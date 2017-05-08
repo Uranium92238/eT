@@ -1,7 +1,7 @@
 Programmering:
   ☐ Fjerdedelsfaktoren i A2-leddet & sikre på at vi har fem kasser (så kan vi teste store systemer på stallo)
   ☐ Input-struktur og lesing av input-fil.
-  ☐ Klasser for implementert og oppgave(fra input)
+  ✔ Klasser for implementert og oppgave(fra input) @done (17-05-08 17:01)
   ✔ DIIS-løser @done (17-05-05 13:31)
   ☐ CC2
   ☐ Jacobi
@@ -12,15 +12,16 @@ Programmering:
   ☐ MLCCSD
 
  Omstrukturering:
+   ☐ Oppryddning i grunntilstandskoden
    ☐ cmake
-   ☐ Git-repo
-   ☐ Navn
+   ✔ Git-repo @done (17-05-08 17:12)
+   ✔ Navn @done (17-05-08 17:12)
 
 
 ----------------------------------------------------
-Mandag 08.05 :
-Input-struktur
-Klasser for implementert/beregning/settings
+Tirsdag 08.05 :
+ Input-leser
+ cmake
 
 Mai:
 CCSD, CC2 (GS)
@@ -38,4 +39,4 @@ SCCSD
 ------------------------------------------------------
 Ting som må diskuteres:
   ☐ Required mem for batching
-  ☐ Preferences?
+  ☐ Integralene tar tid
