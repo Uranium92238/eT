@@ -11,7 +11,6 @@ module ccsd_class
 !  -::- Modules used by the class -::-
 !  :::::::::::::::::::::::::::::::::::
 !
-!
 !  General tools
 !
    use types

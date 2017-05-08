@@ -1,12 +1,19 @@
 program eT_program
 !
 !
-!
 !                 Coupled cluster module eT - Main program                                
 !         Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017         
-!                                                                           
+!                              
+!                                             
+!  :::::::::::::::::::::::::::::::::::::
+!  -::- Modules used by the program -::-
+!  :::::::::::::::::::::::::::::::::::::
+!
+!  IO module 
 !
    use input_output
+!
+!  Method classes
 !
    use hf_class
    use ccs_class
@@ -15,12 +22,24 @@ program eT_program
 !
    implicit none
 !
+!  Method class allocatable objects
+!
    type(cc2), allocatable  :: cc2
    type(ccsd), allocatable :: ccsd
 !
+!  Wavefunction pointer
+!
    class(hf), pointer :: wf
 !
+!  Unit identifier for input file eT.inp
+!
+   integer(i15) :: unit_identifier_input = -1
+!
 !  Open input file
+!
+   call generate_unit_identifier(unit_identifier_input)
+   open(unit=unit_identifier_input, file='eT.inp', status='old', form='formatted')
+   rewind(unit_identifier_input)
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::::
 !  -::- Reading method section of input file -::- 
