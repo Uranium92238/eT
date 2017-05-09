@@ -22,7 +22,7 @@ module ccs_class
 !
 !  The preferences class 
 !
-   use preferences_class
+   use calc_settings_class
 !
 !  The ancestor class module (HF)
 !
@@ -57,7 +57,7 @@ module ccs_class
 !
 !     Preferences (convergence thresholds and other settings)
 !
-      type(preferences) :: settings 
+      type(settings) :: settings 
 !
    contains 
 !

@@ -15,10 +15,10 @@ program eT_program
 !
    implicit none
 !
-   type(cc2), allocatable  :: cc2
-   type(ccsd), allocatable :: ccsd
+   type(cc2), allocatable  :: cc2_obj
+   type(ccsd), allocatable :: ccsd_obj
 !
-   class(hf), pointer :: wf
+   class(hartree_fock), pointer :: wf
 !
 !  Open input file
 !

@@ -1,0 +1,20 @@
+set(eT_fortran_sources
+   src/types.F90
+   src/workspace.F90
+   src/input_output.F90
+   src/utils.F90
+   src/calc_procedures_class.F90
+   src/calc_settings_class.F90
+   src/hf_class.F90
+   src/ccs_class.F90
+   src/ccsd_class.F90
+   src/cc2_class.F90
+   src/ccs_class_submodules/cholesky_submodule.F90
+   src/ccs_class_submodules/diis_submodule.F90
+   src/ccs_class_submodules/fock_submodule.F90
+   src/ccsd_class_submodules/diis_submodule.F90
+   src/ccsd_class_submodules/omega_submodule.F90
+   src/ccsd_class_submodules/jacobian_submodule.F90
+   src/cc2_class_submodules/omega_submodule.F90
+   src/eT_program.F90
+)
