@@ -33,16 +33,27 @@ program eT_program
 !
 !  Wavefunction pointer
 !
-
    class(hartree_fock), pointer :: wf => null()
 !
 !  Method string 
 !
-   character(len=25) :: method 
+   character(len=40) :: method 
 !
 !  Unit identifier for input file eT.inp
 !
    integer(i15) :: unit_input = -1
+!
+!  Set up workspace controller
+!
+   call work_init
+!
+!  Create & open the main output file, used throughout the program
+!
+   call init_output_file
+   open(unit=unit_output,file='eT.out',status='unknown',form='formatted')
+   rewind(unit_output)
+!
+   write(unit_output,'(/t3,a/)')  ':: eT - a coupled cluster program'
 !
 !  Open input file
 !
@@ -60,19 +71,23 @@ program eT_program
 !
    call method_reader(unit_input, method)
 !
-   if (method == 'CC2') then
+   write(unit_output,'(t3,a,a,a/)') 'Our wavefunction is of type ',trim(method),'.'
+   flush(unit_output)
+!
+   if (trim(method) == 'CC2') then
 !
       allocate(cc2_wf)
       wf => cc2_wf
 !
-   elseif (method == 'CCSD') then
-! 
+   elseif (trim(method) == 'CCSD') then
+!
       allocate(ccsd_wf)
       wf => ccsd_wf
 !
    else
 !
-      write(unit_output,*) 'Input error: method ', method, ' not recognized.'
+      write(unit_output,*) 'Method ', trim(method), ' not recognized.'
+      flush(unit_output)
       stop ! Terminate program
 !
    endif
@@ -83,7 +98,11 @@ program eT_program
 !
 !  Set calculation specifications
 !
- !  call calculation_reader(unit_input, wf%tasks)
+   call calculation_reader(unit_input, wf%tasks)
+!
+   if (wf%tasks%do_ground_state)  write(unit_output,'(t3,a/)') 'Ground state calculation requested.'
+   if (wf%tasks%do_excited_state) write(unit_output,'(t3,a/)') 'Excited state calculation requested.'
+   ! E: add properties later.
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::::::
 !  -::- Reading settings section of input file -::- 
@@ -91,22 +110,28 @@ program eT_program
 !
 !  Set calculation settings settings
 !
-!  call settings_reader(wf%settings) 
+   call settings_reader(unit_input, wf%settings) 
+!
+   write(unit_output,'(t3,a/)') 'Settings for this calculation:'
+   write(unit_output,'(t6,a25,e10.2)') 'Energy threshold:', wf%settings%energy_threshold
+   write(unit_output,'(t6,a25,e10.2/)') 'Amplitude eqs. threshold:', wf%settings%ampeqs_threshold
 !
 !  Close input file
 !
-!  :::::::::::::::::::::::::::::
-!  -::- Prepare output file -::- 
-!  :::::::::::::::::::::::::::::
+   close(unit_input)
 !
 !  :::::::::::::::::::::::::
 !  -::- Run Calculation -::- 
 !  :::::::::::::::::::::::::
 !
-!  call wf%drv()
+   call wf%init
+   call wf%drv
 !
 !  :::::::::::::::::::::::::::
 !  -::- Close output file -::- 
 !  :::::::::::::::::::::::::::
+!
+   close(unit_output)
+!
 !
 end program eT_program

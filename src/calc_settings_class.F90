@@ -15,14 +15,14 @@ module calc_settings_class
 !  -::- Definition of the calc_settings class -::-
 !  :::::::::::::::::::::::::::::::::::::::::::::::
 !
-   type :: settings 
+   type :: calc_settings 
 !
       real(dp) :: energy_threshold = 1.0D-06
       real(dp) :: ampeqs_threshold = 1.0D-06
 !
       integer(i15) :: ampeqs_max_iterations = 25
 !
-   end type settings                                                                            
+   end type calc_settings                                                                            
 !
 !
 contains

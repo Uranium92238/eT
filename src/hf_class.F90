@@ -18,6 +18,7 @@ module hf_class
    use workspace
    use input_output
    use calc_procedures_class
+   use calc_settings_class
 !
    implicit none
 !
@@ -52,10 +53,11 @@ module hf_class
       real(dp) :: nuclear_potential ! Nuclear potential energy term
       real(dp) :: scf_energy        ! The Hartree-Fock (HF/SCF) energy
 !
-!     Calculation tasks and implemented methods
+!     Calculation settings, tasks, and implemented methods
 !
       type(calc_procedures) :: tasks
       type(calc_procedures) :: implemented
+      type(calc_settings)   :: settings
 !
    contains
 !
