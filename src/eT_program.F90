@@ -112,9 +112,10 @@ program eT_program
 !
    call settings_reader(unit_input, wf%settings) 
 !
-   write(unit_output,'(t3,a/)') 'Settings for this calculation:'
-   write(unit_output,'(t6,a25,e10.2)') 'Energy threshold:', wf%settings%energy_threshold
-   write(unit_output,'(t6,a25,e10.2/)') 'Amplitude eqs. threshold:', wf%settings%ampeqs_threshold
+   write(unit_output,'(t3,a/)')         'Settings for this calculation:'
+!
+   write(unit_output,'(t6,a25,e10.2)')    'Energy threshold:',         wf%settings%energy_threshold
+   write(unit_output,'(t6,a25,e10.2/)')   'Amplitude eqs. threshold:', wf%settings%ampeqs_threshold
 !
 !  Close input file
 !
