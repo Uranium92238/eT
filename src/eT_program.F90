@@ -82,7 +82,7 @@ program eT_program
 !
 !  Set calculation specifications
 !
-!  call calculation_reader(wf%tasks)
+   call calculation_reader(unit_input, wf%tasks)
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::::::
 !  -::- Reading settings section of input file -::- 
