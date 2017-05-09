@@ -1,7 +1,7 @@
 program eT_program
 !
 !
-!                 Coupled cluster module eT - Main program                                
+!                        eT coupled cluster program                                
 !         Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017         
 !                              
 !                                             
@@ -12,6 +12,10 @@ program eT_program
 !  IO module 
 !
    use input_output
+!
+!  Input file reader module 
+!
+   use input_reader
 !
 !  Method classes
 !
@@ -29,25 +33,49 @@ program eT_program
 !
 !  Wavefunction pointer
 !
-   class(hartree_fock), pointer :: wf
+
+   class(hartree_fock), pointer :: wf => null()
+!
+!  Method string 
+!
+   character(len=25) :: method 
 !
 !  Unit identifier for input file eT.inp
 !
-   integer(i15) :: unit_identifier_input = -1
+   integer(i15) :: unit_input = -1
 !
 !  Open input file
 !
-   call generate_unit_identifier(unit_identifier_input)
-   open(unit=unit_identifier_input, file='eT.inp', status='old', form='formatted')
-   rewind(unit_identifier_input)
+   call generate_unit_identifier(unit_input)
+   open(unit=unit_input, file='eT.inp', status='old', form='formatted')
+   rewind(unit_input)
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::::
 !  -::- Reading method section of input file -::- 
 !  ::::::::::::::::::::::::::::::::::::::::::::::
 !
-!  Set method - Initialize object
+!  Read the method from file, allocate the appropriate 
+!  wavefunction object, and point to the main wavefunction 
+!  wf to this object.
 !
-!  call method_reader(STRING)
+   call read_method(unit_input, method)
+!
+   if (method == 'CC2') then
+!
+      allocate(cc2)
+      wf => cc2 
+!
+   elseif (method == 'CCSD') then
+! 
+      allocate(ccsd)
+      wf => ccsd 
+!
+   else
+!
+      write(unit_output,*) 'Input error: method ', method, ' not recognized.'
+      stop ! Terminate program
+!
+   endif
 !
 !  :::::::::::::::::::::::::::::::::::::::::::::::::::
 !  -::- Reading calculation section of input file -::- 
@@ -55,7 +83,7 @@ program eT_program
 !
 !  Set calculation specifications
 !
-!  call calculation_reader(wf%tasks)
+   call calculation_reader(unit_input, wf%tasks)
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::::::
 !  -::- Reading settings section of input file -::- 
