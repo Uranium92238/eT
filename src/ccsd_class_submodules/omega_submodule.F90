@@ -49,10 +49,10 @@ contains
       class(ccsd) :: wf
 !
       call allocator(wf%omega1, wf%n_v, wf%n_o)
-      call dzero(wf%omega1, (wf%n_v)*(wf%n_o))
+      wf%omega1 = zero
 !
       call allocator(wf%omega2, wf%n_t2am, 1)
-      call dzero(wf%omega2, wf%n_t2am)
+      wf%omega2 = zero
 !
    end subroutine initialize_omega_ccsd
 !
@@ -75,8 +75,8 @@ contains
 !
 !     Set the omega vector to zero 
 !
-      call dzero(wf%omega1, wf%n_t1am)
-      call dzero(wf%omega2, wf%n_t2am)
+      wf%omega1 = zero
+      wf%omega2 = zero
 !
 !     Construct singles contributions 
 !
@@ -139,7 +139,7 @@ contains
 !     Allocate Cholesky vector L_kc_J
 !
       call allocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
-      call dzero(L_kc_J, (wf%n_o)*(wf%n_v)*(wf%n_J))
+      L_kc_J = zero
 !
 !     Get Cholesky vector L_kc_J
 !
@@ -148,7 +148,7 @@ contains
 !     Allocate u_ckd_i = u_ki^cd
 !
       call allocator(u_ckd_i, (wf%n_o)*(wf%n_v)**2, wf%n_o)
-      call dzero(u_ckd_i, ((wf%n_o)**2)*((wf%n_v)**2))
+      u_ckd_i = zero
 !
 !     Calculate u_ckd_i
 !
@@ -206,7 +206,7 @@ contains
          ad_dim = batch_length*(wf%n_v) ! Dimension of ad for the batch over index a 
 !
          call allocator(L_da_J, ad_dim, wf%n_J)
-         call dzero(L_da_J, ad_dim*(wf%n_J))
+         L_da_J = zero
 !
 !        Get reordered Cholesky vector L_da_J = L_ad^J 
 !
@@ -240,7 +240,7 @@ contains
 !        Allocate g_a_ckd = g_adkc and set to zero
 !
          call allocator(g_a_ckd, batch_length, (wf%n_o)*(wf%n_v)**2)
-         call dzero(g_a_ckd, batch_length*(wf%n_o)*(wf%n_v)**2)
+         g_a_ckd = zero
 !
 !        Reorder the integrals to g_a_ckd
 !
@@ -337,8 +337,8 @@ contains
       call allocator(L_ki_J, (wf%n_o)**2, wf%n_J)
       call allocator(L_lc_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
-      call dzero(L_ki_J, (wf%n_J)*(wf%n_o)**2)
-      call dzero(L_lc_J, (wf%n_o)*(wf%n_v)*(wf%n_J))
+      L_ki_J = zero
+      L_lc_J = zero
 !
 !     Read the Cholesky vectors L_ki_J and L_lc_J
 !
@@ -372,7 +372,7 @@ contains
 !     Allocate reordered integrals g_ckl_i = g_kilc 
 !
       call allocator(g_ckl_i, (wf%n_v)*((wf%n_o)**2), wf%n_o)
-      call dzero(g_ckl_i, (wf%n_v)*((wf%n_o)**3))
+      g_ckl_i = zero
 !
 !     Determine g_ckl_i = g_kilc 
 !
@@ -404,7 +404,7 @@ contains
 !     Allocate redordered u_a_ckl = u_kl^ac and set it to zero
 !
       call allocator(u_a_ckl, wf%n_v, (wf%n_v)*(wf%n_o)**2)
-      call dzero(u_a_ckl, ((wf%n_v)**2)*(wf%n_o)**2)
+      u_a_ckl = zero
 !
 !     Determine u_a_ckl = u_kl^ac
 !
@@ -505,8 +505,8 @@ contains
       call allocator(u_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))  
       call allocator(omega1_ai, (wf%n_o)*(wf%n_v), 1)
 !
-      call dzero(F_ck, (wf%n_o)*(wf%n_v))
-      call dzero(u_ai_ck, ((wf%n_o)**2)*(wf%n_v)**2)
+      F_ck    = zero  
+      u_ai_ck = zero
 !
 !     Set up u_ck_ai and virtual-occupied Fock matrix
 !
@@ -743,7 +743,7 @@ contains
 !        Get cholesky vectors L_ac^J ordered as L_ca_J
 !
          call allocator(L_ca_J, (wf%n_v)*a_length, wf%n_J)
-         call dzero(L_ca_J, (wf%n_v)*a_length*(wf%n_J))
+         L_ca_J = zero
 !
          reorder = .true.
          call wf%get_cholesky_ab(L_ca_J, a_first, a_last, (wf%n_v)*a_length, reorder)
@@ -764,7 +764,7 @@ contains
 !           Get cholesky vectors L_bd^J ordered as L_db_J
 !
             call allocator(L_db_J, (wf%n_v)*b_length, wf%n_J)
-            call dzero(L_db_J, (wf%n_v)*b_length*(wf%n_J))
+            L_db_J = zero
 !  
             reorder = .true.
             call wf%get_cholesky_ab(L_db_J, b_first, b_last, (wf%n_v)*b_length, reorder)
@@ -802,16 +802,11 @@ contains
             call allocator(t_p_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
             call allocator(t_m_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
 !
-            call dzero(g_p_ab_cd, packed_size(a_length)*packed_size(wf%n_v))
-            call dzero(g_m_ab_cd, packed_size(a_length)*packed_size(wf%n_v))
-            call dzero(t_p_cd_ij, packed_size(wf%n_v)*packed_size(wf%n_o))
-            call dzero(t_m_cd_ij, packed_size(wf%n_v)*packed_size(wf%n_o))
+            g_p_ab_cd = zero
+            g_m_ab_cd = zero
+            t_p_cd_ij = zero
+            t_m_cd_ij = zero
 !
-!           E: attempting to optimize (formaldehyde/pvtz, before: 0.73370899999999750 s)
-!                                                         after:  0.53656699999999091 s)
-!                 -114.33117412 new code 
-!                 -114.3311740730 good...
-!                 -114.33117412
 !
             call cpu_time(begin_timer)
             do c = 1, wf%n_v 
@@ -1333,8 +1328,8 @@ contains
       call allocator(g_dl_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call allocator(t_ai_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      call dzero(g_dl_ck, (wf%n_o)*(wf%n_v)*(wf%n_o)*(wf%n_v))
-      call dzero(t_ai_dl, (wf%n_o)*(wf%n_v)*(wf%n_o)*(wf%n_v))
+      g_dl_ck = zero
+      t_ai_dl = zero
 !
       do c = 1, wf%n_v
          do d = 1, wf%n_v
@@ -1393,7 +1388,7 @@ contains
 !     Allocate g_ki_ca
 !
       call allocator(g_ki_ca, (wf%n_o)*(wf%n_o), (wf%n_v)*(wf%n_v))
-      call dzero(g_ki_ca, (wf%n_o)*(wf%n_o)*(wf%n_v)*(wf%n_v))
+      g_ki_ca = zero
 !
 !     Allocate L_ki_J
 !
@@ -1688,7 +1683,7 @@ contains
 !     Allocate L_ld_kc = L_ldkc and set to zero    
 !
       call allocator(L_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call dzero(L_ld_kc, (wf%n_o)*(wf%n_v)*(wf%n_o)*(wf%n_v))
+      L_ld_kc = zero
 !
 !     Determine L_ld_kc = L_ldkc from g_ld_kc = g_ldkc 
 !
@@ -1722,7 +1717,7 @@ contains
 !     Allocate u_ai_ld = u_il^ad and set to zero 
 !
       call allocator(u_ai_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call dzero(u_ai_ld, (wf%n_o)*(wf%n_v)*(wf%n_o)*(wf%n_v))
+      u_ai_ld = zero
 ! 
 !     Determine u_ai_ld = u_il^ad = 2 * t_il^ad - t_li^ad 
 !
@@ -1896,7 +1891,7 @@ contains
 !     Allocate u_kc_bj and set it to zero 
 !
       call allocator(u_kc_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call dzero(u_kc_bj, (wf%n_o)*(wf%n_v)*(wf%n_o)*(wf%n_v))
+      u_kc_bj = zero
 !
 !     Determine u_kc_bj = u_jk^bc = 2 * t_jk^bc - t_kj^bc 
 !
@@ -2008,7 +2003,7 @@ contains
 !     Allocate the full g_ai_ck = g_acki and set it to zero 
 !
       call allocator(g_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call dzero(g_ai_ck, (wf%n_o)*(wf%n_v)*(wf%n_o)*(wf%n_v))
+      g_ai_ck = zero
 !
 !     Prepare for batching over the index a to calculate g_ai_ck = g_acki
 !
@@ -2101,7 +2096,7 @@ contains
 !     Allocate the u_ck_bj = u_jk^bc vector and set it to zero 
 !
       call allocator(u_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call dzero(u_ck_bj, (wf%n_o)*(wf%n_v)*(wf%n_o)*(wf%n_v))
+      u_ck_bj = zero
 !
 !     Determine u_ck_bj = u_jk^bc = 2 * t_jk^bc - t_kj^bc 
 !
@@ -2289,12 +2284,12 @@ contains
 !     Allocate u_b_kdl = u_kl^bd and set to zero
 !
       call allocator(u_b_kdl, wf%n_v, (wf%n_v)*((wf%n_o)**2))
-      call dzero(u_b_kdl, (wf%n_v)*(wf%n_v)*((wf%n_o)**2))
+      u_b_kdl = zero
 !
 !     Allocate g_kdl_c = g_ldkc and set to zero 
 !
       call allocator(g_kdl_c, (wf%n_v)*((wf%n_o)**2), wf%n_v)
-      call dzero(g_kdl_c, (wf%n_v)*((wf%n_o)**2)*(wf%n_v))
+      g_kdl_c = zero
 !
 !     Determine u_b_kdl = u_kl^bd and g_kdl_c = g_ldkc
 !
@@ -2370,7 +2365,7 @@ contains
 !     Allocate t_c_jai = t_ij^ac and set to zero
 !
       call allocator(t_c_jai, wf%n_v, (wf%n_v)*(wf%n_o)**2)
-      call dzero(t_c_jai, (wf%n_v)*(wf%n_v)*(wf%n_o)**2)
+      t_c_jai = zero
 !
 !     Determine t_c_jai = t_ij^ac 
 !
@@ -2503,12 +2498,12 @@ contains
 !     Allocate g_k_dlc = g_ldkc and set to zero 
 !
       call allocator(g_k_dlc, wf%n_o, (wf%n_o)*(wf%n_v)**2)
-      call dzero(g_k_dlc, (wf%n_o)*(wf%n_o)*(wf%n_v)**2)
+      g_k_dlc = zero
 !
 !     Allocate u_dlc_j = u_lj^dc and set to zero
 !
       call allocator(u_dlc_j, (wf%n_o)*(wf%n_v)**2, wf%n_o)
-      call dzero(u_dlc_j, (wf%n_o)*(wf%n_o)*(wf%n_v)**2)
+      u_dlc_j = zero
 !
 !     Determine g_k_dlc = g_ldkc and u_dlc_j = u_lj^dc 
 !
@@ -2582,7 +2577,7 @@ contains
 !     Allocate t_aib_k = t_ik^ab and set it to zero 
 !
       call allocator(t_aib_k, (wf%n_o)*(wf%n_v)**2, wf%n_o)
-      call dzero(t_aib_k, (wf%n_o)*(wf%n_o)*(wf%n_v)**2)
+      t_aib_k = zero
 !
 !     Determine t_aib_k = t_ik^ab 
 !

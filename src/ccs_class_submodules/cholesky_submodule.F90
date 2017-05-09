@@ -197,7 +197,7 @@ contains
 !     Allocate L_Ja_i
 !
       call allocator(L_Ja_i, (wf%n_J)*(wf%n_v), wf%n_o)
-      call dzero(L_Ja_i, (wf%n_J)*(wf%n_v)*(wf%n_o))
+      L_Ja_i = zero
 !
 !     Set batching variables 
 !

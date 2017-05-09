@@ -71,7 +71,7 @@ contains
 !
 !     Set the omega vector to zero 
 !
-      call dzero(wf%omega1,(wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      wf%omega1 = zero
 !
 !     Prepare for batching over index a (Assumes A1 requires the most memory)
 !  
@@ -107,8 +107,8 @@ contains
 !
          call allocator(L_bj_J, (wf%n_v)*(wf%n_o), wf%n_J)
          call allocator(L_ia_J, a_length*(wf%n_o), wf%n_J)
-         call dzero(L_bj_J, (wf%n_v)*(wf%n_o), wf%n_J)
-         call dzero(L_ia_J, a_length*(wf%n_o), wf%n_J)
+         L_bj_J = zero
+         L_ia_J = zero
 !
          call wf%get_cholesky_ai(L_bj_J)
 !
@@ -259,7 +259,7 @@ contains
 !     Allocate u_dkc_i = u_ki^cd
 !
       call allocator(u_dkc_i, (wf%n_o)*(wf%n_v)*(c_length), wf%n_o)
-      call dzero(u_dkc_i, (wf%n_o)*(wf%n_v)*(c_length), wf%n_o)
+      u_dkc_i = zero
 !
 !     Calculate u_ckd_i
 !
@@ -289,7 +289,7 @@ contains
 !     Allocate Cholesky vector L_kc_J for all c
 !
       call allocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
-      call dzero(L_kc_J, (wf%n_o)*(wf%n_v)*(wf%n_J))
+      L_kc_J = zero
 !
 !     Get Cholesky vector L_kc_J for all c
 !
@@ -324,7 +324,7 @@ contains
          ad_dim = a_length*(wf%n_v) ! Dimension of ad for the batch over index a 
 !
          call allocator(L_da_J, ad_dim, wf%n_J)
-         call dzero(L_da_J, ad_dim*(wf%n_J))
+         L_da_J = zero
 !
 !        Get reordered Cholesky vector L_da_J = L_ad^J 
 !
@@ -357,7 +357,7 @@ contains
 !        Allocate g_a_ckd = g_adkc and set to zero Batching both c and a
 !
          call allocator(g_a_dkc, a_length, (wf%n_o)*(wf%n_v)*c_length)
-         call dzero(g_a_dkc, a_length, (wf%n_o)*(wf%n_v)*c_length)
+         g_a_dkc = zero
 !
 !        Reorder the integrals to g_a_ckd
 !
@@ -459,8 +459,8 @@ contains
       call allocator(L_lc_J, (wf%n_o)*(wf%n_v), wf%n_J)
       call allocator(L_lc_J_batch, (wf%n_o)*c_length, wf%n_J)
 !
-      call dzero(L_lc_J, (wf%n_o)*(wf%n_v)*(wf%n_J))
-      call dzero(L_lc_J_batch, (wf%n_o)*c_length, wf%n_J)
+      L_lc_J       = zero
+      L_lc_J_batch = zero
 
 !
 !     Read the Cholesky vectors L_lc_J
@@ -491,7 +491,7 @@ contains
 !     Allocate L_ki_J
 !
       call allocator(L_ki_J, (wf%n_o)**2, wf%n_J)
-      call dzero(L_ki_J, (wf%n_J)*(wf%n_o)**2)
+      L_ki_J = zero
 !
 !     Read the Cholesky vectors L_ki_J
 !
@@ -524,7 +524,7 @@ contains
 !     Allocate reordered integrals g_ckl_i = g_kilc 
 !
       call allocator(g_klc_i, c_length*((wf%n_o)**2), wf%n_o)
-      call dzero(g_klc_i, c_length*((wf%n_o)**3))
+      g_klc_i = zero
 !
 !     Determine g_ckl_i = g_kilc 
 !
@@ -556,7 +556,7 @@ contains
 !     Allocate redordered u_a_ckl = u_kl^ac and set it to zero
 !
       call allocator(u_a_klc, wf%n_v, c_length*(wf%n_o)**2)
-      call dzero(u_a_klc, (wf%n_v),c_length*(wf%n_o)**2)
+      u_a_klc = zero
 !
 !     Determine u_a_ckl = u_kl^ac
 !
@@ -647,8 +647,8 @@ contains
       call allocator(u_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*c_length)  
       call allocator(omega1_ai, (wf%n_o)*(wf%n_v), 1)
 !
-      call dzero(F_kc, (wf%n_o)*c_length)
-      call dzero(u_ai_kc, ((wf%n_o)**2)*(wf%n_v)*c_length)
+      F_kc    = zero
+      u_ai_kc = zero
 !
 !     Set up u_ck_ai and virtual-occupied Fock matrix
 !

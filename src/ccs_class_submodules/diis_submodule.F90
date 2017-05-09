@@ -429,7 +429,7 @@ contains
 !
 !     :: Update the amplitudes (placed in dt on exit) ::
 !
-      call dzero(dt, n_variables)
+      dt = zero
 !
       rewind(unit_t_dt)
 !
@@ -437,7 +437,7 @@ contains
 !
 !        Read the t_i + Δ t_i vector 
 !
-         call dzero(t_dt, n_variables)
+         t_dt = zero
          read(unit_t_dt) (t_dt(j, 1), j = 1, n_variables)
 !
 !        Add w_i (t_i + Δ t_i) to the amplitudes 

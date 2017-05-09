@@ -38,8 +38,8 @@ contains
       call allocator(tr1am, wf%n_v, wf%n_o)
       call allocator(tr2am, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
-      call dzero(tr1am, (wf%n_v)*(wf%n_o))
-      call dzero(tr2am, (wf%n_v)**2*(wf%n_o)**2)
+      tr1am = zero
+      tr2am = zero
 !
 !     Calculate the singles contributions 
 !
@@ -237,7 +237,7 @@ contains
 !     calculation over batches
 !
       call allocator(tr1am_tmp, wf%n_o, wf%n_v)
-      call dzero(tr1am_tmp, (wf%n_o)*(wf%n_v))
+      tr1am_tmp = zero
 !
 !     Begin batching over a 
 !
