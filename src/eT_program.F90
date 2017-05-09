@@ -28,8 +28,8 @@ program eT_program
 !
 !  Method class allocatable objects
 !
-   type(cc2), allocatable  :: cc2
-   type(ccsd), allocatable :: ccsd
+   type(cc2), allocatable, target  :: cc2_wf
+   type(ccsd), allocatable, target :: ccsd_wf
 !
 !  Wavefunction pointer
 !
@@ -58,17 +58,17 @@ program eT_program
 !  wavefunction object, and point to the main wavefunction 
 !  wf to this object.
 !
-   call read_method(unit_input, method)
+   call method_reader(unit_input, method)
 !
    if (method == 'CC2') then
 !
-      allocate(cc2)
-      wf => cc2 
+      allocate(cc2_wf)
+      wf => cc2_wf
 !
    elseif (method == 'CCSD') then
 ! 
-      allocate(ccsd)
-      wf => ccsd 
+      allocate(ccsd_wf)
+      wf => ccsd_wf
 !
    else
 !
@@ -83,7 +83,7 @@ program eT_program
 !
 !  Set calculation specifications
 !
-   call calculation_reader(unit_input, wf%tasks)
+ !  call calculation_reader(unit_input, wf%tasks)
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::::::
 !  -::- Reading settings section of input file -::- 
