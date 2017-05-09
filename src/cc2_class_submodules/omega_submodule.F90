@@ -286,23 +286,15 @@ contains
          enddo
       enddo
 !
-!     Allocate Cholesky vector L_kc_J for all c
-!
-      call allocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
-      L_kc_J = zero
-!
-!     Get Cholesky vector L_kc_J for all c
-!
-      call wf%get_cholesky_ia(L_kc_J)
-!
 !     Start batching over a
 !
       available = get_available()
-      required  = ((wf%n_v)**2)*(wf%n_J) &
-                  + (wf%n_v**2)*(wf%n_o)*(wf%n_v) & 
-                  + 2*((wf%n_v)**3)*(wf%n_o)
+      required  = (wf%n_J)*(wf%n_v**2) + (wf%n_J)*(wf%n_o)*(wf%n_v)                                ! Needed to hold L_ab_J and L_kc_J
+      required  = required &
+                + max((wf%n_J)*(wf%n_v**2) + 2*(wf%n_J)*(wf%n_o)*(wf%n_v), &                       ! Determine if it is more demanding to get L_ab_J 
+                      2*(wf%n_o)*(wf%n_v**3))                                                      ! or to hold g_ad_kc and g_a_ckd
 !
-      required = 4*required
+      required = four*required
 !
       batch_dimension  = wf%n_v ! Batch over the virtual index a
       max_batch_length = 0      ! Initilization of unset variables 
@@ -318,6 +310,15 @@ contains
 !
          call batch_limits(a_first, a_last, a_batch, max_batch_length, batch_dimension)
          a_length = a_last - a_first + 1 
+!
+!        Allocate Cholesky vector L_kc_J for all c
+!
+         call allocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
+         L_kc_J = zero
+!
+!        Get Cholesky vector L_kc_J for all c
+!
+         call wf%get_cholesky_ia(L_kc_J)
 !
 !        Allocate the Cholesky vector L_da_J = L_ad^J
 !

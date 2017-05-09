@@ -136,15 +136,6 @@ contains
 !
       logical :: reorder ! To get L_ab_J reordered, for batching over a (first index)
 !
-!     Allocate Cholesky vector L_kc_J
-!
-      call allocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
-      L_kc_J = zero
-!
-!     Get Cholesky vector L_kc_J
-!
-      call wf%get_cholesky_ia(L_kc_J)
-!
 !     Allocate u_ckd_i = u_ki^cd
 !
       call allocator(u_ckd_i, (wf%n_o)*(wf%n_v)**2, wf%n_o)
@@ -183,8 +174,12 @@ contains
 !     later on in the same loop, g_ad_kc and g_a_ckd simultaneously
 !
       available = get_available()
-      required  = max(((wf%n_v)**2)*(wf%n_J) + (wf%n_v**2)*(wf%n_o)*(wf%n_v), &
-                              2*((wf%n_v)**3)*(wf%n_o)) ! Eirik: redo this estimate !
+      required  = (wf%n_J)*(wf%n_v**2) + (wf%n_J)*(wf%n_o)*(wf%n_v)                                ! Needed to hold L_ab_J and L_kc_J
+      required  = required &
+                + max((wf%n_J)*(wf%n_v**2) + 2*(wf%n_J)*(wf%n_o)*(wf%n_v), &                       ! Determine if it is more demanding to get L_ab_J 
+                      2*(wf%n_o)*(wf%n_v**3))                                                      ! or to hold g_ad_kc and g_a_ckd
+!                                                                                            
+      required = four*required ! In words 
 !
       batch_dimension  = wf%n_v ! Batch over the virtual index a
       max_batch_length = 0      ! Initilization of unset variables 
@@ -200,6 +195,15 @@ contains
 !
          call batch_limits(a_begin, a_end, a_batch, max_batch_length, batch_dimension)
          batch_length = a_end - a_begin + 1 
+!
+!        Allocate Cholesky vector L_kc_J
+!
+         call allocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
+         L_kc_J = zero
+!
+!        Get Cholesky vector L_kc_J
+!
+         call wf%get_cholesky_ia(L_kc_J)
 !
 !        Allocate the Cholesky vector L_da_J = L_ad^J
 !
@@ -233,9 +237,10 @@ contains
                      g_da_kc,           &
                      ad_dim)
 !
-!        Deallocate the reordered Cholesky vector L_da_J
+!        Deallocate the reordered Cholesky vector L_da_J and L_kc_J
 !
          call deallocator(L_da_J, ad_dim, wf%n_J)
+         call deallocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
 !        Allocate g_a_ckd = g_adkc and set to zero
 !
@@ -283,6 +288,8 @@ contains
                      wf%omega1(a_begin,1), &
                      wf%n_v)
 !
+         call deallocator(g_a_ckd, batch_length, (wf%n_o)*(wf%n_v)**2)
+!
       enddo ! End of batches of the index a 
 !
 !     Print the omega vector 
@@ -300,8 +307,6 @@ contains
 !     Deallocate vectors 
 !
       call deallocator(u_ckd_i, (wf%n_o)*(wf%n_v)**2, wf%n_o)
-      call deallocator(g_a_ckd, batch_length, (wf%n_o)*(wf%n_v)**2)
-      call deallocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
    end subroutine omega_a1_ccsd
 !
@@ -716,11 +721,15 @@ contains
 !!!   A2.2 term !!!
 !
 !
-      required = 2*(wf%n_v)**2*(wf%n_J) &             ! Needed to get L_ca_J
-               + 2*(wf%n_o)*(wf%n_v)*(wf%n_J)&        ! Needed to get L_db_J
-               + (wf%n_v)**4 &                        ! Needed to get g_ac_bd
-               + 2*(wf%n_v)**2*(packed_size(wf%n_v))  ! Needed to get g+-
-      required = required*4                           ! Words
+      required = max(2*(wf%n_v)**2*(wf%n_J) + 2*(wf%n_v)*(wf%n_o)*(wf%n_J),      & ! Needed to get L_ca_J or L_db_J
+                     (wf%n_v)**4 + 2*(wf%n_v)**2*(wf%n_J), &                       ! Needed to get g_ac_bd
+                     (wf%n_v)**4 + 2*(packed_size(wf%n_v))*(packed_size(wf%n_v)) & ! Needed to get g+- and t+-
+                     + 2*(packed_size(wf%n_v))*(packed_size(wf%n_o)), &            !
+                       2*(packed_size(wf%n_v))*(packed_size(wf%n_v)) &             ! Needed for g+- and t+- and Omega+-
+                     + 2*(packed_size(wf%n_v))*(packed_size(wf%n_o)) &             !
+                     + 2*(wf%n_v)**2*(packed_size(wf%n_v)))                        !
+!
+      required = required*4  ! Words
 
       available=get_available()
 !
@@ -740,14 +749,6 @@ contains
          call batch_limits(a_first ,a_last ,a_batch, a_max_length, wf%n_v)
          a_length = a_last - a_first + 1     
 !
-!        Get cholesky vectors L_ac^J ordered as L_ca_J
-!
-         call allocator(L_ca_J, (wf%n_v)*a_length, wf%n_J)
-         L_ca_J = zero
-!
-         reorder = .true.
-         call wf%get_cholesky_ab(L_ca_J, a_first, a_last, (wf%n_v)*a_length, reorder)
-!
 !        Start looping over batches of b
 !
          b_first  = 0
@@ -760,6 +761,14 @@ contains
 !
             call batch_limits(b_first ,b_last ,b_batch, b_max_length, wf%n_v)
             b_length = b_last - b_first + 1 
+!
+!           Get cholesky vectors L_ac^J ordered as L_ca_J
+!
+            call allocator(L_ca_J, (wf%n_v)*a_length, wf%n_J)
+            L_ca_J = zero
+!
+            reorder = .true.
+            call wf%get_cholesky_ab(L_ca_J, a_first, a_last, (wf%n_v)*a_length, reorder)
 !
 !           Get cholesky vectors L_bd^J ordered as L_db_J
 !
@@ -793,7 +802,11 @@ contains
 !
 !           Deallocate L_db_J 
 !
-            call deallocator(L_db_J, (wf%n_v)*b_length, wf%n_J) 
+            call deallocator(L_db_J, (wf%n_v)*b_length, wf%n_J)
+!
+!           Deallocate L_ca_J
+!
+            call deallocator(L_ca_J, (wf%n_v)*a_length, wf%n_J) 
 !
 !           Allocate for +-g, +-t
 !
@@ -874,8 +887,6 @@ contains
 !
             call allocator(omega2_p_ab_ij, packed_size(a_length), packed_size(wf%n_o))
             call allocator(omega2_m_ab_ij, packed_size(a_length), packed_size(wf%n_o))
-         !   omega2_p_ab_ij = zero (not needed)
-          !  omega2_m_ab_ij = zero (not needed)
 !  
 !            omega2_ab_ij = sum_(cd) g_ab_cd*t_cd_ij
 !  
@@ -954,9 +965,6 @@ contains
 !
          enddo
 !
-!        Deallocate L_ca_J
-!
-         call deallocator(L_ca_J, (wf%n_v)*a_length, wf%n_J)
       enddo
 !      
 !         write(unit_output,*) 
@@ -2007,11 +2015,17 @@ contains
 !
 !     Prepare for batching over the index a to calculate g_ai_ck = g_acki
 !
-!        To calculate this term, we need to hold L_ac^J and g_acki
-!        in memory simultaneously 
+!     To calculate this term, we need to first create L_ac^J, then hold L_ac^J and g_acki
+!     in memory simultaneously 
 !
-      required = (wf%n_J)*(wf%n_v)**2 + ((wf%n_v)**2)*((wf%n_o)**2) ! Eirik: This estimate has to be updated,
-                                                                      ! when we account for the T1 transformation
+      required = (wf%n_J)*(wf%n_v)**2  ! Holding L_ac^J
+!
+      required = required &                                             !
+                  + max( ((wf%n_v)**2)*((wf%n_o)**2), &                 ! Is it more demanding to hold g_acki
+                   (wf%n_J)*(wf%n_v)**2 + 2*(wf%n_J)*(wf%n_v)*(wf%n_o)) ! or create L_ac^J
+!
+      required = four*required ! In words
+!
       available = get_available()
       batch_dimension = wf%n_v
 !

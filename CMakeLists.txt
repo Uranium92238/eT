@@ -13,13 +13,7 @@ set(CMAKE_MODULE_PATH
     /usr/local/share/cmake/Modules
     )
 
-option(ENABLE_64BIT_INTEGERS "Enable 64-bit integers"                           ON)
-option(ENABLE_GPU            "Enable GPU acceleration"                          OFF)
-option(ENABLE_CUDA           "Enable CUDA GPU acceleration"                     OFF)
-option(ENABLE_CUBLAS         "Enable the CUBLAS GPU library"                    OFF)
-option(ENABLE_MPI            "Enable MPI parallelization"                       OFF)
-option(ENABLE_OMP            "Enable OpenMP parallelization"                    OFF)
-
+option(ENABLE_64BIT_INTEGERS "Enable 64-bit integers"       ON)
 
 # Including the source files
 include(eT_sources)

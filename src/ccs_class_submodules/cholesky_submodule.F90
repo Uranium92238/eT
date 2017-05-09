@@ -29,8 +29,10 @@ contains
 !     
 !        L_ij_J_T1 = L_ij_J + sum_a t_aj * L_ia_J
 !
-!     Needed memory by routine: (n_o*n_v*n_J*2)
+!     Memory required in routine:
 !
+!        2*n_J*n_o*n_v     -> for reading L_ia_J contribution and reordering
+!        
       implicit none 
 !
       class(ccs) :: wf
@@ -131,6 +133,10 @@ contains
 !
 !        L_ia_J_T1 = L_ia_J (only reading necessary)
 !
+!     Memory required in routine:
+!
+!        No additional memory
+!
       implicit none 
 !
       class(ccs) :: wf
@@ -153,8 +159,13 @@ contains
 !                           + sum_b  t_bi*L_ab_J
 !                           - sum_bj t_aj*t_bi*L_jb_J
 !
-!     Required memory by routine: 2*n_v*n_J*batch_length 
-!                                 + n_v*n_o*n_J
+!     Allocations in routine:
+!
+!       (1) n_J*n_o*n_v + 2*n_J*n_v*batch_length   ->  for L_ab_J contribution
+!       (2) n_J*n_o*n_v + 2*n_J*n_o^2              ->  for L_ij_J contribution
+!       (3) 2*n_J*n_o*n_v                          ->  for L_jb_J contribution
+!
+!       (1) determines memory requirement. 
 !
       implicit none 
 !
@@ -308,11 +319,6 @@ contains
       call allocator(L_k_iJ, wf%n_o, (wf%n_o)*(wf%n_J))
 !
       call allocator(L_ik_J, (wf%n_o)**2, wf%n_J)
-!
-   !   L_a_iJ = zero   (dgem, not needed)
-     ! L_k_iJ = zero E: needed?
-!
-    !  L_ik_J = zero  E: needed?
 !  
 !     Read Cholesky IJ vectors
 !
@@ -513,7 +519,9 @@ contains
 !     If reorder = .true.,  L_ba_J is returned with batching over a
 !     If reorder = .false., L_ab_J is returned with batching over b
 !
-!     Required memory: n_J*batch_length*n_v + n_v*n_o*n_J*2
+!     Required memory: 
+!        n_J*batch_length*n_v   ->   For reordering of L_ab_J / L_ba_J
+!        2*n_v*n_o*n_J          ->   For L_ib_J contribution
 !
       implicit none
 !
