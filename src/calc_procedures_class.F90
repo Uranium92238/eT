@@ -2,7 +2,7 @@ module calc_procedures_class
 !
 !
 !                         Calculation procedures class module                                 
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017         
+!              Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017         
 !
 !
 !  :::::::::::::::::::::::::::::::::::
@@ -15,7 +15,7 @@ module calc_procedures_class
 !  -::- Definition of the calc_procedures class -::-
 !  :::::::::::::::::::::::::::::::::::::::::::::::
 !
-   type :: procedures 
+   type :: calc_procedures 
 !
       logical :: do_ground_state   = .false.
       logical :: do_excited_state  = .false. 
@@ -24,7 +24,7 @@ module calc_procedures_class
       integer(i15) :: n_singlet_states = 0
       integer(i15) :: n_triplet_states = 0
 !
-   end type procedures                                                                            
+   end type calc_procedures                                                                            
 !
 !
 contains
