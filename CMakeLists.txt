@@ -28,6 +28,8 @@ if(LAPACK_FOUND AND BLAS_FOUND)
    set(lapackblas_libraries ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 endif()
 
+set(WORK_MEM_WORDS "64000000")
+add_definitions(-DINSTALL_WRKMEM=${WORK_MEM_WORDS})
 
 set(eT_fortran_sources
         ${eT_fortran_sources}
