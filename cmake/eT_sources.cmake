@@ -2,6 +2,7 @@ set(eT_fortran_sources
    src/types.F90
    src/workspace.F90
    src/input_output.F90
+   src/input_reader.F90
    src/utils.F90
    src/calc_procedures_class.F90
    src/calc_settings_class.F90

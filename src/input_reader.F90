@@ -5,7 +5,7 @@ module input_reader
 !
    use types
    use input_output
-   use calculation_procedures
+   use calc_procedures_class
 !
 contains
 !
@@ -31,7 +31,7 @@ contains
             read(unit_input,'(a40)') line 
          enddo
 !
-         if (trim(line)) == 'Method:') then
+         if (trim(line) == 'Method:') then
 !
             read(unit_input,'(a40)') line
 !
@@ -45,7 +45,7 @@ contains
             else
                write(unit_output,*) 'Input error: could not read method.'
                stop ! Terminate program
-            exit
+            endif
 !
          else
 !
@@ -69,12 +69,12 @@ contains
 !
       implicit none 
 !
-      type(calculation_procedures) :: tasks 
+      type(calc_procedures) :: tasks 
 !
 !
       integer(i15), intent(in) :: unit_input
 !
-      character(len=40) :: method, calculation 
+      character(len=40) :: calculation 
 !
       character(len=40) :: line 
 !
@@ -86,7 +86,7 @@ contains
             read(unit_input,'(a40)') line 
          enddo
 !
-         if (trim(line)) == 'Calculation:') then
+         if (trim(line) == 'Calculation:') then
 !
             read(unit_input,'(a40)') line
 !
@@ -100,7 +100,7 @@ contains
             else
                write(unit_output,*) 'Input error: could not read calculation.'
                stop ! Terminate program
-            exit
+            endif
 !
          else
 !

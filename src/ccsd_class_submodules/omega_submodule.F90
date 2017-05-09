@@ -95,7 +95,7 @@ contains
 !
        call cpu_time(omega_end)
        write(unit_output,*)'Time in omega:', omega_end-omega_start  
-       call flshfo(unit_output)  
+       call flush(unit_output)  
 !
 !
    end subroutine construct_omega_ccsd
