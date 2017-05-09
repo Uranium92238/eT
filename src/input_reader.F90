@@ -6,6 +6,8 @@ module input_reader
    use types
    use input_output
    use calc_procedures_class
+   use calc_settings_class
+   use hf_class
 !
 contains
 !
@@ -27,7 +29,7 @@ contains
 !
          read(unit_input,'(a40)') line 
 !
-         do while (line(1:1) == '!') ! Comment; read the next line
+         do while (line(1:1) == '!' .or. trim(line) == '') ! Comment or blank line: read the next line
             read(unit_input,'(a40)') line 
          enddo
 !
@@ -35,7 +37,7 @@ contains
 !
             read(unit_input,'(a40)') line
 !
-            do while (line(1:1) == '!') ! Comment; read the next line
+            do while (line(1:1) == '!' .or. trim(line) == '') ! Comment or blank line: read the next line
                read(unit_input,'(a40)') line 
             enddo
 !
@@ -43,13 +45,13 @@ contains
                method = trim(line(2:40))
                exit ! Escape from general do loop
             else
-               write(unit_output,*) 'Input error: could not read method.'
+               write(unit_output,*) 'Input error: expected method, not the line ',trim(line),'.'
                stop ! Terminate program
             endif
 !
          else
 !
-            write(unit_output,*) 'Input error: method section must come first in input file.'
+            write(unit_output,*) 'Input error: expected method section, not the line ',trim(line),'.'
             stop ! Terminate program
 !
          endif
@@ -80,31 +82,59 @@ contains
 !
       do ! General do loop - ends when it reaches 'exit'
 !
-         read(unit_input,'(a40)') line 
+         read(unit_input,'(a40)') line   
 !
-         do while (line(1:1) == '!') ! Comment; read the next line
+         do while (line(1:1) == '!' .or. trim(line) == '') ! Comment or blank line: read the next line
+!
             read(unit_input,'(a40)') line 
+!
          enddo
 !
          if (trim(line) == 'Calculation:') then
 !
-            read(unit_input,'(a40)') line
+            do
 !
-            do while (line(1:1) == '!') ! Comment; read the next line
-               read(unit_input,'(a40)') line 
+               read(unit_input,'(a40)') line
+!
+               do while (line(1:1) == '!' .or. trim(line) == '') ! Comment or blank line: read the next line
+                  read(unit_input,'(a40)') line 
+               enddo
+!
+               if (line(1:1) == '.') then 
+!
+                  calculation = trim(line(2:40))
+!
+!                 Test for which type, set the logical in tasks, and cycle!
+!
+                  if (trim(line(2:40)) == 'ground_state') then
+!
+                     tasks%do_ground_state = .true.
+                     exit
+!
+                  else
+!
+                     write(unit_output,*) 'Input error: calculation ',trim(line(2:40)),' not recognized.'
+                     stop
+!
+                  endif
+!
+               else
+! 
+                  write(unit_output,*) 'Input error: line ',trim(line),' not recognized.'
+                  stop
+!
+               endif
+!
             enddo
 !
-            if (line(1:1) == '.') then 
-               calculation = trim(line(2:40))
-               ! Test for which type, set the logical in tasks, and cycle!
-            else
-               write(unit_output,*) 'Input error: could not read calculation.'
-               stop ! Terminate program
-            endif
+         elseif (trim(line) == 'Settings:') then 
+!
+            backspace(unit_input)
+            exit ! escape the do loop
 !
          else
 !
-            write(unit_output,*) 'Input error: method section must come first in input file.'
+            write(unit_output,*) 'Input error: expected calculation section, not the line ',trim(line),'.'
             stop ! Terminate program
 !
          endif
@@ -112,6 +142,92 @@ contains
       enddo ! End general do loop
 !
    end subroutine calculation_reader
+!
+!
+   subroutine settings_reader(unit_input, settings)
+!
+!     Settings Reader
+!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!
+!     Reads the calculation settings from the input file and initializes the 
+!     settings requested of the wavefunction.
+!
+      implicit none 
+!
+      type(calc_settings) :: settings 
+!
+      integer(i15), intent(in) :: unit_input
+!
+      character(len=40) :: setting 
+!
+      character(len=40) :: line 
+!
+      do ! General do loop - ends when it reaches 'exit'
+!
+         read(unit_input,'(a40)') line   
+!
+         do while (line(1:1) == '!' .or. trim(line) == '') ! Comment or blank line: read the next line
+!
+            read(unit_input,'(a40)') line 
+!
+         enddo
+!
+         if (trim(line) == 'Settings:') then
+!
+            do
+!
+               read(unit_input,'(a40)') line
+!
+               do while (line(1:1) == '!' .or. trim(line) == '') ! Comment or blank line: read the next line
+                  read(unit_input,'(a40)') line 
+               enddo
+!
+               if (line(1:1) == '.') then 
+!
+                  setting = trim(line(2:40))
+!
+!                 Test for which type, set the logical in tasks, and cycle!
+!
+                  if (setting == 'energy_threshold') then
+!
+                     read(unit_input,*) settings%energy_threshold
+                     exit
+!
+                  elseif (setting == 'ampeqs_threshold') then 
+!
+                     read(unit_input,*) settings%ampeqs_threshold
+                     exit
+!
+                  else
+!
+                     write(unit_output,*) 'Input error: setting ',trim(line(2:40)),' not recognized.'
+                     stop
+!
+                  endif
+!
+               else
+! 
+                  write(unit_output,*) 'Input error: line ',trim(line),' not recognized.'
+                  stop
+!
+               endif
+!
+            enddo
+!
+         elseif (trim(line) == '#end of eT input') then 
+!
+            exit ! done reading input; escape the do loop
+!
+         else
+!
+            write(unit_output,*) 'Input error: expected settings section, not the line ',trim(line),'.'
+            stop ! Terminate program
+!
+         endif
+!
+      enddo ! End general do loop
+!
+   end subroutine settings_reader
 !
 !
 end module input_reader
