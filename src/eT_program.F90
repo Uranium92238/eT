@@ -53,8 +53,10 @@ program eT_program
    open(unit=unit_output,file='eT.out',status='old',form='formatted')
    rewind(unit_output)
 !
-   write(unit_output,'(///t15,a)')  'eT - a coupled cluster program'
-   write(unit_output,'(t12,a///)') 'S. D. Folkestad, E. F. Kjønstad, 2017'
+!  Print program banner
+!
+   write(unit_output,'(//t18,a)')  'eT - a coupled cluster program'
+   write(unit_output,'(t15,a//)') 'S. D. Folkestad, E. F. Kjønstad, 2017'
 
 !
 !  Open input file
@@ -63,9 +65,10 @@ program eT_program
    open(unit=unit_input, file='eT.inp', status='old', form='formatted')
    rewind(unit_input)
 !
+!  Print banner as we enter the input reader section 
 !
-      write(unit_output,'(T3,A)')   ':: Input reader'
-      write(unit_output,'(T3,A/)')  ':: S. D. Folkestad, E. F. Kjønstad, May 2017'
+   write(unit_output,'(T3,A)')   ':: Input reader'
+   write(unit_output,'(T3,A/)')  ':: S. D. Folkestad, E. F. Kjønstad, May 2017'
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::::
 !  -::- Reading method section of input file -::- 
