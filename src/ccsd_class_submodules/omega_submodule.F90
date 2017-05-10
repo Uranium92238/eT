@@ -333,15 +333,10 @@ contains
       real(dp), dimension(:,:), allocatable :: g_ckl_i ! g_kilc 
       real(dp), dimension(:,:), allocatable :: u_a_ckl ! u_kl^ac = 2 t_kl^ac - t_lk^ac
 !
-!     Allocate Cholesky vectors L_ki,J and L_lc,J 
+!     Form the Cholesky vectors L_ki_J and L_lc_J 
 !
       call allocator(L_ki_J, (wf%n_o)**2, wf%n_J)
       call allocator(L_lc_J, (wf%n_o)*(wf%n_v), wf%n_J)
-!
-      L_ki_J = zero
-      L_lc_J = zero
-!
-!     Read the Cholesky vectors L_ki_J and L_lc_J
 !
       call wf%get_cholesky_ij(L_ki_J)
       call wf%get_cholesky_ia(L_lc_J)
