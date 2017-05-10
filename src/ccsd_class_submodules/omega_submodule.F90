@@ -333,15 +333,10 @@ contains
       real(dp), dimension(:,:), allocatable :: g_ckl_i ! g_kilc 
       real(dp), dimension(:,:), allocatable :: u_a_ckl ! u_kl^ac = 2 t_kl^ac - t_lk^ac
 !
-!     Allocate Cholesky vectors L_ki,J and L_lc,J 
+!     Form the Cholesky vectors L_ki_J and L_lc_J 
 !
       call allocator(L_ki_J, (wf%n_o)**2, wf%n_J)
       call allocator(L_lc_J, (wf%n_o)*(wf%n_v), wf%n_J)
-!
-      L_ki_J = zero
-      L_lc_J = zero
-!
-!     Read the Cholesky vectors L_ki_J and L_lc_J
 !
       call wf%get_cholesky_ij(L_ki_J)
       call wf%get_cholesky_ia(L_lc_J)
@@ -370,26 +365,20 @@ contains
       call deallocator(L_ki_J, (wf%n_o)**2, wf%n_J)
       call deallocator(L_lc_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
-!     Allocate reordered integrals g_ckl_i = g_kilc 
+!     Form the reordered integrals g_ckl_i = g_kilc 
 !
       call allocator(g_ckl_i, (wf%n_v)*((wf%n_o)**2), wf%n_o)
-      g_ckl_i = zero
 !
-!     Determine g_ckl_i = g_kilc 
+      do i = 1, wf%n_o
+         do l = 1, wf%n_o
+            do k = 1, wf%n_o
 !
-      do c = 1, wf%n_v
-         do k = 1, wf%n_o
-            do l = 1, wf%n_o
-               do i = 1, wf%n_o
+               ki  = index_two(k, i, wf%n_o)
 !
-!                 Calculate necessary indices
+               do c = 1, wf%n_v
 !
-                  ckl = index_three(c, k, l, wf%n_v, wf%n_o) 
-!
-                  ki  = index_two(k, i, wf%n_o)                 
+                  ckl = index_three(c, k, l, wf%n_v, wf%n_o)                    
                   lc  = index_two(l, c, wf%n_o)           
-!
-!                 Set value of g_ckl_i
 !
                   g_ckl_i(ckl, i) = g_ki_lc(ki, lc)
 !
@@ -402,29 +391,25 @@ contains
 !
       call deallocator(g_ki_lc, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
 !
-!     Allocate redordered u_a_ckl = u_kl^ac and set it to zero
+!     Form the redordered u_a_ckl = u_kl^ac
 !
       call allocator(u_a_ckl, wf%n_v, (wf%n_v)*(wf%n_o)**2)
-      u_a_ckl = zero
 !
-!     Determine u_a_ckl = u_kl^ac
+      do l = 1, wf%n_o
+         do k = 1, wf%n_o
+            do c = 1, wf%n_v
 !
-      do a = 1, wf%n_v
-         do c = 1, wf%n_v
-            do k = 1, wf%n_o
-               do l = 1, wf%n_o
+               cl  = index_two(c, l, wf%n_v)
+               ck  = index_two(c, k, wf%n_v)
+               ckl = index_three(c, k, l, wf%n_v, wf%n_o) 
 !
-!                 Calculate necessary indices
-!
-                  ckl  = index_three(c, k, l, wf%n_v, wf%n_o) 
+               do a = 1, wf%n_v
 !
                   ak   = index_two(a, k, wf%n_v)
-                  cl   = index_two(c, l, wf%n_v)
 !
                   akcl = index_packed(ak, cl)
 !
                   al   = index_two(a, l, wf%n_v)
-                  ck   = index_two(c, k, wf%n_v)
 !
                   alck = index_packed(al, ck)
 !
@@ -451,18 +436,6 @@ contains
                   one,                    &
                   wf%omega1,              &
                   wf%n_v) 
-!
-!     Print the omega vector 
-!
-      if (debug) then  
-!
-         write(unit_output,*) 
-         write(unit_output,*) 'Omega(a,i) after B1 term has been added:'
-         write(unit_output,*)
-!
-         call vec_print(wf%omega1, wf%n_v, wf%n_o)
-!
-      endif
 !
 !     Deallocate remaining vectors 
 !
