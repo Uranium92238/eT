@@ -1600,7 +1600,6 @@ contains
 !     Allocate the Cholesky vector L_kc_J = L_kc^J and set to zero 
 !
       call allocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
-   !   L_kc_J = zero
 !
 !     Read the Cholesky vector L_kc_J from file
 !
@@ -1609,7 +1608,6 @@ contains
 !     Allocate g_ld_kc = g_ldkc and set to zero 
 !
       call allocator(g_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-    !  g_ld_kc = zero 
 !
 !     Calculate g_ld_kc = g_ldkc = sum_J L_ld^J L_kc^J
 !
@@ -1629,7 +1627,6 @@ contains
 !     Allocate L_ld_kc = L_ldkc and set to zero    
 !
       call allocator(L_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      L_ld_kc = zero
 !
 !     Determine L_ld_kc = L_ldkc from g_ld_kc = g_ldkc 
 !
@@ -1660,32 +1657,27 @@ contains
       call deallocator(g_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call deallocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
-!     Allocate u_ai_ld = u_il^ad and set to zero 
+!     Allocate u_ai_ld = u_il^ad 
 !
       call allocator(u_ai_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      u_ai_ld = zero
 ! 
 !     Determine u_ai_ld = u_il^ad = 2 * t_il^ad - t_li^ad 
 !
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
-            do l = 1, wf%n_o
+      do i = 1, wf%n_o
+         do l = 1, wf%n_o
+            do a = 1, wf%n_v
+!
+               ai   = index_two(a, i, wf%n_v)
+               al   = index_two(a, l, wf%n_v)
+!
                do d = 1, wf%n_v
 !
-!                 Calculate the necessary indices 
-!
-                  ai   = index_two(a, i, wf%n_v)
                   ld   = index_two(l, d, wf%n_o)
-!
                   dl   = index_two(d, l, wf%n_v)
-                  aidl = index_packed(ai, dl)
-!
-                  al   = index_two(a, l, wf%n_v)
                   di   = index_two(d, i, wf%n_v)
 !
+                  aidl = index_packed(ai, dl)
                   aldi = index_packed(al, di)
-!
-!                 Set the value of u_ai_ld 
 !
                   u_ai_ld(ai, ld) = two*(wf%t2am(aidl, 1)) - wf%t2am(aldi, 1)
 !
@@ -1697,7 +1689,6 @@ contains
 !     Allocate the intermediate Z_ai_kc = sum_dl u_ai_ld L_ld_kc and set it to zero
 !
       call allocator(Z_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-    !  Z_ai_kc = zero
 !
 !     Form the intermediate Z_ai_kc = sum_dl u_ai_ld L_ld_kc
 !
@@ -1721,7 +1712,6 @@ contains
 !     Allocate the D2.3 term omega2_ai_bj and set it to zero
 !
       call allocator(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-    !  omega2_ai_bj = zero
 !
 !     Form the D2.3 term, 1/4 sum_kc Z_ai_kc u_kc_bj = 1/4 sum_kc Z_ai_kc(ai,kc) u_ai_ld(bj,kc)
 !
@@ -1752,20 +1742,17 @@ contains
 !
 !     Add the D2.3 term to the omega vector 
 !
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
+!
+            ai   = index_two(a, i, wf%n_v)
+!
             do b = 1, wf%n_v
                do j = 1, wf%n_o
 !
-!                 Calculate the necessary indices 
-!
-                  ai   = index_two(a, i, wf%n_v)
                   bj   = index_two(b, j, wf%n_v)
 !
                   aibj = index_packed(ai, bj)
-!
-!                 Restrict the indices to avoid adding both (ai,bj) and (bj,ai), 
-!                 as they are identical in packed indices
 !
                   if (ai .ge. bj) then
 !
@@ -1801,9 +1788,6 @@ contains
       call allocator(L_ai_J, (wf%n_o)*(wf%n_v), wf%n_J)
       call allocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
-   !   L_ai_J = zero
-   !   L_kc_J = zero
-!
 !     Read the Cholesky vectors from file 
 !
       call wf%get_cholesky_ai(L_ai_J)
@@ -1812,7 +1796,6 @@ contains
 !     Allocate g_ai_kc = g_aikc and set it zero
 !
       call allocator(g_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-    !  g_ai_kc = zero 
 !
 !     Form the g_ai_kc integrals from L_ai_J and L_kc_J
 !  
@@ -1837,30 +1820,27 @@ contains
 !     Allocate u_kc_bj and set it to zero 
 !
       call allocator(u_kc_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      u_kc_bj = zero
 !
 !     Determine u_kc_bj = u_jk^bc = 2 * t_jk^bc - t_kj^bc 
 !
       do k = 1, wf%n_o
          do c = 1, wf%n_v
-            do b = 1, wf%n_v
-               do j = 1, wf%n_o
 !
-!                 Calculate the necessary indices 
+            ck   = index_two(c, k, wf%n_v)
+            kc   = index_two(k, c, wf%n_o)
 !
-                  kc   = index_two(k, c, wf%n_o)
+            do j = 1, wf%n_o
+!
+               cj   = index_two(c, j, wf%n_v)
+!
+               do b = 1, wf%n_v
+!                 
                   bj   = index_two(b, j, wf%n_v)
-                  ck   = index_two(c, k, wf%n_v)
+                  bk   = index_two(b, k, wf%n_v)            
 !
                   bjck = index_packed(bj, ck)
-!
-                  bk   = index_two(b, k, wf%n_v)
-                  cj   = index_two(c, j, wf%n_v)
-!
                   bkcj = index_packed(bk, cj)
-!
-!                 Set the value of u_kc_bj
-!     
+!    
                   u_kc_bj(kc, bj) = two*(wf%t2am(bjck, 1)) - wf%t2am(bkcj, 1)
 !
                enddo
@@ -1870,8 +1850,7 @@ contains
 !
 !     Allocate omega2_ai_bj and set it to zero 
 !
-      call allocator(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-    !  omega2_ai_bj = zero 
+      call allocator(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) 
 !
 !     Calculate the D2.1 term sum_ck u_jk^bc g_aikc = sum_ck g_ai_kc u_kc_bj
 !
@@ -1890,20 +1869,18 @@ contains
 !
 !     Add the D2.1 term to the omega vector 
 !
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
-            do b = 1, wf%n_v
-               do j = 1, wf%n_o
+      
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
 !
-!                 Calculate the necessary indices 
+            ai   = index_two(a, i, wf%n_v)
 !
-                  ai   = index_two(a, i, wf%n_v)
+            do j = 1, wf%n_o
+               do b = 1, wf%n_v
+!                 
                   bj   = index_two(b, j, wf%n_v)
 !
                   aibj = index_packed(ai, bj)
-!
-!                 Restrict the indices to avoid adding both (ai,bj) and (bj,ai), 
-!                 as they are identical in packed indices
 !
                   if (ai .ge. bj) then
 !
@@ -1940,7 +1917,6 @@ contains
 !     Allocate L_ki_J and set it to zero
 !
       call allocator(L_ki_J, (wf%n_o)**2, wf%n_J)
-   !   L_ki_J = zero 
 !
 !     Read the Cholesky vector L_ki_J from file 
 !
@@ -1959,7 +1935,7 @@ contains
       required = (wf%n_J)*(wf%n_v)**2  ! Holding L_ac^J
 !
       required = required &                                             !
-                  + max( ((wf%n_v)**2)*((wf%n_o)**2), &                 ! Is it more demanding to hold g_acki
+                  + max( ((wf%n_v)**2)*((wf%n_o)**2), &                 ! Testing if it is more demanding to hold g_acki
                    (wf%n_J)*(wf%n_v)**2 + 2*(wf%n_J)*(wf%n_v)*(wf%n_o)) ! or create L_ac^J
 !
       required = four*required ! In words
@@ -1985,7 +1961,6 @@ contains
          ac_dim = batch_length*(wf%n_v) ! Dimension of ac for the batch over index a 
 !
          call allocator(L_ca_J, ac_dim, wf%n_J)
-      !   L_ca_J = zero
 !
 !        Read the Cholesky vector from file 
 !
@@ -1995,7 +1970,6 @@ contains
 !        Allocate the integral g_ca_ki = g_acki and set to zero 
 !
          call allocator(g_ca_ki, ac_dim, (wf%n_o)**2)
-         ! g_ca_ki = zero ! Not needed
 !
 !        Calculate g_ca_ki = g_acki from L_ca_J = L_ac^J and L_ki_J = L_ki^J
 !
@@ -2008,30 +1982,30 @@ contains
                      ac_dim,      &
                      L_ki_J,      &
                      (wf%n_o)**2, &
-                     zero,        & ! E: Changed from one to zero
+                     zero,        & 
                      g_ca_ki,     &
                      ac_dim)
 !
 !        Reorder the integrals g_ca_ki (reduced a) = g_acki = g_ai_ck (full a)
 !
          do a = 1, batch_length
-            do c = 1, wf%n_v
+!
+            a_full = a - 1 + a_begin ! The full matrix index a
+!
+            do i = 1, wf%n_o
+!
+               ai = index_two(a_full, i, wf%n_v)
+!
                do k = 1, wf%n_o
-                  do i = 1, wf%n_o
 !
-!                    Calculate the necessary indices 
+                  ki = index_two(k, i, wf%n_o)
 !
-                     a_full = a - 1 + a_begin ! The full matrix index a
-!
-                     ai = index_two(a_full, i, wf%n_v)
-                     ck = index_two(c, k, wf%n_v)
+                  do c = 1, wf%n_v
 !
                      ca = index_two(c, a, wf%n_v)
-                     ki = index_two(k, i, wf%n_o)
+                     ck = index_two(c, k, wf%n_v)
 !
-!                    Set the value of g_ai_ck = g_acki 
-!
-                     g_ai_ck(ai, ck) = g_ca_ki(ca, ki) ! g_acki
+                     g_ai_ck(ai, ck) = g_ca_ki(ca, ki)
 !
                   enddo
                enddo
@@ -2052,24 +2026,21 @@ contains
 !
 !     Determine u_ck_bj = u_jk^bc = 2 * t_jk^bc - t_kj^bc 
 !
-      do c = 1, wf%n_v
-         do k = 1, wf%n_o
-            do b = 1, wf%n_v
-               do j = 1, wf%n_o
+      do k = 1, wf%n_o   
+         do j = 1, wf%n_o
+            do c = 1, wf%n_v
 !
-!                 Calculate the necessary indices 
+            ck = index_two(c, k, wf%n_v)
+            cj   = index_two(c, j, wf%n_v)
 !
-                  ck = index_two(c, k, wf%n_v)
+               do b = 1, wf%n_v
+!
                   bj = index_two(b, j, wf%n_v)
+                  bk   = index_two(b, k, wf%n_v)
 !
                   bjck = index_packed(bj, ck)
 !
-                  bk   = index_two(b, k, wf%n_v)
-                  cj   = index_two(c, j, wf%n_v)
-!
                   bkcj = index_packed(bk, cj)
-!
-!                 Set the value of u_ck_bj 
 !
                   u_ck_bj(ck, bj) = two*(wf%t2am(bjck, 1)) - wf%t2am(bkcj, 1)
 !
@@ -2081,7 +2052,6 @@ contains
 !     Allocate the D2.2 term and set it to zero 
 !
       call allocator(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
- !     omega2_ai_bj = zero
 !
 !     Calculate the D2.2 term, - 1/2 * sum_ck u_jk^bc g_acki = -1/2 * sum_ck g_ai_ck u_ck_bj
 !
@@ -2100,20 +2070,17 @@ contains
 !
 !     Add the D2.2 term to the omega vector 
 !
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
-            do b = 1, wf%n_v
-               do j = 1, wf%n_o
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
 !
-!                 Calculate the necessary indices 
+            ai = index_two(a, i, wf%n_v)
 !
-                  ai = index_two(a, i, wf%n_v)
+            do j = 1, wf%n_o
+               do b = 1, wf%n_v              
+!
                   bj = index_two(b, j, wf%n_v)
 !
                   aibj = index_packed(ai, bj)
-!
-!                 Restrict the indices to avoid adding both (ai,bj) and (bj,ai), 
-!                 as they are identical in packed indices
 !
                   if (ai .ge. bj) then
 !
