@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.0)
 project(eT Fortran)
 
 # To link with fortran not c++
-set(CMAKE_CXX_LINKER_PREFERENCE_PROPAGATES FALSE)
+#set(CMAKE_CXX_LINKER_PREFERENCE_PROPAGATES FALSE)
 
 # these are paths that CMake will search for cmake
 # module files that end with .cmake
@@ -28,9 +28,6 @@ if(LAPACK_FOUND AND BLAS_FOUND)
    set(lapackblas_libraries ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 endif()
 
-set(WORK_MEM_WORDS "64000000")
-add_definitions(-DINSTALL_WRKMEM=${WORK_MEM_WORDS})
-
 set(eT_fortran_sources
         ${eT_fortran_sources}
         )
@@ -38,3 +35,5 @@ set(eT_fortran_sources
 add_executable(eT ${eT_fortran_sources})
 
 target_link_libraries(eT ${lapackblas_libraries})
+
+set_target_properties(eT PROPERTIES LINKER_LANGUAGE Fortran)
