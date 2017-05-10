@@ -58,6 +58,8 @@ contains
       work_remains = work_remains - 4*size
       work_used    = work_used + 4*size
 !
+      write(unit_output,*) 'Memory used (words):', work_used
+!
       if (work_remains .lt. 0) then
          write(unit_output,'(t3,a)') "Error: user-specified memory insufficient."
          stop
