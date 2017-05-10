@@ -1,7 +1,7 @@
-submodule (ccs_class) diis
+submodule (ccs_class) ground_state 
 !
 !
-!                          -::- DIIS submodule (CCS) -::-
+!                         -::- Ground state submodule (CCS) -::-
 !             Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !
 !
@@ -73,7 +73,7 @@ contains
 !
 !     Let the user know the ground state solver is running
 !
-      write(unit_output,'(/T3,A)')  ':: Ground state solver (DIIS)'
+      write(unit_output,'(/T3,A)')   ':: Ground state solver (DIIS)'
       write(unit_output,'(T3,A/)')  ':: S. D. Folkestad, E. F. Kjønstad, May 2017'
       write(unit_output,'(T3,A,1X,A/)') &
                                     'Requested the ground state for:', wf%name
@@ -138,7 +138,7 @@ contains
             converged = .true.
 !
             write(unit_output,'(/T3,A,I2,A/)') 'Converged in ', iteration, ' iterations!'
-            write(unit_output,'(T3,A,F14.8/)') 'Total energy:', wf%energy
+            write(unit_output,'(T3,A27,F14.8)') 'Total energy (hartrees):', wf%energy
 !
          else
 !
@@ -159,7 +159,7 @@ contains
 !
       call cpu_time(last_time)
 !
-      write(unit_output,*) 'Total time:',last_time-first_time
+      write(unit_output,'(T3,A27,F14.8/)') 'Total time (seconds):',last_time-first_time
 !
    end subroutine ground_state_solver_ccs
 !
@@ -455,4 +455,4 @@ contains
    end subroutine diis_ccs 
 !
 !
-end submodule diis
+end submodule ground_state

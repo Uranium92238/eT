@@ -1,7 +1,7 @@
-submodule (ccsd_class) diis
+submodule (ccsd_class) ground_state
 !
 !
-!                             -::- DIIS submodule (CCSD) -::-
+!                           -::- Ground state submodule (CCSD) -::-
 !                 Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !
 !
@@ -154,4 +154,4 @@ contains
    end subroutine calc_quasi_Newton_doubles_ccsd
 !
 !
-end submodule diis 
+end submodule ground_state 

@@ -71,7 +71,7 @@ contains
       real(dp) :: omega_start = zero
       real(dp) :: omega_end = zero
 !
-      call cpu_time(omega_start)
+    !  call cpu_time(omega_start)
 !
 !     Set the omega vector to zero 
 !
@@ -93,9 +93,9 @@ contains
       call wf%omega_d2
       call wf%omega_e2
 !
-       call cpu_time(omega_end)
-       write(unit_output,*)'Time in omega:', omega_end-omega_start  
-       call flush(unit_output)  
+      ! call cpu_time(omega_end)
+      ! write(unit_output,*)'Time in omega:', omega_end-omega_start  
+      ! call flush(unit_output)  
 !
 !
    end subroutine construct_omega_ccsd
@@ -108,7 +108,7 @@ contains
 !
 !     Calculates the A1 term, 
 !
-!        sum_ckd g_adkc * u_ki^cd,
+!        sum_ckd g_adkc u_ki^cd,
 !
 !     and adds it to the singles projection vector (omeg1) of
 !     the wavefunction object wf.
@@ -143,19 +143,20 @@ contains
 !
 !     Calculate u_ckd_i
 !
-      do c = 1, wf%n_v
-         do k = 1, wf%n_o
+      do k = 1, wf%n_o
+         do c = 1, wf%n_v
+!
+            ck = index_two(c, k, wf%n_v)
+!
             do d = 1, wf%n_v
-               do i = 1, wf%n_o
 !
-!                 Calculate the necessary indices 
+               ckd = index_three(c, k, d, wf%n_v, wf%n_o)
+               dk  = index_two(d, k, wf%n_v)
 !
-                  ckd  = index_three(c, k, d, wf%n_v, wf%n_o)
-!
-                  ck   = index_two(c, k, wf%n_v)
+               do i = 1, wf%n_o     
+!      
                   di   = index_two(d, i, wf%n_v)
                   ci   = index_two(c, i, wf%n_v)
-                  dk   = index_two(d, k, wf%n_v)
 !
                   ckdi = index_packed(ck, di)
                   cidk = index_packed(ci, dk)
@@ -174,12 +175,12 @@ contains
 !     later on in the same loop, g_ad_kc and g_a_ckd simultaneously
 !
       available = get_available()
-      required  = (wf%n_J)*(wf%n_v**2) + (wf%n_J)*(wf%n_o)*(wf%n_v)                                ! Needed to hold L_ab_J and L_kc_J
+      required  = (wf%n_J)*(wf%n_v**2) + (wf%n_J)*(wf%n_o)*(wf%n_v)          ! Needed to hold L_ab_J and L_kc_J
       required  = required &
-                + max((wf%n_J)*(wf%n_v**2) + 2*(wf%n_J)*(wf%n_o)*(wf%n_v), &                       ! Determine if it is more demanding to get L_ab_J 
-                      2*(wf%n_o)*(wf%n_v**3))                                                      ! or to hold g_ad_kc and g_a_ckd
+                + max((wf%n_J)*(wf%n_v**2) + 2*(wf%n_J)*(wf%n_o)*(wf%n_v), & ! Determine if it is more demanding to get L_ab_J 
+                      2*(wf%n_o)*(wf%n_v**3))                                ! or to hold g_ad_kc and g_a_ckd
 !                                                                                            
-      required = four*required ! In words 
+      required = 4*required ! In words 
 !
       batch_dimension  = wf%n_v ! Batch over the virtual index a
       max_batch_length = 0      ! Initilization of unset variables 
@@ -212,7 +213,7 @@ contains
          call allocator(L_da_J, ad_dim, wf%n_J)
          L_da_J = zero
 !
-!        Get reordered Cholesky vector L_da_J = L_ad^J 
+!        Get reordered Cholesky vector (Note: L_da_J(da,J) = L_ad^J)
 !
          reorder = .true.
          call wf%get_cholesky_ab(L_da_J, a_begin, a_end, &
@@ -242,25 +243,20 @@ contains
          call deallocator(L_da_J, ad_dim, wf%n_J)
          call deallocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
-!        Allocate g_a_ckd = g_adkc and set to zero
+!        Form the reordered integrals g_a_ckd = g_adkc
 !
          call allocator(g_a_ckd, batch_length, (wf%n_o)*(wf%n_v)**2)
-         g_a_ckd = zero
-!
-!        Reorder the integrals to g_a_ckd
 !
          do c = 1, wf%n_v
             do k = 1, wf%n_o
+!
+               kc  = index_two(k, c, wf%n_o)
+!
                do d = 1, wf%n_v
                   do a = 1, batch_length
-!
-!                    Get the needed indices 
-!
-                     kc  = index_two(k, c, wf%n_o)
+!                 
                      da  = index_two(d, a, wf%n_v)
                      ckd = index_three(c, k, d, wf%n_v, wf%n_o) 
-!
-!                    Set the value of reordered integral, g_a_ckd
 !
                      g_a_ckd(a, ckd) = g_da_kc(da, kc) ! g_adkc 
 !
@@ -784,7 +780,7 @@ contains
 !
 !           g_ca_db = sum_J L_ca_J*L_db_J
 !     
-            call cpu_time(begin_timer)
+         !   call cpu_time(begin_timer)
             call dgemm('N','T',            &
                         (wf%n_v)*a_length, &
                         (wf%n_v)*b_length, &
@@ -797,8 +793,8 @@ contains
                         zero,              &
                         g_ca_db,           &
                         (wf%n_v)*a_length)
-            call cpu_time(end_timer)
-            write(unit_output,*) 'Time to make g_acbd',end_timer-begin_timer
+          !  call cpu_time(end_timer)
+          !  write(unit_output,*) 'Time to make g_acbd',end_timer-begin_timer
 !
 !           Deallocate L_db_J 
 !
@@ -821,7 +817,7 @@ contains
             t_m_cd_ij = zero
 !
 !
-            call cpu_time(begin_timer)
+       !     call cpu_time(begin_timer)
             do c = 1, wf%n_v 
                do d = 1, c
                   do b = 1, b_length
@@ -876,8 +872,8 @@ contains
                   enddo
                enddo
             enddo
-            call cpu_time(end_timer)
-            write(unit_output,*) 'Time to reorder in A2:', end_timer-begin_timer
+         !   call cpu_time(end_timer)
+         !   write(unit_output,*) 'Time to reorder in A2:', end_timer-begin_timer
 !
 !           Dellocate g_ac_bd 
 !
@@ -890,7 +886,7 @@ contains
 !  
 !            omega2_ab_ij = sum_(cd) g_ab_cd*t_cd_ij
 !  
-            call cpu_time(begin_timer)
+          !  call cpu_time(begin_timer)
             call dgemm('N','N',                & 
                         packed_size(a_length), &
                         packed_size(wf%n_o),   &
@@ -916,8 +912,8 @@ contains
                         zero,                  &
                         omega2_m_ab_ij,        &
                         packed_size(a_length) )
-            call cpu_time(end_timer)
-            write(unit_output,*) 'Time for dgemm A2',end_timer-begin_timer
+          !  call cpu_time(end_timer)
+          !  write(unit_output,*) 'Time for dgemm A2',end_timer-begin_timer
 !
 !           Deallocate +-g, +-t
 !  

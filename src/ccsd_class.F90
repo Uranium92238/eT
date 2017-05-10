@@ -417,8 +417,6 @@ contains
 !
       call wf%ground_state_solver
 !
-      call wf%jacobian_transformation(wf%omega1,wf%omega2)
-!
    end subroutine drv_ccsd
 !
 !

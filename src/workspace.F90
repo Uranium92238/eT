@@ -6,6 +6,7 @@ module workspace
 !  A collection of subroutines for memory management and monitoring
 !
    use types
+   use input_output
 !   
    implicit none
 !
@@ -43,14 +44,14 @@ contains
       integer, intent(in)                    :: M,N
       real(dp), dimension(:,:), allocatable  :: elm
       integer                                :: size
-      integer                                :: stat, error
-!  
+      integer                                :: stat = 0, error = 0
+! 
       size = M*N
 !  
       allocate(elm(M,N),stat = error)
 !  
       if (stat .ne. 0) then
-         print*,"Error: couldn't allocate memory for array of size",size
+         write(unit_output,'(t3,a,i15)') 'Allocation error! Could not allocate array of size (M*N):', size
          stop
       endif
 !       
@@ -58,7 +59,7 @@ contains
       work_used    = work_used + 4*size
 !
       if (work_remains .lt. 0) then
-         print*,"Error: user-specified memory too small"
+         write(unit_output,'(t3,a)') "Error: user-specified memory insufficient."
          stop
       endif
 !
@@ -74,15 +75,15 @@ contains
       implicit none
 !  
       real(dp), dimension(:,:), allocatable   :: elm
-      integer                                 :: stat, error
+      integer                                 :: stat = 0, error = 0
       integer, intent(in)                     :: M, N
       integer                                 :: size
-!  
+!
       size = M*N
 !  
       deallocate(elm,stat = error)  
       if (stat .ne. 0) then
-         print*,"error: couldn't deallocate array"
+         write(unit_output,'(t3,a,i15)') 'Deallocation error! Could not deallocate array of size (M*N):', size
          stop
       endif
 !  
@@ -103,21 +104,21 @@ contains
       integer, intent(in)                  :: M,N
       integer, dimension(:,:), allocatable :: elm
       integer                              :: size
-      integer                              :: stat, error
+      integer                              :: stat = 0, error = 0
 !  
       size = M*N
 !  
       allocate(elm(M,N),stat = error)
 !  
       if (stat .ne. 0) then
-         print*,"Error: couldn't allocate memory for array of size",size
+         write(unit_output,'(t3,a,i15)') 'Allocation error! Could not allocate array of size (M*N):', size
          stop
       endif 
 !  
       work_remains = work_remains-2*size
       work_used = work_used+2*size
       if (work_remains .lt. 0) then
-         print*,"Error: user-specified memory too small"
+         write(unit_output,'(t3,a)') "Error: user-specified memory insufficient."
          stop
       endif
 !
@@ -133,7 +134,7 @@ contains
       implicit none
 !  
       integer, dimension(:,:), allocatable :: elm
-      integer                              :: stat, error
+      integer                              :: stat = 0, error = 0
       integer, intent(in)                  :: M, N
       integer                              :: size
 !  
@@ -141,7 +142,7 @@ contains
 !  
       deallocate(elm,stat = error)  
       if (stat .ne. 0) then
-         print*,"error: couldn't deallocate array"
+         write(unit_output,'(t3,a,i15)') 'Deallocation error! Could not deallocate array of size (M*N):', size
          stop
       endif
 !  
