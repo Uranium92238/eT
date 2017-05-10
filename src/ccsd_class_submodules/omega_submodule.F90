@@ -956,14 +956,8 @@ contains
          enddo
 !
       enddo
-!      
-!         write(unit_output,*) 
-!         write(unit_output,*) 'Omega(aibj,1) after A2 term has been added:'
-!         write(unit_output,*)
-!         call vec_print(wf%omega2, wf%n_t2am, 1)
 !
    end subroutine omega_a2_ccsd
-!
 !
 !
    subroutine omega_b2_ccsd(wf)
@@ -1018,7 +1012,6 @@ contains
 !     Read cholesky vector of type L_ij_J
 !
       call allocator(L_ij_J, (wf%n_o)*(wf%n_o), wf%n_J)
-      L_ij_J = zero 
 !
       call wf%get_cholesky_ij(L_ij_J)
 !
@@ -1043,7 +1036,6 @@ contains
       call deallocator(L_ij_J, (wf%n_o)*(wf%n_o), wf%n_J)
 !
       call allocator(g_kl_ij, (wf%n_o)*(wf%n_o),(wf%n_o)*(wf%n_o))
-      g_kl_ij = zero
 !
       do k = 1, wf%n_o
          do l = 1, wf%n_o
@@ -1100,25 +1092,24 @@ contains
       call allocator(t_cd_ij, (wf%n_v)*(wf%n_v), (wf%n_o)*(wf%n_o))
       call allocator(g_kl_cd, (wf%n_o)*(wf%n_o), (wf%n_v)*(wf%n_v))
 !
-      do k = 1, wf%n_o
+      do d = 1, wf%n_v
          do c = 1, wf%n_v
+!
+            cd = index_two(c, d, wf%n_v)
+!
             do l = 1, wf%n_o
-               do d = 1, wf%n_v
+!  
+               ld = index_two(l, d, wf%n_o)
+               dj = index_two(d, l, wf%n_v)
 !
-!                 Calculate compound indices
+               do k = 1, wf%n_o              
 !
-                  cd = index_two(c, d, wf%n_v)
                   kl = index_two(k, l, wf%n_o)
                   kc = index_two(k, c, wf%n_o)
-                  ld = index_two(l, d, wf%n_o)
-! 
                   ci = index_two(c, k, wf%n_v)
-                  dj = index_two(d, l, wf%n_v)
-                  ij = index_two(k, l, wf%n_o)
+                  ij = kl
 !
                   cidj = index_packed(ci, dj)
-!
-!                 Reordering
 !
                   g_kl_cd(kl, cd) = g_kc_ld(kc, ld)
                   t_cd_ij(cd, ij) = wf%t2am(cidj, 1)
@@ -1154,17 +1145,20 @@ contains
 !
       call allocator(t_ab_kl, (wf%n_v)**2, (wf%n_o)**2)
 !
-      do a = 1, wf%n_v
-         do b = 1, wf%n_v
-            do k = 1, wf%n_o
-               do l=1, wf%n_o
+      do l=1, wf%n_o
+         do k = 1, wf%n_o
 !
-!                 Calculate compound indices
+            kl = index_two(k, l, wf%n_o)
+!
+            do b = 1, wf%n_v
+!
+               bl = index_two(b, l, wf%n_v)
+!
+               do a = 1, wf%n_v
 !
                   ak = index_two(a, k, wf%n_v)
-                  bl = index_two(b, l, wf%n_v)
                   ab = index_two(a, b, wf%n_v)
-                  kl = index_two(k, l, wf%n_o)
+                  
 !
                   akbl = index_packed(ak, bl)
 !
@@ -1197,20 +1191,23 @@ contains
 !
 !     Reorder omega
 !
-      do a = 1, wf%n_v
-         do b = 1, wf%n_v
-            do i = 1, wf%n_o
-               do j = 1, wf%n_o
+      do i = 1, wf%n_o
+         do j = 1, wf%n_o
 !
-!                 Calculate compound indices
+            ij = index_two(i, j, wf%n_o)
+!
+            do b = 1, wf%n_v
+!
+               bj = index_two(b, j, wf%n_v)
+!
+               do a = 1, wf%n_v
 !
                   ai = index_two(a, i, wf%n_v)
-                  bj = index_two(b, j, wf%n_v)
+                  
 !
                   if (ai .ge. bj) then
 !
                      ab = index_two(a, b, wf%n_v)
-                     ij = index_two(i, j, wf%n_o)
 !
                      aibj = index_packed(ai, bj)
 !
@@ -1226,12 +1223,12 @@ contains
 !
 !     Print the omega vector, having added B2
 !
-      if (debug) then 
-         write(unit_output,*) 
-         write(unit_output,*) 'Omega(aibj,1) after B2 term has been added:'
-         write(unit_output,*)
-         call vec_print(wf%omega2, wf%n_t2am, 1)
-      endif
+!      if (debug) then 
+!         write(unit_output,*) 
+!         write(unit_output,*) 'Omega(aibj,1) after B2 term has been added:'
+!         write(unit_output,*)
+!         call vec_print(wf%omega2, wf%n_t2am, 1)
+!      endif
 !
    end subroutine omega_b2_ccsd
 !
