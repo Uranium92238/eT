@@ -1,7 +1,7 @@
-submodule (ccs_class) diis
+submodule (ccs_class) ground_state 
 !
 !
-!                          -::- DIIS submodule (CCS) -::-
+!                         -::- Ground state submodule (CCS) -::-
 !             Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !
 !
@@ -455,4 +455,4 @@ contains
    end subroutine diis_ccs 
 !
 !
-end submodule diis
+end submodule ground_state
