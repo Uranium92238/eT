@@ -71,6 +71,8 @@ contains
       real(dp) :: omega_start = zero
       real(dp) :: omega_end = zero
 !
+      real(dp) :: norm_of_omega = zero
+!
     !  call cpu_time(omega_start)
 !
 !     Set the omega vector to zero 
@@ -81,26 +83,78 @@ contains
 !     Construct singles contributions 
 !
       write(unit_output,*) 'Doing A1'
+      flush(unit_output)
       call wf%omega_a1
+!
+      norm_of_omega = zero
+      call wf%calc_ampeqs_norm(norm_of_omega)
+      write(unit_output,*) 'Norm after A1', norm_of_omega
+!
       write(unit_output,*) 'Doing B1'
+      flush(unit_output)
       call wf%omega_b1
+!
+      norm_of_omega = zero
+      call wf%calc_ampeqs_norm(norm_of_omega)
+      write(unit_output,*) 'Norm after B1', norm_of_omega
+!
       write(unit_output,*) 'Doing C1'
+      flush(unit_output)
       call wf%omega_c1
+!
+      norm_of_omega = zero
+      call wf%calc_ampeqs_norm(norm_of_omega)
+      write(unit_output,*) 'Norm after C1', norm_of_omega
+!
       write(unit_output,*) 'Doing D1'
+      flush(unit_output)
       call wf%omega_d1
+!
+      norm_of_omega = zero
+      call wf%calc_ampeqs_norm(norm_of_omega)
+      write(unit_output,*) 'Norm after D1', norm_of_omega
 !
 !     Construct doubles contributions 
 !
       write(unit_output,*) 'Doing A2'
+      flush(unit_output)
       call wf%omega_a2
+!
+      norm_of_omega = zero
+      call wf%calc_ampeqs_norm(norm_of_omega)
+      write(unit_output,*) 'Norm after A2', norm_of_omega
+!
       write(unit_output,*) 'Doing B2'
+      flush(unit_output)
       call wf%omega_b2
+!
+      norm_of_omega = zero
+      call wf%calc_ampeqs_norm(norm_of_omega)
+      write(unit_output,*) 'Norm after B2', norm_of_omega
+!
       write(unit_output,*) 'Doing C2'
+      flush(unit_output)
       call wf%omega_c2
+!
+      norm_of_omega = zero
+      call wf%calc_ampeqs_norm(norm_of_omega)
+      write(unit_output,*) 'Norm after C2', norm_of_omega
+!
       write(unit_output,*) 'Doing D2'
+      flush(unit_output)
       call wf%omega_d2
+!
+      norm_of_omega = zero
+      call wf%calc_ampeqs_norm(norm_of_omega)
+      write(unit_output,*) 'Norm after D2', norm_of_omega
+!
       write(unit_output,*) 'Doing E2'
+      flush(unit_output)
       call wf%omega_e2
+!
+      norm_of_omega = zero
+      call wf%calc_ampeqs_norm(norm_of_omega)
+      write(unit_output,*) 'Norm after E2', norm_of_omega
 !
       ! call cpu_time(omega_end)
       ! write(unit_output,*)'Time in omega:', omega_end-omega_start  
