@@ -1189,7 +1189,7 @@ contains
       call deallocator(t_ab_kl, (wf%n_v)**2, (wf%n_o)**2)
       call deallocator(g_kl_ij, (wf%n_o)**2, (wf%n_o)**2)
 !
-!     Reorder omega
+!     Reorder into omega2
 !
       do i = 1, wf%n_o
          do j = 1, wf%n_o
@@ -1202,8 +1202,7 @@ contains
 !
                do a = 1, wf%n_v
 !
-                  ai = index_two(a, i, wf%n_v)
-                  
+                  ai = index_two(a, i, wf%n_v)                 
 !
                   if (ai .ge. bj) then
 !
@@ -1214,6 +1213,7 @@ contains
                      wf%omega2(aibj, 1) = wf%omega2(aibj, 1) + omega_ab_ij(ab, ij)
 !
                   endif
+!
                enddo
             enddo
          enddo
@@ -1291,7 +1291,6 @@ contains
 !     Allocate L_ia_J
 !
       call allocator(L_ia_J,(wf%n_o)*(wf%n_v),(wf%n_J))
-     ! L_ia_J=zero
 !
 !     Get L_ia_J
 !
@@ -1323,30 +1322,25 @@ contains
       call allocator(g_dl_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call allocator(t_ai_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      g_dl_ck = zero
-      t_ai_dl = zero
-!
-      do c = 1, wf%n_v
+      do k = 1, wf%n_o        
          do d = 1, wf%n_v
-            do k = 1, wf%n_o
-               do l = 1, wf%n_o
 !
-!                 Calculate compound indices
+            kd = index_two(k, d, wf%n_o)
+            dk = index_two(d, k, wf%n_v)
 !
-                  kd = index_two(k, d, wf%n_o)
+            do l = 1, wf%n_o
+!
+               dl = index_two(d, l, wf%n_v)
+!
+               do c = 1, wf%n_v               
+!  
                   lc = index_two(l, c, wf%n_o)
-                  dl = index_two(d, l, wf%n_v)
                   ck = index_two(c, k, wf%n_v)
-!
                   cl = index_two(c, l, wf%n_v)
-                  dk = index_two(d, k, wf%n_v)
 !
                   cldk = index_packed(cl, dk)
 !
-!                 Reorderings
-!
                   g_dl_ck(dl, ck) = g_kd_lc(kd, lc)
-!
                   t_ai_dl(ck, dl) = wf%t2am(cldk, 1)
 !
                enddo
@@ -1395,7 +1389,6 @@ contains
 !
 !     Prepare batching over a 
 !
-!
 !     Setup of variables needed for batching
 !
       available = get_available()
@@ -1418,7 +1411,6 @@ contains
 !        Allocation for L_ac_J as L_ca_J (L_ca_J = L_acJ)
 !
          call allocator(L_ca_J,(wf%n_v)*a_length, wf%n_J)
-        ! L_ca_J=zero
 !
 !        Read Cholesky vectors
 !
@@ -1456,14 +1448,16 @@ contains
 !
       do i = 1, wf%n_o
          do k = 1, wf%n_o
+!
+            ki = index_two(k, i, wf%n_o)
+!
             do a = 1, wf%n_v
+!
+               ai = index_two(a, i, wf%n_v)
+!
                do c = 1, wf%n_v
 !
-!                 Calculate compound indices
-!
-                  ki = index_two(k, i, wf%n_o)
                   ca = index_two(c, a, wf%n_v)
-                  ai = index_two(a, i, wf%n_v)
                   ck = index_two(c, k, wf%n_v)
 !
                   g_ai_ck(ai, ck) = g_ki_ca(ki, ca)
@@ -1487,20 +1481,19 @@ contains
 !
       call allocator(t_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      do c = 1, wf%n_v
+      do j = 1, wf%n_o
          do k = 1, wf%n_o
             do b = 1, wf%n_v
-               do j = 1, wf%n_o
 !
-!                 Needed indices
+               bk = index_two(b, k, wf%n_v)
+               bj = index_two(b, j, wf%n_v)
 !
-                  bk = index_two(b, k, wf%n_v)
+               do c = 1, wf%n_v
+!
                   cj = index_two(c, j, wf%n_v)
+                  ck = index_two(c, k, wf%n_v)
 !
                   bkcj = index_packed(bk, cj)
-!
-                  bj = index_two(b, j, wf%n_v)
-                  ck = index_two(c, k, wf%n_v)
 !
                   t_ck_bj(ck, bj) = wf%t2am(bkcj, 1)
 !
@@ -1512,7 +1505,6 @@ contains
 !     Allocate intermediate Y_ai_bj
 !
       call allocator(Y_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-     ! Y_ai_bj = zero
 !
 !     Y_ai_bj = - sum_(ck) X_ai_ck*t_ck_bj
 !
@@ -1539,14 +1531,14 @@ contains
 !
 !     Omega_aibj,1 = P_ai_bj ( 1/2*Y_ai_bj + Y_aj_bi )
 !
-      do a = 1, wf%n_v
          do i = 1, wf%n_o
-            do b = 1, wf%n_v
-               do j = 1, wf%n_o
+            do a = 1, wf%n_v
 !
-!                 Calculate compound indices
+               ai = index_two(a, i, wf%n_v)
 !
-                  ai = index_two(a, i, wf%n_v)
+               do j = 1, wf%n_o    
+                  do b = 1, wf%n_v
+!
                   bj = index_two(b, j, wf%n_v)
 !
                   if (ai .ge. bj) then
