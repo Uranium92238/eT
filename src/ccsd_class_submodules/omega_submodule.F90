@@ -601,13 +601,18 @@ contains
 !
    subroutine omega_a2_ccsd(wf)
 !
-!     MLCC Omega A2 term: Omega A2 = g_ai_bj + sum_(cd)g_ac_bd * t_ci_dj = A2.1 + A.2.2
+!     Omega A2 term: Omega A2 = g_ai_bj + sum_(cd)g_ac_bd * t_ci_dj = A2.1 + A.2.2
+!
 !     Written by Sarai D. Folkestad and Eirik F. Kjønstad, 10 Mar 2017
 !
-!     Structure: Batching over both a and b. If no batching is necessary L_ab_J is only read once, and g_ac_bd 
-!                is constructed and kept in memory full size. 
-!                g_ac_bd is reordered as g_ab_cd and t_ci_dj is reordered as t_cd_ij.
-!                Omega contribution for A2.2 is ordered as Omega_ab_ij, and is reordered into the packed omega2 vector.          
+!     Structure: Batching over both a and b for A2.2.
+!                t^+_ci_dj = t_ci_dj + t_di_cj
+!                t^-_ci_dj = t_ci_dj - t_di_cj
+!                g^+_ac_bd = g_ac_bd + g_bc_ad 
+!                g^-_ac_bd = g_ac_bd - g_bc_ad 
+! 
+!                omega_A2.2_ai_bj = 1/4*(g^+_ac_bd*t^+_ci_dj + g^-_ac_bd*t^-_ci_dj) = omega_A2.2_bj_ai
+!                omega_A2.2_aj_bi = 1/4*(g^+_ac_bd*t^+_ci_dj - g^-_ac_bd*t^-_ci_dj) = omega_A2.2_bi_aj
 !
       use utils
 !
@@ -688,21 +693,19 @@ contains
 !
 !     Add A2.1 to Omega 2
 !     
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
-            do b = 1, wf%n_v
-               do j = 1, wf%n_o
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
 !
-!                 Set up compound indices
+            ai = index_two(a, i, wf%n_v)
 !
-                  ai = index_two(a, i, wf%n_v)
+            do j = 1, wf%n_o
+               do b = 1, wf%n_v
+!
                   bj = index_two(b, j, wf%n_v)
 !
                   if(ai .ge. bj) then
 !
                      aibj = index_packed(ai, bj)
-!
-!                    Add to omega
 !
                      wf%omega2(aibj, 1) = wf%omega2(aibj, 1) + g_ai_bj(ai, bj)
 !
@@ -761,7 +764,6 @@ contains
 !           Get cholesky vectors L_ac^J ordered as L_ca_J
 !
             call allocator(L_ca_J, (wf%n_v)*a_length, wf%n_J)
-            L_ca_J = zero
 !
             reorder = .true.
             call wf%get_cholesky_ab(L_ca_J, a_first, a_last, (wf%n_v)*a_length, reorder)
@@ -769,7 +771,6 @@ contains
 !           Get cholesky vectors L_bd^J ordered as L_db_J
 !
             call allocator(L_db_J, (wf%n_v)*b_length, wf%n_J)
-            L_db_J = zero
 !  
             reorder = .true.
             call wf%get_cholesky_ab(L_db_J, b_first, b_last, (wf%n_v)*b_length, reorder)
@@ -780,7 +781,6 @@ contains
 !
 !           g_ca_db = sum_J L_ca_J*L_db_J
 !     
-         !   call cpu_time(begin_timer)
             call dgemm('N','T',            &
                         (wf%n_v)*a_length, &
                         (wf%n_v)*b_length, &
@@ -793,8 +793,6 @@ contains
                         zero,              &
                         g_ca_db,           &
                         (wf%n_v)*a_length)
-          !  call cpu_time(end_timer)
-          !  write(unit_output,*) 'Time to make g_acbd',end_timer-begin_timer
 !
 !           Deallocate L_db_J 
 !
@@ -816,26 +814,26 @@ contains
             t_p_cd_ij = zero
             t_m_cd_ij = zero
 !
-!
-       !     call cpu_time(begin_timer)
+!           Reorder g_ca_db to g_ab_cd and t_ci_dj to t_cd_ij
+! 
             do c = 1, wf%n_v 
                do d = 1, c
-                  do b = 1, b_length
-                     do a = 1, a_length
+!
+                  cd = index_packed(c, d)
+!
+                  do a = 1, a_length
+!
+                     ca = index_two(c, a, wf%n_v)
+                     da = index_two(d, a, wf%n_v)
+!
+                     do  b = 1, b_length
                         if ((a+a_first) .ge. (b+b_first)) then
-!
-!                          Calculate compound indices
-!
-                           ca = index_two(c, a, wf%n_v)
+!                         
                            db = index_two(d, b, wf%n_v)
-                           da = index_two(d, a, wf%n_v)
                            cb = index_two(c, b, wf%n_v)
 !
                            ab = index_packed(a, b)
-                           cd = index_packed(c, d)
-!
-!                          Reorder g_ca_db to g_ab_cd
-!  
+! 
                            g_p_ab_cd(ab, cd) = g_ca_db(ca, db) + g_ca_db(da, cb)
                            g_m_ab_cd(ab, cd) = g_ca_db(ca, db) - g_ca_db(da, cb)
 !
@@ -850,8 +848,6 @@ contains
 !
                   do i = 1, wf%n_o
                      do j = 1, i
-!
-!                       Calculate compound indices
 !     
                         ij = index_packed(i, j)
 !     
@@ -862,9 +858,7 @@ contains
 !  
                         cidj = index_packed(ci, dj)
                         cjdi = index_packed(cj, di)
-!
-!                       Reorder t_ci_dj to t_cd_ij
-!  
+! 
                         t_p_cd_ij(cd, ij) = wf%t2am(cidj, 1) + wf%t2am(cjdi, 1)
                         t_m_cd_ij(cd, ij) = wf%t2am(cidj, 1) - wf%t2am(cjdi, 1)  
 !
@@ -872,8 +866,6 @@ contains
                   enddo
                enddo
             enddo
-         !   call cpu_time(end_timer)
-         !   write(unit_output,*) 'Time to reorder in A2:', end_timer-begin_timer
 !
 !           Dellocate g_ac_bd 
 !
@@ -885,8 +877,7 @@ contains
             call allocator(omega2_m_ab_ij, packed_size(a_length), packed_size(wf%n_o))
 !  
 !            omega2_ab_ij = sum_(cd) g_ab_cd*t_cd_ij
-!  
-          !  call cpu_time(begin_timer)
+! 
             call dgemm('N','N',                & 
                         packed_size(a_length), &
                         packed_size(wf%n_o),   &
@@ -912,8 +903,6 @@ contains
                         zero,                  &
                         omega2_m_ab_ij,        &
                         packed_size(a_length) )
-          !  call cpu_time(end_timer)
-          !  write(unit_output,*) 'Time for dgemm A2',end_timer-begin_timer
 !
 !           Deallocate +-g, +-t
 !  
@@ -924,30 +913,35 @@ contains
 !
             do i = 1, wf%n_o
                do j = 1, i
+!
+                  
+                  ij = index_packed(i, j)
+!
                   do a = 1, a_length
-                     do b = 1, a
-!  
-!                       Calculate compound indices
-!     
-                        Ai = index_two(a + a_first - 1, i, wf%n_v) ! A is full-space a index
-                        Aj = index_two(a + a_first - 1, j, wf%n_v) ! A is full-space a index
-                        Bj = index_two(b + b_first - 1, j, wf%n_v) ! B is full-space b index
-                        Bi = index_two(b + b_first - 1, i, wf%n_v) ! B is full-space b index
+!
+                     Ai = index_two(a + a_first - 1, i, wf%n_v) ! A is full-space a index
+                     Aj = index_two(a + a_first - 1, j, wf%n_v) ! A is full-space a index
+!
+                     do b = 1, b_length
+!              
+                        if ((a+a_first) .ge. (b+b_first)) then
+                           Bj = index_two(b + b_first - 1, j, wf%n_v) ! B is full-space b index
+                           Bi = index_two(b + b_first - 1, i, wf%n_v) ! B is full-space b index
 !
 !
-                        ab = index_packed(a, b)
-                        ij = index_packed(i, j)
+                           ab = index_packed(a, b)
 !     
-                        AiBj = index_packed(Ai, Bj)
-                        BiAj = index_packed(Bi, Aj)
+                           AiBj = index_packed(Ai, Bj)
+                           BiAj = index_packed(Bi, Aj)
 !                       
-!                       Reorder into omega2_aibj
+!                          Reorder into omega2_aibj
 !  
-                        wf%omega2(AiBj,1) = wf%omega2(AiBj, 1) + omega2_p_ab_ij(ab, ij) + omega2_m_ab_ij(ab, ij)
+                           wf%omega2(AiBj,1) = wf%omega2(AiBj, 1) + omega2_p_ab_ij(ab, ij) + omega2_m_ab_ij(ab, ij)
 !
-                        if (AiBj .ne. BiAj) then
-                           wf%omega2(BiAj,1) = wf%omega2(BiAj, 1) + omega2_p_ab_ij(ab, ij) - omega2_m_ab_ij(ab, ij)
-                        endif   
+                           if (AiBj .ne. BiAj) then
+                              wf%omega2(BiAj,1) = wf%omega2(BiAj, 1) + omega2_p_ab_ij(ab, ij) - omega2_m_ab_ij(ab, ij)
+                           endif  
+                        endif 
 !     
                      enddo
                   enddo
