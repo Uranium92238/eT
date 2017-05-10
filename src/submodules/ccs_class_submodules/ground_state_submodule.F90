@@ -112,6 +112,8 @@ contains
 !
          call wf%calc_energy
 !
+         write(unit_output,*) 'ENERGY:', wf%energy
+!
 !        Update the Fock matrix 
 !
          call wf%construct_fock

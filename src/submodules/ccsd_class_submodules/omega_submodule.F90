@@ -757,6 +757,11 @@ contains
       a_max_length = 0
       call num_two_batch(required, available, a_max_length, a_n_batch, wf%n_v)
 !
+      write(unit_output,*) 'n_batch:',a_n_batch
+      write(unit_output,*) 'a_max_length',a_max_length
+      write(unit_output,*) 'required:', required
+      write(unit_output,*) 'available:', available
+!
 !     Initialize some variables for batching
 !
       a_first  = 0
@@ -786,6 +791,7 @@ contains
 !           Get cholesky vectors L_ac^J ordered as L_ca_J
 !
             call allocator(L_ca_J, (wf%n_v)*a_length, wf%n_J)
+            L_ca_J = zero
 !
             reorder = .true.
             call wf%get_cholesky_ab(L_ca_J, a_first, a_last, (wf%n_v)*a_length, reorder)
@@ -793,6 +799,7 @@ contains
 !           Get cholesky vectors L_bd^J ordered as L_db_J
 !
             call allocator(L_db_J, (wf%n_v)*b_length, wf%n_J)
+            L_db_J = zero
 !  
             reorder = .true.
             call wf%get_cholesky_ab(L_db_J, b_first, b_last, (wf%n_v)*b_length, reorder)
@@ -800,6 +807,7 @@ contains
 !           Allocate g_ca_db
 !
             call allocator(g_ca_db, (wf%n_v)*a_length, (wf%n_v)*b_length)
+            g_ca_db = zero
 !
 !           g_ca_db = sum_J L_ca_J*L_db_J
 !     
@@ -897,6 +905,9 @@ contains
 !
             call allocator(omega2_p_ab_ij, packed_size(a_length), packed_size(wf%n_o))
             call allocator(omega2_m_ab_ij, packed_size(a_length), packed_size(wf%n_o))
+!
+            omega2_p_ab_ij = zero
+            omega2_m_ab_ij = zero
 !  
 !            omega2_ab_ij = sum_(cd) g_ab_cd*t_cd_ij
 ! 

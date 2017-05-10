@@ -54,11 +54,11 @@ contains
          write(unit_output,'(t3,a,i15)') 'Allocation error! Could not allocate array of size (M*N):', size
          stop
       endif
+!
+      write(unit_output,*) 'Memory used - alloc (words):', work_used
 !       
       work_remains = work_remains - 4*size
       work_used    = work_used + 4*size
-!
-      write(unit_output,*) 'Memory used (words):', work_used
 !
       if (work_remains .lt. 0) then
          write(unit_output,'(t3,a)') "Error: user-specified memory insufficient."
@@ -91,6 +91,8 @@ contains
 !  
       work_remains = work_remains + 4*size
       work_used    = work_used - 4*size
+!
+      write(unit_output,*) 'Memory used - dealloc (words):', work_used
 !
    end subroutine deallocator
 !
