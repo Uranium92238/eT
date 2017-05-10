@@ -173,6 +173,8 @@ contains
       integer(i15), intent(in)           :: required, available, batch_dimension
       integer(i15)                       :: max_batch_length,n_batch,i
 !
+   n_batch = 1
+!
    if (required .lt. available) then
          n_batch = 1
          max_batch_length = batch_dimension
