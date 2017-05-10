@@ -857,6 +857,7 @@ contains
                      da = index_two(d, a, wf%n_v)
 !
                      do  b = 1, b_length
+!
                         if ((a+a_first) .ge. (b+b_first)) then
 !                         
                            db = index_two(d, b, wf%n_v)
@@ -947,7 +948,6 @@ contains
             do i = 1, wf%n_o
                do j = 1, i
 !
-                  
                   ij = index_packed(i, j)
 !
                   do a = 1, a_length
@@ -958,9 +958,9 @@ contains
                      do b = 1, b_length
 !              
                         if ((a+a_first) .ge. (b+b_first)) then
+!
                            Bj = index_two(b + b_first - 1, j, wf%n_v) ! B is full-space b index
                            Bi = index_two(b + b_first - 1, i, wf%n_v) ! B is full-space b index
-!
 !
                            ab = index_packed(a, b)
 !     
@@ -974,6 +974,7 @@ contains
                            if (AiBj .ne. BiAj) then
                               wf%omega2(BiAj,1) = wf%omega2(BiAj, 1) + omega2_p_ab_ij(ab, ij) - omega2_m_ab_ij(ab, ij)
                            endif  
+!
                         endif 
 !     
                      enddo
@@ -995,7 +996,7 @@ contains
 !
    subroutine omega_b2_ccsd(wf)
 !
-!     MLCC Omega B2 term
+!     Omega B2
 !     Written by Sarai D. Folkestad and Eirik F. Kjønstad, 11 Mar 2017
 !
 !     Omega B2 = sum_(kl) t_ak_bl*(g_kilj+sum_(cd) t_ci_dj * g_kc_ld) 
@@ -1042,7 +1043,7 @@ contains
 !
       integer(i15) :: aibj = 0, akbl = 0, cidj = 0 
 !
-!     Read cholesky vector of type L_ij_J
+!     Read Cholesky vector of type L_ij_J
 !
       call allocator(L_ij_J, (wf%n_o)*(wf%n_o), wf%n_J)
 !
@@ -1082,7 +1083,7 @@ contains
                   kl = index_two(k, l, wf%n_o)
                   ij = index_two(i, j, wf%n_o)
 !
-!                  Reordering g_ki_lj to g_kl_ij
+!                 Reordering g_ki_lj to g_kl_ij
 !
                   g_kl_ij(kl, ij) = g_ki_lj(ki, lj)
 !
@@ -1093,7 +1094,7 @@ contains
 !
       call deallocator(g_ki_lj, (wf%n_o)*(wf%n_o), (wf%n_o)*(wf%n_o))
 !
-!     Read cholesky vectors of ia-type into L_kc_J
+!     Read Cholesky vectors of ia-type into L_kc_J
 !
       call allocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
@@ -1254,25 +1255,16 @@ contains
 !
       call deallocator(omega_ab_ij,(wf%n_v)*(wf%n_v),(wf%n_o)*(wf%n_o))  
 !
-!     Print the omega vector, having added B2
-!
-!      if (debug) then 
-!         write(unit_output,*) 
-!         write(unit_output,*) 'Omega(aibj,1) after B2 term has been added:'
-!         write(unit_output,*)
-!         call vec_print(wf%omega2, wf%n_t2am, 1)
-!      endif
-!
    end subroutine omega_b2_ccsd
 !
 !
    subroutine omega_c2_ccsd(wf)
 !
-!     C2 omega term. Omega C2 = -1/2* sum_(ck)t_bk_cj*(g_ki_ac -1/2 sum_(dl)t_al_di * g_kd_lc)
-!                               - sum_(ck) t_bk_ci (g_kj_ac-sum_(dl)t_al_dj*g_kd_lc)
-!
-!
+!     Omega C2
 !     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2017
+!
+!     Omega C2 = -1/2* sum_(ck)t_bk_cj*(g_ki_ac -1/2 sum_(dl)t_al_di * g_kd_lc)
+!                - sum_(ck) t_bk_ci (g_kj_ac-sum_(dl)t_al_dj*g_kd_lc)
 !     
       implicit none
 !
@@ -1426,7 +1418,7 @@ contains
 !
       available = get_available()
       required = 2*(wf%n_v**2)*(wf%n_J) + 2*(wf%n_v)*(wf%n_o)*(wf%n_J)
-      required = four*required
+      required = 4*required
       call num_batch(required, available, max_batch_length, n_batch, wf%n_v)
 !
       a_start  = 1
@@ -1844,19 +1836,7 @@ contains
 !     Deallocate the omega2_ai_bj and u_ai_ld(ai,ld) = u_il^ad vector
 !
       call deallocator(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call deallocator(u_ai_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
-!     Print the omega vector, having added the D2.3 term 
-!
-      if (debug) then 
-!
-         write(unit_output,*) 
-         write(unit_output,*) 'Omega(aibj,1) after D2.3 term has been added:'
-         write(unit_output,*)
-!
-         call vec_print(wf%omega2, wf%n_t2am, 1)
-!
-      endif                
+      call deallocator(u_ai_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))            
 !
 !     Allocate the L_ai_J and L_kc_J terms and set them to zero 
 !
@@ -1944,7 +1924,6 @@ contains
 !
 !     Add the D2.1 term to the omega vector 
 !
-      
       do i = 1, wf%n_o
          do a = 1, wf%n_v
 !
@@ -1976,17 +1955,6 @@ contains
 !
       call deallocator(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-!     Print the omega vector, having added the D2.1 term 
-!
-      if (debug) then 
-!
-         write(unit_output,*) 
-         write(unit_output,*) 'Omega(aibj,1) after D2.1 term has been added:'
-         write(unit_output,*)
-         call vec_print(wf%omega2, wf%n_t2am, 1)
-!
-      endif 
-!
 !     - 1/2 * sum_ck u_jk^bc g_acki = -1/2 * sum_ck g_ai_ck u_ck_bj 
 !
 !     Allocate L_ki_J and set it to zero
@@ -2009,9 +1977,9 @@ contains
 !
       required = (wf%n_J)*(wf%n_v)**2  ! Holding L_ac^J
 !
-      required = required &                                             !
-                  + max( ((wf%n_v)**2)*((wf%n_o)**2), &                 ! Testing if it is more demanding to hold g_acki
-                   (wf%n_J)*(wf%n_v)**2 + 2*(wf%n_J)*(wf%n_v)*(wf%n_o)) ! or create L_ac^J
+      required = required &                                             
+                  + max( ((wf%n_v)**2)*((wf%n_o)**2), &                 ! Testing if it is more demanding 
+                   (wf%n_J)*(wf%n_v)**2 + 2*(wf%n_J)*(wf%n_v)*(wf%n_o)) ! to hold g_acki or to create L_ac^J
 !
       required = four*required ! In words
 !
@@ -2169,26 +2137,13 @@ contains
          enddo
       enddo      
 !
-!     Print the omega vector, having added the D2.2 term 
-!
-      if (debug) then 
-!
-         write(unit_output,*) 
-         write(unit_output,*) 'Omega(aibj,1) after D2.2 term has been added:'
-         write(unit_output,*)
-!
-         call vec_print(wf%omega2, wf%n_t2am, 1)
-!
-      endif 
-!
-!     Deallocate g_ai_ck, u_ck_bj, and the temporary omega2_ai_bj
+!     Deallocations
 !
       call deallocator(g_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call deallocator(u_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call deallocator(L_ki_J, (wf%n_o)**2, wf%n_J)
 !
       call deallocator(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
-      call deallocator(L_ki_J,(wf%n_o)**2, wf%n_J)
 !
    end subroutine omega_d2_ccsd
 !
