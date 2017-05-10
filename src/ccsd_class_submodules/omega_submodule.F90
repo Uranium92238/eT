@@ -80,17 +80,26 @@ contains
 !
 !     Construct singles contributions 
 !
+      write(unit_output,*) 'Doing A1'
       call wf%omega_a1
+      write(unit_output,*) 'Doing B1'
       call wf%omega_b1
+      write(unit_output,*) 'Doing C1'
       call wf%omega_c1
+      write(unit_output,*) 'Doing D1'
       call wf%omega_d1
 !
 !     Construct doubles contributions 
 !
+      write(unit_output,*) 'Doing A2'
       call wf%omega_a2
+      write(unit_output,*) 'Doing B2'
       call wf%omega_b2
+      write(unit_output,*) 'Doing C2'
       call wf%omega_c2
+      write(unit_output,*) 'Doing D2'
       call wf%omega_d2
+      write(unit_output,*) 'Doing E2'
       call wf%omega_e2
 !
       ! call cpu_time(omega_end)

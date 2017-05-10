@@ -146,6 +146,12 @@ contains
          n_batch = n_batch+1
       endif
 !
+!  Debugs...
+!
+      if (n_batch .gt. 1) then
+         write(unit_output,*) 'I am batching; nr of batches:',n_batch
+      endif
+!
    end subroutine num_batch
 !
    subroutine num_two_batch(required,available,max_batch_length,n_batch,batch_dimension)
