@@ -50,16 +50,22 @@ program eT_program
 !  Create & open the main output file, used throughout the program
 !
    call init_output_file
-   open(unit=unit_output,file='eT.out',status='unknown',form='formatted')
+   open(unit=unit_output,file='eT.out',status='old',form='formatted')
    rewind(unit_output)
 !
-   write(unit_output,'(/t3,a/)')  ':: eT - a coupled cluster program'
+   write(unit_output,'(///t15,a)')  'eT - a coupled cluster program'
+   write(unit_output,'(t12,a///)') 'S. D. Folkestad, E. F. Kjønstad, 2017'
+
 !
 !  Open input file
 !
    call generate_unit_identifier(unit_input)
    open(unit=unit_input, file='eT.inp', status='old', form='formatted')
    rewind(unit_input)
+!
+!
+      write(unit_output,'(T3,A)')   ':: Input reader'
+      write(unit_output,'(T3,A/)')  ':: S. D. Folkestad, E. F. Kjønstad, May 2017'
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::::
 !  -::- Reading method section of input file -::- 
@@ -71,7 +77,7 @@ program eT_program
 !
    call method_reader(unit_input, method)
 !
-   write(unit_output,'(t3,a,a,a/)') 'Our wavefunction is of type ',trim(method),'.'
+   write(unit_output,'(t3,a,a,a)') 'Our wavefunction is of type ',trim(method),'.'
    flush(unit_output)
 !
    if (trim(method) == 'CC2') then

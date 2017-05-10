@@ -43,12 +43,9 @@ contains
 !
 !     Calculate the singles contributions 
 !
-      call wf%jacobian_a1(tr1am,c1am)
+   !   call wf%jacobian_a1(tr1am,c1am) -114.20157599
 !
-      write(unit_output,*) 'tr1am(a,i)'
-      call vec_print(tr1am, wf%n_v, wf%n_o)
-!
-      call wf%jacobian_b1(tr1am,c1am)
+    !  call wf%jacobian_b1(tr1am,c1am)
 !
    end subroutine jacobian_transformation_ccsd
 !

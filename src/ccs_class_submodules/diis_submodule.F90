@@ -73,7 +73,7 @@ contains
 !
 !     Let the user know the ground state solver is running
 !
-      write(unit_output,'(/T3,A)')  ':: Ground state solver (DIIS)'
+      write(unit_output,'(T3,A)')   ':: Ground state solver (DIIS)'
       write(unit_output,'(T3,A/)')  ':: S. D. Folkestad, E. F. Kjønstad, May 2017'
       write(unit_output,'(T3,A,1X,A/)') &
                                     'Requested the ground state for:', wf%name

@@ -71,7 +71,7 @@ contains
       real(dp) :: omega_start = zero
       real(dp) :: omega_end = zero
 !
-      call cpu_time(omega_start)
+    !  call cpu_time(omega_start)
 !
 !     Set the omega vector to zero 
 !
@@ -93,9 +93,9 @@ contains
       call wf%omega_d2
       call wf%omega_e2
 !
-       call cpu_time(omega_end)
-       write(unit_output,*)'Time in omega:', omega_end-omega_start  
-       call flush(unit_output)  
+      ! call cpu_time(omega_end)
+      ! write(unit_output,*)'Time in omega:', omega_end-omega_start  
+      ! call flush(unit_output)  
 !
 !
    end subroutine construct_omega_ccsd
@@ -784,7 +784,7 @@ contains
 !
 !           g_ca_db = sum_J L_ca_J*L_db_J
 !     
-            call cpu_time(begin_timer)
+         !   call cpu_time(begin_timer)
             call dgemm('N','T',            &
                         (wf%n_v)*a_length, &
                         (wf%n_v)*b_length, &
@@ -797,8 +797,8 @@ contains
                         zero,              &
                         g_ca_db,           &
                         (wf%n_v)*a_length)
-            call cpu_time(end_timer)
-            write(unit_output,*) 'Time to make g_acbd',end_timer-begin_timer
+          !  call cpu_time(end_timer)
+          !  write(unit_output,*) 'Time to make g_acbd',end_timer-begin_timer
 !
 !           Deallocate L_db_J 
 !
@@ -821,7 +821,7 @@ contains
             t_m_cd_ij = zero
 !
 !
-            call cpu_time(begin_timer)
+       !     call cpu_time(begin_timer)
             do c = 1, wf%n_v 
                do d = 1, c
                   do b = 1, b_length
@@ -876,8 +876,8 @@ contains
                   enddo
                enddo
             enddo
-            call cpu_time(end_timer)
-            write(unit_output,*) 'Time to reorder in A2:', end_timer-begin_timer
+         !   call cpu_time(end_timer)
+         !   write(unit_output,*) 'Time to reorder in A2:', end_timer-begin_timer
 !
 !           Dellocate g_ac_bd 
 !
@@ -890,7 +890,7 @@ contains
 !  
 !            omega2_ab_ij = sum_(cd) g_ab_cd*t_cd_ij
 !  
-            call cpu_time(begin_timer)
+          !  call cpu_time(begin_timer)
             call dgemm('N','N',                & 
                         packed_size(a_length), &
                         packed_size(wf%n_o),   &
@@ -916,8 +916,8 @@ contains
                         zero,                  &
                         omega2_m_ab_ij,        &
                         packed_size(a_length) )
-            call cpu_time(end_timer)
-            write(unit_output,*) 'Time for dgemm A2',end_timer-begin_timer
+          !  call cpu_time(end_timer)
+          !  write(unit_output,*) 'Time for dgemm A2',end_timer-begin_timer
 !
 !           Deallocate +-g, +-t
 !  
