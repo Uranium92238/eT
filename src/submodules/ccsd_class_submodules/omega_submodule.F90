@@ -1360,7 +1360,8 @@ contains
 !     Setup of variables needed for batching
 !
       available = get_available()
-      required = 2*(wf%n_v)*(wf%n_v)*(wf%n_J)*4 + 2*(wf%n_v)*(wf%n_o)*(wf%n_J)*4
+      required = 2*(wf%n_v**2)*(wf%n_J) + 2*(wf%n_v)*(wf%n_o)*(wf%n_J)
+      required = four*required
       call num_batch(required, available, max_batch_length, n_batch, wf%n_v)
 !
       a_start  = 1
