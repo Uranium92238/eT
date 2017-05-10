@@ -108,7 +108,7 @@ contains
 !
 !     Calculates the A1 term, 
 !
-!        sum_ckd g_adkc * u_ki^cd,
+!        sum_ckd g_adkc u_ki^cd,
 !
 !     and adds it to the singles projection vector (omeg1) of
 !     the wavefunction object wf.
@@ -143,19 +143,20 @@ contains
 !
 !     Calculate u_ckd_i
 !
-      do c = 1, wf%n_v
-         do k = 1, wf%n_o
+      do k = 1, wf%n_o
+         do c = 1, wf%n_v
+!
+            ck = index_two(c, k, wf%n_v)
+!
             do d = 1, wf%n_v
-               do i = 1, wf%n_o
 !
-!                 Calculate the necessary indices 
+               ckd = index_three(c, k, d, wf%n_v, wf%n_o)
+               dk  = index_two(d, k, wf%n_v)
 !
-                  ckd  = index_three(c, k, d, wf%n_v, wf%n_o)
-!
-                  ck   = index_two(c, k, wf%n_v)
+               do i = 1, wf%n_o     
+!      
                   di   = index_two(d, i, wf%n_v)
                   ci   = index_two(c, i, wf%n_v)
-                  dk   = index_two(d, k, wf%n_v)
 !
                   ckdi = index_packed(ck, di)
                   cidk = index_packed(ci, dk)
@@ -174,12 +175,12 @@ contains
 !     later on in the same loop, g_ad_kc and g_a_ckd simultaneously
 !
       available = get_available()
-      required  = (wf%n_J)*(wf%n_v**2) + (wf%n_J)*(wf%n_o)*(wf%n_v)                                ! Needed to hold L_ab_J and L_kc_J
+      required  = (wf%n_J)*(wf%n_v**2) + (wf%n_J)*(wf%n_o)*(wf%n_v)          ! Needed to hold L_ab_J and L_kc_J
       required  = required &
-                + max((wf%n_J)*(wf%n_v**2) + 2*(wf%n_J)*(wf%n_o)*(wf%n_v), &                       ! Determine if it is more demanding to get L_ab_J 
-                      2*(wf%n_o)*(wf%n_v**3))                                                      ! or to hold g_ad_kc and g_a_ckd
+                + max((wf%n_J)*(wf%n_v**2) + 2*(wf%n_J)*(wf%n_o)*(wf%n_v), & ! Determine if it is more demanding to get L_ab_J 
+                      2*(wf%n_o)*(wf%n_v**3))                                ! or to hold g_ad_kc and g_a_ckd
 !                                                                                            
-      required = four*required ! In words 
+      required = 4*required ! In words 
 !
       batch_dimension  = wf%n_v ! Batch over the virtual index a
       max_batch_length = 0      ! Initilization of unset variables 
@@ -212,7 +213,7 @@ contains
          call allocator(L_da_J, ad_dim, wf%n_J)
          L_da_J = zero
 !
-!        Get reordered Cholesky vector L_da_J = L_ad^J 
+!        Get reordered Cholesky vector (Note: L_da_J(da,J) = L_ad^J)
 !
          reorder = .true.
          call wf%get_cholesky_ab(L_da_J, a_begin, a_end, &
@@ -242,25 +243,20 @@ contains
          call deallocator(L_da_J, ad_dim, wf%n_J)
          call deallocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
-!        Allocate g_a_ckd = g_adkc and set to zero
+!        Form the reordered integrals g_a_ckd = g_adkc
 !
          call allocator(g_a_ckd, batch_length, (wf%n_o)*(wf%n_v)**2)
-         g_a_ckd = zero
-!
-!        Reorder the integrals to g_a_ckd
 !
          do c = 1, wf%n_v
             do k = 1, wf%n_o
+!
+               kc  = index_two(k, c, wf%n_o)
+!
                do d = 1, wf%n_v
                   do a = 1, batch_length
-!
-!                    Get the needed indices 
-!
-                     kc  = index_two(k, c, wf%n_o)
+!                 
                      da  = index_two(d, a, wf%n_v)
                      ckd = index_three(c, k, d, wf%n_v, wf%n_o) 
-!
-!                    Set the value of reordered integral, g_a_ckd
 !
                      g_a_ckd(a, ckd) = g_da_kc(da, kc) ! g_adkc 
 !
