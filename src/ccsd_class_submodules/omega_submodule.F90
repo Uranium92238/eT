@@ -448,7 +448,7 @@ contains
    subroutine omega_c1_ccsd(wf)        
 !
 !        
-!     C1 Omega 
+!     Omega C1
 !     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !
 !     Calculates the C1 term, 
@@ -545,7 +545,7 @@ contains
 !
    subroutine omega_d1_ccsd(wf)
 !
-!     D1 omega term: Omega_ai^D1=F_ai_T1
+!     Omega D1 term: Omega_ai^D1=F_ai_T1
 !
 !     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mars 2017
 !
@@ -574,8 +574,6 @@ contains
 ! 
 !                omega_A2.2_ai_bj = 1/4*(g^+_ac_bd*t^+_ci_dj + g^-_ac_bd*t^-_ci_dj) = omega_A2.2_bj_ai
 !                omega_A2.2_aj_bi = 1/4*(g^+_ac_bd*t^+_ci_dj - g^-_ac_bd*t^-_ci_dj) = omega_A2.2_bi_aj
-!
-      use utils
 !
       implicit none
 !
