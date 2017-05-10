@@ -448,7 +448,7 @@ contains
    subroutine omega_c1_ccsd(wf)        
 !
 !        
-!     C1 Omega 
+!     Omega C1
 !     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !
 !     Calculates the C1 term, 
@@ -471,18 +471,15 @@ contains
       real(dp), dimension(:,:), allocatable :: omega1_ai
 !
       integer(i15) :: i = 0, k = 0, c = 0, a = 0
-      integer(i15) :: ck = 0, ai = 0, ak = 0, ci = 0, aick = 0, akci = 0
+      integer(i15) :: ck = 0, ai = 0, ak = 0, ci = 0
+      integer(i15) :: aick = 0, akci = 0
 !
-!     Allocation of F_ck, u_ai_ck and omega1_ai
+!     Allocation of F_ck and u_ai_ck
 !
       call allocator(F_ck, (wf%n_o)*(wf%n_v), 1)
       call allocator(u_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))  
-      call allocator(omega1_ai, (wf%n_o)*(wf%n_v), 1)
 !
-      F_ck    = zero  
-      u_ai_ck = zero
-!
-!     Set up u_ck_ai and virtual-occupied Fock matrix
+!     Set up u_ai_ck and virtual-occupied Fock matrix
 !
       do k = 1, wf%n_o
          do c = 1, wf%n_v
@@ -495,19 +492,17 @@ contains
 !
             F_ck(ck, 1) = wf%fock_ia(k, c)
 !
-            do a = 1, wf%n_v
-               do i = 1, wf%n_o
+            do i = 1, wf%n_o 
 !
-!                 Set up compound indices
+               ci = index_two(c, i, wf%n_v)
+!
+               do a = 1, wf%n_v
 !
                   ai = index_two(a, i, wf%n_v)
-                  ci = index_two(c, i, wf%n_v)
                   ak = index_two(a, k, wf%n_v)
 !
                   aick = index_packed(ck, ai)
                   akci = index_packed(ci, ak)
-!                    
-!                 u_ck_ai
 !
                   u_ai_ck(ai, ck) = two*(wf%t2am(aick, 1)) - wf%t2am(akci, 1)
 !
@@ -516,7 +511,11 @@ contains
          enddo
       enddo
 !
-!     Matrix multiplication
+!     Allocate holder of omega contribution
+!
+      call allocator(omega1_ai, (wf%n_o)*(wf%n_v), 1)
+!
+!     ... and calculate it
 !
       call dgemm('N','N',            &
                   (wf%n_o)*(wf%n_v), &
@@ -531,22 +530,11 @@ contains
                   omega1_ai,         &
                   (wf%n_o)*(wf%n_v))
 !
+!     Copy the contribution into the wavefunction's omega 
 !
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
+      call daxpy((wf%n_o)*(wf%n_v), one, omega1_ai, 1, wf%omega1, 1)
 !
-!           Set up compound index
-!
-            ai = index_two(a, i, wf%n_v)
-!
-!           Add to omega1
-!
-            wf%omega1(a,i) = wf%omega1(a, i) + omega1_ai(ai,1)
-!
-         enddo
-      enddo
-!
-!     Deallocation
+!     Deallocations
 !
       call deallocator(F_ck, (wf%n_o)*(wf%n_v), 1)
       call deallocator(omega1_ai, (wf%n_o)*(wf%n_v), 1)
@@ -557,7 +545,7 @@ contains
 !
    subroutine omega_d1_ccsd(wf)
 !
-!     D1 omega term: Omega_ai^D1=F_ai_T1
+!     Omega D1 term: Omega_ai^D1=F_ai_T1
 !
 !     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mars 2017
 !
@@ -586,8 +574,6 @@ contains
 ! 
 !                omega_A2.2_ai_bj = 1/4*(g^+_ac_bd*t^+_ci_dj + g^-_ac_bd*t^-_ci_dj) = omega_A2.2_bj_ai
 !                omega_A2.2_aj_bi = 1/4*(g^+_ac_bd*t^+_ci_dj - g^-_ac_bd*t^-_ci_dj) = omega_A2.2_bi_aj
-!
-      use utils
 !
       implicit none
 !
