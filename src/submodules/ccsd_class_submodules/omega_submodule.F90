@@ -910,7 +910,7 @@ contains
             omega2_p_ab_ij = zero
             omega2_m_ab_ij = zero
 !  
-!            omega2_ab_ij = sum_(cd) g_ab_cd*t_cd_ij
+!           omega2_ab_ij = sum_(cd) g_ab_cd*t_cd_ij
 ! 
             call dgemm('N','N',                & 
                         packed_size(a_length), &
@@ -936,7 +936,7 @@ contains
                         packed_size(wf%n_v),   &
                         zero,                  &
                         omega2_m_ab_ij,        &
-                        packed_size(a_length) )
+                        packed_size(a_length))
 !
 !           Deallocate +-g, +-t
 !  

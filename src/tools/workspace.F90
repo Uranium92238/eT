@@ -173,7 +173,7 @@ contains
    end subroutine deallocator_int
 !
 !
-   integer function get_available
+   integer function get_available()
 !
 !     Get Available 
 !     Written by Eirik F. Kjønstad and Sarai D. Folkestad, Mar 2017
