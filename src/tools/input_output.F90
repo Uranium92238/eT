@@ -1,10 +1,10 @@
 module input_output
 !
 !!
-!!    Input output module
+!!    Input_output module
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, April 2017
 !!
-!!    Module handles input and output and contains:
+!!    Handles input and output and contains:
 !! 
 !!    generate_unit_identifier: Returns a free unit_identifier which can be assigned to a file that is opened. 
 !!    vec_print:                Prints vector in compound index order.  
@@ -35,6 +35,31 @@ contains
       unit_identifier = n_files
 !
    end subroutine generate_unit_identifier
+!
+!
+   subroutine vec_print(vec,dim_1,dim_2)
+!!
+!!    Vector print
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, March 2017
+!!
+!!    A vector is printed with a compound index (p q) of dimension (dim_1 x dim_2)
+!!
+      implicit none
+!
+      integer(i15) :: p = 0, q = 0, pq = 0
+!
+      integer(i15), intent(in) :: dim_1,dim_2
+      real(dp), dimension(dim_1, dim_2), intent(in) :: vec
+!
+      do q = 1, dim_2
+         do p = 1, dim_1
+!
+            write(unit_output,*) p, q, vec(p,q)
+!
+         enddo
+      enddo
+!
+   end subroutine vec_print
 !
 !
 end module input_output

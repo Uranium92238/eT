@@ -134,10 +134,10 @@ module ccsd_class
 !!  
 !!       Calculates the A1 term, 
 !!  
-!!          sum_ckd g_adkc * u_ki^cd,
+!!       A1: sum_ckd g_adkc * u_ki^cd,
 !!  
 !!       and adds it to the singles projection vector (omeg1) of
-!!       the wavefunction object wfn.
+!!       the wavefunction object wf.
 !!
          implicit none 
 !
@@ -153,10 +153,10 @@ module ccsd_class
 !!
 !!       Calculates the B1 term, 
 !!
-!!         - sum_ckl u_kl^ac * g_kilc,
+!!       B1: - sum_ckl u_kl^ac * g_kilc,
 !! 
 !!       and adds it to the singles projection vector (omeg1) of
-!!       the wavefunction object wfn
+!!       the wavefunction object wf
 !!
          implicit none 
 !
