@@ -64,7 +64,7 @@ program eT_program
 !  -::-    Print banner for input section    -::- 
 !  ::::::::::::::::::::::::::::::::::::::::::::::
 !
-   write(unit_output,'(T3,A)')   ':: Input reader'
+   write(unit_output,'(t3,a/)')   ':: Input reader'
 !
 !  Open input file
 !

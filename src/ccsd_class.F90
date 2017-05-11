@@ -444,8 +444,9 @@ contains
 !!       2. Transforms AO Cholesky vectors to MO basis and saves to file (read_transform_cholesky)
 !!       3. Allocates the Fock matrix and sets it to zero
 !!       4. Initializes the amplitudes (sets their initial values and associated variables)
-!!       5. Sets the initial energy based on the initial amplitudes (in particular, the MP2
-!!           estimate of the doubles amplitude)
+!!
+!!    Note: this routine does not calculate the energy, which is postponed until the wavefunction
+!!    is passed to the ground-state solver.
 !!
       implicit none 
 !
@@ -470,10 +471,6 @@ contains
 !     Initialize the Fock matrix (allocate and construct given the initial amplitudes)
 !
       call wf%initialize_fock_matrix
-!
-!     Set the initial value of the energy (given the initial amplitudes) 
-!
-      call wf%calc_energy
 !
 !     Initialize the projection vector (omega)
 !

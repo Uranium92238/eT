@@ -74,13 +74,13 @@ contains
 !
 !     Let the user know the ground state solver is running
 !
-      write(unit_output,'(/T3,A)')   ':: Ground state solver (DIIS)'
-      write(unit_output,'(T3,A/)')  ':: S. D. Folkestad, E. F. Kjønstad, May 2017'
-      write(unit_output,'(T3,A,1X,A/)') &
-                                    'Requested the ground state for:', wf%name
+      write(unit_output,'(/t3,a)')   ':: Ground state solver (DIIS)'
+      write(unit_output,'(t3,a/)')   ':: S. D. Folkestad, E. F. Kjønstad, May 2017'
+      write(unit_output,'(t3,a,a,a/)') &
+                                     'Requested the ground state for: ', trim(wf%name),'.'
 !
-      write(unit_output,'(T3,A)')   'Iter.    Norm of amplitude eq.'
-      write(unit_output,'(T3,A)')   '------------------------------'    
+      write(unit_output,'(t3,a)')    'Iter.   Energy           Norm of amplitude eq.'
+      write(unit_output,'(t3,a)')    '----------------------------------------------'    
 !
 !     Make sure the initial energy is up to date 
 !
@@ -113,8 +113,6 @@ contains
 !
          call wf%calc_energy
 !
-         write(unit_output,*) 'ENERGY:', wf%energy
-!
 !        Update the Fock matrix 
 !
          call wf%construct_fock
@@ -132,7 +130,8 @@ contains
 !
 !        Print information to output 
 !
-         write(unit_output,'(T3,I2,7X,E10.4)') iteration, ampeqs_norm 
+         write(unit_output,'(T3,I2,5X,F14.8,4X,E10.4)') iteration, wf%energy, ampeqs_norm 
+         flush(unit_output) ! Flush so that the user can follow each iteration as they are reached
 !
 !        Perform DIIS update if convergence hasn't been reached
 !
@@ -140,8 +139,8 @@ contains
 !
             converged = .true.
 !
-            write(unit_output,'(/T3,A,I2,A/)') 'Converged in ', iteration, ' iterations!'
-            write(unit_output,'(T3,A27,F14.8)') 'Total energy (hartrees):', wf%energy
+            write(unit_output,'(/t3,a,i2,a/)')  'Converged in ', iteration, ' iterations!'
+            write(unit_output,'(t3,a27,f14.8)') 'Total energy (hartrees):', wf%energy
 !
          else
 !
@@ -162,7 +161,7 @@ contains
 !
       call cpu_time(last_time)
 !
-      write(unit_output,'(T3,A27,F14.8/)') 'Total time (seconds):',last_time-first_time
+      write(unit_output,'(t3,a27,f14.8/)') 'Total time (seconds):',last_time-first_time
 !
    end subroutine ground_state_solver_ccs
 !
