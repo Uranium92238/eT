@@ -166,13 +166,19 @@ module ccsd_class
 !
 !
       module subroutine omega_c1_ccsd(wf)
-!!
-!!       Omega C1 
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, March 2017
-!!
-!!       Omega_ai^C1 = sum_ck F_kc*u_ai_ck,
-!!                       u_ai_ck = 2*t_ck_ai-t_ci_ak
-!!
+!!  
+!!     Omega C1
+!!     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!  
+!!     Calculates the C1 term of omega,
+!!  
+!!     C1: sum_ck F_kc*u_ai_ck,
+!!  
+!!     and adds it to the projection vector (omega1) of    
+!!     the wavefunction object wf                           
+!!  
+!!     u_ai_ck = 2*t_ck_ai - t_ci_ak
+!! 
          implicit none 
 !
          class(ccsd) :: wf 
@@ -196,16 +202,18 @@ module ccsd_class
 !
       module subroutine omega_a2_ccsd(wf)
 !!
-!!       Omega A2 term
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, 10 Mar 2017
+!!     Omega A2 term: Omega A2 = g_ai_bj + sum_(cd)g_ac_bd * t_ci_dj = A2.1 + A.2.2
 !!
-!!       Omega A2 = g_ai_bj + sum_(cd)g_ac_bd * t_ci_dj = A2.1 + A.2.2
+!!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, 10 Mar 2017
 !!
-!!       Structure: Batching over both a and b. If no batching is necessary 
-!!       L_ab_J is only read once, and g_ac_bd is constructed and kept in memory 
-!!       full size. g_ac_bd is reordered as g_ab_cd and t_ci_dj is reordered as t_cd_ij.
-!!       Omega contribution for A2.2 is ordered as Omega_ab_ij, and is reordered into 
-!!       the packed omega2 vector.          
+!!     Structure: Batching over both a and b for A2.2.
+!!                t^+_ci_dj = t_ci_dj + t_di_cj
+!!                t^-_ci_dj = t_ci_dj - t_di_cj
+!!                g^+_ac_bd = g_ac_bd + g_bc_ad 
+!!                g^-_ac_bd = g_ac_bd - g_bc_ad 
+!! 
+!!                omega_A2.2_ai_bj = 1/4*(g^+_ac_bd*t^+_ci_dj + g^-_ac_bd*t^-_ci_dj) = omega_A2.2_bj_ai
+!!                omega_A2.2_aj_bi = 1/4*(g^+_ac_bd*t^+_ci_dj - g^-_ac_bd*t^-_ci_dj) = omega_A2.2_bi_aj
 !!
          implicit none 
 !
