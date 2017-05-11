@@ -1,7 +1,7 @@
 module input_output
 !
 !!
-!!    Input_output module
+!!    Input output module
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, April 2017
 !!
 !!    Module handles input and output and contains:

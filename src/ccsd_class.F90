@@ -434,19 +434,19 @@ contains
 !
 !
    subroutine init_ccsd(wf)
-!
-!     Initialize CCSD object
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!     Performs the following tasks:
-!
-!        1. Sets HF orbital and energy information by reading from file (read_hf_info)
-!        2. Transforms AO Cholesky vectors to MO basis and saves to file (read_transform_cholesky)
-!        3. Allocates the Fock matrix and sets it to zero
-!        4. Initializes the amplitudes (sets their initial values and associated variables)
-!        5. Sets the initial energy based on the initial amplitudes (in particular, the MP2
-!           estimate of the doubles amplitude)
-!
+!!
+!!    Initialize CCSD object
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!    Performs the following tasks:
+!!
+!!       1. Sets HF orbital and energy information by reading from file (read_hf_info)
+!!       2. Transforms AO Cholesky vectors to MO basis and saves to file (read_transform_cholesky)
+!!       3. Allocates the Fock matrix and sets it to zero
+!!       4. Initializes the amplitudes (sets their initial values and associated variables)
+!!       5. Sets the initial energy based on the initial amplitudes (in particular, the MP2
+!!           estimate of the doubles amplitude)
+!!
       implicit none 
 !
       class(ccsd) :: wf
@@ -483,7 +483,13 @@ contains
 !
 !
    subroutine drv_ccsd(wf)
-!
+!!
+!!    Driver (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!    Controls the CCSD calculation using requested calculations from
+!!    user (eventually: still under construction).
+!!
       implicit none 
 !
       class(ccsd) :: wf
@@ -492,11 +498,9 @@ contains
 !
    end subroutine drv_ccsd
 !
-!
 !  :::::::::::::::::::::::::::::::::::::::::
 !  -::- Class subroutines and functions -::- 
 !  :::::::::::::::::::::::::::::::::::::::::
-!
 !
    subroutine initialize_amplitudes_ccsd(wf)
 !!
@@ -533,7 +537,7 @@ contains
       wf%t2am = zero
 !
 !
-!     -::- Initialize the doubles amplitudes to the MP2 estimate -::-
+!     :: Initialize the doubles amplitudes to the MP2 estimate ::
 !
 !
 !     Allocate L_ia_J and g_ia_jb
@@ -565,19 +569,19 @@ contains
 !
 !     Set the doubles amplitudes
 !
-      do a = 1, wf%n_v
-         do b = 1, wf%n_v
-            do i = 1, wf%n_o
-               do j = 1, wf%n_o
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
 !
-!                 Get necessary indices
+            ai = index_two(a, i, wf%n_v)
+            ia = index_two(i, a, wf%n_o)
 !
-                  ai = index_two(a, i, wf%n_v)
-                  bj = index_two(b, j, wf%n_v)
-                  ia = index_two(i, a, wf%n_o)
+            do j = 1, wf%n_o
+               do b = 1, wf%n_v
+!    
                   jb = index_two(j, b, wf%n_o)
+                  bj = index_two(b, j, wf%n_v)
 !
-!                 Set the doubles indices
+!                 Set the doubles amplitudes
 !
                   if (ai .le. bj) then ! To avoid setting the same element twice
 !
@@ -604,12 +608,12 @@ contains
 !
 !
    subroutine calc_energy_ccsd(wf)
-!
-!     Calculate Energy (CCSD)
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!     Calculates the CCSD energy
-!
+!!
+!!     Calculate Energy (CCSD)
+!!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!     Calculates the CCSD energy for the wavefunction's current amplitudes.
+!!
       implicit none 
 !
       class(ccsd) :: wf 
@@ -661,21 +665,21 @@ contains
 !
       do i = 1, wf%n_o
          do a = 1, wf%n_v
+!
+            ai = index_two(a, i, wf%n_v)
+            ia = index_two(i, a, wf%n_o)
+!
             do j = 1, wf%n_o
+!
+               ja = index_two(j, a, wf%n_o)
+!
                do b = 1, wf%n_v
-!
-!                 Calculate the necessary indices 
-!
-                  ai   = index_two(a, i, wf%n_v)
-                  bj   = index_two(b, j, wf%n_v)
+! 
+                  bj = index_two(b, j, wf%n_v)
+                  jb = index_two(j, b, wf%n_o)
+                  ib = index_two(i, b, wf%n_o)
 !
                   aibj = index_packed(ai, bj)
-!
-                  ia   = index_two(i, a, wf%n_o)
-                  jb   = index_two(j, b, wf%n_o)
-!
-                  ib   = index_two(i, b, wf%n_o)
-                  ja   = index_two(j, a, wf%n_o)
 !
 !                 Add the correlation energy 
 !
