@@ -38,12 +38,13 @@ submodule (ccsd_class) omega
 contains
 !
 !
-   subroutine initialize_omega_ccsd(wf)
+   module subroutine initialize_omega_ccsd(wf)
 !
-!     Initialize Omega (CCSD)
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!      Initialize Omega (CCSD)
+!      Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !
-!     Allocates the projection vector (omega) and sets it to zero.
+!      Allocates the projection vector (omega1, omega2) and sets it
+!      to zero.
 !
       implicit none 
 !
@@ -58,12 +59,13 @@ contains
    end subroutine initialize_omega_ccsd
 !
 !
-   subroutine construct_omega_ccsd(wf)
+   module subroutine construct_omega_ccsd(wf)
 !
 !     Construct Omega (CCSD)
-!     Written by Eirik F. Kjønstad and Sarai Folkestad, Apr 2017
+!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !
-!     Directs the calculation of the omega vector.
+!     Directs the construction of the projection vector < mu | exp(-T) H exp(T) | R >
+!     for the current amplitudes of the object wfn 
 !
       implicit none 
 !
@@ -92,17 +94,17 @@ contains
    end subroutine construct_omega_ccsd
 !
 !
-   subroutine omega_a1_ccsd(wf)
+   module subroutine omega_a1_ccsd(wf)
 !
-!     Omega A1 term
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!     Calculates the A1 term, 
-!
-!        sum_ckd g_adkc u_ki^cd,
-!
-!     and adds it to the singles projection vector (omeg1) of
-!     the wavefunction object wf.
+!       Omega A1 term
+!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!  
+!       Calculates the A1 term, 
+!  
+!       A1 = sum_ckd g_adkc * u_ki^cd,
+!  
+!       and adds it to the singles projection vector (omeg1) of
+!       the wavefunction object wf.
 !
       implicit none
 !
@@ -286,18 +288,18 @@ contains
    end subroutine omega_a1_ccsd
 !
 !
-   subroutine omega_b1_ccsd(wf)
-!
-!     Omega B1
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!     Calculates the B1 term, 
-!
-!        - sum_ckl u_kl^ac * g_kilc,
-! 
-!     and adds it to the singles projection vector (omeg1) of
-!     the wavefunction object wfn
-!
+   module subroutine omega_b1_ccsd(wf)
+!!
+!!       Omega B1
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!       Calculates the B1 term, 
+!!
+!!        B1:  - sum_ckl u_kl^ac * g_kilc,
+!! 
+!!       and adds it to the singles projection vector (omeg1) of
+!!       the wavefunction object wf
+!!
       implicit none
 !
       class(ccsd) :: wf 
@@ -424,22 +426,13 @@ contains
    end subroutine omega_b1_ccsd
 !
 !
-   subroutine omega_c1_ccsd(wf)        
+   module subroutine omega_c1_ccsd(wf)        
 !
-!        
-!     Omega C1
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!     Omega C1 
+!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, March 2017
 !
-!     Calculates the C1 term, 
-!
-!        sum_ck F_kc*u_ai_ck,
-!
-!     where
-!              
-!        u_ai_ck = 2*t_ck_ai-t_ci_ak,
-!    
-!     and adds it to the projection vector (omega1) of the
-!     wavefunction object wf.    
+!     Omega_ai^C1 = sum_ck F_kc*u_ai_ck,
+!                     u_ai_ck = 2*t_ck_ai-t_ci_ak
 !
       implicit none
 !
@@ -522,7 +515,7 @@ contains
    end subroutine omega_c1_ccsd
 !
 !
-   subroutine omega_d1_ccsd(wf)
+   module subroutine omega_d1_ccsd(wf)
 !
 !     Omega D1 term: Omega_ai^D1=F_ai_T1
 !
@@ -539,7 +532,7 @@ contains
    end subroutine omega_d1_ccsd
 !
 !
-   subroutine omega_a2_ccsd(wf)
+   module subroutine omega_a2_ccsd(wf)
 !
 !     Omega A2 term: Omega A2 = g_ai_bj + sum_(cd)g_ac_bd * t_ci_dj = A2.1 + A.2.2
 !
@@ -1055,17 +1048,17 @@ contains
    end subroutine omega_a2_ccsd
 !
 !
-   subroutine omega_b2_ccsd(wf)
-!
-!     Omega B2
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, 11 Mar 2017
-!
-!     Omega B2 = sum_(kl) t_ak_bl*(g_kilj+sum_(cd) t_ci_dj * g_kc_ld) 
-!
-!     Structure: g_kilj is constructed first and reordered as g_kl_ij. 
-!                Then the contraction over cd is performed, and the results added to g_kl_ij.
-!                t_ak_bl is then reordered as t_ab_kl and the contraction over kl is performed.
-!
+   module subroutine omega_b2_ccsd(wf)
+!!
+!!    Omega B2
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 11 Mar 2017
+!! 
+!!    Omega B2 = sum_(kl) t_ak_bl*(g_kilj + sum_(cd) t_ci_dj * g_kc_ld)
+!!
+!!    Structure: g_kilj is constructed first and reordered as g_kl_ij. 
+!!    Then the contraction over cd is performed, and the results added to g_kl_ij.
+!!    t_ak_bl is then reordered as t_ab_kl and the contraction over kl is performed.
+!!
       implicit none
 !
       class(ccsd) :: wf 
@@ -1319,14 +1312,14 @@ contains
    end subroutine omega_b2_ccsd
 !
 !
-   subroutine omega_c2_ccsd(wf)
-!
-!     Omega C2
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2017
-!
-!     Omega C2 = -1/2* sum_(ck)t_bk_cj*(g_ki_ac -1/2 sum_(dl)t_al_di * g_kd_lc)
-!                - sum_(ck) t_bk_ci (g_kj_ac-sum_(dl)t_al_dj*g_kd_lc)
-!     
+   module subroutine omega_c2_ccsd(wf)
+!!
+!!    Omega C2 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2017
+!!    
+!!    Omega C2 = -1/2* sum_(ck)t_bk_cj*(g_ki_ac -1/2 sum_(dl)t_al_di * g_kd_lc)
+!!                                  - sum_(ck) t_bk_ci (g_kj_ac-sum_(dl)t_al_dj*g_kd_lc)
+!!    
       implicit none
 !
       class(ccsd) :: wf
@@ -1651,7 +1644,7 @@ contains
    end subroutine omega_c2_ccsd
 !
 !
-   subroutine omega_d2_ccsd(wf)
+   module subroutine omega_d2_ccsd(wf)
 !
 !     Omega D2 
 !     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -2200,7 +2193,7 @@ contains
    end subroutine omega_d2_ccsd
 !
 ! 
-   subroutine omega_e2_ccsd(wf)
+   module subroutine omega_e2_ccsd(wf)
 !
 !     Omega E2
 !     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017

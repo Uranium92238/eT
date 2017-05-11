@@ -1,8 +1,28 @@
 module utils
 !
-!   Utilities module 
-!   Written by Sarai D. Folkstad and Eirik F. Kjønstad, 28 Feb 2017
-!
+!!
+!!    Utilities module 
+!!    Written by Sarai D. Folkstad and Eirik F. Kjønstad, 28 Feb 2017
+!!
+!!    Contains:
+!!    
+!!    Index functions:
+!!       index_packed: Calculates the packed index of symetric matrix
+!!       index_two:    Calculates the compound index of two indices
+!!       index_three   Calculates the compound index given by three indices 
+!!
+!!    Matrix utilities:
+!!       packin:      packs in symetric matrix
+!!       packed_size: Returns size of packed matrix
+!!       squeareup:   squares up symmetric matrix
+!!
+!!    Batching subroutines:
+!!        num_batch:     Calculates the number of batches needed.
+!!        num_two_batch: Calculates the number of batches needed 
+!!                       for to batching variables with equal number of batches. 
+!!        batch_limits:  Returns batch start index and batch end index.
+!!
+! 
    use input_output
    use types
 !
@@ -10,9 +30,12 @@ contains
 !
 !
    integer(i15) function index_packed(i,j)
-!
-!     Purpose: Returns packed index (ij) for symmetric arrays
-! 
+!!
+!!    Packed index    
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2017
+!!
+!!    Calculates the packed index of symetric matrix.
+!!
       implicit none
 !
       integer(i15), intent(in) :: i,j
@@ -22,11 +45,46 @@ contains
    end function index_packed
 !
 !
-   integer(i15) function packed_size(N)
+   integer(i15) function index_three(p,q,r,dim_p,dim_q)
+!!
+!!    Three index compound
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2017
+!!
+!!    Returns the compound index (pqr)
+!!
+      implicit none
 !
-!     Purpose: Returns size of packed symmetric matrices
-!              of dimension N x N (triangular elements) 
-!   
+      integer(i15), intent(in) :: p, q, r, dim_p, dim_q
+!
+      index_three = dim_p*(dim_q*(r-1)+q-1)+p
+!
+   end function index_three
+!
+!
+   integer(i15) function index_two(p,q,dim_p)
+!!
+!!    Two index compound
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2017
+!!
+!!    Returns the compound index (pq)
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: p,q,dim_p
+!
+      index_two = dim_p*(q-1)+p
+!
+   end function index_two
+!
+!
+   integer(i15) function packed_size(N)
+!!
+!!    Packed size    
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2017
+!!
+!!    Returns size of packed symmetric matrices
+!!    of dimension N x N (triangular elements) 
+!!   
       implicit none
 !
       integer(i15), intent(in) :: N
@@ -37,10 +95,12 @@ contains
 !
 !
    subroutine squareup(packed,unpacked,N)
-!
-!     Purpose: Squares up to full dimension (N x N) 
-!              of packed matrices.
-!
+!!
+!!    Square up packed symmetric matrix
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2017
+!!
+!!    Squares up to full dimension (N x N) of packed matrices.
+!!
       implicit none
 !
       integer(i15), intent(in) :: N
@@ -60,9 +120,12 @@ contains
 !
 !
    subroutine packin(packed,unpacked,N)
-!
-!     Purpose: Pack down full square matrix of dimension N x N.
-!
+!!
+!!    Pack in symmetric matrix
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2017
+!!
+!!    Pack down full square matrix of dimension N x N.
+!!
       implicit none
 !
       integer(i15), intent(in) :: N
@@ -81,52 +144,26 @@ contains
    end subroutine
 !
 !
-   integer(i15) function index_three(p,q,r,dim_p,dim_q)
-!
-!     Purpose: Returns the compound index (pqr)
-!
-      implicit none
-!
-      integer(i15), intent(in) :: p, q, r, dim_p, dim_q
-!
-      index_three = dim_p*(dim_q*(r-1)+q-1)+p
-!
-   end function index_three
-!
-!
-   integer(i15) function index_two(p,q,dim_p)
-!
-!     Purpose: Returns the compound index (pq)
-!
-      implicit none
-!
-      integer(i15), intent(in) :: p,q,dim_p
-!
-      index_two = dim_p*(q-1)+p
-!
-   end function index_two
-!
-!
    subroutine num_batch(required,available,max_batch_length,n_batch,batch_dimension)
-!  Purpose: Calculate number of batches
-!
-!  required          =  required memory (words)
-!  available         =  available memory (words)
-!  max_batch_length  =  length of batch 
-!  n_batch           =  number of batches
-!  batch_dimension   =  original size of dimension that we batch over
-!
-!  Batching structure will be:
-!  With rest:     (n_batch-1)*(max_batch_length) + rest = required
-!  Without rest:  (n_batch)*(max_batch_length) = required
-!
+!!
+!!    Number of batches 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2017
+!!
+!!    Calculates number of batches
+!!
+!!    Batching structure will be:
+!!    With rest:     (n_batch-1)*(max_batch_length) + rest = required
+!!    Without rest:  (n_batch)*(max_batch_length) = required
+!!
       implicit none
 !
 !     
       integer(i15), intent(in)           :: available, batch_dimension
       integer(i15)                       :: max_batch_length,n_batch
-      integer(i15)                       :: required ! Upped by 10% as a buffer
+      integer(i15)                       :: required
       integer(i15)                       :: buffer
+!
+!     Adding buffer for required
 !
       buffer = required/10
 !
@@ -148,30 +185,28 @@ contains
 !
 !  Test for rest
 !
-      if (n_batch*max_batch_length .lt. required) then
+      if (n_batch*max_batch_length .lt. batch_dimension) then
          n_batch = n_batch+1
       endif
 !
    end subroutine num_batch
 !
    subroutine num_two_batch(required,available,max_batch_length,n_batch,batch_dimension)
-!  Purpose: Calculate number of batches when batching over two variables of same dimension.
-!
-!  required          =  required memory (words)
-!  available         =  available memory (words)
-!  max_batch_length  =  length of batch 
-!  n_batch           =  number of batches
-!  batch_dimension   =  original size of dimension that we batch over
-!
-!  Batching structure will be:
-!  With rest:     (n_batch-1)*(max_batch_length) + rest = required
-!  Without rest:  (n_batch)*(max_batch_length) = required
-!
+!!
+!!    Number of batches 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2017
+!!
+!!    Calculates number of batches when two batching variables are needed
+!!
+!!    Batching structure will be:
+!!    With rest:     (n_batch-1)*(max_batch_length) + rest = required
+!!    Without rest:  (n_batch)*(max_batch_length) = required
+!!
       implicit none
 !
 !     
       integer(i15), intent(in)           :: available, batch_dimension
-      integer(i15)                       :: max_batch_length,n_batch,i,required,buffer
+      integer(i15)                       :: max_batch_length,n_batch,i,buffer,required
 !
       buffer = required/10
 !
@@ -186,9 +221,17 @@ contains
    endif
 !  
    do i = 1, batch_dimension
-      if (available .gt. required/i**2) then ! E: insert logical for success!
+      if (available .gt. buffer/i**2) then ! E: insert logical for success!
+!
          n_batch = i
          max_batch_length = batch_dimension/n_batch
+!
+!        Test for rest
+!
+         if (n_batch*max_batch_length .lt. batch_dimension) then
+            n_batch = n_batch + 1
+         endif
+!
          return
       endif
    enddo
@@ -197,13 +240,16 @@ contains
 !
 !
    subroutine batch_limits(first,last,batch_number,max_batch_length,batch_dimension)
-!
-!     Purpose: Find batch limits (first and last) 
-!
-!        batch_number: the current batch (1,2,...,n_batch)
-!        max_batch_length: the length of each batch (except the last, which may be a rest, see n_one_batch routine)
-!        batch_dimension: the dimensionality of the batching variable (e.g., n_vir for a virtual index)
-!
+!!
+!!     Batch limits 
+!!     Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2017
+!!
+!!     Find batch limits (first and last) 
+!!
+!!     batch_number: the current batch (1,2,...,n_batch)
+!!     max_batch_length: the length of each batch (except the last, which may be a rest, see n_one_batch routine)
+!!     batch_dimension: the dimensionality of the batching variable (e.g., n_vir for a virtual index)
+!!
       implicit none 
 !
       integer(i15) :: first,last
@@ -213,29 +259,6 @@ contains
       last  = min(max_batch_length+(batch_number-1)*max_batch_length,batch_dimension)
 !
    end subroutine batch_limits
-!
-!
-   subroutine vec_print(vec,dim_1,dim_2)
-!
-!     Purpose: prints a vector with a compound index (p q) of dimension (dim_1 x dim_2)
-!        (for debugging, remove or replace later on)
-!
-      implicit none
-!
-      integer(i15) :: p = 0, q = 0, pq = 0
-!
-      integer(i15), intent(in) :: dim_1,dim_2
-      real(dp), dimension(dim_1, dim_2), intent(in) :: vec
-!
-      do q = 1, dim_2
-         do p = 1, dim_1
-!
-            write(unit_output,*) p, q, vec(p,q)
-!
-         enddo
-      enddo
-!
-   end subroutine vec_print
 !
 !
 end module utils
