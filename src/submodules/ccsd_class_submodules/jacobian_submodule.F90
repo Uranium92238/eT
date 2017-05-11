@@ -1,9 +1,11 @@
 submodule (ccsd_class) jacobian
 !
-!
-!                     -::- Jacobian submodule (CCSD) -::-                             
-!        Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017         
-!                                                                           
+!!
+!!
+!!     Jacobian submodule (CCSD)                            
+!!     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017         
+!!
+!!                                                                           
 !
 contains
 !

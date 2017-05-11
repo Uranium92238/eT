@@ -240,7 +240,7 @@ contains
          call allocator(L_Ja_b, batch_length*(wf%n_J), wf%n_v)
 !
        !  L_ba_J = zero
-        ! L_Ja_b = zero  ! E: needed?
+        ! L_Ja_b = zero 
 !
 !        Read Cholesky AB vectors, batching over a
 ! 

@@ -1,24 +1,25 @@
 submodule (cc2_class) omega
 !
-!
-!                       -::- Omega submodule (CC2) -::-
-!           Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2017
-!
-!
-!     Contains the following family of procedures of the CC2 class:
-!
-!        initialize_omega: allocates the projection vector omega1
-!                          and sets it to zero.
-!
-!        construct_omega:  constructs the projection vector omega1
-!                          for the current amplitudes t1am for the
-!                          wavefunction object wf. The routine assumes that
-!                          the projection vector is allocated.
-!
-!        omega_a1:         adds A1 term to omega1
-!        omega_b1:         adds B1 term to omega1
-!        omega_c1:         adds C1 term to omega1
-!        omega_d1:         adds D1 term to omega1
+!!
+!!    Omega submodule (CC2) 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2017
+!!
+!!    Contains the following family of procedures of the CC2 class:
+!!
+!!    initialize_omega: allocates the projection vector omega1
+!!                      and sets it to zero.
+!!
+!!    construct_omega: constructs the projection vector omega1
+!!                     for the current amplitudes t1am for the
+!!                     wavefunction object wf. 
+!!                     The routine assumes that the projection
+!!                     vector is allocated.
+!!
+!!    omega_a1:  adds A1 term to omega1
+!!    omega_b1:  adds B1 term to omega1
+!!    omega_c1:  adds C1 term to omega1
+!!    omega_d1:  adds D1 term to omega1
+!!
 !
    implicit none 
 !
@@ -27,13 +28,21 @@ submodule (cc2_class) omega
 !
 contains
 !
-  subroutine construct_omega_cc2(wf)
-!
+  module subroutine construct_omega_cc2(wf)
+!  
 !     Construct Omega (CC2)
 !     Written by Eirik F. Kjønstad and Sarai Folkestad, Apr 2017
-!
-!     
-!
+!  
+!     Constructs t2-amplitudes on the fly, according to the CC2
+!     expression for the doubles amplitudes,
+!  
+!     t_ij^ab = - g_ai_bj / (e_a + e_b - e_i - e_j),
+!  
+!     where g_ai_bj are T1-transformed two-electron integrals 
+!     and e_x is the orbital enegy of orbital x.
+!      
+!     The routine also sets up timing variables.    
+!  
       implicit none 
 !
       class(cc2) :: wf
@@ -42,11 +51,11 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: L_bj_J
       real(dp), dimension(:,:), allocatable :: L_ia_J
-      real(dp), dimension(:,:), allocatable :: g_ia_bj ! = g_aibj
+      real(dp), dimension(:,:), allocatable :: g_ia_bj ! Reordered g_aibj
 !
 !     t2 amplitudes
 !
-      real(dp), dimension(:,:), allocatable :: t_ia_bj ! = g_aibj/(e_a + e_b - e_i - e_j)
+      real(dp), dimension(:,:), allocatable :: t_ia_bj
 !
 !     Batching variables
 !  
@@ -65,7 +74,7 @@ contains
       real(dp) :: omega_start = zero
       real(dp) :: omega_end   = zero
 !
-!     Start timings of omega
+!     Start timing of omega
 !
       call cpu_time(omega_start)
 !
@@ -85,7 +94,7 @@ contains
                + 2*((wf%n_v)**2)*(wf%n_J) + 2*(wf%n_v)*(wf%n_o)*(wf%n_J) & ! Needed for L_da_J in A1
                + 2*((wf%n_v)**3)*(wf%n_o)))                                ! Needed for g_da_kc and reordering in A1
 !      
-      required = 4*required ! In words
+      required  = 4*required ! In words
       available = get_available()
 !
       batch_dimension  = wf%n_v ! Batch over the virtual index a
@@ -159,17 +168,13 @@ contains
 !
 !        Create t2 amplitudes
 !
-         do i = 1, wf%n_o
-            do a = 1, a_length
-!
-!              Calculate compound index
+         do a = 1, a_length
+            do i = 1, wf%n_o
 !
                ia = index_two(i, a, wf%n_o)
 !
-               do b = 1, wf%n_v
-                  do j = 1, wf%n_o
-!
-!                    Calculare compond index               
+               do j = 1, wf%n_o
+                  do b = 1, wf%n_v
 !
                      bj = index_two(b, j, wf%n_v)
 !
@@ -199,6 +204,7 @@ contains
 !        Deallocate t_ia_bj
 !
          call deallocator(t_ia_bj, a_length*(wf%n_o), (wf%n_o)*(wf%n_v))
+!
       enddo
 !
 !     Timings
@@ -209,18 +215,20 @@ contains
    end subroutine construct_omega_cc2
 !
 !
-   subroutine omega_a1_cc2(wf, t_kc_di, c_first, c_last, c_length)
-!
-!     Omega A1 term
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!     Calculates the A1 term, 
-!
-!        sum_ckd g_adkc * u_ki^cd,
-!
-!     and adds it to the singles projection vector (omeg1) of
-!     the wavefunction object wfn
-!
+   module subroutine omega_a1_cc2(wf, t_kc_di, c_first, c_last, c_length)
+! 
+!     Omega A1
+!     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!   
+!     Calculates the A1 term of omega, 
+!   
+!     A1 = sum_ckd g_adkc * u_ki^cd,
+!  
+!     and adds it to the projection vector (omega1) of
+!     the wavefunction object wf
+! 
+!     u_ki^cd = 2*t_ki^cd - t_ik^cd 
+! 
       implicit none
 !
       class(cc2) :: wf
@@ -248,13 +256,12 @@ contains
       integer(i15) :: ad_dim = 0   
 !
       real(dp), dimension(:,:), allocatable :: L_kc_J 
-      real(dp), dimension(:,:), allocatable :: L_da_J  ! L_ad^J; a is being batched over
-      real(dp), dimension(:,:), allocatable :: g_da_kc ! g_adkc; a is being batched over
-      real(dp), dimension(:,:), allocatable :: g_a_dkc ! reordered g_adkc; a is being batched over
-      real(dp), dimension(:,:), allocatable :: u_dkc_i ! u_ki^cd
+      real(dp), dimension(:,:), allocatable :: L_da_J  ! L_ad^J; a is batched over
+      real(dp), dimension(:,:), allocatable :: g_da_kc ! g_adkc; a is batched over
+      real(dp), dimension(:,:), allocatable :: g_a_dkc ! reordered g_adkc; a and c is batched over
+      real(dp), dimension(:,:), allocatable :: u_dkc_i ! u_ki^cd c is batched over
 !
-      logical :: reorder ! To get L_ab_J reordered, for batching over a (first index)
-!
+      logical :: reorder ! To get L_ab_J reordered, for batching over a
 !
 !     Allocate u_dkc_i = u_ki^cd
 !
@@ -265,19 +272,19 @@ contains
 !
       do c = 1, c_length
          do k = 1, wf%n_o
+!
+            kc = index_two(k, c, wf%n_o)
+!
             do d = 1, wf%n_v
+!
+               dk = index_two(d, k, wf%n_v)
+!
+               dkc = index_three(d, k, c, wf%n_v, wf%n_o)
+!
                do i = 1, wf%n_o
-!
-!                 Calculate the necessary indices 
-!
-                  dkc = index_three(d, k, c, wf%n_v, wf%n_o)
-!
-                  kc = index_two(k, c, wf%n_o)
-                  dk = index_two(d, k, wf%n_v)
+!                 
                   ic = index_two(i, c, wf%n_o)
                   di = index_two(d, i, wf%n_v) 
-!
-!                 Calculate u_dkc_i
 !
                   u_dkc_i(dkc, i) = two*(t_kc_di(kc, di)) - t_kc_di(ic, dk)
 !
@@ -289,10 +296,10 @@ contains
 !     Start batching over a
 !
       available = get_available()
-      required  = (wf%n_J)*(wf%n_v**2) + (wf%n_J)*(wf%n_o)*(wf%n_v)                                ! Needed to hold L_ab_J and L_kc_J
+      required  = (wf%n_J)*(wf%n_v**2) + (wf%n_J)*(wf%n_o)*(wf%n_v)          ! Needed to hold L_ab_J and L_kc_J
       required  = required &
-                + max((wf%n_J)*(wf%n_v**2) + 2*(wf%n_J)*(wf%n_o)*(wf%n_v), &                       ! Determine if it is more demanding to get L_ab_J 
-                      2*(wf%n_o)*(wf%n_v**3))                                                      ! or to hold g_ad_kc and g_a_ckd
+                + max((wf%n_J)*(wf%n_v**2) + 2*(wf%n_J)*(wf%n_o)*(wf%n_v), & ! Determine if it is more demanding to get L_ab_J 
+                      2*(wf%n_o)*(wf%n_v**3))                                ! or to hold g_ad_kc and g_a_ckd
 !
       required = four*required
 !
@@ -364,16 +371,16 @@ contains
 !
          do c = 1, c_length
             do k = 1, wf%n_o
+!
+               kc  = index_two(k, c + c_first - 1, wf%n_o)
+!
                do d = 1, wf%n_v
+!
+                  dkc = index_three(d, k, c, wf%n_v, wf%n_o) 
+!
                   do a = 1, a_length
 !
-!                    Get the needed indices 
-!
-                     kc  = index_two(k, c + c_first - 1, wf%n_o)
                      da  = index_two(d, a, wf%n_v)
-                     dkc = index_three(d, k, c, wf%n_v, wf%n_o) 
-!
-!                    Set the value of reordered integral, g_a_ckd
 !
                      g_a_dkc(a, dkc) = g_da_kc(da, kc) ! g_adkc 
 !
@@ -414,18 +421,20 @@ contains
    end subroutine omega_a1_cc2
 !
 !
-   subroutine omega_b1_cc2(wf, t_lc_ak, c_first, c_last, c_length)
-!
-!     Omega B1
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!     Calculates the B1 term, 
-!
-!        - sum_ckl u_kl^ac * g_kilc,
+   module subroutine omega_b1_cc2(wf, t_lc_ak, c_first, c_last, c_length)
 ! 
-!     and adds it to the singles projection vector (omeg1) of
-!     the wavefunction object wfn
-!
+!     Omega B1
+!     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+! 
+!     Calculates the B1 term of omega, 
+! 
+!      B1 = - sum_ckl u_kl^ac * g_kilc,
+!  
+!     and adds it to the projection vector (omeg1) of
+!     the wavefunction object wf
+! 
+!     u_kl^ac = 2*t_kl^ac - t_lk^ac 
+! 
       implicit none
 !
       class(cc2) :: wf 
@@ -452,7 +461,7 @@ contains
       real(dp), dimension(:,:), allocatable :: L_lc_J_batch  ! L_lc^J  with c constrained to the batch
       real(dp), dimension(:,:), allocatable :: g_ki_lc       ! g_kilc 
       real(dp), dimension(:,:), allocatable :: g_klc_i       ! g_kilc 
-      real(dp), dimension(:,:), allocatable :: u_a_klc       ! u_kl^ac = 2 t_kl^ac - t_lk^ac
+      real(dp), dimension(:,:), allocatable :: u_a_klc       ! u_kl^ac = 2 t_kl^ac - t_lk^ac, batching over c
 !
 !
 !     Allocate Cholesky vectors L_lc_J and L_lc_J_batch 
@@ -470,14 +479,13 @@ contains
 !
 !     Constrain Cholesky vectors to c     
 !
-      do j = 1, wf%n_J
-         do c = 1, c_length
-            do l = 1, wf%n_o
+      do c = 1, c_length
+         do l = 1, wf%n_o
 !
-!              Calculate compound indices
+            lc_batch = index_two(l, c, wf%n_o)
+            lc = index_two(l, c + c_first - 1, wf%n_o)
 !
-               lc_batch = index_two(l, c, wf%n_o)
-               lc = index_two(l, c + c_first - 1, wf%n_o)
+            do j = 1, wf%n_J
 !
                L_lc_J_batch(lc_batch, J) = L_lc_J(lc, J) 
 !
@@ -530,18 +538,17 @@ contains
 !     Determine g_ckl_i = g_kilc 
 !
       do c = 1, c_length
-         do k = 1, wf%n_o
-            do l = 1, wf%n_o
+         do l = 1, wf%n_o
+!
+            lc  = index_two(l, c, wf%n_o)
+!
+            do k = 1, wf%n_o
+!
+               klc = index_three(k, l, c, wf%n_o, wf%n_o) 
+!            
                do i = 1, wf%n_o
 !
-!                 Calculate necessary indices
-!
-                  klc = index_three(k, l, c, wf%n_o, wf%n_o) 
-!
                   ki  = index_two(k, i, wf%n_o)                 
-                  lc  = index_two(l, c, wf%n_o)           
-!
-!                 Set value of g_ckl_i
 !
                   g_klc_i(klc, i) = g_ki_lc(ki, lc)
 !
@@ -560,24 +567,21 @@ contains
       u_a_klc = zero
 !
 !     Determine u_a_ckl = u_kl^ac
+!     
+      do c = 1, c_length
+         do l = 1, wf%n_o
 !
-      do a = 1, wf%n_v
-         do c = 1, c_length
+            lc   = index_two(l, c, wf%n_o)
+!
             do k = 1, wf%n_o
-               do l = 1, wf%n_o
 !
-!                 Calculate necessary indices
+               kc   = index_two(k, c, wf%n_o)
+               klc  = index_three(k, l, c, wf%n_o, wf%n_o) 
 !
-                  klc  = index_three(k, l, c, wf%n_o, wf%n_o) 
+               do a = 1, wf%n_v
 !
                   ak   = index_two(a, k, wf%n_v)
-                  lc   = index_two(l, c, wf%n_o)
-!
                   al   = index_two(a, l, wf%n_v)
-                  kc   = index_two(k, c, wf%n_o)
-!
-!
-!                 Set the value of u_a_ckl = u_kl^ac = 2*t_kl^ac - t_lk^ac = 2*t_ak,cl - t_al,ck 
 !
                   u_a_klc(a, klc) = two*(t_lc_ak(lc, ak)) - t_lc_ak(kc, al)
 !                  
@@ -609,23 +613,20 @@ contains
    end subroutine omega_b1_cc2
 !
 !
-   subroutine omega_c1_cc2(wf, t_kc_ai, c_first, c_last, c_length)        
-!
-!        
-!     C1 Omega 
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!     Calculates the C1 term, 
-!
-!        sum_ck F_kc*u_ai_ck,
-!
-!     where
-!              
-!        u_ai_ck = 2*t_ck_ai-t_ci_ak,
-!    
-!     and adds it to the projection vector (omega1) of the
-!     wavefunction object wf.    
-!
+   module subroutine omega_c1_cc2(wf, t_kc_ai, c_first, c_last, c_length)        
+!  
+!     Omega C1
+!     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!  
+!     Calculates the C1 term of omega,
+!  
+!     C1 = sum_ck F_kc*u_ai_ck,
+!  
+!     and adds it to the projection vector (omega1) of    
+!     the wavefunction object wf                           
+!  
+!     u_ai_ck = 2*t_ck_ai - t_ci_ak
+!  
       implicit none
 !
       class(cc2) :: wf 
@@ -721,12 +722,18 @@ contains
    end subroutine omega_c1_cc2
 !
 !
-   subroutine omega_d1_cc2(wf)
-!
-!     D1 omega term: Omega_ai^D1=F_ai_T1
-!
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mars 2017
-!
+   module subroutine omega_d1_cc2(wf)
+! 
+!     Omega D1
+!     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+! 
+!     Calculates the D1 term of omega,
+! 
+!     D1 = F_ai_T1
+! 
+!     and adds it to the projection vector (omega1) of
+!     the wavefunction object wf 
+! 
       implicit none
 !
       class(cc2) :: wf

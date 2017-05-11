@@ -70,6 +70,8 @@ module cc2_class
 !!        Directs the construction of the projection vector < mu | exp(-T) H exp(T) | R >
 !!        for the current amplitudes of the object wf 
 !!
+         implicit none
+!
          class(cc2) :: wf 
 !
       end subroutine construct_omega_cc2
@@ -89,6 +91,8 @@ module cc2_class
 !!
 !!        u_ki^cd = 2*t_ki^cd - t_ik^cd 
 !!
+         implicit none
+!
          class(cc2) :: wf
 !
 !        Batching variable for double amplitudes t_kc_di
@@ -114,6 +118,8 @@ module cc2_class
 !!
 !!        u_kl^ac = 2*t_kl^ac - t_lk^ac 
 !!
+         implicit none
+!
          class(cc2) :: wf 
 !
 !        Batching variable for double amplitudes t_kc_di
@@ -138,7 +144,9 @@ module cc2_class
 !!        the wavefunction object wf                           
 !!
 !!        u_ai_ck = 2*t_ck_ai - t_ci_ak
-!!        
+!!
+         implicit none
+!       
          class(cc2) :: wf 
 !
 !        Batching variable for double amplitudes t_kc_di
@@ -162,6 +170,8 @@ module cc2_class
 !!        and adds it to the projection vector (omega1) of
 !!        the wavefunction object wf 
 !!
+         implicit none
+!
          class(cc2) :: wf
 !
       end subroutine omega_d1_cc2

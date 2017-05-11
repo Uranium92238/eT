@@ -1,30 +1,31 @@
 submodule (ccsd_class) omega
 !
-!
-!                       -::- Omega submodule (CCSD) -::-
-!           Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!
-!     Contains the following family of procedures of the CCSD class:
-!
-!        initialize_omega: allocates the projection vector (omega1, omega2)
-!                          and sets it to zero.
-!
-!        construct_omega:  constructs the projection vector (omega1, omega2) 
-!                          for the current amplitudes (t1am, t2am) for the
-!                          wavefunction object wf. The routine assumes that
-!                          the projection vector is allocated.
-!
-!        omega_a1:         adds A1 term to omega1
-!        omega_b1:         adds B1 term to omega1
-!        omega_c1:         adds C1 term to omega1
-!        omega_d1:         adds D1 term to omega1
-!
-!        omega_a2:         adds A2 term to omega2
-!        omega_b2:         adds B2 term to omega2
-!        omega_c2:         adds C2 term to omega2
-!        omega_d2:         adds D2 term to omega2
-!        omega_e2:         adds E2 term to omega2
+!!
+!!    Omega submodule (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!
+!!    Contains the following family of procedures of the CCSD class:
+!!
+!!    initialize_omega: allocates the projection vector (omega1, omega2)
+!!                          and sets it to zero.
+!!
+!!    construct_omega:  constructs the projection vector (omega1, omega2) 
+!!                          for the current amplitudes (t1am, t2am) for the
+!!                          wavefunction object wf. The routine assumes that
+!!                          the projection vector is allocated.
+!!
+!!    omega_a1:         adds A1 term to omega1
+!!    omega_b1:         adds B1 term to omega1
+!!    omega_c1:         adds C1 term to omega1
+!!    omega_d1:         adds D1 term to omega1
+!!
+!!    omega_a2:         adds A2 term to omega2
+!!    omega_b2:         adds B2 term to omega2
+!!    omega_c2:         adds C2 term to omega2
+!!    omega_d2:         adds D2 term to omega2
+!!    omega_e2:         adds E2 term to omega2
+!!
 !
    implicit none 
 !

@@ -1,23 +1,23 @@
 submodule (ccsd_class) ground_state
 !
-!
-!                           -::- Ground state submodule (CCSD) -::-
-!                 Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!
-!
-!     Consists of the following subroutines of the CCSD module:
-! 
-!     new_amplitudes:             Calculates the quasi-Newton estimate and passes the 
-!                                 information needed by the DIIS routine.
-!     calc_ampeqs_norm:           Calculates the norm of the amplitude equations.
-!     calc_quasi_Newton_doubles:  Calculates the doubles part of the quasi-Newton estimate.
-!
-!     Can be inherited by models of the same level (e.g. CC3) without modification.
-!
-!     When inherited by higher level models (e.g. CCSDT), the new_amplitudes and calc_ampeqs_norm
-!     routines should be overridden to account for the triples quasi-Newton estimate, amplitudes, 
-!     and projection vector.
-!
+!!    
+!!     Ground state submodule (CCSD)
+!!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!    
+!!    
+!!     Consists of the following subroutines of the CCSD module:
+!!     
+!!     new_amplitudes:             Calculates the quasi-Newton estimate and passes the 
+!!                                 information needed by the DIIS routine.
+!!     calc_ampeqs_norm:           Calculates the norm of the amplitude equations.
+!!     calc_quasi_Newton_doubles:  Calculates the doubles part of the quasi-Newton estimate.
+!!    
+!!     Can be inherited by models of the same level (e.g. CC3) without modification.
+!!    
+!!     When inherited by higher level models (e.g. CCSDT), the new_amplitudes and calc_ampeqs_norm
+!!     routines should be overridden to account for the triples quasi-Newton estimate, amplitudes, 
+!!     and projection vector.
+!!    
 !
    implicit none 
 !

@@ -1,9 +1,25 @@
 module workspace
 !
-!  Workspace module
-!  Written by Henrik Koch, Rolf H. Myhre, Eirik Kjønstad and Sarai Folkestad, Jan 2017
-!
-!  A collection of subroutines for memory management and monitoring
+!!
+!!    Workspace module
+!!    Written by Henrik Koch, Rolf H. Myhre, Eirik Kjønstad and Sarai Folkestad, Jan 2017
+!!
+!!    Manages program memory usage and contains:
+!!
+!!    work_init: Initializes the memory management variables.
+!!
+!!    allocator:   Allocation of double precission array of two dimmensions (M,N). 
+!!                 Updates memory management variables.
+!!    deallocator: Deallocation of double precission array of two dimmensions (M,N).
+!!                 Updates memory management variables. 
+!!
+!!    allocator_int:   Allocation of integer array of two dimmensions (M,N). 
+!!                     Updates memory management variables.
+!!    deallocator_int: Deallocation of integer array of two dimmensions (M,N)
+!!                     Updates memory management variables. 
+!!
+!!    get_available: Returns available memory.
+!!
 !
    use types
    use input_output
@@ -14,7 +30,7 @@ module workspace
    integer, private :: work_remains = 0
    integer, private :: work_used    = 0
 !
-   integer(i15)     :: mem = 1000000000 ! 7 GB
+   integer(i15)     :: mem = 1000000000 ! 7 GB S: Settes i input og bør testes avhengig av minimumskravene for metoden.
 !
 !
 contains
