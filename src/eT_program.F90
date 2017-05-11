@@ -1,9 +1,9 @@
 program eT_program
 !
-!
-!                        eT - a coupled cluster program                                
-!         Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017         
-!                              
+!!
+!!                        eT - a coupled cluster program                                
+!!         Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017         
+!!                              
 !                                             
 !  :::::::::::::::::::::::::::::::::::::
 !  -::- Modules used by the program -::-
@@ -37,7 +37,6 @@ program eT_program
 !  Unit identifier for input file eT.inp
 !
    integer(i15) :: unit_input = -1
-!
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::::
 !  -::-     Set up memory controller         -::- 
@@ -111,9 +110,9 @@ program eT_program
 !
    call calculation_reader(unit_input, wf%tasks)
 !
-   if (wf%tasks%do_ground_state)  write(unit_output,'(t3,a/)') 'Ground state calculation requested.'
-   if (wf%tasks%do_excited_state) write(unit_output,'(t3,a/)') 'Excited state calculation requested.'
-   ! E: add properties later.
+   if (wf%tasks%do_ground_state)  write(unit_output,'(t3,a)')  'Ground state calculation requested.'
+   if (wf%tasks%do_excited_state) write(unit_output,'(t3,a)')  'Excited state calculation requested.' ! Dummy as of now 
+   if (wf%tasks%do_properties)    write(unit_output,'(t3,a)')  'Properties calculation requested.'    ! Dummy as of now
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::::::
 !  -::- Reading settings section of input file -::- 
@@ -123,7 +122,7 @@ program eT_program
 !
    call settings_reader(unit_input, wf%settings) 
 !
-   write(unit_output,'(t3,a/)')         'Settings for this calculation:'
+   write(unit_output,'(/t3,a/)')         'Settings for this calculation:'
 !
    write(unit_output,'(t6,a25,e10.2)')    'Energy threshold:',         wf%settings%energy_threshold
    write(unit_output,'(t6,a25,e10.2/)')   'Amplitude eqs. threshold:', wf%settings%ampeqs_threshold
