@@ -152,14 +152,6 @@ contains
          n_batch = n_batch+1
       endif
 !
-!  Debugs...
-!
-      if (n_batch .gt. 1) then
-         write(unit_output,*) 'I am batching; nr of batches:',n_batch
-      else
-         write(unit_output,*) 'I am not batching!'
-      endif
-!
    end subroutine num_batch
 !
    subroutine num_two_batch(required,available,max_batch_length,n_batch,batch_dimension)
@@ -178,37 +170,28 @@ contains
       implicit none
 !
 !     
-      integer(i15), intent(in)           :: required, available, batch_dimension
-      integer(i15)                       :: max_batch_length,n_batch,i
+      integer(i15), intent(in)           :: available, batch_dimension
+      integer(i15)                       :: max_batch_length,n_batch,i,required,buffer
+!
+      buffer = required/10
+!
+      required = required + buffer
 !
    n_batch = 1
-
-   write(unit_output,*) 'In num_two_batch'
 !
    if (required .lt. available) then
-         write(unit_output,*) 'I have room!'
          n_batch = 1
          max_batch_length = batch_dimension
          return
    endif
 !  
    do i = 1, batch_dimension
-      if (available .gt. required/i**2) then
-         write(unit_output,*) 'I can batch!', i
+      if (available .gt. required/i**2) then ! E: insert logical for success!
          n_batch = i
          max_batch_length = batch_dimension/n_batch
          return
       endif
    enddo
-!
-!  Debugs...
-!
-      if (n_batch .gt. 1) then
-         write(unit_output,*) 'I am batching; nr of batches:',n_batch
-      else
-         write(unit_output,*) 'I am not batching!'
-      endif
-!
 !
    end subroutine num_two_batch
 !

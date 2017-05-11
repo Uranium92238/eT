@@ -57,8 +57,6 @@ contains
          write(unit_output,'(t3,a,i15)') 'Allocation error! Could not allocate array of size (M*N):', size
          stop
       endif
-!
-      write(unit_output,*) 'Memory used - alloc (words):', work_used
 !       
       work_remains = work_remains - 4*size
       work_used    = work_used    + 4*size
@@ -98,8 +96,6 @@ contains
 !  
       work_remains = work_remains + 4*size
       work_used    = work_used    - 4*size
-!
-      write(unit_output,*) 'Memory used - dealloc (words):', work_used
 !
    end subroutine deallocator
 !
@@ -144,10 +140,12 @@ contains
 !
    subroutine deallocator_int(elm, M, N)
 !
+!
 !     Deallocator Integer Arrays 
 !     Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2017
 !  
 !     Deallocates array and updates memory information
+!
 !  
       implicit none
 !  
