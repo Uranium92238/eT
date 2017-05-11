@@ -181,11 +181,9 @@ contains
       integer(i15), intent(in)           :: required, available, batch_dimension
       integer(i15)                       :: max_batch_length,n_batch,i
 !
-<<<<<<< HEAD
    n_batch = 1
-=======
+
    write(unit_output,*) 'In num_two_batch'
->>>>>>> a35bddabc023bd9229063004a937f315bb00c88f
 !
    if (required .lt. available) then
          write(unit_output,*) 'I have room!'
