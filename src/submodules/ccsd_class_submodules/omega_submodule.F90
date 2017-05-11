@@ -101,7 +101,7 @@ contains
 !  
 !       Calculates the A1 term, 
 !  
-!       A1 = sum_ckd g_adkc * u_ki^cd,
+!       A1: sum_ckd g_adkc * u_ki^cd,
 !  
 !       and adds it to the singles projection vector (omeg1) of
 !       the wavefunction object wf.
@@ -427,13 +427,19 @@ contains
 !
 !
    module subroutine omega_c1_ccsd(wf)        
-!
-!     Omega C1 
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, March 2017
-!
-!     Omega_ai^C1 = sum_ck F_kc*u_ai_ck,
-!                     u_ai_ck = 2*t_ck_ai-t_ci_ak
-!
+!!  
+!!     Omega C1
+!!     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!  
+!!     Calculates the C1 term of omega,
+!!  
+!!     C1: sum_ck F_kc*u_ai_ck,
+!!  
+!!     and adds it to the projection vector (omega1) of    
+!!     the wavefunction object wf                           
+!!  
+!!     u_ai_ck = 2*t_ck_ai - t_ci_ak
+!! 
       implicit none
 !
       class(ccsd) :: wf 
@@ -1651,7 +1657,7 @@ contains
 !
 !     Calculates the D2 term,
 !
-!        sum_ck u_jk^bc g_aikc 
+!      D2: sum_ck u_jk^bc g_aikc 
 !        - 1/2 * sum_ck u_jk^bc g_acki 
 !        + 1/4 * sum_ck u_jk^bc sum_dl L_ldkc u_il^ad,
 !
@@ -2200,7 +2206,7 @@ contains
 !
 !     Calculates the E2 term,
 !
-!        sum_c t_ij^ac (F_bc - sum_dkl g_ldkc u_kl^bd) 
+!      E2: sum_c t_ij^ac (F_bc - sum_dkl g_ldkc u_kl^bd) 
 !        - sum_k t_ik^ab (F_kj + sum_cdl g_ldkc u_lj^dc),
 !
 !     where

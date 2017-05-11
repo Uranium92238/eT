@@ -222,7 +222,7 @@ contains
 !   
 !     Calculates the A1 term of omega, 
 !   
-!     A1 = sum_ckd g_adkc * u_ki^cd,
+!     A1: sum_ckd g_adkc * u_ki^cd,
 !  
 !     and adds it to the projection vector (omega1) of
 !     the wavefunction object wf
@@ -428,7 +428,7 @@ contains
 ! 
 !     Calculates the B1 term of omega, 
 ! 
-!      B1 = - sum_ckl u_kl^ac * g_kilc,
+!     B1: - sum_ckl u_kl^ac * g_kilc,
 !  
 !     and adds it to the projection vector (omeg1) of
 !     the wavefunction object wf
@@ -620,7 +620,7 @@ contains
 !  
 !     Calculates the C1 term of omega,
 !  
-!     C1 = sum_ck F_kc*u_ai_ck,
+!     C1: sum_ck F_kc*u_ai_ck,
 !  
 !     and adds it to the projection vector (omega1) of    
 !     the wavefunction object wf                           
@@ -729,7 +729,7 @@ contains
 ! 
 !     Calculates the D1 term of omega,
 ! 
-!     D1 = F_ai_T1
+!     D1: F_ai_T1
 ! 
 !     and adds it to the projection vector (omega1) of
 !     the wavefunction object wf 
