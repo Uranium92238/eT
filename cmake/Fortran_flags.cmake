@@ -1,6 +1,7 @@
 #
-# Testing for Fortran compiler, so far only gfortran (GNU)
-#  
+# Testing for Fortran compiler and setting compiler flags
+#
+## GNU ##  
 if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
     add_definitions(-DVAR_GFORTRAN)
     set(CMAKE_Fortran_FLAGS         "-DVAR_GFORTRAN -ffloat-store -fcray-pointer -finit-local-zero")
@@ -22,14 +23,6 @@ if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
     set(CMAKE_Fortran_FLAGS_RELEASE "-O3 -ffast-math -funroll-loops -ftree-vectorize")
     set(CMAKE_Fortran_FLAGS_PROFILE "${CMAKE_Fortran_FLAGS_RELEASE} -g -pg")
 #
-#   If ENABLE_OMP is set to ON
-#
-    if(ENABLE_OMP)
-        set(CMAKE_Fortran_FLAGS
-            "${CMAKE_Fortran_FLAGS} -fopenmp"
-            )
-    endif()
-#
 #   If ENABLE_64BIT_INTEGERS ON
 #
     if(ENABLE_64BIT_INTEGERS)
@@ -38,3 +31,31 @@ if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
             )
     endif()
 endif()
+#
+## Intel iFort ##
+#
+if(CMAKE_Fortran_COMPILER_ID MATCHES Intel)
+    add_definitions(-DVAR_IFORT)
+    set(CMAKE_Fortran_FLAGS         "-fpp -assume byterecl -DVAR_IFORT")
+    set(CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -traceback")
+    set(CMAKE_Fortran_FLAGS_RELEASE "-O3 -ip -diag-disable 8290 -diag-disable 8291")
+    set(CMAKE_Fortran_FLAGS_PROFILE "${CMAKE_Fortran_FLAGS_RELEASE} -g -pg")
+#
+#   If ENABLE_64BIT_INTEGERS ON
+#
+    if(ENABLE_64BIT_INTEGERS)
+        set(CMAKE_Fortran_FLAGS
+            "${CMAKE_Fortran_FLAGS} -i8"
+            )
+    endif()
+#
+    if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+        message("--Switch off warnings due to incompatibility XCode 4 and Intel 11 on OsX 10.6")
+        set(CMAKE_Fortran_FLAGS
+            "${CMAKE_Fortran_FLAGS} -Qoption,ld,-w"
+            )
+    endif()
+    set(reorder_definitions " --nocollapse ${reorder_definitions}")
+endif()
+#
+save_compiler_flags(Fortran)
