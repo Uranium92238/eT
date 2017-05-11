@@ -113,7 +113,7 @@ contains
 !        For each batch, get the limits for the a index 
 !
          call batch_limits(a_first, a_last, a_batch, max_batch_length, batch_dimension)
-         a_length = a_last - a_first + 1 
+         a_length = a_last - a_first + 1
 !
 !        Allocate L_bj_J and L_ia_J (= reordering of L_bj_J constrained to the batch)
 !
@@ -127,7 +127,7 @@ contains
 !        Create L_ia_J
 !
          do a = 1, a_length
-            do i = 1, wf%n_v
+            do i = 1, wf%n_o
                do J = 1, wf%n_J
 !
 !                 Calculate compound indices
@@ -201,7 +201,7 @@ contains
          call wf%omega_b1(t_ia_bj, a_first, a_last, a_length)
 !
          call wf%omega_c1(t_ia_bj, a_first, a_last, a_length)
-
+!
          call wf%omega_d1()
 !
 !        Deallocate t_ia_bj
@@ -523,7 +523,7 @@ contains
                   one,               &
                   L_ki_J,            &
                   (wf%n_o)**2,       &
-                  L_lc_J,            &
+                  L_lc_J_batch,      &
                   (wf%n_o)*c_length, &
                   zero,              &
                   g_ki_lc,           &

@@ -202,6 +202,13 @@ contains
 !
       class(cc2)  :: wf
 !
+      write(unit_output,*)'In init_cc2'
+      flush(unit_output)
+!
+!     Set model name
+!
+      wf%name = 'CC2'
+!
 !     Read Hartree-Fock info from SIRIUS
 !
       call wf%read_hf_info
@@ -234,6 +241,8 @@ contains
 !
       class(cc2) :: wf
 !
+      write(unit_output,*)'In drv_cc2'
+      flush(unit_output)
       call wf%ground_state_solver
 !
    end subroutine drv_cc2
@@ -254,12 +263,12 @@ contains
 !
    class(cc2) :: wf
 !
-!
 !     Integrals
 !
       real(dp), dimension(:,:), allocatable :: L_bj_J
       real(dp), dimension(:,:), allocatable :: L_ia_J
       real(dp), dimension(:,:), allocatable :: g_ia_bj ! = g_aibj
+      real(dp), dimension(:,:), allocatable :: g_ia_jb 
 !
 !     t2 amplitudes
 !
@@ -270,6 +279,15 @@ contains
       integer(i15) :: a_batch, a_first, a_last, a_length
       integer(i15) :: required, available, n_batch, batch_dimension, max_batch_length
 !
+!     Indices
+!
+      integer(i15) :: a = 0, b = 0
+      integer(i15) :: i = 0, j = 0
+!
+      integer(i15) :: ai = 0, bj = 0
+      integer(i15) :: ia = 0, ib = 0, jb = 0, ja = 0
+!
+      integer(i15) :: aibj = 0
 !
 !     Prepare for batching over index a
 !  
@@ -290,6 +308,170 @@ contains
 !     Loop over the number of a batches 
 !
       do a_batch = 1, n_batch
+!
+!        For each batch, get the limits for the a index 
+!
+         call batch_limits(a_first, a_last, a_batch, max_batch_length, batch_dimension)
+         a_length = a_last - a_first + 1 
+!
+!        :: Calculate cc2 doubles amplitudes ::
+!
+!        Allocate L_bj_J and L_ia_J (= reordering of L_bj_J constrained to the batch)
+!
+         call allocator(L_bj_J, (wf%n_v)*(wf%n_o), wf%n_J)
+         call allocator(L_ia_J, a_length*(wf%n_o), wf%n_J)
+         L_bj_J = zero
+         L_ia_J = zero
+!
+         call wf%get_cholesky_ai(L_bj_J)
+!
+!        Create L_ia_J
+!
+         do a = 1, a_length
+            do i = 1, wf%n_o
+               do J = 1, wf%n_J
+!
+!                 Calculate compound indices
+!
+                  ia = index_two(i, a, wf%n_o)
+                  ai = index_two(a + a_first - 1, i, wf%n_v)
+!
+                  L_ia_J(ia, J) = L_bj_J(ai, J)
+!
+               enddo
+            enddo
+         enddo
+!
+!        Allocate g_ia_bj
+!
+         call allocator(g_ia_bj, a_length*(wf%n_o), (wf%n_o)*(wf%n_v))
+!
+!        Construct integral g_ia_bj (= g_aibj for the batch)
+!
+         call dgemm('N','T',            &
+                     a_length*(wf%n_o), &
+                     (wf%n_o)*(wf%n_v), &
+                     wf%n_J,            &
+                     one,               &
+                     L_ia_J,            &
+                     a_length*(wf%n_o), &
+                     L_bj_J,            &
+                     (wf%n_o)*(wf%n_v), &
+                     zero,              &
+                     g_ia_bj,           &
+                     a_length*(wf%n_o))
+!
+!        L_bj_J and L_ia_J
+!
+         call deallocator(L_bj_J, (wf%n_v)*(wf%n_o), wf%n_J)
+         call deallocator(L_ia_J, a_length*(wf%n_o), wf%n_J)
+!
+!        :: Construct the needed integrals for the enegry ::
+!
+!        Allocate t_ia_bj
+!
+         call allocator(t_ia_bj, a_length*(wf%n_o), (wf%n_o)*(wf%n_v))
+!
+!        Create t2 amplitudes
+!
+         do a = 1, a_length
+            do i = 1, wf%n_o
+!
+               ia = index_two(i, a, wf%n_o)
+!
+               do j = 1, wf%n_o
+                  do b = 1, wf%n_v
+!
+                     bj = index_two(b, j, wf%n_v)
+!
+                     t_ia_bj(ia, bj) = - g_ia_bj(ia, bj)/(wf%fock_diagonal(a + wf%n_o, 1) &
+                                          + wf%fock_diagonal(b + wf%n_o, 1) &
+                                          - wf%fock_diagonal(i, 1) - wf%fock_diagonal(j, 1))
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+!        Deallocate g_ia_bj
+!
+         call deallocator(g_ia_bj, a_length*(wf%n_o), (wf%n_o)*(wf%n_v))
+!
+!        Allocate the Cholesky vector L_ia_J = L_ia^J and set to zero 
+!
+         call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+         L_ia_J = zero
+!
+!         Get the Cholesky vector L_ia_J 
+!
+         call wf%get_cholesky_ia(L_ia_J)
+!
+!        Allocate g_ia_jb = g_iajb and set it to zero
+!
+         call allocator(g_ia_jb, (wf%n_o)*a_length, (wf%n_o)*(wf%n_v))
+         g_ia_jb = zero
+!
+!        Calculate the integrals g_ia_jb from the Cholesky vector L_ia_J 
+!
+         call dgemm('N','T',                                   &
+                     (wf%n_o)*a_length,                        &
+                     (wf%n_o)*(wf%n_v),                        &
+                     wf%n_J,                                   &
+                     one,                                      &
+                     L_ia_J(index_two(1, a_first, wf%n_o), 1), &
+                     (wf%n_o)*(wf%n_v),                        &
+                     L_ia_J,                                   &
+                     (wf%n_o)*(wf%n_v),                        &
+                     zero,                                     &
+                     g_ia_jb,                                  &
+                     (wf%n_o)*a_length)
+!
+!     Deallocate the Cholesky vector L_ia_J 
+!
+      call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+!
+!     Set the initial value of the energy 
+!
+      wf%energy = wf%scf_energy
+!
+!     Add the correlation energy E = E + sum_aibj (t_ij^ab + t_i^a t_j^b) L_iajb
+!
+         do i = 1, wf%n_o
+            do a = 1, a_length
+!
+               ai = index_two(a, i, a_length)
+               ia = index_two(i, a, wf%n_o)
+!
+               do j = 1, wf%n_o
+!
+                  ja = index_two(j, a, wf%n_o)
+!
+                 do b = 1, wf%n_v
+! 
+                     bj = index_two(b, j, wf%n_v)
+                     jb = index_two(j, b, wf%n_o)
+                     ib = index_two(i, b, wf%n_o)
+!
+                     aibj = index_packed(ai, bj)
+!
+!                    Add the correlation energy 
+!
+                     wf%energy = wf%energy + &
+                     (two*g_ia_jb(ia,jb) - g_ia_jb(ja, ib))*(t_ia_bj(ia, bj) + (wf%t1am(a,i))*(wf%t1am(b,j)))
+                              
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+!        Deallocate g_ia_jb
+!
+         call deallocator(g_ia_jb, (wf%n_o)*a_length, (wf%n_o)*(wf%n_v))
+!
+!        Deallocate t_ia_bj
+!  
+         call deallocator(t_ia_bj, a_length*(wf%n_o), (wf%n_o)*(wf%n_v))
 !
       enddo
 !
