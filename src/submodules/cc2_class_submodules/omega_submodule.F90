@@ -82,6 +82,9 @@ contains
 !
       wf%omega1 = zero
 !
+!     :: Calculate cc2 doubles amplitudes ::
+!
+!
 !     Prepare for batching over index a (Assumes A1 requires the most memory)
 !  
       required = max((2*(wf%n_v)*(wf%n_o)*(wf%n_J) &                       !    
@@ -191,7 +194,7 @@ contains
 !
          call deallocator(g_ia_bj, a_length*(wf%n_o), (wf%n_o)*(wf%n_v))
 !
-!        Construct singles contributions to batch
+!        :: Calculate omega contributions for the batch ::
 !
          call wf%omega_a1(t_ia_bj, a_first, a_last, a_length)
 !
@@ -205,7 +208,7 @@ contains
 !
          call deallocator(t_ia_bj, a_length*(wf%n_o), (wf%n_o)*(wf%n_v))
 !
-      enddo
+      enddo ! Batches of a
 !
 !     Timings
 !
