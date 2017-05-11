@@ -1,18 +1,18 @@
 submodule (ccs_class) cholesky
 !
-!
-!                       -::- Cholesky submodule (CCS) -::-
-!           Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!
-!     Contains the following family of procedures of the CCS class:
-!
-!        get_cholesky_ij(L_ij_J):         returns the T1-transformed Cholesky vector L_ij^J 
-!        get_cholesky_ia(L_ia_J):         returns the T1-transformed Cholesky vector L_ia^J 
-!        get_cholesky_ai(L_ai_J):         returns the T1-transformed Cholesky vector L_ai^J
-!        get_cholesky_ab(L_ab_J, ...):    returns the T1-transformed Cholesky vector L_ab^J,
-!                                         but has options (...) for batching over the two 
-!                                         indices a and b
+!!
+!!    Cholesky submodule (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!    Contains the following family of procedures of the CCS class:
+!!
+!!    get_cholesky_ij(L_ij_J):         returns the T1-transformed Cholesky vector L_ij^J 
+!!    get_cholesky_ia(L_ia_J):         returns the T1-transformed Cholesky vector L_ia^J 
+!!    get_cholesky_ai(L_ai_J):         returns the T1-transformed Cholesky vector L_ai^J
+!!    get_cholesky_ab(L_ab_J, ...):    returns the T1-transformed Cholesky vector L_ab^J,
+!!                                     but has options (...) for batching over the two 
+!!                                     indices a and b
+!!
 !
    implicit none 
 !
@@ -21,18 +21,18 @@ contains
 !
 !
    module subroutine get_cholesky_ij_ccs(wf, L_ij_J)
-!
-!     Get Cholesky IJ
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!     Reads and T1-transforms the IA Cholesky vectors:
-!     
-!        L_ij_J_T1 = L_ij_J + sum_a t_aj * L_ia_J
-!
-!     Memory required in routine:
-!
-!        2*n_J*n_o*n_v     -> for reading L_ia_J contribution and reordering
-!        
+!!
+!!    Get Cholesky IJ
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!    Reads and T1-transforms the IA Cholesky vectors:
+!!     
+!!       L_ij_J_T1 = L_ij_J + sum_a t_aj * L_ia_J
+!!
+!!    Memory required in routine:
+!!
+!!       2*n_J*n_o*n_v     -> for reading L_ia_J contribution and reordering
+!!        
       implicit none 
 !
       class(ccs) :: wf
@@ -50,9 +50,6 @@ contains
       call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
       call allocator(L_iJ_a, (wf%n_o)*(wf%n_J), wf%n_v)
 !
-    !  L_ia_J = zero E: needed?
-    !  L_iJ_a = zero E: needed?
-!
 !     Read the untransformed Cholesky vectors 
 !
       call wf%read_cholesky_ij(L_ij_J)
@@ -64,8 +61,6 @@ contains
          do J = 1, wf%n_J
             do a = 1, wf%n_v
 !              
-!              Needed indices
-!
                iJ = index_two(i, J, wf%n_o)
                ia = index_two(i, a, wf%n_o)
 !
@@ -82,7 +77,6 @@ contains
 !     Allocate L_iJ_k
 !
       call allocator(L_iJ_k, (wf%n_o)*(wf%n_J), wf%n_o)
-    !  L_iJ_k = zero
 !
 !     T1-transformation
 !
@@ -125,18 +119,18 @@ contains
 !
 !
    module subroutine get_cholesky_ia_ccs(wf, L_ia_J)
-!
-!     Get Cholesky IA
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!     Reads and T1-transforms IA Cholesky vectors
-!
-!        L_ia_J_T1 = L_ia_J (only reading necessary)
-!
-!     Memory required in routine:
-!
-!        No additional memory
-!
+!!
+!!    Get Cholesky IA
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!    Reads and T1-transforms IA Cholesky vectors
+!!
+!!       L_ia_J_T1 = L_ia_J (only reading necessary)
+!!
+!!    Memory required in routine:
+!!
+!!       No additional memory
+!!
       implicit none 
 !
       class(ccs) :: wf
@@ -149,24 +143,24 @@ contains
 !
 !
    module subroutine get_cholesky_ai_ccs(wf, L_ai_J)
-!
-!     Get Cholesky AI
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!     Read and T1-transform Cholesky AI vectors:
-!     
-!        L_ai_J_T1 = L_ia_J - sum_j  t_aj*L_ji_J 
-!                           + sum_b  t_bi*L_ab_J
-!                           - sum_bj t_aj*t_bi*L_jb_J
-!
-!     Allocations in routine:
-!
-!       (1) n_J*n_o*n_v + 2*n_J*n_v*batch_length   ->  for L_ab_J contribution
-!       (2) n_J*n_o*n_v + 2*n_J*n_o^2              ->  for L_ij_J contribution
-!       (3) 2*n_J*n_o*n_v                          ->  for L_jb_J contribution
-!
-!       (1) determines memory requirement. 
-!
+!!
+!!     Get Cholesky AI
+!!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!     Read and T1-transform Cholesky AI vectors:
+!!     
+!!        L_ai_J_T1 = L_ia_J - sum_j  t_aj*L_ji_J 
+!!                           + sum_b  t_bi*L_ab_J
+!!                           - sum_bj t_aj*t_bi*L_jb_J
+!!
+!!     Allocations in routine:
+!!
+!!       (1) n_J*n_o*n_v + 2*n_J*n_v*batch_length   ->  for L_ab_J contribution
+!!       (2) n_J*n_o*n_v + 2*n_J*n_o^2              ->  for L_ij_J contribution
+!!       (3) 2*n_J*n_o*n_v                          ->  for L_jb_J contribution
+!!
+!!       (1) determines memory requirement. 
+!!
       implicit none 
 !
       class(ccs) :: wf
@@ -202,7 +196,7 @@ contains
       call wf%read_cholesky_ai(L_ai_J)
 !
 !                       
-!     -::- L_ab_J contributions -::-
+!     :: L_ab_J contributions ::
 !
 !
 !     Allocate L_Ja_i
@@ -239,8 +233,9 @@ contains
          call allocator(L_ba_J, (wf%n_v)*batch_length, wf%n_J) ! L_ab^J = L_ba_J(ba,J)
          call allocator(L_Ja_b, batch_length*(wf%n_J), wf%n_v)
 !
-       !  L_ba_J = zero
-        ! L_Ja_b = zero 
+         L_ba_J = zero
+         L_Ja_b = zero 
+
 !
 !        Read Cholesky AB vectors, batching over a
 ! 
@@ -310,7 +305,7 @@ contains
       call deallocator(L_Ja_i, (wf%n_J)*(wf%n_v), wf%n_o)
 !
 !
-!     -::- L_ij_J contributions -::-
+!     :: L_ij_J contributions ::
 !
 !
 !     Allocate L_a_iJ, L_ik_J, L_k_iJ
@@ -381,7 +376,7 @@ contains
       call deallocator(L_ik_J, (wf%n_o)**2, wf%n_J)
 !
 !
-!     -::- L_jb_J contributions -::-    
+!     :: L_jb_J contributions ::    
 !
 !
       call allocator(L_kJ_b, (wf%n_o)*(wf%n_J), wf%n_v)
@@ -396,8 +391,6 @@ contains
       do k = 1, wf%n_o
          do b = 1, wf%n_v
             do J = 1, wf%n_J
-!
-!              Needed indices
 !
                kb = index_two(k, b, wf%n_o)
                kJ = index_two(k, J, wf%n_o)
@@ -415,7 +408,6 @@ contains
 !     Allocate L_kJ_i 
 !
       call allocator(L_kJ_i, (wf%n_o)*(wf%n_J), wf%n_o)
-     ! L_kJ_i = zero
 !
 !     Calculate sum_b L_kJ_b*t_b_i = L_kJ_i
 !
@@ -439,15 +431,12 @@ contains
 !     Allocate L_k_iJ
 !  
       call allocator(L_k_iJ, (wf%n_o), (wf%n_o)*(wf%n_J))
-     ! L_k_iJ = zero
 !
 !     Reorder L_kJ_i to L_k_iJ    
 !
       do i = 1, wf%n_o
          do k = 1, wf%n_o
             do J = 1, wf%n_J
-!
-!              Needed indices
 !
                kJ = index_two(k, J, wf%n_o)
                iJ = index_two(i, J, wf%n_o)
@@ -465,7 +454,6 @@ contains
 !     Allocate L_a_iJ
 !
       call allocator(L_a_iJ, wf%n_v, (wf%n_o)*(wf%n_J))
-    !  L_a_iJ = zero
 !      
 !     Calculate sum_k t_a_k*L_k_iJ = L_a_iJ
 !
@@ -488,8 +476,6 @@ contains
          do i = 1, wf%n_o
             do J = 1, wf%n_J
 !
-!              Needed indices
-!
                iJ = index_two(i, J, wf%n_o)
                ai = index_two(a, i, wf%n_v)
 !
@@ -508,21 +494,22 @@ contains
 !
 !
    module subroutine get_cholesky_ab_ccs(wf, L_ab_J, first, last, ab_dim, reorder)
-!
-!     Get Cholesky AB
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!     Reads and T1-transforms the IA Cholesky vectors:
-!
-!           L_ab_J_T1 = L_ab_J - sum_i t_ai*L_ib_J
-!
-!     If reorder = .true.,  L_ba_J is returned with batching over a
-!     If reorder = .false., L_ab_J is returned with batching over b
-!
-!     Required memory: 
-!        n_J*batch_length*n_v   ->   For reordering of L_ab_J / L_ba_J
-!        2*n_v*n_o*n_J          ->   For L_ib_J contribution
-!
+!!
+!!    Get Cholesky AB
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!    Reads and T1-transforms the IA Cholesky vectors:
+!!
+!!       L_ab_J_T1 = L_ab_J - sum_i t_ai*L_ib_J
+!!
+!!    If reorder = .true.,  L_ba_J is returned with batching over a
+!!    If reorder = .false., L_ab_J is returned with batching over b
+!!
+!!    Required memory: 
+!!
+!!       n_J*batch_length*n_v   ->   For reordering of L_ab_J / L_ba_J
+!!       2*n_v*n_o*n_J          ->   For L_ib_J contribution
+!!
       implicit none
 !
       class(ccs) :: wf
@@ -558,7 +545,6 @@ contains
 !        Allocate L_ib_J
 !     
          call allocator(L_ib_J, (wf%n_o)*(wf%n_v), wf%n_J)
-        ! L_ib_J = zero
 !
 !        Read L_ia_J
 !  
@@ -572,15 +558,12 @@ contains
 !        Allocate L_i,Jb
 !
          call allocator(L_i_Jb, wf%n_o, (wf%n_J)*(wf%n_v))
-        ! L_i_Jb = zero
 !
 !        Reorder L_ib_J to L_i_Jb
 !
          do i = 1, wf%n_o
             do b = 1, wf%n_v
                do J = 1, wf%n_J
-!
-!                 Needed indices
 !
                   ib = index_two(i, b, wf%n_o)
                   Jb = index_two(J, b, wf%n_J)
@@ -620,8 +603,6 @@ contains
             do b = 1, wf%n_v
                do J = 1, wf%n_J
 !
-!                 Needed indices
-!
                   Jb = index_two(J, b, wf%n_J)
                   ba = index_two(b, a, wf%n_v)
 !
@@ -641,12 +622,11 @@ contains
 !        Allocate L_ib_J
 !     
          call allocator(L_ib_J, (wf%n_o)*(wf%n_v), wf%n_J)
-        ! L_ib_J = zero
 !
 !        Read L_ia_J
 !
-!           Note: using L_ia_J instead of L_ai_J, here, to avoid two reorderings.
-!                 This is possible because of the symmetry L_ai_J(ai,J) == L_ia_J(ia,J).
+!        Note: using L_ia_J instead of L_ai_J, here, to avoid two reorderings.
+!              This is possible because of the symmetry L_ai_J(ai,J) == L_ia_J(ia,J).
 !  
          call wf%read_cholesky_ia(L_ib_J)
 !
@@ -657,15 +637,12 @@ contains
 !        Allocate L_Jb,i for batch of b
 !
          call allocator(L_Jb_i, (wf%n_J)*batch_length, wf%n_o)
-        ! L_Jb_i = zero
 !
 !        Reorder L_ib_J to L_Jb_i
 !
          do i = 1, wf%n_o
             do b = 1, batch_length
                do J = 1, wf%n_J
-!
-!                 Needed indices
 !
                   ib = index_two(i, b + first - 1, wf%n_o) ! Note: in L_ib_J we have all b, not the case for L_Jb_i
                   Jb = index_two(J, b, wf%n_J)
@@ -704,8 +681,6 @@ contains
          do a = 1, wf%n_v
             do b = 1, batch_length
                do J = 1, wf%n_J
-!
-!                 Needed indices
 !
                   Jb = index_two(J, b, wf%n_J)
                   ab = index_two(a, b, wf%n_v)

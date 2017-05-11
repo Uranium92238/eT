@@ -1,11 +1,9 @@
 module ccsd_class
 !
-!
-!
-!           Coupled cluster singles and doubles (CCSD) class module                                 
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017         
-!                                                                           
-!
+!!
+!!           Coupled cluster singles and doubles (CCSD) class module                                 
+!!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017         
+!!                                                                           
 !
 !  :::::::::::::::::::::::::::::::::::
 !  -::- Modules used by the class -::-
@@ -24,15 +22,13 @@ module ccsd_class
 !
    implicit none 
 !
-!
 !  ::::::::::::::::::::::::::::::::::::::
 !  -::- Definition of the CCSD class -::-
 !  ::::::::::::::::::::::::::::::::::::::
 !
-!
    type, extends(ccs) :: ccsd
 !
-!     Amplitude attributes
+!     Amplitude variables
 !
       integer(i15) :: n_t2am = 0                    ! Number of doubles amplitudes
       real(dp), dimension(:,:), allocatable :: t2am ! Doubles amplitude vector
@@ -94,22 +90,22 @@ module ccsd_class
 !
    end type ccsd
 !
-!
 !  :::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  -::- Interface to the submodule routines of CCSD -::- 
 !  :::::::::::::::::::::::::::::::::::::::::::::::::::::
-!
 !
    interface
 !
 !
       module subroutine initialize_omega_ccsd(wf)
-!
-!        Initialize Omega (CCSD)
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!
-!        Allocates the projection vector (omega1, omega2) and sets it
-!        to zero.
+!!
+!!       Initialize Omega (CCSD)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!       Allocates the projection vector (omega1, omega2) and sets it
+!!       to zero.
+!!
+         implicit none 
 !
          class(ccsd) :: wf
 !
@@ -117,12 +113,14 @@ module ccsd_class
 !
 !
       module subroutine construct_omega_ccsd(wf)
-!
-!        Construct Omega (CCSD)
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!        Directs the construction of the projection vector < mu | exp(-T) H exp(T) | R >
-!        for the current amplitudes of the object wfn 
+!!
+!!       Construct Omega (CCSD)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!       Directs the construction of the projection vector < mu | exp(-T) H exp(T) | R >
+!!       for the current amplitudes of the object wfn 
+!!
+         implicit none 
 !
          class(ccsd) :: wf 
 !
@@ -130,16 +128,18 @@ module ccsd_class
 !
 !
       module subroutine omega_a1_ccsd(wf)
-!
-!        Omega A1 term
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!  
-!        Calculates the A1 term, 
-!  
-!           sum_ckd g_adkc * u_ki^cd,
-!  
-!        and adds it to the singles projection vector (omeg1) of
-!        the wavefunction object wfn
+!!
+!!       Omega A1 term
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!  
+!!       Calculates the A1 term, 
+!!  
+!!          sum_ckd g_adkc * u_ki^cd,
+!!  
+!!       and adds it to the singles projection vector (omeg1) of
+!!       the wavefunction object wfn.
+!!
+         implicit none 
 !
          class(ccsd) :: wf
 !
@@ -147,16 +147,18 @@ module ccsd_class
 !
 !
       module subroutine omega_b1_ccsd(wf)
-!
-!        Omega B1
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!        Calculates the B1 term, 
-!
-!          - sum_ckl u_kl^ac * g_kilc,
-! 
-!        and adds it to the singles projection vector (omeg1) of
-!        the wavefunction object wfn
+!!
+!!       Omega B1
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!       Calculates the B1 term, 
+!!
+!!         - sum_ckl u_kl^ac * g_kilc,
+!! 
+!!       and adds it to the singles projection vector (omeg1) of
+!!       the wavefunction object wfn
+!!
+         implicit none 
 !
          class(ccsd) :: wf 
 !
@@ -164,11 +166,14 @@ module ccsd_class
 !
 !
       module subroutine omega_c1_ccsd(wf)
-!
-!        C1 omega term: Omega_ai^C1 = sum_ck F_kc*u_ai_ck,
-!                       u_ai_ck = 2*t_ck_ai-t_ci_ak
-!        
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, March 2017
+!!
+!!       Omega C1 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, March 2017
+!!
+!!       Omega_ai^C1 = sum_ck F_kc*u_ai_ck,
+!!                       u_ai_ck = 2*t_ck_ai-t_ci_ak
+!!
+         implicit none 
 !
          class(ccsd) :: wf 
 !
@@ -176,26 +181,33 @@ module ccsd_class
 !
 !
       module subroutine omega_d1_ccsd(wf)
+!!
+!!       Omega D1 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, March 2017
+!!
+!!       Omega_ai^D1 = F_ai_T1
+!!
+         implicit none 
 !
-!        D1 omega term: Omega_ai^D1=F_ai_T1
-!
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, March 2017
-!
-            class(ccsd) :: wf
+         class(ccsd) :: wf
 !
       end subroutine omega_d1_ccsd
 !
 !
       module subroutine omega_a2_ccsd(wf)
-!
-!        MLCC Omega A2 term: Omega A2 = g_ai_bj + sum_(cd)g_ac_bd * t_ci_dj = A2.1 + A.2.2
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, 10 Mar 2017
-!
-!        Structure: Batching over both a and b. If no batching is necessary L_ab_J is only read once, and g_ac_bd 
-!                   is constructed and kept in memory full size. 
-!                   g_ac_bd is reordered as g_ab_cd and t_ci_dj is reordered as t_cd_ij.
-!                   Omega contribution for A2.2 is ordered as Omega_ab_ij, and is reordered into the packed omega2 vector.          
-!
+!!
+!!       Omega A2 term
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, 10 Mar 2017
+!!
+!!       Omega A2 = g_ai_bj + sum_(cd)g_ac_bd * t_ci_dj = A2.1 + A.2.2
+!!
+!!       Structure: Batching over both a and b. If no batching is necessary 
+!!       L_ab_J is only read once, and g_ac_bd is constructed and kept in memory 
+!!       full size. g_ac_bd is reordered as g_ab_cd and t_ci_dj is reordered as t_cd_ij.
+!!       Omega contribution for A2.2 is ordered as Omega_ab_ij, and is reordered into 
+!!       the packed omega2 vector.          
+!!
+         implicit none 
 !
          class(ccsd) :: wf
 !
@@ -203,14 +215,17 @@ module ccsd_class
 !
 !
       module subroutine omega_b2_ccsd(wf)
-!
-!        MLCC Omega B2 term.  Omega B2 = sum_(kl) t_ak_bl*(g_kilj + sum_(cd) t_ci_dj * g_kc_ld)
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, 11 Mar 2017
-! 
-!
-!        Structure: g_kilj is constructed first and reordered as g_kl_ij. 
-!                   Then the contraction over cd is performed, and the results added to g_kl_ij.
-!                   t_ak_bl is then reordered as t_ab_kl and the contraction over kl is performed.
+!!
+!!       Omega B2
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, 11 Mar 2017
+!! 
+!!       Omega B2 = sum_(kl) t_ak_bl*(g_kilj + sum_(cd) t_ci_dj * g_kc_ld)
+!!
+!!       Structure: g_kilj is constructed first and reordered as g_kl_ij. 
+!!       Then the contraction over cd is performed, and the results added to g_kl_ij.
+!!       t_ak_bl is then reordered as t_ab_kl and the contraction over kl is performed.
+!!
+         implicit none 
 !
          class(ccsd) :: wf
 !
@@ -218,13 +233,14 @@ module ccsd_class
 !
 !
       module subroutine omega_c2_ccsd(wf)
-!
-!        C2 omega term. Omega C2 = -1/2* sum_(ck)t_bk_cj*(g_ki_ac -1/2 sum_(dl)t_al_di * g_kd_lc)
-!                                  - sum_(ck) t_bk_ci (g_kj_ac-sum_(dl)t_al_dj*g_kd_lc)
-!
-!
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2017
-!     
+!!
+!!       Omega C2 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2017
+!!     
+!!       Omega C2 = -1/2* sum_(ck)t_bk_cj*(g_ki_ac -1/2 sum_(dl)t_al_di * g_kd_lc)
+!!                                  - sum_(ck) t_bk_ci (g_kj_ac-sum_(dl)t_al_dj*g_kd_lc)
+!!
+         implicit none 
 !
          class(ccsd) :: wf
 !
@@ -232,6 +248,28 @@ module ccsd_class
 !
 !
       module subroutine omega_d2_ccsd(wf)
+!!
+!!       Omega D2 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!       Calculates the D2 term,
+!!
+!!          sum_ck u_jk^bc g_aikc 
+!!           - 1/2 * sum_ck u_jk^bc g_acki 
+!!           + 1/4 * sum_ck u_jk^bc sum_dl L_ldkc u_il^ad,
+!!
+!!       where 
+!!
+!!          u_jk^bc = 2 * t_jk^bc - t_kj^bc,
+!!          L_ldkc  = 2 * g_ldkc  - g_lckd.
+!!
+!!       The first, second, and third terms are referred to as D2.1, D2.2, and D2.3, 
+!!       and comes out ordered as (ai,bj). All terms are added to the omega vector of the 
+!!       wavefunction object wf.
+!!
+!!       The routine adds the terms in the following order: D2.3, D2.1, D2.2
+!!
+         implicit none 
 !
          class(ccsd) :: wf
 !
@@ -239,6 +277,26 @@ module ccsd_class
 !
 !
       module subroutine omega_e2_ccsd(wf)
+!!
+!!       Omega E2
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!       Calculates the E2 term,
+!!
+!!           sum_c t_ij^ac (F_bc - sum_dkl g_ldkc u_kl^bd) 
+!!           - sum_k t_ik^ab (F_kj + sum_cdl g_ldkc u_lj^dc),
+!!
+!!       where
+!!
+!!          u_kl^bc = 2 * t_kl^bc - t_lk^bc.
+!!
+!!       The first term is referred to as the E2.1 term, and comes out ordered as (b,jai).
+!!       The second term is referred to as the E2.2 term, and comes out ordered as (aib,j).
+!!
+!!       Both are permuted added to the projection vector element omega2(ai,bj) of
+!!       the wavefunction object wf.
+!!
+         implicit none 
 !
          class(ccsd) :: wf
 !
@@ -246,9 +304,11 @@ module ccsd_class
 !
 !
       module subroutine calc_ampeqs_norm_ccsd(wf, ampeqs_norm)
-!
-!        Calculate Amplitude Equations Norm (CCSD)
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!       Calculate Amplitude Equations Norm (CCSD)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+         implicit none 
 !
          class(ccsd) :: wf 
 !
@@ -258,13 +318,15 @@ module ccsd_class
 !
 !
       module subroutine new_amplitudes_ccsd(wf)
-!
-!        New Amplitudes (CCSD)
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!
-!        Directs the calculation of the quasi-Newton estimate Δ t_i, 
-!        and t_i + Δ t_i, and calls the DIIS routine to save & get 
-!        the amplitudes for the next iteration. 
+!!
+!!       New Amplitudes (CCSD)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!       Directs the calculation of the quasi-Newton estimate Δ t_i, 
+!!       and t_i + Δ t_i, and calls the DIIS routine to save & get 
+!!       the amplitudes for the next iteration. 
+!!
+         implicit none 
 !
          class(ccsd) :: wf 
 !
@@ -272,13 +334,15 @@ module ccsd_class
 !
 !
       module subroutine calc_quasi_Newton_doubles_ccsd(wf,dt,n_variables)
-!
-!        Calculate quasi-Newton estimate (CCSD)
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!
-!        Calculates the quasi-Newton estimate Δ t_i (doubbles part)
-!        and places the contribution in the dt vector (of length n_variables,
-!        with singles first, then doubles, etc. if inherited)
+!!
+!!       Calculate quasi-Newton estimate (CCSD)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!       Calculates the quasi-Newton estimate Δ t_i (doubbles part)
+!!       and places the contribution in the dt vector (of length n_variables,
+!!       with singles first, then doubles, etc. if inherited)
+!!
+         implicit none 
 !
          class(ccsd) :: wf 
 !
@@ -289,16 +353,23 @@ module ccsd_class
 !
 !
       module subroutine jacobian_transformation_ccsd(wf,c1am,c2am)
-!
-!        Jacobian Transformation (CCSD)
-!        Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!
-!        Directs the transformation of the incoming vector c by the 
-!        coupled cluster Jacobian matrix 
-!
-!           A_mu,nu = < mu | [e^(-T) H e^(T),tau_nu] | R >.
-!
-!        On exit, A*c is placed in the incoming c vector.
+!!
+!!       Jacobian Transformation (CCSD)
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!       Directs the transformation of the incoming vector c by the 
+!!       coupled cluster Jacobian matrix, 
+!!
+!!          A_mu,nu = < mu | [e^(-T) H e^(T),tau_nu] | R >.
+!!
+!!       On exit, A*c is placed in the incoming c vector.
+!!
+!!       Reads doubles amplitudes from file, but assumes the singles are held in 
+!!       memory from a ground state calculation. The routine assumes that the omega 
+!!       vector and the doubles amplitudes are deallocated, in terms of memory 
+!!       presumed available (~ 5 * v^2 * o^2).
+!!
+         implicit none 
 !
          class(ccsd) :: wf 
 !
@@ -309,16 +380,16 @@ module ccsd_class
 !
 !
       module subroutine jacobian_a1_ccsd(wf,tr1am,c1am)
-!
-!        Jacobian A1 
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!
-!        Calculates the A1 term, 
-!
-!           sum_c F_ac c_ci - sum_k c_ak F_ki + sum_ck L_aikc c_ck
-!
-!        and adds it to the transformed singles vector element tr1am(a,i).
-!
+!!
+!!       Jacobian A1 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!       Calculates the A1 term, 
+!!
+!!          sum_c F_ac c_ci - sum_k c_ak F_ki + sum_ck L_aikc c_ck
+!!
+!!       and adds it to the transformed singles vector element tr1am(a,i).
+!!
          implicit none 
 !
          class(ccsd) :: wf 
@@ -330,16 +401,18 @@ module ccsd_class
       end subroutine jacobian_a1_ccsd
 !
       module subroutine jacobian_b1_ccsd(wf,tr1am,c1am)
-!
-!        Jacobian B1
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!
-!        Calculates the B1 term,
-!
-!           sum_dl (sum_ck L_ldkc c_ck) u_li^da,
-!
-!        where L_ldkc = 2 * g_ldkc - g_lckd and 
-!        u_li^ad = 2 * t_li^ad - t_il^ad.
+!!
+!!       Jacobian B1
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!       Calculates the B1 term,
+!!
+!!         sum_dl (sum_ck L_ldkc c_ck) u_li^da,
+!!
+!!       where L_ldkc = 2 * g_ldkc - g_lckd and 
+!!       u_li^ad = 2 * t_li^ad - t_il^ad.
+!!
+         implicit none 
 !
          class(ccsd) :: wf 
 !
@@ -380,7 +453,7 @@ contains
 !
 !     Set model name 
 !
-      wf%name = 'CCSD   '
+      wf%name = 'CCSD'
 !
 !     Read Hartree-Fock info from SIRIUS
 !
@@ -426,14 +499,14 @@ contains
 !
 !
    subroutine initialize_amplitudes_ccsd(wf)
-!
-!     Initialize Amplitudes (CCSD)
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!     Allocates the amplitudes, sets them to zero, calculates
-!     the number of amplitudes, and sets the doubles amplitudes
-!     to the perturbative MP2 estimate.
-!
+!!
+!!     Initialize Amplitudes (CCSD)
+!!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!     Allocates the amplitudes, sets them to zero, calculates
+!!     the number of amplitudes, and sets the doubles amplitudes
+!!     to the perturbative MP2 estimate.
+!!
       implicit none 
 !
       class(ccsd) :: wf

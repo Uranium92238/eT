@@ -1,32 +1,30 @@
 submodule (ccsd_class) jacobian
 !
 !!
-!!
-!!     Jacobian submodule (CCSD)                            
-!!     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017         
-!!
-!!                                                                           
+!!    Jacobian submodule (CCSD)                            
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017         
+!!                                                                          
 !
 contains
 !
 !
    module subroutine jacobian_transformation_ccsd(wf,c1am,c2am)
-!
-!     Jacobian Transformation (CCSD)
-!     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!
-!     Directs the transformation of the incoming vector c by the 
-!     coupled cluster Jacobian matrix, 
-!
-!        A_mu,nu = < mu | [e^(-T) H e^(T),tau_nu] | R >.
-!
-!     On exit, A*c is placed in the incoming c vector.
-!
-!     Reads doubles amplitudes from file, but assumes the singles are held in 
-!     memory from a ground state calculation. The routine assumes that the omega 
-!     vector and the doubles amplitudes are deallocated, in terms of memory 
-!     presumed available (~ 5 * v^2 * o^2).
-!
+!!
+!!    Jacobian Transformation (CCSD)
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!    Directs the transformation of the incoming vector c by the 
+!!    coupled cluster Jacobian matrix, 
+!!
+!!       A_mu,nu = < mu | [e^(-T) H e^(T),tau_nu] | R >.
+!!
+!!    On exit, A*c is placed in the incoming c vector.
+!!
+!!    Reads doubles amplitudes from file, but assumes the singles are held in 
+!!    memory from a ground state calculation. The routine assumes that the omega 
+!!    vector and the doubles amplitudes are deallocated, in terms of memory 
+!!    presumed available (~ 5 * v^2 * o^2).
+!!
       class(ccsd) :: wf 
 !
       real(dp), dimension(:,:) :: c1am 

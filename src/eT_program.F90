@@ -28,7 +28,7 @@ program eT_program
 !
 !  Wavefunction pointer
 !
-   class(hartree_fock), pointer :: wf => null()
+   class(hf), pointer :: wf => null()
 !
 !  Method string 
 !
@@ -49,8 +49,8 @@ program eT_program
 !  -::-  Create & open the main output file  -::- 
 !  ::::::::::::::::::::::::::::::::::::::::::::::
 !
-   call init_output_file
-   open(unit=unit_output,file='eT.out',status='old',form='formatted')
+   call generate_unit_identifier(unit_output)
+   open(unit=unit_output,file='eT.out',status='unknown',form='formatted')
    rewind(unit_output)
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::::
