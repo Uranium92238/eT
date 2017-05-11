@@ -7,7 +7,6 @@ module input_reader
    use input_output
    use calc_procedures_class
    use calc_settings_class
-   use hf_class
 !
 contains
 !
@@ -42,11 +41,15 @@ contains
             enddo
 !
             if (line(1:1) == '.') then 
+!
                method = trim(line(2:40))
                exit ! Escape from general do loop
+!
             else
+!
                write(unit_output,*) 'Input error: expected method, not the line ',trim(line),'.'
                stop ! Terminate program
+!
             endif
 !
          else
