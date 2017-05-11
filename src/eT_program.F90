@@ -117,9 +117,9 @@ program eT_program
 !
    write(unit_output,'(/t3,a/)')         'Settings for this calculation:'
 !
-   write(unit_output,'(t6,a25,e10.2)')    'Energy threshold:',         wf%settings%energy_threshold
-   write(unit_output,'(t6,a25,e10.2/)')   'Amplitude eqs. threshold:', wf%settings%ampeqs_threshold
-   write(unit_output,'(t6,a25,i10/)')     'Memory:',                   mem
+   write(unit_output,'(t6,a25,e14.2)')    'Energy threshold:',         wf%settings%energy_threshold
+   write(unit_output,'(t6,a25,e14.2)')   'Amplitude eqs. threshold:', wf%settings%ampeqs_threshold
+   write(unit_output,'(t6,a25,i14/)')     'Memory:',                   mem
 !
 !  Close input file
 !
