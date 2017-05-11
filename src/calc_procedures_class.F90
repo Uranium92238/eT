@@ -13,7 +13,6 @@ module calc_procedures_class
 !!    Tasks are determined during the read of the input (see the main program).
 !!    Implemented are set by the wavefunction's initialization routine.
 !! 
-!!
 !
 !  :::::::::::::::::::::::::::::::::::
 !  -::- Modules used by the class -::-
