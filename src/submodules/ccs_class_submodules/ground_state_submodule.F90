@@ -65,7 +65,7 @@ contains
       real(dp) :: prev_energy
       real(dp) :: ampeqs_norm
 !
-      real(dp) :: last_time, first_time
+      real(dp) :: start_gs_solver, end_gs_solver
 !
       logical :: converged_energy = .false.
       logical :: converged_ampeqs = .false.
@@ -101,7 +101,7 @@ contains
 !
       iteration = 1
 !
-      call cpu_time(first_time)
+      call cpu_time(start_gs_solver)
 !
       do while ((.not. converged) .and. (iteration .le. wf%settings%ampeqs_max_iterations))
 !
@@ -131,7 +131,7 @@ contains
 !        Print information to output 
 !
          write(unit_output,'(T3,I2,5X,F14.8,4X,E10.4)') iteration, wf%energy, ampeqs_norm 
-         flush(unit_output) ! Flush so that the user can follow each iteration as they are reached
+         flush(unit_output) ! Flush so that the user can follow each iteration in real-time
 !
 !        Perform DIIS update if convergence hasn't been reached
 !
@@ -159,9 +159,9 @@ contains
       close(unit_t_dt)
       close(unit_diis_matrix)
 !
-      call cpu_time(last_time)
+      call cpu_time(end_gs_solver)
 !
-      write(unit_output,'(t3,a27,f14.8/)') 'Total time (seconds):',last_time-first_time
+      write(unit_output,'(t3,a27,f14.8/)') 'Total time (seconds):', end_gs_solver - start_gs_solver
 !
    end subroutine ground_state_solver_ccs
 !
