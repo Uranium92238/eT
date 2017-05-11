@@ -1,17 +1,13 @@
 module ccs_class
 !
-!
-!
-!               Coupled cluster singles (CCS) class module                                 
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017         
-!                                                                           
-!
-!
+!!
+!!              Coupled cluster singles (CCS) class module                                 
+!!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017         
+!!                                                                           
 !
 !  :::::::::::::::::::::::::::::::::::
 !  -::- Modules used by the class -::-
 !  :::::::::::::::::::::::::::::::::::
-!
 !
 !  General tools
 !
@@ -24,16 +20,13 @@ module ccs_class
 !
    use hf_class
 !
-!
    implicit none 
-!
 !
 !  :::::::::::::::::::::::::::::::::::::
 !  -::- Definition of the CCS class -::-
 !  ::::::::::::::::::::::::::::::::::::: 
 !
-!
-   type, extends(hartree_fock) :: ccs
+   type, extends(hf) :: ccs
 !
 !     Amplitude attributes
 !
@@ -99,45 +92,58 @@ module ccs_class
       procedure :: ground_state_solver       => ground_state_solver_ccs
 !
       procedure :: new_amplitudes            => new_amplitudes_ccs
-      procedure :: diis                      => diis_ccs
-!   
       procedure :: calc_ampeqs               => calc_ampeqs_ccs
       procedure :: calc_ampeqs_norm          => calc_ampeqs_norm_ccs
       procedure :: calc_quasi_Newton_singles => calc_quasi_Newton_singles_ccs
 !
+      procedure, non_overridable :: diis     => diis_ccs
+!
 !
    end type ccs
-!
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  -::- Interface to the submodule routines of CCS -::- 
 !  ::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
-!
    interface
 !
 !
       module subroutine get_cholesky_ij_ccs(wf, L_ij_J)
-!
-!        Get Cholesky IJ
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!        Calculates the T1-transformed Cholesky vector L_ij^J,
-!        and places it in L_ij_J
+!!
+!!       Get Cholesky IJ
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!       Reads and T1-transforms the IA Cholesky vectors:
+!!     
+!!          L_ij_J_T1 = L_ij_J + sum_a t_aj * L_ia_J
+!!
+!!       Memory required in routine:
+!!
+!!          2*n_J*n_o*n_v     -> for reading L_ia_J contribution and reordering
+!!        
+         implicit none 
 !
          class(ccs) :: wf
+!
          real(dp), dimension((wf%n_o)**2, wf%n_J) :: L_ij_J
 !
       end subroutine get_cholesky_ij_ccs
 !
 !
       module subroutine get_cholesky_ia_ccs(wf, L_ia_J)
-!
-!        Get Cholesky IA
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!        Calculates the T1-transformed Cholesky vector L_ia^J,
-!        and places it in L_ia_J
+!!
+!!       Get Cholesky IA
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!       Reads and T1-transforms IA Cholesky vectors
+!!
+!!          L_ia_J_T1 = L_ia_J (only reading necessary)
+!!
+!!       Memory required in routine:
+!!
+!!          No additional memory
+!!
+         implicit none 
 !
          class(ccs) :: wf
 !
@@ -147,12 +153,25 @@ module ccs_class
 !
 !
       module subroutine get_cholesky_ai_ccs(wf,L_ai_J)
-!
-!        Get Cholesky AI
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!        Calculates the T1-transformed Cholesky vector L_ai^J,
-!        and places it in L_ai_J 
+!!
+!!       Get Cholesky AI
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!       Read and T1-transform Cholesky AI vectors:
+!!     
+!!           L_ai_J_T1 = L_ia_J - sum_j  t_aj*L_ji_J 
+!!                           + sum_b  t_bi*L_ab_J
+!!                           - sum_bj t_aj*t_bi*L_jb_J
+!!
+!!       Allocations in routine:
+!!
+!!          (1) n_J*n_o*n_v + 2*n_J*n_v*batch_length   ->  for L_ab_J contribution
+!!          (2) n_J*n_o*n_v + 2*n_J*n_o^2              ->  for L_ij_J contribution
+!!          (3) 2*n_J*n_o*n_v                          ->  for L_jb_J contribution
+!!
+!!          (1) determines memory requirement. 
+!!
+         implicit none 
 !
          class(ccs) :: wf
 !
@@ -162,19 +181,31 @@ module ccs_class
 !
 !
       module subroutine get_cholesky_ab_ccs(wf, L_ab_J, first, last, ab_dim, reorder)
-!
-!        Get Cholesky AB
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!        Calculates the T1-transformed Cholesky vector L_ab^J,
-!        and places it in L_ab_J (with options for batching over a and b)
+!!
+!!       Get Cholesky AB
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!       Reads and T1-transforms the IA Cholesky vectors:
+!!
+!!          L_ab_J_T1 = L_ab_J - sum_i t_ai*L_ib_J
+!!
+!!       If reorder = .true.,  L_ba_J is returned with batching over a
+!!       If reorder = .false., L_ab_J is returned with batching over b
+!!
+!!       Required memory: 
+!!
+!!          n_J*batch_length*n_v   ->   For reordering of L_ab_J / L_ba_J
+!!          2*n_v*n_o*n_J          ->   For L_ib_J contribution
+!!
+         implicit none 
 !
          class(ccs) :: wf
+!
+         logical, intent(in) :: reorder
 !
          integer(i15), intent(in) :: ab_dim
          integer(i15), intent(in) :: first
          integer(i15), intent(in) :: last
-         logical, intent(in)      :: reorder
 !
          real(dp), dimension(ab_dim, wf%n_J) :: L_ab_J
 !
@@ -182,12 +213,14 @@ module ccs_class
 !
 !
       module subroutine initialize_fock_matrix_ccs(wf)
-!  
-!        Initialize Fock matrix
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!        Allocates and sets Fock matrix blocks (ij, ia, ai, ab) to zero
-!        before calling the Fock matrix constructor
+!!  
+!!       Initialize Fock matrix
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!       Allocates and sets Fock matrix blocks (ij, ia, ai, ab) to zero
+!!       before calling the Fock matrix constructor.
+!!
+         implicit none 
 !
          class(ccs) :: wf
 !     
@@ -195,13 +228,14 @@ module ccs_class
 !
 !
       module subroutine construct_fock_ccs(wf)
-!
-!        Construct Fock 
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!        Constructs the T1-transformed Fock matrix blocks (occ/vir-occ/vir),
-!        and saves the result in the class variables fock_matrix_pq (see the
-!        Hartree-Fock class for these variables)  
+!!
+!!       Construct Fock 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!       Constructs the T1-transformed Fock matrix blocks (occ/vir-occ/vir),
+!!       and saves the result in the class variables fock_pq.  
+!!
+         implicit none 
 !
          class(ccs) :: wf
 !
@@ -209,16 +243,20 @@ module ccs_class
 !
 !
       module subroutine one_electron_t1_ccs(wf, h1 ,h1_T1)
-!
-!        One-electron T1 
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!        T1-transforms the one-electron MO integrals h_pq
-!
-!              h_p_q_T1 = sum_st x_p_s * y_q_t * h_s_t
-!
-!              x = I - t1
-!              y = I - t1^T
+!!
+!!       One-electron T1 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!       T1-transforms the one-electron MO integrals h_pq
+!!
+!!           h_p_q_T1 = sum_st x_p_s * y_q_t * h_s_t,
+!!
+!!       where
+!!
+!!           x = I - t1,
+!!           y = I - t1^T.
+!!
+         implicit none 
 !
          class(ccs) :: wf
 !
@@ -229,27 +267,36 @@ module ccs_class
 !
 !
       module subroutine ground_state_solver_ccs(wf)
+!!
+!!       Ground State Solver 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!       Directs the solution of the ground state amplitude equations
+!!       using a DIIS algorithm. The problem the routine solves is 
+!!
+!!          X_mu(t) = 0, where t = { t_mu }_mu 
+!!
+!!       For standard coupled cluster theories, the vector X is the
+!!       projection vector (omega).
+!!
+         implicit none 
 !
-!       Ground State Solver 
-!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!
-!       Directs the solution of the ground state amplitude equations
-!       using a DIIS algorithm.
-!
-        class(ccs) :: wf 
+         class(ccs) :: wf 
 !
       end subroutine ground_state_solver_ccs
 !
 !
       module subroutine calc_ampeqs_ccs(wf)
-!
-!        Calculate Amplitude Equations (CCS)
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!
-!        Constructs the amplitude equations vector (the projection vector 
-!        in CCS) for the amplitudes of the current iteration of the ground state
-!        solver. It also calculates the norm of the amplitude equations, which 
-!        is zero when the equations are exactly solved.
+!!
+!!       Calculate Amplitude Equations (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!       Constructs the amplitude equations vector (the projection vector 
+!!       in CCS) for the amplitudes of the current iteration of the ground state
+!!       solver. It also calculates the norm of the amplitude equations, which 
+!!       is zero when the equations are exactly solved.
+!!
+         implicit none 
 !
          class(ccs) :: wf 
 !
@@ -257,9 +304,11 @@ module ccs_class
 !
 !
       module subroutine calc_ampeqs_norm_ccs(wf, ampeqs_norm)
-!
-!        Calculate Amplitude Equations Norm 
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!       Calculate Amplitude Equations Norm (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+         implicit none 
 !
          class(ccs) :: wf 
          real(dp)   :: ampeqs_norm 
@@ -268,13 +317,15 @@ module ccs_class
 !
 !
       module subroutine new_amplitudes_ccs(wf)
-!
-!        New Amplitudes (CCS)
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!
-!        Directs the calculation of the quasi-Newton estimate Δ t_i, 
-!        and t_i + Δ t_i, and calls the DIIS routine to save & get 
-!        the amplitudes for the next iteration.
+!!
+!!       New Amplitudes (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!       Directs the calculation of the quasi-Newton estimate Δ t_i, 
+!!       and t_i + Δ t_i, and calls the DIIS routine to save & get 
+!!       the amplitudes for the next iteration.
+!!
+         implicit none 
 !
          class(ccs) :: wf 
 !
@@ -282,13 +333,15 @@ module ccs_class
 !
 !
       module subroutine calc_quasi_Newton_singles_ccs(wf,dt,n_variables)
-!
-!        Calculate quasi-Newton estimate (CCS)
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!
-!        Calculates the quasi-Newton estimate Δ t_i (singles part)
-!        and places the contribution in the dt vector (of length n_variables,
-!        with singles first, then doubles, etc. if inherited)
+!!
+!!       Calculate quasi-Newton estimate (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!       Calculates the quasi-Newton estimate Δ t_i (singles part)
+!!       and places the contribution in the dt vector (of length n_variables,
+!!       with singles first, then doubles, etc. if inherited)
+!!
+         implicit none 
 !
          class(ccs) :: wf 
 !
@@ -299,20 +352,22 @@ module ccs_class
 !
 !
       module subroutine diis_ccs(wf,dt,t_dt,n_variables)
-!
-!        DIIS routine (CCS)
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad
-!
-!        The next amplitudes are 
-!
-!           t_n+1 = sum_k w_k (t_k + dt_k), 
-! 
-!        where the weights w_k in front of the quasi-Newton estimate dt_k
-!        are determined so as to minimize 
-!
-!           f(w_k) = sum_k w_k dt_k, 
-!
-!        with the constraint that g(w_k) = sum_k w_k - 1 = 0.
+!!
+!!       DIIS routine (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad
+!!
+!!       The next amplitudes are 
+!!
+!!          t_n+1 = sum_k w_k (t_k + dt_k), 
+!! 
+!!       where the weights w_k in front of the quasi-Newton estimate dt_k
+!!       are determined so as to minimize 
+!!
+!!          f(w_k) = sum_k w_k dt_k, 
+!!
+!!       with the constraint that g(w_k) = sum_k w_k - 1 = 0.
+!!
+         implicit none 
 !
          class(ccs), intent(in)   :: wf 
 !
@@ -329,32 +384,30 @@ module ccs_class
 !
 contains
 !
-!
 !  ::::::::::::::::::::::::::::::::::::::::::::
 !  -::- Initialization and driver routines -::- 
 !  ::::::::::::::::::::::::::::::::::::::::::::
 !
-!
    subroutine init_ccs(wf)
-!
-!     Initialize CCS object
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!     Performs the following tasks
-!
-!     1. Sets HF orbital and energy information by reading from file (read_hf_info)
-!     2. Transforms AO Cholesky vectors to MO basis and saves to file (read_transform_cholesky)
-!     3. Allocates the Fock matrix and sets it to zero (note: the matrix is constructed in 
-!        the descendant classes) 
-!     4. Allocates the singles amplitudes and sets them to zero, and sets associated properties 
-!
+!!
+!!    Initialize CCS object
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!    Performs the following tasks
+!!
+!!    1. Sets HF orbital and energy information by reading from file
+!!    2. Transforms AO Cholesky vectors to MO basis and saves to file 
+!!    3. Allocates the singles amplitudes and sets them to zero, and sets associated properties 
+!!    4. Allocates the omega vector and sets it to zero
+!!    5. Initializes the Fock matrix and sets it to zero 
+!!
       implicit none 
 !
       class(ccs) :: wf
 !
 !     Set model name 
 !
-      wf%name = 'CCS    '
+      wf%name = 'CCS'
 !
 !     Read Hartree-Fock info from SIRIUS
 !
@@ -380,36 +433,34 @@ contains
 !
 !
    subroutine drv_ccs(wf)
-!
-!     CCS Driver
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!     If called, the routine lets the user know there is no driver 
-!     for CCS, then exits the program.
-!
+!!
+!!    CCS Driver
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!    If called, the routine lets the user know there is no driver 
+!!    for CCS, then exits the program.
+!!
       implicit none 
 !
       class(ccs) :: wf
 !
       write(unit_output,*) 'ERROR: There is no driver for the CCS class'
-      call exit
+      stop
 !
    end subroutine drv_ccs
-!
 !
 !  :::::::::::::::::::::::::::::::::::::::::
 !  -::- Class subroutines and functions -::- 
 !  :::::::::::::::::::::::::::::::::::::::::
 !
-!
    subroutine initialize_amplitudes_ccs(wf)
-!
-!     Initialize Amplitudes (CCS)
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!     Allocates the singles amplitudes, sets them to zero, and calculates
-!     the number of singles amplitudes.
-!
+!!
+!!    Initialize Amplitudes (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!    Allocates the singles amplitudes, sets them to zero, and calculates
+!!    the number of singles amplitudes.
+!!
       implicit none 
 !
       class(ccs) :: wf
@@ -428,13 +479,13 @@ contains
 !
 !
    subroutine initialize_omega_ccs(wf)
-!
-!     Initialize Omega (CCS)
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!
-!     Allocates and sets the projection vector to zero (which is
-!     also its correct value, by Brillouin)
-!
+!!
+!!    Initialize Omega (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!    Allocates and sets the projection vector to zero (which is
+!!    also its correct value, by Brillouin)
+!!
       implicit none 
 !
       class(ccs) :: wf
@@ -446,10 +497,10 @@ contains
 !
 !   
    subroutine calc_energy_ccs(wf)
-!
-!     Calculate Energy (CCS)
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!
+!!
+!!    Calculate Energy (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
       implicit none 
 !
       class(ccs) :: wf 
@@ -460,10 +511,10 @@ contains
 !
 !
    subroutine construct_omega_ccs(wf)
-!
-!     Construct Omega (CCS)
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!
+!!
+!!    Construct Omega (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
       implicit none 
 !
       class(ccs) :: wf 

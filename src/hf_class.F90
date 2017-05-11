@@ -1,17 +1,15 @@
 module hf_class
 !
-!
-!
-!                      Hartree-Fock (HF) class module                                 
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017         
-!                                                                           
-!
-!
+!!
+!!                      Hartree-Fock (HF) class module                                 
+!!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017         
+!!                       
+!                                                    
 !  :::::::::::::::::::::::::::::::::::
 !  -::- Modules used by the class -::-
 !  :::::::::::::::::::::::::::::::::::
 !
-!  Use general tools
+!  General tools
 !
    use types
    use utils
@@ -26,13 +24,13 @@ module hf_class
 !  -::- Definition of the HF class -::-
 !  ::::::::::::::::::::::::::::::::::::
 !   
-   type :: hartree_fock
+   type :: hf
 !
 !     Model name 
 !
-      character(len=7) :: name = 'HF     '
+      character(len=40) :: name = 'HF'
 !
-!     Orbital information attributes
+!     Orbital information variables
 !
       integer(i15) :: n_o  ! Number of occupied orbitals
       integer(i15) :: n_v  ! Number of virtual orbitals
@@ -42,11 +40,11 @@ module hf_class
 !
       real(dp), dimension(:,:), allocatable :: mo_coef ! MO coefficient matrix
 !
-!     Fock matrix attributes
+!     Fock matrix variables
 !
       real(dp), dimension(:,:), allocatable :: fock_diagonal  ! diagonal vector
 !
-!     Energy attributes
+!     Energy variables
 !
       real(dp) :: energy            ! Same as scf_energy for HF class, different for descendants
 !
@@ -55,34 +53,34 @@ module hf_class
 !
 !     Calculation settings, tasks, and implemented methods
 !
+      type(calc_settings)   :: settings
       type(calc_procedures) :: tasks
       type(calc_procedures) :: implemented
-      type(calc_settings)   :: settings
 !
    contains
 !
 !     Initialization and driver routines
 !
-      procedure :: init => init_hartree_fock
-      procedure :: drv  => drv_hartree_fock
+      procedure :: init => init_hf
+      procedure :: drv  => drv_hf
 !
 !     Routines to read MO Cholesky vectors from file
 !
-      procedure, non_overridable :: read_cholesky_ij => read_cholesky_ij_hartree_fock ! occ-occ
-      procedure, non_overridable :: read_cholesky_ia => read_cholesky_ia_hartree_fock ! occ-vir
-      procedure, non_overridable :: read_cholesky_ai => read_cholesky_ai_hartree_fock ! vir-occ
-      procedure, non_overridable :: read_cholesky_ab => read_cholesky_ab_hartree_fock ! vir-vir
+      procedure, non_overridable :: read_cholesky_ij => read_cholesky_ij_hf ! occ-occ
+      procedure, non_overridable :: read_cholesky_ia => read_cholesky_ia_hf ! occ-vir
+      procedure, non_overridable :: read_cholesky_ai => read_cholesky_ai_hf ! vir-occ
+      procedure, non_overridable :: read_cholesky_ab => read_cholesky_ab_hf ! vir-vir
 !
 !     Routines needed to initialize HF     
 !
-!     read_hf_info            : sets attributes from file (n_o,n_v,scf_energy,...)
-!     read_transform_cholesky : reads AO Cholesky vectors, transforms to MO basis, and
-!                               saves the MO vectors to file
+!     read_info               : sets variables from file (n_o, n_v, scf_energy,...)
+!     read_transform_cholesky : reads AO Cholesky vectors, transforms to MO, and saves to file
 !
-      procedure, non_overridable :: read_hf_info            => read_hf_info_hartree_fock
-      procedure, non_overridable :: read_transform_cholesky => read_transform_cholesky_hartree_fock 
+      procedure, non_overridable :: read_hf_info            => read_hf_info_hf
+      procedure, non_overridable :: read_transform_cholesky => read_transform_cholesky_hf 
 !
-   end type hartree_fock
+   end type hf
+!
 !
 contains 
 !
@@ -90,23 +88,21 @@ contains
 !  -::- Initialization and driver routines -::-
 !  ::::::::::::::::::::::::::::::::::::::::::::
 ! 
-   subroutine init_hartree_fock(wf)
-!
-!     Initialization of Hartree-Fock object
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!     Performs the following tasks:
-!
-!     1. Sets HF orbital and energy information by reading from file (read_hf_info)
-!     2. Transforms AO Cholesky vectors to MO basis and saves to file (read_transform_cholesky)
-!     3. Allocates the Fock matrix and sets it to zero (note: the matrix is constructed in 
-!        the descendant classes) 
-!
+   subroutine init_hf(wf)
+!!
+!!    Initialization of Hartree-Fock object
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!    Performs the following tasks:
+!!
+!!    1. Sets HF orbital and energy information by reading from file
+!!    2. Transforms AO Cholesky vectors to MO basis and saves to file
+!!
       implicit none
 !
-      class(hartree_fock) :: wf
+      class(hf) :: wf
 !
-!     Initialize HF attributes
+!     Initialize HF variables
 !
       call wf%read_hf_info        
 !
@@ -114,62 +110,62 @@ contains
 !     
       call wf%read_transform_cholesky
 !
-   end subroutine init_hartree_fock
+   end subroutine init_hf
 !
 !
-   subroutine drv_hartree_fock(wf)
-!
-!     HF Driver
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!     Lets the user know there is no driver for Hartree-Fock and exits
-!     the program if called. The module reads Hartree-Fock information 
-!     from files and contains no independent solver.
-!
+   subroutine drv_hf(wf)
+!!
+!!    Driver (HF)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!    Lets the user know there is no driver for Hartree-Fock and exits
+!!    the program if called. The module reads Hartree-Fock information 
+!!    from files and contains no independent solver.
+!!
       implicit none 
 !
-      class(hartree_fock) :: wf
+      class(hf) :: wf
 !
       write(unit_output,*) 'ERROR: There is no driver for the Hartree-Fock class'
       call exit
 !
-   end subroutine drv_hartree_fock
+   end subroutine drv_hf
 !
 !  :::::::::::::::::::::::::::::::::::::::::
 !  -::- Class subroutines and functions -::-
 !  :::::::::::::::::::::::::::::::::::::::::
 !
-   subroutine read_hf_info_hartree_fock(wf)
-!
-!     Read HF Info
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!     Reads the file mlcc_hf_info and sets the following HF attributes: 
-!     n_o, n_v, n_mo, orbital_coef, and fock_diagonal
-!
-!     The file mlcc_hf_info is written in the mlcc_write_sirifc 
-!     subroutine, which is called from the wr_sirifc subroutine in
-!     the siropt module of the DALTON suite
-!  
+   subroutine read_hf_info_hf(wf)
+!!
+!!    Read HF Info
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!    Reads the file mlcc_hf_info and sets the following HF variables: 
+!!    n_o, n_v, n_mo, orbital_coef, and the fock_diagonal.
+!!
+!!    The file mlcc_hf_info is written in the mlcc_write_sirifc 
+!!    subroutine, which is called from the wr_sirifc subroutine in
+!!    the siropt module of the DALTON suite.
+!!
       implicit none
 !
-      class(hartree_fock) :: wf
+      class(hf) :: wf
 !
-      integer(i15) :: unit_identifier_hf = -1 ! Unit identifier for mlcc_hf_info file
+      integer(i15) :: unit_hf = -1 ! Unit identifier for mlcc_hf_info file
 !
       integer(i15) :: n_lambda = 0 ! n_ao * n_mo, read but discarded
       integer(i15) :: i = 0, j = 0
 !
 !     Open the file mlcc_hf_info
 !
-      call generate_unit_identifier(unit_identifier_hf)
-      open(unit=unit_identifier_hf, file='mlcc_hf_info', status='old', form='formatted')
-      rewind(unit_identifier_hf)
+      call generate_unit_identifier(unit_hf)
+      open(unit=unit_hf, file='mlcc_hf_info', status='old', form='formatted')
+      rewind(unit_hf)
 !
 !     Read mlcc_hf_info into HF variables
 !  
-      read(unit_identifier_hf,*) wf%n_mo, wf%n_o, n_lambda, &
-                                  wf%nuclear_potential, wf%scf_energy
+      read(unit_hf,*) wf%n_mo, wf%n_o, n_lambda, &
+                        wf%nuclear_potential, wf%scf_energy
 !
 !     Set the energy equal to the read SCF energy
 !
@@ -189,27 +185,27 @@ contains
 !
 !     Read in the Fock diagonal and MO coefficients
 !
-      read(unit_identifier_hf,*) (wf%fock_diagonal(i,1), i = 1, wf%n_mo)
-      read(unit_identifier_hf,*) (wf%mo_coef(i,1), i = 1, n_lambda) 
+      read(unit_hf,*) (wf%fock_diagonal(i,1), i = 1, wf%n_mo)
+      read(unit_hf,*) (wf%mo_coef(i,1), i = 1, n_lambda) 
 !
 !     Close the mlcc_hf_info file
 !    
-      close(unit_identifier_hf)
+      close(unit_hf)
 !
-   end subroutine read_hf_info_hartree_fock
+   end subroutine read_hf_info_hf
 !
 !
-   subroutine read_transform_cholesky_hartree_fock(wf)
-!
-!     Read and Transform Cholesky
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, 20 Apr 2017
-!
-!     Reads the AO Cholesky vectors from file, transforms the vectors 
-!     to the MO basis, and saves the MO vectors to file
-!
+   subroutine read_transform_cholesky_hf(wf)
+!!
+!!    Read and Transform Cholesky
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 20 Apr 2017
+!!
+!!    Reads the AO Cholesky vectors from file, transforms the vectors 
+!!    to the MO basis, and saves the MO vectors to file
+!!
       implicit none
 !
-      class(hartree_fock) :: wf
+      class(hf) :: wf
 !
       integer(i15) :: unit_chol_ao    = -1 ! Unit identifier for mlcc_cholesky file
       integer(i15) :: unit_chol_mo_ij = -1 ! cholesky_ij file
@@ -327,20 +323,20 @@ contains
       close(unit_chol_mo_ia)
       close(unit_chol_mo_ab)
 !  
-   end subroutine read_transform_cholesky_hartree_fock
+   end subroutine read_transform_cholesky_hf
 !
 !
-   subroutine read_cholesky_ij_hartree_fock(wf,L_ij_J)
-!
-!     Read Cholesky IJ vectors
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!     Reads the MO Cholesky IJ (occ-occ) vectors from file and 
-!     places them in the incoming L_ij_J matrix
-!
+   subroutine read_cholesky_ij_hf(wf,L_ij_J)
+!!
+!!    Read Cholesky IJ 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!    Reads the MO Cholesky IJ (occ-occ) vectors from file and 
+!!    places them in the incoming L_ij_J matrix
+!!
       implicit none
 !
-      class(hartree_fock) :: wf
+      class(hf) :: wf
 !
       real(dp), dimension((wf%n_o)**2, wf%n_J) :: L_ij_J ! L_ij^J
 !
@@ -363,20 +359,20 @@ contains
 !
       close(unit_chol_mo_ij)    
 !   
-   end subroutine read_cholesky_ij_hartree_fock
+   end subroutine read_cholesky_ij_hf
 !
 !
-   subroutine read_cholesky_ia_hartree_fock(wf,L_ia_J)
-!
-!     Read Cholesky IA 
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!     Reads the MO Cholesky IA (occ-vir) vectors from file and
-!     places them in the incoming L_ia_J matrix
-!
+   subroutine read_cholesky_ia_hf(wf,L_ia_J)
+!!
+!!    Read Cholesky IA 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!    Reads the MO Cholesky IA (occ-vir) vectors from file and
+!!    places them in the incoming L_ia_J matrix
+!!
       implicit none
 !
-      class(hartree_fock) :: wf
+      class(hf) :: wf
 !
       real(dp), dimension((wf%n_o)*(wf%n_v), wf%n_J) :: L_ia_J ! L_ia^J
 !
@@ -392,27 +388,29 @@ contains
 !     Read Cholesky vectors into the L_ia_J matrix
 !
       do j = 1, wf%n_J
+!
          read(unit_chol_mo_ia) (L_ia_J(i,j), i = 1, (wf%n_o)*(wf%n_v))
+!
       enddo
 !
 !     Close file
 !
       close(unit_chol_mo_ia)    
 !   
-   end subroutine read_cholesky_ia_hartree_fock
+   end subroutine read_cholesky_ia_hf
 !
 !
-   subroutine read_cholesky_ai_hartree_fock(wf, L_ai_J)
-!
-!     Read Cholesky AI 
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!     Reads the MO Cholesky AI (vir-occ) vectors from file and
-!     places them in the incoming L_ai_J matrix
-!
+   subroutine read_cholesky_ai_hf(wf, L_ai_J)
+!!
+!!    Read Cholesky AI 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!    Reads the MO Cholesky AI (vir-occ) vectors from file and
+!!    places them in the incoming L_ai_J matrix
+!!
       implicit none
 !
-      class(hartree_fock) :: wf
+      class(hf) :: wf
 !
       real(dp), dimension((wf%n_v)*(wf%n_o), wf%n_J) :: L_ai_J ! L_ai^J
 !
@@ -452,28 +450,29 @@ contains
 !
       call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)   
 !
-   end subroutine read_cholesky_ai_hartree_fock
+   end subroutine read_cholesky_ai_hf
 !   
 !
-   subroutine read_cholesky_ab_hartree_fock(wf, L_ab_J, first, last, ab_dim, reorder)
-!
-!     Read Cholesky AB 
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!     Reads the MO Cholesky AB (vir-vir) vectors from file and
-!     places them in the incoming L_ab_J matrix, with batching 
-!     if necessary
-!
-!     If reorder = .true.,  L_ba_J is returned with batching over a
-!     If reorder = .false., L_ab_J is returned with batching over b
-!
+   subroutine read_cholesky_ab_hf(wf, L_ab_J, first, last, ab_dim, reorder)
+!!
+!!    Read Cholesky AB 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!    Reads the MO Cholesky AB (vir-vir) vectors from file and
+!!    places them in the incoming L_ab_J matrix, with batching 
+!!    if necessary
+!!
+!!    If reorder = .true.,  L_ba_J is returned with batching over a
+!!    If reorder = .false., L_ab_J is returned with batching over b
+!!
       implicit none
 !
-      class(hartree_fock) :: wf
+      class(hf) :: wf
 !
       integer(i15), intent(in) :: first   ! First index (can differ from 1 when batching)
       integer(i15), intent(in) :: last    ! Last index  (can differ from n_v when batching)
-      integer(i15), intent(in) :: ab_dim  ! Dimension of ab index (not n_v^2 when batching)      
+      integer(i15), intent(in) :: ab_dim  ! Dimension of ab index (not n_v^2 when batching) 
+!     
       logical, intent(in)      :: reorder ! See description above
 !
       real(dp), dimension(ab_dim, wf%n_J) :: L_ab_J ! L_ab^J
@@ -552,7 +551,7 @@ contains
 !    
       close(unit_chol_mo_ab)
 !
-   end subroutine read_cholesky_ab_hartree_fock
+   end subroutine read_cholesky_ab_hf
 !
 !
 end module hf_class

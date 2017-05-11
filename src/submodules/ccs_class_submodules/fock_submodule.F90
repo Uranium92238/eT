@@ -1,15 +1,15 @@
 submodule (ccs_class) fock
 !
-!
-!                       -::- Fock submodule (CCS) -::-
-!            Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!
-!  Contains the following family of procedures of the CCS class:
-!  
-!  initialize_fock_matrix_ccs(wf):		Allocates and sets Fock matrix to 0        
-!  construct_fock_ccs(wf):			      Constructs T1_transformed mo Fock matrix 
-!  one_electron_t1_ccs(wf, h1 ,h1_T1):	T1-transformation of one-electron mo integrals
+!!
+!!    Fock submodule
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!    Contains the following family of procedures of the CCS class:
+!!  
+!!    initialize_fock_matrix_ccs(wf):     Allocates and sets Fock matrix to 0.      
+!!    construct_fock_ccs(wf):             Constructs T1_transformed mo Fock matrix.
+!!    one_electron_t1_ccs(wf, h1 ,h1_T1): T1-transformation of one-electron mo integrals.
+!!
 !
    implicit none 
 !
@@ -18,12 +18,13 @@ contains
 !
 !
     subroutine initialize_fock_matrix_ccs(wf)
-!
-!     Initialize Fock Matrix (CCS)
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!     Allocates and constructs the Fock matrix 
-!
+!!
+!!     Initialize Fock Matrix
+!!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!     Allocates and sets Fock matrix blocks (ij, ia, ai, ab) to zero
+!!     before calling the Fock matrix constructor.
+!!
       implicit none
 !  
       class(ccs) :: wf   
@@ -45,14 +46,13 @@ contains
 !
 !
    subroutine construct_fock_ccs(wf)
-!
-!     Construct Fock
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!     Constructs the T1-transformed Fock matrix blocks (occ/vir-occ/vir),
-!     and saves the result in the class variables fock_matrix_pq (see the
-!     Hartree-Fock class for these variables)  
-!
+!!
+!!    Construct Fock
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!    Constructs the T1-transformed Fock matrix blocks (occ/vir-occ/vir),
+!!    and saves the result in the class variables fock_pq.
+!!
       implicit none
 !
       class(ccs) :: wf
@@ -106,7 +106,7 @@ contains
       fock_matrix = zero
 !
 !
-!     -::- One-electron contribution -::-
+!     :: One-electron contribution ::
 !
 !
 !     Allocate for one-electron ao integrals
@@ -183,10 +183,7 @@ contains
       call deallocator(fock_ao, wf%n_ao, wf%n_ao)
 !
 !
-!     -::- Two-electron contribution -::-
-!
-!
-!     :: Occupied-occupied block: F_ij = h_ij + sum_k (2*g_ijkk - g_ikkj) ::
+!     :: Two-electron occupied-occupied block: F_ij = h_ij + sum_k (2*g_ijkk - g_ikkj) ::
 !  
 !
 !     Allocation for L_ij_J
@@ -244,7 +241,7 @@ contains
       call deallocator(g_ij_kl, (wf%n_o)**2, (wf%n_o)**2)
 !
 !
-!    :: Occupied-virtual blocks ::
+!     :: Two-electron occupied-virtual blocks ::
 !
 !
 !     Allocation for g_ia_jk 
@@ -341,7 +338,7 @@ contains
       call deallocator(g_ai_jk, (wf%n_v)*(wf%n_o), (wf%n_o)**2)
 !
 !
-!     :: Virtual-virtual block F_ab = h_ab + sum_k (2*g_abkk - g_akkb) ::
+!     :: Two-electron virtual-virtual block F_ab = h_ab + sum_k (2*g_abkk - g_akkb) ::
 !
 !
       call allocator(g_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
@@ -511,17 +508,19 @@ contains
 !
 !
    subroutine one_electron_t1_ccs(wf, h1 ,h1_T1)
-!
-!     One-electron T1 
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!     T1-transforms the one-electron MO integrals h_pq
-!
-!           h_p_q_T1 = sum_st x_p_s * y_q_t * h_s_t
-!
-!           x = I - t1
-!           y = I - t1^T
-!
+!!
+!!    One-electron T1 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!    T1-transforms the one-electron MO integrals h_pq
+!!
+!!       h_p_q_T1 = sum_st x_p_s * y_q_t * h_s_t,
+!!
+!!    where
+!!
+!!       x = I - t1,
+!!       y = I - t1^T.
+!!
       implicit none
 !
       class(ccs) :: wf

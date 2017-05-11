@@ -1,32 +1,33 @@
 submodule (ccs_class) ground_state 
 !
-!
-!                         -::- Ground state submodule (CCS) -::-
-!             Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!
-!
-!   Consists of the following subroutines of the CCS module:
-!
-!   ground_state_solver:        controls the iterative loop, calling in turn
-!                               the calculation of the energy, the amplitude equations 
-!                               (and its norm), and the new_amplitudes routine
-!   new_amplitudes:             calculates the quasi-Newton estimate and passes the 
-!                               information needed by the DIIS routine.
-!   diis_ccs:                   This routine saves the quasi-Newton estimate Δ t and
-!                               t + Δ t to file. It uses the previous estimates to
-!                               select the amplitudes t for the next iteration.
-!    
-!
-!   calc_ampeqs:                Updates the amplitude equations for the current amplitudes.
-!   calc_ampeqs_norm:           Calculates the norm of the amplitude equations.
-!   calc_quasi_Newton_singles:  Calculates the singles part of the quasi-Newton estimate.
-!
-!  Can be inherited by models of the same level (e.g. CC2) without modification.
-!
-!  When inherited by higher level models (e.g. CCSD), the new_amplitudes and calc_ampeqs_norm
-!  routines should be overridden to account for the doubles quasi-Newton estimate, amplitudes, 
-!  and projection vector.
-!
+!!
+!!                                Ground state submodule (CCS)
+!!                Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!    Consists of the following subroutines of the CCS module:
+!!
+!!    ground_state_solver:        Controls the iterative loop, calling in turn
+!!                                the calculation of the energy, the amplitude equations 
+!!                                (and its norm), and the new_amplitudes routine.
+!!
+!!    new_amplitudes:             Calculates the quasi-Newton estimate and passes the 
+!!                                information needed by the DIIS routine.
+!!
+!!    diis_ccs:                   This routine saves the quasi-Newton estimate Δ t and
+!!                                t + Δ t to file. It uses the previous estimates to
+!!                                select the amplitudes t for the next iteration.
+!!    
+!!
+!!    calc_ampeqs:                Updates the amplitude equations for the current amplitudes.
+!!    calc_ampeqs_norm:           Calculates the norm of the amplitude equations.
+!!    calc_quasi_Newton_singles:  Calculates the singles part of the quasi-Newton estimate.
+!!
+!!    Can be inherited by models of the same level (e.g. CC2) without modification.
+!!
+!!    When inherited by higher level models (e.g. CCSD), the new_amplitudes and calc_ampeqs_norm
+!!    routines should be overridden to account for the doubles quasi-Newton estimate, amplitudes, 
+!!    and projection vector.
+!!
 !
    implicit none
 !
@@ -38,25 +39,25 @@ submodule (ccs_class) ground_state
    integer(i15) :: unit_t_dt        = -1 ! Unit identifier for t_i + Δ t_i file
    integer(i15) :: unit_diis_matrix = -1 ! Unit identifier for DIIS matrix file
 !
-   integer(i15), parameter :: diis_dim = 9 ! The maximum dimension of the DIIS matrix plus 1 
+   integer(i15), parameter :: diis_dim = 9 ! The maximum dimension of the DIIS matrix, plus 1 
 !
 !
 contains
 !
 !
    module subroutine ground_state_solver_ccs(wf)
-!
-!     Ground State Solver 
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!
-!     Directs the solution of the ground state amplitude equations
-!     using a DIIS algorithm. The problem the routine solves is 
-!
-!        X_mu(t) = 0, where t = { t_mu }_mu 
-!
-!     For standard coupled cluster theories, the vector X is the
-!     projection vector (omega).
-!
+!!
+!!    Ground State Solver 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!    Directs the solution of the ground state amplitude equations
+!!    using a DIIS algorithm. The problem the routine solves is 
+!!
+!!       X_mu(t) = 0, where t = { t_mu }_mu 
+!!
+!!    For standard coupled cluster theories, the vector X is the
+!!    projection vector (omega).
+!!
       implicit none
 !
       class(ccs) :: wf 
@@ -167,15 +168,15 @@ contains
 !
 !
    module subroutine calc_ampeqs_ccs(wf)
-!
-!     Calculate Amplitude Equations (CCS)
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!
-!     Constructs the amplitude equations vector (the projection vector 
-!     in CCS) for the amplitudes of the current iteration of the ground 
-!     state solver. It also calculates the norm of the amplitude equations, 
-!     which is zero when the equations are exactly solved.
-!
+!!
+!!    Calculate Amplitude Equations (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!    Constructs the amplitude equations vector (the projection vector 
+!!    in CCS) for the amplitudes of the current iteration of the ground 
+!!    state solver. It also calculates the norm of the amplitude equations, 
+!!    which is zero when the equations are exactly solved.
+!!
       implicit none 
 !
       class(ccs) :: wf 
@@ -188,10 +189,10 @@ contains
 !
 !
    module subroutine calc_ampeqs_norm_ccs(wf, ampeqs_norm)
-!
-!     Calculate Amplitude Equations Norm (CCS)
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!
+!!
+!!     Calculate Amplitude Equations Norm (CCS)
+!!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
       implicit none 
 !
       class(ccs) :: wf 
@@ -208,14 +209,14 @@ contains
 !
 !
    module subroutine new_amplitudes_ccs(wf)
-!
-!     New Amplitudes (CCS)
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!
-!     Directs the calculation of the quasi-Newton estimate Δ t_i, 
-!     and t_i + Δ t_i, and calls the DIIS routine to save & get 
-!     the amplitudes for the next iteration.
-!
+!!
+!!    New Amplitudes (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!    Directs the calculation of the quasi-Newton estimate Δ t_i, 
+!!    and t_i + Δ t_i, and calls the DIIS routine to save & get 
+!!    the amplitudes for the next iteration.
+!!
       implicit none 
 !
       class(ccs) :: wf 
@@ -262,14 +263,14 @@ contains
 !
 !
    module subroutine calc_quasi_Newton_singles_ccs(wf,dt,n_variables)
-!
-!     Calculate quasi-Newton estimate (CCS)
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!
-!     Calculates the quasi-Newton estimate Δ t_i (singles part)
-!     and places the contribution in the dt vector (of length n_variables,
-!     with singles first, then doubles, etc. if inherited)
-!
+!!
+!!    Calculate quasi-Newton estimate (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!    Calculates the quasi-Newton estimate Δ t_i (singles part)
+!!    and places the contribution in the dt vector (of length n_variables,
+!!    with singles first, then doubles, etc. if inherited)
+!!
       implicit none 
 !
       class(ccs) :: wf 
@@ -296,21 +297,21 @@ contains
 !
 !
    module subroutine diis_ccs(wf, dt, t_dt, n_variables)
-!
-!     DIIS routine (CCS)
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!
-!     The next amplitudes are 
-!
-!        t_n+1 = sum_k w_k (t_k + dt_k), 
-! 
-!     where the weights w_k in front of the quasi-Newton estimate dt_k
-!     are determined so as to minimize 
-!
-!        f(w_k) = sum_k w_k dt_k, 
-!
-!     with the constraint that g(w_k) = sum_k w_k - 1 = 0.
-!
+!!
+!!    DIIS routine
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!    The next amplitudes are 
+!!
+!!       t_n+1 = sum_k w_k (t_k + dt_k), 
+!! 
+!!    where the weights w_k in front of the quasi-Newton estimate dt_k
+!!    are determined so as to minimize 
+!!
+!!       f(w_k) = sum_k w_k dt_k, 
+!!
+!!    with the constraint that g(w_k) = sum_k w_k - 1 = 0.
+!!
       implicit none 
 !
       class(ccs), intent(in) :: wf 
