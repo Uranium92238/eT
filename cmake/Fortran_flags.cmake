@@ -57,5 +57,3 @@ if(CMAKE_Fortran_COMPILER_ID MATCHES Intel)
     endif()
     set(reorder_definitions " --nocollapse ${reorder_definitions}")
 endif()
-#
-save_compiler_flags(Fortran)
