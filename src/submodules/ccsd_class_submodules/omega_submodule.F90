@@ -103,7 +103,7 @@ contains
 !  
 !       A1: sum_ckd g_adkc * u_ki^cd,
 !  
-!       and adds it to the singles projection vector (omeg1) of
+!       and adds it to the singles projection vector (omega1) of
 !       the wavefunction object wf.
 !
       implicit none
@@ -427,19 +427,19 @@ contains
 !
 !
    module subroutine omega_c1_ccsd(wf)        
-!!  
-!!     Omega C1
-!!     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!  
-!!     Calculates the C1 term of omega,
-!!  
-!!     C1: sum_ck F_kc*u_ai_ck,
-!!  
-!!     and adds it to the projection vector (omega1) of    
-!!     the wavefunction object wf                           
-!!  
-!!     u_ai_ck = 2*t_ck_ai - t_ci_ak
-!! 
+!  
+!     Omega C1
+!     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!  
+!     Calculates the C1 term of omega,
+!  
+!     C1: sum_ck F_kc*u_ai_ck,
+!  
+!     and adds it to the projection vector (omega1) of    
+!     the wavefunction object wf                           
+!  
+!     u_ai_ck = 2*t_ck_ai - t_ci_ak
+! 
       implicit none
 !
       class(ccsd) :: wf 
@@ -600,7 +600,7 @@ contains
       logical :: reorder
 !
 !
-!!!   A2.1 term   !!!
+!     ::  Calculate the A2.1 term of omega ::
 !
 !
 !     Create g_ai_bj
@@ -654,7 +654,7 @@ contains
 !
       call deallocator(g_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-!!!   A2.2 term !!!
+!     ::  Calculate the A2.2 term  of omega ::
 !
 !
       required = max(2*(wf%n_v)**2*(wf%n_J) + 2*(wf%n_v)*(wf%n_o)*(wf%n_J),      & ! Needed to get L_ca_J or L_db_J
@@ -1715,6 +1715,9 @@ contains
 !
       logical :: reorder 
 !
+!     :: Calculate the D2.3 term of omega ::
+!
+!
 !     Allocate the Cholesky vector L_kc_J = L_kc^J and set to zero 
 !
       call allocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
@@ -1887,7 +1890,10 @@ contains
 !     Deallocate the omega2_ai_bj and u_ai_ld(ai,ld) = u_il^ad vector
 !
       call deallocator(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call deallocator(u_ai_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))            
+      call deallocator(u_ai_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) 
+!
+!     :: Calculate the D2.1 term of omega :: 
+!           
 !
 !     Allocate the L_ai_J and L_kc_J terms and set them to zero 
 !
@@ -2005,6 +2011,8 @@ contains
       call deallocator(u_kc_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       call deallocator(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!     :: Calculate D2.2 term of Omega ::
 !
 !     - 1/2 * sum_ck u_jk^bc g_acki = -1/2 * sum_ck g_ai_ck u_ck_bj 
 !
@@ -2248,6 +2256,8 @@ contains
       real(dp), dimension(:,:), allocatable :: Y_k_j        ! An intermediate, see below for definition 
       real(dp), dimension(:,:), allocatable :: t_aib_k      ! t_ik^ab 
 !
+!     :: Calculate the E2.1 term of omega ::
+!
 !     Form the Cholesky vector L_kc_J = L_kc^J 
 !
       call allocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
@@ -2435,6 +2445,9 @@ contains
       call deallocator(omega2_b_jai, wf%n_v, (wf%n_v)*(wf%n_o)**2)
       call deallocator(X_b_c, wf%n_v, wf%n_v)
       call deallocator(t_c_jai, wf%n_v, (wf%n_v)*(wf%n_o)**2)
+!
+!     :: Calculate E.2.2 term of omega ::
+!
 !
 !     Form the Cholesky vector L_kc_J = L_kc^J 
 !

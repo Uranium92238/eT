@@ -28,6 +28,9 @@ module utils
 !
 contains
 !
+!  :::::::::::::::::::::::::
+!  -::- Index functions -::-
+!  :::::::::::::::::::::::::
 !
    integer(i15) function index_packed(i,j)
 !!
@@ -76,6 +79,9 @@ contains
 !
    end function index_two
 !
+! ::::::::::::::::::::::::
+! -:- Matrix utilities -:-
+! ::::::::::::::::::::::::
 !
    integer(i15) function packed_size(N)
 !!
@@ -143,6 +149,9 @@ contains
 !
    end subroutine
 !
+! :::::::::::::::::::::::::::::::
+!  -:- Batching functionality -:-
+! :::::::::::::::::::::::::::::::
 !
    subroutine num_batch(required,available,max_batch_length,n_batch,batch_dimension)
 !!
