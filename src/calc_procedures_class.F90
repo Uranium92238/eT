@@ -1,9 +1,9 @@
 module calc_procedures_class
 !
-!
-!                         Calculation procedures class module                                 
-!              Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017         
-!
+!!
+!!                         Calculation procedures class module                                 
+!!              Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017         
+!!
 !
 !  :::::::::::::::::::::::::::::::::::
 !  -::- Modules used by the class -::-
@@ -11,9 +11,9 @@ module calc_procedures_class
 !
    use types
 !
-!  :::::::::::::::::::::::::::::::::::::::::::::::
+!  :::::::::::::::::::::::::::::::::::::::::::::::::
 !  -::- Definition of the calc_procedures class -::-
-!  :::::::::::::::::::::::::::::::::::::::::::::::
+!  :::::::::::::::::::::::::::::::::::::::::::::::::
 !
    type :: calc_procedures 
 !
@@ -25,7 +25,6 @@ module calc_procedures_class
       integer(i15) :: n_triplet_states = 0
 !
    end type calc_procedures                                                                            
-!
 !
 contains
 !

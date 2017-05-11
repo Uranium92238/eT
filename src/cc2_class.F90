@@ -1,10 +1,10 @@
 module cc2_class
 !
 !
-!
-!            Coupled cluster perturbative doubles (CC2) class module                                 
-!         Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2017         
-!                                                                           
+!!
+!!            Coupled cluster perturbative doubles (CC2) class module                                 
+!!         Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017         
+!!                                                                           
 !
 !
 !  :::::::::::::::::::::::::::::::::::
@@ -61,53 +61,63 @@ module cc2_class
 !
    interface
 !
+!
       module subroutine construct_omega_cc2(wf)
-!
-!        Construct Omega 
-!        Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2017
-!
-!        Directs the construction of the projection vector < mu | exp(-T) H exp(T) | R >
-!        for the current amplitudes of the object wf 
-!
+!!
+!!        Construct Omega 
+!!        Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!        Directs the construction of the projection vector < mu | exp(-T) H exp(T) | R >
+!!        for the current amplitudes of the object wf 
+!!
          class(cc2) :: wf 
 !
       end subroutine construct_omega_cc2
 !
+!
       module subroutine omega_a1_cc2(wf, t_kc_di, c_first, c_last, c_length)
-!
-!        Omega A1 term
-!        Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2017
-!  
-!        Calculates the A1 term, 
-!  
-!           sum_ckd g_adkc * u_ki^cd,
-!  
-!        and adds it to the singles projection vector (omeg1) of
-!        the wavefunction object wfn
-!
+!!
+!!        Omega A1
+!!        Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!  
+!!        Calculates the A1 term of omega, 
+!!  
+!!        A1 = sum_ckd g_adkc * u_ki^cd,
+!! 
+!!        and adds it to the projection vector (omega1) of
+!!        the wavefunction object wf
+!!
+!!        u_ki^cd = 2*t_ki^cd - t_ik^cd 
+!!
          class(cc2) :: wf
+!
+!        Batching variable for double amplitudes t_kc_di
 !  
          integer(i15) :: c_first, c_last, c_length
 !
-         real(dp), dimension(c_length*(wf%n_o),(wf%n_v)*(wf%n_o)):: t_kc_di
+         real(dp), dimension(c_length*(wf%n_o), (wf%n_v)*(wf%n_o)) :: t_kc_di
 !
       end subroutine omega_a1_cc2
 !
 !
       module subroutine omega_b1_cc2(wf, t_lc_ak, c_first, c_last, c_length)
-!
-!        Omega B1
-!        Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2017
-!
-!        Calculates the B1 term, 
-!
-!          - sum_ckl u_kl^ac * g_kilc,
-! 
-!        and adds it to the singles projection vector (omeg1) of
-!        the wavefunction object wfn
-!
+!!
+!!        Omega B1
+!!        Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!        Calculates the B1 term of omega, 
+!!
+!!         B1 = - sum_ckl u_kl^ac * g_kilc,
+!! 
+!!        and adds it to the projection vector (omeg1) of
+!!        the wavefunction object wf
+!!
+!!        u_kl^ac = 2*t_kl^ac - t_lk^ac 
+!!
          class(cc2) :: wf 
 !
+!        Batching variable for double amplitudes t_kc_di
+!  
          integer(i15) :: c_first, c_last, c_length
 !
          real(dp), dimension(c_length*(wf%n_o),(wf%n_v)*(wf%n_o)) :: t_lc_ak
@@ -116,14 +126,23 @@ module cc2_class
 !
 !
       module subroutine omega_c1_cc2(wf, t_kc_ai, c_first, c_last, c_length)
-!
-!        C1 omega term: Omega_ai^C1 = sum_ck F_kc*u_ai_ck,
-!                       u_ai_ck = 2*t_ck_ai-t_ci_ak
-!        
-!        Written by Eirik F. Kjønstad and Sarai D. Folkestad, March 2017
-!
+!!
+!!        Omega C1
+!!        Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!        Calculates the C1 term of omega,
+!! 
+!!        C1 = sum_ck F_kc*u_ai_ck,
+!!
+!!        and adds it to the projection vector (omega1) of    
+!!        the wavefunction object wf                           
+!!
+!!        u_ai_ck = 2*t_ck_ai - t_ci_ak
+!!        
          class(cc2) :: wf 
 !
+!        Batching variable for double amplitudes t_kc_di
+!  
          integer(i15) :: c_first, c_last, c_length
 !
          real(dp), dimension(c_length*(wf%n_o),(wf%n_v)*(wf%n_o)) :: t_kc_ai
@@ -132,42 +151,48 @@ module cc2_class
 !
 !
       module subroutine omega_d1_cc2(wf)
-!
-!        D1 omega term: Omega_ai^D1=F_ai_T1
-!
-!        Written by Eirik F. Kjønstad and Sarai D. Folkestad, March 2017
-!
+!!
+!!        Omega D1
+!!        Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!        Calculates the D1 term of omega,
+!!
+!!        D1 = F_ai_T1
+!!
+!!        and adds it to the projection vector (omega1) of
+!!        the wavefunction object wf 
+!!
          class(cc2) :: wf
 !
       end subroutine omega_d1_cc2
 !
+!
    end interface
 !
-contains
 !
+contains
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::
 !  -::- Initialization and driver routines -::- 
 !  ::::::::::::::::::::::::::::::::::::::::::::
 !
    subroutine init_cc2(wf)
-!
-!     Initialize CC2 object
-!     Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2017
-!
-!     Performs the following tasks
-!
-!     1. Sets HF orbital and energy information by reading from file (read_hf_info)
-!     2. Transforms AO Cholesky vectors to MO basis and saves to file (read_transform_cholesky)
-!     3. Allocates the Fock matrix and sets it to zero (note: the matrix is constructed in 
-!        the descendant classes) 
-!     4. Allocates the singles amplitudes and sets them to zero, and sets associated properties 
-!     5. Allocate Omega vector
-!
+!!
+!!     Initialize CC2 object
+!!     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!     Performs the following tasks
+!!
+!!     1. Sets HF orbital and energy information by reading from file (read_hf_info)
+!!     2. Transforms AO Cholesky vectors to MO basis and saves to file (read_transform_cholesky)
+!!     3. Allocates the Fock matrix and sets it to zero (note: the matrix is constructed in 
+!!        the descendant classes) 
+!!     4. Allocates the singles amplitudes and sets them to zero, and sets associated properties 
+!!     5. Allocate Omega vector
+!!
       implicit none
 !
       class(cc2)  :: wf
-!
 !
 !     Read Hartree-Fock info from SIRIUS
 !
@@ -191,11 +216,12 @@ contains
 !
    end subroutine init_cc2
 !
+!
    subroutine drv_cc2(wf)
-!
-!     CC2 Driver
-!     Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2017
-!
+!!
+!!     CC2 Driver
+!!     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
       implicit none 
 !
       class(cc2) :: wf
@@ -209,12 +235,13 @@ contains
 !  :::::::::::::::::::::::::::::::::::::::::
 !
    subroutine calc_energy_cc2(wf)
-!
-!  Calculate Energy (CC2)
-!
-!  Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2017
-!  Calculate the CC2 energy
-!
+!!
+!!  Calculate Energy (CC2)
+!!
+!!  Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!  Calculates the CC2 energy
+!!
    implicit none
 !
    class(cc2) :: wf
@@ -236,7 +263,7 @@ contains
       integer(i15) :: required, available, n_batch, batch_dimension, max_batch_length
 !
 !
-!     Prepare for batching over index a (Assumes A1 requires the most memory)
+!     Prepare for batching over index a
 !  
       required = (2*(wf%n_v)*(wf%n_o)*(wf%n_J) &                           !    
                + 2*(wf%n_v)*(wf%n_o)*(wf%n_J) &                            ! Needed for g_aibj  
@@ -257,6 +284,8 @@ contains
       do a_batch = 1, n_batch
 !
       enddo
+!
    end subroutine calc_energy_cc2
+!
 !
 end module cc2_class

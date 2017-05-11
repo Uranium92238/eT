@@ -1,9 +1,9 @@
 module calc_settings_class 
 !
-!
-!                         Calculation settings class module                                 
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017         
-!
+!!
+!!                         Calculation settings class module                                 
+!!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017         
+!!
 !
 !  :::::::::::::::::::::::::::::::::::
 !  -::- Modules used by the class -::-
@@ -23,7 +23,6 @@ module calc_settings_class
       integer(i15) :: ampeqs_max_iterations = 25
 !
    end type calc_settings                                                                            
-!
 !
 contains
 !
