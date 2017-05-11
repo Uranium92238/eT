@@ -9,15 +9,10 @@ program eT_program
 !  -::- Modules used by the program -::-
 !  :::::::::::::::::::::::::::::::::::::
 !
-!  IO module 
+   use input_output ! IO module 
+   use input_reader ! Input reader routines
 !
-   use input_output
-!
-!  Input file reader module 
-!
-   use input_reader
-!
-!  Method classes
+!  Wavefunction classes
 !
    use hf_class
    use ccs_class
@@ -28,7 +23,7 @@ program eT_program
 !
 !  Method class allocatable objects
 !
-   type(cc2), allocatable, target  :: cc2_wf
+   type(cc2),  allocatable, target :: cc2_wf
    type(ccsd), allocatable, target :: ccsd_wf
 !
 !  Wavefunction pointer
@@ -43,32 +38,39 @@ program eT_program
 !
    integer(i15) :: unit_input = -1
 !
-!  Set up workspace controller
+!
+!  ::::::::::::::::::::::::::::::::::::::::::::::
+!  -::-     Set up memory controller         -::- 
+!  ::::::::::::::::::::::::::::::::::::::::::::::
 !
    call work_init
 !
-!  Create & open the main output file, used throughout the program
+!  ::::::::::::::::::::::::::::::::::::::::::::::
+!  -::-  Create & open the main output file  -::- 
+!  ::::::::::::::::::::::::::::::::::::::::::::::
 !
    call init_output_file
    open(unit=unit_output,file='eT.out',status='old',form='formatted')
    rewind(unit_output)
 !
-!  Print program banner
+!  ::::::::::::::::::::::::::::::::::::::::::::::
+!  -::-         Print program banner         -::- 
+!  ::::::::::::::::::::::::::::::::::::::::::::::
 !
    write(unit_output,'(//t18,a)')  'eT - a coupled cluster program'
    write(unit_output,'(t15,a//)') 'S. D. Folkestad, E. F. Kjønstad, 2017'
-
+!
+!  ::::::::::::::::::::::::::::::::::::::::::::::
+!  -::-    Print banner for input section    -::- 
+!  ::::::::::::::::::::::::::::::::::::::::::::::
+!
+   write(unit_output,'(T3,A)')   ':: Input reader'
 !
 !  Open input file
 !
    call generate_unit_identifier(unit_input)
    open(unit=unit_input, file='eT.inp', status='old', form='formatted')
    rewind(unit_input)
-!
-!  Print banner as we enter the input reader section 
-!
-   write(unit_output,'(T3,A)')   ':: Input reader'
-   write(unit_output,'(T3,A/)')  ':: S. D. Folkestad, E. F. Kjønstad, May 2017'
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::::
 !  -::- Reading method section of input file -::- 
@@ -97,7 +99,7 @@ program eT_program
 !
       write(unit_output,*) 'Method ', trim(method), ' not recognized.'
       flush(unit_output)
-      stop ! Terminate program
+      stop
 !
    endif
 !
@@ -117,7 +119,7 @@ program eT_program
 !  -::- Reading settings section of input file -::- 
 !  ::::::::::::::::::::::::::::::::::::::::::::::::
 !
-!  Set calculation settings settings
+!  Set the calculation settings of the wavefunction
 !
    call settings_reader(unit_input, wf%settings) 
 !
@@ -142,6 +144,5 @@ program eT_program
 !  :::::::::::::::::::::::::::
 !
    close(unit_output)
-!
 !
 end program eT_program

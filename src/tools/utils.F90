@@ -123,8 +123,14 @@ contains
       implicit none
 !
 !     
-      integer(i15), intent(in)           :: required, available, batch_dimension
+      integer(i15), intent(in)           :: available, batch_dimension
       integer(i15)                       :: max_batch_length,n_batch
+      integer(i15)                       :: required ! Upped by 10% as a buffer
+      integer(i15)                       :: buffer
+!
+      buffer = required/10
+!
+      required = required + buffer
 !
       if (required .lt. available) then
          n_batch = 1
@@ -150,6 +156,8 @@ contains
 !
       if (n_batch .gt. 1) then
          write(unit_output,*) 'I am batching; nr of batches:',n_batch
+      else
+         write(unit_output,*) 'I am not batching!'
       endif
 !
    end subroutine num_batch
@@ -173,9 +181,14 @@ contains
       integer(i15), intent(in)           :: required, available, batch_dimension
       integer(i15)                       :: max_batch_length,n_batch,i
 !
+<<<<<<< HEAD
    n_batch = 1
+=======
+   write(unit_output,*) 'In num_two_batch'
+>>>>>>> a35bddabc023bd9229063004a937f315bb00c88f
 !
    if (required .lt. available) then
+         write(unit_output,*) 'I have room!'
          n_batch = 1
          max_batch_length = batch_dimension
          return
@@ -183,11 +196,21 @@ contains
 !  
    do i = 1, batch_dimension
       if (available .gt. required/i**2) then
+         write(unit_output,*) 'I can batch!', i
          n_batch = i
          max_batch_length = batch_dimension/n_batch
          return
       endif
    enddo
+!
+!  Debugs...
+!
+      if (n_batch .gt. 1) then
+         write(unit_output,*) 'I am batching; nr of batches:',n_batch
+      else
+         write(unit_output,*) 'I am not batching!'
+      endif
+!
 !
    end subroutine num_two_batch
 !
