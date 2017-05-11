@@ -207,8 +207,6 @@
       
       <a class="list-group-item" href="../sourcefile/calc_settings_class.f90.html">calc_settings_class.F90</a>
       
-      <a class="list-group-item" href="../sourcefile/cc2_class.f90.html">cc2_class.F90</a>
-      
       <a class="list-group-item" href="../sourcefile/ccs_class.f90.html">ccs_class.F90</a>
       
       <a class="list-group-item" href="../sourcefile/ccsd_class.f90.html">ccsd_class.F90</a>
@@ -229,11 +227,7 @@
       
       <a class="list-group-item" href="../sourcefile/input_reader.f90.html">input_reader.F90</a>
       
-      <a class="list-group-item" href="../sourcefile/jacobian_submodule.f90.html">jacobian_submodule.F90</a>
-      
       <a class="list-group-item" href="../sourcefile/omega_submodule.f90.html">omega_submodule.F90</a>
-      
-      <a class="list-group-item" href="../sourcefile/omega_submodule.f90%7E2.html">omega_submodule.F90</a>
       
       <a class="list-group-item" href="../sourcefile/types.f90.html">types.F90</a>
       
@@ -302,29 +296,32 @@
     <section>
       <h2><span class="anchor" id="src"></span>Source Code</h2>
     <div class="hl"><pre><span></span><a name="ln-1"></a><span class="k">module </span><span class="n">types</span>
-<a name="ln-2"></a><span class="c">!!</span>
-<a name="ln-3"></a><span class="c">!!  Types module</span>
-<a name="ln-4"></a><span class="c">!!  Written by Sarai D. Folkestad and Eirik F. Kjønstad, April 2017</span>
-<a name="ln-5"></a><span class="c">!!</span>
-<a name="ln-6"></a><span class="c">!!  Defines the real and integer types used throughout the module</span>
-<a name="ln-7"></a><span class="c">!!</span>
-<a name="ln-8"></a>   <span class="k">implicit none</span>
+<a name="ln-2"></a><span class="c">!</span>
+<a name="ln-3"></a><span class="c">!!</span>
+<a name="ln-4"></a><span class="c">!!  Types module</span>
+<a name="ln-5"></a><span class="c">!!  Written by Sarai D. Folkestad and Eirik F. Kjønstad, April 2017</span>
+<a name="ln-6"></a><span class="c">!!</span>
+<a name="ln-7"></a><span class="c">!!  Defines the real and integer types used throughout the module</span>
+<a name="ln-8"></a><span class="c">!!</span>
 <a name="ln-9"></a><span class="c">!</span>
-<a name="ln-10"></a><span class="c">!  Kind numbers for real and integers</span>
-<a name="ln-11"></a><span class="c">!  Usage:	real(dp) 	 :: foo</span>
-<a name="ln-12"></a><span class="c">!				integer(i15) :: foo_int</span>
+<a name="ln-10"></a>   <span class="k">implicit none</span>
+<a name="ln-11"></a><span class="c">!</span>
+<a name="ln-12"></a><span class="c">!  Kind numbers for real and integers</span>
 <a name="ln-13"></a><span class="c">!</span>
-<a name="ln-14"></a>   <span class="kt">integer</span><span class="p">,</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">sp</span>  <span class="o">=</span> <span class="nb">selected_real_kind</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="mi">37</span><span class="p">)</span>
-<a name="ln-15"></a>   <span class="kt">integer</span><span class="p">,</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">dp</span>  <span class="o">=</span> <span class="nb">selected_real_kind</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span><span class="mi">307</span><span class="p">)</span>
-<a name="ln-16"></a>   <span class="kt">integer</span><span class="p">,</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">qp</span>  <span class="o">=</span> <span class="nb">selected_real_kind</span><span class="p">(</span><span class="mi">33</span><span class="p">,</span><span class="mi">4931</span><span class="p">)</span>
-<a name="ln-17"></a>   <span class="kt">integer</span><span class="p">,</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">i15</span> <span class="o">=</span> <span class="nb">selected_int_kind</span><span class="p">(</span><span class="mi">15</span><span class="p">)</span>
-<a name="ln-18"></a><span class="c">!   </span>
-<a name="ln-19"></a><span class="c">!  Integers as reals </span>
-<a name="ln-20"></a><span class="c">!</span>
-<a name="ln-21"></a>   <span class="kt">real</span><span class="p">(</span><span class="n">dp</span><span class="p">),</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">zero</span> <span class="o">=</span> <span class="mf">0.0D0</span><span class="p">,</span> <span class="n">one</span> <span class="o">=</span> <span class="mf">1.0D0</span><span class="p">,</span> <span class="n">two</span> <span class="o">=</span> <span class="mf">2.0D0</span><span class="p">,</span> <span class="n">half</span> <span class="o">=</span> <span class="mf">0.5D0</span>
-<a name="ln-22"></a>   <span class="kt">real</span><span class="p">(</span><span class="n">dp</span><span class="p">),</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">three</span> <span class="o">=</span> <span class="mf">3.0D0</span><span class="p">,</span> <span class="n">four</span> <span class="o">=</span> <span class="mf">4.0D0</span><span class="p">,</span> <span class="n">five</span> <span class="o">=</span> <span class="mf">5.0D0</span><span class="p">,</span> <span class="n">six</span> <span class="o">=</span> <span class="mf">6.0D0</span>
+<a name="ln-14"></a><span class="c">!  Usage:	real(dp) 	 :: foo</span>
+<a name="ln-15"></a><span class="c">!				integer(i15) :: foo_int</span>
+<a name="ln-16"></a><span class="c">!</span>
+<a name="ln-17"></a>   <span class="kt">integer</span><span class="p">,</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">sp</span>  <span class="o">=</span> <span class="nb">selected_real_kind</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span><span class="mi">37</span><span class="p">)</span>
+<a name="ln-18"></a>   <span class="kt">integer</span><span class="p">,</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">dp</span>  <span class="o">=</span> <span class="nb">selected_real_kind</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span><span class="mi">307</span><span class="p">)</span>
+<a name="ln-19"></a>   <span class="kt">integer</span><span class="p">,</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">qp</span>  <span class="o">=</span> <span class="nb">selected_real_kind</span><span class="p">(</span><span class="mi">33</span><span class="p">,</span><span class="mi">4931</span><span class="p">)</span>
+<a name="ln-20"></a>   <span class="kt">integer</span><span class="p">,</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">i15</span> <span class="o">=</span> <span class="nb">selected_int_kind</span><span class="p">(</span><span class="mi">15</span><span class="p">)</span>
+<a name="ln-21"></a><span class="c">!   </span>
+<a name="ln-22"></a><span class="c">!  Integers as reals </span>
 <a name="ln-23"></a><span class="c">!</span>
-<a name="ln-24"></a><span class="k">end module </span><span class="n">types</span>
+<a name="ln-24"></a>   <span class="kt">real</span><span class="p">(</span><span class="n">dp</span><span class="p">),</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">zero</span> <span class="o">=</span> <span class="mf">0.0D0</span><span class="p">,</span> <span class="n">one</span> <span class="o">=</span> <span class="mf">1.0D0</span><span class="p">,</span> <span class="n">two</span> <span class="o">=</span> <span class="mf">2.0D0</span><span class="p">,</span> <span class="n">half</span> <span class="o">=</span> <span class="mf">0.5D0</span>
+<a name="ln-25"></a>   <span class="kt">real</span><span class="p">(</span><span class="n">dp</span><span class="p">),</span> <span class="k">parameter</span> <span class="kd">::</span> <span class="n">three</span> <span class="o">=</span> <span class="mf">3.0D0</span><span class="p">,</span> <span class="n">four</span> <span class="o">=</span> <span class="mf">4.0D0</span><span class="p">,</span> <span class="n">five</span> <span class="o">=</span> <span class="mf">5.0D0</span><span class="p">,</span> <span class="n">six</span> <span class="o">=</span> <span class="mf">6.0D0</span>
+<a name="ln-26"></a><span class="c">!</span>
+<a name="ln-27"></a><span class="k">end module </span><span class="n">types</span>
 </pre></div>
 
     </section>
@@ -343,8 +340,6 @@
       <a class="list-group-item" href="../sourcefile/calc_procedures_class.f90.html">calc_procedures_class.F90</a>
       
       <a class="list-group-item" href="../sourcefile/calc_settings_class.f90.html">calc_settings_class.F90</a>
-      
-      <a class="list-group-item" href="../sourcefile/cc2_class.f90.html">cc2_class.F90</a>
       
       <a class="list-group-item" href="../sourcefile/ccs_class.f90.html">ccs_class.F90</a>
       
@@ -366,11 +361,7 @@
       
       <a class="list-group-item" href="../sourcefile/input_reader.f90.html">input_reader.F90</a>
       
-      <a class="list-group-item" href="../sourcefile/jacobian_submodule.f90.html">jacobian_submodule.F90</a>
-      
       <a class="list-group-item" href="../sourcefile/omega_submodule.f90.html">omega_submodule.F90</a>
-      
-      <a class="list-group-item" href="../sourcefile/omega_submodule.f90%7E2.html">omega_submodule.F90</a>
       
       <a class="list-group-item" href="../sourcefile/types.f90.html">types.F90</a>
       

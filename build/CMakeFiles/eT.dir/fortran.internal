@@ -1,0 +1,13 @@
+# The fortran modules provided by this target.
+provides
+ calc_procedures_class
+ calc_settings_class
+ cc2_class
+ ccs_class
+ ccsd_class
+ hf_class
+ input_output
+ input_reader
+ types
+ utils
+ workspace
