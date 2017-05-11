@@ -173,70 +173,70 @@ contains
 !
       character(len=40) :: line 
 !
-      do ! General do loop - ends when it reaches 'exit'
+      read(unit_input,'(a40)') line   
 !
-         read(unit_input,'(a40)') line   
+      do while (line(1:1) == '!' .or. trim(line) == '') ! Comment or blank line: read the next line
 !
-         do while (line(1:1) == '!' .or. trim(line) == '') ! Comment or blank line: read the next line
+         read(unit_input,'(a40)') line 
 !
-            read(unit_input,'(a40)') line 
+      enddo
 !
-         enddo
+      if (trim(line) == 'Settings:') then
 !
-         if (trim(line) == 'Settings:') then
+         do ! Read settings 
 !
-            do
+            read(unit_input,'(a40)') line
 !
-               read(unit_input,'(a40)') line
+            do while (line(1:1) == '!' .or. trim(line) == '') ! Comment or blank line: read the next line
+               read(unit_input,'(a40)') line 
+            enddo
 !
-               do while (line(1:1) == '!' .or. trim(line) == '') ! Comment or blank line: read the next line
-                  read(unit_input,'(a40)') line 
-               enddo
+            if (line(1:1) == '.') then 
 !
-               if (line(1:1) == '.') then 
+               setting = trim(line(2:40))
 !
-                  setting = trim(line(2:40))
+!              Test for which type, set the logical in tasks, and cycle!
 !
-!                 Test for which type, set the logical in tasks, and cycle!
+               if (setting == 'energy_threshold') then
 !
-                  if (setting == 'energy_threshold') then
+                  read(unit_input,*) settings%energy_threshold
+                  cycle
 !
-                     read(unit_input,*) settings%energy_threshold
-                     exit
+               elseif (setting == 'ampeqs_threshold') then 
 !
-                  elseif (setting == 'ampeqs_threshold') then 
+                  read(unit_input,*) settings%ampeqs_threshold
+                  cycle
 !
-                     read(unit_input,*) settings%ampeqs_threshold
-                     exit
+               elseif (trim(line) == '#end of eT input') then
 !
-                  else
-!
-                     write(unit_output,*) 'Input error: setting ',trim(line(2:40)),' not recognized.'
-                     stop
-!
-                  endif
+                  exit ! escape do loop 
 !
                else
-! 
-                  write(unit_output,*) 'Input error: line ',trim(line),' not recognized.'
+!
+                  write(unit_output,*) 'Input error: setting ',trim(line(2:40)),' not recognized.'
                   stop
 !
                endif
 !
-            enddo
+            elseif (trim(line) == '#end of eT input') then
 !
-         elseif (trim(line) == '#end of eT input') then 
+               exit
 !
-            exit ! done reading input; escape the do loop
+            else
 !
-         else
+               write(unit_output,*) 'Input error: unregonized line ',trim(line),'.'
+               stop
 !
-            write(unit_output,*) 'Input error: expected settings section, not the line ',trim(line),'.'
-            stop ! Terminate program
+            endif
 !
-         endif
+         enddo
 !
-      enddo ! End general do loop
+      else
+!
+         write(unit_output,*) 'Input error: expected settings section, not the line ',trim(line),'.'
+         stop ! Terminate program
+!
+      endif
 !
    end subroutine settings_reader
 !
