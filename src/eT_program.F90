@@ -1,7 +1,7 @@
 program eT_program
 !
 !
-!                        eT coupled cluster program                                
+!                        eT - a coupled cluster program                                
 !         Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017         
 !                              
 !                                             
