@@ -32,6 +32,7 @@ module ccs_class
 !
       integer(i15) :: n_t1am = 0                    ! Number of singles amplitudes
       real(dp), dimension(:,:), allocatable :: t1am ! Singles amplitude vector
+      real(dp), dimension(:,:), allocatable :: c1am ! Right vector of Jacobian
 !
 !     Projection vector < mu | exp(-T) H exp(T) | R > (the omega vector)
 ! 
@@ -43,6 +44,10 @@ module ccs_class
       real(dp), dimension(:,:), allocatable :: fock_ia ! occ-vir block
       real(dp), dimension(:,:), allocatable :: fock_ai ! vir-occ block
       real(dp), dimension(:,:), allocatable :: fock_ab ! vir-vir block
+!
+!     Right transform rho
+!
+      real(dp), dimension(:,:), allocatable :: rho1_a_i
 !
    contains 
 !
@@ -98,7 +103,18 @@ module ccs_class
 !
       procedure, non_overridable :: diis     => diis_ccs
 !
+!     Routines for the right transform of the Jacobian matrix
 !
+      procedure :: construct_right_transform => construct_right_transform_ccs
+!
+!     Helper routines. 
+!     Non-overridable, they will be used for contributions
+!     to linear of higher order coupled cluster methods
+!
+      procedure, non_overridable :: rho_ccs_a1 => rho_ccs_a1_ccs 
+      procedure, non_overridable :: rho_ccs_b1 => rho_ccs_b1_ccs
+!
+! 
    end type ccs
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -376,7 +392,58 @@ module ccs_class
          real(dp), dimension(n_variables, 1) :: dt 
          real(dp), dimension(n_variables, 1) :: t_dt 
 !
-      end subroutine diis_ccs 
+      end subroutine diis_ccs
+!
+!
+      module subroutine construct_right_transform_ccs(wf)
+!!
+!!       Construct Right Transform of Jacobian
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!
+         implicit none
+!
+         class(ccs) :: wf        
+!
+      end subroutine construct_right_transform_ccs
+!
+!
+      module subroutine rho_ccs_a1_ccs(wf)
+!!
+!!       A1 contribution to right transform of Jacobian
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!       Calculates the A1 term of the right transform of the
+!!       Jacobian,
+!!
+!!       A1: sum_b F_ab*c_bi + sum_j F_ji*c_aj
+!!
+!!       and adds it to the rho vector.
+!!
+         implicit none
+!
+         class(ccs) :: wf        
+!
+      end subroutine rho_ccs_a1_ccs
+!
+!
+      module subroutine rho_ccs_b1_ccs(wf)
+!!
+!!       B1 contribution to right transform of Jacobian
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!       Calculates the B1 term of the right transform of the
+!!       Jacobian,
+!!
+!!       B1: sum_bj L_aijb*c_bj
+!!
+!!       and adds it to the rho vector.
+!!
+         implicit none
+!
+         class(ccs) :: wf        
+!
+      end subroutine rho_ccs_B1_ccs
 !
 !
    end interface 
