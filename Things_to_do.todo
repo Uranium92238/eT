@@ -10,6 +10,8 @@ Programmering:
   ☐ CC3 grunntilstand
   ☐ Løser for eksiterte tilstander 
   ☐ MLCCSD
+  ☐ Gi omega D1 til CCS
+  ☐ Rutiner som deallokerer omega etter grunntilstanden er laget.
 
  Omstrukturering:
    ✔ Oppryddning i grunntilstandskoden @done (17-05-11 22:24)
