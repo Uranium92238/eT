@@ -95,6 +95,7 @@ module ccs_class
       procedure :: ground_state_solver       => ground_state_solver_ccs
 !
       procedure :: initialize_ground_state   => initialize_ground_state_ccs
+      procedure :: destruct_ground_state     => destruct_ground_state_ccs
       procedure :: new_amplitudes            => new_amplitudes_ccs
       procedure :: calc_ampeqs               => calc_ampeqs_ccs
       procedure :: calc_ampeqs_norm          => calc_ampeqs_norm_ccs
@@ -106,6 +107,11 @@ module ccs_class
 !
       procedure :: save_amplitudes => save_amplitudes_ccs
       procedure :: read_amplitudes => read_amplitudes_ccs
+!
+!     Routines to destroy amplitudes and omega 
+!
+      procedure :: destruct_amplitudes   => destruct_amplitudes_ccs
+      procedure :: destruct_omega        => destruct_omega_ccs
 !
    end type ccs
 !
@@ -402,6 +408,21 @@ module ccs_class
       end subroutine initialize_ground_state_ccs
 !
 !
+      module subroutine destruct_ground_state_ccs(wf)
+!!
+!!       Destruct Ground State (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!       Deallocates the amplitudes and the projection vector. This routine 
+!!       can be inherited unaltered by standard CC methods.
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+      end subroutine destruct_ground_state_ccs
+!
+!
    end interface 
 !
 !
@@ -627,6 +648,7 @@ contains
    end subroutine omega_ccs_a1_ccs
 !
 !
+<<<<<<< HEAD
    subroutine save_amplitudes_ccs(wf)
 !!
 !!    Save Amplitudes (CCS)
@@ -699,6 +721,32 @@ contains
       endif
 !
    end subroutine read_amplitudes_ccs
+!
+!
+   subroutine destruct_amplitudes_ccs(wf)
+!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      if (allocated(wf%t1am)) then
+         call deallocator(wf%t1am, wf%n_v, wf%n_o)
+      endif
+!
+   end subroutine destruct_amplitudes_ccs
+!
+!
+   subroutine destruct_omega_ccs(wf)
+!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      if (allocated(wf%omega1)) then
+         call deallocator(wf%omega1, wf%n_v, wf%n_o)
+      endif
+!
+   end subroutine destruct_omega_ccs
 !
 !
 end module ccs_class

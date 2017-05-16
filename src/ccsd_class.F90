@@ -79,6 +79,9 @@ module ccsd_class
       procedure :: new_amplitudes            => new_amplitudes_ccsd
       procedure :: calc_quasi_Newton_doubles => calc_quasi_Newton_doubles_ccsd
 !
+      procedure :: destruct_amplitudes => destruct_amplitudes_ccsd
+      procedure :: destruct_omega      => destruct_omega_ccsd
+!
    end type ccsd
 !
 !  :::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -601,6 +604,38 @@ contains
       call deallocator(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine calc_energy_ccsd
+!
+!
+   subroutine destruct_amplitudes_ccsd(wf)
+!
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      if (allocated(wf%t1am)) then
+         call deallocator(wf%t1am, wf%n_v, wf%n_o)
+      endif
+      if (allocated(wf%t2am)) then
+         call deallocator(wf%t2am, wf%n_t2am, 1)
+      endif
+!
+   end subroutine destruct_amplitudes_ccsd
+!
+!
+   subroutine destruct_omega_ccsd(wf)
+!
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      if (allocated(wf%omega1)) then
+         call deallocator(wf%omega1, wf%n_v, wf%n_o)
+      endif
+      if (allocated(wf%omega2)) then
+         call deallocator(wf%omega2, wf%n_t2am, 1)
+      endif
+!
+   end subroutine destruct_omega_ccsd
 !
 !
 end module ccsd_class
