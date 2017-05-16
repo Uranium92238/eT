@@ -253,11 +253,17 @@ contains
 !
    subroutine calc_energy_cc2(wf)
 !!
-!!  Calculate Energy (CC2)
+!!    Calculate Energy (CC2)
 !!
-!!  Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!  Calculates the CC2 energy
+!!    Calculates the CC2 energy, 
+!!
+!!    E_CC2 = E_HF + sum_aibj L_iajb*(t_ij^ab + t_i^a*t_j^b),
+!!   
+!!    with t_ij^ab = - g_aibj/(e_a + e_b - e_i - e_j) where 
+!!    g_aibj are T1-transformed integrals.
+!!    Batching over a.
 !!
    implicit none
 !
@@ -473,7 +479,7 @@ contains
 !  
          call deallocator(t_ia_bj, a_length*(wf%n_o), (wf%n_o)*(wf%n_v))
 !
-      enddo
+      enddo ! End of batching
 !
    end subroutine calc_energy_cc2
 !
