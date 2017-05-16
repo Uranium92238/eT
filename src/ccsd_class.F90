@@ -65,8 +65,7 @@ module ccsd_class
 !
       procedure :: omega_a1 => omega_a1_ccsd 
       procedure :: omega_b1 => omega_b1_ccsd 
-      procedure :: omega_c1 => omega_c1_ccsd 
-      procedure :: omega_d1 => omega_d1_ccsd
+      procedure :: omega_c1 => omega_c1_ccsd
 !
       procedure :: omega_a2 => omega_a2_ccsd 
       procedure :: omega_b2 => omega_b2_ccsd 
@@ -176,20 +175,6 @@ module ccsd_class
          class(ccsd) :: wf 
 !
       end subroutine omega_c1_ccsd
-!
-!
-      module subroutine omega_d1_ccsd(wf)
-!!
-!!       Omega D1 
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, March 2017
-!!
-!!       Omega_ai^D1 = F_ai_T1
-!!
-         implicit none 
-!
-         class(ccsd) :: wf
-!
-      end subroutine omega_d1_ccsd
 !
 !
       module subroutine omega_a2_ccsd(wf)

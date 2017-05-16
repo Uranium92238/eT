@@ -82,6 +82,7 @@ module ccs_class
 !     Routine to construct projection vector (omega)
 !
       procedure :: construct_omega => construct_omega_ccs
+      procedure :: omega_ccs_a1    => omega_ccs_a1_ccs
 !
 !     Ground state solver routines (and helpers)
 !
@@ -580,6 +581,23 @@ contains
       wf%omega1 = zero ! Brillouin
 !
    end subroutine construct_omega_ccs
+!
+!
+   subroutine omega_ccs_a1_ccs(wf)
+!
+!     Omega D1 term: Omega_ai^D1=F_ai_T1
+!
+!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mars 2017
+!
+      implicit none
+!
+      class(ccs) :: wf
+!
+!     Add F_a_i to omega
+!
+      call daxpy((wf%n_o)*(wf%n_v), one, wf%fock_ai, 1, wf%omega1, 1)
+!
+   end subroutine omega_ccs_a1_ccs
 !
 !
 end module ccs_class

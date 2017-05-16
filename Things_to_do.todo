@@ -10,14 +10,17 @@ Programmering:
   ☐ CC3 grunntilstand
   ☐ Løser for eksiterte tilstander 
   ☐ MLCCSD
-  ☐ Gi omega D1 til CCS
   ☐ Rutiner som deallokerer omega etter grunntilstanden er laget.
+  ☐ CC2 - teste batching
+
 
  Omstrukturering:
    ✔ Oppryddning i grunntilstandskoden @done (17-05-11 22:24)
    ☐ cmake
    ✔ Git-repo @done (17-05-08 17:12)
    ✔ Navn @done (17-05-08 17:12)
+   ☐ Gi omega D1 til CCS
+   ☐ Én driver
 
 
 ----------------------------------------------------
