@@ -2,13 +2,7 @@ submodule (ccsd_class) jacobian
 !
 !!
 !!    Jacobian submodule (CCSD)                            
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017  
-!!
-!!    Contains the following subroutines of the CCSD module:
-!!
-!!    jacobian_transformation : Performs the transformation by the Jacobi matrix, c -> A * c 
-!!    jacobian_a1             : Calculates the A1 term for the jacobian_transformation routine
-!!    etc.                    : Under construction...
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017         
 !!                                                                          
 !
 contains

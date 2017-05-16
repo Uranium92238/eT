@@ -81,6 +81,13 @@ module ccsd_class
       procedure :: new_amplitudes            => new_amplitudes_ccsd
       procedure :: calc_quasi_Newton_doubles => calc_quasi_Newton_doubles_ccsd
 !
+!     Jacobian transformation routines 
+!
+      procedure :: jacobian_transformation => jacobian_transformation_ccsd
+!
+      procedure :: jacobian_a1 => jacobian_a1_ccsd
+      procedure :: jacobian_b1 => jacobian_b1_ccsd
+!
    end type ccsd
 !
 !  :::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -352,6 +359,76 @@ module ccsd_class
 !
       end subroutine calc_quasi_Newton_doubles_ccsd
 !
+!
+      module subroutine jacobian_transformation_ccsd(wf,c1am,c2am)
+!!
+!!       Jacobian Transformation (CCSD)
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!       Directs the transformation of the incoming vector c by the 
+!!       coupled cluster Jacobian matrix, 
+!!
+!!          A_mu,nu = < mu | [e^(-T) H e^(T),tau_nu] | R >.
+!!
+!!       On exit, A*c is placed in the incoming c vector.
+!!
+!!       Reads doubles amplitudes from file, but assumes the singles are held in 
+!!       memory from a ground state calculation. The routine assumes that the omega 
+!!       vector and the doubles amplitudes are deallocated, in terms of memory 
+!!       presumed available (~ 5 * v^2 * o^2).
+!!
+         implicit none 
+!
+         class(ccsd) :: wf 
+!
+         real(dp), dimension(:,:) :: c1am 
+         real(dp), dimension(:,:) :: c2am 
+!
+      end subroutine jacobian_transformation_ccsd
+!
+!
+      module subroutine jacobian_a1_ccsd(wf,tr1am,c1am)
+!!
+!!       Jacobian A1 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!       Calculates the A1 term, 
+!!
+!!          sum_c F_ac c_ci - sum_k c_ak F_ki + sum_ck L_aikc c_ck
+!!
+!!       and adds it to the transformed singles vector element tr1am(a,i).
+!!
+         implicit none 
+!
+         class(ccsd) :: wf 
+!
+         real(dp), dimension(wf%n_v, wf%n_o) :: tr1am 
+!
+         real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c1am 
+!
+      end subroutine jacobian_a1_ccsd
+!
+      module subroutine jacobian_b1_ccsd(wf,tr1am,c1am)
+!!
+!!       Jacobian B1
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!       Calculates the B1 term,
+!!
+!!         sum_dl (sum_ck L_ldkc c_ck) u_li^da,
+!!
+!!       where L_ldkc = 2 * g_ldkc - g_lckd and 
+!!       u_li^ad = 2 * t_li^ad - t_il^ad.
+!!
+         implicit none 
+!
+         class(ccsd) :: wf 
+!
+         real(dp), dimension(wf%n_v, wf%n_o) :: tr1am 
+!
+         real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c1am
+!
+      end subroutine jacobian_b1_ccsd
 !
    end interface
 !

@@ -1,9 +1,11 @@
 module cc2_class
 !
+!
 !!
 !!            Coupled cluster perturbative doubles (CC2) class module                                 
 !!         Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017         
 !!                                                                           
+!
 !
 !  :::::::::::::::::::::::::::::::::::
 !  -::- Modules used by the class -::-

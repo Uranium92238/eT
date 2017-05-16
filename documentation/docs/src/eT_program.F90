@@ -16,12 +16,14 @@ program eT_program
 !
    use hf_class
    use ccs_class
+   use cc2_class
    use ccsd_class
 !
    implicit none
 !
 !  Method class allocatable objects
 !
+   type(cc2),  allocatable, target :: cc2_wf
    type(ccsd), allocatable, target :: ccsd_wf
 !
 !  Wavefunction pointer
@@ -82,7 +84,12 @@ program eT_program
    write(unit_output,'(t3,a,a,a)') 'Our wavefunction is of type ',trim(method),'.'
    flush(unit_output)
 !
-   if (trim(method) == 'CCSD') then
+   if (trim(method) == 'CC2') then
+!
+      allocate(cc2_wf)
+      wf => cc2_wf
+!
+   elseif (trim(method) == 'CCSD') then
 !
       allocate(ccsd_wf)
       wf => ccsd_wf
@@ -117,9 +124,8 @@ program eT_program
 !
    write(unit_output,'(/t3,a/)')         'Settings for this calculation:'
 !
-   write(unit_output,'(t6,a25,e14.2)')    'Energy threshold:',         wf%settings%energy_threshold
-   write(unit_output,'(t6,a25,e14.2)')   'Amplitude eqs. threshold:', wf%settings%ampeqs_threshold
-   write(unit_output,'(t6,a25,i14/)')     'Memory:',                   mem
+   write(unit_output,'(t6,a25,e10.2)')    'Energy threshold:',         wf%settings%energy_threshold
+   write(unit_output,'(t6,a25,e10.2/)')   'Amplitude eqs. threshold:', wf%settings%ampeqs_threshold
 !
 !  Close input file
 !
