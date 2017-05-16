@@ -22,6 +22,8 @@ module calc_settings_class
 !
       integer(i15) :: ampeqs_max_iterations = 25
 !
+      logical :: restart = .false.
+!
    end type calc_settings                                                                            
 !
 contains

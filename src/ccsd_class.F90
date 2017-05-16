@@ -41,10 +41,9 @@ module ccsd_class
 !
    contains
 !
-!     Initialization and driver routines
+!     Initialization routine (driver is inherited)
 !
       procedure :: init => init_ccsd
-      procedure :: drv  => drv_ccsd
 !
 !     Initialization routine for the (singles, doubles) amplitudes
 !
@@ -66,8 +65,7 @@ module ccsd_class
 !
       procedure :: omega_a1 => omega_a1_ccsd 
       procedure :: omega_b1 => omega_b1_ccsd 
-      procedure :: omega_c1 => omega_c1_ccsd 
-      procedure :: omega_d1 => omega_d1_ccsd
+      procedure :: omega_c1 => omega_c1_ccsd
 !
       procedure :: omega_a2 => omega_a2_ccsd 
       procedure :: omega_b2 => omega_b2_ccsd 
@@ -80,6 +78,9 @@ module ccsd_class
       procedure :: calc_ampeqs_norm          => calc_ampeqs_norm_ccsd
       procedure :: new_amplitudes            => new_amplitudes_ccsd
       procedure :: calc_quasi_Newton_doubles => calc_quasi_Newton_doubles_ccsd
+!
+      procedure :: destruct_amplitudes => destruct_amplitudes_ccsd
+      procedure :: destruct_omega      => destruct_omega_ccsd
 !
    end type ccsd
 !
@@ -177,20 +178,6 @@ module ccsd_class
          class(ccsd) :: wf 
 !
       end subroutine omega_c1_ccsd
-!
-!
-      module subroutine omega_d1_ccsd(wf)
-!!
-!!       Omega D1 
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, March 2017
-!!
-!!       Omega_ai^D1 = F_ai_T1
-!!
-         implicit none 
-!
-         class(ccsd) :: wf
-!
-      end subroutine omega_d1_ccsd
 !
 !
       module subroutine omega_a2_ccsd(wf)
@@ -387,6 +374,10 @@ contains
 !
       wf%name = 'CCSD'
 !
+!     Set implemented methods
+!
+      wf%implemented%ground_state = .true.
+!
 !     Read Hartree-Fock info from SIRIUS
 !
       call wf%read_hf_info
@@ -399,6 +390,10 @@ contains
 !
       call wf%initialize_amplitudes
 !
+!     Set the number of parameters in the wavefunction 
+!
+      wf%n_parameters = wf%n_t1am + wf%n_t2am
+!
 !     Initialize the Fock matrix (allocate and construct given the initial amplitudes)
 !
       call wf%initialize_fock_matrix
@@ -409,22 +404,6 @@ contains
 !
    end subroutine init_ccsd
 !
-!
-   subroutine drv_ccsd(wf)
-!!
-!!    Driver (CCSD)
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!!
-!!    Controls the CCSD calculation using requested calculations from
-!!    user (eventually: still under construction).
-!!
-      implicit none 
-!
-      class(ccsd) :: wf
-!
-      call wf%ground_state_solver
-!
-   end subroutine drv_ccsd
 !
 !  :::::::::::::::::::::::::::::::::::::::::
 !  -::- Class subroutines and functions -::- 
@@ -625,6 +604,38 @@ contains
       call deallocator(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine calc_energy_ccsd
+!
+!
+   subroutine destruct_amplitudes_ccsd(wf)
+!
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      if (allocated(wf%t1am)) then
+         call deallocator(wf%t1am, wf%n_v, wf%n_o)
+      endif
+      if (allocated(wf%t2am)) then
+         call deallocator(wf%t2am, wf%n_t2am, 1)
+      endif
+!
+   end subroutine destruct_amplitudes_ccsd
+!
+!
+   subroutine destruct_omega_ccsd(wf)
+!
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      if (allocated(wf%omega1)) then
+         call deallocator(wf%omega1, wf%n_v, wf%n_o)
+      endif
+      if (allocated(wf%omega2)) then
+         call deallocator(wf%omega2, wf%n_t2am, 1)
+      endif
+!
+   end subroutine destruct_omega_ccsd
 !
 !
 end module ccsd_class

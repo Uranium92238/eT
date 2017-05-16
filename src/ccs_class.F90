@@ -33,6 +33,8 @@ module ccs_class
       integer(i15) :: n_t1am = 0                    ! Number of singles amplitudes
       real(dp), dimension(:,:), allocatable :: t1am ! Singles amplitude vector
 !
+      integer(i15) :: n_parameters = 0 ! Number of parameters in the wavefunction
+!
 !     Projection vector < mu | exp(-T) H exp(T) | R > (the omega vector)
 ! 
       real(dp), dimension(:,:), allocatable :: omega1 ! Singles vector 
@@ -82,6 +84,7 @@ module ccs_class
 !     Routine to construct projection vector (omega)
 !
       procedure :: construct_omega => construct_omega_ccs
+      procedure :: omega_ccs_a1    => omega_ccs_a1_ccs
 !
 !     Ground state solver routines (and helpers)
 !
@@ -91,6 +94,8 @@ module ccs_class
 !
       procedure :: ground_state_solver       => ground_state_solver_ccs
 !
+      procedure :: initialize_ground_state   => initialize_ground_state_ccs
+      procedure :: destruct_ground_state     => destruct_ground_state_ccs
       procedure :: new_amplitudes            => new_amplitudes_ccs
       procedure :: calc_ampeqs               => calc_ampeqs_ccs
       procedure :: calc_ampeqs_norm          => calc_ampeqs_norm_ccs
@@ -98,7 +103,15 @@ module ccs_class
 !
       procedure, non_overridable :: diis     => diis_ccs
 !
-!     Routines for the right transform of the Jacobian matrix
+!     Routine to save and read the amplitudes (to/from disk)
+!
+      procedure :: save_amplitudes => save_amplitudes_ccs
+      procedure :: read_amplitudes => read_amplitudes_ccs
+!
+!     Routines to destroy amplitudes and omega 
+!
+      procedure :: destruct_amplitudes   => destruct_amplitudes_ccs
+      procedure :: destruct_omega        => destruct_omega_ccs
 !
       procedure :: transform_trial_vecs      => transform_trial_vecs_ccs
       procedure :: initialize_trial_vectors  => initialize_trial_vectors_ccs
@@ -492,6 +505,36 @@ module ccs_class
       end subroutine rho_ccs_B1_ccs
 !
 !
+      module subroutine initialize_ground_state_ccs(wf)
+!!
+!!       Initialize Ground State (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!       Initializes the amplitudes and the projection vector. This routine 
+!!       can be inherited unaltered by standard CC methods.
+!!
+         implicit none 
+!
+         class(ccs) :: wf
+!
+      end subroutine initialize_ground_state_ccs
+!
+!
+      module subroutine destruct_ground_state_ccs(wf)
+!!
+!!       Destruct Ground State (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!       Deallocates the amplitudes and the projection vector. This routine 
+!!       can be inherited unaltered by standard CC methods.
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+      end subroutine destruct_ground_state_ccs
+!
+!
    end interface 
 !
 !
@@ -522,6 +565,10 @@ contains
 !
       wf%name = 'CCS'
 !
+!     Set implemented methods
+!
+      wf%implemented%ground_state = .true.
+!
 !     Read Hartree-Fock info from SIRIUS
 !
       call wf%read_hf_info
@@ -533,6 +580,10 @@ contains
 !     Initialize amplitudes and associated attributes
 !
       call wf%initialize_amplitudes
+!
+!     Set the number of parameters in the wavefunction 
+!
+      wf%n_parameters = wf%n_t1am
 !
 !     Initialize the projection vector 
 !
@@ -550,15 +601,69 @@ contains
 !!    CCS Driver
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!    If called, the routine lets the user know there is no driver 
-!!    for CCS, then exits the program.
+!!    The driver for CCS is written so as to be inherited unaltered.
+!!    It finds which calculations are requested by the user, and controls
+!!    that the calculation can be done. If the method is implemented, it 
+!!    calls the driver for that particular calculation (e.g., ground state
+!!    energy).
 !!
       implicit none 
 !
       class(ccs) :: wf
 !
-      write(unit_output,*) 'ERROR: There is no driver for the CCS class'
-      stop
+      if (wf%tasks%ground_state) then 
+!
+!        Ground state calculation requested
+!
+         if (wf%implemented%ground_state) then 
+!
+            call wf%ground_state_solver
+!
+         else
+!
+            write(unit_output,'(t3,a,a)') &
+               'Error: ground state solver not implemented for ',trim(wf%name)
+            stop
+!
+         endif
+      endif
+!
+      if (wf%tasks%excited_state) then
+!
+!        Excited state calculation requested
+!
+         if (wf%implemented%excited_state) then 
+!
+          !  call wf%excited_state_solver
+!
+         else
+!
+            write(unit_output,'(t3,a,a)') &
+               'Error: excited state solver not implemented for ',trim(wf%name)
+            flush(unit_output)
+            stop
+!
+         endif
+!
+      endif
+!
+      if (wf%tasks%properties) then
+!
+!        Properties calculation requested
+!
+         if (wf%implemented%properties) then 
+!
+          !  call wf%properties
+!
+         else
+!
+            write(unit_output,'(t3,a,a)') &
+               'Error: properties not implemented for ',trim(wf%name)
+            stop
+!
+         endif
+!
+      endif
 !
    end subroutine drv_ccs
 !
@@ -635,6 +740,134 @@ contains
       wf%omega1 = zero ! Brillouin
 !
    end subroutine construct_omega_ccs
+!
+!
+   subroutine omega_ccs_a1_ccs(wf)
+!!
+!!    Omega D1
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, March 2017
+!!
+!!    Omega_ai^D1 = F_ai_T1
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+!     Add F_a_i to omega
+!
+      call daxpy((wf%n_o)*(wf%n_v), one, wf%fock_ai, 1, wf%omega1, 1)
+!
+   end subroutine omega_ccs_a1_ccs
+!
+!
+   subroutine save_amplitudes_ccs(wf)
+!!
+!!    Save Amplitudes (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
+!!
+!!    Store the amplitudes to disk (T1AM)
+!!
+      implicit none 
+!
+      class(ccs) :: wf
+!
+      integer(i15) :: unit_t1am = -1 
+!
+!     Open amplitude file
+!
+      call generate_unit_identifier(unit_t1am)
+      open(unit_t1am, file='t1am', status='unknown', form='unformatted')
+      rewind(unit_t1am)
+!
+!     Write to file 
+!
+      write(unit_t1am) wf%t1am 
+!
+!     Close amplitude file
+!
+      close(unit_t1am)
+!
+   end subroutine save_amplitudes_ccs
+!
+!
+   subroutine read_amplitudes_ccs(wf)
+!!
+!!    Read Amplitudes (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
+!!
+!!    Reads the amplitudes from disk (T1AM)
+!!
+      implicit none 
+!
+      class(ccs) :: wf
+!
+      integer(i15) :: unit_t1am = -1 
+!
+      logical :: file_exists = .false.
+!
+!     Check to see whether file exists
+!
+      inquire(file='t1am',exist=file_exists)
+!
+      if (file_exists) then 
+!
+!        Open amplitude file if it exists
+!
+         call generate_unit_identifier(unit_t1am)
+         open(unit_t1am, file='t1am', status='unknown', form='unformatted')
+         rewind(unit_t1am)
+!
+!        Read from file & close
+!
+         wf%t1am = zero
+         read(unit_t1am) wf%t1am 
+!  
+         close(unit_t1am)
+!
+      else
+!
+         write(unit_output,'(t3,a)') 'Error: amplitude file does not exist.'
+         stop
+!
+      endif
+!
+   end subroutine read_amplitudes_ccs
+!
+!
+   subroutine destruct_amplitudes_ccs(wf)
+!!
+!!    Destruct Amplitudes (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
+!!
+!!    Deallocates the singles amplitudes.
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      if (allocated(wf%t1am)) then
+         call deallocator(wf%t1am, wf%n_v, wf%n_o)
+      endif
+!
+   end subroutine destruct_amplitudes_ccs
+!
+!
+   subroutine destruct_omega_ccs(wf)
+!!
+!!    Destruct Omega (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
+!!
+!!    Deallocates the singles projection vector.
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      if (allocated(wf%omega1)) then
+         call deallocator(wf%omega1, wf%n_v, wf%n_o)
+      endif
+!
+   end subroutine destruct_omega_ccs
 !
 !
 end module ccs_class
