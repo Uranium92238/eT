@@ -723,7 +723,12 @@ contains
 !
 !
    subroutine destruct_amplitudes_ccs(wf)
-!
+!!
+!!    Destruct Amplitudes (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
+!!
+!!    Deallocates the singles amplitudes.
+!!
       implicit none
 !
       class(ccs) :: wf
@@ -736,7 +741,12 @@ contains
 !
 !
    subroutine destruct_omega_ccs(wf)
-!
+!!
+!!    Destruct Omega (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
+!!
+!!    Deallocates the singles projection vector.
+!!
       implicit none
 !
       class(ccs) :: wf

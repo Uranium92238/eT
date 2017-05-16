@@ -21,12 +21,15 @@ submodule (ccs_class) ground_state
 !!    calc_ampeqs:                Updates the amplitude equations for the current amplitudes.
 !!    calc_ampeqs_norm:           Calculates the norm of the amplitude equations.
 !!    calc_quasi_Newton_singles:  Calculates the singles part of the quasi-Newton estimate.
+!!    initialize_ground_state:    Initializes the amplitudes and the amplitude equations.
+!!    destruct_ground_state:      Deallocates the amplitudes and the amplitude equations.
 !!
 !!    Can be inherited by models of the same level (e.g. CC2) without modification.
 !!
 !!    When inherited by higher level models (e.g. CCSD), the new_amplitudes and calc_ampeqs_norm
 !!    routines should be overridden to account for the doubles quasi-Newton estimate, amplitudes, 
-!!    and projection vector.
+!!    and projection vector. Non-standard CC methods may need to override the initialize_ground_state
+!!    and destruct_ground_state.
 !!
 !
    implicit none
@@ -81,6 +84,10 @@ contains
 !
       write(unit_output,'(t3,a)')    'Iter.   Energy           Norm of amplitude eq.'
       write(unit_output,'(t3,a)')    '----------------------------------------------'    
+!
+!     Initialize amplitudes & amplitude equations 
+!
+      call wf%initialize_ground_state
 !
 !     Make sure the initial energy is up to date 
 !
@@ -162,6 +169,10 @@ contains
       call cpu_time(end_gs_solver)
 !
       write(unit_output,'(t3,a27,f14.8/)') 'Total time (seconds):', end_gs_solver - start_gs_solver
+!
+!     Save the amplitudes 
+!
+      call wf%save_amplitudes
 !
    end subroutine ground_state_solver_ccs
 !
@@ -455,6 +466,42 @@ contains
       call deallocator(diis_matrix, current_index + 1, current_index+1)
 !
    end subroutine diis_ccs 
+!
+!
+   subroutine initialize_ground_state_ccs(wf)
+!!
+!!    Initialize Ground State (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!    Initializes the amplitudes and the projection vector. This routine 
+!!    can be inherited unaltered by standard CC methods.
+!!
+      implicit none 
+!
+      class(ccs) :: wf
+!
+      call wf%initialize_amplitudes ! Amplitudes 
+      call wf%initialize_omega      ! Projection vector 
+!
+   end subroutine initialize_ground_state_ccs
+!
+!
+   subroutine destruct_ground_state_ccs(wf)
+!!
+!!    Destruct Ground State (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!    Deallocates the amplitudes and the projection vector. This routine 
+!!    can be inherited unaltered by standard CC methods.
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!  
+      call wf%destruct_amplitudes
+      call wf%destruct_omega
+!
+   end subroutine destruct_ground_state_ccs
 !
 !
 end submodule ground_state
