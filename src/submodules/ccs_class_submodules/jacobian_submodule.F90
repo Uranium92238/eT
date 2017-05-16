@@ -6,7 +6,11 @@ submodule (ccs_class) jacobian
 !!
 !!    Contains the following family of procedures of the CCS class:
 !!
-!!
+!!    initialize_trial_vectors_ccs:
+!!    find_lowest_orbital_diff:
+!!    jacobian_transformation:
+!!    rho_ccs_a1:
+!!    rho_ccs_b1:
 !
    implicit none 
 !
@@ -14,7 +18,167 @@ submodule (ccs_class) jacobian
 contains
 !
 !
-      subroutine construct_right_transform_ccs(wf)
+      module subroutine initialize_trial_vectors_ccs(wf)
+!!
+!!       Initialize trial vectors
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!        
+         integer(i15), dimension(:,:), allocatable :: index_lowest_obital_diff
+!
+         real(dp), dimension(:,:), allocatable :: c_ai
+! 
+         integer(i15) :: i = 0, j = 0
+         integer(i15) :: unit_trial_vecs = 0, unit_rho = 0, ioerror = 0
+!
+         call allocator_int( index_lowest_obital_diff, wf%tasks%n_singlet_states, 1)
+         index_lowest_obital_diff = zero
+!
+!        Find indecies of lowest orbital differences
+!
+         call wf%find_lowest_orbital_diff(index_lowest_obital_diff)
+!
+!        Generate start trial vectors and write to file
+!
+         call allocator(c_ai, (wf%n_v)*(wf%n_o), 1)
+!
+         call generate_unit_identifier(unit_trial_vecs)
+         open(unit=unit_trial_vecs, file='trial_vec', action='write', status='new', &
+           access='direct', form='unformatted', recl=dp*(wf%n_v)*(wf%n_o), iostat=ioerror)
+!
+         do i = 1, (wf%tasks%n_singlet_states)
+            c_ai = zero
+            c_ai(index_lowest_obital_diff(i,1),1) = one
+            write(unit_trial_vecs, rec=i, iostat=ioerror) (c_ai(j,1), j = 1, (wf%n_v)*(wf%n_o))
+         enddo
+!     
+         close(unit_trial_vecs)
+!
+         call deallocator(c_ai, (wf%n_v)*(wf%n_o), 1)
+!
+         call deallocator_int( index_lowest_obital_diff, wf%tasks%n_singlet_states, 1)
+!
+!        Prepare linear transform file
+!
+         call generate_unit_identifier(unit_rho)
+         open(unit=unit_rho, file='trial_vec', action='write', status='new', &
+           access='direct', form='unformatted', recl=dp*(wf%n_v)*(wf%n_o), iostat=ioerror)
+         close(unit_rho)
+!
+      end subroutine initialize_trial_vectors_ccs
+!
+!
+      module subroutine find_lowest_orbital_diff_ccs(wf, index_list)
+!!
+!!       Find indices for lowest orbital differences
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!
+         implicit none
+!
+         class(ccs) :: wf
+         integer(i15), dimension(wf%tasks%n_singlet_states,1), intent(inout) :: index_list
+!
+         real(dp), dimension(:,:), allocatable :: orbital_diff
+         real(dp), dimension(:,:), allocatable :: lowest_orbital_diff
+!
+         integer(i15) :: a = 0, i = 0, j = 0
+!
+         integer(i15) :: ai = 0
+!
+         real(dp)     :: max
+         integer(i15) :: max_pos 
+!
+         real(dp)     :: swap     = zero
+         integer(i15) :: swap_int = 0
+!
+         call allocator(orbital_diff,(wf%n_v)*(wf%n_o),1)
+!
+!        Finding orbital differences
+!
+         do i = 1, wf%n_o
+            do a = 1, wf%n_v
+               ai = index_two(a, i, wf%n_v)
+               orbital_diff(ai, 1) = wf%fock_diagonal(a + wf%n_o, 1) - wf%fock_diagonal(i, 1)
+            enddo
+         enddo
+!
+         call allocator(lowest_orbital_diff, wf%tasks%n_singlet_states, 1)
+         
+         lowest_orbital_diff      = zero
+!
+!        Placing the first elements of orbital_diff into lowest_orbital_diff
+!
+         lowest_orbital_diff(1,1) = orbital_diff(1,1)
+         index_list(1,1) = 1
+!
+         max = lowest_orbital_diff(1,1)
+         max_pos = 1
+!
+         do i = 2, wf%tasks%n_singlet_states
+!
+            lowest_orbital_diff(i,1) = orbital_diff(i,1)
+            index_list(i,1) = i
+!
+            if (lowest_orbital_diff(i,1) .ge. max) then
+!
+               max = lowest_orbital_diff(i,1)
+               max_pos = i
+!
+            endif
+         enddo
+!
+!        Looping through the rest of orbital_diff to find lowest values
+!
+         do i = wf%tasks%n_singlet_states + 1, (wf%n_o)*(wf%n_v)
+            if (orbital_diff(i,1) .lt. max) then
+!
+               lowest_orbital_diff(max_pos,1) = orbital_diff(i,1)
+               index_list(max_pos,1) = i
+               max = orbital_diff(i,1)
+!
+               do j = 1, wf%tasks%n_singlet_states
+                  if (lowest_orbital_diff(j, 1) .gt. max) then
+!
+                     max = lowest_orbital_diff(j, 1)
+                     max_pos = j
+!
+                  endif
+               enddo
+            endif
+         enddo
+!
+!        Sorting lowest_orbital_diff
+!
+         do i = 1, wf%tasks%n_singlet_states
+            do j = 1, wf%tasks%n_singlet_states - 1
+               if (lowest_orbital_diff(j,1) .gt. lowest_orbital_diff(j+1, 1)) then
+!
+                  swap = lowest_orbital_diff(j,1)
+                  lowest_orbital_diff(j,1) = lowest_orbital_diff(j+1, 1)
+                  lowest_orbital_diff(j+1, 1) = swap
+!
+                  swap_int = index_list(j, 1)
+                  index_list(j,1) = index_list(j + 1,1)
+                  index_list(j + 1,1) = swap_int
+!
+               endif
+            enddo
+         enddo
+!
+         call deallocator(orbital_diff,(wf%n_v)*(wf%n_o),1)
+!
+         call deallocator(lowest_orbital_diff, wf%tasks%n_singlet_states, 1)
+!
+! 
+      end subroutine find_lowest_orbital_diff_ccs
+!
+!
+      module subroutine transform_trial_vecs_ccs(wf, first_trial, last_trial)
 !!
 !!       Construct Right Transform of Jacobian
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
@@ -22,30 +186,81 @@ contains
 !!
          implicit none
 !
-         class(ccs) :: wf      
+         class(ccs) :: wf
 !
-!        Allocate rho and c vectors
+         integer(i15), intent(in) :: first_trial, last_trial ! Which trial_vectors we are to transform
 !
-         call allocator(wf%c1am, wf%n_v, wf%n_o)
-         call allocator(wf%rho1_a_i, wf%n_v, wf%n_o)
+         real(dp), dimension(:,:), allocatable :: c_a_i
 !
-         wf%c1am = zero
-         wf%rho1_a_i = zero
+         integer(i15) :: unit_trial_vecs = 0, unit_rho = 0, ioerror = 0
+         integer(i15) :: trial = 0 
 !
-!        Construct rho
+!        Allocate c_a_i
+!
+         call allocator(c_a_i, wf%n_v, wf%n_o)
+         c_a_i = zero 
+!
+!        Open trial vector and transformed vector files
+!
+         call generate_unit_identifier(unit_trial_vecs)
+         open(unit=unit_trial_vecs, file='trial_vec', action='read', status='old', &
+           access='direct', form='unformatted', recl=dp*(wf%n_v)*(wf%n_o), iostat=ioerror)
+!
+         call generate_unit_identifier(unit_rho)
+         open(unit=unit_rho, file='right_transform_trial_vecs', action='write', status='old', &
+           access='direct', form='unformatted', recl=dp*(wf%n_v)*(wf%n_o), iostat=ioerror)
+!               
+         do trial = first_trial, last_trial
+!
+            read(unit_trial_vecs, rec=trial, iostat=ioerror) c_a_i
+!
+            call wf%jacobian_transformation(c_a_i)
+!
+!           Write transformed vector to file
+!
+            write(unit_rho, rec=trial, iostat=ioerror) c_a_i
+          
+         enddo
+         close(unit_trial_vecs) 
+         close(unit_rho)                                
+!
+!        Deallocate c_a_i
+!
+         call deallocator(c_a_i, wf%n_v, wf%n_o)
+!
+      end subroutine transform_trial_vecs_ccs
+!
+!
+      module subroutine jacobian_transformation_ccs(wf, c_a_i)
+!!
+!!       Jacobian transformation
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!
+         implicit none
+!
+         class(ccs) :: wf 
+         real(dp), dimension(wf%n_v, wf%n_o)   :: c_a_i       
+!
+         real(dp), dimension(:,:), allocatable :: rho_a_i
+!
+         call allocator(rho_a_i, wf%n_v, wf%n_o)
 !
 !        A1-term
 !
-         call wf%rho_ccs_a1()
+         call wf%rho_ccs_a1(c_a_i,rho_a_i)
 !
 !        B1-term
 !
-         call wf%rho_ccs_b1()
-!  
-      end subroutine construct_right_transform_ccs
+         call wf%rho_ccs_b1(c_a_i,rho_a_i)
 !
+         call dcopy((wf%n_o)*(wf%n_v), rho_a_i, 1, c_a_i, 1)
 !
-      subroutine rho_ccs_a1_ccs(wf)
+         call deallocator(rho_a_i, wf%n_v, wf%n_o)
+!
+      end subroutine jacobian_transformation_ccs
+!
+      module subroutine rho_ccs_a1_ccs(wf,c1,rho)
 !!
 !!       A1 contribution to right transform of Jacobian
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
@@ -53,13 +268,16 @@ contains
 !!       Calculates the A1 term of the right transform of the
 !!       Jacobian,
 !!
-!!       A1: sum_b F_ab*c_bi + sum_j F_ji*c_aj
+!!       A1: sum_b F_ab*c_bi - sum_j F_ji*c_aj
 !!
 !!       and adds it to the rho vector.
 !!
          implicit none
 !
-         class(ccs) :: wf        
+         class(ccs) :: wf
+         real(dp), dimension(wf%n_o,wf%n_v) :: c1
+         real(dp), dimension(wf%n_o,wf%n_v) :: rho
+!   
 !
 !        sum_b F_a_b * c_b_i
 !
@@ -70,10 +288,10 @@ contains
                      one,         &
                      wf%fock_ab,  &
                      wf%n_v,      &
-                     wf%c1am,     &
+                     c1,     &
                      wf%n_v,      &
                      one,         &
-                     wf%rho1_a_i, &
+                     rho, &
                      wf%n_v)
 !
 !        - sum_j c_a_j * F_j_i
@@ -83,18 +301,18 @@ contains
                      wf%n_o,      &
                      wf%n_o,      &
                      -one,        &
-                     wf%c1am,     &
+                     c1,     &
                      wf%n_v,      &
                      wf%fock_ij,  &
                      wf%n_o,      &
                      one,         &
-                     wf%rho1_a_i, &
+                     rho, &
                      wf%n_v)
 !
       end subroutine rho_ccs_a1_ccs
 !
 !
-      subroutine rho_ccs_b1_ccs(wf)
+      module subroutine rho_ccs_b1_ccs(wf,c1,rho)
 !!
 !!       B1 contribution to right transform of Jacobian
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
@@ -108,7 +326,10 @@ contains
 !!
          implicit none
 !
-         class(ccs) :: wf        
+         class(ccs) :: wf   
+         real(dp), dimension(wf%n_o,wf%n_v) :: c1
+         real(dp), dimension(wf%n_o,wf%n_v) :: rho       
+
 !
 !        Integrals
 !
@@ -277,7 +498,7 @@ contains
             do b = 1, b_length
                jb = index_two(j, b, wf%n_o)
 !
-               c_jb(jb,1) = wf%c1am(b, j)
+               c_jb(jb,1) = c1(b, j)
 !
             enddo
          enddo
@@ -312,7 +533,7 @@ contains
             do a = 1, wf%n_v
                ai = index_two(a, i, wf%n_v)
 !
-               wf%rho1_a_i = wf%rho1_a_i + rho_ai(ai, 1)
+               rho(a,i) = rho(a,i) + rho_ai(ai, 1)
             enddo
          enddo
 !

@@ -32,7 +32,6 @@ module ccs_class
 !
       integer(i15) :: n_t1am = 0                    ! Number of singles amplitudes
       real(dp), dimension(:,:), allocatable :: t1am ! Singles amplitude vector
-      real(dp), dimension(:,:), allocatable :: c1am ! Right vector of Jacobian
 !
 !     Projection vector < mu | exp(-T) H exp(T) | R > (the omega vector)
 ! 
@@ -44,10 +43,6 @@ module ccs_class
       real(dp), dimension(:,:), allocatable :: fock_ia ! occ-vir block
       real(dp), dimension(:,:), allocatable :: fock_ai ! vir-occ block
       real(dp), dimension(:,:), allocatable :: fock_ab ! vir-vir block
-!
-!     Right transform rho
-!
-      real(dp), dimension(:,:), allocatable :: rho1_a_i
 !
    contains 
 !
@@ -105,7 +100,10 @@ module ccs_class
 !
 !     Routines for the right transform of the Jacobian matrix
 !
-      procedure :: construct_right_transform => construct_right_transform_ccs
+      procedure :: transform_trial_vecs      => transform_trial_vecs_ccs
+      procedure :: initialize_trial_vectors  => initialize_trial_vectors_ccs
+      procedure :: find_lowest_orbital_diff  => find_lowest_orbital_diff_ccs
+      procedure :: jacobian_transformation   => jacobian_transformation_ccs 
 !
 !     Helper routines. 
 !     Non-overridable, they will be used for contributions
@@ -395,7 +393,36 @@ module ccs_class
       end subroutine diis_ccs
 !
 !
-      module subroutine construct_right_transform_ccs(wf)
+      module subroutine initialize_trial_vectors_ccs(wf)
+!!
+!!       Initialize trial vectors
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+! 
+      end subroutine initialize_trial_vectors_ccs
+!
+!
+      module subroutine find_lowest_orbital_diff_ccs(wf, index_list)
+!!
+!!       Get indices for lowest orbital differences
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!
+         implicit none
+!
+         class(ccs) :: wf
+         integer(i15), dimension(wf%tasks%n_singlet_states,1), intent(inout) :: index_list
+!
+! 
+      end subroutine find_lowest_orbital_diff_ccs
+!
+!
+      module subroutine transform_trial_vecs_ccs(wf, first_trial, last_trial)
 !!
 !!       Construct Right Transform of Jacobian
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
@@ -403,12 +430,27 @@ module ccs_class
 !!
          implicit none
 !
-         class(ccs) :: wf        
+         class(ccs) :: wf 
+         integer(i15), intent(in) :: first_trial, last_trial       
 !
-      end subroutine construct_right_transform_ccs
+      end subroutine transform_trial_vecs_ccs
 !
 !
-      module subroutine rho_ccs_a1_ccs(wf)
+      module subroutine jacobian_transformation_ccs(wf, c_a_i)
+!!
+!!       Jacobian transformation
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!
+         implicit none
+!
+         class(ccs) :: wf 
+         real(dp), dimension(wf%n_v, wf%n_o)   :: c_a_i       
+!
+      end subroutine jacobian_transformation_ccs
+!
+!
+      module subroutine rho_ccs_a1_ccs(wf,c1,rho)
 !!
 !!       A1 contribution to right transform of Jacobian
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
@@ -422,12 +464,14 @@ module ccs_class
 !!
          implicit none
 !
-         class(ccs) :: wf        
+         class(ccs) :: wf
+         real(dp), dimension(wf%n_o,wf%n_v) :: c1 
+         real(dp), dimension(wf%n_o,wf%n_v) :: rho                               
 !
       end subroutine rho_ccs_a1_ccs
 !
 !
-      module subroutine rho_ccs_b1_ccs(wf)
+      module subroutine rho_ccs_b1_ccs(wf,c1,rho)
 !!
 !!       B1 contribution to right transform of Jacobian
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
@@ -441,7 +485,9 @@ module ccs_class
 !!
          implicit none
 !
-         class(ccs) :: wf        
+         class(ccs) :: wf
+         real(dp), dimension(wf%n_o,wf%n_v) :: c1
+         real(dp), dimension(wf%n_o,wf%n_v) :: rho                
 !
       end subroutine rho_ccs_B1_ccs
 !
