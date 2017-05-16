@@ -33,6 +33,8 @@ module ccs_class
       integer(i15) :: n_t1am = 0                    ! Number of singles amplitudes
       real(dp), dimension(:,:), allocatable :: t1am ! Singles amplitude vector
 !
+      integer(i15) :: n_parameters = 0 ! Number of parameters in the wavefunction
+!
 !     Projection vector < mu | exp(-T) H exp(T) | R > (the omega vector)
 ! 
       real(dp), dimension(:,:), allocatable :: omega1 ! Singles vector 
@@ -92,6 +94,7 @@ module ccs_class
 !
       procedure :: ground_state_solver       => ground_state_solver_ccs
 !
+      procedure :: initialize_ground_state   => initialize_ground_state_ccs
       procedure :: new_amplitudes            => new_amplitudes_ccs
       procedure :: calc_ampeqs               => calc_ampeqs_ccs
       procedure :: calc_ampeqs_norm          => calc_ampeqs_norm_ccs
@@ -99,6 +102,10 @@ module ccs_class
 !
       procedure, non_overridable :: diis     => diis_ccs
 !
+!     Routine to save and read the amplitudes (to/from disk)
+!
+      procedure :: save_amplitudes => save_amplitudes_ccs
+      procedure :: read_amplitudes => read_amplitudes_ccs
 !
    end type ccs
 !
@@ -380,6 +387,21 @@ module ccs_class
       end subroutine diis_ccs 
 !
 !
+      module subroutine initialize_ground_state_ccs(wf)
+!!
+!!       Initialize Ground State (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!       Initializes the amplitudes and the projection vector. This routine 
+!!       can be inherited unaltered by standard CC methods.
+!!
+         implicit none 
+!
+         class(ccs) :: wf
+!
+      end subroutine initialize_ground_state_ccs
+!
+!
    end interface 
 !
 !
@@ -425,6 +447,10 @@ contains
 !     Initialize amplitudes and associated attributes
 !
       call wf%initialize_amplitudes
+!
+!     Set the number of parameters in the wavefunction 
+!
+      wf%n_parameters = wf%n_t1am
 !
 !     Initialize the projection vector 
 !
@@ -584,11 +610,12 @@ contains
 !
 !
    subroutine omega_ccs_a1_ccs(wf)
-!
-!     Omega D1 term: Omega_ai^D1=F_ai_T1
-!
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mars 2017
-!
+!!
+!!    Omega D1
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, March 2017
+!!
+!!    Omega_ai^D1 = F_ai_T1
+!!
       implicit none
 !
       class(ccs) :: wf
@@ -598,6 +625,80 @@ contains
       call daxpy((wf%n_o)*(wf%n_v), one, wf%fock_ai, 1, wf%omega1, 1)
 !
    end subroutine omega_ccs_a1_ccs
+!
+!
+   subroutine save_amplitudes_ccs(wf)
+!!
+!!    Save Amplitudes (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
+!!
+!!    Store the amplitudes to disk (T1AM)
+!!
+      implicit none 
+!
+      class(ccs) :: wf
+!
+      integer(i15) :: unit_t1am = -1 
+!
+!     Open amplitude file
+!
+      call generate_unit_identifier(unit_t1am)
+      open(unit_t1am, file='t1am', status='unknown', form='unformatted')
+      rewind(unit_t1am)
+!
+!     Write to file 
+!
+      write(unit_t1am) wf%t1am 
+!
+!     Close amplitude file
+!
+      close(unit_t1am)
+!
+   end subroutine save_amplitudes_ccs
+!
+!
+   subroutine read_amplitudes_ccs(wf)
+!!
+!!    Read Amplitudes (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
+!!
+!!    Reads the amplitudes from disk (T1AM)
+!!
+      implicit none 
+!
+      class(ccs) :: wf
+!
+      integer(i15) :: unit_t1am = -1 
+!
+      logical :: file_exists = .false.
+!
+!     Check to see whether file exists
+!
+      inquire(file='t1am',exist=file_exists)
+!
+      if (file_exists) then 
+!
+!        Open amplitude file if it exists
+!
+         call generate_unit_identifier(unit_t1am)
+         open(unit_t1am, file='t1am', status='unknown', form='unformatted')
+         rewind(unit_t1am)
+!
+!        Read from file & close
+!
+         wf%t1am = zero
+         read(unit_t1am) wf%t1am 
+!  
+         close(unit_t1am)
+!
+      else
+!
+         write(unit_output,'(t3,a)') 'Error: amplitude file does not exist.'
+         stop
+!
+      endif
+!
+   end subroutine read_amplitudes_ccs
 !
 !
 end module ccs_class
