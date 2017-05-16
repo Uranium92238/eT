@@ -99,8 +99,9 @@ module ccs_class
 !
       procedure, non_overridable :: diis     => diis_ccs
 !
-      procedure :: destruct_amplitudes => destruct_amplitudes_ccs
-      procedure :: destruct_omega      => destruct_omega_ccs
+      procedure :: destruct_amplitudes   => destruct_amplitudes_ccs
+      procedure :: destruct_omega        => destruct_omega_ccs
+      procedure :: destruct_ground_state => destruct_ground_state_ccs
 !
    end type ccs
 !
@@ -626,4 +627,17 @@ contains
       endif
 !
    end subroutine destruct_omega_ccs
+!
+   subroutine destruct_ground_state_ccs(wf)
+!
+!
+      implicit none
+!
+      class(ccs) :: wf
+!  
+      call wf%destruct_amplitudes
+      call wf%destruct_omega
+!
+   end subroutine destruct_ground_state_ccs
+!
 end module ccs_class
