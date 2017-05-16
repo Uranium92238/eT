@@ -54,6 +54,7 @@ module hf_class
 !     Calculation settings, tasks, and implemented methods
 !
       type(calc_settings)   :: settings
+!
       type(calc_procedures) :: tasks
       type(calc_procedures) :: implemented
 !

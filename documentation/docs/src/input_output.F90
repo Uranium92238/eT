@@ -15,7 +15,7 @@ module input_output
    implicit none
 !
    integer(i15) :: unit_output = 0 
-   integer, private :: n_files = 200 ! To not overwrite the DALTON.OUT identifier (for debug against old code)
+   integer, private :: n_files = 0 
 !
 contains
 !

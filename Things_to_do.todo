@@ -1,21 +1,26 @@
 Programmering:
-  ☐ Fjerdedelsfaktoren i A2-leddet & sikre på at vi har fem kasser (så kan vi teste store systemer på stallo)
-  ☐ Input-struktur og lesing av input-fil.
+  ✔ Fjerdedelsfaktoren i A2-leddet & sikre på at vi har fem kasser (så kan vi teste store systemer på stallo) @done (17-05-11 22:24)
+  ✔ Input-struktur og lesing av input-fil. @done (17-05-11 22:24)
   ✔ Klasser for implementert og oppgave(fra input) @done (17-05-08 17:01)
   ✔ DIIS-løser @done (17-05-05 13:31)
-  ☐ CC2
+  ✔ CC2 @done (17-05-11 22:24)
   ☐ Jacobi
   ☐ Jacobi venstre
-  ☐ Testing av batching i grunntilstand
+  ✔ Testing av batching i grunntilstand @done (17-05-11 22:24)
   ☐ CC3 grunntilstand
   ☐ Løser for eksiterte tilstander 
   ☐ MLCCSD
+  ☐ Rutiner som deallokerer omega etter grunntilstanden er laget.
+  ☐ CC2 - teste batching
+
 
  Omstrukturering:
-   ☐ Oppryddning i grunntilstandskoden
+   ✔ Oppryddning i grunntilstandskoden @done (17-05-11 22:24)
    ☐ cmake
    ✔ Git-repo @done (17-05-08 17:12)
    ✔ Navn @done (17-05-08 17:12)
+   ☐ Gi omega D1 til CCS
+   ☐ Én driver
 
 
 ----------------------------------------------------
@@ -38,5 +43,5 @@ SCCSD
 
 ------------------------------------------------------
 Ting som må diskuteres:
-  ☐ Required mem for batching
+  ✔ Required mem for batching @done (17-05-11 22:24)
   ☐ Integralene tar tid

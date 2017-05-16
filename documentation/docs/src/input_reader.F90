@@ -6,6 +6,7 @@ module input_reader
 !!
 !
    use types
+   use workspace
    use input_output
    use calc_procedures_class
    use calc_settings_class
@@ -205,6 +206,11 @@ contains
                elseif (setting == 'ampeqs_threshold') then 
 !
                   read(unit_input,*) settings%ampeqs_threshold
+                  cycle
+!
+               elseif (setting == 'memory') then
+!
+                  read(unit_input,*) mem 
                   cycle
 !
                elseif (trim(line) == '#end of eT input') then

@@ -10,7 +10,7 @@
     <meta name="author" content="Eirik F. Kjønstad and Sarai D. Folkestad" >
     <link rel="icon" href="../favicon.png">
 
-    <title>calc_procedures_class.F90 &ndash; Fortran Program</title>
+    <title>calc_procedures_class.F90 &ndash; The eT program</title>
 
     <link href="../css/bootstrap.min.css" rel="stylesheet">
     <link href="../css/pygments.css" rel="stylesheet">
@@ -48,7 +48,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="../index.html">Fortran Program </a>
+          <a class="navbar-brand" href="../index.html">The eT program </a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
@@ -130,7 +130,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
 	  data-placement="bottom" data-html="true"
-	  title=" 0.3% of total for source files.">11 statements</a>
+	  title=" 0.4% of total for source files.">11 statements</a>
      </li> 
      
      
@@ -207,8 +207,6 @@
       
       <a class="list-group-item" href="../sourcefile/calc_settings_class.f90.html">calc_settings_class.F90</a>
       
-      <a class="list-group-item" href="../sourcefile/cc2_class.f90.html">cc2_class.F90</a>
-      
       <a class="list-group-item" href="../sourcefile/ccs_class.f90.html">ccs_class.F90</a>
       
       <a class="list-group-item" href="../sourcefile/ccsd_class.f90.html">ccsd_class.F90</a>
@@ -229,11 +227,7 @@
       
       <a class="list-group-item" href="../sourcefile/input_reader.f90.html">input_reader.F90</a>
       
-      <a class="list-group-item" href="../sourcefile/jacobian_submodule.f90.html">jacobian_submodule.F90</a>
-      
       <a class="list-group-item" href="../sourcefile/omega_submodule.f90.html">omega_submodule.F90</a>
-      
-      <a class="list-group-item" href="../sourcefile/omega_submodule.f90%7E2.html">omega_submodule.F90</a>
       
       <a class="list-group-item" href="../sourcefile/types.f90.html">types.F90</a>
       
@@ -304,34 +298,43 @@
     <div class="hl"><pre><span></span><a name="ln-1"></a><span class="k">module </span><span class="n">calc_procedures_class</span>
 <a name="ln-2"></a><span class="c">!</span>
 <a name="ln-3"></a><span class="c">!!</span>
-<a name="ln-4"></a><span class="c">!!                         Calculation procedures class module                                 </span>
-<a name="ln-5"></a><span class="c">!!              Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017         </span>
+<a name="ln-4"></a><span class="c">!!                       Calculation procedures class module                                 </span>
+<a name="ln-5"></a><span class="c">!!            Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017         </span>
 <a name="ln-6"></a><span class="c">!!</span>
-<a name="ln-7"></a><span class="c">!</span>
-<a name="ln-8"></a><span class="c">!  :::::::::::::::::::::::::::::::::::</span>
-<a name="ln-9"></a><span class="c">!  -::- Modules used by the class -::-</span>
-<a name="ln-10"></a><span class="c">!  :::::::::::::::::::::::::::::::::::</span>
-<a name="ln-11"></a><span class="c">!</span>
-<a name="ln-12"></a>   <span class="k">use </span><span class="n">types</span>
-<a name="ln-13"></a><span class="c">!</span>
-<a name="ln-14"></a><span class="c">!  :::::::::::::::::::::::::::::::::::::::::::::::::</span>
-<a name="ln-15"></a><span class="c">!  -::- Definition of the calc_procedures class -::-</span>
-<a name="ln-16"></a><span class="c">!  :::::::::::::::::::::::::::::::::::::::::::::::::</span>
-<a name="ln-17"></a><span class="c">!</span>
-<a name="ln-18"></a>   <span class="k">type</span> <span class="kd">::</span> <span class="n">calc_procedures</span> 
-<a name="ln-19"></a><span class="c">!</span>
-<a name="ln-20"></a>      <span class="kt">logical</span> <span class="kd">::</span> <span class="n">do_ground_state</span>   <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span>
-<a name="ln-21"></a>      <span class="kt">logical</span> <span class="kd">::</span> <span class="n">do_excited_state</span>  <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span> 
-<a name="ln-22"></a>      <span class="kt">logical</span> <span class="kd">::</span> <span class="n">do_properties</span>     <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span>
-<a name="ln-23"></a><span class="c">!</span>
-<a name="ln-24"></a>      <span class="kt">integer</span><span class="p">(</span><span class="n">i15</span><span class="p">)</span> <span class="kd">::</span> <span class="n">n_singlet_states</span> <span class="o">=</span> <span class="mi">0</span>
-<a name="ln-25"></a>      <span class="kt">integer</span><span class="p">(</span><span class="n">i15</span><span class="p">)</span> <span class="kd">::</span> <span class="n">n_triplet_states</span> <span class="o">=</span> <span class="mi">0</span>
+<a name="ln-7"></a><span class="c">!!    The procedures class is used for two purposes. Wavefunctions possess </span>
+<a name="ln-8"></a><span class="c">!!    &quot;implemented&quot; and &quot;tasks&quot; objects, which are both instances of the class </span>
+<a name="ln-9"></a><span class="c">!!    calculation procedures. If one of the tasks requested is not implemented</span>
+<a name="ln-10"></a><span class="c">!!    for the wavefunction in question, the program stops, letting the user know</span>
+<a name="ln-11"></a><span class="c">!!    that the requested functionality is not a part of eT (yet).</span>
+<a name="ln-12"></a><span class="c">!!</span>
+<a name="ln-13"></a><span class="c">!!    Tasks are determined during the read of the input (see the main program).</span>
+<a name="ln-14"></a><span class="c">!!    Implemented are set by the wavefunction&#39;s initialization routine.</span>
+<a name="ln-15"></a><span class="c">!! </span>
+<a name="ln-16"></a><span class="c">!</span>
+<a name="ln-17"></a><span class="c">!  :::::::::::::::::::::::::::::::::::</span>
+<a name="ln-18"></a><span class="c">!  -::- Modules used by the class -::-</span>
+<a name="ln-19"></a><span class="c">!  :::::::::::::::::::::::::::::::::::</span>
+<a name="ln-20"></a><span class="c">!</span>
+<a name="ln-21"></a>   <span class="k">use </span><span class="n">types</span>
+<a name="ln-22"></a><span class="c">!</span>
+<a name="ln-23"></a><span class="c">!  :::::::::::::::::::::::::::::::::::::::::::::::::</span>
+<a name="ln-24"></a><span class="c">!  -::- Definition of the calc_procedures class -::-</span>
+<a name="ln-25"></a><span class="c">!  :::::::::::::::::::::::::::::::::::::::::::::::::</span>
 <a name="ln-26"></a><span class="c">!</span>
-<a name="ln-27"></a>   <span class="k">end type </span><span class="n">calc_procedures</span>                                                                            
+<a name="ln-27"></a>   <span class="k">type</span> <span class="kd">::</span> <span class="n">calc_procedures</span> 
 <a name="ln-28"></a><span class="c">!</span>
-<a name="ln-29"></a><span class="k">contains</span>
-<a name="ln-30"></a><span class="c">!</span>
-<a name="ln-31"></a><span class="k">end module </span><span class="n">calc_procedures_class</span>
+<a name="ln-29"></a>      <span class="kt">logical</span> <span class="kd">::</span> <span class="n">do_ground_state</span>   <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<a name="ln-30"></a>      <span class="kt">logical</span> <span class="kd">::</span> <span class="n">do_excited_state</span>  <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span> 
+<a name="ln-31"></a>      <span class="kt">logical</span> <span class="kd">::</span> <span class="n">do_properties</span>     <span class="o">=</span> <span class="p">.</span><span class="n">false</span><span class="p">.</span>
+<a name="ln-32"></a><span class="c">!</span>
+<a name="ln-33"></a>      <span class="kt">integer</span><span class="p">(</span><span class="n">i15</span><span class="p">)</span> <span class="kd">::</span> <span class="n">n_singlet_states</span> <span class="o">=</span> <span class="mi">0</span>
+<a name="ln-34"></a>      <span class="kt">integer</span><span class="p">(</span><span class="n">i15</span><span class="p">)</span> <span class="kd">::</span> <span class="n">n_triplet_states</span> <span class="o">=</span> <span class="mi">0</span>
+<a name="ln-35"></a><span class="c">!</span>
+<a name="ln-36"></a>   <span class="k">end type </span><span class="n">calc_procedures</span>                                                                            
+<a name="ln-37"></a><span class="c">!</span>
+<a name="ln-38"></a><span class="k">contains</span>
+<a name="ln-39"></a><span class="c">!</span>
+<a name="ln-40"></a><span class="k">end module </span><span class="n">calc_procedures_class</span>
 </pre></div>
 
     </section>
@@ -350,8 +353,6 @@
       <a class="list-group-item" href="../sourcefile/calc_procedures_class.f90.html">calc_procedures_class.F90</a>
       
       <a class="list-group-item" href="../sourcefile/calc_settings_class.f90.html">calc_settings_class.F90</a>
-      
-      <a class="list-group-item" href="../sourcefile/cc2_class.f90.html">cc2_class.F90</a>
       
       <a class="list-group-item" href="../sourcefile/ccs_class.f90.html">ccs_class.F90</a>
       
@@ -373,11 +374,7 @@
       
       <a class="list-group-item" href="../sourcefile/input_reader.f90.html">input_reader.F90</a>
       
-      <a class="list-group-item" href="../sourcefile/jacobian_submodule.f90.html">jacobian_submodule.F90</a>
-      
       <a class="list-group-item" href="../sourcefile/omega_submodule.f90.html">omega_submodule.F90</a>
-      
-      <a class="list-group-item" href="../sourcefile/omega_submodule.f90%7E2.html">omega_submodule.F90</a>
       
       <a class="list-group-item" href="../sourcefile/types.f90.html">types.F90</a>
       
@@ -405,7 +402,7 @@
             
           </p>
         </div>
-        <div class="col-xs-12 col-md-4 col-md-pull-4"><p class="text-center"> Fortran Program was developed by Eirik F. Kjønstad and Sarai D. Folkestad</p></div>
+        <div class="col-xs-12 col-md-4 col-md-pull-4"><p class="text-center"> The eT program was developed by Eirik F. Kjønstad and Sarai D. Folkestad</p></div>
       </div>
       <br>
       </div> <!-- /container -->    
