@@ -113,17 +113,17 @@ contains
 !
                if (calculation == 'ground_state') then
 !
-                  tasks%do_ground_state = .true.
+                  tasks%ground_state = .true.
                   cycle
 !
                elseif (calculation == 'excited_state') then
 !
-                  tasks%do_excited_state = .true.
+                  tasks%excited_state = .true.
                   cycle 
 !
                elseif (calculation == 'properties') then
 !
-                  tasks%do_properties = .true. 
+                  tasks%properties = .true. 
                   cycle 
 !
                else

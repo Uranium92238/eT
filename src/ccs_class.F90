@@ -409,6 +409,10 @@ contains
 !
       wf%name = 'CCS'
 !
+!     Set implemented methods
+!
+      wf%implemented%ground_state = .true.
+!
 !     Read Hartree-Fock info from SIRIUS
 !
       call wf%read_hf_info
@@ -437,15 +441,69 @@ contains
 !!    CCS Driver
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!    If called, the routine lets the user know there is no driver 
-!!    for CCS, then exits the program.
+!!    The driver for CCS is written so as to be inherited unaltered.
+!!    It finds which calculations are requested by the user, and controls
+!!    that the calculation can be done. If the method is implemented, it 
+!!    calls the driver for that particular calculation (e.g., ground state
+!!    energy).
 !!
       implicit none 
 !
       class(ccs) :: wf
 !
-      write(unit_output,*) 'ERROR: There is no driver for the CCS class'
-      stop
+      if (wf%tasks%ground_state) then 
+!
+!        Ground state calculation requested
+!
+         if (wf%implemented%ground_state) then 
+!
+            call wf%ground_state_solver
+!
+         else
+!
+            write(unit_output,'(t3,a,a)') &
+               'Error: ground state solver not implemented for ',trim(wf%name)
+!
+         endif
+      endif
+!
+      if (wf%tasks%excited_state) then
+!
+!        Excited state calculation requested
+!
+         if (wf%implemented%excited_state) then 
+!
+          !  call wf%excited_state_solver
+!
+         else
+!
+            write(unit_output,'(t3,a,a)') &
+               'Error: excited state solver not implemented for ',trim(wf%name)
+            flush(unit_output)
+            stop
+!
+         endif
+!
+      endif
+!
+      if (wf%tasks%properties) then
+!
+!        Properties calculation requested
+!
+         if (wf%implemented%properties) then 
+!
+          !  call wf%properties
+!
+         else
+!
+            write(unit_output,'(t3,a,a)') &
+               'Error: properties not implemented for ',trim(wf%name)
+            flush(unit_output)
+            stop
+!
+         endif
+!
+      endif
 !
    end subroutine drv_ccs
 !

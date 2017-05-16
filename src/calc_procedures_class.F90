@@ -26,9 +26,9 @@ module calc_procedures_class
 !
    type :: calc_procedures 
 !
-      logical :: do_ground_state   = .false.
-      logical :: do_excited_state  = .false. 
-      logical :: do_properties     = .false.
+      logical :: ground_state   = .false.
+      logical :: excited_state  = .false. 
+      logical :: properties     = .false.
 !
       integer(i15) :: n_singlet_states = 0
       integer(i15) :: n_triplet_states = 0
