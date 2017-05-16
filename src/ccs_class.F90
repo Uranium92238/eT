@@ -99,6 +99,8 @@ module ccs_class
 !
       procedure, non_overridable :: diis     => diis_ccs
 !
+      procedure :: destruct_amplitudes => destruct_amplitudes_ccs
+      procedure :: destruct_omega      => destruct_omega_ccs
 !
    end type ccs
 !
@@ -542,4 +544,28 @@ contains
    end subroutine omega_ccs_a1_ccs
 !
 !
+   subroutine destruct_amplitudes_ccs(wf)
+!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      if (allocated(wf%t1am)) then
+         call deallocator(wf%t1am, wf%n_v, wf%n_o)
+      endif
+!
+   end subroutine destruct_amplitudes_ccs
+!
+!
+   subroutine destruct_omega_ccs(wf)
+!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      if (allocated(wf%omega1)) then
+         call deallocator(wf%omega1, wf%n_v, wf%n_o)
+      endif
+!
+   end subroutine destruct_omega_ccs
 end module ccs_class
