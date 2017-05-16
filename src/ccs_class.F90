@@ -464,6 +464,7 @@ contains
 !
             write(unit_output,'(t3,a,a)') &
                'Error: ground state solver not implemented for ',trim(wf%name)
+            stop
 !
          endif
       endif
@@ -499,7 +500,6 @@ contains
 !
             write(unit_output,'(t3,a,a)') &
                'Error: properties not implemented for ',trim(wf%name)
-            flush(unit_output)
             stop
 !
          endif
