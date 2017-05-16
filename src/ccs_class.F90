@@ -648,7 +648,6 @@ contains
    end subroutine omega_ccs_a1_ccs
 !
 !
-<<<<<<< HEAD
    subroutine save_amplitudes_ccs(wf)
 !!
 !!    Save Amplitudes (CCS)
