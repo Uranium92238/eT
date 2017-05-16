@@ -41,10 +41,9 @@ module ccsd_class
 !
    contains
 !
-!     Initialization and driver routines
+!     Initialization routine (driver is inherited)
 !
       procedure :: init => init_ccsd
-      procedure :: drv  => drv_ccsd
 !
 !     Initialization routine for the (singles, doubles) amplitudes
 !
@@ -375,6 +374,10 @@ contains
 !
       wf%name = 'CCSD'
 !
+!     Set implemented methods
+!
+      wf%implemented%ground_state = .true.
+!
 !     Read Hartree-Fock info from SIRIUS
 !
       call wf%read_hf_info
@@ -397,22 +400,6 @@ contains
 !
    end subroutine init_ccsd
 !
-!
-   subroutine drv_ccsd(wf)
-!!
-!!    Driver (CCSD)
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!!
-!!    Controls the CCSD calculation using requested calculations from
-!!    user (eventually: still under construction).
-!!
-      implicit none 
-!
-      class(ccsd) :: wf
-!
-      call wf%ground_state_solver
-!
-   end subroutine drv_ccsd
 !
 !  :::::::::::::::::::::::::::::::::::::::::
 !  -::- Class subroutines and functions -::- 
