@@ -23,17 +23,26 @@ contains
 !!       Initialize trial vectors
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
 !!
+!!       Initializes start trial vectors for the calculation of 
+!!       singlet excited states and writes them to file 'trial_vecs'.
+!!
+!!       n start vectors are constructed by finding the n lowest orbital differences,      
+!!       where n = n_singlet_states. Vector i has a 1.0D0 at the element corresponding to the i'th lowest
+!!       orbital difference and 0.0d0 everywhere else
 !!
          implicit none
 !
          class(ccs) :: wf
-!        
+!       
          integer(i15), dimension(:,:), allocatable :: index_lowest_obital_diff
 !
-         real(dp), dimension(:,:), allocatable :: c_ai
+         real(dp), dimension(:,:), allocatable :: c
 ! 
          integer(i15) :: i = 0, j = 0
+!
          integer(i15) :: unit_trial_vecs = 0, unit_rho = 0, ioerror = 0
+!
+!        Allocate array for the indices of the lowest orbital differences
 !
          call allocator_int( index_lowest_obital_diff, wf%tasks%n_singlet_states, 1)
          index_lowest_obital_diff = zero
@@ -42,31 +51,39 @@ contains
 !
          call wf%find_lowest_orbital_diff(index_lowest_obital_diff)
 !
-!        Generate start trial vectors and write to file
+!        Generate start trial vectors c and write to file
 !
-         call allocator(c_ai, (wf%n_v)*(wf%n_o), 1)
+         call allocator(c, wf%n_parameters, 1)
+!
+!        Prepare for writing trial vectors to file
 !
          call generate_unit_identifier(unit_trial_vecs)
          open(unit=unit_trial_vecs, file='trial_vec', action='write', status='new', &
-           access='direct', form='unformatted', recl=dp*(wf%n_v)*(wf%n_o), iostat=ioerror)
+           access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror)
 !
          do i = 1, (wf%tasks%n_singlet_states)
-            c_ai = zero
-            c_ai(index_lowest_obital_diff(i,1),1) = one
-            write(unit_trial_vecs, rec=i, iostat=ioerror) (c_ai(j,1), j = 1, (wf%n_v)*(wf%n_o))
+            c = zero
+            c(index_lowest_obital_diff(i,1),1) = one
+            write(unit_trial_vecs, rec=i, iostat=ioerror) (c(j,1), j = 1, wf%n_parameters)
          enddo
+!
+!        Close file
 !     
          close(unit_trial_vecs)
 !
-         call deallocator(c_ai, (wf%n_v)*(wf%n_o), 1)
+!        Deallocate c
+!
+         call deallocator(c, wf%n_parameters, 1)
+!
+!        Deallocate index_lowest_obital_diff
 !
          call deallocator_int( index_lowest_obital_diff, wf%tasks%n_singlet_states, 1)
 !
 !        Prepare linear transform file
 !
          call generate_unit_identifier(unit_rho)
-         open(unit=unit_rho, file='trial_vec', action='write', status='new', &
-           access='direct', form='unformatted', recl=dp*(wf%n_v)*(wf%n_o), iostat=ioerror)
+         open(unit=unit_rho, file='transformed_vec', action='write', status='new', &
+           access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror)
          close(unit_rho)
 !
       end subroutine initialize_trial_vectors_ccs
@@ -96,20 +113,20 @@ contains
          real(dp)     :: swap     = zero
          integer(i15) :: swap_int = 0
 !
-         call allocator(orbital_diff,(wf%n_v)*(wf%n_o),1)
+!        Allocate orbital_diff
+!
+         call allocator(orbital_diff,wf%n_parameters,1)
+         orbital_diff = zero
+!
+!        Calculate orbital differences
+!
+         call wf%calculate_orbital_differences(orbital_diff)
 !
 !        Finding orbital differences
 !
-         do i = 1, wf%n_o
-            do a = 1, wf%n_v
-               ai = index_two(a, i, wf%n_v)
-               orbital_diff(ai, 1) = wf%fock_diagonal(a + wf%n_o, 1) - wf%fock_diagonal(i, 1)
-            enddo
-         enddo
-!
          call allocator(lowest_orbital_diff, wf%tasks%n_singlet_states, 1)
          
-         lowest_orbital_diff      = zero
+         lowest_orbital_diff = zero
 !
 !        Placing the first elements of orbital_diff into lowest_orbital_diff
 !
@@ -134,7 +151,7 @@ contains
 !
 !        Looping through the rest of orbital_diff to find lowest values
 !
-         do i = wf%tasks%n_singlet_states + 1, (wf%n_o)*(wf%n_v)
+         do i = wf%tasks%n_singlet_states + 1, wf%n_parameters
             if (orbital_diff(i,1) .lt. max) then
 !
                lowest_orbital_diff(max_pos,1) = orbital_diff(i,1)
@@ -168,9 +185,10 @@ contains
 !
                endif
             enddo
-         enddo
+         enddo     
 !
-         call deallocator(orbital_diff,(wf%n_v)*(wf%n_o),1)
+!
+         call deallocator(orbital_diff,wf%n_parameters,1)
 !
          call deallocator(lowest_orbital_diff, wf%tasks%n_singlet_states, 1)
 !
@@ -178,11 +196,36 @@ contains
       end subroutine find_lowest_orbital_diff_ccs
 !
 !
+      module subroutine calculate_orbital_differences_ccs(wf,orbital_diff)
+!!
+!!       Calculate and return orbital differences
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad May 2017
+!!
+         implicit none
+!
+         class(ccs) :: wf
+         real(dp), dimension(wf%n_parameters, 1) :: orbital_diff
+!
+         integer(i15) :: a = 0, i = 0
+         integer(i15) :: ai = 0
+! 
+         do i = 1, wf%n_o
+            do a = 1, wf%n_v
+               ai = index_two(a, i, wf%n_v)
+               orbital_diff(ai, 1) = wf%fock_diagonal(a + wf%n_o, 1) - wf%fock_diagonal(i, 1)
+            enddo
+         enddo
+!
+      end subroutine calculate_orbital_differences_ccs
+!
+!
       module subroutine transform_trial_vecs_ccs(wf, first_trial, last_trial)
 !!
-!!       Construct Right Transform of Jacobian
+!!       Construct Jacobian Transformation of trial vectors
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
 !!
+!!       Each trial vector in first_trial to last_trial is read from file and
+!!       transformed before the transformed vector is written to file.
 !!
          implicit none
 !
@@ -207,8 +250,10 @@ contains
            access='direct', form='unformatted', recl=dp*(wf%n_v)*(wf%n_o), iostat=ioerror)
 !
          call generate_unit_identifier(unit_rho)
-         open(unit=unit_rho, file='right_transform_trial_vecs', action='write', status='old', &
+         open(unit=unit_rho, file='transformed_vec', action='write', status='old', &
            access='direct', form='unformatted', recl=dp*(wf%n_v)*(wf%n_o), iostat=ioerror)
+!
+!        For each trial vector: Read, transform and write
 !               
          do trial = first_trial, last_trial
 !

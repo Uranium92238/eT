@@ -113,10 +113,12 @@ module ccs_class
       procedure :: destruct_amplitudes   => destruct_amplitudes_ccs
       procedure :: destruct_omega        => destruct_omega_ccs
 !
-      procedure :: transform_trial_vecs      => transform_trial_vecs_ccs
-      procedure :: initialize_trial_vectors  => initialize_trial_vectors_ccs
-      procedure :: find_lowest_orbital_diff  => find_lowest_orbital_diff_ccs
-      procedure :: jacobian_transformation   => jacobian_transformation_ccs 
+      procedure :: transform_trial_vecs            => transform_trial_vecs_ccs
+      procedure :: jacobian_transformation         => jacobian_transformation_ccs
+      procedure :: calculate_orbital_differences   => calculate_orbital_differences_ccs ! Must be overwritten for CCSD 
+!
+      procedure, non_overridable :: find_lowest_orbital_diff  => find_lowest_orbital_diff_ccs
+      procedure, non_overridable :: initialize_trial_vectors  => initialize_trial_vectors_ccs
 !
 !     Helper routines. 
 !     Non-overridable, they will be used for contributions
@@ -125,7 +127,10 @@ module ccs_class
       procedure, non_overridable :: rho_ccs_a1 => rho_ccs_a1_ccs 
       procedure, non_overridable :: rho_ccs_b1 => rho_ccs_b1_ccs
 !
-! 
+!
+      procedure :: excited_state_solver => excited_state_solver_ccs
+!
+!
    end type ccs
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -430,9 +435,19 @@ module ccs_class
 !
          class(ccs) :: wf
          integer(i15), dimension(wf%tasks%n_singlet_states,1), intent(inout) :: index_list
-!
 ! 
       end subroutine find_lowest_orbital_diff_ccs
+!
+!
+      module subroutine calculate_orbital_differences_ccs(wf,orbital_diff)
+!
+!
+         implicit none
+!
+         class(ccs) :: wf
+         real(dp), dimension(wf%n_parameters, 1) :: orbital_diff
+!
+      end subroutine calculate_orbital_differences_ccs
 !
 !
       module subroutine transform_trial_vecs_ccs(wf, first_trial, last_trial)
@@ -535,6 +550,15 @@ module ccs_class
       end subroutine destruct_ground_state_ccs
 !
 !
+      module subroutine excited_state_solver_ccs(wf)
+!
+         implicit none
+!  
+         class(ccs) :: wf
+!
+      end subroutine excited_state_solver_ccs
+!
+!
    end interface 
 !
 !
@@ -568,6 +592,7 @@ contains
 !     Set implemented methods
 !
       wf%implemented%ground_state = .true.
+      wf%implemented%excited_state = .true.
 !
 !     Read Hartree-Fock info from SIRIUS
 !
@@ -634,7 +659,7 @@ contains
 !
          if (wf%implemented%excited_state) then 
 !
-          !  call wf%excited_state_solver
+           call wf%excited_state_solver
 !
          else
 !
