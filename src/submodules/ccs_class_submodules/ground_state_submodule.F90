@@ -79,19 +79,21 @@ contains
 !
       write(unit_output,'(/t3,a)')   ':: Ground state solver (DIIS)'
       write(unit_output,'(t3,a/)')   ':: S. D. Folkestad, E. F. Kjønstad, May 2017'
-      write(unit_output,'(t3,a,a,a/)') &
-                                     'Requested the ground state for: ', trim(wf%name),'.'
-!
-      write(unit_output,'(t3,a)')    'Iter.   Energy           Norm of amplitude eq.'
-      write(unit_output,'(t3,a)')    '----------------------------------------------'    
+      write(unit_output,'(t3,a,a,a)') &
+                                     'Requested the ground state for: ', trim(wf%name),'.'   
 !
 !     Initialize amplitudes & amplitude equations 
 !
       call wf%initialize_ground_state
 !
-!     Make sure the initial energy is up to date 
+!     If restart, read amplitudes from disk 
 !
-      call wf%calc_energy
+      if (wf%settings%restart) then 
+!
+         write(unit_output,'(t3,a)') 'Requested restart. Reading amplitudes from file.'
+         call wf%read_amplitudes
+!
+      endif
 !
 !     Open DIIS files 
 !
@@ -105,6 +107,13 @@ contains
       open(unit=unit_diis_matrix,file='diis_matrix',status='unknown',form='unformatted')
 !
 !     Enter iterative loop
+!
+      write(unit_output,'(/t3,a)')   'Iter.   Energy           Norm of amplitude eq.'
+      write(unit_output,'(t3,a)')    '----------------------------------------------' 
+!
+!     Make sure the initial energy is up to date for first iteration
+!
+      call wf%calc_energy
 !
       iteration = 1
 !
@@ -170,9 +179,15 @@ contains
 !
       write(unit_output,'(t3,a27,f14.8/)') 'Total time (seconds):', end_gs_solver - start_gs_solver
 !
+      write(unit_output,'(t3,a/)') 'Saving amplitudes to file & cleaning up.'
+!
 !     Save the amplitudes 
 !
       call wf%save_amplitudes
+!
+!     Destroy amplitudes and amplitude equations 
+!
+      call wf%destruct_ground_state
 !
    end subroutine ground_state_solver_ccs
 !
@@ -220,7 +235,7 @@ contains
 !
    module subroutine new_amplitudes_ccs(wf)
 !!
-!!    New Amplitudes (CCS)
+!!    New Amplitudes (CCS) (! E : make inheritable? )
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
 !!    Directs the calculation of the quasi-Newton estimate Δ t_i, 

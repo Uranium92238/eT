@@ -667,8 +667,6 @@ contains
       open(unit_t1am, file='t1am', status='unknown', form='unformatted')
       rewind(unit_t1am)
 !
-!     Write to file 
-!
       write(unit_t1am) wf%t1am 
 !
 !     Close amplitude file

@@ -79,6 +79,13 @@ module ccsd_class
       procedure :: new_amplitudes            => new_amplitudes_ccsd
       procedure :: calc_quasi_Newton_doubles => calc_quasi_Newton_doubles_ccsd
 !
+!     Routine to save and read the amplitudes (to/from disk)
+!
+      procedure :: save_amplitudes => save_amplitudes_ccsd
+      procedure :: read_amplitudes => read_amplitudes_ccsd
+!
+!     Routines to destroy amplitudes and omega 
+!
       procedure :: destruct_amplitudes => destruct_amplitudes_ccsd
       procedure :: destruct_omega      => destruct_omega_ccsd
 !
@@ -636,6 +643,99 @@ contains
       endif
 !
    end subroutine destruct_omega_ccsd
+!
+!
+   subroutine save_amplitudes_ccsd(wf)
+!!
+!!    Save Amplitudes (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
+!!
+!!    Store the amplitudes to disk (T1AM, T2AM)
+!!
+      implicit none 
+!
+      class(ccsd) :: wf
+!
+      integer(i15) :: unit_t1am = -1
+      integer(i15) :: unit_t2am = -1
+!
+!     Open amplitude files
+!
+      call generate_unit_identifier(unit_t1am)
+      call generate_unit_identifier(unit_t2am)
+!
+      open(unit_t1am, file='t1am', status='unknown', form='unformatted')
+      open(unit_t2am, file='t2am', status='unknown', form='unformatted')
+!
+      rewind(unit_t1am)
+      rewind(unit_t2am)
+!
+!     Write amplitudes to files
+!
+      write(unit_t1am) wf%t1am 
+      write(unit_t2am) wf%t2am
+!
+!     Close amplitude files
+!
+      close(unit_t1am)
+      close(unit_t2am)
+!
+   end subroutine save_amplitudes_ccsd
+!
+!
+   subroutine read_amplitudes_ccsd(wf)
+!!
+!!    Read Amplitudes (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
+!!
+!!    Reads the amplitudes from disk (T1AM, T2AM)
+!!
+      implicit none 
+!
+      class(ccsd) :: wf
+!
+      integer(i15) :: unit_t1am = -1
+      integer(i15) :: unit_t2am = -1 
+!
+      logical :: file_exists = .false.
+!
+!     Check to see whether file exists
+!
+      inquire(file='t1am',exist=file_exists)
+      inquire(file='t2am',exist=file_exists)
+!
+      if (file_exists) then 
+!
+!        Open amplitude files if they exist
+!
+         call generate_unit_identifier(unit_t1am)
+         call generate_unit_identifier(unit_t2am)
+!
+         open(unit_t1am, file='t1am', status='unknown', form='unformatted')
+         open(unit_t2am, file='t2am', status='unknown', form='unformatted')
+!
+         rewind(unit_t1am)
+         rewind(unit_t2am)
+!
+!        Read from file & close
+!
+         wf%t1am = zero
+         wf%t2am = zero
+!
+         read(unit_t1am) wf%t1am 
+         read(unit_t2am) wf%t2am
+!  
+         close(unit_t1am)
+         close(unit_t2am)
+!
+      else
+!
+         write(unit_output,'(t3,a)') 'Error: amplitude files do not exist.'
+         stop
+!
+      endif
+!
+   end subroutine read_amplitudes_ccsd
 !
 !
 end module ccsd_class

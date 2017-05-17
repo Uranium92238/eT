@@ -213,6 +213,11 @@ contains
                   read(unit_input,*) mem 
                   cycle
 !
+               elseif (setting == 'restart') then
+!
+                  settings%restart = .true.
+                  cycle
+!
                elseif (trim(line) == '#end of eT input') then
 !
                   exit ! escape do loop 
