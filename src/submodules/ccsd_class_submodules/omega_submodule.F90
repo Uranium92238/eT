@@ -274,7 +274,7 @@ contains
                      u_ckd_i,              &
                      (wf%n_o)*(wf%n_v)**2, &
                      one,                  &
-                     wf%omega1(a_begin,1), &
+                     wf%omega1(a_begin,1), & 
                      wf%n_v)
 !
          call deallocator(g_a_ckd, batch_length, (wf%n_o)*(wf%n_v)**2)

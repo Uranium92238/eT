@@ -17,12 +17,14 @@ program eT_program
    use hf_class
    use ccs_class
    use ccsd_class
+   use cc3_class
 !
    implicit none
 !
 !  Method class allocatable objects
 !
    type(ccsd), allocatable, target :: ccsd_wf
+   type(cc3),  allocatable, target :: cc3_wf
 !
 !  Wavefunction pointer
 !
@@ -87,6 +89,11 @@ program eT_program
       allocate(ccsd_wf)
       wf => ccsd_wf
 !
+   elseif (trim(method) == 'CC3') then 
+!
+      allocate (cc3_wf)
+      wf => cc3_wf
+!
    else
 !
       write(unit_output,*) 'Method ', trim(method), ' not recognized.'
@@ -118,7 +125,7 @@ program eT_program
    write(unit_output,'(/t3,a/)')         'Settings for this calculation:'
 !
    write(unit_output,'(t6,a25,e14.2)')    'Energy threshold:',         wf%settings%energy_threshold
-   write(unit_output,'(t6,a25,e14.2)')   'Amplitude eqs. threshold:', wf%settings%ampeqs_threshold
+   write(unit_output,'(t6,a25,e14.2)')    'Amplitude eqs. threshold:', wf%settings%ampeqs_threshold
    write(unit_output,'(t6,a25,i14/)')     'Memory:',                   mem
 !
 !  Close input file

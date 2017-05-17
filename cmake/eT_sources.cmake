@@ -9,10 +9,12 @@ set(eT_fortran_sources
    src/hf_class.F90
    src/ccs_class.F90
    src/ccsd_class.F90
+   src/cc3_class.F90
    src/submodules/ccs_class_submodules/cholesky_submodule.F90
    src/submodules/ccs_class_submodules/ground_state_submodule.F90
    src/submodules/ccs_class_submodules/fock_submodule.F90
    src/submodules/ccsd_class_submodules/ground_state_submodule.F90
    src/submodules/ccsd_class_submodules/omega_submodule.F90
+   src/submodules/cc3_class_submodules/omega_submodule.F90
    src/eT_program.F90
 )
