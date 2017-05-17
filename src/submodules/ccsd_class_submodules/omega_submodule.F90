@@ -18,7 +18,6 @@ submodule (ccsd_class) omega
 !!    omega_a1:         adds A1 term to omega1
 !!    omega_b1:         adds B1 term to omega1
 !!    omega_c1:         adds C1 term to omega1
-!!    omega_d1:         adds D1 term to omega1
 !!
 !!    omega_a2:         adds A2 term to omega2
 !!    omega_b2:         adds B2 term to omega2
@@ -81,7 +80,7 @@ contains
       call wf%omega_a1
       call wf%omega_b1
       call wf%omega_c1
-      call wf%omega_d1
+      call wf%omega_ccs_a1
 !
 !     Construct doubles contributions 
 !
@@ -519,23 +518,6 @@ contains
       call deallocator(u_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine omega_c1_ccsd
-!
-!
-   module subroutine omega_d1_ccsd(wf)
-!
-!     Omega D1 term: Omega_ai^D1=F_ai_T1
-!
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mars 2017
-!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-!     Add F_a_i to omega
-!
-      call daxpy((wf%n_o)*(wf%n_v), one, wf%fock_ai, 1, wf%omega1, 1)
-!
-   end subroutine omega_d1_ccsd
 !
 !
    module subroutine omega_a2_ccsd(wf)

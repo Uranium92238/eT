@@ -127,8 +127,8 @@ contains
 !
       class(hf) :: wf
 !
-      write(unit_output,*) 'ERROR: There is no driver for the Hartree-Fock class'
-      call exit
+      write(unit_output,*) 'Error: There is no driver for the Hartree-Fock class.'
+      stop
 !
    end subroutine drv_hf
 !

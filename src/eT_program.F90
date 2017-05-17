@@ -23,6 +23,7 @@ program eT_program
 !
 !  Method class allocatable objects
 !
+   type(ccs),  allocatable, target :: ccs_wf 
    type(ccsd), allocatable, target :: ccsd_wf
    type(cc3),  allocatable, target :: cc3_wf
 !
@@ -84,7 +85,12 @@ program eT_program
    write(unit_output,'(t3,a,a,a)') 'Our wavefunction is of type ',trim(method),'.'
    flush(unit_output)
 !
-   if (trim(method) == 'CCSD') then
+   if (trim(method) == 'CCS') then 
+!
+      allocate(ccs_wf)
+      wf => ccs_wf
+!
+   elseif (trim(method) == 'CCSD') then
 !
       allocate(ccsd_wf)
       wf => ccsd_wf
@@ -110,9 +116,9 @@ program eT_program
 !
    call calculation_reader(unit_input, wf%tasks)
 !
-   if (wf%tasks%do_ground_state)  write(unit_output,'(t3,a)')  'Ground state calculation requested.'
-   if (wf%tasks%do_excited_state) write(unit_output,'(t3,a)')  'Excited state calculation requested.' ! Dummy as of now 
-   if (wf%tasks%do_properties)    write(unit_output,'(t3,a)')  'Properties calculation requested.'    ! Dummy as of now
+   if (wf%tasks%ground_state)  write(unit_output,'(t3,a)')  'Ground state calculation requested.'
+   if (wf%tasks%excited_state) write(unit_output,'(t3,a)')  'Excited state calculation requested.' ! Dummy as of now 
+   if (wf%tasks%properties)    write(unit_output,'(t3,a)')  'Properties calculation requested.'    ! Dummy as of now
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::::::
 !  -::- Reading settings section of input file -::- 
