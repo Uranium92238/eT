@@ -7,6 +7,9 @@ submodule (cc3_class) omega
 !
    implicit none 
 !
+   real(dp) :: begin_ccsd, end_ccsd, begin_cc3, end_cc3
+   real(dp) :: begin_timer, end_timer
+!
 contains
 !
    module subroutine construct_omega_cc3(wf)
@@ -35,12 +38,19 @@ contains
       wf%omega1 = zero
       wf%omega2 = zero    
 !
-!     :: CC3 contributions :: 
+!     :: CC3 integrals :: 
+!
+      call cpu_time(begin_cc3)
 !
 !     Calculate and save to disk the integrals needed 
 !     to form the triples amplitudes & CC3 omega contributions     
 !
+      call cpu_time(begin_timer)
       call wf%omega_integrals
+      call cpu_time(end_timer)
+      write(unit_output,*) 'Time to do integrals:',end_timer-begin_timer
+!
+!     :: CC3 contributions to omega ::
 !
 !     We construct the triples amplitudes t_abc (= t_ijk^abc) 
 !     for a given set of occupied indices, i, j, k, adding
@@ -102,7 +112,12 @@ contains
       call deallocator(omega_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_o)*(wf%n_v))
       call deallocator(t_abc, (wf%n_v)**3, 1)
 !
-!     :: CCSD contributions :: 
+      call cpu_time(end_cc3)
+      write(unit_output,*) 'Time to caculate CC3 omega:', end_cc3-begin_cc3
+!
+!     :: CCSD contributions to omega :: 
+!
+      call cpu_time(begin_ccsd)
 !
 !     Construct singles contributions (CCSD)
 !
@@ -118,6 +133,11 @@ contains
       call wf%omega_c2
       call wf%omega_d2
       call wf%omega_e2 
+!
+      call cpu_time(end_ccsd)
+      write(unit_output,*) 'Time to caculate CCSD omega:', end_ccsd-begin_ccsd
+!
+!     About 1.55 seconds
 !
    end subroutine construct_omega_cc3
 !

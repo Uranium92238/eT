@@ -79,6 +79,9 @@ module cc3_class
 !!
 !!       Calculates g_bdck and saves to disk in the order bcd, k (one record per d and k)
 !!       Calculates g_ljck and saves to disk in the order lc, jk (one record per j and k)
+!!       Calculates g_jbkc and saves to disk in the order bc, kj (one record per k and j)
+!!       Calculates g_ilkc and saves to disk in the order cl, ik (one record per i and k)
+!!       Calculates g_dbkc and saves to disk in the order bcd, k (one record per d and k)
 !!
          implicit none 
 !
@@ -132,7 +135,17 @@ module cc3_class
 !
 !
       module subroutine omega_f2_cc3(wf,omega_ai_bj,t_abc,i,j,k)
-!
+!!
+!!       Omega F2 (CC3)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!       Calculates the F2 term,
+!! 
+!!          sum_c (t_ijk^abc - t_ijk^cba) F_kc,
+!!
+!!       for a given set of i, j, and k, and adds the contribution to 
+!!       the doubles projection vector (omega2), element ai_bj.
+!!
          implicit none 
 !
          class(cc3) :: wf 
@@ -146,7 +159,18 @@ module cc3_class
 !
 !
       module subroutine omega_g2_cc3(wf,omega_ai_bj,t_abc,i,j,k)
-!
+!!
+!!       Omega G2 (CC3)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!       Calculates the G2 term,
+!! 
+!!          omega(al,bj) = - sum_c  (2 t_ijk^abc - t_ijk^cba - t_ijk^acb) g_ilkc
+!!          omega(ai,dj) = + sum_bc (2 t_ijk^abc - t_ijk^cba - t_ijk^acb) g_dbkc
+!!
+!!       for a given set of i, j, and k, and adds the contribution to 
+!!       the doubles projection vector (omega2).
+!!
          implicit none 
 !
          class(cc3) :: wf 
@@ -157,7 +181,6 @@ module cc3_class
          integer(i15), intent(in) :: i, j, k
 !
       end subroutine omega_g2_cc3
-!
 !
 !
    end interface
