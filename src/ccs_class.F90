@@ -46,6 +46,8 @@ module ccs_class
       real(dp), dimension(:,:), allocatable :: fock_ai ! vir-occ block
       real(dp), dimension(:,:), allocatable :: fock_ab ! vir-vir block
 !
+      real(dp), dimension(:,:), allocatable :: excited_state_energies
+!
    contains 
 !
 !     Initialization and driver routines
@@ -129,6 +131,7 @@ module ccs_class
 !
 !
       procedure :: excited_state_solver => excited_state_solver_ccs
+      procedure :: solve_reduced_eigenvalue_problem => solve_reduced_eigenvalue_problem_ccs
 !
 !
    end type ccs
@@ -559,7 +562,15 @@ module ccs_class
       end subroutine excited_state_solver_ccs
 !
 !
-   end interface 
+      module subroutine solve_reduced_eigenvalue_problem_ccs(wf)
+!
+       implicit none
+!
+        class(ccs) :: wf 
+!
+!
+    end subroutine solve_reduced_eigenvalue_problem_ccs
+    end interface 
 !
 !
 contains

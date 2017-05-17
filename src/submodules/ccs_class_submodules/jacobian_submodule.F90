@@ -290,6 +290,7 @@ contains
          real(dp), dimension(:,:), allocatable :: rho_a_i
 !
          call allocator(rho_a_i, wf%n_v, wf%n_o)
+         rho_a_i = zero
 !
 !        A1-term
 !
