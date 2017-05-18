@@ -4,11 +4,25 @@ submodule (cc3_class) omega
 !!    Omega submodule (CC3)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
+!!    Contains the following subroutines:
+!!
+!!    construct_omega: constructs the projection vector by adding the CC3 
+!!                     and CCSD contributions to omega1 and omega2. 
+!!    omega_integrals: constructs the integrals needed for the CC3 contributions,
+!!                     and saves them to disk.
+!!    omega_e1:        adds the E1 term to omega1 (for a given i, j, and k).
+!!    omega_f2:        adds the F2 term to omega2 (for a given i, j, and k).
+!!    omega_g2:        adds the G2 term to omega2 (for a given i, j, and k).
+!!
+!!    The submodule was based on the MLCC3 routines implemented by Rolf H. Myhre
+!!    and Henrik Koch in the Dalton quantum chemistry program. 
+!!
+!!    Note: the construction of omega has not yet been optimized, and is rather
+!!    slow. Among other things, the factor of 1/6 (i >= j >= k) that can be saved
+!!    in the construction of t_ijk^abc has not been implemented. Todo. 
+!!
 !
    implicit none 
-!
-   real(dp) :: begin_ccsd, end_ccsd, begin_cc3, end_cc3
-   real(dp) :: begin_timer, end_timer
 !
 contains
 !
@@ -30,8 +44,12 @@ contains
                                                            ! to the omega2 vector
 !
       integer(i15) :: i = 0, j = 0, k = 0 
-!
       integer(i15) :: a = 0, b = 0, ai = 0, bj = 0, aibj = 0
+!
+      real(dp) :: begin_time, end_time 
+!
+      real(dp) :: acc_time, time1, time2
+      real(dp) :: acc_time_2, time3, time4
 !
 !     Set the omega vector to zero 
 !
@@ -40,15 +58,10 @@ contains
 !
 !     :: CC3 integrals :: 
 !
-      call cpu_time(begin_cc3)
-!
 !     Calculate and save to disk the integrals needed 
 !     to form the triples amplitudes & CC3 omega contributions     
 !
-      call cpu_time(begin_timer)
       call wf%omega_integrals
-      call cpu_time(end_timer)
-      write(unit_output,*) 'Time to do integrals:',end_timer-begin_timer
 !
 !     :: CC3 contributions to omega ::
 !
@@ -62,6 +75,11 @@ contains
       call allocator(omega_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
       omega_ai_bj = zero 
 !
+      call cpu_time(begin_time)
+!
+      acc_time = zero
+      acc_time_2 = zero
+!
       do i = 1, wf%n_o
          do j = 1, wf%n_o
             do k = 1, wf%n_o 
@@ -72,18 +90,29 @@ contains
 !              and divide by orbital energy difference, t_abc = - W_abc / e_abc
 !
                t_abc = zero
+               call cpu_time(time1)
                call wf%calc_triples(t_abc,i,j,k)
+               call cpu_time(time2)
+               acc_time = acc_time + time2 - time1
 !
 !              Add the CC3 omega terms, using the calculated triples amplitudes:
 !
+               call cpu_time(time3)
                call wf%omega_e1(t_abc,i,j,k)
 !
                call wf%omega_f2(omega_ai_bj,t_abc,i,j,k)
                call wf%omega_g2(omega_ai_bj,t_abc,i,j,k)
+               call cpu_time(time4)
+               acc_time_2 = acc_time_2 + time4 - time3
 !
             enddo
          enddo
       enddo
+!
+      call cpu_time(end_time)
+      write(unit_output,*) 'Time for CC3 omega:',end_time-begin_time
+      write(unit_output,*) 'Time to contruct triples:',acc_time
+      write(unit_output,*) 'Time for actual omega:',acc_time_2
 !
 !     Pack in squared omega into the wavefunction's packed omega vector 
 !
@@ -112,19 +141,14 @@ contains
       call deallocator(omega_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_o)*(wf%n_v))
       call deallocator(t_abc, (wf%n_v)**3, 1)
 !
-      call cpu_time(end_cc3)
-      write(unit_output,*) 'Time to caculate CC3 omega:', end_cc3-begin_cc3
-!
 !     :: CCSD contributions to omega :: 
-!
-      call cpu_time(begin_ccsd)
 !
 !     Construct singles contributions (CCSD)
 !
       call wf%omega_a1
       call wf%omega_b1
       call wf%omega_c1
-      call wf%omega_d1
+      call wf%omega_ccs_a1
 !
 !     Construct doubles contributions (CCSD)
 !
@@ -133,11 +157,6 @@ contains
       call wf%omega_c2
       call wf%omega_d2
       call wf%omega_e2 
-!
-      call cpu_time(end_ccsd)
-      write(unit_output,*) 'Time to caculate CCSD omega:', end_ccsd-begin_ccsd
-!
-!     About 1.55 seconds
 !
    end subroutine construct_omega_cc3
 !
@@ -625,6 +644,7 @@ contains
       real(dp), dimension(:,:), allocatable :: w ! Holds differently ordered contributions to w_abc
 !
       real(dp) :: e_abc ! Orbital energy difference e_ijk^abc 
+      real(dp) :: e_ijk ! e_i + e_j + e_k 
 !
       integer(i15) :: a = 0, d = 0, ai = 0, dj = 0, aidj = 0, l = 0
       integer(i15) :: abc = 0, acb = 0, b = 0, c = 0, aidk = 0, dk = 0
@@ -709,22 +729,7 @@ contains
                   wf%n_v,      &
                   zero,        &
                   w,           &
-                  (wf%n_v)**2)
-!
-!     Add w(acb) to w_abc(abc)
-!
-      do b = 1, wf%n_v
-         do c = 1, wf%n_v
-            do a = 1, wf%n_v
-!
-               acb = index_three(a, c, b, wf%n_v, wf%n_v)
-               abc = index_three(a, b, c, wf%n_v, wf%n_v)
-!
-               w_abc(abc,1) = w_abc(abc,1) + w(acb,1)
-!
-            enddo
-         enddo
-      enddo
+                  (wf%n_v)**2) ! Note: wait to add to w_abc
 !
 !     Term 3. sum_d t_ik^ad g_bjcd
 ! 
@@ -757,8 +762,6 @@ contains
 !
 !     Now, sum_d t_ik^ad g_bjcd = sum_d t_a_b(a,d) g_bc_d(cb,d) -> ordered as a,cb 
 !
-      w = zero
-!
       call dgemm('N','T',      &
                   wf%n_v,      &
                   (wf%n_v)**2, &
@@ -768,7 +771,7 @@ contains
                   wf%n_v,      &
                   g_bc_d,      &
                   (wf%n_v)**2, &
-                  zero,        &
+                  one,         & ! Accumulate from previous term
                   w,           &
                   (wf%n_v))
 !
@@ -903,8 +906,8 @@ contains
 !     Add w(bac) to w_abc(abc)
 !
       do c = 1, wf%n_v
-         do a = 1, wf%n_v
-            do b = 1, wf%n_v
+         do b = 1, wf%n_v
+            do a = 1, wf%n_v
 !
                bac = index_three(b, a, c, wf%n_v, wf%n_v)
                abc = index_three(a, b, c, wf%n_v, wf%n_v)
@@ -923,7 +926,6 @@ contains
 !
       call deallocator(g_bc_d, (wf%n_v)**2, wf%n_v)
       call deallocator(t_a_b, wf%n_v, wf%n_v)
-!
 !
 !     :: The g_ljck terms, i.e., - P_ijk^abc sum_l t_il^ab g_ljck :: 
 !
@@ -1209,36 +1211,38 @@ contains
 !
 !     Divide by orbital energy difference (w_abc -> t_abc)
 !
-      do c = 1, wf%n_v
-         do b = 1, wf%n_v
-            do a = 1, wf%n_v 
+      e_ijk = wf%fock_diagonal(i, 1)+ wf%fock_diagonal(j, 1) + wf%fock_diagonal(k, 1)
 !
-               abc = index_three(a, b, c, wf%n_v, wf%n_v)
+      if (i .eq. j .and. j .eq. k) then
 !
-               if (a .eq. b .and. b .eq. c) then 
+         w_abc = zero 
 !
-                  w_abc(abc, 1) = zero
+      else
 !
-               elseif (i .eq. j .and. j .eq. k) then
-!
-                  w_abc(abc, 1) = zero
-!
-               else
-!
-                  e_abc = -one/(wf%fock_diagonal(wf%n_o + a, 1) + &
-                             wf%fock_diagonal(wf%n_o + b, 1) + &
-                             wf%fock_diagonal(wf%n_o + c, 1) - &
-                             wf%fock_diagonal(i, 1) - &
-                             wf%fock_diagonal(j, 1) - &
-                             wf%fock_diagonal(k, 1))
-!
-                  w_abc(abc, 1) = e_abc*w_abc(abc, 1)
-!
-               endif
-!
+         do c = 1, wf%n_v
+            do b = 1, wf%n_v
+               do a = 1, wf%n_v 
+!  
+                  abc = index_three(a, b, c, wf%n_v, wf%n_v)
+!  
+                  if (a .eq. b .and. b .eq. c) then 
+!  
+                     w_abc(abc, 1) = zero
+!  
+                  else
+!  
+                     e_abc = -one/(wf%fock_diagonal(wf%n_o + a, 1) + &
+                                wf%fock_diagonal(wf%n_o + b, 1) + &
+                                wf%fock_diagonal(wf%n_o + c, 1) - e_ijk)
+!  
+                     w_abc(abc, 1) = e_abc*w_abc(abc, 1)
+!  
+                  endif
+!  
+               enddo
             enddo
          enddo
-      enddo
+      endif
 !
 !     Deallocations 
 !

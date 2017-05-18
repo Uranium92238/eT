@@ -1,8 +1,8 @@
 module cc3_class
 !
 !!
-!!                          CC3 class module
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!                           CC3 class module
+!!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
 !
 !  :::::::::::::::::::::::::::::::::::
@@ -16,7 +16,7 @@ module cc3_class
    use workspace
    use input_output
 !
-!  Ancestor class module (CCS)
+!  Ancestor class module (CCSD)
 !
    use ccsd_class
 !
@@ -27,6 +27,8 @@ module cc3_class
 !  :::::::::::::::::::::::::::::::::::::
 !
    type, extends(ccsd) :: cc3
+!
+!     No unique variables (inherits all of them from CCSD)
 !
    contains
 !
@@ -189,6 +191,11 @@ module cc3_class
 contains
 !
 !
+!  ::::::::::::::::::::::::::::::::::::::::::::
+!  -::-       Initialization routine       -::-
+!  ::::::::::::::::::::::::::::::::::::::::::::
+!
+!
    subroutine init_cc3(wf)
 !!
 !!    Initialize CC3 object
@@ -212,6 +219,10 @@ contains
 !
       wf%name = 'CC3'
 !
+!     Set implemented methods
+!
+      wf%implemented%ground_state = .true.
+!
 !     Read Hartree-Fock info from SIRIUS
 !
       call wf%read_hf_info
@@ -227,10 +238,6 @@ contains
 !     Initialize the Fock matrix (allocate and construct given the initial amplitudes)
 !
       call wf%initialize_fock_matrix
-!
-!     Initialize the projection vector (omega)
-!
-      call wf%initialize_omega
 !
    end subroutine init_cc3
 !
