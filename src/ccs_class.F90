@@ -130,8 +130,9 @@ module ccs_class
       procedure, non_overridable :: rho_ccs_b1 => rho_ccs_b1_ccs
 !
 !
-      procedure :: excited_state_solver => excited_state_solver_ccs
+      procedure :: excited_state_solver             => excited_state_solver_ccs
       procedure :: solve_reduced_eigenvalue_problem => solve_reduced_eigenvalue_problem_ccs
+      procedure :: get_next_trial_vectors           => get_next_trial_vectors_ccs
 !
 !
    end type ccs
@@ -562,14 +563,45 @@ module ccs_class
       end subroutine excited_state_solver_ccs
 !
 !
-      module subroutine solve_reduced_eigenvalue_problem_ccs(wf)
+      module subroutine solve_reduced_eigenvalue_problem_ccs(wf, eigenvalues_Re, eigenvalues_Im, &
+                                                               solution_vectors, n_red, n_new_trials)
+!!
+!!       Solve reduced eigenvalue problem
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad May 2017
+!!
+!!       Constructes the reduced A matrix, solves the reduced eigenvalue problem
+!!       and returns the first n eigenvalues and eigenvectors.
+!!
+         implicit none
 !
-       implicit none
+         class(ccs)                                            :: wf
+         integer(i15)                                          :: n_red, n_new_trials
+         real(dp), dimension(wf%tasks%n_singlet_states,1)      :: eigenvalues_Re
+         real(dp), dimension(wf%tasks%n_singlet_states,1)      :: eigenvalues_Im 
+         real(dp), dimension(n_red, wf%tasks%n_singlet_states) :: solution_vectors
 !
-        class(ccs) :: wf 
+!
+      end subroutine solve_reduced_eigenvalue_problem_ccs
 !
 !
-    end subroutine solve_reduced_eigenvalue_problem_ccs
+      module subroutine get_next_trial_vectors_ccs(wf, eigenvalues_Re_new, eigenvalues_Im_new, &
+                                                   solution_vectors_red, & 
+                                                   n_red, n_new_trials)
+!!
+!!
+!!
+         implicit none
+!
+         class(ccs) :: wf
+         real(dp), dimension(wf%tasks%n_singlet_states,1) :: eigenvalues_Re_new
+         real(dp), dimension(wf%tasks%n_singlet_states,1) :: eigenvalues_Im_new
+         real(dp), dimension(n_red, wf%tasks%n_singlet_states) :: solution_vectors_red
+         integer(i15) :: n_red, n_new_trials
+!
+!
+      end subroutine get_next_trial_vectors_ccs
+!
+!
     end interface 
 !
 !

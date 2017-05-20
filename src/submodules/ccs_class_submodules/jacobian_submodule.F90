@@ -122,77 +122,19 @@ contains
 !
          call wf%calculate_orbital_differences(orbital_diff)
 !
-!        Finding orbital differences
+!        Finding lowest orbital differences
 !
          call allocator(lowest_orbital_diff, wf%tasks%n_singlet_states, 1)
          
          lowest_orbital_diff = zero
 !
-!        Placing the first elements of orbital_diff into lowest_orbital_diff
-!
-         lowest_orbital_diff(1,1) = orbital_diff(1,1)
-         index_list(1,1) = 1
-!
-         max = lowest_orbital_diff(1,1)
-         max_pos = 1
-!
-         do i = 2, wf%tasks%n_singlet_states
-!
-            lowest_orbital_diff(i,1) = orbital_diff(i,1)
-            index_list(i,1) = i
-!
-            if (lowest_orbital_diff(i,1) .ge. max) then
-!
-               max = lowest_orbital_diff(i,1)
-               max_pos = i
-!
-            endif
-         enddo
-!
-!        Looping through the rest of orbital_diff to find lowest values
-!
-         do i = wf%tasks%n_singlet_states + 1, wf%n_parameters
-            if (orbital_diff(i,1) .lt. max) then
-!
-               lowest_orbital_diff(max_pos,1) = orbital_diff(i,1)
-               index_list(max_pos,1) = i
-               max = orbital_diff(i,1)
-!
-               do j = 1, wf%tasks%n_singlet_states
-                  if (lowest_orbital_diff(j, 1) .gt. max) then
-!
-                     max = lowest_orbital_diff(j, 1)
-                     max_pos = j
-!
-                  endif
-               enddo
-            endif
-         enddo
-!
-!        Sorting lowest_orbital_diff
-!
-         do i = 1, wf%tasks%n_singlet_states
-            do j = 1, wf%tasks%n_singlet_states - 1
-               if (lowest_orbital_diff(j,1) .gt. lowest_orbital_diff(j+1, 1)) then
-!
-                  swap = lowest_orbital_diff(j,1)
-                  lowest_orbital_diff(j,1) = lowest_orbital_diff(j+1, 1)
-                  lowest_orbital_diff(j+1, 1) = swap
-!
-                  swap_int = index_list(j, 1)
-                  index_list(j,1) = index_list(j + 1,1)
-                  index_list(j + 1,1) = swap_int
-!
-               endif
-            enddo
-         enddo     
-!
+         call get_n_lowest(wf%tasks%n_singlet_states, wf%n_parameters, orbital_diff, lowest_orbital_diff, index_list)
 !
          call deallocator(orbital_diff,wf%n_parameters,1)
 !
          call deallocator(lowest_orbital_diff, wf%tasks%n_singlet_states, 1)
 !
-! 
+!
       end subroutine find_lowest_orbital_diff_ccs
 !
 !
@@ -208,7 +150,7 @@ contains
 !
          integer(i15) :: a = 0, i = 0
          integer(i15) :: ai = 0
-! 
+!
          do i = 1, wf%n_o
             do a = 1, wf%n_v
                ai = index_two(a, i, wf%n_v)

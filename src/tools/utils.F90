@@ -269,5 +269,95 @@ contains
 !
    end subroutine batch_limits
 !
+   subroutine get_n_lowest(n, size, vec, sorted_short_vec, index_list)
+!!
+!!    Get n lowest elements
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!    Finds the n lowest values of vec,
+!!    sorts them, and returns them in sorted_short_vec 
+!!    together with an index list refering to the indices of the 
+!!    lowest elements in the original vector.
+!!
+      implicit none
+!
+      integer(i15) :: n    ! Number of elements wanted
+      integer(i15) :: size ! Size of original vector
+!
+      real(dp), dimension(size, 1) :: vec
+      real(dp), dimension(n, 1)    :: sorted_short_vec
+!
+      integer(i15), dimension(n, 1) ::index_list
+!
+!     Variables for sorting
+!
+      real(dp)     :: max
+      integer(i15) :: max_pos
+!
+      real(dp)     :: swap     = zero
+      integer(i15) :: swap_int = 0
+!
+      integer(i15) :: i = 0, j = 0
+!
+!        Placing the n first elements of vec into sorted_short_vec
+!
+         sorted_short_vec(1,1) = vec(1,1)
+         index_list(1,1) = 1
+!
+         max = sorted_short_vec(1,1)
+         max_pos = 1
+!
+         do i = 2, n
+!
+            sorted_short_vec(i,1) = vec(i,1)
+            index_list(i,1) = i
+!
+            if (sorted_short_vec(i,1) .ge. max) then
+!
+               max = sorted_short_vec(i,1)
+               max_pos = i
+!
+            endif
+         enddo
+!
+!        Looping through the rest of vec to find lowest values
+!
+         do i = n + 1, size
+            if (vec(i,1) .lt. max) then
+!
+               sorted_short_vec(max_pos,1) = vec(i,1)
+               index_list(max_pos,1) = i
+               max = vec(i,1)
+!
+               do j = 1, n
+                  if (sorted_short_vec(j, 1) .gt. max) then
+!
+                     max = sorted_short_vec(j, 1)
+                     max_pos = j
+!
+                  endif
+               enddo
+            endif
+         enddo
+!
+!        Sorting sorted_short_vec
+!
+         do i = 1, n
+            do j = 1, n - 1
+               if (sorted_short_vec(j,1) .gt. sorted_short_vec(j+1, 1)) then
+!
+                  swap = sorted_short_vec(j,1)
+                  sorted_short_vec(j,1) = sorted_short_vec(j+1, 1)
+                  sorted_short_vec(j+1, 1) = swap
+!
+                  swap_int = index_list(j, 1)
+                  index_list(j,1) = index_list(j + 1,1)
+                  index_list(j + 1,1) = swap_int
+!
+               endif
+            enddo
+         enddo     
+!
+   end subroutine get_n_lowest
 !
 end module utils

@@ -17,8 +17,8 @@ module calc_settings_class
 !
    type :: calc_settings 
 !
-      real(dp) :: energy_threshold = 1.0D-06
-      real(dp) :: ampeqs_threshold = 1.0D-06
+      real(dp) :: energy_threshold = 1.0D-10
+      real(dp) :: ampeqs_threshold = 1.0D-07
 !
       integer(i15) :: ampeqs_max_iterations = 25
 !
