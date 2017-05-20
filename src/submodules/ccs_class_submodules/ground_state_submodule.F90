@@ -179,8 +179,6 @@ contains
 !
       write(unit_output,'(t3,a27,f14.8/)') 'Total time (seconds):', end_gs_solver - start_gs_solver
 !
-      write(unit_output,'(t3,a/)') 'Saving amplitudes to file & cleaning up.'
-!
 !     Save the amplitudes 
 !
       call wf%save_amplitudes
@@ -235,7 +233,7 @@ contains
 !
    module subroutine new_amplitudes_ccs(wf)
 !!
-!!    New Amplitudes (CCS) (! E : make inheritable? )
+!!    New Amplitudes (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
 !!    Directs the calculation of the quasi-Newton estimate Δ t_i, 
