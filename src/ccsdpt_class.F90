@@ -170,6 +170,10 @@ contains
 !!    routine therefore relies heavily on the omega routines of 
 !!    the parent CC3 class.
 !!
+!!    Note: as is the case for CC3 omega, this routine (in particular
+!!    the i >= j >= k saving) is not optimized. Both CC3 and CCSD(T)
+!!    should be optimized simultaneously.
+!!
       class(ccsdpt) :: wf 
 !
       real(dp), dimension(:,:), allocatable :: u_ai
