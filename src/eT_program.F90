@@ -18,14 +18,16 @@ program eT_program
    use ccs_class
    use ccsd_class
    use cc3_class
+   use ccsdpt_class
 !
    implicit none
 !
 !  Method class allocatable objects
 !
-   type(ccs),  allocatable, target :: ccs_wf 
-   type(ccsd), allocatable, target :: ccsd_wf
-   type(cc3),  allocatable, target :: cc3_wf
+   type(ccs),    allocatable, target :: ccs_wf 
+   type(ccsd),   allocatable, target :: ccsd_wf
+   type(cc3),    allocatable, target :: cc3_wf
+   type(ccsdpt), allocatable, target :: ccsdpt_wf 
 !
 !  Wavefunction pointer
 !
@@ -99,6 +101,11 @@ program eT_program
 !
       allocate (cc3_wf)
       wf => cc3_wf
+!
+   elseif (trim(method) == 'CCSD(T)') then
+!
+      allocate(ccsdpt_wf)
+      wf => ccsdpt_wf
 !
    else
 !

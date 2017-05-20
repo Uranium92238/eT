@@ -46,11 +46,6 @@ contains
       integer(i15) :: i = 0, j = 0, k = 0 
       integer(i15) :: a = 0, b = 0, ai = 0, bj = 0, aibj = 0
 !
-      real(dp) :: begin_time, end_time 
-!
-      real(dp) :: acc_time, time1, time2
-      real(dp) :: acc_time_2, time3, time4
-!
 !     Set the omega vector to zero 
 !
       wf%omega1 = zero
@@ -75,11 +70,6 @@ contains
       call allocator(omega_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
       omega_ai_bj = zero 
 !
-      call cpu_time(begin_time)
-!
-      acc_time = zero
-      acc_time_2 = zero
-!
       do i = 1, wf%n_o
          do j = 1, wf%n_o
             do k = 1, wf%n_o 
@@ -90,29 +80,18 @@ contains
 !              and divide by orbital energy difference, t_abc = - W_abc / e_abc
 !
                t_abc = zero
-               call cpu_time(time1)
                call wf%calc_triples(t_abc,i,j,k)
-               call cpu_time(time2)
-               acc_time = acc_time + time2 - time1
 !
 !              Add the CC3 omega terms, using the calculated triples amplitudes:
 !
-               call cpu_time(time3)
                call wf%omega_e1(t_abc,i,j,k)
 !
                call wf%omega_f2(omega_ai_bj,t_abc,i,j,k)
                call wf%omega_g2(omega_ai_bj,t_abc,i,j,k)
-               call cpu_time(time4)
-               acc_time_2 = acc_time_2 + time4 - time3
 !
             enddo
          enddo
       enddo
-!
-      call cpu_time(end_time)
-      write(unit_output,*) 'Time for CC3 omega:',end_time-begin_time
-      write(unit_output,*) 'Time to contruct triples:',acc_time
-      write(unit_output,*) 'Time for actual omega:',acc_time_2
 !
 !     Pack in squared omega into the wavefunction's packed omega vector 
 !
@@ -343,7 +322,7 @@ contains
                   kc  = index_two(k, c, wf%n_o)
                   bcd = index_two(b, c, wf%n_v) ! d is fixed 
 !
-                  g_bcd_k(bcd,k) = g_bd_kc(b, kc) ! g_dbkc ! E: debug?
+                  g_bcd_k(bcd,k) = g_bd_kc(b, kc) ! g_dbkc
 !
                enddo
             enddo
@@ -1211,7 +1190,7 @@ contains
 !
 !     Divide by orbital energy difference (w_abc -> t_abc)
 !
-      e_ijk = wf%fock_diagonal(i, 1)+ wf%fock_diagonal(j, 1) + wf%fock_diagonal(k, 1)
+      e_ijk = wf%fock_diagonal(i, 1) + wf%fock_diagonal(j, 1) + wf%fock_diagonal(k, 1)
 !
       if (i .eq. j .and. j .eq. k) then
 !
