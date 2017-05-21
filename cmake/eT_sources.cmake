@@ -7,6 +7,7 @@ set(eT_fortran_sources
    src/calc_procedures_class.F90
    src/calc_settings_class.F90
    src/hf_class.F90
+   src/mp2_class.F90
    src/ccs_class.F90
    src/ccsd_class.F90
    src/cc3_class.F90
