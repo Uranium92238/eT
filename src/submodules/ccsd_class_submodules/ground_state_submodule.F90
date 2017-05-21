@@ -64,26 +64,22 @@ contains
       real(dp), dimension(:,:), allocatable :: dt   ! Δ t_i
       real(dp), dimension(:,:), allocatable :: t_dt ! t_i + Δ t_i
 !
-      integer(i15) :: n_variables = 0
-!
-      n_variables = wf%n_t1am + wf%n_t2am
-!
 !     Allocate Δ t_i and t_i + Δ t_i vectors 
 ! 
-      call allocator(dt, n_variables, 1)
-      call allocator(t_dt, n_variables, 1)
+      call allocator(dt, wf%n_parameters, 1)
+      call allocator(t_dt, wf%n_parameters, 1)
 !
       dt   = zero 
       t_dt = zero 
 !
 !     Calculate Δ t_i
 !
-      call wf%calc_quasi_Newton_singles(dt, n_variables)
-      call wf%calc_quasi_Newton_doubles(dt, n_variables)
+      call wf%calc_quasi_Newton_singles(dt)
+      call wf%calc_quasi_Newton_doubles(dt)
 !
 !     Set t_i + Δ t_i 
 !
-      call dcopy(n_variables, dt, 1, t_dt, 1) ! t_dt = Δ t_i 
+      call dcopy(wf%n_parameters, dt, 1, t_dt, 1) ! t_dt = Δ t_i 
 !
       call daxpy(wf%n_t1am, one, wf%t1am, 1, t_dt, 1)                   ! t_dt = t_i + Δ t_i singles 
       call daxpy(wf%n_t2am, one, wf%t2am, 1, t_dt(wf%n_t1am + 1, 1), 1) ! t_dt = t_i + Δ t_i doubles     
@@ -91,7 +87,7 @@ contains
 !     Save estimates to file and get the next amplitudes
 !     (they are placed in dt on exit from diis) 
 !
-      call wf%diis(dt, t_dt, n_variables)
+      call wf%diis(dt, t_dt)
 !
 !     Set the new amplitudes 
 !
@@ -100,32 +96,31 @@ contains
 !
 !     Deallocate vectors 
 !
-      call deallocator(dt, n_variables, 1)
-      call deallocator(t_dt, n_variables, 1)
+      call deallocator(dt, wf%n_parameters, 1)
+      call deallocator(t_dt, wf%n_parameters, 1)
 !
    end subroutine new_amplitudes_ccsd
 !
 !
-   module subroutine calc_quasi_Newton_doubles_ccsd(wf,dt,n_variables)
+   module subroutine calc_quasi_Newton_doubles_ccsd(wf,dt)
 !
 !     Calculate quasi-Newtoni doubles estimate (CCSD)
 !     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !
 !     Calculates the quasi-Newton estimate Δ t_i (doubbles part)
-!     and places the contribution in the dt vector (of length n_variables,
+!     and places the contribution in the dt vector (of length n_parameters,
 !     with singles first, then doubles, etc. if inherited)
 !
       implicit none 
 !
       class(ccsd) :: wf 
 !
-      integer(i15), intent(in) :: n_variables
-      real(dp), dimension(n_variables, 1) :: dt
+      real(dp), dimension(wf%n_parameters, 1) :: dt
 !
       integer(i15) :: a = 0, i = 0, b = 0, j = 0
       integer(i15) :: ai = 0, bj = 0, aibj = 0, offset = 0
 !
-!     Calculate the doubles Δ t_i contribbution
+!     Calculate the doubles Δ t_i contribution
 !
       do a = 1, wf%n_v
          do i = 1, wf%n_o

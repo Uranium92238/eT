@@ -127,8 +127,8 @@ contains
 !
       class(hf) :: wf
 !
-      write(unit_output,*) 'ERROR: There is no driver for the Hartree-Fock class'
-      call exit
+      write(unit_output,*) 'Error: There is no driver for the Hartree-Fock class.'
+      stop
 !
    end subroutine drv_hf
 !
@@ -307,7 +307,7 @@ contains
                      wf%n_ao,    &
                      zero,       &
                      chol_mo_sq, &
-                     wf % n_mo)
+                     wf%n_mo)
 !
 !        Write the MO vectors to files in blocks
 !
