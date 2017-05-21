@@ -16,6 +16,7 @@ program eT_program
 !
    use hf_class
    use ccs_class
+   use cc2_class
    use ccsd_class
 !
    implicit none
@@ -23,6 +24,7 @@ program eT_program
 !  Method class allocatable objects
 !
    type(ccsd), allocatable, target :: ccsd_wf
+   type(cc2),  allocatable, target :: cc2_wf
 !
 !  Wavefunction pointer
 !
@@ -87,8 +89,12 @@ program eT_program
       allocate(ccsd_wf)
       wf => ccsd_wf
 !
-   else
+   elseif (trim(method) == 'CC2') then
 !
+      allocate(cc2_wf)
+      wf => cc2_wf
+!
+   else
       write(unit_output,*) 'Method ', trim(method), ' not recognized.'
       flush(unit_output)
       stop

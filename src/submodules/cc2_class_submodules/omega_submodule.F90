@@ -18,7 +18,6 @@ submodule (cc2_class) omega
 !!    omega_a1:  adds A1 term to omega1
 !!    omega_b1:  adds B1 term to omega1
 !!    omega_c1:  adds C1 term to omega1
-!!    omega_d1:  adds D1 term to omega1
 !!
 !
    implicit none 
@@ -202,7 +201,7 @@ contains
 !
          call wf%omega_c1(t_ia_bj, a_first, a_last, a_length)
 !
-         call wf%omega_d1()
+         call wf%omega_ccs_a1()
 !
 !        Deallocate t_ia_bj
 !
@@ -723,29 +722,6 @@ contains
       call deallocator(omega1_ai, (wf%n_o)*(wf%n_v), 1)
 !
    end subroutine omega_c1_cc2
-!
-!
-   module subroutine omega_d1_cc2(wf)
-! 
-!     Omega D1
-!     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-! 
-!     Calculates the D1 term of omega,
-! 
-!     D1: F_ai_T1
-! 
-!     and adds it to the projection vector (omega1) of
-!     the wavefunction object wf 
-! 
-      implicit none
-!
-      class(cc2) :: wf
-!
-!     Add F_a_i to omega
-!
-      call daxpy((wf%n_o)*(wf%n_v), one, wf%fock_ai, 1, wf%omega1, 1)
-!
-   end subroutine omega_d1_cc2
 !
 !
 end submodule
