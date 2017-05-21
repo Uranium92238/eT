@@ -15,6 +15,7 @@ program eT_program
 !  Wavefunction classes
 !
    use hf_class
+   use mp2_class
    use ccs_class
    use ccsd_class
    use cc3_class
@@ -24,6 +25,7 @@ program eT_program
 !
 !  Method class allocatable objects
 !
+   type(mp2),    allocatable, target :: mp2_wf
    type(ccs),    allocatable, target :: ccs_wf 
    type(ccsd),   allocatable, target :: ccsd_wf
    type(cc3),    allocatable, target :: cc3_wf
@@ -87,7 +89,12 @@ program eT_program
    write(unit_output,'(t3,a,a,a)') 'Our wavefunction is of type ',trim(method),'.'
    flush(unit_output)
 !
-   if (trim(method) == 'CCS') then 
+   if (trim(method) == 'MP2') then 
+!
+      allocate(mp2_wf)
+      wf => mp2_wf
+!
+   elseif (trim(method) == 'CCS') then 
 !
       allocate(ccs_wf)
       wf => ccs_wf
@@ -127,6 +134,8 @@ program eT_program
    if (wf%tasks%excited_state) write(unit_output,'(t3,a)')  'Excited state calculation requested.' ! Dummy as of now 
    if (wf%tasks%properties)    write(unit_output,'(t3,a)')  'Properties calculation requested.'    ! Dummy as of now
 !
+   flush(unit_output)
+!
 !  ::::::::::::::::::::::::::::::::::::::::::::::::
 !  -::- Reading settings section of input file -::- 
 !  ::::::::::::::::::::::::::::::::::::::::::::::::
@@ -134,12 +143,6 @@ program eT_program
 !  Set the calculation settings of the wavefunction
 !
    call settings_reader(unit_input, wf%settings) 
-!
-   write(unit_output,'(/t3,a/)')         'Settings for this calculation:'
-!
-   write(unit_output,'(t6,a25,e14.2)')    'Energy threshold:',         wf%settings%energy_threshold
-   write(unit_output,'(t6,a25,e14.2)')    'Amplitude eqs. threshold:', wf%settings%ampeqs_threshold
-   write(unit_output,'(t6,a25,i14/)')     'Memory:',                   mem
 !
 !  Close input file
 !

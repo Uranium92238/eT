@@ -235,6 +235,11 @@ contains
 !
       call wf%initialize_amplitudes
 !
+!     Set the number of parameters in the wavefunction
+!     (that are solved for in the ground and excited state solvers) 
+!
+      wf%n_parameters = wf%n_t1am + wf%n_t2am
+!
 !     Initialize the Fock matrix (allocate and construct given the initial amplitudes)
 !
       call wf%initialize_fock_matrix

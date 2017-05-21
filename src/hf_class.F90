@@ -307,7 +307,7 @@ contains
                      wf%n_ao,    &
                      zero,       &
                      chol_mo_sq, &
-                     wf % n_mo)
+                     wf%n_mo)
 !
 !        Write the MO vectors to files in blocks
 !

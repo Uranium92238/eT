@@ -346,26 +346,25 @@ module ccs_class
       end subroutine new_amplitudes_ccs
 !
 !
-      module subroutine calc_quasi_Newton_singles_ccs(wf,dt,n_variables)
+      module subroutine calc_quasi_Newton_singles_ccs(wf,dt)
 !!
 !!       Calculate quasi-Newton estimate (CCS)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
 !!       Calculates the quasi-Newton estimate Δ t_i (singles part)
-!!       and places the contribution in the dt vector (of length n_variables,
+!!       and places the contribution in the dt vector (of length n_parameters,
 !!       with singles first, then doubles, etc. if inherited)
 !!
          implicit none 
 !
          class(ccs) :: wf 
 !
-         integer(i15), intent(in) :: n_variables
-         real(dp), dimension(n_variables, 1) :: dt
+         real(dp), dimension(wf%n_parameters, 1) :: dt
 !
       end subroutine calc_quasi_Newton_singles_ccs
 !
 !
-      module subroutine diis_ccs(wf,dt,t_dt,n_variables)
+      module subroutine diis_ccs(wf,dt,t_dt)
 !!
 !!       DIIS routine (CCS)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad
@@ -385,10 +384,8 @@ module ccs_class
 !
          class(ccs), intent(in)   :: wf 
 !
-         integer(i15), intent(in) :: n_variables 
-!
-         real(dp), dimension(n_variables, 1) :: dt 
-         real(dp), dimension(n_variables, 1) :: t_dt 
+         real(dp), dimension(wf%n_parameters, 1) :: dt 
+         real(dp), dimension(wf%n_parameters, 1) :: t_dt 
 !
       end subroutine diis_ccs 
 !
@@ -469,7 +466,8 @@ contains
 !
       call wf%initialize_amplitudes
 !
-!     Set the number of parameters in the wavefunction 
+!     Set the number of parameters in the wavefunction
+!     (that are solved for in the ground and excited state solvers) 
 !
       wf%n_parameters = wf%n_t1am
 !

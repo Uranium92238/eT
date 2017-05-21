@@ -133,7 +133,7 @@ contains
 !
                endif
 !
-            elseif (trim(line) == 'Settings:') then 
+            elseif (trim(line) == 'Settings:' .or. trim(line) == '#end of eT input') then 
 !
                backspace(unit_input)
                exit ! escape the do loop
@@ -241,6 +241,10 @@ contains
             endif
 !
          enddo
+!
+      elseif (trim(line) == '#end of eT input') then
+!
+!        Do nothing (i.e., exit the settings reader)
 !
       else
 !
