@@ -238,7 +238,7 @@ contains
 !
          call generate_unit_identifier(unit_reduced_jacobi)
          open(unit=unit_reduced_jacobi, file='reduced_jacobi', action='readwrite', status='unknown',&
-          form='formatted', iostat=ioerror)
+          form='unformatted', iostat=ioerror)
 !
       else
 !
