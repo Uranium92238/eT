@@ -6,19 +6,21 @@ module workspace
 !!
 !!    Manages program memory usage and contains:
 !!
-!!    work_init: Initializes the memory management variables.
+!!    work_init:       Initializes the memory management variables.
 !!
-!!    allocator:   Allocation of double precission array of two dimmensions (M,N). 
-!!                 Updates memory management variables.
-!!    deallocator: Deallocation of double precission array of two dimmensions (M,N).
-!!                 Updates memory management variables. 
+!!    allocator:       Allocation of double precission array of two dimmensions (M,N). 
+!!                     Updates memory management variables.
+!!
+!!    deallocator:     Deallocation of double precission array of two dimmensions (M,N).
+!!                     Updates memory management variables. 
 !!
 !!    allocator_int:   Allocation of integer array of two dimmensions (M,N). 
 !!                     Updates memory management variables.
+!!
 !!    deallocator_int: Deallocation of integer array of two dimmensions (M,N)
 !!                     Updates memory management variables. 
 !!
-!!    get_available: Returns available memory.
+!!    get_available:   Returns available memory.
 !!
 !
    use types

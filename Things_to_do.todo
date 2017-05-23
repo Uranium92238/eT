@@ -7,10 +7,11 @@ Programmering:
   ☐ Jacobi
   ☐ Jacobi venstre
   ✔ Testing av batching i grunntilstand @done (17-05-11 22:24)
-  ☐ CC3 grunntilstand
+  ✔ CC3 grunntilstand @done (17-05-18 20:27)
+  ☐ Optimering av CC3 grunntilstand
   ☐ Løser for eksiterte tilstander 
   ☐ MLCCSD
-  ☐ Rutiner som deallokerer omega etter grunntilstanden er laget.
+  ✔ Rutiner som deallokerer omega etter grunntilstanden er laget. @done (17-05-18 20:28)
   ☐ CC2 - teste batching
 
 
@@ -20,7 +21,7 @@ Programmering:
    ✔ Git-repo @done (17-05-08 17:12)
    ✔ Navn @done (17-05-08 17:12)
    ☐ Gi omega D1 til CCS
-   ☐ Én driver
+   ✔ Én driver @done (17-05-18 20:28)
 
 
 ----------------------------------------------------
