@@ -236,11 +236,11 @@ contains
 !
 !        A1-term
 !
-         call wf%rho_ccs_a1(c_a_i,rho_a_i)
+         call wf%jacobian_ccs_a1(c_a_i,rho_a_i)
 !
 !        B1-term
 !
-         call wf%rho_ccs_b1(c_a_i,rho_a_i)
+         call wf%jacobian_ccs_b1(c_a_i,rho_a_i)
 !
          call dcopy((wf%n_o)*(wf%n_v), rho_a_i, 1, c_a_i, 1)
 !
@@ -248,7 +248,7 @@ contains
 !
       end subroutine jacobian_transformation_ccs
 !
-      module subroutine rho_ccs_a1_ccs(wf,c1,rho)
+      module subroutine jacobian_ccs_a1_ccs(wf,c1,rho)
 !!
 !!       A1 contribution to right transform of Jacobian
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
@@ -300,7 +300,7 @@ contains
       end subroutine rho_ccs_a1_ccs
 !
 !
-      module subroutine rho_ccs_b1_ccs(wf,c1,rho)
+      module subroutine jacobian_ccs_b1_ccs(wf,c1,rho)
 !!
 !!       B1 contribution to right transform of Jacobian
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad

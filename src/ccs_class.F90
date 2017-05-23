@@ -126,8 +126,8 @@ module ccs_class
 !     Non-overridable, they will be used for contributions
 !     to linear of higher order coupled cluster methods
 !
-      procedure, non_overridable :: rho_ccs_a1 => rho_ccs_a1_ccs 
-      procedure, non_overridable :: rho_ccs_b1 => rho_ccs_b1_ccs
+      procedure, non_overridable :: jacobian_ccs_a1 => jacobian_ccs_a1_ccs 
+      procedure, non_overridable :: jacobian_ccs_b1 => jacobian_ccs_b1_ccs
 !
 !
       procedure :: excited_state_solver             => excited_state_solver_ccs
