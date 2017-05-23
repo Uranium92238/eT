@@ -70,9 +70,19 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: X_lc ! An intermediate
 !
+      real(dp), dimension(:,:), allocatable :: X_k_i   ! An intermediate 
+      real(dp), dimension(:,:), allocatable :: L_k_lcd ! L_lckd = L_lc_dk 
+!
+      real(dp), dimension(:,:), allocatable :: t_lcd_i ! t_li^cd 
+!
+      real(dp), dimension(:,:), allocatable :: t_a_lkd ! t_lk^ad 
+      real(dp), dimension(:,:), allocatable :: L_lkd_c ! L_lckd
+!
+      real(dp), dimension(:,:), allocatable :: X_a_c ! An intermediate 
+!
       integer(i15) :: a = 0, ai = 0, al = 0, c = 0, ci = 0, cial = 0, clai = 0
       integer(i15) :: d = 0, dk = 0, i = 0, k = 0, kc = 0, kd = 0, l = 0, lc = 0
-      integer(i15) :: ld = 0, cl = 0
+      integer(i15) :: ld = 0, cl = 0, lcd = 0, cldi = 0, di = 0, aldk = 0, lkd = 0
 !
 !
 !     :: Term 1: sum_ckdl L_lckd u_li^ca c_dk ::
@@ -203,10 +213,188 @@ contains
       call deallocator(X_lc, (wf%n_v)*(wf%n_o), 1)
 !
 !
+!     :: Term 2. - sum_ckdl L_lckd t_li^cd c_ak ::
 !
 !
+!     Reorder to L_k_lcd = L_lckd = L_lc_dk 
+!
+      call allocator(L_k_lcd, wf%n_o, (wf%n_o)*(wf%n_v)**2)
+!
+      do d = 1, wf%n_v
+         do c = 1, wf%n_v
+            do l = 1, wf%n_o
+!
+               lc = index_two(l, c, wf%n_o)
+!
+               lcd = index_three(l, c, d, wf%n_o, wf%n_v)
+!
+               do k = 1, wf%n_o 
+!
+                  kd = index_two(k, d, wf%n_o)
+!
+                  L_k_lcd(k, lcd) = L_lc_dk(lc, dk) ! L_lckd 
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      call deallocator(L_lc_dk, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!     Reorder amplitudes to t_lcd_i = t_li^cd 
+!
+      call allocator(t_lcd_i, (wf%n_o)*(wf%n_v)**2, wf%n_o)
+!
+      do i = 1, wf%n_o
+         do d = 1, wf%n_v
+!
+            di = index_two(d, i, wf%n_v)
+!
+            do c = 1, wf%n_v
+               do l = 1, wf%n_o
+!
+                  cl = index_two(c, l, wf%n_v)
+!
+                  cldi = index_packed(cl, di)
+!
+                  lcd = index_three(l, c, d, wf%n_o, wf%n_v)
+!
+                  t_lcd_i(lcd, i) = wf%t2am(cldi, 1)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+!     Calculate X_k_i = sum_cdl L_k_lcd t_lcd_i
+!
+      call allocator(X_k_i, wf%n_o, wf%n_o)
+!
+      call dgemm('N','N',               &
+                  wf%n_o,               &
+                  wf%n_o,               &
+                  (wf%n_o)*(wf%n_v)**2, &
+                  one,                  &
+                  L_k_lcd,              &
+                  wf%n_o,               &
+                  t_lcd_i,              &
+                  (wf%n_o)*(wf%n_v)**2, &
+                  zero,                 &
+                  X_k_i,                &
+                  wf%n_o)
+!
+      call deallocator(t_lcd_i, (wf%n_o)*(wf%n_v)**2, wf%n_o)
+!
+!     Calculate rho_a_i =+ - sum_k c_a_i(a,k) X_k_i(k,i)
+!
+      call dgemm('N','N',  &
+                  wf%n_v,  &
+                  wf%n_o,  &
+                  wf%n_o,  &
+                  -one,    &
+                  c_a_i,   &
+                  wf%n_v,  &
+                  X_k_i,   &
+                  wf%n_o,  &
+                  one,     &
+                  rho_a_i, &
+                  wf%n_v)
+!
+!     Deallocations (keep L_k_lcd = L_lckd)
+! 
+      call deallocator(X_k_i, wf%n_o, wf%n_o)
+!
+!
+!     :: Term 3: - sum_ckdl L_lckd t_lk^ad c_ci ::
+!
+!     Reorder to L_lkd_c = L_lckd = L_k_lcd
+!
+      call allocator(L_lkd_c, (wf%n_v)*(wf%n_o)**2, wf%n_v)
+!
+      do c = 1, wf%n_v
+         do d = 1, wf%n_v
+            do k = 1, wf%n_o
+               do l = 1, wf%n_o
+!
+                  lkd = index_three(l, k, d, wf%n_o, wf%n_o)
+                  lcd = index_three(l, c, d, wf%n_o, wf%n_v)
+!
+                  L_lkd_c(lkd, c) = L_k_lcd(k, lcd) ! L_lckd 
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      call deallocator(L_k_lcd, wf%n_o, (wf%n_o)*(wf%n_v)**2)
+!
+!     Reorder amplitudes to t_a_lkd = t_lk^ad 
+!
+      do d = 1, wf%n_v
+         do k = 1, wf%n_o
+!
+            dk = index_two(d, k, wf%n_v)
+!
+            do l = 1, wf%n_o
+!
+               lkd = index_three(l, k, d, wf%n_o, wf%n_o)
+!
+               do a = 1, wf%n_v
+!
+                  al = index_two(a, l, wf%n_v)
+!
+                  aldk = index_packed(al, dk)
+!
+                  t_a_lkd(a, lkd) = wf%t2am(aldk, 1)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+!     Done with doubles amplitudes: deallocate 
+!
+      call wf%destruct_amplitudes
+!
+!     Calculate X_a_c = sum_kdl t_a_lkd L_lkd_c 
+!
+      call allocator(X_a_c, wf%n_v, wf%n_v)
+!
+      call dgemm('N','N',               &
+                  wf%n_v,               &
+                  wf%n_v,               &
+                  one,                  &
+                  t_a_lkd,              &
+                  wf%n_v,               &
+                  L_lkd_c,              &
+                  (wf%n_v)*(wf%n_o)**2, &
+                  zero,                 &
+                  X_a_c,                &
+                  wf%n_v)
+!
+!     Calculate rho_a_i =+ - sum_c X_a_c(a,c) c_a_i(c,i)
+!
+      call dgemm('N','N',  &
+                  wf%n_v,  &
+                  wf%n_o,  &
+                  wf%n_v,  &
+                  -one,    &
+                  X_a_c,   &
+                  wf%n_v,  &
+                  c_a_i,   &
+                  wf%n_v,  &
+                  one,     &
+                  rho_a_i, &
+                  wf%n_v)
+!
+!     Deallocations 
+!
+      call deallocator(L_lkd_c, (wf%n_v)*(wf%n_o)**2, wf%n_v)
+      call deallocator(X_a_c, wf%n_v, wf%n_v)
+      call deallocator(t_a_lkd, wf%n_v, (wf%n_v)*(wf%n_o)**2)
 !
    end subroutine jacobian_ccsd_a1_ccsd
+!  
    subroutine jacobian_ccsd_b1_ccsd(wf, c_aibj, rho_a_i)
 !!
 !!       Jacobian CCSD A1
