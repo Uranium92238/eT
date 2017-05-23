@@ -297,7 +297,7 @@ contains
                      rho, &
                      wf%n_v)
 !
-      end subroutine rho_ccs_a1_ccs
+      end subroutine jacobian_ccs_a1_ccs
 !
 !
       module subroutine jacobian_ccs_b1_ccs(wf,c1,rho)
@@ -532,7 +532,7 @@ contains
       enddo ! Looping over batches
 !
 !
-      end subroutine rho_ccs_b1_ccs
+      end subroutine jacobian_ccs_b1_ccs
 !
 !
 end submodule

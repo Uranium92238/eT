@@ -479,7 +479,7 @@ module ccs_class
       end subroutine jacobian_transformation_ccs
 !
 !
-      module subroutine rho_ccs_a1_ccs(wf,c1,rho)
+      module subroutine jacobian_ccs_a1_ccs(wf,c1,rho)
 !!
 !!       A1 contribution to right transform of Jacobian
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
@@ -497,10 +497,10 @@ module ccs_class
          real(dp), dimension(wf%n_o,wf%n_v) :: c1 
          real(dp), dimension(wf%n_o,wf%n_v) :: rho                               
 !
-      end subroutine rho_ccs_a1_ccs
+      end subroutine jacobian_ccs_a1_ccs
 !
 !
-      module subroutine rho_ccs_b1_ccs(wf,c1,rho)
+      module subroutine jacobian_ccs_b1_ccs(wf,c1,rho)
 !!
 !!       B1 contribution to right transform of Jacobian
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
@@ -518,7 +518,7 @@ module ccs_class
          real(dp), dimension(wf%n_o,wf%n_v) :: c1
          real(dp), dimension(wf%n_o,wf%n_v) :: rho                
 !
-      end subroutine rho_ccs_B1_ccs
+      end subroutine jacobian_ccs_B1_ccs
 !
 !
       module subroutine initialize_ground_state_ccs(wf)
