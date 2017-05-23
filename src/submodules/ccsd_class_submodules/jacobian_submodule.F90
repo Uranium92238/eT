@@ -197,6 +197,15 @@ contains
                   rho_a_i,           &
                   (wf%n_v)*(wf%n_o))
 !
+!     Deallocations (keep L_lc_dk = L_lckd)
+!
+      call deallocator(u_ai_lc, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      call deallocator(X_lc, (wf%n_v)*(wf%n_o), 1)
+!
+!
+!
+!
+!
    end subroutine jacobian_ccsd_a1_ccsd
 !
 end submodule jacobian
