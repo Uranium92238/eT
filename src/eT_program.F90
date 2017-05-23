@@ -17,6 +17,7 @@ program eT_program
    use hf_class
    use mp2_class
    use ccs_class
+   use cc2_class
    use ccsd_class
    use cc3_class
    use ccsdpt_class
@@ -27,6 +28,7 @@ program eT_program
 !
    type(mp2),    allocatable, target :: mp2_wf
    type(ccs),    allocatable, target :: ccs_wf 
+   type(cc2),    allocatable, target :: cc2_wf
    type(ccsd),   allocatable, target :: ccsd_wf
    type(cc3),    allocatable, target :: cc3_wf
    type(ccsdpt), allocatable, target :: ccsdpt_wf 
@@ -104,6 +106,11 @@ program eT_program
       allocate(ccsd_wf)
       wf => ccsd_wf
 !
+   elseif (trim(method) == 'CC2') then
+!
+      allocate(cc2_wf)
+      wf => cc2_wf
+!
    elseif (trim(method) == 'CC3') then 
 !
       allocate (cc3_wf)
@@ -115,7 +122,6 @@ program eT_program
       wf => ccsdpt_wf
 !
    else
-!
       write(unit_output,*) 'Method ', trim(method), ' not recognized.'
       flush(unit_output)
       stop
