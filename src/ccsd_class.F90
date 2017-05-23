@@ -95,6 +95,9 @@ module ccsd_class
 !
       procedure :: jacobian_ccsd_a1 => jacobian_ccsd_a1_ccsd
       procedure :: jacobian_ccsd_b1 => jacobian_ccsd_b1_ccsd
+      procedure :: jacobian_ccsd_c1 => jacobian_ccsd_c1_ccsd 
+!
+      procedure :: jacobian_ccsd_a2 => jacobian_ccsd_a2_ccsd
 !
 !     Routines to destroy amplitudes and omega 
 !
@@ -439,6 +442,25 @@ module ccsd_class
 
 !
    end subroutine jacobian_ccsd_c1_ccsd
+!
+!
+      module subroutine jacobian_ccsd_a2_ccsd(wf, rho_ai_bj, c_a_i)
+!!
+!!       Jacobian CCSD A2 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!       rho_ai_bj^A2 = sum_c g_aibc c_cj - sum_k g_aikj c_bk 
+!!
+         implicit none 
+!
+         class(ccsd) :: wf 
+!
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
+         real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i
+!
+      end subroutine jacobian_ccsd_a2_ccsd
+!
+!
    end interface
 !
 !
