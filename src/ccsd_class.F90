@@ -45,9 +45,11 @@ module ccsd_class
 !
       procedure :: init => init_ccsd
 !
-!     Initialization routine for the (singles, doubles) amplitudes
+!     Initialization routine for the (singles, doubles) amplitudes,
+!     and routine to set MP2 guess for the doubles amplitudes 
 !
-      procedure :: initialize_amplitudes => initialize_amplitudes_ccsd
+      procedure :: initialize_amplitudes          => initialize_amplitudes_ccsd
+      procedure :: construct_perturbative_doubles => construct_perturbative_doubles_ccsd
 !
 !     Routine to calculate the energy from the current amplitudes
 !
@@ -73,19 +75,12 @@ module ccsd_class
       procedure :: omega_d2 => omega_d2_ccsd 
       procedure :: omega_e2 => omega_e2_ccsd   
 !
-!     Construct perturbative estimate of doubles amplitudes 
-!
-      procedure :: construct_perturbative_doubles => construct_perturbative_doubles_ccsd
-!
 !     Ground state solver routine (helpers only, see CCS for the rest)
 !
+      procedure :: initialize_ground_state   => initialize_ground_state_ccsd
       procedure :: calc_ampeqs_norm          => calc_ampeqs_norm_ccsd
       procedure :: new_amplitudes            => new_amplitudes_ccsd
       procedure :: calc_quasi_Newton_doubles => calc_quasi_Newton_doubles_ccsd
-!
-      procedure :: initialize_ground_state   => initialize_ground_state_ccsd
-      procedure :: destruct_amplitudes       => destruct_amplitudes_ccsd
-      procedure :: destruct_omega            => destruct_omega_ccsd
 !
 !     Routine to save and read the amplitudes (to/from disk)
 !
@@ -98,7 +93,12 @@ module ccsd_class
 !
 !     Helper routines for Jacobian transformation 
 !
-      procedure :: rho_ccsd_a1 => rho_ccsd_a1_ccsd
+      procedure :: jacobian_ccsd_a1 => jacobian_ccsd_a1_ccsd
+!
+!     Routines to destroy amplitudes and omega 
+!
+      procedure :: destruct_amplitudes => destruct_amplitudes_ccsd
+      procedure :: destruct_omega      => destruct_omega_ccsd
 !
    end type ccsd
 !
@@ -339,21 +339,20 @@ module ccsd_class
       end subroutine new_amplitudes_ccsd
 !
 !
-      module subroutine calc_quasi_Newton_doubles_ccsd(wf,dt,n_variables)
+      module subroutine calc_quasi_Newton_doubles_ccsd(wf,dt)
 !!
 !!       Calculate quasi-Newton estimate (CCSD)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
 !!       Calculates the quasi-Newton estimate Δ t_i (doubbles part)
-!!       and places the contribution in the dt vector (of length n_variables,
+!!       and places the contribution in the dt vector (of length n_parameters,
 !!       with singles first, then doubles, etc. if inherited)
 !!
          implicit none 
 !
          class(ccsd) :: wf 
 !
-         integer(i15), intent(in) :: n_variables
-         real(dp), dimension(n_variables, 1) :: dt
+         real(dp), dimension(wf%n_parameters, 1) :: dt
 !
       end subroutine calc_quasi_Newton_doubles_ccsd
 !
@@ -363,7 +362,8 @@ module ccsd_class
 !!       Initialize Ground State (CCSD)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-!!       Initializes the amplitudes and the projection vector.
+!!       Initializes the amplitudes and the projection vector for the ground
+!!       state solver. 
 !!
          implicit none 
 !
@@ -387,9 +387,9 @@ module ccsd_class
       end subroutine jacobian_ccsd_transformation_ccsd
 !
 !
-      module subroutine rho_ccsd_a1_ccsd(wf, c_a_i, rho_a_i)
+      module subroutine jacobian_ccsd_a1_ccsd(wf, c_a_i, rho_a_i)
 !!
-!!       A1 contribution of the CCSD Jacobian transformation 
+!!       Jacobian CCSD A1
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017 
 !!
 !!       rho_ai^A1 = sum_ckdl L_lckd (u_li^ca c_dk  - t_li^cd c_ak - t_lk^ad c_ci)
@@ -401,7 +401,7 @@ module ccsd_class
          real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i   ! c_ai 
          real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i ! rho_ai
 !
-      end subroutine rho_ccsd_a1_ccsd
+      end subroutine jacobian_ccsd_a1_ccsd
 !
 !
    end interface
@@ -454,7 +454,8 @@ contains
 !
       call wf%initialize_amplitudes
 !
-!     Set the number of parameters in the wavefunction 
+!     Set the number of parameters in the wavefunction
+!     (that are solved for in the ground and excited state solvers) 
 !
       wf%n_parameters = wf%n_t1am + wf%n_t2am
 !
@@ -504,18 +505,19 @@ contains
 !!    Construct Perturbative Doubles (CCSD)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-!!    Sets the doubles amplitudes (t2am) to the their MP2 estimate.
-!!    This is a good initial estimate for solving the amplitude equations.
+!!    Sets the doubles amplitudes (t2am) to its MP2 estimate. This is
+!!    the initial guess used in the solver for the ground state amplitude 
+!!    equations.
 !!
       implicit none 
 !
-      class(ccsd) :: wf 
+      class(ccsd) :: wf
 !
       real(dp), dimension(:,:), allocatable :: L_ia_J
       real(dp), dimension(:,:), allocatable :: g_ia_jb
 !
       integer(i15) :: i = 0, j = 0, a = 0, b = 0
-      integer(i15) :: ai = 0, bj = 0, ia = 0, jb = 0, aibj = 0
+      integer(i15) :: ai = 0, bj = 0, ia = 0, jb = 0, aibj = 0 
 !
 !     Allocate L_ia_J and g_ia_jb
 !
@@ -581,8 +583,8 @@ contains
       call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), (wf%n_J))
       call deallocator(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) 
 !
-!
    end subroutine construct_perturbative_doubles_ccsd
+!
 !
    subroutine calc_energy_ccsd(wf)
 !!
@@ -799,7 +801,6 @@ contains
       endif
 !
    end subroutine read_amplitudes_ccsd
-
 !
 !
 end module ccsd_class

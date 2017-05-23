@@ -368,26 +368,25 @@ module ccs_class
       end subroutine new_amplitudes_ccs
 !
 !
-      module subroutine calc_quasi_Newton_singles_ccs(wf,dt,n_variables)
+      module subroutine calc_quasi_Newton_singles_ccs(wf,dt)
 !!
 !!       Calculate quasi-Newton estimate (CCS)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
 !!       Calculates the quasi-Newton estimate Δ t_i (singles part)
-!!       and places the contribution in the dt vector (of length n_variables,
+!!       and places the contribution in the dt vector (of length n_parameters,
 !!       with singles first, then doubles, etc. if inherited)
 !!
          implicit none 
 !
          class(ccs) :: wf 
 !
-         integer(i15), intent(in) :: n_variables
-         real(dp), dimension(n_variables, 1) :: dt
+         real(dp), dimension(wf%n_parameters, 1) :: dt
 !
       end subroutine calc_quasi_Newton_singles_ccs
 !
 !
-      module subroutine diis_ccs(wf,dt,t_dt,n_variables)
+      module subroutine diis_ccs(wf,dt,t_dt)
 !!
 !!       DIIS routine (CCS)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad
@@ -407,10 +406,8 @@ module ccs_class
 !
          class(ccs), intent(in)   :: wf 
 !
-         integer(i15), intent(in) :: n_variables 
-!
-         real(dp), dimension(n_variables, 1) :: dt 
-         real(dp), dimension(n_variables, 1) :: t_dt 
+         real(dp), dimension(wf%n_parameters, 1) :: dt 
+         real(dp), dimension(wf%n_parameters, 1) :: t_dt 
 !
       end subroutine diis_ccs
 !
@@ -649,7 +646,8 @@ contains
 !
       call wf%initialize_amplitudes
 !
-!     Set the number of parameters in the wavefunction 
+!     Set the number of parameters in the wavefunction
+!     (that are solved for in the ground and excited state solvers) 
 !
       wf%n_parameters = wf%n_t1am
 !
@@ -758,7 +756,7 @@ contains
 !     Allocate the singles amplitudes and set to zero
 !     (which is also the value that solves the projected Scrödinger eq.)
 !
-      call allocator(wf%t1am, wf%n_v, wf%n_o)
+      if (.not. allocated(wf%t1am)) call allocator(wf%t1am, wf%n_v, wf%n_o)
       wf%t1am = zero
 !
    end subroutine initialize_amplitudes_ccs
@@ -776,7 +774,7 @@ contains
 !
       class(ccs) :: wf
 !
-      call allocator(wf%omega1, wf%n_v, wf%n_o)
+      if (.not. allocated(wf%omega1)) call allocator(wf%omega1, wf%n_v, wf%n_o)
       wf%omega1 = zero
 !
    end subroutine initialize_omega_ccs
@@ -846,8 +844,6 @@ contains
       call generate_unit_identifier(unit_t1am)
       open(unit_t1am, file='t1am', status='unknown', form='unformatted')
       rewind(unit_t1am)
-!
-!     Write to file 
 !
       write(unit_t1am) wf%t1am 
 !

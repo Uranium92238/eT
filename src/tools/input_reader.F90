@@ -134,7 +134,7 @@ contains
 !
                endif
 !
-            elseif (trim(line) == 'Settings:') then 
+            elseif (trim(line) == 'Settings:' .or. trim(line) == '#end of eT input') then 
 !
                backspace(unit_input)
                exit ! escape the do loop
@@ -214,6 +214,11 @@ contains
                   read(unit_input,*) mem 
                   cycle
 !
+               elseif (setting == 'restart') then
+!
+                  settings%restart = .true.
+                  cycle
+!
                elseif (trim(line) == '#end of eT input') then
 !
                   exit ! escape do loop 
@@ -237,6 +242,10 @@ contains
             endif
 !
          enddo
+!
+      elseif (trim(line) == '#end of eT input') then
+!
+!        Do nothing (i.e., exit the settings reader)
 !
       else
 !

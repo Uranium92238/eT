@@ -79,19 +79,26 @@ contains
 !
       write(unit_output,'(/t3,a)')   ':: Ground state solver (DIIS)'
       write(unit_output,'(t3,a/)')   ':: S. D. Folkestad, E. F. Kjønstad, May 2017'
-      write(unit_output,'(t3,a,a,a/)') &
-                                     'Requested the ground state for: ', trim(wf%name),'.'
+      write(unit_output,'(t3,a,a,a)') &
+                                     'Requested the ground state for: ', trim(wf%name),'.'   
 !
-      write(unit_output,'(t3,a)')    'Iter.   Energy           Norm of amplitude eq.'
-      write(unit_output,'(t3,a)')    '----------------------------------------------'    
+      write(unit_output,'(/t3,a/)')  'Settings for this calculation:'
+!
+      write(unit_output,'(t6,a20,e9.2)') 'Energy threshold:',   wf%settings%energy_threshold
+      write(unit_output,'(t6,a20,e9.2)') 'Equation threshold:', wf%settings%ampeqs_threshold
 !
 !     Initialize amplitudes & amplitude equations 
 !
       call wf%initialize_ground_state
 !
-!     Make sure the initial energy is up to date 
+!     If restart, read amplitudes from disk 
 !
-      call wf%calc_energy
+      if (wf%settings%restart) then 
+!
+         write(unit_output,'(/t3,a)') 'Requested restart. Reading amplitudes from file.'
+         call wf%read_amplitudes
+!
+      endif
 !
 !     Open DIIS files 
 !
@@ -105,6 +112,13 @@ contains
       open(unit=unit_diis_matrix,file='diis_matrix',status='unknown',form='unformatted')
 !
 !     Enter iterative loop
+!
+      write(unit_output,'(/t3,a)')   'Iter.   Energy           Norm of amplitude eq.'
+      write(unit_output,'(t3,a)')    '----------------------------------------------' 
+!
+!     Make sure the initial energy is up to date for first iteration
+!
+      call wf%calc_energy
 !
       iteration = 1
 !
@@ -169,10 +183,15 @@ contains
       call cpu_time(end_gs_solver)
 !
       write(unit_output,'(t3,a27,f14.8/)') 'Total time (seconds):', end_gs_solver - start_gs_solver
+      flush(unit_output)
 !
 !     Save the amplitudes 
 !
       call wf%save_amplitudes
+!
+!     Destroy amplitudes and amplitude equations 
+!
+      call wf%destruct_ground_state
 !
    end subroutine ground_state_solver_ccs
 !
@@ -234,21 +253,17 @@ contains
       real(dp), dimension(:,:), allocatable :: dt   ! Δ t_i
       real(dp), dimension(:,:), allocatable :: t_dt ! t_i + Δ t_i
 !
-      integer(i15) :: n_variables = 0
-!
-      n_variables = wf%n_t1am 
-!
 !     Allocate Δ t_i and t_i + Δ t_i vectors 
 ! 
-      call allocator(dt, n_variables, 1)
-      call allocator(t_dt, n_variables, 1)
+      call allocator(dt, wf%n_parameters, 1)
+      call allocator(t_dt, wf%n_parameters, 1)
 !
       dt   = zero 
       t_dt = zero 
 !
 !     Calculate Δ t_i
 !
-      call wf%calc_quasi_Newton_singles(dt, n_variables)
+      call wf%calc_quasi_Newton_singles(dt)
 !
 !     Set t_i + Δ t_i 
 !
@@ -258,7 +273,7 @@ contains
 !     Save estimates to file and get the next amplitudes
 !     (they are placed in dt on exit from diis) 
 !
-      call wf%diis(dt, t_dt, n_variables)
+      call wf%diis(dt, t_dt)
 !
 !     Set the new amplitudes 
 !
@@ -266,27 +281,26 @@ contains
 !
 !     Deallocate vectors 
 !
-      call deallocator(dt, n_variables, 1)
-      call deallocator(t_dt, n_variables, 1)
+      call deallocator(dt, wf%n_parameters, 1)
+      call deallocator(t_dt, wf%n_parameters, 1)
 !
    end subroutine new_amplitudes_ccs
 !
 !
-   module subroutine calc_quasi_Newton_singles_ccs(wf,dt,n_variables)
+   module subroutine calc_quasi_Newton_singles_ccs(wf,dt)
 !!
 !!    Calculate quasi-Newton estimate (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
 !!    Calculates the quasi-Newton estimate Δ t_i (singles part)
-!!    and places the contribution in the dt vector (of length n_variables,
+!!    and places the contribution in the dt vector (of length n_parameters,
 !!    with singles first, then doubles, etc. if inherited)
 !!
       implicit none 
 !
       class(ccs) :: wf 
 !
-      integer(i15), intent(in) :: n_variables
-      real(dp), dimension(n_variables, 1) :: dt
+      real(dp), dimension(wf%n_parameters, 1) :: dt
 !
       integer(i15) :: a = 0, i = 0, ai = 0
 !
@@ -298,7 +312,7 @@ contains
             ai = index_two(a, i, wf%n_v)
 !
             dt(ai, 1) = - wf%omega1(a, i)/(wf%fock_diagonal(wf%n_o + a, 1) - &
-                                             wf%fock_diagonal(i, 1))
+                                           wf%fock_diagonal(i, 1))
 !
          enddo
       enddo
@@ -306,7 +320,7 @@ contains
    end subroutine calc_quasi_Newton_singles_ccs
 !
 !
-   module subroutine diis_ccs(wf, dt, t_dt, n_variables)
+   module subroutine diis_ccs(wf, dt, t_dt)
 !!
 !!    DIIS routine
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -326,10 +340,8 @@ contains
 !
       class(ccs), intent(in) :: wf 
 !
-      integer(i15), intent(in) :: n_variables
-!
-      real(dp), dimension(n_variables, 1) :: dt 
-      real(dp), dimension(n_variables, 1) :: t_dt 
+      real(dp), dimension(wf%n_parameters, 1) :: dt 
+      real(dp), dimension(wf%n_parameters, 1) :: t_dt 
 !
       real(dp), dimension(:,:), allocatable :: dt_i ! To hold previous Δ t_i temporarily
 !
@@ -356,8 +368,8 @@ contains
          rewind(unit_t_dt)
       endif
 !
-      write(unit_dt)   (dt(i,1), i = 1, n_variables)
-      write(unit_t_dt) (t_dt(i,1), i = 1, n_variables)
+      write(unit_dt)   (dt(i,1), i = 1, wf%n_parameters)
+      write(unit_t_dt) (t_dt(i,1), i = 1, wf%n_parameters)
 !
 !     :: Solve the least squares problem, G * w = H ::
 !
@@ -395,16 +407,16 @@ contains
 !     Get the parts of the DIIS matrix G not constructed in 
 !     the previous iterations 
 !
-      call allocator(dt_i, n_variables, 1) ! Allocate temporary holder of quasi-Newton estimates
+      call allocator(dt_i, wf%n_parameters, 1) ! Allocate temporary holder of quasi-Newton estimates
       dt_i = zero 
 !
       rewind(unit_dt)
 !
       do i = 1, current_index
 !
-         read(unit_dt) (dt_i(j,1), j = 1, n_variables) 
+         read(unit_dt) (dt_i(j,1), j = 1, wf%n_parameters) 
 !
-         diis_matrix(current_index,i) = ddot(n_variables, dt, 1, dt_i, 1) 
+         diis_matrix(current_index,i) = ddot(wf%n_parameters, dt, 1, dt_i, 1) 
          diis_matrix(i,current_index) = diis_matrix(current_index,i)
 !
          diis_matrix(current_index+1,i) = -one
@@ -451,17 +463,17 @@ contains
 !        Read the t_i + Δ t_i vector 
 !
          t_dt = zero
-         read(unit_t_dt) (t_dt(j, 1), j = 1, n_variables)
+         read(unit_t_dt) (t_dt(j, 1), j = 1, wf%n_parameters)
 !
 !        Add w_i (t_i + Δ t_i) to the amplitudes 
 !
-         call daxpy(n_variables, diis_vector(i, 1), t_dt, 1, dt, 1)
+         call daxpy(wf%n_parameters, diis_vector(i, 1), t_dt, 1, dt, 1)
 !
       enddo
 !
 !     Deallocations 
 !
-      call deallocator(dt_i, n_variables, 1)
+      call deallocator(dt_i, wf%n_parameters, 1)
       call deallocator(diis_vector, current_index + 1, 1)
       call deallocator(diis_matrix, current_index + 1, current_index+1)
 !

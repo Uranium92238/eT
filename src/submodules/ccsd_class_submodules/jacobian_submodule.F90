@@ -36,21 +36,21 @@ contains
 !
 !     CCS contributions from the singles c vector 
 !
-      call wf%rho_ccs_a1(c_a_i, rho_a_i)
-      call wf%rho_ccs_b1(c_a_i, rho_a_i)
+      call wf%jacobian_ccs_a1(c_a_i, rho_a_i)
+      call wf%jacobian_ccs_b1(c_a_i, rho_a_i)
 !
 !     CCSD contributions from the singles c vector 
 !
-      call wf%rho_ccsd_a1(c_a_i, rho_a_i)
+      call wf%jacobian_ccsd_a1(c_a_i, rho_a_i)
 !
       call deallocator(rho_a_i, wf%n_v, wf%n_o)
 !
    end subroutine jacobian_ccsd_transformation_ccsd
 !
 !
-   module subroutine rho_ccsd_a1_ccsd(wf, c_a_i, rho_a_i)
+   module subroutine jacobian_ccsd_a1_ccsd(wf, c_a_i, rho_a_i)
 !!
-!!    A1 contribution of the CCSD Jacobian transformation 
+!!    Jacobian CCSD A1
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017 
 !!
 !!    rho_ai^A1 = sum_ckdl L_lckd (u_li^ca c_dk  - t_li^cd c_ak - t_lk^ad c_ci)
@@ -197,6 +197,6 @@ contains
                   rho_a_i,           &
                   (wf%n_v)*(wf%n_o))
 !
-   end subroutine rho_ccsd_a1_ccsd
+   end subroutine jacobian_ccsd_a1_ccsd
 !
 end submodule jacobian
