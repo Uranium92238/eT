@@ -198,5 +198,21 @@ contains
                   (wf%n_v)*(wf%n_o))
 !
    end subroutine jacobian_ccsd_a1_ccsd
+   subroutine jacobian_ccsd_b1_ccsd(wf, c_aibj, rho_a_i)
+!!
+!!       Jacobian CCSD A1
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017 
+!!
+!!       rho_ai^A1 = sum_ckdl L_lckd (u_li^ca c_dk  - t_li^cd c_ak - t_lk^ad c_ci)
+!!
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+         real(dp), dimension(wf%n_t2am, 1) :: c_aibj   ! c_aibj 
+         real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i ! rho_ai
+!
+   end subroutine jacobian_ccsd_b1_ccsd
+!
 !
 end submodule jacobian
