@@ -45,9 +45,11 @@ module ccsd_class
 !
       procedure :: init => init_ccsd
 !
-!     Initialization routine for the (singles, doubles) amplitudes
+!     Initialization routine for the (singles, doubles) amplitudes,
+!     and routine to set MP2 guess for the doubles amplitudes 
 !
       procedure :: initialize_amplitudes => initialize_amplitudes_ccsd
+      procedure :: construct_perturbative_doubles => construct_perturbative_doubles_ccsd
 !
 !     Routine to calculate the energy from the current amplitudes
 !
@@ -75,6 +77,7 @@ module ccsd_class
 !
 !     Ground state solver routine (helpers only, see CCS for the rest)
 !
+      procedure :: initialize_ground_state   => initialize_ground_state_ccsd
       procedure :: calc_ampeqs_norm          => calc_ampeqs_norm_ccsd
       procedure :: new_amplitudes            => new_amplitudes_ccsd
       procedure :: calc_quasi_Newton_doubles => calc_quasi_Newton_doubles_ccsd
@@ -346,6 +349,21 @@ module ccsd_class
       end subroutine calc_quasi_Newton_doubles_ccsd
 !
 !
+      module subroutine initialize_ground_state_ccsd(wf)
+!!
+!!       Initialize Ground State (CCSD)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!       Initializes the amplitudes and the projection vector for the ground
+!!       state solver. 
+!!
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+      end subroutine initialize_ground_state_ccsd
+!
+!
    end interface
 !
 !
@@ -429,12 +447,6 @@ contains
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension(:,:), allocatable :: L_ia_J
-      real(dp), dimension(:,:), allocatable :: g_ia_jb
-!
-      integer(i15) :: i = 0, j = 0, a = 0, b = 0
-      integer(i15) :: ai = 0, bj = 0, ia = 0, jb = 0, aibj = 0
-!
 !     Calculate the number of singles and doubles amplitudes
 !
       wf%n_t1am = (wf%n_o)*(wf%n_v) 
@@ -442,17 +454,35 @@ contains
 !
 !     Allocate the singles amplitudes and set to zero
 !
-      call allocator(wf%t1am, wf%n_v, wf%n_o)
+      if (.not. allocated(wf%t1am)) call allocator(wf%t1am, wf%n_v, wf%n_o)
       wf%t1am = zero
 !
 !     Allocate the doubles amplitudes and set to zero
 !
-      call allocator(wf%t2am, wf%n_t2am, 1)
+      if (.not. allocated(wf%t2am)) call allocator(wf%t2am, wf%n_t2am, 1)
       wf%t2am = zero
 !
+   end subroutine initialize_amplitudes_ccsd
 !
-!     :: Initialize the doubles amplitudes to the MP2 estimate ::
 !
+   subroutine construct_perturbative_doubles_ccsd(wf)
+!!
+!!    Construct Perturbative Doubles (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!    Sets the doubles amplitudes (t2am) to its MP2 estimate. This is
+!!    the initial guess used in the solver for the ground state amplitude 
+!!    equations.
+!!
+      implicit none 
+!
+      class(ccsd) :: wf
+!
+      real(dp), dimension(:,:), allocatable :: L_ia_J
+      real(dp), dimension(:,:), allocatable :: g_ia_jb
+!
+      integer(i15) :: i = 0, j = 0, a = 0, b = 0
+      integer(i15) :: ai = 0, bj = 0, ia = 0, jb = 0, aibj = 0 
 !
 !     Allocate L_ia_J and g_ia_jb
 !
@@ -518,7 +548,7 @@ contains
       call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), (wf%n_J))
       call deallocator(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) 
 !
-   end subroutine initialize_amplitudes_ccsd
+   end subroutine construct_perturbative_doubles_ccsd
 !
 !
    subroutine calc_energy_ccsd(wf)

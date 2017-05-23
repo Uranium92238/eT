@@ -11,6 +11,8 @@ submodule (ccsd_class) ground_state
 !!                                 information needed by the DIIS routine.
 !!     calc_ampeqs_norm:           Calculates the norm of the amplitude equations.
 !!     calc_quasi_Newton_doubles:  Calculates the doubles part of the quasi-Newton estimate.
+!!     initialize_ground_state:    Initializes the amplitudes (MP2 estimate) and the amplitude 
+!!                                 equations.
 !!    
 !!     Can be inherited by models of the same level (e.g. CC3) without modification.
 !!    
@@ -147,6 +149,25 @@ contains
       enddo
 !
    end subroutine calc_quasi_Newton_doubles_ccsd
+!
+!
+   subroutine initialize_ground_state_ccsd(wf)
+!!
+!!    Initialize Ground State (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!    Initializes the amplitudes and the projection vector for the ground
+!!    state solver. 
+!!
+      implicit none 
+!
+      class(ccsd) :: wf
+!
+      call wf%initialize_amplitudes          ! Allocate amplitudes
+      call wf%construct_perturbative_doubles ! Set doubles amplitudes to MP2 guess 
+      call wf%initialize_omega               ! Allocate projection vector 
+!
+   end subroutine initialize_ground_state_ccsd
 !
 !
 end submodule ground_state 

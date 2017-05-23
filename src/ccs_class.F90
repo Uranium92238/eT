@@ -576,7 +576,7 @@ contains
 !     Allocate the singles amplitudes and set to zero
 !     (which is also the value that solves the projected Scrödinger eq.)
 !
-      call allocator(wf%t1am, wf%n_v, wf%n_o)
+      if (.not. allocated(wf%t1am)) call allocator(wf%t1am, wf%n_v, wf%n_o)
       wf%t1am = zero
 !
    end subroutine initialize_amplitudes_ccs
@@ -594,7 +594,7 @@ contains
 !
       class(ccs) :: wf
 !
-      call allocator(wf%omega1, wf%n_v, wf%n_o)
+      if (.not. allocated(wf%omega1)) call allocator(wf%omega1, wf%n_v, wf%n_o)
       wf%omega1 = zero
 !
    end subroutine initialize_omega_ccs
