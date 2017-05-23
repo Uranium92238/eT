@@ -1,11 +1,9 @@
 module cc2_class
 !
-!
 !!
 !!            Coupled cluster perturbative doubles (CC2) class module                                 
 !!         Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017         
 !!                                                                           
-!
 !
 !  :::::::::::::::::::::::::::::::::::
 !  -::- Modules used by the class -::-
@@ -46,7 +44,7 @@ module cc2_class
 !
       procedure :: omega_a1 => omega_a1_cc2 
       procedure :: omega_b1 => omega_b1_cc2 
-      procedure :: omega_c1 => omega_c1_cc2     
+      procedure :: omega_c1 => omega_c1_cc2      
 !
 !     Ground state solver helper routines
 !
@@ -155,25 +153,6 @@ module cc2_class
          real(dp), dimension(c_length*(wf%n_o),(wf%n_v)*(wf%n_o)) :: t_kc_ai
 !
       end subroutine omega_c1_cc2
-!
-!
-      module subroutine omega_d1_cc2(wf)
-!!
-!!        Omega D1
-!!        Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!
-!!        Calculates the D1 term of omega,
-!!
-!!        D1: F_ai_T1
-!!
-!!        and adds it to the projection vector (omega1) of
-!!        the wavefunction object wf 
-!!
-         implicit none
-!
-         class(cc2) :: wf
-!
-      end subroutine omega_d1_cc2
 !
 !
    end interface
