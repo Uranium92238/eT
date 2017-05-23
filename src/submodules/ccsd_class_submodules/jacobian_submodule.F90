@@ -198,21 +198,234 @@ contains
                   (wf%n_v)*(wf%n_o))
 !
    end subroutine jacobian_ccsd_a1_ccsd
-   subroutine jacobian_ccsd_b1_ccsd(wf, c_aibj, rho_a_i)
+!
+!
+   module subroutine jacobian_ccsd_b1_ccsd(wf, c_aibj, rho_a_i)
 !!
-!!       Jacobian CCSD A1
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017 
+!!       Jacobian CCSD B1
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017 
 !!
-!!       rho_ai^A1 = sum_ckdl L_lckd (u_li^ca c_dk  - t_li^cd c_ak - t_lk^ad c_ci)
+!!       rho_ai^B1 = sum_bj F_jb (2*c_aibj  -  c_ajbi) = sum_bj F_jb v_ai_bj
 !!
          implicit none 
 !
          class(ccsd) :: wf
 !
-         real(dp), dimension(wf%n_t2am, 1) :: c_aibj   ! c_aibj 
+         real(dp), dimension(wf%n_t2am, 1)   :: c_aibj   ! c_aibj
          real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i ! rho_ai
 !
+         real(dp), dimension(:,:), allocatable :: v_ai_bj
+         real(dp), dimension(:,:), allocatable :: F_bj
+         real(dp), dimension(:,:), allocatable :: rho_ai
+!
+         integer(i15) :: a = 0, b = 0
+         integer(i15) :: i = 0, j = 0
+!
+         integer(i15) :: ai = 0, aj = 0, bi = 0, bj = 0
+!
+         integer(i15) :: aibj = 0, ajbi = 0
+
+!
+!        Construct v_ai_bj = 2*c_aibj - c_ajbi
+!        Reorder F_j_b to F_bj 
+!
+         call allocator(v_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+         call allocator(F_bj, (wf%n_o)*(wf%n_v), 1)
+         call allocator(rho_ai, (wf%n_o)*(wf%n_v), 1)
+!
+         do j = 1, wf%n_o
+            do b = 1, wf%n_v
+!
+               bj = index_two(b, j, wf%n_v)
+               F_bj = wf%fock_ia(j, b)
+!
+               do i = 1, wf%n_o
+!
+                  bi = index_two(b, i, wf%n_v)
+!
+                  do a = 1, wf%n_v
+!
+                     ai = index_two(a, i, wf%n_v)
+                     aj = index_two(a, j, wf%n_v)                 
+!
+                     aibj = index_packed(ai, bj)
+                     ajbi = index_packed(aj, bi)
+!
+                     v_ai_bj(ai, bj) =  two*c_aibj(aibj,1) - c_aibj(ajbi,1)        
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+!        sum_bj F_jb v_ai_bj 
+! 
+         call dgemm('N', 'N',           &
+                     (wf%n_o)*(wf%n_v), &
+                     1,                 &
+                     (wf%n_o)*(wf%n_v), &
+                     one,               &
+                     v_ai_bj,           &
+                     (wf%n_o)*(wf%n_v), &
+                     F_bj,              &
+                     (wf%n_o)*(wf%n_v), &
+                     zero,              &        
+                     rho_ai,            &
+                     (wf%n_o)*(wf%n_v)) 
+!
+         call deallocator(v_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+         call deallocator(F_bj, (wf%n_o)*(wf%n_v), 1)
+!
+!        Reorder into rho_a_i
+! 
+         do i = 1, wf%n_o
+            do a = 1, wf%n_v
+!
+               ai = index_two(a, i, wf%n_v)
+!
+               rho_a_i(a,i) = rho_ai(ai, 1)
+!
+            enddo
+         enddo
+
+         call deallocator(rho_ai, (wf%n_o)*(wf%n_v), 1)
+!
    end subroutine jacobian_ccsd_b1_ccsd
+!
+!
+   module subroutine jacobian_ccsd_c1_ccsd(wf, c_aibj, rho_a_i)
+!!
+!!       Jacobian CCSD C1
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017 
+!!
+!!       rho_ai^C1 = - sum_bjk L_jikb c_aj_bk = - sum_bjk (2*g_jikb - g_jbki) c_aj_bk
+!!                 = - sum_bjk (2*g_jikb - g_kijb) c_aj_bk 
+!!
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+         real(dp), dimension(wf%n_t2am, 1)   :: c_aibj   ! c_aibj
+         real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i ! rho_ai
+!
+         real(dp), dimension(:,:), allocatable :: L_ji_J
+         real(dp), dimension(:,:), allocatable :: L_kb_J
+         real(dp), dimension(:,:), allocatable :: g_ji_kb
+         real(dp), dimension(:,:), allocatable :: L_jkb_i
+         real(dp), dimension(:,:), allocatable :: c_a_jkb
+!
+         integer(i15) :: i = 0, j = 0, k = 0
+         integer(i15) :: a = 0, b = 0 
+!
+         integer(i15) :: ji = 0, ik = 0
+         integer(i15) :: jb = 0, kb = 0
+         integer(i15) :: aj = 0, bk = 0
+!
+         integer(i15) :: jkb = 0
+!
+         integer(i15) :: ajbk = 0
+!
+!        Construct integral g_ji_kb = sum_J L_ji_J * L_kb_J
+!
+         call allocator(L_ji_J, (wf%n_o)**2, wf%n_J)
+         call wf%get_cholesky_ij(L_ji_J)
+!
+         call allocator(L_kb_J, (wf%n_o)*(wf%n_v), wf%n_J)
+         call wf%get_cholesky_ia(L_kb_J)
+!
+         call allocator(g_ji_kb, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
+         call dgemm('N', 'T',           &
+                     (wf%n_o)**2,       &
+                     (wf%n_o)*(wf%n_v), &
+                     (wf%n_J),          &
+                     one,               &
+                     L_ji_J,            &
+                     (wf%n_o)**2,       & 
+                     L_kb_J,            &      
+                     (wf%n_o)*(wf%n_v), &
+                     zero,              &
+                     g_ji_kb,           &
+                     (wf%n_o)**2)
+!
+         call deallocator(L_ji_J, (wf%n_o)**2, wf%n_J)
+         call deallocator(L_kb_J, (wf%n_o)*(wf%n_v), wf%n_J)
+!
+!        Construct L_jikb ordered as L_jkb_i
+!
+         call allocator(L_jkb_i, (wf%n_v)*((wf%n_o)**2), wf%n_o)
+!
+         
+            
+         do b = 1, wf%n_v
+            do k = 1, wf%n_o
+!
+               kb =index_two(k, b, wf%n_o)
+!
+               do j = 1, wf%n_o
+!
+                  jb = index_two(j, b, wf%n_o)
+                  jkb = index_three(j, k, b, wf%n_o, wf%n_o)
+!
+                  do i = 1, wf%n_o
+!
+                     ji = index_two(j, i, wf%n_o)
+                     ik = index_two(i, k, wf%n_o)
+!
+                     L_jkb_i(jkb, i) = two*g_ji_kb(ji, kb) - g_ji_kb(ik,jb)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+         call deallocator(g_ji_kb, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
+!
+!        Reorder c_ajbk as c_a_jkb
+!
+         call allocator(c_a_jkb, wf%n_v, (wf%n_v)*((wf%n_o)**2))
+!
+         do b = 1, wf%n_v
+            do k = 1, wf%n_o
+!
+               bk = index_two(b, k, wf%n_v)
+!
+               do j = 1, wf%n_o
+!
+                  jkb = index_three(j, k, b, wf%n_o, wf%n_o)
+!
+                  do a = 1, wf%n_v
+!
+                     aj = index_two(a, j, wf%n_v)
+!
+                     ajbk = index_packed(aj, bk)
+!
+                     c_a_jkb(a, jkb) = c_aibj(ajbk,1)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+!        - sum_bjk L_jkb_i * c_a_jkb
+!
+         call dgemm('N', 'N',                &
+                     wf%n_v,                 &
+                     wf%n_o,                 &
+                     (wf%n_v)*((wf%n_o)**2), &
+                     -one,                   &
+                     c_a_jkb,                &
+                     wf%n_v,                 &
+                     L_jkb_i,                &
+                     (wf%n_v)*((wf%n_o)**2), &
+                     zero,                   &
+                     rho_a_i,                &
+                     wf%n_v)
+!
+         call deallocator(c_a_jkb, wf%n_v, (wf%n_v)*((wf%n_o)**2))
+         call deallocator(L_jkb_i, (wf%n_v)*((wf%n_o)**2), wf%n_o)
+         
+!
+   end subroutine jacobian_ccsd_c1_ccsd
 !
 !
 end submodule jacobian
