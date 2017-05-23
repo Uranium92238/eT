@@ -154,4 +154,30 @@ contains
    end subroutine calc_quasi_Newton_doubles_ccsd
 !
 !
+   subroutine initialize_ground_state_ccsd(wf)
+!!
+!!    Initialize Ground State (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!    Initializes the amplitudes and the projection vector.
+!!
+      implicit none 
+!
+      class(ccsd) :: wf
+!
+!     Initialize amplitudes (if they aren't already)
+!
+      call wf%initialize_amplitudes
+!
+!     Construct the MP2 estimate for the doubles amplitudes 
+!
+      call wf%construct_perturbative_doubles
+!
+!     Allocate the omega vector and set to zero
+!
+      call wf%initialize_omega  
+!
+   end subroutine initialize_ground_state_ccsd
+!
+!
 end submodule ground_state 

@@ -473,15 +473,19 @@ contains
 !!    Initialize Ground State (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-!!    Initializes the amplitudes and the projection vector. This routine 
-!!    can be inherited unaltered by standard CC methods.
+!!    Initializes the amplitudes and the projection vector. 
 !!
       implicit none 
 !
       class(ccs) :: wf
 !
-      call wf%initialize_amplitudes ! Amplitudes 
-      call wf%initialize_omega      ! Projection vector 
+!     Initialize amplitudes (if they aren't already)
+!
+      call wf%initialize_amplitudes
+!
+!     Allocate the omega vector and set to zero
+!
+      call wf%initialize_omega  
 !
    end subroutine initialize_ground_state_ccs
 !

@@ -71,7 +71,11 @@ module ccsd_class
       procedure :: omega_b2 => omega_b2_ccsd 
       procedure :: omega_c2 => omega_c2_ccsd 
       procedure :: omega_d2 => omega_d2_ccsd 
-      procedure :: omega_e2 => omega_e2_ccsd       
+      procedure :: omega_e2 => omega_e2_ccsd   
+!
+!     Construct perturbative estimate of doubles amplitudes 
+!
+      procedure :: construct_perturbative_doubles => construct_perturbative_doubles_ccsd
 !
 !     Ground state solver routine (helpers only, see CCS for the rest)
 !
@@ -79,8 +83,22 @@ module ccsd_class
       procedure :: new_amplitudes            => new_amplitudes_ccsd
       procedure :: calc_quasi_Newton_doubles => calc_quasi_Newton_doubles_ccsd
 !
-      procedure :: destruct_amplitudes => destruct_amplitudes_ccsd
-      procedure :: destruct_omega      => destruct_omega_ccsd
+      procedure :: initialize_ground_state   => initialize_ground_state_ccsd
+      procedure :: destruct_amplitudes       => destruct_amplitudes_ccsd
+      procedure :: destruct_omega            => destruct_omega_ccsd
+!
+!     Routine to save and read the amplitudes (to/from disk)
+!
+      procedure :: save_amplitudes => save_amplitudes_ccsd
+      procedure :: read_amplitudes => read_amplitudes_ccsd
+!
+!     Jacobian transformation routine 
+!
+      procedure :: jacobian_ccsd_transformation => jacobian_ccsd_transformation_ccsd
+!
+!     Helper routines for Jacobian transformation 
+!
+      procedure :: rho_ccsd_a1 => rho_ccsd_a1_ccsd
 !
    end type ccsd
 !
@@ -340,6 +358,52 @@ module ccsd_class
       end subroutine calc_quasi_Newton_doubles_ccsd
 !
 !
+      module subroutine initialize_ground_state_ccsd(wf)
+!!
+!!       Initialize Ground State (CCSD)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!       Initializes the amplitudes and the projection vector.
+!!
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+      end subroutine initialize_ground_state_ccsd
+!
+!
+      module subroutine jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
+!!
+!!       Jacobian CCSD transformation
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+         implicit none
+!
+         class(ccsd) :: wf 
+!
+         real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai 
+         real(dp), dimension(wf%n_t2am, 1)   :: c_aibj ! c_aibj 
+!
+      end subroutine jacobian_ccsd_transformation_ccsd
+!
+!
+      module subroutine rho_ccsd_a1_ccsd(wf, c_a_i, rho_a_i)
+!!
+!!       A1 contribution of the CCSD Jacobian transformation 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017 
+!!
+!!       rho_ai^A1 = sum_ckdl L_lckd (u_li^ca c_dk  - t_li^cd c_ak - t_lk^ad c_ci)
+!!
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+         real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i   ! c_ai 
+         real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i ! rho_ai
+!
+      end subroutine rho_ccsd_a1_ccsd
+!
+!
    end interface
 !
 !
@@ -398,10 +462,6 @@ contains
 !
       call wf%initialize_fock_matrix
 !
-!     Initialize the projection vector (omega)
-!
-      call wf%initialize_omega
-!
    end subroutine init_ccsd
 !
 !
@@ -414,19 +474,12 @@ contains
 !!     Initialize Amplitudes (CCSD)
 !!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!     Allocates the amplitudes, sets them to zero, calculates
-!!     the number of amplitudes, and sets the doubles amplitudes
-!!     to the perturbative MP2 estimate.
+!!     Allocates the amplitudes, sets them to zero, and calculates
+!!     the number of amplitudes.
 !!
       implicit none 
 !
       class(ccsd) :: wf
-!
-      real(dp), dimension(:,:), allocatable :: L_ia_J
-      real(dp), dimension(:,:), allocatable :: g_ia_jb
-!
-      integer(i15) :: i = 0, j = 0, a = 0, b = 0
-      integer(i15) :: ai = 0, bj = 0, ia = 0, jb = 0, aibj = 0
 !
 !     Calculate the number of singles and doubles amplitudes
 !
@@ -435,17 +488,34 @@ contains
 !
 !     Allocate the singles amplitudes and set to zero
 !
-      call allocator(wf%t1am, wf%n_v, wf%n_o)
+      if (.not. allocated(wf%t1am)) call allocator(wf%t1am, wf%n_v, wf%n_o)
       wf%t1am = zero
 !
 !     Allocate the doubles amplitudes and set to zero
 !
-      call allocator(wf%t2am, wf%n_t2am, 1)
+      if (.not. allocated(wf%t2am)) call allocator(wf%t2am, wf%n_t2am, 1)
       wf%t2am = zero
 !
+   end subroutine initialize_amplitudes_ccsd
 !
-!     :: Initialize the doubles amplitudes to the MP2 estimate ::
 !
+   subroutine construct_perturbative_doubles_ccsd(wf)
+!!
+!!    Construct Perturbative Doubles (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!    Sets the doubles amplitudes (t2am) to the their MP2 estimate.
+!!    This is a good initial estimate for solving the amplitude equations.
+!!
+      implicit none 
+!
+      class(ccsd) :: wf 
+!
+      real(dp), dimension(:,:), allocatable :: L_ia_J
+      real(dp), dimension(:,:), allocatable :: g_ia_jb
+!
+      integer(i15) :: i = 0, j = 0, a = 0, b = 0
+      integer(i15) :: ai = 0, bj = 0, ia = 0, jb = 0, aibj = 0
 !
 !     Allocate L_ia_J and g_ia_jb
 !
@@ -511,8 +581,8 @@ contains
       call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), (wf%n_J))
       call deallocator(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) 
 !
-   end subroutine initialize_amplitudes_ccsd
 !
+   end subroutine construct_perturbative_doubles_ccsd
 !
    subroutine calc_energy_ccsd(wf)
 !!
@@ -636,6 +706,100 @@ contains
       endif
 !
    end subroutine destruct_omega_ccsd
+!
+!
+   subroutine save_amplitudes_ccsd(wf)
+!!
+!!    Save Amplitudes (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
+!!
+!!    Store the amplitudes to disk (T1AM, T2AM)
+!!
+      implicit none 
+!
+      class(ccsd) :: wf
+!
+      integer(i15) :: unit_t1am = -1
+      integer(i15) :: unit_t2am = -1
+!
+!     Open amplitude files
+!
+      call generate_unit_identifier(unit_t1am)
+      call generate_unit_identifier(unit_t2am)
+!
+      open(unit_t1am, file='t1am', status='unknown', form='unformatted')
+      open(unit_t2am, file='t2am', status='unknown', form='unformatted')
+!
+      rewind(unit_t1am)
+      rewind(unit_t2am)
+!
+!     Write amplitudes to files
+!
+      write(unit_t1am) wf%t1am 
+      write(unit_t2am) wf%t2am
+!
+!     Close amplitude files
+!
+      close(unit_t1am)
+      close(unit_t2am)
+!
+   end subroutine save_amplitudes_ccsd
+!
+!
+   subroutine read_amplitudes_ccsd(wf)
+!!
+!!    Read Amplitudes (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
+!!
+!!    Reads the amplitudes from disk (T1AM, T2AM)
+!!
+      implicit none 
+!
+      class(ccsd) :: wf
+!
+      integer(i15) :: unit_t1am = -1
+      integer(i15) :: unit_t2am = -1 
+!
+      logical :: file_exists = .false.
+!
+!     Check to see whether file exists
+!
+      inquire(file='t1am',exist=file_exists)
+      inquire(file='t2am',exist=file_exists)
+!
+      if (file_exists) then 
+!
+!        Open amplitude files if they exist
+!
+         call generate_unit_identifier(unit_t1am)
+         call generate_unit_identifier(unit_t2am)
+!
+         open(unit_t1am, file='t1am', status='unknown', form='unformatted')
+         open(unit_t2am, file='t2am', status='unknown', form='unformatted')
+!
+         rewind(unit_t1am)
+         rewind(unit_t2am)
+!
+!        Read from file & close
+!
+         wf%t1am = zero
+         wf%t2am = zero
+!
+         read(unit_t1am) wf%t1am 
+         read(unit_t2am) wf%t2am
+!  
+         close(unit_t1am)
+         close(unit_t2am)
+!
+      else
+!
+         write(unit_output,'(t3,a)') 'Error: amplitude files do not exist.'
+         stop
+!
+      endif
+!
+   end subroutine read_amplitudes_ccsd
+
 !
 !
 end module ccsd_class
