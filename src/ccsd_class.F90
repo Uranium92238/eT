@@ -408,7 +408,7 @@ module ccsd_class
       end subroutine jacobian_ccsd_a1_ccsd
 !
 !
-      module subroutine jacobian_ccsd_b1_ccsd(wf, c_aibj, rho_a_i)
+      module subroutine jacobian_ccsd_b1_ccsd(wf, c_ai_bj, rho_a_i)
 !!
 !!       Jacobian CCSD B1
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017 
@@ -419,13 +419,13 @@ module ccsd_class
 !
          class(ccsd) :: wf
 !
-         real(dp), dimension(wf%n_t2am, 1) :: c_aibj   ! c_aibj 
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: c_ai_bj   ! c_aibj 
          real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i ! rho_ai
 !
       end subroutine jacobian_ccsd_b1_ccsd
 !
 !
-    module subroutine jacobian_ccsd_c1_ccsd(wf, c_aibj, rho_a_i)
+    module subroutine jacobian_ccsd_c1_ccsd(wf, c_ai_bj, rho_a_i)
 !!
 !!       Jacobian CCSD C1
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017 
@@ -436,13 +436,13 @@ module ccsd_class
 !
          class(ccsd) :: wf
 !
-         real(dp), dimension(wf%n_t2am, 1)   :: c_aibj   ! c_aibj
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: c_ai_bj
          real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i ! rho_ai
 !
    end subroutine jacobian_ccsd_c1_ccsd
 !
 !
-    module subroutine jacobian_ccsd_d1_ccsd(wf, c_bicj, rho_a_i)
+    module subroutine jacobian_ccsd_d1_ccsd(wf, c_bi_cj, rho_a_i)
 !!
 !!       Jacobian CCSD D1
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017 
@@ -453,7 +453,7 @@ module ccsd_class
 !
          class(ccsd) :: wf
 !
-         real(dp), dimension(wf%n_t2am, 1)   :: c_bicj   ! c_aibj
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: c_bi_cj
          real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i ! rho_ai
 !
    end subroutine jacobian_ccsd_d1_ccsd
@@ -476,21 +476,59 @@ module ccsd_class
       end subroutine jacobian_ccsd_a2_ccsd
 !
 !
-      module subroutine jacobian_ccsd_c2_ccsd(wf, rho_ai_bj, c_aibj)
+      module subroutine jacobian_ccsd_e2_ccsd(wf, rho_ai_bj, c_ai_ck)
 !!
-!!       Jacobian CCSD C2 
+!!       Jacobian CCSD E2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!       rho_ai_bj^C2 = sum_dlck t_bj,dl * L_kc,ld * c_ai,ck
+!!       rho_ai_bj^E2 = sum_dlck t_bj,dl * L_kc,ld * c_ai,ck
 !!
          implicit none 
 !
          class(ccsd) :: wf 
 !
          real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
-         real(dp), dimension(wf%n_t2am, 1) :: c_aibj
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))  :: c_ai_ck
 !
-      end subroutine jacobian_ccsd_c2_ccsd
+      end subroutine jacobian_ccsd_e2_ccsd
+!
+!
+      module subroutine jacobian_ccsd_f2_ccsd(wf, rho_ai_bj, c_ai_bj)
+!!
+!!       Jacobian CCSD F2 
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!       rho_ai_bj^F2 =  P_(ij)^(ab) (- sum_ckld t_ai,ck * L_kc,ld * c_bl,dj 
+!!                                    - sum_ckdl t_ai,dj * L_kc,ld * c_bk,cl
+!!                                    - sum_ckdl t_ai_bl * L_kc,ld * c_ck,dj )
+!!
+         implicit none 
+!
+         class(ccsd) :: wf 
+!
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: c_ai_bj
+!
+      end subroutine jacobian_ccsd_f2_ccsd
+!
+!
+      module subroutine jacobian_ccsd_g2_ccsd(wf, rho_ai_bj, c_ai_bj)
+!!
+!!       Jacobian CCSD G2 
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!       rho_ai_bj^G2 =  P_(ij)^(ab) (- sum_ckld t_ck,dj * L_kc,ld * c_ai,bl 
+!!                                    - sum_ckdl t_bl,dj * L_kc,ld * c_ai,ck
+!!                                    - sum_ckdl t_ck_bl * L_kc,ld * c_ai,dj )
+!!
+         implicit none 
+!
+         class(ccsd) :: wf 
+!
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: c_ai_bj
+!
+      end subroutine jacobian_ccsd_g2_ccsd
 !
 !
    end interface
