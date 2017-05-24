@@ -476,6 +476,23 @@ module ccsd_class
       end subroutine jacobian_ccsd_a2_ccsd
 !
 !
+      module subroutine jacobian_ccsd_c2_ccsd(wf, rho_ai_bj, c_aibj)
+!!
+!!       Jacobian CCSD C2 
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!       rho_ai_bj^C2 = sum_dlck t_bj,dl * L_kc,ld * c_ai,ck
+!!
+         implicit none 
+!
+         class(ccsd) :: wf 
+!
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
+         real(dp), dimension(wf%n_t2am, 1) :: c_aibj
+!
+      end subroutine jacobian_ccsd_c2_ccsd
+!
+!
    end interface
 !
 !

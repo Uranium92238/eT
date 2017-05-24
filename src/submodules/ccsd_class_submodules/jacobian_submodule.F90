@@ -789,6 +789,8 @@ contains
       enddo ! End batching over a
 !
    end subroutine jacobian_ccsd_d1_ccsd
+!
+!
    module subroutine jacobian_ccsd_a2_ccsd(wf, rho_ai_bj, c_a_i)
 !!
 !!    Jacobian CCSD A2 
@@ -1044,6 +1046,135 @@ contains
       enddo
 !
    end subroutine jacobian_ccsd_a2_ccsd
+!
+!
+   module subroutine jacobian_ccsd_e2_ccsd(wf, rho_ai_bj, c_aick)
+!!
+!!    Jacobian CCSD C2 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!    rho_ai_bj^C2 = sum_dlck t_bj,dl * L_kc,ld * c_ai,ck
+!!
+      implicit none 
+!
+      class(ccsd) :: wf 
+!
+      real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
+      real(dp), dimension(wf%n_t2am, 1) :: c_aick
+!
+      real(dp), dimension(:,:), allocatable :: t_dl_bj
+      real(dp), dimension(:,:), allocatable :: L_ia_J
+      real(dp), dimension(:,:), allocatable :: g_kc_ld
+      real(dp), dimension(:,:), allocatable :: L_ck_dl
+      real(dp), dimension(:,:), allocatable :: X_ck_bj
+      real(dp), dimension(:,:), allocatable :: c_ai_ck
+!
+      integer(i15) :: c = 0, d = 0, k = 0, l = 0
+      integer(i15) :: ck = 0, dl = 0, kc = 0, kd = 0, lc = 0, ld = 0
+!
+!     Read T2 amplitudes from disk
+!
+      call wf%initialize_amplitudes
+      call wf%read_amplitudes
+!
+      call allocator(t_dl_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      t_dl_bj = zero
+!
+      call squareup(wf%t2am, t_dl_bj,(wf%n_o)*(wf%n_v))
+!
+      call wf%destruct_amplitudes
+!
+!     Construct g_kcld = sum_J L_kc_J * L_ld_J
+!
+      call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call allocator(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+      call dgemm('N', 'T',           &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  wf%n_J,            &
+                  one,               &
+                  L_ia_J,            &
+                  (wf%n_o)*(wf%n_v), &
+                  L_ia_J,            &
+                  (wf%n_o)*(wf%n_v), &
+                  zero,              &
+                  g_kc_ld,           &
+                  (wf%n_o)*(wf%n_v))
+!
+      call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+!
+!     Construct L_kc,ld ordered as L_ck_dl
+!
+      call allocator(L_ck_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      do l = 1, wf%n_o
+         do d = 1, wf%n_v
+!
+            dl = index_two(d, l, wf%n_v)
+            ld = index_two(l, d, wf%n_o)
+!
+            do k = 1, wf%n_o
+!
+               kd = index_two(k, d, wf%n_o)
+!
+               do c = 1, wf%n_v
+!
+                  ck = index_two(c, k, wf%n_v)
+                  kc = index_two(k, c, wf%n_o)
+                  lc = index_two(l, c, wf%n_o)
+
+!
+                  L_ck_dl(ck, dl) = two*g_kc_ld(kc, ld) - g_kc_ld(kd, lc)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      call deallocator(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!     Intermediate X_ck_bj = sum_dl L_ck_dl * t_dl_bj
+!
+      call allocator(X_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call dgemm('N', 'N',           &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  L_ck_dl,           &
+                  (wf%n_o)*(wf%n_v), &
+                  t_dl_bj,           &
+                  (wf%n_o)*(wf%n_v), &
+                  zero,              &
+                  X_ck_bj,           &        
+                  (wf%n_o)*(wf%n_v))
+!
+      call deallocator(t_dl_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call deallocator(L_ck_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+      call allocator(c_ai_ck, (wf%n_o)*(wf%n_v),(wf%n_o)*(wf%n_v))
+      c_ai_ck = zero
+      call squareup(c_aick, c_ai_ck, (wf%n_o)*(wf%n_v))
+!
+!     rho_ai_bj = 2 * sum_ck c_ai_ck * X_ck_bj
+!
+      call dgemm('N', 'N',           &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  two,               &
+                  c_ai_ck,           &
+                  (wf%n_o)*(wf%n_v), &
+                  X_ck_bj,           &
+                  (wf%n_o)*(wf%n_v), &
+                  zero,              &
+                  rho_ai_bj,         &        
+                  (wf%n_o)*(wf%n_v))
+!
+      call deallocator(X_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call deallocator(c_ai_ck, (wf%n_o)*(wf%n_v),(wf%n_o)*(wf%n_v))
+!
+   end subroutine jacobian_ccsd_e2_ccsd
 !
 !
 end submodule jacobian
