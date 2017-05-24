@@ -428,4 +428,153 @@ contains
    end subroutine jacobian_ccsd_c1_ccsd
 !
 !
+    module subroutine jacobian_ccsd_d1_ccsd(wf, c_bicj, rho_a_i)
+!!
+!!    Jacobian CCSD D1
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017 
+!!
+!!    rho_ai^D1 =  sum_bcj L_abjc c_bicj
+!!
+      implicit none 
+!
+      class(ccsd) :: wf
+!
+      real(dp), dimension(wf%n_t2am, 1)   :: c_bicj  ! c_aibj
+      real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i ! rho_ai
+!
+!     Variables for batching
+!
+      integer(i15) :: required = 0, available = 0
+      integer(i15) :: batch_dimension = 0, max_batch_length = 0, n_batch = 0
+      integer(i15) :: a_batch = 0, a_first = 0, a_last = 0, a_length = 0
+!
+!     Integrals
+!
+      real(dp), dimension(:,:), allocatable :: L_ba_J ! Reordered L_ab_J
+      real(dp), dimension(:,:), allocatable :: L_jc_J
+      real(dp), dimension(:,:), allocatable :: g_ba_jc ! Reordered g_ab_jc
+      real(dp), dimension(:,:), allocatable :: L_a_bjc
+      real(dp), dimension(:,:), allocatable :: c_bjc_i
+!
+      integer(i15) :: a = 0, b = 0, c = 0
+      integer(i15) :: i = 0, j = 0 
+!
+      integer(i15) :: jb = 0, jc = 0, bi = 0, cj = 0 
+      integer(i15) :: ba = 0, ca = 0
+!
+      integer(i15) :: bjc = 0
+!
+      integer(i15) :: bicj = 0 
+!
+!     Prepare for batching over index a
+! 
+      rho_a_i = zero
+! 
+      required = max(2*(wf%n_J)*((wf%n_v)**2) + 2*(wf%n_J)*(wf%n_v)*(wf%n_o), &
+                       (wf%n_J)*((wf%n_v)**2) + (wf%n_J)*(wf%n_v)*(wf%n_o) + ((wf%n_v)**3)*(wf%n_o), &
+                        2*((wf%n_v)**3)*(wf%n_o))
+!     
+      required = 4*required ! In words
+      available = get_available()
+!
+      batch_dimension  = wf%n_v ! Batch over the virtual index a
+      max_batch_length = 0      ! Initilization of unset variables 
+      n_batch          = 0
+!
+      call num_batch(required, available, max_batch_length, n_batch, batch_dimension)           
+!
+!     Loop over the number of a batches 
+!
+      do a_batch = 1, n_batch
+!
+!        For each batch, get the limits for the a index 
+!
+         call batch_limits(a_first, a_last, a_batch, max_batch_length, batch_dimension)
+         a_length = a_last - a_first + 1 
+!
+         call allocator(L_ba_J, (wf%n_v)*a_length, wf%n_J)
+         call wf%get_cholesky_ab(L_ba_J, a_first, a_last, a_length*(wf%n_v), .true.)
+!
+         call allocator(L_jc_J, (wf%n_v)*(wf%n_o), wf%n_J)
+         call wf%get_cholesky_ia(L_jc_J)
+!
+!        g_abjc = sum_J L_ab_J * L_jc_J ordered as g_ba_jc
+!
+         call allocator(g_ba_jc, a_length*(wf%n_v), (wf%n_v)*(wf%n_o))
+!  
+         call dgemm('N', 'T', &
+                     (wf%n_v)*a_length, &
+                     (wf%n_v)*(wf%n_o), &
+                     wf%n_J,            &
+                     one,               &
+                     L_ba_J,            &
+                     (wf%n_v)*a_length, &
+                     L_jc_J,            &
+                     (wf%n_v)*(wf%n_o), &
+                     zero,              &
+                     g_ba_jc,           &
+                     (wf%n_v)*a_length)
+!
+         call deallocator(L_jc_J, (wf%n_v)*(wf%n_o), wf%n_J)
+         call deallocator(L_ba_J, (wf%n_v)*a_length, wf%n_J)
+!
+!        Construct L_abjc ordered as L_a_bjc
+!        Reorder c_bicj to c_bjc_i
+!
+         call allocator(L_a_bjc, a_length, ((wf%n_v)**2)*(wf%n_o))
+         call allocator(c_bjc_i, ((wf%n_v)**2)*(wf%n_o), wf%n_o)
+!
+         
+         do c = 1, wf%n_v
+            do j = 1, wf%n_o
+               do b = 1, wf%n_v
+!
+                  bjc = index_three(b, j, c, wf%n_v, wf%n_o)
+                  jb = index_two(j, b, wf%n_o)
+!
+                  do i = 1, wf%n_o
+!
+                     bi = index_two(b, i, wf%n_v)
+                     cj = index_two(c, j, wf%n_v)
+                     jc = index_two(j, c, wf%n_o)
+!
+                     bicj = index_packed(bi, cj)
+!
+                     c_bjc_i(bjc, i) = c_bicj(bicj, 1)
+!
+                  enddo
+                  do a = 1, a_length
+!
+                     ca = index_two(c, a, wf%n_v)
+                     ba = index_two(b, a, wf%n_v)
+!
+                     L_a_bjc(a, bjc) = two*g_ba_jc(ba, jc) - g_ba_jc(ca, jb)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+         call deallocator(g_ba_jc, a_length*(wf%n_v), (wf%n_v)*(wf%n_o))
+!
+         call dgemm('N', 'N',                & 
+                     a_length,               &
+                     wf%n_o,                 &
+                     (wf%n_o)*((wf%n_v)**2), &
+                     one,                    &
+                     L_a_bjc,                &
+                     a_length,               &
+                     c_bjc_i,                &
+                     (wf%n_o)*((wf%n_v)**2), &
+                     one,                    &
+                     rho_a_i(a_first, 1),    &
+                     wf%n_v)
+!
+         call deallocator(c_bjc_i, ((wf%n_v)**2)*(wf%n_o), wf%n_o)
+         call deallocator(L_a_bjc, a_length, ((wf%n_v)**2)*(wf%n_o))
+!
+      enddo
+!
+   end subroutine jacobian_ccsd_d1_ccsd
+!
+!
 end submodule jacobian

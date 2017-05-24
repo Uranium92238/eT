@@ -436,9 +436,26 @@ module ccsd_class
          real(dp), dimension(wf%n_t2am, 1)   :: c_aibj   ! c_aibj
          real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i ! rho_ai
 !
-
-!
    end subroutine jacobian_ccsd_c1_ccsd
+!
+!
+    module subroutine jacobian_ccsd_d1_ccsd(wf, c_bicj, rho_a_i)
+!!
+!!       Jacobian CCSD D1
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017 
+!!
+!!       rho_ai^D1 =  sum_bcj L_abjc c_bicj
+!!
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+         real(dp), dimension(wf%n_t2am, 1)   :: c_bicj   ! c_aibj
+         real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i ! rho_ai
+!
+   end subroutine jacobian_ccsd_d1_ccsd
+!
+!
    end interface
 !
 !
