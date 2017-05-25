@@ -101,6 +101,13 @@ module ccsd_class
       procedure :: jacobian_ccsd_b2 => jacobian_ccsd_b2_ccsd
       procedure :: jacobian_ccsd_c2 => jacobian_ccsd_c2_ccsd
       procedure :: jacobian_ccsd_d2 => jacobian_ccsd_d2_ccsd
+      procedure :: jacobian_ccsd_e2 => jacobian_ccsd_e2_ccsd
+      procedure :: jacobian_ccsd_f2 => jacobian_ccsd_f2_ccsd
+      procedure :: jacobian_ccsd_g2 => jacobian_ccsd_g2_ccsd
+      procedure :: jacobian_ccsd_h2 => jacobian_ccsd_h2_ccsd
+      procedure :: jacobian_ccsd_i2 => jacobian_ccsd_i2_ccsd
+      procedure :: jacobian_ccsd_j2 => jacobian_ccsd_j2_ccsd
+      procedure :: jacobian_ccsd_k2 => jacobian_ccsd_k2_ccsd
 !
 !     Routines to destroy amplitudes and omega 
 !
@@ -712,6 +719,7 @@ contains
 !     Set implemented methods
 !
       wf%implemented%ground_state = .true.
+      wf%implemented%excited_state = .true.
 !
 !     Read Hartree-Fock info from SIRIUS
 !

@@ -25,11 +25,18 @@ contains
 !
       class(ccsd) :: wf 
 !
-      real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai 
-      real(dp), dimension(wf%n_t2am, 1)   :: c_aibj ! c_aibj     
+      real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i       ! c_ai 
+      real(dp), dimension(wf%n_t2am, 1)   :: c_aibj      ! c_aibj     
 !
-      real(dp), dimension(:,:), allocatable :: rho_a_i  ! rho_ai   = (A c)_ai
+      real(dp), dimension(:,:), allocatable :: rho_a_i   ! rho_ai   = (A c)_ai
       real(dp), dimension(:,:), allocatable :: rho_ai_bj ! rho_ai_bj = (A c)_aibj
+!
+      real(dp), dimension(:,:), allocatable :: c_ai_bj       ! Unpacked c_aibj
+      real(dp), dimension(:,:), allocatable :: rho_ai_bj_sym ! Symmetrized rho_ai_bj, temporary
+      real(dp), dimension(:,:), allocatable :: rho_ab_ij     ! rho_ai_bj, reordered
+      real(dp), dimension(:,:), allocatable :: c_ab_ij       ! c_ai_bj, reordered
+!
+      integer(i15) :: a = 0, ab = 0, ai = 0, b = 0, bj = 0, i = 0, ij = 0, j = 0
 !
       call allocator(rho_a_i, wf%n_v, wf%n_o)
       rho_a_i = zero
@@ -42,6 +49,11 @@ contains
 !     CCSD contributions to the singles c vector 
 !
       call wf%jacobian_ccsd_a1(c_a_i, rho_a_i)
+!
+      call allocator(c_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      c_ai_bj = zero
+!
+      call squareup(c_aibj, c_ai_bj, (wf%n_o)*(wf%n_v)) ! Pack out vector 
 !
       call wf%jacobian_ccsd_b1(c_aibj, rho_a_i)
       call wf%jacobian_ccsd_c1(c_aibj, rho_a_i)
@@ -58,27 +70,115 @@ contains
 !
 !     Pack out c_ai_bj and add factor (1+ δ_ai,bj)
 !
-!     call wf%jacobian_ccsd_e2(rho_ai_bj, c_ai_bj)
-!     call wf%jacobian_ccsd_f2(rho_ai_bj, c_ai_bj)
-!     call wf%jacobian_ccsd_g2(rho_ai_bj, c_ai_bj)
-!     call wf%jacobian_ccsd_h2(rho_ai_bj, c_ai_bj)
-!     call wf%jacobian_ccsd_i2(rho_ai_bj, c_ai_bj)
+      call wf%jacobian_ccsd_e2(rho_ai_bj, c_ai_bj)
+      call wf%jacobian_ccsd_f2(rho_ai_bj, c_ai_bj)
+      call wf%jacobian_ccsd_g2(rho_ai_bj, c_ai_bj)
+      call wf%jacobian_ccsd_h2(rho_ai_bj, c_ai_bj)
+      call wf%jacobian_ccsd_i2(rho_ai_bj, c_ai_bj)
 !
-!     P_ij^ab(rho_ai_bj)
+!     Symmetrize rho_ai_bj = P_ij^ab ( rho_ai_bj )
+!
+      call allocator(rho_ai_bj_sym, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      rho_ai_bj_sym = zero
+!
+      do j = 1, wf%n_o
+         do b = 1, wf%n_v
+!
+            bj = index_two(b, j, wf%n_v)
+!
+            do i = 1, wf%n_o
+               do a = 1, wf%n_v
+!
+                  ai = index_two(a, i, wf%n_v)
+!
+                  rho_ai_bj_sym(ai, bj) = rho_ai_bj(ai, bj) + rho_ai_bj(bj, ai)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      rho_ai_bj = rho_ai_bj_sym
+      call allocator(rho_ai_bj_sym, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
 !     Reorder rho_ai_bj to rho_ab_ij, and c_ai_bj to c_ab_ij
 !
-!     call wf%jacobian_ccsd_j2(rho_ab_ij, c_ai_bj)
-!     call wf%jacobian_ccsd_k2(rho_ab_ij, c_ai_bj)
+      call allocator(rho_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
+      call allocator(c_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
 !
-!     Overwrite the incoming c vector and perform permutation (ai <-> bj)
-!     with the transformed vector rho 
+      rho_ab_ij = zero
+      c_ab_ij   = zero
 !
-! ... To do later 
+      do j = 1, wf%n_o
+         do i = 1, wf%n_o
+!
+            ij = index_two(i, j, wf%n_o)
+!
+            do b = 1, wf%n_v
+!
+               bj = index_two(b, j, wf%n_v)
+!
+               do a = 1, wf%n_v
+!
+                  ai = index_two(a, i, wf%n_v)
+                  ab = index_two(a, b, wf%n_v)
+!
+                  c_ab_ij(ab, ij)   = c_ai_bj(ai, bj)
+                  rho_ab_ij(ab, ij) = rho_ai_bj(ai, bj)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      call deallocator(c_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call deallocator(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+      call wf%jacobian_ccsd_j2(rho_ab_ij, c_ab_ij)
+      call wf%jacobian_ccsd_k2(rho_ab_ij, c_ab_ij)
+!
+      call deallocator(c_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
+!
+!     Order rho_ab_ij back to rho_ai_bj & divide by (1 + delta_ai,bj)
+!
+      call allocator(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      rho_ai_bj = zero 
+!
+      do j = 1, wf%n_o
+         do b = 1, wf%n_v
+!
+            bj = index_two(b, j, wf%n_v)
+!
+            do i = 1, wf%n_o
+!
+               ij = index_two(i, j, wf%n_o)
+!
+               do a = 1, wf%n_v
+!
+                  ab = index_two(a, b, wf%n_v)
+                  ai = index_two(a, i, wf%n_v)
+!
+                  if (a .eq. b .and. i .eq. j) then 
+                     rho_ai_bj(ai, bj) = half*rho_ab_ij(ab, ij)
+                  else
+                     rho_ai_bj(ai, bj) = rho_ab_ij(ab, ij)
+                  endif
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      call deallocator(rho_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
+!
+!     Overwrite the incoming c vector & pack in
+!
+      call packin(c_aibj, rho_ai_bj, (wf%n_o)*(wf%n_v))
 !
 !     Deallocations 
 !
       call deallocator(rho_a_i, wf%n_v, wf%n_o)
+      call deallocator(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine jacobian_ccsd_transformation_ccsd
 !
