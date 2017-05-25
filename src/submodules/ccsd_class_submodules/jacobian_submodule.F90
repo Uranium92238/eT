@@ -3974,6 +3974,248 @@ contains
          real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: rho_ab_ij
          real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: c_ab_ij
 !
+         real(dp), dimension(:,:), allocatable :: L_ij_J
+         real(dp), dimension(:,:), allocatable :: L_ca_J
+         real(dp), dimension(:,:), allocatable :: L_db_J
+!
+         real(dp), dimension(:,:), allocatable :: g_ki_lj
+         real(dp), dimension(:,:), allocatable :: g_kl_ij
+         real(dp), dimension(:,:), allocatable :: g_ca_db
+         real(dp), dimension(:,:), allocatable :: g_ab_cd
+!
+         real(dp), dimension(:,:), allocatable :: rho_batch_ab_ij
+!
+         integer(i15) :: i = 0, j = 0, k = 0, l = 0  
+         integer(i15) :: a = 0, b = 0, c = 0, d = 0  
+!
+         integer(i15) :: ab = 0, db = 0, ca = 0, cd = 0, full_ab = 0
+         integer(i15) :: ij = 0, ki = 0, kl = 0, lj = 0
+!
+!        Batching and memory handling variables
+!
+         integer(i15) :: a_n_batch = 0, a_first = 0, a_last = 0, a_length = 0, a_max_length = 0, a_batch = 0
+         integer(i15) :: b_n_batch = 0, b_first = 0, b_last = 0, b_length = 0, b_max_length = 0, b_batch = 0
+!
+         integer(i15) :: required = 0, available = 0
+!
+         call allocator(L_ij_J, (wf%n_o)**2, wf%n_J)
+         L_ij_J = zero
+!
+         call wf%get_cholesky_ij(L_ij_J)
+!
+         call allocator(g_ki_lj, (wf%n_o)**2, (wf%n_o)**2)
+!
+         call dgemm('N', 'T',     &
+                     (wf%n_o)**2, &
+                     (wf%n_o)**2, &
+                     wf%n_J,      &
+                     one,         &
+                     L_ij_J,      &
+                     (wf%n_o)**2, &
+                     L_ij_J,      &
+                     (wf%n_o)**2, &
+                     zero,        &
+                     g_ki_lj,     &
+                     (wf%n_o)**2)
+!
+         call deallocator(L_ij_J, (wf%n_o)**2, wf%n_J)
+!
+!        Reorder g_ki_lj to g_kl_ij
+!
+         call allocator(g_kl_ij, (wf%n_o)**2, (wf%n_o)**2)
+!
+         do j = 1, wf%n_o
+            do i = 1, wf%n_o
+!
+               ij = index_two(i , j, wf%n_o)
+!
+               do k = 1, wf%n_o
+!
+                  ki = index_two(k , i, wf%n_o)
+!
+                  do l = 1, wf%n_o
+! 
+                     kl = index_two(k , l, wf%n_o)
+                     lj = index_two(l , j, wf%n_o)
+!
+                     g_kl_ij(kl, ij) = g_ki_lj(ki, lj)
+!                     
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+         call deallocator(g_ki_lj, (wf%n_o)**2, (wf%n_o)**2)
+!
+         call dgemm('N', 'N',     & 
+                     (wf%n_v)**2, &
+                     (wf%n_o)**2, &
+                     (wf%n_o)**2, &
+                     one,         &
+                     c_ab_ij,     &
+                     (wf%n_v)**2, &
+                     g_kl_ij,     &
+                     (wf%n_o)**2, &
+                     one,         &
+                     rho_ab_ij,   &
+                     (wf%n_v)**2)
+!
+         call deallocator(g_kl_ij, (wf%n_o)**2, (wf%n_o)**2)
+!
+!        Prepare for batching over a and b
+!
+!
+!        ::  Calculate the A2.2 term  of omega ::
+!
+!
+         required = max(3*(wf%n_v)**2*(wf%n_J) + 2*(wf%n_v)*(wf%n_o)*(wf%n_J),      & ! Needed to get  L_db_J
+                     (wf%n_v)**4 + 2*(wf%n_v)**2*(wf%n_J))                            ! Needed to get g_ac_bd
+!
+         required = required*4  ! Words
+
+         available=get_available()
+!
+         a_max_length = 0
+         call num_two_batch(required, available, a_max_length, a_n_batch, wf%n_v)
+!
+!        Initialize some variables for batching
+!
+         a_first  = 0
+         a_last   = 0
+         a_length = 0
+!
+!        Start looping over a-batches
+!
+         do a_batch = 1,a_n_batch
+!   
+            call batch_limits(a_first ,a_last ,a_batch, a_max_length, wf%n_v)
+            a_length = a_last - a_first + 1     
+!
+!           Start looping over batches of b
+!
+            b_first  = 0
+            b_last   = 0
+            b_length = 0
+!
+            b_max_length = a_max_length
+!
+            do b_batch = 1, a_n_batch
+!
+               call batch_limits(b_first ,b_last ,b_batch, b_max_length, wf%n_v)
+               b_length = b_last - b_first + 1 
+!
+!
+!              Get cholesky vectors L_ac^J ordered as L_ca_J
+!
+               call allocator(L_ca_J, (wf%n_v)*a_length, wf%n_J)
+               L_ca_J = zero
+!
+               call wf%get_cholesky_ab(L_ca_J, a_first, a_last, (wf%n_v)*a_length, .true.)
+!
+!              Get cholesky vectors L_bd^J ordered as L_db_J
+!
+               call allocator(L_db_J, (wf%n_v)*b_length, wf%n_J)
+               L_db_J = zero
+!  
+               call wf%get_cholesky_ab(L_db_J, b_first, b_last, (wf%n_v)*b_length, .true.)
+!
+!              Allocate g_ca_db
+!
+               call allocator(g_ca_db, (wf%n_v)*a_length, (wf%n_v)*b_length)
+               g_ca_db = zero
+!
+!              g_ca_db = sum_J L_ca_J*L_db_J
+!     
+               call dgemm('N','T',            &
+                           (wf%n_v)*a_length, &
+                           (wf%n_v)*b_length, &
+                           wf%n_J,            &
+                           one,               &
+                           L_ca_J,            &
+                           (wf%n_v)*a_length, &
+                           L_db_J,            &
+                           (wf%n_v)*b_length, &
+                           zero,              &
+                           g_ca_db,           &
+                           (wf%n_v)*a_length)
+!
+!              Deallocate L_db_J 
+!
+               call deallocator(L_db_J, (wf%n_v)*b_length, wf%n_J)
+!
+!              Deallocate L_ca_J
+!
+               call deallocator(L_ca_J, (wf%n_v)*a_length, wf%n_J) 
+!
+!              Reorder g_ca_db into g_ab_cd 
+!
+               call allocator(g_ab_cd, a_length*b_length, (wf%n_v)**2) 
+!
+               do b = 1, b_length
+                  do a = 1, a_length
+!
+                     ab = index_two(a, b, wf%n_v)
+!
+                     do d = 1, wf%n_v
+!
+                        db = index_two(d, b, wf%n_v)
+!
+                        do c = 1, wf%n_v
+!
+                           ca = index_two(c, a, wf%n_v)
+                           cd = index_two(c, d, wf%n_v)
+!
+                           g_ab_cd(ab,cd) = g_ca_db(ca, db)
+!
+                        enddo
+                     enddo
+                  enddo
+               enddo
+!
+               call deallocator(g_ca_db, (wf%n_v)*a_length, (wf%n_v)*b_length) 
+!
+               call allocator(rho_batch_ab_ij,  a_length*b_length, (wf%n_o)**2)
+!
+               call dgemm('N', 'N',            &  
+                            a_length*b_length, &
+                            (wf%n_o)**2,       &  
+                            (wf%n_v)**2,       &  
+                            one,               &  
+                            g_ab_cd,           &
+                            a_length*b_length, &
+                            c_ab_ij,           &
+                            (wf%n_v)**2,       &  
+                            zero,              &
+                            rho_batch_ab_ij,   &
+                            a_length*b_length)
+!               
+               call deallocator(g_ab_cd, a_length*b_length, (wf%n_v)**2)
+!
+!              Reorder into rho_ab_ij
+!
+               do b = 1, b_length
+                  do a = 1, a_length
+!
+                     ab = index_two(a, b, a_length)
+                     full_ab = index_two(a + a_first - 1, b + b_first - 1, wf%n_v)
+!
+                     do i = 1, wf%n_o
+                        do j = 1, wf%n_o
+!
+                           ij = index_two(i, j, wf%n_o)
+!
+                           rho_ab_ij(full_ab, ij) = rho_ab_ij(full_ab, ij) + rho_batch_ab_ij(ab, ij)
+!
+                        enddo
+                     enddo
+                  enddo
+               enddo
+!
+               call deallocator(rho_batch_ab_ij,  a_length*b_length, (wf%n_o)**2) 
+!
+            enddo
+         enddo
+!         
       end subroutine jacobian_ccsd_k2_ccsd
 !
 !
