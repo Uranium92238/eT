@@ -639,7 +639,7 @@ contains
 !     ::  Calculate the A2.2 term  of omega ::
 !
 !
-      required = max(2*(wf%n_v)**2*(wf%n_J) + 2*(wf%n_v)*(wf%n_o)*(wf%n_J),      & ! Needed to get L_ca_J or L_db_J
+      required = max(3*(wf%n_v)**2*(wf%n_J) + 2*(wf%n_v)*(wf%n_o)*(wf%n_J),      & ! Needed to get  L_db_J
                      (wf%n_v)**4 + 2*(wf%n_v)**2*(wf%n_J), &                       ! Needed to get g_ac_bd
                      (wf%n_v)**4 + 2*(packed_size(wf%n_v))*(packed_size(wf%n_v)) & ! Needed to get g+- and t+-
                      + 2*(packed_size(wf%n_v))*(packed_size(wf%n_o)), &            !

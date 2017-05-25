@@ -597,6 +597,84 @@ module ccsd_class
       end subroutine jacobian_ccsd_g2_ccsd
 !
 !
+      module subroutine jacobian_ccsd_h2_ccsd(wf, rho_ai_bj, c_ai_bj)
+!!
+!!       Jacobian CCSD H2 
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!       rho_ai_bj^H2 =  P_(ij)^(ab) ( sum_ckld t_ci,ak * g_kc,ld * c_bl,dj 
+!!                                   + sum_ckdl t_cj,al * g_kc,ld * c_bk,di)
+!!                
+!!
+         implicit none 
+!
+         class(ccsd) :: wf 
+!
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: c_ai_bj
+!
+      end subroutine jacobian_ccsd_h2_ccsd
+!
+!
+      module subroutine jacobian_ccsd_i2_ccsd(wf, rho_ai_bj, c_ai_bj)
+!!
+!!       Jacobian CCSD I2 
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!       rho_ai_bj^I2 =  P_ij^ab ( sum_c F_bc * c_ai,cj - sum_k F_k * c_ai,bk
+!!                               + sum_ck L_bj,kc * c_ai,ck
+!!                               - sum_ck ( g_kc,bj * c_ak,ci + g_kibc * c_ak,cj ) )
+!!                
+!!
+         implicit none 
+!
+         class(ccsd) :: wf 
+!
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: c_ai_bj
+!
+      end subroutine jacobian_ccsd_i2_ccsd
+!
+!
+      module subroutine jacobian_ccsd_j2_ccsd(wf, rho_ab_ij, c_ab_ij)
+!!
+!!       Jacobian CCSD J2 
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!       rho_ab_ij^J2 =    sum_ckld t_ci,dj * g_kc,ld * c_ak,bl 
+!!                       + sum_ckdl t_ak,bl * g_kc,ld * c_ci,dj
+!!                
+!!
+         implicit none 
+!
+         class(ccsd) :: wf 
+!
+         real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: rho_ab_ij
+         real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: c_ab_ij
+!
+      end subroutine jacobian_ccsd_j2_ccsd
+!
+!
+      module subroutine jacobian_ccsd_k2_ccsd(wf, rho_ab_ij, c_ab_ij)
+!!
+!!       Jacobian CCSD K2 
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!       rho_ab_ij^K2 =    sum_kl g_ki,lj * c_ak,bl 
+!!                       + sum_cd g_ac,bd * c_ci,dj
+!!                
+!!
+         implicit none 
+!
+         class(ccsd) :: wf 
+!
+         real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: rho_ab_ij
+         real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: c_ab_ij
+!
+!
+      end subroutine jacobian_ccsd_k2_ccsd
+!
+!
    end interface
 !
 !
