@@ -2444,9 +2444,12 @@ contains
 !
          real(dp), dimension(:,:), allocatable :: c_aij_c 
          real(dp), dimension(:,:), allocatable :: c_aib_k
+         real(dp), dimension(:,:), allocatable :: c_ai_ck
+         real(dp), dimension(:,:), allocatable :: c_aj_ck
 !
          real(dp), dimension(:,:), allocatable :: rho_aij_b
          real(dp), dimension(:,:), allocatable :: rho_aib_j
+         real(dp), dimension(:,:), allocatable :: rho_aj_bi
 !
          real(dp), dimension(:,:), allocatable :: L_bj_J
          real(dp), dimension(:,:), allocatable :: L_kc_J
@@ -2460,7 +2463,7 @@ contains
          integer(i15) :: a = 0, b = 0, c = 0
          integer(i15) :: i = 0, j = 0, k = 0
 !
-         integer(i15) :: ai = 0, bj = 0, bk = 0, cj = 0, ck = 0
+         integer(i15) :: ai = 0, aj = 0, ak = 0, bi = 0, bj = 0, bk = 0, ci = 0, cj = 0, ck = 0
          integer(i15) :: bc = 0
          integer(i15) :: kc = 0
          integer(i15) :: kj = 0
@@ -2602,9 +2605,9 @@ contains
 !
          call deallocator(rho_aib_j, (wf%n_o)*((wf%n_v)**2), wf%n_o)
 !
-!        ::   sum_ck L_bj,kc * c_ai,ck - sum_ck ( g_kc,bj * c_ak,ci + g_ki,bc * c_ak,cj ) ::
+!        ::   sum_ck L_bj,kc*c_ai,ck - sum_ck ( g_kc,bj*c_ak,ci + g_ki,bc*c_ak,cj ) ::
 !            
-!         sum_ck ( 2*g_bj,kc * (c_ai,ck - c_ak,ci) - g_bc,kj * c_ai,ck - g_ki,bc * c_ak,cj ) 
+!         sum_ck ( g_bj,kc*(2*c_ai,ck - c_ak,ci) - g_bc,kj*c_ai,ck - g_ki,bc*c_ak,cj ) 
 !
 !        Construct g_bj,kc 
 !
@@ -2673,16 +2676,43 @@ contains
 !
 !        Reorder c_ak,ci to c_ai_ck
 !
+         call allocator(c_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
          do i = 1, wf%n_o
             do k = 1, wf%n_o
                do a = 1, wf%n_v
+!
+                  ak = index_two(a, k, wf%n_v)
+                  ai = index_two(a, i, wf%n_v)
+! 
                   do c = 1, wf%n_v
+!
+                     ck = index_two(c, k, wf%n_v)
+                     ci = index_two(c, i, wf%n_v) 
+!
+                     c_ai_ck(ai, ck) = c_ai_bj(ak, ci)
 !
                   enddo
                enddo
             enddo
          enddo
-
+!
+!        - sum_ck  g_ck_bj*c_ai_ck
+!
+         call dgemm('N', 'N',           &
+                     (wf%n_o)*(wf%n_v), &
+                     (wf%n_o)*(wf%n_v), &
+                     (wf%n_o)*(wf%n_v), &
+                     -one,              &
+                     c_ai_ck,           &
+                     (wf%n_o)*(wf%n_v), &
+                     g_ck_bj,           &   
+                     (wf%n_o)*(wf%n_v), &
+                     one,               &
+                     rho_ai_bj,         &
+                     (wf%n_o)*(wf%n_v))
+!
+         call deallocator(c_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
          call deallocator(g_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !        Construct g_bc_kj       
@@ -2781,8 +2811,71 @@ contains
                      rho_ai_bj,         &
                      (wf%n_o)*(wf%n_v))
 !
-         call deallocator(g_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!        Reorder  c_ak,cj to c_aj_ck
 !
+         call allocator(c_aj_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+         do j = 1, wf%n_o
+            do k = 1, wf%n_o
+               do a = 1, wf%n_v
+!
+                  ak = index_two(a, k, wf%n_v)
+                  aj = index_two(a, i, wf%n_v)
+! 
+                  do c = 1, wf%n_v
+!
+                     ck = index_two(c, k, wf%n_v)
+                     cj = index_two(c, i, wf%n_v) 
+!
+                     c_aj_ck(aj, ck) = c_ai_bj(ak, cj)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+         call allocator(rho_aj_bi, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+         call dgemm('N', 'N',           &
+                     (wf%n_o)*(wf%n_v), &
+                     (wf%n_o)*(wf%n_v), &
+                     (wf%n_o)*(wf%n_v), &
+                     -one,              &
+                     c_ai_ck,           &
+                     (wf%n_o)*(wf%n_v), &
+                     g_ck_bj,           &   
+                     (wf%n_o)*(wf%n_v), &
+                     zero,              &
+                     rho_aj_bi,         &
+                     (wf%n_o)*(wf%n_v))
+!
+         call deallocator(g_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+         call deallocator(c_aj_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!        Reorder rho_aj_bi int rho_ai_bj
+!
+         do i = 1, wf%n_o
+            do a = 1, wf%n_v
+!  
+               ai  = index_two(a, i, wf%n_v)
+!                 
+               do j = 1, wf%n_o
+!                
+                  aj = index_two(a, j, wf%n_v)
+!
+                  do b = 1, wf%n_v          
+!
+                     bj = index_two(b, j, wf%n_v)
+                     bi = index_two(b, i, wf%n_v)
+!
+                     rho_ai_bj(ai, bj) = rho_ai_bj(ai, bj) + rho_aj_bi(aj, bi)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+         call deallocator(rho_aj_bi, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       end subroutine jacobian_ccsd_i2_ccsd
 !
