@@ -53,6 +53,21 @@ contains
 !
       call wf%jacobian_ccsd_a2(rho_ai_bj, c_a_i)
 !
+!     Pack out c_ai_bj and add factor (1+ δ_ai,bj)
+!
+!     call wf%jacobian_ccsd_e2(rho_ai_bj, c_ai_bj)
+!     call wf%jacobian_ccsd_f2(rho_ai_bj, c_ai_bj)
+!     call wf%jacobian_ccsd_g2(rho_ai_bj, c_ai_bj)
+!     call wf%jacobian_ccsd_h2(rho_ai_bj, c_ai_bj)
+!     call wf%jacobian_ccsd_i2(rho_ai_bj, c_ai_bj)
+!
+!     P_ij^ab(rho_ai_bj)
+!
+!     Reorder rho_ai_bj to rho_ab_ij, and c_ai_bj to c_ab_ij
+!
+!     call wf%jacobian_ccsd_j2(rho_ab_ij, c_ai_bj)
+!     call wf%jacobian_ccsd_k2(rho_ab_ij, c_ai_bj)
+!
 !     Overwrite the incoming c vector and perform permutation (ai <-> bj)
 !     with the transformed vector rho 
 !
@@ -3691,12 +3706,12 @@ contains
       end subroutine jacobian_ccsd_i2_ccsd
 !
 
-      module subroutine jacobian_ccsd_j2_ccsd(wf, rho_ai_bj, c_ai_bj)
+      module subroutine jacobian_ccsd_j2_ccsd(wf, rho_ab_ij, c_ab_ij)
 !!
 !!       Jacobian CCSD J2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!       rho_ai_bj^J2 =    sum_ckld t_ci,dj * g_kc,ld * c_ak,bl 
+!!       rho_ab_ij^J2 =    sum_ckld t_ci,dj * g_kc,ld * c_ak,bl 
 !!                       + sum_ckdl t_ak,bl * g_kc,ld * c_ci,dj
 !!                
 !!
@@ -3704,27 +3719,191 @@ contains
 !
          class(ccsd) :: wf 
 !
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: c_ai_bj
+         real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: rho_ab_ij
+         real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: c_ab_ij
+!
+         real(dp), dimension(:,:), allocatable :: L_ia_J
+         real(dp), dimension(:,:), allocatable :: g_kc_ld
+         real(dp), dimension(:,:), allocatable :: g_kl_cd
+!
+         real(dp), dimension(:,:), allocatable :: t_ab_ij
+!
+         real(dp), dimension(:,:), allocatable :: X_kl_ij
+!
+         integer(i15) :: a = 0, b = 0, c = 0, d = 0
+         integer(i15) :: i = 0, j = 0, k = 0, l = 0
+!
+         integer(i15) :: ab = 0, cd = 0
+         integer(i15) :: ai = 0, bj = 0
+         integer(i15) :: kl = 0, ij = 0
+         integer(i15) :: kc = 0, ld = 0
+!
+         integer(i15) :: aibj = 0
+!
+!        Constructing g_kc_ld
+!
+         call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+         call allocator(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+         call wf%get_cholesky_ia(L_ia_J)
+!
+         call dgemm('N', 'T',        &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  wf%n_J,            &
+                  one,               &
+                  L_ia_J,            &
+                  (wf%n_o)*(wf%n_v), &
+                  L_ia_J,            &
+                  (wf%n_o)*(wf%n_v), &
+                  zero,              &
+                  g_kc_ld,           &
+                  (wf%n_o)*(wf%n_v))
+!
+         call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+         call allocator(g_kl_cd, (wf%n_o)**2, (wf%n_v)**2)
+!
+!        Reorder g_kc_ld to g_kl_cd
+!
+         do c = 1, wf%n_v
+            do d = 1, wf%n_v
+!
+               cd = index_two(c, d, wf%n_v)
+!
+               do k = 1, wf%n_o
+!
+                  kc = index_two(k, c, wf%n_o)
+!
+                  do l = 1, wf%n_o
+! 
+                     kl = index_two(k, l, wf%n_o)
+                     ld = index_two(l, d, wf%n_o)
+!
+                     g_kl_cd(kl, cd) = g_kc_ld(kc, ld)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+         call deallocator(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!        Reordered T2 amplitudes        
+!
+         call wf%initialize_amplitudes
+         call wf%read_amplitudes
+!
+         call allocator(t_ab_ij, (wf%n_v)**2, (wf%n_o)**2 )
+!
+         do j = 1, wf%n_o
+            do i = 1, wf%n_o
+!
+               ij = index_two(i, j, wf%n_o)
+!
+               do b = 1, wf%n_v
+!
+                  bj = index_two(b, j, wf%n_v)
+!
+                  do a = 1, wf%n_v
+!
+                     ai = index_two(a, i, wf%n_v)
+                     ab = index_two(a, b, wf%n_v)
+!  
+                     aibj = index_packed(ai, bj)
+!
+                     t_ab_ij(ab, ij) = wf%t2am(aibj, 1)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+
+         call wf%destruct_amplitudes
+!
+!        X_kl_ij = g_kl_cd * t_cd_ij
+!
+         call allocator(X_kl_ij, (wf%n_o)**2, (wf%n_o)**2)
+!
+         call dgemm('N', 'N',     &
+                     (wf%n_o)**2, &
+                     (wf%n_o)**2, &
+                     (wf%n_v)**2, &
+                     one,         &  
+                     g_kl_cd,     &
+                     (wf%n_o)**2, &
+                     t_ab_ij,     &
+                     (wf%n_v)**2, &
+                     zero,        &
+                     X_kl_ij,     &
+                     (wf%n_o)**2)
+!
+!         rho_ab_ij = c_ab_kl * X_kl_ij
+!
+         call dgemm('N', 'N',     &
+                     (wf%n_v)**2, &
+                     (wf%n_o)**2, &
+                     (wf%n_o)**2, &
+                     one,         &  
+                     c_ab_ij,     &
+                     (wf%n_v)**2, &
+                     X_kl_ij,     &
+                     (wf%n_o)**2, &
+                     one,         &
+                     rho_ab_ij,   &
+                     (wf%n_v)**2)
+!
+!        X_kl_ij = g_kl_cd * c_cd_ij
+!
+         call dgemm('N', 'N',     &
+                     (wf%n_o)**2, &
+                     (wf%n_o)**2, &
+                     (wf%n_v)**2, &
+                     one,         &  
+                     g_kl_cd,     &
+                     (wf%n_o)**2, &
+                     c_ab_ij,     &
+                     (wf%n_v)**2, &
+                     zero,        &
+                     X_kl_ij,     &
+                     (wf%n_o)**2)
+!
+!         rho_ab_ij = t_ab_kl * X_kl_ij
+!
+         call dgemm('N', 'N',     &
+                     (wf%n_v)**2, &
+                     (wf%n_o)**2, &
+                     (wf%n_o)**2, &
+                     one,         &  
+                     t_ab_ij,     &
+                     (wf%n_v)**2, &
+                     X_kl_ij,     &
+                     (wf%n_o)**2, &
+                     one,         &
+                     rho_ab_ij,   &
+                     (wf%n_v)**2)
+!
+         call deallocator(X_kl_ij, (wf%n_o)**2, (wf%n_o)**2)
+         call deallocator(g_kl_cd, (wf%n_o)**2, (wf%n_v)**2)
+         call deallocator(t_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
 !
       end subroutine jacobian_ccsd_j2_ccsd
 !
 !
-      module subroutine jacobian_ccsd_k2_ccsd(wf, rho_ai_bj, c_ai_bj)
+      module subroutine jacobian_ccsd_k2_ccsd(wf, rho_ab_ij, c_ab_ij)
 !!
 !!       Jacobian CCSD K2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!       rho_ai_bj^K2 =    sum_kl g_ki,lj * c_ak,bl 
-!!                       + sum_kl g_ac,bd * c_ci,dj
+!!       rho_ab_ij^K2 =    sum_kl g_ki,lj * c_ak,bl 
+!!                       + sum_cd g_ac,bd * c_ci,dj
 !!                
 !!
          implicit none 
 !
          class(ccsd) :: wf 
 !
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: c_ai_bj
+         real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: rho_ab_ij
+         real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: c_ab_ij
 !
       end subroutine jacobian_ccsd_k2_ccsd
 !
