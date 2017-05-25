@@ -455,7 +455,9 @@ contains
 !        Reorder F_j_b to F_bj 
 !
          call allocator(v_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+         v_ai_bj = zero
          call allocator(F_bj, (wf%n_o)*(wf%n_v), 1)
+         F_bj = zero
          call allocator(rho_ai, (wf%n_o)*(wf%n_v), 1)
 !
          do j = 1, wf%n_o
@@ -551,9 +553,11 @@ contains
 !        Construct integral g_ji_kb = sum_J L_ji_J * L_kb_J
 !
          call allocator(L_ji_J, (wf%n_o)**2, wf%n_J)
+         L_ji_J = zero
          call wf%get_cholesky_ij(L_ji_J)
 !
          call allocator(L_kb_J, (wf%n_o)*(wf%n_v), wf%n_J)
+         L_kb_J = zero
          call wf%get_cholesky_ia(L_kb_J)
 !
          call allocator(g_ji_kb, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
@@ -576,9 +580,8 @@ contains
 !        Construct L_jikb ordered as L_jkb_i
 !
          call allocator(L_jkb_i, (wf%n_v)*((wf%n_o)**2), wf%n_o)
-!
-         
-            
+         L_jkb_i = zero
+!   
          do b = 1, wf%n_v
             do k = 1, wf%n_o
 !
@@ -606,6 +609,7 @@ contains
 !        Reorder c_ajbk as c_a_jkb
 !
          call allocator(c_a_jkb, wf%n_v, (wf%n_v)*((wf%n_o)**2))
+         c_a_jkb = zero
 !
          do b = 1, wf%n_v
             do k = 1, wf%n_o
@@ -712,9 +716,11 @@ contains
          a_length = a_last - a_first + 1 
 !
          call allocator(L_ba_J, (wf%n_v)*a_length, wf%n_J)
+         L_ba_J = zero
          call wf%get_cholesky_ab(L_ba_J, a_first, a_last, a_length*(wf%n_v), .true.)
 !
          call allocator(L_jc_J, (wf%n_v)*(wf%n_o), wf%n_J)
+         L_jc_J = zero
          call wf%get_cholesky_ia(L_jc_J)
 !
 !        g_abjc = sum_J L_ab_J * L_jc_J ordered as g_ba_jc
@@ -742,8 +748,9 @@ contains
 !
          call allocator(L_a_bjc, a_length, ((wf%n_v)**2)*(wf%n_o))
          call allocator(c_bjc_i, ((wf%n_v)**2)*(wf%n_o), wf%n_o)
-!
-         
+         L_a_bjc = zero
+         c_bjc_i = zero
+!       
          do c = 1, wf%n_v
             do j = 1, wf%n_o
                do b = 1, wf%n_v
@@ -1901,6 +1908,9 @@ contains
 !     Construct g_kcld = sum_J L_kc_J * L_ld_J
 !
       call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      L_ia_J = zero
+      call wf%get_cholesky_ia(L_ia_J)
+!
       call allocator(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       call dgemm('N', 'T',           &
@@ -1921,6 +1931,8 @@ contains
 !     Construct L_kc,ld ordered as L_ck_dl
 !
       call allocator(L_ck_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      L_ck_dl = zero
+!
       do l = 1, wf%n_o
          do d = 1, wf%n_v
 !
@@ -2038,6 +2050,7 @@ contains
 !        :: Construct L_kc_ld ::
 !
          call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+         L_ia_J = zero
          call allocator(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
          call wf%get_cholesky_ia(L_ia_J)
@@ -2057,7 +2070,8 @@ contains
 !
          call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !   
-         call allocator(L_ck_dl,(wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+         call allocator(L_ck_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+         L_ck_dl = zero
 !
 !        Construct L_kc_dl ordered as L_ck_dl
 !             
@@ -2088,6 +2102,7 @@ contains
 !        Reorder c_bl_dj as c_dl_bj
 !
          call allocator(c_dl_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+         c_dl_bj = zero
 !
          do l = 1, wf%n_o
             do j = 1, wf%n_o
@@ -2131,6 +2146,7 @@ contains
 !
          call allocator(t_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
          t_ai_ck = zero
+!
          call squareup(wf%t2am, t_ai_ck, (wf%n_o)*(wf%n_v))
          call wf%destruct_amplitudes
 !
@@ -2153,6 +2169,8 @@ contains
 !        :: Term 2: - sum_ckdl t_ai,dj * L_kc,ld * c_bk,cl
 !
          call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+         L_ia_J = zero
+!
          call allocator(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
          call wf%get_cholesky_ia(L_ia_J)
@@ -2175,6 +2193,7 @@ contains
 !        Reorder L_ck_dl to L_d_clk
 !
          call allocator(L_d_clk, wf%n_v, (wf%n_v)*((wf%n_o)**2))
+         L_d_clk = zero
 !
          do k = 1, wf%n_o
             do l = 1, wf%n_o
@@ -2199,6 +2218,7 @@ contains
 !        Reorder c_bl,ck as c_clk_b
 !        
          call allocator(c_clk_b, (wf%n_v)*((wf%n_o)**2), wf%n_v)
+         c_clk_b = zero
 !
          do k = 1, wf%n_o
             do l = 1, wf%n_o
@@ -2241,7 +2261,9 @@ contains
 !
          call wf%initialize_amplitudes
          call wf%read_amplitudes
+!
          call allocator(t_aij_d, (wf%n_v)*((wf%n_o)**2), wf%n_v)
+         t_aij_d = zero
 !
 !        Reorder T2 amplitudes
 !
@@ -2312,6 +2334,8 @@ contains
 !        :: Construct L_kc_ld ::
 !
          call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+         L_ia_J = zero
+!
          call allocator(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
          call wf%get_cholesky_ia(L_ia_J)
@@ -2332,6 +2356,7 @@ contains
          call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !   
          call allocator(L_l_ckd,(wf%n_o), (wf%n_o)*((wf%n_v)**2))
+         L_l_ckd = zero
 !
 !        Construct L_kc_dl ordered as L_ck_dl
 !             
@@ -2359,6 +2384,7 @@ contains
 !        Reorder c_ck,dj to c_ckd_j 
 !
          call allocator(c_ckd_j, ((wf%n_v)**2)*(wf%n_o), wf%n_o)
+         c_ckd_j = zero
 !
          do k = 1, wf%n_o
             do j = 1, wf%n_o
@@ -2399,6 +2425,7 @@ contains
          call wf%initialize_amplitudes
          call wf%read_amplitudes
          call allocator(t_aib_l, (wf%n_o)*((wf%n_v)**2), wf%n_o)
+         t_aib_l = zero
 !
 !        Reorder T2 amplitudes
 !
@@ -2515,6 +2542,8 @@ contains
 !        :: Term 1: - sum_ckdl t_bl,dj * L_kc,ld * c_ai,ck  ::
 !
          call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+         L_ia_J = zero
+!
          call allocator(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
          call wf%get_cholesky_ia(L_ia_J)
@@ -2535,6 +2564,7 @@ contains
          call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !   
          call allocator(L_ck_dl,(wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+         L_ck_dl = zero
 !
 !        Construct L_kc_dl ordered as L_ck_dl
 !             
@@ -2564,6 +2594,7 @@ contains
          call wf%initialize_amplitudes
          call wf%read_amplitudes
          call allocator(t_dl_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+         t_dl_bj = zero
 !
          do l = 1, wf%n_o
             do j = 1, wf%n_o
@@ -2624,6 +2655,8 @@ contains
 !        :: Term 2: - sum_ckdl t_ck_bl * L_kc,ld * c_ai,dj
 !
          call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+         L_ia_J = zero
+!
          call allocator(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
          call wf%get_cholesky_ia(L_ia_J)
@@ -2646,6 +2679,7 @@ contains
 !        Reorder L_ck_dl to L_d_clk
 !
          call allocator(L_d_clk, wf%n_v, (wf%n_v)*((wf%n_o)**2))
+         L_d_clk = zero
 !
          do k = 1, wf%n_o
             do l = 1, wf%n_o
@@ -2670,7 +2704,9 @@ contains
 !        
          call wf%initialize_amplitudes
          call wf%read_amplitudes
+!
          call allocator(t_clk_b, (wf%n_v)*((wf%n_o)**2), wf%n_v)
+         t_clk_b = zero
 !
          do k = 1, wf%n_o
             do l = 1, wf%n_o
@@ -2715,6 +2751,7 @@ contains
          call deallocator(L_d_clk, wf%n_v, (wf%n_v)*((wf%n_o)**2)) 
 !
          call allocator(c_aij_d, (wf%n_v)*((wf%n_o)**2), wf%n_v)
+         c_aij_d = zero
 !
 !        Reorder c_ai_dl to c_aij_d
 !
@@ -2783,6 +2820,8 @@ contains
 !
 !
          call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+         L_ia_J = zero
+!
          call allocator(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
          call wf%get_cholesky_ia(L_ia_J)
@@ -2803,6 +2842,7 @@ contains
          call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !   
          call allocator(L_l_ckd,(wf%n_o), (wf%n_o)*((wf%n_v)**2))
+         L_l_ckd = zero
 !
 !        Construct L_kc_dl ordered as L_ck_dl
 !             
@@ -2831,7 +2871,9 @@ contains
 !
          call wf%initialize_amplitudes
          call wf%read_amplitudes
+!
          call allocator(t_ckd_j, ((wf%n_v)**2)*(wf%n_o), wf%n_o)
+         t_ckd_j = zero
 !
          do k = 1, wf%n_o
             do j = 1, wf%n_o
@@ -2874,6 +2916,7 @@ contains
          call deallocator(t_ckd_j, ((wf%n_v)**2)*(wf%n_o), wf%n_o)
 !
          call allocator(c_aib_l, (wf%n_o)*((wf%n_v)**2), wf%n_o)
+         c_aib_l = zero
 !
 !        Reorder c_ai_bl to c_aib_l
 !
@@ -2982,6 +3025,8 @@ contains
 !        Construct g_kc_ld
 !
          call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+         L_ia_J = zero
+!
          call allocator(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
          call wf%get_cholesky_ia(L_ia_J)
@@ -3007,6 +3052,7 @@ contains
          call wf%read_amplitudes
 !
          call allocator(t_ai_kc, (wf%n_o)*(wf%n_v),(wf%n_o)*(wf%n_v))
+         t_ai_kc = zero
 !
          do i = 1, wf%n_o
             do a = 1, wf%n_v
@@ -3050,6 +3096,7 @@ contains
          call deallocator(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
          call allocator(c_ld_bj, (wf%n_o)*(wf%n_v),(wf%n_o)*(wf%n_v))
+         c_ld_bj = zero
 !
 !        Reorder c_bl,dj as c_ld_bj
 !
@@ -3092,6 +3139,8 @@ contains
 !        Construct g_kc_ld
 !
          call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+         L_ia_J = zero
+!
          call allocator(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
          call wf%get_cholesky_ia(L_ia_J)
@@ -3114,6 +3163,8 @@ contains
 !        Reorder g_kc_ld to g_lc_kd 
 !
          call allocator(g_lc_kd, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+         g_lc_kd = zero
+!
          do c = 1, wf%n_v
             do d = 1, wf%n_v
                do k = 1, wf%n_o
@@ -3140,6 +3191,7 @@ contains
          call wf%read_amplitudes
 !
          call allocator(t_aj_lc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+         t_aj_lc = zero
 !
          do j = 1, wf%n_o
             do a = 1, wf%n_v
@@ -3150,10 +3202,10 @@ contains
                   do l = 1, wf%n_o
 !
                      cj = index_two(c, j, wf%n_v)
-                     al = index_two(a, k, wf%n_v)
-                     lc = index_two(k, c, wf%n_o)
+                     al = index_two(a, l, wf%n_v)
+                     lc = index_two(l, c, wf%n_o)
 !
-                     alcj = index_packed(ak, cj)
+                     alcj = index_packed(al, cj)
 !
                      t_aj_lc(aj, lc) = wf%t2am(alcj, 1)
 ! 
@@ -3185,9 +3237,10 @@ contains
 !        Reorder c_bk,di as c_kd_bi
 !
          call allocator(c_kd_bi, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+         c_kd_bi = zero
 !
          do i = 1, wf%n_o
-            do l = 1, wf%n_o
+            do k = 1, wf%n_o
                do d = 1, wf%n_v
 !
                   kd = index_two(k, d, wf%n_o)
@@ -3307,6 +3360,7 @@ contains
 !        Reorder c_ai,cj to c_aij_c
 !
          call allocator(c_aij_c, (wf%n_v)*((wf%n_o)**2), wf%n_v)
+         c_aij_c = zero
 !
          do j = 1, wf%n_o
             do i = 1, wf%n_o
@@ -3371,6 +3425,7 @@ contains
 !        Reorder c_ai,bk to c_aib_k
 !
          call allocator(c_aib_k, (wf%n_o)*((wf%n_v)**2), wf%n_o)
+         c_aib_k = zero
 !        
          do i = 1, wf%n_o
             do a = 1, wf%n_v
@@ -3438,9 +3493,11 @@ contains
 !        Construct g_bj,kc 
 !
          call allocator(L_bj_J, (wf%n_o)*(wf%n_v), wf%n_J)
+         L_bj_J = zero
          call wf%get_cholesky_ai(L_bj_J)
 !
          call allocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
+         L_kc_J = zero
          call wf%get_cholesky_ia(L_kc_J)
 !
          call allocator(g_bj_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
@@ -3464,6 +3521,7 @@ contains
 !        Reordering g_bj_kc to g_ck_bj
 !
          call allocator(g_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+         g_ck_bj = zero
 !
          do j = 1, wf%n_o
             do b = 1, wf%n_v
@@ -3503,6 +3561,7 @@ contains
 !        Reorder c_ak,ci to c_ai_ck
 !
          call allocator(c_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+         c_ai_ck = zero
 !
          do i = 1, wf%n_o
             do k = 1, wf%n_o
@@ -3571,9 +3630,11 @@ contains
             c_length = c_last - c_first + 1
 !
             call allocator(L_bc_J, (wf%n_v)*c_length, wf%n_J)
+            L_bc_J = zero
             call wf%get_cholesky_ab(L_bc_J, c_first, c_last, c_length*(wf%n_v), .false.)
 !
             call allocator(L_kj_J, (wf%n_o)**2, wf%n_J)
+            L_kj_J = zero
             call wf%get_cholesky_ij(L_kj_J)
 !
             offset = index_two(1, c_first, wf%n_v)
@@ -3600,6 +3661,8 @@ contains
 !        Reorder g_bc_kj
 !
          call allocator(g_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+         g_ck_bj = zero
+!
          do c = 1, wf%n_v
             do b = 1, wf%n_v
  !
@@ -3640,6 +3703,7 @@ contains
 !        Reorder  c_ak,cj to c_aj_ck
 !
          call allocator(c_aj_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+         c_aj_ck = zero
 !
          do j = 1, wf%n_o
             do k = 1, wf%n_o
@@ -3651,7 +3715,7 @@ contains
                   do c = 1, wf%n_v
 !
                      ck = index_two(c, k, wf%n_v)
-                     cj = index_two(c, i, wf%n_v) 
+                     cj = index_two(c, j, wf%n_v) 
 !
                      c_aj_ck(aj, ck) = c_ai_bj(ak, cj)
 !
@@ -3743,6 +3807,8 @@ contains
 !        Constructing g_kc_ld
 !
          call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+         L_ia_J = zero
+!
          call allocator(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
          call wf%get_cholesky_ia(L_ia_J)
@@ -3761,7 +3827,9 @@ contains
                   (wf%n_o)*(wf%n_v))
 !
          call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+!
          call allocator(g_kl_cd, (wf%n_o)**2, (wf%n_v)**2)
+         g_kl_cd = zero
 !
 !        Reorder g_kc_ld to g_kl_cd
 !
@@ -3794,6 +3862,7 @@ contains
          call wf%read_amplitudes
 !
          call allocator(t_ab_ij, (wf%n_v)**2, (wf%n_o)**2 )
+         t_ab_ij = zero
 !
          do j = 1, wf%n_o
             do i = 1, wf%n_o
