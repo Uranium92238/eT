@@ -100,6 +100,7 @@ module ccsd_class
       procedure :: jacobian_ccsd_a2 => jacobian_ccsd_a2_ccsd
       procedure :: jacobian_ccsd_b2 => jacobian_ccsd_b2_ccsd
       procedure :: jacobian_ccsd_c2 => jacobian_ccsd_c2_ccsd
+      procedure :: jacobian_ccsd_d2 => jacobian_ccsd_d2_ccsd
 !
 !     Routines to destroy amplitudes and omega 
 !
@@ -513,6 +514,30 @@ module ccsd_class
          real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
 !
       end subroutine jacobian_ccsd_c2_ccsd
+!
+!
+      module subroutine jacobian_ccsd_d2_ccsd(wf, rho_ai_bj, c_a_i)
+!!
+!!       Jacobian CCSD D2 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!       rho_ai_bj^D2 = sum_kcd g_kcbd (t_ij^cd c_ak + t_kj^ad c_ci + t_ik^ca c_dj)
+!!                    - sum_kcd L_kcbd (t_ik^ac c_dj + t_ij^ad c_ck)
+!!
+!!       Note: the code is structured so that we batch over the index b,
+!!             where the integrals are made as g_kc_db = g_kcbd and held
+!!             in some ordering or other throughout a given batch (i.e.,
+!!             all five terms are constructed gradually in the batches).
+!!
+         implicit none 
+!
+         class(ccsd) :: wf 
+!
+         real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i
+!
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
+!
+      end subroutine jacobian_ccsd_d2_ccsd
 !
 !
       module subroutine jacobian_ccsd_e2_ccsd(wf, rho_ai_bj, c_ai_ck)

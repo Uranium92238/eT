@@ -52,6 +52,9 @@ contains
       rho_ai_bj = zero 
 !
       call wf%jacobian_ccsd_a2(rho_ai_bj, c_a_i)
+      call wf%jacobian_ccsd_b2(rho_ai_bj, c_a_i)
+      call wf%jacobian_ccsd_c2(rho_ai_bj, c_a_i)
+      call wf%jacobian_ccsd_d2(rho_ai_bj, c_a_i)
 !
 !     Overwrite the incoming c vector and perform permutation (ai <-> bj)
 !     with the transformed vector rho 
@@ -1846,6 +1849,735 @@ contains
       call wf%destruct_amplitudes
 !
    end subroutine jacobian_ccsd_c2_ccsd
+!
+!
+   module subroutine jacobian_ccsd_d2_ccsd(wf, rho_ai_bj, c_a_i)
+!!
+!!    Jacobian CCSD D2 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!    rho_ai_bj^D2 = sum_kcd g_kcbd (t_ij^cd c_ak + t_kj^ad c_ci + t_ik^ca c_dj)
+!!                 - sum_kcd L_kcbd (t_ik^ac c_dj + t_ij^ad c_ck)
+!!
+!!    Note: the code is structured so that we batch over the index b,
+!!          where the integrals are made as g_kc_db = g_kcbd and held
+!!          in some ordering or other throughout a given batch (i.e.,
+!!          all five terms are constructed gradually in the batches).
+!!
+      implicit none 
+!
+      class(ccsd) :: wf 
+!
+      real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
+      real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i
+!
+      real(dp), dimension(:,:), allocatable :: L_kc_J ! L_kc^J
+      real(dp), dimension(:,:), allocatable :: L_db_J ! L_bd^J
+!
+      real(dp), dimension(:,:), allocatable :: g_kc_db ! g_kcbd 
+      real(dp), dimension(:,:), allocatable :: g_cd_kb ! g_kcbd reordered
+      real(dp), dimension(:,:), allocatable :: g_ckb_d ! g_kcbd reordered 
+      real(dp), dimension(:,:), allocatable :: L_ckb_d ! L_kcbd = 2 g_kcbd - g-kdbc
+!
+      real(dp), dimension(:,:), allocatable :: t_ij_cd ! t_ij^cd
+      real(dp), dimension(:,:), allocatable :: t_dk_aj ! t_kj^ad 
+      real(dp), dimension(:,:), allocatable :: t_ai_ck ! t_ik^ca 
+      real(dp), dimension(:,:), allocatable :: t_d_aij ! t_ij^ad 
+!
+      real(dp), dimension(:,:), allocatable :: X_ij_kb ! An intermediate, term 1
+      real(dp), dimension(:,:), allocatable :: X_k_ijb ! The above intermediate, reordered 
+      real(dp), dimension(:,:), allocatable :: X_i_dkb ! An intermediate, term 2
+      real(dp), dimension(:,:), allocatable :: X_ib_dk ! The above intermediate, reordered 
+      real(dp), dimension(:,:), allocatable :: X_ckb_j ! An intermediate, term 3 
+      real(dp), dimension(:,:), allocatable :: Y_ckb_j ! An intermediate, term 4
+      real(dp), dimension(:,:), allocatable :: X_bd    ! An intermediate, term 5
+!
+      real(dp), dimension(:,:), allocatable :: rho_a_ijb ! rho_ai_bj, batching over b
+      real(dp), dimension(:,:), allocatable :: rho_ib_aj ! rho_ai_bj, batching over b
+      real(dp), dimension(:,:), allocatable :: rho_aib_j ! rho_ai_bj, batching over b 
+      real(dp), dimension(:,:), allocatable :: rho_b_aij ! rho_ai_bj, batching over b
+!
+      logical :: reorder 
+!
+!     Batching variables 
+!
+      integer(i15) :: required = 0, available = 0, max_batch_length = 0, batch_dimension = 0
+      integer(i15) :: n_batch = 0, b_begin = 0, b_end = 0, b_batch = 0, batch_length = 0
+!
+!     Indices 
+!
+      integer(i15) :: b = 0, c = 0, cd = 0, ci = 0, dj = 0, cidj = 0, d = 0, db = 0
+      integer(i15) :: k = 0, j = 0, kb = 0, kc = 0, i = 0, ij = 0, ijb = 0, kb = 0
+      integer(i15) :: a = 0, ai = 0, bj = 0, ib = 0, dkb = 0, dk = 0, akdj = 0, ak = 0
+      integer(i15) :: aj = 0, ck = 0, ckb = 0, ciak = 0, aib = 0, dkb = 0, aidj = 0, aij = 0
+!
+!     Read amplitudes from disk
+! 
+      call wf%initialize_amplitudes
+      call wf%read_amplitudes
+!
+!     Determine batch size, etc.
+!     (Redo estimate once loop is done)
+!
+      required = max(2*(wf%n_v)*(wf%n_o)*(wf%n_J) + &
+                     2*(wf%n_J)*(wf%n_v)**2,        &  ! Constr of L_bc^J 
+                     (wf%n_J)*(wf%n_v)**2 +         &
+                     (wf%n_o)*(wf%n_v)**3)             ! Holding L_bc^J and g_aibc
+!
+      required = 4*required ! Words
+!
+      batch_dimension  = wf%n_v ! Batch over the virtual index b
+      max_batch_length = 0      ! Initilization of unset variables 
+      n_batch          = 0
+!
+      call num_batch(required, available, max_batch_length, n_batch, batch_dimension)  
+!
+      do b_batch = 1, n_batch 
+!
+!        Get batching limits 
+!
+         call batch_limits(b_begin, b_end, b_batch, max_batch_length, batch_dimension)
+         batch_length = b_end - b_begin + 1 
+!
+!
+!        :: Term 1. sum_kcd g_kcbd t_ij^cd c_ak ::
+!
+!        Form g_kc_db = g_kcbd
+!
+         call allocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)     ! Consider moving outside batching loop 
+         call allocator(L_db_J, (wf%n_v)*batch_length, wf%n_J) ! L_bd^J 
+!
+         call wf%get_cholesky_ia(L_kc_J)
+!
+         reorder = .true.
+         call wf%get_cholesky_ab(L_db_J, b_begin, b_end, (wf%n_v)*batch_length, reorder)
+!
+         call allocator(g_kc_db, (wf%n_o)*(wf%n_v), (wf%n_v)*batch_length)
+!
+         call dgemm('N','T',                &
+                     (wf%n_o)*(wf%n_v),     &
+                     (wf%n_v)*batch_length, &
+                     wf%n_J,                &
+                     one,                   &
+                     L_kc_J,                &
+                     (wf%n_o)*(wf%n_v),     &
+                     L_db_J,                &
+                     (wf%n_v)*batch_length, &
+                     zero,                  &
+                     g_kc_db,               &
+                     (wf%n_o)*(wf%n_v))
+!
+         call deallocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
+         call deallocator(L_db_J, (wf%n_v)*batch_length, wf%n_J)
+!
+!        Reorder to g_cd_kb = g_kc_db = g_kcbd 
+!
+         call allocator(g_cd_kb, (wf%n_v)**2, (wf%n_o)*batch_length)
+         g_cd_kb = zero
+!
+         do b = 1, batch_length
+            do k = 1, wf%n_o
+!
+               kb = index_two(k, b, wf%n_o)
+!
+               do d = 1, wf%n_v
+!
+                  db = index_two(d, b, wf%n_v)
+!
+                  do c = 1, wf%n_v
+!
+                     kc = index_two(k, c, wf%n_o)
+                     cd = index_two(c, d, wf%n_v)
+!
+                     g_cd_kb(cd, kb) = g_kc_db(kc, db) ! g_kcbd 
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+         call deallocator(g_kc_db, (wf%n_o)*(wf%n_v), (wf%n_v)*batch_length)
+!
+!        Order amplitudes as t_ij_cd = t_ij^cd 
+!
+         call allocator(t_ij_cd, (wf%n_o)**2, (wf%n_v)**2)
+         t_ij_cd = zero
+!
+         do d = 1, wf%n_v
+            do c = 1, wf%n_v
+!
+               cd = index_two(c, d, wf%n_v)
+!
+               do j = 1, wf%n_o
+!
+                  dj = index_two(d, j, wf%n_v)
+!
+                  do i = 1, wf%n_o
+!
+                     ci = index_two(c, i, wf%n_v)
+                     ij = index_two(i, j, wf%n_o)
+!
+                     cidj = index_packed(ci, dj)
+!
+                     t_ij_cd(ij, cd) = wf%t2am(cidj, 1) ! t_ij^cd
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+!        Form intermediate X_ij_kb = sum_cd g_kcdb t_ij^cd 
+!                                  = sum_cd t_ij_cd g_cd_kb
+!
+         call allocator(X_ij_kb, (wf%n_o)**2, (wf%n_o)*batch_length)
+!
+         call dgemm('N','N',                &
+                     (wf%n_o)**2,           &
+                     (wf%n_o)*batch_length, &
+                     (wf%n_v)**2,           &
+                     one,                   &
+                     t_ij_cd,               &
+                     (wf%n_o)**2,           &
+                     g_cd_kb,               &
+                     (wf%n_v)**2,           &
+                     zero,                  &
+                     X_ij_kb,               &
+                     (wf%n_o)**2)
+!
+         call deallocator(t_ij_cd, (wf%n_o)**2, (wf%n_v)**2)
+!
+!        sum_kcd g_kcbd t_ij^cd c_ak = sum_k X_ij_kb c_ak 
+!        Reorder to X_k_ijb = X_ij_kb 
+!
+         call allocator(X_k_ijb, (wf%n_o), batch_length*(wf%n_o)**2)
+         X_k_ijb = zero
+!
+         do b = 1, batch_length
+            do j = 1, wf%n_o
+               do i = 1, wf%n_o
+!
+                  ij = index_two(i, j, wf%n_o)
+!
+                  ijb = index_three(i, j, b, wf%n_o, wf%n_o)
+!
+                  do k = 1, wf%n_o
+!
+                     kb = index_two(k, b, wf%n_o)
+!
+                     X_k_ijb(k, ijb) = X_ij_kb(ij, kb)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+         call deallocator(X_ij_kb, (wf%n_o)**2, (wf%n_o)*batch_length)
+!
+!        Form rho_a_ijb = sum_k c_ak X_k_ijb = sum_k c_a_i(a,k) X_k_ijb(k, ijb)
+!
+         call allocator(rho_a_ijb, wf%n_v, batch_length*(wf%n_o)**2)
+!
+         call dgemm('N','N',                   &
+                     wf%n_v,                   &
+                     batch_length*(wf%n_o)**2, &
+                     wf%n_o,                   &
+                     one,                      &
+                     c_a_i,                    &
+                     wf%n_v,                   &
+                     X_k_ijb,                  &
+                     wf%n_o,                   &
+                     zero,                     &
+                     rho_a_ijb,                &
+                     wf%n_v)
+!
+         call deallocator(X_k_ijb, wf%n_o, batch_length*(wf%n_o)**2)
+!
+!        Add rho_a_ijb (batch over b) to rho_ai_bj (full space)
+!
+         do b = 1, batch_length ! Loop over restricted space 
+            do j = 1, wf%n_o
+!
+               Bj = index_two(b + b_begin - 1, j, wf%n_v) ! b in full space 
+!
+               do i = 1, wf%n_o
+!
+                  ijb = index_three(i, j, b, wf%n_o, wf%n_o)
+!
+                  do a = 1, wf%n_v
+!
+                     ai = index_two(a, i, wf%n_v)
+!
+                     rho_ai_bj(ai,Bj) = rho_ai_bj(ai,Bj) + rho_a_ijb(a, ijb)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+!        Deallocations for term 1 (keep g_cd_kb = g_kcbd)
+!
+         call deallocator(rho_a_ijb, wf%n_v, batch_length*(wf%n_o)**2)
+!
+!
+!        :: Term 2. sum_kcd g_kcbd t_kj^ad c_ci ::
+!
+!        Form the intermediate X_i_dkb = sum_c g_kcbd c_ci 
+!                                      = sum_c c_ci g_cd_kb 
+!                                      = sum_c c_a_i^T(i,c) g_cd_kb(c, dkb)
+!
+!        Note: g_cd_kb is interpreted as g_c_dkb in the matrix multiplication.
+!
+         call allocator(X_i_dkb, wf%n_o, (wf%n_v)*(wf%n_o)*batch_length)
+!
+         call dgemm('T','N',                         &
+                     wf%n_o,                         &
+                     (wf%n_v)*(wf%n_o)*batch_length, &
+                     wf%n_v,                         &
+                     one,                            &
+                     c_a_i,                          &
+                     wf%n_v,                         &
+                     g_cd_kb,                        & ! "g_c_dkb" 
+                     wf%n_v,                         &
+                     zero,                           &
+                     X_i_dkb,                        &
+                     wf%n_o)
+!
+!        sum_kcd g_kcbd t_kj^ad c_ci = sum_kd (sum_c c_ci g_kcbd) t_kj^ad
+!                                    = sum_kd X_i_dkb t_kj^ad 
+!                                    = sum_kd X_ib_dk t_dk_aj
+!
+!        Reorder to X_ib_dk = X_i_dkb 
+!
+         call allocator(X_ib_dk, (wf%n_o)*batch_length, (wf%n_v)*(wf%n_o))
+!
+         do k = 1, wf%n_o
+            do d = 1, wf%n_v
+!
+               dk = index_two(d, k, wf%n_v)
+!
+               do b = 1, batch_length
+!
+                  dkb = index_three(d, k, b, wf%n_v, wf%n_o)
+!
+                  do i = 1, wf%n_o
+!
+                     ib = index_two(i, b, wf%n_o)
+!
+                     X_ib_dk(ib, dk) = X_i_dkb(i, dkb)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+         call deallocator(X_i_dkb, wf%n_o, (wf%n_o)*(wf%n_v)*batch_length)
+!
+!        Order the amplitudes as t_dk_aj = t_kj^ad 
+!
+         call allocator(t_dk_aj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+         t_dk_aj = zero
+!
+         do j = 1, wf%n_o
+            do a = 1, wf%n_v
+!
+               aj = index_two(a, j, wf%n_v)
+!
+               do k = 1, wf%n_o
+!
+                  ak = index_two(a, k, wf%n_v)
+!
+                 do d = 1, wf%n_v
+!
+                     dj = index_two(d, j, wf%n_v)
+                     dk = index_two(d, k, wf%n_v)
+!
+                     akdj = index_packed(ak, dj)
+!
+                     t_dk_aj(dk, aj) = wf%t2am(akdj, 1) ! t_kj^ad 
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+!        Calculate rho_ib_aj = sum_kcd g_kcbd t_kj^ad c_ci
+!                            = sum_dk X_ib_dk t_dk_aj
+!
+         call allocator(rho_ib_aj, (wf%n_o)*batch_length, (wf%n_o)*(wf%n_v))
+!
+         call dgemm('N','N',                &
+                     (wf%n_o)*batch_length, &
+                     (wf%n_o)*(wf%n_v),     &
+                     (wf%n_o)*(wf%n_v),     &
+                     one,                   &
+                     X_ib_dk,               &
+                     (wf%n_o)*batch_length, &
+                     t_dk_aj,               &
+                     (wf%n_o)*(wf%n_v),     &
+                     zero,                  &
+                     rho_ib_aj,             &
+                     (wf%n_o)*batch_length)
+!
+         call deallocator(X_ib_dk, (wf%n_o)*batch_length, (wf%n_o)*(wf%n_v))
+         call deallocator(t_dk_aj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!        Add rho_ib_aj (batch over b) ro rho_ai_bj (full space)
+!
+         do j = 1, wf%n_o
+            do a = 1, wf%n_v
+!
+               aj = index_two(a, j, wf%n_v)
+!
+               do b = 1, batch_length
+!
+                  Bj = index_two(b + b_begin - 1, j, wf%n_v) ! b is full space index 
+!
+                  do i = 1, wf%n_o
+!
+                     ai = index_two(a, i, wf%n_v)
+                     ib = index_two(i, b, wf%n_o)
+!
+                     rho_ai_bj(ai, Bj) = rho_ai_bj(ai, Bj) + rho_ib_aj(ib, aj)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+!        Deallocations for term 2 (keep g_cd_kb = g_kcbd)
+!
+         call deallocator(rho_ib_aj, (wf%n_o)*batch_length, (wf%n_v)*(wf%n_o))
+!
+!
+!        :: Term 3. sum_kcd g_kcbd t_ik^ca c_dj ::
+!
+!        sum_d g_kcbd c_dj = sum_d g_cd_kb c_dj
+!
+!        Reorder integrals to g_cd_kb to g_ckb_d
+!
+         call allocator(g_ckb_d, (wf%n_o)*(wf%n_v)*batch_length, wf%n_v)
+         g_ckb_d = zero
+!
+         do d = 1, wf%n_v
+            do b = 1, batch_length
+               do k = 1, wf%n_o
+!
+                  kb = index_two(k, b, wf%n_o)
+!
+                  do c = 1, wf%n_v
+!
+                     cd = index_two(c, d, wf%n_v)
+!
+                     ckb = index_three(c, k, b, wf%n_v, wf%n_o)
+!
+                     g_ckb_d(ckb, d) = g_cd_kb(cd, kb)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+         call deallocator(g_cd_kb, (wf%n_v)**2, (wf%n_o)*batch_length)
+!
+!        Form the intermediate X_ckb_j = sum_d g_kcbd c_dj = sum_d g_ckb_d c_d_j 
+!
+         call allocator(X_ckb_j, (wf%n_v)*(wf%n_o)*batch_length, wf%n_o)
+!
+         call dgemm('N','N',                         &
+                     (wf%n_v)*(wf%n_o)*batch_length, &
+                     wf%n_o,                         &
+                     wf%n_v,                         &
+                     one,                            &
+                     g_ckb_d,                        &
+                     (wf%n_v)*(wf%n_o)*batch_length, &
+                     c_a_i,                          &
+                     wf%n_v,                         &
+                     zero,                           &
+                     X_ckb_j,                        &
+                     (wf%n_v)*(wf%n_o)*batch_length)
+!
+!        Order amplitudes as t_ai_ck = t_ik^ca
+!
+         call allocator(t_ai_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+         t_ai_ck = zero 
+!
+         do k = 1, wf%n_o
+            do c = 1, wf%n_v
+!
+               ck = index_two(c, k, wf%n_v)
+!
+               do i = 1, wf%n_o
+!
+                  ci = index_two(c, i, wf%n_v)
+!
+                  do a = 1, wf%n_v
+!
+                     ak = index_two(a, k, wf%n_v)
+                     ai = index_two(a, i, wf%n_v)
+!
+                     ciak = index_packed(ci, ak)
+!
+                     t_ai_ck(ai, ck) = wf%t2am(ciak, 1) ! t_ik^ca 
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+!        Form rho_aib_j = sum_kcd g_kcbd t_ik^ca c_dj = sum_ck t_ai_ck X_ckb_j 
+!
+!        Note: X_ckb_j is interpreted as X_ck_bj in the matrix multiplication.
+!        Note: rho_aib_j is interpreted as rho_ai_bj in the matrix multiplication.
+!
+         call allocator(rho_aib_j, (wf%n_v)*(wf%n_o)*batch_length, wf%n_o)
+!
+         call dgemm('N','N',                &
+                     (wf%n_v)*(wf%n_o),     &
+                     (wf%n_o)*batch_length, &
+                     (wf%n_v)*(wf%n_o),     &
+                     one,                   &
+                     t_ai_ck,               &
+                     (wf%n_v)*(wf%n_o),     &
+                     X_ckb_j,               & ! "X_ck_bj"
+                     (wf%n_v)*(wf%n_o),     &
+                     zero,                  &
+                     rho_aib_j,             & ! "rho_ai_bj"
+                     (wf%n_v)*(wf%n_o))
+!
+         call deallocator(X_ckb_j, (wf%n_v)*(wf%n_o)*batch_length, wf%n_o)
+         call deallocator(t_ai_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+!
+!        Add rho_aib_j to rho_ai_bj 
+!
+         do j = 1, wf%n_o
+            do b = 1, batch_length
+!
+               Bj = index_two(b + b_begin - 1, j, wf%n_v)
+!
+               do i = 1, wf%n_o
+                  do a = 1, wf%n_v
+!
+                     ai = index_two(a, i, wf%n_v)
+!
+                     aib = index_three(a, i, b, wf%n_v, wf%n_o)
+!
+                     rho_ai_bj(ai, Bj) = rho_ai_bj(ai, Bj) + rho_aib_j(aib, j)
+!
+                 enddo
+               enddo
+            enddo
+         enddo
+!
+!        Deallocations for term 3 (keep g_ckb_d = g_kcbd)
+!
+         call deallocator(rho_aib_j, (wf%n_o)*(wf%n_v)*batch_length, wf%n_o)
+!
+!
+!        :: Term 4. - sum_kcd L_kcbd t_ik^ac c_dj :: 
+!
+!        sum_d L_kcbd c_dj = sum_d L_ckb_d c_dj 
+!
+!        Form L_ckb_d = L_kcbd = 2 * g_kcbd - g_kdbc = 2 * g_ckb_d(ckb, d) - g_ckb_d(dkb, c)
+!
+         call allocator(L_ckb_d, (wf%n_o)*(wf%n_v)*batch_length, wf%n_v)
+         L_ckb_d = zero
+!
+         do d = 1, wf%n_v
+            do b = 1, batch_length
+               do k = 1, wf%n_o
+!
+                  dkb = index_three(d, k, b, wf%n_v, wf%n_o)
+!
+                  do c = 1, wf%n_v
+!
+                     ckb = index_three(c, k, b, wf%n_v, wf%n_o)
+!
+                     L_ckb_d(ckb, d) = two*g_ckb_d(ckb, d) - g_ckb_d(dkb, c)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+         call deallocator(g_ckb_d, (wf%n_o)*(wf%n_v)*batch_length, wf%n_v)
+!
+!        Form the intermediate Y_ckb_j = sum_d L_kcbd c_dj = sum_d L_ckb_d c_dj 
+!
+         call allocator(Y_ckb_j, (wf%n_v)*(wf%n_o)*batch_length, wf%n_o)
+!
+         call dgemm('N','N',                         &
+                     (wf%n_v)*(wf%n_o)*batch_length, & 
+                     wf%n_o,                         &
+                     wf%n_v,                         &
+                     one,                            &
+                     L_ckb_d,                        &
+                     (wf%n_v)*(wf%n_o)*batch_length, &
+                     c_a_i,                          &
+                     wf%n_v,                         &
+                     zero,                           &
+                     Y_ckb_j,                        &
+                     (wf%n_v)*(wf%n_o)*batch_length)
+!
+!        Order amplitudes as t_ai_ck = t_ik^ac = t2am(aick, 1)
+!
+         call allocator(t_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+         t_ai_ck = zero 
+!
+         call squareup(wf%t2am, t_ai_ck, (wf%n_o)*(wf%n_v))
+!
+!        Form rho_aib_j = - sum_ck t_ai_ck Y_ckb_j 
+!
+!        Note: we interpret Y_ckb_j as Y_ck_bj in the matrix multiplication
+!        Note: we interpret rho_aib_j as rho_ai_bj in the matrix multiplication
+!
+         call allocator(rho_aib_j, (wf%n_o)*(wf%n_v)*batch_length, wf%n_o)
+!
+         call dgemm('N','N',                &
+                     (wf%n_o)*(wf%n_v),     &
+                     (wf%n_o)*batch_length, &
+                     (wf%n_o)*(wf%n_v),     &
+                     -one,                  &
+                     t_ai_ck,               &
+                     (wf%n_o)*(wf%n_v),     &
+                     Y_ckb_j,               & ! "Y_ck_bj"
+                     (wf%n_o)*(wf%n_v),     &
+                     zero,                  &
+                     rho_aib_j,             & ! "rho_ai_bj"
+                     (wf%n_o)*(wf%n_v))
+!
+         call deallocator(Y_ckb_j, (wf%n_v)*(wf%n_o)*batch_length, wf%n_o)
+         call deallocator(t_ai_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+!
+!        Add rho_aib_j to rho_ai_bj 
+!
+         do j = 1, wf%n_o
+            do b = 1, batch_length
+!
+               Bj = index_two(b + b_begin - 1, j, wf%n_v)
+!
+               do i = 1, wf%n_o
+                  do a = 1, wf%n_v
+!
+                     aib = index_three(a, i, b, wf%n_v, wf%n_o)
+!  
+                     ai = index_two(a, i, wf%n_v)
+!
+                     rho_ai_bj(ai, Bj) = rho_ai_bj(ai, Bj) + rho_aib_j(aib, j)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+!        Deallocations for term 4 (keep L_ckb_d = L_kcbd)
+!
+         call deallocator(rho_aib_j, (wf%n_v)*(wf%n_o)*batch_length, wf%n_o)
+!
+!
+!        :: Term 5. - sum_kcd L_kcbd t_ij^ad c_ck ::
+!
+!        Form the intermediate X_bd = sum_ck c_ck L_kcbd = sum_ck c_ck L_ckb_d
+!
+!        Note: L_ckb_d is interpreted as L_ck_bd in the matrix multiplication 
+!        Note: c_a_i is interpreted as c_ai in the matrix multiplication 
+!
+         call allocator(X_bd, batch_length*(wf%n_v), 1)
+!  
+         call dgemm('N','N',                &
+                     batch_length*(wf%n_v), &
+                     1,                     &
+                     (wf%n_o)*(wf%n_v),     &
+                     one,                   &
+                     c_a_i,                 & ! "c_ai"
+                     (wf%n_o)*(wf%n_v),     &
+                     L_ckb_d,               & ! "L_ck_bd"
+                     (wf%n_o)*(wf%n_v),     &
+                     zero,                  &
+                     X_bd,                  &
+                     batch_length*(wf%n_v))
+!
+!        Order amplitudes as t_d_aij = t_ij^ad 
+!
+         call allocator(t_d_aij, wf%n_v, (wf%n_v)*(wf%n_o)**2)
+         t_d_aij = zero
+!
+         do j = 1, wf%n_o
+            do i = 1, wf%n_o
+               do a = 1, wf%n_v
+!
+                  ai = index_two(a, i, wf%n_v)
+!
+                  aij = index_three(a, i, j, wf%n_v, wf%n_o)
+!
+                  do d = 1, wf%n_v
+!
+                     dj = index_two(d, j, wf%n_v)
+!
+                     aidj = index_packed(ai, dj)
+!
+                     t_d_aij(d, aij) = wf%t2am(aidj, 1)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+!        Form rho_b_aij = - sum_kcd L_kcbd t_ij^ad c_ck
+!                       = - sum_d X_bd t_d_aij
+!
+!        Note: X_bd is interpreted as X_b_d in the matrix multiplication
+!
+         call allocator(rho_b_aij, batch_length, (wf%n_v)*(wf%n_o)**2)
+!
+         call dgemm('N','N',               &
+                     batch_length,         &
+                     (wf%n_v)*(wf%n_o)**2, &
+                     wf%n_v,               &
+                     -one,                 &
+                     X_bd,                 & ! "X_b_d"
+                     batch_length,         &
+                     t_d_aij,              &
+                     wf%n_v,               &
+                     zero,                 &
+                     rho_b_aij,            &
+                     batch_length)
+!
+         call deallocator(X_bd, batch_length*(wf%n_v), 1)
+         call deallocator(t_d_aij, wf%n_v, (wf%n_v)*(wf%n_o)**2)
+!
+!        Add rho_b_aij to rho_ai_bj 
+!
+         do j = 1, wf%n_o
+            do i = 1, wf%n_o
+               do a = 1, wf%n_v
+!
+                  ai = index_two(a, i, wf%n_v)
+!
+                  aij = index_three(a, i, j, wf%n_v, wf%n_o)
+!
+                  do b = 1, batch_length
+!
+                     Bj = index_two(b + b_begin - 1, j, wf%n_v)
+!
+                     rho_ai_bj(ai, Bj) = rho_ai_bj(ai, Bj) + rho_b_aij(b, aij)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+!        Final deallocations in batching loop 
+!
+         call deallocator(rho_b_aij, batch_length, (wf%n_v)*(wf%n_o)**2)
+         call deallocator(L_ckb_d, (wf%n_v)*(wf%n_o)*batch_length, wf%n_v)
+!
+      enddo ! End of batches over b 
+!
+!     Destroy amplitudes from memory
+!
+      call wf%destruct_amplitudes
+!
+   end subroutine jacobian_ccsd_d2_ccsd
 !
 !
    module subroutine jacobian_ccsd_e2_ccsd(wf, rho_ai_bj, c_ai_ck)
