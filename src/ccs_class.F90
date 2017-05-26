@@ -699,7 +699,7 @@ contains
 !        Excited state calculation requested
 !
          if (wf%implemented%excited_state) then 
-!
+!     
            call wf%excited_state_solver
 !
          else

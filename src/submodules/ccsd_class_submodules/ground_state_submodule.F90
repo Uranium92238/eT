@@ -163,6 +163,9 @@ contains
 !
       class(ccsd) :: wf
 !
+      if (.not. allocated(wf%t1am)) call allocator(wf%t1am, wf%n_v, wf%n_o)
+      wf%t1am = zero
+!
       call wf%initialize_amplitudes          ! Allocate amplitudes
       call wf%construct_perturbative_doubles ! Set doubles amplitudes to MP2 guess 
       call wf%initialize_omega               ! Allocate projection vector 

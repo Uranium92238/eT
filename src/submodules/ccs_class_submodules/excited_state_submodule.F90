@@ -11,7 +11,7 @@ submodule (ccs_class) excited_state
 !
 !  Some variables available to all routines of the module
 !
-   integer(i15) :: iteration = 1, max_iterations = 25
+   integer(i15) :: iteration = 1, max_iterations = 10
 !
 !     Variables to handle convergence criterea
 !
@@ -90,6 +90,7 @@ contains
       if (.not. wf%tasks%n_triplet_states .eq. 0) then
          write(unit_output,'(t3,a/)') 'Triplet excitations not implemented.'
       endif
+      flush(unit_output)
 !
 !     Initialize for excited state calculation
 !
@@ -98,6 +99,8 @@ contains
 !
 !     Find start trial vectors and store them to file trial_vec
 !
+      write(unit_output,*)'Initialize trial vectors'
+      flush(unit_output)
       call wf%initialize_trial_vectors
 !
 !     Allocate eigenvalue arrays
@@ -113,6 +116,8 @@ contains
 !
 !     Start of iterative loop
 !
+      write(unit_output,*)'Start iterative loop'
+      flush(unit_output)
       do while (.not. converged .and. iteration .le. max_iterations) 
 !
 !     Prints 
@@ -120,10 +125,13 @@ contains
          write(unit_output,'(/t3,a,i3/)') 'Iter.', iteration
          write(unit_output,'(t3,a,i3)')'Reduced space dimension:', n_red
          write(unit_output,'(t3,a/)')'----------------------------'
+         flush(unit_output)
 !
 !        Transform new trial vectors 
 !        rho_i = A * c_i
 !
+         write(unit_output,*)'Transforming trial vectors'
+         flush(unit_output)
          call wf%transform_trial_vecs(n_red - n_new_trials + 1, n_red)
 !
 !        Allocate solution vectors for reduced problem
@@ -133,6 +141,8 @@ contains
 !
 !        Solve the reduced eigenvalue problem
 !
+         write(unit_output,*)'Solve eigenvector problem'
+         flush(unit_output)
          call wf%solve_reduced_eigenvalue_problem(eigenvalues_Re_new, eigenvalues_Im_new, eigenvectors, n_red, n_new_trials)
 !
 !        Test energy convergence criteria
@@ -410,7 +420,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: full_space_solution_vector
       real(dp), dimension(:,:), allocatable :: residual
-      real(dp) :: norm_solution_vector  
+      real(dp) :: norm_solution_vector, dot_prod = 0  
       real(dp), dimension(:,:), allocatable :: residual_norms
 !
       real(dp), dimension(:,:), allocatable :: c_i
@@ -519,61 +529,25 @@ contains
 !
          write(unit_output,'(t3,i2,5x,f14.8,7x,f14.8,11x,e10.4)') root, eigenvalues_Re_new(root, 1), &
                                                                 eigenvalues_Im_new(root, 1), residual_norms(root, 1)
-!
+!        
+         flush(unit_output)
 !        Orthogonalize new trial vector against old trial vectors
 !
          call allocator(c_i, wf%n_parameters, 1)
-         call allocator(project_out,wf%n_parameters,wf%n_parameters)
          call allocator(temp, wf%n_parameters, 1)
 !
-!        prod_i (I - c_i*c_i^T)*Residual
+!        prod_i (I - c_i*c_i^T)*Res = prod_i (Res - c_i*c_i^T*Res)
 !
          do trial = 1, n_red
             c_i = zero
             read(unit_trial_vecs, rec=trial, iostat=ioerror) c_i
-!
-!          Y = -c_i*c_i^T : 
-!
-            call dgemm('N', 'T', &
-                        wf%n_parameters, &
-                        wf%n_parameters, &
-                        1,               &
-                        -one,            &
-                        c_i,             &
-                        wf%n_parameters, &
-                        c_i,             &
-                        wf%n_parameters, &
-                        zero,            &
-                        project_out,     &
-                        wf%n_parameters)
-!
-!           Y = I + Y : 
-!
-            do i = 1, wf%n_parameters
-               project_out(i,i) = project_out(i,i) + 1
-            enddo
-!
-!           Residual*Y : 
-!
-            call dgemm('N','N', &
-               wf%n_parameters, &
-               1,               &
-               wf%n_parameters, &
-               one,             &
-               project_out,     &
-               wf%n_parameters, &
-               residual,        &
-               wf%n_parameters, &
-               zero,            &
-               temp,            &
-               wf%n_parameters  )
-!
-               call dcopy(wf%n_parameters, temp, 1, residual, 1)
+            dot_prod = ddot(wf%n_parameters, c_i, 1, residual, 1)
+            call daxpy(wf%n_parameters, -dot_prod, c_i, 1, residual,1)
 !
          enddo
+
 !
          call deallocator(c_i, wf%n_parameters, 1)
-         call deallocator(project_out,wf%n_parameters,wf%n_parameters)
          call deallocator(temp, wf%n_parameters, 1)
 !
 !        Calculate norm of new trial vector
@@ -588,7 +562,7 @@ contains
             n_new_trials = n_new_trials + 1
             call dscal(wf%n_parameters, one/norm_solution_vector, residual, 1)
             write(unit_trial_vecs, rec=n_new_trials+n_red, iostat=ioerror) residual
-!
+!  
          endif
 !
       enddo

@@ -85,17 +85,21 @@ module ccsd_class
 !     Routine to save and read the amplitudes (to/from disk)
 !
       procedure :: save_amplitudes => save_amplitudes_ccsd
-      procedure :: read_amplitudes => read_amplitudes_ccsd
+      procedure :: read_single_amplitudes => read_single_amplitudes_ccsd ! Sarai: Should be moved to ccs
+      procedure :: read_double_amplitudes => read_double_amplitudes_ccsd
 !
 !     Jacobian transformation routine 
 !
-      procedure :: jacobian_ccsd_transformation => jacobian_ccsd_transformation_ccsd
+      procedure :: calculate_orbital_differences => calculate_orbital_differences_ccsd
+      procedure :: jacobian_ccsd_transformation  => jacobian_ccsd_transformation_ccsd
+      procedure :: transform_trial_vecs          => transform_trial_vecs_ccsd
 !
 !     Helper routines for Jacobian transformation 
 !
       procedure :: jacobian_ccsd_a1 => jacobian_ccsd_a1_ccsd
       procedure :: jacobian_ccsd_b1 => jacobian_ccsd_b1_ccsd
-      procedure :: jacobian_ccsd_c1 => jacobian_ccsd_c1_ccsd 
+      procedure :: jacobian_ccsd_c1 => jacobian_ccsd_c1_ccsd
+      procedure :: jacobian_ccsd_d1 => jacobian_ccsd_d1_ccsd 
 !
       procedure :: jacobian_ccsd_a2 => jacobian_ccsd_a2_ccsd
       procedure :: jacobian_ccsd_b2 => jacobian_ccsd_b2_ccsd
@@ -386,6 +390,34 @@ module ccsd_class
       end subroutine initialize_ground_state_ccsd
 !
 !
+      module subroutine calculate_orbital_differences_ccsd(wf,orbital_diff)
+!!
+!!       Calculate and return orbital differences
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad May 2017
+!!
+         implicit none
+!
+         class(ccsd) :: wf
+         real(dp), dimension(wf%n_parameters, 1) :: orbital_diff
+!
+      end subroutine calculate_orbital_differences_ccsd
+!
+!
+      module subroutine transform_trial_vecs_ccsd(wf, first_trial, last_trial)
+!!
+!!       Construct Jacobian Transformation of trial vectors
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!       Each trial vector in first_trial to last_trial is read from file and
+!!       transformed before the transformed vector is written to file.
+!!
+         implicit none
+!
+         class(ccsd) :: wf
+!
+         integer(i15), intent(in) :: first_trial, last_trial ! Which trial_vectors we are to transform
+!
+      end subroutine transform_trial_vecs_ccsd
       module subroutine jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!
 !!       Jacobian CCSD transformation
@@ -731,14 +763,15 @@ contains
 !
 !     Initialize (singles and doubles) amplitudes
 !
-      call wf%initialize_amplitudes
-!
-!     Set the number of parameters in the wavefunction
-!     (that are solved for in the ground and excited state solvers) 
+      wf%n_t1am = (wf%n_o)*(wf%n_v) 
+      wf%n_t2am = (wf%n_t1am)*(wf%n_t1am + 1)/2 
 !
       wf%n_parameters = wf%n_t1am + wf%n_t2am
 !
 !     Initialize the Fock matrix (allocate and construct given the initial amplitudes)
+!
+      if (.not. allocated(wf%t1am)) call allocator(wf%t1am, wf%n_v, wf%n_o)
+      wf%t1am = zero
 !
       call wf%initialize_fock_matrix
 !
@@ -760,16 +793,6 @@ contains
       implicit none 
 !
       class(ccsd) :: wf
-!
-!     Calculate the number of singles and doubles amplitudes
-!
-      wf%n_t1am = (wf%n_o)*(wf%n_v) 
-      wf%n_t2am = (wf%n_t1am)*(wf%n_t1am + 1)/2
-!
-!     Allocate the singles amplitudes and set to zero
-!
-      if (.not. allocated(wf%t1am)) call allocator(wf%t1am, wf%n_v, wf%n_o)
-      wf%t1am = zero
 !
 !     Allocate the doubles amplitudes and set to zero
 !
@@ -963,9 +986,6 @@ contains
 !
       class(ccsd) :: wf
 !
-      if (allocated(wf%t1am)) then
-         call deallocator(wf%t1am, wf%n_v, wf%n_o)
-      endif
       if (allocated(wf%t2am)) then
          call deallocator(wf%t2am, wf%n_t2am, 1)
       endif
@@ -1027,7 +1047,54 @@ contains
    end subroutine save_amplitudes_ccsd
 !
 !
-   subroutine read_amplitudes_ccsd(wf)
+   subroutine read_double_amplitudes_ccsd(wf)
+!!
+!!    Read Amplitudes (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
+!!
+!!    Reads the amplitudes from disk (T1AM, T2AM)
+!!
+      implicit none 
+!
+      class(ccsd) :: wf
+!
+      integer(i15) :: unit_t2am = -1 
+!
+      logical :: file_exists = .false.
+!
+!     Check to see whether file exists
+!
+      inquire(file='t2am',exist=file_exists)
+!
+      if (file_exists) then 
+!
+!        Open amplitude files if they exist
+!
+         call generate_unit_identifier(unit_t2am)
+!
+         open(unit_t2am, file='t2am', status='unknown', form='unformatted')
+!
+         rewind(unit_t2am)
+!
+!        Read from file & close
+!
+         wf%t2am = zero
+!
+         read(unit_t2am) wf%t2am
+!
+         close(unit_t2am)
+!
+      else
+!
+         write(unit_output,'(t3,a)') 'Error: amplitude files do not exist.'
+         stop
+!
+      endif
+!
+   end subroutine read_double_amplitudes_ccsd
+!
+!
+   subroutine read_single_amplitudes_ccsd(wf)
 !!
 !!    Read Amplitudes (CCSD)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
@@ -1039,38 +1106,30 @@ contains
       class(ccsd) :: wf
 !
       integer(i15) :: unit_t1am = -1
-      integer(i15) :: unit_t2am = -1 
 !
       logical :: file_exists = .false.
 !
 !     Check to see whether file exists
 !
       inquire(file='t1am',exist=file_exists)
-      inquire(file='t2am',exist=file_exists)
 !
       if (file_exists) then 
 !
 !        Open amplitude files if they exist
 !
          call generate_unit_identifier(unit_t1am)
-         call generate_unit_identifier(unit_t2am)
 !
          open(unit_t1am, file='t1am', status='unknown', form='unformatted')
-         open(unit_t2am, file='t2am', status='unknown', form='unformatted')
 !
          rewind(unit_t1am)
-         rewind(unit_t2am)
 !
 !        Read from file & close
 !
          wf%t1am = zero
-         wf%t2am = zero
 !
          read(unit_t1am) wf%t1am 
-         read(unit_t2am) wf%t2am
 !  
          close(unit_t1am)
-         close(unit_t2am)
 !
       else
 !
@@ -1079,7 +1138,7 @@ contains
 !
       endif
 !
-   end subroutine read_amplitudes_ccsd
+   end subroutine read_single_amplitudes_ccsd
 !
 !
 end module ccsd_class

@@ -16,6 +16,103 @@ submodule (ccsd_class) jacobian
 contains
 !
 !
+      module subroutine calculate_orbital_differences_ccsd(wf,orbital_diff)
+!!
+!!       Calculate and return orbital differences
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad May 2017
+!!
+         implicit none
+!
+         class(ccsd) :: wf
+         real(dp), dimension(wf%n_parameters, 1) :: orbital_diff
+!
+         integer(i15) :: a = 0, i = 0, b = 0, j = 0
+         integer(i15) :: ai = 0, bj = 0
+         integer(i15) :: aibj = 0
+!
+         do i = 1, wf%n_o
+            do a = 1, wf%n_v
+               ai = index_two(a, i, wf%n_v)
+               orbital_diff(ai, 1) = wf%fock_diagonal(a + wf%n_o, 1) - wf%fock_diagonal(i, 1)
+               do j = 1, wf%n_o
+                  do b = 1, wf%n_v
+                     bj = index_two(b, j, wf%n_v)
+                     aibj = index_packed(ai, bj)
+                     orbital_diff((wf%n_o)*(wf%n_v)+aibj, 1) = wf%fock_diagonal(a + wf%n_o, 1) - wf%fock_diagonal(i, 1) &
+                                                            + wf%fock_diagonal(b + wf%n_o, 1) - wf%fock_diagonal(j, 1)
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+      end subroutine calculate_orbital_differences_ccsd
+!
+!
+      module subroutine transform_trial_vecs_ccsd(wf, first_trial, last_trial)
+!!
+!!       Construct Jacobian Transformation of trial vectors
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!       Each trial vector in first_trial to last_trial is read from file and
+!!       transformed before the transformed vector is written to file.
+!!
+         implicit none
+!
+         class(ccsd) :: wf
+!
+         integer(i15), intent(in) :: first_trial, last_trial ! Which trial_vectors we are to transform
+!
+         real(dp), dimension(:,:), allocatable :: c_a_i
+         real(dp), dimension(:,:), allocatable :: c_aibj
+!
+         integer(i15) :: unit_trial_vecs = 0, unit_rho = 0, ioerror = 0
+         integer(i15) :: trial = 0 
+         write(unit_output,*)'In vector transformation'
+         flush(unit_output)
+!
+!        Allocate c_a_i
+!
+         call allocator(c_a_i, wf%n_v, wf%n_o)
+         c_a_i = zero 
+         call allocator(c_aibj, wf%n_t2am, 1)
+         c_aibj = zero 
+!
+!        Open trial vector and transformed vector files
+!
+         call generate_unit_identifier(unit_trial_vecs)
+         open(unit=unit_trial_vecs, file='trial_vec', action='read', status='old', &
+           access='direct', form='unformatted', recl=dp*wf%n_parameters, iostat=ioerror)
+!
+         call generate_unit_identifier(unit_rho)
+         open(unit=unit_rho, file='transformed_vec', action='write', status='old', &
+           access='direct', form='unformatted', recl=dp*wf%n_parameters, iostat=ioerror)
+!
+!        For each trial vector: Read, transform and write
+!   
+         write(unit_output,*)'Jacobian transformation'     
+         flush(unit_output)       
+         do trial = first_trial, last_trial
+!
+            read(unit_trial_vecs, rec=trial, iostat=ioerror) c_a_i, c_aibj
+!
+            call wf%jacobian_ccsd_transformation(c_a_i, c_aibj)
+!
+!           Write transformed vector to file
+!
+            write(unit_rho, rec=trial, iostat=ioerror) c_a_i, c_aibj
+          
+         enddo
+         close(unit_trial_vecs) 
+         close(unit_rho)                                
+!
+!        Deallocate c_a_i
+!
+         call deallocator(c_a_i, wf%n_v, wf%n_o)
+         call deallocator(c_aibj, wf%n_t2am, 1)
+!
+      end subroutine transform_trial_vecs_ccsd
+!
+!
    module subroutine jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!
 !!    Jacobian transformation (CCSD)
@@ -55,8 +152,9 @@ contains
 !
       call squareup(c_aibj, c_ai_bj, (wf%n_o)*(wf%n_v)) ! Pack out vector 
 !
-      call wf%jacobian_ccsd_b1(c_aibj, rho_a_i)
-      call wf%jacobian_ccsd_c1(c_aibj, rho_a_i)
+      call wf%jacobian_ccsd_b1(c_ai_bj, rho_a_i)
+      call wf%jacobian_ccsd_c1(c_ai_bj, rho_a_i)
+      call wf%jacobian_ccsd_d1(c_ai_bj, rho_a_i)
 !
 !     CCSD contributions to the doubles c vector 
 !
@@ -68,7 +166,7 @@ contains
       call wf%jacobian_ccsd_c2(rho_ai_bj, c_a_i)
       call wf%jacobian_ccsd_d2(rho_ai_bj, c_a_i)
 !
-!     Pack out c_ai_bj and add factor (1+ δ_ai,bj)
+      call dcopy((wf%n_o)*(wf%n_v), rho_a_i, 1, c_a_i, 1)
 !
       call wf%jacobian_ccsd_e2(rho_ai_bj, c_ai_bj)
       call wf%jacobian_ccsd_f2(rho_ai_bj, c_ai_bj)
@@ -299,7 +397,7 @@ contains
 !     Form u_ai_lc = u_li^ca = 2 * t_li^ca - t_il^ca = 2 * t2am(clai,1) - t2am(cial,1)
 !
       call wf%initialize_amplitudes ! Allocate t amplitudes, then set them to zero 
-      call wf%read_amplitudes       ! Read the converged amplitudes from disk 
+      call wf%read_double_amplitudes       ! Read the converged amplitudes from disk 
 !
       call allocator(u_ai_lc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
@@ -307,6 +405,7 @@ contains
          do l = 1, wf%n_o
 !
             lc = index_two(l, c, wf%n_o)
+            cl = index_two(c, l, wf%n_v)
 !
             do i = 1, wf%n_o
 !
@@ -465,6 +564,7 @@ contains
 !
 !     Reorder amplitudes to t_a_lkd = t_lk^ad 
 !
+      call allocator(t_a_lkd, wf%n_v, (wf%n_v)*((wf%n_o)**2))
       do d = 1, wf%n_v
          do k = 1, wf%n_o
 !
@@ -498,6 +598,7 @@ contains
       call dgemm('N','N',               &
                   wf%n_v,               &
                   wf%n_v,               &
+                  (wf%n_v)*(wf%n_o)**2, &
                   one,                  &
                   t_a_lkd,              &
                   wf%n_v,               &
@@ -611,7 +712,7 @@ contains
 !
                ai = index_two(a, i, wf%n_v)
 !
-               rho_a_i(a,i) = rho_ai(ai, 1)
+               rho_a_i(a,i) = rho_a_i(a,i) + rho_ai(ai, 1)
 !
             enddo
          enddo
@@ -1060,6 +1161,8 @@ contains
 !
       required = 4*required ! Words
 !
+      available = get_available()
+! 
       batch_dimension  = wf%n_v ! Batch over the virtual index b
       max_batch_length = 0      ! Initilization of unset variables 
       n_batch          = 0
@@ -1208,7 +1311,7 @@ contains
 !     Read the amplitudes from disk 
 !
       call wf%initialize_amplitudes
-      call wf%read_amplitudes
+      call wf%read_double_amplitudes
 !
 !     Order the amplitudes as t_c_aij = t_ij^ac 
 !
@@ -1318,6 +1421,7 @@ contains
 !
 !     Order the amplitudes as t_aib_k = t_ik^ab 
 !
+      call allocator(t_aib_k, ((wf%n_v)**2)*(wf%n_o), wf%n_o)
       do k = 1, wf%n_o
          do b = 1, wf%n_v
 !
@@ -1462,7 +1566,7 @@ contains
 !     Read the amplitudes from disk
 !
       call wf%initialize_amplitudes
-      call wf%read_amplitudes
+      call wf%read_double_amplitudes
 !
 !     Order as t_kc_ai = t_ki^ac 
 !
@@ -1527,7 +1631,7 @@ contains
                   wf%n_o,               & ! "X_l_jai"
                   zero,                 &
                   rho_b_jai,            &
-                  wf%n_v) 
+                  wf%n_v)
 !
       call deallocator(X_lj_ai, (wf%n_o)**2, (wf%n_v)*(wf%n_o))
 !
@@ -1599,10 +1703,15 @@ contains
             bi = index_two(b, i, wf%n_v)
 !
             do c = 1, wf%n_v
+!
+               ci = index_two(c, i, wf%n_v)
+!
                do l = 1, wf%n_o
 !
                   bl = index_two(b, l, wf%n_v)
                   lc = index_two(l, c, wf%n_o)
+!
+                  blci = index_packed(bl, ci)
 !
                   t_lc_bi(lc, bi) = wf%t2am(blci, 1) ! t_li^bc 
 !
@@ -1889,7 +1998,7 @@ contains
                   wf%n_o,               &
                   one,                  &
                   rho_ai_bj,            & ! "rho_aib_j"
-                  (wf%n_o)*(wf%n_v)**2) 
+                  (wf%n_o)*(wf%n_v)**2)
 !
       call deallocator(t_aib_l, (wf%n_o)*(wf%n_v)**2, wf%n_o)
       call deallocator(X_lj, (wf%n_o)**2, 1)
@@ -2036,7 +2145,7 @@ contains
 !     Read amplitudes from disk
 ! 
       call wf%initialize_amplitudes
-      call wf%read_amplitudes
+      call wf%read_double_amplitudes
 !
 !     Determine batch size, etc.
 !     (Redo estimate once loop is done)
@@ -2047,6 +2156,7 @@ contains
                      (wf%n_o)*(wf%n_v)**3)             ! Holding L_bc^J and g_aibc
 !
       required = 4*required ! Words
+      available = get_available()
 !
       batch_dimension  = wf%n_v ! Batch over the virtual index b
       max_batch_length = 0      ! Initilization of unset variables 
@@ -2603,20 +2713,20 @@ contains
 !        Note: L_ckb_d is interpreted as L_ck_bd in the matrix multiplication 
 !        Note: c_a_i is interpreted as c_ai in the matrix multiplication 
 !
-         call allocator(X_bd, batch_length*(wf%n_v), 1)
+         call allocator(X_bd, 1, batch_length*(wf%n_v))
 !  
          call dgemm('N','N',                &
-                     batch_length*(wf%n_v), &
                      1,                     &
+                     batch_length*(wf%n_v), &
                      (wf%n_o)*(wf%n_v),     &
                      one,                   &
                      c_a_i,                 & ! "c_ai"
-                     (wf%n_o)*(wf%n_v),     &
+                     1,                     &
                      L_ckb_d,               & ! "L_ck_bd"
                      (wf%n_o)*(wf%n_v),     &
                      zero,                  &
                      X_bd,                  &
-                     batch_length*(wf%n_v))
+                     1)
 !
 !        Order amplitudes as t_d_aij = t_ij^ad 
 !
@@ -2664,7 +2774,8 @@ contains
                      rho_b_aij,            &
                      batch_length)
 !
-         call deallocator(X_bd, batch_length*(wf%n_v), 1)
+!
+         call deallocator(X_bd, 1, batch_length*(wf%n_v))
          call deallocator(t_d_aij, wf%n_v, (wf%n_v)*(wf%n_o)**2)
 !
 !        Add rho_b_aij to rho_ai_bj 
@@ -2728,7 +2839,7 @@ contains
 !     Read T2 amplitudes from disk
 !
       call wf%initialize_amplitudes
-      call wf%read_amplitudes
+      call wf%read_double_amplitudes
 !
       call allocator(t_dl_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       t_dl_bj = zero
@@ -2974,7 +3085,7 @@ contains
          call deallocator(L_ck_dl,(wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
          call wf%initialize_amplitudes
-         call wf%read_amplitudes
+         call wf%read_double_amplitudes
 !
          call allocator(t_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
          t_ai_ck = zero
@@ -2991,7 +3102,7 @@ contains
                     (wf%n_o)*(wf%n_v), &
                     X_ck_bj,           &
                     (wf%n_o)*(wf%n_v), &
-                    one,              &
+                    one,               &
                     rho_ai_bj,         &        
                     (wf%n_o)*(wf%n_v))
 !
@@ -3092,7 +3203,7 @@ contains
          call deallocator(L_d_clk, wf%n_v, (wf%n_v)*((wf%n_o)**2)) 
 !
          call wf%initialize_amplitudes
-         call wf%read_amplitudes
+         call wf%read_double_amplitudes
 !
          call allocator(t_aij_d, (wf%n_v)*((wf%n_o)**2), wf%n_v)
          t_aij_d = zero
@@ -3255,7 +3366,7 @@ contains
          call deallocator(c_ckd_j, ((wf%n_v)**2)*(wf%n_o), wf%n_o)
 !
          call wf%initialize_amplitudes
-         call wf%read_amplitudes
+         call wf%read_double_amplitudes
          call allocator(t_aib_l, (wf%n_o)*((wf%n_v)**2), wf%n_o)
          t_aib_l = zero
 !
@@ -3288,12 +3399,12 @@ contains
                      wf%n_o,                 &
                      -one,                   &
                      t_aib_l,                &
-                     ((wf%n_o)**2)*(wf%n_v), &
+                     ((wf%n_v)**2)*(wf%n_o), &
                      Z_l_j,                  &
                      wf%n_o,                 &
                      zero,                   &
                      rho_aib_j,              &
-                     ((wf%n_o)**2)*(wf%n_v))
+                     ((wf%n_v)**2)*(wf%n_o))
 !
          call deallocator(t_aib_l, (wf%n_o)*((wf%n_v)**2), wf%n_o)
          call deallocator(Z_l_j, wf%n_o, wf%n_o)
@@ -3424,7 +3535,7 @@ contains
 !        Reorder t_bl_dj as t_dl_bj
 !
          call wf%initialize_amplitudes
-         call wf%read_amplitudes
+         call wf%read_double_amplitudes
          call allocator(t_dl_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
          t_dl_bj = zero
 !
@@ -3474,7 +3585,7 @@ contains
                     (wf%n_o)*(wf%n_v), &
                     (wf%n_o)*(wf%n_v), &
                     -one,              &
-                    c_ai_ck,           &
+                    c_ai_bj,           &
                     (wf%n_o)*(wf%n_v), &
                     X_ck_bj,           &
                     (wf%n_o)*(wf%n_v), &
@@ -3535,7 +3646,7 @@ contains
 !        Reorder t_ck,bl as t_clk_b
 !        
          call wf%initialize_amplitudes
-         call wf%read_amplitudes
+         call wf%read_double_amplitudes
 !
          call allocator(t_clk_b, (wf%n_v)*((wf%n_o)**2), wf%n_v)
          t_clk_b = zero
@@ -3551,7 +3662,7 @@ contains
                   do b = 1, wf%n_v
 !
                      bl = index_two(b, l, wf%n_v)
-                     ckbl = index_packed(bk, cl)
+                     ckbl = index_packed(ck, bl)
 !
                      t_clk_b(clk,b) = wf%t2am(ckbl, 1)
 !
@@ -3702,7 +3813,7 @@ contains
 !        Reorder t_ck,dj to t_ckd_j 
 !
          call wf%initialize_amplitudes
-         call wf%read_amplitudes
+         call wf%read_double_amplitudes
 !
          call allocator(t_ckd_j, ((wf%n_v)**2)*(wf%n_o), wf%n_o)
          t_ckd_j = zero
@@ -3779,12 +3890,12 @@ contains
                      wf%n_o,                 &
                      -one,                   &
                      c_aib_l,                &
-                     ((wf%n_o)**2)*(wf%n_v), &
+                     ((wf%n_v)**2)*(wf%n_o), &
                      Z_l_j,                  &
                      wf%n_o,                 &
                      zero,                   &
                      rho_aib_j,              &
-                     ((wf%n_o)**2)*(wf%n_v))
+                     ((wf%n_v)**2)*(wf%n_o))
 !
          call deallocator(c_aib_l, (wf%n_o)*((wf%n_v)**2), wf%n_o)
          call deallocator(Z_l_j, wf%n_o, wf%n_o)
@@ -3881,7 +3992,7 @@ contains
 !        t_ak,ci ordered as t_ai_kc
 !  
          call wf%initialize_amplitudes
-         call wf%read_amplitudes
+         call wf%read_double_amplitudes
 !
          call allocator(t_ai_kc, (wf%n_o)*(wf%n_v),(wf%n_o)*(wf%n_v))
          t_ai_kc = zero
@@ -4020,7 +4131,7 @@ contains
 !        t_al,cj ordered as t_aj_lc
 !  
          call wf%initialize_amplitudes
-         call wf%read_amplitudes
+         call wf%read_double_amplitudes
 !
          call allocator(t_aj_lc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
          t_aj_lc = zero
@@ -4563,7 +4674,7 @@ contains
                      (wf%n_o)*(wf%n_v), &
                      (wf%n_o)*(wf%n_v), &
                      -one,              &
-                     c_ai_ck,           &
+                     c_aj_ck,           &
                      (wf%n_o)*(wf%n_v), &
                      g_ck_bj,           &   
                      (wf%n_o)*(wf%n_v), &
@@ -4691,7 +4802,7 @@ contains
 !        Reordered T2 amplitudes        
 !
          call wf%initialize_amplitudes
-         call wf%read_amplitudes
+         call wf%read_double_amplitudes
 !
          call allocator(t_ab_ij, (wf%n_v)**2, (wf%n_o)**2 )
          t_ab_ij = zero
