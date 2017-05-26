@@ -4213,8 +4213,8 @@ contains
 !
                call deallocator(rho_batch_ab_ij,  a_length*b_length, (wf%n_o)**2) 
 !
-            enddo
-         enddo
+            enddo ! End batches of b 
+         enddo ! End batches of a 
 !         
       end subroutine jacobian_ccsd_k2_ccsd
 !
