@@ -129,6 +129,8 @@ module ccs_class
       procedure, non_overridable :: jacobian_ccs_a1 => jacobian_ccs_a1_ccs 
       procedure, non_overridable :: jacobian_ccs_b1 => jacobian_ccs_b1_ccs
 !
+      procedure :: jacobi_test => jacobi_test_ccs
+!
 !
       procedure :: excited_state_solver             => excited_state_solver_ccs
       procedure :: solve_reduced_eigenvalue_problem => solve_reduced_eigenvalue_problem_ccs
@@ -700,7 +702,9 @@ contains
 !
          if (wf%implemented%excited_state) then 
 !     
-           call wf%excited_state_solver
+!           call wf%excited_state_solver
+            call wf%jacobi_test
+
 !
          else
 !
@@ -932,6 +936,15 @@ contains
       endif
 !
    end subroutine destruct_omega_ccs
+!
+!
+   subroutine jacobi_test_ccs(wf)
+!
+      implicit none 
+!
+      class(ccs) :: wf 
+!
+   end subroutine jacobi_test_ccs
 !
 !
 end module ccs_class

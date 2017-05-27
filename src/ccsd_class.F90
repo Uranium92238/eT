@@ -113,6 +113,8 @@ module ccsd_class
       procedure :: jacobian_ccsd_j2 => jacobian_ccsd_j2_ccsd
       procedure :: jacobian_ccsd_k2 => jacobian_ccsd_k2_ccsd
 !
+      procedure :: jacobi_test => jacobi_test_ccsd
+!
 !     Routines to destroy amplitudes and omega 
 !
       procedure :: destruct_amplitudes => destruct_amplitudes_ccsd
@@ -1140,5 +1142,57 @@ contains
 !
    end subroutine read_single_amplitudes_ccsd
 !
+!
+   subroutine jacobi_test_ccsd(wf)
+!
+      implicit none 
+!
+      class(ccsd) :: wf 
+!
+      real(dp), dimension(:,:), allocatable :: c1am 
+      real(dp), dimension(:,:), allocatable :: c2am
+!
+      integer(i15) :: i = 0, a = 0
+!
+      call wf%initialize_amplitudes
+      call wf%read_double_amplitudes
+!  
+      call allocator(c1am, wf%n_v, wf%n_o)
+      call allocator(c2am, wf%n_t2am, 1)
+!
+      c1am = wf%t1am
+      c2am = wf%t2am 
+!
+      write(unit_output,*) 'T1AM'
+!
+      do i = 1,5
+         do a = 1,5
+            write(unit_output,*) index_two(a,i,wf%n_v), c1am(a,i)
+         enddo
+      enddo
+!
+      write(unit_output,*) 'T2AM'
+!
+      do i = 1,25
+         write(unit_output,*) c2am(i,1)
+      enddo
+!
+      call wf%jacobian_ccsd_transformation(c1am,c2am)
+!
+      write(unit_output,*) 'TRF(SINGLES)'
+!
+      do i = 1,5
+         do a = 1,5
+            write(unit_output,*) index_two(a,i,wf%n_v),c1am(a,i)
+         enddo
+      enddo
+!
+      write(unit_output,*) 'TRF(DOUBLES)'
+!
+      do i = 1,25
+         write(unit_output,*) c2am(i,1)
+      enddo
+!
+   end subroutine jacobi_test_ccsd
 !
 end module ccsd_class
