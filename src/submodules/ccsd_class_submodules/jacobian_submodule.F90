@@ -142,23 +142,23 @@ contains
 !
       call wf%jacobian_ccs_a1(c_a_i, rho_a_i)
 !
-      write(unit_output,*) 'After ccs a1, singles'
-      call vec_print(rho_a_i,wf%n_v,wf%n_o)
-      rho_a_i = zero 
+      ! write(unit_output,*) 'After ccs a1, singles'
+      ! call vec_print(rho_a_i,wf%n_v,wf%n_o)
+      ! rho_a_i = zero 
 !
       call wf%jacobian_ccs_b1(c_a_i, rho_a_i)
 !
-      write(unit_output,*) 'After ccs b1, singles'
-      call vec_print(rho_a_i,wf%n_v,wf%n_o)
-      rho_a_i = zero 
+      ! write(unit_output,*) 'After ccs b1, singles'
+      ! call vec_print(rho_a_i,wf%n_v,wf%n_o)
+      ! rho_a_i = zero 
 !
 !     CCSD contributions to the singles c vector 
 !
       call wf%jacobian_ccsd_a1(c_a_i, rho_a_i)
 !
-      write(unit_output,*) 'After ccsd a1, singles'
-      call vec_print(rho_a_i,wf%n_v,wf%n_o)
-      rho_a_i = zero 
+      ! write(unit_output,*) 'After ccsd a1, singles'
+      ! call vec_print(rho_a_i,wf%n_v,wf%n_o)
+      ! rho_a_i = zero 
 !
       call allocator(c_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       c_ai_bj = zero
@@ -167,21 +167,21 @@ contains
 !
       call wf%jacobian_ccsd_b1(c_ai_bj, rho_a_i)
 !
-      write(unit_output,*) 'After ccsd b1, singles'
-      call vec_print(rho_a_i,wf%n_v,wf%n_o)
-      rho_a_i = zero 
+      ! write(unit_output,*) 'After ccsd b1, singles'
+      ! call vec_print(rho_a_i,wf%n_v,wf%n_o)
+      ! rho_a_i = zero 
 !
       call wf%jacobian_ccsd_c1(c_ai_bj, rho_a_i)
 !
-      write(unit_output,*) 'After ccsd c1, singles'
-      call vec_print(rho_a_i,wf%n_v,wf%n_o)
-      rho_a_i = zero 
+      ! write(unit_output,*) 'After ccsd c1, singles'
+      ! call vec_print(rho_a_i,wf%n_v,wf%n_o)
+      ! rho_a_i = zero 
 !
       call wf%jacobian_ccsd_d1(c_ai_bj, rho_a_i)
 !
-      write(unit_output,*) 'After ccsd d1, singles'
-      call vec_print(rho_a_i,wf%n_v,wf%n_o)
-  !    rho_a_i = zero 
+  !     write(unit_output,*) 'After ccsd d1, singles'
+  !     call vec_print(rho_a_i,wf%n_v,wf%n_o)
+  ! !    rho_a_i = zero 
 !
 !     CCSD contributions to the doubles c vector 
 !
@@ -189,9 +189,28 @@ contains
       rho_ai_bj = zero 
 !
       call wf%jacobian_ccsd_a2(rho_ai_bj, c_a_i)
+!
+      write(unit_output,*) 'After ccsd a2, doubles'
+      call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))
+      rho_ai_bj = zero 
+!
       call wf%jacobian_ccsd_b2(rho_ai_bj, c_a_i)
+!
+      write(unit_output,*) 'After ccsd b2, doubles'
+      call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))
+      rho_ai_bj = zero 
+!
       call wf%jacobian_ccsd_c2(rho_ai_bj, c_a_i)
+!
+      write(unit_output,*) 'After ccsd c2, doubles'
+      call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))
+      rho_ai_bj = zero 
+!
       call wf%jacobian_ccsd_d2(rho_ai_bj, c_a_i)
+!
+      write(unit_output,*) 'After ccsd d2, doubles'
+      call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))
+      rho_ai_bj = zero 
 !
       call dcopy((wf%n_o)*(wf%n_v), rho_a_i, 1, c_a_i, 1)
 !
@@ -1573,6 +1592,9 @@ contains
       call allocator(L_lj_J, (wf%n_o)**2, wf%n_J)
       call allocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
+      call wf%get_cholesky_ij(L_lj_J)
+      call wf%get_cholesky_ia(L_kc_J)
+!
       call allocator(g_lj_kc, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
 !
       call dgemm('N','T',            &
@@ -1688,7 +1710,6 @@ contains
 !     Final deallocations for term 1 (keep g_lj_kc for later use)
 !
       call deallocator(rho_b_jai, wf%n_v, (wf%n_v)*(wf%n_o)**2)
-!
 !
 !     :: Term 2. sum_kcl g_ljkc t_li^bc c_ak ::
 !
@@ -2031,7 +2052,6 @@ contains
       call deallocator(t_aib_l, (wf%n_o)*(wf%n_v)**2, wf%n_o)
       call deallocator(X_lj, (wf%n_o)**2, 1)
 !
-!
 !     :: Term 5. - sum_kcl L_ljkc t_ik^ac c_bl ::
 !
 !     Square up the amplitudes, t_ck_ai(ck, ai) = t_ki^ca = t_ik^ac 
@@ -2105,7 +2125,7 @@ contains
       call deallocator(L_lj_ck, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
       call deallocator(rho_b_jai, (wf%n_v), (wf%n_v)*(wf%n_o)**2)
 !
-      call wf%destruct_amplitudes
+      call wf%destruct_amplitudes 
 !
    end subroutine jacobian_ccsd_c2_ccsd
 !
