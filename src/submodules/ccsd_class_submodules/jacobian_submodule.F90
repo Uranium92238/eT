@@ -141,11 +141,24 @@ contains
 !     CCS contributions to the singles c vector 
 !
       call wf%jacobian_ccs_a1(c_a_i, rho_a_i)
+!
+      write(unit_output,*) 'After ccs a1, singles'
+      call vec_print(rho_a_i,wf%n_v,wf%n_o)
+      rho_a_i = zero 
+!
       call wf%jacobian_ccs_b1(c_a_i, rho_a_i)
+!
+      write(unit_output,*) 'After ccs b1, singles'
+      call vec_print(rho_a_i,wf%n_v,wf%n_o)
+      rho_a_i = zero 
 !
 !     CCSD contributions to the singles c vector 
 !
       call wf%jacobian_ccsd_a1(c_a_i, rho_a_i)
+!
+      write(unit_output,*) 'After ccsd a1, singles'
+      call vec_print(rho_a_i,wf%n_v,wf%n_o)
+      rho_a_i = zero 
 !
       call allocator(c_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       c_ai_bj = zero
@@ -153,8 +166,22 @@ contains
       call squareup(c_aibj, c_ai_bj, (wf%n_o)*(wf%n_v)) ! Pack out vector 
 !
       call wf%jacobian_ccsd_b1(c_ai_bj, rho_a_i)
+!
+      write(unit_output,*) 'After ccsd b1, singles'
+      call vec_print(rho_a_i,wf%n_v,wf%n_o)
+      rho_a_i = zero 
+!
       call wf%jacobian_ccsd_c1(c_ai_bj, rho_a_i)
+!
+      write(unit_output,*) 'After ccsd c1, singles'
+      call vec_print(rho_a_i,wf%n_v,wf%n_o)
+      rho_a_i = zero 
+!
       call wf%jacobian_ccsd_d1(c_ai_bj, rho_a_i)
+!
+      write(unit_output,*) 'After ccsd d1, singles'
+      call vec_print(rho_a_i,wf%n_v,wf%n_o)
+  !    rho_a_i = zero 
 !
 !     CCSD contributions to the doubles c vector 
 !
@@ -668,7 +695,7 @@ contains
             do b = 1, wf%n_v
 !
                bj = index_two(b, j, wf%n_v)
-               F_bj = wf%fock_ia(j, b)
+               F_bj(bj,1) = wf%fock_ia(j, b)
 !
                do i = 1, wf%n_o
 !
