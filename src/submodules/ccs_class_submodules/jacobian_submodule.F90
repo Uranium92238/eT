@@ -315,9 +315,9 @@ contains
          implicit none
 !
          class(ccs) :: wf   
-         real(dp), dimension(wf%n_o,wf%n_v) :: c1
-         real(dp), dimension(wf%n_o,wf%n_v) :: rho       
-
+!
+         real(dp), dimension(wf%n_v,wf%n_o) :: c1
+         real(dp), dimension(wf%n_v,wf%n_o) :: rho        
 !
 !        Integrals
 !
@@ -490,7 +490,6 @@ contains
 !
             enddo
          enddo
-
 !
 !        Create rho contribution from the batch
 !
