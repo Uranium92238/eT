@@ -423,10 +423,11 @@ contains
 !
 !     Form u_ai_lc = u_li^ca = 2 * t_li^ca - t_il^ca = 2 * t2am(clai,1) - t2am(cial,1)
 !
-      call wf%initialize_amplitudes ! Allocate t amplitudes, then set them to zero 
+      call wf%initialize_amplitudes        ! Allocate t amplitudes, then set them to zero 
       call wf%read_double_amplitudes       ! Read the converged amplitudes from disk 
 !
       call allocator(u_ai_lc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      u_ai_lc = zero
 !
       do c = 1, wf%n_v
          do l = 1, wf%n_o
@@ -491,7 +492,7 @@ contains
 !
                do k = 1, wf%n_o 
 !
-                  kd = index_two(k, d, wf%n_o)
+                  dk = index_two(d, k, wf%n_v)
 !
                   L_k_lcd(k, lcd) = L_lc_dk(lc, dk) ! L_lckd 
 !
