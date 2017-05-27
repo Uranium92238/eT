@@ -215,10 +215,36 @@ contains
       call dcopy((wf%n_o)*(wf%n_v), rho_a_i, 1, c_a_i, 1)
 !
       call wf%jacobian_ccsd_e2(rho_ai_bj, c_ai_bj)
+!
+      write(unit_output,*) 'After ccsd e2, doubles'
+      call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))
+      rho_ai_bj = zero 
+!
       call wf%jacobian_ccsd_f2(rho_ai_bj, c_ai_bj)
+!
+      write(unit_output,*) 'After ccsd f2, doubles'
+      call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))
+      rho_ai_bj = zero 
+!
       call wf%jacobian_ccsd_g2(rho_ai_bj, c_ai_bj)
+!
+      write(unit_output,*) 'After ccsd g2, doubles'
+      call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))
+      rho_ai_bj = zero 
+!
       call wf%jacobian_ccsd_h2(rho_ai_bj, c_ai_bj)
+!
+      write(unit_output,*) 'After ccsd h2, doubles'
+      call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))
+      rho_ai_bj = zero 
+!
       call wf%jacobian_ccsd_i2(rho_ai_bj, c_ai_bj)
+!
+!
+      write(unit_output,*) 'After ccsd i2, doubles'
+      call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))
+      rho_ai_bj = zero 
+!
 !
 !     Symmetrize rho_ai_bj = P_ij^ab ( rho_ai_bj )
 !
@@ -4409,6 +4435,7 @@ contains
             enddo
          enddo
 !
+!
          call deallocator(rho_aij_b, (wf%n_v)*((wf%n_o)**2), wf%n_v)
 !
 !       ::  - sum_k F_jk * c_ai,bk  ::
@@ -4701,7 +4728,7 @@ contains
                do a = 1, wf%n_v
 !
                   ak = index_two(a, k, wf%n_v)
-                  aj = index_two(a, i, wf%n_v)
+                  aj = index_two(a, j, wf%n_v)
 ! 
                   do c = 1, wf%n_v
 !
