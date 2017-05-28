@@ -1149,49 +1149,126 @@ contains
 !
       class(ccsd) :: wf 
 !
-      real(dp), dimension(:,:), allocatable :: c1am 
-      real(dp), dimension(:,:), allocatable :: c2am
+      real(dp), dimension(:,:), allocatable :: c_a_i  
+      real(dp), dimension(:,:), allocatable :: c_aibj
 !
-      integer(i15) :: i = 0, a = 0
+      integer(i15) :: a = 0, i = 0, b = 0, j = 0, ai = 0, bj = 0
+!
+      real(dp) :: displacement
+!
+!     We wish to calculate A_mu,nu = d(omega)_mu / dt_nu, 
+!     in two different ways:
+!
+!        1. By transforming c_tau = delta_tau,nu with A. Then (A c)_mu = sum_tau A_mu,tau c_tau = A_mu,nu
+!        2. By calculating A_mu,nu = (omega(t+Dt_nu)_mu - omega(t)_mu)/Dt_nu.
+!
+!
+!     :: First approach: transform by A :: 
+!
+      call allocator(c_a_i, wf%n_v, wf%n_o)
+      call allocator(c_aibj, wf%n_t2am, 1)
+!
+      c_a_i  = zero
+      c_aibj = zero
+!
+      write(unit_output,*) 'A_mu,nu, singles, by transformation'
+!
+      do j = 1, wf%n_o
+         do b = 1, wf%n_v
+!
+!           Let c have a one for the excitation bj, zero otherwise 
+!
+            c_a_i(b, j) = one 
+!
+!           Transform c by A. The result should be A_mu,bj 
+!
+            call wf%jacobian_ccsd_transformation(c_a_i,c_aibj)
+!
+!           Print these elements of A.
+!
+            do i = 1, wf%n_o
+               do a = 1, wf%n_v
+!
+                  ai = index_two(a, i, wf%n_v)
+                  bj = index_two(b, j, wf%n_v)
+!
+                  write(unit_output,*) 'ai, bj, A_ai,bj', ai, bj, c_a_i(a, i)
+!
+               enddo
+            enddo
+!
+            c_a_i = zero
+            c_aibj = zero
+!
+         enddo
+      enddo 
+!
+      write(unit_output,*) 'A_mu,nu, singles, by derivation'
 !
       call wf%initialize_amplitudes
       call wf%read_double_amplitudes
-!  
-      call allocator(c1am, wf%n_v, wf%n_o)
-      call allocator(c2am, wf%n_t2am, 1)
 !
-      c1am = wf%t1am
-      c2am = wf%t2am 
+      displacement = 1.0D0
 !
-      write(unit_output,*) 'T1AM'
+      call wf%initialize_omega
 !
-      do i = 1,5
-         do a = 1,5
-            write(unit_output,*) index_two(a,i,wf%n_v), c1am(a,i)
+      do j = 1, wf%n_o
+         do b = 1, wf%n_v
+!
+!           Construct omega and save in c 
+!
+            wf%omega1 = zero
+            wf%omega2 = zero
+!
+            call wf%construct_omega
+!
+            c_a_i  = wf%omega1
+            c_aibj = wf%omega2
+!
+!           Shift the j,b amplitude 
+!
+            wf%t1am(b,j) = wf%t1am(b,j) + displacement
+!
+!           Construct omega 
+!
+            wf%omega1 = zero
+            wf%omega2 = zero
+!
+            call wf%construct_fock
+            call wf%construct_omega 
+!
+! 125  A_mu,nu, singles, by derivation
+! 126  ai, bj, A_ai,bj                    1                    1  0.34971541079464175
+! 127  ai, bj, A_ai,bj                    2                    1  -4.4720761674640081E-003
+! 128  ai, bj, A_ai,bj                    3                    1   2.1710771728185977E-002
+! 129  ai, bj, A_ai,bj                    4                    1   0.0000000000000000
+! 130  ai, bj, A_ai,bj                    5                    1   0.0000000000000000
+! 131  ai, bj, A_ai,bj                    6                    1   6.7402265329333938E-002
+!  43  A_mu,nu, singles, by transformation
+!  44  ai, bj, A_ai,bj                    1                    1  0.44463638910338227
+!  45  ai, bj, A_ai,bj                    2                    1   1.4350081876687438E-015
+!  46  ai, bj, A_ai,bj                    3                    1   2.1710771728185432E-002
+!  47  ai, bj, A_ai,bj                    4                    1   0.0000000000000000
+!  48  ai, bj, A_ai,bj                    5                    1   0.0000000000000000
+!  49  ai, bj, A_ai,bj                    6                    1  -2.1265416526293723E-016
+!
+            do i = 1, wf%n_o
+               do a = 1, wf%n_v
+!
+!                 Calculate A_ai,bj = (omega(t)_ai - omega(t+Dt_bj)_ai)/Dt_bj.
+!
+                  ai = index_two(a, i, wf%n_v)
+                  bj = index_two(b, j, wf%n_v)
+!
+                  write(unit_output,*) 'ai, bj, A_ai,bj', ai, bj, (wf%omega1(a,i)-c_a_i(a,i))/displacement
+!
+               enddo
+            enddo
+!
+            wf%t1am(b,j) = wf%t1am(b,j) - displacement
+!
          enddo
-      enddo
-!
-      write(unit_output,*) 'T2AM'
-!
-      do i = 1,25
-         write(unit_output,*) c2am(i,1)
-      enddo
-!
-      call wf%jacobian_ccsd_transformation(c1am,c2am)
-!
-      write(unit_output,*) 'TRF(SINGLES)'
-!
-      do i = 1,5
-         do a = 1,5
-            write(unit_output,*) index_two(a,i,wf%n_v),c1am(a,i)
-         enddo
-      enddo
-!
-      write(unit_output,*) 'TRF(DOUBLES)'
-!
-      do i = 1,25
-         write(unit_output,*) c2am(i,1)
-      enddo
+      enddo      
 !
    end subroutine jacobi_test_ccsd
 !

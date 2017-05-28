@@ -263,9 +263,9 @@ contains
          implicit none
 !
          class(ccs) :: wf
-         real(dp), dimension(wf%n_o,wf%n_v) :: c1
-         real(dp), dimension(wf%n_o,wf%n_v) :: rho
-!   
+!
+         real(dp), dimension(wf%n_v,wf%n_o) :: c1
+         real(dp), dimension(wf%n_v,wf%n_o) :: rho
 !
 !        sum_b F_a_b * c_b_i
 !
@@ -276,10 +276,10 @@ contains
                      one,         &
                      wf%fock_ab,  &
                      wf%n_v,      &
-                     c1,     &
+                     c1,          &
                      wf%n_v,      &
                      one,         &
-                     rho, &
+                     rho,         &
                      wf%n_v)
 !
 !        - sum_j c_a_j * F_j_i
@@ -289,12 +289,12 @@ contains
                      wf%n_o,      &
                      wf%n_o,      &
                      -one,        &
-                     c1,     &
+                     c1,          &
                      wf%n_v,      &
                      wf%fock_ij,  &
                      wf%n_o,      &
                      one,         &
-                     rho, &
+                     rho,         &
                      wf%n_v)
 !
       end subroutine jacobian_ccs_a1_ccs
@@ -337,8 +337,8 @@ contains
 !
 !        Batching variables
 !
-         integer(i15) :: b_batch, b_first, b_last, b_length
-         integer(i15) :: required, available, n_batch, batch_dimension, max_batch_length
+         integer(i15) :: b_batch = 0, b_first = 0, b_last = 0, b_length = 0
+         integer(i15) :: required = 0, available = 0, n_batch = 0, batch_dimension = 0, max_batch_length = 0
 !
 !        Indices
 !
@@ -450,15 +450,19 @@ contains
 !        Allocate L_ai_jb
 !
          call allocator(L_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*b_length)
+         L_ai_jb = zero
 !
 !        Construct L_ai_jb = 2*g_ai_jb - g_ab_ij
 !
          do i = 1, wf%n_o
             do b = 1, b_length
                do j = 1, wf%n_o
-                  ji = index_two(j, i , wf%n_o)
+!
+                  ji = index_two(j, i, wf%n_o)
                   jb = index_two(j, b, wf%n_o)
+!
                   do a = 1, wf%n_v
+!
                      ai = index_two(a, i, wf%n_v)
                      ab = index_two(a, b, wf%n_v)
 !
@@ -468,7 +472,6 @@ contains
                enddo
             enddo
          enddo
-
 !
 !        Deallocate g_ai_jb and g_ab_ji
 !
@@ -480,13 +483,16 @@ contains
          call allocator(c_jb, (wf%n_o)*b_length, 1)
          call allocator(rho_ai, (wf%n_o)*(wf%n_v), 1)
 !
+         c_jb = zero
+!
 !        reordered c amplitudes
 !
          do j = 1, wf%n_o
             do b = 1, b_length
                jb = index_two(j, b, wf%n_o)
 !
-               c_jb(jb,1) = c1(b, j)
+         !      c_jb(jb,1) = c1(b, j)
+               c_jb(jb,1) = c1(b+b_first-1,j)
 !
             enddo
          enddo
@@ -502,7 +508,7 @@ contains
                      (wf%n_v)*(wf%n_o), &
                      c_jb,              &
                      b_length*(wf%n_o), &
-                     zero,              &
+                     zero,              & 
                      rho_ai,            &
                      (wf%n_v)*(wf%n_o))         
 !

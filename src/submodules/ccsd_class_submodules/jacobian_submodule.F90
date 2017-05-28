@@ -188,62 +188,62 @@ contains
       call allocator(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       rho_ai_bj = zero 
 !
-      call wf%jacobian_ccsd_a2(rho_ai_bj, c_a_i)
+  !    call wf%jacobian_ccsd_a2(rho_ai_bj, c_a_i)
 !
-      write(unit_output,*) 'After ccsd a2, doubles'
-      call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))
-      rho_ai_bj = zero 
+      ! write(unit_output,*) 'After ccsd a2, doubles'
+      ! call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))
+      ! rho_ai_bj = zero 
 !
-      call wf%jacobian_ccsd_b2(rho_ai_bj, c_a_i)
+  !    call wf%jacobian_ccsd_b2(rho_ai_bj, c_a_i)
 !
-      write(unit_output,*) 'After ccsd b2, doubles'
-      call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))
-      rho_ai_bj = zero 
+      ! write(unit_output,*) 'After ccsd b2, doubles'
+      ! call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))
+      ! rho_ai_bj = zero 
 !
-      call wf%jacobian_ccsd_c2(rho_ai_bj, c_a_i)
+   !   call wf%jacobian_ccsd_c2(rho_ai_bj, c_a_i)
 !
-      write(unit_output,*) 'After ccsd c2, doubles'
-      call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))
-      rho_ai_bj = zero 
+      ! write(unit_output,*) 'After ccsd c2, doubles'
+      ! call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))
+      ! rho_ai_bj = zero 
 !
-      call wf%jacobian_ccsd_d2(rho_ai_bj, c_a_i)
+   !   call wf%jacobian_ccsd_d2(rho_ai_bj, c_a_i)
 !
-      write(unit_output,*) 'After ccsd d2, doubles'
-      call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))
-      rho_ai_bj = zero 
+      ! write(unit_output,*) 'After ccsd d2, doubles'
+      ! call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))
+      ! rho_ai_bj = zero 
 !
       call dcopy((wf%n_o)*(wf%n_v), rho_a_i, 1, c_a_i, 1)
 !
       call wf%jacobian_ccsd_e2(rho_ai_bj, c_ai_bj)
 !
-      write(unit_output,*) 'After ccsd e2, doubles'
-      call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))
-      rho_ai_bj = zero 
+      ! write(unit_output,*) 'After ccsd e2, doubles'
+      ! call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))
+      ! rho_ai_bj = zero 
 !
       call wf%jacobian_ccsd_f2(rho_ai_bj, c_ai_bj)
 !
-      write(unit_output,*) 'After ccsd f2, doubles'
-      call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))
-      rho_ai_bj = zero 
+      ! write(unit_output,*) 'After ccsd f2, doubles'
+      ! call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))
+      ! rho_ai_bj = zero 
 !
       call wf%jacobian_ccsd_g2(rho_ai_bj, c_ai_bj)
 !
-      write(unit_output,*) 'After ccsd g2, doubles'
-      call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))
-      rho_ai_bj = zero 
+      ! write(unit_output,*) 'After ccsd g2, doubles'
+      ! call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))
+      ! rho_ai_bj = zero 
 !
       call wf%jacobian_ccsd_h2(rho_ai_bj, c_ai_bj)
 !
-      write(unit_output,*) 'After ccsd h2, doubles'
-      call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))
-      rho_ai_bj = zero 
+      ! write(unit_output,*) 'After ccsd h2, doubles'
+      ! call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))
+      ! rho_ai_bj = zero 
 !
       call wf%jacobian_ccsd_i2(rho_ai_bj, c_ai_bj)
 !
 !
-      write(unit_output,*) 'After ccsd i2, doubles'
-      call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))
-      rho_ai_bj = zero 
+      ! write(unit_output,*) 'After ccsd i2, doubles'
+      ! call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))
+      ! rho_ai_bj = zero 
 !
 !
 !     Symmetrize rho_ai_bj = P_ij^ab ( rho_ai_bj )
@@ -305,7 +305,17 @@ contains
       call deallocator(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       call wf%jacobian_ccsd_j2(rho_ab_ij, c_ab_ij)
+!
+      ! write(unit_output,*) 'After ccsd j2, doubles'
+      ! call vec_print(rho_ab_ij,(wf%n_v)**2,(wf%n_o)**2)
+      ! rho_ab_ij = zero 
+!
       call wf%jacobian_ccsd_k2(rho_ab_ij, c_ab_ij)
+!
+      ! write(unit_output,*) 'After ccsd k2, doubles'
+      ! call vec_print(rho_ab_ij,(wf%n_v)**2,(wf%n_o)**2)
+      ! rho_ab_ij = zero 
+!
 !
       call deallocator(c_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
 !
