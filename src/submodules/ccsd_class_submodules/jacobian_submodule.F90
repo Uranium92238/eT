@@ -139,6 +139,8 @@ contains
 !!    28 May #2: jacobian_ccsd_a1 ... jacobian_ccsd_d1 leads to the correct values 
 !!    of A_ckdl, bj and A_ck, aibj blocks. These are presumably bug-free.
 !!
+!!    The A_ai,ckdl block uses the terms arising from c_ai_bj and is correct... Hmm...
+!!
       implicit none
 !
       class(ccsd) :: wf 
@@ -185,6 +187,29 @@ contains
       c_ai_bj = zero
 !
       call squareup(c_aibj, c_ai_bj, (wf%n_o)*(wf%n_v)) ! Pack out vector 
+!
+!       do j = 1, wf%n_o 
+!          do b = 1, wf%n_v
+!             do i = 1, wf%n_o
+!                do a = 1, wf%n_v
+! !
+!                   ai = index_two(a, i, wf%n_v)
+!                   bj = index_two(b, j, wf%n_v)
+! !
+!                   if (a .eq. b .and. i .eq. j) then
+! !
+!                    !  c_ai_bj(ai,bj) = two*c_ai_bj(ai,bj)
+! !
+!                   else
+! !
+!                      c_ai_bj(ai,bj) = half*c_ai_bj(ai,bj)
+! !
+!                   endif
+! !
+!                enddo
+!             enddo
+!          enddo
+!       enddo
 !
       call wf%jacobian_ccsd_b1(c_ai_bj, rho_a_i) 
 !
@@ -247,13 +272,13 @@ contains
       ! call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))
       ! rho_ai_bj = zero 
 !
-      call wf%jacobian_ccsd_g2(rho_ai_bj, c_ai_bj)
+      call wf%jacobian_ccsd_g2(rho_ai_bj, c_ai_bj) 
 !
       ! write(unit_output,*) 'After ccsd g2, doubles'
       ! call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))
       ! rho_ai_bj = zero 
 !
-      call wf%jacobian_ccsd_h2(rho_ai_bj, c_ai_bj)
+      call wf%jacobian_ccsd_h2(rho_ai_bj, c_ai_bj) ! makes some contr to the off ellements
 !
       ! write(unit_output,*) 'After ccsd h2, doubles'
       ! call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))
@@ -331,7 +356,7 @@ contains
       ! call vec_print(rho_ab_ij,(wf%n_v)**2,(wf%n_o)**2)
       ! rho_ab_ij = zero 
 !
-      call wf%jacobian_ccsd_k2(rho_ab_ij, c_ab_ij)
+      call wf%jacobian_ccsd_k2(rho_ab_ij, c_ab_ij) ! THIS TERM BREAKS THE AI <-> BJ symmetry.
 !
       ! write(unit_output,*) 'After ccsd k2, doubles'
       ! call vec_print(rho_ab_ij,(wf%n_v)**2,(wf%n_o)**2)
@@ -374,6 +399,7 @@ contains
 !
 !     Overwrite the incoming c vector & pack in
 !
+      c_aibj = zero
       call packin(c_aibj, rho_ai_bj, (wf%n_o)*(wf%n_v))
 !
 !     Deallocations 
@@ -1082,6 +1108,7 @@ contains
                      c_bjc_i(bjc, i) = c_bi_cj(bi, cj)
 !
                   enddo
+!
                   do a = 1, a_length
 !
                      ca = index_two(c, a, wf%n_v)
@@ -2935,7 +2962,7 @@ contains
 !!    Jacobian CCSD E2 
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!    rho_ai_bj^E2 = sum_dlck t_bj,dl * L_kc,ld * c_ai,ck ! E: Missing factor 2? Not in the calculation, only here
+!!    rho_ai_bj^E2 = 2 sum_dlck t_bj,dl * L_kc,ld * c_ai,ck 
 !!
       implicit none 
 !
@@ -3008,7 +3035,6 @@ contains
                   ck = index_two(c, k, wf%n_v)
                   kc = index_two(k, c, wf%n_o)
                   lc = index_two(l, c, wf%n_o)
-
 !
                   L_ck_dl(ck, dl) = two*g_kc_ld(kc, ld) - g_kc_ld(kd, lc)
 !
@@ -3137,8 +3163,10 @@ contains
 !             
          do c = 1, wf%n_v
             do k = 1, wf%n_o
+!
                kc = index_two(k, c, wf%n_o)
                ck = index_two(c, k, wf%n_v)
+!
                do d = 1, wf%n_v
                   do l = 1, wf%n_o
 !
@@ -3260,6 +3288,7 @@ contains
                do c = 1, wf%n_v
 !
                   clk = index_three(c, l, k, wf%n_v, wf%n_o)
+!
                   kc = index_two(k, c, wf%n_o)
                   lc = index_two(l, c, wf%n_o)
 !
@@ -3267,6 +3296,7 @@ contains
 !
                      ld = index_two(l, d, wf%n_o)
                      kd = index_two(k, d, wf%n_o)
+!
                      L_d_clk(d, clk) = two*g_kc_ld(kc, ld) - g_kc_ld(kd, lc)
 !
                   enddo
@@ -3418,11 +3448,13 @@ contains
          call allocator(L_l_ckd,(wf%n_o), (wf%n_o)*((wf%n_v)**2))
          L_l_ckd = zero
 !
-!        Construct L_kc_dl ordered as L_ck_dl
+!        Construct L_kc_dl ordered as L_ck_dl (L_l_ckd ?)
 !             
          do c = 1, wf%n_v
             do k = 1, wf%n_o
+!
                kc = index_two(k, c, wf%n_o)
+!
                do d = 1, wf%n_v
                   do l = 1, wf%n_o
 !
@@ -3455,6 +3487,7 @@ contains
                   do d = 1, wf%n_v
 !
                      dj = index_two(d, j, wf%n_v)
+!
                      ckd = index_three(c, k, d, wf%n_v, wf%n_o)
 !
                      c_ckd_j(ckd,j) = c_ai_bj(ck,dj)
@@ -3484,6 +3517,7 @@ contains
 !
          call wf%initialize_amplitudes
          call wf%read_double_amplitudes
+!
          call allocator(t_aib_l, (wf%n_o)*((wf%n_v)**2), wf%n_o)
          t_aib_l = zero
 !
@@ -3499,7 +3533,9 @@ contains
 !
                      aib = index_three(a, i, b, wf%n_v, wf%n_o)
                      ai = index_two(a, i, wf%n_v)
+!
                      aibl = index_packed(ai, bl)
+!
                      t_aib_l(aib, l) = wf%t2am(aibl,1)
 !
                   enddo
@@ -3630,8 +3666,10 @@ contains
 !             
          do c = 1, wf%n_v
             do k = 1, wf%n_o
+!
                kc = index_two(k, c, wf%n_o)
                ck = index_two(c, k, wf%n_v)
+!
                do d = 1, wf%n_v
                   do l = 1, wf%n_o
 !
@@ -3653,6 +3691,7 @@ contains
 !
          call wf%initialize_amplitudes
          call wf%read_double_amplitudes
+!
          call allocator(t_dl_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
          t_dl_bj = zero
 !
@@ -3746,6 +3785,7 @@ contains
                do c = 1, wf%n_v
 !
                   clk = index_three(c, l, k, wf%n_v, wf%n_o)
+!
                   kc = index_two(k, c, wf%n_o)
                   lc = index_two(l, c, wf%n_o)
 !
@@ -3753,6 +3793,7 @@ contains
 !
                      ld = index_two(l, d, wf%n_o)
                      kd = index_two(k, d, wf%n_o)
+!
                      L_d_clk(d, clk) = two*g_kc_ld(kc, ld) - g_kc_ld(kd, lc)
 !
                   enddo
@@ -3904,11 +3945,13 @@ contains
          call allocator(L_l_ckd,(wf%n_o), (wf%n_o)*((wf%n_v)**2))
          L_l_ckd = zero
 !
-!        Construct L_kc_dl ordered as L_ck_dl
+!        Construct L_kc_dl ordered as L_ck_dl (L_l_ckd?)
 !             
          do c = 1, wf%n_v
             do k = 1, wf%n_o
+!
                kc = index_two(k, c, wf%n_o)
+!
                do d = 1, wf%n_v
                   do l = 1, wf%n_o
 !
@@ -4162,7 +4205,9 @@ contains
 !
          do l = 1, wf%n_o
             do b = 1, wf%n_v
+!
                bl = index_two(b, l, wf%n_v)
+!
                do j = 1, wf%n_o
 !
                   bj = index_two(b, j, wf%n_v)
@@ -4173,6 +4218,7 @@ contains
                      ld = index_two(l, d, wf%n_o)
 !
                      c_ld_bj(ld, bj) = c_ai_bj(bl, dj)
+!
                   enddo
                enddo
             enddo
@@ -4359,7 +4405,7 @@ contains
                enddo
             enddo
          enddo
-
+!
          call deallocator(rho_aj_bi, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       end subroutine jacobian_ccsd_h2_ccsd
@@ -4444,17 +4490,19 @@ contains
 !
          call allocator(rho_aij_b, (wf%n_v)*((wf%n_o)**2), wf%n_v)
 !
-         call dgemm('N','N',                &  
-                     (wf%n_v)*((wf%n_o)**2),&
-                     wf%n_v,                & 
-                     wf%n_v,                & 
-                     one,                   & 
-                     c_aij_c,               & 
-                     (wf%n_v)*((wf%n_o)**2),&
-                     wf%fock_ab,            & 
-                     wf%n_v,                & 
-                     zero,                  & 
-                     rho_aij_b,             & 
+!        sum_c F_bc * c_ai,cj = sum_c c_aij_c(aij,c) F_ab(b,c) = sum_c c_aij_c(aij,c) F_ab^T(c,b)
+!
+         call dgemm('N','T',                 & ! Second factor is transposed here (E, 28 May)
+                     (wf%n_v)*((wf%n_o)**2), &
+                     wf%n_v,                 & 
+                     wf%n_v,                 & 
+                     one,                    & 
+                     c_aij_c,                & 
+                     (wf%n_v)*((wf%n_o)**2), &
+                     wf%fock_ab,             & 
+                     wf%n_v,                 & 
+                     zero,                   & 
+                     rho_aij_b,              & 
                      (wf%n_v)*((wf%n_o)**2))
 !
          call deallocator(c_aij_c, (wf%n_v)*((wf%n_o)**2), wf%n_v)
@@ -4588,7 +4636,7 @@ contains
          do j = 1, wf%n_o
             do b = 1, wf%n_v
 !
-               bj = index_two(b, j, wf%n_o)
+               bj = index_two(b, j, wf%n_v) ! E: bug fix 28 may, was n_o
 !
                do k = 1, wf%n_o
                   do c = 1, wf%n_v
@@ -4644,7 +4692,7 @@ contains
             enddo
          enddo
 !
-!        - sum_ck  g_ck_bj*c_ai_ck
+!        - sum_ck g_ck_bj*c_ai_ck
 !
          call dgemm('N', 'N',           &
                      (wf%n_o)*(wf%n_v), &
@@ -4693,10 +4741,12 @@ contains
 !
             call allocator(L_bc_J, (wf%n_v)*c_length, wf%n_J)
             L_bc_J = zero
+!
             call wf%get_cholesky_ab(L_bc_J, c_first, c_last, c_length*(wf%n_v), .false.)
 !
             call allocator(L_kj_J, (wf%n_o)**2, wf%n_J)
             L_kj_J = zero
+!
             call wf%get_cholesky_ij(L_kj_J)
 !
             offset = index_two(1, c_first, wf%n_v)
@@ -4716,9 +4766,8 @@ contains
 !
             call deallocator(L_bc_J, (wf%n_v)*c_length, wf%n_J)
             call deallocator(L_kj_J, (wf%n_o)**2, wf%n_J)
-         enddo
 !
-
+         enddo
 !
 !        Reorder g_bc_kj
 !
@@ -4745,6 +4794,7 @@ contains
                enddo
             enddo
          enddo
+!
          call deallocator(g_bc_kj, (wf%n_v)**2, (wf%n_o)**2)
 !
 !         - sum_ck c_ai_ck * g_ck_bj       
@@ -4804,7 +4854,7 @@ contains
          call deallocator(g_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
          call deallocator(c_aj_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-!        Reorder rho_aj_bi int rho_ai_bj
+!        Reorder rho_aj_bi into rho_ai_bj
 !
          do i = 1, wf%n_o
             do a = 1, wf%n_v
@@ -4968,7 +5018,7 @@ contains
                      X_kl_ij,     &
                      (wf%n_o)**2)
 !
-!         rho_ab_ij = c_ab_kl * X_kl_ij
+!        rho_ab_ij = c_ab_kl * X_kl_ij
 !
          call dgemm('N', 'N',     &
                      (wf%n_v)**2, &
@@ -4998,7 +5048,7 @@ contains
                      X_kl_ij,     &
                      (wf%n_o)**2)
 !
-!         rho_ab_ij = t_ab_kl * X_kl_ij
+!        rho_ab_ij = t_ab_kl * X_kl_ij
 !
          call dgemm('N', 'N',     &
                      (wf%n_v)**2, &
@@ -5085,20 +5135,21 @@ contains
 !        Reorder g_ki_lj to g_kl_ij
 !
          call allocator(g_kl_ij, (wf%n_o)**2, (wf%n_o)**2)
+         g_kl_ij = zero
 !
          do j = 1, wf%n_o
             do i = 1, wf%n_o
 !
-               ij = index_two(i , j, wf%n_o)
+               ij = index_two(i, j, wf%n_o)
 !
                do k = 1, wf%n_o
 !
-                  ki = index_two(k , i, wf%n_o)
+                  ki = index_two(k, i, wf%n_o)
 !
                   do l = 1, wf%n_o
 ! 
-                     kl = index_two(k , l, wf%n_o)
-                     lj = index_two(l , j, wf%n_o)
+                     kl = index_two(k, l, wf%n_o)
+                     lj = index_two(l, j, wf%n_o)
 !
                      g_kl_ij(kl, ij) = g_ki_lj(ki, lj)
 !                     
@@ -5109,6 +5160,8 @@ contains
 !
          call deallocator(g_ki_lj, (wf%n_o)**2, (wf%n_o)**2)
 !
+!        sum_kl g_ki,lj * c_ak,bl = sum_kl c_ab_ij(ab,kl) g_kl_ij(kl,ij)
+!
          call dgemm('N', 'N',     & 
                      (wf%n_v)**2, &
                      (wf%n_o)**2, &
@@ -5116,7 +5169,7 @@ contains
                      one,         &
                      c_ab_ij,     &
                      (wf%n_v)**2, &
-                     g_kl_ij,     &
+                     g_kl_ij,     & 
                      (wf%n_o)**2, &
                      one,         &
                      rho_ab_ij,   &
@@ -5126,16 +5179,14 @@ contains
 !
 !        Prepare for batching over a and b
 !
-!
-!        ::  Calculate the A2.2 term  of omega ::
-!
+!        ::  sum_cd g_ac,bd * c_ci,dj ::
 !
          required = max(3*(wf%n_v)**2*(wf%n_J) + 2*(wf%n_v)*(wf%n_o)*(wf%n_J),      & ! Needed to get  L_db_J
                      (wf%n_v)**4 + 2*(wf%n_v)**2*(wf%n_J))                            ! Needed to get g_ac_bd
 !
          required = required*4  ! Words
 
-         available=get_available()
+         available = get_available()
 !
          a_max_length = 0
          call num_two_batch(required, available, a_max_length, a_n_batch, wf%n_v)
@@ -5148,9 +5199,9 @@ contains
 !
 !        Start looping over a-batches
 !
-         do a_batch = 1,a_n_batch
+         do a_batch = 1, a_n_batch
 !   
-            call batch_limits(a_first ,a_last ,a_batch, a_max_length, wf%n_v)
+            call batch_limits(a_first, a_last, a_batch, a_max_length, wf%n_v)
             a_length = a_last - a_first + 1     
 !
 !           Start looping over batches of b
@@ -5166,22 +5217,21 @@ contains
                call batch_limits(b_first ,b_last ,b_batch, b_max_length, wf%n_v)
                b_length = b_last - b_first + 1 
 !
-!
-!              Get cholesky vectors L_ac^J ordered as L_ca_J
+!              Get Cholesky vectors L_ac^J ordered as L_ca_J
 !
                call allocator(L_ca_J, (wf%n_v)*a_length, wf%n_J)
                L_ca_J = zero
 !
                call wf%get_cholesky_ab(L_ca_J, a_first, a_last, (wf%n_v)*a_length, .true.)
 !
-!              Get cholesky vectors L_bd^J ordered as L_db_J
+!              Get Cholesky vectors L_bd^J ordered as L_db_J
 !
                call allocator(L_db_J, (wf%n_v)*b_length, wf%n_J)
                L_db_J = zero
 !  
                call wf%get_cholesky_ab(L_db_J, b_first, b_last, (wf%n_v)*b_length, .true.)
 !
-!              Allocate g_ca_db
+!              Allocate g_ca_db = g_acbd
 !
                call allocator(g_ca_db, (wf%n_v)*a_length, (wf%n_v)*b_length)
                g_ca_db = zero
@@ -5194,7 +5244,7 @@ contains
                            wf%n_J,            &
                            one,               &
                            L_ca_J,            &
-                           (wf%n_v)*a_length, &
+                           (wf%n_v)*a_length, &  
                            L_db_J,            &
                            (wf%n_v)*b_length, &
                            zero,              &
@@ -5209,14 +5259,18 @@ contains
 !
                call deallocator(L_ca_J, (wf%n_v)*a_length, wf%n_J) 
 !
+!              sum_cd g_ac,bd * c_ci,dj = sum_cd g_ac,bd c_cd,ij = sum_cd g_ab_cd c_cd_ij 
+!
 !              Reorder g_ca_db into g_ab_cd 
+!              (Here, g_ab_cd = g_acbd = g_ca_db.)
 !
                call allocator(g_ab_cd, a_length*b_length, (wf%n_v)**2) 
+               g_ab_cd = zero
 !
                do b = 1, b_length
                   do a = 1, a_length
 !
-                     ab = index_two(a, b, wf%n_v)
+                     ab = index_two(a, b, a_length)
 !
                      do d = 1, wf%n_v
 !
@@ -5227,7 +5281,7 @@ contains
                            ca = index_two(c, a, wf%n_v)
                            cd = index_two(c, d, wf%n_v)
 !
-                           g_ab_cd(ab,cd) = g_ca_db(ca, db)
+                           g_ab_cd(ab, cd) = g_ca_db(ca, db) ! = g_acbd 
 !
                         enddo
                      enddo
@@ -5238,6 +5292,8 @@ contains
 !
                call allocator(rho_batch_ab_ij,  a_length*b_length, (wf%n_o)**2)
 !
+!              rho_ab_ij = sum_cd g_ac,bd * c_ci,dj = sum_cd g_ab_cd(ab, cd) c_ab_ij(cd, ij)
+!
                call dgemm('N', 'N',            &  
                             a_length*b_length, &
                             (wf%n_o)**2,       &  
@@ -5245,7 +5301,7 @@ contains
                             one,               &  
                             g_ab_cd,           &
                             a_length*b_length, &
-                            c_ab_ij,           &
+                            c_ab_ij,           & ! E: Should take care of batching here, eventually.
                             (wf%n_v)**2,       &  
                             zero,              &
                             rho_batch_ab_ij,   &

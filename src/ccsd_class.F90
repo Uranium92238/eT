@@ -1341,7 +1341,7 @@ contains
       call wf%initialize_amplitudes
       call wf%read_double_amplitudes
 !
-      displacement = 1.0D-8
+      displacement = 1.0D-10
 !
       call wf%initialize_omega
 !
@@ -1494,7 +1494,6 @@ contains
                                  write(unit_output,*) 'ckdl, aibj, A_ckdl, aibj', & 
                                           ckdl, aibj, half*(wf%omega2(ckdl,1)-c_aibj(ckdl,1))/displacement
                               else
-
 !
                                  write(unit_output,*) 'ckdl, aibj, A_ckdl, aibj', & 
                                           ckdl, aibj, (wf%omega2(ckdl,1)-c_aibj(ckdl,1))/displacement

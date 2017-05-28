@@ -143,7 +143,14 @@ contains
 !
       do i = 1, N
          do j = 1, N
+!
+            if (abs(unpacked(i, j) - unpacked(j, i)) .gt. 10D-6) then 
+               write(unit_output,*) 'WARNING: Attempting to pack non-symmetric matrix'
+               write(unit_output,*) 'Make sure code is bug-free. Information will be lost.'
+            endif
+!
             packed(index_packed(i, j), 1) = unpacked(i, j)
+!
          enddo
       enddo
 !
