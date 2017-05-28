@@ -1318,7 +1318,7 @@ contains
 !
                cb = index_two(c, b, wf%n_v)
 !
-              do i = 1, wf%n_o
+               do i = 1, wf%n_o
                   do a = 1, wf%n_v
 !
                      ai = index_two(a, i, wf%n_v)
@@ -1326,7 +1326,6 @@ contains
                      aib = index_three(a, i, b, wf%n_v, wf%n_o)
 !
                      g_aib_c(aib, c) = g_ai_cb(ai, cb)
-
 !
                   enddo
                enddo
@@ -1390,7 +1389,10 @@ contains
 !!    Jacobian CCSD B2 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-!!    rho_ai_bj^B2 = sum_kc (F_kc t_ij^ac c_bk + F_kc t_ik^ab c_cj)
+!!    rho_ai_bj^B2 = - sum_kc (F_kc t_ij^ac c_bk + F_kc t_ik^ab c_cj)
+!!
+!!    Bug fix 28 May: changed the sign of the entire term, which was
+!!    in disagreement with equations.
 !!
       implicit none 
 !
@@ -1473,7 +1475,7 @@ contains
                   wf%n_v,               &
                   (wf%n_v)*(wf%n_o)**2, &
                   wf%n_o,               &
-                  one,                  &
+                  -one,                 & 
                   c_a_i,                &
                   wf%n_v,               &
                   X_k_aij,              &
@@ -1559,7 +1561,7 @@ contains
                   (wf%n_o)*(wf%n_v)**2, &
                   wf%n_o,               &
                   wf%n_o,               &
-                  one,                  &
+                  -one,                 & 
                   t_aib_k,              &
                   (wf%n_o)*(wf%n_v)**2, &
                   X_k_j,                &
@@ -2196,13 +2198,16 @@ contains
 !!    Jacobian CCSD D2 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-!!    rho_ai_bj^D2 = sum_kcd g_kcbd (t_ij^cd c_ak + t_kj^ad c_ci + t_ik^ca c_dj)
-!!                 - sum_kcd L_kcbd (t_ik^ac c_dj + t_ij^ad c_ck)
+!!    rho_ai_bj^D2 = - ( sum_kcd g_kcbd (t_ij^cd c_ak + t_kj^ad c_ci + t_ik^ca c_dj)
+!!                       - sum_kcd L_kcbd (t_ik^ac c_dj + t_ij^ad c_ck))
 !!
 !!    Note: the code is structured so that we batch over the index b,
 !!          where the integrals are made as g_kc_db = g_kcbd and held
 !!          in some ordering or other throughout a given batch (i.e.,
 !!          all five terms are constructed gradually in the batches).
+!!
+!!    Bug fix 28 May: changed the sign of the entire term, which was
+!!    in disagreement with equations.
 !!
       implicit none 
 !
@@ -2422,7 +2427,7 @@ contains
                      wf%n_v,                   &
                      batch_length*(wf%n_o)**2, &
                      wf%n_o,                   &
-                     one,                      &
+                     -one,                     & 
                      c_a_i,                    &
                      wf%n_v,                   &
                      X_k_ijb,                  &
@@ -2550,7 +2555,7 @@ contains
                      (wf%n_o)*batch_length, &
                      (wf%n_o)*(wf%n_v),     &
                      (wf%n_o)*(wf%n_v),     &
-                     one,                   &
+                     -one,                  & 
                      X_ib_dk,               &
                      (wf%n_o)*batch_length, &
                      t_dk_aj,               &
@@ -2676,7 +2681,7 @@ contains
                      (wf%n_v)*(wf%n_o),     &
                      (wf%n_o)*batch_length, &
                      (wf%n_v)*(wf%n_o),     &
-                     one,                   &
+                     -one,                  & 
                      t_ai_ck,               &
                      (wf%n_v)*(wf%n_o),     &
                      X_ckb_j,               & ! "X_ck_bj"
@@ -2777,7 +2782,7 @@ contains
                      (wf%n_o)*(wf%n_v),     &
                      (wf%n_o)*batch_length, &
                      (wf%n_o)*(wf%n_v),     &
-                     -one,                  &
+                     one,                   & 
                      t_ai_ck,               &
                      (wf%n_o)*(wf%n_v),     &
                      Y_ckb_j,               & ! "Y_ck_bj"
@@ -2874,7 +2879,7 @@ contains
                      batch_length,         &
                      (wf%n_v)*(wf%n_o)**2, &
                      wf%n_v,               &
-                     -one,                 &
+                     one,                  & 
                      X_bd,                 & ! "X_b_d"
                      batch_length,         &
                      t_d_aij,              &
