@@ -308,7 +308,7 @@ contains
 !!       Calculates the B1 term of the right transform of the
 !!       Jacobian,
 !!
-!!       B1: sum_bj L_aijb*c_bj = sum_bj (2*g_aijb-g_abji)c_bj
+!!       B1: sum_bj L_aijb*c_bj = sum_bj (2*g_aijb-g_abji) c_bj
 !!
 !!       and adds it to the rho vector.
 !!
@@ -338,7 +338,8 @@ contains
 !        Batching variables
 !
          integer(i15) :: b_batch = 0, b_first = 0, b_last = 0, b_length = 0
-         integer(i15) :: required = 0, available = 0, n_batch = 0, batch_dimension = 0, max_batch_length = 0
+         integer(i15) :: required = 0, available = 0, n_batch = 0, batch_dimension = 0
+         integer(i15) :: max_batch_length = 0
 !
 !        Indices
 !
@@ -350,7 +351,6 @@ contains
          integer(i15) :: ji = 0
 !
          logical :: reorder
-!
 !
 !        Preparing for batching over b
 !
@@ -442,7 +442,7 @@ contains
                      g_ab_ji,           &
                      (wf%n_v)*b_length)
 !
-!        Deallocate and get L_ab_J and L_ji_J
+!        Deallocate L_ab_J and L_ji_J
 !
          call deallocator(L_ab_J, (wf%n_v)*b_length, wf%n_J)
          call deallocator(L_ji_J, (wf%n_o)**2, wf%n_J)
@@ -452,7 +452,7 @@ contains
          call allocator(L_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*b_length)
          L_ai_jb = zero
 !
-!        Construct L_ai_jb = 2*g_ai_jb - g_ab_ij
+!        Construct L_ai_jb = 2*g_ai_jb - g_ab_ji
 !
          do i = 1, wf%n_o
             do b = 1, b_length
@@ -489,10 +489,11 @@ contains
 !
          do j = 1, wf%n_o
             do b = 1, b_length
+!
                jb = index_two(j, b, wf%n_o)
 !
-         !      c_jb(jb,1) = c1(b, j)
-               c_jb(jb,1) = c1(b+b_first-1,j)
+         !      c_jb(jb,1) = c1(b, j) ! E: I think we must use full space on the right here, i.e.:
+               c_jb(jb, 1) = c1(b+b_first-1, j)
 !
             enddo
          enddo
@@ -524,9 +525,11 @@ contains
 !
          do i = 1, wf%n_o
             do a = 1, wf%n_v
+!
                ai = index_two(a, i, wf%n_v)
 !
                rho(a,i) = rho(a,i) + rho_ai(ai, 1)
+!
             enddo
          enddo
 !

@@ -165,19 +165,19 @@ contains
 !
       call squareup(c_aibj, c_ai_bj, (wf%n_o)*(wf%n_v)) ! Pack out vector 
 !
-      call wf%jacobian_ccsd_b1(c_ai_bj, rho_a_i)
+   !   call wf%jacobian_ccsd_b1(c_ai_bj, rho_a_i) ! Does not contribute to singles-singles-bblock
 !
       ! write(unit_output,*) 'After ccsd b1, singles'
       ! call vec_print(rho_a_i,wf%n_v,wf%n_o)
       ! rho_a_i = zero 
 !
-      call wf%jacobian_ccsd_c1(c_ai_bj, rho_a_i)
+    !  call wf%jacobian_ccsd_c1(c_ai_bj, rho_a_i)
 !
       ! write(unit_output,*) 'After ccsd c1, singles'
       ! call vec_print(rho_a_i,wf%n_v,wf%n_o)
       ! rho_a_i = zero 
 !
-      call wf%jacobian_ccsd_d1(c_ai_bj, rho_a_i)
+   !   call wf%jacobian_ccsd_d1(c_ai_bj, rho_a_i)
 !
   !     write(unit_output,*) 'After ccsd d1, singles'
   !     call vec_print(rho_a_i,wf%n_v,wf%n_o)
@@ -431,7 +431,7 @@ contains
       call allocator(L_lc_dk, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       L_lc_dk = zero 
 !
-!     L_lc_dk = L_lckd
+!     L_lc_dk = L_lckd = 2*g_lckd - g_ldkc = 2*g_lc_kd(lc,kd)-g_lc_kd(ld,kc)
 !
       do k = 1, wf%n_o
          do d = 1, wf%n_v
@@ -536,6 +536,7 @@ contains
 !     Reorder to L_k_lcd = L_lckd = L_lc_dk 
 !
       call allocator(L_k_lcd, wf%n_o, (wf%n_o)*(wf%n_v)**2)
+      L_k_lcd = zero
 !
       do d = 1, wf%n_v
          do c = 1, wf%n_v
@@ -561,6 +562,7 @@ contains
 !     Reorder amplitudes to t_lcd_i = t_li^cd 
 !
       call allocator(t_lcd_i, (wf%n_o)*(wf%n_v)**2, wf%n_o)
+      t_lcd_i = zero
 !
       do i = 1, wf%n_o
          do d = 1, wf%n_v
@@ -627,6 +629,7 @@ contains
 !     Reorder to L_lkd_c = L_lckd = L_k_lcd
 !
       call allocator(L_lkd_c, (wf%n_v)*(wf%n_o)**2, wf%n_v)
+      L_lkd_c = zero
 !
       do c = 1, wf%n_v
          do d = 1, wf%n_v
@@ -647,7 +650,9 @@ contains
 !
 !     Reorder amplitudes to t_a_lkd = t_lk^ad 
 !
-      call allocator(t_a_lkd, wf%n_v, (wf%n_v)*((wf%n_o)**2))
+      call allocator(t_a_lkd, wf%n_v, (wf%n_v)*(wf%n_o)**2)
+      t_a_lkd = zero
+!
       do d = 1, wf%n_v
          do k = 1, wf%n_o
 !
@@ -743,14 +748,17 @@ contains
 !
          call allocator(v_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
          v_ai_bj = zero
+!
          call allocator(F_bj, (wf%n_o)*(wf%n_v), 1)
          F_bj = zero
+!
          call allocator(rho_ai, (wf%n_o)*(wf%n_v), 1)
 !
          do j = 1, wf%n_o
             do b = 1, wf%n_v
 !
                bj = index_two(b, j, wf%n_v)
+!
                F_bj(bj,1) = wf%fock_ia(j, b)
 !
                do i = 1, wf%n_o
@@ -762,8 +770,7 @@ contains
                      ai = index_two(a, i, wf%n_v)
                      aj = index_two(a, j, wf%n_v)                 
 !
-!
-                     v_ai_bj(ai, bj) =  two*c_ai_bj(ai,bj) - c_ai_bj(aj, bi)        
+                     v_ai_bj(ai, bj) = two*c_ai_bj(ai, bj) - c_ai_bj(aj, bi)        
 !
                   enddo
                enddo

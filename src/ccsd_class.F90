@@ -1208,7 +1208,7 @@ contains
       call wf%initialize_amplitudes
       call wf%read_double_amplitudes
 !
-      displacement = 1.0D0
+      displacement = 1.0D-7
 !
       call wf%initialize_omega
 !
@@ -1220,6 +1220,7 @@ contains
             wf%omega1 = zero
             wf%omega2 = zero
 !
+            call wf%construct_fock
             call wf%construct_omega
 !
             c_a_i  = wf%omega1
@@ -1236,21 +1237,6 @@ contains
 !
             call wf%construct_fock
             call wf%construct_omega 
-!
-! 125  A_mu,nu, singles, by derivation
-! 126  ai, bj, A_ai,bj                    1                    1  0.34971541079464175
-! 127  ai, bj, A_ai,bj                    2                    1  -4.4720761674640081E-003
-! 128  ai, bj, A_ai,bj                    3                    1   2.1710771728185977E-002
-! 129  ai, bj, A_ai,bj                    4                    1   0.0000000000000000
-! 130  ai, bj, A_ai,bj                    5                    1   0.0000000000000000
-! 131  ai, bj, A_ai,bj                    6                    1   6.7402265329333938E-002
-!  43  A_mu,nu, singles, by transformation
-!  44  ai, bj, A_ai,bj                    1                    1  0.44463638910338227
-!  45  ai, bj, A_ai,bj                    2                    1   1.4350081876687438E-015
-!  46  ai, bj, A_ai,bj                    3                    1   2.1710771728185432E-002
-!  47  ai, bj, A_ai,bj                    4                    1   0.0000000000000000
-!  48  ai, bj, A_ai,bj                    5                    1   0.0000000000000000
-!  49  ai, bj, A_ai,bj                    6                    1  -2.1265416526293723E-016
 !
             do i = 1, wf%n_o
                do a = 1, wf%n_v
