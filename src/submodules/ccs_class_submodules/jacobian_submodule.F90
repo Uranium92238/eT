@@ -58,13 +58,19 @@ contains
 !        Prepare for writing trial vectors to file
 !
          call generate_unit_identifier(unit_trial_vecs)
-         open(unit=unit_trial_vecs, file='trial_vec', action='write', status='new', &
+         open(unit=unit_trial_vecs, file='trial_vec', action='write', status='unknown', &
            access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror)
 !
-         do i = 1, (wf%tasks%n_singlet_states)
+         if (ioerror .ne. 0) write(unit_output,*) 'Error opening trial vectors file xxx'
+!
+         do i = 1, wf%tasks%n_singlet_states
+!
             c = zero
             c(index_lowest_obital_diff(i,1),1) = one
             write(unit_trial_vecs, rec=i, iostat=ioerror) (c(j,1), j = 1, wf%n_parameters)
+!
+            if (ioerror .ne. 0) write(unit_output,*) 'Error writing to trial vectors file'
+!
          enddo
 !
 !        Close file
@@ -77,12 +83,12 @@ contains
 !
 !        Deallocate index_lowest_obital_diff
 !
-         call deallocator_int( index_lowest_obital_diff, wf%tasks%n_singlet_states, 1)
+         call deallocator_int(index_lowest_obital_diff, wf%tasks%n_singlet_states, 1)
 !
 !        Prepare linear transform file
 !
          call generate_unit_identifier(unit_rho)
-         open(unit=unit_rho, file='transformed_vec', action='write', status='new', &
+         open(unit=unit_rho, file='transformed_vec', action='write', status='unknown', &
            access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror)
          close(unit_rho)
 !
@@ -190,10 +196,14 @@ contains
          call generate_unit_identifier(unit_trial_vecs)
          open(unit=unit_trial_vecs, file='trial_vec', action='read', status='old', &
            access='direct', form='unformatted', recl=dp*(wf%n_v)*(wf%n_o), iostat=ioerror)
+!        
+         if (ioerror .ne. 0) write(unit_output,*) 'Error opening trial vectors file'
 !
          call generate_unit_identifier(unit_rho)
          open(unit=unit_rho, file='transformed_vec', action='write', status='old', &
            access='direct', form='unformatted', recl=dp*(wf%n_v)*(wf%n_o), iostat=ioerror)
+!
+         if (ioerror .ne. 0) write(unit_output,*) 'Error opening transformed vectors file'
 !
 !        For each trial vector: Read, transform and write
 !               
@@ -201,12 +211,16 @@ contains
 !
             read(unit_trial_vecs, rec=trial, iostat=ioerror) c_a_i
 !
+            if (ioerror .ne. 0) write(unit_output,*) 'Error reading trial vector from file'
+!
             call wf%jacobian_transformation(c_a_i)
 !
 !           Write transformed vector to file
 !
             write(unit_rho, rec=trial, iostat=ioerror) c_a_i
-          
+!
+            if (ioerror .ne. 0) write(unit_output,*) 'Error writing transformed vector to file'
+!          
          enddo
          close(unit_trial_vecs) 
          close(unit_rho)                                
@@ -247,6 +261,7 @@ contains
          call deallocator(rho_a_i, wf%n_v, wf%n_o)
 !
       end subroutine jacobian_transformation_ccs
+!
 !
       module subroutine jacobian_ccs_a1_ccs(wf,c1,rho)
 !!
@@ -539,8 +554,7 @@ contains
 !
       enddo ! Looping over batches
 !
-!
-      end subroutine jacobian_ccs_b1_ccs
+   end subroutine jacobian_ccs_b1_ccs
 !
 !
 end submodule

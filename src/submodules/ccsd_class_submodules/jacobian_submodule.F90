@@ -16,14 +16,15 @@ submodule (ccsd_class) jacobian
 contains
 !
 !
-      module subroutine calculate_orbital_differences_ccsd(wf,orbital_diff)
+   module subroutine calculate_orbital_differences_ccsd(wf,orbital_diff)
 !!
-!!       Calculate and return orbital differences
+!!       Calculate Orbital Differences (CCSD)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad May 2017
 !!
          implicit none
 !
          class(ccsd) :: wf
+!
          real(dp), dimension(wf%n_parameters, 1) :: orbital_diff
 !
          integer(i15) :: a = 0, i = 0, b = 0, j = 0
@@ -32,91 +33,108 @@ contains
 !
          do i = 1, wf%n_o
             do a = 1, wf%n_v
+!
                ai = index_two(a, i, wf%n_v)
+!
                orbital_diff(ai, 1) = wf%fock_diagonal(a + wf%n_o, 1) - wf%fock_diagonal(i, 1)
+!
                do j = 1, wf%n_o
                   do b = 1, wf%n_v
+!
                      bj = index_two(b, j, wf%n_v)
+!
                      aibj = index_packed(ai, bj)
+!
                      orbital_diff((wf%n_o)*(wf%n_v)+aibj, 1) = wf%fock_diagonal(a + wf%n_o, 1) - wf%fock_diagonal(i, 1) &
-                                                            + wf%fock_diagonal(b + wf%n_o, 1) - wf%fock_diagonal(j, 1)
+                                                               + wf%fock_diagonal(b + wf%n_o, 1) - wf%fock_diagonal(j, 1)
+
+!
                   enddo
                enddo
             enddo
          enddo
 !
-      end subroutine calculate_orbital_differences_ccsd
+   end subroutine calculate_orbital_differences_ccsd
 !
 !
-      module subroutine transform_trial_vecs_ccsd(wf, first_trial, last_trial)
+   module subroutine transform_trial_vecs_ccsd(wf, first_trial, last_trial)
 !!
-!!       Construct Jacobian Transformation of trial vectors
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!    Transformation Trial Vectors (CCSD)
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!       Each trial vector in first_trial to last_trial is read from file and
-!!       transformed before the transformed vector is written to file.
+!!    Each trial vector in first_trial to last_trial is read from file and
+!!    transformed before the transformed vector is written to file.
 !!
-         implicit none
+      implicit none
 !
-         class(ccsd) :: wf
+      class(ccsd) :: wf
 !
-         integer(i15), intent(in) :: first_trial, last_trial ! Which trial_vectors we are to transform
+      integer(i15), intent(in) :: first_trial, last_trial ! Which trial_vectors we are to transform
 !
-         real(dp), dimension(:,:), allocatable :: c_a_i
-         real(dp), dimension(:,:), allocatable :: c_aibj
+      real(dp), dimension(:,:), allocatable :: c_a_i
+      real(dp), dimension(:,:), allocatable :: c_aibj
 !
-         integer(i15) :: unit_trial_vecs = 0, unit_rho = 0, ioerror = 0
-         integer(i15) :: trial = 0 
-         write(unit_output,*)'In vector transformation'
-         flush(unit_output)
+      integer(i15) :: unit_trial_vecs = 0, unit_rho = 0, ioerror = 0
+      integer(i15) :: trial = 0 
 !
-!        Allocate c_a_i
+      write(unit_output,*)'In vector transformation'
+      flush(unit_output)
 !
-         call allocator(c_a_i, wf%n_v, wf%n_o)
-         c_a_i = zero 
-         call allocator(c_aibj, wf%n_t2am, 1)
-         c_aibj = zero 
+!     Allocate c_a_i
 !
-!        Open trial vector and transformed vector files
+      call allocator(c_a_i, wf%n_v, wf%n_o)
+      c_a_i = zero 
 !
-         call generate_unit_identifier(unit_trial_vecs)
-         open(unit=unit_trial_vecs, file='trial_vec', action='read', status='old', &
+      call allocator(c_aibj, wf%n_t2am, 1)
+      c_aibj = zero 
+!
+!     Open trial vector and transformed vector files
+!
+      call generate_unit_identifier(unit_trial_vecs)
+      open(unit=unit_trial_vecs, file='trial_vec', action='read', status='old', &
            access='direct', form='unformatted', recl=dp*wf%n_parameters, iostat=ioerror)
 !
-         call generate_unit_identifier(unit_rho)
-         open(unit=unit_rho, file='transformed_vec', action='write', status='old', &
+      call generate_unit_identifier(unit_rho)
+      open(unit=unit_rho, file='transformed_vec', action='write', status='old', &
            access='direct', form='unformatted', recl=dp*wf%n_parameters, iostat=ioerror)
 !
-!        For each trial vector: Read, transform and write
+!     For each trial vector: read, transform and write
 !   
-         write(unit_output,*)'Jacobian transformation'     
-         flush(unit_output)       
-         do trial = first_trial, last_trial
+      write(unit_output,*)'Jacobian transformation'     
+      flush(unit_output)    
+!  
+      do trial = first_trial, last_trial
 !
-            read(unit_trial_vecs, rec=trial, iostat=ioerror) c_a_i, c_aibj
+         read(unit_trial_vecs, rec=trial, iostat=ioerror) c_a_i, c_aibj
 !
-            call wf%jacobian_ccsd_transformation(c_a_i, c_aibj)
+         call wf%jacobian_ccsd_transformation(c_a_i, c_aibj)
 !
-!           Write transformed vector to file
+!        Write transformed vector to file
 !
-            write(unit_rho, rec=trial, iostat=ioerror) c_a_i, c_aibj
-          
-         enddo
-         close(unit_trial_vecs) 
-         close(unit_rho)                                
+         write(unit_rho, rec=trial, iostat=ioerror) c_a_i, c_aibj
 !
-!        Deallocate c_a_i
+      enddo
 !
-         call deallocator(c_a_i, wf%n_v, wf%n_o)
-         call deallocator(c_aibj, wf%n_t2am, 1)
+      close(unit_trial_vecs) 
+      close(unit_rho)                                
 !
-      end subroutine transform_trial_vecs_ccsd
+!     Deallocate c_a_i
+!
+      call deallocator(c_a_i, wf%n_v, wf%n_o)
+      call deallocator(c_aibj, wf%n_t2am, 1)
+!
+   end subroutine transform_trial_vecs_ccsd
 !
 !
    module subroutine jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!
 !!    Jacobian transformation (CCSD)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!    Status for debugging: 
+!!
+!!    28 May: jacobian_ccs_a1, jacobian_ccs_b1, and jacobian_ccsd_a1 leads to the
+!!    correct values of A_ai,bj and are presumably bug-free.
 !!
       implicit none
 !
@@ -165,19 +183,19 @@ contains
 !
       call squareup(c_aibj, c_ai_bj, (wf%n_o)*(wf%n_v)) ! Pack out vector 
 !
-   !   call wf%jacobian_ccsd_b1(c_ai_bj, rho_a_i) ! Does not contribute to singles-singles-bblock
+      call wf%jacobian_ccsd_b1(c_ai_bj, rho_a_i) ! Does not contribute to singles-singles-bblock
 !
       ! write(unit_output,*) 'After ccsd b1, singles'
       ! call vec_print(rho_a_i,wf%n_v,wf%n_o)
       ! rho_a_i = zero 
 !
-    !  call wf%jacobian_ccsd_c1(c_ai_bj, rho_a_i)
+      call wf%jacobian_ccsd_c1(c_ai_bj, rho_a_i)
 !
       ! write(unit_output,*) 'After ccsd c1, singles'
       ! call vec_print(rho_a_i,wf%n_v,wf%n_o)
       ! rho_a_i = zero 
 !
-   !   call wf%jacobian_ccsd_d1(c_ai_bj, rho_a_i)
+      call wf%jacobian_ccsd_d1(c_ai_bj, rho_a_i)
 !
   !     write(unit_output,*) 'After ccsd d1, singles'
   !     call vec_print(rho_a_i,wf%n_v,wf%n_o)
@@ -188,25 +206,25 @@ contains
       call allocator(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       rho_ai_bj = zero 
 !
-  !    call wf%jacobian_ccsd_a2(rho_ai_bj, c_a_i)
+      call wf%jacobian_ccsd_a2(rho_ai_bj, c_a_i)
 !
       ! write(unit_output,*) 'After ccsd a2, doubles'
       ! call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))
       ! rho_ai_bj = zero 
 !
-  !    call wf%jacobian_ccsd_b2(rho_ai_bj, c_a_i)
+      call wf%jacobian_ccsd_b2(rho_ai_bj, c_a_i)
 !
       ! write(unit_output,*) 'After ccsd b2, doubles'
       ! call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))
       ! rho_ai_bj = zero 
 !
-   !   call wf%jacobian_ccsd_c2(rho_ai_bj, c_a_i)
+      call wf%jacobian_ccsd_c2(rho_ai_bj, c_a_i)
 !
       ! write(unit_output,*) 'After ccsd c2, doubles'
       ! call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))
       ! rho_ai_bj = zero 
 !
-   !   call wf%jacobian_ccsd_d2(rho_ai_bj, c_a_i)
+     call wf%jacobian_ccsd_d2(rho_ai_bj, c_a_i)
 !
       ! write(unit_output,*) 'After ccsd d2, doubles'
       ! call vec_print(rho_ai_bj,(wf%n_v)*(wf%n_o),(wf%n_v)*(wf%n_o))

@@ -101,6 +101,7 @@ contains
 !
       write(unit_output,*)'Initialize trial vectors'
       flush(unit_output)
+!
       call wf%initialize_trial_vectors
 !
 !     Allocate eigenvalue arrays
@@ -150,7 +151,7 @@ contains
          converged_energy = .true.
 !
          do i = 1, wf%tasks%n_singlet_states
-            if ( abs(eigenvalues_Re_new(i,1)-eigenvalues_Re_old(i,1)) .gt. wf%settings%energy_threshold) then
+            if (abs(eigenvalues_Re_new(i,1)-eigenvalues_Re_old(i,1)) .gt. wf%settings%energy_threshold) then
                converged_energy = .false.
             endif
          enddo
@@ -476,6 +477,8 @@ contains
             read(unit_trial_vecs, rec=trial, iostat=ioerror) c_i
             call daxpy(wf%n_parameters, solution_vectors_red(trial,root), c_i, 1, full_space_solution_vector, 1)
 !
+            if (ioerror .ne. 0) write(unit_output,*) 'Error reading trial vecs in get_next_trial_vectors'
+!
          enddo
 !
          call deallocator(c_i, wf%n_parameters, 1)
@@ -510,6 +513,8 @@ contains
             read(unit_rho, rec=trial, iostat=ioerror) rho_i
             call daxpy(wf%n_parameters, solution_vectors_red(trial,root), rho_i, 1, residual, 1)
 !
+            if (ioerror .ne. 0) write(unit_output,*) 'Error reading tranf vecs in get_next_trial_vectors'
+!
          enddo
 !
          call deallocator(rho_i, wf%n_parameters, 1)
@@ -539,13 +544,15 @@ contains
 !        prod_i (I - c_i*c_i^T)*Res = prod_i (Res - c_i*c_i^T*Res)
 !
          do trial = 1, n_red
+!
             c_i = zero
             read(unit_trial_vecs, rec=trial, iostat=ioerror) c_i
             dot_prod = ddot(wf%n_parameters, c_i, 1, residual, 1)
             call daxpy(wf%n_parameters, -dot_prod, c_i, 1, residual,1)
 !
+            if (ioerror .ne. 0) write(unit_output,*) 'Error reading trial vecs in get_next_trial_vectors'
+!
          enddo
-
 !
          call deallocator(c_i, wf%n_parameters, 1)
          call deallocator(temp, wf%n_parameters, 1)
@@ -557,7 +564,7 @@ contains
 !        Test for linear dependency on old trial vectors
 !        If norm sufficiently high new vector is normalized and written to file
 !
-         if (norm_solution_vector .gt. wf%settings%ampeqs_threshold) then
+         if (norm_solution_vector .gt. 1.0D-12) then
 !
             n_new_trials = n_new_trials + 1
             call dscal(wf%n_parameters, one/norm_solution_vector, residual, 1)
@@ -581,6 +588,7 @@ contains
       call deallocator(residual_norms, wf%tasks%n_singlet_states, 1)
 !
       write(unit_output,'(t3,a/)') '----------------------------------------------------------------'
+!
    end subroutine get_next_trial_vectors_ccs
 !
 !
