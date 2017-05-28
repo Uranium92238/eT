@@ -136,6 +136,9 @@ contains
 !!    28 May: jacobian_ccs_a1, jacobian_ccs_b1, and jacobian_ccsd_a1 leads to the
 !!    correct values of A_ai,bj and are presumably bug-free.
 !!
+!!    28 May #2: jacobian_ccsd_a1 ... jacobian_ccsd_d1 leads to the correct values 
+!!    of A_ckdl, bj and A_ck, aibj blocks. These are presumably bug-free.
+!!
       implicit none
 !
       class(ccsd) :: wf 
@@ -151,7 +154,7 @@ contains
       real(dp), dimension(:,:), allocatable :: rho_ab_ij     ! rho_ai_bj, reordered
       real(dp), dimension(:,:), allocatable :: c_ab_ij       ! c_ai_bj, reordered
 !
-      integer(i15) :: a = 0, ab = 0, ai = 0, b = 0, bj = 0, i = 0, ij = 0, j = 0
+      integer(i15) :: a = 0, ab = 0, ai = 0, b = 0, bj = 0, i = 0, ij = 0, j = 0, aibj = 0
 !
       call allocator(rho_a_i, wf%n_v, wf%n_o)
       rho_a_i = zero
@@ -183,7 +186,7 @@ contains
 !
       call squareup(c_aibj, c_ai_bj, (wf%n_o)*(wf%n_v)) ! Pack out vector 
 !
-      call wf%jacobian_ccsd_b1(c_ai_bj, rho_a_i) ! Does not contribute to singles-singles-bblock
+      call wf%jacobian_ccsd_b1(c_ai_bj, rho_a_i) 
 !
       ! write(unit_output,*) 'After ccsd b1, singles'
       ! call vec_print(rho_a_i,wf%n_v,wf%n_o)
@@ -2932,7 +2935,7 @@ contains
 !!    Jacobian CCSD E2 
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!    rho_ai_bj^E2 = sum_dlck t_bj,dl * L_kc,ld * c_ai,ck
+!!    rho_ai_bj^E2 = sum_dlck t_bj,dl * L_kc,ld * c_ai,ck ! E: Missing factor 2? Not in the calculation, only here
 !!
       implicit none 
 !
@@ -2958,7 +2961,7 @@ contains
       call allocator(t_dl_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       t_dl_bj = zero
 !
-      call squareup(wf%t2am, t_dl_bj,(wf%n_o)*(wf%n_v))
+      call squareup(wf%t2am, t_dl_bj, (wf%n_o)*(wf%n_v))
 !
       call wf%destruct_amplitudes
 !
@@ -4234,7 +4237,8 @@ contains
                      lc = index_two(l, c, wf%n_o)
                      ld = index_two(l, d, wf%n_o)
 !
-
+                     g_lc_kd(lc, kd) = g_kc_ld(kc, ld)
+!
                   enddo
                enddo
             enddo
