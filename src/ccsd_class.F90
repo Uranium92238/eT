@@ -1153,7 +1153,7 @@ contains
       real(dp), dimension(:,:), allocatable :: c_aibj
 !
       integer(i15) :: a = 0, i = 0, b = 0, j = 0, ai = 0, bj = 0, aibj = 0
-      integer(i15) :: c = 0, k = 0, ck = 0
+      integer(i15) :: c = 0, k = 0, ck = 0, ckdl = 0, l = 0, d = 0, dl = 0
 !
       real(dp) :: displacement
 !
@@ -1203,10 +1203,51 @@ contains
          enddo
       enddo 
 !
+      write(unit_output,*) 'A_ckdl,bj, singles, by transformation ZZ'
+!
+      do j = 1, wf%n_o
+         do b = 1, wf%n_v
+!
+!           Let c have a one for the excitation bj, zero otherwise 
+!
+            c_a_i(b, j) = one 
+!
+!           Transform c by A. The result should be A_mu,bj 
+!
+            call wf%jacobian_ccsd_transformation(c_a_i,c_aibj)
+!
+!           Print these elements of A.
+!
+            do k = 1, wf%n_o
+               do c = 1, wf%n_v
+                  do l = 1, wf%n_o
+                     do d = 1, wf%n_v
+!
+                        ck = index_two(c, k, wf%n_v)
+                        dl = index_two(d, l, wf%n_v)
+!
+                        ckdl = index_packed(ck, dl)
+!
+                        bj = index_two(b, j, wf%n_v)
+!
+                        write(unit_output,*) 'ckdl, bj, A_ckdl,bj', ckdl, bj, c_aibj(ckdl,1)
+!
+                     enddo
+                  enddo
+!
+               enddo
+            enddo
+!
+            c_a_i = zero
+            c_aibj = zero
+!
+         enddo
+      enddo 
+!
       c_a_i  = zero
       c_aibj = zero
 !
-      write(unit_output,*) 'A_mu,nu, doubles, by transformation XX'
+      write(unit_output,*) 'A_ck,aibj, doubles, by transformation XX'
 !
       do j = 1, wf%n_o
          do b = 1, wf%n_v
@@ -1246,6 +1287,53 @@ contains
          enddo
       enddo
 !
+      write(unit_output,*) 'A_ckdl,aibj, doubles, by transformation YY'
+!
+      do j = 1, wf%n_o
+         do b = 1, wf%n_v
+!
+            bj = index_two(b, j, wf%n_v)
+!
+            do i = 1, wf%n_o
+               do a = 1, wf%n_v
+!
+                  ai = index_two(a, i, wf%n_v)
+!
+                  aibj = index_packed(ai, bj)
+!
+                  c_aibj(aibj,1) = one
+!
+!                 Transform c by A. The result should be A_mu,aibj 
+!
+                  call wf%jacobian_ccsd_transformation(c_a_i,c_aibj)
+!
+!                 Print singles-doubles block 
+!
+                  do k = 1, wf%n_o
+                     do c = 1, wf%n_v
+                        do l = 1, wf%n_o
+                           do d = 1, wf%n_v
+!
+                              ck = index_two(c, k, wf%n_v)
+                              dl = index_two(d, l, wf%n_v)
+!
+                              ckdl = index_packed(ck, dl)
+!
+                              write(unit_output,*) 'ckdl, aibj, A_ckdl, aibj', ckdl, aibj, c_aibj(ckdl,1)
+!
+                           enddo
+                        enddo
+                     enddo
+                  enddo
+!
+                  c_a_i = zero
+                  c_aibj = zero
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
 !     :: Second approach: differentaition of omega :: 
 !
       write(unit_output,*) 'A_mu,nu, singles, by derivation'
@@ -1253,7 +1341,7 @@ contains
       call wf%initialize_amplitudes
       call wf%read_double_amplitudes
 !
-      displacement = 1.0D-5
+      displacement = 1.0D-8
 !
       call wf%initialize_omega
 !
@@ -1301,7 +1389,7 @@ contains
          enddo
       enddo 
 !
-      write(unit_output,*) 'A_mu,nu, doubles, by differentiation XX'     
+      write(unit_output,*) 'A_ck,aibj, doubles, by differentiation XX'     
 !
       do j = 1, wf%n_o
          do b = 1, wf%n_v
@@ -1355,54 +1443,139 @@ contains
          enddo
       enddo
 !
+!
+      write(unit_output,*) 'A_ckdl,aibj, doubles, by differentiation YY'     
+!
+      do j = 1, wf%n_o
+         do b = 1, wf%n_v
+!
+            do i = 1, wf%n_o
+               do a = 1, wf%n_v
+!
+                  ai = index_two(a, i, wf%n_v)
+                  bj = index_two(b, j, wf%n_v)
+!
+                  aibj = index_packed(ai, bj)
+!  
+!                 Construct omega and save in c 
+!
+                  wf%omega1 = zero
+                  wf%omega2 = zero
+!
+                  call wf%construct_fock
+                  call wf%construct_omega
+!
+                  c_a_i  = wf%omega1
+                  c_aibj = wf%omega2
+!
+!                 Shift the aibj amplitude 
+!
+                  wf%t2am(aibj,1) = wf%t2am(aibj,1) + displacement
+!
+!                 Construct omega 
+!
+                  wf%omega1 = zero
+                  wf%omega2 = zero
+!
+                  call wf%construct_fock
+                  call wf%construct_omega 
+!
+                  do k = 1, wf%n_o
+                     do c = 1, wf%n_v
+                        do l = 1, wf%n_o
+                           do d = 1, wf%n_v
+!
+                              ck = index_two(c, k, wf%n_v)
+                              dl = index_two(d, l, wf%n_v)
+!
+                              ckdl = index_packed(ck, dl)
+!
+                              if (c .eq. d .and. k .eq. l) then
+                                 write(unit_output,*) 'ckdl, aibj, A_ckdl, aibj', & 
+                                          ckdl, aibj, half*(wf%omega2(ckdl,1)-c_aibj(ckdl,1))/displacement
+                              else
+
+!
+                                 write(unit_output,*) 'ckdl, aibj, A_ckdl, aibj', & 
+                                          ckdl, aibj, (wf%omega2(ckdl,1)-c_aibj(ckdl,1))/displacement
+                              endif
+!
+                           enddo
+                        enddo
+                     enddo
+                  enddo
+!
+                  wf%t2am(aibj,1) = wf%t2am(aibj,1) - displacement
+!
+               enddo
+            enddo
+!
+         enddo
+      enddo
+!
+     write(unit_output,*) 'A_ckdl,bj, singles, by derivation ZZ'
+!
+      do j = 1, wf%n_o
+         do b = 1, wf%n_v
+!
+!           Construct omega and save in c 
+!
+            wf%omega1 = zero
+            wf%omega2 = zero
+!
+            call wf%construct_fock
+            call wf%construct_omega
+!
+            c_a_i  = wf%omega1
+            c_aibj = wf%omega2
+!
+!           Shift the j,b amplitude 
+!
+            wf%t1am(b,j) = wf%t1am(b,j) + displacement
+!
+!           Construct omega 
+!
+            wf%omega1 = zero
+            wf%omega2 = zero
+!
+            call wf%construct_fock
+            call wf%construct_omega 
+!
+            do k = 1, wf%n_o
+               do c = 1, wf%n_v
+                  do l = 1, wf%n_o
+                     do d = 1, wf%n_v
+!
+!                       Calculate A_ckdl,bj = (omega(t)_ckdl - omega(t+Dt_bj)_ckdl)/Dt_bj.
+!
+                        ck = index_two(c, k, wf%n_v)
+                        dl = index_two(d, l, wf%n_v)
+                        bj = index_two(b, j, wf%n_v)
+!
+                        ckdl = index_packed(ck, dl)
+!
+                        if (c .eq. d .and. k .eq. l) then 
+!
+                           write(unit_output,*) 'ckdl, bj, A_ckdl,bj', ckdl, bj, &
+                                    half*(wf%omega2(ckdl,1)-c_aibj(ckdl,1))/displacement
+!
+                        else
+!
+                           write(unit_output,*) 'ckdl, bj, A_ckdl,bj', ckdl, bj, &
+                                    (wf%omega2(ckdl,1)-c_aibj(ckdl,1))/displacement
+                        endif
+!
+                     enddo
+                  enddo
+               enddo
+            enddo
+!
+            wf%t1am(b,j) = wf%t1am(b,j) - displacement
+!
+         enddo
+      enddo 
+!
    end subroutine jacobi_test_ccsd
 !
 end module ccsd_class
-! A_mu,nu, doubles, by differentiation XX
-!  938  ck, aibj, A_ck, aibj                    1                    1  -4.5449755071706691E-016
-!  939  ck, aibj, A_ck, aibj                    2                    1  -4.4720761815941756E-003
-!  940  ck, aibj, A_ck, aibj                    3                    1   4.8225312628727163E-016
-!  941  ck, aibj, A_ck, aibj                    4                    1   0.0000000000000000
-!  942  ck, aibj, A_ck, aibj                    5                    1   0.0000000000000000
-!  943  ck, aibj, A_ck, aibj                    6                    1   6.7402265366278691E-002
-!  944  ck, aibj, A_ck, aibj                    7                    1   0.0000000000000000
-!  945  ck, aibj, A_ck, aibj                    8                    1   0.0000000000000000
-!  946  ck, aibj, A_ck, aibj                    9                    1  -1.5785983630976213E-016
-!  947  ck, aibj, A_ck, aibj                    1                    2  -7.7742080282527284E-002
-!  948  ck, aibj, A_ck, aibj                    2                    2   0.0000000000000000
-!  949  ck, aibj, A_ck, aibj                    3                    2  0.15521072482199655
-!  950  ck, aibj, A_ck, aibj                    4                    2   0.0000000000000000
-!  951  ck, aibj, A_ck, aibj                    5                    2   0.0000000000000000
-!  952  ck, aibj, A_ck, aibj                    6                    2   0.0000000000000000
-!  953  ck, aibj, A_ck, aibj                    7                    2   0.0000000000000000
-!  954  ck, aibj, A_ck, aibj                    8                    2   0.0000000000000000
-!  955  ck, aibj, A_ck, aibj                    9                    2  -4.7428504773530486E-002
-!  956  ck, aibj, A_ck, aibj                    1                    4   1.2125717096415451E-015
-!  957  ck, aibj, A_ck, aibj                    2                    4  0.11413527827713876
-!  958  ck, aibj, A_ck, aibj                    3                    4  -1.9203388878219162E-015
-!  959  ck, aibj, A_ck, aibj                    4                    4   0.0000000000000000
-!  960  ck, aibj, A_ck, aibj                    5                    4   0.0000000000000000
-!  A_mu,nu, doubles, by transformation XX
-!  126  ck, aibj, A_ck, aibj                    1                    1  -4.5449755070592346E-016
-!  127  ck, aibj, A_ck, aibj                    2                    1  -4.4720761674654653E-003
-!  128  ck, aibj, A_ck, aibj                    3                    1   4.8225312632155237E-016
-!  129  ck, aibj, A_ck, aibj                    4                    1   0.0000000000000000
-!  130  ck, aibj, A_ck, aibj                    5                    1   0.0000000000000000
-!  131  ck, aibj, A_ck, aibj                    6                    1   6.7402265329334188E-002
-!  132  ck, aibj, A_ck, aibj                    7                    1   0.0000000000000000
-!  133  ck, aibj, A_ck, aibj                    8                    1   0.0000000000000000
-!  134  ck, aibj, A_ck, aibj                    9                    1  -1.5785983631388945E-016
-!  135  ck, aibj, A_ck, aibj                    1                    2  -7.7742080282527631E-002
-!  136  ck, aibj, A_ck, aibj                    2                    2  -1.1682471870995383E-002
-!  137  ck, aibj, A_ck, aibj                    3                    2  0.15521072482199724
-!  138  ck, aibj, A_ck, aibj                    4                    2   0.0000000000000000
-!  139  ck, aibj, A_ck, aibj                    5                    2   0.0000000000000000
-!  140  ck, aibj, A_ck, aibj                    6                    2  0.11037764258162563
-!  141  ck, aibj, A_ck, aibj                    7                    2   0.0000000000000000
-!  142  ck, aibj, A_ck, aibj                    8                    2   0.0000000000000000
-!  143  ck, aibj, A_ck, aibj                    9                    2  -4.7428504773530937E-002
-!  144  ck, aibj, A_ck, aibj                    1                    4  -2.5691418584346322E-002
-!  145  ck, aibj, A_ck, aibj                    2                    4  0.10723007656022390
-!  146  ck, aibj, A_ck, aibj                    3                    4  0.16035701386992271
-!  147  ck, aibj, A_ck, aibj                    4                    4   0.0000000000000000
-!  148  ck, aibj, A_ck, aibj                    5                    4   0.0000000000000000
+!
