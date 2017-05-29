@@ -283,7 +283,7 @@ contains
          do i = 1,n_red
            read(unit_trial_vecs, rec=i, iostat=ioerror) c_i
             do j = n_red - n_new_trials + 1, n_red
-               read(unit_rho, rec=j, iostat=ioerror) rho_j
+             read(unit_rho, rec=j, iostat=ioerror) rho_j
                A_red(i,j) = ddot(wf%n_parameters, c_i, 1, rho_j, 1)
             enddo
          enddo
@@ -300,9 +300,12 @@ contains
       call deallocator(rho_j, wf%n_parameters, 1)
 !
 !      write(unit_output,*) 'Reduced A:'
-!      do i = 1, n_red
-!            write(unit_output,*)(A_red(i,j), j=1,n_red)
-!      enddo
+!
+!         do i = 1, n_red
+!           
+!               write(unit_output,*)(A_red(i,j), j = 1, n_red)
+!         
+!         enddo
 !
 !     Close files for trial vectors and transformed vectors
 !
@@ -373,8 +376,8 @@ contains
 !
 !     Write eigenvalues_Re
 !
-!      write(unit_output,*)'Eigenvalues'
-!      write(unit_output,*) (eigenvalues_Re(i,1), i=1,wf%tasks%n_singlet_states)
+      write(unit_output,*)'Eigenvalues'
+      write(unit_output,*) (eigenvalues_Re(i,1), i=1,wf%tasks%n_singlet_states)
 !
 !      write(unit_output,*) (eigenvalues_full_Re(i,1), i=1,n_red)
 !
@@ -459,6 +462,7 @@ contains
 !     For each of the roots
 !
       do root = 1, wf%tasks%n_singlet_states
+         residual = zero
 !
 !        Create fullspace vector X and calculate norm ||X||
 !
@@ -521,7 +525,7 @@ contains
 !
 !        Divide by solution vector norm |X|
 !
-         call dscal(wf%n_parameters, norm_solution_vector, residual, 1)
+         call dscal(wf%n_parameters, one/norm_solution_vector, residual, 1)
 !
 !        Calculate residual norm and check convergence criteria on residual norms
 !
@@ -564,12 +568,12 @@ contains
 !        Test for linear dependency on old trial vectors
 !        If norm sufficiently high new vector is normalized and written to file
 !
-         if (norm_solution_vector .gt. 1.0D-12) then
+         if (norm_solution_vector .gt. 1.0D-2) then
 !
             n_new_trials = n_new_trials + 1
             call dscal(wf%n_parameters, one/norm_solution_vector, residual, 1)
             write(unit_trial_vecs, rec=n_new_trials+n_red, iostat=ioerror) residual
-!  
+!     
          endif
 !
       enddo

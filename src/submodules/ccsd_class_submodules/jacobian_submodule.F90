@@ -91,11 +91,11 @@ contains
 !     Open trial vector and transformed vector files
 !
       call generate_unit_identifier(unit_trial_vecs)
-      open(unit=unit_trial_vecs, file='trial_vec', action='read', status='old', &
+      open(unit=unit_trial_vecs, file='trial_vec', action='read', status='unknown', &
            access='direct', form='unformatted', recl=dp*wf%n_parameters, iostat=ioerror)
 !
       call generate_unit_identifier(unit_rho)
-      open(unit=unit_rho, file='transformed_vec', action='write', status='old', &
+      open(unit=unit_rho, file='transformed_vec', action='write', status='unknown', &
            access='direct', form='unformatted', recl=dp*wf%n_parameters, iostat=ioerror)
 !
 !     For each trial vector: read, transform and write
@@ -188,28 +188,24 @@ contains
 !
       call squareup(c_aibj, c_ai_bj, (wf%n_o)*(wf%n_v)) ! Pack out vector 
 !
-!       do j = 1, wf%n_o 
-!          do b = 1, wf%n_v
-!             do i = 1, wf%n_o
-!                do a = 1, wf%n_v
-! !
-!                   ai = index_two(a, i, wf%n_v)
-!                   bj = index_two(b, j, wf%n_v)
-! !
-!                   if (a .eq. b .and. i .eq. j) then
-! !
-!                    !  c_ai_bj(ai,bj) = two*c_ai_bj(ai,bj)
-! !
-!                   else
-! !
-!                      c_ai_bj(ai,bj) = half*c_ai_bj(ai,bj)
-! !
-!                   endif
-! !
-!                enddo
-!             enddo
-!          enddo
-!       enddo
+       do j = 1, wf%n_o 
+          do b = 1, wf%n_v
+             do i = 1, wf%n_o
+                do a = 1, wf%n_v
+ !
+                   ai = index_two(a, i, wf%n_v)
+                   bj = index_two(b, j, wf%n_v)
+ !
+                   if (a .eq. b .and. i .eq. j) then
+ !
+                      c_ai_bj(ai,bj) = two*c_ai_bj(ai,bj)
+ !
+                   endif
+ !
+                enddo
+             enddo
+          enddo
+       enddo
 !
       call wf%jacobian_ccsd_b1(c_ai_bj, rho_a_i) 
 !

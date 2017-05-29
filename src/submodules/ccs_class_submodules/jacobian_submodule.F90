@@ -61,16 +61,10 @@ contains
          open(unit=unit_trial_vecs, file='trial_vec', action='write', status='unknown', &
            access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror)
 !
-         if (ioerror .ne. 0) write(unit_output,*) 'Error opening trial vectors file xxx'
-!
-         do i = 1, wf%tasks%n_singlet_states
-!
+         do i = 1, (wf%tasks%n_singlet_states)
             c = zero
             c(index_lowest_obital_diff(i,1),1) = one
             write(unit_trial_vecs, rec=i, iostat=ioerror) (c(j,1), j = 1, wf%n_parameters)
-!
-            if (ioerror .ne. 0) write(unit_output,*) 'Error writing to trial vectors file'
-!
          enddo
 !
 !        Close file
@@ -83,14 +77,7 @@ contains
 !
 !        Deallocate index_lowest_obital_diff
 !
-         call deallocator_int(index_lowest_obital_diff, wf%tasks%n_singlet_states, 1)
-!
-!        Prepare linear transform file
-!
-         call generate_unit_identifier(unit_rho)
-         open(unit=unit_rho, file='transformed_vec', action='write', status='unknown', &
-           access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror)
-         close(unit_rho)
+         call deallocator_int( index_lowest_obital_diff, wf%tasks%n_singlet_states, 1)
 !
       end subroutine initialize_trial_vectors_ccs
 !
@@ -196,14 +183,10 @@ contains
          call generate_unit_identifier(unit_trial_vecs)
          open(unit=unit_trial_vecs, file='trial_vec', action='read', status='old', &
            access='direct', form='unformatted', recl=dp*(wf%n_v)*(wf%n_o), iostat=ioerror)
-!        
-         if (ioerror .ne. 0) write(unit_output,*) 'Error opening trial vectors file'
 !
          call generate_unit_identifier(unit_rho)
          open(unit=unit_rho, file='transformed_vec', action='write', status='old', &
            access='direct', form='unformatted', recl=dp*(wf%n_v)*(wf%n_o), iostat=ioerror)
-!
-         if (ioerror .ne. 0) write(unit_output,*) 'Error opening transformed vectors file'
 !
 !        For each trial vector: Read, transform and write
 !               
@@ -211,16 +194,12 @@ contains
 !
             read(unit_trial_vecs, rec=trial, iostat=ioerror) c_a_i
 !
-            if (ioerror .ne. 0) write(unit_output,*) 'Error reading trial vector from file'
-!
             call wf%jacobian_transformation(c_a_i)
 !
 !           Write transformed vector to file
 !
             write(unit_rho, rec=trial, iostat=ioerror) c_a_i
-!
-            if (ioerror .ne. 0) write(unit_output,*) 'Error writing transformed vector to file'
-!          
+          
          enddo
          close(unit_trial_vecs) 
          close(unit_rho)                                
@@ -262,7 +241,6 @@ contains
 !
       end subroutine jacobian_transformation_ccs
 !
-!
       module subroutine jacobian_ccs_a1_ccs(wf,c1,rho)
 !!
 !!       A1 contribution to right transform of Jacobian
@@ -278,9 +256,9 @@ contains
          implicit none
 !
          class(ccs) :: wf
-!
-         real(dp), dimension(wf%n_v,wf%n_o) :: c1
-         real(dp), dimension(wf%n_v,wf%n_o) :: rho
+         real(dp), dimension(wf%n_o,wf%n_v) :: c1
+         real(dp), dimension(wf%n_o,wf%n_v) :: rho
+!   
 !
 !        sum_b F_a_b * c_b_i
 !
@@ -291,10 +269,10 @@ contains
                      one,         &
                      wf%fock_ab,  &
                      wf%n_v,      &
-                     c1,          &
+                     c1,     &
                      wf%n_v,      &
                      one,         &
-                     rho,         &
+                     rho, &
                      wf%n_v)
 !
 !        - sum_j c_a_j * F_j_i
@@ -304,12 +282,12 @@ contains
                      wf%n_o,      &
                      wf%n_o,      &
                      -one,        &
-                     c1,          &
+                     c1,     &
                      wf%n_v,      &
                      wf%fock_ij,  &
                      wf%n_o,      &
                      one,         &
-                     rho,         &
+                     rho, &
                      wf%n_v)
 !
       end subroutine jacobian_ccs_a1_ccs
@@ -323,16 +301,16 @@ contains
 !!       Calculates the B1 term of the right transform of the
 !!       Jacobian,
 !!
-!!       B1: sum_bj L_aijb*c_bj = sum_bj (2*g_aijb-g_abji) c_bj
+!!       B1: sum_bj L_aijb*c_bj = sum_bj (2*g_aijb-g_abji)c_bj
 !!
 !!       and adds it to the rho vector.
 !!
          implicit none
 !
          class(ccs) :: wf   
-!
-         real(dp), dimension(wf%n_v,wf%n_o) :: c1
-         real(dp), dimension(wf%n_v,wf%n_o) :: rho        
+         real(dp), dimension(wf%n_o,wf%n_v) :: c1
+         real(dp), dimension(wf%n_o,wf%n_v) :: rho       
+
 !
 !        Integrals
 !
@@ -352,9 +330,8 @@ contains
 !
 !        Batching variables
 !
-         integer(i15) :: b_batch = 0, b_first = 0, b_last = 0, b_length = 0
-         integer(i15) :: required = 0, available = 0, n_batch = 0, batch_dimension = 0
-         integer(i15) :: max_batch_length = 0
+         integer(i15) :: b_batch, b_first, b_last, b_length
+         integer(i15) :: required, available, n_batch, batch_dimension, max_batch_length
 !
 !        Indices
 !
@@ -366,6 +343,7 @@ contains
          integer(i15) :: ji = 0
 !
          logical :: reorder
+!
 !
 !        Preparing for batching over b
 !
@@ -457,7 +435,7 @@ contains
                      g_ab_ji,           &
                      (wf%n_v)*b_length)
 !
-!        Deallocate L_ab_J and L_ji_J
+!        Deallocate and get L_ab_J and L_ji_J
 !
          call deallocator(L_ab_J, (wf%n_v)*b_length, wf%n_J)
          call deallocator(L_ji_J, (wf%n_o)**2, wf%n_J)
@@ -465,19 +443,15 @@ contains
 !        Allocate L_ai_jb
 !
          call allocator(L_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*b_length)
-         L_ai_jb = zero
 !
-!        Construct L_ai_jb = 2*g_ai_jb - g_ab_ji
+!        Construct L_ai_jb = 2*g_ai_jb - g_ab_ij
 !
          do i = 1, wf%n_o
             do b = 1, b_length
                do j = 1, wf%n_o
-!
-                  ji = index_two(j, i, wf%n_o)
+                  ji = index_two(j, i , wf%n_o)
                   jb = index_two(j, b, wf%n_o)
-!
                   do a = 1, wf%n_v
-!
                      ai = index_two(a, i, wf%n_v)
                      ab = index_two(a, b, wf%n_v)
 !
@@ -487,6 +461,7 @@ contains
                enddo
             enddo
          enddo
+
 !
 !        Deallocate g_ai_jb and g_ab_ji
 !
@@ -498,20 +473,17 @@ contains
          call allocator(c_jb, (wf%n_o)*b_length, 1)
          call allocator(rho_ai, (wf%n_o)*(wf%n_v), 1)
 !
-         c_jb = zero
-!
 !        reordered c amplitudes
 !
          do j = 1, wf%n_o
             do b = 1, b_length
-!
                jb = index_two(j, b, wf%n_o)
 !
-         !      c_jb(jb,1) = c1(b, j) ! E: I think we must use full space on the right here, i.e.:
-               c_jb(jb, 1) = c1(b+b_first-1, j)
+               c_jb(jb,1) = c1(b, j)
 !
             enddo
          enddo
+
 !
 !        Create rho contribution from the batch
 !
@@ -524,7 +496,7 @@ contains
                      (wf%n_v)*(wf%n_o), &
                      c_jb,              &
                      b_length*(wf%n_o), &
-                     zero,              & 
+                     zero,              &
                      rho_ai,            &
                      (wf%n_v)*(wf%n_o))         
 !
@@ -540,11 +512,9 @@ contains
 !
          do i = 1, wf%n_o
             do a = 1, wf%n_v
-!
                ai = index_two(a, i, wf%n_v)
 !
                rho(a,i) = rho(a,i) + rho_ai(ai, 1)
-!
             enddo
          enddo
 !
@@ -554,7 +524,8 @@ contains
 !
       enddo ! Looping over batches
 !
-   end subroutine jacobian_ccs_b1_ccs
+!
+      end subroutine jacobian_ccs_b1_ccs
 !
 !
 end submodule
