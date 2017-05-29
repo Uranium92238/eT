@@ -149,18 +149,26 @@ contains
 !
       class(ccsd) :: wf 
 !
-      real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i       ! c_ai 
-      real(dp), dimension(wf%n_t2am, 1)   :: c_aibj      ! c_aibj     
+!     Incoming vector c 
+!
+      real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai 
+      real(dp), dimension(wf%n_t2am, 1)   :: c_aibj ! c_aibj     
+!
+!     Local unpacked and reordered vectors 
 !
       real(dp), dimension(:,:), allocatable :: rho_a_i   ! rho_ai   = (A c)_ai
       real(dp), dimension(:,:), allocatable :: rho_ai_bj ! rho_ai_bj = (A c)_aibj
 !
-      real(dp), dimension(:,:), allocatable :: c_ai_bj       ! Unpacked c_aibj
+      real(dp), dimension(:,:), allocatable :: c_ai_bj ! Unpacked c_aibj
+      real(dp), dimension(:,:), allocatable :: c_ab_ij ! c_ai_bj, reordered
+!
       real(dp), dimension(:,:), allocatable :: rho_ai_bj_sym ! Symmetrized rho_ai_bj, temporary
       real(dp), dimension(:,:), allocatable :: rho_ab_ij     ! rho_ai_bj, reordered
-      real(dp), dimension(:,:), allocatable :: c_ab_ij       ! c_ai_bj, reordered
 !
-      integer(i15) :: a = 0, ab = 0, ai = 0, b = 0, bj = 0, i = 0, ij = 0, j = 0, aibj = 0
+!     Indices 
+!
+      integer(i15) :: a = 0, ab = 0, ai = 0, b = 0 
+      integer(i15) :: bj = 0, i = 0, ij = 0, j = 0, aibj = 0
 !
 !     Allocate and zero the transformed vector (singles part)
 !
@@ -169,12 +177,12 @@ contains
 !
 !     :: CCS contributions to the singles c vector ::  
 !
-      call wf%jacobian_ccs_a1(c_a_i, rho_a_i)
-      call wf%jacobian_ccs_b1(c_a_i, rho_a_i)
+      call wf%jacobian_ccs_a1(rho_a_i, c_a_i)
+      call wf%jacobian_ccs_b1(rho_a_i, c_a_i)
 !
 !     :: CCSD contributions to the transformed singles vector :: 
 !
-      call wf%jacobian_ccsd_a1(c_a_i, rho_a_i)
+      call wf%jacobian_ccsd_a1(rho_a_i, c_a_i)
 !
 !     Allocate the incoming unpacked doubles vector 
 !
@@ -192,9 +200,9 @@ contains
 !
       enddo
 !
-      call wf%jacobian_ccsd_b1(c_ai_bj, rho_a_i) 
-      call wf%jacobian_ccsd_c1(c_ai_bj, rho_a_i)
-      call wf%jacobian_ccsd_d1(c_ai_bj, rho_a_i)
+      call wf%jacobian_ccsd_b1(rho_a_i, c_ai_bj) 
+      call wf%jacobian_ccsd_c1(rho_a_i, c_ai_bj)
+      call wf%jacobian_ccsd_d1(rho_a_i, c_ai_bj)
 !
 !     :: CCSD contributions to the transformed doubles vector ::  
 !
@@ -347,7 +355,7 @@ contains
    end subroutine jacobian_ccsd_transformation_ccsd
 !
 !
-   module subroutine jacobian_ccsd_a1_ccsd(wf, c_a_i, rho_a_i)
+   module subroutine jacobian_ccsd_a1_ccsd(wf, rho_a_i, c_a_i)
 !!
 !!    Jacobian CCSD A1
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017 
@@ -704,7 +712,7 @@ contains
    end subroutine jacobian_ccsd_a1_ccsd
 !
 !
-   module subroutine jacobian_ccsd_b1_ccsd(wf, c_ai_bj, rho_a_i)
+   module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !!
 !!       Jacobian CCSD B1
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017 
@@ -796,7 +804,7 @@ contains
    end subroutine jacobian_ccsd_b1_ccsd
 !
 !
-   module subroutine jacobian_ccsd_c1_ccsd(wf, c_ai_bj, rho_a_i)
+   module subroutine jacobian_ccsd_c1_ccsd(wf, rho_a_i, c_ai_bj)
 !!
 !!       Jacobian CCSD C1
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017 
@@ -931,7 +939,7 @@ contains
    end subroutine jacobian_ccsd_c1_ccsd
 !
 !
-    module subroutine jacobian_ccsd_d1_ccsd(wf, c_bi_cj, rho_a_i)
+    module subroutine jacobian_ccsd_d1_ccsd(wf, rho_a_i, c_bi_cj)
 !!
 !!    Jacobian CCSD D1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017 
