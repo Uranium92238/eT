@@ -38,9 +38,9 @@ submodule (ccs_class) ground_state
 !
    integer(i15) :: iteration = -1 
 !
-   integer(i15) :: unit_dt          = -1 ! Unit identifier for Δ t_i file 
-   integer(i15) :: unit_t_dt        = -1 ! Unit identifier for t_i + Δ t_i file
-   integer(i15) :: unit_diis_matrix = -1 ! Unit identifier for DIIS matrix file
+   integer(i15) :: unit_dt          = -1   ! Unit identifier for Δ t_i file 
+   integer(i15) :: unit_t_dt        = -1   ! Unit identifier for t_i + Δ t_i file
+   integer(i15) :: unit_diis_matrix = -1   ! Unit identifier for DIIS matrix file
 !
    integer(i15), parameter :: diis_dim = 9 ! The maximum dimension of the DIIS matrix, plus 1 
 !
@@ -85,7 +85,7 @@ contains
       write(unit_output,'(/t3,a/)')  'Settings for this calculation:'
 !
       write(unit_output,'(t6,a20,e9.2)') 'Energy threshold:',   wf%settings%energy_threshold
-      write(unit_output,'(t6,a20,e9.2)') 'Equation threshold:', wf%settings%ampeqs_threshold
+      write(unit_output,'(t6,a20,e9.2)') 'Equation threshold:', wf%settings%equation_threshold
 !
 !     Initialize amplitudes & amplitude equations 
 !
@@ -113,8 +113,8 @@ contains
 !
 !     Enter iterative loop
 !
-      write(unit_output,'(/t3,a)')   'Iter.   Energy           Norm of amplitude eq.'
-      write(unit_output,'(t3,a)')    '----------------------------------------------' 
+      write(unit_output,'(/t3,a)')   'Iter.      Energy             Norm of amplitude eq.'
+      write(unit_output,'(t3,a)')    '---------------------------------------------------' 
 !
 !     Make sure the initial energy is up to date for first iteration
 !
@@ -124,7 +124,7 @@ contains
 !
       call cpu_time(start_gs_solver)
 !
-      do while ((.not. converged) .and. (iteration .le. wf%settings%ampeqs_max_iterations))
+      do while ((.not. converged) .and. (iteration .le. wf%settings%ground_state_max_iterations))
 !
 !        Save the previous energy 
 !
@@ -147,11 +147,11 @@ contains
 !        Check for convergence of the energy and the amplitude equations
 !
          converged_energy = abs(wf%energy-prev_energy) .lt. wf%settings%energy_threshold
-         converged_ampeqs = ampeqs_norm                .lt. wf%settings%ampeqs_threshold
+         converged_ampeqs = ampeqs_norm                .lt. wf%settings%equation_threshold
 !
 !        Print information to output 
 !
-         write(unit_output,'(T3,I2,5X,F14.8,4X,E10.4)') iteration, wf%energy, ampeqs_norm 
+         write(unit_output,'(T3,i2,5x,f19.12,4x,e10.4)') iteration, wf%energy, ampeqs_norm 
          flush(unit_output) ! Flush so that the user can follow each iteration in real-time
 !
 !        Perform DIIS update if convergence hasn't been reached
@@ -485,15 +485,15 @@ contains
 !!    Initialize Ground State (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-!!    Initializes the amplitudes and the projection vector. This routine 
-!!    can be inherited unaltered by standard CC methods.
+!!    Initializes the amplitudes and the projection vector for the 
+!!    ground state solver.
 !!
       implicit none 
 !
       class(ccs) :: wf
 !
-      call wf%initialize_amplitudes ! Amplitudes 
-      call wf%initialize_omega      ! Projection vector 
+      call wf%initialize_amplitudes ! Allocate amplitudes 
+      call wf%initialize_omega      ! Allocate projection vector 
 !
    end subroutine initialize_ground_state_ccs
 !
