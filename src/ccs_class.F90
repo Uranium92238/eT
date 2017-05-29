@@ -115,12 +115,12 @@ module ccs_class
       procedure :: destruct_amplitudes   => destruct_amplitudes_ccs
       procedure :: destruct_omega        => destruct_omega_ccs
 !
-      procedure :: transform_trial_vecs            => transform_trial_vecs_ccs
+      procedure :: transform_trial_vectors         => transform_trial_vectors_ccs
       procedure :: jacobian_transformation         => jacobian_transformation_ccs
       procedure :: calculate_orbital_differences   => calculate_orbital_differences_ccs ! Must be overwritten for CCSD 
 !
-      procedure, non_overridable :: find_lowest_orbital_diff  => find_lowest_orbital_diff_ccs
-      procedure, non_overridable :: initialize_trial_vectors  => initialize_trial_vectors_ccs
+      procedure, non_overridable :: find_start_trial_indices      => find_start_trial_indices_ccs
+      procedure, non_overridable :: initialize_trial_vectors      => initialize_trial_vectors_ccs
 !
 !     Helper routines. 
 !     Non-overridable, they will be used for contributions
@@ -132,9 +132,9 @@ module ccs_class
       procedure :: jacobi_test => jacobi_test_ccs
 !
 !
-      procedure :: excited_state_solver             => excited_state_solver_ccs
-      procedure :: solve_reduced_eigenvalue_problem => solve_reduced_eigenvalue_problem_ccs
-      procedure :: get_next_trial_vectors           => get_next_trial_vectors_ccs
+      procedure, non_overridable :: excited_state_solver              => excited_state_solver_ccs
+      procedure, non_overridable :: solve_reduced_eigenvalue_equation => solve_reduced_eigenvalue_equation_ccs
+      procedure, non_overridable :: construct_next_trial_vectors      => construct_next_trial_vectors_ccs
 !
 !
    end type ccs
@@ -428,7 +428,7 @@ module ccs_class
       end subroutine initialize_trial_vectors_ccs
 !
 !
-      module subroutine find_lowest_orbital_diff_ccs(wf, index_list)
+      module subroutine find_start_trial_indices_ccs(wf, index_list)
 !!
 !!       Get indices for lowest orbital differences
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
@@ -439,7 +439,7 @@ module ccs_class
          class(ccs) :: wf
          integer(i15), dimension(wf%tasks%n_singlet_states,1), intent(inout) :: index_list
 ! 
-      end subroutine find_lowest_orbital_diff_ccs
+      end subroutine find_start_trial_indices_ccs
 !
 !
       module subroutine calculate_orbital_differences_ccs(wf,orbital_diff)
@@ -453,7 +453,7 @@ module ccs_class
       end subroutine calculate_orbital_differences_ccs
 !
 !
-      module subroutine transform_trial_vecs_ccs(wf, first_trial, last_trial)
+      module subroutine transform_trial_vectors_ccs(wf, first_trial, last_trial)
 !!
 !!       Construct Right Transform of Jacobian
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
@@ -464,7 +464,7 @@ module ccs_class
          class(ccs) :: wf 
          integer(i15), intent(in) :: first_trial, last_trial       
 !
-      end subroutine transform_trial_vecs_ccs
+      end subroutine transform_trial_vectors_ccs
 !
 !
       module subroutine jacobian_transformation_ccs(wf, c_a_i)
@@ -562,8 +562,8 @@ module ccs_class
       end subroutine excited_state_solver_ccs
 !
 !
-      module subroutine solve_reduced_eigenvalue_problem_ccs(wf, eigenvalues_Re, eigenvalues_Im, &
-                                                               solution_vectors, n_red, n_new_trials)
+      module subroutine solve_reduced_eigenvalue_equation_ccs(wf, eigenvalues_Re, eigenvalues_Im, &
+                                                               solution_vectors, reduced_dim, n_new_trials)
 !!
 !!       Solve reduced eigenvalue problem
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad May 2017
@@ -574,18 +574,18 @@ module ccs_class
          implicit none
 !
          class(ccs)                                            :: wf
-         integer(i15)                                          :: n_red, n_new_trials
+         integer(i15)                                          :: reduced_dim, n_new_trials
          real(dp), dimension(wf%tasks%n_singlet_states,1)      :: eigenvalues_Re
          real(dp), dimension(wf%tasks%n_singlet_states,1)      :: eigenvalues_Im 
-         real(dp), dimension(n_red, wf%tasks%n_singlet_states) :: solution_vectors
+         real(dp), dimension(reduced_dim, wf%tasks%n_singlet_states) :: solution_vectors
 !
 !
-      end subroutine solve_reduced_eigenvalue_problem_ccs
+      end subroutine solve_reduced_eigenvalue_equation_ccs
 !
 !
-      module subroutine get_next_trial_vectors_ccs(wf, eigenvalues_Re_new, eigenvalues_Im_new, &
+      module subroutine construct_next_trial_vectors_ccs(wf, eigenvalues_Re_new, eigenvalues_Im_new, &
                                                    solution_vectors_red, & 
-                                                   n_red, n_new_trials)
+                                                   reduced_dim, n_new_trials)
 !!
 !!
 !!
@@ -594,11 +594,11 @@ module ccs_class
          class(ccs) :: wf
          real(dp), dimension(wf%tasks%n_singlet_states,1) :: eigenvalues_Re_new
          real(dp), dimension(wf%tasks%n_singlet_states,1) :: eigenvalues_Im_new
-         real(dp), dimension(n_red, wf%tasks%n_singlet_states) :: solution_vectors_red
-         integer(i15) :: n_red, n_new_trials
+         real(dp), dimension(reduced_dim, wf%tasks%n_singlet_states) :: solution_vectors_red
+         integer(i15) :: reduced_dim, n_new_trials
 !
 !
-      end subroutine get_next_trial_vectors_ccs
+      end subroutine construct_next_trial_vectors_ccs
 !
 !
     end interface 

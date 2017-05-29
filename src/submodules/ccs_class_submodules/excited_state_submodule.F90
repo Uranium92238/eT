@@ -11,7 +11,7 @@ submodule (ccs_class) excited_state
 !
 !  Some variables available to all routines of the module
 !
-   integer(i15) :: iteration = 1, max_iterations = 10
+   integer(i15) :: iteration = 1, max_iterations = 25
 !
 !     Variables to handle convergence criterea
 !
@@ -63,7 +63,7 @@ contains
 !
       class(ccs) :: wf
 !
-      integer(i15) :: n_red        = 0 
+      integer(i15) :: reduced_dim  = 0 
       integer(i15) :: n_new_trials = 0
 !
 !  Solution for the reduced eigenvalue problem
@@ -94,7 +94,7 @@ contains
 !
 !     Initialize for excited state calculation
 !
-      n_red        = wf%tasks%n_singlet_states
+      reduced_dim        = wf%tasks%n_singlet_states
       n_new_trials = wf%tasks%n_singlet_states
 !
 !     Find start trial vectors and store them to file trial_vec
@@ -110,6 +110,7 @@ contains
       call allocator(eigenvalues_Re_old, wf%tasks%n_singlet_states, 1)
       call allocator(eigenvalues_Im_new, wf%tasks%n_singlet_states, 1)
       call allocator(eigenvalues_Re_new, wf%tasks%n_singlet_states, 1)
+!
       eigenvalues_Im_old = zero
       eigenvalues_Re_old = zero
       eigenvalues_Im_new = zero
@@ -124,7 +125,7 @@ contains
 !     Prints 
 !
          write(unit_output,'(/t3,a,i3/)') 'Iter.', iteration
-         write(unit_output,'(t3,a,i3)')'Reduced space dimension:', n_red
+         write(unit_output,'(t3,a,i3)')'Reduced space dimension:', reduced_dim
          write(unit_output,'(t3,a/)')'----------------------------'
          flush(unit_output)
 !
@@ -133,18 +134,18 @@ contains
 !
          write(unit_output,*)'Transforming trial vectors'
          flush(unit_output)
-         call wf%transform_trial_vecs(n_red - n_new_trials + 1, n_red)
+         call wf%transform_trial_vectors(reduced_dim - n_new_trials + 1, reduced_dim)
 !
 !        Allocate solution vectors for reduced problem
 !
-         call allocator(eigenvectors, n_red, wf%tasks%n_singlet_states)
+         call allocator(eigenvectors, reduced_dim, wf%tasks%n_singlet_states)
          eigenvectors = zero
 !
 !        Solve the reduced eigenvalue problem
 !
          write(unit_output,*)'Solve eigenvector problem'
          flush(unit_output)
-         call wf%solve_reduced_eigenvalue_problem(eigenvalues_Re_new, eigenvalues_Im_new, eigenvectors, n_red, n_new_trials)
+         call wf%solve_reduced_eigenvalue_equation(eigenvalues_Re_new, eigenvalues_Im_new, eigenvectors, reduced_dim, n_new_trials)
 !
 !        Test energy convergence criteria
 !
@@ -163,7 +164,7 @@ contains
 !
 !        Get next trial vectors
 !
-         call wf%get_next_trial_vectors(eigenvalues_Re_new, eigenvalues_Im_new, eigenvectors, n_red, n_new_trials)
+         call wf%construct_next_trial_vectors(eigenvalues_Re_new, eigenvalues_Im_new, eigenvectors, reduced_dim, n_new_trials)
 !
 !        Test for convergence
 !
@@ -173,7 +174,7 @@ contains
             iteration = iteration + 1
          endif
 !
-         call deallocator(eigenvectors, n_red, wf%tasks%n_singlet_states)
+         call deallocator(eigenvectors, reduced_dim, wf%tasks%n_singlet_states)
 !
       enddo
 !
@@ -187,15 +188,16 @@ contains
 !
 !     Final deallocations
 !
-      call deallocator(eigenvalues_Im_old, n_red, 1)
-      call deallocator(eigenvalues_Re_old, n_red, 1)
-      call deallocator(eigenvalues_Im_new, n_red, 1)
-      call deallocator(eigenvalues_Re_new, n_red, 1)
+      call deallocator(eigenvalues_Im_old, reduced_dim, 1)
+      call deallocator(eigenvalues_Re_old, reduced_dim, 1)
+      call deallocator(eigenvalues_Im_new, reduced_dim, 1)
+      call deallocator(eigenvalues_Re_new, reduced_dim, 1)
 !
    end subroutine excited_state_solver_ccs
 !
 !
-   module subroutine solve_reduced_eigenvalue_problem_ccs(wf, eigenvalues_Re, eigenvalues_Im, solution_vectors, n_red, n_new_trials)
+   module subroutine solve_reduced_eigenvalue_equation_ccs(wf, eigenvalues_Re, eigenvalues_Im,&
+                                                                solution_vectors, reduced_dim, n_new_trials)
 !!
 !!    Solve reduced eigenvalue problem
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad May 2017
@@ -206,10 +208,10 @@ contains
       implicit none
 !
       class(ccs)                                            :: wf
-      integer(i15)                                          :: n_red, n_new_trials
+      integer(i15)                                          :: reduced_dim, n_new_trials
       real(dp), dimension(wf%tasks%n_singlet_states,1)      :: eigenvalues_Re
       real(dp), dimension(wf%tasks%n_singlet_states,1)      :: eigenvalues_Im 
-      real(dp), dimension(n_red, wf%tasks%n_singlet_states) :: solution_vectors
+      real(dp), dimension(reduced_dim, wf%tasks%n_singlet_states) :: solution_vectors
 !
       real(dp), dimension(:,:), allocatable :: A_red
       real(dp), dimension(:,:), allocatable :: c_i
@@ -230,7 +232,7 @@ contains
       integer      :: info = -1 
 !
 !
-      call allocator(A_red, n_red, n_red)
+      call allocator(A_red, reduced_dim, reduced_dim)
       A_red = zero
 !
 !     -::- Prepare to solve the eigenvalue problem -::-
@@ -258,7 +260,7 @@ contains
           form='unformatted', iostat=ioerror)
 !
          rewind(unit_reduced_jacobi)
-         read(unit_reduced_jacobi) ((A_red(i,j),i = 1, n_red-n_new_trials), j=1, n_red-n_new_trials)
+         read(unit_reduced_jacobi) ((A_red(i,j),i = 1, reduced_dim-n_new_trials), j=1, reduced_dim-n_new_trials)
       endif
 !
 !     Allocate c and rho
@@ -272,24 +274,24 @@ contains
 !     A_red_ij = c_i^T * A * c_j = c_i^T * rho_i
 !
       if (iteration .eq. 1) then
-         do i = 1,n_red
+         do i = 1,reduced_dim
            read(unit_trial_vecs, rec=i, iostat=ioerror) c_i
-            do j = 1,n_red
+            do j = 1,reduced_dim
                read(unit_rho, rec=j, iostat=ioerror) rho_j
                A_red(i,j) = ddot(wf%n_parameters, c_i, 1, rho_j, 1)
             enddo
          enddo
       else
-         do i = 1,n_red
+         do i = 1,reduced_dim
            read(unit_trial_vecs, rec=i, iostat=ioerror) c_i
-            do j = n_red - n_new_trials + 1, n_red
+            do j = reduced_dim - n_new_trials + 1, reduced_dim
              read(unit_rho, rec=j, iostat=ioerror) rho_j
                A_red(i,j) = ddot(wf%n_parameters, c_i, 1, rho_j, 1)
             enddo
          enddo
-         do j = 1, n_red - n_new_trials
+         do j = 1, reduced_dim - n_new_trials
            read(unit_rho, rec=j, iostat=ioerror) rho_j
-           do i = n_red - n_new_trials + 1, n_red
+           do i = reduced_dim - n_new_trials + 1, reduced_dim
               read(unit_trial_vecs, rec=i, iostat=ioerror) c_i
               A_red(i,j) = ddot(wf%n_parameters, c_i, 1, rho_j, 1)
             enddo
@@ -301,10 +303,11 @@ contains
 !
 !      write(unit_output,*) 'Reduced A:'
 !
-!         do i = 1, n_red
-!           
-!               write(unit_output,*)(A_red(i,j), j = 1, n_red)
-!         
+!         do i = 1, reduced_dim
+!               write(unit_output,*)'Row:', i
+!               do j = 1, reduced_dim
+!                write(unit_output,*)A_red(i,j)
+!               enddo
 !         enddo
 !
 !     Close files for trial vectors and transformed vectors
@@ -315,7 +318,7 @@ contains
 !     Write new A_red to file
 !
       rewind(unit_reduced_jacobi)
-      write(unit_reduced_jacobi) ((A_red(i,j), i = 1, n_red), j = 1, n_red)
+      write(unit_reduced_jacobi) ((A_red(i,j), i = 1, reduced_dim), j = 1, reduced_dim)
 !
 !     Close file
 !
@@ -325,36 +328,36 @@ contains
 !
 !     Allocate arrays for eigenvalues and eigenvectors
 !
-      call allocator(eigenvectors, n_red, n_red)
+      call allocator(eigenvectors, reduced_dim, reduced_dim)
       eigenvectors = zero
 !
-      call allocator(eigenvalues_full_Re, n_red, 1)
-      call allocator(eigenvalues_full_Im, n_red, 1)
+      call allocator(eigenvalues_full_Re, reduced_dim, 1)
+      call allocator(eigenvalues_full_Im, reduced_dim, 1)
       eigenvalues_full_Re = zero
       eigenvalues_full_Im = zero
 !
-      call allocator(work, 4*n_red, 1)
+      call allocator(work, 4*reduced_dim, 1)
       work = zero
 !
 !     Solve eigenvalue problem
 !
       call dgeev('N','V',              &
-                  n_red,               &
+                  reduced_dim,               &
                   A_red,               &
-                  n_red,               &
+                  reduced_dim,               &
                   eigenvalues_full_Re, &
                   eigenvalues_full_Im, &
                   dummy,               &
                   1,                   &
                   eigenvectors,        &
-                  n_red,               &
+                  reduced_dim,               &
                   work,                &
-                  4*n_red,             &
+                  4*reduced_dim,             &
                   info)
 !
 !     Deallocate A_red
 !
-      call deallocator(A_red, n_red, n_red)
+      call deallocator(A_red, reduced_dim, reduced_dim)
 !
 !     Sort eigenvalues, and crop
 !
@@ -363,11 +366,11 @@ contains
 !
 !     Only want the lowest eigenvalues, and sorted. 
 !
-      call get_n_lowest(wf%tasks%n_singlet_states, n_red, eigenvalues_full_Re, eigenvalues_Re, index_list)
+      call get_n_lowest(wf%tasks%n_singlet_states, reduced_dim, eigenvalues_full_Re, eigenvalues_Re, index_list)
 !
 !     Select solution vectors and imaginary parts of eigenvalues according to index_list 
 !
-      do i = 1, n_red
+      do i = 1, reduced_dim
          do j = 1, wf%tasks%n_singlet_states
             solution_vectors(i,j) = eigenvectors(i,index_list(j,1))
             eigenvalues_Im = eigenvalues_full_Im(index_list(j,1), 1)
@@ -379,21 +382,21 @@ contains
       write(unit_output,*)'Eigenvalues'
       write(unit_output,*) (eigenvalues_Re(i,1), i=1,wf%tasks%n_singlet_states)
 !
-!      write(unit_output,*) (eigenvalues_full_Re(i,1), i=1,n_red)
+!      write(unit_output,*) (eigenvalues_full_Re(i,1), i=1,reduced_dim)
 !
 !     Final deallocatons
 !
-      call deallocator(eigenvectors, n_red, n_red)
-      call deallocator(eigenvalues_full_Im, n_red, 1)
-      call deallocator(eigenvalues_full_Re, n_red, 1)
+      call deallocator(eigenvectors, reduced_dim, reduced_dim)
+      call deallocator(eigenvalues_full_Im, reduced_dim, 1)
+      call deallocator(eigenvalues_full_Re, reduced_dim, 1)
       call deallocator_int(index_list,wf%tasks%n_singlet_states,1)
 !
-   end subroutine solve_reduced_eigenvalue_problem_ccs
+   end subroutine solve_reduced_eigenvalue_equation_ccs
 !
 !
-   module subroutine get_next_trial_vectors_ccs(wf, eigenvalues_Re_new, eigenvalues_Im_new, &
+   module subroutine construct_next_trial_vectors_ccs(wf, eigenvalues_Re_new, eigenvalues_Im_new, &
                                                 solution_vectors_red, &
-                                                n_red, n_new_trials)
+                                                reduced_dim, n_new_trials)
 !!
 !!    Get next trial vectors.    
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -417,8 +420,8 @@ contains
       class(ccs) :: wf
       real(dp), dimension(wf%tasks%n_singlet_states,1) :: eigenvalues_Re_new
       real(dp), dimension(wf%tasks%n_singlet_states,1) :: eigenvalues_Im_new
-      real(dp), dimension(n_red, wf%tasks%n_singlet_states) :: solution_vectors_red
-      integer(i15) :: n_red, n_new_trials
+      real(dp), dimension(reduced_dim, wf%tasks%n_singlet_states) :: solution_vectors_red
+      integer(i15) :: reduced_dim, n_new_trials
 !
       integer(i15) :: root = 0, trial = 0, i = 0
 !
@@ -475,7 +478,7 @@ contains
 !
 !        Xj = sum_i x_j_i * c_i
 !
-         do trial = 1, n_red
+         do trial = 1, reduced_dim
 !
             c_i = zero
             read(unit_trial_vecs, rec=trial, iostat=ioerror) c_i
@@ -511,7 +514,7 @@ contains
 !
          call allocator(rho_i, wf%n_parameters, 1)
 !
-         do trial = 1, n_red
+         do trial = 1, reduced_dim
 !
             rho_i = zero
             read(unit_rho, rec=trial, iostat=ioerror) rho_i
@@ -527,19 +530,6 @@ contains
 !
          call dscal(wf%n_parameters, one/norm_solution_vector, residual, 1)
 !
-!        Calculate residual norm and check convergence criteria on residual norms
-!
-         residual_norms(root, 1) = sqrt(ddot(wf%n_parameters, residual, 1, residual, 1)) 
-         if (residual_norms(root,1) .gt. wf%settings%ampeqs_threshold) then
-            converged_residual = .false.
-         endif
-!
-!        Prints
-!
-         write(unit_output,'(t3,i2,5x,f14.8,7x,f14.8,11x,e10.4)') root, eigenvalues_Re_new(root, 1), &
-                                                                eigenvalues_Im_new(root, 1), residual_norms(root, 1)
-!        
-         flush(unit_output)
 !        Orthogonalize new trial vector against old trial vectors
 !
          call allocator(c_i, wf%n_parameters, 1)
@@ -547,7 +537,7 @@ contains
 !
 !        prod_i (I - c_i*c_i^T)*Res = prod_i (Res - c_i*c_i^T*Res)
 !
-         do trial = 1, n_red
+         do trial = 1, reduced_dim + n_new_trials
 !
             c_i = zero
             read(unit_trial_vecs, rec=trial, iostat=ioerror) c_i
@@ -565,14 +555,27 @@ contains
 !
          norm_solution_vector = sqrt(ddot(wf%n_parameters, residual, 1, residual, 1))
 !
+!        Calculate residual norm and check convergence criteria on residual norms
+!
+         if (norm_solution_vector  .gt. wf%settings%ampeqs_threshold) then
+            converged_residual = .false.
+         endif
+!
+!        Prints
+!
+         write(unit_output,'(t3,i2,5x,f14.8,7x,f14.8,11x,e10.4)') root, eigenvalues_Re_new(root, 1), &
+                                                                eigenvalues_Im_new(root, 1), norm_solution_vector
+!        
+         flush(unit_output)
+!
 !        Test for linear dependency on old trial vectors
 !        If norm sufficiently high new vector is normalized and written to file
 !
-         if (norm_solution_vector .gt. 1.0D-2) then
+         if (norm_solution_vector .gt. 1.0D-6) then
 !
             n_new_trials = n_new_trials + 1
             call dscal(wf%n_parameters, one/norm_solution_vector, residual, 1)
-            write(unit_trial_vecs, rec=n_new_trials+n_red, iostat=ioerror) residual
+            write(unit_trial_vecs, rec=n_new_trials+reduced_dim, iostat=ioerror) residual
 !     
          endif
 !
@@ -586,14 +589,14 @@ contains
 !
 !     Update dimension of reduced space 
 !
-      n_red = n_red + n_new_trials
+      reduced_dim = reduced_dim + n_new_trials
 !
       call deallocator(residual, wf%n_parameters, 1)
       call deallocator(residual_norms, wf%tasks%n_singlet_states, 1)
 !
       write(unit_output,'(t3,a/)') '----------------------------------------------------------------'
 !
-   end subroutine get_next_trial_vectors_ccs
+   end subroutine construct_next_trial_vectors_ccs
 !
 !
 end submodule

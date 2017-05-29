@@ -53,11 +53,12 @@ contains
                enddo
             enddo
          enddo
+         call vec_print(orbital_diff,wf%n_parameters,1)
 !
    end subroutine calculate_orbital_differences_ccsd
 !
 !
-   module subroutine transform_trial_vecs_ccsd(wf, first_trial, last_trial)
+   module subroutine transform_trial_vectors_ccsd(wf, first_trial, last_trial)
 !!
 !!    Transformation Trial Vectors (CCSD)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -123,7 +124,7 @@ contains
       call deallocator(c_a_i, wf%n_v, wf%n_o)
       call deallocator(c_aibj, wf%n_t2am, 1)
 !
-   end subroutine transform_trial_vecs_ccsd
+   end subroutine transform_trial_vectors_ccsd
 !
 !
    module subroutine jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)

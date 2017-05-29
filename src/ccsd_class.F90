@@ -92,7 +92,7 @@ module ccsd_class
 !
       procedure :: calculate_orbital_differences => calculate_orbital_differences_ccsd
       procedure :: jacobian_ccsd_transformation  => jacobian_ccsd_transformation_ccsd
-      procedure :: transform_trial_vecs          => transform_trial_vecs_ccsd
+      procedure :: transform_trial_vectors          => transform_trial_vectors_ccsd
 !
 !     Helper routines for Jacobian transformation 
 !
@@ -405,7 +405,7 @@ module ccsd_class
       end subroutine calculate_orbital_differences_ccsd
 !
 !
-      module subroutine transform_trial_vecs_ccsd(wf, first_trial, last_trial)
+      module subroutine transform_trial_vectors_ccsd(wf, first_trial, last_trial)
 !!
 !!       Construct Jacobian Transformation of trial vectors
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
@@ -419,7 +419,7 @@ module ccsd_class
 !
          integer(i15), intent(in) :: first_trial, last_trial ! Which trial_vectors we are to transform
 !
-      end subroutine transform_trial_vecs_ccsd
+      end subroutine transform_trial_vectors_ccsd
       module subroutine jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!
 !!       Jacobian CCSD transformation

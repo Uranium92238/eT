@@ -49,7 +49,7 @@ contains
 !
 !        Find indecies of lowest orbital differences
 !
-         call wf%find_lowest_orbital_diff(index_lowest_obital_diff)
+         call wf%find_start_trial_indices(index_lowest_obital_diff)
 !
 !        Generate start trial vectors c and write to file
 !
@@ -82,7 +82,7 @@ contains
       end subroutine initialize_trial_vectors_ccs
 !
 !
-      module subroutine find_lowest_orbital_diff_ccs(wf, index_list)
+      module subroutine find_start_trial_indices_ccs(wf, index_list)
 !!
 !!       Find indices for lowest orbital differences
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
@@ -128,7 +128,7 @@ contains
          call deallocator(lowest_orbital_diff, wf%tasks%n_singlet_states, 1)
 !
 !
-      end subroutine find_lowest_orbital_diff_ccs
+      end subroutine find_start_trial_indices_ccs
 !
 !
       module subroutine calculate_orbital_differences_ccs(wf,orbital_diff)
@@ -154,7 +154,7 @@ contains
       end subroutine calculate_orbital_differences_ccs
 !
 !
-      module subroutine transform_trial_vecs_ccs(wf, first_trial, last_trial)
+      module subroutine transform_trial_vectors_ccs(wf, first_trial, last_trial)
 !!
 !!       Construct Jacobian Transformation of trial vectors
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
@@ -208,7 +208,7 @@ contains
 !
          call deallocator(c_a_i, wf%n_v, wf%n_o)
 !
-      end subroutine transform_trial_vecs_ccs
+      end subroutine transform_trial_vectors_ccs
 !
 !
       module subroutine jacobian_transformation_ccs(wf, c_a_i)
@@ -256,8 +256,8 @@ contains
          implicit none
 !
          class(ccs) :: wf
-         real(dp), dimension(wf%n_o,wf%n_v) :: c1
-         real(dp), dimension(wf%n_o,wf%n_v) :: rho
+         real(dp), dimension(wf%n_v,wf%n_o) :: c1
+         real(dp), dimension(wf%n_v,wf%n_o) :: rho
 !   
 !
 !        sum_b F_a_b * c_b_i
@@ -308,8 +308,8 @@ contains
          implicit none
 !
          class(ccs) :: wf   
-         real(dp), dimension(wf%n_o,wf%n_v) :: c1
-         real(dp), dimension(wf%n_o,wf%n_v) :: rho       
+         real(dp), dimension(wf%n_v,wf%n_o) :: c1
+         real(dp), dimension(wf%n_v,wf%n_o) :: rho       
 
 !
 !        Integrals
@@ -330,8 +330,9 @@ contains
 !
 !        Batching variables
 !
-         integer(i15) :: b_batch, b_first, b_last, b_length
-         integer(i15) :: required, available, n_batch, batch_dimension, max_batch_length
+         integer(i15) :: b_batch = 0, b_first = 0, b_last = 0, b_length = 0
+         integer(i15) :: required = 0, available = 0, n_batch = 0, batch_dimension = 0
+         integer(i15) :: max_batch_length = 0
 !
 !        Indices
 !
@@ -443,6 +444,7 @@ contains
 !        Allocate L_ai_jb
 !
          call allocator(L_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*b_length)
+         L_ai_jb = zero
 !
 !        Construct L_ai_jb = 2*g_ai_jb - g_ab_ij
 !
@@ -475,11 +477,12 @@ contains
 !
 !        reordered c amplitudes
 !
+         c_jb = zero
          do j = 1, wf%n_o
             do b = 1, b_length
                jb = index_two(j, b, wf%n_o)
 !
-               c_jb(jb,1) = c1(b, j)
+               c_jb(jb, 1) = c1(b+b_first-1, j)
 !
             enddo
          enddo
