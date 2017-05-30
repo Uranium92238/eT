@@ -481,7 +481,7 @@ module ccs_class
       end subroutine jacobian_transformation_ccs
 !
 !
-      module subroutine jacobian_ccs_a1_ccs(wf,c1,rho)
+      module subroutine jacobian_ccs_a1_ccs(wf,rho,c1)
 !!
 !!       A1 contribution to right transform of Jacobian
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
@@ -502,7 +502,7 @@ module ccs_class
       end subroutine jacobian_ccs_a1_ccs
 !
 !
-      module subroutine jacobian_ccs_b1_ccs(wf,c1,rho)
+      module subroutine jacobian_ccs_b1_ccs(wf,rho,c1)
 !!
 !!       B1 contribution to right transform of Jacobian
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad

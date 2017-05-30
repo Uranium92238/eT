@@ -92,7 +92,7 @@ module ccsd_class
 !
       procedure :: calculate_orbital_differences => calculate_orbital_differences_ccsd
       procedure :: jacobian_ccsd_transformation  => jacobian_ccsd_transformation_ccsd
-      procedure :: transform_trial_vectors          => transform_trial_vectors_ccsd
+      procedure :: transform_trial_vectors       => transform_trial_vectors_ccsd
 !
 !     Helper routines for Jacobian transformation 
 !
@@ -420,6 +420,8 @@ module ccsd_class
          integer(i15), intent(in) :: first_trial, last_trial ! Which trial_vectors we are to transform
 !
       end subroutine transform_trial_vectors_ccsd
+!
+!
       module subroutine jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!
 !!       Jacobian CCSD transformation
@@ -435,7 +437,7 @@ module ccsd_class
       end subroutine jacobian_ccsd_transformation_ccsd
 !
 !
-      module subroutine jacobian_ccsd_a1_ccsd(wf, c_a_i, rho_a_i)
+      module subroutine jacobian_ccsd_a1_ccsd(wf, rho_a_i, c_a_i)
 !!
 !!       Jacobian CCSD A1
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017 
@@ -452,7 +454,7 @@ module ccsd_class
       end subroutine jacobian_ccsd_a1_ccsd
 !
 !
-      module subroutine jacobian_ccsd_b1_ccsd(wf, c_ai_bj, rho_a_i)
+      module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !!
 !!       Jacobian CCSD B1
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017 
@@ -469,7 +471,7 @@ module ccsd_class
       end subroutine jacobian_ccsd_b1_ccsd
 !
 !
-      module subroutine jacobian_ccsd_c1_ccsd(wf, c_ai_bj, rho_a_i)
+      module subroutine jacobian_ccsd_c1_ccsd(wf, rho_a_i, c_ai_bj)
 !!
 !!       Jacobian CCSD C1
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017 
@@ -486,7 +488,7 @@ module ccsd_class
       end subroutine jacobian_ccsd_c1_ccsd
 !
 !
-      module subroutine jacobian_ccsd_d1_ccsd(wf, c_bi_cj, rho_a_i)
+      module subroutine jacobian_ccsd_d1_ccsd(wf, rho_a_i, c_bi_cj)
 !!
 !!       Jacobian CCSD D1
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017 
