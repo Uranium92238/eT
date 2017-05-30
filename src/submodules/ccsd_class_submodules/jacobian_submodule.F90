@@ -53,7 +53,6 @@ contains
                enddo
             enddo
          enddo
-         call vec_print(orbital_diff,wf%n_parameters,1)
 !
    end subroutine calculate_orbital_differences_ccsd
 !

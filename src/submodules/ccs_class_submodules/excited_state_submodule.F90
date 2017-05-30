@@ -197,7 +197,7 @@ contains
 !
 !
    module subroutine solve_reduced_eigenvalue_equation_ccs(wf, eigenvalues_Re, eigenvalues_Im,&
-                                                                solution_vectors, reduced_dim, n_new_trials)
+                                                                solution_vectors_reduced, reduced_dim, n_new_trials)
 !!
 !!    Solve reduced eigenvalue problem
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad May 2017
@@ -211,7 +211,7 @@ contains
       integer(i15)                                          :: reduced_dim, n_new_trials
       real(dp), dimension(wf%tasks%n_singlet_states,1)      :: eigenvalues_Re
       real(dp), dimension(wf%tasks%n_singlet_states,1)      :: eigenvalues_Im 
-      real(dp), dimension(reduced_dim, wf%tasks%n_singlet_states) :: solution_vectors
+      real(dp), dimension(reduced_dim, wf%tasks%n_singlet_states) :: solution_vectors_reduced
 !
       real(dp), dimension(:,:), allocatable :: A_red
       real(dp), dimension(:,:), allocatable :: c_i
@@ -372,7 +372,7 @@ contains
 !
       do i = 1, reduced_dim
          do j = 1, wf%tasks%n_singlet_states
-            solution_vectors(i,j) = eigenvectors(i,index_list(j,1))
+            solution_vectors_reduced(i,j) = eigenvectors(i,index_list(j,1))
             eigenvalues_Im = eigenvalues_full_Im(index_list(j,1), 1)
          enddo
       enddo
@@ -395,7 +395,7 @@ contains
 !
 !
    module subroutine construct_next_trial_vectors_ccs(wf, eigenvalues_Re_new, eigenvalues_Im_new, &
-                                                solution_vectors_red, &
+                                                solution_vectors_reduced, &
                                                 reduced_dim, n_new_trials)
 !!
 !!    Get next trial vectors.    
@@ -420,20 +420,19 @@ contains
       class(ccs) :: wf
       real(dp), dimension(wf%tasks%n_singlet_states,1) :: eigenvalues_Re_new
       real(dp), dimension(wf%tasks%n_singlet_states,1) :: eigenvalues_Im_new
-      real(dp), dimension(reduced_dim, wf%tasks%n_singlet_states) :: solution_vectors_red
+      real(dp), dimension(reduced_dim, wf%tasks%n_singlet_states) :: solution_vectors_reduced
       integer(i15) :: reduced_dim, n_new_trials
 !
       integer(i15) :: root = 0, trial = 0, i = 0
 !
-      real(dp), dimension(:,:), allocatable :: full_space_solution_vector
+      real(dp), dimension(:,:), allocatable :: solution_vector
       real(dp), dimension(:,:), allocatable :: residual
-      real(dp) :: norm_solution_vector, dot_prod = 0  
-      real(dp), dimension(:,:), allocatable :: residual_norms
 !
       real(dp), dimension(:,:), allocatable :: c_i
       real(dp), dimension(:,:), allocatable :: rho_i
-      real(dp), dimension(:,:), allocatable :: project_out
-      real(dp), dimension(:,:), allocatable :: temp
+!
+      
+      real(dp) :: norm_solution_vector = 0, norm_residual = 0, dot_prod = 0  
 !
       integer(i15) :: unit_trial_vecs = 0, unit_rho = 0, unit_solution = 0, ioerror = 0
       real(dp) :: ddot
@@ -453,8 +452,6 @@ contains
       access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
 !
       call allocator(residual, wf%n_parameters, 1)
-      call allocator(residual_norms, wf%tasks%n_singlet_states, 1)
-      residual_norms = zero
 !
       n_new_trials = 0
       converged_residual = .true.
@@ -471,8 +468,8 @@ contains
 !
 !        Xj = sum_i x_j_i c_i
 !
-         call allocator(full_space_solution_vector, wf%n_parameters, 1)
-         full_space_solution_vector = zero
+         call allocator(solution_vector, wf%n_parameters, 1)
+         solution_vector = zero
 !
          call allocator(c_i, wf%n_parameters, 1)
 !
@@ -482,7 +479,7 @@ contains
 !
             c_i = zero
             read(unit_trial_vecs, rec=trial, iostat=ioerror) c_i
-            call daxpy(wf%n_parameters, solution_vectors_red(trial,root), c_i, 1, full_space_solution_vector, 1)
+            call daxpy(wf%n_parameters, solution_vectors_reduced(trial,root), c_i, 1, solution_vector, 1)
 !
             if (ioerror .ne. 0) write(unit_output,*) 'Error reading trial vecs in get_next_trial_vectors'
 !
@@ -492,17 +489,18 @@ contains
 !
 !        Calculate norm of solution vector
 !
-         norm_solution_vector = sqrt(ddot(wf%n_parameters,full_space_solution_vector, 1, full_space_solution_vector, 1))
+         norm_solution_vector = sqrt(ddot(wf%n_parameters, solution_vector, 1, solution_vector, 1))
 !
 !        Start to calculate residual
 !
-         call dcopy(wf%n_parameters, full_space_solution_vector, 1, residual, 1)
+         call dcopy(wf%n_parameters, solution_vector, 1, residual, 1)
 !
 !        Normalize and write full space solution vectors to file
 !
-         call dscal(wf%n_parameters, one/norm_solution_vector, full_space_solution_vector, 1)
-         write(unit_solution, rec=root, iostat=ioerror) full_space_solution_vector
-         call deallocator(full_space_solution_vector, wf%n_parameters, 1)
+         call dscal(wf%n_parameters, one/norm_solution_vector, solution_vector, 1)
+         write(unit_solution, rec=root, iostat=ioerror) solution_vector
+!        
+         call deallocator(solution_vector, wf%n_parameters, 1)
 !
 !        Residual = (AX - eX)/||X||
 !
@@ -518,7 +516,7 @@ contains
 !
             rho_i = zero
             read(unit_rho, rec=trial, iostat=ioerror) rho_i
-            call daxpy(wf%n_parameters, solution_vectors_red(trial,root), rho_i, 1, residual, 1)
+            call daxpy(wf%n_parameters, solution_vectors_reduced(trial,root), rho_i, 1, residual, 1)
 !
             if (ioerror .ne. 0) write(unit_output,*) 'Error reading tranf vecs in get_next_trial_vectors'
 !
@@ -526,14 +524,33 @@ contains
 !
          call deallocator(rho_i, wf%n_parameters, 1)
 !
+!
 !        Divide by solution vector norm |X|
 !
-         call dscal(wf%n_parameters, one/norm_solution_vector, residual, 1)
+        call dscal(wf%n_parameters, one/norm_solution_vector, residual, 1)
+!
+!        Calculate norm of residual
+!
+         norm_residual = sqrt(ddot(wf%n_parameters, residual, 1, residual, 1))
+!
+!        Calculate residual norm and check convergence criteria on residual norms
+!
+         if (norm_residual  .gt. wf%settings%ampeqs_threshold) then
+            converged_residual = .false.
+         endif
+!
+!        Prints
+!
+         write(unit_output,'(t3,i2,5x,f14.8,7x,f14.8,11x,e10.4)') root, eigenvalues_Re_new(root, 1), &
+                                                                eigenvalues_Im_new(root, 1), norm_residual
+         flush(unit_output)
+!
+         call dscal(wf%n_parameters, one/norm_residual, residual, 1)
+
 !
 !        Orthogonalize new trial vector against old trial vectors
 !
          call allocator(c_i, wf%n_parameters, 1)
-         call allocator(temp, wf%n_parameters, 1)
 !
 !        prod_i (I - c_i*c_i^T)*Res = prod_i (Res - c_i*c_i^T*Res)
 !
@@ -549,32 +566,18 @@ contains
          enddo
 !
          call deallocator(c_i, wf%n_parameters, 1)
-         call deallocator(temp, wf%n_parameters, 1)
 !
-!        Calculate norm of new trial vector
+!        Calculate norm of residual
 !
-         norm_solution_vector = sqrt(ddot(wf%n_parameters, residual, 1, residual, 1))
-!
-!        Calculate residual norm and check convergence criteria on residual norms
-!
-         if (norm_solution_vector  .gt. wf%settings%ampeqs_threshold) then
-            converged_residual = .false.
-         endif
-!
-!        Prints
-!
-         write(unit_output,'(t3,i2,5x,f14.8,7x,f14.8,11x,e10.4)') root, eigenvalues_Re_new(root, 1), &
-                                                                eigenvalues_Im_new(root, 1), norm_solution_vector
-!        
-         flush(unit_output)
+         norm_residual = sqrt(ddot(wf%n_parameters, residual, 1, residual, 1))
 !
 !        Test for linear dependency on old trial vectors
 !        If norm sufficiently high new vector is normalized and written to file
 !
-         if (norm_solution_vector .gt. 1.0D-6) then
+         if (norm_residual .gt. 1.0D-6) then
 !
             n_new_trials = n_new_trials + 1
-            call dscal(wf%n_parameters, one/norm_solution_vector, residual, 1)
+            call dscal(wf%n_parameters, one/norm_residual, residual, 1)
             write(unit_trial_vecs, rec=n_new_trials+reduced_dim, iostat=ioerror) residual
 !     
          endif
@@ -592,7 +595,6 @@ contains
       reduced_dim = reduced_dim + n_new_trials
 !
       call deallocator(residual, wf%n_parameters, 1)
-      call deallocator(residual_norms, wf%tasks%n_singlet_states, 1)
 !
       write(unit_output,'(t3,a/)') '----------------------------------------------------------------'
 !

@@ -144,7 +144,7 @@ contains
       do i = 1, N
          do j = 1, N
 !
-            if (abs(unpacked(i, j) - unpacked(j, i)) .gt. 10D-6) then 
+            if (abs(unpacked(i, j) - unpacked(j, i)) .gt. 10D-4) then 
                write(unit_output,*) 'WARNING: Attempting to pack non-symmetric matrix'
                write(unit_output,*) 'Make sure code is bug-free. Information will be lost.'
             endif
