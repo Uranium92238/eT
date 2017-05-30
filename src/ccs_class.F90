@@ -563,7 +563,7 @@ module ccs_class
 !
 !
       module subroutine solve_reduced_eigenvalue_equation_ccs(wf, eigenvalues_Re, eigenvalues_Im, &
-                                                               solution_vectors, reduced_dim, n_new_trials)
+                                                               solution_vectors_reduced, reduced_dim, n_new_trials)
 !!
 !!       Solve reduced eigenvalue problem
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad May 2017
@@ -577,14 +577,14 @@ module ccs_class
          integer(i15)                                          :: reduced_dim, n_new_trials
          real(dp), dimension(wf%tasks%n_singlet_states,1)      :: eigenvalues_Re
          real(dp), dimension(wf%tasks%n_singlet_states,1)      :: eigenvalues_Im 
-         real(dp), dimension(reduced_dim, wf%tasks%n_singlet_states) :: solution_vectors
+         real(dp), dimension(reduced_dim, wf%tasks%n_singlet_states) :: solution_vectors_reduced
 !
 !
       end subroutine solve_reduced_eigenvalue_equation_ccs
 !
 !
       module subroutine construct_next_trial_vectors_ccs(wf, eigenvalues_Re_new, eigenvalues_Im_new, &
-                                                   solution_vectors_red, & 
+                                                   solution_vectors_reduced, & 
                                                    reduced_dim, n_new_trials)
 !!
 !!
@@ -594,7 +594,7 @@ module ccs_class
          class(ccs) :: wf
          real(dp), dimension(wf%tasks%n_singlet_states,1) :: eigenvalues_Re_new
          real(dp), dimension(wf%tasks%n_singlet_states,1) :: eigenvalues_Im_new
-         real(dp), dimension(reduced_dim, wf%tasks%n_singlet_states) :: solution_vectors_red
+         real(dp), dimension(reduced_dim, wf%tasks%n_singlet_states) :: solution_vectors_reduced
          integer(i15) :: reduced_dim, n_new_trials
 !
 !
