@@ -527,7 +527,11 @@ contains
 !
       else ! Reorder L_ab_J is L_ba_J
 !
-         throw_away_index = index_two(wf%n_v, first - 1, wf%n_v)
+         if (first .ne. 1)
+            throw_away_index = index_two(wf%n_v, first - 1, wf%n_v)
+         else
+            throw_away_index = 0
+         endif
 !
 !        Reading vectors
 !
