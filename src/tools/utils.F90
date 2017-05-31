@@ -61,6 +61,10 @@ contains
 !
       index_three = dim_p*(dim_q*(r-1)+q-1)+p
 !
+!     Debug sanity check 
+!
+      if (p .eq. 0 .or. q .eq. 0 .or. r .eq. 0) write(unit_output,*) 'WARNING: one of the indices in index_three is zero!',p,q,r
+!
    end function index_three
 !
 !
@@ -76,6 +80,10 @@ contains
       integer(i15), intent(in) :: p,q,dim_p
 !
       index_two = dim_p*(q-1)+p
+!
+!     Debug sanity check 
+!
+      if (p .eq. 0 .or. q .eq. 0) write(unit_output,*) 'WARNING: one of the indices in index_two is zero!',p,q
 !
    end function index_two
 !
