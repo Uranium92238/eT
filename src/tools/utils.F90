@@ -65,6 +65,9 @@ contains
 !
       if (p .eq. 0 .or. q .eq. 0 .or. r .eq. 0) write(unit_output,*) 'WARNING: one of the indices in index_three is zero!',p,q,r
 !
+      if (p .gt. dim_p) write(unit_output,*) 'WARNING: first index exceeds its dimension', p, dim_p
+      if (q .gt. dim_q) write(unit_output,*) 'WARNING: first index exceeds its dimension', q, dim_q
+!
    end function index_three
 !
 !
@@ -84,6 +87,8 @@ contains
 !     Debug sanity check 
 !
       if (p .eq. 0 .or. q .eq. 0) write(unit_output,*) 'WARNING: one of the indices in index_two is zero!',p,q
+!
+      if (p .gt. dim_p) write(unit_output,*) 'WARNING: first index exceeds its dimension', p, dim_p
 !
    end function index_two
 !
