@@ -725,7 +725,7 @@ contains
 !!    Jacobian CCSD B1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017 
 !!
-!!    rho_ai^B1 = sum_bj F_jb (2*c_aibj  -  c_aj_bi) = sum_bj F_jb v_ai_bj
+!!    rho_ai^B1 = sum_bj F_jb (2*c_ai_bj  -  c_aj_bi) = sum_bj F_jb v_ai_bj
 !!
 !!    The term is added as rho_a_i(a,i) = rho_a_i(a,i) + rho_ai^A1,
 !!    where c_a_i(a,i) = c_ai above. 
@@ -790,7 +790,7 @@ contains
                   (wf%n_o)*(wf%n_v), &
                   F_bj,              &
                   (wf%n_o)*(wf%n_v), &
-                  zero,              &        
+                  one,              &        
                   rho_a_i,           &
                   (wf%n_o)*(wf%n_v)) 
 !
@@ -883,9 +883,9 @@ contains
                do i = 1, wf%n_o
 !
                   ji = index_two(j, i, wf%n_o)
-                  ik = index_two(i, k, wf%n_o)
+                  ki = index_two(k, i, wf%n_o)
 !
-                  L_jkb_i(jkb, i) = two*g_ji_kb(ji, kb) - g_ji_kb(ik,jb)
+                  L_jkb_i(jkb, i) = two*g_ji_kb(ji, kb) - g_ji_kb(ki,jb)
 !
                enddo
             enddo
@@ -4590,7 +4590,7 @@ contains
          do j = 1, wf%n_o
             do b = 1, wf%n_v
 !
-               bj = index_two(b, j, wf%n_v) ! E: bug fix 28 may, was n_o
+               bj = index_two(b, j, wf%n_v) 
 !
                do k = 1, wf%n_o
                   do c = 1, wf%n_v

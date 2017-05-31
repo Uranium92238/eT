@@ -326,7 +326,6 @@ contains
 !        Reorderings of c and rho
 !
          real(dp), dimension(:,:), allocatable :: c_jb
-         real(dp), dimension(:,:), allocatable :: rho_ai
 !
 !        Batching variables
 !
@@ -473,7 +472,6 @@ contains
 !        Allocate reordering of c and rho
 !
          call allocator(c_jb, (wf%n_o)*b_length, 1)
-         call allocator(rho_ai, (wf%n_o)*(wf%n_v), 1)
 !
 !        reordered c amplitudes
 !
@@ -499,8 +497,8 @@ contains
                      (wf%n_v)*(wf%n_o), &
                      c_jb,              &
                      b_length*(wf%n_o), &
-                     zero,              &
-                     rho_ai,            &
+                     one,               &
+                     rho,               &
                      (wf%n_v)*(wf%n_o))         
 !
 !        Deallocate L_ai_jb
@@ -510,20 +508,6 @@ contains
 !        Deallocate c reordered
 !
          call deallocator(c_jb, (wf%n_o)*b_length, 1)
-!
-!        Add contribution to rho      
-!
-         do i = 1, wf%n_o
-            do a = 1, wf%n_v
-               ai = index_two(a, i, wf%n_v)
-!
-               rho(a,i) = rho(a,i) + rho_ai(ai, 1)
-            enddo
-         enddo
-!
-!        Deallocate rho reordered
-!
-         call deallocator(rho_ai, (wf%n_o)*(wf%n_v), 1)
 !
       enddo ! Looping over batches
 !
