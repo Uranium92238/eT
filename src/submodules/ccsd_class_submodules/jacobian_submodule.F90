@@ -176,6 +176,8 @@ contains
 !
 !     :: CCS contributions to the singles c vector ::  
 !
+      write(unit_output,*) 'Memory before Jacobi'
+      write(unit_output,*) get_available()
       call wf%jacobian_ccs_a1(rho_a_i, c_a_i)
       call wf%jacobian_ccs_b1(rho_a_i, c_a_i)
 !

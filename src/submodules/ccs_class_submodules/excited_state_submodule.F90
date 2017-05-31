@@ -11,7 +11,7 @@ submodule (ccs_class) excited_state
 !
 !  Some variables available to all routines of the module
 !
-   integer(i15) :: iteration = 1, max_iterations = 50
+   integer(i15) :: iteration = 1, max_iterations = 100
 !
 !     Variables to handle convergence criterea
 !
@@ -342,18 +342,19 @@ contains
 !     Solve eigenvalue problem
 !
       call dgeev('N','V',              &
-                  reduced_dim,               &
+                  reduced_dim,         &
                   A_red,               &
-                  reduced_dim,               &
+                  reduced_dim,         &
                   eigenvalues_full_Re, &
                   eigenvalues_full_Im, &
                   dummy,               &
                   1,                   &
                   eigenvectors,        &
-                  reduced_dim,               &
+                  reduced_dim,         &
                   work,                &
-                  4*reduced_dim,             &
+                  4*reduced_dim,       &
                   info)
+      call deallocator(work, 4*reduced_dim, 1)
 !
 !     Deallocate A_red
 !
@@ -394,7 +395,7 @@ contains
    end subroutine solve_reduced_eigenvalue_equation_ccs
 !
 !
-   module subroutine construct_next_trial_vectors_ccs(wf, eigenvalues_Re_new, eigenvalues_Im_new, &
+   module subroutine construct_next_trial_vectors_ccs(wf, eigenvalues_Re, eigenvalues_Im, &
                                                 solution_vectors_reduced, &
                                                 reduced_dim, n_new_trials)
 !!
@@ -418,17 +419,18 @@ contains
       implicit none
 !
       class(ccs) :: wf
-      real(dp), dimension(wf%tasks%n_singlet_states,1) :: eigenvalues_Re_new
-      real(dp), dimension(wf%tasks%n_singlet_states,1) :: eigenvalues_Im_new
+      real(dp), dimension(wf%tasks%n_singlet_states,1) :: eigenvalues_Re
+      real(dp), dimension(wf%tasks%n_singlet_states,1) :: eigenvalues_Im
       real(dp), dimension(reduced_dim, wf%tasks%n_singlet_states) :: solution_vectors_reduced
       integer(i15) :: reduced_dim, n_new_trials
 !
-      integer(i15) :: root = 0, trial = 0, i = 0
+      integer(i15) :: root = 0, trial = 0, i = 0, j= 0
 !
       real(dp), dimension(:,:), allocatable :: solution_vector
       real(dp), dimension(:,:), allocatable :: residual
 !
       real(dp), dimension(:,:), allocatable :: c_i
+      real(dp), dimension(:,:), allocatable :: c_j
       real(dp), dimension(:,:), allocatable :: rho_i
 !
       
@@ -506,7 +508,7 @@ contains
 !
 !        - eX : 
 !
-         call dscal(wf%n_parameters, -eigenvalues_Re_new(root, 1), residual, 1)
+         call dscal(wf%n_parameters, -eigenvalues_Re(root, 1), residual, 1)
 !
 !        + AX : 
 !
@@ -524,7 +526,6 @@ contains
 !
          call deallocator(rho_i, wf%n_parameters, 1)
 !
-!
 !        Divide by solution vector norm |X|
 !
         call dscal(wf%n_parameters, one/norm_solution_vector, residual, 1)
@@ -541,12 +542,17 @@ contains
 !
 !        Prints
 !
-         write(unit_output,'(t3,i2,5x,f14.8,7x,f14.8,11x,e10.4)') root, eigenvalues_Re_new(root, 1), &
-                                                                eigenvalues_Im_new(root, 1), norm_residual
+         write(unit_output,'(t3,i2,5x,f14.8,7x,f14.8,11x,e10.4)') root, eigenvalues_Re(root, 1), &
+                                                                eigenvalues_Im(root, 1), norm_residual
          flush(unit_output)
+!         write(unit_output,*)'Residual before nbr', root
+!         do i = 1, 20
+!            write(unit_output,*)(residual(i,1))
+!         enddo
+!
+!        Normalize residual
 !
          call dscal(wf%n_parameters, one/norm_residual, residual, 1)
-
 !
 !        Orthogonalize new trial vector against old trial vectors
 !
@@ -554,7 +560,7 @@ contains
 !
 !        prod_i (I - c_i*c_i^T)*Res = prod_i (Res - c_i*c_i^T*Res)
 !
-         do trial = 1, reduced_dim + n_new_trials
+         do trial = 1, reduced_dim
 !
             c_i = zero
             read(unit_trial_vecs, rec=trial, iostat=ioerror) c_i
@@ -581,8 +587,33 @@ contains
             write(unit_trial_vecs, rec=n_new_trials+reduced_dim, iostat=ioerror) residual
 !     
          endif
-!
+!        write(unit_output,*)'Residual nbr', root
+!        do i = 1, 20
+!           write(unit_output,*)(residual(i,1))
+!        enddo
+!  
       enddo
+!
+     call allocator(c_i, wf%n_parameters, 1)
+     call allocator(c_j, wf%n_parameters, 1)
+!
+     do i = reduced_dim + 1,  reduced_dim + n_new_trials
+!
+           c_i = zero
+           read(unit_trial_vecs, rec=i, iostat=ioerror) c_i
+           do j = i + 1,  reduced_dim + n_new_trials
+              c_j = zero
+              read(unit_trial_vecs, rec=j, iostat=ioerror) c_j
+              dot_prod = ddot(wf%n_parameters, c_j, 1, c_i, 1)
+              call daxpy(wf%n_parameters, -dot_prod, c_j, 1, c_i,1)
+!    
+              if (ioerror .ne. 0) write(unit_output,*) 'Error reading trial vecs in get_next_trial_vectors'
+!
+           enddo
+           write(unit_trial_vecs, rec=i, iostat=ioerror) c_i
+     enddo
+     call deallocator(c_i, wf%n_parameters, 1)
+     call deallocator(c_j, wf%n_parameters, 1)
 !
 !     Close all files
 !

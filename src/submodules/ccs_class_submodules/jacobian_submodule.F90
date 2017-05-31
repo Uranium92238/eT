@@ -269,10 +269,10 @@ contains
                      one,         &
                      wf%fock_ab,  &
                      wf%n_v,      &
-                     c1,     &
+                     c1,          &
                      wf%n_v,      &
                      one,         &
-                     rho, &
+                     rho,         &
                      wf%n_v)
 !
 !        - sum_j c_a_j * F_j_i
@@ -282,12 +282,12 @@ contains
                      wf%n_o,      &
                      wf%n_o,      &
                      -one,        &
-                     c1,     &
+                     c1,          &
                      wf%n_v,      &
                      wf%fock_ij,  &
                      wf%n_o,      &
                      one,         &
-                     rho, &
+                     rho,         &
                      wf%n_v)
 !
       end subroutine jacobian_ccs_a1_ccs
