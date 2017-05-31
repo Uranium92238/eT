@@ -1520,6 +1520,8 @@ contains
 !     Order the amplitudes as t_aib_k = t_ik^ab 
 !
       call allocator(t_aib_k, ((wf%n_v)**2)*(wf%n_o), wf%n_o)
+      t_aib_k = zero
+!
       do k = 1, wf%n_o
          do b = 1, wf%n_v
 !
@@ -2019,6 +2021,7 @@ contains
          do c = 1, wf%n_v
 !
             ck = index_two(c, k, wf%n_v)
+            kc = index_two(k, c, wf%n_o)
 !
             do j = 1, wf%n_o
 !
@@ -2030,7 +2033,8 @@ contains
                   lj = index_two(l, j, wf%n_o)
                   lc = index_two(l, c, wf%n_o)
 !
-                  L_lj_ck(lj, ck) = two*g_kj_lc(kj, lc) - g_kj_lc(jk, lc) ! L_ljkc
+              !    L_lj_ck(lj, ck) = two*g_kj_lc(kj, lc) - g_kj_lc(jk, lc) ! L_ljkc
+                  L_lj_ck(lj, ck) = two*g_kj_lc(kj, lc) - g_kj_lc(lj, kc) ! L_ljkc
 !
                enddo
             enddo
