@@ -837,13 +837,14 @@ contains
       real(dp), dimension(:,:), allocatable :: L_ji_J
       real(dp), dimension(:,:), allocatable :: L_kb_J
       real(dp), dimension(:,:), allocatable :: g_ji_kb
+      real(dp), dimension(:,:), allocatable :: g_jb_ki ! g_jbki 
       real(dp), dimension(:,:), allocatable :: L_jkb_i
       real(dp), dimension(:,:), allocatable :: c_a_jkb
 !
       integer(i15) :: i = 0, j = 0, k = 0
       integer(i15) :: a = 0, b = 0 
 !
-      integer(i15) :: ji = 0, ik = 0
+      integer(i15) :: ji = 0, ik = 0, ki = 0
       integer(i15) :: jb = 0, kb = 0
       integer(i15) :: aj = 0, bk = 0
 !
@@ -878,12 +879,27 @@ contains
                   g_ji_kb,           &
                   (wf%n_o)**2)
 !
+      call allocator(g_jb_ki, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
+!
+      call dgemm('N', 'T',&
+                  (wf%n_o)*(wf%n_v),&
+                  (wf%n_o)**2,&
+                  wf%n_J,&
+                  one,&
+                  L_kb_J,&
+                  (wf%n_o)*(wf%n_v),&
+                  L_ji_J,&
+                  (wf%n_o)**2,&
+                  zero,&
+                  g_jb_ki,&
+                  (wf%n_o)*(wf%n_v))
+!
       call deallocator(L_ji_J, (wf%n_o)**2, wf%n_J)
       call deallocator(L_kb_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
-!     Construct L_jikb ordered as L_jkb_i
+!     Constructing L_jikb = 2*g_jikb - g_jbki
 !
-      call allocator(L_jkb_i, (wf%n_v)*((wf%n_o)**2), wf%n_o)
+      call allocator(L_jkb_i, (wf%n_v)*((wf%n_o)**2), wf%n_o)  
       L_jkb_i = zero
 !   
       do b = 1, wf%n_v
@@ -899,15 +915,16 @@ contains
                do i = 1, wf%n_o
 !
                   ji = index_two(j, i, wf%n_o)
-                  ik = index_two(i, k, wf%n_o)
+                  ki = index_two(k, i, wf%n_o)
 !
-                  L_jkb_i(jkb, i) = two*g_ji_kb(ji, kb) - g_ji_kb(ik,jb)
+                  L_jkb_i(jkb, i) = two*g_ji_kb(ji, kb) - g_jb_ki(jb, ki) ! L_jikb
 !
                enddo
             enddo
          enddo
-      enddo
+      enddo 
 !
+      call deallocator(g_jb_ki, (wf%n_o)*(wf%n_v), (wf%n_o)**2)         
       call deallocator(g_ji_kb, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
 !
 !     Reorder c_ajbk as c_a_jkb
