@@ -1157,7 +1157,55 @@ contains
       integer(i15) :: a = 0, i = 0, b = 0, j = 0, ai = 0, bj = 0, aibj = 0
       integer(i15) :: c = 0, k = 0, ck = 0, ckdl = 0, l = 0, d = 0, dl = 0
 !
+      real(dp), dimension(:,:), allocatable :: r1am
+      real(dp), dimension(:,:), allocatable :: r2am
+!
       real(dp) :: displacement
+!
+!     Calculate the transformation of the t1 amplitudes 
+!
+      call wf%initialize_amplitudes
+      call wf%read_double_amplitudes
+!
+      call allocator(r1am, wf%n_v, wf%n_o)
+      call allocator(r2am, wf%n_t2am, 1)
+!
+      r1am = wf%t1am
+      r2am = wf%t2am 
+!
+      call wf%destruct_amplitudes
+!
+      write(unit_output,*) 'T1AM'
+!
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
+            ai = index_two(a, i, wf%n_v)
+            write(unit_output,*) ai,r1am(a,i)
+         enddo
+      enddo
+!
+      write(unit_output,*) 'T2AM'
+!
+      do j = 1, 15
+         write(unit_output,*) j, r2am(j,1)
+      enddo
+!
+      call wf%jacobian_ccsd_transformation(r1am,r2am)
+!
+      write(unit_output,*) 'TRF(SINGLES)'
+!
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
+            ai = index_two(a, i, wf%n_v)
+            write(unit_output,*) ai,r1am(a,i)
+         enddo
+      enddo
+!
+      write(unit_output,*) 'TRF(DOUBLES)'
+!
+      do j = 1, 15
+         write(unit_output,*) j, r2am(j,1)
+      enddo
 !
 !     We wish to calculate A_mu,nu = d(omega)_mu / dt_nu, 
 !     in two different ways:

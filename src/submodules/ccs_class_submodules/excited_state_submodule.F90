@@ -261,6 +261,7 @@ contains
 !
          rewind(unit_reduced_jacobi)
          read(unit_reduced_jacobi) ((A_red(i,j),i = 1, reduced_dim-n_new_trials), j=1, reduced_dim-n_new_trials)
+!
       endif
 !
 !     Allocate c and rho
