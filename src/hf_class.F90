@@ -527,7 +527,7 @@ contains
 !
       else ! Reorder L_ab_J is L_ba_J
 !
-         if (first .ne. 1)
+         if (first .ne. 1) then
             throw_away_index = index_two(wf%n_v, first - 1, wf%n_v)
          else
             throw_away_index = 0
