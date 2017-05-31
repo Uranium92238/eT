@@ -740,7 +740,6 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: v_ai_bj
       real(dp), dimension(:,:), allocatable :: F_bj
-      real(dp), dimension(:,:), allocatable :: rho_ai
 !
       integer(i15) :: a = 0, b = 0
       integer(i15) :: i = 0, j = 0
@@ -756,7 +755,6 @@ contains
       call allocator(F_bj, (wf%n_o)*(wf%n_v), 1)
       F_bj = zero
 !
-      call allocator(rho_ai, (wf%n_o)*(wf%n_v), 1)
 !
       do j = 1, wf%n_o
          do b = 1, wf%n_v
@@ -793,25 +791,11 @@ contains
                   F_bj,              &
                   (wf%n_o)*(wf%n_v), &
                   zero,              &        
-                  rho_ai,            &
+                  rho_a_i,           &
                   (wf%n_o)*(wf%n_v)) 
 !
       call deallocator(v_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call deallocator(F_bj, (wf%n_o)*(wf%n_v), 1)
-!
-!     Reorder into rho_a_i
-! 
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
-!
-            ai = index_two(a, i, wf%n_v)
-!
-            rho_a_i(a,i) = rho_a_i(a,i) + rho_ai(ai, 1)
-!
-         enddo
-      enddo
-!
-      call deallocator(rho_ai, (wf%n_o)*(wf%n_v), 1)
 !
    end subroutine jacobian_ccsd_b1_ccsd
 !
