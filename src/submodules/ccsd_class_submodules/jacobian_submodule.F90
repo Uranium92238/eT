@@ -3090,7 +3090,7 @@ contains
 !
          integer(i15) :: bldj = 0, aidj = 0, bkcl = 0, aibl = 0
 !
-!        :: Construct L_kc_ld ::
+!        :: Construct L_kc,ld ::
 !
          call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
          L_ia_J = zero
@@ -3116,7 +3116,7 @@ contains
          call allocator(L_ck_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
          L_ck_dl = zero
 !
-!        Construct L_kc_dl ordered as L_ck_dl
+!        Construct L_kc,ld ordered as L_ck_dl
 !             
          do c = 1, wf%n_v
             do k = 1, wf%n_o
@@ -3211,7 +3211,7 @@ contains
          call deallocator(X_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
          call deallocator(t_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-!        :: Term 2: - sum_ckdl t_ai,dj * L_kc,ld * c_bk,cl
+!        :: Term 2: - sum_ckdl t_ai,dj * L_kc,ld * c_bl,ck
 !
          call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
          L_ia_J = zero
@@ -3376,7 +3376,7 @@ contains
 !
          call deallocator(rho_aij_b, (wf%n_v)*((wf%n_o)**2), wf%n_v)
 !
-!        :: Term 3: ::
+!        :: Term 3: - sum_ckdl t_ai,bl * L_kc,ld * c_ck,dj ::
 !
 !        :: Construct L_kc_ld ::
 !
@@ -4449,7 +4449,7 @@ contains
 !
 !        sum_c F_bc * c_ai,cj = sum_c c_aij_c(aij,c) F_ab(b,c) = sum_c c_aij_c(aij,c) F_ab^T(c,b)
 !
-         call dgemm('N','T',                 & ! Second factor is transposed here (E, 28 May)
+         call dgemm('N','T',                 & 
                      (wf%n_v)*((wf%n_o)**2), &
                      wf%n_v,                 & 
                      wf%n_v,                 & 
@@ -4802,7 +4802,7 @@ contains
                      -one,              &
                      c_aj_ck,           &
                      (wf%n_o)*(wf%n_v), &
-                     g_ck_bj,           &   
+                     g_ck_bj,           &  !g_ck_bi(ck,bi) = g_bc,ki 
                      (wf%n_o)*(wf%n_v), &
                      zero,              &
                      rho_aj_bi,         &
@@ -5167,7 +5167,7 @@ contains
             b_last   = 0
             b_length = 0
 !
-            b_max_length = a_max_length
+            b_max_length = 0
 !
             do b_batch = 1, a_n_batch
 !
