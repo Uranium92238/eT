@@ -1110,6 +1110,10 @@ contains
 !!    The term is added as rho_ai_bj(ai,bj) = rho_ai_bj(ai,bj) + rho_ai_bj^A2,
 !!    where c_a_i(a,i) = c_ai above. 
 !!
+!!    Debug updates:
+!!
+!!       E: Equation and coding logic checked, 1 June 2017
+!!
       implicit none 
 !
       class(ccsd) :: wf 
@@ -1383,6 +1387,10 @@ contains
 !!    The term is added as rho_ai_bj(ai,bj) = rho_ai_bj(ai,bj) + rho_ai_bj^B2,
 !!    where c_a_i(a,i) = c_ai above.
 !!
+!!    Debug updates
+!!
+!!       E: checked logic in detail, 1 June 2017
+!!
       implicit none 
 !
       class(ccsd) :: wf 
@@ -1404,7 +1412,7 @@ contains
       integer(i15) :: bk = 0, aibk = 0, aib = 0
 !
 !
-!     :: Term 1. sum_kc F_kc t_ij^ac c_bk ::
+!     :: Term 1. - sum_kc F_kc t_ij^ac c_bk ::
 !
 !     Read the amplitudes from disk 
 !
@@ -1498,7 +1506,7 @@ contains
       call deallocator(rho_b_aij, wf%n_v, (wf%n_v)*(wf%n_o)**2)
 !
 !
-!     :: Term 2. sum_kc F_kc t_ik^ab c_cj :: 
+!     :: Term 2. - sum_kc F_kc t_ik^ab c_cj :: 
 !
 !     Form X_k_j = sum_c F_kc c_cj = sum_c fock_ia(k,c) c_a_i(c,j)
 !
@@ -1543,7 +1551,8 @@ contains
          enddo
       enddo
 ! 
-!     Form rho_aib_j = sum_k t_aib_k X_k_j 
+!     Form rho_aib_j = - sum_k t_aib_k X_k_j
+!     (Interpret rho_ai_bj as rho_aib_j)
 !
       call allocator(rho_aib_j, (wf%n_o)*(wf%n_v)**2, wf%n_o)
 !
@@ -1557,7 +1566,7 @@ contains
                   X_k_j,                &
                   wf%n_o,               &
                   zero,                 &
-                  rho_aib_j,            &
+                  rho_ai_bj,            &
                   (wf%n_o)*(wf%n_v)**2)
 !
       call deallocator(X_k_j, wf%n_o, wf%n_o)
@@ -1565,26 +1574,26 @@ contains
 !
 !     Add rho_aib_j to rho_ai_bj 
 !
-      do j = 1, wf%n_o
-         do b = 1, wf%n_v
-!
-            bj = index_two(b, j, wf%n_v)
-!
-            do i = 1, wf%n_o
-               do a = 1, wf%n_v
-!
-                  ai = index_two(a, i, wf%n_v)
-!
-                  aib = index_three(a, i, b, wf%n_v, wf%n_o)
-!
-                  rho_ai_bj(ai, bj) = rho_ai_bj(ai, bj) + rho_aib_j(aib, j)
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!
-      call deallocator(rho_aib_j, (wf%n_o)*(wf%n_v)**2, wf%n_o)
+!       do j = 1, wf%n_o
+!          do b = 1, wf%n_v
+! !
+!             bj = index_two(b, j, wf%n_v)
+! !
+!             do i = 1, wf%n_o
+!                do a = 1, wf%n_v
+! !
+!                   ai = index_two(a, i, wf%n_v)
+! !
+!                   aib = index_three(a, i, b, wf%n_v, wf%n_o)
+! !
+!                   rho_ai_bj(ai, bj) = rho_ai_bj(ai, bj) + rho_aib_j(aib, j)
+! !
+!                enddo
+!             enddo
+!          enddo
+!       enddo
+! !
+!       call deallocator(rho_aib_j, (wf%n_o)*(wf%n_v)**2, wf%n_o)
 !
 !     Deallocate doubles amplitudes    
 !
@@ -2013,7 +2022,7 @@ contains
 !
 !     :: Term 4. - sum_kcl L_ljkc t_il^ab c_ck ::
 !
-!     Form L_lj_ck = L_ljkc = 2 * g_ljck - g_lkcj = 2 * g_kj_lc(kj,lc) - g_kj_lc(jk,lc)
+!     Form L_lj_ck = L_ljkc = 2 * g_ljkc - g_lckj = 2 * g_ljkc - g_kjlc = g_kj_lc(kj,lc) - g_kj_lc(lj,kc)
 !
       call allocator(L_lj_ck, (wf%n_o)**2, (wf%n_v)*(wf%n_o))
 !
@@ -2188,8 +2197,8 @@ contains
 !!    Jacobian CCSD D2 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-!!    rho_ai_bj^D2 = - ( sum_kcd g_kcbd (t_ij^cd c_ak + t_kj^ad c_ci + t_ik^ca c_dj)
-!!                       - sum_kcd L_kcbd (t_ik^ac c_dj + t_ij^ad c_ck))
+!!    rho_ai_bj^D2 = - sum_kcd g_kcbd (t_ij^cd c_ak + t_kj^ad c_ci + t_ik^ca c_dj)
+!!                       + sum_kcd L_kcbd (t_ik^ac c_dj + t_ij^ad c_ck)
 !!
 !!    Note: the code is structured so that we batch over the index b,
 !!          where the integrals are made as g_kc_db = g_kcbd and held
@@ -2275,7 +2284,7 @@ contains
          call batch_limits(b_begin, b_end, b_batch, max_batch_length, batch_dimension)
          batch_length = b_end - b_begin + 1 
 !
-!        :: Term 1. sum_kcd g_kcbd t_ij^cd c_ak ::
+!        :: Term 1. - sum_kcd g_kcbd t_ij^cd c_ak ::
 !
 !        Form g_kc_db = g_kcbd
 !
@@ -2454,7 +2463,7 @@ contains
          call deallocator(rho_a_ijb, wf%n_v, batch_length*(wf%n_o)**2)
 !
 !
-!        :: Term 2. sum_kcd g_kcbd t_kj^ad c_ci ::
+!        :: Term 2. - sum_kcd g_kcbd t_kj^ad c_ci ::
 !
 !        Form the intermediate X_i_dkb = sum_c g_kcbd c_ci 
 !                                      = sum_c c_ci g_cd_kb 
@@ -2584,7 +2593,7 @@ contains
          call deallocator(rho_ib_aj, (wf%n_o)*batch_length, (wf%n_v)*(wf%n_o))
 !
 !
-!        :: Term 3. sum_kcd g_kcbd t_ik^ca c_dj ::
+!        :: Term 3. - sum_kcd g_kcbd t_ik^ca c_dj ::
 !
 !        sum_d g_kcbd c_dj = sum_d g_cd_kb c_dj
 !
@@ -2708,7 +2717,7 @@ contains
          call deallocator(rho_aib_j, (wf%n_o)*(wf%n_v)*batch_length, wf%n_o)
 !
 !
-!        :: Term 4. - sum_kcd L_kcbd t_ik^ac c_dj :: 
+!        :: Term 4.  sum_kcd L_kcbd t_ik^ac c_dj :: 
 !
 !        sum_d L_kcbd c_dj = sum_d L_ckb_d c_dj 
 !
@@ -2809,12 +2818,12 @@ contains
          call deallocator(rho_aib_j, (wf%n_v)*(wf%n_o)*batch_length, wf%n_o)
 !
 !
-!        :: Term 5. - sum_kcd L_kcbd t_ij^ad c_ck ::
+!        :: Term 5.  sum_kcd L_kcbd t_ij^ad c_ck ::
 !
-!        Form the intermediate X_bd = sum_ck c_ck L_kcbd = sum_ck c_ck L_ckb_d
+!        Form the intermediate X_1,bd = sum_ck c_ck L_kcbd = sum_ck c_1,ck L_ckb_d
 !
 !        Note: L_ckb_d is interpreted as L_ck_bd in the matrix multiplication 
-!        Note: c_a_i is interpreted as c_ai in the matrix multiplication 
+!        Note: c_a_i is interpreted as c_1,ai in the matrix multiplication 
 !
          call allocator(X_bd, 1, batch_length*(wf%n_v))
 !  
@@ -2823,7 +2832,7 @@ contains
                      batch_length*(wf%n_v), &
                      (wf%n_o)*(wf%n_v),     &
                      one,                   &
-                     c_a_i,                 & ! "c_ai"
+                     c_a_i,                 & ! "c_1,ai"
                      1,                     &
                      L_ckb_d,               & ! "L_ck_bd"
                      (wf%n_o)*(wf%n_v),     &
@@ -2857,8 +2866,8 @@ contains
             enddo
          enddo
 !
-!        Form rho_b_aij = - sum_kcd L_kcbd t_ij^ad c_ck
-!                       = - sum_d X_bd t_d_aij
+!        Form rho_b_aij =  sum_kcd L_kcbd t_ij^ad c_ck
+!                       =  sum_d X_bd t_d_aij
 !
 !        Note: X_bd is interpreted as X_b_d in the matrix multiplication
 !
@@ -2876,7 +2885,6 @@ contains
                      zero,                 &
                      rho_b_aij,            &
                      batch_length)
-!
 !
          call deallocator(X_bd, 1, batch_length*(wf%n_v))
          call deallocator(t_d_aij, wf%n_v, (wf%n_v)*(wf%n_o)**2)
@@ -3049,9 +3057,9 @@ contains
 !!       Jacobian CCSD F2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!       rho_ai_bj^F2 =  P_(ij)^(ab) (- sum_ckld t_ai,ck * L_kc,ld * c_bl,dj 
-!!                                    - sum_ckdl t_ai,dj * L_kc,ld * c_bl,ck
-!!                                    - sum_ckdl t_ai_bl * L_kc,ld * c_ck,dj ) 
+!!       rho_ai_bj^F2 =   - sum_ckld t_ai,ck * L_kc,ld * c_bl,dj 
+!!                        - sum_ckdl t_ai,dj * L_kc,ld * c_bl,ck
+!!                        - sum_ckdl t_ai_bl * L_kc,ld * c_ck,dj
 !!
          implicit none 
 !
@@ -3145,7 +3153,6 @@ contains
 !
 !        :: Term 1: - sum_ckld t_ai,ck * L_kc,ld * c_bl,dj ::
 !
-!
 !        Reorder c_bl_dj as c_dl_bj
 !
          call allocator(c_dl_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
@@ -3172,7 +3179,7 @@ contains
 !
          call allocator(X_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-         call dgemm('N', 'N', &
+         call dgemm('N', 'N',           &
                      (wf%n_o)*(wf%n_v), &
                      (wf%n_o)*(wf%n_v), &
                      (wf%n_o)*(wf%n_v), &
@@ -3186,7 +3193,7 @@ contains
                      (wf%n_o)*(wf%n_v))
 !
          call deallocator(c_dl_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-         call deallocator(L_ck_dl,(wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+         call deallocator(L_ck_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
          call wf%initialize_amplitudes
          call wf%read_double_amplitudes
@@ -3555,9 +3562,9 @@ contains
 !!       Jacobian CCSD G2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!       rho_ai_bj^G2 =  P_(ij)^(ab) (- sum_ckdl t_bl,dj * L_kc,ld * c_ai,ck 
-!!                                    - sum_ckdl t_ck_bl * L_kc,ld * c_ai,dj 
-!!                                    - sum_ckld t_ck,dj * L_kc,ld * c_ai,bl )
+!!       rho_ai_bj^G2 =  - sum_ckdl t_bl,dj * L_kc,ld * c_ai,ck 
+!!                       - sum_ckdl t_ck_bl * L_kc,ld * c_ai,dj 
+!!                       - sum_ckld t_ck,dj * L_kc,ld * c_ai,bl 
 !!
          implicit none 
 !
@@ -3883,7 +3890,6 @@ contains
          call deallocator(rho_aij_b, (wf%n_v)*((wf%n_o)**2), wf%n_v)
 !
 !        :: Term 3: - sum_ckld t_ck,dj * L_kc,ld * c_ai,bl ::
-!
 !
          call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
          L_ia_J = zero
@@ -4862,7 +4868,6 @@ contains
 !!       rho_ab_ij^J2 =    sum_ckld t_ci,dj * g_kc,ld * c_ak,bl 
 !!                       + sum_ckdl t_ak,bl * g_kc,ld * c_ci,dj
 !!                
-!!
          implicit none 
 !
          class(ccsd) :: wf 
@@ -5050,7 +5055,6 @@ contains
 !!       rho_ab_ij^K2 =    sum_kl g_ki,lj * c_ak,bl 
 !!                       + sum_cd g_ac,bd * c_ci,dj
 !!                
-!!
          implicit none 
 !
          class(ccsd) :: wf 

@@ -1173,6 +1173,9 @@ contains
       r1am = wf%t1am
       r2am = wf%t2am 
 !
+      r1am = zero
+    !  r2am = zero
+!
       call wf%destruct_amplitudes
 !
       write(unit_output,*) 'T1AM'

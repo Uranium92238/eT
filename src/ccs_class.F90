@@ -704,7 +704,6 @@ contains
 !     
      !      call wf%excited_state_solver
            call wf%jacobi_test
-
 !
          else
 !
