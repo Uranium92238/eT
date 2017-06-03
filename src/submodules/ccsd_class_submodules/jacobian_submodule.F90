@@ -1554,7 +1554,7 @@ contains
 !     Form rho_aib_j = - sum_k t_aib_k X_k_j
 !     (Interpret rho_ai_bj as rho_aib_j)
 !
-      call allocator(rho_aib_j, (wf%n_o)*(wf%n_v)**2, wf%n_o)
+  !    call allocator(rho_aib_j, (wf%n_o)*(wf%n_v)**2, wf%n_o)
 !
       call dgemm('N','N',               &
                   (wf%n_o)*(wf%n_v)**2, &
@@ -1960,6 +1960,7 @@ contains
                do k = 1, wf%n_o
 !
                   ak = index_two(a, k, wf%n_v)
+                  kl = index_two(k, l, wf%n_o) ! E: Bug fix, 3 June - wasn't there!!
 !
                   blak = index_packed(bl, ak)
 !
