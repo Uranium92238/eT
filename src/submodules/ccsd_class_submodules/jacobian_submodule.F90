@@ -1569,7 +1569,7 @@ contains
                   (wf%n_o)*(wf%n_v)**2, &
                   X_k_j,                &
                   wf%n_o,               &
-                  zero,                 &
+                  one,                  &
                   rho_ai_bj,            &
                   (wf%n_o)*(wf%n_v)**2)
 !
@@ -2395,7 +2395,7 @@ contains
 !
          call deallocator(X_ij_kb, (wf%n_o)**2, (wf%n_o)*batch_length)
 !
-!        Form rho_a_ijb = sum_k c_ak X_k_ijb = sum_k c_a_i(a,k) X_k_ijb(k, ijb)
+!        Form rho_a_ijb = - sum_k c_ak X_k_ijb = - sum_k c_a_i(a,k) X_k_ijb(k, ijb)
 !
          call allocator(rho_a_ijb, wf%n_v, batch_length*(wf%n_o)**2)
 !
@@ -2522,8 +2522,8 @@ contains
             enddo
          enddo
 !
-!        Calculate rho_ib_aj = sum_kcd g_kcbd t_kj^ad c_ci
-!                            = sum_dk X_ib_dk t_dk_aj
+!        Calculate rho_ib_aj = - sum_kcd g_kcbd t_kj^ad c_ci
+!                            = - sum_dk X_ib_dk t_dk_aj
 !
          call allocator(rho_ib_aj, (wf%n_o)*batch_length, (wf%n_o)*(wf%n_v))
 !
@@ -2646,7 +2646,7 @@ contains
             enddo
          enddo
 !
-!        Form rho_aib_j = sum_kcd g_kcbd t_ik^ca c_dj = sum_ck t_ai_ck X_ckb_j 
+!        Form rho_aib_j = -sum_kcd g_kcbd t_ik^ca c_dj = sum_ck t_ai_ck X_ckb_j 
 !
 !        Note: X_ckb_j is interpreted as X_ck_bj in the matrix multiplication.
 !        Note: rho_aib_j is interpreted as rho_ai_bj in the matrix multiplication.
@@ -2747,7 +2747,7 @@ contains
 !
          call squareup(wf%t2am, t_ai_ck, (wf%n_o)*(wf%n_v))
 !
-!        Form rho_aib_j = - sum_ck t_ai_ck Y_ckb_j 
+!        Form rho_aib_j =  sum_ck t_ai_ck Y_ckb_j 
 !
 !        Note: we interpret Y_ckb_j as Y_ck_bj in the matrix multiplication
 !        Note: we interpret rho_aib_j as rho_ai_bj in the matrix multiplication
@@ -2763,8 +2763,8 @@ contains
                      (wf%n_o)*(wf%n_v),     &
                      Y_ckb_j,               & ! "Y_ck_bj"
                      (wf%n_o)*(wf%n_v),     &
-                     one,                   &
-                     rho_ai_bj,             & ! "rho_ai_bj"
+                     zero,                  &
+                     rho_aib_j,             & ! "rho_ai_bj"
                      (wf%n_o)*(wf%n_v))
 !
          call deallocator(Y_ckb_j, (wf%n_v)*(wf%n_o)*batch_length, wf%n_o)
@@ -2914,7 +2914,7 @@ contains
       class(ccsd) :: wf 
 !
       real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
-      real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))  :: c_ai_ck
+      real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: c_ai_ck
 !
       real(dp), dimension(:,:), allocatable :: t_dl_bj
       real(dp), dimension(:,:), allocatable :: L_ia_J
@@ -4958,7 +4958,7 @@ contains
                      kl = index_two(k, l, wf%n_o)
                      lj = index_two(l, j, wf%n_o)
 !
-                     g_kl_ij(kl, ij) = g_ki_lj(ki, lj) ! E: This "reordering" appears unneccesary. Make g_kl_ij from L_ij^J instead.
+                     g_kl_ij(kl, ij) = g_ki_lj(ki, lj) 
 !                     
                   enddo
                enddo
