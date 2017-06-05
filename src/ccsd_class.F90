@@ -1173,8 +1173,12 @@ contains
       r1am = wf%t1am
       r2am = wf%t2am 
 !
-    !  r1am = zero
-      r2am = zero
+!     Make sure fock matrix is up to date 
+!
+      call wf%construct_fock
+!
+   !   r1am = zero
+   !   r2am = zero
 !
       call wf%destruct_amplitudes
 !
