@@ -99,9 +99,6 @@ contains
 !
 !     Find start trial vectors and store them to file trial_vec
 !
-      write(unit_output,*)'Initialize trial vectors'
-      flush(unit_output)
-!
       call wf%initialize_trial_vectors
 !
 !     Allocate eigenvalue arrays
@@ -118,8 +115,6 @@ contains
 !
 !     Start of iterative loop
 !
-      write(unit_output,*)'Start iterative loop'
-      flush(unit_output)
       do while (.not. converged .and. iteration .le. max_iterations) 
 !
 !     Prints 
@@ -132,8 +127,6 @@ contains
 !        Transform new trial vectors 
 !        rho_i = A * c_i
 !
-         write(unit_output,*)'Transforming trial vectors'
-         flush(unit_output)
          call wf%transform_trial_vectors(reduced_dim - n_new_trials + 1, reduced_dim)
 !
 !        Allocate solution vectors for reduced problem
@@ -143,8 +136,6 @@ contains
 !
 !        Solve the reduced eigenvalue problem
 !
-         write(unit_output,*)'Solve eigenvector problem'
-         flush(unit_output)
          call wf%solve_reduced_eigenvalue_equation(eigenvalues_Re_new, eigenvalues_Im_new, eigenvectors, reduced_dim, n_new_trials)
 !
 !        Test energy convergence criteria
@@ -561,7 +552,7 @@ contains
 !
 !        prod_i (I - c_i*c_i^T)*Res = prod_i (Res - c_i*c_i^T*Res)
 !
-         do trial = 1, reduced_dim
+         do trial = 1, reduced_dim + n_new_trials
 !
             c_i = zero
             read(unit_trial_vecs, rec=trial, iostat=ioerror) c_i
@@ -598,21 +589,21 @@ contains
      call allocator(c_i, wf%n_parameters, 1)
      call allocator(c_j, wf%n_parameters, 1)
 !
-     do i = reduced_dim + 1,  reduced_dim + n_new_trials
-!
-           c_i = zero
-           read(unit_trial_vecs, rec=i, iostat=ioerror) c_i
-           do j = i + 1,  reduced_dim + n_new_trials
-              c_j = zero
-              read(unit_trial_vecs, rec=j, iostat=ioerror) c_j
-              dot_prod = ddot(wf%n_parameters, c_j, 1, c_i, 1)
-              call daxpy(wf%n_parameters, -dot_prod, c_j, 1, c_i,1)
-!    
-              if (ioerror .ne. 0) write(unit_output,*) 'Error reading trial vecs in get_next_trial_vectors'
-!
-           enddo
-           write(unit_trial_vecs, rec=i, iostat=ioerror) c_i
-     enddo
+!     do i = reduced_dim + 1,  reduced_dim + n_new_trials
+!!
+!           c_i = zero
+!           read(unit_trial_vecs, rec=i, iostat=ioerror) c_i
+!           do j = i + 1,  reduced_dim + n_new_trials
+!              c_j = zero
+!              read(unit_trial_vecs, rec=j, iostat=ioerror) c_j
+!              dot_prod = ddot(wf%n_parameters, c_j, 1, c_i, 1)
+!              call daxpy(wf%n_parameters, -dot_prod, c_j, 1, c_i,1)
+!!    
+!              if (ioerror .ne. 0) write(unit_output,*) 'Error reading trial vecs in get_next_trial_vectors'
+!!
+!           enddo
+!           write(unit_trial_vecs, rec=i, iostat=ioerror) c_i
+!     enddo
      call deallocator(c_i, wf%n_parameters, 1)
      call deallocator(c_j, wf%n_parameters, 1)
 !

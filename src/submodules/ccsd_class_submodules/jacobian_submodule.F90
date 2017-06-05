@@ -3050,7 +3050,7 @@ contains
          real(dp), dimension(:,:), allocatable :: g_kc_ld
 !
          real(dp), dimension(:,:), allocatable :: L_ck_dl
-         real(dp), dimension(:,:), allocatable :: L_d_clk
+         real(dp), dimension(:,:), allocatable :: L_d_lck
          real(dp), dimension(:,:), allocatable :: L_l_ckd
 !
          real(dp), dimension(:,:), allocatable :: c_dl_bj
@@ -3074,7 +3074,7 @@ contains
          integer(i15) :: ai = 0, bj = 0, bk = 0, bl= 0, ck = 0, cl = 0, dj = 0, dl = 0
          integer(i15) :: kc = 0, kd = 0, ld = 0, lc = 0 
 !
-         integer(i15) :: aij = 0, aib = 0, clk = 0, ckd = 0
+         integer(i15) :: aij = 0, aib = 0, lck = 0, ckd = 0
 !
          integer(i15) :: bldj = 0, aidj = 0, bkcl = 0, aibl = 0
 !
@@ -3225,14 +3225,14 @@ contains
 !
 !        Reorder L_ck_dl to L_d_clk
 !
-         call allocator(L_d_clk, wf%n_v, (wf%n_v)*((wf%n_o)**2))
-         L_d_clk = zero
+         call allocator(L_d_lck, wf%n_v, (wf%n_v)*((wf%n_o)**2))
+         L_d_lck = zero
 !
          do k = 1, wf%n_o
             do l = 1, wf%n_o
                do c = 1, wf%n_v
 !
-                  clk = index_three(c, l, k, wf%n_v, wf%n_o)
+                  lck = index_three(l, c, k, wf%n_o, wf%n_v)
 !
                   kc = index_two(k, c, wf%n_o)
                   lc = index_two(l, c, wf%n_o)
@@ -3242,7 +3242,7 @@ contains
                      ld = index_two(l, d, wf%n_o)
                      kd = index_two(k, d, wf%n_o)
 !
-                     L_d_clk(d, clk) = two*g_kc_ld(kc, ld) - g_kc_ld(kd, lc)
+                     L_d_lck(d, lck) = two*g_kc_ld(kc, ld) - g_kc_ld(kd, lc)
 !
                   enddo
                enddo
@@ -3250,49 +3250,24 @@ contains
          enddo
 
 !
-!        Reorder c_bl,ck as c_clk_b
-!        
-         call allocator(c_clk_b, (wf%n_v)*((wf%n_o)**2), wf%n_v)
-         c_clk_b = zero
-!
-         do k = 1, wf%n_o
-            do l = 1, wf%n_o
-               do c = 1, wf%n_v
-!  
-                  ck = index_two(c, k, wf%n_v)
-!
-                  clk = index_three(c, l, k, wf%n_v, wf%n_o)
-!
-                  do b = 1, wf%n_v
-!
-                     bl = index_two(b, l, wf%n_v)
-!
-                     c_clk_b(clk,b) = c_ai_bj(bl,ck)
-!
-                 enddo
-               enddo
-            enddo
-         enddo
-!
 !        Y_d_b = sum_clk L_d_clk * c_clk_b 
 !
          call allocator(Y_d_b, wf%n_v, wf%n_v)
 !
-         call dgemm('N', 'N',              &
+         call dgemm('N', 'T',              &
                      wf%n_v,               &
                      wf%n_v,               &
                      ((wf%n_o)**2)*wf%n_v, &
                      one,                  &
-                     L_d_clk,              &
+                     L_d_lck,              &
                      wf%n_v,               &
-                     c_clk_b,              &
-                     ((wf%n_o)**2)*wf%n_v, &
+                     c_ai_bj,              &
+                     wf%n_v, &
                      zero,                 &
                      Y_d_b,                &
                      wf%n_v)
 !
-         call deallocator(c_clk_b, (wf%n_v)*((wf%n_o)**2), wf%n_v)
-         call deallocator(L_d_clk, wf%n_v, (wf%n_v)*((wf%n_o)**2)) 
+         call deallocator(L_d_lck, wf%n_v, (wf%n_v)*((wf%n_o)**2)) 
 !
          call wf%initialize_amplitudes
          call wf%read_double_amplitudes
@@ -3403,13 +3378,14 @@ contains
                kc = index_two(k, c, wf%n_o)
 !
                do d = 1, wf%n_v
+!
+                  ckd = index_three(c, k, d, wf%n_v, wf%n_o)
+!
                   do l = 1, wf%n_o
 !
                      lc = index_two(l, c, wf%n_o)
                      ld = index_two(l, d, wf%n_o)
                      kd = index_two(k, d, wf%n_o)
-!
-                     ckd = index_three(c, k, d, wf%n_v, wf%n_o)
 !
                      L_l_ckd(l, ckd) = two*g_kc_ld(kc, ld) - g_kc_ld(kd, lc)
 !
@@ -3441,31 +3417,9 @@ contains
          call wf%initialize_amplitudes
          call wf%read_double_amplitudes
 !
-         call allocator(t_aib_l, (wf%n_o)*((wf%n_v)**2), wf%n_o)
+         call allocator(t_aib_l, (wf%n_o)*((wf%n_v)), wf%n_o*(wf%n_v))
          t_aib_l = zero
-!
-!        Reorder T2 amplitudes
-!
-         do l = 1, wf%n_o
-            do i = 1, wf%n_o
-               do b = 1, wf%n_v
-!
-                  bl = index_two(b, l, wf%n_v)
-!
-                  do a = 1, wf%n_v
-!
-                     aib = index_three(a, i, b, wf%n_v, wf%n_o)
-!
-                     ai = index_two(a, i, wf%n_v)
-!
-                     aibl = index_packed(ai, bl)
-!
-                     t_aib_l(aib, l) = wf%t2am(aibl,1)
-!
-                  enddo
-               enddo
-            enddo
-         enddo
+         call squareup(wf%t2am, t_aib_l, wf%n_o*(wf%n_v))
 !
          call wf%destruct_amplitudes
 !
@@ -3483,7 +3437,7 @@ contains
                      rho_ai_bj,              &
                      ((wf%n_v)**2)*(wf%n_o))
 !
-         call deallocator(t_aib_l, (wf%n_o)*((wf%n_v)**2), wf%n_o)
+         call deallocator(t_aib_l, (wf%n_o)*((wf%n_v)), wf%n_o*(wf%n_v))
          call deallocator(Z_l_j, wf%n_o, wf%n_o)
 ! 
       end subroutine jacobian_ccsd_f2_ccsd
@@ -3847,7 +3801,7 @@ contains
          call allocator(L_l_ckd,(wf%n_o), (wf%n_o)*((wf%n_v)**2))
          L_l_ckd = zero
 !
-!        Construct L_kc_dl (E: L_kc_ld?) ordered as L_ck_dl (E: L_l_ckd?)
+!        Construct L_kc_ld ordered as  L_l_ckd
 !             
          do c = 1, wf%n_v
             do k = 1, wf%n_o
@@ -4160,9 +4114,11 @@ contains
                aj = index_two(a, j, wf%n_v)
 !
                do c = 1, wf%n_v
+!
+                  cj = index_two(c, j, wf%n_v)
+!
                   do l = 1, wf%n_o
 !
-                     cj = index_two(c, j, wf%n_v)
                      al = index_two(a, l, wf%n_v)
                      lc = index_two(l, c, wf%n_o)
 !
@@ -4958,7 +4914,7 @@ contains
                      kl = index_two(k, l, wf%n_o)
                      lj = index_two(l, j, wf%n_o)
 !
-                     g_kl_ij(kl, ij) = g_ki_lj(ki, lj) ! E: This "reordering" appears unneccesary. Make g_kl_ij from L_ij^J instead.
+                     g_kl_ij(kl, ij) = g_ki_lj(ki, lj) 
 !                     
                   enddo
                enddo
@@ -4967,7 +4923,8 @@ contains
 !
          call deallocator(g_ki_lj, (wf%n_o)**2, (wf%n_o)**2)
 !
-!        sum_kl g_ki,lj * c_ak,bl = sum_kl c_ab_ij(ab,kl) g_kl_ij(kl,ij)
+!        sum_kl g_ki,lj * c_ak,bl = sum_kl c_ab_ij(ab,kl) g_kl_ij(kl,ij)  
+!
 !
          call dgemm('N', 'N',     & 
                      (wf%n_v)**2, &
@@ -5067,7 +5024,7 @@ contains
 !
                call deallocator(L_ca_J, (wf%n_v)*a_length, wf%n_J) 
 !
-!              sum_cd g_ac,bd * c_ci,dj = sum_cd g_ac,bd c_cd,ij = sum_cd g_ab_cd c_cd_ij 
+!              sum_cd g_ac,bd * c_ci,dj = sum_cd g_ac,bd c_cd,ij = sum_cd g_ab_cd c_cd_ij  
 !
 !              Reorder g_ca_db into g_ab_cd 
 !              (Here, g_ab_cd = g_acbd = g_ca_db.)
@@ -5100,7 +5057,7 @@ contains
 !
                call allocator(rho_batch_ab_ij, a_length*b_length, (wf%n_o)**2)
 !
-!              rho_ab_ij = sum_cd g_ac,bd * c_ci,dj = sum_cd g_ab_cd(ab, cd) c_ab_ij(cd, ij)
+!              rho_ab_ij = sum_cd g_ac,bd * c_ci,dj = sum_cd g_ab_cd(ab, cd) c_ab_ij(cd, ij) 
 !
                call dgemm('N', 'N',            &  
                             a_length*b_length, &
@@ -5109,7 +5066,7 @@ contains
                             one,               &  
                             g_ab_cd,           &
                             a_length*b_length, &
-                            c_ab_ij,           & ! E: Should take care of batching here, eventually.
+                            c_ab_ij,           & 
                             (wf%n_v)**2,       &  
                             zero,              &
                             rho_batch_ab_ij,   &
