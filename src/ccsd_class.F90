@@ -1173,6 +1173,10 @@ contains
       r1am = wf%t1am
       r2am = wf%t2am 
 !
+!     Make sure fock matrix is up to date 
+!
+      call wf%construct_fock
+!
    !   r1am = zero
    !   r2am = zero
 !

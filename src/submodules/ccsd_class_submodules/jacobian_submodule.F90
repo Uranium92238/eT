@@ -3105,7 +3105,6 @@ contains
          L_ck_dl = zero
 !
 !        Construct L_kc,ld ordered as L_ck_dl
-!
 !             
          do c = 1, wf%n_v
             do k = 1, wf%n_o
@@ -3436,7 +3435,7 @@ contains
                      wf%n_o)
 !
          call deallocator(L_l_ckd,(wf%n_o), (wf%n_o)*((wf%n_v)**2)) 
-         call deallocator(c_ckd_j, ((wf%n_v)**2)*(wf%n_o), wf%n_o)
+      !   call deallocator(c_ckd_j, ((wf%n_v)**2)*(wf%n_o), wf%n_o) ! Old no-trick vector. Removed, I think.
 !
          call wf%initialize_amplitudes
          call wf%read_double_amplitudes
@@ -3460,7 +3459,7 @@ contains
 !
                      aibl = index_packed(ai, bl)
 !
-                     t_aib_l(aib, l) = wf%t2am(aibl,1)
+                     t_aib_l(aib, l) = wf%t2am(aibl,1) ! E: Here we can use squareup, if we'd like to: t_aib_l = "t_ai_bl"
 !
                   enddo
                enddo
@@ -3479,7 +3478,7 @@ contains
                      ((wf%n_v)**2)*(wf%n_o), &
                      Z_l_j,                  &
                      wf%n_o,                 &
-                     one,                   &
+                     one,                    &
                      rho_ai_bj,              &
                      ((wf%n_v)**2)*(wf%n_o))
 !
@@ -3563,7 +3562,7 @@ contains
          call allocator(L_ck_dl,(wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
          L_ck_dl = zero
 !
-!        Construct L_kc_dl ordered as L_ck_dl
+!        Construct L_kc_ld ordered as L_ck_dl
 !             
          do c = 1, wf%n_v
             do k = 1, wf%n_o
@@ -3621,6 +3620,8 @@ contains
 !
          call allocator(X_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
+!        X_ck_bj = sum_dl t_bl,dj * L_kc,ld = sum_dl L_ck_dl t_dl_bj 
+!
          call dgemm('N', 'N',           &
                      (wf%n_o)*(wf%n_v), &
                      (wf%n_o)*(wf%n_v), &
@@ -3636,6 +3637,8 @@ contains
 !
          call deallocator(t_dl_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
          call deallocator(L_ck_dl,(wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!        rho_ai_bj =+ - sum_ck c_ai,ck X_ck_bj
 !
          call dgemm('N', 'N',          &
                     (wf%n_o)*(wf%n_v), &
@@ -3756,7 +3759,7 @@ contains
          call allocator(c_aij_d, (wf%n_v)*((wf%n_o)**2), wf%n_v)
          c_aij_d = zero
 !
-!        Reorder c_ai_dl (E: c_ai_dj, I guess) to c_aij_d
+!        Reorder c_ai_dj to c_aij_d
 !
          do j = 1, wf%n_o
             do i = 1, wf%n_o
@@ -3847,7 +3850,7 @@ contains
          call allocator(L_l_ckd,(wf%n_o), (wf%n_o)*((wf%n_v)**2))
          L_l_ckd = zero
 !
-!        Construct L_kc_dl (E: L_kc_ld?) ordered as L_ck_dl (E: L_l_ckd?)
+!        Construct L_kc_ld ordered as L_l_ckd
 !             
          do c = 1, wf%n_v
             do k = 1, wf%n_o
@@ -3894,7 +3897,7 @@ contains
 !
                      ckdj = index_packed(ck, dj)
 !
-                     t_ckd_j(ckd, j) = wf%t2am(ckdj, 1)
+                     t_ckd_j(ckd, j) = wf%t2am(ckdj, 1) ! E: Here we can use squareup, if we'd like to
 !
                  enddo
                enddo
@@ -3944,10 +3947,9 @@ contains
 !!       Jacobian CCSD H2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!       rho_ai_bj^H2 =  P_(ij)^(ab) ( sum_ckld t_ci,ak * g_kc,ld * c_bl,dj 
-!!                                   + sum_ckdl t_cj,al * g_kc,ld * c_bk,di)
+!!       rho_ai_bj^H2 =  sum_ckdl t_ci,ak * g_kc,ld * c_bl,dj 
+!!                     + sum_ckdl t_cj,al * g_kc,ld * c_bk,di
 !!                
-!!
          implicit none 
 !
          class(ccsd) :: wf 
@@ -4270,10 +4272,11 @@ contains
 !!       Jacobian CCSD I2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!       rho_ai_bj^I2 =  P_ij^ab ( sum_c F_bc * c_ai,cj - sum_k F_jk * c_ai,bk
-!!                               + sum_ck L_bj,kc * c_ai,ck
-!!                               - sum_ck ( g_kc,bj * c_ak,ci + g_ki,bc * c_ak,cj ) )
+!!       rho_ai_bj^I2 =  sum_c F_bc * c_ai,cj - sum_k F_jk * c_ai,bk
+!!                     + sum_ck L_bj,kc * c_ai,ck 
+!!                     - sum_ck ( g_kc,bj * c_ak,ci + g_ki,bc * c_ak,cj ) 
 !!                
+!!       Debug 5 June: I think F_jk should be F_kj. Changed it and got a major improvement.
 !!
          implicit none 
 !
@@ -4389,7 +4392,7 @@ contains
 !
 !        - sum_k F_jk * c_ai,bk = - sum_k c_aib_k(aib,k) F_ij(k,j)^T 
 !
-         call dgemm('N', 'T',                &  
+         call dgemm('N', 'N',                &  ! E: 'N' 'T' before 
                      (wf%n_o)*((wf%n_v)**2), &
                      wf%n_o,                 & 
                      wf%n_o,                 & 
