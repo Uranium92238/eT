@@ -222,9 +222,9 @@ contains
       real(dp), dimension(:,:), allocatable :: A_red
       real(dp), dimension(:,:), allocatable :: c_i
       real(dp), dimension(:,:), allocatable :: rho_j
-      real(dp), dimension(:,:), allocatable :: eigenvectors  ! S: So maybe a new name for this? 
-      real(dp), dimension(:,:), allocatable :: eigenvalues_full_Re
-      real(dp), dimension(:,:), allocatable :: eigenvalues_full_Im
+      real(dp), dimension(:,:), allocatable :: solution_vectors_reduced_all 
+      real(dp), dimension(:,:), allocatable :: eigenvalues_Re_all
+      real(dp), dimension(:,:), allocatable :: eigenvalues_Im_all
       real(dp), dimension(:,:), allocatable :: work
 !
       real(dp) :: ddot, dummy
@@ -327,31 +327,31 @@ contains
 !
 !     Allocate arrays for eigenvalues and eigenvectors
 !
-      call allocator(eigenvectors, reduced_dim, reduced_dim)
-      eigenvectors = zero
+      call allocator(solution_vectors_reduced_all, reduced_dim, reduced_dim)
+      solution_vectors_reduced_all = zero
 !
-      call allocator(eigenvalues_full_Re, reduced_dim, 1)
-      call allocator(eigenvalues_full_Im, reduced_dim, 1)
-      eigenvalues_full_Re = zero
-      eigenvalues_full_Im = zero
+      call allocator(eigenvalues_Re_all, reduced_dim, 1)
+      call allocator(eigenvalues_Im_all, reduced_dim, 1)
+      eigenvalues_Re_all = zero
+      eigenvalues_Im_all = zero
 !
       call allocator(work, 4*reduced_dim, 1)
       work = zero
 !
 !     Solve eigenvalue problem
 !
-      call dgeev('N','V',              &
-                  reduced_dim,         &
-                  A_red,               &
-                  reduced_dim,         &
-                  eigenvalues_full_Re, &
-                  eigenvalues_full_Im, &
-                  dummy,               &
-                  1,                   &
-                  eigenvectors,        &
-                  reduced_dim,         &
-                  work,                &
-                  4*reduced_dim,       &
+      call dgeev('N','V',                       &
+                  reduced_dim,                  &
+                  A_red,                        &
+                  reduced_dim,                  &
+                  eigenvalues_Re_all,           &
+                  eigenvalues_Im_all,           &
+                  dummy,                        &
+                  1,                            &
+                  solution_vectors_reduced_all, &
+                  reduced_dim,                  &
+                  work,                         &
+                  4*reduced_dim,                &
                   info)
 !
       call deallocator(work, 4*reduced_dim, 1)
@@ -365,24 +365,24 @@ contains
       call allocator_int(index_list,wf%tasks%n_singlet_states,1)
       index_list = 0
 !
-      call get_n_lowest(wf%tasks%n_singlet_states, reduced_dim, eigenvalues_full_Re, eigenvalues_Re, index_list)
+      call get_n_lowest(wf%tasks%n_singlet_states, reduced_dim, eigenvalues_Re_all, eigenvalues_Re, index_list)
 !
 !     Select solution vectors and imaginary parts of eigenvalues according to index_list 
 !
       do i = 1, reduced_dim
          do j = 1, wf%tasks%n_singlet_states
 !
-            solution_vectors_reduced(i,j) = eigenvectors(i,index_list(j,1))
-            eigenvalues_Im = eigenvalues_full_Im(index_list(j,1), 1)
+            solution_vectors_reduced(i,j) = solution_vectors_reduced_all(i,index_list(j,1))
+            eigenvalues_Im = eigenvalues_Im_all(index_list(j,1), 1)
 !
          enddo
       enddo
 !
 !     Final deallocatons
 !
-      call deallocator(eigenvectors, reduced_dim, reduced_dim)
-      call deallocator(eigenvalues_full_Im, reduced_dim, 1)
-      call deallocator(eigenvalues_full_Re, reduced_dim, 1)
+      call deallocator(solution_vectors_reduced_all, reduced_dim, reduced_dim)
+      call deallocator(eigenvalues_Im_all, reduced_dim, 1)
+      call deallocator(eigenvalues_Re_all, reduced_dim, 1)
 !
       call deallocator_int(index_list,wf%tasks%n_singlet_states,1)
 !
@@ -432,7 +432,7 @@ contains
       real(dp), dimension(:,:), allocatable :: rho_i
 !
       
-      real(dp) :: norm_solution_vector = zero, norm_residual = zero, norm_new_trial = zero, dot_prod = zero  
+      real(dp) :: norm_solution_vector = zero, norm_residual = zero, norm_new_trial = zero, conv_test = zero, dot_prod = zero  
 !
       integer(i15) :: unit_trial_vecs = 0, unit_rho = 0, unit_solution = 0, ioerror = 0
 !
@@ -533,7 +533,8 @@ contains
 !        Calculate residual norm and check convergence criteria on residual norms
 !        ||AX-eX||/||X||
 !
-         if (norm_residual/norm_solution_vector  .gt. wf%settings%ampeqs_threshold) then
+         conv_test = norm_residual/norm_solution_vector
+         if (conv_test  .gt. wf%settings%ampeqs_threshold) then
             converged_residual = .false.
          endif
 !
@@ -592,7 +593,7 @@ contains
 !        Test for linear dependency on old trial vectors
 !        If norm sufficiently high new vector is normalized and written to file
 !
-         if ((norm_new_trial .gt. wf%settings%ampeqs_threshold) ) then
+         if ((norm_new_trial .gt. wf%settings%ampeqs_threshold) .and. (conv_test .gt. wf%settings%ampeqs_threshold)) then
 !
             n_new_trials = n_new_trials + 1
             call dscal(wf%n_parameters, one/norm_new_trial, residual, 1)
@@ -616,7 +617,6 @@ contains
 !
       write(unit_output,'(t3,a/)') '----------------------------------------------------------------'
 !
-      write(unit_output,*)'n_new_trials', n_new_trials
    end subroutine construct_next_trial_vectors_ccs
 !
 !

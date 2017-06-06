@@ -176,9 +176,6 @@ contains
 !
 !     :: CCS contributions to the singles c vector ::  
 !
-      write(unit_output,*) 'Memory before Jacobi'
-      write(unit_output,*) get_available()
-      flush(unit_output)
       call wf%jacobian_ccs_a1(rho_a_i, c_a_i)
       call wf%jacobian_ccs_b1(rho_a_i, c_a_i)
 !
@@ -1175,7 +1172,7 @@ contains
 !
 !     Deallocate Cholesky's (keep L_ai_J for later)
 !
-      call deallocator(L_kj_J, (wf%n_v)*(wf%n_o), wf%n_J)
+      call deallocator(L_kj_J, (wf%n_o)**2, wf%n_J)
 !
 !     Reorder to g_k_aij = g_aikj = g_ai_kj
 !
@@ -1201,7 +1198,7 @@ contains
          enddo
       enddo
 !
-      call deallocator(g_ai_kj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call deallocator(g_ai_kj, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
 !
 !     Calculate rho_b_aij = - sum_k c_bk g_aikj = - sum_k c_a_i(b, k) g_k_aij(k, aij)
 !
