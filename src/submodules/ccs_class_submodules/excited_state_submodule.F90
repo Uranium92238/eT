@@ -89,17 +89,17 @@ contains
 !
 !     Let the user know the excited state solver is running
 !
-      write(unit_output,'(/t3,a)')   ':: Excited state solver (Davidson)'
+      write(unit_output,'(t3,a)')    ':: Excited state solver (Davidson)'
       write(unit_output,'(t3,a/)')   ':: E. F. Kjønstad, S. D. Folkestad, May 2017'
       write(unit_output,'(t3,a,i3,a,a,a)') &
                                      'Requested ',wf%tasks%n_singlet_states,' ', trim(wf%name), ' singlet states.'
-      write(unit_output,'(t3,a,i3,a,a,a/)') &
+      write(unit_output,'(t3,a,i3,a,a,a)') &
                                      'Requested ',wf%tasks%n_triplet_states,' ', trim(wf%name), ' triplet states.'
 !
 !     Test for triplet calculation, and stop if so - not yet implemented
 !
       if (.not. wf%tasks%n_triplet_states .eq. 0) then
-         write(unit_output,'(t3,a/)') 'Triplet excitations not implemented.'
+         write(unit_output,'(/t3,a/)') 'Triplet excitations not implemented.'
       endif
       flush(unit_output)
 !
@@ -130,12 +130,11 @@ contains
 !
 !        Prints 
 !
-         write(unit_output,'(/t3,a,i3/)') 'Iter.', iteration
-         write(unit_output,'(t3,a,i3)')'Reduced space dimension:', reduced_dim
-         write(unit_output,'(t3,a/)')'----------------------------'
+         write(unit_output,'(/t3,a,i3)') 'Iteration:', iteration
+         write(unit_output,'(t3,a,i3/)') 'Reduced space dimension:', reduced_dim
          flush(unit_output)
 !
-!        Transform new trial vectors 
+!        Transform new trial vectors  
 !        rho_i = A * c_i
 !
          call wf%transform_trial_vectors(reduced_dim - n_new_trials + 1, reduced_dim)
@@ -496,8 +495,8 @@ contains
       n_new_trials = 0
       converged_residual = .true.
 !
-      write(unit_output,'(/t3,a)') 'Root    Eigenvalue (Re)      Eigenvalue (Im)      Residual norm'
-      write(unit_output,'(t3,a)') '----------------------------------------------------------------'
+      write(unit_output,'(t3,a)') 'Root       Eigenvalue (Re)      Eigenvalue (Im)      Residual norm'
+      write(unit_output,'(t3,a)') '-------------------------------------------------------------------'
 !
 !     For each of the roots
 !
@@ -653,7 +652,7 @@ contains
 !
       call deallocator(residual, wf%n_parameters, 1)
 !
-      write(unit_output,'(t3,a/)') '----------------------------------------------------------------'
+      write(unit_output,'(t3,a)') '-------------------------------------------------------------------'
 !
    end subroutine construct_next_trial_vectors_ccs
 !
