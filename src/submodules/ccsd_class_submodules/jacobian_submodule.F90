@@ -1302,6 +1302,7 @@ contains
                      zero,                  &
                      g_ai_cb,               &
                      (wf%n_v)*(wf%n_o))
+         call deallocator(L_cb_J, (wf%n_v)*batch_length, wf%n_J)
 !
 !        Reorder to g_aib_c 
 !
@@ -2117,6 +2118,7 @@ contains
                   zero,              &
                   Y_lj_ai,           &
                   (wf%n_o)**2)
+      call deallocator(t_ck_ai, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     Calculate rho_b_jai =+ - sum_l c_bl Y_lj_ai
 !
@@ -3247,6 +3249,7 @@ contains
                enddo
             enddo
          enddo
+         call deallocator(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 
 !
 !        Y_d_b = sum_clk L_d_clk * c_clk_b 
@@ -3410,8 +3413,7 @@ contains
                      Z_l_j,                &
                      wf%n_o)
 !
-         call deallocator(L_l_ckd,(wf%n_o), (wf%n_o)*((wf%n_v)**2)) 
-      !   call deallocator(c_ckd_j, ((wf%n_v)**2)*(wf%n_o), wf%n_o) ! Old no-trick vector. Removed, I think.
+         call deallocator(L_l_ckd,(wf%n_o), (wf%n_o)*((wf%n_v)**2))
 !
          call wf%initialize_amplitudes
          call wf%read_double_amplitudes
@@ -3659,6 +3661,7 @@ contains
                enddo
             enddo
          enddo
+         call deallocator(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !        Reorder t_ck,bl as t_clk_b
 !        
@@ -3805,11 +3808,8 @@ contains
          call allocator(L_l_ckd,(wf%n_o), (wf%n_o)*((wf%n_v)**2))
          L_l_ckd = zero
 !
-<<<<<<< HEAD
 !        Construct L_kc_ld ordered as  L_l_ckd
-=======
-!        Construct L_kc_ld ordered as L_l_ckd
->>>>>>> 5867f0e43349503ff0fa83a641bc2a7aea306178
+
 !             
          do c = 1, wf%n_v
             do k = 1, wf%n_o
@@ -3839,29 +3839,9 @@ contains
          call wf%initialize_amplitudes
          call wf%read_double_amplitudes
 !
-         call allocator(t_ckd_j, ((wf%n_v)**2)*(wf%n_o), wf%n_o)
+         call allocator(t_ckd_j, ((wf%n_v))*(wf%n_o), wf%n_o*(wf%n_v))
          t_ckd_j = zero
-!
-         do k = 1, wf%n_o
-            do j = 1, wf%n_o
-               do c = 1, wf%n_v
-!  
-                  ck = index_two(c, k, wf%n_v)
-!
-                  do d = 1, wf%n_v
-!
-                     dj = index_two(d, j, wf%n_v)
-!
-                     ckd = index_three(c, k, d, wf%n_v, wf%n_o)
-!
-                     ckdj = index_packed(ck, dj)
-!
-                     t_ckd_j(ckd, j) = wf%t2am(ckdj, 1) ! E: Here we can use squareup, if we'd like to
-!
-                 enddo
-               enddo
-            enddo
-         enddo
+         call squareup(wf%t2am, t_ckd_j, wf%n_o*(wf%n_v))
 !
          call wf%destruct_amplitudes
 !
@@ -3881,7 +3861,7 @@ contains
                      wf%n_o)
 !
          call deallocator(L_l_ckd,(wf%n_o), (wf%n_o)*((wf%n_v)**2)) 
-         call deallocator(t_ckd_j, ((wf%n_v)**2)*(wf%n_o), wf%n_o)
+         call deallocator(t_ckd_j, ((wf%n_v))*(wf%n_o), wf%n_o*(wf%n_v))
 !
 !
          call dgemm('N','N',                 &

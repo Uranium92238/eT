@@ -702,8 +702,8 @@ contains
 !
          if (wf%implemented%excited_state) then 
 !     
-      !     call wf%excited_state_solver
-              call wf%jacobi_test
+           call wf%excited_state_solver
+      !        call wf%jacobi_test
 !
          else
 !
