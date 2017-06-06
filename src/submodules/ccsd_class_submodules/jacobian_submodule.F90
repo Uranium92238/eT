@@ -77,8 +77,6 @@ contains
       integer(i15) :: unit_trial_vecs = 0, unit_rho = 0, ioerror = 0
       integer(i15) :: trial = 0 
 !
-      write(unit_output,*)'In vector transformation'
-      flush(unit_output)
 !
 !     Allocate c_a_i
 !
@@ -98,10 +96,7 @@ contains
       open(unit=unit_rho, file='transformed_vec', action='write', status='unknown', &
            access='direct', form='unformatted', recl=dp*wf%n_parameters, iostat=ioerror)
 !
-!     For each trial vector: read, transform and write
-!   
-      write(unit_output,*)'Jacobian transformation'     
-      flush(unit_output)    
+!     For each trial vector: read, transform and write  
 !  
       do trial = first_trial, last_trial
 !
