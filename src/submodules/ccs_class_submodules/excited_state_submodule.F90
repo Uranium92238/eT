@@ -592,7 +592,7 @@ contains
 !        Test for linear dependency on old trial vectors
 !        If norm sufficiently high new vector is normalized and written to file
 !
-         if ((norm_new_trial .gt. wf%settings%ampeqs_threshold) .and. (norm_residual .gt. wf%settings%ampeqs_threshold)) then
+         if ((norm_new_trial .gt. wf%settings%ampeqs_threshold) ) then
 !
             n_new_trials = n_new_trials + 1
             call dscal(wf%n_parameters, one/norm_new_trial, residual, 1)
