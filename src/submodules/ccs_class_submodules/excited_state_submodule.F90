@@ -61,7 +61,6 @@ contains
 !!    The linear system (equivalently, the residual) is preconditioned with a diagonal 
 !!    matrix with elements equal to the inverse orbital differences.
 !!   
-
       implicit none
 !
       class(ccs) :: wf
