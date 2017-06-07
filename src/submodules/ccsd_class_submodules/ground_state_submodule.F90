@@ -157,11 +157,14 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
 !!    Initializes the amplitudes and the projection vector for the ground
-!!    state solver. 
+!!    state solver.
 !!
       implicit none 
 !
       class(ccsd) :: wf
+!
+      if (.not. allocated(wf%t1am)) call allocator(wf%t1am, wf%n_v, wf%n_o)
+      wf%t1am = zero
 !
       call wf%initialize_amplitudes          ! Allocate amplitudes
       call wf%construct_perturbative_doubles ! Set doubles amplitudes to MP2 guess 

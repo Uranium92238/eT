@@ -46,6 +46,8 @@ module ccs_class
       real(dp), dimension(:,:), allocatable :: fock_ai ! vir-occ block
       real(dp), dimension(:,:), allocatable :: fock_ab ! vir-vir block
 !
+      real(dp), dimension(:,:), allocatable :: excited_state_energies
+!
    contains 
 !
 !     Initialization and driver routines
@@ -112,6 +114,36 @@ module ccs_class
 !
       procedure :: destruct_amplitudes   => destruct_amplitudes_ccs
       procedure :: destruct_omega        => destruct_omega_ccs
+!
+!     Jacobian transformation routine 
+!
+      procedure :: jacobian_transformation => jacobian_transformation_ccs
+!
+!     Helper routines
+!
+!     Non-overridable, they will be used for contributions
+!     to linear of higher order coupled cluster methods
+!
+      procedure, non_overridable :: jacobian_ccs_a1 => jacobian_ccs_a1_ccs 
+      procedure, non_overridable :: jacobian_ccs_b1 => jacobian_ccs_b1_ccs
+!
+      procedure :: jacobi_test => jacobi_test_ccs
+!
+!     Excited state solver 
+!
+      procedure, non_overridable :: excited_state_solver => excited_state_solver_ccs
+!
+!     Helper routines 
+!
+      procedure :: transform_trial_vectors       => transform_trial_vectors_ccs
+      procedure :: calculate_orbital_differences => calculate_orbital_differences_ccs ! Must be overwritten for CCSD 
+!
+      procedure, non_overridable :: find_start_trial_indices => find_start_trial_indices_ccs
+      procedure, non_overridable :: initialize_trial_vectors => initialize_trial_vectors_ccs
+!
+      procedure, non_overridable :: solve_reduced_eigenvalue_equation => solve_reduced_eigenvalue_equation_ccs
+      procedure, non_overridable :: construct_next_trial_vectors      => construct_next_trial_vectors_ccs
+!
 !
    end type ccs
 !
@@ -387,7 +419,116 @@ module ccs_class
          real(dp), dimension(wf%n_parameters, 1) :: dt 
          real(dp), dimension(wf%n_parameters, 1) :: t_dt 
 !
-      end subroutine diis_ccs 
+      end subroutine diis_ccs
+!
+!
+      module subroutine initialize_trial_vectors_ccs(wf)
+!!
+!!       Initialize trial vectors
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+! 
+      end subroutine initialize_trial_vectors_ccs
+!
+!
+      module subroutine find_start_trial_indices_ccs(wf, index_list)
+!!
+!!       Get indices for lowest orbital differences
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!
+         implicit none
+!
+         class(ccs) :: wf
+         integer(i15), dimension(wf%tasks%n_singlet_states,1), intent(inout) :: index_list
+! 
+      end subroutine find_start_trial_indices_ccs
+!
+!
+      module subroutine calculate_orbital_differences_ccs(wf,orbital_diff)
+!
+!
+         implicit none
+!
+         class(ccs) :: wf
+         real(dp), dimension(wf%n_parameters, 1) :: orbital_diff
+!
+      end subroutine calculate_orbital_differences_ccs
+!
+!
+      module subroutine transform_trial_vectors_ccs(wf, first_trial, last_trial)
+!!
+!!       Construct Right Transform of Jacobian
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!
+         implicit none
+!
+         class(ccs) :: wf 
+         integer(i15), intent(in) :: first_trial, last_trial       
+!
+      end subroutine transform_trial_vectors_ccs
+!
+!
+      module subroutine jacobian_transformation_ccs(wf, c_a_i)
+!!
+!!       Jacobian transformation
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!
+         implicit none
+!
+         class(ccs) :: wf 
+         real(dp), dimension(wf%n_v, wf%n_o)   :: c_a_i       
+!
+      end subroutine jacobian_transformation_ccs
+!
+!
+      module subroutine jacobian_ccs_a1_ccs(wf,rho,c1)
+!!
+!!       A1 contribution to right transform of Jacobian
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!       Calculates the A1 term of the right transform of the
+!!       Jacobian,
+!!
+!!       A1: sum_b F_ab*c_bi + sum_j F_ji*c_aj
+!!
+!!       and adds it to the rho vector.
+!!
+         implicit none
+!
+         class(ccs) :: wf
+         real(dp), dimension(wf%n_o,wf%n_v) :: c1 
+         real(dp), dimension(wf%n_o,wf%n_v) :: rho                               
+!
+      end subroutine jacobian_ccs_a1_ccs
+!
+!
+      module subroutine jacobian_ccs_b1_ccs(wf,rho,c1)
+!!
+!!       B1 contribution to right transform of Jacobian
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!       Calculates the B1 term of the right transform of the
+!!       Jacobian,
+!!
+!!       B1: sum_bj L_aijb*c_bj
+!!
+!!       and adds it to the rho vector.
+!!
+         implicit none
+!
+         class(ccs) :: wf
+         real(dp), dimension(wf%n_o,wf%n_v) :: c1
+         real(dp), dimension(wf%n_o,wf%n_v) :: rho                
+!
+      end subroutine jacobian_ccs_B1_ccs
 !
 !
       module subroutine initialize_ground_state_ccs(wf)
@@ -420,7 +561,113 @@ module ccs_class
       end subroutine destruct_ground_state_ccs
 !
 !
-   end interface 
+      module subroutine excited_state_solver_ccs(wf)
+!!
+!!       Excited State Solver
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!       Directs the solution of the excited states using a Davidson algorithm.
+!!       The routine aims to find the right eigenvectors of the Jacobian matrix
+!!
+!!          AX = eX,  
+!!
+!!       and the eigenvalues which corresponds to the excitation energies.
+!!
+!!       The problem is solved in reduced space. To find n roots, n start trial vectors {c_i}_i=1, 
+!!       n are generated according to the lowest orbital differences. Then a reduced space Jacobian 
+!!       is constructed,
+!! 
+!!          A_red_ij = c_i^T * A c_j,
+!!
+!!       and the eigenvalues e and eigenvectors x of this matrix are found.
+!!       The full space vectors {X_j}_j=1,n are then given by
+!!
+!!          X_j = sum_i x_j_i*c_i, 
+!! 
+!!       and the j'th residual vector is given by
+!!
+!!          R_j = (A*X_j - e*X_j)/|X_j|.
+!!
+!!       If the norm of this residual is sufficiently small (and the excitation energies 
+!!       are converged within a given threshold), convergence is reached. If not, new trial 
+!!       vectors will be generated by orthogonalizing the residual vector against the previous 
+!!       trial vectors and then normalizing them, thereby expanding the dimension 
+!!       of the reduced space for the next iteration.
+!!
+!!       The linear system (equivalently, the residual) is preconditioned with a diagonal 
+!!       matrix with elements equal to the inverse orbital differences.
+!!   
+         implicit none
+!  
+         class(ccs) :: wf
+!
+      end subroutine excited_state_solver_ccs
+!
+!
+      module subroutine solve_reduced_eigenvalue_equation_ccs(wf, eigenvalues_Re, eigenvalues_Im, &
+                                                               solution_vectors_reduced, reduced_dim, n_new_trials)
+!!
+!!       Solve Reduced Eigenvalue Equation
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!       Constructs the reduced A matrix, solves its eigenvalue equation,
+!!       and returns its first n eigenvalues and eigenvectors (reduced space
+!!       solution vectors).
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+         integer(i15) :: reduced_dim, n_new_trials
+!
+         real(dp), dimension(wf%tasks%n_singlet_states,1) :: eigenvalues_Re
+         real(dp), dimension(wf%tasks%n_singlet_states,1) :: eigenvalues_Im
+! 
+         real(dp), dimension(reduced_dim, wf%tasks%n_singlet_states) :: solution_vectors_reduced
+!
+      end subroutine solve_reduced_eigenvalue_equation_ccs
+!
+!
+      module subroutine construct_next_trial_vectors_ccs(wf, eigenvalues_Re, eigenvalues_Im, &
+                                                   solution_vectors_reduced, & 
+                                                   reduced_dim, n_new_trials)
+!!
+!!       Construct Next Trial Vectors    
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!       Constructs the next eigenvectors by constructing the residual vectors
+!!    
+!!          R_j = (A*X_j - e*X_j)/|X_j|,
+!!
+!!       orthogonalizing them against the other trial vectors.
+!!
+!!       Residual vectors are preconditioned before orthogonalization.
+!!       This is done by dividing by the orbital differences.
+!!    
+!!       If norm of orthogonal vector is very small 
+!!       (i.e. high degree of linear dependence on previous trial vectors)
+!!       it is scrapped. If norm sufficiently large, vector is normalized and
+!!       stored in trial_vec file, to be used in the next iteration.
+!!
+!!       Routine also constructs full space solution vectors and stores them
+!!       in file solution_vectors 
+!! 
+         implicit none
+!
+         class(ccs) :: wf
+!
+         real(dp), dimension(wf%tasks%n_singlet_states,1) :: eigenvalues_Re
+         real(dp), dimension(wf%tasks%n_singlet_states,1) :: eigenvalues_Im
+!
+         real(dp), dimension(reduced_dim, wf%tasks%n_singlet_states) :: solution_vectors_reduced
+!
+         integer(i15) :: reduced_dim
+         integer(i15) :: n_new_trials
+!
+      end subroutine construct_next_trial_vectors_ccs
+!
+!
+    end interface 
 !
 !
 contains
@@ -453,6 +700,7 @@ contains
 !     Set implemented methods
 !
       wf%implemented%ground_state = .true.
+      wf%implemented%excited_state = .true.
 !
 !     Read Hartree-Fock info from SIRIUS
 !
@@ -519,8 +767,9 @@ contains
 !        Excited state calculation requested
 !
          if (wf%implemented%excited_state) then 
-!
-          !  call wf%excited_state_solver
+!     
+           call wf%excited_state_solver
+      !        call wf%jacobi_test
 !
          else
 !
@@ -752,6 +1001,15 @@ contains
       endif
 !
    end subroutine destruct_omega_ccs
+!
+!
+   subroutine jacobi_test_ccs(wf)
+!
+      implicit none 
+!
+      class(ccs) :: wf 
+!
+   end subroutine jacobi_test_ccs
 !
 !
 end module ccs_class
