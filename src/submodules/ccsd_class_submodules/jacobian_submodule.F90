@@ -4279,7 +4279,6 @@ contains
 !
 !        :: sum_c F_bc * c_ai,cj ::
 !
-!
 !        Reorder c_ai,cj to c_aij_c
 !
          call allocator(c_aij_c, (wf%n_v)*((wf%n_o)**2), wf%n_v)
@@ -4351,7 +4350,7 @@ contains
 !
 !        - sum_k F_jk * c_ai,bk = - sum_k c_aib_k(aib,k) F_ij(k,j)^T 
 !
-         call dgemm('N', 'N',                &  ! E: 'N' 'T' before 
+         call dgemm('N', 'N',                & 
                      (wf%n_o)*((wf%n_v)**2), &
                      wf%n_o,                 & 
                      wf%n_o,                 & 
