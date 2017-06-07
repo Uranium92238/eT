@@ -21,6 +21,13 @@ contains
 !!       Calculate Orbital Differences (CCSD)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad May 2017
 !!
+!!       Calculates orbital differences
+!!
+!!          1) ε_i^a = ε_a - ε_i
+!!          2) ε_ij^ab = ε_a + ε_b - ε_i - ε_j
+!!
+!!       and puts them in orbital_diff, which is a vector of length n_parameters.        
+!!
          implicit none
 !
          class(ccsd) :: wf
@@ -65,6 +72,9 @@ contains
 !!    Each trial vector in first_trial to last_trial is read from file and
 !!    transformed before the transformed vector is written to file.
 !!
+!!    Singles and doubles part of the transformed vectors are written to 
+!!    the same record in file transformed_vec, record length is n_parameters long.
+!!
       implicit none
 !
       class(ccsd) :: wf
@@ -78,7 +88,7 @@ contains
       integer(i15) :: trial = 0 
 !
 !
-!     Allocate c_a_i
+!     Allocate c_a_i and c_aibj
 !
       call allocator(c_a_i, wf%n_v, wf%n_o)
       c_a_i = zero 
@@ -86,7 +96,7 @@ contains
       call allocator(c_aibj, wf%n_t2am, 1)
       c_aibj = zero 
 !
-!     Open trial vector and transformed vector files
+!     Open trial vector- and transformed vector files
 !
       call generate_unit_identifier(unit_trial_vecs)
       open(unit=unit_trial_vecs, file='trial_vec', action='read', status='unknown', &
@@ -104,16 +114,16 @@ contains
 !
          call wf%jacobian_ccsd_transformation(c_a_i, c_aibj)
 !
-!        Write transformed vector to file
-!
          write(unit_rho, rec=trial, iostat=ioerror) c_a_i, c_aibj
 !
       enddo
 !
+!     Close files
+!
       close(unit_trial_vecs) 
       close(unit_rho)                                
 !
-!     Deallocate c_a_i
+!     Deallocate c_a_i and c_aibj
 !
       call deallocator(c_a_i, wf%n_v, wf%n_o)
       call deallocator(c_aibj, wf%n_t2am, 1)
@@ -719,7 +729,8 @@ contains
 !!    Jacobian CCSD B1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017 
 !!
-!!    rho_ai^B1 = sum_bj F_jb (2*c_ai_bj  -  c_aj_bi) = sum_bj F_jb v_ai_bj
+!!    rho_ai^B1 = sum_bj F_jb (2*c_ai_bj  -  c_aj_bi) 
+!!              = sum_bj F_jb v_ai_bj
 !!
 !!    The term is added as rho_a_i(a,i) = rho_a_i(a,i) + rho_ai^A1,
 !!    where c_a_i(a,i) = c_ai above. 
@@ -749,7 +760,6 @@ contains
       call allocator(F_bj, (wf%n_o)*(wf%n_v), 1)
       F_bj = zero
 !
-!
       do j = 1, wf%n_o
          do b = 1, wf%n_v
 !
@@ -773,7 +783,7 @@ contains
          enddo
       enddo
 !
-!     sum_bj F_jb v_ai_bj 
+!     sum_bj F_jb*v_ai_bj = sum_bj F_bj(bj,1)*v_ai_bj(ai,bj)
 ! 
       call dgemm('N', 'N',           &
                   (wf%n_o)*(wf%n_v), &
@@ -799,7 +809,7 @@ contains
 !!    Jacobian CCSD C1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017 
 !!
-!!    rho_ai^C1 = - sum_bjk L_jikb c_aj_bk = - sum_bjk (2*g_jikb - g_jbki) c_aj_bk
+!!    rho_ai^C1 = - sum_bjk L_jikb c_aj_bk 
 !!              = - sum_bjk (2*g_jikb - g_kijb) c_aj_bk 
 !!
 !!    The term is added as rho_a_i(a,i) = rho_a_i(a,i) + rho_ai^A1,
@@ -3033,6 +3043,8 @@ contains
 !!                        - sum_ckdl t_ai,dj * L_kc,ld * c_bl,ck
 !!                        - sum_ckdl t_ai_bl * L_kc,ld * c_ck,dj
 !!
+!!       L_kc,ld = 2*g_kc,ld - g_kd,lc = 2*g_kc_ld(kc,ld) - 2*g_kc_ld(kd,lc)
+!!
          implicit none 
 !
          class(ccsd) :: wf 
@@ -3151,6 +3163,8 @@ contains
 !
          call allocator(X_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
+!        X_ck_bj = sum_dl L_ck_dl*c_dl_bj = sum_dl L_kc,ld*c_bl,dj
+!
          call dgemm('N', 'N',           &
                      (wf%n_o)*(wf%n_v), &
                      (wf%n_o)*(wf%n_v), &
@@ -3175,6 +3189,8 @@ contains
 !
          call squareup(wf%t2am, t_ai_ck, (wf%n_o)*(wf%n_v))
          call wf%destruct_amplitudes
+!
+!        rho_ai_bj = sum_ck t_ai_ck*X_ck_bj
 !
          call dgemm('N', 'N',          &
                     (wf%n_o)*(wf%n_v), &
@@ -3216,7 +3232,7 @@ contains
 !
          call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
-!        Reorder L_ck_dl to L_d_clk
+!        Construct L_ck,dl reordered as L_d_clk
 !
          call allocator(L_d_lck, wf%n_v, (wf%n_v)*((wf%n_o)**2))
          L_d_lck = zero
@@ -3241,8 +3257,8 @@ contains
                enddo
             enddo
          enddo
+!
          call deallocator(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-
 !
 !        Y_d_b = sum_clk L_d_clk * c_clk_b 
 !
@@ -3296,6 +3312,8 @@ contains
 !
          call allocator(rho_aij_b, (wf%n_v)*((wf%n_o)**2), wf%n_v)
 !
+!        rho_aij_b = sum_d t_aij_d*Y_d_b
+!
          call dgemm('N','N',                 &
                      ((wf%n_o)**2)*(wf%n_v), &
                      wf%n_v,                 &
@@ -3337,8 +3355,6 @@ contains
 !
 !        :: Term 3: - sum_ckdl t_ai,bl * L_kc,ld * c_ck,dj ::
 !
-!        :: Construct L_kc_ld ::
-!
          call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
          L_ia_J = zero
 !
@@ -3364,7 +3380,7 @@ contains
          call allocator(L_l_ckd,(wf%n_o), (wf%n_o)*((wf%n_v)**2))
          L_l_ckd = zero
 !
-!        Construct L_kc_dl ordered as L_l_ckd
+!        Construct L_kc,dl ordered as L_l_ckd
 !             
          do c = 1, wf%n_v
             do k = 1, wf%n_o
@@ -3392,6 +3408,8 @@ contains
 !
          call allocator(Z_l_j, wf%n_o, wf%n_o)
 !
+!        Z_l_j = sum_ckd L_l_ckd * c_ckd_l 
+!  
          call dgemm('N', 'N',              &
                      wf%n_o,               &
                      wf%n_o,               &
@@ -3399,7 +3417,7 @@ contains
                      one,                  &
                      L_l_ckd,              &
                      wf%n_o,               &
-                     c_ai_bj,              &
+                     c_ai_bj,              & ! c_ai_bj(ck,dl)= c_ckd_l
                      ((wf%n_v)**2)*wf%n_o, &
                      zero,                 &
                      Z_l_j,                &
@@ -3417,6 +3435,7 @@ contains
 !
          call wf%destruct_amplitudes
 !
+!        rho_ai_bj = sum_l t_aib_l * Z_l_j
 !
          call dgemm('N','N',                 &
                      ((wf%n_v)**2)*(wf%n_o), &
@@ -3444,6 +3463,8 @@ contains
 !!       rho_ai_bj^G2 =  - sum_ckdl t_bl,dj * L_kc,ld * c_ai,ck 
 !!                       - sum_ckdl t_ck_bl * L_kc,ld * c_ai,dj 
 !!                       - sum_ckld t_ck,dj * L_kc,ld * c_ai,bl 
+!!
+!!       L_kc,ld = 2*g_kc,ld - g_kd,lc = 2*g_kc_ld(kc,ld) - 2*g_kc_ld(kd,lc)
 !!
          implicit none 
 !
@@ -3734,6 +3755,8 @@ contains
 !
          call allocator(rho_aij_b, (wf%n_v)*((wf%n_o)**2), wf%n_v)
 !
+!        rho_aij_b = sum_d c_aij_d * Y_d_b
+!
          call dgemm('N','N',                 &
                      ((wf%n_o)**2)*(wf%n_v), &
                      wf%n_v,                 &
@@ -3839,6 +3862,8 @@ contains
 !
          call allocator(Z_l_j, wf%n_o, wf%n_o)
 !
+!        Z_l_j = sum_ckd L_l_ckd*t_ckd_j
+!
          call dgemm('N', 'N',              &
                      wf%n_o,               &
                      wf%n_o,               &
@@ -3855,6 +3880,7 @@ contains
          call deallocator(L_l_ckd,(wf%n_o), (wf%n_o)*((wf%n_v)**2)) 
          call deallocator(t_ckd_j, ((wf%n_v))*(wf%n_o), wf%n_o*(wf%n_v))
 !
+!        rho_aib_j = sum_l c_aib_l*Z_l_j
 !
          call dgemm('N','N',                 &
                      ((wf%n_v)**2)*(wf%n_o), &
@@ -4209,8 +4235,8 @@ contains
 !!                     + sum_ck L_bj,kc * c_ai,ck 
 !!                     - sum_ck ( g_kc,bj * c_ak,ci + g_ki,bc * c_ak,cj ) 
 !!                
-!!       Debug 5 June: I think F_jk should be F_kj. Changed it and got a major improvement.
-!!
+!!       Batch over c to construct  g_ki_bc
+!! 
          implicit none 
 !
          class(ccsd) :: wf 
@@ -4397,7 +4423,7 @@ contains
 !
          call deallocator(g_bj_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-!        sum_ck 2*c_ai_ck * g_ck_bj
+!       rho_ai_bj += sum_ck 2*c_ai_ck * g_ck_bj
 !
          call dgemm('N', 'N',           &
                      (wf%n_o)*(wf%n_v), &
@@ -4436,7 +4462,7 @@ contains
             enddo
          enddo
 !
-!        - sum_ck g_ck_bj*c_ai_ck
+!        rho_ai_bj += - sum_ck g_ck_bj*c_ai_ck
 !
          call dgemm('N', 'N',           &
                      (wf%n_o)*(wf%n_v), &
@@ -4541,7 +4567,7 @@ contains
 !
          call deallocator(g_bc_kj, (wf%n_v)**2, (wf%n_o)**2)
 !
-!         - sum_ck c_ai_ck * g_ck_bj       
+!        rho_ai_bj += - sum_ck c_ai_ck * g_ck_bj       
 !
          call dgemm('N', 'N',           &
                      (wf%n_o)*(wf%n_v), &
@@ -4633,7 +4659,7 @@ contains
 !!
 !!       rho_ab_ij^J2 =    sum_ckld t_ci,dj * g_kc,ld * c_ak,bl 
 !!                       + sum_ckdl t_ak,bl * g_kc,ld * c_ci,dj
-!!                
+!!             
          implicit none 
 !
          class(ccsd) :: wf 
@@ -4820,7 +4846,10 @@ contains
 !!
 !!       rho_ab_ij^K2 =    sum_kl g_ki,lj * c_ak,bl 
 !!                       + sum_cd g_ac,bd * c_ci,dj
-!!                
+!! 
+!!       For the last term we batch over a and b and 
+!!       add each batch to rho_ai_bj 
+!!               
          implicit none 
 !
          class(ccsd) :: wf 

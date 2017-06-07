@@ -394,8 +394,15 @@ module ccsd_class
 !
       module subroutine calculate_orbital_differences_ccsd(wf,orbital_diff)
 !!
-!!       Calculate and return orbital differences
+!!       Calculate Orbital Differences (CCSD)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad May 2017
+!!
+!!       Calculates orbital differences
+!!
+!!          1) ε_i^a = ε_a - ε_i
+!!          2) ε_ij^ab = ε_a + ε_b - ε_i - ε_j
+!!
+!!       and puts them in orbital_diff, which is a vector of length n_parameters.        
 !!
          implicit none
 !
@@ -407,11 +414,14 @@ module ccsd_class
 !
       module subroutine transform_trial_vectors_ccsd(wf, first_trial, last_trial)
 !!
-!!       Construct Jacobian Transformation of trial vectors
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!       Transformation Trial Vectors (CCSD)
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
 !!       Each trial vector in first_trial to last_trial is read from file and
 !!       transformed before the transformed vector is written to file.
+!!
+!!       Singles and doubles part of the transformed vectors are written to 
+!!       the same record in file transformed_vec, record length is n_parameters long.
 !!
          implicit none
 !
@@ -459,7 +469,11 @@ module ccsd_class
 !!       Jacobian CCSD B1
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017 
 !!
-!!       rho_ai^B1 = sum_bj F_jb (2*c_aibj  -  c_ajbi) = sum_bj F_jb v_ai_bj
+!!       rho_ai^B1 = sum_bj F_jb (2*c_ai_bj  -  c_aj_bi) 
+!!              = sum_bj F_jb v_ai_bj
+!!
+!!       The term is added as rho_a_i(a,i) = rho_a_i(a,i) + rho_ai^A1,
+!!       where c_a_i(a,i) = c_ai above. 
 !!
          implicit none 
 !
@@ -476,7 +490,11 @@ module ccsd_class
 !!       Jacobian CCSD C1
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017 
 !!
-!!       rho_ai^C1 = - sum_bjk L_jikb c_aj_bk
+!!       rho_ai^C1 = - sum_bjk L_jikb c_aj_bk 
+!!                 = - sum_bjk (2*g_jikb - g_kijb) c_aj_bk 
+!!
+!!       The term is added as rho_a_i(a,i) = rho_a_i(a,i) + rho_ai^A1,
+!!       where c_ai_bj(ai,bj) = c_aibj above. 
 !!
          implicit none 
 !
@@ -494,6 +512,9 @@ module ccsd_class
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017 
 !!
 !!       rho_ai^D1 =  sum_bcj L_abjc c_bicj
+!!
+!!       The term is added as rho_a_i(a,i) = rho_a_i(a,i) + rho_ai^A1,
+!!       where c_bi_cj(bi,cj) = c_bicj above. 
 !!
          implicit none 
 !
@@ -588,7 +609,7 @@ module ccsd_class
 !!       Jacobian CCSD E2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!       rho_ai_bj^E2 = sum_dlck t_bj,dl * L_kc,ld * c_ai,ck
+!!       rho_ai_bj^E2 = 2 sum_dlck t_bj,dl * L_kc,ld * c_ai,ck 
 !!
          implicit none 
 !
@@ -606,9 +627,11 @@ module ccsd_class
 !!       Jacobian CCSD F2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!       rho_ai_bj^F2 =  P_(ij)^(ab) (- sum_ckld t_ai,ck * L_kc,ld * c_bl,dj 
-!!                                    - sum_ckdl t_ai,dj * L_kc,ld * c_bk,cl
-!!                                    - sum_ckdl t_ai_bl * L_kc,ld * c_ck,dj )
+!!       rho_ai_bj^F2 =   - sum_ckld t_ai,ck * L_kc,ld * c_bl,dj 
+!!                        - sum_ckdl t_ai,dj * L_kc,ld * c_bl,ck
+!!                        - sum_ckdl t_ai_bl * L_kc,ld * c_ck,dj
+!!
+!!       L_kc,ld = 2*g_kc,ld - g_kd,lc = 2*g_kc_ld(kc,ld) - 2*g_kc_ld(kd,lc)
 !!
          implicit none 
 !
@@ -664,11 +687,12 @@ module ccsd_class
 !!       Jacobian CCSD I2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!       rho_ai_bj^I2 =  P_ij^ab ( sum_c F_bc * c_ai,cj - sum_k F_k * c_ai,bk
-!!                               + sum_ck L_bj,kc * c_ai,ck
-!!                               - sum_ck ( g_kc,bj * c_ak,ci + g_kibc * c_ak,cj ) )
+!!       rho_ai_bj^I2 =  sum_c F_bc * c_ai,cj - sum_k F_jk * c_ai,bk
+!!                     + sum_ck L_bj,kc * c_ai,ck 
+!!                     - sum_ck ( g_kc,bj * c_ak,ci + g_ki,bc * c_ak,cj ) 
 !!                
-!!
+!!       Batch over c to construct  g_ki_bc
+!! 
          implicit none 
 !
          class(ccsd) :: wf 
@@ -705,8 +729,10 @@ module ccsd_class
 !!
 !!       rho_ab_ij^K2 =    sum_kl g_ki,lj * c_ak,bl 
 !!                       + sum_cd g_ac,bd * c_ci,dj
-!!                
-!!
+!! 
+!!       For the last term we batch over a and b and 
+!!       add each batch to rho_ai_bj 
+!!   
          implicit none 
 !
          class(ccsd) :: wf 
