@@ -3995,6 +3995,8 @@ contains
 !  
          call allocator(X_ai_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
+!        X_ai_ld = sum_ck t_ai_kc*g_kc_ld
+!
          call dgemm('N', 'N',           &
                      (wf%n_o)*(wf%n_v), &
                      (wf%n_o)*(wf%n_v), &
@@ -4036,6 +4038,8 @@ contains
                enddo
             enddo
          enddo
+!
+!        rho_ai_bj += sum_ld X_ai_ld*c_ld_bj
 !
          call dgemm('N', 'N',           &
                      (wf%n_o)*(wf%n_v), &
@@ -4140,6 +4144,8 @@ contains
 !
          call allocator(Y_aj_kd, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
+!        Y_aj_kd = sum_lc t_aj_lc * g_lc_kd
+!
          call dgemm('N', 'N',           &
                      (wf%n_o)*(wf%n_v), &
                      (wf%n_o)*(wf%n_v), &
@@ -4181,6 +4187,8 @@ contains
          enddo
 !
          call allocator(rho_aj_bi, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!        rho_aj_bi = sum_kd  Y_aj_kd * c_kd_bi
 !
          call dgemm('N', 'N',           & 
                      (wf%n_o)*(wf%n_v), &
@@ -4305,7 +4313,7 @@ contains
 !
          call allocator(rho_aij_b, (wf%n_v)*((wf%n_o)**2), wf%n_v)
 !
-!        sum_c F_bc * c_ai,cj = sum_c c_aij_c(aij,c) F_ab(b,c) = sum_c c_aij_c(aij,c) F_ab^T(c,b)
+!        rho_ai_bj += sum_c F_bc * c_ai,cj = sum_c c_aij_c(aij,c) F_ab(b,c) = sum_c c_aij_c(aij,c) F_ab^T(c,b)
 !
          call dgemm('N','T',                 & 
                      (wf%n_v)*((wf%n_o)**2), &
@@ -4348,7 +4356,7 @@ contains
 !
 !       ::  - sum_k F_jk * c_ai,bk  ::
 !
-!        - sum_k F_jk * c_ai,bk = - sum_k c_aib_k(aib,k) F_ij(k,j)^T 
+!        rho_ai_bj += - sum_k F_jk * c_ai,bk = - sum_k c_aib_k(aib,k) F_ij(k,j)^T 
 !
          call dgemm('N', 'N',                & 
                      (wf%n_o)*((wf%n_v)**2), &
@@ -4786,7 +4794,7 @@ contains
                      X_kl_ij,     &
                      (wf%n_o)**2)
 !
-!        rho_ab_ij = c_ab_kl * X_kl_ij
+!        rho_ab_ij += c_ab_kl * X_kl_ij
 !
          call dgemm('N', 'N',     &
                      (wf%n_v)**2, &
@@ -4816,7 +4824,7 @@ contains
                      X_kl_ij,     &
                      (wf%n_o)**2)
 !
-!        rho_ab_ij = t_ab_kl * X_kl_ij
+!        rho_ab_ij += t_ab_kl * X_kl_ij
 !
          call dgemm('N', 'N',     &
                      (wf%n_v)**2, &
@@ -4931,7 +4939,7 @@ contains
 !
          call deallocator(g_ki_lj, (wf%n_o)**2, (wf%n_o)**2)
 !
-!        sum_kl g_ki,lj * c_ak,bl = sum_kl c_ab_ij(ab,kl) g_kl_ij(kl,ij)  
+!        rho_ab_ij += sum_kl g_ki,lj * c_ak,bl = sum_kl c_ab_ij(ab,kl) g_kl_ij(kl,ij)  
 !
 !
          call dgemm('N', 'N',     & 
@@ -5065,7 +5073,7 @@ contains
 !
                call allocator(rho_batch_ab_ij, a_length*b_length, (wf%n_o)**2)
 !
-!              rho_ab_ij = sum_cd g_ac,bd * c_ci,dj = sum_cd g_ab_cd(ab, cd) c_ab_ij(cd, ij) 
+!              rho_ab_ij += sum_cd g_ac,bd * c_ci,dj = sum_cd g_ab_cd(ab, cd) c_ab_ij(cd, ij) 
 !
                call dgemm('N', 'N',            &  
                             a_length*b_length, &
