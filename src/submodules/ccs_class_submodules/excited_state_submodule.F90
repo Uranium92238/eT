@@ -570,7 +570,7 @@ contains
 !
          conv_test = norm_residual/norm_solution_vector
 !
-         if (conv_test .gt. wf%settings%ampeqs_threshold) converged_residual = .false.
+         if (conv_test .gt. wf%settings%equation_threshold) converged_residual = .false.
 !
 !        Prints
 !
@@ -629,7 +629,7 @@ contains
 !        Test for linear dependency on old trial vectors
 !        If norm sufficiently high new vector is normalized and written to file
 !
-         if ((norm_new_trial .gt. wf%settings%ampeqs_threshold) .and. (conv_test .gt. wf%settings%ampeqs_threshold)) then
+         if ((norm_new_trial .gt. wf%settings%equation_threshold) .and. (conv_test .gt. wf%settings%equation_threshold)) then
 !
             n_new_trials = n_new_trials + 1
             call dscal(wf%n_parameters, one/norm_new_trial, residual, 1)
