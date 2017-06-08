@@ -119,6 +119,7 @@ contains
                elseif (calculation == 'excited_state') then
 !
                   tasks%excited_state = .true.
+                  read(unit_input,'(i3,i3)') tasks%n_singlet_states, tasks%n_triplet_states
                   cycle 
 !
                elseif (calculation == 'properties') then
@@ -203,9 +204,9 @@ contains
                   read(unit_input,*) settings%energy_threshold
                   cycle
 !
-               elseif (setting == 'ampeqs_threshold') then 
+               elseif (setting == 'equation_threshold') then 
 !
-                  read(unit_input,*) settings%ampeqs_threshold
+                  read(unit_input,*) settings%equation_threshold
                   cycle
 !
                elseif (setting == 'memory') then
@@ -216,6 +217,11 @@ contains
                elseif (setting == 'restart') then
 !
                   settings%restart = .true.
+                  cycle
+!
+               elseif (setting == 'ground_state_max_iterations') then 
+!
+                  read(unit_input,*) settings%ground_state_max_iterations
                   cycle
 !
                elseif (trim(line) == '#end of eT input') then
