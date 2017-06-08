@@ -85,7 +85,7 @@ module ccsd_class
 !     Routine to save and read the amplitudes (to/from disk)
 !
       procedure :: save_amplitudes => save_amplitudes_ccsd
-      procedure :: read_single_amplitudes => read_single_amplitudes_ccsd ! Sarai: Should be moved to ccs
+      procedure :: read_amplitudes => read_amplitudes_ccsd
       procedure :: read_double_amplitudes => read_double_amplitudes_ccsd
 !
 !     Jacobian transformation routine 
@@ -1076,6 +1076,21 @@ contains
 !
    end subroutine save_amplitudes_ccsd
 !
+   subroutine read_amplitudes_ccsd(wf)
+!!
+!!    Read Amplitudes (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
+!!
+!!    Reads the amplitudes from disk (T1AM)
+!!
+      implicit none 
+!
+      class(ccsd) :: wf
+!
+      call wf%read_single_amplitudes
+      call wf%read_double_amplitudes
+!
+   end subroutine read_amplitudes_ccsd
 !
    subroutine read_double_amplitudes_ccsd(wf)
 !!
@@ -1124,51 +1139,6 @@ contains
    end subroutine read_double_amplitudes_ccsd
 !
 !
-   subroutine read_single_amplitudes_ccsd(wf)
-!!
-!!    Read Amplitudes (CCSD)
-!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
-!!
-!!    Reads the amplitudes from disk (T1AM, T2AM)
-!!
-      implicit none 
-!
-      class(ccsd) :: wf
-!
-      integer(i15) :: unit_t1am = -1
-!
-      logical :: file_exists = .false.
-!
-!     Check to see whether file exists
-!
-      inquire(file='t1am',exist=file_exists)
-!
-      if (file_exists) then 
-!
-!        Open amplitude files if they exist
-!
-         call generate_unit_identifier(unit_t1am)
-!
-         open(unit_t1am, file='t1am', status='unknown', form='unformatted')
-!
-         rewind(unit_t1am)
-!
-!        Read from file & close
-!
-         wf%t1am = zero
-!
-         read(unit_t1am) wf%t1am 
-!  
-         close(unit_t1am)
-!
-      else
-!
-         write(unit_output,'(t3,a)') 'Error: amplitude files do not exist.'
-         stop
-!
-      endif
-!
-   end subroutine read_single_amplitudes_ccsd
 !
 !
    subroutine jacobi_test_ccsd(wf)
