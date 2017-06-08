@@ -109,6 +109,7 @@ module ccs_class
 !
       procedure :: save_amplitudes => save_amplitudes_ccs
       procedure :: read_amplitudes => read_amplitudes_ccs
+      procedure :: read_single_amplitudes => read_single_amplitudes_ccs
 !
 !     Routines to destroy amplitudes and omega 
 !
@@ -934,7 +935,22 @@ contains
 !
       class(ccs) :: wf
 !
-      integer(i15) :: unit_t1am = -1 
+      call wf%read_single_amplitudes
+!
+   end subroutine read_amplitudes_ccs
+!
+   subroutine read_single_amplitudes_ccs(wf)
+!!
+!!    Read Amplitudes (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
+!!
+!!    Reads the amplitudes from disk (T1AM, T2AM)
+!!
+      implicit none 
+!
+      class(ccs) :: wf
+!
+      integer(i15) :: unit_t1am = -1
 !
       logical :: file_exists = .false.
 !
@@ -944,28 +960,30 @@ contains
 !
       if (file_exists) then 
 !
-!        Open amplitude file if it exists
+!        Open amplitude files if they exist
 !
          call generate_unit_identifier(unit_t1am)
+!
          open(unit_t1am, file='t1am', status='unknown', form='unformatted')
+!
          rewind(unit_t1am)
 !
 !        Read from file & close
 !
          wf%t1am = zero
+!
          read(unit_t1am) wf%t1am 
 !  
          close(unit_t1am)
 !
       else
 !
-         write(unit_output,'(t3,a)') 'Error: amplitude file does not exist.'
+         write(unit_output,'(t3,a)') 'Error: amplitude files do not exist.'
          stop
 !
       endif
 !
-   end subroutine read_amplitudes_ccs
-!
+   end subroutine read_single_amplitudes_ccs
 !
    subroutine destruct_amplitudes_ccs(wf)
 !!
