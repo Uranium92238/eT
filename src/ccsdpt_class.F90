@@ -241,12 +241,12 @@ contains
 !              Note: v_ai is identical to the CC3 omega1(a,i), 
 !              with non-transformed integrals:
 !
-               call wf%omega_e1(t_abc,i,j,k)
+               call wf%omega_cc3_a1(t_abc,i,j,k)
 !
-!              Note: v_ai_bj is identical the CC3 G2 contribution
+!              Note: v_ai_bj is identical the CC3 B2 contribution
 !              to omega2(ai,bj):
 !
-               call wf%omega_g2(v_ai_bj,t_abc,i,j,k)
+               call wf%omega_cc3_b2(v_ai_bj,t_abc,i,j,k)
 !
             enddo
          enddo
