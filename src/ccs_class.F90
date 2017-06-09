@@ -141,6 +141,7 @@ module ccs_class
 !
       procedure, non_overridable :: find_start_trial_indices => find_start_trial_indices_ccs
       procedure, non_overridable :: initialize_trial_vectors => initialize_trial_vectors_ccs
+      procedure, non_overridable :: trial_vectors_from_stored_solutions => trial_vectors_from_stored_solutions_ccs
 !
       procedure, non_overridable :: solve_reduced_eigenvalue_equation => solve_reduced_eigenvalue_equation_ccs
       procedure, non_overridable :: construct_next_trial_vectors      => construct_next_trial_vectors_ccs
@@ -428,7 +429,12 @@ module ccs_class
 !!       Initialize trial vectors
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
 !!
+!!       Initializes start trial vectors for the calculation of 
+!!       singlet excited states and writes them to file 'trial_vecs'.
 !!
+!!       n start vectors are constructed by finding the n lowest orbital differences,      
+!!       where n = n_singlet_states. Vector i has a 1.0D0 at the element corresponding to the i'th lowest
+!!       orbital difference and 0.0d0 everywhere else
          implicit none
 !
          class(ccs) :: wf
@@ -437,9 +443,20 @@ module ccs_class
       end subroutine initialize_trial_vectors_ccs
 !
 !
+      module subroutine trial_vectors_from_stored_solutions_ccs(wf)
+!!
+!!
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      end subroutine trial_vectors_from_stored_solutions_ccs
+!
+!
       module subroutine find_start_trial_indices_ccs(wf, index_list)
 !!
-!!       Get indices for lowest orbital differences
+!!       Find indices for lowest orbital differences
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
 !!
 !!
@@ -452,8 +469,10 @@ module ccs_class
 !
 !
       module subroutine calculate_orbital_differences_ccs(wf,orbital_diff)
-!
-!
+!!
+!!       Calculate and return orbital differences
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad May 2017
+!!
          implicit none
 !
          class(ccs) :: wf
