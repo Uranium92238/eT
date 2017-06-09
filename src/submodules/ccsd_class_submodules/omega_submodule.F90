@@ -15,15 +15,15 @@ submodule (ccsd_class) omega
 !!                          wavefunction object wf. The routine assumes that
 !!                          the projection vector is allocated.
 !!
-!!    omega_a1:         adds A1 term to omega1
-!!    omega_b1:         adds B1 term to omega1
-!!    omega_c1:         adds C1 term to omega1
+!!    omega_ccsd_a1:         adds A1 term to omega1
+!!    omega_ccsd_b1:         adds B1 term to omega1
+!!    omega_ccsd_c1:         adds C1 term to omega1
 !!
-!!    omega_a2:         adds A2 term to omega2
-!!    omega_b2:         adds B2 term to omega2
-!!    omega_c2:         adds C2 term to omega2
-!!    omega_d2:         adds D2 term to omega2
-!!    omega_e2:         adds E2 term to omega2
+!!    omega_ccsd_a2:         adds A2 term to omega2
+!!    omega_ccsd_b2:         adds B2 term to omega2
+!!    omega_ccsd_c2:         adds C2 term to omega2
+!!    omega_ccsd_d2:         adds D2 term to omega2
+!!    omega_ccsd_e2:         adds E2 term to omega2
 !!
 !
    implicit none 
@@ -77,23 +77,23 @@ contains
 !
 !     Construct singles contributions 
 !
-      call wf%omega_a1
-      call wf%omega_b1
-      call wf%omega_c1
+      call wf%omega_ccsd_a1
+      call wf%omega_ccsd_b1
+      call wf%omega_ccsd_c1
       call wf%omega_ccs_a1
 !
 !     Construct doubles contributions 
 !
-      call wf%omega_a2
-      call wf%omega_b2
-      call wf%omega_c2
-      call wf%omega_d2
-      call wf%omega_e2
+      call wf%omega_ccsd_a2
+      call wf%omega_ccsd_b2
+      call wf%omega_ccsd_c2
+      call wf%omega_ccsd_d2
+      call wf%omega_ccsd_e2
 !
    end subroutine construct_omega_ccsd
 !
 !
-   module subroutine omega_a1_ccsd(wf)
+   module subroutine omega_ccsd_a1_ccsd(wf)
 !
 !       Omega A1 term
 !       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -284,10 +284,10 @@ contains
 !
       call deallocator(u_ckd_i, (wf%n_o)*(wf%n_v)**2, wf%n_o)
 !
-   end subroutine omega_a1_ccsd
+   end subroutine omega_ccsd_a1_ccsd
 !
 !
-   module subroutine omega_b1_ccsd(wf)
+   module subroutine omega_ccsd_b1_ccsd(wf)
 !!
 !!       Omega B1
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -422,10 +422,10 @@ contains
       call deallocator(u_a_ckl, wf%n_v, (wf%n_v)*((wf%n_o)**2))
       call deallocator(g_ckl_i, (wf%n_v)*((wf%n_o)**2), wf%n_o)
 !
-   end subroutine omega_b1_ccsd
+   end subroutine omega_ccsd_b1_ccsd
 !
 !
-   module subroutine omega_c1_ccsd(wf)        
+   module subroutine omega_ccsd_c1_ccsd(wf)        
 !  
 !     Omega C1
 !     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -517,10 +517,10 @@ contains
       call deallocator(omega1_ai, (wf%n_o)*(wf%n_v), 1)
       call deallocator(u_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-   end subroutine omega_c1_ccsd
+   end subroutine omega_ccsd_c1_ccsd
 !
 !
-   module subroutine omega_a2_ccsd(wf)
+   module subroutine omega_ccsd_a2_ccsd(wf)
 !
 !     Omega A2 term: Omega A2 = g_ai_bj + sum_(cd)g_ac_bd * t_ci_dj = A2.1 + A.2.2
 !
@@ -1033,10 +1033,10 @@ contains
 !
       enddo
 !
-   end subroutine omega_a2_ccsd
+   end subroutine omega_ccsd_a2_ccsd
 !
 !
-   module subroutine omega_b2_ccsd(wf)
+   module subroutine omega_ccsd_b2_ccsd(wf)
 !!
 !!    Omega B2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 11 Mar 2017
@@ -1297,10 +1297,10 @@ contains
 !
       call deallocator(omega_ab_ij,(wf%n_v)*(wf%n_v),(wf%n_o)*(wf%n_o))  
 !
-   end subroutine omega_b2_ccsd
+   end subroutine omega_ccsd_b2_ccsd
 !
 !
-   module subroutine omega_c2_ccsd(wf)
+   module subroutine omega_ccsd_c2_ccsd(wf)
 !!
 !!    Omega C2 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2017
@@ -1629,10 +1629,10 @@ contains
 !
       call deallocator(Y_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-   end subroutine omega_c2_ccsd
+   end subroutine omega_ccsd_c2_ccsd
 !
 !
-   module subroutine omega_d2_ccsd(wf)
+   module subroutine omega_ccsd_d2_ccsd(wf)
 !
 !     Omega D2 
 !     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -2186,10 +2186,10 @@ contains
 !
       call deallocator(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-   end subroutine omega_d2_ccsd
+   end subroutine omega_ccsd_d2_ccsd
 !
 ! 
-   module subroutine omega_e2_ccsd(wf)
+   module subroutine omega_ccsd_e2_ccsd(wf)
 !
 !     Omega E2
 !     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -2620,7 +2620,7 @@ contains
 !
       call deallocator(omega2_aib_j, (wf%n_o)*(wf%n_v)**2, wf%n_o)
 !
-   end subroutine omega_e2_ccsd
+   end subroutine omega_ccsd_e2_ccsd
 !
 ! 
 end submodule omega

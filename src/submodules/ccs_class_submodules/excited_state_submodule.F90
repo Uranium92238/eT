@@ -111,6 +111,15 @@ contains
 !
       call wf%initialize_trial_vectors
 !
+!     If restart use old solution vectors for first start vectors
+!
+      if (wf%settings%restart) then 
+!
+         write(unit_output,'(/t3,a)') 'Requested restart. Using old solution vectors as trial vectors.'
+         call wf%trial_vectors_from_stored_solutions
+!
+      endif
+!
 !     Allocate and initialize eigenvalue arrays
 !
       call allocator(eigenvalues_Im_old, wf%tasks%n_singlet_states, 1)

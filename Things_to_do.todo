@@ -12,8 +12,7 @@ Programmering:
   ✔ Løser for eksiterte tilstander @done (17-05-29 15:30)
   ☐ MLCCSD
   ✔ Rutiner som deallokerer omega etter grunntilstanden er laget. @done (17-05-18 20:28)
-  ☐ CC2 - teste batching
-  ☐ Clean up of excited state solver and jacobi 
+  ✔ Clean up of excited state solver and jacobi @done (17-06-08 11:38)
   ☐ Optimere Jacobi K2 og time exciterte tilstander
   ☐ Respons solver
   ☐ EOM

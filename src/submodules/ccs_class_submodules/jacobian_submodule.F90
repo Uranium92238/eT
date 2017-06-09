@@ -82,6 +82,115 @@ contains
       end subroutine initialize_trial_vectors_ccs
 !
 !
+      module subroutine trial_vectors_from_stored_solutions_ccs(wf)
+!!
+!!
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+         logical      :: solution_exists = .false.
+         logical      :: more_trials = .true.
+!
+         integer(i15) :: ioerror = 0, unit_solution = 0, unit_trial_vecs = 0
+         integer(i15) :: number_of_solutions = 0
+!
+         integer(i15) :: i = 0, j = 0
+!
+         real(dp), dimension(:,:), allocatable :: c_i, c_j
+!
+         real(dp) :: ddot, dot_prod = zero, norm = zero 
+!
+!        Open solution vector file - if it does not exist return
+!
+         inquire(file='solution_vectors', exist=solution_exists)
+!
+!        If no solution vector file, return and use orbital differences.
+!
+         if (.not. solution_exists) return
+!
+!        Open files
+!
+         call generate_unit_identifier(unit_trial_vecs)
+         open(unit=unit_trial_vecs, file='trial_vec', action='readwrite', status='old', &
+         access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror)
+!
+         call generate_unit_identifier(unit_solution)
+         open(unit=unit_solution, file='solution_vectors', action='read', status='unknown', &
+         access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
+!
+!        Allocate c_i
+!
+         call allocator(c_i, wf%n_parameters, 1)
+         c_i = zero
+!
+         i = 1
+         do while ((i .le. wf%tasks%n_singlet_states) .and. more_trials)
+!
+!        Read old solutions and count them
+!
+            read(unit_solution, rec=i, iostat=ioerror) c_i
+            if (ioerror .ne. 0) write(unit_output,*) 'Error reading solution vecs'
+!
+            if (ioerror .eq. 0) then
+!
+               write(unit_trial_vecs, rec = i)c_i
+!
+            else
+!
+               more_trials = .false.
+!
+            endif
+!
+            i = i + 1
+!
+         enddo
+!
+!        Deallocate c_i 
+!
+         call deallocator(c_i, wf%n_parameters, 1)
+!
+!        Close solution file
+!
+         close(unit_solution)
+!
+!        Allocate c_i and c_j
+!
+         call allocator(c_i, wf%n_parameters, 1)
+         call allocator(c_j, wf%n_parameters, 1)
+         c_i = zero
+         c_j = zero
+!
+!        Reorthonormalize trial vectors
+!
+         do i = 1, wf%tasks%n_singlet_states
+!
+            read(unit_trial_vecs, rec=i, iostat=ioerror) c_i
+!
+            do j = 1, i-1
+!
+               read(unit_trial_vecs, rec=j, iostat=ioerror) c_j
+               dot_prod = ddot(wf%n_parameters, c_j, 1, c_i, 1)
+               call daxpy(wf%n_parameters, -dot_prod, c_j, 1, c_i, 1)
+!  
+               norm = sqrt(ddot(wf%n_parameters, c_i, 1, c_i, 1))
+               call dscal(wf%n_parameters, one/norm, c_i, 1)
+!
+            enddo
+            write(unit_trial_vecs, rec = i)c_i
+         enddo
+!  
+         call deallocator(c_i, wf%n_parameters, 1)
+         call deallocator(c_j, wf%n_parameters, 1)  
+!
+!        Close trial vector file
+!
+         close(unit_trial_vecs)     
+!
+      end subroutine trial_vectors_from_stored_solutions_ccs
+!
+!
       module subroutine find_start_trial_indices_ccs(wf, index_list)
 !!
 !!       Find indices for lowest orbital differences
