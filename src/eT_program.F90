@@ -21,6 +21,7 @@ program eT_program
    use ccsd_class
    use cc3_class
    use ccsdpt_class
+   use mlcc2_class
 !
    implicit none
 !
@@ -31,7 +32,11 @@ program eT_program
    type(cc2),    allocatable, target :: cc2_wf
    type(ccsd),   allocatable, target :: ccsd_wf
    type(cc3),    allocatable, target :: cc3_wf
-   type(ccsdpt), allocatable, target :: ccsdpt_wf 
+   type(ccsdpt), allocatable, target :: ccsdpt_wf
+!
+!  Multi-level methods
+!
+   type(mlcc2), allocatable, target :: mlcc2_wf
 !
 !  Wavefunction pointer
 !
@@ -120,6 +125,11 @@ program eT_program
 !
       allocate(ccsdpt_wf)
       wf => ccsdpt_wf
+   elseif (trim(method) == 'MLCC2') then
+!
+      allocate(mlcc2_wf)
+      wf => mlcc2_wf
+      call mlcc_reader(unit_input, wf%mlcc_settings)
 !
    else
       write(unit_output,*) 'Method ', trim(method), ' not recognized.'

@@ -10,6 +10,7 @@ module input_reader
    use input_output
    use calc_procedures_class
    use calc_settings_class
+   use mlcc_calculation_settings_class
 !
    implicit none
 !
@@ -261,5 +262,83 @@ contains
 !
    end subroutine settings_reader
 !
+   subroutine mlcc_reader(unit_input,mlcc_settings)
+!!
+!!
+   implicit none
+!
+   integer(i15) :: unit_input
+   type(mlcc_calculation_settings) :: mlcc_settings
+!
+      character(len=40) :: setting 
+!
+      character(len=40) :: line 
+!
+      read(unit_input,'(a40)') line   
+!
+      do while (line(1:1) == '!' .or. trim(line) == '') ! Comment or blank line: read the next line
+!
+         read(unit_input,'(a40)') line 
+!
+      enddo
+!
+      if (trim(line) == 'mlcc_settings:') then
+!
+         do ! Read settings 
+!
+            read(unit_input,'(a40)') line
+!
+            do while (line(1:1) == '!' .or. trim(line) == '') ! Comment or blank line: read the next line
+               read(unit_input,'(a40)') line 
+            enddo
+!
+            if (line(1:1) == '.') then 
+!
+               setting = trim(line(2:40))
+!
+!              Test for which type, set the logical in tasks, and cycle!
+!
+               if(setting == 'cholesky') then
+!
+                     mlcc_settings%cholesky = .true.
+!
+               elseif (setting == 'cnto') then
+!
+                     write(unit_output,*)'WARNING: CNTOs not implemented yet!'
+                     stop
+!  
+               elseif (setting == 'CC2') then
+!
+                  mlcc_settings%CC2 = .true.
+                  cycle
+!
+               elseif (setting == 'CCSD') then
+!
+                  mlcc_settings%CCSD = .true.
+                  cycle
+!                  
+               elseif (setting == 'CC3') then
+!
+                  mlcc_settings%CC3 = .true.
+                  cycle
+               else
+! 
+               write(unit_output,*) 'Input error: line ',trim(line),' not recognized.'
+               stop
+!
+               endif
+            else
+               stop
+            endif
+!
+         enddo
+      else
+!
+         write(unit_output,*) 'Input error: expected mlcc settings section, not the line.'
+         stop ! Terminate program
+!
+      endif
+!
+   end subroutine
 !
 end module input_reader

@@ -13,6 +13,8 @@ set(eT_fortran_sources
    src/cc2_class.F90
    src/cc3_class.F90
    src/ccsdpt_class.F90
+   src/mlcc2_class.F90
+   src/mlcc_calculation_settings_class.F90
    src/submodules/ccs_class_submodules/cholesky_submodule.F90
    src/submodules/ccs_class_submodules/ground_state_submodule.F90
    src/submodules/ccs_class_submodules/fock_submodule.F90
