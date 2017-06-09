@@ -45,10 +45,10 @@ module cc3_class
       procedure :: omega_integrals => omega_integrals_cc3
       procedure :: calc_triples    => calc_triples_cc3
 !
-      procedure :: omega_e1 => omega_e1_cc3
+      procedure :: omega_cc3_a1 => omega_cc3_a1_cc3
 !
-      procedure :: omega_f2 => omega_f2_cc3
-      procedure :: omega_g2 => omega_g2_cc3
+      procedure :: omega_cc3_a2 => omega_cc3_a2_cc3
+      procedure :: omega_cc3_b2 => omega_cc3_b2_cc3
 !
    end type cc3 
 !
@@ -113,12 +113,12 @@ module cc3_class
       end subroutine calc_triples_cc3
 !
 !
-      module subroutine omega_e1_cc3(wf,t_abc,i,j,k)
+      module subroutine omega_cc3_a1_cc3(wf,t_abc,i,j,k)
 !!
-!!       Omega E1 (CC3)
+!!       Omega A1 (CC3)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-!!       Calculates the E1 term,
+!!       Calculates the A1 term,
 !! 
 !!          sum_bc (t_ijk^abc - t_ijk^cba) L_jbkc,
 !!
@@ -133,15 +133,15 @@ module cc3_class
 !
          integer(i15), intent(in) :: i, j, k
 !
-      end subroutine omega_e1_cc3
+      end subroutine omega_cc3_a1_cc3
 !
 !
-      module subroutine omega_f2_cc3(wf,omega_ai_bj,t_abc,i,j,k)
+      module subroutine omega_cc3_a2_cc3(wf,omega_ai_bj,t_abc,i,j,k)
 !!
-!!       Omega F2 (CC3)
+!!       Omega A2 (CC3)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-!!       Calculates the F2 term,
+!!       Calculates the A2 term,
 !! 
 !!          sum_c (t_ijk^abc - t_ijk^cba) F_kc,
 !!
@@ -157,15 +157,15 @@ module cc3_class
 !
          integer(i15), intent(in) :: i, j, k
 !
-      end subroutine omega_f2_cc3
+      end subroutine omega_cc3_a2_cc3
 !
 !
-      module subroutine omega_g2_cc3(wf,omega_ai_bj,t_abc,i,j,k)
+      module subroutine omega_cc3_b2_cc3(wf,omega_ai_bj,t_abc,i,j,k)
 !!
-!!       Omega G2 (CC3)
+!!       Omega B2 (CC3)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-!!       Calculates the G2 term,
+!!       Calculates the B2 term,
 !! 
 !!          omega(al,bj) = - sum_c  (2 t_ijk^abc - t_ijk^cba - t_ijk^acb) g_ilkc
 !!          omega(ai,dj) = + sum_bc (2 t_ijk^abc - t_ijk^cba - t_ijk^acb) g_dbkc
@@ -182,7 +182,7 @@ module cc3_class
 !
          integer(i15), intent(in) :: i, j, k
 !
-      end subroutine omega_g2_cc3
+      end subroutine omega_cc3_b2_cc3
 !
 !
    end interface

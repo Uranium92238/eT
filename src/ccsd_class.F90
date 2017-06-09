@@ -65,15 +65,15 @@ module ccsd_class
 !
 !     Helper routines for construct_omega
 !
-      procedure :: omega_a1 => omega_a1_ccsd 
-      procedure :: omega_b1 => omega_b1_ccsd 
-      procedure :: omega_c1 => omega_c1_ccsd
+      procedure :: omega_ccsd_a1 => omega_ccsd_a1_ccsd 
+      procedure :: omega_ccsd_b1 => omega_ccsd_b1_ccsd 
+      procedure :: omega_ccsd_c1 => omega_ccsd_c1_ccsd
 !
-      procedure :: omega_a2 => omega_a2_ccsd 
-      procedure :: omega_b2 => omega_b2_ccsd 
-      procedure :: omega_c2 => omega_c2_ccsd 
-      procedure :: omega_d2 => omega_d2_ccsd 
-      procedure :: omega_e2 => omega_e2_ccsd   
+      procedure :: omega_ccsd_a2 => omega_ccsd_a2_ccsd 
+      procedure :: omega_ccsd_b2 => omega_ccsd_b2_ccsd 
+      procedure :: omega_ccsd_c2 => omega_ccsd_c2_ccsd 
+      procedure :: omega_ccsd_d2 => omega_ccsd_d2_ccsd 
+      procedure :: omega_ccsd_e2 => omega_ccsd_e2_ccsd   
 !
 !     Ground state solver routine (helpers only, see CCS for the rest)
 !
@@ -159,7 +159,7 @@ module ccsd_class
       end subroutine construct_omega_ccsd
 !
 !
-      module subroutine omega_a1_ccsd(wf)
+      module subroutine omega_ccsd_a1_ccsd(wf)
 !!
 !!       Omega A1 term
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -175,10 +175,10 @@ module ccsd_class
 !
          class(ccsd) :: wf
 !
-      end subroutine omega_a1_ccsd
+      end subroutine omega_ccsd_a1_ccsd
 !
 !
-      module subroutine omega_b1_ccsd(wf)
+      module subroutine omega_ccsd_b1_ccsd(wf)
 !!
 !!       Omega B1
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -194,10 +194,10 @@ module ccsd_class
 !
          class(ccsd) :: wf 
 !
-      end subroutine omega_b1_ccsd
+      end subroutine omega_ccsd_b1_ccsd
 !
 !
-      module subroutine omega_c1_ccsd(wf)
+      module subroutine omega_ccsd_c1_ccsd(wf)
 !!  
 !!     Omega C1
 !!     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -215,10 +215,10 @@ module ccsd_class
 !
          class(ccsd) :: wf 
 !
-      end subroutine omega_c1_ccsd
+      end subroutine omega_ccsd_c1_ccsd
 !
 !
-      module subroutine omega_a2_ccsd(wf)
+      module subroutine omega_ccsd_a2_ccsd(wf)
 !!
 !!     Omega A2 term: Omega A2 = g_ai_bj + sum_(cd)g_ac_bd * t_ci_dj = A2.1 + A.2.2
 !!
@@ -237,10 +237,10 @@ module ccsd_class
 !
          class(ccsd) :: wf
 !
-      end subroutine omega_a2_ccsd
+      end subroutine omega_ccsd_a2_ccsd
 !
 !
-      module subroutine omega_b2_ccsd(wf)
+      module subroutine omega_ccsd_b2_ccsd(wf)
 !!
 !!       Omega B2
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, 11 Mar 2017
@@ -255,10 +255,10 @@ module ccsd_class
 !
          class(ccsd) :: wf
 !
-      end subroutine omega_b2_ccsd
+      end subroutine omega_ccsd_b2_ccsd
 !
 !
-      module subroutine omega_c2_ccsd(wf)
+      module subroutine omega_ccsd_c2_ccsd(wf)
 !!
 !!       Omega C2 
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2017
@@ -270,10 +270,10 @@ module ccsd_class
 !
          class(ccsd) :: wf
 !
-      end subroutine omega_c2_ccsd
+      end subroutine omega_ccsd_c2_ccsd
 !
 !
-      module subroutine omega_d2_ccsd(wf)
+      module subroutine omega_ccsd_d2_ccsd(wf)
 !!
 !!       Omega D2 
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -299,10 +299,10 @@ module ccsd_class
 !
          class(ccsd) :: wf
 !
-      end subroutine omega_d2_ccsd
+      end subroutine omega_ccsd_d2_ccsd
 !
 !
-      module subroutine omega_e2_ccsd(wf)
+      module subroutine omega_ccsd_e2_ccsd(wf)
 !!
 !!       Omega E2
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -326,7 +326,7 @@ module ccsd_class
 !
          class(ccsd) :: wf
 !
-      end subroutine omega_e2_ccsd
+      end subroutine omega_ccsd_e2_ccsd
 !
 !
       module subroutine calc_ampeqs_norm_ccsd(wf, ampeqs_norm)

@@ -10,9 +10,9 @@ submodule (cc3_class) omega
 !!                     and CCSD contributions to omega1 and omega2. 
 !!    omega_integrals: constructs the integrals needed for the CC3 contributions,
 !!                     and saves them to disk.
-!!    omega_e1:        adds the E1 term to omega1 (for a given i, j, and k).
-!!    omega_f2:        adds the F2 term to omega2 (for a given i, j, and k).
-!!    omega_g2:        adds the G2 term to omega2 (for a given i, j, and k).
+!!    omega_cc3_a1:    adds the A1 term to omega1 (for a given i, j, and k).
+!!    omega_cc3_a2:    adds the A2 term to omega2 (for a given i, j, and k).
+!!    omega_cc3_b2:    adds the B2 term to omega2 (for a given i, j, and k).
 !!
 !!    The submodule was based on the MLCC3 routines implemented by Rolf H. Myhre
 !!    and Henrik Koch in the Dalton quantum chemistry program. 
@@ -84,10 +84,10 @@ contains
 !
 !              Add the CC3 omega terms, using the calculated triples amplitudes:
 !
-               call wf%omega_e1(t_abc,i,j,k)
+               call wf%omega_cc3_a1(t_abc,i,j,k)
 !
-               call wf%omega_f2(omega_ai_bj,t_abc,i,j,k)
-               call wf%omega_g2(omega_ai_bj,t_abc,i,j,k)
+               call wf%omega_cc3_a2(omega_ai_bj,t_abc,i,j,k)
+               call wf%omega_cc3_b2(omega_ai_bj,t_abc,i,j,k)
 !
             enddo
          enddo
@@ -124,18 +124,18 @@ contains
 !
 !     Construct singles contributions (CCSD)
 !
-      call wf%omega_a1
-      call wf%omega_b1
-      call wf%omega_c1
+      call wf%omega_ccsd_a1
+      call wf%omega_ccsd_b1
+      call wf%omega_ccsd_c1
       call wf%omega_ccs_a1
 !
 !     Construct doubles contributions (CCSD)
 !
-      call wf%omega_a2
-      call wf%omega_b2
-      call wf%omega_c2
-      call wf%omega_d2
-      call wf%omega_e2 
+      call wf%omega_ccsd_a2
+      call wf%omega_ccsd_b2
+      call wf%omega_ccsd_c2
+      call wf%omega_ccsd_d2
+      call wf%omega_ccsd_e2 
 !
    end subroutine construct_omega_cc3
 !
@@ -1232,12 +1232,12 @@ contains
    end subroutine calc_triples_cc3
 !
 !
-   subroutine omega_e1_cc3(wf,t_abc,i,j,k)
+   subroutine omega_cc3_a1_cc3(wf,t_abc,i,j,k)
 !!
-!!    Omega E1 (CC3)
+!!    Omega A1 (CC3)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-!!    Calculates the E1 term,
+!!    Calculates the A1 term,
 !! 
 !!       sum_bc (t_ijk^abc - t_ijk^cba) L_jbkc,
 !!
@@ -1317,7 +1317,7 @@ contains
          enddo
       enddo
 !
-!     Calculate the E1 contribution,
+!     Calculate the A1 contribution,
 !
 !        sum_bc (t_ijk^abc - t_ijk^cba) L_jbkc 
 !                          = sum_bc u_a_bc(a,bc) L_bc(bc,1)
@@ -1340,15 +1340,15 @@ contains
       call deallocator(u_a_bc, wf%n_v, (wf%n_v)**2)
       call deallocator(L_bc, (wf%n_v)**2, 1)
 !
-   end subroutine omega_e1_cc3
+   end subroutine omega_cc3_a1_cc3
 !
 !
-   subroutine omega_f2_cc3(wf,omega_ai_bj,t_abc,i,j,k)
+   subroutine omega_cc3_a2_cc3(wf,omega_ai_bj,t_abc,i,j,k)
 !!
-!!    Omega F2 (CC3)
+!!    Omega A2 (CC3)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-!!    Calculates the F2 term,
+!!    Calculates the A2 term,
 !! 
 !!       sum_c (t_ijk^abc - t_ijk^cba) F_kc,
 !!
@@ -1404,7 +1404,7 @@ contains
 !
       enddo
 !
-!     Allocate and compute the F2 contribution,
+!     Allocate and compute the A2 contribution,
 !
 !        sum_c (t_ijk^abc - t_ijk^cba) F_kc = sum_c u_ab_c(ab,c) F_c(c, 1) 
 !
@@ -1446,15 +1446,15 @@ contains
 !
       call deallocator(omega_ab, (wf%n_v)**2, 1)
 !
-   end subroutine omega_f2_cc3
+   end subroutine omega_cc3_a2_cc3
 !
 !
-   subroutine omega_g2_cc3(wf,omega_ai_bj,t_abc,i,j,k)
+   subroutine omega_cc3_b2_cc3(wf,omega_ai_bj,t_abc,i,j,k)
 !!
-!!    Omega G2 (CC3)
+!!    Omega B2 (CC3)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-!!    Calculates the G2 term,
+!!    Calculates the B2 term,
 !! 
 !!       omega(al,bj) = - sum_c  (2 t_ijk^abc - t_ijk^cba - t_ijk^acb) g_ilkc
 !!       omega(ai,dj) = + sum_bc (2 t_ijk^abc - t_ijk^cba - t_ijk^acb) g_dbkc
@@ -1616,7 +1616,7 @@ contains
       call deallocator(omega_a_d, wf%n_v, wf%n_v)
       call deallocator(v_abc, (wf%n_v)**3, 1)
 !
-   end subroutine omega_g2_cc3
+   end subroutine omega_cc3_b2_cc3
 !
 !
 end submodule omega
