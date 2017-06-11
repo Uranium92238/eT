@@ -17,6 +17,7 @@ module hf_class
    use input_output
    use calc_procedures_class
    use calc_settings_class
+   use mlcc_calculation_settings_class
 !
    implicit none
 !
@@ -58,6 +59,8 @@ module hf_class
       type(calc_procedures) :: tasks
       type(calc_procedures) :: implemented
 !
+      type(mlcc_calculation_settings) :: mlcc_settings
+!
    contains
 !
 !     Initialization and driver routines
@@ -79,7 +82,6 @@ module hf_class
 !     read_transform_cholesky        : reads AO Cholesky vectors, transforms to MO, and saves to file
 !
       procedure, non_overridable :: read_hf_info            => read_hf_info_hf
-      procedure, non_overridable :: read_center_info        => read_center_info_hf
       procedure, non_overridable :: read_transform_cholesky => read_transform_cholesky_hf 
 !
    end type hf
@@ -559,62 +561,6 @@ contains
       close(unit_chol_mo_ab)
 !
    end subroutine read_cholesky_ab_hf
-!
-!
-   subroutine read_center_info_hf(wf)
-!!
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      integer(i15) :: n_nuclei = 0, nucleus = 0
-!
-      integer(i15) :: unit_center = 0
-      integer(i15) :: ioerror     = 0
-      integer(i15) :: offset      = 0
-      integer(i15) :: i           = 0
-!
-      integer(i15), dimension(:,:), allocatable :: ao_center_info, n_ao_on_center
-!
-!     Read number of nuclei, and info on which atomic orbitals are 
-!     centered on them. Ordered according to input geometry
-!
-      call generate_unit_identifier(unit_center)
-      open(unit=unit_center, file='center_info', status='unknown', form='unformatted', iostat=ioerror)
-      if (ioerror .ne. 0) write(unit_output)'WARNING: Error while opening center_info'
-      rewind(unit_center)
-!
-      read(unit_center) n_nuclei, wf%n_ao
-!
-      call allocator_int(n_ao_on_center, n_nuclei, 1)
-!
-      read(unit_center, iostat=ioerror) n_ao_on_center
-      if (ioerror .ne. 0) write(unit_output,*)'WARNING: Error while reading center_info'
-!
-      call allocator_int(ao_center_info, wf%n_ao, 2)
-!
-      offset = 1
-      do nucleus = 1, n_nuclei
-!
-         do i = 1, n_ao_on_center(nucleus, 1)
-            ao_center_info(offset + i - 1,1)=nucleus
-         enddo
-!
-         read(unit_center, iostat=ioerror) (ao_center_info(offset + i - 1, 2), i = 1, n_ao_on_center(nucleus, 1))
-         if (ioerror .ne. 0) write(unit_output,*)'WARNING: Error while reading center_info'
-!
-         offset = offset + n_ao_on_center(nucleus,1)
-!
-      enddo
-!
-      close(unit_center)
-!
-      call deallocator_int(n_ao_on_center, n_nuclei, 2)
-!
-      call deallocator_int(ao_center_info, wf%n_ao, 2)
-!
-   end subroutine read_center_info_hf
 !
 !
 end module hf_class

@@ -16,6 +16,7 @@ module mlcc_calculation_settings_class
 !
 !  Levels of the hierarchy
 !
+   logical :: CCS  = .false.
    logical :: CC2  = .false.
    logical :: CCSD = .false.
    logical :: CC3  = .false.

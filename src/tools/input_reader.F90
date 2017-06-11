@@ -86,73 +86,81 @@ contains
 !
       character(len=40) :: calculation 
 !
-      character(len=40) :: line 
+      character(len=40) :: line
 !
-      read(unit_input,'(a40)') line   
+      logical :: calculation_info = .false.
 !
-      do while (line(1:1) == '!' .or. trim(line) == '') ! Comment or blank line: read the next line
+      rewind(unit_input)
+
+      do
+         read(unit_input,'(a40)') line   
 !
-         read(unit_input,'(a40)') line 
+         do while (line(1:1) == '!' .or. trim(line) == '') ! Comment or blank line: read the next line
+            read(unit_input,'(a40)') line 
+         enddo
 !
-      enddo
+         if (trim(line) == 'Calculation:') then
+            calculation_info = .true.
 !
-      if (trim(line) == 'Calculation:') then
+            do ! Read calculations 
 !
-         do ! Read calculations 
+               read(unit_input,'(a40)') line
 !
-            read(unit_input,'(a40)') line
+               do while (line(1:1) == '!' .or. trim(line) == '') ! Comment or blank line: read the next line
+                  read(unit_input,'(a40)') line 
+               enddo
 !
-            do while (line(1:1) == '!' .or. trim(line) == '') ! Comment or blank line: read the next line
-               read(unit_input,'(a40)') line 
-            enddo
+               if (line(1:1) == '.') then 
 !
-            if (line(1:1) == '.') then 
+                  calculation = trim(line(2:40))
 !
-               calculation = trim(line(2:40))
+!                 Test for which type, set the logical in tasks, and cycle!
 !
-!              Test for which type, set the logical in tasks, and cycle!
+                  if (calculation == 'ground_state') then
 !
-               if (calculation == 'ground_state') then
+                     tasks%ground_state = .true.
+                     cycle
 !
-                  tasks%ground_state = .true.
-                  cycle
+                  elseif (calculation == 'excited_state') then
 !
-               elseif (calculation == 'excited_state') then
+                     tasks%excited_state = .true.
+                     read(unit_input,'(i3,i3)') tasks%n_singlet_states, tasks%n_triplet_states
+                     cycle 
 !
-                  tasks%excited_state = .true.
-                  read(unit_input,'(i3,i3)') tasks%n_singlet_states, tasks%n_triplet_states
-                  cycle 
+                  elseif (calculation == 'properties') then
 !
-               elseif (calculation == 'properties') then
+                     tasks%properties = .true. 
+                     cycle 
 !
-                  tasks%properties = .true. 
-                  cycle 
+                  else
 !
-               else
+                     write(unit_output,*) 'Input error: calculation ',trim(line(2:40)),' not recognized.'
+                     stop
 !
-                  write(unit_output,*) 'Input error: calculation ',trim(line(2:40)),' not recognized.'
-                  stop
+                  endif
+!
+               elseif (trim(line) == 'Settings:' .or. trim(line) == 'MLCC:') then
+!
+                  exit ! escape the do loop
+!
+               elseif ( trim(line) == '#end of eT input') then
+!
+                  backspace(unit_input)
+                  exit
 !
                endif
 !
-            elseif (trim(line) == 'Settings:' .or. trim(line) == '#end of eT input') then 
+            enddo
 !
-               backspace(unit_input)
-               exit ! escape the do loop
+         elseif ( trim(line) == '#end of eT input') then
+            backspace(unit_input)
+            exit
+         endif
+      enddo
 !
-            else
-! 
-               write(unit_output,*) 'Input error: line ',trim(line),' not recognized.'
-               stop
-!
-            endif
-!
-         enddo
-!
-      else
-!
-         write(unit_output,*) 'Expected calculation settings, not ',trim(line),'.'
-!
+      if (.not. calculation_info) then
+         write(unit_output,*)'WARNING: Calculation information expected.'
+         stop
       endif
 !
    end subroutine calculation_reader
@@ -176,89 +184,83 @@ contains
 !
       character(len=40) :: line 
 !
-      read(unit_input,'(a40)') line   
+      rewind(unit_input)
 !
-      do while (line(1:1) == '!' .or. trim(line) == '') ! Comment or blank line: read the next line
+      do
+         read(unit_input,'(a40)') line  
 !
-         read(unit_input,'(a40)') line 
+         do while (line(1:1) == '!' .or. trim(line) == '') ! Comment or blank line: read the next line
+                  read(unit_input,'(a40)') line 
+         enddo 
 !
-      enddo
+         if (trim(line) == 'Settings:') then
 !
-      if (trim(line) == 'Settings:') then
+            do ! Read settings 
 !
-         do ! Read settings 
+               read(unit_input,'(a40)') line
 !
-            read(unit_input,'(a40)') line
+               do while (line(1:1) == '!' .or. trim(line) == '') ! Comment or blank line: read the next line
+                  read(unit_input,'(a40)') line 
+               enddo
 !
-            do while (line(1:1) == '!' .or. trim(line) == '') ! Comment or blank line: read the next line
-               read(unit_input,'(a40)') line 
-            enddo
+               if (line(1:1) == '.') then 
 !
-            if (line(1:1) == '.') then 
+                  setting = trim(line(2:40))
 !
-               setting = trim(line(2:40))
+!                 Test for which type, set the logical in tasks, and cycle!
 !
-!              Test for which type, set the logical in tasks, and cycle!
+                  if (setting == 'energy_threshold') then
 !
-               if (setting == 'energy_threshold') then
+                     read(unit_input,*) settings%energy_threshold
+                     cycle
 !
-                  read(unit_input,*) settings%energy_threshold
-                  cycle
+                  elseif (setting == 'equation_threshold') then 
 !
-               elseif (setting == 'equation_threshold') then 
+                     read(unit_input,*) settings%equation_threshold
+                     cycle
 !
-                  read(unit_input,*) settings%equation_threshold
-                  cycle
+                  elseif (setting == 'memory') then
 !
-               elseif (setting == 'memory') then
+                     read(unit_input,*) mem 
+                     cycle
 !
-                  read(unit_input,*) mem 
-                  cycle
+                  elseif (setting == 'restart') then
 !
-               elseif (setting == 'restart') then
+                     settings%restart = .true.
+                     cycle
 !
-                  settings%restart = .true.
-                  cycle
+                  elseif (setting == 'ground_state_max_iterations') then 
 !
-               elseif (setting == 'ground_state_max_iterations') then 
+                     read(unit_input,*) settings%ground_state_max_iterations
+                     cycle
 !
-                  read(unit_input,*) settings%ground_state_max_iterations
-                  cycle
+                  else
+!
+                     write(unit_output,*) 'Input error: setting ',trim(line(2:40)),' not recognized.'
+                     stop
+!
+                  endif
+               elseif (trim(line) == 'Calculation:' .or. trim(line) == 'MLCC:') then
+!
+                  exit
 !
                elseif (trim(line) == '#end of eT input') then
 !
+                  backspace(unit_input)
                   exit ! escape do loop 
-!
-               else
-!
-                  write(unit_output,*) 'Input error: setting ',trim(line(2:40)),' not recognized.'
-                  stop
 !
                endif
 !
-            elseif (trim(line) == '#end of eT input') then
+            enddo
 !
-               exit
+         elseif (trim(line) == '#end of eT input') then
 !
-            else
+            backspace(unit_input)
+            exit
 !
-               write(unit_output,*) 'Input error: unregonized line ',trim(line),'.'
-               stop
+         endif
 !
-            endif
-!
-         enddo
-!
-      elseif (trim(line) == '#end of eT input') then
-!
-!        Do nothing (i.e., exit the settings reader)
-!
-      else
-!
-         write(unit_output,*) 'Input error: expected settings section, not the line ',trim(line),'.'
-         stop ! Terminate program
-!
-      endif
+      enddo
 !
    end subroutine settings_reader
 !
@@ -267,77 +269,110 @@ contains
 !!
    implicit none
 !
-   integer(i15) :: unit_input
-   type(mlcc_calculation_settings) :: mlcc_settings
+      integer(i15) :: unit_input
+      type(mlcc_calculation_settings) :: mlcc_settings
 !
       character(len=40) :: setting 
 !
       character(len=40) :: line 
 !
-      read(unit_input,'(a40)') line   
+      logical :: mlcc_info = .false.
+      logical :: read_new_line = .true.
 !
-      do while (line(1:1) == '!' .or. trim(line) == '') ! Comment or blank line: read the next line
+      rewind(unit_input)
 !
-         read(unit_input,'(a40)') line 
+      do
 !
-      enddo
+         read(unit_input,'(a40)') line
 !
-      if (trim(line) == 'mlcc_settings:') then
+         do while (line(1:1) == '!' .or. trim(line) == '') ! Comment or blank line: read the next line
 !
-         do ! Read settings 
+               read(unit_input,'(a40)') line
+!
+         enddo
+!
+         if (trim(line) == 'MLCC:') then
+            mlcc_info = .true.
+            do
 !
             read(unit_input,'(a40)') line
 !
+!           Reading settings
+!
             do while (line(1:1) == '!' .or. trim(line) == '') ! Comment or blank line: read the next line
-               read(unit_input,'(a40)') line 
+!
+               read(unit_input,'(a40)') line
+!
             enddo
+
 !
-            if (line(1:1) == '.') then 
+               if (line(1:1) == '.') then
 !
-               setting = trim(line(2:40))
+                  setting = trim(line(2:40))
 !
-!              Test for which type, set the logical in tasks, and cycle!
+!                 Test for which type, set the logical in tasks, and cycle!
 !
-               if(setting == 'cholesky') then
+                  if (setting == 'cholesky') then
 !
                      mlcc_settings%cholesky = .true.
+                     cycle
 !
-               elseif (setting == 'cnto') then
+                  elseif (setting == 'cnto') then 
 !
-                     write(unit_output,*)'WARNING: CNTOs not implemented yet!'
+                     write(unit_output,*)'WARNING: CNTOs are not implemented'
                      stop
-!  
-               elseif (setting == 'CC2') then
 !
-                  mlcc_settings%CC2 = .true.
-                  cycle
+                  elseif (setting == 'CCS') then
 !
-               elseif (setting == 'CCSD') then
+                     mlcc_settings%CCS = .true.
+                     cycle
+                  elseif (setting == 'CC2') then
 !
-                  mlcc_settings%CCSD = .true.
-                  cycle
-!                  
-               elseif (setting == 'CC3') then
+                     mlcc_settings%CC2 = .true.
+                     cycle
 !
-                  mlcc_settings%CC3 = .true.
-                  cycle
-               else
-! 
-               write(unit_output,*) 'Input error: line ',trim(line),' not recognized.'
-               stop
+                  elseif (setting == 'CCSD') then
+!
+                     mlcc_settings%CCSD = .true.
+                     cycle
+!
+                  elseif (setting == 'CC3') then
+!
+                     mlcc_settings%CC3 = .true.
+                     cycle
+!
+                  elseif (trim(line) == 'Calculation:' .or. trim(line) == 'Settings:') then
+!
+                     exit
+!
+                  elseif (trim(line) == '#end of eT input') then
+!
+                     backspace(unit_input)
+                     exit
+!
+                  endif
+!
+               elseif (trim(line) == '#end of eT input') then
+!
+                  backspace(unit_input)
+                  exit
 !
                endif
-            else
-               stop
-            endif
 !
-         enddo
-      else
+            enddo
+!           
+         elseif ( trim(line) == '#end of eT input') then
+            backspace(unit_input)
+            exit
+         endif
+      enddo
 !
-         write(unit_output,*) 'Input error: expected mlcc settings section, not the line.'
+      if (.not. mlcc_info) then 
+         write(unit_output,*) 'Input error: expected mlcc settings section.'
          stop ! Terminate program
-!
       endif
+!
+
 !
    end subroutine
 !
