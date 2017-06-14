@@ -1397,7 +1397,7 @@ contains
       real(dp), dimension(:,:), allocatable :: L_a_Jb
       real(dp), dimension(:,:), allocatable :: L_i_Jb
 !
-      integer(i15) :: a_length, b_length
+      integer(i15) :: batch_length, other_dim_length
 !
       batch_length = batch_last - batch_first + 1
       other_dim_length = other_dim_last - other_dim_first + 1
@@ -1453,7 +1453,7 @@ contains
                      other_dim_length*(wf%n_J), &
                      wf%n_o,            &
                      -one,              &
-                     wf%t1am(first,1),  &
+                     wf%t1am(batch_first,1),  &
                      wf%n_v,            &
                      L_i_Jb,            &
                      wf%n_o,            &
@@ -1492,7 +1492,7 @@ contains
 !        Note: using L_ia_J instead of L_ai_J, here, to avoid two reorderings.
 !              This is possible because of the symmetry L_ai_J(ai,J) == L_ia_J(ia,J).
 !  
-         call wf%read_cholesky_ia(L_ib_J, 1, wf%n_v, batch_first, batch_last)
+         call wf%read_cholesky_ia(L_ib_J, 1, wf%n_o, batch_first, batch_last)
 !
 !        Read L_ab_J for batch of b
 !
@@ -1523,12 +1523,12 @@ contains
 !
 !        Allocate L_Jb_a for batch of b
 !  
-         call allocator(L_Jb_a, (wf%n_J)*b_length, other_dim_length)
+         call allocator(L_Jb_a, (wf%n_J)*batch_length, other_dim_length)
 !
 !        T1-transformation
 !
          call dgemm('N','T',                &
-                     (wf%n_J)*b_length,     &
+                     (wf%n_J)*batch_length, &
                      other_dim_length,      &
                      wf%n_o,                &
                      -one,                  &

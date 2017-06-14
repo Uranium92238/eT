@@ -373,7 +373,7 @@ contains
 !
 !        Read Cholesky vectors
 !
-         call wf%get_cholesky_ab(L_ab_J, batch_start, batch_end, (wf%n_v)*batch_length, .false.)
+         call wf%get_cholesky_ab(L_ab_J, batch_start, batch_end, .false., 1,wf%n_v)
 !
 !        Calculate g_ab_ij = sum_J L_ab_J*L_ij_J
 !

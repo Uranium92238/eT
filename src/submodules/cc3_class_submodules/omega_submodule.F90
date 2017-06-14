@@ -200,7 +200,7 @@ contains
          L_bd_J = zero
 !
          reorder = .false.
-         call wf%get_cholesky_ab(L_bd_J, d, d, wf%n_v, reorder)
+         call wf%get_cholesky_ab(L_bd_J, d, d, reorder, 1,wf%n_v)
 !
          call allocator(L_ck_J, (wf%n_v)*(wf%n_o), wf%n_J)
          L_ck_J = zero
@@ -286,7 +286,7 @@ contains
          L_bd_J = zero
 !
          reorder = .true. ! bd is actually db => reorder
-         call wf%get_cholesky_ab(L_bd_J, d, d, wf%n_v, reorder)
+         call wf%get_cholesky_ab(L_bd_J, d, d, reorder, 1,wf%n_v)
 !
 !        Form the integral g_bd_kc = g_dbkc
 !

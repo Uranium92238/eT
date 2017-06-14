@@ -209,7 +209,7 @@ contains
 !
          reorder = .true.
          call wf%get_cholesky_ab(L_da_J, a_begin, a_end, &
-                                 ad_dim, reorder)
+                                 reorder, 1,wf%n_v)
 !
 !        Allocate g_da_kc = g_adkc
 !
@@ -686,7 +686,7 @@ contains
             L_ca_J = zero
 !
             reorder = .true.
-            call wf%get_cholesky_ab(L_ca_J, a_first, a_last, (wf%n_v)*a_length, reorder)
+            call wf%get_cholesky_ab(L_ca_J, a_first, a_last, reorder, 1,wf%n_v)
 !
 !           Get cholesky vectors L_bd^J ordered as L_db_J
 !
@@ -694,7 +694,7 @@ contains
             L_db_J = zero
 !  
             reorder = .true.
-            call wf%get_cholesky_ab(L_db_J, b_first, b_last, (wf%n_v)*b_length, reorder)
+            call wf%get_cholesky_ab(L_db_J, b_first, b_last, reorder, 1,wf%n_v)
 !
 !           Allocate g_ca_db
 !
@@ -1483,7 +1483,7 @@ contains
 !        Read Cholesky vectors
 !
          reorder = .true.
-         call wf%get_cholesky_ab(L_ca_J, a_start, a_end, (wf%n_v)*a_length, reorder)
+         call wf%get_cholesky_ab(L_ca_J, a_start, a_end, reorder, 1,wf%n_v)
 !
 !        g_ki_ca = sum_J L_ki_J*L_ca_J
 !
@@ -2049,7 +2049,7 @@ contains
 !        Read the Cholesky vector from file 
 !
          reorder = .true.
-         call wf%get_cholesky_ab(L_ca_J, a_begin, a_end, ac_dim, reorder)
+         call wf%get_cholesky_ab(L_ca_J, a_begin, a_end, reorder, 1,wf%n_v)
 !
 !        Allocate the integral g_ca_ki = g_acki and set to zero 
 !
