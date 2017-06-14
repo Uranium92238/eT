@@ -380,4 +380,46 @@ contains
 !
    end subroutine get_n_lowest
 !
+   function check_orthogonality(A, M, N)
+!!
+!!   Check orthogonality
+!!   Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
+!!
+!!    Check if columns of A are orthogonal. A is (M x N) matrix.
+!!    Returns logical.
+!!
+      use workspace
+!
+      implicit none
+!  
+      integer(i15)             :: M
+      integer(i15)             :: N
+      real(dp), dimension(M,N) :: A
+      logical                  :: check_orthogonality
+!
+      integer(i15) :: i = 0, j = 0
+      real(dp), dimension(:,:), allocatable :: a_i, a_j
+      real(dp) :: ddot
+!
+      check_orthogonality = .true.
+!
+      call allocator(a_i, M, 1)
+      call allocator(a_j, M, 1)
+!
+      do i = 1, N
+         a_i(:,1) = A(:,i)
+         do j = 1, i-1
+            a_j(:,1) = A(:,j)
+            if (abs(ddot(M,a_i, 1, a_j, 1)) .gt. 1.0d-07) then
+               check_orthogonality = .false.
+               return
+            endif
+         enddo
+      enddo
+!
+      call deallocator(a_i, M, 1)
+      call deallocator(a_j, M, 1)
+!
+   end function check_orthogonality
+! 
 end module utils
