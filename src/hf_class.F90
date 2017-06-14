@@ -829,7 +829,6 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, i_first, i_last, a_first, a_last)
 !
    end subroutine read_cholesky_ab_hf
 !
-<<<<<<< HEAD
    subroutine construct_ao_fock_hf(wf, ao_fock, density)
 !!
 !!
@@ -1003,6 +1002,4 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, i_first, i_last, a_first, a_last)
    end subroutine construct_density_matrices_hf
 !
 !
-=======
->>>>>>> 4101974773076453661163ea5649860190be8a40
 end module hf_class
