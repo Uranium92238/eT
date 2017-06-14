@@ -156,106 +156,107 @@ module ccs_class
    interface
 !
 !
-      module subroutine get_cholesky_ij_ccs(wf, L_ij_J)
+   module subroutine get_cholesky_ij_ccs(wf, L_ij_J, i_first, i_last, j_first, j_last)
 !!
-!!       Get Cholesky IJ
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!    Get Cholesky IJ
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!       Reads and T1-transforms the IA Cholesky vectors:
+!!    Reads and T1-transforms the IA Cholesky vectors:
 !!     
-!!          L_ij_J_T1 = L_ij_J + sum_a t_aj * L_ia_J
+!!       L_ij_J_T1 = L_ij_J + sum_a t_aj * L_ia_J
 !!
-!!       Memory required in routine:
+!!    Memory required in routine:
 !!
-!!          2*n_J*n_o*n_v     -> for reading L_ia_J contribution and reordering
+!!       2*n_J*n_o*n_v     -> for reading L_ia_J contribution and reordering
 !!        
-         implicit none 
+      implicit none 
 !
-         class(ccs) :: wf
+      class(ccs) :: wf
+      integer(i15), optional ::  i_first, i_last, j_first, j_last
 !
-         real(dp), dimension((wf%n_o)**2, wf%n_J) :: L_ij_J
+      real(dp), dimension(:,:) :: L_ij_J
 !
       end subroutine get_cholesky_ij_ccs
 !
 !
-      module subroutine get_cholesky_ia_ccs(wf, L_ia_J)
+   module subroutine get_cholesky_ia_ccs(wf, L_ia_J, i_first, i_last, a_first, a_last)
 !!
-!!       Get Cholesky IA
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!    Get Cholesky IA
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!       Reads and T1-transforms IA Cholesky vectors
+!!    Reads and T1-transforms IA Cholesky vectors
 !!
-!!          L_ia_J_T1 = L_ia_J (only reading necessary)
+!!       L_ia_J_T1 = L_ia_J (only reading necessary)
 !!
-!!       Memory required in routine:
+!!    Memory required in routine:
 !!
-!!          No additional memory
+!!       No additional memory
 !!
-         implicit none 
+      implicit none 
 !
-         class(ccs) :: wf
+      class(ccs) :: wf
+      integer(i15), optional ::  i_first, i_last, a_first, a_last
 !
-         real(dp), dimension((wf%n_o)*(wf%n_v), wf%n_J) :: L_ia_J
+      real(dp), dimension(:,:) :: L_ia_J
 !
       end subroutine get_cholesky_ia_ccs
 !
 !
-      module subroutine get_cholesky_ai_ccs(wf,L_ai_J)
+      module subroutine get_cholesky_ai_ccs(wf, L_ai_J, i_first, i_last, a_first, a_last)
 !!
 !!       Get Cholesky AI
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
 !!       Read and T1-transform Cholesky AI vectors:
-!!     
-!!           L_ai_J_T1 = L_ia_J - sum_j  t_aj*L_ji_J 
-!!                           + sum_b  t_bi*L_ab_J
-!!                           - sum_bj t_aj*t_bi*L_jb_J
+!!       
+!!          L_ai_J_T1 = L_ia_J - sum_j  t_aj*L_ji_J 
+!!                             + sum_b  t_bi*L_ab_J
+!!                             - sum_bj t_aj*t_bi*L_jb_J
 !!
 !!       Allocations in routine:
 !!
-!!          (1) n_J*n_o*n_v + 2*n_J*n_v*batch_length   ->  for L_ab_J contribution
-!!          (2) n_J*n_o*n_v + 2*n_J*n_o^2              ->  for L_ij_J contribution
-!!          (3) 2*n_J*n_o*n_v                          ->  for L_jb_J contribution
+!!         (1) n_J*n_o*n_v + 2*n_J*n_v*batch_length   ->  for L_ab_J contribution
+!!         (2) n_J*n_o*n_v + 2*n_J*n_o^2              ->  for L_ij_J contribution
+!!         (3) 2*n_J*n_o*n_v                          ->  for L_jb_J contribution
 !!
-!!          (1) determines memory requirement. 
+!!         (1) determines memory requirement. 
 !!
          implicit none 
 !
          class(ccs) :: wf
+         integer(i15), optional ::  i_first, i_last, a_first, a_last
 !
-         real(dp), dimension((wf%n_o)*(wf%n_v), wf%n_J) :: L_ai_J
+         real(dp), dimension(:,:) :: L_ai_J
 !
       end subroutine get_cholesky_ai_ccs
 !
 !
-      module subroutine get_cholesky_ab_ccs(wf, L_ab_J, first, last, ab_dim, reorder)
+   module subroutine get_cholesky_ab_ccs(wf, L_ab_J, batch_first, batch_last, reorder, other_dim_first, other_dim_last)
 !!
-!!       Get Cholesky AB
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!    Get Cholesky AB
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!       Reads and T1-transforms the IA Cholesky vectors:
+!!    Reads and T1-transforms the IA Cholesky vectors:
 !!
-!!          L_ab_J_T1 = L_ab_J - sum_i t_ai*L_ib_J
+!!       L_ab_J_T1 = L_ab_J - sum_i t_ai*L_ib_J
 !!
-!!       If reorder = .true.,  L_ba_J is returned with batching over a
-!!       If reorder = .false., L_ab_J is returned with batching over b
+!!    If reorder = .true.,  L_ba_J is returned with batching over a
+!!    If reorder = .false., L_ab_J is returned with batching over b
 !!
-!!       Required memory: 
+!!    Required memory: 
 !!
-!!          n_J*batch_length*n_v   ->   For reordering of L_ab_J / L_ba_J
-!!          2*n_v*n_o*n_J          ->   For L_ib_J contribution
+!!       n_J*batch_length*n_v   ->   For reordering of L_ab_J / L_ba_J
+!!       2*n_v*n_o*n_J          ->   For L_ib_J contribution
 !!
-         implicit none 
+      implicit none
 !
-         class(ccs) :: wf
+      class(ccs) :: wf
 !
-         logical, intent(in) :: reorder
+      integer(i15), intent(in) :: other_dim_last, other_dim_first
+      integer(i15), intent(in) :: batch_last, batch_first
 !
-         integer(i15), intent(in) :: ab_dim
-         integer(i15), intent(in) :: first
-         integer(i15), intent(in) :: last
-!
-         real(dp), dimension(ab_dim, wf%n_J) :: L_ab_J
+      logical, intent(in) :: reorder
+      real(dp), dimension(((batch_last - batch_first + 1)*(other_dim_last - other_dim_first + 1)), wf%n_J) :: L_ab_J ! L_ab^J
 !
       end subroutine get_cholesky_ab_ccs
 !
