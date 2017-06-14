@@ -212,6 +212,12 @@ contains
       integer(i15) :: unit_chol_mo_ij = -1 ! cholesky_ij file
       integer(i15) :: unit_chol_mo_ia = -1 ! cholesky_ia file
       integer(i15) :: unit_chol_mo_ab = -1 ! cholesky_ab file
+      integer(i15) :: unit_chol_mo_ij_direct = -1 ! cholesky_ij direct access file
+      integer(i15) :: unit_chol_mo_ia_direct = -1 ! cholesky_ia direct access file
+      integer(i15) :: unit_chol_mo_ab_direct = -1 ! cholesky_ab direct access file
+      integer(i15) :: ioerror = 0
+      integer(i15) :: throw_away_index = 0
+      real(dp)     :: throw_away
 !
       integer(i15) :: n_ao_sq_packed = 0 ! Packed dimensionality of (n_ao x n_ao) matrix
 !
@@ -220,8 +226,17 @@ contains
       real(dp), dimension(:,:), allocatable :: chol_mo_sq ! Unpacked MO Cholesky vector
 !
       real(dp), dimension(:,:), allocatable :: X ! An intermediate matrix
+      real(dp), dimension(:,:), allocatable :: L_ij_J
+      real(dp), dimension(:,:), allocatable :: L_ia_J
+      real(dp), dimension(:,:), allocatable :: L_ab_J
 !
-      integer(i15) :: i,j,a,b,k 
+      integer(i15) :: i,j,a,b,k,ij,ia, ab
+!
+!     Batching variables
+!
+      integer(i15) :: b_batch = 0, b_first = 0, b_last = 0, b_length = 0
+      integer(i15) :: required = 0, available = 0, n_batch = 0, batch_dimension = 0
+      integer(i15) :: max_batch_length = 0
 !
 !     Open Dalton file mlcc_cholesky (see mlcc_write_cholesky.F)
 ! 
@@ -323,9 +338,137 @@ contains
       close(unit_chol_mo_ij)
       close(unit_chol_mo_ia)
       close(unit_chol_mo_ab)
-!  
-   end subroutine read_transform_cholesky_hf
+! 
+!     Rewrite to direct access file, delete sequential file
+! 
+!     :: L_ij_J ::
 !
+      call generate_unit_identifier(unit_chol_mo_ij)
+      open(unit_chol_mo_ij, file='cholesky_ij', status='unknown', form='unformatted')
+      rewind(unit_chol_mo_ij)
+!
+!     Read L_ij_J
+!
+      call allocator(L_ij_J, wf%n_o*(wf%n_o+1)/2, wf%n_J)
+      do J = 1, wf%n_J
+         read(unit_chol_mo_ij) (L_ij_J(ij, J), ij = 1, wf%n_o*(wf%n_o+1)/2)
+      enddo
+!
+!     Close and delete file
+!
+      close(unit_chol_mo_ij, status='delete')
+!
+      call generate_unit_identifier(unit_chol_mo_ij_direct)
+      open(unit=unit_chol_mo_ij_direct, file='cholesky_ij_direct', action='write', status='unknown', &
+           access='direct', form='unformatted', recl=dp*(wf%n_J), iostat=ioerror)
+!
+      do ij = 1, wf%n_o*(wf%n_o+1)/2
+         write(unit_chol_mo_ij_direct, rec=ij) (L_ij_J(ij,j), j = 1, wf%n_J)
+      enddo
+!
+      call deallocator(L_ij_J,  wf%n_o*(wf%n_o+1)/2, wf%n_J)
+      close(unit_chol_mo_ij_direct)
+!
+!     :: L_ia_J :: 
+!
+      call generate_unit_identifier(unit_chol_mo_ia)
+      open(unit_chol_mo_ia, file='cholesky_ia', status='unknown', form='unformatted')
+      rewind(unit_chol_mo_ia)
+!
+!     Read L_ia_J
+!
+      call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      do J = 1, wf%n_J
+         read(unit_chol_mo_ia) (L_ia_J(ia, J), ia = 1, (wf%n_o)*(wf%n_v))
+      enddo
+!
+!     Close and delete file
+!
+      close(unit_chol_mo_ia, status='delete')
+!
+      call generate_unit_identifier(unit_chol_mo_ia_direct)
+      open(unit=unit_chol_mo_ia_direct, file='cholesky_ia_direct', action='write', status='unknown', &
+           access='direct', form='unformatted', recl=dp*(wf%n_J), iostat=ioerror)
+!
+      do ia = 1, (wf%n_o)*(wf%n_v)
+         write(unit_chol_mo_ia_direct, rec=ia) (L_ia_J(ia,j), j = 1, wf%n_J)
+      enddo
+!
+      call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      close(unit_chol_mo_ia_direct)
+!
+!     :: L_ab_J ::
+!
+      call generate_unit_identifier(unit_chol_mo_ab)
+      open(unit_chol_mo_ab, file='cholesky_ab', status='unknown', form='unformatted')
+      rewind(unit_chol_mo_ab)
+!
+      call generate_unit_identifier(unit_chol_mo_ia_direct)
+      open(unit=unit_chol_mo_ia_direct, file='cholesky_ia_direct', action='write', status='unknown', &
+           access='direct', form='unformatted', recl=dp*(wf%n_J), iostat=ioerror)
+!
+!     Read L_ab_J in batches over b
+!
+      required = ((wf%n_v)**2)*(wf%n_J)
+!
+      required = 4*required ! In words
+      available = get_available()
+!
+      batch_dimension  = wf%n_v ! Batch over the virtual index b
+      max_batch_length = 0      ! Initilization of unset variables 
+      n_batch          = 0
+!
+      call num_batch(required, available, max_batch_length, n_batch, batch_dimension)           
+!
+!     Loop over the number of a batches 
+!
+      do b_batch = 1, n_batch
+!
+         call batch_limits(b_first, b_last, b_batch, max_batch_length, batch_dimension)
+         b_length = b_last - b_first + 1 
+!
+         call allocator(L_ab_J, (((b_length + 1)*b_length/2)+(wf%n_v - b_length - b_first + 1)*b_length), wf%n_J)
+!
+         if (b_first .ne. 1) then
+!  
+!           Calculate index of last element to throw away
+!  
+            throw_away_index = index_packed(wf%n_v, b_first - 1)
+!  
+!           Throw away all elements from 1 to throw_away_index, then read from batch start
+!  
+            do j = 1, wf%n_J
+!
+              read(unit_chol_mo_ab) (throw_away, i = 1, throw_away_index), &
+                                    (L_ab_J(a,j), a = 1,(((b_length + 1)*b_length/2)+(wf%n_v - b_length - b_first + 1)*b_length))
+!
+            enddo
+!
+         else
+!  
+!           Read from the start of each entry
+!  
+            do j = 1, wf%n_J
+!
+              read(unit_chol_mo_ab) (L_ab_J(a,j), a = 1, (((b_length + 1)*b_length/2)+(wf%n_v - b_length - b_first + 1)*b_length))
+!
+            enddo
+!
+         endif
+!
+         do a = 1, wf%n_v
+            do b = b_first, b_last
+               ab = index_packed(a, b)
+               write(unit_chol_mo_ij_direct, rec=ab) (L_ab_J(ab, J), J = 1, wf%n_J)
+            enddo
+         enddo
+         call deallocator(L_ab_J, (((b_length+1)*b_length/2)+(wf%n_v - b_length - b_first + 1)*b_length), wf%n_J)
+!
+      enddo
+      close(unit_chol_mo_ab, status='delete')
+      close(unit_chol_mo_ab_direct)
+!
+   end subroutine read_transform_cholesky_hf
 !
    subroutine read_cholesky_ij_hf(wf,L_ij_J)
 !!
