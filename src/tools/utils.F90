@@ -137,6 +137,30 @@ contains
 !
    end subroutine
 !
+   subroutine squareup_to_compound(packed,unpacked,N,M)
+!!
+!!    Square up packed symmetric matrix
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2017
+!!
+!!    Squares up to full dimension ((N x N), M) of packed matrices.
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: N,M
+!
+      real(dp), dimension(N*(N+1)/2,M), intent(in) :: packed
+      real(dp), dimension(N*N,M)                   :: unpacked
+!
+      integer(i15) :: i = 0, j = 0
+!
+      do i = 1, N
+         do j = 1, N
+            unpacked(index_two(i,j,N), 1:M) = packed(index_packed(i,j), 1:M)
+         enddo
+      enddo
+!
+   end subroutine
+!
 !
    subroutine packin(packed,unpacked,N)
 !!
@@ -206,6 +230,8 @@ contains
 !
 !  Max batch size
 !
+      
+      write(unit_output,*)'I am batching'
       max_batch_length = available/(required/batch_dimension)
 !
 !  Number of full batches
@@ -248,6 +274,8 @@ contains
          max_batch_length = batch_dimension
          return
    endif
+
+   write(unit_output,*)'I am batching'
 !  
    do i = 1, batch_dimension
       if (available .gt. buffer/i**2) then ! E: insert logical for success!

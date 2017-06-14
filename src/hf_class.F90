@@ -218,6 +218,12 @@ contains
       integer(i15) :: unit_chol_mo_ij = -1 ! cholesky_ij file
       integer(i15) :: unit_chol_mo_ia = -1 ! cholesky_ia file
       integer(i15) :: unit_chol_mo_ab = -1 ! cholesky_ab file
+      integer(i15) :: unit_chol_mo_ij_direct = -1 ! cholesky_ij direct access file
+      integer(i15) :: unit_chol_mo_ia_direct = -1 ! cholesky_ia direct access file
+      integer(i15) :: unit_chol_mo_ab_direct = -1 ! cholesky_ab direct access file
+      integer(i15) :: ioerror = 0
+      integer(i15) :: throw_away_index = 0
+      real(dp)     :: throw_away
 !
       integer(i15) :: n_ao_sq_packed = 0 ! Packed dimensionality of (n_ao x n_ao) matrix
 !
@@ -226,8 +232,17 @@ contains
       real(dp), dimension(:,:), allocatable :: chol_mo_sq ! Unpacked MO Cholesky vector
 !
       real(dp), dimension(:,:), allocatable :: X ! An intermediate matrix
+      real(dp), dimension(:,:), allocatable :: L_ij_J
+      real(dp), dimension(:,:), allocatable :: L_ia_J
+      real(dp), dimension(:,:), allocatable :: L_ab_J
 !
-      integer(i15) :: i,j,a,b,k 
+      integer(i15) :: i,j,a,b,k,ij,ia, ab
+!
+!     Batching variables
+!
+      integer(i15) :: b_batch = 0, b_first = 0, b_last = 0, b_length = 0
+      integer(i15) :: required = 0, available = 0, n_batch = 0, batch_dimension = 0
+      integer(i15) :: max_batch_length = 0
 !
 !     Open Dalton file mlcc_cholesky (see mlcc_write_cholesky.F)
 ! 
@@ -317,9 +332,9 @@ contains
 !
 !        Write the MO vectors to files in blocks
 !
-         write(unit_chol_mo_ij) ((chol_mo_sq(i,k), i = 1, wf%n_o), k = 1, wf%n_o)
+         write(unit_chol_mo_ij) ((chol_mo_sq(i,k), k = 1, i), i = 1, wf%n_o)
          write(unit_chol_mo_ia) ((chol_mo_sq(i,a), i = 1, wf%n_o), a = wf%n_o + 1, wf%n_mo)
-         write(unit_chol_mo_ab) ((chol_mo_sq(a,b), a = wf%n_o + 1, wf%n_mo), b = wf%n_o + 1, wf%n_mo)
+         write(unit_chol_mo_ab) ((chol_mo_sq(a,b), b = wf%n_o + 1, a), a = wf%n_o + 1, wf%n_mo)
 !
       enddo
 !
@@ -329,11 +344,149 @@ contains
       close(unit_chol_mo_ij)
       close(unit_chol_mo_ia)
       close(unit_chol_mo_ab)
+! 
+!     Rewrite to direct access file, delete sequential file
+! 
+!     :: L_ij_J ::
+!
+      call generate_unit_identifier(unit_chol_mo_ij)
+      open(unit_chol_mo_ij, file='cholesky_ij', status='unknown', form='unformatted')
+      rewind(unit_chol_mo_ij)
+!
+!     Read L_ij_J
+!
+      call allocator(L_ij_J, wf%n_o*(wf%n_o+1)/2, wf%n_J)
+      do J = 1, wf%n_J
+         read(unit_chol_mo_ij) (L_ij_J(ij, J), ij = 1, wf%n_o*(wf%n_o+1)/2)
+      enddo
+!
+!     Close and delete file
+!
+      close(unit_chol_mo_ij, status='delete')
+!
+      call generate_unit_identifier(unit_chol_mo_ij_direct)
+      open(unit=unit_chol_mo_ij_direct, file='cholesky_ij_direct', action='write', status='unknown', &
+           access='direct', form='unformatted', recl=dp*(wf%n_J), iostat=ioerror)
+!
+      do i = 1, wf%n_o
+         do k = 1, wf%n_o
+            ij = index_packed(i, k)
+            write(unit_chol_mo_ij_direct, rec=ij) (L_ij_J(ij,j), j = 1, wf%n_J)
+         enddo
+      enddo
+!
+      call deallocator(L_ij_J,  wf%n_o*(wf%n_o+1)/2, wf%n_J)
+      close(unit_chol_mo_ij_direct)
+!
+!     :: L_ia_J :: 
+!
+      call generate_unit_identifier(unit_chol_mo_ia)
+      open(unit_chol_mo_ia, file='cholesky_ia', status='unknown', form='unformatted')
+      rewind(unit_chol_mo_ia)
+!
+!     Read L_ia_J
+!
+      call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+!
+      do J = 1, wf%n_J
+         read(unit_chol_mo_ia) (L_ia_J(ia, J), ia = 1, (wf%n_o)*(wf%n_v))
+      enddo
+!
+!     Close and delete file
+!
+      close(unit_chol_mo_ia, status='delete')
+!
+      call generate_unit_identifier(unit_chol_mo_ia_direct)
+      open(unit=unit_chol_mo_ia_direct, file='cholesky_ia_direct', action='write', status='unknown', &
+           access='direct', form='unformatted', recl=dp*(wf%n_J), iostat=ioerror)
+!
+      do ia = 1, wf%n_o*wf%n_v
+            write(unit_chol_mo_ia_direct, rec=ia) (L_ia_J(ia,j), j = 1, wf%n_J)
+      enddo
+!
+      call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      close(unit_chol_mo_ia_direct)
+!
+!     :: L_ab_J ::
+!
+      call generate_unit_identifier(unit_chol_mo_ab)
+      open(unit_chol_mo_ab, file='cholesky_ab', status='unknown', form='unformatted')
+      rewind(unit_chol_mo_ab)
+!
+      call generate_unit_identifier(unit_chol_mo_ab_direct)
+      open(unit=unit_chol_mo_ab_direct, file='cholesky_ab_direct', action='write', status='unknown', &
+           access='direct', form='unformatted', recl=dp*(wf%n_J), iostat=ioerror)
+      if (ioerror .ne. 0) then
+            write(unit_output,*)'WARNING: error while creating cholesky_ab_direct'
+            stop
+         endif
+!
+!     Read L_ab_J in batches over b
+!
+      required = ((wf%n_v)**2)*(wf%n_J)
+!
+      required = 4*required ! In words
+      available = get_available()
+!
+      batch_dimension  = wf%n_v ! Batch over the virtual index b
+      max_batch_length = 0      ! Initilization of unset variables 
+      n_batch          = 0
+!
+      call num_batch(required, available, max_batch_length, n_batch, batch_dimension)           
+!
+!     Loop over the number of a batches 
+!
+      do b_batch = 1, n_batch
+!
+         call batch_limits(b_first, b_last, b_batch, max_batch_length, batch_dimension)
+         b_length = b_last - b_first + 1 
+!
+         call allocator(L_ab_J, (((b_length + 1)*b_length/2)+(wf%n_v - b_length - b_first + 1)*b_length), wf%n_J)
+!
+         if (b_first .ne. 1) then
 !  
+!           Calculate index of last element to throw away
+!  
+            throw_away_index = index_packed(wf%n_v, b_first - 1)
+!  
+!           Throw away all elements from 1 to throw_away_index, then read from batch start
+!  
+            do j = 1, wf%n_J
+!
+              read(unit_chol_mo_ab) (throw_away, i = 1, throw_away_index), &
+                                    (L_ab_J(a,j), a = 1,(((b_length + 1)*b_length/2)+(wf%n_v - b_length - b_first + 1)*b_length))
+!
+            enddo
+!
+         else
+!  
+!           Read from the start of each entry
+!  
+            do j = 1, wf%n_J
+!
+              read(unit_chol_mo_ab) (L_ab_J(a,j), a = 1, (((b_length + 1)*b_length/2)+(wf%n_v - b_length - b_first + 1)*b_length))
+!
+            enddo
+!
+         endif
+!
+         do a = 1, wf%n_v
+            do b = b_first, b_last
+               ab = index_packed(a, b)
+               write(unit_chol_mo_ab_direct, rec=ab) (L_ab_J(ab, J), J = 1, wf%n_J)
+            enddo
+         enddo
+!
+         call deallocator(L_ab_J, (((b_length+1)*b_length/2)+(wf%n_v - b_length - b_first + 1)*b_length), wf%n_J)
+!
+      enddo
+      close(unit_chol_mo_ab, status='delete')
+      close(unit_chol_mo_ab_direct)
+!
    end subroutine read_transform_cholesky_hf
 !
 !
-   subroutine read_cholesky_ij_hf(wf,L_ij_J)
+   subroutine read_cholesky_ij_hf(wf,L_ij_J , i_first, i_last, j_first, j_last)
 !!
 !!    Read Cholesky IJ 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -343,33 +496,79 @@ contains
 !!
       implicit none
 !
-      class(hf) :: wf
+      class(hf)    :: wf
+      integer(i15), optional ::  i_first, i_last, j_first, j_last
 !
-      real(dp), dimension((wf%n_o)**2, wf%n_J) :: L_ij_J ! L_ij^J
+      real(dp), dimension(:,:) :: L_ij_J ! L_ij^J
 !
       integer(i15) :: unit_chol_mo_ij = -1 ! Unit identifier for cholesky_ij file 
-      integer(i15) :: i = 0, j = 0
+      integer(i15) :: i = 0, j = 0, k = 0, ij = 0, ik = 0, ij_full
+      integer(i15) :: i_length, j_length
+      integer(i15) :: ioerror
 !
-!     Prepare for reading: generate unit idientifier, open file, and rewind
 !
-      call generate_unit_identifier(unit_chol_mo_ij)
-      open(unit=unit_chol_mo_ij, file='cholesky_ij', status='unknown', form='unformatted')
-      rewind(unit_chol_mo_ij)
+      if (present(i_first) .and. present(i_last) .and. present(j_first) .and. present(j_last)) then
+         i_length = i_last - i_first + 1
+         j_length = j_last - j_first + 1
 !
-!     Read the Cholesky vectors into the L_ij_J matrix
+!        Prepare for reading: generate unit idientifier, open file, and rewind
 !
-      do j = 1, wf%n_J
-         read(unit_chol_mo_ij) (L_ij_J(i,j), i = 1, (wf%n_o)**2)
-      enddo
+         call generate_unit_identifier(unit_chol_mo_ij)
+         open(unit=unit_chol_mo_ij, file='cholesky_ij_direct', action='read', status='unknown', &
+              access='direct', form='unformatted', recl=dp*(wf%n_J), iostat=ioerror)
+         if (ioerror .ne. 0) then
+            write(unit_output,*)'WARNING: error while reading cholesky_ij_direct'
+            stop
+         endif
 !
-!     Close file
+!        Read the Cholesky vectors into the L_ij_J matrix
 !
-      close(unit_chol_mo_ij)    
+         do i = 1, i_length
+            do k = 1 ,j_length
+               ij_full = index_packed((i + i_first - 1), (k + j_first - 1))
+               ij =  index_two(i, k, i_length)
+               read(unit_chol_mo_ij, rec=ij_full) (L_ij_J(ij,j), j = 1, wf%n_J)
+            enddo
+         enddo
+!
+!        Close file
+!
+         close(unit_chol_mo_ij) 
+!
+      elseif (.not. (present(i_first) .and. present(i_last) .and. present(j_first) .and. present(j_last))) then
+!
+!        Prepare for reading: generate unit idientifier, open file, and rewind
+!
+         call generate_unit_identifier(unit_chol_mo_ij)
+         open(unit=unit_chol_mo_ij, file='cholesky_ij_direct', action='read', status='unknown', &
+              access='direct', form='unformatted', recl=dp*(wf%n_J), iostat=ioerror)
+         if (ioerror .ne. 0) then
+            write(unit_output,*)'WARNING: error while reading cholesky_ij_direct'
+            stop
+         endif
+!
+!        Read the Cholesky vectors into the L_ij_J matrix
+!
+         do i = 1, wf%n_o
+            do k = 1, wf%n_o
+               ij = index_two(i, k, wf%n_o)
+               ik = index_packed(i,k)
+               read(unit_chol_mo_ij, rec=ik) (L_ij_J(ij,j), j = 1, wf%n_J)
+            enddo
+         enddo
+!
+!        Close file
+!
+         close(unit_chol_mo_ij) 
+      else
+            write(unit_output, *) 'WARNING: Error in call to read_cholesky_ij'
+            stop
+      endif   
 !   
    end subroutine read_cholesky_ij_hf
 !
 !
-   subroutine read_cholesky_ia_hf(wf,L_ia_J)
+   subroutine read_cholesky_ia_hf(wf,L_ia_J, i_first, i_last, a_first, a_last)
 !!
 !!    Read Cholesky IA 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -379,35 +578,78 @@ contains
 !!
       implicit none
 !
-      class(hf) :: wf
+      class(hf) :: wf    
+      integer(i15), optional ::  i_first, i_last, a_first, a_last
 !
-      real(dp), dimension((wf%n_o)*(wf%n_v), wf%n_J) :: L_ia_J ! L_ia^J
+      real(dp), dimension(:,:) :: L_ia_J ! L_ia^J
 !
       integer(i15) :: unit_chol_mo_ia = -1 ! Unit identifier for cholesky_ia file
-      integer(i15) :: i = 0, j = 0
+      integer(i15) :: ioerror = 0
+      integer(i15) :: i = 0, j = 0, a = 0, ia = 0, ia_full = 0
+      integer(i15) :: i_length, a_length
 !
-!     Prepare for reading: generate unit idientifier, open, and rewind file
+      if (present(i_first) .and. present(i_last) .and. present(a_first) .and. present(a_last)) then
+         i_length = i_last - i_first + 1
+         a_length = a_last - a_first + 1
 !
-      call generate_unit_identifier(unit_chol_mo_ia)
-      open(unit=unit_chol_mo_ia, file='cholesky_ia', status='unknown', form='unformatted')
-      rewind(unit_chol_mo_ia)
+!        Prepare for reading: generate unit idientifier, open, and rewind file
 !
-!     Read Cholesky vectors into the L_ia_J matrix
+         call generate_unit_identifier(unit_chol_mo_ia)
+         open(unit=unit_chol_mo_ia, file='cholesky_ia_direct', action='read', status='unknown', &
+              access='direct', form='unformatted', recl=dp*(wf%n_J), iostat=ioerror)
+         if (ioerror .ne. 0) then
+            write(unit_output,*)'WARNING: error while reading cholesky_ij_direct'
+            stop
+         endif
 !
-      do j = 1, wf%n_J
+!        Read Cholesky vectors into the L_ia_J matrix
 !
-         read(unit_chol_mo_ia) (L_ia_J(i,j), i = 1, (wf%n_o)*(wf%n_v))
+         do i = 1, i_length
+            do a = 1, a_length
 !
-      enddo
+               ia_full = index_two(i + i_first - 1, a + a_first - 1, wf%n_o)
+               ia = index_two(i, a, i_length)
+               read(unit_chol_mo_ia, rec=ia_full) (L_ia_J(ia,j), j = 1, wf%n_J)
 !
-!     Close file
+            enddo
+         enddo
 !
-      close(unit_chol_mo_ia)    
+!        Close file
+!
+         close(unit_chol_mo_ia)
+
+      elseif (.not.(present(i_first) .and. present(i_last) .and. present(a_first) .and. present(a_last))) then
+!
+!        Prepare for reading: generate unit idientifier, open, and rewind file
+!
+         call generate_unit_identifier(unit_chol_mo_ia)
+         open(unit=unit_chol_mo_ia, file='cholesky_ia_direct', action='read', status='unknown', &
+              access='direct', form='unformatted', recl=dp*(wf%n_J), iostat=ioerror)
+         if (ioerror .ne. 0) then
+            write(unit_output,*)'WARNING: error while reading cholesky_ij_direct'
+            stop
+         endif
+!
+!        Read Cholesky vectors into the L_ia_J matrix
+!
+         do ia = 1, (wf%n_v)*(wf%n_o)
+!
+               read(unit_chol_mo_ia, rec=ia) (L_ia_J(ia,j), j = 1, wf%n_J)
+!
+         enddo
+!
+!        Close file
+!
+         close(unit_chol_mo_ia)
+      else
+         write(unit_output, *) 'WARNING: Error in call to read_cholesky_ia'
+            stop
+      endif    
 !   
    end subroutine read_cholesky_ia_hf
 !
-!
-   subroutine read_cholesky_ai_hf(wf, L_ai_J)
+!   
+subroutine read_cholesky_ai_hf(wf, L_ai_J, i_first, i_last, a_first, a_last)
 !!
 !!    Read Cholesky AI 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -418,49 +660,93 @@ contains
       implicit none
 !
       class(hf) :: wf
+      integer(i15), optional ::  i_first, i_last, a_first, a_last
 !
-      real(dp), dimension((wf%n_v)*(wf%n_o), wf%n_J) :: L_ai_J ! L_ai^J
+      real(dp), dimension(:, :) :: L_ai_J ! L_ai^J
 !
       real(dp), dimension(:,:), allocatable :: L_ia_J       
 !
       integer(i15) :: i = 0, j = 0, a = 0, ia = 0, ai = 0
+      integer(i15) :: i_length, a_length
 !
-!     Allocation
+      if (present(i_first) .and. present(i_last) .and. present(a_first) .and. present(a_last)) then
+         i_length = i_last - i_first + 1
+         a_length = a_last - a_first + 1
 !
-      call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
-      L_ia_J = zero
-!     
-!     Get Cholesky IA vector 
+!        Allocation
 !
-      call wf%read_cholesky_ia(L_ia_J)
+         call allocator(L_ia_J, i_length*a_length, wf%n_J)
+         L_ia_J = zero
+!        
+!        Get Cholesky IA vector 
 !
-!     Reorder and save in AI vector 
-!      
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
+         call wf%read_cholesky_ia(L_ia_J, i_first, i_last, a_first, a_last)
 !
-!           Needed indices
+!        Reorder and save in AI vector 
+!         
+         do i = 1, i_length
+            do a = 1, a_length
 !
-            ai = index_two(a, i, wf%n_v)
-            ia = index_two(i, a, wf%n_o)
+!              Needed indices
 !
-            do j = 1, wf%n_J
+               ai = index_two(a, i, a_length)
+               ia = index_two(i, a, i_length)
 !
-               L_ai_J(ai, j) = L_ia_J(ia, j)
+               do j = 1, wf%n_J
+!
+                  L_ai_J(ai, j) = L_ia_J(ia, j)
+!
+               enddo
 !
             enddo
-!
          enddo
-      enddo
 !
-!     Deallocate temporary vector 
+!        Deallocate temporary vector 
 !
-      call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)   
+         call deallocator(L_ia_J, a_length*i_length, wf%n_J)   
+
+      elseif (.not.(present(i_first) .and. present(i_last) .and. present(a_first) .and. present(a_last))) then
+!
+!        Allocation
+!
+         call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+         L_ia_J = zero
+!        
+!        Get Cholesky IA vector 
+!
+         call wf%read_cholesky_ia(L_ia_J)
+!
+!        Reorder and save in AI vector 
+!         
+         do i = 1, wf%n_o
+            do a = 1, wf%n_v
+!
+!              Needed indices
+!
+               ai = index_two(a, i, wf%n_v)
+               ia = index_two(i, a, wf%n_o)
+!
+               do j = 1, wf%n_J
+!
+                  L_ai_J(ai, j) = L_ia_J(ia, j)
+!
+               enddo
+!
+            enddo
+         enddo
+!
+!        Deallocate temporary vector 
+!
+         call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)   
+      else
+         write(unit_output, *) 'WARNING: Error in call to read_cholesky_ia'
+            stop
+      endif    
 !
    end subroutine read_cholesky_ai_hf
-!   
 !
-   subroutine read_cholesky_ab_hf(wf, L_ab_J, first, last, ab_dim, reorder)
+!
+    subroutine read_cholesky_ab_hf(wf, L_ab_J, a_first, a_last, b_first, b_last, reorder)
 !!
 !!    Read Cholesky AB 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -469,101 +755,81 @@ contains
 !!    places them in the incoming L_ab_J matrix, with batching 
 !!    if necessary
 !!
-!!    If reorder = .true.,  L_ba_J is returned with batching over a
-!!    If reorder = .false., L_ab_J is returned with batching over b
 !!
       implicit none
 !
       class(hf) :: wf
 !
-      integer(i15), intent(in) :: first   ! First index (can differ from 1 when batching)
-      integer(i15), intent(in) :: last    ! Last index  (can differ from n_v when batching)
-      integer(i15), intent(in) :: ab_dim  ! Dimension of ab index (not n_v^2 when batching) 
-!     
-      logical, intent(in)      :: reorder ! See description above
+      integer(i15), intent(in) :: a_first, b_first   ! First index (can differ from 1 when batching)
+      integer(i15), intent(in) :: a_last, b_last    ! Last index  (can differ from n_v when batching)
+!  
+      real(dp), dimension(((a_last - a_first + 1)*(b_last - b_first + 1)), wf%n_J) :: L_ab_J ! L_ab^J
 !
-      real(dp), dimension(ab_dim, wf%n_J) :: L_ab_J ! L_ab^J
+      logical :: reorder
 !
       integer(i15) :: unit_chol_mo_ab = -1 ! Unit identifier for cholesky_ab file
+      integer(i15) :: ioerror = 0
 !
-      integer(i15) :: a = 0, b = 0, j = 0, i = 0
-      integer(i15) :: batch_length = 0
+      integer(i15) :: a = 0, b = 0, j = 0, i = 0, ab = 0, ab_full = 0, ba = 0, ba_full = 0
+      integer(i15) :: a_length, b_length
 !
-      integer(i15) :: throw_away_index = 0
-      real(dp)     :: throw_away = 0
-!
-!     Prepare for reading: generate unit identifier, open, and rewind file
-!  
-      call generate_unit_identifier(unit_chol_mo_ab)
-      open(unit=unit_chol_mo_ab, file='cholesky_ab', status='unknown', form='unformatted')
-      rewind(unit_chol_mo_ab)
-!
-!     Calculating batch length
-!
-      batch_length = last - first + 1
+      a_length = a_last - a_first + 1
+      b_length = b_last - b_first + 1
 !
       if (.not. reorder) then
 !
-         if (first .ne. 1) then
+!        Prepare for reading: generate unit identifier, open, and rewind file
 !  
-!           Calculate index of last element to throw away
-!  
-            throw_away_index = index_two(wf%n_v, first - 1, wf%n_v)
-!  
-!           Throw away all elements from 1 to throw_away_index, then read from batch start
-!  
-            do j = 1, wf%n_J
+         call generate_unit_identifier(unit_chol_mo_ab)
+         open(unit=unit_chol_mo_ab, file='cholesky_ab_direct', action='read', status='unknown', &
+              access='direct', form='unformatted', recl=dp*(wf%n_J), iostat=ioerror)
 !
-              read(unit_chol_mo_ab) (throw_away, i = 1, throw_away_index),&
-                                    (L_ab_J(a,j), a = 1, ab_dim)
-!
-            enddo
-!
-         else
-!  
-!           Read from the start of each entry
-!  
-            do j = 1, wf%n_J
-!
-              read(unit_chol_mo_ab) (L_ab_J(a,j), a = 1, ab_dim)
-!
-            enddo
-!
+         if (ioerror .ne. 0) then
+            write(unit_output,*)'WARNING: error while reading cholesky_ab_direct.', ioerror
+            stop
          endif
 !
-      else ! Reorder L_ab_J is L_ba_J
-!
-         if (first .ne. 1) then
-            throw_away_index = index_two(wf%n_v, first - 1, wf%n_v)
-         else
-            throw_away_index = 0
-         endif
-!
-!        Reading vectors
-!
-         do j = 1, wf%n_J
-!
-            if (first .eq. 1) then
-! 
-               read(unit_chol_mo_ab) ((L_ab_J(index_two(b, a, wf%n_v), j), b = 1, wf%n_v), a = 1, batch_length)
-!
-            else
-!
-               read(unit_chol_mo_ab) (throw_away, i = 1, throw_away_index),&
-                                     ((L_ab_J(index_two(b, a, wf%n_v), j), b = 1, wf%n_v), a = 1, batch_length)
-!
-            endif
-!
+         do a = 1, a_length
+            do b = 1, b_length
+               ab_full = index_packed(a + a_first - 1,b + b_first - 1)
+               ab = index_two(a, b, a_length)
+               read(unit_chol_mo_ab, rec=ab_full) (L_ab_J(ab, J), J = 1, wf%n_J)
+            enddo
          enddo
-!     
-      endif  ! Reorder
-! 
-!     Close file
-!    
+!
+!        Close file
+!        
       close(unit_chol_mo_ab)
+!
+      else
+!
+!        Prepare for reading: generate unit identifier, open, and rewind file
+!  
+         call generate_unit_identifier(unit_chol_mo_ab)
+         open(unit=unit_chol_mo_ab, file='cholesky_ab_direct', action='read', status='unknown', &
+              access='direct', form='unformatted', recl=dp*(wf%n_J), iostat=ioerror)
+         if (ioerror .ne. 0) then
+            write(unit_output,*)'WARNING: error while reading cholesky_ab_direct'
+            stop
+         endif
+!
+         do a = 1, a_length
+            do b = 1, b_length
+               ba_full = index_packed(a + a_first - 1, b + b_first - 1)
+               ba = index_two(b, a, b_length)
+               read(unit_chol_mo_ab, rec=ba_full) (L_ab_J(ba, J), J = 1, wf%n_J)
+            enddo
+         enddo
+!
+!        Close file
+!        
+         close(unit_chol_mo_ab)
+!
+      endif
 !
    end subroutine read_cholesky_ab_hf
 !
+<<<<<<< HEAD
    subroutine construct_ao_fock_hf(wf, ao_fock, density)
 !!
 !!
@@ -737,4 +1003,6 @@ contains
    end subroutine construct_density_matrices_hf
 !
 !
+=======
+>>>>>>> 4101974773076453661163ea5649860190be8a40
 end module hf_class

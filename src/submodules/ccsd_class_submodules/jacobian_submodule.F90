@@ -1015,7 +1015,7 @@ contains
          call allocator(L_ba_J, (wf%n_v)*a_length, wf%n_J)
          L_ba_J = zero
 !
-         call wf%get_cholesky_ab(L_ba_J, a_first, a_last, a_length*(wf%n_v), .true.)
+         call wf%get_cholesky_ab(L_ba_J, a_first, a_last,  .true., 1,wf%n_v)
 !
          call allocator(L_jc_J, (wf%n_v)*(wf%n_o), wf%n_J)
          L_jc_J = zero
@@ -1286,7 +1286,7 @@ contains
          call allocator(L_cb_J, (wf%n_v)*batch_length, wf%n_J)
 !
          reorder = .true.
-         call wf%get_cholesky_ab(L_cb_J, b_begin, b_end, (wf%n_v)*batch_length, reorder)
+         call wf%get_cholesky_ab(L_cb_J, b_begin, b_end, reorder, 1,wf%n_v)
 !
 !        Calculate g_ai_cb = g_aibc
 !
@@ -2276,7 +2276,7 @@ contains
          call wf%get_cholesky_ia(L_kc_J)
 !
          reorder = .true.
-         call wf%get_cholesky_ab(L_db_J, b_begin, b_end, (wf%n_v)*batch_length, reorder)
+         call wf%get_cholesky_ab(L_db_J, b_begin, b_end, reorder, 1,wf%n_v)
 !
          call allocator(g_kc_db, (wf%n_o)*(wf%n_v), (wf%n_v)*batch_length)
 !
@@ -4519,7 +4519,7 @@ contains
             call allocator(L_bc_J, (wf%n_v)*c_length, wf%n_J)
             L_bc_J = zero
 !
-            call wf%get_cholesky_ab(L_bc_J, c_first, c_last, c_length*(wf%n_v), .false.)
+            call wf%get_cholesky_ab(L_bc_J, c_first, c_last, .false., 1,wf%n_v)
 !
             call allocator(L_kj_J, (wf%n_o)**2, wf%n_J)
             L_kj_J = zero
@@ -5002,14 +5002,14 @@ contains
                call allocator(L_ca_J, (wf%n_v)*a_length, wf%n_J)
                L_ca_J = zero
 !
-               call wf%get_cholesky_ab(L_ca_J, a_first, a_last, (wf%n_v)*a_length, .true.)
+               call wf%get_cholesky_ab(L_ca_J, a_first, a_last,  .true., 1,wf%n_v)
 !
 !              Get Cholesky vectors L_bd^J ordered as L_db_J
 !
                call allocator(L_db_J, (wf%n_v)*b_length, wf%n_J)
                L_db_J = zero
 !  
-               call wf%get_cholesky_ab(L_db_J, b_first, b_last, (wf%n_v)*b_length, .true.)
+               call wf%get_cholesky_ab(L_db_J, b_first, b_last,  .true., 1,wf%n_v)
 !
 !              Allocate g_ca_db = g_acbd
 !

@@ -339,7 +339,7 @@ contains
 !        Get reordered Cholesky vector L_da_J = L_ad^J 
 !
          reorder = .true.
-         call wf%get_cholesky_ab(L_da_J, a_first, a_last, ad_dim, reorder)
+         call wf%get_cholesky_ab(L_da_J, a_first, a_last, reorder, 1,wf%n_v)
 !
 !        Allocate g_da_kc = g_adkc
 !
