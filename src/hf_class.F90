@@ -479,41 +479,6 @@ contains
 !
    end subroutine read_transform_cholesky_hf
 !
-!   subroutine read_cholesky_ij_hf(wf,L_ij_J)
-!!!
-!!!    Read Cholesky IJ 
-!!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!!!
-!!!    Reads the MO Cholesky IJ (occ-occ) vectors from file and 
-!!!    places them in the incoming L_ij_J matrix
-!!!
-!      implicit none
-!!
-!      class(hf) :: wf
-!!
-!      real(dp), dimension((wf%n_o)**2, wf%n_J) :: L_ij_J ! L_ij^J
-!!
-!      integer(i15) :: unit_chol_mo_ij = -1 ! Unit identifier for cholesky_ij file 
-!      integer(i15) :: i = 0, j = 0
-!!
-!!     Prepare for reading: generate unit idientifier, open file, and rewind
-!!
-!      call generate_unit_identifier(unit_chol_mo_ij)
-!      open(unit=unit_chol_mo_ij, file='cholesky_ij', status='unknown', form='unformatted')
-!      rewind(unit_chol_mo_ij)
-!!
-!!     Read the Cholesky vectors into the L_ij_J matrix
-!!
-!      do j = 1, wf%n_J
-!         read(unit_chol_mo_ij) (L_ij_J(i,j), i = 1, (wf%n_o)**2)
-!      enddo
-!!
-!!     Close file
-!!
-!      close(unit_chol_mo_ij)    
-!!   
-!   end subroutine read_cholesky_ij_hf
-!
 !
    subroutine read_cholesky_ij_hf(wf,L_ij_J , i_first, i_last, j_first, j_last)
 !!
@@ -595,42 +560,7 @@ contains
       endif   
 !   
    end subroutine read_cholesky_ij_hf
-!   subroutine read_cholesky_ia_hf(wf,L_ia_J)
-!!!
-!!!    Read Cholesky IA 
-!!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!!!
-!!!    Reads the MO Cholesky IA (occ-vir) vectors from file and
-!!!    places them in the incoming L_ia_J matrix
-!!!
-!      implicit none
-!!
-!      class(hf) :: wf
-!!
-!      real(dp), dimension((wf%n_o)*(wf%n_v), wf%n_J) :: L_ia_J ! L_ia^J
-!!
-!      integer(i15) :: unit_chol_mo_ia = -1 ! Unit identifier for cholesky_ia file
-!      integer(i15) :: i = 0, j = 0
-!!
-!!     Prepare for reading: generate unit idientifier, open, and rewind file
-!!
-!      call generate_unit_identifier(unit_chol_mo_ia)
-!      open(unit=unit_chol_mo_ia, file='cholesky_ia', status='unknown', form='unformatted')
-!      rewind(unit_chol_mo_ia)
-!!
-!!     Read Cholesky vectors into the L_ia_J matrix
-!!
-!      do j = 1, wf%n_J
-!!
-!         read(unit_chol_mo_ia) (L_ia_J(i,j), i = 1, (wf%n_o)*(wf%n_v))
-!!
-!      enddo
-!!
-!!     Close file
-!!
-!      close(unit_chol_mo_ia)    
-!!   
-!   end subroutine read_cholesky_ia_hf
+!
 !
    subroutine read_cholesky_ia_hf(wf,L_ia_J, i_first, i_last, a_first, a_last)
 !!
@@ -712,57 +642,6 @@ contains
 !   
    end subroutine read_cholesky_ia_hf
 !
-!   subroutine read_cholesky_ai_hf(wf, L_ai_J)
-!!!
-!!!    Read Cholesky AI 
-!!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!!!
-!!!    Reads the MO Cholesky AI (vir-occ) vectors from file and
-!!!    places them in the incoming L_ai_J matrix
-!!!
-!      implicit none
-!!
-!      class(hf) :: wf
-!!
-!      real(dp), dimension((wf%n_v)*(wf%n_o), wf%n_J) :: L_ai_J ! L_ai^J
-!!
-!      real(dp), dimension(:,:), allocatable :: L_ia_J       
-!!
-!      integer(i15) :: i = 0, j = 0, a = 0, ia = 0, ai = 0
-!!
-!!     Allocation
-!!
-!      call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
-!      L_ia_J = zero
-!!     
-!!     Get Cholesky IA vector 
-!!
-!      call wf%read_cholesky_ia(L_ia_J)
-!!
-!!     Reorder and save in AI vector 
-!!      
-!      do i = 1, wf%n_o
-!         do a = 1, wf%n_v
-!!
-!!           Needed indices
-!!
-!            ai = index_two(a, i, wf%n_v)
-!            ia = index_two(i, a, wf%n_o)
-!!
-!            do j = 1, wf%n_J
-!!
-!               L_ai_J(ai, j) = L_ia_J(ia, j)
-!!
-!            enddo
-!!
-!         enddo
-!      enddo
-!!
-!!     Deallocate temporary vector 
-!!
-!      call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)   
-!!
-!   end subroutine read_cholesky_ai_hf
 !   
 subroutine read_cholesky_ai_hf(wf, L_ai_J, i_first, i_last, a_first, a_last)
 !!
@@ -860,109 +739,6 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, i_first, i_last, a_first, a_last)
 !
    end subroutine read_cholesky_ai_hf
 !
- ! subroutine read_cholesky_ab_hf(wf, L_ab_J, first, last, ab_dim, reorder)
-!!
-!!    Read Cholesky AB 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!!
-!!    Reads the MO Cholesky AB (vir-vir) vectors from file and
-!!    places them in the incoming L_ab_J matrix, with batching 
-!!    if necessary
-!!
-!!    If reorder = .true.,  L_ba_J is returned with batching over a
-!!    If reorder = .false., L_ab_J is returned with batching over b
-!!
- !    implicit none
-!
- !    class(hf) :: wf
-!
- !    integer(i15), intent(in) :: first   ! First index (can differ from 1 when batching)
- !    integer(i15), intent(in) :: last    ! Last index  (can differ from n_v when batching)
- !    integer(i15), intent(in) :: ab_dim  ! Dimension of ab index (not n_v^2 when batching) 
-!!    
- !    logical, intent(in)      :: reorder ! See description above
-!
- !    real(dp), dimension(ab_dim, wf%n_J) :: L_ab_J ! L_ab^J
-!
- !    integer(i15) :: unit_chol_mo_ab = -1 ! Unit identifier for cholesky_ab file
-!
- !    integer(i15) :: a = 0, b = 0, j = 0, i = 0
- !    integer(i15) :: batch_length = 0
-!
- !    integer(i15) :: throw_away_index = 0
- !    real(dp)     :: throw_away = 0
-!
-!!    Prepare for reading: generate unit identifier, open, and rewind file
-!! 
- !    call generate_unit_identifier(unit_chol_mo_ab)
- !    open(unit=unit_chol_mo_ab, file='cholesky_ab', status='unknown', form='unformatted')
- !    rewind(unit_chol_mo_ab)
-!
-!!    Calculating batch length
-!
- !    batch_length = last - first + 1
-!
- !    if (.not. reorder) then
-!
- !       if (first .ne. 1) then
-!! 
-!!          Calculate index of last element to throw away
-!! 
- !          throw_away_index = index_two(wf%n_v, first - 1, wf%n_v)
-!! 
-!!          Throw away all elements from 1 to throw_away_index, then read from batch start
-!! 
- !          do j = 1, wf%n_J
-!
- !            read(unit_chol_mo_ab) (throw_away, i = 1, throw_away_index),&
- !                                  (L_ab_J(a,j), a = 1, ab_dim)
-!
- !          enddo
-!
- !       else
-!! 
-!!          Read from the start of each entry
-!! 
- !          do j = 1, wf%n_J
-!
- !            read(unit_chol_mo_ab) (L_ab_J(a,j), a = 1, ab_dim)
-!
- !          enddo
-!
- !       endif
-!
- !    else ! Reorder L_ab_J is L_ba_J
-!
- !       if (first .ne. 1) then
- !          throw_away_index = index_two(wf%n_v, first - 1, wf%n_v)
- !       else
- !          throw_away_index = 0
- !       endif
-!
-!!       Reading vectors
-!
- !       do j = 1, wf%n_J
-!
- !          if (first .eq. 1) then
-!!
- !             read(unit_chol_mo_ab) ((L_ab_J(index_two(b, a, wf%n_v), j), b = 1, wf%n_v), a = 1, batch_length)
-!
- !          else
-!
- !             read(unit_chol_mo_ab) (throw_away, i = 1, throw_away_index),&
- !                                   ((L_ab_J(index_two(b, a, wf%n_v), j), b = 1, wf%n_v), a = 1, batch_length)
-!
- !          endif
-!
- !       enddo
-!!    
- !    endif  ! Reorder
-!!
-!!    Close file
-!!   
- !    close(unit_chol_mo_ab)
-!
- ! end subroutine read_cholesky_ab_hf
 !
     subroutine read_cholesky_ab_hf(wf, L_ab_J, a_first, a_last, b_first, b_last, reorder)
 !!
