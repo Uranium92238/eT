@@ -93,12 +93,12 @@ contains
                      wf%n_v,            &
                      one,               &
                      L_iJ_a,            &
-                     (wf%n_o)*(wf%n_J), &
+                     i_length*(wf%n_J), &
                      wf%t1am,           &
                      wf%n_v,            &
                      zero,              &
                      L_iJ_k,            &
-                     (wf%n_o)*(wf%n_J))
+                     i_length*(wf%n_J))
 !
 !        Place terms from L_iJ_k into L_ij_J
 !
@@ -225,7 +225,7 @@ contains
    end subroutine get_cholesky_ia_ccs
 !
 !
-   module subroutine get_cholesky_ai_ccs(wf, L_ai_J, i_first, i_last, a_first, a_last)
+   module subroutine get_cholesky_ai_ccs(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !!
 !!     Get Cholesky AI
 !!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -282,7 +282,7 @@ contains
 !
 !        Read L_ai^J from file 
 !
-         call wf%read_cholesky_ai(L_ai_J, i_first, i_last, a_first, a_last)
+         call wf%read_cholesky_ai(L_ai_J, a_first, a_last, i_first, i_last)
 !                          
 !        :: L_ab_J contributions ::
 !
@@ -312,7 +312,11 @@ contains
 !
 !           Get start, end, and length of batch
 !
-            call batch_limits(batch_start, batch_end, a_batch, max_batch_length, wf%n_v)
+            call batch_limits(batch_start, batch_end, a_batch, max_batch_length, a_length)
+            batch_start  = batch_start + (a_first - 1)
+            batch_end    = batch_end + (a_first - 1)
+!
+            if (batch_end .gt. a_last) batch_end = a_last
             batch_length = batch_end - batch_start + 1
 !
 !           Allocate L_ab_J and L_Ja_b
@@ -344,7 +348,7 @@ contains
 !
                   enddo
                enddo
-            enddo        
+            enddo       
 !
 !           Calculate sum_b L_Ja_b*t_b_i = L_Ja_i 
 !           
@@ -352,16 +356,16 @@ contains
 !
             call dgemm('N','N',                &
                         batch_length*(wf%n_J), &
-                        wf%n_o,                &
+                        i_length,              &
                         wf%n_v,                &
                         one,                   &
                         L_Ja_b,                &
                         batch_length*(wf%n_J), &
-                        wf%t1am,               &
+                        wf%t1am(1,i_first),    &
                         wf%n_v,                &
                         one,                   &
                         L_Ja_i(L_off, 1),      &
-                        (wf%n_v)*(wf%n_J))
+                        a_length*(wf%n_J))
 !
 !           Deallocate L_ab_J and L_Ja_b
 !
@@ -386,6 +390,7 @@ contains
                enddo
             enddo
          enddo
+
 !
 !        Deallocate L_Ja_i
 !
@@ -404,7 +409,7 @@ contains
 !  
 !        Read Cholesky IJ vectors
 !
-         call wf%read_cholesky_ij(L_ik_J, i_first, i_last, 1, wf%n_o) ! L_ik_J(ik,J) = L_ik^J 
+         call wf%read_cholesky_ij(L_ik_J, i_first, i_last, 1, wf%n_o) ! L_ik_J(ik,J) = L_ik^J
 !
 !        Reorder IJ Cholesky vectors
 !
@@ -426,17 +431,17 @@ contains
 !        Calculate -sum_k t_a_k*L_k_iJ = L_a_iJ  ! Here we assume L_ik^J = L_ki^J 
 !
          call dgemm('N','N',            &
-                     wf%n_v,            &
+                     a_length,          &
                      i_length*(wf%n_J), &
                      wf%n_o,            &
                      -one,              &
-                     wf%t1am,           &
+                     wf%t1am(a_first,1),&
                      wf%n_v,            &
                      L_k_iJ,            &
                      wf%n_o,            &
                      zero,              &
                      L_a_iJ,            &
-                     wf%n_v)
+                     a_length)
 !
 !        Add terms to T1-transformation of L_ai_J
 !
@@ -447,7 +452,7 @@ contains
 !                 Needed indices
 !
                   ai = index_two(a, i, a_length)
-                  iJ = index_two(i, J, a_length)
+                  iJ = index_two(i, J, i_length)
 !
                   L_ai_J(ai, J) = L_ai_J(ai, J) + L_a_iJ(a, iJ)
 !
@@ -555,7 +560,7 @@ contains
                      wf%n_o,            &
                      zero,              &
                      L_a_iJ,            &
-                     wf%n_v)
+                     a_length)
 !
 !        Add contribution to L ai_J
 !
@@ -563,8 +568,8 @@ contains
             do i = 1, i_length
                do J = 1, wf%n_J
 !
-                  iJ = index_two(i, J,i_length)
-                  ai = index_two(a, i,a_length)
+                  iJ = index_two(i, J, i_length)
+                  ai = index_two(a, i, a_length)
 !
                   L_ai_J(ai, J) = L_ai_J(ai, J) + L_a_iJ(a, iJ)
 !
@@ -1024,7 +1029,7 @@ contains
 !
 !        Read L_ab_J for batch of b
 !
-         call wf%read_cholesky_ab(L_ab_J, 1, wf%n_v, batch_first, batch_last, .false.)
+         call wf%read_cholesky_ab(L_ab_J, other_dim_first, other_dim_last, batch_first, batch_last, .false.)
 !
 !        Allocate L_Jb,i for batch of b
 !
@@ -1062,7 +1067,7 @@ contains
                      -one,                  &
                      L_Jb_i,                &
                      (wf%n_J)*batch_length, &
-                     wf%t1am,               &
+                     wf%t1am(other_dim_first,1),&
                      wf%n_v,                &
                      zero,                  &
                      L_Jb_a,                &

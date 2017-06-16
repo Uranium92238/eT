@@ -525,9 +525,13 @@ contains
 !
          do i = 1, i_length
             do k = 1 ,j_length
+!
                ij_full = index_packed((i + i_first - 1), (k + j_first - 1))
+!
                ij =  index_two(i, k, i_length)
+!
                read(unit_chol_mo_ij, rec=ij_full) (L_ij_J(ij,j), j = 1, wf%n_J)
+!
             enddo
          enddo
 !
@@ -649,7 +653,7 @@ contains
    end subroutine read_cholesky_ia_hf
 !
 !   
-subroutine read_cholesky_ai_hf(wf, L_ai_J, i_first, i_last, a_first, a_last)
+subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !!
 !!    Read Cholesky AI 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
