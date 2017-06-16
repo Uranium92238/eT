@@ -314,10 +314,12 @@ contains
 !
       call wf%read_hf_info
 !
-!     Orbital partitioning
+!     Orbital partitioning - only if we have CCS region
 !
       if (wf%mlcc_settings%CCS) then
+!
          call wf%orbital_partitioning
+!
       else
 !
          write(unit_output,*)'Full CC2 requested, orbital partitioning skipped'
@@ -360,11 +362,12 @@ contains
 !!
 !!    Calculates the MLCC2 energy, 
 !!
-!!    E_CC2 = E_HF + sum_aibj L_iajb*(s_ij^ab + s_i^a*s_j^b),
+!!    E_CC2 = E_HF + sum_aibj L_iajb*(s_ij^ab + t_i^a*t_j^b),
 !!   
 !!    with s_ij^ab = - g_aibj/(e_a + e_b - e_i - e_j) where 
 !!    g_aibj are T1-transformed integrals.
 !!    Batching over a.
+!! 
 !!
    implicit none
 !
@@ -377,11 +380,10 @@ contains
       real(dp), dimension(:,:), allocatable :: L_IA_J
       real(dp), dimension(:,:), allocatable :: L_ai_J
       real(dp), dimension(:,:), allocatable :: g_IA_JB ! = g_aibj
-      real(dp), dimension(:,:), allocatable :: s_ia_jb 
 !
-!     t2 amplitudes
+!     s2 amplitudes
 !
-      real(dp), dimension(:,:), allocatable :: s_ia_bj ! = g_aibj/(e_a + e_b - e_i - e_j)
+      real(dp), dimension(:,:), allocatable :: s_ia_jb ! = g_aibj/(e_a + e_b - e_i - e_j)
 !
 !     Batching variables
 !  
@@ -407,8 +409,6 @@ contains
       integer(i15) :: first_active_v ! first active virtual index
       integer(i15) :: last_active_o ! first active occupied index 
       integer(i15) :: last_active_v ! first active virtual index
-      if (debug) write(unit_output,*)'Calculating energy'
-      flush(unit_output)
 !
 !     :: t1 contribution ::
 !
@@ -512,7 +512,7 @@ contains
          max_batch_length = 0          ! Initilization of unset variables 
          n_batch          = 0
 !
-         call num_batch(required, available, max_batch_length, n_batch, batch_dimension)           
+         call num_batch(required, available, max_batch_length, n_batch, batch_dimension)        
 !
 !        Loop over the number of a batches 
 !
@@ -573,7 +573,8 @@ contains
                         (n_active_o)*(n_active_v),  &
                         zero,                       &
                         s_ia_jb,                    &
-                        (n_active_o)*a_length)        
+                        (n_active_o)*a_length)
+!
 !
             call deallocator(L_ia_J, (n_active_o)*(n_active_v), wf%n_J)
 !
@@ -594,12 +595,11 @@ contains
                         jb = index_two(j, b, n_active_o)
                         JB_full = index_two(j + first_active_o - 1, b + first_active_v - 1, wf%n_o)
                         JA_full = index_two(j + first_active_o - 1, a + a_first - 1, wf%n_o)
-
 !
                         wf%energy = wf%energy + (two*g_ia_jb(IA_full, JB_full) - g_ia_jb(JA_full, IB_full))*((s_ia_jb(ia,jb))&
                                                 /(wf%fock_diagonal(i + first_active_o - 1 ,1)&
                                                  +wf%fock_diagonal(j + first_active_o - 1 ,1) &
-                                                - wf%fock_diagonal(wf%n_o + a + first_active_v - 1 ,1)&
+                                                - wf%fock_diagonal(wf%n_o + a + a_first - 1 ,1)&
                                                 - wf%fock_diagonal(wf%n_o + b + first_active_v - 1 ,1)))
 !
                      enddo
@@ -611,6 +611,7 @@ contains
 !
          enddo ! End of batching
       enddo ! End loop over active spaces
+      call deallocator(g_ia_jb, wf%n_o*wf%n_v, wf%n_o*wf%n_v)
 !
    end subroutine calc_energy_mlcc2
    subroutine initialize_orbital_info_mlcc2(wf)

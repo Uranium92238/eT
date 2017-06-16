@@ -66,7 +66,11 @@ contains
 !
 !        :: Calculate omega contributions ::
 !
+         if (debug) write(unit_output,*)'omega a1'
+         flush(unit_output)
          call wf%omega_mlcc2_a1(active_space)
+         if (debug) write(unit_output,*)'omega b1'
+         flush(unit_output)
          call wf%omega_mlcc2_b1(active_space)
 !
       enddo
@@ -268,7 +272,7 @@ contains
             L_Ab_J = zero
 !
             reorder = .false.
-            call wf%get_cholesky_ab(L_Ab_J, a_first, a_last, reorder, first_active_v, last_active_v)
+            call wf%get_cholesky_ab(L_Ab_J, first_active_v, last_active_v, reorder, a_first, a_last)
 !
 !
             call allocator(L_jc_J, n_active_o*c_length, wf%n_J)
