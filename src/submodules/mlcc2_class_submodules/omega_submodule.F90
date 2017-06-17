@@ -46,6 +46,11 @@ contains
 !
       real(dp) :: omega_start = zero
       real(dp) :: omega_end   = zero
+      real(dp) :: omega_a_start = zero
+      real(dp) :: omega_a_end   = zero
+      real(dp) :: omega_b_start = zero
+      real(dp) :: omega_b_end   = zero
+!
       if (debug) write(unit_output,*)'In omega_constructor'
       flush(unit_output)
 !
@@ -68,10 +73,16 @@ contains
 !
          if (debug) write(unit_output,*)'omega a1'
          flush(unit_output)
+         call cpu_time(omega_a_start)
          call wf%omega_mlcc2_a1(active_space)
+         call cpu_time(omega_a_end)
+         write(unit_output,*)'Time in omega a:', omega_a_end-omega_a_start 
          if (debug) write(unit_output,*)'omega b1'
          flush(unit_output)
+         call cpu_time(omega_b_start)
          call wf%omega_mlcc2_b1(active_space)
+         call cpu_time(omega_b_end)
+         write(unit_output,*)'Time in omega b:', omega_b_end-omega_b_start 
 !
       enddo
 !
@@ -157,115 +168,117 @@ contains
       available = get_available()
 
       max_length = 0
-      call num_two_batch(required, available, max_length, A_n_batch, wf%n_v)
+      call num_two_batch(required, available, max_length, c_n_batch, wf%n_v)
 !
 !     Initialize some variables for batching
 !
-      A_first  = 0
-      A_last   = 0
-      A_length = 0
 !
-!     Start looping over a-batches
+!     Start looping over batches of c
 !
-      do A_batch = 1, A_n_batch
+      c_first  = 0
+      c_last   = 0
+      c_length = 0
+
+!
+      do c_batch = 1, c_n_batch
+!
+         call batch_limits(c_first ,c_last ,c_batch, max_length, n_active_v)
+!
+!        c is active index, and thus c_first and c_last must be displaced
+!
+         c_first  = c_first + (first_active_v - 1)
+         c_last   = c_last  + (first_active_v - 1)
+!
+         if (c_last .gt. last_active_v) c_last = last_active_v
+!
+!        Length of batch
+!
+         c_length = c_last - c_first + 1 
+!
+         call allocator(L_bi_J, n_active_o*n_active_v, wf%n_J)
+         L_bi_J = zero
+!
+         call wf%get_cholesky_ai(L_bi_J, first_active_v, last_active_v, first_active_o, last_active_o)
+!
+         call allocator(L_ib_J, (n_active_o)*(n_active_v), wf%n_J)
+!
+!        reorder and constrain L_bi_J
+!
+         do b = 1, n_active_v
+            do i = 1, n_active_o
+!
+               ib = index_two(i, b, n_active_o)
+               bi = index_two(b, i, n_active_v)
+!
+               do J = 1, wf%n_J
+!
+                  L_ib_J(ib, J) = L_bi_J(bi, J) 
+!
+               enddo
+            enddo
+         enddo
+!
+         call deallocator(L_bi_J, n_active_o*n_active_v, wf%n_J)
+!
+         call allocator(s_ib_jc, (n_active_o)*(n_active_v), (n_active_o)*c_length)
+!
+         offset = index_two(1, c_first, n_active_o)
+!
+         call dgemm('N', 'T',                    &
+                     (n_active_o)*(n_active_v),  &
+                     (n_active_o)*c_length,      &
+                     (wf%n_J),                   &
+                     one,                        &
+                     L_ib_J,                     &
+                     (n_active_o)*(n_active_v),  &
+                     L_ib_J(offset,1),           &
+                     (n_active_o)*(n_active_v),  &
+                     zero,                       &
+                     s_ib_jc,                    &
+                     (n_active_o)*(n_active_v))        
+!
+         call deallocator(L_ib_J, (n_active_o)*(n_active_v), wf%n_J)
+!
+!        u_ij^bc = 2*s_ij^bc - s_ij^cb  (place in s_bjc_i)        
+!
+         call allocator(u_bjc_i, n_active_v*n_active_o*c_length, n_active_o)
+         do b = 1, n_active_v
+            do i = 1, n_active_o
+!
+               ib = index_two(i, b, n_active_o)
+!
+               do c = 1, c_length
+                  do j = 1, n_active_o
+!
+                     jc = index_two(j, c, n_active_o)
+                     jb = index_two(j, b, n_active_o)
+                     ic = index_two(i, c, n_active_o)
+                     bjc = index_three(b, j, c, n_active_v, n_active_o)
+!
+                     u_bjc_i(bjc,i) = (two*s_ib_jc(ib,jc)-s_ib_jc(ic, jb))/(wf%fock_diagonal(i + first_active_o - 1,1)&
+                                           + wf%fock_diagonal(j+ first_active_o - 1,1) &
+                                           - wf%fock_diagonal(wf%n_o + c + first_active_v - 1,1) &
+                                           - wf%fock_diagonal(wf%n_o + b + first_active_v - 1,1))
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!         
+         call deallocator(s_ib_jc, (n_active_o)*(n_active_v), (n_active_o)*c_length)
+!
+         A_first  = 0
+         A_last   = 0
+         A_length = 0
+         A_n_batch = c_n_batch
+!
+!        Start looping over a-batches
+!
+         do A_batch = 1, A_n_batch
 !   
-         call batch_limits(A_first ,A_last ,A_batch, max_length, wf%n_v)
-         A_length = A_last - A_first + 1   
-!
-!        Start looping over batches of c
-!
-         c_first  = 0
-         c_last   = 0
-         c_length = 0
-         c_n_batch = a_n_batch
-!
-         do c_batch = 1, c_n_batch
-!
-            call batch_limits(c_first ,c_last ,c_batch, max_length, n_active_v)
-!
-!           c is active index, and thus c_first and c_last must be displaced
-!
-            c_first  = c_first + (first_active_v - 1)
-            c_last   = c_last  + (first_active_v - 1)
-!
-            if (c_last .gt. last_active_v) c_last = last_active_v
-!
-!           Length of batch
-!
-            c_length = c_last - c_first + 1 
-!
-            call allocator(L_bi_J, n_active_o*n_active_v, wf%n_J)
-            L_bi_J = zero
-!
-            call wf%get_cholesky_ai(L_bi_J, first_active_v, last_active_v, first_active_o, last_active_o)
-!
-            call allocator(L_ib_J, (n_active_o)*(n_active_v), wf%n_J)
-!
-!           reorder and constrain L_bi_J
-!
-            do b = 1, n_active_v
-               do i = 1, n_active_o
-!
-                  ib = index_two(i, b, n_active_o)
-                  bi = index_two(b, i, n_active_v)
-!
-                  do J = 1, wf%n_J
-!
-                     L_ib_J(ib, J) = L_bi_J(bi, J) 
-!
-                  enddo
-               enddo
-            enddo
-!
-            call deallocator(L_bi_J, n_active_o*n_active_v, wf%n_J)
-!
-            call allocator(s_ib_jc, (n_active_o)*(n_active_v), (n_active_o)*c_length)
-!
-            offset = index_two(1, c_first, n_active_o)
-!
-            call dgemm('N', 'T',                    &
-                        (n_active_o)*(n_active_v),  &
-                        (n_active_o)*c_length,      &
-                        (wf%n_J),                   &
-                        one,                        &
-                        L_ib_J,                     &
-                        (n_active_o)*(n_active_v),  &
-                        L_ib_J(offset,1),           &
-                        (n_active_o)*(n_active_v),  &
-                        zero,                       &
-                        s_ib_jc,                    &
-                        (n_active_o)*(n_active_v))        
-!
-            call deallocator(L_ib_J, (n_active_o)*(n_active_v), wf%n_J)
-!
-!           u_ij^bc = 2*s_ij^bc - s_ij^cb  (place in s_bjc_i)        
-!
-            call allocator(u_bjc_i, n_active_v*n_active_o*c_length, n_active_o)
-            do b = 1, n_active_v
-               do i = 1, n_active_o
-!
-                  ib = index_two(i, b, n_active_o)
-!
-                  do c = 1, c_length
-                     do j = 1, n_active_o
-!
-                        jc = index_two(j, c, n_active_o)
-                        jb = index_two(j, b, n_active_o)
-                        ic = index_two(i, c, n_active_o)
-                        bjc = index_three(b, j, c, n_active_v, n_active_o)
-!
-                        u_bjc_i(bjc,i) = (two*s_ib_jc(ib,jc)-s_ib_jc(ic, jb))/(wf%fock_diagonal(i + first_active_o - 1,1)&
-                                              + wf%fock_diagonal(j+ first_active_o - 1,1) &
-                                              - wf%fock_diagonal(wf%n_o + c + first_active_v - 1,1) &
-                                              - wf%fock_diagonal(wf%n_o + b + first_active_v - 1,1))
-!
-                     enddo
-                  enddo
-               enddo
-            enddo
-!            
-            call deallocator(s_ib_jc, (n_active_o)*(n_active_v), (n_active_o)*c_length)
-!
+            call batch_limits(A_first ,A_last ,A_batch, max_length, wf%n_v)
+            A_length = A_last - A_first + 1   
+
 !           Construct integral g_Ab,jc batching over A
 !
             call allocator(L_Ab_J, (n_active_v)*a_length, wf%n_J) 
@@ -280,8 +293,6 @@ contains
 
 !
             call allocator(g_Ab_jc, n_active_v*a_length, n_active_o*c_length)      
-!
-!        
 !
             call dgemm('N', 'T',                  &
                         (n_active_v)*a_length,    &
@@ -315,13 +326,16 @@ contains
             call deallocator(g_Ab_jc, n_active_v*a_length, n_active_o*c_length)
             call deallocator(u_bjc_i, n_active_v*n_active_o*c_length, n_active_o)
 !
-            if (c_batch*max_length .ge. n_active_v) exit ! exit loop over c; This is necessary because n_active_v may be less than n_v
+         enddo ! Batching over a
 !
-         enddo ! Batching over c
-      enddo ! Batching over a
+         if (c_last .eq. last_active_v) exit ! exit loop over c; This is necessary because n_active_v may be less than n_v
+!
+      enddo ! Batching over c
 
 !
    end subroutine omega_mlcc2_a1_mlcc2
+!
+!
     module subroutine omega_mlcc2_b1_mlcc2(wf, active_space)
 ! 
 !     Omega B1

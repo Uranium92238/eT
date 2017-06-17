@@ -500,9 +500,8 @@ contains
 !
 !        Prepare for batching over index a
 !  
-         required = (2*(wf%n_v)*(wf%n_o)*(wf%n_J) &                           !    
-                  + 2*(wf%n_v)*(wf%n_o)*(wf%n_J) &                            ! Needed for g_aibj  
-                  + 2*((wf%n_v)**2)*(wf%n_J) + ((wf%n_o)**2)*(wf%n_J) &       ! and 's2' amplitudes  
+         required = (2*(wf%n_v)*(wf%n_o)*(wf%n_J) &                            ! Needed for g_aibj  
+                  + 2*((wf%n_v)**2)*(wf%n_J) &               ! and 's2' amplitudes  
                   + 2*(wf%n_v)**2*(wf%n_o)**2)                                !
 !         
          required = 4*required ! In words
