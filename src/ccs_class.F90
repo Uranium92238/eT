@@ -549,7 +549,7 @@ module ccs_class
          real(dp), dimension(wf%n_o,wf%n_v) :: c1
          real(dp), dimension(wf%n_o,wf%n_v) :: rho                
 !
-      end subroutine jacobian_ccs_B1_ccs
+      end subroutine jacobian_ccs_b1_ccs
 !
 !
       module subroutine initialize_ground_state_ccs(wf)
@@ -790,7 +790,6 @@ contains
          if (wf%implemented%excited_state) then 
 !     
            call wf%excited_state_solver
-      !        call wf%jacobi_test
 !
          else
 !
