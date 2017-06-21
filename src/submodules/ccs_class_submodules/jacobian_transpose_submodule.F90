@@ -15,7 +15,7 @@ submodule (ccs_class) jacobian_transpose
 contains
 !
 !
-   module subroutine jacobian_transpose_transformation_ccs(wf, b_a_i)
+   module subroutine jacobian_transpose_ccs_transformation_ccs(wf, b_a_i)
 !!
 !!    Jacobian transpose transformation (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
@@ -46,7 +46,7 @@ contains
 !
       call wf%jacobian_transpose_ccs_a1(sigma_a_i, b_a_i)
 !
-   end subroutine jacobian_transpose_transformation_ccs
+   end subroutine jacobian_transpose_ccs_transformation_ccs
 !
 !
    module subroutine jacobian_transpose_ccs_a1_ccs(wf, sigma_a_i, b_a_i)
