@@ -130,6 +130,18 @@ module ccs_class
 !
       procedure :: jacobi_test => jacobi_test_ccs
 !
+!     Jacobian transpose transformation routine (b^T -> b^T A, i.e., b -> A^T b)
+!
+      procedure :: jacobian_transpose_transformation => jacobian_transpose_transformation_ccs
+!
+!     Helper routines 
+!
+!     Non-overridable, they will be used for contributions
+!     to linear of higher order coupled cluster methods
+!
+      procedure, non_overridable :: jacobian_transpose_ccs_a1 => jacobian_transpose_ccs_a1_ccs
+      procedure, non_overridable :: jacobian_transpose_ccs_b1 => jacobian_transpose_ccs_b1_ccs
+!
 !     Excited state solver 
 !
       procedure, non_overridable :: excited_state_solver => excited_state_solver_ccs
@@ -686,6 +698,71 @@ module ccs_class
          integer(i15) :: n_new_trials
 !
       end subroutine construct_next_trial_vectors_ccs
+!
+!
+      module subroutine jacobian_transpose_transformation_ccs(wf, b_a_i)
+!!
+!!       Jacobian transpose transformation (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Calculates the transpose Jacobian transformation, i.e., the transformation 
+!!       by the transpose of the Jacobian matrix
+!!
+!!          A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | R >.
+!!
+!!       The transformation is performed as sigma^T = b^T A, where b is the vector
+!!       sent to the routine. On exit, the vector b is equal to sigma (the transformed
+!!       vector).
+!!
+         implicit none 
+!
+         class(ccs) :: wf 
+!
+         real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i 
+!
+      end subroutine jacobian_transpose_transformation_ccs
+!
+!
+      module subroutine jacobian_transpose_ccs_a1_ccs(wf, sigma_a_i, b_a_i)
+!!
+!!       Jacobian transpose A1 (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Calculates the A1 term,
+!!
+!!          sum_c b_ci F_ca - sum_k b_ak F_ik,
+!!
+!!       and adds it to the sigma-vector (b^T -> sigma^T = b^T A).
+!!
+         implicit none 
+!
+         class(ccs) :: wf
+!
+         real(dp), dimension(wf%n_v, wf%n_o) :: sigma_a_i 
+         real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i 
+!
+      end subroutine jacobian_transpose_ccs_a1_ccs
+!
+!
+      module subroutine jacobian_transpose_ccs_b1_ccs(wf, sigma_a_i, b_a_i)
+!!
+!!       Jacobian transpose B1 (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Calculates the B1 term,
+!!
+!!          sum_ck L_ckia b_ck
+!!
+!!       and adds it to the sigma-vector (b^T -> sigma^T = b^T A).
+!!
+         implicit none 
+!
+         class(ccs) :: wf
+!
+         real(dp), dimension(wf%n_v, wf%n_o) :: sigma_a_i 
+         real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i 
+!
+      end subroutine jacobian_transpose_ccs_b1_ccs
 !
 !
     end interface 
