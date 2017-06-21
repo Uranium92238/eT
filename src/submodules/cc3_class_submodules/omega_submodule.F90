@@ -161,6 +161,7 @@ contains
       integer(i15) :: rec_number = 0, ioerror = 0 
 !
       real(dp), dimension(:,:), allocatable :: L_bd_J 
+      real(dp), dimension(:,:), allocatable :: L_db_J 
       real(dp), dimension(:,:), allocatable :: L_ck_J
       real(dp), dimension(:,:), allocatable :: L_lj_J
       real(dp), dimension(:,:), allocatable :: L_kc_J
@@ -199,8 +200,9 @@ contains
          call allocator(L_bd_J, (wf%n_v), wf%n_J)
          L_bd_J = zero
 !
-         reorder = .false.
-         call wf%get_cholesky_ab(L_bd_J, d, d, reorder, 1,wf%n_v)
+!        Get ab-cholesky vectors for the batch, L_bd_J = L_bd^J
+!
+         call wf%get_cholesky_ab(L_bd_J, 1, wf%n_v, d, d)
 !
          call allocator(L_ck_J, (wf%n_v)*(wf%n_o), wf%n_J)
          L_ck_J = zero
@@ -282,11 +284,12 @@ contains
 !
 !        Read Cholesky vector L_bd_J(bd,J) = L_db^J 
 !
-         call allocator(L_bd_J, (wf%n_v), wf%n_J)
-         L_bd_J = zero
+         call allocator(L_db_J, (wf%n_v), wf%n_J)
+         L_db_J = zero
 !
-         reorder = .true. ! bd is actually db => reorder
-         call wf%get_cholesky_ab(L_bd_J, d, d, reorder, 1,wf%n_v)
+!        Get ab-cholesky vectors for the batch, L_db^J =  L_db_J
+!
+         call wf%get_cholesky_ab(L_db_J, d, d, 1,wf%n_v)
 !
 !        Form the integral g_bd_kc = g_dbkc
 !
@@ -298,7 +301,7 @@ contains
                      (wf%n_v)*(wf%n_o), &
                      wf%n_J,            &
                      one,               &
-                     L_bd_J,            &
+                     L_db_J,            &
                      wf%n_v,            &
                      L_kc_J,            &
                      (wf%n_v)*(wf%n_o), &

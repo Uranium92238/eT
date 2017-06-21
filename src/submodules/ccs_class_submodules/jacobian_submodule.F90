@@ -518,8 +518,7 @@ contains
 !
          call allocator(L_ab_J, (wf%n_v)*b_length, wf%n_J)
 !
-         reorder = .false.
-         call wf%get_cholesky_ab(L_ab_J, b_first, b_last, reorder, 1, wf%n_v)
+         call wf%get_cholesky_ab(L_ab_J, 1, wf%n_v, b_first, b_last)
 !
 !        Allocate and get L_ji_J
 !

@@ -34,7 +34,6 @@ module cc2_class
 !     Initialization and driver routines
 !
       procedure :: init => init_cc2
-      procedure :: drv  => drv_cc2
 !
 !     Routines to construct the projection vector (omega)
 !
@@ -182,12 +181,12 @@ contains
 !
       class(cc2)  :: wf
 !
-      write(unit_output,*)'In init_cc2'
-      flush(unit_output)
 !
 !     Set model name
 !
       wf%name = 'CC2'
+!
+      wf%implemented%ground_state = .true.
 !
 !     Read Hartree-Fock info from SIRIUS
 !
@@ -205,27 +204,14 @@ contains
 !
       call wf%initialize_fock_matrix
 !
+      wf%n_parameters = wf%n_t1am
+!
 !     Initialize omega vector
 !
       call wf%initialize_omega
 !
    end subroutine init_cc2
 !
-!
-   subroutine drv_cc2(wf)
-!!
-!!     CC2 Driver
-!!     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!
-      implicit none 
-!
-      class(cc2) :: wf
-!
-      write(unit_output,*)'In drv_cc2'
-      flush(unit_output)
-      call wf%ground_state_solver
-!
-   end subroutine drv_cc2
 !
 !  :::::::::::::::::::::::::::::::::::::::::
 !  -::- Class subroutines and functions -::- 

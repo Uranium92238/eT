@@ -740,7 +740,7 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, i_first, i_last, a_first, a_last)
    end subroutine read_cholesky_ai_hf
 !
 !
-    subroutine read_cholesky_ab_hf(wf, L_ab_J, a_first, a_last, b_first, b_last, reorder)
+    subroutine read_cholesky_ab_hf(wf, L_ab_J, a_first, a_last, b_first, b_last)
 !!
 !!    Read Cholesky AB 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -754,72 +754,45 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, i_first, i_last, a_first, a_last)
 !
       class(hf) :: wf
 !
-      integer(i15), intent(in) :: a_first, b_first   ! First index (can differ from 1 when batching)
-      integer(i15), intent(in) :: a_last, b_last    ! Last index  (can differ from n_v when batching)
+      integer(i15), intent(in) :: a_first, b_first   ! First index (can differ from 1 when batching  or for mlcc)
+      integer(i15), intent(in) :: a_last, b_last    ! Last index  (can differ from n_v when batching or for mlcc)
 !  
       real(dp), dimension(((a_last - a_first + 1)*(b_last - b_first + 1)), wf%n_J) :: L_ab_J ! L_ab^J
 !
-      logical :: reorder
 !
       integer(i15) :: unit_chol_mo_ab = -1 ! Unit identifier for cholesky_ab file
       integer(i15) :: ioerror = 0
 !
-      integer(i15) :: a = 0, b = 0, j = 0, i = 0, ab = 0, ab_full = 0, ba = 0, ba_full = 0
+      integer(i15) :: a = 0, b = 0, j = 0, i = 0, ab = 0, ab_full = 0
       integer(i15) :: a_length, b_length
 !
       a_length = a_last - a_first + 1
       b_length = b_last - b_first + 1
+
 !
-      if (.not. reorder) then
-!
-!        Prepare for reading: generate unit identifier, open, and rewind file
+!     Prepare for reading: generate unit identifier, open, and rewind file
 !  
-         call generate_unit_identifier(unit_chol_mo_ab)
-         open(unit=unit_chol_mo_ab, file='cholesky_ab_direct', action='read', status='unknown', &
-              access='direct', form='unformatted', recl=dp*(wf%n_J), iostat=ioerror)
+      call generate_unit_identifier(unit_chol_mo_ab)
+      open(unit=unit_chol_mo_ab, file='cholesky_ab_direct', action='read', status='unknown', &
+           access='direct', form='unformatted', recl=dp*(wf%n_J), iostat=ioerror)
 !
-         if (ioerror .ne. 0) then
-            write(unit_output,*)'WARNING: error while reading cholesky_ab_direct.', ioerror
-            stop
-         endif
-!
-         do a = 1, a_length
-            do b = 1, b_length
-               ab_full = index_packed(a + a_first - 1,b + b_first - 1)
-               ab = index_two(a, b, a_length)
-               read(unit_chol_mo_ab, rec=ab_full) (L_ab_J(ab, J), J = 1, wf%n_J)
-            enddo
-         enddo
-!
-!        Close file
-!        
-      close(unit_chol_mo_ab)
-!
-      else
-!
-!        Prepare for reading: generate unit identifier, open, and rewind file
-!  
-         call generate_unit_identifier(unit_chol_mo_ab)
-         open(unit=unit_chol_mo_ab, file='cholesky_ab_direct', action='read', status='unknown', &
-              access='direct', form='unformatted', recl=dp*(wf%n_J), iostat=ioerror)
-         if (ioerror .ne. 0) then
-            write(unit_output,*)'WARNING: error while reading cholesky_ab_direct'
-            stop
-         endif
-!
-         do a = 1, a_length
-            do b = 1, b_length
-               ba_full = index_packed(a + a_first - 1, b + b_first - 1)
-               ba = index_two(b, a, b_length)
-               read(unit_chol_mo_ab, rec=ba_full) (L_ab_J(ba, J), J = 1, wf%n_J)
-            enddo
-         enddo
-!
-!        Close file
-!        
-         close(unit_chol_mo_ab)
-!
+      if (ioerror .ne. 0) then
+         write(unit_output,*)'WARNING: error while reading cholesky_ab_direct.', ioerror
+         stop
       endif
+!
+      do a = 1, a_length
+         do b = 1, b_length
+            ab_full = index_packed(a + a_first - 1,b + b_first - 1)
+            ab = index_two(a, b, a_length)
+            read(unit_chol_mo_ab, rec=ab_full) (L_ab_J(ab, J), J = 1, wf%n_J)
+         enddo
+      enddo
+!
+!     Close file
+!     
+      close(unit_chol_mo_ab)
+
 !
    end subroutine read_cholesky_ab_hf
 !

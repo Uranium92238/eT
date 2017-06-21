@@ -231,7 +231,7 @@ module ccs_class
       end subroutine get_cholesky_ai_ccs
 !
 !
-   module subroutine get_cholesky_ab_ccs(wf, L_ab_J, batch_first, batch_last, reorder, other_dim_first, other_dim_last)
+  module subroutine get_cholesky_ab_ccs(wf, L_ab_J, a_first, a_last, b_first, b_last)
 !!
 !!    Get Cholesky AB
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -240,26 +240,22 @@ module ccs_class
 !!
 !!       L_ab_J_T1 = L_ab_J - sum_i t_ai*L_ib_J
 !!
-!!    If reorder = .true.,  L_ba_J is returned with batching over a
-!!    If reorder = .false., L_ab_J is returned with batching over b
 !!
 !!    Required memory: 
 !!
-!!       n_J*batch_length*n_v   ->   For reordering of L_ab_J / L_ba_J
-!!       2*n_v*n_o*n_J          ->   For L_ib_J contribution
+!!       n_J*b_length*a_length       ->   For reordering of L_ab_J / L_ba_J
+!!       2*b_length*n_o*n_J          ->   For L_ib_J contribution
 !!
       implicit none
 !
       class(ccs) :: wf
+
 !
-      integer(i15), intent(in) :: other_dim_last, other_dim_first
-      integer(i15), intent(in) :: batch_last, batch_first
+      integer(i15), intent(in) :: a_first, b_first   ! First index (can differ from 1 when batching or for mlcc)
+      integer(i15), intent(in) :: a_last, b_last    ! Last index (can differ from n_v when batching or for mlcc)
 !
-      logical, intent(in) :: reorder
-      real(dp), dimension(((batch_last - batch_first + 1)*(other_dim_last - other_dim_first + 1)), wf%n_J) :: L_ab_J ! L_ab^J
-!
-      end subroutine get_cholesky_ab_ccs
-!
+      real(dp), dimension(((b_last - b_first + 1)*(a_last - a_first + 1)), wf%n_J) :: L_ab_J ! L_ab^J
+   end subroutine get_cholesky_ab_ccs
 !
       module subroutine initialize_fock_matrix_ccs(wf)
 !!  
