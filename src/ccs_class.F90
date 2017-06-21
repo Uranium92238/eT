@@ -46,6 +46,7 @@ module ccs_class
       real(dp), dimension(:,:), allocatable :: fock_ai ! vir-occ block
       real(dp), dimension(:,:), allocatable :: fock_ab ! vir-vir block
 !
+      character(len=40)                     :: excited_state_task     = 'right_eigenvectors' ! The task being performed at the moment 
       real(dp), dimension(:,:), allocatable :: excited_state_energies
 !
    contains 
@@ -118,7 +119,7 @@ module ccs_class
 !
 !     Jacobian transformation routine 
 !
-      procedure :: jacobian_transformation => jacobian_transformation_ccs
+      procedure :: jacobian_ccs_transformation => jacobian_ccs_transformation_ccs
 !
 !     Helper routines
 !
@@ -130,8 +131,9 @@ module ccs_class
 !
       procedure :: jacobi_test => jacobi_test_ccs
 !
-!     Excited state solver 
+!     Excited state driver & solver 
 !
+      procedure                  :: excited_state_driver => excited_state_driver_ccs 
       procedure, non_overridable :: excited_state_solver => excited_state_solver_ccs
 !
 !     Helper routines 
@@ -496,7 +498,7 @@ module ccs_class
       end subroutine transform_trial_vectors_ccs
 !
 !
-      module subroutine jacobian_transformation_ccs(wf, c_a_i)
+      module subroutine jacobian_ccs_transformation_ccs(wf, c_a_i)
 !!
 !!       Jacobian transformation
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
@@ -507,7 +509,7 @@ module ccs_class
          class(ccs) :: wf 
          real(dp), dimension(wf%n_v, wf%n_o)   :: c_a_i       
 !
-      end subroutine jacobian_transformation_ccs
+      end subroutine jacobian_ccs_transformation_ccs
 !
 !
       module subroutine jacobian_ccs_a1_ccs(wf,rho,c1)
@@ -688,6 +690,25 @@ module ccs_class
       end subroutine construct_next_trial_vectors_ccs
 !
 !
+      module subroutine excited_state_driver_ccs(wf)
+!!
+!!       Excited state driver (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Directs the solution of the excited state problem for CCS. The
+!!       routine is inherited is to be inherited unaltered in the CC hierarchy. 
+!!
+!!       Note: it is only necessary to alter this routine if the excited states are 
+!!       solved for by a different algorithm (such as in similarity constrained CC, 
+!!       where the excited states and ground state are determined simultaneously).
+!!
+         implicit none 
+!
+         class(ccs) :: wf 
+!
+      end subroutine excited_state_driver_ccs
+!
+!
     end interface 
 !
 !
@@ -789,7 +810,7 @@ contains
 !
          if (wf%implemented%excited_state) then 
 !     
-           call wf%excited_state_solver
+           call wf%excited_state_driver 
 !
          else
 !
