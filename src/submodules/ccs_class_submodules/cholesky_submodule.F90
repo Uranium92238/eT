@@ -34,12 +34,14 @@ contains
 !!
 !!       2*n_J*(i_length)*n_v     -> for reading L_ia_J contribution and reordering
 !!       i_length = i_last - i_first + 1
+!!
+!!    Optional arguments: i_first, i_last, j_first, j_last can be used in order to restrict indices
 !!        
       implicit none 
 !
-      class(ccs) :: wf
-      integer(i15), optional ::  i_first, j_first     ! First index (can differ from 1 when batching or for mlcc)
-      integer(i15), optional ::  i_last, j_last      ! Last index (can differ from n_o when batching or for mlcc)
+      class(ccs)               :: wf
+      integer(i15), optional   :: i_first, j_first     ! First index (can differ from 1 when batching or for mlcc)
+      integer(i15), optional   :: i_last, j_last      ! Last index (can differ from n_o when batching or for mlcc)
       real(dp), dimension(:,:) :: L_ij_J
 !
 !     Local routine variables
@@ -216,11 +218,13 @@ contains
 !!
 !!       No additional memory
 !!
+!!    Optional arguments: i_first, i_last, a_first, a_last can be used in order to restrict indices
+!!
       implicit none 
 !
-      class(ccs) :: wf
-      integer(i15), optional :: i_first, a_first   ! First index (can differ from 1 when batching or for mlcc)
-      integer(i15), optional :: i_last, a_last    ! Last index (can differ from n_v/n_o when batching or for mlcc)
+      class(ccs)               :: wf
+      integer(i15), optional   :: i_first, a_first   ! First index (can differ from 1 when batching or for mlcc)
+      integer(i15), optional   :: i_last, a_last    ! Last index (can differ from n_v/n_o when batching or for mlcc)
       real(dp), dimension(:,:) :: L_ia_J
 !
       call wf%read_cholesky_ia(L_ia_J,i_first, i_last, a_first, a_last)
@@ -228,7 +232,7 @@ contains
    end subroutine get_cholesky_ia_ccs
 !
 !
-   module subroutine get_cholesky_ai_ccs(wf, L_ai_J, i_first, i_last, a_first, a_last)
+    module subroutine get_cholesky_ai_ccs(wf, L_ai_J, i_first, i_last, a_first, a_last)
 !!
 !!    Get Cholesky AI
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -250,11 +254,13 @@ contains
 !!
 !!      (1) determines memory requirement. 
 !!
+!!    Optional arguments: i_first, i_last, a_first, a_last can be used in order to restrict indices
+!!
       implicit none 
 !
-      class(ccs) :: wf
-      integer(i15), optional :: i_first, a_first   ! First index (can differ from 1 when batching or for mlcc)
-      integer(i15), optional :: i_last, a_last    ! Last index (can differ from n_v/n_o when batching or for mlcc)
+      class(ccs)               :: wf
+      integer(i15), optional   :: i_first, a_first     ! First index (can differ from 1 when batching or for mlcc)
+      integer(i15), optional   :: i_last, a_last      ! Last index (can differ from n_o/n_v when batching or for mlcc)
       real(dp), dimension(:,:) :: L_ai_J
 !
 !     Local routine variables
@@ -936,7 +942,7 @@ contains
 !!
       implicit none
 !
-      class(ccs) :: wf
+      class(ccs)               :: wf
       integer(i15), intent(in) :: a_first, b_first   ! First index (can differ from 1 when batching)
       integer(i15), intent(in) :: a_last, b_last    ! Last index  (can differ from n_v when batching)
       real(dp), dimension(((b_last - b_first + 1)*(a_last - a_first + 1)), wf%n_J) :: L_ab_J ! L_ab^J
