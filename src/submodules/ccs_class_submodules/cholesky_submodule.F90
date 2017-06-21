@@ -32,14 +32,17 @@ contains
 !!
 !!    Memory required in routine:
 !!
-!!       2*n_J*n_o*n_v     -> for reading L_ia_J contribution and reordering
+!!       2*n_J*(i_length)*n_v     -> for reading L_ia_J contribution and reordering
+!!       i_length = i_last - i_first + 1
 !!        
       implicit none 
 !
       class(ccs) :: wf
-      integer(i15), optional ::  i_first, i_last, j_first, j_last
-!
+      integer(i15), optional ::  i_first, j_first     ! First index (can differ from 1 when batching or for mlcc)
+      integer(i15), optional ::  i_last, j_last      ! Last index (can differ from n_o when batching or for mlcc)
       real(dp), dimension(:,:) :: L_ij_J
+!
+!     Local routine variables
 !
       real(dp), dimension(:,:), allocatable :: L_ia_J ! L_ia^J
       real(dp), dimension(:,:), allocatable :: L_iJ_a ! L_ia^J reordered
@@ -216,8 +219,8 @@ contains
       implicit none 
 !
       class(ccs) :: wf
-      integer(i15), optional :: i_first, i_last, a_first, a_last
-!
+      integer(i15), optional :: i_first, a_first   ! First index (can differ from 1 when batching or for mlcc)
+      integer(i15), optional :: i_last, a_last    ! Last index (can differ from n_v/n_o when batching or for mlcc)
       real(dp), dimension(:,:) :: L_ia_J
 !
       call wf%read_cholesky_ia(L_ia_J,i_first, i_last, a_first, a_last)
@@ -227,29 +230,34 @@ contains
 !
    module subroutine get_cholesky_ai_ccs(wf, L_ai_J, i_first, i_last, a_first, a_last)
 !!
-!!     Get Cholesky AI
-!!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!    Get Cholesky AI
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!     Read and T1-transform Cholesky AI vectors:
-!!     
-!!        L_ai_J_T1 = L_ia_J - sum_j  t_aj*L_ji_J 
-!!                           + sum_b  t_bi*L_ab_J
-!!                           - sum_bj t_aj*t_bi*L_jb_J
+!!    Read and T1-transform Cholesky AI vectors:
+!!    
+!!       L_ai_J_T1 = L_ia_J - sum_j  t_aj*L_ji_J 
+!!                          + sum_b  t_bi*L_ab_J
+!!                          - sum_bj t_aj*t_bi*L_jb_J
 !!
-!!     Allocations in routine:
+!!    Allocations in routine:
 !!
-!!       (1) n_J*n_o*n_v + 2*n_J*n_v*batch_length   ->  for L_ab_J contribution
-!!       (2) n_J*n_o*n_v + 2*n_J*n_o^2              ->  for L_ij_J contribution
-!!       (3) 2*n_J*n_o*n_v                          ->  for L_jb_J contribution
+!!      (1) n_J*(i_length)*(a_length) + 2*n_J*(a_length)*batch_length  ->  for L_ab_J contribution (batches of b)
+!!      (2) n_J*(i_length)*n_v + 2*n_J*n_o*(i_length)                  ->  for L_ij_J contribution
+!!      (3) 2*n_J*n_o*n_v                                              ->  for L_jb_J contribution
 !!
-!!       (1) determines memory requirement. 
+!!      i_length = i_last - i_first + 1          
+!!      a_length = a_last - a_first + 1          
+!!
+!!      (1) determines memory requirement. 
 !!
       implicit none 
 !
       class(ccs) :: wf
-      integer(i15), optional ::  i_first, i_last, a_first, a_last
+      integer(i15), optional :: i_first, a_first   ! First index (can differ from 1 when batching or for mlcc)
+      integer(i15), optional :: i_last, a_last    ! Last index (can differ from n_v/n_o when batching or for mlcc)
+      real(dp), dimension(:,:) :: L_ai_J
 !
-      real(dp), dimension(:,:) :: L_ai_J 
+!     Local routine variables
 !
       logical :: reorder ! Reorder or not, when reading Cholesky AB 
 !
@@ -923,16 +931,17 @@ contains
 !!       n_J*b_length*a_length       ->   For reordering of L_ab_J / L_ba_J
 !!       2*b_length*n_o*n_J          ->   For L_ib_J contribution
 !!
+!!      a_length = a_last - a_first + 1          
+!!      b_length = b_last - b_first + 1 
 !!
       implicit none
 !
       class(ccs) :: wf
-
-!
       integer(i15), intent(in) :: a_first, b_first   ! First index (can differ from 1 when batching)
       integer(i15), intent(in) :: a_last, b_last    ! Last index  (can differ from n_v when batching)
-!
       real(dp), dimension(((b_last - b_first + 1)*(a_last - a_first + 1)), wf%n_J) :: L_ab_J ! L_ab^J
+!
+!     Local routine variables
 !
       integer(i15) :: memory_lef = 0
 !
