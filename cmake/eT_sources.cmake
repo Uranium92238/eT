@@ -31,5 +31,6 @@ set(eT_fortran_sources
    src/submodules/mlcc2_class_submodules/orbital_partitioning_submodule.F90
    src/submodules/mlcc2_class_submodules/omega_submodule.F90
    src/submodules/mlcc2_class_submodules/jacobian_submodule.F90
+   src/submodules/mlcc2_class_submodules/excited_state_submodule.F90
    src/eT_program.F90
 )

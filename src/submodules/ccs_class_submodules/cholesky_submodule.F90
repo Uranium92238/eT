@@ -986,11 +986,7 @@ contains
 !
 !        Read L_ab_J for batch of b
 !
-<<<<<<< HEAD
-         call wf%read_cholesky_ab(L_ab_J, other_dim_first, other_dim_last, batch_first, batch_last, .false.)
-=======
          call wf%read_cholesky_ab(L_ab_J, 1, wf%n_v, b_first, b_last)
->>>>>>> acb59a18c0f608f1372fc38fe14db2ec33a441e5
 !
 !        Allocate L_Jb,i for batch of b
 !
@@ -1027,13 +1023,8 @@ contains
                      wf%n_o,                &
                      -one,                  &
                      L_Jb_i,                &
-<<<<<<< HEAD
-                     (wf%n_J)*batch_length, &
-                     wf%t1am(other_dim_first,1),&
-=======
                      (wf%n_J)*b_length,     &
                      wf%t1am(a_first, 1),   &
->>>>>>> acb59a18c0f608f1372fc38fe14db2ec33a441e5
                      wf%n_v,                &
                      zero,                  &
                      L_Jb_a,                &

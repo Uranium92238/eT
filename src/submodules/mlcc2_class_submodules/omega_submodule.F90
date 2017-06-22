@@ -296,8 +296,7 @@ contains
             call allocator(L_Ab_J, (n_active_v)*a_length, wf%n_J) 
             L_Ab_J = zero
 !
-            reorder = .false.
-            call wf%get_cholesky_ab(L_Ab_J, first_active_v, last_active_v, reorder, a_first, a_last)
+            call wf%get_cholesky_ab(L_Ab_J, a_first, a_last, first_active_v, last_active_v)
 !
             call allocator(g_Ab_jc, n_active_v*a_length, n_active_o*c_length)      
 !
