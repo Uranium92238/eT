@@ -728,9 +728,234 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o)                       :: sigma_a_i 
       real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
 !
+      real(dp), dimension(:,:), allocatable :: b_a_ckl ! b_ckal 
+      real(dp), dimension(:,:), allocatable :: t_ckl_d ! t_kl^cd 
+!
+      real(dp), dimension(:,:), allocatable :: X_a_d ! An intermediate, term 1
+!
+      real(dp), dimension(:,:), allocatable :: t_l_ckd ! t_kl^cd 
+!
+      real(dp), dimension(:,:), allocatable :: X_l_i ! An intermediate, term 2 
+!
+      integer(i15) :: l = 0, k = 0, c = 0, ck = 0, ckl = 0, a = 0, al = 0
+      integer(i15) :: d = 0, dl = 0, ckdl = 0, ckd = 0
+!
+!
+!     :: Term 1. - sum_ckdl b_ckal F_id t_kl^cd ::
+!
+!     Reorder b_ai_bj to b_a_ckl(a,ckl) = b_ckal 
+!
+      call allocator(b_a_ckl, wf%n_v, (wf%n_v)*(wf%n_o)**2)
+      b_a_ckl = zero
+!
+      do l = 1, wf%n_o
+         do k = 1, wf%n_o
+            do c = 1, wf%n_v
+!
+               ck = index_two(c, k, wf%n_v)
+!
+               ckl = index_three(c, k, l, wf%n_v, wf%n_o)
+!
+               do a = 1, wf%n_v
+!
+                  al = index_two(a, l, wf%n_v)
+!
+                  b_a_ckl(a, ckl) = b_ai_bj(ck, al) ! b_ckal
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+!     Read amplitudes and order as t_ckl_d = t_kl^cd 
+!
+      call wf%initialize_amplitudes
+      call wf%read_double_amplitudes
+!
+      call allocator(t_ckl_d, (wf%n_v)*(wf%n_o)**2, wf%n_v)
+      t_ckl_d = zero 
+!
+      do d = 1, wf%n_v
+         do l = 1, wf%n_o
+!
+            dl = index_two(d, l, wf%n_v)
+!
+            do k = 1, wf%n_o
+               do c = 1, wf%n_v
+!
+                  ck = index_two(c, k, wf%n_v)
+!
+                  ckdl = index_packed(ck, dl)
+!
+                  ckl = index_three(c, k, l, wf%n_v, wf%n_o)
+!
+                  t_ckl_d(ckl, d) = wf%t2am(ckdl, 1) ! t_kl^cd
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      call wf%destruct_amplitudes
+!
+!     Form the intermediate X_a_d = sum_ckl b_a_ckl t_ckl_d 
+!  
+      call allocator(X_a_d, wf%n_v, wf%n_v)
+!
+      call dgemm('N','N',               &
+                  wf%n_v,               &
+                  wf%n_v,               &
+                  (wf%n_v)*(wf%n_o)**2, &
+                  one,                  &
+                  b_a_ckl,              &
+                  wf%n_v,               &
+                  t_ckl_d,              &
+                  (wf%n_v)*(wf%n_o)**2, &
+                  zero,                 &
+                  X_a_d,                &
+                  wf%n_v)
+!
+!     Add - sum_ckdl b_ckal F_id t_kl^cd
+!           = - sum_d X_a_d F_id 
+!           = - sum_d X_a_d F_i_a^T(d,i)
+!
+      call dgemm('N','T',     &
+                  wf%n_v,     &
+                  wf%n_o,     &
+                  wf%n_v,     &
+                  -one,       &
+                  X_a_d,      &
+                  wf%n_v,     &
+                  wf%fock_ia, & ! F_i_a
+                  wf%n_o,     &
+                  one,        &
+                  sigma_a_i,  &
+                  wf%n_v)
+!
+      call deallocator(X_a_d, wf%n_v, wf%n_v)
+      call deallocator(b_a_ckl, wf%n_v, (wf%n_v)*(wf%n_o)**2)
+!
+!     :: Term 2. - sum_ckdl b_ckdi F_la t_kl^cd
+!
+!     Order amplitudes as t_l_ckd = t_kl^cd = t_ckl_d
+!
+      call allocator(t_l_ckd, wf%n_o, (wf%n_o)*(wf%n_v)**2)
+      t_l_ckd = zero 
+!
+      do d = 1, wf%n_v
+         do k = 1, wf%n_o
+            do c = 1, wf%n_v
+!
+               ckd = index_three(c, k, d, wf%n_v, wf%n_o)
+!
+               do l = 1, wf%n_o
+!
+                  ckl = index_three(c, k, l, wf%n_v, wf%n_o)
+!
+                  t_l_ckd(l, ckd) = t_ckl_d(ckl, d)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      call deallocator(t_ckl_d, (wf%n_v)*(wf%n_o)**2, wf%n_v)
+!
+!     Form the intermediate X_l_i = sum_ckd t_l_ckd b_ckd_i  
+!
+!     Note: we interpret b_ai_bj as b_aib_j, such that b_aib_j(ckd, i) = b_ckdi
+!
+      call allocator(X_l_i, wf%n_o, wf%n_o)
+!
+      call dgemm('N','N',               &
+                  wf%n_o,               &
+                  wf%n_o,               &
+                  (wf%n_o)*(wf%n_v)**2, &
+                  one,                  &
+                  t_l_ckd,              &
+                  wf%n_o,               &
+                  b_ai_bj,              & ! "b_ckd_i"
+                  (wf%n_o)*(wf%n_v)**2, &
+                  zero,                 &
+                  X_l_i,                &
+                  wf%n_o)
+!
+      call deallocator(t_l_ckd, wf%n_o, (wf%n_o)*(wf%n_v)**2)
+!
+!     Add - sum_ckdl b_ckdi F_la t_kl^cd = - sum_l F_la X_l_i = - sum_l F_i_a^T(a,l) X_l_i(l,i)
+!
+      call dgemm('T','N',     &
+                  wf%n_v,     &
+                  wf%n_o,     &
+                  wf%n_o,     &
+                  -one,       &
+                  wf%fock_ia, &
+                  wf%n_o,     &
+                  X_l_i,      &
+                  wf%n_o,     &
+                  one,        &
+                  sigma_a_i,  &
+                  wf%n_v)
+!
+      call deallocator(X_l_i, wf%n_o, wf%n_o)
+!
    end subroutine jacobian_transpose_ccsd_d1_ccsd
 !
 !
+   module subroutine jacobian_transpose_ccsd_e1_ccsd(wf, sigma_a_i, b_ai_bj)
+!!
+!!    Jacobian transpose CCSD E1 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!    Calculates the E1 term,
+!!
+!!       sum_ckdle (b_ckdi L_dale t_kl^ce + b_ckdl L_deia t_kl^ce)
+!!      -sum_ckdlm (b_ckal L_ilmd t_km^cd + b_ckdl L_mlia t_km^cd)
+!! 
+!!    and adds it to the transformed vector sigma_a_i.
+!!
+!!    The routine adds the third and forth terms first.
+!!
+      implicit none 
+!
+      class(ccsd) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o)                       :: sigma_a_i 
+      real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
+!
+!     :: Term 3. - sum_ckdlm b_ckal L_ilmd t_km^cd ::
+!
+!     X_il_ck = sum_md L_ilmd t_km^cd = sum_md L_ilmd t_mk^dc 
+!
+!     Read the amplitudes from disk 
+!
+      call wf%initialize_amplitudes
+      call wf%read_double_amplitudes
+!
+      call allocator(t_dm_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+      call squareup(wf%t2am, t_dm_ck, (wf%n_o)*(wf%n_v)) 
+!
+!     Form g_il_md = g_ilmd 
+!
+      call allocator(L_il_J, (wf%n_o)**2, wf%n_J)
+!
+      call wf%get_cholesky_ij(L_il_J)
+!
+      call allocator(L_md_J, (wf%n_o)*(wf%n_v), wf%n_J)
+!
+      call wf%get_cholesky_ia(L_md_J)
+!
+      call allocator(g_il_md, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
+!
+      call dgemm('N','T',&
+                  (wf%n_o)**2,&
+                  (wf%n_o)*(wf%n_v),&
+                  wf%n_J,&
+                  one,&
+                  )
+!
+   end subroutine jacobian_transpose_ccsd_e1_ccsd
 !
 !
 !
