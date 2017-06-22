@@ -124,6 +124,7 @@ module ccsd_class
       procedure :: jacobian_transpose_ccsd_a1 => jacobian_transpose_ccsd_a1_ccsd
       procedure :: jacobian_transpose_ccsd_b1 => jacobian_transpose_ccsd_b1_ccsd 
       procedure :: jacobian_transpose_ccsd_c1 => jacobian_transpose_ccsd_c1_ccsd 
+      procedure :: jacobian_transpose_ccsd_d1 => jacobian_transpose_ccsd_d1_ccsd
 !
 !     Routines to destroy amplitudes and omega 
 !
@@ -839,6 +840,27 @@ module ccsd_class
          real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
 !
       end subroutine jacobian_transpose_ccsd_c1_ccsd
+!
+!
+      module subroutine jacobian_transpose_ccsd_d1_ccsd(wf, sigma_a_i, b_ai_bj)
+!!
+!!       Jacobian transpose CCSD D1 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Calculates the D1 term,
+!!
+!!           - sum_ckdl (b_ckal F_id t_kl^cd + b_ckdi F_la t_kl^cd),
+!! 
+!!       and adds it to the transformed vector sigma_a_i.
+!!
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+         real(dp), dimension(wf%n_v, wf%n_o)                       :: sigma_a_i 
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
+!
+      end subroutine jacobian_transpose_ccsd_d1_ccsd
 !
 !
    end interface
