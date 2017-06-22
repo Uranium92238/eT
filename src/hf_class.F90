@@ -771,7 +771,7 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !
       logical :: reorder
 !
-      integer(i15) :: unit_chol_mo_ab = -1 ! Unit identifier for cholesky_ab file
+      integer(i15) :: unit_chol_mo_ab_direct = -1 ! Unit identifier for cholesky_ab file
       integer(i15) :: ioerror = 0
 !
       integer(i15) :: a = 0, b = 0, j = 0, i = 0, ab = 0, ab_full = 0, ba = 0, ba_full = 0
@@ -784,8 +784,8 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !
 !        Prepare for reading: generate unit identifier, open, and rewind file
 !  
-         call generate_unit_identifier(unit_chol_mo_ab)
-         open(unit=unit_chol_mo_ab, file='cholesky_ab_direct', action='read', status='unknown', &
+         call generate_unit_identifier(unit_chol_mo_ab_direct)
+         open(unit=unit_chol_mo_ab_direct, file='cholesky_ab_direct', action='read', status='unknown', &
               access='direct', form='unformatted', recl=dp*(wf%n_J), iostat=ioerror)
 !
          if (ioerror .ne. 0) then
@@ -797,20 +797,20 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
             do b = 1, b_length
                ab_full = index_packed(a + a_first - 1,b + b_first - 1)
                ab = index_two(a, b, a_length)
-               read(unit_chol_mo_ab, rec=ab_full) (L_ab_J(ab, J), J = 1, wf%n_J)
+               read(unit_chol_mo_ab_direct, rec=ab_full) (L_ab_J(ab, J), J = 1, wf%n_J)
             enddo
          enddo
 !
 !        Close file
 !        
-      close(unit_chol_mo_ab)
+      close(unit_chol_mo_ab_direct)
 !
       else
 !
 !        Prepare for reading: generate unit identifier, open, and rewind file
 !  
-         call generate_unit_identifier(unit_chol_mo_ab)
-         open(unit=unit_chol_mo_ab, file='cholesky_ab_direct', action='read', status='unknown', &
+         call generate_unit_identifier(unit_chol_mo_ab_direct)
+         open(unit=unit_chol_mo_ab_direct, file='cholesky_ab_direct', action='read', status='unknown', &
               access='direct', form='unformatted', recl=dp*(wf%n_J), iostat=ioerror)
          if (ioerror .ne. 0) then
             write(unit_output,*)'WARNING: error while reading cholesky_ab_direct'
@@ -821,13 +821,13 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
             do b = 1, b_length
                ba_full = index_packed(a + a_first - 1, b + b_first - 1)
                ba = index_two(b, a, b_length)
-               read(unit_chol_mo_ab, rec=ba_full) (L_ab_J(ba, J), J = 1, wf%n_J)
+               read(unit_chol_mo_ab_direct, rec=ba_full) (L_ab_J(ba, J), J = 1, wf%n_J)
             enddo
          enddo
 !
 !        Close file
 !        
-         close(unit_chol_mo_ab)
+         close(unit_chol_mo_ab_direct)
 !
       endif
 !

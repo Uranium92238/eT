@@ -37,6 +37,10 @@ module mlcc2_class
       integer(i15), dimension(:,:), allocatable :: n_CC2_o
       integer(i15), dimension(:,:), allocatable :: n_CC2_v
 !
+      integer(i15) :: n_s2am = 0 ! Number of CC2 double amplitudes, only needed for excited state calculation.
+!
+      integer(i15) :: n_total_active_o = 0 
+      integer(i15) :: n_total_active_v = 0 
    contains
 !
 !     Initialization and driver routines
@@ -63,6 +67,17 @@ module mlcc2_class
 !
       procedure :: calc_energy => calc_energy_mlcc2
 !
+!     Jacobian
+!
+      procedure :: initialize_excited_states     => initialize_excited_states_mlcc2
+      procedure :: calculate_orbital_differences => calculate_orbital_differences_mlcc2
+      procedure :: transform_trial_vectors       => transform_trial_vectors_mlcc2
+      procedure :: jacobian_mlcc2_transformation => jacobian_mlcc2_transformation_mlcc2
+      procedure :: jacobian_mlcc2_a1             => jacobian_mlcc2_a1_mlcc2
+      procedure :: jacobian_mlcc2_b1             => jacobian_mlcc2_b1_mlcc2
+      procedure :: jacobian_mlcc2_a2             => jacobian_mlcc2_a2_mlcc2
+      procedure :: jacobian_mlcc2_b2             => jacobian_mlcc2_b2_mlcc2
+!
    end type mlcc2
 !
    interface
@@ -78,19 +93,12 @@ module mlcc2_class
       end subroutine orbital_partitioning_mlcc2
 !
 !
-   module subroutine cholesky_localization_mlcc2(wf, orbitals, orbital_energies,&
-                                              n_nuclei, ao_center_info, n_ao_on_center, unit_cholesky_decomp)
+   module subroutine cholesky_localization_mlcc2(wf)
 !!
 !!
       implicit none
 !
       class(mlcc2) :: wf
-      real(dp), dimension(wf%n_ao, wf%n_mo) :: orbitals
-      real(dp), dimension(wf%n_mo, 1)       :: orbital_energies
-      integer(i15)                          :: n_nuclei
-      integer(i15), dimension(wf%n_ao,2)    :: ao_center_info
-      integer(i15), dimension(n_nuclei, 1)  :: n_ao_on_center
-      integer(i15)                          :: unit_cholesky_decomp
 !
       end subroutine cholesky_localization_mlcc2
 !
@@ -261,7 +269,7 @@ module mlcc2_class
    end subroutine omega_mlcc2_b1_mlcc2
 !
 !
-      module subroutine construct_omega_mlcc2(wf)
+   module subroutine construct_omega_mlcc2(wf)
 !  
 !        Construct Omega (CC2)
 !        Written by Eirik F. Kjønstad and Sarai Folkestad, Apr 2017
@@ -280,7 +288,165 @@ module mlcc2_class
 !
          class(mlcc2) :: wf
 !
-      end subroutine construct_omega_mlcc2
+   end subroutine construct_omega_mlcc2
+!
+!
+   module subroutine initialize_excited_states_mlcc2(wf)
+!!
+      implicit none 
+!    
+      class(mlcc2) :: wf
+!
+   end subroutine initialize_excited_states_mlcc2
+!  
+!
+   module subroutine calculate_orbital_differences_mlcc2(wf, orbital_diff)
+!!
+!!       Calculate Orbital Differences (CCSD)
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad May 2017
+!!
+!!       Calculates orbital differences
+!!
+!!          1) ε_I^A = ε_A - ε_I
+!!          2) ε_ij^ab = ε_a + ε_b - ε_i - ε_j (for active spaces only)
+!!
+!!       and puts them in orbital_diff, which is a vector of length n_parameters.        
+!!
+         implicit none
+!
+         class(mlcc2) :: wf
+!
+         real(dp), dimension(wf%n_parameters, 1) :: orbital_diff
+!
+   end subroutine calculate_orbital_differences_mlcc2
+!
+!
+   module subroutine transform_trial_vectors_mlcc2(wf, first_trial, last_trial)
+!!
+!!    Transformation Trial Vectors (CCSD)
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!    Each trial vector in first_trial to last_trial is read from file and
+!!    transformed before the transformed vector is written to file.
+!!
+!!    Singles and doubles part of the transformed vectors are written to 
+!!    the same record in file transformed_vec, record length is n_parameters long.
+!!
+      implicit none
+!
+      class(mlcc2) :: wf
+!
+      integer(i15), intent(in) :: first_trial, last_trial ! Which trial_vectors we are to transform
+!
+   end subroutine transform_trial_vectors_mlcc2
+!
+!
+   module subroutine jacobian_mlcc2_transformation_mlcc2(wf, c_a_i, c_aibj)
+!!
+!!    Jacobian transformation (MLCC2)
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
+!!
+!!    Directs the transformation by the CCSD Jacobi matrix,
+!!
+!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >,
+!!
+!!    where the basis employed for the brackets is biorthonormal. 
+!!    The transformation is rho = A c, i.e., 
+!!
+!!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck 
+!!                  + 1/2 sum_ckdl A_mu,ckdl c_ckdl (1 + delta_ck,dl).
+!!
+!!    On exit, c is overwritten by rho. That is, c_a_i = rho_a_i,
+!!    and c_aibj = rho_aibj. 
+!!
+      implicit none
+!
+      class(mlcc2) :: wf 
+!
+!     Incoming vector c 
+!
+      real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai 
+      real(dp), dimension(wf%n_s2am, 1)   :: c_aibj ! c_aibj    
+   end subroutine jacobian_mlcc2_transformation_mlcc2
+!
+!
+   module subroutine jacobian_mlcc2_a1_mlcc2(wf, rho_a_i, c_a_i)
+!!
+!!
+!!    A1: 2*sum_BJck u_ik^ac*g_kc,JB*c_BJ - sum_Bjck u_kj^ca*g_kc,jB*c_BI
+!!        - sum_BJck u_ik^ac*g_kB,Jc*c_BJ - sum_bJck u_ki^cb*g_kc,Jb*c_AJ 
+!!
+      implicit none
+!
+      class(mlcc2) :: wf 
+!
+!     Incoming vectors c and rho 
+!
+      real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i 
+      real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i 
+!
+   end subroutine jacobian_mlcc2_a1_mlcc2
+!
+!
+   module subroutine jacobian_mlcc2_b1_mlcc2(wf, rho_a_i, c_ai_bj, n_active_o, &
+                                              n_active_v, first_active_o, first_active_v)
+!!
+!!
+!!    B1:   sum_ck F_kc*(2c_ai,ck - c_ak,ci) 
+!!        - sum_ckj L_jIkc * c_aj,ck + sum_cbk L_Abkc * c_bi,ck
+!!
+!!
+      implicit none
+!  
+      class(mlcc2) :: wf
+!
+      real(dp), dimension((n_active_v)*(n_active_o), (n_active_v)*(n_active_o))   :: c_ai_bj 
+      real(dp), dimension(wf%n_v, wf%n_o)                                                                             :: rho_a_i
+      integer(i15) :: n_active_o, n_active_v
+      integer(i15) :: first_active_o, first_active_v
+!
+   end subroutine jacobian_mlcc2_b1_mlcc2
+!
+!
+   module subroutine jacobian_mlcc2_a2_mlcc2(wf, rho_ai_bj, c_a_i,&
+                                  n_active_o, n_active_v, first_active_o, first_active_v)
+!!
+!!
+!!    A2:   sum_C g_aibC*c_Cj - sum_K g_aiKb*C_bK
+!!
+!!
+      implicit none
+!  
+      class(mlcc2) :: wf
+!
+      real(dp), dimension((n_active_v)*(n_active_o), (n_active_v)*(n_active_o))   :: rho_ai_bj 
+      real(dp), dimension(wf%n_v, wf%n_o)                                                                             :: c_a_i 
+      integer(i15) :: n_active_o, n_active_v
+      integer(i15) :: first_active_o, first_active_v
+!
+   end subroutine jacobian_mlcc2_a2_mlcc2
+!
+!
+   module subroutine jacobian_mlcc2_b2_mlcc2(wf, rho_ai_bj, c_ai_bj,&
+                                  n_active_o, n_active_v, first_active_o, first_active_v)
+!!
+!!
+!!    B2:   ε_ij^ab*c_ai,bj
+!!
+!!
+      implicit none
+!  
+      class(mlcc2) :: wf
+!
+      real(dp), dimension((n_active_v)*(n_active_o), (n_active_v)*(n_active_o))   :: c_ai_bj 
+      real(dp), dimension((n_active_v)*(n_active_o), (n_active_v)*(n_active_o))   :: rho_ai_bj
+      integer(i15) :: n_active_o, n_active_v
+      integer(i15) :: first_active_o, first_active_v 
+!
+!
+   end subroutine jacobian_mlcc2_b2_mlcc2
+!
+!
    end interface
 !
 contains
@@ -309,6 +475,7 @@ contains
 !     Set implemented methods
 !
       wf%implemented%ground_state = .true.
+      wf%implemented%excited_state = .true.
 !
 !     Read Hartree-Fock info
 !
@@ -333,6 +500,7 @@ contains
 !     Initialize amplitudes and associated attributes
 !
       call wf%initialize_amplitudes
+      call wf%initialize_omega
 !
 !     Set the number of parameters in the wavefunction
 !     (that are solved for in the ground and excited state solvers) 
@@ -610,11 +778,16 @@ contains
 !
          enddo ! End of batching
       enddo ! End loop over active spaces
+!
       call deallocator(g_ia_jb, wf%n_o*wf%n_v, wf%n_o*wf%n_v)
 !
    end subroutine calc_energy_mlcc2
+!
+!
    subroutine initialize_orbital_info_mlcc2(wf)
 !!
+!!    Initialize orbital information
+!!    Written by Sarai D. Folkestad, June 2017
 !!
       implicit none
 !
@@ -630,6 +803,8 @@ contains
 !
    subroutine destruct_orbital_info_mlcc2(wf)
 !!
+!!    Destruct orbital info
+!!    Written by Sarai D. Folkestad, June 2017
 !!
       implicit none
 !
@@ -643,7 +818,11 @@ contains
 !
    subroutine get_CC2_active_indices_mlcc2(wf, first_o, first_v, active_space)
 !!
+!!    Get CC2 active indices,
+!!    Written by Sarai D. Folkestad, June 2017
 !!
+!!    Returns the first active occupied and virtual indices 
+!!    of the active space.
 !!
    implicit none
 !
@@ -654,8 +833,6 @@ contains
 !
    integer(i15) :: i
 !
-
-!
    first_o = 1
    first_v = 1
 !
@@ -665,4 +842,6 @@ contains
    enddo
 !
    end subroutine get_CC2_active_indices_mlcc2
+!
+!
 end module mlcc2_class

@@ -18,6 +18,14 @@ submodule (ccs_class) jacobian
 contains
 !
 !
+   module subroutine initialize_excited_states_ccs(wf)
+!!
+      implicit none 
+!    
+      class(ccs) :: wf
+!
+   end subroutine initialize_excited_states_ccs
+!
       module subroutine initialize_trial_vectors_ccs(wf)
 !!
 !!       Initialize trial vectors
@@ -233,6 +241,7 @@ contains
          call get_n_lowest(wf%tasks%n_singlet_states, wf%n_parameters, orbital_diff, lowest_orbital_diff, index_list)
 !
          call deallocator(orbital_diff,wf%n_parameters,1)
+!
 !
          call deallocator(lowest_orbital_diff, wf%tasks%n_singlet_states, 1)
 !

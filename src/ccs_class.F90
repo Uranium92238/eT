@@ -136,6 +136,7 @@ module ccs_class
 !
 !     Helper routines 
 !
+      procedure :: initialize_excited_states     => initialize_excited_states_ccs
       procedure :: transform_trial_vectors       => transform_trial_vectors_ccs
       procedure :: calculate_orbital_differences => calculate_orbital_differences_ccs ! Must be overwritten for CCSD 
 !
@@ -423,6 +424,15 @@ module ccs_class
          real(dp), dimension(wf%n_parameters, 1) :: t_dt 
 !
       end subroutine diis_ccs
+!
+!
+      module subroutine initialize_excited_states_ccs(wf)
+!!
+         implicit none 
+!    
+         class(ccs) :: wf
+!
+      end subroutine initialize_excited_states_ccs
 !
 !
       module subroutine initialize_trial_vectors_ccs(wf)

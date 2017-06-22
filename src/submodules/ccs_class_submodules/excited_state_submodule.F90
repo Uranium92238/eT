@@ -12,7 +12,7 @@ submodule (ccs_class) excited_state
 !  Some variables available to all routines of the module
 !
    integer(i15) :: iteration = 1
-   integer(i15) :: max_iterations = 50 ! E: we move this to calculation settings later
+   integer(i15) :: max_iterations = 50! E: we move this to calculation settings later
 !
 !  Variables to handle convergence criterea
 !
@@ -107,8 +107,17 @@ contains
       reduced_dim  = wf%tasks%n_singlet_states
       n_new_trials = wf%tasks%n_singlet_states
 !
+!     Initialize for excited state calc 
+!     Does nothing for CCS, but is overwritten for CC2 excited states
+!
+      write(unit_output,*)'Initialize excited states'
+      flush(unit_output)
+      call wf%initialize_excited_states
+!
 !     Find start trial vectors and store them to the trial_vec file
 !
+       write(unit_output,*)'Initialize trials'
+       flush(unit_output)
       call wf%initialize_trial_vectors
 !
 !     If restart use old solution vectors for first start vectors
@@ -145,6 +154,8 @@ contains
 !        Transform new trial vectors  
 !        rho_i = A * c_i
 !
+          write(unit_output,*)'Transform trials'
+          flush(unit_output)
          call wf%transform_trial_vectors(reduced_dim - n_new_trials + 1, reduced_dim)
 !
 !        Allocate solution vectors for reduced problem

@@ -650,11 +650,13 @@ contains
 !
                   enddo
                enddo
-            enddo        
+            enddo
+            call deallocator(L_ba_J, (wf%n_v)*batch_length, wf%n_J)    
 !
 !           Calculate sum_b L_Ja_b*t_b_i = L_Ja_i 
 !           
             L_off = index_two(1, batch_start, wf%n_J)
+!
 !
             call dgemm('N','N',                &
                         batch_length*(wf%n_J), &
@@ -669,9 +671,9 @@ contains
                         L_Ja_i(L_off, 1),      &
                         (wf%n_v)*(wf%n_J))
 !
-!           Deallocate L_ab_J and L_Ja_b
 !
-            call deallocator(L_ba_J, (wf%n_v)*batch_length, wf%n_J)
+!           Deallocate  L_Ja_b
+!
             call deallocator(L_Ja_b, batch_length*(wf%n_J), wf%n_v)
 !
          enddo ! batching over a 

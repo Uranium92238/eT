@@ -1,5 +1,19 @@
 submodule (mlcc2_class) orbital_partitioning
 !
+!!
+!!    Orbital partitioning submodule (MLCC2) 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2017
+!!
+!!    Contains the following family of procedures of the MLCC2 class:
+!!
+!!    orbital_partitioning:   Directs the orbital partitioning
+!!    cholesky_localization:  Directs orbital localization by cholesky decomposition  
+!!    cholesky_orbital_drv:   Directs construction of new orbitals                     
+!!    cholesky_decomposition: Cholesky decomposes the density
+!!    cholesky_orbitals:      Constructs new orbitals (C matrix) from cholesky vectors 
+!! 
+!!    Contains the following subroutines and functions
+!
    implicit none 
 !
    logical :: debug = .true.
@@ -15,19 +29,53 @@ contains
 !
       class(mlcc2) :: wf
 !
+      if (wf%mlcc_settings%cholesky) then
+
+         call wf%cholesky_localization
+!
+      endif
+!
+   end subroutine orbital_partitioning_mlcc2
+!
+!
+   module subroutine cholesky_localization_mlcc2(wf)
+!!
+!!
+      implicit none
+!
+      class(mlcc2) :: wf
+!
       real(dp), dimension(:,:), allocatable     :: orbitals
-      real(dp), dimension(:,:), allocatable     :: orbital_energies 
+      real(dp), dimension(:,:), allocatable     :: orbital_energies
+      integer(i15)                              :: n_nuclei
       integer(i15), dimension(:,:), allocatable :: ao_center_info, n_ao_on_center
+      integer(i15)                              :: active_space = 0, n_CC2_atoms = 0
+      integer(i15)                              :: offset_o = 0, offset_v = 0
+      integer(i15), dimension(:,:), allocatable :: active_atoms
+      integer(i15), dimension(:,:), allocatable :: active_ao_index_list
+      integer(i15)                              :: n_active_aos = 0
+      integer(i15), dimension(:,:), allocatable :: n_vectors_o, n_vectors_v
 !
-      integer(i15) :: n_nuclei
-      real(dp)     :: start_chol_deco = 0, end_chol_deco = 0
+!     Timing variables
 !
-      logical :: file_exists     
+      real(dp) :: start_chol_deco = 0, end_chol_deco = 0
+!
+!     IO-variables
+!
+      logical      :: file_exists     
       integer(i15) :: unit_cholesky_decomp = 0, ioerror = 0
 !
-      if (wf%mlcc_settings%cholesky) then
+!     Indices
 !
-!     Timings
+      integer(i15) :: i = 0, j = 0, ij = 0
+!
+!     Allocatables
+!
+      real(dp), dimension(:,:), allocatable :: density_o, density_v
+      real(dp), dimension(:,:), allocatable :: ao_fock
+      real(dp), dimension(:,:), allocatable :: C
+!
+!     Start timings
 !
       call cpu_time(start_chol_deco)
 !
@@ -37,98 +85,43 @@ contains
 !
       write(unit_output,'(/t3,a/)')    ':: Cholesky decomposition '
 !
-!        :: Get center info
+!     Get center info
 !
-         call read_atom_info(n_nuclei, wf%n_ao)
+      call read_atom_info(n_nuclei, wf%n_ao)
 !
-         call allocator_int(n_ao_on_center, n_nuclei, 1)      
-         call allocator_int(ao_center_info, wf%n_ao, 2)
+      call allocator_int(n_ao_on_center, n_nuclei, 1)      
+      call allocator_int(ao_center_info, wf%n_ao, 2)
 !
-         call read_center_info(n_nuclei, wf%n_ao, n_ao_on_center, ao_center_info)
+      call read_center_info(n_nuclei, wf%n_ao, n_ao_on_center, ao_center_info)
 !
+!     Check that cholesky.inp exists
 !
-!        Check that cholesky.inp exists
-!
-         inquire(file='cholesky.inp', exist=file_exists)
-         if (.not. file_exists) then
-            write(unit_output,*) 'WARNING: Input file for cholesky decomposition is not found.'
-            stop
-         endif
-!
-!        Open cholesky.inp
-!
-         call generate_unit_identifier(unit_cholesky_decomp)
-         open(unit=unit_cholesky_decomp, file='cholesky.inp', status='unknown', form='formatted', iostat=ioerror)
-         if (ioerror .ne. 0) write(unit_output)'WARNING: Error while opening cholesky.inp'
-         rewind(unit_cholesky_decomp)
-!
-!        Get number of active spaces
-!
-         wf%n_active_spaces = get_number_of_active_spaces(unit_cholesky_decomp)
-!
-!        Initialize orbital info variables
-!
-         call wf%initialize_orbital_info
-!
-!        Cholesky localized orbitals
-!
-         call allocator (orbitals, wf%n_ao, wf%n_mo)
-         call allocator (orbital_energies, wf%n_mo, 1)
-!
-         call wf%cholesky_localization(orbitals, orbital_energies, n_nuclei, &
-                                             ao_center_info, n_ao_on_center, unit_cholesky_decomp)
-!
-         wf%mo_coef       = orbitals
-         wf%fock_diagonal = orbital_energies
-!
-         call deallocator (orbitals, wf%n_ao, wf%n_mo)
-         call deallocator (orbital_energies, wf%n_mo, 1)
-         call deallocator_int(n_ao_on_center, n_nuclei, 2)
-         call deallocator_int(ao_center_info, wf%n_ao, 2)
-!        
-!        Close cholesky.inp
-!
-         close(unit_cholesky_decomp)
-!
-!       Print timings
-!
-         call cpu_time(end_chol_deco)
-         write(unit_output,'(/t3,a27,f14.8/)') 'Total time (seconds):', end_chol_deco - start_chol_deco
-         flush(unit_output)
-!
+      inquire(file='cholesky.inp', exist=file_exists)
+      if (.not. file_exists) then
+         write(unit_output,*) 'WARNING: Input file for cholesky decomposition is not found.'
+         stop
       endif
 !
-   end subroutine orbital_partitioning_mlcc2
+!     Open cholesky.inp
 !
+      call generate_unit_identifier(unit_cholesky_decomp)
+      open(unit=unit_cholesky_decomp, file='cholesky.inp', status='unknown', form='formatted', iostat=ioerror)
+      if (ioerror .ne. 0) write(unit_output,*)'WARNING: Error while opening cholesky.inp'
+      rewind(unit_cholesky_decomp)
 !
-   module subroutine cholesky_localization_mlcc2(wf, orbitals, orbital_energies,&
-                                              n_nuclei, ao_center_info, n_ao_on_center, unit_cholesky_decomp)
-!!
-!!
-      implicit none
+!     Get number of active spaces
 !
-      class(mlcc2) :: wf
-      real(dp), dimension(wf%n_ao, wf%n_mo) :: orbitals
-      real(dp), dimension(wf%n_mo, 1)       :: orbital_energies
-      integer(i15)                          :: n_nuclei
-      integer(i15), dimension(wf%n_ao,2)    :: ao_center_info
-      integer(i15), dimension(n_nuclei, 1)  :: n_ao_on_center
-      integer(i15)                          :: unit_cholesky_decomp
+      wf%n_active_spaces = get_number_of_active_spaces(unit_cholesky_decomp)
 !
-      integer(i15) :: active_space = 0, n_CC2_atoms = 0
-      integer(i15) :: offset_o = 0, offset_v = 0
-      integer(i15) :: i = 0, j = 0, ij = 0
+!     Initialize orbital info variables
 !
-      integer(i15), dimension(:,:), allocatable :: active_atoms
-      integer(i15), dimension(:,:), allocatable :: active_ao_index_list
+      call wf%initialize_orbital_info
 !
-      real(dp), dimension(:,:), allocatable :: density_o, density_v
-      real(dp), dimension(:,:), allocatable :: ao_fock
-      real(dp), dimension(:,:), allocatable :: C
+!     Cholesky localized orbitals
 !
-      integer(i15) :: n_active_aos = 0
+      call allocator (orbitals, wf%n_ao, wf%n_mo)
+      call allocator (orbital_energies, wf%n_mo, 1)
 !
-      integer(i15), dimension(:,:), allocatable :: n_vectors_o, n_vectors_v
 !
 !     Print number of active spaces requested active spaces
 !
@@ -160,7 +153,7 @@ contains
       call allocator_int(n_vectors_o, wf%n_active_spaces + 1, 1)
       call allocator_int(n_vectors_v, wf%n_active_spaces + 1, 1)
 !
-!     Start loop
+!     Start loop over active spaces
 !
       do active_space = 1, wf%n_active_spaces
 !
@@ -225,6 +218,11 @@ contains
 !
          call deallocator_int(active_atoms, n_CC2_atoms, 1)
          call deallocator_int(active_ao_index_list, n_active_aos, 1)
+!
+!        Save active space information
+!
+         wf%n_CC2_o(active_space, 1) = n_vectors_o(active_space, 1)
+         wf%n_CC2_v(active_space, 1) = n_vectors_v(active_space, 1)
 !   
       enddo
 !
@@ -241,19 +239,110 @@ contains
                               .false., n_active_aos)
 !
       call deallocator(density_v, wf%n_ao, wf%n_ao)   
+      call deallocator(density_o, wf%n_ao, wf%n_ao)   
       call deallocator(ao_fock, wf%n_ao, wf%n_ao)
 !
-      do active_space = 1, wf%n_active_spaces
-         wf%n_CC2_o(active_space, 1) = n_vectors_o(active_space, 1)
-         wf%n_CC2_v(active_space, 1) = n_vectors_v(active_space, 1)
-      enddo
+!     Save inactive space information
 !
-      wf%n_CCS_o = n_vectors_o(wf%n_active_spaces, 1)
-      wf%n_CCS_v = n_vectors_v(wf%n_active_spaces, 1)
+      wf%n_CCS_o = n_vectors_o(wf%n_active_spaces + 1, 1)
+      wf%n_CCS_v = n_vectors_v(wf%n_active_spaces + 1, 1)
+!
       call deallocator_int(n_vectors_o, wf%n_active_spaces + 1, 1)
       call deallocator_int(n_vectors_v, wf%n_active_spaces + 1, 1)
 !
+!     Check orthogonality
+!
+!     NEED OVERLAP MATRIX!
+!
+      wf%mo_coef       = orbitals
+      wf%fock_diagonal = orbital_energies
+!
+      call deallocator (orbitals, wf%n_ao, wf%n_mo)
+      call deallocator (orbital_energies, wf%n_mo, 1)
+      call deallocator_int(n_ao_on_center, n_nuclei, 2)
+      call deallocator_int(ao_center_info, wf%n_ao, 2)
+!     
+!     Close cholesky.inp
+!
+      close(unit_cholesky_decomp)
+!
+!     Print timings
+!
+      call cpu_time(end_chol_deco)
+      write(unit_output,'(/t3,a27,f14.8/)') 'Total time (seconds):', end_chol_deco - start_chol_deco
+      flush(unit_output)
+!
+!
    end subroutine cholesky_localization_mlcc2
+!
+!
+   module subroutine cholesky_orbital_drv_mlcc2(wf, orbitals, orbital_energies, offset, ao_fock, density, n_vectors,&
+                              selection, n_active_aos, active_ao_index_list)
+!!
+!!
+      implicit none
+!
+      class(mlcc2)                                       :: wf
+      real(dp), dimension(wf%n_ao, wf%n_mo)              :: orbitals
+      real(dp), dimension(wf%n_mo, 1)                    :: orbital_energies
+      real(dp), dimension(wf%n_ao, wf%n_ao)              :: ao_fock
+      integer(i15)                                       :: n_active_aos, offset
+      integer(i15)                                       :: n_vectors
+      real(dp), dimension(wf%n_ao,wf%n_ao)               :: density
+      logical                                            :: selection
+      integer(i15), dimension( n_active_aos,1), optional :: active_ao_index_list
+!
+      real(dp), dimension(:,:), allocatable              :: cholesky
+      real(dp), dimension(:,:), allocatable              :: orbitals_temp
+      real(dp), dimension(:,:), allocatable              :: orbital_energies_temp
+!
+      integer(i15) :: i = 0, j = 0
+!
+      if (selection .and. (.not. present(active_ao_index_list)) ) then
+         write(unit_output,*) 'WARNING: Illegal argument list for cholesky decomposition'
+            stop
+      endif
+!
+      call allocator(cholesky, wf%n_ao, wf%n_ao)     
+        
+      cholesky = zero   
+!
+!     Construct cholesky vectors
+!
+      if (selection) then
+         call wf%cholesky_decomposition(density, cholesky, &
+                                               n_vectors, .true., n_active_aos, active_ao_index_list)
+      else 
+         call wf%cholesky_decomposition(density, cholesky, &
+                                               n_vectors, .false., n_active_aos)
+      endif   
+!
+!     Construct cholesky orbitals
+!
+      call allocator(orbitals_temp, wf%n_ao, n_vectors)
+      call allocator(orbital_energies_temp, n_vectors,1)
+      orbitals_temp = zero     
+      orbital_energies_temp = zero
+!
+      call wf%cholesky_orbitals(cholesky, n_vectors, orbitals_temp, orbital_energies_temp, ao_fock)       
+!
+!     Place new orbitals and orbital energies in array
+!
+
+      do i = 1, wf%n_ao
+         do j = 1, n_vectors
+            orbitals(i,j + offset - 1)         = orbitals_temp(i, j)
+            orbital_energies(j + offset - 1,1) = orbital_energies_temp(j,1)
+         enddo
+      enddo
+!
+!     Deallocations
+!
+      call deallocator(cholesky, wf%n_ao, wf%n_ao)
+      call deallocator(orbitals_temp, wf%n_ao, n_vectors)
+      call deallocator(orbital_energies_temp, n_vectors,1)
+!
+   end subroutine cholesky_orbital_drv_mlcc2
 !
 !
    module subroutine cholesky_decomposition_mlcc2(wf, density, cholesky_vectors,&
@@ -555,6 +644,7 @@ contains
          elseif(trim(line) == '#end of Cholesky input') then
 !
             backspace(unit_cholesky_decomp)
+            get_number_of_active_atoms = 0
             return
 !
          endif
@@ -659,7 +749,7 @@ contains
 !
       call generate_unit_identifier(unit_center)
       open(unit=unit_center, file='center_info', status='unknown', form='unformatted', iostat=ioerror)
-      if (ioerror .ne. 0) write(unit_output)'WARNING: Error while opening center_info'
+      if (ioerror .ne. 0) write(unit_output,*)'WARNING: Error while opening center_info'
       rewind(unit_center)
 !
 !     Read number of nuclei and aos
@@ -689,7 +779,7 @@ contains
 !
       call generate_unit_identifier(unit_center)
       open(unit=unit_center, file='center_info', status='unknown', form='unformatted', iostat=ioerror)
-      if (ioerror .ne. 0) write(unit_output)'WARNING: Error while opening center_info'
+      if (ioerror .ne. 0) write(unit_output,*)'WARNING: Error while opening center_info'
       rewind(unit_center)
 !
 !     Empty read 
@@ -719,75 +809,6 @@ contains
       close(unit_center)
 !
    end subroutine read_center_info
-!
-!
-   module subroutine cholesky_orbital_drv_mlcc2(wf, orbitals, orbital_energies, offset, ao_fock, density, n_vectors,&
-                              selection, n_active_aos, active_ao_index_list)
-!!
-!!
-      implicit none
-!
-      class(mlcc2)                                       :: wf
-      real(dp), dimension(wf%n_ao, wf%n_mo)              :: orbitals
-      real(dp), dimension(wf%n_mo, 1)                    :: orbital_energies
-      real(dp), dimension(wf%n_ao, wf%n_ao)              :: ao_fock
-      integer(i15)                                       :: n_active_aos, offset
-      integer(i15)                                       :: n_vectors
-      real(dp), dimension(wf%n_ao,wf%n_ao)               :: density
-      logical                                            :: selection
-      integer(i15), dimension( n_active_aos,1), optional :: active_ao_index_list
-!
-      real(dp), dimension(:,:), allocatable              :: cholesky
-      real(dp), dimension(:,:), allocatable              :: orbitals_temp
-      real(dp), dimension(:,:), allocatable              :: orbital_energies_temp
-!
-      integer(i15) :: i = 0, j = 0
-!
-      if (selection .and. (.not. present(active_ao_index_list)) ) then
-         write(unit_output,*) 'WARNING: Illegal argument list for cholesky decomposition'
-            stop
-      endif
-!
-      call allocator(cholesky, wf%n_ao, wf%n_ao)     
-        
-      cholesky = zero   
-!
-!     Construct cholesky vectors
-!
-      if (selection) then
-         call wf%cholesky_decomposition(density, cholesky, &
-                                               n_vectors, .true., n_active_aos, active_ao_index_list)
-      else 
-         call wf%cholesky_decomposition(density, cholesky, &
-                                               n_vectors, .false., n_active_aos)
-      endif   
-!
-!     Construct cholesky orbitals
-!
-      call allocator(orbitals_temp, wf%n_ao, n_vectors)
-      call allocator(orbital_energies_temp, n_vectors,1)
-      orbitals_temp = zero     
-      orbital_energies_temp = zero
-!
-      call wf%cholesky_orbitals(cholesky, n_vectors, orbitals_temp, orbital_energies_temp, ao_fock)       
-!
-!     Place new orbitals and orbital energies in array
-!
-
-      do i = 1, wf%n_ao
-         do j = 1, n_vectors
-            orbitals(i,j + offset - 1)         = orbitals_temp(i, j)
-            orbital_energies(j + offset - 1,1) = orbital_energies_temp(j,1)
-         enddo
-      enddo
-!
-!     Deallocations
-!
-      call deallocator(cholesky, wf%n_ao, wf%n_ao)
-      call deallocator(orbitals_temp, wf%n_ao, n_vectors)
-      call deallocator(orbital_energies_temp, n_vectors,1)
-!
-   end subroutine cholesky_orbital_drv_mlcc2
 !
 !
 end submodule orbital_partitioning
