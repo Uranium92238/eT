@@ -494,17 +494,23 @@ contains
 !!    Reads the MO Cholesky IJ (occ-occ) vectors from file and 
 !!    places them in the incoming L_ij_J matrix
 !!
+!!    Optional arguments: i_first, i_last, j_first, j_last can be used in order to restrict indices
+!!
       implicit none
 !
-      class(hf)    :: wf
-      integer(i15), optional ::  i_first, i_last, j_first, j_last
-!
+      class(hf)                :: wf
+      integer(i15), optional   :: i_first, j_first     ! First index (can differ from 1 when batching or for mlcc) 
+      integer(i15), optional   :: i_last, j_last      ! Last index (can differ from n_o when batching or for mlcc)   
       real(dp), dimension(:,:) :: L_ij_J ! L_ij^J
 !
-      integer(i15) :: unit_chol_mo_ij = -1 ! Unit identifier for cholesky_ij file 
-      integer(i15) :: i = 0, j = 0, k = 0, ij = 0, ik = 0, ij_full
-      integer(i15) :: i_length, j_length
+!     Local routine variables 
+!
+      integer(i15) :: unit_chol_mo_ij = -1 ! Unit identifier for cholesky_ij file
       integer(i15) :: ioerror
+!
+      integer(i15) :: i = 0, j = 0, k = 0, ij = 0, ik = 0, ij_full
+!
+      integer(i15) :: i_length, j_length ! number of i and j elements
 !
 !
       if (present(i_first) .and. present(i_last) .and. present(j_first) .and. present(j_last)) then
@@ -580,16 +586,23 @@ contains
 !!    Reads the MO Cholesky IA (occ-vir) vectors from file and
 !!    places them in the incoming L_ia_J matrix
 !!
+!!
+!!    Optional arguments: i_first, i_last, a_first, a_last can be used in order to restrict indices
+!!
       implicit none
 !
-      class(hf) :: wf    
-      integer(i15), optional ::  i_first, i_last, a_first, a_last
-!
+      class(hf)                :: wf    
+      integer(i15), optional   :: i_first, a_first     ! First index (can differ from 1 when batching or for mlcc) 
+      integer(i15), optional   :: i_last, a_last      ! Last index (can differ from n_o when batching or for mlcc) 
       real(dp), dimension(:,:) :: L_ia_J ! L_ia^J
+!
+!     Local routine variables
 !
       integer(i15) :: unit_chol_mo_ia = -1 ! Unit identifier for cholesky_ia file
       integer(i15) :: ioerror = 0
+!
       integer(i15) :: i = 0, j = 0, a = 0, ia = 0, ia_full = 0
+!
       integer(i15) :: i_length, a_length
 !
       if (present(i_first) .and. present(i_last) .and. present(a_first) .and. present(a_last)) then
@@ -661,12 +674,16 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !!    Reads the MO Cholesky AI (vir-occ) vectors from file and
 !!    places them in the incoming L_ai_J matrix
 !!
+!!    Optional arguments: i_first, i_last, a_first, a_last can be used in order to restrict indices
+!!
       implicit none
 !
-      class(hf) :: wf
-      integer(i15), optional ::  i_first, i_last, a_first, a_last
-!
+      class(hf)                 :: wf
+      integer(i15), optional    :: i_first, a_first     ! First index (can differ from 1 when batching or for mlcc) 
+      integer(i15), optional    :: i_last, a_last      ! Last index (can differ from n_o when batching or for mlcc) 
       real(dp), dimension(:, :) :: L_ai_J ! L_ai^J
+!
+!     Local routine variables
 !
       real(dp), dimension(:,:), allocatable :: L_ia_J       
 !
@@ -750,7 +767,7 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
    end subroutine read_cholesky_ai_hf
 !
 !
-    subroutine read_cholesky_ab_hf(wf, L_ab_J, a_first, a_last, b_first, b_last, reorder)
+    subroutine read_cholesky_ab_hf(wf, L_ab_J, a_first, a_last, b_first, b_last)
 !!
 !!    Read Cholesky AB 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -759,39 +776,37 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !!    places them in the incoming L_ab_J matrix, with batching 
 !!    if necessary
 !!
+!!    Optional arguments: b_first, b_last, a_first, a_last can be used in order to restrict indices
 !!
       implicit none
 !
-      class(hf) :: wf
-!
-      integer(i15), intent(in) :: a_first, b_first   ! First index (can differ from 1 when batching)
-      integer(i15), intent(in) :: a_last, b_last    ! Last index  (can differ from n_v when batching)
-!  
+      class(hf)                :: wf
+      integer(i15), intent(in) :: a_first, b_first   ! First index (can differ from 1 when batching  or for mlcc)
+      integer(i15), intent(in) :: a_last, b_last    ! Last index  (can differ from n_v when batching or for mlcc)
       real(dp), dimension(((a_last - a_first + 1)*(b_last - b_first + 1)), wf%n_J) :: L_ab_J ! L_ab^J
 !
-      logical :: reorder
 !
       integer(i15) :: unit_chol_mo_ab_direct = -1 ! Unit identifier for cholesky_ab file
       integer(i15) :: ioerror = 0
 !
-      integer(i15) :: a = 0, b = 0, j = 0, i = 0, ab = 0, ab_full = 0, ba = 0, ba_full = 0
+      integer(i15) :: a = 0, b = 0, j = 0, i = 0, ab = 0, ab_full = 0
       integer(i15) :: a_length, b_length
 !
       a_length = a_last - a_first + 1
       b_length = b_last - b_first + 1
+
 !
-      if (.not. reorder) then
-!
-!        Prepare for reading: generate unit identifier, open, and rewind file
+!     Prepare for reading: generate unit identifier, open, and rewind file
 !  
-         call generate_unit_identifier(unit_chol_mo_ab_direct)
-         open(unit=unit_chol_mo_ab_direct, file='cholesky_ab_direct', action='read', status='unknown', &
-              access='direct', form='unformatted', recl=dp*(wf%n_J), iostat=ioerror)
+      call generate_unit_identifier(unit_chol_mo_ab_direct)
+      open(unit=unit_chol_mo_ab_direct, file='cholesky_ab_direct', action='read', status='unknown', &
+            access='direct', form='unformatted', recl=dp*(wf%n_J), iostat=ioerror)
+
 !
-         if (ioerror .ne. 0) then
-            write(unit_output,*)'WARNING: error while reading cholesky_ab_direct.', ioerror
-            stop
-         endif
+      if (ioerror .ne. 0) then
+         write(unit_output,*)'WARNING: error while reading cholesky_ab_direct.', ioerror
+         stop
+      endif
 !
          do a = 1, a_length
             do b = 1, b_length
@@ -800,6 +815,7 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
                read(unit_chol_mo_ab_direct, rec=ab_full) (L_ab_J(ab, J), J = 1, wf%n_J)
             enddo
          enddo
+      enddo
 !
 !        Close file
 !        
@@ -830,6 +846,9 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
          close(unit_chol_mo_ab_direct)
 !
       endif
+!     Close file
+!     
+      close(unit_chol_mo_ab)
 !
    end subroutine read_cholesky_ab_hf
 !

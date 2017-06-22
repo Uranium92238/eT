@@ -32,14 +32,19 @@ contains
 !!
 !!    Memory required in routine:
 !!
-!!       2*n_J*n_o*n_v     -> for reading L_ia_J contribution and reordering
+!!       2*n_J*(i_length)*n_v     -> for reading L_ia_J contribution and reordering
+!!       i_length = i_last - i_first + 1
+!!
+!!    Optional arguments: i_first, i_last, j_first, j_last can be used in order to restrict indices
 !!        
       implicit none 
 !
-      class(ccs) :: wf
-      integer(i15), optional ::  i_first, i_last, j_first, j_last
-!
+      class(ccs)               :: wf
+      integer(i15), optional   :: i_first, j_first     ! First index (can differ from 1 when batching or for mlcc)
+      integer(i15), optional   :: i_last, j_last      ! Last index (can differ from n_o when batching or for mlcc)
       real(dp), dimension(:,:) :: L_ij_J
+!
+!     Local routine variables
 !
       real(dp), dimension(:,:), allocatable :: L_ia_J ! L_ia^J
       real(dp), dimension(:,:), allocatable :: L_iJ_a ! L_ia^J reordered
@@ -213,11 +218,13 @@ contains
 !!
 !!       No additional memory
 !!
+!!    Optional arguments: i_first, i_last, a_first, a_last can be used in order to restrict indices
+!!
       implicit none 
 !
-      class(ccs) :: wf
-      integer(i15), optional :: i_first, i_last, a_first, a_last
-!
+      class(ccs)               :: wf
+      integer(i15), optional   :: i_first, a_first   ! First index (can differ from 1 when batching or for mlcc)
+      integer(i15), optional   :: i_last, a_last    ! Last index (can differ from n_v/n_o when batching or for mlcc)
       real(dp), dimension(:,:) :: L_ia_J
 !
       call wf%read_cholesky_ia(L_ia_J,i_first, i_last, a_first, a_last)
@@ -227,29 +234,36 @@ contains
 !
    module subroutine get_cholesky_ai_ccs(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !!
-!!     Get Cholesky AI
-!!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!    Get Cholesky AI
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!     Read and T1-transform Cholesky AI vectors:
-!!     
-!!        L_ai_J_T1 = L_ia_J - sum_j  t_aj*L_ji_J 
-!!                           + sum_b  t_bi*L_ab_J
-!!                           - sum_bj t_aj*t_bi*L_jb_J
+!!    Read and T1-transform Cholesky AI vectors:
+!!    
+!!       L_ai_J_T1 = L_ia_J - sum_j  t_aj*L_ji_J 
+!!                          + sum_b  t_bi*L_ab_J
+!!                          - sum_bj t_aj*t_bi*L_jb_J
 !!
-!!     Allocations in routine:
+!!    Allocations in routine:
 !!
-!!       (1) n_J*n_o*n_v + 2*n_J*n_v*batch_length   ->  for L_ab_J contribution
-!!       (2) n_J*n_o*n_v + 2*n_J*n_o^2              ->  for L_ij_J contribution
-!!       (3) 2*n_J*n_o*n_v                          ->  for L_jb_J contribution
+!!      (1) n_J*(i_length)*(a_length) + 2*n_J*(a_length)*batch_length  ->  for L_ab_J contribution (batches of b)
+!!      (2) n_J*(i_length)*n_v + 2*n_J*n_o*(i_length)                  ->  for L_ij_J contribution
+!!      (3) 2*n_J*n_o*n_v                                              ->  for L_jb_J contribution
 !!
-!!       (1) determines memory requirement. 
+!!      i_length = i_last - i_first + 1          
+!!      a_length = a_last - a_first + 1          
+!!
+!!      (1) determines memory requirement. 
+!!
+!!    Optional arguments: i_first, i_last, a_first, a_last can be used in order to restrict indices
 !!
       implicit none 
 !
-      class(ccs) :: wf
-      integer(i15), optional ::  i_first, i_last, a_first, a_last
+      class(ccs)               :: wf
+      integer(i15), optional   :: i_first, a_first     ! First index (can differ from 1 when batching or for mlcc)
+      integer(i15), optional   :: i_last, a_last      ! Last index (can differ from n_o/n_v when batching or for mlcc)
+      real(dp), dimension(:,:) :: L_ai_J
 !
-      real(dp), dimension(:,:) :: L_ai_J 
+!     Local routine variables
 !
       logical :: reorder ! Reorder or not, when reading Cholesky AB 
 !
@@ -261,12 +275,13 @@ contains
 !     Indices
 !
       integer(i15) :: a = 0, b = 0, J = 0, i = 0, ai = 0, Ja = 0
-      integer(i15) :: ba = 0, k = 0, ik = 0, iJ = 0, kb = 0, kJ = 0
+      integer(i15) :: ba = 0, k = 0, ik = 0, iJ = 0, kb = 0, kJ = 0, ab = 0
       integer(i15) :: a_length, i_length
 !
 !     Cholesky vectors (in many different orderings)
 !
       real(dp), dimension(:,:), allocatable :: L_ba_J
+      real(dp), dimension(:,:), allocatable :: L_ab_J
       real(dp), dimension(:,:), allocatable :: L_Ja_b
       real(dp), dimension(:,:), allocatable :: L_Ja_i
       real(dp), dimension(:,:), allocatable :: L_ik_J
@@ -320,18 +335,30 @@ contains
             batch_length = batch_end - batch_start + 1
 !
 !           Allocate L_ab_J and L_Ja_b
-!
-            call allocator(L_ba_J, (wf%n_v)*batch_length, wf%n_J) ! L_ab^J = L_ba_J(ba,J)
-            call allocator(L_Ja_b, batch_length*(wf%n_J), wf%n_v)
-!
-            L_ba_J = zero
-            L_Ja_b = zero 
-
+! 
+            call allocator(L_ab_J, (wf%n_v)*batch_length, wf%n_J) ! L_ab^J 
+            L_ab_J = zero
+             call wf%read_cholesky_ab(L_ab_J, batch_start, batch_end, 1, wf%n_v)
 !
 !           Read Cholesky AB vectors, batching over a
-! 
-            reorder = .true.
-            call wf%read_cholesky_ab(L_ba_J, batch_start, batch_end, 1, wf%n_v, reorder)
+!
+            call allocator(L_ba_J, (wf%n_v)*batch_length, wf%n_J) ! L_ab^J = L_ba_J(ba,J)
+            L_ba_J = zero
+!
+            do b = 1, wf%n_v
+              do a = 1, batch_length
+                ba = index_two(b, a, wf%n_v)
+                ab = index_two(a, b, batch_length)
+                do J = 1, wf%n_J
+                  L_ba_J(ba, J) = L_ab_J(ab, J)
+                enddo
+              enddo
+            enddo
+!
+            call deallocator(L_ab_J, (wf%n_v)*batch_length, wf%n_J)
+            
+            call allocator(L_Ja_b, batch_length*(wf%n_J), wf%n_v)
+            L_Ja_b = zero           
 !
 !           Reorder the Cholesky array L_ba_J
 !
@@ -621,19 +648,28 @@ contains
             call batch_limits(batch_start, batch_end, a_batch, max_batch_length, wf%n_v)
             batch_length = batch_end - batch_start + 1
 !
-!           Allocate L_ab_J and L_Ja_b
-!
-            call allocator(L_ba_J, (wf%n_v)*batch_length, wf%n_J) ! L_ab^J = L_ba_J(ba,J)
-            call allocator(L_Ja_b, batch_length*(wf%n_J), wf%n_v)
-!
-            L_ba_J = zero
-            L_Ja_b = zero 
-
+            call allocator(L_ab_J, batch_length*(wf%n_v), wf%n_J) ! L_ab^J
+            L_ab_J = zero
 !
 !           Read Cholesky AB vectors, batching over a
 ! 
-            reorder = .true.
-            call wf%read_cholesky_ab(L_ba_J, batch_start, batch_end, 1, wf%n_v, reorder)
+            call wf%read_cholesky_ab(L_ab_J, batch_start, batch_end, 1, wf%n_v)
+!
+            call allocator(L_ba_J, (wf%n_v)*batch_length, wf%n_J) ! L_ab^J = L_ba_J(ba,J)
+            L_ba_J = zero
+            do b = 1, wf%n_v
+              do a = 1, batch_length
+                ba = index_two(b, a, wf%n_v)
+                ab = index_two(a, b, batch_length)
+                do J = 1, wf%n_J
+                  L_ba_J(ba, J) = L_ab_J(ab, J)
+                enddo
+              enddo
+            enddo
+            call deallocator(L_ab_J, batch_length*(wf%n_v), wf%n_J)
+!
+            call allocator(L_Ja_b, batch_length*(wf%n_J), wf%n_v)
+            L_Ja_b = zero
 !
 !           Reorder the Cholesky array L_ba_J
 !
@@ -893,7 +929,7 @@ contains
    end subroutine get_cholesky_ai_ccs
 !
 !
-   module subroutine get_cholesky_ab_ccs(wf, L_ab_J, batch_first, batch_last, reorder, other_dim_first, other_dim_last)
+   module subroutine get_cholesky_ab_ccs(wf, L_ab_J, a_first, a_last, b_first, b_last)
 !!
 !!    Get Cholesky AB
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -902,23 +938,23 @@ contains
 !!
 !!       L_ab_J_T1 = L_ab_J - sum_i t_ai*L_ib_J
 !!
-!!    If reorder = .true.,  L_ba_J is returned with batching over a
-!!    If reorder = .false., L_ab_J is returned with batching over b
 !!
 !!    Required memory: 
 !!
-!!       n_J*batch_length*n_v   ->   For reordering of L_ab_J / L_ba_J
-!!       2*n_v*n_o*n_J          ->   For L_ib_J contribution
+!!       n_J*b_length*a_length       ->   For reordering of L_ab_J / L_ba_J
+!!       2*b_length*n_o*n_J          ->   For L_ib_J contribution
+!!
+!!      a_length = a_last - a_first + 1          
+!!      b_length = b_last - b_first + 1 
 !!
       implicit none
 !
-      class(ccs) :: wf
+      class(ccs)               :: wf
+      integer(i15), intent(in) :: a_first, b_first   ! First index (can differ from 1 when batching)
+      integer(i15), intent(in) :: a_last, b_last    ! Last index  (can differ from n_v when batching)
+      real(dp), dimension(((b_last - b_first + 1)*(a_last - a_first + 1)), wf%n_J) :: L_ab_J ! L_ab^J
 !
-      integer(i15), intent(in) :: other_dim_last, other_dim_first
-      integer(i15), intent(in) :: batch_last, batch_first
-!
-      logical, intent(in) :: reorder
-      real(dp), dimension(((batch_last - batch_first + 1)*(other_dim_last - other_dim_first + 1)), wf%n_J) :: L_ab_J ! L_ab^J
+!     Local routine variables
 !
       integer(i15) :: memory_lef = 0
 !
@@ -932,115 +968,38 @@ contains
       real(dp), dimension(:,:), allocatable :: L_a_Jb
       real(dp), dimension(:,:), allocatable :: L_i_Jb
 !
-      integer(i15) :: batch_length, other_dim_length
+      integer(i15) :: b_length, a_length
 !
-      batch_length = batch_last - batch_first + 1
-      other_dim_length = other_dim_last - other_dim_first + 1
-!
-!     Testing which index is batched
-!
-      if (reorder) then !! Batching over a !!
+      a_length = a_last - a_first + 1
+      b_length = b_last - b_first + 1
 !
 !        Allocate L_ib_J
 !     
-         call allocator(L_ib_J, (wf%n_o)*other_dim_length, wf%n_J)
-!
-!        Read L_ia_J
-!  
-         call wf%read_cholesky_ia(L_ib_J, 1, wf%n_o, other_dim_first, other_dim_last) ! Note: using L_ia_J instead of L_ai_J, here, to avoid two reorderings.
-                                          ! This is possible because of the symmetry L_ai_J(ai,J) == L_ia_J(ia,J).
-!
-!        Read L_ab_J for batch of a
-!
-         call wf%read_cholesky_ab(L_ab_J, batch_first, batch_last, other_dim_first, other_dim_last, .true.) ! L_ab_J(ba) = L_ab^J 
-!
-!        Allocate L_i,Jb
-!
-         call allocator(L_i_Jb, wf%n_o, (wf%n_J)*other_dim_length)
-!
-!        Reorder L_ib_J to L_i_Jb
-!
-         do i = 1, wf%n_o
-            do b = 1, other_dim_length
-               do J = 1, wf%n_J
-!
-                  ib = index_two(i, b, wf%n_o)
-                  Jb = index_two(J, b, wf%n_J)
-!
-                  L_i_Jb(i, Jb) = L_ib_J(ib, J)
-!
-               enddo
-            enddo
-         enddo
-!
-!        Dellocate L_ib_J
-!  
-         call deallocator(L_ib_J, (wf%n_o)*other_dim_length, wf%n_J)
-!
-!        Allocate L_a_Jb for batch of a
-!  
-         call allocator(L_a_Jb, batch_length, other_dim_length*(wf%n_J))
-!
-!        Calculate  -t1_a_i * L_i_Jb = L_a_Jb
-!
-         call dgemm('N','N',            &
-                     batch_length,      &
-                     other_dim_length*(wf%n_J), &
-                     wf%n_o,            &
-                     -one,              &
-                     wf%t1am(batch_first,1),  &
-                     wf%n_v,            &
-                     L_i_Jb,            &
-                     wf%n_o,            &
-                     zero,              &
-                     L_a_Jb,            &
-                     batch_length)
-!
-!        Add terms of L_a_Jb to L_ab_J
-!
-         do a = 1, batch_length
-            do b = 1, other_dim_length
-               do J = 1, wf%n_J
-!
-                  Jb = index_two(J, b, wf%n_J)
-                  ba = index_two(b, a, other_dim_length)
-!
-                  L_ab_J(ba, J) = L_ab_J(ba, J) + L_a_Jb(a, Jb) 
-!
-               enddo
-            enddo
-         enddo
-!
-!        Dellocate L_i_Jb and L_a_Jb for batch of a
-!
-         call deallocator(L_a_Jb, batch_length, (wf%n_J)*other_dim_length)
-         call deallocator(L_i_Jb, (wf%n_o), (wf%n_J)*other_dim_length)
-!
-      else  !! Batching over b !!
-!
-!        Allocate L_ib_J
-!     
-         call allocator(L_ib_J, (wf%n_o)*batch_length, wf%n_J)
+         call allocator(L_ib_J, (wf%n_o)*b_length, wf%n_J)
 !
 !        Read L_ia_J
 !
 !        Note: using L_ia_J instead of L_ai_J, here, to avoid two reorderings.
 !              This is possible because of the symmetry L_ai_J(ai,J) == L_ia_J(ia,J).
 !  
-         call wf%read_cholesky_ia(L_ib_J, 1, wf%n_o, batch_first, batch_last)
+         call wf%read_cholesky_ia(L_ib_J, 1, wf%n_o, b_first, b_last)
 !
 !        Read L_ab_J for batch of b
 !
+<<<<<<< HEAD
          call wf%read_cholesky_ab(L_ab_J, other_dim_first, other_dim_last, batch_first, batch_last, .false.)
+=======
+         call wf%read_cholesky_ab(L_ab_J, 1, wf%n_v, b_first, b_last)
+>>>>>>> acb59a18c0f608f1372fc38fe14db2ec33a441e5
 !
 !        Allocate L_Jb,i for batch of b
 !
-         call allocator(L_Jb_i, (wf%n_J)*batch_length, wf%n_o)
+         call allocator(L_Jb_i, (wf%n_J)*b_length, wf%n_o)
 !
 !        Reorder L_ib_J to L_Jb_i
 !
          do i = 1, wf%n_o
-            do b = 1, batch_length
+            do b = 1, b_length
                do J = 1, wf%n_J
 !
                   ib = index_two(i, b, wf%n_o) 
@@ -1054,35 +1013,40 @@ contains
 !
 !        Dellocate L_ib_J
 !  
-         call deallocator(L_ib_J, (wf%n_o)*batch_length, wf%n_J)
+         call deallocator(L_ib_J, (wf%n_o)*b_length, wf%n_J)
 !
 !        Allocate L_Jb_a for batch of b
 !  
-         call allocator(L_Jb_a, (wf%n_J)*batch_length, other_dim_length)
+         call allocator(L_Jb_a, (wf%n_J)*b_length, a_length)
 !
 !        T1-transformation
 !
          call dgemm('N','T',                &
-                     (wf%n_J)*batch_length, &
-                     other_dim_length,      &
+                     (wf%n_J)*b_length,     & 
+                     a_length,              &
                      wf%n_o,                &
                      -one,                  &
                      L_Jb_i,                &
+<<<<<<< HEAD
                      (wf%n_J)*batch_length, &
                      wf%t1am(other_dim_first,1),&
+=======
+                     (wf%n_J)*b_length,     &
+                     wf%t1am(a_first, 1),   &
+>>>>>>> acb59a18c0f608f1372fc38fe14db2ec33a441e5
                      wf%n_v,                &
                      zero,                  &
                      L_Jb_a,                &
-                     batch_length*(wf%n_J))
+                     b_length*(wf%n_J))
 !
 !        Add terms of L_Jb_a to L_ab_J
 !
-         do a = 1, other_dim_length
-            do b = 1, batch_length
+         do a = 1, a_length
+            do b = 1, b_length
                do J = 1, wf%n_J
 !
                   Jb = index_two(J, b, wf%n_J)
-                  ab = index_two(a, b, other_dim_length)
+                  ab = index_two(a, b, a_length)
 !
                   L_ab_J(ab, J) = L_ab_J(ab, J) + L_Jb_a(Jb, a)
 !
@@ -1092,12 +1056,9 @@ contains
 !
 !        Dellocate L_Jb,i and L_Jb_a for batch of b
 !
-         call deallocator(L_Jb_a, (wf%n_J)*batch_length, other_dim_length)
-         call deallocator(L_Jb_i, (wf%n_J)*batch_length, wf%n_o)
-!
-      endif
+         call deallocator(L_Jb_a, (wf%n_J)*b_length, a_length)
+         call deallocator(L_Jb_i, (wf%n_J)*b_length, wf%n_o)
 !
    end subroutine get_cholesky_ab_ccs
-!
 !
 end submodule cholesky

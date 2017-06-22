@@ -1,11 +1,11 @@
 submodule (ccs_class) excited_state
 !
 !!
-!!    Excited state  submodule (CCS)
+!!    Excited state submodule (CCS)
 !!    Written by Eirik F. Kjønstad and Sarai Dery Folkestad, May 2017
 !!
 !!    Contains the following family of procedures of the CCS class:
-!!
+!!       TODO!!!
 !
    implicit none 
 !
@@ -25,19 +25,62 @@ submodule (ccs_class) excited_state
 contains
 !
 !
+   module subroutine excited_state_driver_ccs(wf)
+!!
+!!    Excited state driver (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!    Directs the solution of the excited state problem for CCS. The
+!!    routine is inherited is to be inherited unaltered in the CC hierarchy. 
+!!
+!!    Note: it is only necessary to alter this routine if the excited states are 
+!!    solved for by a different algorithm (such as in similarity constrained CC, 
+!!    where the excited states and ground state are determined simultaneously).
+!!
+      implicit none 
+!
+      class(ccs) :: wf 
+!
+!     Let the user know the excited state driver is running
+!
+      write(unit_output,'(t3,a)')    ':: Excited state solver (Davidson)'
+      write(unit_output,'(t3,a/)')   ':: E. F. Kjønstad, S. D. Folkestad, May 2017'
+      write(unit_output,'(t3,a,i3,a,a,a)') &
+                                     'Requested ',wf%tasks%n_singlet_states,' ', trim(wf%name), ' singlet states.'
+      write(unit_output,'(t3,a,i3,a,a,a)') &
+                                     'Requested ',wf%tasks%n_triplet_states,' ', trim(wf%name), ' triplet states.'     
+!
+!     Set the excited state task 
+!
+      wf%excited_state_task = 'right_eigenvectors'
+!
+!     Run the general solver routine (file names are given
+!     by the task, i.e., the file 'right_eigenvectors' contains
+!     the right eigenvectors)
+!
+      call wf%excited_state_solver
+!
+   end subroutine excited_state_driver_ccs
+!
+!
    module subroutine excited_state_solver_ccs(wf)
 !!
 !!    Excited State Solver
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
 !!    Directs the solution of the excited states using a Davidson algorithm.
-!!    The routine aims to find the right eigenvectors of the Jacobian matrix
+!!    The routine aims to find the right eigenvectors of the matrix A:
 !!
-!!       AX = eX,  
+!!       A X = e X,  
 !!
-!!    and the eigenvalues which corresponds to the excitation energies.
+!!    and the eigenvalues which corresponds to the excitation energies. 
 !!
-!!    The problem is solved in reduced space. To find n roots, n start trial vectors {c_i}_i=1, 
+!!    The matrix A above can be the Jacobian (the usual A) or the transposed Jacobian (A^T), or,
+!!    in principle, any matrix. The transformation used is determined by the value of the wavefunction's 
+!!    "excited_state_task" variable (if "right_eigenvectors", use A; if "left_eigenvectors", use A^T; and so on).
+!!    The selection of A is done in the routine transform_trial_vectors.
+!!
+!!    The problem is solved in a reduced space. To find n roots, n start trial vectors {c_i}_i=1, 
 !!    n are generated according to the lowest orbital differences. Then a reduced space Jacobian 
 !!    is constructed,
 !! 
@@ -86,15 +129,6 @@ contains
 !
       call cpu_time(start_excited_state_solver)
 !
-!     Let the user know the excited state solver is running
-!
-      write(unit_output,'(t3,a)')    ':: Excited state solver (Davidson)'
-      write(unit_output,'(t3,a/)')   ':: E. F. Kjønstad, S. D. Folkestad, May 2017'
-      write(unit_output,'(t3,a,i3,a,a,a)') &
-                                     'Requested ',wf%tasks%n_singlet_states,' ', trim(wf%name), ' singlet states.'
-      write(unit_output,'(t3,a,i3,a,a,a)') &
-                                     'Requested ',wf%tasks%n_triplet_states,' ', trim(wf%name), ' triplet states.'
-!
 !     Test for triplet calculation, and stop if so - not yet implemented
 !
       if (.not. wf%tasks%n_triplet_states .eq. 0) then
@@ -107,17 +141,10 @@ contains
       reduced_dim  = wf%tasks%n_singlet_states
       n_new_trials = wf%tasks%n_singlet_states
 !
-!     Initialize for excited state calc 
-!     Does nothing for CCS, but is overwritten for CC2 excited states
-!
-      write(unit_output,*)'Initialize excited states'
-      flush(unit_output)
       call wf%initialize_excited_states
 !
 !     Find start trial vectors and store them to the trial_vec file
 !
-       write(unit_output,*)'Initialize trials'
-       flush(unit_output)
       call wf%initialize_trial_vectors
 !
 !     If restart use old solution vectors for first start vectors
@@ -506,7 +533,7 @@ contains
       access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
 !
       call generate_unit_identifier(unit_solution)
-      open(unit=unit_solution, file='solution_vectors', action='write', status='unknown', &
+      open(unit=unit_solution, file=wf%excited_state_task, action='write', status='unknown', &
       access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
 !
       call allocator(residual, wf%n_parameters, 1)
@@ -676,4 +703,328 @@ contains
    end subroutine construct_next_trial_vectors_ccs
 !
 !
-end submodule
+      module subroutine initialize_trial_vectors_ccs(wf)
+!!
+!!       Initialize trial vectors
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!       Initializes start trial vectors for the calculation of 
+!!       singlet excited states and writes them to file 'trial_vecs'.
+!!
+!!       n start vectors are constructed by finding the n lowest orbital differences,      
+!!       where n = n_singlet_states. Vector i has a 1.0D0 at the element corresponding to the i'th lowest
+!!       orbital difference and 0.0d0 everywhere else
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!       
+         integer(i15), dimension(:,:), allocatable :: index_lowest_obital_diff
+!
+         real(dp), dimension(:,:), allocatable :: c
+! 
+         integer(i15) :: i = 0, j = 0
+!
+         integer(i15) :: unit_trial_vecs = 0, unit_rho = 0, ioerror = 0
+!
+!        Allocate array for the indices of the lowest orbital differences
+!
+         call allocator_int( index_lowest_obital_diff, wf%tasks%n_singlet_states, 1)
+         index_lowest_obital_diff = zero
+!
+!        Find indecies of lowest orbital differences
+!
+         call wf%find_start_trial_indices(index_lowest_obital_diff)
+!
+!        Generate start trial vectors c and write to file
+!
+         call allocator(c, wf%n_parameters, 1)
+!
+!        Prepare for writing trial vectors to file
+!
+         call generate_unit_identifier(unit_trial_vecs)
+         open(unit=unit_trial_vecs, file='trial_vec', action='write', status='unknown', &
+           access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror)
+!
+         do i = 1, (wf%tasks%n_singlet_states)
+            c = zero
+            c(index_lowest_obital_diff(i,1),1) = one
+            write(unit_trial_vecs, rec=i, iostat=ioerror) (c(j,1), j = 1, wf%n_parameters)
+         enddo
+!
+!        Close file
+!     
+         close(unit_trial_vecs)
+!
+!        Deallocate c
+!
+         call deallocator(c, wf%n_parameters, 1)
+!
+!        Deallocate index_lowest_obital_diff
+!
+         call deallocator_int( index_lowest_obital_diff, wf%tasks%n_singlet_states, 1)
+!
+      end subroutine initialize_trial_vectors_ccs
+!
+!
+      module subroutine trial_vectors_from_stored_solutions_ccs(wf)
+!!
+!!
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+         logical      :: solution_exists = .false.
+         logical      :: more_trials = .true.
+!
+         integer(i15) :: ioerror = 0, unit_solution = 0, unit_trial_vecs = 0
+         integer(i15) :: number_of_solutions = 0
+!
+         integer(i15) :: i = 0, j = 0
+!
+         real(dp), dimension(:,:), allocatable :: c_i, c_j
+!
+         real(dp) :: ddot, dot_prod = zero, norm = zero 
+!
+!        Open solution vector file - if it does not exist return
+!
+         inquire(file=wf%excited_state_task, exist=solution_exists)
+!
+!        If no solution vector file, return and use orbital differences.
+!
+         if (.not. solution_exists) return
+!
+!        Open files
+!
+         call generate_unit_identifier(unit_trial_vecs)
+         open(unit=unit_trial_vecs, file='trial_vec', action='readwrite', status='old', &
+         access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror)
+!
+         call generate_unit_identifier(unit_solution)
+!
+         open(unit=unit_solution, file=wf%excited_state_task, action='read', status='unknown', &
+         access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
+!
+!        Allocate c_i
+!
+         call allocator(c_i, wf%n_parameters, 1)
+         c_i = zero
+!
+         i = 1
+         do while ((i .le. wf%tasks%n_singlet_states) .and. more_trials)
+!
+!        Read old solutions and count them
+!
+            read(unit_solution, rec=i, iostat=ioerror) c_i
+            if (ioerror .ne. 0) write(unit_output,*) 'Error reading solution vecs'
+!
+            if (ioerror .eq. 0) then
+!
+               write(unit_trial_vecs, rec = i) c_i
+!
+            else
+!
+               more_trials = .false.
+!
+            endif
+!
+            i = i + 1
+!
+         enddo
+!
+!        Deallocate c_i 
+!
+         call deallocator(c_i, wf%n_parameters, 1)
+!
+!        Close solution file
+!
+         close(unit_solution)
+!
+!        Allocate c_i and c_j
+!
+         call allocator(c_i, wf%n_parameters, 1)
+         call allocator(c_j, wf%n_parameters, 1)
+         c_i = zero
+         c_j = zero
+!
+!        Reorthonormalize trial vectors
+!
+         do i = 1, wf%tasks%n_singlet_states
+!
+            read(unit_trial_vecs, rec=i, iostat=ioerror) c_i
+!
+            do j = 1, i-1
+!
+               read(unit_trial_vecs, rec=j, iostat=ioerror) c_j
+               dot_prod = ddot(wf%n_parameters, c_j, 1, c_i, 1)
+               call daxpy(wf%n_parameters, -dot_prod, c_j, 1, c_i, 1)
+!  
+               norm = sqrt(ddot(wf%n_parameters, c_i, 1, c_i, 1))
+               call dscal(wf%n_parameters, one/norm, c_i, 1)
+!
+            enddo
+            write(unit_trial_vecs, rec = i)c_i
+         enddo
+!  
+         call deallocator(c_i, wf%n_parameters, 1)
+         call deallocator(c_j, wf%n_parameters, 1)  
+!
+!        Close trial vector file
+!
+         close(unit_trial_vecs)     
+!
+      end subroutine trial_vectors_from_stored_solutions_ccs
+!
+!
+      module subroutine find_start_trial_indices_ccs(wf, index_list)
+!!
+!!       Find indices for lowest orbital differences
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!
+         implicit none
+!
+         class(ccs) :: wf
+         integer(i15), dimension(wf%tasks%n_singlet_states,1), intent(inout) :: index_list
+!
+         real(dp), dimension(:,:), allocatable :: orbital_diff
+         real(dp), dimension(:,:), allocatable :: lowest_orbital_diff
+!
+         integer(i15) :: a = 0, i = 0, j = 0
+!
+         integer(i15) :: ai = 0
+!
+         real(dp)     :: max
+         integer(i15) :: max_pos 
+!
+         real(dp)     :: swap     = zero
+         integer(i15) :: swap_int = 0
+!
+!        Allocate orbital_diff
+!
+         call allocator(orbital_diff,wf%n_parameters,1)
+         orbital_diff = zero
+!
+!        Calculate orbital differences
+!
+         call wf%calculate_orbital_differences(orbital_diff)
+!
+!        Finding lowest orbital differences
+!
+         call allocator(lowest_orbital_diff, wf%tasks%n_singlet_states, 1)
+         
+         lowest_orbital_diff = zero
+!
+         call get_n_lowest(wf%tasks%n_singlet_states, wf%n_parameters, orbital_diff, lowest_orbital_diff, index_list)
+!
+         call deallocator(orbital_diff,wf%n_parameters,1)
+!
+         call deallocator(lowest_orbital_diff, wf%tasks%n_singlet_states, 1)
+!
+!
+      end subroutine find_start_trial_indices_ccs
+!
+!
+      module subroutine calculate_orbital_differences_ccs(wf,orbital_diff)
+!!
+!!       Calculate and return orbital differences
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad May 2017
+!!
+         implicit none
+!
+         class(ccs) :: wf
+         real(dp), dimension(wf%n_parameters, 1) :: orbital_diff
+!
+         integer(i15) :: a = 0, i = 0
+         integer(i15) :: ai = 0
+!
+         do i = 1, wf%n_o
+            do a = 1, wf%n_v
+               ai = index_two(a, i, wf%n_v)
+               orbital_diff(ai, 1) = wf%fock_diagonal(a + wf%n_o, 1) - wf%fock_diagonal(i, 1)
+            enddo
+         enddo
+!
+      end subroutine calculate_orbital_differences_ccs
+!
+!
+      module subroutine transform_trial_vectors_ccs(wf, first_trial, last_trial)
+!!
+!!       Transform trial vectors (CCS)
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!       Each trial vector in first_trial to last_trial is read from file and
+!!       transformed before the transformed vector is written to file.
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+         integer(i15), intent(in) :: first_trial, last_trial ! Which trial_vectors we are to transform
+!
+         real(dp), dimension(:,:), allocatable :: c_a_i
+!
+         integer(i15) :: unit_trial_vecs = 0, unit_rho = 0, ioerror = 0
+         integer(i15) :: trial = 0 
+!
+!        Allocate c_a_i
+!
+         call allocator(c_a_i, wf%n_v, wf%n_o)
+         c_a_i = zero 
+!
+!        Open trial vector and transformed vector files
+!
+         call generate_unit_identifier(unit_trial_vecs)
+         open(unit=unit_trial_vecs, file='trial_vec', action='read', status='old', &
+           access='direct', form='unformatted', recl=dp*(wf%n_v)*(wf%n_o), iostat=ioerror)
+!
+         call generate_unit_identifier(unit_rho)
+         open(unit=unit_rho, file='transformed_vec', action='write', status='old', &
+           access='direct', form='unformatted', recl=dp*(wf%n_v)*(wf%n_o), iostat=ioerror)
+!
+!        For each trial vector: Read, transform and write
+!               
+         do trial = first_trial, last_trial
+!
+            read(unit_trial_vecs, rec=trial, iostat=ioerror) c_a_i
+!
+            if (wf%excited_state_task=='right_eigenvectors') then
+!
+               call wf%jacobian_ccs_transformation(c_a_i)
+!
+            elseif (wf%excited_state_task=='left_eigenvectors') then
+!
+      !         call wf%jacobian_transpose_ccs_transformation(c_a_i)
+!
+            else
+!
+               write(unit_output,*) 'Error: Excited state task not recognized'
+               stop
+!
+            endif
+!
+!           Write transformed vector to file
+!
+            write(unit_rho, rec=trial, iostat=ioerror) c_a_i
+          
+         enddo
+         close(unit_trial_vecs) 
+         close(unit_rho)                                
+!
+!        Deallocate c_a_i
+!
+         call deallocator(c_a_i, wf%n_v, wf%n_o)
+!
+      end subroutine transform_trial_vectors_ccs
+!
+!
+      module subroutine initialize_excited_states_ccs(wf)
+!!
+         implicit none 
+!    
+         class(ccs) :: wf
+!
+      end subroutine initialize_excited_states_ccs
+!
+end submodule excited_state
