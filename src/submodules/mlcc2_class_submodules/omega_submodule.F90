@@ -30,13 +30,18 @@ submodule (mlcc2_class) omega
 !
 contains
   module subroutine construct_omega_mlcc2(wf)
-!  
-!     Construct Omega (CC2)
-!     Written by Eirik F. Kjønstad and Sarai Folkestad, Apr 2017
-!  
-!     s2-amplitudes are constructed on the fly, according to the CC2
-!     expression for the doubles amplitudes 
-!  
+!! 
+!!    Construct Omega (MLCC2)
+!!    Written by Eirik F. Kjønstad and Sarai Folkestad, Apr 2017
+!!
+!!    Constructs the MlCC2 omega.
+!! 
+!!    s2-amplitudes are constructed on the fly, according to the CC2
+!!    expression for the doubles amplitudes. 
+!!
+!!    Calculated by looping over active spaces, 
+!!    Adding the omega contribution from each active space in turn.
+!! 
       implicit none 
 !
       class(mlcc2) :: wf
@@ -86,7 +91,7 @@ contains
 !!     Omega A1
 !!     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!   
-!!     Calculates the A1 term of omega, 
+!!     Calculates the A1 term of omega for the active space, 
 !!   
 !!     A1: sum_bcj g_Abjc * u_ij^bc,
 !!  
@@ -95,12 +100,13 @@ contains
 !! 
 !!     u_ij^bc = 2*s_ij^bc - s_ij^cb 
 !!
-!!    Batchind over A and c
+!!    Batching over A and c
+!!
 !! 
       implicit none
 !
       class(mlcc2)   :: wf
-      integer(i15)   :: active_space
+      integer(i15)   :: active_space !Current active space
 !
 !     Batching variables 
 !
@@ -185,6 +191,10 @@ contains
 !
          c_length = c_last - c_first + 1 
 !
+!        :: Construct u_ib_jc ::
+!
+!        Get cholesky vectors
+!
          call allocator(L_bi_J, n_active_o*n_active_v, wf%n_J)
          L_bi_J = zero
 !
@@ -210,11 +220,11 @@ contains
 !
          call deallocator(L_bi_J, n_active_o*n_active_v, wf%n_J)
 !
-!        :: Construct u_ib_jc ::
-!
          call allocator(g_ib_jc, (n_active_o)*(n_active_v), (n_active_o)*c_length)
 !
          offset = index_two(1, c_first, n_active_o)
+!
+!        g_ib_jc = g_bi,cj = sum_J L_bj^J*L_ci^J
 !
          call dgemm('N', 'T',                    &
                      (n_active_o)*(n_active_v),  &
@@ -231,7 +241,7 @@ contains
 !
          call deallocator(L_ib_J, (n_active_o)*(n_active_v), wf%n_J)
 !
-!        u_ij^bc = 2*g_ij^bc - s_ij^cb  (place in s_bjc_i)        
+!        u_ij^bc = 2*s_ij^bc - s_ij^cb =  (2*g_ij^bc - g_ij^cb)/ε_ij^cb
 !
          call allocator(u_bjc_i, n_active_v*n_active_o*c_length, n_active_o)
 !
@@ -261,6 +271,8 @@ contains
 !         
          call deallocator(g_ib_jc, (n_active_o)*(n_active_v), (n_active_o)*c_length)
 !
+!        Prepare for batching over A
+!
          A_first  = 0
          A_last   = 0
          A_length = 0
@@ -275,6 +287,8 @@ contains
 !
 !           :: Construct integral g_Ab,jc ::
 !
+!           Get cholesky vectors
+!
             call allocator(L_jc_J, n_active_o*c_length, wf%n_J)
             L_jc_J = zero
             call wf%get_cholesky_ia(L_jc_J, first_active_o, last_active_o, c_first, c_last)
@@ -286,6 +300,8 @@ contains
             call wf%get_cholesky_ab(L_Ab_J, first_active_v, last_active_v, reorder, a_first, a_last)
 !
             call allocator(g_Ab_jc, n_active_v*a_length, n_active_o*c_length)      
+!
+!           g_Ab,jc = sum_J L_Ab^J*L_jc^J
 !
             call dgemm('N', 'T',                  &
                         (n_active_v)*a_length,    &
@@ -361,7 +377,7 @@ contains
       real(dp), dimension(:,:), allocatable :: L_ja_J 
       real(dp), dimension(:,:), allocatable :: L_kb_J 
       real(dp), dimension(:,:), allocatable :: L_ji_J 
-      real(dp), dimension(:,:), allocatable :: s_ja_kb 
+      real(dp), dimension(:,:), allocatable :: g_ja_kb 
       real(dp), dimension(:,:), allocatable :: u_a_kbj 
       real(dp), dimension(:,:), allocatable :: g_kb_ji 
 !
@@ -422,8 +438,8 @@ contains
 !
          b_length = b_last - b_first + 1 
 !
-!        :: - sum_bjk u_ja_kb * g_kb_jI 
-!
+!        :: Construct u_jk^ab ::
+!  
          call allocator(L_aj_J, n_active_o*n_active_v, wf%n_J)
          L_aj_J = zero
 !
@@ -449,9 +465,9 @@ contains
 !
          call deallocator(L_aj_J, n_active_o*n_active_v, wf%n_J)
 !
-!        Construct s_ja_kb
-!  
-         call allocator(s_ja_kb, (n_active_o)*n_active_v, (n_active_o)*b_length)
+         call allocator(g_ja_kb, (n_active_o)*n_active_v, (n_active_o)*b_length)
+!
+!        g_ja_kb = sum_J L_ja_J * L_kb_J = g_aj,bk
 !
          offset = index_two(1, b_first, n_active_o)
          call dgemm('N', 'T',                    &
@@ -464,13 +480,13 @@ contains
                      L_ja_J(offset,1),           &
                      (n_active_o)*(n_active_v),  &
                      zero,                       &
-                     s_ja_kb,                    &
+                     g_ja_kb,                    &
                      (n_active_o)*(n_active_v))
 
 !  
          call deallocator(L_ja_J, (n_active_o)*(n_active_v), wf%n_J)
 !  
-!        u_jk^ab = 2*s_jk^ab - s_jk^ba  (place in s_a_jkb)        
+!        u_jk^ab = 2*s_jk^ab - s_jk^ba  (place in u_a_jkb)        
 !  
          call allocator(u_a_kbj, n_active_v, (n_active_o**2)*b_length)
 
@@ -490,7 +506,7 @@ contains
                      ka = index_two(k, a, n_active_o)
                      
 !  
-                     u_a_kbj(a,kbj) = (two*s_ja_kb(ja,kb)-s_ja_kb(jb, ka))/(wf%fock_diagonal(j + first_active_o - 1,1)&
+                     u_a_kbj(a,kbj) = (two*g_ja_kb(ja,kb)-g_ja_kb(jb, ka))/(wf%fock_diagonal(j + first_active_o - 1,1)&
                                               + wf%fock_diagonal(k+ first_active_o - 1,1) &
                                               - wf%fock_diagonal(wf%n_o + a + first_active_v - 1,1) &
                                               - wf%fock_diagonal(wf%n_o + b + b_first - 1,1))
@@ -501,10 +517,12 @@ contains
             enddo
          enddo
 !
-         call deallocator(s_ja_kb, (n_active_o)*(n_active_v), (n_active_o)*(b_length))
+         call deallocator(g_ja_kb, (n_active_o)*(n_active_v), (n_active_o)*(b_length))
 !
-!        Construct g_kb_ji
+!        :: - sum_bjk u_ja_kb * g_kb_jI ::
 !
+!        Get cholesky vectors
+! 
          call allocator(L_jI_J, n_active_o*(wf%n_o), wf%n_J)
 !
          call wf%get_cholesky_ij(L_jI_J, first_active_o, last_active_o, 1, wf%n_o)
@@ -514,6 +532,8 @@ contains
          call wf%get_cholesky_ia(L_kb_J, first_active_o, last_active_o, b_first, b_last)
 !
          call allocator(g_kb_jI, n_active_o*b_length, n_active_o*(wf%n_o) )
+!
+!        g_kb_jI = sum_J L_kb^J*L_jI_J
 !
          call dgemm('N', 'T',                    &
                      (n_active_o)*b_length,      &
@@ -525,7 +545,7 @@ contains
                      L_ji_J,                     &
                      (n_active_o)*(wf%n_o),      &
                      zero,                       &
-                     g_kb_ji,                    &
+                     g_kb_jI,                    &
                      (n_active_o)*b_length) 
 !
          call deallocator(L_jI_J, n_active_o*(wf%n_o), wf%n_J)

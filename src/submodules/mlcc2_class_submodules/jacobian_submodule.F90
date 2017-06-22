@@ -6,12 +6,22 @@ submodule (mlcc2_class) jacobian
 !!
 !!    Contains the following family of procedures of the MLCC2 class:
 !!
+!!    inititialize_excited_states: Initializes number of s2 amplitudes (n_s2am), and adds it n_parameters
+!!    calculate_orbital_differences: Calculates the orbital differences, including the double excitation differences 
+!!                                   in the active CC2 spaces
+!!    transform_trial_vectors: Transforms the new trial vectors. rho = Ac
+!!    jacobian_transformation: Directs the transformation by A.
 !!
+!!    MLCC2 contributions to jacobi transformation
+!!
+!!    jacobian_mlcc2_a1
+!!    jacobian_mlcc2_b1
+!!    jacobian_mlcc2_a2
+!!    jacobian_mlcc2_b2
 !!
 !!    Upper case indices are general indices, lower case indices are restricted
 !!    to the CC2 orbital space.
 !! 
-!!
 !
    implicit none 
 !
@@ -23,6 +33,12 @@ contains
 !
 !
    module subroutine initialize_excited_states_mlcc2(wf)
+!!
+!!    Initialize excited states
+!!    Written by Sarai D. Folkestad, June 2017
+!!
+!!    Calculates and sets n_s2am, and updates n_parameters
+!!    for excited state calculation
 !!
       implicit none 
 !    
@@ -116,13 +132,13 @@ contains
 !
                do a = 1, n_active_v
 !
-                  ai = index_two(a, i, wf%n_total_active_v)
+                  ai = index_two(a, i, n_active_v)
 !
                   do j = 1, n_active_o
 !
                      do b = 1, n_active_v
 !
-                        bj = index_two(b, j, wf%n_total_active_v)
+                        bj = index_two(b, j, n_active_v)
 !
                         aibj = index_packed(ai, bj)
 !
@@ -147,7 +163,7 @@ contains
 !
    module subroutine transform_trial_vectors_mlcc2(wf, first_trial, last_trial)
 !!
-!!    Transformation Trial Vectors (MLCC2)
+!!    Transformation of Trial Vectors (MLCC2)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
 !!    Each trial vector in first_trial to last_trial is read from file and
@@ -409,9 +425,19 @@ contains
 !
    module subroutine jacobian_mlcc2_a1_mlcc2(wf, rho_a_i, c_a_i)
 !!
+!!    Jacobian tem A1
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
 !!
-!!    A1: 2*sum_BJck u_ik^ac*g_kc,JB*c_BJ - sum_Bjck u_kj^ca*g_kc,jB*c_BI
-!!        - sum_BJck u_ik^ac*g_kB,Jc*c_BJ - sum_bJck u_ki^cb*g_kc,Jb*c_AJ 
+!!    Calculates the A1 contribution to the jacobi transformation,
+!!
+!!       A1: 2*sum_BJck u_ik^ac*g_kc,JB*c_BJ - sum_Bjck u_kj^ca*g_kc,jB*c_BI
+!!            - sum_BJck u_ik^ac*g_kB,Jc*c_BJ - sum_bJck u_ki^cb*g_kc,Jb*c_AJ, 
+!!
+!!     with, 
+!!
+!!    u_ik^ac = 2*s_ik^ac - 2*s_ik^ca,
+!!
+!!    which is constructed while batching over c
 !!
       implicit none
 !
@@ -939,17 +965,23 @@ contains
    module subroutine jacobian_mlcc2_b1_mlcc2(wf, rho_a_i, c_ai_bj,&
                                   n_active_o, n_active_v, first_active_o, first_active_v)
 !!
+!!    Jacobian tem B1
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
 !!
-!!    B1:   sum_ck F_kc*(2c_ai,ck - c_ak,ci) 
-!!        - sum_ckj L_jIkc * c_aj,ck + sum_cbk L_Abkc * c_bi,ck
+!!    Calculates the B1 contribution to the jacobi transformation,
 !!
+!!       B1:   sum_ck F_kc*(2c_ai,ck - c_ak,ci) 
+!!           - sum_ckj L_jIkc * c_aj,ck + sum_cbk L_Abkc * c_bi,ck
+!!
+!!
+!!    L_Abkc is constructed while batching over A.
 !!
       implicit none
 !  
       class(mlcc2) :: wf
 !
       real(dp), dimension((n_active_v)*(n_active_o), (n_active_v)*(n_active_o))   :: c_ai_bj 
-      real(dp), dimension(wf%n_v, wf%n_o)                                                                             :: rho_a_i
+      real(dp), dimension(wf%n_v, wf%n_o)                                         :: rho_a_i
       integer(i15) :: n_active_o, n_active_v
       integer(i15) :: first_active_o, first_active_v
 !
@@ -1003,6 +1035,8 @@ contains
 !
       call allocator(c_ai_ck, n_active_o*n_active_v, n_active_o*n_active_v)
 !
+!     Construct 2c_ai,ck - c_ak,ci
+!
       do i = 1, n_active_o
          do a = 1, n_active_v
 !
@@ -1024,7 +1058,10 @@ contains
          enddo
       enddo
 !
+!     Adding term to rho     
+!
       call allocator(rho_ai_active_space, n_active_v, n_active_o)
+!
       call dgemm('N', 'N', &
                   n_active_o*n_active_v, &
                   1,                     &
@@ -1052,17 +1089,17 @@ contains
 !
 !     :: Term 2 ::
 !     - sum_ckj L_jI,kc * c_aj,ck = - sum_ckj (2*g_jIkc - g_kIjc) * c_aj,ck (L_jI,kc ordered as L_jck_I)
-!
-!     Construct g_jIkc
-!
+
       call allocator(L_jI_J, (n_active_o)*(wf%n_o), wf%n_J)
       call wf%get_cholesky_ij(L_jI_J, first_active_o, last_active_o, 1, wf%n_o)
 !
       call allocator(L_kc_J, n_active_o*n_active_v, wf%n_J)
       call wf%get_cholesky_ia(L_kc_J, first_active_o, last_active_o, first_active_v, last_active_v)
 !
-      call allocator(g_jI_kc, n_active_o*wf%n_o, n_active_v*n_active_o)
+!     g_jI,kc = sum_J L_jI_J*L_kc_J
 !
+      call allocator(g_jI_kc, n_active_o*wf%n_o, n_active_v*n_active_o)
+!  
       call dgemm('N', 'T',                    &
                   (n_active_o)*(wf%n_o),      &
                   n_active_v*n_active_o,      &
@@ -1146,9 +1183,8 @@ contains
 !   
          call batch_limits(A_first ,A_last ,A_batch, max_length, wf%n_v)
 !
-!        Construct g_Ab,kc ordered as g_Ab_kc
-!
          A_length = A_last - A_first + 1
+!
          reorder = .false.
          call allocator(L_Ab_J, n_active_v*A_length, wf%n_J)
          call wf%get_cholesky_ab(L_Ab_J, first_active_v, last_active_v, reorder, A_first, A_last) 
@@ -1157,6 +1193,8 @@ contains
          call wf%get_cholesky_ia(L_kc_J, first_active_o, last_active_o, first_active_v, last_active_v) 
 !
          call allocator(g_Ab_kc, n_active_v*A_length, n_active_o*n_active_v)
+!
+!        Construct g_Ab,kc ordered as g_Ab_kc
 !
          call dgemm('N', 'T',                    &
                      A_length*n_active_v,        &
@@ -1196,7 +1234,6 @@ contains
 !
          call deallocator(g_Ab_kc, n_active_v*A_length, n_active_o*n_active_v)
 !
-!
 !        Reorder c_bi_ck to c_bkc_i
 !
          call allocator(c_bkc_i, (n_active_v**2)*n_active_o, n_active_o)
@@ -1216,6 +1253,9 @@ contains
             enddo
          enddo
 !
+!        Add contribution for current batch to rho
+!
+
          call dgemm('N', 'N',                          &
                      A_length,                         &
                      n_active_o,                       &
@@ -1231,6 +1271,7 @@ contains
 !
          call deallocator(L_Ab_kc, n_active_v*A_length, n_active_o*n_active_v)
          call deallocator(c_bkc_i, (n_active_v**2)*n_active_o, n_active_o)
+!
       enddo ! Batching over A
 !
 !
@@ -1240,16 +1281,21 @@ contains
    module subroutine jacobian_mlcc2_a2_mlcc2(wf, rho_ai_bj, c_a_i,&
                                   n_active_o, n_active_v, first_active_o, first_active_v)
 !!
+!!    Jacobian tem A2
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
 !!
-!!    A2:   sum_C g_ai,bC * c_Cj - sum_K g_ai,Kj * C_bK
+!!    Calculates the A2 contribution to the jacobi transformation,
 !!
+!!       A2:   sum_C g_ai,bC * c_Cj - sum_K g_ai,Kj * C_bK.
+!!
+!!    g_ai,bC is constructed in batches of C.
 !!
       implicit none
 !  
       class(mlcc2) :: wf
 !
       real(dp), dimension((n_active_v)*(n_active_o), (n_active_v)*(n_active_o))   :: rho_ai_bj 
-      real(dp), dimension(wf%n_v, wf%n_o)                                                                             :: c_a_i 
+      real(dp), dimension(wf%n_v, wf%n_o)                                         :: c_a_i 
       integer(i15) :: n_active_o, n_active_v
       integer(i15) :: first_active_o, first_active_v
 !
@@ -1320,7 +1366,8 @@ contains
          call wf%get_cholesky_ab(L_bC_J, c_first, c_last, .false., first_active_v, last_active_v)
 !
          call allocator(g_ai_bC, n_active_v*n_active_o, n_active_v*C_length)
-
+!
+!        g_ai,bC = sum_J L_ai^J*L_bC^J
 !
          call dgemm('N', 'T',                    &
                      n_active_v*n_active_o,      &
@@ -1336,6 +1383,8 @@ contains
                      n_active_v*n_active_o)
 !
          call deallocator(L_bC_J, C_length*n_active_v, wf%n_J)
+!
+!        Add contribution tho rho
 !        
          call dgemm('N', 'N', &
                      (n_active_v**2)*n_active_o, &
@@ -1400,6 +1449,8 @@ contains
 !
      call allocator(rho_aij_b, n_active_v*n_active_o**2, n_active_v)
 !
+!     Add term to rho_ai_bj
+!
      call dgemm('N', 'T',                    &
                  n_active_v*n_active_o**2,   &
                  n_active_v,                 &
@@ -1438,8 +1489,12 @@ contains
    module subroutine jacobian_mlcc2_b2_mlcc2(wf, rho_ai_bj, c_ai_bj,&
                                   n_active_o, n_active_v, first_active_o, first_active_v)
 !!
+!!    Jacobian tem B2
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
 !!
-!!    B2:   ε_ij^ab*c_ai,bj
+!!    Calculates the B2 contribution to the jacobi transformation,
+!!
+!!       B2:   ε_ij^ab*c_ai,bj.
 !!
 !!
       implicit none

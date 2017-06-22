@@ -372,9 +372,19 @@ module mlcc2_class
 !
    module subroutine jacobian_mlcc2_a1_mlcc2(wf, rho_a_i, c_a_i)
 !!
+!!    Jacobian tem A1
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
 !!
-!!    A1: 2*sum_BJck u_ik^ac*g_kc,JB*c_BJ - sum_Bjck u_kj^ca*g_kc,jB*c_BI
-!!        - sum_BJck u_ik^ac*g_kB,Jc*c_BJ - sum_bJck u_ki^cb*g_kc,Jb*c_AJ 
+!!    Calculates the A1 contribution to the jacobi transformation,
+!!
+!!       A1: 2*sum_BJck u_ik^ac*g_kc,JB*c_BJ - sum_Bjck u_kj^ca*g_kc,jB*c_BI
+!!            - sum_BJck u_ik^ac*g_kB,Jc*c_BJ - sum_bJck u_ki^cb*g_kc,Jb*c_AJ, 
+!!
+!!     with, 
+!!
+!!    u_ik^ac = 2*s_ik^ac - 2*s_ik^ca,
+!!
+!!    which is constructed while batching over c
 !!
       implicit none
 !
@@ -391,17 +401,23 @@ module mlcc2_class
    module subroutine jacobian_mlcc2_b1_mlcc2(wf, rho_a_i, c_ai_bj, n_active_o, &
                                               n_active_v, first_active_o, first_active_v)
 !!
+!!    Jacobian tem B1
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
 !!
-!!    B1:   sum_ck F_kc*(2c_ai,ck - c_ak,ci) 
-!!        - sum_ckj L_jIkc * c_aj,ck + sum_cbk L_Abkc * c_bi,ck
+!!    Calculates the B1 contribution to the jacobi transformation,
 !!
+!!       B1:   sum_ck F_kc*(2c_ai,ck - c_ak,ci) 
+!!           - sum_ckj L_jIkc * c_aj,ck + sum_cbk L_Abkc * c_bi,ck
+!!
+!!
+!!    L_Abkc is constructed while batching over A.
 !!
       implicit none
 !  
       class(mlcc2) :: wf
 !
       real(dp), dimension((n_active_v)*(n_active_o), (n_active_v)*(n_active_o))   :: c_ai_bj 
-      real(dp), dimension(wf%n_v, wf%n_o)                                                                             :: rho_a_i
+      real(dp), dimension(wf%n_v, wf%n_o)                                         :: rho_a_i
       integer(i15) :: n_active_o, n_active_v
       integer(i15) :: first_active_o, first_active_v
 !
@@ -411,16 +427,21 @@ module mlcc2_class
    module subroutine jacobian_mlcc2_a2_mlcc2(wf, rho_ai_bj, c_a_i,&
                                   n_active_o, n_active_v, first_active_o, first_active_v)
 !!
+!!    Jacobian tem A2
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
 !!
-!!    A2:   sum_C g_aibC*c_Cj - sum_K g_aiKb*C_bK
+!!    Calculates the A2 contribution to the jacobi transformation,
 !!
+!!       A2:   sum_C g_ai,bC * c_Cj - sum_K g_ai,Kj * C_bK.
+!!
+!!    g_ai,bC is constructed in batches of C.
 !!
       implicit none
 !  
       class(mlcc2) :: wf
 !
       real(dp), dimension((n_active_v)*(n_active_o), (n_active_v)*(n_active_o))   :: rho_ai_bj 
-      real(dp), dimension(wf%n_v, wf%n_o)                                                                             :: c_a_i 
+      real(dp), dimension(wf%n_v, wf%n_o)                                         :: c_a_i 
       integer(i15) :: n_active_o, n_active_v
       integer(i15) :: first_active_o, first_active_v
 !
@@ -430,8 +451,12 @@ module mlcc2_class
    module subroutine jacobian_mlcc2_b2_mlcc2(wf, rho_ai_bj, c_ai_bj,&
                                   n_active_o, n_active_v, first_active_o, first_active_v)
 !!
+!!    Jacobian tem B2
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
 !!
-!!    B2:   ε_ij^ab*c_ai,bj
+!!    Calculates the B2 contribution to the jacobi transformation,
+!!
+!!       B2:   ε_ij^ab*c_ai,bj.
 !!
 !!
       implicit none
