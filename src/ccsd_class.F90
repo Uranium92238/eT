@@ -115,6 +115,14 @@ module ccsd_class
 !
       procedure :: jacobi_test => jacobi_test_ccsd
 !
+!     Jacobian transpose transformation routine 
+!
+      procedure :: jacobian_transpose_ccsd_transformation => jacobian_transpose_ccsd_transformation_ccsd
+!
+!     Helper routines for Jacobian transpose transformation 
+!
+      procedure :: jacobian_transpose_ccsd_a1 => jacobian_transpose_ccsd_a1_ccsd 
+!
 !     Routines to destroy amplitudes and omega 
 !
       procedure :: destruct_amplitudes => destruct_amplitudes_ccsd
@@ -742,6 +750,51 @@ module ccsd_class
 !
 !
       end subroutine jacobian_ccsd_k2_ccsd
+!
+!
+      module subroutine jacobian_transpose_ccsd_transformation_ccsd(wf, b_a_i, b_aibj)
+!!
+!!       Jacobian transpose transformation (CCSD)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Calculates the transpose Jacobian transformation, i.e., the transformation 
+!!       by the transpose of the Jacobian matrix
+!!
+!!          A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | R >.
+!!
+!!       The transformation is performed as sigma^T = b^T A, where b is the vector
+!!       sent to the routine. On exit, the vector b is equal to sigma (the transformed
+!!       vector).
+!!
+         implicit none 
+!
+         class(ccsd) :: wf 
+!
+         real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i 
+         real(dp), dimension(wf%n_t2am, 1)   :: b_aibj 
+!
+      end subroutine jacobian_transpose_ccsd_transformation_ccsd
+!
+!
+      module subroutine jacobian_transpose_ccsd_a1_ccsd(wf, sigma_a_i, b_a_i)
+!!
+!!       Jacobian transpose CCSD A1 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Calculates the A1 term,
+!!
+!!          sum_ckdl b_ck L_iald u_kl^cd,
+!! 
+!!       abd adds it to the transformed vector sigma_a_i.
+!!
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+         real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i 
+         real(dp), dimension(wf%n_v, wf%n_o) :: sigma_a_i 
+!
+      end subroutine jacobian_transpose_ccsd_a1_ccsd
 !
 !
    end interface

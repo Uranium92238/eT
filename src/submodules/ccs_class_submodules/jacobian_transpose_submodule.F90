@@ -6,7 +6,9 @@ submodule (ccs_class) jacobian_transpose
 !!
 !!    Contains the following family of procedures of the CCS class:
 !!
-!!    Todo...!   
+!!    jacobian_transpose_ccs_transformation: performs the transposed Jacobian transformation (A^T)
+!!    jacobian_transpose_ccs_a1:             adds the CCS A1 term for the A^T transformation 
+!!    jacobian_transpose_ccs_b1:             adds the CCS B1 term for the A^T transformation 
 !! 
 !
    implicit none 
@@ -35,7 +37,7 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i 
 !
-      real(dp), dimension(:, :), allocatable :: sigma_a_i
+      real(dp), dimension(:,:), allocatable :: sigma_a_i
 !
 !     Allocate the transformed vector 
 !
@@ -45,6 +47,15 @@ contains
 !     Calculate and add the CCS contributions 
 !
       call wf%jacobian_transpose_ccs_a1(sigma_a_i, b_a_i)
+      call wf%jacobian_transpose_ccs_b1(sigma_a_i, b_a_i)
+!
+!     Copy the result into the incoming vector 
+!
+      call dcopy((wf%n_o)*(wf%n_v), sigma_a_i, 1, b_a_i, 1)
+!
+!     Deallocate the transformed vector 
+!
+      call deallocator(sigma_a_i, wf%n_v, wf%n_o)
 !
    end subroutine jacobian_transpose_ccs_transformation_ccs
 !
@@ -172,6 +183,9 @@ contains
 !
 !     :: Form L_ai_ck = L_ckia in batches over a ::
 !
+      call allocator(L_ai_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      L_ai_ck = zero
+!
 !     For g_caik, we'll need to L_ik^J Cholesky vector 
 !
       call allocator(L_ik_J, (wf%n_o)**2, wf%n_J)
@@ -250,14 +264,31 @@ contains
             enddo
          enddo
 !
+         call deallocator(g_ca_ik, (wf%n_v)*a_length, (wf%n_o)**2)
+!
       enddo ! End of batches over a 
 !
-!     Not done!!
+      call deallocator(L_ik_J, (wf%n_o)**2, wf%n_J)
+      call deallocator(g_ck_ia, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!     Add sum_ck L_ckia b_ck = sum_ck L_ai_ck b_ck 
+!
+      call dgemm('N','N',            &
+                  (wf%n_v)*(wf%n_o), &
+                  1,                 &
+                  (wf%n_v)*(wf%n_o), &
+                  one,               &
+                  L_ai_ck,           &
+                  (wf%n_v)*(wf%n_o), &
+                  b_a_i,             & ! "b_ai"
+                  (wf%n_v)*(wf%n_o), &
+                  one,               &
+                  sigma_a_i,         & ! "sigma_ai"
+                  (wf%n_v)*(wf%n_o))
+!
+      call deallocator(L_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine jacobian_transpose_ccs_b1_ccs
-!
-!
-!
 !
 !
 end submodule jacobian_transpose
