@@ -181,13 +181,16 @@ module ccs_class
 !!
 !!    Memory required in routine:
 !!
-!!       2*n_J*n_o*n_v     -> for reading L_ia_J contribution and reordering
-!!        
+!!       2*n_J*(i_length)*n_v     -> for reading L_ia_J contribution and reordering
+!!       i_length = i_last - i_first + 1
+!!
+!!    Optional arguments: i_first, i_last, j_first, j_last can be used in order to restrict indices
+!!       
       implicit none 
 !
-      class(ccs) :: wf
-      integer(i15), optional ::  i_first, i_last, j_first, j_last
-!
+      class(ccs)               :: wf
+      integer(i15), optional   :: i_first, j_first     ! First index (can differ from 1 when batching or for mlcc)
+      integer(i15), optional   :: i_last, j_last      ! Last index (can differ from n_o when batching or for mlcc)
       real(dp), dimension(:,:) :: L_ij_J
 !
       end subroutine get_cholesky_ij_ccs
@@ -206,11 +209,13 @@ module ccs_class
 !!
 !!       No additional memory
 !!
+!!    Optional arguments: i_first, i_last, a_first, a_last can be used in order to restrict indices
+!!
       implicit none 
 !
-      class(ccs) :: wf
-      integer(i15), optional ::  i_first, i_last, a_first, a_last
-!
+      class(ccs)               :: wf
+      integer(i15), optional   :: i_first, a_first   ! First index (can differ from 1 when batching or for mlcc)
+      integer(i15), optional   :: i_last, a_last    ! Last index (can differ from n_v/n_o when batching or for mlcc)
       real(dp), dimension(:,:) :: L_ia_J
 !
       end subroutine get_cholesky_ia_ccs
@@ -229,51 +234,54 @@ module ccs_class
 !!
 !!       Allocations in routine:
 !!
-!!         (1) n_J*n_o*n_v + 2*n_J*n_v*batch_length   ->  for L_ab_J contribution
-!!         (2) n_J*n_o*n_v + 2*n_J*n_o^2              ->  for L_ij_J contribution
-!!         (3) 2*n_J*n_o*n_v                          ->  for L_jb_J contribution
+!!         (1) n_J*(i_length)*(a_length) + 2*n_J*(a_length)*batch_length  ->  for L_ab_J contribution (batches of b)
+!!         (2) n_J*(i_length)*n_v + 2*n_J*n_o*(i_length)                  ->  for L_ij_J contribution
+!!         (3) 2*n_J*n_o*n_v                                              ->  for L_jb_J contribution
+!!
+!!         i_length = i_last - i_first + 1          
+!!         a_length = a_last - a_first + 1          
 !!
 !!         (1) determines memory requirement. 
 !!
+!!       Optional arguments: i_first, i_last, a_first, a_last can be used in order to restrict indices
+!!
          implicit none 
 !
-         class(ccs) :: wf
-         integer(i15), optional ::  i_first, i_last, a_first, a_last
-!
+         class(ccs)               :: wf
+         integer(i15), optional   :: i_first, a_first     ! First index (can differ from 1 when batching or for mlcc)
+         integer(i15), optional   :: i_last, a_last      ! Last index (can differ from n_o/n_v when batching or for mlcc)
          real(dp), dimension(:,:) :: L_ai_J
 !
       end subroutine get_cholesky_ai_ccs
 !
 !
-   module subroutine get_cholesky_ab_ccs(wf, L_ab_J, batch_first, batch_last, reorder, other_dim_first, other_dim_last)
+      module subroutine get_cholesky_ab_ccs(wf, L_ab_J, a_first, a_last, b_first, b_last)
 !!
-!!    Get Cholesky AB
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!       Get Cholesky AB
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!    Reads and T1-transforms the IA Cholesky vectors:
+!!       Reads and T1-transforms the IA Cholesky vectors:
 !!
-!!       L_ab_J_T1 = L_ab_J - sum_i t_ai*L_ib_J
+!!          L_ab_J_T1 = L_ab_J - sum_i t_ai*L_ib_J
 !!
-!!    If reorder = .true.,  L_ba_J is returned with batching over a
-!!    If reorder = .false., L_ab_J is returned with batching over b
 !!
-!!    Required memory: 
+!!       Required memory: 
 !!
-!!       n_J*batch_length*n_v   ->   For reordering of L_ab_J / L_ba_J
-!!       2*n_v*n_o*n_J          ->   For L_ib_J contribution
+!!          n_J*b_length*a_length       ->   For reordering of L_ab_J / L_ba_J
+!!          2*b_length*n_o*n_J          ->   For L_ib_J contribution
 !!
-      implicit none
+!!         a_length = a_last - a_first + 1          
+!!         b_length = b_last - b_first + 1 
+!!
+
+         implicit none
 !
-      class(ccs) :: wf
+         class(ccs)               :: wf
+         integer(i15), intent(in) :: a_first, b_first   ! First index (can differ from 1 when batching or for mlcc)
+         integer(i15), intent(in) :: a_last, b_last    ! Last index (can differ from n_v when batching or for mlcc)
+         real(dp), dimension(((b_last - b_first + 1)*(a_last - a_first + 1)), wf%n_J) :: L_ab_J ! L_ab^J
 !
-      integer(i15), intent(in) :: other_dim_last, other_dim_first
-      integer(i15), intent(in) :: batch_last, batch_first
-!
-      logical, intent(in) :: reorder
-      real(dp), dimension(((batch_last - batch_first + 1)*(other_dim_last - other_dim_first + 1)), wf%n_J) :: L_ab_J ! L_ab^J
-!
-      end subroutine get_cholesky_ab_ccs
-!
+   end subroutine get_cholesky_ab_ccs
 !
       module subroutine initialize_fock_matrix_ccs(wf)
 !!  

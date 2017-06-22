@@ -117,11 +117,12 @@ contains
 !     Indices 
 !
       integer(i15) :: i = 0, j = 0, a = 0, c = 0, k = 0, d = 0
-      integer(i15) :: ad = 0, ad_dim = 0, ci = 0, cidk = 0, ck = 0 
+      integer(i15) :: ad = 0, ad_dim = 0, ci = 0, cidk = 0, ck = 0, da = 0 
       integer(i15) :: ckd = 0, ckdi = 0, di = 0, dk = 0, kc = 0, da = 0
 !
       real(dp), dimension(:,:), allocatable :: L_kc_J 
       real(dp), dimension(:,:), allocatable :: L_da_J  ! L_ad^J; a is being batched over
+      real(dp), dimension(:,:), allocatable :: L_ad_J  ! L_ad^J; a is being batched over
       real(dp), dimension(:,:), allocatable :: g_da_kc ! g_adkc; a is being batched over
       real(dp), dimension(:,:), allocatable :: g_a_ckd ! reordered g_adkc; a is being batched over
       real(dp), dimension(:,:), allocatable :: u_ckd_i ! u_ki^cd
@@ -202,14 +203,26 @@ contains
 !
          ad_dim = batch_length*(wf%n_v) ! Dimension of ad for the batch over index a 
 !
+!        Get ab-cholesky vectors for the batch, L_ad^J, then reorder from L_ad_J to L_da_J
+!
+         call allocator(L_ad_J, ad_dim, wf%n_J)
+         L_ad_J = zero
+         call wf%get_cholesky_ab(L_ad_J, a_begin, a_end, 1, wf%n_v)
+!
          call allocator(L_da_J, ad_dim, wf%n_J)
          L_da_J = zero
 !
-!        Get reordered Cholesky vector (Note: L_da_J(da,J) = L_ad^J)
+         do a = 1, batch_length
+            do d = 1, wf%n_v
+               da = index_two(d, a, wf%n_v)
+               ad = index_two(a, d, batch_length)
+               do J = 1, wf%n_J
+                  L_da_J(da, J) = L_ad_J(ad, J)
+               enddo
+            enddo
+         enddo
 !
-         reorder = .true.
-         call wf%get_cholesky_ab(L_da_J, a_begin, a_end, &
-                                 reorder, 1,wf%n_v)
+         call deallocator(L_ad_J, ad_dim, wf%n_J)
 !
 !        Allocate g_da_kc = g_adkc
 !
@@ -547,7 +560,9 @@ contains
       real(dp), dimension(:,:), allocatable :: g_m_ab_cd
       real(dp), dimension(:,:), allocatable :: L_ai_J 
       real(dp), dimension(:,:), allocatable :: L_ca_J 
+      real(dp), dimension(:,:), allocatable :: L_ac_J 
       real(dp), dimension(:,:), allocatable :: L_db_J 
+      real(dp), dimension(:,:), allocatable :: L_bd_J 
 !
 !     Reordered T2 amplitudes
 !
@@ -564,7 +579,7 @@ contains
       integer(i15) :: a = 0, b = 0, c = 0, d = 0
       integer(i15) :: i = 0, j = 0
 !
-      integer(i15) :: ab = 0, ca = 0, cb = 0, cd = 0, da = 0, db = 0 
+      integer(i15) :: ab = 0, ca = 0, cb = 0, cd = 0, da = 0, db = 0, ac = 0, bd = 0 
       integer(i15) :: ai = 0, aj = 0, bj = 0, bi = 0, ci = 0, cj = 0, dj = 0, di = 0
       integer(i15) :: ij = 0
 !
@@ -680,22 +695,50 @@ contains
             call batch_limits(b_first ,b_last ,b_batch, b_max_length, wf%n_v)
             b_length = b_last - b_first + 1 
 !
-!           Get cholesky vectors L_ac^J ordered as L_ca_J
+!           Get ab-cholesky vectors for the batch, L_ac^J, then reorder from L_ac_J to L_ca_J
+!
+            call allocator(L_ac_J, (wf%n_v)*a_length, wf%n_J)
+            L_ac_J = zero
+!
+            call wf%get_cholesky_ab(L_ac_J, a_first, a_last, 1, wf%n_v)
 !
             call allocator(L_ca_J, (wf%n_v)*a_length, wf%n_J)
             L_ca_J = zero
 !
-            reorder = .true.
-            call wf%get_cholesky_ab(L_ca_J, a_first, a_last, reorder, 1,wf%n_v)
+            do c = 1, wf%n_v
+               do a = 1, a_length
+                  ca = index_two(c, a, wf%n_v)
+                  ac = index_two(a, c, a_length)
+                  do J = 1, wf%n_J
+                     L_ca_J(ca, J) = L_ac_J(ac, J) 
+                  enddo
+               enddo
+            enddo
 !
-!           Get cholesky vectors L_bd^J ordered as L_db_J
+            call deallocator(L_ac_J, (wf%n_v)*a_length, wf%n_J)
+!
+!           Get ab-cholesky vectors for the batch, L_bd^J, then reorder from L_bd_J to L_db_J
+!
+            call allocator(L_bd_J, (wf%n_v)*b_length, wf%n_J)
+            L_bd_J = zero
+!
+            call wf%get_cholesky_ab(L_bd_J, b_first, b_last, 1, wf%n_v)
 !
             call allocator(L_db_J, (wf%n_v)*b_length, wf%n_J)
             L_db_J = zero
-!  
-            reorder = .true.
-            call wf%get_cholesky_ab(L_db_J, b_first, b_last, reorder, 1,wf%n_v)
 !
+            do d = 1, wf%n_v
+               do b = 1, b_length
+                  db = index_two(d, b, wf%n_v)
+                  bd = index_two(b, d, b_length)
+                  do J = 1, wf%n_J
+                     L_db_J(db, J) = L_bd_J(bd, J)
+                  enddo
+               enddo
+            enddo
+
+            call deallocator(L_bd_J, (wf%n_v)*b_length, wf%n_J)
+!  
 !           Allocate g_ca_db
 !
             call allocator(g_ca_db, (wf%n_v)*a_length, (wf%n_v)*b_length)
@@ -1317,6 +1360,7 @@ contains
       real(dp), dimension(:,:), allocatable :: L_ia_J 
       real(dp), dimension(:,:), allocatable :: L_ki_J 
       real(dp), dimension(:,:), allocatable :: L_ca_J 
+      real(dp), dimension(:,:), allocatable :: L_ac_J 
       real(dp), dimension(:,:), allocatable :: g_kd_lc
       real(dp), dimension(:,:), allocatable :: g_dl_ck
       real(dp), dimension(:,:), allocatable :: g_ki_ca
@@ -1339,7 +1383,7 @@ contains
 !
       integer(i15) :: ca = 0
       integer(i15) :: ai = 0, aj = 0, al = 0, bi = 0, bj = 0, bk = 0, cj = 0, ck = 0, cl = 0, di = 0, dk = 0, dl = 0
-      integer(i15) :: kd = 0, lc = 0
+      integer(i15) :: kd = 0, lc = 0, ca = 0, ac = 0
       integer(i15) :: ki = 0
 !
       integer(i15) :: aldi = 0, aibj = 0, cldk = 0, bkcj = 0
@@ -1476,14 +1520,25 @@ contains
          call batch_limits(a_start, a_end, a_batch, max_batch_length, wf%n_v)
          a_length = a_end - a_start + 1
 !
-!        Allocation for L_ac_J as L_ca_J (L_ca_J = L_acJ)
+!        Get ab-cholesky vectors for the batch, L_ac^J, then reorder from L_ac_J to L_ca_J
+!
+         call allocator(L_ac_J,(wf%n_v)*a_length, wf%n_J)
+         L_ac_J = zero
+         call wf%get_cholesky_ab(L_ac_J, a_start, a_end, 1, wf%n_v)
 !
          call allocator(L_ca_J,(wf%n_v)*a_length, wf%n_J)
-!
-!        Read Cholesky vectors
-!
-         reorder = .true.
-         call wf%get_cholesky_ab(L_ca_J, a_start, a_end, reorder, 1,wf%n_v)
+         L_ca_J = zero
+         do a = 1, a_length
+            do c = 1, wf%n_v
+               ac = index_two(a, c, a_length) 
+               ca = index_two(c, a, wf%n_v) 
+               do J = 1, wf%n_J
+                 L_ca_J(ca, J) = L_ac_J(ac, J)
+               enddo
+            enddo
+         enddo
+
+         call deallocator(L_ac_J,(wf%n_v)*a_length, wf%n_J)
 !
 !        g_ki_ca = sum_J L_ki_J*L_ca_J
 !
@@ -1665,7 +1720,7 @@ contains
 !
 !     Indices 
 !
-      integer(i15) :: ai = 0, aidl = 0, al = 0, aldi = 0, a = 0, i = 0, b = 0, ca = 0
+      integer(i15) :: ai = 0, aidl = 0, al = 0, aldi = 0, a = 0, i = 0, b = 0, ca = 0, ac = 0
       integer(i15) :: j = 0, c = 0, d = 0, di = 0, dl = 0, k = 0, kc = 0, kd = 0, l = 0, ki = 0
       integer(i15) :: lc = 0, ld = 0, aibj = 0, bj = 0, bjck = 0, bk = 0, bkcj = 0, cj = 0, ck = 0
 !
@@ -1690,6 +1745,7 @@ contains
       real(dp), dimension(:,:), allocatable :: g_ai_ck ! g_acki
       real(dp), dimension(:,:), allocatable :: g_ca_ki ! g_acki; a is batched over 
       real(dp), dimension(:,:), allocatable :: L_ca_J  ! L_ac^J; a is batched over 
+      real(dp), dimension(:,:), allocatable :: L_ac_J  ! L_ac^J; a is batched over 
       real(dp), dimension(:,:), allocatable :: L_ki_J  ! L_ki^J 
       real(dp), dimension(:,:), allocatable :: u_ck_bj ! u_jk^bc
 !
@@ -2040,16 +2096,27 @@ contains
          call batch_limits(a_begin, a_end, a_batch, max_batch_length, batch_dimension)
          batch_length = a_end - a_begin + 1 
 !
-!        Allocate the Cholesky vector L_ca_J = L_ac^J and set it to zero 
+!        Get ab-cholesky vectors for the batch, L_ac^J, then reorder from L_ac_J to L_ca_J
 !
          ac_dim = batch_length*(wf%n_v) ! Dimension of ac for the batch over index a 
 !
+         call allocator(L_ac_J, ac_dim, wf%n_J)
+         L_ac_J = zero
+         call wf%get_cholesky_ab(L_ac_J, a_begin, a_end, 1, wf%n_v)
+!
          call allocator(L_ca_J, ac_dim, wf%n_J)
+         L_ca_J = zero
+         do c = 1, wf%n_v
+            do a = 1, batch_length
+               ca = index_two(c, a, wf%n_v)
+               ac = index_two(a, c, batch_length)
+               do J = 1, wf%n_J
+                  L_ca_J(ca, J) = L_ac_J(ac, J)
+               enddo
+            enddo
+         enddo
 !
-!        Read the Cholesky vector from file 
-!
-         reorder = .true.
-         call wf%get_cholesky_ab(L_ca_J, a_begin, a_end, reorder, 1,wf%n_v)
+         call deallocator(L_ac_J, ac_dim, wf%n_J)
 !
 !        Allocate the integral g_ca_ki = g_acki and set to zero 
 !
