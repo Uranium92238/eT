@@ -148,8 +148,6 @@ contains
 !
       integer(i15) :: a_batch = 0, a_length = 0, a_first = 0, a_last = 0
 !
-      logical :: reorder 
-!
 !     Indices 
 !
       integer(i15) :: a = 0, i = 0, c = 0, k = 0, ck = 0, ik = 0, ai = 0
@@ -219,8 +217,7 @@ contains
 !
          call allocator(L_ca_J, (wf%n_v)*a_length, wf%n_J)
 !
-         reorder = .false.
-         call wf%get_cholesky_ab(L_ca_J, a_first, a_last, reorder, 1, wf%n_v)
+         call wf%get_cholesky_ab(L_ca_J, 1, wf%n_v, a_first, a_last)
 !
          call allocator(g_ca_ik, (wf%n_v)*a_length, (wf%n_o)**2)
 !
