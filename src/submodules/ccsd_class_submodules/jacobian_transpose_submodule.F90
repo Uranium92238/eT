@@ -55,7 +55,14 @@ contains
 !     Calculate and add the CCSD contributions to the
 !     singles transformed vector 
 !
+      write(unit_output,*) 'a1'
+      flush(unit_output)
+!
       call wf%jacobian_transpose_ccsd_a1(sigma_a_i, b_a_i)
+!
+      write(unit_output,*) 'b1'
+      flush(unit_output)
+!
       call wf%jacobian_transpose_ccsd_b1(sigma_a_i, b_a_i)
 !
       call allocator(b_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
@@ -63,10 +70,37 @@ contains
 !
       call squareup(b_aibj, b_ai_bj, (wf%n_v)*(wf%n_o))
 !
+      write(unit_output,*) 'c1'
+      flush(unit_output)
+!
       call wf%jacobian_transpose_ccsd_c1(sigma_a_i, b_ai_bj)
 !
-!     End of routine ... deallocs:
+      write(unit_output,*) 'd1'
+      flush(unit_output)
 !
+      call wf%jacobian_transpose_ccsd_d1(sigma_a_i, b_ai_bj)
+!
+      write(unit_output,*) 'e1'
+      flush(unit_output)
+!
+      call wf%jacobian_transpose_ccsd_e1(sigma_a_i, b_ai_bj)
+!
+      write(unit_output,*) 'f1'
+      flush(unit_output)
+!
+      call wf%jacobian_transpose_ccsd_f1(sigma_a_i, b_ai_bj)
+!
+      write(unit_output,*) 'g1'
+      flush(unit_output)
+!
+      call wf%jacobian_transpose_ccsd_g1(sigma_a_i, b_ai_bj)
+!
+!     Copy the transformed singles over into the incoming singles vector
+!
+      b_a_i = sigma_a_i
+!
+!     End of routines - deallocations 
+! 
       call deallocator(sigma_a_i, wf%n_v, wf%n_o)
       call deallocator(b_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
@@ -1532,6 +1566,9 @@ contains
 !        Form L_ai_de = L_deia = 2 * g_deia - g_daie
 !                              = 2 * g_de_ia(de,ia) - g_de_ia(da,ie)
 !
+         call allocator(L_ai_de, (wf%n_o)*(wf%n_v), (wf%n_v)*e_length)
+         L_ai_de = zero
+!
          do e = 1, e_length
             do d = 1, wf%n_v
 !
@@ -1767,7 +1804,7 @@ contains
 !
 !     We have t_mc_dl(mc,dl) = t_lm^cd 
 !     Reorder t_cl_dm(cl,dm) = t_mc_dl(lc,dm) = t_ml^cd  
-! 
+!
       call allocator(t_cl_dm, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
       t_cl_dm = zero 
 !
@@ -2038,7 +2075,625 @@ contains
    end subroutine jacobian_transpose_ccsd_f1_ccsd
 !
 !
+   module subroutine jacobian_transpose_ccsd_g1_ccsd(wf, sigma_a_i, b_ai_bj)
+!!
+!!    Jacobian transpose CCSD G1 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!    Calculates the G1 term,
+!!
+!!       - sum_ckdle (b_akdl t_kl^ce g_icde + b_cidl t_kl^ce g_kade + b_cldi t_kl^ce g_keda)
+!! 
+!!    and adds it to the transformed vector sigma_a_i.
+!!
+!!    NB! In our equations, we have opposite signs on this term. Moreover,
+!!    I have g_keda in the second term. I think S's equations are correct.
+!!
+      implicit none 
 !
+      class(ccsd) :: wf
 !
+      real(dp), dimension(wf%n_v, wf%n_o)                       :: sigma_a_i 
+      real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj
+!
+      real(dp), dimension(:,:), allocatable :: L_ka_J ! L_ka^J 
+      real(dp), dimension(:,:), allocatable :: L_de_J ! L_de^J 
+      real(dp), dimension(:,:), allocatable :: L_ke_J ! L_ke^J
+      real(dp), dimension(:,:), allocatable :: L_ic_J ! L_ic^J
+      real(dp), dimension(:,:), allocatable :: L_da_J ! L_da^J 
+!
+      real(dp), dimension(:,:), allocatable :: b_di_cl ! b_cidl 
+!
+      real(dp), dimension(:,:), allocatable :: X_di_ek ! An intermediate, term 2
+      real(dp), dimension(:,:), allocatable :: X_kde_i ! Reordered intermediate, term 2
+!
+      real(dp), dimension(:,:), allocatable :: X_id_kl ! An intermediate, term 1 
+      real(dp), dimension(:,:), allocatable :: X_dkl_i ! Reordered intermediate, term 1
+!
+      real(dp), dimension(:,:), allocatable :: t_cl_ek ! t_kl^ce 
+      real(dp), dimension(:,:), allocatable :: t_ce_kl ! t_kl^ce 
+!
+      real(dp), dimension(:,:), allocatable :: g_ka_de ! g_kade 
+      real(dp), dimension(:,:), allocatable :: g_a_kde ! g_kade
+      real(dp), dimension(:,:), allocatable :: g_ke_da ! g_keda  
+      real(dp), dimension(:,:), allocatable :: g_ic_de ! g_icde
+      real(dp), dimension(:,:), allocatable :: g_id_ce ! g_icde
+!
+      integer(i15) :: l = 0, kde = 0, ka = 0, k = 0, i = 0, el = 0, ek = 0, e = 0
+      integer(i15) :: dl = 0, di = 0, de = 0, d = 0, cl = 0, ckel = 0, ci = 0, ck = 0
+      integer(i15) :: c = 0, a = 0, kl = 0, ke = 0, id = 0, ic = 0, dkl = 0, da = 0, ce = 0
+!
+!     Batching variables 
+!
+      integer(i15) :: required = 0, available = 0 
+      integer(i15) :: batch_dimension = 0, max_batch_length = 0, n_batch = 0
+!
+      integer(i15) :: a_batch = 0, a_length = 0, a_first = 0, a_last = 0
+      integer(i15) :: e_batch = 0, e_length = 0, e_first = 0, e_last = 0, offset_kde = 0
+      integer(i15) :: d_batch = 0, d_length = 0, d_first = 0, d_last = 0, offset_id = 0
+!
+!     :: Term 2. - sum_ckdle b_cidl t_kl^ce g_kade ::
+!
+!     X_di_ek = sum_cl b_cidl t_kl^ce = sum_cl b_di_cl t_cl_ek
+!
+!     Reorder to b_di_cl = b_cidl
+!
+      call allocator(b_di_cl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      b_di_cl = zero 
+!
+      do l = 1, wf%n_o
+         do c = 1, wf%n_v
+!
+            cl = index_two(c, l, wf%n_v)
+!
+            do i = 1, wf%n_o
+!
+               ci = index_two(c, i, wf%n_v)
+!
+               do d = 1, wf%n_v
+!
+                  di = index_two(d, i, wf%n_v)
+                  dl = index_two(d, l, wf%n_v)
+!
+                  b_di_cl(di, cl) = b_ai_bj(ci, dl) ! b_cidl
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+!     Order amplitudes as t_cl_ek = t_kl^ce
+!
+      call wf%initialize_amplitudes
+      call wf%read_double_amplitudes
+!
+      call allocator(t_cl_ek, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      t_cl_ek = zero 
+!
+      do k = 1, wf%n_o
+         do e = 1, wf%n_v
+!
+            ek = index_two(e, k, wf%n_v)
+!
+            do l = 1, wf%n_o
+!
+               el = index_two(e, l, wf%n_v)
+!
+               do c = 1, wf%n_v
+!
+                  ck = index_two(c, k, wf%n_v)
+                  cl = index_two(c, l, wf%n_v)
+!
+                  ckel = index_packed(ck, el) 
+!
+                  t_cl_ek(cl, ek) = wf%t2am(ckel, 1) ! t_kl^ce
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      call wf%destruct_amplitudes
+!
+!     Form the intermediate X_di_ek = sum_cl b_di_cl t_cl_ek
+!
+      call allocator(X_di_ek, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+      call dgemm('N','N',            &
+                  (wf%n_o)*(wf%n_v), & 
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  b_di_cl,           &
+                  (wf%n_o)*(wf%n_v), &
+                  t_cl_ek,           &
+                  (wf%n_o)*(wf%n_v), &
+                  zero,              &
+                  X_di_ek,           &
+                  (wf%n_o)*(wf%n_v))
+!
+      call deallocator(b_di_cl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!     - sum_ckdle b_cidl t_kl^ce g_kade = sum_kde g_kade X_di_ek
+!
+!     Reorder X_di_ek to X_kde_i
+!
+      call allocator(X_kde_i, (wf%n_o)*(wf%n_v)**2, wf%n_o)
+      X_kde_i = zero 
+!
+      do i = 1, wf%n_o
+         do e = 1, wf%n_v
+            do d = 1, wf%n_v
+!
+               di = index_two(d, i, wf%n_v)
+!
+               do k = 1, wf%n_o
+!
+                  ek = index_two(e, k, wf%n_v)
+!
+                  kde = index_three(k, d, e, wf%n_o, wf%n_v)
+!
+                  X_kde_i(kde, i) = X_di_ek(di, ek)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      call deallocator(X_di_ek, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!     Get L_ka^J 
+!
+      call allocator(L_ka_J, (wf%n_o)*(wf%n_v), wf%n_J)
+!
+      call wf%get_cholesky_ia(L_ka_J)
+!
+!     Prepare batching over index e
+!
+      required = 1 ! Not a correct estimate - needs to be set!
+!     
+      required  = 4*required ! In words
+      available = get_available()
+!
+      batch_dimension  = wf%n_v ! Batch over the virtual index a
+      max_batch_length = 0      ! Initilization of unset variables 
+      n_batch          = 0
+!
+      call num_batch(required, available, max_batch_length, n_batch, batch_dimension)           
+!
+!     Loop over the number of a batches 
+!
+      do e_batch = 1, n_batch
+!
+!        For each batch, get the limits for the a index 
+!
+         call batch_limits(e_first, e_last, e_batch, max_batch_length, batch_dimension)
+         e_length = e_last - e_first + 1    
+!
+!        Form g_ka_de = g_kade 
+!
+         call allocator(L_de_J, (wf%n_v)*e_length, wf%n_J)
+!
+         call wf%get_cholesky_ab(L_de_J, 1, wf%n_v, e_first, e_last)
+!
+         call allocator(g_ka_de, (wf%n_o)*(wf%n_v), (wf%n_v)*e_length)
+!
+         call dgemm('N','T',            &
+                     (wf%n_o)*(wf%n_v), & 
+                     (wf%n_v)*e_length, &
+                     wf%n_J,            &
+                     one,               &
+                     L_ka_J,            &
+                     (wf%n_o)*(wf%n_v), &
+                     L_de_J,            &
+                     (wf%n_v)*e_length, &
+                     zero,              &
+                     g_ka_de,           &
+                     (wf%n_o)*(wf%n_v))
+!
+         call deallocator(L_de_J, (wf%n_v)*e_length, wf%n_J)
+!
+!        Reorder to g_a_kde = g_ka_de = g_kade 
+!
+         call allocator(g_a_kde, wf%n_v, (wf%n_o)*(wf%n_v)*e_length)
+         g_a_kde = zero 
+!
+         do e = 1, e_length
+            do d = 1, wf%n_v
+!
+               de = index_two(d, e, wf%n_v)
+!  
+               do k = 1, wf%n_o
+!
+                  kde = index_three(k, d, e, wf%n_o, wf%n_v)
+!
+                  do a = 1, wf%n_v
+!
+                     ka = index_two(k, a, wf%n_o)
+!
+                     g_a_kde(a, kde) = g_ka_de(ka, de)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+         call deallocator(g_ka_de, (wf%n_v)*(wf%n_o), (wf%n_v)*e_length)
+!
+!        Add the contribution of
+!
+!           - sum_ckdle b_cidl t_kl^ce g_kade = sum_kde g_a_kde X_kde_i
+!
+!        arising from the present batch over e 
+!
+         offset_kde = index_three(1, 1, e_first, wf%n_o, wf%n_v)
+!
+         call dgemm('N','N',                     &
+                     wf%n_v,                     &
+                     wf%n_o,                     &
+                     (wf%n_o)*(wf%n_v)*e_length, &
+                     -one,                       &
+                     g_a_kde,                    &
+                     wf%n_v,                     &
+                     X_kde_i(offset_kde,1),      & ! First element to use 
+                     (wf%n_o)*(wf%n_v)**2,       & ! Full space dimension of X_kde_i 
+                     one,                        &
+                     sigma_a_i,                  &
+                     wf%n_v)
+!
+         call deallocator(g_a_kde, wf%n_v, (wf%n_o)*(wf%n_v)*e_length)
+!
+      enddo ! End of batches over e 
+!
+      call deallocator(L_ka_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call deallocator(X_kde_i, (wf%n_o)*(wf%n_v)**2, wf%n_o)
+!
+!     :: Term 3. - sum_ckdle b_cldi t_kl^ce g_keda ::
+!
+!     X_di_ek = sum_cl b_cldi t_kl^ce = sum_cl b_di_cl t_cl_ek
+!
+!     We have t_cl_ek = t_kl^ce, so this can be used unaltered
+!     b_ai_bj(cl,di) = b_cldi & hence b_ai^bj^T(di,cl) = b_cldi
+!
+      call allocator(X_di_ek, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+      call dgemm('T','N',            &
+                  (wf%n_o)*(wf%n_v), & 
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  b_ai_bj,           & ! "b_cl_di"
+                  (wf%n_o)*(wf%n_v), &
+                  t_cl_ek,           &
+                  (wf%n_o)*(wf%n_v), &
+                  zero,              &
+                  X_di_ek,           &
+                  (wf%n_o)*(wf%n_v))
+!
+!     - sum_kde X_di_ek g_keda
+!
+!     Reorder X_di_ek to X_kde_i
+!
+      call allocator(X_kde_i, (wf%n_o)*(wf%n_v)**2, wf%n_o)
+      X_kde_i = zero
+!
+      do i = 1, wf%n_o
+         do e = 1, wf%n_v
+            do d = 1, wf%n_v
+!
+               di = index_two(d, i, wf%n_v)
+!
+               do k = 1, wf%n_o
+!
+                  ek = index_two(e, k, wf%n_v)
+!
+                  kde = index_three(k, d, e, wf%n_o, wf%n_v)
+!
+                  X_kde_i(kde, i) = X_di_ek(di, ek)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      call deallocator(X_di_ek, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!     Get L_ke^J 
+!
+      call allocator(L_ke_J, (wf%n_o)*(wf%n_v), wf%n_J)
+!
+      call wf%get_cholesky_ia(L_ke_J)
+!
+!     Prepare batching over a 
+!
+      required = 1 ! Not a correct estimate - needs to be set!
+!     
+      required  = 4*required ! In words
+      available = get_available()
+!
+      batch_dimension  = wf%n_v ! Batch over the virtual index a
+      max_batch_length = 0      ! Initilization of unset variables 
+      n_batch          = 0
+!
+      call num_batch(required, available, max_batch_length, n_batch, batch_dimension)           
+!
+!     Loop over the number of a batches 
+!
+      do a_batch = 1, n_batch
+!
+!        For each batch, get the limits for the a index 
+!
+         call batch_limits(a_first, a_last, a_batch, max_batch_length, batch_dimension)
+         a_length = a_last - a_first + 1    
+!
+!        Form g_ke_da = g_keda
+!
+         call allocator(L_da_J, (wf%n_v)*a_length, wf%n_J)
+!
+         call wf%get_cholesky_ab(L_da_J, 1, wf%n_v, a_first, a_last)
+!
+         call allocator(g_ke_da, (wf%n_o)*(wf%n_v), (wf%n_v)*a_length)
+!
+         call dgemm('N','T',            &
+                     (wf%n_o)*(wf%n_v), & 
+                     (wf%n_v)*a_length, &
+                     wf%n_J,            &
+                     one,               &
+                     L_ke_J,            &
+                     (wf%n_o)*(wf%n_v), &
+                     L_da_J,            &
+                     (wf%n_v)*a_length, &
+                     zero,              &
+                     g_ke_da,           &
+                     (wf%n_o)*(wf%n_v))
+!
+         call deallocator(L_da_J, (wf%n_v)*a_length, wf%n_J)
+!
+!        Reorder to g_a_kde = g_ke_da 
+!
+         call allocator(g_a_kde, a_length, (wf%n_o)*(wf%n_v)**2)
+         g_a_kde = zero 
+!
+         do e = 1, wf%n_v
+            do d = 1, wf%n_v
+               do k = 1, wf%n_o
+!
+                  ke = index_two(k, e, wf%n_o)
+!
+                  kde = index_three(k, d, e, wf%n_o, wf%n_v)
+!     
+                  do a = 1, a_length
+!
+                     da = index_two(d, a, wf%n_v)
+!
+                     g_a_kde(a, kde) = g_ke_da(ke, da) ! g_keda
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+         call deallocator(g_ke_da, (wf%n_o)*(wf%n_v), (wf%n_v)*a_length)
+!
+!        Add 
+!
+!            - sum_ckdle b_cldi t_kl^ce g_keda
+!                 = -sum_kde g_a_kde X_kde_i 
+!
+!        for the current batch of a's
+!
+         call dgemm('N','N',               &
+                     a_length,             &
+                     wf%n_o,               &
+                     (wf%n_o)*(wf%n_v)**2, &
+                     -one,                 &
+                     g_a_kde,              &
+                     a_length,             &
+                     X_kde_i,              &
+                     (wf%n_o)*(wf%n_v)**2, &
+                     one,                  &
+                     sigma_a_i(a_first,1), &
+                     wf%n_v)
+!
+         call deallocator(g_a_kde, a_length, (wf%n_o)*(wf%n_v)**2)
+!
+      enddo ! End of batches over a 
+!
+      call deallocator(X_kde_i, (wf%n_o)*(wf%n_v)**2, wf%n_o)
+      call deallocator(L_ke_J, (wf%n_o)*(wf%n_v), wf%n_J)
+!  
+!     :: Term 1. - sum_ckdle b_akdl t_kl^ce g_icde ::
+! 
+!     X_id_kl = sum_ce t_kl^ce g_icde = sum_ce g_id_ce t_ce_kl
+!
+!     We have t_cl_ek = t_kl^ce
+!     Reorder to t_ce_kl = t_cl_ek = t_kl^ce
+!
+      call allocator(t_ce_kl, (wf%n_v)**2, (wf%n_o)**2)
+      t_ce_kl = zero 
+!
+      do l = 1, wf%n_o
+         do k = 1, wf%n_o
+!
+            kl = index_two(k, l, wf%n_o)
+!
+            do e = 1, wf%n_v
+!
+               ek = index_two(e, k, wf%n_v)
+!
+               do c = 1, wf%n_v
+!
+                  cl = index_two(c, l, wf%n_v)
+                  ce = index_two(c, e, wf%n_v)
+!
+                  t_ce_kl(ce, kl) = t_cl_ek(cl, ek) ! t_kl^ce
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      call deallocator(t_cl_ek, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!     Get L_ic^J
+!
+      call allocator(L_ic_J, (wf%n_o)*(wf%n_v), wf%n_J)
+!
+      call wf%get_cholesky_ia(L_ic_J)
+!
+      call allocator(X_id_kl, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
+      X_id_kl = zero
+!
+!     Prepare for batching over d 
+!
+      required = 1 ! Not a correct estimate - needs to be set!
+!     
+      required  = 4*required ! In words
+      available = get_available()
+!
+      batch_dimension  = wf%n_v ! Batch over the virtual index a
+      max_batch_length = 0      ! Initilization of unset variables 
+      n_batch          = 0
+!
+      call num_batch(required, available, max_batch_length, n_batch, batch_dimension)           
+!
+!     Loop over the number of a batches 
+!
+      do d_batch = 1, n_batch
+!
+!        For each batch, get the limits for the a index 
+!
+         call batch_limits(d_first, d_last, d_batch, max_batch_length, batch_dimension)
+         d_length = d_last - d_first + 1    
+!
+!        Form g_ic_de = g_icde 
+!
+         call allocator(L_de_J, (wf%n_v)*d_length, wf%n_J)
+!
+         call wf%get_cholesky_ab(L_de_J, d_first, d_last, 1, wf%n_v)
+!
+         call allocator(g_ic_de, (wf%n_o)*(wf%n_v), (wf%n_v)*d_length)
+!
+         call dgemm('N','T',            &
+                     (wf%n_o)*(wf%n_v), & 
+                     (wf%n_v)*d_length, &
+                     wf%n_J,            &
+                     one,               &
+                     L_ic_J,            &
+                     (wf%n_o)*(wf%n_v), &
+                     L_de_J,            &
+                     (wf%n_v)*d_length, & 
+                     zero,              &
+                     g_ic_de,           &
+                     (wf%n_o)*(wf%n_v))
+!
+         call deallocator(L_de_J, d_length*(wf%n_v), wf%n_J)
+!
+!        Reorder to g_id_ce = g_ic_de
+!
+         call allocator(g_id_ce, (wf%n_o)*d_length, (wf%n_v)**2)
+         g_id_ce = zero 
+!
+         do e = 1, wf%n_v
+            do c = 1, wf%n_v
+!
+               ce = index_two(c, e, wf%n_v)
+!
+               do d = 1, d_length
+!
+                  de = index_two(d, e, d_length)
+!
+                  do i = 1, wf%n_o
+!
+                     ic = index_two(i, c, wf%n_o)
+                     id = index_two(i, d, wf%n_o)
+!
+                     g_id_ce(id, ce) = g_ic_de(ic, de)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+         call deallocator(g_ic_de, (wf%n_o)*(wf%n_v), (wf%n_v)**2)
+!
+!        Add the contribution 
+!
+!           X_id_kl = sum_ce t_kl^ce g_icde = sum_ce g_id_ce t_ce_kl
+!
+!        from the current batch of d 
+!
+         offset_id = index_two(i, d_first, wf%n_o)
+!
+         call dgemm('N','N',               &
+                     (wf%n_o)*d_length,    &
+                     (wf%n_o)**2,          &
+                     (wf%n_v)**2,          &
+                     one,                  &
+                     g_id_ce,              &
+                     (wf%n_o)*d_length,    &
+                     t_ce_kl,              &
+                     (wf%n_v)**2,          &
+                     one,                  &
+                     X_id_kl(offset_id,1), &
+                     (wf%n_o)*(wf%n_v))
+!
+         call deallocator(g_id_ce, (wf%n_o)*d_length, (wf%n_v)**2)
+!
+      enddo ! End of batches over d 
+!
+      call deallocator(t_ce_kl, (wf%n_v)**2, (wf%n_o)**2)
+      call deallocator(L_ic_J, (wf%n_o)*(wf%n_v), wf%n_J)
+!
+!     - sum_ckdle b_akdl t_kl^ce g_icde = sum_kdl b_akdl X_id_kl
+!
+!     Reorder to X_dkl_i = X_id_kl 
+!
+      call allocator(X_dkl_i, (wf%n_v)*(wf%n_o)**2, wf%n_o)
+      X_dkl_i = zero
+!
+      do i = 1, wf%n_o
+         do l = 1, wf%n_o
+            do k = 1, wf%n_o
+!
+               kl = index_two(k, l, wf%n_o)
+!
+               do d = 1, wf%n_v
+!
+                  id = index_two(i, d, wf%n_o)
+!
+                  dkl = index_three(d, k, l, wf%n_v, wf%n_o)
+!
+                  X_dkl_i(dkl, i) = X_id_kl(id, kl)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      call deallocator(X_id_kl, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
+!
+!     Add - sum_ckdle b_akdl t_kl^ce g_icde = - sum_dkl b_a_kdl X_dkl_i
+!
+!     Note: we interpret b_ai_bj as b_a_ibj
+!
+      call dgemm('N','N',               &
+                  wf%n_v,               &
+                  wf%n_o,               &
+                  (wf%n_v)*(wf%n_o)**2, &
+                  -one,                 &
+                  b_ai_bj,              & ! "b_a_ibj"
+                  wf%n_v,               &
+                  X_dkl_i,              &
+                  (wf%n_v)*(wf%n_o)**2, &
+                  one,                  &
+                  sigma_a_i,            &
+                  wf%n_v)
+!
+      call deallocator(X_dkl_i, (wf%n_v)*(wf%n_o)**2, wf%n_o)
+!
+   end subroutine jacobian_transpose_ccsd_g1_ccsd
+!
+!  
 !
 end submodule jacobian_transpose

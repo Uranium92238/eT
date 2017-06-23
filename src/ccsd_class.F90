@@ -127,6 +127,7 @@ module ccsd_class
       procedure :: jacobian_transpose_ccsd_d1 => jacobian_transpose_ccsd_d1_ccsd
       procedure :: jacobian_transpose_ccsd_e1 => jacobian_transpose_ccsd_e1_ccsd
       procedure :: jacobian_transpose_ccsd_f1 => jacobian_transpose_ccsd_f1_ccsd
+      procedure :: jacobian_transpose_ccsd_g1 => jacobian_transpose_ccsd_g1_ccsd
 !
 !     Routines to destroy amplitudes and omega 
 !
@@ -896,7 +897,7 @@ module ccsd_class
 !!
 !!       Calculates the F1 term,
 !!
-!!        - sum_ckdlm (b_akdl t_lm^cd g_ikmc + b_ckal t_ml^cd g_mkid + b_ckdi t_ml^cd g_mkla)
+!!         sum_ckdlm (b_akdl t_lm^cd g_ikmc + b_ckal t_ml^cd g_mkid + b_ckdi t_ml^cd g_mkla)
 !! 
 !!       and adds it to the transformed vector sigma_a_i.
 !!
@@ -910,6 +911,30 @@ module ccsd_class
          real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
 !
       end subroutine jacobian_transpose_ccsd_f1_ccsd
+!
+!
+      module subroutine jacobian_transpose_ccsd_g1_ccsd(wf, sigma_a_i, b_ai_bj)
+!!
+!!       Jacobian transpose CCSD G1 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Calculates the G1 term,
+!!
+!!         - sum_ckdle (b_akdl t_kl^ce g_icde + b_cidl t_kl^ce g_kade + b_cldi t_kl^ce g_keda)
+!! 
+!!       and adds it to the transformed vector sigma_a_i.
+!!
+!!       NB! In our equations, we have opposite signs on this term. Moreover,
+!!       I have g_keda in the second term. I think S's equations are correct.
+!!
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+         real(dp), dimension(wf%n_v, wf%n_o)                       :: sigma_a_i 
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
+!
+      end subroutine jacobian_transpose_ccsd_g1_ccsd
 !
 !
    end interface
@@ -1361,7 +1386,8 @@ contains
          write(unit_output,*) j, r2am(j,1)
       enddo
 !
-      call wf%jacobian_ccsd_transformation(r1am,r2am)
+   !   call wf%jacobian_ccsd_transformation(r1am,r2am)
+      call wf%jacobian_transpose_ccsd_transformation(r1am,r2am)
 !
       write(unit_output,*) 'TRF(SINGLES)'
 !
