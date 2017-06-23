@@ -49,8 +49,8 @@ contains
 !     Calculate and add the CCS contributions to the 
 !     singles transformed vector 
 !
-      call wf%jacobian_transpose_ccs_a1(sigma_a_i, b_a_i)
-      call wf%jacobian_transpose_ccs_b1(sigma_a_i, b_a_i)
+      call wf%jacobian_transpose_ccs_a1(sigma_a_i, b_a_i) ! Seems OK (symmetrywise)
+      call wf%jacobian_transpose_ccs_b1(sigma_a_i, b_a_i) ! Seems OK (symmetrywise)
 !
 !     Calculate and add the CCSD contributions to the
 !     singles transformed vector 
@@ -58,12 +58,12 @@ contains
       write(unit_output,*) 'a1'
       flush(unit_output)
 !
-      call wf%jacobian_transpose_ccsd_a1(sigma_a_i, b_a_i)
+      call wf%jacobian_transpose_ccsd_a1(sigma_a_i, b_a_i) ! Seems OK (symmetrywise)
 !
       write(unit_output,*) 'b1'
       flush(unit_output)
 !
-      call wf%jacobian_transpose_ccsd_b1(sigma_a_i, b_a_i)
+   !   call wf%jacobian_transpose_ccsd_b1(sigma_a_i, b_a_i)
 !
       call allocator(b_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
       b_ai_bj = zero 
@@ -73,27 +73,27 @@ contains
       write(unit_output,*) 'c1'
       flush(unit_output)
 !
-      call wf%jacobian_transpose_ccsd_c1(sigma_a_i, b_ai_bj)
+      call wf%jacobian_transpose_ccsd_c1(sigma_a_i, b_ai_bj) ! Seems OK (symmetrywise)
 !
       write(unit_output,*) 'd1'
       flush(unit_output)
 !
-      call wf%jacobian_transpose_ccsd_d1(sigma_a_i, b_ai_bj)
+      call wf%jacobian_transpose_ccsd_d1(sigma_a_i, b_ai_bj) ! Seems OK (symmetrywise)
 !
       write(unit_output,*) 'e1'
       flush(unit_output)
 !
-      call wf%jacobian_transpose_ccsd_e1(sigma_a_i, b_ai_bj)
+      call wf%jacobian_transpose_ccsd_e1(sigma_a_i, b_ai_bj) ! Seems OK (symmetrywise)
 !
       write(unit_output,*) 'f1'
       flush(unit_output)
 !
-      call wf%jacobian_transpose_ccsd_f1(sigma_a_i, b_ai_bj)
+      call wf%jacobian_transpose_ccsd_f1(sigma_a_i, b_ai_bj) ! Seems OK (symmetrywise)
 !
       write(unit_output,*) 'g1'
       flush(unit_output)
 !
-      call wf%jacobian_transpose_ccsd_g1(sigma_a_i, b_ai_bj)
+      call wf%jacobian_transpose_ccsd_g1(sigma_a_i, b_ai_bj) ! Herein there's a symmetry mistake
 !
 !     Copy the transformed singles over into the incoming singles vector
 !
@@ -2108,7 +2108,7 @@ contains
       real(dp), dimension(:,:), allocatable :: X_kde_i ! Reordered intermediate, term 2
 !
       real(dp), dimension(:,:), allocatable :: X_id_kl ! An intermediate, term 1 
-      real(dp), dimension(:,:), allocatable :: X_dkl_i ! Reordered intermediate, term 1
+      real(dp), dimension(:,:), allocatable :: X_kdl_i ! Reordered intermediate, term 1
 !
       real(dp), dimension(:,:), allocatable :: t_cl_ek ! t_kl^ce 
       real(dp), dimension(:,:), allocatable :: t_ce_kl ! t_kl^ce 
@@ -2121,7 +2121,7 @@ contains
 !
       integer(i15) :: l = 0, kde = 0, ka = 0, k = 0, i = 0, el = 0, ek = 0, e = 0
       integer(i15) :: dl = 0, di = 0, de = 0, d = 0, cl = 0, ckel = 0, ci = 0, ck = 0
-      integer(i15) :: c = 0, a = 0, kl = 0, ke = 0, id = 0, ic = 0, dkl = 0, da = 0, ce = 0
+      integer(i15) :: c = 0, a = 0, kl = 0, ke = 0, id = 0, ic = 0, kdl = 0, da = 0, ce = 0
 !
 !     Batching variables 
 !
@@ -2502,7 +2502,9 @@ contains
       call deallocator(X_kde_i, (wf%n_o)*(wf%n_v)**2, wf%n_o)
       call deallocator(L_ke_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !  
-!     :: Term 1. - sum_ckdle b_akdl t_kl^ce g_icde ::
+!     E: There's a symmetry bug in the following term: 
+!
+!     :: Term 1. - sum_ckdle b_akdl t_kl^ce g_icde :: 
 ! 
 !     X_id_kl = sum_ce t_kl^ce g_icde = sum_ce g_id_ce t_ce_kl
 !
@@ -2551,7 +2553,7 @@ contains
       required  = 4*required ! In words
       available = get_available()
 !
-      batch_dimension  = wf%n_v ! Batch over the virtual index a
+      batch_dimension  = wf%n_v ! Batch over the virtual index d
       max_batch_length = 0      ! Initilization of unset variables 
       n_batch          = 0
 !
@@ -2623,7 +2625,7 @@ contains
 !
 !        from the current batch of d 
 !
-         offset_id = index_two(i, d_first, wf%n_o)
+         offset_id = index_two(1, d_first, wf%n_o)
 !
          call dgemm('N','N',               &
                      (wf%n_o)*d_length,    &
@@ -2647,10 +2649,10 @@ contains
 !
 !     - sum_ckdle b_akdl t_kl^ce g_icde = sum_kdl b_akdl X_id_kl
 !
-!     Reorder to X_dkl_i = X_id_kl 
+!     Reorder to X_kdl_i = X_id_kl 
 !
-      call allocator(X_dkl_i, (wf%n_v)*(wf%n_o)**2, wf%n_o)
-      X_dkl_i = zero
+      call allocator(X_kdl_i, (wf%n_v)*(wf%n_o)**2, wf%n_o)
+      X_kdl_i = zero
 !
       do i = 1, wf%n_o
          do l = 1, wf%n_o
@@ -2662,9 +2664,9 @@ contains
 !
                   id = index_two(i, d, wf%n_o)
 !
-                  dkl = index_three(d, k, l, wf%n_v, wf%n_o)
+                  kdl = index_three(k, d, l, wf%n_o, wf%n_v)
 !
-                  X_dkl_i(dkl, i) = X_id_kl(id, kl)
+                  X_kdl_i(kdl, i) = X_id_kl(id, kl)
 !
                enddo
             enddo
@@ -2673,7 +2675,7 @@ contains
 !
       call deallocator(X_id_kl, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
 !
-!     Add - sum_ckdle b_akdl t_kl^ce g_icde = - sum_dkl b_a_kdl X_dkl_i
+!     Add - sum_ckdle b_akdl t_kl^ce g_icde = - sum_dkl b_a_kdl X_kdl_i
 !
 !     Note: we interpret b_ai_bj as b_a_ibj
 !
@@ -2684,13 +2686,13 @@ contains
                   -one,                 &
                   b_ai_bj,              & ! "b_a_ibj"
                   wf%n_v,               &
-                  X_dkl_i,              &
+                  X_kdl_i,              &
                   (wf%n_v)*(wf%n_o)**2, &
                   one,                  &
                   sigma_a_i,            &
                   wf%n_v)
 !
-      call deallocator(X_dkl_i, (wf%n_v)*(wf%n_o)**2, wf%n_o)
+      call deallocator(X_kdl_i, (wf%n_v)*(wf%n_o)**2, wf%n_o)
 !
    end subroutine jacobian_transpose_ccsd_g1_ccsd
 !
