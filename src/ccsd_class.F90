@@ -1367,7 +1367,7 @@ contains
       call wf%construct_fock
 !
    !   r1am = zero
-   !   r2am = zero
+      r2am = zero
 !
       call wf%destruct_amplitudes
 !

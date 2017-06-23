@@ -49,51 +49,25 @@ contains
 !     Calculate and add the CCS contributions to the 
 !     singles transformed vector 
 !
-      call wf%jacobian_transpose_ccs_a1(sigma_a_i, b_a_i) ! Seems OK (symmetrywise)
-      call wf%jacobian_transpose_ccs_b1(sigma_a_i, b_a_i) ! Seems OK (symmetrywise)
+      call wf%jacobian_transpose_ccs_a1(sigma_a_i, b_a_i) 
+      call wf%jacobian_transpose_ccs_b1(sigma_a_i, b_a_i) 
 !
 !     Calculate and add the CCSD contributions to the
 !     singles transformed vector 
 !
-      write(unit_output,*) 'a1'
-      flush(unit_output)
-!
-      call wf%jacobian_transpose_ccsd_a1(sigma_a_i, b_a_i) ! Seems OK (symmetrywise)
-!
-      write(unit_output,*) 'b1'
-      flush(unit_output)
-!
-   !   call wf%jacobian_transpose_ccsd_b1(sigma_a_i, b_a_i)
+      call wf%jacobian_transpose_ccsd_a1(sigma_a_i, b_a_i) 
+      call wf%jacobian_transpose_ccsd_b1(sigma_a_i, b_a_i) ! ccs_a1, ccs_b1, ccsd_a1, ccsd_b1 are all correct!
 !
       call allocator(b_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
       b_ai_bj = zero 
 !
       call squareup(b_aibj, b_ai_bj, (wf%n_v)*(wf%n_o))
 !
-      write(unit_output,*) 'c1'
-      flush(unit_output)
-!
-      call wf%jacobian_transpose_ccsd_c1(sigma_a_i, b_ai_bj) ! Seems OK (symmetrywise)
-!
-      write(unit_output,*) 'd1'
-      flush(unit_output)
-!
-      call wf%jacobian_transpose_ccsd_d1(sigma_a_i, b_ai_bj) ! Seems OK (symmetrywise)
-!
-      write(unit_output,*) 'e1'
-      flush(unit_output)
-!
-      call wf%jacobian_transpose_ccsd_e1(sigma_a_i, b_ai_bj) ! Seems OK (symmetrywise)
-!
-      write(unit_output,*) 'f1'
-      flush(unit_output)
-!
-      call wf%jacobian_transpose_ccsd_f1(sigma_a_i, b_ai_bj) ! Seems OK (symmetrywise)
-!
-      write(unit_output,*) 'g1'
-      flush(unit_output)
-!
-      call wf%jacobian_transpose_ccsd_g1(sigma_a_i, b_ai_bj) ! Herein there's a symmetry mistake
+      call wf%jacobian_transpose_ccsd_c1(sigma_a_i, b_ai_bj) 
+      call wf%jacobian_transpose_ccsd_d1(sigma_a_i, b_ai_bj) 
+      call wf%jacobian_transpose_ccsd_e1(sigma_a_i, b_ai_bj) 
+      call wf%jacobian_transpose_ccsd_f1(sigma_a_i, b_ai_bj) 
+      call wf%jacobian_transpose_ccsd_g1(sigma_a_i, b_ai_bj) 
 !
 !     Copy the transformed singles over into the incoming singles vector
 !
