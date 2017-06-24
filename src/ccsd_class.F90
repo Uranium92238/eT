@@ -129,6 +129,8 @@ module ccsd_class
       procedure :: jacobian_transpose_ccsd_f1 => jacobian_transpose_ccsd_f1_ccsd
       procedure :: jacobian_transpose_ccsd_g1 => jacobian_transpose_ccsd_g1_ccsd
 !
+      procedure :: jacobian_transpose_ccsd_a2 => jacobian_transpose_ccsd_a2_ccsd
+!
 !     Routines to destroy amplitudes and omega 
 !
       procedure :: destruct_amplitudes => destruct_amplitudes_ccsd
@@ -930,6 +932,27 @@ module ccsd_class
          real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
 !
       end subroutine jacobian_transpose_ccsd_g1_ccsd
+!
+!
+      module subroutine jacobian_transpose_ccsd_a2_ccsd(wf, sigma_ai_bj, b_a_i)
+!!
+!!       Jacobian transpose CCSD A2 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Calculates the A2 term,
+!!
+!!           2 F_jb b_ai - F_ib b_aj - sum_k L_ikjb b_ak + sum_c L_cajb b_ci 
+!! 
+!!       and adds it to the transformed vector sigma_ai_bj.
+!!
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+         real(dp), dimension(wf%n_v, wf%n_o)                       :: b_a_i  
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ai_bj 
+!
+      end subroutine jacobian_transpose_ccsd_a2_ccsd
 !
 !
    end interface
