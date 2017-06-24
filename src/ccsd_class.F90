@@ -901,8 +901,6 @@ module ccsd_class
 !! 
 !!       and adds it to the transformed vector sigma_a_i.
 !!
-!!       NB! In our equations, we have opposite signs on this term. 
-!!
          implicit none 
 !
          class(ccsd) :: wf
@@ -923,9 +921,6 @@ module ccsd_class
 !!         - sum_ckdle (b_akdl t_kl^ce g_icde + b_cidl t_kl^ce g_kade + b_cldi t_kl^ce g_keda)
 !! 
 !!       and adds it to the transformed vector sigma_a_i.
-!!
-!!       NB! In our equations, we have opposite signs on this term. Moreover,
-!!       I have g_keda in the second term. I think S's equations are correct.
 !!
          implicit none 
 !
@@ -1367,7 +1362,7 @@ contains
       call wf%construct_fock
 !
    !   r1am = zero
-      r2am = zero
+   !   r2am = zero
 !
       call wf%destruct_amplitudes
 !

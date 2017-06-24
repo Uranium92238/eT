@@ -56,7 +56,7 @@ contains
 !     singles transformed vector 
 !
       call wf%jacobian_transpose_ccsd_a1(sigma_a_i, b_a_i) 
-      call wf%jacobian_transpose_ccsd_b1(sigma_a_i, b_a_i) ! ccs_a1, ccs_b1, ccsd_a1, ccsd_b1 are all correct!
+      call wf%jacobian_transpose_ccsd_b1(sigma_a_i, b_a_i) 
 !
       call allocator(b_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
       b_ai_bj = zero 
@@ -66,7 +66,7 @@ contains
       call wf%jacobian_transpose_ccsd_c1(sigma_a_i, b_ai_bj) 
       call wf%jacobian_transpose_ccsd_d1(sigma_a_i, b_ai_bj) 
       call wf%jacobian_transpose_ccsd_e1(sigma_a_i, b_ai_bj) 
-      call wf%jacobian_transpose_ccsd_f1(sigma_a_i, b_ai_bj) 
+      call wf%jacobian_transpose_ccsd_f1(sigma_a_i, b_ai_bj)
       call wf%jacobian_transpose_ccsd_g1(sigma_a_i, b_ai_bj) 
 !
 !     Copy the transformed singles over into the incoming singles vector
@@ -991,6 +991,7 @@ contains
       call wf%read_double_amplitudes
 !
       call allocator(t_dm_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      t_dm_ck = zero
 !
       call squareup(wf%t2am, t_dm_ck, (wf%n_o)*(wf%n_v)) ! t_dm_ck(dm,ck) = t_mk^dc = t_km^cd 
 !
@@ -1540,6 +1541,8 @@ contains
 !        Form L_ai_de = L_deia = 2 * g_deia - g_daie
 !                              = 2 * g_de_ia(de,ia) - g_de_ia(da,ie)
 !
+!        E: This will not work when batching... a is not restricted; e is restricted...!!
+!
          call allocator(L_ai_de, (wf%n_o)*(wf%n_v), (wf%n_v)*e_length)
          L_ai_de = zero
 !
@@ -1606,8 +1609,6 @@ contains
 !!       sum_ckdlm (b_akdl t_lm^cd g_ikmc + b_ckal t_ml^cd g_mkid + b_ckdi t_ml^cd g_mkla)
 !! 
 !!    and adds it to the transformed vector sigma_a_i.
-!!
-!!    NB! In our equations, we have opposite signs on this term. 
 !!
       implicit none 
 !
@@ -1962,7 +1963,7 @@ contains
       call dgemm('N','N',            &
                   (wf%n_o)**2,       & 
                   (wf%n_o)**2,       &
-                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_v)**2,       &
                   one,               &
                   b_ki_cd,           &
                   (wf%n_o)**2,       &
@@ -2060,8 +2061,6 @@ contains
 !! 
 !!    and adds it to the transformed vector sigma_a_i.
 !!
-!!    NB! In our equations, we have opposite signs on this term. Moreover,
-!!    I have g_keda in the second term. I think S's equations are correct.
 !!
       implicit none 
 !
