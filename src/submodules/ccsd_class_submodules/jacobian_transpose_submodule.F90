@@ -3727,4 +3727,364 @@ contains
    end subroutine jacobian_transpose_ccsd_d2_ccsd
 !
 !
+   module subroutine jacobian_transpose_ccsd_e2_ccsd(wf, sigma_ai_bj, b_ai_bj)
+!!
+!!    Jacobian transpose CCSD E2 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!    Calculates the E2 term,
+!!
+!!       - sum_ckdl (b_aibl t_kl^cd L_kcjd + b_aicl t_kl^cd L_jbkd + b_aicj t_kl^cd L_ldkb)
+!! 
+!!    and adds it to the transformed vector sigma_ai_bj.
+!!
+      implicit none 
+!
+      class(ccsd) :: wf
+!
+      real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
+      real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ai_bj
+!
+      real(dp), dimension(:,:), allocatable :: L_kc_J
+!
+      real(dp), dimension(:,:), allocatable :: g_kc_jd
+      real(dp), dimension(:,:), allocatable :: L_j_ckd ! L_kcjd
+      real(dp), dimension(:,:), allocatable :: L_dk_bj ! L_jbkd
+      real(dp), dimension(:,:), allocatable :: L_ldk_b ! L_ldkb
+!
+      real(dp), dimension(:,:), allocatable :: t_ckd_l ! t_kl^cd
+      real(dp), dimension(:,:), allocatable :: t_cl_dk ! t_kl^cd
+!
+      real(dp), dimension(:,:), allocatable :: X_j_l   ! An intermediate, term 1
+      real(dp), dimension(:,:), allocatable :: X_cl_bj ! An intermediate, term 2
+      real(dp), dimension(:,:), allocatable :: X_c_b   ! An intermediate, term 3
+!
+      real(dp), dimension(:,:), allocatable :: sigma_aij_b ! sigma_ai_bj contribution 
+      real(dp), dimension(:,:), allocatable :: b_aij_c     ! b_aicj 
+!
+      integer(i15) :: kd = 0, kc = 0, k = 0, jd = 0, jc = 0, j = 0, d = 0
+      integer(i15) :: ckd = 0, c = 0, l = 0, dk = 0, cl = 0, bjd = 0, bj = 0
+      integer(i15) :: b = 0, ldk = 0, i = 0, dl = 0, cj = 0, bk = 0, aij = 0
+      integer(i15) :: a = 0, ai = 0
+!
+!     :: Term 1. - sum_ckdl b_aibl t_kl^cd L_kcjd ::
+!
+!     X_j_l = sum_kcd L_kcjd t_kl^cd = sum_kcd L_j_ckd t_ck_dl 
+!
+!     Form g_kc_jd = g_kcjd
+!
+      call allocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call wf%get_cholesky_ia(L_kc_J)
+!
+      call allocator(g_kc_jd, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+      call dgemm('N','T',            &
+                  (wf%n_o)*(wf%n_v), & 
+                  (wf%n_o)*(wf%n_v), &
+                  wf%n_J,            &
+                  one,               &
+                  L_kc_J,            &
+                  (wf%n_o)*(wf%n_v), &
+                  L_kc_J,            &
+                  (wf%n_o)*(wf%n_v), &
+                  zero,              &
+                  g_kc_jd,           &
+                  (wf%n_o)*(wf%n_v))
+!
+      call deallocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
+!
+!     Form L_j_ckd = L_kcjd = 2 * g_kcjd - g_kdjc
+!                           = 2 * g_kc_jd(kc,jd) - g_kc_jd(kd,jc)
+!
+      call allocator(L_j_ckd, wf%n_o, (wf%n_o)*(wf%n_v)**2)
+      L_j_ckd = zero
+!
+      do d = 1, wf%n_v
+         do k = 1, wf%n_o
+!
+            kd = index_two(k, d, wf%n_o)
+!
+            do c = 1, wf%n_v
+!
+               kc = index_two(k, c, wf%n_o)
+!
+               ckd = index_three(c, k, d, wf%n_v, wf%n_o)
+!
+               do j = 1, wf%n_o
+!
+                  jd = index_two(j, d, wf%n_o)
+                  jc = index_two(j, c, wf%n_o)
+!
+                  L_j_ckd(j, ckd) = two*g_kc_jd(kc, jd) - g_kc_jd(kd, jc) ! L_kcjd
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      call deallocator(g_kc_jd, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!     Form t_ckd_l = t_kl^cd 
+!
+      call wf%initialize_amplitudes
+      call wf%read_double_amplitudes
+!
+      call allocator(t_ckd_l, (wf%n_o)*(wf%n_v)**2, wf%n_o)
+      t_ckd_l = zero
+!
+      call squareup(wf%t2am, t_ckd_l, (wf%n_o)*(wf%n_v))
+!
+      call wf%destruct_amplitudes
+!
+!     Form the intermediate X_j_l = sum_kcd L_kcjd t_kl^cd 
+!                                 = sum_kcd L_j_ckd t_ckd_l
+!
+      call allocator(X_j_l, wf%n_o, wf%n_o)
+!
+      call dgemm('N','N',               &
+                  wf%n_o,               & 
+                  wf%n_o,               &
+                  (wf%n_o)*(wf%n_v)**2, &
+                  one,                  &
+                  L_j_ckd,              &
+                  wf%n_o,               &
+                  t_ckd_l,              &
+                  (wf%n_o)*(wf%n_v)**2, & 
+                  zero,                 &
+                  X_j_l,                &
+                  wf%n_o)
+!
+!     Add - sum_ckdl b_aibl t_kl^cd L_kcjd 
+!         = - sum_l b_aib_l X_j_l^T(l,j)
+!
+      call dgemm('N','T',               &
+                  (wf%n_o)*(wf%n_v)**2, &
+                  wf%n_o,               &
+                  wf%n_o,               &
+                  -one,                 &
+                  b_ai_bj,              & ! "b_aib_l"
+                  (wf%n_o)*(wf%n_v)**2, &
+                  X_j_l,                &
+                  wf%n_o,               &
+                  one,                  &
+                  sigma_ai_bj,          & ! "sigma_aib_j"
+                  (wf%n_o)*(wf%n_v)**2)
+!
+      call deallocator(X_j_l, wf%n_o, wf%n_o)
+!
+!     :: Term 2. -sum_ckdl b_aicl t_kl^cd L_jbkd ::
+!
+!     X_cl_bj = sum_kd t_kl^cd L_jbkd = sum_kd t_cl_dk L_dk_bj
+!
+!     We have L_j_ckd = L_kcjd   => L_j_ckd(k, bjd) = L_jbkd
+!     We have t_ckd_l = t_kl^cd 
+!
+!     Reorder to L_dk_bj(dk,bj) = L_jbkd = L_j_ckd(k, bjd)
+!
+      call allocator(L_dk_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      L_dk_bj = zero
+!
+      do j = 1, wf%n_o
+         do b = 1, wf%n_v
+!
+            bj = index_two(b, j, wf%n_v)
+!
+            do k = 1, wf%n_o
+               do d = 1, wf%n_v
+!
+                  dk = index_two(d, k, wf%n_v)
+!
+                  bjd = index_three(b, j, d, wf%n_v, wf%n_o)
+!
+                  L_dk_bj(dk, bj) = L_j_ckd(k, bjd) ! L_jbkd
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      call deallocator(L_j_ckd, wf%n_o, (wf%n_o)*(wf%n_v)**2)
+!
+!     Reorder to t_cl_dk = t_kl^cd = t_ckd_l 
+!
+      call allocator(t_cl_dk, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      t_cl_dk = zero
+!
+      do k = 1, wf%n_o
+         do d = 1, wf%n_v
+!
+            dk = index_two(d, k, wf%n_v)
+!
+            do l = 1, wf%n_o
+               do c = 1, wf%n_v
+!
+                  cl = index_two(c, l, wf%n_v)
+!
+                  ckd = index_three(c, k, d, wf%n_v, wf%n_o)
+!
+                  t_cl_dk(cl, dk) = t_ckd_l(ckd, l) ! t_kl^cd
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      call deallocator(t_ckd_l, (wf%n_o)*(wf%n_v)**2, wf%n_o)
+!
+!     Form the intermediate X_cl_bj = sum_kd t_kl^cd L_jbkd 
+!                                   = sum_kd t_cl_dk L_dk_bj
+!
+      call dgemm('N','N',            &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  t_cl_dk,           &
+                  (wf%n_o)*(wf%n_v), &
+                  L_dk_bj,           &
+                  (wf%n_o)*(wf%n_v), &
+                  zero,              &
+                  X_cl_bj,           &
+                  (wf%n_o)*(wf%n_v))
+!
+!     Add - sum_ckdl b_aicl t_kl^cd L_jbkd
+!           = - sum_cl b_ai_cl X_cl_bj
+!
+      call dgemm('N','N',            &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  -one,              &
+                  b_ai_bj,           & ! "b_ai_cl"
+                  (wf%n_o)*(wf%n_v), &
+                  X_cl_bj,           &
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  sigma_ai_bj,       &
+                  (wf%n_o)*(wf%n_v))
+!
+      call deallocator(X_cl_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!     :: Term 3. - sum_ckdl b_aicj t_kl^cd L_ldkb ::
+!
+!     - sum_c b_aij_c X_c_b,   X_c_b = sum_kdl t_kl^cd L_ldkb
+!                                    = sum_kdl t_cl_dk L_ldk_b
+!
+!     We have L_dk_bj(dk,bj) = L_jbkd => L_dk_bj(bk,dl) = L_ldkb 
+!
+!     Reorder to L_ldk_b = L_ldkb = L_dk_bj(bk,dl)
+!
+      call allocator(L_ldk_b, (wf%n_v)*(wf%n_o)**2, wf%n_v)
+      L_ldk_b = zero
+!
+      do b = 1, wf%n_v
+         do k = 1, wf%n_o
+!
+            bk = index_two(b, k, wf%n_v)
+!
+            do d = 1, wf%n_v
+               do l = 1, wf%n_o
+!
+                  dl = index_two(d, l, wf%n_v)
+!
+                  ldk = index_three(l, d, k, wf%n_o, wf%n_v)
+!
+                  L_ldk_b(ldk, b) = L_dk_bj(bk, dl) ! L_ldkb 
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      call deallocator(L_dk_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+!
+!     Form the intermediate X_c_b = sum_kdl t_kl^cd L_ldkb
+!                                 = sum_kdl t_cl_dk L_ldk_b
+!
+      call allocator(X_c_b, wf%n_v, wf%n_v)
+!
+      call dgemm('N','N',               &
+                  wf%n_v,               &
+                  wf%n_v,               &
+                  (wf%n_v)*(wf%n_o)**2, & 
+                  one,                  &
+                  t_cl_dk,              & ! "t_c_ldk"
+                  wf%n_v,               &
+                  L_ldk_b,              &
+                  (wf%n_v)*(wf%n_o)**2, &
+                  zero,                 &
+                  X_c_b,                &
+                  wf%n_v)
+!
+      call deallocator(t_cl_dk, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      call deallocator(L_ldk_b, (wf%n_v)*(wf%n_o)**2, wf%n_v)
+!
+!     Reorder to b_aij_c = b_aicj 
+!
+      call allocator(b_aij_c, (wf%n_v)*(wf%n_o)**2, wf%n_v)
+      b_aij_c = zero
+!
+      do c = 1, wf%n_v
+         do j = 1, wf%n_o
+!
+            cj = index_two(c, j, wf%n_v)
+!
+            do i = 1, wf%n_o
+               do a = 1, wf%n_v
+!
+                  ai = index_two(a, i, wf%n_v)
+!
+                  aij = index_three(a, i, j, wf%n_v, wf%n_o)
+!
+                  b_aij_c(aij, c) = b_ai_bj(ai, cj) ! b_aicj
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+!     Form and add - sum_ckdl b_aicj t_kl^cd L_ldkb
+!                  = - sum_c b_aij_c X_c_b
+!
+      call allocator(sigma_aij_b, (wf%n_v)*(wf%n_o)**2, wf%n_v)
+!
+      call dgemm('N','N',               &
+                  (wf%n_v)*(wf%n_o)**2, & 
+                  wf%n_v,               &
+                  wf%n_v,               &
+                  -one,                 &
+                  b_aij_c,              &
+                  (wf%n_v)*(wf%n_o)**2, &
+                  X_c_b,                &
+                  wf%n_v,               &
+                  zero,                 &
+                  sigma_aij_b,          &
+                  (wf%n_v)*(wf%n_o)**2)
+!
+      call deallocator(X_c_b, wf%n_v, wf%n_v)
+!
+      do j = 1, wf%n_o
+         do b = 1, wf%n_v
+!
+            bj = index_two(b, j, wf%n_v)
+!
+            do i = 1, wf%n_o
+               do a = 1, wf%n_v
+!
+                  ai = index_two(a, i, wf%n_v)
+!
+                  aij = index_three(a, i, j, wf%n_v, wf%n_o)
+!
+                  sigma_ai_bj(ai, bj) = sigma_ai_bj(ai, bj) + sigma_aij_b(aij, b)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      call deallocator(sigma_aij_b, (wf%n_v)*(wf%n_o)**2, wf%n_v)
+!
+   end subroutine jacobian_transpose_ccsd_e2_ccsd
+!
+!
 end submodule jacobian_transpose
