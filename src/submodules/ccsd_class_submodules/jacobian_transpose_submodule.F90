@@ -77,6 +77,16 @@ contains
 !
       call wf%jacobian_transpose_ccsd_a2(sigma_ai_bj, b_a_i)
 !
+!     Unpack incoming doubles vector, and add the CCSD terms arising
+!     from this vector 
+!
+      call allocator(b_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      b_ai_bj = zero 
+!
+      call squareup(b_aibj, b_ai_bj, (wf%n_o)*(wf%n_v))
+!
+      call wf%jacobian_transpose_ccsd_b2(sigma_ai_bj, b_ai_bj)
+!
 !     Copy the transformed singles over into the incoming singles vector
 !
       b_a_i = sigma_a_i
@@ -84,6 +94,8 @@ contains
 !     End of routines - deallocations 
 ! 
       call deallocator(sigma_a_i, wf%n_v, wf%n_o)
+      call deallocator(sigma_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
       call deallocator(b_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
    end subroutine jacobian_transpose_ccsd_transformation_ccsd
@@ -2923,7 +2935,7 @@ contains
       available = get_available()
 !
       batch_dimension  = wf%n_v ! Batch over the virtual index b
-      max_batch_length = 0      ! Initilization of unset variables 
+      max_batch_length = 0      ! Initilization of unset variables
       n_batch          = 0
 !
       call num_batch(required, available, max_batch_length, n_batch, batch_dimension)           
@@ -2957,6 +2969,8 @@ contains
                      zero,              &
                      g_cb_ja,           &
                      (wf%n_v)*b_length)
+!
+         call deallocator(L_cb_J, (wf%n_v)*b_length, wf%n_J)
 !
 !         Form - sum_c g_cbja b_ci = - sum_c b_ci^T(i,c) g_c_bja 
 !
@@ -3006,6 +3020,302 @@ contains
       call deallocator(L_jb_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
    end subroutine jacobian_transpose_ccsd_a2_ccsd
+!
+!
+   module subroutine jacobian_transpose_ccsd_b2_ccsd(wf, sigma_ai_bj, b_ai_bj)
+!!
+!!    Jacobian transpose CCSD B2 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!    Calculates the B2 term,
+!!
+!!       sum_c b_aicj F_cb - sum_k b_aibk F_jk + sum_ck b_aick L_ckjb 
+!! 
+!!    and adds it to the transformed vector sigma_ai_bj.
+!!
+      implicit none 
+!
+      class(ccsd) :: wf
+!
+      real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
+      real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ai_bj 
+!
+      real(dp), dimension(:,:), allocatable :: b_aij_c ! b_aicj 
+!
+      real(dp), dimension(:,:), allocatable :: sigma_aij_b ! sigma_ai_bj contribution
+!
+      real(dp), dimension(:,:), allocatable :: L_cb_J
+      real(dp), dimension(:,:), allocatable :: L_ck_J
+      real(dp), dimension(:,:), allocatable :: L_jk_J
+      real(dp), dimension(:,:), allocatable :: L_jb_J
+!
+      real(dp), dimension(:,:), allocatable :: g_ck_jb ! g_ckjb
+      real(dp), dimension(:,:), allocatable :: g_ck_bj ! g_ckjb & g_cbjk
+!
+      real(dp), dimension(:,:), allocatable :: g_cb_jk ! g_cbjk 
+!
+      integer(i15) :: c = 0, j = 0, i = 0, a = 0, cj = 0, ai = 0, bj = 0, aij = 0, b = 0
+      integer(i15) :: jb = 0, jk = 0, k = 0, ck = 0, cb = 0
+!
+!     Batching variables 
+!
+      integer(i15) :: required = 0, available = 0 
+      integer(i15) :: batch_dimension = 0, max_batch_length = 0, n_batch = 0
+!
+      integer(i15) :: b_batch = 0, b_length = 0, b_first = 0, b_last = 0, cb_offset = 0
+!
+!     :: Term 1. sum_c b_aicj F_cb ::
+!
+!     Reorder to b_aij_c = b_aicj 
+!
+      call allocator(b_aij_c, (wf%n_v)*(wf%n_o)**2, wf%n_v)
+      b_aij_c = zero 
+!
+      do c = 1, wf%n_v
+         do j = 1, wf%n_o
+!
+            cj = index_two(c, j, wf%n_v)
+!
+            do i = 1, wf%n_o
+               do a = 1, wf%n_v
+!
+                  ai = index_two(a, i, wf%n_v)
+!
+                  aij = index_three(a, i, j, wf%n_v, wf%n_o)
+!
+                  b_aij_c(aij, c) = b_ai_bj(ai, cj) ! b_aicj 
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+!     Calculate and add sum_c b_aicj F_cb = sum_c b_aij_c F_c_b
+!
+      call allocator(sigma_aij_b, (wf%n_v)*(wf%n_o)**2, wf%n_v)
+!
+      call dgemm('N','N',               &
+                  (wf%n_v)*(wf%n_o)**2, & 
+                  wf%n_v,               &
+                  wf%n_v,               &
+                  one,                  &
+                  b_aij_c,              &
+                  (wf%n_v)*(wf%n_o)**2, &
+                  wf%fock_ab,           & ! "F_c_b"
+                  wf%n_v,               &
+                  zero,                 &   
+                  sigma_aij_b,          &
+                  (wf%n_v)*(wf%n_o)**2)
+!
+      call deallocator(b_aij_c, (wf%n_v)*(wf%n_o)**2, wf%n_v)
+!
+      do j = 1, wf%n_o
+         do b = 1, wf%n_v
+!
+            bj = index_two(b, j, wf%n_v)
+!
+            do i = 1, wf%n_o
+               do a = 1, wf%n_v
+!
+                  ai = index_two(a, i, wf%n_v)
+!
+                  aij = index_three(a, i, j, wf%n_v, wf%n_o)
+!
+                  sigma_ai_bj(ai, bj) = sigma_ai_bj(ai, bj) + sigma_aij_b(aij, b)
+!  
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      call deallocator(sigma_aij_b, (wf%n_v)*(wf%n_o)**2, wf%n_v)
+!
+!     :: Term 2. - sum_k b_aibk F_jk ::
+!
+!     - sum_k b_aibk F_jk = - sum_k b_aib_k F_jk^T(k,j)
+!
+      call dgemm('N','T',               &
+                  (wf%n_o)*(wf%n_v)**2, &
+                  wf%n_o,               &
+                  wf%n_o,               &
+                  -one,                 &
+                  b_ai_bj,              & ! "b_aib_k"
+                  (wf%n_o)*(wf%n_v)**2, &
+                  wf%fock_ij,           & ! "F_j_k"
+                  wf%n_o,               &
+                  one,                  &
+                  sigma_ai_bj,          & ! "sigma_aib_j"
+                  (wf%n_o)*(wf%n_v)**2)
+!
+!     :: Term 3. sum_ck b_aick L_ckjb :: 
+!
+!     Form g_ck_jb 
+!
+      call allocator(L_ck_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call allocator(L_jb_J, (wf%n_o)*(wf%n_v), wf%n_J)
+!
+      call wf%get_cholesky_ai(L_ck_J)
+      call wf%get_cholesky_ia(L_jb_J)
+!
+      call allocator(g_ck_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+      call dgemm('N','T',            &
+                  (wf%n_o)*(wf%n_v), & 
+                  (wf%n_o)*(wf%n_v), &
+                  wf%n_J,            &
+                  one,               &
+                  L_ck_J,            &
+                  (wf%n_o)*(wf%n_v), &
+                  L_jb_J,            &
+                  (wf%n_o)*(wf%n_v), &
+                  zero,              &
+                  g_ck_jb,           &
+                  (wf%n_o)*(wf%n_v))
+!
+      call deallocator(L_ck_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call deallocator(L_jb_J, (wf%n_o)*(wf%n_v), wf%n_J)
+!
+!     Reorder to g_ck_bj = g_ck_jb = g_ckjb 
+!
+      call allocator(g_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      g_ck_bj = zero 
+!
+      do j = 1, wf%n_o
+         do b = 1, wf%n_v
+!
+            bj = index_two(b, j, wf%n_v)
+            jb = index_two(j, b, wf%n_o)
+!
+            do I = 1, (wf%n_o)*(wf%n_v)
+!
+               g_ck_bj(I, bj) = g_ck_jb(I, jb) ! g_ckjb 
+!
+            enddo
+         enddo
+      enddo
+!
+      call deallocator(g_ck_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!     Add 2 * sum_ck b_aick g_ckjb = 2 * sum_ck b_aick g_ck_bj 
+!
+      call dgemm('N','N',            &
+                  (wf%n_o)*(wf%n_v), & 
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  two,               &
+                  b_ai_bj,           & ! "b_ai_ck" 
+                  (wf%n_o)*(wf%n_v), &
+                  g_ck_bj,           &
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  sigma_ai_bj,       &
+                  (wf%n_o)*(wf%n_v))
+!
+      call deallocator(g_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!     - sum_ck b_aick g_cbjk
+!
+!     Prepare to batch over b to make g_cb_jk = g_cbjk successively
+!
+      call allocator(g_cb_jk, (wf%n_v)**2, (wf%n_o)**2)
+      g_cb_jk = zero
+!
+      call allocator(L_jk_J, (wf%n_o)**2, wf%n_J)
+      call wf%get_cholesky_ij(L_jk_J)
+!
+      required = 1 ! Not a correct estimate - needs to be set!
+!     
+      required  = 4*required ! In words
+      available = get_available()
+!
+      batch_dimension  = wf%n_v ! Batch over the virtual index b
+      max_batch_length = 0      ! Initilization of unset variables 
+      n_batch          = 0
+!
+      call num_batch(required, available, max_batch_length, n_batch, batch_dimension)           
+!
+!     Loop over the number of b batches 
+!
+      do b_batch = 1, n_batch
+!
+!        For each batch, get the limits for the b index 
+!
+         call batch_limits(b_first, b_last, b_batch, max_batch_length, batch_dimension)
+         b_length = b_last - b_first + 1 
+!
+!        Form g_cb_jk = g_cbjk 
+!
+         call allocator(L_cb_J, (wf%n_v)*b_length, wf%n_J)
+!
+         call wf%get_cholesky_ab(L_cb_J, 1, wf%n_v, b_first, b_last)
+!
+         cb_offset = index_two(1, b_first, wf%n_v)
+!
+         call dgemm('N','T',               &
+                     (wf%n_v)*b_length,    &
+                     (wf%n_o)**2,          &
+                     wf%n_J,               &
+                     one,                  &
+                     L_cb_J,               &
+                     (wf%n_v)*b_length,    &
+                     L_jk_J,               &
+                     (wf%n_o)**2,          &
+                     one,                  &
+                     g_cb_jk(cb_offset,1), &
+                     (wf%n_v)**2)
+!
+         call deallocator(L_cb_J, (wf%n_v)*b_length, wf%n_J)   
+!
+      enddo ! End of batches over b 
+!
+      call deallocator(L_jk_J, (wf%n_o)**2, wf%n_J)
+!
+!     Reorder to g_ck_bj 
+!
+      call allocator(g_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      g_ck_bj = zero
+!
+      do j = 1, wf%n_o
+         do b = 1, wf%n_v
+!
+            bj = index_two(b, j, wf%n_v)  
+!
+            do k = 1, wf%n_o
+!
+               jk = index_two(j, k, wf%n_o)
+!
+               do c = 1, wf%n_v
+!
+                  cb = index_two(c, b, wf%n_v)
+                  ck = index_two(c, k, wf%n_v)
+!
+                  g_ck_bj(ck, bj) = g_cb_jk(cb, jk) ! g_cbjk
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!  
+      call deallocator(g_cb_jk, (wf%n_v)**2, (wf%n_o)**2)
+!
+!     Add  - sum_ck b_aick g_cbjk = - sum_ck b_ai_ck g_ck_bj 
+!
+      call dgemm('N','N',            &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  -one,              &
+                  b_ai_bj,           & ! "b_ai_ck"
+                  (wf%n_o)*(wf%n_v), &
+                  g_ck_bj,           &
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  sigma_ai_bj,       &
+                  (wf%n_o)*(wf%n_v))
+!
+      call deallocator(g_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+   end subroutine jacobian_transpose_ccsd_b2_ccsd
 !
 !
 end submodule jacobian_transpose
