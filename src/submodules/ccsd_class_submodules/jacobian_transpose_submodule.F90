@@ -87,6 +87,7 @@ contains
 !
       call wf%jacobian_transpose_ccsd_b2(sigma_ai_bj, b_ai_bj)
       call wf%jacobian_transpose_ccsd_b2(sigma_ai_bj, b_ai_bj)
+      call wf%jacobian_transpose_ccsd_c2(sigma_ai_bj, b_ai_bj)
 !
 !     Perform ai <-> bj permutation - todo 
 !
@@ -3589,5 +3590,141 @@ contains
       call deallocator(sigma_aj_bi, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine jacobian_transpose_ccsd_c2_ccsd
+!
+!
+   module subroutine jacobian_transpose_ccsd_d2_ccsd(wf, sigma_ai_bj, b_ai_bj)
+!!
+!!    Jacobian transpose CCSD D2 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!    Calculates the D2 term,
+!!
+!!       2 * sum_ckdl b_aick L_jbld t_kl^cd 
+!! 
+!!    and adds it to the transformed vector sigma_ai_bj.
+!!
+      implicit none 
+!
+      class(ccsd) :: wf
+!
+      real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
+      real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ai_bj
+!
+      real(dp), dimension(:,:), allocatable :: t_ck_dl ! t_kl^cd  
+!
+      real(dp), dimension(:,:), allocatable :: X_ck_bj ! An intermediate 
+!
+      real(dp), dimension(:,:), allocatable :: L_jb_J
+!
+      real(dp), dimension(:,:), allocatable :: g_jb_ld ! g_jbld
+      real(dp), dimension(:,:), allocatable :: L_dl_bj ! L_jbld
+!
+      integer(i15) :: i = 0, j = 0, a = 0, b = 0, l = 0, lb = 0, jd = 0
+      integer(i15) :: dl = 0, d = 0, ld = 0, bj = 0, jb = 0
+!
+!     Form g_jb_ld = g_jbld 
+!
+      call allocator(L_jb_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call wf%get_cholesky_ia(L_jb_J)
+!
+      call allocator(g_jb_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+      call dgemm('N','T',            &
+                  (wf%n_o)*(wf%n_v), & 
+                  (wf%n_o)*(wf%n_v), &
+                  wf%n_J,            &
+                  one,               &
+                  L_jb_J,            &
+                  (wf%n_o)*(wf%n_v), &
+                  L_jb_J,            &
+                  (wf%n_o)*(wf%n_v), &
+                  zero,              &
+                  g_jb_ld,           &
+                  (wf%n_o)*(wf%n_v))
+!
+      call deallocator(L_jb_J, (wf%n_o)*(wf%n_v), wf%n_J)
+!
+!     Form L_dl_bj = L_jbld = 2 * g_jbld - g_jdlb
+!                           = 2 * g_jb_ld(jb,ld) - g_jb_ld(jd,lb)
+!
+      call allocator(L_dl_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      L_dl_bj = zero
+!
+      do j = 1, wf%n_o
+         do b = 1, wf%n_v
+!
+            bj = index_two(b, j, wf%n_v)
+            jb = index_two(j, b, wf%n_o)
+!
+            do l = 1, wf%n_o
+!
+               lb = index_two(l, b, wf%n_o)
+!
+               do d = 1, wf%n_v
+!
+                  jd = index_two(j, d, wf%n_o)
+                  ld = index_two(l, d, wf%n_o)
+                  dl = index_two(d, l, wf%n_v)
+!
+                  L_dl_bj(dl, bj) = two*g_jb_ld(jb, ld) - g_jb_ld(jd, lb) ! L_jbld
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      call deallocator(g_jb_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!     Form t_ck_dl = t_kl^cd 
+!
+      call wf%initialize_amplitudes
+      call wf%read_double_amplitudes
+!
+      call allocator(t_ck_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      t_ck_dl = zero 
+!
+      call squareup(wf%t2am, t_ck_dl, (wf%n_o)*(wf%n_v))
+!
+      call wf%destruct_amplitudes
+!
+!     Form the intermediate X_ck_bj = sum_dl t_ck_dl L_dl_bj
+!
+      call allocator(X_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+      call dgemm('N','N',            &
+                  (wf%n_o)*(wf%n_v), & 
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  t_ck_dl,           &
+                  (wf%n_o)*(wf%n_v), &
+                  L_dl_bj,           &
+                  (wf%n_o)*(wf%n_v), &
+                  zero,              &
+                  X_ck_bj,           &
+                  (wf%n_o)*(wf%n_v))
+!
+      call deallocator(t_ck_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call deallocator(L_dl_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!     Add 2 * sum_ckdl b_aick L_jbld t_kl^cd = 2 * sum_ck b_ai_ck X_ck_bj
+!
+      call dgemm('N','N',            &
+                  (wf%n_o)*(wf%n_v), & 
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  two,               &
+                  b_ai_bj,           & ! "b_ai_ck"
+                  (wf%n_o)*(wf%n_v), &
+                  X_ck_bj,           &
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  sigma_ai_bj,       &
+                  (wf%n_o)*(wf%n_v))
+!
+      call deallocator(X_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+   end subroutine jacobian_transpose_ccsd_d2_ccsd
+!
 !
 end submodule jacobian_transpose
