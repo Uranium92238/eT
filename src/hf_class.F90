@@ -656,7 +656,7 @@ contains
    end subroutine read_cholesky_ia_hf
 !
 !   
-subroutine read_cholesky_ai_hf(wf, L_ai_J, i_first, i_last, a_first, a_last)
+subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !!
 !!    Read Cholesky AI 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
