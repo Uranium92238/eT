@@ -979,7 +979,7 @@ contains
 !
 !        Read L_ab_J for batch of b
 !
-         call wf%read_cholesky_ab(L_ab_J, 1, wf%n_v, b_first, b_last)
+         call wf%read_cholesky_ab(L_ab_J, a_first, a_last, b_first, b_last)
 !
 !        Allocate L_Jb,i for batch of b
 !
