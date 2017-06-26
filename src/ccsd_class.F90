@@ -1604,7 +1604,7 @@ contains
 !
       write(unit_output,*) 'TRF(DOUBLES)'
 !
-      do j = 1, 15
+      do j = 1, 500
          write(unit_output,*) j, r2am(j,1)
       enddo
 !

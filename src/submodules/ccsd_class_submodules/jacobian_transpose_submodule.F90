@@ -4951,8 +4951,8 @@ contains
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ab_ij
-      real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ab_ij
+      real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: b_ab_ij
+      real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: sigma_ab_ij
 !
       real(dp), dimension(:,:), allocatable :: sigma_ab_ij_batch
 !
@@ -5108,6 +5108,7 @@ contains
             call wf%get_cholesky_ab(L_db_J, 1, wf%n_v, b_first, b_last)
 !
             call allocator(g_ca_db, (wf%n_v)*a_length, (wf%n_v)*b_length)
+            g_ca_db = zero
 !
             call dgemm('N','T',            &
                         (wf%n_v)*a_length, & 
@@ -5221,8 +5222,8 @@ contains
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ab_ij
-      real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ab_ij
+      real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: b_ab_ij
+      real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: sigma_ab_ij
 !
       real(dp), dimension(:,:), allocatable :: t_kl_cd ! t_kl^cd 
 !
