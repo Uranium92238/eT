@@ -136,6 +136,8 @@ module ccsd_class
       procedure :: jacobian_transpose_ccsd_e2 => jacobian_transpose_ccsd_e2_ccsd
       procedure :: jacobian_transpose_ccsd_f2 => jacobian_transpose_ccsd_f2_ccsd
       procedure :: jacobian_transpose_ccsd_g2 => jacobian_transpose_ccsd_g2_ccsd
+      procedure :: jacobian_transpose_ccsd_h2 => jacobian_transpose_ccsd_h2_ccsd
+      procedure :: jacobian_transpose_ccsd_i2 => jacobian_transpose_ccsd_i2_ccsd
 !
 !     Routines to destroy amplitudes and omega 
 !
@@ -1085,6 +1087,58 @@ module ccsd_class
          real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ai_bj
 !
       end subroutine jacobian_transpose_ccsd_g2_ccsd
+!
+!
+      module subroutine jacobian_transpose_ccsd_h2_ccsd(wf, sigma_ab_ij, b_ab_ij)
+!!
+!!       Jacobian transpose CCSD H2 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Calculates the H2 term,
+!!
+!!         sum_kl b_akbl g_ikjl + sum_cd b_cidj g_cadb 
+!! 
+!!       and adds it to the transformed vector sigma_ab_ij.
+!!
+!!       In this routine, the b and sigma vectors are ordered as
+!!
+!!         b_ab_ij = b_ai_bj 
+!!         sigma_ab_ij = sigma_ab_ij
+!!
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ab_ij
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ab_ij
+!
+      end subroutine jacobian_transpose_ccsd_h2_ccsd
+!
+!
+      module subroutine jacobian_transpose_ccsd_i2_ccsd(wf, sigma_ab_ij, b_ab_ij)
+!!
+!!       Jacobian transpose CCSD I2 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Calculates the I2 term,
+!!
+!!          sum_ckdl b_cidj t_kl^cd g_kalb + sum_ckdl b_akbl t_kl^cd g_icjd 
+!! 
+!!       and adds it to the transformed vector sigma_ab_ij.
+!!
+!!       In this routine, the b and sigma vectors are ordered as
+!!
+!!          b_ab_ij = b_ai_bj 
+!!          sigma_ab_ij = sigma_ab_ij
+!!
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ab_ij
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ab_ij
+!
+      end subroutine jacobian_transpose_ccsd_i2_ccsd
 !
 !
    end interface
