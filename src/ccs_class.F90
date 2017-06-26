@@ -221,7 +221,7 @@ module ccs_class
       end subroutine get_cholesky_ia_ccs
 !
 !
-      module subroutine get_cholesky_ai_ccs(wf, L_ai_J, i_first, i_last, a_first, a_last)
+      module subroutine get_cholesky_ai_ccs(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !!
 !!       Get Cholesky AI
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
