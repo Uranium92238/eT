@@ -104,8 +104,7 @@ contains
       call squareup(b_aibj, b_ai_bj, (wf%n_o)*(wf%n_v))
 !
       call wf%jacobian_transpose_ccsd_b2(sigma_ai_bj, b_ai_bj)
-      call wf%jacobian_transpose_ccsd_b2(sigma_ai_bj, b_ai_bj)
-      call wf%jacobian_transpose_ccsd_c2(sigma_ai_bj, b_ai_bj)
+      call wf%jacobian_transpose_ccsd_c2(sigma_ai_bj, b_ai_bj) 
       call wf%jacobian_transpose_ccsd_d2(sigma_ai_bj, b_ai_bj)
       call wf%jacobian_transpose_ccsd_e2(sigma_ai_bj, b_ai_bj)
       call wf%jacobian_transpose_ccsd_f2(sigma_ai_bj, b_ai_bj)
@@ -176,7 +175,7 @@ contains
       call deallocator(b_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call deallocator(sigma_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      call wf%jacobian_transpose_ccsd_h2(sigma_ab_ij, b_ab_ij)
+      call wf%jacobian_transpose_ccsd_h2(sigma_ab_ij, b_ab_ij) ! symmetry mistake??
       call wf%jacobian_transpose_ccsd_i2(sigma_ab_ij, b_ab_ij)
 !
 !     Done with reordered doubles b; deallocate 
@@ -3564,7 +3563,7 @@ contains
       call allocator(L_ik_J, (wf%n_o)**2, wf%n_J)
       call wf%get_cholesky_ij(L_ik_J)
 !
-      call allocator(g_cb_ik, (wf%n_o)**2, (wf%n_v)**2)
+      call allocator(g_cb_ik, (wf%n_v)**2, (wf%n_o)**2)
       g_cb_ik = zero
 !
       required = 1 ! Not a correct estimate - needs to be set!
@@ -3874,7 +3873,7 @@ contains
       real(dp), dimension(:,:), allocatable :: L_dk_bj ! L_jbkd
       real(dp), dimension(:,:), allocatable :: L_ldk_b ! L_ldkb
 !
-      real(dp), dimension(:,:), allocatable :: t_ckd_l ! t_kl^cd
+      real(dp), dimension(:,:), allocatable :: t_ck_dl ! t_kl^cd
       real(dp), dimension(:,:), allocatable :: t_cl_dk ! t_kl^cd
 !
       real(dp), dimension(:,:), allocatable :: X_j_l   ! An intermediate, term 1
@@ -3887,7 +3886,7 @@ contains
       integer(i15) :: kd = 0, kc = 0, k = 0, jd = 0, jc = 0, j = 0, d = 0
       integer(i15) :: ckd = 0, c = 0, l = 0, dk = 0, cl = 0, bjd = 0, bj = 0
       integer(i15) :: b = 0, ldk = 0, i = 0, dl = 0, cj = 0, bk = 0, aij = 0
-      integer(i15) :: a = 0, ai = 0
+      integer(i15) :: a = 0, ai = 0, ck = 0
 !
 !     :: Term 1. - sum_ckdl b_aibl t_kl^cd L_kcjd ::
 !
@@ -3946,15 +3945,15 @@ contains
 !
       call deallocator(g_kc_jd, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-!     Form t_ckd_l = t_kl^cd 
+!     Form t_ck_dl = t_kl^cd 
 !
       call wf%initialize_amplitudes
       call wf%read_double_amplitudes
 !
-      call allocator(t_ckd_l, (wf%n_o)*(wf%n_v)**2, wf%n_o)
-      t_ckd_l = zero
+      call allocator(t_ck_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      t_ck_dl = zero
 !
-      call squareup(wf%t2am, t_ckd_l, (wf%n_o)*(wf%n_v))
+      call squareup(wf%t2am, t_ck_dl, (wf%n_o)*(wf%n_v))
 !
       call wf%destruct_amplitudes
 !
@@ -3970,11 +3969,12 @@ contains
                   one,                  &
                   L_j_ckd,              &
                   wf%n_o,               &
-                  t_ckd_l,              &
+                  t_ck_dl,              & ! "t_ckd_l"
                   (wf%n_o)*(wf%n_v)**2, & 
                   zero,                 &
                   X_j_l,                &
                   wf%n_o)
+!
 !
 !     Add - sum_ckdl b_aibl t_kl^cd L_kcjd 
 !         = - sum_l b_aib_l X_j_l^T(l,j)
@@ -4027,7 +4027,7 @@ contains
 !
       call deallocator(L_j_ckd, wf%n_o, (wf%n_o)*(wf%n_v)**2)
 !
-!     Reorder to t_cl_dk = t_kl^cd = t_ckd_l 
+!     Reorder to t_cl_dk = t_kl^cd = t_ck_dl 
 !
       call allocator(t_cl_dk, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       t_cl_dk = zero
@@ -4038,23 +4038,27 @@ contains
             dk = index_two(d, k, wf%n_v)
 !
             do l = 1, wf%n_o
+!
+               dl = index_two(d, l, wf%n_v)
+!
                do c = 1, wf%n_v
 !
+                  ck = index_two(c, k, wf%n_v)
                   cl = index_two(c, l, wf%n_v)
 !
-                  ckd = index_three(c, k, d, wf%n_v, wf%n_o)
-!
-                  t_cl_dk(cl, dk) = t_ckd_l(ckd, l) ! t_kl^cd
+                  t_cl_dk(cl, dk) = t_ck_dl(ck, dl) ! t_kl^cd
 !
                enddo
             enddo
          enddo
       enddo
 !
-      call deallocator(t_ckd_l, (wf%n_o)*(wf%n_v)**2, wf%n_o)
+      call deallocator(t_ck_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     Form the intermediate X_cl_bj = sum_kd t_kl^cd L_jbkd 
 !                                   = sum_kd t_cl_dk L_dk_bj
+!
+      call allocator(X_cl_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       call dgemm('N','N',            &
                   (wf%n_o)*(wf%n_v), &
@@ -5097,6 +5101,9 @@ contains
             call allocator(L_ca_J, (wf%n_v)*a_length, wf%n_J)
             call allocator(L_db_J, (wf%n_v)*b_length, wf%n_J)
 !
+            L_ca_J = zero
+            L_db_J = zero
+!
             call wf%get_cholesky_ab(L_ca_J, 1, wf%n_v, a_first, a_last)
             call wf%get_cholesky_ab(L_db_J, 1, wf%n_v, b_first, b_last)
 !
@@ -5294,6 +5301,7 @@ contains
                   (wf%n_o)*(wf%n_v), & 
                   (wf%n_o)*(wf%n_v), &
                   wf%n_J,            &
+                  one,               &
                   L_ka_J,            &
                   (wf%n_o)*(wf%n_v), &
                   L_ka_J,            &
