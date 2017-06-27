@@ -111,7 +111,7 @@ contains
 !
          elseif (wf%excited_state_task=='left_eigenvectors') then
 !
-      !       call wf%jacobian_transpose_transformation(c_a_i)
+            call wf%jacobian_transpose_ccsd_transformation(c_a_i, c_aibj)
 !
          else
 !

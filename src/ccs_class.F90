@@ -37,7 +37,11 @@ module ccs_class
 !
 !     Projection vector < mu | exp(-T) H exp(T) | R > (the omega vector)
 ! 
-      real(dp), dimension(:,:), allocatable :: omega1 ! Singles vector 
+      real(dp), dimension(:,:), allocatable :: omega1 ! Singles vector
+!
+!     Right projection vector < R | exp(-T) H exp(T) | mu > (the eta vector)
+!
+      real(dp), dimension(:,:), allocatable :: eta1 ! Singles vector 
 !
 !     The T1-transformed Fock matrix (in vir-occ block form)
 !
@@ -64,6 +68,10 @@ module ccs_class
 !
       procedure :: initialize_omega => initialize_omega_ccs
 !
+!     Routine to initialize eta (allocate and set to zero)
+!
+      procedure :: initialize_eta => initialize_eta_ccs
+!
 !     Initialization routine for the Fock matrix, and a Fock matrix constructor
 !     (for the given T1 amplitudes)
 !
@@ -89,6 +97,10 @@ module ccs_class
       procedure :: construct_omega => construct_omega_ccs
       procedure :: omega_ccs_a1    => omega_ccs_a1_ccs
 !
+!     Routine to construct right projection vector (eta)
+!
+      procedure :: construct_eta => construct_eta_ccs 
+!
 !     Ground state solver routines (and helpers)
 !
 !     Note: while this solver is strictly uneccessary for CCS, where the solution
@@ -112,10 +124,11 @@ module ccs_class
       procedure :: read_amplitudes => read_amplitudes_ccs
       procedure :: read_single_amplitudes => read_single_amplitudes_ccs
 !
-!     Routines to destroy amplitudes and omega 
+!     Routines to destroy amplitudes, omega, and eta 
 !
       procedure :: destruct_amplitudes   => destruct_amplitudes_ccs
       procedure :: destruct_omega        => destruct_omega_ccs
+      procedure :: destruct_eta          => destruct_eta_ccs
 !
 !     Jacobian transformation routine 
 !
@@ -895,8 +908,7 @@ contains
 !
          if (wf%implemented%excited_state) then 
 !     
-        !   call wf%excited_state_driver 
-            call wf%jacobi_test
+           call wf%excited_state_driver 
 !
          else
 !
@@ -975,7 +987,24 @@ contains
 !
    end subroutine initialize_omega_ccs
 !
-!   
+!  
+   subroutine initialize_eta_ccs(wf)
+!!
+!!    Initialize Eta (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!    Allocates and sets the right projection vector to zero.
+!!
+      implicit none 
+!
+      class(ccs) :: wf
+!
+      if (.not. allocated(wf%eta1)) call allocator(wf%eta1, wf%n_v, wf%n_o)
+      wf%eta1 = zero
+!
+   end subroutine initialize_eta_ccs
+!
+! 
    subroutine calc_energy_ccs(wf)
 !!
 !!    Calculate Energy (CCS)
@@ -1020,6 +1049,33 @@ contains
       call daxpy((wf%n_o)*(wf%n_v), one, wf%fock_ai, 1, wf%omega1, 1)
 !
    end subroutine omega_ccs_a1_ccs
+!
+!
+   subroutine construct_eta_ccs(wf)
+!!
+!!    Construct Eta (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!    Note: the routine assumes that eta is initialized and that the Fock matrix
+!!    has been constructed.
+!!
+      implicit none 
+!
+      class(ccs) :: wf 
+!
+      integer(i15) :: i = 0, a = 0
+!
+      wf%eta1 = zero 
+!
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v 
+!
+            wf%eta1(a, i) = two*(wf%fock_ia(i, a)) ! eta_ai = 2 F_ia 
+!
+         enddo
+      enddo
+!
+   end subroutine construct_eta_ccs
 !
 !
    subroutine save_amplitudes_ccs(wf)
@@ -1111,12 +1167,13 @@ contains
 !
    end subroutine read_single_amplitudes_ccs
 !
+!
    subroutine destruct_amplitudes_ccs(wf)
 !!
 !!    Destruct Amplitudes (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
 !!
-!!    Deallocates the singles amplitudes.
+!!    Deallocates the amplitudes.
 !!
       implicit none
 !
@@ -1129,12 +1186,30 @@ contains
    end subroutine destruct_amplitudes_ccs
 !
 !
+   subroutine destruct_eta_ccs(wf)
+!!
+!!    Destruct Eta (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, June 2017
+!!
+!!    Deallocates the eta vector.
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      if (allocated(wf%eta1)) then
+         call deallocator(wf%eta1, wf%n_v, wf%n_o)
+      endif
+!
+   end subroutine destruct_eta_ccs
+!
+!
    subroutine destruct_omega_ccs(wf)
 !!
 !!    Destruct Omega (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
 !!
-!!    Deallocates the singles projection vector.
+!!    Deallocates the projection vector.
 !!
       implicit none
 !
