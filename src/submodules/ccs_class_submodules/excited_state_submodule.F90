@@ -50,9 +50,9 @@ contains
       write(unit_output,'(t3,a,i3,a,a,a)') &
                                      'Requested ',wf%tasks%n_triplet_states,' ', trim(wf%name), ' triplet states.'     
 !
-!     Set the excited state task 
+!     Set the response task 
 !
-      wf%excited_state_task = 'right_eigenvectors'
+      wf%response_task = 'right_eigenvectors'
 !
 !     Run the general solver routine (file names are given
 !     by the task, i.e., the file 'right_eigenvectors' contains
@@ -77,7 +77,7 @@ contains
 !!
 !!    The matrix A above can be the Jacobian (the usual A) or the transposed Jacobian (A^T), or,
 !!    in principle, any matrix. The transformation used is determined by the value of the wavefunction's 
-!!    "excited_state_task" variable (if "right_eigenvectors", use A; if "left_eigenvectors", use A^T; and so on).
+!!    "response_task" variable (if "right_eigenvectors", use A; if "left_eigenvectors", use A^T; and so on).
 !!    The selection of A is done in the routine transform_trial_vectors.
 !!
 !!    The problem is solved in a reduced space. To find n roots, n start trial vectors {c_i}_i=1, 
@@ -529,7 +529,7 @@ contains
       access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
 !
       call generate_unit_identifier(unit_solution)
-      open(unit=unit_solution, file=wf%excited_state_task, action='write', status='unknown', &
+      open(unit=unit_solution, file=wf%response_task, action='write', status='unknown', &
       access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
 !
       call allocator(residual, wf%n_parameters, 1)
@@ -785,7 +785,7 @@ contains
 !
 !        Open solution vector file - if it does not exist return
 !
-         inquire(file=wf%excited_state_task, exist=solution_exists)
+         inquire(file=wf%response_task, exist=solution_exists)
 !
 !        If no solution vector file, return and use orbital differences.
 !
@@ -799,7 +799,7 @@ contains
 !
          call generate_unit_identifier(unit_solution)
 !
-         open(unit=unit_solution, file=wf%excited_state_task, action='read', status='unknown', &
+         open(unit=unit_solution, file=wf%response_task, action='read', status='unknown', &
          access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
 !
 !        Allocate c_i
@@ -985,17 +985,21 @@ contains
 !
             read(unit_trial_vecs, rec=trial, iostat=ioerror) c_a_i
 !
-            if (wf%excited_state_task=='right_eigenvectors') then
+            if (wf%response_task=='right_eigenvectors') then
 !
                call wf%jacobian_ccs_transformation(c_a_i)
 !
-            elseif (wf%excited_state_task=='left_eigenvectors') then
+            elseif (wf%response_task=='left_eigenvectors') then
+!
+               call wf%jacobian_transpose_ccs_transformation(c_a_i)
+!
+            elseif (wf%response_task=='multipliers') then 
 !
                call wf%jacobian_transpose_ccs_transformation(c_a_i)
 !
             else
 !
-               write(unit_output,*) 'Error: Excited state task not recognized'
+               write(unit_output,*) 'Error: Response task not recognized'
                stop
 !
             endif

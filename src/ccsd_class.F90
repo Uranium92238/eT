@@ -37,10 +37,6 @@ module ccsd_class
 ! 
       real(dp), dimension(:,:), allocatable :: omega2 ! Doubles vector
 !
-!     Right projection vector < R | exp(-T) H exp(T) | mu > (the eta vector)
-!
-      real(dp), dimension(:,:), allocatable :: eta2 ! Doubles vector
-!
    contains
 !
 !     Initialization routine (driver is inherited)
@@ -60,10 +56,6 @@ module ccsd_class
 !     Routine to initialize omega (allocate and set to zero)
 !
       procedure :: initialize_omega => initialize_omega_ccsd
-!
-!     Routine to initialize eta (allocate and set to zero)
-!
-      procedure :: initialize_eta => initialize_eta_ccsd
 !
 !     Routines to construct the projection vector (omega)
 !
@@ -145,11 +137,14 @@ module ccsd_class
       procedure :: jacobian_transpose_ccsd_h2 => jacobian_transpose_ccsd_h2_ccsd
       procedure :: jacobian_transpose_ccsd_i2 => jacobian_transpose_ccsd_i2_ccsd
 !
-!     Routines to destroy amplitudes, omega, and eta 
+!     Routine to construct right projection vector (eta)
+!
+      procedure :: construct_eta => construct_eta_ccsd
+!
+!     Routines to destroy amplitudes and omega 
 !
       procedure :: destruct_amplitudes => destruct_amplitudes_ccsd
       procedure :: destruct_omega      => destruct_omega_ccsd
-      procedure :: destruct_eta        => destruct_eta_ccsd
 !
    end type ccsd
 !
@@ -1186,6 +1181,7 @@ contains
 !
       wf%implemented%ground_state = .true.
       wf%implemented%excited_state = .true.
+      wf%implemented%properties = .true.
 !
 !     Read Hartree-Fock info from SIRIUS
 !
@@ -1428,23 +1424,6 @@ contains
       if (allocated(wf%t2am)) call deallocator(wf%t2am, wf%n_t2am, 1)
 !
    end subroutine destruct_amplitudes_ccsd
-!
-!
-   subroutine destruct_eta_ccsd(wf)
-!!
-!!    Destruct Eta (CCSD)
-!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
-!!
-!!    Deallocates the (doubles) amplitudes.
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      if (allocated(wf%eta1)) call deallocator(wf%eta1, wf%n_v, wf%n_o)
-      if (allocated(wf%eta2)) call deallocator(wf%eta2, wf%n_t2am, 1)
-!
-   end subroutine destruct_eta_ccsd
 !
 !
    subroutine destruct_omega_ccsd(wf)
@@ -2056,27 +2035,7 @@ contains
    end subroutine jacobi_test_ccsd
 !
 !
-   module subroutine initialize_eta_ccsd(wf)
-!!
-!!    Initialize Eta (CCSD)
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
-!!
-!!    Allocates the right projection vector and sets it to zero.
-!!
-      implicit none 
-!
-      class(ccsd) :: wf
-!
-      if (.not. allocated(wf%eta1)) call allocator(wf%eta1, wf%n_v, wf%n_o)
-      wf%eta1 = zero
-!
-      if (.not. allocated(wf%eta2)) call allocator(wf%eta2, wf%n_t2am, 1)
-      wf%eta2 = zero
-!
-   end subroutine initialize_eta_ccsd
-!
-!
-   subroutine construct_eta_ccsd(wf)
+   subroutine construct_eta_ccsd(wf,eta)
 !!
 !!    Construct Eta (CCSD)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
@@ -2088,24 +2047,26 @@ contains
 !
       class(ccsd) :: wf 
 !
+      real(dp), dimension(wf%n_parameters, 1) :: eta ! eta = ( eta_ai eta_aibj )
+!
       real(dp), dimension(:,:), allocatable :: L_ia_J 
       real(dp), dimension(:,:), allocatable :: g_ia_jb 
+!
       real(dp), dimension(:,:), allocatable :: eta_ai_bj
 !
-      integer(i15) :: i = 0, a = 0, j = 0, b = 0 
+      integer(i15) :: i = 0, a = 0, j = 0, b = 0, aibj = 0
       integer(i15) :: ib = 0, ja = 0, jb = 0, ia = 0, bj = 0, ai = 0
 !
-      wf%eta1 = zero 
+      eta = zero 
 !
       do i = 1, wf%n_o
          do a = 1, wf%n_v 
 !
-            wf%eta1(a, i) = two*(wf%fock_ia(i, a)) ! eta_ai = 2 F_ia 
+            ai = index_two(a, i, wf%n_v)
+            eta(ai, 1) = two*(wf%fock_ia(i, a)) ! eta_ai = 2 F_ia 
 !
          enddo
       enddo
-!
-      wf%eta2 = zero 
 !
 !     Form g_ia_jb = g_iajb 
 !
@@ -2160,7 +2121,24 @@ contains
 !
 !     Pack vector into doubles eta 
 !
-      call packin(wf%eta2, eta_ai_bj, (wf%n_o)*(wf%n_v))
+      do j = 1, wf%n_o
+         do b = 1, wf%n_v
+!
+            bj = index_two(b, j, wf%n_v)
+!
+            do i = 1, wf%n_o
+               do a = 1, wf%n_v
+!
+                  ai = index_two(a, i, wf%n_v)
+!
+                  aibj = index_packed(ai, bj)
+!
+                  eta(wf%n_t1am + aibj, 1) = eta_ai_bj(ai, bj)
+!
+               enddo
+            enddo
+         enddo
+      enddo
 !
       call deallocator(eta_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
