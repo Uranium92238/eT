@@ -46,7 +46,13 @@ module ccs_class
       real(dp), dimension(:,:), allocatable :: fock_ai ! vir-occ block
       real(dp), dimension(:,:), allocatable :: fock_ab ! vir-vir block
 !
-      character(len=40)                     :: excited_state_task     = 'right_eigenvectors' ! The task being performed at the moment 
+!     Variables that keep track of which response task is being 
+!     performed at the moment 
+!
+      character(len=40) :: response_task = 'multipliers'
+!
+!     The excitation energies (omega_1, omega_2, ...)
+!
       real(dp), dimension(:,:), allocatable :: excited_state_energies
 !
    contains 
@@ -88,6 +94,10 @@ module ccs_class
 !
       procedure :: construct_omega => construct_omega_ccs
       procedure :: omega_ccs_a1    => omega_ccs_a1_ccs
+!
+!     Routine to construct right projection vector (eta)
+!
+      procedure :: construct_eta => construct_eta_ccs 
 !
 !     Ground state solver routines (and helpers)
 !
@@ -131,6 +141,18 @@ module ccs_class
 !
       procedure :: jacobi_test => jacobi_test_ccs
 !
+!     Jacobian transpose transformation routine (b^T -> b^T A, i.e., b -> A^T b)
+!
+      procedure :: jacobian_transpose_ccs_transformation => jacobian_transpose_ccs_transformation_ccs
+!
+!     Helper routines 
+!
+!     Non-overridable, they will be used for contributions
+!     to linear of higher order coupled cluster methods
+!
+      procedure, non_overridable :: jacobian_transpose_ccs_a1 => jacobian_transpose_ccs_a1_ccs
+      procedure, non_overridable :: jacobian_transpose_ccs_b1 => jacobian_transpose_ccs_b1_ccs
+
 !     Excited state driver & solver 
 !
       procedure                  :: excited_state_driver => excited_state_driver_ccs 
@@ -148,6 +170,17 @@ module ccs_class
       procedure, non_overridable :: solve_reduced_eigenvalue_equation => solve_reduced_eigenvalue_equation_ccs
       procedure, non_overridable :: construct_next_trial_vectors      => construct_next_trial_vectors_ccs
 !
+!     Response driver & solver 
+!
+      procedure :: response_driver => response_driver_ccs
+      procedure :: response_solver => response_solver_ccs
+!
+      procedure :: initialize_response => initialize_response_ccs
+      procedure :: solve_reduced_response_equation  => solve_reduced_response_equation_ccs
+      procedure :: construct_reduced_matrix => construct_reduced_matrix_ccs
+      procedure :: construct_reduced_gradient => construct_reduced_gradient_ccs
+      procedure :: construct_next_response_trial_vectors => construct_next_response_trial_vectors_ccs
+      procedure :: construct_gradient_vector => construct_gradient_vector_ccs
 !
    end type ccs
 !
@@ -698,6 +731,29 @@ module ccs_class
       end subroutine construct_next_trial_vectors_ccs
 !
 !
+      module subroutine jacobian_transpose_ccs_transformation_ccs(wf, b_a_i)
+!!
+!!       Jacobian transpose transformation (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Calculates the transpose Jacobian transformation, i.e., the transformation 
+!!       by the transpose of the Jacobian matrix
+!!
+!!          A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | R >.
+!!
+!!       The transformation is performed as sigma^T = b^T A, where b is the vector
+!!       sent to the routine. On exit, the vector b is equal to sigma (the transformed
+!!       vector).
+!
+         implicit none 
+!
+         class(ccs) :: wf 
+!
+         real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i 
+!
+      end subroutine jacobian_transpose_ccs_transformation_ccs
+!
+!
       module subroutine excited_state_driver_ccs(wf)
 !!
 !!       Excited state driver (CCS)
@@ -715,6 +771,216 @@ module ccs_class
          class(ccs) :: wf 
 !
       end subroutine excited_state_driver_ccs
+!
+!
+      module subroutine jacobian_transpose_ccs_a1_ccs(wf, sigma_a_i, b_a_i)
+!!
+!!       Jacobian transpose A1 (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Calculates the A1 term,
+!!
+!!          sum_c b_ci F_ca - sum_k b_ak F_ik,
+!!
+!!       and adds it to the sigma-vector (b^T -> sigma^T = b^T A).
+!!
+         implicit none 
+!
+         class(ccs) :: wf
+!
+         real(dp), dimension(wf%n_v, wf%n_o) :: sigma_a_i 
+         real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i 
+!
+      end subroutine jacobian_transpose_ccs_a1_ccs
+!
+!
+      module subroutine jacobian_transpose_ccs_b1_ccs(wf, sigma_a_i, b_a_i)
+!!
+!!       Jacobian transpose B1 (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Calculates the B1 term,
+!!
+!!          sum_ck L_ckia b_ck
+!!
+!!       and adds it to the sigma-vector (b^T -> sigma^T = b^T A).
+!!
+         implicit none 
+!
+         class(ccs) :: wf
+!
+         real(dp), dimension(wf%n_v, wf%n_o) :: sigma_a_i 
+         real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i 
+!
+      end subroutine jacobian_transpose_ccs_b1_ccs
+!
+!
+      module subroutine response_driver_ccs(wf)
+!!
+!!       Response driver (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Directs the solution of molculear properties for CCS. The
+!!       routine is inherited is to be inherited unaltered in the CC hierarchy. 
+!!
+         implicit none 
+!
+         class(ccs) :: wf 
+!
+      end subroutine response_driver_ccs
+!
+!
+      module subroutine response_solver_ccs(wf)
+!!
+!!       Response Solver (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Solves the response equation
+!!
+!!          A X = F,
+!!
+!!       where F is the gradient vector and A is either the Jacobian (A) or 
+!!       the transposed Jacobian (A^T) matrix. 
+!!
+!!       The equation is solved by constructing a set of trial vectors, c_i, and 
+!!       solving the projected/reduced equations associated with the reduced A and
+!!       reduced F vectors:
+!!
+!!          A_ij = c_i^T A c_j,    F_i = c_i^T F 
+!!
+!!       The space of trial vectors is expanded according to a Davidson algorithm.
+!!
+         implicit none 
+!
+         class(ccs) :: wf
+!
+      end subroutine response_solver_ccs
+!
+!
+      module subroutine initialize_response_ccs(wf)
+!!
+!!       Initialize response (CCS)
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
+!!
+!!       Performs two tasks:
+!!
+!!       1. Initializes start trial vector for response solver. We use the 
+!!       the diagonal approximation D of A (and A^T) to form the trial vector:
+!!
+!!          A X = F => X ~ D^-1 F 
+!!
+!!       The diagonal approximation of A consists of the orbital energy differences.
+!!
+!!       2. Constructs the vector F and saves it to file.
+!!
+         implicit none 
+!
+         class(ccs) :: wf 
+!
+      end subroutine initialize_response_ccs
+!
+!
+      module subroutine solve_reduced_response_equation_ccs(wf, solution_vector_reduced, reduced_dim, n_new_trials)
+!!
+!!       Solve Reduced Response Equation
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
+!!
+!!       Constructs the reduced A matrix and the reduced F vector,
+!!       and solves the (reduced space) linear equation A X = F for X. 
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+         integer(i15) :: reduced_dim, n_new_trials
+! 
+         real(dp), dimension(reduced_dim, 1) :: solution_vector_reduced
+!
+      end subroutine solve_reduced_response_equation_ccs
+!
+!
+      module subroutine construct_reduced_matrix_ccs(wf, A_reduced, reduced_dim, n_new_trials)
+!!
+!!       Construct Reduced Matrix (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Constructs A_ij = c_i^T A c_j by reading from file and constructing the missing elements.
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+         integer(i15) :: reduced_dim, n_new_trials
+!
+         real(dp), dimension(reduced_dim, reduced_dim) :: A_reduced
+!
+      end subroutine construct_reduced_matrix_ccs
+!
+!
+      module subroutine construct_reduced_gradient_ccs(wf, F_reduced, reduced_dim, n_new_trials)
+!!
+!!       Construct Reduced Gradient (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Constructs F_i = c_i^T F by reading from file and constructing the missing elements.
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+         integer(i15) :: reduced_dim, n_new_trials
+!
+         real(dp), dimension(reduced_dim, 1) :: F_reduced
+!
+      end subroutine construct_reduced_gradient_ccs
+!
+!
+      module subroutine construct_gradient_vector_ccs(wf)
+!!
+!!       Construct Gradient Vector (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Constructs the gradient vector, given the current value of "response_task",
+!!       and stores the vector on disk for use by the solver. 
+!!
+         implicit none 
+!
+         class(ccs) :: wf
+!
+      end subroutine construct_gradient_vector_ccs
+!
+!
+      module subroutine construct_next_response_trial_vectors_ccs(wf, solution_vector_reduced, reduced_dim, n_new_trials)
+!!
+!!       Construct Next Response Trial Vectors (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Constructs the next trial vector by constructing the residual vector
+!!    
+!!          R = (A*X - F)/|X|,
+!!
+!!       and orthogonalizing it against the previous trial vectors.
+!!
+!!       Residual vectors are preconditioned before orthogonalization.
+!!       This is done by dividing by the orbital differences.
+!!    
+!!       If the norm of orthogonal vector is very small 
+!!       (i.e. high degree of linear dependence on previous trial vectors)
+!!       it is scrapped. If norm sufficiently large, the vector is normalized and
+!!       stored in trial_vec file, to be used in the next iteration.
+!!
+!!       The routine also constructs full space solution vectors and stores them
+!!       in file solution_vectors 
+!! 
+         implicit none
+!
+         class(ccs) :: wf
+!
+         integer(i15) :: reduced_dim, n_new_trials
+!
+         real(dp), dimension(reduced_dim, 1) :: solution_vector_reduced ! X_reduced 
+!
+      end subroutine construct_next_response_trial_vectors_ccs
 !
 !
     end interface 
@@ -747,10 +1013,11 @@ contains
 !
       wf%name = 'CCS'
 !
-!     Set implemented methods
+!     Set implemented generic methods
 !
       wf%implemented%ground_state = .true.
       wf%implemented%excited_state = .true.
+      wf%implemented%properties = .false.
 !
 !     Read Hartree-Fock info from SIRIUS
 !
@@ -837,7 +1104,7 @@ contains
 !
          if (wf%implemented%properties) then 
 !
-          !  call wf%properties
+            call wf%response_driver
 !
          else
 !
@@ -897,7 +1164,7 @@ contains
 !
    end subroutine initialize_omega_ccs
 !
-!   
+! 
    subroutine calc_energy_ccs(wf)
 !!
 !!    Calculate Energy (CCS)
@@ -942,6 +1209,36 @@ contains
       call daxpy((wf%n_o)*(wf%n_v), one, wf%fock_ai, 1, wf%omega1, 1)
 !
    end subroutine omega_ccs_a1_ccs
+!
+!
+   subroutine construct_eta_ccs(wf, eta)
+!!
+!!    Construct Eta (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!    Note: the routine assumes that the Fock matrix
+!!    has been constructed.
+!!
+      implicit none 
+!
+      class(ccs) :: wf 
+!
+      real(dp), dimension(wf%n_parameters, 1) :: eta ! eta_ai
+!
+      integer(i15) :: i = 0, a = 0, ai = 0
+!
+      eta = zero 
+!
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v 
+!
+            ai = index_two(a, i, wf%n_v)
+            eta(ai, 1) = two*(wf%fock_ia(i, a)) ! eta_ai = 2 F_ia 
+!
+         enddo
+      enddo
+!
+   end subroutine construct_eta_ccs
 !
 !
    subroutine save_amplitudes_ccs(wf)
@@ -1033,12 +1330,13 @@ contains
 !
    end subroutine read_single_amplitudes_ccs
 !
+!
    subroutine destruct_amplitudes_ccs(wf)
 !!
 !!    Destruct Amplitudes (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
 !!
-!!    Deallocates the singles amplitudes.
+!!    Deallocates the amplitudes.
 !!
       implicit none
 !
@@ -1056,7 +1354,7 @@ contains
 !!    Destruct Omega (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
 !!
-!!    Deallocates the singles projection vector.
+!!    Deallocates the projection vector.
 !!
       implicit none
 !

@@ -33,10 +33,8 @@ module ccsd_class
       integer(i15) :: n_t2am = 0                    ! Number of doubles amplitudes
       real(dp), dimension(:,:), allocatable :: t2am ! Doubles amplitude vector
 !
-!     Schrödinger equation projection vector (the omega vector)
+!     Projection vector < mu | exp(-T) H exp(T) | R > (the omega vector)
 ! 
-!        < mu | exp(-T) H exp(T) | R >
-!
       real(dp), dimension(:,:), allocatable :: omega2 ! Doubles vector
 !
    contains
@@ -114,6 +112,34 @@ module ccsd_class
       procedure :: jacobian_ccsd_k2 => jacobian_ccsd_k2_ccsd
 !
       procedure :: jacobi_test => jacobi_test_ccsd
+!
+!     Jacobian transpose transformation routine 
+!
+      procedure :: jacobian_transpose_ccsd_transformation => jacobian_transpose_ccsd_transformation_ccsd
+!
+!     Helper routines for Jacobian transpose transformation 
+!
+      procedure :: jacobian_transpose_ccsd_a1 => jacobian_transpose_ccsd_a1_ccsd
+      procedure :: jacobian_transpose_ccsd_b1 => jacobian_transpose_ccsd_b1_ccsd 
+      procedure :: jacobian_transpose_ccsd_c1 => jacobian_transpose_ccsd_c1_ccsd 
+      procedure :: jacobian_transpose_ccsd_d1 => jacobian_transpose_ccsd_d1_ccsd
+      procedure :: jacobian_transpose_ccsd_e1 => jacobian_transpose_ccsd_e1_ccsd
+      procedure :: jacobian_transpose_ccsd_f1 => jacobian_transpose_ccsd_f1_ccsd
+      procedure :: jacobian_transpose_ccsd_g1 => jacobian_transpose_ccsd_g1_ccsd
+!
+      procedure :: jacobian_transpose_ccsd_a2 => jacobian_transpose_ccsd_a2_ccsd
+      procedure :: jacobian_transpose_ccsd_b2 => jacobian_transpose_ccsd_b2_ccsd
+      procedure :: jacobian_transpose_ccsd_c2 => jacobian_transpose_ccsd_c2_ccsd
+      procedure :: jacobian_transpose_ccsd_d2 => jacobian_transpose_ccsd_d2_ccsd
+      procedure :: jacobian_transpose_ccsd_e2 => jacobian_transpose_ccsd_e2_ccsd
+      procedure :: jacobian_transpose_ccsd_f2 => jacobian_transpose_ccsd_f2_ccsd
+      procedure :: jacobian_transpose_ccsd_g2 => jacobian_transpose_ccsd_g2_ccsd
+      procedure :: jacobian_transpose_ccsd_h2 => jacobian_transpose_ccsd_h2_ccsd
+      procedure :: jacobian_transpose_ccsd_i2 => jacobian_transpose_ccsd_i2_ccsd
+!
+!     Routine to construct right projection vector (eta)
+!
+      procedure :: construct_eta => construct_eta_ccsd
 !
 !     Routines to destroy amplitudes and omega 
 !
@@ -744,6 +770,379 @@ module ccsd_class
       end subroutine jacobian_ccsd_k2_ccsd
 !
 !
+      module subroutine jacobian_transpose_ccsd_transformation_ccsd(wf, b_a_i, b_aibj)
+!!
+!!       Jacobian transpose transformation (CCSD)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Calculates the transpose Jacobian transformation, i.e., the transformation 
+!!       by the transpose of the Jacobian matrix
+!!
+!!          A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | R >.
+!!
+!!       The transformation is performed as sigma^T = b^T A, where b is the vector
+!!       sent to the routine. On exit, the vector b is equal to sigma (the transformed
+!!       vector).
+!!
+         implicit none 
+!
+         class(ccsd) :: wf 
+!
+         real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i 
+         real(dp), dimension(wf%n_t2am, 1)   :: b_aibj 
+!
+      end subroutine jacobian_transpose_ccsd_transformation_ccsd
+!
+!
+      module subroutine jacobian_transpose_ccsd_a1_ccsd(wf, sigma_a_i, b_a_i)
+!!
+!!       Jacobian transpose CCSD A1 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Calculates the A1 term,
+!!
+!!          sum_ckdl b_ck L_iald u_kl^cd,
+!! 
+!!       abd adds it to the transformed vector sigma_a_i.
+!!
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+         real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i 
+         real(dp), dimension(wf%n_v, wf%n_o) :: sigma_a_i 
+!
+      end subroutine jacobian_transpose_ccsd_a1_ccsd
+!
+!
+      module subroutine jacobian_transpose_ccsd_b1_ccsd(wf, sigma_a_i, b_a_i)
+!!
+!!       Jacobian transpose CCSD B1 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Calculates the B1 term,
+!!
+!!           - sum_ckdl (b_al L_kcid t_kl^cd + b_ci L_ldka t_kl^cd),
+!! 
+!!       abd adds it to the transformed vector sigma_a_i.
+!!
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+         real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i 
+         real(dp), dimension(wf%n_v, wf%n_o) :: sigma_a_i 
+!
+      end subroutine jacobian_transpose_ccsd_b1_ccsd
+!
+!
+      module subroutine jacobian_transpose_ccsd_c1_ccsd(wf, sigma_a_i, b_ai_bj)
+!!
+!!       Jacobian transpose CCSD C1 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Calculates the C1 term,
+!!
+!!          sum_cdl b_cidl g_dlca - sum_kdl b_akdl g_dlik,
+!! 
+!!       and adds it to the transformed vector sigma_a_i.
+!!
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+         real(dp), dimension(wf%n_v, wf%n_o)                       :: sigma_a_i 
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
+!
+      end subroutine jacobian_transpose_ccsd_c1_ccsd
+!
+!
+      module subroutine jacobian_transpose_ccsd_d1_ccsd(wf, sigma_a_i, b_ai_bj)
+!!
+!!       Jacobian transpose CCSD D1 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Calculates the D1 term,
+!!
+!!           - sum_ckdl (b_ckal F_id t_kl^cd + b_ckdi F_la t_kl^cd),
+!! 
+!!       and adds it to the transformed vector sigma_a_i.
+!!
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+         real(dp), dimension(wf%n_v, wf%n_o)                       :: sigma_a_i 
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
+!
+      end subroutine jacobian_transpose_ccsd_d1_ccsd
+!
+!
+      module subroutine jacobian_transpose_ccsd_e1_ccsd(wf, sigma_a_i, b_ai_bj)
+!!
+!!       Jacobian transpose CCSD E1 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Calculates the E1 term,
+!!
+!!        sum_ckdle (b_ckdi L_dale t_kl^ce + b_ckdl L_deia t_kl^ce)
+!!         -sum_ckdlm (b_ckal L_ilmd t_km^cd + b_ckdl L_mlia t_km^cd)
+!! 
+!!       and adds it to the transformed vector sigma_a_i.
+!!
+!!       The routine adds the third and forth terms first.
+!!
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+         real(dp), dimension(wf%n_v, wf%n_o)                       :: sigma_a_i 
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
+!
+      end subroutine jacobian_transpose_ccsd_e1_ccsd
+!
+!
+      module subroutine jacobian_transpose_ccsd_f1_ccsd(wf, sigma_a_i, b_ai_bj)
+!!
+!!       Jacobian transpose CCSD F1 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Calculates the F1 term,
+!!
+!!         sum_ckdlm (b_akdl t_lm^cd g_ikmc + b_ckal t_ml^cd g_mkid + b_ckdi t_ml^cd g_mkla)
+!! 
+!!       and adds it to the transformed vector sigma_a_i.
+!!
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+         real(dp), dimension(wf%n_v, wf%n_o)                       :: sigma_a_i 
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
+!
+      end subroutine jacobian_transpose_ccsd_f1_ccsd
+!
+!
+      module subroutine jacobian_transpose_ccsd_g1_ccsd(wf, sigma_a_i, b_ai_bj)
+!!
+!!       Jacobian transpose CCSD G1 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Calculates the G1 term,
+!!
+!!         - sum_ckdle (b_akdl t_kl^ce g_icde + b_cidl t_kl^ce g_kade + b_cldi t_kl^ce g_keda)
+!! 
+!!       and adds it to the transformed vector sigma_a_i.
+!!
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+         real(dp), dimension(wf%n_v, wf%n_o)                       :: sigma_a_i 
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
+!
+      end subroutine jacobian_transpose_ccsd_g1_ccsd
+!
+!
+      module subroutine jacobian_transpose_ccsd_a2_ccsd(wf, sigma_ai_bj, b_a_i)
+!!
+!!       Jacobian transpose CCSD A2 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Calculates the A2 term,
+!!
+!!           2 F_jb b_ai - F_ib b_aj - sum_k L_ikjb b_ak + sum_c L_cajb b_ci 
+!! 
+!!       and adds it to the transformed vector sigma_ai_bj.
+!!
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+         real(dp), dimension(wf%n_v, wf%n_o)                       :: b_a_i  
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ai_bj 
+!
+      end subroutine jacobian_transpose_ccsd_a2_ccsd
+!
+!
+      module subroutine jacobian_transpose_ccsd_b2_ccsd(wf, sigma_ai_bj, b_ai_bj)
+!!
+!!       Jacobian transpose CCSD B2 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Calculates the B2 term,
+!!
+!!           sum_c b_aicj F_cb - sum_k b_aibk F_jk + sum_ck b_aick L_ckjb 
+!! 
+!!       and adds it to the transformed vector sigma_ai_bj.
+!!
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ai_bj 
+!
+      end subroutine jacobian_transpose_ccsd_b2_ccsd
+!
+!
+      module subroutine jacobian_transpose_ccsd_c2_ccsd(wf, sigma_ai_bj, b_ai_bj)
+!!
+!!       Jacobian transpose CCSD C2 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Calculates the C2 term,
+!!
+!!         - sum_ck (b_ajck g_ibck + b_akcj g_ikcb) 
+!! 
+!!       and adds it to the transformed vector sigma_ai_bj.
+!!
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ai_bj 
+!
+      end subroutine jacobian_transpose_ccsd_c2_ccsd
+!
+!
+      module subroutine jacobian_transpose_ccsd_d2_ccsd(wf, sigma_ai_bj, b_ai_bj)
+!!
+!!       Jacobian transpose CCSD D2 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Calculates the D2 term,
+!!
+!!           2 * sum_ckdl b_aick L_jbld t_kl^cd 
+!! 
+!!       and adds it to the transformed vector sigma_ai_bj.
+!!
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ai_bj 
+!
+      end subroutine jacobian_transpose_ccsd_d2_ccsd
+!
+!
+      module subroutine jacobian_transpose_ccsd_e2_ccsd(wf, sigma_ai_bj, b_ai_bj)
+!!
+!!       Jacobian transpose CCSD E2 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Calculates the E2 term,
+!!
+!!          - sum_ckdl (b_aibl t_kl^cd L_kcjd + b_aicl t_kl^cd L_jbkd + b_aicj t_kl^cd L_ldkb)
+!! 
+!!       and adds it to the transformed vector sigma_ai_bj.
+!!
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ai_bj
+!
+      end subroutine jacobian_transpose_ccsd_e2_ccsd
+!
+!
+      module subroutine jacobian_transpose_ccsd_f2_ccsd(wf, sigma_ai_bj, b_ai_bj)
+!!
+!!       Jacobian transpose CCSD F2 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Calculates the F2 term,
+!!
+!!          - sum_ckdl (b_alck t_kl^cd L_jbid + b_ajck t_kl^cd L_ldib + b_djck t_kl^cd L_ialb)
+!! 
+!!       and adds it to the transformed vector sigma_ai_bj.
+!!
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ai_bj
+!
+      end subroutine jacobian_transpose_ccsd_f2_ccsd
+!
+!
+      module subroutine jacobian_transpose_ccsd_g2_ccsd(wf, sigma_ai_bj, b_ai_bj)
+!!
+!!       Jacobian transpose CCSD G2 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Calculates the G2 term,
+!!
+!!          sum_ckdl (b_alcj t_kl^cd g_kbid + b_ajcl t_kl^cd g_kdib)
+!! 
+!!       and adds it to the transformed vector sigma_ai_bj.
+!!
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ai_bj
+!
+      end subroutine jacobian_transpose_ccsd_g2_ccsd
+!
+!
+      module subroutine jacobian_transpose_ccsd_h2_ccsd(wf, sigma_ab_ij, b_ab_ij)
+!!
+!!       Jacobian transpose CCSD H2 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Calculates the H2 term,
+!!
+!!         sum_kl b_akbl g_ikjl + sum_cd b_cidj g_cadb 
+!! 
+!!       and adds it to the transformed vector sigma_ab_ij.
+!!
+!!       In this routine, the b and sigma vectors are ordered as
+!!
+!!         b_ab_ij = b_ai_bj 
+!!         sigma_ab_ij = sigma_ab_ij
+!!
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ab_ij
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ab_ij
+!
+      end subroutine jacobian_transpose_ccsd_h2_ccsd
+!
+!
+      module subroutine jacobian_transpose_ccsd_i2_ccsd(wf, sigma_ab_ij, b_ab_ij)
+!!
+!!       Jacobian transpose CCSD I2 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Calculates the I2 term,
+!!
+!!          sum_ckdl b_cidj t_kl^cd g_kalb + sum_ckdl b_akbl t_kl^cd g_icjd 
+!! 
+!!       and adds it to the transformed vector sigma_ab_ij.
+!!
+!!       In this routine, the b and sigma vectors are ordered as
+!!
+!!          b_ab_ij = b_ai_bj 
+!!          sigma_ab_ij = sigma_ab_ij
+!!
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ab_ij
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ab_ij
+!
+      end subroutine jacobian_transpose_ccsd_i2_ccsd
+!
+!
    end interface
 !
 !
@@ -782,6 +1181,7 @@ contains
 !
       wf%implemented%ground_state = .true.
       wf%implemented%excited_state = .true.
+      wf%implemented%properties = .true.
 !
 !     Read Hartree-Fock info from SIRIUS
 !
@@ -1011,30 +1411,34 @@ contains
 !
 !
    subroutine destruct_amplitudes_ccsd(wf)
-!
+!!
+!!    Destruct Amplitudes (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
+!!
+!!    Deallocates the (doubles) amplitudes.
+!!
       implicit none
 !
       class(ccsd) :: wf
 !
-      if (allocated(wf%t2am)) then
-         call deallocator(wf%t2am, wf%n_t2am, 1)
-      endif
+      if (allocated(wf%t2am)) call deallocator(wf%t2am, wf%n_t2am, 1)
 !
    end subroutine destruct_amplitudes_ccsd
 !
 !
    subroutine destruct_omega_ccsd(wf)
-!
+!!
+!!    Destruct Omega (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
+!!
+!!    Deallocates the projection vector.
+!!
       implicit none
 !
       class(ccsd) :: wf
 !
-      if (allocated(wf%omega1)) then
-         call deallocator(wf%omega1, wf%n_v, wf%n_o)
-      endif
-      if (allocated(wf%omega2)) then
-         call deallocator(wf%omega2, wf%n_t2am, 1)
-      endif
+      if (allocated(wf%omega1)) call deallocator(wf%omega1, wf%n_v, wf%n_o)
+      if (allocated(wf%omega2)) call deallocator(wf%omega2, wf%n_t2am, 1)
 !
    end subroutine destruct_omega_ccsd
 !
@@ -1193,7 +1597,8 @@ contains
          write(unit_output,*) j, r2am(j,1)
       enddo
 !
-      call wf%jacobian_ccsd_transformation(r1am,r2am)
+   !   call wf%jacobian_ccsd_transformation(r1am,r2am)
+      call wf%jacobian_transpose_ccsd_transformation(r1am,r2am)
 !
       write(unit_output,*) 'TRF(SINGLES)'
 !
@@ -1206,7 +1611,7 @@ contains
 !
       write(unit_output,*) 'TRF(DOUBLES)'
 !
-      do j = 1, 15
+      do j = 1, 500
          write(unit_output,*) j, r2am(j,1)
       enddo
 !
@@ -1628,6 +2033,117 @@ contains
       enddo 
 !
    end subroutine jacobi_test_ccsd
+!
+!
+   subroutine construct_eta_ccsd(wf,eta)
+!!
+!!    Construct Eta (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!    Note: the routine assumes that eta is initialized and that the Fock matrix
+!!    has been constructed.
+!!
+      implicit none 
+!
+      class(ccsd) :: wf 
+!
+      real(dp), dimension(wf%n_parameters, 1) :: eta ! eta = ( eta_ai eta_aibj )
+!
+      real(dp), dimension(:,:), allocatable :: L_ia_J 
+      real(dp), dimension(:,:), allocatable :: g_ia_jb 
+!
+      real(dp), dimension(:,:), allocatable :: eta_ai_bj
+!
+      integer(i15) :: i = 0, a = 0, j = 0, b = 0, aibj = 0
+      integer(i15) :: ib = 0, ja = 0, jb = 0, ia = 0, bj = 0, ai = 0
+!
+      eta = zero 
+!
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v 
+!
+            ai = index_two(a, i, wf%n_v)
+            eta(ai, 1) = two*(wf%fock_ia(i, a)) ! eta_ai = 2 F_ia 
+!
+         enddo
+      enddo
+!
+!     Form g_ia_jb = g_iajb 
+!
+      call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call wf%get_cholesky_ia(L_ia_J)
+!
+      call allocator(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+      call dgemm('N','T',            &
+                  (wf%n_o)*(wf%n_v), & 
+                  (wf%n_o)*(wf%n_v), &
+                  wf%n_J,            &
+                  one,               &
+                  L_ia_J,            &
+                  (wf%n_o)*(wf%n_v), &
+                  L_ia_J,            &
+                  (wf%n_o)*(wf%n_v), &
+                  zero,              &
+                  g_ia_jb,           &
+                  (wf%n_o)*(wf%n_v))
+!
+      call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+!
+!     Form eta_ai_bj = 2* L_iajb = 2 * ( 2 * g_iajb - g_ibja) 
+!                                = 4 * g_ia_jb(ia,jb) - 2 * g_ia_jb(ib,ja)
+!
+      call allocator(eta_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      eta_ai_bj = zero
+!
+      do j = 1, wf%n_o
+         do b = 1, wf%n_v
+!
+            bj = index_two(b, j, wf%n_v)
+            jb = index_two(j, b, wf%n_o)
+!
+            do i = 1, wf%n_o
+!
+               ib = index_two(i, b, wf%n_o)
+!
+               do a = 1, wf%n_v 
+!
+                  ai = index_two(a, i, wf%n_v)
+                  ia = index_two(i, a, wf%n_o)
+                  ja = index_two(j, a, wf%n_o)
+!
+                  eta_ai_bj(ai, bj) = four*g_ia_jb(ia, jb) - two*g_ia_jb(ib, ja) ! 2 * L_iajb
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+!     Pack vector into doubles eta 
+!
+      do j = 1, wf%n_o
+         do b = 1, wf%n_v
+!
+            bj = index_two(b, j, wf%n_v)
+!
+            do i = 1, wf%n_o
+               do a = 1, wf%n_v
+!
+                  ai = index_two(a, i, wf%n_v)
+!
+                  aibj = index_packed(ai, bj)
+!
+                  eta(wf%n_t1am + aibj, 1) = eta_ai_bj(ai, bj)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      call deallocator(eta_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+   end subroutine construct_eta_ccsd
+!
 !
 end module ccsd_class
 !

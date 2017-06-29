@@ -184,6 +184,7 @@ contains
             if (abs(unpacked(i, j) - unpacked(j, i)) .gt. 10D-8) then 
                write(unit_output,*) 'WARNING: Attempting to pack non-symmetric matrix'
                write(unit_output,*) 'Make sure code is bug-free. Information will be lost.'
+               write(unit_output,*) unpacked(i, j), unpacked(j, i)
             endif
 !
             packed(index_packed(i, j), 1) = unpacked(i, j)
