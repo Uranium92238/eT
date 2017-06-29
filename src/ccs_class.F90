@@ -46,8 +46,7 @@ module ccs_class
       real(dp), dimension(:,:), allocatable :: fock_ai ! vir-occ block
       real(dp), dimension(:,:), allocatable :: fock_ab ! vir-vir block
 !
-!     Variables that keep track of which response task is being 
-!     performed at the moment 
+!     Variables that keep track of which response task is being performed 
 !
       character(len=40) :: response_task = 'multipliers'
 !
@@ -62,28 +61,24 @@ module ccs_class
       procedure :: init => init_ccs
       procedure :: drv  => drv_ccs
 !
-!     Initialization routine for the (singles) amplitudes
+!     Initialization routine for the amplitudes and omega 
 !      
       procedure :: initialize_amplitudes => initialize_amplitudes_ccs
+      procedure :: initialize_omega      => initialize_omega_ccs
 !
-!     Routine to initialize omega (allocate and set to zero)
+!     Initialization routine for the Fock matrix, and a T1 Fock matrix constructor
 !
-      procedure :: initialize_omega => initialize_omega_ccs
-!
-!     Initialization routine for the Fock matrix, and a Fock matrix constructor
-!     (for the given T1 amplitudes)
-!
-      procedure                  :: initialize_fock_matrix => initialize_fock_matrix_ccs
       procedure, non_overridable :: construct_fock         => construct_fock_ccs
+      procedure, non_overridable :: initialize_fock_matrix => initialize_fock_matrix_ccs
 !
-      procedure, non_overridable :: one_electron_t1        => one_electron_t1_ccs ! T1-transf. of h_pq
+      procedure, non_overridable :: one_electron_t1 => one_electron_t1_ccs ! T1-transf. of h_pq
 !
-!     Routine to calculate the energy (trivial: it is the SCF energy)
+!     Routine to calculate the energy
 !
       procedure :: calc_energy => calc_energy_ccs
 !
-!     get Cholesky routines to calculate the occ/vir-occ/vir  blocks of the 
-!     T1-transformed Cholesky vectors
+!     get Cholesky routines to calculate the occ/vir-occ/vir blocks of the 
+!     T1-transformed MO Cholesky vectors
 !
       procedure, non_overridable :: get_cholesky_ij => get_cholesky_ij_ccs ! occ-occ
       procedure, non_overridable :: get_cholesky_ia => get_cholesky_ia_ccs ! occ-vir
@@ -101,9 +96,8 @@ module ccs_class
 !
 !     Ground state solver routines (and helpers)
 !
-!     Note: while this solver is strictly uneccessary for CCS, where the solution
-!           is trivial, it is inherited mostly unaltered by descendants (CCSD, CC2, 
-!           etc.), where it serves an actual role.
+!     Note: while this solver is uneccessary for CCS, where the solution is trivial, 
+!     it is inherited mostly unaltered by descendants (CCSD, CC2, etc.).
 !
       procedure :: ground_state_solver       => ground_state_solver_ccs
 !
@@ -118,37 +112,28 @@ module ccs_class
 !
 !     Routine to save and read the amplitudes (to/from disk)
 !
-      procedure :: save_amplitudes => save_amplitudes_ccs
-      procedure :: read_amplitudes => read_amplitudes_ccs
+      procedure :: save_amplitudes        => save_amplitudes_ccs
+!
+      procedure :: read_amplitudes        => read_amplitudes_ccs
       procedure :: read_single_amplitudes => read_single_amplitudes_ccs
 !
 !     Routines to destroy amplitudes and omega 
 !
-      procedure :: destruct_amplitudes   => destruct_amplitudes_ccs
-      procedure :: destruct_omega        => destruct_omega_ccs
+      procedure :: destruct_amplitudes => destruct_amplitudes_ccs
+      procedure :: destruct_omega      => destruct_omega_ccs
 !
-!     Jacobian transformation routine 
+!     Coupled cluster Jacobian transformation routine
 !
       procedure :: jacobian_ccs_transformation => jacobian_ccs_transformation_ccs
-!
-!     Helper routines
-!
-!     Non-overridable, they will be used for contributions
-!     to linear of higher order coupled cluster methods
 !
       procedure, non_overridable :: jacobian_ccs_a1 => jacobian_ccs_a1_ccs 
       procedure, non_overridable :: jacobian_ccs_b1 => jacobian_ccs_b1_ccs
 !
-      procedure :: jacobi_test => jacobi_test_ccs
+      procedure :: jacobi_test => jacobi_test_ccs ! A debug routine for A transformation 
 !
-!     Jacobian transpose transformation routine (b^T -> b^T A, i.e., b -> A^T b)
+!     Coupled cluster Jacobian transpose transformation routine
 !
       procedure :: jacobian_transpose_ccs_transformation => jacobian_transpose_ccs_transformation_ccs
-!
-!     Helper routines 
-!
-!     Non-overridable, they will be used for contributions
-!     to linear of higher order coupled cluster methods
 !
       procedure, non_overridable :: jacobian_transpose_ccs_a1 => jacobian_transpose_ccs_a1_ccs
       procedure, non_overridable :: jacobian_transpose_ccs_b1 => jacobian_transpose_ccs_b1_ccs
@@ -158,13 +143,13 @@ module ccs_class
       procedure                  :: excited_state_driver => excited_state_driver_ccs 
       procedure, non_overridable :: excited_state_solver => excited_state_solver_ccs
 !
-!     Helper routines 
+!     Helper routines for excited state solver 
 !
       procedure :: transform_trial_vectors       => transform_trial_vectors_ccs
       procedure :: calculate_orbital_differences => calculate_orbital_differences_ccs ! Must be overwritten for CCSD 
 !
-      procedure, non_overridable :: find_start_trial_indices => find_start_trial_indices_ccs
-      procedure, non_overridable :: initialize_trial_vectors => initialize_trial_vectors_ccs
+      procedure, non_overridable :: find_start_trial_indices            => find_start_trial_indices_ccs
+      procedure, non_overridable :: initialize_trial_vectors            => initialize_trial_vectors_ccs
       procedure, non_overridable :: trial_vectors_from_stored_solutions => trial_vectors_from_stored_solutions_ccs
 !
       procedure, non_overridable :: solve_reduced_eigenvalue_equation => solve_reduced_eigenvalue_equation_ccs
@@ -175,12 +160,14 @@ module ccs_class
       procedure :: response_driver => response_driver_ccs
       procedure :: response_solver => response_solver_ccs
 !
-      procedure :: initialize_response => initialize_response_ccs
-      procedure :: solve_reduced_response_equation  => solve_reduced_response_equation_ccs
-      procedure :: construct_reduced_matrix => construct_reduced_matrix_ccs
-      procedure :: construct_reduced_gradient => construct_reduced_gradient_ccs
+!     Helper routines for response solver 
+!
+      procedure :: initialize_response                   => initialize_response_ccs
+      procedure :: solve_reduced_response_equation       => solve_reduced_response_equation_ccs
+      procedure :: construct_reduced_matrix              => construct_reduced_matrix_ccs
+      procedure :: construct_reduced_gradient            => construct_reduced_gradient_ccs
       procedure :: construct_next_response_trial_vectors => construct_next_response_trial_vectors_ccs
-      procedure :: construct_gradient_vector => construct_gradient_vector_ccs
+      procedure :: construct_gradient_vector             => construct_gradient_vector_ccs
 !
    end type ccs
 !
