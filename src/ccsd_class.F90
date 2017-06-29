@@ -61,8 +61,6 @@ module ccsd_class
 !
       procedure :: construct_omega => construct_omega_ccsd
 !
-!     Helper routines for construct_omega
-!
       procedure :: omega_ccsd_a1 => omega_ccsd_a1_ccsd 
       procedure :: omega_ccsd_b1 => omega_ccsd_b1_ccsd 
       procedure :: omega_ccsd_c1 => omega_ccsd_c1_ccsd
@@ -73,26 +71,21 @@ module ccsd_class
       procedure :: omega_ccsd_d2 => omega_ccsd_d2_ccsd 
       procedure :: omega_ccsd_e2 => omega_ccsd_e2_ccsd   
 !
-!     Ground state solver routine (helpers only, see CCS for the rest)
+!     Helpers for ground state solver routine (see CCS for the rest)
 !
       procedure :: initialize_ground_state   => initialize_ground_state_ccsd
       procedure :: calc_ampeqs_norm          => calc_ampeqs_norm_ccsd
       procedure :: new_amplitudes            => new_amplitudes_ccsd
       procedure :: calc_quasi_Newton_doubles => calc_quasi_Newton_doubles_ccsd
 !
-!     Routine to save and read the amplitudes (to/from disk)
-!
-      procedure :: save_amplitudes => save_amplitudes_ccsd
-      procedure :: read_amplitudes => read_amplitudes_ccsd
-      procedure :: read_double_amplitudes => read_double_amplitudes_ccsd
-!
-!     Jacobian transformation routine 
+!     Helpers for excited state solver (see CCS for the rest)
 !
       procedure :: calculate_orbital_differences => calculate_orbital_differences_ccsd
-      procedure :: jacobian_ccsd_transformation  => jacobian_ccsd_transformation_ccsd
       procedure :: transform_trial_vectors       => transform_trial_vectors_ccsd
 !
-!     Helper routines for Jacobian transformation 
+!     Coupled cluster Jacobian transformation routine 
+!
+      procedure :: jacobian_ccsd_transformation => jacobian_ccsd_transformation_ccsd
 !
       procedure :: jacobian_ccsd_a1 => jacobian_ccsd_a1_ccsd
       procedure :: jacobian_ccsd_b1 => jacobian_ccsd_b1_ccsd
@@ -111,13 +104,11 @@ module ccsd_class
       procedure :: jacobian_ccsd_j2 => jacobian_ccsd_j2_ccsd
       procedure :: jacobian_ccsd_k2 => jacobian_ccsd_k2_ccsd
 !
-      procedure :: jacobi_test => jacobi_test_ccsd
+      procedure :: jacobi_test => jacobi_test_ccsd ! A debug routine 
 !
-!     Jacobian transpose transformation routine 
+!     Coupled cluster Jacobian transpose transformation routine 
 !
       procedure :: jacobian_transpose_ccsd_transformation => jacobian_transpose_ccsd_transformation_ccsd
-!
-!     Helper routines for Jacobian transpose transformation 
 !
       procedure :: jacobian_transpose_ccsd_a1 => jacobian_transpose_ccsd_a1_ccsd
       procedure :: jacobian_transpose_ccsd_b1 => jacobian_transpose_ccsd_b1_ccsd 
@@ -140,6 +131,13 @@ module ccsd_class
 !     Routine to construct right projection vector (eta)
 !
       procedure :: construct_eta => construct_eta_ccsd
+!
+!     Routine to save and read the amplitudes (to/from disk)
+!
+      procedure :: save_amplitudes => save_amplitudes_ccsd
+!
+      procedure :: read_amplitudes => read_amplitudes_ccsd
+      procedure :: read_double_amplitudes => read_double_amplitudes_ccsd
 !
 !     Routines to destroy amplitudes and omega 
 !
