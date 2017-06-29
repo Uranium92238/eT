@@ -10,11 +10,11 @@ submodule (ccs_class) response
 !  Some variables available to all routines of the module
 !
    integer(i15) :: iteration = 1
-   integer(i15) :: max_iterations = 200 ! E: we move this to calculation settings later
+   integer(i15) :: max_iterations = 75
 !
 !  Variables to handle convergence criterea
 !
-   logical :: converged = .false. ! True if the equations have converged 
+   logical :: converged = .false. ! True if the residual has converged 
 !
 contains 
 !
@@ -34,7 +34,8 @@ contains
 !     Let the user know the response driver is running
 !
       write(unit_output,'(t3,a)')  ':: Response solver (Davidson)'
-      write(unit_output,'(t3,a)')  ':: E. F. Kjønstad, S. D. Folkestad, June 2017'     
+      write(unit_output,'(t3,a)')  ':: E. F. Kjønstad, S. D. Folkestad, June 2017' 
+      flush(unit_output)    
 !
 !     Set the response task 
 !
@@ -67,7 +68,8 @@ contains
 !!
 !!       A_ij = c_i^T A c_j,    F_i = c_i^T F 
 !!
-!!    The space of trial vectors is expanded according to a Davidson algorithm.
+!!    The equation is precondition with the orbital energy differences, and the space 
+!!    of trial vectors is expanded according to a Davidson algorithm.
 !!
       implicit none 
 !
@@ -91,11 +93,11 @@ contains
 !
       call wf%initialize_response
 !
+      write(unit_output,'(/t3,a)')   'Iteration      Residual norm'
+      write(unit_output,'(t3,a)')    '----------------------------' 
+      flush(unit_output)
+!
       do while (.not. converged .and. iteration .le. max_iterations)
-!
-!        Print iteration information 
-!
-         write(unit_output,'(/t3,a,i3)') 'Iteration:', iteration
 !
 !        Allocate solution vector 
 !
@@ -592,7 +594,7 @@ contains
 !!    stored in trial_vec file, to be used in the next iteration.
 !!
 !!    The routine also constructs full space solution vectors and stores them
-!!    in file solution_vectors 
+!!    in file solution_vectors when the residuals are converged.
 !! 
       implicit none
 !
@@ -710,9 +712,20 @@ contains
       norm_residual = sqrt(ddot(wf%n_parameters, residual, 1, residual, 1))
 !
       conv_test = norm_residual/norm_solution_vector
-      if (conv_test .le. wf%settings%equation_threshold) converged = .true.
 !
-      write(unit_output,'(t3,a,e10.4)') 'Residual norm: ', conv_test
+      if (conv_test .le. wf%settings%equation_threshold) then 
+!
+         converged = .true.
+!
+!        Write solution vector to disk 
+!
+         write(unit_solution, rec=1, iostat=ioerror) solution_vector
+!
+      endif
+!
+!     Print information to output 
+!
+      write(unit_output,'(t3,i2,13x,e10.4)') iteration, conv_test 
       flush(unit_output)
 !
 !     Precondition the residual by inverse orbital energy differences
