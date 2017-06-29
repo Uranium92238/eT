@@ -136,7 +136,7 @@ module ccsd_class
 !
       procedure :: save_amplitudes => save_amplitudes_ccsd
 !
-      procedure :: read_amplitudes => read_amplitudes_ccsd
+      procedure :: read_amplitudes        => read_amplitudes_ccsd
       procedure :: read_double_amplitudes => read_double_amplitudes_ccsd
 !
 !     Routines to destroy amplitudes and omega 
@@ -152,6 +152,8 @@ module ccsd_class
 !
    interface
 !
+!     -::- Omega submodule interface -::-
+!     :::::::::::::::::::::::::::::::::::
 !
       module subroutine initialize_omega_ccsd(wf)
 !!
@@ -353,6 +355,14 @@ module ccsd_class
       end subroutine omega_ccsd_e2_ccsd
 !
 !
+   end interface
+!
+!
+   interface 
+!
+!     -::- Ground state submodule interface -::-
+!     :::::::::::::::::::::::::::::::::::::::::: 
+!
       module subroutine calc_ampeqs_norm_ccsd(wf, ampeqs_norm)
 !!
 !!       Calculate Amplitude Equations Norm (CCSD)
@@ -416,6 +426,14 @@ module ccsd_class
       end subroutine initialize_ground_state_ccsd
 !
 !
+   end interface 
+!
+!
+   interface 
+!
+!     -::- Excited state submodule interface -::-
+!     :::::::::::::::::::::::::::::::::::::::::::
+!
       module subroutine calculate_orbital_differences_ccsd(wf,orbital_diff)
 !!
 !!       Calculate Orbital Differences (CCSD)
@@ -455,6 +473,14 @@ module ccsd_class
 !
       end subroutine transform_trial_vectors_ccsd
 !
+!
+   end interface 
+!
+!
+   interface 
+!
+!     -::- Jacobian submodule interface -::-
+!     :::::::::::::::::::::::::::::::::::::: 
 !
       module subroutine jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!
@@ -767,6 +793,14 @@ module ccsd_class
 !
       end subroutine jacobian_ccsd_k2_ccsd
 !
+!
+   end interface 
+!
+!
+   interface 
+!
+!     -::- Jacobian transpose submodule interface -::-
+!     ::::::::::::::::::::::::::::::::::::::::::::::::
 !
       module subroutine jacobian_transpose_ccsd_transformation_ccsd(wf, b_a_i, b_aibj)
 !!
