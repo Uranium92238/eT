@@ -175,56 +175,58 @@ module ccs_class
 !  -::- Interface to the submodule routines of CCS -::- 
 !  ::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
-   interface
+   interface 
 !
+!     -::- Cholesky submodule interface -::-
+!     :::::::::::::::::::::::::::::::::::::: 
 !
-   module subroutine get_cholesky_ij_ccs(wf, L_ij_J, i_first, i_last, j_first, j_last)
+      module subroutine get_cholesky_ij_ccs(wf, L_ij_J, i_first, i_last, j_first, j_last)
 !!
-!!    Get Cholesky IJ
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!       Get Cholesky IJ
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!    Reads and T1-transforms the IA Cholesky vectors:
+!!       Reads and T1-transforms the IA Cholesky vectors:
 !!     
-!!       L_ij_J_T1 = L_ij_J + sum_a t_aj * L_ia_J
+!!          L_ij_J_T1 = L_ij_J + sum_a t_aj * L_ia_J
 !!
-!!    Memory required in routine:
+!!       Memory required in routine:
 !!
-!!       2*n_J*(i_length)*n_v     -> for reading L_ia_J contribution and reordering
-!!       i_length = i_last - i_first + 1
+!!          2*n_J*(i_length)*n_v     -> for reading L_ia_J contribution and reordering
+!!          i_length = i_last - i_first + 1
 !!
-!!    Optional arguments: i_first, i_last, j_first, j_last can be used in order to restrict indices
+!!       Optional arguments: i_first, i_last, j_first, j_last can be used in order to restrict indices
 !!       
-      implicit none 
+         implicit none 
 !
-      class(ccs)               :: wf
-      integer(i15), optional   :: i_first, j_first     ! First index (can differ from 1 when batching or for mlcc)
-      integer(i15), optional   :: i_last, j_last      ! Last index (can differ from n_o when batching or for mlcc)
-      real(dp), dimension(:,:) :: L_ij_J
+         class(ccs)               :: wf
+         integer(i15), optional   :: i_first, j_first ! First index (can differ from 1 when batching or for mlcc)
+         integer(i15), optional   :: i_last, j_last   ! Last index (can differ from n_o when batching or for mlcc)
+         real(dp), dimension(:,:) :: L_ij_J
 !
       end subroutine get_cholesky_ij_ccs
 !
 !
-   module subroutine get_cholesky_ia_ccs(wf, L_ia_J, i_first, i_last, a_first, a_last)
+      module subroutine get_cholesky_ia_ccs(wf, L_ia_J, i_first, i_last, a_first, a_last)
 !!
-!!    Get Cholesky IA
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!       Get Cholesky IA
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!    Reads and T1-transforms IA Cholesky vectors
+!!       Reads and T1-transforms IA Cholesky vectors
 !!
-!!       L_ia_J_T1 = L_ia_J (only reading necessary)
+!!          L_ia_J_T1 = L_ia_J (only reading necessary)
 !!
-!!    Memory required in routine:
+!!       Memory required in routine:
 !!
-!!       No additional memory
+!!          No additional memory
 !!
-!!    Optional arguments: i_first, i_last, a_first, a_last can be used in order to restrict indices
+!!       Optional arguments: i_first, i_last, a_first, a_last can be used in order to restrict indices
 !!
-      implicit none 
+         implicit none 
 !
-      class(ccs)               :: wf
-      integer(i15), optional   :: i_first, a_first   ! First index (can differ from 1 when batching or for mlcc)
-      integer(i15), optional   :: i_last, a_last    ! Last index (can differ from n_v/n_o when batching or for mlcc)
-      real(dp), dimension(:,:) :: L_ia_J
+         class(ccs)               :: wf
+         integer(i15), optional   :: i_first, a_first   ! First index (can differ from 1 when batching or for mlcc)
+         integer(i15), optional   :: i_last, a_last    ! Last index (can differ from n_v/n_o when batching or for mlcc)
+         real(dp), dimension(:,:) :: L_ia_J
 !
       end subroutine get_cholesky_ia_ccs
 !
@@ -289,7 +291,16 @@ module ccs_class
          integer(i15), intent(in) :: a_last, b_last    ! Last index (can differ from n_v when batching or for mlcc)
          real(dp), dimension(((b_last - b_first + 1)*(a_last - a_first + 1)), wf%n_J) :: L_ab_J ! L_ab^J
 !
-   end subroutine get_cholesky_ab_ccs
+      end subroutine get_cholesky_ab_ccs
+!
+!
+   end interface 
+!
+!
+   interface
+!
+!     -::- Fock submodule interface -::-
+!     ::::::::::::::::::::::::::::::::::
 !
       module subroutine initialize_fock_matrix_ccs(wf)
 !!  
@@ -344,6 +355,14 @@ module ccs_class
 !  
       end subroutine one_electron_t1_ccs
 !
+!
+   end interface 
+!
+!
+   interface
+!
+!     -::- Ground state submodule interface -::-
+!     ::::::::::::::::::::::::::::::::::::::::::
 !
       module subroutine ground_state_solver_ccs(wf)
 !!
@@ -455,133 +474,6 @@ module ccs_class
       end subroutine diis_ccs
 !
 !
-      module subroutine initialize_trial_vectors_ccs(wf)
-!!
-!!       Initialize trial vectors
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
-!!
-!!       Initializes start trial vectors for the calculation of 
-!!       singlet excited states and writes them to file 'trial_vecs'.
-!!
-!!       n start vectors are constructed by finding the n lowest orbital differences,      
-!!       where n = n_singlet_states. Vector i has a 1.0D0 at the element corresponding to the i'th lowest
-!!       orbital difference and 0.0d0 everywhere else
-         implicit none
-!
-         class(ccs) :: wf
-!
-! 
-      end subroutine initialize_trial_vectors_ccs
-!
-!
-      module subroutine trial_vectors_from_stored_solutions_ccs(wf)
-!!
-!!
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      end subroutine trial_vectors_from_stored_solutions_ccs
-!
-!
-      module subroutine find_start_trial_indices_ccs(wf, index_list)
-!!
-!!       Find indices for lowest orbital differences
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
-!!
-!!
-         implicit none
-!
-         class(ccs) :: wf
-         integer(i15), dimension(wf%tasks%n_singlet_states,1), intent(inout) :: index_list
-! 
-      end subroutine find_start_trial_indices_ccs
-!
-!
-      module subroutine calculate_orbital_differences_ccs(wf,orbital_diff)
-!!
-!!       Calculate and return orbital differences
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad May 2017
-!!
-         implicit none
-!
-         class(ccs) :: wf
-         real(dp), dimension(wf%n_parameters, 1) :: orbital_diff
-!
-      end subroutine calculate_orbital_differences_ccs
-!
-!
-      module subroutine transform_trial_vectors_ccs(wf, first_trial, last_trial)
-!!
-!!       Construct Right Transform of Jacobian
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
-!!
-!!
-         implicit none
-!
-         class(ccs) :: wf 
-         integer(i15), intent(in) :: first_trial, last_trial       
-!
-      end subroutine transform_trial_vectors_ccs
-!
-!
-      module subroutine jacobian_ccs_transformation_ccs(wf, c_a_i)
-!!
-!!       Jacobian transformation
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
-!!
-!!
-         implicit none
-!
-         class(ccs) :: wf 
-         real(dp), dimension(wf%n_v, wf%n_o)   :: c_a_i       
-!
-      end subroutine jacobian_ccs_transformation_ccs
-!
-!
-      module subroutine jacobian_ccs_a1_ccs(wf,rho,c1)
-!!
-!!       A1 contribution to right transform of Jacobian
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
-!!
-!!       Calculates the A1 term of the right transform of the
-!!       Jacobian,
-!!
-!!       A1: sum_b F_ab*c_bi + sum_j F_ji*c_aj
-!!
-!!       and adds it to the rho vector.
-!!
-         implicit none
-!
-         class(ccs) :: wf
-         real(dp), dimension(wf%n_o,wf%n_v) :: c1 
-         real(dp), dimension(wf%n_o,wf%n_v) :: rho                               
-!
-      end subroutine jacobian_ccs_a1_ccs
-!
-!
-      module subroutine jacobian_ccs_b1_ccs(wf,rho,c1)
-!!
-!!       B1 contribution to right transform of Jacobian
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
-!!
-!!       Calculates the B1 term of the right transform of the
-!!       Jacobian,
-!!
-!!       B1: sum_bj L_aijb*c_bj
-!!
-!!       and adds it to the rho vector.
-!!
-         implicit none
-!
-         class(ccs) :: wf
-         real(dp), dimension(wf%n_o,wf%n_v) :: c1
-         real(dp), dimension(wf%n_o,wf%n_v) :: rho                
-!
-      end subroutine jacobian_ccs_b1_ccs
-!
-!
       module subroutine initialize_ground_state_ccs(wf)
 !!
 !!       Initialize Ground State (CCS)
@@ -610,6 +502,90 @@ module ccs_class
          class(ccs) :: wf
 !
       end subroutine destruct_ground_state_ccs
+!
+!
+   end interface 
+!
+!
+   interface 
+!
+!     -::- Excited state submodule interface -::-
+!     :::::::::::::::::::::::::::::::::::::::::::
+!
+      module subroutine initialize_trial_vectors_ccs(wf)
+!!
+!!       Initialize trial vectors (CCS)
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!       Initializes start trial vectors for the calculation of 
+!!       singlet excited states and writes them to file 'trial_vecs'.
+!!
+!!       n start vectors are constructed by finding the n lowest orbital differences,      
+!!       where n = n_singlet_states. Vector i has a 1.0D0 at the element corresponding to the i'th lowest
+!!       orbital difference and 0.0d0 everywhere else
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+      end subroutine initialize_trial_vectors_ccs
+!
+!
+      module subroutine trial_vectors_from_stored_solutions_ccs(wf)
+!!
+!!       Trial Vectors from Stored Solutions (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!       Reads the solutions from file and uses them as the first trial
+!!       vectors in the iterative loop.
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+      end subroutine trial_vectors_from_stored_solutions_ccs
+!
+!
+      module subroutine find_start_trial_indices_ccs(wf, index_list)
+!!
+!!       Find Start Trial Indices (CCS) 
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+         implicit none
+!
+         class(ccs) :: wf
+         integer(i15), dimension(wf%tasks%n_singlet_states,1), intent(inout) :: index_list
+! 
+      end subroutine find_start_trial_indices_ccs
+!
+!
+      module subroutine calculate_orbital_differences_ccs(wf,orbital_diff)
+!!
+!!       Calculate Orbital Differences (CCS)
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad May 2017
+!!
+         implicit none
+!
+         class(ccs) :: wf
+         real(dp), dimension(wf%n_parameters, 1) :: orbital_diff
+!
+      end subroutine calculate_orbital_differences_ccs
+!
+!
+      module subroutine transform_trial_vectors_ccs(wf, first_trial, last_trial)
+!!
+!!       Transform trial vectors (CCS)
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!       Each trial vector in first_trial to last_trial is read from file and
+!!       transformed before the transformed vector is written to file.
+!!
+         implicit none
+!
+         class(ccs) :: wf 
+         integer(i15), intent(in) :: first_trial, last_trial       
+!
+      end subroutine transform_trial_vectors_ccs
 !
 !
       module subroutine excited_state_solver_ccs(wf)
@@ -718,6 +694,106 @@ module ccs_class
       end subroutine construct_next_trial_vectors_ccs
 !
 !
+      module subroutine excited_state_driver_ccs(wf)
+!!
+!!       Excited state driver (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Directs the solution of the excited state problem for CCS. The
+!!       routine is inherited is to be inherited unaltered in the CC hierarchy. 
+!!
+!!       Note: it is only necessary to alter this routine if the excited states are 
+!!       solved for by a different algorithm (such as in similarity constrained CC, 
+!!       where the excited states and ground state are determined simultaneously).
+!!
+         implicit none 
+!
+         class(ccs) :: wf 
+!
+      end subroutine excited_state_driver_ccs
+!
+!
+   end interface 
+!
+!
+   interface 
+!
+!     -::- Jacobian submodule interface -::-
+!     ::::::::::::::::::::::::::::::::::::::
+!
+      module subroutine jacobian_ccs_transformation_ccs(wf, c_a_i)
+!!
+!!       Jacobian CCS transformation
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!       Directs the transformation by the CCSD Jacobi matrix,
+!!
+!!          A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >. 
+!!
+!!       In particular,
+!!
+!!          rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck.
+!! 
+!!       On exit, c is overwritten by rho. 
+!!
+         implicit none
+!
+         class(ccs) :: wf 
+         real(dp), dimension(wf%n_v, wf%n_o)   :: c_a_i       
+!
+      end subroutine jacobian_ccs_transformation_ccs
+!
+!
+      module subroutine jacobian_ccs_a1_ccs(wf,rho,c1)
+!!
+!!       Jacobian CCS A1
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!       Calculates the A1 term,
+!!
+!!          sum_b F_ab*c_bi - sum_j F_ji*c_aj
+!!
+!!       and adds it to the rho vector.
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+         real(dp), dimension(wf%n_o,wf%n_v) :: c1 
+         real(dp), dimension(wf%n_o,wf%n_v) :: rho                               
+!
+      end subroutine jacobian_ccs_a1_ccs
+!
+!
+      module subroutine jacobian_ccs_b1_ccs(wf,rho,c1)
+!!
+!!       Jacobian CCS B1 
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!       Calculates the B1 term,
+!!
+!!          sum_bj L_aijb*c_bj = sum_bj (2*g_aijb-g_abji)c_bj,
+!!
+!!       and adds it to the rho vector.
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+         real(dp), dimension(wf%n_o,wf%n_v) :: c1
+         real(dp), dimension(wf%n_o,wf%n_v) :: rho                
+!
+      end subroutine jacobian_ccs_b1_ccs
+!
+!
+   end interface 
+!
+!
+   interface 
+!
+!     -::- Jacobian transpose submodule interface -::-
+!     ::::::::::::::::::::::::::::::::::::::::::::::::
+!
       module subroutine jacobian_transpose_ccs_transformation_ccs(wf, b_a_i)
 !!
 !!       Jacobian transpose transformation (CCS)
@@ -739,25 +815,6 @@ module ccs_class
          real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i 
 !
       end subroutine jacobian_transpose_ccs_transformation_ccs
-!
-!
-      module subroutine excited_state_driver_ccs(wf)
-!!
-!!       Excited state driver (CCS)
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
-!!
-!!       Directs the solution of the excited state problem for CCS. The
-!!       routine is inherited is to be inherited unaltered in the CC hierarchy. 
-!!
-!!       Note: it is only necessary to alter this routine if the excited states are 
-!!       solved for by a different algorithm (such as in similarity constrained CC, 
-!!       where the excited states and ground state are determined simultaneously).
-!!
-         implicit none 
-!
-         class(ccs) :: wf 
-!
-      end subroutine excited_state_driver_ccs
 !
 !
       module subroutine jacobian_transpose_ccs_a1_ccs(wf, sigma_a_i, b_a_i)
@@ -801,6 +858,14 @@ module ccs_class
 !
       end subroutine jacobian_transpose_ccs_b1_ccs
 !
+!
+   end interface 
+!
+!
+   interface 
+!
+!     -::- Response submodule interface -::-
+!     ::::::::::::::::::::::::::::::::::::::
 !
       module subroutine response_driver_ccs(wf)
 !!
