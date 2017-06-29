@@ -9,6 +9,9 @@ submodule (ccsd_class) jacobian
 !!    jacobian_transformation: performs the transformation by the CCSD
 !!                             Jacobian matrix A, placing the result in the
 !!                             incoming vector. 
+!!    jacobian_ccsd_x1:        adds the X1 term to the transformed singles vector; x = a, b, c, d
+!!    jacobian_ccsd_x2:        adds the X2 term to the transformed doubles vector; x = a, b, ..., k
+!!
 !
    implicit none 
 !
@@ -1016,10 +1019,6 @@ contains
 !!    The term is added as rho_ai_bj(ai,bj) = rho_ai_bj(ai,bj) + rho_ai_bj^A2,
 !!    where c_a_i(a,i) = c_ai above. 
 !!
-!!    Debug updates:
-!!
-!!       E: Equation and coding logic checked, 1 June 2017
-!!
       implicit none 
 !
       class(ccsd) :: wf 
@@ -1307,10 +1306,6 @@ contains
 !!
 !!    The term is added as rho_ai_bj(ai,bj) = rho_ai_bj(ai,bj) + rho_ai_bj^B2,
 !!    where c_a_i(a,i) = c_ai above.
-!!
-!!    Debug updates
-!!
-!!       E: checked logic in detail, 1 June 2017
 !!
       implicit none 
 !
@@ -1856,7 +1851,7 @@ contains
                do k = 1, wf%n_o
 !
                   ak = index_two(a, k, wf%n_v)
-                  kl = index_two(k, l, wf%n_o) ! E: Bug fix, 3 June - wasn't there!!
+                  kl = index_two(k, l, wf%n_o) 
 !
                   blak = index_packed(bl, ak)
 !

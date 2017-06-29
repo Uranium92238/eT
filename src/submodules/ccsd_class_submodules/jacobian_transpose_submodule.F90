@@ -2,11 +2,17 @@ submodule (ccsd_class) jacobian_transpose
 !
 !!
 !!    Jacobian transpose submodule (CCSD)
-!!    Written by Eirik F. Kjønstad and Sarai Dery Folkestad, May 2017
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
 !!
 !!    Contains the following family of procedures of the CCSD class:
 !!
-!!    jacobian_transpose_ccsd_transformation: performs the transposed Jacobian transformation (A^T)
+!!    jacobian_transpose_ccsd_transformation: performs the transformation by the CCSD
+!!                                            Jacobian transpose matrix A^T, placing the result in the
+!!                                            incoming vector. 
+!!    jacobian_transpose_ccsd_x1:             adds the X1 term to the transformed singles vector; 
+!!                                            x = a, b, c, ..., g 
+!!    jacobian_transpose_ccsd_x2:             adds the X2 term to the transformed doubles vector; 
+!!                                            x = a, b, ..., i
 !! 
 !
    implicit none 
@@ -175,7 +181,7 @@ contains
       call deallocator(b_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call deallocator(sigma_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      call wf%jacobian_transpose_ccsd_h2(sigma_ab_ij, b_ab_ij) ! symmetry mistake??
+      call wf%jacobian_transpose_ccsd_h2(sigma_ab_ij, b_ab_ij)
       call wf%jacobian_transpose_ccsd_i2(sigma_ab_ij, b_ab_ij)
 !
 !     Done with reordered doubles b; deallocate 
@@ -1687,7 +1693,8 @@ contains
 !        Form L_ai_de = L_deia = 2 * g_deia - g_daie
 !                              = 2 * g_de_ia(de,ia) - g_de_ia(da,ie)
 !
-!        E: This will not work when batching... a is not restricted; e is restricted...!!
+!        E: This will not work when batching. We need to split it up in two 
+!        g terms, and batch for each particular contribution.
 !
          call allocator(L_ai_de, (wf%n_o)*(wf%n_v), (wf%n_v)*e_length)
          L_ai_de = zero
@@ -2620,8 +2627,6 @@ contains
 !
       call deallocator(X_kde_i, (wf%n_o)*(wf%n_v)**2, wf%n_o)
       call deallocator(L_ke_J, (wf%n_o)*(wf%n_v), wf%n_J)
-!  
-!     E: There's a symmetry bug in the following term: 
 !
 !     :: Term 1. - sum_ckdle b_akdl t_kl^ce g_icde :: 
 ! 

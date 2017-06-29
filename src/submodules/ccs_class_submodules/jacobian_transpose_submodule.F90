@@ -2,7 +2,7 @@ submodule (ccs_class) jacobian_transpose
 !
 !!
 !!    Jacobian transpose submodule (CCS)
-!!    Written by Eirik F. Kjønstad and Sarai Dery Folkestad, May 2017
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
 !!
 !!    Contains the following family of procedures of the CCS class:
 !!
