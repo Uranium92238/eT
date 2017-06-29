@@ -2,7 +2,25 @@ submodule (ccs_class) response
 !
 !!
 !!    Response submodule (CCS)
-!!    Written by Eirik F. Kjønstad and Sarai Dery Folkestad, May 2017
+!!    Written by Eirik F. Kjønstad and Sarai Dery Folkestad, June 2017
+!!
+!!    Contains the following family of procedures of the CCS class: 
+!!
+!!    response_driver:                       directs the solution of molecular properties.
+!!    response_solver:                       solves for a particular molecular property.
+!!    initialize_response:                   finds a suitable start trial vector & requests the construction 
+!!                                           of the so-called response gradient vector (F).
+!!    solve_reduced_response_equation:       solves the response equation in the reduced space
+!!                                           of trial vectors (in the given iteration).
+!!    construct_gradient_vector:             constructs the gradient vector (F) & saves it to disk.
+!!    construct_next_response_trial_vectors: finds the next trial vectors from the residual resulting
+!!                                           from the reduced space solution. 
+!!    construct_reduced_matrix:              constructs the reduced matrix (the reduced Jacobian, or Jacobian^T).
+!!    construct_reduced_gradient:            constructs the reduced gradient vector.
+!!    
+!!    Note: in order to implement new properties, changes needs to be made in the "transform_trial_vectors"
+!!    and "construct_gradient_vector" routines. The behavior of these routines are governed by the value of
+!!    the "response_task" string, which must be set in the response driver. 
 !!
 !
    implicit none 
