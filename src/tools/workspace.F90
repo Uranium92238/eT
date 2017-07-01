@@ -32,7 +32,7 @@ module workspace
    integer, private :: work_remains = 0
    integer, private :: work_used    = 0
 !
-   integer(i15)     :: mem = 1000000000 ! 7 GB S: Settes i input og bør testes avhengig av minimumskravene for metoden.
+   integer(i15)     :: mem = 2000000000 ! ca. 15 gb
 !
 !
 contains
@@ -75,7 +75,7 @@ contains
          write(unit_output,'(t3,a,i15)') 'Allocation error! Could not allocate array of size (M*N):', size
          stop
       endif
-!       
+!  
       work_remains = work_remains - 4*size
       work_used    = work_used    + 4*size
 !

@@ -47,9 +47,6 @@ contains
 !
       do active_space = 1, wf%n_active_spaces
 !
-         wf%n_total_active_o = wf%n_total_active_o + wf%n_CC2_o(active_space,1) 
-         wf%n_total_active_v = wf%n_total_active_v + wf%n_CC2_v(active_space,1)
-!
          wf%n_s2am = wf%n_s2am &
                   + ((wf%n_CC2_v(active_space,1))*(wf%n_CC2_o(active_space,1)))&
                    *((wf%n_CC2_v(active_space,1) )*(wf%n_CC2_o(active_space,1))+1)/2 
@@ -57,7 +54,7 @@ contains
       enddo
 !
       
-      wf%n_parameters = wf%n_t1am + wf%n_s2am
+      wf%n_parameters = wf%n_parameters + wf%n_s2am
                        
 !
    end subroutine initialize_excited_states_mlcc2
@@ -115,7 +112,7 @@ contains
 !
 !        Calculate first/last indices
 ! 
-         call wf%get_CC2_active_indices(first_active_v, first_active_o, active_space)
+         call wf%get_CC2_active_indices(first_active_o, first_active_v, active_space)
 !
          n_active_o = wf%n_CC2_o(active_space,1) 
          n_active_v = wf%n_CC2_v(active_space,1)
@@ -146,8 +143,7 @@ contains
          enddo
 !
          offset = offset &
-               + ((wf%n_CC2_v(active_space,1))*(wf%n_CC2_o(active_space,1)))&
-               *((wf%n_CC2_v(active_space,1) )*(wf%n_CC2_o(active_space,1))+1)/2
+               + (n_active_o*n_active_v)*(n_active_o*n_active_v+1)/2
 !
       enddo
 !

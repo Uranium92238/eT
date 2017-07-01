@@ -88,6 +88,7 @@ contains
       call wf%initialize_amplitudes
       call wf%read_amplitudes
 !
+!
       call wf%jacobian_ccs_a1(rho_a_i, c_a_i)
       call wf%jacobian_ccs_b1(rho_a_i, c_a_i)
 !
@@ -147,7 +148,7 @@ contains
          rho_ai_bj = zero 
 !
 !        - A2 term -
-!   
+!  
          call wf%jacobian_mlcc2_a2(rho_ai_bj, c_a_i, n_active_o, n_active_v, first_active_o, first_active_v)
 !
 !        Last term is already symmetric (B2). Perform the symmetrization 
@@ -1163,6 +1164,7 @@ contains
 !
          call allocator(L_bC_J, C_length*n_active_v, wf%n_J)
          call wf%get_cholesky_ab(L_bC_J, first_active_v, last_active_v, c_first, c_last)
+
 !
          call allocator(g_ai_bC, n_active_v*n_active_o, n_active_v*C_length)
 !
@@ -1208,8 +1210,8 @@ contains
 !
 !    Construct g_ai,Kj ordered as g_aij_K
 !
-     call allocator(L_Kj_J, n_active_o*(wf%n_o), wf%n_J)
-     call wf%get_cholesky_ij(L_Kj_J, 1, wf%n_o, first_active_o, last_active_o)
+     call allocator(L_Kj_J, (n_active_o)*(wf%n_o), wf%n_J)
+      call wf%get_cholesky_ij(L_Kj_J, 1, wf%n_o, first_active_o, last_active_o)
      call allocator(g_ai_Kj, n_active_v*n_active_o, n_active_o*(wf%n_o))
 !
      call dgemm('N', 'T',                    &
@@ -1223,7 +1225,7 @@ contains
                  n_active_o*(wf%n_o),        &
                  zero,                       &
                  g_ai_Kj,                    &
-                 n_active_v*n_active_o) 
+                 n_active_v*n_active_o)
 !
      call deallocator(L_Kj_J, n_active_o*(wf%n_o), wf%n_J)
      call deallocator(L_ai_J, n_active_o*n_active_v, wf%n_J)
@@ -1309,6 +1311,7 @@ contains
 !
       integer(i15) :: i = 0, j = 0, a = 0, b = 0
       integer(i15) :: ai = 0, bj = 0
+!
 !     Active space variables
 !  
       integer(i15) :: last_active_o ! first active occupied index 

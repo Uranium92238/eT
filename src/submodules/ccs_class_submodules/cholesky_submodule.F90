@@ -86,20 +86,20 @@ contains
 !
          call deallocator(L_ia_J, i_length*(wf%n_v), wf%n_J)
 !
-!        Allocate L_iJ_k
+!        Allocate L_iJ_k (L_ij^J reordered as L_iJ_j)
 !
-         call allocator(L_iJ_k, i_length*(wf%n_J), wf%n_o)
+         call allocator(L_iJ_k, i_length*(wf%n_J), j_length)
 !
 !        T1-transformation
 !
          call dgemm('N','N',            &
                      i_length*(wf%n_J), &
-                     wf%n_o,            &
+                     j_length,          &
                      wf%n_v,            &
                      one,               &
                      L_iJ_a,            &
                      i_length*(wf%n_J), &
-                     wf%t1am,           &
+                     wf%t1am(1, j_first),&
                      wf%n_v,            &
                      zero,              &
                      L_iJ_k,            &
@@ -108,7 +108,7 @@ contains
 !        Place terms from L_iJ_k into L_ij_J
 !
          do i = 1, i_length
-            do k = 1, wf%n_o
+            do k = 1, j_length
                do J = 1, wf%n_J
 !                 
 !                 Needed indices
@@ -124,7 +124,7 @@ contains
 !
 !        Deallocate L_iJ_k and L_iJ_a
 !
-         call deallocator(L_iJ_k, i_length*(wf%n_J), wf%n_o)
+         call deallocator(L_iJ_k, i_length*(wf%n_J), j_length)
          call deallocator(L_iJ_a, i_length*(wf%n_J), wf%n_v)
 !
     elseif (.not. (present(i_first) .and. present(i_last) .and. present(j_first) .and. present(j_last))) then
@@ -614,10 +614,8 @@ contains
 !        Read L_ai^J from file 
 !
          call wf%read_cholesky_ai(L_ai_J)
-!
 !                          
 !        :: L_ab_J contributions ::
-!
 !
 !        Allocate L_Ja_i
 !
@@ -986,7 +984,7 @@ contains
 !
 !        Read L_ab_J for batch of b
 !
-         call wf%read_cholesky_ab(L_ab_J, 1, wf%n_v, b_first, b_last)
+         call wf%read_cholesky_ab(L_ab_J, a_first, a_last, b_first, b_last)
 !
 !        Allocate L_Jb,i for batch of b
 !

@@ -84,7 +84,10 @@ module hf_class
       procedure, non_overridable :: read_hf_info                => read_hf_info_hf
       procedure, non_overridable :: read_transform_cholesky     => read_transform_cholesky_hf
       procedure, non_overridable :: construct_ao_fock           => construct_ao_fock_hf 
+      procedure, non_overridable :: construct_ao_fock_new       => construct_ao_fock_new_hf 
       procedure, non_overridable :: construct_density_matrices  => construct_density_matrices_hf
+      procedure, non_overridable :: construct_density_matrix    => construct_density_matrix_hf
+      procedure, non_overridable :: construct_density_matrix_v  => construct_density_matrix_v_hf
 !
    end type hf
 !
@@ -823,14 +826,15 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !
    end subroutine read_cholesky_ab_hf
 !
-   subroutine construct_ao_fock_hf(wf, ao_fock, density)
+   subroutine construct_ao_fock_hf(wf, ao_fock)
 !!
 !!
    implicit none
 !
       class(hf) :: wf
       real(dp), dimension(wf%n_ao, wf%n_ao) :: ao_fock
-      real(dp), dimension(wf%n_ao, wf%n_ao) :: density
+!
+      real(dp), dimension(:, :), allocatable :: density
 !
       real(dp), dimension(:,:), allocatable :: h1ao
       real(dp), dimension(:,:), allocatable :: chol_ao
@@ -890,12 +894,13 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
          do j = 1, wf%n_J
             read(unit_chol_ao,*) (chol_ao(i,j), i = 1, wf%n_ao*(wf%n_ao+1)/2)
          enddo
+         
 !
 !
-         call allocator(g_J_mn_ps, (wf%n_ao)*(wf%n_ao+1)/2,(wf%n_ao)*(wf%n_ao+1)/2)
+      call allocator(g_J_mn_ps, (wf%n_ao)*(wf%n_ao+1)/2,(wf%n_ao)*(wf%n_ao+1)/2)
 !
 !
-         call dgemm('N', 'T', &
+            call dgemm('N', 'T', &
                      wf%n_ao*(wf%n_ao+1)/2, &
                      wf%n_ao*(wf%n_ao+1)/2, &
                      wf%n_J,                &
@@ -908,49 +913,201 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
                      g_J_mn_ps,             &
                      wf%n_ao*(wf%n_ao+1)/2)
 !
-         call deallocator(chol_ao, wf%n_o**2, wf%n_J)
-         call allocator(L_J_mn_ps, wf%n_ao**2, wf%n_ao**2)
+            call deallocator(chol_ao, wf%n_ao*(wf%n_ao+1)/2, wf%n_J)
+            call allocator(density, wf%n_ao, wf%n_ao)
+            density = zero     
 !
-         do m = 1, wf%n_ao
-            do n = 1, wf%n_ao
+            call wf%construct_density_matrix(density, wf%mo_coef, wf%n_o, wf%n_v) 
 !
-               mn = index_packed(m, n)
+            do m = 1, wf%n_ao
+               do n = 1, wf%n_ao
 !
-               do p = 1, wf%n_ao 
+                  mn = index_packed(m, n)
 !
-                  pn = index_packed(p,n)
+                  do p = 1, wf%n_ao 
 !
-                  do s = 1, wf%n_ao 
+                     pn = index_packed(p,n)
+!
+                     do s = 1, wf%n_ao 
 !                    
-                     ms = index_packed(m, s)
+                        ms = index_packed(m, s)
 !
-                     ps = index_packed(p, s)                                         
+                        ps = index_packed(p, s)                                         
 !
-                     ao_fock(m,n) = ao_fock(m,n) + (two*g_J_mn_ps(mn,ps) - g_J_mn_ps(ms, pn))*density(p,s)    
+                        ao_fock(m,n) = ao_fock(m,n) + (two*g_J_mn_ps(mn,ps) - g_J_mn_ps(ms, pn))*density(p,s)    
 !     
+                     enddo
                   enddo
                enddo
             enddo
-         enddo
 !
          call deallocator(g_J_mn_ps, (wf%n_ao)*(wf%n_ao+1)/2,(wf%n_ao)*(wf%n_ao+1)/2)
-!
-      call deallocator(L_J_mn_ps, wf%n_ao**2, wf%n_ao**2)
+         call deallocator(density, wf%n_ao, wf%n_ao)
 !
       close(unit_chol_ao)
       close(unit_identifier_ao_integrals)
 !
    end subroutine construct_ao_fock_hf
+   subroutine construct_ao_fock_new_hf(wf, ao_fock)
+!!
+!!
+      implicit none
 !
-   subroutine construct_density_matrices_hf(wf, density_o, density_v)
+      class(hf) :: wf
+      real(dp), dimension(wf%n_ao, wf%n_ao) :: ao_fock
+!
+      real(dp), dimension(:, :), allocatable :: density
+!
+      real(dp), dimension(:,:), allocatable :: h1ao
+      real(dp), dimension(:,:), allocatable :: chol_ao
+      real(dp), dimension(:,:), allocatable :: chol_ao_sq
+      real(dp), dimension(:,:), allocatable :: Y
+!
+      real(dp) :: X
+!
+      integer(i15) :: i = 0, J = 0, m = 0, n = 0, p = 0, s = 0
+      integer(i15) :: mn = 0, ms = 0, ps = 0, pn = 0
+!
+      integer(i15) :: unit_identifier_ao_integrals = 0, unit_chol_ao = 0
+!
+!     Batching variables
+!
+      integer(i15) :: m_batch = 0, m_first = 0, m_last = 0, m_length = 0
+      integer(i15) :: required = 0, available = 0, n_batch = 0, batch_dimension = 0
+      integer(i15) :: max_batch_length = 0
+!
+!
+      call allocator(h1ao, wf%n_ao*(wf%n_ao+1)/2, 1)
+      h1ao = zero
+!
+!     Open mlcc_aoint file
+!
+      call generate_unit_identifier(unit_identifier_ao_integrals)
+      open(unit=unit_identifier_ao_integrals,file='mlcc_aoint',status='old',form='formatted')
+      rewind(unit_identifier_ao_integrals)
+!
+!     Read in one-electron AO integrals
+!
+      read(unit_identifier_ao_integrals,*) (h1ao(i,1), i = 1, wf%n_ao*(wf%n_ao+1)/2)
+!
+!     Close mlcc_aoint
+!
+      close(unit_identifier_ao_integrals)
+!
+!     Allocate the AO Fock matrix and add the one-electron contributions
+!
+      ao_fock = zero
+!
+      call squareup(h1ao, ao_fock, wf%n_ao) 
+!
+!     Deallocation of one-electron AO integrals
+!   
+      call deallocator(h1ao, wf%n_ao*(wf%n_ao+1)/2, 1)
+!
+!     Read Cholesky in ao basis
+!
+      call generate_unit_identifier(unit_chol_ao)
+      open(unit=unit_chol_ao, file='mlcc_cholesky', status='old', form='formatted')
+      rewind(unit_chol_ao)
+!
+!     Read the number of Cholesky vectors (n_J) and 
+!     the number of atomic orbitals (n_ao)
+!
+      read(unit_chol_ao,*) wf%n_ao, wf%n_J
+!
+      do j = 1, wf%n_J
+!
+         call allocator(chol_ao, wf%n_ao*(wf%n_ao+1)/2, 1)    
+!
+         chol_ao    = zero
+!
+!        Read Cholesky AO vector
+!
+         read(unit_chol_ao,*) (chol_ao(i,1), i = 1, wf%n_ao*(wf%n_ao+1)/2)
+!
+         call allocator(chol_ao_sq, wf%n_ao, wf%n_ao)
+         chol_ao_sq = zero
+!
+         call squareup(chol_ao, chol_ao_sq, wf%n_ao)
+!
+         call deallocator(chol_ao, wf%n_ao*(wf%n_ao+1)/2, 1) 
+
+         call allocator(density, wf%n_ao, wf%n_ao)
+         density = zero   
+!
+!        Coulomb term: sum_Jps 2 * L^J_ps * D_p,s * L^J_mn
+!
+         call wf%construct_density_matrix(density, wf%mo_coef, wf%n_o, wf%n_v)
+!
+         call dgemm('N', 'N',    &
+                     1,          &
+                     1,          &
+                     wf%n_ao**2, &
+                     two,        &
+                     chol_ao_sq, &
+                     1,          &
+                     density,    &
+                     wf%n_ao**2, &
+                     zero,       &
+                     X,          &
+                     1)
+!
+         call daxpy(wf%n_ao**2, X, chol_ao_sq, 1, ao_fock, 1)
+         
+!
+!        Exchange term: - sum_Jps  L^J_ms * D_p,s * L^J_pn
+!
+         call allocator(Y, wf%n_ao, wf%n_ao)
+!
+         call dgemm('N', 'T', &
+                     wf%n_ao, &
+                     wf%n_ao, &
+                     wf%n_ao, &
+                     one, &
+                     chol_ao_sq, &
+                     wf%n_ao, &
+                     density, &
+                     wf%n_ao, &
+                     zero, &
+                     Y, &
+                     wf%n_ao)
+!
+         call deallocator(density, wf%n_ao, wf%n_ao)
+!
+         call dgemm('N', 'N', &
+                     wf%n_ao, &
+                     wf%n_ao, &
+                     wf%n_ao, &
+                     -one, &
+                     Y, &
+                     wf%n_ao, &
+                     chol_ao_sq, &
+                     wf%n_ao, &
+                     one, &
+                     ao_fock, &
+                     wf%n_ao)
+!
+         call deallocator(Y, wf%n_ao, wf%n_ao)
+         call deallocator(chol_ao_sq, wf%n_ao, wf%n_ao) 
+!
+      enddo ! looping over J
+!
+      close(unit_chol_ao)
+      close(unit_identifier_ao_integrals)
+!
+   end subroutine construct_ao_fock_new_hf
+!
+   subroutine construct_density_matrices_hf(wf, density_o, density_v, C_matrix, n_o, n_v)
 !!
 !!
 !!
       implicit none
 !
       class(hf) :: wf
-      real(dp), dimension(wf%n_ao, wf%n_ao) :: density_o
-      real(dp), dimension(wf%n_ao, wf%n_ao) :: density_v
+      real(dp), dimension(wf%n_ao, wf%n_ao)   :: density_o
+      real(dp), dimension(wf%n_ao, wf%n_ao)   :: density_v
+      real(dp), dimension(wf%n_ao, n_o + n_v) :: C_matrix
+      integer(i15)                            :: n_o, n_v
 !
       real(dp), dimension(:,:), allocatable :: C
 !
@@ -959,29 +1116,29 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
       call dgemm('N', 'T',    &
                   wf%n_ao,    &
                   wf%n_ao,    &
-                  wf%n_o,     &
+                  n_o,        &
                   one,        &
-                  wf%mo_coef, &
+                  C_matrix,   &
                   wf%n_ao,    &
-                  wf%mo_coef, &
+                  C_matrix,   &
                   wf%n_ao,    &
                   zero,       &
                   density_o,  &
                   wf%n_ao)
 !
-      call allocator(C, wf%n_ao, wf%n_v)
+      call allocator(C, wf%n_ao, n_v)
 !
       do i = 1, wf%n_ao
-         do j = 1, wf%n_v
-            ij = index_two(i, j+wf%n_o, wf%n_ao)
-            C(i,j) = wf%mo_coef(ij,1)
+         do j = 1, n_v
+            ij = index_two(i, j + n_o, wf%n_ao)
+            C(i,j) = C_matrix(ij,1)
          enddo
       enddo
 !
       call dgemm('N', 'T',                   &
                   wf%n_ao,                   &
                   wf%n_ao,                   &
-                  wf%n_v,                    &
+                  n_v,                       &
                   one,                       &
                   C,                         &
                   wf%n_ao,                   &
@@ -991,9 +1148,73 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
                   density_v,                 &
                   wf%n_ao)
 !
-      call deallocator(C, wf%n_ao, wf%n_v)
+      call deallocator(C, wf%n_ao, n_v)
 !
    end subroutine construct_density_matrices_hf
 !
+   subroutine construct_density_matrix_hf(wf, density_o, C_matrix, n_o, n_v)
+!!
+!!
+      implicit none
+!
+      class(hf) :: wf
+      real(dp), dimension(wf%n_ao, wf%n_ao)   :: density_o
+      real(dp), dimension(wf%n_ao, n_o + n_v) :: C_matrix
+      integer(i15)                            :: n_o, n_v
+!      
+      call dgemm('N', 'T',    &
+                  wf%n_ao,    &
+                  wf%n_ao,    &
+                  n_o,        &
+                  one,        &
+                  C_matrix,   &
+                  wf%n_ao,    &
+                  C_matrix,   &
+                  wf%n_ao,    &
+                  zero,       &
+                  density_o,  &
+                  wf%n_ao)
+!
+   end subroutine construct_density_matrix_hf
+!
+   subroutine construct_density_matrix_v_hf(wf, density_v, C_matrix,  n_o, n_v)
+!!
+!!
+!!
+      implicit none
+!
+      class(hf) :: wf
+      real(dp), dimension(wf%n_ao, wf%n_ao)   :: density_v
+      real(dp), dimension(wf%n_ao, n_o + n_v) :: C_matrix
+      integer(i15)                            :: n_v, n_o
+      real(dp), dimension(:,:), allocatable :: C
+!
+      integer(i15) :: i = 0, j = 0, ij = 0
+!
+      call allocator(C, wf%n_ao, n_v)
+!
+      do i = 1, wf%n_ao
+         do j = 1, n_v
+            ij = index_two(i, j + n_o, wf%n_ao)
+            C(i,j) = C_matrix(ij,1)
+         enddo
+      enddo
+!
+      call dgemm('N', 'T',                   &
+                  wf%n_ao,                   &
+                  wf%n_ao,                   &
+                  n_v,                       &
+                  one,                       &
+                  C,                         &
+                  wf%n_ao,                   &
+                  C,                         &
+                  wf%n_ao,                   &
+                  zero,                      &
+                  density_v,                 &
+                  wf%n_ao)
+!
+      call deallocator(C, wf%n_ao, n_v)
+!
+   end subroutine construct_density_matrix_v_hf
 !
 end module hf_class

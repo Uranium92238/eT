@@ -319,8 +319,8 @@ contains
 !
                   elseif (setting == 'cnto') then 
 !
-                     write(unit_output,*)'WARNING: CNTOs are not implemented'
-                     stop
+                     mlcc_settings%cnto = .true.
+                     cycle
 !
                   elseif (setting == 'CCS') then
 !

@@ -21,6 +21,9 @@ submodule (ccs_class) excited_state
    logical :: converged_energy   = .false.
    logical :: converged_residual = .false.
 !
+   logical :: timings = .true.
+   logical :: print_vectors = .true.
+!
 !
 contains
 !
@@ -120,10 +123,12 @@ contains
       real(dp), dimension(:,:), allocatable :: eigenvalues_Im_old
 !
       real(dp), dimension(:,:), allocatable :: solution_vectors_reduced
+      real(dp), dimension(:,:), allocatable :: solution
 !
-      integer(i15) :: state = 0 ! For looping over the states
+      integer(i15) :: state = 0, unit_solution = 0, ioerror = 0 ! For looping over the states
 !
       real(dp) :: start_excited_state_solver, end_excited_state_solver
+      real(dp) :: start_excited_state_iter, end_excited_state_iter
 !
 !     Start timings
 !
@@ -171,6 +176,7 @@ contains
 !     Enter iterative loop
 !
       do while (.not. converged .and. iteration .le. max_iterations) 
+         if (timings) call cpu_time(start_excited_state_iter)
 !
 !        Prints 
 !
@@ -181,8 +187,6 @@ contains
 !        Transform new trial vectors  
 !        rho_i = A * c_i
 !
-          write(unit_output,*)'Transform trials'
-          flush(unit_output)
          call wf%transform_trial_vectors(reduced_dim - n_new_trials + 1, reduced_dim)
 !
 !        Allocate solution vectors for reduced problem
@@ -229,12 +233,41 @@ contains
 !
          call deallocator(solution_vectors_reduced, reduced_dim, wf%tasks%n_singlet_states)
 !
+         if (timings) then
+            call cpu_time(end_excited_state_iter)
+            write(unit_output,'(t3,a35,i5,a5,f14.8/)') 'Total time (seconds) of iteration ',&
+                                     iteration, ' : ' ,end_excited_state_iter - start_excited_state_iter
+            flush(unit_output)
+!
+         endif
+!
       enddo ! End of iterative loop 
 !
 !     Prints
 !
       if ( converged ) then
          write(unit_output,'(/t3,a,i2,a/)')  'Converged in ', iteration, ' iterations!'
+!
+         if (print_vectors) then
+!
+            call generate_unit_identifier(unit_solution)
+            open(unit=unit_solution, file=wf%excited_state_task, action='write', status='unknown', &
+            access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
+            if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file'
+!
+            call allocator(solution, wf%n_parameters,1)
+            do state = 1, wf%tasks%n_singlet_states
+!
+               solution = zero
+               read(unit_solution, rec=state) solution
+!
+               write(unit_output,*)'Solution vector', state
+               call vec_print_nonzero_elm(solution, wf%n_parameters, 1) 
+!
+            enddo
+            call deallocator(solution, wf%n_parameters,1) 
+         endif  
+!
       else
          write(unit_output,'(/t3,a/)') 'Max number of iterations performed without convergence!'
       endif
@@ -303,11 +336,11 @@ contains
 !     Prepare files
 !  
       call generate_unit_identifier(unit_trial_vecs)
-         open(unit=unit_trial_vecs, file='trial_vec', action='read', status='old', &
+         open(unit=unit_trial_vecs, file='trial_vec', action='read', status='unknown', &
            access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror)
 !
       call generate_unit_identifier(unit_rho)
-         open(unit=unit_rho, file='transformed_vec', action='read', status='old', &
+         open(unit=unit_rho, file='transformed_vec', action='read', status='unknown', &
            access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror)      
 !
       if (iteration .eq. 1) then
@@ -521,20 +554,24 @@ contains
       integer(i15) :: unit_trial_vecs = 0, unit_rho = 0, unit_solution = 0 ! Unit identifiers for files 
 !
       real(dp) :: ddot
+      character(100) :: iostring
 !
 !     Prepare necessary files
 !
       call generate_unit_identifier(unit_trial_vecs)
-      open(unit=unit_trial_vecs, file='trial_vec', action='readwrite', status='old', &
+      open(unit=unit_trial_vecs, file='trial_vec', action='readwrite', status='unknown', &
         access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror)
+      if (ioerror .ne. 0) write(unit_output,*) 'Error while opening trial vecs file'
 !
       call generate_unit_identifier(unit_rho)
-      open(unit=unit_rho, file='transformed_vec', action='read', status='old', &
+      open(unit=unit_rho, file='transformed_vec', action='read', status='unknown', &
       access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
+      if (ioerror .ne. 0) write(unit_output,*) 'Error while opening transformed vecs file'
 !
       call generate_unit_identifier(unit_solution)
       open(unit=unit_solution, file=wf%excited_state_task, action='write', status='unknown', &
       access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
+      if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file'
 !
       call allocator(residual, wf%n_parameters, 1)
 !
@@ -562,10 +599,10 @@ contains
          do trial = 1, reduced_dim
 !
             c_i = zero
-            read(unit_trial_vecs, rec=trial, iostat=ioerror) c_i
+            read(unit_trial_vecs, rec=trial, iostat=ioerror, iomsg = iostring) c_i
             call daxpy(wf%n_parameters, solution_vectors_reduced(trial,root), c_i, 1, solution_vector, 1)
 !
-            if (ioerror .ne. 0) write(unit_output,*) 'Error reading trial vecs in get_next_trial_vectors'
+            if (ioerror .ne. 0) write(unit_output,*) 'Error reading trial vecs in get_next_trial_vectors', ioerror, iostring
 !
          enddo
 !
@@ -602,7 +639,7 @@ contains
             read(unit_rho, rec=trial, iostat=ioerror) rho_i
             call daxpy(wf%n_parameters, solution_vectors_reduced(trial,root), rho_i, 1, residual, 1)
 !
-            if (ioerror .ne. 0) write(unit_output,*) 'Error reading tranf vecs in get_next_trial_vectors'
+            if (ioerror .ne. 0) write(unit_output,*) 'Error reading tranf vecs in get_next_trial_vectors', ioerror
 !
          enddo
 !
@@ -976,11 +1013,11 @@ contains
 !        Open trial vector and transformed vector files
 !
          call generate_unit_identifier(unit_trial_vecs)
-         open(unit=unit_trial_vecs, file='trial_vec', action='read', status='old', &
+         open(unit=unit_trial_vecs, file='trial_vec', action='read', status='unknown', &
            access='direct', form='unformatted', recl=dp*(wf%n_v)*(wf%n_o), iostat=ioerror)
 !
          call generate_unit_identifier(unit_rho)
-         open(unit=unit_rho, file='transformed_vec', action='write', status='old', &
+         open(unit=unit_rho, file='transformed_vec', action='write', status='unknown', &
            access='direct', form='unformatted', recl=dp*(wf%n_v)*(wf%n_o), iostat=ioerror)
 !
 !        For each trial vector: Read, transform and write
@@ -1024,6 +1061,8 @@ contains
          implicit none 
 !    
          class(ccs) :: wf
+!
+         call wf%initialize_amplitudes
 !
       end subroutine initialize_excited_states_ccs
 !

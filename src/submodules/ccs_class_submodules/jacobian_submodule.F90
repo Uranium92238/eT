@@ -29,11 +29,11 @@ contains
 !
 !        A1-term
 !
-         call wf%jacobian_ccs_a1(c_a_i,rho_a_i)
+         call wf%jacobian_ccs_a1(rho_a_i,c_a_i)
 !
 !        B1-term
 !
-         call wf%jacobian_ccs_b1(c_a_i,rho_a_i)
+         call wf%jacobian_ccs_b1(rho_a_i,c_a_i)
 !
          call dcopy((wf%n_o)*(wf%n_v), rho_a_i, 1, c_a_i, 1)
 !
@@ -58,7 +58,6 @@ contains
          class(ccs) :: wf
          real(dp), dimension(wf%n_v,wf%n_o) :: c1
          real(dp), dimension(wf%n_v,wf%n_o) :: rho
-!   
 !
 !        sum_b F_a_b * c_b_i
 !
@@ -89,6 +88,7 @@ contains
                      one,         &
                      rho,         &
                      wf%n_v)
+!
 !
       end subroutine jacobian_ccs_a1_ccs
 !
@@ -172,7 +172,7 @@ contains
          b_length = b_last - b_first + 1 
 !            
 !        Allocate and get L_ai_J
-! 
+!
          call allocator(L_ai_J, (wf%n_v)*(wf%n_o), wf%n_J)
 !
          call wf%get_cholesky_ai(L_ai_J)
@@ -297,7 +297,7 @@ contains
                      b_length*(wf%n_o), &
                      one,               &
                      rho,               &
-                     (wf%n_v)*(wf%n_o))         
+                     (wf%n_v)*(wf%n_o))      
 !
 !        Deallocate L_ai_jb
 ! 
