@@ -25,7 +25,7 @@ submodule (mlcc2_class) omega
    implicit none 
 !
    logical :: debug   = .false.
-   logical :: timings = .true.
+   logical :: timings = .false.
 !
 !
 contains
@@ -197,7 +197,7 @@ contains
 !        u_ij^bc = 2*s_ij^bc - s_ij^cb =  (2*g_ij^bc - g_ij^cb)/ε_ij^cb
 !
          call allocator(s_ib_jc, (n_active_o)*(n_active_v), (n_active_o)*c_length )
-         call wf%get_s2am(s_ib_jc, c_first, c_last, active_space)
+         call wf%get_s2am(s_ib_jc, c_first, c_length, active_space)
 !
          call allocator(u_bjc_i, n_active_v*n_active_o*c_length, n_active_o)
 !
@@ -431,6 +431,7 @@ contains
          call allocator(L_jI_J, n_active_o*(wf%n_o), wf%n_J)
 !
          call wf%get_cholesky_ij(L_jI_J, first_active_o, last_active_o, 1, wf%n_o)
+
 !
          call allocator(L_kb_J, n_active_o*b_length, wf%n_J)
 !
@@ -451,7 +452,7 @@ contains
                      (n_active_o)*(wf%n_o),      &
                      zero,                       &
                      g_kb_jI,                    &
-                     (n_active_o)*b_length) 
+                     (n_active_o)*b_length)
 !
          call deallocator(L_jI_J, n_active_o*(wf%n_o), wf%n_J)
          call deallocator(L_kb_J, n_active_o*b_length, wf%n_J)
@@ -535,7 +536,7 @@ contains
 !
       integer(i15) :: i = 0, j = 0, a = 0, b = 0, ia = 0, jb = 0, ai = 0
 !
-      call wf%get_CC2_active_indices(first_active_v, first_active_o, active_space)
+      call wf%get_CC2_active_indices(first_active_o, first_active_v, active_space)
 !
       n_active_o = wf%n_CC2_o(active_space,1) 
       n_active_v = wf%n_CC2_v(active_space,1)
@@ -585,7 +586,7 @@ contains
                   (n_active_o)*(n_active_v),  &
                   zero,                       &
                   g_ia_jb,                    &
-                  (n_active_o)*(n_active_v))        
+                  (n_active_o)*(n_active_v))
 !
       call deallocator(L_ia_J, (n_active_o)*(n_active_v), wf%n_J)
 !

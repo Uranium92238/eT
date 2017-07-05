@@ -29,10 +29,10 @@ contains
 !  
       class(ccs) :: wf   
 !
-      call allocator(wf%fock_ij, wf%n_o, wf%n_o)
-      call allocator(wf%fock_ia, wf%n_o, wf%n_v)
-      call allocator(wf%fock_ai, wf%n_v, wf%n_o)
-      call allocator(wf%fock_ab, wf%n_v, wf%n_v)
+      if (.not. allocated(wf%fock_ij)) call allocator(wf%fock_ij, wf%n_o, wf%n_o)
+      if (.not. allocated(wf%fock_ia)) call allocator(wf%fock_ia, wf%n_o, wf%n_v)
+      if (.not. allocated(wf%fock_ai)) call allocator(wf%fock_ai, wf%n_v, wf%n_o)
+      if (.not. allocated(wf%fock_ab)) call allocator(wf%fock_ab, wf%n_v, wf%n_v)
 
 !
       wf%fock_ij = zero

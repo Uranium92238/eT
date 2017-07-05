@@ -79,7 +79,7 @@ contains
       do q = 1, dim_2
          do p = 1, dim_1
 !
-            if (vec(p, q) .gt. 1.0D-05) then
+            if (vec(p, q) .gt. 1.0D-03) then
                write(unit_output,*) p, q, vec(p,q)
             endif
 !

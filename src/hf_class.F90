@@ -197,6 +197,7 @@ contains
 !
       read(unit_hf,*) (wf%fock_diagonal(i,1), i = 1, wf%n_mo)
       read(unit_hf,*) (wf%mo_coef(i,1), i = 1, n_lambda) 
+      wf%n_ao = n_lambda/wf%n_mo
 !
 !     Close the mlcc_hf_info file
 !    
@@ -1193,12 +1194,7 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !
       call allocator(C, wf%n_ao, n_v)
 !
-      do i = 1, wf%n_ao
-         do j = 1, n_v
-            ij = index_two(i, j + n_o, wf%n_ao)
-            C(i,j) = C_matrix(ij,1)
-         enddo
-      enddo
+      C(:,1:n_v) = C_matrix(:,1 + n_o : n_o + n_v)
 !
       call dgemm('N', 'T',                   &
                   wf%n_ao,                   &

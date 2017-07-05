@@ -32,7 +32,7 @@ module workspace
    integer, private :: work_remains = 0
    integer, private :: work_used    = 0
 !
-   integer(i15)     :: mem = 2000000000 ! ca. 15 gb
+   integer(i15)     :: mem = 2000000000 ! ca. 14.9 gb
 !
 !
 contains
@@ -66,6 +66,8 @@ contains
       real(dp), dimension(:,:), allocatable  :: elm
       integer                                :: size
       integer                                :: stat = 0, error = 0
+!
+      logical :: debug = .false.
 ! 
       size = M*N
 !  
@@ -75,6 +77,8 @@ contains
          write(unit_output,'(t3,a,i15)') 'Allocation error! Could not allocate array of size (M*N):', size
          stop
       endif
+!
+      if(debug) write(unit_output,*)work_remains, 4*size
 !  
       work_remains = work_remains - 4*size
       work_used    = work_used    + 4*size

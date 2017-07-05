@@ -22,7 +22,7 @@ submodule (ccs_class) excited_state
    logical :: converged_residual = .false.
 !
    logical :: timings = .true.
-   logical :: print_vectors = .true.
+   logical :: print_vectors = .false.
 !
 !
 contains
@@ -141,6 +141,13 @@ contains
       endif
       flush(unit_output)
 !
+      converged = .false. 
+!
+      converged_energy   = .false.
+      converged_residual = .false.
+!
+      iteration = 1
+!
 !     Initialize for excited state calculation
 !
       reduced_dim  = wf%tasks%n_singlet_states
@@ -251,7 +258,7 @@ contains
          if (print_vectors) then
 !
             call generate_unit_identifier(unit_solution)
-            open(unit=unit_solution, file=wf%excited_state_task, action='write', status='unknown', &
+            open(unit=unit_solution, file=wf%excited_state_task, action='read', status='unknown', &
             access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
             if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file'
 !
@@ -262,10 +269,11 @@ contains
                read(unit_solution, rec=state) solution
 !
                write(unit_output,*)'Solution vector', state
-               call vec_print_nonzero_elm(solution, wf%n_parameters, 1) 
+               call vec_print_nonzero_elm(solution, wf%n_parameters, 1)
 !
             enddo
             call deallocator(solution, wf%n_parameters,1) 
+            close(unit_solution)
          endif  
 !
       else

@@ -117,10 +117,13 @@ contains
       write(unit_output,'(t3,a)')    '---------------------------------------------------' 
 !
 !     Make sure the initial energy is up to date for first iteration
-!
+!  
       call wf%calc_energy
 !
       iteration = 1
+      converged_energy = .false.
+      converged_ampeqs = .false.
+      converged = .false.
 !
       call cpu_time(start_gs_solver)
 !
