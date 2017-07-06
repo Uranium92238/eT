@@ -27,7 +27,7 @@ submodule (ccsd_class) ground_state
 contains
 !
 !
-   module subroutine calc_ampeqs_norm_ccsd(wf, ampeqs_norm)
+   subroutine calc_ampeqs_norm_ccsd(wf, ampeqs_norm)
 !
 !     Calculate Amplitude Equations Norm (CCSD)
 !     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -48,7 +48,7 @@ contains
    end subroutine calc_ampeqs_norm_ccsd
 !
 !
-   module subroutine new_amplitudes_ccsd(wf)
+   subroutine new_amplitudes_ccsd(wf)
 !
 !     New Amplitudes (CCSD)
 !     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -104,7 +104,7 @@ contains
    end subroutine new_amplitudes_ccsd
 !
 !
-   module subroutine calc_quasi_Newton_doubles_ccsd(wf,dt)
+   subroutine calc_quasi_Newton_doubles_ccsd(wf,dt)
 !
 !     Calculate quasi-Newtoni doubles estimate (CCSD)
 !     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017

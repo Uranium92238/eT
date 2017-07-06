@@ -28,7 +28,7 @@ submodule (mlcc2_class) jacobian
 contains
 !
 
-   module subroutine jacobian_mlcc2_transformation_mlcc2(wf, c_a_i, c_aibj)
+   subroutine jacobian_mlcc2_transformation_mlcc2(wf, c_a_i, c_aibj)
 !!
 !!    Jacobian transformation (MLCC2)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
@@ -224,7 +224,7 @@ contains
    end subroutine jacobian_mlcc2_transformation_mlcc2
 !  
 !
-   module subroutine jacobian_mlcc2_a1_mlcc2(wf, rho_a_i, c_a_i)
+   subroutine jacobian_mlcc2_a1_mlcc2(wf, rho_a_i, c_a_i)
 !!
 !!    Jacobian tem A1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
@@ -763,7 +763,7 @@ contains
    end subroutine jacobian_mlcc2_a1_mlcc2
 !
 !
-   module subroutine jacobian_mlcc2_b1_mlcc2(wf, rho_a_i, c_ai_bj,&
+   subroutine jacobian_mlcc2_b1_mlcc2(wf, rho_a_i, c_ai_bj,&
                                   n_active_o, n_active_v, first_active_o, first_active_v)
 !!
 !!    Jacobian tem B1
@@ -1078,7 +1078,7 @@ contains
    end subroutine jacobian_mlcc2_b1_mlcc2
 !
 !
-   module subroutine jacobian_mlcc2_a2_mlcc2(wf, rho_ai_bj, c_a_i,&
+   subroutine jacobian_mlcc2_a2_mlcc2(wf, rho_ai_bj, c_a_i,&
                                   n_active_o, n_active_v, first_active_o, first_active_v)
 !!
 !!    Jacobian tem A2
@@ -1287,7 +1287,7 @@ contains
    end subroutine jacobian_mlcc2_a2_mlcc2
 !
 !
-   module subroutine jacobian_mlcc2_b2_mlcc2(wf, rho_ai_bj, c_ai_bj,&
+   subroutine jacobian_mlcc2_b2_mlcc2(wf, rho_ai_bj, c_ai_bj,&
                                   n_active_o, n_active_v, first_active_o, first_active_v)
 !!
 !!    Jacobian tem B2

@@ -16,7 +16,7 @@ submodule (ccsd_class) jacobian
 contains
 !
 !
-   module subroutine jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
+   subroutine jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!
 !!    Jacobian transformation (CCSD)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -245,7 +245,7 @@ contains
    end subroutine jacobian_ccsd_transformation_ccsd
 !
 !
-   module subroutine jacobian_ccsd_a1_ccsd(wf, rho_a_i, c_a_i)
+   subroutine jacobian_ccsd_a1_ccsd(wf, rho_a_i, c_a_i)
 !!
 !!    Jacobian CCSD A1
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017 
@@ -609,7 +609,7 @@ contains
    end subroutine jacobian_ccsd_a1_ccsd
 !
 !
-   module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
+   subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !!
 !!    Jacobian CCSD B1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017 
@@ -689,7 +689,7 @@ contains
    end subroutine jacobian_ccsd_b1_ccsd
 !
 !
-   module subroutine jacobian_ccsd_c1_ccsd(wf, rho_a_i, c_ai_bj)
+   subroutine jacobian_ccsd_c1_ccsd(wf, rho_a_i, c_ai_bj)
 !!
 !!    Jacobian CCSD C1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017 
@@ -832,7 +832,7 @@ contains
    end subroutine jacobian_ccsd_c1_ccsd
 !
 !
-   module subroutine jacobian_ccsd_d1_ccsd(wf, rho_a_i, c_bi_cj)
+   subroutine jacobian_ccsd_d1_ccsd(wf, rho_a_i, c_bi_cj)
 !!
 !!    Jacobian CCSD D1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017 
@@ -1006,7 +1006,7 @@ contains
    end subroutine jacobian_ccsd_d1_ccsd
 !
 !
-   module subroutine jacobian_ccsd_a2_ccsd(wf, rho_ai_bj, c_a_i)
+   subroutine jacobian_ccsd_a2_ccsd(wf, rho_ai_bj, c_a_i)
 !!
 !!    Jacobian CCSD A2 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -1298,7 +1298,7 @@ contains
    end subroutine jacobian_ccsd_a2_ccsd
 !
 !
-   module subroutine jacobian_ccsd_b2_ccsd(wf, rho_ai_bj, c_a_i)
+   subroutine jacobian_ccsd_b2_ccsd(wf, rho_ai_bj, c_a_i)
 !!
 !!    Jacobian CCSD B2 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -1498,7 +1498,7 @@ contains
    end subroutine jacobian_ccsd_b2_ccsd
 !
 !
-   module subroutine jacobian_ccsd_c2_ccsd(wf, rho_ai_bj, c_a_i)
+   subroutine jacobian_ccsd_c2_ccsd(wf, rho_ai_bj, c_a_i)
 !!
 !!    Jacobian CCSD C2 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -2090,7 +2090,7 @@ contains
    end subroutine jacobian_ccsd_c2_ccsd
 !
 !
-   module subroutine jacobian_ccsd_d2_ccsd(wf, rho_ai_bj, c_a_i)
+   subroutine jacobian_ccsd_d2_ccsd(wf, rho_ai_bj, c_a_i)
 !!
 !!    Jacobian CCSD D2 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -2838,7 +2838,7 @@ contains
    end subroutine jacobian_ccsd_d2_ccsd
 !
 !
-   module subroutine jacobian_ccsd_e2_ccsd(wf, rho_ai_bj, c_ai_ck)
+   subroutine jacobian_ccsd_e2_ccsd(wf, rho_ai_bj, c_ai_ck)
 !!
 !!    Jacobian CCSD E2 
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -2966,7 +2966,7 @@ contains
    end subroutine jacobian_ccsd_e2_ccsd
 !
 !
-      module subroutine jacobian_ccsd_f2_ccsd(wf, rho_ai_bj, c_ai_bj)
+      subroutine jacobian_ccsd_f2_ccsd(wf, rho_ai_bj, c_ai_bj)
 !!
 !!       Jacobian CCSD F2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -3387,7 +3387,7 @@ contains
 ! 
       end subroutine jacobian_ccsd_f2_ccsd
 !
-      module subroutine jacobian_ccsd_g2_ccsd(wf, rho_ai_bj, c_ai_bj)
+      subroutine jacobian_ccsd_g2_ccsd(wf, rho_ai_bj, c_ai_bj)
 !!
 !!       Jacobian CCSD G2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -3831,7 +3831,7 @@ contains
 ! 
       end subroutine jacobian_ccsd_g2_ccsd
 !
-      module subroutine jacobian_ccsd_h2_ccsd(wf, rho_ai_bj, c_ai_bj)
+      subroutine jacobian_ccsd_h2_ccsd(wf, rho_ai_bj, c_ai_bj)
 !!
 !!       Jacobian CCSD H2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -4166,7 +4166,7 @@ contains
       end subroutine jacobian_ccsd_h2_ccsd
 !
 !
-      module subroutine jacobian_ccsd_i2_ccsd(wf, rho_ai_bj, c_ai_bj)
+      subroutine jacobian_ccsd_i2_ccsd(wf, rho_ai_bj, c_ai_bj)
 !!
 !!       Jacobian CCSD I2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -4593,7 +4593,7 @@ contains
       end subroutine jacobian_ccsd_i2_ccsd
 !
 
-      module subroutine jacobian_ccsd_j2_ccsd(wf, rho_ab_ij, c_ab_ij)
+      subroutine jacobian_ccsd_j2_ccsd(wf, rho_ab_ij, c_ab_ij)
 !!
 !!       Jacobian CCSD J2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -4780,7 +4780,7 @@ contains
       end subroutine jacobian_ccsd_j2_ccsd
 !
 !
-      module subroutine jacobian_ccsd_k2_ccsd(wf, rho_ab_ij, c_ab_ij)
+      subroutine jacobian_ccsd_k2_ccsd(wf, rho_ab_ij, c_ab_ij)
 !!
 !!       Jacobian CCSD K2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017

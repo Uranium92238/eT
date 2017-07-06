@@ -21,7 +21,7 @@ contains
 !
 !
 
-   module subroutine get_cholesky_ij_ccs(wf, L_ij_J, i_first, i_last, j_first, j_last)
+   subroutine get_cholesky_ij_ccs(wf, L_ij_J, i_first, i_last, j_first, j_last)
 !!
 !!    Get Cholesky IJ
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -205,7 +205,7 @@ contains
    end subroutine get_cholesky_ij_ccs
 !
 !
-   module subroutine get_cholesky_ia_ccs(wf, L_ia_J, i_first, i_last, a_first, a_last)
+   subroutine get_cholesky_ia_ccs(wf, L_ia_J, i_first, i_last, a_first, a_last)
 !!
 !!    Get Cholesky IA
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -232,7 +232,7 @@ contains
    end subroutine get_cholesky_ia_ccs
 !
 !
-   module subroutine get_cholesky_ai_ccs(wf, L_ai_J, a_first, a_last, i_first, i_last)
+   subroutine get_cholesky_ai_ccs(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !!
 !!    Get Cholesky AI
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -927,7 +927,7 @@ contains
    end subroutine get_cholesky_ai_ccs
 !
 !
-   module subroutine get_cholesky_ab_ccs(wf, L_ab_J, a_first, a_last, b_first, b_last)
+   subroutine get_cholesky_ab_ccs(wf, L_ab_J, a_first, a_last, b_first, b_last)
 !!
 !!    Get Cholesky AB
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017

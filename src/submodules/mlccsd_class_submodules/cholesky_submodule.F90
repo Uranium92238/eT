@@ -12,7 +12,7 @@ submodule (mlccsd_class) cholesky
 contains
 !
 !
-   module subroutine read_transform_cholesky_for_CC2_amplitude_mlccsd(wf)
+   subroutine read_transform_cholesky_for_CC2_amplitude_mlccsd(wf)
 !
       implicit none
 !
@@ -185,7 +185,7 @@ contains
    end subroutine read_cholesky_ai_for_cc2_amplitudes_mlccsd
 !
 !
-  module subroutine get_cholesky_ai_for_cc2_amplitudes_mlccsd(wf, L_ai_J, a_first, a_last, i_first, i_last)
+  subroutine get_cholesky_ai_for_cc2_amplitudes_mlccsd(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !!
 !!    Get Cholesky AI
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017

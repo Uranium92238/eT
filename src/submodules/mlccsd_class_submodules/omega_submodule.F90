@@ -8,7 +8,7 @@ submodule (mlccsd_class) omega
 !
 contains
 !
-   module subroutine initialize_omega_mlccsd(wf)
+   subroutine initialize_omega_mlccsd(wf)
 !
 !      Initialize Omega (MLCCSD)
 !      Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -28,7 +28,7 @@ contains
 !
    end subroutine initialize_omega_mlccsd
 !
-    module subroutine omega_mlcc2_a1_mlccsd(wf, active_space)
+    subroutine omega_mlcc2_a1_mlccsd(wf, active_space)
 !! 
 !!     Omega A1
 !!     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -202,7 +202,7 @@ contains
    end subroutine omega_mlcc2_a1_mlccsd
 !
 !
-    module subroutine omega_mlcc2_b1_mlccsd(wf, active_space)
+    subroutine omega_mlcc2_b1_mlccsd(wf, active_space)
 !! 
 !!    Omega B1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -371,7 +371,7 @@ contains
    end subroutine omega_mlcc2_b1_mlccsd
 !
 !
-       module subroutine omega_mlccsd_a1_mlccsd(wf, active_space)
+       subroutine omega_mlccsd_a1_mlccsd(wf, active_space)
 !! 
 !!     Omega A1
 !!     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -551,7 +551,7 @@ contains
    end subroutine omega_mlccsd_a1_mlccsd
 !
 !
-    module subroutine omega_mlccsd_b1_mlccsd(wf, active_space)
+    subroutine omega_mlccsd_b1_mlccsd(wf, active_space)
 !! 
 !!    Omega B1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -717,7 +717,8 @@ contains
    end subroutine omega_mlccsd_b1_mlccsd
 !
 !
-  module subroutine omega_ccsd_a2_mlccsd(wf, active_space)
+
+  subroutine omega_ccsd_a2_mlccsd(wf, active_space)
 !
 !     Omega A2 term: Omega A2 = g_ai_bj + sum_(cd)g_ac_bd * t_ci_dj = A2.1 + A.2.2
 !
@@ -1247,7 +1248,8 @@ contains
    end subroutine omega_ccsd_a2_ccsd
 !
 !
-   module subroutine get_mlccsd_s2am_mlccsd(wf, s_ia_jb)
+   subroutine get_mlccsd_s2am_mlccsd(wf, s_ia_jb)
+
 !!
 !!
       implicit none
@@ -1336,7 +1338,7 @@ contains
                enddo
             enddo
 !
-!           Change basis
+!           :: Change to local basis ::
 !
 !           Transform index A : X1_a_IBJ = sum_A T_aA*s_A_IBJ_CC2
 !
