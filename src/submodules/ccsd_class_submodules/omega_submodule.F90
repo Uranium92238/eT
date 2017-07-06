@@ -37,7 +37,7 @@ submodule (ccsd_class) omega
 contains
 !
 !
-   module subroutine initialize_omega_ccsd(wf)
+   subroutine initialize_omega_ccsd(wf)
 !
 !      Initialize Omega (CCSD)
 !      Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -58,7 +58,7 @@ contains
    end subroutine initialize_omega_ccsd
 !
 !
-   module subroutine construct_omega_ccsd(wf)
+   subroutine construct_omega_ccsd(wf)
 !
 !     Construct Omega (CCSD)
 !     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -93,7 +93,7 @@ contains
    end subroutine construct_omega_ccsd
 !
 !
-   module subroutine omega_ccsd_a1_ccsd(wf)
+   subroutine omega_ccsd_a1_ccsd(wf)
 !
 !       Omega A1 term
 !       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -300,7 +300,7 @@ contains
    end subroutine omega_ccsd_a1_ccsd
 !
 !
-   module subroutine omega_ccsd_b1_ccsd(wf)
+   subroutine omega_ccsd_b1_ccsd(wf)
 !!
 !!       Omega B1
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -438,7 +438,7 @@ contains
    end subroutine omega_ccsd_b1_ccsd
 !
 !
-   module subroutine omega_ccsd_c1_ccsd(wf)        
+   subroutine omega_ccsd_c1_ccsd(wf)        
 !  
 !     Omega C1
 !     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -533,7 +533,7 @@ contains
    end subroutine omega_ccsd_c1_ccsd
 !
 !
-   module subroutine omega_ccsd_a2_ccsd(wf)
+   subroutine omega_ccsd_a2_ccsd(wf)
 !
 !     Omega A2 term: Omega A2 = g_ai_bj + sum_(cd)g_ac_bd * t_ci_dj = A2.1 + A.2.2
 !
@@ -1079,7 +1079,7 @@ contains
    end subroutine omega_ccsd_a2_ccsd
 !
 !
-   module subroutine omega_ccsd_b2_ccsd(wf)
+   subroutine omega_ccsd_b2_ccsd(wf)
 !!
 !!    Omega B2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 11 Mar 2017
@@ -1343,7 +1343,7 @@ contains
    end subroutine omega_ccsd_b2_ccsd
 !
 !
-   module subroutine omega_ccsd_c2_ccsd(wf)
+   subroutine omega_ccsd_c2_ccsd(wf)
 !!
 !!    Omega C2 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2017
@@ -1687,7 +1687,7 @@ contains
    end subroutine omega_ccsd_c2_ccsd
 !
 !
-   module subroutine omega_ccsd_d2_ccsd(wf)
+   subroutine omega_ccsd_d2_ccsd(wf)
 !
 !     Omega D2 
 !     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -2256,7 +2256,7 @@ contains
    end subroutine omega_ccsd_d2_ccsd
 !
 ! 
-   module subroutine omega_ccsd_e2_ccsd(wf)
+   subroutine omega_ccsd_e2_ccsd(wf)
 !
 !     Omega E2
 !     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017

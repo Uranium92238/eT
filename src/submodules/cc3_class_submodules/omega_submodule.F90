@@ -26,7 +26,7 @@ submodule (cc3_class) omega
 !
 contains
 !
-   module subroutine construct_omega_cc3(wf)
+    subroutine construct_omega_cc3(wf)
 !!
 !!    Construct Omega (CC3)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017

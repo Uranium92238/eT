@@ -17,7 +17,7 @@ submodule (mlccsd_class) orbital_partitioning
 contains
 !
 !
-   module subroutine cholesky_localization_drv_mlccsd(wf)
+   subroutine cholesky_localization_drv_mlccsd(wf)
 !!
 !!    Cholesky orbital localization. driver,
 !!    Written by Sarai D. Folkestad, June 2017
@@ -190,7 +190,7 @@ contains
 !
    end subroutine cholesky_localization_drv_mlccsd
 !
-   module subroutine cholesky_localization_CCSD_CC2_CCS_mlccsd(wf, ao_center_info, n_ao_on_center,&
+   subroutine cholesky_localization_CCSD_CC2_CCS_mlccsd(wf, ao_center_info, n_ao_on_center,&
                                                        ao_fock, n_nuclei, unit_cholesky_decomp)
 !!
 !!    Cholesky orbital localization. driver,
@@ -510,7 +510,7 @@ contains
    end subroutine cholesky_localization_CCSD_CC2_CCS_mlccsd
 !
 !
-   module subroutine cholesky_localization_CCSD_CCS_mlccsd(wf, ao_center_info, n_ao_on_center,&
+   subroutine cholesky_localization_CCSD_CCS_mlccsd(wf, ao_center_info, n_ao_on_center,&
                                                        ao_fock, n_nuclei, unit_cholesky_decomp)
 !!
 !!    Cholesky orbital localization. driver,
@@ -699,7 +699,7 @@ contains
    end subroutine cholesky_localization_CCSD_CCS_mlccsd
 !
 !
-   module subroutine cholesky_localization_CCSD_CC2_mlccsd(wf, ao_center_info, n_ao_on_center,&
+   subroutine cholesky_localization_CCSD_CC2_mlccsd(wf, ao_center_info, n_ao_on_center,&
                                                        ao_fock, n_nuclei, unit_cholesky_decomp)
 !!
 !!    Cholesky orbital localization. driver,
@@ -884,7 +884,7 @@ contains
    end subroutine cholesky_localization_CCSD_CC2_mlccsd
 !
 !
-   module subroutine construct_MO_transformation_matrix(wf)
+   subroutine construct_MO_transformation_matrix(wf)
 !!
 !!
       implicit none

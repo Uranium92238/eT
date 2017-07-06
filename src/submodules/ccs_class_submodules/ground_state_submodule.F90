@@ -4,7 +4,7 @@ submodule (ccs_class) ground_state
 !!                                Ground state submodule (CCS)
 !!                Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-!!    Consists of the following subroutines of the CCS module:
+!!    Consists of the following subroutines of the CCS:
 !!
 !!    ground_state_solver:        Controls the iterative loop, calling in turn
 !!                                the calculation of the energy, the amplitude equations 
@@ -48,7 +48,7 @@ submodule (ccs_class) ground_state
 contains
 !
 !
-   module subroutine ground_state_solver_ccs(wf)
+   subroutine ground_state_solver_ccs(wf)
 !!
 !!    Ground State Solver 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -199,7 +199,7 @@ contains
    end subroutine ground_state_solver_ccs
 !
 !
-   module subroutine calc_ampeqs_ccs(wf)
+    subroutine calc_ampeqs_ccs(wf)
 !!
 !!    Calculate Amplitude Equations (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -220,7 +220,7 @@ contains
    end subroutine calc_ampeqs_ccs
 !
 !
-   module subroutine calc_ampeqs_norm_ccs(wf, ampeqs_norm)
+    subroutine calc_ampeqs_norm_ccs(wf, ampeqs_norm)
 !!
 !!     Calculate Amplitude Equations Norm (CCS)
 !!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -240,7 +240,7 @@ contains
    end subroutine calc_ampeqs_norm_ccs
 !
 !
-   module subroutine new_amplitudes_ccs(wf)
+    subroutine new_amplitudes_ccs(wf)
 !!
 !!    New Amplitudes (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -290,7 +290,7 @@ contains
    end subroutine new_amplitudes_ccs
 !
 !
-   module subroutine calc_quasi_Newton_singles_ccs(wf,dt)
+    subroutine calc_quasi_Newton_singles_ccs(wf,dt)
 !!
 !!    Calculate quasi-Newton estimate (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -323,7 +323,7 @@ contains
    end subroutine calc_quasi_Newton_singles_ccs
 !
 !
-   module subroutine diis_ccs(wf, dt, t_dt)
+    subroutine diis_ccs(wf, dt, t_dt)
 !!
 !!    DIIS routine
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017

@@ -28,7 +28,7 @@ submodule (ccs_class) excited_state
 contains
 !
 !
-   module subroutine excited_state_driver_ccs(wf)
+   subroutine excited_state_driver_ccs(wf)
 !!
 !!    Excited state driver (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
@@ -66,7 +66,7 @@ contains
    end subroutine excited_state_driver_ccs
 !
 !
-   module subroutine excited_state_solver_ccs(wf)
+   subroutine excited_state_solver_ccs(wf)
 !!
 !!    Excited State Solver
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -297,7 +297,7 @@ contains
    end subroutine excited_state_solver_ccs
 !
 !
-   module subroutine solve_reduced_eigenvalue_equation_ccs(wf, eigenvalues_Re, eigenvalues_Im, &
+   subroutine solve_reduced_eigenvalue_equation_ccs(wf, eigenvalues_Re, eigenvalues_Im, &
                                                                 solution_vectors_reduced, reduced_dim, n_new_trials)
 !!
 !!    Solve Reduced Eigenvalue Equation
@@ -503,7 +503,7 @@ contains
    end subroutine solve_reduced_eigenvalue_equation_ccs
 !
 !
-   module subroutine construct_next_trial_vectors_ccs(wf, eigenvalues_Re, eigenvalues_Im, &
+   subroutine construct_next_trial_vectors_ccs(wf, eigenvalues_Re, eigenvalues_Im, &
                                                 solution_vectors_reduced, &
                                                 reduced_dim, n_new_trials)
 !!
@@ -748,7 +748,7 @@ contains
    end subroutine construct_next_trial_vectors_ccs
 !
 !
-      module subroutine initialize_trial_vectors_ccs(wf)
+      subroutine initialize_trial_vectors_ccs(wf)
 !!
 !!       Initialize trial vectors
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
@@ -812,7 +812,7 @@ contains
       end subroutine initialize_trial_vectors_ccs
 !
 !
-      module subroutine trial_vectors_from_stored_solutions_ccs(wf)
+      subroutine trial_vectors_from_stored_solutions_ccs(wf)
 !!
 !!
 !!
@@ -922,7 +922,7 @@ contains
       end subroutine trial_vectors_from_stored_solutions_ccs
 !
 !
-      module subroutine find_start_trial_indices_ccs(wf, index_list)
+      subroutine find_start_trial_indices_ccs(wf, index_list)
 !!
 !!       Find indices for lowest orbital differences
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
@@ -971,7 +971,7 @@ contains
       end subroutine find_start_trial_indices_ccs
 !
 !
-      module subroutine calculate_orbital_differences_ccs(wf,orbital_diff)
+      subroutine calculate_orbital_differences_ccs(wf,orbital_diff)
 !!
 !!       Calculate and return orbital differences
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad May 2017
@@ -994,7 +994,7 @@ contains
       end subroutine calculate_orbital_differences_ccs
 !
 !
-      module subroutine transform_trial_vectors_ccs(wf, first_trial, last_trial)
+      subroutine transform_trial_vectors_ccs(wf, first_trial, last_trial)
 !!
 !!       Transform trial vectors (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -1064,7 +1064,7 @@ contains
       end subroutine transform_trial_vectors_ccs
 !
 !
-      module subroutine initialize_excited_states_ccs(wf)
+      subroutine initialize_excited_states_ccs(wf)
 !!
          implicit none 
 !    
