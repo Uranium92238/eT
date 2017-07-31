@@ -1,11 +1,11 @@
-submodule (ccsd_class) ground_state
+submodule (mlccsd_class) ground_state
 !
 !!    
-!!     Ground state submodule (CCSD)
+!!     Ground state submodule (MLCCSD)
 !!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!    
 !!    
-!!     Consists of the following subroutines of the CCSD module:
+!!     Consists of the following subroutines of the MLCCSD module:
 !!     
 !!     new_amplitudes:             Calculates the quasi-Newton estimate and passes the 
 !!                                 information needed by the DIIS routine.
@@ -14,11 +14,6 @@ submodule (ccsd_class) ground_state
 !!     initialize_ground_state:    Initializes the amplitudes (MP2 estimate) and the amplitude 
 !!                                 equations.
 !!    
-!!     Can be inherited by models of the same level (e.g. CC3) without modification.
-!!    
-!!     When inherited by higher level models (e.g. CCSDT), the new_amplitudes and calc_ampeqs_norm
-!!     routines should be overridden to account for the triples quasi-Newton estimate, amplitudes, 
-!!     and projection vector.
 !!    
 !
    implicit none 
@@ -27,14 +22,14 @@ submodule (ccsd_class) ground_state
 contains
 !
 !
-   subroutine calc_ampeqs_norm_ccsd(wf, ampeqs_norm)
+   subroutine calc_ampeqs_norm_mlccsd(wf, ampeqs_norm)
 !
-!     Calculate Amplitude Equations Norm (CCSD)
+!     Calculate Amplitude Equations Norm (MLCCSD)
 !     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !
       implicit none 
 !
-      class(ccsd) :: wf 
+      class(mlccsd) :: wf 
 !
       real(dp) :: ampeqs_norm 
 !
@@ -45,12 +40,12 @@ contains
       ampeqs_norm = ddot(wf%n_t2am, wf%omega2, 1, wf%omega2, 1) + ampeqs_norm
       ampeqs_norm = sqrt(ampeqs_norm)
 !
-   end subroutine calc_ampeqs_norm_ccsd
+   end subroutine calc_ampeqs_norm_mlccsd
 !
 !
-   subroutine new_amplitudes_ccsd(wf)
+   subroutine new_amplitudes_mlccsd(wf)
 !
-!     New Amplitudes (CCSD)
+!     New Amplitudes (MLCCSD)
 !     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !
 !     Directs the calculation of the quasi-Newton estimate Δ t_i, 
@@ -59,7 +54,7 @@ contains
 !
       implicit none 
 !
-      class(ccsd) :: wf 
+      class(mlccsd) :: wf 
 !
       integer(i15) :: i = 0 ! for debug purposes
 !
@@ -101,10 +96,10 @@ contains
       call deallocator(dt, wf%n_parameters, 1)
       call deallocator(t_dt, wf%n_parameters, 1)
 !
-   end subroutine new_amplitudes_ccsd
+   end subroutine new_amplitudes_mlccsd
 !
 !
-   subroutine calc_quasi_Newton_doubles_ccsd(wf,dt)
+   subroutine calc_quasi_Newton_doubles_mlccsd(wf,dt)
 !
 !     Calculate quasi-Newtoni doubles estimate (CCSD)
 !     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -115,44 +110,68 @@ contains
 !
       implicit none 
 !
-      class(ccsd) :: wf 
+      class(mlccsd) :: wf 
 !
       real(dp), dimension(wf%n_parameters, 1) :: dt
 !
       integer(i15) :: a = 0, i = 0, b = 0, j = 0
       integer(i15) :: ai = 0, bj = 0, aibj = 0, offset = 0
 !
-!     Calculate the doubles Δ t_i contribution
+!     Active space variables
 !
-         
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
-            do b = 1, wf%n_v
-               do j = 1, wf%n_o
+      integer(i15) :: n_active_o = 0, n_active_v = 0
+      integer(i15) :: first_active_o ! first active occupied index 
+      integer(i15) :: first_active_v ! first active virtual index
+      integer(i15) :: last_active_o ! first active occupied index 
+      integer(i15) :: last_active_v ! first active virtual index
+      integer(i15) :: active_space ! first active virtual index
 !
-!                 Calculate the necessary indices 
+      do active_space = 1, wf%n_active_spaces   
 !
-                  ai = index_two(a, i, wf%n_v)
-                  bj = index_two(b, j, wf%n_v)
+!        Calculate first/last indeces
+! 
+         call wf%get_CCSD_active_indices(first_active_o, first_active_v, active_space)
 !
-                  aibj = index_packed(ai, bj) 
+         n_active_o = wf%n_CCSD_o(active_space, 1)
+         n_active_v = wf%n_CCSD_v(active_space, 1)
 !
-                  offset = wf%n_t1am + aibj ! dt has singles first, then doubles 
+         last_active_o = first_active_o + n_active_o - 1
+         last_active_v = first_active_v + n_active_v - 1 
 !
-                  dt(offset,1) = - wf%omega2(aibj, 1)/(wf%fock_diagonal(wf%n_o + a, 1) + &
-                                                       wf%fock_diagonal(wf%n_o + b, 1) - &
-                                                       wf%fock_diagonal(i, 1) -          &
-                                                       wf%fock_diagonal(j, 1))
+         offset = wf%active_space_t2am_offset(active_space)
 !
+!        Calculate the doubles Δ t_i contribution
+!
+         do a = 1, n_active_v
+            do i = 1, n_active_o
+               do b = 1, n_active_v
+                  do j = 1, n_active_o
+!
+!                    Calculate the necessary indices 
+!
+                     ai = index_two(a, i, n_active_v)
+                     bj = index_two(b, j, n_active_v)
+!
+                     aibj = index_packed(ai, bj) 
+!
+                     dt(wf%n_t1am + aibj + offset,1) = - wf%omega2(aibj + offset, 1)/&
+                                       (wf%fock_diagonal(wf%n_o + a + first_active_v - 1, 1) + &
+                                        wf%fock_diagonal(wf%n_o + b + first_active_v - 1, 1) - &
+                                        wf%fock_diagonal(i + first_active_o - 1, 1) -          &
+                                        wf%fock_diagonal(j + first_active_o - 1, 1))
+!
+                  enddo
                enddo
             enddo
          enddo
+
+!
       enddo
 !
-   end subroutine calc_quasi_Newton_doubles_ccsd
+   end subroutine calc_quasi_Newton_doubles_mlccsd
 !
 !
-   subroutine initialize_ground_state_ccsd(wf)
+   subroutine initialize_ground_state_mlccsd(wf)
 !!
 !!    Initialize Ground State (CCSD)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -162,16 +181,13 @@ contains
 !!
       implicit none 
 !
-      class(ccsd) :: wf
-!
-      if (.not. allocated(wf%t1am)) call allocator(wf%t1am, wf%n_v, wf%n_o)
-      wf%t1am = zero
+      class(mlccsd) :: wf
 !
       call wf%initialize_amplitudes          ! Allocate amplitudes
       call wf%construct_perturbative_doubles ! Set doubles amplitudes to MP2 guess 
       call wf%initialize_omega               ! Allocate projection vector 
 !
-   end subroutine initialize_ground_state_ccsd
+   end subroutine initialize_ground_state_mlccsd
 !
 !
 end submodule ground_state 

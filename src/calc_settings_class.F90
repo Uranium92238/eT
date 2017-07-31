@@ -20,7 +20,7 @@ module calc_settings_class
       real(dp) :: energy_threshold   = 1.0D-06 ! Threshold for energies 
       real(dp) :: equation_threshold = 1.0D-06 ! Threshold for equation residuals
 !
-      integer(i15) :: ground_state_max_iterations = 25 ! Ground state maximum number of iterations 
+      integer(i15) :: ground_state_max_iterations = 50 ! Ground state maximum number of iterations 
 !
       logical :: restart = .false.
 !

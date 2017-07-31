@@ -86,6 +86,7 @@ contains
 !
       write(unit_output,'(t6,a20,e9.2)') 'Energy threshold:',   wf%settings%energy_threshold
       write(unit_output,'(t6,a20,e9.2)') 'Equation threshold:', wf%settings%equation_threshold
+      flush(unit_output)
 !
 !     Initialize amplitudes & amplitude equations 
 !
@@ -115,6 +116,7 @@ contains
 !
       write(unit_output,'(/t3,a)')   'Iter.      Energy             Norm of amplitude eq.'
       write(unit_output,'(t3,a)')    '---------------------------------------------------' 
+      flush(unit_output)
 !
 !     Make sure the initial energy is up to date for first iteration
 !  

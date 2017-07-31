@@ -67,6 +67,7 @@ module mlcc2_class
 !     ML helper routines
 !
       procedure :: get_CC2_active_indices => get_CC2_active_indices_mlcc2
+      procedure :: get_CC2_n_active       => get_CC2_n_active_mlcc2
       procedure :: set_n_total_active     => set_n_total_active_mlcc2
 !
 !     Omega
@@ -234,7 +235,7 @@ module mlcc2_class
          integer(i15)      :: get_number_of_active_atoms
          integer(i15)      :: unit_cholesky_decomp
          integer(i15)      :: active_space
-         character(len=5) :: ml_level
+         character(len=5)  :: ml_level
 !
       end function get_number_of_active_atoms
 !
@@ -413,7 +414,7 @@ module mlcc2_class
 !
       end subroutine construct_omega_mlcc2
 !
-      module subroutine get_s2am_mlcc2(wf, s_ia_jb, b_first, b_length, active_space)
+      module subroutine get_s2am_mlcc2(wf, s_ia_jb, active_space, b_first, b_length)
 !!
 !!       Batching over b
 !!
@@ -1034,6 +1035,27 @@ contains
       first_v = wf%first_CC2_v(active_space, 1)
 !
    end subroutine get_CC2_active_indices_mlcc2
+!
+!
+   subroutine get_CC2_n_active_mlcc2(wf, n_active_o, n_active_v, active_space)
+!!
+!!    Get CC2 active indices,
+!!    Written by Sarai D. Folkestad, June 2017
+!!
+!!    Returns the first active occupied and virtual indices 
+!!    of the active space.
+!!
+      implicit none
+!
+      class(mlcc2) :: wf
+      integer(i15) :: n_active_o
+      integer(i15) :: n_active_v
+      integer(i15) :: active_space
+!
+      n_active_o = wf%n_CC2_o(active_space, 1)
+      n_active_v = wf%n_CC2_v(active_space, 1)
+!
+   end subroutine get_CC2_n_active_mlcc2
 !
 !
    subroutine set_n_total_active_mlcc2(wf)

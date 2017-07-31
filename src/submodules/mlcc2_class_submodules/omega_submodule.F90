@@ -148,8 +148,7 @@ contains
 ! 
       call wf%get_CC2_active_indices(first_active_v, first_active_o, active_space)
 !
-      n_active_o = wf%n_CC2_o(active_space,1) 
-      n_active_v = wf%n_CC2_v(active_space,1)
+      call wf%get_CC2_n_active(n_active_o, n_active_v, active_space)
 !
       last_active_o = first_active_o + n_active_o - 1
       last_active_v = first_active_v + n_active_v - 1 
@@ -197,7 +196,7 @@ contains
 !        u_ij^bc = 2*s_ij^bc - s_ij^cb =  (2*g_ij^bc - g_ij^cb)/ε_ij^cb
 !
          call allocator(s_ib_jc, (n_active_o)*(n_active_v), (n_active_o)*c_length )
-         call wf%get_s2am(s_ib_jc, c_first, c_length, active_space)
+         call wf%get_s2am(s_ib_jc, active_space, c_first, c_length)
 !
          call allocator(u_bjc_i, n_active_v*n_active_o*c_length, n_active_o)
 !
@@ -352,8 +351,7 @@ contains
 ! 
       call wf%get_CC2_active_indices(first_active_o, first_active_v, active_space)
 !
-      n_active_o = wf%n_CC2_o(active_space,1) 
-      n_active_v = wf%n_CC2_v(active_space,1)
+      call wf%get_CC2_n_active(n_active_o, n_active_v, active_space)
 !
       last_active_o = first_active_o + n_active_o - 1
       last_active_v = first_active_v + n_active_v - 1
@@ -395,7 +393,7 @@ contains
 !        u_jk^ab = 2*s_jk^ab - s_jk^ba  (place in u_a_jkb)        
 !  
          call allocator(s_ja_kb, (n_active_o)*n_active_v, (n_active_o)*b_length)
-         call wf%get_s2am(s_ja_kb, b_first, b_length, active_space)
+         call wf%get_s2am(s_ja_kb, active_space, b_first, b_length)
 !
          call allocator(u_a_kbj, n_active_v, (n_active_o**2)*b_length)
 
@@ -507,7 +505,7 @@ contains
 !      
    end subroutine omega_mlcc2_b1_mlcc2
 !
-   subroutine get_s2am_mlcc2(wf, s_ia_jb, b_first, b_length, active_space)
+   subroutine get_s2am_mlcc2(wf, s_ia_jb, active_space, b_first, b_length)
 !!
 !!    Batching over b
 !!
@@ -538,8 +536,7 @@ contains
 !
       call wf%get_CC2_active_indices(first_active_o, first_active_v, active_space)
 !
-      n_active_o = wf%n_CC2_o(active_space,1) 
-      n_active_v = wf%n_CC2_v(active_space,1)
+      call wf%get_CC2_n_active(n_active_o, n_active_v, active_space)
 !
       last_active_o = first_active_o + n_active_o - 1
       last_active_v = first_active_v + n_active_v - 1
