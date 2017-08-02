@@ -115,14 +115,6 @@ contains
 !
       write(unit_output,'(t3,a,i3,a/)')'Requested ', wf%n_active_spaces,' active space(s).'
 !
-!     Must keep information on CC2/CCS partition
-!  
-      call allocator(wf%mo_coef_cc2_ccs, wf%n_ao, wf%n_mo) 
-      call allocator(wf%fock_diagonal_cc2_ccs, wf%n_mo, 1)
-!
-      call allocator(orbitals, wf%n_ao, wf%n_mo)
-      call allocator(orbital_energies, wf%n_mo, 1)
-!
 !     Start timings
 !
       call cpu_time(start_chol_deco)
@@ -289,6 +281,7 @@ contains
 !
       integer(i15) :: n_nuclei
       integer(i15) :: unit_cholesky_decomp
+      integer(i15) :: i, j, ij
 !
 !     Local routine variables
 !
@@ -314,7 +307,7 @@ contains
       integer(i15) :: n_active_orbitals_v
       integer(i15) :: n_CC2_atoms, n_CCSD_atoms
       integer(i15) :: n_vectors_o, n_vectors_v
-      integer(i15) :: offset_o, offset_v
+      integer(i15) :: offset_o, offset_v, offset
 !
 !     :::::::::::::::::::::::::::::::::::::
 !     -::-  Prepare for decomposition  -::-
@@ -480,20 +473,31 @@ contains
 !
 !        Construct CC2 density
 !
-         call allocator(C_cc2, wf%n_ao, wf%n_CC2_o(active_space,1) + wf%n_CC2_v(active_space,1)) 
+         call allocator(C_cc2, wf%n_ao*(wf%n_CC2_o(active_space,1) + wf%n_CC2_v(active_space,1)), 1) 
 !
-         do i = 1, wf%n_CC2_o(active_space,1)
-            C_cc2(:,i) = wf%mo_coef_cc2_ccs(:,i)
+         do i = 1, wf%n_ao
+            do j = 1, wf%n_CC2_o(active_space,1)
+               ij =  index_two(i, j, wf%n_ao)
+               C_cc2(ij, 1) = wf%mo_coef_cc2_ccs(i, j)
+            enddo
          enddo
 !
-         do i = 1, wf%n_CC2_v(active_space,1)
-            C_cc2(:, i + wf%n_CC2_o(active_space,1)) = wf%mo_coef_cc2_ccs(:, i + wf%n_o)
+         offset = wf%n_o
+         do i = 1, active_space - 1
+            offset = offset + wf%n_CC2_v(i, 1)
+         enddo
+!
+         do i = 1, wf%n_ao
+            do j = 1, wf%n_CC2_v(active_space,1)
+               ij =  index_two(i, wf%n_CC2_o(active_space,1) + j, wf%n_ao)
+               C_cc2(ij, 1) = wf%mo_coef_cc2_ccs(i, offset + j)
+            enddo
          enddo
 !
          call wf%construct_density_matrices(density_o, density_v, C_cc2, &
                                        wf%n_CC2_o(active_space,1), wf%n_CC2_v(active_space,1))
 !  
-         call deallocator(C_cc2, wf%n_ao, wf%n_CC2_o(active_space,1) + wf%n_CC2_v(active_space,1)) 
+         call deallocator(C_cc2, wf%n_ao*( wf%n_CC2_o(active_space,1) + wf%n_CC2_v(active_space,1)), 1) 
 !
          n_CCSD_atoms =  get_number_of_active_atoms(unit_cholesky_decomp, active_space, 'CCSD ')
 !  
@@ -1048,8 +1052,8 @@ contains
       call deallocator(X, wf%n_mo, wf%n_ao)
 !
       call deallocator(wf%mo_coef_cc2_ccs, wf%n_ao, wf%n_mo)
-      call allocator(wf%T_o, wf%n_total_active_o, wf%n_total_active_o)
-      call allocator(wf%T_v, wf%n_total_active_v, wf%n_total_active_v)
+      call allocator(wf%T_o, wf%n_o, wf%n_o)
+      call allocator(wf%T_v, wf%n_v, wf%n_v)
 !
 !     Construct active occupied and active virtual transformation matrices
 !

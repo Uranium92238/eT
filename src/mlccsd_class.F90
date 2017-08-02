@@ -118,7 +118,14 @@ module mlccsd_class
       procedure :: new_amplitudes            => new_amplitudes_mlccsd
       procedure :: calc_quasi_Newton_doubles => calc_quasi_Newton_doubles_mlccsd
       procedure :: initialize_ground_state   => initialize_ground_state_mlccsd
-
+!
+      procedure :: construct_orbital_coef_CC2_CCS     => construct_orbital_coef_CC2_CCS_mlccsd
+      procedure :: construct_orbital_energy_CC2_CCS   => construct_orbital_energy_CC2_CCS_mlccsd
+!
+      procedure :: destruct_orbital_coef_CC2_CCS     => destruct_orbital_coef_CC2_CCS_mlccsd
+      procedure :: destruct_orbital_energy_CC2_CCS   => destruct_orbital_energy_CC2_CCS_mlccsd
+      procedure :: destruct_amplitudes               => destruct_amplitudes_mlccsd
+      procedure :: destruct_double_amplitudes        => destruct_double_amplitudes_mlccsd
 !
    end type mlccsd
 !
@@ -711,7 +718,14 @@ contains
 !
 !     Orbital partitioning - only if we have CCS/CC2 region
 !
-      if (wf%mlcc_settings%CCS .or. wf%mlcc_settings%CC2) then
+      if (wf%mlcc_settings%CCS) then
+!
+         if (wf%mlcc_settings%CC2) then
+!
+            call wf%construct_orbital_coef_CC2_CCS
+            call wf%construct_orbital_energy_CC2_CCS
+!
+         endif
 !
          call wf%orbital_partitioning
 !
@@ -763,26 +777,18 @@ contains
 !
       if (wf%mlcc_settings%CC2) then
 !
-         write(unit_output,*)'Read CC2/CCS cholesky'
-         flush(unit_output)
          call wf%read_transform_cholesky_for_CC2_amplitude
-         write(unit_output,*)'Construct transformation matrix'
-         flush(unit_output)
          call wf%construct_MO_transformation_matrix
+         call wf%destruct_orbital_coef_CC2_CCS
 !
       endif
 !
-      write(unit_output,*)'Read CC2/CCSD cholesky'
-      flush(unit_output)
       call wf%read_transform_cholesky
 !
 !     Initialize fock matrix
 !
-      write(unit_output,*)'Fock'
-      flush(unit_output)
       call wf%initialize_fock_matrix
 !
-      stop
    end subroutine init_mlccsd
 !
 !
@@ -1275,6 +1281,79 @@ contains
       call deallocator(x_ia_jb, n_active_v*n_active_o, n_active_v*n_active_o)
 !
    end subroutine calc_energy_mlccsd
+!
+!
+   subroutine construct_orbital_coef_CC2_CCS_mlccsd(wf)
+!!
+!!
+      implicit none
+!
+      class(mlccsd) :: wf
+!
+      if (.not. allocated(wf%mo_coef_cc2_ccs)) call allocator(wf%mo_coef_cc2_ccs, wf%n_ao, wf%n_mo)
+      wf%mo_coef_cc2_ccs = zero
+!
+   end subroutine construct_orbital_coef_CC2_CCS_mlccsd
+!
+!
+   subroutine destruct_orbital_coef_CC2_CCS_mlccsd(wf)
+!!
+!!
+      implicit none
+!
+      class(mlccsd) :: wf
+!
+      if (allocated(wf%mo_coef_cc2_ccs)) call deallocator(wf%mo_coef_cc2_ccs, wf%n_ao, wf%n_mo)
+!
+   end subroutine destruct_orbital_coef_CC2_CCS_mlccsd
+!
+!
+   subroutine construct_orbital_energy_CC2_CCS_mlccsd(wf)
+!!
+!!
+      implicit none
+!
+      class(mlccsd) :: wf
+!
+      if (.not. allocated(wf%fock_diagonal_cc2_ccs)) call allocator(wf%fock_diagonal_cc2_ccs, wf%n_mo, 1)
+      wf%mo_coef_cc2_ccs = zero
+!
+   end subroutine construct_orbital_energy_CC2_CCS_mlccsd
+!
+   subroutine destruct_orbital_energy_CC2_CCS_mlccsd(wf)
+!!
+!!
+      implicit none
+!
+      class(mlccsd) :: wf
+!
+      if (allocated(wf%fock_diagonal_cc2_ccs)) call deallocator(wf%fock_diagonal_cc2_ccs, wf%n_mo, 1)
+!
+   end subroutine destruct_orbital_energy_CC2_CCS_mlccsd
+!
+!
+   subroutine destruct_double_amplitudes_mlccsd(wf)
+!!
+!!
+      implicit none
+!
+      class(mlccsd) :: wf
+!
+      if (allocated(wf%t2am)) call deallocator(wf%t2am, wf%n_t2am, 1)
+!
+   end subroutine destruct_double_amplitudes_mlccsd
+!
+   subroutine destruct_amplitudes_mlccsd(wf)
+!!
+!!
+      implicit none
+!
+      class(mlccsd) :: wf
+!
+      call wf%destruct_double_amplitudes
+      call destruct_amplitudes_ccs(wf)
+!
+   end subroutine destruct_amplitudes_mlccsd
 !
 !
 end module mlccsd_class

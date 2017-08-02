@@ -121,7 +121,7 @@ contains
 !
          call dgemm('N','N',     &
                      wf%n_ao,    &
-                     wf%n_o, &
+                     wf%n_o,     &
                      wf%n_ao,    &
                      one,        &
                      chol_ao_sq, &
@@ -135,15 +135,15 @@ contains
          call deallocator(chol_ao_sq, wf%n_ao, wf%n_ao)
 !
          call dgemm('T','N',     &
-                     wf%n_v, &
-                     wf%n_o, &
+                     wf%n_v,     &
+                     wf%n_o,     &
                      wf%n_ao,    &
                      one,        &
                      C_v,        &
                      wf%n_ao,    &
                      X,          &
                      wf%n_ao,    &
-                     one,       &
+                     one,        &
                      L_ai_J(1,J),&
                      wf%n_v)
 !
@@ -671,34 +671,34 @@ contains
       
       call allocator(X1_a_I, wf%n_v, wf%n_o)
 !
-      call dgemm('T','N', &
-                  wf%n_v,&
-                  wf%n_o, &
-                  wf%n_v, &
-                  one, &
-                  wf%T_v, &
-                  wf%n_v, &
+      call dgemm('T','N',  &
+                  wf%n_v,  &
+                  wf%n_o,  &
+                  wf%n_v,  &
+                  one,     &
+                  wf%T_v,  &
+                  wf%n_v,  &
                   wf%t1am, &
-                  wf%n_v, &
-                  zero, &
-                  X1_a_I, &
-                  n_active_v)
+                  wf%n_v,  &
+                  zero,    &
+                  X1_a_I,  &
+                  wf%n_v)
 !
       call allocator(t1_a_i, wf%n_v, wf%n_o)
 !
       call dgemm('N', 'N', &
-                  wf%n_v, &
-                  wf%n_o, &
-                  wf%n_o, &
+                  wf%n_v,  &
+                  wf%n_o,  &
+                  wf%n_o,  &
                   one,     &
-                  X1_a_I, &
-                  wf%n_v, &
-                  wf%T_o, &
-                  wf%n_o, &
-                  zero, &
-                  t1_a_i, &
+                  X1_a_I,  &
+                  wf%n_v,  &
+                  wf%T_o,  &
+                  wf%n_o,  &
+                  zero,    &
+                  t1_a_i,  &
                   wf%n_v)
-!!
+!
          call deallocator(X1_a_I, wf%n_v, wf%n_o)
 !
 !     Read L_ai^J from file 
@@ -801,7 +801,7 @@ contains
                      wf%n_v,                &
                      one,                   &
                      L_Ja_i(L_off, 1),      &
-                     (wf%n_v)*(wf%n_J))
+                     (n_active_v)*(wf%n_J))
 !
 !
 !        Deallocate  L_Ja_b
