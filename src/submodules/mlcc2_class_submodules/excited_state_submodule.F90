@@ -2,7 +2,7 @@ submodule (mlcc2_class) excited_state
 !
 !!
 !!    Excited state submodule (MLCC2) 
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2017
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
 !!
 !!    Contains the following family of procedures of the MLCC2 class:
 !!
@@ -40,9 +40,6 @@ contains
 !     
 !     Add packed number of double amplitudes 
 !
-      wf%n_total_active_o = 0
-      wf%n_total_active_v = 0
-!
       wf%n_s2am = 0
 !
       do active_space = 1, wf%n_active_spaces
@@ -62,7 +59,7 @@ contains
 !
    subroutine calculate_orbital_differences_mlcc2(wf, orbital_diff)
 !!
-!!    Calculate Orbital Differences (CCSD)
+!!    Calculate Orbital Differences (CC2)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad May 2017
 !!
 !!    Calculates orbital differences

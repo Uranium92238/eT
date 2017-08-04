@@ -49,6 +49,7 @@ module mlccsd_class
 !
       integer(i15) :: n_t2am = 0                    ! Number of doubles amplitudes
       real(dp), dimension(:,:), allocatable :: t2am ! Doubles amplitude vector
+      real(dp), dimension(:,:), allocatable :: x2am ! Doubles amplitude vector with s2 amplitudes
 !
 !     Schrödinger equation projection vector (the omega vector)
 ! 
@@ -126,6 +127,10 @@ module mlccsd_class
       procedure :: destruct_orbital_energy_CC2_CCS   => destruct_orbital_energy_CC2_CCS_mlccsd
       procedure :: destruct_amplitudes               => destruct_amplitudes_mlccsd
       procedure :: destruct_double_amplitudes        => destruct_double_amplitudes_mlccsd
+!
+      !procedure :: save_amplitudes        => save_amplitudes_mlccsd
+      !procedure :: read_amplitudes        => read_amplitudes_mlccsd
+      !procedure :: read_double_amplitudes => read_double_amplitudes_mlccsd
 !
    end type mlccsd
 !
@@ -1354,6 +1359,106 @@ contains
       call destruct_amplitudes_ccs(wf)
 !
    end subroutine destruct_amplitudes_mlccsd
+!
+!
+!   subroutine save_amplitudes_mlccsd(wf)
+!!!
+!!!    Save Amplitudes (CCSD)
+!!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
+!!!
+!!!    Store the amplitudes to disk (T1AM, T2AM)
+!!!
+!      implicit none 
+!!
+!      class(mlccsd) :: wf
+!!
+!      integer(i15) :: unit_t1am = -1
+!      integer(i15) :: unit_t2am = -1
+!!
+!!     Open amplitude files
+!!
+!      call generate_unit_identifier(unit_t1am)
+!      call generate_unit_identifier(unit_t2am)
+!!
+!      open(unit_t1am, file='t1am', status='unknown', form='unformatted')
+!      open(unit_t2am, file='t2am', status='unknown', form='unformatted')
+!!
+!      rewind(unit_t1am)
+!      rewind(unit_t2am)
+!!
+!!     Write amplitudes to files
+!!
+!      write(unit_t1am) wf%t1am 
+!      write(unit_t2am) wf%t2am
+!!
+!!     Close amplitude files
+!!
+!      close(unit_t1am)
+!      close(unit_t2am)
+!!
+!   end subroutine save_amplitudes_mlccsd
+!!
+!   subroutine read_amplitudes_mlccsd(wf)
+!!!
+!!!    Read Amplitudes (CCS)
+!!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
+!!!
+!!!    Reads the amplitudes from disk (T1AM)
+!!!
+!      implicit none 
+!!
+!      class(mlccsd) :: wf
+!!
+!      call wf%read_single_amplitudes
+!      call wf%read_double_amplitudes
+!!
+!   end subroutine read_amplitudes_mlccsd
+!!
+!   subroutine read_double_amplitudes_mlccsd(wf)
+!!!
+!!!    Read Amplitudes (CCSD)
+!!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
+!!!
+!!!    Reads the amplitudes from disk (T1AM, T2AM)
+!!!
+!      implicit none 
+!!
+!      class(mlccsd) :: wf
+!!
+!      integer(i15) :: unit_t2am = -1 
+!!
+!      logical :: file_exists = .false.
+!!
+!!     Check to see whether file exists
+!!
+!      inquire(file='t2am',exist=file_exists)
+!!
+!      if (file_exists) then 
+!!
+!!        Open amplitude files if they exist
+!!
+!         call generate_unit_identifier(unit_t2am)
+!!
+!         open(unit_t2am, file='t2am', status='unknown', form='unformatted')
+!!
+!         rewind(unit_t2am)
+!!
+!!        Read from file & close
+!!
+!         wf%t2am = zero
+!!
+!         read(unit_t2am) wf%t2am
+!!
+!         close(unit_t2am)
+!!
+!      else
+!!
+!         write(unit_output,'(t3,a)') 'Error: amplitude files do not exist.'
+!         stop
+!!
+!      endif
+!!
+!   end subroutine read_double_amplitudes_mlccsd
 !
 !
 end module mlccsd_class

@@ -2,7 +2,7 @@ submodule (mlcc2_class) jacobian
 !
 !!
 !!    Jacobian transformation submodule (MLCC2) 
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2017
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
 !!
 !!    Contains the following family of procedures of the MLCC2 class:
 !!
