@@ -38,5 +38,7 @@ set(eT_fortran_sources
    src/submodules/mlccsd_class_submodules/orbital_partitioning_submodule.F90
    src/submodules/mlccsd_class_submodules/cholesky_submodule.F90
    src/submodules/mlccsd_class_submodules/ground_state_submodule.F90
+   src/submodules/mlccsd_class_submodules/jacobian_submodule.F90
+   src/submodules/mlccsd_class_submodules/excited_state_submodule.F90
    src/eT_program.F90
 )

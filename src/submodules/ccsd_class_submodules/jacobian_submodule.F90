@@ -1308,9 +1308,6 @@ contains
 !!    The term is added as rho_ai_bj(ai,bj) = rho_ai_bj(ai,bj) + rho_ai_bj^B2,
 !!    where c_a_i(a,i) = c_ai above.
 !!
-!!    Debug updates
-!!
-!!       E: checked logic in detail, 1 June 2017
 !!
       implicit none 
 !
@@ -1856,7 +1853,7 @@ contains
                do k = 1, wf%n_o
 !
                   ak = index_two(a, k, wf%n_v)
-                  kl = index_two(k, l, wf%n_o) ! E: Bug fix, 3 June - wasn't there!!
+                  kl = index_two(k, l, wf%n_o) 
 !
                   blak = index_packed(bl, ak)
 !
@@ -3192,7 +3189,8 @@ contains
 !
          call deallocator(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-!        Y_d_b = sum_clk L_d_clk * c_clk_b 
+!        Y_d_b = sum_clk L_d_lck * c_b_lck
+!        Here dgemm is tricked to believe that c_bl_ck is c_b_lck 
 !
          call allocator(Y_d_b, wf%n_v, wf%n_v)
 !
@@ -4592,7 +4590,7 @@ contains
 !
       end subroutine jacobian_ccsd_i2_ccsd
 !
-
+!
       subroutine jacobian_ccsd_j2_ccsd(wf, rho_ab_ij, c_ab_ij)
 !!
 !!       Jacobian CCSD J2 

@@ -152,7 +152,7 @@ contains
 !      
 !     ai-type
 !
-      do ai = 1, (wf%n_total_active_v)*(wf%n_total_active_o)
+      do ai = 1, (wf%n_o)*(wf%n_v)
          write(unit_chol_mo_ai, rec=ai) (L_ai_J(ai,j), j = 1, wf%n_J)
       enddo
 !
@@ -419,7 +419,7 @@ contains
          do i = 1, n_active_o
             do a = 1, n_active_v
                ai = index_two(a, i, n_active_v)
-               ai_full = index_two(a + a_first - 1, i + i_first - 1, wf%n_total_active_v)
+               ai_full = index_two(a + a_first - 1, i + i_first - 1, wf%n_v)
 !
                read(unit_chol_mo_ai, rec=ai_full) (L_ai_J(ai,j), j = 1, wf%n_J)
             enddo
@@ -996,7 +996,7 @@ contains
                   wf%n_o,              &
                   zero,                &
                   L_a_iJ,              &
-                  wf%n_total_active_v)
+                  n_active_v)
 !
 !     Add contribution to L ai_J
 !

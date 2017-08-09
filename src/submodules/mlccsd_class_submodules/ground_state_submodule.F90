@@ -124,49 +124,40 @@ contains
       integer(i15) :: first_active_v ! first active virtual index
       integer(i15) :: last_active_o ! first active occupied index 
       integer(i15) :: last_active_v ! first active virtual index
-      integer(i15) :: active_space ! first active virtual index
 !
-      do active_space = 1, wf%n_active_spaces   
-!
-!        Calculate first/last indeces
+!     Calculate first/last indeces
 ! 
-         call wf%get_CCSD_active_indices(first_active_o, first_active_v, active_space)
+      call wf%get_CCSD_active_indices(first_active_o, first_active_v)
+      call wf%get_CCSD_n_active(first_active_o, first_active_v)
 !
-         n_active_o = wf%n_CCSD_o(active_space, 1)
-         n_active_v = wf%n_CCSD_v(active_space, 1)
+      last_active_o = first_active_o + n_active_o - 1
+      last_active_v = first_active_v + n_active_v - 1 
 !
-         last_active_o = first_active_o + n_active_o - 1
-         last_active_v = first_active_v + n_active_v - 1 
+!     Calculate the doubles Δ t_i contribution
 !
-         offset = wf%active_space_t2am_offset(active_space)
+      do a = 1, n_active_v
+         do i = 1, n_active_o
+            do b = 1, n_active_v
+               do j = 1, n_active_o
 !
-!        Calculate the doubles Δ t_i contribution
+!                 Calculate the necessary indices 
 !
-         do a = 1, n_active_v
-            do i = 1, n_active_o
-               do b = 1, n_active_v
-                  do j = 1, n_active_o
+                  ai = index_two(a, i, n_active_v)
+                  bj = index_two(b, j, n_active_v)
 !
-!                    Calculate the necessary indices 
+                  aibj = index_packed(ai, bj) 
 !
-                     ai = index_two(a, i, n_active_v)
-                     bj = index_two(b, j, n_active_v)
+                  dt(wf%n_t1am + aibj,1) = - wf%omega2(aibj, 1)/&
+                                    (wf%fock_diagonal(wf%n_o + a + first_active_v - 1, 1) + &
+                                     wf%fock_diagonal(wf%n_o + b + first_active_v - 1, 1) - &
+                                     wf%fock_diagonal(i + first_active_o - 1, 1) -          &
+                                     wf%fock_diagonal(j + first_active_o - 1, 1))
 !
-                     aibj = index_packed(ai, bj) 
-!
-                     dt(wf%n_t1am + aibj + offset,1) = - wf%omega2(aibj + offset, 1)/&
-                                       (wf%fock_diagonal(wf%n_o + a + first_active_v - 1, 1) + &
-                                        wf%fock_diagonal(wf%n_o + b + first_active_v - 1, 1) - &
-                                        wf%fock_diagonal(i + first_active_o - 1, 1) -          &
-                                        wf%fock_diagonal(j + first_active_o - 1, 1))
-!
-                  enddo
                enddo
             enddo
          enddo
-
-!
       enddo
+
 !
    end subroutine calc_quasi_Newton_doubles_mlccsd
 !

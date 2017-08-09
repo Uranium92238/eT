@@ -6,7 +6,7 @@ submodule (mlcc2_class) excited_state
 !!
 !!    Contains the following family of procedures of the MLCC2 class:
 !!
-!!    inititialize_excited_states: Initializes number of s2 amplitudes (n_s2am), and adds it n_parameters
+!!    inititialize_excited_states: Initializes number of s2 amplitudes (n_x2am), and adds it n_parameters
 !!    calculate_orbital_differences: Calculates the orbital differences, including the double excitation differences 
 !!                                   in the active CC2 spaces
 !!    transform_trial_vectors: Transforms the new trial vectors. rho = Ac
@@ -36,22 +36,11 @@ contains
 !    
       class(mlcc2) :: wf
 !
-      integer(i15) :: active_space
-!     
-!     Add packed number of double amplitudes 
-!
-      wf%n_s2am = 0
-!
-      do active_space = 1, wf%n_active_spaces
-!
-         wf%n_s2am = wf%n_s2am &
-                  + ((wf%n_CC2_v(active_space,1))*(wf%n_CC2_o(active_space,1)))&
-                   *((wf%n_CC2_v(active_space,1) )*(wf%n_CC2_o(active_space,1))+1)/2 
-!
-      enddo
+      wf%n_x2am = + ((wf%n_CC2_v)*(wf%n_CC2_o))&
+                   *((wf%n_CC2_v )*(wf%n_CC2_o)+1)/2 
 !
       
-      wf%n_parameters = wf%n_parameters + wf%n_s2am
+      wf%n_parameters = wf%n_parameters + wf%n_x2am
                        
 !
    end subroutine initialize_excited_states_mlcc2
@@ -84,8 +73,6 @@ contains
       integer(i15) :: n_active_o
       integer(i15) :: n_active_v         
 !
-      integer(i15) :: active_space
-!
       integer(i15) :: offset = 0
 !
       integer(i15) :: A = 0, I = 0, b = 0, j = 0
@@ -102,46 +89,34 @@ contains
          enddo
       enddo
 !
-!     Adding double terms only for active spaces
-!
-      offset = 0
-      do active_space = 1, wf%n_active_spaces
-!
-!        Calculate first/last indices
+!     Calculate active space indices
 ! 
-         call wf%get_CC2_active_indices(first_active_o, first_active_v, active_space)
+      call wf%get_CC2_active_indices(first_active_o, first_active_v)
+      call wf%get_CC2_n_active(n_active_o, n_active_v)
 !
-         n_active_o = wf%n_CC2_o(active_space,1) 
-         n_active_v = wf%n_CC2_v(active_space,1)
+      do i = 1, n_active_o
 !
-         do i = 1, n_active_o
+         do a = 1, n_active_v
 !
-            do a = 1, n_active_v
+            ai = index_two(a, i, n_active_v)
 !
-               ai = index_two(a, i, n_active_v)
+            do j = 1, n_active_o
 !
-               do j = 1, n_active_o
+               do b = 1, n_active_v
 !
-                  do b = 1, n_active_v
+                  bj = index_two(b, j, n_active_v)
 !
-                     bj = index_two(b, j, n_active_v)
+                  aibj = index_packed(ai, bj)
 !
-                     aibj = index_packed(ai, bj)
+                  orbital_diff((wf%n_o)*(wf%n_v) + aibj, 1) &
+                                                 = wf%fock_diagonal(wf%n_o + a + first_active_v - 1, 1) &
+                                                 - wf%fock_diagonal(i + first_active_o - 1, 1) &
+                                                 + wf%fock_diagonal(wf%n_o + b + first_active_v - 1, 1) &
+                                                 - wf%fock_diagonal(j + first_active_o - 1, 1)
 !
-                     orbital_diff((wf%n_o)*(wf%n_v) + aibj + offset, 1) &
-                                                    = wf%fock_diagonal(wf%n_o + a + first_active_v - 1, 1) &
-                                                    - wf%fock_diagonal(i + first_active_o - 1, 1) &
-                                                    + wf%fock_diagonal(wf%n_o + b + first_active_v - 1, 1) &
-                                                    - wf%fock_diagonal(j + first_active_o - 1, 1)
-!
-                  enddo
                enddo
             enddo
          enddo
-!
-         offset = offset &
-               + (n_active_o*n_active_v)*(n_active_o*n_active_v+1)/2
-!
       enddo
 !
    end subroutine calculate_orbital_differences_mlcc2
@@ -176,7 +151,7 @@ contains
       call allocator(c_a_i, wf%n_v, wf%n_o)
       c_a_i = zero 
 !
-      call allocator(c_aibj, wf%n_s2am, 1)
+      call allocator(c_aibj, wf%n_x2am, 1)
       c_aibj = zero 
 !
 !     Open trial vector- and transformed vector files
@@ -209,7 +184,7 @@ contains
 !     Deallocate c_a_i and c_aibj
 !
       call deallocator(c_a_i, wf%n_v, wf%n_o)
-      call deallocator(c_aibj, wf%n_s2am, 1)
+      call deallocator(c_aibj, wf%n_x2am, 1)
 !
    end subroutine transform_trial_vectors_mlcc2
 !

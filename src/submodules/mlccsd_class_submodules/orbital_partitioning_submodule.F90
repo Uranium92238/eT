@@ -103,18 +103,6 @@ contains
       if (ioerror .ne. 0) write(unit_output,*)'WARNING: Error while opening cholesky.inp'
       rewind(unit_cholesky_decomp)
 !
-!     Get number of active spaces
-!
-      wf%n_active_spaces = get_number_of_active_spaces(unit_cholesky_decomp)
-!
-!     Initialize orbital info variables
-!
-      call wf%initialize_orbital_info
-!
-!     Print number of active spaces requested active spaces
-!
-      write(unit_output,'(t3,a,i3,a/)')'Requested ', wf%n_active_spaces,' active space(s).'
-!
 !     Start timings
 !
       call cpu_time(start_chol_deco)
@@ -162,11 +150,6 @@ contains
 !
          write(unit_output,*)'CC2/CCSD wavefunction requested' 
          flush(unit_output)
-!
-         if (wf%n_active_spaces .gt. 1) then
-            write(unit_output,*)'Not yet implemented for several active spaces'
-            stop
-         endif
 !
          call wf%cholesky_localization_CCSD_CC2(ao_center_info, n_ao_on_center,&
                                                    ao_fock, n_nuclei, unit_cholesky_decomp)
@@ -240,13 +223,11 @@ contains
 !
 !     Print decomposition info
 !
-      do active_space = 1, wf%n_active_spaces
-         write(unit_output, '(/t3,a15, i3/)')'Active space:  ', active_space
-         write(unit_output,'(t3,a45, i3)') 'Number of CCSD active occupied orbitals:  ', wf%n_CCSD_o(active_space, 1)
-         write(unit_output,'(t3,a45, i3/)')'Number of CCSD active virtual orbitals:   ', wf%n_CCSD_v(active_space, 1)
-         write(unit_output,'(t3,a45, i3)') 'Number of CC2 active occupied orbitals:   ', wf%n_CC2_o(active_space, 1)
-         write(unit_output,'(t3,a45, i3/)')'Number of CC2 active virtual orbitals:    ', wf%n_CC2_v(active_space, 1)
-      enddo                                
+      write(unit_output, '(/t3,a15/)')'Active space:  '
+      write(unit_output,'(t3,a45, i3)') 'Number of CCSD active occupied orbitals:  ', wf%n_CCSD_o
+      write(unit_output,'(t3,a45, i3/)')'Number of CCSD active virtual orbitals:   ', wf%n_CCSD_v
+      write(unit_output,'(t3,a45, i3)') 'Number of CC2 active occupied orbitals:   ', wf%n_CC2_o
+      write(unit_output,'(t3,a45, i3/)')'Number of CC2 active virtual orbitals:    ', wf%n_CC2_v                           
 !
       write(unit_output, '(/t3,a15/)')'Inactive space:  '
       write(unit_output,'(t3,a45, i3)') 'Number of CCS inactive occupied orbitals: ', wf%n_CCS_o
@@ -298,7 +279,7 @@ contains
 !
 !     Looping variables
 !
-      integer(i15) :: active_space = 0, i = 0
+      integer(i15) :: i = 0
 !
 !     Active space variables
 !
@@ -331,94 +312,89 @@ contains
 !
       offset_o = 1
       offset_v = 1 + wf%n_o
-!
-!     Start loop over active spaces
 !  
-      do active_space = 1, wf%n_active_spaces
+!     Get CC2/CCSD-active atoms
 !  
-!        Get CC2/CCSD-active atoms
+      n_CC2_atoms  =  get_number_of_active_atoms(unit_cholesky_decomp, 'CC2  ')
+      n_CCSD_atoms =  get_number_of_active_atoms(unit_cholesky_decomp, 'CCSD ')
 !  
-         n_CC2_atoms  =  get_number_of_active_atoms(unit_cholesky_decomp, active_space, 'CC2  ')
-         n_CCSD_atoms =  get_number_of_active_atoms(unit_cholesky_decomp, active_space, 'CCSD ')
+!     Allocate active atoms list
 !  
-!        Allocate active atoms list
+      call allocator_int(active_atoms_CC2, n_CC2_atoms, 1)
+      call allocator_int(active_atoms_CCSD, n_CCSD_atoms, 1)
+      call allocator_int(active_atoms, n_CCSD_atoms + n_CC2_atoms, 1)
 !  
-         call allocator_int(active_atoms_CC2, n_CC2_atoms, 1)
-         call allocator_int(active_atoms_CCSD, n_CCSD_atoms, 1)
-         call allocator_int(active_atoms, n_CCSD_atoms + n_CC2_atoms, 1)
-!  
-!        Get list of active atoms
+!     Get list of active atoms
 ! 
-         call get_active_atoms(unit_cholesky_decomp, active_atoms_CC2,  n_CC2_atoms,  active_space, 'CC2  ')
-         call get_active_atoms(unit_cholesky_decomp, active_atoms_CCSD, n_CCSD_atoms, active_space, 'CCSD ')
+      call get_active_atoms(unit_cholesky_decomp, active_atoms_CC2,  n_CC2_atoms,  'CC2  ')
+      call get_active_atoms(unit_cholesky_decomp, active_atoms_CCSD, n_CCSD_atoms, 'CCSD ')
 !
-         do i = 1, n_CC2_atoms
-            active_atoms(i, 1) = active_atoms_CC2(i, 1)
-         enddo
-         do i = 1, n_CCSD_atoms
-            active_atoms(n_CC2_atoms + i, 1) = active_atoms_CCSD(i,1)
-         enddo
+      do i = 1, n_CC2_atoms
+         active_atoms(i, 1) = active_atoms_CC2(i, 1)
+      enddo
+      do i = 1, n_CCSD_atoms
+         active_atoms(n_CC2_atoms + i, 1) = active_atoms_CCSD(i,1)
+      enddo
 !
-         call deallocator_int(active_atoms_CC2, n_CC2_atoms, 1)
-         call deallocator_int(active_atoms_CCSD, n_CCSD_atoms, 1)
+      call deallocator_int(active_atoms_CC2, n_CC2_atoms, 1)
+      call deallocator_int(active_atoms_CCSD, n_CCSD_atoms, 1)
 ! 
-!        Sanity check on active atoms
+!     Sanity check on active atoms
 ! 
-          if ((n_CC2_atoms + n_CCSD_atoms) .gt. n_nuclei) then
-            write(unit_output,*) 'WARNING: Illegal chioce of atoms in cholesky.inp.'
+       if ((n_CC2_atoms + n_CCSD_atoms) .gt. n_nuclei) then
+         write(unit_output,*) 'WARNING: Illegal chioce of atoms in cholesky.inp.'
+         stop
+      endif
+! 
+      do i = 1, n_CC2_atoms + n_CCSD_atoms
+         if (active_atoms(i,1) .gt. n_nuclei) then
+            write(unit_output,*) 'WARNING: Illegal chioce of atoms in cholesky.inp.',i, active_atoms(i,1)
             stop
          endif
-! 
-         do i = 1, n_CC2_atoms + n_CCSD_atoms
-            if (active_atoms(i,1) .gt. n_nuclei) then
-               write(unit_output,*) 'WARNING: Illegal chioce of atoms in cholesky.inp.',i, active_atoms(i,1)
-               stop
-            endif
-         enddo
-!  
-!        :: CC2 localized Cholesky orbitals ::
-!  
-         n_active_aos = 0
-!
-         do i = 1, n_CC2_atoms + n_CCSD_atoms
-            n_active_aos = n_active_aos + n_ao_on_center(active_atoms(i,1),1)
-         enddo
-!  
-!        Construct active_ao_index_list
-!  
-         call allocator_int(active_ao_index_list, n_active_aos, 1)
-         call construct_active_ao_index_list(active_ao_index_list, n_active_aos, active_atoms, &
-                                                  n_CC2_atoms + n_CCSD_atoms, ao_center_info, wf%n_ao)
-!  
-!        Occupied part
-!
-         n_vectors_o = 0  
-         call wf%cholesky_orbital_constructor(orbitals, orbital_energies, offset_o, ao_fock, &
-                                              density_o, n_vectors_o,&
-                                             .true., n_active_aos, active_ao_index_list)
-!  
-!        Virtual part
-!  
-         n_vectors_v = 0 
-         call wf%cholesky_orbital_constructor(orbitals, orbital_energies, offset_v, ao_fock, &
-                                              density_v, n_vectors_v,&
-                                              .true., n_active_aos, active_ao_index_list)
-!
-!
-!        Save CC2 space information
-!
-         wf%n_CC2_o(active_space, 1) = n_vectors_o
-         wf%n_CC2_v(active_space, 1) = n_vectors_v
-!  
-!        Calculate new offset         
-!  
-         offset_o = offset_o + n_vectors_o
-         offset_v = offset_v + n_vectors_v
-!  
-         call deallocator_int(active_atoms, n_CC2_atoms + n_CCSD_atoms, 1)
-         call deallocator_int(active_ao_index_list, n_active_aos, 1)
-!     
       enddo
+!  
+!     :: CC2 localized Cholesky orbitals ::
+!  
+      n_active_aos = 0
+!
+      do i = 1, n_CC2_atoms + n_CCSD_atoms
+         n_active_aos = n_active_aos + n_ao_on_center(active_atoms(i,1),1)
+      enddo
+!  
+!     Construct active_ao_index_list
+!  
+      call allocator_int(active_ao_index_list, n_active_aos, 1)
+      call construct_active_ao_index_list(active_ao_index_list, n_active_aos, active_atoms, &
+                                               n_CC2_atoms + n_CCSD_atoms, ao_center_info, wf%n_ao)
+!  
+!     Occupied part
+!
+      n_vectors_o = 0  
+      call wf%cholesky_orbital_constructor(orbitals, orbital_energies, offset_o, ao_fock, &
+                                           density_o, n_vectors_o,&
+                                          .true., n_active_aos, active_ao_index_list)
+!  
+!     Virtual part
+!  
+      n_vectors_v = 0 
+      call wf%cholesky_orbital_constructor(orbitals, orbital_energies, offset_v, ao_fock, &
+                                           density_v, n_vectors_v,&
+                                           .true., n_active_aos, active_ao_index_list)
+!
+!
+!     Save CC2 space information
+!
+      wf%n_CC2_o = n_vectors_o
+      wf%n_CC2_v = n_vectors_v
+!  
+!     Calculate new offset         
+!  
+      offset_o = offset_o + n_vectors_o
+      offset_v = offset_v + n_vectors_v
+!  
+      call deallocator_int(active_atoms, n_CC2_atoms + n_CCSD_atoms, 1)
+      call deallocator_int(active_ao_index_list, n_active_aos, 1)
+!     
 !
 !     :: CCS localized Cholesky orbitals  ::
 !
@@ -464,130 +440,121 @@ contains
       offset_o = 1
       offset_v = 1 + wf%n_o
 !
-      do active_space = 1, wf%n_active_spaces
+!     Construct CC2 density matrix, occupied and virtual
 !
-!        Construct CC2 density matrix, occupied and virtual
+      call allocator(density_v, wf%n_ao, wf%n_ao)   
+      call allocator(density_o, wf%n_ao, wf%n_ao)
 !
-         call allocator(density_v, wf%n_ao, wf%n_ao)   
-         call allocator(density_o, wf%n_ao, wf%n_ao)
+!     Construct CC2 density
 !
-!        Construct CC2 density
+      call allocator(C_cc2, wf%n_ao*(wf%n_CC2_o + wf%n_CC2_v), 1) 
 !
-         call allocator(C_cc2, wf%n_ao*(wf%n_CC2_o(active_space,1) + wf%n_CC2_v(active_space,1)), 1) 
-!
-         do i = 1, wf%n_ao
-            do j = 1, wf%n_CC2_o(active_space,1)
-               ij =  index_two(i, j, wf%n_ao)
-               C_cc2(ij, 1) = wf%mo_coef_cc2_ccs(i, j)
-            enddo
+      do i = 1, wf%n_ao
+         do j = 1, wf%n_CC2_o
+            ij =  index_two(i, j, wf%n_ao)
+            C_cc2(ij, 1) = wf%mo_coef_cc2_ccs(i, j)
          enddo
-!
-         offset = wf%n_o
-         do i = 1, active_space - 1
-            offset = offset + wf%n_CC2_v(i, 1)
-         enddo
-!
-         do i = 1, wf%n_ao
-            do j = 1, wf%n_CC2_v(active_space,1)
-               ij =  index_two(i, wf%n_CC2_o(active_space,1) + j, wf%n_ao)
-               C_cc2(ij, 1) = wf%mo_coef_cc2_ccs(i, offset + j)
-            enddo
-         enddo
-!
-         call wf%construct_density_matrices(density_o, density_v, C_cc2, &
-                                       wf%n_CC2_o(active_space,1), wf%n_CC2_v(active_space,1))
-!  
-         call deallocator(C_cc2, wf%n_ao*( wf%n_CC2_o(active_space,1) + wf%n_CC2_v(active_space,1)), 1) 
-!
-         n_CCSD_atoms =  get_number_of_active_atoms(unit_cholesky_decomp, active_space, 'CCSD ')
-!  
-!        Allocate active atoms list
-!
-         call allocator_int(active_atoms, n_CCSD_atoms, 1)
-!  
-!        Get list of active atoms
-! 
-         call get_active_atoms(unit_cholesky_decomp, active_atoms,  n_CCSD_atoms, active_space, 'CCSD ')
-!  
-!        Construct active_ao_index_list
-!  
-         n_active_aos = 0
-!
-         do i = 1, n_CCSD_atoms
-            n_active_aos = n_active_aos + n_ao_on_center(active_atoms(i,1),1)
-         enddo
-!
-         call allocator_int(active_ao_index_list, n_active_aos, 1)
-         active_ao_index_list = 0
-!
-         call construct_active_ao_index_list(active_ao_index_list, n_active_aos, active_atoms, &
-                                                  n_CCSD_atoms, ao_center_info, wf%n_ao)
-!
-         call deallocator_int(active_atoms, n_CCSD_atoms, 1)
-!  
-!        Occupied part
-!  
-         n_vectors_o = 0 
-         call wf%cholesky_orbital_constructor(orbitals, orbital_energies, offset_o, ao_fock, &
-                                              density_o, n_vectors_o,&
-                                             .true., n_active_aos, active_ao_index_list)
-!  
-!        Virtual part
-!
-         n_vectors_v = 0 
-         call wf%cholesky_orbital_constructor(orbitals, orbital_energies, offset_v, ao_fock, &
-                                              density_v, n_vectors_v,&
-                                              .true., n_active_aos, active_ao_index_list)
-!
-         call deallocator_int(active_ao_index_list, n_active_aos, 1)
-!
-!  
-!        Save active space information
-!  
-         wf%n_CCSD_o(active_space, 1) = n_vectors_o
-         wf%n_CCSD_v(active_space, 1) = n_vectors_v
-!
-         wf%first_CCSD_o(active_space, 1) = offset_o
-         wf%first_CCSD_v(active_space, 1) = offset_v - wf%n_o
-!  
-!        Calculate new offset         
-!  
-         offset_o = offset_o + n_vectors_o
-         offset_v = offset_v + n_vectors_v  
-!
-!        :: CC2  localized Cholesky orbitals  ::
-!  
-!        Occupied part
-!  
-         n_vectors_o = 0 
-         call wf%cholesky_orbital_constructor(orbitals, orbital_energies, offset_o, ao_fock, &
-                                              density_o, n_vectors_o,&
-                                             .false., n_active_aos)
-!  
-!        Virtual part
-!  
-         n_vectors_v = 0 
-         call wf%cholesky_orbital_constructor(orbitals, orbital_energies, offset_v, ao_fock, &
-                                              density_v, n_vectors_v,&
-                                              .false., n_active_aos)
-!
-!        Save inactive space information
-!
-         wf%n_CC2_o(active_space,1) = n_vectors_o
-         wf%n_CC2_v(active_space,1) = n_vectors_v
-!
-         wf%first_CC2_o(active_space,1) = offset_o
-         wf%first_CC2_v(active_space,1) = offset_v - wf%n_o
-!  
-!        Calculate new offset         
-!  
-         offset_o = offset_o + n_vectors_o
-         offset_v = offset_v + n_vectors_v
-!
-         call deallocator(density_v, wf%n_ao, wf%n_ao)   
-         call deallocator(density_o, wf%n_ao, wf%n_ao)
-!
       enddo
+!
+      do i = 1, wf%n_ao
+         do j = 1, wf%n_CC2_v
+            ij =  index_two(i, wf%n_CC2_o + j, wf%n_ao)
+            C_cc2(ij, 1) = wf%mo_coef_cc2_ccs(i, wf%n_o + j)
+         enddo
+      enddo
+!
+      call wf%construct_density_matrices(density_o, density_v, C_cc2, &
+                                    wf%n_CC2_o, wf%n_CC2_v)
+!  
+      call deallocator(C_cc2, wf%n_ao*(wf%n_CC2_o + wf%n_CC2_v), 1) 
+!
+      n_CCSD_atoms =  get_number_of_active_atoms(unit_cholesky_decomp, 'CCSD ')
+!  
+!     Allocate active atoms list
+!
+      call allocator_int(active_atoms, n_CCSD_atoms, 1)
+!  
+!     Get list of active atoms
+! 
+      call get_active_atoms(unit_cholesky_decomp, active_atoms,  n_CCSD_atoms, 'CCSD ')
+!  
+!     Construct active_ao_index_list
+!  
+      n_active_aos = 0
+!
+      do i = 1, n_CCSD_atoms
+         n_active_aos = n_active_aos + n_ao_on_center(active_atoms(i,1),1)
+      enddo
+!
+      call allocator_int(active_ao_index_list, n_active_aos, 1)
+      active_ao_index_list = 0
+!
+      call construct_active_ao_index_list(active_ao_index_list, n_active_aos, active_atoms, &
+                                               n_CCSD_atoms, ao_center_info, wf%n_ao)
+!
+      call deallocator_int(active_atoms, n_CCSD_atoms, 1)
+!  
+!     Occupied part
+!  
+      n_vectors_o = 0 
+      call wf%cholesky_orbital_constructor(orbitals, orbital_energies, offset_o, ao_fock, &
+                                           density_o, n_vectors_o,&
+                                          .true., n_active_aos, active_ao_index_list)
+!  
+!     Virtual part
+!
+      n_vectors_v = 0 
+      call wf%cholesky_orbital_constructor(orbitals, orbital_energies, offset_v, ao_fock, &
+                                           density_v, n_vectors_v,&
+                                           .true., n_active_aos, active_ao_index_list)
+!
+      call deallocator_int(active_ao_index_list, n_active_aos, 1)
+!
+!  
+!     Save active space information
+!  
+      wf%n_CCSD_o = n_vectors_o
+      wf%n_CCSD_v = n_vectors_v
+!
+      wf%first_CCSD_o = offset_o
+      wf%first_CCSD_v = offset_v - wf%n_o
+!  
+!     Calculate new offset         
+!  
+      offset_o = offset_o + n_vectors_o
+      offset_v = offset_v + n_vectors_v  
+!
+!     :: CC2  localized Cholesky orbitals  ::
+!  
+!     Occupied part
+!  
+      n_vectors_o = 0 
+      call wf%cholesky_orbital_constructor(orbitals, orbital_energies, offset_o, ao_fock, &
+                                           density_o, n_vectors_o,&
+                                          .false., n_active_aos)
+!  
+!     Virtual part
+!  
+      n_vectors_v = 0 
+      call wf%cholesky_orbital_constructor(orbitals, orbital_energies, offset_v, ao_fock, &
+                                           density_v, n_vectors_v,&
+                                           .false., n_active_aos)
+!
+!     Save inactive space information
+!
+      wf%n_CC2_o = n_vectors_o
+      wf%n_CC2_v = n_vectors_v
+!
+      wf%first_CC2_o = offset_o
+      wf%first_CC2_v = offset_v - wf%n_o
+!  
+!     Calculate new offset         
+!  
+      offset_o = offset_o + n_vectors_o
+      offset_v = offset_v + n_vectors_v
+!
+      call deallocator(density_v, wf%n_ao, wf%n_ao)   
+      call deallocator(density_o, wf%n_ao, wf%n_ao)
 !
       wf%mo_coef       = orbitals
       wf%fock_diagonal = orbital_energies
@@ -635,7 +602,7 @@ contains
 !
 !     Looping variables
 !
-      integer(i15) :: active_space = 0, i = 0, j = 0, ij = 0
+      integer(i15) :: i = 0, j = 0, ij = 0
 !
 !
 !
@@ -654,14 +621,6 @@ contains
       call allocator (orbitals, wf%n_ao, wf%n_mo)
       call allocator (orbital_energies, wf%n_mo, 1)
 !
-      do i = 1, wf%n_ao
-         do j = 1, wf%n_mo
-            ij = index_two(i, j, wf%n_ao)
-            wf%mo_coef_cc2_ccs (i,j)= wf%mo_coef(ij, 1)
-         enddo
-      enddo
-      wf%fock_diagonal_cc2_ccs = wf%fock_diagonal
-!
 !     :: Construct canonical occupied and vacant density matrices ::    
 !
       call allocator(density_o, wf%n_ao, wf%n_ao)
@@ -679,80 +638,75 @@ contains
       offset_o = 1
       offset_v = 1 + wf%n_o
 !
-!     Start loop over active spaces
 !  
-      do active_space = 1, wf%n_active_spaces
-!  
-!        Get CC2/CCSD-active atoms
+!     Get CC2/CCSD-active atoms
 !
-         n_CCSD_atoms =  get_number_of_active_atoms(unit_cholesky_decomp, active_space, 'CCSD ')  
+      n_CCSD_atoms =  get_number_of_active_atoms(unit_cholesky_decomp, 'CCSD ')  
 !
-!        Allocate active atoms list
+!     Allocate active atoms list
 !  
-         call allocator_int(active_atoms, n_CCSD_atoms, 1)
+      call allocator_int(active_atoms, n_CCSD_atoms, 1)
 !  
-!        Get list of active atoms
+!     Get list of active atoms
 !  
-         call get_active_atoms(unit_cholesky_decomp, active_atoms,  n_CCSD_atoms, active_space, 'CCSD  ')
+      call get_active_atoms(unit_cholesky_decomp, active_atoms,  n_CCSD_atoms, 'CCSD  ')
 !  
-!        Sanity check on active atoms
+!     Sanity check on active atoms
 !  
-         if (n_CCSD_atoms .gt. n_nuclei) then
+      if (n_CCSD_atoms .gt. n_nuclei) then
+         write(unit_output,*) 'WARNING: Illegal chioce of atoms in cholesky.inp.'
+         stop
+      endif
+!  
+      do i = 1, n_CCSD_atoms
+         if (active_atoms(i,1) .gt. n_nuclei) then
             write(unit_output,*) 'WARNING: Illegal chioce of atoms in cholesky.inp.'
             stop
          endif
-!  
-         do i = 1, n_CCSD_atoms
-            if (active_atoms(i,1) .gt. n_nuclei) then
-               write(unit_output,*) 'WARNING: Illegal chioce of atoms in cholesky.inp.'
-               stop
-            endif
-         enddo
-!  
-!        :: Constructing active (CCSD) localized Cholesky orbitals ::
-!  
-         n_active_aos = 0
-         do i = 1, n_CCSD_atoms
-            n_active_aos = n_active_aos + n_ao_on_center(active_atoms(i,1),1)
-         enddo
-!  
-!        Construct active_ao_index_list
-!  
-         call allocator_int(active_ao_index_list, n_active_aos, 1)
-         call construct_active_ao_index_list(active_ao_index_list, n_active_aos, active_atoms, &
-                                                  n_CCSD_atoms, ao_center_info, wf%n_ao)
-!  
-!        Occupied part
-!  
-         n_vectors_o = 0 
-         call wf%cholesky_orbital_constructor(orbitals, orbital_energies, offset_o, ao_fock, &
-                                              density_o, n_vectors_o,&
-                                             .true., n_active_aos, active_ao_index_list)
-!  
-!        Virtual part
-!  
-         n_vectors_v = 0 
-         call wf%cholesky_orbital_constructor(orbitals, orbital_energies, offset_v, ao_fock, &
-                                              density_v, n_vectors_v,&
-                                              .true., n_active_aos, active_ao_index_list)
-!  
-!        Save active space information
-!  
-         wf%n_CCSD_o(active_space, 1) = n_vectors_o
-         wf%n_CCSD_v(active_space, 1) = n_vectors_v
-!
-         wf%first_CCSD_o(active_space, 1) = offset_o
-         wf%first_CCSD_v(active_space, 1) = offset_v - wf%n_o
-!  
-!        Calculate new offset         
-!  
-         offset_o = offset_o + n_vectors_o
-         offset_v = offset_v + n_vectors_v
-!  
-         call deallocator_int(active_atoms, n_CCSD_atoms, 1)
-         call deallocator_int(active_ao_index_list, n_active_aos, 1)
-!     
       enddo
+!  
+!     :: Constructing active (CCSD) localized Cholesky orbitals ::
+!  
+      n_active_aos = 0
+      do i = 1, n_CCSD_atoms
+         n_active_aos = n_active_aos + n_ao_on_center(active_atoms(i,1),1)
+      enddo
+!  
+!     Construct active_ao_index_list
+!  
+      call allocator_int(active_ao_index_list, n_active_aos, 1)
+      call construct_active_ao_index_list(active_ao_index_list, n_active_aos, active_atoms, &
+                                               n_CCSD_atoms, ao_center_info, wf%n_ao)
+!  
+!     Occupied part
+!  
+      n_vectors_o = 0 
+      call wf%cholesky_orbital_constructor(orbitals, orbital_energies, offset_o, ao_fock, &
+                                           density_o, n_vectors_o,&
+                                          .true., n_active_aos, active_ao_index_list)
+!  
+!     Virtual part
+!  
+      n_vectors_v = 0 
+      call wf%cholesky_orbital_constructor(orbitals, orbital_energies, offset_v, ao_fock, &
+                                           density_v, n_vectors_v,&
+                                           .true., n_active_aos, active_ao_index_list)
+!  
+!     Save active space information
+!  
+      wf%n_CCSD_o = n_vectors_o
+      wf%n_CCSD_v = n_vectors_v
+!
+      wf%first_CCSD_o = offset_o
+      wf%first_CCSD_v = offset_v - wf%n_o
+!  
+!     Calculate new offset         
+!  
+      offset_o = offset_o + n_vectors_o
+      offset_v = offset_v + n_vectors_v
+!  
+      call deallocator_int(active_atoms, n_CCSD_atoms, 1)
+      call deallocator_int(active_ao_index_list, n_active_aos, 1)
 !
 !     :: CCS  localized Cholesky orbitals  ::
 !
@@ -829,7 +783,7 @@ contains
 !
 !     Looping variables
 !
-      integer(i15) :: active_space = 0, i = 0, j = 0, ij = 0
+      integer(i15) :: i = 0, j = 0, ij = 0
 !
 !
 !
@@ -872,80 +826,75 @@ contains
       offset_o = 1
       offset_v = 1 + wf%n_o
 !
-!     Start loop over active spaces
 !  
-      do active_space = 1, wf%n_active_spaces
-!  
-!        Get CC2/CCSD-active atoms
+!     Get CC2/CCSD-active atoms
 !
-         n_CCSD_atoms =  get_number_of_active_atoms(unit_cholesky_decomp, active_space, 'CCSD ') 
+      n_CCSD_atoms =  get_number_of_active_atoms(unit_cholesky_decomp, 'CCSD ') 
 !
-!        Allocate active atoms list
+!     Allocate active atoms list
 !  
-         call allocator_int(active_atoms, n_CCSD_atoms, 1)
+      call allocator_int(active_atoms, n_CCSD_atoms, 1)
 !  
-!        Get list of active atoms
+!     Get list of active atoms
 !  
-         call get_active_atoms(unit_cholesky_decomp, active_atoms,  n_CCSD_atoms, active_space, 'CCSD  ')
+      call get_active_atoms(unit_cholesky_decomp, active_atoms,  n_CCSD_atoms, 'CCSD  ')
 !  
-!        Sanity check on active atoms
+!     Sanity check on active atoms
 !  
-         if (n_CCSD_atoms .gt. n_nuclei) then
+      if (n_CCSD_atoms .gt. n_nuclei) then
+         write(unit_output,*) 'WARNING: Illegal chioce of atoms in cholesky.inp.'
+         stop
+      endif
+!  
+      do i = 1, n_CCSD_atoms
+         if (active_atoms(i,1) .gt. n_nuclei) then
             write(unit_output,*) 'WARNING: Illegal chioce of atoms in cholesky.inp.'
             stop
          endif
-!  
-         do i = 1, n_CCSD_atoms
-            if (active_atoms(i,1) .gt. n_nuclei) then
-               write(unit_output,*) 'WARNING: Illegal chioce of atoms in cholesky.inp.'
-               stop
-            endif
-         enddo 
-!  
-!        :: Constructing active (CCSD) localized Cholesky orbitals ::
-!  
-         n_active_aos = 0
-         do i = 1, n_CCSD_atoms
-            n_active_aos = n_active_aos + n_ao_on_center(active_atoms(i,1),1)
-         enddo
-!  
-!        Construct active_ao_index_list
-!  
-         call allocator_int(active_ao_index_list, n_active_aos, 1)
-         call construct_active_ao_index_list(active_ao_index_list, n_active_aos, active_atoms, &
-                                                     n_CCSD_atoms, ao_center_info, wf%n_ao) 
-!  
-!        Occupied part
-!  
-         n_vectors_o = 0 
-         call wf%cholesky_orbital_constructor(orbitals, orbital_energies, offset_o, ao_fock, &
-                                                 density_o, n_vectors_o,&
-                                                .true., n_active_aos, active_ao_index_list)
-!  
-!        Virtual part
-!  
-         n_vectors_v = 0 
-         call wf%cholesky_orbital_constructor(orbitals, orbital_energies, offset_v, ao_fock, &
-                                                 density_v, n_vectors_v,&
-                                                 .true., n_active_aos, active_ao_index_list)
-!  
-!        Save active space information
-!  
-         wf%n_CCSD_o(active_space, 1) = n_vectors_o
-         wf%n_CCSD_v(active_space, 1) = n_vectors_v
-!
-         wf%first_CCSD_o(active_space, 1) = offset_o
-         wf%first_CCSD_v(active_space, 1) = offset_v - wf%n_o
-!  
-!        Calculate new offset         
-!  
-         offset_o = offset_o + n_vectors_o
-         offset_v = offset_v + n_vectors_v
-!  
-         call deallocator_int(active_atoms, n_CCSD_atoms, 1)
-         call deallocator_int(active_ao_index_list, n_active_aos, 1)
-!     
       enddo 
+!  
+!     :: Constructing active (CCSD) localized Cholesky orbitals ::
+!  
+      n_active_aos = 0
+      do i = 1, n_CCSD_atoms
+         n_active_aos = n_active_aos + n_ao_on_center(active_atoms(i,1),1)
+      enddo
+!  
+!     Construct active_ao_index_list
+!  
+      call allocator_int(active_ao_index_list, n_active_aos, 1)
+      call construct_active_ao_index_list(active_ao_index_list, n_active_aos, active_atoms, &
+                                                  n_CCSD_atoms, ao_center_info, wf%n_ao) 
+!  
+!     Occupied part
+!  
+      n_vectors_o = 0 
+      call wf%cholesky_orbital_constructor(orbitals, orbital_energies, offset_o, ao_fock, &
+                                              density_o, n_vectors_o,&
+                                             .true., n_active_aos, active_ao_index_list)
+!  
+!     Virtual part
+!  
+      n_vectors_v = 0 
+      call wf%cholesky_orbital_constructor(orbitals, orbital_energies, offset_v, ao_fock, &
+                                              density_v, n_vectors_v,&
+                                              .true., n_active_aos, active_ao_index_list)
+!  
+!     Save active space information
+!  
+      wf%n_CCSD_o = n_vectors_o
+      wf%n_CCSD_v = n_vectors_v
+!
+      wf%first_CCSD_o = offset_o
+      wf%first_CCSD_v = offset_v - wf%n_o
+!  
+!     Calculate new offset         
+!  
+      offset_o = offset_o + n_vectors_o
+      offset_v = offset_v + n_vectors_v
+!  
+      call deallocator_int(active_atoms, n_CCSD_atoms, 1)
+      call deallocator_int(active_ao_index_list, n_active_aos, 1)
 !
 !     :: CC2  localized Cholesky orbitals  ::
 !
@@ -963,24 +912,24 @@ contains
                                            density_v, n_vectors_v,&
                                            .false., n_active_aos)
 !
-!        Save inactive space information
+!     Save inactive space information
 !
-         wf%n_CC2_o(1,1) = n_vectors_o
-         wf%n_CC2_v(1,1) = n_vectors_v
+      wf%n_CC2_o = n_vectors_o
+      wf%n_CC2_v = n_vectors_v
 !
-         wf%first_CC2_o(1,1) = offset_o
-         wf%first_CC2_v(1,1) = offset_v - wf%n_o
+      wf%first_CC2_o = offset_o
+      wf%first_CC2_v = offset_v - wf%n_o
 !
-         wf%mo_coef       = orbitals
-         wf%fock_diagonal = orbital_energies
+      wf%mo_coef       = orbitals
+      wf%fock_diagonal = orbital_energies
 !
-!        Deallocations
+!     Deallocations
 !
-         call deallocator(density_v, wf%n_ao, wf%n_ao)   
-         call deallocator(density_o, wf%n_ao, wf%n_ao)
+      call deallocator(density_v, wf%n_ao, wf%n_ao)   
+      call deallocator(density_o, wf%n_ao, wf%n_ao)
 !
-         call deallocator(orbitals, wf%n_ao, wf%n_mo)
-         call deallocator(orbital_energies, wf%n_mo, 1) 
+      call deallocator(orbitals, wf%n_ao, wf%n_mo)
+      call deallocator(orbital_energies, wf%n_mo, 1) 
 !
    end subroutine cholesky_localization_CCSD_CC2_mlccsd
 !

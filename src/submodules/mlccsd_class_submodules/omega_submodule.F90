@@ -76,39 +76,32 @@ contains
 !     OBS! T2 could be deleted here to be allocated and read from file
 !           at the end of this routine for memory savings.
 !
+!     :: Calculate CCSD omega contributions ::
 !
-!     Loop over active spaces
+!     Construct x2 amplitude: x^AB_IJ = s^AB_IJ + t^AB_IJ  
+!     s amplitudes are CC2 amplitudes, t amplitudes are CCSD corrections.      
+!     x is given in entire CC2 space (upper case letters), however
+!     t is zero for external/semi-external and s is zero for internal.
 !
-      do active_space = 1, wf%n_active_spaces
+      call wf%get_CC2_n_active(n_CC2_o, n_CC2_v)
 !
-!        :: Calculate CCSD omega contributions ::
+      call allocator(x_IA_JB, (n_CC2_o)*(n_CC2_v), (n_CC2_o)*(n_CC2_v))
+      call wf%get_mlccsd_x2am(x_IA_JB)
 !
-!        Construct x2 amplitude: x^AB_IJ = s^AB_IJ + t^AB_IJ  
-!        s amplitudes are CC2 amplitudes, t amplitudes are CCSD corrections.      
-!        x is given in entire CC2 space (upper case letters), however
-!        t is zero for external/semi-external and s is zero for internal.
+!     Omega 1 contributions
 !
-         call wf%get_CC2_n_active(n_CC2_o, n_CC2_v, active_space)
+      call wf%omega_mlccsd_a1(x_IA_JB)
+      call wf%omega_mlccsd_b1(x_IA_JB)
 !
-         call allocator(x_IA_JB, (n_CC2_o)*(n_CC2_v), (n_CC2_o)*(n_CC2_v))
-         call wf%get_mlccsd_x2am(x_IA_JB, active_space)
+!     Omega 2 contributions
 !
-!        Omega 1 contributions
+      call wf%omega_mlccsd_a2(x_IA_JB)
+      call wf%omega_mlccsd_b2(x_IA_JB)
+      call wf%omega_mlccsd_c2(x_IA_JB)
+      call wf%omega_mlccsd_d2(x_IA_JB)
+      call wf%omega_mlccsd_e2(x_IA_JB)
 !
-         call wf%omega_mlccsd_a1(active_space, x_IA_JB)
-         call wf%omega_mlccsd_b1(active_space, x_IA_JB)
-!
-!        Omega 2 contributions
-!
-         call wf%omega_mlccsd_a2(active_space, x_IA_JB)
-         call wf%omega_mlccsd_b2(active_space, x_IA_JB)
-         call wf%omega_mlccsd_c2(active_space, x_IA_JB)
-         call wf%omega_mlccsd_d2(active_space, x_IA_JB)
-         call wf%omega_mlccsd_e2(active_space, x_IA_JB)
-!
-         call deallocator(x_IA_JB, (n_CC2_o)*(n_CC2_v), (n_CC2_o)*(n_CC2_v))
-!        
-      enddo
+      call deallocator(x_IA_JB, (n_CC2_o)*(n_CC2_v), (n_CC2_o)*(n_CC2_v))
 !
       call cpu_time(omega_end)
       if (timings) write(unit_output,*)'Time in omega:', omega_end-omega_start    
@@ -116,7 +109,7 @@ contains
    end subroutine construct_omega_mlccsd
 !
 !
-   subroutine get_mlccsd_x2am_mlccsd(wf, x_ia_jb, active_space)
+   subroutine get_mlccsd_x2am_mlccsd(wf, x_ia_jb)
 !!
 !!    Constructs x_ia_jb amplitudes for current active space 
 !!
@@ -126,8 +119,6 @@ contains
       class(mlccsd) :: wf
 !
       real(dp), dimension(:,:) :: x_ia_jb
-!
-      integer :: active_space
 !
       real(dp), dimension(:,:), allocatable :: L_ai_J
       real(dp), dimension(:,:), allocatable :: g_ai_bj
@@ -153,20 +144,16 @@ contains
       integer(i15) :: last_CC2_o ! first active occupied index 
       integer(i15) :: last_CC2_v ! first active virtual index
 !
-      integer(i15) :: offset
-!
 !     Calculate first/last indeces
 !
-      call wf%get_CC2_active_indices(first_CC2_o, first_CC2_v, active_space)
-      call wf%get_CCSD_active_indices(first_CCSD_o, first_CCSD_v, active_space)
+      call wf%get_CC2_active_indices(first_CC2_o, first_CC2_v)
+      call wf%get_CCSD_active_indices(first_CCSD_o, first_CCSD_v)
 
-      call wf%get_CC2_n_active(n_CC2_o, n_CC2_v, active_space)
-      call wf%get_CCSD_n_active(n_CCSD_o, n_CCSD_v, active_space)
+      call wf%get_CC2_n_active(n_CC2_o, n_CC2_v)
+      call wf%get_CCSD_n_active(n_CCSD_o, n_CCSD_v)
 !
       last_CC2_o = first_CC2_o + n_CC2_o - 1
       last_CC2_v = first_CC2_v + n_CC2_v - 1 
-!
-      offset = wf%active_space_t2am_offset(active_space)
 !
       if(wf%mlcc_settings%CC2) then
 !
@@ -207,7 +194,6 @@ contains
                   do J = 1, n_CC2_o
 !
                      BJ = index_two(B, J, n_CC2_v)
-                     !
 !
                      s_AI_BJ_CC2(AI, BJ) = g_ai_bj(AI, BJ)/(wf%fock_diagonal_cc2_ccs(I + first_CC2_o - 1,1)&
                                         + wf%fock_diagonal_cc2_ccs(J + first_CC2_o - 1,1) &
@@ -218,6 +204,7 @@ contains
                enddo
             enddo
          enddo
+!
          call deallocator(g_ai_bj, (n_CC2_o)*(n_CC2_v), (n_CC2_o)*(n_CC2_v))
 !
 !        Transform to CCSD/CC2/CCS block diagonal basis (Cholesky or cnto)
@@ -335,7 +322,7 @@ contains
 !
                      aibj = index_packed(ai, bj)
 !
-                     x_ia_jb(ia, jb) = wf%t2am(aibj + offset, 1)
+                     x_ia_jb(ia, jb) = wf%t2am(aibj, 1)
 !
                   enddo
                enddo
@@ -356,7 +343,7 @@ contains
 !
                      aibj = index_packed(ai, bj)
 !
-                     x_ia_jb(ia, jb) = wf%t2am(aibj + offset, 1)
+                     x_ia_jb(ia, jb) = wf%t2am(aibj, 1)
 !
                   enddo
                enddo
@@ -367,7 +354,7 @@ contains
    end subroutine get_mlccsd_x2am_mlccsd
 !
 !
-    subroutine omega_mlccsd_a1_mlccsd(wf, active_space, x_ib_jc)
+    subroutine omega_mlccsd_a1_mlccsd(wf, x_ib_jc)
 !! 
 !!    Omega A1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -390,7 +377,6 @@ contains
       implicit none
 !
       class(mlccsd)            :: wf
-      integer(i15)             :: active_space ! Current active space
       real(dp), dimension(:,:) :: x_ib_jc
 !
 !     Batching variables 
@@ -424,8 +410,8 @@ contains
 !
 !     Calculate first/last indeces
 ! 
-      call wf%get_CC2_active_indices(first_CC2_o, first_CC2_v, active_space)
-      call wf%get_CC2_n_active(n_CC2_o, n_CC2_v, active_space)
+      call wf%get_CC2_active_indices(first_CC2_o, first_CC2_v)
+      call wf%get_CC2_n_active(n_CC2_o, n_CC2_v)
 !
       last_CC2_o = first_CC2_o + n_CC2_o - 1
       last_CC2_v = first_CC2_v + n_CC2_v - 1 
@@ -541,7 +527,7 @@ contains
    end subroutine omega_mlccsd_a1_mlccsd
 !
 !
-    subroutine omega_mlccsd_b1_mlccsd(wf, active_space, x_ja_kb)
+    subroutine omega_mlccsd_b1_mlccsd(wf, x_ja_kb)
 !! 
 !!    Omega B1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -555,7 +541,6 @@ contains
       implicit none
 !
       class(mlccsd)            :: wf
-      integer(i15)             :: active_space
       real(dp), dimension(:,:) :: x_ja_kb  
 !
 !     Batching 
@@ -586,8 +571,8 @@ contains
 !
 !     Calculate first/last indeces
 ! 
-      call wf%get_CC2_active_indices(first_CC2_o, first_CC2_v, active_space)
-      call wf%get_CC2_n_active(n_CC2_o, n_CC2_v, active_space)
+      call wf%get_CC2_active_indices(first_CC2_o, first_CC2_v)
+      call wf%get_CC2_n_active(n_CC2_o, n_CC2_v)
 !
       last_CC2_o = first_CC2_o + n_CC2_o - 1
       last_CC2_v = first_CC2_v + n_CC2_v - 1
@@ -703,7 +688,7 @@ contains
    end subroutine omega_mlccsd_b1_mlccsd
 !
 !
-  subroutine omega_mlccsd_a2_mlccsd(wf, active_space, x_IC_JD)
+  subroutine omega_mlccsd_a2_mlccsd(wf, x_IC_JD)
 !
 !     Omega A2 term: Omega A2 = sum_(cd)g_aC_bD * x_Ci_Dj
 !
@@ -721,7 +706,6 @@ contains
       implicit none
 !
       class(mlccsd)  :: wf
-      integer(i15) :: active_space
       real(dp), dimension(:,:) :: x_IC_JD
 !
 !     Integrals
@@ -785,15 +769,13 @@ contains
       integer(i15) :: last_CCSD_o ! first active occupied index 
       integer(i15) :: last_CCSD_v ! first active virtual index
 !
-      integer(i15) :: offset
-!
 !     Calculate first/last indeces
 ! 
-      call wf%get_CC2_active_indices(first_CC2_o, first_CC2_v, active_space)
-      call wf%get_CCSD_active_indices(first_CCSD_o, first_CCSD_v, active_space)
+      call wf%get_CC2_active_indices(first_CC2_o, first_CC2_v)
+      call wf%get_CCSD_active_indices(first_CCSD_o, first_CCSD_v)
 !
-      call wf%get_CC2_n_active(n_CC2_o, n_CC2_v, active_space)
-      call wf%get_CCSD_n_active(n_CCSD_o, n_CCSD_v, active_space)
+      call wf%get_CC2_n_active(n_CC2_o, n_CC2_v)
+      call wf%get_CCSD_n_active(n_CCSD_o, n_CCSD_v)
 !
       last_CC2_o = first_CC2_o + n_CC2_o - 1
       last_CC2_v = first_CC2_v + n_CC2_v - 1 
@@ -801,8 +783,6 @@ contains
       last_CCSD_o = first_CCSD_o + n_CCSD_o - 1
       last_CCSD_v = first_CCSD_v + n_CCSD_v - 1 
 !
-!
-      offset = wf%active_space_t2am_offset(active_space)
 !
 !     ::  Calculate the A2.1 term of omega ::
 !
@@ -847,7 +827,7 @@ contains
 !
                      aibj = index_packed(ai, bj)
 !
-                     wf%omega2(aibj + offset, 1) = wf%omega2(aibj + offset, 1) + g_ai_bj(ai, bj)
+                     wf%omega2(aibj, 1) = wf%omega2(aibj, 1) + g_ai_bj(ai, bj)
 !
                   endif
                enddo
@@ -1073,11 +1053,11 @@ contains
 !                         
 !                            Reorder into omega2_aibj
 ! 
-                             wf%omega2(AiBj + offset,1) = wf%omega2(AiBj + offset  , 1) &
+                             wf%omega2(AiBj,1) = wf%omega2(AiBj, 1) &
                                                    + omega2_p_ab_ij(ab, ij) + omega2_m_ab_ij(ab, ij)
 !
                              if (AiBj .ne. BiAj) then
-                                wf%omega2(BiAj + offset,1) = wf%omega2(BiAj + offset, 1) &
+                                wf%omega2(BiAj,1) = wf%omega2(BiAj, 1) &
                                                    + omega2_p_ab_ij(ab, ij) - omega2_m_ab_ij(ab, ij)
                              endif  
                           endif 
@@ -1221,11 +1201,11 @@ contains
 !                          
 !                             Reorder into omega2_aibj
 !  
-                              wf%omega2(AiBj + offset,1) = wf%omega2(AiBj + offset, 1) &
+                              wf%omega2(AiBj,1) = wf%omega2(AiBj, 1) &
                                           + omega2_p_ab_ij(ab, ij) + omega2_m_ab_ij(ab, ij)
 !
                               if (AiBj .ne. BiAj) then
-                                 wf%omega2(BiAj + offset,1) = wf%omega2(BiAj + offset, 1) &
+                                 wf%omega2(BiAj,1) = wf%omega2(BiAj, 1) &
                                           + omega2_p_ab_ij(ab, ij) - omega2_m_ab_ij(ab, ij)
                               endif   
 !     
@@ -1246,7 +1226,7 @@ contains
    end subroutine omega_mlccsd_a2_mlccsd
 !
 !
-   subroutine omega_mlccsd_b2_mlccsd(wf, active_space, x_kc_ld)
+   subroutine omega_mlccsd_b2_mlccsd(wf, x_kc_ld)
 !!
 !!    Omega B2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 11 Mar 2017
@@ -1260,7 +1240,6 @@ contains
       implicit none
 !
       class(mlccsd) :: wf 
-      integer(i15)  :: active_space
       real(dp), dimension(:,:) :: x_kc_ld 
 !
 !     Integrals
@@ -1307,28 +1286,24 @@ contains
       integer(i15) :: last_CC2_v 
       integer(i15) :: last_CCSD_o  
       integer(i15) :: last_CCSD_v 
-
-      integer(i15) :: offset 
 !
 !     Calculate first/last indeces
 ! 
 !     CC2
 !  
-      call wf%get_CC2_active_indices(first_CC2_o, first_CC2_v, active_space)
-      call wf%get_CC2_n_active(n_CC2_o, n_CC2_v, active_space)
+      call wf%get_CC2_active_indices(first_CC2_o, first_CC2_v)
+      call wf%get_CC2_n_active(n_CC2_o, n_CC2_v)
 !
 !     CCSD
 !
-      call wf%get_CCSD_active_indices(first_CCSD_o, first_CCSD_v, active_space)
-      call wf%get_CCSD_n_active(n_CCSD_o, n_CCSD_v, active_space)
+      call wf%get_CCSD_active_indices(first_CCSD_o, first_CCSD_v)
+      call wf%get_CCSD_n_active(n_CCSD_o, n_CCSD_v)
 !
       last_CC2_o = first_CC2_o + n_CC2_o - 1
       last_CC2_v = first_CC2_v + n_CC2_v - 1
 !
       last_CCSD_o = first_CCSD_o + n_CCSD_o - 1
       last_CCSD_v = first_CCSD_v + n_CCSD_v - 1  
-!
-      offset = wf%active_space_t2am_offset(active_space)
 !
 !     Read Cholesky vector L_Ki_J
 !
@@ -1527,7 +1502,7 @@ contains
 !
                      aibj = index_packed(ai, bj)
 !
-                     wf%omega2(aibj + offset, 1) = wf%omega2(aibj + offset, 1) + omega_ab_ij(ab, ij)
+                     wf%omega2(aibj, 1) = wf%omega2(aibj, 1) + omega_ab_ij(ab, ij)
 !
                   endif
 !
@@ -1541,7 +1516,7 @@ contains
    end subroutine omega_mlccsd_b2_mlccsd
 !
 !
-  subroutine omega_mlccsd_c2_mlccsd(wf, active_space, x_lc_kd)
+  subroutine omega_mlccsd_c2_mlccsd(wf, x_lc_kd)
 !!
 !!    Omega C2 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2017
@@ -1554,7 +1529,6 @@ contains
       implicit none
 !
       class(mlccsd)            :: wf
-      integer(i15)             :: active_space
       real(dp), dimension(:,:) :: x_lc_kd
 !
 !     Integrals
@@ -1613,27 +1587,23 @@ contains
       integer(i15) :: last_CCSD_o 
       integer(i15) :: last_CCSD_v 
 !
-      integer(i15) :: offset ! first active virtual index
-!
 !     Calculate first/last indeces
 !
 !     CC2
 ! 
-      call wf%get_CC2_active_indices(first_CC2_o, first_CC2_v, active_space)
-      call wf%get_CC2_n_active(n_CC2_o, n_CC2_v, active_space)
+      call wf%get_CC2_active_indices(first_CC2_o, first_CC2_v)
+      call wf%get_CC2_n_active(n_CC2_o, n_CC2_v)
 !
 !     CCSD
 !
-      call wf%get_CCSD_active_indices(first_CCSD_o, first_CCSD_v, active_space)
-      call wf%get_CCSD_n_active(n_CCSD_o, n_CCSD_v, active_space)
+      call wf%get_CCSD_active_indices(first_CCSD_o, first_CCSD_v)
+      call wf%get_CCSD_n_active(n_CCSD_o, n_CCSD_v)
 !
       last_CC2_o = first_CC2_o + n_CC2_o - 1
       last_CC2_v = first_CC2_v + n_CC2_v - 1 
 !
       last_CCSD_o = first_CCSD_o + n_CCSD_o - 1
       last_CCSD_v = first_CCSD_v + n_CCSD_v - 1
-!
-      offset = wf%active_space_t2am_offset(active_space)
 !
 !     Construct g_Ki,aC ordered as g_Ki_Ca
 !
@@ -1882,7 +1852,7 @@ contains
 !
                      aibj=index_packed(ai, bj)
 !
-                     wf%omega2(aibj + offset, 1) = wf%omega2(aibj + offset, 1) + half*Z_ai_bj(ai, bj) + Z_ai_bj(aj, bi) &
+                     wf%omega2(aibj, 1) = wf%omega2(aibj, 1) + half*Z_ai_bj(ai, bj) + Z_ai_bj(aj, bi) &
                                                                + half*Z_ai_bj(bj, ai) + Z_ai_bj(bi, aj)
 !
                   endif
@@ -1897,7 +1867,7 @@ contains
    end subroutine omega_mlccsd_c2_mlccsd
 !
 !
-  subroutine omega_mlccsd_d2_mlccsd(wf, active_space, x_KC_LD)
+  subroutine omega_mlccsd_d2_mlccsd(wf, x_KC_LD)
 !!
 !!     Omega D2 
 !!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -1922,7 +1892,6 @@ contains
       implicit none 
 !
       class(mlccsd) :: wf 
-      integer(i15)  :: active_space
       real(dp), dimension(:,:) :: x_KC_LD
 !
 !     Batching variables 
@@ -1979,23 +1948,19 @@ contains
       integer(i15) :: last_CCSD_o
       integer(i15) :: last_CCSD_v
 !
-      integer(i15) :: offset 
-!
 !     Calculate first/last indeces
 ! 
-      call wf%get_CC2_active_indices(first_CC2_o, first_CC2_v, active_space)
-      call wf%get_CC2_n_active(n_CC2_o, n_CC2_v, active_space)
+      call wf%get_CC2_active_indices(first_CC2_o, first_CC2_v)
+      call wf%get_CC2_n_active(n_CC2_o, n_CC2_v)
 !
-      call wf%get_CCSD_active_indices(first_CCSD_o, first_CCSD_v, active_space)
-      call wf%get_CCSD_n_active(n_CCSD_o, n_CCSD_v, active_space)
+      call wf%get_CCSD_active_indices(first_CCSD_o, first_CCSD_v)
+      call wf%get_CCSD_n_active(n_CCSD_o, n_CCSD_v)
 !
       last_CC2_o = first_CC2_o + n_CC2_o - 1
       last_CC2_v = first_CC2_v + n_CC2_v - 1 
 !
       last_CCSD_o = first_CCSD_o + n_CCSD_o - 1
       last_CCSD_v = first_CCSD_v + n_CCSD_v - 1 
-!
-      offset = wf%active_space_t2am_offset(active_space)
 !
 !     :: Calculate the D2.3 term of omega ::
 !
@@ -2154,7 +2119,7 @@ contains
 !
                   if (ai .ge. bj) then
 !
-                     wf%omega2(aibj + offset, 1) = wf%omega2(aibj + offset, 1) + omega2_ai_bj(ai, bj) & 
+                     wf%omega2(aibj, 1) = wf%omega2(aibj, 1) + omega2_ai_bj(ai, bj) & 
                                                                + omega2_ai_bj(bj, ai)
 !
                   endif
@@ -2269,7 +2234,7 @@ contains
 !
                   if (ai .ge. bj) then
 !
-                     wf%omega2(aibj + offset,1) = wf%omega2(aibj + offset,1) + omega2_ai_bj(ai,bj) & 
+                     wf%omega2(aibj,1) = wf%omega2(aibj,1) + omega2_ai_bj(ai,bj) & 
                                                             + omega2_ai_bj(bj,ai)
 !
                   endif
@@ -2455,7 +2420,7 @@ contains
 !
                  if (ai .ge. bj) then
 !
-                    wf%omega2(aibj + offset, 1) = wf%omega2(aibj + offset, 1) + omega2_ai_bj(ai,bj) &
+                    wf%omega2(aibj, 1) = wf%omega2(aibj, 1) + omega2_ai_bj(ai,bj) &
                                                               + omega2_ai_bj(bj,ai)
 !
                  endif
@@ -2476,7 +2441,7 @@ contains
    end subroutine omega_mlccsd_d2_mlccsd
 !
 !
-   subroutine omega_mlccsd_e2_mlccsd(wf, active_space, x_kc_ld)
+   subroutine omega_mlccsd_e2_mlccsd(wf, x_kc_ld)
 !!
 !!     Omega E2
 !!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -2499,7 +2464,6 @@ contains
        implicit none 
 !
       class(mlccsd) :: wf 
-      integer(i15)  :: active_space
       real(dp), dimension(:,:) :: x_kc_ld
 !
 !     Indices 
@@ -2550,19 +2514,17 @@ contains
 !
 !     Calculate first/last indeces
 ! 
-      call wf%get_CC2_active_indices(first_CC2_o, first_CC2_v, active_space)
-      call wf%get_CC2_n_active(n_CC2_o, n_CC2_v, active_space)
+      call wf%get_CC2_active_indices(first_CC2_o, first_CC2_v)
+      call wf%get_CC2_n_active(n_CC2_o, n_CC2_v)
 !
-      call wf%get_CCSD_active_indices(first_CCSD_o, first_CCSD_v, active_space)
-      call wf%get_CCSD_n_active(n_CCSD_o, n_CCSD_v, active_space)
+      call wf%get_CCSD_active_indices(first_CCSD_o, first_CCSD_v)
+      call wf%get_CCSD_n_active(n_CCSD_o, n_CCSD_v)
 !
       last_CC2_o = first_CC2_o + n_CC2_o - 1
       last_CC2_v = first_CC2_v + n_CC2_v - 1 
 !
       last_CCSD_o = first_CCSD_o + n_CCSD_o - 1
-      last_CCSD_v = first_CCSD_v + n_CCSD_v - 1 
-!
-      offset = wf%active_space_t2am_offset(active_space)
+      last_CCSD_v = first_CCSD_v + n_CCSD_v - 1
 !
 !     :: Calculate the E2.1 term of omega ::
 !
@@ -2739,7 +2701,7 @@ contains
 !
                   if (ai .ge. bj) then
 !
-                     wf%omega2(aibj + offset,1) = wf%omega2(aibj + offset,1) + omega2_b_jai(b,jai) &
+                     wf%omega2(aibj,1) = wf%omega2(aibj,1) + omega2_b_jai(b,jai) &
                                                             + omega2_b_jai(a,ibj)
 !
                   endif
@@ -2933,7 +2895,7 @@ contains
 !
                   if (ai .ge. bj) then
 !
-                     wf%omega2(aibj + offset, 1) = wf%omega2(aibj + offset, 1) + omega2_aib_j(aib, j) & 
+                     wf%omega2(aibj, 1) = wf%omega2(aibj, 1) + omega2_aib_j(aib, j) & 
                                                                + omega2_aib_j(bja, i)
 !
                   endif

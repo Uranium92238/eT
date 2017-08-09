@@ -31,11 +31,11 @@ module mlccsd_class
 !
 !     ML-variables
 !
-      integer(i15), dimension(:,:), allocatable :: n_CCSD_o
-      integer(i15), dimension(:,:), allocatable :: n_CCSD_v
+      integer(i15) :: n_CCSD_o = 0
+      integer(i15) :: n_CCSD_v = 0
 !
-      integer(i15), dimension(:,:), allocatable :: first_CCSD_o
-      integer(i15), dimension(:,:), allocatable :: first_CCSD_v
+      integer(i15) :: first_CCSD_o = 0
+      integer(i15) :: first_CCSD_v = 0
 !
       real(dp), dimension(:,:), allocatable :: mo_coef_cc2_ccs ! MO coefficient matrix for mlccsd basis
       real(dp), dimension(:,:), allocatable :: T_o ! Occupied MO transformation matrix for mlccsd basis
@@ -47,9 +47,9 @@ module mlccsd_class
 !
 !     Amplitude variables
 !
-      integer(i15) :: n_t2am = 0                    ! Number of doubles amplitudes
+      integer(i15) :: n_t2am = 0                    ! Number CCSD of doubles amplitudes
+!
       real(dp), dimension(:,:), allocatable :: t2am ! Doubles amplitude vector
-      real(dp), dimension(:,:), allocatable :: x2am ! Doubles amplitude vector with s2 amplitudes
 !
 !     Schrödinger equation projection vector (the omega vector)
 ! 
@@ -63,7 +63,6 @@ module mlccsd_class
 !
 !     Initialization routines
 !
-      procedure :: initialize_orbital_info => initialize_orbital_info_mlccsd
       procedure :: initialize_amplitudes   => initialize_amplitudes_mlccsd
       procedure :: initialize_omega        => initialize_omega_mlccsd
 !
@@ -95,8 +94,6 @@ module mlccsd_class
       procedure :: get_CC2_n_active          => get_CC2_n_active_mlccsd
       procedure :: get_CCSD_active_indices   => get_CCSD_active_indices_mlccsd
       procedure :: get_CCSD_n_active         => get_CCSD_n_active_mlccsd
-      procedure :: set_n_total_active        => set_n_total_active_mlccsd
-      procedure :: active_space_t2am_offset  => active_space_t2am_offset_mlccsd
 !
 !     Omega routines
 !
@@ -128,9 +125,10 @@ module mlccsd_class
       procedure :: destruct_amplitudes               => destruct_amplitudes_mlccsd
       procedure :: destruct_double_amplitudes        => destruct_double_amplitudes_mlccsd
 !
-      !procedure :: save_amplitudes        => save_amplitudes_mlccsd
-      !procedure :: read_amplitudes        => read_amplitudes_mlccsd
-      !procedure :: read_double_amplitudes => read_double_amplitudes_mlccsd
+      procedure :: save_amplitudes                 => save_amplitudes_mlccsd
+      procedure :: read_amplitudes                 => read_amplitudes_mlccsd
+      procedure :: read_mlccsd_double_amplitudes   => read_mlccsd_double_amplitudes_mlccsd
+      procedure :: read_double_amplitudes          => read_double_amplitudes_mlccsd
 !
    end type mlccsd
 !
@@ -428,7 +426,7 @@ module mlccsd_class
 !     -::- Omega CC2 submodule interface -::-
 !     :::::::::::::::::::::::::::::::::::::::
 !
-      module subroutine get_mlccsd_x2am_mlccsd(wf, x_ia_jb, active_space)
+      module subroutine get_mlccsd_x2am_mlccsd(wf, x_ia_jb)
 !!
 !!
          implicit none
@@ -437,12 +435,10 @@ module mlccsd_class
 !
          real(dp), dimension(:,:) :: x_ia_jb
 !
-         integer :: active_space
-!
      end subroutine get_mlccsd_x2am_mlccsd
 !
 !
-    module subroutine omega_mlccsd_a1_mlccsd(wf, active_space, x_ib_jc)
+    module subroutine omega_mlccsd_a1_mlccsd(wf, x_ib_jc)
 !! 
 !!    Omega A1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -465,13 +461,12 @@ module mlccsd_class
       implicit none
 !
       class(mlccsd)            :: wf
-      integer(i15)             :: active_space ! Current active space
       real(dp), dimension(:,:) :: x_ib_jc
 !
       end subroutine omega_mlccsd_a1_mlccsd
 !
 !
-      module subroutine omega_mlccsd_b1_mlccsd(wf, active_space, x_ja_kb)
+      module subroutine omega_mlccsd_b1_mlccsd(wf, x_ja_kb)
 !! 
 !!       Omega B1
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -485,13 +480,12 @@ module mlccsd_class
          implicit none
 !
          class(mlccsd)            :: wf
-         integer(i15)             :: active_space
          real(dp), dimension(:,:) :: x_ja_kb  
 !
       end subroutine omega_mlccsd_b1_mlccsd
 !
 !
-      module subroutine omega_mlccsd_a2_mlccsd(wf, active_space, x_IC_JD)
+      module subroutine omega_mlccsd_a2_mlccsd(wf, x_IC_JD)
 !
 !        Omega A2 term: Omega A2 = sum_(cd)g_aC_bD * x_Ci_Dj
 !
@@ -509,13 +503,12 @@ module mlccsd_class
          implicit none
 !
          class(mlccsd)  :: wf
-         integer(i15) :: active_space
          real(dp), dimension(:,:) :: x_IC_JD
 !
       end subroutine omega_mlccsd_a2_mlccsd
 !
 !
-      module subroutine omega_mlccsd_b2_mlccsd(wf, active_space, x_kc_ld)
+      module subroutine omega_mlccsd_b2_mlccsd(wf, x_kc_ld)
 !!
 !!       Omega B2
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, 11 Mar 2017
@@ -529,13 +522,12 @@ module mlccsd_class
          implicit none
 !
          class(mlccsd) :: wf 
-         integer(i15)  :: active_space
          real(dp), dimension(:,:) :: x_kc_ld 
 !
       end subroutine omega_mlccsd_b2_mlccsd
 !
 !
-      module subroutine omega_mlccsd_c2_mlccsd(wf, active_space, x_lc_kd)
+      module subroutine omega_mlccsd_c2_mlccsd(wf, x_lc_kd)
 !!
 !!       Omega C2 
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2017
@@ -548,13 +540,12 @@ module mlccsd_class
          implicit none
 !
          class(mlccsd)            :: wf
-         integer(i15)             :: active_space
          real(dp), dimension(:,:) :: x_lc_kd
 !
       end subroutine omega_mlccsd_c2_mlccsd
 !
 !
-      module subroutine omega_mlccsd_d2_mlccsd(wf, active_space, x_KC_LD)
+      module subroutine omega_mlccsd_d2_mlccsd(wf, x_KC_LD)
 !!
 !!       Omega D2 
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -579,13 +570,12 @@ module mlccsd_class
          implicit none 
 !
          class(mlccsd) :: wf 
-         integer(i15)  :: active_space
          real(dp), dimension(:,:) :: x_KC_LD
 !
       end subroutine omega_mlccsd_d2_mlccsd
 !
 !
-      module subroutine omega_mlccsd_e2_mlccsd(wf, active_space, x_kc_ld)
+      module subroutine omega_mlccsd_e2_mlccsd(wf, x_kc_ld)
 !!
 !!     Omega E2
 !!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -608,7 +598,6 @@ module mlccsd_class
        implicit none 
 !
       class(mlccsd) :: wf 
-      integer(i15)  :: active_space
       real(dp), dimension(:,:) :: x_kc_ld
 !
    end subroutine omega_mlccsd_e2_mlccsd
@@ -689,6 +678,28 @@ module mlccsd_class
    end interface
 !
 !
+   interface
+!
+!
+      module subroutine jacobian_mlcc2_b2_mlccsd(wf, rho_ai_bj, c_ai_bj)
+!!
+!!       Jacobian tem B2
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
+!!
+!!
+         implicit none
+!  
+         class(mlccsd) :: wf
+!
+         real(dp), dimension(:,:)   :: c_ai_bj 
+         real(dp), dimension(:,:)   :: rho_ai_bj
+!
+      end subroutine jacobian_mlcc2_b2_mlccsd
+!
+!
+   end interface
+!
+!
 contains
 !
 !
@@ -741,10 +752,6 @@ contains
 !
 !        Do full space CCSD calculation
 !
-         wf%n_active_spaces = 1
-!
-         call wf%initialize_orbital_info
-!
          wf%n_CCSD_o = wf%n_o
          wf%n_CCSD_v = wf%n_v
 !
@@ -756,19 +763,12 @@ contains
 !
       endif
 !
-      call wf%set_n_total_active
-!
 !     Initialize amplitudes and associated attributes
 !
 !     Set number of amplitudes for CCSD active space
 !
-      do active_space = 1, wf%n_active_spaces
-!
-         wf%n_t2am = wf%n_t2am &
-                  + ((wf%n_CCSD_v(active_space,1))*(wf%n_CCSD_o(active_space,1)))&
-                   *((wf%n_CCSD_v(active_space,1) )*(wf%n_CCSD_o(active_space,1))+1)/2
-! 
-      enddo
+      wf%n_t2am = ((wf%n_CCSD_v)*(wf%n_CCSD_o))*((wf%n_CCSD_v )*(wf%n_CCSD_o)+1)/2
+
 !
       call wf%initialize_amplitudes
       call wf%initialize_omega
@@ -797,58 +797,6 @@ contains
    end subroutine init_mlccsd
 !
 !
-   subroutine initialize_orbital_info_mlccsd(wf)
-!!
-!!    Initialize orbital information
-!!    Written by Sarai D. Folkestad, June 2017
-!!
-      implicit none
-!
-      class(mlccsd) :: wf
-!
-!     :: CC2 ::
-!
-      if (wf%mlcc_settings%CCS .and. wf%mlcc_settings%CC2) then ! CCS is inactive method
-!
-         if (.not. allocated(wf%n_CC2_o)) call allocator_int(wf%n_CC2_o, wf%n_active_spaces, 1)
-         if (.not. allocated(wf%n_CC2_v)) call allocator_int(wf%n_CC2_v, wf%n_active_spaces, 1)
-!
-         if (.not. allocated(wf%first_CC2_o)) call allocator_int(wf%first_CC2_o, wf%n_active_spaces, 1)
-         if (.not. allocated(wf%first_CC2_v)) call allocator_int(wf%first_CC2_v, wf%n_active_spaces, 1)
-!
-      elseif(.not. wf%mlcc_settings%CCS) then ! CC2 is inactive method
-!
-         if (.not. allocated(wf%n_CC2_o)) call allocator_int(wf%n_CC2_o, 1, 1)
-         if (.not. allocated(wf%n_CC2_v)) call allocator_int(wf%n_CC2_v, 1, 1)
-!
-         if (.not. allocated(wf%first_CC2_o)) call allocator_int(wf%first_CC2_o, 1, 1)
-         if (.not. allocated(wf%first_CC2_v)) call allocator_int(wf%first_CC2_v, 1, 1)
-!
-      endif
-!      
-      wf%n_CC2_o  = 0
-      wf%n_CC2_v  = 0
-!
-      wf%first_CC2_o  = 0
-      wf%first_CC2_v  = 0
-!
-!     :: CCSD ::
-!
-      if (.not. allocated(wf%first_CCSD_o)) call allocator_int(wf%first_CCSD_o, wf%n_active_spaces, 1)
-      if (.not. allocated(wf%first_CCSD_v)) call allocator_int(wf%first_CCSD_v, wf%n_active_spaces, 1) 
-!       
-      if (.not. allocated(wf%n_CCSD_o)) call allocator_int(wf%n_CCSD_o, wf%n_active_spaces, 1)
-      if (.not. allocated(wf%n_CCSD_v)) call allocator_int(wf%n_CCSD_v, wf%n_active_spaces, 1) 
-!
-      wf%n_CCSD_o = 0
-      wf%n_CCSD_v = 0
-!
-      wf%first_CCSD_o = 0
-      wf%first_CCSD_v = 0
-!
-   end subroutine initialize_orbital_info_mlccsd
-!
-!
    subroutine initialize_amplitudes_mlccsd(wf)
 !!
 !!     Initialize Amplitudes (MLCCSD)
@@ -861,20 +809,13 @@ contains
 !
       class(mlccsd) :: wf
 !
-      integer(i15) :: active_space
-!
 !     Allocate the doubles amplitudes and set to zero
 !
       wf%n_t1am = (wf%n_o)*(wf%n_v)
       if (.not. allocated(wf%t1am)) call allocator(wf%t1am, wf%n_v, wf%n_o)
       wf%t1am = zero
 !
-      wf%n_t2am = zero
-!
-      do active_space = 1, wf%n_active_spaces
-         wf%n_t2am = wf%n_t2am + (wf%n_CCSD_v(active_space,1))*(wf%n_CCSD_o(active_space,1))&
-                  *((wf%n_CCSD_v(active_space,1))*(wf%n_CCSD_o(active_space,1))+1)/2
-      enddo
+      wf%n_t2am = ((wf%n_CCSD_v)*(wf%n_CCSD_o))*((wf%n_CCSD_v )*(wf%n_CCSD_o)+1)/2
 !
       if (.not. allocated(wf%t2am)) call allocator(wf%t2am, wf%n_t2am, 1)
       wf%t2am = zero
@@ -900,8 +841,6 @@ contains
       integer(i15) :: i = 0, j = 0, a = 0, b = 0
       integer(i15) :: ai = 0, bj = 0, ia = 0, jb = 0, aibj = 0 
 !
-      integer(i15) :: offset
-!
 !     Active space variables
 !
       integer(i15) :: n_active_o = 0, n_active_v = 0
@@ -909,91 +848,80 @@ contains
       integer(i15) :: first_active_v ! first active virtual index
       integer(i15) :: last_active_o ! first active occupied index 
       integer(i15) :: last_active_v ! first active virtual index
-      integer(i15) :: active_space ! first active virtual index
 !
-      do active_space = 1, wf%n_active_spaces
-!
-!        Get offset for t2 vector
-!
-         offset = wf%active_space_t2am_offset(active_space)
-!
-!        Calculate first/last indeces
+!     Calculate first/last indeces
 ! 
-         call wf%get_CCSD_active_indices(first_active_o, first_active_v, active_space)
+      call wf%get_CCSD_active_indices(first_active_o, first_active_v)
+      call wf%get_CCSD_n_active(n_active_o, n_active_v)
 !
-         n_active_o = wf%n_CCSD_o(active_space, 1)
-         n_active_v = wf%n_CCSD_v(active_space, 1)
+      last_active_o = first_active_o + n_active_o - 1
+      last_active_v = first_active_v + n_active_v - 1 
 !
-         last_active_o = first_active_o + n_active_o - 1
-         last_active_v = first_active_v + n_active_v - 1 
+!     Allocate L_ia_J and g_ia_jb
 !
-!        Allocate L_ia_J and g_ia_jb
+      call allocator(L_ai_J, (n_active_o)*(n_active_v), wf%n_J)
+      call allocator(g_ai_bj, (n_active_o)*(n_active_v), (n_active_o)*(n_active_v))
 !
-         call allocator(L_ai_J, (n_active_o)*(n_active_v), wf%n_J)
-         call allocator(g_ai_bj, (n_active_o)*(n_active_v), (n_active_o)*(n_active_v))
+      L_ai_J = zero
+      g_ai_bj = zero
 !
-         L_ai_J = zero
-         g_ai_bj = zero
+!     Get the Cholesky IA vector 
 !
-!        Get the Cholesky IA vector 
+      call wf%get_cholesky_ai(L_ai_J, first_active_v, last_active_v, first_active_o, last_active_o)
 !
-         call wf%get_cholesky_ai(L_ai_J, first_active_v, last_active_v, first_active_o, last_active_o)
+!     Calculate g_ia_jb = g_iajb
 !
-!        Calculate g_ia_jb = g_iajb
+      call dgemm('N','T',                 &
+                  n_active_o*n_active_v,  & 
+                  n_active_o*n_active_v,  &
+                  wf%n_J,                 &
+                  one,                    &
+                  L_ai_J,                 &
+                  n_active_o*n_active_v,  &
+                  L_ai_J,                 &
+                  n_active_o*n_active_v,  &
+                  zero,                   &
+                  g_ai_bj,                &
+                  n_active_o*n_active_v)
 !
-         call dgemm('N','T',                 &
-                     n_active_o*n_active_v,  & 
-                     n_active_o*n_active_v,  &
-                     wf%n_J,                 &
-                     one,                    &
-                     L_ai_J,                 &
-                     n_active_o*n_active_v,  &
-                     L_ai_J,                 &
-                     n_active_o*n_active_v,  &
-                     zero,                   &
-                     g_ai_bj,                &
-                     n_active_o*n_active_v)
+!     Set the doubles amplitudes
 !
-!        Set the doubles amplitudes
+      do i = 1, n_active_o
+         do a = 1, n_active_v
 !
-         do i = 1, n_active_o
-            do a = 1, n_active_v
+            ai = index_two(a, i, n_active_v)
 !
-               ai = index_two(a, i, n_active_v)
+            do j = 1, n_active_o
+               do b = 1, n_active_v
+!     
+                  bj = index_two(b, j, n_active_v)
 !
-               do j = 1, n_active_o
-                  do b = 1, n_active_v
-!        
-                     bj = index_two(b, j, n_active_v)
+!                 Set the doubles amplitudes
 !
-!                    Set the doubles amplitudes
+                  if (ai .le. bj) then ! To avoid setting the same element twice
 !
-                     if (ai .le. bj) then ! To avoid setting the same element twice
+                     aibj = index_packed(ai,bj)
 !
-                        aibj = index_packed(ai,bj)
+                     wf%t2am(aibj, 1) = - g_ai_bj(ai,bj)/(wf%fock_diagonal(wf%n_o + a + first_active_v - 1, 1) + &
+                                                            wf%fock_diagonal(wf%n_o + b + first_active_v - 1, 1) - &
+                                                            wf%fock_diagonal(i + first_active_o - 1, 1) - &
+                                                            wf%fock_diagonal(j + first_active_o - 1, 1))
 !
-                        wf%t2am(aibj + offset, 1) = - g_ai_bj(ai,bj)/(wf%fock_diagonal(wf%n_o + a + first_active_v - 1, 1) + &
-                                                               wf%fock_diagonal(wf%n_o + b + first_active_v - 1, 1) - &
-                                                               wf%fock_diagonal(i + first_active_o - 1, 1) - &
-                                                               wf%fock_diagonal(j + first_active_o - 1, 1))
+                  endif
 !
-                     endif
-!
-                  enddo
                enddo
             enddo
          enddo
-!
-!        Deallocations
-!
-         call deallocator(L_ai_J, (wf%n_o)*(wf%n_v), (wf%n_J))
-         call deallocator(g_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) 
-!
       enddo
+!
+!     Deallocations
+!
+      call deallocator(L_ai_J, (n_active_o)*(n_active_v), wf%n_J)
+      call deallocator(g_ai_bj, (n_active_o)*(n_active_v), (n_active_o)*(n_active_v)) 
 !
    end subroutine construct_perturbative_doubles_mlccsd
 !
-   subroutine get_CCSD_active_indices_mlccsd(wf, first_o, first_v, active_space)
+   subroutine get_CCSD_active_indices_mlccsd(wf, first_o, first_v)
 !!
 !!    Get CC2 active indices,
 !!    Written by Sarai D. Folkestad, June 2017
@@ -1006,69 +934,14 @@ contains
    class(mlccsd) :: wf
    integer(i15) :: first_o
    integer(i15) :: first_v
-   integer(i15) :: active_space
 ! 
-   first_o = wf%first_CCSD_o(active_space, 1)
-   first_v = wf%first_CCSD_v(active_space, 1)
+   first_o = wf%first_CCSD_o
+   first_v = wf%first_CCSD_v
 !
    end subroutine get_CCSD_active_indices_mlccsd
 !
-   subroutine set_n_total_active_mlccsd(wf)
-!!
-!!
-      implicit none
-!  
-      class(mlccsd) :: wf
 !
-      integer(i15) :: active_space
-!
-      wf%n_total_active_o = 0
-      wf%n_total_active_v = 0
-!
-      if (wf%mlcc_settings%CCS) then !CCS is inactive method
-!
-         do active_space = 1, wf%n_active_spaces
-            wf%n_total_active_o = wf%n_total_active_o + wf%n_CC2_o(active_space, 1) + wf%n_CCSD_o(active_space, 1)
-            wf%n_total_active_v = wf%n_total_active_v + wf%n_CC2_v(active_space, 1) + wf%n_CCSD_v(active_space, 1)
-         enddo
-!
-      else ! CC2 is inactive method
-!
-          wf%n_total_active_o = wf%n_o
-          wf%n_total_active_v = wf%n_v
-!
-      endif 
-!
-   end subroutine set_n_total_active_mlccsd
-!
-!
-   function active_space_t2am_offset_mlccsd(wf, active_space)
-!!
-!!
-      implicit none
-!
-      class(mlccsd) :: wf
-!
-      integer(i15) :: active_space
-!
-      integer(i15) :: active_space_t2am_offset_mlccsd
-!
-      integer(i15) :: i = 0
-!
-      active_space_t2am_offset_mlccsd = 0
-!
-      do i = 1, active_space - 1
-!
-         active_space_t2am_offset_mlccsd = active_space_t2am_offset_mlccsd &
-                                       + ((wf%n_CCSD_v(active_space,1))*(wf%n_CCSD_o(active_space,1)))&
-                                       *((wf%n_CCSD_v(active_space,1) )*(wf%n_CCSD_o(active_space,1))+1)/2
-!
-      enddo
-!
-   end function active_space_t2am_offset_mlccsd
-!
-!
-   subroutine get_CC2_active_indices_mlccsd(wf, first_o, first_v, active_space)
+   subroutine get_CC2_active_indices_mlccsd(wf, first_o, first_v)
 !!
 !!    Get CC2 active indices,
 !!    Written by Sarai D. Folkestad, June 2017
@@ -1081,15 +954,14 @@ contains
       class(mlccsd) :: wf
       integer(i15) :: first_o
       integer(i15) :: first_v
-      integer(i15) :: active_space
 !
-      first_o = wf%first_CCSD_o(active_space, 1)
-      first_v = wf%first_CCSD_v(active_space, 1)
+      first_o = wf%first_CCSD_o
+      first_v = wf%first_CCSD_v
 !
    end subroutine get_CC2_active_indices_mlccsd
 !
 !
-   subroutine get_CC2_n_active_mlccsd(wf, n_active_o, n_active_v, active_space)
+   subroutine get_CC2_n_active_mlccsd(wf, n_active_o, n_active_v)
 !!
 !!    Get CC2 active indices,
 !!    Written by Sarai D. Folkestad, June 2017
@@ -1102,15 +974,14 @@ contains
       class(mlccsd) :: wf
       integer(i15) :: n_active_o
       integer(i15) :: n_active_v
-      integer(i15) :: active_space
 !
-      n_active_o = wf%n_CC2_o(active_space, 1) + wf%n_CCSD_o(active_space, 1)
-      n_active_v = wf%n_CC2_v(active_space, 1) + wf%n_CCSD_v(active_space, 1)
+      n_active_o = wf%n_CC2_o + wf%n_CCSD_o
+      n_active_v = wf%n_CC2_v + wf%n_CCSD_v
 !
    end subroutine get_CC2_n_active_mlccsd
 !
 !
-   subroutine get_CCSD_n_active_mlccsd(wf, n_active_o, n_active_v, active_space)
+   subroutine get_CCSD_n_active_mlccsd(wf, n_active_o, n_active_v)
 !!
 !!    Get CC2 active indices,
 !!    Written by Sarai D. Folkestad, June 2017
@@ -1123,10 +994,9 @@ contains
       class(mlccsd) :: wf
       integer(i15) :: n_active_o
       integer(i15) :: n_active_v
-      integer(i15) :: active_space
 !
-      n_active_o = wf%n_CCSD_o(active_space, 1)
-      n_active_v = wf%n_CCSD_v(active_space, 1)
+      n_active_o = wf%n_CCSD_o
+      n_active_v = wf%n_CCSD_v
 !
    end subroutine get_CCSD_n_active_mlccsd
 !
@@ -1165,8 +1035,6 @@ contains
       integer(i15) :: first_active_v ! first active virtual index
       integer(i15) :: last_active_o ! first active occupied index 
       integer(i15) :: last_active_v ! first active virtual index
-      integer(i15) :: active_space ! first active virtual index
-      integer(i15) :: offset
 !
 !     Allocate the Cholesky vector L_ia_J = L_ia^J and set to zero 
 !
@@ -1234,50 +1102,42 @@ contains
       enddo
 !
 !     t2 amplitude contribution to the energy
-!     
-      do active_space = 1, wf%n_active_spaces
 !
-!        Get offset for t2 vector
-!
-         offset = wf%active_space_t2am_offset(active_space)
-!
-!        Calculate first/last indeces
+!     Calculate first/last indeces
 ! 
-         call wf%get_CCSD_active_indices(first_active_o, first_active_v, active_space)
-         call wf%get_CC2_n_active(n_active_o, n_active_v, active_space)
+      call wf%get_CCSD_active_indices(first_active_o, first_active_v)
+      call wf%get_CC2_n_active(n_active_o, n_active_v)
 !
-         call allocator(x_ia_jb, n_active_v*n_active_o, n_active_v*n_active_o)
-         call wf%get_mlccsd_x2am(x_ia_jb, active_space)
+      call allocator(x_ia_jb, n_active_v*n_active_o, n_active_v*n_active_o)
+      call wf%get_mlccsd_x2am(x_ia_jb)
 !
-         do i = 1, n_active_o
-            do a = 1, n_active_v
+      do i = 1, n_active_o
+         do a = 1, n_active_v
 !
-               ia = index_two(i, a, n_active_o)
-               ia_full = index_two(i + first_active_o - 1, a + first_active_v - 1, wf%n_o)
+            ia = index_two(i, a, n_active_o)
+            ia_full = index_two(i + first_active_o - 1, a + first_active_v - 1, wf%n_o)
 !
-               do j = 1, n_active_o
+            do j = 1, n_active_o
 !
-                  ja = index_two(j + first_active_o - 1, a + first_active_v - 1, wf%n_o)
+               ja = index_two(j + first_active_o - 1, a + first_active_v - 1, wf%n_o)
 !
-                  do b = 1, n_active_v
+               do b = 1, n_active_v
 !
-                     jb_full = index_two(j + first_active_o - 1, b + first_active_v - 1, wf%n_o)
-                     jb = index_two(j , b , n_active_o)
-                     ib = index_two(i + first_active_o - 1, b + first_active_v - 1, wf%n_o)
+                  jb_full = index_two(j + first_active_o - 1, b + first_active_v - 1, wf%n_o)
+                  jb = index_two(j , b , n_active_o)
+                  ib = index_two(i + first_active_o - 1, b + first_active_v - 1, wf%n_o)
 !
 
 !
-!                    Add the correlation energy from the double amplitudes
+!                 Add the correlation energy from the double amplitudes
 !
-                     wf%energy = wf%energy +              & 
-                                    (x_ia_jb(ia, jb))*    &
-                                    (two*g_ia_jb(ia_full, jb_full) - g_ia_jb(ib,ja))
+                  wf%energy = wf%energy +              & 
+                                 (x_ia_jb(ia, jb))*    &
+                                 (two*g_ia_jb(ia_full, jb_full) - g_ia_jb(ib,ja))
 !
-                  enddo
                enddo
             enddo
          enddo
-!
       enddo
 !
 !     Deallocate g_ia_jb
@@ -1361,104 +1221,202 @@ contains
    end subroutine destruct_amplitudes_mlccsd
 !
 !
-!   subroutine save_amplitudes_mlccsd(wf)
-!!!
-!!!    Save Amplitudes (CCSD)
-!!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
-!!!
-!!!    Store the amplitudes to disk (T1AM, T2AM)
-!!!
-!      implicit none 
+   subroutine save_amplitudes_mlccsd(wf)
 !!
-!      class(mlccsd) :: wf
+!!    Save Amplitudes (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
 !!
-!      integer(i15) :: unit_t1am = -1
-!      integer(i15) :: unit_t2am = -1
+!!    Store the amplitudes to disk (T1AM, T2AM)
 !!
-!!     Open amplitude files
+      implicit none 
+!
+      class(mlccsd) :: wf
+!
+      integer(i15) :: unit_x1am = -1
+      integer(i15) :: unit_x2am = -1
+      integer(i15) :: unit_t2am = -1
+      integer(i15) :: n_active_o, n_active_v
+!
+      integer(i15) ::  i = 0, a = 0, b = 0, j = 0
+      integer(i15) ::  ia = 0, ai = 0, jb = 0, bj = 0
+      integer(i15) ::  aibj = 0
+!
+      real(dp), dimension(:,:), allocatable :: x_ia_jb
+!
+!     Open amplitude files
+!
+      call generate_unit_identifier(unit_x1am)
+      call generate_unit_identifier(unit_x2am)
+!
+      open(unit_x1am, file='t1am', status='unknown', form='unformatted')
+      open(unit_t2am, file='t2am', status='unknown', form='unformatted')
+      open(unit_x2am, file='x2am', status='unknown', form='unformatted')
+!
+      rewind(unit_x1am)
+      rewind(unit_x2am)
+      rewind(unit_t2am)
+!
+!     Write amplitudes to files
+!
+      write(unit_x1am) wf%t1am
+      write(unit_t2am) wf%t2am
+!
+      call wf%get_CC2_n_active(n_active_o, n_active_v)
+      wf%n_x2am = (n_active_v)*(n_active_o)*((n_active_v)*(n_active_o)+1)/2
+!
+      call allocator(x_ia_jb, (n_active_v)*(n_active_o), (n_active_v)*(n_active_o)) 
+      call wf%get_mlccsd_x2am(x_ia_jb)
+!
+!     Reorder and pack in
+!
+      call allocator(wf%x2am, wf%n_x2am, 1)
+!
+      do i = 1, n_active_o
+         do a = 1, n_active_v
+            ai = index_two(a, i, n_active_v)
+            ia = index_two(i, a, n_active_o)
+            do j = 1, n_active_o
+               do b = 1, n_active_v
+!
+                  bj = index_two(b, j, n_active_v)
+                  jb = index_two(j, b, n_active_o)
+!
+                  aibj = index_packed(ai, bj)
+!
+                  wf%x2am(aibj, 1) = x_ia_jb(ia, jb)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      call deallocator(x_ia_jb, (n_active_v)*(n_active_o), (n_active_v)*(n_active_o)) 
+!
+      write(unit_x2am) wf%x2am
+      call deallocator(wf%x2am, wf%n_x2am, 1)
+!
+!     Close amplitude files
+!
+      close(unit_x1am)
+      close(unit_x2am)
+      close(unit_t2am)
+!
+   end subroutine save_amplitudes_mlccsd
+!
+   subroutine read_amplitudes_mlccsd(wf)
 !!
-!      call generate_unit_identifier(unit_t1am)
-!      call generate_unit_identifier(unit_t2am)
+!!    Read Amplitudes (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
 !!
-!      open(unit_t1am, file='t1am', status='unknown', form='unformatted')
-!      open(unit_t2am, file='t2am', status='unknown', form='unformatted')
+!!    Reads the amplitudes from disk (T1AM)
 !!
-!      rewind(unit_t1am)
-!      rewind(unit_t2am)
+      implicit none 
+!
+      class(mlccsd) :: wf
+!
+      call wf%read_single_amplitudes
+      call wf%read_mlccsd_double_amplitudes
+!
+   end subroutine read_amplitudes_mlccsd
+!
+   subroutine read_mlccsd_double_amplitudes_mlccsd(wf)
 !!
-!!     Write amplitudes to files
+!!    Read Amplitudes (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
 !!
-!      write(unit_t1am) wf%t1am 
-!      write(unit_t2am) wf%t2am
+!!    Reads the amplitudes from disk (T1AM, T2AM)
 !!
-!!     Close amplitude files
-!!
-!      close(unit_t1am)
-!      close(unit_t2am)
-!!
-!   end subroutine save_amplitudes_mlccsd
-!!
-!   subroutine read_amplitudes_mlccsd(wf)
-!!!
-!!!    Read Amplitudes (CCS)
-!!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
-!!!
-!!!    Reads the amplitudes from disk (T1AM)
-!!!
-!      implicit none 
-!!
-!      class(mlccsd) :: wf
-!!
-!      call wf%read_single_amplitudes
-!      call wf%read_double_amplitudes
-!!
-!   end subroutine read_amplitudes_mlccsd
-!!
-!   subroutine read_double_amplitudes_mlccsd(wf)
-!!!
-!!!    Read Amplitudes (CCSD)
-!!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
-!!!
-!!!    Reads the amplitudes from disk (T1AM, T2AM)
-!!!
-!      implicit none 
-!!
-!      class(mlccsd) :: wf
-!!
-!      integer(i15) :: unit_t2am = -1 
-!!
-!      logical :: file_exists = .false.
-!!
-!!     Check to see whether file exists
-!!
-!      inquire(file='t2am',exist=file_exists)
-!!
-!      if (file_exists) then 
-!!
-!!        Open amplitude files if they exist
-!!
-!         call generate_unit_identifier(unit_t2am)
-!!
-!         open(unit_t2am, file='t2am', status='unknown', form='unformatted')
-!!
-!         rewind(unit_t2am)
-!!
-!!        Read from file & close
-!!
-!         wf%t2am = zero
-!!
-!         read(unit_t2am) wf%t2am
-!!
-!         close(unit_t2am)
-!!
-!      else
-!!
-!         write(unit_output,'(t3,a)') 'Error: amplitude files do not exist.'
-!         stop
-!!
-!      endif
-!!
-!   end subroutine read_double_amplitudes_mlccsd
+      implicit none 
+!
+      class(mlccsd) :: wf
+!
+      integer(i15) :: unit_x2am = -1 
+      integer(i15) :: n_active_v, n_active_o 
+!
+      logical :: file_exists = .false.
+!
+!     Check to see whether file exists
+!
+      inquire(file='x2am',exist=file_exists)
+!
+      if (file_exists) then 
+!
+!        Open amplitude files if they exist
+!
+         call generate_unit_identifier(unit_x2am)
+!
+         open(unit_x2am, file='x2am', status='unknown', form='unformatted')
+!
+         rewind(unit_x2am)
+!
+!        Read from file & close
+!
+         call wf%get_CC2_n_active(n_active_o, n_active_v)
+         wf%n_x2am = (n_active_v)*(n_active_o)*((n_active_v)*(n_active_o)+1)/2
+!
+         if (.not. allocated(wf%x2am)) call allocator(wf%x2am, wf%n_x2am, 1)
+!
+         read(unit_x2am) wf%x2am
+!
+         close(unit_x2am)
+!
+      else
+!
+         write(unit_output,'(t3,a)') 'Error: amplitude files do not exist.'
+         stop
+!
+      endif
+!
+   end subroutine read_mlccsd_double_amplitudes_mlccsd
 !
 !
+   subroutine read_double_amplitudes_mlccsd(wf)
+!!
+!!    Read Amplitudes (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
+!!
+!!    Reads the amplitudes from disk (T1AM, T2AM)
+!!
+      implicit none 
+!
+      class(mlccsd) :: wf
+!
+      integer(i15) :: unit_t2am = -1 
+      integer(i15) :: n_active_v, n_active_o 
+!
+      logical :: file_exists = .false.
+!
+!     Check to see whether file exists
+!
+      inquire(file='t2am',exist=file_exists)
+!
+      if (file_exists) then 
+!
+!        Open amplitude files if they exist
+!
+         call generate_unit_identifier(unit_t2am)
+!
+         open(unit_t2am, file='t2am', status='unknown', form='unformatted')
+!
+         rewind(unit_t2am)
+!
+!        Read from file & close
+!
+         call wf%get_CCSD_n_active(n_active_o, n_active_v)
+         wf%n_t2am = (n_active_v)*(n_active_o)*((n_active_v)*(n_active_o)+1)/2
+!
+         if (.not. allocated(wf%t2am)) call allocator(wf%t2am, wf%n_t2am, 1)
+!
+         read(unit_t2am) wf%t2am
+!
+         close(unit_t2am)
+!
+      else
+!
+         write(unit_output,'(t3,a)') 'Error: amplitude files do not exist.'
+         stop
+!
+      endif
+!
+   end subroutine read_double_amplitudes_mlccsd
 end module mlccsd_class

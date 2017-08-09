@@ -29,32 +29,32 @@ module mlcc2_class
 !
    type, extends(ccs) :: mlcc2
 !
-      integer(i15) :: n_active_spaces
+!     ML variables
 !
-      integer(i15)                              :: n_CCS_o = 0
-      integer(i15)                              :: n_CCS_v = 0
+      integer(i15) :: n_CCS_o = 0
+      integer(i15) :: n_CCS_v = 0
 !
-      integer(i15)                              :: first_CCS_o = 0
-      integer(i15)                              :: first_CCS_v = 0
+      integer(i15) :: first_CCS_o = 0
+      integer(i15) :: first_CCS_v = 0
 !          
-      integer(i15), dimension(:,:), allocatable :: n_CC2_o
-      integer(i15), dimension(:,:), allocatable :: n_CC2_v
+      integer(i15) :: n_CC2_o = 0
+      integer(i15) :: n_CC2_v = 0
 !
-      integer(i15), dimension(:,:), allocatable :: first_CC2_o
-      integer(i15), dimension(:,:), allocatable :: first_CC2_v
+      integer(i15) :: first_CC2_o = 0
+      integer(i15) :: first_CC2_v = 0
 !
-      integer(i15) :: n_s2am = 0 ! Number of CC2 double amplitudes, only needed for excited state calculation.
+!     Excited state variables
 !
-      integer(i15) :: n_total_active_o = 0 
-      integer(i15) :: n_total_active_v = 0
-! 
+      integer(i15)                           :: n_x2am = 0 
+      real(dp), dimension(:,:), allocatable  :: x2am 
+!
    contains
 !
 !     Initialization and driver routines
 !
-      procedure :: init                    => init_mlcc2
-      procedure :: initialize_orbital_info => initialize_orbital_info_mlcc2
-      procedure :: destruct_orbital_info   => destruct_orbital_info_mlcc2
+      procedure :: init => init_mlcc2
+!
+!     Orbital partitioning
 !
       procedure :: orbital_partitioning          => orbital_partitioning_mlcc2
       procedure :: cholesky_decomposition        => cholesky_decomposition_mlcc2
@@ -62,13 +62,19 @@ module mlcc2_class
       procedure :: cholesky_orbitals             => cholesky_orbitals_mlcc2
       procedure :: cholesky_orbital_constructor  => cholesky_orbital_constructor_mlcc2
 !
-      procedure :: cnto_orbital_drv     => cnto_orbital_drv_mlcc2
+      procedure :: cnto_orbital_drv => cnto_orbital_drv_mlcc2
 !
 !     ML helper routines
 !
       procedure :: get_CC2_active_indices => get_CC2_active_indices_mlcc2
       procedure :: get_CC2_n_active       => get_CC2_n_active_mlcc2
-      procedure :: set_n_total_active     => set_n_total_active_mlcc2
+!
+!     Amplitude routines
+!
+      procedure :: save_amplitudes              => save_amplitudes_mlcc2
+      procedure :: read_amplitudes              => read_amplitudes_mlcc2
+      procedure :: read_cc2_double_amplitudes   => read_cc2_double_amplitudes_mlcc2
+      procedure :: destruct_x2am                => destruct_x2am_mlcc2
 !
 !     Omega
 !
@@ -76,6 +82,8 @@ module mlcc2_class
       procedure :: omega_mlcc2_b1   => omega_mlcc2_b1_mlcc2
       procedure :: construct_omega  => construct_omega_mlcc2
       procedure :: get_s2am         => get_s2am_mlcc2
+!
+!     Ground state energy calculation
 !
       procedure :: calc_energy => calc_energy_mlcc2
 !
@@ -158,7 +166,7 @@ module mlcc2_class
          real(dp), dimension(wf%n_ao, wf%n_ao)              :: cholesky_vectors
          logical                                            :: selection  
          integer(i15), dimension( n_active_aos,1), optional :: active_ao_index_list
-   !
+!
       end subroutine cholesky_decomposition_mlcc2
 !
 !
@@ -208,21 +216,7 @@ module mlcc2_class
       end subroutine cholesky_orbital_constructor_mlcc2
 !
 !
-      module function get_number_of_active_spaces(unit_cholesky_decomp)
-!!
-!!       Get number of active spaces
-!!       Written by Sarai D. Folkestad June 2017
-!!
-!!       Reads cholesky.inp, and returns the number of active spaces for the mlcc calculation.
-!!
-         implicit none
-!
-         integer(i15) :: get_number_of_active_spaces
-         integer(i15) :: unit_cholesky_decomp
-!
-      end function get_number_of_active_spaces
-!
-      module function get_number_of_active_atoms(unit_cholesky_decomp, active_space, ml_level)
+      module function get_number_of_active_atoms(unit_cholesky_decomp, ml_level)
 !!
 !!       Get number of active atoms
 !!       Written by Sarai D. Folkestad June 2017
@@ -234,12 +228,11 @@ module mlcc2_class
 !  
          integer(i15)      :: get_number_of_active_atoms
          integer(i15)      :: unit_cholesky_decomp
-         integer(i15)      :: active_space
          character(len=5)  :: ml_level
 !
       end function get_number_of_active_atoms
 !
-      module subroutine get_active_atoms(unit_cholesky_decomp, active_atoms, n_active_atoms, active_space, ml_level)
+      module subroutine get_active_atoms(unit_cholesky_decomp, active_atoms, n_active_atoms, ml_level)
 !!
 !!       Get active atoms
 !!       Written by Sarai D. Folkestad June 2017
@@ -250,7 +243,7 @@ module mlcc2_class
          implicit none
 !
          integer(i15)      :: unit_cholesky_decomp
-         integer(i15)      :: active_space, n_active_atoms
+         integer(i15)      :: n_active_atoms
          character(len=5)  :: ml_level
 !
          integer(i15), dimension(n_active_atoms,1) :: active_atoms
@@ -354,7 +347,7 @@ module mlcc2_class
 !     -::- Omega submodule interface -::-
 !     :::::::::::::::::::::::::::::::::::
 !
-      module subroutine omega_mlcc2_a1_mlcc2(wf, active_space)
+      module subroutine omega_mlcc2_a1_mlcc2(wf)
 ! 
 !        Omega A1
 !        Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -371,12 +364,11 @@ module mlcc2_class
          implicit none
 !
          class(mlcc2)   :: wf
-         integer(i15) :: active_space
 !
       end subroutine omega_mlcc2_a1_mlcc2
 !
 !
-      module subroutine omega_mlcc2_b1_mlcc2(wf, active_space)
+      module subroutine omega_mlcc2_b1_mlcc2(wf)
 ! 
 !        Omega B1
 !        Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -388,7 +380,6 @@ module mlcc2_class
          implicit none
 !
          class(mlcc2)   :: wf
-         integer(i15)   :: active_space 
       
       end subroutine omega_mlcc2_b1_mlcc2
 !
@@ -414,7 +405,7 @@ module mlcc2_class
 !
       end subroutine construct_omega_mlcc2
 !
-      module subroutine get_s2am_mlcc2(wf, s_ia_jb, active_space, b_first, b_length)
+      module subroutine get_s2am_mlcc2(wf, s_ia_jb, b_first, b_length)
 !!
 !!       Batching over b
 !!
@@ -423,9 +414,7 @@ module mlcc2_class
          class(mlcc2) :: wf
 ! 
          integer(i15) :: b_first, b_length
-         integer(i15) :: active_space
-         real(dp), dimension((wf%n_CC2_v(active_space,1))*(wf%n_CC2_o(active_space,1)),&
-                                  b_length*(wf%n_CC2_o(active_space,1))) :: s_ia_jb
+         real(dp), dimension((wf%n_CC2_v)*(wf%n_CC2_o), b_length*(wf%n_CC2_o)) :: s_ia_jb
 !
       end subroutine get_s2am_mlcc2
 !
@@ -522,7 +511,8 @@ module mlcc2_class
 !        Incoming vector c 
 !
          real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai 
-         real(dp), dimension(wf%n_s2am, 1)   :: c_aibj ! c_aibj    
+         real(dp), dimension(wf%n_x2am, 1)   :: c_aibj ! c_aibj  
+!  
       end subroutine jacobian_mlcc2_transformation_mlcc2
 !
 !
@@ -554,8 +544,7 @@ module mlcc2_class
       end subroutine jacobian_mlcc2_a1_mlcc2
 !
 !
-      module subroutine jacobian_mlcc2_b1_mlcc2(wf, rho_a_i, c_ai_bj, n_active_o, &
-                                              n_active_v, first_active_o, first_active_v)
+      module subroutine jacobian_mlcc2_b1_mlcc2(wf, rho_a_i, c_ai_bj)
 !!
 !!       Jacobian tem B1
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
@@ -572,16 +561,13 @@ module mlcc2_class
 !  
          class(mlcc2) :: wf
 !
-         real(dp), dimension((n_active_v)*(n_active_o), (n_active_v)*(n_active_o))   :: c_ai_bj 
-         real(dp), dimension(wf%n_v, wf%n_o)                                         :: rho_a_i
-         integer(i15) :: n_active_o, n_active_v
-         integer(i15) :: first_active_o, first_active_v
+         real(dp), dimension(:,:)            :: c_ai_bj 
+         real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i
 !
       end subroutine jacobian_mlcc2_b1_mlcc2
 !
 !
-      module subroutine jacobian_mlcc2_a2_mlcc2(wf, rho_ai_bj, c_a_i,&
-                                  n_active_o, n_active_v, first_active_o, first_active_v)
+      module subroutine jacobian_mlcc2_a2_mlcc2(wf, rho_ai_bj, c_a_i)
 !!
 !!       Jacobian tem A2
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
@@ -596,16 +582,13 @@ module mlcc2_class
 !     
          class(mlcc2) :: wf
 !  
-         real(dp), dimension((n_active_v)*(n_active_o), (n_active_v)*(n_active_o))   :: rho_ai_bj 
-         real(dp), dimension(wf%n_v, wf%n_o)                                         :: c_a_i 
-         integer(i15) :: n_active_o, n_active_v
-         integer(i15) :: first_active_o, first_active_v
+         real(dp), dimension(:,:)            :: rho_ai_bj 
+         real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i 
 !
       end subroutine jacobian_mlcc2_a2_mlcc2
 !
 !
-      module subroutine jacobian_mlcc2_b2_mlcc2(wf, rho_ai_bj, c_ai_bj,&
-                                  n_active_o, n_active_v, first_active_o, first_active_v)
+      module subroutine jacobian_mlcc2_b2_mlcc2(wf, rho_ai_bj, c_ai_bj)
 !!
 !!       Jacobian tem B2
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
@@ -619,10 +602,8 @@ module mlcc2_class
 !  
          class(mlcc2) :: wf
 !
-         real(dp), dimension((n_active_v)*(n_active_o), (n_active_v)*(n_active_o))   :: c_ai_bj 
-         real(dp), dimension((n_active_v)*(n_active_o), (n_active_v)*(n_active_o))   :: rho_ai_bj
-         integer(i15) :: n_active_o, n_active_v
-         integer(i15) :: first_active_o, first_active_v 
+         real(dp), dimension(:,:)   :: c_ai_bj 
+         real(dp), dimension(:,:)   :: rho_ai_bj
 !
 !
       end subroutine jacobian_mlcc2_b2_mlcc2
@@ -633,6 +614,8 @@ module mlcc2_class
 !
 contains
 !
+!  -::- MLCC2 initialization routine -::-
+!  ::::::::::::::::::::::::::::::::::::::
 !
    subroutine init_mlcc2(wf)
 !!
@@ -675,10 +658,6 @@ contains
 !
          write(unit_output,'(/t3,a50)')'Full CC2 requested, orbital partitioning skipped'
 !
-         wf%n_active_spaces = 1
-!
-         call wf%initialize_orbital_info
-!
          wf%n_CC2_o = wf%n_o
          wf%n_CC2_v = wf%n_v
 !
@@ -686,10 +665,6 @@ contains
          wf%first_CC2_v = 1         
 !
       endif
-!
-!     Set total number of active orbitals
-!
-      call wf%set_n_total_active
 !
 !     Initialize amplitudes and associated attributes
 !
@@ -715,6 +690,9 @@ contains
 !  :::::::::::::::::::::::::::::::::::::::::
 !  -::- Class subroutines and functions -::- 
 !  :::::::::::::::::::::::::::::::::::::::::
+!
+!  -::- Energy routine -::-
+!  ::::::::::::::::::::::::
 !
    subroutine calc_energy_mlcc2(wf)
 !!
@@ -765,7 +743,6 @@ contains
 !
 !     ML variables
 !
-      integer(i15) :: active_space
       integer(i15) :: n_active_o = 0, n_active_v = 0
       integer(i15) :: first_active_o ! first active occupied index 
       integer(i15) :: first_active_v ! first active virtual index
@@ -847,176 +824,135 @@ contains
 !
 !     sum_aibj s_ai_bj*L_ia_jb
 !
-!     Loop over active spaces
+!     Set ML variables
 !
-      do active_space = 1, wf%n_active_spaces
+      call wf%get_CC2_active_indices(first_active_o, first_active_v)
 !
-!        Set ML variables
+      call wf%get_CC2_n_active(n_active_o, n_active_v)
 !
-         call wf%get_CC2_active_indices(first_active_o, first_active_v, active_space)
+      last_active_o = first_active_o + n_active_o - 1
+      last_active_v = first_active_v + n_active_v - 1 
 !
-         n_active_o = wf%n_CC2_o(active_space,1) 
-         n_active_v = wf%n_CC2_v(active_space,1)
-!
-         last_active_o = first_active_o + n_active_o - 1
-         last_active_v = first_active_v + n_active_v - 1 
-!
-!        Prepare for batching over index a
+!     Prepare for batching over index a
 !  
-         required = (2*(wf%n_v)*(wf%n_o)*(wf%n_J) &                            ! Needed for g_aibj  
-                  + 2*((wf%n_v)**2)*(wf%n_J) &                                 ! and 's2' amplitudes  
-                  + 2*(wf%n_v)**2*(wf%n_o)**2)                                  !
+      required = (2*(wf%n_v)*(wf%n_o)*(wf%n_J) &                            ! Needed for g_aibj  
+                  + 2*((wf%n_v)**2)*(wf%n_J) &                              ! and 's2' amplitudes  
+                  + 2*(wf%n_v)**2*(wf%n_o)**2)                              !
 !         
-         required = 4*required ! In words
-         available = get_available()
+      required = 4*required ! In words
+      available = get_available()
 !
-         batch_dimension  = n_active_v ! Batch over the virtual index a
-         max_batch_length = 0          ! Initilization of unset variables 
-         n_batch          = 0
+      batch_dimension  = n_active_v ! Batch over the virtual index a
+      max_batch_length = 0          ! Initilization of unset variables 
+      n_batch          = 0
 !
-         call num_batch(required, available, max_batch_length, n_batch, batch_dimension)       
+      call num_batch(required, available, max_batch_length, n_batch, batch_dimension)       
 !
-!        Loop over the number of a batches 
+!     Loop over the number of a batches 
 !
-         do a_batch = 1, n_batch
+      do a_batch = 1, n_batch
 !
-!           For each batch, get the limits for the a index 
+!        For each batch, get the limits for the a index 
 !
-            call batch_limits(a_first, a_last, a_batch, max_batch_length, batch_dimension)
+         call batch_limits(a_first, a_last, a_batch, max_batch_length, batch_dimension)
 !
-!           a is active index, and thus a_first and a_last must be displaced
+!        a is active index, and thus a_first and a_last must be displaced
 !
-            a_first  = a_first + (first_active_v - 1)
-            a_last   = a_last  + (first_active_v - 1)
+         a_first  = a_first + (first_active_v - 1)
+         a_last   = a_last  + (first_active_v - 1)
 !
-            if (a_last .gt. last_active_v) a_last = last_active_v
+         if (a_last .gt. last_active_v) a_last = last_active_v
 !
-            a_length = a_last - a_first + 1 
+         a_length = a_last - a_first + 1 
 
-!           :: Calculate cc2 doubles amplitudes ::
+!        :: Calculate cc2 doubles amplitudes ::
 !
-            call allocator(L_ai_J, n_active_o*n_active_v, wf%n_J)
-            L_ai_J = zero
+         call allocator(L_ai_J, n_active_o*n_active_v, wf%n_J)
+         L_ai_J = zero
 !    
-            call wf%get_cholesky_ai(L_ai_J, first_active_v, last_active_v, first_active_o, last_active_o)
+         call wf%get_cholesky_ai(L_ai_J, first_active_v, last_active_v, first_active_o, last_active_o)
 !
-            call allocator(L_ia_J, (n_active_o)*(n_active_v), wf%n_J)
+         call allocator(L_ia_J, (n_active_o)*(n_active_v), wf%n_J)
 !
-!           reorder and constrain L_bi_J
+!        reorder and constrain L_bi_J
 !
-            do a = 1, n_active_v
-               do i = 1, n_active_o
+         do a = 1, n_active_v
+            do i = 1, n_active_o
 !
-                  ia = index_two(i, a, n_active_o)
-                  ai = index_two(a, i, n_active_v)
+               ia = index_two(i, a, n_active_o)
+               ai = index_two(a, i, n_active_v)
 !
-                  do J = 1, wf%n_J
+               do J = 1, wf%n_J
 !
-                     L_ia_J(ia, J) = L_ai_J(ai, J) 
+                  L_ia_J(ia, J) = L_ai_J(ai, J) 
+!
+               enddo
+            enddo
+         enddo
+!
+         call deallocator(L_ai_J, n_active_o*n_active_v, wf%n_J)
+!
+         call allocator(s_ia_jb, (n_active_o)*a_length, (n_active_o)*n_active_v)
+!
+         offset = index_two(1, a_first, n_active_o)
+!
+         call dgemm('N', 'T',                    &
+                     (n_active_o)*a_length,      &
+                     (n_active_o)*(n_active_v),  &
+                     (wf%n_J),                   &
+                     one,                        &
+                     L_ia_J(offset,1),           &
+                     (n_active_o)*(n_active_v),  &
+                     L_ia_J,                     &
+                     (n_active_o)*(n_active_v),  &
+                     zero,                       &
+                     s_ia_jb,                    &
+                     (n_active_o)*a_length)
+!
+!
+         call deallocator(L_ia_J, (n_active_o)*(n_active_v), wf%n_J)
+!
+!        Add the rest of the correlation energy E = E + sum_aibj (s_ij^ab ) L_iajb
+!
+         do a = 1, a_length
+            do i = 1, n_active_o
+!
+               ia = index_two(i, a, n_active_o)
+               IA_full = index_two(i + first_active_o - 1, a + a_first - 1, wf%n_o)
+!
+               do b = 1, n_active_v
+!
+                     IB_full = index_two(i + first_active_o - 1, b + first_active_v - 1, wf%n_o)
+!
+                  do j = 1, n_active_o
+!
+                     jb = index_two(j, b, n_active_o)
+                     JB_full = index_two(j + first_active_o - 1, b + first_active_v - 1, wf%n_o)
+                     JA_full = index_two(j + first_active_o - 1, a + a_first - 1, wf%n_o)
+!
+                     wf%energy = wf%energy + (two*g_ia_jb(IA_full, JB_full) - g_ia_jb(JA_full, IB_full))*((s_ia_jb(ia,jb))&
+                                             /(wf%fock_diagonal(i + first_active_o - 1 ,1)&
+                                              +wf%fock_diagonal(j + first_active_o - 1 ,1) &
+                                             - wf%fock_diagonal(wf%n_o + a + a_first - 1 ,1)&
+                                             - wf%fock_diagonal(wf%n_o + b + first_active_v - 1 ,1)))
 !
                   enddo
                enddo
             enddo
-!
-            call deallocator(L_ai_J, n_active_o*n_active_v, wf%n_J)
-!
-            call allocator(s_ia_jb, (n_active_o)*a_length, (n_active_o)*n_active_v)
-!
-            offset = index_two(1, a_first, n_active_o)
-!
-            call dgemm('N', 'T',                    &
-                        (n_active_o)*a_length,      &
-                        (n_active_o)*(n_active_v),  &
-                        (wf%n_J),                   &
-                        one,                        &
-                        L_ia_J(offset,1),           &
-                        (n_active_o)*(n_active_v),  &
-                        L_ia_J,                     &
-                        (n_active_o)*(n_active_v),  &
-                        zero,                       &
-                        s_ia_jb,                    &
-                        (n_active_o)*a_length)
-!
-!
-            call deallocator(L_ia_J, (n_active_o)*(n_active_v), wf%n_J)
-!
-!           Add the rest of the correlation energy E = E + sum_aibj (s_ij^ab ) L_iajb
-!
-            do a = 1, a_length
-               do i = 1, n_active_o
-!
-                  ia = index_two(i, a, n_active_o)
-                  IA_full = index_two(i + first_active_o - 1, a + a_first - 1, wf%n_o)
-!
-                  do b = 1, n_active_v
-!
-                        IB_full = index_two(i + first_active_o - 1, b + first_active_v - 1, wf%n_o)
-!
-                     do j = 1, n_active_o
-!
-                        jb = index_two(j, b, n_active_o)
-                        JB_full = index_two(j + first_active_o - 1, b + first_active_v - 1, wf%n_o)
-                        JA_full = index_two(j + first_active_o - 1, a + a_first - 1, wf%n_o)
-!
-                        wf%energy = wf%energy + (two*g_ia_jb(IA_full, JB_full) - g_ia_jb(JA_full, IB_full))*((s_ia_jb(ia,jb))&
-                                                /(wf%fock_diagonal(i + first_active_o - 1 ,1)&
-                                                 +wf%fock_diagonal(j + first_active_o - 1 ,1) &
-                                                - wf%fock_diagonal(wf%n_o + a + a_first - 1 ,1)&
-                                                - wf%fock_diagonal(wf%n_o + b + first_active_v - 1 ,1)))
-!
-                     enddo
-                  enddo
-               enddo
-            enddo
+         enddo
 !  
-            call deallocator(s_ia_jb, a_length*n_active_o, n_active_o*n_active_v)
+         call deallocator(s_ia_jb, a_length*n_active_o, n_active_o*n_active_v)
 !
-         enddo ! End of batching
-      enddo ! End loop over active spaces
+      enddo ! End of batching
 !
       call deallocator(g_ia_jb, wf%n_o*wf%n_v, wf%n_o*wf%n_v)
 !
    end subroutine calc_energy_mlcc2
 !
+!  -::- ML helper routines -::-
+!  ::::::::::::::::::::::::::::
 !
-   subroutine initialize_orbital_info_mlcc2(wf)
-!!
-!!    Initialize orbital information
-!!    Written by Sarai D. Folkestad, June 2017
-!!
-      implicit none
-!
-      class(mlcc2) :: wf
-!
-      if (.not. allocated(wf%n_CC2_o)) call allocator_int(wf%n_CC2_o, wf%n_active_spaces, 1)
-      if (.not. allocated(wf%n_CC2_v)) call allocator_int(wf%n_CC2_v, wf%n_active_spaces, 1)
-      wf%n_CC2_o = 0
-      wf%n_CC2_v = 0
-!
-      if (.not. allocated(wf%first_CC2_o)) call allocator_int(wf%first_CC2_o, wf%n_active_spaces, 1)
-      if (.not. allocated(wf%first_CC2_v)) call allocator_int(wf%first_CC2_v, wf%n_active_spaces, 1)
-      wf%first_CC2_o = 0
-      wf%first_CC2_v = 0
-!
-   end subroutine initialize_orbital_info_mlcc2
-!
-!
-   subroutine destruct_orbital_info_mlcc2(wf)
-!!
-!!    Destruct orbital info
-!!    Written by Sarai D. Folkestad, June 2017
-!!
-      implicit none
-!
-      class(mlcc2) :: wf
-!
-      if (allocated(wf%n_CC2_o)) call deallocator_int(wf%n_CC2_o, wf%n_active_spaces, 1)
-      if (allocated(wf%n_CC2_v)) call deallocator_int(wf%n_CC2_v, wf%n_active_spaces, 1)
-!
-   end subroutine destruct_orbital_info_mlcc2
-!
-!
-   subroutine get_CC2_active_indices_mlcc2(wf, first_o, first_v, active_space)
+   subroutine get_CC2_active_indices_mlcc2(wf, first_o, first_v)
 !!
 !!    Get CC2 active indices,
 !!    Written by Sarai D. Folkestad, June 2017
@@ -1029,15 +965,14 @@ contains
       class(mlcc2) :: wf
       integer(i15) :: first_o
       integer(i15) :: first_v
-      integer(i15) :: active_space
 !
-      first_o = wf%first_CC2_o(active_space, 1)
-      first_v = wf%first_CC2_v(active_space, 1)
+      first_o = wf%first_CC2_o
+      first_v = wf%first_CC2_v
 !
    end subroutine get_CC2_active_indices_mlcc2
 !
 !
-   subroutine get_CC2_n_active_mlcc2(wf, n_active_o, n_active_v, active_space)
+   subroutine get_CC2_n_active_mlcc2(wf, n_active_o, n_active_v)
 !!
 !!    Get CC2 active indices,
 !!    Written by Sarai D. Folkestad, June 2017
@@ -1050,32 +985,167 @@ contains
       class(mlcc2) :: wf
       integer(i15) :: n_active_o
       integer(i15) :: n_active_v
-      integer(i15) :: active_space
 !
-      n_active_o = wf%n_CC2_o(active_space, 1)
-      n_active_v = wf%n_CC2_v(active_space, 1)
+      n_active_o = wf%n_CC2_o
+      n_active_v = wf%n_CC2_v
 !
    end subroutine get_CC2_n_active_mlcc2
 !
+!  -::- Amplitude routines -::-
+!  ::::::::::::::::::::::::::::
 !
-   subroutine set_n_total_active_mlcc2(wf)
+   subroutine save_amplitudes_mlcc2(wf)
 !!
+!!    Save Amplitudes (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
 !!
-      implicit none
-!  
+!!    Store the amplitudes to disk (T1AM)
+!!
+      implicit none 
+!
       class(mlcc2) :: wf
 !
-      integer(i15) :: active_space
+      integer(i15) :: unit_x1am = -1 
+      integer(i15) :: unit_x2am = -1 
 !
-      wf%n_total_active_o = 0
-      wf%n_total_active_v = 0
+      real(dp), dimension(:,:), allocatable :: s_ia_jb
+      real(dp), dimension(:,:), allocatable :: s2am
 !
-      do active_space = 1, wf%n_active_spaces
-         wf%n_total_active_o = wf%n_total_active_o + wf%n_CC2_o(active_space, 1)
-         wf%n_total_active_v = wf%n_total_active_v + wf%n_CC2_v(active_space, 1)
-      enddo 
+      integer(i15) :: a = 0, i = 0, ai = 0, ia = 0, b = 0, j = 0, bj = 0, jb = 0
+      integer(i15) :: aibj = 0
 !
-   end subroutine set_n_total_active_mlcc2
+!     Open amplitude files
 !
+      call generate_unit_identifier(unit_x1am)
+      open(unit_x1am, file='t1am', status='unknown', form='unformatted')
+      rewind(unit_x1am)
+!
+      call generate_unit_identifier(unit_x2am)
+      open(unit_x2am, file='x2am', status='unknown', form='unformatted')
+      rewind(unit_x2am)
+!
+!     Write t1 amplitudes
+!
+      write(unit_x1am) wf%t1am
+!
+!     Construct s2 amplitudes
+!
+      call allocator(s_ia_jb, (wf%n_CC2_v)*(wf%n_CC2_o), (wf%n_CC2_v)*(wf%n_CC2_o))
+      call wf%get_s2am(s_ia_jb, wf%first_CC2_v, wf%first_CC2_v + wf%n_CC2_v - 1)
+!  
+!     Reorder and pack in
+!
+      call allocator(s2am, (wf%n_CC2_v)*(wf%n_CC2_o)*((wf%n_CC2_v)*(wf%n_CC2_o)+1)/2, 1)
+!
+      do i = 1, wf%n_CC2_o
+         do a = 1, wf%n_CC2_v
+            ai = index_two(a, i, wf%n_CC2_v)
+            ia = index_two(i, a, wf%n_CC2_o)
+            do j = 1, wf%n_CC2_o
+               do b = 1, wf%n_CC2_v
+!
+                  bj = index_two(b, j, wf%n_CC2_v)
+                  jb = index_two(j, b, wf%n_CC2_o)
+!
+                  aibj = index_packed(ai, bj)
+!
+                  s2am(aibj, 1) = s_ia_jb(ia, jb)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      call deallocator(s_ia_jb, (wf%n_CC2_v)*(wf%n_CC2_o), (wf%n_CC2_v)*(wf%n_CC2_o))
+!
+!     Write s2 amplitudes 
+!
+      write(unit_x2am) s2am
+!
+      call deallocator(s2am, (wf%n_CC2_v)*(wf%n_CC2_o)*((wf%n_CC2_v)*(wf%n_CC2_o)+1)/2, 1)
+!
+!     Close amplitude file
+!
+      close(unit_x1am)
+      close(unit_x2am)
+!
+   end subroutine save_amplitudes_mlcc2
+!
+!
+   subroutine read_amplitudes_mlcc2(wf)
+!!
+!!    Read Amplitudes (MLCC2)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
+!!
+!!    Reads the amplitudes from disk (T1AM)
+!!
+      implicit none 
+!
+      class(mlcc2) :: wf
+!
+      call wf%read_single_amplitudes
+      call wf%read_cc2_double_amplitudes
+!
+   end subroutine read_amplitudes_mlcc2
+!
+   subroutine read_cc2_double_amplitudes_mlcc2(wf)
+!!
+!!    Read Amplitudes (MLCC2)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
+!!
+!!    Reads the amplitudes from disk (T1AM, S2AM)
+!!
+      implicit none 
+!
+      class(mlcc2) :: wf
+!
+      integer(i15) :: unit_x2am = -1 
+!
+      logical :: file_exists = .false.
+!
+!     Check to see whether file exists
+!
+      inquire(file='x2am',exist=file_exists)
+!
+      if (file_exists) then 
+!
+!        Open amplitude files if they exist
+!
+         call generate_unit_identifier(unit_x2am)
+!
+         open(unit_x2am, file='x2am', status='unknown', form='unformatted')
+!
+         rewind(unit_x2am)
+!
+!        Read from file & close
+!
+         wf%n_x2am = + ((wf%n_CC2_v)*(wf%n_CC2_o))&
+                   *((wf%n_CC2_v )*(wf%n_CC2_o)+1)/2 
+!
+         if (.not. allocated(wf%x2am)) call allocator(wf%x2am, wf%n_x2am, 1) 
+         read(unit_x2am) wf%x2am
+!
+         close(unit_x2am)
+!
+      else
+!
+         write(unit_output,'(t3,a)') 'Error: amplitude files do not exist.'
+         stop
+!
+      endif
+!
+   end subroutine read_cc2_double_amplitudes_mlcc2
+!
+   subroutine destruct_x2am_mlcc2(wf)
+!!
+!!
+!!
+   implicit none
+!
+   class(mlcc2) :: wf
+!
+   if (allocated(wf%x2am)) call deallocator(wf%x2am, wf%n_x2am, 1)
+!
+   end subroutine destruct_x2am_mlcc2
 !
 end module mlcc2_class
