@@ -618,8 +618,8 @@ contains
 !     :::::::::::::::::::::::::::::
 !
 !
-      call allocator (orbitals, wf%n_ao, wf%n_mo)
-      call allocator (orbital_energies, wf%n_mo, 1)
+      call allocator(orbitals, wf%n_ao, wf%n_mo)
+      call allocator(orbital_energies, wf%n_mo, 1)
 !
 !     :: Construct canonical occupied and vacant density matrices ::    
 !
@@ -664,6 +664,8 @@ contains
             stop
          endif
       enddo
+       write(unit_output, *)'2'
+      flush(unit_output)
 !  
 !     :: Constructing active (CCSD) localized Cholesky orbitals ::
 !  

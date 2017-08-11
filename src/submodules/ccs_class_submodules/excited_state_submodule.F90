@@ -153,6 +153,7 @@ contains
       reduced_dim  = wf%tasks%n_singlet_states
       n_new_trials = wf%tasks%n_singlet_states
 !
+!
       call wf%initialize_excited_states
 !
 !     Find start trial vectors and store them to the trial_vec file

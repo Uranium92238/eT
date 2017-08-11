@@ -109,7 +109,6 @@ module mlccsd_class
       procedure :: omega_mlccsd_c2  => omega_mlccsd_c2_mlccsd
       procedure :: omega_mlccsd_d2  => omega_mlccsd_d2_mlccsd
       procedure :: omega_mlccsd_e2  => omega_mlccsd_e2_mlccsd
-!
 !     Ground state solver routines
 !
       procedure :: calc_ampeqs_norm          => calc_ampeqs_norm_mlccsd
@@ -129,6 +128,22 @@ module mlccsd_class
       procedure :: read_amplitudes                 => read_amplitudes_mlccsd
       procedure :: read_mlccsd_double_amplitudes   => read_mlccsd_double_amplitudes_mlccsd
       procedure :: read_double_amplitudes          => read_double_amplitudes_mlccsd
+!
+      procedure :: jacobian_mlccsd_transformation => jacobian_mlccsd_transformation_mlccsd
+!
+      procedure :: jacobian_mlccsd_b2 => jacobian_mlccsd_b2_mlccsd
+      procedure :: jacobian_mlccsd_c2 => jacobian_mlccsd_c2_mlccsd
+      procedure :: jacobian_mlccsd_d2 => jacobian_mlccsd_d2_mlccsd
+      procedure :: jacobian_mlccsd_e2 => jacobian_mlccsd_e2_mlccsd
+      procedure :: jacobian_mlccsd_f2 => jacobian_mlccsd_f2_mlccsd
+      procedure :: jacobian_mlccsd_g2 => jacobian_mlccsd_g2_mlccsd
+      procedure :: jacobian_mlccsd_h2 => jacobian_mlccsd_h2_mlccsd
+      procedure :: jacobian_mlccsd_i2 => jacobian_mlccsd_i2_mlccsd
+      procedure :: jacobian_mlccsd_j2 => jacobian_mlccsd_j2_mlccsd
+      procedure :: jacobian_mlccsd_k2 => jacobian_mlccsd_k2_mlccsd
+!
+      procedure :: transform_trial_vectors => transform_trial_vectors_mlccsd
+      procedure :: initialize_excited_states => initialize_excited_states_mlccsd
 !
    end type mlccsd
 !
@@ -346,10 +361,10 @@ module mlccsd_class
 !!
       implicit none
 !
-      class(mlccsd)                :: wf    
-      integer(i15)             :: i_first, a_first     ! First index (can differ from 1 when batching or for mlcc) 
-      integer(i15)             :: i_last, a_last      ! Last index (can differ from n_o when batching or for mlcc) 
-      real(dp), dimension(:,:) :: L_ia_J ! L_ia^J
+      class(mlccsd)                 :: wf    
+      integer(i15)                  :: i_first, a_first     ! First index (can differ from 1 when batching or for mlcc) 
+      integer(i15)                  :: i_last, a_last      ! Last index (can differ from n_o when batching or for mlcc) 
+      real(dp), dimension(:,:)      :: L_ia_J ! L_ia^J
 !
    end subroutine read_cholesky_ia_for_cc2_amplitudes_mlccsd
 !
@@ -680,26 +695,282 @@ module mlccsd_class
 !
    interface
 !
+!     -::- Jacobi submodule interface -::-
+!     ::::::::::::::::::::::::::::::::::::
 !
-      module subroutine jacobian_mlcc2_b2_mlccsd(wf, rho_ai_bj, c_ai_bj)
+   module subroutine jacobian_mlccsd_transformation_mlccsd(wf, c_a_i, c_aibj)
 !!
-!!       Jacobian tem B2
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
+!!    Jacobian transformation (MLCC2)
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
 !!
+!!    Directs the transformation by the CCSD Jacobi matrix,
 !!
-         implicit none
-!  
-         class(mlccsd) :: wf
+!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >,
+!!
+!!    where the basis employed for the brackets is biorthonormal. 
+!!    The transformation is rho = A c, i.e., 
+!!
+!!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck 
+!!                  + 1/2 sum_ckdl A_mu,ckdl c_ckdl (1 + delta_ck,dl).
+!!
+!!    On exit, c is overwritten by rho. That is, c_a_i = rho_a_i,
+!!    and c_aibj = rho_aibj. 
+!!
+      implicit none
 !
-         real(dp), dimension(:,:)   :: c_ai_bj 
-         real(dp), dimension(:,:)   :: rho_ai_bj
+      class(mlccsd) :: wf 
 !
-      end subroutine jacobian_mlcc2_b2_mlccsd
+!      Incoming vector c 
+!
+      real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai 
+      real(dp), dimension(wf%n_x2am, 1)   :: c_aibj ! c_aibj  
+!
+      end subroutine jacobian_mlccsd_transformation_mlccsd
+!
+!
+      module subroutine jacobian_mlccsd_b2_mlccsd(wf, rho_ai_bj, c_a_i)
+!!
+!!    Jacobian CCSD B2 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!    rho_ai_bj^B2 = - sum_kc (F_kc t_ij^ac c_bk + F_kc t_ik^ab c_cj)
+!!
+!!    The term is added as rho_ai_bj(ai,bj) = rho_ai_bj(ai,bj) + rho_ai_bj^B2,
+!!    where c_a_i(a,i) = c_ai above.
+!!
+      implicit none 
+!
+      class(mlccsd) :: wf 
+!
+      real(dp), dimension(wf%n_v, wf%n_o)                       :: c_a_i
+      real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
+!
+!
+      end subroutine jacobian_mlccsd_b2_mlccsd
+!
+!
+      module subroutine jacobian_mlccsd_c2_mlccsd(wf, rho_ai_bj, c_a_i)
+!!
+!!    Jacobian CCSD C2 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2017
+!!
+!!    rho_ai_bj^C2 = sum_kcl (g_ljkc * t_ki^ac * c_bl) + (g_ljkc * t_li^bc * c_ak) 
+!!                         + (g_ljkc * t_lk^ba * c_ci) 
+!!                         - (L_ljkc * t_ik^ac * c_bl)- (L_ljkc * t_il^ab * c_ck)
+!!                
+!!
+      implicit none 
+!
+      class(mlccsd) :: wf 
+!
+      real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i
+      real(dp), dimension(:,:)            :: rho_ai_bj
+!
+      end subroutine jacobian_mlccsd_c2_mlccsd
+!
+!
+      module subroutine jacobian_mlccsd_d2_mlccsd(wf, rho_ai_bj, c_a_i)
+!!
+!!    Jacobian CCSD D2 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!    rho_ai_bj^D2 = - sum_kcd g_kcbd (x_ij^cd c_ak + x_kj^ad c_ci + x_ik^ca c_dj)
+!!                       + sum_kcd L_kcbd (x_ik^ac c_dj + x_ij^ad c_ck)
+!!
+!!    Note: the code is structured so that we batch over the index b,
+!!          where the integrals are made as g_kc_db = g_kcbd and held
+!!          in some ordering or other throughout a given batch (i.e.,
+!!          all five terms are constructed gradually in the batches).
+!!
+!!    The term is added as rho_ai_bj(ai,bj) = rho_ai_bj(ai,bj) + rho_ai_bj^D2,
+!!    where c_a_i(a,i) = c_ai above.
+!!
+      implicit none 
+!
+      class(mlccsd) :: wf 
+!
+      real(dp), dimension(wf%n_v, wf%n_o)                       :: c_a_i
+      real(dp), dimension(:,:) :: rho_ai_bj
+!
+      end subroutine jacobian_mlccsd_d2_mlccsd
+!
+!
+      module subroutine jacobian_mlccsd_e2_mlccsd(wf, rho_ai_bj, c_ai_ck)
+!!
+!!    Jacobian MLCCSD E2 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!    rho_ai_bj^E2 = 2 sum_dlck x_bj,DL * L_KC,LD * c_ai,CK 
+!!
+      implicit none 
+!
+      class(mlccsd) :: wf 
+!
+      real(dp), dimension(:,:) :: rho_ai_bj
+      real(dp), dimension(:,:) :: c_ai_ck
+!
+      end subroutine jacobian_mlccsd_e2_mlccsd
+!
+!
+      module subroutine jacobian_mlccsd_f2_mlccsd(wf, rho_ai_bj, c_ai_bj)
+!!
+!!       Jacobian MLCCSD F2 
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!       rho_ai_bj^F2 =   - sum_(CKDL) x_ai,CK * L_KC,LD * c_bL,Dj 
+!!                        - sum_(CKDL) x_ai,Dj * L_KC,LD * c_bL,CK
+!!                        - sum_(CKDL) x_ai_bL * L_KC,LD * c_CK,Dj
+!!
+!!
+         implicit none 
+!
+         class(mlccsd) :: wf 
+!
+         real(dp), dimension(:,:) :: rho_ai_bj
+         real(dp), dimension(:,:) :: c_ai_bj
+!
+      end subroutine jacobian_mlccsd_f2_mlccsd
+!
+!
+     module subroutine jacobian_mlccsd_g2_mlccsd(wf, rho_ai_bj, c_ai_bj)
+!!
+!!       Jacobian MLCCSD G2 
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!       rho_ai_bj^G2 =  - sum_ckdl x_bL,Dj * L_KC,LD * c_ai,CK 
+!!                       - sum_ckdl x_CK_bL * L_KC,LD * c_ai,Dj 
+!!                       - sum_ckld x_CK,Dj * L_KC,LD * c_ai,bL 
+!!
+!!
+         implicit none 
+!
+         class(mlccsd) :: wf 
+!
+         real(dp), dimension(:,:) :: rho_ai_bj
+         real(dp), dimension(:,:) :: c_ai_bj
+!
+      end subroutine jacobian_mlccsd_g2_mlccsd
+!
+!
+     module subroutine jacobian_mlccsd_h2_mlccsd(wf, rho_ai_bj, c_ai_bj)
+!!
+!!       Jacobian MLCCSD H2 
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!       rho_ai_bj^H2 =  sum_CKDL x_Ci,aK * g_KC,LD * c_bL,Dj 
+!!                     + sum_CKDL x_Cj,aL * g_KC,LD * c_bK,Di
+!!                
+         implicit none 
+!
+         class(mlccsd) :: wf 
+!
+         real(dp), dimension(:,:) :: rho_ai_bj
+         real(dp), dimension(:,:) :: c_ai_bj
+!
+   end subroutine jacobian_mlccsd_h2_mlccsd
+!
+!
+      module subroutine jacobian_mlccsd_i2_mlccsd(wf, rho_ai_bj, c_ai_bj)
+!!
+!!       Jacobian MLCCSD I2 
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!       rho_ai_bj^I2 =  sum_C F_bC * c_ai,Cj - sum_K F_jK * c_ai,bK
+!!                     + sum_ck L_bj,KC * c_ai,CK 
+!!                     - sum_ck ( g_KC,bj * c_aK,Ci + g_Ki,bC * c_aK,Cj ) 
+!!                
+!!       Batch over c to construct  g_ki_bC
+!! 
+         implicit none 
+!
+         class(mlccsd) :: wf 
+!
+         real(dp), dimension(:,:) :: rho_ai_bj
+         real(dp), dimension(:,:) :: c_ai_bj
+!
+   end subroutine jacobian_mlccsd_i2_mlccsd
+!
+!
+      module subroutine jacobian_mlccsd_j2_mlccsd(wf, rho_ab_ij, c_ab_ij)
+!!
+!!       Jacobian CCSD J2 
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!       rho_ab_ij^J2 =    sum_ckld t_ci,dj * g_kc,ld * c_ak,bl 
+!!                       + sum_ckdl t_ak,bl * g_kc,ld * c_ci,dj
+!!             
+         implicit none 
+!
+         class(mlccsd) :: wf 
+!
+         real(dp), dimension(:,:) :: rho_ab_ij
+         real(dp), dimension(:,:) :: c_ab_ij
+!
+      end subroutine jacobian_mlccsd_j2_mlccsd
+!
+!
+      module subroutine jacobian_mlccsd_k2_mlccsd(wf, rho_ab_ij, c_ab_ij)
+!!
+!!       Jacobian MLCCSD K2 
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!       rho_ab_ij^K2 =    sum_kl g_Ki,Lj * c_aK,bL 
+!!                       + sum_cd g_aC,bD * c_Ci,Dj
+!! 
+!!       For the last term we batch over a and b and 
+!!       add each batch to rho_ai_bj 
+!!               
+         implicit none 
+!
+         class(mlccsd) :: wf 
+!
+         real(dp), dimension(:,:) :: rho_ab_ij
+         real(dp), dimension(:,:) :: c_ab_ij
+!
+      end subroutine jacobian_mlccsd_k2_mlccsd
+!
 !
 !
    end interface
 !
 !
+   interface
+!
+      module subroutine transform_trial_vectors_mlccsd(wf, first_trial, last_trial)
+!!
+!!    Transformation of Trial Vectors (MLCC2)
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!    Each trial vector in first_trial to last_trial is read from file and
+!!    transformed before the transformed vector is written to file.
+!!
+!!    Singles and doubles part of the transformed vectors are written to 
+!!    the same record in file transformed_vec, record length is n_parameters long.
+!!
+      implicit none
+!
+      class(mlccsd) :: wf
+!
+      integer(i15), intent(in) :: first_trial, last_trial ! Which trial_vectors we are to transform
+!
+      end subroutine transform_trial_vectors_mlccsd
+!
+!
+   module subroutine initialize_excited_states_mlccsd(wf)
+!!
+!!    Initialize excited states
+!!    Written by Sarai D. Folkestad, Aug 2017
+!!
+!!    Calculates and sets n_s2am, and updates n_parameters
+!!    for excited state calculation
+!!
+      implicit none 
+!    
+      class(mlccsd) :: wf
+      end subroutine initialize_excited_states_mlccsd
+!
+!
+   end interface
 contains
 !
 !
@@ -726,7 +997,7 @@ contains
 !     Set implemented methods
 !
        wf%implemented%ground_state = .true.
-!      wf%implemented%excited_state = .true.
+       wf%implemented%excited_state = .true.
 !
 !     Read Hartree-Fock info
 !
@@ -734,20 +1005,20 @@ contains
 !
 !     Orbital partitioning - only if we have CCS/CC2 region
 !
-      if (wf%mlcc_settings%CCS) then
-!
-         if (wf%mlcc_settings%CC2) then
+      if (wf%mlcc_settings%CC2) then
 !
             call wf%construct_orbital_coef_CC2_CCS
             call wf%construct_orbital_energy_CC2_CCS
 !
-         endif
+      endif
+!
+      if (wf%mlcc_settings%CCS .or. wf%mlcc_settings%CC2) then
 !
          call wf%orbital_partitioning
 !
       else
 !
-         write(unit_output,*)'Full CCSD requested, orbital partitioning skipped'
+         write(unit_output,'(t3,a)')'Full CCSD requested, orbital partitioning skipped'
          flush(unit_output)
 !
 !        Do full space CCSD calculation
@@ -1247,6 +1518,7 @@ contains
 !
       call generate_unit_identifier(unit_x1am)
       call generate_unit_identifier(unit_x2am)
+      call generate_unit_identifier(unit_t2am)
 !
       open(unit_x1am, file='t1am', status='unknown', form='unformatted')
       open(unit_t2am, file='t2am', status='unknown', form='unformatted')

@@ -98,25 +98,15 @@ contains
       call allocator(c_ai_bj, n_active_o*n_active_v, n_active_o*n_active_v) 
       c_ai_bj = zero
 !
-      do a = 1, n_active_v
-         do i = 1, n_active_o
+      call squareup(c_aibj, c_ai_bj, n_active_o*n_active_v) ! Pack out vector 
 !
-            ai = index_two(a, i, n_active_v)
+!     Scale the doubles vector by 1 + delta_ai,bj, i.e.
+!     redefine to c_ckdl = c_ckdl (1 + delta_ck,dl)
 !
-            do b = 1, n_active_v
-               do j = 1, n_active_o
+      do i = 1, (wf%n_o)*(wf%n_v)
 !
-                  bj = index_two(b, j, n_active_v)
+         c_ai_bj(i,i) = two*c_ai_bj(i,i)
 !
-                  aibj = index_packed(ai, bj)
-!
-                  c_ai_bj(ai, bj) = c_aibj(aibj, 1)
-!
-                  if (ai == bj) c_ai_bj(ai, bj) = two*c_ai_bj(ai, bj)
-!
-               enddo
-            enddo
-         enddo
       enddo
 !
 !     - B1 term -

@@ -128,7 +128,7 @@ contains
 !     Calculate first/last indeces
 ! 
       call wf%get_CCSD_active_indices(first_active_o, first_active_v)
-      call wf%get_CCSD_n_active(first_active_o, first_active_v)
+      call wf%get_CCSD_n_active(n_active_o, n_active_v)
 !
       last_active_o = first_active_o + n_active_o - 1
       last_active_v = first_active_v + n_active_v - 1 
@@ -147,7 +147,7 @@ contains
 !
                   aibj = index_packed(ai, bj) 
 !
-                  dt(wf%n_t1am + aibj,1) = - wf%omega2(aibj, 1)/&
+                  dt(wf%n_t1am + aibj ,1) = - wf%omega2(aibj, 1)/&
                                     (wf%fock_diagonal(wf%n_o + a + first_active_v - 1, 1) + &
                                      wf%fock_diagonal(wf%n_o + b + first_active_v - 1, 1) - &
                                      wf%fock_diagonal(i + first_active_o - 1, 1) -          &

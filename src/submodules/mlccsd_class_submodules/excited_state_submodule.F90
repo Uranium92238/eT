@@ -40,81 +40,72 @@ contains
 !
    end subroutine initialize_excited_states_mlccsd
 !
-   subroutine calculate_orbital_differences_mlccsd(wf, orbital_diff)
+!
+   subroutine transform_trial_vectors_mlccsd(wf, first_trial, last_trial)
 !!
-!!    Calculate Orbital Differences (MLCCSD)
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad May 2017
+!!    Transformation of Trial Vectors (MLCC2)
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!    Calculates orbital differences
+!!    Each trial vector in first_trial to last_trial is read from file and
+!!    transformed before the transformed vector is written to file.
 !!
-!!       1) ε_I^A = ε_A - ε_I
-!!       2) ε_ij^ab = ε_a + ε_b - ε_i - ε_j (for active spaces only)
-!!
-!!    and puts them in orbital_diff, which is a vector of length n_parameters.        
+!!    Singles and doubles part of the transformed vectors are written to 
+!!    the same record in file transformed_vec, record length is n_parameters long.
 !!
       implicit none
 !
-      class(mlcc2) :: wf
+      class(mlccsd) :: wf
 !
-      real(dp), dimension(wf%n_parameters, 1) :: orbital_diff
+      integer(i15), intent(in) :: first_trial, last_trial ! Which trial_vectors we are to transform
 !
-!     Active space variables
+      real(dp), dimension(:,:), allocatable :: c_a_i
+      real(dp), dimension(:,:), allocatable :: c_aibj
 !
-      integer(i15) :: first_active_o ! first active occupied index 
-      integer(i15) :: first_active_v ! first active virtual index
-      integer(i15) :: last_active_o ! last active occupied index 
-      integer(i15) :: last_active_v ! last active virtual index
-      integer(i15) :: n_active_o
-      integer(i15) :: n_active_v         
+      integer(i15) :: unit_trial_vecs = 0, unit_rho = 0, ioerror = 0
+      integer(i15) :: trial = 0 
 !
-      integer(i15) :: active_space
 !
-      integer(i15) :: offset = 0
+!     Allocate c_a_i and c_aibj
 !
-      integer(i15) :: A = 0, I = 0, b = 0, j = 0
-      integer(i15) :: AI = 0, bj = 0
-      integer(i15) :: aibj = 0
+      call allocator(c_a_i, wf%n_v, wf%n_o)
+      c_a_i = zero 
 !
-      do I = 1, wf%n_o
-         do A = 1, wf%n_v
+      call allocator(c_aibj, wf%n_x2am, 1)
+      c_aibj = zero 
 !
-            AI = index_two(A, I, wf%n_v)
+!     Open trial vector- and transformed vector files
 !
-            orbital_diff(AI, 1) = wf%fock_diagonal(A + wf%n_o, 1) - wf%fock_diagonal(I, 1)
+      call generate_unit_identifier(unit_trial_vecs)
+      open(unit=unit_trial_vecs, file='trial_vec', action='read', status='unknown', &
+           access='direct', form='unformatted', recl=dp*wf%n_parameters, iostat=ioerror)
 !
-         enddo
+      call generate_unit_identifier(unit_rho)
+      open(unit=unit_rho, file='transformed_vec', action='write', status='unknown', &
+           access='direct', form='unformatted', recl=dp*wf%n_parameters, iostat=ioerror)
+!
+!     For each trial vector: read, transform and write  
+!  
+      do trial = first_trial, last_trial
+!
+         read(unit_trial_vecs, rec=trial, iostat=ioerror) c_a_i, c_aibj
+!
+         call wf%jacobian_mlccsd_transformation(c_a_i, c_aibj)
+!
+         write(unit_rho, rec=trial, iostat=ioerror) c_a_i, c_aibj
+!
       enddo
 !
-!     Calculate first/last indices
-! 
-      call wf%get_CC2_active_indices(first_active_o, first_active_v)
-      call wf%get_CC2_n_active(n_active_o, n_active_v)
+!     Close files
 !
-      do i = 1, n_active_o
+      close(unit_trial_vecs) 
+      close(unit_rho)                                
 !
-         do a = 1, n_active_v
+!     Deallocate c_a_i and c_aibj
 !
-            ai = index_two(a, i, n_active_v)
+      call deallocator(c_a_i, wf%n_v, wf%n_o)
+      call deallocator(c_aibj, wf%n_x2am, 1)
 !
-            do j = 1, n_active_o
+   end subroutine transform_trial_vectors_mlccsd
 !
-               do b = 1, n_active_v
-!
-                  bj = index_two(b, j, n_active_v)
-!
-                  aibj = index_packed(ai, bj)
-!
-                  orbital_diff((wf%n_o)*(wf%n_v) + aibj, 1) &
-                                                 = wf%fock_diagonal(wf%n_o + a + first_active_v - 1, 1) &
-                                                 - wf%fock_diagonal(i + first_active_o - 1, 1) &
-                                                 + wf%fock_diagonal(wf%n_o + b + first_active_v - 1, 1) &
-                                                 - wf%fock_diagonal(j + first_active_o - 1, 1)
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!
-   end subroutine calculate_orbital_differences_mlccsd
 !
 end submodule excited_state
