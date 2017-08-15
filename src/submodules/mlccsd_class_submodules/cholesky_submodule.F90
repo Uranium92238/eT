@@ -45,18 +45,20 @@ contains
 !
       call allocator(C_o, wf%n_ao, wf%n_o)
       call allocator(C_v, wf%n_ao, wf%n_v)
-!
+!   
       do i = 1, wf%n_o
 !
          C_o(:,i) = wf%mo_coef_cc2_ccs(:,i)
 !
       enddo
+
 !
       do a = 1, wf%n_v
 !
          C_v(:,a) = wf%mo_coef_cc2_ccs(: , wf%n_o + a)
 !
       enddo
+
 !
 !     Read AO-cholesky
 !

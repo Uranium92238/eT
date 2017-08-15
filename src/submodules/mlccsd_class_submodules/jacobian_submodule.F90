@@ -93,7 +93,7 @@ contains
 !     Scale the doubles vector by 1 + delta_ai,bj, i.e.
 !     redefine to c_ckdl = c_ckdl (1 + delta_ck,dl)
 !
-      do i = 1, (wf%n_o)*(wf%n_v)
+      do i = 1, n_active_o*n_active_v
 !
          c_ai_bj(i,i) = two*c_ai_bj(i,i)
 !
@@ -256,7 +256,7 @@ contains
       class(mlccsd) :: wf 
 !
       real(dp), dimension(wf%n_v, wf%n_o)                       :: c_a_i
-      real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
+      real(dp), dimension(:,:) :: rho_ai_bj
 !
       real(dp), dimension(:,:), allocatable :: x_c_aij ! t_ij^ac 
       real(dp), dimension(:,:), allocatable :: x_aib_k ! t_ik^ab 
@@ -366,7 +366,7 @@ contains
 !
 !     Add rho_b_aij to rho_ai_bj 
 !
-      do j = 1,n_CCSD_o
+      do j = 1, n_CCSD_o
          do i = 1, n_CCSD_o
             do a = 1, n_CCSD_v
 !
@@ -483,7 +483,7 @@ contains
          enddo
       enddo
 !
-      call deallocator(rho_aib_j, (n_CCSD_o)*(n_CCSD_v)**2, n_CC2_o)
+      call deallocator(rho_aib_j, (n_CCSD_o)*(n_CCSD_v)**2, n_CCSD_o)
 !
    end subroutine jacobian_mlccsd_b2_mlccsd
 !
@@ -698,7 +698,7 @@ contains
       call deallocator(rho_b_jai, n_CCSD_v, (n_CCSD_o**2)*(n_CCSD_v))
 !
 !     :: Term 2 ::
-!     sum_kcl (g_ljkc * t_li^bc * c_ak)
+!     sum_kcl (g_ljkc * x_li^bc * c_ak)
 !
 !     k           - general index
 !     l, c        - CC2 index 
@@ -1414,6 +1414,7 @@ contains
       real(dp), dimension(:,:), allocatable :: g_kb_cd
 !
       real(dp), dimension(:,:), allocatable :: L_kc_bd
+      real(dp), dimension(:,:), allocatable :: L_kcb_d
       real(dp), dimension(:,:), allocatable :: L_ck_bd
 ! 
       real(dp), dimension(:,:), allocatable :: x_cd_ij 
@@ -1451,7 +1452,7 @@ contains
       integer(i15) :: ij = 0
       integer(i15) :: kc = 0, kb = 0, kd = 0, kc_CC2
 !
-      integer(i15) :: aij = 0, bij = 0
+      integer(i15) :: aij = 0, bij = 0, kcb = 0
 !
       integer(i15) :: akdj = 0, aidj = 0, akci = 0, cidj = 0, aick = 0
 !
@@ -1923,13 +1924,33 @@ contains
 !
          call deallocator(g_kc_bd, (wf%n_o)*(wf%n_v), (wf%n_v)*b_length)
 !
-!        :: Term 4 :: 
-!        sum_(kcd) L_kcbd x_ik^ac c_dj
+!       :: Term 4 :: 
+!       sum_(kcd) L_kcbd x_ik^ac c_dj
 !
-!        d           - general index 
-!        k, c        - CC2 indices 
-!        a, b, i, j  - CCSD indices
+!       d           - general index 
+!       k, c        - CC2 indices 
+!       a, b, i, j  - CCSD indices
 !
+         call allocator(L_kcb_d, n_CC2_o*n_CC2_v*b_length, wf%n_v)
+!
+         do c = 1, n_CC2_v
+            do k = 1, n_CC2_o
+!
+               kc = index_two(k, c, n_CC2_o)
+!
+               do d = 1, wf%n_v
+!
+                  do b = 1, b_length
+!
+                     bd = index_two(b, d, b_length)
+                     kcb = index_three(k, c, b, n_CC2_o, n_CC2_v)
+!
+                     L_kcb_d(kcb, d) = L_kc_bd(kc, bd)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
 !
 !        I_kc_bj = sum_(d) L_kc_bd *c_dj
 !
@@ -1940,13 +1961,15 @@ contains
                      (n_CCSD_o),                      &
                      wf%n_v,                          &
                      one,                             &
-                     L_kc_bd,                         &
+                     L_kcb_d,                         & ! L_kcb_d
                      (n_CC2_o)*(n_CC2_v)*(b_length),  &
                      c_a_i,                           &
                      wf%n_v,                          &
                      zero,                            &
                      I_kcb_j,                         &
                      (n_CC2_o)*(n_CC2_v)*(b_length))
+!
+         call deallocator(L_kcb_d, n_CC2_o*n_CC2_v*b_length, wf%n_v)
 !
 !        Construct x_ik^ac ordered as x_ai_kc with
 !
@@ -1965,6 +1988,7 @@ contains
 !
                      ai = index_two(a, i, n_CCSD_v)
                      ai_CC2 = index_two(a, i, n_CC2_v)
+!
                      aick = index_packed(ai_CC2, ck)
 !
                      x_ai_kc(ai, kc) = wf%x2am(aick, 1)
@@ -1978,7 +2002,7 @@ contains
 !
 !        rho_ai_bj_CCSD = x_ai_kc * I_kcb_j
 !
-         call allocator(rho_ai_bj_CCSD, n_CCSD_o*n_CCSD_v, (b_length)*(n_CCSD_o))
+         call allocator(rho_ai_bj_CCSD, (n_CCSD_o)*(n_CCSD_v), (b_length)*(n_CCSD_o))
 !
          call dgemm('N', 'N', &
                      (n_CCSD_o)*(n_CCSD_v),  &
@@ -1988,7 +2012,7 @@ contains
                      x_ai_kc,                &
                      (n_CCSD_o)*(n_CCSD_v),  &
                      I_kcb_j,                & ! I_kc_bj
-                     (n_CC2_o)*(wf%n_v),     &
+                     (n_CC2_o)*(n_CC2_v),    &
                      zero,                   &
                      rho_ai_bj_CCSD,         &
                      (n_CCSD_o)*(n_CCSD_v))
@@ -4334,7 +4358,7 @@ contains
 !  
                ai  = index_two(a, i, n_CC2_v)
 !                 
-               do j = 1, wf%n_o
+               do j = 1, n_CCSD_o
 !                
                   aj = index_two(a, j, n_CCSD_v)
 !
@@ -4350,7 +4374,7 @@ contains
             enddo
          enddo
 !
-          call deallocator(rho_aj_bi, (n_CCSD_o)*(n_CCSD_v), (n_CCSD_o)*(n_CCSD_v))
+         call deallocator(rho_aj_bi, (n_CCSD_o)*(n_CCSD_v), (n_CCSD_o)*(n_CCSD_v))
 !  
 !
       end subroutine jacobian_mlccsd_i2_mlccsd

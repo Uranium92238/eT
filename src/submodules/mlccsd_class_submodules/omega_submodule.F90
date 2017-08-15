@@ -322,7 +322,7 @@ contains
 !
                      aibj = index_packed(ai, bj)
 !
-                     x_ia_jb(ia, jb) = wf%t2am(aibj, 1)
+                     x_ia_jb(ia, jb) =  wf%t2am(aibj, 1)
 !
                   enddo
                enddo

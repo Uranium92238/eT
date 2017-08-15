@@ -454,6 +454,7 @@ contains
 !
 !     Solve reduced eigenvalue problem
 !
+      info = 0
       call dgeev('N','V',                       &
                   reduced_dim,                  &
                   A_red,                        &
@@ -467,6 +468,10 @@ contains
                   work,                         &
                   4*reduced_dim,                &
                   info)
+      if (info .ne. 0) then 
+         write(unit_output,*)  'WARNING: Error while finding solution', info
+         stop
+      endif
 !
       call deallocator(work, 4*reduced_dim, 1)
 !

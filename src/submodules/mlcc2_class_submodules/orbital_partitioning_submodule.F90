@@ -55,6 +55,7 @@ contains
       elseif (wf%mlcc_settings%cnto) then
 !
          call wf%cnto_orbital_drv
+         call wf%print_cnto_info
 !
       endif
 !
@@ -969,14 +970,65 @@ contains
 !
       class(mlcc2) :: wf
 !
+      real(dp) :: start_cnto = 0, end_cnto = 0
+!     
+!     Prints
+!     
+      write(unit_output,'(/t3,a/)') ':: CNTO orbital partitioning for MLCC2 calculation '
+!
+!     Timings 
+!
+      call cpu_time(start_cnto)
+!
+!     CNTO orbital selection for CC2
+!
+      call wf%cc2_cnto
+!
+!     Timings
+!
+      call cpu_time(end_cnto)
+!
+      if (timings) write(unit_output,'(/t3,a50,f14.8/)') 'Total time in cnto orbital construction (seconds):', end_cnto - start_cnto
+      flush(unit_output)
+!
+   end subroutine cnto_orbital_drv_mlcc2
+!
+!
+   subroutine cc2_cnto_mlcc2(wf)
+!!
+!!    CNTO orbital driver,
+!!    Written by Sarai D. Folkestad, June 2017.
+!!
+!!    A CCS calculation ground state and excited states is performed.
+!!    The M and N matrices are then constructed, 
+!! 
+!!       M_ij = sum_a R1_ai*R1_aj + sum_a R2_ai*R2_aj + ...
+!!       N_ab = sum_i R1_ai*R1_bi + sum_a R2_ai*R2_bi + ...
+!!   
+!!    where Ri_ai is the i'th single excitation vector obtained from the CCS calculation. 
+!!    The transformation matrices for the occupied and virtual part
+!!    are constructed by diagonalizing M and N. The number of active occupied
+!!    and virtual orbitals are determined from δ_o and δ_v
+!!
+!!       1 - sum_i λ^o_i < δ_o
+!!       1 - sum_i λ^v_i < δ_v
+!!
+!!    Where the orbitals of highest eigenvalues λ^o/λ^v are selected first.
+!!
+!!    Fock matrix is block diagonalized in active and inactive blocks in order to obtain 
+!!    the orbitals and orbital energies used in the CC2 calculation.
+!!
+
+      implicit none 
+!
+      class(mlcc2) :: wf
+!
       type(ccs), allocatable :: ccs_wf
 !
       integer(i15) :: unit_solution = -1
       integer(i15) :: ioerror = 0
       integer(i15) :: lower_level_n_singlet_states
       integer(i15) :: state, i
-!
-      real(dp) :: start_cnto = 0, end_cnto = 0
 !
       real(dp), dimension(:,:), allocatable :: solution
       real(dp), dimension(:,:), allocatable :: R_a_i
@@ -1008,16 +1060,6 @@ contains
 !     ::::::::::::::::::::::::::::::::::::::::::::::::
 !     -::- Running lower level method calculation -::-
 !     ::::::::::::::::::::::::::::::::::::::::::::::::
-!     
-!     Prints
-!     
-      write(unit_output,'(/t3,a/)')    ':: Cholesky decomposition '
-      write(unit_output,'(/t3, a30)')'CCS Calculation:'
-      write(unit_output,'(t3, a30/)')'----------------'
-!
-!     Timings 
-!
-      call cpu_time(start_cnto)
 !
 !     Allocate lower level method
 !
@@ -1370,7 +1412,7 @@ contains
 !
       call dsyev('V','U',                                   &
                   wf%n_CCS_o,                               &
-                  wf%fock_ij(wf%first_CCS_o, wf%first_CCS_o),   &
+                  wf%fock_ij(wf%first_CCS_o, wf%first_CCS_o), &
                   wf%n_o,                                   &
                   orbital_energies,                         &
                   work,                                     & 
@@ -1594,22 +1636,22 @@ contains
       call deallocator(C_v_transformed, wf%n_ao, wf%n_CCS_v)
       call deallocator(C_v, wf%n_ao, wf%n_v)
 !
-!     Final prints
+   end subroutine cc2_cnto_mlcc2
 !
-      write(unit_output,'(t3,a40, i3)') 'Number of active occupied orbitals:  ', wf%n_CC2_o
-      write(unit_output,'(t3,a40, i3/)')'Number of active virtual orbitals:   ', wf%n_CC2_v
+!
+   subroutine print_cnto_info_mlcc2(wf)
+!!
+!!
+      implicit none 
+!
+      class(mlcc2) :: wf
+!
+      write(unit_output,'(t3,a40, i3)') 'Number of CC2 occupied orbitals:       ', wf%n_CC2_o
+      write(unit_output,'(t3,a40, i3/)')'Number of CC2 virtual orbitals:        ', wf%n_CC2_v
 !
       write(unit_output,'(t3,a40, i3)') 'Number of inactive occupied orbitals:  ', wf%n_CCS_o
       write(unit_output,'(t3,a40, i3/)')'Number of inactive virtual orbitals:   ', wf%n_CCS_v
       flush(unit_output)
 !
-!     Timings
-!
-      call cpu_time(end_cnto)
-      if (timings) write(unit_output,'(/t3,a50,f14.8/)') 'Total time in cnto orbital construction (seconds):', end_cnto - start_cnto
-      flush(unit_output)
-!
-   end subroutine cnto_orbital_drv_mlcc2
-!
-!
+   end subroutine print_cnto_info_mlcc2
 end submodule orbital_partitioning

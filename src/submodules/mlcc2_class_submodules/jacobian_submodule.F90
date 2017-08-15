@@ -103,7 +103,7 @@ contains
 !     Scale the doubles vector by 1 + delta_ai,bj, i.e.
 !     redefine to c_ckdl = c_ckdl (1 + delta_ck,dl)
 !
-      do i = 1, (wf%n_o)*(wf%n_v)
+      do i = 1, n_active_o*n_active_v
 !
          c_ai_bj(i,i) = two*c_ai_bj(i,i)
 !
