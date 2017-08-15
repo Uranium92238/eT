@@ -29,7 +29,7 @@ submodule (mlcc2_class) omega
 !
 !
 contains
-  module subroutine construct_omega_mlcc2(wf)
+  subroutine construct_omega_mlcc2(wf)
 !! 
 !!    Construct Omega (MLCC2)
 !!    Written by Eirik F. Kjønstad and Sarai Folkestad, Apr 2017
@@ -76,7 +76,7 @@ contains
 !
    end subroutine construct_omega_mlcc2
 !
-    module subroutine omega_mlcc2_a1_mlcc2(wf)
+    subroutine omega_mlcc2_a1_mlcc2(wf)
 !! 
 !!     Omega A1
 !!     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -288,7 +288,7 @@ contains
    end subroutine omega_mlcc2_a1_mlcc2
 !
 !
-    module subroutine omega_mlcc2_b1_mlcc2(wf)
+    subroutine omega_mlcc2_b1_mlcc2(wf)
 !! 
 !!    Omega B1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -493,7 +493,7 @@ contains
 !      
    end subroutine omega_mlcc2_b1_mlcc2
 !
-   module subroutine get_s2am_mlcc2(wf, s_ia_jb, b_first, b_length)
+   subroutine get_s2am_mlcc2(wf, s_ia_jb, b_first, b_length)
 !!
 !!    Batching over b
 !!

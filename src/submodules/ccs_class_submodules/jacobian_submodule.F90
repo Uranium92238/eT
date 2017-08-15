@@ -12,7 +12,7 @@ submodule (ccs_class) jacobian
 !
 contains
 !
-      module subroutine jacobian_ccs_transformation_ccs(wf, c_a_i)
+      subroutine jacobian_ccs_transformation_ccs(wf, c_a_i)
 !!
 !!       Jacobian transformation
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -41,7 +41,7 @@ contains
 !
       end subroutine jacobian_ccs_transformation_ccs
 !
-      module subroutine jacobian_ccs_a1_ccs(wf,rho,c1)
+      subroutine jacobian_ccs_a1_ccs(wf,rho,c1)
 !!
 !!       A1 contribution to right transform of Jacobian
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
@@ -93,7 +93,7 @@ contains
       end subroutine jacobian_ccs_a1_ccs
 !
 !
-      module subroutine jacobian_ccs_b1_ccs(wf,rho,c1)
+      subroutine jacobian_ccs_b1_ccs(wf,rho,c1)
 !!
 !!       B1 contribution to right transform of Jacobian
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad

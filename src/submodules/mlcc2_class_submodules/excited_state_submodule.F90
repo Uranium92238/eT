@@ -24,7 +24,7 @@ submodule (mlcc2_class) excited_state
 contains
 !
 !
-   module subroutine initialize_excited_states_mlcc2(wf)
+   subroutine initialize_excited_states_mlcc2(wf)
 !!
 !!    Initialize excited states
 !!    Written by Sarai D. Folkestad, June 2017
@@ -46,7 +46,7 @@ contains
    end subroutine initialize_excited_states_mlcc2
 !
 !
-   module subroutine calculate_orbital_differences_mlcc2(wf, orbital_diff)
+   subroutine calculate_orbital_differences_mlcc2(wf, orbital_diff)
 !!
 !!    Calculate Orbital Differences (CC2)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad May 2017
@@ -122,7 +122,7 @@ contains
    end subroutine calculate_orbital_differences_mlcc2
 !
 !
-   module subroutine transform_trial_vectors_mlcc2(wf, first_trial, last_trial)
+   subroutine transform_trial_vectors_mlcc2(wf, first_trial, last_trial)
 !!
 !!    Transformation of Trial Vectors (MLCC2)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017

@@ -12,7 +12,7 @@ submodule (mlccsd_class) cholesky
 contains
 !
 !
-   module subroutine read_transform_cholesky_for_CC2_amplitude_mlccsd(wf)
+   subroutine read_transform_cholesky_for_CC2_amplitude_mlccsd(wf)
 !
       implicit none
 !
@@ -374,7 +374,7 @@ contains
    end subroutine read_transform_cholesky_for_CC2_amplitude_mlccsd
 !
 !
-   module subroutine read_cholesky_ai_for_cc2_amplitudes_mlccsd(wf,L_ai_J, a_first, a_last, i_first, i_last)
+   subroutine read_cholesky_ai_for_cc2_amplitudes_mlccsd(wf,L_ai_J, a_first, a_last, i_first, i_last)
 !!
 !!    Read Cholesky IA 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -435,7 +435,7 @@ contains
    end subroutine read_cholesky_ai_for_cc2_amplitudes_mlccsd
 !
 !
-  module subroutine read_cholesky_ia_for_cc2_amplitudes_mlccsd(wf,L_ia_J, i_first, i_last, a_first, a_last)
+  subroutine read_cholesky_ia_for_cc2_amplitudes_mlccsd(wf,L_ia_J, i_first, i_last, a_first, a_last)
 !!
 !!    Read Cholesky IA 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -495,7 +495,7 @@ contains
    end subroutine read_cholesky_ia_for_cc2_amplitudes_mlccsd
 !
 !
-   module subroutine read_cholesky_ij_for_cc2_amplitudes_mlccsd(wf,L_ij_J , i_first, i_last, j_first, j_last)
+   subroutine read_cholesky_ij_for_cc2_amplitudes_mlccsd(wf,L_ij_J , i_first, i_last, j_first, j_last)
 !!
 !!    Read Cholesky IJ 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -556,7 +556,7 @@ contains
    end subroutine read_cholesky_ij_for_cc2_amplitudes_mlccsd
 !
 !
-    module subroutine read_cholesky_ab_for_cc2_amplitudes_mlccsd(wf, L_ab_J, a_first, a_last, b_first, b_last)
+    subroutine read_cholesky_ab_for_cc2_amplitudes_mlccsd(wf, L_ab_J, a_first, a_last, b_first, b_last)
 !!
 !!    Read Cholesky AB 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -613,7 +613,7 @@ contains
    end subroutine read_cholesky_ab_for_cc2_amplitudes_mlccsd
 !
 !
-  module subroutine get_cholesky_ai_for_cc2_amplitudes_mlccsd(wf, L_ai_J, a_first, a_last, i_first, i_last)
+  subroutine get_cholesky_ai_for_cc2_amplitudes_mlccsd(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !!
 !!    Get Cholesky AI
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
