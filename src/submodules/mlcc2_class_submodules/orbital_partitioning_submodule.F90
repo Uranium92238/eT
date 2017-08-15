@@ -718,7 +718,7 @@ contains
    end subroutine cholesky_orbitals_mlcc2
 !
 !
-   function get_number_of_active_atoms(unit_cholesky_decomp, ml_level)
+   module function get_number_of_active_atoms(unit_cholesky_decomp, ml_level)
 !!
 !!    Get number of active atoms
 !!    Written by Sarai D. Folkestad June 2017
@@ -1028,7 +1028,7 @@ contains
       integer(i15) :: unit_solution = -1
       integer(i15) :: ioerror = 0
       integer(i15) :: lower_level_n_singlet_states
-      integer(i15) :: state, i
+      integer(i15) :: state
 !
       real(dp), dimension(:,:), allocatable :: solution
       real(dp), dimension(:,:), allocatable :: R_a_i
