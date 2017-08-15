@@ -18,7 +18,7 @@ submodule (ccsdpt_class) ground_state
 contains
 !
 !
-   subroutine destruct_ground_state_ccsdpt(wf)
+   module subroutine destruct_ground_state_ccsdpt(wf)
 !!
 !!    Destruct Ground State (CCSD(T))
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017

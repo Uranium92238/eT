@@ -27,7 +27,7 @@ submodule (cc2_class) omega
 !
 contains
 !
-    subroutine construct_omega_cc2(wf)
+    module subroutine construct_omega_cc2(wf)
 !  
 !     Construct Omega (CC2)
 !     Written by Eirik F. Kjønstad and Sarai Folkestad, Apr 2017
@@ -217,7 +217,7 @@ contains
    end subroutine construct_omega_cc2
 !
 !
-   subroutine omega_a1_cc2(wf, t_kc_di, c_first, c_last, c_length)
+   module subroutine omega_a1_cc2(wf, t_kc_di, c_first, c_last, c_length)
 ! 
 !     Omega A1
 !     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -434,7 +434,7 @@ contains
    end subroutine omega_a1_cc2
 !
 !
-   subroutine omega_b1_cc2(wf, t_lc_ak, c_first, c_last, c_length)
+   module subroutine omega_b1_cc2(wf, t_lc_ak, c_first, c_last, c_length)
 ! 
 !     Omega B1
 !     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -626,7 +626,7 @@ contains
    end subroutine omega_b1_cc2
 !
 !
-   subroutine omega_c1_cc2(wf, t_kc_ai, c_first, c_last, c_length)        
+   module subroutine omega_c1_cc2(wf, t_kc_ai, c_first, c_last, c_length)        
 !  
 !     Omega C1
 !     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017

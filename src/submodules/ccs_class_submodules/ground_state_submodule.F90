@@ -4,7 +4,7 @@ submodule (ccs_class) ground_state
 !!                                Ground state submodule (CCS)
 !!                Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-!!    Consists of the following subroutines of the CCS:
+!!    Consists of the following module subroutines of the CCS:
 !!
 !!    ground_state_solver:        Controls the iterative loop, calling in turn
 !!                                the calculation of the energy, the amplitude equations 
@@ -48,7 +48,7 @@ submodule (ccs_class) ground_state
 contains
 !
 !
-   subroutine ground_state_solver_ccs(wf)
+   module subroutine ground_state_solver_ccs(wf)
 !!
 !!    Ground State Solver 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -201,7 +201,7 @@ contains
    end subroutine ground_state_solver_ccs
 !
 !
-    subroutine calc_ampeqs_ccs(wf)
+    module subroutine calc_ampeqs_ccs(wf)
 !!
 !!    Calculate Amplitude Equations (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -222,7 +222,7 @@ contains
    end subroutine calc_ampeqs_ccs
 !
 !
-    subroutine calc_ampeqs_norm_ccs(wf, ampeqs_norm)
+    module subroutine calc_ampeqs_norm_ccs(wf, ampeqs_norm)
 !!
 !!     Calculate Amplitude Equations Norm (CCS)
 !!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -242,7 +242,7 @@ contains
    end subroutine calc_ampeqs_norm_ccs
 !
 !
-    subroutine new_amplitudes_ccs(wf)
+    module subroutine new_amplitudes_ccs(wf)
 !!
 !!    New Amplitudes (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -292,7 +292,7 @@ contains
    end subroutine new_amplitudes_ccs
 !
 !
-    subroutine calc_quasi_Newton_singles_ccs(wf,dt)
+    module subroutine calc_quasi_Newton_singles_ccs(wf,dt)
 !!
 !!    Calculate quasi-Newton estimate (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -325,7 +325,7 @@ contains
    end subroutine calc_quasi_Newton_singles_ccs
 !
 !
-    subroutine diis_ccs(wf, dt, t_dt)
+    module subroutine diis_ccs(wf, dt, t_dt)
 !!
 !!    DIIS routine
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -482,10 +482,10 @@ contains
       call deallocator(diis_vector, current_index + 1, 1)
       call deallocator(diis_matrix, current_index + 1, current_index+1)
 !
-   end subroutine diis_ccs 
+   end subroutine diis_ccs
 !
 !
-   subroutine initialize_ground_state_ccs(wf)
+   module subroutine initialize_ground_state_ccs(wf)
 !!
 !!    Initialize Ground State (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -503,7 +503,7 @@ contains
    end subroutine initialize_ground_state_ccs
 !
 !
-   subroutine destruct_ground_state_ccs(wf)
+   module subroutine destruct_ground_state_ccs(wf)
 !!
 !!    Destruct Ground State (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017

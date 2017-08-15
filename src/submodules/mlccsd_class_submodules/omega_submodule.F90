@@ -8,7 +8,7 @@ submodule (mlccsd_class) omega
 !
 contains
 !
-   subroutine initialize_omega_mlccsd(wf)
+   module subroutine initialize_omega_mlccsd(wf)
 !
 !      Initialize Omega (MLCCSD)
 !      Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -28,7 +28,7 @@ contains
 !
    end subroutine initialize_omega_mlccsd
 !
-  subroutine construct_omega_mlccsd(wf)
+  module subroutine construct_omega_mlccsd(wf)
 !! 
 !!    Construct Omega (MLCCSD)
 !!    Written by Eirik F. Kjønstad and Sarai Folkestad, Apr 2017
@@ -109,7 +109,7 @@ contains
    end subroutine construct_omega_mlccsd
 !
 !
-   subroutine get_mlccsd_x2am_mlccsd(wf, x_ia_jb)
+   module subroutine get_mlccsd_x2am_mlccsd(wf, x_ia_jb)
 !!
 !!    Constructs x_ia_jb amplitudes for current active space 
 !!
@@ -354,7 +354,7 @@ contains
    end subroutine get_mlccsd_x2am_mlccsd
 !
 !
-    subroutine omega_mlccsd_a1_mlccsd(wf, x_ib_jc)
+    module subroutine omega_mlccsd_a1_mlccsd(wf, x_ib_jc)
 !! 
 !!    Omega A1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -527,7 +527,7 @@ contains
    end subroutine omega_mlccsd_a1_mlccsd
 !
 !
-    subroutine omega_mlccsd_b1_mlccsd(wf, x_ja_kb)
+    module subroutine omega_mlccsd_b1_mlccsd(wf, x_ja_kb)
 !! 
 !!    Omega B1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -688,7 +688,7 @@ contains
    end subroutine omega_mlccsd_b1_mlccsd
 !
 !
-  subroutine omega_mlccsd_a2_mlccsd(wf, x_IC_JD)
+  module subroutine omega_mlccsd_a2_mlccsd(wf, x_IC_JD)
 !
 !     Omega A2 term: Omega A2 = sum_(cd)g_aC_bD * x_Ci_Dj
 !
@@ -1226,7 +1226,7 @@ contains
    end subroutine omega_mlccsd_a2_mlccsd
 !
 !
-   subroutine omega_mlccsd_b2_mlccsd(wf, x_kc_ld)
+   module subroutine omega_mlccsd_b2_mlccsd(wf, x_kc_ld)
 !!
 !!    Omega B2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 11 Mar 2017
@@ -1516,7 +1516,7 @@ contains
    end subroutine omega_mlccsd_b2_mlccsd
 !
 !
-  subroutine omega_mlccsd_c2_mlccsd(wf, x_lc_kd)
+  module subroutine omega_mlccsd_c2_mlccsd(wf, x_lc_kd)
 !!
 !!    Omega C2 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2017
@@ -1867,7 +1867,7 @@ contains
    end subroutine omega_mlccsd_c2_mlccsd
 !
 !
-  subroutine omega_mlccsd_d2_mlccsd(wf, x_KC_LD)
+  module subroutine omega_mlccsd_d2_mlccsd(wf, x_KC_LD)
 !!
 !!     Omega D2 
 !!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -2441,7 +2441,7 @@ contains
    end subroutine omega_mlccsd_d2_mlccsd
 !
 !
-   subroutine omega_mlccsd_e2_mlccsd(wf, x_kc_ld)
+   module subroutine omega_mlccsd_e2_mlccsd(wf, x_kc_ld)
 !!
 !!     Omega E2
 !!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017

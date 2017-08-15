@@ -14,7 +14,7 @@ submodule (mlccsd_class) excited_state
 !
 contains
 !
-   subroutine initialize_excited_states_mlccsd(wf)
+   module subroutine initialize_excited_states_mlccsd(wf)
 !!
 !!    Initialize excited states
 !!    Written by Sarai D. Folkestad, Aug 2017
@@ -41,7 +41,7 @@ contains
    end subroutine initialize_excited_states_mlccsd
 !
 !
-   subroutine transform_trial_vectors_mlccsd(wf, first_trial, last_trial)
+   module subroutine transform_trial_vectors_mlccsd(wf, first_trial, last_trial)
 !!
 !!    Transformation of Trial Vectors (MLCC2)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
