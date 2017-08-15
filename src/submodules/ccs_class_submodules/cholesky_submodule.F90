@@ -1,4 +1,4 @@
-sub(ccs_class) cholesky
+submodule(ccs_class) cholesky
 !
 !!
 !!    Cholesky sub(CCS)

@@ -1,4 +1,4 @@
-sub(ccs_class) fock
+submodule(ccs_class) fock
 !
 !!
 !!    Fock submodule

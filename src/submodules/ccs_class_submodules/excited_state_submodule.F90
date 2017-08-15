@@ -1,4 +1,4 @@
-sub(ccs_class) excited_state
+submodule(ccs_class) excited_state
 !
 !!
 !!    Excited state sub(CCS)
