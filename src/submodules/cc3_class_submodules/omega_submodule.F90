@@ -1374,7 +1374,7 @@ contains
       real(dp), dimension(:,:), allocatable :: omega_ab ! sum_c u_ab_c * F_c 
 !
       integer(i15) :: a = 0, b = 0, c = 0, ab = 0, abc = 0, cba = 0
-      integer(i15) :: ai = 0, bj = 0, ab = 0
+      integer(i15) :: ai = 0, bj = 0
 !
 !     Set u_ab_c(ab,c) = t_ijk^abc - t_ijk^cba 
 !
