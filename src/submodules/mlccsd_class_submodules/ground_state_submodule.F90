@@ -22,7 +22,7 @@ submodule (mlccsd_class) ground_state
 contains
 !
 !
-   subroutine calc_ampeqs_norm_mlccsd(wf, ampeqs_norm)
+   module subroutine calc_ampeqs_norm_mlccsd(wf, ampeqs_norm)
 !
 !     Calculate Amplitude Equations Norm (MLCCSD)
 !     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -43,7 +43,7 @@ contains
    end subroutine calc_ampeqs_norm_mlccsd
 !
 !
-   subroutine new_amplitudes_mlccsd(wf)
+   module subroutine new_amplitudes_mlccsd(wf)
 !
 !     New Amplitudes (MLCCSD)
 !     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -99,7 +99,7 @@ contains
    end subroutine new_amplitudes_mlccsd
 !
 !
-   subroutine calc_quasi_Newton_doubles_mlccsd(wf,dt)
+   module subroutine calc_quasi_Newton_doubles_mlccsd(wf,dt)
 !
 !     Calculate quasi-Newtoni doubles estimate (CCSD)
 !     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -162,7 +162,7 @@ contains
    end subroutine calc_quasi_Newton_doubles_mlccsd
 !
 !
-   subroutine initialize_ground_state_mlccsd(wf)
+   module subroutine initialize_ground_state_mlccsd(wf)
 !!
 !!    Initialize Ground State (CCSD)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017

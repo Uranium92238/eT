@@ -12,7 +12,7 @@ submodule (mlcc2_class) orbital_partitioning
 !!    cholesky_decomposition:       Cholesky decomposes the density
 !!    cholesky_orbitals:            Constructs new orbitals (C matrix) from cholesky vectors 
 !! 
-!!    Contains the following subroutines and functions: These should eventually be moved to some 
+!!    Contains the following module subroutines and functions: These should eventually be moved to some 
 !!                                                       utils !
 !!
 !!    get_number_of_active_spaces:     Returns number of active spaces from cholesky.inp
@@ -33,7 +33,7 @@ submodule (mlcc2_class) orbital_partitioning
 contains
 !
 !
-   subroutine orbital_partitioning_mlcc2(wf)
+   module subroutine orbital_partitioning_mlcc2(wf)
 !!
 !!    Orbital partitioning,
 !!    Written by Sarai D. Folkestad, June 2017
@@ -62,7 +62,7 @@ contains
    end subroutine orbital_partitioning_mlcc2
 !
 !
-   subroutine cholesky_localization_drv_mlcc2(wf)
+   module subroutine cholesky_localization_drv_mlcc2(wf)
 !!
 !!    Cholesky orbital localization. driver,
 !!    Written by Sarai D. Folkestad, June 2017
@@ -425,7 +425,7 @@ contains
    end subroutine cholesky_localization_drv_mlcc2
 !
 !
-   subroutine cholesky_orbital_constructor_mlcc2(wf, orbitals, orbital_energies, offset, ao_fock, density, n_vectors,&
+   module subroutine cholesky_orbital_constructor_mlcc2(wf, orbitals, orbital_energies, offset, ao_fock, density, n_vectors,&
                               selection, n_active_aos, active_ao_index_list)
 !!
 !!    Cholesky orbital constructor,
@@ -500,7 +500,7 @@ contains
    end subroutine cholesky_orbital_constructor_mlcc2
 !
 !
-   subroutine cholesky_decomposition_mlcc2(wf, density, cholesky_vectors,&
+   module subroutine cholesky_decomposition_mlcc2(wf, density, cholesky_vectors,&
                                                      n_vectors, selection, n_active_aos, active_ao_index_list)
 !!
 !!    Cholesky decomposition, 
@@ -614,7 +614,7 @@ contains
    end subroutine cholesky_decomposition_mlcc2
 !
 !
-   subroutine cholesky_orbitals_mlcc2(wf, cholesky_vectors, n_vectors, orbitals, orbital_energies, ao_fock)
+   module subroutine cholesky_orbitals_mlcc2(wf, cholesky_vectors, n_vectors, orbitals, orbital_energies, ao_fock)
 !!
 !!    Cholesky orbitals,
 !!    Written by Sarai Dery Folkestad, June 2017
@@ -768,7 +768,7 @@ contains
    end function get_number_of_active_atoms
 !
 !
-   subroutine get_active_atoms(unit_cholesky_decomp, active_atoms, n_active_atoms ,ml_level)
+   module subroutine get_active_atoms(unit_cholesky_decomp, active_atoms, n_active_atoms ,ml_level)
 !!
 !!    Get active atoms
 !!    Written by Sarai D. Folkestad June 2017
@@ -820,7 +820,7 @@ contains
    end subroutine get_active_atoms
 !
 !
-      subroutine construct_active_ao_index_list(active_ao_index_list, n_active_aos, active_atoms, &
+      module subroutine construct_active_ao_index_list(active_ao_index_list, n_active_aos, active_atoms, &
                                                    n_active_atoms, ao_center_info, n_ao)
 !!
 !!    Construct active ao index list,
@@ -852,7 +852,7 @@ contains
     end subroutine construct_active_ao_index_list
 !
 !
-   subroutine read_atom_info(n_nuclei, n_ao)
+   module subroutine read_atom_info(n_nuclei, n_ao)
 !!
 !!    Read atom info,
 !!    Written by Sarai Dery Folkestad, June 2017.
@@ -882,7 +882,7 @@ contains
 !
    end subroutine read_atom_info
 !
-   subroutine read_center_info(n_nuclei, n_ao, n_ao_on_center, ao_center_info)
+   module subroutine read_center_info(n_nuclei, n_ao, n_ao_on_center, ao_center_info)
 !!
 !!    Read center info,
 !!    Written by Sarai Dery Folkestad, June 2017.
@@ -941,7 +941,7 @@ contains
 !     -::- CNTO Routines -::-
 !     :::::::::::::::::::::::
 !
-   subroutine cnto_orbital_drv_mlcc2(wf)
+   module subroutine cnto_orbital_drv_mlcc2(wf)
 !!
 !!    CNTO orbital driver,
 !!    Written by Sarai D. Folkestad, June 2017.
@@ -994,7 +994,7 @@ contains
    end subroutine cnto_orbital_drv_mlcc2
 !
 !
-   subroutine cc2_cnto_mlcc2(wf)
+   module subroutine cc2_cnto_mlcc2(wf)
 !!
 !!    CNTO orbital driver,
 !!    Written by Sarai D. Folkestad, June 2017.
@@ -1639,7 +1639,7 @@ contains
    end subroutine cc2_cnto_mlcc2
 !
 !
-   subroutine print_cnto_info_mlcc2(wf)
+   module subroutine print_cnto_info_mlcc2(wf)
 !!
 !!
       implicit none 

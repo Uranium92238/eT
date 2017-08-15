@@ -26,7 +26,7 @@ submodule (cc3_class) omega
 !
 contains
 !
-    subroutine construct_omega_cc3(wf)
+    module subroutine construct_omega_cc3(wf)
 !!
 !!    Construct Omega (CC3)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -140,7 +140,7 @@ contains
    end subroutine construct_omega_cc3
 !
 !
-   subroutine omega_integrals_cc3(wf)
+   module subroutine omega_integrals_cc3(wf)
 !!
 !!     Omega Integrals (CC3)
 !!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -596,7 +596,7 @@ contains
    end subroutine omega_integrals_cc3
 !
 !
-   subroutine calc_triples_cc3(wf,w_abc,i,j,k)
+   module subroutine calc_triples_cc3(wf,w_abc,i,j,k)
 !!
 !!    Calculate Triples (CC3)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -1235,7 +1235,7 @@ contains
    end subroutine calc_triples_cc3
 !
 !
-   subroutine omega_cc3_a1_cc3(wf,t_abc,i,j,k)
+   module subroutine omega_cc3_a1_cc3(wf,t_abc,i,j,k)
 !!
 !!    Omega A1 (CC3)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -1346,7 +1346,7 @@ contains
    end subroutine omega_cc3_a1_cc3
 !
 !
-   subroutine omega_cc3_a2_cc3(wf,omega_ai_bj,t_abc,i,j,k)
+   module subroutine omega_cc3_a2_cc3(wf,omega_ai_bj,t_abc,i,j,k)
 !!
 !!    Omega A2 (CC3)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -1452,7 +1452,7 @@ contains
    end subroutine omega_cc3_a2_cc3
 !
 !
-   subroutine omega_cc3_b2_cc3(wf,omega_ai_bj,t_abc,i,j,k)
+   module subroutine omega_cc3_b2_cc3(wf,omega_ai_bj,t_abc,i,j,k)
 !!
 !!    Omega B2 (CC3)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017

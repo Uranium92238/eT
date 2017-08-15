@@ -17,7 +17,7 @@ submodule (ccs_class) fock
 contains
 !
 !
-    subroutine initialize_fock_matrix_ccs(wf)
+    module subroutine initialize_fock_matrix_ccs(wf)
 !!
 !!     Initialize Fock Matrix
 !!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -45,7 +45,7 @@ contains
    end subroutine initialize_fock_matrix_ccs
 !
 !
-   subroutine construct_fock_ccs(wf)
+   module subroutine construct_fock_ccs(wf)
 !!
 !!    Construct Fock
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -507,7 +507,7 @@ contains
    end subroutine construct_fock_ccs
 !
 !
-   subroutine one_electron_t1_ccs(wf, h1 ,h1_T1)
+   module subroutine one_electron_t1_ccs(wf, h1 ,h1_T1)
 !!
 !!    One-electron T1 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017

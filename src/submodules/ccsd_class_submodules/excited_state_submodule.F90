@@ -10,7 +10,7 @@ submodule (ccsd_class) excited_state
 contains 
 !
 !
-   subroutine calculate_orbital_differences_ccsd(wf,orbital_diff)
+   module subroutine calculate_orbital_differences_ccsd(wf,orbital_diff)
 !!
 !!       Calculate Orbital Differences (CCSD)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad May 2017
@@ -58,7 +58,7 @@ contains
    end subroutine calculate_orbital_differences_ccsd
 !
 !
-   subroutine transform_trial_vectors_ccsd(wf, first_trial, last_trial)
+   module subroutine transform_trial_vectors_ccsd(wf, first_trial, last_trial)
 !!
 !!    Transformation Trial Vectors (CCSD)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
