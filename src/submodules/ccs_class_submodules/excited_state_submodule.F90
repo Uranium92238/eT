@@ -540,10 +540,11 @@ contains
       real(dp), dimension(wf%tasks%n_singlet_states,1) :: eigenvalues_Re
       real(dp), dimension(wf%tasks%n_singlet_states,1) :: eigenvalues_Im
 !
-      real(dp), dimension(reduced_dim, wf%tasks%n_singlet_states) :: solution_vectors_reduced
-!
       integer(i15) :: reduced_dim
       integer(i15) :: n_new_trials
+!
+      real(dp), dimension(reduced_dim, wf%tasks%n_singlet_states) :: solution_vectors_reduced
+
 !
 !     Local variables 
 !
