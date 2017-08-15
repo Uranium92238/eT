@@ -118,7 +118,7 @@ contains
 !
       integer(i15) :: i = 0, j = 0, a = 0, c = 0, k = 0, d = 0
       integer(i15) :: ad = 0, ad_dim = 0, ci = 0, cidk = 0, ck = 0, da = 0 
-      integer(i15) :: ckd = 0, ckdi = 0, di = 0, dk = 0, kc = 0, da = 0
+      integer(i15) :: ckd = 0, ckdi = 0, di = 0, dk = 0, kc = 0
 !
       real(dp), dimension(:,:), allocatable :: L_kc_J 
       real(dp), dimension(:,:), allocatable :: L_da_J  ! L_ad^J; a is being batched over
@@ -1381,7 +1381,6 @@ contains
       integer(i15) :: a = 0, b = 0, c = 0, d = 0
       integer(i15) :: i = 0, j = 0, k = 0, l = 0
 !
-      integer(i15) :: ca = 0
       integer(i15) :: ai = 0, aj = 0, al = 0, bi = 0, bj = 0, bk = 0, cj = 0, ck = 0, cl = 0, di = 0, dk = 0, dl = 0
       integer(i15) :: kd = 0, lc = 0, ca = 0, ac = 0
       integer(i15) :: ki = 0

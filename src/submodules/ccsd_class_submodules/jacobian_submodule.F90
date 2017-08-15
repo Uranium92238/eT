@@ -2147,9 +2147,9 @@ contains
 !     Indices 
 !
       integer(i15) :: b = 0, c = 0, cd = 0, ci = 0, dj = 0, cidj = 0, d = 0, db = 0, bd = 0
-      integer(i15) :: k = 0, j = 0, kb = 0, kc = 0, i = 0, ij = 0, ijb = 0, kb = 0
+      integer(i15) :: k = 0, j = 0, kb = 0, kc = 0, i = 0, ij = 0, ijb = 0
       integer(i15) :: a = 0, ai = 0, bj = 0, ib = 0, dkb = 0, dk = 0, akdj = 0, ak = 0
-      integer(i15) :: aj = 0, ck = 0, ckb = 0, ciak = 0, aib = 0, dkb = 0, aidj = 0, aij = 0
+      integer(i15) :: aj = 0, ck = 0, ckb = 0, ciak = 0, aib = 0, aidj = 0, aij = 0
 !
 !     Read amplitudes from disk
 ! 
