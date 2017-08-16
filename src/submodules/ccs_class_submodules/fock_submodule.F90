@@ -119,7 +119,7 @@ contains
 !     Open mlcc_aoint file
 !
       call generate_unit_identifier(unit_identifier_ao_integrals)
-      open(unit=unit_identifier_ao_integrals,file='mlcc_aoint',status='old',form='formatted')
+      open(unit=unit_identifier_ao_integrals,file='MLCC_AOINT',status='old',form='formatted')
       rewind(unit_identifier_ao_integrals)
 !
 !     Read in one-electron AO integrals
