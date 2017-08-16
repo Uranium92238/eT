@@ -536,7 +536,7 @@ contains
       integer(i15) :: ab = 0
       integer(i15) :: ai = 0, ak = 0, ci = 0, ck = 0, bj = 0, bl = 0, ai_CC2
       integer(i15) :: kc = 0, lc = 0, jc = 0
-      integer(i15) :: jk = 0, jl = 0, lj = 0, kl = 0, ji = 0, kj = 0, jk = 0, kl = 0
+      integer(i15) :: jl = 0, lj = 0, kl = 0, ji = 0, kj = 0, jk = 0
       integer(i15) :: jai = 0, bij = 0, abj = 0, ljk = 0, aib = 0
       integer(i15) :: akci = 0, akbl = 0, aick = 0, aibl = 0
 !
