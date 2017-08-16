@@ -1557,7 +1557,6 @@ contains
       integer(i15) :: a = 0, b = 0, c = 0, d = 0
       integer(i15) :: i = 0, j = 0, k = 0, l = 0
 !
-      integer(i15) :: ca = 0
       integer(i15) :: ai = 0, aj = 0, al = 0, bi = 0, bj = 0, bk = 0, cj = 0
       integer(i15) :: ck = 0, cl = 0, di = 0, dk = 0, dl = 0, ck_restricted = 0
       integer(i15) :: kd = 0, lc = 0, ca = 0, ac = 0, id = 0, la = 0
@@ -2471,7 +2470,7 @@ contains
       integer(i15) :: aib = 0, aibk = 0, bk = 0, bja = 0, ibj = 0, aibj = 0, dlck = 0
       integer(i15) :: b = 0, c = 0, k = 0, d = 0, ck = 0, ckdl = 0, cl = 0, cldk = 0
       integer(i15) :: dk = 0, dl = 0, kc = 0, kdl = 0, l = 0, ld = 0, a = 0, ai = 0
-      integer(i15) :: ia = 0, ld = 0, kd = 0, lc = 0, jc = 0, kb = 0 
+      integer(i15) :: ia = 0, kd = 0, lc = 0, jc = 0, kb = 0 
       integer(i15) :: bj = 0, aicj = 0, cj = 0, i = 0, j = 0, jai = 0, dlc = 0, dkcl = 0
 !
 !     Vectors for E2.1 term 
