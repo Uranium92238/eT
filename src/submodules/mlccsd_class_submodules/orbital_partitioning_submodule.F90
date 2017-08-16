@@ -277,10 +277,6 @@ contains
       integer(i15), dimension(:,:), allocatable :: active_atoms, active_atoms_CC2, active_atoms_CCSD
       integer(i15), dimension(:,:), allocatable :: active_ao_index_list
 !
-!     Looping variables
-!
-      integer(i15) :: i = 0
-!
 !     Active space variables
 !
       integer(i15) :: n_active_aos
@@ -1089,7 +1085,7 @@ contains
       integer(i15) :: unit_solution = -1
       integer(i15) :: ioerror = 0
       integer(i15) :: lower_level_n_singlet_states
-      integer(i15) :: state, i
+      integer(i15) :: state
       integer(i15) :: cc2_n_x2am, cc2_n_parameters
 !
       real(dp), dimension(:,:), allocatable :: solution
