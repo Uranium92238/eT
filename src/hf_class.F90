@@ -858,7 +858,7 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !     Open mlcc_aoint file
 !
       call generate_unit_identifier(unit_identifier_ao_integrals)
-      open(unit=unit_identifier_ao_integrals,file='mlcc_aoint',status='old',form='formatted')
+      open(unit=unit_identifier_ao_integrals,file='MLCC_AOINT',status='old',form='formatted')
       rewind(unit_identifier_ao_integrals)
 !
 !     Read in one-electron AO integrals
@@ -882,7 +882,7 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !     Read Cholesky in ao basis
 !
       call generate_unit_identifier(unit_chol_ao)
-      open(unit=unit_chol_ao, file='mlcc_cholesky', status='old', form='formatted')
+      open(unit=unit_chol_ao, file='MLCC_CHOLESKY', status='old', form='formatted')
       rewind(unit_chol_ao)
 !
 !     Read the number of Cholesky vectors (n_J) and 
@@ -988,7 +988,7 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !     Open mlcc_aoint file
 !
       call generate_unit_identifier(unit_identifier_ao_integrals)
-      open(unit=unit_identifier_ao_integrals,file='mlcc_aoint',status='old',form='formatted')
+      open(unit=unit_identifier_ao_integrals,file='MLCC_AOINT',status='old',form='formatted')
       rewind(unit_identifier_ao_integrals)
 !
 !     Read in one-electron AO integrals
@@ -1012,7 +1012,7 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !     Read Cholesky in ao basis
 !
       call generate_unit_identifier(unit_chol_ao)
-      open(unit=unit_chol_ao, file='mlcc_cholesky', status='old', form='formatted')
+      open(unit=unit_chol_ao, file='MLCC_CHOLESKY', status='old', form='formatted')
       rewind(unit_chol_ao)
 !
 !     Read the number of Cholesky vectors (n_J) and 
