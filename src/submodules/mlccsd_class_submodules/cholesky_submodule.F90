@@ -25,7 +25,7 @@ contains
       integer(i15) :: unit_chol_mo_ij = -1
       integer(i15) :: unit_chol_mo_ab = -1
       integer(i15) :: unit_chol_mo_ab_tmp = -1
-      integer(i15) :: J, i, a, ai, ia, k, ij, ij_rec, a, b, ab 
+      integer(i15) :: J, i, a, ai, ia, k, ij, ij_rec, b, ab 
 !
       real(dp), dimension(:,:), allocatable :: C_o, C_v
       real(dp), dimension(:,:), allocatable :: chol_ao_sq, chol_ao
