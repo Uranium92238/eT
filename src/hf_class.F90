@@ -251,7 +251,7 @@ contains
 !     Open Dalton file mlcc_cholesky (see mlcc_write_cholesky.F)
 ! 
       call generate_unit_identifier(unit_chol_ao)
-      open(unit=unit_chol_ao, file='mlcc_cholesky', status='old', form='formatted', iostat = ioerror)
+      open(unit=unit_chol_ao, file='MLCC_CHOLESKY', status='old', form='formatted', iostat = ioerror)
       if (ioerror .ne. 0) then
          write(unit_output,*)'Erorr while opening file mlcc_cholesky. Error code', ioerror
          flush(unit_output)
