@@ -1212,6 +1212,8 @@ contains
 !
       wf%mlcc_settings%delta_o = 1.0d-3
       wf%mlcc_settings%delta_v = 1.0d-4 ! THESE SHOULD BE SET IN INPUT
+      write(unit_output,*)'1'
+      flush(unit_output)
 !
 !     Open file of CC2 solution vectors
 !
@@ -1235,6 +1237,8 @@ contains
          call daxpy(cc2_n_parameters, one, R, 1, R_sum, 1)
 !
       enddo
+      write(unit_output,*)'2'
+      flush(unit_output)
 !
 !     Done with file, delete it
 !
@@ -1264,6 +1268,8 @@ contains
       enddo
 !
       call deallocator(R_sum, cc2_n_parameters, 1)
+      write(unit_output,*)'3'
+      flush(unit_output)
 
 !
 !     Construct M and N
@@ -1342,6 +1348,8 @@ contains
       enddo
 !
       call deallocator(R_ai_bj, n_cc2_o*n_cc2_v, n_cc2_o*n_cc2_v)
+      write(unit_output,*)'4'
+      flush(unit_output)
 !
 !
 !     :: Diagonalize M and N matrix ::
@@ -1375,6 +1383,8 @@ contains
                   info)
 !
       call deallocator(work, 4*(n_cc2_v), 1)
+      write(unit_output,*)'5'
+      flush(unit_output)
 !
 !     :: Reorder M and N ::
 !
@@ -1402,6 +1412,8 @@ contains
       enddo
 !
       call deallocator(N_a_b, n_CC2_v, n_CC2_v)
+      write(unit_output,*)'6'
+      flush(unit_output)
 !
 !
 !     Transform C to CNTO
@@ -1424,6 +1436,8 @@ contains
         enddo
 !
      enddo
+     write(unit_output,*)'7'
+      flush(unit_output)
 !
       call allocator(C_o_transformed, wf%n_ao, n_cc2_o)
       call dgemm('N', 'N',    &
@@ -1458,6 +1472,8 @@ contains
       call deallocator(C_v, wf%n_ao, n_cc2_v)
       call deallocator(N, n_cc2_v, n_cc2_v)
       call deallocator(M, n_cc2_o, n_cc2_o)  
+      write(unit_output,*)'8'
+      flush(unit_output)
 !
       do i = 1, wf%n_ao
 !
@@ -1476,6 +1492,8 @@ contains
 !
       call deallocator(C_o_transformed, wf%n_ao, n_cc2_o)
       call deallocator(C_v_transformed, wf%n_ao, n_cc2_v)
+      write(unit_output,*)'9'
+      flush(unit_output)
 !
 !     :: Determine number of active orbitals ::
 !
@@ -1499,6 +1517,8 @@ contains
          wf%n_CCSD_v = wf%n_CCSD_v + 1
 !
       enddo 
+      write(unit_output,*)'10'
+      flush(unit_output)
 !
 !     Save information to object
 !
@@ -1513,6 +1533,7 @@ contains
 !
       call deallocator(eigenvalues_o, n_cc2_o, 1)
       call deallocator(eigenvalues_v, n_cc2_v, 1)
+      call wf%print_cnto_info
 !     ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !     -::- Finding orbital energies and new block diagonal C matrix -::-
 !     ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

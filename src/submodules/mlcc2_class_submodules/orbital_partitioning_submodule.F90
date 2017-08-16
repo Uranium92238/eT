@@ -718,7 +718,7 @@ contains
    end subroutine cholesky_orbitals_mlcc2
 !
 !
-   function get_number_of_active_atoms(unit_cholesky_decomp, ml_level)
+   module function get_number_of_active_atoms(unit_cholesky_decomp, ml_level)
 !!
 !!    Get number of active atoms
 !!    Written by Sarai D. Folkestad June 2017
