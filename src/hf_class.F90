@@ -169,7 +169,7 @@ contains
 !     Open the file mlcc_hf_info
 !
       call generate_unit_identifier(unit_hf)
-      open(unit=unit_hf, file='mlcc_hf_info', status='old', form='formatted')
+      open(unit=unit_hf, file='MLCC_HF_INFO', status='old', form='formatted')
       rewind(unit_hf)
 !
 !     Read mlcc_hf_info into HF variables
