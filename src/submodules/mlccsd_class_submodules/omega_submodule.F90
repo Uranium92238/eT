@@ -841,15 +841,16 @@ contains
 !
 !     Calc of required should be fixed, is now conservative.
 !
-      required = max(3*(n_CC2_v)**2*(wf%n_J) + 2*(n_CC2_v)*(n_CC2_o)*(wf%n_J),  &      ! Needed to get  L_db_J
-                     (n_CC2_v)**4 + 2*(n_CC2_v)**2*(wf%n_J), &                            ! Needed to get g_ac_bd
-                     (n_CC2_v)**4 + 2*(packed_size(n_CC2_v))*(packed_size(n_CC2_v)) &  ! Needed to get g+- and t+-
-                     + 2*(packed_size(n_CC2_v))*(packed_size(n_CC2_o)), &                 !
-                       2*(packed_size(n_CC2_v))*(packed_size(n_CC2_v)) &                  ! Needed for g+- and t+- and Omega+-
-                     + 2*(packed_size(n_CC2_v))*(packed_size(n_CC2_o)) &                  !
-                     + 2*(n_CC2_v)**2*(packed_size(n_CC2_v)))                             !
+      required = max(3*((n_CC2_v)**2)*(wf%n_J) + 2*(n_CC2_v)*(n_CC2_o)*(wf%n_J),  &      ! Needed to get  L_db_J
+                     (n_CC2_v)**4 + 2*(n_CC2_v)**2*(wf%n_J), &                         ! Needed to get g_ac_bd
+                     (n_CC2_v)**4 + 2*((n_CC2_v)**2)*(packed_size(n_CC2_v))      &  ! Needed to get g+- and t+-
+                     + 2*(packed_size(n_CC2_v))*(packed_size(n_CC2_o)), &              !
+                       2*(packed_size(n_CC2_o))*(packed_size(n_CC2_v)) &               ! Needed for g+- and t+- and Omega+-
+                     + 2*(packed_size(n_CC2_v))*(packed_size(n_CC2_o)) &               !
+                     + 2*(n_CC2_v)**2*(packed_size(n_CC2_v)))                          !
 !
       required = required*4  ! Words
+      write(unit_output,*)'Required in A2', required
 
       available=get_available()
 !

@@ -278,7 +278,7 @@ contains
    write(unit_output,*)'I am batching'
 !  
    do i = 1, batch_dimension
-      if (available .gt. buffer/i**2) then ! E: insert logical for success!
+      if (available .gt. required/i**2) then
 !
          n_batch = i
          max_batch_length = batch_dimension/n_batch
