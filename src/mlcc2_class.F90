@@ -94,11 +94,15 @@ module mlcc2_class
       procedure :: initialize_excited_states     => initialize_excited_states_mlcc2
       procedure :: calculate_orbital_differences => calculate_orbital_differences_mlcc2
       procedure :: transform_trial_vectors       => transform_trial_vectors_mlcc2
-      procedure :: jacobian_mlcc2_transformation => jacobian_mlcc2_transformation_mlcc2
-      procedure :: jacobian_mlcc2_a1             => jacobian_mlcc2_a1_mlcc2
-      procedure :: jacobian_mlcc2_b1             => jacobian_mlcc2_b1_mlcc2
-      procedure :: jacobian_mlcc2_a2             => jacobian_mlcc2_a2_mlcc2
-      procedure :: jacobian_mlcc2_b2             => jacobian_mlcc2_b2_mlcc2
+      procedure :: cvs_residual_projection       => cvs_residual_projection_mlcc2 
+!
+      procedure :: jacobian_mlcc2_transformation      => jacobian_mlcc2_transformation_mlcc2
+      procedure :: cvs_jacobian_mlcc2_transformation  => cvs_jacobian_mlcc2_transformation_mlcc2
+      procedure :: cvs_rho_ai_bj_projection           => cvs_rho_ai_bj_projection_mlcc2
+      procedure :: jacobian_mlcc2_a1                  => jacobian_mlcc2_a1_mlcc2
+      procedure :: jacobian_mlcc2_b1                  => jacobian_mlcc2_b1_mlcc2
+      procedure :: jacobian_mlcc2_a2                  => jacobian_mlcc2_a2_mlcc2
+      procedure :: jacobian_mlcc2_b2                  => jacobian_mlcc2_b2_mlcc2
 !
    end type mlcc2
 !
@@ -487,6 +491,17 @@ module mlcc2_class
       end subroutine transform_trial_vectors_mlcc2
 !
 !
+      module subroutine cvs_residual_projection_mlcc2(wf, residual)
+!!
+!!
+         implicit none
+!
+         class(mlcc2) :: wf
+         real(dp), dimension(wf%n_parameters, 1) :: residual
+!
+      end subroutine cvs_residual_projection_mlcc2
+!
+!
    end interface
 !
 !
@@ -523,6 +538,36 @@ module mlcc2_class
          real(dp), dimension(wf%n_x2am, 1)   :: c_aibj ! c_aibj  
 !  
       end subroutine jacobian_mlcc2_transformation_mlcc2
+!
+!
+      module subroutine cvs_jacobian_mlcc2_transformation_mlcc2(wf, c_a_i, c_aibj)
+!!
+!!    Jacobian transformation (MLCC2)
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
+!!
+!!    Directs the transformation by the CCSD Jacobi matrix,
+!!
+!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >,
+!!
+!!    where the basis employed for the brackets is biorthonormal. 
+!!    The transformation is rho = A c, i.e., 
+!!
+!!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck 
+!!                  + 1/2 sum_ckdl A_mu,ckdl c_ckdl (1 + delta_ck,dl).
+!!
+!!    On exit, c is overwritten by rho. That is, c_a_i = rho_a_i,
+!!    and c_aibj = rho_aibj. 
+!!
+      implicit none
+!
+      class(mlcc2) :: wf 
+!
+!     Incoming vector c 
+!
+      real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai 
+      real(dp), dimension(wf%n_x2am, 1)   :: c_aibj ! c_aibj     
+!
+   end subroutine cvs_jacobian_mlcc2_transformation_mlcc2
 !
 !
       module subroutine jacobian_mlcc2_a1_mlcc2(wf, rho_a_i, c_a_i)
@@ -618,6 +663,17 @@ module mlcc2_class
       end subroutine jacobian_mlcc2_b2_mlcc2
 !
 !
+      module subroutine cvs_rho_ai_bj_projection_mlcc2(wf, vec_ai_bj)
+!!
+!!
+         implicit none
+!
+         class(mlcc2) :: wf
+         real(dp), dimension(:, :) :: vec_ai_bj
+!
+      end subroutine cvs_rho_ai_bj_projection_mlcc2
+!
+!
    end interface
 ! 
 !
@@ -650,6 +706,7 @@ contains
 !
       wf%implemented%ground_state = .true.
       wf%implemented%excited_state = .true.
+      wf%implemented%core_excited_state = .true.
 !
 !     Read Hartree-Fock info
 !

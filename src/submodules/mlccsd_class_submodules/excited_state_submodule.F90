@@ -89,7 +89,24 @@ contains
 !
          read(unit_trial_vecs, rec=trial, iostat=ioerror) c_a_i, c_aibj
 !
-         call wf%jacobian_mlccsd_transformation(c_a_i, c_aibj)
+         if (wf%excited_state_task=='right_valence') then
+!
+               call wf%jacobian_mlccsd_transformation(c_a_i, c_aibj)
+!
+            elseif (wf%excited_state_task=='right_core') then
+!
+               call wf%cvs_jacobian_mlccsd_transformation(c_a_i, c_aibj)
+!
+            elseif (wf%excited_state_task=='left_valence') then
+!
+      !         call wf%jacobian_transpose_mlccsd_transformation(c_a_i, c_aibj)
+!
+            else
+!
+               write(unit_output,*) 'Error: Excited state task not recognized'
+               stop
+!
+         endif
 !
          write(unit_rho, rec=trial, iostat=ioerror) c_a_i, c_aibj
 !

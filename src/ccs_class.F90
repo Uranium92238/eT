@@ -120,6 +120,7 @@ module ccs_class
 !     Jacobian transformation routine 
 !
       procedure :: jacobian_ccs_transformation => jacobian_ccs_transformation_ccs
+      procedure :: cvs_jacobian_ccs_transformation => cvs_jacobian_ccs_transformation_ccs
 !
 !     Helper routines
 !
@@ -130,6 +131,9 @@ module ccs_class
       procedure, non_overridable :: jacobian_ccs_b1 => jacobian_ccs_b1_ccs
 !
       procedure :: jacobi_test => jacobi_test_ccs
+!
+      procedure :: cvs_rho_a_i_projection        => cvs_rho_a_i_projection_ccs
+      procedure :: cvs_residual_projection   => cvs_residual_projection_ccs
 !
 !     Excited state driver & solver 
 !
@@ -519,6 +523,17 @@ module ccs_class
       end subroutine transform_trial_vectors_ccs
 !
 !
+      module subroutine cvs_residual_projection_ccs(wf, residual)
+!!
+!!
+         implicit none
+!
+         class(ccs) :: wf
+         real(dp), dimension(wf%n_parameters, 1) :: residual
+!
+      end subroutine cvs_residual_projection_ccs
+!
+!
       module subroutine jacobian_ccs_transformation_ccs(wf, c_a_i)
 !!
 !!       Jacobian transformation
@@ -532,6 +547,18 @@ module ccs_class
 !
       end subroutine jacobian_ccs_transformation_ccs
 !
+!
+      module subroutine cvs_jacobian_ccs_transformation_ccs(wf, c_a_i)
+!!
+!!       Jacobian transformation
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+         implicit none
+!
+         class(ccs) :: wf 
+         real(dp), dimension(wf%n_v, wf%n_o)   :: c_a_i    
+!
+      end subroutine cvs_jacobian_ccs_transformation_ccs
 !
       module subroutine jacobian_ccs_a1_ccs(wf,rho,c1)
 !!
@@ -573,6 +600,17 @@ module ccs_class
          real(dp), dimension(wf%n_o,wf%n_v) :: rho                
 !
       end subroutine jacobian_ccs_b1_ccs
+!
+!
+      module subroutine cvs_rho_a_i_projection_ccs(wf, vec_a_i)
+!!
+!!
+         implicit none
+!
+         class(ccs) :: wf
+         real(dp), dimension(wf%n_o,wf%n_v) :: vec_a_i
+!
+      end subroutine cvs_rho_a_i_projection_ccs
 !
 !
       module subroutine initialize_ground_state_ccs(wf)
@@ -780,43 +818,46 @@ module ccs_class
       end subroutine initialize_trial_vectors_ccs
 !
 !
-      module subroutine precondition_residual_ccs(wf)
+      module subroutine precondition_residual_ccs(wf, residual)
 !!
 !!
 !!
          implicit none
 !
          class(ccs) :: wf
+         real(dp), dimension(wf%n_parameters ,1) :: residual
 !
       end subroutine precondition_residual_ccs
 !
 !
-      module subroutine precondition_residual_valence_ccs(wf)
+      module subroutine precondition_residual_valence_ccs(wf, residual)
 !!
 !!
 !!
          implicit none
 !
          class(ccs) :: wf
+         real(dp), dimension(wf%n_parameters ,1) :: residual
 !   
 !
       end subroutine precondition_residual_valence_ccs
 !
 !
 !
-      module subroutine precondition_residual_core_ccs(wf)
+      module subroutine precondition_residual_core_ccs(wf, residual)
 !!
 !!
 !!
          implicit none
 !
          class(ccs) :: wf
+         real(dp), dimension(wf%n_parameters ,1) :: residual
 !       
 !
       end subroutine precondition_residual_core_ccs
 !
 !
-      module subroutine find_core_mo_ccs(wf, index_core_mo)
+      module subroutine find_core_mo_ccs(wf)
 !!
 !!       Find indices for lowest orbital differences
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
@@ -825,7 +866,6 @@ module ccs_class
          implicit none
 !
          class(ccs) :: wf
-         integer(i15), dimension(wf%tasks%n_cores, 1), intent(inout) :: index_core_mo
 !
       end subroutine find_core_mo_ccs
 !

@@ -40,6 +40,7 @@ module calc_procedures_class
 !
       integer(i15) :: n_cores ! number of equivalent cores
       integer(i15), dimension(:,:), allocatable :: cores
+      integer(i15), dimension(:,:), allocatable :: index_core_mo
 !
    end type calc_procedures                                                                            
 !

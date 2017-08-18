@@ -135,6 +135,7 @@ module mlccsd_class
       procedure :: read_double_amplitudes          => read_double_amplitudes_mlccsd
 !
       procedure :: jacobian_mlccsd_transformation => jacobian_mlccsd_transformation_mlccsd
+      procedure :: cvs_jacobian_mlccsd_transformation => cvs_jacobian_mlccsd_transformation_mlccsd
 !
       procedure :: jacobian_mlccsd_b2 => jacobian_mlccsd_b2_mlccsd
       procedure :: jacobian_mlccsd_c2 => jacobian_mlccsd_c2_mlccsd
@@ -787,6 +788,36 @@ module mlccsd_class
       end subroutine jacobian_mlccsd_transformation_mlccsd
 !
 !
+   module subroutine cvs_jacobian_mlccsd_transformation_mlccsd(wf, c_a_i, c_aibj)
+!!
+!!    Jacobian transformation (MLCC2)
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
+!!
+!!    Directs the transformation by the CCSD Jacobi matrix,
+!!
+!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >,
+!!
+!!    where the basis employed for the brackets is biorthonormal. 
+!!    The transformation is rho = A c, i.e., 
+!!
+!!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck 
+!!                  + 1/2 sum_ckdl A_mu,ckdl c_ckdl (1 + delta_ck,dl).
+!!
+!!    On exit, c is overwritten by rho. That is, c_a_i = rho_a_i,
+!!    and c_aibj = rho_aibj. 
+!!
+      implicit none
+!
+      class(mlccsd) :: wf 
+!
+!      Incoming vector c 
+!
+      real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai 
+      real(dp), dimension(wf%n_x2am, 1)   :: c_aibj ! c_aibj  
+!
+      end subroutine cvs_jacobian_mlccsd_transformation_mlccsd
+!
+!
       module subroutine jacobian_mlccsd_b2_mlccsd(wf, rho_ai_bj, c_a_i)
 !!
 !!    Jacobian CCSD B2 
@@ -1057,6 +1088,7 @@ contains
 !
        wf%implemented%ground_state = .true.
        wf%implemented%excited_state = .true.
+       wf%implemented%core_excited_state = .true.
 !
 !     Read Hartree-Fock info
 !

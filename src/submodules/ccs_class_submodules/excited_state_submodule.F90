@@ -674,18 +674,7 @@ contains
 !
 !        :: Precondition the residual by inverse orbital energy differences ::
 !
-         call allocator(orbital_diff, wf%n_parameters, 1)
-         orbital_diff = zero
-!
-         call wf%calculate_orbital_differences(orbital_diff)
-!
-         do i = 1, wf%n_parameters
-!
-            residual(i, 1) = residual(i,1)/orbital_diff(i,1)
-!
-         enddo
-!
-         call deallocator(orbital_diff, wf%n_parameters, 1)
+         call wf%precondition_residual(residual)
 !
 !        :: Orthogonalize the residual to the other trial vectors ::
 !
@@ -1082,23 +1071,22 @@ contains
          class(ccs) :: wf
          integer(i15), dimension(wf%tasks%n_singlet_states,1), intent(inout) :: index_list
 !
-         integer(i15), dimension(:,:), allocatable :: index_core_mo
          real(dp), dimension(:,:), allocatable     ::  sorted_short_vec
 !
          integer(i15) :: a, i, counter
 !
 !        Find core mo(s)
 !
-         call allocator_int(index_core_mo, wf%tasks%n_cores, 1)
+         call allocator_int(wf%tasks%index_core_mo, wf%tasks%n_cores, 1)
 !
-         call wf%find_core_mo(index_core_mo)
+         call wf%find_core_mo
 !
          counter = 1
          do a = 1, wf%n_v
             if ( counter .le.  wf%tasks%n_singlet_states)  then
                do i = 1, wf%tasks%n_cores
 !
-                  index_list(counter, 1) = index_two(a, index_core_mo(i, 1), wf%n_v)
+                  index_list(counter, 1) = index_two(a, wf%tasks%index_core_mo(i, 1), wf%n_v)
 !
                   counter = counter + 1
 !
@@ -1108,11 +1096,9 @@ contains
             endif
          enddo
 !
-         call deallocator_int(index_core_mo, wf%tasks%n_cores, 1)
-!
       end subroutine find_start_trial_indices_core_ccs
 !
-      module subroutine find_core_mo_ccs(wf, index_core_mo)
+      module subroutine find_core_mo_ccs(wf)
 !!
 !!       Find indices for lowest orbital differences
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
@@ -1121,7 +1107,6 @@ contains
          implicit none
 !
          class(ccs) :: wf
-         integer(i15), dimension(wf%tasks%n_cores, 1), intent(inout) :: index_core_mo
 !
          integer(i15) :: n_nuclei = 0, core = 0, ao = 0, mo = 0, ao_mo_index = 0
          integer(i15) :: first_ao_on_core = 0, counter = 0, n_aos_on_atoms = 0, i = 0, j = 0
@@ -1159,7 +1144,7 @@ contains
 !
 !        :: Find core mo that has large ao component on the atom in question ::
 !
-         index_core_mo = zero
+         wf%tasks%index_core_mo = zero
          counter = 0
 !
          do ao = 1, n_aos_on_atoms
@@ -1178,7 +1163,7 @@ contains
                      counter = counter + 1
 !
                      if (counter .le. wf%tasks%n_cores) then
-                        index_core_mo(counter, 1) = mo
+                        wf%tasks%index_core_mo(counter, 1) = mo
                      endif
 !
                         
@@ -1197,7 +1182,7 @@ contains
 !        Sanity check
 !
          do core = 1, wf%tasks%n_cores
-            if (index_core_mo(core, 1) .eq. 0) then
+            if (wf%tasks%index_core_mo(core, 1) .eq. 0) then
                write(unit_output,*)'WARNING: Found no core orbitals for core', wf%tasks%cores(core, 1)
                stop
             endif
@@ -1275,7 +1260,7 @@ contains
 !
             elseif (wf%excited_state_task=='right_core') then
 !
-              ! call wf%cvs_jacobian_ccs_transformation(c_a_i)
+               call wf%cvs_jacobian_ccs_transformation(c_a_i)
 !
             elseif (wf%excited_state_task=='left_valence') then
 !
@@ -1314,13 +1299,14 @@ contains
       end subroutine initialize_excited_states_ccs
 !
 !
-      module subroutine precondition_residual_ccs(wf)
+      module subroutine precondition_residual_ccs(wf, residual)
 !!
 !!
 !!
          implicit none
 !
          class(ccs) :: wf
+         real(dp), dimension(wf%n_parameters ,1) :: residual
 !       
 !
 !        If restart use old solution vectors for first start vectors
@@ -1336,39 +1322,112 @@ contains
          if ((wf%excited_state_task .eq. 'right_valence') .and. &
              (wf%excited_state_task .eq. 'left_valence')) then
 !
-            !call wf%precond_residual_valence
+            call wf%precondition_residual_valence(residual)
 !
          elseif (wf%excited_state_task .eq. 'right_core') then
 !
-            !call wf%precond_residual_core
+            call wf%precondition_residual_core(residual)
 !
          endif
 !
       end subroutine precondition_residual_ccs
 !
 !
-      module subroutine precondition_residual_valence_ccs(wf)
+      module subroutine precondition_residual_valence_ccs(wf, residual)
 !!
 !!
 !!
          implicit none
 !
          class(ccs) :: wf
+         real(dp), dimension(wf%n_parameters ,1) :: residual
+!
+         integer(i15) :: i = 0
+!
+         real(dp), dimension(:,:), allocatable :: orbital_diff
 !   
+         call allocator(orbital_diff, wf%n_parameters, 1)
+         orbital_diff = zero
+!
+         call wf%calculate_orbital_differences(orbital_diff)
+!
+         do i = 1, wf%n_parameters
+!
+            residual(i, 1) = residual(i,1)/orbital_diff(i,1)
+!
+         enddo
+!
+         call deallocator(orbital_diff, wf%n_parameters, 1)
 !
       end subroutine precondition_residual_valence_ccs
 !
 !
 !
-      module subroutine precondition_residual_core_ccs(wf)
+      module subroutine precondition_residual_core_ccs(wf, residual)
 !!
 !!
 !!
          implicit none
 !
          class(ccs) :: wf
-!       
+         real(dp), dimension(wf%n_parameters ,1) :: residual
+! 
+         real(dp), dimension(:,:), allocatable :: orbital_diff
+!
+         integer(i15) :: i = 0
+!
+!        Projection
+!      
+         call wf%cvs_residual_projection(residual)
+!
+!        Weight highest orbitals
+!
+         call allocator(orbital_diff, wf%n_parameters, 1)
+         orbital_diff = zero
+!
+         call wf%calculate_orbital_differences(orbital_diff)
+!
+         do i = 1, wf%n_parameters
+!
+            residual(i, 1) = residual(i,1)/orbital_diff(i,1)
+!
+         enddo
+!
+         call deallocator(orbital_diff, wf%n_parameters, 1)
 !
       end subroutine precondition_residual_core_ccs
+!
+!
+      module subroutine cvs_residual_projection_ccs(wf, residual)
+!!
+!!
+         implicit none
+!
+         class(ccs) :: wf
+         real(dp), dimension(wf%n_parameters, 1) :: residual
+!
+         integer(i15) :: i = 0, a = 0, core = 0, ai = 0
+!
+         logical :: core_orbital
+!
+         do i = 1, wf%n_o
+!
+            core_orbital = .false.
+            do core = 1, wf%tasks%n_cores
+!
+               if (i .eq. wf%tasks%index_core_mo(core, 1)) core_orbital = .true.
+!
+            enddo
+!
+            if (.not. core_orbital) then
+               do a = 1, wf%n_v
+                  ai = index_two(a, i, wf%n_v)
+                  residual(ai, 1) = zero
+               enddo
+            endif
+!
+         enddo
+!
+      end subroutine cvs_residual_projection_ccs
 !
 end submodule excited_state

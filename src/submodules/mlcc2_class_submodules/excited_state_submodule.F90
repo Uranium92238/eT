@@ -169,12 +169,31 @@ contains
       do trial = first_trial, last_trial
 !
          read(unit_trial_vecs, rec=trial, iostat=ioerror) c_a_i, c_aibj
+         if (wf%excited_state_task=='right_valence') then
 !
-         call wf%jacobian_mlcc2_transformation(c_a_i, c_aibj)
+               call wf%jacobian_mlcc2_transformation(c_a_i, c_aibj)
+!
+            elseif (wf%excited_state_task=='right_core') then
+!
+               call wf%cvs_jacobian_mlcc2_transformation(c_a_i, c_aibj)
+!
+            elseif (wf%excited_state_task=='left_valence') then
+!
+      !         call wf%jacobian_transpose_mlcc2_transformation(c_a_i, c_aibj)
+!
+            else
+!
+               write(unit_output,*) 'Error: Excited state task not recognized'
+               stop
+!
+         endif
+!
+         
 !
          write(unit_rho, rec=trial, iostat=ioerror) c_a_i, c_aibj
 !
       enddo
+            
 !
 !     Close files
 !
@@ -187,6 +206,79 @@ contains
       call deallocator(c_aibj, wf%n_x2am, 1)
 !
    end subroutine transform_trial_vectors_mlcc2
+!
+!
+   module subroutine cvs_residual_projection_mlcc2(wf, residual)
+!!
+!!
+         implicit none
+!
+         class(mlcc2) :: wf
+         real(dp), dimension(wf%n_parameters, 1) :: residual
+!
+         integer(i15) :: i = 0, a = 0, j = 0, b = 0, core = 0, ai = 0, bj = 0, aibj = 0
+!
+         logical :: core_orbital
+!
+!        Active space variables
+!     
+         integer(i15) :: n_active_o = 0, n_active_v = 0
+         integer(i15) :: first_active_o ! first active occupied index 
+         integer(i15) :: first_active_v ! first active virtual index
+         integer(i15) :: last_active_o ! first active occupied index 
+         integer(i15) :: last_active_v ! first active virtual index
+!   
+!        Calculate first/last indeces
+!     
+         call wf%get_CC2_active_indices(first_active_o, first_active_v)
+         call wf%get_CC2_n_active(n_active_o, n_active_v)
+!   
+         last_active_o = first_active_o + n_active_o - 1
+         last_active_v = first_active_v + n_active_v - 1   
+         do i = 1, wf%n_o
+!
+            core_orbital = .false.
+            do core = 1, wf%tasks%n_cores
+!
+               if (i .eq. wf%tasks%index_core_mo(core, 1)) core_orbital = .true.
+!
+            enddo
+!
+            if (.not. core_orbital) then
+               do a = 1, wf%n_v
+                  ai = index_two(a, i, wf%n_v)
+                  residual(ai, 1) = zero
+               enddo
+            endif
+!
+         enddo
+!
+        do i = 1, n_active_o
+           do j = 1, n_active_o
+!
+              core_orbital = .false.
+              do core = 1, wf%tasks%n_cores
+!
+                 if ((i .eq. wf%tasks%index_core_mo(core, 1)) .or. &
+                    (j .eq. wf%tasks%index_core_mo(core, 1))) core_orbital = .true.
+!
+              enddo
+!
+              if (.not. core_orbital) then
+                 do a = 1, n_active_v
+                    do b = 1, n_active_v
+                       ai = index_two(a, i, n_active_v)
+                       bj = index_two(b, j, n_active_v)
+                       aibj = index_packed(ai, bj)
+
+                       residual(wf%n_t1am + aibj, 1) = zero
+                    enddo
+                 enddo
+              endif
+           enddo
+        enddo
+!
+      end subroutine cvs_residual_projection_mlcc2
 !
 !
 end submodule

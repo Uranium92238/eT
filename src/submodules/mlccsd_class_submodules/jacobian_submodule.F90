@@ -241,6 +241,236 @@ contains
    end subroutine jacobian_mlccsd_transformation_mlccsd
 !
 !
+   module subroutine cvs_jacobian_mlccsd_transformation_mlccsd(wf, c_a_i, c_aibj)
+!!
+!!    Jacobian transformation (MLCC2)
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
+!!
+!!    Directs the transformation by the CCSD Jacobi matrix,
+!!
+!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >,
+!!
+!!    where the basis employed for the brackets is biorthonormal. 
+!!    The transformation is rho = A c, i.e., 
+!!
+!!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck 
+!!                  + 1/2 sum_ckdl A_mu,ckdl c_ckdl (1 + delta_ck,dl).
+!!
+!!    On exit, c is overwritten by rho. That is, c_a_i = rho_a_i,
+!!    and c_aibj = rho_aibj. 
+!!
+      implicit none
+!
+      class(mlccsd) :: wf 
+!
+!      Incoming vector c 
+!
+      real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai 
+      real(dp), dimension(wf%n_x2am, 1)   :: c_aibj ! c_aibj     
+!
+!      Local unpacked and reordered vectors 
+!
+      real(dp), dimension(:,:), allocatable :: rho_a_i         ! rho_ai   = (A c)_ai
+      real(dp), dimension(:,:), allocatable :: rho_ai_bj       ! rho_ai   = (A c)_aibj
+      real(dp), dimension(:,:), allocatable :: rho_ab_ij       ! rho_ai   = (A c)_aibj
+      real(dp), dimension(:,:), allocatable :: rho_ai_bj_sym   ! rho_ai   = (A c)_aibj
+      real(dp), dimension(:,:), allocatable :: c_ai_bj         ! rho_ai   = (A c)_aibj
+      real(dp), dimension(:,:), allocatable :: c_ab_ij         ! rho_ai   = (A c)_aibj
+      real(dp), dimension(:,:), allocatable :: x_ia_jb         ! rho_ai   = (A c)_aibj
+!
+!      Indices 
+!
+      integer(i15) :: a = 0, ab = 0, ai = 0, b = 0 
+      integer(i15) :: bj = 0, i = 0, ij = 0, j = 0, aibj = 0
+!
+      integer(i15) :: offset = 0
+!
+!    Active space variables
+!
+      integer(i15) :: n_active_o = 0, n_active_v = 0
+      integer(i15) :: active_space = 0
+!
+!    Allocate and zero the transformed vector (singles part)
+!
+      call allocator(rho_a_i, wf%n_v, wf%n_o)
+      rho_a_i = zero
+!
+!    :: CCS contributions to the singles c vector ::  
+!
+      call initialize_amplitudes_ccs(wf)
+      call wf%read_single_amplitudes
+!
+      call wf%jacobian_ccs_a1(rho_a_i, c_a_i)
+      call wf%jacobian_ccs_b1(rho_a_i, c_a_i)
+!
+!     :: MLCCSD contributions to transformed vector :: 
+!
+      call wf%jacobian_mlcc2_a1(rho_a_i, c_a_i)
+!
+!     Calculate number of active indices
+! 
+      call wf%get_CC2_n_active(n_active_o, n_active_v)
+!
+!     Allocate the incoming unpacked doubles vector 
+!
+      call allocator(c_ai_bj, n_active_o*n_active_v, n_active_o*n_active_v) 
+      c_ai_bj = zero
+!
+      call squareup(c_aibj, c_ai_bj, n_active_o*n_active_v) ! Pack out vector 
+!
+!     Scale the doubles vector by 1 + delta_ai,bj, i.e.
+!     redefine to c_ckdl = c_ckdl (1 + delta_ck,dl)
+!
+      do i = 1, n_active_o*n_active_v
+!
+         c_ai_bj(i,i) = two*c_ai_bj(i,i)
+!
+      enddo
+!
+      call wf%jacobian_mlcc2_b1(rho_a_i, c_ai_bj)
+!
+!     Allocate unpacked transformed vector
+!
+      call allocator(rho_ai_bj, n_active_o*n_active_v, n_active_o*n_active_v) 
+      rho_ai_bj = zero 
+!
+      call wf%jacobian_mlcc2_a2(rho_ai_bj, c_a_i)
+      call wf%jacobian_mlccsd_b2(rho_ai_bj, c_a_i)
+      call wf%jacobian_mlccsd_c2(rho_ai_bj, c_a_i)
+      call wf%jacobian_mlccsd_d2(rho_ai_bj, c_a_i)
+!
+      call wf%jacobian_mlccsd_e2(rho_ai_bj, c_ai_bj)
+      call wf%jacobian_mlccsd_f2(rho_ai_bj, c_ai_bj)
+      call wf%jacobian_mlccsd_g2(rho_ai_bj, c_ai_bj)
+      call wf%jacobian_mlccsd_h2(rho_ai_bj, c_ai_bj)
+      call wf%jacobian_mlccsd_i2(rho_ai_bj, c_ai_bj)
+!
+!     Allocate temporary symmetric transformed vector 
+!
+      call allocator(rho_ai_bj_sym, n_active_o*n_active_v, n_active_o*n_active_v)
+      rho_ai_bj_sym = zero
+!!
+      do j = 1, n_active_o
+         do b = 1, n_active_v
+!!
+            bj = index_two(b, j, n_active_v)
+!!
+            do i = 1, n_active_o
+               do a = 1, n_active_v
+!!
+                  ai = index_two(a, i, n_active_v)
+!!
+                  rho_ai_bj_sym(ai, bj) = rho_ai_bj(ai, bj) + rho_ai_bj(bj, ai)
+!!
+               enddo
+            enddo
+         enddo
+      enddo
+!!
+      rho_ai_bj = rho_ai_bj_sym
+!
+ 
+!     Done with temporary vector; deallocate
+!  
+      call deallocator(rho_ai_bj_sym, n_active_o*n_active_v, n_active_o*n_active_v)
+! 
+!     In preparation for last two terms, reorder 
+!     rho_ai_bj to rho_ab_ij, and c_ai_bj to c_ab_ij
+! 
+      call allocator(rho_ab_ij, (n_active_v)**2, (n_active_o)**2)
+      call allocator(c_ab_ij, (n_active_v)**2, (n_active_o)**2)
+! 
+      rho_ab_ij = zero
+      c_ab_ij   = zero
+! 
+      do j = 1, n_active_o
+         do i = 1, n_active_o
+! 
+            ij = index_two(i, j, n_active_o)
+! 
+            do b = 1, n_active_v
+! 
+               bj = index_two(b, j, n_active_v)
+! 
+               do a = 1, n_active_v
+! 
+                  ai = index_two(a, i, n_active_v)
+                  ab = index_two(a, b, n_active_v)
+! 
+                  c_ab_ij(ab, ij)   = c_ai_bj(ai, bj)
+                  rho_ab_ij(ab, ij) = rho_ai_bj(ai, bj)
+! 
+               enddo
+            enddo
+         enddo
+      enddo
+! 
+      call deallocator(c_ai_bj, n_active_o*n_active_v, n_active_o*n_active_v)
+      call deallocator(rho_ai_bj, n_active_o*n_active_v, n_active_o*n_active_v)
+! 
+      call wf%jacobian_mlccsd_j2(rho_ab_ij, c_ab_ij)
+      call wf%jacobian_mlccsd_k2(rho_ab_ij, c_ab_ij)
+! 
+!     Done with reordered doubles c; deallocate 
+! 
+      call deallocator(c_ab_ij, (n_active_v)**2, (n_active_o)**2)
+! 
+!     Order rho_ab_ij back into rho_ai_bj & divide by 
+!     the biorthonormal factor 1 + delta_ai,bj
+! 
+      call allocator(rho_ai_bj, (n_active_o)*(n_active_v), (n_active_o)*(n_active_v))
+! 
+      do j = 1, n_active_o
+         do b = 1, n_active_v
+! 
+            bj = index_two(b, j, n_active_v)
+! 
+            do i = 1, n_active_o
+! 
+               ij = index_two(i, j, n_active_o)
+! 
+               do a = 1, n_active_v
+! 
+                  ab = index_two(a, b, n_active_v)
+                  ai = index_two(a, i, n_active_v)
+! 
+                  if ((a .eq. b) .and. (i .eq. j)) then 
+! 
+                     rho_ai_bj(ai, bj) = half*rho_ab_ij(ab, ij)
+! 
+                  else
+! 
+                     rho_ai_bj(ai, bj) = rho_ab_ij(ab, ij)
+! 
+                  endif
+! 
+               enddo
+            enddo
+         enddo
+      enddo
+! 
+!     Done with reordered transformed vector; deallocate 
+! 
+      call deallocator(rho_ab_ij, (n_active_v)**2, (n_active_o)**2)
+!
+!     c_a_i -> rho_a_i
+!     c_ai_bj -> rho_ai_bj
+!
+      call wf%cvs_rho_a_i_projection(rho_a_i)
+      c_a_i = rho_a_i
+!
+      call wf%cvs_rho_ai_bj_projection(rho_ai_bj)
+      c_aibj = zero
+      call packin(c_aibj, rho_ai_bj, n_active_o*n_active_v)
+!
+!     Deallocations
+!
+      call deallocator(rho_a_i, wf%n_v, wf%n_o)
+      call deallocator(rho_ai_bj, n_active_o*n_active_v, n_active_o*n_active_v)
+!
+   end subroutine cvs_jacobian_mlccsd_transformation_mlccsd
+!
+!
    module subroutine jacobian_mlccsd_b2_mlccsd(wf, rho_ai_bj, c_a_i)
 !!
 !!    Jacobian CCSD B2 

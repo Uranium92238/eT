@@ -191,6 +191,173 @@ contains
    end subroutine jacobian_mlcc2_transformation_mlcc2
 !  
 !
+   module subroutine cvs_jacobian_mlcc2_transformation_mlcc2(wf, c_a_i, c_aibj)
+!!
+!!    Jacobian transformation (MLCC2)
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
+!!
+!!    Directs the transformation by the CCSD Jacobi matrix,
+!!
+!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >,
+!!
+!!    where the basis employed for the brackets is biorthonormal. 
+!!    The transformation is rho = A c, i.e., 
+!!
+!!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck 
+!!                  + 1/2 sum_ckdl A_mu,ckdl c_ckdl (1 + delta_ck,dl).
+!!
+!!    On exit, c is overwritten by rho. That is, c_a_i = rho_a_i,
+!!    and c_aibj = rho_aibj. 
+!!
+      implicit none
+!
+      class(mlcc2) :: wf 
+!
+!     Incoming vector c 
+!
+      real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai 
+      real(dp), dimension(wf%n_x2am, 1)   :: c_aibj ! c_aibj     
+!
+!     Local unpacked and reordered vectors 
+!
+      real(dp), dimension(:,:), allocatable :: rho_a_i         ! rho_ai   = (A c)_ai
+      real(dp), dimension(:,:), allocatable :: rho_ai_bj       ! rho_ai   = (A c)_aibj
+      real(dp), dimension(:,:), allocatable :: rho_ai_bj_sym   ! rho_ai   = (A c)_aibj
+      real(dp), dimension(:,:), allocatable :: c_ai_bj         ! rho_ai   = (A c)_aibj
+!
+!     Indices 
+!
+      integer(i15) :: a = 0, ab = 0, ai = 0, b = 0 
+      integer(i15) :: bj = 0, i = 0, ij = 0, j = 0, aibj = 0
+!
+!     Active space variables
+!
+      integer(i15) :: n_active_o = 0, n_active_v = 0
+!
+!     Allocate and zero the transformed vector (singles part)
+!
+      call allocator(rho_a_i, wf%n_v, wf%n_o)
+      rho_a_i = zero
+!
+!     :: CCS contributions to the singles c vector ::  
+!
+      call wf%initialize_amplitudes
+      call wf%read_amplitudes
+!
+!
+      call wf%jacobian_ccs_a1(rho_a_i, c_a_i)
+      call wf%jacobian_ccs_b1(rho_a_i, c_a_i)
+!
+!     :: MLCC2 contributions to transformed vector :: 
+!
+      call wf%jacobian_mlcc2_a1(rho_a_i, c_a_i)
+!
+!     Calculatenumber of active indices
+! 
+      call wf%get_CC2_n_active(n_active_o, n_active_v)
+!
+!     Allocate the incoming unpacked doubles vector 
+!
+      call allocator(c_ai_bj, n_active_o*n_active_v, n_active_o*n_active_v) 
+      c_ai_bj = zero
+!
+      call squareup(c_aibj, c_ai_bj, n_active_o*n_active_v) ! Pack out vector 
+!
+!     Scale the doubles vector by 1 + delta_ai,bj, i.e.
+!     redefine to c_ckdl = c_ckdl (1 + delta_ck,dl)
+!
+      do i = 1, n_active_o*n_active_v
+!
+         c_ai_bj(i,i) = two*c_ai_bj(i,i)
+!
+      enddo
+!
+!     - B1 term -
+!
+      call wf%jacobian_mlcc2_b1(rho_a_i, c_ai_bj)
+!
+!
+!     Allocate unpacked transformed vector
+!
+      call allocator(rho_ai_bj, n_active_o*n_active_v, n_active_o*n_active_v) 
+      rho_ai_bj = zero 
+!
+!     - A2 term -
+!  
+      call wf%jacobian_mlcc2_a2(rho_ai_bj, c_a_i)
+!
+!     Last term is already symmetric (B2). Perform the symmetrization 
+!     rho_ai_bj = P_ij^ab rho_ai_bj now, for convenience 
+!
+!     Allocate temporary symmetric transformed vector 
+!
+      call allocator(rho_ai_bj_sym, n_active_o*n_active_v, n_active_o*n_active_v) 
+      rho_ai_bj_sym = zero
+!
+      do j = 1, n_active_o
+         do b = 1, n_active_v
+!
+            bj = index_two(b, j, n_active_v)
+!
+            do i = 1, n_active_o
+               do a = 1, n_active_v
+!
+                  ai = index_two(a, i, n_active_v)
+!
+                  rho_ai_bj_sym(ai, bj) = rho_ai_bj(ai, bj) + rho_ai_bj(bj, ai)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      rho_ai_bj = rho_ai_bj_sym
+!
+!     Done with temporary vector; deallocate
+! 
+      call deallocator(rho_ai_bj_sym, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+!
+!     - B2 term -
+!
+      call wf%jacobian_mlcc2_b2(rho_ai_bj, c_ai_bj)
+!
+      call wf%cvs_rho_ai_bj_projection(rho_ai_bj)
+!
+!     Divide rho_ai_bj by biorthonormal, and save to c_aibj     
+!
+      do a = 1, n_active_v
+         do i = 1, n_active_o
+!
+            ai = index_two(a, i, n_active_v)
+!
+            do b = 1, n_active_v
+               do j = 1, n_active_o
+!
+                  bj = index_two(b, j, n_active_v)
+!
+                  aibj = index_packed(ai, bj)
+!
+                  if (ai == bj) rho_ai_bj(ai, bj) = half*rho_ai_bj(ai, bj)
+!
+                   c_aibj(aibj, 1) = rho_ai_bj(ai, bj)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      call deallocator(rho_ai_bj, n_active_o*n_active_v, n_active_o*n_active_v)
+      call deallocator(c_ai_bj, n_active_o*n_active_v, n_active_o*n_active_v)
+!
+      call wf%cvs_rho_a_i_projection(rho_a_i)
+!
+      c_a_i = rho_a_i
+!
+      call deallocator(rho_a_i, wf%n_v, wf%n_o)
+!
+   end subroutine cvs_jacobian_mlcc2_transformation_mlcc2
+!
+!
    module subroutine jacobian_mlcc2_a1_mlcc2(wf, rho_a_i, c_a_i)
 !!
 !!    Jacobian tem A1
@@ -1241,5 +1408,59 @@ contains
 !
    end subroutine jacobian_mlcc2_b2_mlcc2
 !
+!
+      module subroutine cvs_rho_ai_bj_projection_mlcc2(wf, vec_ai_bj)
+!!
+!!
+         implicit none
+!
+         class(mlcc2) :: wf
+         real(dp), dimension(:, :) :: vec_ai_bj
+!
+         integer(i15) :: i = 0, a = 0, j = 0, b = 0, core = 0, ai = 0, bj = 0
+!
+         logical :: core_orbital
+!
+!         Active space variables
+!     
+          integer(i15) :: n_active_o = 0, n_active_v = 0
+          integer(i15) :: first_active_o ! first active occupied index 
+          integer(i15) :: first_active_v ! first active virtual index
+          integer(i15) :: last_active_o ! first active occupied index 
+          integer(i15) :: last_active_v ! first active virtual index
+!   
+!         Calculate first/last indeces
+!     
+          call wf%get_CC2_active_indices(first_active_o, first_active_v)
+          call wf%get_CC2_n_active(n_active_o, n_active_v)
+!   
+          last_active_o = first_active_o + n_active_o - 1
+          last_active_v = first_active_v + n_active_v - 1         
+!
+          do i = 1, n_active_o
+           do j = 1, n_active_o
+!
+              core_orbital = .false.
+              do core = 1, wf%tasks%n_cores
+!
+                 if ((i .eq. wf%tasks%index_core_mo(core, 1)) .or. &
+                    (j .eq. wf%tasks%index_core_mo(core, 1))) core_orbital = .true.
+!
+              enddo
+!
+              if (.not. core_orbital) then
+                 do a = 1, n_active_v
+                    do b = 1, n_active_v
+                       ai = index_two(a, i, n_active_v)
+                       bj = index_two(b, j, n_active_v)
+
+                       vec_ai_bj(ai, bj) = zero
+                    enddo
+                 enddo
+              endif
+           enddo
+        enddo
+!
+      end subroutine cvs_rho_ai_bj_projection_mlcc2
 !
 end submodule jacobian
