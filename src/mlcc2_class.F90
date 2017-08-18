@@ -273,41 +273,6 @@ module mlcc2_class
       end subroutine construct_active_ao_index_list
 !
 !
-      module subroutine read_atom_info(n_nuclei, n_ao)
-!!
-!!       Read atom info,
-!!       Written by Sarai Dery Folkestad, June 2017.
-!!
-!!       Reads atom info from DALTON generated file:
-!!       Reads:
-!!       - Number of nuclei
-!!       - Number of AO's
-!!
-         implicit none
-!
-         integer(i15) :: n_nuclei,n_ao 
-!
-      end subroutine read_atom_info
-!
-!
-      module subroutine read_center_info(n_nuclei, n_ao, n_ao_on_center, ao_center_info)
-!!
-!!       Read center info,
-!!       Written by Sarai Dery Folkestad, June 2017.
-!!
-!!       Reads atom info from DALTON generated file:
-!!       Reads:
-!!          - Information of which ao's belong to which nuclei
-!!
-         implicit none
-!
-         integer(i15) :: n_nuclei
-         integer(i15) :: n_ao
-         integer, dimension(n_nuclei, 1)  :: n_ao_on_center
-         integer, dimension(n_ao, 2)      :: ao_center_info
-!
-      end subroutine read_center_info
-!
 !
       module subroutine cnto_orbital_drv_mlcc2(wf)
 !!

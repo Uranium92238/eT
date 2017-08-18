@@ -63,7 +63,7 @@ contains
 !     Read AO-cholesky
 !
       call generate_unit_identifier(unit_chol_ao)
-      open(unit=unit_chol_ao, file='mlcc_cholesky', status='old', form='formatted')
+      open(unit=unit_chol_ao, file='MLCC_CHOLESKY', status='old', form='formatted')
       rewind(unit_chol_ao)
 !
 !     Read the number of Cholesky vectors (n_J) and 

@@ -46,7 +46,7 @@ module ccs_class
       real(dp), dimension(:,:), allocatable :: fock_ai ! vir-occ block
       real(dp), dimension(:,:), allocatable :: fock_ab ! vir-vir block
 !
-      character(len=40)                     :: excited_state_task     = 'right_eigenvectors' ! The task being performed at the moment 
+      character(len=40)                     :: excited_state_task     = 'right_valence' ! The task being performed at the moment 
       real(dp), dimension(:,:), allocatable :: excited_state_energies
 !
    contains 
@@ -142,8 +142,16 @@ module ccs_class
       procedure :: transform_trial_vectors       => transform_trial_vectors_ccs
       procedure :: calculate_orbital_differences => calculate_orbital_differences_ccs ! Must be overwritten for CCSD 
 !
-      procedure, non_overridable :: find_start_trial_indices => find_start_trial_indices_ccs
-      procedure, non_overridable :: initialize_trial_vectors => initialize_trial_vectors_ccs
+      procedure :: precondition_residual           => precondition_residual_ccs
+      procedure :: precondition_residual_valence   => precondition_residual_valence_ccs
+      procedure :: precondition_residual_core      => precondition_residual_core_ccs
+!
+      procedure, non_overridable :: find_start_trial_indices            => find_start_trial_indices_ccs
+      procedure, non_overridable :: find_start_trial_indices_core       => find_start_trial_indices_core_ccs
+      procedure, non_overridable :: find_core_mo                        => find_core_mo_ccs
+      procedure, non_overridable :: initialize_trial_vectors            => initialize_trial_vectors_ccs
+      procedure, non_overridable :: initialize_trial_vectors_valence    => initialize_trial_vectors_valence_ccs
+      procedure, non_overridable :: initialize_trial_vectors_core       => initialize_trial_vectors_core_ccs
       procedure, non_overridable :: trial_vectors_from_stored_solutions => trial_vectors_from_stored_solutions_ccs
 !
       procedure, non_overridable :: solve_reduced_eigenvalue_equation => solve_reduced_eigenvalue_equation_ccs
@@ -445,24 +453,6 @@ module ccs_class
       end subroutine initialize_excited_states_ccs
 !
 !
-      module subroutine initialize_trial_vectors_ccs(wf)
-!!
-!!       Initialize trial vectors
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
-!!
-!!       Initializes start trial vectors for the calculation of 
-!!       singlet excited states and writes them to file 'trial_vecs'.
-!!
-!!       n start vectors are constructed by finding the n lowest orbital differences,      
-!!       where n = n_singlet_states. Vector i has a 1.0D0 at the element corresponding to the i'th lowest
-!!       orbital difference and 0.0d0 everywhere else
-         implicit none
-!
-         class(ccs) :: wf
-!
-! 
-      end subroutine initialize_trial_vectors_ccs
-!
 !
       module subroutine trial_vectors_from_stored_solutions_ccs(wf)
 !!
@@ -487,6 +477,19 @@ module ccs_class
          integer(i15), dimension(wf%tasks%n_singlet_states,1), intent(inout) :: index_list
 ! 
       end subroutine find_start_trial_indices_ccs
+!
+      module subroutine find_start_trial_indices_core_ccs(wf, index_list)
+!!
+!!       Find indices for lowest orbital differences
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!
+         implicit none
+!
+         class(ccs) :: wf
+         integer(i15), dimension(wf%tasks%n_singlet_states,1), intent(inout) :: index_list
+!
+      end subroutine find_start_trial_indices_core_ccs
 !
 !
       module subroutine calculate_orbital_differences_ccs(wf,orbital_diff)
@@ -726,6 +729,107 @@ module ccs_class
       end subroutine excited_state_driver_ccs
 !
 !
+      module subroutine initialize_trial_vectors_valence_ccs(wf)
+!!
+!!       Initialize trial vectors
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!       Initializes start trial vectors for the calculation of 
+!!       singlet excited states and writes them to file 'trial_vecs'.
+!!
+!!       n start vectors are constructed by finding the n lowest orbital differences,      
+!!       where n = n_singlet_states. Vector i has a 1.0D0 at the element corresponding to the i'th lowest
+!!       orbital difference and 0.0d0 everywhere else
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+      end subroutine initialize_trial_vectors_valence_ccs
+!
+!
+!
+      module subroutine initialize_trial_vectors_core_ccs(wf)
+!!
+!!       Initialize trial vectors
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+      end subroutine initialize_trial_vectors_core_ccs
+!
+!
+      module subroutine initialize_trial_vectors_ccs(wf)
+!!
+!!       Initialize trial vectors
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!       Initializes start trial vectors for the calculation of 
+!!       singlet excited states and writes them to file 'trial_vecs'.
+!!
+!!       n start vectors are constructed by finding the n lowest orbital differences,      
+!!       where n = n_singlet_states. Vector i has a 1.0D0 at the element corresponding to the i'th lowest
+!!       orbital difference and 0.0d0 everywhere else
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!      
+      end subroutine initialize_trial_vectors_ccs
+!
+!
+      module subroutine precondition_residual_ccs(wf)
+!!
+!!
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+      end subroutine precondition_residual_ccs
+!
+!
+      module subroutine precondition_residual_valence_ccs(wf)
+!!
+!!
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!   
+!
+      end subroutine precondition_residual_valence_ccs
+!
+!
+!
+      module subroutine precondition_residual_core_ccs(wf)
+!!
+!!
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!       
+!
+      end subroutine precondition_residual_core_ccs
+!
+!
+      module subroutine find_core_mo_ccs(wf, index_core_mo)
+!!
+!!       Find indices for lowest orbital differences
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!
+         implicit none
+!
+         class(ccs) :: wf
+         integer(i15), dimension(wf%tasks%n_cores, 1), intent(inout) :: index_core_mo
+!
+      end subroutine find_core_mo_ccs
+!
+!
     end interface 
 !
 !
@@ -760,6 +864,7 @@ contains
 !
       wf%implemented%ground_state = .true.
       wf%implemented%excited_state = .true.
+      wf%implemented%core_excited_state = .true.
 !
 !     Read Hartree-Fock info from SIRIUS
 !
@@ -824,6 +929,7 @@ contains
       if (wf%tasks%excited_state) then
 !
 !        Excited state calculation requested
+         write(unit_output,*) wf%tasks%n_singlet_states, wf%tasks%n_cores, wf%tasks%cores
 !
          if (wf%implemented%excited_state) then 
 !     
@@ -833,6 +939,26 @@ contains
 !
             write(unit_output,'(t3,a,a)') &
                'Error: excited state solver not implemented for ',trim(wf%name)
+            flush(unit_output)
+            stop
+!
+         endif
+!
+      endif
+!
+      if (wf%tasks%core_excited_state) then
+!
+!        Excited state calculation requested
+!
+         if (wf%implemented%core_excited_state) then 
+!     
+            wf%excited_state_task = 'right_core'
+            call wf%excited_state_driver 
+!
+         else
+!
+            write(unit_output,'(t3,a,a)') &
+               'Error: core excited state solver not implemented for ',trim(wf%name)
             flush(unit_output)
             stop
 !
@@ -1085,6 +1211,92 @@ contains
       class(ccs) :: wf 
 !
    end subroutine jacobi_test_ccs
+!
+!
+   subroutine read_atom_info(n_nuclei, n_ao)
+!!
+!!    Read atom info,
+!!    Written by Sarai Dery Folkestad, June 2017.
+!!
+!!    Reads atom info from DALTON generated file:
+!!    Reads:
+!!       - Number of nuclei
+!!       - Number of AO's
+!!
+      implicit none
+!
+      integer(i15) :: n_nuclei,n_ao 
+!
+      integer(i15) :: unit_center = 0
+      integer(i15) :: ioerror     = 0
+!
+      call generate_unit_identifier(unit_center)
+      open(unit=unit_center, file='center_info', status='unknown', form='unformatted', iostat=ioerror)
+      if (ioerror .ne. 0) write(unit_output,*)'WARNING: Error while opening center_info'
+      rewind(unit_center)
+!
+!     Read number of nuclei and aos
+!
+      read(unit_center) n_nuclei, n_ao
+!
+      close(unit_center)
+!
+   end subroutine read_atom_info
+!
+   subroutine read_center_info(n_nuclei, n_ao, n_ao_on_center, ao_center_info)
+!!
+!!    Read center info,
+!!    Written by Sarai Dery Folkestad, June 2017.
+!!
+!!    Reads atom info from DALTON generated file:
+!!    Reads:
+!!       - Information of which ao's belong to which nuclei
+!!
+      implicit none
+!
+      integer(i15) :: n_nuclei
+      integer(i15) :: n_ao
+      integer, dimension(n_nuclei, 1)  :: n_ao_on_center
+      integer, dimension(n_ao, 2)      :: ao_center_info
+!
+      integer(i15) :: offset = 0, nucleus = 0
+      integer(i15) :: i = 0
+      integer(i15) :: unit_center = 0, ioerror = 0
+!
+!     Read number of aos on each center
+!
+      call generate_unit_identifier(unit_center)
+      open(unit=unit_center, file='center_info', status='unknown', form='unformatted', iostat=ioerror)
+      if (ioerror .ne. 0) write(unit_output,*)'WARNING: Error while opening center_info'
+      rewind(unit_center)
+!
+!     Empty read 
+!
+      read(unit_center)
+!
+      read(unit_center, iostat=ioerror) n_ao_on_center
+      if (ioerror .ne. 0) write(unit_output,*)'WARNING: Error while reading center_info'
+!
+      offset = 1
+!
+      do nucleus = 1, n_nuclei
+!
+         do i = 1, n_ao_on_center(nucleus, 1)
+            ao_center_info(offset + i - 1,1)=nucleus
+         enddo
+!
+!        Read which aos are on which centers
+!
+         read(unit_center, iostat=ioerror) (ao_center_info(offset + i - 1, 2), i = 1, n_ao_on_center(nucleus, 1))
+         if (ioerror .ne. 0) write(unit_output,*)'WARNING: Error while reading center_info'
+!
+         offset = offset + n_ao_on_center(nucleus,1)
+!
+      enddo
+!
+      close(unit_center)
+!
+   end subroutine read_center_info
 !
 !
 end module ccs_class

@@ -55,10 +55,14 @@ contains
 !
 !     Set the excited state task 
 !
-      wf%excited_state_task = 'right_eigenvectors'
+      if (wf%tasks%excited_state) then
+         wf%excited_state_task = 'right_valence'
+      else
+         wf%excited_state_task = 'right_core'
+      endif
 !
 !     Run the general solver routine (file names are given
-!     by the task, i.e., the file 'right_eigenvectors' contains
+!     by the task, i.e., the file 'right_valence' contains
 !     the right eigenvectors)
 !
       call wf%excited_state_solver
@@ -159,15 +163,6 @@ contains
 !     Find start trial vectors and store them to the trial_vec file
 !
       call wf%initialize_trial_vectors
-!
-!     If restart use old solution vectors for first start vectors
-!
-      if (wf%settings%restart) then 
-!
-         write(unit_output,'(/t3,a)') 'Requested restart. Using old solution vectors as trial vectors.'
-         call wf%trial_vectors_from_stored_solutions
-!
-      endif
 !
 !     Allocate and initialize eigenvalue arrays
 !
@@ -755,7 +750,7 @@ contains
    end subroutine construct_next_trial_vectors_ccs
 !
 !
-   module subroutine initialize_trial_vectors_ccs(wf)
+   module subroutine initialize_trial_vectors_valence_ccs(wf)
 !!
 !!       Initialize trial vectors
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
@@ -815,6 +810,104 @@ contains
 !        Deallocate index_lowest_obital_diff
 !
          call deallocator_int( index_lowest_obital_diff, wf%tasks%n_singlet_states, 1)
+!
+      end subroutine initialize_trial_vectors_valence_ccs
+!
+!
+      module subroutine initialize_trial_vectors_core_ccs(wf)
+!!
+!!       Initialize trial vectors
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+         integer(i15), dimension(:,:), allocatable :: index_core_obital
+!
+         real(dp), dimension(:,:), allocatable :: c
+! 
+         integer(i15) :: i = 0, j = 0
+!
+         integer(i15) :: unit_trial_vecs = 0, unit_rho = 0, ioerror = 0
+!
+!        Allocate array for the indices of the lowest orbital differences
+!
+         call allocator_int( index_core_obital, wf%tasks%n_singlet_states, 1)
+         index_core_obital = zero
+!
+!        Find indecies of lowest orbital differences
+!
+         call wf%find_start_trial_indices_core(index_core_obital)
+!
+!        Generate start trial vectors c and write to file
+!
+         call allocator(c, wf%n_parameters, 1)
+!
+!        Prepare for writing trial vectors to file
+!
+         call generate_unit_identifier(unit_trial_vecs)
+         open(unit=unit_trial_vecs, file='trial_vec', action='write', status='unknown', &
+           access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror)
+!
+         do i = 1, (wf%tasks%n_singlet_states)
+            c = zero
+            c(index_core_obital(i,1),1) = one
+            write(unit_trial_vecs, rec=i, iostat=ioerror) (c(j,1), j = 1, wf%n_parameters)
+         enddo
+!
+!        Close file
+!     
+         close(unit_trial_vecs)
+!
+!        Deallocate c
+!
+         call deallocator(c, wf%n_parameters, 1)
+!
+!        Deallocate index_lowest_obital_diff
+!
+         call deallocator_int(index_core_obital, wf%tasks%n_singlet_states, 1)
+!
+      end subroutine initialize_trial_vectors_core_ccs
+!
+!
+      module subroutine initialize_trial_vectors_ccs(wf)
+!!
+!!       Initialize trial vectors
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!       Initializes start trial vectors for the calculation of 
+!!       singlet excited states and writes them to file 'trial_vecs'.
+!!
+!!       n start vectors are constructed by finding the n lowest orbital differences,      
+!!       where n = n_singlet_states. Vector i has a 1.0D0 at the element corresponding to the i'th lowest
+!!       orbital difference and 0.0d0 everywhere else
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!       
+!
+!        If restart use old solution vectors for first start vectors
+!
+         if (wf%settings%restart) then 
+!
+            write(unit_output,'(/t3,a)') 'Requested restart. Using old solution vectors as trial vectors.'
+            call wf%trial_vectors_from_stored_solutions
+            return
+!
+         endif 
+!
+         if ((wf%excited_state_task .eq. 'right_valence') .and. &
+             (wf%excited_state_task .eq. 'left_valence')) then
+!
+            call wf%initialize_trial_vectors_valence
+!
+         elseif (wf%excited_state_task .eq. 'right_core') then
+!
+            call wf%initialize_trial_vectors_core
+!
+         endif
 !
       end subroutine initialize_trial_vectors_ccs
 !
@@ -978,6 +1071,141 @@ contains
       end subroutine find_start_trial_indices_ccs
 !
 !
+      module subroutine find_start_trial_indices_core_ccs(wf, index_list)
+!!
+!!       Find indices for lowest orbital differences
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!
+         implicit none
+!
+         class(ccs) :: wf
+         integer(i15), dimension(wf%tasks%n_singlet_states,1), intent(inout) :: index_list
+!
+         integer(i15), dimension(:,:), allocatable :: index_core_mo
+         real(dp), dimension(:,:), allocatable     ::  sorted_short_vec
+!
+         integer(i15) :: a, i, counter
+!
+!        Find core mo(s)
+!
+         call allocator_int(index_core_mo, wf%tasks%n_cores, 1)
+!
+         call wf%find_core_mo(index_core_mo)
+!
+         counter = 1
+         do a = 1, wf%n_v
+            if ( counter .le.  wf%tasks%n_singlet_states)  then
+               do i = 1, wf%tasks%n_cores
+!
+                  index_list(counter, 1) = index_two(a, index_core_mo(i, 1), wf%n_v)
+!
+                  counter = counter + 1
+!
+                  if ( counter .gt.  wf%tasks%n_singlet_states) exit
+!
+               enddo
+            endif
+         enddo
+!
+         call deallocator_int(index_core_mo, wf%tasks%n_cores, 1)
+!
+      end subroutine find_start_trial_indices_core_ccs
+!
+      module subroutine find_core_mo_ccs(wf, index_core_mo)
+!!
+!!       Find indices for lowest orbital differences
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!
+         implicit none
+!
+         class(ccs) :: wf
+         integer(i15), dimension(wf%tasks%n_cores, 1), intent(inout) :: index_core_mo
+!
+         integer(i15) :: n_nuclei = 0, core = 0, ao = 0, mo = 0, ao_mo_index = 0
+         integer(i15) :: first_ao_on_core = 0, counter = 0, n_aos_on_atoms = 0, i = 0, j = 0
+         integer(i15), dimension(:,:), allocatable :: n_ao_on_center, ao_center_info, aos_on_atoms
+!
+!        :: Get center info ::
+!
+         call read_atom_info(n_nuclei, wf%n_ao)
+!
+         call allocator_int(n_ao_on_center, n_nuclei, 1)      
+         call allocator_int(ao_center_info, wf%n_ao, 2)
+!
+         call read_center_info(n_nuclei, wf%n_ao, n_ao_on_center, ao_center_info)
+!
+!        :: Find index of first ao on atom ::
+!   
+         n_aos_on_atoms = 0
+         do i = 1, wf%tasks%n_cores
+            n_aos_on_atoms = n_aos_on_atoms + n_ao_on_center(wf%tasks%cores(i,1),1)
+         enddo
+!
+         call allocator_int(aos_on_atoms, n_aos_on_atoms, 1)
+!
+         counter = 0    
+         do i = 1, wf%tasks%n_cores 
+            do j = 1, wf%n_ao
+               if (ao_center_info(j,1) == wf%tasks%cores(i,1)) then
+                  counter = counter + 1
+                  aos_on_atoms(counter,1) = ao_center_info(j,2)
+               endif
+            enddo
+         enddo
+!
+         call deallocator_int(ao_center_info, wf%n_ao, 2)
+!
+!        :: Find core mo that has large ao component on the atom in question ::
+!
+         index_core_mo = zero
+         counter = 0
+!
+         do ao = 1, n_aos_on_atoms
+!
+            do  mo = 1, wf%n_o
+!
+!              Determine wether orbital in core mo
+!
+               if(wf%fock_diagonal(mo, 1) .lt. -5.0d0) then
+!
+!                 Determine wether the core orbital sits on the corect atom(s)
+!
+                  ao_mo_index = index_two(aos_on_atoms(ao, 1), mo, wf%n_ao)
+!
+                  if(abs(wf%mo_coef(ao_mo_index, 1)) .gt. 0.5d0) then
+                     counter = counter + 1
+!
+                     if (counter .le. wf%tasks%n_cores) then
+                        index_core_mo(counter, 1) = mo
+                     endif
+!
+                        
+                  endif
+!
+               endif
+!
+            enddo
+!
+         enddo
+!
+!
+         call deallocator_int(n_ao_on_center, n_nuclei, 1) 
+         call deallocator_int(aos_on_atoms, n_aos_on_atoms, 1) 
+!
+!        Sanity check
+!
+         do core = 1, wf%tasks%n_cores
+            if (index_core_mo(core, 1) .eq. 0) then
+               write(unit_output,*)'WARNING: Found no core orbitals for core', wf%tasks%cores(core, 1)
+               stop
+            endif
+         enddo
+!
+      end subroutine find_core_mo_ccs
+!
+!
       module subroutine calculate_orbital_differences_ccs(wf,orbital_diff)
 !!
 !!       Calculate and return orbital differences
@@ -1041,11 +1269,15 @@ contains
 !
             read(unit_trial_vecs, rec=trial, iostat=ioerror) c_a_i
 !
-            if (wf%excited_state_task=='right_eigenvectors') then
+            if (wf%excited_state_task=='right_valence') then
 !
                call wf%jacobian_ccs_transformation(c_a_i)
 !
-            elseif (wf%excited_state_task=='left_eigenvectors') then
+            elseif (wf%excited_state_task=='right_core') then
+!
+              ! call wf%cvs_jacobian_ccs_transformation(c_a_i)
+!
+            elseif (wf%excited_state_task=='left_valence') then
 !
       !         call wf%jacobian_transpose_ccs_transformation(c_a_i)
 !
@@ -1080,5 +1312,63 @@ contains
          call wf%initialize_amplitudes
 !
       end subroutine initialize_excited_states_ccs
+!
+!
+      module subroutine precondition_residual_ccs(wf)
+!!
+!!
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!       
+!
+!        If restart use old solution vectors for first start vectors
+!
+         if (wf%settings%restart) then 
+!
+            write(unit_output,'(/t3,a)') 'Requested restart. Using old solution vectors as trial vectors.'
+            call wf%trial_vectors_from_stored_solutions
+            return
+!
+         endif 
+!
+         if ((wf%excited_state_task .eq. 'right_valence') .and. &
+             (wf%excited_state_task .eq. 'left_valence')) then
+!
+            !call wf%precond_residual_valence
+!
+         elseif (wf%excited_state_task .eq. 'right_core') then
+!
+            !call wf%precond_residual_core
+!
+         endif
+!
+      end subroutine precondition_residual_ccs
+!
+!
+      module subroutine precondition_residual_valence_ccs(wf)
+!!
+!!
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!   
+!
+      end subroutine precondition_residual_valence_ccs
+!
+!
+!
+      module subroutine precondition_residual_core_ccs(wf)
+!!
+!!
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!       
+!
+      end subroutine precondition_residual_core_ccs
 !
 end submodule excited_state
