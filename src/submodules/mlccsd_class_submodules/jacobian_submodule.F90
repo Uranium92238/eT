@@ -4868,7 +4868,7 @@ contains
             enddo
          enddo
 !
-         call allocator(rho_ab_ij_CCSD, n_CCSD_v**2, n_CCSD_o**2)
+         call deallocator(rho_ab_ij_CCSD, n_CCSD_v**2, n_CCSD_o**2)
 !
 !        Prepare for batching over a and b
 !

@@ -898,7 +898,7 @@ contains
 !
          endif 
 !
-         if ((wf%excited_state_task .eq. 'right_valence') .and. &
+         if ((wf%excited_state_task .eq. 'right_valence') .or. &
              (wf%excited_state_task .eq. 'left_valence')) then
 !
             call wf%initialize_trial_vectors_valence
