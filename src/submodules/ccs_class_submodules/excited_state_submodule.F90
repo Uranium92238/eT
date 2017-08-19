@@ -765,6 +765,7 @@ contains
 !
 !        Allocate array for the indices of the lowest orbital differences
 !
+
          call allocator_int( index_lowest_obital_diff, wf%tasks%n_singlet_states, 1)
          index_lowest_obital_diff = zero
 !
@@ -1374,13 +1375,9 @@ contains
 ! 
          real(dp), dimension(:,:), allocatable :: orbital_diff
 !
-         integer(i15) :: i = 0
-!
-!        Projection
+         integer(i15) :: i = 0, a = 0, ai = 0
 !      
          call wf%cvs_residual_projection(residual)
-!
-!        Weight highest orbitals
 !
          call allocator(orbital_diff, wf%n_parameters, 1)
          orbital_diff = zero

@@ -82,6 +82,7 @@ module mlccsd_class
 !
       procedure :: cnto_orbital_drv                   => cnto_orbital_drv_mlccsd
       procedure :: ccsd_cnto                          => ccsd_cnto_mlccsd
+      procedure :: ccsd_cnto_cvs                      => ccsd_cnto_cvs_mlccsd
       procedure :: print_cnto_info                    => print_cnto_info_mlccsd
 !
 !     Cholesky vector routines
@@ -306,6 +307,38 @@ module mlccsd_class
       class(mlccsd) :: wf
 !
       end subroutine ccsd_cnto_mlccsd
+!
+!
+      module subroutine ccsd_cnto_cvs_mlccsd(wf)
+!!
+!!    CNTO orbital driver,
+!!    Written by Sarai D. Folkestad, June 2017.
+!!
+!!    A CCS calculation ground state and excited states is performed.
+!!    The M and N matrices are then constructed, 
+!! 
+!!       M_ij = sum_a R1_ai*R1_aj + sum_a R2_ai*R2_aj + ...
+!!       N_ab = sum_i R1_ai*R1_bi + sum_a R2_ai*R2_bi + ...
+!!   
+!!    where Ri_ai is the i'th single excitation vector obtained from the CCS calculation. 
+!!    The transformation matrices for the occupied and virtual part
+!!    are constructed by diagonalizing M and N. The number of active occupied
+!!    and virtual orbitals are determined from δ_o and δ_v
+!!
+!!       1 - sum_i λ^o_i < δ_o
+!!       1 - sum_i λ^v_i < δ_v
+!!
+!!    Where the orbitals of highest eigenvalues λ^o/λ^v are selected first.
+!!
+!!    Fock matrix is block diagonalized in active and inactive blocks in order to obtain 
+!!    the orbitals and orbital energies used in the CC2 calculation.
+!!
+
+      implicit none 
+!
+      class(mlccsd) :: wf
+!
+      end subroutine ccsd_cnto_cvs_mlccsd
 !
 !
       module subroutine print_cnto_info_mlccsd(wf)
@@ -1155,6 +1188,8 @@ contains
 !     Initialize fock matrix
 !
       call wf%initialize_fock_matrix
+!
+      write(unit_output,*) 'done with input'
 !
    end subroutine init_mlccsd
 !

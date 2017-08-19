@@ -1040,7 +1040,19 @@ contains
 !
 !     CNTO orbital selection for CCSD
 !
-      call wf%ccsd_cnto
+      if (wf%tasks%excited_state) then
+!
+         call wf%ccsd_cnto
+!
+      elseif (wf%tasks%core_excited_state) then
+!
+         call wf%ccsd_cnto_cvs
+!
+      else
+!
+         write(unit_output,*)'WARNING: cntos without excited state calculation makes no sense.'
+      endif
+      
 !
 !     Timings
 !
@@ -1208,14 +1220,12 @@ contains
 !
       wf%mlcc_settings%delta_o = 1.0d-3
       wf%mlcc_settings%delta_v = 1.0d-4 ! THESE SHOULD BE SET IN INPUT
-      write(unit_output,*)'1'
-      flush(unit_output)
 !
 !     Open file of CC2 solution vectors
 !
       call generate_unit_identifier(unit_solution)
 !
-      open(unit=unit_solution, file='wf%excited_state_tasks', action='read', status='unknown', &
+      open(unit=unit_solution, file=wf%excited_state_task, action='read', status='unknown', &
         access='direct', form='unformatted', recl=dp*(cc2_n_parameters), iostat=ioerror) 
 !
       if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file', ioerror
@@ -1233,8 +1243,6 @@ contains
          call daxpy(cc2_n_parameters, one, R, 1, R_sum, 1)
 !
       enddo
-      write(unit_output,*)'2'
-      flush(unit_output)
 !
 !     Done with file, delete it
 !
@@ -1264,8 +1272,6 @@ contains
       enddo
 !
       call deallocator(R_sum, cc2_n_parameters, 1)
-      write(unit_output,*)'3'
-      flush(unit_output)
 
 !
 !     Construct M and N
@@ -1344,8 +1350,6 @@ contains
       enddo
 !
       call deallocator(R_ai_bj, n_cc2_o*n_cc2_v, n_cc2_o*n_cc2_v)
-      write(unit_output,*)'4'
-      flush(unit_output)
 !
 !
 !     :: Diagonalize M and N matrix ::
@@ -1379,8 +1383,6 @@ contains
                   info)
 !
       call deallocator(work, 4*(n_cc2_v), 1)
-      write(unit_output,*)'5'
-      flush(unit_output)
 !
 !     :: Reorder M and N ::
 !
@@ -1408,8 +1410,6 @@ contains
       enddo
 !
       call deallocator(N_a_b, n_CC2_v, n_CC2_v)
-      write(unit_output,*)'6'
-      flush(unit_output)
 !
 !
 !     Transform C to CNTO
@@ -1432,8 +1432,6 @@ contains
         enddo
 !
      enddo
-     write(unit_output,*)'7'
-      flush(unit_output)
 !
       call allocator(C_o_transformed, wf%n_ao, n_cc2_o)
       call dgemm('N', 'N',    &
@@ -1488,8 +1486,6 @@ contains
 !
       call deallocator(C_o_transformed, wf%n_ao, n_cc2_o)
       call deallocator(C_v_transformed, wf%n_ao, n_cc2_v)
-      write(unit_output,*)'9'
-      flush(unit_output)
 !
 !     :: Determine number of active orbitals ::
 !
@@ -1513,8 +1509,6 @@ contains
          wf%n_CCSD_v = wf%n_CCSD_v + 1
 !
       enddo 
-      write(unit_output,*)'10'
-      flush(unit_output)
 !
 !     Save information to object
 !
@@ -1839,6 +1833,784 @@ contains
       
 !
    end subroutine ccsd_cnto_mlccsd
+!
+!
+ module subroutine ccsd_cnto_cvs_mlccsd(wf)
+!!
+!!    CNTO orbital driver,
+!!    Written by Sarai D. Folkestad, June 2017.
+!!
+!!    A CCS calculation ground state and excited states is performed.
+!!    The M and N matrices are then constructed, 
+!! 
+!!       M_ij = sum_a R1_ai*R1_aj + sum_a R2_ai*R2_aj + ...
+!!       N_ab = sum_i R1_ai*R1_bi + sum_a R2_ai*R2_bi + ...
+!!   
+!!    where Ri_ai is the i'th single excitation vector obtained from the CCS calculation. 
+!!    The transformation matrices for the occupied and virtual part
+!!    are constructed by diagonalizing M and N. The number of active occupied
+!!    and virtual orbitals are determined from δ_o and δ_v
+!!
+!!       1 - sum_i λ^o_i < δ_o
+!!       1 - sum_i λ^v_i < δ_v
+!!
+!!    Where the orbitals of highest eigenvalues λ^o/λ^v are selected first.
+!!
+!!    Fock matrix is block diagonalized in active and inactive blocks in order to obtain 
+!!    the orbitals and orbital energies used in the CC2 calculation.
+!!
+
+      implicit none 
+!
+      class(mlccsd) :: wf
+!
+      type(mlcc2), allocatable :: cc2_wf
+!
+      integer(i15) :: unit_solution = -1
+      integer(i15) :: ioerror = 0
+      integer(i15) :: lower_level_n_singlet_states
+      integer(i15) :: state
+      integer(i15) :: cc2_n_x2am, cc2_n_parameters
+!
+      real(dp), dimension(:,:), allocatable :: solution
+      real(dp), dimension(:,:), allocatable :: R
+      real(dp), dimension(:,:), allocatable :: R_sum
+      real(dp), dimension(:,:), allocatable :: R_a_i
+      real(dp), dimension(:,:), allocatable :: R_ai_bj
+      real(dp), dimension(:,:), allocatable :: R_a_icj
+      real(dp), dimension(:,:), allocatable :: M_i_j
+      real(dp), dimension(:,:), allocatable :: N_a_b
+      real(dp), dimension(:,:), allocatable :: M
+      real(dp), dimension(:,:), allocatable :: N
+      real(dp), dimension(:,:), allocatable :: X
+      real(dp), dimension(:,:), allocatable :: eigenvalues_o
+      real(dp), dimension(:,:), allocatable :: eigenvalues_v
+      real(dp), dimension(:,:), allocatable :: work
+      real(dp), dimension(:,:), allocatable :: C_o
+      real(dp), dimension(:,:), allocatable :: C_v
+      real(dp), dimension(:,:), allocatable :: C_o_transformed
+      real(dp), dimension(:,:), allocatable :: C_v_transformed
+      real(dp), dimension(:,:), allocatable :: fock_o
+      real(dp), dimension(:,:), allocatable :: fock_v
+      real(dp), dimension(:,:), allocatable :: orbital_energies
+      real(dp), dimension(:,:), allocatable :: test1
+      real(dp), dimension(:,:), allocatable :: test2
+!
+      integer(i15) :: unit_dt = -1 , unit_t_dt = -1
+!
+      integer(i15) :: info
+      integer(i15) :: i = 0, j = 0, a = 0, b = 0, c = 0, k = 0
+      integer(i15) :: ai = 0, ij = 0, cj = 0, bj = 0, bk = 0
+      integer(i15) :: aibj
+!
+      real(dp) :: trace, ddot, sum_o, sum_v, norm
+      integer(i15) :: n_CC2_o, n_CC2_v
+!
+!     ::::::::::::::::::::::::::::::::::::::::::::::::
+!     -::- Running lower level method calculation -::-
+!     ::::::::::::::::::::::::::::::::::::::::::::::::
+!
+!     Allocate lower level method
+!
+      allocate(cc2_wf)
+!
+!     Set calculation tasks
+!
+      cc2_wf%tasks%ground_state = .true.
+      cc2_wf%tasks%core_excited_state = .true.
+      cc2_wf%tasks%n_cores = wf%tasks%n_cores
+      call allocator_int(cc2_wf%tasks%cores, cc2_wf%tasks%n_cores, 1)
+      cc2_wf%tasks%cores = wf%tasks%cores
+!
+!     Set calculation settings
+!
+      cc2_wf%settings = wf%settings
+! 
+!     Set number of excitations to use for cnto generation
+!
+      cc2_wf%tasks%n_singlet_states = wf%tasks%n_singlet_states
+!
+!     Set convergence threshold for lower lying method
+!
+      cc2_wf%settings%energy_threshold = 1.0D-04 
+      cc2_wf%settings%equation_threshold = 1.0D-04 
+!
+!     Set mlcc settings
+!
+!
+      if(wf%mlcc_settings%CCS .and. wf%mlcc_settings%CC2) then
+!
+         write(unit_output,*) 'Not implemented yet'
+         stop
+         cc2_wf%mlcc_settings%CCS      = .true.
+         cc2_wf%mlcc_settings%cnto     = .true.
+         cc2_wf%mlcc_settings%cholesky = .false.
+!
+      else
+!
+         cc2_wf%mlcc_settings%CC2      = .true.
+         cc2_wf%mlcc_settings%CCS = .false.
+!
+      endif
+!
+!     Initialize lower level method
+!  
+      call cc2_wf%init
+!
+!     Call driver of lower level method
+!
+      call cc2_wf%drv
+!
+      cc2_n_parameters = cc2_wf%n_parameters
+      cc2_n_x2am = cc2_wf%n_x2am
+!
+      do i = 1, wf%n_ao
+         do j = 1, wf%n_mo
+            ij = index_two(i, j, wf%n_ao)
+            wf%mo_coef_cc2_ccs(i, j) = cc2_wf%mo_coef(ij, 1)
+         enddo
+      enddo
+!
+      wf%fock_diagonal_cc2_ccs = cc2_wf%fock_diagonal
+!
+      wf%mo_coef = cc2_wf%mo_coef
+      wf%fock_diagonal = cc2_wf%fock_diagonal
+!
+      n_CC2_o = cc2_wf%n_CC2_o
+      n_CC2_v = cc2_wf%n_CC2_v
+!
+!     Save info on CCS space
+!
+      wf%n_CCS_o = cc2_wf%n_CCS_o
+      wf%n_CCS_v = cc2_wf%n_CCS_v
+!
+      wf%first_CCS_o = cc2_wf%first_CCS_o
+      wf%first_CCS_v = cc2_wf%first_CCS_v
+!
+!     Deallocate lower level method
+!
+      deallocate(cc2_wf)
+!
+!     ::::::::::::::::::::::::::::::::::::::::::::::
+!     -::- Construct CNTO transformation matrix -::-
+!     ::::::::::::::::::::::::::::::::::::::::::::::
+!
+      wf%mlcc_settings%delta_o = 1.0d-3
+      wf%mlcc_settings%delta_v = 1.0d-4 ! THESE SHOULD BE SET IN INPUT
+!
+!     Open file of CC2 solution vectors
+!
+      call generate_unit_identifier(unit_solution)
+!
+      open(unit=unit_solution, file=wf%excited_state_task, action='read', status='unknown', &
+        access='direct', form='unformatted', recl=dp*(cc2_n_parameters), iostat=ioerror) 
+!
+      if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file', ioerror
+!
+      call allocator(R, cc2_n_parameters, 1)
+      call allocator(R_sum, cc2_n_parameters, 1)
+      R_sum = zero
+!
+!     Construct sum of excitation vectors
+!
+      do state = 1, wf%tasks%n_singlet_states
+!
+         read(unit=unit_solution, rec=state) R
+!
+         call daxpy(cc2_n_parameters, one, R, 1, R_sum, 1)
+!
+      enddo
+!
+!     Done with file, delete it
+!
+      close(unit_solution, status='delete')
+!
+      call deallocator(R, cc2_n_parameters, 1)
+!
+      norm = sqrt(ddot(cc2_n_parameters, R_sum, 1, R_sum, 1))
+      call dscal(cc2_n_parameters, one/norm, R_sum, 1)
+!
+      call allocator(R_a_i, n_cc2_v, n_cc2_o)
+!
+      do a = 1, n_cc2_v
+         do i = 1, n_cc2_o
+            ai = index_two(a, i, wf%n_v)
+            R_a_i(a, i) = R_sum(ai, 1)
+         enddo
+      enddo
+!
+      call allocator(R_ai_bj, n_cc2_o*n_cc2_v, n_cc2_o*n_cc2_v)
+!
+      do ai = 1, n_cc2_o*n_cc2_v
+         do bj = 1, n_cc2_o*n_cc2_v
+            aibj = index_packed(ai, bj)
+            R_ai_bj(ai, bj) = R_sum(aibj + wf%n_o*wf%n_v, 1)
+         enddo
+      enddo
+!
+      call deallocator(R_sum, cc2_n_parameters, 1)
+
+!
+!     Construct M and N
+!
+      call allocator(M_i_j, n_CC2_o, n_CC2_o)
+      call allocator(N_a_b, n_CC2_v, n_CC2_v)
+!
+!     Singles contribution
+!
+      call dgemm('T', 'N',    &
+                     n_CC2_o, &
+                     n_CC2_o, &
+                     n_CC2_v, &
+                     one,     &
+                     R_a_i,   &
+                     n_CC2_v, &
+                     R_a_i,   &
+                     n_CC2_v, &
+                     zero,    &
+                     M_i_j,   &
+                     n_CC2_o)
+!
+      call dgemm('N', 'T', &
+                     n_CC2_v, &
+                     n_CC2_v, &
+                     n_CC2_o, &
+                     one,     &
+                     R_a_i,   &
+                     n_CC2_v, &
+                     R_a_i,   &
+                     n_CC2_v, &
+                     zero,    &
+                     N_a_b,   &
+                     n_CC2_v)
+!
+      call deallocator(R_a_i, n_cc2_v, n_cc2_o)
+!
+      call dgemm('T', 'N',                   &
+                     n_CC2_o,                &
+                     n_CC2_o,                &
+                     (n_CC2_v**2)*(n_CC2_o), &
+                     half,                   &
+                     R_ai_bj,                & ! R_ai,bk
+                     (n_CC2_v**2)*(n_CC2_o), &
+                     R_ai_bj,                & ! R_aj,bk
+                     (n_CC2_v**2)*(n_CC2_o), &
+                     one,                    &
+                     M_i_j,                  &
+                     n_CC2_o)
+!
+      do i = 1, n_CC2_o
+         do a = 1, n_CC2_v
+            ai = index_two(a, i, n_CC2_v)
+            M_i_j(i, i) = M_i_j(i, i) + half*R_ai_bj(ai, bj)
+         enddo
+      enddo
+!
+      call dgemm('N', 'T',                   &
+                     n_CC2_v,                &
+                     n_CC2_v,                &
+                     (n_CC2_o**2)*(n_CC2_v), &
+                     half,                   &
+                     R_ai_bj,                & ! R_ai,cj
+                     n_CC2_v,                &
+                     R_ai_bj,                & ! R_bi,cj
+                     n_CC2_v,                &
+                     one,                    &
+                     N_a_b,                  &
+                     n_CC2_v)
+!
+      do a = 1, n_CC2_v
+         do i = 1, n_CC2_o
+            ai = index_two(a, i, n_CC2_v)
+            N_a_b(a, a) = N_a_b(a, a) + half*R_ai_bj(ai, ai)
+         enddo
+      enddo
+!
+      call deallocator(R_ai_bj, n_cc2_o*n_cc2_v, n_cc2_o*n_cc2_v)
+!
+!
+!     :: Diagonalize M and N matrix ::
+!
+      call allocator(eigenvalues_o, n_cc2_o, 1)
+      call allocator(work, 4*(n_cc2_o), 1)
+      work = zero
+!
+      call dsyev('V','U', &
+                  n_cc2_o, &
+                  M_i_j, &
+                  n_cc2_o, &
+                  eigenvalues_o, &
+                  work, & 
+                  4*(n_cc2_o), &
+                  info)
+!
+      call deallocator(work, 4*(n_cc2_o), 1)
+!
+      call allocator(eigenvalues_v, n_cc2_v, 1)
+      call allocator(work, 4*(n_cc2_v), 1)
+      work = zero
+!
+      call dsyev('V','U', &
+                  n_cc2_v, &
+                  N_a_b, &
+                  n_cc2_v, &
+                  eigenvalues_v, &
+                  work, & 
+                  4*(n_cc2_v), &
+                  info)
+!
+      call deallocator(work, 4*(n_cc2_v), 1)
+!
+!     :: Reorder M and N ::
+!
+!     dsyev orderes eigenvalues and corresponding eigenvectors in ascending order.
+!     We wish to select active space according to highest eigenvalues, thus we must reorder
+!
+      call allocator(M, n_cc2_o, n_cc2_o)
+!
+      do i = 1, n_cc2_o
+!
+         j = i -1
+         M(:,i) = M_i_j(:, n_cc2_o - j)
+!
+      enddo
+!
+      call deallocator(M_i_j, n_CC2_o, n_CC2_o)
+!
+      call allocator(N, n_cc2_v, n_cc2_v)
+!
+      do a = 1, n_cc2_v
+!
+         b = a -1
+         N(:,a) = N_a_b(:,n_cc2_v - b)
+!
+      enddo
+!
+      call deallocator(N_a_b, n_CC2_v, n_CC2_v)
+!
+!
+!     Transform C to CNTO
+!
+      call allocator(C_o, wf%n_ao, n_cc2_o)
+      call allocator(C_v, wf%n_ao, n_cc2_v)
+      C_o = zero
+      C_v = zero      
+!
+     do i = 1, wf%n_ao
+!
+        do j = 1, n_cc2_o
+           ij = index_two(i, j, wf%n_ao)
+           C_o(i, j) = wf%mo_coef(ij, 1) 
+        enddo
+!
+        do j = 1, n_cc2_v 
+           ij = index_two(i, j + wf%n_o, wf%n_ao)
+           C_v(i, j) = wf%mo_coef(ij, 1) 
+        enddo
+!
+     enddo
+!
+      call allocator(C_o_transformed, wf%n_ao, n_cc2_o)
+      call dgemm('N', 'N',    &
+                  wf%n_ao,    &
+                  n_cc2_o,    &
+                  n_cc2_o,    &
+                  one,        &
+                  C_o,        &
+                  wf%n_ao,    &
+                  M,          &
+                  n_cc2_o,    &
+                  zero,       &
+                  C_o_transformed, &
+                  wf%n_ao)
+!
+      call deallocator(C_o, wf%n_ao, n_cc2_o)
+!
+      call allocator(C_v_transformed, wf%n_ao, n_cc2_v)
+      call dgemm('N', 'N',                   &
+                  wf%n_ao,                   &
+                  n_cc2_v,                   &
+                  n_cc2_v,                   &
+                  one,                       &
+                  C_v,                       &
+                  wf%n_ao,                   &
+                  N,                         &
+                  n_cc2_v,                   &
+                  zero,                      &
+                  C_v_transformed,           &
+                  wf%n_ao)
+!
+      call deallocator(C_v, wf%n_ao, n_cc2_v)
+      call deallocator(N, n_cc2_v, n_cc2_v)
+      call deallocator(M, n_cc2_o, n_cc2_o)  
+      write(unit_output,*)'8'
+      flush(unit_output)
+!
+      do i = 1, wf%n_ao
+!
+
+         do j = 1, n_cc2_o
+            ij = index_two(i, j, wf%n_ao)
+            wf%mo_coef(ij, 1) = C_o_transformed(i, j) 
+         enddo
+!
+         do j = 1, n_cc2_v 
+            ij = index_two(i, j + wf%n_o, wf%n_ao)
+            wf%mo_coef(ij, 1) = C_v_transformed(i, j) 
+         enddo
+!
+      enddo
+!
+      call deallocator(C_o_transformed, wf%n_ao, n_cc2_o)
+      call deallocator(C_v_transformed, wf%n_ao, n_cc2_v)
+!
+!     :: Determine number of active orbitals ::
+!
+      sum_o       = 1
+      wf%n_CCSD_o = 1
+!
+      do while ((sum_o .gt. wf%mlcc_settings%delta_o) .and. (wf%n_CCSD_o .lt. n_cc2_o))
+!
+         sum_o = sum_o - eigenvalues_o(n_CC2_o - (wf%n_CCSD_o - 1), 1)
+         wf%n_CCSD_o = wf%n_CCSD_o + 1
+!
+      enddo
+
+!
+      sum_v      = 1
+      wf%n_CCSD_v = 1
+!
+      do while (sum_v .gt. wf%mlcc_settings%delta_v .and. (wf%n_CCSD_v .lt. n_cc2_v))
+!
+         sum_v = sum_v - eigenvalues_v(n_CC2_v - (wf%n_CCSD_v - 1), 1)
+         wf%n_CCSD_v = wf%n_CCSD_v + 1
+!
+      enddo 
+!
+!     Save information to object
+!
+      wf%first_CCSD_o = 1
+      wf%first_CCSD_v = 1
+!
+      wf%n_CC2_o = n_cc2_o - wf%n_CCSD_o
+      wf%n_CC2_v = n_cc2_v - wf%n_CCSD_v
+!
+      wf%first_CC2_o = 1 + wf%n_CCSD_o
+      wf%first_CC2_v = 1 + wf%n_CCSD_v
+!
+      call deallocator(eigenvalues_o, n_cc2_o, 1)
+      call deallocator(eigenvalues_v, n_cc2_v, 1)
+      call wf%print_cnto_info
+!     ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!     -::- Finding orbital energies and new block diagonal C matrix -::-
+!     ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!
+!     Initialize amplitudes and associated attributes
+!
+      call wf%initialize_amplitudes
+!
+!     Read Cholesky AO integrals and transform to MO basis
+!
+      call wf%read_transform_cholesky
+!
+!     Initialize fock matrix
+!
+      call wf%initialize_fock_matrix
+!
+!     :: Occupied Orbitals ::
+!
+!     Diagonalize active-active block
+!
+      if (wf%n_CCSD_o .gt. 0) then
+!
+         call allocator(work, 4*(wf%n_CCSD_o), 1)
+         call allocator(orbital_energies, (wf%n_CCSD_o), 1)
+         work = zero
+!
+         call dsyev('V','U',              &
+                     (wf%n_CCSD_o),       &
+                     wf%fock_ij,          &
+                     wf%n_o,              &
+                     orbital_energies,    &
+                     work,                & 
+                     4*(wf%n_CCSD_o),     &
+                     info)
+!
+         call deallocator(work, 4*(wf%n_CCSD_o), 1)
+!
+         if (info .ne. 0) then
+            write(unit_output,*)'WARNING: Diagonalization of active virtual block not successful. '
+            stop
+         endif
+!
+!        Setting orbital energies
+!
+         do j = 1, wf%n_CCSD_o
+!
+            wf%fock_diagonal(j,1) = orbital_energies(j,1)
+!
+         enddo
+!
+         call deallocator(orbital_energies, (wf%n_CCSD_o), 1)
+      endif
+!
+!     Diagonalize inactive-inactive block 
+!
+      if (wf%n_CC2_o .gt. 0) then
+         call allocator(work, 4*wf%n_CC2_o, 1)
+         call allocator(orbital_energies, wf%n_CC2_o, 1)
+         orbital_energies = zero
+         work = zero
+!
+         call dsyev('V','U',                                   &
+                     wf%n_CC2_o,                               &
+                     wf%fock_ij(wf%first_CC2_o, wf%first_CC2_o),&
+                     wf%n_o,                                   &
+                     orbital_energies,                         &
+                     work,                                     & 
+                     4*wf%n_CC2_o,                             &
+                     info)
+!
+         call deallocator(work, 4*wf%n_CC2_o, 1)
+!
+         if (info .ne. 0) then
+            write(unit_output,*)'WARNING: Diagonalization of inactive virtual block not successful.'
+            stop
+         endif
+!
+!        Setting orbital energies
+!
+         do j = 1, wf%n_CC2_o
+!
+            wf%fock_diagonal(j + wf%first_CC2_o - 1,1) = orbital_energies(j,1)
+!
+         enddo
+         call deallocator(orbital_energies, wf%n_CC2_o, 1)
+      endif
+!
+!     Transform C-matrix (active occupied block)
+!
+      call allocator(C_o, wf%n_ao, wf%n_o)
+      C_o = zero     
+!  
+      do i = 1, wf%n_ao
+!  
+         do j = 1, wf%n_o
+           ij = index_two(i, j, wf%n_ao)
+           C_o(i, j) = wf%mo_coef(ij, 1) 
+         enddo
+!  
+      enddo
+!
+      if (wf%n_CCSD_o .gt. 0) then
+!  
+         call allocator(C_o_transformed, wf%n_ao, wf%n_CCSD_o)
+!  
+         call dgemm('N', 'N',          &
+                     wf%n_ao,          &
+                     wf%n_CCSD_o,      &
+                     wf%n_CCSD_o,      &
+                     one,              &
+                     C_o,              &
+                     wf%n_ao,          &
+                     wf%fock_ij,       &
+                     wf%n_o,           &
+                     zero,             &
+                     C_o_transformed,  &
+                     wf%n_ao)
+!  
+         do i = 1, wf%n_ao
+!  
+            do j = 1, wf%n_CCSD_o
+               ij = index_two(i, j, wf%n_ao)
+               wf%mo_coef(ij, 1) = C_o_transformed(i, j) 
+            enddo
+!  
+         enddo
+!  
+         call deallocator(C_o_transformed, wf%n_ao, wf%n_CCSD_o)
+      endif
+!
+!     Transform C-matrix (inactive occupied block)
+!
+      if (wf%n_CC2_o .gt. 0) then
+         call allocator(C_o_transformed, wf%n_ao, wf%n_CC2_o)
+         call dgemm('N', 'N',    &
+                     wf%n_ao,    &
+                     wf%n_CC2_o, &
+                     wf%n_CC2_o, &
+                     one,        &
+                     C_o(1, wf%first_CC2_o),        &
+                     wf%n_ao,    &
+                     wf%fock_ij(wf%first_CC2_o, wf%first_CC2_o), &
+                     wf%n_o,     &
+                     zero,       &
+                     C_o_transformed, &
+                     wf%n_ao)
+!
+         call deallocator(C_o, wf%n_ao, wf%n_o)
+!
+         do i = 1, wf%n_ao
+!
+            do j = 1, wf%n_CC2_o
+               ij = index_two(i, j + wf%first_CC2_o -1, wf%n_ao)
+               wf%mo_coef(ij, 1) = C_o_transformed(i, j) 
+            enddo
+!
+         enddo
+!
+         call deallocator(C_o_transformed, wf%n_ao, wf%n_CC2_o)
+      endif
+!
+!     :: Vacant orbitals ::
+!
+!     Diagonalize active-active block
+!
+      if (wf%n_CCSD_v .gt. 0) then
+         call allocator(work, 4*(wf%n_CCSD_v), 1)
+         call allocator(orbital_energies, (wf%n_CCSD_v), 1)
+         work = zero
+!
+         call dsyev('V','U',              &
+                     (wf%n_CCSD_v),   &
+                     wf%fock_ab,          &
+                     wf%n_v,              &
+                     orbital_energies,    &
+                     work,                & 
+                     4*(wf%n_CCSD_v), &
+                     info)
+!
+         call deallocator(work, 4*(wf%n_CCSD_v), 1)
+!
+         if (info .ne. 0) then
+            write(unit_output,*)'WARNING: Diagonalization of active virtual block not successful. '
+                  stop
+         endif
+!
+!        Setting orbital energies
+!
+         do j = 1, wf%n_CCSD_v
+!
+            wf%fock_diagonal(j + wf%n_o ,1) = orbital_energies(j,1)
+!
+         enddo
+!
+         call deallocator(orbital_energies, (wf%n_CCSD_v), 1)
+!
+      endif
+!
+!     Diagonalize inactive-inactive block 
+!
+      if (wf%n_CC2_v .gt. 0) then
+         call allocator(work, 4*wf%n_CC2_v, 1)
+         call allocator(orbital_energies, wf%n_CC2_v, 1)
+         orbital_energies = zero
+         work = zero
+!
+         call dsyev('V','U',                                      &
+                     wf%n_CC2_v,                                  &
+                     wf%fock_ab(wf%first_CC2_v, wf%first_CC2_v),  &
+                     wf%n_v,                                      &
+                     orbital_energies,                            &
+                     work,                                        & 
+                     4*(wf%n_CC2_v),                              &
+                     info)
+!
+         call deallocator(work, 4*wf%n_CC2_v, 1)
+!
+         if (info .ne. 0) then
+            write(unit_output,*)'WARNING: Diagonalization of inactive virtual block not successful.'
+            stop
+         endif
+!
+!        Setting orbital energies
+!
+         do j = 1, wf%n_CC2_v
+!
+            wf%fock_diagonal(j + wf%n_o + wf%first_CC2_v - 1,1) = orbital_energies(j,1)
+!
+         enddo
+
+         call deallocator(orbital_energies, wf%n_CC2_v, 1)
+!
+      endif
+!
+!     Transform C-matrix (active virtual block)
+!
+      call allocator(C_v, wf%n_ao, wf%n_v)
+      C_v = zero     
+!
+      do i = 1, wf%n_ao
+!
+         do j = 1, wf%n_v
+            ij = index_two(i, j + wf%n_o, wf%n_ao)
+            C_v(i, j) = wf%mo_coef(ij, 1) 
+         enddo
+!
+      enddo
+!
+      if (wf%n_CCSD_v .gt. 0) then
+!
+         call allocator(C_v_transformed, wf%n_ao, wf%n_CCSD_v)
+         call dgemm('N', 'N',    &
+                     wf%n_ao,    &
+                     wf%n_CCSD_v,&
+                     wf%n_CCSD_v,&
+                     one,        &
+                     C_v,        &
+                     wf%n_ao,    &
+                     wf%fock_ab, &
+                     wf%n_v,     &
+                     zero,       &
+                     C_v_transformed, &
+                     wf%n_ao)
+!
+         do i = 1, wf%n_ao
+            do j = 1, wf%n_CCSD_v
+               ij = index_two(i, j + wf%n_o, wf%n_ao)
+               wf%mo_coef(ij, 1) = C_v_transformed(i, j) 
+            enddo
+         enddo
+!
+         call deallocator(C_v_transformed, wf%n_ao, wf%n_CCSD_v)
+!
+      endif
+!
+!     Transform C-matrix (inactive virtual block)
+!
+      if (wf%n_CC2_v .gt. 0) then
+!
+         call allocator(C_v_transformed, wf%n_ao, wf%n_CC2_v)
+         call dgemm('N', 'N',    &
+                     wf%n_ao,    &
+                     wf%n_CC2_v, &
+                     wf%n_CC2_v, &
+                     one,        &
+                     C_v(1, wf%first_CC2_v),        &
+                     wf%n_ao,    &
+                     wf%fock_ab(wf%first_CC2_v, wf%first_CC2_v), &
+                     wf%n_v,     &
+                     zero,       &
+                     C_v_transformed, &
+                     wf%n_ao)
+!
+         do i = 1, wf%n_ao
+
+            do j = 1, wf%n_CC2_v
+               ij = index_two(i, j + wf%n_o + wf%first_CC2_v - 1, wf%n_ao)
+               wf%mo_coef(ij, 1) = C_v_transformed(i, j) 
+            enddo
+         enddo
+!
+         call deallocator(C_v_transformed, wf%n_ao, wf%n_CC2_v)
+!
+      endif
+!
+      call deallocator(C_v, wf%n_ao, wf%n_v)
+      
+!
+   end subroutine ccsd_cnto_cvs_mlccsd
+!
 !
    module subroutine print_cnto_info_mlccsd(wf)
 !!
