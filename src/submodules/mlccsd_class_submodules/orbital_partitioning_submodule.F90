@@ -1215,7 +1215,7 @@ contains
 !
       call generate_unit_identifier(unit_solution)
 !
-      open(unit=unit_solution, file='right_eigenvectors', action='read', status='unknown', &
+      open(unit=unit_solution, file='wf%excited_state_tasks', action='read', status='unknown', &
         access='direct', form='unformatted', recl=dp*(cc2_n_parameters), iostat=ioerror) 
 !
       if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file', ioerror
