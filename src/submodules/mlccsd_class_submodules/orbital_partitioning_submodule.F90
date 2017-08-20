@@ -1325,7 +1325,7 @@ contains
       do i = 1, n_CC2_o
          do a = 1, n_CC2_v
             ai = index_two(a, i, n_CC2_v)
-            M_i_j(i, i) = M_i_j(i, i) + half*R_ai_bj(ai, bj)
+            M_i_j(i, i) = M_i_j(i, i) + half*R_ai_bj(ai, ai)
          enddo
       enddo
 !
@@ -1877,6 +1877,7 @@ contains
       real(dp), dimension(:,:), allocatable :: R_sum
       real(dp), dimension(:,:), allocatable :: R_a_i
       real(dp), dimension(:,:), allocatable :: R_ai_bj
+      real(dp), dimension(:,:), allocatable :: R_aib_k
       real(dp), dimension(:,:), allocatable :: R_a_icj
       real(dp), dimension(:,:), allocatable :: M_i_j
       real(dp), dimension(:,:), allocatable :: N_a_b
@@ -1901,7 +1902,7 @@ contains
       integer(i15) :: info
       integer(i15) :: i = 0, j = 0, a = 0, b = 0, c = 0, k = 0
       integer(i15) :: ai = 0, ij = 0, cj = 0, bj = 0, bk = 0
-      integer(i15) :: aibj
+      integer(i15) :: aibj = 0, aibk = 0, aib = 0, icj = 0
 !
       real(dp) :: trace, ddot, sum_o, sum_v, norm
       integer(i15) :: n_CC2_o, n_CC2_v
@@ -1990,6 +1991,8 @@ contains
 !     Deallocate lower level method
 !
       deallocate(cc2_wf)
+      write(unit_output,*)'1'
+      flush(unit_output)
 !
 !     ::::::::::::::::::::::::::::::::::::::::::::::
 !     -::- Construct CNTO transformation matrix -::-
@@ -2002,7 +2005,7 @@ contains
 !
       call generate_unit_identifier(unit_solution)
 !
-      open(unit=unit_solution, file=wf%excited_state_task, action='read', status='unknown', &
+      open(unit=unit_solution, file='right_core', action='read', status='unknown', &
         access='direct', form='unformatted', recl=dp*(cc2_n_parameters), iostat=ioerror) 
 !
       if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file', ioerror
@@ -2010,6 +2013,8 @@ contains
       call allocator(R, cc2_n_parameters, 1)
       call allocator(R_sum, cc2_n_parameters, 1)
       R_sum = zero
+      write(unit_output,*)'2'
+      flush(unit_output)
 !
 !     Construct sum of excitation vectors
 !
@@ -2020,6 +2025,8 @@ contains
          call daxpy(cc2_n_parameters, one, R, 1, R_sum, 1)
 !
       enddo
+      write(unit_output,*)'3'
+      flush(unit_output)
 !
 !     Done with file, delete it
 !
@@ -2029,6 +2036,8 @@ contains
 !
       norm = sqrt(ddot(cc2_n_parameters, R_sum, 1, R_sum, 1))
       call dscal(cc2_n_parameters, one/norm, R_sum, 1)
+      write(unit_output,*)'4'
+      flush(unit_output)
 !
       call allocator(R_a_i, n_cc2_v, n_cc2_o)
 !
@@ -2047,6 +2056,8 @@ contains
             R_ai_bj(ai, bj) = R_sum(aibj + wf%n_o*wf%n_v, 1)
          enddo
       enddo
+      write(unit_output,*)'5'
+      flush(unit_output)
 !
       call deallocator(R_sum, cc2_n_parameters, 1)
 
@@ -2084,40 +2095,80 @@ contains
                      N_a_b,   &
                      n_CC2_v)
 !
+      write(unit_output,*)'6'
+      flush(unit_output)
+!
       call deallocator(R_a_i, n_cc2_v, n_cc2_o)
+!
+      call allocator(R_aib_k, (n_CC2_v**2)*(n_CC2_o), n_CC2_o)
+!
+      do a = 1, n_CC2_v
+         do b = 1, n_CC2_v
+            do k = 1, n_CC2_o
+               do i = 1, n_CC2_o
+                  aib = index_three(a, i, b, n_CC2_v, n_CC2_o)
+                  ai = index_two(a, i, n_CC2_v)
+                  bk = index_two(b, k, n_CC2_v)
+                  R_aib_k(aib, k) = R_ai_bj(ai, bk)
+               enddo
+            enddo
+         enddo
+      enddo
 !
       call dgemm('T', 'N',                   &
                      n_CC2_o,                &
                      n_CC2_o,                &
                      (n_CC2_v**2)*(n_CC2_o), &
                      half,                   &
-                     R_ai_bj,                & ! R_ai,bk
+                     R_aib_k,                & ! R_ai,bk
                      (n_CC2_v**2)*(n_CC2_o), &
-                     R_ai_bj,                & ! R_aj,bk
+                     R_aib_k,                & ! R_aj,bk
                      (n_CC2_v**2)*(n_CC2_o), &
                      one,                    &
                      M_i_j,                  &
                      n_CC2_o)
 !
+      write(unit_output,*)'6.5'
+      flush(unit_output)
+      call deallocator(R_aib_k, (n_CC2_v**2)*(n_CC2_o), n_CC2_o)
+!
       do i = 1, n_CC2_o
          do a = 1, n_CC2_v
             ai = index_two(a, i, n_CC2_v)
-            M_i_j(i, i) = M_i_j(i, i) + half*R_ai_bj(ai, bj)
+            M_i_j(i, i) = M_i_j(i, i) + half*R_ai_bj(ai, ai)
          enddo
       enddo
+      write(unit_output,*)'7'
+      flush(unit_output)
 !
+      call allocator(R_a_icj, n_CC2_v, (n_CC2_o**2)*(n_CC2_v))
+!
+      do a = 1, n_CC2_v
+         do c = 1, n_CC2_v
+            do j = 1, n_CC2_o
+               do i = 1, n_CC2_o
+                  icj = index_three(i, c, j, n_CC2_o, n_CC2_v)
+                  ai = index_two(a, i, n_CC2_v)
+                  cj = index_two(c, j, n_CC2_v)
+                  R_a_icj(a, icj) = R_ai_bj(ai, cj)
+               enddo
+            enddo
+         enddo
+      enddo
       call dgemm('N', 'T',                   &
                      n_CC2_v,                &
                      n_CC2_v,                &
                      (n_CC2_o**2)*(n_CC2_v), &
                      half,                   &
-                     R_ai_bj,                & ! R_ai,cj
+                     R_a_icj,                & ! R_ai,cj
                      n_CC2_v,                &
-                     R_ai_bj,                & ! R_bi,cj
+                     R_a_icj,                & ! R_bi,cj
                      n_CC2_v,                &
                      one,                    &
                      N_a_b,                  &
                      n_CC2_v)
+!
+      call deallocator(R_a_icj, n_CC2_v, (n_CC2_o**2)*(n_CC2_v))
 !
       do a = 1, n_CC2_v
          do i = 1, n_CC2_o
@@ -2127,6 +2178,8 @@ contains
       enddo
 !
       call deallocator(R_ai_bj, n_cc2_o*n_cc2_v, n_cc2_o*n_cc2_v)
+      write(unit_output,*)'8'
+      flush(unit_output)
 !
 !
 !     :: Diagonalize M and N matrix ::
@@ -2160,6 +2213,8 @@ contains
                   info)
 !
       call deallocator(work, 4*(n_cc2_v), 1)
+      write(unit_output,*)'9'
+      flush(unit_output)
 !
 !     :: Reorder M and N ::
 !
@@ -2209,6 +2264,8 @@ contains
         enddo
 !
      enddo
+     write(unit_output,*)'10'
+      flush(unit_output)
 !
       call allocator(C_o_transformed, wf%n_ao, n_cc2_o)
       call dgemm('N', 'N',    &
@@ -2243,7 +2300,7 @@ contains
       call deallocator(C_v, wf%n_ao, n_cc2_v)
       call deallocator(N, n_cc2_v, n_cc2_v)
       call deallocator(M, n_cc2_o, n_cc2_o)  
-      write(unit_output,*)'8'
+      write(unit_output,*)'11'
       flush(unit_output)
 !
       do i = 1, wf%n_ao
@@ -2261,6 +2318,8 @@ contains
 !
       enddo
 !
+      write(unit_output,*)'12'
+      flush(unit_output)
       call deallocator(C_o_transformed, wf%n_ao, n_cc2_o)
       call deallocator(C_v_transformed, wf%n_ao, n_cc2_v)
 !
@@ -2286,6 +2345,8 @@ contains
          wf%n_CCSD_v = wf%n_CCSD_v + 1
 !
       enddo 
+      write(unit_output,*)'13'
+      flush(unit_output)
 !
 !     Save information to object
 !

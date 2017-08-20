@@ -12,7 +12,7 @@ submodule(ccs_class) excited_state
 !  Some variables available to all routines of the module
 !
    integer(i15) :: iteration = 1
-   integer(i15) :: max_iterations = 50! E: we move this to calculation settings later
+   integer(i15) :: max_iterations = 75! E: we move this to calculation settings later
 !
 !  Variables to handle convergence criterea
 !
@@ -57,7 +57,7 @@ contains
 !
       if (wf%tasks%excited_state) then
          wf%excited_state_task = 'right_valence'
-      else
+      elseif (wf%tasks%core_excited_state) then
          wf%excited_state_task = 'right_core'
       endif
 !
@@ -1310,17 +1310,7 @@ contains
          real(dp), dimension(wf%n_parameters ,1) :: residual
 !       
 !
-!        If restart use old solution vectors for first start vectors
-!
-         if (wf%settings%restart) then 
-!
-            write(unit_output,'(/t3,a)') 'Requested restart. Using old solution vectors as trial vectors.'
-            call wf%trial_vectors_from_stored_solutions
-            return
-!
-         endif 
-!
-         if ((wf%excited_state_task .eq. 'right_valence') .and. &
+         if ((wf%excited_state_task .eq. 'right_valence') .or. &
              (wf%excited_state_task .eq. 'left_valence')) then
 !
             call wf%precondition_residual_valence(residual)
