@@ -1,4 +1,4 @@
-submodule (ccs_class) fock
+submodule(ccs_class) fock
 !
 !!
 !!    Fock submodule
@@ -17,7 +17,7 @@ submodule (ccs_class) fock
 contains
 !
 !
-    subroutine initialize_fock_matrix_ccs(wf)
+    module subroutine initialize_fock_matrix_ccs(wf)
 !!
 !!     Initialize Fock Matrix
 !!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -29,10 +29,10 @@ contains
 !  
       class(ccs) :: wf   
 !
-      call allocator(wf%fock_ij, wf%n_o, wf%n_o)
-      call allocator(wf%fock_ia, wf%n_o, wf%n_v)
-      call allocator(wf%fock_ai, wf%n_v, wf%n_o)
-      call allocator(wf%fock_ab, wf%n_v, wf%n_v)
+      if (.not. allocated(wf%fock_ij)) call allocator(wf%fock_ij, wf%n_o, wf%n_o)
+      if (.not. allocated(wf%fock_ia)) call allocator(wf%fock_ia, wf%n_o, wf%n_v)
+      if (.not. allocated(wf%fock_ai)) call allocator(wf%fock_ai, wf%n_v, wf%n_o)
+      if (.not. allocated(wf%fock_ab)) call allocator(wf%fock_ab, wf%n_v, wf%n_v)
 
 !
       wf%fock_ij = zero
@@ -45,7 +45,7 @@ contains
    end subroutine initialize_fock_matrix_ccs
 !
 !
-   subroutine construct_fock_ccs(wf)
+   module subroutine construct_fock_ccs(wf)
 !!
 !!    Construct Fock
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -119,7 +119,7 @@ contains
 !     Open mlcc_aoint file
 !
       call generate_unit_identifier(unit_identifier_ao_integrals)
-      open(unit=unit_identifier_ao_integrals,file='mlcc_aoint',status='old',form='formatted')
+      open(unit=unit_identifier_ao_integrals,file='MLCC_AOINT',status='old',form='formatted')
       rewind(unit_identifier_ao_integrals)
 !
 !     Read in one-electron AO integrals
@@ -507,7 +507,7 @@ contains
    end subroutine construct_fock_ccs
 !
 !
-   subroutine one_electron_t1_ccs(wf, h1 ,h1_T1)
+   module subroutine one_electron_t1_ccs(wf, h1 ,h1_T1)
 !!
 !!    One-electron T1 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017

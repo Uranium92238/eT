@@ -27,7 +27,7 @@ submodule (cc2_class) omega
 !
 contains
 !
-  module subroutine construct_omega_cc2(wf)
+    module subroutine construct_omega_cc2(wf)
 !  
 !     Construct Omega (CC2)
 !     Written by Eirik F. Kjønstad and Sarai Folkestad, Apr 2017
@@ -248,7 +248,7 @@ contains
 !
       integer(i15) :: i = 0, j = 0, k = 0, a = 0, c = 0, d = 0
 !
-      integer(i15) :: ad = 0, da = 0, ad = 0
+      integer(i15) :: ad = 0, da = 0
       integer(i15) :: ci = 0, ck = 0, di = 0, dk = 0
       integer(i15) :: kc = 0, ic = 0 
 !

@@ -21,7 +21,7 @@ if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
     endif()
     set(CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -fbacktrace -fcray-pointer -Wuninitialized")
     set(CMAKE_Fortran_FLAGS_RELEASE "-O3 -ffast-math -funroll-loops -ftree-vectorize")
-    set(CMAKE_Fortran_FLAGS_PROFILE "${CMAKE_Fortran_FLAGS_RELEASE} -g -pg")
+    set(CMAKE_Fortran_FLAGS_PROFILE "${CMAKE_Fortran_FLAGS_RELEASE} -g -pg -fbounds-check -o0")
 #
 #   If ENABLE_64BIT_INTEGERS ON
 #
@@ -36,7 +36,7 @@ endif()
 #
 if(CMAKE_Fortran_COMPILER_ID MATCHES Intel)
     add_definitions(-DVAR_IFORT)
-    set(CMAKE_Fortran_FLAGS         "-fpp -assume byterecl -DVAR_IFORT")
+    set(CMAKE_Fortran_FLAGS         "-mkl -fpp -assume byterecl -DVAR_IFORT")
     set(CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -traceback")
     set(CMAKE_Fortran_FLAGS_RELEASE "-O3 -ip -diag-disable 8290 -diag-disable 8291")
     set(CMAKE_Fortran_FLAGS_PROFILE "${CMAKE_Fortran_FLAGS_RELEASE} -g -pg")

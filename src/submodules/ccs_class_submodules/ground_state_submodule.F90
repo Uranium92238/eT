@@ -4,7 +4,7 @@ submodule (ccs_class) ground_state
 !!    Ground state submodule (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-!!    Consists of the following subroutines of the CCS module:
+!!    Consists of the following module subroutines of the CCS:
 !!
 !!    ground_state_solver:        Controls the iterative loop, calling in turn
 !!                                the calculation of the energy, the amplitude equations 
@@ -86,6 +86,7 @@ contains
 !
       write(unit_output,'(t6,a20,e9.2)') 'Energy threshold:',   wf%settings%energy_threshold
       write(unit_output,'(t6,a20,e9.2)') 'Equation threshold:', wf%settings%equation_threshold
+      flush(unit_output)
 !
 !     Initialize amplitudes & amplitude equations 
 !
@@ -115,12 +116,16 @@ contains
 !
       write(unit_output,'(/t3,a)')   'Iter.      Energy             Norm of amplitude eq.'
       write(unit_output,'(t3,a)')    '---------------------------------------------------' 
+      flush(unit_output)
 !
 !     Make sure the initial energy is up to date for first iteration
-!
+!  
       call wf%calc_energy
 !
       iteration = 1
+      converged_energy = .false.
+      converged_ampeqs = .false.
+      converged = .false.
 !
       call cpu_time(start_gs_solver)
 !
@@ -196,7 +201,7 @@ contains
    end subroutine ground_state_solver_ccs
 !
 !
-   module subroutine calc_ampeqs_ccs(wf)
+    module subroutine calc_ampeqs_ccs(wf)
 !!
 !!    Calculate Amplitude Equations (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -217,7 +222,7 @@ contains
    end subroutine calc_ampeqs_ccs
 !
 !
-   module subroutine calc_ampeqs_norm_ccs(wf, ampeqs_norm)
+    module subroutine calc_ampeqs_norm_ccs(wf, ampeqs_norm)
 !!
 !!     Calculate Amplitude Equations Norm (CCS)
 !!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -237,7 +242,7 @@ contains
    end subroutine calc_ampeqs_norm_ccs
 !
 !
-   module subroutine new_amplitudes_ccs(wf)
+    module subroutine new_amplitudes_ccs(wf)
 !!
 !!    New Amplitudes (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -287,7 +292,7 @@ contains
    end subroutine new_amplitudes_ccs
 !
 !
-   module subroutine calc_quasi_Newton_singles_ccs(wf,dt)
+    module subroutine calc_quasi_Newton_singles_ccs(wf,dt)
 !!
 !!    Calculate quasi-Newton estimate (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -320,7 +325,7 @@ contains
    end subroutine calc_quasi_Newton_singles_ccs
 !
 !
-   module subroutine diis_ccs(wf, dt, t_dt)
+    module subroutine diis_ccs(wf, dt, t_dt)
 !!
 !!    DIIS routine
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -477,10 +482,10 @@ contains
       call deallocator(diis_vector, current_index + 1, 1)
       call deallocator(diis_matrix, current_index + 1, current_index+1)
 !
-   end subroutine diis_ccs 
+   end subroutine diis_ccs
 !
 !
-   subroutine initialize_ground_state_ccs(wf)
+   module subroutine initialize_ground_state_ccs(wf)
 !!
 !!    Initialize Ground State (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -498,7 +503,7 @@ contains
    end subroutine initialize_ground_state_ccs
 !
 !
-   subroutine destruct_ground_state_ccs(wf)
+   module subroutine destruct_ground_state_ccs(wf)
 !!
 !!    Destruct Ground State (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017

@@ -26,12 +26,21 @@ module calc_procedures_class
 !
    type :: calc_procedures 
 !
-      logical :: ground_state   = .false.
-      logical :: excited_state  = .false. 
-      logical :: properties     = .false.
+      logical :: ground_state       = .false.
+      logical :: excited_state      = .false. 
+      logical :: core_excited_state = .false. 
+      logical :: properties         = .false.
+!
+!     For excited states (core and valence)
 !
       integer(i15) :: n_singlet_states = 0
       integer(i15) :: n_triplet_states = 0
+!
+!     For core excited states 
+!
+      integer(i15) :: n_cores ! number of equivalent cores
+      integer(i15), dimension(:,:), allocatable :: cores
+      integer(i15), dimension(:,:), allocatable :: index_core_mo
 !
    end type calc_procedures                                                                            
 !

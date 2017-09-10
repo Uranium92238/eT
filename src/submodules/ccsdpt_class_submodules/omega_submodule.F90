@@ -18,7 +18,7 @@ submodule (ccsdpt_class) omega
 contains
 !
 !
-   subroutine construct_omega_ccsdpt(wf) 
+   module subroutine construct_omega_ccsdpt(wf) 
 !
 !     Construct Omega (CCSD(T))
 !     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
