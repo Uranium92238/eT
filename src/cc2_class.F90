@@ -41,9 +41,9 @@ module cc2_class
 !
 !     Helper routines for construct_omega
 !
-      procedure :: omega_a1 => omega_a1_cc2 
-      procedure :: omega_b1 => omega_b1_cc2 
-      procedure :: omega_c1 => omega_c1_cc2      
+      procedure :: omega_cc2_a1 => omega_cc2_a1_cc2 
+      procedure :: omega_cc2_b1 => omega_cc2_b1_cc2 
+      procedure :: get_s2am => get_s2am_cc2    
 !
 !     Ground state solver helper routines
 !
@@ -57,6 +57,8 @@ module cc2_class
 !
    interface
 !
+!     -::- Omega interface -::-
+!     :::::::::::::::::::::::::
 !
       module subroutine construct_omega_cc2(wf)
 !!
@@ -73,7 +75,7 @@ module cc2_class
       end subroutine construct_omega_cc2
 !
 !
-      module subroutine omega_a1_cc2(wf, t_kc_di, c_first, c_last, c_length)
+      module subroutine omega_cc2_a1_cc2(wf)
 !!
 !!        Omega A1
 !!        Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -91,16 +93,10 @@ module cc2_class
 !
          class(cc2) :: wf
 !
-!        Batching variable for double amplitudes t_kc_di
-!  
-         integer(i15) :: c_first, c_last, c_length
-!
-         real(dp), dimension(c_length*(wf%n_o), (wf%n_v)*(wf%n_o)) :: t_kc_di
-!
-      end subroutine omega_a1_cc2
+      end subroutine omega_cc2_a1_cc2
 !
 !
-      module subroutine omega_b1_cc2(wf, t_lc_ak, c_first, c_last, c_length)
+      module subroutine omega_cc2_b1_cc2(wf)
 !!
 !!        Omega B1
 !!        Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -118,40 +114,28 @@ module cc2_class
 !
          class(cc2) :: wf 
 !
-!        Batching variable for double amplitudes t_kc_di
-!  
-         integer(i15) :: c_first, c_last, c_length
-!
-         real(dp), dimension(c_length*(wf%n_o),(wf%n_v)*(wf%n_o)) :: t_lc_ak
-!
-      end subroutine omega_b1_cc2
+      end subroutine omega_cc2_b1_cc2
 !
 !
-      module subroutine omega_c1_cc2(wf, t_kc_ai, c_first, c_last, c_length)
+      module subroutine get_s2am_cc2(wf, s_ia_jb, b_first, b_length)
 !!
-!!        Omega C1
-!!        Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!       Get S_2 amplitudes, 
+!!       Written by Sarai D. Folkestad, July 2017 
 !!
-!!        Calculates the C1 term of omega,
-!! 
-!!        C1: sum_ck F_kc*u_ai_ck,
+!!       Construct
 !!
-!!        and adds it to the projection vector (omega1) of    
-!!        the wavefunction object wf                           
+!!          s_ai_bj = - 1/ε_ij^ab * g_aibj,
 !!
-!!        u_ai_ck = 2*t_ck_ai - t_ci_ak
+!!       while batching over b.
 !!
          implicit none
-!       
-         class(cc2) :: wf 
 !
-!        Batching variable for double amplitudes t_kc_di
-!  
-         integer(i15) :: c_first, c_last, c_length
+         class(cc2) :: wf
+! 
+         integer(i15) :: b_first, b_length
+         real(dp), dimension((wf%n_v)*(wf%n_o), b_length*(wf%n_o)) :: s_ia_jb
 !
-         real(dp), dimension(c_length*(wf%n_o),(wf%n_v)*(wf%n_o)) :: t_kc_ai
-!
-      end subroutine omega_c1_cc2
+      end subroutine get_s2am_cc2
 !
 !
    end interface
