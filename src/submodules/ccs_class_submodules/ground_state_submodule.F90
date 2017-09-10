@@ -1,8 +1,8 @@
 submodule (ccs_class) ground_state 
 !
 !!
-!!                                Ground state submodule (CCS)
-!!                Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!    Ground state submodule (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
 !!    Consists of the following module subroutines of the CCS:
 !!

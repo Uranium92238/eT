@@ -49,10 +49,10 @@ contains
 !
       class(ccsd) :: wf
 !
-      call allocator(wf%omega1, wf%n_v, wf%n_o)
+      if (.not. allocated(wf%omega1)) call allocator(wf%omega1, wf%n_v, wf%n_o)
       wf%omega1 = zero
 !
-      call allocator(wf%omega2, wf%n_t2am, 1)
+      if (.not. allocated(wf%omega2)) call allocator(wf%omega2, wf%n_t2am, 1)
       wf%omega2 = zero
 !
    end subroutine initialize_omega_ccsd

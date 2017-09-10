@@ -6,197 +6,217 @@ submodule (ccs_class) jacobian
 !!
 !!    Contains the following family of procedures of the CCS class:
 !!
+!!    jacobian_ccs_transformation: directs the transformation by A.
+!!    jacobian_ccs_a1:             adds the A1 term to the transformed vector. 
+!!    jacobian_ccs_b1:             adds the B1 term to the transformed vector.
+!!
 !
    implicit none 
 !
 !
 contains
-!
       module subroutine jacobian_ccs_transformation_ccs(wf, c_a_i)
+
 !!
-!!       Jacobian transformation
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!    Jacobian CCS transformation
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-         implicit none
-!
-         class(ccs) :: wf 
-         real(dp), dimension(wf%n_v, wf%n_o)   :: c_a_i       
-!
-         real(dp), dimension(:,:), allocatable :: rho_a_i
-!
-         call allocator(rho_a_i, wf%n_v, wf%n_o)
-         rho_a_i = zero
-!
-!        A1-term
-!
-         call wf%jacobian_ccs_a1(rho_a_i,c_a_i)
-!
-!        B1-term
-!
-         call wf%jacobian_ccs_b1(rho_a_i,c_a_i)
-!
-         call dcopy((wf%n_o)*(wf%n_v), rho_a_i, 1, c_a_i, 1)
-!
-         call deallocator(rho_a_i, wf%n_v, wf%n_o)
-!
-      end subroutine jacobian_ccs_transformation_ccs
-!
-!
-      module subroutine cvs_jacobian_ccs_transformation_ccs(wf, c_a_i)
+!!    Directs the transformation by the CCSD Jacobi matrix,
 !!
-!!       Jacobian transformation, CVS calculation
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >. 
 !!
-         implicit none
-!
-         class(ccs) :: wf 
-         real(dp), dimension(wf%n_v, wf%n_o)   :: c_a_i       
-!
-         real(dp), dimension(:,:), allocatable :: rho_a_i
-!
-         call allocator(rho_a_i, wf%n_v, wf%n_o)
-         rho_a_i = zero
-!
-!        A1-term
-!
-         call wf%jacobian_ccs_a1(rho_a_i,c_a_i)
-!
-!        B1-term
-!
-         call wf%jacobian_ccs_b1(rho_a_i,c_a_i)
-!
-!        Projection
-!
-         call wf%cvs_rho_a_i_projection(rho_a_i)
-!
-!        Place rho_a_i in c_a_i
-         c_a_i = zero
-!
-         call dcopy((wf%n_o)*(wf%n_v), rho_a_i, 1, c_a_i, 1)
-!
-         call deallocator(rho_a_i, wf%n_v, wf%n_o)
-!
-      end subroutine cvs_jacobian_ccs_transformation_ccs
-!
-!
-      module subroutine jacobian_ccs_a1_ccs(wf,rho,c1)
+!!    In particular,
 !!
-!!       A1 contribution to right transform of Jacobian
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck.
+!! 
+!!    On exit, c is overwritten by rho. 
 !!
-!!       Calculates the A1 term of the right transform of the
-!!       Jacobian,
+      implicit none
+!
+      class(ccs) :: wf 
+      real(dp), dimension(wf%n_v, wf%n_o)   :: c_a_i       
+!
+      real(dp), dimension(:,:), allocatable :: rho_a_i
+!
+      call allocator(rho_a_i, wf%n_v, wf%n_o)
+      rho_a_i = zero
+!
+!     Add the CCS terms of the transformation 
+!
+      call wf%jacobian_ccs_a1(c_a_i,rho_a_i)
+      call wf%jacobian_ccs_b1(c_a_i,rho_a_i)
+!
+      call dcopy((wf%n_o)*(wf%n_v), rho_a_i, 1, c_a_i, 1)
+!
+      call deallocator(rho_a_i, wf%n_v, wf%n_o)
+!
+   end subroutine jacobian_ccs_transformation_ccs
+!
+!
+   module subroutine cvs_jacobian_ccs_transformation_ccs(wf, c_a_i)
 !!
-!!       A1: sum_b F_ab*c_bi - sum_j F_ji*c_aj
+!!    Jacobian transformation, CVS calculation
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!       and adds it to the rho vector.
+!!    Directs the transformation by the CCSD Jacobi matrix for CVS calculation
 !!
-         implicit none
-!
-         class(ccs) :: wf
-         real(dp), dimension(wf%n_v,wf%n_o) :: c1
-         real(dp), dimension(wf%n_v,wf%n_o) :: rho
-!
-!        sum_b F_a_b * c_b_i
-!
-         call dgemm('N', 'N',     &
-                     wf%n_v,      &
-                     wf%n_o,      &
-                     wf%n_v,      &
-                     one,         &
-                     wf%fock_ab,  &
-                     wf%n_v,      &
-                     c1,          &
-                     wf%n_v,      &
-                     one,         &
-                     rho,         &
-                     wf%n_v)
-!
-!        - sum_j c_a_j * F_j_i
-!
-         call dgemm('N','N',      &
-                     wf%n_v,      &
-                     wf%n_o,      &
-                     wf%n_o,      &
-                     -one,        &
-                     c1,          &
-                     wf%n_v,      &
-                     wf%fock_ij,  &
-                     wf%n_o,      &
-                     one,         &
-                     rho,         &
-                     wf%n_v)
-!
-!
-      end subroutine jacobian_ccs_a1_ccs
-!
-!
-      module subroutine jacobian_ccs_b1_ccs(wf,rho,c1)
+!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >. 
 !!
-!!       B1 contribution to right transform of Jacobian
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!    In particular,
 !!
-!!       Calculates the B1 term of the right transform of the
-!!       Jacobian,
+!!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck.
+!! 
+!!    On exit, elements that do not correspond to the core excitation
+!!    are projected out before c is overwritten by rho. 
 !!
-!!       B1: sum_bj L_aijb*c_bj = sum_bj (2*g_aijb-g_abji)c_bj
-!!
-!!       and adds it to the rho vector.
-!!
-         implicit none
+      implicit none
 !
-         class(ccs) :: wf   
-         real(dp), dimension(wf%n_v,wf%n_o) :: c1
-         real(dp), dimension(wf%n_v,wf%n_o) :: rho       
+      class(ccs) :: wf 
+      real(dp), dimension(wf%n_v, wf%n_o)   :: c_a_i       
+!
+      real(dp), dimension(:,:), allocatable :: rho_a_i
+!
+      call allocator(rho_a_i, wf%n_v, wf%n_o)
+      rho_a_i = zero
+!
+!     A1-term
+!
+      call wf%jacobian_ccs_a1(rho_a_i,c_a_i)
+!
+!     B1-term
+!
+      call wf%jacobian_ccs_b1(rho_a_i,c_a_i)
+!
+!     Projection
+!
+      call wf%cvs_rho_a_i_projection(rho_a_i)
+!
+!     Place rho_a_i in c_a_i
+      c_a_i = zero
+!
+      call dcopy((wf%n_o)*(wf%n_v), rho_a_i, 1, c_a_i, 1)
+!
+      call deallocator(rho_a_i, wf%n_v, wf%n_o)
+!
+   end subroutine cvs_jacobian_ccs_transformation_ccs
+!
+!
+   module subroutine jacobian_ccs_a1_ccs(wf,rho,c1)
+!!
+!!    Jacobian CCS A1
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!    Calculates the A1 term,
+!!
+!!       sum_b F_ab*c_bi - sum_j F_ji*c_aj
+!!
+!!    and adds it to the rho vector.
+!!
+      implicit none
+!
+      class(ccs) :: wf
+      real(dp), dimension(wf%n_v,wf%n_o) :: c1
+      real(dp), dimension(wf%n_v,wf%n_o) :: rho
+!
+!     sum_b F_a_b * c_b_i
+!
+      call dgemm('N', 'N',     &
+                  wf%n_v,      &
+                  wf%n_o,      &
+                  wf%n_v,      &
+                  one,         &
+                  wf%fock_ab,  &
+                  wf%n_v,      &
+                  c1,          &
+                  wf%n_v,      &
+                  one,         &
+                  rho,         &
+                  wf%n_v)
+!
+!     - sum_j c_a_j * F_j_i
+!
+      call dgemm('N','N',      &
+                  wf%n_v,      &
+                  wf%n_o,      &
+                  wf%n_o,      &
+                  -one,        &
+                  c1,          &
+                  wf%n_v,      &
+                  wf%fock_ij,  &
+                  wf%n_o,      &
+                  one,         &
+                  rho,         &
+                  wf%n_v)
+!
+!
+   end subroutine jacobian_ccs_a1_ccs
+!
+!
+   module subroutine jacobian_ccs_b1_ccs(wf,rho,c1)
+!!
+!!    Jacobian CCS B1 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!    Calculates the B1 term,
+!!
+!!       sum_bj L_aijb*c_bj = sum_bj (2*g_aijb-g_abji)c_bj,
+!!
+!!    and adds it to the rho vector.
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!   
+      real(dp), dimension(wf%n_v,wf%n_o) :: c1
+      real(dp), dimension(wf%n_v,wf%n_o) :: rho       
 
 !
-!        Integrals
+!     Integrals
 !
-         real(dp), dimension(:,:), allocatable :: L_ai_J
-         real(dp), dimension(:,:), allocatable :: L_jb_J
-         real(dp), dimension(:,:), allocatable :: L_ji_J
-         real(dp), dimension(:,:), allocatable :: L_ab_J
+      real(dp), dimension(:,:), allocatable :: L_ai_J
+      real(dp), dimension(:,:), allocatable :: L_jb_J
+      real(dp), dimension(:,:), allocatable :: L_ji_J
+      real(dp), dimension(:,:), allocatable :: L_ab_J
 !
-         real(dp), dimension(:,:), allocatable :: g_ai_jb
-         real(dp), dimension(:,:), allocatable :: g_ab_ji
-         real(dp), dimension(:,:), allocatable :: L_ai_jb
+      real(dp), dimension(:,:), allocatable :: g_ai_jb
+      real(dp), dimension(:,:), allocatable :: g_ab_ji
+      real(dp), dimension(:,:), allocatable :: L_ai_jb
 !
-!        Reorderings of c and rho
+!     Reorderings of c and rho
 !
-         real(dp), dimension(:,:), allocatable :: c_jb
+      real(dp), dimension(:,:), allocatable :: c_jb
 !
-!        Batching variables
+!     Batching variables
 !
-         integer(i15) :: b_batch = 0, b_first = 0, b_last = 0, b_length = 0
-         integer(i15) :: required = 0, available = 0, n_batch = 0, batch_dimension = 0
-         integer(i15) :: max_batch_length = 0
+      integer(i15) :: b_batch = 0, b_first = 0, b_last = 0, b_length = 0
+      integer(i15) :: required = 0, available = 0, n_batch = 0, batch_dimension = 0
+      integer(i15) :: max_batch_length = 0
 !
-!        Indices
+!     Indices
 !
-         integer(i15) :: a = 0, b = 0
-         integer(i15) :: i = 0, j = 0
+      integer(i15) :: a = 0, b = 0
+      integer(i15) :: i = 0, j = 0
 !
-         integer(i15) :: ab = 0
-         integer(i15) :: ai = 0, jb = 0
-         integer(i15) :: ji = 0
+      integer(i15) :: ab = 0
+      integer(i15) :: ai = 0, jb = 0
+      integer(i15) :: ji = 0
 !
-         logical :: reorder
+      logical :: reorder
 !
+!     Preparing for batching over b
 !
-!        Preparing for batching over b
-!
-         required = max(((wf%n_o)**2)*((wf%n_v)**2)                              &  !
+      required = max(((wf%n_o)**2)*((wf%n_v)**2)                                 &  !
                         + 2*(wf%n_J)*(wf%n_v)**2 + 2*(wf%n_J)*(wf%n_v)*(wf%n_o), &  ! Needed to get L_ab_J
                         2*((wf%n_o)**2)*((wf%n_v)**2)                            &  !
                         + (wf%n_J)*(wf%n_v)**2 + (wf%n_J)*(wf%n_o)**2,           &  ! Needed to get g_ab_ij
                         3*((wf%n_o)**2)*((wf%n_v)**2))                              ! Needed to get L_ai_jb
 !
-         required = 4*required ! In words
-         available = get_available()
+      required = 4*required ! In words
+      available = get_available()
 !
-         batch_dimension  = wf%n_v ! Batch over the virtual index b
-         max_batch_length = 0      ! Initilization of unset variables 
-         n_batch          = 0
+      batch_dimension  = wf%n_v ! Batch over the virtual index b
+      max_batch_length = 0      ! Initilization of unset variables 
+      n_batch          = 0
 !
       call num_batch(required, available, max_batch_length, n_batch, batch_dimension)           
 !
@@ -347,38 +367,41 @@ contains
 !
       enddo ! Looping over batches
 !
+   end subroutine jacobian_ccs_b1_ccs
 !
-      end subroutine jacobian_ccs_b1_ccs
 !
-!
-      module subroutine cvs_rho_a_i_projection_ccs(wf, vec_a_i)
+   module subroutine cvs_rho_a_i_projection_ccs(wf, vec_a_i)
 !!
+!!    CVS projection of rho_a_i, 
+!!    Written by Sarai D. Folkestad, Aug. 2017
 !!
-         implicit none
+!!    Projects out elements of rho that do not correspond to the core excitation.
+!!
+      implicit none
 !
-         class(ccs) :: wf
-         real(dp), dimension(wf%n_v ,wf%n_o) :: vec_a_i
+      class(ccs) :: wf
+      real(dp), dimension(wf%n_v ,wf%n_o) :: vec_a_i
 !
-         integer(i15) :: i = 0, a = 0, core = 0
+      integer(i15) :: i = 0, a = 0, core = 0
 !
-         logical :: core_orbital
+      logical :: core_orbital
 !
-         do i = 1, wf%n_o
+      do i = 1, wf%n_o
 !
-            core_orbital = .false.
+         core_orbital = .false.
 !
-            do core = 1, wf%tasks%n_cores
+         do core = 1, wf%tasks%n_cores
 !
-               if (i .eq. wf%tasks%index_core_mo(core, 1)) core_orbital = .true.
-!
-            enddo
-!
-            if (.not. core_orbital) then
-               vec_a_i(:,i) = zero
-            endif
+            if (i .eq. wf%tasks%index_core_mo(core, 1)) core_orbital = .true.
 !
          enddo
 !
-      end subroutine cvs_rho_a_i_projection_ccs
+         if (.not. core_orbital) then
+            vec_a_i(:,i) = zero
+         endif
 !
-end submodule
+      enddo
+!
+   end subroutine cvs_rho_a_i_projection_ccs
+!
+end submodule jacobian
