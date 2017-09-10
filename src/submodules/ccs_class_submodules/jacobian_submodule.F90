@@ -44,7 +44,7 @@ contains
 !
       module subroutine cvs_jacobian_ccs_transformation_ccs(wf, c_a_i)
 !!
-!!       Jacobian transformation
+!!       Jacobian transformation, CVS calculation
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
          implicit none

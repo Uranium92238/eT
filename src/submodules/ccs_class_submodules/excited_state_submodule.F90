@@ -739,9 +739,53 @@ contains
    end subroutine construct_next_trial_vectors_ccs
 !
 !
-   module subroutine initialize_trial_vectors_valence_ccs(wf)
+      module subroutine initialize_trial_vectors_ccs(wf)
 !!
 !!       Initialize trial vectors
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!       Wrapper for initialization of trial vectors:
+!!
+!!       If restart, then checks if old solution file exists, 
+!!       then uses old solutions as new trial vectors
+!!
+!!       If not restart: 
+!!       initialize_trial_vectors_valence is called for regular excited state calculation
+!!       initialize_trial_vectors_core is called for cvs calculation
+!!        
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!       
+!
+!        If restart use old solution vectors for first start vectors
+!
+         if (wf%settings%restart) then 
+!
+            write(unit_output,'(/t3,a)') 'Requested restart. Using old solution vectors as trial vectors.'
+            call wf%trial_vectors_from_stored_solutions
+            return
+!
+         endif 
+!
+         if ((wf%excited_state_task .eq. 'right_valence') .or. &
+             (wf%excited_state_task .eq. 'left_valence')) then
+!
+            call wf%initialize_trial_vectors_valence
+!
+         elseif (wf%excited_state_task .eq. 'right_core') then
+!
+            call wf%initialize_trial_vectors_core
+!
+         endif
+!
+      end subroutine initialize_trial_vectors_ccs
+!
+!
+   module subroutine initialize_trial_vectors_valence_ccs(wf)
+!!
+!!       Initialize trial vectors valence
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
 !!
 !!       Initializes start trial vectors for the calculation of 
@@ -806,8 +850,12 @@ contains
 !
       module subroutine initialize_trial_vectors_core_ccs(wf)
 !!
-!!       Initialize trial vectors
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!       Initialize trial vectors, for CVS calculation 
+!!       Written by Sarai D. Folkestad, Aug. 2017
+!!
+!!       Finds correct core MO, and selects the n_singlet_state lowest 
+!!       orbital differences where one of the occupied indices corresponds to the 
+!!       core MO
 !!
          implicit none
 !
@@ -861,50 +909,12 @@ contains
       end subroutine initialize_trial_vectors_core_ccs
 !
 !
-      module subroutine initialize_trial_vectors_ccs(wf)
-!!
-!!       Initialize trial vectors
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
-!!
-!!       Initializes start trial vectors for the calculation of 
-!!       singlet excited states and writes them to file 'trial_vecs'.
-!!
-!!       n start vectors are constructed by finding the n lowest orbital differences,      
-!!       where n = n_singlet_states. Vector i has a 1.0D0 at the element corresponding to the i'th lowest
-!!       orbital difference and 0.0d0 everywhere else
-!!
-         implicit none
-!
-         class(ccs) :: wf
-!       
-!
-!        If restart use old solution vectors for first start vectors
-!
-         if (wf%settings%restart) then 
-!
-            write(unit_output,'(/t3,a)') 'Requested restart. Using old solution vectors as trial vectors.'
-            call wf%trial_vectors_from_stored_solutions
-            return
-!
-         endif 
-!
-         if ((wf%excited_state_task .eq. 'right_valence') .or. &
-             (wf%excited_state_task .eq. 'left_valence')) then
-!
-            call wf%initialize_trial_vectors_valence
-!
-         elseif (wf%excited_state_task .eq. 'right_core') then
-!
-            call wf%initialize_trial_vectors_core
-!
-         endif
-!
-      end subroutine initialize_trial_vectors_ccs
-!
-!
       module subroutine trial_vectors_from_stored_solutions_ccs(wf)
 !!
+!!    Trial vectors from old solutions,
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
 !!
+!!    Restart: Use old solutions as trial vectors
 !!
          implicit none
 !
@@ -1101,9 +1111,8 @@ contains
 !
       module subroutine find_core_mo_ccs(wf)
 !!
-!!       Find indices for lowest orbital differences
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
-!!
+!!       Find which mo are core mos
+!!       Written by Sarai D. Folkestad, Aug. 2017
 !!
          implicit none
 !
@@ -1302,7 +1311,11 @@ contains
 !
       module subroutine precondition_residual_ccs(wf, residual)
 !!
+!!       Precondition residual
+!!       Written by Sarai D. Folkestad, Aug. 2017
 !!
+!!       Calls precondition_residual_valence for normal excited state calculation
+!!       Calls precondition_residual_core for cvs calculation
 !!
          implicit none
 !
@@ -1326,7 +1339,10 @@ contains
 !
       module subroutine precondition_residual_valence_ccs(wf, residual)
 !!
+!!       Precondition residual valence
+!!       Written by Sarai D. Folkestad, Aug. 2017
 !!
+!!       Divide elements of residual by orbital difference       
 !!
          implicit none
 !
@@ -1356,7 +1372,11 @@ contains
 !
       module subroutine precondition_residual_core_ccs(wf, residual)
 !!
+!!       Precondition residual core
+!!       Written by Sarai D. Folkestad, Aug. 2017
 !!
+!!       Project out elements not corresponding to the core excitation
+!!       Divide elements of residual by orbital difference
 !!
          implicit none
 !
@@ -1387,6 +1407,8 @@ contains
 !
       module subroutine cvs_residual_projection_ccs(wf, residual)
 !!
+!!       Residual projection for CVS
+!!       Written by Sarai D. Folkestad, Aug. 2017
 !!
          implicit none
 !

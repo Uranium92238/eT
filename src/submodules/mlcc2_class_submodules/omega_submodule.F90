@@ -495,7 +495,14 @@ contains
 !
    module subroutine get_s2am_mlcc2(wf, s_ia_jb, b_first, b_length)
 !!
-!!    Batching over b
+!!    Get S_2 amplitudes, 
+!!    Written by Sarai D. Folkestad, July 2017 
+!!
+!!    Construct
+!!
+!!       s_ai_bj = - 1/ε_ij^ab * g_aibj,
+!!
+!!    while batching over b.
 !!
       implicit none
 !

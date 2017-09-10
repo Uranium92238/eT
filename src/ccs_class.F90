@@ -46,7 +46,7 @@ module ccs_class
       real(dp), dimension(:,:), allocatable :: fock_ai ! vir-occ block
       real(dp), dimension(:,:), allocatable :: fock_ab ! vir-vir block
 !
-      character(len=40)                     :: excited_state_task     = 'right_valence' ! The task being performed at the moment 
+      character(len=40)                     :: excited_state_task   
       real(dp), dimension(:,:), allocatable :: excited_state_energies
 !
    contains 
@@ -120,7 +120,6 @@ module ccs_class
 !     Jacobian transformation routine 
 !
       procedure :: jacobian_ccs_transformation => jacobian_ccs_transformation_ccs
-      procedure :: cvs_jacobian_ccs_transformation => cvs_jacobian_ccs_transformation_ccs
 !
 !     Helper routines
 !
@@ -132,8 +131,11 @@ module ccs_class
 !
       procedure :: jacobi_test => jacobi_test_ccs
 !
-      procedure :: cvs_rho_a_i_projection        => cvs_rho_a_i_projection_ccs
-      procedure :: cvs_residual_projection   => cvs_residual_projection_ccs
+!     Core-valence separation approximation routines
+!
+      procedure :: cvs_rho_a_i_projection          => cvs_rho_a_i_projection_ccs
+      procedure :: cvs_residual_projection         => cvs_residual_projection_ccs
+      procedure :: cvs_jacobian_ccs_transformation => cvs_jacobian_ccs_transformation_ccs
 !
 !     Excited state driver & solver 
 !
@@ -148,18 +150,24 @@ module ccs_class
 !
       procedure :: precondition_residual           => precondition_residual_ccs
       procedure :: precondition_residual_valence   => precondition_residual_valence_ccs
-      procedure :: precondition_residual_core      => precondition_residual_core_ccs
 !
       procedure, non_overridable :: find_start_trial_indices            => find_start_trial_indices_ccs
-      procedure, non_overridable :: find_start_trial_indices_core       => find_start_trial_indices_core_ccs
-      procedure, non_overridable :: find_core_mo                        => find_core_mo_ccs
+!
+!     Valence
+!
       procedure, non_overridable :: initialize_trial_vectors            => initialize_trial_vectors_ccs
       procedure, non_overridable :: initialize_trial_vectors_valence    => initialize_trial_vectors_valence_ccs
-      procedure, non_overridable :: initialize_trial_vectors_core       => initialize_trial_vectors_core_ccs
       procedure, non_overridable :: trial_vectors_from_stored_solutions => trial_vectors_from_stored_solutions_ccs
 !
-      procedure, non_overridable :: solve_reduced_eigenvalue_equation => solve_reduced_eigenvalue_equation_ccs
-      procedure, non_overridable :: construct_next_trial_vectors      => construct_next_trial_vectors_ccs
+!     Core
+!
+      procedure                  :: precondition_residual_core          => precondition_residual_core_ccs
+      procedure, non_overridable :: find_start_trial_indices_core       => find_start_trial_indices_core_ccs
+      procedure, non_overridable :: find_core_mo                        => find_core_mo_ccs
+      procedure, non_overridable :: initialize_trial_vectors_core       => initialize_trial_vectors_core_ccs
+!
+      procedure, non_overridable :: solve_reduced_eigenvalue_equation   => solve_reduced_eigenvalue_equation_ccs
+      procedure, non_overridable :: construct_next_trial_vectors        => construct_next_trial_vectors_ccs
 !
 !
    end type ccs
@@ -169,6 +177,9 @@ module ccs_class
 !  ::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
    interface
+!
+!    -::- Cholesky submodule interface -::-
+!    ::::::::::::::::::::::::::::::::::::::
 !
 !
    module subroutine get_cholesky_ij_ccs(wf, L_ij_J, i_first, i_last, j_first, j_last)
@@ -284,6 +295,16 @@ module ccs_class
 !
    end subroutine get_cholesky_ab_ccs
 !
+!
+   end interface
+!
+!
+   interface
+!
+!    -::- Fock submodule interface -::-
+!    ::::::::::::::::::::::::::::::::::
+!
+!
       module subroutine initialize_fock_matrix_ccs(wf)
 !!  
 !!       Initialize Fock matrix
@@ -336,6 +357,15 @@ module ccs_class
          real(dp), dimension(wf%n_mo, wf%n_mo) :: h1_T1
 !  
       end subroutine one_electron_t1_ccs
+!
+!
+   end interface
+!
+!
+   interface
+!
+!    -::- Ground state submodule interface -::-
+!    :::::::::::::::::::::::::::::::::::::::::::
 !
 !
       module subroutine ground_state_solver_ccs(wf)
@@ -448,171 +478,6 @@ module ccs_class
       end subroutine diis_ccs
 !
 !
-      module subroutine initialize_excited_states_ccs(wf)
-!!
-         implicit none 
-!    
-         class(ccs) :: wf
-!
-      end subroutine initialize_excited_states_ccs
-!
-!
-!
-      module subroutine trial_vectors_from_stored_solutions_ccs(wf)
-!!
-!!
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      end subroutine trial_vectors_from_stored_solutions_ccs
-!
-!
-      module subroutine find_start_trial_indices_ccs(wf, index_list)
-!!
-!!       Find indices for lowest orbital differences
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
-!!
-!!
-         implicit none
-!
-         class(ccs) :: wf
-         integer(i15), dimension(wf%tasks%n_singlet_states,1), intent(inout) :: index_list
-! 
-      end subroutine find_start_trial_indices_ccs
-!
-      module subroutine find_start_trial_indices_core_ccs(wf, index_list)
-!!
-!!       Find indices for lowest orbital differences
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
-!!
-!!
-         implicit none
-!
-         class(ccs) :: wf
-         integer(i15), dimension(wf%tasks%n_singlet_states,1), intent(inout) :: index_list
-!
-      end subroutine find_start_trial_indices_core_ccs
-!
-!
-      module subroutine calculate_orbital_differences_ccs(wf,orbital_diff)
-!!
-!!       Calculate and return orbital differences
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad May 2017
-!!
-         implicit none
-!
-         class(ccs) :: wf
-         real(dp), dimension(wf%n_parameters, 1) :: orbital_diff
-!
-      end subroutine calculate_orbital_differences_ccs
-!
-!
-      module subroutine transform_trial_vectors_ccs(wf, first_trial, last_trial)
-!!
-!!       Construct Right Transform of Jacobian
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
-!!
-!!
-         implicit none
-!
-         class(ccs) :: wf 
-         integer(i15), intent(in) :: first_trial, last_trial       
-!
-      end subroutine transform_trial_vectors_ccs
-!
-!
-      module subroutine cvs_residual_projection_ccs(wf, residual)
-!!
-!!
-         implicit none
-!
-         class(ccs) :: wf
-         real(dp), dimension(wf%n_parameters, 1) :: residual
-!
-      end subroutine cvs_residual_projection_ccs
-!
-!
-      module subroutine jacobian_ccs_transformation_ccs(wf, c_a_i)
-!!
-!!       Jacobian transformation
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
-!!
-!!
-         implicit none
-!
-         class(ccs) :: wf 
-         real(dp), dimension(wf%n_v, wf%n_o)   :: c_a_i       
-!
-      end subroutine jacobian_ccs_transformation_ccs
-!
-!
-      module subroutine cvs_jacobian_ccs_transformation_ccs(wf, c_a_i)
-!!
-!!       Jacobian transformation
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!
-         implicit none
-!
-         class(ccs) :: wf 
-         real(dp), dimension(wf%n_v, wf%n_o)   :: c_a_i    
-!
-      end subroutine cvs_jacobian_ccs_transformation_ccs
-!
-      module subroutine jacobian_ccs_a1_ccs(wf,rho,c1)
-!!
-!!       A1 contribution to right transform of Jacobian
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
-!!
-!!       Calculates the A1 term of the right transform of the
-!!       Jacobian,
-!!
-!!       A1: sum_b F_ab*c_bi + sum_j F_ji*c_aj
-!!
-!!       and adds it to the rho vector.
-!!
-         implicit none
-!
-         class(ccs) :: wf
-         real(dp), dimension(wf%n_o,wf%n_v) :: c1 
-         real(dp), dimension(wf%n_o,wf%n_v) :: rho                               
-!
-      end subroutine jacobian_ccs_a1_ccs
-!
-!
-      module subroutine jacobian_ccs_b1_ccs(wf,rho,c1)
-!!
-!!       B1 contribution to right transform of Jacobian
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
-!!
-!!       Calculates the B1 term of the right transform of the
-!!       Jacobian,
-!!
-!!       B1: sum_bj L_aijb*c_bj
-!!
-!!       and adds it to the rho vector.
-!!
-         implicit none
-!
-         class(ccs) :: wf
-         real(dp), dimension(wf%n_o,wf%n_v) :: c1
-         real(dp), dimension(wf%n_o,wf%n_v) :: rho                
-!
-      end subroutine jacobian_ccs_b1_ccs
-!
-!
-      module subroutine cvs_rho_a_i_projection_ccs(wf, vec_a_i)
-!!
-!!
-         implicit none
-!
-         class(ccs) :: wf
-         real(dp), dimension(wf%n_o,wf%n_v) :: vec_a_i
-!
-      end subroutine cvs_rho_a_i_projection_ccs
-!
-!
       module subroutine initialize_ground_state_ccs(wf)
 !!
 !!       Initialize Ground State (CCS)
@@ -641,6 +506,32 @@ module ccs_class
          class(ccs) :: wf
 !
       end subroutine destruct_ground_state_ccs
+!
+   end interface
+!
+!
+   interface
+!
+!    -::- Excited state submodule interface -::-
+!    :::::::::::::::::::::::::::::::::::::::::::
+!
+      module subroutine excited_state_driver_ccs(wf)
+!!
+!!       Excited state driver (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Directs the solution of the excited state problem for CCS. The
+!!       routine is inherited is to be inherited unaltered in the CC hierarchy. 
+!!
+!!       Note: it is only necessary to alter this routine if the excited states are 
+!!       solved for by a different algorithm (such as in similarity constrained CC, 
+!!       where the excited states and ground state are determined simultaneously).
+!!
+         implicit none 
+!
+         class(ccs) :: wf 
+!
+      end subroutine excited_state_driver_ccs
 !
 !
       module subroutine excited_state_solver_ccs(wf)
@@ -710,7 +601,7 @@ module ccs_class
       end subroutine solve_reduced_eigenvalue_equation_ccs
 !
 !
-      module subroutine construct_next_trial_vectors_ccs(wf, eigenvalues_Re, eigenvalues_Im, &
+     module subroutine construct_next_trial_vectors_ccs(wf, eigenvalues_Re, eigenvalues_Im, &
                                                    solution_vectors_reduced, & 
                                                    reduced_dim, n_new_trials)
 !!
@@ -748,28 +639,31 @@ module ccs_class
       end subroutine construct_next_trial_vectors_ccs
 !
 !
-      module subroutine excited_state_driver_ccs(wf)
+      module subroutine initialize_trial_vectors_ccs(wf)
 !!
-!!       Excited state driver (CCS)
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!       Initialize trial vectors
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
 !!
-!!       Directs the solution of the excited state problem for CCS. The
-!!       routine is inherited is to be inherited unaltered in the CC hierarchy. 
+!!       Wrapper for initialization of trial vectors:
 !!
-!!       Note: it is only necessary to alter this routine if the excited states are 
-!!       solved for by a different algorithm (such as in similarity constrained CC, 
-!!       where the excited states and ground state are determined simultaneously).
+!!       If restart, then checks if old solution file exists, 
+!!       then uses old solutions as new trial vectors
 !!
-         implicit none 
+!!       If not restart: 
+!!       initialize_trial_vectors_valence is called for regular excited state calculation
+!!       initialize_trial_vectors_core is called for cvs calculation
+!!        
+!!
+         implicit none
 !
-         class(ccs) :: wf 
-!
-      end subroutine excited_state_driver_ccs
+         class(ccs) :: wf
+!      
+      end subroutine initialize_trial_vectors_ccs
 !
 !
       module subroutine initialize_trial_vectors_valence_ccs(wf)
 !!
-!!       Initialize trial vectors
+!!       Initialize trial vectors valence
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
 !!
 !!       Initializes start trial vectors for the calculation of 
@@ -789,8 +683,12 @@ module ccs_class
 !
       module subroutine initialize_trial_vectors_core_ccs(wf)
 !!
-!!       Initialize trial vectors
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!       Initialize trial vectors, for CVS calculation 
+!!       Written by Sarai D. Folkestad, Aug. 2017
+!!
+!!       Finds correct core MO, and selects the n_singlet_state lowest 
+!!       orbital differences where one of the occupied indices corresponds to the 
+!!       core MO
 !!
          implicit none
 !
@@ -799,29 +697,120 @@ module ccs_class
       end subroutine initialize_trial_vectors_core_ccs
 !
 !
-      module subroutine initialize_trial_vectors_ccs(wf)
+      module subroutine trial_vectors_from_stored_solutions_ccs(wf)
 !!
-!!       Initialize trial vectors
+!!    Trial vectors from old solutions,
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
+!!
+!!    Restart: Use old solutions as trial vectors
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      end subroutine trial_vectors_from_stored_solutions_ccs
+!
+!
+      module subroutine find_start_trial_indices_ccs(wf, index_list)
+!!
+!!       Find indices for lowest orbital differences
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
-!!
-!!       Initializes start trial vectors for the calculation of 
-!!       singlet excited states and writes them to file 'trial_vecs'.
-!!
-!!       n start vectors are constructed by finding the n lowest orbital differences,      
-!!       where n = n_singlet_states. Vector i has a 1.0D0 at the element corresponding to the i'th lowest
-!!       orbital difference and 0.0d0 everywhere else
 !!
          implicit none
 !
          class(ccs) :: wf
-!      
-      end subroutine initialize_trial_vectors_ccs
+         integer(i15), dimension(wf%tasks%n_singlet_states,1), intent(inout) :: index_list
+! 
+      end subroutine find_start_trial_indices_ccs
+!
+      module subroutine find_start_trial_indices_core_ccs(wf, index_list)
+!!
+!!       Find indices for lowest orbital differences core excitation
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+         implicit none
+!
+         class(ccs) :: wf
+         integer(i15), dimension(wf%tasks%n_singlet_states,1), intent(inout) :: index_list
+!
+      end subroutine find_start_trial_indices_core_ccs
+!
+!
+      module subroutine find_core_mo_ccs(wf)
+!!
+!!       Find which mo are core mos
+!!       Written by Sarai D. Folkestad, Aug. 2017
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+      end subroutine find_core_mo_ccs
+!
+!
+      module subroutine calculate_orbital_differences_ccs(wf,orbital_diff)
+!!
+!!       Calculate and return orbital differences
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad May 2017
+!!
+         implicit none
+!
+         class(ccs) :: wf
+         real(dp), dimension(wf%n_parameters, 1) :: orbital_diff
+!
+      end subroutine calculate_orbital_differences_ccs
+!
+!
+      module subroutine transform_trial_vectors_ccs(wf, first_trial, last_trial)
+!!
+!!       Transform trial vectors (CCS)
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!       Each trial vector in first_trial to last_trial is read from file and
+!!       transformed before the transformed vector is written to file.
+!!
+         implicit none
+!
+         class(ccs) :: wf 
+         integer(i15), intent(in) :: first_trial, last_trial       
+!
+      end subroutine transform_trial_vectors_ccs
+!
+!
+      module subroutine initialize_excited_states_ccs(wf)
+!!
+!!       Initialize excited states
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
+!!
+         implicit none 
+!    
+         class(ccs) :: wf
+!
+      end subroutine initialize_excited_states_ccs
+!
+!
+      module subroutine cvs_residual_projection_ccs(wf, residual)
+!!
+!!       Residual projection for CVS
+!!       Written by Sarai D. Folkestad, Aug. 2017
+!!
+         implicit none
+!
+         class(ccs) :: wf
+         real(dp), dimension(wf%n_parameters, 1) :: residual
+!
+      end subroutine cvs_residual_projection_ccs
 !
 !
       module subroutine precondition_residual_ccs(wf, residual)
 !!
+!!       Precondition residual
+!!       Written by Sarai D. Folkestad, Aug. 2017
 !!
+!!       Calls precondition_residual_valence for normal excited state calculation
+!!       Calls precondition_residual_core for cvs calculation
 !!
+
          implicit none
 !
          class(ccs) :: wf
@@ -832,7 +821,10 @@ module ccs_class
 !
       module subroutine precondition_residual_valence_ccs(wf, residual)
 !!
+!!       Precondition residual valence
+!!       Written by Sarai D. Folkestad, Aug. 2017
 !!
+!!       Divide elements of residual by orbital difference       
 !!
          implicit none
 !
@@ -846,7 +838,11 @@ module ccs_class
 !
       module subroutine precondition_residual_core_ccs(wf, residual)
 !!
+!!       Precondition residual core
+!!       Written by Sarai D. Folkestad, Aug. 2017
 !!
+!!       Project out elements not corresponding to the core excitation
+!!       Divide elements of residual by orbital difference
 !!
          implicit none
 !
@@ -857,17 +853,93 @@ module ccs_class
       end subroutine precondition_residual_core_ccs
 !
 !
-      module subroutine find_core_mo_ccs(wf)
+   end interface
+!
+!
+   interface
+!
+!    -::- Jacobian submodule interface -::-
+!    ::::::::::::::::::::::::::::::::::::::
+!
+!
+      module subroutine jacobian_ccs_transformation_ccs(wf, c_a_i)
 !!
-!!       Find indices for lowest orbital differences
+!!       Jacobian transformation
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
 !!
+         implicit none
+!
+         class(ccs) :: wf 
+         real(dp), dimension(wf%n_v, wf%n_o)   :: c_a_i       
+!
+      end subroutine jacobian_ccs_transformation_ccs
+!
+!
+      module subroutine cvs_jacobian_ccs_transformation_ccs(wf, c_a_i)
+!!
+!!       Jacobian transformation for CVS calculation
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+         implicit none
+!
+         class(ccs) :: wf 
+         real(dp), dimension(wf%n_v, wf%n_o)   :: c_a_i    
+!
+      end subroutine cvs_jacobian_ccs_transformation_ccs
+!
+      module subroutine jacobian_ccs_a1_ccs(wf,rho,c1)
+!!
+!!       A1 contribution to right transform of Jacobian
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!       Calculates the A1 term of the right transform of the
+!!       Jacobian,
+!!
+!!       A1: sum_b F_ab*c_bi + sum_j F_ji*c_aj
+!!
+!!       and adds it to the rho vector.
 !!
          implicit none
 !
          class(ccs) :: wf
+         real(dp), dimension(wf%n_o,wf%n_v) :: c1 
+         real(dp), dimension(wf%n_o,wf%n_v) :: rho                               
 !
-      end subroutine find_core_mo_ccs
+      end subroutine jacobian_ccs_a1_ccs
+!
+!
+      module subroutine jacobian_ccs_b1_ccs(wf,rho,c1)
+!!
+!!       B1 contribution to right transform of Jacobian
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!       Calculates the B1 term of the right transform of the
+!!       Jacobian,
+!!
+!!       B1: sum_bj L_aijb*c_bj
+!!
+!!       and adds it to the rho vector.
+!!
+         implicit none
+!
+         class(ccs) :: wf
+         real(dp), dimension(wf%n_o,wf%n_v) :: c1
+         real(dp), dimension(wf%n_o,wf%n_v) :: rho                
+!
+      end subroutine jacobian_ccs_b1_ccs
+!
+!
+      module subroutine cvs_rho_a_i_projection_ccs(wf, vec_a_i)
+!!
+!!       Rho projection for CVS
+!!       Written by Sarai D. Folkestad, Aug. 2017
+!!
+         implicit none
+!
+         class(ccs) :: wf
+         real(dp), dimension(wf%n_o,wf%n_v) :: vec_a_i
+!
+      end subroutine cvs_rho_a_i_projection_ccs
 !
 !
     end interface 
@@ -973,7 +1045,8 @@ contains
 !
          if (wf%implemented%excited_state) then 
 !     
-           call wf%excited_state_driver 
+            wf%excited_state_task = 'right_valence'
+            call wf%excited_state_driver 
 !
          else
 !

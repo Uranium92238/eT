@@ -10,8 +10,11 @@ submodule (mlcc2_class) orbital_partitioning
 !!    cholesky_localization_drv:    Directs orbital localization by cholesky decomposition  
 !!    cholesky_orbital_constructor: Directs construction of new orbitals                     
 !!    cholesky_decomposition:       Cholesky decomposes the density
-!!    cholesky_orbitals:            Constructs new orbitals (C matrix) from cholesky vectors 
+!!    cholesky_orbitals:            Constructs new orbitals (C matrix) from cholesky vectors
 !! 
+!!    cnto_orbital_drv:             
+!!    cc2_cnto:
+!!
 !!    Contains the following module subroutines and functions: These should eventually be moved to some 
 !!                                                       utils !
 !!
@@ -28,6 +31,8 @@ submodule (mlcc2_class) orbital_partitioning
 !
    logical :: debug   = .false.
    logical :: timings = .true.
+!
+   integer(i15) :: CCS_factor_n_singlet_states = 4
 !
 !
 contains
@@ -55,7 +60,6 @@ contains
       elseif (wf%mlcc_settings%cnto) then
 !
          call wf%cnto_orbital_drv
-         call wf%print_cnto_info
 !
       endif
 !
@@ -861,13 +865,17 @@ contains
 !!    CNTO orbital driver,
 !!    Written by Sarai D. Folkestad, June 2017.
 !!
+!!    Directs the construction of CNTOs and the selection of the active space.
+!!
 !!    A CCS calculation ground state and excited states is performed.
 !!    The M and N matrices are then constructed, 
 !! 
-!!       M_ij = sum_a R1_ai*R1_aj + sum_a R2_ai*R2_aj + ...
-!!       N_ab = sum_i R1_ai*R1_bi + sum_a R2_ai*R2_bi + ...
+!!       M_ij = 1/n sum_{k=1,n} (sum_a R^k_ai*R1_aj)
+!!       N_ab = 1/n sum_{k=1,n} (sum_i R^k_ai*R1_bi)
+!!
+!!    where n > 1.
 !!   
-!!    where Ri_ai is the i'th single excitation vector obtained from the CCS calculation. 
+!!    Ri_ai is the i'th single excitation vector obtained from the CCS calculation. 
 !!    The transformation matrices for the occupied and virtual part
 !!    are constructed by diagonalizing M and N. The number of active occupied
 !!    and virtual orbitals are determined from δ_o and δ_v
@@ -880,7 +888,7 @@ contains
 !!    Fock matrix is block diagonalized in active and inactive blocks in order to obtain 
 !!    the orbitals and orbital energies used in the CC2 calculation.
 !!
-
+!!
       implicit none 
 !
       class(mlcc2) :: wf
@@ -895,11 +903,30 @@ contains
 !
       call cpu_time(start_cnto)
 !
-!     CNTO orbital selection for CC2
+!     CNTO orbital selection for CCSD
 !
-      call wf%cc2_cnto
+      if (wf%tasks%excited_state) then
+!  
+         wf%excited_state_task = 'right_valence'
+         call wf%cc2_cnto_lower_level_method
 !
-!     Timings
+      elseif (wf%tasks%core_excited_state) then
+!
+         wf%excited_state_task = 'right_core'
+         call wf%cc2_cnto_lower_level_method_cvs
+!
+      else
+!
+         write(unit_output,*)'WARNING: cntos without excited state calculation makes no sense.'
+      endif
+!
+!     Print info
+!
+      call wf%cc2_cnto_orbitals
+!
+      call wf%print_cnto_info     
+!
+!     Print timings
 !
       call cpu_time(end_cnto)
 !
@@ -909,68 +936,20 @@ contains
    end subroutine cnto_orbital_drv_mlcc2
 !
 !
-   module subroutine cc2_cnto_mlcc2(wf)
+   module subroutine cc2_cnto_lower_level_method_mlcc2(wf)
 !!
-!!    CNTO orbital driver,
+!!    CNTO lower level calculation (MLCC2),
 !!    Written by Sarai D. Folkestad, June 2017.
 !!
-!!    A CCS calculation ground state and excited states is performed.
-!!    The M and N matrices are then constructed, 
-!! 
-!!       M_ij = sum_a R1_ai*R1_aj + sum_a R2_ai*R2_aj + ...
-!!       N_ab = sum_i R1_ai*R1_bi + sum_a R2_ai*R2_bi + ...
-!!   
-!!    where Ri_ai is the i'th single excitation vector obtained from the CCS calculation. 
-!!    The transformation matrices for the occupied and virtual part
-!!    are constructed by diagonalizing M and N. The number of active occupied
-!!    and virtual orbitals are determined from δ_o and δ_v
+!!    Runs lower level method for CNTOs 
 !!
-!!       1 - sum_i λ^o_i < δ_o
-!!       1 - sum_i λ^v_i < δ_v
-!!
-!!    Where the orbitals of highest eigenvalues λ^o/λ^v are selected first.
-!!
-!!    Fock matrix is block diagonalized in active and inactive blocks in order to obtain 
-!!    the orbitals and orbital energies used in the CC2 calculation.
-!!
-
       implicit none 
 !
       class(mlcc2) :: wf
 !
       type(ccs), allocatable :: ccs_wf
 !
-      integer(i15) :: unit_solution = -1
-      integer(i15) :: ioerror = 0
       integer(i15) :: lower_level_n_singlet_states
-      integer(i15) :: state
-!
-      real(dp), dimension(:,:), allocatable :: solution
-      real(dp), dimension(:,:), allocatable :: R_a_i
-      real(dp), dimension(:,:), allocatable :: M_i_j
-      real(dp), dimension(:,:), allocatable :: N_a_b
-      real(dp), dimension(:,:), allocatable :: M
-      real(dp), dimension(:,:), allocatable :: N
-      real(dp), dimension(:,:), allocatable :: X
-      real(dp), dimension(:,:), allocatable :: eigenvalues_o
-      real(dp), dimension(:,:), allocatable :: eigenvalues_v
-      real(dp), dimension(:,:), allocatable :: work
-      real(dp), dimension(:,:), allocatable :: C_o
-      real(dp), dimension(:,:), allocatable :: C_v
-      real(dp), dimension(:,:), allocatable :: C_o_transformed
-      real(dp), dimension(:,:), allocatable :: C_v_transformed
-      real(dp), dimension(:,:), allocatable :: fock_o
-      real(dp), dimension(:,:), allocatable :: fock_v
-      real(dp), dimension(:,:), allocatable :: orbital_energies
-      real(dp), dimension(:,:), allocatable :: test1
-      real(dp), dimension(:,:), allocatable :: test2
-!
-      integer(i15) :: unit_dt = -1 , unit_t_dt = -1
-!
-      integer(i15) :: info
-      integer(i15) :: i = 0, j = 0, a = 0, b = 0, ai = 0, ij = 0
-!
-      real(dp) :: trace, ddot, sum_o, sum_v
 !
 !     ::::::::::::::::::::::::::::::::::::::::::::::::
 !     -::- Running lower level method calculation -::-
@@ -992,7 +971,7 @@ contains
 !     Set number of excitations to use for cnto generation
 !        - Should be some function of wf%tasks%n_singlet_states@
 !
-      lower_level_n_singlet_states = 4*wf%tasks%n_singlet_states
+      lower_level_n_singlet_states = CCS_factor_n_singlet_states*wf%tasks%n_singlet_states
 ! 
       ccs_wf%tasks%n_singlet_states = lower_level_n_singlet_states
 !
@@ -1013,6 +992,111 @@ contains
 !
       deallocate(ccs_wf)
 !
+   end subroutine cc2_cnto_lower_level_method_mlcc2
+!
+!
+   module subroutine cc2_cnto_lower_level_method_cvs_mlcc2(wf)
+!!
+!!    CNTO lower level calculation for CVS (MLCC2),
+!!    Written by Sarai D. Folkestad, June 2017.
+!!
+!!    Runs lower level method for CNTOs for CVS calculation
+!!
+      implicit none 
+!
+      class(mlcc2) :: wf
+!
+      type(ccs), allocatable :: ccs_wf
+!
+      integer(i15) :: lower_level_n_singlet_states
+!
+!     ::::::::::::::::::::::::::::::::::::::::::::::::
+!     -::- Running lower level method calculation -::-
+!     ::::::::::::::::::::::::::::::::::::::::::::::::
+!
+!     Allocate lower level method
+!
+      allocate(ccs_wf)
+!
+!     Set calculation tasks
+!
+      ccs_wf%tasks%ground_state = .true.
+      ccs_wf%tasks%core_excited_state = .true.
+      ccs_wf%tasks%n_cores = wf%tasks%n_cores
+!
+      call allocator_int(ccs_wf%tasks%cores, ccs_wf%tasks%n_cores, 1)
+      ccs_wf%tasks%cores = wf%tasks%cores
+!
+!
+!     Set calculation settings
+!
+      ccs_wf%settings = wf%settings
+! 
+!     Set number of excitations to use for cnto generation
+!        - Should be some function of wf%tasks%n_singlet_states@
+!
+      lower_level_n_singlet_states = CCS_factor_n_singlet_states*wf%tasks%n_singlet_states
+! 
+      ccs_wf%tasks%n_singlet_states = lower_level_n_singlet_states
+!
+!     Set convergence threshold for lower lying method
+!
+      ccs_wf%settings%energy_threshold = 1.0D-04 
+      ccs_wf%settings%equation_threshold = 1.0D-04 
+!
+!     Initialize lower level method
+!  
+      call ccs_wf%init
+!
+!     Call driver of lower level method
+!
+      call ccs_wf%drv
+!
+!     Done with lower lying method
+!
+      deallocate(ccs_wf)
+!
+   end subroutine cc2_cnto_lower_level_method_cvs_mlcc2
+!
+!
+   module subroutine cc2_cnto_orbitals_mlcc2(wf)
+!!
+!!    CNTO Oritals (MLCC2),
+!!    Written by Sarai D. Folkestad Aug. 2017
+!!
+!!    Constructs the CNTO orbitals based on exitation vectors from lower level method
+!!    
+      implicit none
+!
+      class(mlcc2) :: wf
+!
+      integer(i15) :: unit_solution = -1
+      integer(i15) :: ioerror = 0
+      integer(i15) :: state
+      integer(i15) :: lower_level_n_singlet_states
+!
+      real(dp), dimension(:,:), allocatable :: solution
+      real(dp), dimension(:,:), allocatable :: R_a_i
+      real(dp), dimension(:,:), allocatable :: M_i_j
+      real(dp), dimension(:,:), allocatable :: N_a_b
+      real(dp), dimension(:,:), allocatable :: M
+      real(dp), dimension(:,:), allocatable :: N
+      real(dp), dimension(:,:), allocatable :: X
+      real(dp), dimension(:,:), allocatable :: eigenvalues_o
+      real(dp), dimension(:,:), allocatable :: eigenvalues_v
+      real(dp), dimension(:,:), allocatable :: work
+      real(dp), dimension(:,:), allocatable :: C_o
+      real(dp), dimension(:,:), allocatable :: C_v
+      real(dp), dimension(:,:), allocatable :: C_o_transformed
+      real(dp), dimension(:,:), allocatable :: C_v_transformed
+      real(dp), dimension(:,:), allocatable :: fock_o
+      real(dp), dimension(:,:), allocatable :: fock_v
+      real(dp), dimension(:,:), allocatable :: orbital_energies
+!
+      integer(i15) :: info
+      integer(i15) :: i = 0, j = 0, a = 0, b = 0, ai = 0, ij = 0
+!
+      real(dp) :: trace, ddot, sum_o, sum_v
 !
 !     ::::::::::::::::::::::::::::::::::::::::::::::
 !     -::- Construct CNTO transformation matrix -::-
@@ -1025,7 +1109,7 @@ contains
       open(unit=unit_solution, file=wf%excited_state_task, action='read', status='unknown', &
         access='direct', form='unformatted', recl=dp*((wf%n_o)*(wf%n_v)), iostat=ioerror)  
 !
-      if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file', ioerror
+     if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file', ioerror, wf%excited_state_task
 !
 !     Allocations
 !
@@ -1039,6 +1123,7 @@ contains
 !
 !     Construct M and N
 !
+      lower_level_n_singlet_states = CCS_factor_n_singlet_states*wf%tasks%n_singlet_states
       do state = 1, lower_level_n_singlet_states
          read(unit=unit_solution, rec=state) (R_a_i(i , 1), i = 1, (wf%n_o)*(wf%n_v))
 !
@@ -1551,11 +1636,16 @@ contains
       call deallocator(C_v_transformed, wf%n_ao, wf%n_CCS_v)
       call deallocator(C_v, wf%n_ao, wf%n_v)
 !
-   end subroutine cc2_cnto_mlcc2
+!
+   end subroutine cc2_cnto_orbitals_mlcc2
 !
 !
    module subroutine print_cnto_info_mlcc2(wf)
 !!
+!!    Print CNTO info, 
+!!    Written by Sarai D. Folkestad, Aug. 2017
+!!
+!!    Prints information on CNTO partitioning
 !!
       implicit none 
 !

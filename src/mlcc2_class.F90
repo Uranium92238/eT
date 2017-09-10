@@ -62,9 +62,11 @@ module mlcc2_class
       procedure :: cholesky_orbitals             => cholesky_orbitals_mlcc2
       procedure :: cholesky_orbital_constructor  => cholesky_orbital_constructor_mlcc2
 !
-      procedure :: cnto_orbital_drv => cnto_orbital_drv_mlcc2
-      procedure :: cc2_cnto         => cc2_cnto_mlcc2
-      procedure :: print_cnto_info  => print_cnto_info_mlcc2
+      procedure :: cnto_orbital_drv                => cnto_orbital_drv_mlcc2
+      procedure :: cc2_cnto_lower_level_method     => cc2_cnto_lower_level_method_mlcc2
+      procedure :: cc2_cnto_lower_level_method_cvs => cc2_cnto_lower_level_method_cvs_mlcc2
+      procedure :: cc2_cnto_orbitals               => cc2_cnto_orbitals_mlcc2
+      procedure :: print_cnto_info                 => print_cnto_info_mlcc2
 !
 !     ML helper routines
 !
@@ -89,16 +91,20 @@ module mlcc2_class
 !
       procedure :: calc_energy => calc_energy_mlcc2
 !
-!     Jacobian
+!     Excited states
 !
       procedure :: initialize_excited_states     => initialize_excited_states_mlcc2
       procedure :: calculate_orbital_differences => calculate_orbital_differences_mlcc2
       procedure :: transform_trial_vectors       => transform_trial_vectors_mlcc2
       procedure :: cvs_residual_projection       => cvs_residual_projection_mlcc2 
 !
+!     Jacobian
+!
       procedure :: jacobian_mlcc2_transformation      => jacobian_mlcc2_transformation_mlcc2
       procedure :: cvs_jacobian_mlcc2_transformation  => cvs_jacobian_mlcc2_transformation_mlcc2
+!
       procedure :: cvs_rho_ai_bj_projection           => cvs_rho_ai_bj_projection_mlcc2
+!
       procedure :: jacobian_mlcc2_a1                  => jacobian_mlcc2_a1_mlcc2
       procedure :: jacobian_mlcc2_b1                  => jacobian_mlcc2_b1_mlcc2
       procedure :: jacobian_mlcc2_a2                  => jacobian_mlcc2_a2_mlcc2
@@ -277,19 +283,21 @@ module mlcc2_class
       end subroutine construct_active_ao_index_list
 !
 !
-!
       module subroutine cnto_orbital_drv_mlcc2(wf)
 !!
 !!       CNTO orbital driver,
 !!       Written by Sarai D. Folkestad, June 2017.
 !!
+!!       Directs the construction of CNTOs and the selection of the active space
 !!       A CCS calculation ground state and excited states is performed.
 !!       The M and N matrices are then constructed, 
 !! 
-!!          M_ij = sum_a R1_ai*R1_aj + sum_a R2_ai*R2_aj + ...
-!!          N_ab = sum_i R1_ai*R1_bi + sum_a R2_ai*R2_bi + ...
+!!          M_ij = 1/n sum_{k=1,n} (sum_a R^k_ai*R1_aj)
+!!          N_ab = 1/n sum_{k=1,n} (sum_i R^k_ai*R1_bi)
+!!
+!!       where n > 1.
 !!   
-!!       where Ri_ai is the i'th single excitation vector obtained from the CCS calculation. 
+!!       Ri_ai is the i'th single excitation vector obtained from the CCS calculation. 
 !!       The transformation matrices for the occupied and virtual part
 !!       are constructed by diagonalizing M and N. The number of active occupied
 !!       and virtual orbitals are determined from δ_o and δ_v
@@ -302,7 +310,6 @@ module mlcc2_class
 !!       Fock matrix is block diagonalized in active and inactive blocks in order to obtain 
 !!       the orbitals and orbital energies used in the CC2 calculation.
 !!
-
          implicit none 
 !
          class(mlcc2) :: wf
@@ -310,46 +317,62 @@ module mlcc2_class
       end subroutine cnto_orbital_drv_mlcc2
 !
 !
-      module subroutine cc2_cnto_mlcc2(wf)
+      module subroutine cc2_cnto_lower_level_method_mlcc2(wf)
 !!
-!!    CNTO orbital driver,
-!!    Written by Sarai D. Folkestad, June 2017.
+!!       CNTO lower level calculation (MLCC2),
+!!       Written by Sarai D. Folkestad, June 2017.
 !!
-!!    A CCS calculation ground state and excited states is performed.
-!!    The M and N matrices are then constructed, 
-!! 
-!!       M_ij = sum_a R1_ai*R1_aj + sum_a R2_ai*R2_aj + ...
-!!       N_ab = sum_i R1_ai*R1_bi + sum_a R2_ai*R2_bi + ...
-!!   
-!!    where Ri_ai is the i'th single excitation vector obtained from the CCS calculation. 
-!!    The transformation matrices for the occupied and virtual part
-!!    are constructed by diagonalizing M and N. The number of active occupied
-!!    and virtual orbitals are determined from δ_o and δ_v
-!!
-!!       1 - sum_i λ^o_i < δ_o
-!!       1 - sum_i λ^v_i < δ_v
-!!
-!!    Where the orbitals of highest eigenvalues λ^o/λ^v are selected first.
-!!
-!!    Fock matrix is block diagonalized in active and inactive blocks in order to obtain 
-!!    the orbitals and orbital energies used in the CC2 calculation.
+!!       Runs lower level method for CNTOs
 !!
 
-      implicit none 
+         implicit none 
 !
-      class(mlcc2) :: wf
+         class(mlcc2) :: wf
 !
-   end subroutine cc2_cnto_mlcc2
+      end subroutine cc2_cnto_lower_level_method_mlcc2
 !
 !
-   module subroutine print_cnto_info_mlcc2(wf)
+      module subroutine cc2_cnto_lower_level_method_cvs_mlcc2(wf)
 !!
+!!       CNTO lower level calculation for CVS (MLCC2),
+!!       Written by Sarai D. Folkestad, June 2017.
 !!
-      implicit none 
+!!       Runs lower level method for CNTOs for CVS calculation
+!!
+
+         implicit none 
 !
-      class(mlcc2) :: wf
+         class(mlcc2) :: wf
 !
-   end subroutine print_cnto_info_mlcc2
+      end subroutine cc2_cnto_lower_level_method_cvs_mlcc2
+!
+!
+      module subroutine cc2_cnto_orbitals_mlcc2(wf)
+!!
+!!       CNTO Oritals (MLCC2),
+!!       Written by Sarai D. Folkestad Aug. 2017
+!!
+!!       Constructs the CNTO orbitals based on exitation vectors from lower level method
+!!    
+         implicit none
+!
+         class(mlcc2) :: wf
+!
+      end subroutine cc2_cnto_orbitals_mlcc2
+!
+!
+      module subroutine print_cnto_info_mlcc2(wf)
+!!
+!!       Print CNTO info, 
+!!       Written by Sarai D. Folkestad, Aug. 2017
+!!
+!!       Prints information on CNTO partitioning
+!!
+         implicit none 
+!
+         class(mlcc2) :: wf
+!
+      end subroutine print_cnto_info_mlcc2
 !
 !
    end interface
@@ -361,19 +384,19 @@ module mlcc2_class
 !     :::::::::::::::::::::::::::::::::::
 !
       module subroutine omega_mlcc2_a1_mlcc2(wf)
-! 
-!        Omega A1
-!        Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!   
-!        Calculates the A1 term of omega, 
-!   
-!        A1: sum_ckd g_adkc * u_ki^cd,
-!  
-!        and adds it to the projection vector (omega1) of
-!        the wavefunction object wf
-! 
-!        u_ki^cd = 2*s_ki^cd - s_ik^cd 
-! 
+!! 
+!!       Omega A1
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!  
+!!       Calculates the A1 term of omega, 
+!!  
+!!       A1: sum_ckd g_adkc * u_ki^cd,
+!! 
+!!       and adds it to the projection vector (omega1) of
+!!       the wavefunction object wf
+!!
+!!       u_ki^cd = 2*s_ki^cd - s_ik^cd 
+!! 
          implicit none
 !
          class(mlcc2)   :: wf
@@ -382,14 +405,14 @@ module mlcc2_class
 !
 !
       module subroutine omega_mlcc2_b1_mlcc2(wf)
-! 
-!        Omega B1
-!        Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!   
-!        Calculates the B1 term of omega, 
-!   
-!        B1: - sum_bjk u_jk^ab*g_jikb
-!
+!!
+!!       Omega B1
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!  
+!!       Calculates the B1 term of omega, 
+!!  
+!!       B1: - sum_bjk u_jk^ab*g_jikb
+!!
          implicit none
 !
          class(mlcc2)   :: wf
@@ -398,29 +421,36 @@ module mlcc2_class
 !
 !
       module subroutine construct_omega_mlcc2(wf)
-!  
-!           Construct Omega (CC2)
-!           Written by Eirik F. Kjønstad and Sarai Folkestad, Apr 2017
-!  
-!           Constructs t2-amplitudes on the fly, according to the CC2
-!           expression for the doubles amplitudes,
-!  
-!           t_ij^ab = - g_ai_bj / (e_a + e_b - e_i - e_j),
-!  
-!           where g_ai_bj are T1-transformed two-electron integrals 
-!           and e_x is the orbital enegy of orbital x.
-!            
-!           The routine also sets up timing variables.    
-!  
-            implicit none 
+!! 
+!!       Construct Omega (CC2)
+!!       Written by Eirik F. Kjønstad and Sarai Folkestad, Apr 2017
+!! 
+!!       Constructs t2-amplitudes on the fly, according to the CC2
+!!       expression for the doubles amplitudes,
+!! 
+!!       t_ij^ab = - g_ai_bj / (e_a + e_b - e_i - e_j),
+!! 
+!!       where g_ai_bj are T1-transformed two-electron integrals 
+!!       and e_x is the orbital enegy of orbital x.
+!!        
+!!       The routine also sets up timing variables.    
+!! 
+         implicit none 
 !
-            class(mlcc2) :: wf
+         class(mlcc2) :: wf
 !
       end subroutine construct_omega_mlcc2
 !
       module subroutine get_s2am_mlcc2(wf, s_ia_jb, b_first, b_length)
 !!
-!!       Batching over b
+!!       Get S_2 amplitudes, 
+!!       Written by Sarai D. Folkestad, July 2017 
+!!
+!!       Construct
+!!
+!!          s_ai_bj = - 1/ε_ij^ab * g_aibj,
+!!
+!!       while batching over b.
 !!
          implicit none
 !
@@ -442,6 +472,12 @@ module mlcc2_class
 !
       module subroutine initialize_excited_states_mlcc2(wf)
 !!
+!!       Initialize excited states
+!!       Written by Sarai D. Folkestad, June 2017
+!!
+!!       Calculates and sets n_s2am, and updates n_parameters
+!!       for excited state calculation
+!! 
          implicit none 
 !    
          class(mlcc2) :: wf
@@ -473,7 +509,7 @@ module mlcc2_class
 !
       module subroutine transform_trial_vectors_mlcc2(wf, first_trial, last_trial)
 !!
-!!       Transformation Trial Vectors (CCSD)
+!!       Transformation Trial Vectors (MLCC2)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !! 
 !!       Each trial vector in first_trial to last_trial is read from file and
@@ -493,6 +529,8 @@ module mlcc2_class
 !
       module subroutine cvs_residual_projection_mlcc2(wf, residual)
 !!
+!!       Residual projection (MLCC2), 
+!!       Written by Sarai D. Folkestad Aug. 2017    
 !!
          implicit none
 !
@@ -665,6 +703,8 @@ module mlcc2_class
 !
       module subroutine cvs_rho_ai_bj_projection_mlcc2(wf, vec_ai_bj)
 !!
+!!       Rho projection for CVS (MLCC2),
+!!       Written by Sarai D. Folkestad, Aug. 2017
 !!
          implicit none
 !

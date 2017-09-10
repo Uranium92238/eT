@@ -1409,58 +1409,60 @@ contains
    end subroutine jacobian_mlcc2_b2_mlcc2
 !
 !
-      module subroutine cvs_rho_ai_bj_projection_mlcc2(wf, vec_ai_bj)
+    module subroutine cvs_rho_ai_bj_projection_mlcc2(wf, vec_ai_bj)
 !!
+!!    Rho projection for CVS (MLCC2),
+!!    Written by Sarai D. Folkestad, Aug. 2017
 !!
-         implicit none
+      implicit none
 !
-         class(mlcc2) :: wf
-         real(dp), dimension(:, :) :: vec_ai_bj
+      class(mlcc2) :: wf
+      real(dp), dimension(:, :) :: vec_ai_bj
 !
-         integer(i15) :: i = 0, a = 0, j = 0, b = 0, core = 0, ai = 0, bj = 0
+      integer(i15) :: i = 0, a = 0, j = 0, b = 0, core = 0, ai = 0, bj = 0
 !
-         logical :: core_orbital
+      logical :: core_orbital
 !
-!         Active space variables
-!     
-          integer(i15) :: n_active_o = 0, n_active_v = 0
-          integer(i15) :: first_active_o ! first active occupied index 
-          integer(i15) :: first_active_v ! first active virtual index
-          integer(i15) :: last_active_o ! first active occupied index 
-          integer(i15) :: last_active_v ! first active virtual index
-!   
-!         Calculate first/last indeces
-!     
-          call wf%get_CC2_active_indices(first_active_o, first_active_v)
-          call wf%get_CC2_n_active(n_active_o, n_active_v)
-!   
-          last_active_o = first_active_o + n_active_o - 1
-          last_active_v = first_active_v + n_active_v - 1         
+!     Active space variables
+! 
+      integer(i15) :: n_active_o = 0, n_active_v = 0
+      integer(i15) :: first_active_o ! first active occupied index 
+      integer(i15) :: first_active_v ! first active virtual index
+      integer(i15) :: last_active_o ! first active occupied index 
+      integer(i15) :: last_active_v ! first active virtual index
+! 
+!     Calculate first/last indeces
+! 
+      call wf%get_CC2_active_indices(first_active_o, first_active_v)
+      call wf%get_CC2_n_active(n_active_o, n_active_v)
+! 
+      last_active_o = first_active_o + n_active_o - 1
+      last_active_v = first_active_v + n_active_v - 1         
 !
-          do i = 1, n_active_o
-           do j = 1, n_active_o
+      do i = 1, n_active_o
+       do j = 1, n_active_o
 !
-              core_orbital = .false.
-              do core = 1, wf%tasks%n_cores
+          core_orbital = .false.
+          do core = 1, wf%tasks%n_cores
 !
-                 if ((i .eq. wf%tasks%index_core_mo(core, 1)) .or. &
-                    (j .eq. wf%tasks%index_core_mo(core, 1))) core_orbital = .true.
+             if ((i .eq. wf%tasks%index_core_mo(core, 1)) .or. &
+                (j .eq. wf%tasks%index_core_mo(core, 1))) core_orbital = .true.
 !
-              enddo
+          enddo
 !
-              if (.not. core_orbital) then
-                 do a = 1, n_active_v
-                    do b = 1, n_active_v
-                       ai = index_two(a, i, n_active_v)
-                       bj = index_two(b, j, n_active_v)
+          if (.not. core_orbital) then
+             do a = 1, n_active_v
+                do b = 1, n_active_v
+                   ai = index_two(a, i, n_active_v)
+                   bj = index_two(b, j, n_active_v)
 
-                       vec_ai_bj(ai, bj) = zero
-                    enddo
-                 enddo
-              endif
-           enddo
-        enddo
+                   vec_ai_bj(ai, bj) = zero
+                enddo
+             enddo
+          endif
+       enddo
+    enddo
 !
-      end subroutine cvs_rho_ai_bj_projection_mlcc2
+  end subroutine cvs_rho_ai_bj_projection_mlcc2
 !
 end submodule jacobian

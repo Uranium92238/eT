@@ -81,11 +81,12 @@ module mlccsd_class
       procedure :: construct_MO_transformation_matrix => construct_MO_transformation_matrix_mlccsd
 !
       procedure :: cnto_orbital_drv                   => cnto_orbital_drv_mlccsd
-      procedure :: ccsd_cnto                          => ccsd_cnto_mlccsd
-      procedure :: ccsd_cnto_cvs                      => ccsd_cnto_cvs_mlccsd
+      procedure :: ccsd_cnto_lower_level_method       => ccsd_cnto_lower_level_method_mlccsd
+      procedure :: ccsd_cnto_lower_level_method_cvs   => ccsd_cnto_lower_level_method_cvs_mlccsd
+      procedure :: ccsd_cnto_orbitals                 => ccsd_cnto_orbitals_mlccsd
       procedure :: print_cnto_info                    => print_cnto_info_mlccsd
 !
-!     Cholesky vector routines
+!     Cholesky vector routines for CC2 space
 !
       procedure :: read_transform_cholesky_for_CC2_amplitude   => read_transform_cholesky_for_CC2_amplitude_mlccsd
       procedure :: read_cholesky_ai_for_cc2_amplitudes         => read_cholesky_ai_for_cc2_amplitudes_mlccsd
@@ -115,12 +116,15 @@ module mlccsd_class
       procedure :: omega_mlccsd_c2  => omega_mlccsd_c2_mlccsd
       procedure :: omega_mlccsd_d2  => omega_mlccsd_d2_mlccsd
       procedure :: omega_mlccsd_e2  => omega_mlccsd_e2_mlccsd
+!
 !     Ground state solver routines
 !
       procedure :: calc_ampeqs_norm          => calc_ampeqs_norm_mlccsd
       procedure :: new_amplitudes            => new_amplitudes_mlccsd
       procedure :: calc_quasi_Newton_doubles => calc_quasi_Newton_doubles_mlccsd
       procedure :: initialize_ground_state   => initialize_ground_state_mlccsd
+!
+!     Helper routines for onstruction, destruction, saving and reading
 !
       procedure :: construct_orbital_coef_CC2_CCS     => construct_orbital_coef_CC2_CCS_mlccsd
       procedure :: construct_orbital_energy_CC2_CCS   => construct_orbital_energy_CC2_CCS_mlccsd
@@ -134,6 +138,8 @@ module mlccsd_class
       procedure :: read_amplitudes                 => read_amplitudes_mlccsd
       procedure :: read_mlccsd_double_amplitudes   => read_mlccsd_double_amplitudes_mlccsd
       procedure :: read_double_amplitudes          => read_double_amplitudes_mlccsd
+!
+!     Jacobian 
 !
       procedure :: jacobian_mlccsd_transformation => jacobian_mlccsd_transformation_mlccsd
       procedure :: cvs_jacobian_mlccsd_transformation => cvs_jacobian_mlccsd_transformation_mlccsd
@@ -149,6 +155,8 @@ module mlccsd_class
       procedure :: jacobian_mlccsd_j2 => jacobian_mlccsd_j2_mlccsd
       procedure :: jacobian_mlccsd_k2 => jacobian_mlccsd_k2_mlccsd
 !
+!     Excited states
+!
       procedure :: transform_trial_vectors => transform_trial_vectors_mlccsd
       procedure :: initialize_excited_states => initialize_excited_states_mlccsd
 !
@@ -162,10 +170,10 @@ module mlccsd_class
 !
       module subroutine cholesky_localization_drv_mlccsd(wf)
 !!
-!!       Cholesky orbital localization. driver,
-!!       Written by Sarai D. Folkestad, June 2017
+!!       Cholesky orbital localization driver,
+!!       Written by Sarai D. Folkestad, July 2017.
 !!
-!!       Driver for Cholesky density decomposition.  
+!!       Driver for Cholesky density decomposition 
 !!
 !!       - Collects atom and ao-basis information.
 !!       - Constructs occupied and vacant densities.
@@ -185,10 +193,10 @@ module mlccsd_class
       module subroutine cholesky_localization_CCSD_CC2_CCS_mlccsd(wf, ao_center_info, n_ao_on_center,&
                                                        ao_fock, n_nuclei, unit_cholesky_decomp)
 !!
-!!       Cholesky orbital localization. driver,
-!!       Written by Sarai D. Folkestad, June 2017
+!!       Cholesky orbital localization CCS/CC2/CCSD,
+!!       Written by Sarai D. Folkestad, July 2017
 !!
-!!       Driver for Cholesky density decomposition.  
+!!       Cholesky partitiining routine for CCS/CC2/CCSD calculation
 !!
          implicit none
 !
@@ -210,9 +218,10 @@ module mlccsd_class
       module subroutine cholesky_localization_CCSD_CCS_mlccsd(wf, ao_center_info, n_ao_on_center,&
                                                        ao_fock, n_nuclei, unit_cholesky_decomp)
 !!
-!!       Cholesky orbital localization driver,
-!!       Written by Sarai D. Folkestad, June 2017
+!!       Cholesky orbital localization CCS/CCSD,
+!!       Written by Sarai D. Folkestad, July 2017
 !!
+!!       Cholesky partitiining routine for CCS/CCSD calculation
 !!
          implicit none
 !
@@ -234,9 +243,10 @@ module mlccsd_class
       module subroutine cholesky_localization_CCSD_CC2_mlccsd(wf, ao_center_info, n_ao_on_center,&
                                                        ao_fock, n_nuclei, unit_cholesky_decomp)
 !!
-!!       Cholesky orbital localization driver
-!!       Written by Sarai D. Folkestad, June 2017
+!!       Cholesky orbital localization CC2/CCSD
+!!       Written by Sarai D. Folkestad, July 2017
 !!
+!!       Cholesky partitiining routine for CC2/CCSD calculation
 !!
          implicit none
 !
@@ -257,6 +267,15 @@ module mlccsd_class
 !
       module subroutine construct_MO_transformation_matrix_mlccsd(wf)
 !!
+!!       Construct MO transformation matrix,
+!!       Written by Sarai D. Fokestad, July 2017
+!!
+!!       Constructs transformation matrix,
+!!
+!!          T = (C_CCSD)^T * S * C_CC2
+!!
+!!       between CC2 basis and CCSD basis. 
+!!       Needed for transforming s_ij_ab from CC2 to CCSD basis.
 !!
          implicit none
 !
@@ -267,86 +286,96 @@ module mlccsd_class
 !
       module subroutine cnto_orbital_drv_mlccsd(wf)
 !!
-!!    CNTO orbital driver,
-!!    Written by Sarai D. Folkestad, June 2017.
+!!       CNTO orbital driver,
+!!       Written by Sarai D. Folkestad, July 2017.
 !!
-      implicit none 
+!!       A CCS calculation ground state and excited states is performed.
+!!       The M and N matrices are then constructed, 
+!! 
+!!          M_ij = sum_a R1_ai*R1_aj + sum_a R2_ai*R2_aj + ...
+!!          N_ab = sum_i R1_ai*R1_bi + sum_a R2_ai*R2_bi + ...
+!!   
+!!       where Ri_ai is the i'th single excitation vector obtained from the CCS calculation. 
+!!       The transformation matrices for the occupied and virtual part
+!!       are constructed by diagonalizing M and N. The number of active occupied
+!!       and virtual orbitals are determined from δ_o and δ_v
+!!
+!!          1 - sum_i λ^o_i < δ_o
+!!          1 - sum_i λ^v_i < δ_v
+!!
+!!       Where the orbitals of highest eigenvalues λ^o/λ^v are selected first.
+!!
+!!       Fock matrix is block diagonalized in active and inactive blocks in order to obtain 
+!!       the orbitals and orbital energies used in the CC2 calculation.
+!!
+         implicit none 
 !
-      class(mlccsd) :: wf
+         class(mlccsd) :: wf
 !
       end subroutine cnto_orbital_drv_mlccsd
 !
 !
-      module subroutine ccsd_cnto_mlccsd(wf)
+      module subroutine ccsd_cnto_lower_level_method_mlccsd(wf, cc2_n_parameters, cc2_n_x2am, n_cc2_o, n_cc2_v)
 !!
-!!    CNTO orbital driver,
-!!    Written by Sarai D. Folkestad, June 2017.
+!!    CNTO constructor (MLCCSD),
+!!    Written by Sarai D. Folkestad, Aug. 2017
 !!
-!!    A CCS calculation ground state and excited states is performed.
-!!    The M and N matrices are then constructed, 
-!! 
-!!       M_ij = sum_a R1_ai*R1_aj + sum_a R2_ai*R2_aj + ...
-!!       N_ab = sum_i R1_ai*R1_bi + sum_a R2_ai*R2_bi + ...
-!!   
-!!    where Ri_ai is the i'th single excitation vector obtained from the CCS calculation. 
-!!    The transformation matrices for the occupied and virtual part
-!!    are constructed by diagonalizing M and N. The number of active occupied
-!!    and virtual orbitals are determined from δ_o and δ_v
+!!    Constructs CNTOs and partitions orbital space
 !!
-!!       1 - sum_i λ^o_i < δ_o
-!!       1 - sum_i λ^v_i < δ_v
-!!
-!!    Where the orbitals of highest eigenvalues λ^o/λ^v are selected first.
-!!
-!!    Fock matrix is block diagonalized in active and inactive blocks in order to obtain 
-!!    the orbitals and orbital energies used in the CC2 calculation.
-!!
-
       implicit none 
 !
       class(mlccsd) :: wf
 !
-      end subroutine ccsd_cnto_mlccsd
+      integer(i15) :: cc2_n_x2am, cc2_n_parameters
+      integer(i15) :: n_CC2_o, n_CC2_v
+!
+      end subroutine ccsd_cnto_lower_level_method_mlccsd
 !
 !
-      module subroutine ccsd_cnto_cvs_mlccsd(wf)
+      module subroutine ccsd_cnto_lower_level_method_cvs_mlccsd(wf, cc2_n_parameters, cc2_n_x2am, n_cc2_o, n_cc2_v)
 !!
-!!    CNTO orbital driver,
-!!    Written by Sarai D. Folkestad, June 2017.
+!!    CNTO constructor (MLCCSD),
+!!    Written by Sarai D. Folkestad, Aug. 2017
 !!
-!!    A CCS calculation ground state and excited states is performed.
-!!    The M and N matrices are then constructed, 
-!! 
-!!       M_ij = sum_a R1_ai*R1_aj + sum_a R2_ai*R2_aj + ...
-!!       N_ab = sum_i R1_ai*R1_bi + sum_a R2_ai*R2_bi + ...
-!!   
-!!    where Ri_ai is the i'th single excitation vector obtained from the CCS calculation. 
-!!    The transformation matrices for the occupied and virtual part
-!!    are constructed by diagonalizing M and N. The number of active occupied
-!!    and virtual orbitals are determined from δ_o and δ_v
+!!    Constructs CNTOs and partitions orbital space
 !!
-!!       1 - sum_i λ^o_i < δ_o
-!!       1 - sum_i λ^v_i < δ_v
-!!
-!!    Where the orbitals of highest eigenvalues λ^o/λ^v are selected first.
-!!
-!!    Fock matrix is block diagonalized in active and inactive blocks in order to obtain 
-!!    the orbitals and orbital energies used in the CC2 calculation.
-!!
-
       implicit none 
 !
       class(mlccsd) :: wf
 !
-      end subroutine ccsd_cnto_cvs_mlccsd
+      integer(i15) :: cc2_n_x2am, cc2_n_parameters
+      integer(i15) :: n_CC2_o, n_CC2_v
+!
+      end subroutine ccsd_cnto_lower_level_method_cvs_mlccsd
+!
+!
+      module subroutine ccsd_cnto_orbitals_mlccsd(wf, cc2_n_parameters, cc2_n_x2am, n_cc2_o, n_cc2_v)
+!!
+!!       CNTO Oritals (MLCCSD),
+!!       Written by Sarai D. Folkestad Aug. 2017
+!!
+!!       Constructs the CNTO orbitals based on exitation vectors from lower level method
+!!    
+         implicit none
+!
+         class(mlccsd) :: wf
+!
+         integer(i15) :: cc2_n_x2am, cc2_n_parameters
+         integer(i15) :: n_CC2_o, n_CC2_v
+!
+      end subroutine ccsd_cnto_orbitals_mlccsd
 !
 !
       module subroutine print_cnto_info_mlccsd(wf)
 !!
+!!       Print CNTO info, 
+!!       Written by Sarai D. Folkestad, Aug. 2017
 !!
-      implicit none 
+!!       Prints information on CNTO partitioning
+!!
+         implicit none 
 !
-      class(mlccsd) :: wf
+         class(mlccsd) :: wf
 !
       end subroutine print_cnto_info_mlccsd
 !
