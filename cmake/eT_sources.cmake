@@ -29,6 +29,8 @@ set(eT_fortran_sources
    src/submodules/ccsd_class_submodules/jacobian_submodule.F90
    src/submodules/ccsd_class_submodules/jacobian_transpose_submodule.F90
    src/submodules/cc2_class_submodules/omega_submodule.F90
+   src/submodules/cc2_class_submodules/jacobian_submodule.F90
+   src/submodules/cc2_class_submodules/excited_state_submodule.F90
    src/submodules/cc3_class_submodules/omega_submodule.F90
    src/submodules/ccsdpt_class_submodules/ground_state_submodule.F90
    src/submodules/ccsdpt_class_submodules/omega_submodule.F90

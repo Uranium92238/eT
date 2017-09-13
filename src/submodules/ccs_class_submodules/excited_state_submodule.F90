@@ -24,7 +24,7 @@ submodule(ccs_class) excited_state
 !  Some variables available to all routines of the module
 !
    integer(i15) :: iteration = 1
-   integer(i15) :: max_iterations = 75! E: we move this to calculation settings later
+   integer(i15) :: max_iterations = 25! E: we move this to calculation settings later
 !
 !  Variables to handle convergence criterea
 !

@@ -1249,102 +1249,102 @@ contains
 !
 !        Add contribution tho rho
 !        
-         call dgemm('N', 'N', &
-                     (n_active_v**2)*n_active_o, &
-                     n_active_o, &
-                     C_length, &
-                     one, &
-                     g_ai_bC, &
-                     ((n_active_v)**2)*n_active_o, &
-                     c_a_i(c_first, first_active_o), &
-                     wf%n_v, &
-                     one, &
-                     rho_ai_bj, &
-                     (n_active_v**2)*n_active_o)
+          call dgemm('N', 'N', &
+                      (n_active_v**2)*n_active_o, &
+                      n_active_o, &
+                      C_length, &
+                      one, &
+                      g_ai_bC, &
+                      ((n_active_v)**2)*n_active_o, &
+                      c_a_i(c_first, first_active_o), &
+                      wf%n_v, &
+                      one, &
+                      rho_ai_bj, &
+                      (n_active_v**2)*n_active_o)
 !
          call deallocator(g_ai_bC, n_active_v*n_active_o, n_active_v*C_length)
 
 !
       enddo ! batching over c
-!
-!    :: Term 2 ::
-!    - sum_K g_aij_K * C_K_b(= - sum_K g_ai,Kj * C_bK)
-!
-!    Construct g_ai,Kj ordered as g_aij_K
-!
-     call allocator(L_Kj_J, (n_active_o)*(wf%n_o), wf%n_J)
-      call wf%get_cholesky_ij(L_Kj_J, 1, wf%n_o, first_active_o, last_active_o)
-     call allocator(g_ai_Kj, n_active_v*n_active_o, n_active_o*(wf%n_o))
-!
-     call dgemm('N', 'T',                    &
-                 n_active_v*n_active_o,      &
-                 n_active_o*(wf%n_o),        &
-                 (wf%n_J),                   &
-                 one,                        &
-                 L_ai_J,                     &
-                 n_active_v*n_active_o,      &
-                 L_Kj_J,                     &
-                 n_active_o*(wf%n_o),        &
-                 zero,                       &
-                 g_ai_Kj,                    &
-                 n_active_v*n_active_o)
-!
-     call deallocator(L_Kj_J, n_active_o*(wf%n_o), wf%n_J)
-     call deallocator(L_ai_J, n_active_o*n_active_v, wf%n_J)
-!
-!    Reorder g_ai_Kj to g_aij_K
-!
-     call allocator(g_aij_K, n_active_v*n_active_o**2, wf%n_o)
-     g_aij_K = zero
-     do a = 1, n_active_v
-        do j = 1, n_active_o
-           do i = 1, n_active_o
-              aij = index_three(a, i, j, n_active_v, n_active_o)
-              ai = index_two(a, i, n_active_v)
-              do K = 1, wf%n_o
-                 Kj = index_two(K, j, wf%n_o)
-                 g_aij_K(aij, K) = g_ai_Kj(ai, Kj)
-              enddo
-           enddo
-        enddo
-     enddo
-     call deallocator(g_ai_Kj, n_active_v*n_active_o, n_active_o*(wf%n_o))
-!
-     call allocator(rho_aij_b, n_active_v*n_active_o**2, n_active_v)
-!
-!     Add term to rho_ai_bj
-!
-     call dgemm('N', 'T',                    &
-                 n_active_v*n_active_o**2,   &
-                 n_active_v,                 &
-                 wf%n_o,                     &
-                 -one,                       &
-                 g_aij_K,                    &
-                 n_active_v*n_active_o**2,   &
-                 c_a_i(first_active_v,1),    &
-                 wf%n_v,                     &
-                 zero,                       &
-                 rho_aij_b,                  &
-                 n_active_v*n_active_o**2)
-!
-     call deallocator(g_aij_K, n_active_v*n_active_o**2, wf%n_o)
-!
-!
-!    Reorder into rho_ai_bj
-!
-     do a = 1, n_active_v
-        do b = 1, n_active_v
-           do i = 1, n_active_o
-              do j = 1, n_active_o
-                 ai = index_two(a, i, n_active_v)
-                 bj = index_two(b, j, n_active_v)
-                 aij = index_three(a, i, j, n_active_v, n_active_o)
-                 rho_ai_bj(ai, bj) = rho_ai_bj(ai, bj) + rho_aij_b(aij, b)
-              enddo
-           enddo
-        enddo
-     enddo
-     call deallocator(rho_aij_b, n_active_v*n_active_o**2, n_active_v)
+! 
+!     :: Term 2 ::
+!     - sum_K g_aij_K * C_K_b(= - sum_K g_ai,Kj * C_bK)
+! 
+!     Construct g_ai,Kj ordered as g_aij_K
+! 
+      call allocator(L_Kj_J, (n_active_o)*(wf%n_o), wf%n_J)
+       call wf%get_cholesky_ij(L_Kj_J, 1, wf%n_o, first_active_o, last_active_o)
+      call allocator(g_ai_Kj, n_active_v*n_active_o, n_active_o*(wf%n_o))
+! 
+      call dgemm('N', 'T',                    &
+                  n_active_v*n_active_o,      &
+                  n_active_o*(wf%n_o),        &
+                  (wf%n_J),                   &
+                  one,                        &
+                  L_ai_J,                     &
+                  n_active_v*n_active_o,      &
+                  L_Kj_J,                     &
+                  n_active_o*(wf%n_o),        &
+                  zero,                       &
+                  g_ai_Kj,                    &
+                  n_active_v*n_active_o)
+! 
+      call deallocator(L_Kj_J, n_active_o*(wf%n_o), wf%n_J)
+      call deallocator(L_ai_J, n_active_o*n_active_v, wf%n_J)
+! 
+!     Reorder g_ai_Kj to g_aij_K
+! 
+      call allocator(g_aij_K, n_active_v*n_active_o**2, wf%n_o)
+      g_aij_K = zero
+      do a = 1, n_active_v
+         do j = 1, n_active_o
+            do i = 1, n_active_o
+               aij = index_three(a, i, j, n_active_v, n_active_o)
+               ai = index_two(a, i, n_active_v)
+               do K = 1, wf%n_o
+                  Kj = index_two(K, j, wf%n_o)
+                  g_aij_K(aij, K) = g_ai_Kj(ai, Kj)
+               enddo
+            enddo
+         enddo
+      enddo
+      call deallocator(g_ai_Kj, n_active_v*n_active_o, n_active_o*(wf%n_o))
+! 
+      call allocator(rho_aij_b, n_active_v*n_active_o**2, n_active_v)
+! 
+!      Add term to rho_ai_bj
+! 
+      call dgemm('N', 'T',                    &
+                  n_active_v*n_active_o**2,   &
+                  n_active_v,                 &
+                  wf%n_o,                     &
+                  -one,                       &
+                  g_aij_K,                    &
+                  n_active_v*n_active_o**2,   &
+                  c_a_i(first_active_v,1),    &
+                  wf%n_v,                     &
+                  zero,                       &
+                  rho_aij_b,                  &
+                  n_active_v*n_active_o**2)
+! 
+      call deallocator(g_aij_K, n_active_v*n_active_o**2, wf%n_o)
+! 
+! 
+!     Reorder into rho_ai_bj
+! 
+      do a = 1, n_active_v
+         do b = 1, n_active_v
+            do i = 1, n_active_o
+               do j = 1, n_active_o
+                  ai = index_two(a, i, n_active_v)
+                  bj = index_two(b, j, n_active_v)
+                  aij = index_three(a, i, j, n_active_v, n_active_o)
+                  rho_ai_bj(ai, bj) = rho_ai_bj(ai, bj) + rho_aij_b(aij, b)
+               enddo
+            enddo
+         enddo
+      enddo
+      call deallocator(rho_aij_b, n_active_v*n_active_o**2, n_active_v)
 !
    end subroutine jacobian_mlcc2_a2_mlcc2
 !

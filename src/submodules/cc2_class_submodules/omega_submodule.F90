@@ -32,14 +32,6 @@ contains
 !  
 !     Construct Omega (CC2)
 !     Written by Eirik F. Kjønstad and Sarai Folkestad, Apr 2017
-!  
-!     Constructs t2-amplitudes on the fly, according to the CC2
-!     expression for the doubles amplitudes,
-!  
-!     t_ij^ab = - g_ai_bj / (e_a + e_b - e_i - e_j),
-!  
-!     where g_ai_bj are T1-transformed two-electron integrals 
-!     and e_x is the orbital enegy of orbital x.
 !      
 !     The routine also sets up timing variables.    
 !  
@@ -52,10 +44,6 @@ contains
       real(dp), dimension(:,:), allocatable :: L_bj_J
       real(dp), dimension(:,:), allocatable :: L_ia_J
       real(dp), dimension(:,:), allocatable :: g_ia_bj ! Reordered g_aibj
-!
-!     t2 amplitudes
-!
-      real(dp), dimension(:,:), allocatable :: t_ia_bj
 !
 !     Batching variables
 !  
