@@ -23,6 +23,7 @@ submodule (cc2_class) omega
    implicit none 
 !
    logical :: debug = .false.
+   logical :: timings = .false.
 !
 !
 contains
@@ -31,14 +32,6 @@ contains
 !  
 !     Construct Omega (CC2)
 !     Written by Eirik F. Kjønstad and Sarai Folkestad, Apr 2017
-!  
-!     Constructs t2-amplitudes on the fly, according to the CC2
-!     expression for the doubles amplitudes,
-!  
-!     t_ij^ab = - g_ai_bj / (e_a + e_b - e_i - e_j),
-!  
-!     where g_ai_bj are T1-transformed two-electron integrals 
-!     and e_x is the orbital enegy of orbital x.
 !      
 !     The routine also sets up timing variables.    
 !  
@@ -51,10 +44,6 @@ contains
       real(dp), dimension(:,:), allocatable :: L_bj_J
       real(dp), dimension(:,:), allocatable :: L_ia_J
       real(dp), dimension(:,:), allocatable :: g_ia_bj ! Reordered g_aibj
-!
-!     t2 amplitudes
-!
-      real(dp), dimension(:,:), allocatable :: t_ia_bj
 !
 !     Batching variables
 !  
@@ -81,658 +70,483 @@ contains
 !
       wf%omega1 = zero
 !
-!     :: Calculate cc2 doubles amplitudes ::
+!     :: Calculate CCS omega contributions ::
 !
+      call wf%omega_ccs_a1
 !
-!     Prepare for batching over index a (Assumes A1 requires the most memory)
-!  
-      required = max((2*(wf%n_v)*(wf%n_o)*(wf%n_J) &                       !    
-               + 2*(wf%n_v)*(wf%n_o)*(wf%n_J) &                            ! Needed for g_aibj  
-               + 2*((wf%n_v)**2)*(wf%n_J) + ((wf%n_o)**2)*(wf%n_J) &       ! and 't2' amplitudes  
-               + 2*(wf%n_v)**2*(wf%n_o)**2), &                             !
-                 ((wf%n_v)**2*(wf%n_o)**2   &                              ! Needed for A1:   
-               + (wf%n_v)*(wf%n_o)*(wf%n_J) &                              ! Needed for L_kc_J in A1
-               + ((wf%n_v)**2)*((wf%n_o)**2) &                             ! Needed for u_ckd_i in A1
-               + 2*((wf%n_v)**2)*(wf%n_J) + 2*(wf%n_v)*(wf%n_o)*(wf%n_J) & ! Needed for L_da_J in A1
-               + 2*((wf%n_v)**3)*(wf%n_o)))                                ! Needed for g_da_kc and reordering in A1
-!      
-      required  = 4*required ! In words
-      available = get_available()
+!     :: Calculate CC2 omega contributions ::
 !
-      batch_dimension  = wf%n_v ! Batch over the virtual index a
-      max_batch_length = 0      ! Initilization of unset variables 
-      n_batch          = 0
+      call wf%omega_cc2_a1
 !
-      call num_batch(required, available, max_batch_length, n_batch, batch_dimension)           
-!
-!     Loop over the number of a batches 
-!
-      do a_batch = 1, n_batch
-!
-!        For each batch, get the limits for the a index 
-!
-         call batch_limits(a_first, a_last, a_batch, max_batch_length, batch_dimension)
-         a_length = a_last - a_first + 1
-!
-!        Allocate L_bj_J and L_ia_J (= reordering of L_bj_J constrained to the batch)
-!
-         call allocator(L_bj_J, (wf%n_v)*(wf%n_o), wf%n_J)
-         call allocator(L_ia_J, a_length*(wf%n_o), wf%n_J)
-         L_bj_J = zero
-         L_ia_J = zero
-!
-         call wf%get_cholesky_ai(L_bj_J)
-!
-!        Create L_ia_J
-!
-         do a = 1, a_length
-            do i = 1, wf%n_o
-               do J = 1, wf%n_J
-!
-!                 Calculate compound indices
-!
-                  ia = index_two(i, a, wf%n_o)
-                  ai = index_two(a + a_first - 1, i, wf%n_v)
-!
-                  L_ia_J(ia, J) = L_bj_J(ai, J)
-!
-               enddo
-            enddo
-         enddo
-!
-!        Allocate g_ia_bj
-!
-         call allocator(g_ia_bj, a_length*(wf%n_o), (wf%n_o)*(wf%n_v))
-!
-!        Construct integral g_ia_bj (= g_aibj for the batch)
-!
-         call dgemm('N','T',            &
-                     a_length*(wf%n_o), &
-                     (wf%n_o)*(wf%n_v), &
-                     wf%n_J,            &
-                     one,               &
-                     L_ia_J,            &
-                     a_length*(wf%n_o), &
-                     L_bj_J,            &
-                     (wf%n_o)*(wf%n_v), &
-                     zero,              &
-                     g_ia_bj,           &
-                     a_length*(wf%n_o))
-!
-!        L_bj_J and L_ia_J
-!
-         call deallocator(L_bj_J, (wf%n_v)*(wf%n_o), wf%n_J)
-         call deallocator(L_ia_J, a_length*(wf%n_o), wf%n_J)
-!
-!        Allocate t_ia_bj
-!
-         call allocator(t_ia_bj, a_length*(wf%n_o), (wf%n_o)*(wf%n_v))
-!
-!        Create t2 amplitudes
-!
-         do a = 1, a_length
-            do i = 1, wf%n_o
-!
-               ia = index_two(i, a, wf%n_o)
-!
-               do j = 1, wf%n_o
-                  do b = 1, wf%n_v
-!
-                     bj = index_two(b, j, wf%n_v)
-!
-                     t_ia_bj(ia, bj) = - g_ia_bj(ia, bj)/(wf%fock_diagonal(a + wf%n_o, 1) &
-                                                        + wf%fock_diagonal(b + wf%n_o, 1) &
-                                                        - wf%fock_diagonal(i, 1) - wf%fock_diagonal(j, 1))
-!
-                  enddo
-               enddo
-            enddo
-         enddo
-!
-!        Deallocate g_ia_bj
-!
-         call deallocator(g_ia_bj, a_length*(wf%n_o), (wf%n_o)*(wf%n_v))
-!
-!        :: Calculate omega contributions for the batch ::
-!
-         call wf%omega_a1(t_ia_bj, a_first, a_last, a_length)
-!
-         call wf%omega_b1(t_ia_bj, a_first, a_last, a_length)
-!
-         call wf%omega_c1(t_ia_bj, a_first, a_last, a_length)
-!
-         call wf%omega_ccs_a1()
-!
-!        Deallocate t_ia_bj
-!
-         call deallocator(t_ia_bj, a_length*(wf%n_o), (wf%n_o)*(wf%n_v))
-!
-      enddo ! Batches of a
+      call wf%omega_cc2_b1
 !
 !     Timings
 !
       call cpu_time(omega_end)
-      write(unit_output,*)'Time in omega:', omega_end-omega_start    
+      if (timings) write(unit_output,*)'Time in omega:', omega_end-omega_start     
 !
    end subroutine construct_omega_cc2
 !
 !
-   module subroutine omega_a1_cc2(wf, t_kc_di, c_first, c_last, c_length)
-! 
-!     Omega A1
-!     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!   
-!     Calculates the A1 term of omega, 
-!   
-!     A1: sum_ckd g_adkc * u_ki^cd,
-!  
-!     and adds it to the projection vector (omega1) of
-!     the wavefunction object wf
-! 
-!     u_ki^cd = 2*t_ki^cd - t_ik^cd 
-! 
+   module subroutine omega_cc2_a1_cc2(wf)
+!! 
+!!     Omega A1
+!!     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!   
+!!     Calculates the A1 term of omega for the active space, 
+!!   
+!!     A1: sum_bcj g_Abjc * u_ij^bc,
+!!  
+!!     and adds it to the projection vector (omega1) of
+!!     the wavefunction object wf
+!! 
+!!     u_ij^bc = 2*s_ij^bc - s_ij^cb 
+!!
+!!    Batching over A and c
+!!
+!! 
       implicit none
 !
-      class(cc2) :: wf
-!
-      integer(i15) :: c_first, c_last, c_length
-!
-      real(dp), dimension(c_length*(wf%n_o),(wf%n_v)*(wf%n_o)) :: t_kc_di
+      class(cc2)   :: wf
 !
 !     Batching variables 
 !
-      integer(i15) :: required = 0, available = 0, max_batch_length = 0, batch_dimension = 0
-      integer(i15) :: n_batch = 0, a_first = 0, a_last = 0, a_batch = 0, a_length = 0
+      integer(i15) :: required = 0, available = 0, max_length = 0, batch_dimension = 0, offset = 0
+      integer(i15) :: A_n_batch = 0, A_first = 0, A_last = 0, A_batch = 0, A_length = 0
+      integer(i15) :: c_n_batch = 0, c_first = 0, c_last = 0, c_batch = 0, c_length = 0
 !
 !     Indices 
 !
-      integer(i15) :: i = 0, j = 0, k = 0, a = 0, c = 0, d = 0
+      integer(i15) :: i = 0, j = 0, a = 0, c = 0, b = 0
 !
-      integer(i15) :: ad = 0, da = 0
-      integer(i15) :: ci = 0, ck = 0, di = 0, dk = 0
-      integer(i15) :: kc = 0, ic = 0 
+      integer(i15) :: ba = 0, ab = 0, bi = 0
+      integer(i15) :: ic = 0, ib = 0, jc = 0, jb = 0 
+      integer(i15) :: bjc = 0
 !
-      integer(i15) :: dkc = 0 
-      integer(i15) :: cidk = 0, ckdi = 0
+!     Allocatables
 !
-      integer(i15) :: ad_dim = 0   
+      real(dp), dimension(:,:), allocatable :: L_ib_J 
+      real(dp), dimension(:,:), allocatable :: L_bi_J 
+      real(dp), dimension(:,:), allocatable :: L_jc_J
+      real(dp), dimension(:,:), allocatable :: g_ib_jc 
+      real(dp), dimension(:,:), allocatable :: s_ib_jc 
+      real(dp), dimension(:,:), allocatable :: u_bjc_i 
+      real(dp), dimension(:,:), allocatable :: g_Ab_jc 
+      real(dp), dimension(:,:), allocatable :: L_Ab_J  ! L_Ab^J; A is batched over
 !
-      real(dp), dimension(:,:), allocatable :: L_kc_J 
-      real(dp), dimension(:,:), allocatable :: L_da_J  ! L_ad^J; a is batched over
-      real(dp), dimension(:,:), allocatable :: L_ad_J  ! L_ad^J; a is batched over
-      real(dp), dimension(:,:), allocatable :: g_da_kc ! g_adkc; a is batched over
-      real(dp), dimension(:,:), allocatable :: g_a_dkc ! reordered g_adkc; a and c is batched over
-      real(dp), dimension(:,:), allocatable :: u_dkc_i ! u_ki^cd c is batched over
+      logical :: reorder  ! To get L_ab_J reordered, for batching over a
 !
-      logical :: reorder ! To get L_ab_J reordered, for batching over a
+!     Prepare for batching ocer c and A     
 !
-!     Allocate u_dkc_i = u_ki^cd
+      required = wf%n_v*(wf%n_v)*(wf%n_J) &
+               + wf%n_v*(wf%n_o)*(wf%n_J) &
+               + (wf%n_v**2)*(wf%n_o)*wf%n_o &
+               + ((wf%n_o)**2)*((wf%n_v)**2)
 !
-      call allocator(u_dkc_i, (wf%n_o)*(wf%n_v)*(c_length), wf%n_o)
-      u_dkc_i = zero
 !
-!     Calculate u_ckd_i
-!
-      do c = 1, c_length
-         do k = 1, wf%n_o
-!
-            kc = index_two(k, c, wf%n_o)
-!
-            do d = 1, wf%n_v
-!
-               dk = index_two(d, k, wf%n_v)
-!
-               dkc = index_three(d, k, c, wf%n_v, wf%n_o)
-!
-               do i = 1, wf%n_o
-!                 
-                  ic = index_two(i, c, wf%n_o)
-                  di = index_two(d, i, wf%n_v) 
-!
-                  u_dkc_i(dkc, i) = two*(t_kc_di(kc, di)) - t_kc_di(ic, dk)
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!
-!     Start batching over a
-!
+      required = required*4  ! Words
+
       available = get_available()
-      required  = (wf%n_J)*(wf%n_v**2) + (wf%n_J)*(wf%n_o)*(wf%n_v)          ! Needed to hold L_ab_J and L_kc_J
-      required  = required &
-                + max((wf%n_J)*(wf%n_v**2) + 2*(wf%n_J)*(wf%n_o)*(wf%n_v), & ! Determine if it is more demanding to get L_ab_J 
-                      2*(wf%n_o)*(wf%n_v**3))                                ! or to hold g_ad_kc and g_a_ckd
+
+      max_length = 0
 !
-      required = four*required
+      call num_two_batch(required, available, max_length, c_n_batch, wf%n_v)
 !
-      batch_dimension  = wf%n_v ! Batch over the virtual index a
-      max_batch_length = 0      ! Initilization of unset variables 
-      n_batch          = 0
+!     Initialize some variables for batching
 !
-      call num_batch(required, available, max_batch_length, n_batch, batch_dimension)           
+      c_first  = 0
+      c_last   = 0
+      c_length = 0
 !
-!     Loop over the number of a batches 
+!     Start looping over batches of c
 !
-      do a_batch = 1, n_batch
+      do c_batch = 1, c_n_batch
 !
-!        For each batch, get the limits for the a index 
+         call batch_limits(c_first ,c_last ,c_batch, max_length, wf%n_v)
 !
-         call batch_limits(a_first, a_last, a_batch, max_batch_length, batch_dimension)
-         a_length = a_last - a_first + 1 
+!        Length of batch
 !
-!        Allocate Cholesky vector L_kc_J for all c
+         c_length = c_last - c_first + 1 
 !
-         call allocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
-         L_kc_J = zero
+!        :: Construct u_ib_jc ::
 !
-!        Get Cholesky vector L_kc_J for all c
+!        u_ij^bc = 2*s_ij^bc - s_ij^cb =  (2*g_ij^bc - g_ij^cb)/ε_ij^cb
 !
-         call wf%get_cholesky_ia(L_kc_J)
+         call allocator(s_ib_jc, (wf%n_o)*(wf%n_v), (wf%n_o)*c_length )
+         call wf%get_s2am(s_ib_jc, c_first, c_length)
 !
-!        Get ab-cholesky vectors for the batch, L_ad^J, then reorder from L_ad_J to L_da_J
+         call allocator(u_bjc_i, wf%n_v*wf%n_o*c_length, wf%n_o)
 !
-         ad_dim = a_length*(wf%n_v) ! Dimension of ad for the batch over index a 
+         do b = 1, wf%n_v
+            do i = 1, wf%n_o
 !
-         call allocator(L_ad_J, ad_dim, wf%n_J)
-         L_ad_J = zero
-         call wf%get_cholesky_ab(L_ad_J, a_first, a_last, 1, wf%n_v)
+               ib = index_two(i, b, wf%n_o)
 !
-!        Get reordered Cholesky vector L_da_J = L_ad^J 
-         call allocator(L_da_J, ad_dim, wf%n_J)
-         L_da_J = zero
-         do d = 1, wf%n_v
-            do a = 1, a_length
-               da = index_two(d, a, wf%n_v)
-               ad = index_two(a, d, a_length)
-               do J = 1, wf%n_J
-                  L_da_J(da, J) = L_ad_J(ad, J)
+               do c = 1, c_length
+                  do j = 1, wf%n_o
+!
+                     jc = index_two(j, c, wf%n_o)
+                     jb = index_two(j, b, wf%n_o)
+                     ic = index_two(i, c, wf%n_o)
+!
+                     bjc = index_three(b, j, c, wf%n_v, wf%n_o)
+!
+                     u_bjc_i(bjc,i) = (two*s_ib_jc(ib,jc)-s_ib_jc(ic, jb))
+!
+                  enddo
                enddo
             enddo
          enddo
-         call deallocator(L_ad_J, ad_dim, wf%n_J)
+!         
+         call deallocator(s_ib_jc, (wf%n_o)*(wf%n_v), (wf%n_o)*c_length)
 !
-!        Allocate g_da_kc = g_adkc
+!        Prepare for batching over A
 !
-         call allocator(g_da_kc, ad_dim, (wf%n_o)*(wf%n_v))
+         A_first  = 0
+         A_last   = 0
+         A_length = 0
+         A_n_batch = c_n_batch
 !
-!        Calculate g_da_kc = sum_J L_da_J L_kc_J^T = sum_J L_ad^J L_kc^J = g_adkc 
-!     
-         call dgemm('N','T',            &
-                     ad_dim,            &
-                     (wf%n_o)*(wf%n_v), &
-                     wf%n_J,            &
-                     one,               &
-                     L_da_J,            &
-                     ad_dim,            &
-                     L_kc_J,            &
-                     (wf%n_o)*(wf%n_v), &
-                     zero,              &
-                     g_da_kc,           &
-                     ad_dim)
+!        Start looping over a-batches
 !
-!        Deallocate L_da_J
+         do A_batch = 1, A_n_batch
+!   
+            call batch_limits(A_first ,A_last ,A_batch, max_length, wf%n_v)
+            A_length = A_last - A_first + 1   
 !
-         call allocator(L_da_J, ad_dim, wf%n_J)
+!           :: Construct integral g_Ab,jc ::
 !
-!        Allocate g_a_ckd = g_adkc and set to zero Batching both c and a
+!           Get cholesky vectors
 !
-         call allocator(g_a_dkc, a_length, (wf%n_o)*(wf%n_v)*c_length)
-         g_a_dkc = zero
+            call allocator(L_jc_J, wf%n_o*c_length, wf%n_J)
+            L_jc_J = zero
+            call wf%get_cholesky_ia(L_jc_J, 1, wf%n_o, c_first, c_last)
 !
-!        Reorder the integrals to g_a_ckd
+            call allocator(L_ab_J, (wf%n_v)*a_length, wf%n_J) 
+            L_ab_J = zero
 !
-         do c = 1, c_length
-            do k = 1, wf%n_o
+            call wf%get_cholesky_ab(L_ab_J, a_first, a_last, 1, wf%n_v)
 !
-               kc  = index_two(k, c + c_first - 1, wf%n_o)
+            call allocator(g_ab_jc, wf%n_v*a_length, wf%n_o*c_length)      
 !
-               do d = 1, wf%n_v
+!           g_Ab,jc = sum_J L_Ab^J*L_jc^J
 !
-                  dkc = index_three(d, k, c, wf%n_v, wf%n_o) 
+            call dgemm('N', 'T',             &
+                        (wf%n_v)*a_length,   &
+                        (wf%n_o)*c_length,   &
+                        (wf%n_J),            &
+                        one,                 &
+                        L_Ab_J,              &
+                        (wf%n_v)*a_length,   &
+                        L_jc_J,              &
+                        (wf%n_o)*c_length,   &
+                        zero,                &
+                        g_Ab_jc,             &
+                        (wf%n_v)*a_length) 
 !
-                  do a = 1, a_length
+            call deallocator(L_jc_J, (wf%n_o)*(c_length), wf%n_J)
+            call deallocator(L_Ab_J, (wf%n_v)*(a_length), wf%n_J)
 !
-                     da  = index_two(d, a, wf%n_v)
+!           :: Add contributions to omega ::
 !
-                     g_a_dkc(a, dkc) = g_da_kc(da, kc) ! g_adkc 
+            call dgemm('N', 'N',                      &
+                        A_length,                     &
+                        wf%n_o,                       &
+                        (wf%n_v)*(wf%n_o)*c_length,   &
+                        one,                          &
+                        g_Ab_jc,                      &
+                        A_length,                     &
+                        u_bjc_i,                      &
+                        (wf%n_v)*(wf%n_o)*c_length,   &
+                        one,                          &
+                        wf%omega1(A_first,1),         &
+                        wf%n_v)
+! 
+            call deallocator(g_Ab_jc, (wf%n_v)*a_length, wf%n_o*c_length)
+!
+         enddo ! Batching over a
+!
+         call deallocator(u_bjc_i, (wf%n_v)*(wf%n_o)*c_length, wf%n_o)
+!
+      enddo ! Batching over c
+
+!
+   end subroutine omega_cc2_a1_cc2
+!
+!
+    module subroutine omega_cc2_b1_cc2(wf)
+!! 
+!!    Omega B1
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!   
+!!    Calculates the B1 term of omega, 
+!!   
+!!    B1: - sum_bjk u_jk^ab*g_kbjI + sum_bj u_ij^ab F_jb,
+!!
+!!    with u_ij^ab = 2*s_ij^ab - s_ij^ba. 
+!!
+!!    Batching over b.
+!!
+      implicit none
+!
+      class(cc2)   :: wf
+!
+!     Batching 
+!
+      integer(i15) :: required = 0, available = 0, max_length = 0, batch_dimension = 0, offset = 0
+      integer(i15) :: b_n_batch = 0, b_first = 0, b_last = 0, b_batch = 0, b_length = 0
+!
+!     Allocatables
+!
+      real(dp), dimension(:,:), allocatable :: L_aj_J 
+      real(dp), dimension(:,:), allocatable :: L_ja_J 
+      real(dp), dimension(:,:), allocatable :: L_kb_J 
+      real(dp), dimension(:,:), allocatable :: L_ji_J 
+      real(dp), dimension(:,:), allocatable :: s_ja_kb 
+      real(dp), dimension(:,:), allocatable :: u_a_kbj 
+      real(dp), dimension(:,:), allocatable :: g_kb_ji 
+!
+!     looping indices
+!
+      integer(i15) :: i = 0, j = 0, k = 0, a  = 0, b = 0
+      integer(i15) :: I_full = 0, J_full = 0, A_full  = 0, B_full = 0
+      integer(i15) :: ja = 0, kb = 0, ka  = 0, jb = 0, aj = 0
+      integer(i15) :: kbj = 0, jbi = 0
+!
+!     Prepare for batching
+!
+      required = ((wf%n_o)**3)*(wf%n_v) + ((wf%n_o)**2)*(wf%n_J) &
+               + (wf%n_o)*(wf%n_v)*(wf%n_J) + ((wf%n_o)**2)*((wf%n_v)**2)  
+!
+!
+      required = required*4  ! Words
+
+      available = get_available()
+
+      max_length = 0
+      call num_batch(required, available, max_length, b_n_batch, wf%n_v)
+!
+!     Initialize some variables for batching
+!
+      b_first  = 0
+      b_last   = 0
+      b_length = 0
+!
+!     Start looping over a-batches
+!
+      do b_batch = 1, b_n_batch
+!   
+         call batch_limits(b_first ,b_last ,b_batch, max_length, wf%n_v)
+!
+!        b is active index, and thus b_first and b_last must be displaced
+!
+         b_length = b_last - b_first + 1 
+!
+!        :: Construct u_jk^ab ::
+!  
+!        u_jk^ab = 2*s_jk^ab - s_jk^ba  (place in u_a_jkb)        
+!  
+         call allocator(s_ja_kb, (wf%n_o)*(wf%n_v), (wf%n_o)*b_length)
+         call wf%get_s2am(s_ja_kb, b_first, b_length)
+!
+         call allocator(u_a_kbj, wf%n_v, (wf%n_o**2)*b_length)
+
+         do k = 1, wf%n_o
+            do b = 1, b_length         
+!  
+                kb = index_two(k, b, wf%n_o)
+!  
+               do j = 1, wf%n_o
+!
+                  jb = index_two(j, b, wf%n_o)
+                  kbj = index_three(k, b, j, wf%n_o, b_length)
+!
+                  do a = 1, wf%n_v             
+!  
+                     ja = index_two(j, a, wf%n_o)
+                     ka = index_two(k, a, wf%n_o)
+                     
+!  
+                     u_a_kbj(a,kbj) = (two*s_ja_kb(ja,kb)-s_ja_kb(jb, ka))
 !
                   enddo
                enddo
             enddo
          enddo
 !
-!        Deallocate g_da_kc = g_adkc
+         call deallocator(s_ja_kb, (wf%n_o)*(wf%n_v), (wf%n_o)*(b_length))
 !
-         call deallocator(g_da_kc, ad_dim, (wf%n_o)*(wf%n_v))
+!        :: - sum_bjk u_ja_kb * g_kb_jI ::
 !
-!        Calculate the A1 term (sum_ckd g_a,ckd * u_ckd,i) & add to the omega vector
+!        Get cholesky vectors
 ! 
-         call dgemm('N','N',                     &
-                     a_length,                   &
-                     wf%n_o,                     &
-                     (wf%n_o)*(wf%n_v)*c_length, &
-                     one,                        &
-                     g_a_dkc,                    &
-                     a_length,                   &
-                     u_dkc_i,                    &
-                     (wf%n_o)*(wf%n_v)*c_length, &
-                     one,                        &
-                     wf%omega1(a_first,1),       &
-                     wf%n_v)
+         call allocator(L_jI_J, wf%n_o**2, wf%n_J)
 !
-!        Deallocate g_a_dkc
-!  
-         call allocator(g_a_dkc, a_length, (wf%n_o)*(wf%n_v)*c_length)
-
-      enddo  ! End of batches of the index a 
-!
-!     Deallocate u_ckd_i
-!
-      call deallocator(u_dkc_i, (wf%n_o)*(wf%n_v)*(c_length), wf%n_o)
-!
-   end subroutine omega_a1_cc2
-!
-!
-   module subroutine omega_b1_cc2(wf, t_lc_ak, c_first, c_last, c_length)
-! 
-!     Omega B1
-!     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-! 
-!     Calculates the B1 term of omega, 
-! 
-!     B1: - sum_ckl u_kl^ac * g_kilc,
-!  
-!     and adds it to the projection vector (omeg1) of
-!     the wavefunction object wf
-! 
-!     u_kl^ac = 2*t_kl^ac - t_lk^ac 
-! 
-      implicit none
-!
-      class(cc2) :: wf 
-!
-      integer(i15) :: c_first, c_last, c_length
-!
-      real(dp), dimension(c_length*(wf%n_o),(wf%n_v)*(wf%n_o)) :: t_lc_ak
-!
-      integer(i15) :: a = 0, c = 0
-      integer(i15) :: i = 0, j = 0, k = 0, l = 0
-!
-      integer(i15) :: ai = 0, ak = 0, al = 0
-      integer(i15) :: kc = 0, lc = 0
-      integer(i15) :: ki = 0
-!
-      integer(i15) :: klc = 0
-      integer(i15) :: lc_batch = 0
-!
-      integer(i15) :: akcl = 0,  alck = 0
-   
-!
-      real(dp), dimension(:,:), allocatable :: L_ki_J        ! L_ki^J 
-      real(dp), dimension(:,:), allocatable :: L_lc_J        ! L_lc^J 
-      real(dp), dimension(:,:), allocatable :: L_lc_J_batch  ! L_lc^J  with c constrained to the batch
-      real(dp), dimension(:,:), allocatable :: g_ki_lc       ! g_kilc 
-      real(dp), dimension(:,:), allocatable :: g_klc_i       ! g_kilc 
-      real(dp), dimension(:,:), allocatable :: u_a_klc       ! u_kl^ac = 2 t_kl^ac - t_lk^ac, batching over c
-!
-!
-!     Allocate Cholesky vectors L_lc_J and L_lc_J_batch 
-!
-      call allocator(L_lc_J, (wf%n_o)*(wf%n_v), wf%n_J)
-      call allocator(L_lc_J_batch, (wf%n_o)*c_length, wf%n_J)
-!
-      L_lc_J       = zero
-      L_lc_J_batch = zero
+         call wf%get_cholesky_ij(L_ji_J)
 
 !
-!     Read the Cholesky vectors L_lc_J
+         call allocator(L_kb_J, (wf%n_o)*b_length, wf%n_J)
 !
-      call wf%get_cholesky_ia(L_lc_J)
+         call wf%get_cholesky_ia(L_kb_J, 1, wf%n_o, b_first, b_last)
 !
-!     Constrain Cholesky vectors to c     
+         call allocator(g_kb_jI, (wf%n_o)*b_length, (wf%n_o)**2 )
 !
-      do c = 1, c_length
-         do l = 1, wf%n_o
+!        g_kb_jI = sum_J L_kb^J*L_jI_J
 !
-            lc_batch = index_two(l, c, wf%n_o)
-            lc = index_two(l, c + c_first - 1, wf%n_o)
+         call dgemm('N', 'T',                &
+                     (wf%n_o)*b_length,      &
+                     (wf%n_o)*(wf%n_o),      &
+                     (wf%n_J),               &
+                     one,                    &
+                     L_kb_J,                 &
+                     (wf%n_o)*b_length,      &
+                     L_ji_J,                 &
+                     (wf%n_o)*(wf%n_o),      &
+                     zero,                   &
+                     g_kb_jI,                &
+                     (wf%n_o)*b_length)
 !
-            do j = 1, wf%n_J
+         call deallocator(L_jI_J, wf%n_o*(wf%n_o), wf%n_J)
+         call deallocator(L_kb_J, wf%n_o*b_length, wf%n_J)
 !
-               L_lc_J_batch(lc_batch, J) = L_lc_J(lc, J) 
+!        Add contributions to omega
 !
-            enddo
-         enddo
-      enddo
+         call dgemm('N', 'N',                &
+                     wf%n_v,                 &
+                     (wf%n_o),               &
+                     b_length*((wf%n_o)**2), &
+                     -one,                   &
+                     u_a_kbj,                &
+                     wf%n_v,                 &
+                     g_kb_jI,                &
+                     b_length*((wf%n_o)**2), &
+                     one,                    &
+                     wf%omega1,              &
+                     (wf%n_v))
 !
-!     Deallocate L_lc_J
+         call deallocator(g_kb_jI, wf%n_o*b_length, wf%n_o*(wf%n_o))
 !
-      call deallocator(L_lc_J, (wf%n_o)*(wf%n_v), wf%n_J)
+!        :: sum_jb F_jb u_ij^ab ::
 !
-!     Allocate L_ki_J
-!
-      call allocator(L_ki_J, (wf%n_o)**2, wf%n_J)
-      L_ki_J = zero
-!
-!     Read the Cholesky vectors L_ki_J
-!
-      call wf%get_cholesky_ij(L_ki_J)
-!
-!
-!     Allocate integrals g_ki_lc = g_kilc
-!
-      call allocator(g_ki_lc, (wf%n_o)**2, (wf%n_o)*c_length)
-!
-!     Calculate g_ki_lc = sum_J L_ki_J L_lc_J^T 
-! 
-      call dgemm('N','T',            &
-                  (wf%n_o)**2,       &
-                  (wf%n_o)*c_length, &
-                  wf%n_J,            &
-                  one,               &
-                  L_ki_J,            &
-                  (wf%n_o)**2,       &
-                  L_lc_J_batch,      &
-                  (wf%n_o)*c_length, &
-                  zero,              &
-                  g_ki_lc,           &
-                  (wf%n_o)**2)
-!
-      call deallocator(L_ki_J, (wf%n_o)**2, wf%n_J)
-      call deallocator(L_lc_J_batch, (wf%n_o)*c_length, wf%n_J)
-!
-!
-!     Allocate reordered integrals g_ckl_i = g_kilc 
-!
-      call allocator(g_klc_i, c_length*((wf%n_o)**2), wf%n_o)
-      g_klc_i = zero
-!
-!     Determine g_ckl_i = g_kilc 
-!
-      do c = 1, c_length
-         do l = 1, wf%n_o
-!
-            lc  = index_two(l, c, wf%n_o)
-!
-            do k = 1, wf%n_o
-!
-               klc = index_three(k, l, c, wf%n_o, wf%n_o) 
-!            
-               do i = 1, wf%n_o
-!
-                  ki  = index_two(k, i, wf%n_o)                 
-!
-                  g_klc_i(klc, i) = g_ki_lc(ki, lc)
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!
-!     Deallocate unordered integrals g_ki_lc
-!
-      call deallocator(g_ki_lc, (wf%n_o)**2, (wf%n_o)*c_length)
-!
-!     Allocate redordered u_a_ckl = u_kl^ac and set it to zero
-!
-      call allocator(u_a_klc, wf%n_v, c_length*(wf%n_o)**2)
-      u_a_klc = zero
-!
-!     Determine u_a_ckl = u_kl^ac
-!     
-      do c = 1, c_length
-         do l = 1, wf%n_o
-!
-            lc   = index_two(l, c, wf%n_o)
-!
-            do k = 1, wf%n_o
-!
-               kc   = index_two(k, c, wf%n_o)
-               klc  = index_three(k, l, c, wf%n_o, wf%n_o) 
-!
-               do a = 1, wf%n_v
-!
-                  ak   = index_two(a, k, wf%n_v)
-                  al   = index_two(a, l, wf%n_v)
-!
-                  u_a_klc(a, klc) = two*(t_lc_ak(lc, ak)) - t_lc_ak(kc, al)
-!                  
-               enddo
-            enddo
-         enddo
-      enddo
-!
-!     Calculate the B1 term, - sum_ckl u_a_klc g_klc_i
-!
-      call dgemm('N','N',                 &
-                  wf%n_v,                 &
-                  wf%n_o,                 &
-                  c_length*((wf%n_o)**2), &
-                  -one,                   &
-                  u_a_klc,                &
-                  wf%n_v,                 &
-                  g_klc_i,                &
-                  c_length*((wf%n_o)**2), &
-                  one,                    &
-                  wf%omega1,              &
-                  wf%n_v)
-!
-!     Deallocate remaining vectors 
-!
-      call deallocator(u_a_klc, wf%n_v, c_length*((wf%n_o)**2))
-      call deallocator(g_klc_i, c_length*((wf%n_o)**2), wf%n_o) 
-!
-   end subroutine omega_b1_cc2
-!
-!
-   module subroutine omega_c1_cc2(wf, t_kc_ai, c_first, c_last, c_length)        
-!  
-!     Omega C1
-!     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!  
-!     Calculates the C1 term of omega,
-!  
-!     C1: sum_ck F_kc*u_ai_ck,
-!  
-!     and adds it to the projection vector (omega1) of    
-!     the wavefunction object wf                           
-!  
-!     u_ai_ck = 2*t_ck_ai - t_ci_ak
-!  
-      implicit none
-!
-      class(cc2) :: wf 
-!
-      integer(i15) :: c_first, c_last, c_length
-!
-      real(dp), dimension(c_length*(wf%n_o),(wf%n_v)*(wf%n_o)) :: t_kc_ai
-!
-      real(dp), dimension(:,:), allocatable :: F_kc     
-      real(dp), dimension(:,:), allocatable :: u_ai_kc  
-      real(dp), dimension(:,:), allocatable :: omega1_ai
-!
-      integer(i15) :: i = 0, k = 0, c = 0, a = 0
-!
-      integer(i15) :: kc = 0, ai = 0, ak = 0, ic = 0
-!
-!     Allocation of F_ck, u_ai_ck and omega1_ai
-!
-      call allocator(F_kc, (wf%n_o)*c_length, 1)
-      call allocator(u_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*c_length)  
-      call allocator(omega1_ai, (wf%n_o)*(wf%n_v), 1)
-!
-      F_kc    = zero
-      u_ai_kc = zero
-!
-!     Set up u_ck_ai and virtual-occupied Fock matrix
-!
-      do k = 1, wf%n_o
-         do c = 1, c_length
-!
-!           Set up compound index
-!  
-            kc = index_two(k, c, wf%n_o)
-!
-!           Reorder MO Fock matrix
-!
-            F_kc(kc, 1) = wf%fock_ia(k, c)
+         do i = 1, wf%n_o
 !
             do a = 1, wf%n_v
-               do i = 1, wf%n_o
+!          
+               do j = 1, wf%n_o
 !
-!                 Set up compound indices
+                  do b = 1, b_length
+! 
+                     B_full = b + b_first - 1
+! 
+                     jbi = index_three(j, b, i, wf%n_o, b_length)
+                    
+                     wf%omega1(a, i) = wf%omega1(a, i) + u_a_kbj(a, jbi)*wf%fock_ia(j, B_full)
 !
-                  ai = index_two(a, i, wf%n_v)
-                  ic = index_two(i, c, wf%n_o)
-                  ak = index_two(a, k, wf%n_v)
-!                    
-!                 u_ck_ai
-!
-                  u_ai_kc(ai, kc) = two*(t_kc_ai(kc, ai)) - t_kc_ai(ic, ak)
-!
+                  enddo
                enddo
             enddo
          enddo
-      enddo
+! 
+         call deallocator(u_a_kbj, wf%n_v, (wf%n_o**2)*b_length)
 !
-!     Matrix multiplication
+      enddo 
+!      
+   end subroutine omega_cc2_b1_cc2
 !
-      call dgemm('N','N',            &
-                  (wf%n_o)*(wf%n_v), &
-                  1,                 &
-                  (wf%n_o)*c_length, &
-                  one,               &
-                  u_ai_kc,           &
-                  (wf%n_o)*(wf%n_v), &
-                  F_kc,              &
-                  (wf%n_o)*c_length, &
-                  zero,              &
-                  omega1_ai,         &
-                  (wf%n_o)*(wf%n_v))
+   module subroutine get_s2am_cc2(wf, s_ia_jb, b_first, b_length)
+!!
+!!    Get S_2 amplitudes, 
+!!    Written by Sarai D. Folkestad, July 2017 
+!!
+!!    Construct
+!!
+!!       s_ai_bj = - 1/ε_ij^ab * g_aibj,
+!!
+!!    while batching over b.
+!!
+      implicit none
 !
+      class(cc2) :: wf
+! 
+      integer(i15) :: b_first, b_length
+      real(dp), dimension((wf%n_v)*(wf%n_o), b_length*(wf%n_o)) :: s_ia_jb
+!
+      real(dp), dimension(:,:), allocatable :: L_ia_J
+      real(dp), dimension(:,:), allocatable :: L_ai_J
+      real(dp), dimension(:,:), allocatable :: g_ia_jb
+!
+      integer(i15) :: i = 0, j = 0, a = 0, b = 0, ia = 0, jb = 0, ai = 0, offset = 0
+!
+      call allocator(L_ai_J, wf%n_o*wf%n_v, wf%n_J)
+      L_ai_J = zero
+!
+      call wf%get_cholesky_ai(L_ai_J)
+!
+      call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+!
+!     Reorder L_bi_J to L_ib_J
 !
       do a = 1, wf%n_v
          do i = 1, wf%n_o
 !
-!           Set up compound index
-!
+            ia = index_two(i, a, wf%n_o)
             ai = index_two(a, i, wf%n_v)
 !
-!           Add to omega1
+            do J = 1, wf%n_J
 !
-            wf%omega1(a,i) = wf%omega1(a, i) + omega1_ai(ai,1)
+               L_ia_J(ia, J) = L_ai_J(ai, J) 
 !
+            enddo
          enddo
       enddo
 !
-!     Deallocation of F_ck, u_ai_ck and omega1_ai
+      call deallocator(L_ai_J, wf%n_o*wf%n_v, wf%n_J)
 !
-      call deallocator(F_kc, (wf%n_o)*c_length, 1)
-      call deallocator(u_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*c_length)  
-      call deallocator(omega1_ai, (wf%n_o)*(wf%n_v), 1)
+      call allocator(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*b_length)
 !
-   end subroutine omega_c1_cc2
+      offset = index_two(1, b_first, wf%n_o)
+!
+!     g_ib_jc = g_bi,cj = sum_J L_bj^J*L_ci^J
+!
+      call dgemm('N', 'T',            &
+                  (wf%n_o)*(wf%n_v),  &
+                  (wf%n_o)*b_length,  &
+                  (wf%n_J),           &
+                  one,                &
+                  L_ia_J,             &
+                  (wf%n_o)*(wf%n_v),  &
+                  L_ia_J(offset,1),   &
+                  (wf%n_o)*(wf%n_v),  &
+                  zero,               &
+                  g_ia_jb,            &
+                  (wf%n_o)*(wf%n_v))
+!
+      call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+!
+!
+         do a = 1, wf%n_v
+            do i = 1, wf%n_o
+!
+               ia = index_two(i, a, wf%n_o)
+!
+               do b = 1, b_length
+                  do j = 1, wf%n_o
+!
+                     jb = index_two(j, b, wf%n_o)
+!
+                     s_ia_jb(ia, jb) = g_ia_jb(ia, jb)/(wf%fock_diagonal(i,1)&
+                                           + wf%fock_diagonal(j,1) &
+                                           - wf%fock_diagonal(wf%n_o + b + b_first - 1,1) &
+                                           - wf%fock_diagonal(wf%n_o + a ,1))
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+      call deallocator(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*b_length)
+!
+   end subroutine get_s2am_cc2
 !
 !
 end submodule
