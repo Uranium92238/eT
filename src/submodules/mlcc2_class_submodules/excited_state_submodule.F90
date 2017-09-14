@@ -48,7 +48,7 @@ contains
 !
    module subroutine calculate_orbital_differences_mlcc2(wf, orbital_diff)
 !!
-!!    Calculate Orbital Differences (CC2)
+!!    Calculate Orbital Differences (MLCC2)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad May 2017
 !!
 !!    Calculates orbital differences
