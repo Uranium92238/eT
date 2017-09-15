@@ -29,4 +29,469 @@ contains
    end subroutine get_oo_oo_ccs
 !
 !
+   module subroutine get_vo_vo_ccs(wf, integral_type, x_vo_vo,    & 
+                                       index1_first, index1_last, &
+                                       index2_first, index2_last, &
+                                       index3_first, index3_last, &
+                                       index4_first, index4_last)
+!!
+!!
+!!
+      implicit none 
+!
+      class(ccs) :: wf 
+!
+      character(len=40) :: integral_type 
+!
+      real(dp), dimension(:, :) :: x_vo_vo
+!
+      integer(i15), optional :: index1_first, index1_last
+      integer(i15), optional :: index2_first, index2_last
+      integer(i15), optional :: index3_first, index3_last
+      integer(i15), optional :: index4_first, index4_last
+!
+      if (trim(integral_type) == 'electronic_repulsion') then
+!
+         call wf%get_vo_vo_electronic_repulsion(x_vo_vo,          & 
+                                       index1_first, index1_last, &
+                                       index2_first, index2_last, &
+                                       index3_first, index3_last, &
+                                       index4_first, index4_last)
+!
+      else
+!
+         write(unit_output,*)'WARNING: unknown integral type requested from get_vo_vo'
+!
+      endif
+!
+   end subroutine get_vo_vo_ccs
+!
+!
+   module subroutine get_ov_vo_ccs(wf, integral_type, x_ov_vo,    & 
+                                       index1_first, index1_last, &
+                                       index2_first, index2_last, &
+                                       index3_first, index3_last, &
+                                       index4_first, index4_last)
+!!
+!!
+!!
+      implicit none 
+!
+      class(ccs) :: wf 
+!
+      character(len=40) :: integral_type 
+!
+      real(dp), dimension(:, :) :: x_ov_vo
+!
+      integer(i15), optional :: index1_first, index1_last
+      integer(i15), optional :: index2_first, index2_last
+      integer(i15), optional :: index3_first, index3_last
+      integer(i15), optional :: index4_first, index4_last
+!
+      if (trim(integral_type) == 'electronic_repulsion') then
+!
+         call wf%get_ov_vo_electronic_repulsion(x_ov_vo,          & 
+                                       index1_first, index1_last, &
+                                       index2_first, index2_last, &
+                                       index3_first, index3_last, &
+                                       index4_first, index4_last)
+!
+      else
+!
+         write(unit_output,*)'WARNING: unknown integral type requested from get_vo_vo'
+!
+      endif
+!
+   end subroutine get_ov_vo_ccs
+!
+!
+   module subroutine get_vo_ov_ccs(wf, integral_type, x_vo_ov,    & 
+                                       index1_first, index1_last, &
+                                       index2_first, index2_last, &
+                                       index3_first, index3_last, &
+                                       index4_first, index4_last)
+!!
+!!
+!!
+      implicit none 
+!
+      class(ccs) :: wf 
+!
+      character(len=40) :: integral_type 
+!
+      real(dp), dimension(:, :) :: x_vo_ov
+!
+      integer(i15), optional :: index1_first, index1_last
+      integer(i15), optional :: index2_first, index2_last
+      integer(i15), optional :: index3_first, index3_last
+      integer(i15), optional :: index4_first, index4_last
+!
+      if (trim(integral_type) == 'electronic_repulsion') then
+!
+         call wf%get_ov_vo_electronic_repulsion(x_vo_ov,          & 
+                                       index1_first, index1_last, &
+                                       index2_first, index2_last, &
+                                       index3_first, index3_last, &
+                                       index4_first, index4_last)
+!
+      else
+!
+         write(unit_output,*)'WARNING: unknown integral type requested from get_vo_vo'
+!
+      endif
+!
+   end subroutine get_vo_ov_ccs
+!
+!
+   module subroutine get_vo_vo_electronic_repulsion_ccs(wf, x_vo_vo,    & 
+                                       index1_first, index1_last, &
+                                       index2_first, index2_last, &
+                                       index3_first, index3_last, &
+                                       index4_first, index4_last)
+!!
+!!
+!!
+      implicit none 
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(:, :) :: x_vo_vo
+!
+      integer(i15), optional :: index1_first, index1_last
+      integer(i15), optional :: index2_first, index2_last
+      integer(i15), optional :: index3_first, index3_last
+      integer(i15), optional :: index4_first, index4_last
+!
+      real(dp), dimension(:,:), allocatable :: L_ai_J, L_bj_J
+!
+      integer(i15) :: length_1 = 0, length_2 = 0, length_3 = 0, length_4 = 0
+!
+   if (present(index1_first) .and. present(index1_first)      &
+      .and. present(index2_first) .and. present(index2_first) &
+      .and. present(index3_first) .and. present(index3_first) &
+      .and. present(index4_first) .and. present(index4_first) ) then
+!
+!     Optional arguments are pressent, we are either batching or running MLCC calculation
+!
+!     Sanity check here!!
+!
+!     Lengths
+!
+      length_1 = index1_last - index1_first + 1
+      length_2 = index2_last - index2_first + 1
+      length_3 = index3_last - index3_first + 1
+      length_4 = index4_last - index4_first + 1
+!
+!     Alllocate Cholesky vectors
+!
+      call allocator(L_ai_J, length_1*length_2, wf%n_J)
+      call allocator(L_bj_J, length_3*length_4, wf%n_J)
+!
+!     Get T1-transformed Cholesky vectors
+!
+      call wf%get_cholesky_ai(L_ai_J, index1_first, index1_last, index2_first, index2_last)
+      call wf%get_cholesky_ai(L_bj_J, index3_first, index3_last, index4_first, index4_last)
+!
+!     Construct integral
+!
+      call dgemm('N', 'T',             &
+                  length_1*length_2,   &
+                  length_3*length_4,   &
+                  wf%n_J,              &
+                  one,                 &
+                  L_ai_J,              &
+                  length_1*length_2,   &
+                  L_bj_J,              &
+                  length_3*length_4,   &
+                  zero,                &
+                  x_vo_vo,             &
+                  length_1*length_2)
+!
+!     Deallocate Cholesky vectors
+!
+      call deallocator(L_ai_J, length_1*length_2, wf%n_J)
+      call deallocator(L_bj_J, length_3*length_4, wf%n_J)
+!
+   elseif ( .not. (present(index1_first) .and. present(index1_first) &
+         .and. present(index2_first) .and. present(index2_first)     &
+         .and. present(index3_first) .and. present(index3_first)     &
+         .and. present(index4_first) .and. present(index4_first) )) then
+!
+!     No optional arguments passed
+!
+!     Alllocate Cholesky vector
+!
+      call allocator(L_ai_J, (wf%n_v)*(wf%n_o), wf%n_J)
+!
+!     Get T1-transformed Cholesky vector
+!
+      call wf%get_cholesky_ai(L_ai_J)
+!
+!     Construct integral
+!
+      call dgemm('N', 'T',             &
+                  (wf%n_v)*(wf%n_o),   &
+                  (wf%n_v)*(wf%n_o),   &
+                  wf%n_J,              &
+                  one,                 &
+                  L_ai_J,              &
+                  (wf%n_v)*(wf%n_o),   &
+                  L_ai_J,              &
+                  (wf%n_v)*(wf%n_o),   &
+                  zero,                &
+                  x_vo_vo,             &
+                  (wf%n_v)*(wf%n_o))
+!
+!     Deallocate Cholesky vector
+!
+      call deallocator(L_ai_J, (wf%n_v)*(wf%n_o), wf%n_J)
+!
+   else
+!
+!     Something wrong in subroutine call
+!
+      write(unit_output,*) 'WARNING: Some, but not all optional arguments were passed to get_vo_vo_electronic_repulsion'
+      stop
+!
+   endif
+!
+   end subroutine get_vo_vo_electronic_repulsion_ccs
+!
+!
+module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    & 
+                                       index1_first, index1_last, &
+                                       index2_first, index2_last, &
+                                       index3_first, index3_last, &
+                                       index4_first, index4_last)
+!!
+!!
+!!
+      implicit none 
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(:, :) :: x_ov_vo
+!
+      integer(i15), optional :: index1_first, index1_last
+      integer(i15), optional :: index2_first, index2_last
+      integer(i15), optional :: index3_first, index3_last
+      integer(i15), optional :: index4_first, index4_last
+!
+      real(dp), dimension(:,:), allocatable :: L_ia_J, L_bj_J
+!
+      integer(i15) :: length_1 = 0, length_2 = 0, length_3 = 0, length_4 = 0
+!
+   if (present(index1_first) .and. present(index1_first)      &
+      .and. present(index2_first) .and. present(index2_first) &
+      .and. present(index3_first) .and. present(index3_first) &
+      .and. present(index4_first) .and. present(index4_first) ) then
+!
+!     Optional arguments are pressent, we are either batching or running MLCC calculation
+!
+!     Sanity check here!!
+!
+!     Lengths
+!
+      length_1 = index1_last - index1_first + 1
+      length_2 = index2_last - index2_first + 1
+      length_3 = index3_last - index3_first + 1
+      length_4 = index4_last - index4_first + 1
+!
+!     Alllocate Cholesky vectors
+!
+      call allocator(L_ia_J, length_1*length_2, wf%n_J)
+      call allocator(L_bj_J, length_3*length_4, wf%n_J)
+!
+!     Get T1-transformed Cholesky vectors
+!
+      call wf%get_cholesky_ia(L_ia_J, index1_first, index1_last, index2_first, index2_last)
+      call wf%get_cholesky_ai(L_bj_J, index3_first, index3_last, index4_first, index4_last)
+!
+!     Construct integral
+!
+      call dgemm('N', 'T',             &
+                  length_1*length_2,   &
+                  length_3*length_4,   &
+                  wf%n_J,              &
+                  one,                 &
+                  L_ia_J,              &
+                  length_1*length_2,   &
+                  L_bj_J,              &
+                  length_3*length_4,   &
+                  zero,                &
+                  x_ov_vo,             &
+                  length_1*length_2)
+!
+!     Deallocate Cholesky vectors
+!
+      call deallocator(L_ia_J, length_1*length_2, wf%n_J)
+      call deallocator(L_bj_J, length_3*length_4, wf%n_J)
+!
+   elseif ( .not. (present(index1_first) .and. present(index1_first) &
+         .and. present(index2_first) .and. present(index2_first)     &
+         .and. present(index3_first) .and. present(index3_first)     &
+         .and. present(index4_first) .and. present(index4_first) )) then
+!
+!     No optional arguments passed
+!
+!     Alllocate Cholesky vector
+!
+      call allocator(L_ia_J, (wf%n_v)*(wf%n_o), wf%n_J)      
+      call allocator(L_bj_J, (wf%n_v)*(wf%n_o), wf%n_J)
+!
+!     Get T1-transformed Cholesky vectors
+!
+      call wf%get_cholesky_ia(L_ia_J)
+      call wf%get_cholesky_ai(L_bj_J)
+!
+!     Construct integral
+!
+      call dgemm('N', 'T',             &
+                  (wf%n_v)*(wf%n_o),   &
+                  (wf%n_v)*(wf%n_o),   &
+                  wf%n_J,              &
+                  one,                 &
+                  L_ia_J,              &
+                  (wf%n_v)*(wf%n_o),   &
+                  L_bj_J,              &
+                  (wf%n_v)*(wf%n_o),   &
+                  zero,                &
+                  x_ov_vo,             &
+                  (wf%n_v)*(wf%n_o))
+!
+!     Deallocate Cholesky vector
+!
+      call deallocator(L_ia_J, (wf%n_v)*(wf%n_o), wf%n_J)      
+      call deallocator(L_bj_J, (wf%n_v)*(wf%n_o), wf%n_J)
+!
+   else
+!
+!     Something wrong in subroutine call
+!
+      write(unit_output,*) 'WARNING: Some, but not all optional arguments were passed to get_vo_vo_electronic_repulsion'
+      stop
+!
+   endif
+!
+   end subroutine get_ov_vo_electronic_repulsion_ccs
+!
+!
+module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    & 
+                                       index1_first, index1_last, &
+                                       index2_first, index2_last, &
+                                       index3_first, index3_last, &
+                                       index4_first, index4_last)
+!!
+!!
+!!
+      implicit none 
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(:, :) :: x_vo_ov
+!
+      integer(i15), optional :: index1_first, index1_last
+      integer(i15), optional :: index2_first, index2_last
+      integer(i15), optional :: index3_first, index3_last
+      integer(i15), optional :: index4_first, index4_last
+!
+      real(dp), dimension(:,:), allocatable :: L_ai_J, L_jb_J
+!
+      integer(i15) :: length_1 = 0, length_2 = 0, length_3 = 0, length_4 = 0
+!
+   if (present(index1_first) .and. present(index1_first)      &
+      .and. present(index2_first) .and. present(index2_first) &
+      .and. present(index3_first) .and. present(index3_first) &
+      .and. present(index4_first) .and. present(index4_first) ) then
+!
+!     Optional arguments are pressent, we are either batching or running MLCC calculation
+!
+!     Sanity check here!!
+!
+!     Lengths
+!
+      length_1 = index1_last - index1_first + 1
+      length_2 = index2_last - index2_first + 1
+      length_3 = index3_last - index3_first + 1
+      length_4 = index4_last - index4_first + 1
+!
+!     Alllocate Cholesky vectors
+!
+      call allocator(L_ai_J, length_1*length_2, wf%n_J)
+      call allocator(L_jb_J, length_3*length_4, wf%n_J)
+!
+!     Get T1-transformed Cholesky vectors
+!
+      call wf%get_cholesky_ai(L_ai_J, index1_first, index1_last, index2_first, index2_last)
+      call wf%get_cholesky_ia(L_jb_J, index3_first, index3_last, index4_first, index4_last)
+!
+!     Construct integral
+!
+      call dgemm('N', 'T',             &
+                  length_1*length_2,   &
+                  length_3*length_4,   &
+                  wf%n_J,              &
+                  one,                 &
+                  L_ai_J,              &
+                  length_1*length_2,   &
+                  L_jb_J,              &
+                  length_3*length_4,   &
+                  zero,                &
+                  x_vo_ov,             &
+                  length_1*length_2)
+!
+!     Deallocate Cholesky vectors
+!
+      call deallocator(L_ai_J, length_1*length_2, wf%n_J)
+      call deallocator(L_jb_J, length_3*length_4, wf%n_J)
+!
+   elseif ( .not. (present(index1_first) .and. present(index1_first) &
+         .and. present(index2_first) .and. present(index2_first)     &
+         .and. present(index3_first) .and. present(index3_first)     &
+         .and. present(index4_first) .and. present(index4_first) )) then
+!
+!     No optional arguments passed
+!
+!     Alllocate Cholesky vector
+!
+      call allocator(L_ai_J, (wf%n_v)*(wf%n_o), wf%n_J)      
+      call allocator(L_jb_J, (wf%n_v)*(wf%n_o), wf%n_J)
+!
+!     Get T1-transformed Cholesky vectors
+!
+      call wf%get_cholesky_ia(L_ai_J)
+      call wf%get_cholesky_ai(L_jb_J)
+!
+!     Construct integral
+!
+      call dgemm('N', 'T',             &
+                  (wf%n_v)*(wf%n_o),   &
+                  (wf%n_v)*(wf%n_o),   &
+                  wf%n_J,              &
+                  one,                 &
+                  L_ai_J,              &
+                  (wf%n_v)*(wf%n_o),   &
+                  L_jb_J,              &
+                  (wf%n_v)*(wf%n_o),   &
+                  zero,                &
+                  x_vo_ov,             &
+                  (wf%n_v)*(wf%n_o))
+!
+!     Deallocate Cholesky vector
+!
+      call deallocator(L_ai_J, (wf%n_v)*(wf%n_o), wf%n_J)      
+      call deallocator(L_jb_J, (wf%n_v)*(wf%n_o), wf%n_J)
+!
+   else
+!
+!     Something wrong in subroutine call
+!
+      write(unit_output,*) 'WARNING: Some, but not all optional arguments were passed to get_vo_vo_electronic_repulsion'
+      stop
+!
+   endif
+!
+   end subroutine get_vo_ov_electronic_repulsion_ccs
+!
+!
 end submodule integrals
