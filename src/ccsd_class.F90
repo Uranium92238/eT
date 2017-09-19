@@ -1143,8 +1143,8 @@ module ccsd_class
 !
          class(ccsd) :: wf
 !
-         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ab_ij
-         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ab_ij
+         real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: b_ab_ij
+         real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: sigma_ab_ij
 !
       end subroutine jacobian_transpose_ccsd_h2_ccsd
 !
@@ -1169,8 +1169,8 @@ module ccsd_class
 !
          class(ccsd) :: wf
 !
-         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ab_ij
-         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ab_ij
+         real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: b_ab_ij
+         real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: sigma_ab_ij
 !
       end subroutine jacobian_transpose_ccsd_i2_ccsd
 !

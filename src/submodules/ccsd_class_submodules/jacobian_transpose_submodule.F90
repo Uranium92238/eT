@@ -260,7 +260,7 @@ contains
       real(dp), dimension(:,:), allocatable :: L_ai_ld ! L_iald 
 !
       integer(i15) :: k = 0, c = 0, d = 0, l = 0, ck = 0, dk = 0, dl = 0
-      integer(i15) :: ld = 0, cl = 0, ckdl = 0, cldk = 0, i = 0, a = 0, ld = 0
+      integer(i15) :: cl = 0, ckdl = 0, cldk = 0, i = 0, a = 0, ld = 0
       integer(i15) :: id = 0, la = 0, ia = 0, ai = 0
 !
 !     Read the amplitudes from disk 
