@@ -904,7 +904,7 @@ module ccs_class
       end subroutine print_excited_state_info_ccs
 !
 !
-      module subroutine print_excitation_vector_ccs(wf, vec, unit_id)
+           module subroutine print_excitation_vector_ccs(wf, vec, unit_id)
 !!
 !!
 !!
@@ -912,7 +912,7 @@ module ccs_class
 !  
          class(ccs) :: wf
 !
-         real(dp), dimension(wf%n_v*wf%n_o, 1) :: vec
+         real(dp), dimension(wf%n_parameters, 1) :: vec
 !
          integer(i15) :: unit_id     
 !
