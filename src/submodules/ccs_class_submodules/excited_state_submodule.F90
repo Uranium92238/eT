@@ -1512,7 +1512,7 @@ contains
 !  
          class(ccs) :: wf
 !
-         real(dp), dimension(wf%n_v*wf%n_o, 1) :: vec
+         real(dp), dimension(wf%n_parameters, 1) :: vec
 !
          integer(i15) :: unit_id     
 !
