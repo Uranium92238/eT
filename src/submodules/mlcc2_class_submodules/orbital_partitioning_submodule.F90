@@ -1123,7 +1123,8 @@ contains
 !
 !     Construct M and N
 !
-      lower_level_n_singlet_states = CCS_factor_n_singlet_states*wf%tasks%n_singlet_states
+      lower_level_n_singlet_states = CCS_factor_n_singlet_states*(wf%tasks%n_singlet_states)
+!
       do state = 1, lower_level_n_singlet_states
          read(unit=unit_solution, rec=state) (R_a_i(i , 1), i = 1, (wf%n_o)*(wf%n_v))
 !

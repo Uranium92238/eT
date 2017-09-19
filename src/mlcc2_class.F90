@@ -98,6 +98,8 @@ module mlcc2_class
       procedure :: transform_trial_vectors       => transform_trial_vectors_mlcc2
       procedure :: cvs_residual_projection       => cvs_residual_projection_mlcc2 
 !
+      procedure :: print_excitation_vector => print_excitation_vector_mlcc2
+!
 !     Jacobian
 !
       procedure :: jacobian_mlcc2_transformation      => jacobian_mlcc2_transformation_mlcc2
@@ -538,6 +540,21 @@ module mlcc2_class
          real(dp), dimension(wf%n_parameters, 1) :: residual
 !
       end subroutine cvs_residual_projection_mlcc2
+!
+!
+     module subroutine print_excitation_vector_mlcc2(wf, vec, unit_id)
+!!
+!!
+!!
+         implicit none
+!  
+         class(mlcc2) :: wf
+!
+         real(dp), dimension(wf%n_parameters, 1) :: vec
+!
+         integer(i15) :: unit_id     
+!
+      end subroutine print_excitation_vector_mlcc2
 !
 !
    end interface

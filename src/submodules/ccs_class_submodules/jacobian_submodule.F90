@@ -41,10 +41,17 @@ contains
       call allocator(rho_a_i, wf%n_v, wf%n_o)
       rho_a_i = zero
 !
-!     Add the CCS terms of the transformation 
+!     A1-term
 !
-      call wf%jacobian_ccs_a1(c_a_i,rho_a_i)
-      call wf%jacobian_ccs_b1(c_a_i,rho_a_i)
+      call wf%jacobian_ccs_a1(rho_a_i, c_a_i)
+!
+!     B1-term
+!
+      call wf%jacobian_ccs_b1(rho_a_i, c_a_i)
+!
+!     Place rho_a_i in c_a_i
+!
+      c_a_i = zero
 !
       call dcopy((wf%n_o)*(wf%n_v), rho_a_i, 1, c_a_i, 1)
 !
@@ -81,11 +88,11 @@ contains
 !
 !     A1-term
 !
-      call wf%jacobian_ccs_a1(rho_a_i,c_a_i)
+      call wf%jacobian_ccs_a1(rho_a_i, c_a_i)
 !
 !     B1-term
 !
-      call wf%jacobian_ccs_b1(rho_a_i,c_a_i)
+      call wf%jacobian_ccs_b1(rho_a_i, c_a_i)
 !
 !     Projection
 !
@@ -101,7 +108,7 @@ contains
    end subroutine cvs_jacobian_ccs_transformation_ccs
 !
 !
-   module subroutine jacobian_ccs_a1_ccs(wf,rho,c1)
+   module subroutine jacobian_ccs_a1_ccs(wf, rho, c1)
 !!
 !!    Jacobian CCS A1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad
