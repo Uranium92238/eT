@@ -203,6 +203,7 @@ module ccs_class
       procedure :: get_vv_ov => get_vv_ov_ccs
       procedure :: get_vo_vv => get_vo_vv_ccs
       procedure :: get_vv_vo => get_vv_vo_ccs
+      procedure :: get_vv_vv => get_vv_vv_ccs
 !
       procedure :: get_vo_vo_electronic_repulsion => get_vo_vo_electronic_repulsion_ccs
       procedure :: get_ov_vo_electronic_repulsion => get_ov_vo_electronic_repulsion_ccs
@@ -211,6 +212,7 @@ module ccs_class
       procedure :: get_vv_ov_electronic_repulsion => get_vv_ov_electronic_repulsion_ccs
       procedure :: get_vo_vv_electronic_repulsion => get_vo_vv_electronic_repulsion_ccs
       procedure :: get_vv_vo_electronic_repulsion => get_vv_vo_electronic_repulsion_ccs
+      procedure :: get_vv_vv_electronic_repulsion => get_vv_vv_electronic_repulsion_ccs
 
 ! ...
 !
@@ -1475,6 +1477,30 @@ module ccs_class
       end subroutine get_vv_vo_ccs
 !
 !
+      module subroutine get_vv_vv_ccs(wf, integral_type, x_vv_vv,    & 
+                                          index1_first, index1_last, &
+                                          index2_first, index2_last, &
+                                          index3_first, index3_last, &
+                                          index4_first, index4_last)
+!  
+!  
+!  
+         implicit none 
+!  
+         class(ccs) :: wf 
+!  
+         character(len=40) :: integral_type 
+!  
+         real(dp), dimension(:,:) :: x_vv_vv
+!  
+         integer(i15), optional :: index1_first, index1_last
+         integer(i15), optional :: index2_first, index2_last
+         integer(i15), optional :: index3_first, index3_last
+         integer(i15), optional :: index4_first, index4_last
+!  
+      end subroutine get_vv_vv_ccs
+!
+!
       module subroutine get_vo_vo_electronic_repulsion_ccs(wf, x_vo_vo, & 
                                           index1_first, index1_last,    &
                                           index2_first, index2_last,    &
@@ -1627,6 +1653,28 @@ module ccs_class
          integer(i15), optional :: index4_first, index4_last
 !  
       end subroutine get_vv_vo_electronic_repulsion_ccs
+!
+!
+      module subroutine get_vv_vv_electronic_repulsion_ccs(wf, x_vv_vv, & 
+                                          index1_first, index1_last,    &
+                                          index2_first, index2_last,    &
+                                          index3_first, index3_last,    &
+                                          index4_first, index4_last)
+!  
+!  
+!  
+         implicit none 
+!  
+         class(ccs) :: wf 
+!  
+         real(dp), dimension(:,:) :: x_vv_vv
+!  
+         integer(i15), optional :: index1_first, index1_last
+         integer(i15), optional :: index2_first, index2_last
+         integer(i15), optional :: index3_first, index3_last
+         integer(i15), optional :: index4_first, index4_last
+!  
+      end subroutine get_vv_vv_electronic_repulsion_ccs
 !
 !
    end interface
