@@ -828,21 +828,21 @@ module ccsd_class
 !
       module subroutine jacobian_transpose_ccsd_a1_ccsd(wf, sigma_a_i, b_a_i)
 !!
-!!       Jacobian transpose CCSD A1 
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!    Jacobian transpose CCSD A1 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-!!       Calculates the A1 term,
+!!    Calculates the A1 term,
 !!
-!!          sum_ckdl b_ck L_iald u_kl^cd,
+!!       sum_ckdl b_ck L_iald u_kl^cd,
 !! 
-!!       abd adds it to the transformed vector sigma_a_i.
+!!    abd adds it to the transformed vector sigma_a_i.
 !!
-         implicit none 
+      implicit none 
 !
-         class(ccsd) :: wf
+      class(ccsd) :: wf
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i 
-         real(dp), dimension(wf%n_v, wf%n_o) :: sigma_a_i 
+      real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i 
+      real(dp), dimension(wf%n_v, wf%n_o) :: sigma_a_i 
 !
       end subroutine jacobian_transpose_ccsd_a1_ccsd
 !
@@ -1143,8 +1143,8 @@ module ccsd_class
 !
          class(ccsd) :: wf
 !
-         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ab_ij
-         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ab_ij
+         real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: b_ab_ij
+         real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: sigma_ab_ij
 !
       end subroutine jacobian_transpose_ccsd_h2_ccsd
 !
@@ -1169,8 +1169,8 @@ module ccsd_class
 !
          class(ccsd) :: wf
 !
-         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ab_ij
-         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ab_ij
+         real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: b_ab_ij
+         real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: sigma_ab_ij
 !
       end subroutine jacobian_transpose_ccsd_i2_ccsd
 !
