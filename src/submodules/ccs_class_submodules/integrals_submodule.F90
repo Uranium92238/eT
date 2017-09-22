@@ -446,10 +446,10 @@ contains
 !
       integer(i15) :: length_1 = 0, length_2 = 0, length_3 = 0, length_4 = 0
 !
-   if (present(index1_first) .and. present(index1_first)      &
-      .and. present(index2_first) .and. present(index2_first) &
-      .and. present(index3_first) .and. present(index3_first) &
-      .and. present(index4_first) .and. present(index4_first) ) then
+   if (     present(index1_first) .and. present(index1_last) &
+      .and. present(index2_first) .and. present(index2_last) &
+      .and. present(index3_first) .and. present(index3_last) &
+      .and. present(index4_first) .and. present(index4_last) ) then
 !
 !     Optional arguments are pressent, we are either batching or running MLCC calculation
 !
@@ -492,10 +492,10 @@ contains
       call deallocator(L_ai_J, length_1*length_2, wf%n_J)
       call deallocator(L_bj_J, length_3*length_4, wf%n_J)
 !
-   elseif ( .not. (present(index1_first) .and. present(index1_first) &
-         .and. present(index2_first) .and. present(index2_first)     &
-         .and. present(index3_first) .and. present(index3_first)     &
-         .and. present(index4_first) .and. present(index4_first) )) then
+   elseif ( .not. (present(index1_first) .and. present(index1_last) &
+             .and. present(index2_first) .and. present(index2_last) &
+             .and. present(index3_first) .and. present(index3_last) &
+             .and. present(index4_first) .and. present(index4_last) )) then
 !
 !     No optional arguments passed
 !
@@ -561,10 +561,10 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
       integer(i15) :: length_1 = 0, length_2 = 0, length_3 = 0, length_4 = 0
 !
-   if (present(index1_first) .and. present(index1_first)      &
-      .and. present(index2_first) .and. present(index2_first) &
-      .and. present(index3_first) .and. present(index3_first) &
-      .and. present(index4_first) .and. present(index4_first) ) then
+   if (     present(index1_first) .and. present(index1_last) &
+      .and. present(index2_first) .and. present(index2_last) &
+      .and. present(index3_first) .and. present(index3_last) &
+      .and. present(index4_first) .and. present(index4_last) ) then
 !
 !     Optional arguments are pressent, we are either batching or running MLCC calculation
 !
@@ -607,10 +607,10 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
       call deallocator(L_ia_J, length_1*length_2, wf%n_J)
       call deallocator(L_bj_J, length_3*length_4, wf%n_J)
 !
-   elseif ( .not. (present(index1_first) .and. present(index1_first) &
-         .and. present(index2_first) .and. present(index2_first)     &
-         .and. present(index3_first) .and. present(index3_first)     &
-         .and. present(index4_first) .and. present(index4_first) )) then
+   elseif ( .not. (present(index1_first) .and. present(index1_last) &
+             .and. present(index2_first) .and. present(index2_last) &
+             .and. present(index3_first) .and. present(index3_last) &
+             .and. present(index4_first) .and. present(index4_last) )) then
 !
 !     No optional arguments passed
 !
@@ -679,10 +679,10 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
 !
       integer(i15) :: length_1 = 0, length_2 = 0, length_3 = 0, length_4 = 0
 !
-   if (present(index1_first) .and. present(index1_first)      &
-      .and. present(index2_first) .and. present(index2_first) &
-      .and. present(index3_first) .and. present(index3_first) &
-      .and. present(index4_first) .and. present(index4_first) ) then
+   if (     present(index1_first) .and. present(index1_last) &
+      .and. present(index2_first) .and. present(index2_last) &
+      .and. present(index3_first) .and. present(index3_last) &
+      .and. present(index4_first) .and. present(index4_last) ) then
 !
 !     Optional arguments are pressent, we are either batching or running MLCC calculation
 !
@@ -725,10 +725,10 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
       call deallocator(L_ai_J, length_1*length_2, wf%n_J)
       call deallocator(L_jb_J, length_3*length_4, wf%n_J)
 !
-   elseif ( .not. (present(index1_first) .and. present(index1_first) &
-         .and. present(index2_first) .and. present(index2_first)     &
-         .and. present(index3_first) .and. present(index3_first)     &
-         .and. present(index4_first) .and. present(index4_first) )) then
+   elseif ( .not. (present(index1_first) .and. present(index1_last) &
+             .and. present(index2_first) .and. present(index2_last) &
+             .and. present(index3_first) .and. present(index3_last) &
+             .and. present(index4_first) .and. present(index4_last) )) then
 !
 !     No optional arguments passed
 !
@@ -797,10 +797,10 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
 !
       integer(i15) :: length_1 = 0, length_2 = 0, length_3 = 0, length_4 = 0
 !
-   if (present(index1_first) .and. present(index1_first)      &
-      .and. present(index2_first) .and. present(index2_first) &
-      .and. present(index3_first) .and. present(index3_first) &
-      .and. present(index4_first) .and. present(index4_first) ) then
+   if (     present(index1_first) .and. present(index1_last) &
+      .and. present(index2_first) .and. present(index2_last) &
+      .and. present(index3_first) .and. present(index3_last) &
+      .and. present(index4_first) .and. present(index4_last) ) then
 !
 !     Optional arguments are pressent, we are either batching or running MLCC calculation
 !
@@ -843,10 +843,10 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
       call deallocator(L_ia_J, length_1*length_2, wf%n_J)
       call deallocator(L_bc_J, length_3*length_4, wf%n_J)
 !
-   elseif ( .not. (present(index1_first) .and. present(index1_first) &
-         .and. present(index2_first) .and. present(index2_first)     &
-         .and. present(index3_first) .and. present(index3_first)     &
-         .and. present(index4_first) .and. present(index4_first) )) then
+   elseif ( .not. (present(index1_first) .and. present(index1_last) &
+             .and. present(index2_first) .and. present(index2_last) &
+             .and. present(index3_first) .and. present(index3_last) &
+             .and. present(index4_first) .and. present(index4_last) )) then
 !
 !     No optional arguments passed
 !
@@ -915,10 +915,10 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
 !
       integer(i15) :: length_1 = 0, length_2 = 0, length_3 = 0, length_4 = 0
 !
-   if (present(index1_first) .and. present(index1_first)      &
-      .and. present(index2_first) .and. present(index2_first) &
-      .and. present(index3_first) .and. present(index3_first) &
-      .and. present(index4_first) .and. present(index4_first) ) then
+   if (     present(index1_first) .and. present(index1_last) &
+      .and. present(index2_first) .and. present(index2_last) &
+      .and. present(index3_first) .and. present(index3_last) &
+      .and. present(index4_first) .and. present(index4_last) ) then
 !
 !     Optional arguments are pressent, we are either batching or running MLCC calculation
 !
@@ -961,10 +961,10 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
       call deallocator(L_ab_J, length_1*length_2, wf%n_J)
       call deallocator(L_ic_J, length_3*length_4, wf%n_J)
 !
-   elseif ( .not. (present(index1_first) .and. present(index1_first) &
-         .and. present(index2_first) .and. present(index2_first)     &
-         .and. present(index3_first) .and. present(index3_first)     &
-         .and. present(index4_first) .and. present(index4_first) )) then
+   elseif ( .not. (present(index1_first) .and. present(index1_last) &
+             .and. present(index2_first) .and. present(index2_last) &
+             .and. present(index3_first) .and. present(index3_last) &
+             .and. present(index4_first) .and. present(index4_last) )) then
 !
 !     No optional arguments passed
 !
@@ -1033,10 +1033,10 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
 !
       integer(i15) :: length_1 = 0, length_2 = 0, length_3 = 0, length_4 = 0
 !
-   if (present(index1_first) .and. present(index1_first)      &
-      .and. present(index2_first) .and. present(index2_first) &
-      .and. present(index3_first) .and. present(index3_first) &
-      .and. present(index4_first) .and. present(index4_first) ) then
+   if (     present(index1_first) .and. present(index1_last) &
+      .and. present(index2_first) .and. present(index2_last) &
+      .and. present(index3_first) .and. present(index3_last) &
+      .and. present(index4_first) .and. present(index4_last) ) then
 !
 !     Optional arguments are pressent, we are either batching or running MLCC calculation
 !
@@ -1079,10 +1079,10 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
       call deallocator(L_ai_J, length_1*length_2, wf%n_J)
       call deallocator(L_bc_J, length_3*length_4, wf%n_J)
 !
-   elseif ( .not. (present(index1_first) .and. present(index1_first) &
-         .and. present(index2_first) .and. present(index2_first)     &
-         .and. present(index3_first) .and. present(index3_first)     &
-         .and. present(index4_first) .and. present(index4_first) )) then
+   elseif ( .not. (present(index1_first) .and. present(index1_last) &
+             .and. present(index2_first) .and. present(index2_last) &
+             .and. present(index3_first) .and. present(index3_last) &
+             .and. present(index4_first) .and. present(index4_last) )) then
 !
 !     No optional arguments passed
 !
@@ -1151,10 +1151,10 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
 !
       integer(i15) :: length_1 = 0, length_2 = 0, length_3 = 0, length_4 = 0
 !
-   if (present(index1_first) .and. present(index1_first)      &
-      .and. present(index2_first) .and. present(index2_first) &
-      .and. present(index3_first) .and. present(index3_first) &
-      .and. present(index4_first) .and. present(index4_first) ) then
+   if (     present(index1_first) .and. present(index1_last) &
+      .and. present(index2_first) .and. present(index2_last) &
+      .and. present(index3_first) .and. present(index3_last) &
+      .and. present(index4_first) .and. present(index4_last) ) then
 !
 !     Optional arguments are pressent, we are either batching or running MLCC calculation
 !
@@ -1197,10 +1197,10 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
       call deallocator(L_ab_J, length_1*length_2, wf%n_J)
       call deallocator(L_ci_J, length_3*length_4, wf%n_J)
 !
-   elseif ( .not. (present(index1_first) .and. present(index1_first) &
-         .and. present(index2_first) .and. present(index2_first)     &
-         .and. present(index3_first) .and. present(index3_first)     &
-         .and. present(index4_first) .and. present(index4_first) )) then
+   elseif ( .not. (present(index1_first) .and. present(index1_last) &
+             .and. present(index2_first) .and. present(index2_last) &
+             .and. present(index3_first) .and. present(index3_last) &
+             .and. present(index4_first) .and. present(index4_last) )) then
 !
 !     No optional arguments passed
 !
@@ -1270,10 +1270,10 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
 !
       integer(i15) :: length_1 = 0, length_2 = 0, length_3 = 0, length_4 = 0
 !
-   if (present(index1_first) .and. present(index1_first)      &
-      .and. present(index2_first) .and. present(index2_first) &
-      .and. present(index3_first) .and. present(index3_first) &
-      .and. present(index4_first) .and. present(index4_first) ) then
+   if (     present(index1_first) .and. present(index1_last) &
+      .and. present(index2_first) .and. present(index2_last) &
+      .and. present(index3_first) .and. present(index3_last) &
+      .and. present(index4_first) .and. present(index4_last) ) then
 !
 !     Optional arguments are pressent, we are either batching or running MLCC calculation
 !
@@ -1316,10 +1316,10 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
       call deallocator(L_ab_J, length_1*length_2, wf%n_J)
       call deallocator(L_cd_J, length_3*length_4, wf%n_J)
 !
-   elseif ( .not. (present(index1_first) .and. present(index1_first) &
-         .and. present(index2_first) .and. present(index2_first)     &
-         .and. present(index3_first) .and. present(index3_first)     &
-         .and. present(index4_first) .and. present(index4_first) )) then
+   elseif ( .not. (present(index1_first) .and. present(index1_last) &
+             .and. present(index2_first) .and. present(index2_last) &
+             .and. present(index3_first) .and. present(index3_last) &
+             .and. present(index4_first) .and. present(index4_last) )) then
 !
 !     No optional arguments passed
 !
