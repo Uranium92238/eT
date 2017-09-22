@@ -898,6 +898,8 @@ contains
 !     Prints
 !     
       write(unit_output,'(/t3,a/)') ':: CNTO orbital partitioning for MLCC2 calculation '
+      write(unit_output,'(/a35, f12.3/)')'Threshold for occupied orbitals:',wf%mlcc_settings%delta_o
+      write(unit_output,'(/a35, f12.3/)')'Threshold for virtual orbitals:',wf%mlcc_settings%delta_v
 !
 !     Timings 
 !
