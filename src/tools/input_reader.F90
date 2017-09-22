@@ -331,6 +331,34 @@ contains
                   elseif (setting == 'cnto') then 
 !
                      mlcc_settings%cnto = .true.
+!
+!                    Get thresholds if in input
+!
+                     read(unit_input,'(a40)') line
+                     if(trim(line)=='cnto_threshold_o') then
+!
+                        read(unit_input,*) mlcc_settings%delta_o
+!
+                        read(unit_input,'(a40)') line
+!
+                        if(trim(line)=='cnto_threshold_v') then
+                          read(unit_input,*) mlcc_settings%delta_v
+                        endif
+! 
+                     elseif(trim(line)=='cnto_threshold_v') then
+!
+                        read(unit_input,*) mlcc_settings%delta_v
+!
+                        read(unit_input,'(a40)') line
+!
+                        if(trim(line)=='cnto_threshold_o') then
+                          read(unit_input,*) mlcc_settings%delta_o
+                        endif
+! 
+                     endif
+!
+!                    Done
+!
                      cycle
 !
                   elseif (setting == 'CCS') then
