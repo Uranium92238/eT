@@ -355,6 +355,11 @@ contains
                           read(unit_input,*) mlcc_settings%delta_o
                         endif
 ! 
+                     elseif (trim(line) == '#end of eT input') then
+!
+                        backspace(unit_input)
+                        exit
+!
                      endif
 !
 !                    Done
