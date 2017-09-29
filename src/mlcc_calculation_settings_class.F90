@@ -26,8 +26,8 @@ module mlcc_calculation_settings_class
    logical :: cholesky = .false.
    logical :: cnto     = .false.
 !
-   real(dp) :: delta_o = 1.0D-06
-   real(dp) :: delta_v = 1.0D-06
+   real(dp) :: delta_o = 1.0D-07
+   real(dp) :: delta_v = 1.0D-07
 !
 !  Cholesky specific variables
 !

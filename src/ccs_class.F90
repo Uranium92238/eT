@@ -160,6 +160,9 @@ module ccs_class
       procedure :: precondition_residual           => precondition_residual_ccs
       procedure :: precondition_residual_valence   => precondition_residual_valence_ccs
 !
+      procedure :: print_excited_state_info  => print_excited_state_info_ccs      
+      procedure :: print_excitation_vector   => print_excitation_vector_ccs
+!
 !
 !     Valence
 !
@@ -927,6 +930,32 @@ module ccs_class
 !       
 !
       end subroutine precondition_residual_core_ccs
+!
+!
+      module subroutine print_excited_state_info_ccs(wf)
+!!
+!!
+!!
+         implicit none
+!  
+         class(ccs) :: wf
+!
+      end subroutine print_excited_state_info_ccs
+!
+!
+           module subroutine print_excitation_vector_ccs(wf, vec, unit_id)
+!!
+!!
+!!
+         implicit none
+!  
+         class(ccs) :: wf
+!
+         real(dp), dimension(wf%n_parameters, 1) :: vec
+!
+         integer(i15) :: unit_id     
+!
+      end subroutine print_excitation_vector_ccs
 !
 !
    end interface

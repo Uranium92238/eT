@@ -24,7 +24,7 @@ submodule(ccs_class) excited_state
 !  Some variables available to all routines of the module
 !
    integer(i15) :: iteration = 1
-   integer(i15) :: max_iterations = 25! E: we move this to calculation settings later
+   integer(i15) :: max_iterations = 70! E: we move this to calculation settings later
 !
 !  Variables to handle convergence criterea
 !
@@ -34,7 +34,7 @@ submodule(ccs_class) excited_state
    logical :: converged_residual = .false.
 !
    logical :: timings = .true.
-   logical :: print_vectors = .false.
+   logical :: print_vectors = .true.
 !
 !
 contains
@@ -265,23 +265,8 @@ contains
 !
          if (print_vectors) then
 !
-            call generate_unit_identifier(unit_solution)
-            open(unit=unit_solution, file=wf%excited_state_task, action='read', status='unknown', &
-            access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
-            if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file'
+            call wf%print_excited_state_info
 !
-            call allocator(solution, wf%n_parameters,1)
-            do state = 1, wf%tasks%n_singlet_states
-!
-               solution = zero
-               read(unit_solution, rec=state) solution
-!
-               write(unit_output,*)'Solution vector', state
-               call vec_print_nonzero_elm(solution, wf%n_parameters, 1)
-!
-            enddo
-            call deallocator(solution, wf%n_parameters,1) 
-            close(unit_solution)
          endif  
 !
       else
@@ -591,7 +576,7 @@ contains
       if (ioerror .ne. 0) write(unit_output,*) 'Error while opening transformed vecs file'
 !
       call generate_unit_identifier(unit_solution)
-      open(unit=unit_solution, file=wf%response_task, action='write', status='unknown', &
+      open(unit=unit_solution, file=wf%excited_state_task, action='write', status='unknown', &
       access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
       if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file'
 !
@@ -953,7 +938,7 @@ contains
 !
 !     Open solution vector file - if it does not exist return
 !
-      inquire(file=wf%response_task, exist=solution_exists)
+      inquire(file=wf%excited_state_task, exist=solution_exists)
 !
 !     If no solution vector file, return and use orbital differences.
 !
@@ -967,7 +952,7 @@ contains
 !
       call generate_unit_identifier(unit_solution)
 !
-      open(unit=unit_solution, file=wf%response_task, action='read', status='unknown', &
+      open(unit=unit_solution, file=wf%excited_state_task, action='read', status='unknown', &
          access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
 !
 !     Allocate c_i
@@ -1396,7 +1381,6 @@ contains
       end subroutine precondition_residual_valence_ccs
 !
 !
-!
       module subroutine precondition_residual_core_ccs(wf, residual)
 !!
 !!       Precondition residual core
@@ -1465,5 +1449,90 @@ contains
          enddo
 !
       end subroutine cvs_residual_projection_ccs
+!
+!
+      module subroutine print_excited_state_info_ccs(wf)
+!!
+!!
+!!
+         implicit none
+!  
+         class(ccs) :: wf
+!
+         integer(i15) :: unit_solution = -1, unit_es_info = -1, ioerror = 0
+         integer(i15) :: state = 0
+!
+         real(dp), dimension(:,:), allocatable :: solution
+!  
+!        Read solution vectors 
+!  
+         call generate_unit_identifier(unit_solution)
+!
+         open(unit=unit_solution, file=wf%excited_state_task, action='read', status='unknown', &
+         access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
+!
+         if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file'
+!
+!        Open info file 
+!  
+         call generate_unit_identifier(unit_es_info)
+!
+         open(unit=unit_es_info, file='excited_state_information', action='write', status='unknown', &
+         access='sequential', form='formatted', iostat=ioerror)
+         rewind(unit_es_info) 
+!
+         if (ioerror .ne. 0) write(unit_output,*) 'Error while opening excited_state_information file'
+
+         call allocator(solution, wf%n_parameters, 1)
+         do state = 1, wf%tasks%n_singlet_states
+!  
+            solution = zero
+            read(unit_solution, rec=state) solution
+!  
+            write(unit_es_info,'(/a33)')'----------------------------------'
+            write(unit_es_info,'(a30,i2, a1)')'Components of solution vector', state, ':'
+            write(unit_es_info,'(a33/)')'----------------------------------'
+            call wf%print_excitation_vector(solution, unit_es_info)
+!  
+         enddo
+!
+         call deallocator(solution, wf%n_parameters,1) 
+!
+         close(unit_solution)
+         close(unit_es_info)
+!
+      end subroutine print_excited_state_info_ccs
+!
+!
+      module subroutine print_excitation_vector_ccs(wf, vec, unit_id)
+!!
+!!
+!!
+         implicit none
+!  
+         class(ccs) :: wf
+!
+         real(dp), dimension(wf%n_parameters, 1) :: vec
+!
+         integer(i15) :: unit_id     
+!
+         integer(i15) :: a = 0, i = 0, ai = 0
+!
+         write(unit_id,'(2a6,a12)')'a', 'i', 'coeff'
+         write(unit_id,'(t3,a)')'-------------------------'
+!
+         do a = 1, wf%n_v
+            do i = 1, wf%n_o
+!  
+               ai = index_two(a, i, wf%n_v)
+               if (abs(vec(ai, 1)) .gt. 1.0D-03) then
+                  write(unit_id,'(2i6,f12.4)') a, i, vec(ai, 1)
+               endif
+!
+         enddo
+      enddo
+!
+      end subroutine print_excitation_vector_ccs
+!
 !
 end submodule excited_state

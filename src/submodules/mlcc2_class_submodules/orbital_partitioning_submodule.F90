@@ -898,6 +898,8 @@ contains
 !     Prints
 !     
       write(unit_output,'(/t3,a/)') ':: CNTO orbital partitioning for MLCC2 calculation '
+      write(unit_output,'(/a35,e10.2)')'Threshold for occupied orbitals:',wf%mlcc_settings%delta_o
+      write(unit_output,'(a35,e10.2/)')'Threshold for virtual orbitals: ',wf%mlcc_settings%delta_v
 !
 !     Timings 
 !
@@ -1123,7 +1125,8 @@ contains
 !
 !     Construct M and N
 !
-      lower_level_n_singlet_states = CCS_factor_n_singlet_states*wf%tasks%n_singlet_states
+      lower_level_n_singlet_states = CCS_factor_n_singlet_states*(wf%tasks%n_singlet_states)
+!
       do state = 1, lower_level_n_singlet_states
          read(unit=unit_solution, rec=state) (R_a_i(i , 1), i = 1, (wf%n_o)*(wf%n_v))
 !

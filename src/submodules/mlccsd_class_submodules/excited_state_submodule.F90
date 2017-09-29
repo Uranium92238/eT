@@ -125,4 +125,110 @@ contains
    end subroutine transform_trial_vectors_mlccsd
 !
 !
+      module subroutine print_excitation_vector_mlccsd(wf, vec, unit_id)
+!!
+!!
+!!
+         implicit none
+!  
+         class(mlccsd) :: wf
+!
+         real(dp), dimension(wf%n_parameters, 1) :: vec
+!
+         integer(i15) :: unit_id     
+!
+         integer(i15) :: a = 0, i = 0, ai = 0, b = 0, j = 0, bj = 0, aibj = 0
+         integer(i15) :: n_active_o, n_active_v
+         real(dp)     :: a_active_i_active, a_active_i_inactive, a_inactive_i_active, a_inactive_i_inactive, total
+!
+!        Print singles part
+!
+         write(unit_id,'(2a6,a12)')'a', 'i', 'coeff'
+         write(unit_id,'(t3,a)')'-------------------------'
+!
+         do a = 1, wf%n_v
+            do i = 1, wf%n_o
+!  
+               ai = index_two(a, i, wf%n_v)
+               if (abs(vec(ai, 1)) .gt. 1.0D-03) then
+                  write(unit_id,'(2i6,f12.4)') a, i, vec(ai, 1)
+               endif
+!
+         enddo
+      enddo
+      flush(unit_id)
+!
+!     Print doubles part
+!
+      write(unit_id,'(/4a6, a11)')'a', 'i', 'b', 'j', 'coeff'
+      write(unit_id,'(t3,a)')'---------------------------------'
+!
+      call wf%get_CC2_n_active(n_active_o, n_active_v)
+!
+      do a = 1, n_active_v
+         do i = 1, n_active_o
+            do b = 1, n_active_v
+               do j = 1, n_active_o
+!
+                  ai = index_two(a, i, n_active_v)
+                  bj = index_two(b, j, n_active_v)
+                  aibj = index_packed(ai, bj)
+!
+                  if (abs(vec((wf%n_o)*(wf%n_v) + aibj, 1)) .gt. 1.0D-03 .and. ai .ge. bj) then
+                     write(unit_id,'(4i6,f12.4)') a, i, b, j, vec((wf%n_o)*(wf%n_v) + aibj, 1)
+                  endif
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+!    
+!
+      call wf%get_CCSD_n_active(n_active_o, n_active_v)
+!
+      a_active_i_active       = 0
+      a_inactive_i_active     = 0
+      a_active_i_inactive     = 0
+      a_inactive_i_inactive   = 0
+!
+      do a = 1, wf%n_v
+         do i = 1, wf%n_o
+!
+            ai = index_two(a, i, wf%n_v)
+!
+            if (a .le. n_active_v .and. i .le. n_active_o) then
+!
+               a_active_i_active = a_active_i_active + (vec(ai, 1))**2
+!
+            elseif (a .le. n_active_v .and. i .gt. n_active_o) then
+!
+               a_active_i_inactive = a_active_i_inactive + (vec(ai, 1))**2
+!
+            elseif (a .gt. n_active_v .and. i .le. n_active_o) then
+!
+               a_inactive_i_active = a_inactive_i_active + (vec(ai, 1))**2
+!
+            elseif (a .gt. n_active_v .and. i .gt. n_active_o) then
+!
+               a_inactive_i_inactive = a_inactive_i_inactive + (vec(ai, 1))**2
+!
+            endif
+
+         enddo
+      enddo
+!
+!     Print active space stats:
+!
+      total = (a_active_i_active + a_active_i_inactive + a_inactive_i_active + a_inactive_i_inactive)
+      write(unit_id,'(/a10, 3a12)')'T->T:', 'S->T:', 'T->S:', 'S->S:'
+      write(unit_id,'(a50)')'--------------------------------------------------'
+      write(unit_id,'(4f12.5)') a_active_i_active/total,&
+         a_active_i_inactive/total, &
+         a_inactive_i_active/total,&
+         a_inactive_i_inactive/total
+      write(unit_id,'(/t3,a40,f12.5/)')'Singles contribution to excitation is', total
+   end subroutine print_excitation_vector_mlccsd
+!
+!
 end submodule excited_state

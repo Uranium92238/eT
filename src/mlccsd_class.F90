@@ -157,8 +157,9 @@ module mlccsd_class
 !
 !     Excited states
 !
-      procedure :: transform_trial_vectors => transform_trial_vectors_mlccsd
+      procedure :: transform_trial_vectors   => transform_trial_vectors_mlccsd
       procedure :: initialize_excited_states => initialize_excited_states_mlccsd
+      procedure :: print_excitation_vector   => print_excitation_vector_mlccsd
 !
    end type mlccsd
 !
@@ -1088,6 +1089,10 @@ module mlccsd_class
 !
    interface
 !
+!
+!     -::- Excited state submodule interface -::-
+!     :::::::::::::::::::::::::::::::::::::::::::
+!
       module subroutine transform_trial_vectors_mlccsd(wf, first_trial, last_trial)
 !!
 !!    Transformation of Trial Vectors (MLCC2)
@@ -1108,18 +1113,33 @@ module mlccsd_class
       end subroutine transform_trial_vectors_mlccsd
 !
 !
-   module subroutine initialize_excited_states_mlccsd(wf)
+      module subroutine initialize_excited_states_mlccsd(wf)
 !!
-!!    Initialize excited states
-!!    Written by Sarai D. Folkestad, Aug 2017
+!!       Initialize excited states
+!!       Written by Sarai D. Folkestad, Aug 2017
 !!
-!!    Calculates and sets n_s2am, and updates n_parameters
-!!    for excited state calculation
+!!       Calculates and sets n_s2am, and updates n_parameters
+!!       for excited state calculation
 !!
-      implicit none 
-!    
-      class(mlccsd) :: wf
+         implicit none 
+!       
+         class(mlccsd) :: wf
       end subroutine initialize_excited_states_mlccsd
+!
+!
+      module subroutine print_excitation_vector_mlccsd(wf, vec, unit_id)
+!!
+!!
+!!
+         implicit none
+!  
+         class(mlccsd) :: wf
+!
+         real(dp), dimension(wf%n_parameters, 1) :: vec
+!
+         integer(i15) :: unit_id     
+!
+      END subroutine print_excitation_vector_mlccsd
 !
 !
    end interface
