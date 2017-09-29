@@ -408,7 +408,7 @@ contains
 !
       if (trim(integral_type) == 'electronic_repulsion') then
 !
-         call wf%get_ov_vo_electronic_repulsion(x_vo_ov,          & 
+         call wf%get_vo_ov_electronic_repulsion(x_vo_ov,          & 
                                        index1_first, index1_last, &
                                        index2_first, index2_last, &
                                        index3_first, index3_last, &

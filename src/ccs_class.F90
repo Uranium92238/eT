@@ -194,18 +194,18 @@ module ccs_class
 !
 !     Integral routines 
 !
-      procedure :: get_oo_oo => get_oo_oo_ccs
-      procedure :: get_oo_ov => get_oo_ov_ccs
+      procedure :: get_oo_oo => get_oo_oo_ccs ! Tested, Eirik, 29 Sep
+      procedure :: get_oo_ov => get_oo_ov_ccs ! Tested, Eirik, 29 Sep
       procedure :: get_ov_oo => get_ov_oo_ccs 
       procedure :: get_oo_vo => get_oo_vo_ccs 
       procedure :: get_vo_oo => get_vo_oo_ccs
       procedure :: get_oo_vv => get_oo_vv_ccs
       procedure :: get_vv_oo => get_vv_oo_ccs
-      procedure :: get_ov_ov => get_ov_ov_ccs  
+      procedure :: get_ov_ov => get_ov_ov_ccs ! Tested, Eirik, 29 Sep
 !
-      procedure :: get_vo_vo => get_vo_vo_ccs
+      procedure :: get_vo_vo => get_vo_vo_ccs ! Tested, Eirik, 29 Sep
       procedure :: get_ov_vo => get_ov_vo_ccs
-      procedure :: get_vo_ov => get_vo_ov_ccs
+      procedure :: get_vo_ov => get_vo_ov_ccs ! Tested, Eirik, 29 Sep
       procedure :: get_ov_vv => get_ov_vv_ccs
       procedure :: get_vv_ov => get_vv_ov_ccs
       procedure :: get_vo_vv => get_vo_vv_ccs
