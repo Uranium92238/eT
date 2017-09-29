@@ -33,6 +33,9 @@ submodule (ccsd_class) omega
    real(dp) :: begin_timer
    real(dp) :: end_timer 
 !
+
+      character(len=40) :: integral_type
+!
 !
 contains
 !
@@ -352,6 +355,12 @@ contains
                   zero,              &
                   g_ki_lc,           &
                   (wf%n_o)**2)
+! .... Eirik -> tester oo_ov rutinen
+      write(unit_output,*) 'Getting oo_ov integral!'
+      g_ki_lc = zero
+      integral_type = 'electronic_repulsion'
+      call wf%get_oo_ov(integral_type, g_ki_lc)
+! ....
 !
 !     Deallocate the Cholesky vectors L_ki_J and L_lc_J
 !
@@ -621,7 +630,12 @@ contains
                   zero,              &
                   g_ai_bj,           &
                   (wf%n_o)*(wf%n_v))
-!
+! .... Eirik, testing the vo_vo routine  
+      g_ai_bj = zero
+      integral_type = 'electronic_repulsion'
+      write(unit_output,*) 'Getting vo_vo_integral!'
+      call wf%get_vo_vo(integral_type, g_ai_bj)
+! ...
 !
       call deallocator(L_ai_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
@@ -1150,6 +1164,12 @@ contains
                   zero,              &
                   g_ki_lj,           &
                   (wf%n_o)*(wf%n_o))
+! ... Eirik, testing oo_oo routine
+      g_ki_lj = zero
+      integral_type = 'electronic_repulsion'
+      write(unit_output,*) 'Getting oo_oo integral!'
+      call wf%get_oo_oo(integral_type,g_ki_lj)
+! ...
 !
 !
       call deallocator(L_ij_J, (wf%n_o)*(wf%n_o), wf%n_J)
@@ -1960,6 +1980,12 @@ contains
                   zero,              &
                   g_ai_kc,           &
                   (wf%n_o)*(wf%n_v))
+! ... Eirik, testing vo_ov integral 
+      g_ai_kc = zero
+      integral_type = 'electronic_repulsion'
+      write(unit_output,*) 'Getting vo_ov integral!'
+      call wf%get_vo_ov(integral_type,g_ai_kc)
+! ...
 !
 !     Deallocate the Cholesky vectors L_ai_J and L_kc_J
 !
@@ -2519,6 +2545,12 @@ contains
                  zero,              &
                  g_ld_kc,           &
                  (wf%n_o)*(wf%n_v))
+! ... Eirik, testing ov_ov integral
+      g_ld_kc = zero
+      integral_type = 'electronic_repulsion'
+      write(unit_output,*) 'Getting ov_ov integral!'
+      call wf%get_ov_ov(integral_type,g_ld_kc)
+! ...
 !
 !    Deallocate the Cholesky vector, L_kc_J
 !
