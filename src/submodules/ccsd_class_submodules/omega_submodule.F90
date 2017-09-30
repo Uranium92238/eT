@@ -121,45 +121,40 @@ contains
 !
       integer(i15) :: i = 0, j = 0, a = 0, c = 0, k = 0, d = 0
       integer(i15) :: ad = 0, ad_dim = 0, ci = 0, cidk = 0, ck = 0, da = 0 
-      integer(i15) :: ckd = 0, ckdi = 0, di = 0, dk = 0, kc = 0
+      integer(i15) :: dkc = 0, ckdi = 0, di = 0, dk = 0, kc = 0
 !
-      real(dp), dimension(:,:), allocatable :: L_kc_J 
-      real(dp), dimension(:,:), allocatable :: L_da_J  ! L_ad^J; a is being batched over
-      real(dp), dimension(:,:), allocatable :: L_ad_J  ! L_ad^J; a is being batched over
-      real(dp), dimension(:,:), allocatable :: g_da_kc ! g_adkc; a is being batched over
-      real(dp), dimension(:,:), allocatable :: g_a_ckd ! reordered g_adkc; a is being batched over
-      real(dp), dimension(:,:), allocatable :: u_ckd_i ! u_ki^cd
+      real(dp), dimension(:,:), allocatable :: g_ad_kc ! g_adkc; a is being batched over
+      real(dp), dimension(:,:), allocatable :: u_dkc_i ! u_ki^cd
 !
       logical :: reorder ! To get L_ab_J reordered, for batching over a (first index)
 !
-!     Allocate u_ckd_i = u_ki^cd
+!     Allocate u_dkc_i = u_ki^cd
 !
-      call allocator(u_ckd_i, (wf%n_o)*(wf%n_v)**2, wf%n_o)
-      u_ckd_i = zero
+      call allocator(u_dkc_i, (wf%n_o)*(wf%n_v)**2, wf%n_o)
+      u_dkc_i = zero
 !
-!     Calculate u_ckd_i
+!     Calculate u_dkc_i = u_ki^cd
 !
-      do k = 1, wf%n_o
-         do c = 1, wf%n_v
+      do i = 1, wf%n_o
+         do c = 1, wf%n_v 
 !
-            ck = index_two(c, k, wf%n_v)
+            ci = index_two(c, i, wf%n_v)
 !
-            do d = 1, wf%n_v
+            do k = 1, wf%n_o
 !
-               ckd = index_three(c, k, d, wf%n_v, wf%n_o)
-               dk  = index_two(d, k, wf%n_v)
+               ck = index_two(c, k, wf%n_v)
 !
-               do i = 1, wf%n_o     
-!      
-                  di   = index_two(d, i, wf%n_v)
-                  ci   = index_two(c, i, wf%n_v)
+               do d = 1, wf%n_v
+!
+                  dk = index_two(d, k, wf%n_v)
+                  di = index_two(d, i, wf%n_v)
+!
+                  dkc = index_three(d, k, c, wf%n_v, wf%n_o)
 !
                   ckdi = index_packed(ck, di)
                   cidk = index_packed(ci, dk)
 !
-!                 Calculate u_ckd_i
-!
-                  u_ckd_i(ckd, i) = two*(wf%t2am(ckdi, 1)) - wf%t2am(cidk, 1)
+                  u_dkc_i(dkc, i) = two*(wf%t2am(ckdi, 1)) - wf%t2am(cidk, 1)
 !
                enddo
             enddo
@@ -193,112 +188,50 @@ contains
          call batch_limits(a_begin, a_end, a_batch, max_batch_length, batch_dimension)
          batch_length = a_end - a_begin + 1 
 !
-!        Allocate Cholesky vector L_kc_J
+         ad_dim = batch_length*(wf%n_v)
 !
-         call allocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
-         L_kc_J = zero
+!        Form g_ad_kc = g_adkc
 !
-!        Get Cholesky vector L_kc_J
+         call allocator(g_ad_kc, ad_dim, (wf%n_o)*(wf%n_v))
 !
-         call wf%get_cholesky_ia(L_kc_J)
+         integral_type = 'electronic_repulsion'
+         call wf%get_vv_ov(integral_type, & 
+                           g_ad_kc,       &
+                           a_begin,       &
+                           a_end,         &
+                           1,             &
+                           wf%n_v,        &
+                           1,             &
+                           wf%n_o,        &
+                           1,             &
+                           wf%n_v)
 !
-!        Allocate the Cholesky vector L_da_J = L_ad^J
+!        Calculate the A1 term, 
 !
-         ad_dim = batch_length*(wf%n_v) ! Dimension of ad for the batch over index a 
-!
-!        Get ab-cholesky vectors for the batch, L_ad^J, then reorder from L_ad_J to L_da_J
-!
-         call allocator(L_ad_J, ad_dim, wf%n_J)
-         L_ad_J = zero
-         call wf%get_cholesky_ab(L_ad_J, a_begin, a_end, 1, wf%n_v)
-!
-         call allocator(L_da_J, ad_dim, wf%n_J)
-         L_da_J = zero
-!
-         do a = 1, batch_length
-            do d = 1, wf%n_v
-               da = index_two(d, a, wf%n_v)
-               ad = index_two(a, d, batch_length)
-               do J = 1, wf%n_J
-                  L_da_J(da, J) = L_ad_J(ad, J)
-               enddo
-            enddo
-         enddo
-!
-         call deallocator(L_ad_J, ad_dim, wf%n_J)
-!
-!        Allocate g_da_kc = g_adkc
-!
-         call allocator(g_da_kc, ad_dim, (wf%n_o)*(wf%n_v))
-!
-!        Calculate g_da_kc = sum_J L_da_J L_kc_J^T = sum_J L_ad^J L_kc^J = g_adkc 
-!     
-         call dgemm('N','T',            &
-                     ad_dim,            &
-                     (wf%n_o)*(wf%n_v), &
-                     wf%n_J,            &
-                     one,               &
-                     L_da_J,            &
-                     ad_dim,            &
-                     L_kc_J,            &
-                     (wf%n_o)*(wf%n_v), &
-                     zero,              &
-                     g_da_kc,           &
-                     ad_dim)
-!
-!        Deallocate the reordered Cholesky vector L_da_J and L_kc_J
-!
-         call deallocator(L_da_J, ad_dim, wf%n_J)
-         call deallocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
-!
-!        Form the reordered integrals g_a_ckd = g_adkc
-!
-         call allocator(g_a_ckd, batch_length, (wf%n_o)*(wf%n_v)**2)
-!
-         do c = 1, wf%n_v
-            do k = 1, wf%n_o
-!
-               kc  = index_two(k, c, wf%n_o)
-!
-               do d = 1, wf%n_v
-                  do a = 1, batch_length
-!                 
-                     da  = index_two(d, a, wf%n_v)
-                     ckd = index_three(c, k, d, wf%n_v, wf%n_o) 
-!
-                     g_a_ckd(a, ckd) = g_da_kc(da, kc) ! g_adkc 
-!
-                  enddo
-               enddo
-            enddo
-         enddo
-!
-!        Deallocate reordered integrals g_da_kc
-!
-         call deallocator(g_da_kc, ad_dim, (wf%n_o)*(wf%n_v))
-!
-!        Calculate the A1 term (sum_ckd g_a,ckd * u_ckd,i) & add to the omega vector
+!           sum_ckd g_adkc * u_ki^cd = sum_ckd g_ad_kc u_dkc_i,
+! 
+!        and add it to the omega vector
 ! 
          call dgemm('N','N',               &
                      batch_length,         &
                      wf%n_o,               &
                      (wf%n_o)*(wf%n_v)**2, &
                      one,                  &
-                     g_a_ckd,              &
+                     g_ad_kc,              & ! g_a_dkc
                      batch_length,         &
-                     u_ckd_i,              &
+                     u_dkc_i,              &
                      (wf%n_o)*(wf%n_v)**2, &
                      one,                  &
                      wf%omega1(a_begin,1), & 
                      wf%n_v)
 !
-         call deallocator(g_a_ckd, batch_length, (wf%n_o)*(wf%n_v)**2)
+         call deallocator(g_ad_kc, ad_dim, (wf%n_o)*(wf%n_v))
 !
       enddo ! End of batches of the index a 
 !
 !     Deallocate vectors 
 !
-      call deallocator(u_ckd_i, (wf%n_o)*(wf%n_v)**2, wf%n_o)
+      call deallocator(u_dkc_i, (wf%n_o)*(wf%n_v)**2, wf%n_o)
 !
    end subroutine omega_ccsd_a1_ccsd
 !
