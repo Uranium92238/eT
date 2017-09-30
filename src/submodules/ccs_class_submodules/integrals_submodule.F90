@@ -1,6 +1,17 @@
 submodule (ccs_class) integrals
 !
-!
+!!
+!!    Integrals submodule (CCS)
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
+!!
+!!
+!!    Contains procedures for construction of general integrals, and 
+!!    spesifically:
+!!
+!!    - electronic repulsion integrals
+!!    
+!!    o - occupied index
+!!    v - virtual index
 !
 contains
 !
@@ -10,9 +21,22 @@ contains
                                        index2_first, index2_last, &
                                        index3_first, index3_last, &
                                        index4_first, index4_last)
-!
-!
-!
+!!
+!!    Get x_oo,oo integral (CCS),
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep. 2017.
+!! 
+!!    Construct genereal two-electron integral x_oo,oo (ordered as x_oo_oo)
+!!    of type integral_type.
+!!
+!!    Optional parameters
+!! 
+!!    index1_first, index1_last,   
+!!    index2_first, index2_last,   
+!!    index3_first, index3_last  and 
+!!    index4_first, index4_last
+!!
+!!    are used to restrict indices of the integral.
+!!
       implicit none 
 !
       class(ccs) :: wf 
@@ -48,9 +72,22 @@ contains
                                        index2_first, index2_last, &
                                        index3_first, index3_last, &
                                        index4_first, index4_last)
-!
-!
-!
+!!
+!!    Get x_oo,ov integral (CCS),
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep. 2017.
+!! 
+!!    Construct genereal two-electron integral x_oo,ov (ordered as x_oo_ov)
+!!    of type integral_type.
+!!
+!!    Optional parameters
+!! 
+!!    index1_first, index1_last,   
+!!    index2_first, index2_last,   
+!!    index3_first, index3_last  and 
+!!    index4_first, index4_last
+!!
+!!    are used to restrict indices of the integral.
+!!
       implicit none 
 !
       class(ccs) :: wf 
@@ -86,9 +123,22 @@ contains
                                        index2_first, index2_last, &
                                        index3_first, index3_last, &
                                        index4_first, index4_last)
-!
-!
-!
+!!
+!!    Get x_ov,oo integral (CCS),
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep. 2017.
+!! 
+!!    Construct genereal two-electron integral x_ov,oo (ordered as x_ov_oo)
+!!    of type integral_type.
+!!
+!!    Optional parameters
+!! 
+!!    index1_first, index1_last,   
+!!    index2_first, index2_last,   
+!!    index3_first, index3_last  and 
+!!    index4_first, index4_last
+!!
+!!    are used to restrict indices of the integral.
+!!
       implicit none 
 !
       class(ccs) :: wf 
@@ -124,9 +174,22 @@ contains
                                        index2_first, index2_last, &
                                        index3_first, index3_last, &
                                        index4_first, index4_last)
-!
-!
-!
+!!
+!!    Get x_oo,vo integral (CCS),
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep. 2017.
+!! 
+!!    Construct genereal two-electron integral x_oo,vo (ordered as x_oo_vo)
+!!    of type integral_type.
+!!
+!!    Optional parameters
+!! 
+!!    index1_first, index1_last,   
+!!    index2_first, index2_last,   
+!!    index3_first, index3_last  and 
+!!    index4_first, index4_last
+!!
+!!    are used to restrict indices of the integral.
+!!
       implicit none 
 !
       class(ccs) :: wf 
@@ -162,9 +225,22 @@ contains
                                        index2_first, index2_last, &
                                        index3_first, index3_last, &
                                        index4_first, index4_last)
-!
-!
-!
+!!
+!!    Get x_vo,oo integral (CCS),
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep. 2017.
+!! 
+!!    Construct genereal two-electron integral x_vo,oo (ordered as x_vo_oo)
+!!    of type integral_type.
+!!
+!!    Optional parameters
+!! 
+!!    index1_first, index1_last,   
+!!    index2_first, index2_last,   
+!!    index3_first, index3_last  and 
+!!    index4_first, index4_last
+!!
+!!    are used to restrict indices of the integral.
+!!
       implicit none 
 !
       class(ccs) :: wf 
@@ -200,9 +276,22 @@ contains
                                        index2_first, index2_last, &
                                        index3_first, index3_last, &
                                        index4_first, index4_last)
-!
-!
-!
+!!
+!!    Get x_oo,vv integral (CCS),
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep. 2017.
+!! 
+!!    Construct genereal two-electron integral x_oo,vv (ordered as x_oo_vv)
+!!    of type integral_type.
+!!
+!!    Optional parameters
+!! 
+!!    index1_first, index1_last,   
+!!    index2_first, index2_last,   
+!!    index3_first, index3_last  and 
+!!    index4_first, index4_last
+!!
+!!    are used to restrict indices of the integral.
+!!
       implicit none 
 !
       class(ccs) :: wf 
@@ -238,9 +327,22 @@ contains
                                        index2_first, index2_last, &
                                        index3_first, index3_last, &
                                        index4_first, index4_last)
-!
-!
-!
+!!
+!!    Get x_vv,oo integral (CCS),
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep. 2017.
+!! 
+!!    Construct genereal two-electron integral x_vv,oo (ordered as x_vv_oo)
+!!    of type integral_type.
+!!
+!!    Optional parameters
+!! 
+!!    index1_first, index1_last,   
+!!    index2_first, index2_last,   
+!!    index3_first, index3_last  and 
+!!    index4_first, index4_last
+!!
+!!    are used to restrict indices of the integral.
+!!
       implicit none 
 !
       class(ccs) :: wf 
@@ -276,9 +378,22 @@ contains
                                        index2_first, index2_last, &
                                        index3_first, index3_last, &
                                        index4_first, index4_last)
-!
-!
-!
+!!
+!!    Get x_ov,ov integral (CCS),
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep. 2017.
+!! 
+!!    Construct genereal two-electron integral x_ov,ov (ordered as x_ov_ov)
+!!    of type integral_type.
+!!
+!!    Optional parameters
+!! 
+!!    index1_first, index1_last,   
+!!    index2_first, index2_last,   
+!!    index3_first, index3_last  and 
+!!    index4_first, index4_last
+!!
+!!    are used to restrict indices of the integral.
+!!
       implicit none 
 !
       class(ccs) :: wf 
@@ -315,7 +430,20 @@ contains
                                        index3_first, index3_last, &
                                        index4_first, index4_last)
 !!
+!!    Get x_vo,vo integral (CCS),
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep. 2017.
+!! 
+!!    Construct genereal two-electron integral x_vo,vo (ordered as x_vo_vo)
+!!    of type integral_type.
 !!
+!!    Optional parameters
+!! 
+!!    index1_first, index1_last,   
+!!    index2_first, index2_last,   
+!!    index3_first, index3_last  and 
+!!    index4_first, index4_last
+!!
+!!    are used to restrict indices of the integral.
 !!
       implicit none 
 !
@@ -353,7 +481,20 @@ contains
                                        index3_first, index3_last, &
                                        index4_first, index4_last)
 !!
+!!    Get x_ov,vo integral (CCS),
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep. 2017.
+!! 
+!!    Construct genereal two-electron integral x_ov,vo (ordered as x_ov_vo)
+!!    of type integral_type.
 !!
+!!    Optional parameters
+!! 
+!!    index1_first, index1_last,   
+!!    index2_first, index2_last,   
+!!    index3_first, index3_last  and 
+!!    index4_first, index4_last
+!!
+!!    are used to restrict indices of the integral.
 !!
       implicit none 
 !
@@ -391,7 +532,20 @@ contains
                                        index3_first, index3_last, &
                                        index4_first, index4_last)
 !!
+!!    Get x_vo,ov integral (CCS),
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep. 2017.
+!! 
+!!    Construct genereal two-electron integral x_vo,ov (ordered as x_vo_ov)
+!!    of type integral_type.
 !!
+!!    Optional parameters
+!! 
+!!    index1_first, index1_last,   
+!!    index2_first, index2_last,   
+!!    index3_first, index3_last  and 
+!!    index4_first, index4_last
+!!
+!!    are used to restrict indices of the integral.
 !!
       implicit none 
 !
@@ -429,7 +583,20 @@ contains
                                        index3_first, index3_last, &
                                        index4_first, index4_last)
 !!
+!!    Get x_ov,vv integral (CCS),
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep. 2017.
+!! 
+!!    Construct genereal two-electron integral x_ov,vv (ordered as x_ov_vv)
+!!    of type integral_type.
 !!
+!!    Optional parameters
+!! 
+!!    index1_first, index1_last,   
+!!    index2_first, index2_last,   
+!!    index3_first, index3_last  and 
+!!    index4_first, index4_last
+!!
+!!    are used to restrict indices of the integral.
 !!
       implicit none 
 !
@@ -467,7 +634,20 @@ contains
                                        index3_first, index3_last, &
                                        index4_first, index4_last)
 !!
+!!    Get x_vv,ov integral (CCS),
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep. 2017.
+!! 
+!!    Construct genereal two-electron integral x_vv,ov (ordered as x_vv_ov)
+!!    of type integral_type.
 !!
+!!    Optional parameters
+!! 
+!!    index1_first, index1_last,   
+!!    index2_first, index2_last,   
+!!    index3_first, index3_last  and 
+!!    index4_first, index4_last
+!!
+!!    are used to restrict indices of the integral.
 !!
       implicit none 
 !
@@ -505,7 +685,20 @@ contains
                                        index3_first, index3_last, &
                                        index4_first, index4_last)
 !!
+!!    Get x_vo,vv integral (CCS),
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep. 2017.
+!! 
+!!    Construct genereal two-electron integral x_vo,vv (ordered as x_vo_vv)
+!!    of type integral_type.
 !!
+!!    Optional parameters
+!! 
+!!    index1_first, index1_last,   
+!!    index2_first, index2_last,   
+!!    index3_first, index3_last  and 
+!!    index4_first, index4_last
+!!
+!!    are used to restrict indices of the integral.
 !!
       implicit none 
 !
@@ -543,7 +736,20 @@ contains
                                        index3_first, index3_last, &
                                        index4_first, index4_last)
 !!
+!!    Get x_vv,vo integral (CCS),
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep. 2017.
+!! 
+!!    Construct genereal two-electron integral x_vv,vo (ordered as x_vv_vo)
+!!    of type integral_type.
 !!
+!!    Optional parameters
+!! 
+!!    index1_first, index1_last,   
+!!    index2_first, index2_last,   
+!!    index3_first, index3_last  and 
+!!    index4_first, index4_last
+!!
+!!    are used to restrict indices of the integral.
 !!
       implicit none 
 !
@@ -581,7 +787,20 @@ contains
                                        index3_first, index3_last, &
                                        index4_first, index4_last)
 !!
+!!    Get x_vv,vv integral (CCS),
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep. 2017.
+!! 
+!!    Construct genereal two-electron integral x_vv,vv (ordered as x_vv_vv)
+!!    of type integral_type.
 !!
+!!    Optional parameters
+!! 
+!!    index1_first, index1_last,   
+!!    index2_first, index2_last,   
+!!    index3_first, index3_last  and 
+!!    index4_first, index4_last
+!!
+!!    are used to restrict indices of the integral.
 !!
       implicit none 
 !
@@ -598,7 +817,7 @@ contains
 !
       if (trim(integral_type) == 'electronic_repulsion') then
 !
-         call wf%get_vv_vo_electronic_repulsion(x_vv_vv,          & 
+         call wf%get_vv_vv_electronic_repulsion(x_vv_vv,          & 
                                        index1_first, index1_last, &
                                        index2_first, index2_last, &
                                        index3_first, index3_last, &
@@ -619,7 +838,19 @@ contains
                                        index3_first, index3_last, &
                                        index4_first, index4_last)
 !!
+!!    Get g_vo,vo integral (CCS),
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep. 2017.
+!! 
+!!    Construct two-electron repulsion integral g_vo,vo (ordered as g_vo_vo)
 !!
+!!    Optional parameters
+!! 
+!!    index1_first, index1_last,   
+!!    index2_first, index2_last,   
+!!    index3_first, index3_last  and 
+!!    index4_first, index4_last
+!!
+!!    are used to restrict indices of the integral.
 !!
       implicit none 
 !
@@ -734,7 +965,19 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
                                        index3_first, index3_last, &
                                        index4_first, index4_last)
 !!
+!!    Get g_ov,vo integral (CCS),
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep. 2017.
+!! 
+!!    Construct two-electron repulsion integral g_ov,vo (ordered as g_ov_vo)
 !!
+!!    Optional parameters
+!! 
+!!    index1_first, index1_last,   
+!!    index2_first, index2_last,   
+!!    index3_first, index3_last  and 
+!!    index4_first, index4_last
+!!
+!!    are used to restrict indices of the integral.
 !!
       implicit none 
 !
@@ -852,7 +1095,19 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
                                        index3_first, index3_last, &
                                        index4_first, index4_last)
 !!
+!!    Get g_vo,ov integral (CCS),
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep. 2017.
+!! 
+!!    Construct two-electron repulsion integral g_vo,ov (ordered as g_vo_ov)
 !!
+!!    Optional parameters
+!! 
+!!    index1_first, index1_last,   
+!!    index2_first, index2_last,   
+!!    index3_first, index3_last  and 
+!!    index4_first, index4_last
+!!
+!!    are used to restrict indices of the integral.
 !!
       implicit none 
 !
@@ -970,7 +1225,19 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
                                        index3_first, index3_last, &
                                        index4_first, index4_last)
 !!
+!!    Get g_vo,vv integral (CCS),
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep. 2017.
+!! 
+!!    Construct two-electron repulsion integral g_vo,vv (ordered as g_vo_vv)
 !!
+!!    Optional parameters
+!! 
+!!    index1_first, index1_last,   
+!!    index2_first, index2_last,   
+!!    index3_first, index3_last  and 
+!!    index4_first, index4_last
+!!
+!!    are used to restrict indices of the integral.
 !!
       implicit none 
 !
@@ -1088,7 +1355,19 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
                                        index3_first, index3_last, &
                                        index4_first, index4_last)
 !!
+!!    Get g_vv,ov integral (CCS),
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep. 2017.
+!! 
+!!    Construct two-electron repulsion integral g_vv,ov (ordered as g_vv_ov)
 !!
+!!    Optional parameters
+!! 
+!!    index1_first, index1_last,   
+!!    index2_first, index2_last,   
+!!    index3_first, index3_last  and 
+!!    index4_first, index4_last
+!!
+!!    are used to restrict indices of the integral.
 !!
       implicit none 
 !
@@ -1206,7 +1485,19 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
                                        index3_first, index3_last, &
                                        index4_first, index4_last)
 !!
+!!    Get g_vo,vv integral (CCS),
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep. 2017.
+!! 
+!!    Construct two-electron repulsion integral g_vo,vv (ordered as g_vo_vv)
 !!
+!!    Optional parameters
+!! 
+!!    index1_first, index1_last,   
+!!    index2_first, index2_last,   
+!!    index3_first, index3_last  and 
+!!    index4_first, index4_last
+!!
+!!    are used to restrict indices of the integral.
 !!
       implicit none 
 !
@@ -1324,7 +1615,19 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
                                        index3_first, index3_last, &
                                        index4_first, index4_last)
 !!
+!!    Get g_vv,vo integral (CCS),
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep. 2017.
+!! 
+!!    Construct two-electron repulsion integral g_vv,vo (ordered as g_vv_vo)
 !!
+!!    Optional parameters
+!! 
+!!    index1_first, index1_last,   
+!!    index2_first, index2_last,   
+!!    index3_first, index3_last  and 
+!!    index4_first, index4_last
+!!
+!!    are used to restrict indices of the integral.
 !!
       implicit none 
 !
@@ -1443,7 +1746,19 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
                                        index3_first, index3_last, &
                                        index4_first, index4_last)
 !!
+!!    Get g_vv,vv integral (CCS),
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep. 2017.
+!! 
+!!    Construct two-electron repulsion integral g_vv,vv (ordered as g_vv_vv)
 !!
+!!    Optional parameters
+!! 
+!!    index1_first, index1_last,   
+!!    index2_first, index2_last,   
+!!    index3_first, index3_last  and 
+!!    index4_first, index4_last
+!!
+!!    are used to restrict indices of the integral.
 !!
       implicit none 
 !
@@ -1558,7 +1873,19 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
                                                          index3_first, index3_last, &
                                                          index4_first, index4_last)
 !!
+!!    Get g_oo,oo integral (CCS),
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep. 2017.
+!! 
+!!    Construct two-electron repulsion integral g_oo,oo (ordered as g_oo_oo)
 !!
+!!    Optional parameters
+!! 
+!!    index1_first, index1_last,   
+!!    index2_first, index2_last,   
+!!    index3_first, index3_last  and 
+!!    index4_first, index4_last
+!!
+!!    are used to restrict indices of the integral.
 !!
       implicit none 
 !
@@ -1681,7 +2008,19 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
                                                          index3_first, index3_last, &
                                                          index4_first, index4_last)
 !!
+!!    Get g_oo,ov integral (CCS),
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep. 2017.
+!! 
+!!    Construct two-electron repulsion integral g_oo,ov (ordered as g_oo_ov)
 !!
+!!    Optional parameters
+!! 
+!!    index1_first, index1_last,   
+!!    index2_first, index2_last,   
+!!    index3_first, index3_last  and 
+!!    index4_first, index4_last
+!!
+!!    are used to restrict indices of the integral.
 !!
       implicit none 
 !
@@ -1807,7 +2146,19 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
                                                          index3_first, index3_last, &
                                                          index4_first, index4_last)
 !!
+!!    Get g_ov,oo integral (CCS),
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep. 2017.
+!! 
+!!    Construct two-electron repulsion integral g_ov,oo (ordered as g_ov_oo)
 !!
+!!    Optional parameters
+!! 
+!!    index1_first, index1_last,   
+!!    index2_first, index2_last,   
+!!    index3_first, index3_last  and 
+!!    index4_first, index4_last
+!!
+!!    are used to restrict indices of the integral.
 !!
       implicit none 
 !
@@ -1933,7 +2284,19 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
                                                          index3_first, index3_last, &
                                                          index4_first, index4_last)
 !!
+!!    Get g_oo,vo integral (CCS),
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep. 2017.
+!! 
+!!    Construct two-electron repulsion integral g_oo,vo (ordered as g_oo_vo)
 !!
+!!    Optional parameters
+!! 
+!!    index1_first, index1_last,   
+!!    index2_first, index2_last,   
+!!    index3_first, index3_last  and 
+!!    index4_first, index4_last
+!!
+!!    are used to restrict indices of the integral.
 !!
       implicit none 
 !
@@ -2059,7 +2422,19 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
                                                          index3_first, index3_last, &
                                                          index4_first, index4_last)
 !!
+!!    Get g_vo,oo integral (CCS),
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep. 2017.
+!! 
+!!    Construct two-electron repulsion integral g_vooo (ordered as g_vo_oo)
 !!
+!!    Optional parameters
+!! 
+!!    index1_first, index1_last,   
+!!    index2_first, index2_last,   
+!!    index3_first, index3_last  and 
+!!    index4_first, index4_last
+!!
+!!    are used to restrict indices of the integral.
 !!
       implicit none 
 !
@@ -2185,7 +2560,19 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
                                                          index3_first, index3_last, &
                                                          index4_first, index4_last)
 !!
+!!    Get g_oo,vv integral (CCS),
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep. 2017.
+!! 
+!!    Construct two-electron repulsion integral g_oo,vv (ordered as g_oo_vv)
 !!
+!!    Optional parameters
+!! 
+!!    index1_first, index1_last,   
+!!    index2_first, index2_last,   
+!!    index3_first, index3_last  and 
+!!    index4_first, index4_last
+!!
+!!    are used to restrict indices of the integral.
 !!
       implicit none 
 !
@@ -2311,7 +2698,19 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
                                                          index3_first, index3_last, &
                                                          index4_first, index4_last)
 !!
+!!    Get g_vv,oo integral (CCS),
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep. 2017.
+!! 
+!!    Construct two-electron repulsion integral g_vv,oo (ordered as g_vv_oo)
 !!
+!!    Optional parameters
+!! 
+!!    index1_first, index1_last,   
+!!    index2_first, index2_last,   
+!!    index3_first, index3_last  and 
+!!    index4_first, index4_last
+!!
+!!    are used to restrict indices of the integral.
 !!
       implicit none 
 !
@@ -2437,7 +2836,19 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
                                                          index3_first, index3_last, &
                                                          index4_first, index4_last)
 !!
+!!    Get g_ov,ov integral (CCS),
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep. 2017.
+!! 
+!!    Construct two-electron repulsion integral g_ov,ov (ordered as g_ov_ov)
 !!
+!!    Optional parameters
+!! 
+!!    index1_first, index1_last,   
+!!    index2_first, index2_last,   
+!!    index3_first, index3_last  and 
+!!    index4_first, index4_last
+!!
+!!    are used to restrict indices of the integral.
 !!
       implicit none 
 !

@@ -213,7 +213,7 @@ module ccs_class
       procedure :: get_vv_ov => get_vv_ov_ccs
       procedure :: get_vo_vv => get_vo_vv_ccs
       procedure :: get_vv_vo => get_vv_vo_ccs
-      procedure :: get_vv_vv => get_vv_vv_ccs
+      procedure :: get_vv_vv => get_vv_vv_ccs ! Tested, Sarai 29 Sep
 !
       procedure :: get_oo_oo_electronic_repulsion => get_oo_oo_electronic_repulsion_ccs
       procedure :: get_oo_ov_electronic_repulsion => get_oo_ov_electronic_repulsion_ccs
