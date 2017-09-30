@@ -33,9 +33,7 @@ submodule (ccsd_class) omega
    real(dp) :: begin_timer
    real(dp) :: end_timer 
 !
-
-      character(len=40) :: integral_type
-!
+   character(len=40) :: integral_type ! Here: electronic repulsion, 1/r_ij, g_pqrs 
 !
 contains
 !
@@ -87,11 +85,11 @@ contains
 !
 !     Construct doubles contributions 
 !
-       call wf%omega_ccsd_a2
-       call wf%omega_ccsd_b2
-       call wf%omega_ccsd_c2
-       call wf%omega_ccsd_d2
-       call wf%omega_ccsd_e2
+      call wf%omega_ccsd_a2
+      call wf%omega_ccsd_b2
+      call wf%omega_ccsd_c2
+      call wf%omega_ccsd_d2
+      call wf%omega_ccsd_e2
 !
    end subroutine construct_omega_ccsd
 !
@@ -125,8 +123,6 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: g_ad_kc ! g_adkc; a is being batched over
       real(dp), dimension(:,:), allocatable :: u_dkc_i ! u_ki^cd
-!
-      logical :: reorder ! To get L_ab_J reordered, for batching over a (first index)
 !
 !     Allocate u_dkc_i = u_ki^cd
 !
@@ -260,11 +256,9 @@ contains
       real(dp), dimension(:,:), allocatable :: g_ckl_i ! g_kilc 
       real(dp), dimension(:,:), allocatable :: u_a_ckl ! u_kl^ac = 2 t_kl^ac - t_lk^ac
 !
-!     Allocate integrals g_ki_lc = g_kilc
+!     Get g_ki_lc = g_kilc
 !
       call allocator(g_ki_lc, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
-!
-!     Calculate g_ki_lc = sum_J L_ki_J L_lc_J^T 
 !
       integral_type = 'electronic_repulsion'
       call wf%get_oo_ov(integral_type, g_ki_lc)
@@ -474,10 +468,6 @@ contains
       integer(i15) :: b_n_batch = 0, b_first = 0, b_last = 0, b_length = 0, b_max_length = 0, b_batch = 0
 
       integer(i15) :: required = 0, available = 0
-!
-!     Logical for reordering in L_ab_J when batching over the last index
-!
-      logical :: reorder
 !
 !
 !     ::  Calculate the A2.1 term of omega ::
@@ -1021,7 +1011,6 @@ contains
 !
 !     Deallocate t_cd_ij and g_kl_cd
 !
-      
       call deallocator(g_kl_cd, (wf%n_o)*(wf%n_o), (wf%n_v)*(wf%n_v))
 !
 !     omega_ab_ij = sum_(kl) t_ab_kl*X_kl_ij
@@ -1124,10 +1113,6 @@ contains
 !
       integer(i15) :: n_batch = 0, max_batch_length = 0
       integer(i15) :: a_batch = 0, a_start = 0, a_end = 0, a_length = 0 
-!
-!     Logical for reordering L_ab_J when batching over last index 
-!
-      logical :: reorder 
 !
 !     Allocate and construct g_kd_lc 
 !
@@ -1381,7 +1366,6 @@ contains
 !
 !     Vectors for D2.3 term 
 !
-      real(dp), dimension(:,:), allocatable :: L_kc_J  ! L_kc^J 
       real(dp), dimension(:,:), allocatable :: g_ld_kc ! g_ldkc 
       real(dp), dimension(:,:), allocatable :: L_ld_kc ! L_ldkc = 2 * g_ldkc - g_lckd 
       real(dp), dimension(:,:), allocatable :: u_ai_ld ! u_il^ad = 2 * t_il^ad - t_li^ad 
@@ -1398,24 +1382,18 @@ contains
       real(dp), dimension(:,:), allocatable :: g_ac_ki ! g_acki; a is batched over 
       real(dp), dimension(:,:), allocatable :: u_ck_bj ! u_jk^bc
 !
-!     Logical for reordering L_ab_J when batching over the last index 
-!
-      logical :: reorder 
-!
 !     :: Calculate the D2.3 term of omega ::
 !
-!     Calculate g_ld_kc = g_ldkc = sum_J L_ld^J L_kc^J
+!     Get g_ld_kc = g_ldkc 
 !
       call allocator(g_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       integral_type = 'electronic_repulsion'
       call wf%get_ov_ov(integral_type, g_ld_kc)
 !
-!     Allocate L_ld_kc = L_ldkc and set to zero    
+!     Form L_ld_kc = L_ldkc    
 !
       call allocator(L_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
-!     Determine L_ld_kc = L_ldkc from g_ld_kc = g_ldkc 
 !
       do c = 1, wf%n_v
          do k = 1, wf%n_o 
@@ -1494,11 +1472,9 @@ contains
 !
       call deallocator(L_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-!     Allocate the D2.3 term omega2_ai_bj and set it to zero
+!     Form the D2.3 term, 1/4 sum_kc Z_ai_kc u_kc_bj = 1/4 sum_kc Z_ai_kc(ai,kc) u_ai_ld(bj,kc)
 !
       call allocator(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
-!     Form the D2.3 term, 1/4 sum_kc Z_ai_kc u_kc_bj = 1/4 sum_kc Z_ai_kc(ai,kc) u_ai_ld(bj,kc)
 !
       call dgemm('N','T',            &
                   (wf%n_o)*(wf%n_v), &
@@ -1877,12 +1853,10 @@ contains
       integral_type = 'electronic_repulsion'
       call wf%get_ov_ov(integral_type, g_ld_kc)
 !
-!     Allocate u_b_kdl = u_kl^bd 
-!
-      call allocator(u_b_ldk, wf%n_v, (wf%n_v)*((wf%n_o)**2))
-!
 !     Form u_b_ldk = u_kl^bd
 ! 
+      call allocator(u_b_ldk, wf%n_v, (wf%n_v)*((wf%n_o)**2))
+!
       do k = 1, wf%n_o 
          do d = 1, wf%n_v
 !
@@ -1985,11 +1959,10 @@ contains
          enddo
       enddo
 !
-!     Deallocate the E2.1 term, the X intermediate, and the reordered amplitudes 
+!     Deallocate the E2.1 term, the X intermediate, keep the amplitudes 
 !
       call deallocator(omega2_bj_ai, (wf%n_o)*(wf%n_v), (wf%n_v)*(wf%n_o))
       call deallocator(X_b_c, wf%n_v, wf%n_v)
-      call deallocator(t_cj_ai, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
 !     :: Calculate E2.2 term of omega ::
 !
@@ -2000,27 +1973,25 @@ contains
       integral_type = 'electronic_repulsion'
       call wf%get_ov_ov(integral_type,g_kc_ld)
 !
-!     Allocate u_cld_j = u_lj^dc
+!     Form u_cld_j = u_lj^dc 
 !
       call allocator(u_cld_j, (wf%n_o)*(wf%n_v)**2, wf%n_o)
 !
-!     Form u_cld_j = u_lj^dc 
-!
       do k = 1, wf%n_o ! Use as though "j" for u_dlc_j term 
-         do c = 1, wf%n_v
+         do d = 1, wf%n_v
 !
-            ck = index_two(c, k, wf%n_v)
+            dk = index_two(d, k, wf%n_v)
 !
             do l = 1, wf%n_o
 !
-               cl = index_two(c, l, wf%n_v)
+               dl = index_two(d, l, wf%n_v)
 !
-               do d = 1, wf%n_v
+               do c = 1, wf%n_v
+!
+                  ck = index_two(c, k, wf%n_v)
+                  cl = index_two(c, l, wf%n_v)
 !
                   cld  = index_three(c, l, d, wf%n_v, wf%n_o)
-!
-                  dl = index_two(d, l, wf%n_v)
-                  dk = index_two(d, k, wf%n_v)
 !
                   dlck = index_packed(dl, ck)
                   dkcl = index_packed(dk, cl)
@@ -2033,8 +2004,8 @@ contains
       enddo
 !
 !     Allocate the intermediate Y_k_j = F_kj  + sum_cdl u_lj^dc g_ldkc 
-!                                    = F_kj  + sum_cdl u_lj^dc g_kcld 
-!                                    = F_k_j + sum_cdl g_k_cld * u_cld_j
+!                                     = F_kj  + sum_cdl u_lj^dc g_kcld 
+!                                     = F_k_j + sum_cdl g_k_cld * u_cld_j
 !
       call allocator(Y_k_j, wf%n_o, wf%n_o)
 !
@@ -2063,11 +2034,6 @@ contains
       call deallocator(u_cld_j, (wf%n_o)*(wf%n_v)**2, wf%n_o)
       call deallocator(g_kc_ld, (wf%n_v)*(wf%n_o), (wf%n_o)*(wf%n_v))
 !
-!     Form t_ai_bk = t_ik^ab
-!
-      call allocator(t_ai_bk, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call squareup(wf%t2am, t_ai_bk, (wf%n_o)*(wf%n_v))
-!
 !    Allocate the E2.2 term and set to zero 
 !
      call allocator(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
@@ -2075,12 +2041,15 @@ contains
 !    Calculate the E2.2 term, 
 !    - sum_k t_aib_k Y_k_j = - sum_k t_ik^ab (F_kj + sum_cdl g_ldkc u_lj^dc)
 !
-     call dgemm('N','N',               &
+!    Note: t_cj_ai = t_ji^ca => t_cj_ai(ai,bk) = t_ik^ab;
+!    thus, we can treat t_cj_ai as t_aib_k = t_ik^ab.
+!
+      call dgemm('N','N',               &
                  (wf%n_o)*(wf%n_v)**2, &
                  wf%n_o,               &
                  wf%n_o,               &
                  -one,                 &
-                 t_ai_bk,              & ! t_aib_k 
+                 t_cj_ai,              & ! t_aib_k 
                  (wf%n_o)*(wf%n_v)**2, &
                  Y_k_j,                &
                  wf%n_o,               &
@@ -2088,10 +2057,10 @@ contains
                  omega2_ai_bj,         & ! omega2_aib_j 
                  (wf%n_o)*(wf%n_v)**2)
 !
-!    Deallocate t_aib_k and Y_k_j 
+!    Deallocate Y_k_j and the amplitudes 
 !
-     call deallocator(t_ai_bk, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-     call deallocator(Y_k_j, wf%n_o, wf%n_o)
+      call deallocator(Y_k_j, wf%n_o, wf%n_o)
+      call deallocator(t_cj_ai, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
 !    Add the E2.2 term to the omega vector 
 !
