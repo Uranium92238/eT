@@ -256,49 +256,18 @@ contains
       integer(i15) :: ak = 0, akcl = 0, al = 0, alck = 0, ck = 0, ai = 0
       integer(i15) :: cl = 0, lc = 0, i = 0, j = 0
 !
-      real(dp), dimension(:,:), allocatable :: L_ki_J  ! L_ki^J 
-      real(dp), dimension(:,:), allocatable :: L_lc_J  ! L_lc^J 
       real(dp), dimension(:,:), allocatable :: g_ki_lc ! g_kilc 
       real(dp), dimension(:,:), allocatable :: g_ckl_i ! g_kilc 
       real(dp), dimension(:,:), allocatable :: u_a_ckl ! u_kl^ac = 2 t_kl^ac - t_lk^ac
-!
-!     Form the Cholesky vectors L_ki_J and L_lc_J 
-!
-      call allocator(L_ki_J, (wf%n_o)**2, wf%n_J)
-      call allocator(L_lc_J, (wf%n_o)*(wf%n_v), wf%n_J)
-!
-      call wf%get_cholesky_ij(L_ki_J)
-      call wf%get_cholesky_ia(L_lc_J)
 !
 !     Allocate integrals g_ki_lc = g_kilc
 !
       call allocator(g_ki_lc, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
 !
 !     Calculate g_ki_lc = sum_J L_ki_J L_lc_J^T 
-! 
-      call dgemm('N','T',            &
-                  (wf%n_o)**2,       &
-                  (wf%n_o)*(wf%n_v), &
-                  wf%n_J,            &
-                  one,               &
-                  L_ki_J,            &
-                  (wf%n_o)**2,       &
-                  L_lc_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  g_ki_lc,           &
-                  (wf%n_o)**2)
-! .... Eirik -> tester oo_ov rutinen
-      write(unit_output,*) 'Getting oo_ov integral!'
-      g_ki_lc = zero
+!
       integral_type = 'electronic_repulsion'
       call wf%get_oo_ov(integral_type, g_ki_lc)
-! ....
-!
-!     Deallocate the Cholesky vectors L_ki_J and L_lc_J
-!
-      call deallocator(L_ki_J, (wf%n_o)**2, wf%n_J)
-      call deallocator(L_lc_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
 !     Form the reordered integrals g_ckl_i = g_kilc 
 !
@@ -341,11 +310,9 @@ contains
                do a = 1, wf%n_v
 !
                   ak   = index_two(a, k, wf%n_v)
-!
-                  akcl = index_packed(ak, cl)
-!
                   al   = index_two(a, l, wf%n_v)
 !
+                  akcl = index_packed(ak, cl)
                   alck = index_packed(al, ck)
 !
 !                 Set the value of u_a_ckl = u_kl^ac = 2*t_kl^ac - t_lk^ac = 2*t_ak,cl - t_al,ck 
