@@ -2992,7 +2992,9 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
       integer(i15) :: b_first = 0, b_last = 0, b_length = 0, b_max_length = 0, b_batch = 0, b_n_batch = 0
       integer(i15) :: d_first = 0, d_last = 0, d_length = 0, d_max_length = 0, d_batch = 0
 !
-      integer(i15) :: a = 0, b = 0, c = 0, d = 0, ab = 0, cd = 0
+      integer(i15) :: a = 0, b = 0, c = 0, d = 0, bcd = 0, cd_packed = 0, I = 0
+!
+      real(dp) :: begin_timer, end_timer
 !
 !     Cholesky vectors 
 !
@@ -3001,7 +3003,7 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
 !
 !     The electronic repulsion integral 
 !
-      real(dp), dimension(:,:), allocatable :: g_ab_cd ! g_abcd 
+      real(dp), dimension(:,:), allocatable :: g_a_bcd ! g_abcd 
 !
 !     Calculate the disk space (in GB) required to store the vir-vir-vir-vir integrals 
 !
@@ -3020,21 +3022,17 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
 !
       required_space_gb = real(required_space)*(1.0D-9)
 !
-      write(unit_output,'(/t3,a,F7.4)') &
-               'The space needed to store g_abcd integrals is (in GBs)', required_space_gb
-!
 !     Test whether there is room for the integrals & save if this is the case 
 !
       if (required_space_gb .lt. wf%settings%disk_space) then 
 !
-         write(unit_output,'(t3,a)') &
-               'The integrals g_abcd will be stored to disk.'
+         call cpu_time(begin_timer)
 !
-!        Open file for writing integrals to (one record per integral)
+!        Open file for writing integrals - one record: (a, bcd) = (1:n_v, bcd)
 !
          call generate_unit_identifier(unit_g_abcd)
          open(unit=unit_g_abcd, file='g_abcd', action='write', status='unknown', &
-               access='direct', form='unformatted', recl=dp, iostat=ioerror)
+               access='direct', form='unformatted', recl=dp*(wf%n_v), iostat=ioerror)
 !
 !        In calculating g_ab_cd, we will batch over the b and d indices 
 !
@@ -3071,12 +3069,11 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
 !              Calculate the integrals g_ab_cd, where b and d are restricted by
 !              the current batching limits 
 !
-!
                call allocator(L_cd_J, (wf%n_v)*d_length, wf%n_J)
 !
                call wf%read_cholesky_ab(L_cd_J, 1, wf%n_v, d_first, d_last)
 !
-               call allocator(g_ab_cd, (wf%n_v)*b_length, (wf%n_v)*d_length)
+               call allocator(g_a_bcd, (wf%n_v), b_length*(wf%n_v)*d_length)
 !
                call dgemm('N', 'T',           &
                            (wf%n_v)*b_length, & 
@@ -3088,68 +3085,41 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
                            L_cd_J,            &
                            (wf%n_v)*d_length, &
                            zero,              &
-                           g_ab_cd,           &
+                           g_a_bcd,           & ! g_ab_cd 
                            (wf%n_v)*b_length)
 !
                call deallocator(L_cd_J, (wf%n_v)*d_length, wf%n_J)
 !
 !              Save the integrals to disk 
 !
-               if (d_batch .lt. b_batch) then ! Store all integrals (entire block in the ab,cd matrix)
+               if (d_batch .le. b_batch) then ! Store all integrals (ab >= cd)
+                                              ! There will be some wasted space here, but for a large number
+                                              ! of batches, the waste will go to zero
 !
                   do d = 1, d_length
                      do c = 1, wf%n_v
                         do b = 1, b_length
-                           do a = 1, wf%n_v
 !
-!                             Calculate record number 
+!                          Calculate record number 
 !
-                              rec_number = index_packed(index_packed(a, b + b_first - 1), &
-                                                        index_packed(c, d + d_first - 1))
+                           cd_packed = index_packed(c, d)
+                           bcd = index_two(b + b_first - 1, cd_packed, wf%n_v)
 !
-!                             Write integral value to that record 
-!  
-                              ab = index_two(a, b, wf%n_v)
-                              cd = index_two(c, d, wf%n_v)
+                           if (c .ge. (d + d_first - 1)) then 
 !
-                              write(unit_g_abcd, rec=rec_number) g_ab_cd(ab, cd)
+!                             Write integrals to that record 
 !
-                           enddo
+                              write(unit_g_abcd, rec=bcd) (g_a_bcd(I, bcd), I = 1, wf%n_v)
+!
+                           endif
+!
                         enddo
                      enddo
                   enddo
 !
-               else ! Store integrals below the diagonal 
-!
-                  do d = 1, d_length
-                     do c = 1, wf%n_v
-                        do b = 1, b_length
-                           do a = 1, wf%n_v
-!
-!                             Calculate record number 
-!
-                              rec_number = index_packed(index_packed(a, b + b_first - 1), &
-                                                        index_packed(c, d + d_first - 1))
-!
-!                             Write integral value to that record 
-!  
-                              ab = index_two(a, b, wf%n_v)
-                              cd = index_two(c, d, wf%n_v)
-!
-                              if (ab .ge. cd) then 
-!
-                                 write(unit_g_abcd, rec=rec_number) g_ab_cd(ab, cd)
-!
-                              endif
-!
-                           enddo
-                        enddo
-                     enddo
-                  enddo                  
-!
                endif
 !
-               call deallocator(g_ab_cd, (wf%n_v)*b_length, (wf%n_v)*d_length)
+               call deallocator(g_a_bcd, (wf%n_v), b_length*(wf%n_v)*d_length)
 !
             enddo ! End of batches over d
 !
@@ -3164,6 +3134,15 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
 !        Close file 
 !
          close(unit_g_abcd)
+!
+         call cpu_time(end_timer)
+!
+         if (wf%settings%print_level == 'developer') then
+! 
+            write(unit_output,'(t3,a36,f14.8)') 'Time used to store g_abcd (seconds):', end_timer - begin_timer
+            flush(unit_output)
+!
+         endif
 !
       endif 
 !
