@@ -39,13 +39,13 @@ contains
 !
 !
    module subroutine initialize_omega_ccsd(wf)
-!
-!      Initialize Omega (CCSD)
-!      Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!
-!      Allocates the projection vector (omega1, omega2) and sets it
-!      to zero.
-!
+!!
+!!    Initialize Omega (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!    Allocates the projection vector (omega1, omega2) and sets it
+!!    to zero.
+!!
       implicit none 
 !
       class(ccsd) :: wf
@@ -60,13 +60,13 @@ contains
 !
 !
    module subroutine construct_omega_ccsd(wf)
-!
-!     Construct Omega (CCSD)
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!     Directs the construction of the projection vector < mu | exp(-T) H exp(T) | R >
-!     for the current amplitudes of the object wfn 
-!
+!!
+!!     Construct Omega (CCSD)
+!!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!     Directs the construction of the projection vector < mu | exp(-T) H exp(T) | R >
+!!     for the current amplitudes of the object wfn 
+!!
       implicit none 
 !
       class(ccsd) :: wf
@@ -95,16 +95,16 @@ contains
 !
 !
    module subroutine omega_ccsd_a1_ccsd(wf)
-!
-!       Omega A1 term
-!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!  
-!       Calculates the A1 term, 
-!  
-!       A1: sum_ckd g_adkc * u_ki^cd,
-!  
-!       and adds it to the singles projection vector (omega1) of
-!       the wavefunction object wf.
+!!
+!!    Omega A1 term
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!  
+!!    Calculates the A1 term, 
+!!  
+!!       A1: sum_ckd g_adkc * u_ki^cd,
+!!  
+!!    and adds it to the singles projection vector (omega1) of
+!!    the wavefunction object wf.
 !
       implicit none
 !
@@ -342,19 +342,19 @@ contains
 !
 !
    module subroutine omega_ccsd_c1_ccsd(wf)        
-!  
-!     Omega C1
-!     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!  
-!     Calculates the C1 term of omega,
-!  
-!     C1: sum_ck F_kc*u_ai_ck,
-!  
-!     and adds it to the projection vector (omega1) of    
-!     the wavefunction object wf                           
-!  
-!     u_ai_kc = 2*t_ck_ai - t_ci_ak
-! 
+!!  
+!!    Omega C1
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!  
+!!    Calculates the C1 term of omega,
+!!  
+!!       C1: sum_ck F_kc*u_ai_ck,
+!!  
+!!    and adds it to the projection vector (omega1) of    
+!!    the wavefunction object wf                           
+!!  
+!!    u_ai_kc = 2*t_ck_ai - t_ci_ak
+!! 
       implicit none
 !
       class(ccsd) :: wf 
@@ -416,20 +416,19 @@ contains
 !
 !
    module subroutine omega_ccsd_a2_ccsd(wf)
-!
-!     Omega A2 term: Omega A2 = g_ai_bj + sum_(cd)g_ac_bd * t_ci_dj = A2.1 + A.2.2
-!
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, 10 Mar 2017
-!
-!     Structure: Batching over both a and b for A2.2.
-!                t^+_ci_dj = t_ci_dj + t_di_cj
-!                t^-_ci_dj = t_ci_dj - t_di_cj
-!                g^+_ac_bd = g_ac_bd + g_bc_ad 
-!                g^-_ac_bd = g_ac_bd - g_bc_ad 
-! 
-!                omega_A2.2_ai_bj = 1/4*(g^+_ac_bd*t^+_ci_dj + g^-_ac_bd*t^-_ci_dj) = omega_A2.2_bj_ai
-!                omega_A2.2_aj_bi = 1/4*(g^+_ac_bd*t^+_ci_dj - g^-_ac_bd*t^-_ci_dj) = omega_A2.2_bi_aj
-!
+!!
+!!    Omega A2 term: Omega A2 = g_ai_bj + sum_(cd)g_ac_bd * t_ci_dj = A2.1 + A.2.2
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 10 Mar 2017
+!!
+!!    Structure: Batching over both a and b for A2.2.
+!!                t^+_ci_dj = t_ci_dj + t_di_cj
+!!                t^-_ci_dj = t_ci_dj - t_di_cj
+!!                g^+_ac_bd = g_ac_bd + g_bc_ad 
+!!                g^-_ac_bd = g_ac_bd - g_bc_ad 
+!! 
+!!                omega_A2.2_ai_bj = 1/4*(g^+_ac_bd*t^+_ci_dj + g^-_ac_bd*t^-_ci_dj) = omega_A2.2_bj_ai
+!!                omega_A2.2_aj_bi = 1/4*(g^+_ac_bd*t^+_ci_dj - g^-_ac_bd*t^-_ci_dj) = omega_A2.2_bi_aj
+!!
       implicit none
 !
       class(ccsd) :: wf
@@ -1177,7 +1176,6 @@ contains
       call deallocator(t_ai_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     Constructing g_ki_ac ordered as g_ki_ca
-
 !
 !     Setup of variables needed for batching
 !

@@ -239,7 +239,6 @@ module ccs_class
 !  -::- Interface to the submodule routines of CCS -::- 
 !  ::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
-!
    interface 
 !
 !
@@ -361,15 +360,6 @@ module ccs_class
 !
 !
    end interface 
-!
-!
-   interface
-!
-!     -::- Fock submodule interface -::-
-!     ::::::::::::::::::::::::::::::::::
-!
-!
-   end interface
 !
 !
    interface
@@ -636,13 +626,6 @@ module ccs_class
 !
       end subroutine transform_trial_vectors_ccs
 !
-   end interface
-!
-!
-   interface
-!
-!    -::- Excited state submodule interface -::-
-!    :::::::::::::::::::::::::::::::::::::::::::
 !
       module subroutine excited_state_driver_ccs(wf)
 !!
