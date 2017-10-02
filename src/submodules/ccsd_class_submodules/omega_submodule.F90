@@ -707,7 +707,7 @@ contains
               call dgemm('N','N',                & 
                           packed_size(a_length), &
                           packed_size(wf%n_o),   &
-                          packed_size(wf%n_v),    &
+                          packed_size(wf%n_v),   &
                           one/four,              &
                           g_p_ab_cd,             &
                           packed_size(a_length), &

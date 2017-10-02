@@ -24,6 +24,8 @@ module calc_settings_class
 !
       logical :: restart = .false.
 !
+      real(dp) :: disk_space = 100D0 ! 100 gigabytes; can be modified by user
+!
    end type calc_settings                                                                            
 !
 contains

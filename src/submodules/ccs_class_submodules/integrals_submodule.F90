@@ -2965,4 +2965,209 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
    end subroutine get_ov_ov_electronic_repulsion_ccs
 !
 !
+   module subroutine store_electronic_repulsion_integrals_ccs(wf)
+!!
+!!    Store Electronic Repulsion Integrals 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!    Tests whether it is possible to store vir-vir-vir-vir integrals and,
+!!    if possible, writes the integrals to disk 
+!!
+      implicit none 
+!
+      class(ccs) :: wf 
+!
+      integer  :: required_space 
+      real(dp) :: required_space_gb
+!
+      integer(i15) :: unit_g_abcd = -1 ! g_abcd, electronic repulsion integrals  
+      integer(i15) :: ioerror = -1     ! Error integer for file handling
+      integer(i15) :: rec_number = -1  ! The record where g_abcd is positioned 
+!
+!     Batching variables
+!
+      integer(i15) :: required_mem = -1
+      integer(i15) :: available_mem = -1 
+!
+      integer(i15) :: b_first = 0, b_last = 0, b_length = 0, b_max_length = 0, b_batch = 0, b_n_batch = 0
+      integer(i15) :: d_first = 0, d_last = 0, d_length = 0, d_max_length = 0, d_batch = 0
+!
+      integer(i15) :: a = 0, b = 0, c = 0, d = 0, ab = 0, cd = 0
+!
+!     Cholesky vectors 
+!
+      real(dp), dimension(:,:), allocatable :: L_ab_J 
+      real(dp), dimension(:,:), allocatable :: L_cd_J
+!
+!     The electronic repulsion integral 
+!
+      real(dp), dimension(:,:), allocatable :: g_ab_cd ! g_abcd 
+!
+!     Calculate the disk space (in GB) required to store the vir-vir-vir-vir integrals 
+!
+!     For non-T1-transformed integrals, there is a four-fold symmetri, 
+!
+!        ((a >= b) >= (c >= d),
+!
+!     giving required space = (n_v*(n_v+1)/2)*(n_v*(n_v+1)/2 + 1)/2
+!
+      required_space = ((wf%n_v)*(wf%n_v+1)/2)*(wf%n_v*(wf%n_v+1)/2 + 1)/2
+!
+!     This is the required space in number of double precision numbers (8 bytes per such number).
+!     We convert this number to gigabytes. 
+!
+      required_space = 8*required_space ! in bytes
+!
+      required_space_gb = real(required_space)*(1.0D-9)
+!
+      write(unit_output,'(/t3,a,F7.4)') &
+               'The space needed to store g_abcd integrals is (in GBs)', required_space_gb
+!
+!     Test whether there is room for the integrals & save if this is the case 
+!
+      if (required_space_gb .lt. wf%settings%disk_space) then 
+!
+         write(unit_output,'(t3,a)') &
+               'The integrals g_abcd will be stored to disk.'
+!
+!        Open file for writing integrals to (one record per integral)
+!
+         call generate_unit_identifier(unit_g_abcd)
+         open(unit=unit_g_abcd, file='g_abcd', action='write', status='unknown', &
+               access='direct', form='unformatted', recl=dp, iostat=ioerror)
+!
+!        In calculating g_ab_cd, we will batch over the b and d indices 
+!
+         required_mem = max(2*(wf%n_v)**2*(wf%n_J) + 4*(wf%n_v)*(wf%n_o)*(wf%n_J), & ! Needed to get L_ab_J & L_cd_J
+                           (wf%n_v)**4 + 2*(wf%n_v)**2*(wf%n_J)) ! Needed to get g_ac_bd
+!         
+         required_mem  = 4*required_mem
+         available_mem = get_available()
+!
+         b_max_length = 0
+         call num_two_batch(required_mem, available_mem, b_max_length, b_n_batch, wf%n_v)
+!
+         do b_batch = 1, b_n_batch ! Batch over b index 
+!
+            call batch_limits(b_first, b_last, b_batch, b_max_length, wf%n_v)
+            b_length = b_last - b_first + 1  
+!
+!           Start looping over batches of d
+!
+            d_first  = 0
+            d_last   = 0
+            d_length = 0
+!
+            d_max_length = b_max_length
+!
+            call allocator(L_ab_J, (wf%n_v)*b_length, wf%n_J)
+            call wf%read_cholesky_ab(L_ab_J, 1, wf%n_v, b_first, b_last)
+!
+            do d_batch = 1, b_batch ! Batch over d index; restricted by b index 
+!
+               call batch_limits(d_first, d_last, d_batch, d_max_length, wf%n_v)
+               d_length = d_last - d_first + 1 
+!
+!              Calculate the integrals g_ab_cd, where b and d are restricted by
+!              the current batching limits 
+!
+!
+               call allocator(L_cd_J, (wf%n_v)*d_length, wf%n_J)
+!
+               call wf%read_cholesky_ab(L_cd_J, 1, wf%n_v, d_first, d_last)
+!
+               call allocator(g_ab_cd, (wf%n_v)*b_length, (wf%n_v)*d_length)
+!
+               call dgemm('N', 'T',           &
+                           (wf%n_v)*b_length, & 
+                           (wf%n_v)*d_length, &
+                           wf%n_J,            &
+                           one,               &
+                           L_ab_J,            &
+                           (wf%n_v)*b_length, &
+                           L_cd_J,            &
+                           (wf%n_v)*d_length, &
+                           zero,              &
+                           g_ab_cd,           &
+                           (wf%n_v)*b_length)
+!
+               call deallocator(L_cd_J, (wf%n_v)*d_length, wf%n_J)
+!
+!              Save the integrals to disk 
+!
+               if (d_batch .lt. b_batch) then ! Store all integrals (entire block in the ab,cd matrix)
+!
+                  do d = 1, d_length
+                     do c = 1, wf%n_v
+                        do b = 1, b_length
+                           do a = 1, wf%n_v
+!
+!                             Calculate record number 
+!
+                              rec_number = index_packed(index_packed(a, b + b_first - 1), &
+                                                        index_packed(c, d + d_first - 1))
+!
+!                             Write integral value to that record 
+!  
+                              ab = index_two(a, b, wf%n_v)
+                              cd = index_two(c, d, wf%n_v)
+!
+                              write(unit_g_abcd, rec=rec_number) g_ab_cd(ab, cd)
+!
+                           enddo
+                        enddo
+                     enddo
+                  enddo
+!
+               else ! Store integrals below the diagonal 
+!
+                  do d = 1, d_length
+                     do c = 1, wf%n_v
+                        do b = 1, b_length
+                           do a = 1, wf%n_v
+!
+!                             Calculate record number 
+!
+                              rec_number = index_packed(index_packed(a, b + b_first - 1), &
+                                                        index_packed(c, d + d_first - 1))
+!
+!                             Write integral value to that record 
+!  
+                              ab = index_two(a, b, wf%n_v)
+                              cd = index_two(c, d, wf%n_v)
+!
+                              if (ab .ge. cd) then 
+!
+                                 write(unit_g_abcd, rec=rec_number) g_ab_cd(ab, cd)
+!
+                              endif
+!
+                           enddo
+                        enddo
+                     enddo
+                  enddo                  
+!
+               endif
+!
+               call deallocator(g_ab_cd, (wf%n_v)*b_length, (wf%n_v)*d_length)
+!
+            enddo ! End of batches over d
+!
+            call deallocator(L_ab_J, (wf%n_v)*b_length, wf%n_J)
+!
+         enddo ! End of batches over b 
+!
+!        Test for file handling error 
+!
+         if (ioerror .ne. 0) write(unit_output,'(t3,a)') 'Error: write error in store_electronic_repulsion_integrals_ccs'
+!
+!        Close file 
+!
+         close(unit_g_abcd)
+!
+      endif 
+!
+   end subroutine store_electronic_repulsion_integrals_ccs
+!
+!
 end submodule integrals

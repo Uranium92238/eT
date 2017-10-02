@@ -86,6 +86,10 @@ module ccs_class
       procedure, non_overridable :: get_cholesky_ai => get_cholesky_ai_ccs ! vir-occ
       procedure, non_overridable :: get_cholesky_ab => get_cholesky_ab_ccs ! vir-vir
 !
+!     Routine to store electronic repulsion integrals (g_abcd)
+!
+      procedure, non_overridable :: store_electronic_repulsion_integrals => store_electronic_repulsion_integrals_ccs
+!
 !     Routine to construct projection vector (omega)
 !
       procedure :: construct_omega => construct_omega_ccs
@@ -1304,6 +1308,15 @@ module ccs_class
 !     -::- Integral submodule interface -::-
 !     ::::::::::::::::::::::::::::::::::::::
 !
+      module subroutine store_electronic_repulsion_integrals_ccs(wf)
+!
+         implicit none 
+!
+         class(ccs) :: wf 
+!
+      end subroutine store_electronic_repulsion_integrals_ccs
+!
+!
       module subroutine get_oo_oo_ccs(wf, integral_type, x_oo_oo,    & 
                                           index1_first, index1_last, &
                                           index2_first, index2_last, &
@@ -2114,6 +2127,12 @@ contains
 !     Read Cholesky AO integrals and transform to MO basis
 !
       call wf%read_transform_cholesky
+!
+!     Test for the possibility of storing vir-vir-vir-vir
+!     electronic repulsion integrals (g_abcd), storing the
+!     integrals if possible
+!
+      call wf%store_electronic_repulsion_integrals 
 !
 !     Initialize amplitudes and associated attributes
 !
