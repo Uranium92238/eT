@@ -71,6 +71,18 @@ contains
 !
       class(ccsd) :: wf
 !
+      real(dp) :: begin_timer, end_timer
+!
+      real(dp) :: ccsd_a1_time
+      real(dp) :: ccsd_b1_time 
+      real(dp) :: ccsd_c1_time
+      real(dp) :: ccs_a1_time 
+      real(dp) :: ccsd_a2_time
+      real(dp) :: ccsd_b2_time 
+      real(dp) :: ccsd_c2_time 
+      real(dp) :: ccsd_d2_time 
+      real(dp) :: ccsd_e2_time  
+!
 !     Set the omega vector to zero 
 !
       wf%omega1 = zero
@@ -78,18 +90,65 @@ contains
 !
 !     Construct singles contributions 
 !
+      call cpu_time(begin_timer)
       call wf%omega_ccsd_a1
+      call cpu_time(end_timer)
+      ccsd_a1_time = end_timer - begin_timer
+!
+      call cpu_time(begin_timer)
       call wf%omega_ccsd_b1
+      call cpu_time(end_timer)
+      ccsd_b1_time = end_timer - begin_timer
+!
+      call cpu_time(begin_timer)
       call wf%omega_ccsd_c1
+      call cpu_time(end_timer)
+      ccsd_c1_time = end_timer - begin_timer
+!
+      call cpu_time(begin_timer)
       call wf%omega_ccs_a1
+      call cpu_time(end_timer)
+      ccs_a1_time = end_timer - begin_timer
 !
 !     Construct doubles contributions 
 !
+      call cpu_time(begin_timer)
       call wf%omega_ccsd_a2
+      call cpu_time(end_timer)
+      ccsd_a2_time = end_timer - begin_timer
+!
+      call cpu_time(begin_timer)
       call wf%omega_ccsd_b2
+      call cpu_time(end_timer)
+      ccsd_b2_time = end_timer - begin_timer
+!
+      call cpu_time(begin_timer)
       call wf%omega_ccsd_c2
+      call cpu_time(end_timer)
+      ccsd_c2_time = end_timer - begin_timer
+!
+      call cpu_time(begin_timer)
       call wf%omega_ccsd_d2
+      call cpu_time(end_timer)
+      ccsd_d2_time = end_timer - begin_timer
+!
+      call cpu_time(begin_timer)
       call wf%omega_ccsd_e2
+      call cpu_time(end_timer)
+      ccsd_e2_time = end_timer - begin_timer
+!
+!     Print timings
+!
+      write(unit_output,'(t3,a27,f14.8)') 'Time in CCSD A1 (seconds):', ccsd_a1_time
+      write(unit_output,'(t3,a27,f14.8)') 'Time in CCSD B1 (seconds):', ccsd_b1_time
+      write(unit_output,'(t3,a27,f14.8)') 'Time in CCSD C1 (seconds):', ccsd_c1_time
+      write(unit_output,'(t3,a27,f14.8)') 'Time in CCS  A1 (seconds):', ccs_a1_time
+      write(unit_output,'(t3,a27,f14.8)') 'Time in CCSD A2 (seconds):', ccsd_a2_time
+      write(unit_output,'(t3,a27,f14.8)') 'Time in CCSD B2 (seconds):', ccsd_b2_time
+      write(unit_output,'(t3,a27,f14.8)') 'Time in CCSD C2 (seconds):', ccsd_c2_time
+      write(unit_output,'(t3,a27,f14.8)') 'Time in CCSD D2 (seconds):', ccsd_d2_time
+      write(unit_output,'(t3,a27,f14.8)') 'Time in CCSD E2 (seconds):', ccsd_e2_time
+      flush(unit_output)
 !
    end subroutine construct_omega_ccsd
 !
@@ -1081,6 +1140,11 @@ contains
 !!    Omega C2 = -1/2 * sum_(ck) t_bk_cj*(g_ki_ac -1/2 sum_(dl)t_al_di * g_kd_lc)
 !!                    - sum_(ck) t_bk_ci*(g_kj_ac - sum_(dl)t_al_dj * g_kd_lc)
 !!    
+!!    Eirik: I would like to put a term for D2 into this term!
+!!
+!!       - 1/2 * sum_ck u_jk^bc g_acki
+!!
+!!
       implicit none
 !
       class(ccsd) :: wf
@@ -1181,7 +1245,7 @@ contains
       call deallocator(g_dl_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call deallocator(t_ai_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-!     Constructing g_ki_ac ordered as g_ki_ca
+!     Constructing g_ki_ac
 !
 !     Setup of variables needed for batching
 !
@@ -1315,7 +1379,7 @@ contains
                      aj = index_two(a, j, wf%n_v)
                      bi = index_two(b, i, wf%n_v)
 !
-                     aibj=index_packed(ai, bj)
+                     aibj = index_packed(ai, bj)
 !
                      wf%omega2(aibj, 1) = wf%omega2(aibj, 1) + half*Y_ai_bj(ai, bj) + Y_ai_bj(aj, bi) &
                                                                + half*Y_ai_bj(bj, ai) + Y_ai_bj(bi, aj)
@@ -1670,11 +1734,9 @@ contains
          call batch_limits(a_begin, a_end, a_batch, max_batch_length, batch_dimension)
          batch_length = a_end - a_begin + 1 
 !
-         ac_dim = batch_length*(wf%n_v) ! Dimension of ac for the batch over index a 
-!
 !        Form g_ac_ki = g_acki 
 !
-         call allocator(g_ac_ki, ac_dim, (wf%n_o)**2)
+         call allocator(g_ac_ki, batch_length*(wf%n_v), (wf%n_o)**2)
 !
          integral_type = 'electronic_repulsion'
          call wf%get_vv_oo(integral_type, &
@@ -1716,7 +1778,7 @@ contains
 !
 !        Deallocate the g_ac_ki
 !
-         call deallocator(g_ac_ki, ac_dim, (wf%n_o)**2)
+         call deallocator(g_ac_ki, batch_length*(wf%n_v), (wf%n_o)**2)
 !
       enddo ! End of loop over batches of a 
 !

@@ -1994,7 +1994,7 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
 !
 !        Something wrong in subroutine call
 !
-         write(unit_output,*) 'WARNING: Some, but not all optional arguments were passed to get_vv_vv_electronic_repulsion'
+         write(unit_output,*) 'WARNING: Some, but not all optional arguments were passed to get_oo_oo_electronic_repulsion'
          stop
 !
       endif
