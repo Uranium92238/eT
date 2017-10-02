@@ -3092,32 +3092,26 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
 !
 !              Save the integrals to disk 
 !
-               if (d_batch .le. b_batch) then ! Store all integrals (ab >= cd)
-                                              ! There will be some wasted space here, but for a large number
-                                              ! of batches, the waste will go to zero
+               do d = 1, d_length
+                  do c = 1, wf%n_v
+                     do b = 1, b_length
 !
-                  do d = 1, d_length
-                     do c = 1, wf%n_v
-                        do b = 1, b_length
+!                       Calculate record number 
 !
-!                          Calculate record number 
+                        cd_packed = index_packed(c, d)
+                        bcd = index_two(b + b_first - 1, cd_packed, wf%n_v)
 !
-                           cd_packed = index_packed(c, d)
-                           bcd = index_two(b + b_first - 1, cd_packed, wf%n_v)
+                        if (c .ge. (d + d_first - 1)) then 
 !
-                           if (c .ge. (d + d_first - 1)) then 
+!                          Write integrals to that record 
 !
-!                             Write integrals to that record 
+                           write(unit_g_abcd, rec=bcd) (g_a_bcd(I, bcd), I = 1, wf%n_v)
 !
-                              write(unit_g_abcd, rec=bcd) (g_a_bcd(I, bcd), I = 1, wf%n_v)
+                        endif
 !
-                           endif
-!
-                        enddo
                      enddo
                   enddo
-!
-               endif
+               enddo
 !
                call deallocator(g_a_bcd, (wf%n_v), b_length*(wf%n_v)*d_length)
 !
