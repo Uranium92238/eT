@@ -554,10 +554,16 @@ contains
 !           Get g_ac_bd
 !
             integral_type = 'electronic_repulsion'
-            call wf%get_vv_vv(integral_type, g_ac_bd, a_first, a_last,  &
-                                                   1, wf%n_v,           &
-                                                   b_first, b_last,     &
-                                                   1, wf%n_v)  
+            call wf%get_vv_vv(integral_type, & 
+                              g_ac_bd,       &
+                              a_first,       &
+                              a_last,        &
+                              1,             & 
+                              wf%n_v,        &
+                              b_first,       & 
+                              b_last,        &
+                              1,             & 
+                              wf%n_v)  
 !
 !
             if (b_batch .eq. a_batch) then
@@ -1203,11 +1209,16 @@ contains
          call allocator(g_ki_ac, (wf%n_o)**2, a_length*(wf%n_v))
 !
          integral_type = 'electronic_repulsion'
-         call wf%get_oo_vv(integral_type, g_ki_ac, &
-                        1, wf%n_o,                 &
-                        1, wf%n_o,                 &
-                        a_start, a_end,            &
-                        1, wf%n_v)
+         call wf%get_oo_vv(integral_type, & 
+                           g_ki_ac,       &
+                           1,             & 
+                           wf%n_o,        &
+                           1,             & 
+                           wf%n_o,        &
+                           a_start,       & 
+                           a_end,         &
+                           1,             &
+                           wf%n_v)
 !
 !        X_ai_ck = X_ai_ck + g_ki_ac
 !  
@@ -1324,27 +1335,27 @@ contains
 !
 !
    module subroutine omega_ccsd_d2_ccsd(wf)
-!
-!     Omega D2 
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!     Calculates the D2 term,
-!
-!      D2: sum_ck u_jk^bc g_aikc 
-!        - 1/2 * sum_ck u_jk^bc g_acki 
-!        + 1/4 * sum_ck u_jk^bc sum_dl L_ldkc u_il^ad,
-!
-!     where 
-!
-!        u_jk^bc = 2 * t_jk^bc - t_kj^bc,
-!        L_ldkc  = 2 * g_ldkc  - g_lckd.
-!
-!     The first, second, and third terms are referred to as D2.1, D2.2, and D2.3, 
-!     and comes out ordered as (ai,bj). All terms are added to the omega vector of the 
-!     wavefunction object wf.
-!
-!     The routine adds the terms in the following order: D2.3, D2.1, D2.2
-!
+!!
+!!    Omega D2 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!    Calculates the D2 term,
+!!
+!!      D2: sum_ck u_jk^bc g_aikc 
+!!        - 1/2 * sum_ck u_jk^bc g_acki 
+!!        + 1/4 * sum_ck u_jk^bc sum_dl L_ldkc u_il^ad,
+!!
+!!    where 
+!!
+!!        u_jk^bc = 2 * t_jk^bc - t_kj^bc,
+!!        L_ldkc  = 2 * g_ldkc  - g_lckd.
+!!
+!!    The first, second, and third terms are referred to as D2.1, D2.2, and D2.3, 
+!!    and comes out ordered as (ai,bj). All terms are added to the omega vector of the 
+!!    wavefunction object wf.
+!!
+!!    The routine adds the terms in the following order: D2.3, D2.1, D2.2
+!!
       implicit none 
 !
       class(ccsd) :: wf 
