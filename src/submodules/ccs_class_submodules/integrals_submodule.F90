@@ -1775,94 +1775,107 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
 !
       integer(i15) :: length_1 = 0, length_2 = 0, length_3 = 0, length_4 = 0
 !
-   if (     present(index1_first) .and. present(index1_last) &
-      .and. present(index2_first) .and. present(index2_last) &
-      .and. present(index3_first) .and. present(index3_last) &
-      .and. present(index4_first) .and. present(index4_last) ) then
+      logical :: vvvv_on_file = .false.
 !
-!     Optional arguments are pressent, we are either batching or running MLCC calculation
+      inquire(file='g_abcd',exist=vvvv_on_file)
+      if (vvvv_on_file) then
 !
-!     Sanity check here!!
+!     Read x_vv_vv
 !
-!     Lengths
 !
-      length_1 = index1_last - index1_first + 1
-      length_2 = index2_last - index2_first + 1
-      length_3 = index3_last - index3_first + 1
-      length_4 = index4_last - index4_first + 1
+!     T1-transform x_vv_vv
 !
-!     Alllocate Cholesky vectors
+      !call wf%t1_transform_vv_vv(x_vv_vv
+      else
+         if (     present(index1_first) .and. present(index1_last) &
+            .and. present(index2_first) .and. present(index2_last) &
+            .and. present(index3_first) .and. present(index3_last) &
+            .and. present(index4_first) .and. present(index4_last) ) then
 !
-      call allocator(L_ab_J, length_1*length_2, wf%n_J)
-      call allocator(L_cd_J, length_3*length_4, wf%n_J)
+!           Optional arguments are pressent, we are either batching or running MLCC calculation
 !
-!     Get T1-transformed Cholesky vectors
+!           Sanity check here!!
 !
-      call wf%get_cholesky_ab(L_ab_J, index1_first, index1_last, index2_first, index2_last)
-      call wf%get_cholesky_ab(L_cd_J, index3_first, index3_last, index4_first, index4_last)
+!           Lengths
 !
-!     Construct integral
+            length_1 = index1_last - index1_first + 1
+            length_2 = index2_last - index2_first + 1
+            length_3 = index3_last - index3_first + 1
+            length_4 = index4_last - index4_first + 1
 !
-      call dgemm('N', 'T',             &
-                  length_1*length_2,   &
-                  length_3*length_4,   &
-                  wf%n_J,              &
-                  one,                 &
-                  L_ab_J,              &
-                  length_1*length_2,   &
-                  L_cd_J,              &
-                  length_3*length_4,   &
-                  zero,                &
-                  x_vv_vv,             &
-                  length_1*length_2)
+!           Alllocate Cholesky vectors
 !
-!     Deallocate Cholesky vectors
+            call allocator(L_ab_J, length_1*length_2, wf%n_J)
+            call allocator(L_cd_J, length_3*length_4, wf%n_J)
 !
-      call deallocator(L_ab_J, length_1*length_2, wf%n_J)
-      call deallocator(L_cd_J, length_3*length_4, wf%n_J)
+!           Get T1-transformed Cholesky vectors
 !
-   elseif ( .not. (present(index1_first) .and. present(index1_last) &
-             .and. present(index2_first) .and. present(index2_last) &
-             .and. present(index3_first) .and. present(index3_last) &
-             .and. present(index4_first) .and. present(index4_last) )) then
+            call wf%get_cholesky_ab(L_ab_J, index1_first, index1_last, index2_first, index2_last)
+            call wf%get_cholesky_ab(L_cd_J, index3_first, index3_last, index4_first, index4_last)
 !
-!     No optional arguments passed
+!           Construct integral
 !
-!     Alllocate Cholesky vector
+            call dgemm('N', 'T',             &
+                        length_1*length_2,   &
+                        length_3*length_4,   &
+                        wf%n_J,              &
+                        one,                 &
+                        L_ab_J,              &
+                        length_1*length_2,   &
+                        L_cd_J,              &
+                        length_3*length_4,   &
+                        zero,                &
+                        x_vv_vv,             &
+                        length_1*length_2)
 !
-      call allocator(L_ab_J, (wf%n_v)**2, wf%n_J)      
+!           Deallocate Cholesky vectors
 !
-!     Get T1-transformed Cholesky vectors
+            call deallocator(L_ab_J, length_1*length_2, wf%n_J)
+            call deallocator(L_cd_J, length_3*length_4, wf%n_J)
 !
-      call wf%get_cholesky_ab(L_ab_J, 1, wf%n_v, 1, wf%n_v)
+         elseif ( .not. (present(index1_first) .and. present(index1_last) &
+                   .and. present(index2_first) .and. present(index2_last) &
+                   .and. present(index3_first) .and. present(index3_last) &
+                   .and. present(index4_first) .and. present(index4_last) )) then
 !
-!     Construct integral
+!           No optional arguments passed
 !
-      call dgemm('N', 'T',             &
-                  (wf%n_v)**2,         &
-                  (wf%n_v)*(wf%n_o),   &
-                  wf%n_J,              &
-                  one,                 &
-                  L_ab_J,              &
-                  (wf%n_v)**2,         &
-                  L_ab_J,              &
-                  (wf%n_v)**2,         &
-                  zero,                &
-                  x_vv_vv,             &
-                  (wf%n_v)**2)
+!           Alllocate Cholesky vector
 !
-!     Deallocate Cholesky vector
+            call allocator(L_ab_J, (wf%n_v)**2, wf%n_J)      
 !
-      call deallocator(L_ab_J, (wf%n_v)**2, wf%n_J)      
+!           Get T1-transformed Cholesky vectors
 !
-   else
+            call wf%get_cholesky_ab(L_ab_J, 1, wf%n_v, 1, wf%n_v)
 !
-!     Something wrong in subroutine call
+!           Construct integral
 !
-      write(unit_output,*) 'WARNING: Some, but not all optional arguments were passed to get_vv_vv_electronic_repulsion'
-      stop
+            call dgemm('N', 'T',             &
+                        (wf%n_v)**2,         &
+                        (wf%n_v)*(wf%n_o),   &
+                        wf%n_J,              &
+                        one,                 &
+                        L_ab_J,              &
+                        (wf%n_v)**2,         &
+                        L_ab_J,              &
+                        (wf%n_v)**2,         &
+                        zero,                &
+                        x_vv_vv,             &
+                        (wf%n_v)**2)
 !
-   endif
+!           Deallocate Cholesky vector
+!
+            call deallocator(L_ab_J, (wf%n_v)**2, wf%n_J)      
+!
+         else
+!
+!           Something wrong in subroutine call
+!
+            write(unit_output,*) 'WARNING: Some, but not all optional arguments were passed to get_vv_vv_electronic_repulsion'
+            stop
+!
+         endif
+      endif
 !
    end subroutine get_vv_vv_electronic_repulsion_ccs
 !
@@ -3216,7 +3229,7 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
 !
 !     giving required space = (n_v*(n_v+1)/2)*(n_v*(n_v+1)/2 + 1)/2
 !
-      required_space = ((wf%n_v)*(wf%n_v+1)/2)*(wf%n_v*(wf%n_v+1)/2 + 1)/2 ! Sarai: is this underestimated? Do we use all symmetries?
+      required_space = ((wf%n_v**3)*(wf%n_v+1))/2 
 !
 !     This is the required space in number of double precision numbers (8 bytes per such number).
 !     We convert this number to gigabytes. 
@@ -3301,7 +3314,7 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
 !
 !                       Calculate record number 
 !
-                        cd_packed = index_packed(c, d)
+                        cd_packed = index_packed(c, d + d_first -1)
                         bcd = index_two(b + b_first - 1, cd_packed, wf%n_v)
 !
                         if (c .ge. (d + d_first - 1)) then 
