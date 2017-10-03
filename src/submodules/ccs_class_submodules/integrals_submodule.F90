@@ -2965,25 +2965,24 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
    end subroutine get_ov_ov_electronic_repulsion_ccs
 !
 !
-   module subroutine t1_transform_vv_vv(wf, g_vv_vv,              & 
-                                       index1_first, index1_last, &
-                                       index2_first, index2_last, &
-                                       index3_first, index3_last, &
-                                       index4_first, index4_last)
+   module subroutine t1_transform_vv_vv_ccs(wf, g_vv_vv,                & 
+                                             index1_first, index1_last, &
+                                             index2_first, index2_last, &
+                                             index3_first, index3_last, &
+                                             index4_first, index4_last)
 !!
+!!       T1 transformation of g_vv_vv integrals (CCS)
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Oct 2017. 
 !!
-!!    g_ab_cd_T1 = g_ab_cd + sum_(J) sum_(i) t_a_i * L_ib_J * L_cd_J
-!!                         + sum_(J) sum_(k) t_c_k * L_kd_J * L_ab_J
-!!                         + sum_(J) sum_(ki) t_a_i * t_c_k * L_kd_J * L_ib_J
-!!
-!!    The last term is calculated first.
-!!
+!!       g_ab_cd_T1 = g_ab_cd + sum_(J) sum_(i) t_a_i * L_ib_J * L_cd_J
+!!                            + sum_(J) sum_(k) t_c_k * L_kd_J * L_ab_J
+!!                            + sum_(J) sum_(ki) t_a_i * t_c_k * L_kd_J * L_ib_J
 !! 
-      implicit none
+      implicit none 
 !
-      class(css) :: wf
+      class(ccs) :: wf
 !
-      real(dp), dimension(:, :) :: g_ov_ov
+      real(dp), dimension(:, :) :: g_vv_vv
 !
       integer(i15), optional :: index1_first, index1_last
       integer(i15), optional :: index2_first, index2_last
@@ -2993,6 +2992,10 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
       integer(i15) :: c = 0, d = 0, cd = 0, dc = 0
 !
       integer(i15) :: length_1 = 0, length_2 = 0, length_3 = 0, length_4 = 0
+!
+      real(dp), dimension(:,:), allocatable :: L_ib_J, L_dk_J, L_cd_J, L_ab_J
+      real(dp), dimension(:,:), allocatable :: x_ib_dk, x_ib_dc, x_ib_cd, x_ab_dk
+      real(dp), dimension(:,:), allocatable :: g_ab_dc
 !
       length_1 = index1_last - index1_first + 1 ! a 
       length_2 = index2_last - index2_first + 1 ! b 
@@ -3163,7 +3166,7 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
 !
       call deallocator(g_ab_dc, length_1*length_2, length_4*length_3)
 !
-   end subroutine t1_transform_vv_vv
+   end subroutine t1_transform_vv_vv_ccs
 !
    module subroutine store_electronic_repulsion_integrals_ccs(wf)
 !!
@@ -3213,7 +3216,7 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
 !
 !     giving required space = (n_v*(n_v+1)/2)*(n_v*(n_v+1)/2 + 1)/2
 !
-      required_space = ((wf%n_v)*(wf%n_v+1)/2)*(wf%n_v*(wf%n_v+1)/2 + 1)/2
+      required_space = ((wf%n_v)*(wf%n_v+1)/2)*(wf%n_v*(wf%n_v+1)/2 + 1)/2 ! Sarai: is this underestimated? Do we use all symmetries?
 !
 !     This is the required space in number of double precision numbers (8 bytes per such number).
 !     We convert this number to gigabytes. 

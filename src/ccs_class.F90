@@ -237,6 +237,8 @@ module ccs_class
       procedure :: get_vv_vo_electronic_repulsion => get_vv_vo_electronic_repulsion_ccs
       procedure :: get_vv_vv_electronic_repulsion => get_vv_vv_electronic_repulsion_ccs
 !
+      procedure :: t1_transform_vv_vv => t1_transform_vv_vv_ccs
+!
    end type ccs
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -2082,6 +2084,31 @@ module ccs_class
 !  
       end subroutine get_vv_vv_electronic_repulsion_ccs
 !
+   module subroutine t1_transform_vv_vv_ccs(wf, g_vv_vv,                & 
+                                             index1_first, index1_last, &
+                                             index2_first, index2_last, &
+                                             index3_first, index3_last, &
+                                             index4_first, index4_last)
+!!
+!!       T1 transformation of g_vv_vv integrals (CCS)
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Oct 2017. 
+!!
+!!       g_ab_cd_T1 = g_ab_cd + sum_(J) sum_(i) t_a_i * L_ib_J * L_cd_J
+!!                            + sum_(J) sum_(k) t_c_k * L_kd_J * L_ab_J
+!!                            + sum_(J) sum_(ki) t_a_i * t_c_k * L_kd_J * L_ib_J
+!! 
+      implicit none 
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(:, :) :: g_vv_vv
+!
+      integer(i15), optional :: index1_first, index1_last
+      integer(i15), optional :: index2_first, index2_last
+      integer(i15), optional :: index3_first, index3_last
+      integer(i15), optional :: index4_first, index4_last
+!
+      end subroutine t1_transform_vv_vv_ccs
 !
    end interface
 !
