@@ -2000,6 +2000,10 @@ module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
 !
       endif 
 !
+!     Deallocate temporary vector 
+!
+      call deallocator(x_v, wf%n_v, 1)
+!
 !     Close file containing the g_abcd integrals 
 !
       close(unit_g_abcd)
