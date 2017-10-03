@@ -1715,10 +1715,10 @@ module ccs_class
 !
          real(dp), dimension(:, :) :: x_oo_oo
 !
-         integer(i15), optional :: index1_first, index1_last
-         integer(i15), optional :: index2_first, index2_last
-         integer(i15), optional :: index3_first, index3_last
-         integer(i15), optional :: index4_first, index4_last
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
 !
          real(dp), dimension(:,:), allocatable :: L_ij_J, L_kl_J
 !
@@ -1741,10 +1741,10 @@ module ccs_class
 !
          real(dp), dimension(:, :) :: x_oo_ov
 !
-         integer(i15), optional :: index1_first, index1_last
-         integer(i15), optional :: index2_first, index2_last
-         integer(i15), optional :: index3_first, index3_last
-         integer(i15), optional :: index4_first, index4_last
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
 !
          real(dp), dimension(:,:), allocatable :: L_ij_J, L_ka_J
 !
@@ -1767,10 +1767,10 @@ module ccs_class
 !
          real(dp), dimension(:, :) :: x_ov_oo
 !
-         integer(i15), optional :: index1_first, index1_last
-         integer(i15), optional :: index2_first, index2_last
-         integer(i15), optional :: index3_first, index3_last
-         integer(i15), optional :: index4_first, index4_last
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
 !
          real(dp), dimension(:,:), allocatable :: L_ia_J, L_jk_J
 !
@@ -1793,10 +1793,10 @@ module ccs_class
 !
          real(dp), dimension(:, :) :: x_oo_vo
 !
-         integer(i15), optional :: index1_first, index1_last
-         integer(i15), optional :: index2_first, index2_last
-         integer(i15), optional :: index3_first, index3_last
-         integer(i15), optional :: index4_first, index4_last
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
 !
          real(dp), dimension(:,:), allocatable :: L_ij_J, L_ak_J
 !
@@ -1819,10 +1819,10 @@ module ccs_class
 !
          real(dp), dimension(:, :) :: x_oo_vv
 !
-         integer(i15), optional :: index1_first, index1_last
-         integer(i15), optional :: index2_first, index2_last
-         integer(i15), optional :: index3_first, index3_last
-         integer(i15), optional :: index4_first, index4_last
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
 !
          real(dp), dimension(:,:), allocatable :: L_ij_J, L_ab_J
 !
@@ -1845,10 +1845,10 @@ module ccs_class
 !
          real(dp), dimension(:, :) :: x_vv_oo
 !
-         integer(i15), optional :: index1_first, index1_last
-         integer(i15), optional :: index2_first, index2_last
-         integer(i15), optional :: index3_first, index3_last
-         integer(i15), optional :: index4_first, index4_last
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
 !
          real(dp), dimension(:,:), allocatable :: L_ab_J, L_ij_J
 !
@@ -1871,10 +1871,10 @@ module ccs_class
 !
          real(dp), dimension(:, :) :: x_ov_ov
 !
-         integer(i15), optional :: index1_first, index1_last
-         integer(i15), optional :: index2_first, index2_last
-         integer(i15), optional :: index3_first, index3_last
-         integer(i15), optional :: index4_first, index4_last
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
 !
          real(dp), dimension(:,:), allocatable :: L_ia_J, L_jb_J
 !
@@ -1897,10 +1897,10 @@ module ccs_class
 !
          real(dp), dimension(:, :) :: x_vo_oo
 !
-         integer(i15), optional :: index1_first, index1_last
-         integer(i15), optional :: index2_first, index2_last
-         integer(i15), optional :: index3_first, index3_last
-         integer(i15), optional :: index4_first, index4_last
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
 !
          real(dp), dimension(:,:), allocatable :: L_ai_J, L_jk_J
 !
@@ -1923,10 +1923,10 @@ module ccs_class
 !  
          real(dp), dimension(:,:) :: x_vo_vo
 !  
-         integer(i15), optional :: index1_first, index1_last
-         integer(i15), optional :: index2_first, index2_last
-         integer(i15), optional :: index3_first, index3_last
-         integer(i15), optional :: index4_first, index4_last
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
 !  
       end subroutine get_vo_vo_electronic_repulsion_ccs
 !
@@ -1945,10 +1945,10 @@ module ccs_class
 !  
          real(dp), dimension(:,:) :: x_ov_vo
 !  
-         integer(i15), optional :: index1_first, index1_last
-         integer(i15), optional :: index2_first, index2_last
-         integer(i15), optional :: index3_first, index3_last
-         integer(i15), optional :: index4_first, index4_last
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
 !  
       end subroutine get_ov_vo_electronic_repulsion_ccs
 !
@@ -1967,10 +1967,10 @@ module ccs_class
 !  
          real(dp), dimension(:,:) :: x_vo_ov
 !  
-         integer(i15), optional :: index1_first, index1_last
-         integer(i15), optional :: index2_first, index2_last
-         integer(i15), optional :: index3_first, index3_last
-         integer(i15), optional :: index4_first, index4_last
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
 !  
       end subroutine get_vo_ov_electronic_repulsion_ccs
 !
@@ -1989,10 +1989,10 @@ module ccs_class
 !  
          real(dp), dimension(:,:) :: x_ov_vv
 !  
-         integer(i15), optional :: index1_first, index1_last
-         integer(i15), optional :: index2_first, index2_last
-         integer(i15), optional :: index3_first, index3_last
-         integer(i15), optional :: index4_first, index4_last
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
 !  
       end subroutine get_ov_vv_electronic_repulsion_ccs
 !
@@ -2011,10 +2011,10 @@ module ccs_class
 !  
          real(dp), dimension(:,:) :: x_vv_ov
 !  
-         integer(i15), optional :: index1_first, index1_last
-         integer(i15), optional :: index2_first, index2_last
-         integer(i15), optional :: index3_first, index3_last
-         integer(i15), optional :: index4_first, index4_last
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
 !  
       end subroutine get_vv_ov_electronic_repulsion_ccs
 !
@@ -2033,10 +2033,10 @@ module ccs_class
 !  
          real(dp), dimension(:,:) :: x_vo_vv
 !  
-         integer(i15), optional :: index1_first, index1_last
-         integer(i15), optional :: index2_first, index2_last
-         integer(i15), optional :: index3_first, index3_last
-         integer(i15), optional :: index4_first, index4_last
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
 !  
       end subroutine get_vo_vv_electronic_repulsion_ccs
 !
@@ -2055,10 +2055,10 @@ module ccs_class
 !  
          real(dp), dimension(:,:) :: x_vv_vo
 !  
-         integer(i15), optional :: index1_first, index1_last
-         integer(i15), optional :: index2_first, index2_last
-         integer(i15), optional :: index3_first, index3_last
-         integer(i15), optional :: index4_first, index4_last
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
 !  
       end subroutine get_vv_vo_electronic_repulsion_ccs
 !
@@ -2077,10 +2077,10 @@ module ccs_class
 !  
          real(dp), dimension(:,:) :: x_vv_vv
 !  
-         integer(i15), optional :: index1_first, index1_last
-         integer(i15), optional :: index2_first, index2_last
-         integer(i15), optional :: index3_first, index3_last
-         integer(i15), optional :: index4_first, index4_last
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
 !  
       end subroutine get_vv_vv_electronic_repulsion_ccs
 !
@@ -2103,10 +2103,10 @@ module ccs_class
 !
       real(dp), dimension(:, :) :: g_vv_vv
 !
-      integer(i15), optional :: index1_first, index1_last
-      integer(i15), optional :: index2_first, index2_last
-      integer(i15), optional :: index3_first, index3_last
-      integer(i15), optional :: index4_first, index4_last
+      integer(i15) :: index1_first, index1_last
+      integer(i15) :: index2_first, index2_last
+      integer(i15) :: index3_first, index3_last
+      integer(i15) :: index4_first, index4_last
 !
       end subroutine t1_transform_vv_vv_ccs
 !
