@@ -2135,6 +2135,11 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
 !     Read x_vv_vv
 !
+      call wf%read_vv_vv_electronic_repulsion(x_vv_vv, &
+                                 index1_first, index1_last, &
+                                 index2_first, index2_last, &
+                                 index3_first, index3_last, &
+                                 index4_first, index4_last)
 !
 !     T1-transform x_vv_vv
 !
