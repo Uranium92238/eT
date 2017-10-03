@@ -237,6 +237,7 @@ module ccs_class
       procedure :: get_vv_vo_electronic_repulsion => get_vv_vo_electronic_repulsion_ccs
       procedure :: get_vv_vv_electronic_repulsion => get_vv_vv_electronic_repulsion_ccs
 !
+      procedure :: read_vv_vv_electronic_repulsion => read_vv_vv_electronic_repulsion_ccs
       procedure :: t1_transform_vv_vv => t1_transform_vv_vv_ccs
 !
    end type ccs
@@ -1317,6 +1318,26 @@ module ccs_class
          class(ccs) :: wf 
 !
       end subroutine store_electronic_repulsion_integrals_ccs
+!
+!
+      module subroutine read_vv_vv_electronic_repulsion_ccs(wf, x_vv_vv,    & 
+                                       index1_first, index1_last, &
+                                       index2_first, index2_last, &
+                                       index3_first, index3_last, &
+                                       index4_first, index4_last)
+!
+         implicit none 
+!
+         class(ccs) :: wf
+!
+         real(dp), dimension(:,:) :: x_vv_vv
+!
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last 
+!
+      end subroutine read_vv_vv_electronic_repulsion_ccs
 !
 !
       module subroutine get_oo_oo_ccs(wf, integral_type, x_oo_oo,    & 
