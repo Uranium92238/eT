@@ -2126,24 +2126,32 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
       real(dp), dimension(:,:), allocatable :: L_ab_J, L_cd_J
 !
+      real(dp) :: ddot
+      real(dp), dimension(:,:), allocatable :: x_vv_vv_copy
+      integer(i15) :: i = 0, j = 0, ab = 0, cd = 0
+!
       integer(i15) :: length_1 = 0, length_2 = 0, length_3 = 0, length_4 = 0
 !
       logical :: vvvv_on_file = .false.
 !
       inquire(file='g_abcd',exist=vvvv_on_file)
+!
       if (vvvv_on_file) then
 !
-!     Read x_vv_vv
+!        Read x_vv_vv
 !
-      call wf%read_vv_vv_electronic_repulsion(x_vv_vv, &
+         call wf%read_vv_vv_electronic_repulsion(x_vv_vv, &
                                  index1_first, index1_last, &
                                  index2_first, index2_last, &
                                  index3_first, index3_last, &
                                  index4_first, index4_last)
 !
-!     T1-transform x_vv_vv
+!        T1-transform x_vv_vv
 !
-      call wf%t1_transform_vv_vv(x_vv_vv, &
+         call allocator(x_vv_vv_copy, (wf%n_v)**2, (wf%n_v)**2)
+         x_vv_vv_copy = x_vv_vv 
+!
+         call wf%t1_transform_vv_vv(x_vv_vv, &
                                  index1_first, index1_last, &
                                  index2_first, index2_last, &
                                  index3_first, index3_last, &
@@ -2224,6 +2232,17 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
       integer(i15) :: a = 0, b = 0, c = 0, d = 0, ab = 0, cd = 0, bcd = 0, acd = 0 
 !
+!     Index lengths 
+!
+      integer(i15) :: length_a = 0, length_b = 0, length_c = 0, length_d = 0
+!
+!     Calculate lengths of indices a,b,c,d 
+!
+      length_a = index1_last - index1_first + 1
+      length_b = index2_last - index2_first + 1
+      length_c = index3_last - index3_first + 1
+      length_d = index4_last - index4_first + 1
+!
 !     Open file containing the g_abcd integrals, ordered as
 !     g_a_bcd, where the compound cd index is packed.
 !
@@ -2246,9 +2265,9 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
       call allocator(x_v, wf%n_v, 1)
       x_v = zero 
 !
-      if ((index1_first .ne. 1) .or. (index1_last .ne. wf%n_v)) then ! Batching over first index, a 
+      if (length_a .ne. wf%n_v) then ! Batching over first index, a 
 !
-         if ((index2_first .ne. 1) .or. (index2_last .ne. wf%n_v)) then ! Batching over second index, b, as well
+         if (length_b .ne. wf%n_v) then ! Batching over second index, b, as well
 !
 !           No simple tricks available. Read all integrals g_a_bcd, a = 1, n_v, into x_v, then through away!
 !
@@ -2260,15 +2279,20 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
 !                    Read g_a_bcd, a = 1, n_v, into x_v 
 !
-                     read(unit_g_abcd, rec=bcd) (x_v(a, 1), a = 1, wf%n_v)
+                     x_v = zero
+                     read(unit_g_abcd, rec=bcd, iostat=ioerror) (x_v(a, 1), a = 1, wf%n_v)
 !
 !                    Place the integral into x_vv_vv = g_ab_cd 
 !
-                     cd = index_two(c, d, index3_last - index3_first)
+                     cd = index_two(c - index3_first + 1, &
+                                    d - index4_first + 1, &
+                                    index3_last - index3_first + 1)
 !
                      do a = index1_first, index1_last
 !
-                        ab = index_two(a, b, index1_last - index1_first)
+                        ab = index_two(a - index1_first + 1, &
+                                       b - index2_first + 1, &
+                                       index1_last - index1_first + 1)
 !
                         x_vv_vv(ab, cd) = x_v(a, 1)
 !
@@ -2291,15 +2315,19 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
 !                    Read g_b_acd, b = 1, n_v, into x_v 
 !
-                     read(unit_g_abcd, rec=acd) (x_v(b, 1), b = 1, wf%n_v)
+                     read(unit_g_abcd, rec=acd, iostat=ioerror) (x_v(b, 1), b = 1, wf%n_v)
 !
 !                    Place the integral into x_vv_vv = g_ab_cd 
 !
-                     cd = index_two(c, d, index3_last - index3_first)
+                     cd = index_two(c - index3_first + 1, &
+                                    d - index4_first + 1, &
+                                    index3_last - index3_first + 1)
 !
                      do b = index2_first, index2_last
 !
-                        ab = index_two(a, b, index1_last - index1_first)
+                        ab = index_two(a - index1_first + 1, &
+                                       b - index2_first + 1, &
+                                       index1_last - index1_first + 1)
 !
                         x_vv_vv(ab, cd) = x_v(b, 1) ! g_abcd 
 !
@@ -2310,6 +2338,34 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
             enddo
 !
          endif 
+!
+      else ! No batching over first index
+!
+         do d = 1, length_d
+            do c = 1, length_c
+               do b = 1, length_b
+!
+                  bcd = index_two(b + index2_first - 1, index_packed(c,d), wf%n_v) ! Record number 
+!
+!                 Read g_a_bcd, a = 1, n_v, into x_v 
+!
+                  read(unit_g_abcd, rec=bcd, iostat=ioerror) (x_v(a, 1), a = 1, wf%n_v)
+!
+!                 Place the integral into x_vv_vv = g_ab_cd 
+!
+                  cd = index_two(c, d, length_c)
+!
+                  do a = 1, length_a
+!
+                     ab = index_two(a, b, length_a)
+!
+                     x_vv_vv(ab, cd) = x_v(a + index1_first - 1, 1)
+!
+                  enddo
+!
+               enddo
+            enddo
+         enddo 
 !
       endif 
 !
@@ -2934,8 +2990,8 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !!       T1 transformation of g_vv_vv integrals (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Oct 2017. 
 !!
-!!       g_ab_cd_T1 = g_ab_cd + sum_(J) sum_(i) t_a_i * L_ib_J * L_cd_J
-!!                            + sum_(J) sum_(k) t_c_k * L_kd_J * L_ab_J
+!!       g_ab_cd_T1 = g_ab_cd - sum_(J) sum_(i) t_a_i * L_ib_J * L_cd_J
+!!                            - sum_(J) sum_(k) t_c_k * L_kd_J * L_ab_J
 !!                            + sum_(J) sum_(ki) t_a_i * t_c_k * L_kd_J * L_ib_J
 !! 
       implicit none 
@@ -2949,7 +3005,7 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
       integer(i15) :: index3_first, index3_last
       integer(i15) :: index4_first, index4_last
 !
-      integer(i15) :: c = 0, d = 0, cd = 0, dc = 0
+      integer(i15) :: c = 0, d = 0, cd = 0, dc = 0, i = 0, j = 0
 !
       integer(i15) :: length_1 = 0, length_2 = 0, length_3 = 0, length_4 = 0
 !
@@ -2990,7 +3046,7 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
       call deallocator(L_cd_J, length_3*length_4, wf%n_J)
 !
-!     g_vv_vv = g_ab_cd += sum_(i)t_a_i* x_ib_cd
+!     g_vv_vv = g_ab_cd -= sum_(i)t_a_i* x_ib_cd
 !
       call dgemm('N', 'N',                      &
                   length_1,                     &
@@ -3000,7 +3056,7 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
                   wf%t1am(index1_first, 1),     & ! t_a_i
                   wf%n_v,                       &
                   x_ib_cd,                      &
-                  length_2*length_4*length_3,   &
+                  wf%n_o,                       &
                   one,                          &
                   g_vv_vv,                      &
                   length_1)
@@ -3033,8 +3089,6 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
                   zero,                &
                   x_ab_dk,             &
                   length_1*length_2)
-!
-      call deallocator(L_dk_J, wf%n_o*length_2, wf%n_J)
 !
 !     g_ab_dc = sum_(k)t_c_k * x_ab_dk
 !
@@ -3104,7 +3158,7 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
                   wf%t1am(index1_first, 1),     & ! t_a_i
                   wf%n_v,                       &
                   x_ib_dc,                      &
-                  length_2*length_4*length_3,   &
+                  wf%n_o,                       &
                   one,                          &
                   g_ab_dc,                      &
                   length_1)
@@ -3125,7 +3179,7 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
       enddo
 !
       call deallocator(g_ab_dc, length_1*length_2, length_4*length_3)
-!
+
    end subroutine t1_transform_vv_vv_ccs
 !
    module subroutine store_electronic_repulsion_integrals_ccs(wf)
@@ -3155,7 +3209,7 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
       integer(i15) :: b_first = 0, b_last = 0, b_length = 0, b_max_length = 0, b_batch = 0, b_n_batch = 0
       integer(i15) :: d_first = 0, d_last = 0, d_length = 0, d_max_length = 0, d_batch = 0
 !
-      integer(i15) :: a = 0, b = 0, c = 0, d = 0, bcd = 0, cd_packed = 0, I = 0
+      integer(i15) :: a = 0, b = 0, c = 0, d = 0, bcd = 0, cd_packed = 0, I = 0, bcd_nonpacked = 0
 !
       real(dp) :: begin_timer, end_timer
 !
@@ -3261,14 +3315,15 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
 !                       Calculate record number 
 !
-                        cd_packed = index_packed(c, d + d_first -1)
-                        bcd = index_two(b + b_first - 1, cd_packed, wf%n_v)
+                        cd_packed = index_packed(c, d + d_first - 1)
+                        bcd = index_two(b + b_first - 1, cd_packed, wf%n_v) ! Packed index!
+                        bcd_nonpacked = index_three(b, c, d, b_length, wf%n_v) ! Nonpacked index! 
 !
                         if (c .ge. (d + d_first - 1)) then 
 !
 !                          Write integrals to that record 
 !
-                           write(unit_g_abcd, rec=bcd) (g_a_bcd(I, bcd), I = 1, wf%n_v)
+                           write(unit_g_abcd, rec=bcd) (g_a_bcd(I, bcd_nonpacked), I = 1, wf%n_v)
 !
                         endif
 !
