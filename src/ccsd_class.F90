@@ -1223,6 +1223,12 @@ contains
 !
       call wf%read_transform_cholesky 
 !
+!     Test for the possibility of storing vir-vir-vir-vir
+!     electronic repulsion integrals (g_abcd), storing the
+!     integrals if possible
+!
+      call wf%store_electronic_repulsion_integrals 
+!
 !     Initialize (singles and doubles) amplitudes
 !
       wf%n_t1am = (wf%n_o)*(wf%n_v) 

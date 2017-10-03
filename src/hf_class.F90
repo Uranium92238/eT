@@ -238,15 +238,21 @@ contains
       real(dp), dimension(:,:), allocatable :: X ! An intermediate matrix
       real(dp), dimension(:,:), allocatable :: L_ij_J
       real(dp), dimension(:,:), allocatable :: L_ia_J
-      real(dp), dimension(:,:), allocatable :: L_ab_J
+      real(dp), dimension(:,:), allocatable :: L_ab_J 
 !
       integer(i15) :: i,j,a,b,k,ij,ia, ab
+!
+!     Timing variables 
+!
+      real(dp) :: begin_timer, end_timer 
 !
 !     Batching variables
 !
       integer(i15) :: b_batch = 0, b_first = 0, b_last = 0, b_length = 0
       integer(i15) :: required = 0, available = 0, n_batch = 0, batch_dimension = 0
       integer(i15) :: max_batch_length = 0
+!
+      call cpu_time(begin_timer)
 !
 !     Open Dalton file mlcc_cholesky (see mlcc_write_cholesky.F)
 ! 
@@ -491,10 +497,21 @@ contains
       close(unit_chol_mo_ab, status='delete')
       close(unit_chol_mo_ab_direct)
 !
+!     Print timings 
+!   
+      call cpu_time(end_timer)
+!
+      if (wf%settings%print_level == 'developer') then 
+!
+         write(unit_output,'(/t3,a36,f14.8)') 'Time to store Cholesky (seconds):   ', end_timer - begin_timer
+         flush(unit_output)
+!
+      endif
+!
    end subroutine read_transform_cholesky_hf
 !
 !
-   subroutine read_cholesky_ij_hf(wf,L_ij_J , i_first, i_last, j_first, j_last)
+   subroutine read_cholesky_ij_hf(wf, L_ij_J , i_first, i_last, j_first, j_last)
 !!
 !!    Read Cholesky IJ 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -578,11 +595,14 @@ contains
 !        Close file
 !
          close(unit_chol_mo_ij) 
+!
       else
-            write(unit_output, *) 'WARNING: Error in call to read_cholesky_ij'
-            stop
+!
+         write(unit_output, *) 'WARNING: Error in call to read_cholesky_ij'
+         stop
+!
       endif   
-!   
+!
    end subroutine read_cholesky_ij_hf
 !
 !

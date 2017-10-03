@@ -39,13 +39,13 @@ contains
 !
 !
    module subroutine initialize_omega_ccsd(wf)
-!
-!      Initialize Omega (CCSD)
-!      Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!
-!      Allocates the projection vector (omega1, omega2) and sets it
-!      to zero.
-!
+!!
+!!    Initialize Omega (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!    Allocates the projection vector (omega1, omega2) and sets it
+!!    to zero.
+!!
       implicit none 
 !
       class(ccsd) :: wf
@@ -60,16 +60,28 @@ contains
 !
 !
    module subroutine construct_omega_ccsd(wf)
-!
-!     Construct Omega (CCSD)
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!     Directs the construction of the projection vector < mu | exp(-T) H exp(T) | R >
-!     for the current amplitudes of the object wfn 
-!
+!!
+!!     Construct Omega (CCSD)
+!!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!     Directs the construction of the projection vector < mu | exp(-T) H exp(T) | R >
+!!     for the current amplitudes of the object wfn 
+!!
       implicit none 
 !
       class(ccsd) :: wf
+!
+      real(dp) :: begin_timer, end_timer
+!
+      real(dp) :: ccsd_a1_time
+      real(dp) :: ccsd_b1_time 
+      real(dp) :: ccsd_c1_time
+      real(dp) :: ccs_a1_time 
+      real(dp) :: ccsd_a2_time
+      real(dp) :: ccsd_b2_time 
+      real(dp) :: ccsd_c2_time 
+      real(dp) :: ccsd_d2_time 
+      real(dp) :: ccsd_e2_time  
 !
 !     Set the omega vector to zero 
 !
@@ -78,33 +90,84 @@ contains
 !
 !     Construct singles contributions 
 !
+      call cpu_time(begin_timer)
       call wf%omega_ccsd_a1
+      call cpu_time(end_timer)
+      ccsd_a1_time = end_timer - begin_timer
+!
+      call cpu_time(begin_timer)
       call wf%omega_ccsd_b1
+      call cpu_time(end_timer)
+      ccsd_b1_time = end_timer - begin_timer
+!
+      call cpu_time(begin_timer)
       call wf%omega_ccsd_c1
+      call cpu_time(end_timer)
+      ccsd_c1_time = end_timer - begin_timer
+!
+      call cpu_time(begin_timer)
       call wf%omega_ccs_a1
+      call cpu_time(end_timer)
+      ccs_a1_time = end_timer - begin_timer
 !
 !     Construct doubles contributions 
 !
+      call cpu_time(begin_timer)
       call wf%omega_ccsd_a2
+      call cpu_time(end_timer)
+      ccsd_a2_time = end_timer - begin_timer
+!
+      call cpu_time(begin_timer)
       call wf%omega_ccsd_b2
+      call cpu_time(end_timer)
+      ccsd_b2_time = end_timer - begin_timer
+!
+      call cpu_time(begin_timer)
       call wf%omega_ccsd_c2
+      call cpu_time(end_timer)
+      ccsd_c2_time = end_timer - begin_timer
+!
+      call cpu_time(begin_timer)
       call wf%omega_ccsd_d2
+      call cpu_time(end_timer)
+      ccsd_d2_time = end_timer - begin_timer
+!
+      call cpu_time(begin_timer)
       call wf%omega_ccsd_e2
+      call cpu_time(end_timer)
+      ccsd_e2_time = end_timer - begin_timer
+!
+!     Print timings
+!
+      if (wf%settings%print_level == 'developer') then 
+!
+         write(unit_output,'(t3,a27,f14.8)') 'Time in CCSD A1 (seconds):', ccsd_a1_time
+         write(unit_output,'(t3,a27,f14.8)') 'Time in CCSD B1 (seconds):', ccsd_b1_time
+         write(unit_output,'(t3,a27,f14.8)') 'Time in CCSD C1 (seconds):', ccsd_c1_time
+         write(unit_output,'(t3,a27,f14.8)') 'Time in CCS  A1 (seconds):', ccs_a1_time
+         write(unit_output,'(t3,a27,f14.8)') 'Time in CCSD A2 (seconds):', ccsd_a2_time
+         write(unit_output,'(t3,a27,f14.8)') 'Time in CCSD B2 (seconds):', ccsd_b2_time
+         write(unit_output,'(t3,a27,f14.8)') 'Time in CCSD C2 (seconds):', ccsd_c2_time
+         write(unit_output,'(t3,a27,f14.8)') 'Time in CCSD D2 (seconds):', ccsd_d2_time
+         write(unit_output,'(t3,a27,f14.8)') 'Time in CCSD E2 (seconds):', ccsd_e2_time
+!
+         flush(unit_output)
+      endif
 !
    end subroutine construct_omega_ccsd
 !
 !
    module subroutine omega_ccsd_a1_ccsd(wf)
-!
-!       Omega A1 term
-!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!  
-!       Calculates the A1 term, 
-!  
-!       A1: sum_ckd g_adkc * u_ki^cd,
-!  
-!       and adds it to the singles projection vector (omega1) of
-!       the wavefunction object wf.
+!!
+!!    Omega A1 term
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!  
+!!    Calculates the A1 term, 
+!!  
+!!       A1: sum_ckd g_adkc * u_ki^cd,
+!!  
+!!    and adds it to the singles projection vector (omega1) of
+!!    the wavefunction object wf.
 !
       implicit none
 !
@@ -342,19 +405,19 @@ contains
 !
 !
    module subroutine omega_ccsd_c1_ccsd(wf)        
-!  
-!     Omega C1
-!     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!  
-!     Calculates the C1 term of omega,
-!  
-!     C1: sum_ck F_kc*u_ai_ck,
-!  
-!     and adds it to the projection vector (omega1) of    
-!     the wavefunction object wf                           
-!  
-!     u_ai_kc = 2*t_ck_ai - t_ci_ak
-! 
+!!  
+!!    Omega C1
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!  
+!!    Calculates the C1 term of omega,
+!!  
+!!       C1: sum_ck F_kc*u_ai_ck,
+!!  
+!!    and adds it to the projection vector (omega1) of    
+!!    the wavefunction object wf                           
+!!  
+!!    u_ai_kc = 2*t_ck_ai - t_ci_ak
+!! 
       implicit none
 !
       class(ccsd) :: wf 
@@ -416,20 +479,19 @@ contains
 !
 !
    module subroutine omega_ccsd_a2_ccsd(wf)
-!
-!     Omega A2 term: Omega A2 = g_ai_bj + sum_(cd)g_ac_bd * t_ci_dj = A2.1 + A.2.2
-!
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, 10 Mar 2017
-!
-!     Structure: Batching over both a and b for A2.2.
-!                t^+_ci_dj = t_ci_dj + t_di_cj
-!                t^-_ci_dj = t_ci_dj - t_di_cj
-!                g^+_ac_bd = g_ac_bd + g_bc_ad 
-!                g^-_ac_bd = g_ac_bd - g_bc_ad 
-! 
-!                omega_A2.2_ai_bj = 1/4*(g^+_ac_bd*t^+_ci_dj + g^-_ac_bd*t^-_ci_dj) = omega_A2.2_bj_ai
-!                omega_A2.2_aj_bi = 1/4*(g^+_ac_bd*t^+_ci_dj - g^-_ac_bd*t^-_ci_dj) = omega_A2.2_bi_aj
-!
+!!
+!!    Omega A2 term: Omega A2 = g_ai_bj + sum_(cd)g_ac_bd * t_ci_dj = A2.1 + A.2.2
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 10 Mar 2017
+!!
+!!    Structure: Batching over both a and b for A2.2.
+!!                t^+_ci_dj = t_ci_dj + t_di_cj
+!!                t^-_ci_dj = t_ci_dj - t_di_cj
+!!                g^+_ac_bd = g_ac_bd + g_bc_ad 
+!!                g^-_ac_bd = g_ac_bd - g_bc_ad 
+!! 
+!!                omega_A2.2_ai_bj = 1/4*(g^+_ac_bd*t^+_ci_dj + g^-_ac_bd*t^-_ci_dj) = omega_A2.2_bj_ai
+!!                omega_A2.2_aj_bi = 1/4*(g^+_ac_bd*t^+_ci_dj - g^-_ac_bd*t^-_ci_dj) = omega_A2.2_bi_aj
+!!
       implicit none
 !
       class(ccsd) :: wf
@@ -555,10 +617,16 @@ contains
 !           Get g_ac_bd
 !
             integral_type = 'electronic_repulsion'
-            call wf%get_vv_vv(integral_type, g_ac_bd, a_first, a_last,  &
-                                                   1, wf%n_v,           &
-                                                   b_first, b_last,     &
-                                                   1, wf%n_v)  
+            call wf%get_vv_vv(integral_type, & 
+                              g_ac_bd,       &
+                              a_first,       &
+                              a_last,        &
+                              1,             & 
+                              wf%n_v,        &
+                              b_first,       & 
+                              b_last,        &
+                              1,             & 
+                              wf%n_v)  
 !
 !
             if (b_batch .eq. a_batch) then
@@ -643,7 +711,7 @@ contains
               call dgemm('N','N',                & 
                           packed_size(a_length), &
                           packed_size(wf%n_o),   &
-                          packed_size(wf%n_v),    &
+                          packed_size(wf%n_v),   &
                           one/four,              &
                           g_p_ab_cd,             &
                           packed_size(a_length), &
@@ -1076,6 +1144,11 @@ contains
 !!    Omega C2 = -1/2 * sum_(ck) t_bk_cj*(g_ki_ac -1/2 sum_(dl)t_al_di * g_kd_lc)
 !!                    - sum_(ck) t_bk_ci*(g_kj_ac - sum_(dl)t_al_dj * g_kd_lc)
 !!    
+!!    Eirik: I would like to put a term for D2 into this term!
+!!
+!!       - 1/2 * sum_ck u_jk^bc g_acki
+!!
+!!
       implicit none
 !
       class(ccsd) :: wf
@@ -1176,8 +1249,7 @@ contains
       call deallocator(g_dl_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call deallocator(t_ai_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-!     Constructing g_ki_ac ordered as g_ki_ca
-
+!     Constructing g_ki_ac
 !
 !     Setup of variables needed for batching
 !
@@ -1205,11 +1277,16 @@ contains
          call allocator(g_ki_ac, (wf%n_o)**2, a_length*(wf%n_v))
 !
          integral_type = 'electronic_repulsion'
-         call wf%get_oo_vv(integral_type, g_ki_ac, &
-                        1, wf%n_o,                 &
-                        1, wf%n_o,                 &
-                        a_start, a_end,            &
-                        1, wf%n_v)
+         call wf%get_oo_vv(integral_type, & 
+                           g_ki_ac,       &
+                           1,             & 
+                           wf%n_o,        &
+                           1,             & 
+                           wf%n_o,        &
+                           a_start,       & 
+                           a_end,         &
+                           1,             &
+                           wf%n_v)
 !
 !        X_ai_ck = X_ai_ck + g_ki_ac
 !  
@@ -1306,7 +1383,7 @@ contains
                      aj = index_two(a, j, wf%n_v)
                      bi = index_two(b, i, wf%n_v)
 !
-                     aibj=index_packed(ai, bj)
+                     aibj = index_packed(ai, bj)
 !
                      wf%omega2(aibj, 1) = wf%omega2(aibj, 1) + half*Y_ai_bj(ai, bj) + Y_ai_bj(aj, bi) &
                                                                + half*Y_ai_bj(bj, ai) + Y_ai_bj(bi, aj)
@@ -1326,27 +1403,27 @@ contains
 !
 !
    module subroutine omega_ccsd_d2_ccsd(wf)
-!
-!     Omega D2 
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!     Calculates the D2 term,
-!
-!      D2: sum_ck u_jk^bc g_aikc 
-!        - 1/2 * sum_ck u_jk^bc g_acki 
-!        + 1/4 * sum_ck u_jk^bc sum_dl L_ldkc u_il^ad,
-!
-!     where 
-!
-!        u_jk^bc = 2 * t_jk^bc - t_kj^bc,
-!        L_ldkc  = 2 * g_ldkc  - g_lckd.
-!
-!     The first, second, and third terms are referred to as D2.1, D2.2, and D2.3, 
-!     and comes out ordered as (ai,bj). All terms are added to the omega vector of the 
-!     wavefunction object wf.
-!
-!     The routine adds the terms in the following order: D2.3, D2.1, D2.2
-!
+!!
+!!    Omega D2 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!    Calculates the D2 term,
+!!
+!!      D2: sum_ck u_jk^bc g_aikc 
+!!        - 1/2 * sum_ck u_jk^bc g_acki 
+!!        + 1/4 * sum_ck u_jk^bc sum_dl L_ldkc u_il^ad,
+!!
+!!    where 
+!!
+!!        u_jk^bc = 2 * t_jk^bc - t_kj^bc,
+!!        L_ldkc  = 2 * g_ldkc  - g_lckd.
+!!
+!!    The first, second, and third terms are referred to as D2.1, D2.2, and D2.3, 
+!!    and comes out ordered as (ai,bj). All terms are added to the omega vector of the 
+!!    wavefunction object wf.
+!!
+!!    The routine adds the terms in the following order: D2.3, D2.1, D2.2
+!!
       implicit none 
 !
       class(ccsd) :: wf 
@@ -1661,11 +1738,9 @@ contains
          call batch_limits(a_begin, a_end, a_batch, max_batch_length, batch_dimension)
          batch_length = a_end - a_begin + 1 
 !
-         ac_dim = batch_length*(wf%n_v) ! Dimension of ac for the batch over index a 
-!
 !        Form g_ac_ki = g_acki 
 !
-         call allocator(g_ac_ki, ac_dim, (wf%n_o)**2)
+         call allocator(g_ac_ki, batch_length*(wf%n_v), (wf%n_o)**2)
 !
          integral_type = 'electronic_repulsion'
          call wf%get_vv_oo(integral_type, &
@@ -1707,7 +1782,7 @@ contains
 !
 !        Deallocate the g_ac_ki
 !
-         call deallocator(g_ac_ki, ac_dim, (wf%n_o)**2)
+         call deallocator(g_ac_ki, batch_length*(wf%n_v), (wf%n_o)**2)
 !
       enddo ! End of loop over batches of a 
 !
