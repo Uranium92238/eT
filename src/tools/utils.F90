@@ -63,10 +63,10 @@ contains
 !
 !     Debug sanity check 
 !
-      if (p .eq. 0 .or. q .eq. 0 .or. r .eq. 0) write(unit_output,*) 'WARNING: one of the indices in index_three is zero!',p,q,r
-!
-      if (p .gt. dim_p) write(unit_output,*) 'WARNING: first index exceeds its dimension', p, dim_p
-      if (q .gt. dim_q) write(unit_output,*) 'WARNING: first index exceeds its dimension', q, dim_q
+!       if (p .eq. 0 .or. q .eq. 0 .or. r .eq. 0) write(unit_output,*) 'WARNING: one of the indices in index_three is zero!',p,q,r
+! !
+!       if (p .gt. dim_p) write(unit_output,*) 'WARNING: first index exceeds its dimension', p, dim_p
+!       if (q .gt. dim_q) write(unit_output,*) 'WARNING: first index exceeds its dimension', q, dim_q
 !
    end function index_three
 !
@@ -84,11 +84,11 @@ contains
 !
       index_two = dim_p*(q-1)+p
 !
-!     Debug sanity check 
-!
-      if (p .eq. 0 .or. q .eq. 0) write(unit_output,*) 'WARNING: one of the indices in index_two is zero!',p,q
-!
-      if (p .gt. dim_p) write(unit_output,*) 'WARNING: first index exceeds its dimension', p, dim_p
+! !     Debug sanity check 
+! !
+!       if (p .eq. 0 .or. q .eq. 0) write(unit_output,*) 'WARNING: one of the indices in index_two is zero!',p,q
+! !
+!       if (p .gt. dim_p) write(unit_output,*) 'WARNING: first index exceeds its dimension', p, dim_p
 !
    end function index_two
 !
@@ -181,11 +181,11 @@ contains
       do i = 1, N
          do j = 1, N
 !
-            if (abs(unpacked(i, j) - unpacked(j, i)) .gt. 10D-8) then 
-               write(unit_output,*) 'WARNING: Attempting to pack non-symmetric matrix'
-               write(unit_output,*) 'Make sure code is bug-free. Information will be lost.'
-               write(unit_output,*) unpacked(i, j), unpacked(j, i)
-            endif
+            ! if (abs(unpacked(i, j) - unpacked(j, i)) .gt. 10D-8) then 
+            !    write(unit_output,*) 'WARNING: Attempting to pack non-symmetric matrix'
+            !    write(unit_output,*) 'Make sure code is bug-free. Information will be lost.'
+            !    write(unit_output,*) unpacked(i, j), unpacked(j, i)
+            ! endif
 !
             packed(index_packed(i, j), 1) = unpacked(i, j)
 !
@@ -231,8 +231,6 @@ contains
 !
 !  Max batch size
 !
-      
-      write(unit_output,*)'I am batching'
       max_batch_length = available/(required/batch_dimension)
 !
 !  Number of full batches

@@ -2126,19 +2126,22 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
       real(dp), dimension(:,:), allocatable :: L_ab_J, L_cd_J
 !
-      real(dp) :: ddot
-      real(dp), dimension(:,:), allocatable :: x_vv_vv_copy
-      integer(i15) :: i = 0, j = 0, ab = 0, cd = 0
+      integer(i15) :: ab = 0, cd = 0
 !
       integer(i15) :: length_1 = 0, length_2 = 0, length_3 = 0, length_4 = 0
 !
       logical :: vvvv_on_file = .false.
 !
+      real(dp) :: begin_timer, end_timer
+!
       inquire(file='g_abcd',exist=vvvv_on_file)
+   !   vvvv_on_file = .false.
 !
       if (vvvv_on_file) then
 !
 !        Read x_vv_vv
+!
+         call cpu_time(begin_timer)
 !
          call wf%read_vv_vv_electronic_repulsion(x_vv_vv, &
                                  index1_first, index1_last, &
@@ -2146,16 +2149,23 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
                                  index3_first, index3_last, &
                                  index4_first, index4_last)
 !
+         call cpu_time(end_timer)
+!
+   !      write(unit_output,'(t6,a27,f14.8)') 'Read abcd (seconds):', end_timer-begin_timer
+!
 !        T1-transform x_vv_vv
 !
-         call allocator(x_vv_vv_copy, (wf%n_v)**2, (wf%n_v)**2)
-         x_vv_vv_copy = x_vv_vv 
+         call cpu_time(begin_timer)
 !
          call wf%t1_transform_vv_vv(x_vv_vv, &
                                  index1_first, index1_last, &
                                  index2_first, index2_last, &
                                  index3_first, index3_last, &
                                  index4_first, index4_last)
+!
+         call cpu_time(end_timer)
+!
+   !      write(unit_output,'(t6,a27,f14.8)') 't1-transform (seconds):', end_timer-begin_timer
 !
       else
 !
