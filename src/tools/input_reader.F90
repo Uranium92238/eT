@@ -127,6 +127,21 @@ contains
 !
                      tasks%excited_state = .true.
                      read(unit_input,'(i3,i3)') tasks%n_singlet_states, tasks%n_triplet_states
+!
+                     read(unit_input,'(a40)') line
+
+                     if (trim(line) == 'start_vector') then
+!
+                        tasks%user_specified_start_vector = .true.
+                        call allocator_int(tasks%start_vectors, tasks%n_singlet_states, 1)
+                        read(unit_input,*) tasks%start_vectors
+!
+                     else
+!
+                        backspace(unit_input)
+!
+                     endif
+!
                      cycle 
 !
                   elseif (calculation == 'core_excited_state') then

@@ -36,6 +36,9 @@ module calc_procedures_class
       integer(i15) :: n_singlet_states = 0
       integer(i15) :: n_triplet_states = 0
 !
+      integer(i15), dimension(:,:), allocatable :: start_vectors
+      logical :: user_specified_start_vector = .false.
+!
 !     For core excited states 
 !
       integer(i15) :: n_cores ! number of equivalent cores

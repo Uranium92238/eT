@@ -1177,6 +1177,22 @@ contains
 !  
       call cc2_wf%init
 !
+!     Test for user specified start vector
+!
+      if (wf%tasks%user_specified_start_vector) then
+!
+         cc2_wf%tasks%user_specified_start_vector = .true.
+         call allocator_int(cc2_wf%tasks%start_vectors, cc2_wf%tasks%n_singlet_states, 1 )
+         cc2_wf%tasks%start_vectors = wf%tasks%start_vectors
+!
+!        Since orbitals will swap order, start vector in higher level method must be removed
+!
+         wf%tasks%user_specified_start_vector = .false.
+         call deallocator_int(wf%tasks%start_vectors, wf%tasks%n_singlet_states, 1)
+!
+!        
+      endif
+!
 !     Call driver of lower level method
 !
       call cc2_wf%drv
