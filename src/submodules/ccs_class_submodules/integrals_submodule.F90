@@ -2133,17 +2133,17 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
       inquire(file='g_abcd',exist=vvvv_on_file)
       if (vvvv_on_file) then
 !
-!     Read x_vv_vv
+!        Read x_vv_vv
 !
-      call wf%read_vv_vv_electronic_repulsion(x_vv_vv, &
-                                 index1_first, index1_last, &
-                                 index2_first, index2_last, &
-                                 index3_first, index3_last, &
-                                 index4_first, index4_last)
+         call wf%read_vv_vv_electronic_repulsion(x_vv_vv, &
+                                    index1_first, index1_last, &
+                                    index2_first, index2_last, &
+                                    index3_first, index3_last, &
+                                    index4_first, index4_last)
 !
-!     T1-transform x_vv_vv
+!        T1-transform x_vv_vv
 !
-      call wf%t1_transform_vv_vv(x_vv_vv, &
+         call wf%t1_transform_vv_vv(x_vv_vv, &
                                  index1_first, index1_last, &
                                  index2_first, index2_last, &
                                  index3_first, index3_last, &
@@ -2934,8 +2934,8 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !!       T1 transformation of g_vv_vv integrals (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Oct 2017. 
 !!
-!!       g_ab_cd_T1 = g_ab_cd + sum_(J) sum_(i) t_a_i * L_ib_J * L_cd_J
-!!                            + sum_(J) sum_(k) t_c_k * L_kd_J * L_ab_J
+!!       g_ab_cd_T1 = g_ab_cd - sum_(J) sum_(i) t_a_i * L_ib_J * L_cd_J
+!!                            - sum_(J) sum_(k) t_c_k * L_kd_J * L_ab_J
 !!                            + sum_(J) sum_(ki) t_a_i * t_c_k * L_kd_J * L_ib_J
 !! 
       implicit none 
@@ -2962,171 +2962,177 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
       length_3 = index3_last - index3_first + 1 ! c
       length_4 = index4_last - index4_first + 1 ! d
 !
-!     ::Term 1::
-!     - sum_(J) sum_(i) t_a_i * L_ib_J * L_cd_J 
+!     Test if we are batching
 !
-      call allocator(L_ib_J, wf%n_o*length_2, wf%n_J)
-      call allocator(L_cd_J, length_3*length_4, wf%n_J)
+      if ((length_1 .eq. wf%n_v) .and. (length_2 .eq. wf%n_v) .and. &
+          (length_3 .eq. wf%n_v) .and. (length_4 .eq. wf%n_v) ) then
+      else
+!        ::Term 1::
+!        - sum_(J) sum_(i) t_a_i * L_ib_J * L_cd_J 
 !
-      call wf%read_cholesky_ia(L_ib_J, 1, wf%n_o, index2_first, index2_last)
-      call wf%read_cholesky_ab(L_cd_J, index3_first, index3_last, index4_first, index4_last)
+         call allocator(L_ib_J, (wf%n_o)*length_2, wf%n_J)
+         call allocator(L_cd_J, length_3*length_4, wf%n_J)
 !
-      call allocator(x_ib_cd, wf%n_o*length_2, length_3*length_4)
+         call wf%read_cholesky_ia(L_ib_J, 1, wf%n_o, index2_first, index2_last)
+         call wf%read_cholesky_ab(L_cd_J, index3_first, index3_last, index4_first, index4_last)
 !
-!     x_ib_cd = sum_(J) L_ib_J * L_cd_J
+         call allocator(x_ib_cd, wf%n_o*length_2, length_3*length_4)
 !
-      call dgemm('N', 'T',             &
-                  wf%n_o*length_2,     &
-                  length_3*length_4,   &
-                  wf%n_J,              &
-                  one,                 &
-                  L_ib_J,              &
-                  wf%n_o*length_2,     &
-                  L_cd_J,              &
-                  length_3*length_4,   &
-                  zero,                &
-                  x_ib_cd,             &
-                  wf%n_o*length_2)
+!        x_ib_cd = sum_(J) L_ib_J * L_cd_J
 !
-      call deallocator(L_cd_J, length_3*length_4, wf%n_J)
+         call dgemm('N', 'T',             &
+                     wf%n_o*length_2,     &
+                     length_3*length_4,   &
+                     wf%n_J,              &
+                     one,                 &
+                     L_ib_J,              &
+                     wf%n_o*length_2,     &
+                     L_cd_J,              &
+                     length_3*length_4,   &
+                     zero,                &
+                     x_ib_cd,             &
+                     wf%n_o*length_2)
 !
-!     g_vv_vv = g_ab_cd += sum_(i)t_a_i* x_ib_cd
+         call deallocator(L_cd_J, length_3*length_4, wf%n_J)
 !
-      call dgemm('N', 'N',                      &
-                  length_1,                     &
-                  length_2*length_4*length_3,   &
-                  wf%n_o,                       &
-                  -one,                         &
-                  wf%t1am(index1_first, 1),     & ! t_a_i
-                  wf%n_v,                       &
-                  x_ib_cd,                      &
-                  length_2*length_4*length_3,   &
-                  one,                          &
-                  g_vv_vv,                      &
-                  length_1)
+!        g_vv_vv = g_ab_cd -= sum_(i)t_a_i* x_ib_cd
 !
-      call deallocator(x_ib_cd, wf%n_o*length_2, length_3*length_4)
+         call dgemm('N', 'N',                      &
+                     length_1,                     &
+                     length_2*length_4*length_3,   &
+                     wf%n_o,                       &
+                     -one,                         &
+                     wf%t1am(index1_first, 1),     & ! t_a_i
+                     wf%n_v,                       &
+                     x_ib_cd,                      &
+                     wf%n_o,                       &
+                     one,                          &
+                     g_vv_vv,                      & ! g_a_bcd
+                     length_1)
 !
-!     :: Term 2 and 3 ::
-!     - sum_(J) sum_(k) t_c_k * L_ab_J * L_kd_J
-!       sum_(ik) t_a_i * t_c_k * (sum_(J) L_ib_J * L_kd_J) 
+         call deallocator(x_ib_cd, wf%n_o*length_2, length_3*length_4)
 !
-      call allocator(L_dk_J, wf%n_o*length_4, wf%n_J)
-      call allocator(L_ab_J, length_1*length_2, wf%n_J)
+!        :: Term 2 and 3 ::
+!        - sum_(J) sum_(k) t_c_k * L_ab_J * L_kd_J
+!          sum_(ik) t_a_i * t_c_k * (sum_(J) L_ib_J * L_kd_J) 
 !
-      call wf%read_cholesky_ai(L_dk_J, index4_first, index4_last, 1, wf%n_o)
-      call wf%read_cholesky_ab(L_ab_J, index1_first, index1_last, index2_first, index2_last)
+         call allocator(L_dk_J, wf%n_o*length_4, wf%n_J)
+         call allocator(L_ab_J, length_1*length_2, wf%n_J)
 !
-      call allocator(x_ab_dk, length_1*length_2, wf%n_o*length_4)
+         call wf%read_cholesky_ai(L_dk_J, index4_first, index4_last, 1, wf%n_o)
+         call wf%read_cholesky_ab(L_ab_J, index1_first, index1_last, index2_first, index2_last)
 !
-!     x_ab_dk = sum_(J)L_ab_J * L_dk_J
+         call allocator(x_ab_dk, length_1*length_2, wf%n_o*length_4)
 !
-      call dgemm('N', 'T',             &
-                  length_1*length_2,   &
-                  wf%n_o*length_4,     &
-                  wf%n_J,              &
-                  one,                 &
-                  L_ab_J,              &
-                  length_1*length_2,   &
-                  L_dk_J,              &
-                  wf%n_o*length_4,     &
-                  zero,                &
-                  x_ab_dk,             &
-                  length_1*length_2)
+!        x_ab_dk = sum_(J)L_ab_J * L_dk_J
 !
-      call deallocator(L_dk_J, wf%n_o*length_2, wf%n_J)
+         call dgemm('N', 'T',             &
+                     length_1*length_2,   &
+                     wf%n_o*length_4,     &
+                     wf%n_J,              &
+                     one,                 &
+                     L_ab_J,              &
+                     length_1*length_2,   &
+                     L_dk_J,              &
+                     wf%n_o*length_4,     &
+                     zero,                &
+                     x_ab_dk,             &
+                     length_1*length_2)
 !
-!     g_ab_dc = sum_(k)t_c_k * x_ab_dk
+!        g_ab_dc = - sum_(k)t_c_k * x_ab_dk
 !
-      call allocator(g_ab_dc, length_1*length_2, length_4*length_3)
+         call allocator(g_ab_dc, length_1*length_2, length_4*length_3)
 !
-      call dgemm('N', 'T',                   &
-                  length_1*length_2*length_4,&
-                  length_3,                  &
-                  wf%n_o,                    &
-                  -one,                      &
-                  x_ab_dk,                   &
-                  length_1*length_2*length_4,&
-                  wf%t1am(index3_first, 1),  & ! t_c_k
-                  wf%n_v,                    &
-                  zero,                      &
-                  g_ab_dc,                   &
-                  length_1*length_2*length_4)
+         call dgemm('N', 'T',                   &
+                     length_1*length_2*length_4,&
+                     length_3,                  &
+                     wf%n_o,                    &
+                     -one,                      &
+                     x_ab_dk,                   &
+                     length_1*length_2*length_4,&
+                     wf%t1am(index3_first, 1),  & ! t_c_k
+                     wf%n_v,                    &
+                     zero,                      &
+                     g_ab_dc,                   &
+                     length_1*length_2*length_4)
 !
-      call deallocator(x_ab_dk, length_1*length_2, wf%n_o*length_4)
+         call deallocator(x_ab_dk, length_1*length_2, wf%n_o*length_4)
 !
-      call allocator(x_ib_dk, wf%n_o*length_2, wf%n_o*length_4)
+         call allocator(x_ib_dk, wf%n_o*length_2, wf%n_o*length_4)
 !
-!     x_ib_dk = sum_(J)L_ib_J * L_dk_J
+!        x_ib_dk = sum_(J)L_ib_J * L_dk_J
 !
-      call dgemm('N', 'T',          &
-                  wf%n_o*length_2,  &
-                  wf%n_o*length_4,  &
-                  wf%n_J,           &
-                  one,              &
-                  L_ib_J,           &
-                  wf%n_o*length_2,  &
-                  L_dk_J,           &
-                  wf%n_o*length_4,  &
-                  zero,             &
-                  x_ib_dk,          &
-                  wf%n_o*length_2)
+         call dgemm('N', 'T',          &
+                     wf%n_o*length_2,  &
+                     wf%n_o*length_4,  &
+                     wf%n_J,           &
+                     one,              &
+                     L_ib_J,           &
+                     wf%n_o*length_2,  &
+                     L_dk_J,           &
+                     wf%n_o*length_4,  &
+                     zero,             &
+                     x_ib_dk,          &
+                     wf%n_o*length_2)
 !
-      call deallocator(L_dk_J, wf%n_o*length_4, wf%n_J)
-      call deallocator(L_ib_J, wf%n_o*length_2, wf%n_J)
+         call deallocator(L_dk_J, wf%n_o*length_4, wf%n_J)
+         call deallocator(L_ib_J, wf%n_o*length_2, wf%n_J)
 !
-      call allocator(x_ib_dc, wf%n_o*length_2, length_4*length_3)
+         call allocator(x_ib_dc, wf%n_o*length_2, length_4*length_3)
 !
-!     x_ib_dc = sum_(k)t_c_k * x_ib_dk
+!        x_ib_dc = sum_(k)t_c_k * x_ib_dk
 !
-      call dgemm('N', 'T',                   &
-                  wf%n_o*length_2*length_4,  &
-                  length_3,                  &
-                  wf%n_o,                    &
-                  one,                       &
-                  x_ib_dk,                   &
-                  wf%n_o*length_2*length_4,  &
-                  wf%t1am(index3_first, 1),  & ! t_c_k
-                  wf%n_v,                    &
-                  zero,                      &
-                  x_ib_dc,                   &
-                  wf%n_o*length_2*length_4)
+         call dgemm('N', 'T',                   &
+                     wf%n_o*length_2*length_4,  &
+                     length_3,                  &
+                     wf%n_o,                    &
+                     one,                       &
+                     x_ib_dk,                   &
+                     wf%n_o*length_2*length_4,  &
+                     wf%t1am(index3_first, 1),  & ! t_c_k
+                     wf%n_v,                    &
+                     zero,                      &
+                     x_ib_dc,                   &
+                     wf%n_o*length_2*length_4)
 !
-      call deallocator(x_ib_dk, wf%n_o*length_2, wf%n_o*length_4)
+         call deallocator(x_ib_dk, wf%n_o*length_2, wf%n_o*length_4)
 !
-!     g_ab_dc += sum_(i) t_a_i * x_ib_dc
+!        g_ab_dc += sum_(i) t_a_i * x_ib_dc
 !
-      call dgemm('N', 'N',                      &
-                  length_1,                     &
-                  length_2*length_4*length_3,   &
-                  wf%n_o,                       &
-                  one,                          &
-                  wf%t1am(index1_first, 1),     & ! t_a_i
-                  wf%n_v,                       &
-                  x_ib_dc,                      &
-                  length_2*length_4*length_3,   &
-                  one,                          &
-                  g_ab_dc,                      &
-                  length_1)
+         call dgemm('N', 'N',                      &
+                     length_1,                     &
+                     length_2*length_4*length_3,   &
+                     wf%n_o,                       &
+                     one,                          &
+                     wf%t1am(index1_first, 1),     & ! t_a_i
+                     wf%n_v,                       &
+                     x_ib_dc,                      &
+                     wf%n_o,                       &
+                     one,                          &
+                     g_ab_dc,                      &
+                     length_1)
 !
-      call deallocator(x_ib_dc, wf%n_o*length_2, length_4*length_3)
+         call deallocator(x_ib_dc, wf%n_o*length_2, length_4*length_3)
 !
-!     g_vv_vv = g_ab_cd(ab, cd) += g_ab_dc(ab, dc)
+!        g_vv_vv = g_ab_cd(ab, cd) += g_ab_dc(ab, dc)
 !
-      do c = 1, length_3
-         do d = 1, length_4
+         do c = 1, length_3
+            do d = 1, length_4
 !
-            cd = index_two(c, d, length_3)
-            dc = index_two(d, c, length_4)
+               cd = index_two(c, d, length_3)
+               dc = index_two(d, c, length_4)
 !
-            g_vv_vv(:,cd) = g_vv_vv(:,cd) + g_ab_dc(:, dc)
+               g_vv_vv(:,cd) = g_vv_vv(:,cd) + g_ab_dc(:, dc)
 !
+            enddo
          enddo
-      enddo
 !
-      call deallocator(g_ab_dc, length_1*length_2, length_4*length_3)
+         call deallocator(g_ab_dc, length_1*length_2, length_4*length_3)
+!
+      endif
 !
    end subroutine t1_transform_vv_vv_ccs
+!
 !
    module subroutine store_electronic_repulsion_integrals_ccs(wf)
 !!
