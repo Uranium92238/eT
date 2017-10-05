@@ -531,7 +531,7 @@ contains
       integer(i15) :: a_n_batch = 0, a_first = 0, a_last = 0, a_length = 0, a_max_length = 0, a_batch = 0
       integer(i15) :: b_n_batch = 0, b_first = 0, b_last = 0, b_length = 0, b_max_length = 0, b_batch = 0
 
-      integer(i15) :: required = 0, available = 0
+      integer(i15) :: required = 0, available = 0, threads = 0
 !
 !     Timing variables
 !
@@ -548,7 +548,7 @@ contains
 !     ::  Calculate the A2.1 term of omega ::
 !
 !     Create g_ai_bj
-!  
+!
       call allocator(g_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       integral_type = 'electronic_repulsion'
@@ -664,7 +664,10 @@ contains
 !
 !              Reorder g_ca_db to g_ab_cd and t_ci_dj to t_cd_ij
 ! 
-               do c = 1, wf%n_v 
+!$omp parallel do schedule(dynamic) private(d,b,a,ac,cd,bd,bc,ab,ad,i,j,ij,ci,dj,cj,di,cidj,dicj)
+               do c = 1, wf%n_v
+                  WRITE(*,*) omp_get_num_threads() 
+
                   do d = 1, c
 !
                      cd = index_packed(c, d)
@@ -714,6 +717,7 @@ contains
                     enddo
                  enddo
               enddo
+!$omp end parallel do
 !
 !              Dellocate g_ac_bd 
 !
@@ -816,6 +820,7 @@ contains
                t_p_cd_ij = zero
                t_m_cd_ij = zero
 ! 
+!$omp parallel do schedule(dynamic) private(d,b,a,ac,cd,bd,bc,ab,ad,i,j,ij,ci,dj,cj,di,cidj,dicj)
                do c = 1, wf%n_v 
                   do d = 1, c
 !
@@ -864,6 +869,7 @@ contains
                     enddo
                  enddo
               enddo
+!$omp end parallel do
 !
 !              Dellocate g_ac_bd 
 !
