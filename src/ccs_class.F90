@@ -47,6 +47,7 @@ module ccs_class
       real(dp), dimension(:,:), allocatable :: fock_ab ! vir-vir block
 !
       character(len=40)                     :: excited_state_task 
+!
 !     Variables that keep track of which response task is being performed 
 !
       character(len=40) :: response_task = 'multipliers'
@@ -85,10 +86,6 @@ module ccs_class
       procedure, non_overridable :: get_cholesky_ia => get_cholesky_ia_ccs ! occ-vir
       procedure, non_overridable :: get_cholesky_ai => get_cholesky_ai_ccs ! vir-occ
       procedure, non_overridable :: get_cholesky_ab => get_cholesky_ab_ccs ! vir-vir
-!
-!     Routine to store electronic repulsion integrals (g_abcd)
-!
-      procedure, non_overridable :: store_electronic_repulsion_integrals => store_electronic_repulsion_integrals_ccs
 !
 !     Routine to construct projection vector (omega)
 !
@@ -142,7 +139,6 @@ module ccs_class
       procedure :: cvs_residual_projection         => cvs_residual_projection_ccs
       procedure :: cvs_jacobian_ccs_transformation => cvs_jacobian_ccs_transformation_ccs
 !
-
 !     Coupled cluster Jacobian transpose transformation routine
 !
       procedure :: jacobian_transpose_ccs_transformation => jacobian_transpose_ccs_transformation_ccs
@@ -167,15 +163,14 @@ module ccs_class
       procedure :: print_excited_state_info  => print_excited_state_info_ccs      
       procedure :: print_excitation_vector   => print_excitation_vector_ccs
 !
-!
-!     Valence
+!     Valence excited states specific routines
 !
       procedure, non_overridable :: initialize_trial_vectors            => initialize_trial_vectors_ccs
       procedure, non_overridable :: initialize_trial_vectors_valence    => initialize_trial_vectors_valence_ccs
       procedure, non_overridable :: find_start_trial_indices            => find_start_trial_indices_ccs
       procedure, non_overridable :: trial_vectors_from_stored_solutions => trial_vectors_from_stored_solutions_ccs
 !
-!     Core
+!     Core excited states specific routines
 !
       procedure                  :: precondition_residual_core          => precondition_residual_core_ccs
       procedure, non_overridable :: find_start_trial_indices_core       => find_start_trial_indices_core_ccs
@@ -199,25 +194,25 @@ module ccs_class
       procedure :: construct_next_response_trial_vectors => construct_next_response_trial_vectors_ccs
       procedure :: construct_gradient_vector             => construct_gradient_vector_ccs
 !
-!     Integral routines 
+!     Integral routines (o: occupied index, v: virtual index)
 !
-      procedure :: get_oo_oo => get_oo_oo_ccs ! Tested, Eirik, 29 Sep
-      procedure :: get_oo_ov => get_oo_ov_ccs ! Tested, Eirik, 29 Sep
+      procedure :: get_oo_oo => get_oo_oo_ccs 
+      procedure :: get_oo_ov => get_oo_ov_ccs 
       procedure :: get_ov_oo => get_ov_oo_ccs 
       procedure :: get_oo_vo => get_oo_vo_ccs 
       procedure :: get_vo_oo => get_vo_oo_ccs
       procedure :: get_oo_vv => get_oo_vv_ccs
       procedure :: get_vv_oo => get_vv_oo_ccs
-      procedure :: get_ov_ov => get_ov_ov_ccs ! Tested, Eirik, 29 Sep
+      procedure :: get_ov_ov => get_ov_ov_ccs 
 !
-      procedure :: get_vo_vo => get_vo_vo_ccs ! Tested, Eirik, 29 Sep
+      procedure :: get_vo_vo => get_vo_vo_ccs 
       procedure :: get_ov_vo => get_ov_vo_ccs
-      procedure :: get_vo_ov => get_vo_ov_ccs ! Tested, Eirik, 29 Sep
+      procedure :: get_vo_ov => get_vo_ov_ccs 
       procedure :: get_ov_vv => get_ov_vv_ccs
       procedure :: get_vv_ov => get_vv_ov_ccs
       procedure :: get_vo_vv => get_vo_vv_ccs
       procedure :: get_vv_vo => get_vv_vo_ccs
-      procedure :: get_vv_vv => get_vv_vv_ccs ! Tested, Sarai 29 Sep
+      procedure :: get_vv_vv => get_vv_vv_ccs 
 !
       procedure :: get_oo_oo_electronic_repulsion => get_oo_oo_electronic_repulsion_ccs
       procedure :: get_oo_ov_electronic_repulsion => get_oo_ov_electronic_repulsion_ccs
@@ -237,8 +232,11 @@ module ccs_class
       procedure :: get_vv_vo_electronic_repulsion => get_vv_vo_electronic_repulsion_ccs
       procedure :: get_vv_vv_electronic_repulsion => get_vv_vv_electronic_repulsion_ccs
 !
-      procedure :: read_vv_vv_electronic_repulsion => read_vv_vv_electronic_repulsion_ccs
-      procedure :: t1_transform_vv_vv => t1_transform_vv_vv_ccs
+!     Routine to store, read, and T1-transform read electronic repulsion integrals (g_abcd)
+!
+      procedure, non_overridable :: store_electronic_repulsion_integrals => store_electronic_repulsion_integrals_ccs
+      procedure, non_overridable :: read_vv_vv_electronic_repulsion      => read_vv_vv_electronic_repulsion_ccs
+      procedure, non_overridable :: t1_transform_vv_vv                   => t1_transform_vv_vv_ccs
 !
    end type ccs
 !

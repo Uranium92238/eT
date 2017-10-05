@@ -77,6 +77,7 @@ contains
       real(dp) :: ccsd_b1_time 
       real(dp) :: ccsd_c1_time
       real(dp) :: ccs_a1_time 
+!
       real(dp) :: ccsd_a2_time
       real(dp) :: ccsd_b2_time 
       real(dp) :: ccsd_c2_time 
