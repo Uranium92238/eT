@@ -1211,9 +1211,9 @@ contains
 !
 !     Set implemented methods
 !
-      wf%implemented%ground_state = .true.
+      wf%implemented%ground_state  = .true.
       wf%implemented%excited_state = .true.
-      wf%implemented%properties = .true.
+      wf%implemented%properties    = .true.
 !
 !     Read Hartree-Fock info from SIRIUS
 !
