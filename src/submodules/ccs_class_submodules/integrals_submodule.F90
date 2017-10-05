@@ -3153,6 +3153,8 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
 !        g_ab_dc += sum_(i) t_a_i * x_ib_dc
 !
+         call allocator(g_ab_dc, length_1*length_2, length_4*length_3)
+!
          call dgemm('N', 'N',                      &
                      length_1,                     &
                      length_2*length_4*length_3,   &
@@ -3162,7 +3164,7 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
                      wf%n_v,                       &
                      x_ib_dc,                      &
                      wf%n_o,                       &
-                     one,                          &
+                     zero,                         & ! g_a_bdc
                      g_ab_dc,                      &
                      length_1)
 !
