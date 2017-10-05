@@ -2140,16 +2140,6 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
       if (vvvv_on_file) then
 !
 !        Read x_vv_vv
-<<<<<<< HEAD
-!
-         call wf%read_vv_vv_electronic_repulsion(x_vv_vv, &
-                                    index1_first, index1_last, &
-                                    index2_first, index2_last, &
-                                    index3_first, index3_last, &
-                                    index4_first, index4_last)
-!
-!        T1-transform x_vv_vv
-=======
 !
          call cpu_time(begin_timer)
 !
@@ -2166,7 +2156,6 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !        T1-transform x_vv_vv
 !
          call cpu_time(begin_timer)
->>>>>>> 9a12c144ef0719b4820e97ebb156cf7732588655
 !
          call wf%t1_transform_vv_vv(x_vv_vv, &
                                  index1_first, index1_last, &
