@@ -533,6 +533,8 @@ contains
 
       integer(i15) :: required = 0, available = 0, threads = 0
 !
+      integer :: omp_get_num_threads
+!
 !     Timing variables
 !
       real(dp) :: time_non_integral_part
@@ -666,7 +668,6 @@ contains
 ! 
 !$omp parallel do schedule(dynamic) private(d,b,a,ac,cd,bd,bc,ab,ad,i,j,ij,ci,dj,cj,di,cidj,dicj)
                do c = 1, wf%n_v
-                  WRITE(*,*) omp_get_num_threads() 
 
                   do d = 1, c
 !
