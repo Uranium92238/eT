@@ -15,11 +15,7 @@ submodule (ccsd_class) jacobian
 !
    implicit none 
 !
-<<<<<<< HEAD
    character(len=40) :: integral_type ! Here: electronic repulsion, 1/r_ij, g_pqrs 
-=======
-   character(len=40) :: integral_type
->>>>>>> 6254e52a7a207ea6388cd61f51d5abd5cedc0f9a
 !
 contains
 !
