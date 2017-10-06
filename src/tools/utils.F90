@@ -257,10 +257,9 @@ contains
 !!    Without rest:  (n_batch)*(max_batch_length) = required
 !!
       implicit none
-!
 !     
-      integer(i15), intent(in)           :: available, batch_dimension
-      integer(i15)                       :: max_batch_length,n_batch,i,buffer,required
+      integer(i15), intent(in) :: available, batch_dimension
+      integer(i15)             :: max_batch_length,n_batch,i,buffer,required
 !
       buffer = required/10
 !
@@ -273,8 +272,6 @@ contains
          max_batch_length = batch_dimension
          return
    endif
-
-   write(unit_output,*)'I am batching'
 !  
    do i = 1, batch_dimension
       if (available .gt. required/i**2) then

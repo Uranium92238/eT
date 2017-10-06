@@ -3030,9 +3030,9 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
 !     Test if we are batching
 !
-      if ((length_1 .eq. wf%n_v) .and. (length_2 .eq. wf%n_v) .and. &
-          (length_3 .eq. wf%n_v) .and. (length_4 .eq. wf%n_v) ) then
-      else
+      ! if ((length_1 .eq. wf%n_v) .and. (length_2 .eq. wf%n_v) .and. &
+      !     (length_3 .eq. wf%n_v) .and. (length_4 .eq. wf%n_v) ) then
+      ! else
 !        ::Term 1::
 !        - sum_(J) sum_(i) t_a_i * L_ib_J * L_cd_J 
 !
@@ -3060,10 +3060,9 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
                      wf%n_o*length_2)
 !
          call deallocator(L_cd_J, length_3*length_4, wf%n_J)
-
+!
 !     g_vv_vv = g_ab_cd -= sum_(i)t_a_i* x_ib_cd
-!
-!
+! 
          call dgemm('N', 'N',                      &
                      length_1,                     &
                      length_2*length_4*length_3,   &
@@ -3196,7 +3195,7 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
          call deallocator(g_ab_dc, length_1*length_2, length_4*length_3)
 !
-      endif
+     ! endif
 !
    end subroutine t1_transform_vv_vv_ccs
 !

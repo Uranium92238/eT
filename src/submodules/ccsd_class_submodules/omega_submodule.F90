@@ -1530,6 +1530,7 @@ contains
                   bj = index_two(b, j, wf%n_v)
 !
                   if (ai .ge. bj) then
+!
                      aj = index_two(a, j, wf%n_v)
                      bi = index_two(b, i, wf%n_v)
 !
@@ -1718,37 +1719,6 @@ contains
 !
       call deallocator(Z_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-!     Add the D2.2 term to the omega vector 
-!
-      do j = 1, wf%n_o 
-         do b = 1, wf%n_v
-!
-            bj = index_two(b, j, wf%n_v)
-!
-            do i = 1, wf%n_o 
-               do a = 1, wf%n_v
-!
-                  ai = index_two(a, i, wf%n_v)
-!
-                  aibj = index_packed(ai, bj)
-! 
-                  if (ai .ge. bj) then
-!
-                     wf%omega2(aibj, 1) = wf%omega2(aibj, 1) + omega2_ai_bj(ai, bj) & 
-                                                               + omega2_ai_bj(bj, ai)
-!
-                  endif
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!
-!     Deallocate the omega2_ai_bj and u_ai_ld(ai,ld) = u_il^ad vector
-!
-      call deallocator(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call deallocator(u_ai_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) 
-!
 !     :: Calculate the D2.1 term of omega :: 
 !
 !     Form g_ai_kc = g_aikc
@@ -1758,55 +1728,22 @@ contains
       integral_type = 'electronic_repulsion'
       call wf%get_vo_ov(integral_type,g_ai_kc)
 !
-!     Allocate u_kc_bj and set it to zero 
+!     Calculate the D2.1 term, sum_ck u_jk^bc g_aikc = sum_ck g_ai_kc(ai,kc) u_ai_ld(bj,kc)
 !
-      call allocator(u_kc_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
-!     Form u_kc_bj = u_jk^bc = 2 * t_jk^bc - t_kj^bc 
-!
-      do j = 1, wf%n_o
-         do b = 1, wf%n_v 
-!
-            bj = index_two(b, j, wf%n_v)
-!
-            do c = 1, wf%n_v 
-!
-               cj = index_two(c, j, wf%n_v)
-!
-               do k = 1, wf%n_o 
-!
-                  bk = index_two(b, k, wf%n_v)
-                  ck = index_two(c, k, wf%n_v)
-                  kc = index_two(k, c, wf%n_o)
-!
-                  bjck = index_packed(bj, ck)
-                  bkcj = index_packed(bk, cj)
-!
-                  u_kc_bj(kc, bj) = two*(wf%t2am(bjck, 1)) - wf%t2am(bkcj, 1)
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!
-!     Allocate omega2_ai_bj
-!
-      call allocator(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) 
-!
-!     Calculate the D2.1 term sum_ck u_jk^bc g_aikc = sum_ck g_ai_kc u_kc_bj
-!
-      call dgemm('N','N',            &
+      call dgemm('N','T',            &
                   (wf%n_o)*(wf%n_v), &
                   (wf%n_o)*(wf%n_v), &
                   (wf%n_o)*(wf%n_v), &
                   one,               &
                   g_ai_kc,           &
                   (wf%n_o)*(wf%n_v), &
-                  u_kc_bj,           &
+                  u_ai_ld,           &
                   (wf%n_o)*(wf%n_v), &
-                  zero,              &
+                  one,               &
                   omega2_ai_bj,      &
                   (wf%n_o)*(wf%n_v))
+!
+      call deallocator(u_ai_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) 
 !
 !     Add the D2.1 term to the omega vector 
 !
@@ -1837,8 +1774,6 @@ contains
 !     Deallocate g_ai_kc, u_kc_bj, and the omega2_ai_bj vectors 
 !
       call deallocator(g_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call deallocator(u_kc_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
       call deallocator(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine omega_ccsd_d2_ccsd
@@ -1881,15 +1816,12 @@ contains
       real(dp), dimension(:,:), allocatable :: g_ld_kc      ! g_ldkc 
       real(dp), dimension(:,:), allocatable :: u_b_ldk      ! u_kl^bd 
       real(dp), dimension(:,:), allocatable :: X_b_c        ! An intermediate, see below for definition
-      real(dp), dimension(:,:), allocatable :: t_cj_ai ! t_ij^ac
+      real(dp), dimension(:,:), allocatable :: t_cj_ai      ! t_ij^ac
 !
 !     Vectors for E2.2 term 
-!
-      real(dp), dimension(:,:), allocatable :: g_kc_ld      ! g_kcld  
-      real(dp), dimension(:,:), allocatable :: u_cld_j      ! u_lj^dc 
+! 
       real(dp), dimension(:,:), allocatable :: omega2_ai_bj ! For storing the E2.2 term temporarily
       real(dp), dimension(:,:), allocatable :: Y_k_j        ! An intermediate, see below for definition 
-      real(dp), dimension(:,:), allocatable :: t_ai_bk      ! t_ik^ab 
 !
 !     :: Calculate the E2.1 term of omega ::
 !
@@ -1915,7 +1847,7 @@ contains
 !
                ldk = index_three(l, d, k, wf%n_o, wf%n_v)
 !
-               do c = 1, wf%n_v 
+               do c = 1, wf%n_v ! Pretend that c is b below
 !
                   cl = index_two(c, l, wf%n_v)
                   ck = index_two(c, k, wf%n_v)
@@ -1953,10 +1885,6 @@ contains
                   one,                  &
                   X_b_c,                &
                   wf%n_v)
-!
-!     Deallocate u_b_kdl
-!
-      call deallocator(u_b_ldk, wf%n_v, (wf%n_v)*(wf%n_o)**2)
 !
 !     Form t_cj_ai = t_ij^ac = t_ji^ca 
 !
@@ -2013,43 +1941,6 @@ contains
 !
 !     :: Calculate E2.2 term of omega ::
 !
-!     Form g_kc_ld = g_kcld
-!
-      call allocator(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
-      integral_type = 'electronic_repulsion'
-      call wf%get_ov_ov(integral_type,g_kc_ld)
-!
-!     Form u_cld_j = u_lj^dc 
-!
-      call allocator(u_cld_j, (wf%n_o)*(wf%n_v)**2, wf%n_o)
-!
-      do k = 1, wf%n_o ! Use as though "j" for u_dlc_j term 
-         do d = 1, wf%n_v
-!
-            dk = index_two(d, k, wf%n_v)
-!
-            do l = 1, wf%n_o
-!
-               dl = index_two(d, l, wf%n_v)
-!
-               do c = 1, wf%n_v
-!
-                  ck = index_two(c, k, wf%n_v)
-                  cl = index_two(c, l, wf%n_v)
-!
-                  cld  = index_three(c, l, d, wf%n_v, wf%n_o)
-!
-                  dlck = index_packed(dl, ck)
-                  dkcl = index_packed(dk, cl)
-!
-                  u_cld_j(cld, k) = two*(wf%t2am(dlck, 1)) - wf%t2am(dkcl, 1) ! u_lk^dc = 2 * t_lk^dc - t_kl^dc 
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!
 !     Allocate the intermediate Y_k_j = F_kj  + sum_cdl u_lj^dc g_ldkc 
 !                                     = F_kj  + sum_cdl u_lj^dc g_kcld 
 !                                     = F_k_j + sum_cdl g_k_cld * u_cld_j
@@ -2063,23 +1954,28 @@ contains
 !     Add sum_cdl g_k_dlc u_dlc_j to Y_k_j, such that 
 !     Y_k_j = F_k_j + sum_cdl g_k_cld u_cld_j
 !
-      call dgemm('N','N',               &
+!     Note:
+!
+!     g_ld_kc(kc,ld) = g_kcld              -> pretend that this is g_k_cld 
+!     u_b_ldk(c,ldj) = u_jl^cd (= u_lj^dc) -> pretend that this is u_cld_j
+!
+      call dgemm('N','N',              &
                  wf%n_o,               &
                  wf%n_o,               &
                  (wf%n_o)*(wf%n_v)**2, &
                  one,                  &
-                 g_kc_ld,              & ! g_k_cld
+                 g_ld_kc,              & ! g_k_cld
                  wf%n_o,               &
-                 u_cld_j,              &
+                 u_b_ldk,              & ! u_cld_j
                  (wf%n_o)*(wf%n_v)**2, &
                  one,                  &
                  Y_k_j,                &
                  wf%n_o)
 !
-!     Deallocate u_cld_j and g_kc_ld 
+!     Deallocate u_b_ldk and g_ld_kc
 !
-      call deallocator(u_cld_j, (wf%n_o)*(wf%n_v)**2, wf%n_o)
-      call deallocator(g_kc_ld, (wf%n_v)*(wf%n_o), (wf%n_o)*(wf%n_v))
+      call deallocator(u_b_ldk, wf%n_v, (wf%n_v)*(wf%n_o)**2)
+      call deallocator(g_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !    Allocate the E2.2 term and set to zero 
 !
@@ -2087,7 +1983,7 @@ contains
 !
 !    Calculate the E2.2 term, 
 !    - sum_k t_aib_k Y_k_j = - sum_k t_ik^ab (F_kj + sum_cdl g_ldkc u_lj^dc)
-!
+! 
 !    Note: t_cj_ai = t_ji^ca => t_cj_ai(ai,bk) = t_ik^ab;
 !    thus, we can treat t_cj_ai as t_aib_k = t_ik^ab.
 !
