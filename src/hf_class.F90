@@ -555,7 +555,7 @@ contains
 !        Read the Cholesky vectors into the L_ij_J matrix
 !
          do i = 1, i_length
-            do k = 1 ,j_length
+            do k = 1, j_length
 !
                ij_full = index_packed((i + i_first - 1), (k + j_first - 1))
 !
