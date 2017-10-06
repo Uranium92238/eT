@@ -477,8 +477,6 @@ contains
          local_index3_last = wf%n_o
          local_index4_last = wf%n_o
 !         
-         write(unit_output,*)'hellaw'
-         flush(unit_output)
       else
          write(unit_output,*)'WARNING: Some optionals missing in call to get_vo_oo'
          stop

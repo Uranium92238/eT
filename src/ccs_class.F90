@@ -218,7 +218,7 @@ module ccs_class
       procedure :: get_oo_ov_electronic_repulsion => get_oo_ov_electronic_repulsion_ccs
       procedure :: get_ov_oo_electronic_repulsion => get_ov_oo_electronic_repulsion_ccs
       procedure :: get_oo_vo_electronic_repulsion => get_oo_vo_electronic_repulsion_ccs
-      procedure :: get_vo_oo_electronic_repulsion => get_oo_vo_electronic_repulsion_ccs
+      procedure :: get_vo_oo_electronic_repulsion => get_vo_oo_electronic_repulsion_ccs
       procedure :: get_oo_vv_electronic_repulsion => get_oo_vv_electronic_repulsion_ccs
       procedure :: get_vv_oo_electronic_repulsion => get_vv_oo_electronic_repulsion_ccs
       procedure :: get_ov_ov_electronic_repulsion => get_ov_ov_electronic_repulsion_ccs
