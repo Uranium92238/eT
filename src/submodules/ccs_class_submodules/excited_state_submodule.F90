@@ -1262,16 +1262,16 @@ contains
          read(unit_trial_vecs, rec=trial, iostat=ioerror) c_a_i
 !
          if (wf%current_task == 'excited_state') then
-            if (wf%excited_state_task =='right_valence') then
-
 !
-            call wf%jacobian_ccs_transformation(c_a_i)
+            if (wf%excited_state_task == 'right_valence') then
 !
-            elseif (wf%excited_state_task=='right_core') then
+               call wf%jacobian_ccs_transformation(c_a_i)
+!
+            elseif (wf%excited_state_task == 'right_core') then
 !
                call wf%cvs_jacobian_ccs_transformation(c_a_i)
 !
-            elseif (wf%excited_state_task=='left_valence') then
+            elseif (wf%excited_state_task == 'left_valence') then
 !               
                call wf%jacobian_transpose_ccs_transformation(c_a_i)
 !
@@ -1284,11 +1284,11 @@ contains
 !
          elseif(wf%current_task == 'response') then
 !
-            if (wf%response_task=='left_eigenvectors') then
+            if (wf%response_task =='left_eigenvectors') then
 !
                call wf%jacobian_transpose_ccs_transformation(c_a_i)
 !
-            elseif (wf%response_task=='multipliers') then 
+            elseif (wf%response_task == 'multipliers') then 
 !
                call wf%jacobian_transpose_ccs_transformation(c_a_i)
 !
@@ -1298,7 +1298,9 @@ contains
                stop
 !
             endif
+!
          else
+!
             write(unit_output,*) 'Error: Current task not recognized'
             stop
 !
