@@ -15,6 +15,7 @@ submodule (ccsd_class) jacobian
 !
    implicit none 
 !
+   character(len=40) :: integral_type
 !
 contains
 !
@@ -69,11 +70,17 @@ contains
 !
 !     :: CCS contributions to the singles c vector ::  
 !
+      write(unit_output,*)'CCS A1'
+            flush(unit_output)
       call wf%jacobian_ccs_a1(rho_a_i, c_a_i)
+      write(unit_output,*)'CCS B1'
+            flush(unit_output)
       call wf%jacobian_ccs_b1(rho_a_i, c_a_i)
 !
 !     :: CCSD contributions to the transformed singles vector :: 
 !
+      write(unit_output,*)'CCSD A1'
+            flush(unit_output)
       call wf%jacobian_ccsd_a1(rho_a_i, c_a_i)
 !
 !     Allocate the incoming unpacked doubles vector 
@@ -92,8 +99,14 @@ contains
 !
       enddo
 !
+      write(unit_output,*)'CCSD B1'
+            flush(unit_output)
       call wf%jacobian_ccsd_b1(rho_a_i, c_ai_bj) 
+      write(unit_output,*)'CCSD C1'
+            flush(unit_output)
       call wf%jacobian_ccsd_c1(rho_a_i, c_ai_bj)
+      write(unit_output,*)'CCSD D1'
+            flush(unit_output)
       call wf%jacobian_ccsd_d1(rho_a_i, c_ai_bj)
 !
 !
@@ -106,9 +119,17 @@ contains
 !
 !     Contributions from singles vector c 
 !
+      write(unit_output,*)'CCSD A2'
+            flush(unit_output)
       call wf%jacobian_ccsd_a2(rho_ai_bj, c_a_i)
+       write(unit_output,*)'CCSD B2'
+            flush(unit_output)
       call wf%jacobian_ccsd_b2(rho_ai_bj, c_a_i)
+      write(unit_output,*)'CCSD c2'
+            flush(unit_output)
       call wf%jacobian_ccsd_c2(rho_ai_bj, c_a_i)
+      write(unit_output,*)'CCSD D2'
+            flush(unit_output)
       call wf%jacobian_ccsd_d2(rho_ai_bj, c_a_i)
 !
 !     Done with singles vector c; overwrite it with 
@@ -118,8 +139,14 @@ contains
 !
 !     Contributions from doubles vector c
 !
+         write(unit_output,*)'CCSD E2'
+            flush(unit_output)
       call wf%jacobian_ccsd_e2(rho_ai_bj, c_ai_bj)
+      write(unit_output,*)'CCSD F2'
+            flush(unit_output)
       call wf%jacobian_ccsd_f2(rho_ai_bj, c_ai_bj)
+      write(unit_output,*)'CCSD G2'
+            flush(unit_output)
       call wf%jacobian_ccsd_g2(rho_ai_bj, c_ai_bj) 
       call wf%jacobian_ccsd_h2(rho_ai_bj, c_ai_bj)
       call wf%jacobian_ccsd_i2(rho_ai_bj, c_ai_bj)

@@ -65,13 +65,6 @@ contains
       write(unit_output,'(t3,a,i3,a,a,a)') &
                                      'Requested ',wf%tasks%n_triplet_states,' ', trim(wf%name), ' triplet states.'     
 !
-!     Set the response task 
-!
-      if (wf%tasks%excited_state) then
-         wf%excited_state_task = 'right_valence'
-      elseif (wf%tasks%core_excited_state) then
-         wf%excited_state_task = 'right_core'
-      endif
 !
 !     Run the general solver routine (file names are given
 !     by the task, i.e., the file 'right_valence' contains
@@ -1268,28 +1261,45 @@ contains
 !
          read(unit_trial_vecs, rec=trial, iostat=ioerror) c_a_i
 !
-         if (wf%excited_state_task=='right_valence') then
+         if (wf%current_task == 'excited_state') then
+            if (wf%excited_state_task =='right_valence') then
 
 !
-         call wf%jacobian_ccs_transformation(c_a_i)
+            call wf%jacobian_ccs_transformation(c_a_i)
 !
-         elseif (wf%excited_state_task=='right_core') then
+            elseif (wf%excited_state_task=='right_core') then
 !
-            call wf%cvs_jacobian_ccs_transformation(c_a_i)
+               call wf%cvs_jacobian_ccs_transformation(c_a_i)
 !
-         elseif (wf%excited_state_task=='left_valence') then
+            elseif (wf%excited_state_task=='left_valence') then
+!               
+               call wf%jacobian_transpose_ccs_transformation(c_a_i)
 !
-         elseif (wf%response_task=='left_eigenvectors') then
+            else
 !
-            call wf%jacobian_transpose_ccs_transformation(c_a_i)
+               write(unit_output,*) 'Error: Excited state task not recognized'
+               stop
 !
-         elseif (wf%response_task=='multipliers') then 
+            endif
 !
-            call wf%jacobian_transpose_ccs_transformation(c_a_i)
+         elseif(wf%current_task == 'response') then
 !
+            if (wf%response_task=='left_eigenvectors') then
+!
+               call wf%jacobian_transpose_ccs_transformation(c_a_i)
+!
+            elseif (wf%response_task=='multipliers') then 
+!
+               call wf%jacobian_transpose_ccs_transformation(c_a_i)
+!
+            else
+!
+               write(unit_output,*) 'Error: Response task not recognized'
+               stop
+!
+            endif
          else
-!
-            write(unit_output,*) 'Error: Response task not recognized'
+            write(unit_output,*) 'Error: Current task not recognized'
             stop
 !
          endif

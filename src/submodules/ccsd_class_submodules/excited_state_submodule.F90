@@ -108,21 +108,44 @@ contains
 !
          read(unit_trial_vecs, rec=trial, iostat=ioerror) c_a_i, c_aibj
 !
-         if (wf%response_task=='right_eigenvectors') then
+         if (wf%current_task == 'excited_state') then
+            if (wf%excited_state_task =='right_valence') then
 !
             call wf%jacobian_ccsd_transformation(c_a_i, c_aibj)
 !
-         elseif (wf%response_task=='left_eigenvectors') then
+            elseif (wf%excited_state_task=='right_core') then
 !
-            call wf%jacobian_transpose_ccsd_transformation(c_a_i, c_aibj)
+               !call wf%cvs_jacobian_ccsd_transformation(c_a_i, c_aibj)
 !
-         elseif (wf%response_task=='multipliers') then 
+            elseif (wf%excited_state_task=='left_valence') then
+!               
+               call wf%jacobian_transpose_ccsd_transformation(c_a_i, c_aibj)
 !
-            call wf%jacobian_transpose_ccsd_transformation(c_a_i, c_aibj)
+            else
 !
+               write(unit_output,*) 'Error: Excited state task not recognized'
+               stop
+!
+            endif
+!
+         elseif(wf%current_task == 'response') then
+!
+            if (wf%response_task=='left_eigenvectors') then
+!
+               call wf%jacobian_transpose_ccsd_transformation(c_a_i, c_aibj)
+!
+            elseif (wf%response_task=='multipliers') then 
+!
+               call wf%jacobian_transpose_ccsd_transformation(c_a_i, c_aibj)
+!
+            else
+!
+               write(unit_output,*) 'Error: Response task not recognized'
+               stop
+!
+            endif
          else
-!
-            write(unit_output,*) 'Error: Response task not recognized'
+            write(unit_output,*) 'Error: Current task not recognized'
             stop
 !
          endif

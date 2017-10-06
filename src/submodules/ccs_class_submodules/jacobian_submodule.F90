@@ -214,19 +214,10 @@ contains
 !
 !     Allocate and construct g_ai_jb
 !
-      call allocator(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*b_length)
+      call allocator(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       integral_type = 'electronic_repulsion'
-      call wf%get_vo_ov(integral_type, &
-                        g_ai_jb,       &
-                        1,             &
-                        wf%n_v,        &
-                        1,             &
-                        wf%n_o,        &
-                        1,             &
-                        wf%n_o,        &
-                        1,             &
-                        wf%n_v)
+      call wf%get_vo_ov(integral_type, g_ai_jb)
 !
 !     Preparing for batching over b
 !
@@ -268,7 +259,7 @@ contains
                            1,             &
                            wf%n_o,        &
                            1,             &
-                           wf%n_o)         
+                           wf%n_o)        
 !
 !        Allocate L_ai_jb
 !

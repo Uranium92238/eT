@@ -44,13 +44,13 @@ module ccs_class
       real(dp), dimension(:,:), allocatable :: fock_ij ! occ-occ block
       real(dp), dimension(:,:), allocatable :: fock_ia ! occ-vir block
       real(dp), dimension(:,:), allocatable :: fock_ai ! vir-occ block
-      real(dp), dimension(:,:), allocatable :: fock_ab ! vir-vir block
-!
-      character(len=40)                     :: excited_state_task 
+      real(dp), dimension(:,:), allocatable :: fock_ab ! vir-vir block 
 !
 !     Variables that keep track of which response task is being performed 
 !
-      character(len=40) :: response_task = 'multipliers'
+      character(len=40) :: response_task 
+      character(len=40) :: excited_state_task
+      character(len=40) :: current_task = 'ground_state'
 !
 !     The excitation energies (omega_1, omega_2, ...)
 !
@@ -2221,6 +2221,7 @@ contains
 !
          if (wf%implemented%ground_state) then 
 !
+            wf%current_task = 'ground_state'
             call wf%ground_state_solver
 !
          else
@@ -2239,6 +2240,7 @@ contains
 !
          if (wf%implemented%excited_state) then 
 !     
+            wf%current_task = 'excited_state'
             wf%excited_state_task = 'right_valence'
             call wf%excited_state_driver 
 !
@@ -2259,6 +2261,7 @@ contains
 !
          if (wf%implemented%core_excited_state) then 
 !     
+            wf%current_task = 'excited_state'
             wf%excited_state_task = 'right_core'
             call wf%excited_state_driver 
 !
@@ -2279,6 +2282,8 @@ contains
 !
          if (wf%implemented%properties) then 
 !
+            wf%current_task = 'response'
+            wf%response_task = 'multipliers'
             call wf%response_driver
 !
          else
