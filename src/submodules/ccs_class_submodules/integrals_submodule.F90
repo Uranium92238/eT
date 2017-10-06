@@ -493,7 +493,6 @@ contains
                                       local_index3_first, local_index3_last, &
                                       local_index4_first, local_index4_last)
 !
-         stop
       else
 !
          write(unit_output,*) 'WARNING: unknown integral type requested from get_vo_oo'
@@ -2728,7 +2727,44 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
       real(dp), dimension(:,:), allocatable :: L_ai_J, L_jk_J
 !
       integer(i15) :: length_1 = 0, length_2 = 0, length_3 = 0, length_4 = 0
-
+!
+!     Lengths
+!
+      length_1 = index1_last - index1_first + 1
+      length_2 = index2_last - index2_first + 1
+      length_3 = index3_last - index3_first + 1
+      length_4 = index4_last - index4_first + 1
+!
+!     Alllocate Cholesky vectors
+!
+      call allocator(L_ai_J, length_1*length_2, wf%n_J)
+      call allocator(L_jk_J, length_3*length_4, wf%n_J)
+!
+!     Get T1-transformed Cholesky vectors
+!
+      call wf%get_cholesky_ai(L_ai_J, index1_first, index1_last, index2_first, index2_last)
+      call wf%get_cholesky_ij(L_jk_J)
+!
+!     Construct integral
+!
+      call dgemm('N', 'T',           &
+                  length_1*length_2, &
+                  length_3*length_4, &
+                  wf%n_J,            &
+                  one,               &
+                  L_ai_J,            &
+                  length_1*length_2, &
+                  L_jk_J,            &
+                  length_3*length_4, &
+                  zero,              &
+                  x_vo_oo,           &
+                  length_1*length_2)
+!
+!     Deallocate Cholesky vectors
+!
+      call deallocator(L_ai_J, length_1*length_2, wf%n_J)
+      call deallocator(L_jk_J, length_3*length_4, wf%n_J)
+!
    end subroutine get_vo_oo_electronic_repulsion_ccs
 !
 !
