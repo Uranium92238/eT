@@ -13,6 +13,7 @@ submodule (ccs_class) jacobian
 !
    implicit none 
 !
+   character(len=40) :: integral_type
 !
 contains
       module subroutine jacobian_ccs_transformation_ccs(wf, c_a_i)
@@ -122,6 +123,7 @@ contains
       implicit none
 !
       class(ccs) :: wf
+!
       real(dp), dimension(wf%n_v,wf%n_o) :: c1
       real(dp), dimension(wf%n_v,wf%n_o) :: rho
 !
@@ -205,10 +207,26 @@ contains
       integer(i15) :: i = 0, j = 0
 !
       integer(i15) :: ab = 0
-      integer(i15) :: ai = 0, jb = 0
+      integer(i15) :: ai = 0, jb = 0, jb_full = 0
       integer(i15) :: ji = 0
 !
       logical :: reorder
+!
+!     Allocate and construct g_ai_jb
+!
+      call allocator(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*b_length)
+!
+      integral_type = 'electronic_repulsion'
+      call wf%get_vo_ov(integral_type, &
+                        g_ai_jb,       &
+                        1,             &
+                        wf%n_v,        &
+                        1,             &
+                        wf%n_o,        &
+                        1,             &
+                        wf%n_o,        &
+                        1,             &
+                        wf%n_v)
 !
 !     Preparing for batching over b
 !
@@ -235,74 +253,22 @@ contains
 !
          call batch_limits(b_first, b_last, b_batch, max_batch_length, batch_dimension)
          b_length = b_last - b_first + 1 
-!            
-!        Allocate and get L_ai_J
-!
-         call allocator(L_ai_J, (wf%n_v)*(wf%n_o), wf%n_J)
-!
-         call wf%get_cholesky_ai(L_ai_J)
-!
-!        Allocate and get L_jb_J
-!
-         call allocator(L_jb_J, (wf%n_o)*(wf%n_v), wf%n_J)
-!
-         call wf%get_cholesky_ia(L_jb_J)
-!
-!        Allocate and construct g_ai_jb constrained to the batch
-!
-         call allocator(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*b_length)
-!
-         call dgemm('N', 'T',                                 &
-                     (wf%n_v)*(wf%n_o),                       &
-                     (wf%n_o)*b_length,                       &
-                     wf%n_J,                                  &
-                     one,                                     &
-                     L_ai_J,                                  &
-                     (wf%n_v)*(wf%n_o),                       &
-                     L_jb_J(index_two(1, b_first, wf%n_o),1), &
-                     (wf%n_v)*(wf%n_o),                       &
-                     zero,                                    &
-                     g_ai_jb,                                 &
-                     (wf%n_v)*(wf%n_o))
-!
-!        Deallocate L_ai_J and L_jb_J
-!
-         call deallocator(L_ai_J, (wf%n_v)*(wf%n_o), wf%n_J)
-         call deallocator(L_jb_J, (wf%n_o)*(wf%n_v), wf%n_J)
-!
-!        Allocate and get L_ab_J
-!
-         call allocator(L_ab_J, (wf%n_v)*b_length, wf%n_J)
-!
-         call wf%get_cholesky_ab(L_ab_J, 1, wf%n_v, b_first, b_last)
-!
-!        Allocate and get L_ji_J
-!
-         call allocator(L_ji_J, (wf%n_o)**2, wf%n_J)
-!
-         call wf%get_cholesky_ij(L_ji_J)
 !
 !        Allocate and construct g_ab_ji
 !
          call allocator(g_ab_ji, (wf%n_v)*b_length, (wf%n_o)**2)
 !
-         call dgemm('N', 'T',           &
-                     (wf%n_v)*b_length, &
-                     (wf%n_o)**2,       &
-                     wf%n_J,            &
-                     one,               &
-                     L_ab_J,            &
-                     (wf%n_v)*b_length, &
-                     L_ji_J,            &
-                     (wf%n_o)**2,       &
-                     zero,              &
-                     g_ab_ji,           &
-                     (wf%n_v)*b_length)
-!
-!        Deallocate and get L_ab_J and L_ji_J
-!
-         call deallocator(L_ab_J, (wf%n_v)*b_length, wf%n_J)
-         call deallocator(L_ji_J, (wf%n_o)**2, wf%n_J)
+         integral_type = 'electronic_repulsion'
+         call wf%get_vv_oo(integral_type, &
+                           g_ab_ji,       &
+                           1,             &
+                           wf%n_v,        &
+                           b_first,       &
+                           b_last,        &
+                           1,             &
+                           wf%n_o,        &
+                           1,             &
+                           wf%n_o)         
 !
 !        Allocate L_ai_jb
 !
@@ -314,13 +280,17 @@ contains
          do i = 1, wf%n_o
             do b = 1, b_length
                do j = 1, wf%n_o
-                  ji = index_two(j, i , wf%n_o)
+!
+                  ji = index_two(j, i, wf%n_o)
                   jb = index_two(j, b, wf%n_o)
+                  jb_full = index_two(j, b + b_first - 1, wf%n_o)
+!
                   do a = 1, wf%n_v
+!
                      ai = index_two(a, i, wf%n_v)
                      ab = index_two(a, b, wf%n_v)
 !
-                     L_ai_jb(ai, jb) = two*g_ai_jb(ai, jb) - g_ab_ji(ab, ji)
+                     L_ai_jb(ai, jb) = two*g_ai_jb(ai, jb_full) - g_ab_ji(ab, ji)
 !
                   enddo
                enddo
@@ -330,7 +300,6 @@ contains
 !
 !        Deallocate g_ai_jb and g_ab_ji
 !
-         call deallocator(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*b_length)
          call deallocator(g_ab_ji, (wf%n_v)*b_length, (wf%n_o)**2)
 !
 !        Allocate reordering of c and rho
@@ -342,6 +311,7 @@ contains
          c_jb = zero
          do j = 1, wf%n_o
             do b = 1, b_length
+!
                jb = index_two(j, b, wf%n_o)
 !
                c_jb(jb, 1) = c1(b+b_first-1, j)
@@ -373,6 +343,8 @@ contains
          call deallocator(c_jb, (wf%n_o)*b_length, 1)
 !
       enddo ! Looping over batches
+!
+      call deallocator(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*b_length)
 !
    end subroutine jacobian_ccs_b1_ccs
 !

@@ -666,7 +666,7 @@ contains
 !
 !              Reorder g_ca_db to g_ab_cd and t_ci_dj to t_cd_ij
 ! 
-!$omp parallel do schedule(dynamic) private(d,b,a,ac,cd,bd,bc,ab,ad,i,j,ij,ci,dj,cj,di,cidj,dicj)
+!$omp parallel do schedule(static) private(d,b,a,ac,cd,bd,bc,ab,ad,i,j,ij,ci,dj,cj,di,cidj,dicj)
                do c = 1, wf%n_v
 
                   do d = 1, c
@@ -821,7 +821,7 @@ contains
                t_p_cd_ij = zero
                t_m_cd_ij = zero
 ! 
-!$omp parallel do schedule(dynamic) private(d,b,a,ac,cd,bd,bc,ab,ad,i,j,ij,ci,dj,cj,di,cidj,dicj)
+!$omp parallel do schedule(static) private(d,b,a,ac,cd,bd,bc,ab,ad,i,j,ij,ci,dj,cj,di,cidj,dicj)
                do c = 1, wf%n_v 
                   do d = 1, c
 !

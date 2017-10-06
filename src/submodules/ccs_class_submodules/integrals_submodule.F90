@@ -2151,7 +2151,7 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
          call cpu_time(end_timer)
 !
-   !      write(unit_output,'(t6,a27,f14.8)') 'Read abcd (seconds):', end_timer-begin_timer
+         write(unit_output,'(t6,a27,f14.8)') 'Read abcd (seconds):', end_timer-begin_timer
 !
 !        T1-transform x_vv_vv
 !
@@ -2165,7 +2165,7 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
          call cpu_time(end_timer)
 !
-   !      write(unit_output,'(t6,a27,f14.8)') 't1-transform (seconds):', end_timer-begin_timer
+         write(unit_output,'(t6,a27,f14.8)') 't1-transform (seconds):', end_timer-begin_timer
 !
       else
 !
@@ -3088,7 +3088,7 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !        Add to g_vv_vv
 !        g_vv_vv = - g_ab_cd(ab, cd) - g_ab_cd(cd, ab)
 !
-!$omp parallel do schedule(dynamic) private(a,c,d,ab,cd)
+!$omp parallel do schedule(static) private(a,c,d,ab,cd)
          do b = 1, length_2
             do a = 1, length_1
                ab = index_two(a, b, length_1)
@@ -3171,6 +3171,7 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
 !        g_vv_vv = g_ab_cd(ab, cd) += g_ab_dc(ab, dc)
 !
+!$omp parallel do schedule(static) private(d,cd,dc)
          do c = 1, length_3
             do d = 1, length_4
 !
@@ -3181,6 +3182,7 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
             enddo
          enddo
+!$omp end parallel do 
 !
          call deallocator(g_ab_dc, length_1*length_2, length_4*length_3)
 !
@@ -3188,7 +3190,7 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
 !        We are batching
 !
-!        ::Term 1::
+!        ::Term 1:: 
 !        - sum_(J) sum_(i) t_a_i * L_ib_J * L_cd_J 
 !
          call allocator(L_ib_J, (wf%n_o)*length_2, wf%n_J)
