@@ -1,3 +1,5 @@
 Programmering:
   ☐ Estimater for batching må fikses, både i omega og jacobi
+  ☐ Ta stilling til "current task, response task, excited state task". Kan vi være smartere med det her?
+  ☐ Den delen av Omega D2 som ble flyttet inn i Omega C2 inngår nå i en UTESTET batch-dgemm!
   ☐ 
