@@ -15,6 +15,7 @@ submodule (ccsd_class) jacobian
 !
    implicit none 
 !
+   character(len=40) :: integral_type
 !
 contains
 !
@@ -618,7 +619,7 @@ contains
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017 
 !!
 !!    rho_ai^B1 = sum_bj F_jb (2*c_ai_bj  -  c_aj_bi) 
-!!              = sum_bj F_jb v_ai_bj
+!!              = sum_bj F_jb v_ai_jb
 !!
 !!    The term is added as rho_a_i(a,i) = rho_a_i(a,i) + rho_ai^A1,
 !!    where c_a_i(a,i) = c_ai above. 
@@ -631,29 +632,24 @@ contains
       real(dp), dimension((wf%n_o)*(wf%n_v),(wf%n_o)*(wf%n_v))   :: c_ai_bj 
       real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i ! rho_ai
 !
-      real(dp), dimension(:,:), allocatable :: v_ai_bj
+      real(dp), dimension(:,:), allocatable :: v_ai_jb 
       real(dp), dimension(:,:), allocatable :: F_bj
 !
       integer(i15) :: a = 0, b = 0
       integer(i15) :: i = 0, j = 0
 !
-      integer(i15) :: ai = 0, aj = 0, bi = 0, bj = 0
+      integer(i15) :: ai = 0, aj = 0, bi = 0, jb = 0, bj = 0
 !
-!     Construct v_ai_bj = 2*c_aibj - c_ajbi
-!     Reorder F_j_b to F_bj 
+!     Construct v_ai_jb = 2*c_aibj - c_ajbi
 !
-      call allocator(v_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      v_ai_bj = zero
-!
-      call allocator(F_bj, (wf%n_o)*(wf%n_v), 1)
-      F_bj = zero
+      call allocator(v_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      v_ai_jb = zero
 !
       do j = 1, wf%n_o
          do b = 1, wf%n_v
 !
             bj = index_two(b, j, wf%n_v)
-!
-            F_bj(bj,1) = wf%fock_ia(j, b)
+            jb = index_two(j, b, wf%n_o)
 !
             do i = 1, wf%n_o
 !
@@ -664,30 +660,29 @@ contains
                   ai = index_two(a, i, wf%n_v)
                   aj = index_two(a, j, wf%n_v)                 
 !
-                  v_ai_bj(ai, bj) = two*c_ai_bj(ai, bj) - c_ai_bj(aj, bi)        
+                  v_ai_jb(ai, jb) = two*c_ai_bj(ai, bj) - c_ai_bj(aj, bi)        
 !
                enddo
             enddo
          enddo
       enddo
 !
-!     sum_bj F_jb*v_ai_bj = sum_bj F_bj(bj,1)*v_ai_bj(ai,bj)
+!     sum_bj F_jb*v_ai_jb
 ! 
       call dgemm('N', 'N',           &
                   (wf%n_o)*(wf%n_v), &
                   1,                 &
                   (wf%n_o)*(wf%n_v), &
                   one,               &
-                  v_ai_bj,           &
+                  v_ai_jb,           &
                   (wf%n_o)*(wf%n_v), &
-                  F_bj,              &
+                  wf%fock_ia,        & ! F_jb 
                   (wf%n_o)*(wf%n_v), &
-                  one,              &        
+                  one,               &        
                   rho_a_i,           &
                   (wf%n_o)*(wf%n_v)) 
 !
-      call deallocator(v_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call deallocator(F_bj, (wf%n_o)*(wf%n_v), 1)
+      call deallocator(v_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine jacobian_ccsd_b1_ccsd
 !
@@ -860,20 +855,16 @@ contains
 !
 !     Integrals
 !
-      real(dp), dimension(:,:), allocatable :: L_ba_J ! Reordered L_ab_J
-      real(dp), dimension(:,:), allocatable :: L_ab_J ! Reordered L_ab_J
-      real(dp), dimension(:,:), allocatable :: L_jc_J
-      real(dp), dimension(:,:), allocatable :: g_ba_jc ! Reordered g_ab_jc
-      real(dp), dimension(:,:), allocatable :: L_a_bjc
-      real(dp), dimension(:,:), allocatable :: c_bjc_i
+      real(dp), dimension(:,:), allocatable :: g_ab_jc ! g_abjc
+      real(dp), dimension(:,:), allocatable :: L_a_cjb
 !
       integer(i15) :: a = 0, b = 0, c = 0
       integer(i15) :: i = 0, j = 0 
 !
       integer(i15) :: jb = 0, jc = 0, bi = 0, cj = 0 
-      integer(i15) :: ba = 0, ca = 0, ab = 0
+      integer(i15) :: ca = 0, ab = 0, ac = 0
 !
-      integer(i15) :: bjc = 0
+      integer(i15) :: cjb = 0
 !
       integer(i15) :: bicj = 0 
 !
@@ -901,84 +892,42 @@ contains
          call batch_limits(a_first, a_last, a_batch, max_batch_length, batch_dimension)
          a_length = a_last - a_first + 1 
 !
-!        Get ab-cholesky vectors for the batch, L_ab^J, then reorder from L_ab_J to L_ba_J
+!        Form g_ab_jc = g_abjc 
 !
-         call allocator(L_ab_J, (wf%n_v)*a_length, wf%n_J)
-         L_ab_J = zero
-         call wf%get_cholesky_ab(L_ab_J, a_first, a_last, 1, wf%n_v)
-
-         call allocator(L_ba_J, (wf%n_v)*a_length, wf%n_J)
-         L_ba_J = zero
+         call allocator(g_ab_jc, a_length*(wf%n_v), (wf%n_v)*(wf%n_o))
 !
-         do a = 1, a_length
-            do b = 1, wf%n_v
-               ab = index_two(a, b, a_length)
-               ba = index_two(b, a, wf%n_v)
-               do J = 1, wf%n_J
-                  L_ba_J(ba, J) = L_ab_J(ab, J)
-               enddo
-            enddo
-         enddo
+         integral_type = 'electronic_repulsion'
+         call wf%get_vv_ov(integral_type, &
+                           g_ab_jc,       &
+                           a_first,       &
+                           a_last,        &
+                           1,             &
+                           wf%n_v,        &
+                           1,             &
+                           wf%n_o,        &
+                           1,             &
+                           wf%n_v)
 !
-         call deallocator(L_ab_J, (wf%n_v)*a_length, wf%n_J)
+!        Construct L_abjc ordered as L_a_cjb
 !
-         call allocator(L_jc_J, (wf%n_v)*(wf%n_o), wf%n_J)
-         L_jc_J = zero
-!
-         call wf%get_cholesky_ia(L_jc_J)
-!
-!        g_abjc = sum_J L_ab_J * L_jc_J ordered as g_ba_jc
-!
-         call allocator(g_ba_jc, a_length*(wf%n_v), (wf%n_v)*(wf%n_o))
-!  
-         call dgemm('N', 'T',           &
-                     (wf%n_v)*a_length, &
-                     (wf%n_v)*(wf%n_o), &
-                     wf%n_J,            &
-                     one,               &
-                     L_ba_J,            &
-                     (wf%n_v)*a_length, &
-                     L_jc_J,            &
-                     (wf%n_v)*(wf%n_o), &
-                     zero,              &
-                     g_ba_jc,           &
-                     (wf%n_v)*a_length)
-!
-         call deallocator(L_jc_J, (wf%n_v)*(wf%n_o), wf%n_J)
-         call deallocator(L_ba_J, (wf%n_v)*a_length, wf%n_J)
-!
-!        Construct L_abjc ordered as L_a_bjc
-!        Reorder c_bicj to c_bjc_i
-!
-         call allocator(L_a_bjc, a_length, ((wf%n_v)**2)*(wf%n_o))
-         call allocator(c_bjc_i, ((wf%n_v)**2)*(wf%n_o), wf%n_o)
-         L_a_bjc = zero
-         c_bjc_i = zero
+         call allocator(L_a_cjb, a_length, ((wf%n_v)**2)*(wf%n_o))
+         L_a_cjb = zero
 !       
-         do c = 1, wf%n_v
+         do b = 1, wf%n_v
             do j = 1, wf%n_o
-               do b = 1, wf%n_v
+               do c = 1, wf%n_v
 !
-                  bjc = index_three(b, j, c, wf%n_v, wf%n_o)
+                  cjb = index_three(c, j, b, wf%n_v, wf%n_o)
 !
                   jb = index_two(j, b, wf%n_o)
-!
-                  do i = 1, wf%n_o
-!
-                     bi = index_two(b, i, wf%n_v)
-                     cj = index_two(c, j, wf%n_v)
-                     jc = index_two(j, c, wf%n_o)
-!
-                     c_bjc_i(bjc, i) = c_bi_cj(bi, cj)
-!
-                  enddo
+                  jc = index_two(j, c, wf%n_o)
 !
                   do a = 1, a_length
 !
-                     ca = index_two(c, a, wf%n_v)
-                     ba = index_two(b, a, wf%n_v)
+                     ac = index_two(a, c, a_length)
+                     ab = index_two(a, b, a_length)
 !
-                     L_a_bjc(a, bjc) = two*g_ba_jc(ba, jc) - g_ba_jc(ca, jb)
+                     L_a_cjb(a, cjb) = two*g_ab_jc(ab, jc) - g_ab_jc(ac, jb)
 !
                   enddo
 !
@@ -986,23 +935,22 @@ contains
             enddo
          enddo
 !
-         call deallocator(g_ba_jc, a_length*(wf%n_v), (wf%n_v)*(wf%n_o))
+         call deallocator(g_ab_jc, a_length*(wf%n_v), (wf%n_v)*(wf%n_o))
 !
          call dgemm('N', 'N',                & 
                      a_length,               &
                      wf%n_o,                 &
                      (wf%n_o)*((wf%n_v)**2), &
                      one,                    &
-                     L_a_bjc,                &
+                     L_a_cjb,                &
                      a_length,               &
-                     c_bjc_i,                &
+                     c_bi_cj,                & ! c_cjb_i
                      (wf%n_o)*((wf%n_v)**2), &
                      one,                    &
                      rho_a_i(a_first, 1),    &
                      wf%n_v)
 !
-         call deallocator(c_bjc_i, ((wf%n_v)**2)*(wf%n_o), wf%n_o)
-         call deallocator(L_a_bjc, a_length, ((wf%n_v)**2)*(wf%n_o))
+         call deallocator(L_a_cjb, a_length, ((wf%n_v)**2)*(wf%n_o))
 !
       enddo ! End batching over a
 !
