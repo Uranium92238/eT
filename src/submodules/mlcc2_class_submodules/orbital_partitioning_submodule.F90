@@ -1209,6 +1209,8 @@ contains
       norm = ddot((wf%n_o)*(wf%n_v), R_a_i, 1, R_a_i_sum, 1)
       call dscal((wf%n_o)*(wf%n_v), one/norm, R_a_i_sum, 1)
 !
+!     Construct M
+!
       call dgemm('T', 'N',       &
                      wf%n_o,     &
                      wf%n_o,     &
