@@ -3669,8 +3669,7 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
 !                       Calculate record number 
 !
-                        cd_packed = index_packed(c, d + d_first - 1)
-                        bcd_nonpacked = index_three(b, c, d, b_length, wf%n_v) ! Nonpacked index! 
+                        bcd_nonpacked = index_three(b, c, d, b_length, wf%n_v) ! Nonpacked index 
 !
 !                       Write integrals to that record 
 !
