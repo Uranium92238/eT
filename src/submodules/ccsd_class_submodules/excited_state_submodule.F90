@@ -170,4 +170,26 @@ contains
    end subroutine transform_trial_vectors_ccsd
 !
 !
+   module subroutine excited_state_preparations_ccsd(wf)
+!!
+!!    Excited State Preparations (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!    A routine for preparation tasks (if any). Can be overwritten
+!!    in descendants if other preparations prove necessary.    
+!!
+      class(ccsd) :: wf 
+!
+!     Store vvvv-electronic repulsion integrals to file if there is space 
+!
+      call wf%store_t1_vv_vv_electronic_repulsion
+!
+!     Store voov-electronic repulsion integrals to file if there is space
+!
+      call wf%store_t1_vo_ov_electronic_repulsion
+!
+   end subroutine excited_state_preparations_ccsd
+
+!
+!
 end submodule excited_state
