@@ -3710,4 +3710,163 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
    end subroutine store_t1_vv_vv_electronic_repulsion_ccs
 !
 !
+   module subroutine store_t1_vo_ov_electronic_repulsion_ccs(wf)
+!!
+!!    Store t1 voov Electronic Repulsion Integrals 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!    Tests whether it is possible to store t1-transformed vir-occ-occ-vir integrals and,
+!!    if possible, writes the integrals to disk 
+!!
+      implicit none 
+!
+      class(ccs) :: wf 
+!
+      integer  :: required_space 
+      real(dp) :: required_space_gb
+!
+      integer(i15) :: unit_g_t1_aijb = -1 ! g_abcd, electronic repulsion integrals  
+      integer(i15) :: ioerror = -1        ! Error integer for file handling
+!
+      real(dp) :: begin_timer, end_timer
+!
+!     Integral
+!
+      real(dp), dimension(:,:), allocatable :: g_ai_jb
+!
+      character(len=40) :: integral_type 
+!
+      integer(i15) :: a = 0, i = 0, ai = 0
+      integer(i15) :: jb = 0
+!
+!     Disk space required to store g_vo_ov 
+!
+      required_space = ((wf%n_v)**2)*((wf%n_o)**2)
+!
+!     This is the required space in number of double precision numbers (8 bytes per such number).
+!     We convert this number to gigabytes. 
+!
+      required_space = 8*required_space ! in bytes
+!
+!     Required in giga bytes
+!
+      required_space_gb = real(required_space)*(1.0D-9)
+!
+!     Test whether there is room for the integrals & save if this is the case 
+!
+      if (required_space_gb .lt. wf%settings%disk_space) then 
+!
+         call cpu_time(begin_timer)
+!
+         call allocator(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+         integral_type = 'electronic_repulsion'
+         call wf%get_vo_ov(integral_type, g_ai_jb)
+!  
+!        Open file for writing integrals - record (ai), record length (n_o)*(n_v) (bj)
+!
+         call generate_unit_identifier(unit_g_t1_aijb)
+         open(unit=unit_g_t1_aijb, file='g_t1_aijb', action='write', status='unknown', &
+               access='direct', form='unformatted', recl=dp*((wf%n_v)*(wf%n_o)), iostat=ioerror)
+!
+         if (ioerror .ne. 0) write(unit_output,'(t3,a)') &
+         'Error: error while opening file in store_t1_vo_ov_electronic_repulsion_ccs'
+!
+         do a = 1, wf%n_v
+            do i = 1, wf%n_o
+!
+!                 Calculate record number 
+!
+                  ai = index_two(a, i, wf%n_v)
+!                  
+!                 Write integrals to that record 
+!
+                  write(unit_g_t1_aijb, rec=ai, iostat=ioerror) (g_ai_jb(ai, jb), jb = 1, wf%n_v*wf%n_o)
+!
+            enddo
+         enddo
+!
+         if (ioerror .ne. 0) write(unit_output,'(t3,a)') &
+            'Error: write error in store_t1_vo_ov_electronic_repulsion_integrals_ccs'
+!
+         call deallocator(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+         call cpu_time(end_timer)
+!
+         if (wf%settings%print_level == 'developer') then
+! 
+            write(unit_output,'(t3,a39,f14.8)') 'Time used to store t1 g_aijb (seconds):', end_timer - begin_timer
+            flush(unit_output)
+!
+         endif
+!
+      endif
+!
+   end subroutine store_t1_vo_ov_electronic_repulsion_ccs
+!!
+   module subroutine read_t1_vo_ov_electronic_repulsion_ccs(wf, g_ai_jb)
+!!
+!!    Read t1 voov Electronic Repulsion Integrals 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!    Reads the T1-transformed vir-occ-occ-vir integrals from file.
+!!
+      implicit none 
+!
+      class(ccs) :: wf
+!
+!     Integral
+!
+      real(dp), dimension(:,:) :: g_ai_jb 
+!
+      integer(i15) :: unit_g_t1_aijb = -1 ! g_abcd, electronic repulsion integrals  
+      integer(i15) :: ioerror = -1        ! Error integer for file handling
+!
+      real(dp) :: begin_timer, end_timer
+!
+      character(len=40) :: integral_type 
+!
+      integer(i15) :: a = 0, i = 0, ai = 0
+      integer(i15) :: jb = 0
+
+      call cpu_time(begin_timer)
+!  
+!     Open file for reading integrals - record (ai), record length (n_o)*(n_v) (bj)
+!
+      call generate_unit_identifier(unit_g_t1_aijb)
+      open(unit=unit_g_t1_aijb, file='g_t1_aijb', action='read', status='unknown', &
+            access='direct', form='unformatted', recl=dp*((wf%n_v)*(wf%n_o)), iostat=ioerror)
+!
+      if (ioerror .ne. 0) write(unit_output,'(t3,a)') &
+      'Error: error while opening file in read_t1_vo_ov_electronic_repulsion_ccs'
+!
+      do a = 1, wf%n_v
+         do i = 1, wf%n_o
+!
+!              Calculate record number 
+!
+               ai = index_two(a, i, wf%n_v)
+!               
+!              Write integrals to that record 
+!
+               read(unit_g_t1_aijb, rec=ai, iostat=ioerror) (g_ai_jb(ai, jb), jb = 1, wf%n_v*wf%n_o)
+!
+         enddo
+      enddo
+!
+      if (ioerror .ne. 0) write(unit_output,'(t3,a)') &
+         'Error: read error in read_t1_vo_ov_electronic_repulsion_integrals_ccs'
+!
+      call cpu_time(end_timer)
+!
+      if (wf%settings%print_level == 'developer') then
+! 
+         write(unit_output,'(t3,a39,f14.8)') 'Time used to store t1 g_aijb (seconds):', end_timer - begin_timer
+         flush(unit_output)
+!
+      endif
+!
+   end subroutine read_t1_vo_ov_electronic_repulsion_ccs
+!
+!
 end submodule integrals
