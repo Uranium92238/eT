@@ -2148,14 +2148,15 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
       integer(i15) :: length_1 = 0, length_2 = 0, length_3 = 0, length_4 = 0
 !
-      logical :: vvvv_on_file = .false.
+      logical :: vvvv_on_file    = .false.
+      logical :: t1_vvvv_on_file = .false.
 !
       real(dp) :: begin_timer, end_timer
 !
       inquire(file='g_abcd',exist=vvvv_on_file)
-   !   vvvv_on_file = .false.
+      inquire(file='g_t1_abcd',exist=t1_vvvv_on_file)
 !
-      if (vvvv_on_file) then
+      if (vvvv_on_file) then ! Read g_abcd and t1 transform it (standard for ground state calculation)
 !
 !        Read x_vv_vv
 !
@@ -2184,6 +2185,22 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
          call cpu_time(end_timer)
 !
          write(unit_output,'(t6,a27,f14.8)') 't1-transform (seconds):', end_timer-begin_timer
+!
+      elseif (t1_vvvv_on_file .and. wf%current_task .ne. 'ground_state') then ! Read t1 g_abcd (standard for excited state calculation)
+!
+!        Read integrals from file 
+!
+         call cpu_time(begin_timer)
+!
+         call wf%read_t1_vv_vv_electronic_repulsion(x_vv_vv, &
+                                 index1_first, index1_last, &
+                                 index2_first, index2_last, &
+                                 index3_first, index3_last, &
+                                 index4_first, index4_last)   
+!
+         call cpu_time(end_timer)
+!
+         write(unit_output,'(t6,a27,f14.8)') 'Read t1 abcd (seconds):', end_timer-begin_timer              
 !
       else
 !
@@ -3748,6 +3765,7 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
       integer  :: required_space 
       real(dp) :: required_space_gb
 !
+      integer(i15) :: unit_g_abcd = -1    ! g_abcd, non-transformed 
       integer(i15) :: unit_g_t1_abcd = -1 ! g_abcd, electronic repulsion integrals  
       integer(i15) :: ioerror = -1        ! Error integer for file handling
       integer(i15) :: rec_number = -1     ! The record where g_abcd is positioned 
@@ -3793,6 +3811,13 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !     Test whether there is room for the integrals & save if this is the case 
 !
       if (required_space_gb .lt. wf%settings%disk_space) then 
+!
+!        Open and delete file containing non-transformed integrals - if it exists, of course
+!
+         call generate_unit_identifier(unit_g_abcd)
+         open(unit=unit_g_abcd, file='g_abcd', action='read', status='unknown', &
+               access='direct', form='unformatted', recl=dp*(wf%n_v), iostat=ioerror) 
+         close(unit_g_abcd, status='delete')        
 !
          call cpu_time(begin_timer)
 !
