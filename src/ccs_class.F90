@@ -234,9 +234,9 @@ module ccs_class
 !
 !     Routine to store, read, and T1-transform read electronic repulsion integrals (g_abcd)
 !
-      procedure, non_overridable :: store_electronic_repulsion_integrals => store_electronic_repulsion_integrals_ccs
-      procedure, non_overridable :: read_vv_vv_electronic_repulsion      => read_vv_vv_electronic_repulsion_ccs
-      procedure, non_overridable :: t1_transform_vv_vv                   => t1_transform_vv_vv_ccs
+      procedure, non_overridable :: store_vvvv_electronic_repulsion_integrals => store_vvvv_electronic_repulsion_integrals_ccs
+      procedure, non_overridable :: read_vv_vv_electronic_repulsion           => read_vv_vv_electronic_repulsion_ccs
+      procedure, non_overridable :: t1_transform_vv_vv                        => t1_transform_vv_vv_ccs
 !
    end type ccs
 !
@@ -1309,13 +1309,13 @@ module ccs_class
 !     -::- Integral submodule interface -::-
 !     ::::::::::::::::::::::::::::::::::::::
 !
-      module subroutine store_electronic_repulsion_integrals_ccs(wf)
+      module subroutine store_vvvv_electronic_repulsion_integrals_ccs(wf)
 !
          implicit none 
 !
          class(ccs) :: wf 
 !
-      end subroutine store_electronic_repulsion_integrals_ccs
+      end subroutine store_vvvv_electronic_repulsion_integrals_ccs
 !
 !
       module subroutine read_vv_vv_electronic_repulsion_ccs(wf, x_vv_vv,    & 
@@ -2178,7 +2178,7 @@ contains
 !     electronic repulsion integrals (g_abcd), storing the
 !     integrals if possible
 !
-      call wf%store_electronic_repulsion_integrals 
+      call wf%store_vvvv_electronic_repulsion_integrals 
 !
 !     Initialize amplitudes and associated attributes
 !
@@ -2236,6 +2236,7 @@ contains
       if (wf%tasks%excited_state) then
 !
 !        Excited state calculation requested
+!
          write(unit_output,*) wf%tasks%n_singlet_states, wf%tasks%n_cores, wf%tasks%cores
 !
          if (wf%implemented%excited_state) then 

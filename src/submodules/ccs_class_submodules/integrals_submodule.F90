@@ -3357,9 +3357,9 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
    end subroutine t1_transform_vv_vv_ccs
 !
 !
-   module subroutine store_electronic_repulsion_integrals_ccs(wf)
+   module subroutine store_vvvv_electronic_repulsion_integrals_ccs(wf)
 !!
-!!    Store Electronic Repulsion Integrals 
+!!    Store vvvv Electronic Repulsion Integrals 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
 !!    Tests whether it is possible to store vir-vir-vir-vir integrals and,
@@ -3533,7 +3533,7 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
       endif 
 !
-   end subroutine store_electronic_repulsion_integrals_ccs
+   end subroutine store_vvvv_electronic_repulsion_integrals_ccs
 !
 !
 end submodule integrals

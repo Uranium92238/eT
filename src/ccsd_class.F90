@@ -1227,7 +1227,7 @@ contains
 !     electronic repulsion integrals (g_abcd), storing the
 !     integrals if possible
 !
-      call wf%store_electronic_repulsion_integrals 
+      call wf%store_vvvv_electronic_repulsion_integrals 
 !
 !     Initialize (singles and doubles) amplitudes
 !
