@@ -2390,6 +2390,185 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
    end subroutine read_vv_vv_electronic_repulsion_ccs
 !
 !
+   module subroutine read_t1_vv_vv_electronic_repulsion_ccs(wf, x_vv_vv,    & 
+                                       index1_first, index1_last, &
+                                       index2_first, index2_last, &
+                                       index3_first, index3_last, &
+                                       index4_first, index4_last)
+!
+      implicit none 
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(:,:) :: x_vv_vv
+!
+      integer(i15) :: index1_first, index1_last
+      integer(i15) :: index2_first, index2_last
+      integer(i15) :: index3_first, index3_last
+      integer(i15) :: index4_first, index4_last 
+!
+!     Temporary vector for holding parts of integral 
+!
+      real(dp), dimension(:,:), allocatable :: x_v ! g_a_bcd, a = 1, n_v, for given bcd
+!
+!     File handling integers 
+!
+      integer(i15) :: unit_g_t1_abcd = -1 ! g_abcd, electronic repulsion integrals  
+      integer(i15) :: ioerror = -1     ! Error integer for file handling
+      integer(i15) :: rec_number = -1  ! The record where g_abcd is positioned 
+!
+!     Indices 
+!
+      integer(i15) :: a = 0, b = 0, c = 0, d = 0, ab = 0, cd = 0, bcd = 0, acd = 0 
+!
+!     Index lengths 
+!
+      integer(i15) :: length_a = 0, length_b = 0, length_c = 0, length_d = 0
+!
+!     Calculate lengths of indices a,b,c,d 
+!
+      length_a = index1_last - index1_first + 1
+      length_b = index2_last - index2_first + 1
+      length_c = index3_last - index3_first + 1
+      length_d = index4_last - index4_first + 1
+!
+!     Open file containing the g_abcd integrals, ordered as
+!     g_a_bcd, where bcd index is unpakced 
+!
+!     The compound index bcd determines the record number,
+!     where the record includes the integrals g(a,bcd), a = 1, n_v
+!
+      call generate_unit_identifier(unit_g_t1_abcd)
+      open(unit=unit_g_t1_abcd, file='g_t1_abcd', action='read', status='unknown', &
+            access='direct', form='unformatted', recl=dp*(wf%n_v), iostat=ioerror)
+!
+      if (ioerror .ne. 0) then 
+!
+         write(unit_output,*) 'Error: could not open file g_t1_abcd in read_t1_vv_vv_electronic_repulsion_ccs'
+         stop
+!
+      endif
+!
+!     Allocate the integral x_v the integrals g_a_bcd for a given bcd, a = 1, n_v 
+!
+      call allocator(x_v, wf%n_v, 1)
+      x_v = zero 
+!
+      if (length_a .ne. wf%n_v) then ! Batching over first index, a 
+!
+         if (length_b .ne. wf%n_v) then ! Batching over second index, b, as well
+!
+!           No simple tricks available. Read all integrals g_a_bcd, a = 1, n_v, into x_v, then through away!
+!
+            do d = index4_first, index4_last
+               do c = index3_first, index3_last
+                  do b = index2_first, index2_last
+!
+                     bcd = index_three(b, c, d, wf%n_v, wf%n_v) ! Record number 
+!
+!                    Read g_a_bcd, a = 1, n_v, into x_v 
+!
+                     x_v = zero
+                     read(unit_g_t1_abcd, rec=bcd, iostat=ioerror) (x_v(a, 1), a = 1, wf%n_v)
+!
+!                    Place the integral into x_vv_vv = g_ab_cd 
+!
+                     cd = index_two(c - index3_first + 1, &
+                                    d - index4_first + 1, &
+                                    index3_last - index3_first + 1)
+!
+                     do a = index1_first, index1_last
+!
+                        ab = index_two(a - index1_first + 1, &
+                                       b - index2_first + 1, &
+                                       index1_last - index1_first + 1)
+!
+                        x_vv_vv(ab, cd) = x_v(a, 1)
+!
+                     enddo
+!
+                  enddo
+               enddo
+            enddo      
+!
+         else ! Batching over first but not second index => pretend a is b to avoid reading more than necessary
+!
+!           Pretend first index is second index (switch a and b, such that batching is over b):
+!           Read g_b_acd, b = 1, n_v, into x_v
+!
+            do d = index4_first, index4_last
+               do c = index3_first, index3_last
+                  do a = index1_first, index1_last
+!
+                     acd = index_three(a, c, d, wf%n_v, wf%n_v) ! Record number 
+!
+!                    Read g_b_acd, b = 1, n_v, into x_v 
+!
+                     read(unit_g_t1_abcd, rec=acd, iostat=ioerror) (x_v(b, 1), b = 1, wf%n_v)
+!
+!                    Place the integral into x_vv_vv = g_ab_cd 
+!
+                     cd = index_two(c - index3_first + 1, &
+                                    d - index4_first + 1, &
+                                    index3_last - index3_first + 1)
+!
+                     do b = index2_first, index2_last
+!
+                        ab = index_two(a - index1_first + 1, &
+                                       b - index2_first + 1, &
+                                       index1_last - index1_first + 1)
+!
+                        x_vv_vv(ab, cd) = x_v(b, 1) ! g_abcd 
+!
+                     enddo
+!
+                  enddo
+               enddo
+            enddo
+!
+         endif 
+!
+      else ! No batching over first index
+!
+         do d = 1, length_d
+            do c = 1, length_c
+               do b = 1, length_b
+!
+                  bcd = index_three(b + index2_first - 1, c, d, wf%n_v, wf%n_v) ! Record number 
+!
+!                 Read g_a_bcd, a = 1, n_v, into x_v 
+!
+                  read(unit_g_t1_abcd, rec=bcd, iostat=ioerror) (x_v(a, 1), a = 1, wf%n_v)
+!
+!                 Place the integral into x_vv_vv = g_ab_cd 
+!
+                  cd = index_two(c, d, length_c)
+!
+                  do a = 1, length_a
+!
+                     ab = index_two(a, b, length_a)
+!
+                     x_vv_vv(ab, cd) = x_v(a + index1_first - 1, 1)
+!
+                  enddo
+!
+               enddo
+            enddo
+         enddo 
+!
+      endif 
+!
+!     Deallocate temporary vector 
+!
+      call deallocator(x_v, wf%n_v, 1)
+!
+!     Close file containing the g_abcd integrals 
+!
+      close(unit_g_t1_abcd)
+!
+   end subroutine read_t1_vv_vv_electronic_repulsion_ccs
+!
+!
    module subroutine get_oo_oo_electronic_repulsion_ccs(wf, x_oo_oo,                & 
                                                          index1_first, index1_last, &
                                                          index2_first, index2_last, &
