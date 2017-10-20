@@ -4151,7 +4151,7 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
       if (wf%settings%print_level == 'developer') then
 ! 
-         write(unit_output,'(t3,a39,f14.8)') 'Time used to store t1 g_aijb (seconds):', end_timer - begin_timer
+         write(unit_output,'(t3,a39,f14.8)') 'Time used to read t1 g_aijb (seconds):', end_timer - begin_timer
          flush(unit_output)
 !
       endif
