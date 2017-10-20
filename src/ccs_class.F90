@@ -234,9 +234,10 @@ module ccs_class
 !
 !     Routine to store, read, and T1-transform read electronic repulsion integrals (g_abcd)
 !
-      procedure, non_overridable :: store_vvvv_electronic_repulsion_integrals => store_vvvv_electronic_repulsion_integrals_ccs
-      procedure, non_overridable :: read_vv_vv_electronic_repulsion           => read_vv_vv_electronic_repulsion_ccs
-      procedure, non_overridable :: t1_transform_vv_vv                        => t1_transform_vv_vv_ccs
+      procedure, non_overridable :: store_vv_vv_electronic_repulsion    => store_vv_vv_electronic_repulsion_ccs
+      procedure, non_overridable :: store_t1_vv_vv_electronic_repulsion => store_t1_vv_vv_electronic_repulsion_ccs
+      procedure, non_overridable :: read_vv_vv_electronic_repulsion     => read_vv_vv_electronic_repulsion_ccs
+      procedure, non_overridable :: t1_transform_vv_vv                  => t1_transform_vv_vv_ccs
 !
    end type ccs
 !
@@ -1309,13 +1310,28 @@ module ccs_class
 !     -::- Integral submodule interface -::-
 !     ::::::::::::::::::::::::::::::::::::::
 !
-      module subroutine store_vvvv_electronic_repulsion_integrals_ccs(wf)
+      module subroutine store_vv_vv_electronic_repulsion_ccs(wf)
 !
          implicit none 
 !
          class(ccs) :: wf 
 !
-      end subroutine store_vvvv_electronic_repulsion_integrals_ccs
+      end subroutine store_vv_vv_electronic_repulsion_ccs
+!
+!
+      module subroutine store_t1_vv_vv_electronic_repulsion_ccs(wf)
+!!
+!!       Store t1 vvvv Electronic Repulsion Integrals 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!       Tests whether it is possible to store t1-transformed vir-vir-vir-vir integrals and,
+!!       if possible, writes the integrals to disk 
+!!
+         implicit none 
+!
+         class(ccs) :: wf 
+!
+      end subroutine store_t1_vv_vv_electronic_repulsion_ccs
 !
 !
       module subroutine read_vv_vv_electronic_repulsion_ccs(wf, x_vv_vv,    & 
@@ -2178,7 +2194,7 @@ contains
 !     electronic repulsion integrals (g_abcd), storing the
 !     integrals if possible
 !
-      call wf%store_vvvv_electronic_repulsion_integrals 
+     ! call wf%store_vvvv_electronic_repulsion_integrals Should this occur in ccs? I don't think so
 !
 !     Initialize amplitudes and associated attributes
 !
