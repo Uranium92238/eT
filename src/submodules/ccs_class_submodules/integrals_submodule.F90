@@ -3759,8 +3759,7 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
          call allocator(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-         integral_type = 'electronic_repulsion'
-         call wf%get_vo_ov(integral_type, g_ai_jb)
+         call wf%get_vo_ov_electronic_repulsion(g_ai_jb, 1, wf%n_v, 1, wf%n_o, 1, wf%n_o, 1, wf%n_v)
 !  
 !        Open file for writing integrals - record (ai), record length (n_o)*(n_v) (bj)
 !
@@ -3803,12 +3802,20 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
    end subroutine store_t1_vo_ov_electronic_repulsion_ccs
 !!
-   module subroutine read_t1_vo_ov_electronic_repulsion_ccs(wf, g_ai_jb)
+   module subroutine read_t1_vo_ov_electronic_repulsion_ccs(wf, g_ai_jb,& 
+                                       index1_first, index1_last, &
+                                       index2_first, index2_last, &
+                                       index3_first, index3_last, &
+                                       index4_first, index4_last)
 !!
 !!    Read t1 voov Electronic Repulsion Integrals 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
 !!    Reads the T1-transformed vir-occ-occ-vir integrals from file.
+!!
+!!    g_t1_ai_jb is written such that we have full flexibility with respect to ai indices. However, get_vo_ov_ccs has
+!!    full flexibility wrt. all indices and we must check wether b and j are full space or not
+!!     (they will presumably always be full space indices).
 !!
       implicit none 
 !
@@ -3818,15 +3825,34 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
       real(dp), dimension(:,:) :: g_ai_jb 
 !
+!
+      integer(i15) :: index1_first, index1_last
+      integer(i15) :: index2_first, index2_last
+      integer(i15) :: index3_first, index3_last
+      integer(i15) :: index4_first, index4_last
+
+!
       integer(i15) :: unit_g_t1_aijb = -1 ! g_abcd, electronic repulsion integrals  
       integer(i15) :: ioerror = -1        ! Error integer for file handling
 !
       real(dp) :: begin_timer, end_timer
 !
+      real(dp), dimension(:,:), allocatable :: g_ai_jb_full 
+!
       character(len=40) :: integral_type 
 !
       integer(i15) :: a = 0, i = 0, ai = 0
-      integer(i15) :: jb = 0
+      integer(i15) :: b = 0, j = 0, jb = 0, jb_full = 0
+!
+      integer(i15) :: length_a = 0, length_i = 0, length_j = 0, length_b = 0
+!
+!     Lengths
+!
+      length_a = index1_last - index1_first + 1
+      length_i = index2_last - index2_first + 1
+      length_j = index3_last - index3_first + 1
+      length_b = index4_last - index4_first + 1
+!
 
       call cpu_time(begin_timer)
 !  
@@ -3838,20 +3864,61 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
       if (ioerror .ne. 0) write(unit_output,'(t3,a)') &
       'Error: error while opening file in read_t1_vo_ov_electronic_repulsion_ccs'
+!  
+!     Check if length_b = wf%n_v and length_j = wf%n_o -> this will usually be the case
 !
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
+      if (length_b .eq. wf%n_v .and. length_j .eq. wf%n_o) then
+!
+         do a = 1, length_a
+            do i = 1, length_i
 !
 !              Calculate record number 
 !
-               ai = index_two(a, i, wf%n_v)
+               ai = index_two(a + index1_first - 1, i + index2_first - 1, wf%n_v)
 !               
 !              Write integrals to that record 
 !
-               read(unit_g_t1_aijb, rec=ai, iostat=ioerror) (g_ai_jb(ai, jb), jb = 1, wf%n_v*wf%n_o)
+               read(unit_g_t1_aijb, rec=ai, iostat=ioerror) (g_ai_jb(ai, jb), jb = 1, (wf%n_v)*(wf%n_o))
 !
+            enddo
          enddo
-      enddo
+!
+      else ! -> Unlikely to happen
+!
+!        Must limit jb index, will first read for all jb's
+!
+         call allocator(g_ai_jb_full, length_a*length_i, (wf%n_v)*(wf%n_o))
+!
+         do a = 1, length_a
+            do i = 1, length_i
+!
+!              Calculate record number 
+!
+               ai = index_two(a + index1_first - 1, i + index2_first - 1, wf%n_v)
+!               
+!              Write integrals to that record 
+!
+               read(unit_g_t1_aijb, rec=ai, iostat=ioerror) (g_ai_jb_full(ai, jb), jb = 1, (wf%n_v)*(wf%n_o))
+!
+            enddo
+         enddo
+!
+!        Then sort away jb elements not required - pretty sure we will never be used
+!
+         do j = 1, length_j
+            do b = 1, length_b
+!
+               jb_full = index_two(j + index3_first - 1, b + index4_first - 1, wf%n_o)
+               jb = index_two(j, b, length_j)
+!
+               g_ai_jb(:, jb) = g_ai_jb_full(:, jb_full)
+!
+            enddo
+         enddo
+!
+         call deallocator(g_ai_jb_full, length_a*length_i, (wf%n_v)*(wf%n_o))
+!
+      endif
 !
       if (ioerror .ne. 0) write(unit_output,'(t3,a)') &
          'Error: read error in read_t1_vo_ov_electronic_repulsion_integrals_ccs'
