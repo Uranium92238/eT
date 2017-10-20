@@ -1752,42 +1752,60 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
       integer(i15) :: length_1 = 0, length_2 = 0, length_3 = 0, length_4 = 0
 !
-!     Lengths
+      logical :: voov_t1_on_file
 !
-      length_1 = index1_last - index1_first + 1
-      length_2 = index2_last - index2_first + 1
-      length_3 = index3_last - index3_first + 1
-      length_4 = index4_last - index4_first + 1
+!     Test if we have T1-transformed on file
 !
-!     Alllocate Cholesky vectors
+      inquire(file='g_t1_aijb',exist=voov_t1_on_file)
 !
-      call allocator(L_ai_J, length_1*length_2, wf%n_J)
-      call allocator(L_jb_J, length_3*length_4, wf%n_J)
+      if (voov_t1_on_file .and. wf%current_task .ne. 'ground_state') then
+!  
+         call wf%read_t1_vo_ov_electronic_repulsion(x_vo_ov,      & 
+                                       index1_first, index1_last, &
+                                       index2_first, index2_last, &
+                                       index3_first, index3_last, &
+                                       index4_first, index4_last)
 !
-!     Get T1-transformed Cholesky vectors
+      else
 !
-      call wf%get_cholesky_ai(L_ai_J, index1_first, index1_last, index2_first, index2_last)
-      call wf%get_cholesky_ia(L_jb_J, index3_first, index3_last, index4_first, index4_last)
+!        Lengths
 !
-!     Construct integral
+         length_1 = index1_last - index1_first + 1
+         length_2 = index2_last - index2_first + 1
+         length_3 = index3_last - index3_first + 1
+         length_4 = index4_last - index4_first + 1
 !
-      call dgemm('N', 'T',             &
-                  length_1*length_2,   &
-                  length_3*length_4,   &
-                  wf%n_J,              &
-                  one,                 &
-                  L_ai_J,              &
-                  length_1*length_2,   &
-                  L_jb_J,              &
-                  length_3*length_4,   &
-                  zero,                &
-                  x_vo_ov,             &
-                  length_1*length_2)
+!        Alllocate Cholesky vectors
 !
-!     Deallocate Cholesky vectors
+         call allocator(L_ai_J, length_1*length_2, wf%n_J)
+         call allocator(L_jb_J, length_3*length_4, wf%n_J)
 !
-      call deallocator(L_ai_J, length_1*length_2, wf%n_J)
-      call deallocator(L_jb_J, length_3*length_4, wf%n_J)
+!        Get T1-transformed Cholesky vectors
+!
+         call wf%get_cholesky_ai(L_ai_J, index1_first, index1_last, index2_first, index2_last)
+         call wf%get_cholesky_ia(L_jb_J, index3_first, index3_last, index4_first, index4_last)
+!
+!        Construct integral
+!
+         call dgemm('N', 'T',             &
+                     length_1*length_2,   &
+                     length_3*length_4,   &
+                     wf%n_J,              &
+                     one,                 &
+                     L_ai_J,              &
+                     length_1*length_2,   &
+                     L_jb_J,              &
+                     length_3*length_4,   &
+                     zero,                &
+                     x_vo_ov,             &
+                     length_1*length_2)
+!
+!        Deallocate Cholesky vectors
+!
+         call deallocator(L_ai_J, length_1*length_2, wf%n_J)
+         call deallocator(L_jb_J, length_3*length_4, wf%n_J)
+!
+      endif
 !
    end subroutine get_vo_ov_electronic_repulsion_ccs
 !
@@ -3981,7 +3999,7 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
    end subroutine store_t1_vo_ov_electronic_repulsion_ccs
 !!
-   module subroutine read_t1_vo_ov_electronic_repulsion_ccs(wf, g_ai_jb,& 
+   module subroutine read_t1_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,& 
                                        index1_first, index1_last, &
                                        index2_first, index2_last, &
                                        index3_first, index3_last, &
@@ -4002,7 +4020,7 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
 !     Integral
 !
-      real(dp), dimension(:,:) :: g_ai_jb 
+      real(dp), dimension(:,:) :: x_vo_ov 
 !
 !
       integer(i15) :: index1_first, index1_last
@@ -4057,7 +4075,7 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !               
 !              Write integrals to that record 
 !
-               read(unit_g_t1_aijb, rec=ai, iostat=ioerror) (g_ai_jb(ai, jb), jb = 1, (wf%n_v)*(wf%n_o))
+               read(unit_g_t1_aijb, rec=ai, iostat=ioerror) (x_vo_ov(ai, jb), jb = 1, (wf%n_v)*(wf%n_o))
 !
             enddo
          enddo
@@ -4090,7 +4108,7 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
                jb_full = index_two(j + index3_first - 1, b + index4_first - 1, wf%n_o)
                jb = index_two(j, b, length_j)
 !
-               g_ai_jb(:, jb) = g_ai_jb_full(:, jb_full)
+               x_vo_ov(:, jb) = g_ai_jb_full(:, jb_full)
 !
             enddo
          enddo
