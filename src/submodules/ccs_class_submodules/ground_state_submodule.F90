@@ -48,6 +48,25 @@ submodule (ccs_class) ground_state
 contains
 !
 !
+   module subroutine ground_state_driver_ccs(wf)
+!!
+!!    Ground state driver (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!    Directs the solution of the ground state problem for CCS. The
+!!    routine is written so as to be inherited unaltered in the CC hierarchy. 
+!!
+      implicit none 
+!
+      class(ccs) :: wf  
+!
+!     Run the solver routine
+!
+      call wf%ground_state_solver
+!
+   end subroutine ground_state_driver_ccs
+!
+!
    module subroutine ground_state_solver_ccs(wf)
 !!
 !!    Ground State Solver 

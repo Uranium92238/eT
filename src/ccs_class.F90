@@ -101,6 +101,7 @@ module ccs_class
 !     Note: while this solver is uneccessary for CCS, where the solution is trivial, 
 !     it is inherited mostly unaltered by descendants (CCSD, CC2, etc.).
 !
+      procedure :: ground_state_driver       => ground_state_driver_ccs
       procedure :: ground_state_solver       => ground_state_solver_ccs
 !
       procedure :: initialize_ground_state   => initialize_ground_state_ccs
@@ -428,7 +429,6 @@ module ccs_class
       end subroutine one_electron_t1_ccs
 !
 !
-
    end interface 
 !
 !
@@ -436,6 +436,21 @@ module ccs_class
 !
 !     -::- Ground state submodule interface -::-
 !     ::::::::::::::::::::::::::::::::::::::::::
+!
+      module subroutine ground_state_driver_ccs(wf)
+!!
+!!       Ground state driver (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!       Directs the solution of the ground state problem for CCS. The
+!!       routine is written so as to be inherited unaltered in the CC hierarchy. 
+!!
+         implicit none 
+!
+         class(ccs) :: wf  
+!
+      end subroutine ground_state_driver_ccs
+!
 !
       module subroutine ground_state_solver_ccs(wf)
 !!
@@ -2238,7 +2253,7 @@ contains
          if (wf%implemented%ground_state) then 
 !
             wf%current_task = 'ground_state'
-            call wf%ground_state_solver
+            call wf%ground_state_driver
 !
          else
 !
