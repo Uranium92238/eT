@@ -56,6 +56,10 @@ contains
 !
       class(ccs) :: wf 
 !
+!     Preparations for excited state solver 
+!
+      call wf%excited_state_preparations
+!
 !     Let the user know the excited state driver is running
 !
       write(unit_output,'(t3,a)')    ':: Excited state solver (Davidson)'
@@ -72,7 +76,43 @@ contains
 !
       call wf%excited_state_solver
 !
+!     Final work and preparations for other tasks (such as property calculations)
+!
+      call wf%excited_state_cleanup
+!
    end subroutine excited_state_driver_ccs
+!
+!
+   module subroutine excited_state_preparations_ccs(wf)
+!!
+!!    Excited State Preparations (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!    A routine for preparation tasks (if any). Can be overwritten
+!!    in descendants if other preparations prove necessary.    
+!!
+      class(ccs) :: wf 
+!
+!     Store voov-electronic repulsion integrals to file if there is space
+!
+      !call wf%store_t1_vo_ov_electronic_repulsion
+!
+   end subroutine excited_state_preparations_ccs
+!
+!
+   module subroutine excited_state_cleanup_ccs(wf)
+!!
+!!    Excited State Cleanup (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!    A routine for cleanup tasks (if any). Can be overwritten
+!!    in descendants if other cleanups prove necessary.    
+!!
+      class(ccs) :: wf 
+!
+!     Nothing yet!
+!
+   end subroutine excited_state_cleanup_ccs
 !
 !
    module subroutine excited_state_solver_ccs(wf)

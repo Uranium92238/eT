@@ -154,8 +154,10 @@ module ccs_class
 !
 !     Excited state driver & solver 
 !
-      procedure                  :: excited_state_driver => excited_state_driver_ccs 
-      procedure, non_overridable :: excited_state_solver => excited_state_solver_ccs
+      procedure                  :: excited_state_preparations => excited_state_preparations_ccs
+      procedure                  :: excited_state_driver       => excited_state_driver_ccs 
+      procedure                  :: excited_state_cleanup      => excited_state_cleanup_ccs
+      procedure, non_overridable :: excited_state_solver       => excited_state_solver_ccs
 !
 !     Helper routines for excited state solver 
 !
@@ -702,6 +704,32 @@ module ccs_class
          class(ccs) :: wf 
 !
       end subroutine excited_state_driver_ccs
+!
+!
+      module subroutine excited_state_preparations_ccs(wf)
+!!
+!!       Excited State Preparations (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!       A routine for preparation tasks (if any). Can be overwritten
+!!       in descendants if other preparations prove necessary.    
+!!
+         class(ccs) :: wf 
+!
+      end subroutine excited_state_preparations_ccs
+!
+!
+      module subroutine excited_state_cleanup_ccs(wf)
+!!
+!!       Excited State Cleanup (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!       A routine for cleanup tasks (if any). Can be overwritten
+!!       in descendants if other cleanups prove necessary.    
+!!
+         class(ccs) :: wf 
+!
+      end subroutine excited_state_cleanup_ccs
 !
 !
       module subroutine excited_state_solver_ccs(wf)
