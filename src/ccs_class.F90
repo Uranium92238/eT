@@ -204,6 +204,11 @@ module ccs_class
       procedure :: ionization_residual_projection              => ionization_residual_projection_ccs
       procedure :: ionization_jacobian_ccs_transformation      => ionization_jacobian_ccs_transformation_ccs
       procedure :: ionization_rho_a_i_projection               => ionization_rho_a_i_projection_ccs
+      procedure :: precondition_residual_core_ionization       => precondition_residual_core_ionization_ccs
+      procedure :: core_ionization_residual_projection         => core_ionization_residual_projection_ccs
+      procedure :: cvs_ionization_jacobian_ccs_transformation  => cvs_ionization_jacobian_ccs_transformation_ccs
+      procedure :: cvs_ionization_rho_a_i_projection           => cvs_ionization_rho_a_i_projection_ccs
+!
 !
 !     Integral routines 
 !
@@ -1098,6 +1103,71 @@ module ccs_class
 !
    end subroutine ionization_jacobian_ccs_transformation_ccs
 !
+!
+module subroutine cvs_ionization_jacobian_ccs_transformation_ccs(wf, c_a_i)
+!!
+!!    Jacobian transformation, CVS calculation
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!    Directs the transformation by the CCSD Jacobi matrix for CVS calculation
+!!
+!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >. 
+!!
+!!    In particular,
+!!
+!!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck.
+!! 
+!!    On exit, elements that do not correspond to the core excitation
+!!    are projected out before c is overwritten by rho. 
+!!
+      implicit none
+!
+      class(ccs) :: wf 
+      real(dp), dimension(wf%n_v, wf%n_o)   :: c_a_i   
+!
+!
+   end subroutine cvs_ionization_jacobian_ccs_transformation_ccs
+!
+!
+   module subroutine cvs_ionization_rho_a_i_projection_ccs(wf, rho_a_i)
+!!
+!!    Residual projection for CVS
+!!    Written by Sarai D. Folkestad, Aug. 2017
+!!
+      implicit none
+!
+      class(ccs) :: wf
+      real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i
+!
+   end subroutine cvs_ionization_rho_a_i_projection_ccs
+!
+!
+   module subroutine precondition_residual_core_ionization_ccs(wf, residual)
+!  
+!     Precondition residual valence
+!     Written by Sarai D. Folkestad, Aug. 2017
+!  
+!     Divide elements of residual by orbital difference       
+!  
+      implicit none
+!
+      class(ccs) :: wf
+      real(dp), dimension(wf%n_parameters ,1) :: residual
+!
+   end subroutine precondition_residual_core_ionization_ccs
+!
+!
+   module subroutine core_ionization_residual_projection_ccs(wf, residual)
+!  
+!     Residual projection for CVS
+!     Written by Sarai D. Folkestad, Aug. 2017
+!  
+      implicit none
+!
+      class(ccs) :: wf
+      real(dp), dimension(wf%n_parameters, 1) :: residual
+!
+   end subroutine core_ionization_residual_projection_ccs
 !
    end interface
 !
@@ -2264,7 +2334,7 @@ contains
       wf%implemented%excited_state = .true.
       wf%implemented%ionized_state = .true.
       wf%implemented%core_excited_state = .true.
-      wf%implemented%core_ionized_state = .false.
+      wf%implemented%core_ionized_state = .true.
       wf%implemented%properties = .false.
 !
 !     Read Hartree-Fock info from SIRIUS

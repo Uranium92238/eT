@@ -1159,12 +1159,15 @@ contains
 !
       call read_atom_info(n_nuclei, wf%n_ao)
 !
+!     n_ao_on_center contains number of aos on each atom
+!     ao_center_info contains ao index (first column) belonging to each of the aos (second column)
+!     
       call allocator_int(n_ao_on_center, n_nuclei, 1)      
       call allocator_int(ao_center_info, wf%n_ao, 2)
 !
       call read_center_info(n_nuclei, wf%n_ao, n_ao_on_center, ao_center_info)
 !
-!     :: Find index of first ao on atom ::
+!     Find number of aos on atoms that we are interested in
 !   
       n_aos_on_atoms = 0
       do i = 1, wf%tasks%n_cores
@@ -1173,13 +1176,18 @@ contains
 !
       call allocator_int(aos_on_atoms, n_aos_on_atoms, 1)
 !
-      counter = 0    
+      write(unit_output,*)wf%tasks%n_cores, wf%tasks%cores(1,1)
+      flush(unit_output)
+!
+      counter = 1    
       do i = 1, wf%tasks%n_cores 
          do j = 1, wf%n_ao
             if (ao_center_info(j,1) == wf%tasks%cores(i,1)) then
-               counter = counter + 1
+!
                aos_on_atoms(counter,1) = ao_center_info(j,2)
-            endif
+               counter = counter + 1  
+!         
+             endif
          enddo
       enddo
 !
@@ -1197,6 +1205,7 @@ contains
 !           Determine wether orbital in core mo
 !
             if(wf%fock_diagonal(mo, 1) .lt. -5.0d0) then
+
 !
 !              Determine wether the core orbital sits on the corect atom(s)
 !
@@ -1337,7 +1346,7 @@ contains
 !
             elseif (wf%excited_state_task=='right_core') then
 !
-               !call wf%ionized_cvs_jacobian_ccs_transformation(c_a_i)
+               call wf%cvs_ionization_jacobian_ccs_transformation(c_a_i)
 !
             else
 !
