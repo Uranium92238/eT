@@ -24,7 +24,7 @@ submodule(ccs_class) excited_state
 !  Some variables available to all routines of the module
 !
    integer(i15) :: iteration = 1
-   integer(i15) :: max_iterations = 70! E: we move this to calculation settings later
+   integer(i15) :: max_iterations = 15! E: we move this to calculation settings later
 !
 !  Variables to handle convergence criterea
 !
@@ -766,15 +766,37 @@ contains
 !
       endif
 !
-      if ((wf%excited_state_task .eq. 'right_valence') .or. &
-          (wf%excited_state_task .eq. 'left_valence')) then
+!     Test for ionization or excitation
 !
-         call wf%initialize_trial_vectors_valence
+      if (wf%tasks%excited_state .or. wf%tasks%core_excited_state) then ! Excitation
 !
-      elseif (wf%excited_state_task .eq. 'right_core') then
+!        Test for valence or core
 !
-         call wf%initialize_trial_vectors_core
+         if ((wf%excited_state_task .eq. 'right_valence') .or. &
+            (wf%excited_state_task .eq. 'left_valence')) then
 !
+            call wf%initialize_trial_vectors_valence
+!
+         elseif (wf%excited_state_task .eq. 'right_core') then
+!
+            call wf%initialize_trial_vectors_core
+!
+         endif
+!
+      elseif (wf%tasks%ionized_state .or. wf%tasks%core_ionized_state) then ! Ionization
+!
+!        Test for valence or core
+!
+         if ((wf%excited_state_task .eq. 'right_valence') .or. &
+            (wf%excited_state_task .eq. 'left_valence')) then
+!
+            call wf%initialize_trial_vectors_valence_ionization
+!
+         elseif (wf%excited_state_task .eq. 'right_core') then
+!
+            call wf%initialize_trial_vectors_core_ionization
+!
+         endif
       endif
 !
    end subroutine initialize_trial_vectors_ccs
@@ -1276,29 +1298,53 @@ contains
 !
          read(unit_trial_vecs, rec=trial, iostat=ioerror) c_a_i
 !
-         if (wf%excited_state_task=='right_valence') then
-
+!        Excited state or ionized state ?
 !
-         call wf%jacobian_ccs_transformation(c_a_i)
+         if (wf%tasks%excited_state .or. wf%tasks%core_excited_state ) then ! Excited state
 !
-         elseif (wf%excited_state_task=='right_core') then
+!           Left, right core or valence
 !
-            call wf%cvs_jacobian_ccs_transformation(c_a_i)
+            if (wf%excited_state_task=='right_valence') then
 !
-         elseif (wf%excited_state_task=='left_valence') then
+            call wf%jacobian_ccs_transformation(c_a_i)
 !
-         elseif (wf%response_task=='left_eigenvectors') then
+            elseif (wf%excited_state_task=='right_core') then
 !
-            call wf%jacobian_transpose_ccs_transformation(c_a_i)
+               call wf%cvs_jacobian_ccs_transformation(c_a_i)
 !
-         elseif (wf%response_task=='multipliers') then 
+            elseif (wf%excited_state_task=='left_valence') then
 !
-            call wf%jacobian_transpose_ccs_transformation(c_a_i)
+            elseif (wf%response_task=='left_eigenvectors') then
 !
-         else
+               call wf%jacobian_transpose_ccs_transformation(c_a_i)
 !
-            write(unit_output,*) 'Error: Response task not recognized'
-            stop
+            elseif (wf%response_task=='multipliers') then 
+!
+               call wf%jacobian_transpose_ccs_transformation(c_a_i)
+!
+            else
+!
+               write(unit_output,*) 'Error: Response task not recognized'
+               stop
+!
+            endif
+!
+         elseif (wf%tasks%ionized_state  .or. wf%tasks%core_ionized_state ) then ! Ionized state
+!
+            if (wf%excited_state_task=='right_valence') then
+!
+               call wf%ionization_jacobian_ccs_transformation(c_a_i)
+!
+            elseif (wf%excited_state_task=='right_core') then
+!
+               !call wf%ionized_cvs_jacobian_ccs_transformation(c_a_i)
+!
+            else
+!
+               write(unit_output,*) 'Error: Response task not recognized'
+               stop
+!
+            endif
 !
          endif
 !
@@ -1341,16 +1387,31 @@ contains
 !
          class(ccs) :: wf
          real(dp), dimension(wf%n_parameters ,1) :: residual
-!       
 !
-         if ((wf%excited_state_task .eq. 'right_valence') .or. &
-             (wf%excited_state_task .eq. 'left_valence')) then
+         if (wf%tasks%excited_state) then       
 !
-            call wf%precondition_residual_valence(residual)
+            if ((wf%excited_state_task .eq. 'right_valence') .or. &
+                (wf%excited_state_task .eq. 'left_valence')) then
 !
-         elseif (wf%excited_state_task .eq. 'right_core') then
+               call wf%precondition_residual_valence(residual)
 !
-            call wf%precondition_residual_core(residual)
+            elseif (wf%excited_state_task .eq. 'right_core') then
+!
+               call wf%precondition_residual_core(residual)
+!
+            endif
+!
+         elseif (wf%tasks%ionized_state) then
+               if ((wf%excited_state_task .eq. 'right_valence') .or. &
+                (wf%excited_state_task .eq. 'left_valence')) then
+!
+               call wf%precondition_residual_valence_ionization(residual)
+!
+            elseif (wf%excited_state_task .eq. 'right_core') then
+!
+               !call wf%precondition_residual_core(residual)
+!
+            endif
 !
          endif
 !

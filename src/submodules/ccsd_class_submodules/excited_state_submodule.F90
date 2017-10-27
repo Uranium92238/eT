@@ -108,26 +108,53 @@ contains
 !
          read(unit_trial_vecs, rec=trial, iostat=ioerror) c_a_i, c_aibj
 !
-         if (wf%response_task=='right_eigenvectors') then
+!        Test for excited state or ionized state
 !
-            call wf%jacobian_ccsd_transformation(c_a_i, c_aibj)
+         if (wf%tasks%excited_state .or. wf%tasks%core_excited_state ) then ! Excited state
 !
-         elseif (wf%response_task=='left_eigenvectors') then
+!           Left, right core or valence
 !
-            call wf%jacobian_transpose_ccsd_transformation(c_a_i, c_aibj)
+            if (wf%response_task=='right_eigenvectors') then
 !
-         elseif (wf%response_task=='multipliers') then 
+               call wf%jacobian_ccsd_transformation(c_a_i, c_aibj)
 !
-            call wf%jacobian_transpose_ccsd_transformation(c_a_i, c_aibj)
+            elseif (wf%response_task=='left_eigenvectors') then
 !
-         else
+               call wf%jacobian_transpose_ccsd_transformation(c_a_i, c_aibj)
 !
-            write(unit_output,*) 'Error: Response task not recognized'
-            stop
+            elseif (wf%response_task=='multipliers') then 
+!
+               call wf%jacobian_transpose_ccsd_transformation(c_a_i, c_aibj)
+!
+            else
+!
+               write(unit_output,*) 'Error: Response task not recognized'
+               stop
+!
+            endif
+!
+            write(unit_rho, rec=trial, iostat=ioerror) c_a_i, c_aibj
+!
+      elseif (wf%tasks%ionized_state  .or. wf%tasks%core_ionized_state ) then ! Ionized state
+!
+            if (wf%excited_state_task=='right_valence') then
+!
+               call wf%ionization_jacobian_ccsd_transformation(c_a_i, c_aibj)
+!
+            elseif (wf%excited_state_task=='right_core') then
+!
+               !call wf%ionized_cvs_jacobian_ccsd_transformation(c_a_i, c_aibj)
+!
+            else
+!
+               write(unit_output,*) 'Error: Response task not recognized'
+               stop
+!
+            endif
+!
+            write(unit_rho, rec=trial, iostat=ioerror) c_a_i, c_aibj
 !
          endif
-!
-         write(unit_rho, rec=trial, iostat=ioerror) c_a_i, c_aibj
 !
       enddo
 !
@@ -143,5 +170,59 @@ contains
 !
    end subroutine transform_trial_vectors_ccsd
 !
+!
+      module subroutine print_excitation_vector_ccsd(wf, vec, unit_id)
+!!
+         implicit none
+!  
+         class(ccsd) :: wf
+!
+         real(dp), dimension(wf%n_parameters, 1) :: vec
+!
+         integer(i15) :: unit_id     
+!
+         integer(i15) :: a = 0, i = 0, ai = 0, b = 0, j = 0, bj = 0, aibj = 0
+!
+!        Print singles part
+!
+         write(unit_id,'(2a6,a12)')'a', 'i', 'coeff'
+         write(unit_id,'(t3,a)')'-------------------------'
+!
+         do a = 1, wf%n_v
+            do i = 1, wf%n_o
+!  
+               ai = index_two(a, i, wf%n_v)
+               if (abs(vec(ai, 1)) .gt. 1.0D-03) then
+                  write(unit_id,'(2i6,f12.4)') a, i, vec(ai, 1)
+               endif
+!
+         enddo
+      enddo
+      flush(unit_id)
+!
+!     Print doubles part
+!
+      write(unit_id,'(/4a6, a11)')'a', 'i', 'b', 'j', 'coeff'
+      write(unit_id,'(t3,a)')'---------------------------------'
+!
+      do a = 1, wf%n_v
+         do i = 1, wf%n_o
+            do b = 1, wf%n_v
+               do j = 1, wf%n_o
+!
+                  ai = index_two(a, i, wf%n_v)
+                  bj = index_two(b, j, wf%n_v)
+                  aibj = index_packed(ai, bj)
+!
+                  if (abs(vec((wf%n_o)*(wf%n_v) + aibj, 1)) .gt. 1.0D-03 .and. ai .ge. bj) then
+                     write(unit_id,'(4i6,f12.4)') a, i, b, j, vec((wf%n_o)*(wf%n_v) + aibj, 1)
+                  endif
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+   end subroutine print_excitation_vector_ccsd
 !
 end submodule excited_state

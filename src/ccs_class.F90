@@ -195,6 +195,16 @@ module ccs_class
       procedure :: construct_next_response_trial_vectors => construct_next_response_trial_vectors_ccs
       procedure :: construct_gradient_vector             => construct_gradient_vector_ccs
 !
+!     Ionized state by super diffuse orbital
+!
+      procedure :: ionized_state_driver                        => ionized_state_driver_ccs
+      procedure :: initialize_trial_vectors_core_ionization    => initialize_trial_vectors_core_ionization_ccs
+      procedure :: initialize_trial_vectors_valence_ionization => initialize_trial_vectors_valence_ionization_ccs
+      procedure :: precondition_residual_valence_ionization    => precondition_residual_valence_ionization_ccs
+      procedure :: ionization_residual_projection              => ionization_residual_projection_ccs
+      procedure :: ionization_jacobian_ccs_transformation      => ionization_jacobian_ccs_transformation_ccs
+      procedure :: ionization_rho_a_i_projection               => ionization_rho_a_i_projection_ccs
+!
 !     Integral routines 
 !
       procedure :: get_oo_oo => get_oo_oo_ccs ! Tested, Eirik, 29 Sep
@@ -956,6 +966,137 @@ module ccs_class
          integer(i15) :: unit_id     
 !
       end subroutine print_excitation_vector_ccs
+!
+!
+   end interface
+!
+!
+   interface
+!
+!    -::- Ionized state submodule interface -::-
+!    :::::::::::::::::::::::::::::::::::::::::::
+!
+
+      module subroutine ionized_state_driver_ccs(wf)
+!!
+!!       Excited state driver (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!       Directs the solution of the excited state problem for CCS. The
+!!       routine is inherited is to be inherited unaltered in the CC hierarchy. 
+!!
+!!       Note: it is only necessary to alter this routine if the excited states are 
+!!       solved for by a different algorithm (such as in similarity constrained CC, 
+!!       where the excited states and ground state are determined simultaneously).
+!!
+         implicit none 
+!
+         class(ccs) :: wf
+!
+      end subroutine ionized_state_driver_ccs
+!
+!
+      module subroutine initialize_trial_vectors_valence_ionization_ccs(wf)
+!!
+!!       Initialize trial vectors for valence ionized state
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!       Initializes start trial vectors for the calculation of 
+!!       singlet excited states and writes them to file 'trial_vecs'.
+!!
+!!       n start vectors are constructed by finding the n lowest orbital differences,      
+!!       where n = n_singlet_states. Vector i has a 1.0D0 at the element corresponding to the i'th lowest
+!!       orbital difference and 0.0d0 everywhere else
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+      end subroutine initialize_trial_vectors_valence_ionization_ccs
+!
+!
+      module subroutine initialize_trial_vectors_core_ionization_ccs(wf)
+!!
+!!       Initialize trial vectors for core ionized state
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!       Initializes start trial vectors for the calculation of 
+!!       singlet excited states and writes them to file 'trial_vecs'.
+!!
+!!       n start vectors are constructed by finding the n lowest orbital differences,      
+!!       where n = n_singlet_states. Vector i has a 1.0D0 at the element corresponding to the i'th lowest
+!!       orbital difference and 0.0d0 everywhere else
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+      end subroutine initialize_trial_vectors_core_ionization_ccs
+!
+!
+      module subroutine precondition_residual_valence_ionization_ccs(wf, residual)
+!!
+!!       Precondition residual valence
+!!       Written by Sarai D. Folkestad, Aug. 2017
+!!
+!!       Divide elements of residual by orbital difference       
+!!
+         implicit none
+!
+         class(ccs) :: wf
+         real(dp), dimension(wf%n_parameters ,1) :: residual
+!
+      end subroutine precondition_residual_valence_ionization_ccs
+!
+!
+      module subroutine ionization_residual_projection_ccs(wf, residual)
+!!
+!!       Residual projection for CVS
+!!       Written by Sarai D. Folkestad, Aug. 2017
+!!
+         implicit none
+!
+         class(ccs) :: wf
+         real(dp), dimension(wf%n_parameters, 1) :: residual
+!
+      end subroutine ionization_residual_projection_ccs
+!
+!
+     module subroutine ionization_rho_a_i_projection_ccs(wf, rho_a_i)
+!!
+!!       Residual projection for CVS
+!!       Written by Sarai D. Folkestad, Aug. 2017
+!!
+         implicit none
+!
+         class(ccs) :: wf
+         real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i
+!
+      end subroutine ionization_rho_a_i_projection_ccs
+!
+!
+   module subroutine ionization_jacobian_ccs_transformation_ccs(wf, c_a_i)
+!!
+!!    Jacobian transformation, CVS calculation
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!    Directs the transformation by the CCSD Jacobi matrix for CVS calculation
+!!
+!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >. 
+!!
+!!    In particular,
+!!
+!!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck.
+!! 
+!!    On exit, elements that do not correspond to the core excitation
+!!    are projected out before c is overwritten by rho. 
+!!
+      implicit none
+!
+      class(ccs) :: wf 
+      real(dp), dimension(wf%n_v, wf%n_o)   :: c_a_i       
+!
+   end subroutine ionization_jacobian_ccs_transformation_ccs
 !
 !
    end interface
@@ -2121,7 +2262,9 @@ contains
 !
       wf%implemented%ground_state = .true.
       wf%implemented%excited_state = .true.
+      wf%implemented%ionized_state = .true.
       wf%implemented%core_excited_state = .true.
+      wf%implemented%core_ionized_state = .false.
       wf%implemented%properties = .false.
 !
 !     Read Hartree-Fock info from SIRIUS
@@ -2186,9 +2329,6 @@ contains
 !
       if (wf%tasks%excited_state) then
 !
-!        Excited state calculation requested
-         write(unit_output,*) wf%tasks%n_singlet_states, wf%tasks%n_cores, wf%tasks%cores
-!
          if (wf%implemented%excited_state) then 
 !     
             wf%excited_state_task = 'right_valence'
@@ -2218,6 +2358,42 @@ contains
 !
             write(unit_output,'(t3,a,a)') &
                'Error: core excited state solver not implemented for ',trim(wf%name)
+            flush(unit_output)
+            stop
+!
+         endif
+!
+      endif
+!
+      if (wf%tasks%ionized_state) then
+!
+         if (wf%implemented%ionized_state) then 
+!     
+            wf%excited_state_task = 'right_valence'
+            call wf%ionized_state_driver 
+!
+         else
+!
+            write(unit_output,'(t3,a,a)') &
+               'Error: ionized state solver not implemented for ',trim(wf%name)
+            flush(unit_output)
+            stop
+!
+         endif
+!
+      endif
+!
+      if (wf%tasks%core_ionized_state) then
+!
+         if (wf%implemented%core_ionized_state) then 
+!     
+            wf%excited_state_task = 'right_core'
+            call wf%ionized_state_driver 
+!
+         else
+!
+            write(unit_output,'(t3,a,a)') &
+               'Error: core ionized state solver not implemented for ',trim(wf%name)
             flush(unit_output)
             stop
 !
