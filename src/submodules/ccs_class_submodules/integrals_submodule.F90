@@ -4159,4 +4159,228 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
    end subroutine read_t1_vo_ov_electronic_repulsion_ccs
 !
 !
+   module subroutine store_t1_vv_ov_electronic_repulsion_ccs(wf)
+!!
+!!    Store t1 ovvv Electronic Repulsion Integrals 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!    Tests whether it is possible to store t1-transformed occ-vir-vir-vir integrals and,
+!!    if possible, writes the integrals to disk 
+!!
+      implicit none 
+!
+      class(ccs) :: wf 
+!
+      integer  :: required_space 
+      real(dp) :: required_space_gb
+!
+      integer(i15) :: unit_g_t1_bcia = -1 ! g_abcd, electronic repulsion integrals  
+      integer(i15) :: ioerror = -1        ! Error integer for file handling
+      integer(i15) :: rec_number = -1     ! The record where g_abcd is positioned 
+!
+      real(dp) :: begin_timer, end_timer
+!
+!     Batching variables
+!
+      integer(i15) :: required_mem = -1
+      integer(i15) :: available_mem = -1 
+!
+      integer(i15) :: b_first = 0, b_last = 0, b_length = 0, b_max_length = 0, b_batch = 0, b_n_batch = 0
+!
+      integer(i15) :: a = 0, b = 0, c = 0, bc = 0, ia = 0, record_number = 0
+!
+!     The electronic repulsion integral 
+!
+      real(dp), dimension(:,:), allocatable :: g_bc_ia ! g_iabc 
+!
+!     Calculate the disk space (in GB) required to store the occ-vir-vir-vir integrals
+!
+      required_space = ((wf%n_v)**3)*(wf%n_o)
+!
+!     This is the required space in number of double precision numbers (8 bytes per such number).
+!     We convert this number to gigabytes. 
+!
+      required_space = 8*required_space ! in bytes
+!
+      required_space_gb = real(required_space)*(1.0D-9)
+!
+!     Test whether there is room for the integrals & save if this is the case 
+!
+      if (required_space_gb .lt. wf%settings%disk_space) then 
+!
+!        Begin timings
+!
+         call cpu_time(begin_timer)
+!
+!        Open file for writing integrals - one record
+!
+         call generate_unit_identifier(unit_g_t1_bcia)
+         open(unit=unit_g_t1_bcia, file='g_t1_bcia', action='write', status='unknown', &
+               access='direct', form='unformatted', recl=dp*(wf%n_v), iostat=ioerror)
+!
+!        In calculating g_ab_cd, we will batch over the b and d indices 
+!
+         required_mem = max(2*(wf%n_v)**2*(wf%n_J) + 4*(wf%n_v)*(wf%n_o)*(wf%n_J), & ! Needed to get L_ia_J & L_bc_J
+                           (wf%n_v)**3*(wf%n_o) + (wf%n_v)**2*(wf%n_J) + (wf%n_v)*(wf%n_o)*(wf%n_J)) ! Needed to get g_ia_bc
+!         
+         required_mem  = 4*required_mem
+         available_mem = get_available()
+!
+         b_max_length = 0
+         call num_batch(required_mem, available_mem, b_max_length, b_n_batch, wf%n_v)
+!
+         do b_batch = 1, b_n_batch ! Batch over b index 
+!
+            call batch_limits(b_first, b_last, b_batch, b_max_length, wf%n_v)
+            b_length = b_last - b_first + 1  
+!
+            call allocator(g_bc_ia, b_length*(wf%n_v), (wf%n_v)*(wf%n_o))
+!
+            call wf%get_vv_ov_electronic_repulsion(g_bc_ia,          &
+                                                   b_first, b_last,  &
+                                                   1, wf%n_v,        &
+                                                   1, wf%n_o,        &
+                                                   1, wf%n_v)
+!
+!           Save the integrals to disk 
+!
+            do b = b_first, b_last
+               do c = 1, wf%n_v
+!
+!                 Write integrals to that record 
+!
+                  bc = index_two(b - b_first + 1, c, b_length)
+                  record_number = index_two(b, c, wf%n_v) 
+                  write(unit_g_t1_bcia, rec=record_number) (g_bc_ia(bc, ia), ia = 1, (wf%n_v)*(wf%n_o))
+!
+               enddo
+            enddo
+!
+!
+         enddo ! End of batches over b 
+!
+!        Test for file handling error 
+!
+         if (ioerror .ne. 0) write(unit_output,'(t3,a)') 'Error: write error in store_t1_vv_ov_electronic_repulsion_integrals_ccs'
+!
+!        Close file 
+!
+         close(unit_g_t1_bcia)
+!
+         call cpu_time(end_timer)
+!
+         if (wf%settings%print_level == 'developer') then
+! 
+            write(unit_output,'(t3,a39,f14.8)') 'Time used to store t1 g_bc_ia (seconds):', end_timer - begin_timer
+            flush(unit_output)
+!
+         endif
+!
+      endif 
+!
+   end subroutine store_t1_vv_ov_electronic_repulsion_ccs
+!
+!
+!
+!
+   module subroutine read_t1_vv_ov_electronic_repulsion_ccs(wf, x_vv_ov,& 
+                                       index1_first, index1_last, &
+                                       index2_first, index2_last, &
+                                       index3_first, index3_last, &
+                                       index4_first, index4_last)
+!!
+!!    Store t1 ovvv Electronic Repulsion Integrals 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!    Tests whether it is possible to store t1-transformed occ-vir-vir-vir integrals and,
+!!    if possible, writes the integrals to disk 
+!!
+      implicit none 
+!
+      class(ccs) :: wf
+!
+!     Integral
+!
+      real(dp), dimension(:,:) :: x_vv_ov 
+!
+      integer(i15) :: index1_first, index1_last
+      integer(i15) :: index2_first, index2_last
+      integer(i15) :: index3_first, index3_last
+      integer(i15) :: index4_first, index4_last
+!
+      real(dp) :: begin_timer, end_timer
+!
+      integer(i15) :: unit_g_t1_bcia = -1 ! g_abcd, electronic repulsion integrals  
+      integer(i15) :: ioerror = -1        ! Error integer for file handling
+      integer(i15) :: rec_number = -1     ! The record where g_abcd is positioned 
+!
+      integer(i15) :: length_a = 0, length_i = 0, length_c = 0, length_b = 0
+!
+      integer(i15) :: a = 0, b = 0, c = 0, bc = 0, record_number = 0, i = 0, ia = 0, ia_full = 0
+!
+      real(dp), dimension(:,:), allocatable :: g_bc_ia 
+!
+!     Lengths
+!
+      length_b = index1_last - index1_first + 1
+      length_c = index2_last - index2_first + 1
+      length_i = index3_last - index3_first + 1
+      length_a = index4_last - index4_first + 1
+!
+!     Begin timings
+!
+      call cpu_time(begin_timer)
+!
+!     Open file for writing integrals - one record
+!
+      call generate_unit_identifier(unit_g_t1_bcia)
+      open(unit=unit_g_t1_bcia, file='g_t1_bcia', action='read', status='unknown', &
+            access='direct', form='unformatted', recl=dp*(wf%n_v), iostat=ioerror)
+!  
+      call allocator(g_bc_ia, length_b*length_c, (wf%n_o)*(wf%n_v))
+!
+      do b = index1_first, index1_last
+         do c = index2_first, index2_last
+!
+!           Write integrals to that record 
+!
+            bc = index_two(b - index1_first + 1, c - index2_first + 1, length_b)
+            record_number = index_two(b, c, wf%n_v) 
+            write(unit_g_t1_bcia, rec=record_number) (g_bc_ia(bc, ia), ia = 1, (wf%n_v)*(wf%n_o))
+!
+         enddo
+      enddo
+!
+      if (length_i .lt. wf%n_o .or. length_a .lt. wf%n_v) then ! this throws away any wasted reads
+!
+         do i = index3_first, index3_last
+            do a = index4_first, index4_last
+!
+               ia       = index_two(i - index3_first + 1, a - index4_first + 1, length_i)
+               ia_full  = index_two(i, a, wf%n_o)
+!
+               x_vv_ov(:,ia) = g_bc_ia(:, ia_full)
+!
+            enddo
+         enddo
+!
+      endif
+!
+!     Test for file handling error 
+!
+      if (ioerror .ne. 0) write(unit_output,'(t3,a)') 'Error: write error in adre_t1_vv_ov_electronic_repulsion_integrals_ccs'
+!
+!     Close file 
+!
+      close(unit_g_t1_bcia)
+      call cpu_time(end_timer)
+!
+      if (wf%settings%print_level == 'developer') then
+! 
+         write(unit_output,'(t3,a39,f14.8)') 'Time used to store t1 g_bc_ia (seconds):', end_timer - begin_timer
+         flush(unit_output)
+!
+      endif
+!
+   end subroutine read_t1_vv_ov_electronic_repulsion_ccs
 end submodule integrals
