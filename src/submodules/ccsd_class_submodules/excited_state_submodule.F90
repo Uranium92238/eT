@@ -188,6 +188,8 @@ contains
 !
       call wf%store_t1_vo_ov_electronic_repulsion
 !
+      call wf%store_t1_vv_ov_electronic_repulsion
+!
    end subroutine excited_state_preparations_ccsd
 
 !
