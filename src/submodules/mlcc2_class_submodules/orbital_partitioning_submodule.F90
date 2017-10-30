@@ -1172,60 +1172,45 @@ contains
       call allocator(M_i_j, wf%n_o, wf%n_o)
       M_i_j = zero
 !
-      call allocator(R_a_i_sum, (wf%n_o)*(wf%n_v), 1)
-      R_a_i_sum = zero
-!
       call allocator(N_a_b, wf%n_v, wf%n_v)
       N_a_b = zero
 !
-!     Construct N
+!     Construct M and N
 !
       lower_level_n_singlet_states = CCS_factor_n_singlet_states*(wf%tasks%n_singlet_states)
 !
       do state = 1, lower_level_n_singlet_states
          read(unit=unit_solution, rec=state) (R_a_i(i , 1), i = 1, (wf%n_o)*(wf%n_v))
 !
-         if (state .le. wf%tasks%n_singlet_states) then
+         call dgemm('T', 'N', &
+                     wf%n_o,  &
+                     wf%n_o,  &
+                     wf%n_v,  &
+                     one,     &
+                     R_a_i,   &
+                     wf%n_v,  &
+                     R_a_i,   &
+                     wf%n_v,  &
+                     one,     &
+                     M_i_j,   &
+                     wf%n_o)
 !
-            call daxpy((wf%n_o)*(wf%n_v), one, R_a_i, 1, R_a_i_sum, 1) 
-!
-         endif 
-!
-            call dgemm('N', 'T', &
-                        wf%n_v,  &
-                        wf%n_v,  &
-                        wf%n_o,  &
-                        one,     &
-                        R_a_i,   &
-                        wf%n_v,  &
-                        R_a_i,   &
-                        wf%n_v,  &
-                        one,     &
-                        N_a_b,   &
-                        wf%n_v)
+         call dgemm('N', 'T', &
+                     wf%n_v,  &
+                     wf%n_v,  &
+                     wf%n_o,  &
+                     one,     &
+                     R_a_i,   &
+                     wf%n_v,  &
+                     R_a_i,   &
+                     wf%n_v,  &
+                     one,     &
+                     N_a_b,   &
+                     wf%n_v)
 !
       enddo
 !
-      norm = ddot((wf%n_o)*(wf%n_v), R_a_i, 1, R_a_i_sum, 1)
-      call dscal((wf%n_o)*(wf%n_v), one/norm, R_a_i_sum, 1)
-!
-!     Construct M
-!
-      call dgemm('T', 'N',       &
-                     wf%n_o,     &
-                     wf%n_o,     &
-                     wf%n_v,     &
-                     one,        &
-                     R_a_i_sum,  &
-                     wf%n_v,     &
-                     R_a_i_sum,  &
-                     wf%n_v,     &
-                     one,        &
-                     M_i_j,      &
-                     wf%n_o)
-!
       call deallocator(R_a_i,(wf%n_o)*(wf%n_v), 1)
-      call deallocator(R_a_i_sum,(wf%n_o)*(wf%n_v), 1)
 !
 !     Done with file
 !
