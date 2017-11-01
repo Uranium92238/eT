@@ -114,17 +114,22 @@ contains
 !
 !           Left, right core or valence
 !
-            if (wf%response_task=='right_eigenvectors') then
+            if (wf%excited_state_task=='right_eigenvectors') then
 !
                call wf%jacobian_ccsd_transformation(c_a_i, c_aibj)
 !
-            elseif (wf%response_task=='left_eigenvectors') then
+            elseif (wf%excited_state_task=='left_eigenvectors') then
 !
                call wf%jacobian_transpose_ccsd_transformation(c_a_i, c_aibj)
 !
             elseif (wf%response_task=='multipliers') then 
 !
                call wf%jacobian_transpose_ccsd_transformation(c_a_i, c_aibj)
+!
+             elseif (wf%excited_state_task=='right_core') then
+               write(unit_output,*)'core transformation'
+!
+               call wf%cvs_jacobian_ccsd_transformation(c_a_i, c_aibj)
 !
             else
 !
@@ -224,5 +229,66 @@ contains
       enddo
 !
    end subroutine print_excitation_vector_ccsd
+!
+!
+   module subroutine cvs_residual_projection_ccsd(wf, residual)
+!!
+!!    Residual projection (CCSD), 
+!!    Written by Sarai D. Folkestad Aug. 2017    
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+      real(dp), dimension(wf%n_parameters, 1) :: residual
+!
+      integer(i15) :: i = 0, a = 0, j = 0, b = 0, core = 0, ai = 0, bj = 0, aibj = 0
+!
+      logical :: core_orbital
+!
+      do i = 1, wf%n_o
+!
+         core_orbital = .false.
+         do core = 1, wf%tasks%n_cores
+!
+            if (i .eq. wf%tasks%index_core_mo(core, 1)) core_orbital = .true.
+!
+         enddo
+!
+         if (.not. core_orbital) then
+            do a = 1, wf%n_v
+               ai = index_two(a, i, wf%n_v)
+               residual(ai, 1) = zero
+            enddo
+         endif
+!
+      enddo
+!
+      do i = 1, wf%n_o
+         do j = 1, wf%n_o
+!
+            core_orbital = .false.
+            do core = 1, wf%tasks%n_cores
+!
+               if ((i .eq. wf%tasks%index_core_mo(core, 1)) .or. &
+                  (j .eq. wf%tasks%index_core_mo(core, 1))) core_orbital = .true.
+!
+            enddo
+!
+            if (.not. core_orbital) then
+               do a = 1,  wf%n_v
+                  do b = 1,  wf%n_v
+                     ai = index_two(a, i,  wf%n_v)
+                     bj = index_two(b, j,  wf%n_v)
+                     aibj = index_packed(ai, bj)
+
+                     residual(wf%n_t1am + aibj, 1) = zero
+                  enddo
+               enddo
+            endif
+         enddo
+      enddo
+!
+    end subroutine cvs_residual_projection_ccsd
+!
 !
 end submodule excited_state

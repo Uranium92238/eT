@@ -86,7 +86,8 @@ module ccsd_class
 !
 !     Coupled cluster Jacobian transformation routine 
 !
-      procedure :: jacobian_ccsd_transformation => jacobian_ccsd_transformation_ccsd
+      procedure :: jacobian_ccsd_transformation       => jacobian_ccsd_transformation_ccsd
+      procedure :: cvs_jacobian_ccsd_transformation   => cvs_jacobian_ccsd_transformation_ccsd
 !
       procedure :: jacobian_ccsd_a1 => jacobian_ccsd_a1_ccsd
       procedure :: jacobian_ccsd_b1 => jacobian_ccsd_b1_ccsd
@@ -106,6 +107,10 @@ module ccsd_class
       procedure :: jacobian_ccsd_k2 => jacobian_ccsd_k2_ccsd
 !
       procedure :: jacobi_test => jacobi_test_ccsd ! A debug routine 
+!
+!     CVS
+!
+      procedure :: cvs_rho_ai_bj_projection => cvs_rho_ai_bj_projection_ccsd
 !
 !     Coupled cluster Jacobian transpose transformation routine 
 !
@@ -490,6 +495,20 @@ module ccsd_class
       end subroutine print_excitation_vector_ccsd
 !
 !
+
+   module subroutine cvs_residual_projection_ccsd(wf, residual)
+!!
+!!    Residual projection (CCSD), 
+!!    Written by Sarai D. Folkestad Aug. 2017    
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+      real(dp), dimension(wf%n_parameters, 1) :: residual
+!
+    end subroutine cvs_residual_projection_ccsd
+!
+!
    end interface 
 !
    interface
@@ -574,6 +593,36 @@ module ccsd_class
          real(dp), dimension(wf%n_t2am, 1)   :: c_aibj ! c_aibj 
 !
       end subroutine jacobian_ccsd_transformation_ccsd
+!
+!
+module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
+!!
+!!    Ionization jacobian transformation (CCSD)
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!    Directs the transformation by the CCSD Jacobi matrix,
+!!
+!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >,
+!!
+!!    where the basis employed for the brackets is biorthonormal. 
+!!    The transformation is rho = A c, i.e., 
+!!
+!!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck 
+!!                  + 1/2 sum_ckdl A_mu,ckdl c_ckdl (1 + delta_ck,dl).
+!!
+!!    On exit, c is overwritten by rho. That is, c_a_i = rho_a_i,
+!!    and c_aibj = rho_aibj. 
+!!
+      implicit none
+!
+      class(ccsd) :: wf 
+!
+!     Incoming vector c 
+!
+      real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai 
+      real(dp), dimension(wf%n_t2am, 1)   :: c_aibj ! c_aibj
+! 
+   end subroutine cvs_jacobian_ccsd_transformation_ccsd
 !
 !
       module subroutine jacobian_ccsd_a1_ccsd(wf, rho_a_i, c_a_i)
@@ -1254,6 +1303,19 @@ module ccsd_class
       end subroutine jacobian_transpose_ccsd_i2_ccsd
 !
 !
+      module subroutine cvs_rho_ai_bj_projection_ccsd(wf, vec_ai_bj)
+!!
+!!       Rho projection for CVS (CCSD),
+!!       Written by Sarai D. Folkestad, Aug. 2017
+!!
+         implicit none
+!
+         class(ccsd) :: wf
+         real(dp), dimension(:, :) :: vec_ai_bj
+!
+   end subroutine cvs_rho_ai_bj_projection_ccsd
+!
+!
    end interface
 !
 !
@@ -1290,10 +1352,11 @@ contains
 !
 !     Set implemented methods
 !
-      wf%implemented%ground_state = .true.
-      wf%implemented%excited_state = .true.
-      wf%implemented%ionized_state = .true.
-      wf%implemented%properties = .true.
+      wf%implemented%ground_state       = .true.
+      wf%implemented%excited_state      = .true.
+      wf%implemented%core_excited_state = .true.
+      wf%implemented%ionized_state      = .true.
+      wf%implemented%properties         = .true.
 !
 !     Read Hartree-Fock info from SIRIUS
 !

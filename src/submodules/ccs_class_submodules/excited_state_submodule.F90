@@ -778,6 +778,7 @@ contains
             call wf%initialize_trial_vectors_valence
 !
          elseif (wf%excited_state_task .eq. 'right_core') then
+            write(unit_output,*)'Hello initialize core'
 !
             call wf%initialize_trial_vectors_core
 !
