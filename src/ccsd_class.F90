@@ -111,6 +111,7 @@ module ccsd_class
 !     CVS
 !
       procedure :: cvs_rho_ai_bj_projection => cvs_rho_ai_bj_projection_ccsd
+      procedure :: cvs_residual_projection => cvs_residual_projection_ccsd
 !
 !     Coupled cluster Jacobian transpose transformation routine 
 !

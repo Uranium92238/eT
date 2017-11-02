@@ -58,56 +58,7 @@ contains
       call deallocator(rho_a_i, wf%n_v, wf%n_o)
 !
    end subroutine jacobian_ccs_transformation_ccs
-!
-!
-   module subroutine cvs_jacobian_ccs_transformation_ccs(wf, c_a_i)
-!!
-!!    Jacobian transformation, CVS calculation
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!
-!!    Directs the transformation by the CCSD Jacobi matrix for CVS calculation
-!!
-!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >. 
-!!
-!!    In particular,
-!!
-!!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck.
-!! 
-!!    On exit, elements that do not correspond to the core excitation
-!!    are projected out before c is overwritten by rho. 
-!!
-      implicit none
-!
-      class(ccs) :: wf 
-      real(dp), dimension(wf%n_v, wf%n_o)   :: c_a_i       
-!
-      real(dp), dimension(:,:), allocatable :: rho_a_i
-!
-      call allocator(rho_a_i, wf%n_v, wf%n_o)
-      rho_a_i = zero
-!
-!     A1-term
-!
-      call wf%jacobian_ccs_a1(rho_a_i, c_a_i)
-!
-!     B1-term
-!
-      call wf%jacobian_ccs_b1(rho_a_i, c_a_i)
-!
-!     Projection
-!
-      call wf%cvs_rho_a_i_projection(rho_a_i)
-!
-!     Place rho_a_i in c_a_i
-      c_a_i = zero
-!
-      call dcopy((wf%n_o)*(wf%n_v), rho_a_i, 1, c_a_i, 1)
-!
-      call deallocator(rho_a_i, wf%n_v, wf%n_o)
-!
-   end subroutine cvs_jacobian_ccs_transformation_ccs
-!
-!
+
    module subroutine jacobian_ccs_a1_ccs(wf, rho, c1)
 !!
 !!    Jacobian CCS A1
@@ -376,39 +327,5 @@ contains
 !
    end subroutine jacobian_ccs_b1_ccs
 !
-!
-   module subroutine cvs_rho_a_i_projection_ccs(wf, vec_a_i)
-!!
-!!    CVS projection of rho_a_i, 
-!!    Written by Sarai D. Folkestad, Aug. 2017
-!!
-!!    Projects out elements of rho that do not correspond to the core excitation.
-!!
-      implicit none
-!
-      class(ccs) :: wf
-      real(dp), dimension(wf%n_v ,wf%n_o) :: vec_a_i
-!
-      integer(i15) :: i = 0, a = 0, core = 0
-!
-      logical :: core_orbital
-!
-      do i = 1, wf%n_o
-!
-         core_orbital = .false.
-!
-         do core = 1, wf%tasks%n_cores
-!
-            if (i .eq. wf%tasks%index_core_mo(core, 1)) core_orbital = .true.
-!
-         enddo
-!
-         if (.not. core_orbital) then
-            vec_a_i(:,i) = zero
-         endif
-!
-      enddo
-!
-   end subroutine cvs_rho_a_i_projection_ccs
 !
 end submodule jacobian
