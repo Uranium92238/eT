@@ -1939,7 +1939,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
       real(dp), dimension(wf%n_v, wf%n_o)                       :: c_a_i
       real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
 !
-      real(dp), dimension(:,:), allocatable :: g_kc_bd ! g_kcbd 
+      real(dp), dimension(:,:), allocatable :: g_bd_kc ! g_kcbd 
       real(dp), dimension(:,:), allocatable :: g_cd_kb ! g_kcbd reordered
       real(dp), dimension(:,:), allocatable :: g_ckb_d ! g_kcbd reordered 
       real(dp), dimension(:,:), allocatable :: L_ckb_d ! L_kcbd = 2 g_kcbd - g-kdbc
@@ -2009,10 +2009,10 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
 !        Form g_kc_db = g_kcbd
 !
-         call allocator(g_kc_bd, (wf%n_o)*(wf%n_v), (wf%n_v)*batch_length)
+         call allocator(g_bd_kc, (wf%n_v)*batch_length, (wf%n_o)*(wf%n_v))
 !
          integral_type = 'electronic_repulsion'
-         call wf%get_ov_vv(integral_type, g_kc_bd, 1, wf%n_o, 1, wf%n_v, b_begin, b_end, 1, wf%n_v)
+         call wf%get_vv_ov(integral_type, g_bd_kc, b_begin, b_end, 1, wf%n_v, 1, wf%n_o, 1, wf%n_v)
 !
 !        Reorder to g_cd_kb = g_kc_db = g_kcbd 
 !
@@ -2032,14 +2032,14 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
                      kc = index_two(k, c, wf%n_o)
                      cd = index_two(c, d, wf%n_v)
 !
-                     g_cd_kb(cd, kb) = g_kc_bd(kc, bd) ! g_kcbd 
+                     g_cd_kb(cd, kb) = g_bd_kc(bd, kc) ! g_kcbd 
 !
                   enddo
                enddo
             enddo
          enddo
 !
-         call deallocator(g_kc_bd, (wf%n_o)*(wf%n_v), (wf%n_v)*batch_length)
+         call deallocator(g_bd_kc, (wf%n_v)*batch_length, (wf%n_o)*(wf%n_v))
 !
 !        Order amplitudes as t_ij_cd = t_ij^cd 
 !

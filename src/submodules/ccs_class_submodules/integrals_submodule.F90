@@ -4364,8 +4364,10 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !!    Store t1 ovvv Electronic Repulsion Integrals 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
-!!    Tests whether it is possible to store t1-transformed occ-vir-vir-vir integrals and,
+!!    Tests whether it is possible to store t1-transformed vir-vir-occ-vir integrals and,
 !!    if possible, writes the integrals to disk 
+!!
+!!    Assumes batching over either b or c, so please don't batch over a because then routine will not work.
 !!
       implicit none 
 !
@@ -4408,8 +4410,6 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
       call generate_unit_identifier(unit_g_t1_bcia)
       open(unit=unit_g_t1_bcia, file='g_t1_bcia', action='read', status='unknown', &
             access='direct', form='unformatted', recl=dp*(wf%n_v)*(wf%n_o), iostat=ioerror)
-!  
-      !call allocator(g_bc_ia, length_b*length_c, (wf%n_o)*(wf%n_v))
 !
       do b = index1_first, index1_last
          do c = index2_first, index2_last
