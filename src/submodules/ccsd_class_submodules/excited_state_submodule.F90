@@ -188,8 +188,11 @@ contains
 !
       call wf%store_t1_vo_ov_electronic_repulsion
 !
+!     Store vvvo-electronic repulsion integrals to file if there is space
+!
+      call wf%store_t1_vv_vo_electronic_repulsion
+!
    end subroutine excited_state_preparations_ccsd
-
 !
 !
 end submodule excited_state

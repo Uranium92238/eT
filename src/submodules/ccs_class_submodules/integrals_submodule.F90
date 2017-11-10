@@ -2068,6 +2068,8 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
       real(dp), dimension(:,:), allocatable :: L_ab_J, L_ci_J
 !
+      logical :: t1_vvvo_on_file = .false.
+!
       integer(i15) :: length_1 = 0, length_2 = 0, length_3 = 0, length_4 = 0
 !
 !     Lengths
@@ -2077,35 +2079,55 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
       length_3 = index3_last - index3_first + 1
       length_4 = index4_last - index4_first + 1
 !
-!     Alllocate Cholesky vectors
+!     Check if the t1-transformed integrals are on file 
 !
-      call allocator(L_ab_J, length_1*length_2, wf%n_J)
-      call allocator(L_ci_J, length_3*length_4, wf%n_J)
+      inquire(file='g_t1_abci',exist=t1_vvvo_on_file)
 !
-!     Get T1-transformed Cholesky vectors
+      if (t1_vvvo_on_file .and. wf%current_task .ne. 'ground_state') then 
 !
-      call wf%get_cholesky_ab(L_ab_J, index1_first, index1_last, index2_first, index2_last)
-      call wf%get_cholesky_ai(L_ci_J, index3_first, index3_last, index4_first, index4_last)
+!        Read the integrals from file 
 !
-!     Construct integral
+         write(unit_output,*) 'Reading vv_vo t1 electronic repulsion...'
 !
-      call dgemm('N', 'T',             &
-                  length_1*length_2,   &
-                  length_3*length_4,   &
-                  wf%n_J,              &
-                  one,                 &
-                  L_ab_J,              &
-                  length_1*length_2,   &
-                  L_ci_J,              &
-                  length_3*length_4,   &
-                  zero,                &
-                  x_vv_vo,             &
-                  length_1*length_2)
+         call wf%read_t1_vv_vo_electronic_repulsion(x_vv_vo, &
+                                 index1_first, index1_last, &
+                                 index2_first, index2_last, &
+                                 index3_first, index3_last, &
+                                 index4_first, index4_last)
 !
-!     Deallocate Cholesky vectors
+      else
 !
-      call deallocator(L_ab_J, length_1*length_2, wf%n_J)
-      call deallocator(L_ci_J, length_3*length_4, wf%n_J)
+!        Alllocate Cholesky vectors
+!
+         call allocator(L_ab_J, length_1*length_2, wf%n_J)
+         call allocator(L_ci_J, length_3*length_4, wf%n_J)
+!
+!        Get T1-transformed Cholesky vectors
+!
+         call wf%get_cholesky_ab(L_ab_J, index1_first, index1_last, index2_first, index2_last)
+         call wf%get_cholesky_ai(L_ci_J, index3_first, index3_last, index4_first, index4_last)
+!
+!        Construct integral
+!
+         call dgemm('N', 'T',             &
+                     length_1*length_2,   &
+                     length_3*length_4,   &
+                     wf%n_J,              &
+                     one,                 &
+                     L_ab_J,              &
+                     length_1*length_2,   &
+                     L_ci_J,              &
+                     length_3*length_4,   &
+                     zero,                &
+                     x_vv_vo,             &
+                     length_1*length_2)
+!
+!        Deallocate Cholesky vectors
+!
+         call deallocator(L_ab_J, length_1*length_2, wf%n_J)
+         call deallocator(L_ci_J, length_3*length_4, wf%n_J)
+!
+      endif
 !
    end subroutine get_vv_vo_electronic_repulsion_ccs
 !
@@ -4024,7 +4046,123 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
       endif
 !
    end subroutine store_t1_vo_ov_electronic_repulsion_ccs
+!
+!
+   module subroutine store_t1_vv_vo_electronic_repulsion_ccs(wf)
 !!
+!!    Store t1 vvvo Electronic Repulsion Integrals 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!    Tests whether it is possible to store t1-transformed vir-vir-vir-occ integrals and,
+!!    if possible, writes the integrals to disk 
+!!
+      implicit none 
+!
+      class(ccs) :: wf 
+!
+      integer  :: required_space 
+      real(dp) :: required_space_gb
+!
+      integer(i15) :: unit_g_t1_abci = -1 ! g_abic, electronic repulsion integrals  
+      integer(i15) :: ioerror = -1        ! Error integer for file handling
+!
+      integer(i15) :: required_mem = 0, available_mem = 0, a_batch = 0, bci = 0, a_rec = 0, a = 0
+      integer(i15) :: a_n_batch = 0, a_max_length = 0, a_length = 0, a_first = 0, a_last = 0
+!
+      real(dp) :: begin_timer, end_timer
+!
+!     Integral
+!
+      real(dp), dimension(:,:), allocatable :: g_a_bci
+!
+      character(len=40) :: integral_type 
+!
+      integer(i15) :: a = 0, i = 0, ai = 0
+      integer(i15) :: jb = 0
+!
+!     Disk space required to store g_vo_vv 
+!
+      required_space = ((wf%n_v)**3)*((wf%n_o)**2)
+!
+!     This is the required space in number of double precision numbers (8 bytes per such number).
+!     We convert this number to gigabytes. 
+!
+      required_space = 8*required_space ! in bytes
+!
+!     Required in giga bytes
+!
+      required_space_gb = real(required_space)*(1.0D-9)
+!
+!     Test whether there is room for the integrals & save if this is the case 
+!
+      if (required_space_gb .lt. wf%settings%disk_space) then 
+!
+         call cpu_time(begin_timer)
+!  
+!        Open file for writing integrals - record (ai), record length (n_o)*(n_v) (bj)
+!
+         call generate_unit_identifier(unit_g_t1_abci)
+         open(unit=unit_g_t1_abci, file='g_t1_abci', action='write', status='unknown', &
+               access='direct', form='unformatted', recl=dp*((wf%n_o)*(wf%n_v)**2), iostat=ioerror)
+!
+         if (ioerror .ne. 0) write(unit_output,*) &
+         'Error: error while opening file in store_t1_vv_vo_electronic_repulsion_ccs', ioerror
+!
+!        In calculating g_ab_ic, we will batch over the a index 
+!
+         required_mem = max((wf%n_v)**2*(wf%n_J) + 2*(wf%n_v)*(wf%n_o)*(wf%n_J), & ! Needed to get L_ab_J
+                           ((wf%n_v)**3)*(wf%n_o) + 2*(wf%n_v)*(wf%n_o)*(wf%n_J)) ! Needed to get g_ab_ci
+!         
+         required_mem  = 4*required_mem
+         available_mem = get_available()
+!
+         a_max_length = 0
+         call num_two_batch(required_mem, available_mem, a_max_length, a_n_batch, wf%n_v)
+!
+         do a_batch = 1, a_n_batch ! Batch over a index 
+!
+            call batch_limits(a_first, a_last, a_batch, a_max_length, wf%n_v)
+            a_length = a_last - a_first + 1  
+
+            call allocator(g_a_bci, a_length, (wf%n_o)*(wf%n_v)**2)
+!
+            call wf%get_vv_vo_electronic_repulsion(g_a_bci, a_first, a_last, 1, wf%n_v, 1, wf%n_v, 1, wf%n_o)
+!
+            do a = 1, a_length
+!
+!              Calculate record number 
+!
+               a_rec = a + a_first - 1
+!                  
+!              Write integrals to that record 
+!
+               write(unit_g_t1_abci, rec=a_rec, iostat=ioerror) (g_a_bci(a, bci), bci = 1, (wf%n_o)*(wf%n_v)**2)
+!
+            enddo
+!
+            if (ioerror .ne. 0) write(unit_output,'(t3,a)') &
+               'Error: write error in store_t1_vv_vo_electronic_repulsion_integrals_ccs'
+!
+            call deallocator(g_a_bci, a_length, (wf%n_o)*(wf%n_v)**2)
+!
+         enddo ! End of batches over a 
+!
+         call cpu_time(end_timer)
+!
+         if (wf%settings%print_level == 'developer') then
+! 
+            write(unit_output,'(t3,a39,f14.8)') 'Time used to store t1 g_abci (seconds):', end_timer - begin_timer
+            flush(unit_output)
+!
+         endif
+
+         close(unit_g_t1_abci)
+!
+      endif
+!
+   end subroutine store_t1_vv_vo_electronic_repulsion_ccs
+!
+!
    module subroutine read_t1_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,& 
                                        index1_first, index1_last, &
                                        index2_first, index2_last, &
@@ -4157,6 +4295,123 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
       endif
 !
    end subroutine read_t1_vo_ov_electronic_repulsion_ccs
+!
+!
+   module subroutine read_t1_vv_vo_electronic_repulsion_ccs(wf, x_vv_vo,& 
+                                       index1_first, index1_last, &
+                                       index2_first, index2_last, &
+                                       index3_first, index3_last, &
+                                       index4_first, index4_last)
+!!
+!!    Read t1 vvvo Electronic Repulsion Integrals 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!    Reads the T1-transformed vir-vir-vir-occ integrals from file.
+!!
+!!    The integrals are stored on file as (a, bci) = (a, :), where a 
+!!    is the record number and : denotes all the bci elements.
+!!
+!!    The recommended use is therefore to batch over the a index,
+!!    as this will involve the minimum amount of wasteful read statements
+!!
+      implicit none 
+!
+      class(ccs) :: wf
+!
+!     Integral
+!
+      real(dp), dimension(:,:) :: x_vv_vo 
+!
+      integer(i15) :: index1_first, index1_last
+      integer(i15) :: index2_first, index2_last
+      integer(i15) :: index3_first, index3_last
+      integer(i15) :: index4_first, index4_last
+!
+      integer(i15) :: unit_g_t1_abci = -1 ! g_abci, electronic repulsion integrals  
+      integer(i15) :: ioerror = -1        ! Error integer for file handling
+!
+      real(dp) :: begin_timer, end_timer
+!
+      real(dp), dimension(:,:), allocatable :: g_A_bci ! Holds the elements A, bci for a given A index 
+!
+      character(len=40) :: integral_type 
+!
+      integer(i15) :: a = 0, a_rec = 0, c = 0, ci = 0, i = 0, bci_full = 0, b = 0, ab = 0
+!
+      integer(i15) :: length_a = 0, length_b = 0, length_c = 0, length_i = 0
+!
+!     Lengths
+!
+      length_a = index1_last - index1_first + 1
+      length_b = index2_last - index2_first + 1
+      length_c = index3_last - index3_first + 1
+      length_i = index4_last - index4_first + 1
+!
+
+      call cpu_time(begin_timer)
+!  
+!     Open file for reading integrals - record (ai), record length (n_o)*(n_v) (bj)
+!
+      call generate_unit_identifier(unit_g_t1_abci)
+      open(unit=unit_g_t1_abci, file='g_t1_abci', action='read', status='unknown', &
+            access='direct', form='unformatted', recl=dp*((wf%n_o)*(wf%n_v)**2), iostat=ioerror)
+!
+      if (ioerror .ne. 0) write(unit_output,'(t3,a)') &
+      'Error: error while opening file in read_t1_vv_vo_electronic_repulsion_ccs'
+!
+      call allocator(g_A_bci, 1, (wf%n_o)*(wf%n_v)**2)
+      g_A_bci = zero
+!
+      do a = 1, length_a
+!
+!        For a given A, read into g_A_bci 
+!
+         a_rec = a + index1_first - 1
+!
+         read(unit_g_t1_abci, rec=a_rec, iostat=ioerror) (g_A_bci(1,bci_full), bci_full = 1, (wf%n_o)*(wf%n_v)**2)
+!
+!        Place the result into the incoming integral array (ab_ci)
+!
+         do i = 1, length_i
+            do c = 1, length_c
+!
+               ci = index_two(c, i, length_c)
+!
+               do b = 1, length_b
+!
+                  ab = index_two(a, b, length_a)
+!
+                  bci_full = index_three(b + index2_first - 1, & 
+                                         c + index3_first - 1, &
+                                         i + index4_first - 1, &
+                                         wf%n_v,               &
+                                         wf%n_v)
+!
+                  x_vv_vo(ab, ci) = g_A_bci(1, bci_full)
+!
+               enddo
+            enddo
+         enddo
+!
+      enddo ! End of read loop over a 
+!
+      call deallocator(g_A_bci, 1, (wf%n_o)*(wf%n_v)**2)
+!
+      if (ioerror .ne. 0) write(unit_output,'(t3,a)') &
+         'Error: read error in read_t1_vv_vo_electronic_repulsion_integrals_ccs'
+!
+      close(unit_g_t1_abci)
+!
+      call cpu_time(end_timer)
+!
+      if (wf%settings%print_level == 'developer') then
+! 
+         write(unit_output,'(t3,a39,f14.8)') 'Time used to read t1 g_abci (seconds):', end_timer - begin_timer
+         flush(unit_output)
+!
+      endif
+!
+   end subroutine read_t1_vv_vo_electronic_repulsion_ccs
 !
 !
 end submodule integrals
