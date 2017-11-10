@@ -250,10 +250,12 @@ module ccs_class
       procedure, non_overridable :: store_t1_vv_vv_electronic_repulsion => store_t1_vv_vv_electronic_repulsion_ccs
       procedure, non_overridable :: store_t1_vo_ov_electronic_repulsion => store_t1_vo_ov_electronic_repulsion_ccs
       procedure, non_overridable :: store_t1_vv_vo_electronic_repulsion => store_t1_vv_vo_electronic_repulsion_ccs
+      procedure, non_overridable :: store_t1_vv_ov_electronic_repulsion => store_t1_vv_ov_electronic_repulsion_ccs
 !
+      procedure, non_overridable :: read_t1_vv_vo_electronic_repulsion  => read_t1_vv_vo_electronic_repulsion_ccs
       procedure, non_overridable :: read_t1_vv_vv_electronic_repulsion  => read_t1_vv_vv_electronic_repulsion_ccs
       procedure, non_overridable :: read_t1_vo_ov_electronic_repulsion  => read_t1_vo_ov_electronic_repulsion_ccs
-      procedure, non_overridable :: read_t1_vv_vo_electronic_repulsion  => read_t1_vv_vo_electronic_repulsion_ccs
+      procedure, non_overridable :: read_t1_vv_ov_electronic_repulsion  => read_t1_vv_ov_electronic_repulsion_ccs
 !
    end type ccs
 !
@@ -1429,6 +1431,19 @@ module ccs_class
 !
       end subroutine store_t1_vo_ov_electronic_repulsion_ccs
 !
+      module subroutine store_t1_vv_ov_electronic_repulsion_ccs(wf)
+!!
+!!       Store t1 voov Electronic Repulsion Integrals 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!! 
+!!       Tests whether it is possible to store t1-transformed vir-vir-occ-vir integrals and,
+!!       if possible, writes the integrals to disk 
+!! 
+         implicit none 
+!  
+         class(ccs) :: wf 
+!
+      end subroutine store_t1_vv_ov_electronic_repulsion_ccs
 !
       module subroutine store_t1_vv_vo_electronic_repulsion_ccs(wf)
 !!
@@ -1504,7 +1519,7 @@ module ccs_class
       end subroutine read_t1_vo_ov_electronic_repulsion_ccs
 !
 !
-      module subroutine read_t1_vv_vo_electronic_repulsion_ccs(wf, x_vv_vo,& 
+      module subroutine read_t1_vv_vo_electronic_repulsion_ccs(wf, x_vv_vo,    & 
                                        index1_first, index1_last, &
                                        index2_first, index2_last, &
                                        index3_first, index3_last, &
@@ -1513,7 +1528,7 @@ module ccs_class
 !!       Read t1 vvvo Electronic Repulsion Integrals 
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
-!!       Reads the T1-transformed vir-vir-vir-occ integrals from file.
+!!       Reads the T1-transformed vir-vir-occ-vir integrals from file.
 !!
 !!       The integrals are stored on file as (a, bci) = (a, :), where a 
 !!       is the record number and : denotes all the bci elements.
@@ -1527,7 +1542,7 @@ module ccs_class
 !
 !        Integral
 !
-         real(dp), dimension(:,:) :: x_vv_vo 
+         real(dp), dimension(:,:) :: x_vv_vo
 !
          integer(i15) :: index1_first, index1_last
          integer(i15) :: index2_first, index2_last
@@ -1535,6 +1550,39 @@ module ccs_class
          integer(i15) :: index4_first, index4_last
 !
       end subroutine read_t1_vv_vo_electronic_repulsion_ccs
+!
+!
+      module subroutine read_t1_vv_ov_electronic_repulsion_ccs(wf, x_vv_ov,    & 
+                                       index1_first, index1_last, &
+                                       index2_first, index2_last, &
+                                       index3_first, index3_last, &
+                                       index4_first, index4_last)
+!!
+!!       Read t1 vvov Electronic Repulsion Integrals 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!       Reads the T1-transformed vir-vir-occ-vir integrals from file.
+!!
+!!       The integrals are stored on file as (a, bci) = (a, :), where a 
+!!       is the record number and : denotes all the bci elements.
+!!
+!!       The recommended use is therefore to batch over the a index,
+!!       as this will involve the minimum amount of wasteful read statements
+!!
+         implicit none 
+!
+         class(ccs) :: wf
+!
+!        Integral
+!
+         real(dp), dimension(:,:) :: x_vv_ov
+!
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
+!
+      end subroutine read_t1_vv_ov_electronic_repulsion_ccs
 !
 !
       module subroutine get_oo_oo_ccs(wf, integral_type, x_oo_oo,    & 
