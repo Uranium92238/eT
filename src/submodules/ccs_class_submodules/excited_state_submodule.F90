@@ -800,7 +800,7 @@ contains
          call wf%trial_vectors_from_stored_solutions
          return
 !
-      endif 
+      endif
 !
       if ((wf%excited_state_task .eq. 'right_valence') .or. &
           (wf%excited_state_task .eq. 'left_valence')) then
@@ -1086,26 +1086,34 @@ contains
       real(dp)     :: swap     = zero
       integer(i15) :: swap_int = 0
 !
-!     Allocate orbital_diff
+!     Test if there are user specified trial vectors
 !
-      call allocator(orbital_diff,wf%n_parameters,1)
-      orbital_diff = zero
+      if (wf%tasks%user_specified_start_vector) then
+         index_list = wf%tasks%start_vectors
+      else
 !
-!     Calculate orbital differences
+!        Allocate orbital_diff
 !
-      call wf%calculate_orbital_differences(orbital_diff)
+         call allocator(orbital_diff,wf%n_parameters,1)
+         orbital_diff = zero
 !
-!     Finding lowest orbital differences
+!        Calculate orbital differences
 !
-      call allocator(lowest_orbital_diff, wf%tasks%n_singlet_states, 1)
-!     
-      lowest_orbital_diff = zero
+         call wf%calculate_orbital_differences(orbital_diff)
 !
-      call get_n_lowest(wf%tasks%n_singlet_states, wf%n_parameters, orbital_diff, lowest_orbital_diff, index_list)
+!        Finding lowest orbital differences
 !
-      call deallocator(orbital_diff,wf%n_parameters,1)
+         call allocator(lowest_orbital_diff, wf%tasks%n_singlet_states, 1)
+!        
+         lowest_orbital_diff = zero
 !
-      call deallocator(lowest_orbital_diff, wf%tasks%n_singlet_states, 1)
+         call get_n_lowest(wf%tasks%n_singlet_states, wf%n_parameters, orbital_diff, lowest_orbital_diff, index_list)
+!
+         call deallocator(orbital_diff,wf%n_parameters,1)
+!
+         call deallocator(lowest_orbital_diff, wf%tasks%n_singlet_states, 1)
+!
+      endif
 !
    end subroutine find_start_trial_indices_ccs
 !

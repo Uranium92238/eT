@@ -952,6 +952,11 @@ contains
       type(ccs), allocatable :: ccs_wf
 !
       integer(i15) :: lower_level_n_singlet_states
+      integer(i15) :: i = 0, j = 0
+!
+      integer(i15), dimension(:,:), allocatable :: index_list
+!
+      logical :: start_vec_exists
 !
 !     ::::::::::::::::::::::::::::::::::::::::::::::::
 !     -::- Running lower level method calculation -::-
@@ -982,11 +987,57 @@ contains
       ccs_wf%settings%energy_threshold = 1.0D-04 
       ccs_wf%settings%equation_threshold = 1.0D-04 
 !
-!     Initialize lower level method
+!     :: Initialize lower level method ::
 !  
       call ccs_wf%init
 !
-!     Call driver of lower level method
+!     :: User specified start vectors for excited state calculation ::
+!
+!     Test for user specified start vector
+!
+      if (wf%tasks%user_specified_start_vector) then
+!
+!        Construct list of lowest orbital differences
+!
+         call allocator_int(index_list, ccs_wf%tasks%n_singlet_states, 1)
+!
+         call ccs_wf%find_start_trial_indices(index_list)
+!
+!        Exchange highest with the CC2 user specified start vectors, if it is not there already.
+!
+         do i = 1, wf%tasks%n_singlet_states
+!
+!           Test if start vector i is in index_list
+!
+            start_vec_exists = .false.
+            do j = 1, ccs_wf%tasks%n_singlet_states 
+               if (wf%tasks%start_vectors(i ,1) .eq. index_list(j,1)) start_vec_exists = .true.
+            enddo
+!
+!           If not, place start vector i in index_list
+!
+            if (.not. start_vec_exists) then
+               index_list(ccs_wf%tasks%n_singlet_states - i + 1, 1) = wf%tasks%start_vectors(i,1) 
+            endif
+!
+         enddo
+!
+!        Set CCS user specified vectors
+!
+         ccs_wf%tasks%user_specified_start_vector = .true.
+         call allocator_int(ccs_wf%tasks%start_vectors, ccs_wf%tasks%n_singlet_states, 1)
+         ccs_wf%tasks%start_vectors = index_list
+!
+         call deallocator_int(index_list, ccs_wf%tasks%n_singlet_states, 1)
+!
+!        Since orbitals will swap order, start vector in higher level method must be removed
+!
+         wf%tasks%user_specified_start_vector = .false.
+         call deallocator_int(wf%tasks%start_vectors, wf%tasks%n_singlet_states, 1)
+!
+      endif
+!
+!     :: Driver of lower level method ::
 !
       call ccs_wf%drv
 !
@@ -1079,6 +1130,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: solution
       real(dp), dimension(:,:), allocatable :: R_a_i
+      real(dp), dimension(:,:), allocatable :: R_a_i_sum
       real(dp), dimension(:,:), allocatable :: M_i_j
       real(dp), dimension(:,:), allocatable :: N_a_b
       real(dp), dimension(:,:), allocatable :: M
@@ -1098,7 +1150,7 @@ contains
       integer(i15) :: info
       integer(i15) :: i = 0, j = 0, a = 0, b = 0, ai = 0, ij = 0
 !
-      real(dp) :: trace, ddot, sum_o, sum_v
+      real(dp) :: trace, ddot, sum_o, sum_v, norm
 !
 !     ::::::::::::::::::::::::::::::::::::::::::::::
 !     -::- Construct CNTO transformation matrix -::-
