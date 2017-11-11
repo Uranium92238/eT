@@ -1998,6 +1998,13 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !!
 !!    are used to restrict indices of the integral.
 !!
+!!    Note: in an excited state calculation, the T1-transformed integrals 
+!!    will be read from a file containing the vv_vo integrals. This involves
+!!    both reading & reordering, thus requiring twice the memory: 2 * v^3 * o.
+!!
+!!    To minimize the number of wasteful reads from file, batching should be in 
+!!    the third index, i.e. the capitalized letter in: g_vo_Vv.
+!!
       implicit none 
 !
       class(ccs) :: wf
@@ -2011,6 +2018,11 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
       real(dp), dimension(:,:), allocatable :: L_ai_J, L_bc_J
 !
+      real(dp), dimension(:,:), allocatable :: x_vv_vo ! g_ab_ci, for reading from file
+      integer(i15) :: I = 0, J = 0
+!
+      logical :: t1_vvvo_on_file = .false.
+!
       integer(i15) :: length_1 = 0, length_2 = 0, length_3 = 0, length_4 = 0
 !
 !     Lengths
@@ -2020,35 +2032,67 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
       length_3 = index3_last - index3_first + 1
       length_4 = index4_last - index4_first + 1
 !
-!     Alllocate Cholesky vectors
+!     Check if the t1-transformed integrals are on file 
 !
-      call allocator(L_ai_J, length_1*length_2, wf%n_J)
-      call allocator(L_bc_J, length_3*length_4, wf%n_J)
+      inquire(file='g_t1_abci',exist=t1_vvvo_on_file)
 !
-!     Get T1-transformed Cholesky vectors
+      if (t1_vvvo_on_file .and. wf%current_task .ne. 'ground_state') then 
 !
-      call wf%get_cholesky_ai(L_ai_J, index1_first, index1_last, index2_first, index2_last)
-      call wf%get_cholesky_ab(L_bc_J, index3_first, index3_last, index4_first, index4_last)
+!        Read the integrals from file 
 !
-!     Construct integral
+         call allocator(x_vv_vo, length_3*length_4, length_1*length_2)
 !
-      call dgemm('N', 'T',             &
-                  length_1*length_2,   &
-                  length_3*length_4,   &
-                  wf%n_J,              &
-                  one,                 &
-                  L_ai_J,              &
-                  length_1*length_2,   &
-                  L_bc_J,              &
-                  length_3*length_4,   &
-                  zero,                &
-                  x_vo_vv,             &
-                  length_1*length_2)
+         call wf%read_t1_vv_vo_electronic_repulsion(x_vv_vo, &
+                                 index3_first, index3_last,  &
+                                 index4_first, index4_last,  &
+                                 index1_first, index1_last,  &
+                                 index2_first, index2_last)
 !
-!     Deallocate Cholesky vectors
+!        Place the integrals in the correct positions 
 !
-      call deallocator(L_ai_J, length_1*length_2, wf%n_J)
-      call deallocator(L_bc_J, length_3*length_4, wf%n_J)
+         do I = 1, length_1*length_2
+            do J = 1, length_3*length_4
+!
+               x_vo_vv(I,J) = x_vv_vo(J,I)
+!
+            enddo
+         enddo
+!
+         call deallocator(x_vv_vo, length_3*length_4, length_1*length_2)
+!
+      else
+!
+!        Alllocate Cholesky vectors
+!
+         call allocator(L_ai_J, length_1*length_2, wf%n_J)
+         call allocator(L_bc_J, length_3*length_4, wf%n_J)
+!
+!        Get T1-transformed Cholesky vectors
+!
+         call wf%get_cholesky_ai(L_ai_J, index1_first, index1_last, index2_first, index2_last)
+         call wf%get_cholesky_ab(L_bc_J, index3_first, index3_last, index4_first, index4_last)
+!
+!        Construct integral
+!
+         call dgemm('N', 'T',             &
+                     length_1*length_2,   &
+                     length_3*length_4,   &
+                     wf%n_J,              &
+                     one,                 &
+                     L_ai_J,              &
+                     length_1*length_2,   &
+                     L_bc_J,              &
+                     length_3*length_4,   &
+                     zero,                &
+                     x_vo_vv,             &
+                     length_1*length_2)
+!
+!        Deallocate Cholesky vectors
+!
+         call deallocator(L_ai_J, length_1*length_2, wf%n_J)
+         call deallocator(L_bc_J, length_3*length_4, wf%n_J)
+!
+      endif
 !
    end subroutine get_vo_vv_electronic_repulsion_ccs
 !
@@ -2104,8 +2148,6 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
       if (t1_vvvo_on_file .and. wf%current_task .ne. 'ground_state') then 
 !
 !        Read the integrals from file 
-!
-         write(unit_output,*) 'Reading vv_vo t1 electronic repulsion...'
 !
          call wf%read_t1_vv_vo_electronic_repulsion(x_vv_vo, &
                                  index1_first, index1_last, &
@@ -2210,7 +2252,11 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
          call cpu_time(end_timer)
 !
-         write(unit_output,'(t6,a27,f14.8)') 'Read abcd (seconds):', end_timer-begin_timer
+         if (wf%settings%print_level == 'developer') then 
+!
+   !         write(unit_output,'(t6,a27,f14.8)') 'Read abcd (seconds):', end_timer-begin_timer
+!
+         endif
 !
 !        T1-transform x_vv_vv
 !
@@ -2224,7 +2270,11 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
          call cpu_time(end_timer)
 !
-         write(unit_output,'(t6,a27,f14.8)') 't1-transform (seconds):', end_timer-begin_timer
+         if (wf%settings%print_level == 'developer') then 
+!
+   !         write(unit_output,'(t6,a27,f14.8)') 't1-transform (seconds):', end_timer-begin_timer
+!
+         endif 
 !
       elseif (t1_vvvv_on_file .and. wf%current_task .ne. 'ground_state') then 
 !
@@ -2240,7 +2290,11 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
          call cpu_time(end_timer)
 !
-         write(unit_output,'(t6,a27,f14.8)') 'Read t1 abcd (seconds):', end_timer-begin_timer         
+         if (wf%settings%print_level == 'developer') then 
+!
+   !         write(unit_output,'(t6,a27,f14.8)') 'Read t1 abcd (seconds):', end_timer-begin_timer 
+!
+         endif        
 !
       else
 !
@@ -3780,7 +3834,7 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
          if (wf%settings%print_level == 'developer') then
 ! 
-            write(unit_output,'(t3,a36,f14.8)') 'Time used to store g_abcd (seconds):', end_timer - begin_timer
+            write(unit_output,'(t6,a36,f14.8)') 'Time used to store g_abcd (seconds):', end_timer - begin_timer
             flush(unit_output)
 !
          endif
@@ -3961,7 +4015,7 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
          if (wf%settings%print_level == 'developer') then
 ! 
-            write(unit_output,'(t3,a39,f14.8)') 'Time used to store t1 g_abcd (seconds):', end_timer - begin_timer
+            write(unit_output,'(t6,a39,f14.8)') 'Time used to store t1 g_abcd (seconds):', end_timer - begin_timer
             flush(unit_output)
 !
          endif
@@ -4085,7 +4139,7 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
          if (wf%settings%print_level == 'developer') then
 ! 
-            write(unit_output,'(t3,a39,f14.8)') 'Time used to store t1 g_aijb (seconds):', end_timer - begin_timer
+            write(unit_output,'(t6,a39,f14.8)') 'Time used to store t1 g_aijb (seconds):', end_timer - begin_timer
             flush(unit_output)
 !
          endif
@@ -4199,7 +4253,7 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
          if (wf%settings%print_level == 'developer') then
 ! 
-            write(unit_output,'(t3,a39,f14.8)') 'Time used to store t1 g_abci (seconds):', end_timer - begin_timer
+            write(unit_output,'(t6,a39,f14.8)') 'Time used to store t1 g_abci (seconds):', end_timer - begin_timer
             flush(unit_output)
 !
          endif
@@ -4337,8 +4391,8 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
       if (wf%settings%print_level == 'developer') then
 ! 
-         write(unit_output,'(t3,a39,f14.8)') 'Time used to read t1 g_aijb (seconds):', end_timer - begin_timer
-         flush(unit_output)
+         ! write(unit_output,'(t3,a39,f14.8)') 'Time used to read t1 g_aijb (seconds):', end_timer - begin_timer
+         ! flush(unit_output)
 !
       endif
 !
@@ -4481,7 +4535,7 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
          if (wf%settings%print_level == 'developer') then
 ! 
-            write(unit_output,'(t3,a39,f14.8)') 'Time used to store t1 g_bc_ia (seconds):', end_timer - begin_timer
+            write(unit_output,'(t6,a39,f14.8)') 'Time used to store t1 g_bcia (seconds):', end_timer - begin_timer
             flush(unit_output)
 !
          endif
@@ -4621,7 +4675,6 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
       length_c = index3_last - index3_first + 1
       length_i = index4_last - index4_first + 1
 !
-
       call cpu_time(begin_timer)
 !  
 !     Open file for reading integrals - record (ai), record length (n_o)*(n_v) (bj)
@@ -4680,8 +4733,8 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
       if (wf%settings%print_level == 'developer') then
 ! 
-         write(unit_output,'(t3,a39,f14.8)') 'Time used to read t1 g_abci (seconds):', end_timer - begin_timer
-         flush(unit_output)
+         ! write(unit_output,'(t3,a39,f14.8)') 'Time used to read t1 g_abci (seconds):', end_timer - begin_timer
+         ! flush(unit_output)
 !
       endif
 !

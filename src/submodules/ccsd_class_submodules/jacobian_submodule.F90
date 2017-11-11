@@ -335,23 +335,25 @@ contains
 !
       if (wf%settings%print_level == 'developer') then 
 !
-         write(unit_output,'(t3,a27,f14.8)') 'Time in CCS  A1 (seconds):', ccs_a1_time
-         write(unit_output,'(t3,a27,f14.8)') 'Time in CCS  B1 (seconds):', ccs_b1_time
-         write(unit_output,'(t3,a27,f14.8)') 'Time in CCSD A1 (seconds):', ccsd_a1_time
-         write(unit_output,'(t3,a27,f14.8)') 'Time in CCSD B1 (seconds):', ccsd_b1_time
-         write(unit_output,'(t3,a27,f14.8)') 'Time in CCSD C1 (seconds):', ccsd_c1_time
-         write(unit_output,'(t3,a27,f14.8)') 'Time in CCSD D1 (seconds):', ccsd_d1_time
-         write(unit_output,'(t3,a27,f14.8)') 'Time in CCSD A2 (seconds):', ccsd_a2_time
-         write(unit_output,'(t3,a27,f14.8)') 'Time in CCSD B2 (seconds):', ccsd_b2_time
-         write(unit_output,'(t3,a27,f14.8)') 'Time in CCSD C2 (seconds):', ccsd_c2_time
-         write(unit_output,'(t3,a27,f14.8)') 'Time in CCSD D2 (seconds):', ccsd_d2_time
-         write(unit_output,'(t3,a27,f14.8)') 'Time in CCSD E2 (seconds):', ccsd_e2_time
-         write(unit_output,'(t3,a27,f14.8)') 'Time in CCSD F2 (seconds):', ccsd_f2_time
-         write(unit_output,'(t3,a27,f14.8)') 'Time in CCSD G2 (seconds):', ccsd_g2_time
-         write(unit_output,'(t3,a27,f14.8)') 'Time in CCSD H2 (seconds):', ccsd_h2_time
-         write(unit_output,'(t3,a27,f14.8)') 'Time in CCSD I2 (seconds):', ccsd_i2_time
-         write(unit_output,'(t3,a27,f14.8)') 'Time in CCSD J2 (seconds):', ccsd_j2_time
-         write(unit_output,'(t3,a27,f14.8)') 'Time in CCSD K2 (seconds):', ccsd_k2_time
+         write(unit_output,'(t3,a/)') 'Breakdown of CCSD Jacobian timings:'
+!
+         write(unit_output,'(t3,a27,f14.8)')  'Time in CCS  A1 (seconds):', ccs_a1_time
+         write(unit_output,'(t3,a27,f14.8)')  'Time in CCS  B1 (seconds):', ccs_b1_time
+         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD A1 (seconds):', ccsd_a1_time
+         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD B1 (seconds):', ccsd_b1_time
+         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD C1 (seconds):', ccsd_c1_time
+         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD D1 (seconds):', ccsd_d1_time
+         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD A2 (seconds):', ccsd_a2_time
+         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD B2 (seconds):', ccsd_b2_time
+         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD C2 (seconds):', ccsd_c2_time
+         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD D2 (seconds):', ccsd_d2_time
+         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD E2 (seconds):', ccsd_e2_time
+         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD F2 (seconds):', ccsd_f2_time
+         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD G2 (seconds):', ccsd_g2_time
+         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD H2 (seconds):', ccsd_h2_time
+         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD I2 (seconds):', ccsd_i2_time
+         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD J2 (seconds):', ccsd_j2_time
+         write(unit_output,'(t3,a27,f14.8/)') 'Time in CCSD K2 (seconds):', ccsd_k2_time
 !
          flush(unit_output)
 !
@@ -987,6 +989,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
       real(dp), dimension(:,:), allocatable :: g_ai_kj ! g_aikj 
       real(dp), dimension(:,:), allocatable :: g_k_aij ! g_aikj reordered 
       real(dp), dimension(:,:), allocatable :: g_ai_bc ! g_aibc, batching over b
+      real(dp), dimension(:,:), allocatable :: g_bc_ai ! g_aibc = g_bcai, batching over b 
 !
       real(dp), dimension(:,:), allocatable :: rho_b_aij ! rho_ai_bj, term 1 (see below)
       real(dp), dimension(:,:), allocatable :: rho_aib_j ! rho_ai_bj, term 2 (batching over b)
@@ -995,6 +998,9 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
       integer(i15) :: k = 0, kj = 0, c = 0, cb = 0, aib = 0, bc = 0
 !
       logical :: reorder 
+!
+      real(dp) :: begin_reorder
+      real(dp) :: end_reorder
 !
 !     Batching variables 
 !
@@ -1115,8 +1121,6 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
          call batch_limits(b_begin, b_end, b_batch, max_batch_length, batch_dimension)
          batch_length = b_end - b_begin + 1 
 !
-!        Calculate g_ai_bc = g_aibc
-!
          call allocator(g_ai_bc, (wf%n_v)*(wf%n_o), (wf%n_v)*batch_length)
 !
          integral_type = 'electronic_repulsion'
@@ -1148,7 +1152,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
                      rho_aib_j(aib_offset,1),        &
                      (wf%n_o)*(wf%n_v)**2)
 !
-         call deallocator(g_ai_bc, (wf%n_v)*(wf%n_o), wf%n_v*batch_length)
+          call deallocator(g_ai_bc, (wf%n_v)*(wf%n_o), wf%n_v*batch_length)
 !
       enddo ! End of batches over b
 !

@@ -180,6 +180,8 @@ contains
 !!
       class(ccsd) :: wf 
 !
+      write(unit_output,'(/t3,a/)') 'Preparing for excited state calculation:'
+!
 !     Store vvvv-electronic repulsion integrals to file if there is space 
 !
       call wf%store_t1_vv_vv_electronic_repulsion

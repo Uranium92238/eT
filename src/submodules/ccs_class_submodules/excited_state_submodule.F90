@@ -56,10 +56,6 @@ contains
 !
       class(ccs) :: wf 
 !
-!     Preparations for excited state solver 
-!
-      call wf%excited_state_preparations
-!
 !     Let the user know the excited state driver is running
 !
       write(unit_output,'(t3,a)')    ':: Excited state solver (Davidson)'
@@ -69,6 +65,13 @@ contains
       write(unit_output,'(t3,a,i3,a,a,a)') &
                                      'Requested ',wf%tasks%n_triplet_states,' ', trim(wf%name), ' triplet states.'     
 !
+!     Preparations for excited state solver 
+!
+      call wf%excited_state_preparations
+!
+!     Set current task to excited state calculation 
+! 
+      wf%current_task = 'excited_state'
 !
 !     Run the general solver routine (file names are given
 !     by the task, i.e., the file 'right_valence' contains

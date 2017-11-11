@@ -2488,7 +2488,6 @@ contains
 !
          if (wf%implemented%excited_state) then 
 !     
-            wf%current_task = 'excited_state'
             wf%excited_state_task = 'right_valence'
             call wf%excited_state_driver 
 !
@@ -2509,7 +2508,6 @@ contains
 !
          if (wf%implemented%core_excited_state) then 
 !     
-            wf%current_task = 'excited_state'
             wf%excited_state_task = 'right_core'
             call wf%excited_state_driver 
 !
