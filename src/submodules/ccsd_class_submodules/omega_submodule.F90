@@ -33,21 +33,19 @@ submodule (ccsd_class) omega
    real(dp) :: begin_timer
    real(dp) :: end_timer 
 !
-
-      character(len=40) :: integral_type
-!
+   character(len=40) :: integral_type ! Here: electronic repulsion, 1/r_ij, g_pqrs 
 !
 contains
 !
 !
    module subroutine initialize_omega_ccsd(wf)
-!
-!      Initialize Omega (CCSD)
-!      Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!
-!      Allocates the projection vector (omega1, omega2) and sets it
-!      to zero.
-!
+!!
+!!    Initialize Omega (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!    Allocates the projection vector (omega1, omega2) and sets it
+!!    to zero.
+!!
       implicit none 
 !
       class(ccsd) :: wf
@@ -62,16 +60,29 @@ contains
 !
 !
    module subroutine construct_omega_ccsd(wf)
-!
-!     Construct Omega (CCSD)
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!     Directs the construction of the projection vector < mu | exp(-T) H exp(T) | R >
-!     for the current amplitudes of the object wfn 
-!
+!!
+!!     Construct Omega (CCSD)
+!!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!     Directs the construction of the projection vector < mu | exp(-T) H exp(T) | R >
+!!     for the current amplitudes of the object wfn 
+!!
       implicit none 
 !
       class(ccsd) :: wf
+!
+      real(dp) :: begin_timer, end_timer
+!
+      real(dp) :: ccsd_a1_time
+      real(dp) :: ccsd_b1_time 
+      real(dp) :: ccsd_c1_time
+      real(dp) :: ccs_a1_time 
+!
+      real(dp) :: ccsd_a2_time
+      real(dp) :: ccsd_b2_time 
+      real(dp) :: ccsd_c2_time 
+      real(dp) :: ccsd_d2_time 
+      real(dp) :: ccsd_e2_time  
 !
 !     Set the omega vector to zero 
 !
@@ -80,33 +91,87 @@ contains
 !
 !     Construct singles contributions 
 !
+      call cpu_time(begin_timer)
       call wf%omega_ccsd_a1
+      call cpu_time(end_timer)
+      ccsd_a1_time = end_timer - begin_timer
+!
+      call cpu_time(begin_timer)
       call wf%omega_ccsd_b1
+      call cpu_time(end_timer)
+      ccsd_b1_time = end_timer - begin_timer
+!
+      call cpu_time(begin_timer)
       call wf%omega_ccsd_c1
+      call cpu_time(end_timer)
+      ccsd_c1_time = end_timer - begin_timer
+!
+      call cpu_time(begin_timer)
       call wf%omega_ccs_a1
+      call cpu_time(end_timer)
+      ccs_a1_time = end_timer - begin_timer
 !
 !     Construct doubles contributions 
 !
-       call wf%omega_ccsd_a2
-       call wf%omega_ccsd_b2
-       call wf%omega_ccsd_c2
-       call wf%omega_ccsd_d2
-       call wf%omega_ccsd_e2
+      call cpu_time(begin_timer)
+      call wf%omega_ccsd_a2
+      call cpu_time(end_timer)
+      ccsd_a2_time = end_timer - begin_timer
+!
+      call cpu_time(begin_timer)
+      call wf%omega_ccsd_b2
+      call cpu_time(end_timer)
+      ccsd_b2_time = end_timer - begin_timer
+!
+      call cpu_time(begin_timer)
+      call wf%omega_ccsd_c2
+      call cpu_time(end_timer)
+      ccsd_c2_time = end_timer - begin_timer
+!
+      call cpu_time(begin_timer)
+      call wf%omega_ccsd_d2
+      call cpu_time(end_timer)
+      ccsd_d2_time = end_timer - begin_timer
+!
+      call cpu_time(begin_timer)
+      call wf%omega_ccsd_e2
+      call cpu_time(end_timer)
+      ccsd_e2_time = end_timer - begin_timer
+!
+!     Print timings
+!
+      if (wf%settings%print_level == 'developer') then 
+!
+         write(unit_output,'(/t3,a)') 'Breakdown of CCSD omega timings:'
+!
+         write(unit_output,'(/t3,a27,f14.8)') 'Time in CCSD A1 (seconds):', ccsd_a1_time
+         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD B1 (seconds):', ccsd_b1_time
+         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD C1 (seconds):', ccsd_c1_time
+         write(unit_output,'(t3,a27,f14.8)')  'Time in CCS  A1 (seconds):', ccs_a1_time
+         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD A2 (seconds):', ccsd_a2_time
+         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD B2 (seconds):', ccsd_b2_time
+         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD C2 (seconds):', ccsd_c2_time
+         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD D2 (seconds):', ccsd_d2_time
+         write(unit_output,'(t3,a27,f14.8/)') 'Time in CCSD E2 (seconds):', ccsd_e2_time
+!
+         flush(unit_output)
+!
+      endif
 !
    end subroutine construct_omega_ccsd
 !
 !
    module subroutine omega_ccsd_a1_ccsd(wf)
-!
-!       Omega A1 term
-!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!  
-!       Calculates the A1 term, 
-!  
-!       A1: sum_ckd g_adkc * u_ki^cd,
-!  
-!       and adds it to the singles projection vector (omega1) of
-!       the wavefunction object wf.
+!!
+!!    Omega A1 term
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!  
+!!    Calculates the A1 term, 
+!!  
+!!       A1: sum_ckd g_adkc * u_ki^cd,
+!!  
+!!    and adds it to the singles projection vector (omega1) of
+!!    the wavefunction object wf.
 !
       implicit none
 !
@@ -121,45 +186,38 @@ contains
 !
       integer(i15) :: i = 0, j = 0, a = 0, c = 0, k = 0, d = 0
       integer(i15) :: ad = 0, ad_dim = 0, ci = 0, cidk = 0, ck = 0, da = 0 
-      integer(i15) :: ckd = 0, ckdi = 0, di = 0, dk = 0, kc = 0
+      integer(i15) :: dkc = 0, ckdi = 0, di = 0, dk = 0, kc = 0
 !
-      real(dp), dimension(:,:), allocatable :: L_kc_J 
-      real(dp), dimension(:,:), allocatable :: L_da_J  ! L_ad^J; a is being batched over
-      real(dp), dimension(:,:), allocatable :: L_ad_J  ! L_ad^J; a is being batched over
-      real(dp), dimension(:,:), allocatable :: g_da_kc ! g_adkc; a is being batched over
-      real(dp), dimension(:,:), allocatable :: g_a_ckd ! reordered g_adkc; a is being batched over
-      real(dp), dimension(:,:), allocatable :: u_ckd_i ! u_ki^cd
+      real(dp), dimension(:,:), allocatable :: g_ad_kc ! g_adkc; a is being batched over
+      real(dp), dimension(:,:), allocatable :: u_dkc_i ! u_ki^cd
 !
-      logical :: reorder ! To get L_ab_J reordered, for batching over a (first index)
+!     Allocate u_dkc_i = u_ki^cd
 !
-!     Allocate u_ckd_i = u_ki^cd
+      call allocator(u_dkc_i, (wf%n_o)*(wf%n_v)**2, wf%n_o)
+      u_dkc_i = zero
 !
-      call allocator(u_ckd_i, (wf%n_o)*(wf%n_v)**2, wf%n_o)
-      u_ckd_i = zero
+!     Calculate u_dkc_i = u_ki^cd
 !
-!     Calculate u_ckd_i
+      do i = 1, wf%n_o
+         do c = 1, wf%n_v 
 !
-      do k = 1, wf%n_o
-         do c = 1, wf%n_v
+            ci = index_two(c, i, wf%n_v)
 !
-            ck = index_two(c, k, wf%n_v)
+            do k = 1, wf%n_o
 !
-            do d = 1, wf%n_v
+               ck = index_two(c, k, wf%n_v)
 !
-               ckd = index_three(c, k, d, wf%n_v, wf%n_o)
-               dk  = index_two(d, k, wf%n_v)
+               do d = 1, wf%n_v
 !
-               do i = 1, wf%n_o     
-!      
-                  di   = index_two(d, i, wf%n_v)
-                  ci   = index_two(c, i, wf%n_v)
+                  dk = index_two(d, k, wf%n_v)
+                  di = index_two(d, i, wf%n_v)
+!
+                  dkc = index_three(d, k, c, wf%n_v, wf%n_o)
 !
                   ckdi = index_packed(ck, di)
                   cidk = index_packed(ci, dk)
 !
-!                 Calculate u_ckd_i
-!
-                  u_ckd_i(ckd, i) = two*(wf%t2am(ckdi, 1)) - wf%t2am(cidk, 1)
+                  u_dkc_i(dkc, i) = two*(wf%t2am(ckdi, 1)) - wf%t2am(cidk, 1)
 !
                enddo
             enddo
@@ -193,112 +251,50 @@ contains
          call batch_limits(a_begin, a_end, a_batch, max_batch_length, batch_dimension)
          batch_length = a_end - a_begin + 1 
 !
-!        Allocate Cholesky vector L_kc_J
+         ad_dim = batch_length*(wf%n_v)
 !
-         call allocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
-         L_kc_J = zero
+!        Form g_ad_kc = g_adkc
 !
-!        Get Cholesky vector L_kc_J
+         call allocator(g_ad_kc, ad_dim, (wf%n_o)*(wf%n_v))
 !
-         call wf%get_cholesky_ia(L_kc_J)
+         integral_type = 'electronic_repulsion'
+         call wf%get_vv_ov(integral_type, & 
+                           g_ad_kc,       &
+                           a_begin,       &
+                           a_end,         &
+                           1,             &
+                           wf%n_v,        &
+                           1,             &
+                           wf%n_o,        &
+                           1,             &
+                           wf%n_v)
 !
-!        Allocate the Cholesky vector L_da_J = L_ad^J
+!        Calculate the A1 term, 
 !
-         ad_dim = batch_length*(wf%n_v) ! Dimension of ad for the batch over index a 
-!
-!        Get ab-cholesky vectors for the batch, L_ad^J, then reorder from L_ad_J to L_da_J
-!
-         call allocator(L_ad_J, ad_dim, wf%n_J)
-         L_ad_J = zero
-         call wf%get_cholesky_ab(L_ad_J, a_begin, a_end, 1, wf%n_v)
-!
-         call allocator(L_da_J, ad_dim, wf%n_J)
-         L_da_J = zero
-!
-         do a = 1, batch_length
-            do d = 1, wf%n_v
-               da = index_two(d, a, wf%n_v)
-               ad = index_two(a, d, batch_length)
-               do J = 1, wf%n_J
-                  L_da_J(da, J) = L_ad_J(ad, J)
-               enddo
-            enddo
-         enddo
-!
-         call deallocator(L_ad_J, ad_dim, wf%n_J)
-!
-!        Allocate g_da_kc = g_adkc
-!
-         call allocator(g_da_kc, ad_dim, (wf%n_o)*(wf%n_v))
-!
-!        Calculate g_da_kc = sum_J L_da_J L_kc_J^T = sum_J L_ad^J L_kc^J = g_adkc 
-!     
-         call dgemm('N','T',            &
-                     ad_dim,            &
-                     (wf%n_o)*(wf%n_v), &
-                     wf%n_J,            &
-                     one,               &
-                     L_da_J,            &
-                     ad_dim,            &
-                     L_kc_J,            &
-                     (wf%n_o)*(wf%n_v), &
-                     zero,              &
-                     g_da_kc,           &
-                     ad_dim)
-!
-!        Deallocate the reordered Cholesky vector L_da_J and L_kc_J
-!
-         call deallocator(L_da_J, ad_dim, wf%n_J)
-         call deallocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
-!
-!        Form the reordered integrals g_a_ckd = g_adkc
-!
-         call allocator(g_a_ckd, batch_length, (wf%n_o)*(wf%n_v)**2)
-!
-         do c = 1, wf%n_v
-            do k = 1, wf%n_o
-!
-               kc  = index_two(k, c, wf%n_o)
-!
-               do d = 1, wf%n_v
-                  do a = 1, batch_length
-!                 
-                     da  = index_two(d, a, wf%n_v)
-                     ckd = index_three(c, k, d, wf%n_v, wf%n_o) 
-!
-                     g_a_ckd(a, ckd) = g_da_kc(da, kc) ! g_adkc 
-!
-                  enddo
-               enddo
-            enddo
-         enddo
-!
-!        Deallocate reordered integrals g_da_kc
-!
-         call deallocator(g_da_kc, ad_dim, (wf%n_o)*(wf%n_v))
-!
-!        Calculate the A1 term (sum_ckd g_a,ckd * u_ckd,i) & add to the omega vector
+!           sum_ckd g_adkc * u_ki^cd = sum_ckd g_ad_kc u_dkc_i,
+! 
+!        and add it to the omega vector
 ! 
          call dgemm('N','N',               &
                      batch_length,         &
                      wf%n_o,               &
                      (wf%n_o)*(wf%n_v)**2, &
                      one,                  &
-                     g_a_ckd,              &
+                     g_ad_kc,              & ! g_a_dkc
                      batch_length,         &
-                     u_ckd_i,              &
+                     u_dkc_i,              &
                      (wf%n_o)*(wf%n_v)**2, &
                      one,                  &
                      wf%omega1(a_begin,1), & 
                      wf%n_v)
 !
-         call deallocator(g_a_ckd, batch_length, (wf%n_o)*(wf%n_v)**2)
+         call deallocator(g_ad_kc, ad_dim, (wf%n_o)*(wf%n_v))
 !
       enddo ! End of batches of the index a 
 !
 !     Deallocate vectors 
 !
-      call deallocator(u_ckd_i, (wf%n_o)*(wf%n_v)**2, wf%n_o)
+      call deallocator(u_dkc_i, (wf%n_o)*(wf%n_v)**2, wf%n_o)
 !
    end subroutine omega_ccsd_a1_ccsd
 !
@@ -323,49 +319,16 @@ contains
       integer(i15) :: ak = 0, akcl = 0, al = 0, alck = 0, ck = 0, ai = 0
       integer(i15) :: cl = 0, lc = 0, i = 0, j = 0
 !
-      real(dp), dimension(:,:), allocatable :: L_ki_J  ! L_ki^J 
-      real(dp), dimension(:,:), allocatable :: L_lc_J  ! L_lc^J 
       real(dp), dimension(:,:), allocatable :: g_ki_lc ! g_kilc 
       real(dp), dimension(:,:), allocatable :: g_ckl_i ! g_kilc 
       real(dp), dimension(:,:), allocatable :: u_a_ckl ! u_kl^ac = 2 t_kl^ac - t_lk^ac
 !
-!     Form the Cholesky vectors L_ki_J and L_lc_J 
-!
-      call allocator(L_ki_J, (wf%n_o)**2, wf%n_J)
-      call allocator(L_lc_J, (wf%n_o)*(wf%n_v), wf%n_J)
-!
-      call wf%get_cholesky_ij(L_ki_J)
-      call wf%get_cholesky_ia(L_lc_J)
-!
-!     Allocate integrals g_ki_lc = g_kilc
+!     Get g_ki_lc = g_kilc
 !
       call allocator(g_ki_lc, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
 !
-!     Calculate g_ki_lc = sum_J L_ki_J L_lc_J^T 
-! 
-      call dgemm('N','T',            &
-                  (wf%n_o)**2,       &
-                  (wf%n_o)*(wf%n_v), &
-                  wf%n_J,            &
-                  one,               &
-                  L_ki_J,            &
-                  (wf%n_o)**2,       &
-                  L_lc_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  g_ki_lc,           &
-                  (wf%n_o)**2)
-! .... Eirik -> tester oo_ov rutinen
-      write(unit_output,*) 'Getting oo_ov integral!'
-      g_ki_lc = zero
       integral_type = 'electronic_repulsion'
       call wf%get_oo_ov(integral_type, g_ki_lc)
-! ....
-!
-!     Deallocate the Cholesky vectors L_ki_J and L_lc_J
-!
-      call deallocator(L_ki_J, (wf%n_o)**2, wf%n_J)
-      call deallocator(L_lc_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
 !     Form the reordered integrals g_ckl_i = g_kilc 
 !
@@ -408,11 +371,9 @@ contains
                do a = 1, wf%n_v
 !
                   ak   = index_two(a, k, wf%n_v)
-!
-                  akcl = index_packed(ak, cl)
-!
                   al   = index_two(a, l, wf%n_v)
 !
+                  akcl = index_packed(ak, cl)
                   alck = index_packed(al, ck)
 !
 !                 Set the value of u_a_ckl = u_kl^ac = 2*t_kl^ac - t_lk^ac = 2*t_ak,cl - t_al,ck 
@@ -448,52 +409,44 @@ contains
 !
 !
    module subroutine omega_ccsd_c1_ccsd(wf)        
-!  
-!     Omega C1
-!     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!  
-!     Calculates the C1 term of omega,
-!  
-!     C1: sum_ck F_kc*u_ai_ck,
-!  
-!     and adds it to the projection vector (omega1) of    
-!     the wavefunction object wf                           
-!  
-!     u_ai_ck = 2*t_ck_ai - t_ci_ak
-! 
+!!  
+!!    Omega C1
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!  
+!!    Calculates the C1 term of omega,
+!!  
+!!       C1: sum_ck F_kc*u_ai_ck,
+!!  
+!!    and adds it to the projection vector (omega1) of    
+!!    the wavefunction object wf                           
+!!  
+!!    u_ai_kc = 2*t_ck_ai - t_ci_ak
+!! 
       implicit none
 !
       class(ccsd) :: wf 
-!
-      real(dp), dimension(:,:), allocatable :: F_ck     
-      real(dp), dimension(:,:), allocatable :: u_ai_ck  
-      real(dp), dimension(:,:), allocatable :: omega1_ai
+!  
+      real(dp), dimension(:,:), allocatable :: u_ai_kc  
 !
       integer(i15) :: i = 0, k = 0, c = 0, a = 0
-      integer(i15) :: ck = 0, ai = 0, ak = 0, ci = 0
+      integer(i15) :: ck = 0, ai = 0, ak = 0, ci = 0, kc = 0
       integer(i15) :: aick = 0, akci = 0
 !
-!     Allocation of F_ck and u_ai_ck
+!     Allocate u_ai_ck
 !
-      call allocator(F_ck, (wf%n_o)*(wf%n_v), 1)
-      call allocator(u_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))  
+      call allocator(u_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))  
 !
-!     Set up u_ai_ck and virtual-occupied Fock matrix
+!     Set up u_ai_kc
 !
-      do k = 1, wf%n_o
+      do i = 1, wf%n_o 
          do c = 1, wf%n_v
 !
-!           Set up compound index
+            ci = index_two(c, i, wf%n_v)
+!
+            do k = 1, wf%n_o
 !  
-            ck = index_two(c, k, wf%n_v)
-!
-!           Reorder MO Fock matrix
-!
-            F_ck(ck, 1) = wf%fock_ia(k, c)
-!
-            do i = 1, wf%n_o 
-!
-               ci = index_two(c, i, wf%n_v)
+               ck = index_two(c, k, wf%n_v)
+               kc = index_two(k, c, wf%n_o)
 !
                do a = 1, wf%n_v
 !
@@ -503,60 +456,46 @@ contains
                   aick = index_packed(ck, ai)
                   akci = index_packed(ci, ak)
 !
-                  u_ai_ck(ai, ck) = two*(wf%t2am(aick, 1)) - wf%t2am(akci, 1)
+                  u_ai_kc(ai, kc) = two*(wf%t2am(aick, 1)) - wf%t2am(akci, 1)
 !
                enddo
             enddo
          enddo
       enddo
 !
-!     Allocate holder of omega contribution
-!
-      call allocator(omega1_ai, (wf%n_o)*(wf%n_v), 1)
-!
-!     ... and calculate it
-!
       call dgemm('N','N',            &
                   (wf%n_o)*(wf%n_v), &
                   1,                 &
                   (wf%n_o)*(wf%n_v), &
                   one,               &
-                  u_ai_ck,           &
+                  u_ai_kc,           &
                   (wf%n_o)*(wf%n_v), &
-                  F_ck,              &
+                  wf%fock_ia,        & ! F_kc
                   (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  omega1_ai,         &
+                  one,               &
+                  wf%omega1,         &
                   (wf%n_o)*(wf%n_v))
 !
-!     Copy the contribution into the wavefunction's omega 
 !
-      call daxpy((wf%n_o)*(wf%n_v), one, omega1_ai, 1, wf%omega1, 1)
-!
-!     Deallocations
-!
-      call deallocator(F_ck, (wf%n_o)*(wf%n_v), 1)
-      call deallocator(omega1_ai, (wf%n_o)*(wf%n_v), 1)
-      call deallocator(u_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call deallocator(u_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine omega_ccsd_c1_ccsd
 !
 !
    module subroutine omega_ccsd_a2_ccsd(wf)
-!
-!     Omega A2 term: Omega A2 = g_ai_bj + sum_(cd)g_ac_bd * t_ci_dj = A2.1 + A.2.2
-!
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, 10 Mar 2017
-!
-!     Structure: Batching over both a and b for A2.2.
-!                t^+_ci_dj = t_ci_dj + t_di_cj
-!                t^-_ci_dj = t_ci_dj - t_di_cj
-!                g^+_ac_bd = g_ac_bd + g_bc_ad 
-!                g^-_ac_bd = g_ac_bd - g_bc_ad 
-! 
-!                omega_A2.2_ai_bj = 1/4*(g^+_ac_bd*t^+_ci_dj + g^-_ac_bd*t^-_ci_dj) = omega_A2.2_bj_ai
-!                omega_A2.2_aj_bi = 1/4*(g^+_ac_bd*t^+_ci_dj - g^-_ac_bd*t^-_ci_dj) = omega_A2.2_bi_aj
-!
+!!
+!!    Omega A2 term: Omega A2 = g_ai_bj + sum_(cd)g_ac_bd * t_ci_dj = A2.1 + A.2.2
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 10 Mar 2017
+!!
+!!    Structure: Batching over both a and b for A2.2.
+!!                t^+_ci_dj = t_ci_dj + t_di_cj
+!!                t^-_ci_dj = t_ci_dj - t_di_cj
+!!                g^+_ac_bd = g_ac_bd + g_bc_ad 
+!!                g^-_ac_bd = g_ac_bd - g_bc_ad 
+!! 
+!!                omega_A2.2_ai_bj = 1/4*(g^+_ac_bd*t^+_ci_dj + g^-_ac_bd*t^-_ci_dj) = omega_A2.2_bj_ai
+!!                omega_A2.2_aj_bi = 1/4*(g^+_ac_bd*t^+_ci_dj - g^-_ac_bd*t^-_ci_dj) = omega_A2.2_bi_aj
+!!
       implicit none
 !
       class(ccsd) :: wf
@@ -564,14 +503,9 @@ contains
 !     Integrals
 !
       real(dp), dimension(:,:), allocatable :: g_ai_bj 
-      real(dp), dimension(:,:), allocatable :: g_ca_db 
+      real(dp), dimension(:,:), allocatable :: g_ac_bd 
       real(dp), dimension(:,:), allocatable :: g_p_ab_cd
       real(dp), dimension(:,:), allocatable :: g_m_ab_cd
-      real(dp), dimension(:,:), allocatable :: L_ai_J 
-      real(dp), dimension(:,:), allocatable :: L_ca_J 
-      real(dp), dimension(:,:), allocatable :: L_ac_J 
-      real(dp), dimension(:,:), allocatable :: L_db_J 
-      real(dp), dimension(:,:), allocatable :: L_bd_J 
 !
 !     Reordered T2 amplitudes
 !
@@ -588,56 +522,41 @@ contains
       integer(i15) :: a = 0, b = 0, c = 0, d = 0
       integer(i15) :: i = 0, j = 0
 !
-      integer(i15) :: ab = 0, ca = 0, cb = 0, cd = 0, da = 0, db = 0, ac = 0, bd = 0 
+      integer(i15) :: ab = 0, ca = 0, bc = 0, cd = 0, ad = 0, db = 0, ac = 0, bd = 0 
       integer(i15) :: ai = 0, aj = 0, bj = 0, bi = 0, ci = 0, cj = 0, dj = 0, di = 0
       integer(i15) :: ij = 0
 !
-      integer(i15) :: aibj = 0, biaj = 0, cidj = 0, cjdi = 0
+      integer(i15) :: aibj = 0, biaj = 0, cidj = 0, dicj = 0
 !
 !     Batching and memory handling variables
 !
       integer(i15) :: a_n_batch = 0, a_first = 0, a_last = 0, a_length = 0, a_max_length = 0, a_batch = 0
       integer(i15) :: b_n_batch = 0, b_first = 0, b_last = 0, b_length = 0, b_max_length = 0, b_batch = 0
 
-      integer(i15) :: required = 0, available = 0
+      integer(i15) :: required = 0, available = 0, threads = 0
 !
-!     Logical for reordering in L_ab_J when batching over the last index
+      integer :: omp_get_num_threads
 !
-      logical :: reorder
+!     Timing variables
 !
+      real(dp) :: time_non_integral_part
+      real(dp) :: a2_begin_time, a2_end_time
+      real(dp) :: a2_begin_time_1, a2_end_time_1
+!
+   !   write(unit_output,'(t3,a/)') 'Breakdown of A2 term:'
+!
+      time_non_integral_part = zero
+!
+      call cpu_time(a2_begin_time)
 !
 !     ::  Calculate the A2.1 term of omega ::
 !
-!
 !     Create g_ai_bj
-!  
+!
       call allocator(g_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call allocator(L_ai_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
-      call wf%get_cholesky_ai(L_ai_J)
-!
-!     g_ai_bj = sum_J L_ai_J*L_bj_J
-!     
-      call dgemm('N','T',            &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  wf%n_J,            &
-                  one,               & 
-                  L_ai_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  L_ai_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  g_ai_bj,           &
-                  (wf%n_o)*(wf%n_v))
-! .... Eirik, testing the vo_vo routine  
-      g_ai_bj = zero
       integral_type = 'electronic_repulsion'
-      write(unit_output,*) 'Getting vo_vo_integral!'
       call wf%get_vo_vo(integral_type, g_ai_bj)
-! ...
-!
-      call deallocator(L_ai_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
 !     Add A2.1 to Omega 2
 !     
@@ -666,7 +585,6 @@ contains
       call deallocator(g_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !    ::  Calculate the A2.2 term  of omega ::
-!
 !
      required = max(3*(wf%n_v)**2*(wf%n_J) + 2*(wf%n_v)*(wf%n_o)*(wf%n_J),      & ! Needed to get  L_db_J
                     (wf%n_v)**4 + 2*(wf%n_v)**2*(wf%n_J), &                       ! Needed to get g_ac_bd
@@ -706,154 +624,109 @@ contains
 !
         do b_batch = 1, a_batch
 !
-           call batch_limits(b_first ,b_last ,b_batch, b_max_length, wf%n_v)
-           b_length = b_last - b_first + 1 
+            call batch_limits(b_first ,b_last ,b_batch, b_max_length, wf%n_v)
+            b_length = b_last - b_first + 1 
+! 
+!           Allocate g_ca_db
 !
-!          Get ab-cholesky vectors for the batch, L_ac^J, then reorder from L_ac_J to L_ca_J
+            call allocator(g_ac_bd, (wf%n_v)*a_length, (wf%n_v)*b_length)
 !
-           call allocator(L_ac_J, (wf%n_v)*a_length, wf%n_J)
-           L_ac_J = zero
+!           Get g_ac_bd
 !
-           call wf%get_cholesky_ab(L_ac_J, a_first, a_last, 1, wf%n_v)
+            call cpu_time(a2_begin_time_1)
 !
-           call allocator(L_ca_J, (wf%n_v)*a_length, wf%n_J)
-           L_ca_J = zero
+            integral_type = 'electronic_repulsion'
+            call wf%get_vv_vv(integral_type, & 
+                              g_ac_bd,       &
+                              a_first,       &
+                              a_last,        &
+                              1,             & 
+                              wf%n_v,        &
+                              b_first,       & 
+                              b_last,        &
+                              1,             & 
+                              wf%n_v)  
 !
-           do c = 1, wf%n_v
-              do a = 1, a_length
-                 ca = index_two(c, a, wf%n_v)
-                 ac = index_two(a, c, a_length)
-                 do J = 1, wf%n_J
-                    L_ca_J(ca, J) = L_ac_J(ac, J) 
-                 enddo
-              enddo
-           enddo
+            call cpu_time(a2_end_time_1)
+            time_non_integral_part = time_non_integral_part & 
+                                    - a2_end_time_1 + a2_begin_time_1 
 !
-           call deallocator(L_ac_J, (wf%n_v)*a_length, wf%n_J)
+            if (b_batch .eq. a_batch) then
 !
-!          Get ab-cholesky vectors for the batch, L_bd^J, then reorder from L_bd_J to L_db_J
 !
-           call allocator(L_bd_J, (wf%n_v)*b_length, wf%n_J)
-           L_bd_J = zero
+!           Allocate for +-g, +-t
 !
-           call wf%get_cholesky_ab(L_bd_J, b_first, b_last, 1, wf%n_v)
+               call allocator(g_p_ab_cd, packed_size(a_length), packed_size(wf%n_v))
+               call allocator(g_m_ab_cd, packed_size(a_length), packed_size(wf%n_v))
+               call allocator(t_p_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
+               call allocator(t_m_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
 !
-           call allocator(L_db_J, (wf%n_v)*b_length, wf%n_J)
-           L_db_J = zero
+               g_p_ab_cd = zero
+               g_m_ab_cd = zero
+               t_p_cd_ij = zero
+               t_m_cd_ij = zero
 !
-           do d = 1, wf%n_v
-              do b = 1, b_length
-                 db = index_two(d, b, wf%n_v)
-                 bd = index_two(b, d, b_length)
-                 do J = 1, wf%n_J
-                    L_db_J(db, J) = L_bd_J(bd, J)
-                 enddo
-              enddo
-           enddo
+!              Reorder g_ca_db to g_ab_cd and t_ci_dj to t_cd_ij
+! 
+!$omp parallel do schedule(static) private(d,b,a,ac,cd,bd,bc,ab,ad,i,j,ij,ci,dj,cj,di,cidj,dicj)
+               do c = 1, wf%n_v
 
-           call deallocator(L_bd_J, (wf%n_v)*b_length, wf%n_J)
-! 
-!          Allocate g_ca_db
+                  do d = 1, c
 !
-           call allocator(g_ca_db, (wf%n_v)*a_length, (wf%n_v)*b_length)
-           g_ca_db = zero
+                     cd = index_packed(c, d)
 !
-!          g_ca_db = sum_J L_ca_J*L_db_J
-!    
-           call dgemm('N','T',            &
-                       (wf%n_v)*a_length, &
-                       (wf%n_v)*b_length, &
-                       wf%n_J,            &
-                       one,               &
-                       L_ca_J,            &
-                       (wf%n_v)*a_length, &
-                       L_db_J,            &
-                       (wf%n_v)*b_length, &
-                       zero,              &
-                       g_ca_db,           &
-                       (wf%n_v)*a_length)
+                     do a = 1, a_length
 !
-!          Deallocate L_db_J 
+                        ac = index_two(a, c, a_length)
+                        ad = index_two(a, d, a_length)
 !
-           call deallocator(L_db_J, (wf%n_v)*b_length, wf%n_J)
-!
-!          Deallocate L_ca_J
-!
-           call deallocator(L_ca_J, (wf%n_v)*a_length, wf%n_J) 
-!
-           if (b_batch .eq. a_batch) then
-!
-!
-!          Allocate for +-g, +-t
-!
-              call allocator(g_p_ab_cd, packed_size(a_length), packed_size(wf%n_v))
-              call allocator(g_m_ab_cd, packed_size(a_length), packed_size(wf%n_v))
-              call allocator(t_p_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
-              call allocator(t_m_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
-!
-              g_p_ab_cd = zero
-              g_m_ab_cd = zero
-              t_p_cd_ij = zero
-              t_m_cd_ij = zero
-!
-!             Reorder g_ca_db to g_ab_cd and t_ci_dj to t_cd_ij
-! 
-              do c = 1, wf%n_v 
-                 do d = 1, c
-!
-                    cd = index_packed(c, d)
-!
-                    do a = 1, a_length
-!
-                       ca = index_two(c, a, wf%n_v)
-                       da = index_two(d, a, wf%n_v)
-!
-                       do  b = 1, b_length
-                          if ((a+a_first-1) .ge. (b+b_first-1)) then
-!                           
-                             db = index_two(d, b, wf%n_v)
-                             cb = index_two(c, b, wf%n_v)
-!
-                             ab = index_packed(a, b)
-! 
-                             g_p_ab_cd(ab, cd) = g_ca_db(ca, db) + g_ca_db(da, cb)
-                             g_m_ab_cd(ab, cd) = g_ca_db(ca, db) - g_ca_db(da, cb)
-!
-                            if(c .ne. d) then
-                              g_p_ab_cd(ab, cd) = two*g_p_ab_cd(ab, cd)
-                              g_m_ab_cd(ab, cd) = two*g_m_ab_cd(ab, cd)
-                            endif
+                        do  b = 1, b_length
+                           if ((a+a_first-1) .ge. (b+b_first-1)) then
 !                            
-                          endif
-                       enddo
-                    enddo
+                              bd = index_two(b, d, b_length)
+                              bc = index_two(b, c, b_length)
+!
+                              ab = index_packed(a, b)
+! 
+                              g_p_ab_cd(ab, cd) = g_ac_bd(ac, bd) + g_ac_bd(ad, bc)
+                              g_m_ab_cd(ab, cd) = g_ac_bd(ac, bd) - g_ac_bd(ad, bc)
+!
+                             if(c .ne. d) then
+                               g_p_ab_cd(ab, cd) = two*g_p_ab_cd(ab, cd)
+                               g_m_ab_cd(ab, cd) = two*g_m_ab_cd(ab, cd)
+                             endif
+!                             
+                           endif
+                        enddo
+                     enddo
 !
                     do i = 1, wf%n_o
                        do j = 1, i
 !    
                           ij = index_packed(i, j)
 !    
-                          ci = index_two(c, i, wf%n_v)
-                          dj = index_two(d, j, wf%n_v)
-                          cj = index_two(c, j, wf%n_v)
-                          di = index_two(d, i, wf%n_v)
+                           ci = index_two(c, i, wf%n_v)
+                           dj = index_two(d, j, wf%n_v)
+                           cj = index_two(c, j, wf%n_v)
+                           di = index_two(d, i, wf%n_v)
+!
+                           cidj = index_packed(ci, dj)
+                           dicj = index_packed(cj, di)
 ! 
-                          cidj = index_packed(ci, dj)
-                          cjdi = index_packed(cj, di)
-! 
-                          t_p_cd_ij(cd, ij) = wf%t2am(cidj, 1) + wf%t2am(cjdi, 1)
-                          t_m_cd_ij(cd, ij) = wf%t2am(cidj, 1) - wf%t2am(cjdi, 1)  
+                           t_p_cd_ij(cd, ij) = wf%t2am(cidj, 1) + wf%t2am(dicj, 1)
+                           t_m_cd_ij(cd, ij) = wf%t2am(cidj, 1) - wf%t2am(dicj, 1)  
 !
                        enddo
                     enddo
                  enddo
               enddo
+!$omp end parallel do
 !
-!             Dellocate g_ac_bd 
+!              Dellocate g_ac_bd 
 !
-              call deallocator(g_ca_db, (wf%n_v)*a_length, (wf%n_v)*b_length)
+               call deallocator(g_ac_bd, (wf%n_v)*a_length, (wf%n_v)*b_length)
 !
-!             Allocate omega +-
+!              Allocate omega +-
 !
               call allocator(omega2_p_ab_ij, packed_size(a_length), packed_size(wf%n_o))
               call allocator(omega2_m_ab_ij, packed_size(a_length), packed_size(wf%n_o))
@@ -901,27 +774,29 @@ contains
 !
                     do a = 1, a_length
 !
-                       Ai = index_two(a + a_first - 1, i, wf%n_v) ! A is full-space a index
-                       Aj = index_two(a + a_first - 1, j, wf%n_v) ! A is full-space a index
+                       ai = index_two(a + a_first - 1, i, wf%n_v) ! A is full-CCSD-space a index
+                       aj = index_two(a + a_first - 1, j, wf%n_v) ! A is full-CCSD-space a index
 !
                        do b = 1, b_length
 !                
                           if ((a+a_first-1) .ge. (b+b_first-1)) then
-                             Bj = index_two(b + b_first - 1, j, wf%n_v) ! B is full-space b index
-                             Bi = index_two(b + b_first - 1, i, wf%n_v) ! B is full-space b index
+                             bj = index_two(b + b_first - 1, j, wf%n_v) ! B is full-CCSD-space b index
+                             bi = index_two(b + b_first - 1, i, wf%n_v) ! B is full-CCSD-space b index
 !
 !
                              ab = index_packed(a, b)
 !    
-                             AiBj = index_packed(Ai, Bj)
-                             BiAj = index_packed(Bi, Aj)
+                             aibj = index_packed(ai, bj)
+                             biaj = index_packed(bi, aj)
 !                         
 !                            Reorder into omega2_aibj
 ! 
-                             wf%omega2(AiBj,1) = wf%omega2(AiBj, 1) + omega2_p_ab_ij(ab, ij) + omega2_m_ab_ij(ab, ij)
+                             wf%omega2(aibj,1) = wf%omega2(aibj, 1) &
+                                                   + omega2_p_ab_ij(ab, ij) + omega2_m_ab_ij(ab, ij)
 !
-                             if (AiBj .ne. BiAj) then
-                                wf%omega2(BiAj,1) = wf%omega2(BiAj, 1) + omega2_p_ab_ij(ab, ij) - omega2_m_ab_ij(ab, ij)
+                             if (aibj .ne. biaj) then
+                                wf%omega2(biaj,1) = wf%omega2(biaj, 1) &
+                                                   + omega2_p_ab_ij(ab, ij) - omega2_m_ab_ij(ab, ij)
                              endif  
                           endif 
 !    
@@ -930,45 +805,44 @@ contains
                  enddo
               enddo
 !
-!             Deallocate omega +-
+!              Deallocate omega +-
 !
-              call deallocator(omega2_p_ab_ij, packed_size(a_length), packed_size(wf%n_o))
-              call deallocator(omega2_m_ab_ij, packed_size(a_length), packed_size(wf%n_o))
-           else
+               call deallocator(omega2_p_ab_ij, packed_size(a_length), packed_size(wf%n_o))
+               call deallocator(omega2_m_ab_ij, packed_size(a_length), packed_size(wf%n_o))
+            else
 !
-!             Allocate for +-g, +-t
+!              Allocate for +-g, +-t
 !
-              call allocator(g_p_ab_cd, a_length*b_length, packed_size(wf%n_v))
-              call allocator(g_m_ab_cd, a_length*b_length, packed_size(wf%n_v))
-              call allocator(t_p_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
-              call allocator(t_m_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
+               call allocator(g_p_ab_cd, a_length*b_length, packed_size(wf%n_v))
+               call allocator(g_m_ab_cd, a_length*b_length, packed_size(wf%n_v))
+               call allocator(t_p_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
+               call allocator(t_m_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
 !
-              g_p_ab_cd = zero
-              g_m_ab_cd = zero
-              t_p_cd_ij = zero
-              t_m_cd_ij = zero
-!
-!             Reorder g_ca_db to g_ab_cd and t_ci_dj to t_cd_ij
+               g_p_ab_cd = zero
+               g_m_ab_cd = zero
+               t_p_cd_ij = zero
+               t_m_cd_ij = zero
 ! 
-              do c = 1, wf%n_v 
-                 do d = 1, c
+!$omp parallel do schedule(static) private(d,b,a,ac,cd,bd,bc,ab,ad,i,j,ij,ci,dj,cj,di,cidj,dicj)
+               do c = 1, wf%n_v 
+                  do d = 1, c
 !
-                    cd = index_packed(c, d)
+                     cd = index_packed(c, d)
 !
-                    do a = 1, a_length
+                     do a = 1, a_length
 !
-                       ca = index_two(c, a, wf%n_v)
-                       da = index_two(d, a, wf%n_v)
+                        ac = index_two(a, c, a_length)
+                        ad = index_two(a, d, a_length)
 !
-                       do  b = 1, b_length
-!                           
-                             db = index_two(d, b, wf%n_v)
-                             cb = index_two(c, b, wf%n_v)
+                        do  b = 1, b_length
+!                            
+                             bd = index_two(b, d, b_length)
+                             bc = index_two(b, c, b_length)
 !
                              ab = index_two(a, b, a_length)
 ! 
-                             g_p_ab_cd(ab, cd) = g_ca_db(ca, db) + g_ca_db(da, cb)
-                             g_m_ab_cd(ab, cd) = g_ca_db(ca, db) - g_ca_db(da, cb)
+                             g_p_ab_cd(ab, cd) = g_ac_bd(ac, bd) + g_ac_bd(ad, bc)
+                             g_m_ab_cd(ab, cd) = g_ac_bd(ac, bd) - g_ac_bd(ad, bc)
 !
                             if(c .ne. d) then
                               g_p_ab_cd(ab, cd) = two*g_p_ab_cd(ab, cd)
@@ -981,60 +855,61 @@ contains
                     do i = 1, wf%n_o
                        do j = 1, i
 !    
-                          ij = index_packed(i, j)
+                           ij = index_packed(i, j)
 !    
-                          ci = index_two(c, i, wf%n_v)
-                          dj = index_two(d, j, wf%n_v)
-                          cj = index_two(c, j, wf%n_v)
-                          di = index_two(d, i, wf%n_v)
+                           ci = index_two(c, i, wf%n_v)
+                           dj = index_two(d, j, wf%n_v)
+                           cj = index_two(c, j, wf%n_v)
+                           di = index_two(d, i, wf%n_v)
+!
+                           cidj = index_packed(ci, dj)
+                           dicj = index_packed(cj, di)
 ! 
-                          cidj = index_packed(ci, dj)
-                          cjdi = index_packed(cj, di)
-! 
-                          t_p_cd_ij(cd, ij) = wf%t2am(cidj, 1) + wf%t2am(cjdi, 1)
-                          t_m_cd_ij(cd, ij) = wf%t2am(cidj, 1) - wf%t2am(cjdi, 1)  
+                           t_p_cd_ij(cd, ij) = wf%t2am(cidj, 1) + wf%t2am(dicj, 1)
+                           t_m_cd_ij(cd, ij) = wf%t2am(cidj, 1) - wf%t2am(dicj, 1)  
 !
                        enddo
                     enddo
                  enddo
               enddo
+!$omp end parallel do
 !
-!             Dellocate g_ac_bd 
+!              Dellocate g_ac_bd 
 !
-              call deallocator(g_ca_db, (wf%n_v)*a_length, (wf%n_v)*b_length)
+               call deallocator(g_ac_bd, (wf%n_v)*a_length, (wf%n_v)*b_length)
 !
-!             Allocate omega +-
+!              Allocate omega +-
 !
 
-              call allocator(omega2_p_ab_ij, b_length*a_length, packed_size(wf%n_o))
-              call allocator(omega2_m_ab_ij, b_length*a_length, packed_size(wf%n_o))
+               call allocator(omega2_p_ab_ij, b_length*a_length, packed_size(wf%n_o))
+               call allocator(omega2_m_ab_ij, b_length*a_length, packed_size(wf%n_o))
+!  
+!               omega2_ab_ij = sum_(cd) g_ab_cd*t_cd_ij
 ! 
-!              omega2_ab_ij = sum_(cd) g_ab_cd*t_cd_ij
-! 
-              call dgemm('N','N',                & 
-                          b_length*a_length,     &
-                          packed_size(wf%n_o),   &
-                          packed_size(wf%n_v),   &
-                          one/four,              &
-                          g_p_ab_cd,             &
-                          b_length*a_length,     &
-                          t_p_cd_ij,             &
-                          packed_size(wf%n_v),   &
-                          zero,                  &
-                          omega2_p_ab_ij,        &
+              call dgemm('N','N',                  & 
+                          b_length*a_length,       &
+                          packed_size(wf%n_o),     &
+                          packed_size(wf%n_v),     &
+                          one/four,                &
+                          g_p_ab_cd,               &
+                          b_length*a_length,       &
+                          t_p_cd_ij,               &
+                          packed_size(wf%n_v),     &
+                          zero,                    &
+                          omega2_p_ab_ij,          &
                           b_length*a_length)
 !
-              call dgemm('N','N',                & 
-                          b_length*a_length,     &
-                          packed_size(wf%n_o),   &
-                          packed_size(wf%n_v),   &
-                          one/four,              &
-                          g_m_ab_cd,             &
-                          b_length*a_length,     &
-                          t_m_cd_ij,             &
-                          packed_size(wf%n_v),   &
-                          zero,                  &
-                          omega2_m_ab_ij,        &
+              call dgemm('N','N',                  & 
+                          b_length*a_length,       &
+                          packed_size(wf%n_o),     &
+                          packed_size(wf%n_v),     &
+                          one/four,                &
+                          g_m_ab_cd,               &
+                          b_length*a_length,       &
+                          t_m_cd_ij,               &
+                          packed_size(wf%n_v),     &
+                          zero,                    &
+                          omega2_m_ab_ij,          &
                           b_length*a_length)
 !
 !          Deallocate +-g, +-t
@@ -1044,51 +919,57 @@ contains
               call deallocator(t_p_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
               call deallocator(t_m_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
 !
-              do i = 1, wf%n_o
-                 do j = 1, i
+               do i = 1, wf%n_o
+                  do j = 1, i
 !
-                    
-                    ij = index_packed(i, j)
+                     
+                     ij = index_packed(i, j)
 !
-                    do a = 1, a_length
+                     do a = 1, a_length
 !
-                       Ai = index_two(a + a_first - 1, i, wf%n_v) ! A is full-space a index
-                       Aj = index_two(a + a_first - 1, j, wf%n_v) ! A is full-space a index
+                        ai = index_two(a + a_first - 1, i, wf%n_v) ! A is full-space a index
+                        aj = index_two(a + a_first - 1, j, wf%n_v) ! A is full-space a index
 !
-                       do b = 1, b_length
-!                
-                             Bj = index_two(b + b_first - 1, j, wf%n_v) ! B is full-space b index
-                             Bi = index_two(b + b_first - 1, i, wf%n_v) ! B is full-space b index
+                        do b = 1, b_length
+!                 
+                              bj = index_two(b + b_first - 1, j, wf%n_v) ! B is full-space b index
+                              bi = index_two(b + b_first - 1, i, wf%n_v) ! B is full-space b index
 !
 !
-                             ab = index_two(a, b, a_length)
+                              ab = index_two(a, b, a_length)
 
-!    
-                             AiBj = index_packed(Ai, Bj)
-                             BiAj = index_packed(Bi, Aj)
-!                         
-!                            Reorder into omega2_aibj
-! 
-                             wf%omega2(AiBj,1) = wf%omega2(AiBj, 1) + omega2_p_ab_ij(ab, ij) + omega2_m_ab_ij(ab, ij)
+!     
+                              aibj = index_packed(ai, bj)
+                              biaj = index_packed(bi, aj)
+!                          
+!                             Reorder into omega2_aibj
+!  
+                              wf%omega2(aibj,1) = wf%omega2(aibj, 1) &
+                                          + omega2_p_ab_ij(ab, ij) + omega2_m_ab_ij(ab, ij)
 !
-                             if (AiBj .ne. BiAj) then
-                                wf%omega2(BiAj,1) = wf%omega2(BiAj, 1) + omega2_p_ab_ij(ab, ij) - omega2_m_ab_ij(ab, ij)
-                             endif   
-!    
-                       enddo
-                    enddo
-                 enddo
-              enddo
+                              if (aibj .ne. biaj) then
+                                 wf%omega2(biaj,1) = wf%omega2(biaj, 1) &
+                                          + omega2_p_ab_ij(ab, ij) - omega2_m_ab_ij(ab, ij)
+                              endif   
+!     
+                        enddo
+                     enddo
+                  enddo
+               enddo
 !
-!             Deallocate omega +-
+!              Deallocate omega +-
 !
-              call deallocator(omega2_p_ab_ij, b_length*a_length, packed_size(wf%n_o))
-              call deallocator(omega2_m_ab_ij, b_length*a_length, packed_size(wf%n_o))
-           endif
+               call deallocator(omega2_p_ab_ij, b_length*a_length, packed_size(wf%n_o))
+               call deallocator(omega2_m_ab_ij, b_length*a_length, packed_size(wf%n_o))
+            endif
 !
-        enddo
+         enddo ! End batching over b
+      enddo ! End batching over a
 !
-     enddo
+   !   call cpu_time(a2_end_time)
+   !   time_non_integral_part = time_non_integral_part + a2_end_time - a2_begin_time
+!
+   !   write(unit_output,'(t6,a27,f14.8/)') 'Non-integral part (seconds):', time_non_integral_part
 !
    end subroutine omega_ccsd_a2_ccsd
 !
@@ -1110,8 +991,6 @@ contains
 !
 !     Integrals
 !
-      real(dp), dimension(:,:), allocatable :: L_kc_J     
-      real(dp), dimension(:,:), allocatable :: L_ij_J  
       real(dp), dimension(:,:), allocatable :: g_kc_ld    
       real(dp), dimension(:,:), allocatable :: g_kl_cd    
       real(dp), dimension(:,:), allocatable :: g_kl_ij    
@@ -1142,37 +1021,12 @@ contains
 !
       integer(i15) :: aibj = 0, akbl = 0, cidj = 0 
 !
-!     Read Cholesky vector of type L_ij_J
-!
-      call allocator(L_ij_J, (wf%n_o)*(wf%n_o), wf%n_J)
-!
-      call wf%get_cholesky_ij(L_ij_J)
-!
-!     Create g_ki_lj = sum_J L_li_J*L_lj_J
+!     Allocate and construct g_ki_lj
 !
       call allocator(g_ki_lj, (wf%n_o)*(wf%n_o), (wf%n_o)*(wf%n_o)) 
 !
-      call dgemm('N','T',            &
-                  (wf%n_o)*(wf%n_o), &
-                  (wf%n_o)*(wf%n_o), &
-                  wf%n_J,            &
-                  one,               &
-                  L_ij_J,            &
-                  (wf%n_o)*(wf%n_o), &
-                  L_ij_J,            &
-                  (wf%n_o)*(wf%n_o), &
-                  zero,              &
-                  g_ki_lj,           &
-                  (wf%n_o)*(wf%n_o))
-! ... Eirik, testing oo_oo routine
-      g_ki_lj = zero
       integral_type = 'electronic_repulsion'
-      write(unit_output,*) 'Getting oo_oo integral!'
       call wf%get_oo_oo(integral_type,g_ki_lj)
-! ...
-!
-!
-      call deallocator(L_ij_J, (wf%n_o)*(wf%n_o), wf%n_J)
 !
       call allocator(g_kl_ij, (wf%n_o)*(wf%n_o),(wf%n_o)*(wf%n_o))
 !
@@ -1199,32 +1053,12 @@ contains
 !
       call deallocator(g_ki_lj, (wf%n_o)*(wf%n_o), (wf%n_o)*(wf%n_o))
 !
-!     Read Cholesky vectors of ia-type into L_kc_J
-!
-      call allocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
-!
-      call wf%get_cholesky_ia(L_kc_J)
-!
-!     Create g_ck_ld = sum_(J) L_kc_J*L_ld_J
+!     Allocate and construct g_kc_ld
 !
       call allocator(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !  
-      call dgemm('N','T',            &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  wf%n_J,            &
-                  one,               &
-                  L_kc_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  L_kc_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  g_kc_ld,           &
-                  (wf%n_o)*(wf%n_v))
-!
-!     Deallocate cholesky vectors L_ck_J
-!
-      call deallocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      integral_type = 'electronic_repulsion'
+      call wf%get_ov_ov(integral_type, g_kc_ld)
 !
 !     Reorder g_kc_ld as g_kl_cd, also reordering t_ci_dj as t_cd_ij
 !
@@ -1277,36 +1111,7 @@ contains
 !
 !     Deallocate t_cd_ij and g_kl_cd
 !
-      call deallocator(t_cd_ij, (wf%n_v)*(wf%n_v), (wf%n_o)*(wf%n_o))
       call deallocator(g_kl_cd, (wf%n_o)*(wf%n_o), (wf%n_v)*(wf%n_v))
-!
-!     Reorder t_ak_bl to t_ab_kl
-!
-      call allocator(t_ab_kl, (wf%n_v)**2, (wf%n_o)**2)
-!
-      do l=1, wf%n_o
-         do k = 1, wf%n_o
-!
-            kl = index_two(k, l, wf%n_o)
-!
-            do b = 1, wf%n_v
-!
-               bl = index_two(b, l, wf%n_v)
-!
-               do a = 1, wf%n_v
-!
-                  ak = index_two(a, k, wf%n_v)
-                  ab = index_two(a, b, wf%n_v)
-                  
-!
-                  akbl = index_packed(ak, bl)
-!
-                  t_ab_kl(ab, kl) = wf%t2am(akbl, 1)
-!
-               enddo
-            enddo
-         enddo
-      enddo
 !
 !     omega_ab_ij = sum_(kl) t_ab_kl*X_kl_ij
 !
@@ -1317,7 +1122,7 @@ contains
                   (wf%n_o)**2, &
                   (wf%n_o)**2, &
                   one,         &
-                  t_ab_kl,     &
+                  t_cd_ij,     & ! t_ab_kl
                   (wf%n_v)**2, &
                   g_kl_ij,     &
                   (wf%n_o)**2, &
@@ -1325,7 +1130,7 @@ contains
                   omega_ab_ij, &
                   (wf%n_v)**2)
 !
-      call deallocator(t_ab_kl, (wf%n_v)**2, (wf%n_o)**2)
+      call deallocator(t_cd_ij, (wf%n_v)**2, (wf%n_o)**2)
       call deallocator(g_kl_ij, (wf%n_o)**2, (wf%n_o)**2)
 !
 !     Reorder into omega2
@@ -1368,22 +1173,19 @@ contains
 !!    Omega C2 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2017
 !!    
-!!    Omega C2 = -1/2* sum_(ck)t_bk_cj*(g_ki_ac -1/2 sum_(dl)t_al_di * g_kd_lc)
-!!                                  - sum_(ck) t_bk_ci (g_kj_ac-sum_(dl)t_al_dj*g_kd_lc)
-!!    
+!!    Omega C2 = -1/2 * sum_(ck) t_bk_cj*(g_ki_ac -1/2 sum_(dl)t_al_di * g_kd_lc)
+!!                    - sum_(ck) t_bk_ci*(g_kj_ac - sum_(dl)t_al_dj * g_kd_lc)
+!!                    - 1/2 * sum_ck u_jk^bc g_acki
+!!
       implicit none
 !
       class(ccsd) :: wf
 !
 !     Integrals
 !
-      real(dp), dimension(:,:), allocatable :: L_ia_J 
-      real(dp), dimension(:,:), allocatable :: L_ki_J 
-      real(dp), dimension(:,:), allocatable :: L_ca_J 
-      real(dp), dimension(:,:), allocatable :: L_ac_J 
       real(dp), dimension(:,:), allocatable :: g_kd_lc
       real(dp), dimension(:,:), allocatable :: g_dl_ck
-      real(dp), dimension(:,:), allocatable :: g_ki_ca
+      real(dp), dimension(:,:), allocatable :: g_ki_ac
       real(dp), dimension(:,:), allocatable :: g_ai_ck
 !
 !     Reordered T2 amplitudes
@@ -1395,6 +1197,11 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: X_ai_ck
       real(dp), dimension(:,:), allocatable :: Y_ai_bj
+!
+!     Reordered U2 amplitudes 
+!
+      real(dp), dimension(:,:), allocatable :: u_ck_bj
+      real(dp), dimension(:,:), allocatable :: omega2_ai_bj ! Holds term temporarily
 !  
 !     Indices
 !     
@@ -1403,9 +1210,9 @@ contains
 !
       integer(i15) :: ai = 0, aj = 0, al = 0, bi = 0, bj = 0, bk = 0, cj = 0, ck = 0, cl = 0, di = 0, dk = 0, dl = 0
       integer(i15) :: kd = 0, lc = 0, ca = 0, ac = 0
-      integer(i15) :: ki = 0
+      integer(i15) :: ki = 0, ai_offset = 0
 !
-      integer(i15) :: aldi = 0, aibj = 0, cldk = 0, bkcj = 0
+      integer(i15) :: aldi = 0, aibj = 0, cldk = 0, bkcj = 0, bjck = 0
 !
 !     Batching and memory handling
 !
@@ -1414,38 +1221,12 @@ contains
       integer(i15) :: n_batch = 0, max_batch_length = 0
       integer(i15) :: a_batch = 0, a_start = 0, a_end = 0, a_length = 0 
 !
-!     Logical for reordering L_ab_J when batching over last index 
-!
-      logical :: reorder 
-!
-!     Allocate L_ia_J
-!
-      call allocator(L_ia_J,(wf%n_o)*(wf%n_v),(wf%n_J))
-!
-!     Get L_ia_J
-!
-      call wf%get_cholesky_ia(L_ia_J)
-!
-!     Create g_kd_lc = sum_J L_kd_J * L_lc_J
+!     Allocate and construct g_kd_lc 
 !
       call allocator(g_kd_lc,(wf%n_o)*(wf%n_v),(wf%n_o)*(wf%n_v))
 !
-      call dgemm('N','T',            &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  wf%n_J,            &   
-                  one,               &
-                  L_ia_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  L_ia_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  g_kd_lc,           &
-                  (wf%n_o)*(wf%n_v))
-!
-!     Deallocate L_ia_J
-!
-      call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      integral_type = 'electronic_repulsion'
+      call wf%get_ov_ov(integral_type, g_kd_lc)
 !
 !     Reorder g_kd_lc as g_dl_ck and t_al_di as t_ai_dl
 !
@@ -1502,27 +1283,50 @@ contains
       call deallocator(g_dl_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call deallocator(t_ai_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-!     Constructing g_ki_ac ordered as g_ki_ca
+!     Allocate the u_ck_bj = u_jk^bc vector
 !
-!     Allocate g_ki_ca
+      call allocator(u_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      u_ck_bj = zero
 !
-      call allocator(g_ki_ca, (wf%n_o)*(wf%n_o), (wf%n_v)*(wf%n_v))
-      g_ki_ca = zero
+!     Form u_ck_bj = u_jk^bc = 2 * t_jk^bc - t_kj^bc 
 !
-!     Allocate L_ki_J
+      do j = 1, wf%n_o 
+         do b = 1, wf%n_v 
 !
-      call allocator(L_ki_J, (wf%n_o)*(wf%n_o), wf%n_J) 
+            bj = index_two(b, j, wf%n_v)
 !
-!     Get cholesky vectors of ij-type
+            do k = 1, wf%n_o 
 !
-      call wf%get_cholesky_ij(L_ki_J)
+               bk = index_two(b, k, wf%n_v)
 !
-!     Prepare batching over a 
+               do c = 1, wf%n_v 
+!
+                  ck = index_two(c, k, wf%n_v)
+                  cj = index_two(c, j, wf%n_v)
+!
+                  bjck = index_packed(bj, ck)
+                  bkcj = index_packed(bk, cj)
+!
+                  u_ck_bj(ck, bj) = two*(wf%t2am(bjck, 1)) - wf%t2am(bkcj, 1)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+!     Allocate a holder for - 1/2 * sum_ck u_jk^bc g_acki,
+!     constructed in batches over the a index below
+!
+      call allocator(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      omega2_ai_bj = zero
+!
+!     Constructing g_ki_ac
 !
 !     Setup of variables needed for batching
 !
       available = get_available()
-      required = 2*(wf%n_v**2)*(wf%n_J) + 2*(wf%n_v)*(wf%n_o)*(wf%n_J)
+      required = 2*(wf%n_v**2)*(wf%n_J) + 2*(wf%n_v)*(wf%n_o)*(wf%n_J) &
+               + (wf%n_o**2)*(wf%n_v**2)
       required = 4*required
       call num_batch(required, available, max_batch_length, n_batch, wf%n_v)
 !
@@ -1539,85 +1343,129 @@ contains
          call batch_limits(a_start, a_end, a_batch, max_batch_length, wf%n_v)
          a_length = a_end - a_start + 1
 !
-!        Get ab-cholesky vectors for the batch, L_ac^J, then reorder from L_ac_J to L_ca_J
+!        Allocate and construct g_ki_ac
 !
-         call allocator(L_ac_J,(wf%n_v)*a_length, wf%n_J)
-         L_ac_J = zero
-         call wf%get_cholesky_ab(L_ac_J, a_start, a_end, 1, wf%n_v)
+         call allocator(g_ki_ac, (wf%n_o)**2, a_length*(wf%n_v))
 !
-         call allocator(L_ca_J,(wf%n_v)*a_length, wf%n_J)
-         L_ca_J = zero
-         do a = 1, a_length
-            do c = 1, wf%n_v
-               ac = index_two(a, c, a_length) 
-               ca = index_two(c, a, wf%n_v) 
-               do J = 1, wf%n_J
-                 L_ca_J(ca, J) = L_ac_J(ac, J)
-               enddo
-            enddo
-         enddo
-
-         call deallocator(L_ac_J,(wf%n_v)*a_length, wf%n_J)
+         integral_type = 'electronic_repulsion'
+         call wf%get_oo_vv(integral_type, & 
+                           g_ki_ac,       &
+                           1,             & 
+                           wf%n_o,        &
+                           1,             & 
+                           wf%n_o,        &
+                           a_start,       & 
+                           a_end,         &
+                           1,             &
+                           wf%n_v)
 !
-!        g_ki_ca = sum_J L_ki_J*L_ca_J
+!        X_ai_ck = X_ai_ck + g_ki_ac
+!  
+         do i = 1, wf%n_o
+            do k = 1, wf%n_o
 !
-         call dgemm('N','T',                                   &
-                     (wf%n_o)*(wf%n_o),                        &
-                     (wf%n_v)*a_length,                        &
-                     wf%n_J,                                   &   
-                     one,                                      &   
-                     L_ki_J,                                   &
-                     (wf%n_o)*(wf%n_o),                        &
-                     L_ca_J,                                   &
-                     (wf%n_v)*a_length,                        &
-                     one,                                      &
-                     g_ki_ca(1,index_two(1, a_start, wf%n_v)), &
-                     (wf%n_o)*(wf%n_o))
-!
-!        Deallocate L_ca_J
-!
-         call deallocator(L_ca_J, (wf%n_v)*a_length, wf%n_J)
-!
-      enddo ! End of batching
-!
-!     Deallocate L_ki_J
-!
-      call deallocator(L_ki_J, (wf%n_o)*(wf%n_o), wf%n_J)
-!
-!     Reorder g_ki_ca to g_ai_ck
-!
-      call allocator(g_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
-      do i = 1, wf%n_o
-         do k = 1, wf%n_o
-!
-            ki = index_two(k, i, wf%n_o)
-!
-            do a = 1, wf%n_v
-!
-               ai = index_two(a, i, wf%n_v)
+               ki = index_two(k, i, wf%n_o)
 !
                do c = 1, wf%n_v
 !
-                  ca = index_two(c, a, wf%n_v)
                   ck = index_two(c, k, wf%n_v)
 !
-                  g_ai_ck(ai, ck) = g_ki_ca(ki, ca)
+                  do a = 1, a_length
+!
+                     ai = index_two(a + a_start -1, i, wf%n_v)
+                     ac = index_two(a, c, a_length)
+!
+                     X_ai_ck(ai, ck) = X_ai_ck(ai, ck) + g_ki_ac(ki, ac)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+!        Calculate the contribution to the term
+!
+!           omega_ai_bj = - 1/2 * sum_ck u_jk^bc g_acki
+!
+!        Reorder g_ac_ki to g_ai_kc 
+!
+         call allocator(g_ai_ck, a_length*(wf%n_o), (wf%n_o)*(wf%n_v))
+         g_ai_ck = zero
+!
+         do k = 1, wf%n_o 
+            do c = 1, wf%n_v
+!
+               ck = index_two(c, k, wf%n_v)
+!
+               do i = 1, wf%n_o
+!
+                  ki = index_two(k, i, wf%n_o)
+!
+                  do a = 1, a_length
+!
+                     ac = index_two(a, c, a_length)
+                     ai = index_two(a, i, a_length)
+!
+                     g_ai_ck(ai, ck) = g_ki_ac(ki, ac) ! g_acki 
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+         call deallocator(g_ki_ac, (wf%n_o)**2, a_length*(wf%n_v))
+!
+!        - 1/2 * sum_ck u_jk^bc g_acki = -1/2 * sum_ck g_ai_ck u_ck_bj
+!
+         ai_offset = index_two(a_start, 1, wf%n_v)
+!
+         call dgemm('N','N',                 &
+                  (wf%n_o)*a_length,         &
+                  (wf%n_o)*(wf%n_v),         &
+                  (wf%n_o)*(wf%n_v),         &
+                  -one/two,                  &
+                  g_ai_ck,                   &
+                  (wf%n_o)*a_length,         &
+                  u_ck_bj,                   &
+                  (wf%n_o)*(wf%n_v),         &
+                  zero,                      &
+                  omega2_ai_bj(ai_offset,1), &
+                  (wf%n_o)*(wf%n_v))
+!
+         call deallocator(g_ki_ac, (wf%n_o)**2, a_length*(wf%n_v))
+!
+      enddo ! End of batching
+!
+!     Deallocate reordered u_ck_bj vector 
+!
+      call deallocator(u_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!     Add the - 1/2 * sum_ck u_jk^bc g_acki term to omega  
+!
+      do j = 1, wf%n_o 
+         do b = 1, wf%n_v
+!
+            bj = index_two(b, j, wf%n_v)
+!
+            do i = 1, wf%n_o 
+               do a = 1, wf%n_v
+!
+                  ai = index_two(a, i, wf%n_v)
+!
+                  aibj = index_packed(ai, bj)
+! 
+                  if (ai .ge. bj) then
+!
+                     wf%omega2(aibj, 1) = wf%omega2(aibj, 1) + omega2_ai_bj(ai, bj) & 
+                                                               + omega2_ai_bj(bj, ai)
+!
+                  endif
 !
                enddo
             enddo
          enddo
-      enddo
+      enddo 
 !
-      call deallocator(g_ki_ca, (wf%n_o)*(wf%n_o), (wf%n_v)*(wf%n_v))
-!
-!     X_ai_ck = X_ai_ck + g_ai_ck
-!
-      call daxpy((wf%n_o)*(wf%n_v)*(wf%n_o)*(wf%n_v), one, g_ai_ck, 1, X_ai_ck, 1)
-!
-!     Deallocate g_ai_kc
-!
-      call deallocator(g_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call deallocator(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) 
 !
 !     Reorder t_bkcj_1 as t_ck_bj
 !
@@ -1684,10 +1532,11 @@ contains
                   bj = index_two(b, j, wf%n_v)
 !
                   if (ai .ge. bj) then
+!
                      aj = index_two(a, j, wf%n_v)
                      bi = index_two(b, i, wf%n_v)
 !
-                     aibj=index_packed(ai, bj)
+                     aibj = index_packed(ai, bj)
 !
                      wf%omega2(aibj, 1) = wf%omega2(aibj, 1) + half*Y_ai_bj(ai, bj) + Y_ai_bj(aj, bi) &
                                                                + half*Y_ai_bj(bj, ai) + Y_ai_bj(bi, aj)
@@ -1707,35 +1556,28 @@ contains
 !
 !
    module subroutine omega_ccsd_d2_ccsd(wf)
-!
-!     Omega D2 
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!
-!     Calculates the D2 term,
-!
-!      D2: sum_ck u_jk^bc g_aikc 
-!        - 1/2 * sum_ck u_jk^bc g_acki 
-!        + 1/4 * sum_ck u_jk^bc sum_dl L_ldkc u_il^ad,
-!
-!     where 
-!
-!        u_jk^bc = 2 * t_jk^bc - t_kj^bc,
-!        L_ldkc  = 2 * g_ldkc  - g_lckd.
-!
-!     The first, second, and third terms are referred to as D2.1, D2.2, and D2.3, 
-!     and comes out ordered as (ai,bj). All terms are added to the omega vector of the 
-!     wavefunction object wf.
-!
-!     The routine adds the terms in the following order: D2.3, D2.1, D2.2
-!
+!!
+!!    Omega D2 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!    Calculates the D2 term,
+!!
+!!      D2: sum_ck u_jk^bc g_aikc 
+!!        + 1/4 * sum_ck u_jk^bc sum_dl L_ldkc u_il^ad,
+!!
+!!    where 
+!!
+!!        u_jk^bc = 2 * t_jk^bc - t_kj^bc,
+!!        L_ldkc  = 2 * g_ldkc  - g_lckd.
+!!
+!!    The first and second terms are referred to as D2.1 and D2.2. 
+!!    All terms are added to the omega vector of the wavefunction object wf.
+!!
+!!    The routine adds the terms in the following order: D2.2, D2.1
+!!
       implicit none 
 !
       class(ccsd) :: wf 
-!
-!     Batching variables 
-!
-      integer(i15) :: required = 0, available = 0, max_batch_length = 0, batch_dimension = 0, n_batch = 0
-      integer(i15) :: a_begin = 0, a_end = 0, a_batch = 0, batch_length = 0, a_full = 0, ac_dim = 0 
 !
 !     Indices 
 !
@@ -1745,84 +1587,49 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: omega2_ai_bj ! For storing D2.3, D2.2 & D2.1
 !
-!     Vectors for D2.3 term 
+!     Vectors for D2.2 term 
 !
-      real(dp), dimension(:,:), allocatable :: L_kc_J  ! L_kc^J 
       real(dp), dimension(:,:), allocatable :: g_ld_kc ! g_ldkc 
       real(dp), dimension(:,:), allocatable :: L_ld_kc ! L_ldkc = 2 * g_ldkc - g_lckd 
       real(dp), dimension(:,:), allocatable :: u_ai_ld ! u_il^ad = 2 * t_il^ad - t_li^ad 
       real(dp), dimension(:,:), allocatable :: Z_ai_kc ! An intermediate, see below
 !
-!     Vectors for D2.2 term 
-!
       real(dp), dimension(:,:), allocatable :: g_ai_kc ! g_aikc 
       real(dp), dimension(:,:), allocatable :: u_kc_bj ! u_jk^bc
-      real(dp), dimension(:,:), allocatable :: L_ai_J  ! L_ai^J 
 !
 !     Vectors for D2.1 term 
 !
       real(dp), dimension(:,:), allocatable :: g_ai_ck ! g_acki
-      real(dp), dimension(:,:), allocatable :: g_ca_ki ! g_acki; a is batched over 
-      real(dp), dimension(:,:), allocatable :: L_ca_J  ! L_ac^J; a is batched over 
-      real(dp), dimension(:,:), allocatable :: L_ac_J  ! L_ac^J; a is batched over 
-      real(dp), dimension(:,:), allocatable :: L_ki_J  ! L_ki^J 
+      real(dp), dimension(:,:), allocatable :: g_ac_ki ! g_acki; a is batched over 
       real(dp), dimension(:,:), allocatable :: u_ck_bj ! u_jk^bc
 !
-!     Logical for reordering L_ab_J when batching over the last index 
+!     :: Calculate the D2.2 term of omega ::
 !
-      logical :: reorder 
-!
-!     :: Calculate the D2.3 term of omega ::
-!
-!
-!     Allocate the Cholesky vector L_kc_J = L_kc^J and set to zero 
-!
-      call allocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
-!
-!     Read the Cholesky vector L_kc_J from file
-!
-      call wf%get_cholesky_ia(L_kc_J)
-!
-!     Allocate g_ld_kc = g_ldkc and set to zero 
+!     Get g_ld_kc = g_ldkc 
 !
       call allocator(g_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-!     Calculate g_ld_kc = g_ldkc = sum_J L_ld^J L_kc^J
+      integral_type = 'electronic_repulsion'
+      call wf%get_ov_ov(integral_type, g_ld_kc)
 !
-      call dgemm('N','T',            &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  wf%n_J,            &
-                  one,               &
-                  L_kc_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  L_kc_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  g_ld_kc,           &
-                  (wf%n_o)*(wf%n_v))
-!
-!     Allocate L_ld_kc = L_ldkc and set to zero    
+!     Form L_ld_kc = L_ldkc    
 !
       call allocator(L_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-!     Determine L_ld_kc = L_ldkc from g_ld_kc = g_ldkc 
+      do c = 1, wf%n_v
+         do k = 1, wf%n_o 
 !
-      do l = 1, wf%n_o
-         do d = 1, wf%n_v
-            do k = 1, wf%n_o
-               do c = 1, wf%n_v
+            kc = index_two(k, c, wf%n_o)
 !
-!                 Calculate the necessary indices 
+            do d = 1, wf%n_v
 !
-                  ld = index_two(l, d, wf%n_o)
-                  kc = index_two(k, c, wf%n_o)
+               kd = index_two(k, d, wf%n_o)
+!
+               do l = 1, wf%n_o
 !
                   lc = index_two(l, c, wf%n_o)
-                  kd = index_two(k, d, wf%n_o)
-!
-!                 Set the value of L_ld_kc = 2 * g_ldkc - g_lckd 
-!
+                  ld = index_two(l, d, wf%n_o)
+! 
                   L_ld_kc(ld, kc) = two*g_ld_kc(ld, kc) - g_ld_kc(lc, kd)
 !
                enddo
@@ -1833,26 +1640,25 @@ contains
 !     Deallocate g_ld_kc and L_kc_J
 !
       call deallocator(g_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call deallocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
-!
-!     Allocate u_ai_ld = u_il^ad 
+! 
+!     Form u_ai_ld = u_il^ad = 2 * t_il^ad - t_li^ad 
 !
       call allocator(u_ai_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-! 
-!     Determine u_ai_ld = u_il^ad = 2 * t_il^ad - t_li^ad 
 !
-      do i = 1, wf%n_o
-         do l = 1, wf%n_o
-            do a = 1, wf%n_v
+      do d = 1, wf%n_v 
+         do l = 1, wf%n_o 
 !
-               ai   = index_two(a, i, wf%n_v)
-               al   = index_two(a, l, wf%n_v)
+            ld = index_two(l, d, wf%n_o)
+            dl = index_two(d, l, wf%n_v)
 !
-               do d = 1, wf%n_v
+            do i = 1, wf%n_o 
 !
-                  ld   = index_two(l, d, wf%n_o)
-                  dl   = index_two(d, l, wf%n_v)
-                  di   = index_two(d, i, wf%n_v)
+               di = index_two(d, i, wf%n_v)
+!
+               do a = 1, wf%n_v 
+!
+                  ai = index_two(a, i, wf%n_v)
+                  al = index_two(a, l, wf%n_v)
 !
                   aidl = index_packed(ai, dl)
                   aldi = index_packed(al, di)
@@ -1887,11 +1693,9 @@ contains
 !
       call deallocator(L_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-!     Allocate the D2.3 term omega2_ai_bj and set it to zero
+!     Form the D2.2 term, 1/4 sum_kc Z_ai_kc u_kc_bj = 1/4 sum_kc Z_ai_kc(ai,kc) u_ai_ld(bj,kc)
 !
       call allocator(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
-!     Form the D2.3 term, 1/4 sum_kc Z_ai_kc u_kc_bj = 1/4 sum_kc Z_ai_kc(ai,kc) u_ai_ld(bj,kc)
 !
       call dgemm('N','T',            &
                   (wf%n_o)*(wf%n_v), &
@@ -1913,25 +1717,50 @@ contains
 !     where Z_ai,kc = sum_dl u_ai,ld L_ld,kc. Note that u_ai_ld(ai,ld) = u_il^ad, 
 !     which means that u_ai_ld(bj,kc)^T = u_ai_ld(kc,bj) = u_kj^cb = u_jk^bc.
 !
-!
 !     Deallocate the Z_ai_kc intermediate 
 !
       call deallocator(Z_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-!     Add the D2.3 term to the omega vector 
+!     :: Calculate the D2.1 term of omega :: 
 !
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
+!     Form g_ai_kc = g_aikc
 !
-            ai   = index_two(a, i, wf%n_v)
+      call allocator(g_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-            do b = 1, wf%n_v
-               do j = 1, wf%n_o
+      integral_type = 'electronic_repulsion'
+      call wf%get_vo_ov(integral_type,g_ai_kc)
 !
-                  bj   = index_two(b, j, wf%n_v)
+!     Calculate the D2.1 term, sum_ck u_jk^bc g_aikc = sum_ck g_ai_kc(ai,kc) u_ai_ld(bj,kc)
+!
+      call dgemm('N','T',            &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  g_ai_kc,           &
+                  (wf%n_o)*(wf%n_v), &
+                  u_ai_ld,           &
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  omega2_ai_bj,      &
+                  (wf%n_o)*(wf%n_v))
+!
+      call deallocator(u_ai_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) 
+!
+!     Add the D2.1 term to the omega vector 
+!
+      do j = 1, wf%n_o 
+         do b = 1, wf%n_v
+!
+            bj = index_two(b, j, wf%n_v)
+!
+            do i = 1, wf%n_o 
+               do a = 1, wf%n_v
+!
+                  ai = index_two(a, i, wf%n_v)
 !
                   aibj = index_packed(ai, bj)
-!
+! 
                   if (ai .ge. bj) then
 !
                      wf%omega2(aibj, 1) = wf%omega2(aibj, 1) + omega2_ai_bj(ai, bj) & 
@@ -1944,338 +1773,9 @@ contains
          enddo
       enddo
 !
-!     Deallocate the omega2_ai_bj and u_ai_ld(ai,ld) = u_il^ad vector
-!
-      call deallocator(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call deallocator(u_ai_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) 
-!
-!     :: Calculate the D2.1 term of omega :: 
-!           
-!
-!     Allocate the L_ai_J and L_kc_J terms and set them to zero 
-!
-      call allocator(L_ai_J, (wf%n_o)*(wf%n_v), wf%n_J)
-      call allocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
-!
-!     Read the Cholesky vectors from file 
-!
-      call wf%get_cholesky_ai(L_ai_J)
-      call wf%get_cholesky_ia(L_kc_J)
-!
-!     Allocate g_ai_kc = g_aikc and set it zero
-!
-      call allocator(g_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
-!     Form the g_ai_kc integrals from L_ai_J and L_kc_J
-!  
-      call dgemm('N','T',            &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  wf%n_J,            &
-                  one,               &
-                  L_ai_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  L_kc_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  g_ai_kc,           &
-                  (wf%n_o)*(wf%n_v))
-! ... Eirik, testing vo_ov integral 
-      g_ai_kc = zero
-      integral_type = 'electronic_repulsion'
-      write(unit_output,*) 'Getting vo_ov integral!'
-      call wf%get_vo_ov(integral_type,g_ai_kc)
-! ...
-!
-!     Deallocate the Cholesky vectors L_ai_J and L_kc_J
-!
-      call deallocator(L_ai_J, (wf%n_o)*(wf%n_v), wf%n_J)
-      call deallocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
-!
-!     Allocate u_kc_bj and set it to zero 
-!
-      call allocator(u_kc_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
-!     Determine u_kc_bj = u_jk^bc = 2 * t_jk^bc - t_kj^bc 
-!
-      do k = 1, wf%n_o
-         do c = 1, wf%n_v
-!
-            ck   = index_two(c, k, wf%n_v)
-            kc   = index_two(k, c, wf%n_o)
-!
-            do j = 1, wf%n_o
-!
-               cj   = index_two(c, j, wf%n_v)
-!
-               do b = 1, wf%n_v
-!                 
-                  bj   = index_two(b, j, wf%n_v)
-                  bk   = index_two(b, k, wf%n_v)            
-!
-                  bjck = index_packed(bj, ck)
-                  bkcj = index_packed(bk, cj)
-!    
-                  u_kc_bj(kc, bj) = two*(wf%t2am(bjck, 1)) - wf%t2am(bkcj, 1)
-!
-               enddo
-            enddo
-         enddo
-      enddo 
-!
-!     Allocate omega2_ai_bj and set it to zero 
-!
-      call allocator(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) 
-!
-!     Calculate the D2.1 term sum_ck u_jk^bc g_aikc = sum_ck g_ai_kc u_kc_bj
-!
-      call dgemm('N','N',            &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  one,               &
-                  g_ai_kc,           &
-                  (wf%n_o)*(wf%n_v), &
-                  u_kc_bj,           &
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  omega2_ai_bj,      &
-                  (wf%n_o)*(wf%n_v))
-!
-!     Add the D2.1 term to the omega vector 
-!
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
-!
-            ai   = index_two(a, i, wf%n_v)
-!
-            do j = 1, wf%n_o
-               do b = 1, wf%n_v
-!                 
-                  bj   = index_two(b, j, wf%n_v)
-!
-                  aibj = index_packed(ai, bj)
-!
-                  if (ai .ge. bj) then
-!
-                     wf%omega2(aibj,1) = wf%omega2(aibj,1) + omega2_ai_bj(ai,bj) & 
-                                                            + omega2_ai_bj(bj,ai)
-!
-                  endif
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!
 !     Deallocate g_ai_kc, u_kc_bj, and the omega2_ai_bj vectors 
 !
       call deallocator(g_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call deallocator(u_kc_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
-      call deallocator(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
-!     :: Calculate D2.2 term of Omega ::
-!
-!     - 1/2 * sum_ck u_jk^bc g_acki = -1/2 * sum_ck g_ai_ck u_ck_bj 
-!
-!     Allocate L_ki_J and set it to zero
-!
-      call allocator(L_ki_J, (wf%n_o)**2, wf%n_J)
-!
-!     Read the Cholesky vector L_ki_J from file 
-!
-      call wf%get_cholesky_ij(L_ki_J)
-!
-!     Allocate the full g_ai_ck = g_acki and set it to zero 
-!
-      call allocator(g_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      g_ai_ck = zero
-!
-!     Prepare for batching over the index a to calculate g_ai_ck = g_acki
-!
-!     To calculate this term, we need to first create L_ac^J, then hold L_ac^J and g_acki
-!     in memory simultaneously 
-!
-      required = (wf%n_J)*(wf%n_v)**2  ! Holding L_ac^J
-!
-      required = required &                                             
-                  + max( ((wf%n_v)**2)*((wf%n_o)**2), &                 ! Testing if it is more demanding 
-                   (wf%n_J)*(wf%n_v)**2 + 2*(wf%n_J)*(wf%n_v)*(wf%n_o)) ! to hold g_acki or to create L_ac^J
-!
-      required = four*required ! In words
-!
-      available = get_available()
-      batch_dimension = wf%n_v
-!
-!     Determine the batching variables 
-!
-      call num_batch(required, available, max_batch_length, n_batch, batch_dimension) 
-!
-!     Determine g_ai_ck = g_acki successively in batches over a 
-!
-      do a_batch = 1, n_batch
-!
-!        For each batch, get the limits for the a index        
-!
-         call batch_limits(a_begin, a_end, a_batch, max_batch_length, batch_dimension)
-         batch_length = a_end - a_begin + 1 
-!
-!        Get ab-cholesky vectors for the batch, L_ac^J, then reorder from L_ac_J to L_ca_J
-!
-         ac_dim = batch_length*(wf%n_v) ! Dimension of ac for the batch over index a 
-!
-         call allocator(L_ac_J, ac_dim, wf%n_J)
-         L_ac_J = zero
-         call wf%get_cholesky_ab(L_ac_J, a_begin, a_end, 1, wf%n_v)
-!
-         call allocator(L_ca_J, ac_dim, wf%n_J)
-         L_ca_J = zero
-         do c = 1, wf%n_v
-            do a = 1, batch_length
-               ca = index_two(c, a, wf%n_v)
-               ac = index_two(a, c, batch_length)
-               do J = 1, wf%n_J
-                  L_ca_J(ca, J) = L_ac_J(ac, J)
-               enddo
-            enddo
-         enddo
-!
-         call deallocator(L_ac_J, ac_dim, wf%n_J)
-!
-!        Allocate the integral g_ca_ki = g_acki and set to zero 
-!
-         call allocator(g_ca_ki, ac_dim, (wf%n_o)**2)
-!
-!        Calculate g_ca_ki = g_acki from L_ca_J = L_ac^J and L_ki_J = L_ki^J
-!
-         call dgemm('N','T',      &
-                     ac_dim,      &
-                     (wf%n_o)**2, &
-                     wf%n_J,      &
-                     one,         &
-                     L_ca_J,      &
-                     ac_dim,      &
-                     L_ki_J,      &
-                     (wf%n_o)**2, &
-                     zero,        & 
-                     g_ca_ki,     &
-                     ac_dim)
-!
-!        Reorder the integrals g_ca_ki (reduced a) = g_acki = g_ai_ck (full a)
-!
-         do a = 1, batch_length
-!
-            a_full = a - 1 + a_begin ! The full matrix index a
-!
-            do i = 1, wf%n_o
-!
-               ai = index_two(a_full, i, wf%n_v)
-!
-               do k = 1, wf%n_o
-!
-                  ki = index_two(k, i, wf%n_o)
-!
-                  do c = 1, wf%n_v
-!
-                     ca = index_two(c, a, wf%n_v)
-                     ck = index_two(c, k, wf%n_v)
-!
-                     g_ai_ck(ai, ck) = g_ca_ki(ca, ki)
-!
-                  enddo
-               enddo
-            enddo
-         enddo
-!
-!        Deallocate the g_ca_ki and L_ca_J vectors
-!
-         call deallocator(g_ca_ki, ac_dim, (wf%n_o)**2)
-         call deallocator(L_ca_J, ac_dim, wf%n_J)
-!
-      enddo ! End of loop over batches of a 
-!
-!     Allocate the u_ck_bj = u_jk^bc vector and set it to zero 
-!
-      call allocator(u_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      u_ck_bj = zero
-!
-!     Determine u_ck_bj = u_jk^bc = 2 * t_jk^bc - t_kj^bc 
-!
-      do k = 1, wf%n_o   
-         do j = 1, wf%n_o
-            do c = 1, wf%n_v
-!
-            ck = index_two(c, k, wf%n_v)
-            cj   = index_two(c, j, wf%n_v)
-!
-               do b = 1, wf%n_v
-!
-                  bj = index_two(b, j, wf%n_v)
-                  bk   = index_two(b, k, wf%n_v)
-!
-                  bjck = index_packed(bj, ck)
-!
-                  bkcj = index_packed(bk, cj)
-!
-                  u_ck_bj(ck, bj) = two*(wf%t2am(bjck, 1)) - wf%t2am(bkcj, 1)
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!
-!     Allocate the D2.2 term and set it to zero 
-!
-      call allocator(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
-!     Calculate the D2.2 term, - 1/2 * sum_ck u_jk^bc g_acki = -1/2 * sum_ck g_ai_ck u_ck_bj
-!
-      call dgemm('N','N',            &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  -one/two,          &
-                  g_ai_ck,           &
-                  (wf%n_o)*(wf%n_v), &
-                  u_ck_bj,           &
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  omega2_ai_bj,      &
-                  (wf%n_o)*(wf%n_v))
-!
-!     Add the D2.2 term to the omega vector 
-!
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
-!
-            ai = index_two(a, i, wf%n_v)
-!
-            do j = 1, wf%n_o
-               do b = 1, wf%n_v              
-!
-                  bj = index_two(b, j, wf%n_v)
-!
-                  aibj = index_packed(ai, bj)
-!
-                  if (ai .ge. bj) then
-!
-                     wf%omega2(aibj, 1) = wf%omega2(aibj, 1) + omega2_ai_bj(ai,bj) &
-                                                               + omega2_ai_bj(bj,ai)
-!
-                  endif
-!
-               enddo
-            enddo
-         enddo
-      enddo      
-!
-!     Deallocations
-!
-      call deallocator(g_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call deallocator(u_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call deallocator(L_ki_J, (wf%n_o)**2, wf%n_J)
-!
       call deallocator(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine omega_ccsd_d2_ccsd
@@ -2309,104 +1809,60 @@ contains
 !
       integer(i15) :: aib = 0, aibk = 0, bk = 0, bja = 0, ibj = 0, aibj = 0, dlck = 0
       integer(i15) :: b = 0, c = 0, k = 0, d = 0, ck = 0, ckdl = 0, cl = 0, cldk = 0
-      integer(i15) :: dk = 0, dl = 0, kc = 0, kdl = 0, l = 0, ld = 0, a = 0, ai = 0
-      integer(i15) :: bj = 0, aicj = 0, cj = 0, i = 0, j = 0, jai = 0, dlc = 0, dkcl = 0
+      integer(i15) :: dk = 0, dl = 0, kc = 0, ldk = 0, l = 0, ld = 0, a = 0, ai = 0
+      integer(i15) :: bj = 0, aicj = 0, cj = 0, i = 0, j = 0, jai = 0, cld = 0, dkcl = 0
 !
 !     Vectors for E2.1 term 
 !
-      real(dp), dimension(:,:), allocatable :: omega2_b_jai ! For storing the E2.1 term temporarily
-      real(dp), dimension(:,:), allocatable :: L_kc_J       ! L_kc^J
+      real(dp), dimension(:,:), allocatable :: omega2_bj_ai ! For storing the E2.1 term temporarily
       real(dp), dimension(:,:), allocatable :: g_ld_kc      ! g_ldkc 
-      real(dp), dimension(:,:), allocatable :: g_kdl_c      ! g_ldkc 
-      real(dp), dimension(:,:), allocatable :: u_b_kdl      ! u_kl^bd 
+      real(dp), dimension(:,:), allocatable :: u_b_ldk      ! u_kl^bd 
       real(dp), dimension(:,:), allocatable :: X_b_c        ! An intermediate, see below for definition
-      real(dp), dimension(:,:), allocatable :: t_c_jai      ! t_ij^ac 
+      real(dp), dimension(:,:), allocatable :: t_cj_ai      ! t_ij^ac
 !
 !     Vectors for E2.2 term 
-!
-      real(dp), dimension(:,:), allocatable :: g_k_dlc      ! g_ldkc 
-      real(dp), dimension(:,:), allocatable :: u_dlc_j      ! u_lj^dc 
-      real(dp), dimension(:,:), allocatable :: omega2_aib_j ! For storing the E2.2 term temporarily
+! 
+      real(dp), dimension(:,:), allocatable :: omega2_ai_bj ! For storing the E2.2 term temporarily
       real(dp), dimension(:,:), allocatable :: Y_k_j        ! An intermediate, see below for definition 
-      real(dp), dimension(:,:), allocatable :: t_aib_k      ! t_ik^ab 
 !
 !     :: Calculate the E2.1 term of omega ::
-!
-!     Form the Cholesky vector L_kc_J = L_kc^J 
-!
-      call allocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
-!
-      call wf%get_cholesky_ia(L_kc_J)
 !
 !     Form g_ld_kc = g_ldkc 
 !
       call allocator(g_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      call dgemm('N','T',            & 
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  wf%n_J,            &
-                  one,               &
-                  L_kc_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  L_kc_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  g_ld_kc,           &
-                  (wf%n_o)*(wf%n_v))
+      integral_type = 'electronic_repulsion'
+      call wf%get_ov_ov(integral_type, g_ld_kc)
 !
-!     Deallocate the Cholesky vector, L_kc_J
-!
-      call deallocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
-!
-!     Allocate u_b_kdl = u_kl^bd 
-!
-      call allocator(u_b_kdl, wf%n_v, (wf%n_v)*((wf%n_o)**2))
-!
-!     Allocate g_kdl_c = g_ldkc 
-!
-      call allocator(g_kdl_c, (wf%n_v)*((wf%n_o)**2), wf%n_v)
-!
-!     Determine u_b_kdl = u_kl^bd and g_kdl_c = g_ldkc
+!     Form u_b_ldk = u_kl^bd
 ! 
-      do l = 1, wf%n_o
+      call allocator(u_b_ldk, wf%n_v, (wf%n_v)*((wf%n_o)**2))
+!
+      do k = 1, wf%n_o 
          do d = 1, wf%n_v
 !
-            ld = index_two(l, d, wf%n_o)
-            dl = index_two(d, l, wf%n_v)
+            dk = index_two(d, k, wf%n_v)
+! 
+            do l = 1, wf%n_o
 !
-            do k = 1, wf%n_o
+               dl = index_two(d, l, wf%n_v)
 !
-               dk  = index_two(d, k, wf%n_v)
-               kdl = index_three(k, d, l, wf%n_o, wf%n_v)
+               ldk = index_three(l, d, k, wf%n_o, wf%n_v)
 !
-               do c = 1, wf%n_v ! Use as though "b" for u_b_kdl term
-!                  
-                  kc   = index_two(k, c, wf%n_o)
-                  cl   = index_two(c, l, wf%n_v)
-                  ck   = index_two(c, k, wf%n_v)        
+               do c = 1, wf%n_v ! Pretend that c is b below
+!
+                  cl = index_two(c, l, wf%n_v)
+                  ck = index_two(c, k, wf%n_v)
 !
                   ckdl = index_packed(ck, dl)
                   cldk = index_packed(cl, dk)
 !
-!                 Set the values of u_b_kdl and g_kdl_c
-!
-                  u_b_kdl(c, kdl) = two*(wf%t2am(ckdl, 1)) - wf%t2am(cldk, 1)
-!
-                  g_kdl_c(kdl, c) = g_ld_kc(ld, kc) ! g_ldkc 
+                  u_b_ldk(c, ldk) = two*(wf%t2am(ckdl, 1)) - wf%t2am(cldk, 1)
 !
                enddo
             enddo
          enddo
       enddo
-!
-!     Deallocate the unordered integrals g_ld_kc = g_ldkc
-!
-!        Note: It might be better to reorder g_kdl_c to g_k_dlc in the 
-!        calculation of the E2.2 term. For now (8 Mar 2017), it remains 
-!        simple & stupid.
-!
-      call deallocator(g_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     Allocate the intermediate X_b_c = F_bc - sum_dkl g_ldkc u_kl^bd and set to zero
 !
@@ -2424,48 +1880,22 @@ contains
                   wf%n_v,               &
                   (wf%n_v)*(wf%n_o)**2, &
                   -one,                 &
-                  u_b_kdl,              &
+                  u_b_ldk,              &
                   wf%n_v,               &
-                  g_kdl_c,              &
+                  g_ld_kc,              & ! g_ldk_c
                   (wf%n_v)*(wf%n_o)**2, &
                   one,                  &
                   X_b_c,                &
                   wf%n_v)
 !
-!     Deallocate u_b_kdl and g_kdl_c
+!     Form t_cj_ai = t_ij^ac = t_ji^ca 
 !
-      call deallocator(u_b_kdl, wf%n_v, (wf%n_v)*(wf%n_o)**2)
-      call deallocator(g_kdl_c, (wf%n_v)*(wf%n_o)**2, wf%n_v)
-!
-!     Form the reordered t_c_jai = t_ij^ac
-!
-      call allocator(t_c_jai, wf%n_v, (wf%n_v)*(wf%n_o)**2)
-!
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
-!
-            ai = index_two(a, i, wf%n_v)
-!
-            do j = 1, wf%n_o
-!
-               jai = index_three(j, a, i, wf%n_o, wf%n_v)
-!
-               do c = 1, wf%n_v
-!               
-                  cj   = index_two(c, j, wf%n_v)
-!
-                  aicj = index_packed(ai, cj)
-!
-                  t_c_jai(c, jai) = wf%t2am(aicj, 1)
-!
-               enddo
-            enddo
-         enddo
-      enddo
+      call allocator(t_cj_ai, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      call squareup(wf%t2am, t_cj_ai, (wf%n_v)*(wf%n_o))
 !
 !     Form the E2.1 term 
 !
-      call allocator(omega2_b_jai, wf%n_v, (wf%n_v)*(wf%n_o)**2)
+      call allocator(omega2_bj_ai, (wf%n_o)*(wf%n_v), (wf%n_v)*(wf%n_o))
 !
       call dgemm('N','N',               &
                   wf%n_v,               &
@@ -2474,38 +1904,30 @@ contains
                   one,                  &
                   X_b_c,                &
                   wf%n_v,               &
-                  t_c_jai,              &
+                  t_cj_ai,              & ! t_c_jai
                   wf%n_v,               &
                   zero,                 &
-                  omega2_b_jai,         &
+                  omega2_bj_ai,         & ! omega2_b_jai 
                   wf%n_v)
 !
 !     Add the E2.1 term to the omega vector 
 !
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
+      do j = 1, wf%n_o 
+         do b = 1, wf%n_v
 !
-            ai = index_two(a, i, wf%n_v)
+            bj = index_two(b, j, wf%n_v)
 !
-            do j = 1, wf%n_o
+            do i = 1, wf%n_o 
+               do a = 1, wf%n_v
 !
-               jai = index_three(j, a, i, wf%n_o, wf%n_v)
+                  ai = index_two(a, i, wf%n_v)
 !
-               do b = 1, wf%n_v
-!
-                  ibj  = index_three(i, b, j, wf%n_o, wf%n_v)
-!             
-                  bj   = index_two(b, j, wf%n_v)
-!
-                  aibj = index_packed(ai,bj)
-!
-!                 Restrict the indices to avoid adding both (ai,bj) and (bj,ai), 
-!                 as they are identical in packed indices
-!
+                  aibj = index_packed(ai, bj)
+! 
                   if (ai .ge. bj) then
 !
-                     wf%omega2(aibj,1) = wf%omega2(aibj,1) + omega2_b_jai(b,jai) &
-                                                            + omega2_b_jai(a,ibj)
+                     wf%omega2(aibj, 1) = wf%omega2(aibj, 1) + omega2_bj_ai(ai, bj) & 
+                                                               + omega2_bj_ai(bj, ai)
 !
                   endif
 !
@@ -2514,209 +1936,106 @@ contains
          enddo
       enddo
 !
-!     Deallocate the E2.1 term, the X intermediate, and the reordered amplitudes 
+!     Deallocate the E2.1 term, the X intermediate, keep the amplitudes 
 !
-      call deallocator(omega2_b_jai, wf%n_v, (wf%n_v)*(wf%n_o)**2)
+      call deallocator(omega2_bj_ai, (wf%n_o)*(wf%n_v), (wf%n_v)*(wf%n_o))
       call deallocator(X_b_c, wf%n_v, wf%n_v)
-      call deallocator(t_c_jai, wf%n_v, (wf%n_v)*(wf%n_o)**2)
 !
-!    :: Calculate E.2.2 term of omega ::
+!     :: Calculate E2.2 term of omega ::
 !
+!     Allocate the intermediate Y_k_j = F_kj  + sum_cdl u_lj^dc g_ldkc 
+!                                     = F_kj  + sum_cdl u_lj^dc g_kcld 
+!                                     = F_k_j + sum_cdl g_k_cld * u_cld_j
 !
-!    Form the Cholesky vector L_kc_J = L_kc^J 
+      call allocator(Y_k_j, wf%n_o, wf%n_o)
 !
-     call allocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
+!     Copy the occupied-occupied Fock matrix, such that Y_k_j = F_kj 
 !
-     call wf%get_cholesky_ia(L_kc_J)
+      call dcopy((wf%n_o)**2, wf%fock_ij, 1, Y_k_j, 1)
 !
-!    Form g_ld_kc = g_ldkc = sum_J L_ld^J L_kc^J 
+!     Add sum_cdl g_k_dlc u_dlc_j to Y_k_j, such that 
+!     Y_k_j = F_k_j + sum_cdl g_k_cld u_cld_j
 !
-     call allocator(g_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!     Note:
 !
-     call dgemm('N','T',            &
-                 (wf%n_o)*(wf%n_v), &
-                 (wf%n_o)*(wf%n_v), &
-                 wf%n_J,            &
-                 one,               &
-                 L_kc_J,            &
-                 (wf%n_o)*(wf%n_v), &
-                 L_kc_J,            &
-                 (wf%n_o)*(wf%n_v), &
-                 zero,              &
-                 g_ld_kc,           &
-                 (wf%n_o)*(wf%n_v))
-! ... Eirik, testing ov_ov integral
-      g_ld_kc = zero
-      integral_type = 'electronic_repulsion'
-      write(unit_output,*) 'Getting ov_ov integral!'
-      call wf%get_ov_ov(integral_type,g_ld_kc)
-! ...
+!     g_ld_kc(kc,ld) = g_kcld              -> pretend that this is g_k_cld 
+!     u_b_ldk(c,ldj) = u_jl^cd (= u_lj^dc) -> pretend that this is u_cld_j
 !
-!    Deallocate the Cholesky vector, L_kc_J
-!
-     call deallocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
-!
-!    Allocate g_k_dlc = g_ldkc
-!
-     call allocator(g_k_dlc, wf%n_o, (wf%n_o)*(wf%n_v)**2)
-!
-!    Allocate u_dlc_j = u_lj^dc
-!
-     call allocator(u_dlc_j, (wf%n_o)*(wf%n_v)**2, wf%n_o)
-!
-!    Determine g_k_dlc = g_ldkc and u_dlc_j = u_lj^dc 
-!
-     do k = 1, wf%n_o ! Use as though "j" for u_dlc_j term 
-        do c = 1, wf%n_v
-!
-           kc = index_two(k, c, wf%n_o)
-           ck = index_two(c, k, wf%n_v)
-!
-           do l = 1, wf%n_o
-!
-              cl = index_two(c, l, wf%n_v)
-!
-              do d = 1, wf%n_v
-!
-                 dlc  = index_three(d, l, c, wf%n_v, wf%n_o)
-!
-                 ld = index_two(l, d, wf%n_o)
-                 dl = index_two(d, l, wf%n_v)
-                 dk = index_two(d, k, wf%n_v)
-!
-                 dlck = index_packed(dl, ck)
-                 dkcl = index_packed(dk, cl)
-!
-!                Set the value of g_k_dlc and u_dlc_j 
-!
-                 g_k_dlc(k, dlc) = g_ld_kc(ld, kc)                           ! g_ldkc 
-                 u_dlc_j(dlc, k) = two*(wf%t2am(dlck, 1)) - wf%t2am(dkcl, 1) ! u_lk^dc = 2 * t_lk^dc - t_kl^dc 
-!
-              enddo
-           enddo
-        enddo
-     enddo
-!
-!    Deallocate the integrals g_ld_kc = g_ldkc 
-!
-     call deallocator(g_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
-!    Allocate the intermediate Y_k_j = F_kj  + sum_cdl u_lj^dc g_ldkc 
-!                                    = F_k_j + sum_cdl g_k_dlc * u_dlc_j
-!
-     call allocator(Y_k_j, wf%n_o, wf%n_o)
-!
-!    Copy the occupied-occupied Fock matrix, such that Y_k_j = F_kj 
-!
-     call dcopy((wf%n_o)**2, wf%fock_ij, 1, Y_k_j, 1)
-!
-!    Add sum_cdl g_k_dlc u_dlc_j to Y_k_j, such that 
-!    Y_k_j = F_k_j + sum_cdl g_k_dlc u_dlc_j
-!
-     call dgemm('N','N',               &
+      call dgemm('N','N',              &
                  wf%n_o,               &
                  wf%n_o,               &
                  (wf%n_o)*(wf%n_v)**2, &
                  one,                  &
-                 g_k_dlc,              &
+                 g_ld_kc,              & ! g_k_cld
                  wf%n_o,               &
-                 u_dlc_j,              &
+                 u_b_ldk,              & ! u_cld_j
                  (wf%n_o)*(wf%n_v)**2, &
                  one,                  &
                  Y_k_j,                &
                  wf%n_o)
 !
-!    Deallocate u_dlc_j and g_k_dlc 
+!     Deallocate u_b_ldk and g_ld_kc
 !
-     call deallocator(u_dlc_j, (wf%n_o)*(wf%n_v)**2, wf%n_o)
-     call deallocator(g_k_dlc, wf%n_o, (wf%n_o)*(wf%n_v)**2)
-!
-!    Allocate t_aib_k = t_ik^ab and set it to zero 
-!
-     call allocator(t_aib_k, (wf%n_o)*(wf%n_v)**2, wf%n_o)
-!
-!    Determine t_aib_k = t_ik^ab 
-!
-     do k = 1, wf%n_o
-        do b = 1, wf%n_v
-!
-           bk = index_two(b, k, wf%n_v)
-!
-           do i = 1, wf%n_o
-              do a = 1, wf%n_v
-!
-                 ai = index_two(a, i, wf%n_v)
-                 aib = index_three(a, i, b, wf%n_v, wf%n_o)
-!
-                 aibk = index_packed(ai, bk)
-!
-                 t_aib_k(aib, k) = wf%t2am(aibk, 1)
-!
-              enddo
-           enddo
-        enddo
-     enddo
+      call deallocator(u_b_ldk, wf%n_v, (wf%n_v)*(wf%n_o)**2)
+      call deallocator(g_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !    Allocate the E2.2 term and set to zero 
 !
-     call allocator(omega2_aib_j, (wf%n_o)*(wf%n_v)**2, wf%n_o)
+     call allocator(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !    Calculate the E2.2 term, 
 !    - sum_k t_aib_k Y_k_j = - sum_k t_ik^ab (F_kj + sum_cdl g_ldkc u_lj^dc)
+! 
+!    Note: t_cj_ai = t_ji^ca => t_cj_ai(ai,bk) = t_ik^ab;
+!    thus, we can treat t_cj_ai as t_aib_k = t_ik^ab.
 !
-     call dgemm('N','N',               &
+      call dgemm('N','N',               &
                  (wf%n_o)*(wf%n_v)**2, &
                  wf%n_o,               &
                  wf%n_o,               &
                  -one,                 &
-                 t_aib_k,              &
+                 t_cj_ai,              & ! t_aib_k 
                  (wf%n_o)*(wf%n_v)**2, &
                  Y_k_j,                &
                  wf%n_o,               &
                  zero,                 &
-                 omega2_aib_j,         &
+                 omega2_ai_bj,         & ! omega2_aib_j 
                  (wf%n_o)*(wf%n_v)**2)
 !
-!    Deallocate t_aib_k and Y_k_j 
+!    Deallocate Y_k_j and the amplitudes 
 !
-     call deallocator(t_aib_k, (wf%n_o)*(wf%n_v)**2, wf%n_o)
-     call deallocator(Y_k_j, wf%n_o, wf%n_o)
+      call deallocator(Y_k_j, wf%n_o, wf%n_o)
+      call deallocator(t_cj_ai, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
 !    Add the E2.2 term to the omega vector 
 !
-     do i = 1, wf%n_o 
-        do a = 1, wf%n_v
+      do j = 1, wf%n_o 
+         do b = 1, wf%n_v
 !
-           ai = index_two(a, i, wf%n_v)
+            bj = index_two(b, j, wf%n_v)
 !
-           do j = 1, wf%n_o
-              do b = 1, wf%n_v
+            do i = 1, wf%n_o 
+               do a = 1, wf%n_v
 !
-                 bj   = index_two(b, j, wf%n_v)
+                  ai = index_two(a, i, wf%n_v)
 !
-                 aibj = index_packed(ai, bj)
+                  aibj = index_packed(ai, bj)
+! 
+                  if (ai .ge. bj) then
 !
-                 aib  = index_three(a, i, b, wf%n_v, wf%n_o)
-                 bja  = index_three(b, j, a, wf%n_v, wf%n_o) 
+                     wf%omega2(aibj, 1) = wf%omega2(aibj, 1) + omega2_ai_bj(ai, bj) & 
+                                                               + omega2_ai_bj(bj, ai)
 !
-!                Restrict the indices to avoid adding both (ai,bj) and (bj,ai), 
-!                as they are identical in packed indices
+                  endif
 !
-                 if (ai .ge. bj) then
-!
-                    wf%omega2(aibj, 1) = wf%omega2(aibj, 1) + omega2_aib_j(aib, j) & 
-                                                              + omega2_aib_j(bja, i)
-!
-                 endif
-!
-              enddo
-           enddo
-        enddo
-     enddo
+               enddo
+            enddo
+         enddo
+      enddo
 !
 !    Deallocate the E2.2 term 
 !
-     call deallocator(omega2_aib_j, (wf%n_o)*(wf%n_v)**2, wf%n_o)
+     call deallocator(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine omega_ccsd_e2_ccsd
 !

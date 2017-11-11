@@ -108,21 +108,47 @@ contains
 !
          read(unit_trial_vecs, rec=trial, iostat=ioerror) c_a_i, c_aibj
 !
-         if (wf%response_task=='right_eigenvectors') then
+         if (wf%current_task == 'excited_state') then
 !
-            call wf%jacobian_ccsd_transformation(c_a_i, c_aibj)
+            if (wf%excited_state_task =='right_valence') then
 !
-         elseif (wf%response_task=='left_eigenvectors') then
+               call wf%jacobian_ccsd_transformation(c_a_i, c_aibj)
 !
-            call wf%jacobian_transpose_ccsd_transformation(c_a_i, c_aibj)
+            elseif (wf%excited_state_task=='right_core') then
 !
-         elseif (wf%response_task=='multipliers') then 
+               !call wf%cvs_jacobian_ccsd_transformation(c_a_i, c_aibj)
 !
-            call wf%jacobian_transpose_ccsd_transformation(c_a_i, c_aibj)
+            elseif (wf%excited_state_task=='left_valence') then
+!               
+               call wf%jacobian_transpose_ccsd_transformation(c_a_i, c_aibj)
+!
+            else
+!
+               write(unit_output,*) 'Error: Excited state task not recognized'
+               stop
+!
+            endif
+!
+         elseif (wf%current_task == 'response') then
+!
+            if (wf%response_task == 'left_eigenvectors') then
+!
+               call wf%jacobian_transpose_ccsd_transformation(c_a_i, c_aibj)
+!
+            elseif (wf%response_task == 'multipliers') then 
+!
+               call wf%jacobian_transpose_ccsd_transformation(c_a_i, c_aibj)
+!
+            else
+!
+               write(unit_output,*) 'Error: Response task not recognized'
+               stop
+!
+            endif
 !
          else
 !
-            write(unit_output,*) 'Error: Response task not recognized'
+            write(unit_output,*) 'Error: Current task not recognized'
             stop
 !
          endif
@@ -142,6 +168,34 @@ contains
       call deallocator(c_aibj, wf%n_t2am, 1)
 !
    end subroutine transform_trial_vectors_ccsd
+!
+!
+   module subroutine excited_state_preparations_ccsd(wf)
+!!
+!!    Excited State Preparations (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!    A routine for preparation tasks (if any). Can be overwritten
+!!    in descendants if other preparations prove necessary.    
+!!
+      class(ccsd) :: wf 
+!
+      write(unit_output,'(/t3,a/)') 'Preparing for excited state calculation:'
+!
+!     Store vvvv-electronic repulsion integrals to file if there is space 
+!
+      call wf%store_t1_vv_vv_electronic_repulsion
+!
+!     Store voov-electronic repulsion integrals to file if there is space
+!
+      call wf%store_t1_vo_ov_electronic_repulsion
+!
+!     Store vvvo and vvov-electronic repulsion integrals to file if there is space
+!
+      call wf%store_t1_vv_vo_electronic_repulsion
+      call wf%store_t1_vv_ov_electronic_repulsion
+!
+   end subroutine excited_state_preparations_ccsd
 !
 !
 end submodule excited_state

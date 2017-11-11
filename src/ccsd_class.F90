@@ -82,6 +82,7 @@ module ccsd_class
 !
       procedure :: calculate_orbital_differences => calculate_orbital_differences_ccsd
       procedure :: transform_trial_vectors       => transform_trial_vectors_ccsd
+      procedure :: excited_state_preparations    => excited_state_preparations_ccsd ! Storing g_vvvv and g_voov integrals to file
 !
 !     Coupled cluster Jacobian transformation routine 
 !
@@ -473,6 +474,18 @@ module ccsd_class
 !
       end subroutine transform_trial_vectors_ccsd
 !
+!
+      module subroutine excited_state_preparations_ccsd(wf)
+!!
+!!       Excited State Preparations (CCSD)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!       A routine for preparation tasks (if any). Can be overwritten
+!!       in descendants if other preparations prove necessary.    
+!!
+         class(ccsd) :: wf 
+!
+      end subroutine excited_state_preparations_ccsd
 !
    end interface 
 !
@@ -1211,9 +1224,9 @@ contains
 !
 !     Set implemented methods
 !
-      wf%implemented%ground_state = .true.
+      wf%implemented%ground_state  = .true.
       wf%implemented%excited_state = .true.
-      wf%implemented%properties = .true.
+      wf%implemented%properties    = .true.
 !
 !     Read Hartree-Fock info from SIRIUS
 !
@@ -1222,6 +1235,12 @@ contains
 !     Read Cholesky AO integrals and transform to MO basis
 !
       call wf%read_transform_cholesky 
+!
+!     Test for the possibility of storing vir-vir-vir-vir
+!     electronic repulsion integrals (g_abcd), storing the
+!     integrals if possible
+!
+      call wf%store_vv_vv_electronic_repulsion
 !
 !     Initialize (singles and doubles) amplitudes
 !

@@ -48,6 +48,63 @@ submodule (ccs_class) ground_state
 contains
 !
 !
+   module subroutine ground_state_driver_ccs(wf)
+!!
+!!    Ground state driver (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!    Directs the solution of the ground state problem for CCS. The
+!!    routine is written so as to be inherited unaltered in the CC hierarchy. 
+!!
+      implicit none 
+!
+      class(ccs) :: wf  
+!
+!     Preparations for ground state solver 
+!
+      call wf%ground_state_preparations
+!
+!     Run the solver routine
+!
+      call wf%ground_state_solver
+!
+!     Final work and preparations for other tasks (such as excited state calculations)
+!
+      call wf%ground_state_cleanup
+!
+   end subroutine ground_state_driver_ccs
+!
+!
+   module subroutine ground_state_preparations_ccs(wf)
+!!
+!!    Ground State Preparations (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!    A routine for preparation tasks (if any). Can be overwritten
+!!    in descendants if other preparations prove necessary.    
+!!
+      class(ccs) :: wf 
+!
+!     Nothing yet!
+!
+   end subroutine ground_state_preparations_ccs
+!
+!
+   module subroutine ground_state_cleanup_ccs(wf)
+!!
+!!    Ground State Cleanup (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!    A routine for cleanup tasks (if any). Can be overwritten
+!!    in descendants if other cleanups prove necessary.    
+!!
+      class(ccs) :: wf 
+!
+!     Nothing yet!
+!
+   end subroutine ground_state_cleanup_ccs
+!
+!
    module subroutine ground_state_solver_ccs(wf)
 !!
 !!    Ground State Solver 

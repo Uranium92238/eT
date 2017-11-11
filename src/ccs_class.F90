@@ -44,12 +44,13 @@ module ccs_class
       real(dp), dimension(:,:), allocatable :: fock_ij ! occ-occ block
       real(dp), dimension(:,:), allocatable :: fock_ia ! occ-vir block
       real(dp), dimension(:,:), allocatable :: fock_ai ! vir-occ block
-      real(dp), dimension(:,:), allocatable :: fock_ab ! vir-vir block
+      real(dp), dimension(:,:), allocatable :: fock_ab ! vir-vir block 
 !
-      character(len=40)                     :: excited_state_task 
 !     Variables that keep track of which response task is being performed 
 !
-      character(len=40) :: response_task = 'multipliers'
+      character(len=40) :: response_task 
+      character(len=40) :: excited_state_task
+      character(len=40) :: current_task = 'ground_state'
 !
 !     The excitation energies (omega_1, omega_2, ...)
 !
@@ -95,12 +96,18 @@ module ccs_class
 !
       procedure :: construct_eta => construct_eta_ccs 
 !
-!     Ground state solver routines (and helpers)
+!     Ground state driver routine (and helpers)
 !
 !     Note: while this solver is uneccessary for CCS, where the solution is trivial, 
 !     it is inherited mostly unaltered by descendants (CCSD, CC2, etc.).
 !
+      procedure :: ground_state_driver => ground_state_driver_ccs
+!
+!     Solver preparations and cleanup routines plus solver routine and its helpers
+!
+      procedure :: ground_state_preparations => ground_state_preparations_ccs
       procedure :: ground_state_solver       => ground_state_solver_ccs
+      procedure :: ground_state_cleanup      => ground_state_cleanup_ccs
 !
       procedure :: initialize_ground_state   => initialize_ground_state_ccs
       procedure :: destruct_ground_state     => destruct_ground_state_ccs
@@ -138,7 +145,6 @@ module ccs_class
       procedure :: cvs_residual_projection         => cvs_residual_projection_ccs
       procedure :: cvs_jacobian_ccs_transformation => cvs_jacobian_ccs_transformation_ccs
 !
-
 !     Coupled cluster Jacobian transpose transformation routine
 !
       procedure :: jacobian_transpose_ccs_transformation => jacobian_transpose_ccs_transformation_ccs
@@ -148,8 +154,10 @@ module ccs_class
 !
 !     Excited state driver & solver 
 !
-      procedure                  :: excited_state_driver => excited_state_driver_ccs 
-      procedure, non_overridable :: excited_state_solver => excited_state_solver_ccs
+      procedure                  :: excited_state_preparations => excited_state_preparations_ccs
+      procedure                  :: excited_state_driver       => excited_state_driver_ccs 
+      procedure                  :: excited_state_cleanup      => excited_state_cleanup_ccs
+      procedure, non_overridable :: excited_state_solver       => excited_state_solver_ccs
 !
 !     Helper routines for excited state solver 
 !
@@ -163,15 +171,14 @@ module ccs_class
       procedure :: print_excited_state_info  => print_excited_state_info_ccs      
       procedure :: print_excitation_vector   => print_excitation_vector_ccs
 !
-!
-!     Valence
+!     Valence excited states specific routines
 !
       procedure, non_overridable :: initialize_trial_vectors            => initialize_trial_vectors_ccs
       procedure, non_overridable :: initialize_trial_vectors_valence    => initialize_trial_vectors_valence_ccs
       procedure, non_overridable :: find_start_trial_indices            => find_start_trial_indices_ccs
       procedure, non_overridable :: trial_vectors_from_stored_solutions => trial_vectors_from_stored_solutions_ccs
 !
-!     Core
+!     Core excited states specific routines
 !
       procedure                  :: precondition_residual_core          => precondition_residual_core_ccs
       procedure, non_overridable :: find_start_trial_indices_core       => find_start_trial_indices_core_ccs
@@ -195,31 +202,31 @@ module ccs_class
       procedure :: construct_next_response_trial_vectors => construct_next_response_trial_vectors_ccs
       procedure :: construct_gradient_vector             => construct_gradient_vector_ccs
 !
-!     Integral routines 
+!     Integral routines (o: occupied index, v: virtual index)
 !
-      procedure :: get_oo_oo => get_oo_oo_ccs ! Tested, Eirik, 29 Sep
-      procedure :: get_oo_ov => get_oo_ov_ccs ! Tested, Eirik, 29 Sep
+      procedure :: get_oo_oo => get_oo_oo_ccs 
+      procedure :: get_oo_ov => get_oo_ov_ccs 
       procedure :: get_ov_oo => get_ov_oo_ccs 
       procedure :: get_oo_vo => get_oo_vo_ccs 
       procedure :: get_vo_oo => get_vo_oo_ccs
       procedure :: get_oo_vv => get_oo_vv_ccs
       procedure :: get_vv_oo => get_vv_oo_ccs
-      procedure :: get_ov_ov => get_ov_ov_ccs ! Tested, Eirik, 29 Sep
+      procedure :: get_ov_ov => get_ov_ov_ccs 
 !
-      procedure :: get_vo_vo => get_vo_vo_ccs ! Tested, Eirik, 29 Sep
+      procedure :: get_vo_vo => get_vo_vo_ccs 
       procedure :: get_ov_vo => get_ov_vo_ccs
-      procedure :: get_vo_ov => get_vo_ov_ccs ! Tested, Eirik, 29 Sep
+      procedure :: get_vo_ov => get_vo_ov_ccs 
       procedure :: get_ov_vv => get_ov_vv_ccs
       procedure :: get_vv_ov => get_vv_ov_ccs
       procedure :: get_vo_vv => get_vo_vv_ccs
       procedure :: get_vv_vo => get_vv_vo_ccs
-      procedure :: get_vv_vv => get_vv_vv_ccs
+      procedure :: get_vv_vv => get_vv_vv_ccs 
 !
       procedure :: get_oo_oo_electronic_repulsion => get_oo_oo_electronic_repulsion_ccs
       procedure :: get_oo_ov_electronic_repulsion => get_oo_ov_electronic_repulsion_ccs
       procedure :: get_ov_oo_electronic_repulsion => get_ov_oo_electronic_repulsion_ccs
       procedure :: get_oo_vo_electronic_repulsion => get_oo_vo_electronic_repulsion_ccs
-      procedure :: get_vo_oo_electronic_repulsion => get_oo_vo_electronic_repulsion_ccs
+      procedure :: get_vo_oo_electronic_repulsion => get_vo_oo_electronic_repulsion_ccs
       procedure :: get_oo_vv_electronic_repulsion => get_oo_vv_electronic_repulsion_ccs
       procedure :: get_vv_oo_electronic_repulsion => get_vv_oo_electronic_repulsion_ccs
       procedure :: get_ov_ov_electronic_repulsion => get_ov_ov_electronic_repulsion_ccs
@@ -233,12 +240,28 @@ module ccs_class
       procedure :: get_vv_vo_electronic_repulsion => get_vv_vo_electronic_repulsion_ccs
       procedure :: get_vv_vv_electronic_repulsion => get_vv_vv_electronic_repulsion_ccs
 !
+!     Routine to store, read, and T1-transform read electronic repulsion integrals (g_abcd)
+!
+      procedure, non_overridable :: store_vv_vv_electronic_repulsion    => store_vv_vv_electronic_repulsion_ccs
+!
+      procedure, non_overridable :: read_vv_vv_electronic_repulsion     => read_vv_vv_electronic_repulsion_ccs
+      procedure, non_overridable :: t1_transform_vv_vv                  => t1_transform_vv_vv_ccs
+!
+      procedure, non_overridable :: store_t1_vv_vv_electronic_repulsion => store_t1_vv_vv_electronic_repulsion_ccs
+      procedure, non_overridable :: store_t1_vo_ov_electronic_repulsion => store_t1_vo_ov_electronic_repulsion_ccs
+      procedure, non_overridable :: store_t1_vv_vo_electronic_repulsion => store_t1_vv_vo_electronic_repulsion_ccs
+      procedure, non_overridable :: store_t1_vv_ov_electronic_repulsion => store_t1_vv_ov_electronic_repulsion_ccs
+!
+      procedure, non_overridable :: read_t1_vv_vo_electronic_repulsion  => read_t1_vv_vo_electronic_repulsion_ccs
+      procedure, non_overridable :: read_t1_vv_vv_electronic_repulsion  => read_t1_vv_vv_electronic_repulsion_ccs
+      procedure, non_overridable :: read_t1_vo_ov_electronic_repulsion  => read_t1_vo_ov_electronic_repulsion_ccs
+      procedure, non_overridable :: read_t1_vv_ov_electronic_repulsion  => read_t1_vv_ov_electronic_repulsion_ccs
+!
    end type ccs
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  -::- Interface to the submodule routines of CCS -::- 
 !  ::::::::::::::::::::::::::::::::::::::::::::::::::::
-!
 !
    interface 
 !
@@ -365,15 +388,6 @@ module ccs_class
 !
    interface
 !
-!     -::- Fock submodule interface -::-
-!     ::::::::::::::::::::::::::::::::::
-!
-!
-   end interface
-!
-!
-   interface
-!
 !    -::- Fock submodule interface -::-
 !    ::::::::::::::::::::::::::::::::::
 !
@@ -432,7 +446,6 @@ module ccs_class
       end subroutine one_electron_t1_ccs
 !
 !
-
    end interface 
 !
 !
@@ -440,6 +453,47 @@ module ccs_class
 !
 !     -::- Ground state submodule interface -::-
 !     ::::::::::::::::::::::::::::::::::::::::::
+!
+      module subroutine ground_state_driver_ccs(wf)
+!!
+!!       Ground state driver (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!       Directs the solution of the ground state problem for CCS. The
+!!       routine is written so as to be inherited unaltered in the CC hierarchy. 
+!!
+         implicit none 
+!
+         class(ccs) :: wf  
+!
+      end subroutine ground_state_driver_ccs
+!
+!
+      module subroutine ground_state_preparations_ccs(wf)
+!!
+!!       Ground State Preparations (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!       A routine for preparation tasks (if any). Can be overwritten
+!!       in descendants if other preparations prove necessary.    
+!!
+         class(ccs) :: wf 
+!
+      end subroutine ground_state_preparations_ccs
+!
+!
+      module subroutine ground_state_cleanup_ccs(wf)
+!!
+!!       Ground State Cleanup (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!       A routine for cleanup tasks (if any). Can be overwritten
+!!       in descendants if other cleanups prove necessary.    
+!!
+         class(ccs) :: wf 
+!
+      end subroutine ground_state_cleanup_ccs
+!
 !
       module subroutine ground_state_solver_ccs(wf)
 !!
@@ -636,13 +690,6 @@ module ccs_class
 !
       end subroutine transform_trial_vectors_ccs
 !
-   end interface
-!
-!
-   interface
-!
-!    -::- Excited state submodule interface -::-
-!    :::::::::::::::::::::::::::::::::::::::::::
 !
       module subroutine excited_state_driver_ccs(wf)
 !!
@@ -661,6 +708,32 @@ module ccs_class
          class(ccs) :: wf 
 !
       end subroutine excited_state_driver_ccs
+!
+!
+      module subroutine excited_state_preparations_ccs(wf)
+!!
+!!       Excited State Preparations (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!       A routine for preparation tasks (if any). Can be overwritten
+!!       in descendants if other preparations prove necessary.    
+!!
+         class(ccs) :: wf 
+!
+      end subroutine excited_state_preparations_ccs
+!
+!
+      module subroutine excited_state_cleanup_ccs(wf)
+!!
+!!       Excited State Cleanup (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!       A routine for cleanup tasks (if any). Can be overwritten
+!!       in descendants if other cleanups prove necessary.    
+!!
+         class(ccs) :: wf 
+!
+      end subroutine excited_state_cleanup_ccs
 !
 !
       module subroutine excited_state_solver_ccs(wf)
@@ -1321,6 +1394,197 @@ module ccs_class
 !     -::- Integral submodule interface -::-
 !     ::::::::::::::::::::::::::::::::::::::
 !
+      module subroutine store_vv_vv_electronic_repulsion_ccs(wf)
+!
+         implicit none 
+!
+         class(ccs) :: wf 
+!
+      end subroutine store_vv_vv_electronic_repulsion_ccs
+!
+!
+      module subroutine store_t1_vv_vv_electronic_repulsion_ccs(wf)
+!!
+!!       Store t1 vvvv Electronic Repulsion Integrals 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!       Tests whether it is possible to store t1-transformed vir-vir-vir-vir integrals and,
+!!       if possible, writes the integrals to disk 
+!!
+         implicit none 
+!
+         class(ccs) :: wf 
+!
+      end subroutine store_t1_vv_vv_electronic_repulsion_ccs
+!
+      module subroutine store_t1_vo_ov_electronic_repulsion_ccs(wf)
+!!
+!!       Store t1 voov Electronic Repulsion Integrals 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!! 
+!!       Tests whether it is possible to store t1-transformed vir-occ-occ-vir integrals and,
+!!       if possible, writes the integrals to disk 
+!! 
+         implicit none 
+!  
+         class(ccs) :: wf 
+!
+      end subroutine store_t1_vo_ov_electronic_repulsion_ccs
+!
+      module subroutine store_t1_vv_ov_electronic_repulsion_ccs(wf)
+!!
+!!       Store t1 voov Electronic Repulsion Integrals 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!! 
+!!       Tests whether it is possible to store t1-transformed vir-vir-occ-vir integrals and,
+!!       if possible, writes the integrals to disk 
+!! 
+         implicit none 
+!  
+         class(ccs) :: wf 
+!
+      end subroutine store_t1_vv_ov_electronic_repulsion_ccs
+!
+      module subroutine store_t1_vv_vo_electronic_repulsion_ccs(wf)
+!!
+!!       Store t1 vvvo Electronic Repulsion Integrals 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!       Tests whether it is possible to store t1-transformed vir-vir-vir-occ integrals and,
+!!       if possible, writes the integrals to disk 
+!!
+         implicit none 
+!
+         class(ccs) :: wf 
+!
+      end subroutine store_t1_vv_vo_electronic_repulsion_ccs
+!
+!
+      module subroutine read_vv_vv_electronic_repulsion_ccs(wf, x_vv_vv,    & 
+                                       index1_first, index1_last, &
+                                       index2_first, index2_last, &
+                                       index3_first, index3_last, &
+                                       index4_first, index4_last)
+!
+         implicit none 
+!
+         class(ccs) :: wf
+!
+         real(dp), dimension(:,:) :: x_vv_vv
+!
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last 
+!
+      end subroutine read_vv_vv_electronic_repulsion_ccs
+!
+!
+      module subroutine read_t1_vv_vv_electronic_repulsion_ccs(wf, x_vv_vv,    & 
+                                       index1_first, index1_last, &
+                                       index2_first, index2_last, &
+                                       index3_first, index3_last, &
+                                       index4_first, index4_last)
+!
+         implicit none 
+!
+         class(ccs) :: wf
+!
+         real(dp), dimension(:,:) :: x_vv_vv
+!
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last 
+!
+      end subroutine read_t1_vv_vv_electronic_repulsion_ccs
+!
+      module subroutine read_t1_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    & 
+                                       index1_first, index1_last, &
+                                       index2_first, index2_last, &
+                                       index3_first, index3_last, &
+                                       index4_first, index4_last)
+!
+         implicit none 
+!
+         class(ccs) :: wf
+!
+         real(dp), dimension(:,:) :: x_vo_ov
+!
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last 
+!
+      end subroutine read_t1_vo_ov_electronic_repulsion_ccs
+!
+!
+      module subroutine read_t1_vv_vo_electronic_repulsion_ccs(wf, x_vv_vo,    & 
+                                       index1_first, index1_last, &
+                                       index2_first, index2_last, &
+                                       index3_first, index3_last, &
+                                       index4_first, index4_last)
+!!
+!!       Read t1 vvvo Electronic Repulsion Integrals 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!       Reads the T1-transformed vir-vir-occ-vir integrals from file.
+!!
+!!       The integrals are stored on file as (a, bci) = (a, :), where a 
+!!       is the record number and : denotes all the bci elements.
+!!
+!!       The recommended use is therefore to batch over the a index,
+!!       as this will involve the minimum amount of wasteful read statements
+!!
+         implicit none 
+!
+         class(ccs) :: wf
+!
+!        Integral
+!
+         real(dp), dimension(:,:) :: x_vv_vo
+!
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
+!
+      end subroutine read_t1_vv_vo_electronic_repulsion_ccs
+!
+!
+      module subroutine read_t1_vv_ov_electronic_repulsion_ccs(wf, x_vv_ov,    & 
+                                       index1_first, index1_last, &
+                                       index2_first, index2_last, &
+                                       index3_first, index3_last, &
+                                       index4_first, index4_last)
+!!
+!!       Read t1 vvov Electronic Repulsion Integrals 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!       Reads the T1-transformed vir-vir-occ-vir integrals from file.
+!!
+!!       The integrals are stored on file as (a, bci) = (a, :), where a 
+!!       is the record number and : denotes all the bci elements.
+!!
+!!       The recommended use is therefore to batch over the a index,
+!!       as this will involve the minimum amount of wasteful read statements
+!!
+         implicit none 
+!
+         class(ccs) :: wf
+!
+!        Integral
+!
+         real(dp), dimension(:,:) :: x_vv_ov
+!
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
+!
+      end subroutine read_t1_vv_ov_electronic_repulsion_ccs
+!
+!
       module subroutine get_oo_oo_ccs(wf, integral_type, x_oo_oo,    & 
                                           index1_first, index1_last, &
                                           index2_first, index2_last, &
@@ -1717,10 +1981,10 @@ module ccs_class
 !
          real(dp), dimension(:, :) :: x_oo_oo
 !
-         integer(i15), optional :: index1_first, index1_last
-         integer(i15), optional :: index2_first, index2_last
-         integer(i15), optional :: index3_first, index3_last
-         integer(i15), optional :: index4_first, index4_last
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
 !
          real(dp), dimension(:,:), allocatable :: L_ij_J, L_kl_J
 !
@@ -1743,10 +2007,10 @@ module ccs_class
 !
          real(dp), dimension(:, :) :: x_oo_ov
 !
-         integer(i15), optional :: index1_first, index1_last
-         integer(i15), optional :: index2_first, index2_last
-         integer(i15), optional :: index3_first, index3_last
-         integer(i15), optional :: index4_first, index4_last
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
 !
          real(dp), dimension(:,:), allocatable :: L_ij_J, L_ka_J
 !
@@ -1769,10 +2033,10 @@ module ccs_class
 !
          real(dp), dimension(:, :) :: x_ov_oo
 !
-         integer(i15), optional :: index1_first, index1_last
-         integer(i15), optional :: index2_first, index2_last
-         integer(i15), optional :: index3_first, index3_last
-         integer(i15), optional :: index4_first, index4_last
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
 !
          real(dp), dimension(:,:), allocatable :: L_ia_J, L_jk_J
 !
@@ -1795,10 +2059,10 @@ module ccs_class
 !
          real(dp), dimension(:, :) :: x_oo_vo
 !
-         integer(i15), optional :: index1_first, index1_last
-         integer(i15), optional :: index2_first, index2_last
-         integer(i15), optional :: index3_first, index3_last
-         integer(i15), optional :: index4_first, index4_last
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
 !
          real(dp), dimension(:,:), allocatable :: L_ij_J, L_ak_J
 !
@@ -1821,10 +2085,10 @@ module ccs_class
 !
          real(dp), dimension(:, :) :: x_oo_vv
 !
-         integer(i15), optional :: index1_first, index1_last
-         integer(i15), optional :: index2_first, index2_last
-         integer(i15), optional :: index3_first, index3_last
-         integer(i15), optional :: index4_first, index4_last
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
 !
          real(dp), dimension(:,:), allocatable :: L_ij_J, L_ab_J
 !
@@ -1847,10 +2111,10 @@ module ccs_class
 !
          real(dp), dimension(:, :) :: x_vv_oo
 !
-         integer(i15), optional :: index1_first, index1_last
-         integer(i15), optional :: index2_first, index2_last
-         integer(i15), optional :: index3_first, index3_last
-         integer(i15), optional :: index4_first, index4_last
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
 !
          real(dp), dimension(:,:), allocatable :: L_ab_J, L_ij_J
 !
@@ -1873,10 +2137,10 @@ module ccs_class
 !
          real(dp), dimension(:, :) :: x_ov_ov
 !
-         integer(i15), optional :: index1_first, index1_last
-         integer(i15), optional :: index2_first, index2_last
-         integer(i15), optional :: index3_first, index3_last
-         integer(i15), optional :: index4_first, index4_last
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
 !
          real(dp), dimension(:,:), allocatable :: L_ia_J, L_jb_J
 !
@@ -1899,10 +2163,10 @@ module ccs_class
 !
          real(dp), dimension(:, :) :: x_vo_oo
 !
-         integer(i15), optional :: index1_first, index1_last
-         integer(i15), optional :: index2_first, index2_last
-         integer(i15), optional :: index3_first, index3_last
-         integer(i15), optional :: index4_first, index4_last
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
 !
          real(dp), dimension(:,:), allocatable :: L_ai_J, L_jk_J
 !
@@ -1925,10 +2189,10 @@ module ccs_class
 !  
          real(dp), dimension(:,:) :: x_vo_vo
 !  
-         integer(i15), optional :: index1_first, index1_last
-         integer(i15), optional :: index2_first, index2_last
-         integer(i15), optional :: index3_first, index3_last
-         integer(i15), optional :: index4_first, index4_last
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
 !  
       end subroutine get_vo_vo_electronic_repulsion_ccs
 !
@@ -1947,10 +2211,10 @@ module ccs_class
 !  
          real(dp), dimension(:,:) :: x_ov_vo
 !  
-         integer(i15), optional :: index1_first, index1_last
-         integer(i15), optional :: index2_first, index2_last
-         integer(i15), optional :: index3_first, index3_last
-         integer(i15), optional :: index4_first, index4_last
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
 !  
       end subroutine get_ov_vo_electronic_repulsion_ccs
 !
@@ -1969,10 +2233,10 @@ module ccs_class
 !  
          real(dp), dimension(:,:) :: x_vo_ov
 !  
-         integer(i15), optional :: index1_first, index1_last
-         integer(i15), optional :: index2_first, index2_last
-         integer(i15), optional :: index3_first, index3_last
-         integer(i15), optional :: index4_first, index4_last
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
 !  
       end subroutine get_vo_ov_electronic_repulsion_ccs
 !
@@ -1991,10 +2255,10 @@ module ccs_class
 !  
          real(dp), dimension(:,:) :: x_ov_vv
 !  
-         integer(i15), optional :: index1_first, index1_last
-         integer(i15), optional :: index2_first, index2_last
-         integer(i15), optional :: index3_first, index3_last
-         integer(i15), optional :: index4_first, index4_last
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
 !  
       end subroutine get_ov_vv_electronic_repulsion_ccs
 !
@@ -2013,10 +2277,10 @@ module ccs_class
 !  
          real(dp), dimension(:,:) :: x_vv_ov
 !  
-         integer(i15), optional :: index1_first, index1_last
-         integer(i15), optional :: index2_first, index2_last
-         integer(i15), optional :: index3_first, index3_last
-         integer(i15), optional :: index4_first, index4_last
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
 !  
       end subroutine get_vv_ov_electronic_repulsion_ccs
 !
@@ -2035,10 +2299,10 @@ module ccs_class
 !  
          real(dp), dimension(:,:) :: x_vo_vv
 !  
-         integer(i15), optional :: index1_first, index1_last
-         integer(i15), optional :: index2_first, index2_last
-         integer(i15), optional :: index3_first, index3_last
-         integer(i15), optional :: index4_first, index4_last
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
 !  
       end subroutine get_vo_vv_electronic_repulsion_ccs
 !
@@ -2057,10 +2321,10 @@ module ccs_class
 !  
          real(dp), dimension(:,:) :: x_vv_vo
 !  
-         integer(i15), optional :: index1_first, index1_last
-         integer(i15), optional :: index2_first, index2_last
-         integer(i15), optional :: index3_first, index3_last
-         integer(i15), optional :: index4_first, index4_last
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
 !  
       end subroutine get_vv_vo_electronic_repulsion_ccs
 !
@@ -2079,13 +2343,38 @@ module ccs_class
 !  
          real(dp), dimension(:,:) :: x_vv_vv
 !  
-         integer(i15), optional :: index1_first, index1_last
-         integer(i15), optional :: index2_first, index2_last
-         integer(i15), optional :: index3_first, index3_last
-         integer(i15), optional :: index4_first, index4_last
+         integer(i15) :: index1_first, index1_last
+         integer(i15) :: index2_first, index2_last
+         integer(i15) :: index3_first, index3_last
+         integer(i15) :: index4_first, index4_last
 !  
       end subroutine get_vv_vv_electronic_repulsion_ccs
 !
+   module subroutine t1_transform_vv_vv_ccs(wf, g_vv_vv,                & 
+                                             index1_first, index1_last, &
+                                             index2_first, index2_last, &
+                                             index3_first, index3_last, &
+                                             index4_first, index4_last)
+!!
+!!       T1 transformation of g_vv_vv integrals (CCS)
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Oct 2017. 
+!!
+!!       g_ab_cd_T1 = g_ab_cd + sum_(J) sum_(i) t_a_i * L_ib_J * L_cd_J
+!!                            + sum_(J) sum_(k) t_c_k * L_kd_J * L_ab_J
+!!                            + sum_(J) sum_(ki) t_a_i * t_c_k * L_kd_J * L_ib_J
+!! 
+      implicit none 
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(:, :) :: g_vv_vv
+!
+      integer(i15) :: index1_first, index1_last
+      integer(i15) :: index2_first, index2_last
+      integer(i15) :: index3_first, index3_last
+      integer(i15) :: index4_first, index4_last
+!
+      end subroutine t1_transform_vv_vv_ccs
 !
    end interface
 !
@@ -2132,6 +2421,12 @@ contains
 !
       call wf%read_transform_cholesky
 !
+!     Test for the possibility of storing vir-vir-vir-vir
+!     electronic repulsion integrals (g_abcd), storing the
+!     integrals if possible
+!
+     ! call wf%store_vvvv_electronic_repulsion_integrals Should this occur in ccs? I don't think so
+!
 !     Initialize amplitudes and associated attributes
 !
       call wf%initialize_amplitudes
@@ -2173,7 +2468,8 @@ contains
 !
          if (wf%implemented%ground_state) then 
 !
-            call wf%ground_state_solver
+            wf%current_task = 'ground_state'
+            call wf%ground_state_driver
 !
          else
 !
@@ -2187,6 +2483,7 @@ contains
       if (wf%tasks%excited_state) then
 !
 !        Excited state calculation requested
+!
          write(unit_output,*) wf%tasks%n_singlet_states, wf%tasks%n_cores, wf%tasks%cores
 !
          if (wf%implemented%excited_state) then 
@@ -2231,6 +2528,8 @@ contains
 !
          if (wf%implemented%properties) then 
 !
+            wf%current_task = 'response'
+            wf%response_task = 'multipliers'
             call wf%response_driver
 !
          else
