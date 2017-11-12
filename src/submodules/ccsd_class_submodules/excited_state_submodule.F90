@@ -107,63 +107,55 @@ contains
       do trial = first_trial, last_trial
 !
          read(unit_trial_vecs, rec=trial, iostat=ioerror) c_a_i, c_aibj
+
+!        Test for left or right transformation
 !
-!        Test for excited state or ionized state
+         if (wf%excited_state_task=='right_valence' .or. wf%excited_state_task=='right_core') then
 !
-         if (wf%tasks%excited_state .or. wf%tasks%core_excited_state ) then ! Excited state
-            write(unit_output,*)'transformation!!'
+            call wf%jacobian_ccsd_transformation(c_a_i, c_aibj)
 !
-!           Left, right core or valence
+         elseif (wf%excited_state_task=='left_valence') then
 !
-            if (wf%excited_state_task=='right_eigenvectors') then
-               write(unit_output,*)'valence transformation'
+            call wf%jacobian_transpose_ccsd_transformation(c_a_i, c_aibj)
 !
-               call wf%jacobian_ccsd_transformation(c_a_i, c_aibj)
+         elseif (wf%excited_state_task=='multipliers') then
 !
-            elseif (wf%excited_state_task=='left_eigenvectors') then
+            call wf%jacobian_transpose_ccsd_transformation(c_a_i, c_aibj)
 !
-               call wf%jacobian_transpose_ccsd_transformation(c_a_i, c_aibj)
-               write(unit_output,*)'what the heck 1'
+         else
 !
-            elseif (wf%excited_state_task=='multipliers') then
-            write(unit_output,*)'what the heck 2' 
-!
-               call wf%jacobian_transpose_ccsd_transformation(c_a_i, c_aibj)
-!
-             elseif (wf%excited_state_task=='right_core') then
-               write(unit_output,*)'core transformation'
-!
-               call wf%cvs_jacobian_ccsd_transformation(c_a_i, c_aibj)
-!
-            else
-!
-               write(unit_output,*) 'Error: Response task not recognized'
-               stop
-!
-            endif
-!
-            write(unit_rho, rec=trial, iostat=ioerror) c_a_i, c_aibj
-!
-      elseif (wf%tasks%ionized_state  .or. wf%tasks%core_ionized_state ) then ! Ionized state
-!
-            if (wf%excited_state_task=='right_valence') then
-!
-               call wf%ionization_jacobian_ccsd_transformation(c_a_i, c_aibj)
-!
-            elseif (wf%excited_state_task=='right_core') then
-!
-               !call wf%ionized_cvs_jacobian_ccsd_transformation(c_a_i, c_aibj)
-!
-            else
-!
-               write(unit_output,*) 'Error: Response task not recognized'
-               stop
-!
-            endif
-!
-            write(unit_rho, rec=trial, iostat=ioerror) c_a_i, c_aibj
+            write(unit_output,*) 'Error: Response task not recognized'
+            stop
 !
          endif
+!
+!        -::- Projections -::-
+!
+!        Test for core calculation 
+!
+         if (wf%tasks%core_excited_state .or. wf%tasks%core_ionized_state) then
+!  
+!           Project out contamination from valence contributions
+!
+            call wf%cvs_rho_a_i_projection(c_a_i)
+            call wf%cvs_rho_aibj_projection(c_aibj)
+!
+         endif
+!
+!        Test for ionization calculation
+!
+         if (wf%tasks%ionized_state .or. wf%tasks%core_ionized_state) then
+!
+!           Project out contamination from regular excitations
+!
+            call wf%ionization_rho_a_i_projection(c_a_i)
+            call wf%ionization_rho_aibj_projection(c_aibj)
+!
+         endif
+!
+!        Write transformed vector to file
+!
+         write(unit_rho, rec=trial, iostat=ioerror) c_a_i, c_aibj
 !
       enddo
 !

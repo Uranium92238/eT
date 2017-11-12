@@ -134,9 +134,8 @@ module ccs_class
 !
 !     Core-valence separation approximation routines
 !
-      procedure :: cvs_rho_a_i_projection          => cvs_rho_a_i_projection_ccs
-      procedure :: cvs_residual_projection         => cvs_residual_projection_ccs
-      procedure :: cvs_jacobian_ccs_transformation => cvs_jacobian_ccs_transformation_ccs
+      procedure :: cvs_rho_a_i_projection             => cvs_rho_a_i_projection_ccs
+      procedure :: cvs_residual_projection            => cvs_residual_projection_ccs
 !
 
 !     Coupled cluster Jacobian transpose transformation routine
@@ -197,17 +196,13 @@ module ccs_class
 !
 !     Ionized state by super diffuse orbital
 !
-      procedure :: ionized_state_driver                        => ionized_state_driver_ccs
-      procedure :: initialize_trial_vectors_core_ionization    => initialize_trial_vectors_core_ionization_ccs
-      procedure :: initialize_trial_vectors_valence_ionization => initialize_trial_vectors_valence_ionization_ccs
-      procedure :: precondition_residual_valence_ionization    => precondition_residual_valence_ionization_ccs
-      procedure :: ionization_residual_projection              => ionization_residual_projection_ccs
-      procedure :: ionization_jacobian_ccs_transformation      => ionization_jacobian_ccs_transformation_ccs
-      procedure :: ionization_rho_a_i_projection               => ionization_rho_a_i_projection_ccs
-      procedure :: precondition_residual_core_ionization       => precondition_residual_core_ionization_ccs
-      procedure :: core_ionization_residual_projection         => core_ionization_residual_projection_ccs
-      procedure :: cvs_ionization_jacobian_ccs_transformation  => cvs_ionization_jacobian_ccs_transformation_ccs
-      procedure :: cvs_ionization_rho_a_i_projection           => cvs_ionization_rho_a_i_projection_ccs
+      procedure :: ionized_state_driver                           => ionized_state_driver_ccs
+      procedure :: initialize_trial_vectors_core_ionization       => initialize_trial_vectors_core_ionization_ccs
+      procedure :: initialize_trial_vectors_valence_ionization    => initialize_trial_vectors_valence_ionization_ccs
+      procedure :: precondition_residual_valence_ionization       => precondition_residual_valence_ionization_ccs
+      procedure :: ionization_residual_projection                 => ionization_residual_projection_ccs
+      procedure :: ionization_rho_a_i_projection                  => ionization_rho_a_i_projection_ccs
+      procedure :: precondition_residual_core_ionization          => precondition_residual_core_ionization_ccs
 !
 !
 !     Integral routines 
@@ -984,13 +979,13 @@ module ccs_class
 
       module subroutine ionized_state_driver_ccs(wf)
 !!
-!!       Excited state driver (CCS)
+!!       Ionized state driver (CCS)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-!!       Directs the solution of the excited state problem for CCS. The
+!!       Directs the solution of the eionized state problem for CCS. The
 !!       routine is inherited is to be inherited unaltered in the CC hierarchy. 
 !!
-!!       Note: it is only necessary to alter this routine if the excited states are 
+!!       Note: it is only necessary to alter this routine if the ionized states are 
 !!       solved for by a different algorithm (such as in similarity constrained CC, 
 !!       where the excited states and ground state are determined simultaneously).
 !!
@@ -1002,6 +997,7 @@ module ccs_class
 !
 !
       module subroutine initialize_trial_vectors_valence_ionization_ccs(wf)
+!!
 !!
 !!       Initialize trial vectors for valence ionized state
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
@@ -1044,7 +1040,8 @@ module ccs_class
 !!       Precondition residual valence
 !!       Written by Sarai D. Folkestad, Aug. 2017
 !!
-!!       Divide elements of residual by orbital difference       
+!!       Projects out contamination from regular excitations
+!!       Divide elements of residual by orbital difference          
 !!
          implicit none
 !
@@ -1056,8 +1053,10 @@ module ccs_class
 !
       module subroutine ionization_residual_projection_ccs(wf, residual)
 !!
-!!       Residual projection for CVS
+!!       Residual projection for core ionization (CCS)
 !!       Written by Sarai D. Folkestad, Aug. 2017
+!!
+!!       Projects out contaminations from regular excitations
 !!
          implicit none
 !
@@ -1080,94 +1079,20 @@ module ccs_class
       end subroutine ionization_rho_a_i_projection_ccs
 !
 !
-   module subroutine ionization_jacobian_ccs_transformation_ccs(wf, c_a_i)
-!!
-!!    Jacobian transformation, CVS calculation
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!
-!!    Directs the transformation by the CCSD Jacobi matrix for CVS calculation
-!!
-!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >. 
-!!
-!!    In particular,
-!!
-!!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck.
-!! 
-!!    On exit, elements that do not correspond to the core excitation
-!!    are projected out before c is overwritten by rho. 
-!!
-      implicit none
+      module subroutine precondition_residual_core_ionization_ccs(wf, residual)
+!     
+!        Precondition residual valence
+!        Written by Sarai D. Folkestad, Aug. 2017
+!     
+!        Divide elements of residual by orbital difference       
+!     
+         implicit none
 !
-      class(ccs) :: wf 
-      real(dp), dimension(wf%n_v, wf%n_o)   :: c_a_i       
+         class(ccs) :: wf
+         real(dp), dimension(wf%n_parameters ,1) :: residual
 !
-   end subroutine ionization_jacobian_ccs_transformation_ccs
+      end subroutine precondition_residual_core_ionization_ccs
 !
-!
-module subroutine cvs_ionization_jacobian_ccs_transformation_ccs(wf, c_a_i)
-!!
-!!    Jacobian transformation, CVS calculation
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!
-!!    Directs the transformation by the CCSD Jacobi matrix for CVS calculation
-!!
-!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >. 
-!!
-!!    In particular,
-!!
-!!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck.
-!! 
-!!    On exit, elements that do not correspond to the core excitation
-!!    are projected out before c is overwritten by rho. 
-!!
-      implicit none
-!
-      class(ccs) :: wf 
-      real(dp), dimension(wf%n_v, wf%n_o)   :: c_a_i   
-!
-!
-   end subroutine cvs_ionization_jacobian_ccs_transformation_ccs
-!
-!
-   module subroutine cvs_ionization_rho_a_i_projection_ccs(wf, rho_a_i)
-!!
-!!    Residual projection for CVS
-!!    Written by Sarai D. Folkestad, Aug. 2017
-!!
-      implicit none
-!
-      class(ccs) :: wf
-      real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i
-!
-   end subroutine cvs_ionization_rho_a_i_projection_ccs
-!
-!
-   module subroutine precondition_residual_core_ionization_ccs(wf, residual)
-!  
-!     Precondition residual valence
-!     Written by Sarai D. Folkestad, Aug. 2017
-!  
-!     Divide elements of residual by orbital difference       
-!  
-      implicit none
-!
-      class(ccs) :: wf
-      real(dp), dimension(wf%n_parameters ,1) :: residual
-!
-   end subroutine precondition_residual_core_ionization_ccs
-!
-!
-   module subroutine core_ionization_residual_projection_ccs(wf, residual)
-!  
-!     Residual projection for CVS
-!     Written by Sarai D. Folkestad, Aug. 2017
-!  
-      implicit none
-!
-      class(ccs) :: wf
-      real(dp), dimension(wf%n_parameters, 1) :: residual
-!
-   end subroutine core_ionization_residual_projection_ccs
 !
    end interface
 !
@@ -1177,7 +1102,7 @@ module subroutine cvs_ionization_jacobian_ccs_transformation_ccs(wf, c_a_i)
 !    -::- Jacobian submodule interface -::-
 !    ::::::::::::::::::::::::::::::::::::::
 !
-      module subroutine cvs_jacobian_ccs_transformation_ccs(wf, c_a_i)
+      module subroutine core_jacobian_ccs_transformation_ccs(wf, c_a_i)
 !!
 !!       Jacobian transformation for CVS calculation
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -1187,7 +1112,7 @@ module subroutine cvs_ionization_jacobian_ccs_transformation_ccs(wf, c_a_i)
          class(ccs) :: wf 
          real(dp), dimension(wf%n_v, wf%n_o)   :: c_a_i    
 !
-      end subroutine cvs_jacobian_ccs_transformation_ccs
+      end subroutine core_jacobian_ccs_transformation_ccs
 !
       module subroutine jacobian_ccs_a1_ccs(wf,rho,c1)
 !!

@@ -87,7 +87,6 @@ module ccsd_class
 !     Coupled cluster Jacobian transformation routine 
 !
       procedure :: jacobian_ccsd_transformation       => jacobian_ccsd_transformation_ccsd
-      procedure :: cvs_jacobian_ccsd_transformation   => cvs_jacobian_ccsd_transformation_ccsd
 !
       procedure :: jacobian_ccsd_a1 => jacobian_ccsd_a1_ccsd
       procedure :: jacobian_ccsd_b1 => jacobian_ccsd_b1_ccsd
@@ -110,7 +109,7 @@ module ccsd_class
 !
 !     CVS
 !
-      procedure :: cvs_rho_ai_bj_projection => cvs_rho_ai_bj_projection_ccsd
+      procedure :: cvs_rho_aibj_projection => cvs_rho_aibj_projection_ccsd
       procedure :: cvs_residual_projection => cvs_residual_projection_ccsd
 !
 !     Coupled cluster Jacobian transpose transformation routine 
@@ -135,9 +134,13 @@ module ccsd_class
       procedure :: jacobian_transpose_ccsd_h2 => jacobian_transpose_ccsd_h2_ccsd
       procedure :: jacobian_transpose_ccsd_i2 => jacobian_transpose_ccsd_i2_ccsd
 !
+!     Valence ionization
+!
       procedure :: ionization_residual_projection => ionization_residual_projection_ccsd
-      procedure :: ionization_jacobian_ccsd_transformation => ionization_jacobian_ccsd_transformation_ccsd
-      procedure :: ionization_rho_ai_bj_projection => ionization_rho_ai_bj_projection_ccsd
+      procedure :: ionization_rho_aibj_projection => ionization_rho_aibj_projection_ccsd
+!
+!     Core ionization
+!
 !     Routine to construct right projection vector (eta)
 !
       procedure :: construct_eta => construct_eta_ccsd
@@ -516,8 +519,7 @@ module ccsd_class
 !
 !     -::- Ionized state submodule interface -::-
 !     :::::::::::::::::::::::::::::::::::::::::::
-!
-!
+!     
       module subroutine ionization_residual_projection_ccsd(wf, residual)
 !!
 !!       Residual projection for CVS
@@ -531,7 +533,7 @@ module ccsd_class
       end subroutine ionization_residual_projection_ccsd
 !
 !
-      module subroutine ionization_rho_ai_bj_projection_ccsd(wf, rho_ai_bj)
+      module subroutine ionization_rho_aibj_projection_ccsd(wf, rho_aibj)
 !!
 !!       Residual projection for CVS
 !!       Written by Sarai D. Folkestad, Aug. 2017
@@ -539,9 +541,9 @@ module ccsd_class
          implicit none
 !
          class(ccsd) :: wf
-         real(dp), dimension(wf%n_o*wf%n_v, wf%n_o*wf%n_v) :: rho_ai_bj
+         real(dp), dimension(:,:) :: rho_aibj
 !
-      end subroutine ionization_rho_ai_bj_projection_ccsd
+      end subroutine ionization_rho_aibj_projection_ccsd
 !
 !
       module subroutine ionization_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
@@ -572,6 +574,36 @@ module ccsd_class
         real(dp), dimension(wf%n_t2am, 1)   :: c_aibj ! c_aibj     
 !
       end subroutine ionization_jacobian_ccsd_transformation_ccsd
+!
+!
+      module subroutine core_ionization_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
+!!
+!!       Ionization jacobian transformation (CCSD)
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!       Directs the transformation by the CCSD Jacobi matrix,
+!!
+!!          A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >,
+!!
+!!       where the basis employed for the brackets is biorthonormal. 
+!!       The transformation is rho = A c, i.e., 
+!!
+!!          rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck 
+!!                     + 1/2 sum_ckdl A_mu,ckdl c_ckdl (1 + delta_ck,dl).
+!!
+!!       On exit, c is overwritten by rho. That is, c_a_i = rho_a_i,
+!!       and c_aibj = rho_aibj. 
+!!
+         implicit none
+!
+         class(ccsd) :: wf 
+!
+!        Incoming vector c 
+!
+         real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai 
+         real(dp), dimension(wf%n_t2am, 1)   :: c_aibj ! c_aibj 
+!
+      end subroutine core_ionization_jacobian_ccsd_transformation_ccsd
 !
 !
    end interface
@@ -1304,7 +1336,7 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
       end subroutine jacobian_transpose_ccsd_i2_ccsd
 !
 !
-      module subroutine cvs_rho_ai_bj_projection_ccsd(wf, vec_ai_bj)
+      module subroutine cvs_rho_aibj_projection_ccsd(wf, vec_aibj)
 !!
 !!       Rho projection for CVS (CCSD),
 !!       Written by Sarai D. Folkestad, Aug. 2017
@@ -1312,9 +1344,9 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
          implicit none
 !
          class(ccsd) :: wf
-         real(dp), dimension(:, :) :: vec_ai_bj
+         real(dp), dimension(:, :) :: vec_aibj
 !
-   end subroutine cvs_rho_ai_bj_projection_ccsd
+   end subroutine cvs_rho_aibj_projection_ccsd
 !
 !
    end interface

@@ -1107,53 +1107,46 @@ contains
 !
          read(unit_trial_vecs, rec=trial, iostat=ioerror) c_a_i
 !
-!        Excited state or ionized state ?
+!        Test for left or right transformation
 !
-         if (wf%tasks%excited_state .or. wf%tasks%core_excited_state ) then ! Excited state
-!
-!           Left, right core or valence
-!
-            if (wf%excited_state_task=='right_valence') then
+         if (wf%excited_state_task=='right_valence' .or. wf%excited_state_task=='right_core') then
 !
             call wf%jacobian_ccs_transformation(c_a_i)
 !
-            elseif (wf%excited_state_task=='right_core') then
+         elseif (wf%excited_state_task=='left_valence') then
 !
-               call wf%cvs_jacobian_ccs_transformation(c_a_i)
+            call wf%jacobian_transpose_ccs_transformation(c_a_i)
 !
-            elseif (wf%excited_state_task=='left_valence') then
+         elseif (wf%response_task=='multipliers') then 
 !
-            elseif (wf%response_task=='left_eigenvectors') then
+            call wf%jacobian_transpose_ccs_transformation(c_a_i)
 !
-               call wf%jacobian_transpose_ccs_transformation(c_a_i)
+         else
 !
-            elseif (wf%response_task=='multipliers') then 
+            write(unit_output,*) 'Error: Response task not recognized'
+            stop
 !
-               call wf%jacobian_transpose_ccs_transformation(c_a_i)
+         endif
 !
-            else
+!        -::- Projections -::-
 !
-               write(unit_output,*) 'Error: Response task not recognized'
-               stop
+!        Test for core calculation 
 !
-            endif
+         if (wf%tasks%core_excited_state .or. wf%tasks%core_ionized_state) then
+!  
+!           Project out contamination from valence contributions
 !
-         elseif (wf%tasks%ionized_state  .or. wf%tasks%core_ionized_state ) then ! Ionized state
+            call wf%cvs_rho_a_i_projection(c_a_i)
 !
-            if (wf%excited_state_task=='right_valence') then
+         endif
 !
-               call wf%ionization_jacobian_ccs_transformation(c_a_i)
+!        Test for ionization calculation
 !
-            elseif (wf%excited_state_task=='right_core') then
+         if (wf%tasks%ionized_state .or. wf%tasks%core_ionized_state) then
 !
-               call wf%cvs_ionization_jacobian_ccs_transformation(c_a_i)
+!           Project out contamination from regular excitations
 !
-            else
-!
-               write(unit_output,*) 'Error: Response task not recognized'
-               stop
-!
-            endif
+            call wf%ionization_rho_a_i_projection(c_a_i)
 !
          endif
 !
@@ -1211,6 +1204,7 @@ contains
             endif
 !
          elseif (wf%tasks%ionized_state) then
+!
                if ((wf%excited_state_task .eq. 'right_valence') .or. &
                 (wf%excited_state_task .eq. 'left_valence')) then
 !
@@ -1218,7 +1212,7 @@ contains
 !
             elseif (wf%excited_state_task .eq. 'right_core') then
 !
-               !call wf%precondition_residual_core(residual)
+               call wf%precondition_residual_core_ionization(residual)
 !
             endif
 !
