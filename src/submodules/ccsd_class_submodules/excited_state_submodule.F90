@@ -107,16 +107,15 @@ contains
       do trial = first_trial, last_trial
 !
          read(unit_trial_vecs, rec=trial, iostat=ioerror) c_a_i, c_aibj
+
+!        Test for left or right transformation
 !
+
          if (wf%current_task == 'excited_state') then
 !
-            if (wf%excited_state_task =='right_valence') then
+            if (wf%excited_state_task =='right_valence' .or. wf%excited_state_task =='right_core') then
 !
                call wf%jacobian_ccsd_transformation(c_a_i, c_aibj)
-!
-            elseif (wf%excited_state_task=='right_core') then
-!
-               !call wf%cvs_jacobian_ccsd_transformation(c_a_i, c_aibj)
 !
             elseif (wf%excited_state_task=='left_valence') then
 !               
@@ -153,6 +152,32 @@ contains
 !
          endif
 !
+!        -::- Projections -::-
+!
+!        Test for core calculation 
+!
+         if (wf%tasks%core_excited_state .or. wf%tasks%core_ionized_state) then
+!  
+!           Project out contamination from valence contributions
+!
+            call wf%cvs_rho_a_i_projection(c_a_i)
+            call wf%cvs_rho_aibj_projection(c_aibj)
+!
+         endif
+!
+!        Test for ionization calculation
+!
+         if (wf%tasks%ionized_state .or. wf%tasks%core_ionized_state) then
+!
+!           Project out contamination from regular excitations
+!
+            call wf%ionization_rho_a_i_projection(c_a_i)
+            call wf%ionization_rho_aibj_projection(c_aibj)
+!
+         endif
+!
+!        Write transformed vector to file
+!
          write(unit_rho, rec=trial, iostat=ioerror) c_a_i, c_aibj
 !
       enddo
@@ -168,6 +193,61 @@ contains
       call deallocator(c_aibj, wf%n_t2am, 1)
 !
    end subroutine transform_trial_vectors_ccsd
+!
+!
+   module subroutine print_excitation_vector_ccsd(wf, vec, unit_id)
+!!
+      implicit none
+!  
+      class(ccsd) :: wf
+!
+      real(dp), dimension(wf%n_parameters, 1) :: vec
+!
+      integer(i15) :: unit_id     
+!
+      integer(i15) :: a = 0, i = 0, ai = 0, b = 0, j = 0, bj = 0, aibj = 0
+!
+!     Print singles part
+!
+      write(unit_id,'(2a6,a12)')'a', 'i', 'coeff'
+      write(unit_id,'(t3,a)')'-------------------------'
+!
+      do a = 1, wf%n_v
+         do i = 1, wf%n_o
+!  
+            ai = index_two(a, i, wf%n_v)
+            if (abs(vec(ai, 1)) .gt. 1.0D-03) then
+               write(unit_id,'(2i6,f12.4)') a, i, vec(ai, 1)
+            endif
+!
+         enddo
+      enddo
+      flush(unit_id)
+!
+!     Print doubles part
+!
+      write(unit_id,'(/4a6, a11)')'a', 'i', 'b', 'j', 'coeff'
+      write(unit_id,'(t3,a)')'---------------------------------'
+!
+      do a = 1, wf%n_v
+         do i = 1, wf%n_o
+            do b = 1, wf%n_v
+               do j = 1, wf%n_o
+!
+                  ai = index_two(a, i, wf%n_v)
+                  bj = index_two(b, j, wf%n_v)
+                  aibj = index_packed(ai, bj)
+!
+                  if (abs(vec((wf%n_o)*(wf%n_v) + aibj, 1)) .gt. 1.0D-03 .and. ai .ge. bj) then
+                     write(unit_id,'(4i6,f12.4)') a, i, b, j, vec((wf%n_o)*(wf%n_v) + aibj, 1)
+                  endif
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+   end subroutine print_excitation_vector_ccsd
 !
 !
    module subroutine excited_state_preparations_ccsd(wf)

@@ -29,6 +29,8 @@ module calc_procedures_class
       logical :: ground_state       = .false.
       logical :: excited_state      = .false. 
       logical :: core_excited_state = .false. 
+      logical :: ionized_state      = .false. 
+      logical :: core_ionized_state = .false. 
       logical :: properties         = .false.
 !
 !     For excited states (core and valence)

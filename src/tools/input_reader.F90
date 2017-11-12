@@ -153,6 +153,22 @@ contains
                      read(unit_input,*) (tasks%cores(i, 1), i = 1, tasks%n_cores)
                      cycle 
 !
+                  elseif (calculation == 'ionized_state') then
+!
+                     tasks%ionized_state = .true.
+                     read(unit_input,'(i3,i3)') tasks%n_singlet_states, tasks%n_triplet_states
+!
+                     cycle
+!
+                  elseif (calculation == 'core_ionized_state') then
+!
+                     tasks%core_ionized_state = .true.
+                     read(unit_input,'(i3,i3)') tasks%n_singlet_states, tasks%n_triplet_states
+                     read(unit_input,'(i3)') tasks%n_cores
+                     call allocator_int(tasks%cores, tasks%n_cores, 1)
+                     read(unit_input,*) (tasks%cores(i, 1), i = 1, tasks%n_cores)
+                     cycle 
+!
                   elseif (calculation == 'properties') then
 !
                      tasks%properties = .true. 

@@ -93,15 +93,15 @@ contains
 !
                call wf%jacobian_mlccsd_transformation(c_a_i, c_aibj)
 !
-            elseif (wf%excited_state_task=='right_core') then
+         elseif (wf%excited_state_task=='right_core') then
 !
                call wf%cvs_jacobian_mlccsd_transformation(c_a_i, c_aibj)
 !
-            elseif (wf%excited_state_task=='left_valence') then
+         elseif (wf%excited_state_task=='left_valence') then
 !
       !         call wf%jacobian_transpose_mlccsd_transformation(c_a_i, c_aibj)
 !
-            else
+         else
 !
                write(unit_output,*) 'Error: Excited state task not recognized'
                stop

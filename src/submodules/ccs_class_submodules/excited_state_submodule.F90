@@ -24,7 +24,7 @@ submodule(ccs_class) excited_state
 !  Some variables available to all routines of the module
 !
    integer(i15) :: iteration = 1
-   integer(i15) :: max_iterations = 70! E: we move this to calculation settings later
+   integer(i15) :: max_iterations = 75 ! E: we move this to calculation settings later
 !
 !  Variables to handle convergence criterea
 !
@@ -802,15 +802,37 @@ contains
 !
       endif
 !
-      if ((wf%excited_state_task .eq. 'right_valence') .or. &
-          (wf%excited_state_task .eq. 'left_valence')) then
+!     Test for ionization or excitation
 !
-         call wf%initialize_trial_vectors_valence
+      if (wf%tasks%excited_state .or. wf%tasks%core_excited_state) then ! Excitation
 !
-      elseif (wf%excited_state_task .eq. 'right_core') then
+!        Test for valence or core
 !
-         call wf%initialize_trial_vectors_core
+         if ((wf%excited_state_task .eq. 'right_valence') .or. &
+            (wf%excited_state_task .eq. 'left_valence')) then
 !
+            call wf%initialize_trial_vectors_valence
+!
+         elseif (wf%excited_state_task .eq. 'right_core') then
+!
+            call wf%initialize_trial_vectors_core
+!
+         endif
+!
+      elseif (wf%tasks%ionized_state .or. wf%tasks%core_ionized_state) then ! Ionization
+!
+!        Test for valence or core
+!
+         if ((wf%excited_state_task .eq. 'right_valence') .or. &
+            (wf%excited_state_task .eq. 'left_valence')) then
+!
+            call wf%initialize_trial_vectors_valence_ionization
+!
+         elseif (wf%excited_state_task .eq. 'right_core') then
+!
+            call wf%initialize_trial_vectors_core_ionization
+!
+         endif
       endif
 !
    end subroutine initialize_trial_vectors_ccs
@@ -881,67 +903,6 @@ contains
       call deallocator_int( index_lowest_obital_diff, wf%tasks%n_singlet_states, 1)
 !
       end subroutine initialize_trial_vectors_valence_ccs
-!
-!
-      module subroutine initialize_trial_vectors_core_ccs(wf)
-!!
-!!       Initialize trial vectors, for CVS calculation 
-!!       Written by Sarai D. Folkestad, Aug. 2017
-!!
-!!       Finds correct core MO, and selects the n_singlet_state lowest 
-!!       orbital differences where one of the occupied indices corresponds to the 
-!!       core MO
-!!
-         implicit none
-!
-         class(ccs) :: wf
-!
-         integer(i15), dimension(:,:), allocatable :: index_core_obital
-!
-         real(dp), dimension(:,:), allocatable :: c
-! 
-         integer(i15) :: i = 0, j = 0
-!
-         integer(i15) :: unit_trial_vecs = 0, unit_rho = 0, ioerror = 0
-!
-!        Allocate array for the indices of the lowest orbital differences
-!
-         call allocator_int( index_core_obital, wf%tasks%n_singlet_states, 1)
-         index_core_obital = zero
-!
-!        Find indecies of lowest orbital differences
-!
-         call wf%find_start_trial_indices_core(index_core_obital)
-!
-!        Generate start trial vectors c and write to file
-!
-         call allocator(c, wf%n_parameters, 1)
-!
-!        Prepare for writing trial vectors to file
-!
-         call generate_unit_identifier(unit_trial_vecs)
-         open(unit=unit_trial_vecs, file='trial_vec', action='write', status='unknown', &
-           access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror)
-!
-         do i = 1, (wf%tasks%n_singlet_states)
-            c = zero
-            c(index_core_obital(i,1),1) = one
-            write(unit_trial_vecs, rec=i, iostat=ioerror) (c(j,1), j = 1, wf%n_parameters)
-         enddo
-!
-!        Close file
-!     
-         close(unit_trial_vecs)
-!
-!        Deallocate c
-!
-         call deallocator(c, wf%n_parameters, 1)
-!
-!        Deallocate index_lowest_obital_diff
-!
-         call deallocator_int(index_core_obital, wf%tasks%n_singlet_states, 1)
-!
-      end subroutine initialize_trial_vectors_core_ccs
 !
 !
    module subroutine trial_vectors_from_stored_solutions_ccs(wf)
@@ -1118,136 +1079,6 @@ contains
    end subroutine find_start_trial_indices_ccs
 !
 !
-   module subroutine find_start_trial_indices_core_ccs(wf, index_list)
-!!
-!!    Find indices for lowest orbital differences
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad
-!!
-!!
-      implicit none
-!
-      class(ccs) :: wf
-      integer(i15), dimension(wf%tasks%n_singlet_states,1), intent(inout) :: index_list
-!
-      real(dp), dimension(:,:), allocatable     ::  sorted_short_vec
-!
-      integer(i15) :: a, i, counter
-!
-!     Find core mo(s)
-!
-      call allocator_int(wf%tasks%index_core_mo, wf%tasks%n_cores, 1)
-!
-      call wf%find_core_mo
-!
-      counter = 1
-      do a = 1, wf%n_v
-         if ( counter .le.  wf%tasks%n_singlet_states)  then
-            do i = 1, wf%tasks%n_cores
-!
-               index_list(counter, 1) = index_two(a, wf%tasks%index_core_mo(i, 1), wf%n_v)
-!
-               counter = counter + 1
-!
-               if ( counter .gt.  wf%tasks%n_singlet_states) exit
-!
-            enddo
-         endif
-      enddo
-!
-   end subroutine find_start_trial_indices_core_ccs
-!
-   module subroutine find_core_mo_ccs(wf)
-!!
-!!    Find which mo are core mos
-!!    Written by Sarai D. Folkestad, Aug. 2017
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      integer(i15) :: n_nuclei = 0, core = 0, ao = 0, mo = 0, ao_mo_index = 0
-      integer(i15) :: first_ao_on_core = 0, counter = 0, n_aos_on_atoms = 0, i = 0, j = 0
-      integer(i15), dimension(:,:), allocatable :: n_ao_on_center, ao_center_info, aos_on_atoms
-!
-!     :: Get center info ::
-!
-      call read_atom_info(n_nuclei, wf%n_ao)
-!
-      call allocator_int(n_ao_on_center, n_nuclei, 1)      
-      call allocator_int(ao_center_info, wf%n_ao, 2)
-!
-      call read_center_info(n_nuclei, wf%n_ao, n_ao_on_center, ao_center_info)
-!
-!     :: Find index of first ao on atom ::
-!   
-      n_aos_on_atoms = 0
-      do i = 1, wf%tasks%n_cores
-         n_aos_on_atoms = n_aos_on_atoms + n_ao_on_center(wf%tasks%cores(i,1),1)
-      enddo
-!
-      call allocator_int(aos_on_atoms, n_aos_on_atoms, 1)
-!
-      counter = 0    
-      do i = 1, wf%tasks%n_cores 
-         do j = 1, wf%n_ao
-            if (ao_center_info(j,1) == wf%tasks%cores(i,1)) then
-               counter = counter + 1
-               aos_on_atoms(counter,1) = ao_center_info(j,2)
-            endif
-         enddo
-      enddo
-!
-      call deallocator_int(ao_center_info, wf%n_ao, 2)
-!
-!     :: Find core mo that has large ao component on the atom in question ::
-!
-      wf%tasks%index_core_mo = zero
-      counter = 0
-!
-      do ao = 1, n_aos_on_atoms
-!
-         do  mo = 1, wf%n_o
-!
-!           Determine wether orbital in core mo
-!
-            if(wf%fock_diagonal(mo, 1) .lt. -5.0d0) then
-!
-!              Determine wether the core orbital sits on the corect atom(s)
-!
-               ao_mo_index = index_two(aos_on_atoms(ao, 1), mo, wf%n_ao)
-!
-               if(abs(wf%mo_coef(ao_mo_index, 1)) .gt. 0.5d0) then
-                  counter = counter + 1
-!
-                  if (counter .le. wf%tasks%n_cores) then
-                     wf%tasks%index_core_mo(counter, 1) = mo
-                  endif
-!
-                     
-               endif
-!
-            endif
-!
-         enddo
-!
-      enddo
-!
-!
-      call deallocator_int(n_ao_on_center, n_nuclei, 1) 
-      call deallocator_int(aos_on_atoms, n_aos_on_atoms, 1) 
-!
-!     Sanity check
-!
-      do core = 1, wf%tasks%n_cores
-         if (wf%tasks%index_core_mo(core, 1) .eq. 0) then
-            write(unit_output,*)'WARNING: Found no core orbitals for core', wf%tasks%cores(core, 1)
-            stop
-         endif
-      enddo
-!
-   end subroutine find_core_mo_ccs
-!
-!
    module subroutine calculate_orbital_differences_ccs(wf,orbital_diff)
 
 !!
@@ -1314,13 +1145,9 @@ contains
 !
          if (wf%current_task == 'excited_state') then
 !
-            if (wf%excited_state_task == 'right_valence') then
+            if (wf%excited_state_task == 'right_valence' .or. wf%excited_state_task == 'right_core') then
 !
                call wf%jacobian_ccs_transformation(c_a_i)
-!
-            elseif (wf%excited_state_task == 'right_core') then
-!
-               call wf%cvs_jacobian_ccs_transformation(c_a_i)
 !
             elseif (wf%excited_state_task == 'left_valence') then
 !               
@@ -1354,6 +1181,28 @@ contains
 !
             write(unit_output,*) 'Error: Current task not recognized'
             stop
+!
+         endif
+!
+!        -::- Projections -::-
+!
+!        Test for core calculation 
+!
+         if (wf%tasks%core_excited_state .or. wf%tasks%core_ionized_state) then
+!  
+!           Project out contamination from valence contributions
+!
+            call wf%cvs_rho_a_i_projection(c_a_i)
+!
+         endif
+!
+!        Test for ionization calculation
+!
+         if (wf%tasks%ionized_state .or. wf%tasks%core_ionized_state) then
+!
+!           Project out contamination from regular excitations
+!
+            call wf%ionization_rho_a_i_projection(c_a_i)
 !
          endif
 !
@@ -1396,16 +1245,32 @@ contains
 !
          class(ccs) :: wf
          real(dp), dimension(wf%n_parameters ,1) :: residual
-!       
 !
-         if ((wf%excited_state_task .eq. 'right_valence') .or. &
-             (wf%excited_state_task .eq. 'left_valence')) then
+         if (wf%tasks%excited_state .or. wf%tasks%core_excited_state) then       
 !
-            call wf%precondition_residual_valence(residual)
+            if ((wf%excited_state_task .eq. 'right_valence') .or. &
+                (wf%excited_state_task .eq. 'left_valence')) then
 !
-         elseif (wf%excited_state_task .eq. 'right_core') then
+               call wf%precondition_residual_valence(residual)
 !
-            call wf%precondition_residual_core(residual)
+            elseif (wf%excited_state_task .eq. 'right_core') then
+!
+               call wf%precondition_residual_core(residual)
+!
+            endif
+!
+         elseif (wf%tasks%ionized_state) then
+!
+               if ((wf%excited_state_task .eq. 'right_valence') .or. &
+                (wf%excited_state_task .eq. 'left_valence')) then
+!
+               call wf%precondition_residual_valence_ionization(residual)
+!
+            elseif (wf%excited_state_task .eq. 'right_core') then
+!
+               call wf%precondition_residual_core_ionization(residual)
+!
+            endif
 !
          endif
 !
@@ -1444,76 +1309,7 @@ contains
       end subroutine precondition_residual_valence_ccs
 !
 !
-      module subroutine precondition_residual_core_ccs(wf, residual)
-!!
-!!       Precondition residual core
-!!       Written by Sarai D. Folkestad, Aug. 2017
-!!
-!!       Project out elements not corresponding to the core excitation
-!!       Divide elements of residual by orbital difference
-!!
-         implicit none
-!
-         class(ccs) :: wf
-         real(dp), dimension(wf%n_parameters ,1) :: residual
-! 
-         real(dp), dimension(:,:), allocatable :: orbital_diff
-!
-         integer(i15) :: i = 0, a = 0, ai = 0
-!      
-         call wf%cvs_residual_projection(residual)
-!
-         call allocator(orbital_diff, wf%n_parameters, 1)
-         orbital_diff = zero
-!
-         call wf%calculate_orbital_differences(orbital_diff)
-!
-         do i = 1, wf%n_parameters
-!
-            residual(i, 1) = residual(i,1)/orbital_diff(i,1)
-!
-         enddo
-!
-         call deallocator(orbital_diff, wf%n_parameters, 1)
-!
-      end subroutine precondition_residual_core_ccs
-!
-!
-      module subroutine cvs_residual_projection_ccs(wf, residual)
-!!
-!!       Residual projection for CVS
-!!       Written by Sarai D. Folkestad, Aug. 2017
-!!
-         implicit none
-!
-         class(ccs) :: wf
-         real(dp), dimension(wf%n_parameters, 1) :: residual
-!
-         integer(i15) :: i = 0, a = 0, core = 0, ai = 0
-!
-         logical :: core_orbital
-!
-         do i = 1, wf%n_o
-!
-            core_orbital = .false.
-            do core = 1, wf%tasks%n_cores
-!
-               if (i .eq. wf%tasks%index_core_mo(core, 1)) core_orbital = .true.
-!
-            enddo
-!
-            if (.not. core_orbital) then
-               do a = 1, wf%n_v
-                  ai = index_two(a, i, wf%n_v)
-                  residual(ai, 1) = zero
-               enddo
-            endif
-!
-         enddo
-!
-      end subroutine cvs_residual_projection_ccs
-!
-!
+     
       module subroutine print_excited_state_info_ccs(wf)
 !!
 !!
