@@ -65,13 +65,13 @@ contains
       write(unit_output,'(t3,a,i3,a,a,a)') &
                                      'Requested ',wf%tasks%n_triplet_states,' ', trim(wf%name), ' triplet states.'     
 !
-!     Set the response task 
+!     Preparations for excited state solver 
 !
-      if (wf%tasks%excited_state) then
-         wf%excited_state_task = 'right_valence'
-      elseif (wf%tasks%core_excited_state) then
-         wf%excited_state_task = 'right_core'
-      endif
+      call wf%excited_state_preparations
+!
+!     Set current task to excited state calculation 
+! 
+      wf%current_task = 'excited_state'
 !
 !     Run the general solver routine (file names are given
 !     by the task, i.e., the file 'right_valence' contains
@@ -79,7 +79,43 @@ contains
 !
       call wf%excited_state_solver
 !
+!     Final work and preparations for other tasks (such as property calculations)
+!
+      call wf%excited_state_cleanup
+!
    end subroutine excited_state_driver_ccs
+!
+!
+   module subroutine excited_state_preparations_ccs(wf)
+!!
+!!    Excited State Preparations (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!    A routine for preparation tasks (if any). Can be overwritten
+!!    in descendants if other preparations prove necessary.    
+!!
+      class(ccs) :: wf 
+!
+!     Store voov-electronic repulsion integrals to file if there is space
+!
+      call wf%store_t1_vo_ov_electronic_repulsion
+!
+   end subroutine excited_state_preparations_ccs
+!
+!
+   module subroutine excited_state_cleanup_ccs(wf)
+!!
+!!    Excited State Cleanup (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!    A routine for cleanup tasks (if any). Can be overwritten
+!!    in descendants if other cleanups prove necessary.    
+!!
+      class(ccs) :: wf 
+!
+!     Nothing yet!
+!
+   end subroutine excited_state_cleanup_ccs
 !
 !
    module subroutine excited_state_solver_ccs(wf)
@@ -1107,23 +1143,43 @@ contains
 !
          read(unit_trial_vecs, rec=trial, iostat=ioerror) c_a_i
 !
-!        Test for left or right transformation
+         if (wf%current_task == 'excited_state') then
 !
-         if (wf%excited_state_task=='right_valence' .or. wf%excited_state_task=='right_core') then
+            if (wf%excited_state_task == 'right_valence' .or. wf%excited_state_task == 'right_core') then
 !
-            call wf%jacobian_ccs_transformation(c_a_i)
+               call wf%jacobian_ccs_transformation(c_a_i)
 !
-         elseif (wf%excited_state_task=='left_valence') then
+            elseif (wf%excited_state_task == 'left_valence') then
+!               
+               call wf%jacobian_transpose_ccs_transformation(c_a_i)
 !
-            call wf%jacobian_transpose_ccs_transformation(c_a_i)
+            else
 !
-         elseif (wf%response_task=='multipliers') then 
+               write(unit_output,*) 'Error: Excited state task not recognized'
+               stop
 !
-            call wf%jacobian_transpose_ccs_transformation(c_a_i)
+            endif
+!
+         elseif(wf%current_task == 'response') then
+!
+            if (wf%response_task =='left_eigenvectors') then
+!
+               call wf%jacobian_transpose_ccs_transformation(c_a_i)
+!
+            elseif (wf%response_task == 'multipliers') then 
+!
+               call wf%jacobian_transpose_ccs_transformation(c_a_i)
+!
+            else
+!
+               write(unit_output,*) 'Error: Response task not recognized'
+               stop
+!
+            endif
 !
          else
 !
-            write(unit_output,*) 'Error: Response task not recognized'
+            write(unit_output,*) 'Error: Current task not recognized'
             stop
 !
          endif

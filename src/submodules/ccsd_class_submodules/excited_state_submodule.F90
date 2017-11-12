@@ -110,21 +110,44 @@ contains
 
 !        Test for left or right transformation
 !
-         if (wf%excited_state_task=='right_valence' .or. wf%excited_state_task=='right_core') then
+
+         if (wf%current_task == 'excited_state') then
 !
-            call wf%jacobian_ccsd_transformation(c_a_i, c_aibj)
+            if (wf%excited_state_task =='right_valence' .or. wf%excited_state_task =='right_core') then
 !
-         elseif (wf%excited_state_task=='left_valence') then
+               call wf%jacobian_ccsd_transformation(c_a_i, c_aibj)
 !
-            call wf%jacobian_transpose_ccsd_transformation(c_a_i, c_aibj)
+            elseif (wf%excited_state_task=='left_valence') then
+!               
+               call wf%jacobian_transpose_ccsd_transformation(c_a_i, c_aibj)
 !
-         elseif (wf%excited_state_task=='multipliers') then
+            else
 !
-            call wf%jacobian_transpose_ccsd_transformation(c_a_i, c_aibj)
+               write(unit_output,*) 'Error: Excited state task not recognized'
+               stop
+!
+            endif
+!
+         elseif (wf%current_task == 'response') then
+!
+            if (wf%response_task == 'left_eigenvectors') then
+!
+               call wf%jacobian_transpose_ccsd_transformation(c_a_i, c_aibj)
+!
+            elseif (wf%response_task == 'multipliers') then 
+!
+               call wf%jacobian_transpose_ccsd_transformation(c_a_i, c_aibj)
+!
+            else
+!
+               write(unit_output,*) 'Error: Response task not recognized'
+               stop
+!
+            endif
 !
          else
 !
-            write(unit_output,*) 'Error: Response task not recognized'
+            write(unit_output,*) 'Error: Current task not recognized'
             stop
 !
          endif
@@ -172,30 +195,30 @@ contains
    end subroutine transform_trial_vectors_ccsd
 !
 !
-      module subroutine print_excitation_vector_ccsd(wf, vec, unit_id)
+   module subroutine print_excitation_vector_ccsd(wf, vec, unit_id)
 !!
-         implicit none
+      implicit none
 !  
-         class(ccsd) :: wf
+      class(ccsd) :: wf
 !
-         real(dp), dimension(wf%n_parameters, 1) :: vec
+      real(dp), dimension(wf%n_parameters, 1) :: vec
 !
-         integer(i15) :: unit_id     
+      integer(i15) :: unit_id     
 !
-         integer(i15) :: a = 0, i = 0, ai = 0, b = 0, j = 0, bj = 0, aibj = 0
+      integer(i15) :: a = 0, i = 0, ai = 0, b = 0, j = 0, bj = 0, aibj = 0
 !
-!        Print singles part
+!     Print singles part
 !
-         write(unit_id,'(2a6,a12)')'a', 'i', 'coeff'
-         write(unit_id,'(t3,a)')'-------------------------'
+      write(unit_id,'(2a6,a12)')'a', 'i', 'coeff'
+      write(unit_id,'(t3,a)')'-------------------------'
 !
-         do a = 1, wf%n_v
-            do i = 1, wf%n_o
+      do a = 1, wf%n_v
+         do i = 1, wf%n_o
 !  
-               ai = index_two(a, i, wf%n_v)
-               if (abs(vec(ai, 1)) .gt. 1.0D-03) then
-                  write(unit_id,'(2i6,f12.4)') a, i, vec(ai, 1)
-               endif
+            ai = index_two(a, i, wf%n_v)
+            if (abs(vec(ai, 1)) .gt. 1.0D-03) then
+               write(unit_id,'(2i6,f12.4)') a, i, vec(ai, 1)
+            endif
 !
          enddo
       enddo
@@ -225,5 +248,34 @@ contains
       enddo
 !
    end subroutine print_excitation_vector_ccsd
-
+!
+!
+   module subroutine excited_state_preparations_ccsd(wf)
+!!
+!!    Excited State Preparations (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!    A routine for preparation tasks (if any). Can be overwritten
+!!    in descendants if other preparations prove necessary.    
+!!
+      class(ccsd) :: wf 
+!
+      write(unit_output,'(/t3,a/)') 'Preparing for excited state calculation:'
+!
+!     Store vvvv-electronic repulsion integrals to file if there is space 
+!
+      call wf%store_t1_vv_vv_electronic_repulsion
+!
+!     Store voov-electronic repulsion integrals to file if there is space
+!
+      call wf%store_t1_vo_ov_electronic_repulsion
+!
+!     Store vvvo and vvov-electronic repulsion integrals to file if there is space
+!
+      call wf%store_t1_vv_vo_electronic_repulsion
+      call wf%store_t1_vv_ov_electronic_repulsion
+!
+   end subroutine excited_state_preparations_ccsd
+!
+!
 end submodule excited_state
