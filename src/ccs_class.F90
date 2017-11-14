@@ -2558,12 +2558,6 @@ contains
 !
       call wf%read_transform_cholesky
 !
-!     Test for the possibility of storing vir-vir-vir-vir
-!     electronic repulsion integrals (g_abcd), storing the
-!     integrals if possible
-!
-     ! call wf%store_vvvv_electronic_repulsion_integrals Should this occur in ccs? I don't think so
-!
 !     Initialize amplitudes and associated attributes
 !
       call wf%initialize_amplitudes

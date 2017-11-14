@@ -1404,7 +1404,6 @@ contains
       wf%implemented%core_excited_state = .true.
       wf%implemented%ionized_state      = .true.
       wf%implemented%properties         = .true.
-
 !
 !     Read Hartree-Fock info from SIRIUS
 !

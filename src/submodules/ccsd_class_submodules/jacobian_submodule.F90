@@ -141,7 +141,6 @@ contains
       call cpu_time(end_timer)
       ccsd_d1_time = end_timer - begin_timer
 !
-!
 !     :: CCSD contributions to the transformed doubles vector ::  
 !
 !     Allocate unpacked transformed vector 
@@ -203,7 +202,7 @@ contains
       call cpu_time(end_timer)
       ccsd_i2_time = end_timer - begin_timer
 !
-!     Last two terms are already symmetric (j2 and k2). Perform the symmetrization 
+!     Last two terms are already symmetric (J2 and K2). Perform the symmetrization 
 !     rho_ai_bj = P_ij^ab rho_ai_bj now, for convenience 
 !
 !     Allocate temporary symmetric transformed vector 
@@ -267,7 +266,7 @@ contains
 ! 
       call deallocator(c_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call deallocator(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-! 
+!
       call cpu_time(begin_timer)
       call wf%jacobian_ccsd_j2(rho_ab_ij, c_ab_ij)
       call cpu_time(end_timer)

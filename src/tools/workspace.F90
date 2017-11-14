@@ -80,8 +80,8 @@ contains
 !
       if(debug) write(unit_output,*) work_remains, 4*size
 !  
-      ! work_remains = work_remains - 4*size
-      ! work_used    = work_used    + 4*size
+      work_remains = work_remains - 4*size
+      work_used    = work_used    + 4*size
 !
       if (work_remains .lt. 0) then
          write(unit_output,'(t3,a)') "Error: user-specified memory insufficient."
@@ -115,9 +115,9 @@ contains
          stop
 !
       endif
-! !  
-!       work_remains = work_remains + 4*size
-!       work_used    = work_used    - 4*size
+!   
+      work_remains = work_remains + 4*size
+      work_used    = work_used    - 4*size
 !
    end subroutine deallocator
 !
@@ -162,13 +162,11 @@ contains
 !
    subroutine deallocator_int(elm, M, N)
 !
-!
 !     Deallocator Integer Arrays 
 !     Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2017
 !  
 !     Deallocates array and updates memory information
 !
-!  
       implicit none
 !  
       integer, dimension(:,:), allocatable :: elm
