@@ -13,6 +13,7 @@ submodule (ccs_class) jacobian_transpose
 !
    implicit none 
 !
+   character(len=40) :: integral_type
 !
 contains
 !
@@ -155,39 +156,15 @@ contains
 !
 !     Form the integral g_ck_ia = g_ckia  
 !
-      call allocator(L_ck_J, (wf%n_v)*(wf%n_o), wf%n_J)
-      call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
-!
-      call wf%get_cholesky_ai(L_ck_J)
-      call wf%get_cholesky_ia(L_ia_J)
-!
       call allocator(g_ck_ia, (wf%n_v)*(wf%n_o), (wf%n_o)*(wf%n_v))
 !
-      call dgemm('N','T',            &
-                  (wf%n_v)*(wf%n_o), & 
-                  (wf%n_v)*(wf%n_o), &
-                  wf%n_J,            &
-                  one,               &
-                  L_ck_J,            &
-                  (wf%n_v)*(wf%n_o), &
-                  L_ia_J,            &
-                  (wf%n_v)*(wf%n_o), &
-                  zero,              &
-                  g_ck_ia,           &
-                  (wf%n_v)*(wf%n_o))
-!
-      call deallocator(L_ck_J, (wf%n_v)*(wf%n_o), wf%n_J)
-      call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      integral_type = 'electronic_repulsion'
+      call wf%get_vo_ov(integral_type, g_ck_ia)
 !
 !     :: Form L_ai_ck = L_ckia in batches over a ::
 !
       call allocator(L_ai_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
       L_ai_ck = zero
-!
-!     For g_caik, we'll need to L_ik^J Cholesky vector 
-!
-      call allocator(L_ik_J, (wf%n_o)**2, wf%n_J)
-      call wf%get_cholesky_ij(L_ik_J)
 !
 !     Prepare for batching over index a
 ! 
@@ -213,28 +190,19 @@ contains
 !
 !        Form g_ca_ik
 !
-!        Get the Cholesky vector L_ca_J = L_ca^J 
-!
-         call allocator(L_ca_J, (wf%n_v)*a_length, wf%n_J)
-!
-         call wf%get_cholesky_ab(L_ca_J, 1, wf%n_v, a_first, a_last)
-!
          call allocator(g_ca_ik, (wf%n_v)*a_length, (wf%n_o)**2)
 !
-         call dgemm('N','T',            &
-                     (wf%n_v)*a_length, &
-                     (wf%n_o)**2,       &
-                     wf%n_J,            &
-                     one,               &
-                     L_ca_J,            &
-                     (wf%n_v)*a_length, &
-                     L_ik_J,            &
-                     (wf%n_o)**2,       &
-                     zero,              &
-                     g_ca_ik,           &
-                     (wf%n_v)*a_length)
-!
-         call deallocator(L_ca_J, (wf%n_v)*a_length, wf%n_J)
+         integral_type = 'electronic_repulsion'
+         call wf%get_vv_oo(integral_type, &
+                           g_ca_ik,       &
+                           1,             &
+                           wf%n_v,        &
+                           a_first,       &
+                           a_last,        &
+                           1,             &
+                           wf%n_o,        &
+                           1,             &
+                           wf%n_o)
 !
 !        Set L_ai_ck = L_ckia = 2 * g_ckia - g_caik 
 !        for the current batch over a 
