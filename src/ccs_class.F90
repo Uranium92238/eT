@@ -2615,7 +2615,8 @@ contains
 !
          if (wf%implemented%excited_state) then 
 !     
-            wf%excited_state_task = 'right_valence'
+      !      wf%excited_state_task = 'right_valence'
+            wf%excited_state_task = 'left_valence'
             call wf%excited_state_driver 
 !
          else

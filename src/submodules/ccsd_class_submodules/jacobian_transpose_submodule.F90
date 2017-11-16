@@ -17,6 +17,7 @@ submodule (ccsd_class) jacobian_transpose
 !
    implicit none 
 !
+   character(len=40) :: integral_type
 !
 contains
 !
@@ -321,26 +322,10 @@ contains
 !     Form L_ai_ld = L_iald = 2 * g_iald - g_idla 
 !                           = 2 * g_ia_ld(ia,ld) - g_ia_ld(id,la)
 !
-      call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
-!
-      call wf%get_cholesky_ia(L_ia_J)
-!
       call allocator(g_ia_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      call dgemm('N','T',            &
-                  (wf%n_o)*(wf%n_v), & 
-                  (wf%n_o)*(wf%n_v), &
-                  wf%n_J,            &
-                  one,               &
-                  L_ia_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  L_ia_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  g_ia_ld,           &
-                  (wf%n_o)*(wf%n_v))
-!
-      call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      integral_type = 'electronic_repulsion'
+      call wf%get_ov_ov(integral_type, g_ia_ld)
 !
       call allocator(L_ai_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       L_ai_ld = zero 
@@ -431,26 +416,10 @@ contains
 !     Form L_kcd_i = L_kcid = 2 * g_kcid - g_kdic
 !                           = 2 * g_kc_id(kc,id) - g_kc_id(kd,ic)
 !
-      call allocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
-!
-      call wf%get_cholesky_ia(L_kc_J)
-!
       call allocator(g_kc_id, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      call dgemm('N','T',            &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  wf%n_J,            &
-                  one,               &
-                  L_kc_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  L_kc_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  g_kc_id,           &
-                  (wf%n_o)*(wf%n_v))
-!
-      call deallocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      integral_type = 'electronic_repulsion'
+      call wf%get_ov_ov(integral_type, g_kc_id)
 !
       call allocator(L_kcd_i, (wf%n_o)*(wf%n_v)**2, wf%n_o)
       L_kcd_i = zero
