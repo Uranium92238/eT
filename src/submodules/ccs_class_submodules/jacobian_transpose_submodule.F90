@@ -130,14 +130,7 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o) :: sigma_a_i 
       real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i 
 !
-      real(dp), dimension(:,:), allocatable :: L_ck_J ! L_ck^J 
-      real(dp), dimension(:,:), allocatable :: L_ia_J ! L_ia^J 
-!
       real(dp), dimension(:,:), allocatable :: g_ck_ia ! g_ckia 
-!
-      real(dp), dimension(:,:), allocatable :: L_ik_J ! L_ik^J 
-      real(dp), dimension(:,:), allocatable :: L_ca_J ! L_ca^J 
-!
       real(dp), dimension(:,:), allocatable :: g_ca_ik ! g_caik 
 !
       real(dp), dimension(:,:), allocatable :: L_ai_ck ! L_ckia = 2 * g_ckia - g_caik
@@ -233,7 +226,6 @@ contains
 !
       enddo ! End of batches over a 
 !
-      call deallocator(L_ik_J, (wf%n_o)**2, wf%n_J)
       call deallocator(g_ck_ia, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     Add sum_ck L_ckia b_ck = sum_ck L_ai_ck b_ck 
