@@ -982,31 +982,10 @@ contains
 !
 !     Form g_il_md = g_ilmd 
 !
-      call allocator(L_il_J, (wf%n_o)**2, wf%n_J)
-!
-      call wf%get_cholesky_ij(L_il_J)
-!
-      call allocator(L_md_J, (wf%n_o)*(wf%n_v), wf%n_J)
-!
-      call wf%get_cholesky_ia(L_md_J)
-!
       call allocator(g_il_md, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
 !
-      call dgemm('N','T',            &
-                  (wf%n_o)**2,       &
-                  (wf%n_o)*(wf%n_v), &
-                  wf%n_J,            &
-                  one,               &
-                  L_il_J,            &
-                  (wf%n_o)**2,       &
-                  L_md_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  g_il_md,           &
-                  (wf%n_o)**2)
-!
-      call deallocator(L_il_J, (wf%n_o)**2, wf%n_J)
-      call deallocator(L_md_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      integral_type = 'electronic_repulsion'
+      call wf%get_oo_ov(integral_type, g_il_md)
 !
 !     Form L_il_dm = L_ilmd = 2 * g_ilmd - g_idml 
 !                           = 2 * g_ilmd - g_mlid
@@ -1060,76 +1039,23 @@ contains
 !
       call deallocator(L_il_dm, (wf%n_o)**2, (wf%n_v)*(wf%n_o))
 !
-!     Order X_il_ck as X_lck_i 
-!
-      call allocator(X_lck_i, (wf%n_v)*(wf%n_o)**2, wf%n_o)
-      X_lck_i = zero 
-!
-      do k = 1, wf%n_o
-         do c = 1, wf%n_v
-!
-            ck = index_two(c, k, wf%n_v)
-!
-            do l = 1, wf%n_o
-!
-               lck = index_three(l, c, k, wf%n_o, wf%n_v)
-!
-               do i = 1, wf%n_o
-!
-                  il = index_two(i, l, wf%n_o)
-!
-                  X_lck_i(lck, i) = X_il_ck(il, ck)
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!
-      call deallocator(X_il_ck, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
-!
-!     Reorder to b_a_lck = b_ckal
-!
-      call allocator(b_a_lck, wf%n_v, (wf%n_v)*(wf%n_o)**2)
-      b_a_lck = zero
-!
-      do k = 1, wf%n_o
-         do c = 1, wf%n_v
-!
-            ck = index_two(c, k, wf%n_v)
-!
-            do l = 1, wf%n_o
-!
-               lck = index_three(l, c, k, wf%n_o, wf%n_v)
-!
-               do a = 1, wf%n_v
-!
-                  al = index_two(a, l, wf%n_v)
-!
-                  b_a_lck(a, lck) = b_ai_bj(ck, al)
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!
 !     Add - sum_ckdlm b_ckal L_ilmd t_km^cd
-!         = - sum_ckl b_a_lck X_lck_i
+!         = - sum_ckl b_a_lck X_i_lck^T
 !
-      call dgemm('N','N',               &
+      call dgemm('N','T',               &
                   wf%n_v,               &
                   wf%n_o,               &
                   (wf%n_v)*(wf%n_o)**2, &
                   -one,                 &
-                  b_a_lck,              &
+                  b_ai_bj,              & ! "b_a_lck" (= b_al_ck = b_ai_bj)
                   wf%n_v,               &
-                  X_lck_i,              &
-                  (wf%n_v)*(wf%n_o)**2, &
+                  X_il_ck,              & ! "X_i_lck"
+                  wf%n_o,               &
                   one,                  &
                   sigma_a_i,            &
                   wf%n_v)
 !
-      call deallocator(X_lck_i, (wf%n_v)*(wf%n_o)**2, wf%n_o)
-      call deallocator(b_a_lck, wf%n_v, (wf%n_v)*(wf%n_o)**2)
+      call deallocator(X_il_ck, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
 !
 !     :: Term 4. - sum_ckdlm b_ckdl L_mlia t_km^cd ::
 !
