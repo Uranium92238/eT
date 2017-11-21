@@ -17,6 +17,34 @@ submodule (mlccsd_class) orbital_partitioning
 contains
 !
 !
+   module subroutine orbital_partitioning_mlccsd(wf)
+!!
+!!    Orbital partitioning,
+!!    Written by Sarai D. Folkestad, June 2017
+!!
+!!    Directs the partitioning for mlcc calculations.
+!!
+!!    So far only Cholesky decomposition is available. 
+!!
+      implicit none
+!
+      class(mlccsd) :: wf
+!
+      if (wf%CCSD_orbitals%cholesky) then
+!
+!        If cholesky - do Cholesky decomposition
+!
+         call wf%cholesky_localization_drv
+!
+      elseif (wf%CCSD_orbitals%cnto) then
+!
+         call wf%cnto_orbital_drv
+!
+      endif
+!
+   end subroutine orbital_partitioning_mlccsd
+!
+!
    module subroutine cholesky_localization_drv_mlccsd(wf)
 !!
 !!    Cholesky orbital localization driver,
@@ -1150,12 +1178,12 @@ contains
 ! 
 !     Set number of excitations to use for cnto generation
 !
-      cc2_wf%tasks%n_singlet_states = wf%tasks%n_singlet_states
+      cc2_wf%excited_state_specifications%n_singlet_states = wf%excited_state_specifications%n_singlet_states
 !
 !     Set convergence threshold for lower lying method
 !
-      cc2_wf%settings%energy_threshold = 1.0D-04 
-      cc2_wf%settings%equation_threshold = 1.0D-04 
+      cc2_wf%excited_state_specifications%energy_threshold = 1.0D-04 
+      cc2_wf%excited_state_specifications%residual_threshold = 1.0D-04 
 !
 !     Set mlcc settings
 !
@@ -1163,13 +1191,13 @@ contains
       if(wf%mlcc_settings%CCS .and. wf%mlcc_settings%CC2) then
 !
          cc2_wf%mlcc_settings%CCS      = .true.
-         cc2_wf%mlcc_settings%cnto     = .true.
-         cc2_wf%mlcc_settings%cholesky = .false.
+         cc2_wf%CC2_orbitals%cnto      = .true.
+         cc2_wf%CC2_orbitals%cholesky  = .false.
 !
       else
 !
          cc2_wf%mlcc_settings%CC2      = .true.
-         cc2_wf%mlcc_settings%CCS = .false.
+         cc2_wf%mlcc_settings%CCS      = .false.
 !
       endif
 !
@@ -1179,16 +1207,18 @@ contains
 !
 !     Test for user specified start vector
 !
-      if (wf%tasks%user_specified_start_vector) then
+      if (wf%excited_state_specifications%user_specified_start_vector) then
 !
-         cc2_wf%tasks%user_specified_start_vector = .true.
-         call allocator_int(cc2_wf%tasks%start_vectors, cc2_wf%tasks%n_singlet_states, 1 )
-         cc2_wf%tasks%start_vectors = wf%tasks%start_vectors
+         cc2_wf%excited_state_specifications%user_specified_start_vector = .true.
+         call allocator_int(cc2_wf%excited_state_specifications%start_vectors,&
+                   cc2_wf%excited_state_specifications%n_singlet_states, 1 )
+!
+         cc2_wf%excited_state_specifications%start_vectors = wf%excited_state_specifications%start_vectors
 !
 !        Since orbitals will swap order, start vector in higher level method must be removed
 !
-         wf%tasks%user_specified_start_vector = .false.
-         call deallocator_int(wf%tasks%start_vectors, wf%tasks%n_singlet_states, 1)
+         wf%excited_state_specifications%user_specified_start_vector = .false.
+         call deallocator_int(wf%excited_state_specifications%start_vectors, wf%excited_state_specifications%n_singlet_states, 1)
 !
 !        
       endif
@@ -1261,9 +1291,10 @@ contains
 !
       cc2_wf%tasks%ground_state = .true.
       cc2_wf%tasks%core_excited_state = .true.
-      cc2_wf%tasks%n_cores = wf%tasks%n_cores
-      call allocator_int(cc2_wf%tasks%cores, cc2_wf%tasks%n_cores, 1)
-      cc2_wf%tasks%cores = wf%tasks%cores
+      cc2_wf%core_excited_state_specifications%n_equivalent_cores = wf%core_excited_state_specifications%n_equivalent_cores
+      call allocator_int(cc2_wf%core_excited_state_specifications%cores,&
+                         cc2_wf%core_excited_state_specifications%n_equivalent_cores, 1)
+      cc2_wf%core_excited_state_specifications%cores = wf%core_excited_state_specifications%cores
 !
 !     Set calculation settings
 !
@@ -1271,12 +1302,12 @@ contains
 ! 
 !     Set number of excitations to use for cnto generation
 !
-      cc2_wf%tasks%n_singlet_states = wf%tasks%n_singlet_states
+      cc2_wf%excited_state_specifications%n_singlet_states = wf%excited_state_specifications%n_singlet_states
 !
 !     Set convergence threshold for lower lying method
 !
-      cc2_wf%settings%energy_threshold = 1.0D-04 
-      cc2_wf%settings%equation_threshold = 1.0D-04 
+      cc2_wf%excited_state_specifications%energy_threshold = 1.0D-04 
+      cc2_wf%excited_state_specifications%residual_threshold = 1.0D-04 
 !
 !     Set mlcc settings
 !
@@ -1284,8 +1315,8 @@ contains
       if(wf%mlcc_settings%CCS .and. wf%mlcc_settings%CC2) then
 !
          cc2_wf%mlcc_settings%CCS      = .true.
-         cc2_wf%mlcc_settings%cnto     = .true.
-         cc2_wf%mlcc_settings%cholesky = .false.
+         cc2_wf%CC2_orbitals%cnto     = .true.
+         cc2_wf%CC2_orbitals%cholesky = .false.
 !
       else
 !
@@ -1388,11 +1419,6 @@ contains
 !     -::- Construct CNTO transformation matrices -::-
 !     ::::::::::::::::::::::::::::::::::::::::::::::::
 !
-!     Thresholds for orbital selection
-!
-      wf%mlcc_settings%delta_o = 1.0d-3
-      wf%mlcc_settings%delta_v = 1.0d-5 ! THESE SHOULD BE SET IN INPUT
-!
 !     Open file of CC2 solution vectors
 !
       call generate_unit_identifier(unit_solution)
@@ -1408,7 +1434,7 @@ contains
       call allocator(R_sum, cc2_n_parameters, 1)
       R_sum = zero
 !
-      do state = 1, wf%tasks%n_singlet_states
+      do state = 1, wf%excited_state_specifications%n_singlet_states
 !
          read(unit=unit_solution, rec=state) R
 !
@@ -1731,7 +1757,7 @@ contains
       sum_o       = 1
       wf%n_CCSD_o = 1
 !
-      do while ((sum_o .gt. wf%mlcc_settings%delta_o) .and. (wf%n_CCSD_o .lt. n_cc2_o))
+      do while ((sum_o .gt. wf%CCSD_orbitals%delta_o) .and. (wf%n_CCSD_o .lt. n_cc2_o))
 !
          sum_o = sum_o - eigenvalues_o(n_CC2_o - (wf%n_CCSD_o - 1), 1)
          wf%n_CCSD_o = wf%n_CCSD_o + 1
@@ -1742,7 +1768,7 @@ contains
       sum_v      = 1
       wf%n_CCSD_v = 1
 !
-      do while (sum_v .gt. wf%mlcc_settings%delta_v .and. (wf%n_CCSD_v .lt. n_cc2_v))
+      do while (sum_v .gt. wf%CCSD_orbitals%delta_v .and. (wf%n_CCSD_v .lt. n_cc2_v))
 !
          sum_v = sum_v - eigenvalues_v(n_CC2_v - (wf%n_CCSD_v - 1), 1)
          wf%n_CCSD_v = wf%n_CCSD_v + 1

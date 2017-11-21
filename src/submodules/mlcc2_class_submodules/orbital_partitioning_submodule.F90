@@ -51,13 +51,13 @@ contains
 !
       class(mlcc2) :: wf
 !
-      if (wf%mlcc_settings%cholesky) then
+      if (wf%CC2_orbitals%cholesky) then
 !
 !        If cholesky - do Cholesky decomposition
 !
          call wf%cholesky_localization_drv
 !
-      elseif (wf%mlcc_settings%cnto) then
+      elseif (wf%CC2_orbitals%cnto) then
 !
          call wf%cnto_orbital_drv
 !
@@ -898,8 +898,8 @@ contains
 !     Prints
 !     
       write(unit_output,'(/t3,a/)') ':: CNTO orbital partitioning for MLCC2 calculation '
-      write(unit_output,'(/a35,e10.2)')'Threshold for occupied orbitals:',wf%mlcc_settings%delta_o
-      write(unit_output,'(a35,e10.2/)')'Threshold for virtual orbitals: ',wf%mlcc_settings%delta_v
+      write(unit_output,'(/a35,e10.2)')'Threshold for occupied orbitals:',wf%CC2_orbitals%delta_o
+      write(unit_output,'(a35,e10.2/)')'Threshold for virtual orbitals: ',wf%CC2_orbitals%delta_v
 !
 !     Timings 
 !
@@ -976,16 +976,16 @@ contains
       ccs_wf%settings = wf%settings
 ! 
 !     Set number of excitations to use for cnto generation
-!        - Should be some function of wf%tasks%n_singlet_states@
+!        - Should be some function of wf%excited_state_specifications%n_singlet_states@
 !
-      lower_level_n_singlet_states = CCS_factor_n_singlet_states*wf%tasks%n_singlet_states
+      lower_level_n_singlet_states = CCS_factor_n_singlet_states*wf%excited_state_specifications%n_singlet_states
 ! 
-      ccs_wf%tasks%n_singlet_states = lower_level_n_singlet_states
+      ccs_wf%excited_state_specifications%n_singlet_states = lower_level_n_singlet_states
 !
 !     Set convergence threshold for lower lying method
 !
-      ccs_wf%settings%energy_threshold = 1.0D-04 
-      ccs_wf%settings%equation_threshold = 1.0D-04 
+      ccs_wf%excited_state_specifications%energy_threshold = 1.0D-04 
+      ccs_wf%excited_state_specifications%residual_threshold = 1.0D-04 
 !
 !     :: Initialize lower level method ::
 !  
@@ -995,45 +995,48 @@ contains
 !
 !     Test for user specified start vector
 !
-      if (wf%tasks%user_specified_start_vector) then
+      if (wf%excited_state_specifications%user_specified_start_vector) then
 !
 !        Construct list of lowest orbital differences
 !
-         call allocator_int(index_list, ccs_wf%tasks%n_singlet_states, 1)
+         call allocator_int(index_list, ccs_wf%excited_state_specifications%n_singlet_states, 1)
 !
          call ccs_wf%find_start_trial_indices(index_list)
 !
 !        Exchange highest with the CC2 user specified start vectors, if it is not there already.
 !
-         do i = 1, wf%tasks%n_singlet_states
+         do i = 1, wf%excited_state_specifications%n_singlet_states
 !
 !           Test if start vector i is in index_list
 !
             start_vec_exists = .false.
-            do j = 1, ccs_wf%tasks%n_singlet_states 
-               if (wf%tasks%start_vectors(i ,1) .eq. index_list(j,1)) start_vec_exists = .true.
+            do j = 1, ccs_wf%excited_state_specifications%n_singlet_states 
+               if (wf%excited_state_specifications%start_vectors(i ,1) .eq. index_list(j,1)) start_vec_exists = .true.
             enddo
 !
 !           If not, place start vector i in index_list
 !
             if (.not. start_vec_exists) then
-               index_list(ccs_wf%tasks%n_singlet_states - i + 1, 1) = wf%tasks%start_vectors(i,1) 
+               index_list(ccs_wf%excited_state_specifications%n_singlet_states - i + 1, 1) &
+                           = wf%excited_state_specifications%start_vectors(i,1) 
             endif
 !
          enddo
 !
 !        Set CCS user specified vectors
 !
-         ccs_wf%tasks%user_specified_start_vector = .true.
-         call allocator_int(ccs_wf%tasks%start_vectors, ccs_wf%tasks%n_singlet_states, 1)
-         ccs_wf%tasks%start_vectors = index_list
+         ccs_wf%excited_state_specifications%user_specified_start_vector = .true.
+         call allocator_int(ccs_wf%excited_state_specifications%start_vectors,&
+                  ccs_wf%excited_state_specifications%n_singlet_states, 1)
 !
-         call deallocator_int(index_list, ccs_wf%tasks%n_singlet_states, 1)
+         ccs_wf%excited_state_specifications%start_vectors = index_list
+!
+         call deallocator_int(index_list, ccs_wf%excited_state_specifications%n_singlet_states, 1)
 !
 !        Since orbitals will swap order, start vector in higher level method must be removed
 !
-         wf%tasks%user_specified_start_vector = .false.
-         call deallocator_int(wf%tasks%start_vectors, wf%tasks%n_singlet_states, 1)
+         wf%excited_state_specifications%user_specified_start_vector = .false.
+         call deallocator_int(wf%excited_state_specifications%start_vectors, wf%excited_state_specifications%n_singlet_states, 1)
 !
       endif
 !
@@ -1075,10 +1078,11 @@ contains
 !
       ccs_wf%tasks%ground_state = .true.
       ccs_wf%tasks%core_excited_state = .true.
-      ccs_wf%tasks%n_cores = wf%tasks%n_cores
+      ccs_wf%core_excited_state_specifications%n_equivalent_cores = wf%core_excited_state_specifications%n_equivalent_cores
 !
-      call allocator_int(ccs_wf%tasks%cores, ccs_wf%tasks%n_cores, 1)
-      ccs_wf%tasks%cores = wf%tasks%cores
+      call allocator_int(ccs_wf%core_excited_state_specifications%cores,&
+                         ccs_wf%core_excited_state_specifications%n_equivalent_cores, 1)
+      ccs_wf%core_excited_state_specifications%cores = wf%core_excited_state_specifications%cores
 !
 !
 !     Set calculation settings
@@ -1086,16 +1090,16 @@ contains
       ccs_wf%settings = wf%settings
 ! 
 !     Set number of excitations to use for cnto generation
-!        - Should be some function of wf%tasks%n_singlet_states@
+!        - Should be some function of wf%excited_state_specifications%n_singlet_states@
 !
-      lower_level_n_singlet_states = CCS_factor_n_singlet_states*wf%tasks%n_singlet_states
+      lower_level_n_singlet_states = CCS_factor_n_singlet_states*wf%excited_state_specifications%n_singlet_states
 ! 
-      ccs_wf%tasks%n_singlet_states = lower_level_n_singlet_states
+      ccs_wf%excited_state_specifications%n_singlet_states = lower_level_n_singlet_states
 !
 !     Set convergence threshold for lower lying method
 !
-      ccs_wf%settings%energy_threshold = 1.0D-04 
-      ccs_wf%settings%equation_threshold = 1.0D-04 
+      ccs_wf%excited_state_specifications%energy_threshold = 1.0D-04 
+      ccs_wf%excited_state_specifications%residual_threshold = 1.0D-04 
 !
 !     Initialize lower level method
 !  
@@ -1177,7 +1181,7 @@ contains
 !
 !     Construct M and N
 !
-      lower_level_n_singlet_states = CCS_factor_n_singlet_states*(wf%tasks%n_singlet_states)
+      lower_level_n_singlet_states = CCS_factor_n_singlet_states*(wf%excited_state_specifications%n_singlet_states)
 !
       do state = 1, lower_level_n_singlet_states
          read(unit=unit_solution, rec=state) (R_a_i(i , 1), i = 1, (wf%n_o)*(wf%n_v))
@@ -1370,7 +1374,7 @@ contains
       sum_o      = 1
       wf%n_CC2_o = 1
 !
-      do while ((sum_o .gt. wf%mlcc_settings%delta_o) .and. (wf%n_CC2_o .le. wf%n_o))
+      do while ((sum_o .gt. wf%CC2_orbitals%delta_o) .and. (wf%n_CC2_o .le. wf%n_o))
 !
          sum_o = sum_o - eigenvalues_o(wf%n_o - (wf%n_CC2_o - 1), 1)
          wf%n_CC2_o = wf%n_CC2_o + 1
@@ -1380,7 +1384,7 @@ contains
       sum_v      = 1
       wf%n_CC2_v = 1
 !
-      do while (sum_v .gt. wf%mlcc_settings%delta_v .and. (wf%n_CC2_v .le. wf%n_v))
+      do while (sum_v .gt. wf%CC2_orbitals%delta_v .and. (wf%n_CC2_v .le. wf%n_v))
 !
          sum_v = sum_v - eigenvalues_v(wf%n_v - (wf%n_CC2_v - 1), 1)
          wf%n_CC2_v = wf%n_CC2_v + 1

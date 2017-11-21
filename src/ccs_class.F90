@@ -79,6 +79,13 @@ module ccs_class
 !
       procedure :: calc_energy => calc_energy_ccs
 !
+!     Routines for reading input file eT.inp
+!
+      procedure :: general_specs_reader      => general_specs_reader_ccs
+      procedure :: calculation_reader        => calculation_reader_ccs
+      procedure :: read_ground_state_specs   => read_ground_state_specs_ccs
+      procedure :: read_excited_state_specs  => read_excited_state_specs_ccs
+!
 !     get Cholesky routines to calculate the occ/vir-occ/vir blocks of the 
 !     T1-transformed MO Cholesky vectors
 !
@@ -271,6 +278,74 @@ module ccs_class
 !  ::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  -::- Interface to the submodule routines of CCS -::- 
 !  ::::::::::::::::::::::::::::::::::::::::::::::::::::
+!
+   interface
+!
+!
+!     -::- Input reader submodule interface -::-
+!     :::::::::::::::::::::::::::::::::::::::::: 
+!
+      module subroutine general_specs_reader_ccs(wf, unit_input)
+!!
+!!       General Specifications Reader
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Nov. 2017
+!!
+         implicit none
+!
+         class(ccs)   :: wf
+         integer(i15) :: unit_input
+!
+         integer :: memory = 0, disk_space = 0
+!
+      end subroutine general_specs_reader_ccs
+!
+!
+ 
+      module subroutine calculation_reader_ccs(wf, unit_input)
+                                    
+!!
+!!       Calculation reader,
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Nov. 2017
+!!
+         implicit none
+!
+         integer(i15) :: unit_input
+!
+         class(ccs) :: wf
+!
+      end subroutine calculation_reader_ccs
+!
+!
+      module subroutine read_ground_state_specs_ccs(wf, unit_input)
+!!
+!!       Read ground state specifications.
+!!       Written by Eirik F. Kjønstad and Sarai Dery Folkestad, Nov. 2017
+!!
+         implicit none
+!
+         integer :: unit_input
+!
+         class(ccs) :: wf
+!
+      end subroutine read_ground_state_specs_ccs
+!
+      module subroutine read_excited_state_specs_ccs(wf, unit_input)
+!!
+!!       Read excited state specifications,
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Nov. 2017
+!!
+         implicit none
+!
+         integer(i15)      :: unit_input
+!
+         class(ccs)        :: wf
+!
+!
+      end subroutine read_excited_state_specs_ccs
+!
+!
+   end interface
+!
 !
    interface 
 !
@@ -679,7 +754,7 @@ module ccs_class
          implicit none
 !
          class(ccs) :: wf
-         integer(i15), dimension(wf%tasks%n_singlet_states,1), intent(inout) :: index_list
+         integer(i15), dimension(wf%excited_state_specifications%n_singlet_states,1), intent(inout) :: index_list
 ! 
       end subroutine find_start_trial_indices_ccs
 !
@@ -804,10 +879,10 @@ module ccs_class
 !
          integer(i15) :: reduced_dim, n_new_trials
 !
-         real(dp), dimension(wf%tasks%n_singlet_states,1) :: eigenvalues_Re
-         real(dp), dimension(wf%tasks%n_singlet_states,1) :: eigenvalues_Im
+         real(dp), dimension(wf%excited_state_specifications%n_singlet_states,1) :: eigenvalues_Re
+         real(dp), dimension(wf%excited_state_specifications%n_singlet_states,1) :: eigenvalues_Im
 ! 
-         real(dp), dimension(reduced_dim, wf%tasks%n_singlet_states) :: solution_vectors_reduced
+         real(dp), dimension(reduced_dim, wf%excited_state_specifications%n_singlet_states) :: solution_vectors_reduced
 !
       end subroutine solve_reduced_eigenvalue_equation_ccs
 !
@@ -840,12 +915,12 @@ module ccs_class
 !
          class(ccs) :: wf
 !
-         real(dp), dimension(wf%tasks%n_singlet_states,1) :: eigenvalues_Re
-         real(dp), dimension(wf%tasks%n_singlet_states,1) :: eigenvalues_Im
+         real(dp), dimension(wf%excited_state_specifications%n_singlet_states,1) :: eigenvalues_Re
+         real(dp), dimension(wf%excited_state_specifications%n_singlet_states,1) :: eigenvalues_Im
 !
          integer(i15) :: reduced_dim
          integer(i15) :: n_new_trials
-         real(dp), dimension(reduced_dim, wf%tasks%n_singlet_states) :: solution_vectors_reduced
+         real(dp), dimension(reduced_dim, wf%excited_state_specifications%n_singlet_states) :: solution_vectors_reduced
 !
       end subroutine construct_next_trial_vectors_ccs
 !
@@ -908,7 +983,7 @@ module ccs_class
          implicit none
 !
          class(ccs) :: wf
-         integer(i15), dimension(wf%tasks%n_singlet_states,1), intent(inout) :: index_list
+         integer(i15), dimension(wf%excited_state_specifications%n_singlet_states,1), intent(inout) :: index_list
 !
       end subroutine find_start_trial_indices_core_ccs
 !
@@ -2537,18 +2612,38 @@ contains
 !
       class(ccs) :: wf
 !
+      integer(i15) :: unit_input = -1
+!
 !     Set model name 
 !
       wf%name = 'CCS'
 !
+!     Open input file eT.inp
+!
+      call generate_unit_identifier(unit_input)
+      open(unit=unit_input, file='eT.inp', status='old', form='formatted')
+      rewind(unit_input)
+!
+!     Read general specifications (memory and diskspace for calculation)
+!
+      call wf%general_specs_reader(unit_input)
+!
 !     Set implemented generic methods
 !
-      wf%implemented%ground_state = .true.
-      wf%implemented%excited_state = .true.
-      wf%implemented%ionized_state = .true.
-      wf%implemented%core_excited_state = .true.
-      wf%implemented%core_ionized_state = .true.
-      wf%implemented%properties = .false.
+      wf%implemented%ground_state         = .true.
+      wf%implemented%excited_state        = .true.
+      wf%implemented%ionized_state        = .true.
+      wf%implemented%core_excited_state   = .true.
+      wf%implemented%core_ionized_state   = .true.
+      wf%implemented%properties           = .false.
+!
+!     Read calculation tasks from input file eT.inp
+!     
+      call wf%calculation_reader(unit_input)
+!
+!     Close input file
+!
+      close(unit_input)
 !
 !     Read Hartree-Fock info from SIRIUS
 !

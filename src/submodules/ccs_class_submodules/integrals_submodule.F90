@@ -3726,6 +3726,9 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
       if (required_space_gb .lt. wf%settings%disk_space) then 
 !
+!        Prints
+!
+         if (wf%settings%print_level == 'developer') write(unit_output,'(/t3,a36)')'Integrals g_abcd are stored on disk.'
          call cpu_time(begin_timer)
 !
 !        Open file for writing integrals - one record: (a, bcd) = (1:n_v, bcd)
@@ -3834,7 +3837,7 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
          if (wf%settings%print_level == 'developer') then
 ! 
-            write(unit_output,'(t6,a36,f14.8)') 'Time used to store g_abcd (seconds):', end_timer - begin_timer
+            write(unit_output,'(t3,a36,f14.8)') 'Time to store g_abcd (seconds):     ', end_timer - begin_timer
             flush(unit_output)
 !
          endif

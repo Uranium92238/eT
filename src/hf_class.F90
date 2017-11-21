@@ -15,9 +15,12 @@ module hf_class
    use utils
    use workspace
    use input_output
-   use calc_procedures_class
+   use calc_tasks_class
    use calc_settings_class
-   use mlcc_calculation_settings_class
+   use ground_state_specs_class
+   use excited_state_specs_class
+   use core_excited_state_specs_class
+   use response_calc_specs_class
 !
    implicit none
 !
@@ -56,10 +59,13 @@ module hf_class
 !
       type(calc_settings)   :: settings
 !
-      type(calc_procedures) :: tasks
-      type(calc_procedures) :: implemented
+      type(calc_tasks) :: tasks
+      type(calc_tasks) :: implemented
 !
-      type(mlcc_calculation_settings) :: mlcc_settings
+      type(ground_state_specs)         :: ground_state_specifications
+      type(excited_state_specs)        :: excited_state_specifications
+      type(core_excited_state_specs)   :: core_excited_state_specifications
+      type(response_calc_specs)        :: response_specifications
 !
    contains
 !

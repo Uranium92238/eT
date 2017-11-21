@@ -731,7 +731,7 @@ contains
 !
       conv_test = norm_residual/norm_solution_vector
 !
-      if (conv_test .le. wf%settings%equation_threshold) then 
+      if (conv_test .le. wf%response_specifications%residual_threshold) then 
 !
          converged = .true.
 !

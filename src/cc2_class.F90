@@ -445,14 +445,35 @@ contains
 !
       class(cc2)  :: wf
 !
+      integer(i15) :: unit_input = -1
 !
 !     Set model name
 !
       wf%name = 'CC2'
 !
-      wf%implemented%ground_state = .true.
-      wf%implemented%excited_state = .true.
-      wf%implemented%core_excited_state = .true.
+!     Open input file eT.inp
+!
+      call generate_unit_identifier(unit_input)
+      open(unit=unit_input, file='eT.inp', status='old', form='formatted')
+      rewind(unit_input)
+!
+!     Read general specifications (memory and diskspace for calculation)
+!
+      call wf%general_specs_reader(unit_input)
+!
+!     Set implemented
+!
+      wf%implemented%ground_state         = .true.
+      wf%implemented%excited_state        = .true.
+      wf%implemented%core_excited_state   = .true.
+!
+!     Read calculation tasks from input file eT.inp
+!     
+      call wf%calculation_reader(unit_input)
+!
+!     Close input file
+!
+      close(unit_input)
 !
 !     Read Hartree-Fock info from SIRIUS
 !

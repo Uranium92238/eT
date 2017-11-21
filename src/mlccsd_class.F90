@@ -37,6 +37,8 @@ module mlccsd_class
       integer(i15) :: first_CCSD_o = 0
       integer(i15) :: first_CCSD_v = 0
 !
+      type(mlcc_orbitals) :: CCSD_orbitals
+!
       real(dp), dimension(:,:), allocatable :: mo_coef_cc2_ccs ! MO coefficient matrix for mlccsd basis
       real(dp), dimension(:,:), allocatable :: T_o ! Occupied MO transformation matrix for mlccsd basis
       real(dp), dimension(:,:), allocatable :: T_v ! Virtual MO transformation matrix for mlccsd basis
@@ -72,6 +74,7 @@ module mlccsd_class
 !
 !     Orbital partitioning
 !
+      procedure :: orbital_partitioning               => orbital_partitioning_mlccsd
       procedure :: cholesky_localization_drv          => cholesky_localization_drv_mlccsd
       procedure :: cholesky_localization_CCSD_CC2_CCS => cholesky_localization_CCSD_CC2_CCS_mlccsd
       procedure :: cholesky_localization_CCSD_CCS     => cholesky_localization_CCSD_CCS_mlccsd
@@ -167,6 +170,22 @@ module mlccsd_class
 !
 !    -::- Orbital partitioning submodule interface -::-
 !    :::::::::::::::::::::::::::::::::::::::::::::::::: 
+!
+!
+      module subroutine orbital_partitioning_mlccsd(wf)
+!!
+!!       Orbital partitioning,
+!!       Written by Sarai D. Folkestad, June 2017
+!! 
+!!       Directs the partitioning for mlcc calculations.
+!! 
+!!       So far only Cholesky decomposition is available. 
+!! 
+         implicit none
+!  
+         class(mlccsd) :: wf
+!  
+      end subroutine orbital_partitioning_mlccsd
 !
 !
       module subroutine cholesky_localization_drv_mlccsd(wf)

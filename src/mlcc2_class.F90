@@ -16,6 +16,8 @@ module mlcc2_class
    use workspace
    use input_output
    use input_reader
+   use mlcc_orbitals_class
+   use mlcc_calculation_settings_class
 !
 !  The ancestor class module (CCS)
 !
@@ -31,6 +33,8 @@ module mlcc2_class
 !
 !     ML variables
 !
+      type(mlcc_calculation_settings)  :: mlcc_settings
+!
       integer(i15) :: n_CCS_o = 0
       integer(i15) :: n_CCS_v = 0
 !
@@ -42,6 +46,8 @@ module mlcc2_class
 !
       integer(i15) :: first_CC2_o = 0
       integer(i15) :: first_CC2_v = 0
+!
+      type(mlcc_orbitals) :: CC2_orbitals
 !
 !     Excited state variables
 !

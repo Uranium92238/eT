@@ -239,9 +239,9 @@ contains
       do i = 1, wf%n_o
 !
          core_orbital = .false.
-         do core = 1, wf%tasks%n_cores
+         do core = 1, wf%core_excited_state_specifications%n_equivalent_cores
 !
-            if (i .eq. wf%tasks%index_core_mo(core, 1)) core_orbital = .true.
+            if (i .eq. wf%core_excited_state_specifications%index_core_mo(core, 1)) core_orbital = .true.
 !
          enddo
 !
@@ -258,10 +258,10 @@ contains
          do j = 1, n_active_o
 !
             core_orbital = .false.
-            do core = 1, wf%tasks%n_cores
+            do core = 1, wf%core_excited_state_specifications%n_equivalent_cores
 !
-               if ((i .eq. wf%tasks%index_core_mo(core, 1)) .or. &
-                  (j .eq. wf%tasks%index_core_mo(core, 1))) core_orbital = .true.
+               if ((i .eq. wf%core_excited_state_specifications%index_core_mo(core, 1)) .or. &
+                  (j .eq. wf%core_excited_state_specifications%index_core_mo(core, 1))) core_orbital = .true.
 !
             enddo
 !

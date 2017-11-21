@@ -260,7 +260,7 @@ contains
 !!
       class(ccsd) :: wf 
 !
-      write(unit_output,'(/t3,a/)') 'Preparing for excited state calculation:'
+      if (wf%settings%print_level == 'developer') write(unit_output,'(/t3,a/)') 'Preparing for excited state calculation:'
 !
 !     Store vvvv-electronic repulsion integrals to file if there is space 
 !
