@@ -1371,22 +1371,22 @@ contains
 !
 !     :: Determine number of active orbitals ::
 !
-      sum_o      = 1
+      sum_o      = 1 - eigenvalues_o(wf%n_o, 1)
       wf%n_CC2_o = 1
 !
       do while ((sum_o .gt. wf%CC2_orbitals%delta_o) .and. (wf%n_CC2_o .le. wf%n_o))
 !
-         sum_o = sum_o - eigenvalues_o(wf%n_o - (wf%n_CC2_o - 1), 1)
+         sum_o = sum_o - eigenvalues_o(wf%n_o - (wf%n_CC2_o), 1)
          wf%n_CC2_o = wf%n_CC2_o + 1
 !
       enddo
 !
-      sum_v      = 1
+      sum_v      = 1- eigenvalues_v(wf%n_v, 1)
       wf%n_CC2_v = 1
 !
       do while (sum_v .gt. wf%CC2_orbitals%delta_v .and. (wf%n_CC2_v .le. wf%n_v))
 !
-         sum_v = sum_v - eigenvalues_v(wf%n_v - (wf%n_CC2_v - 1), 1)
+         sum_v = sum_v - eigenvalues_v(wf%n_v - (wf%n_CC2_v), 1)
          wf%n_CC2_v = wf%n_CC2_v + 1
 !
       enddo

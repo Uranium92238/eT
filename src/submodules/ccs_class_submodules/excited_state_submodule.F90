@@ -178,7 +178,7 @@ contains
       real(dp), dimension(:,:), allocatable :: solution_vectors_reduced
       real(dp), dimension(:,:), allocatable :: solution
 !
-      integer(i15) :: state = 0, unit_solution = 0, ioerror = 0 ! For looping over the states
+      integer(i15) :: state = 0, unit_solution = 0, ioerror = 0, i = 0 ! For looping over the states
 !
       real(dp) :: start_excited_state_solver, end_excited_state_solver
       real(dp) :: start_excited_state_iter, end_excited_state_iter
@@ -280,19 +280,17 @@ contains
 !
          if (converged_energy .and. converged_residual) then
             converged = .true.
+            call cpu_time(end_excited_state_iter)
+            if (wf%settings%print_level == 'developer') &
+                           write(unit_output,'(t3,a35,i5,a5,f14.8/)') 'Total CPU time (seconds) of iteration ',&
+                                     iteration, ' : ' ,end_excited_state_iter - start_excited_state_iter
+            flush(unit_output)
+!
          else
             iteration = iteration + 1
          endif
 !
          call deallocator(solution_vectors_reduced, reduced_dim, wf%excited_state_specifications%n_singlet_states)
-!
-         if (timings) then
-            call cpu_time(end_excited_state_iter)
-            write(unit_output,'(t3,a35,i5,a5,f14.8/)') 'Total time (seconds) of iteration ',&
-                                     iteration, ' : ' ,end_excited_state_iter - start_excited_state_iter
-            flush(unit_output)
-!
-         endif
 !
       enddo ! End of iterative loop 
 !
@@ -311,13 +309,6 @@ contains
          write(unit_output,'(/t3,a/)') 'Max number of iterations performed without convergence!'
       endif
 !
-!     Final deallocations
-!
-      call deallocator(eigenvalues_Im_old, reduced_dim, 1)
-      call deallocator(eigenvalues_Re_old, reduced_dim, 1)
-      call deallocator(eigenvalues_Im_new, reduced_dim, 1)
-      call deallocator(eigenvalues_Re_new, reduced_dim, 1)
-!
 !     End and print timings
 !
       call cpu_time(end_excited_state_solver)
@@ -325,8 +316,29 @@ contains
 !     Print summary
 !
       write(unit_output,'(t3,a,a,a/)')'Summary of ', trim(wf%name), ' excited state calculation:'
-      write(unit_output,'(t6,a25,f14.8/)') 'Total time (seconds):    ', end_excited_state_solver - start_excited_state_solver
+      write(unit_output,'(t6,a25,f14.8/)') 'Total CPU time (seconds):    ', end_excited_state_solver - start_excited_state_solver
       flush(unit_output)
+!
+      write(unit_output,'(t6,a10,a18,a17,a20)')'Excitation', 'energy [a.u.]', 'energy [eV]', 'energy [cm^-1]'
+      write(unit_output,'(t6,a)')'--------------------------------------------------------------------'
+      do i = 1, wf%excited_state_specifications%n_singlet_states
+!
+!     Print energy of excitation in eV, hartree and cm^-1
+!
+      write(unit_output,'(t6,i3,12x,f12.8,7x,f12.8,5x,f16.8)') i, eigenvalues_Re_new(i,1),&
+                                                eigenvalues_Re_new(i,1)*27.211399, &
+                                                eigenvalues_Re_new(i,1)*219474.63
+      enddo
+      write(unit_output,'(t6,a)')'--------------------------------------------------------------------'
+      write(unit_output,'(t6,a)') '1 a.u. = 27.211399 eV'
+      write(unit_output,'(t6,a)') '1 a.u. = 219474.63 cm^-1'
+!
+!     Final deallocations
+!
+      call deallocator(eigenvalues_Im_old, reduced_dim, 1)
+      call deallocator(eigenvalues_Re_old, reduced_dim, 1)
+      call deallocator(eigenvalues_Im_new, reduced_dim, 1)
+      call deallocator(eigenvalues_Re_new, reduced_dim, 1)
 !
    end subroutine excited_state_solver_ccs
 !
@@ -501,6 +513,7 @@ contains
                   work,                         &
                   4*reduced_dim,                &
                   info)
+!
       if (info .ne. 0) then 
          write(unit_output,*)  'WARNING: Error while finding solution', info
          stop
