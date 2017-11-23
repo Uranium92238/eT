@@ -177,6 +177,9 @@ module ccs_class
       procedure :: print_excited_state_info  => print_excited_state_info_ccs      
       procedure :: print_excitation_vector   => print_excitation_vector_ccs
 !
+      procedure :: analyze_single_excitation_vector    => analyze_single_excitation_vector_ccs
+      procedure :: summary_excited_state_info   => summary_excited_state_info_ccs
+!
 !     Valence excited states specific routines
 !
       procedure, non_overridable :: initialize_trial_vectors            => initialize_trial_vectors_ccs
@@ -1113,6 +1116,43 @@ module ccs_class
          integer(i15) :: unit_id     
 !
       end subroutine print_excitation_vector_ccs
+!
+!
+      module subroutine analyze_single_excitation_vector_ccs(wf, vec, n, sorted_short_vec, index_list)
+!!
+!!       Analyze single excitation vectors (CCS)
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Nov. 2017
+!!
+         implicit none
+!  
+         class(ccs) :: wf
+!
+         real(dp), dimension(wf%n_o*wf%n_v, 1) :: vec    
+!
+         integer(i15) :: a = 0, i = 0, ai = 0
+!
+         integer(i15) :: n    ! Number of elements wanted
+!  
+         real(dp), dimension(n, 1)    :: sorted_short_vec
+!  
+         integer(i15), dimension(n, 2) ::index_list
+!
+      end subroutine analyze_single_excitation_vector_ccs
+!
+!
+
+      module subroutine summary_excited_state_info_ccs(wf, energies)
+!!
+!!       Summary of excited state vector (CCS).
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Nov. 2017
+!!
+         implicit none
+!  
+         class(ccs) :: wf
+!
+         real(dp), dimension(wf%excited_state_specifications%n_singlet_states,1) :: energies
+!
+      end subroutine summary_excited_state_info_ccs
 !
 !
    end interface

@@ -64,7 +64,8 @@ contains
                                      ' ', trim(wf%name), ' singlet states.'
       write(unit_output,'(t3,a,i2,a,a,a)') &
                                      'Requested',wf%excited_state_specifications%n_triplet_states,&
-                                     ' ', trim(wf%name), ' triplet states.'     
+                                     ' ', trim(wf%name), ' triplet states.' 
+      flush(unit_output)    
 !
 !     Preparations for excited state solver 
 !
@@ -99,7 +100,11 @@ contains
 !
 !     Store voov-electronic repulsion integrals to file if there is space
 !
+      call allocator(wf%t1am, wf%n_v, wf%n_o)
+      call wf%read_single_amplitudes
+!
       call wf%store_t1_vo_ov_electronic_repulsion
+      call wf%store_t1_vv_ov_electronic_repulsion
 !
    end subroutine excited_state_preparations_ccs
 !
@@ -313,12 +318,15 @@ contains
 !
       call cpu_time(end_excited_state_solver)
 !
+!
+      call wf%summary_excited_state_info(eigenvalues_Re_new)
+!
 !     Print summary
 !
-      write(unit_output,'(t3,a,a,a/)')'Summary of ', trim(wf%name), ' excited state calculation:'
+      write(unit_output,'(//t3,a,a,a/)')'Summary of ', trim(wf%name), ' excited state calculation:'
       write(unit_output,'(t6,a25,f14.8/)') 'Total CPU time (seconds):    ', end_excited_state_solver - start_excited_state_solver
       flush(unit_output)
-!
+
       write(unit_output,'(t6,a10,a18,a17,a20)')'Excitation', 'energy [a.u.]', 'energy [eV]', 'energy [cm^-1]'
       write(unit_output,'(t6,a)')'--------------------------------------------------------------------'
       do i = 1, wf%excited_state_specifications%n_singlet_states
@@ -1414,5 +1422,179 @@ contains
 !
       end subroutine print_excitation_vector_ccs
 !
+!
+      module subroutine analyze_single_excitation_vector_ccs(wf, vec, n, sorted_short_vec, index_list)
+!!
+!!
+!!
+         implicit none
+!  
+         class(ccs) :: wf
+!
+         real(dp), dimension(wf%n_o*wf%n_v, 1) :: vec    
+!
+         integer(i15) :: a = 0, i = 0, ai = 0
+!
+         integer(i15) :: n    ! Number of elements wanted
+!  
+         real(dp), dimension(n, 1)    :: sorted_short_vec
+!  
+         integer(i15), dimension(n, 2) ::index_list
+!  
+!        Variables for sorting
+!  
+         real(dp)     :: min
+         integer(i15) :: min_pos
+!  
+         real(dp)     :: swap     = zero
+         integer(i15) :: swap_i = 0, swap_a = 0
+!  
+         integer(i15) :: i = 0, j = 0
+!
+!        Placing the n first elements of vec into sorted_short_vec
+!
+         sorted_short_vec(1,1) = vec(1,1)
+         index_list(1,1) = 1
+         index_list(1,2) = 1
+!
+         min = abs(sorted_short_vec(1,1))
+         min_pos = 1
+!
+         do i = 1, wf%n_o
+            do a = 1, wf%n_v
+!
+               ai = index_two(a,i, wf%n_v)
+!
+               if (ai .le. n) then
+                  sorted_short_vec(ai,1) = vec(ai,1)
+                  index_list(ai, 1) = a
+                  index_list(ai, 2) = i
+!
+                  if (abs(sorted_short_vec(i,1)) .le. min) then
+!
+                     min = abs(sorted_short_vec(i,1))
+                     min_pos = i
+!
+                  endif
+               
+               else
+                  if (abs(vec(ai,1)) .ge. min) then
+!
+                     sorted_short_vec(min_pos,1) = vec(ai,1)
+                     index_list(min_pos,1) = a
+                     index_list(min_pos,2) = i
+                     min = abs(vec(ai,1))
+!
+                  endif
+!
+                  do j = 1, n
+                     if (abs(sorted_short_vec(j, 1)) .lt. min) then
+!
+                        min = abs(sorted_short_vec(j, 1))
+                        min_pos = j
+!
+                     endif
+                  enddo
+               endif
+            enddo
+         enddo 
+! 
+!         Sorting sorted_short_vec
+! 
+          do i = 1, n
+             do j = 1, n - 1
+                if (abs(sorted_short_vec(j,1)) .lt. abs(sorted_short_vec(j+1, 1))) then
+! 
+                   swap = sorted_short_vec(j,1)
+                   sorted_short_vec(j,1) = sorted_short_vec(j+1, 1)
+                   sorted_short_vec(j+1, 1) = swap
+! 
+                   swap_a = index_list(j, 1)
+                   swap_i = index_list(j, 2)
+!
+                   index_list(j,1) = index_list(j + 1,1)
+                   index_list(j,2) = index_list(j + 1,2)
+                   index_list(j + 1,1) = swap_a
+                   index_list(j + 1,2) = swap_i
+! 
+                endif
+             enddo
+          enddo
+! 
+!
+      end subroutine analyze_single_excitation_vector_ccs
+!
+!
+      module subroutine summary_excited_state_info_ccs(wf, energies)
+!!
+!!
+!!
+         implicit none
+!  
+         class(ccs) :: wf
+!
+         real(dp), dimension(wf%excited_state_specifications%n_singlet_states,1) :: energies
+!
+         integer(i15) :: unit_solution = -1, ioerror = 0
+         integer(i15) :: state = 0, i = 0
+         real(dp), dimension(:,:), allocatable :: solution, sorted_max_vec
+         integer(i15), dimension(:,:), allocatable :: index_list
+         real(dp) :: ddot, norm
+!  
+!        Read solution vectors 
+!  
+         call generate_unit_identifier(unit_solution)
+!
+         open(unit=unit_solution, file=wf%excited_state_task, action='read', status='unknown', &
+         access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
+!
+         if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file'
+
+         call allocator(solution, wf%n_parameters, 1)
+         call allocator_int(index_list, 20, 2)
+         call allocator(sorted_max_vec, 20, 1)
+!
+         do state = 1, wf%excited_state_specifications%n_singlet_states
+!
+            write(unit_output,'(/t3,a30,i3,a1/)')'Analysis of excitation vector ',state, ':' 
+            write(unit_output,'(t6, a, f14.8)')'Excitation energy [a.u.]:   ', energies(state,1)
+            write(unit_output,'(t6, a, f14.8)')'Excited state energy [a.u.]:', wf%energy + energies(state,1)
+! 
+            solution = zero
+            read(unit_solution, rec=state) solution
+!
+            norm = sqrt(ddot(wf%n_t1am, solution,1,solution,1))
+            write(unit_output,'(/t6,a,f6.4)')'Single excitation contribution to excitation vector: ', norm
+!
+            write(unit_output,'(/t6,a)') 'Largest contributions to excitation vector:' 
+!
+            write(unit_output,'(t6,a32)')'--------------------------------'
+            write(unit_output,'(t6,a3, 8x, a3, 8x, a10)')'a', 'i','amplitude'
+            write(unit_output,'(t6,a32)')'--------------------------------'
+!
+!           Get 20 highest amplitudes
+!
+            call wf%analyze_single_excitation_vector(solution, 20, sorted_max_vec, index_list)
+
+            do i = 1, 20
+               if (abs(sorted_max_vec(i, 1)) .lt. 1.0D-03) then
+                  exit 
+               else
+                  write(unit_output,'(t6,i3, 8x, i3, 10x, f8.5)')index_list(i, 1),&
+                                                                index_list(i, 2),&
+                                                                sorted_max_vec(i, 1) 
+               endif
+            enddo
+            write(unit_output,'(t6,a32/)')'--------------------------------'
+!  
+         enddo
+!
+         call deallocator(solution, wf%n_parameters,1) 
+         call deallocator_int(index_list, 20, 2)
+         call deallocator(sorted_max_vec, 20, 1)
+!
+         close(unit_solution)
+!
+      end subroutine summary_excited_state_info_ccs
 !
 end submodule excited_state

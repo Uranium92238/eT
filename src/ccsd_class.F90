@@ -80,10 +80,12 @@ module ccsd_class
 !
 !     Helpers for excited state solver (see CCS for the rest)
 !
-      procedure :: calculate_orbital_differences => calculate_orbital_differences_ccsd
-      procedure :: transform_trial_vectors       => transform_trial_vectors_ccsd
-      procedure :: print_excitation_vector       => print_excitation_vector_ccsd
-      procedure :: excited_state_preparations    => excited_state_preparations_ccsd ! Storing g_vvvv and g_voov integrals to file
+      procedure :: calculate_orbital_differences      => calculate_orbital_differences_ccsd
+      procedure :: transform_trial_vectors            => transform_trial_vectors_ccsd
+      procedure :: print_excitation_vector            => print_excitation_vector_ccsd
+      procedure :: analyze_double_excitation_vector   => analyze_double_excitation_vector_ccsd
+      procedure :: summary_excited_state_info         => summary_excited_state_info_ccsd
+      procedure :: excited_state_preparations         => excited_state_preparations_ccsd ! Storing g_vvvv and g_voov integrals to file
 
 !
 !     Coupled cluster Jacobian transformation routine 
@@ -501,7 +503,6 @@ module ccsd_class
       end subroutine print_excitation_vector_ccsd
 !
 !
-
    module subroutine cvs_residual_projection_ccsd(wf, residual)
 !!
 !!    Residual projection (CCSD), 
@@ -526,6 +527,41 @@ module ccsd_class
          class(ccsd) :: wf 
 !
       end subroutine excited_state_preparations_ccsd
+!
+!
+      module subroutine analyze_double_excitation_vector_ccsd(wf, vec, n, sorted_short_vec, index_list)
+!!
+!!
+!!
+         implicit none
+!  
+         class(ccsd) :: wf
+!
+         real(dp), dimension(wf%n_t2am, 1) :: vec    
+!
+         integer(i15) :: a = 0, i = 0, ai = 0, b = 0, j = 0, bj = 0, aibj = 0, k = 0
+!
+         integer(i15) :: n    ! Number of elements wanted
+!  
+         real(dp), dimension(n, 1)    :: sorted_short_vec
+!  
+         integer(i15), dimension(n, 4) ::index_list
+!  
+      end subroutine analyze_double_excitation_vector_ccsd
+!
+!
+      module subroutine summary_excited_state_info_ccsd(wf, energies)
+!!
+!!
+!!
+         implicit none
+!  
+         class(ccsd) :: wf
+!
+         real(dp), dimension(wf%excited_state_specifications%n_singlet_states,1) :: energies
+!
+      end subroutine summary_excited_state_info_ccsd
+!
 !
    end interface 
 !
