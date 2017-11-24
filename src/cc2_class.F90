@@ -61,9 +61,8 @@ module cc2_class
 !     Jacobian
 !
       procedure :: jacobian_cc2_transformation      => jacobian_cc2_transformation_cc2
-      procedure :: cvs_jacobian_cc2_transformation  => cvs_jacobian_cc2_transformation_cc2
 !
-      procedure :: cvs_rho_ai_bj_projection           => cvs_rho_ai_bj_projection_cc2
+      procedure :: cvs_rho_aibj_projection           => cvs_rho_aibj_projection_cc2
 !
       procedure :: jacobian_cc2_a1                  => jacobian_cc2_a1_cc2
       procedure :: jacobian_cc2_b1                  => jacobian_cc2_b1_cc2
@@ -76,6 +75,10 @@ module cc2_class
       procedure :: calculate_orbital_differences => calculate_orbital_differences_cc2
       procedure :: transform_trial_vectors       => transform_trial_vectors_cc2
       procedure :: cvs_residual_projection       => cvs_residual_projection_cc2 
+      procedure :: excited_state_preparations    => excited_state_preparations_cc2
+!
+      procedure :: analyze_double_excitation_vector => analyze_double_excitation_vector_cc2
+      procedure :: summary_excited_state_info       => summary_excited_state_info_cc2
 !
    end type cc2
 !
@@ -179,7 +182,7 @@ module cc2_class
 !!       Jacobian transformation (CC2)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
 !!
-!!       Directs the transformation by the CCSD Jacobi matrix,
+!!       Directs the transformation by the CC2 Jacobi matrix,
 !!
 !!          A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >,
 !!
@@ -202,36 +205,6 @@ module cc2_class
          real(dp), dimension(wf%n_s2am, 1)   :: c_aibj ! c_aibj  
 !  
       end subroutine jacobian_cc2_transformation_cc2
-!
-!
-      module subroutine cvs_jacobian_cc2_transformation_cc2(wf, c_a_i, c_aibj)
-!!
-!!    Jacobian transformation (CC2)
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
-!!
-!!    Directs the transformation by the CCSD Jacobi matrix,
-!!
-!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >,
-!!
-!!    where the basis employed for the brackets is biorthonormal. 
-!!    The transformation is rho = A c, i.e., 
-!!
-!!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck 
-!!                  + 1/2 sum_ckdl A_mu,ckdl c_ckdl (1 + delta_ck,dl).
-!!
-!!    On exit, c is overwritten by rho. That is, c_a_i = rho_a_i,
-!!    and c_aibj = rho_aibj. 
-!!
-      implicit none
-!
-      class(cc2) :: wf 
-!
-!     Incoming vector c 
-!
-      real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai 
-      real(dp), dimension(wf%n_s2am, 1)   :: c_aibj ! c_aibj     
-!
-   end subroutine cvs_jacobian_cc2_transformation_cc2
 !
 !
       module subroutine jacobian_cc2_a1_cc2(wf, rho_a_i, c_a_i)
@@ -327,7 +300,7 @@ module cc2_class
       end subroutine jacobian_cc2_b2_cc2
 !
 !
-      module subroutine cvs_rho_ai_bj_projection_cc2(wf, vec_ai_bj)
+      module subroutine cvs_rho_aibj_projection_cc2(wf, vec_aibj)
 !!
 !!       Rho projection for CVS (CC2),
 !!       Written by Sarai D. Folkestad, Aug. 2017
@@ -335,9 +308,9 @@ module cc2_class
          implicit none
 !
          class(cc2) :: wf
-         real(dp), dimension(:, :) :: vec_ai_bj
+         real(dp), dimension(:, :) :: vec_aibj
 !
-      end subroutine cvs_rho_ai_bj_projection_cc2
+      end subroutine cvs_rho_aibj_projection_cc2
 !
 !
    end interface
@@ -366,7 +339,7 @@ module cc2_class
 
       module subroutine calculate_orbital_differences_cc2(wf, orbital_diff)
 !!
-!!       Calculate Orbital Differences (CCSD)
+!!       Calculate Orbital Differences (CC2)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad May 2017
 !!
 !!       Calculates orbital differences
@@ -418,6 +391,51 @@ module cc2_class
       end subroutine cvs_residual_projection_cc2
 !
 !
+      module subroutine excited_state_preparations_cc2(wf)
+!!
+!!       Excited State Preparations (CC2)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!       A routine for preparation tasks (if any). Can be overwritten
+!!       in descendants if other preparations prove necessary.    
+!!
+         class(cc2) :: wf 
+!
+      end subroutine excited_state_preparations_cc2
+!
+!
+      module subroutine analyze_double_excitation_vector_cc2(wf, vec, n, sorted_short_vec, index_list)
+!!
+!!
+!!
+         implicit none
+!  
+         class(cc2) :: wf
+!
+         real(dp), dimension(wf%n_s2am, 1) :: vec    
+!
+         integer(i15) :: a = 0, i = 0, ai = 0, b = 0, j = 0, bj = 0, aibj = 0, k = 0
+!
+         integer(i15) :: n    ! Number of elements wanted
+!  
+         real(dp), dimension(n, 1)    :: sorted_short_vec
+!  
+         integer(i15), dimension(n, 4) ::index_list
+!  
+      end subroutine analyze_double_excitation_vector_cc2
+!
+!
+      module subroutine summary_excited_state_info_cc2(wf, energies)
+!!
+!!
+!!
+         implicit none
+!  
+         class(cc2) :: wf
+!
+         real(dp), dimension(wf%excited_state_specifications%n_singlet_states,1) :: energies
+!
+      end subroutine summary_excited_state_info_cc2
    end interface
 !
 !
