@@ -1399,15 +1399,11 @@ contains
       real(dp), dimension(:,:), allocatable :: b_ak_cl ! b_ckal 
       real(dp), dimension(:,:), allocatable :: b_ki_cd ! b_ckdi
 !
-      real(dp), dimension(:,:), allocatable :: L_ik_J ! L_ik^J 
-      real(dp), dimension(:,:), allocatable :: L_mc_J ! L_mc^J
-!
       real(dp), dimension(:,:), allocatable :: g_ik_mc ! g_ikmc 
       real(dp), dimension(:,:), allocatable :: g_kdm_i ! g_mkid
       real(dp), dimension(:,:), allocatable :: g_a_mkl ! g_mkla
 !
       real(dp), dimension(:,:), allocatable :: X_ik_dl ! An intermediate, term 1 
-      real(dp), dimension(:,:), allocatable :: X_kdl_i ! Reordered intermediate, term 1
 !
       real(dp), dimension(:,:), allocatable :: X_ak_dm ! An intermediate, term 2
 !
@@ -1458,31 +1454,10 @@ contains
 !
 !     Form the integral g_ik_mc 
 !
-      call allocator(L_ik_J, (wf%n_o)**2, wf%n_J)
-!
-      call wf%get_cholesky_ij(L_ik_J)
-!
-      call allocator(L_mc_J, (wf%n_o)*(wf%n_v), wf%n_J)
-!
-      call wf%get_cholesky_ia(L_mc_J)
-!
       call allocator(g_ik_mc, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
 !
-      call dgemm('N','T',            &
-                  (wf%n_o)**2,       & 
-                  (wf%n_o)*(wf%n_v), &
-                  wf%n_J,            &
-                  one,               &
-                  L_ik_J,            &
-                  (wf%n_o)**2,       &
-                  L_mc_J,            & 
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  g_ik_mc,           &
-                  (wf%n_o)**2)
-!
-      call deallocator(L_ik_J, (wf%n_o)**2, wf%n_J)
-      call deallocator(L_mc_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      integral_type = 'electronic_repulsion'
+      call wf%get_oo_ov(integral_type, g_ik_mc)
 !
 !     Form the intermediate X_ik_dl = sum_mc t_lm^cd g_ikmc = sum_mc g_ik_mc t_mc_dl
 !
@@ -1501,51 +1476,26 @@ contains
                   X_ik_dl,           &
                   (wf%n_o)**2)
 !
-!     Reorder X_ik_dl to X_kdl_i
-!
-      call allocator(X_kdl_i, (wf%n_v)*(wf%n_o)**2, wf%n_o)
-      X_kdl_i = zero 
-!
-      do i = 1, wf%n_o
-         do l = 1, wf%n_o
-            do d = 1, wf%n_v
-!
-               dl = index_two(d, l, wf%n_v)
-!
-               do k = 1, wf%n_o
-!
-                  ik = index_two(i, k, wf%n_o)
-!
-                  kdl = index_three(k, d, l, wf%n_o, wf%n_v)
-!
-                  X_kdl_i(kdl, i) = X_ik_dl(ik, dl)
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!
-      call deallocator(X_ik_dl, (wf%n_o)**2, (wf%n_v)*(wf%n_o))
-!
 !     Add sum_ckdlm b_akdl t_lm^cd g_ikmc
-!         = sum_kdl b_a_kdl X_kdl_i
+!         = sum_kdl b_a_kdl X_i_kdl^T 
 !
-!     Note: we interpret b_ai_bj as b_a_ibj, such that b_a_ibj(a, kdl) = b_akdl
+!     Note: we interpret b_ai_bj as b_a_ibj
+!           we interpret X_ik_dl as X_i_kdl
 !
-      call dgemm('N','N',               &
+      call dgemm('N','T',               &
                   wf%n_v,               &
                   wf%n_o,               &
                   (wf%n_v)*(wf%n_o)**2, &
                   one,                  &
                   b_ai_bj,              & ! "b_a_ibj"
                   wf%n_v,               &
-                  X_kdl_i,              &
-                  (wf%n_v)*(wf%n_o)**2, &
+                  X_ik_dl,              & ! "X_i_kdl"
+                  wf%n_o,               &
                   one,                  &
                   sigma_a_i,            &
                   wf%n_v)
 !
-      call deallocator(X_kdl_i, (wf%n_v)*(wf%n_o)**2, wf%n_o)
+       call deallocator(X_ik_dl, (wf%n_o)**2, (wf%n_v)*(wf%n_o))
 !
 !     :: Term 2. sum_ckdlm b_ckal t_ml^cd g_mkid ::
 !
