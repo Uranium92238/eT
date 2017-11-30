@@ -4,16 +4,33 @@ submodule (ccs_class) integrals
 !!    Integrals submodule (CCS)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
 !!
-!!
 !!    Contains procedures for construction of general integrals, and 
-!!    spesifically:
+!!    specifically:
 !!
 !!    - electronic repulsion integrals
+!!    - (...no other integrals yet...)
 !!    
 !!    o - occupied index
 !!    v - virtual index
+!!
+!!    Note: for normal use, the get_pq_rs routines should be called. These
+!!    will call the appropriate routines for constructing (or reading) the integrals.
+!!    For example, 
+!!
+!!       integral_type = 'electronic_repulsion'
+!!       call wf%get_vo_vo(integral_type, g_ai_bj)
+!!
+!!    will place the T1-transformed g_aibj integrals in the g_ai_bj array.
+!!    The indices may also be restricted (though this is optional):
+!!
+!!       integral_type = 'electronic_repulsion'
+!!       call wf%get_vo_vo(integral_type, g_ai_bj, a_first, a_last, i_first, i_last, ...)
+!!
 !
 contains
+!
+!    -::- Get integral routines -::-
+!    :::::::::::::::::::::::::::::::
 !
 !
    module subroutine get_oo_oo_ccs(wf, integral_type, x_oo_oo,    & 
@@ -90,7 +107,8 @@ contains
          local_index4_last = wf%n_o
 !         
       else
-         write(unit_output,*)'WARNING: Some optionals missing in call to get_oo_oo'
+!
+         write(unit_output,*) 'Error: some optionals missing in call to get_oo_oo'
          stop
 !
       endif
@@ -105,7 +123,7 @@ contains
 !
       else
 !
-         write(unit_output,*)'WARNING: unknown integral type requested from get_oo_oo'
+         write(unit_output,*) 'Error: unknown integral type requested from get_oo_oo'
          stop
 !
       endif
@@ -172,9 +190,9 @@ contains
 !
 
       elseif ( .not. (present(index1_first) .and. present(index1_last) &
-               .and. present(index2_first) .and. present(index2_last) &
-               .and. present(index3_first) .and. present(index3_last) &
-               .and. present(index4_first) .and. present(index4_last) )) then
+                .and. present(index2_first) .and. present(index2_last) &
+                .and. present(index3_first) .and. present(index3_last) &
+                .and. present(index4_first) .and. present(index4_last) )) then
 !
          local_index1_first = 1
          local_index2_first = 1
@@ -187,7 +205,8 @@ contains
          local_index4_last = wf%n_v
 !         
       else
-         write(unit_output,*)'WARNING: Some optionals missing in call to get_oo_ov'
+!
+         write(unit_output,*) 'Error: some optionals missing in call to get_oo_ov'
          stop
 !
       endif
@@ -202,7 +221,7 @@ contains
 !
       else
 !
-         write(unit_output,*)'WARNING: unknown integral type requested from get_oo_ov'
+         write(unit_output,*) 'Error: unknown integral type requested from get_oo_ov'
          stop
 !
       endif
@@ -269,9 +288,9 @@ contains
 !
 
       elseif ( .not. (present(index1_first) .and. present(index1_last) &
-               .and. present(index2_first) .and. present(index2_last) &
-               .and. present(index3_first) .and. present(index3_last) &
-               .and. present(index4_first) .and. present(index4_last) )) then
+                .and. present(index2_first) .and. present(index2_last) &
+                .and. present(index3_first) .and. present(index3_last) &
+                .and. present(index4_first) .and. present(index4_last) )) then
 !
          local_index1_first = 1
          local_index2_first = 1
@@ -284,14 +303,15 @@ contains
          local_index4_last = wf%n_o
 !
       else
-         write(unit_output,*)'WARNING: Some optionals missing in call to get_ov_oo'
+!
+         write(unit_output,*) 'Error: some optionals missing in call to get_ov_oo'
          stop
 !
       endif
 !
       if (trim(integral_type) == 'electronic_repulsion') then
 !
-         call wf%get_ov_oo_electronic_repulsion(x_ov_oo,          & 
+         call wf%get_ov_oo_electronic_repulsion(x_ov_oo,                      & 
                                        local_index1_first, local_index1_last, &
                                        local_index2_first, local_index2_last, &
                                        local_index3_first, local_index3_last, &
@@ -299,7 +319,7 @@ contains
 !
       else
 !
-         write(unit_output,*)'WARNING: unknown integral type requested from get_ov_oo'
+         write(unit_output,*) 'Error: unknown integral type requested from get_ov_oo'
          stop
 !
       endif
@@ -381,14 +401,14 @@ contains
          local_index4_last = wf%n_o
 !         
       else
-         write(unit_output,*)'WARNING: Some optionals missing in call to get_oo_vo'
+         write(unit_output,*) 'Error: some optionals missing in call to get_oo_vo'
          stop
 !
       endif
 !
       if (trim(integral_type) == 'electronic_repulsion') then
 !
-         call wf%get_oo_vo_electronic_repulsion(x_oo_vo,          & 
+         call wf%get_oo_vo_electronic_repulsion(x_oo_vo,                      & 
                                        local_index1_first, local_index1_last, &
                                        local_index2_first, local_index2_last, &
                                        local_index3_first, local_index3_last, &
@@ -396,7 +416,7 @@ contains
 !
       else
 !
-         write(unit_output,*) 'WARNING: unknown integral type requested from get_oo_vo'
+         write(unit_output,*) 'Error: unknown integral type requested from get_oo_vo'
          stop
 !
       endif
@@ -463,9 +483,9 @@ contains
 !
 
       elseif ( .not. (present(index1_first) .and. present(index1_last) &
-               .and. present(index2_first) .and. present(index2_last) &
-               .and. present(index3_first) .and. present(index3_last) &
-               .and. present(index4_first) .and. present(index4_last) )) then
+                .and. present(index2_first) .and. present(index2_last) &
+                .and. present(index3_first) .and. present(index3_last) &
+                .and. present(index4_first) .and. present(index4_last) )) then
 !
          local_index1_first = 1
          local_index2_first = 1
@@ -478,7 +498,8 @@ contains
          local_index4_last = wf%n_o
 !         
       else
-         write(unit_output,*)'WARNING: Some optionals missing in call to get_vo_oo'
+!
+         write(unit_output,*) 'Error: some optionals missing in call to get_vo_oo'
          stop
 !
       endif
@@ -493,7 +514,7 @@ contains
 !
       else
 !
-         write(unit_output,*) 'WARNING: unknown integral type requested from get_vo_oo'
+         write(unit_output,*) 'Error: unknown integral type requested from get_vo_oo'
          stop
 !
       endif
@@ -560,9 +581,9 @@ contains
 !
 
       elseif ( .not. (present(index1_first) .and. present(index1_last) &
-               .and. present(index2_first) .and. present(index2_last) &
-               .and. present(index3_first) .and. present(index3_last) &
-               .and. present(index4_first) .and. present(index4_last) )) then
+                .and. present(index2_first) .and. present(index2_last) &
+                .and. present(index3_first) .and. present(index3_last) &
+                .and. present(index4_first) .and. present(index4_last) )) then
 !
          local_index1_first = 1
          local_index2_first = 1
@@ -575,14 +596,14 @@ contains
          local_index4_last = wf%n_v
 !         
       else
-         write(unit_output,*)'WARNING: Some optionals missing in call to get_oo_vv'
+         write(unit_output,*) 'Error: some optionals missing in call to get_oo_vv'
          stop
 !
       endif
 !
       if (trim(integral_type) == 'electronic_repulsion') then
 !
-         call wf%get_oo_vv_electronic_repulsion(x_oo_vv,          & 
+         call wf%get_oo_vv_electronic_repulsion(x_oo_vv,                      & 
                                        local_index1_first, local_index1_last, &
                                        local_index2_first, local_index2_last, &
                                        local_index3_first, local_index3_last, &
@@ -590,7 +611,7 @@ contains
 !
       else
 !
-         write(unit_output,*) 'WARNING: unknown integral type requested from get_oo_vv'
+         write(unit_output,*) 'Error: unknown integral type requested from get_oo_vv'
          stop
 !
       endif
@@ -657,9 +678,9 @@ contains
 !
 
       elseif ( .not. (present(index1_first) .and. present(index1_last) &
-               .and. present(index2_first) .and. present(index2_last) &
-               .and. present(index3_first) .and. present(index3_last) &
-               .and. present(index4_first) .and. present(index4_last) )) then
+                .and. present(index2_first) .and. present(index2_last) &
+                .and. present(index3_first) .and. present(index3_last) &
+                .and. present(index4_first) .and. present(index4_last) )) then
 !
          local_index1_first = 1
          local_index2_first = 1
@@ -754,9 +775,9 @@ contains
 !
 
       elseif ( .not. (present(index1_first) .and. present(index1_last) &
-               .and. present(index2_first) .and. present(index2_last) &
-               .and. present(index3_first) .and. present(index3_last) &
-               .and. present(index4_first) .and. present(index4_last) )) then
+                .and. present(index2_first) .and. present(index2_last) &
+                .and. present(index3_first) .and. present(index3_last) &
+                .and. present(index4_first) .and. present(index4_last) )) then
 !
          local_index1_first = 1
          local_index2_first = 1
@@ -769,14 +790,15 @@ contains
          local_index4_last = wf%n_v
 !         
       else
-         write(unit_output,*)'WARNING: Some optionals missing in call to get_ov_ov'
+!
+         write(unit_output,*) 'Error: some optionals missing in call to get_ov_ov'
          stop
 !
       endif
 !
       if (trim(integral_type) == 'electronic_repulsion') then
 !
-         call wf%get_ov_ov_electronic_repulsion(x_ov_ov,          & 
+         call wf%get_ov_ov_electronic_repulsion(x_ov_ov,                      & 
                                        local_index1_first, local_index1_last, &
                                        local_index2_first, local_index2_last, &
                                        local_index3_first, local_index3_last, &
@@ -784,7 +806,7 @@ contains
 !
       else
 !
-         write(unit_output,*) 'WARNING: unknown integral type requested from get_ov_ov'
+         write(unit_output,*) 'Error: unknown integral type requested from get_ov_ov'
          stop
 !
       endif
@@ -851,9 +873,9 @@ contains
 !
 
       elseif ( .not. (present(index1_first) .and. present(index1_last) &
-               .and. present(index2_first) .and. present(index2_last) &
-               .and. present(index3_first) .and. present(index3_last) &
-               .and. present(index4_first) .and. present(index4_last) )) then
+                .and. present(index2_first) .and. present(index2_last) &
+                .and. present(index3_first) .and. present(index3_last) &
+                .and. present(index4_first) .and. present(index4_last) )) then
 !
          local_index1_first = 1
          local_index2_first = 1
@@ -866,7 +888,8 @@ contains
          local_index4_last = wf%n_o
 !         
       else
-         write(unit_output,*)'WARNING: Some optionals missing in call to get_vo_vo'
+!
+         write(unit_output,*) 'Error: Some optionals missing in call to get_vo_vo'
          stop
 !
       endif
@@ -881,7 +904,7 @@ contains
 !
       else
 !
-         write(unit_output,*)'WARNING: unknown integral type requested from get_vo_vo'
+         write(unit_output,*) 'Error: unknown integral type requested from get_vo_vo'
          stop
 !
       endif
@@ -948,9 +971,9 @@ contains
 !
 
       elseif ( .not. (present(index1_first) .and. present(index1_last) &
-               .and. present(index2_first) .and. present(index2_last) &
-               .and. present(index3_first) .and. present(index3_last) &
-               .and. present(index4_first) .and. present(index4_last) )) then
+                .and. present(index2_first) .and. present(index2_last) &
+                .and. present(index3_first) .and. present(index3_last) &
+                .and. present(index4_first) .and. present(index4_last) )) then
 !
          local_index1_first = 1
          local_index2_first = 1
@@ -963,14 +986,15 @@ contains
          local_index4_last = wf%n_o
 !         
       else
-         write(unit_output,*)'WARNING: Some optionals missing in call to get_ov_vo'
+!
+         write(unit_output,*) 'Error: some optionals missing in call to get_ov_vo'
          stop
 !
       endif
 !
       if (trim(integral_type) == 'electronic_repulsion') then
 !
-         call wf%get_ov_vo_electronic_repulsion(x_ov_vo,          & 
+         call wf%get_ov_vo_electronic_repulsion(x_ov_vo,                      & 
                                        local_index1_first, local_index1_last, &
                                        local_index2_first, local_index2_last, &
                                        local_index3_first, local_index3_last, &
@@ -978,7 +1002,7 @@ contains
 !
       else
 !
-         write(unit_output,*)'WARNING: unknown integral type requested from get_ov_vo'
+         write(unit_output,*) 'Error: unknown integral type requested from get_ov_vo'
          stop
 !
       endif
@@ -1060,14 +1084,15 @@ contains
          local_index4_last = wf%n_v
 !         
       else
-         write(unit_output,*)'WARNING: Some optionals missing in call to get_vo_ov'
+!
+         write(unit_output,*) 'Error: some optionals missing in call to get_vo_ov'
          stop
 !
       endif
 !
       if (trim(integral_type) == 'electronic_repulsion') then
 !
-         call wf%get_vo_ov_electronic_repulsion(x_vo_ov,          & 
+         call wf%get_vo_ov_electronic_repulsion(x_vo_ov,                      & 
                                        local_index1_first, local_index1_last, &
                                        local_index2_first, local_index2_last, &
                                        local_index3_first, local_index3_last, &
@@ -1075,7 +1100,7 @@ contains
 !
       else
 !
-         write(unit_output,*)'WARNING: unknown integral type requested from get_vo_ov'
+         write(unit_output,*) 'Error: unknown integral type requested from get_vo_ov'
          stop
 !
       endif
@@ -1142,9 +1167,9 @@ contains
 !
 
       elseif ( .not. (present(index1_first) .and. present(index1_last) &
-               .and. present(index2_first) .and. present(index2_last) &
-               .and. present(index3_first) .and. present(index3_last) &
-               .and. present(index4_first) .and. present(index4_last) )) then
+                .and. present(index2_first) .and. present(index2_last) &
+                .and. present(index3_first) .and. present(index3_last) &
+                .and. present(index4_first) .and. present(index4_last) )) then
 !
          local_index1_first = 1
          local_index2_first = 1
@@ -1157,14 +1182,15 @@ contains
          local_index4_last = wf%n_v
 !         
       else
-         write(unit_output,*)'WARNING: Some optionals missing in call to get_ov_vv'
+!
+         write(unit_output,*) 'Error: some optionals missing in call to get_ov_vv'
          stop
 !
       endif
 !
       if (trim(integral_type) == 'electronic_repulsion') then
 !
-         call wf%get_ov_vv_electronic_repulsion(x_ov_vv,          & 
+         call wf%get_ov_vv_electronic_repulsion(x_ov_vv,                      & 
                                        local_index1_first, local_index1_last, &
                                        local_index2_first, local_index2_last, &
                                        local_index3_first, local_index3_last, &
@@ -1172,7 +1198,7 @@ contains
 !
       else
 !
-         write(unit_output,*)'WARNING: unknown integral type requested from get_ov_vv'
+         write(unit_output,*) 'Error: unknown integral type requested from get_ov_vv'
          stop
 !
       endif
@@ -1239,9 +1265,9 @@ contains
 !
 
       elseif ( .not. (present(index1_first) .and. present(index1_last) &
-               .and. present(index2_first) .and. present(index2_last) &
-               .and. present(index3_first) .and. present(index3_last) &
-               .and. present(index4_first) .and. present(index4_last) )) then
+                .and. present(index2_first) .and. present(index2_last) &
+                .and. present(index3_first) .and. present(index3_last) &
+                .and. present(index4_first) .and. present(index4_last) )) then
 !
          local_index1_first = 1
          local_index2_first = 1
@@ -1254,14 +1280,15 @@ contains
          local_index4_last = wf%n_v
 !         
       else
-         write(unit_output,*)'WARNING: Some optionals missing in call to get_vv_ov'
+!
+         write(unit_output,*) 'Error: some optionals missing in call to get_vv_ov'
          stop
 !
       endif
 !
       if (trim(integral_type) == 'electronic_repulsion') then
 !
-         call wf%get_vv_ov_electronic_repulsion(x_vv_ov,          & 
+         call wf%get_vv_ov_electronic_repulsion(x_vv_ov,                      & 
                                        local_index1_first, local_index1_last, &
                                        local_index2_first, local_index2_last, &
                                        local_index3_first, local_index3_last, &
@@ -1269,7 +1296,7 @@ contains
 !
       else
 !
-         write(unit_output,*)'WARNING: unknown integral type requested from get_vv_ov'
+         write(unit_output,*) 'Error: unknown integral type requested from get_vv_ov'
          stop
 !
       endif
@@ -1336,9 +1363,9 @@ contains
 !
 
       elseif ( .not. (present(index1_first) .and. present(index1_last) &
-               .and. present(index2_first) .and. present(index2_last) &
-               .and. present(index3_first) .and. present(index3_last) &
-               .and. present(index4_first) .and. present(index4_last) )) then
+                .and. present(index2_first) .and. present(index2_last) &
+                .and. present(index3_first) .and. present(index3_last) &
+                .and. present(index4_first) .and. present(index4_last) )) then
 !
          local_index1_first = 1
          local_index2_first = 1
@@ -1351,14 +1378,15 @@ contains
          local_index4_last = wf%n_v
 !         
       else
-         write(unit_output,*)'WARNING: Some optionals missing in call to get_vo_vv'
+!
+         write(unit_output,*) 'Error: some optionals missing in call to get_vo_vv'
          stop
 !
       endif
 !
       if (trim(integral_type) == 'electronic_repulsion') then
 !
-         call wf%get_vo_vv_electronic_repulsion(x_vo_vv,          & 
+         call wf%get_vo_vv_electronic_repulsion(x_vo_vv,                      & 
                                        local_index1_first, local_index1_last, &
                                        local_index2_first, local_index2_last, &
                                        local_index3_first, local_index3_last, &
@@ -1366,7 +1394,7 @@ contains
 !
       else
 !
-         write(unit_output,*)'WARNING: unknown integral type requested from get_vo_vv'
+         write(unit_output,*) 'Error: unknown integral type requested from get_vo_vv'
          stop
 !
       endif
@@ -1433,9 +1461,9 @@ contains
 !
 
       elseif ( .not. (present(index1_first) .and. present(index1_last) &
-               .and. present(index2_first) .and. present(index2_last) &
-               .and. present(index3_first) .and. present(index3_last) &
-               .and. present(index4_first) .and. present(index4_last) )) then
+                .and. present(index2_first) .and. present(index2_last) &
+                .and. present(index3_first) .and. present(index3_last) &
+                .and. present(index4_first) .and. present(index4_last) )) then
 !
          local_index1_first = 1
          local_index2_first = 1
@@ -1448,14 +1476,15 @@ contains
          local_index4_last = wf%n_o
 !         
       else
-         write(unit_output,*)'WARNING: Some optionals missing in call to get_vv_vo'
+!
+         write(unit_output,*) 'Error: some optionals missing in call to get_vv_vo'
          stop
 !
       endif
 !
       if (trim(integral_type) == 'electronic_repulsion') then
 !
-         call wf%get_vv_vo_electronic_repulsion(x_vv_vo,          & 
+         call wf%get_vv_vo_electronic_repulsion(x_vv_vo,                      & 
                                        local_index1_first, local_index1_last, &
                                        local_index2_first, local_index2_last, &
                                        local_index3_first, local_index3_last, &
@@ -1463,7 +1492,7 @@ contains
 !
       else
 !
-         write(unit_output,*)'WARNING: unknown integral type requested from get_vv_vo'
+         write(unit_output,*) 'Error: unknown integral type requested from get_vv_vo'
          stop
 !
       endif
@@ -1530,9 +1559,9 @@ contains
 !
 
       elseif ( .not. (present(index1_first) .and. present(index1_last) &
-               .and. present(index2_first) .and. present(index2_last) &
-               .and. present(index3_first) .and. present(index3_last) &
-               .and. present(index4_first) .and. present(index4_last) )) then
+                .and. present(index2_first) .and. present(index2_last) &
+                .and. present(index3_first) .and. present(index3_last) &
+                .and. present(index4_first) .and. present(index4_last) )) then
 !
          local_index1_first = 1
          local_index2_first = 1
@@ -1545,13 +1574,15 @@ contains
          local_index4_last = wf%n_v
 !
       else
-         write(unit_output,*)'WARNING: Some optionals missing in call to get_vv_vv'
+!
+         write(unit_output,*) 'Error: some optionals missing in call to get_vv_vv'
          stop
+!
       endif
 !
       if (trim(integral_type) == 'electronic_repulsion') then
 !
-         call wf%get_vv_vv_electronic_repulsion(x_vv_vv,          & 
+         call wf%get_vv_vv_electronic_repulsion(x_vv_vv,                      & 
                                        local_index1_first, local_index1_last, &
                                        local_index2_first, local_index2_last, &
                                        local_index3_first, local_index3_last, &
@@ -1559,7 +1590,7 @@ contains
 !
       else
 !
-         write(unit_output,*)'WARNING: unknown integral type requested from get_vv_vv'
+         write(unit_output,*) 'Error: unknown integral type requested from get_vv_vv'
          stop
 !
       endif
@@ -1567,10 +1598,21 @@ contains
    end subroutine get_vv_vv_ccs
 !
 !
-   module subroutine get_vo_vo_electronic_repulsion_ccs(wf, x_vo_vo,    & 
-                                       index1_first, index1_last, &
-                                       index2_first, index2_last, &
-                                       index3_first, index3_last, &
+!    -::- Get electronic repulsion integral routines -::-
+!    ::::::::::::::::::::::::::::::::::::::::::::::::::::
+!
+!     These routines should, normally, not be called directly. 
+!     If "integral_type" equals "electronic_repulsion", the get_pq_rs
+!     routines will call the routines below to get the correct integrals. 
+!
+!     Depending on type of calculation, integrals are either read from file 
+!     or constructed directly from the Cholesky vectors.
+!
+!
+   module subroutine get_vo_vo_electronic_repulsion_ccs(wf, x_vo_vo, & 
+                                       index1_first, index1_last,    &
+                                       index2_first, index2_last,    &
+                                       index3_first, index3_last,    &
                                        index4_first, index4_last)
 !!
 !!    Get g_vo,vo integral (CCS),
@@ -1642,7 +1684,7 @@ contains
    end subroutine get_vo_vo_electronic_repulsion_ccs
 !
 !
-module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    & 
+   module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo, & 
                                        index1_first, index1_last, &
                                        index2_first, index2_last, &
                                        index3_first, index3_last, &
@@ -1717,10 +1759,10 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
    end subroutine get_ov_vo_electronic_repulsion_ccs
 !
 !
-   module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    & 
-                                       index1_first, index1_last, &
-                                       index2_first, index2_last, &
-                                       index3_first, index3_last, &
+   module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov, & 
+                                       index1_first, index1_last,    &
+                                       index2_first, index2_last,    &
+                                       index3_first, index3_last,    &
                                        index4_first, index4_last)
 !!
 !!    Get g_vo,ov integral (CCS),
@@ -1810,10 +1852,10 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
    end subroutine get_vo_ov_electronic_repulsion_ccs
 !
 !
-   module subroutine get_ov_vv_electronic_repulsion_ccs(wf, x_ov_vv,    & 
-                                       index1_first, index1_last, &
-                                       index2_first, index2_last, &
-                                       index3_first, index3_last, &
+   module subroutine get_ov_vv_electronic_repulsion_ccs(wf, x_ov_vv, & 
+                                       index1_first, index1_last,    &
+                                       index2_first, index2_last,    &
+                                       index3_first, index3_last,    &
                                        index4_first, index4_last)
 !!
 !!    Get g_vo,vv integral (CCS),
@@ -1885,10 +1927,10 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
    end subroutine get_ov_vv_electronic_repulsion_ccs
 !
 !
-   module subroutine get_vv_ov_electronic_repulsion_ccs(wf, x_vv_ov,    & 
-                                       index1_first, index1_last, &
-                                       index2_first, index2_last, &
-                                       index3_first, index3_last, &
+   module subroutine get_vv_ov_electronic_repulsion_ccs(wf, x_vv_ov, & 
+                                       index1_first, index1_last,    &
+                                       index2_first, index2_last,    &
+                                       index3_first, index3_last,    &
                                        index4_first, index4_last)
 !!
 !!    Get g_vv,ov integral (CCS),
@@ -1978,10 +2020,10 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
    end subroutine get_vv_ov_electronic_repulsion_ccs
 !
 !
-   module subroutine get_vo_vv_electronic_repulsion_ccs(wf, x_vo_vv,    & 
-                                       index1_first, index1_last, &
-                                       index2_first, index2_last, &
-                                       index3_first, index3_last, &
+   module subroutine get_vo_vv_electronic_repulsion_ccs(wf, x_vo_vv, & 
+                                       index1_first, index1_last,    &
+                                       index2_first, index2_last,    &
+                                       index3_first, index3_last,    &
                                        index4_first, index4_last)
 !!
 !!    Get g_vo,vv integral (CCS),
@@ -2097,10 +2139,10 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
    end subroutine get_vo_vv_electronic_repulsion_ccs
 !
 !
-   module subroutine get_vv_vo_electronic_repulsion_ccs(wf, x_vv_vo,    & 
-                                       index1_first, index1_last, &
-                                       index2_first, index2_last, &
-                                       index3_first, index3_last, &
+   module subroutine get_vv_vo_electronic_repulsion_ccs(wf, x_vv_vo, & 
+                                       index1_first, index1_last,    &
+                                       index2_first, index2_last,    &
+                                       index3_first, index3_last,    &
                                        index4_first, index4_last)
 !!
 !!    Get g_vv,vo integral (CCS),
@@ -2150,9 +2192,9 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !        Read the integrals from file 
 !
          call wf%read_t1_vv_vo_electronic_repulsion(x_vv_vo, &
-                                 index1_first, index1_last, &
-                                 index2_first, index2_last, &
-                                 index3_first, index3_last, &
+                                 index1_first, index1_last,  &
+                                 index2_first, index2_last,  &
+                                 index3_first, index3_last,  &
                                  index4_first, index4_last)
 !
       else
@@ -2193,10 +2235,10 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
 !
 !
-   module subroutine get_vv_vv_electronic_repulsion_ccs(wf, x_vv_vv,    & 
-                                       index1_first, index1_last, &
-                                       index2_first, index2_last, &
-                                       index3_first, index3_last, &
+   module subroutine get_vv_vv_electronic_repulsion_ccs(wf, x_vv_vv, & 
+                                       index1_first, index1_last,    &
+                                       index2_first, index2_last,    &
+                                       index3_first, index3_last,    &
                                        index4_first, index4_last)
 !!
 !!    Get g_vv,vv integral (CCS),
@@ -2262,7 +2304,7 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
          call cpu_time(begin_timer)
 !
-         call wf%t1_transform_vv_vv(x_vv_vv, &
+         call wf%t1_transform_vv_vv(x_vv_vv,                &
                                  index1_first, index1_last, &
                                  index2_first, index2_last, &
                                  index3_first, index3_last, &
@@ -2283,9 +2325,9 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
          call cpu_time(begin_timer)
 !
          call wf%read_t1_vv_vv_electronic_repulsion(x_vv_vv, &
-                                 index1_first, index1_last, &
-                                 index2_first, index2_last, &
-                                 index3_first, index3_last, &
+                                 index1_first, index1_last,  &
+                                 index2_first, index2_last,  &
+                                 index3_first, index3_last,  &
                                  index4_first, index4_last)
 !
          call cpu_time(end_timer)
@@ -2340,12 +2382,18 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
    end subroutine get_vv_vv_electronic_repulsion_ccs
 !
 !
-   module subroutine read_vv_vv_electronic_repulsion_ccs(wf, x_vv_vv,    & 
-                                       index1_first, index1_last, &
-                                       index2_first, index2_last, &
-                                       index3_first, index3_last, &
+   module subroutine read_vv_vv_electronic_repulsion_ccs(wf, x_vv_vv, & 
+                                       index1_first, index1_last,     &
+                                       index2_first, index2_last,     &
+                                       index3_first, index3_last,     &
                                        index4_first, index4_last)
-!
+!!
+!!    Read vvvv Electronic Repulsion (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!    Reads the non-T1-transformed g_abcd integrals from file,
+!!    with indices a,b,c and d restricted as requested. 
+!!
       implicit none 
 !
       class(ccs) :: wf
@@ -2519,12 +2567,18 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
    end subroutine read_vv_vv_electronic_repulsion_ccs
 !
 !
-   module subroutine read_t1_vv_vv_electronic_repulsion_ccs(wf, x_vv_vv,    & 
-                                       index1_first, index1_last, &
-                                       index2_first, index2_last, &
-                                       index3_first, index3_last, &
+   module subroutine read_t1_vv_vv_electronic_repulsion_ccs(wf, x_vv_vv, & 
+                                       index1_first, index1_last,        &
+                                       index2_first, index2_last,        &
+                                       index3_first, index3_last,        &
                                        index4_first, index4_last)
-!
+!!
+!!    Read T1 vvvv Electronic Repulsion (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!    Reads the T1-transformed g_abcd integrals from file,
+!!    with indices a,b,c and d restricted as requested. 
+!!
       implicit none 
 !
       class(ccs) :: wf
@@ -3707,12 +3761,6 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
 !     Calculate the disk space (in GB) required to store the vir-vir-vir-vir integrals 
 !
-!     For non-T1-transformed integrals, there is a four-fold symmetri, 
-!
-!        ((a >= b) >= (c >= d),
-!
-!     giving required space = (n_v*(n_v+1)/2)*(n_v*(n_v+1)/2 + 1)/2
-!
       required_space = ((wf%n_v**3)*(wf%n_v+1))/2 
 !
 !     This is the required space in number of double precision numbers (8 bytes per such number).
@@ -3827,7 +3875,12 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
 !        Test for file handling error 
 !
-         if (ioerror .ne. 0) write(unit_output,'(t3,a)') 'Error: write error in store_electronic_repulsion_integrals_ccs'
+         if (ioerror .ne. 0) then 
+!
+            write(unit_output,'(t3,a)') 'Error: write error in store_electronic_repulsion_integrals_ccs'
+            stop
+!
+         endif
 !
 !        Close file 
 !
@@ -3889,12 +3942,6 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
       real(dp), dimension(:,:), allocatable :: g_a_bcd ! g_abcd 
 !
 !     Calculate the disk space (in GB) required to store the vir-vir-vir-vir integrals 
-!
-!     For non-T1-transformed integrals, there is a four-fold symmetri, 
-!
-!        ((a >= b) >= (c >= d),
-!
-!     giving required space = (n_v*(n_v+1)/2)*(n_v*(n_v+1)/2 + 1)/2
 !
       required_space = (wf%n_v)**4
 !
@@ -4030,7 +4077,7 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
    module subroutine store_t1_vo_ov_electronic_repulsion_ccs(wf)
 !!
-!!    Store t1 voov Electronic Repulsion Integrals 
+!!    Store t1 voov Electronic Repulsion (CCS) 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
 !!    Tests whether it is possible to store t1-transformed vir-occ-occ-vir integrals and,
@@ -4155,7 +4202,7 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !
    module subroutine store_t1_vv_vo_electronic_repulsion_ccs(wf)
 !!
-!!    Store t1 vvvo Electronic Repulsion Integrals 
+!!    Store t1 vvvo Electronic Repulsion (CCS) 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
 !!    Tests whether it is possible to store t1-transformed vir-vir-vir-occ integrals and,
@@ -4268,11 +4315,11 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
    end subroutine store_t1_vv_vo_electronic_repulsion_ccs
 !
 !
-   module subroutine read_t1_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,& 
-                                       index1_first, index1_last, &
-                                       index2_first, index2_last, &
-                                       index3_first, index3_last, &
-                                       index4_first, index4_last)
+   module subroutine read_t1_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov, & 
+                                             index1_first, index1_last,  &
+                                             index2_first, index2_last,  &
+                                             index3_first, index3_last,  &
+                                             index4_first, index4_last)
 !!
 !!    Read t1 voov Electronic Repulsion Integrals 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
@@ -4281,7 +4328,7 @@ module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo,    &
 !!
 !!    g_t1_ai_jb is written such that we have full flexibility with respect to ai indices. However, get_vo_ov_ccs has
 !!    full flexibility wrt. all indices and we must check wether b and j are full space or not
-!!     (they will presumably always be full space indices).
+!!    (they will presumably always be full space indices).
 !!
       implicit none 
 !

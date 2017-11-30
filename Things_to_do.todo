@@ -8,4 +8,7 @@ Programmering:
 Opprydding:
   ☐ Rekkefølge i en rekke interfaces og submoduler kan med fordel være kronologisk
   ☐ Interface og rutiner må ha dokumentasjon, og dokumentasjonen må samsvare mellom de ulike filene
-  ☐ 
+Omstrukturering:
+  ☐ E: burde vi omstrukturere CCS-driveren noe? Ser at vi kanskje bør gi litt av arbeidet til under-drivere? For eksempel, er det en ide å droppe "ionized driver", som bare kaller excited state-driver etter et par steg. 
+Hva som er sjekket (av minnelekkasjer):
+  ☐ Jacobi er fri for minnelekkasje (memory inn lik memory ut)
