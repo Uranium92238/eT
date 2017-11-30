@@ -164,6 +164,7 @@ module mlccsd_class
       procedure :: transform_trial_vectors   => transform_trial_vectors_mlccsd
       procedure :: initialize_excited_states => initialize_excited_states_mlccsd
       procedure :: print_excitation_vector   => print_excitation_vector_mlccsd
+      procedure :: summary_excited_state_info=> summary_excited_state_info_mlccsd
 !
    end type mlccsd
 !
@@ -1145,10 +1146,27 @@ module mlccsd_class
 !
          integer(i15) :: unit_id     
 !
-      END subroutine print_excitation_vector_mlccsd
+      end subroutine print_excitation_vector_mlccsd
+!
+!
+!
+!
+      module subroutine summary_excited_state_info_mlccsd(wf, energies)
+!!
+!!
+!!
+         implicit none
+!  
+         class(mlccsd) :: wf
+!
+         real(dp), dimension(wf%excited_state_specifications%n_singlet_states,1) :: energies
+!
+      end subroutine summary_excited_state_info_mlccsd
 !
 !
    end interface
+!
+!
 contains
 !
 !

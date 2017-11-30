@@ -343,7 +343,7 @@ contains
       integer(i15) :: min_pos
 !  
       real(dp)     :: swap     = zero
-      integer(i15) :: swap_i = 0, swap_a = 0
+      integer(i15) :: swap_i = 0, swap_a = 0, swap_j = 0, swap_b = 0
 !
 !     Placing the n first elements of vec into sorted_short_vec
 !
@@ -423,11 +423,17 @@ contains
 ! 
                 swap_a = index_list(j, 1)
                 swap_i = index_list(j, 2)
+                swap_b = index_list(j, 3)
+                swap_j = index_list(j, 4)
 !
                 index_list(j,1) = index_list(j + 1,1)
                 index_list(j,2) = index_list(j + 1,2)
+                index_list(j,3) = index_list(j + 1,3)
+                index_list(j,4) = index_list(j + 1,4)
                 index_list(j + 1,1) = swap_a
                 index_list(j + 1,2) = swap_i
+                index_list(j + 1,3) = swap_b
+                index_list(j + 1,4) = swap_j
 ! 
              endif
           enddo

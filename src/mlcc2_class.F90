@@ -109,6 +109,9 @@ module mlcc2_class
       procedure :: transform_trial_vectors       => transform_trial_vectors_mlcc2
       procedure :: cvs_residual_projection       => cvs_residual_projection_mlcc2 
 !
+      procedure :: analyze_double_excitation_vector   => analyze_double_excitation_vector_mlcc2
+      procedure :: summary_excited_state_info         => summary_excited_state_info_mlcc2
+!
       procedure :: print_excitation_vector => print_excitation_vector_mlcc2
 !
 !     Jacobian
@@ -564,6 +567,40 @@ module mlcc2_class
          integer(i15) :: unit_id     
 !
       end subroutine print_excitation_vector_mlcc2
+!
+!
+      module subroutine analyze_double_excitation_vector_mlcc2(wf, vec, n, sorted_short_vec, index_list)
+!!
+!!
+!!
+         implicit none
+!  
+         class(mlcc2) :: wf
+!
+         real(dp), dimension(wf%n_x2am, 1) :: vec    
+!
+         integer(i15) :: a = 0, i = 0, ai = 0, b = 0, j = 0, bj = 0, aibj = 0, k = 0
+!
+         integer(i15) :: n    ! Number of elements wanted
+!  
+         real(dp), dimension(n, 1)    :: sorted_short_vec
+!  
+         integer(i15), dimension(n, 4) ::index_list
+!
+      end subroutine analyze_double_excitation_vector_mlcc2
+!
+!
+      module subroutine summary_excited_state_info_mlcc2(wf, energies)
+!!
+!!
+!!
+         implicit none
+!  
+         class(mlcc2) :: wf
+!
+         real(dp), dimension(wf%excited_state_specifications%n_singlet_states,1) :: energies
+!
+      end subroutine summary_excited_state_info_mlcc2
 !
 !
    end interface
