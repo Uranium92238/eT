@@ -188,7 +188,7 @@ contains
 !
                      bjc = index_three(b, j, c, wf%n_v, wf%n_o)
 !
-                     u_bjc_i(bjc,i) = (two*s_ib_jc(ib,jc)-s_ib_jc(ic, jb))
+                     u_bjc_i(bjc,i) = (two*s_ib_jc(ib,jc)-s_ib_jc(jb, ic))
 !
                   enddo
                enddo
@@ -335,7 +335,7 @@ contains
                      ka = index_two(k, a, wf%n_o)
                      
 !  
-                     u_a_kbj(a,kbj) = (two*s_ja_kb(ja,kb)-s_ja_kb(jb, ka))
+                     u_a_kbj(a,kbj) = (two*s_ja_kb(ja,kb)-s_ja_kb(ka, jb))
 !
                   enddo
                enddo

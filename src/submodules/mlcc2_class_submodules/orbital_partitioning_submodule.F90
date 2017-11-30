@@ -89,12 +89,10 @@ contains
       real(dp), dimension(:,:), allocatable :: orbital_energies
 !  
       integer(i15) :: n_nuclei
-      integer(i15) :: n_CC2_atoms = 0
       integer(i15) :: offset_o = 0, offset_v = 0
       integer(i15) :: n_active_aos = 0
 !
       integer(i15), dimension(:,:), allocatable :: ao_center_info, n_ao_on_center
-      integer(i15), dimension(:,:), allocatable :: active_atoms
       integer(i15), dimension(:,:), allocatable :: active_ao_index_list
       integer(i15) :: n_vectors_o = 0, n_vectors_v = 0
 !
@@ -128,7 +126,8 @@ contains
 !
 !     Prints
 !
-      write(unit_output,'(/t3,a/)')    ':: Cholesky decomposition '
+      write(unit_output,'(//t3,a)')    ':: Cholesky orbital construction'
+      write(unit_output,'(t3,a/)')   ':: E. F. Kjønstad, S. D. Folkestad, Jun 2017'
 !
 !     :: Get center info ::
 !
@@ -138,21 +137,6 @@ contains
       call allocator_int(ao_center_info, wf%n_ao, 2)
 !
       call read_center_info(n_nuclei, wf%n_ao, n_ao_on_center, ao_center_info)
-!
-!     Check that cholesky.inp exists
-!
-      inquire(file='cholesky.inp', exist=file_exists)
-      if (.not. file_exists) then
-         write(unit_output,*) 'WARNING: Input file for cholesky decomposition is not found.'
-         stop
-      endif
-!
-!     Open cholesky.inp
-!
-      call generate_unit_identifier(unit_cholesky_decomp)
-      open(unit=unit_cholesky_decomp, file='cholesky.inp', status='unknown', form='formatted', iostat=ioerror)
-      if (ioerror .ne. 0) write(unit_output,*)'WARNING: Error while opening cholesky.inp'
-      rewind(unit_cholesky_decomp)
 !
 !     :::::::::::::::::::::::
 !     -::- Occupied part -::-
@@ -178,28 +162,16 @@ contains
       call allocator (orbitals, wf%n_ao, wf%n_mo)
       call allocator (orbital_energies, wf%n_mo, 1)
 !
-!     Get CC2-active atoms
-!
-      n_CC2_atoms =  get_number_of_active_atoms(unit_cholesky_decomp, 'CC2  ')
-!
-!     Allocate active atoms list
-!
-      call allocator_int(active_atoms, n_CC2_atoms, 1)
-!
-!     Get list of active atoms
-!
-      call get_active_atoms(unit_cholesky_decomp, active_atoms,  n_CC2_atoms, 'CC2  ')
-!
 !     Sanity check on active atoms
 !
-      if (n_CC2_atoms .gt. n_nuclei) then
-         write(unit_output,*) 'WARNING: Illegal chioce of atoms in cholesky.inp.'
+      if (wf%CC2_orbitals%n_active_atoms .gt. n_nuclei) then
+         write(unit_output,*) 'WARNING: Illegal chioce of atoms in cholesky section of eT.inp.'
          stop
       endif
 !
-      do i = 1, n_CC2_atoms
-         if (active_atoms(i,1) .gt. n_nuclei) then
-            write(unit_output,*) 'WARNING: Illegal chioce of atoms in cholesky.inp.'
+      do i = 1, wf%CC2_orbitals%n_active_atoms
+         if (wf%CC2_orbitals%active_atoms(i,1) .gt. n_nuclei) then
+            write(unit_output,*) 'WARNING: Illegal chioce of atomss in cholesky section of eT.inp.'
             stop
          endif
       enddo
@@ -207,15 +179,15 @@ contains
 !     :: Constructing active (CC2) localized Cholesky orbitals ::
 !
       n_active_aos = 0
-      do i = 1, n_CC2_atoms
-         n_active_aos = n_active_aos + n_ao_on_center(active_atoms(i,1),1)
+      do i = 1, wf%CC2_orbitals%n_active_atoms
+         n_active_aos = n_active_aos + n_ao_on_center(wf%CC2_orbitals%active_atoms(i,1),1)
       enddo
 !
 !     Construct active_ao_index_list
 !
       call allocator_int(active_ao_index_list, n_active_aos, 1)
-      call construct_active_ao_index_list(active_ao_index_list, n_active_aos, active_atoms, &
-                                               n_CC2_atoms, ao_center_info, wf%n_ao)
+      call construct_active_ao_index_list(active_ao_index_list, n_active_aos, wf%CC2_orbitals%active_atoms, &
+                                               wf%CC2_orbitals%n_active_atoms, ao_center_info, wf%n_ao)
 !
       call wf%cholesky_orbital_constructor(orbitals, orbital_energies, offset_o, ao_fock, &
                                            density_o, n_vectors_o,&
@@ -231,7 +203,6 @@ contains
 !
       offset_o = offset_o + n_vectors_o
 !
-      call deallocator_int(active_atoms, n_CC2_atoms, 1)
       call deallocator_int(active_ao_index_list, n_active_aos, 1)
 !
 !     :: CCS  localized Cholesky orbitals  ::
@@ -260,27 +231,15 @@ contains
 !
       offset_v = 1 + wf%n_o
 !
-!     Get CC2-active atoms
-!
-      n_CC2_atoms =  get_number_of_active_atoms(unit_cholesky_decomp, 'CC2  ')
-!
-!     Allocate active atoms list
-!
-      call allocator_int(active_atoms, n_CC2_atoms, 1)
-!
-!     Get list of active atoms
-!
-      call get_active_atoms(unit_cholesky_decomp, active_atoms,  n_CC2_atoms, 'CC2  ')
-!
 !     Sanity check on active atoms
 !
-      if (n_CC2_atoms .gt. n_nuclei) then
+      if (wf%CC2_orbitals%n_active_atoms .gt. n_nuclei) then
          write(unit_output,*) 'WARNING: Illegal chioce of atoms in cholesky.inp.'
          stop
       endif
 !
-      do i = 1, n_CC2_atoms
-         if (active_atoms(i,1) .gt. n_nuclei) then
+      do i = 1, wf%CC2_orbitals%n_active_atoms
+         if (wf%CC2_orbitals%active_atoms(i,1) .gt. n_nuclei) then
             write(unit_output,*) 'WARNING: Illegal chioce of atoms in cholesky.inp.'
             stop
          endif
@@ -289,15 +248,15 @@ contains
 !     :: Constructing active (CC2) localized Cholesky orbitals ::
 !
       n_active_aos = 0
-      do i = 1, n_CC2_atoms
-         n_active_aos = n_active_aos + n_ao_on_center(active_atoms(i,1),1)
+      do i = 1, wf%CC2_orbitals%n_active_atoms
+         n_active_aos = n_active_aos + n_ao_on_center(wf%CC2_orbitals%active_atoms(i,1),1)
       enddo
 !
 !     Construct active_ao_index_list
 !
       call allocator_int(active_ao_index_list, n_active_aos, 1)
-      call construct_active_ao_index_list(active_ao_index_list, n_active_aos, active_atoms, &
-                                                  n_CC2_atoms, ao_center_info, wf%n_ao)
+      call construct_active_ao_index_list(active_ao_index_list, n_active_aos, wf%CC2_orbitals%active_atoms, &
+                                                  wf%CC2_orbitals%n_active_atoms, ao_center_info, wf%n_ao)
 !
       call wf%cholesky_orbital_constructor(orbitals, orbital_energies, offset_v, ao_fock, &
                                               density_v, n_vectors_v, &
@@ -313,7 +272,7 @@ contains
 !
       offset_v = offset_v + n_vectors_v
 !
-      call deallocator_int(active_atoms, n_CC2_atoms, 1)
+      !call deallocator_int(active_atoms, n_CC2_atoms, 1)
       call deallocator_int(active_ao_index_list, n_active_aos, 1)
 
 !
@@ -408,26 +367,21 @@ contains
 !
       close(unit_cholesky_decomp)
 !
-!     Print decomposition info
-!
-      write(unit_output, '(/t3,a15, i3/)')'Active space:  '
-      write(unit_output,'(t3,a40, i3)') 'Number of active occupied orbitals:  ', wf%n_CC2_o
-      write(unit_output,'(t3,a40, i3/)')'Number of active virtual orbitals:   ', wf%n_CC2_v
-!
-      write(unit_output, '(/t3,a15/)')'Inactive space:  '
-      write(unit_output,'(t3,a40, i3)') 'Number of inactive occupied orbitals:  ', wf%n_CCS_o
-      write(unit_output,'(t3,a40, i3/)')'Number of inactive virtual orbitals:   ', wf%n_CCS_v
+!     Print summary
+!     
+      write(unit_output,'(t3,a,a,a/)')'Summary of ', trim(wf%name), ' Cholesky orbital construction:'
 !
 !     Print timings
 !
       call cpu_time(end_chol_deco)
-      if (timings) write(unit_output,'(/t3,a50,f14.8/)') 'Total time in Cholesky orbital construction (seconds):',&
+      write(unit_output,'(t6,a25,f14.8/)') 'Total CPU time (seconds):',&
                             end_chol_deco - start_chol_deco
+!
+      call wf%print_orbital_info
       flush(unit_output)
 !
 !
    end subroutine cholesky_localization_drv_mlcc2
-!
 !
    module subroutine cholesky_orbital_constructor_mlcc2(wf, orbitals, orbital_energies, offset, ao_fock, density, n_vectors,&
                               selection, n_active_aos, active_ao_index_list)
@@ -722,108 +676,6 @@ contains
    end subroutine cholesky_orbitals_mlcc2
 !
 !
-   module function get_number_of_active_atoms(unit_cholesky_decomp, ml_level)
-!!
-!!    Get number of active atoms
-!!    Written by Sarai D. Folkestad June 2017
-!!
-!!    Reads cholesky.inp, and returns the number of atoms treated at ml_level of the CC hierarchy
-!!    in active space of question.
-!!
-      implicit none
-!
-      integer(i15)      :: get_number_of_active_atoms
-      integer(i15)      :: unit_cholesky_decomp 
-      character(len=5)  :: ml_level             ! CC2/CCSD/CC3
-!
-      character(len=40) :: line
-      integer(i15)      :: ioerror = 0
-      integer(i15)      :: previous_spaces, previous_atoms, previous_n_atoms
-!
-      rewind(unit_cholesky_decomp)
-!
-      do
-         read(unit_cholesky_decomp,'(a40)')line
-!
-         do while (line(1:1) == '!' .or. trim(line) == '') ! Comment or blank line: read the next line
-!
-            read(unit_cholesky_decomp,'(a40)') line
-         enddo
-!  
-         if (trim(line) == ml_level) then
-!
-            read(unit_cholesky_decomp,'(i5)', iostat=ioerror) get_number_of_active_atoms
-!
-            if (ioerror .ne. 0) then
-               write(unit_output,*)'WARNING: Error while reading number of active spaces from cholesky.inp'
-               stop
-            endif
-            exit
-!
-         elseif(trim(line) == '#end of Cholesky input') then
-!
-            backspace(unit_cholesky_decomp)
-            get_number_of_active_atoms = 0
-            return
-!
-         endif
-      enddo
-!
-   end function get_number_of_active_atoms
-!
-!
-   module subroutine get_active_atoms(unit_cholesky_decomp, active_atoms, n_active_atoms ,ml_level)
-!!
-!!    Get active atoms
-!!    Written by Sarai D. Folkestad June 2017
-!!
-!!    Reads cholesky.inp, and returns the indices of the active atoms treated at ml_level of the CC hierarchy
-!!    in active space of question.
-!!
-      implicit none
-!
-      integer(i15)      :: unit_cholesky_decomp
-      integer(i15)      :: n_active_atoms
-      character(len=5)  :: ml_level
-!
-      integer(i15), dimension(n_active_atoms,1) :: active_atoms
-!
-      character(len=40) :: line
-      integer(i15)      :: ioerror = 0
-      integer(i15)      :: n_atoms
-!
-      rewind(unit_cholesky_decomp)
-      do
-         read(unit_cholesky_decomp,'(a40)')line
-!
-         do while (line(1:1) == '!' .or. trim(line) == '') 
-!
-            read(unit_cholesky_decomp,'(a40)') line
-         enddo
-!  
-         if (trim(line) == ml_level) then
-!
-            read(unit_cholesky_decomp,*, iostat=ioerror) n_atoms
-!
-            read(unit_cholesky_decomp,*, iostat=ioerror) active_atoms
-!
-            if (ioerror .ne. 0) then
-               write(unit_output,*)ioerror
-               write(unit_output,*)'WARNING: Error while reading number of active atoms from cholesky.inp'
-               stop
-            endif
-            exit
-!
-         elseif(trim(line) == '#end of Cholesky input') then
-!
-            backspace(unit_cholesky_decomp)
-            return
-!
-         endif
-      enddo
-   end subroutine get_active_atoms
-!
-!
       module subroutine construct_active_ao_index_list(active_ao_index_list, n_active_aos, active_atoms, &
                                                    n_active_atoms, ao_center_info, n_ao)
 !!
@@ -897,7 +749,8 @@ contains
 !     
 !     Prints
 !     
-      write(unit_output,'(/t3,a/)') ':: CNTO orbital partitioning for MLCC2 calculation '
+      write(unit_output,'(//t3,a)') ':: CNTO orbital partitioning for MLCC2 calculation '
+      write(unit_output,'(t3,a/)')   ':: E. F. Kjønstad, S. D. Folkestad, Jun 2017'
       write(unit_output,'(/a35,e10.2)')'Threshold for occupied orbitals:',wf%CC2_orbitals%delta_o
       write(unit_output,'(a35,e10.2/)')'Threshold for virtual orbitals: ',wf%CC2_orbitals%delta_v
 !
@@ -907,15 +760,9 @@ contains
 !
 !     CNTO orbital selection for CCSD
 !
-      if (wf%tasks%excited_state) then
+      if (wf%tasks%excited_state .or.  wf%tasks%core_excited_state) then
 !  
-         wf%excited_state_task = 'right_valence'
          call wf%cc2_cnto_lower_level_method
-!
-      elseif (wf%tasks%core_excited_state) then
-!
-         wf%excited_state_task = 'right_core'
-         call wf%cc2_cnto_lower_level_method_cvs
 !
       else
 !
@@ -926,14 +773,18 @@ contains
 !
       call wf%cc2_cnto_orbitals
 !
-      call wf%print_cnto_info     
+!     Print summary
+!     
+      write(unit_output,'(/t3,a,a,a/)')'Summary of ', trim(wf%name), ' CNTO orbital construction:'
 !
 !     Print timings
 !
       call cpu_time(end_cnto)
 !
-      if (timings) write(unit_output,'(/t3,a50,f14.8/)') 'Total time in cnto orbital construction (seconds):', end_cnto - start_cnto
+      if (timings) write(unit_output,'(/t6,a26,f14.8/)') 'Total CPU time (seconds): ', end_cnto - start_cnto
       flush(unit_output)
+!
+      call wf%print_orbital_info     
 !
    end subroutine cnto_orbital_drv_mlcc2
 !
@@ -966,68 +817,84 @@ contains
 !
       allocate(ccs_wf)
 !
-!     Set calculation tasks
+!     :: Set calculation tasks ::
 !
-      ccs_wf%tasks%ground_state = .true.
-      ccs_wf%tasks%excited_state = .true.
+      ccs_wf%tasks = wf%tasks
 !
-!     Set calculation settings
+!     :: Set calculation settings ::
 !
-      ccs_wf%settings = wf%settings
+      ccs_wf%settings                           = wf%settings
+      ccs_wf%core_excited_state_specifications  = wf%core_excited_state_specifications
 ! 
-!     Set number of excitations to use for cnto generation
-!        - Should be some function of wf%excited_state_specifications%n_singlet_states@
+!     :: Set number of excitations to use for cnto generation ::
+!        - Should be some function of wf%excited_state_specifications%n_singlet_states
 !
       lower_level_n_singlet_states = CCS_factor_n_singlet_states*wf%excited_state_specifications%n_singlet_states
 ! 
       ccs_wf%excited_state_specifications%n_singlet_states = lower_level_n_singlet_states
 !
-!     Set convergence threshold for lower lying method
+!     :: Set convergence threshold for lower lying method ::
+!
+      ccs_wf%ground_state_specifications%energy_threshold = 1.0D-04 
+      ccs_wf%ground_state_specifications%residual_threshold = 1.0D-04 
 !
       ccs_wf%excited_state_specifications%energy_threshold = 1.0D-04 
       ccs_wf%excited_state_specifications%residual_threshold = 1.0D-04 
-!
-!     :: Initialize lower level method ::
-!  
-      call ccs_wf%init
 !
 !     :: User specified start vectors for excited state calculation ::
 !
 !     Test for user specified start vector
 !
+!     We must do some cumbersome tricks since n_singlet_states for ccs_wf is higher than for wf
+!
       if (wf%excited_state_specifications%user_specified_start_vector) then
 !
-!        Construct list of lowest orbital differences
+!        Find indices lowest orbital differences (either core or valence) and place in index_list
 !
          call allocator_int(index_list, ccs_wf%excited_state_specifications%n_singlet_states, 1)
 !
-         call ccs_wf%find_start_trial_indices(index_list)
+         if (wf%tasks%excited_state) then
 !
-!        Exchange highest with the CC2 user specified start vectors, if it is not there already.
+            call ccs_wf%find_start_trial_indices(index_list)
+!
+         elseif (wf%tasks%core_excited_state) then
+!
+            call ccs_wf%find_start_trial_indices_core(index_list)
+!
+         endif
+!
+!        Loop through user specified start vectors and ...
 !
          do i = 1, wf%excited_state_specifications%n_singlet_states
-!
-!           Test if start vector i is in index_list
-!
             start_vec_exists = .false.
-            do j = 1, ccs_wf%excited_state_specifications%n_singlet_states 
-               if (wf%excited_state_specifications%start_vectors(i ,1) .eq. index_list(j,1)) start_vec_exists = .true.
+!
+!           ... Check if it is contained in index list already
+!
+            do j = 1, ccs_wf%excited_state_specifications%n_singlet_states
+               if (wf%excited_state_specifications%start_vectors(i,1) == index_list(j,1)) &
+                  start_vec_exists = .true.
             enddo
 !
-!           If not, place start vector i in index_list
+!           ... If not, exchange it with an element of index_list (starting at the end of index_list)
 !
             if (.not. start_vec_exists) then
                index_list(ccs_wf%excited_state_specifications%n_singlet_states - i + 1, 1) &
-                           = wf%excited_state_specifications%start_vectors(i,1) 
+                = wf%excited_state_specifications%start_vectors(i,1)
             endif
 !
          enddo
 !
-!        Set CCS user specified vectors
+!        Set user_specified_start_vector to true for lower level method
+!
+!        OBS: It is crusial that tis is done AFTER the call to 
+!             find_start_trial_indices/find_start_trial_indices_core
 !
          ccs_wf%excited_state_specifications%user_specified_start_vector = .true.
-         call allocator_int(ccs_wf%excited_state_specifications%start_vectors,&
-                  ccs_wf%excited_state_specifications%n_singlet_states, 1)
+!
+!        Let index_list be the user specified start vector.
+!
+         call allocator_int(ccs_wf%excited_state_specifications%start_vectors, &
+                            ccs_wf%excited_state_specifications%n_singlet_states, 1)
 !
          ccs_wf%excited_state_specifications%start_vectors = index_list
 !
@@ -1040,6 +907,41 @@ contains
 !
       endif
 !
+!     :: Initialize lower level method ::
+!  
+      ccs_wf%name = 'CCS'
+!
+!     Set implemented generic methods
+!
+      ccs_wf%implemented%ground_state         = .true.
+      ccs_wf%implemented%excited_state        = .true.
+      ccs_wf%implemented%core_excited_state   = .true.
+!
+!     Read Hartree-Fock info from SIRIUS
+!
+      call ccs_wf%read_hf_info
+!
+!     Read Cholesky AO integrals and transform to MO basis
+!
+      call ccs_wf%read_transform_cholesky
+!
+!     Initialize amplitudes and associated attributes
+!
+      call ccs_wf%initialize_amplitudes
+!
+!     Set the number of parameters in the wavefunction
+!     (that are solved for in the ground and excited state solvers) 
+!
+      ccs_wf%n_parameters = ccs_wf%n_t1am
+!
+!     Initialize the projection vector 
+!
+      call ccs_wf%initialize_omega
+!
+!     Allocate Fock matrix and set to zero
+!
+      call ccs_wf%initialize_fock_matrix
+!
 !     :: Driver of lower level method ::
 !
       call ccs_wf%drv
@@ -1049,71 +951,6 @@ contains
       deallocate(ccs_wf)
 !
    end subroutine cc2_cnto_lower_level_method_mlcc2
-!
-!
-   module subroutine cc2_cnto_lower_level_method_cvs_mlcc2(wf)
-!!
-!!    CNTO lower level calculation for CVS (MLCC2),
-!!    Written by Sarai D. Folkestad, June 2017.
-!!
-!!    Runs lower level method for CNTOs for CVS calculation
-!!
-      implicit none 
-!
-      class(mlcc2) :: wf
-!
-      type(ccs), allocatable :: ccs_wf
-!
-      integer(i15) :: lower_level_n_singlet_states
-!
-!     ::::::::::::::::::::::::::::::::::::::::::::::::
-!     -::- Running lower level method calculation -::-
-!     ::::::::::::::::::::::::::::::::::::::::::::::::
-!
-!     Allocate lower level method
-!
-      allocate(ccs_wf)
-!
-!     Set calculation tasks
-!
-      ccs_wf%tasks%ground_state = .true.
-      ccs_wf%tasks%core_excited_state = .true.
-      ccs_wf%core_excited_state_specifications%n_equivalent_cores = wf%core_excited_state_specifications%n_equivalent_cores
-!
-      call allocator_int(ccs_wf%core_excited_state_specifications%cores,&
-                         ccs_wf%core_excited_state_specifications%n_equivalent_cores, 1)
-      ccs_wf%core_excited_state_specifications%cores = wf%core_excited_state_specifications%cores
-!
-!
-!     Set calculation settings
-!
-      ccs_wf%settings = wf%settings
-! 
-!     Set number of excitations to use for cnto generation
-!        - Should be some function of wf%excited_state_specifications%n_singlet_states@
-!
-      lower_level_n_singlet_states = CCS_factor_n_singlet_states*wf%excited_state_specifications%n_singlet_states
-! 
-      ccs_wf%excited_state_specifications%n_singlet_states = lower_level_n_singlet_states
-!
-!     Set convergence threshold for lower lying method
-!
-      ccs_wf%excited_state_specifications%energy_threshold = 1.0D-04 
-      ccs_wf%excited_state_specifications%residual_threshold = 1.0D-04 
-!
-!     Initialize lower level method
-!  
-      call ccs_wf%init
-!
-!     Call driver of lower level method
-!
-      call ccs_wf%drv
-!
-!     Done with lower lying method
-!
-      deallocate(ccs_wf)
-!
-   end subroutine cc2_cnto_lower_level_method_cvs_mlcc2
 !
 !
    module subroutine cc2_cnto_orbitals_mlcc2(wf)
@@ -1164,10 +1001,15 @@ contains
 !
       call generate_unit_identifier(unit_solution)
 !
+!     Determine file name
+!
+      if (wf%tasks%excited_state) wf%excited_state_task        =  'right_valence'
+      if (wf%tasks%core_excited_state) wf%excited_state_task   =  'right_core'
+!
       open(unit=unit_solution, file=wf%excited_state_task, action='read', status='unknown', &
         access='direct', form='unformatted', recl=dp*((wf%n_o)*(wf%n_v)), iostat=ioerror)  
 !
-     if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file', ioerror, wf%excited_state_task
+     if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file', ioerror
 !
 !     Allocations
 !
@@ -1699,9 +1541,9 @@ contains
    end subroutine cc2_cnto_orbitals_mlcc2
 !
 !
-   module subroutine print_cnto_info_mlcc2(wf)
+   module subroutine print_orbital_info_mlcc2(wf)
 !!
-!!    Print CNTO info, 
+!!    Print orbital info, 
 !!    Written by Sarai D. Folkestad, Aug. 2017
 !!
 !!    Prints information on CNTO partitioning
@@ -1710,12 +1552,14 @@ contains
 !
       class(mlcc2) :: wf
 !
-      write(unit_output,'(t3,a40, i3)') 'Number of CC2 occupied orbitals:       ', wf%n_CC2_o
-      write(unit_output,'(t3,a40, i3/)')'Number of CC2 virtual orbitals:        ', wf%n_CC2_v
+      write(unit_output, '(t6,a10)')'CC2 space:'
+      write(unit_output,'(t6,a30, i3)') 'Number of occupied orbitals:  ', wf%n_CC2_o
+      write(unit_output,'(t6,a30, i3/)')'Number of virtual orbitals:   ', wf%n_CC2_v
 !
-      write(unit_output,'(t3,a40, i3)') 'Number of inactive occupied orbitals:  ', wf%n_CCS_o
-      write(unit_output,'(t3,a40, i3/)')'Number of inactive virtual orbitals:   ', wf%n_CCS_v
+      write(unit_output, '(t6,a10)')'CCS space:'
+      write(unit_output,'(t6,a30, i3)') 'Number of occupied orbitals:  ', wf%n_CCS_o
+      write(unit_output,'(t6,a30, i3/)')'Number of virtual orbitals:   ', wf%n_CCS_v
       flush(unit_output)
 !
-   end subroutine print_cnto_info_mlcc2
+   end subroutine print_orbital_info_mlcc2
 end submodule orbital_partitioning

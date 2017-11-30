@@ -85,7 +85,7 @@ contains
 !
                      cycle             
 !
-                  elseif (trim(line) == '}') then ! Use defaults for memory and disk_space
+                  elseif (trim(line) == 'end of eT input') then ! Use defaults for memory and disk_space
 !
                      exit
 !
@@ -419,7 +419,7 @@ contains
             read(unit_input, *) wf%excited_state_specifications%start_vectors
             cycle
 !
-         elseif (trim(line) == 'core excited state:' .or. trim(line) == 'core ionized state:') then ! Requested core excitations 
+         elseif (trim(line) == 'core excited state' .or. trim(line) == 'core ionized state') then ! Requested core excitations 
 !
 !           Set calculation tasks
 !
@@ -447,7 +447,7 @@ contains
             read(unit_input,'(a40)') line 
             line = remove_preceding_blanks(line)
 !
-            if (trim(line) == '}') then
+            if (trim(line) == '{') then
 !
                do
                   read(unit_input,'(a40)') line 

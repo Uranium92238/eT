@@ -61,6 +61,9 @@ module mlccsd_class
 !
    contains
 !
+      procedure :: mlcc_reader       => mlcc_reader_mlccsd
+      procedure :: read_orbital_info => read_orbital_info_mlccsd
+!
       procedure :: init => init_mlccsd
 !
 !     Initialization routines
@@ -85,9 +88,8 @@ module mlccsd_class
 !
       procedure :: cnto_orbital_drv                   => cnto_orbital_drv_mlccsd
       procedure :: ccsd_cnto_lower_level_method       => ccsd_cnto_lower_level_method_mlccsd
-      procedure :: ccsd_cnto_lower_level_method_cvs   => ccsd_cnto_lower_level_method_cvs_mlccsd
       procedure :: ccsd_cnto_orbitals                 => ccsd_cnto_orbitals_mlccsd
-      procedure :: print_cnto_info                    => print_cnto_info_mlccsd
+      procedure :: print_orbital_info                 => print_orbital_info_mlccsd
 !
 !     Cholesky vector routines for CC2 space
 !
@@ -145,7 +147,6 @@ module mlccsd_class
 !     Jacobian 
 !
       procedure :: jacobian_mlccsd_transformation => jacobian_mlccsd_transformation_mlccsd
-      procedure :: cvs_jacobian_mlccsd_transformation => cvs_jacobian_mlccsd_transformation_mlccsd
 !
       procedure :: jacobian_mlccsd_b2 => jacobian_mlccsd_b2_mlccsd
       procedure :: jacobian_mlccsd_c2 => jacobian_mlccsd_c2_mlccsd
@@ -165,6 +166,39 @@ module mlccsd_class
       procedure :: print_excitation_vector   => print_excitation_vector_mlccsd
 !
    end type mlccsd
+!
+!
+   interface
+!
+!    -::- Input reader submodule interface -::-
+!    :::::::::::::::::::::::::::::::::::::::::: 
+!
+      module subroutine mlcc_reader_mlccsd(wf, unit_input)
+!!
+!!
+!!
+         implicit none
+!
+         integer(i15) :: unit_input
+!
+         class(mlccsd)  :: wf
+!
+      end subroutine mlcc_reader_mlccsd
+!
+!
+      module subroutine read_orbital_info_mlccsd(wf, unit_input)
+!!
+!!
+          implicit none
+!
+          integer(i15)      :: unit_input
+!
+          class(mlccsd)      :: wf
+!
+      end subroutine read_orbital_info_mlccsd
+!
+   end interface
+!
 !
    interface
 !
@@ -352,23 +386,6 @@ module mlccsd_class
       end subroutine ccsd_cnto_lower_level_method_mlccsd
 !
 !
-      module subroutine ccsd_cnto_lower_level_method_cvs_mlccsd(wf, cc2_n_parameters, cc2_n_x2am, n_cc2_o, n_cc2_v)
-!!
-!!    CNTO constructor (MLCCSD),
-!!    Written by Sarai D. Folkestad, Aug. 2017
-!!
-!!    Constructs CNTOs and partitions orbital space
-!!
-      implicit none 
-!
-      class(mlccsd) :: wf
-!
-      integer(i15) :: cc2_n_x2am, cc2_n_parameters
-      integer(i15) :: n_CC2_o, n_CC2_v
-!
-      end subroutine ccsd_cnto_lower_level_method_cvs_mlccsd
-!
-!
       module subroutine ccsd_cnto_orbitals_mlccsd(wf, cc2_n_parameters, cc2_n_x2am, n_cc2_o, n_cc2_v)
 !!
 !!       CNTO Oritals (MLCCSD),
@@ -386,7 +403,7 @@ module mlccsd_class
       end subroutine ccsd_cnto_orbitals_mlccsd
 !
 !
-      module subroutine print_cnto_info_mlccsd(wf)
+      module subroutine print_orbital_info_mlccsd(wf)
 !!
 !!       Print CNTO info, 
 !!       Written by Sarai D. Folkestad, Aug. 2017
@@ -397,7 +414,7 @@ module mlccsd_class
 !
          class(mlccsd) :: wf
 !
-      end subroutine print_cnto_info_mlccsd
+      end subroutine print_orbital_info_mlccsd
 !
 !
    end interface
@@ -870,36 +887,6 @@ module mlccsd_class
       end subroutine jacobian_mlccsd_transformation_mlccsd
 !
 !
-   module subroutine cvs_jacobian_mlccsd_transformation_mlccsd(wf, c_a_i, c_aibj)
-!!
-!!    Jacobian transformation (MLCC2)
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
-!!
-!!    Directs the transformation by the CCSD Jacobi matrix,
-!!
-!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >,
-!!
-!!    where the basis employed for the brackets is biorthonormal. 
-!!    The transformation is rho = A c, i.e., 
-!!
-!!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck 
-!!                  + 1/2 sum_ckdl A_mu,ckdl c_ckdl (1 + delta_ck,dl).
-!!
-!!    On exit, c is overwritten by rho. That is, c_a_i = rho_a_i,
-!!    and c_aibj = rho_aibj. 
-!!
-      implicit none
-!
-      class(mlccsd) :: wf 
-!
-!      Incoming vector c 
-!
-      real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai 
-      real(dp), dimension(wf%n_x2am, 1)   :: c_aibj ! c_aibj  
-!
-      end subroutine cvs_jacobian_mlccsd_transformation_mlccsd
-!
-!
       module subroutine jacobian_mlccsd_b2_mlccsd(wf, rho_ai_bj, c_a_i)
 !!
 !!    Jacobian CCSD B2 
@@ -1174,9 +1161,29 @@ contains
 !
       integer(i15) :: i, j, active_space
 !
+      integer(i15) :: unit_input = -1
+!
+!
+      write(unit_output,'(//t3,a/)')    ':: Initialization' 
+!
+!
 !     Set model name 
 !
       wf%name = 'MLCCSD'
+!
+!     Open input file eT.inp
+!
+      call generate_unit_identifier(unit_input)
+      open(unit=unit_input, file='eT.inp', status='old', form='formatted')
+      rewind(unit_input)
+!
+!     Read general specifications (memory and diskspace for calculation)
+!
+      call wf%general_specs_reader(unit_input)
+!
+!     Read MLCC info 
+!
+      call wf%mlcc_reader(unit_input)
 !
 !     MLCC sanity check
 !
@@ -1190,6 +1197,18 @@ contains
        wf%implemented%ground_state = .true.
        wf%implemented%excited_state = .true.
        wf%implemented%core_excited_state = .true.
+!
+!     Read calculation tasks from input file eT.inp
+!     
+      call wf%calculation_reader(unit_input)
+!
+!     Read orbital info 
+!
+      call wf%read_orbital_info(unit_input)
+!
+!     Close input file
+!
+      close(unit_input)
 !
 !     Read Hartree-Fock info
 !
@@ -1210,7 +1229,7 @@ contains
 !
       else
 !
-         write(unit_output,'(t3,a)')'Full CCSD requested, orbital partitioning skipped'
+         write(unit_output,'(/t3,a)')'Full CCSD requested, orbital partitioning skipped.'
          flush(unit_output)
 !
 !        Do full space CCSD calculation
@@ -1256,8 +1275,6 @@ contains
 !     Initialize fock matrix
 !
       call wf%initialize_fock_matrix
-!
-      write(unit_output,*) 'done with input'
 !
    end subroutine init_mlccsd
 !

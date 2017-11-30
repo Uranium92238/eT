@@ -75,12 +75,6 @@ program eT_program
    write(unit_output,'(//t18,a)')  'eT - a coupled cluster program'
    write(unit_output,'(t15,a//)') 'S. D. Folkestad, E. F. Kjønstad, 2017'
 !
-!  ::::::::::::::::::::::::::::::::::::::::::::::
-!  -::-    Print banner for input section    -::- 
-!  ::::::::::::::::::::::::::::::::::::::::::::::
-!
-   write(unit_output,'(t3,a/)')   ':: Input reader'
-!
 !  Open input file
 !
    call generate_unit_identifier(unit_input)

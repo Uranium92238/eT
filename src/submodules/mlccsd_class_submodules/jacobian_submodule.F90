@@ -10,6 +10,7 @@ submodule (mlccsd_class) jacobian
    logical :: debug   = .false.
    logical :: timings = .false.
 !
+   character(len=40) :: integral_type
 !
 contains
 !
@@ -239,236 +240,6 @@ contains
       call deallocator(rho_ai_bj, n_active_o*n_active_v, n_active_o*n_active_v)
 !
    end subroutine jacobian_mlccsd_transformation_mlccsd
-!
-!
-   module subroutine cvs_jacobian_mlccsd_transformation_mlccsd(wf, c_a_i, c_aibj)
-!!
-!!    Jacobian transformation (MLCC2)
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
-!!
-!!    Directs the transformation by the CCSD Jacobi matrix,
-!!
-!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >,
-!!
-!!    where the basis employed for the brackets is biorthonormal. 
-!!    The transformation is rho = A c, i.e., 
-!!
-!!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck 
-!!                  + 1/2 sum_ckdl A_mu,ckdl c_ckdl (1 + delta_ck,dl).
-!!
-!!    On exit, c is overwritten by rho. That is, c_a_i = rho_a_i,
-!!    and c_aibj = rho_aibj. 
-!!
-      implicit none
-!
-      class(mlccsd) :: wf 
-!
-!      Incoming vector c 
-!
-      real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai 
-      real(dp), dimension(wf%n_x2am, 1)   :: c_aibj ! c_aibj     
-!
-!      Local unpacked and reordered vectors 
-!
-      real(dp), dimension(:,:), allocatable :: rho_a_i         ! rho_ai   = (A c)_ai
-      real(dp), dimension(:,:), allocatable :: rho_ai_bj       ! rho_ai   = (A c)_aibj
-      real(dp), dimension(:,:), allocatable :: rho_ab_ij       ! rho_ai   = (A c)_aibj
-      real(dp), dimension(:,:), allocatable :: rho_ai_bj_sym   ! rho_ai   = (A c)_aibj
-      real(dp), dimension(:,:), allocatable :: c_ai_bj         ! rho_ai   = (A c)_aibj
-      real(dp), dimension(:,:), allocatable :: c_ab_ij         ! rho_ai   = (A c)_aibj
-      real(dp), dimension(:,:), allocatable :: x_ia_jb         ! rho_ai   = (A c)_aibj
-!
-!      Indices 
-!
-      integer(i15) :: a = 0, ab = 0, ai = 0, b = 0 
-      integer(i15) :: bj = 0, i = 0, ij = 0, j = 0, aibj = 0
-!
-      integer(i15) :: offset = 0
-!
-!    Active space variables
-!
-      integer(i15) :: n_active_o = 0, n_active_v = 0
-      integer(i15) :: active_space = 0
-!
-!    Allocate and zero the transformed vector (singles part)
-!
-      call allocator(rho_a_i, wf%n_v, wf%n_o)
-      rho_a_i = zero
-!
-!    :: CCS contributions to the singles c vector ::  
-!
-      call initialize_amplitudes_ccs(wf)
-      call wf%read_single_amplitudes
-!
-      call wf%jacobian_ccs_a1(rho_a_i, c_a_i)
-      call wf%jacobian_ccs_b1(rho_a_i, c_a_i)
-!
-!     :: MLCCSD contributions to transformed vector :: 
-!
-      call wf%jacobian_mlcc2_a1(rho_a_i, c_a_i)
-!
-!     Calculate number of active indices
-! 
-      call wf%get_CC2_n_active(n_active_o, n_active_v)
-!
-!     Allocate the incoming unpacked doubles vector 
-!
-      call allocator(c_ai_bj, n_active_o*n_active_v, n_active_o*n_active_v) 
-      c_ai_bj = zero
-!
-      call squareup(c_aibj, c_ai_bj, n_active_o*n_active_v) ! Pack out vector 
-!
-!     Scale the doubles vector by 1 + delta_ai,bj, i.e.
-!     redefine to c_ckdl = c_ckdl (1 + delta_ck,dl)
-!
-      do i = 1, n_active_o*n_active_v
-!
-         c_ai_bj(i,i) = two*c_ai_bj(i,i)
-!
-      enddo
-!
-      call wf%jacobian_mlcc2_b1(rho_a_i, c_ai_bj)
-!
-!     Allocate unpacked transformed vector
-!
-      call allocator(rho_ai_bj, n_active_o*n_active_v, n_active_o*n_active_v) 
-      rho_ai_bj = zero 
-!
-      call wf%jacobian_mlcc2_a2(rho_ai_bj, c_a_i)
-      call wf%jacobian_mlccsd_b2(rho_ai_bj, c_a_i)
-      call wf%jacobian_mlccsd_c2(rho_ai_bj, c_a_i)
-      call wf%jacobian_mlccsd_d2(rho_ai_bj, c_a_i)
-!
-      call wf%jacobian_mlccsd_e2(rho_ai_bj, c_ai_bj)
-      call wf%jacobian_mlccsd_f2(rho_ai_bj, c_ai_bj)
-      call wf%jacobian_mlccsd_g2(rho_ai_bj, c_ai_bj)
-      call wf%jacobian_mlccsd_h2(rho_ai_bj, c_ai_bj)
-      call wf%jacobian_mlccsd_i2(rho_ai_bj, c_ai_bj)
-!
-!     Allocate temporary symmetric transformed vector 
-!
-      call allocator(rho_ai_bj_sym, n_active_o*n_active_v, n_active_o*n_active_v)
-      rho_ai_bj_sym = zero
-!!
-      do j = 1, n_active_o
-         do b = 1, n_active_v
-!!
-            bj = index_two(b, j, n_active_v)
-!!
-            do i = 1, n_active_o
-               do a = 1, n_active_v
-!!
-                  ai = index_two(a, i, n_active_v)
-!!
-                  rho_ai_bj_sym(ai, bj) = rho_ai_bj(ai, bj) + rho_ai_bj(bj, ai)
-!!
-               enddo
-            enddo
-         enddo
-      enddo
-!!
-      rho_ai_bj = rho_ai_bj_sym
-!
- 
-!     Done with temporary vector; deallocate
-!  
-      call deallocator(rho_ai_bj_sym, n_active_o*n_active_v, n_active_o*n_active_v)
-! 
-!     In preparation for last two terms, reorder 
-!     rho_ai_bj to rho_ab_ij, and c_ai_bj to c_ab_ij
-! 
-      call allocator(rho_ab_ij, (n_active_v)**2, (n_active_o)**2)
-      call allocator(c_ab_ij, (n_active_v)**2, (n_active_o)**2)
-! 
-      rho_ab_ij = zero
-      c_ab_ij   = zero
-! 
-      do j = 1, n_active_o
-         do i = 1, n_active_o
-! 
-            ij = index_two(i, j, n_active_o)
-! 
-            do b = 1, n_active_v
-! 
-               bj = index_two(b, j, n_active_v)
-! 
-               do a = 1, n_active_v
-! 
-                  ai = index_two(a, i, n_active_v)
-                  ab = index_two(a, b, n_active_v)
-! 
-                  c_ab_ij(ab, ij)   = c_ai_bj(ai, bj)
-                  rho_ab_ij(ab, ij) = rho_ai_bj(ai, bj)
-! 
-               enddo
-            enddo
-         enddo
-      enddo
-! 
-      call deallocator(c_ai_bj, n_active_o*n_active_v, n_active_o*n_active_v)
-      call deallocator(rho_ai_bj, n_active_o*n_active_v, n_active_o*n_active_v)
-! 
-      call wf%jacobian_mlccsd_j2(rho_ab_ij, c_ab_ij)
-      call wf%jacobian_mlccsd_k2(rho_ab_ij, c_ab_ij)
-! 
-!     Done with reordered doubles c; deallocate 
-! 
-      call deallocator(c_ab_ij, (n_active_v)**2, (n_active_o)**2)
-! 
-!     Order rho_ab_ij back into rho_ai_bj & divide by 
-!     the biorthonormal factor 1 + delta_ai,bj
-! 
-      call allocator(rho_ai_bj, (n_active_o)*(n_active_v), (n_active_o)*(n_active_v))
-! 
-      do j = 1, n_active_o
-         do b = 1, n_active_v
-! 
-            bj = index_two(b, j, n_active_v)
-! 
-            do i = 1, n_active_o
-! 
-               ij = index_two(i, j, n_active_o)
-! 
-               do a = 1, n_active_v
-! 
-                  ab = index_two(a, b, n_active_v)
-                  ai = index_two(a, i, n_active_v)
-! 
-                  if ((a .eq. b) .and. (i .eq. j)) then 
-! 
-                     rho_ai_bj(ai, bj) = half*rho_ab_ij(ab, ij)
-! 
-                  else
-! 
-                     rho_ai_bj(ai, bj) = rho_ab_ij(ab, ij)
-! 
-                  endif
-! 
-               enddo
-            enddo
-         enddo
-      enddo
-! 
-!     Done with reordered transformed vector; deallocate 
-! 
-      call deallocator(rho_ab_ij, (n_active_v)**2, (n_active_o)**2)
-!
-!     c_a_i -> rho_a_i
-!     c_ai_bj -> rho_ai_bj
-!
-      call wf%cvs_rho_a_i_projection(rho_a_i)
-      c_a_i = rho_a_i
-!
-      call wf%cvs_rho_ai_bj_projection(rho_ai_bj)
-      c_aibj = zero
-      call packin(c_aibj, rho_ai_bj, n_active_o*n_active_v)
-!
-!     Deallocations
-!
-      call deallocator(rho_a_i, wf%n_v, wf%n_o)
-      call deallocator(rho_ai_bj, n_active_o*n_active_v, n_active_o*n_active_v)
-!
-   end subroutine cvs_jacobian_mlccsd_transformation_mlccsd
 !
 !
    module subroutine jacobian_mlccsd_b2_mlccsd(wf, rho_ai_bj, c_a_i)
@@ -740,10 +511,6 @@ contains
       real(dp), dimension(:,:), allocatable :: x_ab_kl
       real(dp), dimension(:,:), allocatable :: x_aib_l
       real(dp), dimension(:,:), allocatable :: c_kc
-      real(dp), dimension(:,:), allocatable :: L_lj_J
-      real(dp), dimension(:,:), allocatable :: L_lc_J
-      real(dp), dimension(:,:), allocatable :: L_kc_J
-      real(dp), dimension(:,:), allocatable :: L_kj_J
       real(dp), dimension(:,:), allocatable :: g_kc_lj
       real(dp), dimension(:,:), allocatable :: g_lj_kc
       real(dp), dimension(:,:), allocatable :: g_lc_jk
@@ -840,29 +607,14 @@ contains
 !
 !     Construct g_kc_lj (=g_lj,kc)
 !
-      call allocator(L_lj_J, (wf%n_o)*(n_CCSD_o), wf%n_J)
-      call wf%get_cholesky_ij(L_lj_J, 1, wf%n_o, first_CCSD_o, last_CCSD_o)
-!
-      call allocator(L_kc_J, n_CC2_o*n_CC2_v, wf%n_J)
-      call wf%get_cholesky_ia(L_kc_J, first_CC2_o, last_CC2_o, first_CC2_v, last_CC2_v)
-!
       call allocator(g_lj_kc, (wf%n_o)*(n_CCSD_o), (n_CC2_o)*(n_CC2_v))
 !
-      call dgemm('N', 'T',          &
-            (wf%n_o)*(n_CCSD_o),    &
-            (n_CC2_o)*(n_CC2_v),    &
-            wf%n_J,                 &
-            one,                    &
-            L_lj_J,                 &
-            (wf%n_o)*(n_CCSD_o),    &
-            L_kc_J,                 &
-            (n_CC2_o)*(n_CC2_v),    &
-            zero,                   &
-            g_lj_kc,                &
-            (wf%n_o)*(n_CCSD_o))
-!
-      call deallocator(L_lj_J, (wf%n_o)*(n_CCSD_o), wf%n_J)
-      call deallocator(L_kc_J, (n_CC2_o)*(n_CC2_v), wf%n_J)
+      integral_type = 'electronic_repulsion'
+      call wf%get_oo_ov(integral_type, g_lj_kc,    &
+                        1, wf%n_o,                 &
+                        first_CCSD_o, last_CCSD_o, &
+                        first_CC2_o, last_CC2_o,    &
+                        first_CC2_v, last_CC2_v)
 !
 !     I_ai_lj = sum_(kc) x_ai_kc*g_kc_lj
 !
@@ -936,29 +688,14 @@ contains
 !
 !     Construct g_kj_lc (= g_ljkc)
 !
-      call allocator(L_lj_J, (n_CC2_o)*(n_CCSD_o), wf%n_J)
-      call wf%get_cholesky_ij(L_lj_J, first_CC2_o, last_CC2_o, first_CCSD_o, last_CCSD_o)
-!
-      call allocator(L_kc_J, (wf%n_o)*(n_CC2_v), wf%n_J)
-      call wf%get_cholesky_ia(L_kc_J, 1, wf%n_o, first_CC2_v, last_CC2_v)
-!
       call allocator(g_kc_lj, (wf%n_o)*(n_CC2_v), (n_CCSD_o)*(n_CC2_o))
 !
-      call dgemm('N', 'T',          &
-            (wf%n_o)*(n_CC2_v),     &
-            (n_CC2_o)*(n_CCSD_o),   &
-            wf%n_J,                 &
-            one,                    &
-            L_kc_J,                 &
-            (wf%n_o)*(n_CC2_v),     &
-            L_lj_J,                 &
-            (n_CC2_o)*(n_CCSD_o),   &
-            zero,                   &
-            g_kc_lj,                &
-            (wf%n_o)*(n_CC2_v))
-!
-      call deallocator(L_lj_J, (n_CC2_o)*(n_CCSD_o), wf%n_J)
-      call deallocator(L_kc_J, (wf%n_o)*(n_CC2_v), wf%n_J)
+      integral_type = 'electronic_repulsion'
+      call wf%get_ov_oo(integral_type, g_kc_lj,  &
+                        1, wf%n_o,               &
+                        first_CC2_v, last_CC2_v, &
+                        first_CC2_o, last_CC2_o, &
+                        first_CCSD_o, last_CCSD_o)
 !
 !     Reorder g_kc_lj to g_lc_jk
 !
@@ -1085,31 +822,14 @@ contains
 !
       call wf%destruct_x2am
 !
-!     Construct g_ljkc ordered as g_kc_lj
-!
-      call allocator(L_lj_J, (n_CC2_o)*(n_CCSD_o), wf%n_J)
-      call wf%get_cholesky_ij(L_lj_J, first_CC2_o, last_CC2_o, first_CCSD_o, last_CCSD_o)
-!
-      call allocator(L_kc_J, (n_CC2_o)*(wf%n_v), wf%n_J)
-      call wf%get_cholesky_ia(L_kc_J, first_CC2_o, last_CC2_o, 1, wf%n_v)
-!
       call allocator(g_lj_kc, (n_CC2_o)*(n_CCSD_o), (n_CC2_o)*(wf%n_v))
 !
-      call dgemm('N', 'T',                &
-                  (n_CC2_o)*(n_CCSD_o),   &
-                  (n_CC2_o)*(wf%n_v),     &
-                  wf%n_J,                 &
-                  one,                    &
-                  L_lj_J,                 &
-                  (n_CC2_o)*(n_CCSD_o),   &
-                  L_kc_J,                 &
-                  (n_CC2_o)*(wf%n_v),     &
-                  zero,                   &
-                  g_lj_kc,                &
-                  (n_CC2_o)*(n_CCSD_o))
-!
-      call deallocator(L_lj_J, (n_CC2_o)*(n_CCSD_o), wf%n_J)
-      call deallocator(L_kc_J, (n_CC2_o)*(wf%n_v), wf%n_J)
+      integral_type = 'electronic_repulsion'
+      call wf%get_oo_ov(integral_type, g_lj_kc ,   &
+                        first_CC2_o, last_CC2_o,   &
+                        first_CCSD_o, last_CCSD_o, &
+                        first_CC2_o, last_CC2_o,   &
+                        1, wf%n_v)
 !
 !     I_ljk_i = sum_(c) g_lj_kc * c_ci
 !
@@ -1243,29 +963,14 @@ contains
 !
 !     Construct g_ljkc
 !
-      call allocator(L_lj_J, (wf%n_o)*n_CCSD_o, wf%n_J)
-      call wf%get_cholesky_ij(L_lj_J, 1, wf%n_o, first_CCSD_o, last_CCSD_o)
-!
-      call allocator(L_kc_J, (n_CC2_o)*(n_CC2_v), wf%n_J)
-      call wf%get_cholesky_ia(L_kc_J, first_CC2_o, last_CC2_o, first_CC2_v, last_CC2_v)
-!
       call allocator(g_lj_kc, (wf%n_o)*(n_CCSD_o), (n_CC2_o)*(n_CC2_v))
 !
-      call dgemm('N', 'T',              &
-                  (wf%n_o)*(n_CCSD_o),  &
-                  (n_CC2_o)*(n_CC2_v),  &
-                  wf%n_J,               &
-                  one,                  &
-                  L_lj_J,               &
-                  (wf%n_o)*(n_CCSD_o),  &
-                  L_kc_J,               &
-                  (n_CC2_o)*(n_CC2_v),  &
-                  zero,                 &
-                  g_lj_kc,              &
-                  (wf%n_o)*(n_CCSD_o))
-!
-      call deallocator(L_lj_J, (wf%n_o)*(n_CCSD_o), wf%n_J)
-      call deallocator(L_kc_J, (n_CC2_o)*(n_CC2_v), wf%n_J)
+      integral_type ='electronic_repulsion'
+      call wf%get_oo_ov(integral_type, g_lj_kc,    &
+                        1, wf%n_o,                 &
+                        first_CCSD_o, last_CCSD_o, &
+                        first_CC2_o, last_CC2_o,   &
+                        first_CC2_v, last_CC2_v)
 !
 !     I_lj_ai = - 2sum_(ck) g_lj_kc *t_kc_ai
 !
@@ -1294,29 +999,14 @@ contains
 !
 !     Construct g_kjlc
 !
-      call allocator(L_kj_J, (n_CC2_o)*(n_CCSD_o), wf%n_J)
-      call wf%get_cholesky_ij(L_kj_J, first_CC2_o, last_CC2_o, first_CCSD_o, last_CCSD_o)
-!
-      call allocator(L_lc_J, (wf%n_o)*(n_CC2_v), wf%n_J)
-      call wf%get_cholesky_ia(L_lc_J, 1, wf%n_o, first_CC2_v, last_CC2_v)
-!
       call allocator(g_kj_lc, (n_CC2_o)*(n_CCSD_o), (wf%n_o)*(n_CC2_v))
 !
-      call dgemm('N', 'T', &
-                  (n_CC2_o)*(n_CCSD_o), &
-                  (wf%n_o)*(n_CC2_v), &
-                  wf%n_J, &
-                  one, &
-                  L_kj_J, &
-                  (n_CC2_o)*(n_CCSD_o), &
-                  L_lc_J, &
-                  (wf%n_o)*(n_CC2_v), &
-                  zero, &
-                  g_kj_lc, &
-                  (n_CC2_o)*(n_CCSD_o))
-!
-      call deallocator(L_kj_J, (n_CC2_o)*(n_CCSD_o), wf%n_J)
-      call deallocator(L_lc_J, (wf%n_o)*(n_CC2_v), wf%n_J)
+      integral_type ='electronic_repulsion'
+      call wf%get_oo_ov(integral_type, g_kj_lc,    &
+                        first_CC2_o, last_CC2_o,   &
+                        first_CCSD_o, last_CCSD_o, &
+                        1, wf%n_o,                 &
+                        first_CC2_v, last_CC2_v)
 !
 !     Reorder g_kj_lc to g_lj_kc      
 !
@@ -1446,29 +1136,14 @@ contains
 !
 !     Construct g_ljkc
 !
-      call allocator(L_lj_J, (n_CC2_o)*(n_CCSD_o), wf%n_J)
-      call wf%get_cholesky_ij(L_lj_J, first_CC2_o, last_CC2_o, first_CCSD_o, last_CCSD_o)
-!
-      call allocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
-      call wf%get_cholesky_ia(L_kc_J)
-!
       call allocator(g_lj_kc, (n_CC2_o)*(n_CCSD_o), (wf%n_o)*(wf%n_v))
 !
-      call dgemm('N', 'T',             &
-                  (n_CC2_o)*(n_CCSD_o),&
-                  (wf%n_o)*(wf%n_v),   &
-                  wf%n_J,              &
-                  one,                 &
-                  L_lj_J,              &
-                  (n_CC2_o)*(n_CCSD_o),&
-                  L_kc_J,              &
-                  (wf%n_o)*(wf%n_v),   &
-                  zero,                &
-                  g_lj_kc,             &
-                  (n_CC2_o)*(n_CCSD_o))
-!
-      call deallocator(L_lj_J, (n_CC2_o)*(n_CCSD_o), wf%n_J)
-      call deallocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      integral_type = 'electronic_repulsion'
+      call wf%get_oo_ov(integral_type, g_lj_kc,    &
+                        first_CC2_o, last_CC2_o,   &
+                        first_CCSD_o, last_CCSD_o, &
+                        1, wf%n_o,                 &
+                        1, wf%n_v)
 ! 
       call allocator(c_kc, (wf%n_o)*(wf%n_v), 1)
 !
@@ -1504,30 +1179,15 @@ contains
 !     a, i, b, j  - CCSD index  
 !
 !     Construct g_ljkc
-!
-      call allocator(L_kj_J, (wf%n_o)*(n_CCSD_o), wf%n_J)
-      call wf%get_cholesky_ij(L_kj_J, 1, wf%n_o, first_CCSD_o, last_CCSD_o)
-!
-      call allocator(L_lc_J, (wf%n_v)*(n_CC2_o), wf%n_J)
-      call wf%get_cholesky_ia(L_lc_J, first_CC2_o, last_CC2_o, 1, wf%n_v)
-!
+
       call allocator(g_kj_lc, (wf%n_o)*(n_CCSD_o), (n_CC2_o)*(wf%n_v))
 !
-      call dgemm('N', 'T',             &
-                  (wf%n_o)*(n_CCSD_o), &
-                  (n_CC2_o)*(wf%n_v),  &
-                  wf%n_J,              &
-                  one,                 &
-                  L_kj_J,              &
-                  (wf%n_o)*(n_CCSD_o), &
-                  L_lc_J,              &
-                  (n_CC2_o)*(wf%n_v),  &
-                  zero,                &
-                  g_kj_lc,             &
-                  (wf%n_o)*(n_CCSD_o))
-!
-      call deallocator(L_kj_J, (wf%n_o)*(n_CCSD_o), wf%n_J)
-      call deallocator(L_lc_J, (wf%n_v)*(n_CC2_o), wf%n_J)
+      integral_type = 'electronic_repulsion'
+      call wf%get_oo_ov(integral_type, g_kj_lc,    &
+                        1, wf%n_o,                 &
+                        first_CCSD_o, last_CCSD_o, &
+                        first_CC2_o, last_CC2_o,   &
+                        1, wf%n_v)
 !
 !     Reorder g_kj_lc to g_lj_kc
 !
@@ -1743,29 +1403,14 @@ contains
 !
 !        Construct g_kcbd for the batch
 !
-         call allocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J) 
-         call wf%get_cholesky_ia(L_kc_J)
-!
-         call allocator(L_bd_J, (wf%n_v)*b_length, wf%n_J)  
-         call wf%get_cholesky_ab(L_bd_J, b_first, b_last, 1, wf%n_v)
-!
          call allocator(g_kc_bd, (wf%n_o)*(wf%n_v), (wf%n_v)*b_length)
 !
-         call dgemm('N', 'T',                &
-                     (wf%n_o)*(wf%n_v),      &
-                     (wf%n_v)*b_length,      &
-                     wf%n_J,                 &
-                     one,                    &
-                     L_kc_J,                 &
-                     (wf%n_o)*(wf%n_v),      &
-                     L_bd_J,                 &
-                     (wf%n_v)*b_length,      &
-                     zero,                   &
-                     g_kc_bd,                &
-                     (wf%n_o)*(wf%n_v))
-!
-         call deallocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J) 
-         call deallocator(L_bd_J, (wf%n_v)*b_length, wf%n_J)
+         integral_type = 'electronic_repulsion'
+         call wf%get_ov_vv(integral_type, g_kc_bd, &
+                           1, wf%n_o,              &
+                           1, wf%n_v,              &
+                           b_first, b_last,        &
+                           1, wf%n_v)
 !
 !        :: Term 1 ::
 !        - sum_kcd g_kcbd x_ij^cd c_ak 
@@ -2415,7 +2060,6 @@ contains
       real(dp), dimension(:,:) :: c_ai_ck
 !
       real(dp), dimension(:,:), allocatable :: x_dl_bj
-      real(dp), dimension(:,:), allocatable :: L_ia_J
       real(dp), dimension(:,:), allocatable :: g_kc_ld
       real(dp), dimension(:,:), allocatable :: L_ck_dl
       real(dp), dimension(:,:), allocatable :: I_ck_bj
@@ -2483,28 +2127,14 @@ contains
 !
       call wf%destruct_x2am
 !
-!     Construct g_kcld = sum_J L_kc_J * L_ld_J
-!
-      call allocator(L_ia_J, (n_CC2_o)*(n_CC2_v), wf%n_J)
-      L_ia_J = zero
-      call wf%get_cholesky_ia(L_ia_J, first_CC2_o, last_CC2_o, first_CC2_v, last_CC2_v)
-!
       call allocator(g_kc_ld, (n_CC2_o)*(n_CC2_v), (n_CC2_o)*(n_CC2_v))
 !
-      call dgemm('N', 'T',             &
-                  (n_CC2_o)*(n_CC2_v), &
-                  (n_CC2_o)*(n_CC2_v), &
-                  wf%n_J,              &
-                  one,                 &
-                  L_ia_J,              &
-                  (n_CC2_o)*(n_CC2_v), &
-                  L_ia_J,              &
-                  (n_CC2_o)*(n_CC2_v), &
-                  zero,                &
-                  g_kc_ld,             &
-                  (n_CC2_o)*(n_CC2_v))
-!
-      call deallocator(L_ia_J, (n_CC2_o)*(n_CC2_v), wf%n_J)
+      integral_type = 'electronic_repulsion'
+      call wf%get_ov_ov(integral_type, g_kc_ld,  &
+                        first_CC2_o, last_CC2_o, &
+                        first_CC2_v, last_CC2_v, &
+                        first_CC2_o, last_CC2_o, &
+                        first_CC2_v, last_CC2_v)
 !
 !     Construct L_kc,ld ordered as L_ck_dl
 !
@@ -2682,25 +2312,14 @@ contains
 !
 !        :: Construct L_kc,ld ::
 !
-         call allocator(L_KC_J, (n_CC2_o)*(n_CC2_v), wf%n_J)
          call allocator(g_KC_LD, (n_CC2_o)*(n_CC2_v), (n_CC2_o)*(n_CC2_v))
 !
-         call wf%get_cholesky_ia(L_KC_J, first_CC2_o, last_CC2_o, first_CC2_v, last_CC2_v)
-!
-         call dgemm('N', 'T',          &
-                  (n_CC2_o)*(n_CC2_v), &
-                  (n_CC2_o)*(n_CC2_v), &
-                  wf%n_J,              &
-                  one,                 &
-                  L_KC_J,              &
-                  (n_CC2_o)*(n_CC2_v), &
-                  L_KC_J,              &
-                  (n_CC2_o)*(n_CC2_v), &
-                  zero,                &
-                  g_KC_LD,             &
-                  (n_CC2_o)*(n_CC2_v))
-!
-         call deallocator(L_KC_J, (n_CC2_o)*(n_CC2_v), wf%n_J)
+         integral_type = 'electronic_repulsion'
+         call wf%get_ov_ov(integral_type, g_KC_LD,  &
+                           first_CC2_o, last_CC2_o, &
+                           first_CC2_v, last_CC2_v, &
+                           first_CC2_o, last_CC2_o, &
+                           first_CC2_v, last_CC2_v)
 !   
          call allocator(L_CK_DL, (n_CC2_o)*(n_CC2_v), (n_CC2_o)*(n_CC2_v))
          L_CK_DL = zero
@@ -2846,26 +2465,14 @@ contains
 !
 !        :: Term 2: - sum_ckdl x_ai,dj * L_kc,ld * c_bl,ck
 !
-         call allocator(L_KC_J, (n_CC2_o)*(n_CC2_v), wf%n_J)
-!
          call allocator(g_KC_LD, (n_CC2_o)*(n_CC2_v), (n_CC2_o)*(n_CC2_v))
 !
-         call wf%get_cholesky_ia(L_KC_J, first_CC2_o, last_CC2_o, first_CC2_v, last_CC2_v)
-!
-         call dgemm('N', 'T',          &
-                  (n_CC2_o)*(n_CC2_v), &
-                  (n_CC2_o)*(n_CC2_v), &
-                  wf%n_J,              &
-                  one,                 &
-                  L_KC_J,              &
-                  (n_CC2_o)*(n_CC2_v), &
-                  L_KC_J,              &
-                  (n_CC2_o)*(n_CC2_v), &
-                  zero,                &
-                  g_KC_LD,             &
-                  (n_CC2_o)*(n_CC2_v))
-!
-         call deallocator(L_KC_J, (n_CC2_o)*(n_CC2_v), wf%n_J)
+         integral_type = 'electronic_repulsion'
+         call wf%get_ov_ov(integral_type, g_KC_LD,  &
+                           first_CC2_o, last_CC2_o, &
+                           first_CC2_v, last_CC2_v, &
+                           first_CC2_o, last_CC2_o, &
+                           first_CC2_v, last_CC2_v)
 !
 !        Construct L_ck,dl reordered as L_d_clk
 !
@@ -2988,26 +2595,14 @@ contains
 !
 !        :: Term 3: - sum_(CKDL) x_ai,bL * L_KC,LD * c_CK,Dj ::
 !
-         call allocator(L_KC_J, (n_CC2_o)*(n_CC2_v), wf%n_J)
-!
          call allocator(g_KC_LD, (n_CC2_o)*(n_CC2_v), (n_CC2_o)*(n_CC2_v))
 !
-         call wf%get_cholesky_ia(L_KC_J, first_CC2_o, last_CC2_o, first_CC2_v, last_CC2_v)
-!
-         call dgemm('N', 'T',          &
-                  (n_CC2_o)*(n_CC2_v), &
-                  (n_CC2_o)*(n_CC2_v), &
-                  wf%n_J,              &
-                  one,                 &
-                  L_KC_J,              &
-                  (n_CC2_o)*(n_CC2_v), &
-                  L_KC_J,              &
-                  (n_CC2_o)*(n_CC2_v), &
-                  zero,                &
-                  g_KC_LD,             &
-                  (n_CC2_o)*(n_CC2_v))
-!
-         call deallocator(L_KC_J, (n_CC2_o)*(n_CC2_v), wf%n_J)
+         integral_type = 'electronic_repulsion'
+         call wf%get_ov_ov(integral_type, g_KC_LD,  &
+                           first_CC2_o, last_CC2_o, &
+                           first_CC2_v, last_CC2_v, &
+                           first_CC2_o, last_CC2_o, &
+                           first_CC2_v, last_CC2_v)
 !   
          call allocator(L_L_CKD, (n_CC2_o), (n_CC2_o)*((n_CC2_v)**2))
 !
@@ -3146,7 +2741,6 @@ contains
          real(dp), dimension(:,:) :: rho_ai_bj
          real(dp), dimension(:,:) :: c_ai_bj
 !         
-         real(dp), dimension(:,:), allocatable :: L_KC_J
          real(dp), dimension(:,:), allocatable :: g_KC_LD
 !
          real(dp), dimension(:,:), allocatable :: L_CK_DL
@@ -3202,26 +2796,14 @@ contains
 !
 !        :: Term 1: - sum_ckdl t_bl,dj * L_kc,ld * c_ai,ck  ::
 !
-         call allocator(L_KC_J, (n_CC2_o)*(n_CC2_v), wf%n_J)
-!
          call allocator(g_KC_LD, (n_CC2_o)*(n_CC2_v), (n_CC2_o)*(n_CC2_v))
 !
-         call wf%get_cholesky_ia(L_KC_J, first_CC2_o, last_CC2_o, first_CC2_v, last_CC2_v)
-!
-         call dgemm('N', 'T',          &
-                  (n_CC2_o)*(n_CC2_v), &
-                  (n_CC2_o)*(n_CC2_v), &
-                  wf%n_J,              &
-                  one,                 &
-                  L_KC_J,              &
-                  (n_CC2_o)*(n_CC2_v), &
-                  L_KC_J,              &
-                  (n_CC2_o)*(n_CC2_v), &
-                  zero,                &
-                  g_KC_LD,             &
-                  (n_CC2_o)*(n_CC2_v))
-!
-         call deallocator(L_KC_J, (n_CC2_o)*(n_CC2_v), wf%n_J)
+         integral_type = 'electronic_repulsion'
+         call wf%get_ov_ov(integral_type, g_KC_LD,  &
+                           first_CC2_o, last_CC2_o, &
+                           first_CC2_v, last_CC2_v, &
+                           first_CC2_o, last_CC2_o, &
+                           first_CC2_v, last_CC2_v)
 !   
          call allocator(L_CK_DL, (n_CC2_o)*(n_CC2_v), (n_CC2_o)*(n_CC2_v))
 !
@@ -3357,26 +2939,15 @@ contains
 !
 !        :: Term 2: - sum_ckdl t_ck_bl * L_kc,ld * c_ai,dj
 !
-         call allocator(L_KC_J, (n_CC2_o)*(n_CC2_v), wf%n_J)
 !
          call allocator(g_KC_LD, (n_CC2_o)*(n_CC2_v), (n_CC2_o)*(n_CC2_v))
 !
-         call wf%get_cholesky_ia(L_KC_J, first_CC2_o, last_CC2_o, first_CC2_v, last_CC2_v)
-!
-         call dgemm('N', 'T',          &
-                  (n_CC2_o)*(n_CC2_v), &
-                  (n_CC2_o)*(n_CC2_v), &
-                  wf%n_J,              &
-                  one,                 &
-                  L_KC_J,              &
-                  (n_CC2_o)*(n_CC2_v), &
-                  L_KC_J,              &
-                  (n_CC2_o)*(n_CC2_v), &
-                  zero,                &
-                  g_KC_LD,             &
-                  (n_CC2_o)*(n_CC2_v))
-!
-         call deallocator(L_KC_J, (n_CC2_o)*(n_CC2_v), wf%n_J)
+         integral_type = 'electronic_repulsion'
+         call wf%get_ov_ov(integral_type, g_KC_LD,  &
+                           first_CC2_o, last_CC2_o, &
+                           first_CC2_v, last_CC2_v, &
+                           first_CC2_o, last_CC2_o, &
+                           first_CC2_v, last_CC2_v)
 !
 !        Reorder L_ck_dl to L_d_clk
 !
@@ -3521,26 +3092,16 @@ contains
 !
 !        :: Term 3: - sum_ckld x_ck,dj * L_kc,ld * c_ai,bl ::
 !
-         call allocator(L_KC_J, (n_CC2_o)*(n_CC2_v), wf%n_J)
+
 !
          call allocator(g_KC_LD, (n_CC2_o)*(n_CC2_v), (n_CC2_o)*(n_CC2_v))
 !
-         call wf%get_cholesky_ia(L_KC_J, first_CC2_o, last_CC2_o, first_CC2_v, last_CC2_v)
-!
-         call dgemm('N', 'T',          &
-                  (n_CC2_o)*(n_CC2_v), &
-                  (n_CC2_o)*(n_CC2_v), &
-                  wf%n_J,              &
-                  one,                 &
-                  L_KC_J,              &
-                  (n_CC2_o)*(n_CC2_v), &
-                  L_KC_J,              &
-                  (n_CC2_o)*(n_CC2_v), &
-                  zero,                &
-                  g_KC_LD,             &
-                  (n_CC2_o)*(n_CC2_v))
-!
-         call deallocator(L_KC_J, (n_CC2_o)*(n_CC2_v), wf%n_J)
+         integral_type = 'electronic_repulsion'
+         call wf%get_ov_ov(integral_type, g_KC_LD,  &
+                           first_CC2_o, last_CC2_o, &
+                           first_CC2_v, last_CC2_v, &
+                           first_CC2_o, last_CC2_o, &
+                           first_CC2_v, last_CC2_v)
 !   
          call allocator(L_L_CKD, n_CC2_o, (n_CC2_o)*((n_CC2_v)**2))
 !
@@ -3700,7 +3261,6 @@ contains
          real(dp), dimension(:,:) :: rho_ai_bj
          real(dp), dimension(:,:) :: c_ai_bj
 !         
-         real(dp), dimension(:,:), allocatable :: L_KC_J
          real(dp), dimension(:,:), allocatable :: g_kc_ld
          real(dp), dimension(:,:), allocatable :: g_lc_kd
 !
@@ -3749,26 +3309,14 @@ contains
 !
 !        Construct g_kc_ld
 !
-         call allocator(L_KC_J, (n_CC2_o)*(n_CC2_v), wf%n_J)
-!
          call allocator(g_KC_LD, (n_CC2_o)*(n_CC2_v), (n_CC2_o)*(n_CC2_v))
 !
-         call wf%get_cholesky_ia(L_KC_J, first_CC2_o, last_CC2_o, first_CC2_v, last_CC2_v)
-!
-         call dgemm('N', 'T',          &
-                  (n_CC2_o)*(n_CC2_v), &
-                  (n_CC2_o)*(n_CC2_v), &
-                  wf%n_J,              &
-                  one,                 &
-                  L_KC_J,              &
-                  (n_CC2_o)*(n_CC2_v), &
-                  L_KC_J,              &
-                  (n_CC2_o)*(n_CC2_v), &
-                  zero,                &
-                  g_KC_LD,             &
-                  (n_CC2_o)*(n_CC2_v))
-!
-         call deallocator(L_KC_J, (n_CC2_o)*(n_CC2_v), wf%n_J)
+         integral_type = 'electronic_repulsion'
+         call wf%get_ov_ov(integral_type, g_KC_LD, &
+                           first_CC2_o, last_CC2_o, &
+                           first_CC2_v, last_CC2_v, &
+                           first_CC2_o, last_CC2_o, &
+                           first_CC2_v, last_CC2_v)
 !
 !        x_ak,ci ordered as x_ai_kc
 !  
@@ -3889,26 +3437,14 @@ contains
 !
 !        Construct g_kc_ld
 !
-         call allocator(L_KC_J, (n_CC2_o)*(n_CC2_v), wf%n_J)
-!
          call allocator(g_KC_LD, (n_CC2_o)*(n_CC2_v), (n_CC2_o)*(n_CC2_v))
 !
-         call wf%get_cholesky_ia(L_KC_J, first_CC2_o, last_CC2_o, first_CC2_v, last_CC2_v)
-!
-         call dgemm('N', 'T',          &
-                  (n_CC2_o)*(n_CC2_v), &
-                  (n_CC2_o)*(n_CC2_v), &
-                  wf%n_J,              &
-                  one,                 &
-                  L_KC_J,              &
-                  (n_CC2_o)*(n_CC2_v), &
-                  L_KC_J,              &
-                  (n_CC2_o)*(n_CC2_v), &
-                  zero,                &
-                  g_KC_LD,             &
-                  (n_CC2_o)*(n_CC2_v))
-!
-         call deallocator(L_KC_J, (n_CC2_o)*(n_CC2_v), wf%n_J)
+         integral_type = 'electronic_repulsion'
+         call wf%get_ov_ov(integral_type, g_KC_LD,  &
+                           first_CC2_o, last_CC2_o, &
+                           first_CC2_v, last_CC2_v, &
+                           first_CC2_o, last_CC2_o, &
+                           first_CC2_v, last_CC2_v)
 !
 !        Reorder g_kc_ld to g_lc_kd 
 !
@@ -4085,11 +3621,6 @@ contains
          real(dp), dimension(:,:), allocatable :: rho_aj_bi
          real(dp), dimension(:,:), allocatable :: rho_ai_bj_CCSD
 !
-         real(dp), dimension(:,:), allocatable :: L_bj_J
-         real(dp), dimension(:,:), allocatable :: L_kc_J
-         real(dp), dimension(:,:), allocatable :: L_kj_J
-         real(dp), dimension(:,:), allocatable :: L_bc_J
-!
          real(dp), dimension(:,:), allocatable :: g_bj_kc 
          real(dp), dimension(:,:), allocatable :: g_bc_kj
          real(dp), dimension(:,:), allocatable :: g_ck_bj ! reordering of g_bj_kc and g_bc_kj
@@ -4169,12 +3700,12 @@ contains
 !        rho_ai_bj += sum_c F_bc * c_ai,cj = sum_c c_aij_c(aij,c) F_ab(b,c) = sum_c c_aij_c(aij,c) F_ab^T(c,b)
 !
          call dgemm('N','T',                       & 
-                     (n_CC2_v)*((n_CC2_o)**2),   &
-                     n_CC2_v,                     & 
+                     (n_CC2_v)*((n_CC2_o)**2),     &
+                     n_CC2_v,                      & 
                      n_CC2_v,                      & 
                      one,                          & 
                      c_aij_c,                      & 
-                     (n_CC2_v)*((n_CC2_o)**2),   &
+                     (n_CC2_v)*((n_CC2_o)**2),     &
                      wf%fock_ab,                   & 
                      wf%n_v,                       & 
                      zero,                         & 
@@ -4253,31 +3784,14 @@ contains
 !
 !        Construct g_bj,kc 
 !
-         call allocator(L_bj_J, (n_CCSD_o)*(n_CCSD_v), wf%n_J)
-!
-         call wf%get_cholesky_ai(L_bj_J, first_CCSD_v, last_CCSD_v, first_CCSD_o, last_CCSD_o)
-!
-         call allocator(L_kc_J, (n_CC2_o)*(n_CC2_v), wf%n_J)
-!
-         call wf%get_cholesky_ia(L_kc_J, first_CC2_o, last_CC2_o, first_CC2_v, last_CC2_v)
-!
          call allocator(g_bj_kc, (n_CCSD_o)*(n_CCSD_v), (n_CC2_o)*(n_CC2_v))
 !
-         call dgemm('N', 'T',                & 
-                     (n_CCSD_o)*(n_CCSD_v),  &
-                     (n_CC2_o)*(n_CC2_v),    &
-                     wf%n_J,                 &
-                     one,                    &
-                     L_bj_J,                 &
-                     (n_CCSD_o)*(n_CCSD_v),  &
-                     L_kc_J,                 &
-                     (n_CC2_o)*(n_CC2_v),    &
-                     zero,                   &
-                     g_bj_kc,                &
-                     (n_CCSD_o)*(n_CCSD_v))
-!
-         call deallocator(L_bj_J, (n_CCSD_o)*(n_CCSD_v), wf%n_J)
-         call deallocator(L_kc_J, (n_CC2_o)*(n_CC2_v), wf%n_J)
+         integral_type = 'electronic_repulsion'
+         call wf%get_vo_ov(integral_type, g_bj_kc, &
+                           first_CCSD_v, last_CCSD_v, &
+                           first_CCSD_o, last_CCSD_o, &
+                           first_CC2_o, last_CC2_o, &
+                           first_CC2_v, last_CC2_v)
 !
 !        Reordering g_bj_kc to g_ck_bj
 !
@@ -4399,11 +3913,7 @@ contains
 !
          call deallocator(rho_ai_bj_CCSD, (n_CCSD_o)*(n_CCSD_v), (n_CCSD_o)*(n_CCSD_v))
 !
-!
-!        Construct g_bc_kj       
-!
-         call allocator(g_bc_kj, (n_CC2_v)*(n_CCSD_v), (n_CC2_o)*(n_CCSD_o))
-         g_bc_kj = zero
+         call allocator(g_ck_bj, (n_CC2_o)*(n_CC2_v), (n_CCSD_o)*(n_CCSD_v))
 !
 !       Start batching over c ! MUST BE FIXED
 ! 
@@ -4428,64 +3938,45 @@ contains
 !
            call batch_limits(c_first, c_last, c_batch, max_batch_length, batch_dimension)
            c_length = c_last - c_first + 1
+
 !
-!          Get ab-cholesky vectors for the batch, L_bc_J = L_bc^J
+!           Construct g_bc_kj       
 !
-           call allocator(L_bc_J, (n_CCSD_v)*c_length, wf%n_J)
+            call allocator(g_bc_kj, c_length*(n_CCSD_v), (n_CC2_o)*(n_CCSD_o))
+!           
+            integral_type = 'electronic_repulsion'
+            call wf%get_vv_oo(integral_type, g_bc_kj,    &
+                              first_CCSD_v, last_CCSD_v, &
+                              c_first, c_last,           &
+                              first_CC2_o, last_CC2_o,   &
+                              first_CCSD_o, last_CCSD_o)
 !
-           call wf%get_cholesky_ab(L_bc_J, first_CCSD_v, last_CCSD_v, c_first, c_last)
 !
-           call allocator(L_kj_J, (n_CC2_o)*(n_CCSD_o), wf%n_J)
+!           Reorder g_bc_kj
 !
-           call wf%get_cholesky_ij(L_kj_J, first_CC2_o, last_CC2_o, first_CCSD_o, last_CCSD_o)
-!
-           offset = index_two(1, c_first, n_CCSD_v)
-!
-           call dgemm('N', 'T',              & 
-                       (n_CCSD_v)*c_length,  &
-                       (n_CC2_o)*(n_CCSD_o), &
-                       wf%n_J,               &
-                       one,                  &
-                       L_bc_J,               &               
-                       (n_CCSD_v)*c_length,  &                        
-                       L_kj_J,               &
-                       (n_CC2_o)*(n_CCSD_o), &                                
-                       one,                  &                        
-                       g_bc_kj(offset, 1),   &   
-                       (n_CCSD_v)*(n_CC2_v))
-!
-           call deallocator(L_bc_J, (n_CCSD_v)*c_length, wf%n_J)
-           call deallocator(L_kj_J, (n_CC2_o)*(n_CCSD_o), wf%n_J)
-!
-        enddo
-!
-!       Reorder g_bc_kj
-!
-         call allocator(g_ck_bj, (n_CC2_o)*(n_CC2_v), (n_CCSD_o)*(n_CCSD_v))
-         g_ck_bj = zero
-!
-         do c = 1, n_CC2_v
-            do b = 1, n_CCSD_v
+            do c = 1, c_length
+               do b = 1, n_CCSD_v
  !
-               bc = index_two(b, c, n_CCSD_v)
+                  bc = index_two(b, c, n_CCSD_v)
  !
-               do j = 1, n_CCSD_o
+                  do j = 1, n_CCSD_o
  !
-                  bj = index_two(b, j, n_CCSD_v)
+                     bj = index_two(b, j, n_CCSD_v)
  !
-                  do k = 1, n_CC2_o
+                     do k = 1, n_CC2_o
  !
-                     kj = index_two(k, j, n_CC2_o)
-                     ck = index_two(c, k, n_CC2_v)
+                        kj = index_two(k, j, n_CC2_o)
+                        ck = index_two(c + c_first - 1, k, n_CC2_v)
  !    
-                     g_ck_bj(ck, bj) = g_bc_kj(bc, kj)
+                        g_ck_bj(ck, bj) = g_bc_kj(bc, kj)
  !
+                     enddo
                   enddo
                enddo
             enddo
-         enddo
 !
-         call deallocator(g_bc_kj, (n_CC2_v)*(n_CCSD_v), (n_CC2_o)*(n_CCSD_o))
+            call deallocator(g_bc_kj, c_length*(n_CCSD_v), (n_CC2_o)*(n_CCSD_o))
+        enddo
 !
 !        rho_ai_bj += - sum_ck c_ai_ck * g_ck_bj       
 !
@@ -4625,7 +4116,6 @@ contains
          real(dp), dimension(:,:) :: rho_ab_ij
          real(dp), dimension(:,:) :: c_ab_ij
 !
-         real(dp), dimension(:,:), allocatable :: L_kc_J
          real(dp), dimension(:,:), allocatable :: g_kc_ld
          real(dp), dimension(:,:), allocatable :: g_kl_cd
 !
@@ -4681,26 +4171,14 @@ contains
 !
 !        Constructing g_kc_ld
 !
-         call allocator(L_KC_J, (n_CC2_o)*(n_CC2_v), wf%n_J)
+         call allocator(g_KC_LD, (n_CC2_o)*(n_CC2_v), (n_CC2_o)*(n_CC2_v))
 !
-         call allocator(g_kc_ld, (n_CC2_o)*(n_CC2_v), (n_CC2_o)*(n_CC2_v))
-!
-         call wf%get_cholesky_ia(L_KC_J, first_CC2_o, last_CC2_o, first_CC2_v, last_CC2_v)
-!
-         call dgemm('N', 'T',          &
-                  (n_CC2_o)*(n_CC2_v), &
-                  (n_CC2_o)*(n_CC2_v), &
-                  wf%n_J,              &
-                  one,                 &
-                  L_kc_J,              &
-                  (n_CC2_o)*(n_CC2_v), &
-                  L_kc_J,              &
-                  (n_CC2_o)*(n_CC2_v), &
-                  zero,                &
-                  g_kc_ld,             &
-                  (n_CC2_o)*(n_CC2_v))
-!
-         call deallocator(L_KC_J, (n_CC2_o)*(n_CC2_v), wf%n_J)
+         integral_type = 'electronic_repulsion'
+         call wf%get_ov_ov(integral_type, g_KC_LD,  &
+                           first_CC2_o, last_CC2_o, &
+                           first_CC2_v, last_CC2_v, &
+                           first_CC2_o, last_CC2_o, &
+                           first_CC2_v, last_CC2_v)
 !
          call allocator(g_KL_CD, (n_CC2_o)**2, (n_CC2_v)**2)
 !
@@ -4997,27 +4475,15 @@ contains
          last_CCSD_o = first_CCSD_o + n_CCSD_o - 1
          last_CCSD_v = first_CCSD_v + n_CCSD_v - 1 
 !
-         call allocator(L_Ki_J, (n_CCSD_o)*(n_CC2_o), wf%n_J)
+         call allocator(g_Ki_Lj, (n_CCSD_o)*(n_CC2_o), (n_CCSD_o)*(n_CC2_o))
 !
-         call wf%get_cholesky_ij(L_Ki_J, first_CC2_o, last_CC2_o, first_CCSD_o, last_CCSD_o)
+         integral_type = 'electronic_repulsion'
+         call wf%get_oo_oo(integral_type, g_Ki_Lj,    &
+                           first_CC2_o, last_CC2_o,   &
+                           first_CCSD_o, last_CCSD_o, &
+                           first_CC2_o, last_CC2_o,   &
+                           first_CCSD_o, last_CCSD_o)
 !
-         call allocator(g_ki_lj, (n_CCSD_o)*(n_CC2_o), (n_CCSD_o)*(n_CC2_o))
-!
-         call dgemm('N', 'T',                &
-                     (n_CCSD_o)*(n_CC2_o),   &
-                     (n_CCSD_o)*(n_CC2_o),   &
-                     wf%n_J,                 &
-                     one,                    &
-                     L_Ki_J,                 &
-                     (n_CCSD_o)*(n_CC2_o),   &
-                     L_Ki_J,                 &
-                     (n_CCSD_o)*(n_CC2_o),   &
-                     zero,                   &
-                     g_ki_lj,                &
-                     (n_CCSD_o)*(n_CC2_o))
-!
-!
-         call deallocator(L_Ki_J, (n_CCSD_o)*(n_CC2_o), wf%n_J)
 !
 !        Reorder g_ki_lj to g_kl_ij
 !
@@ -5037,14 +4503,14 @@ contains
                      kl = index_two(k, l, n_CC2_o)
                      lj = index_two(l, j, n_CC2_o)
 !
-                     g_kl_ij(kl, ij) = g_ki_lj(ki, lj) 
+                     g_KL_ij(kl, ij) = g_Ki_Lj(ki, lj) 
 !                     
                   enddo
                enddo
             enddo
          enddo
 !
-         call deallocator(g_ki_lj, (n_CCSD_o)*(n_CC2_o), (n_CCSD_o)*(n_CC2_o))
+         call deallocator(g_Ki_Lj, (n_CCSD_o)*(n_CC2_o), (n_CCSD_o)*(n_CC2_o))
 !
 !        rho_ab_ij += sum_kl g_ki,lj * c_ak,bl = sum_kl c_ab_ij(ab,kl) g_kl_ij(kl,ij)  
 !
@@ -5140,37 +4606,16 @@ contains
                call batch_limits(b_first ,b_last ,b_batch, b_max_length, n_CCSD_v)
                b_length = b_last - b_first + 1 
 !
-!              Get ab-cholesky vectors for the batch, L_ac^J, then reorder from L_ac_J to L_ca_J
-!
-               call allocator(L_ac_J, (n_CC2_v)*a_length, wf%n_J)
-               call wf%get_cholesky_ab(L_ac_J, a_first, a_last, first_CC2_v, last_CC2_v)
-!
-!              Get ab-cholesky vectors for the batch, L_bd^J, then reorder from L_bd_J to L_db_J
-!
-               call allocator(L_bd_J, (n_CC2_v)*b_length, wf%n_J)
-               call wf%get_cholesky_ab(L_bd_J, b_first, b_last, first_CC2_v, last_CC2_v)      
-!
-!              Allocate g_ca_db = g_acbd
+!              Allocate g_ac_bd = g_acbd
 !
                call allocator(g_ac_bd, (n_CC2_v)*a_length, (n_CC2_v)*b_length)
 !
-!              g_ca_db = sum_J L_ca_J*L_db_J
-!     
-               call dgemm('N','T',              &
-                           (n_CC2_v)*a_length,  &
-                           (n_CC2_v)*b_length,  &
-                           wf%n_J,              &
-                           one,                 &
-                           L_ac_J,              &
-                           (n_CC2_v)*a_length,  &  
-                           L_bd_J,              &
-                           (n_CC2_v)*b_length,  &
-                           zero,                &
-                           g_ac_bd,             &
-                           (n_CC2_v)*a_length)
-!
-               call deallocator(L_ac_J, (n_CC2_v)*a_length, wf%n_J)
-               call deallocator(L_bd_J, (n_CC2_v)*b_length, wf%n_J)
+               integral_type = 'electronic_repulsion'
+               call wf%get_vv_vv(integral_type, g_ac_bd, &
+                                 a_first, a_last,        &
+                                 first_CC2_v, last_CC2_v,&
+                                 b_first, b_last,        &
+                                 first_CC2_v, last_CC2_v)
 !
 !              sum_cd g_ac,bd * c_ci,dj = sum_cd g_ac,bd c_cd,ij = sum_cd g_ab_cd c_cd_ij  
 !

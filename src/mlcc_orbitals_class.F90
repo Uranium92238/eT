@@ -18,7 +18,7 @@ module mlcc_orbitals_class
 !  Orbitals used
 !
    logical :: cholesky = .false.
-   logical :: cnto     = .false.
+   logical :: cnto     = .true.
 !
    real(dp) :: delta_o = 1.0D-06
    real(dp) :: delta_v = 1.0D-06
@@ -50,7 +50,7 @@ contains
 !
       class(mlcc_orbitals) :: orbital_info
 !
-      character(len=13)    :: line
+      character(len=40)    :: line
 !
       read(unit_input,'(a40)') line 
       line = remove_preceding_blanks(line)
@@ -93,6 +93,9 @@ contains
                return
 !
             elseif (trim(line) == 'cholesky') then ! cholesky orbitals
+!
+               orbital_info%cnto = .false.
+               orbital_info%cholesky = .true.
 !
                read(unit_input,'(a40)') line 
                line = remove_preceding_blanks(line)

@@ -77,6 +77,7 @@ module ccsd_class
       procedure :: calc_ampeqs_norm          => calc_ampeqs_norm_ccsd
       procedure :: new_amplitudes            => new_amplitudes_ccsd
       procedure :: calc_quasi_Newton_doubles => calc_quasi_Newton_doubles_ccsd
+      procedure :: ground_state_preparations => ground_state_preparations_ccsd
 !
 !     Helpers for excited state solver (see CCS for the rest)
 !
@@ -442,6 +443,15 @@ module ccsd_class
 !
       end subroutine initialize_ground_state_ccsd
 !
+!
+      module subroutine ground_state_preparations_ccsd(wf)
+!!
+!!       Ground State Preparations (CCSD)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+         class(ccsd) :: wf 
+!
+      end subroutine ground_state_preparations_ccsd
 !
    end interface 
 !
@@ -1469,12 +1479,6 @@ contains
 !
       call wf%read_transform_cholesky 
 !
-!     Test for the possibility of storing vir-vir-vir-vir
-!     electronic repulsion integrals (g_abcd), storing the
-!     integrals if possible
-!
-      call wf%store_vv_vv_electronic_repulsion
-!
 !     Initialize (singles and doubles) amplitudes
 !
       wf%n_t1am = (wf%n_o)*(wf%n_v) 
@@ -1825,8 +1829,6 @@ contains
       endif
 !
    end subroutine read_double_amplitudes_ccsd
-!
-!
 !
 !
    subroutine jacobi_test_ccsd(wf)

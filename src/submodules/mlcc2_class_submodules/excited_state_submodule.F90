@@ -24,6 +24,21 @@ submodule (mlcc2_class) excited_state
 contains
 !
 !
+   module subroutine excited_state_preparations_mlcc2(wf)
+!!
+!!    Excited State Preparations (MLCC2)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!    A routine for preparation tasks (if any). Can be overwritten
+!!    in descendants if other preparations prove necessary.    
+!!
+      class(mlcc2) :: wf 
+!
+!     Do nothing for mlcc2
+!
+   end subroutine excited_state_preparations_mlcc2
+!
+!
    module subroutine initialize_excited_states_mlcc2(wf)
 !!
 !!    Initialize excited states
@@ -169,17 +184,14 @@ contains
       do trial = first_trial, last_trial
 !
          read(unit_trial_vecs, rec=trial, iostat=ioerror) c_a_i, c_aibj
-         if (wf%excited_state_task=='right_valence') then
+         if (wf%excited_state_task=='right_valence' .or. wf%excited_state_task=='right_core') then
 !
                call wf%jacobian_mlcc2_transformation(c_a_i, c_aibj)
 !
-            elseif (wf%excited_state_task=='right_core') then
-!
-               call wf%cvs_jacobian_mlcc2_transformation(c_a_i, c_aibj)
-!
             elseif (wf%excited_state_task=='left_valence') then
 !
-      !         call wf%jacobian_transpose_mlcc2_transformation(c_a_i, c_aibj)
+               write(unit_output,*)'Error: Jacobian transpose not implemented for mlcc2'
+               stop
 !
             else
 !
@@ -187,7 +199,30 @@ contains
                stop
 !
          endif
-!     
+!
+!        -::- Projections -::-
+!
+!        Test for core calculation 
+!
+         if (wf%tasks%core_excited_state .or. wf%tasks%core_ionized_state) then
+!  
+!           Project out contamination from valence contributions
+!
+            call wf%cvs_rho_a_i_projection(c_a_i)
+            call wf%cvs_rho_aibj_projection(c_aibj)
+!
+         endif
+!
+!        Test for ionization calculation
+!
+         if (wf%tasks%ionized_state .or. wf%tasks%core_ionized_state) then
+!
+!           Project out contamination from regular excitations
+!
+            write(unit_output,*)'Error: Ionized state not implemented for mlcc2'
+            stop
+!
+         endif     
 !
          write(unit_rho, rec=trial, iostat=ioerror) c_a_i, c_aibj
 !

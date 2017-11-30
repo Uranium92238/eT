@@ -96,7 +96,7 @@ contains
    end subroutine mlcc_reader_mlccsd
 !
 !
-   module subroutine read_orbital_info_mlccsd(wf)
+   module subroutine read_orbital_info_mlccsd(wf, unit_input)
 !!
 !!
       implicit none
