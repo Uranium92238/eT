@@ -32,7 +32,6 @@ submodule(ccs_class) excited_state
    logical :: converged_energy   = .false.
    logical :: converged_residual = .false.
 !
-   logical :: timings = .true.
    logical :: print_vectors = .true.
 !
 !
@@ -71,10 +70,6 @@ contains
 !
       call wf%excited_state_preparations
 !
-!     Set current task to excited state calculation 
-! 
-      wf%current_task = 'excited_state'
-!
 !     Run the general solver routine (file names are given
 !     by the task, i.e., the file 'right_valence' contains
 !     the right eigenvectors)
@@ -98,13 +93,39 @@ contains
 !!
       class(ccs) :: wf 
 !
-!     Store voov-electronic repulsion integrals to file if there is space
+!     Store electronic repulsion integrals to file if there is space
 !
       call allocator(wf%t1am, wf%n_v, wf%n_o)
       call wf%read_single_amplitudes
 !
       call wf%store_t1_vo_ov_electronic_repulsion
       call wf%store_t1_vv_ov_electronic_repulsion
+!
+!     Set current task to excited state calculation 
+! 
+      wf%tasks%current = 'excited_state'
+!
+!     Set filename for solution vectors
+!
+      if (wf%tasks%core_excited_state .or. wf%tasks%core_ionized_state) then   ! Core excitation
+!
+         if (wf%excited_state_specifications%right) then                         ! Right vectors
+            wf%excited_state_specifications%solution_file = 'right_core'
+         else                                                                    ! Left vectors
+            wf%excited_state_specifications%solution_file = 'left_core'
+         endif
+!
+      else                                                                    ! Valence excitation
+!
+         if (wf%excited_state_specifications%left) then                          ! Right vectors
+            wf%excited_state_specifications%solution_file = 'left_valence'
+         else                                                                    ! Left vectors
+            wf%excited_state_specifications%solution_file = 'right_valence'
+         endif
+!
+      endif
+!
+      call deallocator(wf%t1am, wf%n_v, wf%n_o)
 !
    end subroutine excited_state_preparations_ccs
 !
@@ -233,7 +254,7 @@ contains
 !     Enter iterative loop
 !
       do while (.not. converged .and. iteration .le. wf%excited_state_specifications%max_iterations) 
-         if (timings) call cpu_time(start_excited_state_iter)
+         call cpu_time(start_excited_state_iter)
 !
 !        Prints 
 !
@@ -639,7 +660,8 @@ contains
       if (ioerror .ne. 0) write(unit_output,*) 'Error while opening transformed vecs file'
 !
       call generate_unit_identifier(unit_solution)
-      open(unit=unit_solution, file=wf%excited_state_task, action='write', status='unknown', &
+      open(unit=unit_solution, file=wf%excited_state_specifications%solution_file,&
+      action='write', status='unknown', &
       access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
       if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file'
 !
@@ -830,37 +852,24 @@ contains
 !
       endif
 !
-!     Test for ionization or excitation
+!     Test for ionization or excitation, core or valence
 !
-      if (wf%tasks%excited_state .or. wf%tasks%core_excited_state) then ! Excitation
-!
-!        Test for valence or core
-!
-         if ((wf%excited_state_task .eq. 'right_valence') .or. &
-            (wf%excited_state_task .eq. 'left_valence')) then
+      if (wf%tasks%excited_state) then
 !
             call wf%initialize_trial_vectors_valence
 !
-         elseif (wf%excited_state_task .eq. 'right_core') then
+      elseif (wf%tasks%core_excited_state) then
 !
             call wf%initialize_trial_vectors_core
 !
-         endif
-!
-      elseif (wf%tasks%ionized_state .or. wf%tasks%core_ionized_state) then ! Ionization
-!
-!        Test for valence or core
-!
-         if ((wf%excited_state_task .eq. 'right_valence') .or. &
-            (wf%excited_state_task .eq. 'left_valence')) then
+      elseif (wf%tasks%ionized_state) then
 !
             call wf%initialize_trial_vectors_valence_ionization
 !
-         elseif (wf%excited_state_task .eq. 'right_core') then
+      elseif (wf%tasks%core_ionized_state) then
 !
             call wf%initialize_trial_vectors_core_ionization
 !
-         endif
       endif
 !
    end subroutine initialize_trial_vectors_ccs
@@ -963,7 +972,7 @@ contains
 !
 !     Open solution vector file - if it does not exist return
 !
-      inquire(file=wf%excited_state_task, exist=solution_exists)
+      inquire(file=wf%excited_state_specifications%solution_file, exist=solution_exists)
 !
 !     If no solution vector file, return and use orbital differences.
 !
@@ -977,7 +986,8 @@ contains
 !
       call generate_unit_identifier(unit_solution)
 !
-      open(unit=unit_solution, file=wf%excited_state_task, action='read', status='unknown', &
+      open(unit=unit_solution, file=wf%excited_state_specifications%solution_file,&
+         action='read', status='unknown', &
          access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
 !
 !     Allocate c_i
@@ -1172,13 +1182,13 @@ contains
 !
          read(unit_trial_vecs, rec=trial, iostat=ioerror) c_a_i
 !
-         if (wf%current_task == 'excited_state') then
+         if (wf%tasks%current == 'excited_state') then
 !
-            if (wf%excited_state_task == 'right_valence' .or. wf%excited_state_task == 'right_core') then
+            if (wf%excited_state_specifications%right) then
 !
                call wf%jacobian_ccs_transformation(c_a_i)
 !
-            elseif (wf%excited_state_task == 'left_valence') then
+            elseif (wf%excited_state_specifications%left) then
 !               
                call wf%jacobian_transpose_ccs_transformation(c_a_i)
 !
@@ -1189,22 +1199,9 @@ contains
 !
             endif
 !
-         elseif(wf%current_task == 'response') then
-!
-            if (wf%response_task =='left_eigenvectors') then
+         elseif(wf%tasks%current == 'multipliers') then
 !
                call wf%jacobian_transpose_ccs_transformation(c_a_i)
-!
-            elseif (wf%response_task == 'multipliers') then 
-!
-               call wf%jacobian_transpose_ccs_transformation(c_a_i)
-!
-            else
-!
-               write(unit_output,*) 'Error: Response task not recognized'
-               stop
-!
-            endif
 !
          else
 !
@@ -1275,31 +1272,21 @@ contains
          class(ccs) :: wf
          real(dp), dimension(wf%n_parameters ,1) :: residual
 !
-         if (wf%tasks%excited_state .or. wf%tasks%core_excited_state) then       
-!
-            if ((wf%excited_state_task .eq. 'right_valence') .or. &
-                (wf%excited_state_task .eq. 'left_valence')) then
+         if (wf%tasks%excited_state) then       
 !
                call wf%precondition_residual_valence(residual)
 !
-            elseif (wf%excited_state_task .eq. 'right_core') then
+         elseif (wf%tasks%core_excited_state) then
 !
                call wf%precondition_residual_core(residual)
 !
-            endif
-!
          elseif (wf%tasks%ionized_state) then
 !
-               if ((wf%excited_state_task .eq. 'right_valence') .or. &
-                (wf%excited_state_task .eq. 'left_valence')) then
+            call wf%precondition_residual_valence_ionization(residual)
 !
-               call wf%precondition_residual_valence_ionization(residual)
+         elseif (wf%tasks%core_ionized_state) then
 !
-            elseif (wf%excited_state_task .eq. 'right_core') then
-!
-               call wf%precondition_residual_core_ionization(residual)
-!
-            endif
+            call wf%precondition_residual_core_ionization(residual)
 !
          endif
 !
@@ -1356,8 +1343,9 @@ contains
 !  
          call generate_unit_identifier(unit_solution)
 !
-         open(unit=unit_solution, file=wf%excited_state_task, action='read', status='unknown', &
-         access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
+         open(unit=unit_solution, file=wf%excited_state_specifications%solution_file, &
+               action='read', status='unknown', &
+               access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
 !
          if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file'
 !
@@ -1545,8 +1533,9 @@ contains
 !  
          call generate_unit_identifier(unit_solution)
 !
-         open(unit=unit_solution, file=wf%excited_state_task, action='read', status='unknown', &
-         access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
+         open(unit=unit_solution, file=wf%excited_state_specifications%solution_file, &
+               action='read', status='unknown', &
+               access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
 !
          if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file'
 

@@ -85,7 +85,7 @@ contains
 !!
       class(ccs) :: wf 
 !
-!     Nothing yet!
+      wf%tasks%current = 'ground_state'
 !
    end subroutine ground_state_preparations_ccs
 !

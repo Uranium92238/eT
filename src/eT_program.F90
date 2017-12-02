@@ -138,30 +138,6 @@ program eT_program
 !
    endif
 !
-!! :::::::::::::::::::::::::::::::::::::::::::::::::::::
-!! -::- Reading general specs section of input file -::- 
-!! :::::::::::::::::::::::::::::::::::::::::::::::::::::
-!
-!  call general_specs_reader(unit_input, wf%settings)
-!
-!! :::::::::::::::::::::::::::::::::::::::::::::::::
-!! -::- Reading SCC specs section of input file -::- 
-!! :::::::::::::::::::::::::::::::::::::::::::::::::
-!
-!  call SCC_specs_reader(unit_input, wf%settings)
-!
-!! :::::::::::::::::::::::::::::::::::::::::::::::::::
-!! -::- Reading calculation section of input file -::- 
-!! :::::::::::::::::::::::::::::::::::::::::::::::::::
-!
-!   call calculation_reader(unit_input, wf)
-!
-
- ! if (wf%tasks%excited_state) write(unit_output,'(t3,a)')  'Excited state calculation requested.' 
- ! if (wf%tasks%properties)    write(unit_output,'(t3,a)')  'Properties calculation requested.'    
-!
- ! flush(unit_output)
-
 ! Close input file
 !
   close(unit_input)

@@ -51,14 +51,6 @@ contains
                                      'Requested ',wf%excited_state_specifications%n_singlet_states,&
                                        ' ', trim(wf%name), ' singlet states.'
 !
-!     Set the response task 
-!
-      if (wf%tasks%ionized_state) then
-         wf%excited_state_task = 'right_valence'
-      elseif (wf%tasks%core_ionized_state) then
-         wf%excited_state_task = 'right_core'
-      endif
-!
 !     Run the general solver routine (file names are given
 !     by the task, i.e., the file 'right_valence' contains
 !     the right eigenvectors)
