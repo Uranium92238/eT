@@ -81,8 +81,6 @@ contains
 !
       mem%available = mem%total 
 !
-      write(unit_output,*) 'Specified memory:',total 
-!
    end subroutine init_memory_manager
 !
 !
