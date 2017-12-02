@@ -21,6 +21,7 @@ module hf_class
    use excited_state_specs_class
    use core_excited_state_specs_class
    use response_calc_specs_class
+   use memory_manager_class
 !
    implicit none
 !
@@ -66,6 +67,10 @@ module hf_class
       type(excited_state_specs)        :: excited_state_specifications
       type(core_excited_state_specs)   :: core_excited_state_specifications
       type(response_calc_specs)        :: response_specifications
+!
+!     Memory manager 
+!
+      type(memory_manager) :: mem 
 !
    contains
 !
