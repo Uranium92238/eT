@@ -4218,14 +4218,14 @@ contains
       integer(i15) :: unit_g_t1_abci = -1 ! g_abic, electronic repulsion integrals  
       integer(i15) :: ioerror = -1        ! Error integer for file handling
 !
-      integer(i15) :: required_mem = 0, available_mem = 0, a_batch = 0, bci = 0, a_rec = 0, a = 0
-      integer(i15) :: a_n_batch = 0, a_max_length = 0, a_length = 0, a_first = 0, a_last = 0
+      integer(i15) :: required_mem = 0, available_mem = 0, a_batch = 0, bci = 0, a_full = 0, a = 0, b = 0, ci = 0
+      integer(i15) :: a_n_batch = 0, a_max_length = 0, a_length = 0, a_first = 0, a_last = 0, ab_rec = 0, ab = 0
 !
       real(dp) :: begin_timer, end_timer
 !
 !     Integral
 !
-      real(dp), dimension(:,:), allocatable :: g_a_bci
+      real(dp), dimension(:,:), allocatable :: g_ab_ci
 !
       character(len=40) :: integral_type 
 !
@@ -4251,11 +4251,11 @@ contains
 !
          call cpu_time(begin_timer)
 !  
-!        Open file for writing integrals - record (ai), record length (n_o)*(n_v) (bj)
+!        Open file for writing integrals
 !
          call generate_unit_identifier(unit_g_t1_abci)
          open(unit=unit_g_t1_abci, file='g_t1_abci', action='write', status='unknown', &
-               access='direct', form='unformatted', recl=dp*((wf%n_o)*(wf%n_v)**2), iostat=ioerror)
+               access='direct', form='unformatted', recl=dp*((wf%n_o)*(wf%n_v)), iostat=ioerror)
 !
          if (ioerror .ne. 0) write(unit_output,*) &
          'Error: error while opening file in store_t1_vv_vo_electronic_repulsion_ccs', ioerror
@@ -4276,26 +4276,33 @@ contains
             call batch_limits(a_first, a_last, a_batch, a_max_length, wf%n_v)
             a_length = a_last - a_first + 1  
 
-            call allocator(g_a_bci, a_length, (wf%n_o)*(wf%n_v)**2)
+            call allocator(g_ab_ci, a_length*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-            call wf%get_vv_vo_electronic_repulsion(g_a_bci, a_first, a_last, 1, wf%n_v, 1, wf%n_v, 1, wf%n_o)
+            call wf%get_vv_vo_electronic_repulsion(g_ab_ci, a_first, a_last, 1, wf%n_v, 1, wf%n_v, 1, wf%n_o)
 !
             do a = 1, a_length
+               do b = 1, wf%n_v
 !
-!              Calculate record number 
+!                 Calculate record number 
 !
-               a_rec = a + a_first - 1
-!                  
-!              Write integrals to that record 
+                  a_full = a + a_first - 1
+                  ab_rec = index_two(a_full, b, wf%n_v)
 !
-               write(unit_g_t1_abci, rec=a_rec, iostat=ioerror) (g_a_bci(a, bci), bci = 1, (wf%n_o)*(wf%n_v)**2)
+!                 Calculate ab index for (possibly restricted) g_ab_ci integral
 !
+                  ab = index_two(a, b, a_length)                  
+!
+!                 Write integrals to that record 
+!
+                  write(unit_g_t1_abci, rec=ab_rec, iostat=ioerror) (g_ab_ci(ab, ci), ci = 1, (wf%n_o)*(wf%n_v))
+!
+               enddo
             enddo
 !
             if (ioerror .ne. 0) write(unit_output,'(t3,a)') &
                'Error: write error in store_t1_vv_vo_electronic_repulsion_integrals_ccs'
 !
-            call deallocator(g_a_bci, a_length, (wf%n_o)*(wf%n_v)**2)
+            call deallocator(g_ab_ci, a_length*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
          enddo ! End of batches over a 
 !
@@ -4687,11 +4694,11 @@ contains
 !!
 !!    Reads the T1-transformed vir-vir-vir-occ integrals from file.
 !!
-!!    The integrals are stored on file as (a, bci) = (a, :), where a 
+!!    The integrals are stored on file as (ab,ci) = (ab, :), where a 
 !!    is the record number and : denotes all the bci elements.
 !!
-!!    The recommended use is therefore to batch over the a index,
-!!    as this will involve the minimum amount of wasteful read statements
+!!    The recommended use is therefore to batch over the a or b index,
+!!    as this will involve the no wasteful read statements
 !!
       implicit none 
 !
@@ -4710,11 +4717,11 @@ contains
 !
       real(dp) :: begin_timer, end_timer
 !
-      real(dp), dimension(:,:), allocatable :: g_A_bci ! Holds the elements A, bci for a given A index 
+      real(dp), dimension(:,:), allocatable :: g_AB_ci ! Holds the elements AB, ci for a given AB index 
 !
       character(len=40) :: integral_type 
 !
-      integer(i15) :: a = 0, a_rec = 0, c = 0, ci = 0, i = 0, bci_full = 0, b = 0, ab = 0
+      integer(i15) :: a = 0, a_full = 0, b_full = 0, ab_rec = 0, c = 0, ci = 0, i = 0, ci_full = 0, b = 0, ab = 0
 !
       integer(i15) :: length_a = 0, length_b = 0, length_c = 0, length_i = 0
 !
@@ -4731,40 +4738,40 @@ contains
 !
       call generate_unit_identifier(unit_g_t1_abci)
       open(unit=unit_g_t1_abci, file='g_t1_abci', action='read', status='unknown', &
-            access='direct', form='unformatted', recl=dp*((wf%n_o)*(wf%n_v)**2), iostat=ioerror)
+            access='direct', form='unformatted', recl=dp*((wf%n_o)*(wf%n_v)), iostat=ioerror)
 !
       if (ioerror .ne. 0) write(unit_output,'(t3,a)') &
       'Error: error while opening file in read_t1_vv_vo_electronic_repulsion_ccs'
 !
-      call allocator(g_A_bci, 1, (wf%n_o)*(wf%n_v)**2)
-      g_A_bci = zero
+      call allocator(g_AB_ci, 1, (wf%n_o)*(wf%n_v))
+      g_AB_ci = zero
 !
       do a = 1, length_a
+         do b = 1, length_b
 !
-!        For a given A, read into g_A_bci 
+!           For a given A and B, read into g_AB_ci 
 !
-         a_rec = a + index1_first - 1
+            a_full = a + index1_first - 1
+            b_full = b + index2_first - 1
 !
-         read(unit_g_t1_abci, rec=a_rec, iostat=ioerror) (g_A_bci(1,bci_full), bci_full = 1, (wf%n_o)*(wf%n_v)**2)
+            ab_rec = index_two(a_full, b_full, wf%n_v)
 !
-!        Place the result into the incoming integral array (ab_ci)
+            read(unit_g_t1_abci, rec=ab_rec, iostat=ioerror) (g_AB_ci(1,ci_full), ci_full = 1, (wf%n_o)*(wf%n_v))
 !
-         do i = 1, length_i
-            do c = 1, length_c
+!           Place the result into the incoming integral array (ab_ci)
 !
-               ci = index_two(c, i, length_c)
+            do i = 1, length_i
+               do c = 1, length_c
 !
-               do b = 1, length_b
+                  ci = index_two(c, i, length_c)
 !
                   ab = index_two(a, b, length_a)
 !
-                  bci_full = index_three(b + index2_first - 1, & 
-                                         c + index3_first - 1, &
-                                         i + index4_first - 1, &
-                                         wf%n_v,               &
-                                         wf%n_v)
+                  ci_full = index_two(c + index3_first - 1,  &
+                                       i + index4_first - 1, &
+                                       wf%n_v)
 !
-                  x_vv_vo(ab, ci) = g_A_bci(1, bci_full)
+                  x_vv_vo(ab, ci) = g_AB_ci(1, ci_full)
 !
                enddo
             enddo
@@ -4772,7 +4779,7 @@ contains
 !
       enddo ! End of read loop over a 
 !
-      call deallocator(g_A_bci, 1, (wf%n_o)*(wf%n_v)**2)
+      call deallocator(g_AB_ci, 1, (wf%n_o)*(wf%n_v))
 !
       if (ioerror .ne. 0) write(unit_output,'(t3,a)') &
          'Error: read error in read_t1_vv_vo_electronic_repulsion_integrals_ccs'
