@@ -2,7 +2,7 @@ module calc_tasks_class
 !
 !!
 !!                       Calculation tasks class module                                 
-!!            Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017         
+!!            Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2017         
 !!
 !!    The procedures class is used for two purposes. Wavefunctions possess 
 !!    "implemented" and "tasks" objects, which are both instances of the class 
@@ -21,7 +21,7 @@ module calc_tasks_class
    use types
 !
 !  :::::::::::::::::::::::::::::::::::::::::::::::::
-!  -::- Definition of the calc_procedures class -::-
+!  -::- Definition of the calc_tasks class -::-
 !  :::::::::::::::::::::::::::::::::::::::::::::::::
 !
    type :: calc_tasks

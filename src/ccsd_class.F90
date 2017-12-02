@@ -77,13 +77,16 @@ module ccsd_class
       procedure :: calc_ampeqs_norm          => calc_ampeqs_norm_ccsd
       procedure :: new_amplitudes            => new_amplitudes_ccsd
       procedure :: calc_quasi_Newton_doubles => calc_quasi_Newton_doubles_ccsd
+      procedure :: ground_state_preparations => ground_state_preparations_ccsd
 !
 !     Helpers for excited state solver (see CCS for the rest)
 !
-      procedure :: calculate_orbital_differences => calculate_orbital_differences_ccsd
-      procedure :: transform_trial_vectors       => transform_trial_vectors_ccsd
-      procedure :: print_excitation_vector       => print_excitation_vector_ccsd
-      procedure :: excited_state_preparations    => excited_state_preparations_ccsd ! Storing g_vvvv and g_voov integrals to file
+      procedure :: calculate_orbital_differences      => calculate_orbital_differences_ccsd
+      procedure :: transform_trial_vectors            => transform_trial_vectors_ccsd
+      procedure :: print_excitation_vector            => print_excitation_vector_ccsd
+      procedure :: analyze_double_excitation_vector   => analyze_double_excitation_vector_ccsd
+      procedure :: summary_excited_state_info         => summary_excited_state_info_ccsd
+      procedure :: excited_state_preparations         => excited_state_preparations_ccsd ! Storing g_vvvv and g_voov integrals to file
 
 !
 !     Coupled cluster Jacobian transformation routine 
@@ -441,6 +444,15 @@ module ccsd_class
       end subroutine initialize_ground_state_ccsd
 !
 !
+      module subroutine ground_state_preparations_ccsd(wf)
+!!
+!!       Ground State Preparations (CCSD)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+         class(ccsd) :: wf 
+!
+      end subroutine ground_state_preparations_ccsd
+!
    end interface 
 !
 !
@@ -501,7 +513,6 @@ module ccsd_class
       end subroutine print_excitation_vector_ccsd
 !
 !
-
    module subroutine cvs_residual_projection_ccsd(wf, residual)
 !!
 !!    Residual projection (CCSD), 
@@ -526,6 +537,41 @@ module ccsd_class
          class(ccsd) :: wf 
 !
       end subroutine excited_state_preparations_ccsd
+!
+!
+      module subroutine analyze_double_excitation_vector_ccsd(wf, vec, n, sorted_short_vec, index_list)
+!!
+!!
+!!
+         implicit none
+!  
+         class(ccsd) :: wf
+!
+         real(dp), dimension(wf%n_t2am, 1) :: vec    
+!
+         integer(i15) :: a = 0, i = 0, ai = 0, b = 0, j = 0, bj = 0, aibj = 0, k = 0
+!
+         integer(i15) :: n    ! Number of elements wanted
+!  
+         real(dp), dimension(n, 1)    :: sorted_short_vec
+!  
+         integer(i15), dimension(n, 4) ::index_list
+!  
+      end subroutine analyze_double_excitation_vector_ccsd
+!
+!
+      module subroutine summary_excited_state_info_ccsd(wf, energies)
+!!
+!!
+!!
+         implicit none
+!  
+         class(ccsd) :: wf
+!
+         real(dp), dimension(wf%excited_state_specifications%n_singlet_states,1) :: energies
+!
+      end subroutine summary_excited_state_info_ccsd
+!
 !
    end interface 
 !
@@ -1393,9 +1439,21 @@ contains
 !
       class(ccsd) :: wf
 !
+      integer(i15) :: unit_input = -1
+!
 !     Set model name 
 !
       wf%name = 'CCSD'
+!
+!     Open input file eT.inp
+!
+      call generate_unit_identifier(unit_input)
+      open(unit=unit_input, file='eT.inp', status='old', form='formatted')
+      rewind(unit_input)
+!
+!     Read general specifications (memory and diskspace for calculation)
+!
+      call wf%general_specs_reader(unit_input)
 !
 !     Set implemented methods
 !
@@ -1405,6 +1463,14 @@ contains
       wf%implemented%ionized_state      = .true.
       wf%implemented%properties         = .true.
 !
+!     Read calculation tasks from input file eT.inp
+!     
+      call wf%calculation_reader(unit_input)
+!
+!     Close input file
+!
+      close(unit_input)
+!
 !     Read Hartree-Fock info from SIRIUS
 !
       call wf%read_hf_info
@@ -1412,12 +1478,6 @@ contains
 !     Read Cholesky AO integrals and transform to MO basis
 !
       call wf%read_transform_cholesky 
-!
-!     Test for the possibility of storing vir-vir-vir-vir
-!     electronic repulsion integrals (g_abcd), storing the
-!     integrals if possible
-!
-      call wf%store_vv_vv_electronic_repulsion
 !
 !     Initialize (singles and doubles) amplitudes
 !
@@ -1769,8 +1829,6 @@ contains
       endif
 !
    end subroutine read_double_amplitudes_ccsd
-!
-!
 !
 !
    subroutine jacobi_test_ccsd(wf)

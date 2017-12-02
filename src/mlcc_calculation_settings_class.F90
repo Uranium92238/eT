@@ -21,16 +21,6 @@ module mlcc_calculation_settings_class
    logical :: CCSD = .false.
    logical :: CC3  = .false.
 !
-!  Localization method used
-!
-   logical :: cholesky = .false.
-   logical :: cnto     = .false.
-!
-   real(dp) :: delta_o = 1.0D-07
-   real(dp) :: delta_v = 1.0D-07
-!
-!  Cholesky specific variables
-!
    contains
 !
    end type mlcc_calculation_settings                                                                             

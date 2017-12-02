@@ -47,8 +47,9 @@ contains
 !
       write(unit_output,'(t3,a)')    ':: Ionized state solver (Davidson)'
       write(unit_output,'(t3,a/)')   ':: E. F. Kjønstad, S. D. Folkestad, May 2017'
-      write(unit_output,'(t3,a,i3,a,a,a)') &
-                                     'Requested ',wf%tasks%n_singlet_states,' ', trim(wf%name), ' singlet states.'
+      write(unit_output,'(t3,a,i2,a,a,a)') &
+                                     'Requested ',wf%excited_state_specifications%n_singlet_states,&
+                                       ' ', trim(wf%name), ' singlet states.'
 !
 !     Set the response task 
 !
@@ -113,18 +114,18 @@ contains
 !
 !     Allocate array for the indices of the lowest orbital differences
 !
-      call allocator_int( index_lowest_obital_diff, wf%tasks%n_singlet_states, 1)
+      call allocator_int( index_lowest_obital_diff, wf%excited_state_specifications%n_singlet_states, 1)
       index_lowest_obital_diff = zero
 !
 !     Select start vectors corresponding to excitation from HOMO, HOMO - 1, ..., (HOMO - n_singlet_states + 1)
 !     to super diffuse MO
 !
-      do i = 1, wf%tasks%n_singlet_states
+      do i = 1, wf%excited_state_specifications%n_singlet_states
          j = index_two(diffuse_mo - wf%n_o, wf%n_o + 1 - i, wf%n_v)
          index_lowest_obital_diff(i, 1) = j
       enddo
 
-      do i = 1, wf%tasks%n_singlet_states
+      do i = 1, wf%excited_state_specifications%n_singlet_states
          write(unit_output,*)index_lowest_obital_diff(i, 1)
          write(unit_output,*)index_two(1,8, wf%n_v),index_two(1,7, wf%n_v)  
       enddo
@@ -139,7 +140,7 @@ contains
       open(unit=unit_trial_vecs, file='trial_vec', action='write', status='unknown', &
            access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror)
 !
-      do i = 1, (wf%tasks%n_singlet_states)
+      do i = 1, (wf%excited_state_specifications%n_singlet_states)
          c = zero
          c(index_lowest_obital_diff(i,1),1) = one
          write(unit_trial_vecs, rec=i, iostat=ioerror) (c(j,1), j = 1, wf%n_parameters)
@@ -155,7 +156,7 @@ contains
 !
 !     Deallocate index_lowest_obital_diff
 !
-      call deallocator_int(index_lowest_obital_diff, wf%tasks%n_singlet_states, 1)
+      call deallocator_int(index_lowest_obital_diff, wf%excited_state_specifications%n_singlet_states, 1)
 !
    end subroutine initialize_trial_vectors_valence_ionization_ccs
 !
@@ -184,7 +185,7 @@ contains
 !
 !     Sanity check - does number of states correspond to number of equivalent cores ?
 !
-      if (wf%tasks%n_cores .ne. wf%tasks%n_singlet_states) then
+      if (wf%core_excited_state_specifications%n_equivalent_cores .ne. wf%excited_state_specifications%n_singlet_states) then
          write(unit_output,*)'Error: Using super diffuse orbital for XPS calc only allows for one root per equivalent core.'
          stop
       endif
@@ -222,16 +223,17 @@ contains
 !
 !     Find core mo(s)
 !
-      call allocator_int(wf%tasks%index_core_mo, wf%tasks%n_cores, 1)
+      call allocator_int(wf%core_excited_state_specifications%index_core_mo,&
+                         wf%core_excited_state_specifications%n_equivalent_cores, 1)
 !
       call wf%find_core_mo
 
 !
 !     Select start vectors corresponding to excitation from CORE to super diffuse MO
 !
-      do i = 1, wf%tasks%n_cores
+      do i = 1, wf%core_excited_state_specifications%n_equivalent_cores
          c = zero
-         k = index_two(diffuse_mo - wf%n_o, wf%tasks%index_core_mo(i,1), wf%n_v)
+         k = index_two(diffuse_mo - wf%n_o, wf%core_excited_state_specifications%index_core_mo(i,1), wf%n_v)
          c(k,1) = one
          write(unit_trial_vecs, rec=i, iostat=ioerror) (c(j,1), j = 1, wf%n_parameters)
       enddo

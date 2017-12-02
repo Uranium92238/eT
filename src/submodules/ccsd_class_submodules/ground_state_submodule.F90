@@ -174,4 +174,22 @@ contains
    end subroutine initialize_ground_state_ccsd
 !
 !
+   module subroutine ground_state_preparations_ccsd(wf)
+!!
+!!    Ground State Preparations (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!    A routine for preparation tasks (if any). Can be overwritten
+!!    in descendants if other preparations prove necessary.    
+!!
+      class(ccsd) :: wf 
+!
+!     Test for the possibility of storing vir-vir-vir-vir
+!     electronic repulsion integrals (g_abcd), storing the
+!     integrals if possible
+!
+      call wf%store_vv_vv_electronic_repulsion
+!
+   end subroutine ground_state_preparations_ccsd
+
 end submodule ground_state 

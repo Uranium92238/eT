@@ -1,11 +1,17 @@
 set(eT_fortran_sources
+   src/calc_tasks_class.F90
+   src/calc_settings_class.F90
    src/tools/types.F90
    src/tools/workspace.F90
    src/tools/input_output.F90
    src/tools/input_reader.F90
    src/tools/utils.F90
-   src/calc_procedures_class.F90
-   src/calc_settings_class.F90
+   src/ground_state_specs_class.F90
+   src/excited_state_specs_class.F90
+   src/core_excited_state_specs_class.F90
+   src/response_calc_specs_class.F90
+   src/mlcc_calculation_settings_class.F90
+   src/mlcc_orbitals_class.F90
    src/hf_class.F90
    src/mp2_class.F90
    src/ccs_class.F90
@@ -15,7 +21,7 @@ set(eT_fortran_sources
    src/ccsdpt_class.F90
    src/mlcc2_class.F90
    src/mlccsd_class.F90
-   src/mlcc_calculation_settings_class.F90
+   src/submodules/ccs_class_submodules/input_reader_submodule.F90
    src/submodules/ccs_class_submodules/cholesky_submodule.F90
    src/submodules/ccs_class_submodules/ground_state_submodule.F90
    src/submodules/ccs_class_submodules/fock_submodule.F90
@@ -39,10 +45,12 @@ set(eT_fortran_sources
    src/submodules/cc3_class_submodules/omega_submodule.F90
    src/submodules/ccsdpt_class_submodules/ground_state_submodule.F90
    src/submodules/ccsdpt_class_submodules/omega_submodule.F90
+   src/submodules/mlcc2_class_submodules/input_reader_submodule.F90
    src/submodules/mlcc2_class_submodules/orbital_partitioning_submodule.F90
    src/submodules/mlcc2_class_submodules/omega_submodule.F90
    src/submodules/mlcc2_class_submodules/jacobian_submodule.F90
    src/submodules/mlcc2_class_submodules/excited_state_submodule.F90
+   src/submodules/mlccsd_class_submodules/input_reader_submodule.F90
    src/submodules/mlccsd_class_submodules/omega_submodule.F90
    src/submodules/mlccsd_class_submodules/orbital_partitioning_submodule.F90
    src/submodules/mlccsd_class_submodules/cholesky_submodule.F90

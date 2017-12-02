@@ -52,6 +52,8 @@ program eT_program
 !
    integer(i15) :: unit_input = -1
 !
+   character(len=13) :: orbital_level
+!
 !  ::::::::::::::::::::::::::::::::::::::::::::::
 !  -::-     Set up memory controller         -::- 
 !  ::::::::::::::::::::::::::::::::::::::::::::::
@@ -73,12 +75,6 @@ program eT_program
    write(unit_output,'(//t18,a)')  'eT - a coupled cluster program'
    write(unit_output,'(t15,a//)') 'S. D. Folkestad, E. F. Kjønstad, 2017'
 !
-!  ::::::::::::::::::::::::::::::::::::::::::::::
-!  -::-    Print banner for input section    -::- 
-!  ::::::::::::::::::::::::::::::::::::::::::::::
-!
-   write(unit_output,'(t3,a/)')   ':: Input reader'
-!
 !  Open input file
 !
    call generate_unit_identifier(unit_input)
@@ -94,9 +90,6 @@ program eT_program
 !  wf to this object.
 !
    call method_reader(unit_input, method)
-!
-   write(unit_output,'(t3,a,a,a)') 'Our wavefunction is of type ',trim(method),'.'
-   flush(unit_output)
 !
    if (trim(method) == 'MP2') then 
 !
@@ -132,13 +125,11 @@ program eT_program
 !
       allocate(mlcc2_wf)
       wf => mlcc2_wf
-      call mlcc_reader(unit_input, wf%mlcc_settings)
 !
    elseif (trim(method) == 'MLCCSD') then
 !
       allocate(mlccsd_wf)
       wf => mlccsd_wf
-      call mlcc_reader(unit_input, wf%mlcc_settings)
 !
    else
       write(unit_output,*) 'Method ', trim(method), ' not recognized.'
@@ -147,43 +138,45 @@ program eT_program
 !
    endif
 !
-!  :::::::::::::::::::::::::::::::::::::::::::::::::::
-!  -::- Reading calculation section of input file -::- 
-!  :::::::::::::::::::::::::::::::::::::::::::::::::::
+!! :::::::::::::::::::::::::::::::::::::::::::::::::::::
+!! -::- Reading general specs section of input file -::- 
+!! :::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
-!  Set calculation specifications
+!  call general_specs_reader(unit_input, wf%settings)
 !
-   call calculation_reader(unit_input, wf%tasks)
+!! :::::::::::::::::::::::::::::::::::::::::::::::::
+!! -::- Reading SCC specs section of input file -::- 
+!! :::::::::::::::::::::::::::::::::::::::::::::::::
 !
-   if (wf%tasks%ground_state)  write(unit_output,'(t3,a)')  'Ground state calculation requested.'
-   if (wf%tasks%excited_state) write(unit_output,'(t3,a)')  'Excited state calculation requested.' ! Dummy as of now 
-   if (wf%tasks%properties)    write(unit_output,'(t3,a)')  'Properties calculation requested.'    ! Dummy as of now
+!  call SCC_specs_reader(unit_input, wf%settings)
 !
-   flush(unit_output)
+!! :::::::::::::::::::::::::::::::::::::::::::::::::::
+!! -::- Reading calculation section of input file -::- 
+!! :::::::::::::::::::::::::::::::::::::::::::::::::::
 !
-!  ::::::::::::::::::::::::::::::::::::::::::::::::
-!  -::- Reading settings section of input file -::- 
-!  ::::::::::::::::::::::::::::::::::::::::::::::::
+!   call calculation_reader(unit_input, wf)
 !
-!  Set the calculation settings of the wavefunction
+
+ ! if (wf%tasks%excited_state) write(unit_output,'(t3,a)')  'Excited state calculation requested.' 
+ ! if (wf%tasks%properties)    write(unit_output,'(t3,a)')  'Properties calculation requested.'    
 !
-   call settings_reader(unit_input, wf%settings) 
+ ! flush(unit_output)
+
+! Close input file
 !
-!  Close input file
+  close(unit_input)
 !
-   close(unit_input)
+! :::::::::::::::::::::::::
+! -::- Run Calculation -::- 
+! :::::::::::::::::::::::::
 !
-!  :::::::::::::::::::::::::
-!  -::- Run Calculation -::- 
-!  :::::::::::::::::::::::::
+  call wf%init
+  call wf%drv
 !
-   call wf%init
-   call wf%drv
+! :::::::::::::::::::::::::::
+! -::- Close output file -::- 
+! :::::::::::::::::::::::::::
 !
-!  :::::::::::::::::::::::::::
-!  -::- Close output file -::- 
-!  :::::::::::::::::::::::::::
-!
-   close(unit_output)
+  close(unit_output)
 !
 end program eT_program

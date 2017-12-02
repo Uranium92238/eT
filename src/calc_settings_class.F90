@@ -17,14 +17,8 @@ module calc_settings_class
 !
    type :: calc_settings 
 !
-      real(dp) :: energy_threshold   = 1.0D-06 ! Threshold for energies 
-      real(dp) :: equation_threshold = 1.0D-06 ! Threshold for equation residuals
-!
-      integer(i15) :: ground_state_max_iterations = 50! Ground state maximum number of iterations 
-!
-      logical :: restart = .false.
-!
-      real(dp) :: disk_space = 100D0 ! 100 gigabytes; can be modified by user
+      real(dp) :: disk_space = 100D0      ! 100 gigabytes; can be modified by user
+      real(dp) :: memory     = 700000000  ! In words (= ca 5 gb) !! This should be hooked up to workspace!!
 !
       character(len=40) :: print_level = 'developer'
 !

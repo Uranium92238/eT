@@ -134,15 +134,13 @@ contains
 !
 !     Let the user know the ground state solver is running
 !
-      write(unit_output,'(/t3,a)')   ':: Ground state solver (DIIS)'
+      write(unit_output,'(//t3,a)')   ':: Ground state solver (DIIS)'
       write(unit_output,'(t3,a/)')   ':: S. D. Folkestad, E. F. Kjønstad, May 2017'
-      write(unit_output,'(t3,a,a,a)') &
-                                     'Requested the ground state for: ', trim(wf%name),'.'   
 !
-      write(unit_output,'(/t3,a/)')  'Settings for this calculation:'
+      write(unit_output,'(t3,a,a,a/)')  'Settings for ',trim(wf%name), ' ground state calculation:'
 !
-      write(unit_output,'(t6,a20,e9.2)') 'Energy threshold:',   wf%settings%energy_threshold
-      write(unit_output,'(t6,a20,e9.2)') 'Equation threshold:', wf%settings%equation_threshold
+      write(unit_output,'(t6,a20,e9.2)') 'Energy threshold:   ',   wf%ground_state_specifications%energy_threshold
+      write(unit_output,'(t6,a20,e9.2)') 'Residual threshold: ', wf%ground_state_specifications%residual_threshold
       flush(unit_output)
 !
 !     Initialize amplitudes & amplitude equations 
@@ -151,7 +149,7 @@ contains
 !
 !     If restart, read amplitudes from disk 
 !
-      if (wf%settings%restart) then 
+      if (wf%ground_state_specifications%restart) then 
 !
          write(unit_output,'(/t3,a)') 'Requested restart. Reading amplitudes from file.'
          call wf%read_amplitudes
@@ -186,7 +184,7 @@ contains
 !
       call cpu_time(start_gs_solver)
 !
-      do while ((.not. converged) .and. (iteration .le. wf%settings%ground_state_max_iterations))
+      do while ((.not. converged) .and. (iteration .le. wf%ground_state_specifications%max_iterations))
 !
 !        Save the previous energy 
 !
@@ -208,8 +206,8 @@ contains
 !
 !        Check for convergence of the energy and the amplitude equations
 !
-         converged_energy = abs(wf%energy-prev_energy) .lt. wf%settings%energy_threshold
-         converged_ampeqs = ampeqs_norm                .lt. wf%settings%equation_threshold
+         converged_energy = abs(wf%energy-prev_energy) .lt. wf%ground_state_specifications%energy_threshold
+         converged_ampeqs = ampeqs_norm                .lt. wf%ground_state_specifications%residual_threshold
 !
 !        Print information to output 
 !
@@ -223,7 +221,6 @@ contains
             converged = .true.
 !
             write(unit_output,'(/t3,a,i2,a/)')  'Converged in ', iteration, ' iterations!'
-            write(unit_output,'(t3,a27,f14.8)') 'Total energy (hartrees):', wf%energy
 !
          else
 !
@@ -244,7 +241,11 @@ contains
 !
       call cpu_time(end_gs_solver)
 !
-      write(unit_output,'(t3,a27,f14.8/)') 'Total time (seconds):', end_gs_solver - start_gs_solver
+!     Print summary
+!
+      write(unit_output,'(t3,a,a,a/)')'Summary of ', trim(wf%name), ' ground state calculation:'
+      write(unit_output,'(t6,a25,f14.8)')  'Total energy (hartrees):  ', wf%energy
+      write(unit_output,'(t6,a25,f14.8/)') 'Total time CPU (seconds): ', end_gs_solver - start_gs_solver
       flush(unit_output)
 !
 !     Save the amplitudes 

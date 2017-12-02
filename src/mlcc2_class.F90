@@ -16,6 +16,8 @@ module mlcc2_class
    use workspace
    use input_output
    use input_reader
+   use mlcc_orbitals_class
+   use mlcc_calculation_settings_class
 !
 !  The ancestor class module (CCS)
 !
@@ -31,6 +33,8 @@ module mlcc2_class
 !
 !     ML variables
 !
+      type(mlcc_calculation_settings)  :: mlcc_settings
+!
       integer(i15) :: n_CCS_o = 0
       integer(i15) :: n_CCS_v = 0
 !
@@ -43,12 +47,19 @@ module mlcc2_class
       integer(i15) :: first_CC2_o = 0
       integer(i15) :: first_CC2_v = 0
 !
+      type(mlcc_orbitals) :: CC2_orbitals
+!
 !     Excited state variables
 !
       integer(i15)                           :: n_x2am = 0 
       real(dp), dimension(:,:), allocatable  :: x2am 
 !
    contains
+!
+!     Reading eT.inp
+!
+      procedure :: mlcc_reader         => mlcc_reader_mlcc2
+      procedure :: read_orbital_info   => read_orbital_info_mlcc2
 !
 !     Initialization and driver routines
 !
@@ -64,9 +75,8 @@ module mlcc2_class
 !
       procedure :: cnto_orbital_drv                => cnto_orbital_drv_mlcc2
       procedure :: cc2_cnto_lower_level_method     => cc2_cnto_lower_level_method_mlcc2
-      procedure :: cc2_cnto_lower_level_method_cvs => cc2_cnto_lower_level_method_cvs_mlcc2
       procedure :: cc2_cnto_orbitals               => cc2_cnto_orbitals_mlcc2
-      procedure :: print_cnto_info                 => print_cnto_info_mlcc2
+      procedure :: print_orbital_info              => print_orbital_info_mlcc2
 !
 !     ML helper routines
 !
@@ -93,19 +103,22 @@ module mlcc2_class
 !
 !     Excited states
 !
+      procedure :: excited_state_preparations    => excited_state_preparations_mlcc2
       procedure :: initialize_excited_states     => initialize_excited_states_mlcc2
       procedure :: calculate_orbital_differences => calculate_orbital_differences_mlcc2
       procedure :: transform_trial_vectors       => transform_trial_vectors_mlcc2
       procedure :: cvs_residual_projection       => cvs_residual_projection_mlcc2 
+!
+      procedure :: analyze_double_excitation_vector   => analyze_double_excitation_vector_mlcc2
+      procedure :: summary_excited_state_info         => summary_excited_state_info_mlcc2
 !
       procedure :: print_excitation_vector => print_excitation_vector_mlcc2
 !
 !     Jacobian
 !
       procedure :: jacobian_mlcc2_transformation      => jacobian_mlcc2_transformation_mlcc2
-      procedure :: cvs_jacobian_mlcc2_transformation  => cvs_jacobian_mlcc2_transformation_mlcc2
 !
-      procedure :: cvs_rho_ai_bj_projection           => cvs_rho_ai_bj_projection_mlcc2
+      procedure :: cvs_rho_aibj_projection            => cvs_rho_aibj_projection_mlcc2
 !
       procedure :: jacobian_mlcc2_a1                  => jacobian_mlcc2_a1_mlcc2
       procedure :: jacobian_mlcc2_b1                  => jacobian_mlcc2_b1_mlcc2
@@ -113,6 +126,40 @@ module mlcc2_class
       procedure :: jacobian_mlcc2_b2                  => jacobian_mlcc2_b2_mlcc2
 !
    end type mlcc2
+!
+!
+   interface
+!
+!     -::- Input reader submodule interface -::-
+!     ::::::::::::::::::::::::::::::::::::::::::
+!
+      module subroutine mlcc_reader_mlcc2(wf, unit_input)
+!!
+!!
+!!
+         implicit none
+!
+         integer(i15)      :: unit_input
+!
+         class(mlcc2)      :: wf
+!
+      end subroutine mlcc_reader_mlcc2
+!
+!
+      module subroutine read_orbital_info_mlcc2(wf, unit_input)
+!!
+!!
+         implicit none
+!
+         integer(i15)      :: unit_input
+!
+         class(mlcc2)      :: wf
+!
+      end subroutine read_orbital_info_mlcc2
+!
+!
+   end interface
+!
 !
    interface
 !
@@ -230,41 +277,6 @@ module mlcc2_class
       end subroutine cholesky_orbital_constructor_mlcc2
 !
 !
-      module function get_number_of_active_atoms(unit_cholesky_decomp, ml_level)
-!!
-!!       Get number of active atoms
-!!       Written by Sarai D. Folkestad June 2017
-!! 
-!!       Reads cholesky.inp, and returns the number of atoms treated at ml_level of the CC hierarchy
-!!       in active space of question.
-!! 
-         implicit none
-!  
-         integer(i15)      :: get_number_of_active_atoms
-         integer(i15)      :: unit_cholesky_decomp
-         character(len=5)  :: ml_level
-!
-      end function get_number_of_active_atoms
-!
-      module subroutine get_active_atoms(unit_cholesky_decomp, active_atoms, n_active_atoms, ml_level)
-!!
-!!       Get active atoms
-!!       Written by Sarai D. Folkestad June 2017
-!!
-!!       Reads cholesky.inp, and returns the indices of the active atoms treated at ml_level of the CC hierarchy
-!!       in active space of question.
-!!
-         implicit none
-!
-         integer(i15)      :: unit_cholesky_decomp
-         integer(i15)      :: n_active_atoms
-         character(len=5)  :: ml_level
-!
-         integer(i15), dimension(n_active_atoms,1) :: active_atoms
-!
-      end subroutine get_active_atoms
-!
-!
       module subroutine construct_active_ao_index_list(active_ao_index_list, n_active_aos, active_atoms, &
                                                    n_active_atoms, ao_center_info, n_ao)
 !!
@@ -334,21 +346,6 @@ module mlcc2_class
       end subroutine cc2_cnto_lower_level_method_mlcc2
 !
 !
-      module subroutine cc2_cnto_lower_level_method_cvs_mlcc2(wf)
-!!
-!!       CNTO lower level calculation for CVS (MLCC2),
-!!       Written by Sarai D. Folkestad, June 2017.
-!!
-!!       Runs lower level method for CNTOs for CVS calculation
-!!
-
-         implicit none 
-!
-         class(mlcc2) :: wf
-!
-      end subroutine cc2_cnto_lower_level_method_cvs_mlcc2
-!
-!
       module subroutine cc2_cnto_orbitals_mlcc2(wf)
 !!
 !!       CNTO Oritals (MLCC2),
@@ -363,7 +360,7 @@ module mlcc2_class
       end subroutine cc2_cnto_orbitals_mlcc2
 !
 !
-      module subroutine print_cnto_info_mlcc2(wf)
+      module subroutine print_orbital_info_mlcc2(wf)
 !!
 !!       Print CNTO info, 
 !!       Written by Sarai D. Folkestad, Aug. 2017
@@ -374,7 +371,7 @@ module mlcc2_class
 !
          class(mlcc2) :: wf
 !
-      end subroutine print_cnto_info_mlcc2
+      end subroutine print_orbital_info_mlcc2
 !
 !
    end interface
@@ -443,7 +440,7 @@ module mlcc2_class
 !
       end subroutine construct_omega_mlcc2
 !
-      module subroutine get_s2am_mlcc2(wf, s_ia_jb, b_first, b_length)
+      module subroutine get_s2am_mlcc2(wf, s_ai_bj, b_first, b_length)
 !!
 !!       Get S_2 amplitudes, 
 !!       Written by Sarai D. Folkestad, July 2017 
@@ -459,7 +456,7 @@ module mlcc2_class
          class(mlcc2) :: wf
 ! 
          integer(i15) :: b_first, b_length
-         real(dp), dimension((wf%n_CC2_v)*(wf%n_CC2_o), b_length*(wf%n_CC2_o)) :: s_ia_jb
+         real(dp), dimension((wf%n_CC2_v)*(wf%n_CC2_o), b_length*(wf%n_CC2_o)) :: s_ai_bj
 !
       end subroutine get_s2am_mlcc2
 !
@@ -471,6 +468,21 @@ module mlcc2_class
 !
 !     -::- Excited state submodule interface -::-
 !     :::::::::::::::::::::::::::::::::::::::::::
+!
+!
+      module subroutine excited_state_preparations_mlcc2(wf)
+!!
+!!       Excited State Preparations (MLCC2)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!       A routine for preparation tasks (if any). Can be overwritten
+!!       in descendants if other preparations prove necessary.    
+!!
+         class(mlcc2) :: wf 
+!
+!        Do nothing for mlcc2
+!
+      end subroutine excited_state_preparations_mlcc2
 !
       module subroutine initialize_excited_states_mlcc2(wf)
 !!
@@ -557,6 +569,40 @@ module mlcc2_class
       end subroutine print_excitation_vector_mlcc2
 !
 !
+      module subroutine analyze_double_excitation_vector_mlcc2(wf, vec, n, sorted_short_vec, index_list)
+!!
+!!
+!!
+         implicit none
+!  
+         class(mlcc2) :: wf
+!
+         real(dp), dimension(wf%n_x2am, 1) :: vec    
+!
+         integer(i15) :: a = 0, i = 0, ai = 0, b = 0, j = 0, bj = 0, aibj = 0, k = 0
+!
+         integer(i15) :: n    ! Number of elements wanted
+!  
+         real(dp), dimension(n, 1)    :: sorted_short_vec
+!  
+         integer(i15), dimension(n, 4) ::index_list
+!
+      end subroutine analyze_double_excitation_vector_mlcc2
+!
+!
+      module subroutine summary_excited_state_info_mlcc2(wf, energies)
+!!
+!!
+!!
+         implicit none
+!  
+         class(mlcc2) :: wf
+!
+         real(dp), dimension(wf%excited_state_specifications%n_singlet_states,1) :: energies
+!
+      end subroutine summary_excited_state_info_mlcc2
+!
+!
    end interface
 !
 !
@@ -593,36 +639,6 @@ module mlcc2_class
          real(dp), dimension(wf%n_x2am, 1)   :: c_aibj ! c_aibj  
 !  
       end subroutine jacobian_mlcc2_transformation_mlcc2
-!
-!
-      module subroutine cvs_jacobian_mlcc2_transformation_mlcc2(wf, c_a_i, c_aibj)
-!!
-!!    Jacobian transformation (MLCC2)
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
-!!
-!!    Directs the transformation by the CCSD Jacobi matrix,
-!!
-!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >,
-!!
-!!    where the basis employed for the brackets is biorthonormal. 
-!!    The transformation is rho = A c, i.e., 
-!!
-!!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck 
-!!                  + 1/2 sum_ckdl A_mu,ckdl c_ckdl (1 + delta_ck,dl).
-!!
-!!    On exit, c is overwritten by rho. That is, c_a_i = rho_a_i,
-!!    and c_aibj = rho_aibj. 
-!!
-      implicit none
-!
-      class(mlcc2) :: wf 
-!
-!     Incoming vector c 
-!
-      real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai 
-      real(dp), dimension(wf%n_x2am, 1)   :: c_aibj ! c_aibj     
-!
-   end subroutine cvs_jacobian_mlcc2_transformation_mlcc2
 !
 !
       module subroutine jacobian_mlcc2_a1_mlcc2(wf, rho_a_i, c_a_i)
@@ -718,7 +734,7 @@ module mlcc2_class
       end subroutine jacobian_mlcc2_b2_mlcc2
 !
 !
-      module subroutine cvs_rho_ai_bj_projection_mlcc2(wf, vec_ai_bj)
+      module subroutine cvs_rho_aibj_projection_mlcc2(wf, vec_aibj)
 !!
 !!       Rho projection for CVS (MLCC2),
 !!       Written by Sarai D. Folkestad, Aug. 2017
@@ -726,9 +742,9 @@ module mlcc2_class
          implicit none
 !
          class(mlcc2) :: wf
-         real(dp), dimension(:, :) :: vec_ai_bj
+         real(dp), dimension(:, :) :: vec_aibj
 !
-      end subroutine cvs_rho_ai_bj_projection_mlcc2
+      end subroutine cvs_rho_aibj_projection_mlcc2
 !
 !
    end interface
@@ -748,9 +764,28 @@ contains
 !
       integer(i15) :: i, j
 !
+      integer(i15) :: unit_input = -1
+!
+      write(unit_output,'(//t3,a/)')    ':: Initialization' 
+!
+!
 !     Set model name 
 !
       wf%name = 'MLCC2'
+!
+!     Open input file eT.inp
+!
+      call generate_unit_identifier(unit_input)
+      open(unit=unit_input, file='eT.inp', status='old', form='formatted')
+      rewind(unit_input)
+!
+!     Read general specifications (memory and diskspace for calculation)
+!
+      call wf%general_specs_reader(unit_input)
+!
+!     Read MLCC info 
+!
+      call wf%mlcc_reader(unit_input)
 !
 !     MLCC sanity check
 !
@@ -764,6 +799,18 @@ contains
       wf%implemented%ground_state = .true.
       wf%implemented%excited_state = .true.
       wf%implemented%core_excited_state = .true.
+!
+!     Read calculation tasks from input file eT.inp
+!     
+      call wf%calculation_reader(unit_input)
+!
+!     Read orbital info 
+!
+      call wf%read_orbital_info(unit_input)
+!
+!     Close input file
+!
+      close(unit_input)
 !
 !     Read Hartree-Fock info
 !
@@ -779,7 +826,7 @@ contains
 !
 !        Do full space CC2 calculation
 !
-         write(unit_output,'(/t3,a50)')'Full CC2 requested, orbital partitioning skipped'
+         write(unit_output,'(/t3,a50/)')'Full CC2 requested, orbital partitioning skipped.'
 !
          wf%n_CC2_o = wf%n_o
          wf%n_CC2_v = wf%n_v
@@ -1131,7 +1178,7 @@ contains
       integer(i15) :: unit_x1am = -1 
       integer(i15) :: unit_x2am = -1 
 !
-      real(dp), dimension(:,:), allocatable :: s_ia_jb
+      real(dp), dimension(:,:), allocatable :: s_ai_bj
       real(dp), dimension(:,:), allocatable :: s2am
 !
       integer(i15) :: a = 0, i = 0, ai = 0, ia = 0, b = 0, j = 0, bj = 0, jb = 0
@@ -1153,8 +1200,8 @@ contains
 !
 !     Construct s2 amplitudes
 !
-      call allocator(s_ia_jb, (wf%n_CC2_v)*(wf%n_CC2_o), (wf%n_CC2_v)*(wf%n_CC2_o))
-      call wf%get_s2am(s_ia_jb, wf%first_CC2_v, wf%first_CC2_v + wf%n_CC2_v - 1)
+      call allocator(s_ai_bj, (wf%n_CC2_v)*(wf%n_CC2_o), (wf%n_CC2_v)*(wf%n_CC2_o))
+      call wf%get_s2am(s_ai_bj, wf%first_CC2_v, wf%first_CC2_v + wf%n_CC2_v - 1)
 !  
 !     Reorder and pack in
 !
@@ -1163,23 +1210,21 @@ contains
       do i = 1, wf%n_CC2_o
          do a = 1, wf%n_CC2_v
             ai = index_two(a, i, wf%n_CC2_v)
-            ia = index_two(i, a, wf%n_CC2_o)
             do j = 1, wf%n_CC2_o
                do b = 1, wf%n_CC2_v
 !
                   bj = index_two(b, j, wf%n_CC2_v)
-                  jb = index_two(j, b, wf%n_CC2_o)
 !
                   aibj = index_packed(ai, bj)
 !
-                  s2am(aibj, 1) = s_ia_jb(ia, jb)
+                  s2am(aibj, 1) = s_ai_bj(ai, bj)
 !
                enddo
             enddo
          enddo
       enddo
 !
-      call deallocator(s_ia_jb, (wf%n_CC2_v)*(wf%n_CC2_o), (wf%n_CC2_v)*(wf%n_CC2_o))
+      call deallocator(s_ai_bj, (wf%n_CC2_v)*(wf%n_CC2_o), (wf%n_CC2_v)*(wf%n_CC2_o))
 !
 !     Write s2 amplitudes 
 !

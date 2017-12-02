@@ -49,7 +49,7 @@ contains
 !
 !     Allocate array for the indices of the lowest orbital differences
 !
-      call allocator_int( index_core_obital, wf%tasks%n_singlet_states, 1)
+      call allocator_int( index_core_obital, wf%excited_state_specifications%n_singlet_states, 1)
       index_core_obital = zero
 !
 !     Find indecies of lowest orbital differences
@@ -66,7 +66,7 @@ contains
       open(unit=unit_trial_vecs, file='trial_vec', action='write', status='unknown', &
         access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror)
 !
-      do i = 1, (wf%tasks%n_singlet_states)
+      do i = 1, (wf%excited_state_specifications%n_singlet_states)
          c = zero
          c(index_core_obital(i,1),1) = one
          write(unit_trial_vecs, rec=i, iostat=ioerror) (c(j,1), j = 1, wf%n_parameters)
@@ -82,7 +82,7 @@ contains
 !
 !     Deallocate index_lowest_obital_diff
 !
-      call deallocator_int(index_core_obital, wf%tasks%n_singlet_states, 1)
+      call deallocator_int(index_core_obital, wf%excited_state_specifications%n_singlet_states, 1)
 !
    end subroutine initialize_trial_vectors_core_ccs
 !
@@ -96,7 +96,7 @@ contains
       implicit none
 !
       class(ccs) :: wf
-      integer(i15), dimension(wf%tasks%n_singlet_states,1), intent(inout) :: index_list
+      integer(i15), dimension(wf%excited_state_specifications%n_singlet_states,1), intent(inout) :: index_list
 !
       real(dp), dimension(:,:), allocatable     ::  sorted_short_vec
 !
@@ -104,20 +104,21 @@ contains
 !
 !     Find core mo(s)
 !
-      call allocator_int(wf%tasks%index_core_mo, wf%tasks%n_cores, 1)
+      call allocator_int(wf%core_excited_state_specifications%index_core_mo, &
+                           wf%core_excited_state_specifications%n_equivalent_cores, 1)
 !
       call wf%find_core_mo
 !
       counter = 1
       do a = 1, wf%n_v
-         if ( counter .le.  wf%tasks%n_singlet_states)  then
-            do i = 1, wf%tasks%n_cores
+         if ( counter .le.  wf%excited_state_specifications%n_singlet_states)  then
+            do i = 1, wf%core_excited_state_specifications%n_equivalent_cores
 !
-               index_list(counter, 1) = index_two(a, wf%tasks%index_core_mo(i, 1), wf%n_v)
+               index_list(counter, 1) = index_two(a, wf%core_excited_state_specifications%index_core_mo(i, 1), wf%n_v)
 !
                counter = counter + 1
 !
-               if ( counter .gt.  wf%tasks%n_singlet_states) exit
+               if ( counter .gt.  wf%excited_state_specifications%n_singlet_states) exit
 !
             enddo
          endif
@@ -153,19 +154,19 @@ contains
 !     Find number of aos on atoms that we are interested in
 !   
       n_aos_on_atoms = 0
-      do i = 1, wf%tasks%n_cores
-         n_aos_on_atoms = n_aos_on_atoms + n_ao_on_center(wf%tasks%cores(i,1),1)
+      do i = 1, wf%core_excited_state_specifications%n_equivalent_cores
+         n_aos_on_atoms = n_aos_on_atoms + n_ao_on_center(wf%core_excited_state_specifications%cores(i,1),1)
       enddo
 !
       call allocator_int(aos_on_atoms, n_aos_on_atoms, 1)
 !
-      write(unit_output,*)wf%tasks%n_cores, wf%tasks%cores(1,1)
+      write(unit_output,*)wf%core_excited_state_specifications%n_equivalent_cores, wf%core_excited_state_specifications%cores(1,1)
       flush(unit_output)
 !
       counter = 1    
-      do i = 1, wf%tasks%n_cores 
+      do i = 1, wf%core_excited_state_specifications%n_equivalent_cores 
          do j = 1, wf%n_ao
-            if (ao_center_info(j,1) == wf%tasks%cores(i,1)) then
+            if (ao_center_info(j,1) == wf%core_excited_state_specifications%cores(i,1)) then
 !
                aos_on_atoms(counter,1) = ao_center_info(j,2)
                counter = counter + 1  
@@ -178,7 +179,7 @@ contains
 !
 !     :: Find core mo that has large ao component on the atom in question ::
 !
-      wf%tasks%index_core_mo = zero
+      wf%core_excited_state_specifications%index_core_mo = zero
       counter = 0
 !
       do ao = 1, n_aos_on_atoms
@@ -197,8 +198,8 @@ contains
                if(abs(wf%mo_coef(ao_mo_index, 1)) .gt. 0.5d0) then
                   counter = counter + 1
 !
-                  if (counter .le. wf%tasks%n_cores) then
-                     wf%tasks%index_core_mo(counter, 1) = mo
+                  if (counter .le. wf%core_excited_state_specifications%n_equivalent_cores) then
+                     wf%core_excited_state_specifications%index_core_mo(counter, 1) = mo
                   endif
 !
                      
@@ -216,9 +217,9 @@ contains
 !
 !     Sanity check
 !
-      do core = 1, wf%tasks%n_cores
-         if (wf%tasks%index_core_mo(core, 1) .eq. 0) then
-            write(unit_output,*)'WARNING: Found no core orbitals for core', wf%tasks%cores(core, 1)
+      do core = 1, wf%core_excited_state_specifications%n_equivalent_cores
+         if (wf%core_excited_state_specifications%index_core_mo(core, 1) .eq. 0) then
+            write(unit_output,*)'WARNING: Found no core orbitals for core', wf%core_excited_state_specifications%cores(core, 1)
             stop
          endif
       enddo
@@ -278,9 +279,9 @@ contains
       do i = 1, wf%n_o
 !
          core_orbital = .false.
-         do core = 1, wf%tasks%n_cores
+         do core = 1, wf%core_excited_state_specifications%n_equivalent_cores
 !
-            if (i .eq. wf%tasks%index_core_mo(core, 1)) core_orbital = .true.
+            if (i .eq. wf%core_excited_state_specifications%index_core_mo(core, 1)) core_orbital = .true.
 !
          enddo
 !
@@ -316,9 +317,9 @@ contains
 !
          core_orbital = .false.
 !
-         do core = 1, wf%tasks%n_cores
+         do core = 1, wf%core_excited_state_specifications%n_equivalent_cores
 !
-            if (i .eq. wf%tasks%index_core_mo(core, 1)) core_orbital = .true.
+            if (i .eq. wf%core_excited_state_specifications%index_core_mo(core, 1)) core_orbital = .true.
 !
          enddo
 !
