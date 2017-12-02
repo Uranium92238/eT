@@ -3131,25 +3131,10 @@ contains
 !
 !     Form g_jb_ld = g_jbld 
 !
-      call allocator(L_jb_J, (wf%n_o)*(wf%n_v), wf%n_J)
-      call wf%get_cholesky_ia(L_jb_J)
-!
       call allocator(g_jb_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      call dgemm('N','T',            &
-                  (wf%n_o)*(wf%n_v), & 
-                  (wf%n_o)*(wf%n_v), &
-                  wf%n_J,            &
-                  one,               &
-                  L_jb_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  L_jb_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  g_jb_ld,           &
-                  (wf%n_o)*(wf%n_v))
-!
-      call deallocator(L_jb_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      integral_type = 'electronic_repulsion'
+      call wf%get_ov_ov(integral_type, g_jb_ld)
 !
 !     Form L_dl_bj = L_jbld = 2 * g_jbld - g_jdlb
 !                           = 2 * g_jb_ld(jb,ld) - g_jb_ld(jd,lb)
@@ -3280,25 +3265,11 @@ contains
 !
 !     Form g_kc_jd = g_kcjd
 !
-      call allocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
-      call wf%get_cholesky_ia(L_kc_J)
 !
       call allocator(g_kc_jd, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      call dgemm('N','T',            &
-                  (wf%n_o)*(wf%n_v), & 
-                  (wf%n_o)*(wf%n_v), &
-                  wf%n_J,            &
-                  one,               &
-                  L_kc_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  L_kc_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  g_kc_jd,           &
-                  (wf%n_o)*(wf%n_v))
-!
-      call deallocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      integral_type = 'electronic_repulsion'
+      call wf%get_ov_ov(integral_type, g_kc_jd)
 !
 !     Form L_j_ckd = L_kcjd = 2 * g_kcjd - g_kdjc
 !                           = 2 * g_kc_jd(kc,jd) - g_kc_jd(kd,jc)
