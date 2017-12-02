@@ -151,7 +151,7 @@ contains
 !
 !        Allocate solution vector 
 !
-         call allocator(solution_vector_reduced, reduced_dim, 1)
+         call wf%mem%alloc(solution_vector_reduced, reduced_dim, 1)
          solution_vector_reduced = zero 
 !
 !        Transform new trial vector (rho_i = A c_i for new trials i)
@@ -166,7 +166,7 @@ contains
 !
          call wf%construct_next_response_trial_vectors(solution_vector_reduced, reduced_dim, n_new_trials)
 !
-         call deallocator(solution_vector_reduced, reduced_dim, 1)
+         call wf%mem%dealloc(solution_vector_reduced, reduced_dim, 1)
 !
          if (converged) then 
 !
@@ -232,7 +232,7 @@ contains
       open(unit=unit_grad_vec, file='gradient_vec', action='read', status='unknown', &
            access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
 !
-      call allocator(gradient_vector, wf%n_parameters, 1)
+      call wf%mem%alloc(gradient_vector, wf%n_parameters, 1)
       gradient_vector = zero 
 !
       read(unit_grad_vec, rec=1, iostat=ioerror) gradient_vector
@@ -242,7 +242,7 @@ contains
 !
 !     Calculate the orbital differences
 !
-      call allocator(orbital_diff, wf%n_parameters, 1)
+      call wf%mem%alloc(orbital_diff, wf%n_parameters, 1)
       orbital_diff = zero 
 !
       call wf%calculate_orbital_differences(orbital_diff)
@@ -260,8 +260,8 @@ contains
       write(unit_resp_trial_vecs, rec=1, iostat=ioerror) & 
                            (gradient_vector(I,1), I = 1, wf%n_parameters)
 !
-      call deallocator(gradient_vector, wf%n_parameters, 1)
-      call deallocator(orbital_diff, wf%n_parameters, 1)
+      call wf%mem%dealloc(gradient_vector, wf%n_parameters, 1)
+      call wf%mem%dealloc(orbital_diff, wf%n_parameters, 1)
 !
 !     Close response trial vectors file
 !
@@ -295,8 +295,8 @@ contains
 !
 !     Allocate the reduced Jacobi matrix & the reduced gradient vector
 !
-      call allocator(A_reduced, reduced_dim, reduced_dim)
-      call allocator(F_reduced, reduced_dim, 1)
+      call wf%mem%alloc(A_reduced, reduced_dim, reduced_dim)
+      call wf%mem%alloc(F_reduced, reduced_dim, 1)
 !
       A_reduced = zero 
       F_reduced = zero 
@@ -311,7 +311,7 @@ contains
 !     Note: on exit, the solution is in the F_reduced vector,
 !     provided info = 0 (see LAPACK documentation for more)
 !
-      call allocator_int(ipiv, reduced_dim, 1)
+      call wf%mem%alloc_int(ipiv, reduced_dim, 1)
       ipiv = 0
 !
       info = 0
@@ -338,8 +338,8 @@ contains
 !
 !     Deallocations the reduced Jacobi matrix & the reduced gradient vector
 !
-      call deallocator(A_reduced, reduced_dim, reduced_dim)
-      call deallocator(F_reduced, reduced_dim, 1)
+      call wf%mem%dealloc(A_reduced, reduced_dim, reduced_dim)
+      call wf%mem%dealloc(F_reduced, reduced_dim, 1)
 !
    end subroutine solve_reduced_response_equation_ccs
 !
@@ -363,7 +363,7 @@ contains
 !
 !     Allocate and construct the gradient vector 
 !
-      call allocator(gradient_vector, wf%n_parameters, 1)
+      call wf%mem%alloc(gradient_vector, wf%n_parameters, 1)
       gradient_vector = zero 
 !
       if (wf%tasks%multipliers) then 
@@ -387,7 +387,7 @@ contains
 !     Write gradient vector to file and deallocate
 !
       write(unit_grad_vec, rec=1, iostat=ioerror) gradient_vector
-      call deallocator(gradient_vector, wf%n_parameters, 1)
+      call wf%mem%dealloc(gradient_vector, wf%n_parameters, 1)
 !
 !     Close file 
 !
@@ -457,8 +457,8 @@ contains
 !
 !     Allocate trial (c) and transformed trial (rho) vectors 
 !
-      call allocator(c_i, wf%n_parameters, 1)
-      call allocator(rho_j, wf%n_parameters, 1)
+      call wf%mem%alloc(c_i, wf%n_parameters, 1)
+      call wf%mem%alloc(rho_j, wf%n_parameters, 1)
 !
       c_i   = zero
       rho_j = zero
@@ -585,12 +585,12 @@ contains
 !
 !     Allocate trial (c) vector
 !
-      call allocator(c_i, wf%n_parameters, 1)
+      call wf%mem%alloc(c_i, wf%n_parameters, 1)
       c_i = zero
 !
 !     Allocate and read gradient vector (F)
 !
-      call allocator(F, wf%n_parameters, 1)
+      call wf%mem%alloc(F, wf%n_parameters, 1)
       F = zero
 !
 !     Read gradient vector 
@@ -703,10 +703,10 @@ contains
 !
 !     Construct full space solution vector X 
 !
-      call allocator(solution_vector, wf%n_parameters, 1)
+      call wf%mem%alloc(solution_vector, wf%n_parameters, 1)
       solution_vector = zero 
 !
-      call allocator(c_i, wf%n_parameters, 1)
+      call wf%mem%alloc(c_i, wf%n_parameters, 1)
 !
       do trial = 1, reduced_dim
 !
@@ -718,7 +718,7 @@ contains
 !
       enddo
 !
-      call deallocator(c_i, wf%n_parameters, 1)
+      call wf%mem%dealloc(c_i, wf%n_parameters, 1)
 !
 !     Calculate the norm of the solution vector & deallocate 
 !
@@ -726,10 +726,10 @@ contains
 !
 !     Construct A X and place into residual R 
 !
-      call allocator(residual, wf%n_parameters, 1)
+      call wf%mem%alloc(residual, wf%n_parameters, 1)
       residual = zero 
 !
-      call allocator(rho_i, wf%n_parameters, 1)
+      call wf%mem%alloc(rho_i, wf%n_parameters, 1)
 !
       do trial = 1, reduced_dim
 !
@@ -743,7 +743,7 @@ contains
 !
 !     Read the gradient vector from disk 
 !
-      call allocator(gradient_vector, wf%n_parameters, 1)
+      call wf%mem%alloc(gradient_vector, wf%n_parameters, 1)
       gradient_vector = zero 
 !
       call generate_unit_identifier(unit_grad_vec)
@@ -758,7 +758,7 @@ contains
 !
       call daxpy(wf%n_parameters, -one, gradient_vector, 1, residual, 1)
 !
-      call deallocator(gradient_vector, wf%n_parameters, 1)
+      call wf%mem%dealloc(gradient_vector, wf%n_parameters, 1)
 !
 !     Calculate the norm of the residual (|| A X - F || / || X ||)
 !     and print to output 
@@ -784,7 +784,7 @@ contains
 !
 !     Precondition the residual by inverse orbital energy differences
 !
-      call allocator(orbital_diff, wf%n_parameters, 1)
+      call wf%mem%alloc(orbital_diff, wf%n_parameters, 1)
       orbital_diff = zero
 !
       call wf%calculate_orbital_differences(orbital_diff)
@@ -795,13 +795,13 @@ contains
 !
       enddo
 !
-      call deallocator(orbital_diff, wf%n_parameters, 1)
+      call wf%mem%dealloc(orbital_diff, wf%n_parameters, 1)
 !
 !     Orthogonalize the residual against other trials vectors 
 !
       call dscal(wf%n_parameters, one/norm_residual, residual, 1) ! Normalize residual 
 !
-      call allocator(c_i, wf%n_parameters, 1)
+      call wf%mem%alloc(c_i, wf%n_parameters, 1)
 !
 !     prod_i (I - c_i*c_i^T)*Res = prod_i (Res - c_i*c_i^T*Res)
 !
@@ -815,7 +815,7 @@ contains
 !
       enddo
 !
-      call deallocator(c_i, wf%n_parameters, 1)
+      call wf%mem%dealloc(c_i, wf%n_parameters, 1)
 !
       n_new_trials = 0
 !
@@ -846,8 +846,8 @@ contains
 !
       reduced_dim = reduced_dim + n_new_trials
 !
-      call deallocator(residual, wf%n_parameters, 1)
-      call deallocator(solution_vector, wf%n_parameters, 1)
+      call wf%mem%dealloc(residual, wf%n_parameters, 1)
+      call wf%mem%dealloc(solution_vector, wf%n_parameters, 1)
 !
    end subroutine construct_next_response_trial_vectors_ccs
 !

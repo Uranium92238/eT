@@ -42,7 +42,7 @@ contains
 !
 !     Allocate the transformed vector 
 !
-      call allocator(sigma_a_i, wf%n_v, wf%n_o)
+      call wf%mem%alloc(sigma_a_i, wf%n_v, wf%n_o)
       sigma_a_i = zero 
 !
 !     Calculate and add the CCS contributions 
@@ -56,7 +56,7 @@ contains
 !
 !     Deallocate the transformed vector 
 !
-      call deallocator(sigma_a_i, wf%n_v, wf%n_o)
+      call wf%mem%dealloc(sigma_a_i, wf%n_v, wf%n_o)
 !
    end subroutine jacobian_transpose_ccs_transformation_ccs
 !
@@ -149,14 +149,14 @@ contains
 !
 !     Form the integral g_ck_ia = g_ckia  
 !
-      call allocator(g_ck_ia, (wf%n_v)*(wf%n_o), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(g_ck_ia, (wf%n_v)*(wf%n_o), (wf%n_o)*(wf%n_v))
 !
       integral_type = 'electronic_repulsion'
       call wf%get_vo_ov(integral_type, g_ck_ia)
 !
 !     :: Form L_ai_ck = L_ckia in batches over a ::
 !
-      call allocator(L_ai_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      call wf%mem%alloc(L_ai_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
       L_ai_ck = zero
 !
 !     Prepare for batching over index a
@@ -183,7 +183,7 @@ contains
 !
 !        Form g_ca_ik
 !
-         call allocator(g_ca_ik, (wf%n_v)*a_length, (wf%n_o)**2)
+         call wf%mem%alloc(g_ca_ik, (wf%n_v)*a_length, (wf%n_o)**2)
 !
          integral_type = 'electronic_repulsion'
          call wf%get_vv_oo(integral_type, &
@@ -222,11 +222,11 @@ contains
             enddo
          enddo
 !
-         call deallocator(g_ca_ik, (wf%n_v)*a_length, (wf%n_o)**2)
+         call wf%mem%dealloc(g_ca_ik, (wf%n_v)*a_length, (wf%n_o)**2)
 !
       enddo ! End of batches over a 
 !
-      call deallocator(g_ck_ia, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(g_ck_ia, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     Add sum_ck L_ckia b_ck = sum_ck L_ai_ck b_ck 
 !
@@ -243,7 +243,7 @@ contains
                   sigma_a_i,         & ! "sigma_ai"
                   (wf%n_v)*(wf%n_o))
 !
-      call deallocator(L_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(L_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine jacobian_transpose_ccs_b1_ccs
 !

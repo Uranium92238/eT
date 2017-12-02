@@ -318,8 +318,8 @@ contains
 !
 !     Allocate Δ t_i and t_i + Δ t_i vectors 
 ! 
-      call allocator(dt, wf%n_parameters, 1)
-      call allocator(t_dt, wf%n_parameters, 1)
+      call wf%mem%alloc(dt, wf%n_parameters, 1)
+      call wf%mem%alloc(t_dt, wf%n_parameters, 1)
 !
       dt   = zero 
       t_dt = zero 
@@ -344,8 +344,8 @@ contains
 !
 !     Deallocate vectors 
 !
-      call deallocator(dt, wf%n_parameters, 1)
-      call deallocator(t_dt, wf%n_parameters, 1)
+      call wf%mem%dealloc(dt, wf%n_parameters, 1)
+      call wf%mem%dealloc(t_dt, wf%n_parameters, 1)
 !
    end subroutine new_amplitudes_ccs
 !
@@ -445,12 +445,12 @@ contains
 !
 !     First set the DIIS vector to one 
 !
-      call allocator(diis_vector,current_index+1,1)
+      call wf%mem%alloc(diis_vector,current_index+1,1)
       diis_vector = zero 
 !
 !     Allocate the DIIS matrix and read in previous matrix elements
 !
-      call allocator(diis_matrix, current_index+1, current_index+1)
+      call wf%mem%alloc(diis_matrix, current_index+1, current_index+1)
       diis_matrix = zero 
 !
       if (current_index .gt. 1) then 
@@ -470,7 +470,7 @@ contains
 !     Get the parts of the DIIS matrix G not constructed in 
 !     the previous iterations 
 !
-      call allocator(dt_i, wf%n_parameters, 1) ! Allocate temporary holder of quasi-Newton estimates
+      call wf%mem%alloc(dt_i, wf%n_parameters, 1) ! Allocate temporary holder of quasi-Newton estimates
       dt_i = zero 
 !
       rewind(unit_dt)
@@ -536,9 +536,9 @@ contains
 !
 !     Deallocations 
 !
-      call deallocator(dt_i, wf%n_parameters, 1)
-      call deallocator(diis_vector, current_index + 1, 1)
-      call deallocator(diis_matrix, current_index + 1, current_index+1)
+      call wf%mem%dealloc(dt_i, wf%n_parameters, 1)
+      call wf%mem%dealloc(diis_vector, current_index + 1, 1)
+      call wf%mem%dealloc(diis_matrix, current_index + 1, current_index+1)
 !
    end subroutine diis_ccs
 !

@@ -1312,12 +1312,12 @@ contains
 !     Allocate the doubles amplitudes and set to zero
 !
       wf%n_t1am = (wf%n_o)*(wf%n_v)
-      if (.not. allocated(wf%t1am)) call allocator(wf%t1am, wf%n_v, wf%n_o)
+      if (.not. allocated(wf%t1am)) call wf%mem%alloc(wf%t1am, wf%n_v, wf%n_o)
       wf%t1am = zero
 !
       wf%n_t2am = ((wf%n_CCSD_v)*(wf%n_CCSD_o))*((wf%n_CCSD_v )*(wf%n_CCSD_o)+1)/2
 !
-      if (.not. allocated(wf%t2am)) call allocator(wf%t2am, wf%n_t2am, 1)
+      if (.not. allocated(wf%t2am)) call wf%mem%alloc(wf%t2am, wf%n_t2am, 1)
       wf%t2am = zero
 !
    end subroutine initialize_amplitudes_mlccsd
@@ -1359,8 +1359,8 @@ contains
 !
 !     Allocate L_ia_J and g_ia_jb
 !
-      call allocator(L_ai_J, (n_active_o)*(n_active_v), wf%n_J)
-      call allocator(g_ai_bj, (n_active_o)*(n_active_v), (n_active_o)*(n_active_v))
+      call wf%mem%alloc(L_ai_J, (n_active_o)*(n_active_v), wf%n_J)
+      call wf%mem%alloc(g_ai_bj, (n_active_o)*(n_active_v), (n_active_o)*(n_active_v))
 !
       L_ai_J = zero
       g_ai_bj = zero
@@ -1416,8 +1416,8 @@ contains
 !
 !     Deallocations
 !
-      call deallocator(L_ai_J, (n_active_o)*(n_active_v), wf%n_J)
-      call deallocator(g_ai_bj, (n_active_o)*(n_active_v), (n_active_o)*(n_active_v)) 
+      call wf%mem%dealloc(L_ai_J, (n_active_o)*(n_active_v), wf%n_J)
+      call wf%mem%dealloc(g_ai_bj, (n_active_o)*(n_active_v), (n_active_o)*(n_active_v)) 
 !
    end subroutine construct_perturbative_doubles_mlccsd
 !
@@ -1538,7 +1538,7 @@ contains
 !
 !     Allocate the Cholesky vector L_ia_J = L_ia^J and set to zero 
 !
-      call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call wf%mem%alloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
       L_ia_J = zero
 !
 !     Get the Cholesky vector L_ia_J 
@@ -1547,7 +1547,7 @@ contains
 !
 !     Allocate g_ia_jb = g_iajb and set it to zero
 !
-      call allocator(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       g_ia_jb = zero
 !
 !     Calculate the integrals g_ia_jb from the Cholesky vector L_ia_J 
@@ -1567,7 +1567,7 @@ contains
 !
 !     Deallocate the Cholesky vector L_ia_J 
 !
-      call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call wf%mem%dealloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
 !     Set the initial value of the energy 
 !
@@ -1608,7 +1608,7 @@ contains
       call wf%get_CCSD_active_indices(first_active_o, first_active_v)
       call wf%get_CC2_n_active(n_active_o, n_active_v)
 !
-      call allocator(x_ia_jb, n_active_v*n_active_o, n_active_v*n_active_o)
+      call wf%mem%alloc(x_ia_jb, n_active_v*n_active_o, n_active_v*n_active_o)
       call wf%get_mlccsd_x2am(x_ia_jb)
 !
       do i = 1, n_active_o
@@ -1642,8 +1642,8 @@ contains
 !
 !     Deallocate g_ia_jb
 !
-      call deallocator(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call deallocator(x_ia_jb, n_active_v*n_active_o, n_active_v*n_active_o)
+      call wf%mem%dealloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(x_ia_jb, n_active_v*n_active_o, n_active_v*n_active_o)
 !
    end subroutine calc_energy_mlccsd
 !
@@ -1655,7 +1655,7 @@ contains
 !
       class(mlccsd) :: wf
 !
-      if (.not. allocated(wf%mo_coef_cc2_ccs)) call allocator(wf%mo_coef_cc2_ccs, wf%n_ao, wf%n_mo)
+      if (.not. allocated(wf%mo_coef_cc2_ccs)) call wf%mem%alloc(wf%mo_coef_cc2_ccs, wf%n_ao, wf%n_mo)
       wf%mo_coef_cc2_ccs = zero
 !
    end subroutine construct_orbital_coef_CC2_CCS_mlccsd
@@ -1668,7 +1668,7 @@ contains
 !
       class(mlccsd) :: wf
 !
-      if (allocated(wf%mo_coef_cc2_ccs)) call deallocator(wf%mo_coef_cc2_ccs, wf%n_ao, wf%n_mo)
+      if (allocated(wf%mo_coef_cc2_ccs)) call wf%mem%dealloc(wf%mo_coef_cc2_ccs, wf%n_ao, wf%n_mo)
 !
    end subroutine destruct_orbital_coef_CC2_CCS_mlccsd
 !
@@ -1680,7 +1680,7 @@ contains
 !
       class(mlccsd) :: wf
 !
-      if (.not. allocated(wf%fock_diagonal_cc2_ccs)) call allocator(wf%fock_diagonal_cc2_ccs, wf%n_mo, 1)
+      if (.not. allocated(wf%fock_diagonal_cc2_ccs)) call wf%mem%alloc(wf%fock_diagonal_cc2_ccs, wf%n_mo, 1)
       wf%mo_coef_cc2_ccs = zero
 !
    end subroutine construct_orbital_energy_CC2_CCS_mlccsd
@@ -1692,7 +1692,7 @@ contains
 !
       class(mlccsd) :: wf
 !
-      if (allocated(wf%fock_diagonal_cc2_ccs)) call deallocator(wf%fock_diagonal_cc2_ccs, wf%n_mo, 1)
+      if (allocated(wf%fock_diagonal_cc2_ccs)) call wf%mem%dealloc(wf%fock_diagonal_cc2_ccs, wf%n_mo, 1)
 !
    end subroutine destruct_orbital_energy_CC2_CCS_mlccsd
 !
@@ -1704,7 +1704,7 @@ contains
 !
       class(mlccsd) :: wf
 !
-      if (allocated(wf%t2am)) call deallocator(wf%t2am, wf%n_t2am, 1)
+      if (allocated(wf%t2am)) call wf%mem%dealloc(wf%t2am, wf%n_t2am, 1)
 !
    end subroutine destruct_double_amplitudes_mlccsd
 !
@@ -1765,12 +1765,12 @@ contains
       call wf%get_CC2_n_active(n_active_o, n_active_v)
       wf%n_x2am = (n_active_v)*(n_active_o)*((n_active_v)*(n_active_o)+1)/2
 !
-      call allocator(x_ia_jb, (n_active_v)*(n_active_o), (n_active_v)*(n_active_o)) 
+      call wf%mem%alloc(x_ia_jb, (n_active_v)*(n_active_o), (n_active_v)*(n_active_o)) 
       call wf%get_mlccsd_x2am(x_ia_jb)
 !
 !     Reorder and pack in
 !
-      call allocator(wf%x2am, wf%n_x2am, 1)
+      call wf%mem%alloc(wf%x2am, wf%n_x2am, 1)
 !
       do i = 1, n_active_o
          do a = 1, n_active_v
@@ -1791,10 +1791,10 @@ contains
          enddo
       enddo
 !
-      call deallocator(x_ia_jb, (n_active_v)*(n_active_o), (n_active_v)*(n_active_o)) 
+      call wf%mem%dealloc(x_ia_jb, (n_active_v)*(n_active_o), (n_active_v)*(n_active_o)) 
 !
       write(unit_x2am) wf%x2am
-      call deallocator(wf%x2am, wf%n_x2am, 1)
+      call wf%mem%dealloc(wf%x2am, wf%n_x2am, 1)
 !
 !     Close amplitude files
 !
@@ -1855,7 +1855,7 @@ contains
          call wf%get_CC2_n_active(n_active_o, n_active_v)
          wf%n_x2am = (n_active_v)*(n_active_o)*((n_active_v)*(n_active_o)+1)/2
 !
-         if (.not. allocated(wf%x2am)) call allocator(wf%x2am, wf%n_x2am, 1)
+         if (.not. allocated(wf%x2am)) call wf%mem%alloc(wf%x2am, wf%n_x2am, 1)
 !
          read(unit_x2am) wf%x2am
 !
@@ -1906,7 +1906,7 @@ contains
          call wf%get_CCSD_n_active(n_active_o, n_active_v)
          wf%n_t2am = (n_active_v)*(n_active_o)*((n_active_v)*(n_active_o)+1)/2
 !
-         if (.not. allocated(wf%t2am)) call allocator(wf%t2am, wf%n_t2am, 1)
+         if (.not. allocated(wf%t2am)) call wf%mem%alloc(wf%t2am, wf%n_t2am, 1)
 !
          read(unit_t2am) wf%t2am
 !

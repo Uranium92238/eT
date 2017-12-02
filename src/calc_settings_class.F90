@@ -18,7 +18,7 @@ module calc_settings_class
    type :: calc_settings 
 !
       real(dp) :: disk_space = 100D0      ! 100 gigabytes; can be modified by user
-      real(dp) :: memory     = 700000000  ! In words (= ca 5 gb) !! This should be hooked up to workspace!!
+   !   real(dp) :: memory     = 700000000  ! In words (= ca 5 gb) !! This should be hooked up to workspace!!
 !
       character(len=40) :: print_level = 'developer'
 !

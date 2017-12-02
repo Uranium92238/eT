@@ -157,14 +157,15 @@ contains
 !
 !     Initialize (singles and doubles) amplitudes
 !
-      call wf%initialize_amplitudes
-!
-!     Set the number of parameters in the wavefunction
-!     (that are solved for in the ground and excited state solvers) 
+      wf%n_t1am = (wf%n_o)*(wf%n_v) 
+      wf%n_t2am = (wf%n_t1am)*(wf%n_t1am + 1)/2 
 !
       wf%n_parameters = wf%n_t1am + wf%n_t2am
 !
 !     Initialize the Fock matrix (allocate and construct given the initial amplitudes)
+!
+      if (.not. allocated(wf%t1am)) call wf%mem%alloc(wf%t1am, wf%n_v, wf%n_o)
+      wf%t1am = zero
 !
       call wf%initialize_fock_matrix
 !
@@ -222,7 +223,7 @@ contains
 !
 !     :: Calculate the v vector ::
 !
-      call allocator(v_ai, wf%n_v, wf%n_o)
+      call wf%mem%alloc(v_ai, wf%n_v, wf%n_o)
 !
 !     Write to disk the integrals needed for calculation of v
 !
@@ -240,10 +241,10 @@ contains
       wf%omega1 = zero        ! Will hold the singles part of W, 
                               ! arising from the E1 term 
 !
-      call allocator(t_abc, (wf%n_v)**3, 1)
+      call wf%mem%alloc(t_abc, (wf%n_v)**3, 1)
       t_abc = zero
 !
-      call allocator(v_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      call wf%mem%alloc(v_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
       v_ai_bj = zero 
 !
       do i = 1, wf%n_o
@@ -276,14 +277,14 @@ contains
 !
 !     Deallocate the triples amplitude 
 !
-      call deallocator(t_abc, (wf%n_v)**3, 1)
+      call wf%mem%dealloc(t_abc, (wf%n_v)**3, 1)
 !
 !     Calculate the u vector 
 !
-      call allocator(u_ai, wf%n_v, wf%n_o)
+      call wf%mem%alloc(u_ai, wf%n_v, wf%n_o)
       u_ai = zero 
 !
-      call allocator(u_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      call wf%mem%alloc(u_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
       u_ai_bj = zero 
 !
       call daxpy((wf%n_o)*(wf%n_v), two, wf%t1am, 1, u_ai, 1) ! u_ai = 2 * t_ai 
@@ -329,11 +330,11 @@ contains
 !
 !     Deallocations 
 !
-      call deallocator(u_ai, wf%n_v, wf%n_o)
-      call deallocator(u_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      call wf%mem%dealloc(u_ai, wf%n_v, wf%n_o)
+      call wf%mem%dealloc(u_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
-      call deallocator(v_ai, wf%n_v, wf%n_o)
-      call deallocator(v_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      call wf%mem%dealloc(v_ai, wf%n_v, wf%n_o)
+      call wf%mem%dealloc(v_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
       end subroutine calc_energy_correction_ccsdpt
 !

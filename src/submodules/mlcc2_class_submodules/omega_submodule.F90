@@ -183,10 +183,10 @@ contains
 !
 !        u_ij^bc = 2*s_ij^bc - s_ij^cb =  (2*g_ij^bc - g_ij^cb)/ε_ij^cb
 !
-         call allocator(s_bi_cj, (n_active_o)*(n_active_v), (n_active_o)*c_length )
+         call wf%mem%alloc(s_bi_cj, (n_active_o)*(n_active_v), (n_active_o)*c_length )
          call wf%get_s2am(s_bi_cj, c_first, c_length)
 !
-         call allocator(u_bjc_i, n_active_v*n_active_o*c_length, n_active_o)
+         call wf%mem%alloc(u_bjc_i, n_active_v*n_active_o*c_length, n_active_o)
 !
          do b = 1, n_active_v
             do i = 1, n_active_o
@@ -209,7 +209,7 @@ contains
             enddo
          enddo
 !         
-         call deallocator(s_bi_cj, (n_active_o)*(n_active_v), (n_active_o)*c_length)
+         call wf%mem%dealloc(s_bi_cj, (n_active_o)*(n_active_v), (n_active_o)*c_length)
 !
 !        Prepare for batching over A
 !
@@ -227,7 +227,7 @@ contains
 !
 !           :: Construct integral g_Ab,jc ::
 !
-            call allocator(g_Ab_jc, n_active_v*a_length, n_active_o*c_length)
+            call wf%mem%alloc(g_Ab_jc, n_active_v*a_length, n_active_o*c_length)
 ! 
             integral_type = 'electronic_repulsion'
             call wf%get_vv_ov(integral_type, g_Ab_jc, &
@@ -251,11 +251,11 @@ contains
                         wf%omega1(A_first,1),               &
                         wf%n_v)
 ! 
-            call deallocator(g_Ab_jc, n_active_v*a_length, n_active_o*c_length)
+            call wf%mem%dealloc(g_Ab_jc, n_active_v*a_length, n_active_o*c_length)
 !
          enddo ! Batching over a
 !
-         call deallocator(u_bjc_i, n_active_v*n_active_o*c_length, n_active_o)
+         call wf%mem%dealloc(u_bjc_i, n_active_v*n_active_o*c_length, n_active_o)
 !
          if (c_last .eq. last_active_v) exit ! exit loop over c; This is necessary because n_active_v may be less than n_v
 !
@@ -353,10 +353,10 @@ contains
 !  
 !        u_jk^ab = 2*s_jk^ab - s_jk^ba  (place in u_a_jkb)        
 !  
-         call allocator(s_aj_bk, (n_active_o)*n_active_v, (n_active_o)*b_length)
+         call wf%mem%alloc(s_aj_bk, (n_active_o)*n_active_v, (n_active_o)*b_length)
          call wf%get_s2am(s_aj_bk, b_first, b_length)
 !
-         call allocator(u_a_kbj, n_active_v, (n_active_o**2)*b_length)
+         call wf%mem%alloc(u_a_kbj, n_active_v, (n_active_o**2)*b_length)
 
          do k = 1, n_active_o
             do b = 1, b_length         
@@ -381,11 +381,11 @@ contains
             enddo
          enddo
 !
-         call deallocator(s_aj_bk, (n_active_o)*(n_active_v), (n_active_o)*(b_length))
+         call wf%mem%dealloc(s_aj_bk, (n_active_o)*(n_active_v), (n_active_o)*(b_length))
 !
 !        :: - sum_bjk u_ja_kb * g_kb_jI ::
 !
-         call allocator(g_kb_jI, n_active_o*b_length, n_active_o*(wf%n_o) )
+         call wf%mem%alloc(g_kb_jI, n_active_o*b_length, n_active_o*(wf%n_o) )
 !
          integral_type = 'electronic_repulsion'
          call wf%get_ov_oo(integral_type, g_kb_jI,        &
@@ -409,7 +409,7 @@ contains
                      wf%omega1(first_active_v, 1),   &
                      (wf%n_v))
 !
-         call deallocator(g_kb_jI, n_active_o*b_length, n_active_o*(wf%n_o))
+         call wf%mem%dealloc(g_kb_jI, n_active_o*b_length, n_active_o*(wf%n_o))
 !
 !        :: sum_jb F_jb u_ij^ab ::
 !
@@ -438,7 +438,7 @@ contains
             enddo
          enddo
 ! 
-         call deallocator(u_a_kbj, n_active_v, (n_active_o**2)*b_length)
+         call wf%mem%dealloc(u_a_kbj, n_active_v, (n_active_o**2)*b_length)
 !
       enddo 
 !      
@@ -483,7 +483,7 @@ contains
       last_active_o = first_active_o + n_active_o - 1
       last_active_v = first_active_v + n_active_v - 1
 !
-      call allocator(g_ai_bj, (n_active_o)*(n_active_v), (n_active_o)*b_length)
+      call wf%mem%alloc(g_ai_bj, (n_active_o)*(n_active_v), (n_active_o)*b_length)
 !
       integral_type = 'electronic_repulsion'
       call wf%get_vo_vo(integral_type, g_ai_bj,          &
@@ -513,7 +513,7 @@ contains
             enddo
          enddo
 !
-      call deallocator(g_ai_bj, (n_active_o)*(n_active_v), (n_active_o)*b_length)
+      call wf%mem%dealloc(g_ai_bj, (n_active_o)*(n_active_v), (n_active_o)*b_length)
 !
    end subroutine get_s2am_mlcc2
 !

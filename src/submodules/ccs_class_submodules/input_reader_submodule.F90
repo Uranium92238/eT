@@ -73,9 +73,9 @@ contains
 !
                      read(unit_input,*) memory
 !
-!                    Converting from gb to words
+!                    Initialize memory object for the specified memory 
 !
-                     wf%settings%memory = memory*134500000
+                     call wf%mem%init(memory)
 !
                      cycle
 !
@@ -413,7 +413,8 @@ contains
 !
             endif
 !
-            call allocator_int(wf%excited_state_specifications%start_vectors, wf%excited_state_specifications%n_singlet_states, 1)
+            call wf%mem%alloc_int(wf%excited_state_specifications%start_vectors, &
+                                  wf%excited_state_specifications%n_singlet_states, 1)
 !
             read(unit_input, *) wf%excited_state_specifications%start_vectors
             cycle
@@ -464,7 +465,7 @@ contains
                         stop
                      endif
 !
-                     call allocator_int(wf%core_excited_state_specifications%cores, &
+                     call wf%mem%alloc_int(wf%core_excited_state_specifications%cores, &
                                        wf%core_excited_state_specifications%n_equivalent_cores, 1)
 !
                      read(unit_input,*) wf%core_excited_state_specifications%cores
