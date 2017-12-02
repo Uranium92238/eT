@@ -114,7 +114,7 @@ contains
 !
 !     Allocate array for the indices of the lowest orbital differences
 !
-      call allocator_int( index_lowest_obital_diff, wf%excited_state_specifications%n_singlet_states, 1)
+      call wf%mem%alloc_int( index_lowest_obital_diff, wf%excited_state_specifications%n_singlet_states, 1)
       index_lowest_obital_diff = zero
 !
 !     Select start vectors corresponding to excitation from HOMO, HOMO - 1, ..., (HOMO - n_singlet_states + 1)
@@ -132,7 +132,7 @@ contains
 !
 !     Generate start trial vectors c and write to file
 !
-      call allocator(c, wf%n_parameters, 1)
+      call wf%mem%alloc(c, wf%n_parameters, 1)
 !
 !     Prepare for writing trial vectors to file
 !
@@ -152,11 +152,11 @@ contains
 !
 !     Deallocate c
 !
-      call deallocator(c, wf%n_parameters, 1)
+      call wf%mem%dealloc(c, wf%n_parameters, 1)
 !
 !     Deallocate index_lowest_obital_diff
 !
-      call deallocator_int(index_lowest_obital_diff, wf%excited_state_specifications%n_singlet_states, 1)
+      call wf%mem%dealloc_int(index_lowest_obital_diff, wf%excited_state_specifications%n_singlet_states, 1)
 !
    end subroutine initialize_trial_vectors_valence_ionization_ccs
 !
@@ -213,7 +213,7 @@ contains
 !
 !     Generate start trial vectors c and write to file
 !
-      call allocator(c, wf%n_parameters, 1)
+      call wf%mem%alloc(c, wf%n_parameters, 1)
 !
 !     Prepare for writing trial vectors to file
 !
@@ -223,7 +223,7 @@ contains
 !
 !     Find core mo(s)
 !
-      call allocator_int(wf%core_excited_state_specifications%index_core_mo,&
+      call wf%mem%alloc_int(wf%core_excited_state_specifications%index_core_mo,&
                          wf%core_excited_state_specifications%n_equivalent_cores, 1)
 !
       call wf%find_core_mo
@@ -244,7 +244,7 @@ contains
 !
 !     Deallocate c
 !
-      call deallocator(c, wf%n_parameters, 1)
+      call wf%mem%dealloc(c, wf%n_parameters, 1)
 !
    end subroutine initialize_trial_vectors_core_ionization_ccs
 !
@@ -268,7 +268,7 @@ contains
 !  
       call wf%ionization_residual_projection(residual)
 !
-      call allocator(orbital_diff, wf%n_parameters, 1)
+      call wf%mem%alloc(orbital_diff, wf%n_parameters, 1)
       orbital_diff = zero
 !
       call wf%calculate_orbital_differences(orbital_diff)
@@ -279,7 +279,7 @@ contains
 !
       enddo
 !
-      call deallocator(orbital_diff, wf%n_parameters, 1)
+      call wf%mem%dealloc(orbital_diff, wf%n_parameters, 1)
 !
    end subroutine precondition_residual_valence_ionization_ccs
 !
@@ -401,7 +401,7 @@ contains
 !
 !     Preconditioning by dividing with orbital differences
 !
-      call allocator(orbital_diff, wf%n_parameters, 1)
+      call wf%mem%alloc(orbital_diff, wf%n_parameters, 1)
       orbital_diff = zero
 !
       call wf%calculate_orbital_differences(orbital_diff)
@@ -412,7 +412,7 @@ contains
 !
       enddo
 !
-      call deallocator(orbital_diff, wf%n_parameters, 1)
+      call wf%mem%dealloc(orbital_diff, wf%n_parameters, 1)
 !
    end subroutine precondition_residual_core_ionization_ccs
 !

@@ -100,7 +100,7 @@ contains
 !
 !     Store voov-electronic repulsion integrals to file if there is space
 !
-      call allocator(wf%t1am, wf%n_v, wf%n_o)
+      call wf%mem%alloc(wf%t1am, wf%n_v, wf%n_o)
       call wf%read_single_amplitudes
 !
       call wf%store_t1_vo_ov_electronic_repulsion
@@ -220,10 +220,10 @@ contains
 !
 !     Allocate and initialize eigenvalue arrays
 !
-      call allocator(eigenvalues_Im_old, wf%excited_state_specifications%n_singlet_states, 1)
-      call allocator(eigenvalues_Re_old, wf%excited_state_specifications%n_singlet_states, 1)
-      call allocator(eigenvalues_Im_new, wf%excited_state_specifications%n_singlet_states, 1)
-      call allocator(eigenvalues_Re_new, wf%excited_state_specifications%n_singlet_states, 1)
+      call wf%mem%alloc(eigenvalues_Im_old, wf%excited_state_specifications%n_singlet_states, 1)
+      call wf%mem%alloc(eigenvalues_Re_old, wf%excited_state_specifications%n_singlet_states, 1)
+      call wf%mem%alloc(eigenvalues_Im_new, wf%excited_state_specifications%n_singlet_states, 1)
+      call wf%mem%alloc(eigenvalues_Re_new, wf%excited_state_specifications%n_singlet_states, 1)
 !
       eigenvalues_Im_old = zero
       eigenvalues_Re_old = zero
@@ -248,7 +248,7 @@ contains
 !
 !        Allocate solution vectors for reduced problem
 !
-         call allocator(solution_vectors_reduced, reduced_dim, wf%excited_state_specifications%n_singlet_states)
+         call wf%mem%alloc(solution_vectors_reduced, reduced_dim, wf%excited_state_specifications%n_singlet_states)
          solution_vectors_reduced = zero
 !
 !        Solve the reduced eigenvalue problem
@@ -295,7 +295,7 @@ contains
             iteration = iteration + 1
          endif
 !
-         call deallocator(solution_vectors_reduced, reduced_dim, wf%excited_state_specifications%n_singlet_states)
+         call wf%mem%dealloc(solution_vectors_reduced, reduced_dim, wf%excited_state_specifications%n_singlet_states)
 !
       enddo ! End of iterative loop 
 !
@@ -343,10 +343,10 @@ contains
 !
 !     Final deallocations
 !
-      call deallocator(eigenvalues_Im_old, reduced_dim, 1)
-      call deallocator(eigenvalues_Re_old, reduced_dim, 1)
-      call deallocator(eigenvalues_Im_new, reduced_dim, 1)
-      call deallocator(eigenvalues_Re_new, reduced_dim, 1)
+      call wf%mem%dealloc(eigenvalues_Im_old, reduced_dim, 1)
+      call wf%mem%dealloc(eigenvalues_Re_old, reduced_dim, 1)
+      call wf%mem%dealloc(eigenvalues_Im_new, reduced_dim, 1)
+      call wf%mem%dealloc(eigenvalues_Re_new, reduced_dim, 1)
 !
    end subroutine excited_state_solver_ccs
 !
@@ -390,7 +390,7 @@ contains
 !
       integer :: info = -1 
 !
-      call allocator(A_red, reduced_dim, reduced_dim)
+      call wf%mem%alloc(A_red, reduced_dim, reduced_dim)
       A_red = zero
 !
 !     -::- Prepare to solve the eigenvalue problem -::-
@@ -424,8 +424,8 @@ contains
 !
 !     Allocate c and rho
 !
-      call allocator(c_i, wf%n_parameters, 1)
-      call allocator(rho_j, wf%n_parameters, 1)
+      call wf%mem%alloc(c_i, wf%n_parameters, 1)
+      call wf%mem%alloc(rho_j, wf%n_parameters, 1)
       c_i   = zero
       rho_j = zero
 !
@@ -473,8 +473,8 @@ contains
 !
       endif
 !
-      call deallocator(c_i, wf%n_parameters, 1)
-      call deallocator(rho_j, wf%n_parameters, 1)
+      call wf%mem%dealloc(c_i, wf%n_parameters, 1)
+      call wf%mem%dealloc(rho_j, wf%n_parameters, 1)
 !
 !     Close files for trial vectors and transformed vectors
 !
@@ -494,15 +494,15 @@ contains
 !
 !     Allocate arrays for eigenvalues and eigenvectors
 !
-      call allocator(solution_vectors_reduced_all, reduced_dim, reduced_dim)
+      call wf%mem%alloc(solution_vectors_reduced_all, reduced_dim, reduced_dim)
       solution_vectors_reduced_all = zero
 !
-      call allocator(eigenvalues_Re_all, reduced_dim, 1)
-      call allocator(eigenvalues_Im_all, reduced_dim, 1)
+      call wf%mem%alloc(eigenvalues_Re_all, reduced_dim, 1)
+      call wf%mem%alloc(eigenvalues_Im_all, reduced_dim, 1)
       eigenvalues_Re_all = zero
       eigenvalues_Im_all = zero
 !
-      call allocator(work, 4*reduced_dim, 1)
+      call wf%mem%alloc(work, 4*reduced_dim, 1)
       work = zero
 !
 !     Solve reduced eigenvalue problem
@@ -527,16 +527,16 @@ contains
          stop
       endif
 !
-      call deallocator(work, 4*reduced_dim, 1)
+      call wf%mem%dealloc(work, 4*reduced_dim, 1)
 !
 !     Deallocate reduced Jacobi matrix
 !
-      call deallocator(A_red, reduced_dim, reduced_dim)
+      call wf%mem%dealloc(A_red, reduced_dim, reduced_dim)
 !
 !     Find lowest eigenvalues and sort them (the corresponding indices
 !     are placed in the integer array index_list)
 !
-      call allocator_int(index_list, wf%excited_state_specifications%n_singlet_states, 1)
+      call wf%mem%alloc_int(index_list, wf%excited_state_specifications%n_singlet_states, 1)
       index_list = 0
 !
       call get_n_lowest(wf%excited_state_specifications%n_singlet_states,&
@@ -555,11 +555,11 @@ contains
 !
 !     Final deallocatons
 !
-      call deallocator(solution_vectors_reduced_all, reduced_dim, reduced_dim)
-      call deallocator(eigenvalues_Im_all, reduced_dim, 1)
-      call deallocator(eigenvalues_Re_all, reduced_dim, 1)
+      call wf%mem%dealloc(solution_vectors_reduced_all, reduced_dim, reduced_dim)
+      call wf%mem%dealloc(eigenvalues_Im_all, reduced_dim, 1)
+      call wf%mem%dealloc(eigenvalues_Re_all, reduced_dim, 1)
 !
-      call deallocator_int(index_list,wf%excited_state_specifications%n_singlet_states,1)
+      call wf%mem%dealloc_int(index_list,wf%excited_state_specifications%n_singlet_states,1)
 !
    end subroutine solve_reduced_eigenvalue_equation_ccs
 !
@@ -643,7 +643,7 @@ contains
       access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
       if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file'
 !
-      call allocator(residual, wf%n_parameters, 1)
+      call wf%mem%alloc(residual, wf%n_parameters, 1)
 !
       n_new_trials = 0
       converged_residual = .true.
@@ -659,10 +659,10 @@ contains
 !
 !        :: Create fullspace vector X and calculate norm ||X|| ::
 !
-         call allocator(solution_vector, wf%n_parameters, 1)
+         call wf%mem%alloc(solution_vector, wf%n_parameters, 1)
          solution_vector = zero
 !
-         call allocator(c_i, wf%n_parameters, 1)
+         call wf%mem%alloc(c_i, wf%n_parameters, 1)
 !
 !        Calculate X_j = sum_i x_j_i * c_i (for the root j)
 !
@@ -676,7 +676,7 @@ contains
 !
          enddo
 !
-         call deallocator(c_i, wf%n_parameters, 1)
+         call wf%mem%dealloc(c_i, wf%n_parameters, 1)
 !
 !        Calculate norm of solution vector
 !
@@ -691,7 +691,7 @@ contains
 !
          call dcopy(wf%n_parameters, solution_vector, 1, residual, 1) ! R = X 
 !        
-         call deallocator(solution_vector, wf%n_parameters, 1)
+         call wf%mem%dealloc(solution_vector, wf%n_parameters, 1)
 !
 !        Residual = AX - eX
 !
@@ -701,7 +701,7 @@ contains
 !
 !        + AX : 
 !
-         call allocator(rho_i, wf%n_parameters, 1)
+         call wf%mem%alloc(rho_i, wf%n_parameters, 1)
 !
          do trial = 1, reduced_dim
 !
@@ -713,7 +713,7 @@ contains
 !
          enddo
 !
-         call deallocator(rho_i, wf%n_parameters, 1)
+         call wf%mem%dealloc(rho_i, wf%n_parameters, 1)
 !
 !        Calculate norm of residual || AX - eX ||
 !
@@ -748,7 +748,7 @@ contains
 !
 !        Orthogonalize new trial vector (the residual) against old trial vectors
 !
-         call allocator(c_i, wf%n_parameters, 1)
+         call wf%mem%alloc(c_i, wf%n_parameters, 1)
 !
 !        prod_i (I - c_i*c_i^T)*Res = prod_i (Res - c_i*c_i^T*Res)
 !
@@ -763,7 +763,7 @@ contains
 !
          enddo
 !
-         call deallocator(c_i, wf%n_parameters, 1)
+         call wf%mem%dealloc(c_i, wf%n_parameters, 1)
 !
 !        Calculate norm of residual
 !
@@ -793,7 +793,7 @@ contains
 !
       reduced_dim = reduced_dim + n_new_trials
 !
-      call deallocator(residual, wf%n_parameters, 1)
+      call wf%mem%dealloc(residual, wf%n_parameters, 1)
 !
       write(unit_output,'(t3,a)') '-------------------------------------------------------------------'
 !
@@ -894,7 +894,7 @@ contains
 !
 !     Allocate array for the indices of the lowest orbital differences
 !
-      call allocator_int( index_lowest_obital_diff, wf%excited_state_specifications%n_singlet_states, 1)
+      call wf%mem%alloc_int( index_lowest_obital_diff, wf%excited_state_specifications%n_singlet_states, 1)
       index_lowest_obital_diff = zero
 
 !
@@ -904,7 +904,7 @@ contains
 !
 !     Generate start trial vectors c and write to file
 !
-      call allocator(c, wf%n_parameters, 1)
+      call wf%mem%alloc(c, wf%n_parameters, 1)
 !
 !     Prepare for writing trial vectors to file
 !
@@ -924,11 +924,11 @@ contains
 !
 !     Deallocate c
 !
-      call deallocator(c, wf%n_parameters, 1)
+      call wf%mem%dealloc(c, wf%n_parameters, 1)
 !
 !     Deallocate index_lowest_obital_diff
 !
-      call deallocator_int( index_lowest_obital_diff, wf%excited_state_specifications%n_singlet_states, 1)
+      call wf%mem%dealloc_int( index_lowest_obital_diff, wf%excited_state_specifications%n_singlet_states, 1)
 !
       end subroutine initialize_trial_vectors_valence_ccs
 !
@@ -982,7 +982,7 @@ contains
 !
 !     Allocate c_i
 !
-      call allocator(c_i, wf%n_parameters, 1)
+      call wf%mem%alloc(c_i, wf%n_parameters, 1)
       c_i = zero
 !
       i = 1
@@ -1010,7 +1010,7 @@ contains
 !
 !     Deallocate c_i 
 !
-      call deallocator(c_i, wf%n_parameters, 1)
+      call wf%mem%dealloc(c_i, wf%n_parameters, 1)
 !
 !     Close solution file
 !
@@ -1018,8 +1018,8 @@ contains
 !
 !     Allocate c_i and c_j
 !
-      call allocator(c_i, wf%n_parameters, 1)
-      call allocator(c_j, wf%n_parameters, 1)
+      call wf%mem%alloc(c_i, wf%n_parameters, 1)
+      call wf%mem%alloc(c_j, wf%n_parameters, 1)
       c_i = zero
       c_j = zero
 !
@@ -1042,8 +1042,8 @@ contains
          write(unit_trial_vecs, rec = i)c_i
       enddo
 !  
-      call deallocator(c_i, wf%n_parameters, 1)
-      call deallocator(c_j, wf%n_parameters, 1)  
+      call wf%mem%dealloc(c_i, wf%n_parameters, 1)
+      call wf%mem%dealloc(c_j, wf%n_parameters, 1)  
 !
 !     Close trial vector file
 !
@@ -1083,7 +1083,7 @@ contains
 !
 !        Allocate orbital_diff
 !
-         call allocator(orbital_diff,wf%n_parameters,1)
+         call wf%mem%alloc(orbital_diff,wf%n_parameters,1)
          orbital_diff = zero
 !
 !        Calculate orbital differences
@@ -1092,16 +1092,16 @@ contains
 !
 !        Finding lowest orbital differences
 !
-         call allocator(lowest_orbital_diff, wf%excited_state_specifications%n_singlet_states, 1)
+         call wf%mem%alloc(lowest_orbital_diff, wf%excited_state_specifications%n_singlet_states, 1)
 !        
          lowest_orbital_diff = zero
 !
          call get_n_lowest(wf%excited_state_specifications%n_singlet_states,&
                  wf%n_parameters, orbital_diff, lowest_orbital_diff, index_list)
 !
-         call deallocator(orbital_diff,wf%n_parameters,1)
+         call wf%mem%dealloc(orbital_diff,wf%n_parameters,1)
 !
-         call deallocator(lowest_orbital_diff, wf%excited_state_specifications%n_singlet_states, 1)
+         call wf%mem%dealloc(lowest_orbital_diff, wf%excited_state_specifications%n_singlet_states, 1)
 !
       endif
 !
@@ -1153,7 +1153,7 @@ contains
 !
 !     Allocate c_a_i
 !
-      call allocator(c_a_i, wf%n_v, wf%n_o)
+      call wf%mem%alloc(c_a_i, wf%n_v, wf%n_o)
       c_a_i = zero 
 !
 !     Open trial vector and transformed vector files
@@ -1246,7 +1246,7 @@ contains
 !
 !     Deallocate c_a_i
 !
-      call deallocator(c_a_i, wf%n_v, wf%n_o)
+      call wf%mem%dealloc(c_a_i, wf%n_v, wf%n_o)
 !
    end subroutine transform_trial_vectors_ccs
 !
@@ -1322,7 +1322,7 @@ contains
 !
          real(dp), dimension(:,:), allocatable :: orbital_diff
 !   
-         call allocator(orbital_diff, wf%n_parameters, 1)
+         call wf%mem%alloc(orbital_diff, wf%n_parameters, 1)
          orbital_diff = zero
 !
          call wf%calculate_orbital_differences(orbital_diff)
@@ -1333,7 +1333,7 @@ contains
 !
          enddo
 !
-         call deallocator(orbital_diff, wf%n_parameters, 1)
+         call wf%mem%dealloc(orbital_diff, wf%n_parameters, 1)
 !
       end subroutine precondition_residual_valence_ccs
 !
@@ -1371,7 +1371,7 @@ contains
 !
          if (ioerror .ne. 0) write(unit_output,*) 'Error while opening excited_state_information file'
 
-         call allocator(solution, wf%n_parameters, 1)
+         call wf%mem%alloc(solution, wf%n_parameters, 1)
          do state = 1, wf%excited_state_specifications%n_singlet_states
 !  
             solution = zero
@@ -1384,7 +1384,7 @@ contains
 !  
          enddo
 !
-         call deallocator(solution, wf%n_parameters,1) 
+         call wf%mem%dealloc(solution, wf%n_parameters,1) 
 !
          close(unit_solution)
          close(unit_es_info)
@@ -1550,9 +1550,9 @@ contains
 !
          if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file'
 
-         call allocator(solution, wf%n_parameters, 1)
-         call allocator_int(index_list, 20, 2)
-         call allocator(sorted_max_vec, 20, 1)
+         call wf%mem%alloc(solution, wf%n_parameters, 1)
+         call wf%mem%alloc_int(index_list, 20, 2)
+         call wf%mem%alloc(sorted_max_vec, 20, 1)
 !
          do state = 1, wf%excited_state_specifications%n_singlet_states
 !
@@ -1589,9 +1589,9 @@ contains
 !  
          enddo
 !
-         call deallocator(solution, wf%n_parameters,1) 
-         call deallocator_int(index_list, 20, 2)
-         call deallocator(sorted_max_vec, 20, 1)
+         call wf%mem%dealloc(solution, wf%n_parameters,1) 
+         call wf%mem%dealloc_int(index_list, 20, 2)
+         call wf%mem%dealloc(sorted_max_vec, 20, 1)
 !
          close(unit_solution)
 !

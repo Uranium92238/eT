@@ -2750,8 +2750,8 @@ contains
 !
          if (wf%implemented%excited_state) then 
 !     
-         !   wf%excited_state_task = 'right_valence'
-            wf%excited_state_task = 'left_valence'
+            wf%excited_state_task = 'right_valence'
+         !   wf%excited_state_task = 'left_valence'
             call wf%excited_state_driver 
 !
          else
@@ -2866,7 +2866,7 @@ contains
 !     Allocate the singles amplitudes and set to zero
 !     (which is also the value that solves the projected Scrödinger eq.)
 !
-      if (.not. allocated(wf%t1am)) call allocator(wf%t1am, wf%n_v, wf%n_o)
+      if (.not. allocated(wf%t1am)) call wf%mem%alloc(wf%t1am, wf%n_v, wf%n_o)
       wf%t1am = zero
 !
    end subroutine initialize_amplitudes_ccs
@@ -2884,7 +2884,7 @@ contains
 !
       class(ccs) :: wf
 !
-      if (.not. allocated(wf%omega1)) call allocator(wf%omega1, wf%n_v, wf%n_o)
+      if (.not. allocated(wf%omega1)) call wf%mem%alloc(wf%omega1, wf%n_v, wf%n_o)
       wf%omega1 = zero
 !
    end subroutine initialize_omega_ccs
@@ -3068,7 +3068,7 @@ contains
       class(ccs) :: wf
 !
       if (allocated(wf%t1am)) then
-         call deallocator(wf%t1am, wf%n_v, wf%n_o)
+         call wf%mem%dealloc(wf%t1am, wf%n_v, wf%n_o)
       endif
 !
    end subroutine destruct_amplitudes_ccs
@@ -3086,7 +3086,7 @@ contains
       class(ccs) :: wf
 !
       if (allocated(wf%omega1)) then
-         call deallocator(wf%omega1, wf%n_v, wf%n_o)
+         call wf%mem%dealloc(wf%omega1, wf%n_v, wf%n_o)
       endif
 !
    end subroutine destruct_omega_ccs

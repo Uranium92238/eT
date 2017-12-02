@@ -595,8 +595,8 @@ contains
 !
 !        Allocate L_bj_J and L_ia_J (= reordering of L_bj_J constrained to the batch)
 !
-         call allocator(L_bj_J, (wf%n_v)*(wf%n_o), wf%n_J)
-         call allocator(L_ia_J, a_length*(wf%n_o), wf%n_J)
+         call wf%mem%alloc(L_bj_J, (wf%n_v)*(wf%n_o), wf%n_J)
+         call wf%mem%alloc(L_ia_J, a_length*(wf%n_o), wf%n_J)
          L_bj_J = zero
          L_ia_J = zero
 !
@@ -621,7 +621,7 @@ contains
 !
 !        Allocate g_ia_bj
 !
-         call allocator(g_ia_bj, a_length*(wf%n_o), (wf%n_o)*(wf%n_v))
+         call wf%mem%alloc(g_ia_bj, a_length*(wf%n_o), (wf%n_o)*(wf%n_v))
 !
 !        Construct integral g_ia_bj (= g_aibj for the batch)
 !
@@ -640,14 +640,14 @@ contains
 !
 !        L_bj_J and L_ia_J
 !
-         call deallocator(L_bj_J, (wf%n_v)*(wf%n_o), wf%n_J)
-         call deallocator(L_ia_J, a_length*(wf%n_o), wf%n_J)
+         call wf%mem%dealloc(L_bj_J, (wf%n_v)*(wf%n_o), wf%n_J)
+         call wf%mem%dealloc(L_ia_J, a_length*(wf%n_o), wf%n_J)
 !
 !        :: Construct the needed integrals for the enegry ::
 !
 !        Allocate t_ia_bj
 !
-         call allocator(t_ia_bj, a_length*(wf%n_o), (wf%n_o)*(wf%n_v))
+         call wf%mem%alloc(t_ia_bj, a_length*(wf%n_o), (wf%n_o)*(wf%n_v))
 !
 !        Create t2 amplitudes
 !
@@ -672,11 +672,11 @@ contains
 !
 !        Deallocate g_ia_bj
 !
-         call deallocator(g_ia_bj, a_length*(wf%n_o), (wf%n_o)*(wf%n_v))
+         call wf%mem%dealloc(g_ia_bj, a_length*(wf%n_o), (wf%n_o)*(wf%n_v))
 !
 !        Allocate the Cholesky vector L_ia_J = L_ia^J and set to zero 
 !
-         call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+         call wf%mem%alloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
          L_ia_J = zero
 !
 !         Get the Cholesky vector L_ia_J 
@@ -685,7 +685,7 @@ contains
 !
 !        Allocate g_ia_jb = g_iajb and set it to zero
 !
-         call allocator(g_ia_jb, (wf%n_o)*a_length, (wf%n_o)*(wf%n_v))
+         call wf%mem%alloc(g_ia_jb, (wf%n_o)*a_length, (wf%n_o)*(wf%n_v))
          g_ia_jb = zero
 !
 !        Calculate the integrals g_ia_jb from the Cholesky vector L_ia_J 
@@ -705,7 +705,7 @@ contains
 !
 !     Deallocate the Cholesky vector L_ia_J 
 !
-      call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call wf%mem%dealloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
 !     Set the initial value of the energy 
 !
@@ -744,11 +744,11 @@ contains
 !
 !        Deallocate g_ia_jb
 !
-         call deallocator(g_ia_jb, (wf%n_o)*a_length, (wf%n_o)*(wf%n_v))
+         call wf%mem%dealloc(g_ia_jb, (wf%n_o)*a_length, (wf%n_o)*(wf%n_v))
 !
 !        Deallocate t_ia_bj
 !  
-         call deallocator(t_ia_bj, a_length*(wf%n_o), (wf%n_o)*(wf%n_v))
+         call wf%mem%dealloc(t_ia_bj, a_length*(wf%n_o), (wf%n_o)*(wf%n_v))
 !
       enddo ! End of batching
 !
@@ -791,12 +791,12 @@ contains
 !
 !     Construct s2 amplitudes
 !
-      call allocator(s_ia_jb, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      call wf%mem%alloc(s_ia_jb, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
       call wf%get_s2am(s_ia_jb, 1, wf%n_v)
 !  
 !     Reorder and pack in
 !
-      call allocator(s2am, (wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2, 1)
+      call wf%mem%alloc(s2am, (wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2, 1)
 !
       do i = 1, wf%n_o
          do a = 1, wf%n_v
@@ -817,13 +817,13 @@ contains
          enddo
       enddo
 !
-      call deallocator(s_ia_jb, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      call wf%mem%dealloc(s_ia_jb, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
 !     Write s2 amplitudes 
 !
       write(unit_s2am) s2am
 !
-      call deallocator(s2am, (wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2, 1)
+      call wf%mem%dealloc(s2am, (wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2, 1)
 !
 !     Close amplitude file
 !
@@ -840,7 +840,7 @@ contains
 !
    class(cc2) :: wf
 !
-   if (allocated(wf%s2am)) call deallocator(wf%s2am, wf%n_s2am, 1)
+   if (allocated(wf%s2am)) call wf%mem%dealloc(wf%s2am, wf%n_s2am, 1)
 !
    end subroutine destruct_s2am_cc2
 !
@@ -895,7 +895,7 @@ contains
          wf%n_s2am = + ((wf%n_v)*(wf%n_o))&
                    *((wf%n_v )*(wf%n_o)+1)/2 
 !
-         if (.not. allocated(wf%s2am)) call allocator(wf%s2am, wf%n_s2am, 1) 
+         if (.not. allocated(wf%s2am)) call wf%mem%alloc(wf%s2am, wf%n_s2am, 1) 
          read(unit_s2am) wf%s2am
 !
          close(unit_s2am)

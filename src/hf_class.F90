@@ -198,10 +198,10 @@ contains
 !      
 !     Allocate the Fock diagonal and the MO coefficients
 !
-      call allocator(wf%fock_diagonal, wf%n_mo, 1)
+      call wf%mem%alloc(wf%fock_diagonal, wf%n_mo, 1)
       wf%fock_diagonal = zero
 !
-      call allocator(wf%mo_coef, n_lambda, 1)
+      call wf%mem%alloc(wf%mo_coef, n_lambda, 1)
       wf%mo_coef = zero
 !
 !     Read in the Fock diagonal and MO coefficients
@@ -300,9 +300,9 @@ contains
 !
       n_ao_sq_packed = packed_size(wf%n_ao)
 !
-      call allocator(chol_ao, n_ao_sq_packed, 1)
-      call allocator(chol_ao_sq, wf%n_ao, wf%n_ao) 
-      call allocator(chol_mo_sq, wf%n_mo, wf%n_mo)
+      call wf%mem%alloc(chol_ao, n_ao_sq_packed, 1)
+      call wf%mem%alloc(chol_ao_sq, wf%n_ao, wf%n_ao) 
+      call wf%mem%alloc(chol_mo_sq, wf%n_mo, wf%n_mo)
 !
       chol_ao    = zero
       chol_ao_sq = zero
@@ -310,7 +310,7 @@ contains
 !
 !     Allocate an intermediate, X
 !
-      call allocator(X, wf%n_ao, wf%n_mo)
+      call wf%mem%alloc(X, wf%n_ao, wf%n_mo)
 !
       X = zero
 !
@@ -380,7 +380,7 @@ contains
 !
 !     Read L_ij_J
 !
-      call allocator(L_ij_J, wf%n_o*(wf%n_o+1)/2, wf%n_J)
+      call wf%mem%alloc(L_ij_J, wf%n_o*(wf%n_o+1)/2, wf%n_J)
       do J = 1, wf%n_J
          read(unit_chol_mo_ij) (L_ij_J(ij, J), ij = 1, wf%n_o*(wf%n_o+1)/2)
       enddo
@@ -400,7 +400,7 @@ contains
          enddo
       enddo
 !
-      call deallocator(L_ij_J,  wf%n_o*(wf%n_o+1)/2, wf%n_J)
+      call wf%mem%dealloc(L_ij_J,  wf%n_o*(wf%n_o+1)/2, wf%n_J)
       close(unit_chol_mo_ij_direct)
 !
 !     :: L_ia_J :: 
@@ -411,7 +411,7 @@ contains
 !
 !     Read L_ia_J
 !
-      call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call wf%mem%alloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
       do J = 1, wf%n_J
          read(unit_chol_mo_ia) (L_ia_J(ia, J), ia = 1, (wf%n_o)*(wf%n_v))
@@ -429,7 +429,7 @@ contains
             write(unit_chol_mo_ia_direct, rec=ia) (L_ia_J(ia,j), j = 1, wf%n_J)
       enddo
 !
-      call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call wf%mem%dealloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
       close(unit_chol_mo_ia_direct)
 !
 !     :: L_ab_J ::
@@ -466,7 +466,7 @@ contains
          call batch_limits(b_first, b_last, b_batch, max_batch_length, batch_dimension)
          b_length = b_last - b_first + 1 
 !
-         call allocator(L_ab_J, (((b_length + 1)*b_length/2)+(wf%n_v - b_length - b_first + 1)*b_length), wf%n_J)
+         call wf%mem%alloc(L_ab_J, (((b_length + 1)*b_length/2)+(wf%n_v - b_length - b_first + 1)*b_length), wf%n_J)
 !
          if (b_first .ne. 1) then
 !  
@@ -502,7 +502,7 @@ contains
             enddo
          enddo
 !
-         call deallocator(L_ab_J, (((b_length+1)*b_length/2)+(wf%n_v - b_length - b_first + 1)*b_length), wf%n_J)
+         call wf%mem%dealloc(L_ab_J, (((b_length+1)*b_length/2)+(wf%n_v - b_length - b_first + 1)*b_length), wf%n_J)
 !
       enddo
       close(unit_chol_mo_ab, status='delete')
@@ -735,7 +735,7 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !
 !        Allocation
 !
-         call allocator(L_ia_J, i_length*a_length, wf%n_J)
+         call wf%mem%alloc(L_ia_J, i_length*a_length, wf%n_J)
          L_ia_J = zero
 !        
 !        Get Cholesky IA vector 
@@ -763,13 +763,13 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !
 !        Deallocate temporary vector 
 !
-         call deallocator(L_ia_J, a_length*i_length, wf%n_J)   
+         call wf%mem%dealloc(L_ia_J, a_length*i_length, wf%n_J)   
 
       elseif (.not.(present(i_first) .and. present(i_last) .and. present(a_first) .and. present(a_last))) then
 !
 !        Allocation
 !
-         call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+         call wf%mem%alloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
          L_ia_J = zero
 !        
 !        Get Cholesky IA vector 
@@ -797,7 +797,7 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !
 !        Deallocate temporary vector 
 !
-         call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)   
+         call wf%mem%dealloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)   
       else
          write(unit_output, *) 'WARNING: Error in call to read_cholesky_ia'
             stop
@@ -883,7 +883,7 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !
       integer(i15) :: unit_identifier_ao_integrals = 0, unit_chol_ao = 0
 !
-      call allocator(h1ao, wf%n_ao*(wf%n_ao+1)/2, 1)
+      call wf%mem%alloc(h1ao, wf%n_ao*(wf%n_ao+1)/2, 1)
       h1ao = zero
 !
 !     Open mlcc_aoint file
@@ -908,7 +908,7 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !
 !     Deallocation of one-electron AO integrals
 !   
-      call deallocator(h1ao, wf%n_ao*(wf%n_ao+1)/2, 1)
+      call wf%mem%dealloc(h1ao, wf%n_ao*(wf%n_ao+1)/2, 1)
 !
 !     Read Cholesky in ao basis
 !
@@ -921,7 +921,7 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !
       read(unit_chol_ao,*) wf%n_ao, wf%n_J
 !
-      call allocator(chol_ao, wf%n_ao*(wf%n_ao+1)/2, wf%n_J)    
+      call wf%mem%alloc(chol_ao, wf%n_ao*(wf%n_ao+1)/2, wf%n_J)    
 !
          chol_ao    = zero
 !
@@ -933,7 +933,7 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
          
 !
 !
-      call allocator(g_J_mn_ps, (wf%n_ao)*(wf%n_ao+1)/2,(wf%n_ao)*(wf%n_ao+1)/2)
+      call wf%mem%alloc(g_J_mn_ps, (wf%n_ao)*(wf%n_ao+1)/2,(wf%n_ao)*(wf%n_ao+1)/2)
 !
 !
             call dgemm('N', 'T', &
@@ -949,8 +949,8 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
                      g_J_mn_ps,             &
                      wf%n_ao*(wf%n_ao+1)/2)
 !
-            call deallocator(chol_ao, wf%n_ao*(wf%n_ao+1)/2, wf%n_J)
-            call allocator(density, wf%n_ao, wf%n_ao)
+            call wf%mem%dealloc(chol_ao, wf%n_ao*(wf%n_ao+1)/2, wf%n_J)
+            call wf%mem%alloc(density, wf%n_ao, wf%n_ao)
             density = zero     
 !
             call wf%construct_density_matrix(density, wf%mo_coef, wf%n_o, wf%n_v) 
@@ -977,8 +977,8 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
                enddo
             enddo
 !
-         call deallocator(g_J_mn_ps, (wf%n_ao)*(wf%n_ao+1)/2,(wf%n_ao)*(wf%n_ao+1)/2)
-         call deallocator(density, wf%n_ao, wf%n_ao)
+         call wf%mem%dealloc(g_J_mn_ps, (wf%n_ao)*(wf%n_ao+1)/2,(wf%n_ao)*(wf%n_ao+1)/2)
+         call wf%mem%dealloc(density, wf%n_ao, wf%n_ao)
 !
       close(unit_chol_ao)
       close(unit_identifier_ao_integrals)
@@ -1013,7 +1013,7 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
       integer(i15) :: max_batch_length = 0
 !
 !
-      call allocator(h1ao, wf%n_ao*(wf%n_ao+1)/2, 1)
+      call wf%mem%alloc(h1ao, wf%n_ao*(wf%n_ao+1)/2, 1)
       h1ao = zero
 !
 !     Open mlcc_aoint file
@@ -1038,7 +1038,7 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !
 !     Deallocation of one-electron AO integrals
 !   
-      call deallocator(h1ao, wf%n_ao*(wf%n_ao+1)/2, 1)
+      call wf%mem%dealloc(h1ao, wf%n_ao*(wf%n_ao+1)/2, 1)
 !
 !     Read Cholesky in ao basis
 !
@@ -1053,7 +1053,7 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !
       do j = 1, wf%n_J
 !
-         call allocator(chol_ao, wf%n_ao*(wf%n_ao+1)/2, 1)    
+         call wf%mem%alloc(chol_ao, wf%n_ao*(wf%n_ao+1)/2, 1)    
 !
          chol_ao    = zero
 !
@@ -1061,14 +1061,14 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !
          read(unit_chol_ao,*) (chol_ao(i,1), i = 1, wf%n_ao*(wf%n_ao+1)/2)
 !
-         call allocator(chol_ao_sq, wf%n_ao, wf%n_ao)
+         call wf%mem%alloc(chol_ao_sq, wf%n_ao, wf%n_ao)
          chol_ao_sq = zero
 !
          call squareup(chol_ao, chol_ao_sq, wf%n_ao)
 !
-         call deallocator(chol_ao, wf%n_ao*(wf%n_ao+1)/2, 1) 
+         call wf%mem%dealloc(chol_ao, wf%n_ao*(wf%n_ao+1)/2, 1) 
 
-         call allocator(density, wf%n_ao, wf%n_ao)
+         call wf%mem%alloc(density, wf%n_ao, wf%n_ao)
          density = zero   
 !
 !        Coulomb term: sum_Jps 2 * L^J_ps * D_p,s * L^J_mn
@@ -1093,7 +1093,7 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !
 !        Exchange term: - sum_Jps  L^J_ms * D_p,s * L^J_pn
 !
-         call allocator(Y, wf%n_ao, wf%n_ao)
+         call wf%mem%alloc(Y, wf%n_ao, wf%n_ao)
 !
          call dgemm('N', 'T', &
                      wf%n_ao, &
@@ -1108,7 +1108,7 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
                      Y, &
                      wf%n_ao)
 !
-         call deallocator(density, wf%n_ao, wf%n_ao)
+         call wf%mem%dealloc(density, wf%n_ao, wf%n_ao)
 !
          call dgemm('N', 'N', &
                      wf%n_ao, &
@@ -1123,8 +1123,8 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
                      ao_fock, &
                      wf%n_ao)
 !
-         call deallocator(Y, wf%n_ao, wf%n_ao)
-         call deallocator(chol_ao_sq, wf%n_ao, wf%n_ao) 
+         call wf%mem%dealloc(Y, wf%n_ao, wf%n_ao)
+         call wf%mem%dealloc(chol_ao_sq, wf%n_ao, wf%n_ao) 
 !
       enddo ! looping over J
 !
@@ -1162,7 +1162,7 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
                   density_o,  &
                   wf%n_ao)
 !
-      call allocator(C, wf%n_ao, n_v)
+      call wf%mem%alloc(C, wf%n_ao, n_v)
 !
       do i = 1, wf%n_ao
          do j = 1, n_v
@@ -1184,7 +1184,7 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
                   density_v,                 &
                   wf%n_ao)
 !
-      call deallocator(C, wf%n_ao, n_v)
+      call wf%mem%dealloc(C, wf%n_ao, n_v)
 !
    end subroutine construct_density_matrices_hf
 !
@@ -1227,7 +1227,7 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !
       integer(i15) :: i = 0, j = 0, ij = 0
 !
-      call allocator(C, wf%n_ao, n_v)
+      call wf%mem%alloc(C, wf%n_ao, n_v)
 !
       C(:,1:n_v) = C_matrix(:,1 + n_o : n_o + n_v)
 !
@@ -1244,7 +1244,7 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
                   density_v,                 &
                   wf%n_ao)
 !
-      call deallocator(C, wf%n_ao, n_v)
+      call wf%mem%dealloc(C, wf%n_ao, n_v)
 !
    end subroutine construct_density_matrix_v_hf
 !

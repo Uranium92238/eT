@@ -64,10 +64,10 @@ contains
 !     for a given set of occupied indices, i, j, k, adding
 !     the appropriate CC3 omega contributions. 
 !     
-      call allocator(t_abc, (wf%n_v)**3, 1)
+      call wf%mem%alloc(t_abc, (wf%n_v)**3, 1)
       t_abc = zero
 !
-      call allocator(omega_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      call wf%mem%alloc(omega_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
       omega_ai_bj = zero 
 !
       do i = 1, wf%n_o
@@ -117,8 +117,8 @@ contains
          enddo
       enddo
 !
-      call deallocator(omega_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_o)*(wf%n_v))
-      call deallocator(t_abc, (wf%n_v)**3, 1)
+      call wf%mem%dealloc(omega_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(t_abc, (wf%n_v)**3, 1)
 !
 !     :: CCSD contributions to omega :: 
 !
@@ -197,21 +197,21 @@ contains
 !
 !        Read Cholesky vectors L_bd_J and L_ck_J 
 !
-         call allocator(L_bd_J, (wf%n_v), wf%n_J)
+         call wf%mem%alloc(L_bd_J, (wf%n_v), wf%n_J)
          L_bd_J = zero
 !
 !        Get ab-cholesky vectors for the batch, L_bd_J = L_bd^J
 !
          call wf%get_cholesky_ab(L_bd_J, 1, wf%n_v, d, d)
 !
-         call allocator(L_ck_J, (wf%n_v)*(wf%n_o), wf%n_J)
+         call wf%mem%alloc(L_ck_J, (wf%n_v)*(wf%n_o), wf%n_J)
          L_ck_J = zero
 !
          call wf%get_cholesky_ai(L_ck_J)
 !
 !        Form the integral g_bd_ck = g_bdck
 !
-         call allocator(g_bd_ck, wf%n_v, (wf%n_v)*(wf%n_o))
+         call wf%mem%alloc(g_bd_ck, wf%n_v, (wf%n_v)*(wf%n_o))
          g_bd_ck = zero
 !
          call dgemm('N','T',            &
@@ -229,12 +229,12 @@ contains
 !
 !        Deallocate Cholesky vectors
 !
-         call deallocator(L_ck_J, (wf%n_v)*(wf%n_o), wf%n_J)
-         call deallocator(L_bd_J, (wf%n_v), wf%n_J)
+         call wf%mem%dealloc(L_ck_J, (wf%n_v)*(wf%n_o), wf%n_J)
+         call wf%mem%dealloc(L_bd_J, (wf%n_v), wf%n_J)
 !
 !        Reorder the integral as g_bcd_k
 !
-         call allocator(g_bcd_k, (wf%n_v)**2, wf%n_o)
+         call wf%mem%alloc(g_bcd_k, (wf%n_v)**2, wf%n_o)
          g_bcd_k = zero
 !
          do c = 1, wf%n_v
@@ -252,7 +252,7 @@ contains
 !
 !        Deallocate g_bd_ck 
 !
-         call deallocator(g_bd_ck, wf%n_v, (wf%n_v)*(wf%n_o))
+         call wf%mem%dealloc(g_bd_ck, wf%n_v, (wf%n_v)*(wf%n_o))
 !
 !        Write the integral g_bcd_k to disk 
 !
@@ -263,7 +263,7 @@ contains
 !
          enddo
 !
-         call deallocator(g_bcd_k, (wf%n_v)**2, wf%n_o)
+         call wf%mem%dealloc(g_bcd_k, (wf%n_v)**2, wf%n_o)
 !
       enddo ! End of do's over d 
 !
@@ -277,14 +277,14 @@ contains
       open(unit=unit_dbkc, file='dbkc', action='write', status='replace', &
            access='direct', form='unformatted', recl=dp*(wf%n_v)**2, iostat=ioerror)
 !
-      call allocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call wf%mem%alloc(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
       call wf%get_cholesky_ia(L_kc_J)
 !
       do d = 1, wf%n_v
 !
 !        Read Cholesky vector L_bd_J(bd,J) = L_db^J 
 !
-         call allocator(L_db_J, (wf%n_v), wf%n_J)
+         call wf%mem%alloc(L_db_J, (wf%n_v), wf%n_J)
          L_db_J = zero
 !
 !        Get ab-cholesky vectors for the batch, L_db^J =  L_db_J
@@ -293,7 +293,7 @@ contains
 !
 !        Form the integral g_bd_kc = g_dbkc
 !
-         call allocator(g_bd_kc, wf%n_v, (wf%n_v)*(wf%n_o))
+         call wf%mem%alloc(g_bd_kc, wf%n_v, (wf%n_v)*(wf%n_o))
          g_bd_kc = zero
 !
          call dgemm('N','T',            &
@@ -311,11 +311,11 @@ contains
 !
 !        Deallocate Cholesky vector
 !
-         call deallocator(L_bd_J, (wf%n_v), wf%n_J)
+         call wf%mem%dealloc(L_bd_J, (wf%n_v), wf%n_J)
 !
 !        Reorder the integral as g_bcd_k
 !
-         call allocator(g_bcd_k, (wf%n_v)**2, wf%n_o)
+         call wf%mem%alloc(g_bcd_k, (wf%n_v)**2, wf%n_o)
          g_bcd_k = zero
 !
          do c = 1, wf%n_v
@@ -333,7 +333,7 @@ contains
 !
 !        Deallocate g_bd_ck 
 !
-         call deallocator(g_bd_kc, wf%n_v, (wf%n_v)*(wf%n_o))
+         call wf%mem%dealloc(g_bd_kc, wf%n_v, (wf%n_v)*(wf%n_o))
 !
 !        Write the integral g_bcd_k to disk (= g_dbkc)
 !
@@ -345,11 +345,11 @@ contains
 !
          enddo
 !
-         call deallocator(g_bcd_k, (wf%n_v)**2, wf%n_o)
+         call wf%mem%dealloc(g_bcd_k, (wf%n_v)**2, wf%n_o)
 !
       enddo ! End of do's over d 
 !
-      call deallocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call wf%mem%dealloc(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
       close(unit_dbkc)
 !
@@ -359,15 +359,15 @@ contains
       open(unit=unit_ljck, file='ljck', action='write', status='replace', &
            access='direct', form='unformatted', recl=dp*(wf%n_o)*(wf%n_v), iostat=ioerror)
 !
-      call allocator(L_lj_J, (wf%n_o)**2, wf%n_J)
-      call allocator(L_ck_J, (wf%n_v)*(wf%n_o), wf%n_J)
+      call wf%mem%alloc(L_lj_J, (wf%n_o)**2, wf%n_J)
+      call wf%mem%alloc(L_ck_J, (wf%n_v)*(wf%n_o), wf%n_J)
 !
       call wf%get_cholesky_ij(L_lj_J)
       call wf%get_cholesky_ai(L_ck_J)
 !
 !     Form g_lj_ck 
 !
-      call allocator(g_lj_ck, (wf%n_o)**2, (wf%n_v)*(wf%n_o))
+      call wf%mem%alloc(g_lj_ck, (wf%n_o)**2, (wf%n_v)*(wf%n_o))
 !
       call dgemm('N','T',            &
                   (wf%n_o)**2,       &
@@ -384,12 +384,12 @@ contains
 !
 !     Deallocate Cholesky vectors 
 !
-      call deallocator(L_lj_J, (wf%n_o)**2, wf%n_J)
-      call deallocator(L_ck_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call wf%mem%dealloc(L_lj_J, (wf%n_o)**2, wf%n_J)
+      call wf%mem%dealloc(L_ck_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
 !     Reorder to g_lc_jk
 !
-      call allocator(g_lc_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
+      call wf%mem%alloc(g_lc_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
       g_lc_jk = zero
 !
       do c = 1, wf%n_v
@@ -415,7 +415,7 @@ contains
 !
 !     Deallocate unordered integral 
 !
-      call deallocator(g_lj_ck, (wf%n_o)**2, (wf%n_v)*(wf%n_o))
+      call wf%mem%dealloc(g_lj_ck, (wf%n_o)**2, (wf%n_v)*(wf%n_o))
 !
 !     Write the integrals to the ljck file,
 !     ordered as lc, jk  
@@ -430,7 +430,7 @@ contains
          enddo
       enddo
 !
-      call deallocator(g_lc_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
+      call wf%mem%dealloc(g_lc_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
 !
 !     Close ljck file 
 !
@@ -442,11 +442,11 @@ contains
       open(unit=unit_jbkc, file='jbkc', action='write', status='replace', &
            access='direct', form='unformatted', recl=dp*(wf%n_v)**2, iostat=ioerror)
 !
-      call allocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call wf%mem%alloc(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
       call wf%get_cholesky_ia(L_kc_J)
 !
-      call allocator(g_jb_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(g_jb_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       g_jb_kc = zero
 !
       call dgemm('N','T',            &
@@ -464,11 +464,11 @@ contains
 !
 !     Deallocate Cholesky vector L_kc_J
 !
-      call deallocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call wf%mem%dealloc(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
 !     Reorder g_jb_kc to g_bc_kj
 !
-      call allocator(g_bc_kj, (wf%n_v)**2, (wf%n_o)**2)
+      call wf%mem%alloc(g_bc_kj, (wf%n_v)**2, (wf%n_o)**2)
       g_bc_kj = zero
 !
       do c = 1, wf%n_v
@@ -494,7 +494,7 @@ contains
 !
 !     Deallocate unordered integral g_jb_kc
 !
-      call deallocator(g_jb_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(g_jb_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     Write the integrals to the jbkc file,
 !     ordered as bc, kj  
@@ -509,7 +509,7 @@ contains
          enddo
       enddo
 !
-      call deallocator(g_bc_kj, (wf%n_v)**2, (wf%n_o)**2)
+      call wf%mem%dealloc(g_bc_kj, (wf%n_v)**2, (wf%n_o)**2)
 !
 !     Close jbkc file 
 !
@@ -521,13 +521,13 @@ contains
       open(unit=unit_ilkc, file='ilkc', action='write', status='replace', &
            access='direct', form='unformatted', recl=dp*(wf%n_v)*(wf%n_o), iostat=ioerror)
 !
-      call allocator(L_lj_J, (wf%n_o)**2, wf%n_J)
-      call allocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call wf%mem%alloc(L_lj_J, (wf%n_o)**2, wf%n_J)
+      call wf%mem%alloc(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
       call wf%get_cholesky_ij(L_lj_J)
       call wf%get_cholesky_ia(L_kc_J)
 !
-      call allocator(g_il_kc, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(g_il_kc, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
       g_il_kc = zero
 !
       call dgemm('N','T',            &
@@ -543,12 +543,12 @@ contains
                   g_il_kc,           &
                   (wf%n_o)**2)
 !
-      call deallocator(L_lj_J, (wf%n_o)**2, wf%n_J)
-      call deallocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call wf%mem%dealloc(L_lj_J, (wf%n_o)**2, wf%n_J)
+      call wf%mem%dealloc(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
 !     Reorder g_il_kc to g_cl_ik 
 !
-      call allocator(g_cl_ik, (wf%n_v)*(wf%n_o), (wf%n_o)**2)
+      call wf%mem%alloc(g_cl_ik, (wf%n_v)*(wf%n_o), (wf%n_o)**2)
       g_cl_ik = zero 
 !
       do k = 1, wf%n_o
@@ -572,7 +572,7 @@ contains
          enddo
       enddo
 !
-      call deallocator(g_il_kc, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(g_il_kc, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
 !
 !     Write the g_ilkc integrals to the ilkc file,
 !     ordered as cl, ik
@@ -591,7 +591,7 @@ contains
 ! 
       close(unit_ilkc)
 !
-      call deallocator(g_cl_ik, (wf%n_v)*(wf%n_o), (wf%n_o)**2)
+      call wf%mem%dealloc(g_cl_ik, (wf%n_v)*(wf%n_o), (wf%n_o)**2)
 !
    end subroutine omega_integrals_cc3
 !
@@ -644,7 +644,7 @@ contains
 !
 !     Term 1. sum_d t_ij^ad g_bdck = sum_d t_a_b(a,d) g_bc_d(bc,d)
 !
-      call allocator(t_a_b, wf%n_v, wf%n_v)
+      call wf%mem%alloc(t_a_b, wf%n_v, wf%n_v)
       t_a_b = zero
 !
       do a = 1, wf%n_v
@@ -666,7 +666,7 @@ contains
       open(unit=unit_bdck, file='bdck', action='read', status='old', &
            access='direct', form='unformatted', recl=dp*(wf%n_v)**2, iostat=ioerror)
 !
-      call allocator(g_bc_d, (wf%n_v)**2, wf%n_v)
+      call wf%mem%alloc(g_bc_d, (wf%n_v)**2, wf%n_v)
       g_bc_d = zero
 !
       do d = 1, wf%n_v
@@ -697,7 +697,7 @@ contains
 !           g_bc_d(bc,d) = g_bdck
 !        => g_bc_d(ac,d) = g_adck 
 !
-      call allocator(w, (wf%n_v)**3, 1)
+      call wf%mem%alloc(w, (wf%n_v)**3, 1)
       w = zero
 !
       call dgemm('N','N',      &
@@ -906,8 +906,8 @@ contains
 !
 !     Deallocations 
 !
-      call deallocator(g_bc_d, (wf%n_v)**2, wf%n_v)
-      call deallocator(t_a_b, wf%n_v, wf%n_v)
+      call wf%mem%dealloc(g_bc_d, (wf%n_v)**2, wf%n_v)
+      call wf%mem%dealloc(t_a_b, wf%n_v, wf%n_v)
 !
 !     :: The g_ljck terms, i.e., - P_ijk^abc sum_l t_il^ab g_ljck :: 
 !
@@ -919,7 +919,7 @@ contains
 !
 !     Read into g_l_c, ordered as lc, jk, such that g_l_c(l,c) = g_cklj 
 !
-      call allocator(g_l_c, wf%n_o, wf%n_v)
+      call wf%mem%alloc(g_l_c, wf%n_o, wf%n_v)
       g_l_c = zero
 !
       jk = index_two(j, k, wf%n_o)
@@ -928,7 +928,7 @@ contains
 !
 !     Set the amplitudes
 !
-      call allocator(t_ab_l, (wf%n_v)**2, wf%n_o)
+      call wf%mem%alloc(t_ab_l, (wf%n_v)**2, wf%n_o)
       t_ab_l = zero
 !
       do a = 1, wf%n_v
@@ -1228,9 +1228,9 @@ contains
 !
 !     Deallocations 
 !
-      call deallocator(t_ab_l, (wf%n_v)**2, wf%n_o)
-      call deallocator(g_l_c, wf%n_o, wf%n_v)
-      call deallocator(w, (wf%n_v)**3, 1)
+      call wf%mem%dealloc(t_ab_l, (wf%n_v)**2, wf%n_o)
+      call wf%mem%dealloc(g_l_c, wf%n_o, wf%n_v)
+      call wf%mem%dealloc(w, (wf%n_v)**3, 1)
 !
    end subroutine calc_triples_cc3
 !
@@ -1267,7 +1267,7 @@ contains
 !
 !     Read the integrals g_jbkc, ordered as bc for a given j and k 
 !
-      call allocator(g_b_c, wf%n_v, wf%n_v)
+      call wf%mem%alloc(g_b_c, wf%n_v, wf%n_v)
       g_b_c = zero 
 !
       call generate_unit_identifier(unit_jbkc)
@@ -1279,7 +1279,7 @@ contains
 !
 !     Calculate L_bc(bc, 1) = L_jbkc = 2 g_b_c(b,c) - g_b_c(c,b) 
 !
-      call allocator(L_bc, (wf%n_v)**2, 1)
+      call wf%mem%alloc(L_bc, (wf%n_v)**2, 1)
       L_bc = zero 
 !
       do c = 1, wf%n_v
@@ -1293,7 +1293,7 @@ contains
 !
 !     Deallocate g_b_c 
 !
-      call deallocator(g_b_c, wf%n_v, wf%n_v)
+      call wf%mem%dealloc(g_b_c, wf%n_v, wf%n_v)
 !
 !     Close jbkc file 
 !
@@ -1301,7 +1301,7 @@ contains
 !
 !     Form u_a_bc(a,bc) = t_abc(abc, 1) - t_abc(cba, 1)
 !
-      call allocator(u_a_bc, wf%n_v, (wf%n_v)**2)
+      call wf%mem%alloc(u_a_bc, wf%n_v, (wf%n_v)**2)
       u_a_bc = zero 
 !
       do c = 1, wf%n_v
@@ -1340,8 +1340,8 @@ contains
 !
 !     Deallocations
 !
-      call deallocator(u_a_bc, wf%n_v, (wf%n_v)**2)
-      call deallocator(L_bc, (wf%n_v)**2, 1)
+      call wf%mem%dealloc(u_a_bc, wf%n_v, (wf%n_v)**2)
+      call wf%mem%dealloc(L_bc, (wf%n_v)**2, 1)
 !
    end subroutine omega_cc3_a1_cc3
 !
@@ -1378,7 +1378,7 @@ contains
 !
 !     Set u_ab_c(ab,c) = t_ijk^abc - t_ijk^cba 
 !
-      call allocator(u_ab_c, (wf%n_v)**2, wf%n_v)
+      call wf%mem%alloc(u_ab_c, (wf%n_v)**2, wf%n_v)
       u_ab_c = zero 
 !
       do c = 1, wf%n_v
@@ -1398,7 +1398,7 @@ contains
 !
 !     Set F_c(c, 1) = F_kc 
 !
-      call allocator(F_c, wf%n_v, 1)
+      call wf%mem%alloc(F_c, wf%n_v, 1)
       F_c = zero 
 !
       do c = 1, wf%n_v
@@ -1411,7 +1411,7 @@ contains
 !
 !        sum_c (t_ijk^abc - t_ijk^cba) F_kc = sum_c u_ab_c(ab,c) F_c(c, 1) 
 !
-      call allocator(omega_ab, (wf%n_v)**2, 1)
+      call wf%mem%alloc(omega_ab, (wf%n_v)**2, 1)
       omega_ab = zero 
 !
       call dgemm('N','N',      &
@@ -1427,8 +1427,8 @@ contains
                   omega_ab,    &
                   (wf%n_v)**2)
 !
-      call deallocator(F_c, wf%n_v, 1)
-      call deallocator(u_ab_c, (wf%n_v)**2, wf%n_v)
+      call wf%mem%dealloc(F_c, wf%n_v, 1)
+      call wf%mem%dealloc(u_ab_c, (wf%n_v)**2, wf%n_v)
 !
 !     Add the contribution into the unpacked 
 !     projection vector 
@@ -1447,7 +1447,7 @@ contains
          enddo
       enddo
 !
-      call deallocator(omega_ab, (wf%n_v)**2, 1)
+      call wf%mem%dealloc(omega_ab, (wf%n_v)**2, 1)
 !
    end subroutine omega_cc3_a2_cc3
 !
@@ -1491,7 +1491,7 @@ contains
 !
 !     Form v_abc(abc, 1) = 2 t_ijk^abc - t_ijk^cba - t_ijk^acb
 !
-      call allocator(v_abc, (wf%n_v)**3, 1)
+      call wf%mem%alloc(v_abc, (wf%n_v)**3, 1)
       v_abc = zero 
 !
       do c = 1, wf%n_v
@@ -1515,7 +1515,7 @@ contains
       open(unit=unit_ilkc, file='ilkc', action='read', status='old', &
            access='direct', form='unformatted', recl=dp*(wf%n_v)*(wf%n_o), iostat=ioerror)
 !
-      call allocator(g_c_l, wf%n_v, wf%n_o)
+      call wf%mem%alloc(g_c_l, wf%n_v, wf%n_o)
       g_c_l = zero
 !
       rec_number = index_two(i, k, wf%n_o)
@@ -1525,7 +1525,7 @@ contains
 !
 !     Construct the first contribution 
 !
-      call allocator(omega_ab_l, (wf%n_v)**2, wf%n_o)
+      call wf%mem%alloc(omega_ab_l, (wf%n_v)**2, wf%n_o)
       omega_ab_l = zero 
 !
 !     - sum_c  (2 t_ijk^abc - t_ijk^cba - t_ijk^acb) g_ilkc
@@ -1561,7 +1561,7 @@ contains
          enddo
       enddo
 !
-      call deallocator(g_c_l, wf%n_v, wf%n_o)
+      call wf%mem%dealloc(g_c_l, wf%n_v, wf%n_o)
 !
 !     Read the g_dbkc integrals, ordered as bcd, k,
 !     into g_bc_d, such that g_bc_d(bc, d) = g_dbkc 
@@ -1570,7 +1570,7 @@ contains
       open(unit=unit_dbkc, file='dbkc', action='read', status='old', &
            access='direct', form='unformatted', recl=dp*(wf%n_v)**2, iostat=ioerror)
 !
-      call allocator(g_bc_d, (wf%n_v)**2, wf%n_v)
+      call wf%mem%alloc(g_bc_d, (wf%n_v)**2, wf%n_v)
       g_bc_d = zero
 !
       do d = 1, wf%n_v
@@ -1585,7 +1585,7 @@ contains
 !     Calculate the second contribution, 
 !     sum_bc (2 t_ijk^abc - t_ijk^cba - t_ijk^acb) g_dbkc = sum_bc v_abc g_bc_d -> a,d 
 !
-      call allocator(omega_a_d, wf%n_v, wf%n_v)
+      call wf%mem%alloc(omega_a_d, wf%n_v, wf%n_v)
       omega_a_d = zero 
 !
       call dgemm('N','N',      & 
@@ -1614,10 +1614,10 @@ contains
          enddo
       enddo
 !
-      call deallocator(g_bc_d, (wf%n_v)**2, wf%n_v)
-      call deallocator(omega_ab_l, (wf%n_v)**2, wf%n_o)
-      call deallocator(omega_a_d, wf%n_v, wf%n_v)
-      call deallocator(v_abc, (wf%n_v)**3, 1)
+      call wf%mem%dealloc(g_bc_d, (wf%n_v)**2, wf%n_v)
+      call wf%mem%dealloc(omega_ab_l, (wf%n_v)**2, wf%n_o)
+      call wf%mem%dealloc(omega_a_d, wf%n_v, wf%n_v)
+      call wf%mem%dealloc(v_abc, (wf%n_v)**3, 1)
 !
    end subroutine omega_cc3_b2_cc3
 !

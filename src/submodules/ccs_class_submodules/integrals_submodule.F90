@@ -1653,8 +1653,8 @@ contains
 !
 !     Alllocate Cholesky vectors
 !
-      call allocator(L_ai_J, length_1*length_2, wf%n_J)
-      call allocator(L_bj_J, length_3*length_4, wf%n_J)
+      call wf%mem%alloc(L_ai_J, length_1*length_2, wf%n_J)
+      call wf%mem%alloc(L_bj_J, length_3*length_4, wf%n_J)
 !
 !     Get T1-transformed Cholesky vectors
 !
@@ -1678,8 +1678,8 @@ contains
 !
 !     Deallocate Cholesky vectors
 !
-      call deallocator(L_ai_J, length_1*length_2, wf%n_J)
-      call deallocator(L_bj_J, length_3*length_4, wf%n_J)
+      call wf%mem%dealloc(L_ai_J, length_1*length_2, wf%n_J)
+      call wf%mem%dealloc(L_bj_J, length_3*length_4, wf%n_J)
 !
    end subroutine get_vo_vo_electronic_repulsion_ccs
 !
@@ -1728,8 +1728,8 @@ contains
 !
 !     Alllocate Cholesky vectors
 !
-      call allocator(L_ia_J, length_1*length_2, wf%n_J)
-      call allocator(L_bj_J, length_3*length_4, wf%n_J)
+      call wf%mem%alloc(L_ia_J, length_1*length_2, wf%n_J)
+      call wf%mem%alloc(L_bj_J, length_3*length_4, wf%n_J)
 !
 !     Get T1-transformed Cholesky vectors
 !
@@ -1753,8 +1753,8 @@ contains
 !
 !     Deallocate Cholesky vectors
 !
-      call deallocator(L_ia_J, length_1*length_2, wf%n_J)
-      call deallocator(L_bj_J, length_3*length_4, wf%n_J)
+      call wf%mem%dealloc(L_ia_J, length_1*length_2, wf%n_J)
+      call wf%mem%dealloc(L_bj_J, length_3*length_4, wf%n_J)
 !
    end subroutine get_ov_vo_electronic_repulsion_ccs
 !
@@ -1819,8 +1819,8 @@ contains
 !
 !        Alllocate Cholesky vectors
 !
-         call allocator(L_ai_J, length_1*length_2, wf%n_J)
-         call allocator(L_jb_J, length_3*length_4, wf%n_J)
+         call wf%mem%alloc(L_ai_J, length_1*length_2, wf%n_J)
+         call wf%mem%alloc(L_jb_J, length_3*length_4, wf%n_J)
 !
 !        Get T1-transformed Cholesky vectors
 !
@@ -1844,8 +1844,8 @@ contains
 !
 !        Deallocate Cholesky vectors
 !
-         call deallocator(L_ai_J, length_1*length_2, wf%n_J)
-         call deallocator(L_jb_J, length_3*length_4, wf%n_J)
+         call wf%mem%dealloc(L_ai_J, length_1*length_2, wf%n_J)
+         call wf%mem%dealloc(L_jb_J, length_3*length_4, wf%n_J)
 !
       endif
 !
@@ -1896,8 +1896,8 @@ contains
 !
 !     Alllocate Cholesky vectors
 !
-      call allocator(L_ia_J, length_1*length_2, wf%n_J)
-      call allocator(L_bc_J, length_3*length_4, wf%n_J)
+      call wf%mem%alloc(L_ia_J, length_1*length_2, wf%n_J)
+      call wf%mem%alloc(L_bc_J, length_3*length_4, wf%n_J)
 !
 !     Get T1-transformed Cholesky vectors
 !
@@ -1921,8 +1921,8 @@ contains
 !
 !     Deallocate Cholesky vectors
 !
-      call deallocator(L_ia_J, length_1*length_2, wf%n_J)
-      call deallocator(L_bc_J, length_3*length_4, wf%n_J)
+      call wf%mem%dealloc(L_ia_J, length_1*length_2, wf%n_J)
+      call wf%mem%dealloc(L_bc_J, length_3*length_4, wf%n_J)
 !
    end subroutine get_ov_vv_electronic_repulsion_ccs
 !
@@ -1987,8 +1987,8 @@ contains
 !
 !        Alllocate Cholesky vectors
 !
-         call allocator(L_ab_J, length_1*length_2, wf%n_J)
-         call allocator(L_ic_J, length_3*length_4, wf%n_J)
+         call wf%mem%alloc(L_ab_J, length_1*length_2, wf%n_J)
+         call wf%mem%alloc(L_ic_J, length_3*length_4, wf%n_J)
 !
 !        Get T1-transformed Cholesky vectors
 !
@@ -2012,8 +2012,8 @@ contains
 !
 !        Deallocate Cholesky vectors
 !
-         call deallocator(L_ab_J, length_1*length_2, wf%n_J)
-         call deallocator(L_ic_J, length_3*length_4, wf%n_J)
+         call wf%mem%dealloc(L_ab_J, length_1*length_2, wf%n_J)
+         call wf%mem%dealloc(L_ic_J, length_3*length_4, wf%n_J)
 !
       endif
 !
@@ -2082,7 +2082,7 @@ contains
 !
 !        Read the integrals from file 
 !
-         call allocator(x_vv_vo, length_3*length_4, length_1*length_2)
+         call wf%mem%alloc(x_vv_vo, length_3*length_4, length_1*length_2)
 !
          call wf%read_t1_vv_vo_electronic_repulsion(x_vv_vo, &
                                  index3_first, index3_last,  &
@@ -2100,14 +2100,14 @@ contains
             enddo
          enddo
 !
-         call deallocator(x_vv_vo, length_3*length_4, length_1*length_2)
+         call wf%mem%dealloc(x_vv_vo, length_3*length_4, length_1*length_2)
 !
       else
 !
 !        Alllocate Cholesky vectors
 !
-         call allocator(L_ai_J, length_1*length_2, wf%n_J)
-         call allocator(L_bc_J, length_3*length_4, wf%n_J)
+         call wf%mem%alloc(L_ai_J, length_1*length_2, wf%n_J)
+         call wf%mem%alloc(L_bc_J, length_3*length_4, wf%n_J)
 !
 !        Get T1-transformed Cholesky vectors
 !
@@ -2131,8 +2131,8 @@ contains
 !
 !        Deallocate Cholesky vectors
 !
-         call deallocator(L_ai_J, length_1*length_2, wf%n_J)
-         call deallocator(L_bc_J, length_3*length_4, wf%n_J)
+         call wf%mem%dealloc(L_ai_J, length_1*length_2, wf%n_J)
+         call wf%mem%dealloc(L_bc_J, length_3*length_4, wf%n_J)
 !
       endif
 !
@@ -2201,8 +2201,8 @@ contains
 !
 !        Alllocate Cholesky vectors
 !
-         call allocator(L_ab_J, length_1*length_2, wf%n_J)
-         call allocator(L_ci_J, length_3*length_4, wf%n_J)
+         call wf%mem%alloc(L_ab_J, length_1*length_2, wf%n_J)
+         call wf%mem%alloc(L_ci_J, length_3*length_4, wf%n_J)
 !
 !        Get T1-transformed Cholesky vectors
 !
@@ -2226,8 +2226,8 @@ contains
 !
 !        Deallocate Cholesky vectors
 !
-         call deallocator(L_ab_J, length_1*length_2, wf%n_J)
-         call deallocator(L_ci_J, length_3*length_4, wf%n_J)
+         call wf%mem%dealloc(L_ab_J, length_1*length_2, wf%n_J)
+         call wf%mem%dealloc(L_ci_J, length_3*length_4, wf%n_J)
 !
       endif
 !
@@ -2349,8 +2349,8 @@ contains
 !
 !        Alllocate Cholesky vectors
 !
-         call allocator(L_ab_J, length_1*length_2, wf%n_J)
-         call allocator(L_cd_J, length_3*length_4, wf%n_J)
+         call wf%mem%alloc(L_ab_J, length_1*length_2, wf%n_J)
+         call wf%mem%alloc(L_cd_J, length_3*length_4, wf%n_J)
 !
 !        Get T1-transformed Cholesky vectors
 !
@@ -2374,8 +2374,8 @@ contains
 !
 !        Deallocate Cholesky vectors
 !
-         call deallocator(L_ab_J, length_1*length_2, wf%n_J)
-         call deallocator(L_cd_J, length_3*length_4, wf%n_J)
+         call wf%mem%dealloc(L_ab_J, length_1*length_2, wf%n_J)
+         call wf%mem%dealloc(L_cd_J, length_3*length_4, wf%n_J)
 !
       endif
 !
@@ -2449,7 +2449,7 @@ contains
 !
 !     Allocate the integral x_v the integrals g_a_bcd for a given bcd, a = 1, n_v 
 !
-      call allocator(x_v, wf%n_v, 1)
+      call wf%mem%alloc(x_v, wf%n_v, 1)
       x_v = zero 
 !
       if (length_a .ne. wf%n_v) then ! Batching over first index, a 
@@ -2558,7 +2558,7 @@ contains
 !
 !     Deallocate temporary vector 
 !
-      call deallocator(x_v, wf%n_v, 1)
+      call wf%mem%dealloc(x_v, wf%n_v, 1)
 !
 !     Close file containing the g_abcd integrals 
 !
@@ -2634,7 +2634,7 @@ contains
 !
 !     Allocate the integral x_v the integrals g_a_bcd for a given bcd, a = 1, n_v 
 !
-      call allocator(x_v, wf%n_v, 1)
+      call wf%mem%alloc(x_v, wf%n_v, 1)
       x_v = zero 
 !
       if (length_a .ne. wf%n_v) then ! Batching over first index, a 
@@ -2743,7 +2743,7 @@ contains
 !
 !     Deallocate temporary vector 
 !
-      call deallocator(x_v, wf%n_v, 1)
+      call wf%mem%dealloc(x_v, wf%n_v, 1)
 !
 !     Close file containing the g_abcd integrals 
 !
@@ -2796,8 +2796,8 @@ contains
 !
 !     Alllocate Cholesky vectors
 !
-      call allocator(L_ij_J, length_1*length_2, wf%n_J)
-      call allocator(L_kl_J, length_3*length_4, wf%n_J)
+      call wf%mem%alloc(L_ij_J, length_1*length_2, wf%n_J)
+      call wf%mem%alloc(L_kl_J, length_3*length_4, wf%n_J)
 !
 !     Get T1-transformed Cholesky vectors
 !
@@ -2821,8 +2821,8 @@ contains
 !
 !     Deallocate Cholesky vectors
 !
-      call deallocator(L_ij_J, length_1*length_2, wf%n_J)
-      call deallocator(L_kl_J, length_3*length_4, wf%n_J)
+      call wf%mem%dealloc(L_ij_J, length_1*length_2, wf%n_J)
+      call wf%mem%dealloc(L_kl_J, length_3*length_4, wf%n_J)
 !
    end subroutine get_oo_oo_electronic_repulsion_ccs
 !
@@ -2872,8 +2872,8 @@ contains
 !
 !     Alllocate Cholesky vectors
 !
-      call allocator(L_ij_J, length_1*length_2, wf%n_J)
-      call allocator(L_ka_J, length_3*length_4, wf%n_J)
+      call wf%mem%alloc(L_ij_J, length_1*length_2, wf%n_J)
+      call wf%mem%alloc(L_ka_J, length_3*length_4, wf%n_J)
 !
 !     Get T1-transformed Cholesky vectors
 !
@@ -2897,8 +2897,8 @@ contains
 !
 !     Deallocate Cholesky vectors
 !
-      call deallocator(L_ij_J, length_1*length_2, wf%n_J)
-      call deallocator(L_ka_J, length_3*length_4, wf%n_J)
+      call wf%mem%dealloc(L_ij_J, length_1*length_2, wf%n_J)
+      call wf%mem%dealloc(L_ka_J, length_3*length_4, wf%n_J)
 !
    end subroutine get_oo_ov_electronic_repulsion_ccs
 !
@@ -2947,8 +2947,8 @@ contains
 !
 !     Alllocate Cholesky vectors
 !
-      call allocator(L_ia_J, length_1*length_2, wf%n_J)
-      call allocator(L_jk_J, length_3*length_4, wf%n_J)
+      call wf%mem%alloc(L_ia_J, length_1*length_2, wf%n_J)
+      call wf%mem%alloc(L_jk_J, length_3*length_4, wf%n_J)
 !
 !     Get T1-transformed Cholesky vectors
 !
@@ -2972,8 +2972,8 @@ contains
 !
 !     Deallocate Cholesky vectors
 !
-      call deallocator(L_ia_J, length_1*length_2, wf%n_J)
-      call deallocator(L_jk_J, length_3*length_4, wf%n_J)
+      call wf%mem%dealloc(L_ia_J, length_1*length_2, wf%n_J)
+      call wf%mem%dealloc(L_jk_J, length_3*length_4, wf%n_J)
 !
    end subroutine get_ov_oo_electronic_repulsion_ccs
 !
@@ -3022,8 +3022,8 @@ contains
 !
 !     Alllocate Cholesky vectors
 !
-      call allocator(L_ij_J, length_1*length_2, wf%n_J)
-      call allocator(L_ak_J, length_3*length_4, wf%n_J)
+      call wf%mem%alloc(L_ij_J, length_1*length_2, wf%n_J)
+      call wf%mem%alloc(L_ak_J, length_3*length_4, wf%n_J)
 !
 !     Get T1-transformed Cholesky vectors
 !
@@ -3047,8 +3047,8 @@ contains
 !
 !     Deallocate Cholesky vectors
 !
-      call deallocator(L_ij_J, length_1*length_2, wf%n_J)
-      call deallocator(L_ak_J, length_3*length_4, wf%n_J)
+      call wf%mem%dealloc(L_ij_J, length_1*length_2, wf%n_J)
+      call wf%mem%dealloc(L_ak_J, length_3*length_4, wf%n_J)
 !
    end subroutine get_oo_vo_electronic_repulsion_ccs
 !
@@ -3097,8 +3097,8 @@ contains
 !
 !     Alllocate Cholesky vectors
 !
-      call allocator(L_ai_J, length_1*length_2, wf%n_J)
-      call allocator(L_jk_J, length_3*length_4, wf%n_J)
+      call wf%mem%alloc(L_ai_J, length_1*length_2, wf%n_J)
+      call wf%mem%alloc(L_jk_J, length_3*length_4, wf%n_J)
 !
 !     Get T1-transformed Cholesky vectors
 !
@@ -3122,8 +3122,8 @@ contains
 !
 !     Deallocate Cholesky vectors
 !
-      call deallocator(L_ai_J, length_1*length_2, wf%n_J)
-      call deallocator(L_jk_J, length_3*length_4, wf%n_J)
+      call wf%mem%dealloc(L_ai_J, length_1*length_2, wf%n_J)
+      call wf%mem%dealloc(L_jk_J, length_3*length_4, wf%n_J)
 !
    end subroutine get_vo_oo_electronic_repulsion_ccs
 !
@@ -3172,8 +3172,8 @@ contains
 !
 !     Alllocate Cholesky vectors
 !
-      call allocator(L_ij_J, length_1*length_2, wf%n_J)
-      call allocator(L_ab_J, length_3*length_4, wf%n_J)
+      call wf%mem%alloc(L_ij_J, length_1*length_2, wf%n_J)
+      call wf%mem%alloc(L_ab_J, length_3*length_4, wf%n_J)
 !
 !     Get T1-transformed Cholesky vectors
 !
@@ -3197,8 +3197,8 @@ contains
 !
 !     Deallocate Cholesky vectors
 !
-      call deallocator(L_ij_J, length_1*length_2, wf%n_J)
-      call deallocator(L_ab_J, length_3*length_4, wf%n_J)
+      call wf%mem%dealloc(L_ij_J, length_1*length_2, wf%n_J)
+      call wf%mem%dealloc(L_ab_J, length_3*length_4, wf%n_J)
 !
    end subroutine get_oo_vv_electronic_repulsion_ccs
 !
@@ -3247,8 +3247,8 @@ contains
 !
 !     Alllocate Cholesky vectors
 !
-      call allocator(L_ab_J, length_1*length_2, wf%n_J)
-      call allocator(L_ij_J, length_3*length_4, wf%n_J)
+      call wf%mem%alloc(L_ab_J, length_1*length_2, wf%n_J)
+      call wf%mem%alloc(L_ij_J, length_3*length_4, wf%n_J)
 !
 !     Get T1-transformed Cholesky vectors
 !
@@ -3272,8 +3272,8 @@ contains
 !
 !     Deallocate Cholesky vectors
 !
-      call deallocator(L_ab_J, length_1*length_2, wf%n_J)
-      call deallocator(L_ij_J, length_3*length_4, wf%n_J)
+      call wf%mem%dealloc(L_ab_J, length_1*length_2, wf%n_J)
+      call wf%mem%dealloc(L_ij_J, length_3*length_4, wf%n_J)
 !
    end subroutine get_vv_oo_electronic_repulsion_ccs
 !
@@ -3322,8 +3322,8 @@ contains
 !
 !     Alllocate Cholesky vectors
 !
-      call allocator(L_ia_J, length_1*length_2, wf%n_J)
-      call allocator(L_jb_J, length_3*length_4, wf%n_J)
+      call wf%mem%alloc(L_ia_J, length_1*length_2, wf%n_J)
+      call wf%mem%alloc(L_jb_J, length_3*length_4, wf%n_J)
 !
 !     Get T1-transformed Cholesky vectors
 !
@@ -3347,8 +3347,8 @@ contains
 !
 !     Deallocate Cholesky vectors
 !
-      call deallocator(L_ia_J, length_1*length_2, wf%n_J)
-      call deallocator(L_jb_J, length_3*length_4, wf%n_J)
+      call wf%mem%dealloc(L_ia_J, length_1*length_2, wf%n_J)
+      call wf%mem%dealloc(L_jb_J, length_3*length_4, wf%n_J)
 !
    end subroutine get_ov_ov_electronic_repulsion_ccs
 !
@@ -3404,13 +3404,13 @@ contains
 !        = - g_ab_cd - g_cd_ab
 !
 !
-         call allocator(L_ib_J, (wf%n_o)*length_2, wf%n_J)
-         call allocator(L_cd_J, length_3*length_4, wf%n_J)
+         call wf%mem%alloc(L_ib_J, (wf%n_o)*length_2, wf%n_J)
+         call wf%mem%alloc(L_cd_J, length_3*length_4, wf%n_J)
 !
          call wf%read_cholesky_ia(L_ib_J, 1, wf%n_o, index2_first, index2_last)
          call wf%read_cholesky_ab(L_cd_J, index3_first, index3_last, index4_first, index4_last)
 !
-         call allocator(x_ib_cd, wf%n_o*length_2, length_3*length_4)
+         call wf%mem%alloc(x_ib_cd, wf%n_o*length_2, length_3*length_4)
 !
 !        x_ib_cd = sum_(J) L_ib_J * L_cd_J
 !
@@ -3427,11 +3427,11 @@ contains
                      x_ib_cd,             &
                      wf%n_o*length_2)
 !
-         call deallocator(L_cd_J, length_3*length_4, wf%n_J)
+         call wf%mem%dealloc(L_cd_J, length_3*length_4, wf%n_J)
 !
 !        g_ab_cd -= sum_(i)t_a_i* x_ib_cd
 !
-         call allocator(g_ab_cd, length_1*length_2, length_3*length_4)
+         call wf%mem%alloc(g_ab_cd, length_1*length_2, length_3*length_4)
          call dgemm('N', 'N',                      &
                      length_1,                     &
                      length_2*length_4*length_3,   &
@@ -3445,7 +3445,7 @@ contains
                      g_ab_cd,                      & ! g_a_bcd
                      length_1)
 !
-         call deallocator(x_ib_cd, wf%n_o*length_2, length_3*length_4)
+         call wf%mem%dealloc(x_ib_cd, wf%n_o*length_2, length_3*length_4)
 !
 !        Add to g_vv_vv
 !        g_vv_vv = - g_ab_cd(ab, cd) - g_ab_cd(cd, ab)
@@ -3464,16 +3464,16 @@ contains
          enddo
 !$omp end parallel do
 !
-         call deallocator(g_ab_cd, length_1*length_2, length_3*length_4)
+         call wf%mem%dealloc(g_ab_cd, length_1*length_2, length_3*length_4)
 !
 !        :: Term 3 ::
 !
 !          sum_(ik) t_a_i * t_c_k * (sum_(J) L_ib_J * L_kd_J) 
 !
-         call allocator(L_dk_J, wf%n_o*length_4, wf%n_J)
+         call wf%mem%alloc(L_dk_J, wf%n_o*length_4, wf%n_J)
 !
          call wf%read_cholesky_ai(L_dk_J, index4_first, index4_last, 1, wf%n_o)
-         call allocator(x_ib_dk, wf%n_o*length_2, wf%n_o*length_4)
+         call wf%mem%alloc(x_ib_dk, wf%n_o*length_2, wf%n_o*length_4)
 !
 !        x_ib_dk = sum_(J)L_ib_J * L_dk_J
 !
@@ -3490,10 +3490,10 @@ contains
                      x_ib_dk,          &
                      wf%n_o*length_2)
 !
-         call deallocator(L_dk_J, wf%n_o*length_4, wf%n_J)
-         call deallocator(L_ib_J, wf%n_o*length_2, wf%n_J)
+         call wf%mem%dealloc(L_dk_J, wf%n_o*length_4, wf%n_J)
+         call wf%mem%dealloc(L_ib_J, wf%n_o*length_2, wf%n_J)
 !
-         call allocator(x_ib_dc, wf%n_o*length_2, length_4*length_3)
+         call wf%mem%alloc(x_ib_dc, wf%n_o*length_2, length_4*length_3)
 !
 !        x_ib_dc = sum_(k)t_c_k * x_ib_dk
 !
@@ -3510,11 +3510,11 @@ contains
                      x_ib_dc,                   &
                      wf%n_o*length_2*length_4)
 !
-         call deallocator(x_ib_dk, wf%n_o*length_2, wf%n_o*length_4)
+         call wf%mem%dealloc(x_ib_dk, wf%n_o*length_2, wf%n_o*length_4)
 !
 !        g_ab_dc += sum_(i) t_a_i * x_ib_dc
 !
-         call allocator(g_ab_dc, length_1*length_2, length_4*length_3)
+         call wf%mem%alloc(g_ab_dc, length_1*length_2, length_4*length_3)
 !
          call dgemm('N', 'N',                      &
                      length_1,                     &
@@ -3529,7 +3529,7 @@ contains
                      g_ab_dc,                      &
                      length_1)
 !
-         call deallocator(x_ib_dc, wf%n_o*length_2, length_4*length_3)
+         call wf%mem%dealloc(x_ib_dc, wf%n_o*length_2, length_4*length_3)
 !
 !        g_vv_vv = g_ab_cd(ab, cd) += g_ab_dc(ab, dc)
 !
@@ -3546,7 +3546,7 @@ contains
          enddo
 !$omp end parallel do 
 !
-         call deallocator(g_ab_dc, length_1*length_2, length_4*length_3)
+         call wf%mem%dealloc(g_ab_dc, length_1*length_2, length_4*length_3)
 !
       else
 !
@@ -3555,13 +3555,13 @@ contains
 !        ::Term 1:: 
 !        - sum_(J) sum_(i) t_a_i * L_ib_J * L_cd_J 
 !
-         call allocator(L_ib_J, (wf%n_o)*length_2, wf%n_J)
-         call allocator(L_cd_J, length_3*length_4, wf%n_J)
+         call wf%mem%alloc(L_ib_J, (wf%n_o)*length_2, wf%n_J)
+         call wf%mem%alloc(L_cd_J, length_3*length_4, wf%n_J)
 !
          call wf%read_cholesky_ia(L_ib_J, 1, wf%n_o, index2_first, index2_last)
          call wf%read_cholesky_ab(L_cd_J, index3_first, index3_last, index4_first, index4_last)
 !
-         call allocator(x_ib_cd, wf%n_o*length_2, length_3*length_4)
+         call wf%mem%alloc(x_ib_cd, wf%n_o*length_2, length_3*length_4)
 !
 !        x_ib_cd = sum_(J) L_ib_J * L_cd_J
 !
@@ -3578,7 +3578,7 @@ contains
                      x_ib_cd,             &
                      wf%n_o*length_2)
 !
-         call deallocator(L_cd_J, length_3*length_4, wf%n_J)
+         call wf%mem%dealloc(L_cd_J, length_3*length_4, wf%n_J)
 !
 !        g_vv_vv = g_ab_cd -= sum_(i)t_a_i* x_ib_cd
 !
@@ -3595,19 +3595,19 @@ contains
                      g_vv_vv,                      & ! g_a_bcd
                      length_1)
 !
-         call deallocator(x_ib_cd, wf%n_o*length_2, length_3*length_4)
+         call wf%mem%dealloc(x_ib_cd, wf%n_o*length_2, length_3*length_4)
 !
 !        :: Term 2 and 3 ::
 !        - sum_(J) sum_(k) t_c_k * L_ab_J * L_kd_J
 !          sum_(ik) t_a_i * t_c_k * (sum_(J) L_ib_J * L_kd_J) 
 !
-         call allocator(L_dk_J, wf%n_o*length_4, wf%n_J)
-         call allocator(L_ab_J, length_1*length_2, wf%n_J)
+         call wf%mem%alloc(L_dk_J, wf%n_o*length_4, wf%n_J)
+         call wf%mem%alloc(L_ab_J, length_1*length_2, wf%n_J)
 !
          call wf%read_cholesky_ai(L_dk_J, index4_first, index4_last, 1, wf%n_o)
          call wf%read_cholesky_ab(L_ab_J, index1_first, index1_last, index2_first, index2_last)
 !
-         call allocator(x_ab_dk, length_1*length_2, wf%n_o*length_4)
+         call wf%mem%alloc(x_ab_dk, length_1*length_2, wf%n_o*length_4)
 !
 !        x_ab_dk = sum_(J)L_ab_J * L_dk_J
 !
@@ -3626,7 +3626,7 @@ contains
 !
 !        g_ab_dc = - sum_(k)t_c_k * x_ab_dk
 !
-         call allocator(g_ab_dc, length_1*length_2, length_4*length_3)
+         call wf%mem%alloc(g_ab_dc, length_1*length_2, length_4*length_3)
 !
          call dgemm('N', 'T',                   &
                      length_1*length_2*length_4,&
@@ -3641,9 +3641,9 @@ contains
                      g_ab_dc,                   &
                      length_1*length_2*length_4)
 !
-         call deallocator(x_ab_dk, length_1*length_2, wf%n_o*length_4)
+         call wf%mem%dealloc(x_ab_dk, length_1*length_2, wf%n_o*length_4)
 !
-         call allocator(x_ib_dk, wf%n_o*length_2, wf%n_o*length_4)
+         call wf%mem%alloc(x_ib_dk, wf%n_o*length_2, wf%n_o*length_4)
 !
 !        x_ib_dk = sum_(J)L_ib_J * L_dk_J
 !
@@ -3660,10 +3660,10 @@ contains
                      x_ib_dk,          &
                      wf%n_o*length_2)
 !
-         call deallocator(L_dk_J, wf%n_o*length_4, wf%n_J)
-         call deallocator(L_ib_J, wf%n_o*length_2, wf%n_J)
+         call wf%mem%dealloc(L_dk_J, wf%n_o*length_4, wf%n_J)
+         call wf%mem%dealloc(L_ib_J, wf%n_o*length_2, wf%n_J)
 !
-         call allocator(x_ib_dc, wf%n_o*length_2, length_4*length_3)
+         call wf%mem%alloc(x_ib_dc, wf%n_o*length_2, length_4*length_3)
 !
 !        x_ib_dc = sum_(k)t_c_k * x_ib_dk
 !
@@ -3680,7 +3680,7 @@ contains
                      x_ib_dc,                   &
                      wf%n_o*length_2*length_4)
 !
-         call deallocator(x_ib_dk, wf%n_o*length_2, wf%n_o*length_4)
+         call wf%mem%dealloc(x_ib_dk, wf%n_o*length_2, wf%n_o*length_4)
 !
 !        g_ab_dc += sum_(i) t_a_i * x_ib_dc
 !
@@ -3697,7 +3697,7 @@ contains
                      g_ab_dc,                      &
                      length_1)
 !
-         call deallocator(x_ib_dc, wf%n_o*length_2, length_4*length_3)
+         call wf%mem%dealloc(x_ib_dc, wf%n_o*length_2, length_4*length_3)
 !
 !        g_vv_vv = g_ab_cd(ab, cd) += g_ab_dc(ab, dc)
 !
@@ -3712,7 +3712,7 @@ contains
             enddo
          enddo
 !
-         call deallocator(g_ab_dc, length_1*length_2, length_4*length_3)
+         call wf%mem%dealloc(g_ab_dc, length_1*length_2, length_4*length_3)
 !
       endif
 !
@@ -3809,7 +3809,7 @@ contains
 !
             d_max_length = b_max_length
 !
-            call allocator(L_ab_J, (wf%n_v)*b_length, wf%n_J)
+            call wf%mem%alloc(L_ab_J, (wf%n_v)*b_length, wf%n_J)
             call wf%read_cholesky_ab(L_ab_J, 1, wf%n_v, b_first, b_last)
 !
             do d_batch = 1, b_batch ! Batch over d index; restricted by b index 
@@ -3820,11 +3820,11 @@ contains
 !              Calculate the integrals g_ab_cd, where b and d are restricted by
 !              the current batching limits 
 !
-               call allocator(L_cd_J, (wf%n_v)*d_length, wf%n_J)
+               call wf%mem%alloc(L_cd_J, (wf%n_v)*d_length, wf%n_J)
 !
                call wf%read_cholesky_ab(L_cd_J, 1, wf%n_v, d_first, d_last)
 !
-               call allocator(g_a_bcd, (wf%n_v), b_length*(wf%n_v)*d_length)
+               call wf%mem%alloc(g_a_bcd, (wf%n_v), b_length*(wf%n_v)*d_length)
 !
                call dgemm('N', 'T',           &
                            (wf%n_v)*b_length, & 
@@ -3839,7 +3839,7 @@ contains
                            g_a_bcd,           & ! g_ab_cd 
                            (wf%n_v)*b_length)
 !
-               call deallocator(L_cd_J, (wf%n_v)*d_length, wf%n_J)
+               call wf%mem%dealloc(L_cd_J, (wf%n_v)*d_length, wf%n_J)
 !
 !              Save the integrals to disk 
 !
@@ -3865,11 +3865,11 @@ contains
                   enddo
                enddo
 !
-               call deallocator(g_a_bcd, (wf%n_v), b_length*(wf%n_v)*d_length)
+               call wf%mem%dealloc(g_a_bcd, (wf%n_v), b_length*(wf%n_v)*d_length)
 !
             enddo ! End of batches over d
 !
-            call deallocator(L_ab_J, (wf%n_v)*b_length, wf%n_J)
+            call wf%mem%dealloc(L_ab_J, (wf%n_v)*b_length, wf%n_J)
 !
          enddo ! End of batches over b 
 !
@@ -3995,7 +3995,7 @@ contains
 !
             d_max_length = b_max_length
 !
-            call allocator(L_ab_J, (wf%n_v)*b_length, wf%n_J)
+            call wf%mem%alloc(L_ab_J, (wf%n_v)*b_length, wf%n_J)
             call wf%get_cholesky_ab(L_ab_J, 1, wf%n_v, b_first, b_last)
 !
             do d_batch = 1, b_batch ! Batch over d index; restricted by b index 
@@ -4006,11 +4006,11 @@ contains
 !              Calculate the integrals g_ab_cd, where b and d are restricted by
 !              the current batching limits 
 !
-               call allocator(L_cd_J, (wf%n_v)*d_length, wf%n_J)
+               call wf%mem%alloc(L_cd_J, (wf%n_v)*d_length, wf%n_J)
 !
                call wf%get_cholesky_ab(L_cd_J, 1, wf%n_v, d_first, d_last)
 !
-               call allocator(g_a_bcd, (wf%n_v), b_length*(wf%n_v)*d_length)
+               call wf%mem%alloc(g_a_bcd, (wf%n_v), b_length*(wf%n_v)*d_length)
 !
                call dgemm('N', 'T',           &
                            (wf%n_v)*b_length, & 
@@ -4025,7 +4025,7 @@ contains
                            g_a_bcd,           & ! g_ab_cd 
                            (wf%n_v)*b_length)
 !
-               call deallocator(L_cd_J, (wf%n_v)*d_length, wf%n_J)
+               call wf%mem%dealloc(L_cd_J, (wf%n_v)*d_length, wf%n_J)
 !
 !              Save the integrals to disk 
 !
@@ -4045,11 +4045,11 @@ contains
                   enddo
                enddo
 !
-               call deallocator(g_a_bcd, (wf%n_v), b_length*(wf%n_v)*d_length)
+               call wf%mem%dealloc(g_a_bcd, (wf%n_v), b_length*(wf%n_v)*d_length)
 !
             enddo ! End of batches over d
 !
-            call deallocator(L_ab_J, (wf%n_v)*b_length, wf%n_J)
+            call wf%mem%dealloc(L_ab_J, (wf%n_v)*b_length, wf%n_J)
 !
          enddo ! End of batches over b 
 !
@@ -4125,12 +4125,12 @@ contains
 !
          call cpu_time(begin_timer)
 !
-         call allocator(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+         call wf%mem%alloc(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !        Alllocate Cholesky vectors
 !
-         call allocator(L_ai_J, (wf%n_o)*(wf%n_v), wf%n_J)
-         call allocator(L_jb_J, (wf%n_o)*(wf%n_v), wf%n_J)
+         call wf%mem%alloc(L_ai_J, (wf%n_o)*(wf%n_v), wf%n_J)
+         call wf%mem%alloc(L_jb_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
 !        Get T1-transformed Cholesky vectors
 !
@@ -4154,8 +4154,8 @@ contains
 !
 !        Deallocate Cholesky vectors
 !
-         call deallocator(L_ai_J, (wf%n_o)*(wf%n_v), wf%n_J)
-         call deallocator(L_jb_J, (wf%n_o)*(wf%n_v), wf%n_J)
+         call wf%mem%dealloc(L_ai_J, (wf%n_o)*(wf%n_v), wf%n_J)
+         call wf%mem%dealloc(L_jb_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !  
 !        Open file for writing integrals - record (ai), record length (n_o)*(n_v) (bj)
 !
@@ -4183,7 +4183,7 @@ contains
          if (ioerror .ne. 0) write(unit_output,'(t3,a)') &
             'Error: write error in store_t1_vo_ov_electronic_repulsion_integrals_ccs'
 !
-         call deallocator(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+         call wf%mem%dealloc(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
          call cpu_time(end_timer)
 !
@@ -4276,7 +4276,7 @@ contains
             call batch_limits(a_first, a_last, a_batch, a_max_length, wf%n_v)
             a_length = a_last - a_first + 1  
 
-            call allocator(g_ab_ci, a_length*(wf%n_v), (wf%n_o)*(wf%n_v))
+            call wf%mem%alloc(g_ab_ci, a_length*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
             call wf%get_vv_vo_electronic_repulsion(g_ab_ci, a_first, a_last, 1, wf%n_v, 1, wf%n_v, 1, wf%n_o)
 !
@@ -4302,7 +4302,7 @@ contains
             if (ioerror .ne. 0) write(unit_output,'(t3,a)') &
                'Error: write error in store_t1_vv_vo_electronic_repulsion_integrals_ccs'
 !
-            call deallocator(g_ab_ci, a_length*(wf%n_v), (wf%n_o)*(wf%n_v))
+            call wf%mem%dealloc(g_ab_ci, a_length*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
          enddo ! End of batches over a 
 !
@@ -4407,7 +4407,7 @@ contains
 !
 !        Must limit jb index, will first read for all jb's
 !
-         call allocator(g_ai_jb_full, length_a*length_i, (wf%n_v)*(wf%n_o))
+         call wf%mem%alloc(g_ai_jb_full, length_a*length_i, (wf%n_v)*(wf%n_o))
 !
          do a = 1, length_a
             do i = 1, length_i
@@ -4436,7 +4436,7 @@ contains
             enddo
          enddo
 !
-         call deallocator(g_ai_jb_full, length_a*length_i, (wf%n_v)*(wf%n_o))
+         call wf%mem%dealloc(g_ai_jb_full, length_a*length_i, (wf%n_v)*(wf%n_o))
 !
       endif
 !
@@ -4533,10 +4533,10 @@ contains
             call batch_limits(b_first, b_last, b_batch, b_max_length, wf%n_v)
             b_length = b_last - b_first + 1  
 !
-            call allocator(g_bc_ia, b_length*(wf%n_v), (wf%n_v)*(wf%n_o))
+            call wf%mem%alloc(g_bc_ia, b_length*(wf%n_v), (wf%n_v)*(wf%n_o))
 !
-            call allocator(L_bc_J, b_length*(wf%n_v), wf%n_J)
-            call allocator(L_ia_J, (wf%n_v)*(wf%n_o), wf%n_J)
+            call wf%mem%alloc(L_bc_J, b_length*(wf%n_v), wf%n_J)
+            call wf%mem%alloc(L_ia_J, (wf%n_v)*(wf%n_o), wf%n_J)
 !
 !        Get T1-transformed Cholesky vectors
 !
@@ -4560,8 +4560,8 @@ contains
 !
 !        Deallocate Cholesky vectors
 !
-         call deallocator(L_bc_J, b_length*(wf%n_v), wf%n_J)
-         call deallocator(L_ia_J, (wf%n_v)*(wf%n_o), wf%n_J)
+         call wf%mem%dealloc(L_bc_J, b_length*(wf%n_v), wf%n_J)
+         call wf%mem%dealloc(L_ia_J, (wf%n_v)*(wf%n_o), wf%n_J)
 !
 !           Save the integrals to disk 
 !
@@ -4743,7 +4743,7 @@ contains
       if (ioerror .ne. 0) write(unit_output,'(t3,a)') &
       'Error: error while opening file in read_t1_vv_vo_electronic_repulsion_ccs'
 !
-      call allocator(g_AB_ci, 1, (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(g_AB_ci, 1, (wf%n_o)*(wf%n_v))
       g_AB_ci = zero
 !
       do a = 1, length_a
@@ -4779,7 +4779,7 @@ contains
 !
       enddo ! End of read loop over a 
 !
-      call deallocator(g_AB_ci, 1, (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(g_AB_ci, 1, (wf%n_o)*(wf%n_v))
 !
       if (ioerror .ne. 0) write(unit_output,'(t3,a)') &
          'Error: read error in read_t1_vv_vo_electronic_repulsion_integrals_ccs'

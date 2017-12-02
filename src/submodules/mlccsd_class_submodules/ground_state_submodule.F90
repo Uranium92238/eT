@@ -63,8 +63,8 @@ contains
 !
 !     Allocate Δ t_i and t_i + Δ t_i vectors 
 ! 
-      call allocator(dt, wf%n_parameters, 1)
-      call allocator(t_dt, wf%n_parameters, 1)
+      call wf%mem%alloc(dt, wf%n_parameters, 1)
+      call wf%mem%alloc(t_dt, wf%n_parameters, 1)
 !
       dt   = zero 
       t_dt = zero 
@@ -93,8 +93,8 @@ contains
 !
 !     Deallocate vectors 
 !
-      call deallocator(dt, wf%n_parameters, 1)
-      call deallocator(t_dt, wf%n_parameters, 1)
+      call wf%mem%dealloc(dt, wf%n_parameters, 1)
+      call wf%mem%dealloc(t_dt, wf%n_parameters, 1)
 !
    end subroutine new_amplitudes_mlccsd
 !

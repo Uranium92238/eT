@@ -151,12 +151,12 @@ contains
 !
 !     Read L_ia^J from disk 
 !
-      call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call wf%mem%alloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
       call wf%read_cholesky_ia(L_ia_J)
 !
 !     Form g_iajb = sum_J L_ia^J L_ia^J
 !
-      call allocator(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       call dgemm('N','T',            &
                   (wf%n_o)*(wf%n_v), &
@@ -171,7 +171,7 @@ contains
                   g_ia_jb,           &
                   (wf%n_o)*(wf%n_v))
 !
-      call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call wf%mem%dealloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
 !     Add the MP2 correction to the Hartree-Fock energy 
 !
@@ -201,7 +201,7 @@ contains
          enddo
       enddo
 !
-      call deallocator(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     Print the energy to the main output file
 !

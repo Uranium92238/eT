@@ -202,7 +202,7 @@ contains
 !
 !     :: Calculate the v vector ::
 !
-      call allocator(v_ai, wf%n_v, wf%n_o)
+      call wf%mem%alloc(v_ai, wf%n_v, wf%n_o)
 !
 !     Write to disk the integrals needed for calculation of v
 !
@@ -220,10 +220,10 @@ contains
       wf%omega1 = zero        ! Will hold the singles part of W, 
                               ! arising from the E1 term 
 !
-      call allocator(t_abc, (wf%n_v)**3, 1)
+      call wf%mem%alloc(t_abc, (wf%n_v)**3, 1)
       t_abc = zero
 !
-      call allocator(v_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      call wf%mem%alloc(v_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
       v_ai_bj = zero 
 !
       do i = 1, wf%n_o
@@ -256,14 +256,14 @@ contains
 !
 !     Deallocate the triples amplitude 
 !
-      call deallocator(t_abc, (wf%n_v)**3, 1)
+      call wf%mem%dealloc(t_abc, (wf%n_v)**3, 1)
 !
 !     Calculate the u vector 
 !
-      call allocator(u_ai, wf%n_v, wf%n_o)
+      call wf%mem%alloc(u_ai, wf%n_v, wf%n_o)
       u_ai = zero 
 !
-      call allocator(u_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      call wf%mem%alloc(u_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
       u_ai_bj = zero 
 !
       call daxpy((wf%n_o)*(wf%n_v), two, wf%t1am, 1, u_ai, 1) ! u_ai = 2 * t_ai 
@@ -309,11 +309,11 @@ contains
 !
 !     Deallocations 
 !
-      call deallocator(u_ai, wf%n_v, wf%n_o)
-      call deallocator(u_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      call wf%mem%dealloc(u_ai, wf%n_v, wf%n_o)
+      call wf%mem%dealloc(u_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
-      call deallocator(v_ai, wf%n_v, wf%n_o)
-      call deallocator(v_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      call wf%mem%dealloc(v_ai, wf%n_v, wf%n_o)
+      call wf%mem%dealloc(v_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
       end subroutine calc_energy_correction_ccsdpt
 !
