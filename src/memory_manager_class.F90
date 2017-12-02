@@ -27,14 +27,18 @@ module memory_manager_class
 !
 !     The total amount of memory specified by user (standard: 30 GB)
 !
-      integer(i15) :: total = 30000000000 
+      integer(i15) :: total = 30000000000
 !
 !     The amount of memory currently available, based on the arrays currently allocated 
 !     (memory used by objects and local variables are not included in this estimate)
 !
-      integer(i15) :: available
+      integer(i15) :: available = 30000000000 
 !
    contains 
+!
+!     Initialization routine (used if user specifies a memory different from standard)
+!
+      procedure :: init => init_memory_manager
 !
 !     Allocation and deallocation routines for double precision arrays 
 !
@@ -50,6 +54,36 @@ module memory_manager_class
 !
 !
 contains
+!
+!
+   module subroutine init_memory_manager(mem, total)
+!!
+!!    Init (Memory Manager)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017 
+!!
+!!    Initializes the memory manager object by setting the 
+!!    total and initial available memory
+!!
+!!    This is only called if the user specifies a total memory 
+!!    different from the standard
+!! 
+      implicit none 
+!
+      class(memory_manager) :: mem 
+!
+      integer(i15) :: total ! In GBs
+!     
+!     Set the specified total memory in bytes 
+!
+      mem%total = total*1.0D9
+!
+!     Update the initially available memory 
+!
+      mem%available = mem%total 
+!
+      write(unit_output,*) 'Specified memory:',total 
+!
+   end subroutine init_memory_manager
 !
 !
    module subroutine alloc_memory_manager(mem, array, M, N)

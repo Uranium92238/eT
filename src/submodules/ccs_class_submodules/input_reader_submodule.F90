@@ -73,9 +73,9 @@ contains
 !
                      read(unit_input,*) memory
 !
-!                    Converting from gb to words
+!                    Initialize memory object for the specified memory 
 !
-                     wf%settings%memory = memory*134500000
+                     call wf%mem%init(memory)
 !
                      cycle
 !
