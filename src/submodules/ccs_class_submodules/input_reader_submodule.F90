@@ -553,8 +553,8 @@ module subroutine read_property_specs_ccs(wf, unit_input)
 !
          elseif (trim(line) == 'end of eT input') then
 !
-            write(unit_output,*)'Error: No recognized properties specified in property section of eT.inp'
-            stop
+            backspace(unit_input)
+            exit
 !
          endif
 !

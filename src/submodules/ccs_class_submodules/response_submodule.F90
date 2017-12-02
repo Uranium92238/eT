@@ -356,7 +356,7 @@ contains
       call allocator(gradient_vector, wf%n_parameters, 1)
       gradient_vector = zero 
 !
-      if (wf%response_task=='multipliers') then 
+      if (wf%tasks%multipliers) then 
 !
          write(unit_output,'(/t3,a)') 'Requested the solution of the multiplier equation (t-bar).'
          call wf%construct_eta(gradient_vector)
@@ -688,7 +688,7 @@ contains
       access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
 !
       call generate_unit_identifier(unit_solution)
-      open(unit=unit_solution, file=wf%response_task, action='write', status='unknown', &
+      open(unit=unit_solution, file=wf%tasks%current, action='write', status='unknown', &
       access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
 !
 !     Construct full space solution vector X 
