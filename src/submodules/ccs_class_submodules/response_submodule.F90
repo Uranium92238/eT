@@ -51,9 +51,11 @@ contains
 !
 !     Let the user know the response driver is running
 !
-      write(unit_output,'(t3,a)')  ':: Response solver (Davidson)'
-      write(unit_output,'(t3,a)')  ':: E. F. Kjønstad, S. D. Folkestad, June 2017' 
-      flush(unit_output)    
+      write(unit_output,'(/t3,a)')  ':: Response solver (Davidson)'
+      write(unit_output,'(t3,a/)')  ':: E. F. Kjønstad, S. D. Folkestad, June 2017' 
+      flush(unit_output)  
+!
+      call wf%response_preparations  
 
 !     Run the general solver routine (file names are given
 !     by the task, i.e., the file 'right_eigenvectors' contains
@@ -126,6 +128,10 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: solution_vector_reduced
 !
+      real(dp) :: start_property_solver = 0, end_property_solver = 0
+!
+      call cpu_time(start_property_solver)
+!
 !     Initialize variables 
 !
       reduced_dim  = 1
@@ -164,7 +170,7 @@ contains
 !
          if (converged) then 
 !
-            write(unit_output,'(/t3,a,i2,a/)') 'Converged in ',iteration,' iterations!'
+            write(unit_output,'(/t3,a,i2,a)') 'Converged in ',iteration,' iterations!'
 !
          else
 !
@@ -173,6 +179,10 @@ contains
          endif
 !
       enddo
+      call cpu_time(end_property_solver)
+      write(unit_output,'(//t3,a,a,a,a,a/)')'Summary of ', trim(wf%name), ' ', trim(wf%tasks%current), ' calculation:'
+      write(unit_output,'(t6,a25,f14.8/)') 'Total CPU time (seconds):    ', end_property_solver - start_property_solver
+      flush(unit_output)
 !
    end subroutine response_solver_ccs
 !

@@ -46,10 +46,6 @@ module ccs_class
       real(dp), dimension(:,:), allocatable :: fock_ai ! vir-occ block
       real(dp), dimension(:,:), allocatable :: fock_ab ! vir-vir block 
 !
-!     Variables that keep track of which response task is being performed 
-!
-      character(len=40) :: response_task 
-!
 !     The excitation energies (omega_1, omega_2, ...)
 !
       real(dp), dimension(:,:), allocatable :: excited_state_energies
@@ -203,6 +199,7 @@ module ccs_class
 !
 !     Helper routines for response solver 
 !
+      procedure :: response_preparations                 => response_preparations_ccs
       procedure :: initialize_response                   => initialize_response_ccs
       procedure :: solve_reduced_response_equation       => solve_reduced_response_equation_ccs
       procedure :: construct_reduced_matrix              => construct_reduced_matrix_ccs
@@ -1522,6 +1519,19 @@ module ccs_class
          class(ccs) :: wf
 !
       end subroutine response_solver_ccs
+!
+!
+      module subroutine response_preparations_ccs(wf)
+!!
+!!       Response calculation preparations (CCS)
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Dec 2017
+!!
+!!
+         implicit none 
+!
+         class(ccs) :: wf 
+!
+      end subroutine response_preparations_ccs
 !
 !
       module subroutine initialize_response_ccs(wf)

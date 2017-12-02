@@ -171,24 +171,10 @@ contains
 !
             endif
 !
-         elseif (wf%tasks%current == 'response') then
-!
-            if (wf%response_task == 'left_eigenvectors') then
-!
-               write(unit_output,*)'Error: Jacobian transpose transformation not implemented for CC2'
-               stop
-!
-            elseif (wf%response_task == 'multipliers') then 
+         elseif (wf%tasks%current == 'multipliers') then
 !
                write(unit_output,*)'Error: multipliers not implemented for CC2'
                stop
-!
-            else
-!
-               write(unit_output,*) 'Error: Response task not recognized'
-               stop
-!
-            endif
 !
          else
 !
