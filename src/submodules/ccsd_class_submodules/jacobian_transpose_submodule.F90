@@ -2643,9 +2643,10 @@ contains
       real(dp), dimension(:,:), allocatable :: g_ck_bj ! g_ckjb & g_cbjk
 !
       real(dp), dimension(:,:), allocatable :: g_cb_jk ! g_cbjk 
+      real(dp), dimension(:,:), allocatable :: g_cb_jk_restricted ! g_cbjk, batch over b 
 !
       integer(i15) :: c = 0, j = 0, i = 0, a = 0, cj = 0, ai = 0, bj = 0, aij = 0, b = 0
-      integer(i15) :: jb = 0, jk = 0, k = 0, ck = 0, cb = 0
+      integer(i15) :: jb = 0, jk = 0, k = 0, ck = 0, cb = 0, cb_restricted = 0
 !
 !     Batching variables 
 !
@@ -2741,29 +2742,10 @@ contains
 !
 !     Form g_ck_jb 
 !
-      call allocator(L_ck_J, (wf%n_o)*(wf%n_v), wf%n_J)
-      call allocator(L_jb_J, (wf%n_o)*(wf%n_v), wf%n_J)
-!
-      call wf%get_cholesky_ai(L_ck_J)
-      call wf%get_cholesky_ia(L_jb_J)
-!
       call allocator(g_ck_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      call dgemm('N','T',            &
-                  (wf%n_o)*(wf%n_v), & 
-                  (wf%n_o)*(wf%n_v), &
-                  wf%n_J,            &
-                  one,               &
-                  L_ck_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  L_jb_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  g_ck_jb,           &
-                  (wf%n_o)*(wf%n_v))
-!
-      call deallocator(L_ck_J, (wf%n_o)*(wf%n_v), wf%n_J)
-      call deallocator(L_jb_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      integral_type = 'electronic_repulsion'
+      call wf%get_vo_ov(integral_type, g_ck_jb)
 !
 !     Reorder to g_ck_bj = g_ck_jb = g_ckjb 
 !
@@ -2810,9 +2792,6 @@ contains
       call allocator(g_cb_jk, (wf%n_v)**2, (wf%n_o)**2)
       g_cb_jk = zero
 !
-      call allocator(L_jk_J, (wf%n_o)**2, wf%n_J)
-      call wf%get_cholesky_ij(L_jk_J)
-!
       required = 1 ! Not a correct estimate - needs to be set!
 !     
       required  = 4*required ! In words
@@ -2835,30 +2814,42 @@ contains
 !
 !        Form g_cb_jk = g_cbjk 
 !
-         call allocator(L_cb_J, (wf%n_v)*b_length, wf%n_J)
+         call allocator(g_cb_jk_restricted, (wf%n_v)*b_length, (wf%n_o)**2)
 !
-         call wf%get_cholesky_ab(L_cb_J, 1, wf%n_v, b_first, b_last)
+         integral_type = 'electronic_repulsion'
+         call wf%get_vv_oo(integral_type,      &
+                           g_cb_jk_restricted, &
+                           1,                  &
+                           wf%n_v,             &
+                           b_first,            &
+                           b_last,             &
+                           1,                  &
+                           wf%n_o,             &
+                           1,                  &
+                           wf%n_o)
 !
-         cb_offset = index_two(1, b_first, wf%n_v)
+!        Place in full space vector and deallocate restricted vector   
 !
-         call dgemm('N','T',               &
-                     (wf%n_v)*b_length,    &
-                     (wf%n_o)**2,          &
-                     wf%n_J,               &
-                     one,                  &
-                     L_cb_J,               &
-                     (wf%n_v)*b_length,    &
-                     L_jk_J,               &
-                     (wf%n_o)**2,          &
-                     one,                  &
-                     g_cb_jk(cb_offset,1), &
-                     (wf%n_v)**2)
+         do k = 1, wf%n_o
+            do j = 1, wf%n_o
+               do b = b_first, b_last
+                  do c = 1, wf%n_v
 !
-         call deallocator(L_cb_J, (wf%n_v)*b_length, wf%n_J)   
+                     cb = index_two(c, b, wf%n_v)
+                     jk = index_two(j, k, wf%n_o)
+!
+                     cb_restricted = index_two(c, b - b_first + 1, wf%n_v)
+!
+                     g_cb_jk(cb, jk) = g_cb_jk_restricted(cb_restricted, jk)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+         call deallocator(g_cb_jk_restricted, (wf%n_v)*b_length, (wf%n_o)**2)
 !
       enddo ! End of batches over b 
-!
-      call deallocator(L_jk_J, (wf%n_o)**2, wf%n_J)
 !
 !     Reorder to g_ck_bj 
 !
