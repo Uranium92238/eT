@@ -157,14 +157,15 @@ contains
 !
 !     Initialize (singles and doubles) amplitudes
 !
-      call wf%initialize_amplitudes
-!
-!     Set the number of parameters in the wavefunction
-!     (that are solved for in the ground and excited state solvers) 
+      wf%n_t1am = (wf%n_o)*(wf%n_v) 
+      wf%n_t2am = (wf%n_t1am)*(wf%n_t1am + 1)/2 
 !
       wf%n_parameters = wf%n_t1am + wf%n_t2am
 !
 !     Initialize the Fock matrix (allocate and construct given the initial amplitudes)
+!
+      if (.not. allocated(wf%t1am)) call wf%mem%alloc(wf%t1am, wf%n_v, wf%n_o)
+      wf%t1am = zero
 !
       call wf%initialize_fock_matrix
 !
