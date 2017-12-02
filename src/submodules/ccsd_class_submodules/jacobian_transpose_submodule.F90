@@ -3190,8 +3190,6 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: X_ck_bj ! An intermediate 
 !
-      real(dp), dimension(:,:), allocatable :: L_jb_J
-!
       real(dp), dimension(:,:), allocatable :: g_jb_ld ! g_jbld
       real(dp), dimension(:,:), allocatable :: L_dl_bj ! L_jbld
 !
@@ -3305,8 +3303,6 @@ contains
 !
       real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
       real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ai_bj
-!
-      real(dp), dimension(:,:), allocatable :: L_kc_J
 !
       real(dp), dimension(:,:), allocatable :: g_kc_jd
       real(dp), dimension(:,:), allocatable :: L_j_ckd ! L_kcjd
@@ -4382,10 +4378,6 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: sigma_ab_ij_batch
 !
-      real(dp), dimension(:,:), allocatable :: L_db_J 
-      real(dp), dimension(:,:), allocatable :: L_ca_J
-      real(dp), dimension(:,:), allocatable :: L_ik_J  
-!
       real(dp), dimension(:,:), allocatable :: g_ca_db ! g_cadb 
       real(dp), dimension(:,:), allocatable :: g_ab_cd ! g_cadb 
 !
@@ -4412,23 +4404,10 @@ contains
 !
 !     Form g_ik_jl 
 !
-      call allocator(L_ik_J, (wf%n_o)**2, wf%n_J)
-      call wf%get_cholesky_ij(L_ik_J)
-!
       call allocator(g_ik_jl, (wf%n_o)**2, (wf%n_o)**2)
 !
-      call dgemm('N','T',      &
-                  (wf%n_o)**2, &
-                  (wf%n_o)**2, &
-                  wf%n_J,      &
-                  one,         &
-                  L_ik_J,      &
-                  (wf%n_o)**2, &
-                  L_ik_J,      &
-                  (wf%n_o)**2, &
-                  zero,        &
-                  g_ik_jl,     &
-                  (wf%n_o)**2)
+      integral_type = 'electronic_repulsion'
+      call wf%get_oo_oo(integral_type, g_ik_jl)
 !
 !     Reorder to g_kl_ij = g_ik_jl = g_ikjl 
 !
@@ -4524,33 +4503,14 @@ contains
 !
 !           Form g_ca_db = g_cadb 
 !
-            call allocator(L_ca_J, (wf%n_v)*a_length, wf%n_J)
-            call allocator(L_db_J, (wf%n_v)*b_length, wf%n_J)
-!
-            L_ca_J = zero
-            L_db_J = zero
-!
-            call wf%get_cholesky_ab(L_ca_J, 1, wf%n_v, a_first, a_last)
-            call wf%get_cholesky_ab(L_db_J, 1, wf%n_v, b_first, b_last)
-!
             call allocator(g_ca_db, (wf%n_v)*a_length, (wf%n_v)*b_length)
-            g_ca_db = zero
 !
-            call dgemm('N','T',            &
-                        (wf%n_v)*a_length, & 
-                        (wf%n_v)*b_length, &
-                        wf%n_J,            &
-                        one,               &
-                        L_ca_J,            &
-                        (wf%n_v)*a_length, &
-                        L_db_J,            &
-                        (wf%n_v)*b_length, &
-                        zero,              &
-                        g_ca_db,           &
-                        (wf%n_v)*a_length)
-!
-            call deallocator(L_ca_J, (wf%n_v)*a_length, wf%n_J)
-            call deallocator(L_db_J, (wf%n_v)*b_length, wf%n_J)
+            integral_type = 'electronic_repulsion'
+            call wf%get_vv_vv(integral_type, g_ca_db, &
+                              1, wf%n_v,              &
+                              a_first, a_last,        &
+                              1, wf%n_v,              &
+                              b_first, b_last)
 !
 !           Reorder to g_ab_cd = g_ca_db = g_cadb 
 !
