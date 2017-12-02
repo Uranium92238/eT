@@ -1461,7 +1461,7 @@ contains
       wf%implemented%excited_state      = .true.
       wf%implemented%core_excited_state = .true.
       wf%implemented%ionized_state      = .true.
-      wf%implemented%properties         = .true.
+      wf%implemented%multipliers        = .true.
 !
 !     Read calculation tasks from input file eT.inp
 !     

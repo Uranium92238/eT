@@ -1266,11 +1266,12 @@ contains
 !
 !     Determine file name
 !
-      if (wf%tasks%excited_state) wf%excited_state_task        =  'right_valence'
-      if (wf%tasks%core_excited_state) wf%excited_state_task   =  'right_core'
+      if (wf%tasks%excited_state) wf%excited_state_specifications%solution_file = 'right_valence'
+      if (wf%tasks%core_excited_state) wf%excited_state_specifications%solution_file = 'right_core'
 !
-      open(unit=unit_solution, file=wf%excited_state_task, action='read', status='unknown', &
-        access='direct', form='unformatted', recl=dp*(cc2_n_parameters), iostat=ioerror) 
+      open(unit=unit_solution, file=wf%excited_state_specifications%solution_file,&
+            action='read', status='unknown', &
+            access='direct', form='unformatted', recl=dp*(cc2_n_parameters), iostat=ioerror) 
 !
       if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file', ioerror
 !

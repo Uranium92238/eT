@@ -37,6 +37,16 @@ module excited_state_specs_class
       integer(i15) :: n_singlet_states = 0
       integer(i15) :: n_triplet_states = 0
 !
+!     Logicals to determine wether we have Jacobi of Jacobi transpose transformation
+!
+      logical :: right = .true. ! Default
+      logical :: left  = .false. 
+!
+!     Solution file name
+!
+      character(len=40) :: solution_file = 'right_valence' ! Should be 'right_valence', 'left_valence'
+!                                                            'right_core' or 'left_core'.
+!
    end type excited_state_specs                                                                          
 !
 contains

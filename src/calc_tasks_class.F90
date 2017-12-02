@@ -31,9 +31,12 @@ module calc_tasks_class
       logical :: core_excited_state = .false. 
       logical :: ionized_state      = .false. 
       logical :: core_ionized_state = .false. 
-      logical :: properties         = .false.
+      logical :: multipliers        = .false.
 !
-   end type calc_tasks                                                                           
+      character(len=40) :: current = 'ground_state'
+!
+   end type calc_tasks                                                                 
+
 !
 contains
 !

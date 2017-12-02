@@ -33,6 +33,8 @@ module calc_tasks_class
       logical :: core_ionized_state = .false. 
       logical :: properties         = .false.
 !
+      character(len=40) :: current = 'ground_state'
+!
    end type calc_tasks                                                                           
 !
 contains

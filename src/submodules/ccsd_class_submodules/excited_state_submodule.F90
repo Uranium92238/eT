@@ -111,13 +111,13 @@ contains
 !        Test for left or right transformation
 !
 
-         if (wf%current_task == 'excited_state') then
+         if (wf%tasks%current == 'excited_state') then
 !
-            if (wf%excited_state_task =='right_valence' .or. wf%excited_state_task =='right_core') then
+            if (wf%excited_state_specifications%right) then
 !
                call wf%jacobian_ccsd_transformation(c_a_i, c_aibj)
 !
-            elseif (wf%excited_state_task=='left_valence') then
+            elseif (wf%excited_state_specifications%left) then
 !               
                call wf%jacobian_transpose_ccsd_transformation(c_a_i, c_aibj)
 !
@@ -128,22 +128,9 @@ contains
 !
             endif
 !
-         elseif (wf%current_task == 'response') then
-!
-            if (wf%response_task == 'left_eigenvectors') then
+         elseif (wf%tasks%current == 'multipliers') then
 !
                call wf%jacobian_transpose_ccsd_transformation(c_a_i, c_aibj)
-!
-            elseif (wf%response_task == 'multipliers') then 
-!
-               call wf%jacobian_transpose_ccsd_transformation(c_a_i, c_aibj)
-!
-            else
-!
-               write(unit_output,*) 'Error: Response task not recognized'
-               stop
-!
-            endif
 !
          else
 !
@@ -274,6 +261,35 @@ contains
 !
       call wf%store_t1_vv_vo_electronic_repulsion
       call wf%store_t1_vv_ov_electronic_repulsion
+!
+!     Set current task to excited state calculation 
+! 
+      wf%tasks%current = 'excited_state'
+!
+!
+!     Set current task to excited state calculation 
+! 
+      wf%tasks%current = 'excited_state'
+!
+!     Set filename for solution vectors
+!
+      if (wf%tasks%core_excited_state .or. wf%tasks%core_ionized_state) then   ! Core excitation
+!
+         if (wf%excited_state_specifications%right) then                         ! Right vectors
+            wf%excited_state_specifications%solution_file = 'right_core'
+         else                                                                    ! Left vectors
+            wf%excited_state_specifications%solution_file = 'left_core'
+         endif
+!
+      else                                                                    ! Valence excitation
+!
+         if (wf%excited_state_specifications%left) then                          ! Right vectors
+            wf%excited_state_specifications%solution_file = 'left_valence'
+         else                                                                    ! Left vectors
+            wf%excited_state_specifications%solution_file = 'right_valence'
+         endif
+!
+      endif
 !
    end subroutine excited_state_preparations_ccsd
 !
@@ -423,8 +439,9 @@ contains
 !  
       call generate_unit_identifier(unit_solution)
 !
-      open(unit=unit_solution, file=wf%excited_state_task, action='read', status='unknown', &
-      access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
+      open(unit=unit_solution, file=wf%excited_state_specifications%solution_file, &
+            action='read', status='unknown', &
+            access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
 !
       if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file'
 !

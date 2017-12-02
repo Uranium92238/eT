@@ -152,13 +152,14 @@ contains
       do trial = first_trial, last_trial
 !
          read(unit_trial_vecs, rec=trial, iostat=ioerror) c_a_i, c_aibj
-         if (wf%current_task == 'excited_state') then
 !
-            if (wf%excited_state_task =='right_valence' .or. wf%excited_state_task =='right_core') then
+         if (wf%tasks%current == 'excited_state') then
+!
+            if (wf%excited_state_specifications%right) then
 !
                call wf%jacobian_cc2_transformation(c_a_i, c_aibj)
 !
-            elseif (wf%excited_state_task=='left_valence') then
+            elseif (wf%excited_state_specifications%left) then
 !               
                write(unit_output,*)'Error: Jacobian transpose transformation not implemented for CC2'
                stop
@@ -170,7 +171,7 @@ contains
 !
             endif
 !
-         elseif (wf%current_task == 'response') then
+         elseif (wf%tasks%current == 'response') then
 !
             if (wf%response_task == 'left_eigenvectors') then
 !
@@ -315,6 +316,33 @@ contains
       call wf%read_single_amplitudes
 !
       call wf%store_t1_vv_ov_electronic_repulsion
+!
+!     Set current task to excited state calculation 
+! 
+      wf%tasks%current = 'excited_state'
+!
+!     Set filename for solution vectors
+!
+      if (wf%tasks%core_excited_state .or. wf%tasks%core_ionized_state) then   ! Core excitation
+!
+         if (wf%excited_state_specifications%right) then                         ! Right vectors
+            wf%excited_state_specifications%solution_file = 'right_core'
+         else                                                                    ! Left vectors
+            write(unit_output,*)'Error: Jacobian transpose transformation not implemented for core excitations' ! S: should be able to get these with the same projections however so...
+            stop
+         endif
+!
+      else                                                                    ! Valence excitation
+!
+         if (wf%excited_state_specifications%left) then                          ! Right vectors
+            wf%excited_state_specifications%solution_file = 'left_valence'
+         else                                                                    ! Left vectors
+            wf%excited_state_specifications%solution_file = 'right_valence'
+         endif
+!
+      endif
+!
+      call deallocator(wf%t1am, wf%n_v, wf%n_o)
 !
    end subroutine excited_state_preparations_cc2
 !
@@ -464,8 +492,9 @@ contains
 !  
       call generate_unit_identifier(unit_solution)
 !
-      open(unit=unit_solution, file=wf%excited_state_task, action='read', status='unknown', &
-      access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
+      open(unit=unit_solution, file=wf%excited_state_specifications%solution_file, &
+            action='read', status='unknown', &
+            access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
 !
       if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file'
 !

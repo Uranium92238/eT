@@ -49,8 +49,6 @@ module ccs_class
 !     Variables that keep track of which response task is being performed 
 !
       character(len=40) :: response_task 
-      character(len=40) :: excited_state_task
-      character(len=40) :: current_task = 'ground_state'
 !
 !     The excitation energies (omega_1, omega_2, ...)
 !
@@ -85,6 +83,7 @@ module ccs_class
       procedure :: calculation_reader        => calculation_reader_ccs
       procedure :: read_ground_state_specs   => read_ground_state_specs_ccs
       procedure :: read_excited_state_specs  => read_excited_state_specs_ccs
+      procedure :: read_property_specs       => read_property_specs_ccs
 !
 !     get Cholesky routines to calculate the occ/vir-occ/vir blocks of the 
 !     T1-transformed MO Cholesky vectors
@@ -345,6 +344,21 @@ module ccs_class
 !
 !
       end subroutine read_excited_state_specs_ccs
+!
+!
+      module subroutine read_property_specs_ccs(wf, unit_input)
+!!
+!!       Read excited state specifications,
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Nov. 2017
+!!
+         implicit none
+!
+         integer(i15)      :: unit_input
+!
+         class(ccs)        :: wf
+!
+!
+      end subroutine read_property_specs_ccs
 !
 !
    end interface
@@ -2675,7 +2689,7 @@ contains
       wf%implemented%ionized_state        = .true.
       wf%implemented%core_excited_state   = .true.
       wf%implemented%core_ionized_state   = .true.
-      wf%implemented%properties           = .false.
+      wf%implemented%multipliers          = .false.
 !
 !     Read calculation tasks from input file eT.inp
 !     
@@ -2734,7 +2748,6 @@ contains
 !
          if (wf%implemented%ground_state) then 
 !
-            wf%current_task = 'ground_state'
             call wf%ground_state_driver
 !
          else
@@ -2751,7 +2764,6 @@ contains
          if (wf%implemented%excited_state) then 
 !     
             wf%excited_state_task = 'right_valence'
-         !   wf%excited_state_task = 'left_valence'
             call wf%excited_state_driver 
 !
          else
@@ -2771,7 +2783,6 @@ contains
 !
          if (wf%implemented%core_excited_state) then 
 !     
-            wf%excited_state_task = 'right_core'
             call wf%excited_state_driver 
 !
          else
@@ -2789,7 +2800,6 @@ contains
 !
          if (wf%implemented%ionized_state) then 
 !     
-            wf%excited_state_task = 'right_valence'
             call wf%ionized_state_driver 
 !
          else
@@ -2807,7 +2817,6 @@ contains
 !
          if (wf%implemented%core_ionized_state) then 
 !     
-            wf%excited_state_task = 'right_core'
             call wf%ionized_state_driver 
 !
          else
@@ -2821,20 +2830,17 @@ contains
 !
       endif
 !
-      if (wf%tasks%properties) then
+      if (wf%tasks%multipliers) then
 !
-!        Properties calculation requested
+!        Multipliers calculation requested
 !
-         if (wf%implemented%properties) then 
+         if (wf%implemented%multipliers) then 
 !
-            wf%current_task = 'response'
-            wf%response_task = 'multipliers'
             call wf%response_driver
 !
          else
 !
-            write(unit_output,'(t3,a,a)') &
-               'Error: properties not implemented for ',trim(wf%name)
+            write(unit_output,'(t3,a,a)')'Error: Multipliers not implemented for ',trim(wf%name)
             stop
 !
          endif

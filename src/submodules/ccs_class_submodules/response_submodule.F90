@@ -54,11 +54,7 @@ contains
       write(unit_output,'(t3,a)')  ':: Response solver (Davidson)'
       write(unit_output,'(t3,a)')  ':: E. F. Kjønstad, S. D. Folkestad, June 2017' 
       flush(unit_output)    
-!
-!     Set the response task 
-!
-      wf%response_task = 'multipliers'
-!
+
 !     Run the general solver routine (file names are given
 !     by the task, i.e., the file 'right_eigenvectors' contains
 !     the right eigenvectors)
@@ -66,6 +62,36 @@ contains
       call wf%response_solver
 !
    end subroutine response_driver_ccs
+!
+!
+   module subroutine response_preparations_ccs(wf)
+!!
+!!
+!!
+      implicit none
+!
+      class(ccs) :: wf 
+!
+      if (wf%tasks%multipliers) then
+!
+         wf%tasks%current = 'multipliers'
+!
+         wf%excited_state_specifications%right = .false.
+         wf%excited_state_specifications%left  = .true.
+!
+         if (wf%tasks%core_excited_state) then
+!
+            wf%excited_state_specifications%solution_file = 'left_core'
+!
+         else
+!
+            wf%excited_state_specifications%solution_file = 'left_valence'
+!
+         endif
+!
+      endif
+!
+   end subroutine response_preparations_ccs
 !
 !
    module subroutine response_solver_ccs(wf)

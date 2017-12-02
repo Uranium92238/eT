@@ -236,14 +236,13 @@ contains
 !           Prints
 !
             write(unit_output,'(t6,a)')  '- Property'
-            wf%tasks%properties = .true.
 !
             read(unit_input,'(a40)') line
             line = remove_preceding_blanks(line)
 !
             if (trim(line) == '{') then ! Specifications and calculation details given for property calculation
 !
-!               call read_property_specs(unit_input, wf%property_specifications)
+               call wf%read_property_specs(unit_input)
 !
                cycle
 !
@@ -523,6 +522,56 @@ contains
    end subroutine read_excited_state_specs_ccs
 !
 !
+module subroutine read_property_specs_ccs(wf, unit_input)
+!!
+!!    Read property specifications,
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Nov. 2017
+!!
+!!    Reads which properties to calculate. 
+!!
+      implicit none
+!
+      integer(i15)      :: unit_input
+!
+      class(ccs)        :: wf
+!
+      character(len=40) :: line
+!
+!     File is open, and positioned at the top of the ground state section
+!     thus we will NOT rewind.
+!
+      do ! General do loop - ends when it reaches 'exit'. 
+!
+         read(unit_input,'(a40)') line 
+!
+!        Remove blanks preceding text
+!
+         line = remove_preceding_blanks(line)
+!
+         if (trim(line) == 'multipliers') then
+!
+            wf%tasks%multipliers = .true.
+!
+         elseif (trim(line) == 'end of eT input') then
+!
+            write(unit_output,*)'Error: No recognized properties specified in property section of eT.inp'
+            stop
+!
+         endif
+!
+      enddo
+!
+!     Sanity check:
+!
+      if (wf%excited_state_specifications%n_singlet_states == 0 .and. &
+          wf%excited_state_specifications%n_triplet_states == 0) then
+!
+         write(unit_output,*)'Property calculation requires specification of excited state calculation in eT.inp'
+         stop
+!
+      endif
+!
+   end subroutine read_property_specs_ccs
 !
 !
 end submodule input_reader

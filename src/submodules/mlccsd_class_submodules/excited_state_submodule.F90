@@ -89,11 +89,11 @@ contains
 !
          read(unit_trial_vecs, rec=trial, iostat=ioerror) c_a_i, c_aibj
 !
-         if (wf%excited_state_task=='right_valence' .or. wf%excited_state_task=='right_core') then
+         if (wf%excited_state_specifications%right) then
 !
             call wf%jacobian_mlccsd_transformation(c_a_i, c_aibj)
 !
-         elseif (wf%excited_state_task=='left_valence') then
+         elseif (wf%excited_state_specifications%left) then
 !
             write(unit_output,*)'Error: Jacobian transpose not implemented for mlcc2'
             stop
@@ -280,8 +280,9 @@ contains
 !  
       call generate_unit_identifier(unit_solution)
 !
-      open(unit=unit_solution, file=wf%excited_state_task, action='read', status='unknown', &
-      access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
+      open(unit=unit_solution, file=wf%excited_state_specifications%solution_file, &
+            action='read', status='unknown', &
+            access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
 !
       if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file'
 !
