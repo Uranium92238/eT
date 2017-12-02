@@ -1488,7 +1488,7 @@ contains
 !
 !     Initialize the Fock matrix (allocate and construct given the initial amplitudes)
 !
-      if (.not. allocated(wf%t1am)) call allocator(wf%t1am, wf%n_v, wf%n_o)
+      if (.not. allocated(wf%t1am)) call wf%mem%alloc(wf%t1am, wf%n_v, wf%n_o)
       wf%t1am = zero
 !
       call wf%initialize_fock_matrix
@@ -1514,7 +1514,7 @@ contains
 !
 !     Allocate the doubles amplitudes and set to zero
 !
-      if (.not. allocated(wf%t2am)) call allocator(wf%t2am, wf%n_t2am, 1)
+      if (.not. allocated(wf%t2am)) call wf%mem%alloc(wf%t2am, wf%n_t2am, 1)
       wf%t2am = zero
 !
    end subroutine initialize_amplitudes_ccsd
@@ -1541,8 +1541,8 @@ contains
 !
 !     Allocate L_ia_J and g_ia_jb
 !
-      call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
-      call allocator(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call wf%mem%alloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       L_ia_J = zero
       g_ia_jb = zero
@@ -1600,8 +1600,8 @@ contains
 !
 !     Deallocations
 !
-      call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), (wf%n_J))
-      call deallocator(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) 
+      call wf%mem%dealloc(L_ia_J, (wf%n_o)*(wf%n_v), (wf%n_J))
+      call wf%mem%dealloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) 
 !
    end subroutine construct_perturbative_doubles_ccsd
 !
@@ -1625,7 +1625,7 @@ contains
 !
 !     Allocate the Cholesky vector L_ia_J = L_ia^J and set to zero 
 !
-      call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call wf%mem%alloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
       L_ia_J = zero
 !
 !     Get the Cholesky vector L_ia_J 
@@ -1634,7 +1634,7 @@ contains
 !
 !     Allocate g_ia_jb = g_iajb and set it to zero
 !
-      call allocator(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       g_ia_jb = zero
 !
 !     Calculate the integrals g_ia_jb from the Cholesky vector L_ia_J 
@@ -1654,7 +1654,7 @@ contains
 !
 !     Deallocate the Cholesky vector L_ia_J 
 !
-      call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call wf%mem%dealloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
 !     Set the initial value of the energy 
 !
@@ -1693,7 +1693,7 @@ contains
 !
 !     Deallocate g_ia_jb
 !
-      call deallocator(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine calc_energy_ccsd
 !
@@ -1709,7 +1709,7 @@ contains
 !
       class(ccsd) :: wf
 !
-      if (allocated(wf%t2am)) call deallocator(wf%t2am, wf%n_t2am, 1)
+      if (allocated(wf%t2am)) call wf%mem%dealloc(wf%t2am, wf%n_t2am, 1)
 !
    end subroutine destruct_amplitudes_ccsd
 !
@@ -1725,8 +1725,8 @@ contains
 !
       class(ccsd) :: wf
 !
-      if (allocated(wf%omega1)) call deallocator(wf%omega1, wf%n_v, wf%n_o)
-      if (allocated(wf%omega2)) call deallocator(wf%omega2, wf%n_t2am, 1)
+      if (allocated(wf%omega1)) call wf%mem%dealloc(wf%omega1, wf%n_v, wf%n_o)
+      if (allocated(wf%omega2)) call wf%mem%dealloc(wf%omega2, wf%n_t2am, 1)
 !
    end subroutine destruct_omega_ccsd
 !
@@ -1853,8 +1853,8 @@ contains
       call wf%initialize_amplitudes
       call wf%read_double_amplitudes
 !
-      call allocator(r1am, wf%n_v, wf%n_o)
-      call allocator(r2am, wf%n_t2am, 1)
+      call wf%mem%alloc(r1am, wf%n_v, wf%n_o)
+      call wf%mem%alloc(r2am, wf%n_t2am, 1)
 !
       r1am = wf%t1am
       r2am = wf%t2am 
@@ -1909,8 +1909,8 @@ contains
 !
 !     :: First approach: transform by A :: 
 !
-      call allocator(c_a_i, wf%n_v, wf%n_o)
-      call allocator(c_aibj, wf%n_t2am, 1)
+      call wf%mem%alloc(c_a_i, wf%n_v, wf%n_o)
+      call wf%mem%alloc(c_aibj, wf%n_t2am, 1)
 !
       c_a_i  = zero
       c_aibj = zero
@@ -2356,10 +2356,10 @@ contains
 !
 !     Form g_ia_jb = g_iajb 
 !
-      call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call wf%mem%alloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
       call wf%get_cholesky_ia(L_ia_J)
 !
-      call allocator(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       call dgemm('N','T',            &
                   (wf%n_o)*(wf%n_v), & 
@@ -2374,12 +2374,12 @@ contains
                   g_ia_jb,           &
                   (wf%n_o)*(wf%n_v))
 !
-      call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call wf%mem%dealloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
 !     Form eta_ai_bj = 2* L_iajb = 2 * ( 2 * g_iajb - g_ibja) 
 !                                = 4 * g_ia_jb(ia,jb) - 2 * g_ia_jb(ib,ja)
 !
-      call allocator(eta_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(eta_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       eta_ai_bj = zero
 !
       do j = 1, wf%n_o
@@ -2426,7 +2426,7 @@ contains
          enddo
       enddo
 !
-      call deallocator(eta_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(eta_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine construct_eta_ccsd
 !

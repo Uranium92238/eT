@@ -120,7 +120,7 @@ contains
                            stop
                         endif
 !
-                        call allocator_int(orbital_info%active_atoms, orbital_info%n_active_atoms, 1)
+                        allocate(orbital_info%active_atoms(orbital_info%n_active_atoms, 1))
                         read(unit_input,*) orbital_info%active_atoms
                         cycle
 !

@@ -10,14 +10,14 @@ submodule (ccs_class) jacobian
 !!    jacobian_ccs_a1:             adds the A1 term to the transformed vector. 
 !!    jacobian_ccs_b1:             adds the B1 term to the transformed vector.
 !!
-!
    implicit none 
 !
    character(len=40) :: integral_type
 !
 contains
-      module subroutine jacobian_ccs_transformation_ccs(wf, c_a_i)
-
+!
+!
+   module subroutine jacobian_ccs_transformation_ccs(wf, c_a_i)
 !!
 !!    Jacobian CCS transformation
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -39,7 +39,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: rho_a_i
 !
-      call allocator(rho_a_i, wf%n_v, wf%n_o)
+      call wf%mem%alloc(rho_a_i, wf%n_v, wf%n_o)
       rho_a_i = zero
 !
 !     A1-term
@@ -56,10 +56,11 @@ contains
 !
       call dcopy((wf%n_o)*(wf%n_v), rho_a_i, 1, c_a_i, 1)
 !
-      call deallocator(rho_a_i, wf%n_v, wf%n_o)
+      call wf%mem%dealloc(rho_a_i, wf%n_v, wf%n_o)
 !
    end subroutine jacobian_ccs_transformation_ccs
-
+!
+!
    module subroutine jacobian_ccs_a1_ccs(wf, rho, c1)
 !!
 !!    Jacobian CCS A1
@@ -165,7 +166,7 @@ contains
 !
 !     Allocate and construct g_ai_jb
 !
-      call allocator(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       integral_type = 'electronic_repulsion'
       call wf%get_vo_ov(integral_type, g_ai_jb)
@@ -198,7 +199,7 @@ contains
 !
 !        Allocate and construct g_ab_ji
 !
-         call allocator(g_ab_ji, (wf%n_v)*b_length, (wf%n_o)**2)
+         call wf%mem%alloc(g_ab_ji, (wf%n_v)*b_length, (wf%n_o)**2)
 !
          integral_type = 'electronic_repulsion'
          call wf%get_vv_oo(integral_type, &
@@ -214,7 +215,7 @@ contains
 !
 !        Allocate L_ai_jb
 !
-         call allocator(L_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*b_length)
+         call wf%mem%alloc(L_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*b_length)
          L_ai_jb = zero
 !
 !        Construct L_ai_jb = 2*g_ai_jb - g_ab_ij
@@ -242,11 +243,11 @@ contains
 !
 !        Deallocate g_ai_jb and g_ab_ji
 !
-         call deallocator(g_ab_ji, (wf%n_v)*b_length, (wf%n_o)**2)
+         call wf%mem%dealloc(g_ab_ji, (wf%n_v)*b_length, (wf%n_o)**2)
 !
 !        Allocate reordering of c and rho
 !
-         call allocator(c_jb, (wf%n_o)*b_length, 1)
+         call wf%mem%alloc(c_jb, (wf%n_o)*b_length, 1)
 !
 !        reordered c amplitudes
 !
@@ -278,15 +279,15 @@ contains
 !
 !        Deallocate L_ai_jb
 ! 
-         call deallocator(L_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*b_length)
+         call wf%mem%dealloc(L_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*b_length)
 !
 !        Deallocate c reordered
 !
-         call deallocator(c_jb, (wf%n_o)*b_length, 1)
+         call wf%mem%dealloc(c_jb, (wf%n_o)*b_length, 1)
 !
       enddo ! Looping over batches
 !
-      call deallocator(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*b_length)
+      call wf%mem%dealloc(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*b_length)
 !
    end subroutine jacobian_ccs_b1_ccs
 !

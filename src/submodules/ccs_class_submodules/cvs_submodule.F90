@@ -49,7 +49,7 @@ contains
 !
 !     Allocate array for the indices of the lowest orbital differences
 !
-      call allocator_int( index_core_obital, wf%excited_state_specifications%n_singlet_states, 1)
+      call wf%mem%alloc_int( index_core_obital, wf%excited_state_specifications%n_singlet_states, 1)
       index_core_obital = zero
 !
 !     Find indecies of lowest orbital differences
@@ -58,7 +58,7 @@ contains
 !
 !     Generate start trial vectors c and write to file
 !
-      call allocator(c, wf%n_parameters, 1)
+      call wf%mem%alloc(c, wf%n_parameters, 1)
 !
 !     Prepare for writing trial vectors to file
 !
@@ -78,11 +78,11 @@ contains
 !
 !     Deallocate c
 !
-      call deallocator(c, wf%n_parameters, 1)
+      call wf%mem%dealloc(c, wf%n_parameters, 1)
 !
 !     Deallocate index_lowest_obital_diff
 !
-      call deallocator_int(index_core_obital, wf%excited_state_specifications%n_singlet_states, 1)
+      call wf%mem%dealloc_int(index_core_obital, wf%excited_state_specifications%n_singlet_states, 1)
 !
    end subroutine initialize_trial_vectors_core_ccs
 !
@@ -104,7 +104,7 @@ contains
 !
 !     Find core mo(s)
 !
-      call allocator_int(wf%core_excited_state_specifications%index_core_mo, &
+      call wf%mem%alloc_int(wf%core_excited_state_specifications%index_core_mo, &
                            wf%core_excited_state_specifications%n_equivalent_cores, 1)
 !
       call wf%find_core_mo
@@ -146,8 +146,8 @@ contains
 !     n_ao_on_center contains number of aos on each atom
 !     ao_center_info contains ao index (first column) belonging to each of the aos (second column)
 !     
-      call allocator_int(n_ao_on_center, n_nuclei, 1)      
-      call allocator_int(ao_center_info, wf%n_ao, 2)
+      call wf%mem%alloc_int(n_ao_on_center, n_nuclei, 1)      
+      call wf%mem%alloc_int(ao_center_info, wf%n_ao, 2)
 !
       call read_center_info(n_nuclei, wf%n_ao, n_ao_on_center, ao_center_info)
 !
@@ -158,7 +158,7 @@ contains
          n_aos_on_atoms = n_aos_on_atoms + n_ao_on_center(wf%core_excited_state_specifications%cores(i,1),1)
       enddo
 !
-      call allocator_int(aos_on_atoms, n_aos_on_atoms, 1)
+      call wf%mem%alloc_int(aos_on_atoms, n_aos_on_atoms, 1)
 !
       write(unit_output,*)wf%core_excited_state_specifications%n_equivalent_cores, wf%core_excited_state_specifications%cores(1,1)
       flush(unit_output)
@@ -175,7 +175,7 @@ contains
          enddo
       enddo
 !
-      call deallocator_int(ao_center_info, wf%n_ao, 2)
+      call wf%mem%dealloc_int(ao_center_info, wf%n_ao, 2)
 !
 !     :: Find core mo that has large ao component on the atom in question ::
 !
@@ -212,8 +212,8 @@ contains
       enddo
 !
 !
-      call deallocator_int(n_ao_on_center, n_nuclei, 1) 
-      call deallocator_int(aos_on_atoms, n_aos_on_atoms, 1) 
+      call wf%mem%dealloc_int(n_ao_on_center, n_nuclei, 1) 
+      call wf%mem%dealloc_int(aos_on_atoms, n_aos_on_atoms, 1) 
 !
 !     Sanity check
 !
@@ -246,7 +246,7 @@ contains
 !   
       call wf%cvs_residual_projection(residual)
 !
-      call allocator(orbital_diff, wf%n_parameters, 1)
+      call wf%mem%alloc(orbital_diff, wf%n_parameters, 1)
       orbital_diff = zero
 !
       call wf%calculate_orbital_differences(orbital_diff)
@@ -257,7 +257,7 @@ contains
 !
       enddo
 !
-      call deallocator(orbital_diff, wf%n_parameters, 1)
+      call wf%mem%dealloc(orbital_diff, wf%n_parameters, 1)
 !
    end subroutine precondition_residual_core_ccs
 !

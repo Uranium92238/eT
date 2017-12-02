@@ -50,10 +50,10 @@ contains
 !
       class(ccsd) :: wf
 !
-      if (.not. allocated(wf%omega1)) call allocator(wf%omega1, wf%n_v, wf%n_o)
+      if (.not. allocated(wf%omega1)) call wf%mem%alloc(wf%omega1, wf%n_v, wf%n_o)
       wf%omega1 = zero
 !
-      if (.not. allocated(wf%omega2)) call allocator(wf%omega2, wf%n_t2am, 1)
+      if (.not. allocated(wf%omega2)) call wf%mem%alloc(wf%omega2, wf%n_t2am, 1)
       wf%omega2 = zero
 !
    end subroutine initialize_omega_ccsd
@@ -193,7 +193,7 @@ contains
 !
 !     Allocate u_dkc_i = u_ki^cd
 !
-      call allocator(u_dkc_i, (wf%n_o)*(wf%n_v)**2, wf%n_o)
+      call wf%mem%alloc(u_dkc_i, (wf%n_o)*(wf%n_v)**2, wf%n_o)
       u_dkc_i = zero
 !
 !     Calculate u_dkc_i = u_ki^cd
@@ -255,7 +255,7 @@ contains
 !
 !        Form g_ad_kc = g_adkc
 !
-         call allocator(g_ad_kc, ad_dim, (wf%n_o)*(wf%n_v))
+         call wf%mem%alloc(g_ad_kc, ad_dim, (wf%n_o)*(wf%n_v))
 !
          integral_type = 'electronic_repulsion'
          call wf%get_vv_ov(integral_type, & 
@@ -288,13 +288,13 @@ contains
                      wf%omega1(a_begin,1), & 
                      wf%n_v)
 !
-         call deallocator(g_ad_kc, ad_dim, (wf%n_o)*(wf%n_v))
+         call wf%mem%dealloc(g_ad_kc, ad_dim, (wf%n_o)*(wf%n_v))
 !
       enddo ! End of batches of the index a 
 !
 !     Deallocate vectors 
 !
-      call deallocator(u_dkc_i, (wf%n_o)*(wf%n_v)**2, wf%n_o)
+      call wf%mem%dealloc(u_dkc_i, (wf%n_o)*(wf%n_v)**2, wf%n_o)
 !
    end subroutine omega_ccsd_a1_ccsd
 !
@@ -325,14 +325,14 @@ contains
 !
 !     Get g_ki_lc = g_kilc
 !
-      call allocator(g_ki_lc, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(g_ki_lc, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
 !
       integral_type = 'electronic_repulsion'
       call wf%get_oo_ov(integral_type, g_ki_lc)
 !
 !     Form the reordered integrals g_ckl_i = g_kilc 
 !
-      call allocator(g_ckl_i, (wf%n_v)*((wf%n_o)**2), wf%n_o)
+      call wf%mem%alloc(g_ckl_i, (wf%n_v)*((wf%n_o)**2), wf%n_o)
 !
       do i = 1, wf%n_o
          do l = 1, wf%n_o
@@ -354,11 +354,11 @@ contains
 !
 !     Deallocate unordered integrals g_ki_lc
 !
-      call deallocator(g_ki_lc, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(g_ki_lc, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
 !
 !     Form the redordered u_a_ckl = u_kl^ac
 !
-      call allocator(u_a_ckl, wf%n_v, (wf%n_v)*(wf%n_o)**2)
+      call wf%mem%alloc(u_a_ckl, wf%n_v, (wf%n_v)*(wf%n_o)**2)
 !
       do l = 1, wf%n_o
          do k = 1, wf%n_o
@@ -402,8 +402,8 @@ contains
 !
 !     Deallocate remaining vectors 
 !
-      call deallocator(u_a_ckl, wf%n_v, (wf%n_v)*((wf%n_o)**2))
-      call deallocator(g_ckl_i, (wf%n_v)*((wf%n_o)**2), wf%n_o)
+      call wf%mem%dealloc(u_a_ckl, wf%n_v, (wf%n_v)*((wf%n_o)**2))
+      call wf%mem%dealloc(g_ckl_i, (wf%n_v)*((wf%n_o)**2), wf%n_o)
 !
    end subroutine omega_ccsd_b1_ccsd
 !
@@ -434,7 +434,7 @@ contains
 !
 !     Allocate u_ai_ck
 !
-      call allocator(u_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))  
+      call wf%mem%alloc(u_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))  
 !
 !     Set up u_ai_kc
 !
@@ -477,7 +477,7 @@ contains
                   (wf%n_o)*(wf%n_v))
 !
 !
-      call deallocator(u_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(u_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine omega_ccsd_c1_ccsd
 !
@@ -553,7 +553,7 @@ contains
 !
 !     Create g_ai_bj
 !
-      call allocator(g_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(g_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       integral_type = 'electronic_repulsion'
       call wf%get_vo_vo(integral_type, g_ai_bj)
@@ -582,7 +582,7 @@ contains
          enddo
       enddo
 !
-      call deallocator(g_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(g_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !    ::  Calculate the A2.2 term  of omega ::
 !
@@ -629,7 +629,7 @@ contains
 ! 
 !           Allocate g_ca_db
 !
-            call allocator(g_ac_bd, (wf%n_v)*a_length, (wf%n_v)*b_length)
+            call wf%mem%alloc(g_ac_bd, (wf%n_v)*a_length, (wf%n_v)*b_length)
 !
 !           Get g_ac_bd
 !
@@ -656,10 +656,10 @@ contains
 !
 !           Allocate for +-g, +-t
 !
-               call allocator(g_p_ab_cd, packed_size(a_length), packed_size(wf%n_v))
-               call allocator(g_m_ab_cd, packed_size(a_length), packed_size(wf%n_v))
-               call allocator(t_p_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
-               call allocator(t_m_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
+               call wf%mem%alloc(g_p_ab_cd, packed_size(a_length), packed_size(wf%n_v))
+               call wf%mem%alloc(g_m_ab_cd, packed_size(a_length), packed_size(wf%n_v))
+               call wf%mem%alloc(t_p_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
+               call wf%mem%alloc(t_m_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
 !
                g_p_ab_cd = zero
                g_m_ab_cd = zero
@@ -724,12 +724,12 @@ contains
 !
 !              Dellocate g_ac_bd 
 !
-               call deallocator(g_ac_bd, (wf%n_v)*a_length, (wf%n_v)*b_length)
+               call wf%mem%dealloc(g_ac_bd, (wf%n_v)*a_length, (wf%n_v)*b_length)
 !
 !              Allocate omega +-
 !
-              call allocator(omega2_p_ab_ij, packed_size(a_length), packed_size(wf%n_o))
-              call allocator(omega2_m_ab_ij, packed_size(a_length), packed_size(wf%n_o))
+              call wf%mem%alloc(omega2_p_ab_ij, packed_size(a_length), packed_size(wf%n_o))
+              call wf%mem%alloc(omega2_m_ab_ij, packed_size(a_length), packed_size(wf%n_o))
 ! 
 !              omega2_ab_ij = sum_(cd) g_ab_cd*t_cd_ij
 ! 
@@ -761,10 +761,10 @@ contains
 !
 !             Deallocate +-g, +-t
 ! 
-              call deallocator(g_p_ab_cd, packed_size(a_length), packed_size(wf%n_v))
-              call deallocator(g_m_ab_cd, packed_size(a_length), packed_size(wf%n_v))
-              call deallocator(t_p_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
-              call deallocator(t_m_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
+              call wf%mem%dealloc(g_p_ab_cd, packed_size(a_length), packed_size(wf%n_v))
+              call wf%mem%dealloc(g_m_ab_cd, packed_size(a_length), packed_size(wf%n_v))
+              call wf%mem%dealloc(t_p_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
+              call wf%mem%dealloc(t_m_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
 !
               do i = 1, wf%n_o
                  do j = 1, i
@@ -807,16 +807,16 @@ contains
 !
 !              Deallocate omega +-
 !
-               call deallocator(omega2_p_ab_ij, packed_size(a_length), packed_size(wf%n_o))
-               call deallocator(omega2_m_ab_ij, packed_size(a_length), packed_size(wf%n_o))
+               call wf%mem%dealloc(omega2_p_ab_ij, packed_size(a_length), packed_size(wf%n_o))
+               call wf%mem%dealloc(omega2_m_ab_ij, packed_size(a_length), packed_size(wf%n_o))
             else
 !
 !              Allocate for +-g, +-t
 !
-               call allocator(g_p_ab_cd, a_length*b_length, packed_size(wf%n_v))
-               call allocator(g_m_ab_cd, a_length*b_length, packed_size(wf%n_v))
-               call allocator(t_p_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
-               call allocator(t_m_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
+               call wf%mem%alloc(g_p_ab_cd, a_length*b_length, packed_size(wf%n_v))
+               call wf%mem%alloc(g_m_ab_cd, a_length*b_length, packed_size(wf%n_v))
+               call wf%mem%alloc(t_p_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
+               call wf%mem%alloc(t_m_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
 !
                g_p_ab_cd = zero
                g_m_ab_cd = zero
@@ -876,13 +876,13 @@ contains
 !
 !              Dellocate g_ac_bd 
 !
-               call deallocator(g_ac_bd, (wf%n_v)*a_length, (wf%n_v)*b_length)
+               call wf%mem%dealloc(g_ac_bd, (wf%n_v)*a_length, (wf%n_v)*b_length)
 !
 !              Allocate omega +-
 !
 
-               call allocator(omega2_p_ab_ij, b_length*a_length, packed_size(wf%n_o))
-               call allocator(omega2_m_ab_ij, b_length*a_length, packed_size(wf%n_o))
+               call wf%mem%alloc(omega2_p_ab_ij, b_length*a_length, packed_size(wf%n_o))
+               call wf%mem%alloc(omega2_m_ab_ij, b_length*a_length, packed_size(wf%n_o))
 !  
 !               omega2_ab_ij = sum_(cd) g_ab_cd*t_cd_ij
 ! 
@@ -914,10 +914,10 @@ contains
 !
 !          Deallocate +-g, +-t
 ! 
-              call deallocator(g_p_ab_cd, b_length*a_length, packed_size(wf%n_v))
-              call deallocator(g_m_ab_cd, b_length*a_length, packed_size(wf%n_v))
-              call deallocator(t_p_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
-              call deallocator(t_m_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
+              call wf%mem%dealloc(g_p_ab_cd, b_length*a_length, packed_size(wf%n_v))
+              call wf%mem%dealloc(g_m_ab_cd, b_length*a_length, packed_size(wf%n_v))
+              call wf%mem%dealloc(t_p_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
+              call wf%mem%dealloc(t_m_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
 !
                do i = 1, wf%n_o
                   do j = 1, i
@@ -959,8 +959,8 @@ contains
 !
 !              Deallocate omega +-
 !
-               call deallocator(omega2_p_ab_ij, b_length*a_length, packed_size(wf%n_o))
-               call deallocator(omega2_m_ab_ij, b_length*a_length, packed_size(wf%n_o))
+               call wf%mem%dealloc(omega2_p_ab_ij, b_length*a_length, packed_size(wf%n_o))
+               call wf%mem%dealloc(omega2_m_ab_ij, b_length*a_length, packed_size(wf%n_o))
             endif
 !
          enddo ! End batching over b
@@ -1023,12 +1023,12 @@ contains
 !
 !     Allocate and construct g_ki_lj
 !
-      call allocator(g_ki_lj, (wf%n_o)*(wf%n_o), (wf%n_o)*(wf%n_o)) 
+      call wf%mem%alloc(g_ki_lj, (wf%n_o)*(wf%n_o), (wf%n_o)*(wf%n_o)) 
 !
       integral_type = 'electronic_repulsion'
       call wf%get_oo_oo(integral_type,g_ki_lj)
 !
-      call allocator(g_kl_ij, (wf%n_o)*(wf%n_o),(wf%n_o)*(wf%n_o))
+      call wf%mem%alloc(g_kl_ij, (wf%n_o)*(wf%n_o),(wf%n_o)*(wf%n_o))
 !
       do k = 1, wf%n_o
          do l = 1, wf%n_o
@@ -1051,19 +1051,19 @@ contains
          enddo
       enddo
 !
-      call deallocator(g_ki_lj, (wf%n_o)*(wf%n_o), (wf%n_o)*(wf%n_o))
+      call wf%mem%dealloc(g_ki_lj, (wf%n_o)*(wf%n_o), (wf%n_o)*(wf%n_o))
 !
 !     Allocate and construct g_kc_ld
 !
-      call allocator(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !  
       integral_type = 'electronic_repulsion'
       call wf%get_ov_ov(integral_type, g_kc_ld)
 !
 !     Reorder g_kc_ld as g_kl_cd, also reordering t_ci_dj as t_cd_ij
 !
-      call allocator(t_cd_ij, (wf%n_v)*(wf%n_v), (wf%n_o)*(wf%n_o))
-      call allocator(g_kl_cd, (wf%n_o)*(wf%n_o), (wf%n_v)*(wf%n_v))
+      call wf%mem%alloc(t_cd_ij, (wf%n_v)*(wf%n_v), (wf%n_o)*(wf%n_o))
+      call wf%mem%alloc(g_kl_cd, (wf%n_o)*(wf%n_o), (wf%n_v)*(wf%n_v))
 !
       do d = 1, wf%n_v
          do c = 1, wf%n_v
@@ -1094,7 +1094,7 @@ contains
 !
 !     Deallocate g_kc_ld
 !
-      call deallocator(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       call dgemm('N','N',      &
                   (wf%n_o)**2, &
@@ -1111,11 +1111,11 @@ contains
 !
 !     Deallocate t_cd_ij and g_kl_cd
 !
-      call deallocator(g_kl_cd, (wf%n_o)*(wf%n_o), (wf%n_v)*(wf%n_v))
+      call wf%mem%dealloc(g_kl_cd, (wf%n_o)*(wf%n_o), (wf%n_v)*(wf%n_v))
 !
 !     omega_ab_ij = sum_(kl) t_ab_kl*X_kl_ij
 !
-      call allocator(omega_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
+      call wf%mem%alloc(omega_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
 !
       call dgemm('N','N',      &
                   (wf%n_v)**2, &
@@ -1130,8 +1130,8 @@ contains
                   omega_ab_ij, &
                   (wf%n_v)**2)
 !
-      call deallocator(t_cd_ij, (wf%n_v)**2, (wf%n_o)**2)
-      call deallocator(g_kl_ij, (wf%n_o)**2, (wf%n_o)**2)
+      call wf%mem%dealloc(t_cd_ij, (wf%n_v)**2, (wf%n_o)**2)
+      call wf%mem%dealloc(g_kl_ij, (wf%n_o)**2, (wf%n_o)**2)
 !
 !     Reorder into omega2
 !
@@ -1163,7 +1163,7 @@ contains
          enddo
       enddo
 !
-      call deallocator(omega_ab_ij,(wf%n_v)*(wf%n_v),(wf%n_o)*(wf%n_o))  
+      call wf%mem%dealloc(omega_ab_ij,(wf%n_v)*(wf%n_v),(wf%n_o)*(wf%n_o))  
 !
    end subroutine omega_ccsd_b2_ccsd
 !
@@ -1223,15 +1223,15 @@ contains
 !
 !     Allocate and construct g_kd_lc 
 !
-      call allocator(g_kd_lc,(wf%n_o)*(wf%n_v),(wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(g_kd_lc,(wf%n_o)*(wf%n_v),(wf%n_o)*(wf%n_v))
 !
       integral_type = 'electronic_repulsion'
       call wf%get_ov_ov(integral_type, g_kd_lc)
 !
 !     Reorder g_kd_lc as g_dl_ck and t_al_di as t_ai_dl
 !
-      call allocator(g_dl_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call allocator(t_ai_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(g_dl_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(t_ai_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       do k = 1, wf%n_o        
          do d = 1, wf%n_v
@@ -1259,11 +1259,11 @@ contains
          enddo
       enddo
 
-      call deallocator(g_kd_lc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(g_kd_lc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     -1/2*sum_(dl) t_ai_dl*g_dl_ck = X_ai_ck
 !
-      call allocator(X_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(X_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       call dgemm('N','N',            &
                   (wf%n_o)*(wf%n_v), &
@@ -1280,12 +1280,12 @@ contains
 !
 !     Deallocate L_ia_J and g_dl_ck, 
 !
-      call deallocator(g_dl_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call deallocator(t_ai_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(g_dl_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(t_ai_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     Allocate the u_ck_bj = u_jk^bc vector
 !
-      call allocator(u_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(u_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       u_ck_bj = zero
 !
 !     Form u_ck_bj = u_jk^bc = 2 * t_jk^bc - t_kj^bc 
@@ -1317,7 +1317,7 @@ contains
 !     Allocate a holder for - 1/2 * sum_ck u_jk^bc g_acki,
 !     constructed in batches over the a index below
 !
-      call allocator(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       omega2_ai_bj = zero
 !
 !     Constructing g_ki_ac
@@ -1345,7 +1345,7 @@ contains
 !
 !        Allocate and construct g_ki_ac
 !
-         call allocator(g_ki_ac, (wf%n_o)**2, a_length*(wf%n_v))
+         call wf%mem%alloc(g_ki_ac, (wf%n_o)**2, a_length*(wf%n_v))
 !
          integral_type = 'electronic_repulsion'
          call wf%get_oo_vv(integral_type, & 
@@ -1388,7 +1388,7 @@ contains
 !
 !        Reorder g_ac_ki to g_ai_kc 
 !
-         call allocator(g_ai_ck, a_length*(wf%n_o), (wf%n_o)*(wf%n_v))
+         call wf%mem%alloc(g_ai_ck, a_length*(wf%n_o), (wf%n_o)*(wf%n_v))
          g_ai_ck = zero
 !
          do k = 1, wf%n_o 
@@ -1412,7 +1412,7 @@ contains
             enddo
          enddo
 !
-         call deallocator(g_ki_ac, (wf%n_o)**2, a_length*(wf%n_v))
+         call wf%mem%dealloc(g_ki_ac, (wf%n_o)**2, a_length*(wf%n_v))
 !
 !        - 1/2 * sum_ck u_jk^bc g_acki = -1/2 * sum_ck g_ai_ck u_ck_bj
 !
@@ -1431,13 +1431,13 @@ contains
                   omega2_ai_bj(ai_offset,1), &
                   (wf%n_o)*(wf%n_v))
 !
-         call deallocator(g_ki_ac, (wf%n_o)**2, a_length*(wf%n_v))
+         call wf%mem%dealloc(g_ki_ac, (wf%n_o)**2, a_length*(wf%n_v))
 !
       enddo ! End of batching
 !
 !     Deallocate reordered u_ck_bj vector 
 !
-      call deallocator(u_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(u_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     Add the - 1/2 * sum_ck u_jk^bc g_acki term to omega  
 !
@@ -1465,11 +1465,11 @@ contains
          enddo
       enddo 
 !
-      call deallocator(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) 
+      call wf%mem%dealloc(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) 
 !
 !     Reorder t_bkcj_1 as t_ck_bj
 !
-      call allocator(t_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(t_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       do j = 1, wf%n_o
          do k = 1, wf%n_o
@@ -1494,7 +1494,7 @@ contains
 !
 !     Allocate intermediate Y_ai_bj
 !
-      call allocator(Y_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(Y_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     Y_ai_bj = - sum_(ck) X_ai_ck*t_ck_bj
 !
@@ -1513,11 +1513,11 @@ contains
 !
 !     Deallocate the X intermediate
 !
-      call deallocator(X_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(X_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     Deallocate t_ck_bj
 !
-      call deallocator(t_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(t_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     Omega_aibj,1 = P_ai_bj ( 1/2*Y_ai_bj + Y_aj_bi )
 !
@@ -1550,7 +1550,7 @@ contains
 !
 !     Deallocate intermediate Y_ai_bj
 !
-      call deallocator(Y_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(Y_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine omega_ccsd_c2_ccsd
 !
@@ -1607,14 +1607,14 @@ contains
 !
 !     Get g_ld_kc = g_ldkc 
 !
-      call allocator(g_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(g_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       integral_type = 'electronic_repulsion'
       call wf%get_ov_ov(integral_type, g_ld_kc)
 !
 !     Form L_ld_kc = L_ldkc    
 !
-      call allocator(L_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(L_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       do c = 1, wf%n_v
          do k = 1, wf%n_o 
@@ -1639,11 +1639,11 @@ contains
 !
 !     Deallocate g_ld_kc and L_kc_J
 !
-      call deallocator(g_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(g_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 ! 
 !     Form u_ai_ld = u_il^ad = 2 * t_il^ad - t_li^ad 
 !
-      call allocator(u_ai_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(u_ai_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       do d = 1, wf%n_v 
          do l = 1, wf%n_o 
@@ -1672,7 +1672,7 @@ contains
 !
 !     Allocate the intermediate Z_ai_kc = sum_dl u_ai_ld L_ld_kc and set it to zero
 !
-      call allocator(Z_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(Z_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     Form the intermediate Z_ai_kc = sum_dl u_ai_ld L_ld_kc
 !
@@ -1691,11 +1691,11 @@ contains
 !
 !     Deallocate L_ld_kc
 !
-      call deallocator(L_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(L_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     Form the D2.2 term, 1/4 sum_kc Z_ai_kc u_kc_bj = 1/4 sum_kc Z_ai_kc(ai,kc) u_ai_ld(bj,kc)
 !
-      call allocator(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       call dgemm('N','T',            &
                   (wf%n_o)*(wf%n_v), &
@@ -1719,13 +1719,13 @@ contains
 !
 !     Deallocate the Z_ai_kc intermediate 
 !
-      call deallocator(Z_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(Z_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     :: Calculate the D2.1 term of omega :: 
 !
 !     Form g_ai_kc = g_aikc
 !
-      call allocator(g_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(g_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       integral_type = 'electronic_repulsion'
       call wf%get_vo_ov(integral_type,g_ai_kc)
@@ -1745,7 +1745,7 @@ contains
                   omega2_ai_bj,      &
                   (wf%n_o)*(wf%n_v))
 !
-      call deallocator(u_ai_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) 
+      call wf%mem%dealloc(u_ai_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) 
 !
 !     Add the D2.1 term to the omega vector 
 !
@@ -1775,8 +1775,8 @@ contains
 !
 !     Deallocate g_ai_kc, u_kc_bj, and the omega2_ai_bj vectors 
 !
-      call deallocator(g_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call deallocator(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(g_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine omega_ccsd_d2_ccsd
 !
@@ -1829,14 +1829,14 @@ contains
 !
 !     Form g_ld_kc = g_ldkc 
 !
-      call allocator(g_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(g_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       integral_type = 'electronic_repulsion'
       call wf%get_ov_ov(integral_type, g_ld_kc)
 !
 !     Form u_b_ldk = u_kl^bd
 ! 
-      call allocator(u_b_ldk, wf%n_v, (wf%n_v)*((wf%n_o)**2))
+      call wf%mem%alloc(u_b_ldk, wf%n_v, (wf%n_v)*((wf%n_o)**2))
 !
       do k = 1, wf%n_o 
          do d = 1, wf%n_v
@@ -1866,7 +1866,7 @@ contains
 !
 !     Allocate the intermediate X_b_c = F_bc - sum_dkl g_ldkc u_kl^bd and set to zero
 !
-      call allocator(X_b_c, wf%n_v, wf%n_v)
+      call wf%mem%alloc(X_b_c, wf%n_v, wf%n_v)
 !
 !     Copy the virtual-virtual Fock matrix into the intermediate 
 !
@@ -1890,12 +1890,12 @@ contains
 !
 !     Form t_cj_ai = t_ij^ac = t_ji^ca 
 !
-      call allocator(t_cj_ai, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      call wf%mem%alloc(t_cj_ai, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
       call squareup(wf%t2am, t_cj_ai, (wf%n_v)*(wf%n_o))
 !
 !     Form the E2.1 term 
 !
-      call allocator(omega2_bj_ai, (wf%n_o)*(wf%n_v), (wf%n_v)*(wf%n_o))
+      call wf%mem%alloc(omega2_bj_ai, (wf%n_o)*(wf%n_v), (wf%n_v)*(wf%n_o))
 !
       call dgemm('N','N',               &
                   wf%n_v,               &
@@ -1938,8 +1938,8 @@ contains
 !
 !     Deallocate the E2.1 term, the X intermediate, keep the amplitudes 
 !
-      call deallocator(omega2_bj_ai, (wf%n_o)*(wf%n_v), (wf%n_v)*(wf%n_o))
-      call deallocator(X_b_c, wf%n_v, wf%n_v)
+      call wf%mem%dealloc(omega2_bj_ai, (wf%n_o)*(wf%n_v), (wf%n_v)*(wf%n_o))
+      call wf%mem%dealloc(X_b_c, wf%n_v, wf%n_v)
 !
 !     :: Calculate E2.2 term of omega ::
 !
@@ -1947,7 +1947,7 @@ contains
 !                                     = F_kj  + sum_cdl u_lj^dc g_kcld 
 !                                     = F_k_j + sum_cdl g_k_cld * u_cld_j
 !
-      call allocator(Y_k_j, wf%n_o, wf%n_o)
+      call wf%mem%alloc(Y_k_j, wf%n_o, wf%n_o)
 !
 !     Copy the occupied-occupied Fock matrix, such that Y_k_j = F_kj 
 !
@@ -1976,12 +1976,12 @@ contains
 !
 !     Deallocate u_b_ldk and g_ld_kc
 !
-      call deallocator(u_b_ldk, wf%n_v, (wf%n_v)*(wf%n_o)**2)
-      call deallocator(g_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(u_b_ldk, wf%n_v, (wf%n_v)*(wf%n_o)**2)
+      call wf%mem%dealloc(g_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !    Allocate the E2.2 term and set to zero 
 !
-     call allocator(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+     call wf%mem%alloc(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !    Calculate the E2.2 term, 
 !    - sum_k t_aib_k Y_k_j = - sum_k t_ik^ab (F_kj + sum_cdl g_ldkc u_lj^dc)
@@ -2004,8 +2004,8 @@ contains
 !
 !    Deallocate Y_k_j and the amplitudes 
 !
-      call deallocator(Y_k_j, wf%n_o, wf%n_o)
-      call deallocator(t_cj_ai, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      call wf%mem%dealloc(Y_k_j, wf%n_o, wf%n_o)
+      call wf%mem%dealloc(t_cj_ai, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
 !    Add the E2.2 term to the omega vector 
 !
@@ -2035,7 +2035,7 @@ contains
 !
 !    Deallocate the E2.2 term 
 !
-     call deallocator(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+     call wf%mem%dealloc(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine omega_ccsd_e2_ccsd
 !

@@ -927,7 +927,7 @@ contains
 !
 !     Allocate the Cholesky vector L_ia_J = L_ia^J and set to zero 
 !
-      call allocator(L_IA_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call wf%mem%alloc(L_IA_J, (wf%n_o)*(wf%n_v), wf%n_J)
       L_IA_J = zero
 !
 !     Get the Cholesky vector L_ia_J 
@@ -936,7 +936,7 @@ contains
 !
 !     Allocate g_ia_jb = g_iajb and set it to zero
 !
-      call allocator(g_IA_JB, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(g_IA_JB, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       g_IA_JB = zero
 !
 !     Calculate the integrals g_ia_jb from the Cholesky vector L_ia_J 
@@ -956,7 +956,7 @@ contains
 !
 !     Deallocate the Cholesky vector L_ia_J 
 !
-      call deallocator(L_IA_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call wf%mem%dealloc(L_IA_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
 !     Set the initial value of the energy 
 !
@@ -1037,12 +1037,12 @@ contains
 
 !        :: Calculate cc2 doubles amplitudes ::
 !
-         call allocator(L_ai_J, n_active_o*n_active_v, wf%n_J)
+         call wf%mem%alloc(L_ai_J, n_active_o*n_active_v, wf%n_J)
          L_ai_J = zero
 !    
          call wf%get_cholesky_ai(L_ai_J, first_active_v, last_active_v, first_active_o, last_active_o)
 !
-         call allocator(L_ia_J, (n_active_o)*(n_active_v), wf%n_J)
+         call wf%mem%alloc(L_ia_J, (n_active_o)*(n_active_v), wf%n_J)
 !
 !        reorder and constrain L_bi_J
 !
@@ -1060,9 +1060,9 @@ contains
             enddo
          enddo
 !
-         call deallocator(L_ai_J, n_active_o*n_active_v, wf%n_J)
+         call wf%mem%dealloc(L_ai_J, n_active_o*n_active_v, wf%n_J)
 !
-         call allocator(s_ia_jb, (n_active_o)*a_length, (n_active_o)*n_active_v)
+         call wf%mem%alloc(s_ia_jb, (n_active_o)*a_length, (n_active_o)*n_active_v)
 !
          offset = index_two(1, a_first, n_active_o)
 !
@@ -1080,7 +1080,7 @@ contains
                      (n_active_o)*a_length)
 !
 !
-         call deallocator(L_ia_J, (n_active_o)*(n_active_v), wf%n_J)
+         call wf%mem%dealloc(L_ia_J, (n_active_o)*(n_active_v), wf%n_J)
 !
 !        Add the rest of the correlation energy E = E + sum_aibj (s_ij^ab ) L_iajb
 !
@@ -1111,11 +1111,11 @@ contains
             enddo
          enddo
 !  
-         call deallocator(s_ia_jb, a_length*n_active_o, n_active_o*n_active_v)
+         call wf%mem%dealloc(s_ia_jb, a_length*n_active_o, n_active_o*n_active_v)
 !
       enddo ! End of batching
 !
-      call deallocator(g_ia_jb, wf%n_o*wf%n_v, wf%n_o*wf%n_v)
+      call wf%mem%dealloc(g_ia_jb, wf%n_o*wf%n_v, wf%n_o*wf%n_v)
 !
    end subroutine calc_energy_mlcc2
 !
@@ -1200,12 +1200,12 @@ contains
 !
 !     Construct s2 amplitudes
 !
-      call allocator(s_ai_bj, (wf%n_CC2_v)*(wf%n_CC2_o), (wf%n_CC2_v)*(wf%n_CC2_o))
+      call wf%mem%alloc(s_ai_bj, (wf%n_CC2_v)*(wf%n_CC2_o), (wf%n_CC2_v)*(wf%n_CC2_o))
       call wf%get_s2am(s_ai_bj, wf%first_CC2_v, wf%first_CC2_v + wf%n_CC2_v - 1)
 !  
 !     Reorder and pack in
 !
-      call allocator(s2am, (wf%n_CC2_v)*(wf%n_CC2_o)*((wf%n_CC2_v)*(wf%n_CC2_o)+1)/2, 1)
+      call wf%mem%alloc(s2am, (wf%n_CC2_v)*(wf%n_CC2_o)*((wf%n_CC2_v)*(wf%n_CC2_o)+1)/2, 1)
 !
       do i = 1, wf%n_CC2_o
          do a = 1, wf%n_CC2_v
@@ -1224,13 +1224,13 @@ contains
          enddo
       enddo
 !
-      call deallocator(s_ai_bj, (wf%n_CC2_v)*(wf%n_CC2_o), (wf%n_CC2_v)*(wf%n_CC2_o))
+      call wf%mem%dealloc(s_ai_bj, (wf%n_CC2_v)*(wf%n_CC2_o), (wf%n_CC2_v)*(wf%n_CC2_o))
 !
 !     Write s2 amplitudes 
 !
       write(unit_x2am) s2am
 !
-      call deallocator(s2am, (wf%n_CC2_v)*(wf%n_CC2_o)*((wf%n_CC2_v)*(wf%n_CC2_o)+1)/2, 1)
+      call wf%mem%dealloc(s2am, (wf%n_CC2_v)*(wf%n_CC2_o)*((wf%n_CC2_v)*(wf%n_CC2_o)+1)/2, 1)
 !
 !     Close amplitude file
 !
@@ -1290,7 +1290,7 @@ contains
          wf%n_x2am = + ((wf%n_CC2_v)*(wf%n_CC2_o))&
                    *((wf%n_CC2_v )*(wf%n_CC2_o)+1)/2 
 !
-         if (.not. allocated(wf%x2am)) call allocator(wf%x2am, wf%n_x2am, 1) 
+         if (.not. allocated(wf%x2am)) call wf%mem%alloc(wf%x2am, wf%n_x2am, 1) 
          read(unit_x2am) wf%x2am
 !
          close(unit_x2am)
@@ -1312,7 +1312,7 @@ contains
 !
    class(mlcc2) :: wf
 !
-   if (allocated(wf%x2am)) call deallocator(wf%x2am, wf%n_x2am, 1)
+   if (allocated(wf%x2am)) call wf%mem%dealloc(wf%x2am, wf%n_x2am, 1)
 !
    end subroutine destruct_x2am_mlcc2
 !

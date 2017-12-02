@@ -71,7 +71,7 @@ contains
 !
 !     Allocate and zero the transformed vector (singles part)
 !
-      call allocator(rho_a_i, wf%n_v, wf%n_o)
+      call wf%mem%alloc(rho_a_i, wf%n_v, wf%n_o)
       rho_a_i = zero
 !
 !     :: ccS contributions to the singles c vector ::  
@@ -89,7 +89,7 @@ contains
 !
 !     Allocate the incoming unpacked doubles vector 
 !
-      call allocator(c_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) 
+      call wf%mem%alloc(c_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) 
       c_ai_bj = zero
 !
       call squareup(c_aibj, c_ai_bj, (wf%n_o)*(wf%n_v)) ! Pack out vector 
@@ -110,7 +110,7 @@ contains
 !
 !     Allocate unpacked transformed vector
 !
-      call allocator(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) 
+      call wf%mem%alloc(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) 
       rho_ai_bj = zero 
 !
 !     - A2 term -
@@ -122,7 +122,7 @@ contains
 !
 !     Allocate temporary symmetric transformed vector 
 !
-      call allocator(rho_ai_bj_sym, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) 
+      call wf%mem%alloc(rho_ai_bj_sym, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) 
       rho_ai_bj_sym = zero
 !
       do j = 1, wf%n_o
@@ -147,7 +147,7 @@ contains
 !
 !     Done with temporary vector; deallocate
 ! 
-      call deallocator(rho_ai_bj_sym, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      call wf%mem%dealloc(rho_ai_bj_sym, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
 !     - B2 term -
 !
@@ -176,12 +176,12 @@ contains
          enddo
       enddo
 !
-      call deallocator(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call deallocator(c_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(c_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       c_a_i = rho_a_i
 !
-      call deallocator(rho_a_i, wf%n_v, wf%n_o)
+      call wf%mem%dealloc(rho_a_i, wf%n_v, wf%n_o)
 !
    end subroutine jacobian_cc2_transformation_cc2
 !
@@ -234,7 +234,7 @@ contains
 !     :: Term a1.3 ::
 !     - sum_(bjck) g_kc,jb u_kj^ab c_ci
 !
-      call allocator(u_a_jbk, (wf%n_v), (wf%n_o**2)*(wf%n_v)) ! u_ak_bj
+      call wf%mem%alloc(u_a_jbk, (wf%n_v), (wf%n_o**2)*(wf%n_v)) ! u_ak_bj
 !
       do j = 1, wf%n_o
          do b = 1, wf%n_v
@@ -265,14 +265,14 @@ contains
 !
 !     g_jb_kc = g_jb,kc 
 !
-      call allocator(g_jb_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(g_jb_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       integral_type = 'electronic_repulsion'
       call wf%get_ov_ov(integral_type, g_jb_kc)
 !
 !     X_a_c = - sum_(bjk)u_a_jbk * g_jbk_c
 !
-      call allocator(X_a_c, wf%n_v, wf%n_v)
+      call wf%mem%alloc(X_a_c, wf%n_v, wf%n_v)
 !
       call dgemm('N', 'N',              &
                   wf%n_v,               &
@@ -287,7 +287,7 @@ contains
                   X_a_c,                &
                   wf%n_v)
 !
-      call deallocator(u_a_jbk, (wf%n_v), (wf%n_o**2)*(wf%n_v))  
+      call wf%mem%dealloc(u_a_jbk, (wf%n_v), (wf%n_o**2)*(wf%n_v))  
 !
 !     rho_a_i =+ sum_(c) X_a_c * c_c_i 
 !
@@ -304,7 +304,7 @@ contains
                   rho_a_i,  &
                   wf%n_v)
 !
-      call deallocator(X_a_c, wf%n_v, wf%n_v)
+      call wf%mem%dealloc(X_a_c, wf%n_v, wf%n_v)
 !           
 !     :: Term a.2 ::
 !     - sum_(bjck) g_jb,kc u_ki^cb c_aj
@@ -314,7 +314,7 @@ contains
 !
       call wf%read_amplitudes
 !
-      call allocator(u_bkc_i, (wf%n_v**2)*(wf%n_o), (wf%n_o)) ! u_ak_bj
+      call wf%mem%alloc(u_bkc_i, (wf%n_v**2)*(wf%n_o), (wf%n_o)) ! u_ak_bj
 !
       do k = 1, wf%n_o
          do c = 1, wf%n_v
@@ -345,7 +345,7 @@ contains
 !
 !     X_j_i = -sum_(bkc) g_j_bkc * u_bkc_i
 !
-      call allocator(X_j_i, wf%n_o, wf%n_o)
+      call wf%mem%alloc(X_j_i, wf%n_o, wf%n_o)
 !
       call dgemm('N', 'N',            &
                   wf%n_o,             &
@@ -360,7 +360,7 @@ contains
                   X_j_i,              &
                   wf%n_o)
 !
-      call allocator(u_bkc_i, (wf%n_v**2)*(wf%n_o), (wf%n_o)) ! u_ak_bj
+      call wf%mem%alloc(u_bkc_i, (wf%n_v**2)*(wf%n_o), (wf%n_o)) ! u_ak_bj
 !
 !     rho_a_i =+ sum_(c) X_j_i * c_a_j 
 !
@@ -377,14 +377,14 @@ contains
                   rho_a_i,  &
                   wf%n_v)
 !
-      call deallocator(X_j_i, wf%n_o, wf%n_o)
+      call wf%mem%dealloc(X_j_i, wf%n_o, wf%n_o)
 !          
 !     :: Term a1.1 ::
 !     sum_(ckbj) L_jb,kc u_ki^ca c_bj
 !
 !     construct L_kc,bj ordered as L_kc_bj
 !
-      call allocator(L_ck_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      call wf%mem%alloc(L_ck_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
       do k = 1, wf%n_o
         do c = 1, wf%n_v
@@ -413,7 +413,7 @@ contains
 !
       call wf%read_amplitudes
 !
-      call allocator(u_ai_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) 
+      call wf%mem%alloc(u_ai_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) 
 !
       do k = 1, wf%n_o
          do c = 1, wf%n_v
@@ -443,7 +443,7 @@ contains
 !
 !     X_ai_bj = sum_(ck) u_ai_ck * L_ck_bj
 !
-      call allocator(X_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(X_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       call dgemm('N', 'N',    &
                   (wf%n_o)*(wf%n_v), &
@@ -458,8 +458,8 @@ contains
                   X_ai_bj,           &
                   (wf%n_o)*(wf%n_v))
 !
-      call deallocator(u_ai_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
-      call deallocator(L_ck_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) 
+      call wf%mem%dealloc(u_ai_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      call wf%mem%dealloc(L_ck_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) 
 !
       call dgemm('N', 'N',            &
                   (wf%n_o)*(wf%n_v),  &
@@ -474,7 +474,7 @@ contains
                   rho_a_i,            &
                   (wf%n_o)*(wf%n_v))
 !
-      call deallocator(X_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(X_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine jacobian_cc2_a1_cc2
 !
@@ -520,7 +520,7 @@ contains
 !     :: Term 1 ::
 !     sum_ck F_kc*(2c_ai,ck - c_ak,ci) 
 !
-      call allocator(d_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(d_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     construct 2c_ai,ck - c_ak,ci = d_ai_kc
 !
@@ -560,19 +560,19 @@ contains
                   rho_a_i,            &
                   (wf%n_o)*(wf%n_v))
 !
-      call deallocator(d_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(d_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     :: Term 2 ::
 !     - sum_ckj L_ji,kc * c_aj,ck = - sum_ckj (2*g_jikc - g_kijc) * c_aj,ck (L_ji,kc ordered as L_jck_i)
 !
-      call allocator(g_ji_kc, (wf%n_o)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      call wf%mem%alloc(g_ji_kc, (wf%n_o)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
       integral_type = 'electronic_repulsion'
       call wf%get_oo_ov(integral_type, g_ji_kc)
 !
 !     construct L_jikc ( = two*g_ji_kc - g_ki_jc )
 !
-      call allocator(L_jck_i, (wf%n_o**2)*(wf%n_v), wf%n_o)
+      call wf%mem%alloc(L_jck_i, (wf%n_o**2)*(wf%n_v), wf%n_o)
 !
       do j = 1, wf%n_o
          do i = 1, wf%n_o
@@ -591,7 +591,7 @@ contains
          enddo
       enddo
 !
-      call deallocator(g_ji_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(g_ji_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     add term to rho_a_i
 !
@@ -608,7 +608,7 @@ contains
                   rho_a_i,            &
                   wf%n_v) 
 !
-      call deallocator(L_jck_i, (wf%n_o**2)*wf%n_v, wf%n_o)
+      call wf%mem%dealloc(L_jck_i, (wf%n_o**2)*wf%n_v, wf%n_o)
 !
 !    :: Term 3 ::
 !    sum_cbk L_abkc * c_bi,ck
@@ -639,14 +639,14 @@ contains
 !
         a_length = a_last - a_first + 1
 !
-        call allocator(g_ab_kc, wf%n_v*a_length, (wf%n_v)*(wf%n_o))
+        call wf%mem%alloc(g_ab_kc, wf%n_v*a_length, (wf%n_v)*(wf%n_o))
 !
         integral_type = 'electronic_repulsion'
         call wf%get_vv_ov(integral_type, g_ab_kc, a_first, a_last, 1, wf%n_v, 1, wf%n_o, 1, wf%n_v)
 !
 !       construct L_ab_kc = 2*g_ab_kc - g_ac_kb 
 !
-        call allocator(L_ab_kc, (wf%n_v)*a_length, (wf%n_o)*(wf%n_v))
+        call wf%mem%alloc(L_ab_kc, (wf%n_v)*a_length, (wf%n_o)*(wf%n_v))
         do a = 1, a_length
            do b = 1, wf%n_v
               do c = 1, wf%n_v
@@ -664,11 +664,11 @@ contains
            enddo
         enddo
 !
-        call deallocator(g_ab_kc, (wf%n_v)*a_length, (wf%n_o)*(wf%n_v))
+        call wf%mem%dealloc(g_ab_kc, (wf%n_v)*a_length, (wf%n_o)*(wf%n_v))
 !
 !       Reorder c_bi_ck to c_bkc_i
 !
-        call allocator(c_bkc_i, (wf%n_v**2)*(wf%n_o), wf%n_o)
+        call wf%mem%alloc(c_bkc_i, (wf%n_v**2)*(wf%n_o), wf%n_o)
         do i = 1, wf%n_o
            do b = 1, wf%n_v
               do c = 1, wf%n_v
@@ -701,8 +701,8 @@ contains
                     rho_a_i(a_first, 1),     &
                     wf%n_v) 
 !
-        call deallocator(L_ab_kc, (wf%n_v)*a_length, (wf%n_o)*(wf%n_v))
-        call deallocator(c_bkc_i, (wf%n_v**2)*wf%n_o, wf%n_o)
+        call wf%mem%dealloc(L_ab_kc, (wf%n_v)*a_length, (wf%n_o)*(wf%n_v))
+        call wf%mem%dealloc(c_bkc_i, (wf%n_v**2)*wf%n_o, wf%n_o)
 !
       enddo ! batching over a
 !
@@ -776,7 +776,7 @@ contains
 !
          c_length = c_last - c_first + 1
 !
-         call allocator(g_ai_bc, wf%n_v*wf%n_o, wf%n_v*c_length)
+         call wf%mem%alloc(g_ai_bc, wf%n_v*wf%n_o, wf%n_v*c_length)
 !
          integral_type = 'electronic_repulsion'
          call wf%get_vo_vv(integral_type, g_ai_bc, 1, wf%n_v, 1, wf%n_o, 1, wf%n_v, c_first, c_last)
@@ -796,7 +796,7 @@ contains
                       rho_ai_bj, &
                       (wf%n_v**2)*wf%n_o)
 !
-         call deallocator(g_ai_bc, wf%n_v*wf%n_o, wf%n_v*c_length)
+         call wf%mem%dealloc(g_ai_bc, wf%n_v*wf%n_o, wf%n_v*c_length)
 
 !
       enddo ! batching over c
@@ -806,14 +806,14 @@ contains
 ! 
 !     construct g_ai,Kj ordered as g_aij_K
 ! 
-      call allocator(g_ai_kj, wf%n_v*wf%n_o, wf%n_o**2)
+      call wf%mem%alloc(g_ai_kj, wf%n_v*wf%n_o, wf%n_o**2)
 !
       integral_type = 'electronic_repulsion'
       call wf%get_vo_oo(integral_type, g_ai_kj)
 ! 
 !     Reorder g_ai_Kj to g_aij_K
 ! 
-      call allocator(g_aij_K, wf%n_v*wf%n_o**2, wf%n_o)
+      call wf%mem%alloc(g_aij_K, wf%n_v*wf%n_o**2, wf%n_o)
       g_aij_K = zero
       do a = 1, wf%n_v
          do j = 1, wf%n_o
@@ -827,9 +827,9 @@ contains
             enddo
          enddo
       enddo
-      call deallocator(g_ai_Kj, wf%n_v*wf%n_o, wf%n_o*(wf%n_o))
+      call wf%mem%dealloc(g_ai_Kj, wf%n_v*wf%n_o, wf%n_o*(wf%n_o))
 ! 
-      call allocator(rho_aij_b, wf%n_v*wf%n_o**2, wf%n_v)
+      call wf%mem%alloc(rho_aij_b, wf%n_v*wf%n_o**2, wf%n_v)
 ! 
 !      Add term to rho_ai_bj
 ! 
@@ -846,7 +846,7 @@ contains
                   rho_aij_b,          &
                   wf%n_v*wf%n_o**2)
 ! 
-      call deallocator(g_aij_K, wf%n_v*wf%n_o**2, wf%n_o)
+      call wf%mem%dealloc(g_aij_K, wf%n_v*wf%n_o**2, wf%n_o)
 ! 
 ! 
 !     Reorder into rho_ai_bj
@@ -863,7 +863,7 @@ contains
             enddo
          enddo
       enddo
-      call deallocator(rho_aij_b, wf%n_v*wf%n_o**2, wf%n_v)
+      call wf%mem%dealloc(rho_aij_b, wf%n_v*wf%n_o**2, wf%n_v)
 !
 !
    end subroutine jacobian_cc2_a2_cc2

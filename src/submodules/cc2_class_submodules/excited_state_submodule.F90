@@ -131,10 +131,10 @@ contains
 !
 !     Allocate c_a_i and c_aibj
 !
-      call allocator(c_a_i, wf%n_v, wf%n_o)
+      call wf%mem%alloc(c_a_i, wf%n_v, wf%n_o)
       c_a_i = zero 
 !
-      call allocator(c_aibj, wf%n_s2am, 1)
+      call wf%mem%alloc(c_aibj, wf%n_s2am, 1)
       c_aibj = zero 
 !
 !     Open trial vector- and transformed vector files
@@ -234,8 +234,8 @@ contains
 !
 !     Deallocate c_a_i and c_aibj
 !
-      call deallocator(c_a_i, wf%n_v, wf%n_o)
-      call deallocator(c_aibj, wf%n_s2am, 1)
+      call wf%mem%dealloc(c_a_i, wf%n_v, wf%n_o)
+      call wf%mem%dealloc(c_aibj, wf%n_s2am, 1)
 !
    end subroutine transform_trial_vectors_cc2
 !
@@ -312,7 +312,7 @@ contains
 !
 !     Store vvov-electronic repulsion integrals to file if there is space
 !
-      call allocator(wf%t1am, wf%n_v, wf%n_o)
+      call wf%mem%alloc(wf%t1am, wf%n_v, wf%n_o)
       call wf%read_single_amplitudes
 !
       call wf%store_t1_vv_ov_electronic_repulsion
@@ -500,14 +500,14 @@ contains
 !
 !     Allocations
 !
-      call allocator(solution_ai, wf%n_t1am, 1)
-      call allocator(solution_aibj, wf%n_s2am, 1)
+      call wf%mem%alloc(solution_ai, wf%n_t1am, 1)
+      call wf%mem%alloc(solution_aibj, wf%n_s2am, 1)
 !
-      call allocator(sorted_max_vec_singles, 20, 1)
-      call allocator(sorted_max_vec_doubles, 20, 1)
+      call wf%mem%alloc(sorted_max_vec_singles, 20, 1)
+      call wf%mem%alloc(sorted_max_vec_doubles, 20, 1)
 !
-      call allocator_int(index_list_singles, 20, 2)
-      call allocator_int(index_list_doubles, 20, 4)
+      call wf%mem%alloc_int(index_list_singles, 20, 2)
+      call wf%mem%alloc_int(index_list_doubles, 20, 4)
 !
       do state = 1, wf%excited_state_specifications%n_singlet_states
 !
@@ -583,14 +583,14 @@ contains
 !
 !     Deallocations
 !
-      call deallocator(solution_ai, wf%n_t1am, 1)
-      call deallocator(solution_aibj, wf%n_s2am, 1)
+      call wf%mem%dealloc(solution_ai, wf%n_t1am, 1)
+      call wf%mem%dealloc(solution_aibj, wf%n_s2am, 1)
 !
-      call deallocator(sorted_max_vec_singles, 20, 1)
-      call deallocator(sorted_max_vec_doubles, 20, 1)
+      call wf%mem%dealloc(sorted_max_vec_singles, 20, 1)
+      call wf%mem%dealloc(sorted_max_vec_doubles, 20, 1)
 !
-      call deallocator_int(index_list_singles, 20, 2)
-      call deallocator_int(index_list_doubles, 20, 4)
+      call wf%mem%dealloc_int(index_list_singles, 20, 2)
+      call wf%mem%dealloc_int(index_list_doubles, 20, 4)
 !
       close(unit_solution)
 !
