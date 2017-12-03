@@ -1,13 +1,6 @@
 set(eT_fortran_sources
-   src/memory_manager_class.F90
-   src/batching_index_class.F90
    src/calc_tasks_class.F90
    src/calc_settings_class.F90
-   src/tools/types.F90
-   src/tools/workspace.F90
-   src/tools/input_output.F90
-   src/tools/input_reader.F90
-   src/tools/utils.F90
    src/ground_state_specs_class.F90
    src/excited_state_specs_class.F90
    src/core_excited_state_specs_class.F90
@@ -23,6 +16,13 @@ set(eT_fortran_sources
    src/wavefunctions/ccsdpt_class.F90
    src/wavefunctions/mlcc2_class.F90
    src/wavefunctions/mlccsd_class.F90
+   src/tools/types.F90
+   src/tools/workspace.F90
+   src/tools/input_output.F90
+   src/tools/input_reader.F90
+   src/tools/utils.F90
+   src/tools/memory_manager_class.F90
+   src/tools/batching_index_class.F90
    src/submodules/ccs_class_submodules/input_reader_submodule.F90
    src/submodules/ccs_class_submodules/cholesky_submodule.F90
    src/submodules/ccs_class_submodules/ground_state_submodule.F90

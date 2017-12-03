@@ -4,6 +4,9 @@ module workspace
 !!    Workspace module
 !!    Written by Henrik Koch, Rolf H. Myhre, Eirik Kjønstad and Sarai Folkestad, Jan 2017
 !!
+!!    NB! THIS IS BEING PHASED OUT & HAS BEEN REPLACED BY THE MEMORY MANAGER OBJECT.
+!!        THE MANY CALLS TO "GET_AVAILABLE" MEANS THAT WE CANNOT REMOVE IT JUST YET.
+!!
 !!    Manages program memory usage and contains:
 !!
 !!    work_init:       Initializes the memory management variables.
