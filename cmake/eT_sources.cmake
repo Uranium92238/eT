@@ -14,15 +14,15 @@ set(eT_fortran_sources
    src/response_calc_specs_class.F90
    src/mlcc_calculation_settings_class.F90
    src/mlcc_orbitals_class.F90
-   src/hf_class.F90
-   src/mp2_class.F90
-   src/ccs_class.F90
-   src/ccsd_class.F90
-   src/cc2_class.F90
-   src/cc3_class.F90
-   src/ccsdpt_class.F90
-   src/mlcc2_class.F90
-   src/mlccsd_class.F90
+   src/wavefunctions/hf_class.F90
+   src/wavefunctions/mp2_class.F90
+   src/wavefunctions/ccs_class.F90
+   src/wavefunctions/ccsd_class.F90
+   src/wavefunctions/cc2_class.F90
+   src/wavefunctions/cc3_class.F90
+   src/wavefunctions/ccsdpt_class.F90
+   src/wavefunctions/mlcc2_class.F90
+   src/wavefunctions/mlccsd_class.F90
    src/submodules/ccs_class_submodules/input_reader_submodule.F90
    src/submodules/ccs_class_submodules/cholesky_submodule.F90
    src/submodules/ccs_class_submodules/ground_state_submodule.F90

@@ -57,8 +57,8 @@ contains
 !!
 !!    Performs the following tasks
 !!
-!!    1. Sets HF orbital and energy information by reading from file
-!!    2. Transforms AO Cholesky vectors to MO basis and saves to file 
+!!    - Sets HF orbital and energy information by reading from file
+!!    - Transforms AO Cholesky vectors to MO basis and saves to file 
 !!
       implicit none 
 !
