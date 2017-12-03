@@ -25,9 +25,9 @@ module batching_index_class
 !     Values relating the limits and length of the current batch 
 !     (set by determine_limits procedure for a given batch)
 !
-      integer(i15) :: first      = 0 ! Current first value of index 
-      integer(i15) :: last       = 0 ! Current last value of index
-      integer(i15) :: length     = 0 ! Current length of batch (last - first + 1)
+      integer(i15) :: first  = 0 ! Current first value of index 
+      integer(i15) :: last   = 0 ! Current last value of index
+      integer(i15) :: length = 0 ! Current length of batch (last - first + 1)
 !
 !     Values relating the the size of the batch and the total number of batches 
 !     (set by memory manager routines)
@@ -38,6 +38,10 @@ module batching_index_class
 !     Value that must be initialized by user 
 !
       integer(i15) :: index_dimension = 0 ! Full length of index (e.g., typically n_vir for virtual index)
+!
+!     Logical for initialization (for sanity check)
+! 
+      logical :: initialized = .false.
 !
    contains 
 !
@@ -61,8 +65,9 @@ contains
 !!    Init (batching index) 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
 !!
-!!    Note: every batching index has to be initialized - otherwise it
-!!          will not work as expected!
+!!    Note: every batching index must be initialized!
+!!    The 'dimension' variable specifies the total length of the 
+!!    batching index, e.g. the number of virtuals for a virtual index.
 !!
       implicit none 
 !
@@ -70,7 +75,8 @@ contains
 !
       integer(i15), intent(in) :: dimension 
 !
-      batch_p%index_dimension = dimension 
+      batch_p%index_dimension = dimension
+      batch_p%initialized = .true. 
 !
    end subroutine init_batching_index
 !
@@ -85,6 +91,15 @@ contains
       class(batching_index) :: batch_p ! p is general index (can be virtual or occupied or other)
 !
       integer(i15), intent(in) :: batch_number ! The current batch 
+!
+!     Sanity check 
+!
+      if (.not. batch_p%initialized) then 
+!
+         write(unit_output,'(t3,a)') 'Error: a non-initialized batching variable was used.'
+         stop
+!
+      endif
 !
 !     Determine limits of batch, q = first, first + 1, ..., last
 !

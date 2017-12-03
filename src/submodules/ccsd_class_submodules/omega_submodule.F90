@@ -26,6 +26,8 @@ submodule (ccsd_class) omega
 !!    omega_ccsd_e2:         adds E2 term to omega2
 !!
 !
+   use batching_index_class
+!
    implicit none 
 !
    logical :: debug = .false.
@@ -179,8 +181,10 @@ contains
 !
 !     Batching variables 
 !
-      integer(i15) :: required = 0, available = 0, max_batch_length = 0, batch_dimension = 0
-      integer(i15) :: n_batch = 0, a_begin = 0, a_end = 0, a_batch = 0, batch_length = 0
+      type(batching_index) :: batch_a 
+!
+      integer(i15)         :: current_a_batch = 0
+      integer(i15)         :: required        = 0
 !
 !     Indices 
 !
@@ -224,34 +228,30 @@ contains
          enddo
       enddo
 !
-!     Calculate the batching parameters over a = 1,2,...,n_vir,
-!     for which we need to have enough room to store L_ad_J and g_ad_kc, and, 
-!     later on in the same loop, g_ad_kc and g_a_ckd simultaneously
+!     Prepare for batching 
 !
-      available = get_available()
-      required  = (wf%n_J)*(wf%n_v**2) + (wf%n_J)*(wf%n_o)*(wf%n_v)          ! Needed to hold L_ab_J and L_kc_J
-      required  = required &
-                + max((wf%n_J)*(wf%n_v**2) + 2*(wf%n_J)*(wf%n_o)*(wf%n_v), & ! Determine if it is more demanding to get L_ab_J 
-                      2*(wf%n_o)*(wf%n_v**3))                                ! or to hold g_ad_kc and g_a_ckd
-!                                                                                            
-      required = 4*required ! In words 
+!     Estimated memory required to construct g_adkc 
+!     (clearly an underestimate, see Cholesky routines when updating)
 !
-      batch_dimension  = wf%n_v ! Batch over the virtual index a
-      max_batch_length = 0      ! Initilization of unset variables 
-      n_batch          = 0
+      required = (wf%n_o)*(wf%n_v)**3                                & ! g_adkc 
+               + (wf%n_J)*(wf%n_v)**2                                & ! L_ad^J
+               + (wf%n_J)*(wf%n_v)*(wf%n_o)                          & ! L_kc^J 
+               + (wf%n_J)*(wf%n_v)**2 + 2*(wf%n_J)*(wf%n_o)*(wf%n_v)   ! To construct L_ad^J
 !
-      call num_batch(required, available, max_batch_length, n_batch, batch_dimension)           
+!     Initialization of the batching variable
+!
+      call batch_a%init(wf%n_v)                ! Initialize batching index a 
+      call wf%mem%num_batch(batch_a, required) ! Determine batching information   
 !
 !     Loop over the number of a batches 
 !
-      do a_batch = 1, n_batch
+      do current_a_batch = 1, batch_a%num_batches
 !
 !        For each batch, get the limits for the a index 
 !
-         call batch_limits(a_begin, a_end, a_batch, max_batch_length, batch_dimension)
-         batch_length = a_end - a_begin + 1 
+         call batch_a%determine_limits(current_a_batch)
 !
-         ad_dim = batch_length*(wf%n_v)
+         ad_dim = (batch_a%length)*(wf%n_v)
 !
 !        Form g_ad_kc = g_adkc
 !
@@ -260,8 +260,8 @@ contains
          integral_type = 'electronic_repulsion'
          call wf%get_vv_ov(integral_type, & 
                            g_ad_kc,       &
-                           a_begin,       &
-                           a_end,         &
+                           batch_a%first, &
+                           batch_a%last,  &
                            1,             &
                            wf%n_v,        &
                            1,             &
@@ -275,17 +275,17 @@ contains
 ! 
 !        and add it to the omega vector
 ! 
-         call dgemm('N','N',               &
-                     batch_length,         &
-                     wf%n_o,               &
-                     (wf%n_o)*(wf%n_v)**2, &
-                     one,                  &
-                     g_ad_kc,              & ! g_a_dkc
-                     batch_length,         &
-                     u_dkc_i,              &
-                     (wf%n_o)*(wf%n_v)**2, &
-                     one,                  &
-                     wf%omega1(a_begin,1), & 
+         call dgemm('N','N',                     &
+                     batch_a%length,             &
+                     wf%n_o,                     &
+                     (wf%n_o)*(wf%n_v)**2,       &
+                     one,                        &
+                     g_ad_kc,                    & ! g_a_dkc
+                     batch_a%length,             &
+                     u_dkc_i,                    &
+                     (wf%n_o)*(wf%n_v)**2,       &
+                     one,                        &
+                     wf%omega1(batch_a%first,1), & 
                      wf%n_v)
 !
          call wf%mem%dealloc(g_ad_kc, ad_dim, (wf%n_o)*(wf%n_v))

@@ -317,6 +317,7 @@ contains
 !
          batch_p%num_batches = 1
          batch_p%max_length = batch_p%index_dimension
+!
          return
 !
       endif
