@@ -1,5 +1,6 @@
 set(eT_fortran_sources
    src/memory_manager_class.F90
+   src/batching_index_class.F90
    src/calc_tasks_class.F90
    src/calc_settings_class.F90
    src/tools/types.F90
