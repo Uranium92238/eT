@@ -74,38 +74,25 @@ module ccs_class
 !
    type, extends(hf) :: ccs
 !
-!
-!                           -::- Class variables that are inherited by descendants -::-
-!     ---------------------------------------------------------------------------------------------------------
-!
 !     Cluster amplitudes
 !
-      integer(i15) :: n_t1am = 0       ! Number of singles amplitudes
+      integer(i15) :: n_t1am       = 0 ! Number of single excitation amplitudes
       integer(i15) :: n_parameters = 0 ! Number of parameters in the wavefunction
 !
-      real(dp), dimension(:,:), allocatable :: t1am ! Singles amplitude vector, t1am(a,i) = t_i^a 
+      real(dp), dimension(:,:), allocatable :: t1am ! Single excitation amplitudes vector, t_i^a 
 !
 !     The omega, or projection, vector < mu | exp(-T) H exp(T) | R >
 ! 
-      real(dp), dimension(:,:), allocatable :: omega1 ! Singles vector 
+      real(dp), dimension(:,:), allocatable :: omega1 ! Singles projection vector 
 !
 !     The T1-transformed Fock matrix
 !
-      real(dp), dimension(:,:), allocatable :: fock_ij ! occ-occ block
-      real(dp), dimension(:,:), allocatable :: fock_ia ! occ-vir block
-      real(dp), dimension(:,:), allocatable :: fock_ai ! vir-occ block
-      real(dp), dimension(:,:), allocatable :: fock_ab ! vir-vir block 
-!
-!     Excitation energy array (omega_1, omega_2, ...)
-!
-      real(dp), dimension(:,:), allocatable :: excited_state_energies
-!
+      real(dp), dimension(:,:), allocatable :: fock_ij
+      real(dp), dimension(:,:), allocatable :: fock_ia
+      real(dp), dimension(:,:), allocatable :: fock_ai
+      real(dp), dimension(:,:), allocatable :: fock_ab
 !
    contains 
-!
-!
-!                           -::- Class routines that are inherited by descendants -::-
-!     ---------------------------------------------------------------------------------------------------------
 !
 !
 !     -::- Initialization and driver routines -::-
@@ -165,7 +152,7 @@ module ccs_class
 !
       procedure :: initialize_excited_states        => initialize_excited_states_ccs
       procedure :: transform_trial_vectors          => transform_trial_vectors_ccs
-      procedure :: calculate_orbital_differences    => calculate_orbital_differences_ccs ! Must be overwritten for CCSD 
+      procedure :: calculate_orbital_differences    => calculate_orbital_differences_ccs 
 !
       procedure :: precondition_residual            => precondition_residual_ccs
       procedure :: precondition_residual_valence    => precondition_residual_valence_ccs
@@ -374,207 +361,8 @@ module ccs_class
    interface
 !
 !
-!     -::- Input reader submodule interface -::-
-!     :::::::::::::::::::::::::::::::::::::::::: 
-!
-      module subroutine general_specs_reader_ccs(wf, unit_input)
-!!
-!!       General Specifications Reader
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Nov. 2017
-!!
-         implicit none
-!
-         class(ccs)   :: wf
-         integer(i15) :: unit_input
-!
-         integer :: memory = 0, disk_space = 0
-!
-      end subroutine general_specs_reader_ccs
-!
-!
-      module subroutine calculation_reader_ccs(wf, unit_input)                                   
-!!
-!!       Calculation Reader
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Nov. 2017
-!!
-         implicit none
-!
-         integer(i15) :: unit_input
-!
-         class(ccs) :: wf
-!
-      end subroutine calculation_reader_ccs
-!
-!
-      module subroutine read_ground_state_specs_ccs(wf, unit_input)
-!!
-!!       Read Ground State Specifications
-!!       Written by Eirik F. Kjønstad and Sarai Dery Folkestad, Nov. 2017
-!!
-         implicit none
-!
-         integer :: unit_input
-!
-         class(ccs) :: wf
-!
-      end subroutine read_ground_state_specs_ccs
-!
-!
-      module subroutine read_excited_state_specs_ccs(wf, unit_input)
-!!
-!!       Read Excited State Specifications
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Nov. 2017
-!!
-         implicit none
-!
-         integer(i15)      :: unit_input
-!
-         class(ccs)        :: wf
-!
-      end subroutine read_excited_state_specs_ccs
-!
-!
-      module subroutine read_property_specs_ccs(wf, unit_input)
-!!
-!!       Read Property Specifications
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Nov. 2017
-!!
-         implicit none
-!
-         integer(i15)      :: unit_input
-!
-         class(ccs)        :: wf
-!
-      end subroutine read_property_specs_ccs
-!
-!
-   end interface
-!
-!
-   interface 
-!
-!
-!     -::- Cholesky submodule interface -::-
-!     :::::::::::::::::::::::::::::::::::::: 
-!
-      module subroutine get_cholesky_ij_ccs(wf, L_ij_J, i_first, i_last, j_first, j_last)
-!!
-!!       Get Cholesky IJ
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!!  
-         implicit none 
-!
-         class(ccs)               :: wf
-         integer(i15), optional   :: i_first, j_first ! First index (can differ from 1 when batching or for mlcc)
-         integer(i15), optional   :: i_last, j_last   ! Last index (can differ from n_o when batching or for mlcc)
-         real(dp), dimension(:,:) :: L_ij_J
-!
-      end subroutine get_cholesky_ij_ccs
-!
-!
-      module subroutine get_cholesky_ia_ccs(wf, L_ia_J, i_first, i_last, a_first, a_last)
-!!
-!!       Get Cholesky IA
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!!
-         implicit none 
-!
-         class(ccs)               :: wf
-         integer(i15), optional   :: i_first, a_first   ! First index (can differ from 1 when batching or for mlcc)
-         integer(i15), optional   :: i_last, a_last     ! Last index (can differ from n_v/n_o when batching or for mlcc)
-         real(dp), dimension(:,:) :: L_ia_J
-!
-      end subroutine get_cholesky_ia_ccs
-!
-!
-      module subroutine get_cholesky_ai_ccs(wf, L_ai_J, a_first, a_last, i_first, i_last)
-!!
-!!       Get Cholesky AI
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!!
-         implicit none 
-!
-         class(ccs)               :: wf
-         integer(i15), optional   :: i_first, a_first     ! First index (can differ from 1 when batching or for mlcc)
-         integer(i15), optional   :: i_last, a_last       ! Last index (can differ from n_o/n_v when batching or for mlcc)
-         real(dp), dimension(:,:) :: L_ai_J
-!
-      end subroutine get_cholesky_ai_ccs
-!
-!
-      module subroutine get_cholesky_ab_ccs(wf, L_ab_J, a_first, a_last, b_first, b_last)
-!!
-!!       Get Cholesky AB
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!!
-         implicit none
-!
-         class(ccs)               :: wf
-         integer(i15), intent(in) :: a_first, b_first   ! First index (can differ from 1 when batching or for mlcc)
-         integer(i15), intent(in) :: a_last, b_last     ! Last index (can differ from n_v when batching or for mlcc)
-         real(dp), dimension(((b_last - b_first + 1)*(a_last - a_first + 1)), wf%n_J) :: L_ab_J ! L_ab^J
-!
-      end subroutine get_cholesky_ab_ccs
-!
-!
-   end interface 
-!
-!
-   interface
-!
-!
-!    -::- Fock submodule interface -::-
-!    ::::::::::::::::::::::::::::::::::
-!
-!
-      module subroutine initialize_fock_matrix_ccs(wf)
-!!  
-!!       Initialize Fock Matrix
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!!
-         implicit none 
-!
-         class(ccs) :: wf
-!     
-      end subroutine initialize_fock_matrix_ccs
-!
-!
-      module subroutine construct_fock_ccs(wf)
-!!
-!!       Construct Fock 
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!!
-         implicit none 
-!
-         class(ccs) :: wf
-!
-      end subroutine construct_fock_ccs
-!
-!
-      module subroutine one_electron_t1_ccs(wf, h1 ,h1_T1)
-!!
-!!       One-electron T1 
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!!
-         implicit none 
-!
-         class(ccs) :: wf
-!
-         real(dp), dimension(wf%n_mo, wf%n_mo) :: h1
-         real(dp), dimension(wf%n_mo, wf%n_mo) :: h1_T1
-!  
-      end subroutine one_electron_t1_ccs
-!
-!
-   end interface 
-!
-!
-   interface
-!
-!
 !     -::- Ground state submodule interface -::-
-!     ::::::::::::::::::::::::::::::::::::::::::
-!
+!     ------------------------------------------
 !
       module subroutine ground_state_driver_ccs(wf)
 !!
@@ -716,7 +504,7 @@ module ccs_class
    interface 
 !
 !     -::- Excited state submodule interface -::-
-!     :::::::::::::::::::::::::::::::::::::::::::
+!     -------------------------------------------
 !
       module subroutine initialize_trial_vectors_ccs(wf)
 !!
@@ -928,19 +716,6 @@ module ccs_class
       end subroutine initialize_excited_states_ccs
 !
 !
-      module subroutine cvs_residual_projection_ccs(wf, residual)
-!!
-!!       CVS Residual Projection
-!!       Written by Sarai D. Folkestad, Aug. 2017
-!!
-         implicit none
-!
-         class(ccs) :: wf
-         real(dp), dimension(wf%n_parameters, 1) :: residual
-!
-      end subroutine cvs_residual_projection_ccs
-!
-!
       module subroutine precondition_residual_ccs(wf, residual)
 !!
 !!       Precondition Residual
@@ -1048,260 +823,10 @@ module ccs_class
    end interface
 !
 !
-   interface
-!
-!
-!    -::- Ionized state submodule interface -::-
-!    :::::::::::::::::::::::::::::::::::::::::::
-!
-!
-      module subroutine ionized_state_driver_ccs(wf)
-!!
-!!       Ionized State Driver (CCS)
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
-!!
-         implicit none 
-!
-         class(ccs) :: wf
-!
-      end subroutine ionized_state_driver_ccs
-!
-!
-      module subroutine initialize_trial_vectors_valence_ionization_ccs(wf)
-!!
-!!       Initialize Trial Vectors for Valence Ionization
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
-!!
-         implicit none
-!
-         class(ccs) :: wf
-!
-      end subroutine initialize_trial_vectors_valence_ionization_ccs
-!
-!
-      module subroutine initialize_trial_vectors_core_ionization_ccs(wf)
-!!
-!!       Initialize Trial Vectors for Core Ionization
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
-!!
-         implicit none
-!
-         class(ccs) :: wf
-!
-      end subroutine initialize_trial_vectors_core_ionization_ccs
-!
-!
-      module subroutine precondition_residual_valence_ionization_ccs(wf, residual)
-!!
-!!       Precondition Residual Valence
-!!       Written by Sarai D. Folkestad, Aug 2017
-!!
-         implicit none
-!
-         class(ccs) :: wf
-         real(dp), dimension(wf%n_parameters ,1) :: residual
-!
-      end subroutine precondition_residual_valence_ionization_ccs
-!
-!
-      module subroutine ionization_residual_projection_ccs(wf, residual)
-!!
-!!       Core Ionization Residual Projection (CCS)
-!!       Written by Sarai D. Folkestad, Aug 2017
-!!
-         implicit none
-!
-         class(ccs) :: wf
-         real(dp), dimension(wf%n_parameters, 1) :: residual
-!
-      end subroutine ionization_residual_projection_ccs
-!
-!
-     module subroutine ionization_rho_a_i_projection_ccs(wf, rho_a_i)
-!!
-!!       Ionization rho_a_i Projection (CCS)
-!!       Written by Sarai D. Folkestad, Aug 2017
-!!
-         implicit none
-!
-         class(ccs) :: wf
-         real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i
-!
-      end subroutine ionization_rho_a_i_projection_ccs
-!
-!
-      module subroutine precondition_residual_core_ionization_ccs(wf, residual)
-!!     
-!!       Precondition Residual Valence
-!!       Written by Sarai D. Folkestad, Aug 2017
-!!       
-         implicit none
-!
-         class(ccs) :: wf
-         real(dp), dimension(wf%n_parameters ,1) :: residual
-!
-      end subroutine precondition_residual_core_ionization_ccs
-!
-!
-   end interface
-!
-!
-   interface 
-!
-!
-!     -::- Jacobian submodule interface -::-
-!     ::::::::::::::::::::::::::::::::::::::
-!
-!
-      module subroutine jacobian_ccs_transformation_ccs(wf, c_a_i)
-!!
-!!       Jacobian CCS transformation
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!
-!!       Directs the transformation by the CCSD Jacobi matrix,
-!!
-!!          A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >. 
-!!
-!!       In particular,
-!!
-!!          rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck.
-!! 
-!!       On exit, c is overwritten by rho. 
-!!
-         implicit none
-!
-         class(ccs) :: wf 
-         real(dp), dimension(wf%n_v, wf%n_o)   :: c_a_i       
-!
-      end subroutine jacobian_ccs_transformation_ccs
-!
-!
-      module subroutine jacobian_transpose_ccs_transformation_ccs(wf, b_a_i)
-!!
-!!       Jacobian transpose transformation (CCS)
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
-!!
-!!       Calculates the transpose Jacobian transformation, i.e., the transformation 
-!!       by the transpose of the Jacobian matrix
-!!
-!!          A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | R >.
-!!
-!!       The transformation is performed as sigma^T = b^T A, where b is the vector
-!!       sent to the routine. On exit, the vector b is equal to sigma (the transformed
-!!       vector).
-!
-         implicit none 
-!
-         class(ccs) :: wf 
-!
-         real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i 
-!
-      end subroutine jacobian_transpose_ccs_transformation_ccs
-!
-!
-      module subroutine jacobian_transpose_ccs_a1_ccs(wf, sigma_a_i, b_a_i)
-!!
-!!       Jacobian transpose A1 (CCS)
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
-!!
-!!       Calculates the A1 term,
-!!
-!!          sum_c b_ci F_ca - sum_k b_ak F_ik,
-!!
-!!       and adds it to the sigma-vector (b^T -> sigma^T = b^T A).
-!!
-         implicit none 
-!
-         class(ccs) :: wf
-!
-         real(dp), dimension(wf%n_v, wf%n_o) :: sigma_a_i 
-         real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i 
-!
-      end subroutine jacobian_transpose_ccs_a1_ccs
-!
-!
-      module subroutine jacobian_transpose_ccs_b1_ccs(wf, sigma_a_i, b_a_i)
-!!
-!!       Jacobian transpose B1 (CCS)
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
-!!
-!!       Calculates the B1 term,
-!!
-!!          sum_ck L_ckia b_ck
-!!
-!!       and adds it to the sigma-vector (b^T -> sigma^T = b^T A).
-!!
-         implicit none 
-!
-         class(ccs) :: wf
-!
-         real(dp), dimension(wf%n_v, wf%n_o) :: sigma_a_i 
-         real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i 
-!
-      end subroutine jacobian_transpose_ccs_b1_ccs
-!
-!
-      module subroutine core_jacobian_ccs_transformation_ccs(wf, c_a_i)
-!!
-!!       Core (CVS) Jacobian Transformation
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!
-         implicit none
-!
-         class(ccs) :: wf 
-         real(dp), dimension(wf%n_v, wf%n_o)   :: c_a_i    
-!
-      end subroutine core_jacobian_ccs_transformation_ccs
-!
-!
-      module subroutine jacobian_ccs_a1_ccs(wf,rho,c1)
-!!
-!!       Jacobian CCS A1
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!
-         implicit none
-!
-         class(ccs) :: wf
-         real(dp), dimension(wf%n_o,wf%n_v) :: c1 
-         real(dp), dimension(wf%n_o,wf%n_v) :: rho                               
-!
-      end subroutine jacobian_ccs_a1_ccs
-!
-!
-      module subroutine jacobian_ccs_b1_ccs(wf,rho,c1)
-!!
-!!       Jacobian CCS B1 
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!
-         implicit none
-!
-         class(ccs) :: wf
-         real(dp), dimension(wf%n_o,wf%n_v) :: c1
-         real(dp), dimension(wf%n_o,wf%n_v) :: rho                
-!
-      end subroutine jacobian_ccs_b1_ccs
-!
-!
-      module subroutine cvs_rho_a_i_projection_ccs(wf, vec_a_i)
-!!
-!!       CVS rho_a_i Projection 
-!!       Written by Sarai D. Folkestad, Aug 2017
-!!
-         implicit none
-!
-         class(ccs) :: wf
-         real(dp), dimension(wf%n_o,wf%n_v) :: vec_a_i
-!
-      end subroutine cvs_rho_a_i_projection_ccs
-!
-!
-   end interface 
-!
-!
    interface 
 !
 !     -::- Response submodule interface -::-
-!     ::::::::::::::::::::::::::::::::::::::
+!     --------------------------------------
 !
       module subroutine response_driver_ccs(wf)
 !!
@@ -1432,8 +957,158 @@ module ccs_class
 !
    interface
 !
+!
+!     -::- Input reader submodule interface -::-
+!     ------------------------------------------ 
+!
+      module subroutine general_specs_reader_ccs(wf, unit_input)
+!!
+!!       General Specifications Reader
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Nov. 2017
+!!
+         implicit none
+!
+         class(ccs)   :: wf
+         integer(i15) :: unit_input
+!
+         integer :: memory = 0, disk_space = 0
+!
+      end subroutine general_specs_reader_ccs
+!
+!
+      module subroutine calculation_reader_ccs(wf, unit_input)                                   
+!!
+!!       Calculation Reader
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Nov. 2017
+!!
+         implicit none
+!
+         integer(i15) :: unit_input
+!
+         class(ccs) :: wf
+!
+      end subroutine calculation_reader_ccs
+!
+!
+      module subroutine read_ground_state_specs_ccs(wf, unit_input)
+!!
+!!       Read Ground State Specifications
+!!       Written by Eirik F. Kjønstad and Sarai Dery Folkestad, Nov. 2017
+!!
+         implicit none
+!
+         integer :: unit_input
+!
+         class(ccs) :: wf
+!
+      end subroutine read_ground_state_specs_ccs
+!
+!
+      module subroutine read_excited_state_specs_ccs(wf, unit_input)
+!!
+!!       Read Excited State Specifications
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Nov. 2017
+!!
+         implicit none
+!
+         integer(i15)      :: unit_input
+!
+         class(ccs)        :: wf
+!
+      end subroutine read_excited_state_specs_ccs
+!
+!
+      module subroutine read_property_specs_ccs(wf, unit_input)
+!!
+!!       Read Property Specifications
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Nov. 2017
+!!
+         implicit none
+!
+         integer(i15)      :: unit_input
+!
+         class(ccs)        :: wf
+!
+      end subroutine read_property_specs_ccs
+!
+!
+   end interface
+!
+!
+   interface 
+!
+!
+!     -::- Cholesky submodule interface -::-
+!     --------------------------------------
+!
+      module subroutine get_cholesky_ij_ccs(wf, L_ij_J, i_first, i_last, j_first, j_last)
+!!
+!!       Get Cholesky IJ
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!  
+         implicit none 
+!
+         class(ccs)               :: wf
+         integer(i15), optional   :: i_first, j_first ! First index (can differ from 1 when batching or for mlcc)
+         integer(i15), optional   :: i_last, j_last   ! Last index (can differ from n_o when batching or for mlcc)
+         real(dp), dimension(:,:) :: L_ij_J
+!
+      end subroutine get_cholesky_ij_ccs
+!
+!
+      module subroutine get_cholesky_ia_ccs(wf, L_ia_J, i_first, i_last, a_first, a_last)
+!!
+!!       Get Cholesky IA
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+         implicit none 
+!
+         class(ccs)               :: wf
+         integer(i15), optional   :: i_first, a_first   ! First index (can differ from 1 when batching or for mlcc)
+         integer(i15), optional   :: i_last, a_last     ! Last index (can differ from n_v/n_o when batching or for mlcc)
+         real(dp), dimension(:,:) :: L_ia_J
+!
+      end subroutine get_cholesky_ia_ccs
+!
+!
+      module subroutine get_cholesky_ai_ccs(wf, L_ai_J, a_first, a_last, i_first, i_last)
+!!
+!!       Get Cholesky AI
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+         implicit none 
+!
+         class(ccs)               :: wf
+         integer(i15), optional   :: i_first, a_first     ! First index (can differ from 1 when batching or for mlcc)
+         integer(i15), optional   :: i_last, a_last       ! Last index (can differ from n_o/n_v when batching or for mlcc)
+         real(dp), dimension(:,:) :: L_ai_J
+!
+      end subroutine get_cholesky_ai_ccs
+!
+!
+      module subroutine get_cholesky_ab_ccs(wf, L_ab_J, a_first, a_last, b_first, b_last)
+!!
+!!       Get Cholesky AB
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+         implicit none
+!
+         class(ccs)               :: wf
+         integer(i15), intent(in) :: a_first, b_first   ! First index (can differ from 1 when batching or for mlcc)
+         integer(i15), intent(in) :: a_last, b_last     ! Last index (can differ from n_v when batching or for mlcc)
+         real(dp), dimension(((b_last - b_first + 1)*(a_last - a_first + 1)), wf%n_J) :: L_ab_J ! L_ab^J
+!
+      end subroutine get_cholesky_ab_ccs
+!
+!
+   end interface 
+!
+!
+
+   interface
+!
 !     -::- Integral submodule interface -::-
-!     ::::::::::::::::::::::::::::::::::::::
+!     --------------------------------------
 !
       module subroutine store_vv_vv_electronic_repulsion_ccs(wf)
 !!
@@ -2437,6 +2112,287 @@ module ccs_class
          end subroutine t1_transform_vv_vv_ccs
 !
       end interface
+!
+!
+   interface
+!
+!
+!    -::- Fock submodule interface -::-
+!    ----------------------------------
+!
+      module subroutine initialize_fock_matrix_ccs(wf)
+!!  
+!!       Initialize Fock Matrix
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+         implicit none 
+!
+         class(ccs) :: wf
+!     
+      end subroutine initialize_fock_matrix_ccs
+!
+!
+      module subroutine construct_fock_ccs(wf)
+!!
+!!       Construct Fock 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+         implicit none 
+!
+         class(ccs) :: wf
+!
+      end subroutine construct_fock_ccs
+!
+!
+      module subroutine one_electron_t1_ccs(wf, h1 ,h1_T1)
+!!
+!!       One-electron T1 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+         implicit none 
+!
+         class(ccs) :: wf
+!
+         real(dp), dimension(wf%n_mo, wf%n_mo) :: h1
+         real(dp), dimension(wf%n_mo, wf%n_mo) :: h1_T1
+!  
+      end subroutine one_electron_t1_ccs
+!
+!
+   end interface 
+!
+!
+   interface
+!
+!
+!    -::- Ionized state submodule interface -::-
+!    -------------------------------------------
+!
+      module subroutine ionized_state_driver_ccs(wf)
+!!
+!!       Ionized State Driver (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+         implicit none 
+!
+         class(ccs) :: wf
+!
+      end subroutine ionized_state_driver_ccs
+!
+!
+      module subroutine initialize_trial_vectors_valence_ionization_ccs(wf)
+!!
+!!       Initialize Trial Vectors for Valence Ionization
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+      end subroutine initialize_trial_vectors_valence_ionization_ccs
+!
+!
+      module subroutine initialize_trial_vectors_core_ionization_ccs(wf)
+!!
+!!       Initialize Trial Vectors for Core Ionization
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+      end subroutine initialize_trial_vectors_core_ionization_ccs
+!
+!
+      module subroutine precondition_residual_valence_ionization_ccs(wf, residual)
+!!
+!!       Precondition Residual Valence
+!!       Written by Sarai D. Folkestad, Aug 2017
+!!
+         implicit none
+!
+         class(ccs) :: wf
+         real(dp), dimension(wf%n_parameters ,1) :: residual
+!
+      end subroutine precondition_residual_valence_ionization_ccs
+!
+!
+      module subroutine ionization_residual_projection_ccs(wf, residual)
+!!
+!!       Core Ionization Residual Projection (CCS)
+!!       Written by Sarai D. Folkestad, Aug 2017
+!!
+         implicit none
+!
+         class(ccs) :: wf
+         real(dp), dimension(wf%n_parameters, 1) :: residual
+!
+      end subroutine ionization_residual_projection_ccs
+!
+!
+     module subroutine ionization_rho_a_i_projection_ccs(wf, rho_a_i)
+!!
+!!       Ionization rho_a_i Projection (CCS)
+!!       Written by Sarai D. Folkestad, Aug 2017
+!!
+         implicit none
+!
+         class(ccs) :: wf
+         real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i
+!
+      end subroutine ionization_rho_a_i_projection_ccs
+!
+!
+      module subroutine precondition_residual_core_ionization_ccs(wf, residual)
+!!     
+!!       Precondition Residual Valence
+!!       Written by Sarai D. Folkestad, Aug 2017
+!!       
+         implicit none
+!
+         class(ccs) :: wf
+         real(dp), dimension(wf%n_parameters ,1) :: residual
+!
+      end subroutine precondition_residual_core_ionization_ccs
+!
+!
+   end interface
+!
+!
+   interface 
+!
+!
+!     -::- Jacobian submodule interface -::-
+!     --------------------------------------
+!
+      module subroutine jacobian_ccs_transformation_ccs(wf, c_a_i)
+!!
+!!       Jacobian CCS transformation
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+         implicit none
+!
+         class(ccs) :: wf 
+         real(dp), dimension(wf%n_v, wf%n_o)   :: c_a_i       
+!
+      end subroutine jacobian_ccs_transformation_ccs
+!
+!
+      module subroutine jacobian_ccs_a1_ccs(wf,rho,c1)
+!!
+!!       Jacobian CCS A1
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+         implicit none
+!
+         class(ccs) :: wf
+         real(dp), dimension(wf%n_o,wf%n_v) :: c1 
+         real(dp), dimension(wf%n_o,wf%n_v) :: rho                               
+!
+      end subroutine jacobian_ccs_a1_ccs
+!
+!
+      module subroutine jacobian_ccs_b1_ccs(wf,rho,c1)
+!!
+!!       Jacobian CCS B1 
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+         implicit none
+!
+         class(ccs) :: wf
+         real(dp), dimension(wf%n_o,wf%n_v) :: c1
+         real(dp), dimension(wf%n_o,wf%n_v) :: rho                
+!
+      end subroutine jacobian_ccs_b1_ccs
+!
+   end interface
+!
+!
+   interface 
+!
+!
+!     -::- Jacobian transpose submodule interface -::-
+!     ------------------------------------------------
+!
+      module subroutine jacobian_transpose_ccs_transformation_ccs(wf, b_a_i)
+!!
+!!       Jacobian transpose transformation (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+         implicit none 
+!
+         class(ccs) :: wf 
+!
+         real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i 
+!
+      end subroutine jacobian_transpose_ccs_transformation_ccs
+!
+!
+      module subroutine jacobian_transpose_ccs_a1_ccs(wf, sigma_a_i, b_a_i)
+!!
+!!       Jacobian transpose A1 (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+         implicit none 
+!
+         class(ccs) :: wf
+!
+         real(dp), dimension(wf%n_v, wf%n_o) :: sigma_a_i 
+         real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i 
+!
+      end subroutine jacobian_transpose_ccs_a1_ccs
+!
+!
+      module subroutine jacobian_transpose_ccs_b1_ccs(wf, sigma_a_i, b_a_i)
+!!
+!!       Jacobian transpose B1 (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+         implicit none 
+!
+         class(ccs) :: wf
+!
+         real(dp), dimension(wf%n_v, wf%n_o) :: sigma_a_i 
+         real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i 
+!
+      end subroutine jacobian_transpose_ccs_b1_ccs
+!
+!
+   end interface
+!
+!
+   interface
+!
+!     -::- CVS submodule interface -::-
+!     ---------------------------------
+!
+      module subroutine cvs_rho_a_i_projection_ccs(wf, vec_a_i)
+!!
+!!       CVS rho_a_i Projection 
+!!       Written by Sarai D. Folkestad, Aug 2017
+!!
+         implicit none
+!
+         class(ccs) :: wf
+         real(dp), dimension(wf%n_o,wf%n_v) :: vec_a_i
+!
+      end subroutine cvs_rho_a_i_projection_ccs
+!
+!
+      module subroutine cvs_residual_projection_ccs(wf, residual)
+!!
+!!       CVS Residual Projection
+!!       Written by Sarai D. Folkestad, Aug. 2017
+!!
+         implicit none
+!
+         class(ccs) :: wf
+         real(dp), dimension(wf%n_parameters, 1) :: residual
+!
+      end subroutine cvs_residual_projection_ccs
+!
+!
+   end interface 
 !
 !
 contains
