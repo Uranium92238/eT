@@ -8,9 +8,28 @@ module memory_manager_class
 !!    The memory manager class handles the memory used by the model calculation,
 !!    and there is an object called 'mem' in the wavefunction object of this class. 
 !!
-!!    Large arrays must always be allocated using the memory manager object. Small arrays,
-!!    integers, strings, etc., which use a negligible amount of memory, are not considered 
-!!    by the memory manager.
+!!
+!!    To account for the available memory, all large arrays must be allocated and deallocated 
+!!    using the memory manager. A typical usage of the 'mem' object is as follows:
+!!
+!!       real(dp), dimension(:,:), allocatable :: array -> declares an allocatable array 
+!!
+!!       call wf%mem%alloc(array, M, N)   -> allocates the array of dimension M x N 
+!!
+!!       ... Do stuff with the array 
+!!
+!!       call wf%mem%dealloc(array, M, N) -> deallocates the array of dimension M x N
+!!
+!!
+!!    NB! Large arrays MUST always be allocated using the memory manager object. Small arrays,
+!!    integers, strings, etc., which use a negligible amount of memory, do not need to pass through 
+!!    the memory manager.
+!!
+!!
+!!    The 'alloc' and 'dealloc' routines allow the memory manager keep track of the 
+!!    the memory available at a given time. From the specified total memory, the class
+!!    can then set the batching information in a batching index (see the batching 
+!!    index class). See the num_batch and num_two_batches procedures for more details. 
 !! 
 !
 !  :::::::::::::::::::::::::::::::::::
