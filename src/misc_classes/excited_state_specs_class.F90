@@ -28,7 +28,6 @@ module excited_state_specs_class
 !
       logical :: restart = .false.
 !
-
       logical                                   :: user_specified_start_vector = .false. ! True if the user has provided startvectors
       integer(i15), dimension(:,:), allocatable :: start_vectors
 !

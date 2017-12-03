@@ -1,13 +1,50 @@
 module ccsd_class
 !
 !!
-!!           Coupled cluster singles and doubles (CCSD) class module                                 
-!!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017         
+!!
+!!                Coupled cluster singles and doubles (CCSD) class module                                 
+!!              Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017         
 !!                                                                           
+!!
+!!
+!!    This module contains the definition of the coupled cluster singles
+!!    and doubles (CCSD) wavefunction class. It is structured into four sections:
+!!
+!!       1. Modules used by the class: 
+!!
+!!             Basic utilities and the ancestor class (CCS)
+!!
+!!       2. Definition of the class: 
+!!
+!!             Non-inherited variables, followed by non-inherited or overridden procedures
+!!
+!!       3. Interfaces to submodules:
+!!
+!!             The procedures in the class are grouped according to functionality, with
+!!             detailed definitions given in the following class submodules:
+!!
+!!                - Ground state
+!!                - Omega 
+!!                - Excited state 
+!!                - Jacobian (right transformation)
+!!                - Jacobian Transpose (left transformation)
+!!                - Ionized State
+!!                - CVS
+!!
+!!             The interfaces shows incoming variables and their type, but contains 
+!!             no information of the procedure itself. The procedure is shown in full 
+!!             in the corresponding submodule. 
+!!
+!!       4. Class module routines (i.e., non-submodule procedures). These include
+!!          the initialization and driver routines of the class, along with procedures that
+!!          are not (yet, at least) easily gathered in a submodule.
+!!         
+!! 
 !
-!  :::::::::::::::::::::::::::::::::::
-!  -::- Modules used by the class -::-
-!  :::::::::::::::::::::::::::::::::::
+!
+!  :::::::::::::::::::::::::::::::::::::
+!  -::- 1. Modules used by the class -::-
+!  ::::::::::::::::::::::::::::::::::::::
 !
 !  General tools
 !
@@ -22,42 +59,48 @@ module ccsd_class
 !
    implicit none 
 !
-!  ::::::::::::::::::::::::::::::::::::::
-!  -::- Definition of the CCSD class -::-
-!  ::::::::::::::::::::::::::::::::::::::
+!
+!  :::::::::::::::::::::::::::::::::::::::::
+!  -::- 2. Definition of the CCSD class -::-
+!  :::::::::::::::::::::::::::::::::::::::::
+!
 !
    type, extends(ccs) :: ccsd
 !
-!     Amplitude variables
+!     Cluster amplitudes 
 !
-      integer(i15) :: n_t2am = 0                    ! Number of doubles amplitudes
-      real(dp), dimension(:,:), allocatable :: t2am ! Doubles amplitude vector
+      integer(i15) :: n_t2am = 0 ! Number of doubles excitation amplitudes
 !
-!     Projection vector < mu | exp(-T) H exp(T) | R > (the omega vector)
+      real(dp), dimension(:,:), allocatable :: t2am ! Doubles amplitude vector, t_ij^ab 
+!
+!     The omega, or projection, vector < mu | exp(-T) H exp(T) | R >
 ! 
-      real(dp), dimension(:,:), allocatable :: omega2 ! Doubles vector
+      real(dp), dimension(:,:), allocatable :: omega2 ! Doubles projection vector
 !
    contains
 !
-!     Initialization routine (driver is inherited)
+!
+!     -::- Initialization and driver routines -::-
+!     --------------------------------------------
 !
       procedure :: init => init_ccsd
 !
-!     Initialization routine for the (singles, doubles) amplitudes,
-!     and routine to set MP2 guess for the doubles amplitudes 
+      procedure :: initialize_amplitudes => initialize_amplitudes_ccsd
+      procedure :: initialize_omega      => initialize_omega_ccsd
 !
-      procedure :: initialize_amplitudes          => initialize_amplitudes_ccsd
-      procedure :: construct_perturbative_doubles => construct_perturbative_doubles_ccsd
 !
-!     Routine to calculate the energy from the current amplitudes
+!     -::- Ground state submodule routine pointers -::-
+!     ------------------------------------------------- 
 !
-      procedure :: calc_energy => calc_energy_ccsd 
+      procedure :: initialize_ground_state   => initialize_ground_state_ccsd
+      procedure :: calc_ampeqs_norm          => calc_ampeqs_norm_ccsd
+      procedure :: new_amplitudes            => new_amplitudes_ccsd
+      procedure :: calc_quasi_Newton_doubles => calc_quasi_Newton_doubles_ccsd
+      procedure :: ground_state_preparations => ground_state_preparations_ccsd
 !
-!     Routine to initialize omega (allocate and set to zero)
 !
-      procedure :: initialize_omega => initialize_omega_ccsd
-!
-!     Routines to construct the projection vector (omega)
+!     -::- Omega submodule routine pointers -::-
+!     ------------------------------------------
 !
       procedure :: construct_omega => construct_omega_ccsd
 !
@@ -71,27 +114,22 @@ module ccsd_class
       procedure :: omega_ccsd_d2 => omega_ccsd_d2_ccsd 
       procedure :: omega_ccsd_e2 => omega_ccsd_e2_ccsd   
 !
-!     Helpers for ground state solver routine (see CCS for the rest)
 !
-      procedure :: initialize_ground_state   => initialize_ground_state_ccsd
-      procedure :: calc_ampeqs_norm          => calc_ampeqs_norm_ccsd
-      procedure :: new_amplitudes            => new_amplitudes_ccsd
-      procedure :: calc_quasi_Newton_doubles => calc_quasi_Newton_doubles_ccsd
-      procedure :: ground_state_preparations => ground_state_preparations_ccsd
+!     -::- Excited state submodule routine pointers -::-
+!     --------------------------------------------------
 !
-!     Helpers for excited state solver (see CCS for the rest)
+      procedure :: calculate_orbital_differences    => calculate_orbital_differences_ccsd
+      procedure :: transform_trial_vectors          => transform_trial_vectors_ccsd
+      procedure :: print_excitation_vector          => print_excitation_vector_ccsd
+      procedure :: analyze_double_excitation_vector => analyze_double_excitation_vector_ccsd
+      procedure :: summary_excited_state_info       => summary_excited_state_info_ccsd
+      procedure :: excited_state_preparations       => excited_state_preparations_ccsd
 !
-      procedure :: calculate_orbital_differences      => calculate_orbital_differences_ccsd
-      procedure :: transform_trial_vectors            => transform_trial_vectors_ccsd
-      procedure :: print_excitation_vector            => print_excitation_vector_ccsd
-      procedure :: analyze_double_excitation_vector   => analyze_double_excitation_vector_ccsd
-      procedure :: summary_excited_state_info         => summary_excited_state_info_ccsd
-      procedure :: excited_state_preparations         => excited_state_preparations_ccsd ! Storing g_vvvv and g_voov integrals to file
-
 !
-!     Coupled cluster Jacobian transformation routine 
+!     -::- Jacobian submodule routine pointers -::-
+!     ---------------------------------------------
 !
-      procedure :: jacobian_ccsd_transformation       => jacobian_ccsd_transformation_ccsd
+      procedure :: jacobian_ccsd_transformation => jacobian_ccsd_transformation_ccsd
 !
       procedure :: jacobian_ccsd_a1 => jacobian_ccsd_a1_ccsd
       procedure :: jacobian_ccsd_b1 => jacobian_ccsd_b1_ccsd
@@ -110,14 +148,11 @@ module ccsd_class
       procedure :: jacobian_ccsd_j2 => jacobian_ccsd_j2_ccsd
       procedure :: jacobian_ccsd_k2 => jacobian_ccsd_k2_ccsd
 !
-      procedure :: jacobi_test => jacobi_test_ccsd ! A debug routine 
+      procedure :: jacobi_test => jacobi_test_ccsd ! A debug routine
 !
-!     CVS
 !
-      procedure :: cvs_rho_aibj_projection => cvs_rho_aibj_projection_ccsd
-      procedure :: cvs_residual_projection => cvs_residual_projection_ccsd
-!
-!     Coupled cluster Jacobian transpose transformation routine 
+!     -::- Jacobian transpose submodule routine pointers -::-
+!     -------------------------------------------------------
 !
       procedure :: jacobian_transpose_ccsd_transformation => jacobian_transpose_ccsd_transformation_ccsd
 !
@@ -139,251 +174,63 @@ module ccsd_class
       procedure :: jacobian_transpose_ccsd_h2 => jacobian_transpose_ccsd_h2_ccsd
       procedure :: jacobian_transpose_ccsd_i2 => jacobian_transpose_ccsd_i2_ccsd
 !
-!     Valence ionization
+!
+!     -::- Ionized state submodule routine pointers -::-
+!     --------------------------------------------------
 !
       procedure :: ionization_residual_projection => ionization_residual_projection_ccsd
       procedure :: ionization_rho_aibj_projection => ionization_rho_aibj_projection_ccsd
 !
-!     Core ionization
+!
+!     -::- CVS submodule routine pointers -::-
+!     ----------------------------------------
+!
+      procedure :: cvs_rho_aibj_projection => cvs_rho_aibj_projection_ccsd
+      procedure :: cvs_residual_projection => cvs_residual_projection_ccsd
+!
+!
+!     -::- Other class routine pointers not located in submodules -::-
+!     ----------------------------------------------------------------
 !
 !     Routine to construct right projection vector (eta)
 !
       procedure :: construct_eta => construct_eta_ccsd
 !
-!     Routine to save and read the amplitudes (to/from disk)
+!     Routine to save and read the amplitudes 
 !
       procedure :: save_amplitudes => save_amplitudes_ccsd
 !
       procedure :: read_amplitudes        => read_amplitudes_ccsd
       procedure :: read_double_amplitudes => read_double_amplitudes_ccsd
 !
-!     Routines to destroy amplitudes and omega 
+!     Routines to deallocate amplitudes and omega 
 !
       procedure :: destruct_amplitudes => destruct_amplitudes_ccsd
       procedure :: destruct_omega      => destruct_omega_ccsd
 !
+      procedure :: construct_perturbative_doubles => construct_perturbative_doubles_ccsd
+!
+!     Routine to calculate the energy
+!
+      procedure :: calc_energy => calc_energy_ccsd 
+!
    end type ccsd
 !
-!  :::::::::::::::::::::::::::::::::::::::::::::::::::::
-!  -::- Interface to the submodule routines of CCSD -::- 
-!  :::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
-   interface
-!
-!     -::- Omega submodule interface -::-
-!     :::::::::::::::::::::::::::::::::::
-!
-      module subroutine initialize_omega_ccsd(wf)
-!!
-!!       Initialize Omega (CCSD)
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!!
-!!       Allocates the projection vector (omega1, omega2) and sets it
-!!       to zero.
-!!
-         implicit none 
-!
-         class(ccsd) :: wf
-!
-      end subroutine initialize_omega_ccsd
-!
-!
-      module subroutine construct_omega_ccsd(wf)
-!!
-!!       Construct Omega (CCSD)
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!!
-!!       Directs the construction of the projection vector < mu | exp(-T) H exp(T) | R >
-!!       for the current amplitudes of the object wfn 
-!!
-         implicit none 
-!
-         class(ccsd) :: wf 
-!
-      end subroutine construct_omega_ccsd
-!
-!
-      module subroutine omega_ccsd_a1_ccsd(wf)
-!!
-!!       Omega A1 term
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!!  
-!!       Calculates the A1 term, 
-!!  
-!!       A1: sum_ckd g_adkc * u_ki^cd,
-!!  
-!!       and adds it to the singles projection vector (omeg1) of
-!!       the wavefunction object wf.
-!!
-         implicit none 
-!
-         class(ccsd) :: wf
-!
-      end subroutine omega_ccsd_a1_ccsd
-!
-!
-      module subroutine omega_ccsd_b1_ccsd(wf)
-!!
-!!       Omega B1
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!!
-!!       Calculates the B1 term, 
-!!
-!!       B1: - sum_ckl u_kl^ac * g_kilc,
-!! 
-!!       and adds it to the singles projection vector (omeg1) of
-!!       the wavefunction object wf
-!!
-         implicit none 
-!
-         class(ccsd) :: wf 
-!
-      end subroutine omega_ccsd_b1_ccsd
-!
-!
-      module subroutine omega_ccsd_c1_ccsd(wf)
-!!  
-!!     Omega C1
-!!     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!  
-!!     Calculates the C1 term of omega,
-!!  
-!!     C1: sum_ck F_kc*u_ai_ck,
-!!  
-!!     and adds it to the projection vector (omega1) of    
-!!     the wavefunction object wf                           
-!!  
-!!     u_ai_ck = 2*t_ck_ai - t_ci_ak
-!! 
-         implicit none 
-!
-         class(ccsd) :: wf 
-!
-      end subroutine omega_ccsd_c1_ccsd
-!
-!
-      module subroutine omega_ccsd_a2_ccsd(wf)
-!!
-!!     Omega A2 term: Omega A2 = g_ai_bj + sum_(cd)g_ac_bd * t_ci_dj = A2.1 + A.2.2
-!!
-!!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, 10 Mar 2017
-!!
-!!     Structure: Batching over both a and b for A2.2.
-!!                t^+_ci_dj = t_ci_dj + t_di_cj
-!!                t^-_ci_dj = t_ci_dj - t_di_cj
-!!                g^+_ac_bd = g_ac_bd + g_bc_ad 
-!!                g^-_ac_bd = g_ac_bd - g_bc_ad 
-!! 
-!!                omega_A2.2_ai_bj = 1/4*(g^+_ac_bd*t^+_ci_dj + g^-_ac_bd*t^-_ci_dj) = omega_A2.2_bj_ai
-!!                omega_A2.2_aj_bi = 1/4*(g^+_ac_bd*t^+_ci_dj - g^-_ac_bd*t^-_ci_dj) = omega_A2.2_bi_aj
-!!
-         implicit none 
-!
-         class(ccsd) :: wf
-!
-      end subroutine omega_ccsd_a2_ccsd
-!
-!
-      module subroutine omega_ccsd_b2_ccsd(wf)
-!!
-!!       Omega B2
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, 11 Mar 2017
-!! 
-!!       Omega B2 = sum_(kl) t_ak_bl*(g_kilj + sum_(cd) t_ci_dj * g_kc_ld)
-!!
-!!       Structure: g_kilj is constructed first and reordered as g_kl_ij. 
-!!       Then the contraction over cd is performed, and the results added to g_kl_ij.
-!!       t_ak_bl is then reordered as t_ab_kl and the contraction over kl is performed.
-!!
-         implicit none 
-!
-         class(ccsd) :: wf
-!
-      end subroutine omega_ccsd_b2_ccsd
-!
-!
-      module subroutine omega_ccsd_c2_ccsd(wf)
-!!
-!!       Omega C2 
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2017
-!!     
-!!       Omega C2 = -1/2* sum_(ck)t_bk_cj*(g_ki_ac -1/2 sum_(dl)t_al_di * g_kd_lc)
-!!                                  - sum_(ck) t_bk_ci (g_kj_ac-sum_(dl)t_al_dj*g_kd_lc)
-!!
-         implicit none 
-!
-         class(ccsd) :: wf
-!
-      end subroutine omega_ccsd_c2_ccsd
-!
-!
-      module subroutine omega_ccsd_d2_ccsd(wf)
-!!
-!!       Omega D2 
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!!
-!!       Calculates the D2 term,
-!!
-!!          sum_ck u_jk^bc g_aikc 
-!!           - 1/2 * sum_ck u_jk^bc g_acki 
-!!           + 1/4 * sum_ck u_jk^bc sum_dl L_ldkc u_il^ad,
-!!
-!!       where 
-!!
-!!          u_jk^bc = 2 * t_jk^bc - t_kj^bc,
-!!          L_ldkc  = 2 * g_ldkc  - g_lckd.
-!!
-!!       The first, second, and third terms are referred to as D2.1, D2.2, and D2.3, 
-!!       and comes out ordered as (ai,bj). All terms are added to the omega vector of the 
-!!       wavefunction object wf.
-!!
-!!       The routine adds the terms in the following order: D2.3, D2.1, D2.2
-!!
-         implicit none 
-!
-         class(ccsd) :: wf
-!
-      end subroutine omega_ccsd_d2_ccsd
-!
-!
-      module subroutine omega_ccsd_e2_ccsd(wf)
-!!
-!!       Omega E2
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!!
-!!       Calculates the E2 term,
-!!
-!!           sum_c t_ij^ac (F_bc - sum_dkl g_ldkc u_kl^bd) 
-!!           - sum_k t_ik^ab (F_kj + sum_cdl g_ldkc u_lj^dc),
-!!
-!!       where
-!!
-!!          u_kl^bc = 2 * t_kl^bc - t_lk^bc.
-!!
-!!       The first term is referred to as the E2.1 term, and comes out ordered as (b,jai).
-!!       The second term is referred to as the E2.2 term, and comes out ordered as (aib,j).
-!!
-!!       Both are permuted added to the projection vector element omega2(ai,bj) of
-!!       the wavefunction object wf.
-!!
-         implicit none 
-!
-         class(ccsd) :: wf
-!
-      end subroutine omega_ccsd_e2_ccsd
-!
-!
-   end interface
+!  :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!  -::- 3. Interfaces to the submodules of the CCSD class -::- 
+!  :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
 !
    interface 
 !
+!
 !     -::- Ground state submodule interface -::-
-!     :::::::::::::::::::::::::::::::::::::::::: 
+!     ------------------------------------------
 !
       module subroutine calc_ampeqs_norm_ccsd(wf, ampeqs_norm)
 !!
-!!       Calculate Amplitude Equations Norm (CCSD)
+!!       Calculate amplitude equations norm (CCSD)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
          implicit none 
@@ -397,12 +244,8 @@ module ccsd_class
 !
       module subroutine new_amplitudes_ccsd(wf)
 !!
-!!       New Amplitudes (CCSD)
+!!       New amplitudes (CCSD)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!!
-!!       Directs the calculation of the quasi-Newton estimate Δ t_i, 
-!!       and t_i + Δ t_i, and calls the DIIS routine to save & get 
-!!       the amplitudes for the next iteration. 
 !!
          implicit none 
 !
@@ -416,10 +259,6 @@ module ccsd_class
 !!       Calculate quasi-Newton estimate (CCSD)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-!!       Calculates the quasi-Newton estimate Δ t_i (doubbles part)
-!!       and places the contribution in the dt vector (of length n_parameters,
-!!       with singles first, then doubles, etc. if inherited)
-!!
          implicit none 
 !
          class(ccsd) :: wf 
@@ -431,11 +270,8 @@ module ccsd_class
 !
       module subroutine initialize_ground_state_ccsd(wf)
 !!
-!!       Initialize Ground State (CCSD)
+!!       Initialize ground state (CCSD)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!!
-!!       Initializes the amplitudes and the projection vector for the ground
-!!       state solver. 
 !!
          implicit none 
 !
@@ -446,7 +282,7 @@ module ccsd_class
 !
       module subroutine ground_state_preparations_ccsd(wf)
 !!
-!!       Ground State Preparations (CCSD)
+!!       Ground state preparations (CCSD)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
          class(ccsd) :: wf 
@@ -456,22 +292,145 @@ module ccsd_class
    end interface 
 !
 !
+   interface
+!
+!
+!     -::- Omega submodule interface -::-
+!     -----------------------------------
+!
+      module subroutine initialize_omega_ccsd(wf)
+!!
+!!       Initialize omega (CCSD)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+      end subroutine initialize_omega_ccsd
+!
+!
+      module subroutine construct_omega_ccsd(wf)
+!!
+!!       Construct omega (CCSD)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+         implicit none 
+!
+         class(ccsd) :: wf 
+!
+      end subroutine construct_omega_ccsd
+!
+!
+      module subroutine omega_ccsd_a1_ccsd(wf)
+!!
+!!       Omega CCSD A1 term
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!  
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+      end subroutine omega_ccsd_a1_ccsd
+!
+!
+      module subroutine omega_ccsd_b1_ccsd(wf)
+!!
+!!       Omega CCSD B1
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+         implicit none 
+!
+         class(ccsd) :: wf 
+!
+      end subroutine omega_ccsd_b1_ccsd
+!
+!
+      module subroutine omega_ccsd_c1_ccsd(wf)
+!!  
+!!       Omega CCSD C1
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!  
+         implicit none 
+!
+         class(ccsd) :: wf 
+!
+      end subroutine omega_ccsd_c1_ccsd
+!
+!
+      module subroutine omega_ccsd_a2_ccsd(wf)
+!!
+!!       Omega CCSD A2
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2017
+!!
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+      end subroutine omega_ccsd_a2_ccsd
+!
+!
+      module subroutine omega_ccsd_b2_ccsd(wf)
+!!
+!!       Omega CCSD B2
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2017
+!! 
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+      end subroutine omega_ccsd_b2_ccsd
+!
+!
+      module subroutine omega_ccsd_c2_ccsd(wf)
+!!
+!!       Omega CCSD C2 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2017
+!!     
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+      end subroutine omega_ccsd_c2_ccsd
+!
+!
+      module subroutine omega_ccsd_d2_ccsd(wf)
+!!
+!!       Omega CCSD D2
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+      end subroutine omega_ccsd_d2_ccsd
+!
+!
+      module subroutine omega_ccsd_e2_ccsd(wf)
+!!
+!!       Omega E2
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+         implicit none 
+!
+         class(ccsd) :: wf
+!
+      end subroutine omega_ccsd_e2_ccsd
+!
+!
+   end interface
+!
+!
    interface 
 !
+!
 !     -::- Excited state submodule interface -::-
-!     :::::::::::::::::::::::::::::::::::::::::::
+!     -------------------------------------------
 !
       module subroutine calculate_orbital_differences_ccsd(wf,orbital_diff)
 !!
-!!       Calculate Orbital Differences (CCSD)
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad May 2017
-!!
-!!       Calculates orbital differences
-!!
-!!          1) ε_i^a = ε_a - ε_i
-!!          2) ε_ij^ab = ε_a + ε_b - ε_i - ε_j
-!!
-!!       and puts them in orbital_diff, which is a vector of length n_parameters.        
+!!       Calculate orbital differences (CCSD)
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
          implicit none
 !
@@ -483,14 +442,8 @@ module ccsd_class
 !
       module subroutine transform_trial_vectors_ccsd(wf, first_trial, last_trial)
 !!
-!!       Transformation Trial Vectors (CCSD)
+!!       Transformation trial vectors (CCSD)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!
-!!       Each trial vector in first_trial to last_trial is read from file and
-!!       transformed before the transformed vector is written to file.
-!!
-!!       Singles and doubles part of the transformed vectors are written to 
-!!       the same record in file transformed_vec, record length is n_parameters long.
 !!
          implicit none
 !
@@ -501,6 +454,9 @@ module ccsd_class
       end subroutine transform_trial_vectors_ccsd
 !
       module subroutine print_excitation_vector_ccsd(wf, vec, unit_id)
+!!
+!!       Print excitation vector 
+!!       Written by Sarai D. Folkestad, Oct 2017
 !!
          implicit none
 !  
@@ -513,26 +469,23 @@ module ccsd_class
       end subroutine print_excitation_vector_ccsd
 !
 !
-   module subroutine cvs_residual_projection_ccsd(wf, residual)
+      module subroutine cvs_residual_projection_ccsd(wf, residual)
 !!
-!!    Residual projection (CCSD), 
-!!    Written by Sarai D. Folkestad Aug. 2017    
+!!       CVS residual projection (CCSD) 
+!!       Written by Sarai D. Folkestad, Aug 2017    
 !!
-      implicit none
+         implicit none
 !
-      class(ccsd) :: wf
-      real(dp), dimension(wf%n_parameters, 1) :: residual
+         class(ccsd) :: wf
+         real(dp), dimension(wf%n_parameters, 1) :: residual
 !
-    end subroutine cvs_residual_projection_ccsd
+      end subroutine cvs_residual_projection_ccsd
 !
 !
       module subroutine excited_state_preparations_ccsd(wf)
 !!
 !!       Excited State Preparations (CCSD)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
-!!
-!!       A routine for preparation tasks (if any). Can be overwritten
-!!       in descendants if other preparations prove necessary.    
 !!
          class(ccsd) :: wf 
 !
@@ -541,7 +494,8 @@ module ccsd_class
 !
       module subroutine analyze_double_excitation_vector_ccsd(wf, vec, n, sorted_short_vec, index_list)
 !!
-!!
+!!       Analyze double excitation vector 
+!!       Written by Sarai D. Folkestad, Oct 2017
 !!
          implicit none
 !  
@@ -551,7 +505,7 @@ module ccsd_class
 !
          integer(i15) :: a = 0, i = 0, ai = 0, b = 0, j = 0, bj = 0, aibj = 0, k = 0
 !
-         integer(i15) :: n    ! Number of elements wanted
+         integer(i15) :: n 
 !  
          real(dp), dimension(n, 1)    :: sorted_short_vec
 !  
@@ -562,7 +516,8 @@ module ccsd_class
 !
       module subroutine summary_excited_state_info_ccsd(wf, energies)
 !!
-!!
+!!       Summary of excited state info 
+!!       Written by Sarai D. Folkestad, Oct 2017
 !!
          implicit none
 !  
@@ -575,15 +530,17 @@ module ccsd_class
 !
    end interface 
 !
+!
    interface
 !
+!
 !     -::- Ionized state submodule interface -::-
-!     :::::::::::::::::::::::::::::::::::::::::::
+!     -------------------------------------------
 !     
       module subroutine ionization_residual_projection_ccsd(wf, residual)
 !!
 !!       Residual projection for CVS
-!!       Written by Sarai D. Folkestad, Aug. 2017
+!!       Written by Sarai D. Folkestad, Aug 2017
 !!
          implicit none
 !
@@ -596,7 +553,7 @@ module ccsd_class
       module subroutine ionization_rho_aibj_projection_ccsd(wf, rho_aibj)
 !!
 !!       Residual projection for CVS
-!!       Written by Sarai D. Folkestad, Aug. 2017
+!!       Written by Sarai D. Folkestad, Aug 2017
 !!
          implicit none
 !
@@ -608,27 +565,12 @@ module ccsd_class
 !
       module subroutine ionization_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!
-!!      Ionization jacobian transformation (CCSD)
+!!      Ionization Jacobian transformation (CCSD)
 !!      Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!
-!!      Directs the transformation by the CCSD Jacobi matrix,
-!!
-!!         A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >,
-!!
-!!      where the basis employed for the brackets is biorthonormal. 
-!!      The transformation is rho = A c, i.e., 
-!!
-!!         rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck 
-!!                    + 1/2 sum_ckdl A_mu,ckdl c_ckdl (1 + delta_ck,dl).
-!!
-!!      On exit, c is overwritten by rho. That is, c_a_i = rho_a_i,
-!!      and c_aibj = rho_aibj. 
 !!
         implicit none
 !
         class(ccsd) :: wf 
-!
-!       Incoming vector c 
 !
         real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai 
         real(dp), dimension(wf%n_t2am, 1)   :: c_aibj ! c_aibj     
@@ -638,27 +580,12 @@ module ccsd_class
 !
       module subroutine core_ionization_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!
-!!       Ionization jacobian transformation (CCSD)
+!!       Core ionization Jacobian transformation (CCSD)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!
-!!       Directs the transformation by the CCSD Jacobi matrix,
-!!
-!!          A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >,
-!!
-!!       where the basis employed for the brackets is biorthonormal. 
-!!       The transformation is rho = A c, i.e., 
-!!
-!!          rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck 
-!!                     + 1/2 sum_ckdl A_mu,ckdl c_ckdl (1 + delta_ck,dl).
-!!
-!!       On exit, c is overwritten by rho. That is, c_a_i = rho_a_i,
-!!       and c_aibj = rho_aibj. 
 !!
          implicit none
 !
          class(ccsd) :: wf 
-!
-!        Incoming vector c 
 !
          real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai 
          real(dp), dimension(wf%n_t2am, 1)   :: c_aibj ! c_aibj 
@@ -668,10 +595,12 @@ module ccsd_class
 !
    end interface
 !
+!
    interface 
 !
+!
 !     -::- Jacobian submodule interface -::-
-!     :::::::::::::::::::::::::::::::::::::: 
+!     --------------------------------------
 !
       module subroutine jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!
@@ -688,42 +617,25 @@ module ccsd_class
       end subroutine jacobian_ccsd_transformation_ccsd
 !
 !
-module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
+      module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!
-!!    Ionization jacobian transformation (CCSD)
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!       CVS Jacobian transformation (CCSD)
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!    Directs the transformation by the CCSD Jacobi matrix,
-!!
-!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >,
-!!
-!!    where the basis employed for the brackets is biorthonormal. 
-!!    The transformation is rho = A c, i.e., 
-!!
-!!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck 
-!!                  + 1/2 sum_ckdl A_mu,ckdl c_ckdl (1 + delta_ck,dl).
-!!
-!!    On exit, c is overwritten by rho. That is, c_a_i = rho_a_i,
-!!    and c_aibj = rho_aibj. 
-!!
-      implicit none
+         implicit none
 !
-      class(ccsd) :: wf 
+         class(ccsd) :: wf 
 !
-!     Incoming vector c 
-!
-      real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai 
-      real(dp), dimension(wf%n_t2am, 1)   :: c_aibj ! c_aibj
+         real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai 
+         real(dp), dimension(wf%n_t2am, 1)   :: c_aibj ! c_aibj
 ! 
-   end subroutine cvs_jacobian_ccsd_transformation_ccsd
+      end subroutine cvs_jacobian_ccsd_transformation_ccsd
 !
 !
       module subroutine jacobian_ccsd_a1_ccsd(wf, rho_a_i, c_a_i)
 !!
 !!       Jacobian CCSD A1
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017 
-!!
-!!       rho_ai^A1 = sum_ckdl L_lckd (u_li^ca c_dk  - t_li^cd c_ak - t_lk^ad c_ci)
 !!
          implicit none 
 !
@@ -740,12 +652,6 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!       Jacobian CCSD B1
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017 
 !!
-!!       rho_ai^B1 = sum_bj F_jb (2*c_ai_bj  -  c_aj_bi) 
-!!              = sum_bj F_jb v_ai_bj
-!!
-!!       The term is added as rho_a_i(a,i) = rho_a_i(a,i) + rho_ai^A1,
-!!       where c_a_i(a,i) = c_ai above. 
-!!
          implicit none 
 !
          class(ccsd) :: wf
@@ -760,12 +666,6 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!
 !!       Jacobian CCSD C1
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017 
-!!
-!!       rho_ai^C1 = - sum_bjk L_jikb c_aj_bk 
-!!                 = - sum_bjk (2*g_jikb - g_kijb) c_aj_bk 
-!!
-!!       The term is added as rho_a_i(a,i) = rho_a_i(a,i) + rho_ai^A1,
-!!       where c_ai_bj(ai,bj) = c_aibj above. 
 !!
          implicit none 
 !
@@ -782,11 +682,6 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!       Jacobian CCSD D1
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017 
 !!
-!!       rho_ai^D1 =  sum_bcj L_abjc c_bicj
-!!
-!!       The term is added as rho_a_i(a,i) = rho_a_i(a,i) + rho_ai^A1,
-!!       where c_bi_cj(bi,cj) = c_bicj above. 
-!!
          implicit none 
 !
          class(ccsd) :: wf
@@ -802,8 +697,6 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!       Jacobian CCSD A2 
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-!!       rho_ai_bj^A2 = sum_c g_aibc c_cj - sum_k g_aikj c_bk 
-!!
          implicit none 
 !
          class(ccsd) :: wf 
@@ -818,8 +711,6 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!
 !!       Jacobian CCSD B2 
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!!
-!!       rho_ai_bj^B2 = sum_kc (F_kc t_ij^ac c_bk + F_kc t_ik^ab c_cj)
 !!
          implicit none 
 !
@@ -837,9 +728,6 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!       Jacobian CCSD C2 
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-!!       rho_ai_bj^C2 = sum_kcl g_ljkc (t_ki^ac c_bl + t_li^bc c_ak + t_lk^ba c_ci)
-!!                    - sum_kcl L_ljkc (t_il^ab c_ck + t_ik^ac c_bl)
-!!
          implicit none 
 !
          class(ccsd) :: wf 
@@ -855,14 +743,6 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!
 !!       Jacobian CCSD D2 
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!!
-!!       rho_ai_bj^D2 = sum_kcd g_kcbd (t_ij^cd c_ak + t_kj^ad c_ci + t_ik^ca c_dj)
-!!                    - sum_kcd L_kcbd (t_ik^ac c_dj + t_ij^ad c_ck)
-!!
-!!       Note: the code is structured so that we batch over the index b,
-!!             where the integrals are made as g_kc_db = g_kcbd and held
-!!             in some ordering or other throughout a given batch (i.e.,
-!!             all five terms are constructed gradually in the batches).
 !!
          implicit none 
 !
@@ -880,8 +760,6 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!       Jacobian CCSD E2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!       rho_ai_bj^E2 = 2 sum_dlck t_bj,dl * L_kc,ld * c_ai,ck 
-!!
          implicit none 
 !
          class(ccsd) :: wf 
@@ -897,12 +775,6 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!
 !!       Jacobian CCSD F2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!
-!!       rho_ai_bj^F2 =   - sum_ckld t_ai,ck * L_kc,ld * c_bl,dj 
-!!                        - sum_ckdl t_ai,dj * L_kc,ld * c_bl,ck
-!!                        - sum_ckdl t_ai_bl * L_kc,ld * c_ck,dj
-!!
-!!       L_kc,ld = 2*g_kc,ld - g_kd,lc = 2*g_kc_ld(kc,ld) - 2*g_kc_ld(kd,lc)
 !!
          implicit none 
 !
@@ -920,10 +792,6 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!       Jacobian CCSD G2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!       rho_ai_bj^G2 =  P_(ij)^(ab) (- sum_ckld t_ck,dj * L_kc,ld * c_ai,bl 
-!!                                    - sum_ckdl t_bl,dj * L_kc,ld * c_ai,ck
-!!                                    - sum_ckdl t_ck_bl * L_kc,ld * c_ai,dj )
-!!
          implicit none 
 !
          class(ccsd) :: wf 
@@ -938,10 +806,6 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!
 !!       Jacobian CCSD H2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!
-!!       rho_ai_bj^H2 =  P_(ij)^(ab) ( sum_ckld t_ci,ak * g_kc,ld * c_bl,dj 
-!!                                   + sum_ckdl t_cj,al * g_kc,ld * c_bk,di)
-!!                
 !!
          implicit none 
 !
@@ -958,12 +822,6 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!       Jacobian CCSD I2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!       rho_ai_bj^I2 =  sum_c F_bc * c_ai,cj - sum_k F_jk * c_ai,bk
-!!                     + sum_ck L_bj,kc * c_ai,ck 
-!!                     - sum_ck ( g_kc,bj * c_ak,ci + g_ki,bc * c_ak,cj ) 
-!!                
-!!       Batch over c to construct  g_ki_bc
-!! 
          implicit none 
 !
          class(ccsd) :: wf 
@@ -979,10 +837,6 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!       Jacobian CCSD J2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!       rho_ab_ij^J2 =    sum_ckld t_ci,dj * g_kc,ld * c_ak,bl 
-!!                       + sum_ckdl t_ak,bl * g_kc,ld * c_ci,dj
-!!                
-!!
          implicit none 
 !
          class(ccsd) :: wf 
@@ -997,20 +851,13 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!
 !!       Jacobian CCSD K2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!
-!!       rho_ab_ij^K2 =    sum_kl g_ki,lj * c_ak,bl 
-!!                       + sum_cd g_ac,bd * c_ci,dj
-!! 
-!!       For the last term we batch over a and b and 
-!!       add each batch to rho_ai_bj 
-!!   
+!!  
          implicit none 
 !
          class(ccsd) :: wf 
 !
          real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: rho_ab_ij
          real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: c_ab_ij
-!
 !
       end subroutine jacobian_ccsd_k2_ccsd
 !
@@ -1020,22 +867,14 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !
    interface 
 !
+!
 !     -::- Jacobian transpose submodule interface -::-
-!     ::::::::::::::::::::::::::::::::::::::::::::::::
+!     ------------------------------------------------
 !
       module subroutine jacobian_transpose_ccsd_transformation_ccsd(wf, b_a_i, b_aibj)
 !!
 !!       Jacobian transpose transformation (CCSD)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
-!!
-!!       Calculates the transpose Jacobian transformation, i.e., the transformation 
-!!       by the transpose of the Jacobian matrix
-!!
-!!          A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | R >.
-!!
-!!       The transformation is performed as sigma^T = b^T A, where b is the vector
-!!       sent to the routine. On exit, the vector b is equal to sigma (the transformed
-!!       vector).
 !!
          implicit none 
 !
@@ -1049,21 +888,15 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !
       module subroutine jacobian_transpose_ccsd_a1_ccsd(wf, sigma_a_i, b_a_i)
 !!
-!!    Jacobian transpose CCSD A1 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!       Jacobian transpose CCSD A1 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-!!    Calculates the A1 term,
-!!
-!!       sum_ckdl b_ck L_iald u_kl^cd,
-!! 
-!!    abd adds it to the transformed vector sigma_a_i.
-!!
-      implicit none 
+         implicit none 
 !
-      class(ccsd) :: wf
+         class(ccsd) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i 
-      real(dp), dimension(wf%n_v, wf%n_o) :: sigma_a_i 
+         real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i 
+         real(dp), dimension(wf%n_v, wf%n_o) :: sigma_a_i 
 !
       end subroutine jacobian_transpose_ccsd_a1_ccsd
 !
@@ -1072,12 +905,6 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!
 !!       Jacobian transpose CCSD B1 
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
-!!
-!!       Calculates the B1 term,
-!!
-!!           - sum_ckdl (b_al L_kcid t_kl^cd + b_ci L_ldka t_kl^cd),
-!! 
-!!       abd adds it to the transformed vector sigma_a_i.
 !!
          implicit none 
 !
@@ -1094,12 +921,6 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!       Jacobian transpose CCSD C1 
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-!!       Calculates the C1 term,
-!!
-!!          sum_cdl b_cidl g_dlca - sum_kdl b_akdl g_dlik,
-!! 
-!!       and adds it to the transformed vector sigma_a_i.
-!!
          implicit none 
 !
          class(ccsd) :: wf
@@ -1114,12 +935,6 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!
 !!       Jacobian transpose CCSD D1 
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
-!!
-!!       Calculates the D1 term,
-!!
-!!           - sum_ckdl (b_ckal F_id t_kl^cd + b_ckdi F_la t_kl^cd),
-!! 
-!!       and adds it to the transformed vector sigma_a_i.
 !!
          implicit none 
 !
@@ -1136,15 +951,6 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!       Jacobian transpose CCSD E1 
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-!!       Calculates the E1 term,
-!!
-!!        sum_ckdle (b_ckdi L_dale t_kl^ce + b_ckdl L_deia t_kl^ce)
-!!         -sum_ckdlm (b_ckal L_ilmd t_km^cd + b_ckdl L_mlia t_km^cd)
-!! 
-!!       and adds it to the transformed vector sigma_a_i.
-!!
-!!       The routine adds the third and forth terms first.
-!!
          implicit none 
 !
          class(ccsd) :: wf
@@ -1159,12 +965,6 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!
 !!       Jacobian transpose CCSD F1 
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
-!!
-!!       Calculates the F1 term,
-!!
-!!         sum_ckdlm (b_akdl t_lm^cd g_ikmc + b_ckal t_ml^cd g_mkid + b_ckdi t_ml^cd g_mkla)
-!! 
-!!       and adds it to the transformed vector sigma_a_i.
 !!
          implicit none 
 !
@@ -1181,12 +981,6 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!       Jacobian transpose CCSD G1 
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-!!       Calculates the G1 term,
-!!
-!!         - sum_ckdle (b_akdl t_kl^ce g_icde + b_cidl t_kl^ce g_kade + b_cldi t_kl^ce g_keda)
-!! 
-!!       and adds it to the transformed vector sigma_a_i.
-!!
          implicit none 
 !
          class(ccsd) :: wf
@@ -1201,12 +995,6 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!
 !!       Jacobian transpose CCSD A2 
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
-!!
-!!       Calculates the A2 term,
-!!
-!!           2 F_jb b_ai - F_ib b_aj - sum_k L_ikjb b_ak + sum_c L_cajb b_ci 
-!! 
-!!       and adds it to the transformed vector sigma_ai_bj.
 !!
          implicit none 
 !
@@ -1223,12 +1011,6 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!       Jacobian transpose CCSD B2 
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-!!       Calculates the B2 term,
-!!
-!!           sum_c b_aicj F_cb - sum_k b_aibk F_jk + sum_ck b_aick L_ckjb 
-!! 
-!!       and adds it to the transformed vector sigma_ai_bj.
-!!
          implicit none 
 !
          class(ccsd) :: wf
@@ -1243,12 +1025,6 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!
 !!       Jacobian transpose CCSD C2 
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
-!!
-!!       Calculates the C2 term,
-!!
-!!         - sum_ck (b_ajck g_ibck + b_akcj g_ikcb) 
-!! 
-!!       and adds it to the transformed vector sigma_ai_bj.
 !!
          implicit none 
 !
@@ -1265,12 +1041,6 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!       Jacobian transpose CCSD D2 
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-!!       Calculates the D2 term,
-!!
-!!           2 * sum_ckdl b_aick L_jbld t_kl^cd 
-!! 
-!!       and adds it to the transformed vector sigma_ai_bj.
-!!
          implicit none 
 !
          class(ccsd) :: wf
@@ -1285,12 +1055,6 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!
 !!       Jacobian transpose CCSD E2 
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
-!!
-!!       Calculates the E2 term,
-!!
-!!          - sum_ckdl (b_aibl t_kl^cd L_kcjd + b_aicl t_kl^cd L_jbkd + b_aicj t_kl^cd L_ldkb)
-!! 
-!!       and adds it to the transformed vector sigma_ai_bj.
 !!
          implicit none 
 !
@@ -1307,12 +1071,6 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!       Jacobian transpose CCSD F2 
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-!!       Calculates the F2 term,
-!!
-!!          - sum_ckdl (b_alck t_kl^cd L_jbid + b_ajck t_kl^cd L_ldib + b_djck t_kl^cd L_ialb)
-!! 
-!!       and adds it to the transformed vector sigma_ai_bj.
-!!
          implicit none 
 !
          class(ccsd) :: wf
@@ -1327,12 +1085,6 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!
 !!       Jacobian transpose CCSD G2 
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
-!!
-!!       Calculates the G2 term,
-!!
-!!          sum_ckdl (b_alcj t_kl^cd g_kbid + b_ajcl t_kl^cd g_kdib)
-!! 
-!!       and adds it to the transformed vector sigma_ai_bj.
 !!
          implicit none 
 !
@@ -1349,17 +1101,6 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!       Jacobian transpose CCSD H2 
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-!!       Calculates the H2 term,
-!!
-!!         sum_kl b_akbl g_ikjl + sum_cd b_cidj g_cadb 
-!! 
-!!       and adds it to the transformed vector sigma_ab_ij.
-!!
-!!       In this routine, the b and sigma vectors are ordered as
-!!
-!!         b_ab_ij = b_ai_bj 
-!!         sigma_ab_ij = sigma_ab_ij
-!!
          implicit none 
 !
          class(ccsd) :: wf
@@ -1375,17 +1116,6 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !!       Jacobian transpose CCSD I2 
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-!!       Calculates the I2 term,
-!!
-!!          sum_ckdl b_cidj t_kl^cd g_kalb + sum_ckdl b_akbl t_kl^cd g_icjd 
-!! 
-!!       and adds it to the transformed vector sigma_ab_ij.
-!!
-!!       In this routine, the b and sigma vectors are ordered as
-!!
-!!          b_ab_ij = b_ai_bj 
-!!          sigma_ab_ij = sigma_ab_ij
-!!
          implicit none 
 !
          class(ccsd) :: wf
@@ -1398,15 +1128,15 @@ module subroutine cvs_jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
 !
       module subroutine cvs_rho_aibj_projection_ccsd(wf, vec_aibj)
 !!
-!!       Rho projection for CVS (CCSD),
-!!       Written by Sarai D. Folkestad, Aug. 2017
+!!       CVS Rho_aibj projection (CCSD)
+!!       Written by Sarai D. Folkestad, Aug 2017
 !!
          implicit none
 !
          class(ccsd) :: wf
          real(dp), dimension(:, :) :: vec_aibj
 !
-   end subroutine cvs_rho_aibj_projection_ccsd
+      end subroutine cvs_rho_aibj_projection_ccsd
 !
 !
    end interface
@@ -1416,7 +1146,7 @@ contains
 !
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::
-!  -::- Initialization and driver routines -::-
+!  -::- 4. Class subroutines and functions -::- 
 !  ::::::::::::::::::::::::::::::::::::::::::::
 !
 !
@@ -1427,13 +1157,10 @@ contains
 !!
 !!    Performs the following tasks:
 !!
-!!       1. Sets HF orbital and energy information by reading from file (read_hf_info)
-!!       2. Transforms AO Cholesky vectors to MO basis and saves to file (read_transform_cholesky)
-!!       3. Allocates the Fock matrix and sets it to zero
-!!       4. Initializes the amplitudes (sets their initial values and associated variables)
-!!
-!!    Note: this routine does not calculate the energy, which is postponed until the wavefunction
-!!    is passed to the ground-state solver.
+!!    - Sets HF orbital and energy information by reading from file (read_hf_info)
+!!    - Transforms AO Cholesky vectors to MO basis and saves to file (read_transform_cholesky)
+!!    - Allocates the Fock matrix and sets it to zero
+!!    - Initializes the amplitudes (sets their initial values and associated variables)
 !!
       implicit none 
 !
@@ -1495,10 +1222,6 @@ contains
 !
    end subroutine init_ccsd
 !
-!
-!  :::::::::::::::::::::::::::::::::::::::::
-!  -::- Class subroutines and functions -::- 
-!  :::::::::::::::::::::::::::::::::::::::::
 !
    subroutine initialize_amplitudes_ccsd(wf)
 !!
@@ -1832,7 +1555,17 @@ contains
 !
 !
    subroutine jacobi_test_ccsd(wf)
-!
+!!
+!!    Jacobian test (CCSD)
+!!    Written by Eirik F. Kjønstad, June 2017
+!!
+!!    Calculates the Jacobian matrix by numerically differentiating 
+!!    the projection vector:
+!!
+!!       A_mu,nu = d Omega_mu / d t_nu.
+!!
+!!    Used to debug Jacobian transformation.
+!!
       implicit none 
 !
       class(ccsd) :: wf 
@@ -1904,8 +1637,8 @@ contains
 !     We wish to calculate A_mu,nu = d(omega)_mu / dt_nu, 
 !     in two different ways:
 !
-!        1. By transforming c_tau = delta_tau,nu with A. Then (A c)_mu = sum_tau A_mu,tau c_tau = A_mu,nu
-!        2. By calculating A_mu,nu = (omega(t+Dt_nu)_mu - omega(t)_mu)/Dt_nu.
+!        - By transforming c_tau = delta_tau,nu with A. Then (A c)_mu = sum_tau A_mu,tau c_tau = A_mu,nu
+!        - By calculating A_mu,nu = (omega(t+Dt_nu)_mu - omega(t)_mu)/Dt_nu.
 !
 !     :: First approach: transform by A :: 
 !

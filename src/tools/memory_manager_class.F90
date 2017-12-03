@@ -19,6 +19,10 @@ module memory_manager_class
    use types
    use input_output
 !
+!  Batching index class 
+!
+   use batching_index_class
+!
 !  ::::::::::::::::::::::::::::::::::::::::::::::::
 !  -::- Definition of the memory_manager class -::-
 !  ::::::::::::::::::::::::::::::::::::::::::::::::
@@ -33,6 +37,12 @@ module memory_manager_class
 !     (memory used by objects and local variables are not included in this estimate)
 !
       integer(i15) :: available = 30000000000 
+!
+!     Buffer for handling batches (standard: 10%). This means in practice that 'required
+!     memory' estimates are increased by 10% in case they miss they slightly underestimate
+!     the correct memory requirements
+!
+      integer(i15) :: buffer = 10 ! 10%
 !
    contains 
 !
@@ -50,11 +60,18 @@ module memory_manager_class
       procedure :: alloc_int   => alloc_int_memory_manager
       procedure :: dealloc_int => dealloc_int_memory_manager
 !
+<<<<<<< HEAD:src/memory_manager_class.F90
 !     Calculation of required memory for construction of certain integrals (Integrals with at least one L_ab^J)
 !
 !     procedure :: get_vvvo_required_mem => get_vvvo_required_mem_memory_manager
 !     procedure :: get_vvov_required_mem => get_vvov_required_mem_memory_manager
 !     procedure :: get_vvoo_required_mem => get_vvoo_required_mem_memory_manager
+=======
+!     Routines for determining the number of batches 
+!
+      procedure :: num_batch     => num_batch_memory_manager     ! For one-index batch 
+      procedure :: num_two_batch => num_two_batch_memory_manager ! For two-index batches 
+>>>>>>> 8bf80fa5da5ba6f5d7681fa17305941de360afac:src/tools/memory_manager_class.F90
 !
    end type memory_manager                                                                            
 !
@@ -282,6 +299,7 @@ contains
    end subroutine dealloc_int_memory_manager
 !
 !
+<<<<<<< HEAD:src/memory_manager_class.F90
    integer function get_vvvo_required_mem_memory_manager(mem, index_dim_1, index_dim_2, index_dim_3, index_dim_4)
 !!
 !!
@@ -319,6 +337,139 @@ contains
       integer(i15), intent(in)          :: index_dim_1, index_dim_2, index_dim_3, index_dim_4
 !
    end function get_vvoo_required_mem_memory_manager
+=======
+   subroutine num_batch_memory_manager(mem, batch_p, required)
+!!
+!!    Number of batches 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
+!!
+!!    Given the required memory, this routine determines, for a one-index batching,
+!!    the maximum batch length and the number of batches in total. 
+!!
+      implicit none 
+!
+      class(memory_manager) :: mem 
+!
+      class(batching_index) :: batch_p ! The index being batched over 
+!
+      integer(i15) :: required 
+!
+!     Add buffer to required estimate 
+!
+      required = required + required/(mem%buffer)
+!
+      if (required .lt. mem%available) then 
+!
+!        No need to batch 
+!
+         batch_p%num_batches = 1
+         batch_p%max_length = batch_p%index_dimension
+!
+         return
+!
+      endif
+!
+!     We need to batch 
+!
+!     Determine maximum batch length
+!
+      batch_p%max_length = (mem%available)/(required/(batch_p%index_dimension))
+!
+!     Number of full batches
+!
+      batch_p%num_batches = (batch_p%index_dimension)/(batch_p%max_length)
+!
+!     Test for rest not included in the preceding integer division
+!
+      if ((batch_p%num_batches)*(batch_p%max_length) .lt. batch_p%index_dimension) then
+!
+         batch_p%num_batches = batch_p%num_batches + 1
+!
+      endif
+!
+   end subroutine num_batch_memory_manager
+!
+!
+   subroutine num_two_batch_memory_manager(mem, batch_p, batch_q, required)
+!!
+!!    Number of two-batches 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
+!!
+!!    Given the required memory, this routine determines, for two-index batching,
+!!    the maximum batch length and the number of batches in total of both batching
+!!    indices. 
+!!
+      implicit none 
+!
+      class(memory_manager) :: mem 
+!
+      class(batching_index) :: batch_p 
+      class(batching_index) :: batch_q 
+!
+      integer(i15) :: required 
+!
+      integer(i15) :: i = 0
+!
+      required = required + required/(mem%buffer)
+!
+      batch_p%num_batches = 1
+      batch_q%num_batches = 1
+!
+      if (required .lt. mem%available) then
+!
+!        No need to batch 
+!
+         batch_p%num_batches = 1
+         batch_q%num_batches = 1
+!
+         batch_p%max_length = batch_p%index_dimension 
+         batch_q%max_length = batch_q%index_dimension
+!
+         return
+!
+      endif
+!     
+!     We need to batch 
+!
+!     Test whether two different-length indices are requested,
+!     because this feature is not yet implemented 
+!
+      if (batch_p%index_dimension .ne. batch_q%index_dimension) then
+!
+         write(unit_output,'(t3,a)') 'Error: batching over indices of different lengths is not yet implemented'
+         stop 
+!
+      endif
+!
+!     Determine number of batches 
+!
+      do i = 1, batch_p%index_dimension
+!
+         if (mem%available .gt. required/i**2) then
+!
+            batch_p%num_batches = i
+            batch_q%num_batches = i 
+!
+            batch_p%max_length = (batch_p%index_dimension)/(batch_p%num_batches)
+            batch_q%max_length = (batch_q%index_dimension)/(batch_q%num_batches)
+!
+!           Test for rest
+!
+            if ((batch_p%num_batches)*(batch_p%max_length) .lt. batch_p%index_dimension) then
+!
+               batch_p%num_batches = batch_p%num_batches + 1
+               batch_p%num_batches = batch_p%num_batches + 1
+!
+            endif
+!
+            return
+!
+         endif
+!
+      enddo
+!
+   end subroutine num_two_batch_memory_manager
+>>>>>>> 8bf80fa5da5ba6f5d7681fa17305941de360afac:src/tools/memory_manager_class.F90
 !
 !
 end module memory_manager_class

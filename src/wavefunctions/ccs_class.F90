@@ -327,7 +327,7 @@ module ccs_class
       procedure :: cvs_residual_projection            => cvs_residual_projection_ccs
 !
 !
-!     -::- Other slass routine pointers not located in submodules -::-
+!     -::- Other class routine pointers not located in submodules -::-
 !     ----------------------------------------------------------------
 !
 !     Routine to construct omega, or projection, vector
