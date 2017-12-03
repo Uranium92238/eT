@@ -1,4 +1,4 @@
-submodule (ccs_class) fock
+submodule(ccs_class) fock
 !
 !!
 !!    Fock submodule
@@ -17,7 +17,7 @@ submodule (ccs_class) fock
 contains
 !
 !
-    subroutine initialize_fock_matrix_ccs(wf)
+    module subroutine initialize_fock_matrix_ccs(wf)
 !!
 !!     Initialize Fock Matrix
 !!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -29,10 +29,10 @@ contains
 !  
       class(ccs) :: wf   
 !
-      call allocator(wf%fock_ij, wf%n_o, wf%n_o)
-      call allocator(wf%fock_ia, wf%n_o, wf%n_v)
-      call allocator(wf%fock_ai, wf%n_v, wf%n_o)
-      call allocator(wf%fock_ab, wf%n_v, wf%n_v)
+      if (.not. allocated(wf%fock_ij)) call wf%mem%alloc(wf%fock_ij, wf%n_o, wf%n_o)
+      if (.not. allocated(wf%fock_ia)) call wf%mem%alloc(wf%fock_ia, wf%n_o, wf%n_v)
+      if (.not. allocated(wf%fock_ai)) call wf%mem%alloc(wf%fock_ai, wf%n_v, wf%n_o)
+      if (.not. allocated(wf%fock_ab)) call wf%mem%alloc(wf%fock_ab, wf%n_v, wf%n_v)
 
 !
       wf%fock_ij = zero
@@ -45,7 +45,7 @@ contains
    end subroutine initialize_fock_matrix_ccs
 !
 !
-   subroutine construct_fock_ccs(wf)
+   module subroutine construct_fock_ccs(wf)
 !!
 !!    Construct Fock
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -99,10 +99,10 @@ contains
 !
 !     Allocate one-electron MO integrals
 !
-      call allocator(h1mo, wf%n_mo, wf%n_mo)
+      call wf%mem%alloc(h1mo, wf%n_mo, wf%n_mo)
       h1mo = zero
 !
-      call allocator(fock_matrix, wf%n_mo, wf%n_mo)
+      call wf%mem%alloc(fock_matrix, wf%n_mo, wf%n_mo)
       fock_matrix = zero
 !
 !
@@ -113,13 +113,13 @@ contains
 !
       n_ao_sq_packed = packed_size(wf%n_ao)
 !
-      call allocator(h1ao, n_ao_sq_packed, 1)
+      call wf%mem%alloc(h1ao, n_ao_sq_packed, 1)
       h1ao = zero
 !
 !     Open mlcc_aoint file
 !
       call generate_unit_identifier(unit_identifier_ao_integrals)
-      open(unit=unit_identifier_ao_integrals,file='mlcc_aoint',status='old',form='formatted')
+      open(unit=unit_identifier_ao_integrals,file='MLCC_AOINT',status='old',form='formatted')
       rewind(unit_identifier_ao_integrals)
 !
 !     Read in one-electron AO integrals
@@ -132,19 +132,19 @@ contains
 !
 !     Allocate the AO Fock matrix and add the one-electron contributions
 !
-      call allocator(fock_ao, wf%n_ao, wf%n_ao)
+      call wf%mem%alloc(fock_ao, wf%n_ao, wf%n_ao)
       fock_ao = zero
 !
       call squareup(h1ao, fock_ao, wf%n_ao)  
 !
 !     Deallocation of one-electron AO integrals
 !   
-      call deallocator(h1ao, n_ao_sq_packed, 1) 
+      call wf%mem%dealloc(h1ao, n_ao_sq_packed, 1) 
 !
 !     Transform to one-electron part to MO basis and save it
 !     in the fock_matrix 
 !
-      call allocator(X, wf%n_ao, wf%n_mo)
+      call wf%mem%alloc(X, wf%n_ao, wf%n_mo)
 !
       call dgemm('N','N',     &
                   wf%n_ao,    &
@@ -175,12 +175,12 @@ contains
 !     T1-transformation of one-electron integrals in MO basis
 !
       call wf%one_electron_t1(h1mo, fock_matrix)
-      call deallocator(h1mo, wf%n_mo, wf%n_mo)
+      call wf%mem%dealloc(h1mo, wf%n_mo, wf%n_mo)
 !
 !     Deallocate intermediate X and fock_ao
 !
-      call deallocator(X,wf%n_ao, wf%n_mo)
-      call deallocator(fock_ao, wf%n_ao, wf%n_ao)
+      call wf%mem%dealloc(X,wf%n_ao, wf%n_mo)
+      call wf%mem%dealloc(fock_ao, wf%n_ao, wf%n_ao)
 !
 !
 !     :: Two-electron occupied-occupied block: F_ij = h_ij + sum_k (2*g_ijkk - g_ikkj) ::
@@ -188,8 +188,8 @@ contains
 !
 !     Allocation for L_ij_J
 ! 
-      call allocator(L_ij_J, (wf%n_o)**2, wf%n_J)
-      call allocator(g_ij_kl, (wf%n_o)**2, (wf%n_o)**2)
+      call wf%mem%alloc(L_ij_J, (wf%n_o)**2, wf%n_J)
+      call wf%mem%alloc(g_ij_kl, (wf%n_o)**2, (wf%n_o)**2)
 !
       L_ij_J  = zero
       g_ij_kl = zero
@@ -238,7 +238,7 @@ contains
 !
 !     Deallocate g_ij_kl
 ! 
-      call deallocator(g_ij_kl, (wf%n_o)**2, (wf%n_o)**2)
+      call wf%mem%dealloc(g_ij_kl, (wf%n_o)**2, (wf%n_o)**2)
 !
 !
 !     :: Two-electron occupied-virtual blocks ::
@@ -246,8 +246,8 @@ contains
 !
 !     Allocation for g_ia_jk 
 !
-      call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
-      call allocator(g_ia_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
+      call wf%mem%alloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call wf%mem%alloc(g_ia_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
       L_ia_J  = zero
       g_ia_jk = zero
 !
@@ -272,12 +272,12 @@ contains
 !
 !     Dealllocate L_ia_J
 !
-      call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call wf%mem%dealloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
 !     Allocation for g_ai_jk 
 !
-      call allocator(L_ai_J, (wf%n_o)*(wf%n_v), wf%n_J)
-      call allocator(g_ai_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
+      call wf%mem%alloc(L_ai_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call wf%mem%alloc(g_ai_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
       L_ai_J  = zero
       g_ai_jk = zero
 !
@@ -302,7 +302,7 @@ contains
 !
 !     Deallocate L_ai_J
 !
-      call deallocator(L_ai_J, (wf%n_v)*(wf%n_o), wf%n_J)
+      call wf%mem%dealloc(L_ai_J, (wf%n_v)*(wf%n_o), wf%n_J)
 !
 !     Add terms to Fock matrix
 !
@@ -334,14 +334,14 @@ contains
          enddo
       enddo
 !
-      call deallocator(g_ia_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
-      call deallocator(g_ai_jk, (wf%n_v)*(wf%n_o), (wf%n_o)**2)
+      call wf%mem%dealloc(g_ia_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
+      call wf%mem%dealloc(g_ai_jk, (wf%n_v)*(wf%n_o), (wf%n_o)**2)
 !
 !
 !     :: Two-electron virtual-virtual block F_ab = h_ab + sum_k (2*g_abkk - g_akkb) ::
 !
 !
-      call allocator(g_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
+      call wf%mem%alloc(g_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
       g_ab_ij = zero
 !
 !     Batch over index b
@@ -368,12 +368,12 @@ contains
 !
 !        Allocate L_ab_J
 !
-         call allocator(L_ab_J, (wf%n_v)*batch_length, wf%n_J)
+         call wf%mem%alloc(L_ab_J, (wf%n_v)*batch_length, wf%n_J)
          L_ab_J = zero
 !
 !        Read Cholesky vectors
 !
-         call wf%get_cholesky_ab(L_ab_J, batch_start, batch_end, (wf%n_v)*batch_length, .false.)
+         call wf%get_cholesky_ab(L_ab_J, 1, wf%n_v, batch_start, batch_end)
 !
 !        Calculate g_ab_ij = sum_J L_ab_J*L_ij_J
 !
@@ -394,21 +394,21 @@ contains
 !
 !        Deallocate L_ab_J
 !
-         call deallocator(L_ab_J, batch_length*(wf%n_v), wf%n_J)
+         call wf%mem%dealloc(L_ab_J, batch_length*(wf%n_v), wf%n_J)
 !
       enddo ! batching done
 !
 !     Deallocate L_ij_J
 !
-      call deallocator(L_ij_J, (wf%n_o)**2, wf%n_J)
+      call wf%mem%dealloc(L_ij_J, (wf%n_o)**2, wf%n_J)
 !
 !     Allocate for g_ai_jb
 !
-      call allocator(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       g_ai_jb = 0
 !
-      call allocator(L_ai_J, (wf%n_v)*(wf%n_o), wf%n_J)
-      call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call wf%mem%alloc(L_ai_J, (wf%n_v)*(wf%n_o), wf%n_J)
+      call wf%mem%alloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
       L_ai_J = 0
       L_ia_J = 0
 !
@@ -447,8 +447,8 @@ contains
 !
 !    Deallocate L_ia_J
 !
-     call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
-     call deallocator(L_ai_J, (wf%n_o)*(wf%n_v), wf%n_J)
+     call wf%mem%dealloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+     call wf%mem%dealloc(L_ai_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
       do a = 1, wf%n_v
          do b = 1, wf%n_v
@@ -472,8 +472,8 @@ contains
          enddo 
       enddo
 !
-     call deallocator(g_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
-     call deallocator(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+     call wf%mem%dealloc(g_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
+     call wf%mem%dealloc(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     Save the blocks of the Fock matrix in memory (ij,ia,ai,ab)
 !
@@ -502,12 +502,12 @@ contains
          enddo
       enddo
 !
-      call deallocator(fock_matrix, wf%n_mo, wf%n_mo)
+      call wf%mem%dealloc(fock_matrix, wf%n_mo, wf%n_mo)
 !
    end subroutine construct_fock_ccs
 !
 !
-   subroutine one_electron_t1_ccs(wf, h1 ,h1_T1)
+   module subroutine one_electron_t1_ccs(wf, h1 ,h1_T1)
 !!
 !!    One-electron T1 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -538,11 +538,11 @@ contains
 !
 !     Allocate the arrays t1, x, and y
 !
-      call allocator(t1, wf%n_mo, wf%n_mo)
+      call wf%mem%alloc(t1, wf%n_mo, wf%n_mo)
       t1 = zero
 !
-      call allocator(y, wf%n_mo, wf%n_mo)
-      call allocator(x, wf%n_mo, wf%n_mo)
+      call wf%mem%alloc(y, wf%n_mo, wf%n_mo)
+      call wf%mem%alloc(x, wf%n_mo, wf%n_mo)
 !
       y = zero
       x = zero
@@ -579,11 +579,11 @@ contains
 !
 !     Deallocate t1 (only x and y are needed below)
 !
-      call deallocator(t1, wf%n_mo, wf%n_mo)
+      call wf%mem%dealloc(t1, wf%n_mo, wf%n_mo)
 !
 !     Allocate Z intermediate
 !   
-      call allocator(Z, wf%n_mo, wf%n_mo)
+      call wf%mem%alloc(Z, wf%n_mo, wf%n_mo)
 !
 !     Calculate h1_T1 = x*h1*y^T = x*Z
 !
@@ -615,9 +615,9 @@ contains
 !
 !     Deallocate x and y, and the intermediate Z
 !
-      call deallocator(Z, wf%n_mo, wf%n_mo)
-      call deallocator(y, wf%n_mo, wf%n_mo)
-      call deallocator(x, wf%n_mo, wf%n_mo)
+      call wf%mem%dealloc(Z, wf%n_mo, wf%n_mo)
+      call wf%mem%dealloc(y, wf%n_mo, wf%n_mo)
+      call wf%mem%dealloc(x, wf%n_mo, wf%n_mo)
 !
    end subroutine one_electron_t1_ccs
 !

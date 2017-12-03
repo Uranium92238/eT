@@ -62,4 +62,29 @@ contains
    end subroutine vec_print
 !
 !
+   subroutine vec_print_nonzero_elm(vec,dim_1,dim_2)
+!!
+!!    Vector print
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, March 2017
+!!
+!!    A vector is printed with a compound index (p q) of dimension (dim_1 x dim_2)
+!!
+      implicit none
+!
+      integer(i15) :: p = 0, q = 0, pq = 0
+!
+      integer(i15), intent(in) :: dim_1,dim_2
+      real(dp), dimension(dim_1, dim_2), intent(in) :: vec
+!
+      do q = 1, dim_2
+         do p = 1, dim_1
+!
+            if (vec(p, q) .gt. 1.0D-03) then
+               write(unit_output,*) p, q, vec(p,q)
+            endif
+!
+         enddo
+      enddo
+!
+   end subroutine vec_print_nonzero_elm
 end module input_output

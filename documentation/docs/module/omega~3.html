@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+	 
+	 <meta name="description" content="The eT coupled cluster program">
+    
+    <meta name="author" content="Eirik F. Kjønstad and Sarai D. Folkestad" >
+    <link rel="icon" href="../favicon.png">
+
+    <title>omega &ndash; The eT program</title>
+
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/pygments.css" rel="stylesheet">
+    <link href="../css/font-awesome.min.css" rel="stylesheet">
+    <link href="../css/local.css" rel="stylesheet">
+    
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    
+    <script src="../js/jquery-2.1.3.min.js"></script>
+    <script src="../js/svg-pan-zoom.min.js"></script>
+
+    
+    <script src="../tipuesearch/tipuesearch_content.js"></script>
+    <link  href="../tipuesearch/tipuesearch.css" rel="stylesheet">
+    <script src="../tipuesearch/tipuesearch_set.js"></script>
+    <script src="../tipuesearch/tipuesearch.js"></script>
+    
+
+  </head>
+
+  <body>
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../index.html">The eT program </a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+				
+            <li class="dropdown hidden-xs visible-sm visible-md hidden-lg">
+              <a href="#" class="dropdown-toggle"
+              data-toggle="dropdown" role="button"
+              aria-haspopup="true"
+		 aria-expanded="false">Contents <span class="caret"></span></a>
+	      <ul class="dropdown-menu">
+              
+            <li><a href="../lists/files.html">Source Files</a></li>
+				
+				
+            <li><a href="../lists/modules.html">Modules</a></li>
+				
+            
+                                
+            <li><a href="../lists/procedures.html">Procedures</a></li>
+				
+								
+            <li><a href="../lists/types.html">Derived Types</a></li>
+				
+				
+            <li><a href="../program/et_program.html">Program</a></li>
+	    
+            </ul>
+            </li>
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/files.html">Source Files</a></li>
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/modules.html">Modules</a></li>
+
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/procedures.html">Procedures</a></li>
+
+                             
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/types.html">Derived Types</a></li>
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../program/et_program.html">Program</a></li>
+
+          </ul>
+        
+        <form action="../search.html" class="navbar-form navbar-right" role="search">
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Search" name="q" id="tipue_search_input" autocomplete="off" required>
+        </div>
+<!--
+        <button type="submit" class="btn btn-default">Submit</button>
+-->
+        </form>
+        
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container">
+    
+  
+  <div class="row">
+    <h1>omega 
+    <small>Submodule</small>
+    
+    </h1>
+    
+<div class="row">
+  <div class="col-lg-12">
+<div class="well well-sm">
+  <ul class="list-inline" style="margin-bottom:0px;display:inline">
+     
+     
+     
+     
+    
+    
+     <li><i class="fa fa-list-ol"></i>
+       <a data-toggle="tooltip"
+	  data-placement="bottom" data-html="true"
+	  title=" 3.7% of total for modules and submodules.">833 statements</a>
+     </li> 
+     
+     
+    <li><i class="fa fa-code"></i><a href="../src/omega_submodule.F90"> Source File</a></li>
+     
+  </ul>
+  <ol class="breadcrumb in-well text-right">
+  
+     <li><a href='../sourcefile/omega_submodule.f90%7E4.html'>omega_submodule.F90</a></li>
+  
+     <li class="active">omega</li>
+  </ol>
+</div>
+</div>
+</div>
+<script>
+  $(function () {
+  $('[data-toggle="tooltip"]').tooltip()
+  })
+</script>
+
+  </div>
+  
+  <div class="row">
+    <div class="col-md-3 hidden-xs hidden-sm visible-md visible-lg">
+    
+<div id="sidebar">
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <hr>
+  
+
+<div class="panel panel-default">
+  <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#allmods-0">All Modules</a></h3></div>
+  <div id="allmods-0" class="panel-collapse collapse">
+    <div class="list-group">
+      
+      <a class="list-group-item" href="../module/batching_index_class.html">batching_index_class</a>
+      
+      <a class="list-group-item" href="../module/calc_settings_class.html">calc_settings_class</a>
+      
+      <a class="list-group-item" href="../module/calc_tasks_class%7E2.html">calc_tasks_class</a>
+      
+      <a class="list-group-item" href="../module/calc_tasks_class.html">calc_tasks_class</a>
+      
+      <a class="list-group-item" href="../module/cc2_class.html">cc2_class</a>
+      
+      <a class="list-group-item" href="../module/cc3_class.html">cc3_class</a>
+      
+      <a class="list-group-item" href="../module/ccs_class.html">ccs_class</a>
+      
+      <a class="list-group-item" href="../module/ccsd_class.html">ccsd_class</a>
+      
+      <a class="list-group-item" href="../module/ccsdpt_class.html">ccsdpt_class</a>
+      
+      <a class="list-group-item" href="../module/core_excited_state_specs_class.html">core_excited_state_specs_class</a>
+      
+      <a class="list-group-item" href="../module/excited_state_specs_class.html">excited_state_specs_class</a>
+      
+      <a class="list-group-item" href="../module/ground_state_specs_class.html">ground_state_specs_class</a>
+      
+      <a class="list-group-item" href="../module/hf_class.html">hf_class</a>
+      
+      <a class="list-group-item" href="../module/input_output.html">input_output</a>
+      
+      <a class="list-group-item" href="../module/input_reader.html">input_reader</a>
+      
+      <a class="list-group-item" href="../module/memory_manager_class.html">memory_manager_class</a>
+      
+      <a class="list-group-item" href="../module/mlcc2_class.html">mlcc2_class</a>
+      
+      <a class="list-group-item" href="../module/mlcc_calculation_settings_class.html">mlcc_calculation_settings_class</a>
+      
+      <a class="list-group-item" href="../module/mlcc_orbitals_class.html">mlcc_orbitals_class</a>
+      
+      <a class="list-group-item" href="../module/mlccsd_class.html">mlccsd_class</a>
+      
+      <a class="list-group-item" href="../module/mp2_class.html">mp2_class</a>
+      
+      <a class="list-group-item" href="../module/response_calc_specs_class.html">response_calc_specs_class</a>
+      
+      <a class="list-group-item" href="../module/types.html">types</a>
+      
+      <a class="list-group-item" href="../module/utils.html">utils</a>
+      
+      <a class="list-group-item" href="../module/workspace.html">workspace</a>
+      
+    </div>
+  </div>
+</div>
+
+
+</div>  
+
+    </div>
+    
+    <div class="col-md-9" id='text'>
+      
+  
+    <ul class="list-inline">
+      <li><h4>Ancestors:</h4></li>
+      
+      <li><a href='../module/ccsd_class.html'>ccsd_class</a></li>
+      
+      
+    </ul>
+  
+
+    
+  
+    <ul class="list-inline">
+      <li><h4>Uses:</h4></li>
+      
+      <li><a href='../module/batching_index_class.html'>batching_index_class</a></li>
+      
+    </ul>
+    
+                <div class="depgraph"><?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.36.0 (20140111.2315)
+ -->
+<!-- Title: module~~omega~3~~UsesGraph Pages: 1 -->
+<svg id="moduleomega3UsesGraph" width="641pt" height="305pt"
+ viewBox="0.00 0.00 641.00 304.91" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="module~~omega~3~~UsesGraph" class="graph" transform="scale(0.647475 0.647475) rotate(0) translate(4 466.923)">
+<title>module~~omega~3~~UsesGraph</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-466.923 986,-466.923 986,4 -4,4"/>
+<!-- module~omega~3 -->
+<g id="module~~omega~3~~UsesGraph_node1" class="node"><title>module~omega~3</title>
+<polygon fill="none" stroke="black" points="982,-406 928,-406 928,-382 982,-382 982,-406"/>
+<text text-anchor="middle" x="955" y="-391.6" font-family="Helvetica,sans-Serif" font-size="10.50">omega</text>
+</g>
+<!-- module~batching_index_class -->
+<g id="module~~omega~3~~UsesGraph_node2" class="node"><title>module~batching_index_class</title>
+<g id="a_module~~omega~3~~UsesGraph_node2"><a xlink:href="../module/batching_index_class.html" xlink:title="batching_index_class">
+<polygon fill="#337ab7" stroke="#337ab7" points="418.5,-385 305.5,-385 305.5,-361 418.5,-361 418.5,-385"/>
+<text text-anchor="middle" x="362" y="-370.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">batching_index_class</text>
+</a>
+</g>
+</g>
+<!-- module~batching_index_class&#45;&gt;module~omega~3 -->
+<g id="module~~omega~3~~UsesGraph_edge4" class="edge"><title>module~batching_index_class&#45;&gt;module~omega~3</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M415.862,-385.049C433.057,-388.651 452.276,-392.344 470,-395 558.303,-408.233 580.711,-414 670,-414 670,-414 670,-414 764,-414 817.814,-414 879.734,-405.967 917.869,-400.083"/>
+<polygon fill="#000000" stroke="#000000" points="918.636,-403.505 927.968,-398.488 917.544,-396.591 918.636,-403.505"/>
+</g>
+<!-- module~memory_manager_class -->
+<g id="module~~omega~3~~UsesGraph_node16" class="node"><title>module~memory_manager_class</title>
+<g id="a_module~~omega~3~~UsesGraph_node16"><a xlink:href="../module/memory_manager_class.html" xlink:title="memory_manager_class">
+<polygon fill="#337ab7" stroke="#337ab7" points="602.5,-226 475.5,-226 475.5,-202 602.5,-202 602.5,-226"/>
+<text text-anchor="middle" x="539" y="-211.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">memory_manager_class</text>
+</a>
+</g>
+</g>
+<!-- module~batching_index_class&#45;&gt;module~memory_manager_class -->
+<g id="module~~omega~3~~UsesGraph_edge14" class="edge"><title>module~batching_index_class&#45;&gt;module~memory_manager_class</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M379.147,-360.9C394.589,-348.753 417.849,-328.889 434,-308 454.917,-280.947 444.394,-262.665 470,-240 474.081,-236.387 478.717,-233.254 483.605,-230.541"/>
+<polygon fill="#000000" stroke="#000000" points="485.191,-233.662 492.61,-226.099 482.094,-227.384 485.191,-233.662"/>
+</g>
+<!-- module~types -->
+<g id="module~~omega~3~~UsesGraph_node3" class="node"><title>module~types</title>
+<g id="a_module~~omega~3~~UsesGraph_node3"><a xlink:href="../module/types.html" xlink:title="types">
+<polygon fill="#337ab7" stroke="#337ab7" points="54,-168 0,-168 0,-144 54,-144 54,-168"/>
+<text text-anchor="middle" x="27" y="-153.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">types</text>
+</a>
+</g>
+</g>
+<!-- module~types&#45;&gt;module~batching_index_class -->
+<g id="module~~omega~3~~UsesGraph_edge2" class="edge"><title>module~types&#45;&gt;module~batching_index_class</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M173,-432C200.369,-445.783 281.507,-411.378 327.75,-389.482"/>
+<polygon fill="#000000" stroke="#000000" points="329.276,-392.632 336.782,-385.154 326.251,-386.319 329.276,-392.632"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M29.483,-168.298C35.8363,-214.65 65.4432,-378.843 171,-432"/>
+</g>
+<!-- module~input_output -->
+<g id="module~~omega~3~~UsesGraph_node4" class="node"><title>module~input_output</title>
+<g id="a_module~~omega~3~~UsesGraph_node4"><a xlink:href="../module/input_output.html" xlink:title="input_output">
+<polygon fill="#337ab7" stroke="#337ab7" points="207,-306 137,-306 137,-282 207,-282 207,-306"/>
+<text text-anchor="middle" x="172" y="-291.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">input_output</text>
+</a>
+</g>
+</g>
+<!-- module~types&#45;&gt;module~input_output -->
+<g id="module~~omega~3~~UsesGraph_edge1" class="edge"><title>module~types&#45;&gt;module~input_output</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M40.6903,-168.247C65.6637,-192.347 121.349,-246.085 151.199,-274.892"/>
+<polygon fill="#000000" stroke="#000000" points="148.916,-277.552 158.542,-281.978 153.777,-272.515 148.916,-277.552"/>
+</g>
+<!-- module~ccsd_class -->
+<g id="module~~omega~3~~UsesGraph_node5" class="node"><title>module~ccsd_class</title>
+<g id="a_module~~omega~3~~UsesGraph_node5"><a xlink:href="../module/ccsd_class.html" xlink:title="ccsd_class">
+<polygon fill="#337ab7" stroke="#337ab7" points="892,-386 828,-386 828,-362 892,-362 892,-386"/>
+<text text-anchor="middle" x="860" y="-371.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">ccsd_class</text>
+</a>
+</g>
+</g>
+<!-- module~types&#45;&gt;module~ccsd_class -->
+<g id="module~~omega~3~~UsesGraph_edge37" class="edge"><title>module~types&#45;&gt;module~ccsd_class</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M672,-452C727.959,-436.286 789.585,-408.362 826.251,-390.537"/>
+<polygon fill="#000000" stroke="#000000" points="828.026,-393.564 835.46,-386.016 824.941,-387.281 828.026,-393.564"/>
+</g>
+<!-- module~utils -->
+<g id="module~~omega~3~~UsesGraph_node6" class="node"><title>module~utils</title>
+<g id="a_module~~omega~3~~UsesGraph_node6"><a xlink:href="../module/utils.html" xlink:title="utils">
+<polygon fill="#337ab7" stroke="#337ab7" points="566,-306 512,-306 512,-282 566,-282 566,-306"/>
+<text text-anchor="middle" x="539" y="-291.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">utils</text>
+</a>
+</g>
+</g>
+<!-- module~types&#45;&gt;module~utils -->
+<g id="module~~omega~3~~UsesGraph_edge6" class="edge"><title>module~types&#45;&gt;module~utils</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M173,-432C247.627,-469.581 278.512,-445.314 361,-432"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M363,-432C398.334,-426.297 405.965,-416.249 434,-394 452.995,-378.925 452.802,-370.096 470,-353 484.32,-338.764 501.504,-323.872 515.015,-312.61"/>
+<polygon fill="#000000" stroke="#000000" points="517.41,-315.171 522.894,-306.106 512.954,-309.773 517.41,-315.171"/>
+</g>
+<!-- module~ccs_class -->
+<g id="module~~omega~3~~UsesGraph_node7" class="node"><title>module~ccs_class</title>
+<g id="a_module~~omega~3~~UsesGraph_node7"><a xlink:href="../module/ccs_class.html" xlink:title="ccs_class">
+<polygon fill="#337ab7" stroke="#337ab7" points="792,-346 734,-346 734,-322 792,-322 792,-346"/>
+<text text-anchor="middle" x="763" y="-331.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">ccs_class</text>
+</a>
+</g>
+</g>
+<!-- module~types&#45;&gt;module~ccs_class -->
+<g id="module~~omega~3~~UsesGraph_edge30" class="edge"><title>module~types&#45;&gt;module~ccs_class</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M672,-452C716.234,-439.035 742.597,-386.561 754.464,-356.131"/>
+<polygon fill="#000000" stroke="#000000" points="757.881,-356.982 758.063,-346.388 751.315,-354.556 757.881,-356.982"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M363,-432C497.987,-410.212 538.787,-490.459 670,-452"/>
+</g>
+<!-- module~workspace -->
+<g id="module~~omega~3~~UsesGraph_node8" class="node"><title>module~workspace</title>
+<g id="a_module~~omega~3~~UsesGraph_node8"><a xlink:href="../module/workspace.html" xlink:title="workspace">
+<polygon fill="#337ab7" stroke="#337ab7" points="570.5,-386 507.5,-386 507.5,-362 570.5,-362 570.5,-386"/>
+<text text-anchor="middle" x="539" y="-371.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">workspace</text>
+</a>
+</g>
+</g>
+<!-- module~types&#45;&gt;module~workspace -->
+<g id="module~~omega~3~~UsesGraph_edge32" class="edge"><title>module~types&#45;&gt;module~workspace</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M363,-432C412.389,-424.028 466.706,-404.169 501.521,-389.911"/>
+<polygon fill="#000000" stroke="#000000" points="502.913,-393.122 510.804,-386.052 500.226,-386.659 502.913,-393.122"/>
+</g>
+<!-- module~hf_class -->
+<g id="module~~omega~3~~UsesGraph_node9" class="node"><title>module~hf_class</title>
+<g id="a_module~~omega~3~~UsesGraph_node9"><a xlink:href="../module/hf_class.html" xlink:title="hf_class">
+<polygon fill="#337ab7" stroke="#337ab7" points="698,-226 644,-226 644,-202 698,-202 698,-226"/>
+<text text-anchor="middle" x="671" y="-211.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">hf_class</text>
+</a>
+</g>
+</g>
+<!-- module~types&#45;&gt;module~hf_class -->
+<g id="module~~omega~3~~UsesGraph_edge26" class="edge"><title>module~types&#45;&gt;module~hf_class</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M363,-94C440.778,-93.8635 469.077,-57.958 538,-94"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M173,-54C254.399,-28.0807 275.574,-94.1499 361,-94"/>
+</g>
+<!-- module~ground_state_specs_class -->
+<g id="module~~omega~3~~UsesGraph_node10" class="node"><title>module~ground_state_specs_class</title>
+<g id="a_module~~omega~3~~UsesGraph_node10"><a xlink:href="../module/ground_state_specs_class.html" xlink:title="ground_state_specs_class">
+<polygon fill="#337ab7" stroke="#337ab7" points="430.5,-66 293.5,-66 293.5,-42 430.5,-42 430.5,-66"/>
+<text text-anchor="middle" x="362" y="-51.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">ground_state_specs_class</text>
+</a>
+</g>
+</g>
+<!-- module~types&#45;&gt;module~ground_state_specs_class -->
+<g id="module~~omega~3~~UsesGraph_edge7" class="edge"><title>module~types&#45;&gt;module~ground_state_specs_class</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M173,-54C208.1,-42.8235 248.79,-41.5014 283.32,-43.5173"/>
+<polygon fill="#000000" stroke="#000000" points="283.138,-47.0129 293.354,-44.2055 283.617,-40.0293 283.138,-47.0129"/>
+</g>
+<!-- module~calc_settings_class -->
+<g id="module~~omega~3~~UsesGraph_node11" class="node"><title>module~calc_settings_class</title>
+<g id="a_module~~omega~3~~UsesGraph_node11"><a xlink:href="../module/calc_settings_class.html" xlink:title="calc_settings_class">
+<polygon fill="#337ab7" stroke="#337ab7" points="413.5,-24 310.5,-24 310.5,-0 413.5,-0 413.5,-24"/>
+<text text-anchor="middle" x="362" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">calc_settings_class</text>
+</a>
+</g>
+</g>
+<!-- module~types&#45;&gt;module~calc_settings_class -->
+<g id="module~~omega~3~~UsesGraph_edge8" class="edge"><title>module~types&#45;&gt;module~calc_settings_class</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M173,-54C214.799,-40.6901 263.12,-29.9934 300.306,-22.7262"/>
+<polygon fill="#000000" stroke="#000000" points="301.325,-26.0943 310.484,-20.768 300.003,-19.2203 301.325,-26.0943"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M33.682,-143.699C42.8314,-125.319 62.6152,-90.9344 90,-73 120.934,-52.7414 135.766,-65.2193 171,-54"/>
+</g>
+<!-- module~response_calc_specs_class -->
+<g id="module~~omega~3~~UsesGraph_node12" class="node"><title>module~response_calc_specs_class</title>
+<g id="a_module~~omega~3~~UsesGraph_node12"><a xlink:href="../module/response_calc_specs_class.html" xlink:title="response_calc_specs_class">
+<polygon fill="#337ab7" stroke="#337ab7" points="433.5,-186 290.5,-186 290.5,-162 433.5,-162 433.5,-186"/>
+<text text-anchor="middle" x="362" y="-171.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">response_calc_specs_class</text>
+</a>
+</g>
+</g>
+<!-- module~types&#45;&gt;module~response_calc_specs_class -->
+<g id="module~~omega~3~~UsesGraph_edge9" class="edge"><title>module~types&#45;&gt;module~response_calc_specs_class</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M173,-176C208.131,-178.226 247.026,-178.221 280.279,-177.471"/>
+<polygon fill="#000000" stroke="#000000" points="280.499,-180.966 290.408,-177.215 280.323,-173.969 280.499,-180.966"/>
+</g>
+<!-- module~excited_state_specs_class -->
+<g id="module~~omega~3~~UsesGraph_node13" class="node"><title>module~excited_state_specs_class</title>
+<g id="a_module~~omega~3~~UsesGraph_node13"><a xlink:href="../module/excited_state_specs_class.html" xlink:title="excited_state_specs_class">
+<polygon fill="#337ab7" stroke="#337ab7" points="607.5,-146 470.5,-146 470.5,-122 607.5,-122 607.5,-146"/>
+<text text-anchor="middle" x="539" y="-131.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">excited_state_specs_class</text>
+</a>
+</g>
+</g>
+<!-- module~types&#45;&gt;module~excited_state_specs_class -->
+<g id="module~~omega~3~~UsesGraph_edge10" class="edge"><title>module~types&#45;&gt;module~excited_state_specs_class</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M173,-176C225.889,-179.351 237.489,-160.148 290,-153 346.723,-145.279 411.204,-140.459 460.197,-137.607"/>
+<polygon fill="#000000" stroke="#000000" points="460.622,-141.088 470.408,-137.028 460.226,-134.1 460.622,-141.088"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M54.2459,-160.718C82.8442,-165.613 130,-172.969 171,-176"/>
+</g>
+<!-- module~calc_tasks_class~2 -->
+<g id="module~~omega~3~~UsesGraph_node14" class="node"><title>module~calc_tasks_class~2</title>
+<g id="a_module~~omega~3~~UsesGraph_node14"><a xlink:href="../module/calc_tasks_class%7E2.html" xlink:title="calc_tasks_class">
+<polygon fill="#337ab7" stroke="#337ab7" points="217.5,-148 126.5,-148 126.5,-124 217.5,-124 217.5,-148"/>
+<text text-anchor="middle" x="172" y="-133.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">calc_tasks_class</text>
+</a>
+</g>
+</g>
+<!-- module~types&#45;&gt;module~calc_tasks_class~2 -->
+<g id="module~~omega~3~~UsesGraph_edge11" class="edge"><title>module~types&#45;&gt;module~calc_tasks_class~2</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M54.2284,-152.332C71.6301,-149.898 95.1096,-146.614 116.451,-143.629"/>
+<polygon fill="#000000" stroke="#000000" points="116.978,-147.09 126.397,-142.238 116.009,-140.157 116.978,-147.09"/>
+</g>
+<!-- module~core_excited_state_specs_class -->
+<g id="module~~omega~3~~UsesGraph_node15" class="node"><title>module~core_excited_state_specs_class</title>
+<g id="a_module~~omega~3~~UsesGraph_node15"><a xlink:href="../module/core_excited_state_specs_class.html" xlink:title="core_excited_state_specs_class">
+<polygon fill="#337ab7" stroke="#337ab7" points="254,-106 90,-106 90,-82 254,-82 254,-106"/>
+<text text-anchor="middle" x="172" y="-91.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">core_excited_state_specs_class</text>
+</a>
+</g>
+</g>
+<!-- module~types&#45;&gt;module~core_excited_state_specs_class -->
+<g id="module~~omega~3~~UsesGraph_edge12" class="edge"><title>module~types&#45;&gt;module~core_excited_state_specs_class</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M43.4702,-143.665C55.5294,-134.587 73.0247,-122.56 90,-115 94.6904,-112.911 99.6297,-110.999 104.66,-109.254"/>
+<polygon fill="#000000" stroke="#000000" points="105.965,-112.51 114.403,-106.103 103.811,-105.85 105.965,-112.51"/>
+</g>
+<!-- module~types&#45;&gt;module~memory_manager_class -->
+<g id="module~~omega~3~~UsesGraph_edge13" class="edge"><title>module~types&#45;&gt;module~memory_manager_class</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M173,-176C225.538,-179.884 237.69,-188.76 290,-195 348.745,-202.007 415.642,-206.956 465.141,-210.043"/>
+<polygon fill="#000000" stroke="#000000" points="465.235,-213.555 475.43,-210.673 465.663,-206.568 465.235,-213.555"/>
+</g>
+<!-- module~input_output&#45;&gt;module~batching_index_class -->
+<g id="module~~omega~3~~UsesGraph_edge3" class="edge"><title>module~input_output&#45;&gt;module~batching_index_class</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M201.963,-306.171C234.35,-319.78 286.94,-341.879 322.703,-356.907"/>
+<polygon fill="#000000" stroke="#000000" points="321.738,-360.298 332.313,-360.945 324.449,-353.844 321.738,-360.298"/>
+</g>
+<!-- module~input_output&#45;&gt;module~ccsd_class -->
+<g id="module~~omega~3~~UsesGraph_edge36" class="edge"><title>module~input_output&#45;&gt;module~ccsd_class</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M764,-293C795.045,-308.085 824.228,-335.747 841.852,-354.501"/>
+<polygon fill="#000000" stroke="#000000" points="839.329,-356.928 848.669,-361.93 844.487,-352.196 839.329,-356.928"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M540,-254C638.444,-235.443 671.896,-249.218 762,-293"/>
+</g>
+<!-- module~input_output&#45;&gt;module~utils -->
+<g id="module~~omega~3~~UsesGraph_edge5" class="edge"><title>module~input_output&#45;&gt;module~utils</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M363,-294C410.909,-294 466.195,-294 501.592,-294"/>
+<polygon fill="#000000" stroke="#000000" points="501.909,-297.5 511.909,-294 501.909,-290.5 501.909,-297.5"/>
+</g>
+<!-- module~input_output&#45;&gt;module~ccs_class -->
+<g id="module~~omega~3~~UsesGraph_edge29" class="edge"><title>module~input_output&#45;&gt;module~ccs_class</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M363,-294C411.463,-294 421.942,-308.747 470,-315 560.394,-326.762 667.527,-331.37 723.523,-333.074"/>
+<polygon fill="#000000" stroke="#000000" points="723.597,-336.578 733.695,-333.369 723.8,-329.581 723.597,-336.578"/>
+</g>
+<!-- module~input_output&#45;&gt;module~workspace -->
+<g id="module~~omega~3~~UsesGraph_edge33" class="edge"><title>module~input_output&#45;&gt;module~workspace</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M363,-294C416.268,-294 421.281,-326.46 470,-348 478.923,-351.945 488.647,-355.875 497.877,-359.44"/>
+<polygon fill="#000000" stroke="#000000" points="496.673,-362.726 507.264,-363.008 499.161,-356.183 496.673,-362.726"/>
+</g>
+<!-- module~input_output&#45;&gt;module~hf_class -->
+<g id="module~~omega~3~~UsesGraph_edge24" class="edge"><title>module~input_output&#45;&gt;module~hf_class</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M363,-294C442.784,-294 459.597,-268.779 538,-254"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M540,-254C572.367,-247.899 608.057,-236.571 633.839,-227.524"/>
+<polygon fill="#000000" stroke="#000000" points="635.309,-230.716 643.552,-224.059 632.957,-224.123 635.309,-230.716"/>
+</g>
+<!-- module~input_output&#45;&gt;module~memory_manager_class -->
+<g id="module~~omega~3~~UsesGraph_edge15" class="edge"><title>module~input_output&#45;&gt;module~memory_manager_class</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M207.306,-294C244.993,-294 307.309,-294 361,-294"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M363,-294C416.268,-294 421.281,-261.54 470,-240 477.976,-236.474 486.593,-232.959 494.925,-229.707"/>
+<polygon fill="#000000" stroke="#000000" points="496.439,-232.875 504.52,-226.024 493.93,-226.34 496.439,-232.875"/>
+</g>
+<!-- module~ccsd_class&#45;&gt;module~omega~3 -->
+<g id="module~~omega~3~~UsesGraph_edge39" class="edge"><title>module~ccsd_class&#45;&gt;module~omega~3</title>
+<path fill="none" stroke="#000000" d="M892.226,-380.715C900.48,-382.49 909.455,-384.42 917.941,-386.245"/>
+<polygon fill="#000000" stroke="#000000" points="917.456,-389.721 927.969,-388.402 918.928,-382.878 917.456,-389.721"/>
+</g>
+<!-- module~utils&#45;&gt;module~ccsd_class -->
+<g id="module~~omega~3~~UsesGraph_edge34" class="edge"><title>module~utils&#45;&gt;module~ccsd_class</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M566.478,-292.045C592.808,-290.513 634.314,-289.209 670,-293"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M672,-293C711.776,-297.225 726.022,-275.518 762,-293"/>
+</g>
+<!-- module~utils&#45;&gt;module~ccs_class -->
+<g id="module~~omega~3~~UsesGraph_edge28" class="edge"><title>module~utils&#45;&gt;module~ccs_class</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M672,-293C694.762,-295.418 718.223,-306.436 735.483,-316.442"/>
+<polygon fill="#000000" stroke="#000000" points="734.024,-319.649 744.391,-321.835 737.649,-313.661 734.024,-319.649"/>
+</g>
+<!-- module~utils&#45;&gt;module~hf_class -->
+<g id="module~~omega~3~~UsesGraph_edge23" class="edge"><title>module~utils&#45;&gt;module~hf_class</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M566.175,-286.395C579.244,-282.01 594.998,-275.809 608,-268 623.908,-258.446 639.647,-244.67 651.287,-233.424"/>
+<polygon fill="#000000" stroke="#000000" points="654.01,-235.653 658.643,-226.125 649.079,-230.684 654.01,-235.653"/>
+</g>
+<!-- module~ccs_class&#45;&gt;module~ccsd_class -->
+<g id="module~~omega~3~~UsesGraph_edge35" class="edge"><title>module~ccs_class&#45;&gt;module~ccsd_class</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M792.246,-345.893C801.27,-349.693 811.411,-353.963 821.011,-358.005"/>
+<polygon fill="#000000" stroke="#000000" points="819.795,-361.29 830.37,-361.945 822.512,-354.839 819.795,-361.29"/>
+</g>
+<!-- module~workspace&#45;&gt;module~ccsd_class -->
+<g id="module~~omega~3~~UsesGraph_edge38" class="edge"><title>module~workspace&#45;&gt;module~ccsd_class</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M672,-374C721.864,-368.643 779.64,-369.751 817.624,-371.472"/>
+<polygon fill="#000000" stroke="#000000" points="817.63,-374.977 827.789,-371.969 817.972,-367.985 817.63,-374.977"/>
+</g>
+<!-- module~workspace&#45;&gt;module~ccs_class -->
+<g id="module~~omega~3~~UsesGraph_edge31" class="edge"><title>module~workspace&#45;&gt;module~ccs_class</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M570.568,-375.837C596.975,-376.986 636.115,-377.641 670,-374"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M672,-374C694.521,-371.58 717.833,-360.954 735.087,-351.263"/>
+<polygon fill="#000000" stroke="#000000" points="737.151,-354.11 744.006,-346.033 733.61,-348.072 737.151,-354.11"/>
+</g>
+<!-- module~workspace&#45;&gt;module~hf_class -->
+<g id="module~~omega~3~~UsesGraph_edge22" class="edge"><title>module~workspace&#45;&gt;module~hf_class</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M556.654,-361.89C571.265,-350.751 592.533,-333.238 608,-315 629.253,-289.939 648.118,-256.838 659.304,-235.482"/>
+<polygon fill="#000000" stroke="#000000" points="662.565,-236.793 664.019,-226.298 656.338,-233.596 662.565,-236.793"/>
+</g>
+<!-- module~hf_class&#45;&gt;module~ccs_class -->
+<g id="module~~omega~3~~UsesGraph_edge27" class="edge"><title>module~hf_class&#45;&gt;module~ccs_class</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M678.872,-226.025C689.576,-244.323 711.362,-279.893 734,-307 736.164,-309.592 738.551,-312.201 740.991,-314.722"/>
+<polygon fill="#000000" stroke="#000000" points="738.719,-317.396 748.302,-321.915 743.629,-312.407 738.719,-317.396"/>
+</g>
+<!-- module~ground_state_specs_class&#45;&gt;module~hf_class -->
+<g id="module~~omega~3~~UsesGraph_edge16" class="edge"><title>module~ground_state_specs_class&#45;&gt;module~hf_class</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M430.633,-61.1992C464.336,-66.7974 504.859,-76.6696 538,-94"/>
+</g>
+<!-- module~calc_settings_class&#45;&gt;module~hf_class -->
+<g id="module~~omega~3~~UsesGraph_edge17" class="edge"><title>module~calc_settings_class&#45;&gt;module~hf_class</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M540,-94C567.807,-108.541 582.95,-94.1006 608,-113 634.92,-133.31 652.783,-169.013 662.152,-192.074"/>
+<polygon fill="#000000" stroke="#000000" points="658.994,-193.612 665.861,-201.679 665.524,-191.09 658.994,-193.612"/>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M409.791,-24.0767C417.984,-26.6877 426.334,-29.677 434,-33 483.166,-54.3118 490.514,-69.1682 538,-94"/>
+</g>
+<!-- module~response_calc_specs_class&#45;&gt;module~hf_class -->
+<g id="module~~omega~3~~UsesGraph_edge18" class="edge"><title>module~response_calc_specs_class&#45;&gt;module~hf_class</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M433.61,-174.833C482.91,-176.541 550.009,-181.125 608,-193 616.642,-194.77 625.744,-197.397 634.232,-200.199"/>
+<polygon fill="#000000" stroke="#000000" points="633.255,-203.565 643.85,-203.528 635.545,-196.95 633.255,-203.565"/>
+</g>
+<!-- module~excited_state_specs_class&#45;&gt;module~hf_class -->
+<g id="module~~omega~3~~UsesGraph_edge19" class="edge"><title>module~excited_state_specs_class&#45;&gt;module~hf_class</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M578.515,-146.036C588.449,-149.855 598.899,-154.534 608,-160 623.908,-169.554 639.647,-183.33 651.287,-194.576"/>
+<polygon fill="#000000" stroke="#000000" points="649.079,-197.316 658.643,-201.875 654.01,-192.347 649.079,-197.316"/>
+</g>
+<!-- module~calc_tasks_class~2&#45;&gt;module~hf_class -->
+<g id="module~~omega~3~~UsesGraph_edge20" class="edge"><title>module~calc_tasks_class~2&#45;&gt;module~hf_class</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M217.583,-124.973C268.546,-112.538 346.787,-94.0249 361,-94"/>
+</g>
+<!-- module~core_excited_state_specs_class&#45;&gt;module~hf_class -->
+<g id="module~~omega~3~~UsesGraph_edge21" class="edge"><title>module~core_excited_state_specs_class&#45;&gt;module~hf_class</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M254.433,-94.0623C287.504,-94.0713 326.076,-94.0613 361,-94"/>
+</g>
+<!-- module~memory_manager_class&#45;&gt;module~hf_class -->
+<g id="module~~omega~3~~UsesGraph_edge25" class="edge"><title>module~memory_manager_class&#45;&gt;module~hf_class</title>
+<path fill="none" stroke="#000000" stroke-dasharray="5,2" d="M602.715,-214C613.396,-214 624.159,-214 633.849,-214"/>
+<polygon fill="#000000" stroke="#000000" points="633.888,-217.5 643.888,-214 633.888,-210.5 633.888,-217.5"/>
+</g>
+</g>
+</svg>
+</div>
+                <script>var panmoduleomega3UsesGraph = svgPanZoom('#moduleomega3UsesGraph', {
+                    zoomEnabled: true,
+                    controlIconsEnabled: true,
+                    fit: true,
+                    center: true,});
+                    </script>
+                <div><a type="button" class="graph-help" data-toggle="modal" href="#graph-help-text">Help</a></div>
+                <div class="modal fade" id="graph-help-text" tabindex="-1" role="dialog">
+                  <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="-graph-help-label">Graph Key</h4>
+                      </div>
+                      <div class="modal-body">
+                        
+    <p>Nodes of different colours represent the following: </p>
+    <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Generated by graphviz version 2.36.0 (20140111.2315)
+ -->
+<!-- Title: Graph Key Pages: 1 -->
+<svg width="486pt" height="32pt"
+ viewBox="0.00 0.00 486.00 32.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 28)">
+<title>Graph Key</title>
+<polygon fill="white" stroke="none" points="-4,4 -4,-28 482,-28 482,4 -4,4"/>
+<!-- Module -->
+<g id="node1" class="node"><title>Module</title>
+<polygon fill="#337ab7" stroke="#337ab7" points="54,-24 0,-24 0,-0 54,-0 54,-24"/>
+<text text-anchor="middle" x="27" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Module</text>
+</g>
+<!-- Submodule -->
+<g id="node2" class="node"><title>Submodule</title>
+<polygon fill="#5bc0de" stroke="#5bc0de" points="138,-24 72,-24 72,-0 138,-0 138,-24"/>
+<text text-anchor="middle" x="105" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Submodule</text>
+</g>
+<!-- Subroutine -->
+<g id="node3" class="node"><title>Subroutine</title>
+<polygon fill="#d9534f" stroke="#d9534f" points="219.25,-24 156.75,-24 156.75,-0 219.25,-0 219.25,-24"/>
+<text text-anchor="middle" x="188" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Subroutine</text>
+</g>
+<!-- Function -->
+<g id="node4" class="node"><title>Function</title>
+<polygon fill="#d94e8f" stroke="#d94e8f" points="292,-24 238,-24 238,-0 292,-0 292,-24"/>
+<text text-anchor="middle" x="265" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Function</text>
+</g>
+<!-- Program -->
+<g id="node5" class="node"><title>Program</title>
+<polygon fill="#f0ad4e" stroke="#f0ad4e" points="364,-24 310,-24 310,-0 364,-0 364,-24"/>
+<text text-anchor="middle" x="337" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50" fill="white">Program</text>
+</g>
+<!-- This Page&#39;s Entity -->
+<g id="node6" class="node"><title>This Page&#39;s Entity</title>
+<polygon fill="none" stroke="black" points="478,-24 382,-24 382,-0 478,-0 478,-24"/>
+<text text-anchor="middle" x="430" y="-9.6" font-family="Helvetica,sans-Serif" font-size="10.50">This Page&#39;s Entity</text>
+</g>
+</g>
+</svg>
+
+    
+    <p>Solid arrows point from a parent (sub)module to the submodule which is
+    descended from it. Dashed arrows point from a module being used to the
+    module or program unit using it.
+    </p>
+    
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+    
+
+    
+    <div class="codehilite"><pre><span></span>Omega submodule (CCSD)
+Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+
+
+Contains the following family of procedures of the CCSD class:
+
+initialize_omega: allocates the projection vector (omega1, omega2)
+                      and sets it to zero.
+
+construct_omega:  constructs the projection vector (omega1, omega2) 
+                      for the current amplitudes (t1am, t2am) for the
+                      wavefunction object wf. The routine assumes that
+                      the projection vector is allocated.
+
+omega_ccsd_a1:         adds A1 term to omega1
+omega_ccsd_b1:         adds B1 term to omega1
+omega_ccsd_c1:         adds C1 term to omega1
+
+omega_ccsd_a2:         adds A2 term to omega2
+omega_ccsd_b2:         adds B2 term to omega2
+omega_ccsd_c2:         adds C2 term to omega2
+omega_ccsd_d2:         adds D2 term to omega2
+omega_ccsd_e2:         adds E2 term to omega2
+</pre></div>
+    <br>
+    
+
+    <section class="visible-xs visible-sm hidden-md">
+      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    </section>
+    <br class="visible-xs visible-sm hidden-md">
+
+    
+
+    
+    
+    
+    
+    
+
+    
+    
+    
+    
+    
+
+    
+    
+    
+    
+        
+
+        
+
+        
+    
+    
+    </div>
+  </div>
+
+  <section class="visible-xs visible-sm hidden-md">
+    <hr>
+    
+
+<div class="panel panel-default">
+  <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#allmods-1">All Modules</a></h3></div>
+  <div id="allmods-1" class="panel-collapse collapse">
+    <div class="list-group">
+      
+      <a class="list-group-item" href="../module/batching_index_class.html">batching_index_class</a>
+      
+      <a class="list-group-item" href="../module/calc_settings_class.html">calc_settings_class</a>
+      
+      <a class="list-group-item" href="../module/calc_tasks_class%7E2.html">calc_tasks_class</a>
+      
+      <a class="list-group-item" href="../module/calc_tasks_class.html">calc_tasks_class</a>
+      
+      <a class="list-group-item" href="../module/cc2_class.html">cc2_class</a>
+      
+      <a class="list-group-item" href="../module/cc3_class.html">cc3_class</a>
+      
+      <a class="list-group-item" href="../module/ccs_class.html">ccs_class</a>
+      
+      <a class="list-group-item" href="../module/ccsd_class.html">ccsd_class</a>
+      
+      <a class="list-group-item" href="../module/ccsdpt_class.html">ccsdpt_class</a>
+      
+      <a class="list-group-item" href="../module/core_excited_state_specs_class.html">core_excited_state_specs_class</a>
+      
+      <a class="list-group-item" href="../module/excited_state_specs_class.html">excited_state_specs_class</a>
+      
+      <a class="list-group-item" href="../module/ground_state_specs_class.html">ground_state_specs_class</a>
+      
+      <a class="list-group-item" href="../module/hf_class.html">hf_class</a>
+      
+      <a class="list-group-item" href="../module/input_output.html">input_output</a>
+      
+      <a class="list-group-item" href="../module/input_reader.html">input_reader</a>
+      
+      <a class="list-group-item" href="../module/memory_manager_class.html">memory_manager_class</a>
+      
+      <a class="list-group-item" href="../module/mlcc2_class.html">mlcc2_class</a>
+      
+      <a class="list-group-item" href="../module/mlcc_calculation_settings_class.html">mlcc_calculation_settings_class</a>
+      
+      <a class="list-group-item" href="../module/mlcc_orbitals_class.html">mlcc_orbitals_class</a>
+      
+      <a class="list-group-item" href="../module/mlccsd_class.html">mlccsd_class</a>
+      
+      <a class="list-group-item" href="../module/mp2_class.html">mp2_class</a>
+      
+      <a class="list-group-item" href="../module/response_calc_specs_class.html">response_calc_specs_class</a>
+      
+      <a class="list-group-item" href="../module/types.html">types</a>
+      
+      <a class="list-group-item" href="../module/utils.html">utils</a>
+      
+      <a class="list-group-item" href="../module/workspace.html">workspace</a>
+      
+    </div>
+  </div>
+</div>
+
+
+  </section>
+  
+    <hr>    
+    </div> <!-- /container -->
+    <footer>
+      <div class="container">
+      <div class="row">
+        <div class="col-xs-6 col-md-4"><p>&copy; 2017 </p></div>
+        <div class="col-xs-6 col-md-4 col-md-push-4">
+          <p class="text-right">
+            Documentation generated by 
+            <a href="https://github.com/cmacmackin/ford">FORD</a>
+            
+          </p>
+        </div>
+        <div class="col-xs-12 col-md-4 col-md-pull-4"><p class="text-center"> The eT program was developed by Eirik F. Kjønstad and Sarai D. Folkestad</p></div>
+      </div>
+      <br>
+      </div> <!-- /container -->    
+    </footer>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+<!--
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+-->
+    <script src="../js/bootstrap.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="../js/ie10-viewport-bug-workaround.js"></script>
+
+    <!-- MathJax JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } },
+        jax: ['input/TeX','input/MathML','output/HTML-CSS'],
+        extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js'],
+        'HTML-CSS': { 
+           styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: '#000000 ! important'} }
+        }
+      });
+    </script>
+    <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  </body>
+</html>

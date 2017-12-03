@@ -130,7 +130,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
 	  data-placement="bottom" data-html="true"
-	  title=" 2.2% of total for modules and submodules.">58 statements</a>
+	  title=" 0.3% of total for modules and submodules.">68 statements</a>
      </li> 
      
      
@@ -188,19 +188,49 @@
   <div id="allmods-0" class="panel-collapse collapse">
     <div class="list-group">
       
-      <a class="list-group-item" href="../module/calc_procedures_class.html">calc_procedures_class</a>
+      <a class="list-group-item" href="../module/batching_index_class.html">batching_index_class</a>
       
       <a class="list-group-item" href="../module/calc_settings_class.html">calc_settings_class</a>
+      
+      <a class="list-group-item" href="../module/calc_tasks_class%7E2.html">calc_tasks_class</a>
+      
+      <a class="list-group-item" href="../module/calc_tasks_class.html">calc_tasks_class</a>
+      
+      <a class="list-group-item" href="../module/cc2_class.html">cc2_class</a>
+      
+      <a class="list-group-item" href="../module/cc3_class.html">cc3_class</a>
       
       <a class="list-group-item" href="../module/ccs_class.html">ccs_class</a>
       
       <a class="list-group-item" href="../module/ccsd_class.html">ccsd_class</a>
+      
+      <a class="list-group-item" href="../module/ccsdpt_class.html">ccsdpt_class</a>
+      
+      <a class="list-group-item" href="../module/core_excited_state_specs_class.html">core_excited_state_specs_class</a>
+      
+      <a class="list-group-item" href="../module/excited_state_specs_class.html">excited_state_specs_class</a>
+      
+      <a class="list-group-item" href="../module/ground_state_specs_class.html">ground_state_specs_class</a>
       
       <a class="list-group-item" href="../module/hf_class.html">hf_class</a>
       
       <a class="list-group-item" href="../module/input_output.html">input_output</a>
       
       <a class="list-group-item" href="../module/input_reader.html">input_reader</a>
+      
+      <a class="list-group-item" href="../module/memory_manager_class.html">memory_manager_class</a>
+      
+      <a class="list-group-item" href="../module/mlcc2_class.html">mlcc2_class</a>
+      
+      <a class="list-group-item" href="../module/mlcc_calculation_settings_class.html">mlcc_calculation_settings_class</a>
+      
+      <a class="list-group-item" href="../module/mlcc_orbitals_class.html">mlcc_orbitals_class</a>
+      
+      <a class="list-group-item" href="../module/mlccsd_class.html">mlccsd_class</a>
+      
+      <a class="list-group-item" href="../module/mp2_class.html">mp2_class</a>
+      
+      <a class="list-group-item" href="../module/response_calc_specs_class.html">response_calc_specs_class</a>
       
       <a class="list-group-item" href="../module/types.html">types</a>
       
@@ -237,12 +267,14 @@
  Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 
 
- Consists of the following subroutines of the CCSD module:
+ Consists of the following module subroutines of the CCSD module:
 
  new_amplitudes:             Calculates the quasi-Newton estimate and passes the 
                              information needed by the DIIS routine.
  calc_ampeqs_norm:           Calculates the norm of the amplitude equations.
  calc_quasi_Newton_doubles:  Calculates the doubles part of the quasi-Newton estimate.
+ initialize_ground_state:    Initializes the amplitudes (MP2 estimate) and the amplitude 
+                             equations.
 
  Can be inherited by models of the same level (e.g. CC3) without modification.
 
@@ -316,19 +348,49 @@
   <div id="allmods-1" class="panel-collapse collapse">
     <div class="list-group">
       
-      <a class="list-group-item" href="../module/calc_procedures_class.html">calc_procedures_class</a>
+      <a class="list-group-item" href="../module/batching_index_class.html">batching_index_class</a>
       
       <a class="list-group-item" href="../module/calc_settings_class.html">calc_settings_class</a>
+      
+      <a class="list-group-item" href="../module/calc_tasks_class%7E2.html">calc_tasks_class</a>
+      
+      <a class="list-group-item" href="../module/calc_tasks_class.html">calc_tasks_class</a>
+      
+      <a class="list-group-item" href="../module/cc2_class.html">cc2_class</a>
+      
+      <a class="list-group-item" href="../module/cc3_class.html">cc3_class</a>
       
       <a class="list-group-item" href="../module/ccs_class.html">ccs_class</a>
       
       <a class="list-group-item" href="../module/ccsd_class.html">ccsd_class</a>
+      
+      <a class="list-group-item" href="../module/ccsdpt_class.html">ccsdpt_class</a>
+      
+      <a class="list-group-item" href="../module/core_excited_state_specs_class.html">core_excited_state_specs_class</a>
+      
+      <a class="list-group-item" href="../module/excited_state_specs_class.html">excited_state_specs_class</a>
+      
+      <a class="list-group-item" href="../module/ground_state_specs_class.html">ground_state_specs_class</a>
       
       <a class="list-group-item" href="../module/hf_class.html">hf_class</a>
       
       <a class="list-group-item" href="../module/input_output.html">input_output</a>
       
       <a class="list-group-item" href="../module/input_reader.html">input_reader</a>
+      
+      <a class="list-group-item" href="../module/memory_manager_class.html">memory_manager_class</a>
+      
+      <a class="list-group-item" href="../module/mlcc2_class.html">mlcc2_class</a>
+      
+      <a class="list-group-item" href="../module/mlcc_calculation_settings_class.html">mlcc_calculation_settings_class</a>
+      
+      <a class="list-group-item" href="../module/mlcc_orbitals_class.html">mlcc_orbitals_class</a>
+      
+      <a class="list-group-item" href="../module/mlccsd_class.html">mlccsd_class</a>
+      
+      <a class="list-group-item" href="../module/mp2_class.html">mp2_class</a>
+      
+      <a class="list-group-item" href="../module/response_calc_specs_class.html">response_calc_specs_class</a>
       
       <a class="list-group-item" href="../module/types.html">types</a>
       

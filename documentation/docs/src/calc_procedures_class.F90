@@ -1,7 +1,7 @@
-module calc_procedures_class
+module calc_tasks_class
 !
 !!
-!!                       Calculation procedures class module                                 
+!!                       Calculation tasks class module                                 
 !!            Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017         
 !!
 !!    The procedures class is used for two purposes. Wavefunctions possess 
@@ -24,17 +24,19 @@ module calc_procedures_class
 !  -::- Definition of the calc_procedures class -::-
 !  :::::::::::::::::::::::::::::::::::::::::::::::::
 !
-   type :: calc_procedures 
+   type :: calc_tasks
 !
-      logical :: do_ground_state   = .false.
-      logical :: do_excited_state  = .false. 
-      logical :: do_properties     = .false.
+      logical :: ground_state       = .false.
+      logical :: excited_state      = .false. 
+      logical :: core_excited_state = .false. 
+      logical :: ionized_state      = .false. 
+      logical :: core_ionized_state = .false. 
+      logical :: properties         = .false.
 !
-      integer(i15) :: n_singlet_states = 0
-      integer(i15) :: n_triplet_states = 0
+      character(len=40) :: current = 'ground_state'
 !
-   end type calc_procedures                                                                            
+   end type calc_tasks                                                                           
 !
 contains
 !
-end module calc_procedures_class
+end module calc_tasks_class
