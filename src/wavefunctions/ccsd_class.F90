@@ -4,10 +4,44 @@ module ccsd_class
 !!           Coupled cluster singles and doubles (CCSD) class module                                 
 !!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017         
 !!                                                                           
+!!
+!!    This module contains the definition of the coupled cluster singles
+!!    and doubles (CCSD) wavefunction class. It is structured into four sections:
+!!
+!!       1. Modules used by the class: 
+!!
+!!             Basic utilities and the ancestor class (CCS)
+!!
+!!       2. Definition of the class: 
+!!
+!!             Non-inherited variables, followed by non-inherited or overridden procedures
+!!
+!!       3. Interfaces to submodules:
+!!
+!!             The procedures in the class are grouped according to functionality, with
+!!             detailed definitions given in the following class submodules:
+!!
+!!                - Ground state
+!!                - Excited state 
+!!                - Jacobian (right transformation)
+!!                - Jacobian Transpose (left transformation)
+!!                - Ionized State
+!!                - CVS
+!!
+!!             The interfaces shows incoming variables and their type, but contains 
+!!             no information of the procedure itself. The procedure is shown in full 
+!!             in the corresponding submodule. 
+!!
+!!       4. Class module routines (i.e., non-submodule procedures). These include
+!!          the initialization and driver routines of the class, along with procedures that
+!!          are not (yet, at least) easily gathered in a submodule.
+!!         
+!! 
 !
-!  :::::::::::::::::::::::::::::::::::
-!  -::- Modules used by the class -::-
-!  :::::::::::::::::::::::::::::::::::
+!
+!  :::::::::::::::::::::::::::::::::::::
+!  -::- 1. Modules used by the class -::-
+!  ::::::::::::::::::::::::::::::::::::::
 !
 !  General tools
 !
@@ -22,9 +56,11 @@ module ccsd_class
 !
    implicit none 
 !
-!  ::::::::::::::::::::::::::::::::::::::
-!  -::- Definition of the CCSD class -::-
-!  ::::::::::::::::::::::::::::::::::::::
+!
+!  :::::::::::::::::::::::::::::::::::::::::
+!  -::- 2. Definition of the CCSD class -::-
+!  :::::::::::::::::::::::::::::::::::::::::
+!
 !
    type, extends(ccs) :: ccsd
 !
@@ -164,9 +200,11 @@ module ccsd_class
 !
    end type ccsd
 !
-!  :::::::::::::::::::::::::::::::::::::::::::::::::::::
-!  -::- Interface to the submodule routines of CCSD -::- 
-!  :::::::::::::::::::::::::::::::::::::::::::::::::::::
+!
+!  :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!  -::- 3. Interfaces to the submodules of the CCSD class -::- 
+!  :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!
 !
    interface
 !
@@ -1416,7 +1454,7 @@ contains
 !
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::
-!  -::- Initialization and driver routines -::-
+!  -::- 4. Class subroutines and functions -::- 
 !  ::::::::::::::::::::::::::::::::::::::::::::
 !
 !
@@ -1427,13 +1465,10 @@ contains
 !!
 !!    Performs the following tasks:
 !!
-!!       1. Sets HF orbital and energy information by reading from file (read_hf_info)
-!!       2. Transforms AO Cholesky vectors to MO basis and saves to file (read_transform_cholesky)
-!!       3. Allocates the Fock matrix and sets it to zero
-!!       4. Initializes the amplitudes (sets their initial values and associated variables)
-!!
-!!    Note: this routine does not calculate the energy, which is postponed until the wavefunction
-!!    is passed to the ground-state solver.
+!!    - Sets HF orbital and energy information by reading from file (read_hf_info)
+!!    - Transforms AO Cholesky vectors to MO basis and saves to file (read_transform_cholesky)
+!!    - Allocates the Fock matrix and sets it to zero
+!!    - Initializes the amplitudes (sets their initial values and associated variables)
 !!
       implicit none 
 !
@@ -1495,10 +1530,6 @@ contains
 !
    end subroutine init_ccsd
 !
-!
-!  :::::::::::::::::::::::::::::::::::::::::
-!  -::- Class subroutines and functions -::- 
-!  :::::::::::::::::::::::::::::::::::::::::
 !
    subroutine initialize_amplitudes_ccsd(wf)
 !!
