@@ -97,10 +97,8 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017 
 !!
 !!    Initializes the memory manager object by setting the 
-!!    total and initial available memory
-!!
-!!    This is only called if the user specifies a total memory 
-!!    different from the standard
+!!    total and initial available memory. This is only called 
+!!    if the user specifies a total memory different from the standard.
 !! 
       implicit none 
 !
