@@ -4818,7 +4818,7 @@ contains
 !!
 !!    Calculates and returns required memory to make vvvv electronic repulsion integral.
 !!
-!!    dim_1, dim_2, dim_3, and dim_4 are the full dimension of index 1-4.
+!!    dim_1, dim_2, dim_3, and dim_4 are the full dimension of index dim_1-dim_4.
 !!    They will typically be wf%n_v and are therefore optionals, however will not be wf%n_v for ML 
 !!
       implicit none
@@ -4930,7 +4930,7 @@ contains
 !!    Calculates and returns required memory to make vvvv electronic repulsion integral.
 !!
 !!    dim_1, dim_2, dim_3, and dim_4 are the full dimension of index 1-4.
-!!    They will typically be wf%n_v for 1-3 and wf%n_o for 4 and are therefore optionals,  
+!!    They will typically be wf%n_v for dim_1-dim_3 and wf%n_o for dim_4 and are therefore optionals,  
 !!    however will not necessarily have these values for ML 
 !!
       implicit none
@@ -4952,7 +4952,7 @@ contains
 !!    Calculates and returns required memory to make vvvv electronic repulsion integral.
 !!
 !!    dim_1, dim_2, dim_3, and dim_4 are the full dimension of index 1-4.
-!!    They will typically be wf%n_v for 1, 2, and 4 and wf%n_o for 3 and are therefore optionals,  
+!!    They will typically be wf%n_v for dim_1, dim_2, and dim_4 and wf%n_o for dim_3 and are therefore optionals,  
 !!    however will not necessarily have these values for ML 
 !!
       implicit none
@@ -4974,7 +4974,7 @@ contains
 !!    Calculates and returns required memory to make vvvv electronic repulsion integral.
 !!
 !!    dim_1, dim_2, dim_3, and dim_4 are the full dimension of index 1-4.
-!!    They will typically be wf%n_v for 1 and 2 and wf%n_o for 3 and 4 and are therefore optionals,  
+!!    They will typically be wf%n_v for dim_1 and dim_2 and wf%n_o for dim_3 and dim_4 and are therefore optionals,  
 !!    however will not necessarily have these values for ML 
 !!
       implicit none
