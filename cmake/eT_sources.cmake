@@ -17,13 +17,13 @@ set(eT_fortran_sources
    src/misc_classes/calc_settings_class.F90
    src/misc_classes/mlcc_calculation_settings_class.F90
    src/misc_classes/mlcc_orbitals_class.F90
+   src/misc_classes/memory_manager_class.F90
+   src/misc_classes/batching_index_class.F90
    src/tools/types.F90
    src/tools/workspace.F90
    src/tools/input_output.F90
    src/tools/input_reader.F90
    src/tools/utils.F90
-   src/tools/memory_manager_class.F90
-   src/tools/batching_index_class.F90
    src/submodules/ccs_class_submodules/input_reader_submodule.F90
    src/submodules/ccs_class_submodules/cholesky_submodule.F90
    src/submodules/ccs_class_submodules/ground_state_submodule.F90
