@@ -198,7 +198,7 @@ contains
      call wf%mem%dealloc(L_iJ_k, (wf%n_o)*(wf%n_J), wf%n_o)
      call wf%mem%dealloc(L_iJ_a, (wf%n_o)*(wf%n_J), wf%n_v)
     else
-            write(unit_output, *) 'WARNING: Error in call to get_cholesky_ij'
+            write(unit_output, *) 'Error: in call to get_cholesky_ij'
             stop
    endif   
 ! 
@@ -972,82 +972,82 @@ contains
       a_length = a_last - a_first + 1
       b_length = b_last - b_first + 1
 !
-!        Allocate L_ib_J
+!     Allocate L_ib_J
 !     
-         call wf%mem%alloc(L_ib_J, (wf%n_o)*b_length, wf%n_J)
+      call wf%mem%alloc(L_ib_J, (wf%n_o)*b_length, wf%n_J)
 !
-!        Read L_ia_J
+!     Read L_ia_J
 !
-!        Note: using L_ia_J instead of L_ai_J, here, to avoid two reorderings.
-!              This is possible because of the symmetry L_ai_J(ai,J) == L_ia_J(ia,J).
+!     Note: using L_ia_J instead of L_ai_J, here, to avoid two reorderings.
+!           This is possible because of the symmetry L_ai_J(ai,J) == L_ia_J(ia,J).
 !  
-         call wf%read_cholesky_ia(L_ib_J, 1, wf%n_o, b_first, b_last)
+      call wf%read_cholesky_ia(L_ib_J, 1, wf%n_o, b_first, b_last)
 !
-!        Read L_ab_J for batch of b
+!     Read L_ab_J for batch of b
 !
-         call wf%read_cholesky_ab(L_ab_J, a_first, a_last, b_first, b_last)
+      call wf%read_cholesky_ab(L_ab_J, a_first, a_last, b_first, b_last)
 !
-!        Allocate L_Jb,i for batch of b
+!     Allocate L_Jb,i for batch of b
 !
-         call wf%mem%alloc(L_Jb_i, (wf%n_J)*b_length, wf%n_o)
+      call wf%mem%alloc(L_Jb_i, (wf%n_J)*b_length, wf%n_o)
 !
-!        Reorder L_ib_J to L_Jb_i
+!     Reorder L_ib_J to L_Jb_i
 !
-         do i = 1, wf%n_o
-            do b = 1, b_length
-               do J = 1, wf%n_J
+      do i = 1, wf%n_o
+         do b = 1, b_length
+            do J = 1, wf%n_J
 !
-                  ib = index_two(i, b, wf%n_o) 
-                  Jb = index_two(J, b, wf%n_J)
+               ib = index_two(i, b, wf%n_o) 
+               Jb = index_two(J, b, wf%n_J)
 !
-                  L_Jb_i(Jb, i) = L_ib_J(ib, J)
+               L_Jb_i(Jb, i) = L_ib_J(ib, J)
 !
-               enddo
             enddo
          enddo
+      enddo
 !
-!        Dellocate L_ib_J
+!     Dellocate L_ib_J
 !  
-         call wf%mem%dealloc(L_ib_J, (wf%n_o)*b_length, wf%n_J)
+      call wf%mem%dealloc(L_ib_J, (wf%n_o)*b_length, wf%n_J)
 !
-!        Allocate L_Jb_a for batch of b
+!     Allocate L_Jb_a for batch of b
 !  
-         call wf%mem%alloc(L_Jb_a, (wf%n_J)*b_length, a_length)
+      call wf%mem%alloc(L_Jb_a, (wf%n_J)*b_length, a_length)
 !
-!        T1-transformation
+!     T1-transformation
 !
-         call dgemm('N','T',                &
-                     (wf%n_J)*b_length,     & 
-                     a_length,              &
-                     wf%n_o,                &
-                     -one,                  &
-                     L_Jb_i,                &
-                     (wf%n_J)*b_length,     &
-                     wf%t1am(a_first, 1),   &
-                     wf%n_v,                &
-                     zero,                  &
-                     L_Jb_a,                &
-                     b_length*(wf%n_J))
+      call dgemm('N','T',                &
+                  (wf%n_J)*b_length,     & 
+                  a_length,              &
+                  wf%n_o,                &
+                  -one,                  &
+                  L_Jb_i,                &
+                  (wf%n_J)*b_length,     &
+                  wf%t1am(a_first, 1),   &
+                  wf%n_v,                &
+                  zero,                  &
+                  L_Jb_a,                &
+                  b_length*(wf%n_J))
 !
-!        Add terms of L_Jb_a to L_ab_J
+!     Add terms of L_Jb_a to L_ab_J
 !
-         do a = 1, a_length
-            do b = 1, b_length
-               do J = 1, wf%n_J
+      do a = 1, a_length
+         do b = 1, b_length
+            do J = 1, wf%n_J
 !
-                  Jb = index_two(J, b, wf%n_J)
-                  ab = index_two(a, b, a_length)
+               Jb = index_two(J, b, wf%n_J)
+               ab = index_two(a, b, a_length)
 !
-                  L_ab_J(ab, J) = L_ab_J(ab, J) + L_Jb_a(Jb, a)
+               L_ab_J(ab, J) = L_ab_J(ab, J) + L_Jb_a(Jb, a)
 !
-               enddo
             enddo
          enddo
+      enddo
 !
-!        Dellocate L_Jb,i and L_Jb_a for batch of b
+!     Dellocate L_Jb,i and L_Jb_a for batch of b
 !
-         call wf%mem%dealloc(L_Jb_a, (wf%n_J)*b_length, a_length)
-         call wf%mem%dealloc(L_Jb_i, (wf%n_J)*b_length, wf%n_o)
+      call wf%mem%dealloc(L_Jb_a, (wf%n_J)*b_length, a_length)
+      call wf%mem%dealloc(L_Jb_i, (wf%n_J)*b_length, wf%n_o)
 !
    end subroutine get_cholesky_ab_ccs
 !

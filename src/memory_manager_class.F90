@@ -50,13 +50,19 @@ module memory_manager_class
       procedure :: alloc_int   => alloc_int_memory_manager
       procedure :: dealloc_int => dealloc_int_memory_manager
 !
+!     Calculation of required memory for construction of certain integrals (Integrals with at least one L_ab^J)
+!
+!     procedure :: get_vvvo_required_mem => get_vvvo_required_mem_memory_manager
+!     procedure :: get_vvov_required_mem => get_vvov_required_mem_memory_manager
+!     procedure :: get_vvoo_required_mem => get_vvoo_required_mem_memory_manager
+!
    end type memory_manager                                                                            
 !
 !
 contains
 !
 !
-   module subroutine init_memory_manager(mem, total)
+   subroutine init_memory_manager(mem, total)
 !!
 !!    Init (Memory Manager)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017 
@@ -84,7 +90,7 @@ contains
    end subroutine init_memory_manager
 !
 !
-   module subroutine alloc_memory_manager(mem, array, M, N)
+   subroutine alloc_memory_manager(mem, array, M, N)
 !!
 !!    Alloc (Memory Manager)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
@@ -137,7 +143,7 @@ contains
    end subroutine alloc_memory_manager
 !
 !
-   module subroutine dealloc_memory_manager(mem, array, M, N)
+   subroutine dealloc_memory_manager(mem, array, M, N)
 !!
 !!    Dealloc (Memory Manager)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
@@ -180,7 +186,7 @@ contains
    end subroutine dealloc_memory_manager
 !
 !
-   module subroutine alloc_int_memory_manager(mem, array, M, N)
+   subroutine alloc_int_memory_manager(mem, array, M, N)
 !!
 !!    Alloc Int (Memory Manager)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
@@ -233,7 +239,7 @@ contains
    end subroutine alloc_int_memory_manager
 !
 !
-   module subroutine dealloc_int_memory_manager(mem, array, M, N)
+   subroutine dealloc_int_memory_manager(mem, array, M, N)
 !!
 !!    Dealloc Int (Memory Manager)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
@@ -274,6 +280,45 @@ contains
       mem%available = mem%available + i15*size       
 !
    end subroutine dealloc_int_memory_manager
+!
+!
+   integer function get_vvvo_required_mem_memory_manager(mem, index_dim_1, index_dim_2, index_dim_3, index_dim_4)
+!!
+!!
+!!
+      implicit none
+!
+      class(memory_manager), intent(in) :: mem 
+!  
+      integer(i15), intent(in)          :: index_dim_1, index_dim_2, index_dim_3, index_dim_4
+!
+   end function get_vvvo_required_mem_memory_manager
+!
+!
+   integer function get_vvov_required_mem_memory_manager(mem, index_dim_1, index_dim_2, index_dim_3, index_dim_4)
+!!
+!!
+!!
+      implicit none
+!
+      class(memory_manager), intent(in) :: mem 
+!  
+      integer(i15), intent(in)          :: index_dim_1, index_dim_2, index_dim_3, index_dim_4
+!
+   end function get_vvov_required_mem_memory_manager
+!
+!
+   integer function get_vvoo_required_mem_memory_manager(mem, index_dim_1, index_dim_2, index_dim_3, index_dim_4)
+!!
+!!
+!!
+      implicit none
+!
+      class(memory_manager), intent(in) :: mem 
+!  
+      integer(i15), intent(in)          :: index_dim_1, index_dim_2, index_dim_3, index_dim_4
+!
+   end function get_vvoo_required_mem_memory_manager
 !
 !
 end module memory_manager_class

@@ -219,8 +219,8 @@ module ccs_class
       procedure, non_overridable :: get_cholesky_ab => get_cholesky_ab_ccs 
 !
 !
-!     -::- Integrals submodule routine pointers -::-
-!     ----------------------------------------------
+!     -::- Integral submodule routine pointers -::-
+!     ---------------------------------------------
 !
 !     Get integral routines
 !
@@ -276,6 +276,8 @@ module ccs_class
       procedure :: read_t1_vv_vv_electronic_repulsion  => read_t1_vv_vv_electronic_repulsion_ccs
       procedure :: read_t1_vo_ov_electronic_repulsion  => read_t1_vo_ov_electronic_repulsion_ccs
       procedure :: read_t1_vv_ov_electronic_repulsion  => read_t1_vv_ov_electronic_repulsion_ccs
+!
+      procedure :: get_vvvv_required_mem               => get_vvvv_required_mem_ccs
 !
 !
 !     -::- Fock submodule routine pointers -::-
@@ -2111,7 +2113,23 @@ module ccs_class
 !
          end subroutine t1_transform_vv_vv_ccs
 !
-      end interface
+!   
+      module function get_vvvv_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
+!!
+!!       Get vvvv required memory (CCS)
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Dec 2017
+!!
+         implicit none
+!
+         class(ccs), intent(in)              :: wf 
+!  
+         integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
+!
+         integer(i15) :: get_vvvv_required_mem_ccs
+!
+      end function get_vvvv_required_mem_ccs
+!
+   end interface
 !
 !
    interface

@@ -2350,11 +2350,17 @@ contains
 !        Alllocate Cholesky vectors
 !
          call wf%mem%alloc(L_ab_J, length_1*length_2, wf%n_J)
-         call wf%mem%alloc(L_cd_J, length_3*length_4, wf%n_J)
 !
 !        Get T1-transformed Cholesky vectors
 !
          call wf%get_cholesky_ab(L_ab_J, index1_first, index1_last, index2_first, index2_last)
+!
+!        Alllocate Cholesky vectors
+!
+         call wf%mem%alloc(L_cd_J, length_3*length_4, wf%n_J)
+!
+!        Get T1-transformed Cholesky vectors
+!
          call wf%get_cholesky_ab(L_cd_J, index3_first, index3_last, index4_first, index4_last)
 !
 !        Construct integral
@@ -3390,10 +3396,11 @@ contains
       length_3 = index3_last - index3_first + 1 ! c
       length_4 = index4_last - index4_first + 1 ! d
 !
-!     Test if we are batching
+!        Test if we are batching
 !
-        if ((length_1 .eq. wf%n_v) .and. (length_2 .eq. wf%n_v) .and. &
+         if ((length_1 .eq. wf%n_v) .and. (length_2 .eq. wf%n_v) .and. &
             (length_3 .eq. wf%n_v) .and. (length_4 .eq. wf%n_v) ) then
+!
 !        We are NOT batching
 !
 !        :: Term 1 and 2 ::
@@ -3579,6 +3586,7 @@ contains
                      wf%n_o*length_2)
 !
          call wf%mem%dealloc(L_cd_J, length_3*length_4, wf%n_J)
+         call wf%mem%dealloc(L_ib_J, wf%n_o*length_2, wf%n_J)
 !
 !        g_vv_vv = g_ab_cd -= sum_(i)t_a_i* x_ib_cd
 !
@@ -3624,6 +3632,8 @@ contains
                      x_ab_dk,             &
                      length_1*length_2)
 !
+         call wf%mem%dealloc(L_ab_J, length_1*length_2, wf%n_J)
+!
 !        g_ab_dc = - sum_(k)t_c_k * x_ab_dk
 !
          call wf%mem%alloc(g_ab_dc, length_1*length_2, length_4*length_3)
@@ -3646,6 +3656,9 @@ contains
          call wf%mem%alloc(x_ib_dk, wf%n_o*length_2, wf%n_o*length_4)
 !
 !        x_ib_dk = sum_(J)L_ib_J * L_dk_J
+!    
+         call wf%mem%alloc(L_ib_J, (wf%n_o)*length_2, wf%n_J)
+         call wf%read_cholesky_ia(L_ib_J, 1, wf%n_o, index2_first, index2_last)
 !
          call dgemm('N', 'T',          &
                      wf%n_o*length_2,  &
@@ -4798,4 +4811,113 @@ contains
    end subroutine read_t1_vv_vo_electronic_repulsion_ccs
 !
 !
+   module function get_vvvv_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
+!!
+!!    Get vvvv required memory (CCS)
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Dec 2017
+!!
+!!    Calculates and returns required memory to make vvvv electronic repulsion integral.
+!!
+!!    dim_1, dim_2, dim_3, and dim_4 are the full dimension of index 1-4.
+!!    They will typically be wf%n_v and are therefore optionals, however will not be wf%n_v for ML 
+!!
+      implicit none
+!
+      class(ccs), intent(in)              :: wf 
+!  
+      integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
+!
+      integer(i15) :: get_vvvv_required_mem_ccs
+!
+      logical :: vvvv_on_file    = .false.
+      logical :: t1_vvvv_on_file = .false.
+!
+      if (present(dim_1) .and. present(dim_2) .and. present(dim_3) .and. present(dim_4)) then
+!
+         get_vvvv_required_mem_ccs = (dim_1*dim_2*dim_3*dim_4)
+!
+!        Check if vvvv integrals are on file
+!
+         inquire(file='g_abcd',exist=vvvv_on_file)
+         inquire(file='g_t1_abcd',exist=t1_vvvv_on_file)
+!
+         if ( t1_vvvv_on_file) then
+!
+!           We are reading T1 transformed vvvv electronic repulsion integral, 
+!           this only requires the size of the array itself
+!
+            get_vvvv_required_mem_ccs = get_vvvv_required_mem_ccs*dp
+            return
+!
+         elseif (vvvv_on_file) then
+!
+!           We are reading vvvv electronic repulsion integral, 
+!           this only requires the size of the array itself plus T1 transformation
+!
+            get_vvvv_required_mem_ccs = get_vvvv_required_mem_ccs + &
+                     max((dim_2)*(wf%n_o)*(wf%n_J) + (dim_3)*(dim_4)*(wf%n_J) + (dim_2)*(dim_3)*(dim_4)*(wf%n_o)       , &
+                         (dim_4)*(wf%n_o)*(wf%n_J) + (dim_1)*(dim_2)*(dim_4)*(wf%n_o) + (dim_1)*(dim_2)*(wf%n_J)       , &
+                         (dim_4)*(wf%n_o)*(wf%n_J) + (dim_1)*(dim_2)*(dim_4)*(wf%n_o) + (dim_1)*(dim_2)*(dim_3)*(dim_4), &
+                         (dim_4)*(wf%n_o)*(wf%n_J) + (dim_2)*(dim_4)*(wf%n_o**2) &
+                              + (dim_2)*(wf%n_o)*(wf%n_J) + (dim_2)*(dim_4)*(dim_3)*(dim_4), &
+                         (dim_2)*(dim_4)*(wf%n_o**2) + (dim_2)*(dim_3)*(dim_4)*(wf%n_o) + (dim_2)*(dim_4)*(dim_3)*(dim_4))
+!
+            get_vvvv_required_mem_ccs = get_vvvv_required_mem_ccs*dp
+            return
+!
+         endif
+!
+      elseif (.not. (present(dim_1) .and. present(dim_2) .and. present(dim_3) .and. present(dim_4))) then
+!
+         get_vvvv_required_mem_ccs = (wf%n_v**4)*dp
+!
+!        Check if vvvv integrals are on file
+!
+         inquire(file='g_abcd',exist=vvvv_on_file)
+         inquire(file='g_t1_abcd',exist=t1_vvvv_on_file)
+!
+         if ( t1_vvvv_on_file) then
+!
+!           We are reading T1 transformed vvvv electronic repulsion integral, 
+!           this only requires the size of the array itself
+!
+            get_vvvv_required_mem_ccs = get_vvvv_required_mem_ccs*dp
+            return
+!
+         elseif (vvvv_on_file) then
+!
+!           We are reading vvvv electronic repulsion integral, 
+!           this only requires the size of the array itself plus T1 transformation
+!
+            get_vvvv_required_mem_ccs = get_vvvv_required_mem_ccs + &
+                      max((wf%n_v)*(wf%n_o)*(wf%n_J) + (wf%n_v**2)*(wf%n_J) + (wf%n_v**3)*(wf%n_o), &
+                          (wf%n_v)*(wf%n_o)*(wf%n_J) + (wf%n_v**4) + (wf%n_v**3)*(wf%n_o)         , &
+                          2*(wf%n_v)*(wf%n_o)*(wf%n_J) + (wf%n_v**2)*(wf%n_o**2)                  , &
+                          (wf%n_v**2)*(wf%n_o**2) + (wf%n_v**3)*(wf%n_o)                          , &
+                          (wf%n_v**4) + (wf%n_v**3)*(wf%n_o)) 
+!
+            get_vvvv_required_mem_ccs = get_vvvv_required_mem_ccs*dp
+            return
+!
+         endif
+!
+      else
+!
+         write(unit_output,*) 'Error: call to get_vvvv_required_mem is missing some arguments'
+         stop
+!
+      endif
+!
+!     We are constructing the integral from T1-transformed Cholesky vectors
+!
+      get_vvvv_required_mem_ccs = get_vvvv_required_mem_ccs + (dim_1)*(dim_2)*(wf%n_J)
+!
+      get_vvvv_required_mem_ccs = get_vvvv_required_mem_ccs + max(2*(wf%n_o)*(dim_2)*(wf%n_J), &
+                                       (wf%n_o)*(dim_2)*(wf%n_J) + (dim_1)*(dim_2)*(wf%n_J), &
+                                       (dim_3)*(dim_4)*(wf%n_J) + 2*(wf%n_o)*(dim_4)*(wf%n_J), &
+                                       2*(dim_3)*(dim_4)*(wf%n_J) + (wf%n_o)*(dim_4)*(wf%n_J))
+!
+      get_vvvv_required_mem_ccs = get_vvvv_required_mem_ccs*dp
+!
+   end function get_vvvv_required_mem_ccs
 end submodule integrals
