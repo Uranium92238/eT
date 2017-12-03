@@ -1,12 +1,43 @@
 module batching_index_class
 !
 !!
-!!                    Batching index class module                                 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017         
+!!                                  Batching index class module                                 
+!!                   Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017         
 !!
 !!    The batching index class represents a single index (e.g. a in g_abcd)
-!!    that is being batched over. It contains information relevant to the 
-!!    restriction of that index.
+!!    that is being batched over. During a batching process, it contains information 
+!!    relevant to the restriction of that index, such as the first and last indices,
+!!    the length of the batching region as well as the total number of batches.
+!!
+!!    A typical use of the batching index is as follows:
+!!
+!!       type(batching_index) :: batch_a 
+!!
+!!       call batch_a%init(wf%n_v) -> initializes batching object for an index of dimension
+!!                                    equal to the number of virtual orbitals
+!!
+!!       call wf%mem%num_batch(batch_a, required) -> determines the number of batches and
+!!                                                   and the largest batching length, saving
+!!                                                   that information in the batch_a object
+!!
+!!       do current_a_batch = 1, batch_a%num_batches 
+!!
+!!          call batch_a%determine_limits(current_a_batch) -> determines the first and last index values,
+!!                                                            and the length, of the batching range
+!!                                                            for the specific batch 'current_a_batch',
+!!                                                            saving that info. in batch_a 
+!!
+!!          Do some stuff. Useful & available info:
+!!
+!!             batch_a%first  -> first value of index a in the current batch 
+!!             batch_a%last   -> last value of index a in the current batch 
+!!             batch_a%length -> length of current batch, last - first + 1
+!!
+!!       enddo  
+!!
+!!    The case is similar for a two-batching process, which can also be handled 
+!!    by the wavefunction's memory manager object 'mem'.
+!!
 !! 
 !
 !  :::::::::::::::::::::::::::::::::::
@@ -85,6 +116,10 @@ contains
 !!
 !!    Determine limits 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
+!!
+!!    Given the batch number, this routine determine the first and 
+!!    and last values, for the index, as well as the length of the
+!!    current batching interval.
 !!
       implicit none 
 !
