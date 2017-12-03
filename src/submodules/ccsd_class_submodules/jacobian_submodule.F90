@@ -885,7 +885,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
                         2*((wf%n_v)**3)*(wf%n_o))
 !     
       required = 4*required ! In words
-      available = get_available()
+      available = wf%mem%available
 !
       batch_dimension  = wf%n_v ! Batch over the virtual index a
       max_batch_length = 0      ! Initilization of unset variables 
@@ -1105,7 +1105,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
       required = 4*required ! Words
 !
-      available = get_available()
+      available = wf%mem%available
 ! 
       batch_dimension  = wf%n_v ! Batch over the virtual index b
       max_batch_length = 0      ! Initilization of unset variables 
@@ -1993,7 +1993,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
                      (wf%n_o)*(wf%n_v)**3)             ! Holding L_bc^J and g_aibc
 !
       required = 4*required ! Words
-      available = get_available()
+      available = wf%mem%available
 !
       batch_dimension  = wf%n_v ! Batch over the virtual index b
       max_batch_length = 0      ! Initilization of unset variables 
@@ -4045,7 +4045,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
                  + 2*(wf%n_J)*((wf%n_o)**2)
 !    
         required = 4*required         ! In words
-        available = get_available()
+        available = wf%mem%available
 !
         batch_dimension  = wf%n_v ! Batch over the virtual index a
         max_batch_length = 0      ! Initilization of unset variables 
@@ -4460,7 +4460,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
          required = required*4  ! Words
 
-         available = get_available()
+         available = wf%mem%available
 !
          a_max_length = 0
          call num_two_batch(required, available, a_max_length, a_n_batch, wf%n_v)

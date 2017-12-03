@@ -130,7 +130,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
 	  data-placement="bottom" data-html="true"
-	  title=" 6.3% of total for modules and submodules.">165 statements</a>
+	  title=" 0.9% of total for modules and submodules.">203 statements</a>
      </li> 
      
      
@@ -139,7 +139,7 @@
   </ul>
   <ol class="breadcrumb in-well text-right">
   
-     <li><a href='../sourcefile/ground_state_submodule.f90.html'>ground_state_submodule.F90</a></li>
+     <li><a href='../sourcefile/ground_state_submodule.f90%7E4.html'>ground_state_submodule.F90</a></li>
   
      <li class="active">ground_state</li>
   </ol>
@@ -188,19 +188,49 @@
   <div id="allmods-0" class="panel-collapse collapse">
     <div class="list-group">
       
-      <a class="list-group-item" href="../module/calc_procedures_class.html">calc_procedures_class</a>
+      <a class="list-group-item" href="../module/batching_index_class.html">batching_index_class</a>
       
       <a class="list-group-item" href="../module/calc_settings_class.html">calc_settings_class</a>
+      
+      <a class="list-group-item" href="../module/calc_tasks_class%7E2.html">calc_tasks_class</a>
+      
+      <a class="list-group-item" href="../module/calc_tasks_class.html">calc_tasks_class</a>
+      
+      <a class="list-group-item" href="../module/cc2_class.html">cc2_class</a>
+      
+      <a class="list-group-item" href="../module/cc3_class.html">cc3_class</a>
       
       <a class="list-group-item" href="../module/ccs_class.html">ccs_class</a>
       
       <a class="list-group-item" href="../module/ccsd_class.html">ccsd_class</a>
+      
+      <a class="list-group-item" href="../module/ccsdpt_class.html">ccsdpt_class</a>
+      
+      <a class="list-group-item" href="../module/core_excited_state_specs_class.html">core_excited_state_specs_class</a>
+      
+      <a class="list-group-item" href="../module/excited_state_specs_class.html">excited_state_specs_class</a>
+      
+      <a class="list-group-item" href="../module/ground_state_specs_class.html">ground_state_specs_class</a>
       
       <a class="list-group-item" href="../module/hf_class.html">hf_class</a>
       
       <a class="list-group-item" href="../module/input_output.html">input_output</a>
       
       <a class="list-group-item" href="../module/input_reader.html">input_reader</a>
+      
+      <a class="list-group-item" href="../module/memory_manager_class.html">memory_manager_class</a>
+      
+      <a class="list-group-item" href="../module/mlcc2_class.html">mlcc2_class</a>
+      
+      <a class="list-group-item" href="../module/mlcc_calculation_settings_class.html">mlcc_calculation_settings_class</a>
+      
+      <a class="list-group-item" href="../module/mlcc_orbitals_class.html">mlcc_orbitals_class</a>
+      
+      <a class="list-group-item" href="../module/mlccsd_class.html">mlccsd_class</a>
+      
+      <a class="list-group-item" href="../module/mp2_class.html">mp2_class</a>
+      
+      <a class="list-group-item" href="../module/response_calc_specs_class.html">response_calc_specs_class</a>
       
       <a class="list-group-item" href="../module/types.html">types</a>
       
@@ -233,10 +263,10 @@
   
 
     
-    <div class="codehilite"><pre><span></span>                            Ground state submodule (CCS)
-            Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+    <div class="codehilite"><pre><span></span>Ground state submodule (CCS)
+Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 
-Consists of the following subroutines of the CCS module:
+Consists of the following module subroutines of the CCS:
 
 ground_state_solver:        Controls the iterative loop, calling in turn
                             the calculation of the energy, the amplitude equations 
@@ -253,12 +283,15 @@ diis_ccs:                   This routine saves the quasi-Newton estimate Δ t an
 calc_ampeqs:                Updates the amplitude equations for the current amplitudes.
 calc_ampeqs_norm:           Calculates the norm of the amplitude equations.
 calc_quasi_Newton_singles:  Calculates the singles part of the quasi-Newton estimate.
+initialize_ground_state:    Initializes the amplitudes and the amplitude equations.
+destruct_ground_state:      Deallocates the amplitudes and the amplitude equations.
 
 Can be inherited by models of the same level (e.g. CC2) without modification.
 
 When inherited by higher level models (e.g. CCSD), the new_amplitudes and calc_ampeqs_norm
 routines should be overridden to account for the doubles quasi-Newton estimate, amplitudes, 
-and projection vector.
+and projection vector. Non-standard CC methods may need to override the initialize_ground_state
+and destruct_ground_state.
 </pre></div>
     <br>
     
@@ -326,19 +359,49 @@ and projection vector.
   <div id="allmods-1" class="panel-collapse collapse">
     <div class="list-group">
       
-      <a class="list-group-item" href="../module/calc_procedures_class.html">calc_procedures_class</a>
+      <a class="list-group-item" href="../module/batching_index_class.html">batching_index_class</a>
       
       <a class="list-group-item" href="../module/calc_settings_class.html">calc_settings_class</a>
+      
+      <a class="list-group-item" href="../module/calc_tasks_class%7E2.html">calc_tasks_class</a>
+      
+      <a class="list-group-item" href="../module/calc_tasks_class.html">calc_tasks_class</a>
+      
+      <a class="list-group-item" href="../module/cc2_class.html">cc2_class</a>
+      
+      <a class="list-group-item" href="../module/cc3_class.html">cc3_class</a>
       
       <a class="list-group-item" href="../module/ccs_class.html">ccs_class</a>
       
       <a class="list-group-item" href="../module/ccsd_class.html">ccsd_class</a>
+      
+      <a class="list-group-item" href="../module/ccsdpt_class.html">ccsdpt_class</a>
+      
+      <a class="list-group-item" href="../module/core_excited_state_specs_class.html">core_excited_state_specs_class</a>
+      
+      <a class="list-group-item" href="../module/excited_state_specs_class.html">excited_state_specs_class</a>
+      
+      <a class="list-group-item" href="../module/ground_state_specs_class.html">ground_state_specs_class</a>
       
       <a class="list-group-item" href="../module/hf_class.html">hf_class</a>
       
       <a class="list-group-item" href="../module/input_output.html">input_output</a>
       
       <a class="list-group-item" href="../module/input_reader.html">input_reader</a>
+      
+      <a class="list-group-item" href="../module/memory_manager_class.html">memory_manager_class</a>
+      
+      <a class="list-group-item" href="../module/mlcc2_class.html">mlcc2_class</a>
+      
+      <a class="list-group-item" href="../module/mlcc_calculation_settings_class.html">mlcc_calculation_settings_class</a>
+      
+      <a class="list-group-item" href="../module/mlcc_orbitals_class.html">mlcc_orbitals_class</a>
+      
+      <a class="list-group-item" href="../module/mlccsd_class.html">mlccsd_class</a>
+      
+      <a class="list-group-item" href="../module/mp2_class.html">mp2_class</a>
+      
+      <a class="list-group-item" href="../module/response_calc_specs_class.html">response_calc_specs_class</a>
       
       <a class="list-group-item" href="../module/types.html">types</a>
       

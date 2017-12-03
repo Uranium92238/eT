@@ -1,0 +1,1906 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"memory",
+				"memory_left"
+			],
+			[
+				"soluti",
+				"solutions_file_name"
+			],
+			[
+				"excited",
+				"excited_state_task"
+			],
+			[
+				"L_ik",
+				"L_ik_J"
+			],
+			[
+				"g_c",
+				"g_caik"
+			],
+			[
+				"g_",
+				"g_caik"
+			],
+			[
+				"jacobian_tran",
+				"jacobian_transpose_ccs_a1"
+			],
+			[
+				"jacobia",
+				"jacobian_transpose_transformation"
+			],
+			[
+				"b_a",
+				"b_a_i"
+			],
+			[
+				"sigm",
+				"sigma_a_i"
+			],
+			[
+				"jac",
+				"jacobian_transpose_transformation_ccs"
+			],
+			[
+				"lj",
+				"lj"
+			],
+			[
+				"destr",
+				"destruct_amplitudes"
+			],
+			[
+				"initial",
+				"initialize_amplitudes"
+			],
+			[
+				"b",
+				"b"
+			],
+			[
+				"index_",
+				"index_packed"
+			],
+			[
+				"inde",
+				"index_packed"
+			],
+			[
+				"initi",
+				"initialize_omega"
+			],
+			[
+				"jacobi",
+				"jacobi_test_ccs"
+			],
+			[
+				"t1am",
+				"t1am"
+			],
+			[
+				"read",
+				"read_double_amplitudes"
+			],
+			[
+				"t_",
+				"t_kl_ba"
+			],
+			[
+				"g_kl",
+				"g_lj_kc"
+			],
+			[
+				"rho_ai",
+				"rho_ai_bj"
+			],
+			[
+				"g_lj",
+				"g_lj_kc"
+			],
+			[
+				"g_k",
+				"g_k_aij"
+			],
+			[
+				"L_kj",
+				"L_kj_J"
+			],
+			[
+				"get_cho",
+				"get_cholesky_ij"
+			],
+			[
+				"get",
+				"get_cholesky_ia"
+			],
+			[
+				"alloca",
+				"allocator"
+			],
+			[
+				"c_a",
+				"c_a_i"
+			],
+			[
+				"index",
+				"index_three"
+			],
+			[
+				"rho_a",
+				"rho_a_i"
+			],
+			[
+				"X_",
+				"X_k_i"
+			],
+			[
+				"rho_",
+				"rho_a_i"
+			],
+			[
+				"cons",
+				"construct_perturbative_doubles"
+			],
+			[
+				"L_lc",
+				"L_lc_dk"
+			],
+			[
+				"g_lc",
+				"g_lc_kd"
+			],
+			[
+				"tr1am",
+				"tr1am_tmp"
+			],
+			[
+				"g_ai",
+				"g_ai_ck"
+			],
+			[
+				"L_ai",
+				"L_ai_J"
+			],
+			[
+				"L_db",
+				"L_db_J"
+			],
+			[
+				"end",
+				"end_timer"
+			],
+			[
+				"timer",
+				"begin_timer"
+			],
+			[
+				"first",
+				"first_time"
+			],
+			[
+				"unit",
+				"unit_output"
+			],
+			[
+				"diis",
+				"diis_dim"
+			],
+			[
+				"uni",
+				"unit_output"
+			],
+			[
+				"diis_",
+				"diis_matrix"
+			],
+			[
+				"dii",
+				"diis_matrix"
+			],
+			[
+				"n_",
+				"n_variables"
+			],
+			[
+				"calc_qu",
+				"calc_quasi_Newton_doubles"
+			],
+			[
+				"quasi",
+				"calc_quasi_Newton_singles"
+			],
+			[
+				"con",
+				"construct_omega_ccs"
+			],
+			[
+				"calc_ampe",
+				"calc_ampeqs_norm"
+			],
+			[
+				"calc_quasi",
+				"calc_quasi_Newton_singles_ccs"
+			],
+			[
+				"diis_sa",
+				"diis_save_ccs"
+			],
+			[
+				"conver",
+				"converged_ampeqs"
+			],
+			[
+				"solut",
+				"solution_norm"
+			],
+			[
+				"solu",
+				"solution_norm"
+			],
+			[
+				"j",
+				"j"
+			],
+			[
+				"n_v",
+				"n_v"
+			],
+			[
+				"omega_a1",
+				"omega_a1_cc_singles_doubles"
+			],
+			[
+				"construct_omeg",
+				"construct_omega_cc_singles_doubles"
+			],
+			[
+				"set",
+				"set_orbital_shorthands"
+			],
+			[
+				"cc_singl",
+				"cc_singles_doubles"
+			],
+			[
+				"read_chol",
+				"read_cholesky_ia"
+			],
+			[
+				"read_",
+				"read_cholesky_ia"
+			],
+			[
+				"get_ch",
+				"get_cholesky_ij"
+			],
+			[
+				"get_",
+				"get_cholesky_ij"
+			],
+			[
+				"get_choles",
+				"get_cholesky_ia"
+			],
+			[
+				"n_ao",
+				"n_ao_sq_packed"
+			],
+			[
+				"cholesk",
+				"cholesky_mo_sq"
+			],
+			[
+				"choles",
+				"cholesky_ao_sq"
+			],
+			[
+				"generate",
+				"generate_unit_identifier"
+			],
+			[
+				"gener",
+				"generate_unit_identifier"
+			],
+			[
+				"unit_cho",
+				"unit_cholesky_mo_ia"
+			],
+			[
+				"unit_ch",
+				"unit_cholesky_mo_ij"
+			],
+			[
+				"chol",
+				"cholesky_integrals"
+			],
+			[
+				"ccsd",
+				"ccsd_wavefun"
+			],
+			[
+				"hf",
+				"hf"
+			],
+			[
+				"get_en",
+				"get_energy_hartree_fock"
+			],
+			[
+				"allocator_",
+				"allocator_int4"
+			],
+			[
+				"g_ac",
+				"g_ac_kd"
+			],
+			[
+				"get_chol",
+				"get_cholesky_ia"
+			],
+			[
+				"omega",
+				"omega2_ai_bj"
+			],
+			[
+				"vec_pri",
+				"vec_print_packed"
+			],
+			[
+				"vec",
+				"vec_print"
+			],
+			[
+				"ludii",
+				"ludiis_dt"
+			],
+			[
+				"ludi",
+				"ludiis_dt"
+			],
+			[
+				"n_ov",
+				"n_ov_ov_packed"
+			],
+			[
+				"norm",
+				"norm_of_solution"
+			],
+			[
+				"lu",
+				"lu_integers"
+			],
+			[
+				"current",
+				"current_index"
+			],
+			[
+				"converge",
+				"converged_solution"
+			],
+			[
+				"converged_",
+				"converged_energy"
+			],
+			[
+				"conv_",
+				"converged_energy"
+			],
+			[
+				"it",
+				"it"
+			],
+			[
+				"c",
+				"c"
+			],
+			[
+				"omega2",
+				"omega2_ai_bj"
+			],
+			[
+				"memo",
+				"memory_left_after"
+			],
+			[
+				"i",
+				"i"
+			],
+			[
+				"omeg",
+				"omega2_aib_j"
+			],
+			[
+				"L_ck_J",
+				"L_ck_J"
+			],
+			[
+				"cho",
+				"read_cholesky_ia"
+			],
+			[
+				"u_a",
+				"u_a_ckl"
+			],
+			[
+				"n_oo",
+				"n_oo"
+			],
+			[
+				"g_a",
+				"g_a_ckd"
+			],
+			[
+				"g_ad",
+				"g_ad_kc"
+			],
+			[
+				"read_chole",
+				"read_cholesky_ij"
+			],
+			[
+				"max",
+				"max_batch_length"
+			],
+			[
+				"a_b",
+				"a_begin"
+			],
+			[
+				"g_ckl",
+				"g_ckl_i"
+			],
+			[
+				"ind",
+				"ind_cl"
+			],
+			[
+				"n_t2am",
+				"n_t2am_pack"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "src/submodules/ccs_class_submodules/integrals_submodule.F90",
+			"settings":
+			{
+				"buffer_size": 166468,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/ccs_class.F90",
+			"settings":
+			{
+				"buffer_size": 102108,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/submodules/ccs_class_submodules/excited_state_submodule.F90",
+			"settings":
+			{
+				"buffer_size": 53042,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/submodules/ccs_class_submodules/ionized_state_submodule.F90",
+			"settings":
+			{
+				"buffer_size": 13731,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "Things_to_do.todo",
+			"settings":
+			{
+				"buffer_size": 1117,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/submodules/ccs_class_submodules/jacobian_submodule.F90",
+			"settings":
+			{
+				"buffer_size": 8240,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/tools/workspace.F90",
+			"settings":
+			{
+				"buffer_size": 5247,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/submodules/ccsd_class_submodules/jacobian_submodule.F90",
+			"settings":
+			{
+				"buffer_size": 143286,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		}
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+		[
+			[
+				[
+					"Packages/Fortran/build-systems/GFortran.sublime-build",
+					""
+				],
+				[
+					"Packages/Fortran/build-systems/GFortran.sublime-build",
+					"Run"
+				]
+			],
+			[
+				"Packages/Fortran/build-systems/GFortran.sublime-build",
+				""
+			]
+		],
+		[
+			[
+				[
+					"Packages/LaTeXTools/LaTeX.sublime-build",
+					""
+				],
+				[
+					"Packages/LaTeXTools/LaTeX.sublime-build",
+					"Traditional"
+				],
+				[
+					"Packages/LaTeXTools/LaTeX.sublime-build",
+					"PdfLaTeX"
+				],
+				[
+					"Packages/LaTeXTools/LaTeX.sublime-build",
+					"XeLaTeX"
+				],
+				[
+					"Packages/LaTeXTools/LaTeX.sublime-build",
+					"LuaLaTeX"
+				],
+				[
+					"Packages/LaTeXTools/LaTeX.sublime-build",
+					"Basic Builder"
+				],
+				[
+					"Packages/LaTeXTools/LaTeX.sublime-build",
+					"Basic Builder - PdfLaTeX"
+				],
+				[
+					"Packages/LaTeXTools/LaTeX.sublime-build",
+					"Basic Builder - XeLaTeX"
+				],
+				[
+					"Packages/LaTeXTools/LaTeX.sublime-build",
+					"Basic Builder - LuaLaTeX"
+				],
+				[
+					"Packages/LaTeXTools/LaTeX.sublime-build",
+					"Script Builder"
+				]
+			],
+			[
+				"Packages/LaTeXTools/LaTeX.sublime-build",
+				"PdfLaTeX"
+			]
+		]
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 357.0,
+		"last_filter": "color",
+		"selected_items":
+		[
+			[
+				"color",
+				"Colorsublime: Install Theme"
+			],
+			[
+				"Packa",
+				"Package Control: Enable Package"
+			],
+			[
+				"",
+				"Boxy Theme: Activation"
+			],
+			[
+				"Package In",
+				"Package Control: Install Package"
+			],
+			[
+				"Package",
+				"Package Control: Install Package"
+			],
+			[
+				"pack",
+				"Package Control: Install Package"
+			],
+			[
+				"Materi",
+				"Material Theme: Activate theme"
+			],
+			[
+				"packag",
+				"Package Control: Install Package"
+			],
+			[
+				"boxy",
+				"Boxy Theme: Activation"
+			],
+			[
+				"install ",
+				"Package Control: Install Package"
+			],
+			[
+				"packa",
+				"Install Package Control"
+			]
+		],
+		"width": 449.0
+	},
+	"console":
+	{
+		"height": 0.0,
+		"history":
+		[
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/Users/eirikkjonstad/Documents/eT_mast",
+		"/Users/eirikkjonstad/Documents/eT_mast/cmake",
+		"/Users/eirikkjonstad/Documents/eT_mast/src",
+		"/Users/eirikkjonstad/Documents/eT_mast/src/submodules",
+		"/Users/eirikkjonstad/Documents/eT_mast/src/submodules/ccs_class_submodules",
+		"/Users/eirikkjonstad/Documents/eT_mast/src/submodules/ccsd_class_submodules",
+		"/Users/eirikkjonstad/Documents/eT_mast/src/tools"
+	],
+	"file_history":
+	[
+		"/Users/eirikkjonstad/Documents/eT_mast/src/ccsd_class.F90",
+		"/Users/eirikkjonstad/Documents/eT_mast/src/ccs_class.F90",
+		"/Users/eirikkjonstad/Documents/eT_mast/src/submodules/ccs_class_submodules/response_submodule.F90",
+		"/Users/eirikkjonstad/Documents/eT_mast/src/submodules/ccsd_class_submodules/excited_state_submodule.F90",
+		"/Users/eirikkjonstad/Documents/eT_mast/src/submodules/ccs_class_submodules/jacobian_submodule.F90",
+		"/Users/eirikkjonstad/Documents/eT_mast/src/submodules/ccsdpt_class_submodules/ground_state_submodule.F90",
+		"/Users/eirikkjonstad/Documents/eT_mast/src/submodules/ccs_class_submodules/excited_state_submodule.F90",
+		"/Users/eirikkjonstad/Documents/eT_mast/src/submodules/ccs_class_submodules/jacobian_transpose_submodule.F90",
+		"/Users/eirikkjonstad/Documents/eT_mast/src/submodules/ccs_class_submodules/ground_state_submodule.F90",
+		"/Users/eirikkjonstad/Documents/eT_mast/src/submodules/ccs_class_submodules/fock_submodule.F90",
+		"/Users/eirikkjonstad/Documents/eT_mast/src/submodules/ccsd_class_submodules/jacobian_transpose_submodule.F90",
+		"/Users/eirikkjonstad/Documents/eT_mast/src/submodules/ccsd_class_submodules/jacobian_submodule.F90",
+		"/Users/eirikkjonstad/Documents/eT_mast/cmake/eT_sources.cmake",
+		"/Users/eirikkjonstad/Documents/eT_mast/src/calc_procedures_class.F90",
+		"/Users/eirikkjonstad/Documents/eT_mast/src/hf_class.F90",
+		"/Users/eirikkjonstad/Documents/eT_jacobian_transpose/cmake/eT_sources.cmake",
+		"/Users/eirikkjonstad/Documents/eT_master/src/ccsd_class.F90",
+		"/Users/eirikkjonstad/Documents/eT_master/src/submodules/ccs_class_submodules/excited_state_submodule.F90",
+		"/Users/eirikkjonstad/Documents/eT_master/src/ccsdpt_class.F90",
+		"/Users/eirikkjonstad/Documents/eT_master/src/cc3_class.F90",
+		"/Users/eirikkjonstad/Documents/eT_master/src/submodules/cc3_class_submodules/omega_submodule.F90",
+		"/Users/eirikkjonstad/Documents/eT_master/src/submodules/ccsd_class_submodules/omega_submodule.F90",
+		"/Users/eirikkjonstad/Documents/eT_master/src/submodules/ccsdpt_class_submodules/omega_submodule.F90",
+		"/Users/eirikkjonstad/Documents/eT_jacobian_ccsd_trf/src/calc_settings_class.F90",
+		"/Users/eirikkjonstad/Documents/eT_jacobian_ccsd_trf/src/submodules/ccs_class_submodules/cholesky_submodule.F90",
+		"/Users/eirikkjonstad/Documents/eT_jacobian_ccsd_trf/src/hf_class.F90",
+		"/Users/eirikkjonstad/Documents/eT_jacobian_ccsd_trf/src/ccsd_class.F90",
+		"/Users/eirikkjonstad/Documents/eT_jacobian_ccsd_trf/src/submodules/ccsd_class_submodules/omega_submodule.F90",
+		"/Users/eirikkjonstad/Documents/eT_jacobian_ccsd_trf/src/cc3_class.F90",
+		"/Users/eirikkjonstad/Documents/Calculations/HOF/data_from_stallo/pes_w_complex.dat",
+		"/Users/eirikkjonstad/Documents/eT_jacobian_ccsd_trf/src/submodules/ccsd_class_submodules/jacobian_submodule.F90",
+		"/Users/eirikkjonstad/Documents/eT_jacobian_ccsd_trf/src/ccs_class.F90",
+		"/Users/eirikkjonstad/Documents/eT_jacobian_ccsd_trf/src/submodules/ccs_class_submodules/jacobian_submodule.F90",
+		"/Users/eirikkjonstad/Documents/eT_jacobian_ccsd_trf/src/submodules/ccs_class_submodules/fock_submodule.F90",
+		"/Users/eirikkjonstad/Documents/eT_jacobian_ccsd_trf/src/tools/utils.F90",
+		"/Users/eirikkjonstad/Dropbox/PhD Thesis/Teaching/Quantum chemistry/Feedback, computer exercise spring 2017/feedback.tex",
+		"/Users/eirikkjonstad/Documents/eT_jacobian_ccsd_trf/src/submodules/ccs_class_submodules/excited_state_submodule.F90",
+		"/Users/eirikkjonstad/Dropbox/PhD Thesis/Defect free coupled cluster theory/Paper/scc_paper.tex",
+		"/Users/eirikkjonstad/Documents/eT_jacobian_ccsd_trf/src/tools/input_output.F90",
+		"/Users/eirikkjonstad/Documents/eT_jacobian_ccsd_trf/src/submodules/ccs_class_submodules/ground_state_submodule.F90",
+		"/Users/eirikkjonstad/Documents/eT_jacobian_ccsd_trf/src/submodules/ccsd_class_submodules/ground_state_submodule.F90",
+		"/Users/eirikkjonstad/Library/Containers/com.apple.mail/Data/Library/Mail Downloads/46909897-3006-4A1B-AD30-420380EA6C2E/run.sh",
+		"/Users/eirikkjonstad/Library/Containers/com.apple.mail/Data/Library/Mail Downloads/B4297187-E5E0-4129-AF4E-4931B9FA65A5/xa1.dat",
+		"/Users/eirikkjonstad/Library/Containers/com.apple.mail/Data/Library/Mail Downloads/A475B66D-B8FD-4F05-B749-5CF80CE3DB48/h2s.mol",
+		"/Users/eirikkjonstad/Library/Containers/com.apple.mail/Data/Library/Mail Downloads/46EE37FB-5FA8-42E9-8BA6-F0E855D2D715/out.g0_h0.out",
+		"/Users/eirikkjonstad/Library/Containers/com.apple.mail/Data/Library/Mail Downloads/2AE76E94-4C28-4105-81B8-20C47402CBBC/ccsd.dal",
+		"/Users/eirikkjonstad/Library/Containers/com.apple.mail/Data/Library/Mail Downloads/C01FD894-2F32-4CEC-B064-29A56136478E/xa2.dat",
+		"/Users/eirikkjonstad/Library/Containers/com.apple.mail/Data/Library/Mail Downloads/B56B84CA-EE18-41D8-A3AE-A7CB34E389D2/sort.sh",
+		"/Users/eirikkjonstad/Library/Containers/com.apple.mail/Data/Library/Mail Downloads/FCBFABCD-61FA-4477-AFE8-3C0F79B60D76/intersect.p",
+		"/Users/eirikkjonstad/Documents/eT_jacobian_ccsd_trf/cmake/eT_sources.cmake",
+		"/Users/eirikkjonstad/Documents/eT_jacobian_ccsd/src/submodules/ccsd_class_submodules/jacobian_submodule.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_oo_mod/mlcc_oo_driver.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_mod/mlcc_drv.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/gp/gphjj.F",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_interface/mlcc_interface.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_oo_mod/ccsd_class_submodules/omega_submodule.F90",
+		"/Users/eirikkjonstad/Documents/eT/src/ccsd_class_submodules/omega_submodule.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_oo_mod/ccsd_class.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_oo_mod/ccsd_class_submodules/jacobian_submodule.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc/mlcc3_reordering.F90",
+		"/Users/eirikkjonstad/Documents/Calculations/H2_MLCCMOD/h2_mol.inp",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_oo_mod/workspace.F90",
+		"/Users/eirikkjonstad/Documents/Calculations/test_system_mlcc/test_system.mol",
+		"/Users/eirikkjonstad/Documents/Calculations/test_system_mlcc/test_system_mol.inp",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/cc/ccsd_rhs.F",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/build/modules/mlcc3_reordering.mod",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_oo_mod/ccs_class_submodules/diis_submodule.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_oo_mod/ccs_class_submodules/fock_submodule.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_oo_mod/ccsd_class_submodules/diis_submodule.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/cc/ccsd_diis.F",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_oo_mod/cc2_class.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_oo_mod/ccs_class.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_oo_mod/preferences_class.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_oo_mod/input_output.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_oo_mod/Things_to_do.todo",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/cc/ccsd_energy.F",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_oo_mod/ccs_class_submodules/cholesky_submodule.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/gen1int/TODO",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_mod/mlcc_cholesky.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_oo_mod/hf_class.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_mod/mlcc_energy.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_oo_mod/utils.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_oo_mod/types.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/external/qfitlib/src/utilities.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_mod/mlcc_omega.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_mod/mlcc_fock.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_mod/mlcc_utilities.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_oo_mod/tasks.todo",
+		"/Users/eirikkjonstad/Documents/Calculations/Polynitrogen/c8h8/template.inp",
+		"/Users/eirikkjonstad/Documents/Calculations/N_O_poor_compounds/c15h12n2o2/c15h12n2o2.inp",
+		"/Users/eirikkjonstad/Documents/Calculations/Polynitrogen/c8h8/b3lyp/def2-svp/c8h8.out",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_mod/mlcc_t2_init.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_oo_mod/ccs_class_submodule_cholesky.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_oo_mod/cc_singles_doubles_submodules/omega_submodule.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/sirius/mlcc_write_sirifc.F",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/choles/mlcc_write_cholesky.F",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_mod/mlcc_data.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_oo_mod/mlcc_oo_utilities.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_oo_mod/cholesky_integrals_class.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/oo_testing_new/class_triangle.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/oo_testing_new/class_shape.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/build/modules/ccs_class.mod",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_oo_mod/read_and_transform_cholesky_vectors.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_oo_mod/dalton_interface.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_mod/mlcc_types.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc/mlcc_work.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_oo_mod/printing.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_oo_mod/mlcc_oo_drv.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/oo_testing/shapes.F90",
+		"/Users/eirikkjonstad/Library/Application Support/Sublime Text 3/Packages/Fortran/grammars/FortranModern.sublime-syntax",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/oo_cctest/hf.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/oo_cctest/ccsd.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/oo_cctest/mlccmod.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/oo_cctest/untitled.F03",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/oo_testing/hf.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/oo_testing/mlccmod.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_mod/mlcc_workspace.F90",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/choles/cc_cholesky.F",
+		"/Users/eirikkjonstad/Documents/dalton_mlccmod/dalton/DALTON/mlcc_mod/atest.F90",
+		"/Users/eirikkjonstad/Documents/Calculations/N_O_poor_compounds/c8h8n4o2/b3lyp/def2-svp/c8h8n4o2.out",
+		"/Users/eirikkjonstad/Documents/Calculations/N_O_poor_compounds/run.sh",
+		"/Users/eirikkjonstad/Documents/Calculations/N_O_poor_compounds/c8h8n4o2/c8h8n4o2.inp",
+		"/Users/eirikkjonstad/Downloads/151037.cif",
+		"/Users/eirikkjonstad/Downloads/pes_ccsd_pvtz.dat",
+		"/Users/eirikkjonstad/Documents/Calculations/H2_MLCCMOD/h2_dal_ccsd.inp",
+		"/Users/eirikkjonstad/Downloads/DALTON.INP",
+		"/Users/eirikkjonstad/Documents/Calculations/H2_MLCCMOD/scratch/DIIS_DT",
+		"/Users/eirikkjonstad/Documents/Calculations/H2_MLCCMOD/scratch/DIIS_T_DT"
+	],
+	"find":
+	{
+		"height": 22.0
+	},
+	"find_in_files":
+	{
+		"height": 0.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"::::::::",
+			"excited_state_solver",
+			"drv_ccs",
+			"::::::::",
+			":::::::",
+			"drv_ccs",
+			"init_ccsd",
+			"response_task",
+			"construct_gradient_vector",
+			"initialize_fock_matrix_ccs",
+			"S:",
+			"E:",
+			"solution_file",
+			"unit_solution",
+			"solution_file_name",
+			"solution",
+			"unit_solution",
+			"write",
+			"jacobian_ccs_transformation",
+			"jacobian_ccsd_tran",
+			"jacobian_transformation",
+			"jacobian_transformation_ccsd",
+			"jacobian_transformation",
+			"jacobian_ccsd_transformation",
+			"jacobian_transformation",
+			"transform",
+			"jacobian_transformation",
+			"transform_trial_vectors",
+			"transform",
+			"drv_ccs",
+			"get_cholesky_ab",
+			"cc3_a2",
+			"a2",
+			"omega_cc3_a1_cc3",
+			"omega",
+			"omega_f2",
+			"omega_e1",
+			"jacobian_transformation_ccs",
+			"construct_next_trial_vectors",
+			"omega_a1",
+			"omega_a1_ccsd",
+			"read_cholesky_ij",
+			"drv",
+			"drv_ccs",
+			"_e2",
+			"t_bj,dl",
+			"index_packed",
+			"_e2",
+			"index_two",
+			"do d = 1, wf%n_o",
+			"do c = 1, wf%n_o",
+			"do b = 1, wf%n_o",
+			"dgemm",
+			"_e2",
+			"do ",
+			"_e2",
+			"rho_ai_bj,",
+			"_a2",
+			"_c2",
+			"one",
+			"batch",
+			"_a2",
+			"rho_ai_bj",
+			"_a2",
+			"_b2",
+			"dgemm",
+			"aib_j",
+			"_a2",
+			"sum_kcl g_ljkc t_li^bc c_ak",
+			"_a2",
+			"drv",
+			"jacobian_ccsd_a2",
+			"t_ab_ij",
+			"do ",
+			"_a2",
+			"do ",
+			"jacobian_ccsd_a2",
+			"do ",
+			"read_cholesky_ab",
+			"index",
+			"do ",
+			"jacobi_test",
+			"jacobi_test_ccs",
+			"jacobi_test",
+			"jacobian",
+			"close(unit_solution",
+			"close",
+			"allocator",
+			"jacobi_test",
+			"a matrix",
+			"_a1",
+			"jacobian_",
+			"c_ai_bj",
+			"eigenvectors",
+			"jacobi_test",
+			"jacobi",
+			"trial_vec",
+			"transform",
+			"jacobian_ccsd_e2",
+			"jacobian_ccsd_k2",
+			"jacobian_ccsd_j2",
+			"Reorder",
+			"jacobian_ccsd_e2",
+			"Trying",
+			"jacobian_ccsd_d2",
+			"trying",
+			"jacobian_ccsd_b2",
+			"jacobian_ccsd_a2",
+			"ZZ",
+			"by transformation",
+			"get_next_trial_vectors",
+			"ioerror",
+			"driver",
+			"jacobian_ccsd_a1",
+			"jacobian_ccsd_b1",
+			"jacobian_ccsd_a1",
+			"jacobian_ccs_a1",
+			"rho_a_i",
+			"Add",
+			"batch",
+			"driver",
+			"after",
+			"jacobian_ccsd_i2",
+			"jacobian_ccsd_c2",
+			"After",
+			"jacobian_ccsd_c2",
+			"jacobian_ccsd_a1",
+			"jacobian_ccsd_b1"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "src/submodules/ccs_class_submodules/integrals_submodule.F90",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 166468,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								942,
+								942
+							]
+						],
+						"settings":
+						{
+							"WordCount":
+							{
+								"changes": 0,
+								"count": 9042,
+								"modified": false,
+								"selection": false,
+								"status": -1,
+								"syntax": "plain text"
+							},
+							"syntax": "Packages/Fortran/grammars/FortranModern.sublime-syntax",
+							"tab_size": 3,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 258.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "src/ccs_class.F90",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 102108,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"WordCount":
+							{
+								"changes": 0,
+								"count": 6509,
+								"modified": false,
+								"selection": false,
+								"status": -1,
+								"syntax": "plain text"
+							},
+							"syntax": "Packages/Fortran/grammars/FortranModern.sublime-syntax",
+							"tab_size": 3,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 45420.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 6,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "src/submodules/ccs_class_submodules/excited_state_submodule.F90",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 53042,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"WordCount":
+							{
+								"changes": 0,
+								"count": 2903,
+								"modified": false,
+								"selection": false,
+								"status": -1,
+								"syntax": "plain text"
+							},
+							"syntax": "Packages/Fortran/grammars/FortranModern.sublime-syntax",
+							"tab_size": 3,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "src/submodules/ccs_class_submodules/ionized_state_submodule.F90",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 13731,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"WordCount":
+							{
+								"changes": 0,
+								"count": 1087,
+								"modified": false,
+								"selection": false,
+								"status": -1,
+								"syntax": "plain text"
+							},
+							"syntax": "Packages/Fortran/grammars/FortranModern.sublime-syntax",
+							"tab_size": 3,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 5.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "Things_to_do.todo",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1117,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"WordCount":
+							{
+								"changes": 0,
+								"count": 160,
+								"modified": false,
+								"selection": false,
+								"status": -1,
+								"syntax": "plain text"
+							},
+							"plain_tasks_remain_time_phantoms":
+							[
+							],
+							"syntax": "Packages/PlainTasks/PlainTasks.sublime-syntax",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "src/submodules/ccs_class_submodules/jacobian_submodule.F90",
+					"semi_transient": true,
+					"settings":
+					{
+						"buffer_size": 8240,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"WordCount":
+							{
+								"changes": 0,
+								"count": 477,
+								"modified": false,
+								"selection": false,
+								"status": -1,
+								"syntax": "plain text"
+							},
+							"syntax": "Packages/Fortran/grammars/FortranModern.sublime-syntax",
+							"tab_size": 3,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"file": "src/tools/workspace.F90",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 5247,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								18,
+								18
+							]
+						],
+						"settings":
+						{
+							"WordCount":
+							{
+								"changes": 15,
+								"count": 417,
+								"modified": false,
+								"selection": false,
+								"status": -1,
+								"syntax": "plain text"
+							},
+							"syntax": "Packages/Fortran/grammars/FortranModern.sublime-syntax",
+							"tab_size": 3,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 694.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 7,
+					"type": "text"
+				},
+				{
+					"buffer": 7,
+					"file": "src/submodules/ccsd_class_submodules/jacobian_submodule.F90",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 143286,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								9752,
+								9752
+							]
+						],
+						"settings":
+						{
+							"WordCount":
+							{
+								"changes": 417,
+								"count": 6822,
+								"modified": false,
+								"selection": false,
+								"status": -1,
+								"syntax": "plain text"
+							},
+							"syntax": "Packages/Fortran/grammars/FortranModern.sublime-syntax",
+							"tab_size": 3,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 7021.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 22.0
+	},
+	"input":
+	{
+		"height": 0.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.exec":
+	{
+		"height": 244.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"output.latextools":
+	{
+		"height": 100.0
+	},
+	"pinned_build_system": "",
+	"project": "eT_masr.sublime-project",
+	"replace":
+	{
+		"height": 40.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"excited_state_d",
+				"src/submodules/ccs_class_submodules/excited_state_submodule.F90"
+			],
+			[
+				"ion",
+				"src/submodules/ccs_class_submodules/ionized_state_submodule.F90"
+			],
+			[
+				"jacobian",
+				"src/submodules/ccsd_class_submodules/jacobian_submodule.F90"
+			],
+			[
+				"ccs_class",
+				"src/ccs_class.F90"
+			],
+			[
+				"ccsd_class",
+				"src/ccsd_class.F90"
+			],
+			[
+				"ccs_cl",
+				"src/ccs_class.F90"
+			],
+			[
+				"excited",
+				"src/submodules/ccs_class_submodules/excited_state_submodule.F90"
+			],
+			[
+				"ccsd_cl",
+				"src/ccsd_class.F90"
+			],
+			[
+				"excite",
+				"src/submodules/ccs_class_submodules/excited_state_submodule.F90"
+			],
+			[
+				"response",
+				"src/submodules/ccs_class_submodules/response_submodule.F90"
+			],
+			[
+				"exci",
+				"src/submodules/ccs_class_submodules/excited_state_submodule.F90"
+			],
+			[
+				"ground",
+				"src/submodules/ccs_class_submodules/ground_state_submodule.F90"
+			],
+			[
+				"fock_sub",
+				"src/submodules/ccs_class_submodules/fock_submodule.F90"
+			],
+			[
+				"ccs_c",
+				"src/ccs_class.F90"
+			],
+			[
+				"jacobiann",
+				"src/submodules/ccs_class_submodules/jacobian_transpose_submodule.F90"
+			],
+			[
+				"jacobian_",
+				"src/submodules/ccsd_class_submodules/jacobian_transpose_submodule.F90"
+			],
+			[
+				"jacobi",
+				"src/submodules/ccsd_class_submodules/jacobian_submodule.F90"
+			],
+			[
+				"hf_class",
+				"src/hf_class.F90"
+			],
+			[
+				"calc_",
+				"src/calc_procedures_class.F90"
+			],
+			[
+				"cholesk",
+				"src/submodules/ccs_class_submodules/cholesky_submodule.F90"
+			],
+			[
+				"ccsd_c",
+				"src/ccsd_class.F90"
+			],
+			[
+				"ccs_clas",
+				"src/ccs_class.F90"
+			],
+			[
+				"omega_submodule",
+				"src/submodules/ccsdpt_class_submodules/omega_submodule.F90"
+			],
+			[
+				"ccsdpt",
+				"src/ccsdpt_class.F90"
+			],
+			[
+				"cc3omega",
+				"src/submodules/cc3_class_submodules/omega_submodule.F90"
+			],
+			[
+				"cc3_cl",
+				"src/cc3_class.F90"
+			],
+			[
+				"omega_sub",
+				"src/submodules/cc3_class_submodules/omega_submodule.F90"
+			],
+			[
+				"omega_su",
+				"src/submodules/ccsd_class_submodules/omega_submodule.F90"
+			],
+			[
+				"omega",
+				"src/submodules/cc3_class_submodules/omega_submodule.F90"
+			],
+			[
+				"calc_set",
+				"src/calc_settings_class.F90"
+			],
+			[
+				"calc_sett",
+				"src/calc_settings_class.F90"
+			],
+			[
+				"cc3",
+				"src/cc3_class.F90"
+			],
+			[
+				"hf_cl",
+				"src/hf_class.F90"
+			],
+			[
+				"choles",
+				"src/submodules/ccs_class_submodules/cholesky_submodule.F90"
+			],
+			[
+				"jacob",
+				"src/submodules/ccsd_class_submodules/jacobian_submodule.F90"
+			],
+			[
+				"jac",
+				"src/submodules/ccsd_class_submodules/jacobian_submodule.F90"
+			],
+			[
+				"ccsd",
+				"src/ccsd_class.F90"
+			],
+			[
+				"fock",
+				"src/submodules/ccs_class_submodules/fock_submodule.F90"
+			],
+			[
+				"utils",
+				"src/tools/utils.F90"
+			],
+			[
+				"jaco",
+				"src/submodules/ccsd_class_submodules/jacobian_submodule.F90"
+			],
+			[
+				"excit",
+				"src/submodules/ccs_class_submodules/excited_state_submodule.F90"
+			],
+			[
+				"jao",
+				"src/submodules/ccsd_class_submodules/jacobian_submodule.F90"
+			],
+			[
+				"exc",
+				"src/submodules/ccs_class_submodules/excited_state_submodule.F90"
+			],
+			[
+				"",
+				"src/submodules/ccs_class_submodules/excited_state_submodule.F90"
+			],
+			[
+				"input",
+				"src/tools/input_output.F90"
+			],
+			[
+				"ccsd_clas",
+				"src/ccsd_class.F90"
+			],
+			[
+				"jacobia",
+				"src/submodules/ccsd_class_submodules/jacobian_submodule.F90"
+			],
+			[
+				"uti",
+				"src/tools/utils.F90"
+			],
+			[
+				"cholesky",
+				"src/submodules/ccs_class_submodules/cholesky_submodule.F90"
+			],
+			[
+				"siriusmlcc",
+				"DALTON/sirius/mlcc_wr_aoint.F"
+			],
+			[
+				"siri",
+				"DALTON/sirius/sirdiis.F"
+			],
+			[
+				"sirius",
+				"DALTON/sirius/siraba.F"
+			],
+			[
+				"mlcc3_re",
+				"DALTON/mlcc/mlcc3_reordering.F90"
+			],
+			[
+				"ccsd_en",
+				"DALTON/cc/ccsd_energy.F"
+			],
+			[
+				"cceq_sol",
+				"DALTON/cc/cceq_solv.F"
+			],
+			[
+				"mlcc3",
+				"DALTON/mlcc/mlcc3_drv.F90"
+			],
+			[
+				"mlcc_int",
+				"DALTON/mlcc_interface/mlcc_interface.F90"
+			],
+			[
+				"mlcc_dr",
+				"DALTON/mlcc_mod/mlcc_drv.F90"
+			],
+			[
+				"daltongpgphjj",
+				"DALTON/gp/gphjj.F"
+			],
+			[
+				"mlcc_oo",
+				"DALTON/mlcc_oo_mod/mlcc_oo_driver.F90"
+			],
+			[
+				"workspace",
+				"DALTON/mlcc_oo_mod/workspace.F90"
+			],
+			[
+				"mlcc3_reo",
+				"DALTON/mlcc/mlcc3_reordering.F90"
+			],
+			[
+				"ccsd_rhs",
+				"DALTON/cc/ccsd_rhs.F"
+			],
+			[
+				"mlcc_reorder",
+				"build/modules/mlcc3_reordering.mod"
+			],
+			[
+				"cc2_cla",
+				"DALTON/mlcc_oo_mod/cc2_class.F90"
+			],
+			[
+				"ccrhs",
+				"DALTON/cc/ccsd_rhs.F"
+			],
+			[
+				"ccsd_dii",
+				"DALTON/cc/ccsd_diis.F"
+			],
+			[
+				"ccsd_ene",
+				"DALTON/cc/ccsd_energy.F"
+			],
+			[
+				"todo",
+				"DALTON/mlcc_oo_mod/Things_to_do.todo"
+			],
+			[
+				"mlcc_re",
+				"DALTON/mlcc/mlcc3_reordering.F90"
+			],
+			[
+				"cc2_cl",
+				"DALTON/mlcc_oo_mod/cc2_class.F90"
+			],
+			[
+				"fock_submo",
+				"DALTON/mlcc_oo_mod/ccs_class_submodules/fock_submodule.F90"
+			],
+			[
+				"diis_su",
+				"DALTON/mlcc_oo_mod/ccsd_class_submodules/diis_submodule.F90"
+			],
+			[
+				"input_out",
+				"DALTON/mlcc_oo_mod/input_output.F90"
+			],
+			[
+				"cc2_clas",
+				"DALTON/mlcc_oo_mod/cc2_class.F90"
+			],
+			[
+				"mlcc_drv",
+				"DALTON/mlcc_mod/mlcc_drv.F90"
+			],
+			[
+				"omega_",
+				"DALTON/mlcc_oo_mod/ccsd_class_submodules/omega_submodule.F90"
+			],
+			[
+				"mlcc_oo_dr",
+				"DALTON/mlcc_oo_mod/mlcc_oo_driver.F90"
+			],
+			[
+				"utiliti",
+				"external/qfitlib/src/utilities.F90"
+			],
+			[
+				"types",
+				"DALTON/mlcc_oo_mod/types.F90"
+			],
+			[
+				"hf_clas",
+				"DALTON/mlcc_oo_mod/hf_class.F90"
+			],
+			[
+				"mlcc_e",
+				"DALTON/mlcc_mod/mlcc_energy.F90"
+			],
+			[
+				"cholesky_sub",
+				"DALTON/mlcc_oo_mod/ccs_class_submodules/cholesky_submodule.F90"
+			],
+			[
+				"omega_s",
+				"DALTON/mlcc_oo_mod/ccsd_class_submodules/omega_submodule.F90"
+			],
+			[
+				"mlcc_fock",
+				"DALTON/mlcc_mod/mlcc_fock.F90"
+			],
+			[
+				"mlcc_omeg",
+				"DALTON/mlcc_mod/mlcc_omega.F90"
+			],
+			[
+				"mlcc_omega",
+				"DALTON/mlcc_mod/mlcc_omega.F90"
+			],
+			[
+				"mlcc_chol",
+				"DALTON/mlcc_mod/mlcc_cholesky.F90"
+			],
+			[
+				"mlcc_cholesk",
+				"DALTON/mlcc_mod/mlcc_cholesky.F90"
+			],
+			[
+				"mlcc_uti",
+				"DALTON/mlcc_mod/mlcc_utilities.F90"
+			],
+			[
+				"oo_dirver",
+				"DALTON/mlcc_oo_mod/mlcc_oo_driver.F90"
+			],
+			[
+				"fock_su",
+				"DALTON/mlcc_oo_mod/ccs_class_submodules/fock_submodule.F90"
+			],
+			[
+				"hf_cla",
+				"DALTON/mlcc_oo_mod/hf_class.F90"
+			],
+			[
+				"submodule",
+				"DALTON/mlcc_oo_mod/ccs_class_submodule_cholesky.F90"
+			],
+			[
+				"ccsd_cla",
+				"DALTON/mlcc_oo_mod/ccsd_class.F90"
+			],
+			[
+				"mlcc_oo_dri",
+				"DALTON/mlcc_oo_mod/mlcc_oo_driver.F90"
+			],
+			[
+				"mlcc_t2",
+				"DALTON/mlcc_mod/mlcc_t2_init.F90"
+			],
+			[
+				"mlcc_write_",
+				"DALTON/sirius/mlcc_write_sirifc.F"
+			],
+			[
+				"mlcc_write",
+				"DALTON/choles/mlcc_write_cholesky.F"
+			],
+			[
+				"mlcc_cho",
+				"DALTON/mlcc_mod/mlcc_cholesky.F90"
+			],
+			[
+				"mlcc_data",
+				"DALTON/mlcc_mod/mlcc_data.F90"
+			],
+			[
+				"mlcc_",
+				"DALTON/mlcc_mod/mlcc_energy.F90"
+			],
+			[
+				"mlcc_oo_uti",
+				"DALTON/mlcc_oo_mod/mlcc_oo_utilities.F90"
+			],
+			[
+				"ccsd_ca",
+				"DALTON/mlcc_oo_mod/ccsd_class.F90"
+			],
+			[
+				"read_and",
+				"DALTON/mlcc_oo_mod/read_and_transform_cholesky_vectors.F90"
+			],
+			[
+				"mlcc_driver",
+				"DALTON/mlcc_oo_mod/mlcc_oo_driver.F90"
+			],
+			[
+				"worksp",
+				"DALTON/mlcc_oo_mod/workspace.F90"
+			],
+			[
+				"mlcc_oo_d",
+				"DALTON/mlcc_oo_mod/mlcc_oo_driver.F90"
+			],
+			[
+				"input_ou",
+				"DALTON/mlcc_oo_mod/input_output.F90"
+			],
+			[
+				"mlcc_inter",
+				"DALTON/mlcc_interface/mlcc_interface.F90"
+			],
+			[
+				"dalton_int",
+				"DALTON/mlcc_oo_mod/dalton_interface.F90"
+			],
+			[
+				"mlcc_inte",
+				"DALTON/mlcc_interface/mlcc_interface.F90"
+			],
+			[
+				"mlcc_work",
+				"DALTON/mlcc/mlcc_work.F90"
+			],
+			[
+				"hf.f90",
+				"DALTON/oo_cctest/hf.F90"
+			],
+			[
+				"mlccmod",
+				"DALTON/oo_cctest/mlccmod.F90"
+			],
+			[
+				"oo_tes",
+				"DALTON/oo_testing/shapes.F90"
+			],
+			[
+				"mlcc_worksp",
+				"DALTON/mlcc_mod/mlcc_workspace.F90"
+			],
+			[
+				"mlcc_chole",
+				"DALTON/mlcc_mod/mlcc_cholesky.F90"
+			],
+			[
+				"ccsd_diis",
+				"DALTON/cc/ccsd_diis.F"
+			],
+			[
+				"mlcc_en",
+				"DALTON/mlcc_mod/mlcc_energy.F90"
+			],
+			[
+				"cc_choles",
+				"DALTON/choles/cc_cholesky.F"
+			],
+			[
+				"ccsd_e",
+				"DALTON/cc/ccsd_energy.F"
+			],
+			[
+				"mlcc_ene",
+				"DALTON/mlcc_mod/mlcc_energy.F90"
+			],
+			[
+				"ccsd_rs",
+				"DALTON/cc/ccsd_rhs.F"
+			],
+			[
+				"mlcc_utili",
+				"DALTON/mlcc_mod/mlcc_utilities.F90"
+			],
+			[
+				"mlcc_types",
+				"DALTON/mlcc_mod/mlcc_types.F90"
+			],
+			[
+				"gptr",
+				"DALTON/gp/gptrygve.F"
+			],
+			[
+				"crayio",
+				"DALTON/cc/crayio.c"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": false,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 289.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

@@ -17,13 +17,15 @@ module calc_settings_class
 !
    type :: calc_settings 
 !
-      real(dp) :: energy_threshold = 1.0D-06
-      real(dp) :: ampeqs_threshold = 1.0D-06
+      real(dp) :: disk_space = 100D0      ! 100 gigabytes; can be modified by user
+   !   real(dp) :: memory     = 700000000  ! In words (= ca 5 gb) !! This should be hooked up to workspace!!
 !
-      integer(i15) :: ampeqs_max_iterations = 25
+      character(len=40) :: print_level = 'developer'
 !
    end type calc_settings                                                                            
 !
 contains
+!
+!  No procedures yet.
 !
 end module calc_settings_class

@@ -130,7 +130,7 @@
      <li><i class="fa fa-list-ol"></i>
        <a data-toggle="tooltip"
 	  data-placement="bottom" data-html="true"
-	  title="39.0% of total for modules and submodules.">1015 statements</a>
+	  title=" 0.9% of total for modules and submodules.">202 statements</a>
      </li> 
      
      
@@ -188,19 +188,49 @@
   <div id="allmods-0" class="panel-collapse collapse">
     <div class="list-group">
       
-      <a class="list-group-item" href="../module/calc_procedures_class.html">calc_procedures_class</a>
+      <a class="list-group-item" href="../module/batching_index_class.html">batching_index_class</a>
       
       <a class="list-group-item" href="../module/calc_settings_class.html">calc_settings_class</a>
+      
+      <a class="list-group-item" href="../module/calc_tasks_class%7E2.html">calc_tasks_class</a>
+      
+      <a class="list-group-item" href="../module/calc_tasks_class.html">calc_tasks_class</a>
+      
+      <a class="list-group-item" href="../module/cc2_class.html">cc2_class</a>
+      
+      <a class="list-group-item" href="../module/cc3_class.html">cc3_class</a>
       
       <a class="list-group-item" href="../module/ccs_class.html">ccs_class</a>
       
       <a class="list-group-item" href="../module/ccsd_class.html">ccsd_class</a>
+      
+      <a class="list-group-item" href="../module/ccsdpt_class.html">ccsdpt_class</a>
+      
+      <a class="list-group-item" href="../module/core_excited_state_specs_class.html">core_excited_state_specs_class</a>
+      
+      <a class="list-group-item" href="../module/excited_state_specs_class.html">excited_state_specs_class</a>
+      
+      <a class="list-group-item" href="../module/ground_state_specs_class.html">ground_state_specs_class</a>
       
       <a class="list-group-item" href="../module/hf_class.html">hf_class</a>
       
       <a class="list-group-item" href="../module/input_output.html">input_output</a>
       
       <a class="list-group-item" href="../module/input_reader.html">input_reader</a>
+      
+      <a class="list-group-item" href="../module/memory_manager_class.html">memory_manager_class</a>
+      
+      <a class="list-group-item" href="../module/mlcc2_class.html">mlcc2_class</a>
+      
+      <a class="list-group-item" href="../module/mlcc_calculation_settings_class.html">mlcc_calculation_settings_class</a>
+      
+      <a class="list-group-item" href="../module/mlcc_orbitals_class.html">mlcc_orbitals_class</a>
+      
+      <a class="list-group-item" href="../module/mlccsd_class.html">mlccsd_class</a>
+      
+      <a class="list-group-item" href="../module/mp2_class.html">mp2_class</a>
+      
+      <a class="list-group-item" href="../module/response_calc_specs_class.html">response_calc_specs_class</a>
       
       <a class="list-group-item" href="../module/types.html">types</a>
       
@@ -223,7 +253,7 @@
     <ul class="list-inline">
       <li><h4>Ancestors:</h4></li>
       
-      <li><a href='../module/ccsd_class.html'>ccsd_class</a></li>
+      <li><a href='../module/mlcc2_class.html'>mlcc2_class</a></li>
       
       
     </ul>
@@ -233,30 +263,24 @@
   
 
     
-    <div class="codehilite"><pre><span></span>Omega submodule (CCSD)
-Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+    <div class="codehilite"><pre><span></span>Omega submodule (MLCC2) 
+Written by Eirik F. Kjønstad and Sarai D. Folkestad, Apr 2017
+
+Contains the following family of procedures of the MLCC2 class:
 
 
-Contains the following family of procedures of the CCSD class:
+construct_omega: constructs the projection vector omega1
+                 for the current amplitudes t1am for the
+                 wavefunction object wf. 
+                 The routine assumes that the projection
+                 vector is allocated.
 
-initialize_omega: allocates the projection vector (omega1, omega2)
-                      and sets it to zero.
+omega_a1:  adds A1 term to omega1
+omega_b1:  adds B1 term to omega1
 
-construct_omega:  constructs the projection vector (omega1, omega2) 
-                      for the current amplitudes (t1am, t2am) for the
-                      wavefunction object wf. The routine assumes that
-                      the projection vector is allocated.
 
-omega_a1:         adds A1 term to omega1
-omega_b1:         adds B1 term to omega1
-omega_c1:         adds C1 term to omega1
-omega_d1:         adds D1 term to omega1
-
-omega_a2:         adds A2 term to omega2
-omega_b2:         adds B2 term to omega2
-omega_c2:         adds C2 term to omega2
-omega_d2:         adds D2 term to omega2
-omega_e2:         adds E2 term to omega2
+Upper case indices are general indices, lower case indices are restricted
+to the CC2 orbital space.
 </pre></div>
     <br>
     
@@ -324,19 +348,49 @@ omega_e2:         adds E2 term to omega2
   <div id="allmods-1" class="panel-collapse collapse">
     <div class="list-group">
       
-      <a class="list-group-item" href="../module/calc_procedures_class.html">calc_procedures_class</a>
+      <a class="list-group-item" href="../module/batching_index_class.html">batching_index_class</a>
       
       <a class="list-group-item" href="../module/calc_settings_class.html">calc_settings_class</a>
+      
+      <a class="list-group-item" href="../module/calc_tasks_class%7E2.html">calc_tasks_class</a>
+      
+      <a class="list-group-item" href="../module/calc_tasks_class.html">calc_tasks_class</a>
+      
+      <a class="list-group-item" href="../module/cc2_class.html">cc2_class</a>
+      
+      <a class="list-group-item" href="../module/cc3_class.html">cc3_class</a>
       
       <a class="list-group-item" href="../module/ccs_class.html">ccs_class</a>
       
       <a class="list-group-item" href="../module/ccsd_class.html">ccsd_class</a>
+      
+      <a class="list-group-item" href="../module/ccsdpt_class.html">ccsdpt_class</a>
+      
+      <a class="list-group-item" href="../module/core_excited_state_specs_class.html">core_excited_state_specs_class</a>
+      
+      <a class="list-group-item" href="../module/excited_state_specs_class.html">excited_state_specs_class</a>
+      
+      <a class="list-group-item" href="../module/ground_state_specs_class.html">ground_state_specs_class</a>
       
       <a class="list-group-item" href="../module/hf_class.html">hf_class</a>
       
       <a class="list-group-item" href="../module/input_output.html">input_output</a>
       
       <a class="list-group-item" href="../module/input_reader.html">input_reader</a>
+      
+      <a class="list-group-item" href="../module/memory_manager_class.html">memory_manager_class</a>
+      
+      <a class="list-group-item" href="../module/mlcc2_class.html">mlcc2_class</a>
+      
+      <a class="list-group-item" href="../module/mlcc_calculation_settings_class.html">mlcc_calculation_settings_class</a>
+      
+      <a class="list-group-item" href="../module/mlcc_orbitals_class.html">mlcc_orbitals_class</a>
+      
+      <a class="list-group-item" href="../module/mlccsd_class.html">mlccsd_class</a>
+      
+      <a class="list-group-item" href="../module/mp2_class.html">mp2_class</a>
+      
+      <a class="list-group-item" href="../module/response_calc_specs_class.html">response_calc_specs_class</a>
       
       <a class="list-group-item" href="../module/types.html">types</a>
       

@@ -8,8 +8,6 @@ module input_reader
    use types
    use workspace
    use input_output
-   use calc_procedures_class
-   use calc_settings_class
 !
    implicit none
 !
@@ -19,7 +17,7 @@ contains
    subroutine method_reader(unit_input, method)
 !!
 !!    Method Reader
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2017
 !!
       implicit none 
 !
@@ -27,40 +25,111 @@ contains
 !
       character(len=40) :: method
 !
-      character(len=40) :: line 
+      character(len=40) :: line
 !
-      do ! General do loop - ends when it reaches 'exit'
+!     Start at the begining of eT.inp
+!
+      rewind(unit_input)
+!
+      do ! General do loop - ends when it reaches 'exit'. Either when method is specified or if no method is given.
 !
          read(unit_input,'(a40)') line 
 !
-         do while (line(1:1) == '!' .or. trim(line) == '') ! Comment or blank line: read the next line
-            read(unit_input,'(a40)') line 
-         enddo
+!        Remove blanks preceding text
 !
-         if (trim(line) == 'Method:') then
+         line = remove_preceding_blanks(line)
+!
+         if (trim(line) == 'CC') then
 !
             read(unit_input,'(a40)') line
+            line = remove_preceding_blanks(line)
 !
-            do while (line(1:1) == '!' .or. trim(line) == '') ! Comment or blank line: read the next line
-               read(unit_input,'(a40)') line 
-            enddo
+            if (trim(line) == '{') then
 !
-            if (line(1:1) == '.') then 
+               do ! General do loop - ends when it reaches 'exit'. Either when method is specified or if no method is given.
 !
-               method = trim(line(2:40))
-               exit ! Escape from general do loop
+                  read(unit_input,'(a40)') line
+                  line = remove_preceding_blanks(line)
 !
-            else
+                  if (trim(line) == 'method:') then ! Set method 
 !
-               write(unit_output,*) 'Input error: expected method, not the line ',trim(line),'.'
-               stop ! Terminate program
+                     read(unit_input,'(a40)') line
+                     line = remove_preceding_blanks(line)
+!
+                     method = trim(line)
+!
+                     exit
+!
+                  elseif (trim(line) == '}') then
+                     write(unit_output,*)'Error: method was not specified in eT.inp.'
+                     stop
+                  endif 
+!
+               enddo ! End general do loop
+!
+            else 
+!
+               write(unit_output,*)'Error: method was not specified in eT.inp.'
+               stop
 !
             endif
 !
-         else
+!           
+            exit
 !
-            write(unit_output,*) 'Input error: expected method section, not the line ',trim(line),'.'
-            stop ! Terminate program
+         elseif (trim(line) == 'MLCC') then
+!
+!
+!           Determine what type of MLCC method
+!
+            read(unit_input,'(a40)') line
+            line = remove_preceding_blanks(line)
+!
+            if (trim(line) == '{') then
+!
+               do ! General do loop - ends when it reaches 'exit'. Either when method is specified or if no method is given.
+                  read(unit_input,'(a40)') line
+                  line = remove_preceding_blanks(line)
+!
+                  if (trim(line) == 'method:') then ! Set method
+!
+                     read(unit_input,'(a40)') line
+                     line = remove_preceding_blanks(line)
+!
+!                    Set method
+!
+                     method = trim(line)
+!
+                     exit
+!
+                  elseif (trim(line) == '}') then
+!
+                     write(unit_output,*)'Error: method was not specified in eT.inp.'
+                     stop
+!
+                  endif 
+!
+               enddo ! End general do loop
+!
+            else 
+!
+               write(unit_output,*)'Error: method was not specified in eT.inp.'
+               stop
+!
+            endif
+            exit
+!
+         elseif (trim(line) == 'SCC') then
+!
+!           Go to SCC specific reader
+!
+            write(unit_output, '(t3,a)') 'Error: similarity constrained CC calculation requested, but it has not been implemented'
+            stop
+!
+         elseif (trim(line) == 'end of eT input') then
+!
+            write(unit_output,*)'Error: method was not specified in eT.inp.'
+            stop
 !
          endif
 !
@@ -69,182 +138,33 @@ contains
    end subroutine method_reader
 !
 !
-   subroutine calculation_reader(unit_input, tasks)
+   function remove_preceding_blanks(line)
 !!
-!!    Calculation Reader
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!    Remove Preceding Blanks. 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2017
+!!    
+!!    Removes white spaces before text from line
 !!
-!!    Reads the calculation from the input file and initializes the 
-!!    tasks requested of the wavefunction.
-!!
-      implicit none 
+      implicit none
 !
-      type(calc_procedures) :: tasks 
+      character(len=40) :: line
 !
-      integer(i15), intent(in) :: unit_input
+      character(len=40) :: remove_preceding_blanks
 !
-      character(len=40) :: calculation 
+      integer(i15) :: i = 0, j = 0, length = 0
 !
-      character(len=40) :: line 
-!
-      read(unit_input,'(a40)') line   
-!
-      do while (line(1:1) == '!' .or. trim(line) == '') ! Comment or blank line: read the next line
-!
-         read(unit_input,'(a40)') line 
-!
+      do i = 1, 40
+         if (line(i:i) == ' ') then
+            continue
+         else
+            length = 40 - (i - 1)
+            remove_preceding_blanks(1:length) = line(i:40)
+            remove_preceding_blanks(length+1:40) = ' '
+            return
+         endif
       enddo
 !
-      if (trim(line) == 'Calculation:') then
-!
-         do ! Read calculations 
-!
-            read(unit_input,'(a40)') line
-!
-            do while (line(1:1) == '!' .or. trim(line) == '') ! Comment or blank line: read the next line
-               read(unit_input,'(a40)') line 
-            enddo
-!
-            if (line(1:1) == '.') then 
-!
-               calculation = trim(line(2:40))
-!
-!              Test for which type, set the logical in tasks, and cycle!
-!
-               if (calculation == 'ground_state') then
-!
-                  tasks%do_ground_state = .true.
-                  cycle
-!
-               elseif (calculation == 'excited_state') then
-!
-                  tasks%do_excited_state = .true.
-                  cycle 
-!
-               elseif (calculation == 'properties') then
-!
-                  tasks%do_properties = .true. 
-                  cycle 
-!
-               else
-!
-                  write(unit_output,*) 'Input error: calculation ',trim(line(2:40)),' not recognized.'
-                  stop
-!
-               endif
-!
-            elseif (trim(line) == 'Settings:') then 
-!
-               backspace(unit_input)
-               exit ! escape the do loop
-!
-            else
-! 
-               write(unit_output,*) 'Input error: line ',trim(line),' not recognized.'
-               stop
-!
-            endif
-!
-         enddo
-!
-      else
-!
-         write(unit_output,*) 'Expected calculation settings, not ',trim(line),'.'
-!
-      endif
-!
-   end subroutine calculation_reader
-!
-!
-   subroutine settings_reader(unit_input, settings)
-!!
-!!    Settings Reader
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!!
-!!    Reads the calculation settings from the input file and initializes 
-!!    the settings requested of the wavefunction.
-!!
-      implicit none 
-!
-      type(calc_settings) :: settings 
-!
-      integer(i15), intent(in) :: unit_input
-!
-      character(len=40) :: setting 
-!
-      character(len=40) :: line 
-!
-      read(unit_input,'(a40)') line   
-!
-      do while (line(1:1) == '!' .or. trim(line) == '') ! Comment or blank line: read the next line
-!
-         read(unit_input,'(a40)') line 
-!
-      enddo
-!
-      if (trim(line) == 'Settings:') then
-!
-         do ! Read settings 
-!
-            read(unit_input,'(a40)') line
-!
-            do while (line(1:1) == '!' .or. trim(line) == '') ! Comment or blank line: read the next line
-               read(unit_input,'(a40)') line 
-            enddo
-!
-            if (line(1:1) == '.') then 
-!
-               setting = trim(line(2:40))
-!
-!              Test for which type, set the logical in tasks, and cycle!
-!
-               if (setting == 'energy_threshold') then
-!
-                  read(unit_input,*) settings%energy_threshold
-                  cycle
-!
-               elseif (setting == 'ampeqs_threshold') then 
-!
-                  read(unit_input,*) settings%ampeqs_threshold
-                  cycle
-!
-               elseif (setting == 'memory') then
-!
-                  read(unit_input,*) mem 
-                  cycle
-!
-               elseif (trim(line) == '#end of eT input') then
-!
-                  exit ! escape do loop 
-!
-               else
-!
-                  write(unit_output,*) 'Input error: setting ',trim(line(2:40)),' not recognized.'
-                  stop
-!
-               endif
-!
-            elseif (trim(line) == '#end of eT input') then
-!
-               exit
-!
-            else
-!
-               write(unit_output,*) 'Input error: unregonized line ',trim(line),'.'
-               stop
-!
-            endif
-!
-         enddo
-!
-      else
-!
-         write(unit_output,*) 'Input error: expected settings section, not the line ',trim(line),'.'
-         stop ! Terminate program
-!
-      endif
-!
-   end subroutine settings_reader
+   end function remove_preceding_blanks
 !
 !
 end module input_reader

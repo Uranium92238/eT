@@ -4,21 +4,26 @@ module workspace
 !!    Workspace module
 !!    Written by Henrik Koch, Rolf H. Myhre, Eirik Kjønstad and Sarai Folkestad, Jan 2017
 !!
+!!    NB! THIS IS BEING PHASED OUT & HAS BEEN REPLACED BY THE MEMORY MANAGER OBJECT.
+!!        THE MANY CALLS TO "GET_AVAILABLE" MEANS THAT WE CANNOT REMOVE IT JUST YET.
+!!
 !!    Manages program memory usage and contains:
 !!
-!!    work_init: Initializes the memory management variables.
+!!    work_init:       Initializes the memory management variables.
 !!
-!!    allocator:   Allocation of double precission array of two dimmensions (M,N). 
-!!                 Updates memory management variables.
-!!    deallocator: Deallocation of double precission array of two dimmensions (M,N).
-!!                 Updates memory management variables. 
+!!    allocator:       Allocation of double precission array of two dimmensions (M,N). 
+!!                     Updates memory management variables.
+!!
+!!    deallocator:     Deallocation of double precission array of two dimmensions (M,N).
+!!                     Updates memory management variables. 
 !!
 !!    allocator_int:   Allocation of integer array of two dimmensions (M,N). 
 !!                     Updates memory management variables.
+!!
 !!    deallocator_int: Deallocation of integer array of two dimmensions (M,N)
 !!                     Updates memory management variables. 
 !!
-!!    get_available: Returns available memory.
+!!    get_available:   Returns available memory.
 !!
 !
    use types
@@ -30,7 +35,7 @@ module workspace
    integer, private :: work_remains = 0
    integer, private :: work_used    = 0
 !
-   integer(i15)     :: mem = 1000000000 ! 7 GB S: Settes i input og bør testes avhengig av minimumskravene for metoden.
+   integer(i15)     :: mem = 4000000000 ! ca. 30 gb
 !
 !
 contains
@@ -64,6 +69,8 @@ contains
       real(dp), dimension(:,:), allocatable  :: elm
       integer                                :: size
       integer                                :: stat = 0, error = 0
+!
+      logical :: debug = .false.
 ! 
       size = M*N
 !  
@@ -73,7 +80,9 @@ contains
          write(unit_output,'(t3,a,i15)') 'Allocation error! Could not allocate array of size (M*N):', size
          stop
       endif
-!       
+!
+      if(debug) write(unit_output,*) work_remains, 4*size
+!  
       work_remains = work_remains - 4*size
       work_used    = work_used    + 4*size
 !
@@ -109,7 +118,7 @@ contains
          stop
 !
       endif
-!  
+!   
       work_remains = work_remains + 4*size
       work_used    = work_used    - 4*size
 !
@@ -156,13 +165,11 @@ contains
 !
    subroutine deallocator_int(elm, M, N)
 !
-!
 !     Deallocator Integer Arrays 
 !     Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2017
 !  
 !     Deallocates array and updates memory information
 !
-!  
       implicit none
 !  
       integer, dimension(:,:), allocatable :: elm
