@@ -4920,4 +4920,72 @@ contains
       get_vvvv_required_mem_ccs = get_vvvv_required_mem_ccs*dp
 !
    end function get_vvvv_required_mem_ccs
+!
+!
+   integer function get_vvvo_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
+!!
+!!    Get vvvo required memory (CCS)
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Dec 2017
+!!
+!!    Calculates and returns required memory to make vvvv electronic repulsion integral.
+!!
+!!    dim_1, dim_2, dim_3, and dim_4 are the full dimension of index 1-4.
+!!    They will typically be wf%n_v for 1-3 and wf%n_o for 4 and are therefore optionals,  
+!!    however will not necessarily have these values for ML 
+!!
+      implicit none
+!
+      class(ccs), intent(in)              :: wf 
+!  
+      integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
+!
+      integer(i15) :: get_vvvo_required_mem_ccs
+!
+   end function get_vvvo_required_mem_ccs
+!
+!
+   integer function get_vvov_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
+!!
+!!    Get vvvo required memory (CCS)
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Dec 2017
+!!
+!!    Calculates and returns required memory to make vvvv electronic repulsion integral.
+!!
+!!    dim_1, dim_2, dim_3, and dim_4 are the full dimension of index 1-4.
+!!    They will typically be wf%n_v for 1, 2, and 4 and wf%n_o for 3 and are therefore optionals,  
+!!    however will not necessarily have these values for ML 
+!!
+      implicit none
+!
+      class(ccs), intent(in)              :: wf 
+!  
+      integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
+!
+      integer(i15) :: get_vvvo_required_mem_ccs
+!
+   end function get_vvov_required_mem_ccs
+!
+!
+   integer function get_vvoo_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
+!!
+!!    Get vvvo required memory (CCS)
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Dec 2017
+!!
+!!    Calculates and returns required memory to make vvvv electronic repulsion integral.
+!!
+!!    dim_1, dim_2, dim_3, and dim_4 are the full dimension of index 1-4.
+!!    They will typically be wf%n_v for 1 and 2 and wf%n_o for 3 and 4 and are therefore optionals,  
+!!    however will not necessarily have these values for ML 
+!!
+      implicit none
+!
+      class(ccs), intent(in)              :: wf 
+!  
+      integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
+!
+      integer(i15) :: get_vvvo_required_mem_ccs
+!
+   end function get_vvoo_required_mem_ccs
+!
+!
 end submodule integrals

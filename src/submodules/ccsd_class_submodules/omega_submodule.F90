@@ -595,11 +595,9 @@ contains
                     + 2*(wf%n_v)**2*(packed_size(wf%n_v)))                        !
 !
      required = required*4  ! Words
-
-     available=get_available()
 !
      a_max_length = 0
-     call num_two_batch(required, available, a_max_length, a_n_batch, wf%n_v)
+     call num_two_batch(required, wf%mem%available, a_max_length, a_n_batch, wf%n_v)
 !
 !    Initialize some variables for batching
 !
@@ -1323,12 +1321,10 @@ contains
 !     Constructing g_ki_ac
 !
 !     Setup of variables needed for batching
-!
-      available = get_available()
       required = 2*(wf%n_v**2)*(wf%n_J) + 2*(wf%n_v)*(wf%n_o)*(wf%n_J) &
                + (wf%n_o**2)*(wf%n_v**2)
       required = 4*required
-      call num_batch(required, available, max_batch_length, n_batch, wf%n_v)
+      call num_batch(required, wf%mem%available, max_batch_length, n_batch, wf%n_v)
 !
       a_start  = 1
       a_end    = 0

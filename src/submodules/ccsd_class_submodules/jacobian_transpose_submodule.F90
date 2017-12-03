@@ -669,13 +669,12 @@ contains
       required = 1 ! Not a correct estimate - needs to be set!
 !     
       required  = 4*required ! In words
-      available = get_available()
 !
       batch_dimension  = wf%n_v ! Batch over the virtual index a
       max_batch_length = 0      ! Initilization of unset variables 
       n_batch          = 0
 !
-      call num_batch(required, available, max_batch_length, n_batch, batch_dimension)           
+      call num_batch(required, wf%mem%available, max_batch_length, n_batch, batch_dimension)           
 !
 !     Loop over the number of a batches 
 !
@@ -1168,13 +1167,12 @@ contains
       required = 1 ! Not a correct estimate - needs to be set!
 !     
       required  = 4*required ! In words
-      available = get_available()
 !
       batch_dimension  = wf%n_v ! Batch over the virtual index a
       max_batch_length = 0      ! Initilization of unset variables 
       n_batch          = 0
 !
-      call num_batch(required, available, max_batch_length, n_batch, batch_dimension)           
+      call num_batch(required, wf%mem%available, max_batch_length, n_batch, batch_dimension)           
 !
 !     Loop over the number of a batches 
 !
@@ -1280,13 +1278,12 @@ contains
       required = 1 ! Not a correct estimate - needs to be set!
 !     
       required  = 4*required ! In words
-      available = get_available()
 !
       batch_dimension  = wf%n_v ! Batch over the virtual index a
       max_batch_length = 0      ! Initilization of unset variables 
       n_batch          = 0
 !
-      call num_batch(required, available, max_batch_length, n_batch, batch_dimension)           
+      call num_batch(required, wf%mem%available, max_batch_length, n_batch, batch_dimension)           
 !
 !     Loop over the number of a batches 
 !
@@ -1941,13 +1938,12 @@ contains
       required = 1 ! Not a correct estimate - needs to be set!
 !     
       required  = 4*required ! In words
-      available = get_available()
 !
       batch_dimension  = wf%n_v ! Batch over the virtual index a
       max_batch_length = 0      ! Initilization of unset variables 
       n_batch          = 0
 !
-      call num_batch(required, available, max_batch_length, n_batch, batch_dimension)           
+      call num_batch(required, wf%mem%available, max_batch_length, n_batch, batch_dimension)           
 !
 !     Loop over the number of a batches 
 !
@@ -2083,13 +2079,12 @@ contains
       required = 1 ! Not a correct estimate - needs to be set!
 !     
       required  = 4*required ! In words
-      available = get_available()
 !
       batch_dimension  = wf%n_v ! Batch over the virtual index a
       max_batch_length = 0      ! Initilization of unset variables 
       n_batch          = 0
 !
-      call num_batch(required, available, max_batch_length, n_batch, batch_dimension)           
+      call num_batch(required, wf%mem%available, max_batch_length, n_batch, batch_dimension)           
 !
 !     Loop over the number of a batches 
 !
@@ -2183,13 +2178,12 @@ contains
       required = 1 ! Not a correct estimate - needs to be set!
 !     
       required  = 4*required ! In words
-      available = get_available()
 !
       batch_dimension  = wf%n_v ! Batch over the virtual index d
       max_batch_length = 0      ! Initilization of unset variables 
       n_batch          = 0
 !
-      call num_batch(required, available, max_batch_length, n_batch, batch_dimension)           
+      call num_batch(required, wf%mem%available, max_batch_length, n_batch, batch_dimension)           
 !
 !     Loop over the number of a batches 
 !
@@ -2448,13 +2442,12 @@ contains
       required = 1 ! Not a correct estimate - needs to be set!
 !     
       required  = 4*required ! In words
-      available = get_available()
 !
       batch_dimension  = wf%n_v ! Batch over the virtual index a
       max_batch_length = 0      ! Initilization of unset variables 
       n_batch          = 0
 !
-      call num_batch(required, available, max_batch_length, n_batch, batch_dimension)           
+      call num_batch(required, wf%mem%available, max_batch_length, n_batch, batch_dimension)           
 !
 !     Loop over the number of a batches 
 !
@@ -2530,13 +2523,12 @@ contains
       required = 1 ! Not a correct estimate - needs to be set!
 !     
       required  = 4*required ! In words
-      available = get_available()
 !
       batch_dimension  = wf%n_v ! Batch over the virtual index b
       max_batch_length = 0      ! Initilization of unset variables
       n_batch          = 0
 !
-      call num_batch(required, available, max_batch_length, n_batch, batch_dimension)           
+      call num_batch(required, wf%mem%available, max_batch_length, n_batch, batch_dimension)           
 !
 !     Loop over the number of b batches 
 !
@@ -2790,13 +2782,12 @@ contains
       required = 1 ! Not a correct estimate - needs to be set!
 !     
       required  = 4*required ! In words
-      available = get_available()
 !
       batch_dimension  = wf%n_v ! Batch over the virtual index b
       max_batch_length = 0      ! Initilization of unset variables 
       n_batch          = 0
 !
-      call num_batch(required, available, max_batch_length, n_batch, batch_dimension)           
+      call num_batch(required, wf%mem%available, max_batch_length, n_batch, batch_dimension)           
 !
 !     Loop over the number of b batches 
 !
@@ -2971,13 +2962,12 @@ contains
       required = 1 ! Not a correct estimate - needs to be set!
 !     
       required  = 4*required ! In words
-      available = get_available()
 !
       batch_dimension  = wf%n_v ! Batch over the virtual index b
       max_batch_length = 0      ! Initilization of unset variables 
       n_batch          = 0
 !
-      call num_batch(required, available, max_batch_length, n_batch, batch_dimension)           
+      call num_batch(required, wf%mem%available, max_batch_length, n_batch, batch_dimension)           
 !
 !     Loop over the number of b batches 
 !
@@ -4347,7 +4337,6 @@ contains
       required = 1 ! Not a correct estimate - needs to be set!
 !     
       required  = 4*required ! In words
-      available = get_available()
 !
       batch_dimension = wf%n_v ! Batch over the virtual indices a,b 
       a_max_length    = 0      ! Initilization of unset variables 
@@ -4355,7 +4344,7 @@ contains
       a_n_batch = 0
       b_n_batch = 0
 !
-      call num_two_batch(required, available, a_max_length, a_n_batch, batch_dimension)    
+      call num_two_batch(required, wf%mem%available, a_max_length, a_n_batch, batch_dimension)    
       b_n_batch = a_n_batch       
 !
 !     Loop over the number of a & b batches 

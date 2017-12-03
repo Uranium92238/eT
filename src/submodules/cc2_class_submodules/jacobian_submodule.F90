@@ -619,11 +619,9 @@ contains
                     (wf%n_v**3)*(wf%n_o) + wf%n_o*wf%n_v*(wf%n_j) + (wf%n_v**2)*(wf%n_j))
 !
      required = required*4  ! Words
-
-     available = get_available()
-
+!
      max_length = 0
-     call num_batch(required, available, max_length, a_n_batch, wf%n_v)
+     call num_batch(required, wf%mem%available, max_length, a_n_batch, wf%n_v)
 !
 !    initialize some variables for batching
 !
@@ -754,11 +752,9 @@ contains
 !
 !
       required = required*4  ! Words
-
-      available = get_available()
-
+!
       max_length = 0
-      call num_batch(required, available, max_length, c_n_batch, wf%n_v)
+      call num_batch(required, wf%mem%available, max_length, c_n_batch, wf%n_v)
 !
 !     Initialize some variables for batching
 !

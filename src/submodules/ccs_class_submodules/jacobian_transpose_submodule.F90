@@ -164,13 +164,12 @@ contains
       required = 1 ! Not a correct estimate - needs to be set!
 !     
       required  = 4*required ! In words
-      available = get_available()
 !
       batch_dimension  = wf%n_v ! Batch over the virtual index a
       max_batch_length = 0      ! Initilization of unset variables 
       n_batch          = 0
 !
-      call num_batch(required, available, max_batch_length, n_batch, batch_dimension)           
+      call num_batch(required, wf%mem%available, max_batch_length, n_batch, batch_dimension)           
 !
 !     Loop over the number of a batches 
 !

@@ -1386,13 +1386,12 @@ contains
                      (n_CC2_o**2)*(n_CC2_v**2))             ! Holding L_bc^J and g_aibc
 !
       required = 4*required ! Words
-      available = get_available()
 !
       batch_dimension  = n_CCSD_v ! Batch over the virtual index b
       max_b_length = 0        ! Initilization of unset variables 
       n_batch          = 0
 !
-      call num_batch(required, available, max_b_length, n_batch, batch_dimension)  
+      call num_batch(required, wf%mem%available, max_b_length, n_batch, batch_dimension)  
 !
       do b_batch = 1, n_batch 
 !
@@ -3922,13 +3921,12 @@ contains
                  + 2*(wf%n_J)*((wf%n_o)**2)
 !    
         required = 4*required         ! In words
-        available = get_available()
 !
         batch_dimension  = n_CC2_v ! Batch over the virtual index a
         max_batch_length = 0      ! Initilization of unset variables 
         n_batch          = 0
 !
-        call num_batch(required, available, max_batch_length, n_batch, batch_dimension)           
+        call num_batch(required, wf%mem%available, max_batch_length, n_batch, batch_dimension)           
 !
 !       Loop over the number of a batches 
 !
@@ -4574,11 +4572,9 @@ contains
                      (wf%n_v)**4 + 2*(wf%n_v)**2*(wf%n_J))                            ! Needed to get g_ac_bd
 !
          required = required*4  ! Words
-
-         available = get_available()
 !
          a_max_length = 0
-         call num_two_batch(required, available, a_max_length, a_n_batch, n_CCSD_v)
+         call num_two_batch(required, wf%mem%available, a_max_length, a_n_batch, n_CCSD_v)
 !
 !        Initialize some variables for batching
 !

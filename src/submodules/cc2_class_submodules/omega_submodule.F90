@@ -143,11 +143,9 @@ contains
 !
       required = required*4  ! Words
 
-      available = get_available()
-
       max_length = 0
 !
-      call num_two_batch(required, available, max_length, c_n_batch, wf%n_v)
+      call num_two_batch(required, wf%mem%available, max_length, c_n_batch, wf%n_v)
 !
 !     Initialize some variables for batching
 !
@@ -289,10 +287,8 @@ contains
 !
       required = required*4  ! Words
 
-      available = get_available()
-
       max_length = 0
-      call num_batch(required, available, max_length, b_n_batch, wf%n_v)
+      call num_batch(required, wf%mem%available, max_length, b_n_batch, wf%n_v)
 !
 !     Initialize some variables for batching
 !

@@ -455,10 +455,8 @@ contains
 !
       required = required*4  ! Words
 
-      available = get_available()
-
       max_length = 0
-      call num_batch(required, available, max_length, A_n_batch, wf%n_v)
+      call num_batch(required, wf%mem%available, max_length, A_n_batch, wf%n_v)
 !
       A_first  = 0
       A_last   = 0
@@ -794,10 +792,9 @@ contains
                      + 2*(n_CC2_v)**2*(packed_size(n_CC2_v)))                          !
 !
       required = required*4  ! Words
-      available=get_available()
 !
       a_max_length = 0
-      call num_two_batch(required, available, a_max_length, a_n_batch, n_CCSD_v)
+      call num_two_batch(required, wf%mem%available, a_max_length, a_n_batch, n_CCSD_v)
 !
 !     Initialize some variables for batching
 !
@@ -1504,10 +1501,9 @@ contains
 !
 !     Setup of variables needed for batching
 !
-      available = get_available()
       required = 2*(n_CC2_v**2)*(wf%n_J) + 2*(n_CC2_v)*(n_CC2_o)*(wf%n_J)
       required = 4*required
-      call num_batch(required, available, max_batch_length, n_batch, n_CCSD_v)
+      call num_batch(required, wf%mem%available, max_batch_length, n_batch, n_CCSD_v)
 !
       a_start  = 1
       a_end    = 0
@@ -2051,13 +2047,11 @@ contains
                   (wf%n_J)*(n_CC2_v)**2 + 2*(wf%n_J)*(n_CC2_o)*(n_CC2_v)) ! to hold g_acki or to create L_ac^J
 !
      required = 4*required ! In words
-!
-     available = get_available()
      batch_dimension = n_CCSD_v
 !
 !     Determine the batching variables 
 !
-      call num_batch(required, available, max_batch_length, n_batch, batch_dimension) 
+      call num_batch(required, wf%mem%available, max_batch_length, n_batch, batch_dimension) 
 !
 !     Determine g_ai_ck = g_acki successively in batches over a 
 !

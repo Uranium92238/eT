@@ -885,13 +885,12 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
                         2*((wf%n_v)**3)*(wf%n_o))
 !     
       required = 4*required ! In words
-      available = get_available()
 !
       batch_dimension  = wf%n_v ! Batch over the virtual index a
       max_batch_length = 0      ! Initilization of unset variables 
       n_batch          = 0
 !
-      call num_batch(required, available, max_batch_length, n_batch, batch_dimension)           
+      call num_batch(required, wf%mem%available, max_batch_length, n_batch, batch_dimension)           
 !
 !     Loop over the number of a batches 
 !
@@ -1104,14 +1103,12 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
                      (wf%n_o)*(wf%n_v)**3)             ! Holding L_bc^J and g_aibc
 !
       required = 4*required ! Words
-!
-      available = get_available()
 ! 
       batch_dimension  = wf%n_v ! Batch over the virtual index b
       max_batch_length = 0      ! Initilization of unset variables 
       n_batch          = 0
 !
-      call num_batch(required, available, max_batch_length, n_batch, batch_dimension)  
+      call num_batch(required, wf%mem%available, max_batch_length, n_batch, batch_dimension)  
 !
       do b_batch = 1, n_batch 
 !
@@ -1993,13 +1990,12 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
                      (wf%n_o)*(wf%n_v)**3)             ! Holding L_bc^J and g_aibc
 !
       required = 4*required ! Words
-      available = get_available()
 !
       batch_dimension  = wf%n_v ! Batch over the virtual index b
       max_batch_length = 0      ! Initilization of unset variables 
       n_batch          = 0
 !
-      call num_batch(required, available, max_batch_length, n_batch, batch_dimension)  
+      call num_batch(required, wf%mem%available, max_batch_length, n_batch, batch_dimension)  
 !
       do b_batch = 1, n_batch 
 !
@@ -4045,13 +4041,12 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
                  + 2*(wf%n_J)*((wf%n_o)**2)
 !    
         required = 4*required         ! In words
-        available = get_available()
 !
         batch_dimension  = wf%n_v ! Batch over the virtual index a
         max_batch_length = 0      ! Initilization of unset variables 
         n_batch          = 0
 !
-        call num_batch(required, available, max_batch_length, n_batch, batch_dimension)           
+        call num_batch(required, wf%mem%available, max_batch_length, n_batch, batch_dimension)           
 !
 !       Loop over the number of a batches 
 !
@@ -4459,11 +4454,9 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
                      (wf%n_v)**4 + 2*(wf%n_v)**2*(wf%n_J))                            ! Needed to get g_ac_bd
 !
          required = required*4  ! Words
-
-         available = get_available()
 !
          a_max_length = 0
-         call num_two_batch(required, available, a_max_length, a_n_batch, wf%n_v)
+         call num_two_batch(required, wf%mem%available, a_max_length, a_n_batch, wf%n_v)
 !
 !        Initialize some variables for batching
 !

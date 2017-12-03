@@ -60,18 +60,10 @@ module memory_manager_class
       procedure :: alloc_int   => alloc_int_memory_manager
       procedure :: dealloc_int => dealloc_int_memory_manager
 !
-<<<<<<< HEAD:src/memory_manager_class.F90
-!     Calculation of required memory for construction of certain integrals (Integrals with at least one L_ab^J)
-!
-!     procedure :: get_vvvo_required_mem => get_vvvo_required_mem_memory_manager
-!     procedure :: get_vvov_required_mem => get_vvov_required_mem_memory_manager
-!     procedure :: get_vvoo_required_mem => get_vvoo_required_mem_memory_manager
-=======
 !     Routines for determining the number of batches 
 !
       procedure :: num_batch     => num_batch_memory_manager     ! For one-index batch 
       procedure :: num_two_batch => num_two_batch_memory_manager ! For two-index batches 
->>>>>>> 8bf80fa5da5ba6f5d7681fa17305941de360afac:src/tools/memory_manager_class.F90
 !
    end type memory_manager                                                                            
 !
@@ -299,45 +291,6 @@ contains
    end subroutine dealloc_int_memory_manager
 !
 !
-<<<<<<< HEAD:src/memory_manager_class.F90
-   integer function get_vvvo_required_mem_memory_manager(mem, index_dim_1, index_dim_2, index_dim_3, index_dim_4)
-!!
-!!
-!!
-      implicit none
-!
-      class(memory_manager), intent(in) :: mem 
-!  
-      integer(i15), intent(in)          :: index_dim_1, index_dim_2, index_dim_3, index_dim_4
-!
-   end function get_vvvo_required_mem_memory_manager
-!
-!
-   integer function get_vvov_required_mem_memory_manager(mem, index_dim_1, index_dim_2, index_dim_3, index_dim_4)
-!!
-!!
-!!
-      implicit none
-!
-      class(memory_manager), intent(in) :: mem 
-!  
-      integer(i15), intent(in)          :: index_dim_1, index_dim_2, index_dim_3, index_dim_4
-!
-   end function get_vvov_required_mem_memory_manager
-!
-!
-   integer function get_vvoo_required_mem_memory_manager(mem, index_dim_1, index_dim_2, index_dim_3, index_dim_4)
-!!
-!!
-!!
-      implicit none
-!
-      class(memory_manager), intent(in) :: mem 
-!  
-      integer(i15), intent(in)          :: index_dim_1, index_dim_2, index_dim_3, index_dim_4
-!
-   end function get_vvoo_required_mem_memory_manager
-=======
    subroutine num_batch_memory_manager(mem, batch_p, required)
 !!
 !!    Number of batches 
@@ -469,7 +422,6 @@ contains
       enddo
 !
    end subroutine num_two_batch_memory_manager
->>>>>>> 8bf80fa5da5ba6f5d7681fa17305941de360afac:src/tools/memory_manager_class.F90
 !
 !
 end module memory_manager_class
