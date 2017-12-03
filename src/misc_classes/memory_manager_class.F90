@@ -1,15 +1,16 @@
 module memory_manager_class
 !
 !!
-!!                   Memory manager class module                                 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017         
+!!                            Memory manager class module                                 
+!!             Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017         
+!!
 !!
 !!    The memory manager class handles the memory used by the model calculation,
 !!    and there is an object called 'mem' in the wavefunction object of this class. 
 !!
-!!    Note: large arrays must always be allocated using the memory manager object. Small arrays,
-!!          integers, strings, etc., which use a negligible amount of memory, are not considered 
-!!          by the memory manager.
+!!    Large arrays must always be allocated using the memory manager object. Small arrays,
+!!    integers, strings, etc., which use a negligible amount of memory, are not considered 
+!!    by the memory manager.
 !! 
 !
 !  :::::::::::::::::::::::::::::::::::
