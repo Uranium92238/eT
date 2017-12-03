@@ -24,17 +24,17 @@ module ccs_class
 !!             The procedures in the class are grouped according to functionality, with
 !!             detailed definitions given in the following class submodules:
 !!
-!!                - Cholesky 
-!!                - CVS
-!!                - Excited State 
-!!                - Fock
-!!                - Ground State
+!!                - Ground state
+!!                - Excited state 
+!!                - Response 
 !!                - Input Reader 
+!!                - Cholesky
 !!                - Integrals 
-!!                - Ionized State
+!!                - Fock 
 !!                - Jacobian (right transformation)
 !!                - Jacobian Transpose (left transformation)
-!!                - Response 
+!!                - Ionized State
+!!                - CVS
 !!
 !!             The interfaces shows incoming variables and their type, but contains 
 !!             no information of the procedure itself. The procedure is shown in full 
@@ -74,152 +74,107 @@ module ccs_class
 !
    type, extends(hf) :: ccs
 !
-!     Amplitude attributes
 !
-      integer(i15) :: n_t1am = 0                    ! Number of singles amplitudes
-      real(dp), dimension(:,:), allocatable :: t1am ! Singles amplitude vector
+!                           -::- Class variables that are inherited by descendants -::-
+!     ---------------------------------------------------------------------------------------------------------
 !
+!     Cluster amplitudes
+!
+      integer(i15) :: n_t1am = 0       ! Number of singles amplitudes
       integer(i15) :: n_parameters = 0 ! Number of parameters in the wavefunction
 !
-!     Projection vector < mu | exp(-T) H exp(T) | R > (the omega vector)
+      real(dp), dimension(:,:), allocatable :: t1am ! Singles amplitude vector, t1am(a,i) = t_i^a 
+!
+!     The omega, or projection, vector < mu | exp(-T) H exp(T) | R >
 ! 
       real(dp), dimension(:,:), allocatable :: omega1 ! Singles vector 
 !
-!     The T1-transformed Fock matrix (in vir-occ block form)
+!     The T1-transformed Fock matrix
 !
       real(dp), dimension(:,:), allocatable :: fock_ij ! occ-occ block
       real(dp), dimension(:,:), allocatable :: fock_ia ! occ-vir block
       real(dp), dimension(:,:), allocatable :: fock_ai ! vir-occ block
       real(dp), dimension(:,:), allocatable :: fock_ab ! vir-vir block 
 !
-!     The excitation energies (omega_1, omega_2, ...)
+!     Excitation energy array (omega_1, omega_2, ...)
 !
       real(dp), dimension(:,:), allocatable :: excited_state_energies
 !
+!
    contains 
 !
-!     Initialization and driver routines
 !
-      procedure :: init => init_ccs
-      procedure :: drv  => drv_ccs
+!                           -::- Class routines that are inherited by descendants -::-
+!     ---------------------------------------------------------------------------------------------------------
 !
-!     Initialization routine for the amplitudes and omega 
-!      
-      procedure :: initialize_amplitudes => initialize_amplitudes_ccs
-      procedure :: initialize_omega      => initialize_omega_ccs
 !
-!     Initialization routine for the Fock matrix, and a T1 Fock matrix constructor
+!     -::- Initialization and driver routines -::-
+!     --------------------------------------------
 !
-      procedure, non_overridable :: construct_fock         => construct_fock_ccs
-      procedure, non_overridable :: initialize_fock_matrix => initialize_fock_matrix_ccs
+      procedure :: init => init_ccs ! Initialization of class 
+      procedure :: drv  => drv_ccs  ! Driver of class 
+!  
+      procedure :: initialize_amplitudes => initialize_amplitudes_ccs ! Initialize cluster amplitudes 
+      procedure :: initialize_omega      => initialize_omega_ccs      ! Initialize projection vector 
 !
-      procedure, non_overridable :: one_electron_t1 => one_electron_t1_ccs ! T1-transf. of h_pq
 !
-!     Routine to calculate the energy
+!     -::- Ground state submodule routine pointers -::-
+!     -------------------------------------------------
 !
-      procedure :: calc_energy => calc_energy_ccs
-!
-!     Routines for reading input file eT.inp
-!
-      procedure :: general_specs_reader      => general_specs_reader_ccs
-      procedure :: calculation_reader        => calculation_reader_ccs
-      procedure :: read_ground_state_specs   => read_ground_state_specs_ccs
-      procedure :: read_excited_state_specs  => read_excited_state_specs_ccs
-      procedure :: read_property_specs       => read_property_specs_ccs
-!
-!     get Cholesky routines to calculate the occ/vir-occ/vir blocks of the 
-!     T1-transformed MO Cholesky vectors
-!
-      procedure, non_overridable :: get_cholesky_ij => get_cholesky_ij_ccs ! occ-occ
-      procedure, non_overridable :: get_cholesky_ia => get_cholesky_ia_ccs ! occ-vir
-      procedure, non_overridable :: get_cholesky_ai => get_cholesky_ai_ccs ! vir-occ
-      procedure, non_overridable :: get_cholesky_ab => get_cholesky_ab_ccs ! vir-vir
-!
-!     Routine to construct projection vector (omega)
-!
-      procedure :: construct_omega => construct_omega_ccs
-      procedure :: omega_ccs_a1    => omega_ccs_a1_ccs
-!
-!     Routine to construct right projection vector (eta)
-!
-      procedure :: construct_eta => construct_eta_ccs 
-!
-!     Ground state driver routine (and helpers)
-!
-!     Note: while this solver is uneccessary for CCS, where the solution is trivial, 
-!     it is inherited mostly unaltered by descendants (CCSD, CC2, etc.).
+!     Driver and solver 
 !
       procedure :: ground_state_driver => ground_state_driver_ccs
+      procedure :: ground_state_solver => ground_state_solver_ccs
 !
-!     Solver preparations and cleanup routines plus solver routine and its helpers
+!     Preparations and cleanup routines (before and after solver)
 !
       procedure :: ground_state_preparations => ground_state_preparations_ccs
-      procedure :: ground_state_solver       => ground_state_solver_ccs
       procedure :: ground_state_cleanup      => ground_state_cleanup_ccs
 !
       procedure :: initialize_ground_state   => initialize_ground_state_ccs
       procedure :: destruct_ground_state     => destruct_ground_state_ccs
+!
+!     DIIS component of solver, with helper routines 
+!
+      procedure, non_overridable :: diis     => diis_ccs
+!
       procedure :: new_amplitudes            => new_amplitudes_ccs
       procedure :: calc_ampeqs               => calc_ampeqs_ccs
       procedure :: calc_ampeqs_norm          => calc_ampeqs_norm_ccs
       procedure :: calc_quasi_Newton_singles => calc_quasi_Newton_singles_ccs
 !
-      procedure, non_overridable :: diis     => diis_ccs
+!     Ground state energy calculation routine 
 !
-!     Routine to save and read the amplitudes (to/from disk)
+      procedure :: calc_energy => calc_energy_ccs
 !
-      procedure :: save_amplitudes        => save_amplitudes_ccs
 !
-      procedure :: read_amplitudes        => read_amplitudes_ccs
-      procedure :: read_single_amplitudes => read_single_amplitudes_ccs
+!     -::- Excited state submodule routine pointers -::-
+!     --------------------------------------------------
 !
-!     Routines to destroy amplitudes and omega 
+!     Driver and solver 
 !
-      procedure :: destruct_amplitudes => destruct_amplitudes_ccs
-      procedure :: destruct_omega      => destruct_omega_ccs
+      procedure                  :: excited_state_driver => excited_state_driver_ccs 
+      procedure, non_overridable :: excited_state_solver => excited_state_solver_ccs
 !
-!     Coupled cluster Jacobian transformation routine
+!     Preparations and cleanup (before and after solver)
 !
-      procedure :: jacobian_ccs_transformation => jacobian_ccs_transformation_ccs
-!
-      procedure, non_overridable :: jacobian_ccs_a1 => jacobian_ccs_a1_ccs 
-      procedure, non_overridable :: jacobian_ccs_b1 => jacobian_ccs_b1_ccs
-!
-      procedure :: jacobi_test => jacobi_test_ccs ! A debug routine for A transformation 
-!
-!     Core-valence separation approximation routines
-!
-      procedure :: cvs_rho_a_i_projection             => cvs_rho_a_i_projection_ccs
-      procedure :: cvs_residual_projection            => cvs_residual_projection_ccs
-!
-!     Coupled cluster Jacobian transpose transformation routine
-!
-      procedure :: jacobian_transpose_ccs_transformation => jacobian_transpose_ccs_transformation_ccs
-!
-      procedure, non_overridable :: jacobian_transpose_ccs_a1 => jacobian_transpose_ccs_a1_ccs
-      procedure, non_overridable :: jacobian_transpose_ccs_b1 => jacobian_transpose_ccs_b1_ccs
-!
-!     Excited state driver & solver 
-!
-      procedure                  :: excited_state_preparations => excited_state_preparations_ccs
-      procedure                  :: excited_state_driver       => excited_state_driver_ccs 
-      procedure                  :: excited_state_cleanup      => excited_state_cleanup_ccs
-      procedure, non_overridable :: excited_state_solver       => excited_state_solver_ccs
+      procedure :: excited_state_preparations => excited_state_preparations_ccs
+      procedure :: excited_state_cleanup      => excited_state_cleanup_ccs
 !
 !     Helper routines for excited state solver 
 !
-      procedure :: initialize_excited_states     => initialize_excited_states_ccs
-      procedure :: transform_trial_vectors       => transform_trial_vectors_ccs
-      procedure :: calculate_orbital_differences => calculate_orbital_differences_ccs ! Must be overwritten for CCSD 
+      procedure :: initialize_excited_states        => initialize_excited_states_ccs
+      procedure :: transform_trial_vectors          => transform_trial_vectors_ccs
+      procedure :: calculate_orbital_differences    => calculate_orbital_differences_ccs ! Must be overwritten for CCSD 
 !
-      procedure :: precondition_residual           => precondition_residual_ccs
-      procedure :: precondition_residual_valence   => precondition_residual_valence_ccs
+      procedure :: precondition_residual            => precondition_residual_ccs
+      procedure :: precondition_residual_valence    => precondition_residual_valence_ccs
 !
-      procedure :: print_excited_state_info  => print_excited_state_info_ccs      
-      procedure :: print_excitation_vector   => print_excitation_vector_ccs
+      procedure :: print_excited_state_info         => print_excited_state_info_ccs      
+      procedure :: print_excitation_vector          => print_excitation_vector_ccs
 !
-      procedure :: analyze_single_excitation_vector    => analyze_single_excitation_vector_ccs
-      procedure :: summary_excited_state_info   => summary_excited_state_info_ccs
+      procedure :: analyze_single_excitation_vector => analyze_single_excitation_vector_ccs
+      procedure :: summary_excited_state_info       => summary_excited_state_info_ccs
 !
 !     Valence excited states specific routines
 !
@@ -238,12 +193,16 @@ module ccs_class
       procedure, non_overridable :: solve_reduced_eigenvalue_equation   => solve_reduced_eigenvalue_equation_ccs
       procedure, non_overridable :: construct_next_trial_vectors        => construct_next_trial_vectors_ccs
 !
-!     Response driver & solver 
+!
+!     -::- Response submodule routine pointers -::-
+!     ---------------------------------------------
+!
+!     Driver and solver 
 !
       procedure :: response_driver => response_driver_ccs
       procedure :: response_solver => response_solver_ccs
 !
-!     Helper routines for response solver 
+!     Helper routines for solver 
 !
       procedure :: response_preparations                 => response_preparations_ccs
       procedure :: initialize_response                   => initialize_response_ccs
@@ -253,17 +212,30 @@ module ccs_class
       procedure :: construct_next_response_trial_vectors => construct_next_response_trial_vectors_ccs
       procedure :: construct_gradient_vector             => construct_gradient_vector_ccs
 !
-!     Ionized state by super diffuse orbital
 !
-      procedure :: ionized_state_driver                           => ionized_state_driver_ccs
-      procedure :: initialize_trial_vectors_core_ionization       => initialize_trial_vectors_core_ionization_ccs
-      procedure :: initialize_trial_vectors_valence_ionization    => initialize_trial_vectors_valence_ionization_ccs
-      procedure :: precondition_residual_valence_ionization       => precondition_residual_valence_ionization_ccs
-      procedure :: ionization_residual_projection                 => ionization_residual_projection_ccs
-      procedure :: ionization_rho_a_i_projection                  => ionization_rho_a_i_projection_ccs
-      procedure :: precondition_residual_core_ionization          => precondition_residual_core_ionization_ccs
+!     -::- Input reader submodule routine pointers -::-
+!     -------------------------------------------------
 !
-!     Integral routines (o: occupied index, v: virtual index)
+      procedure :: general_specs_reader      => general_specs_reader_ccs
+      procedure :: calculation_reader        => calculation_reader_ccs
+      procedure :: read_ground_state_specs   => read_ground_state_specs_ccs
+      procedure :: read_excited_state_specs  => read_excited_state_specs_ccs
+      procedure :: read_property_specs       => read_property_specs_ccs
+!
+!
+!     -::- Cholesky submodule routine pointers -::-
+!     ---------------------------------------------
+!
+      procedure, non_overridable :: get_cholesky_ij => get_cholesky_ij_ccs 
+      procedure, non_overridable :: get_cholesky_ia => get_cholesky_ia_ccs 
+      procedure, non_overridable :: get_cholesky_ai => get_cholesky_ai_ccs 
+      procedure, non_overridable :: get_cholesky_ab => get_cholesky_ab_ccs 
+!
+!
+!     -::- Integrals submodule routine pointers -::-
+!     ----------------------------------------------
+!
+!     Get integral routines
 !
       procedure :: get_oo_oo => get_oo_oo_ccs 
       procedure :: get_oo_ov => get_oo_ov_ccs 
@@ -301,22 +273,95 @@ module ccs_class
       procedure :: get_vv_vo_electronic_repulsion => get_vv_vo_electronic_repulsion_ccs
       procedure :: get_vv_vv_electronic_repulsion => get_vv_vv_electronic_repulsion_ccs
 !
-!     Routine to store, read, and T1-transform read electronic repulsion integrals (g_abcd)
+!     Routines to store, read, and T1-transform electronic repulsion integrals
 !
-      procedure, non_overridable :: store_vv_vv_electronic_repulsion    => store_vv_vv_electronic_repulsion_ccs
+      procedure :: store_vv_vv_electronic_repulsion    => store_vv_vv_electronic_repulsion_ccs
 !
-      procedure, non_overridable :: read_vv_vv_electronic_repulsion     => read_vv_vv_electronic_repulsion_ccs
-      procedure, non_overridable :: t1_transform_vv_vv                  => t1_transform_vv_vv_ccs
+      procedure :: read_vv_vv_electronic_repulsion     => read_vv_vv_electronic_repulsion_ccs
+      procedure :: t1_transform_vv_vv                  => t1_transform_vv_vv_ccs
 !
-      procedure, non_overridable :: store_t1_vv_vv_electronic_repulsion => store_t1_vv_vv_electronic_repulsion_ccs
-      procedure, non_overridable :: store_t1_vo_ov_electronic_repulsion => store_t1_vo_ov_electronic_repulsion_ccs
-      procedure, non_overridable :: store_t1_vv_vo_electronic_repulsion => store_t1_vv_vo_electronic_repulsion_ccs
-      procedure, non_overridable :: store_t1_vv_ov_electronic_repulsion => store_t1_vv_ov_electronic_repulsion_ccs
+      procedure :: store_t1_vv_vv_electronic_repulsion => store_t1_vv_vv_electronic_repulsion_ccs
+      procedure :: store_t1_vo_ov_electronic_repulsion => store_t1_vo_ov_electronic_repulsion_ccs
+      procedure :: store_t1_vv_vo_electronic_repulsion => store_t1_vv_vo_electronic_repulsion_ccs
+      procedure :: store_t1_vv_ov_electronic_repulsion => store_t1_vv_ov_electronic_repulsion_ccs
 !
-      procedure, non_overridable :: read_t1_vv_vo_electronic_repulsion  => read_t1_vv_vo_electronic_repulsion_ccs
-      procedure, non_overridable :: read_t1_vv_vv_electronic_repulsion  => read_t1_vv_vv_electronic_repulsion_ccs
-      procedure, non_overridable :: read_t1_vo_ov_electronic_repulsion  => read_t1_vo_ov_electronic_repulsion_ccs
-      procedure, non_overridable :: read_t1_vv_ov_electronic_repulsion  => read_t1_vv_ov_electronic_repulsion_ccs
+      procedure :: read_t1_vv_vo_electronic_repulsion  => read_t1_vv_vo_electronic_repulsion_ccs
+      procedure :: read_t1_vv_vv_electronic_repulsion  => read_t1_vv_vv_electronic_repulsion_ccs
+      procedure :: read_t1_vo_ov_electronic_repulsion  => read_t1_vo_ov_electronic_repulsion_ccs
+      procedure :: read_t1_vv_ov_electronic_repulsion  => read_t1_vv_ov_electronic_repulsion_ccs
+!
+!
+!     -::- Fock submodule routine pointers -::-
+!     -----------------------------------------
+!
+      procedure, non_overridable :: initialize_fock_matrix => initialize_fock_matrix_ccs 
+      procedure, non_overridable :: construct_fock         => construct_fock_ccs  
+      procedure, non_overridable :: one_electron_t1        => one_electron_t1_ccs 
+!
+!
+!     -::- Jacobian submodule routine pointers -::-
+!     ---------------------------------------------
+!
+      procedure :: jacobian_ccs_transformation      => jacobian_ccs_transformation_ccs
+!
+      procedure, non_overridable :: jacobian_ccs_a1 => jacobian_ccs_a1_ccs 
+      procedure, non_overridable :: jacobian_ccs_b1 => jacobian_ccs_b1_ccs
+!
+      procedure :: jacobi_test => jacobi_test_ccs ! A debug routine
+!
+!
+!     -::- Jacobian transpose submodule routine pointers -::-
+!     -------------------------------------------------------
+!
+      procedure :: jacobian_transpose_ccs_transformation      => jacobian_transpose_ccs_transformation_ccs
+!
+      procedure, non_overridable :: jacobian_transpose_ccs_a1 => jacobian_transpose_ccs_a1_ccs
+      procedure, non_overridable :: jacobian_transpose_ccs_b1 => jacobian_transpose_ccs_b1_ccs 
+!
+!
+!     -::- Ionized state submodule routine pointers -::-
+!     --------------------------------------------------
+!
+      procedure :: ionized_state_driver                           => ionized_state_driver_ccs
+      procedure :: initialize_trial_vectors_core_ionization       => initialize_trial_vectors_core_ionization_ccs
+      procedure :: initialize_trial_vectors_valence_ionization    => initialize_trial_vectors_valence_ionization_ccs
+      procedure :: precondition_residual_valence_ionization       => precondition_residual_valence_ionization_ccs
+      procedure :: ionization_residual_projection                 => ionization_residual_projection_ccs
+      procedure :: ionization_rho_a_i_projection                  => ionization_rho_a_i_projection_ccs
+      procedure :: precondition_residual_core_ionization          => precondition_residual_core_ionization_ccs
+!
+!
+!     -::- CVS submodule routine pointers -::-
+!     ----------------------------------------
+!
+      procedure :: cvs_rho_a_i_projection             => cvs_rho_a_i_projection_ccs
+      procedure :: cvs_residual_projection            => cvs_residual_projection_ccs
+!
+!
+!     -::- Other slass routine pointers not located in submodules -::-
+!     ----------------------------------------------------------------
+!
+!     Routine to construct omega, or projection, vector
+!
+      procedure :: construct_omega => construct_omega_ccs
+      procedure :: omega_ccs_a1    => omega_ccs_a1_ccs
+!
+!     Routine to construct eta, or right projection, vector
+!
+      procedure :: construct_eta => construct_eta_ccs 
+!
+!     Routine to save and read the amplitudes (to/from disk)
+!
+      procedure :: save_amplitudes        => save_amplitudes_ccs
+!
+      procedure :: read_amplitudes        => read_amplitudes_ccs
+      procedure :: read_single_amplitudes => read_single_amplitudes_ccs
+!
+!     Routines to deallocate amplitudes and omega 
+!
+      procedure :: destruct_amplitudes => destruct_amplitudes_ccs
+      procedure :: destruct_omega      => destruct_omega_ccs
+!
 !
    end type ccs
 !
@@ -2409,11 +2454,11 @@ contains
 !!
 !!    Performs the following tasks
 !!
-!!    1. Sets HF orbital and energy information by reading from file
-!!    2. Transforms AO Cholesky vectors to MO basis and saves to file 
-!!    3. Allocates the singles amplitudes and sets them to zero, and sets associated properties 
-!!    4. Allocates the omega vector and sets it to zero
-!!    5. Initializes the Fock matrix and sets it to zero 
+!!    - Sets HF orbital and energy information by reading from file
+!!    - Transforms AO Cholesky vectors to MO basis and saves to file 
+!!    - Allocates the singles amplitudes and sets them to zero, and sets associated properties 
+!!    - Allocates the omega vector and sets it to zero
+!!    - Initializes the Fock matrix and sets it to zero 
 !!
       implicit none 
 !
