@@ -1,9 +1,11 @@
 module ccsd_class
 !
 !!
-!!           Coupled cluster singles and doubles (CCSD) class module                                 
-!!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017         
+!!
+!!                Coupled cluster singles and doubles (CCSD) class module                                 
+!!              Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017         
 !!                                                                           
+!!
 !!
 !!    This module contains the definition of the coupled cluster singles
 !!    and doubles (CCSD) wavefunction class. It is structured into four sections:
@@ -22,6 +24,7 @@ module ccsd_class
 !!             detailed definitions given in the following class submodules:
 !!
 !!                - Ground state
+!!                - Omega 
 !!                - Excited state 
 !!                - Jacobian (right transformation)
 !!                - Jacobian Transpose (left transformation)
@@ -64,36 +67,40 @@ module ccsd_class
 !
    type, extends(ccs) :: ccsd
 !
-!     Amplitude variables
+!     Cluster amplitudes 
 !
-      integer(i15) :: n_t2am = 0                    ! Number of doubles amplitudes
-      real(dp), dimension(:,:), allocatable :: t2am ! Doubles amplitude vector
+      integer(i15) :: n_t2am = 0 ! Number of doubles excitation amplitudes
 !
-!     Projection vector < mu | exp(-T) H exp(T) | R > (the omega vector)
+      real(dp), dimension(:,:), allocatable :: t2am ! Doubles amplitude vector, t_ij^ab 
+!
+!     The omega, or projection, vector < mu | exp(-T) H exp(T) | R >
 ! 
-      real(dp), dimension(:,:), allocatable :: omega2 ! Doubles vector
+      real(dp), dimension(:,:), allocatable :: omega2 ! Doubles projection vector
 !
    contains
 !
-!     Initialization routine (driver is inherited)
+!
+!     -::- Initialization and driver routines -::-
+!     --------------------------------------------
 !
       procedure :: init => init_ccsd
 !
-!     Initialization routine for the (singles, doubles) amplitudes,
-!     and routine to set MP2 guess for the doubles amplitudes 
+      procedure :: initialize_amplitudes => initialize_amplitudes_ccsd
+      procedure :: initialize_omega      => initialize_omega_ccsd
 !
-      procedure :: initialize_amplitudes          => initialize_amplitudes_ccsd
-      procedure :: construct_perturbative_doubles => construct_perturbative_doubles_ccsd
 !
-!     Routine to calculate the energy from the current amplitudes
+!     -::- Ground state submodule routine pointers -::-
+!     ------------------------------------------------- 
 !
-      procedure :: calc_energy => calc_energy_ccsd 
+      procedure :: initialize_ground_state   => initialize_ground_state_ccsd
+      procedure :: calc_ampeqs_norm          => calc_ampeqs_norm_ccsd
+      procedure :: new_amplitudes            => new_amplitudes_ccsd
+      procedure :: calc_quasi_Newton_doubles => calc_quasi_Newton_doubles_ccsd
+      procedure :: ground_state_preparations => ground_state_preparations_ccsd
 !
-!     Routine to initialize omega (allocate and set to zero)
 !
-      procedure :: initialize_omega => initialize_omega_ccsd
-!
-!     Routines to construct the projection vector (omega)
+!     -::- Omega submodule routine pointers -::-
+!     ------------------------------------------
 !
       procedure :: construct_omega => construct_omega_ccsd
 !
@@ -107,27 +114,22 @@ module ccsd_class
       procedure :: omega_ccsd_d2 => omega_ccsd_d2_ccsd 
       procedure :: omega_ccsd_e2 => omega_ccsd_e2_ccsd   
 !
-!     Helpers for ground state solver routine (see CCS for the rest)
 !
-      procedure :: initialize_ground_state   => initialize_ground_state_ccsd
-      procedure :: calc_ampeqs_norm          => calc_ampeqs_norm_ccsd
-      procedure :: new_amplitudes            => new_amplitudes_ccsd
-      procedure :: calc_quasi_Newton_doubles => calc_quasi_Newton_doubles_ccsd
-      procedure :: ground_state_preparations => ground_state_preparations_ccsd
+!     -::- Excited state submodule routine pointers -::-
+!     --------------------------------------------------
 !
-!     Helpers for excited state solver (see CCS for the rest)
+      procedure :: calculate_orbital_differences    => calculate_orbital_differences_ccsd
+      procedure :: transform_trial_vectors          => transform_trial_vectors_ccsd
+      procedure :: print_excitation_vector          => print_excitation_vector_ccsd
+      procedure :: analyze_double_excitation_vector => analyze_double_excitation_vector_ccsd
+      procedure :: summary_excited_state_info       => summary_excited_state_info_ccsd
+      procedure :: excited_state_preparations       => excited_state_preparations_ccsd
 !
-      procedure :: calculate_orbital_differences      => calculate_orbital_differences_ccsd
-      procedure :: transform_trial_vectors            => transform_trial_vectors_ccsd
-      procedure :: print_excitation_vector            => print_excitation_vector_ccsd
-      procedure :: analyze_double_excitation_vector   => analyze_double_excitation_vector_ccsd
-      procedure :: summary_excited_state_info         => summary_excited_state_info_ccsd
-      procedure :: excited_state_preparations         => excited_state_preparations_ccsd ! Storing g_vvvv and g_voov integrals to file
-
 !
-!     Coupled cluster Jacobian transformation routine 
+!     -::- Jacobian submodule routine pointers -::-
+!     ---------------------------------------------
 !
-      procedure :: jacobian_ccsd_transformation       => jacobian_ccsd_transformation_ccsd
+      procedure :: jacobian_ccsd_transformation => jacobian_ccsd_transformation_ccsd
 !
       procedure :: jacobian_ccsd_a1 => jacobian_ccsd_a1_ccsd
       procedure :: jacobian_ccsd_b1 => jacobian_ccsd_b1_ccsd
@@ -146,14 +148,11 @@ module ccsd_class
       procedure :: jacobian_ccsd_j2 => jacobian_ccsd_j2_ccsd
       procedure :: jacobian_ccsd_k2 => jacobian_ccsd_k2_ccsd
 !
-      procedure :: jacobi_test => jacobi_test_ccsd ! A debug routine 
+      procedure :: jacobi_test => jacobi_test_ccsd ! A debug routine
 !
-!     CVS
 !
-      procedure :: cvs_rho_aibj_projection => cvs_rho_aibj_projection_ccsd
-      procedure :: cvs_residual_projection => cvs_residual_projection_ccsd
-!
-!     Coupled cluster Jacobian transpose transformation routine 
+!     -::- Jacobian transpose submodule routine pointers -::-
+!     -------------------------------------------------------
 !
       procedure :: jacobian_transpose_ccsd_transformation => jacobian_transpose_ccsd_transformation_ccsd
 !
@@ -175,28 +174,45 @@ module ccsd_class
       procedure :: jacobian_transpose_ccsd_h2 => jacobian_transpose_ccsd_h2_ccsd
       procedure :: jacobian_transpose_ccsd_i2 => jacobian_transpose_ccsd_i2_ccsd
 !
-!     Valence ionization
+!
+!     -::- Ionized state submodule routine pointers -::-
+!     --------------------------------------------------
 !
       procedure :: ionization_residual_projection => ionization_residual_projection_ccsd
       procedure :: ionization_rho_aibj_projection => ionization_rho_aibj_projection_ccsd
 !
-!     Core ionization
+!
+!     -::- CVS submodule routine pointers -::-
+!     ----------------------------------------
+!
+      procedure :: cvs_rho_aibj_projection => cvs_rho_aibj_projection_ccsd
+      procedure :: cvs_residual_projection => cvs_residual_projection_ccsd
+!
+!
+!     -::- Other class routine pointers not located in submodules -::-
+!     ----------------------------------------------------------------
 !
 !     Routine to construct right projection vector (eta)
 !
       procedure :: construct_eta => construct_eta_ccsd
 !
-!     Routine to save and read the amplitudes (to/from disk)
+!     Routine to save and read the amplitudes 
 !
       procedure :: save_amplitudes => save_amplitudes_ccsd
 !
       procedure :: read_amplitudes        => read_amplitudes_ccsd
       procedure :: read_double_amplitudes => read_double_amplitudes_ccsd
 !
-!     Routines to destroy amplitudes and omega 
+!     Routines to deallocate amplitudes and omega 
 !
       procedure :: destruct_amplitudes => destruct_amplitudes_ccsd
       procedure :: destruct_omega      => destruct_omega_ccsd
+!
+      procedure :: construct_perturbative_doubles => construct_perturbative_doubles_ccsd
+!
+!     Routine to calculate the energy
+!
+      procedure :: calc_energy => calc_energy_ccsd 
 !
    end type ccsd
 !
