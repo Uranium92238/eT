@@ -1,3 +1,0 @@
-/Users/eirikkjonstad/Documents/eT_mast/build/CMakeFiles/rebuild_cache.dir
-/Users/eirikkjonstad/Documents/eT_mast/build/CMakeFiles/edit_cache.dir
-/Users/eirikkjonstad/Documents/eT_mast/build/CMakeFiles/eT.dir
