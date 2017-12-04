@@ -7,23 +7,29 @@ submodule (ccsd_class) omega
 !!
 !!    Contains the following family of procedures of the CCSD class:
 !!
-!!    initialize_omega: allocates the projection vector (omega1, omega2)
-!!                          and sets it to zero.
+!!    initialize_omega: allocates the projection vector (omega1, omega2),
+!!                      if it is not allocated, and sets it to zero.
+!!
+!!    destruct_omega:   deallocates the projection vector (omega1, omega2), 
+!!                      if it is allocated.
 !!
 !!    construct_omega:  constructs the projection vector (omega1, omega2) 
-!!                          for the current amplitudes (t1am, t2am) for the
-!!                          wavefunction object wf. The routine assumes that
-!!                          the projection vector is allocated.
+!!                      for the current amplitudes (t1am, t2am) for the
+!!                      wavefunction object wf. The routine assumes that
+!!                      the projection vector is allocated.
 !!
-!!    omega_ccsd_a1:         adds A1 term to omega1
-!!    omega_ccsd_b1:         adds B1 term to omega1
-!!    omega_ccsd_c1:         adds C1 term to omega1
+!!    The construct omega routine adds the CCS as well as the CCSD contributions,
+!!    which are defined in the following routines (defined below):
 !!
-!!    omega_ccsd_a2:         adds A2 term to omega2
-!!    omega_ccsd_b2:         adds B2 term to omega2
-!!    omega_ccsd_c2:         adds C2 term to omega2
-!!    omega_ccsd_d2:         adds D2 term to omega2
-!!    omega_ccsd_e2:         adds E2 term to omega2
+!!    omega_ccsd_a1: adds A1 term to omega1
+!!    omega_ccsd_b1: adds B1 term to omega1
+!!    omega_ccsd_c1: adds C1 term to omega1
+!!
+!!    omega_ccsd_a2: adds A2 term to omega2
+!!    omega_ccsd_b2: adds B2 term to omega2
+!!    omega_ccsd_c2: adds C2 term to omega2
+!!    omega_ccsd_d2: adds D2 term to omega2
+!!    omega_ccsd_e2: adds E2 term to omega2
 !!
 !
    use batching_index_class
@@ -59,6 +65,23 @@ contains
       wf%omega2 = zero
 !
    end subroutine initialize_omega_ccsd
+!
+!
+   module subroutine destruct_omega_ccsd(wf)
+!!
+!!    Destruct Omega (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
+!!
+!!    Deallocates the projection vector.
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      if (allocated(wf%omega1)) call wf%mem%dealloc(wf%omega1, wf%n_v, wf%n_o)
+      if (allocated(wf%omega2)) call wf%mem%dealloc(wf%omega2, wf%n_t2am, 1)
+!
+   end subroutine destruct_omega_ccsd
 !
 !
    module subroutine construct_omega_ccsd(wf)
@@ -872,7 +895,6 @@ contains
 !
 !              Allocate omega +-
 !
-
                call wf%mem%alloc(omega2_p_ab_ij, (batch_a%length)*(batch_b%length), packed_size(wf%n_o))
                call wf%mem%alloc(omega2_m_ab_ij, (batch_a%length)*(batch_b%length), packed_size(wf%n_o))
 !  
