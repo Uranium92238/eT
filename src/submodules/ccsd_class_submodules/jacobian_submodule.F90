@@ -3827,11 +3827,6 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
       real(dp), dimension(:,:), allocatable :: rho_aib_j
       real(dp), dimension(:,:), allocatable :: rho_aj_bi
 !
-      real(dp), dimension(:,:), allocatable :: L_bj_J
-      real(dp), dimension(:,:), allocatable :: L_kc_J
-      real(dp), dimension(:,:), allocatable :: L_kj_J
-      real(dp), dimension(:,:), allocatable :: L_bc_J
-!
       real(dp), dimension(:,:), allocatable :: g_bj_kc 
       real(dp), dimension(:,:), allocatable :: g_bc_kj
       real(dp), dimension(:,:), allocatable :: g_ck_bj ! reordering of g_bj_kc and g_bc_kj
@@ -4355,228 +4350,222 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
       end subroutine jacobian_ccsd_j2_ccsd
 !
 !
-      module subroutine jacobian_ccsd_k2_ccsd(wf, rho_ab_ij, c_ab_ij)
+   module subroutine jacobian_ccsd_k2_ccsd(wf, rho_ab_ij, c_ab_ij)
 !!
-!!       Jacobian CCSD K2 
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!    Jacobian CCSD K2 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!       rho_ab_ij^K2 =    sum_kl g_ki,lj * c_ak,bl 
+!!    rho_ab_ij^K2 =    sum_kl g_ki,lj * c_ak,bl 
 !!                       + sum_cd g_ac,bd * c_ci,dj
 !! 
-!!       For the last term we batch over a and b and 
-!!       add each batch to rho_ai_bj 
+!!    For the last term we batch over a and b and 
+!!    add each batch to rho_ai_bj 
 !!               
-         implicit none 
+      implicit none 
 !
-         class(ccsd) :: wf 
+      class(ccsd) :: wf 
 !
-         real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: rho_ab_ij
-         real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: c_ab_ij
+      real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: rho_ab_ij
+      real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: c_ab_ij
 !
-         real(dp), dimension(:,:), allocatable :: g_ki_lj
-         real(dp), dimension(:,:), allocatable :: g_kl_ij
-         real(dp), dimension(:,:), allocatable :: g_ac_bd
-         real(dp), dimension(:,:), allocatable :: g_ab_cd
+      real(dp), dimension(:,:), allocatable :: g_ki_lj
+      real(dp), dimension(:,:), allocatable :: g_kl_ij
+      real(dp), dimension(:,:), allocatable :: g_ac_bd
+      real(dp), dimension(:,:), allocatable :: g_ab_cd
 !
-         real(dp), dimension(:,:), allocatable :: rho_batch_ab_ij
+      real(dp), dimension(:,:), allocatable :: rho_batch_ab_ij
 !
-         integer(i15) :: i = 0, j = 0, k = 0, l = 0  
-         integer(i15) :: a = 0, b = 0, c = 0, d = 0  
+      integer(i15) :: i = 0, j = 0, k = 0, l = 0  
+      integer(i15) :: a = 0, b = 0, c = 0, d = 0  
 !
-         integer(i15) :: ab = 0, bd = 0, ac = 0, cd = 0, full_ab = 0, ac = 0, bd = 0
-         integer(i15) :: ij = 0, ki = 0, kl = 0, lj = 0
+      integer(i15) :: ab = 0, bd = 0, ac = 0, cd = 0, full_ab = 0, ac = 0, bd = 0
+      integer(i15) :: ij = 0, ki = 0, kl = 0, lj = 0
 !
-!        Batching and memory handling variables
+!     Batching and memory handling variables
 !
-         integer(i15) :: a_n_batch = 0, a_first = 0, a_last = 0, a_length = 0, a_max_length = 0, a_batch = 0
-         integer(i15) :: b_n_batch = 0, b_first = 0, b_last = 0, b_length = 0, b_max_length = 0, b_batch = 0
+      integer(i15) :: required = 0 
 !
-         integer(i15) :: required = 0, available = 0
+      integer(i15) :: current_a_batch = 0
+      integer(i15) :: current_b_batch = 0
 !
-         call wf%mem%alloc(g_ki_lj, (wf%n_o)**2, (wf%n_o)**2)
+      type(batching_index) :: batch_a 
+      type(batching_index) :: batch_b
+!
+      call wf%mem%alloc(g_ki_lj, (wf%n_o)**2, (wf%n_o)**2)
 ! 
-         integral_type = 'electronic_repulsion'
-         call wf%get_oo_oo(integral_type, g_ki_lj)
+      integral_type = 'electronic_repulsion'
+      call wf%get_oo_oo(integral_type, g_ki_lj)
 !
-!        Reorder g_ki_lj to g_kl_ij
+!     Reorder g_ki_lj to g_kl_ij
 !
-         call wf%mem%alloc(g_kl_ij, (wf%n_o)**2, (wf%n_o)**2)
-         g_kl_ij = zero
+      call wf%mem%alloc(g_kl_ij, (wf%n_o)**2, (wf%n_o)**2)
+      g_kl_ij = zero
 !
-         do j = 1, wf%n_o
-            do i = 1, wf%n_o
+      do j = 1, wf%n_o
+         do i = 1, wf%n_o
 !
-               ij = index_two(i, j, wf%n_o)
+            ij = index_two(i, j, wf%n_o)
 !
-               do k = 1, wf%n_o
+            do k = 1, wf%n_o
 !
-                  ki = index_two(k, i, wf%n_o)
+               ki = index_two(k, i, wf%n_o)
 !
-                  do l = 1, wf%n_o
+               do l = 1, wf%n_o
 ! 
-                     kl = index_two(k, l, wf%n_o)
-                     lj = index_two(l, j, wf%n_o)
+                  kl = index_two(k, l, wf%n_o)
+                  lj = index_two(l, j, wf%n_o)
 !
-                     g_kl_ij(kl, ij) = g_ki_lj(ki, lj) 
+                  g_kl_ij(kl, ij) = g_ki_lj(ki, lj) 
 !                     
-                  enddo
                enddo
             enddo
          enddo
+      enddo
 !
-         call wf%mem%dealloc(g_ki_lj, (wf%n_o)**2, (wf%n_o)**2)
+      call wf%mem%dealloc(g_ki_lj, (wf%n_o)**2, (wf%n_o)**2)
 !
-!        rho_ab_ij += sum_kl g_ki,lj * c_ak,bl = sum_kl c_ab_ij(ab,kl) g_kl_ij(kl,ij)  
+!     rho_ab_ij += sum_kl g_ki,lj * c_ak,bl = sum_kl c_ab_ij(ab,kl) g_kl_ij(kl,ij)  
 !
+      call dgemm('N', 'N',     & 
+                  (wf%n_v)**2, &
+                  (wf%n_o)**2, &
+                  (wf%n_o)**2, &
+                  one,         &
+                  c_ab_ij,     &
+                  (wf%n_v)**2, &
+                  g_kl_ij,     & 
+                  (wf%n_o)**2, &
+                  one,         &
+                  rho_ab_ij,   &
+                  (wf%n_v)**2)
 !
-         call dgemm('N', 'N',     & 
-                     (wf%n_v)**2, &
-                     (wf%n_o)**2, &
-                     (wf%n_o)**2, &
-                     one,         &
-                     c_ab_ij,     &
-                     (wf%n_v)**2, &
-                     g_kl_ij,     & 
-                     (wf%n_o)**2, &
-                     one,         &
-                     rho_ab_ij,   &
-                     (wf%n_v)**2)
+      call wf%mem%dealloc(g_kl_ij, (wf%n_o)**2, (wf%n_o)**2)
 !
-         call wf%mem%dealloc(g_kl_ij, (wf%n_o)**2, (wf%n_o)**2)
+!     Prepare for batching over a and b
 !
-!        Prepare for batching over a and b
+!     ::  sum_cd g_ac,bd * c_ci,dj ::
 !
-!        ::  sum_cd g_ac,bd * c_ci,dj ::
-!
-         required = max(3*(wf%n_v)**2*(wf%n_J) + 2*(wf%n_v)*(wf%n_o)*(wf%n_J),      & ! Needed to get L_db_J
+      required = max(3*(wf%n_v)**2*(wf%n_J) + 2*(wf%n_v)*(wf%n_o)*(wf%n_J),      & ! Needed to get L_db_J
                      (wf%n_v)**4 + 2*(wf%n_v)**2*(wf%n_J))                            ! Needed to get g_ac_bd
 !
-         required = required*4  ! Words
+!     Initialize batching variables 
 !
-         a_max_length = 0
-         call num_two_batch(required, wf%mem%available, a_max_length, a_n_batch, wf%n_v)
+      call batch_a%init(wf%n_v)
+      call batch_b%init(wf%n_v)
 !
-!        Initialize some variables for batching
+      call wf%mem%num_two_batch(batch_a, batch_b, required)
 !
-         a_first  = 0
-         a_last   = 0
-         a_length = 0
+!     Start looping over a-batches
 !
-!        Start looping over a-batches
-!
-         do a_batch = 1, a_n_batch
+      do current_a_batch = 1, batch_a%num_batches
 !   
-            call batch_limits(a_first, a_last, a_batch, a_max_length, wf%n_v)
-            a_length = a_last - a_first + 1     
+!        Determine limits for current a-batch  
 !
-!           Start looping over batches of b
+         call batch_a%determine_limits(current_a_batch)
 !
-            b_first  = 0
-            b_last   = 0
-            b_length = 0
+!        Start looping over b-batches 
 !
-            b_max_length = a_max_length
+         do current_b_batch = 1, batch_b%num_batches
+!   
+!           Determine limits for current b-batch  
 !
-            do b_batch = 1, a_n_batch
+            call batch_b%determine_limits(current_b_batch)
 !
-               call batch_limits(b_first ,b_last ,b_batch, b_max_length, wf%n_v)
-               b_length = b_last - b_first + 1 
+!           Allocate g_ca_db = g_acbd
 !
-!              Allocate g_ca_db = g_acbd
+            call wf%mem%alloc(g_ac_bd, (wf%n_v)*(batch_a%length), (wf%n_v)*(batch_b%length))
 !
-               call wf%mem%alloc(g_ac_bd, (wf%n_v)*a_length, (wf%n_v)*b_length)
-!
-!              g_ca_db = sum_J L_ca_J*L_db_J
+!           g_ca_db = sum_J L_ca_J*L_db_J
 !     
-               integral_type = 'electronic_repulsion'
-               call wf%get_vv_vv(integral_type, &
+            integral_type = 'electronic_repulsion'
+            call wf%get_vv_vv(integral_type, &
                                  g_ac_bd,       &
-                                 a_first,       &
-                                 a_last,        &   
+                                 batch_a%first, &
+                                 batch_a%last,  &   
                                  1,             &
                                  wf%n_v,        &
-                                 b_first,       &
-                                 b_last,        &
+                                 batch_b%first, &
+                                 batch_b%last,  &
                                  1,             &
                                  wf%n_v)
 !
-!              sum_cd g_ac,bd * c_ci,dj = sum_cd g_ac,bd c_cd,ij = sum_cd g_ab_cd c_cd_ij  
+!           sum_cd g_ac,bd * c_ci,dj = sum_cd g_ac,bd c_cd,ij = sum_cd g_ab_cd c_cd_ij  
 !
-!              Reorder g_ca_db into g_ab_cd 
-!              (Here, g_ab_cd = g_acbd = g_ca_db.)
+!           Reorder g_ca_db into g_ab_cd 
+!           (Here, g_ab_cd = g_acbd = g_ca_db.)
 !
-               call wf%mem%alloc(g_ab_cd, a_length*b_length, (wf%n_v)**2) 
-               g_ab_cd = zero
+            call wf%mem%alloc(g_ab_cd, (batch_a%length)*(batch_b%length), (wf%n_v)**2) 
+            g_ab_cd = zero
 !
-               do b = 1, b_length
-                  do a = 1, a_length
+            do b = 1, batch_b%length
+               do a = 1, batch_a%length
 !
-                     ab = index_two(a, b, a_length)
+                  ab = index_two(a, b, batch_a%length)
 !
-                     do d = 1, wf%n_v
+                  do d = 1, wf%n_v
 !
-                        bd = index_two(b, d, b_length)
+                     bd = index_two(b, d, batch_b%length)
 !
-                        do c = 1, wf%n_v
+                     do c = 1, wf%n_v
 !
-                           ac = index_two(a, c, a_length)
-                           cd = index_two(c, d, wf%n_v)
+                        ac = index_two(a, c, batch_a%length)
+                        cd = index_two(c, d, wf%n_v)
 !
-                           g_ab_cd(ab, cd) = g_ac_bd(ac, bd) ! = g_acbd 
+                        g_ab_cd(ab, cd) = g_ac_bd(ac, bd) ! = g_acbd 
 !
-                        enddo
                      enddo
                   enddo
                enddo
+            enddo
 !
-               call wf%mem%dealloc(g_ac_bd, (wf%n_v)*a_length, (wf%n_v)*b_length) 
+            call wf%mem%dealloc(g_ac_bd, (wf%n_v)*(batch_a%length), (wf%n_v)*(batch_b%length)) 
 !
-               call wf%mem%alloc(rho_batch_ab_ij, a_length*b_length, (wf%n_o)**2)
+            call wf%mem%alloc(rho_batch_ab_ij, (batch_a%length)*(batch_b%length), (wf%n_o)**2)
 !
-!              rho_ab_ij += sum_cd g_ac,bd * c_ci,dj = sum_cd g_ab_cd(ab, cd) c_ab_ij(cd, ij) 
+!           rho_ab_ij += sum_cd g_ac,bd * c_ci,dj = sum_cd g_ab_cd(ab, cd) c_ab_ij(cd, ij) 
 !
-               call dgemm('N', 'N',            &  
-                            a_length*b_length, &
-                            (wf%n_o)**2,       &  
-                            (wf%n_v)**2,       &  
-                            one,               &  
-                            g_ab_cd,           &
-                            a_length*b_length, &
-                            c_ab_ij,           & 
-                            (wf%n_v)**2,       &  
-                            zero,              &
-                            rho_batch_ab_ij,   &
-                            a_length*b_length)
+            call dgemm('N', 'N',                            &  
+                        (batch_a%length)*(batch_b%length), &
+                        (wf%n_o)**2,                       &  
+                        (wf%n_v)**2,                       &  
+                        one,                               &  
+                        g_ab_cd,                           &
+                        (batch_a%length)*(batch_b%length), &
+                        c_ab_ij,                           & 
+                        (wf%n_v)**2,                       &  
+                        zero,                              &
+                        rho_batch_ab_ij,                   &
+                        (batch_a%length)*(batch_b%length))
 !               
-               call wf%mem%dealloc(g_ab_cd, a_length*b_length, (wf%n_v)**2)
+            call wf%mem%dealloc(g_ab_cd, (batch_a%length)*(batch_b%length), (wf%n_v)**2)
 !
-!              Reorder into rho_ab_ij
+!           Reorder into rho_ab_ij
 !
-               do b = 1, b_length
-                  do a = 1, a_length
+            do b = 1, batch_b%length
+               do a = 1, batch_a%length
 !
-                     ab = index_two(a, b, a_length)
+                  ab = index_two(a, b, batch_a%length)
 !
-                     full_ab = index_two(a + a_first - 1, b + b_first - 1, wf%n_v)
+                  full_ab = index_two(a + batch_a%first - 1, b + batch_b%first - 1, wf%n_v)
 !
-                     do i = 1, wf%n_o
-                        do j = 1, wf%n_o
+                  do i = 1, wf%n_o
+                     do j = 1, wf%n_o
 !
-                           ij = index_two(i, j, wf%n_o)
+                        ij = index_two(i, j, wf%n_o)
 !
-                           rho_ab_ij(full_ab, ij) = rho_ab_ij(full_ab, ij) + rho_batch_ab_ij(ab, ij)
+                        rho_ab_ij(full_ab, ij) = rho_ab_ij(full_ab, ij) + rho_batch_ab_ij(ab, ij)
 !
-                        enddo
                      enddo
                   enddo
                enddo
+            enddo
 !
-               call wf%mem%dealloc(rho_batch_ab_ij,  a_length*b_length, (wf%n_o)**2) 
+            call wf%mem%dealloc(rho_batch_ab_ij,  (batch_a%length)*(batch_b%length), (wf%n_o)**2) 
 !
-            enddo ! End batches of b 
-         enddo ! End batches of a 
+         enddo ! End batches of b 
+      enddo ! End batches of a 
 !         
-      end subroutine jacobian_ccsd_k2_ccsd
+   end subroutine jacobian_ccsd_k2_ccsd
 !
 !
 end submodule jacobian
