@@ -1206,11 +1206,6 @@ contains
 !
       type(batching_index) :: batch_a 
 !
-!       integer(i15) :: required = 0, available = 0
-! !
-!       integer(i15) :: n_batch = 0, max_batch_length = 0
-!       integer(i15) :: a_batch = 0, a_start = 0, a_end = 0, a_length = 0 
-!
 !     Allocate and construct g_kd_lc 
 !
       call wf%mem%alloc(g_kd_lc,(wf%n_o)*(wf%n_v),(wf%n_o)*(wf%n_v))
@@ -1312,15 +1307,8 @@ contains
 !
 !     Constructing g_ki_ac
 !
-!     Setup of variables needed for batching
       required = 2*(wf%n_v**2)*(wf%n_J) + 2*(wf%n_v)*(wf%n_o)*(wf%n_J) &
                + (wf%n_o**2)*(wf%n_v**2)
-!
-!       call num_batch(required, wf%mem%available, max_batch_length, n_batch, wf%n_v)
-! !
-!       a_start  = 1
-!       a_end    = 0
-!       a_length = 0
 !
 !     Initialize batching variable 
 !
