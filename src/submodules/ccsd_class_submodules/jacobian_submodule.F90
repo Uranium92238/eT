@@ -859,9 +859,10 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
 !     Variables for batching
 !
-      integer(i15) :: required = 0, available = 0
-      integer(i15) :: batch_dimension = 0, max_batch_length = 0, n_batch = 0
-      integer(i15) :: a_batch = 0, a_first = 0, a_last = 0, a_length = 0
+      integer(i15) :: required = 0 
+      integer(i15) :: current_a_batch = 0
+!
+      type(batching_index) :: batch_a 
 !
 !     Integrals
 !
@@ -883,33 +884,29 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
       required = max(2*(wf%n_J)*((wf%n_v)**2) + 2*(wf%n_J)*(wf%n_v)*(wf%n_o), &
                        (wf%n_J)*((wf%n_v)**2) + (wf%n_J)*(wf%n_v)*(wf%n_o) + ((wf%n_v)**3)*(wf%n_o), &
                         2*((wf%n_v)**3)*(wf%n_o))
-!     
-      required = 4*required ! In words
 !
-      batch_dimension  = wf%n_v ! Batch over the virtual index a
-      max_batch_length = 0      ! Initilization of unset variables 
-      n_batch          = 0
+!     Initialize batching variable 
 !
-      call num_batch(required, wf%mem%available, max_batch_length, n_batch, batch_dimension)           
+      call batch_a%init(wf%n_v)
+      call wf%mem%num_batch(batch_a, required)         
 !
 !     Loop over the number of a batches 
 !
-      do a_batch = 1, n_batch
+      do current_a_batch = 1, batch_a%num_batches
 !
-!        For each batch, get the limits for the a index 
+!        Determine the limits for the current a-batch 
 !
-         call batch_limits(a_first, a_last, a_batch, max_batch_length, batch_dimension)
-         a_length = a_last - a_first + 1 
+         call batch_a%determine_limits(current_a_batch)
 !
 !        Form g_ab_jc = g_abjc 
 !
-         call wf%mem%alloc(g_ab_jc, a_length*(wf%n_v), (wf%n_v)*(wf%n_o))
+         call wf%mem%alloc(g_ab_jc, (batch_a%length)*(wf%n_v), (wf%n_v)*(wf%n_o))
 !
          integral_type = 'electronic_repulsion'
          call wf%get_vv_ov(integral_type, &
                            g_ab_jc,       &
-                           a_first,       &
-                           a_last,        &
+                           batch_a%first, &
+                           batch_a%last,  &
                            1,             &
                            wf%n_v,        &
                            1,             &
@@ -919,7 +916,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
 !        Construct L_abjc ordered as L_a_cjb
 !
-         call wf%mem%alloc(L_a_cjb, a_length, ((wf%n_v)**2)*(wf%n_o))
+         call wf%mem%alloc(L_a_cjb, (batch_a%length), ((wf%n_v)**2)*(wf%n_o))
          L_a_cjb = zero
 !       
          do b = 1, wf%n_v
@@ -931,10 +928,10 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
                   jb = index_two(j, b, wf%n_o)
                   jc = index_two(j, c, wf%n_o)
 !
-                  do a = 1, a_length
+                  do a = 1, batch_a%length 
 !
-                     ac = index_two(a, c, a_length)
-                     ab = index_two(a, b, a_length)
+                     ac = index_two(a, c, batch_a%length )
+                     ab = index_two(a, b, batch_a%length )
 !
                      L_a_cjb(a, cjb) = two*g_ab_jc(ab, jc) - g_ab_jc(ac, jb)
 !
@@ -944,22 +941,22 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
             enddo
          enddo
 !
-         call wf%mem%dealloc(g_ab_jc, a_length*(wf%n_v), (wf%n_v)*(wf%n_o))
+         call wf%mem%dealloc(g_ab_jc, (batch_a%length)*(wf%n_v), (wf%n_v)*(wf%n_o))
 !
-         call dgemm('N', 'N',                & 
-                     a_length,               &
-                     wf%n_o,                 &
-                     (wf%n_o)*((wf%n_v)**2), &
-                     one,                    &
-                     L_a_cjb,                &
-                     a_length,               &
-                     c_bi_cj,                & ! c_cjb_i
-                     (wf%n_o)*((wf%n_v)**2), &
-                     one,                    &
-                     rho_a_i(a_first, 1),    &
+         call dgemm('N', 'N',                   & 
+                     batch_a%length,            &
+                     wf%n_o,                    &
+                     (wf%n_o)*(wf%n_v)**2,      &
+                     one,                       &
+                     L_a_cjb,                   &
+                     batch_a%length,            &
+                     c_bi_cj,                   & ! c_cjb_i
+                     (wf%n_o)*(wf%n_v)**2,      &
+                     one,                       &
+                     rho_a_i(batch_a%first, 1), &
                      wf%n_v)
 !
-         call wf%mem%dealloc(L_a_cjb, a_length, ((wf%n_v)**2)*(wf%n_o))
+         call wf%mem%dealloc(L_a_cjb, batch_a%length, (wf%n_o)*(wf%n_v)**2)
 !
       enddo ! End batching over a
 !
