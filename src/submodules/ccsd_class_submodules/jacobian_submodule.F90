@@ -881,9 +881,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
 !     Prepare for batching over index a
 ! 
-      required = max(2*(wf%n_J)*((wf%n_v)**2) + 2*(wf%n_J)*(wf%n_v)*(wf%n_o), &
-                       (wf%n_J)*((wf%n_v)**2) + (wf%n_J)*(wf%n_v)*(wf%n_o) + ((wf%n_v)**3)*(wf%n_o), &
-                        2*((wf%n_v)**3)*(wf%n_o))
+      required = wf%get_vvov_required_mem() + (wf%n_v**3)*(wf%n_o)*dp
 !
 !     Initialize batching variable 
 !
@@ -1090,13 +1088,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
       call wf%mem%alloc(rho_aib_j, (wf%n_o)*(wf%n_v)**2, wf%n_o) ! rho_ai_bj formed in batch 
       rho_aib_j = zero
 !
-!     We hold L_bc^J and g_aibc in two orderings. The construction of L_bc^J
-!     requires 2*n_v*n_o*n_J + n_J*n_v**2 extra memory.
-!
-      required = max(2*(wf%n_v)*(wf%n_o)*(wf%n_J) + &
-                     2*(wf%n_J)*(wf%n_v)**2,        &  ! Constr of L_bc^J 
-                     (wf%n_J)*(wf%n_v)**2 +         &
-                     (wf%n_o)*(wf%n_v)**3)             ! Holding L_bc^J and g_aibc
+      required = wf%get_vvvo_required_mem()
 !
 !     Initialize batching variable  
 !
@@ -1975,10 +1967,11 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !     Determine batch size, etc.
 !     (Redo estimate once loop is done)
 !
-      required = max(2*(wf%n_v)*(wf%n_o)*(wf%n_J) + &
-                     2*(wf%n_J)*(wf%n_v)**2,        &  ! Constr of L_bc^J 
-                     (wf%n_J)*(wf%n_v)**2 +         &
-                     (wf%n_o)*(wf%n_v)**3)             ! Holding L_bc^J and g_aibc
+      required = wf%get_vvov_required_mem() + &
+                  dp*(max((wf%n_o)*(wf%n_v**3), &
+                     (wf%n_o**2)*(wf%n_v**2) + (wf%n_o**3)*(wf%n_v), &
+                      2*(wf%n_o**3)*(wf%n_v), &
+                      3*(wf%n_o**2)*(wf%n_v**2)))
 !
 !     Initialize batching variable 
 !
@@ -4033,9 +4026,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
 !     Start batching over c
 ! 
-      required = 2*(wf%n_J)*((wf%n_v)**2) &
-                 + 4*(wf%n_J)*(wf%n_v)*(wf%n_o) &
-                 + 2*(wf%n_J)*((wf%n_o)**2)
+      required = wf%get_vvoo_required_mem()
 !    
 !     Initialize batching variable 
 !
@@ -4445,8 +4436,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
 !     ::  sum_cd g_ac,bd * c_ci,dj ::
 !
-      required = max(3*(wf%n_v)**2*(wf%n_J) + 2*(wf%n_v)*(wf%n_o)*(wf%n_J),      & ! Needed to get L_db_J
-                     (wf%n_v)**4 + 2*(wf%n_v)**2*(wf%n_J))                            ! Needed to get g_ac_bd
+      required = wf%get_vvvv_required_mem() + dp*(wf%n_v**4)
 !
 !     Initialize batching variables 
 !

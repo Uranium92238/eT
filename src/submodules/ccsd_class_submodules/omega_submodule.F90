@@ -253,13 +253,9 @@ contains
 !
 !     Prepare for batching 
 !
-!     Estimated memory required to construct g_adkc 
-!     (clearly an underestimate, see Cholesky routines when updating)
+!     Estimated memory required to construct g_adkc
 !
-      required = (wf%n_o)*(wf%n_v)**3                                & ! g_adkc 
-               + (wf%n_J)*(wf%n_v)**2                                & ! L_ad^J
-               + (wf%n_J)*(wf%n_v)*(wf%n_o)                          & ! L_kc^J 
-               + (wf%n_J)*(wf%n_v)**2 + 2*(wf%n_J)*(wf%n_o)*(wf%n_v)   ! To construct L_ad^J
+      required = wf%get_vvov_required_mem()
 !
 !     Initialization of the batching variable
 !
@@ -613,13 +609,7 @@ contains
 !
 !    ::  Calculate the A2.2 term  of omega ::
 !
-     required = max(3*(wf%n_v)**2*(wf%n_J) + 2*(wf%n_v)*(wf%n_o)*(wf%n_J),      & ! Needed to get  L_db_J
-                    (wf%n_v)**4 + 2*(wf%n_v)**2*(wf%n_J), &                       ! Needed to get g_ac_bd
-                    (wf%n_v)**4 + 2*(packed_size(wf%n_v))*(packed_size(wf%n_v)) & ! Needed to get g+- and t+-
-                    + 2*(packed_size(wf%n_v))*(packed_size(wf%n_o)), &            !
-                      2*(packed_size(wf%n_v))*(packed_size(wf%n_v)) &             ! Needed for g+- and t+- and Omega+-
-                    + 2*(packed_size(wf%n_v))*(packed_size(wf%n_o)) &             !
-                    + 2*(wf%n_v)**2*(packed_size(wf%n_v)))                        !
+     required = wf%get_vvvv_required_mem() + (4*(wf%n_o**2)*(wf%n_v**2) + 2*(wf%n_v**4))*dp
 !
 !     Initialize batching variables 
 !
@@ -1329,8 +1319,7 @@ contains
 !
 !     Constructing g_ki_ac
 !
-      required = 2*(wf%n_v**2)*(wf%n_J) + 2*(wf%n_v)*(wf%n_o)*(wf%n_J) &
-               + (wf%n_o**2)*(wf%n_v**2)
+      required = wf%get_vvoo_required_mem()
 !
 !     Initialize batching variable 
 !

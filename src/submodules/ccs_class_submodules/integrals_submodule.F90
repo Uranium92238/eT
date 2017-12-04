@@ -4841,7 +4841,7 @@ contains
          inquire(file='g_abcd',exist=vvvv_on_file)
          inquire(file='g_t1_abcd',exist=t1_vvvv_on_file)
 !
-         if ( t1_vvvv_on_file) then
+         if ( t1_vvvv_on_file  .and. .not. wf%tasks%current == 'ground_state') then
 !
 !           We are reading T1 transformed vvvv electronic repulsion integral, 
 !           this only requires the size of the array itself
@@ -4886,7 +4886,7 @@ contains
          inquire(file='g_abcd',exist=vvvv_on_file)
          inquire(file='g_t1_abcd',exist=t1_vvvv_on_file)
 !
-         if ( t1_vvvv_on_file) then
+         if ( t1_vvvv_on_file  .and. .not. wf%tasks%current == 'ground_state') then
 !
 !           We are reading T1 transformed vvvv electronic repulsion integral, 
 !           this only requires the size of the array itself
@@ -4962,7 +4962,7 @@ contains
 !
          inquire(file='g_t1_abci',exist=t1_vvvo_on_file)
 !
-         if ( t1_vvvo_on_file) then
+         if ( t1_vvvo_on_file .and. .not. wf%tasks%current == 'ground_state') then
 !
 !           We are reading T1 transformed vvvv electronic repulsion integral, 
 !           this only requires the size of the array itself
@@ -4993,7 +4993,7 @@ contains
 !
          inquire(file='g_t1_abci',exist=t1_vvvo_on_file)
 !
-         if ( t1_vvvo_on_file) then
+         if ( t1_vvvo_on_file .and. .not. wf%tasks%current == 'ground_state') then
 !
 !           We are reading T1 transformed vvvv electronic repulsion integral, 
 !           this only requires the size of the array itself
@@ -5059,7 +5059,7 @@ contains
 !
          get_vvov_required_mem_ccs = (dim_1*dim_2*dim_3*dim_4)
 !
-         if (vvov_t1_on_file) then
+         if (vvov_t1_on_file .and. .not. wf%tasks%current == 'ground_state') then
 !
 !           We are reading T1 transformed vvvv electronic repulsion integral, 
 !           this only requires the size of the array itself
@@ -5082,7 +5082,7 @@ contains
 !
          get_vvov_required_mem_ccs = (wf%n_v**3)*(wf%n_o)*dp
 !
-         if (vvov_t1_on_file) then
+         if (vvov_t1_on_file .and. .not. wf%tasks%current == 'ground_state') then
 !
 !           We are reading T1 transformed vvvv electronic repulsion integral, 
 !           this only requires the size of the array itself
