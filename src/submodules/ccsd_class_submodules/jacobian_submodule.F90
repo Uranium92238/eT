@@ -4180,174 +4180,174 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
    end subroutine jacobian_ccsd_i2_ccsd
 !
 !
-      module subroutine jacobian_ccsd_j2_ccsd(wf, rho_ab_ij, c_ab_ij)
+   module subroutine jacobian_ccsd_j2_ccsd(wf, rho_ab_ij, c_ab_ij)
 !!
-!!       Jacobian CCSD J2 
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!     Jacobian CCSD J2 
+!!     Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
 !!       rho_ab_ij^J2 =    sum_ckld t_ci,dj * g_kc,ld * c_ak,bl 
 !!                       + sum_ckdl t_ak,bl * g_kc,ld * c_ci,dj
 !!             
-         implicit none 
+      implicit none 
 !
-         class(ccsd) :: wf 
+      class(ccsd) :: wf 
 !
-         real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: rho_ab_ij
-         real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: c_ab_ij
+      real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: rho_ab_ij
+      real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: c_ab_ij
 !
-         real(dp), dimension(:,:), allocatable :: L_ia_J
-         real(dp), dimension(:,:), allocatable :: g_kc_ld
-         real(dp), dimension(:,:), allocatable :: g_kl_cd
+      real(dp), dimension(:,:), allocatable :: L_ia_J
+      real(dp), dimension(:,:), allocatable :: g_kc_ld
+      real(dp), dimension(:,:), allocatable :: g_kl_cd
 !
-         real(dp), dimension(:,:), allocatable :: t_ab_ij
+      real(dp), dimension(:,:), allocatable :: t_ab_ij
 !
-         real(dp), dimension(:,:), allocatable :: X_kl_ij
+      real(dp), dimension(:,:), allocatable :: X_kl_ij
 !
-         integer(i15) :: a = 0, b = 0, c = 0, d = 0
-         integer(i15) :: i = 0, j = 0, k = 0, l = 0
+      integer(i15) :: a = 0, b = 0, c = 0, d = 0
+      integer(i15) :: i = 0, j = 0, k = 0, l = 0
 !
-         integer(i15) :: ab = 0, cd = 0
-         integer(i15) :: ai = 0, bj = 0
-         integer(i15) :: kl = 0, ij = 0
-         integer(i15) :: kc = 0, ld = 0
+      integer(i15) :: ab = 0, cd = 0
+      integer(i15) :: ai = 0, bj = 0
+      integer(i15) :: kl = 0, ij = 0
+      integer(i15) :: kc = 0, ld = 0
 !
-         integer(i15) :: aibj = 0
+      integer(i15) :: aibj = 0
 !
-!        Constructing g_kc_ld
+!     Constructing g_kc_ld
 !
-         call wf%mem%alloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-         integral_type = 'electronic_repulsion'
-         call wf%get_ov_ov(integral_type, g_kc_ld)
+      integral_type = 'electronic_repulsion'
+      call wf%get_ov_ov(integral_type, g_kc_ld)
 !
-         call wf%mem%alloc(g_kl_cd, (wf%n_o)**2, (wf%n_v)**2)
-         g_kl_cd = zero
+      call wf%mem%alloc(g_kl_cd, (wf%n_o)**2, (wf%n_v)**2)
+      g_kl_cd = zero
 !
-!        Reorder g_kc_ld to g_kl_cd
+!     Reorder g_kc_ld to g_kl_cd
 !
-         do c = 1, wf%n_v
-            do d = 1, wf%n_v
+      do c = 1, wf%n_v
+         do d = 1, wf%n_v
 !
-               cd = index_two(c, d, wf%n_v)
+            cd = index_two(c, d, wf%n_v)
 !
-               do k = 1, wf%n_o
+            do k = 1, wf%n_o
 !
-                  kc = index_two(k, c, wf%n_o)
+               kc = index_two(k, c, wf%n_o)
 !
-                  do l = 1, wf%n_o
+               do l = 1, wf%n_o
 ! 
-                     kl = index_two(k, l, wf%n_o)
-                     ld = index_two(l, d, wf%n_o)
+                  kl = index_two(k, l, wf%n_o)
+                  ld = index_two(l, d, wf%n_o)
 !
-                     g_kl_cd(kl, cd) = g_kc_ld(kc, ld)
+                  g_kl_cd(kl, cd) = g_kc_ld(kc, ld)
 !
-                  enddo
                enddo
             enddo
          enddo
+      enddo
 !
-         call wf%mem%dealloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-!        Reordered T2 amplitudes        
+!     Reordered T2 amplitudes        
 !
-         call wf%initialize_amplitudes
-         call wf%read_double_amplitudes
+      call wf%initialize_amplitudes
+      call wf%read_double_amplitudes
 !
-         call wf%mem%alloc(t_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
-         t_ab_ij = zero
+      call wf%mem%alloc(t_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
+      t_ab_ij = zero
 !
-         do j = 1, wf%n_o
-            do i = 1, wf%n_o
+      do j = 1, wf%n_o
+         do i = 1, wf%n_o
 !
-               ij = index_two(i, j, wf%n_o)
+            ij = index_two(i, j, wf%n_o)
 !
-               do b = 1, wf%n_v
+            do b = 1, wf%n_v
 !
-                  bj = index_two(b, j, wf%n_v)
+               bj = index_two(b, j, wf%n_v)
 !
-                  do a = 1, wf%n_v
+               do a = 1, wf%n_v
 !
-                     ai = index_two(a, i, wf%n_v)
-                     ab = index_two(a, b, wf%n_v)
+                  ai = index_two(a, i, wf%n_v)
+                  ab = index_two(a, b, wf%n_v)
 !  
-                     aibj = index_packed(ai, bj)
+                  aibj = index_packed(ai, bj)
 !
-                     t_ab_ij(ab, ij) = wf%t2am(aibj, 1)
+                  t_ab_ij(ab, ij) = wf%t2am(aibj, 1)
 !
-                  enddo
                enddo
             enddo
          enddo
+      enddo
 
-         call wf%destruct_amplitudes
+      call wf%destruct_amplitudes
 !
-!        X_kl_ij = g_kl_cd * t_cd_ij
+!     X_kl_ij = g_kl_cd * t_cd_ij
 !
-         call wf%mem%alloc(X_kl_ij, (wf%n_o)**2, (wf%n_o)**2)
+      call wf%mem%alloc(X_kl_ij, (wf%n_o)**2, (wf%n_o)**2)
 !
-         call dgemm('N', 'N',     &
-                     (wf%n_o)**2, &
-                     (wf%n_o)**2, &
-                     (wf%n_v)**2, &
-                     one,         &  
-                     g_kl_cd,     &
-                     (wf%n_o)**2, &
-                     t_ab_ij,     &
-                     (wf%n_v)**2, &
-                     zero,        &
-                     X_kl_ij,     &
-                     (wf%n_o)**2)
+      call dgemm('N', 'N',     &
+                  (wf%n_o)**2, &
+                  (wf%n_o)**2, &
+                  (wf%n_v)**2, &
+                  one,         &  
+                  g_kl_cd,     &
+                  (wf%n_o)**2, &
+                  t_ab_ij,     &
+                  (wf%n_v)**2, &
+                  zero,        &
+                  X_kl_ij,     &
+                  (wf%n_o)**2)
 !
 !        rho_ab_ij += c_ab_kl * X_kl_ij
 !
-         call dgemm('N', 'N',     &
-                     (wf%n_v)**2, &
-                     (wf%n_o)**2, &
-                     (wf%n_o)**2, &
-                     one,         &  
-                     c_ab_ij,     &
-                     (wf%n_v)**2, &
-                     X_kl_ij,     &
-                     (wf%n_o)**2, &
-                     one,         &
-                     rho_ab_ij,   &
-                     (wf%n_v)**2)
+      call dgemm('N', 'N',     &
+                  (wf%n_v)**2, &
+                  (wf%n_o)**2, &
+                  (wf%n_o)**2, &
+                  one,         &  
+                  c_ab_ij,     &
+                  (wf%n_v)**2, &
+                  X_kl_ij,     &
+                  (wf%n_o)**2, &
+                  one,         &
+                  rho_ab_ij,   &
+                  (wf%n_v)**2)
 !
-!        X_kl_ij = g_kl_cd * c_cd_ij
+!     X_kl_ij = g_kl_cd * c_cd_ij
 !
-          call dgemm('N', 'N',     &
-                      (wf%n_o)**2, &
-                      (wf%n_o)**2, &
-                      (wf%n_v)**2, &
-                      one,         &  
-                      g_kl_cd,     &
-                      (wf%n_o)**2, &
-                      c_ab_ij,     &
-                      (wf%n_v)**2, &
-                      zero,        &
-                      X_kl_ij,     &
-                      (wf%n_o)**2)
-!!
-!         rho_ab_ij += t_ab_kl * X_kl_ij
-!!
-          call dgemm('N', 'N',     &
-                      (wf%n_v)**2, &
-                      (wf%n_o)**2, &
-                      (wf%n_o)**2, &
-                      one,         &  
-                      t_ab_ij,     &
-                      (wf%n_v)**2, &
-                      X_kl_ij,     &
-                      (wf%n_o)**2, &
-                      one,         &
-                      rho_ab_ij,   &
-                      (wf%n_v)**2)
+      call dgemm('N', 'N',     &
+                  (wf%n_o)**2, &
+                  (wf%n_o)**2, &
+                  (wf%n_v)**2, &
+                  one,         &  
+                  g_kl_cd,     &
+                  (wf%n_o)**2, &
+                  c_ab_ij,     &
+                  (wf%n_v)**2, &
+                  zero,        &
+                  X_kl_ij,     &
+                  (wf%n_o)**2)
 !
-         call wf%mem%dealloc(X_kl_ij, (wf%n_o)**2, (wf%n_o)**2)
-         call wf%mem%dealloc(g_kl_cd, (wf%n_o)**2, (wf%n_v)**2)
-         call wf%mem%dealloc(t_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
+!     rho_ab_ij += t_ab_kl * X_kl_ij
 !
-      end subroutine jacobian_ccsd_j2_ccsd
+      call dgemm('N', 'N',     &
+                  (wf%n_v)**2, &
+                  (wf%n_o)**2, &
+                  (wf%n_o)**2, &
+                  one,         &  
+                  t_ab_ij,     &
+                  (wf%n_v)**2, &
+                  X_kl_ij,     &
+                  (wf%n_o)**2, &
+                  one,         &
+                  rho_ab_ij,   &
+                  (wf%n_v)**2)
+!
+      call wf%mem%dealloc(X_kl_ij, (wf%n_o)**2, (wf%n_o)**2)
+      call wf%mem%dealloc(g_kl_cd, (wf%n_o)**2, (wf%n_v)**2)
+      call wf%mem%dealloc(t_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
+!
+   end subroutine jacobian_ccsd_j2_ccsd
 !
 !
    module subroutine jacobian_ccsd_k2_ccsd(wf, rho_ab_ij, c_ab_ij)
