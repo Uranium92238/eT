@@ -980,7 +980,6 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
       real(dp), dimension(wf%n_v, wf%n_o)                       :: c_a_i
       real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
 !
-!
       real(dp), dimension(:,:), allocatable :: g_ai_kj ! g_aikj 
       real(dp), dimension(:,:), allocatable :: g_k_aij ! g_aikj reordered 
       real(dp), dimension(:,:), allocatable :: g_ai_bc ! g_aibc, batching over b
@@ -999,11 +998,11 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
 !     Batching variables 
 !
-      integer(i15) :: required = 0, available = 0, max_batch_length = 0, batch_dimension = 0
-      integer(i15) :: n_batch = 0, b_begin = 0, b_end = 0, b_batch = 0, batch_length = 0
-!
+      integer(i15) :: required = 0 
+      integer(i15) :: current_b_batch = 0
       integer(i15) :: aib_offset = 0
 !
+      type(batching_index) :: batch_b
 !
 !     :: Term 1. - sum_k g_aikj c_bk ::
 !
@@ -1099,22 +1098,18 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
                      (wf%n_J)*(wf%n_v)**2 +         &
                      (wf%n_o)*(wf%n_v)**3)             ! Holding L_bc^J and g_aibc
 !
-      required = 4*required ! Words
-! 
-      batch_dimension  = wf%n_v ! Batch over the virtual index b
-      max_batch_length = 0      ! Initilization of unset variables 
-      n_batch          = 0
+!     Initialize batching variable  
 !
-      call num_batch(required, wf%mem%available, max_batch_length, n_batch, batch_dimension)  
+      call batch_b%init(wf%n_v)
+      call wf%mem%num_batch(batch_b, required)
 !
-      do b_batch = 1, n_batch 
+      do current_b_batch = 1, batch_b%num_batches 
 !
-!        Get batching limits 
+!        Determine limits for the current b-batch
 !
-         call batch_limits(b_begin, b_end, b_batch, max_batch_length, batch_dimension)
-         batch_length = b_end - b_begin + 1 
+         call batch_b%determine_limits(current_b_batch)
 !
-         call wf%mem%alloc(g_ai_bc, (wf%n_v)*(wf%n_o), (wf%n_v)*batch_length)
+         call wf%mem%alloc(g_ai_bc, (wf%n_v)*(wf%n_o), (wf%n_v)*(batch_b%length))
 !
          integral_type = 'electronic_repulsion'
          call wf%get_vo_vv(integral_type, &
@@ -1123,29 +1118,29 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
                            wf%n_v,        &
                            1,             &
                            wf%n_o,        &
-                           b_begin,       &
-                           b_end,         &
+                           batch_b%first, &
+                           batch_b%last,  &
                            1,             &
                            wf%n_v)
 !
 !        Calculate the contribution to rho_aib_j = sum_c g_aib_c c_cj
 !
-         aib_offset = index_three(1, 1, b_begin, wf%n_v, wf%n_o)
+         aib_offset = index_three(1, 1, batch_b%first, wf%n_v, wf%n_o)
 !
-         call dgemm('N', 'N',                        &
-                     (wf%n_v)*(wf%n_o)*batch_length, &
-                     wf%n_o,                         &
-                     wf%n_v,                         &
-                     one,                            &
-                     g_ai_bc,                        &
-                     (wf%n_v)*(wf%n_o)*batch_length, &
-                     c_a_i,                          &
-                     wf%n_v,                         &
-                     one,                            &
-                     rho_aib_j(aib_offset,1),        &
+         call dgemm('N', 'N',                            &
+                     (wf%n_v)*(wf%n_o)*(batch_b%length), &
+                     wf%n_o,                             &
+                     wf%n_v,                             &
+                     one,                                &
+                     g_ai_bc,                            &
+                     (wf%n_v)*(wf%n_o)*(batch_b%length), &
+                     c_a_i,                              &
+                     wf%n_v,                             &
+                     one,                                &
+                     rho_aib_j(aib_offset,1),            &
                      (wf%n_o)*(wf%n_v)**2)
 !
-          call wf%mem%dealloc(g_ai_bc, (wf%n_v)*(wf%n_o), wf%n_v*batch_length)
+          call wf%mem%dealloc(g_ai_bc, (wf%n_v)*(wf%n_o), wf%n_v*(batch_b%length))
 !
       enddo ! End of batches over b
 !
@@ -1206,7 +1201,6 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
       integer(i15) :: a = 0, c = 0, i = 0, j = 0, b = 0, k = 0
       integer(i15) :: ai = 0, cj = 0, aicj = 0, aij = 0, bj = 0
       integer(i15) :: bk = 0, aibk = 0, aib = 0
-!
 !
 !     :: Term 1. - sum_kc F_kc t_ij^ac c_bk ::
 !
@@ -1300,7 +1294,6 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
       enddo
 !
       call wf%mem%dealloc(rho_b_aij, wf%n_v, (wf%n_v)*(wf%n_o)**2)
-!
 !
 !     :: Term 2. - sum_kc F_kc t_ik^ab c_cj :: 
 !
@@ -1414,7 +1407,6 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
       integer(i15) :: lj = 0, blci = 0, bl = 0, bi = 0, ij = 0, kjl = 0, kl = 0, ba = 0
       integer(i15) :: blak = 0, jk = 0, ck = 0, aib = 0, aibl = 0
 !
-!   
 !     :: Term 1. sum_kcl g_ljkc t_ki^ac c_bl :: 
 !
 !     Form g_lj_kc = g_ljkc
@@ -1961,10 +1953,12 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
       logical :: reorder 
 !
-!     Batching variables 
+!     Batching variables
 !
-      integer(i15) :: required = 0, available = 0, max_batch_length = 0, batch_dimension = 0
-      integer(i15) :: n_batch = 0, b_begin = 0, b_end = 0, b_batch = 0, batch_length = 0
+      integer(i15) :: required = 0 
+      integer(i15) :: current_b_batch = 0 
+!
+      type(batching_index) :: batch_b  
 !
 !     Indices 
 !
@@ -1986,42 +1980,49 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
                      (wf%n_J)*(wf%n_v)**2 +         &
                      (wf%n_o)*(wf%n_v)**3)             ! Holding L_bc^J and g_aibc
 !
-      required = 4*required ! Words
+!     Initialize batching variable 
 !
-      batch_dimension  = wf%n_v ! Batch over the virtual index b
-      max_batch_length = 0      ! Initilization of unset variables 
-      n_batch          = 0
+      call batch_b%init(wf%n_v)
+      call wf%mem%num_batch(batch_b, required)
+!  
+!     Start looping over b-batches 
 !
-      call num_batch(required, wf%mem%available, max_batch_length, n_batch, batch_dimension)  
+      do current_b_batch = 1, batch_b%num_batches 
 !
-      do b_batch = 1, n_batch 
+!        Get batching limits for current b-batch 
 !
-!        Get batching limits 
-!
-         call batch_limits(b_begin, b_end, b_batch, max_batch_length, batch_dimension)
-         batch_length = b_end - b_begin + 1 
+         call batch_b%determine_limits(current_b_batch)
 !
 !        :: Term 1. - sum_kcd g_kcbd t_ij^cd c_ak ::
 !
 !        Form g_kc_db = g_kcbd
 !
-         call wf%mem%alloc(g_bd_kc, (wf%n_v)*batch_length, (wf%n_o)*(wf%n_v))
+         call wf%mem%alloc(g_bd_kc, (wf%n_v)*(batch_b%length), (wf%n_o)*(wf%n_v))
 !
          integral_type = 'electronic_repulsion'
-         call wf%get_vv_ov(integral_type, g_bd_kc, b_begin, b_end, 1, wf%n_v, 1, wf%n_o, 1, wf%n_v)
+         call wf%get_vv_ov(integral_type, &
+                           g_bd_kc,       &
+                           batch_b%first, &
+                           batch_b%last,  &
+                           1,             &
+                           wf%n_v,        &
+                           1,             &
+                           wf%n_o,        &
+                           1,             &
+                           wf%n_v)
 !
 !        Reorder to g_cd_kb = g_kc_db = g_kcbd 
 !
-         call wf%mem%alloc(g_cd_kb, (wf%n_v)**2, (wf%n_o)*batch_length)
+         call wf%mem%alloc(g_cd_kb, (wf%n_v)**2, (wf%n_o)*(batch_b%length))
 !
-         do b = 1, batch_length
+         do b = 1, batch_b%length
             do k = 1, wf%n_o
 !
                kb = index_two(k, b, wf%n_o)
 !
                do d = 1, wf%n_v
 !
-                  bd = index_two(b, d, batch_length)
+                  bd = index_two(b, d, batch_b%length)
 !
                   do c = 1, wf%n_v
 !
@@ -2035,7 +2036,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
             enddo
          enddo
 !
-         call wf%mem%dealloc(g_bd_kc, (wf%n_v)*batch_length, (wf%n_o)*(wf%n_v))
+         call wf%mem%dealloc(g_bd_kc, (wf%n_v)*(batch_b%length), (wf%n_o)*(wf%n_v))
 !
 !        Order amplitudes as t_ij_cd = t_ij^cd 
 !
@@ -2068,19 +2069,19 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !        Form intermediate X_ij_kb = sum_cd g_kcdb t_ij^cd 
 !                                  = sum_cd t_ij_cd g_cd_kb
 !
-         call wf%mem%alloc(X_ij_kb, (wf%n_o)**2, (wf%n_o)*batch_length)
+         call wf%mem%alloc(X_ij_kb, (wf%n_o)**2, (wf%n_o)*(batch_b%length))
 !
-         call dgemm('N', 'N',               &
-                     (wf%n_o)**2,           &
-                     (wf%n_o)*batch_length, &
-                     (wf%n_v)**2,           &
-                     one,                   &
-                     t_ij_cd,               &
-                     (wf%n_o)**2,           &
-                     g_cd_kb,               &
-                     (wf%n_v)**2,           &
-                     zero,                  &
-                     X_ij_kb,               &
+         call dgemm('N', 'N',                   &
+                     (wf%n_o)**2,               &
+                     (wf%n_o)*(batch_b%length), &
+                     (wf%n_v)**2,               &
+                     one,                       &
+                     t_ij_cd,                   &
+                     (wf%n_o)**2,               &
+                     g_cd_kb,                   &
+                     (wf%n_v)**2,               &
+                     zero,                      &
+                     X_ij_kb,                   &
                      (wf%n_o)**2)
 !
          call wf%mem%dealloc(t_ij_cd, (wf%n_o)**2, (wf%n_v)**2)
@@ -2088,10 +2089,10 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !        sum_kcd g_kcbd t_ij^cd c_ak = sum_k X_ij_kb c_ak 
 !        Reorder to X_k_ijb = X_ij_kb 
 !
-         call wf%mem%alloc(X_k_ijb, (wf%n_o), batch_length*(wf%n_o)**2)
+         call wf%mem%alloc(X_k_ijb, (wf%n_o), (batch_b%length)*(wf%n_o)**2)
          X_k_ijb = zero
 !
-         do b = 1, batch_length
+         do b = 1, batch_b%length 
             do j = 1, wf%n_o
                do i = 1, wf%n_o
 !
@@ -2110,33 +2111,33 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
             enddo
          enddo
 !
-         call wf%mem%dealloc(X_ij_kb, (wf%n_o)**2, (wf%n_o)*batch_length)
+         call wf%mem%dealloc(X_ij_kb, (wf%n_o)**2, (wf%n_o)*(batch_b%length))
 !
 !        Form rho_a_ijb = - sum_k c_ak X_k_ijb = - sum_k c_a_i(a,k) X_k_ijb(k, ijb)
 !
-         call wf%mem%alloc(rho_a_ijb, wf%n_v, batch_length*(wf%n_o)**2)
+         call wf%mem%alloc(rho_a_ijb, wf%n_v, (batch_b%length)*(wf%n_o)**2)
 !
-         call dgemm('N', 'N',                  &
-                     wf%n_v,                   &
-                     batch_length*(wf%n_o)**2, &
-                     wf%n_o,                   &
-                     -one,                     & 
-                     c_a_i,                    &
-                     wf%n_v,                   &
-                     X_k_ijb,                  &
-                     wf%n_o,                   &
-                     zero,                     &
-                     rho_a_ijb,                &
+         call dgemm('N', 'N',                      &
+                     wf%n_v,                       &
+                     (batch_b%length)*(wf%n_o)**2, &
+                     wf%n_o,                       &
+                     -one,                         & 
+                     c_a_i,                        &
+                     wf%n_v,                       &
+                     X_k_ijb,                      &
+                     wf%n_o,                       &
+                     zero,                         &
+                     rho_a_ijb,                    &
                      wf%n_v)
 !
-         call wf%mem%dealloc(X_k_ijb, wf%n_o, batch_length*(wf%n_o)**2)
+         call wf%mem%dealloc(X_k_ijb, wf%n_o, (batch_b%length)*(wf%n_o)**2)
 !
 !        Add rho_a_ijb (batch over b) to rho_ai_bj (full space)
 !
-         do b = 1, batch_length ! Loop over restricted space 
+         do b = 1, batch_b%length ! Loop over restricted space 
             do j = 1, wf%n_o
 !
-               Bj = index_two(b + b_begin - 1, j, wf%n_v) ! b in full space 
+               Bj = index_two(b + batch_b%first - 1, j, wf%n_v) ! b in full space 
 !
                do i = 1, wf%n_o
 !
@@ -2155,7 +2156,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
 !        Deallocations for term 1 (keep g_cd_kb = g_kcbd)
 !
-         call wf%mem%dealloc(rho_a_ijb, wf%n_v, batch_length*(wf%n_o)**2)
+         call wf%mem%dealloc(rho_a_ijb, wf%n_v, (batch_b%length)*(wf%n_o)**2)
 !
 !
 !        :: Term 2. - sum_kcd g_kcbd t_kj^ad c_ci ::
@@ -2166,19 +2167,19 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
 !        Note: g_cd_kb is interpreted as g_c_dkb in the matrix multiplication.
 !
-         call wf%mem%alloc(X_i_dkb, wf%n_o, (wf%n_v)*(wf%n_o)*batch_length)
+         call wf%mem%alloc(X_i_dkb, wf%n_o, (wf%n_v)*(wf%n_o)*(batch_b%length))
 !
-         call dgemm('T','N',                         &
-                     wf%n_o,                         &
-                     (wf%n_v)*(wf%n_o)*batch_length, &
-                     wf%n_v,                         &
-                     one,                            &
-                     c_a_i,                          &
-                     wf%n_v,                         &
-                     g_cd_kb,                        & ! "g_c_dkb" 
-                     wf%n_v,                         &
-                     zero,                           &
-                     X_i_dkb,                        &
+         call dgemm('T','N',                             &
+                     wf%n_o,                             &
+                     (wf%n_v)*(wf%n_o)*(batch_b%length), &
+                     wf%n_v,                             &
+                     one,                                &
+                     c_a_i,                              &
+                     wf%n_v,                             &
+                     g_cd_kb,                            & ! "g_c_dkb" 
+                     wf%n_v,                             &
+                     zero,                               &
+                     X_i_dkb,                            &
                      wf%n_o)
 !
 !        sum_kcd g_kcbd t_kj^ad c_ci = sum_kd (sum_c c_ci g_kcbd) t_kj^ad
@@ -2187,14 +2188,14 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
 !        Reorder to X_ib_dk = X_i_dkb 
 !
-         call wf%mem%alloc(X_ib_dk, (wf%n_o)*batch_length, (wf%n_v)*(wf%n_o))
+         call wf%mem%alloc(X_ib_dk, (wf%n_o)*(batch_b%length), (wf%n_v)*(wf%n_o))
 !
          do k = 1, wf%n_o
             do d = 1, wf%n_v
 !
                dk = index_two(d, k, wf%n_v)
 !
-               do b = 1, batch_length
+               do b = 1, batch_b%length
 !
                   dkb = index_three(d, k, b, wf%n_v, wf%n_o)
 !
@@ -2209,7 +2210,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
             enddo
          enddo
 !
-         call wf%mem%dealloc(X_i_dkb, wf%n_o, (wf%n_o)*(wf%n_v)*batch_length)
+         call wf%mem%dealloc(X_i_dkb, wf%n_o, (wf%n_o)*(wf%n_v)*(batch_b%length))
 !
 !        Order the amplitudes as t_dk_aj = t_kj^ad 
 !
@@ -2242,22 +2243,22 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !        Calculate rho_ib_aj = - sum_kcd g_kcbd t_kj^ad c_ci
 !                            = - sum_dk X_ib_dk t_dk_aj
 !
-         call wf%mem%alloc(rho_ib_aj, (wf%n_o)*batch_length, (wf%n_o)*(wf%n_v))
+         call wf%mem%alloc(rho_ib_aj, (wf%n_o)*(batch_b%length), (wf%n_o)*(wf%n_v))
 !
-         call dgemm('N','N',                &
-                     (wf%n_o)*batch_length, &
-                     (wf%n_o)*(wf%n_v),     &
-                     (wf%n_o)*(wf%n_v),     &
-                     -one,                  & 
-                     X_ib_dk,               &
-                     (wf%n_o)*batch_length, &
-                     t_dk_aj,               &
-                     (wf%n_o)*(wf%n_v),     &
-                     zero,                  &
-                     rho_ib_aj,             &
-                     (wf%n_o)*batch_length)
+         call dgemm('N','N',                    &
+                     (wf%n_o)*(batch_b%length), &
+                     (wf%n_o)*(wf%n_v),         &
+                     (wf%n_o)*(wf%n_v),         &
+                     -one,                      & 
+                     X_ib_dk,                   &
+                     (wf%n_o)*(batch_b%length), &
+                     t_dk_aj,                   &
+                     (wf%n_o)*(wf%n_v),         &
+                     zero,                      &
+                     rho_ib_aj,                 &
+                     (wf%n_o)*(batch_b%length))
 !
-         call wf%mem%dealloc(X_ib_dk, (wf%n_o)*batch_length, (wf%n_o)*(wf%n_v))
+         call wf%mem%dealloc(X_ib_dk, (wf%n_o)*(batch_b%length), (wf%n_o)*(wf%n_v))
          call wf%mem%dealloc(t_dk_aj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !        Add rho_ib_aj (batch over b) ro rho_ai_bj (full space)
@@ -2267,9 +2268,9 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
                aj = index_two(a, j, wf%n_v)
 !
-               do b = 1, batch_length
+               do b = 1, batch_b%length
 !
-                  Bj = index_two(b + b_begin - 1, j, wf%n_v) ! b is full space index 
+                  Bj = index_two(b + batch_b%first - 1, j, wf%n_v) ! b is full space index 
 !
                   do i = 1, wf%n_o
 !
@@ -2285,7 +2286,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
 !        Deallocations for term 2 (keep g_cd_kb = g_kcbd)
 !
-         call wf%mem%dealloc(rho_ib_aj, (wf%n_o)*batch_length, (wf%n_v)*(wf%n_o))
+         call wf%mem%dealloc(rho_ib_aj, (wf%n_o)*(batch_b%length), (wf%n_v)*(wf%n_o))
 !
 !
 !        :: Term 3. - sum_kcd g_kcbd t_ik^ca c_dj ::
@@ -2294,11 +2295,11 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
 !        Reorder integrals to g_cd_kb to g_ckb_d
 !
-         call wf%mem%alloc(g_ckb_d, (wf%n_o)*(wf%n_v)*batch_length, wf%n_v)
+         call wf%mem%alloc(g_ckb_d, (wf%n_o)*(wf%n_v)*(batch_b%length), wf%n_v)
          g_ckb_d = zero
 !
          do d = 1, wf%n_v
-            do b = 1, batch_length
+            do b = 1, batch_b%length
                do k = 1, wf%n_o
 !
                   kb = index_two(k, b, wf%n_o)
@@ -2316,24 +2317,24 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
             enddo
          enddo
 !
-         call wf%mem%dealloc(g_cd_kb, (wf%n_v)**2, (wf%n_o)*batch_length)
+         call wf%mem%dealloc(g_cd_kb, (wf%n_v)**2, (wf%n_o)*(batch_b%length))
 !
 !        Form the intermediate X_ckb_j = sum_d g_kcbd c_dj = sum_d g_ckb_d c_d_j 
 !
-         call wf%mem%alloc(X_ckb_j, (wf%n_v)*(wf%n_o)*batch_length, wf%n_o)
+         call wf%mem%alloc(X_ckb_j, (wf%n_v)*(wf%n_o)*(batch_b%length), wf%n_o)
 !
-         call dgemm('N','N',                         &
-                     (wf%n_v)*(wf%n_o)*batch_length, &
-                     wf%n_o,                         &
-                     wf%n_v,                         &
-                     one,                            &
-                     g_ckb_d,                        &
-                     (wf%n_v)*(wf%n_o)*batch_length, &
-                     c_a_i,                          &
-                     wf%n_v,                         &
-                     zero,                           &
-                     X_ckb_j,                        &
-                     (wf%n_v)*(wf%n_o)*batch_length)
+         call dgemm('N','N',                             &
+                     (wf%n_v)*(wf%n_o)*(batch_b%length), &
+                     wf%n_o,                             &
+                     wf%n_v,                             &
+                     one,                                &
+                     g_ckb_d,                            &
+                     (wf%n_v)*(wf%n_o)*(batch_b%length), &
+                     c_a_i,                              &
+                     wf%n_v,                             &
+                     zero,                               &
+                     X_ckb_j,                            &
+                     (wf%n_v)*(wf%n_o)*(batch_b%length))
 !
 !        Order amplitudes as t_ai_ck = t_ik^ca
 !
@@ -2368,30 +2369,30 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !        Note: X_ckb_j is interpreted as X_ck_bj in the matrix multiplication.
 !        Note: rho_aib_j is interpreted as rho_ai_bj in the matrix multiplication.
 !
-         call wf%mem%alloc(rho_aib_j, (wf%n_v)*(wf%n_o)*batch_length, wf%n_o)
+         call wf%mem%alloc(rho_aib_j, (wf%n_v)*(wf%n_o)*(batch_b%length), wf%n_o)
 !
-         call dgemm('N','N',                &
-                     (wf%n_v)*(wf%n_o),     &
-                     (wf%n_o)*batch_length, &
-                     (wf%n_v)*(wf%n_o),     &
-                     -one,                  & 
-                     t_ai_ck,               &
-                     (wf%n_v)*(wf%n_o),     &
-                     X_ckb_j,               & ! "X_ck_bj"
-                     (wf%n_v)*(wf%n_o),     &
-                     zero,                  &
-                     rho_aib_j,             & ! "rho_ai_bj"
+         call dgemm('N','N',                    &
+                     (wf%n_v)*(wf%n_o),         &
+                     (wf%n_o)*(batch_b%length), &
+                     (wf%n_v)*(wf%n_o),         &
+                     -one,                      & 
+                     t_ai_ck,                   &
+                     (wf%n_v)*(wf%n_o),         &
+                     X_ckb_j,                   & ! "X_ck_bj"
+                     (wf%n_v)*(wf%n_o),         &
+                     zero,                      &
+                     rho_aib_j,                 & ! "rho_ai_bj"
                      (wf%n_v)*(wf%n_o))
 !
-         call wf%mem%dealloc(X_ckb_j, (wf%n_v)*(wf%n_o)*batch_length, wf%n_o)
+         call wf%mem%dealloc(X_ckb_j, (wf%n_v)*(wf%n_o)*(batch_b%length), wf%n_o)
          call wf%mem%dealloc(t_ai_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
 !        Add rho_aib_j to rho_ai_bj 
 !
          do j = 1, wf%n_o
-            do b = 1, batch_length
+            do b = 1, batch_b%length 
 !
-               Bj = index_two(b + b_begin - 1, j, wf%n_v)
+               Bj = index_two(b + batch_b%first - 1, j, wf%n_v)
 !
                do i = 1, wf%n_o
                   do a = 1, wf%n_v
@@ -2409,7 +2410,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
 !        Deallocations for term 3 (keep g_ckb_d = g_kcbd)
 !
-         call wf%mem%dealloc(rho_aib_j, (wf%n_o)*(wf%n_v)*batch_length, wf%n_o)
+         call wf%mem%dealloc(rho_aib_j, (wf%n_o)*(wf%n_v)*(batch_b%length), wf%n_o)
 !
 !
 !        :: Term 4.  sum_kcd L_kcbd t_ik^ac c_dj :: 
@@ -2418,11 +2419,11 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
 !        Form L_ckb_d = L_kcbd = 2 * g_kcbd - g_kdbc = 2 * g_ckb_d(ckb, d) - g_ckb_d(dkb, c)
 !
-         call wf%mem%alloc(L_ckb_d, (wf%n_o)*(wf%n_v)*batch_length, wf%n_v)
+         call wf%mem%alloc(L_ckb_d, (wf%n_o)*(wf%n_v)*(batch_b%length), wf%n_v)
          L_ckb_d = zero
 !
          do d = 1, wf%n_v
-            do b = 1, batch_length
+            do b = 1, batch_b%length
                do k = 1, wf%n_o
 !
                   dkb = index_three(d, k, b, wf%n_v, wf%n_o)
@@ -2438,24 +2439,24 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
             enddo
          enddo
 !
-         call wf%mem%dealloc(g_ckb_d, (wf%n_o)*(wf%n_v)*batch_length, wf%n_v)
+         call wf%mem%dealloc(g_ckb_d, (wf%n_o)*(wf%n_v)*(batch_b%length), wf%n_v)
 !
 !        Form the intermediate Y_ckb_j = sum_d L_kcbd c_dj = sum_d L_ckb_d c_dj 
 !
-         call wf%mem%alloc(Y_ckb_j, (wf%n_v)*(wf%n_o)*batch_length, wf%n_o)
+         call wf%mem%alloc(Y_ckb_j, (wf%n_v)*(wf%n_o)*(batch_b%length), wf%n_o)
 !
-         call dgemm('N','N',                         &
-                     (wf%n_v)*(wf%n_o)*batch_length, & 
-                     wf%n_o,                         &
-                     wf%n_v,                         &
-                     one,                            &
-                     L_ckb_d,                        &
-                     (wf%n_v)*(wf%n_o)*batch_length, &
-                     c_a_i,                          &
-                     wf%n_v,                         &
-                     zero,                           &
-                     Y_ckb_j,                        &
-                     (wf%n_v)*(wf%n_o)*batch_length)
+         call dgemm('N','N',                             &
+                     (wf%n_v)*(wf%n_o)*(batch_b%length), & 
+                     wf%n_o,                             &
+                     wf%n_v,                             &
+                     one,                                &
+                     L_ckb_d,                            &
+                     (wf%n_v)*(wf%n_o)*(batch_b%length), &
+                     c_a_i,                              &
+                     wf%n_v,                             &
+                     zero,                               &
+                     Y_ckb_j,                            &
+                     (wf%n_v)*(wf%n_o)*(batch_b%length))
 !
 !        Order amplitudes as t_ai_ck = t_ik^ac = t2am(aick, 1)
 !
@@ -2469,30 +2470,30 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !        Note: we interpret Y_ckb_j as Y_ck_bj in the matrix multiplication
 !        Note: we interpret rho_aib_j as rho_ai_bj in the matrix multiplication
 !
-         call wf%mem%alloc(rho_aib_j, (wf%n_o)*(wf%n_v)*batch_length, wf%n_o)
+         call wf%mem%alloc(rho_aib_j, (wf%n_o)*(wf%n_v)*(batch_b%length), wf%n_o)
 !
-         call dgemm('N','N',                &
-                     (wf%n_o)*(wf%n_v),     &
-                     (wf%n_o)*batch_length, &
-                     (wf%n_o)*(wf%n_v),     &
-                     one,                   & 
-                     t_ai_ck,               &
-                     (wf%n_o)*(wf%n_v),     &
-                     Y_ckb_j,               & ! "Y_ck_bj"
-                     (wf%n_o)*(wf%n_v),     &
-                     zero,                  &
-                     rho_aib_j,             & ! "rho_ai_bj"
+         call dgemm('N','N',                    &
+                     (wf%n_o)*(wf%n_v),         &
+                     (wf%n_o)*(batch_b%length), &
+                     (wf%n_o)*(wf%n_v),         &
+                     one,                       & 
+                     t_ai_ck,                   &
+                     (wf%n_o)*(wf%n_v),         &
+                     Y_ckb_j,                   & ! "Y_ck_bj"
+                     (wf%n_o)*(wf%n_v),         &
+                     zero,                      &
+                     rho_aib_j,                 & ! "rho_ai_bj"
                      (wf%n_o)*(wf%n_v))
 !
-         call wf%mem%dealloc(Y_ckb_j, (wf%n_v)*(wf%n_o)*batch_length, wf%n_o)
+         call wf%mem%dealloc(Y_ckb_j, (wf%n_v)*(wf%n_o)*(batch_b%length), wf%n_o)
          call wf%mem%dealloc(t_ai_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
 !        Add rho_aib_j to rho_ai_bj 
 !
          do j = 1, wf%n_o
-            do b = 1, batch_length
+            do b = 1, batch_b%length 
 !
-               Bj = index_two(b + b_begin - 1, j, wf%n_v)
+               Bj = index_two(b + batch_b%first - 1, j, wf%n_v)
 !
                do i = 1, wf%n_o
                   do a = 1, wf%n_v
@@ -2510,7 +2511,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
 !        Deallocations for term 4 (keep L_ckb_d = L_kcbd)
 !
-         call wf%mem%dealloc(rho_aib_j, (wf%n_v)*(wf%n_o)*batch_length, wf%n_o)
+         call wf%mem%dealloc(rho_aib_j, (wf%n_v)*(wf%n_o)*(batch_b%length), wf%n_o)
 !
 !
 !        :: Term 5.  sum_kcd L_kcbd t_ij^ad c_ck ::
@@ -2520,19 +2521,19 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !        Note: L_ckb_d is interpreted as L_ck_bd in the matrix multiplication 
 !        Note: c_a_i is interpreted as c_1,ai in the matrix multiplication 
 !
-         call wf%mem%alloc(X_bd, 1, batch_length*(wf%n_v))
+         call wf%mem%alloc(X_bd, 1, (batch_b%length)*(wf%n_v))
 !  
-         call dgemm('N','N',                &
-                     1,                     &
-                     batch_length*(wf%n_v), &
-                     (wf%n_o)*(wf%n_v),     &
-                     one,                   &
-                     c_a_i,                 & ! "c_1,ai"
-                     1,                     &
-                     L_ckb_d,               & ! "L_ck_bd"
-                     (wf%n_o)*(wf%n_v),     &
-                     zero,                  &
-                     X_bd,                  &
+         call dgemm('N','N',                    &
+                     1,                         &
+                     (batch_b%length)*(wf%n_v), &
+                     (wf%n_o)*(wf%n_v),         &
+                     one,                       &
+                     c_a_i,                     & ! "c_1,ai"
+                     1,                         &
+                     L_ckb_d,                   & ! "L_ck_bd"
+                     (wf%n_o)*(wf%n_v),         &
+                     zero,                      &
+                     X_bd,                      &
                      1)
 !
 !        Order amplitudes as t_d_aij = t_ij^ad 
@@ -2566,22 +2567,22 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
 !        Note: X_bd is interpreted as X_b_d in the matrix multiplication
 !
-         call wf%mem%alloc(rho_b_aij, batch_length, (wf%n_v)*(wf%n_o)**2)
+         call wf%mem%alloc(rho_b_aij, batch_b%length, (wf%n_v)*(wf%n_o)**2)
 !
          call dgemm('N','N',               &
-                     batch_length,         &
+                     batch_b%length,       &
                      (wf%n_v)*(wf%n_o)**2, &
                      wf%n_v,               &
                      one,                  & 
                      X_bd,                 & ! "X_b_d"
-                     batch_length,         &
+                     batch_b%length,       &
                      t_d_aij,              &
                      wf%n_v,               &
                      zero,                 &
                      rho_b_aij,            &
-                     batch_length)
+                     batch_b%length)
 !
-         call wf%mem%dealloc(X_bd, 1, batch_length*(wf%n_v))
+         call wf%mem%dealloc(X_bd, 1, (batch_b%length)*(wf%n_v))
          call wf%mem%dealloc(t_d_aij, wf%n_v, (wf%n_v)*(wf%n_o)**2)
 !
 !        Add rho_b_aij to rho_ai_bj 
@@ -2594,9 +2595,9 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
                   aij = index_three(a, i, j, wf%n_v, wf%n_o)
 !
-                  do b = 1, batch_length
+                  do b = 1, batch_b%length 
 !
-                     Bj = index_two(b + b_begin - 1, j, wf%n_v)
+                     Bj = index_two(b + batch_b%first - 1, j, wf%n_v)
 !
                      rho_ai_bj(ai, Bj) = rho_ai_bj(ai, Bj) + rho_b_aij(b, aij)
 !
@@ -2607,8 +2608,8 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
 !        Final deallocations in batching loop 
 !
-         call wf%mem%dealloc(rho_b_aij, batch_length, (wf%n_v)*(wf%n_o)**2)
-         call wf%mem%dealloc(L_ckb_d, (wf%n_v)*(wf%n_o)*batch_length, wf%n_v)
+         call wf%mem%dealloc(rho_b_aij, batch_b%length, (wf%n_v)*(wf%n_o)**2)
+         call wf%mem%dealloc(L_ckb_d, (wf%n_v)*(wf%n_o)*(batch_b%length), wf%n_v)
 !
      enddo ! End of batches over b 
 !
