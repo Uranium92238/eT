@@ -3097,400 +3097,397 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
    end subroutine jacobian_ccsd_f2_ccsd
 !
 !
-      module subroutine jacobian_ccsd_g2_ccsd(wf, rho_ai_bj, c_ai_bj)
+   module subroutine jacobian_ccsd_g2_ccsd(wf, rho_ai_bj, c_ai_bj)
 !!
-!!       Jacobian CCSD G2 
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!    Jacobian CCSD G2 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!       rho_ai_bj^G2 =  - sum_ckdl t_bl,dj * L_kc,ld * c_ai,ck 
+!!    rho_ai_bj^G2 =  - sum_ckdl t_bl,dj * L_kc,ld * c_ai,ck 
 !!                       - sum_ckdl t_ck_bl * L_kc,ld * c_ai,dj 
 !!                       - sum_ckld t_ck,dj * L_kc,ld * c_ai,bl 
 !!
-!!       L_kc,ld = 2*g_kc,ld - g_kd,lc = 2*g_kc_ld(kc,ld) - 2*g_kc_ld(kd,lc)
+!!    L_kc,ld = 2*g_kc,ld - g_kd,lc = 2*g_kc_ld(kc,ld) - 2*g_kc_ld(kd,lc)
 !!
-         implicit none 
+      implicit none 
 !
-         class(ccsd) :: wf 
+      class(ccsd) :: wf 
 !
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: c_ai_bj
+      real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
+      real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: c_ai_bj
 !         
-         real(dp), dimension(:,:), allocatable :: L_ia_J
-         real(dp), dimension(:,:), allocatable :: g_kc_ld
+      real(dp), dimension(:,:), allocatable :: g_kc_ld
 !
-         real(dp), dimension(:,:), allocatable :: L_ck_dl
-         real(dp), dimension(:,:), allocatable :: L_d_clk
-         real(dp), dimension(:,:), allocatable :: L_l_ckd
+      real(dp), dimension(:,:), allocatable :: L_ck_dl
+      real(dp), dimension(:,:), allocatable :: L_d_clk
+      real(dp), dimension(:,:), allocatable :: L_l_ckd
 !
-         real(dp), dimension(:,:), allocatable :: c_ai_ck
-         real(dp), dimension(:,:), allocatable :: c_aib_l
-         real(dp), dimension(:,:), allocatable :: c_aij_d
+      real(dp), dimension(:,:), allocatable :: c_ai_ck
+      real(dp), dimension(:,:), allocatable :: c_aib_l
+      real(dp), dimension(:,:), allocatable :: c_aij_d
 !
-         real(dp), dimension(:,:), allocatable :: t_dl_bj
-         real(dp), dimension(:,:), allocatable :: t_clk_b
-         real(dp), dimension(:,:), allocatable :: t_ckd_j
+      real(dp), dimension(:,:), allocatable :: t_dl_bj
+      real(dp), dimension(:,:), allocatable :: t_clk_b
+      real(dp), dimension(:,:), allocatable :: t_ckd_j
  !               
-         real(dp), dimension(:,:), allocatable :: X_ck_bj
-         real(dp), dimension(:,:), allocatable :: Y_d_b
-         real(dp), dimension(:,:), allocatable :: Z_l_j
+      real(dp), dimension(:,:), allocatable :: X_ck_bj
+      real(dp), dimension(:,:), allocatable :: Y_d_b
+      real(dp), dimension(:,:), allocatable :: Z_l_j
 !
-         real(dp), dimension(:,:), allocatable :: rho_aij_b
-         real(dp), dimension(:,:), allocatable :: rho_aib_j
+      real(dp), dimension(:,:), allocatable :: rho_aij_b
+      real(dp), dimension(:,:), allocatable :: rho_aib_j
 !
-         integer(i15) :: a = 0, b = 0, c = 0, d = 0
-         integer(i15) :: i = 0, j = 0, k = 0, l = 0
+      integer(i15) :: a = 0, b = 0, c = 0, d = 0
+      integer(i15) :: i = 0, j = 0, k = 0, l = 0
 !
-         integer(i15) :: ai = 0, bj = 0, bk = 0, bl = 0, ck = 0, cl = 0, dj = 0, dl = 0
-         integer(i15) :: kc = 0, lc = 0, kd = 0, ld = 0
+      integer(i15) :: ai = 0, bj = 0, bk = 0, bl = 0, ck = 0, cl = 0, dj = 0, dl = 0
+      integer(i15) :: kc = 0, lc = 0, kd = 0, ld = 0
 !
-         integer(i15) :: aib = 0, aij = 0, ckd = 0, clk = 0
+      integer(i15) :: aib = 0, aij = 0, ckd = 0, clk = 0
 !
-         integer(i15) :: ckbl = 0, ckdj = 0, bldj = 0
+      integer(i15) :: ckbl = 0, ckdj = 0, bldj = 0
 !
-!        :: Term 1: - sum_ckdl t_bl,dj * L_kc,ld * c_ai,ck  ::
+!     :: Term 1: - sum_ckdl t_bl,dj * L_kc,ld * c_ai,ck  ::
 !
-         call wf%mem%alloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-         integral_type = 'electronic_repulsion'
-         call wf%get_ov_ov(integral_type, g_kc_ld)
+      integral_type = 'electronic_repulsion'
+      call wf%get_ov_ov(integral_type, g_kc_ld)
 !   
-         call wf%mem%alloc(L_ck_dl,(wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-         L_ck_dl = zero
+      call wf%mem%alloc(L_ck_dl,(wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      L_ck_dl = zero
 !
-!        Construct L_kc_ld ordered as L_ck_dl
+!     Construct L_kc_ld ordered as L_ck_dl
 !             
-         do c = 1, wf%n_v
-            do k = 1, wf%n_o
+      do c = 1, wf%n_v
+         do k = 1, wf%n_o
+!
+            kc = index_two(k, c, wf%n_o)
+            ck = index_two(c, k, wf%n_v)
+!
+            do d = 1, wf%n_v
+               do l = 1, wf%n_o
+!
+                  lc = index_two(l, c, wf%n_o)
+                  ld = index_two(l, d, wf%n_o)
+                  dl = index_two(d, l, wf%n_v)
+                  kd = index_two(k, d, wf%n_o)
+!
+                  L_ck_dl(ck, dl) = two*g_kc_ld(kc, ld) - g_kc_ld(kd, lc)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      call wf%mem%dealloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!     Reorder t_bl_dj as t_dl_bj
+!
+      call wf%initialize_amplitudes
+      call wf%read_double_amplitudes
+!
+      call wf%mem%alloc(t_dl_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      t_dl_bj = zero
+!
+      do l = 1, wf%n_o
+         do j = 1, wf%n_o
+            do d = 1, wf%n_v
+!
+               dj = index_two(d, j, wf%n_v)
+               dl = index_two(d, l, wf%n_v)
+!
+               do b = 1, wf%n_v    
+!
+                  bj = index_two(b, j, wf%n_v)    
+                  bl = index_two(b, l, wf%n_v)
+!  
+                  bldj = index_packed(bl, dj)
+!
+                  t_dl_bj(dl, bj) = wf%t2am(bldj, 1)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      call wf%destruct_amplitudes
+!
+      call wf%mem%alloc(X_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!     X_ck_bj = sum_dl t_bl,dj * L_kc,ld = sum_dl L_ck_dl t_dl_bj 
+!
+      call dgemm('N', 'N',           &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  L_ck_dl,           &
+                  (wf%n_o)*(wf%n_v), &
+                  t_dl_bj,           &
+                  (wf%n_o)*(wf%n_v), &
+                  zero,              &
+                  X_ck_bj,           &        
+                  (wf%n_o)*(wf%n_v))
+!
+      call wf%mem%dealloc(t_dl_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(L_ck_dl,(wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!     rho_ai_bj =+ - sum_ck c_ai,ck X_ck_bj
+!
+      call dgemm('N', 'N',          &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  -one,              &
+                  c_ai_bj,           &
+                  (wf%n_o)*(wf%n_v), &
+                  X_ck_bj,           &
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  rho_ai_bj,         &        
+                  (wf%n_o)*(wf%n_v))
+!
+      call wf%mem%dealloc(X_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!     :: Term 2: - sum_ckdl t_ck_bl * L_kc,ld * c_ai,dj
+!
+      call wf%mem%alloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+      integral_type = 'electronic_repulsion'
+      call wf%get_ov_ov(integral_type, g_kc_ld)
+!
+!     Reorder L_ck_dl to L_d_clk
+!
+      call wf%mem%alloc(L_d_clk, wf%n_v, (wf%n_v)*((wf%n_o)**2))
+      L_d_clk = zero
+!
+      do k = 1, wf%n_o
+         do l = 1, wf%n_o
+            do c = 1, wf%n_v
+!
+               clk = index_three(c, l, k, wf%n_v, wf%n_o)
 !
                kc = index_two(k, c, wf%n_o)
+               lc = index_two(l, c, wf%n_o)
+!
+               do d = 1, wf%n_v
+!
+                  ld = index_two(l, d, wf%n_o)
+                  kd = index_two(k, d, wf%n_o)
+!
+                  L_d_clk(d, clk) = two*g_kc_ld(kc, ld) - g_kc_ld(kd, lc)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      call wf%mem%dealloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!     Reorder t_ck,bl as t_clk_b
+!        
+      call wf%initialize_amplitudes
+      call wf%read_double_amplitudes
+!
+      call wf%mem%alloc(t_clk_b, (wf%n_v)*((wf%n_o)**2), wf%n_v)
+      t_clk_b = zero
+!
+      do k = 1, wf%n_o
+         do l = 1, wf%n_o
+            do c = 1, wf%n_v
+!  
                ck = index_two(c, k, wf%n_v)
 !
-               do d = 1, wf%n_v
-                  do l = 1, wf%n_o
+               clk = index_three(c, l, k, wf%n_v, wf%n_o)
 !
-                     lc = index_two(l, c, wf%n_o)
-                     ld = index_two(l, d, wf%n_o)
-                     dl = index_two(d, l, wf%n_v)
-                     kd = index_two(k, d, wf%n_o)
+               do b = 1, wf%n_v
 !
-                     L_ck_dl(ck, dl) = two*g_kc_ld(kc, ld) - g_kc_ld(kd, lc)
+                  bl = index_two(b, l, wf%n_v)
 !
-                  enddo
+                  ckbl = index_packed(ck, bl)
+!
+                  t_clk_b(clk, b) = wf%t2am(ckbl, 1)
+!
                enddo
             enddo
          enddo
+      enddo
 !
-         call wf%mem%dealloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%destruct_amplitudes
 !
-!        Reorder t_bl_dj as t_dl_bj
+!     Y_d_b = sum_clk L_d_clk * c_clk_b 
 !
-         call wf%initialize_amplitudes
-         call wf%read_double_amplitudes
+      call wf%mem%alloc(Y_d_b, wf%n_v, wf%n_v)
 !
-         call wf%mem%alloc(t_dl_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-         t_dl_bj = zero
+      call dgemm('N', 'N',              &
+                  wf%n_v,               &
+                  wf%n_v,               &
+                  ((wf%n_o)**2)*wf%n_v, &
+                  one,                  &
+                  L_d_clk,              &
+                  wf%n_v,               &
+                  t_clk_b,              &
+                  ((wf%n_o)**2)*wf%n_v, &
+                  zero,                 &
+                  Y_d_b,                &
+                  wf%n_v)
 !
-         do l = 1, wf%n_o
-            do j = 1, wf%n_o
-               do d = 1, wf%n_v
+      call wf%mem%dealloc(t_clk_b, (wf%n_v)*((wf%n_o)**2), wf%n_v)
+      call wf%mem%dealloc(L_d_clk, wf%n_v, (wf%n_v)*((wf%n_o)**2)) 
 !
-                  dj = index_two(d, j, wf%n_v)
-                  dl = index_two(d, l, wf%n_v)
+      call wf%mem%alloc(c_aij_d, (wf%n_v)*((wf%n_o)**2), wf%n_v)
+      c_aij_d = zero
 !
-                  do b = 1, wf%n_v    
+!     Reorder c_ai_dj to c_aij_d
 !
-                     bj = index_two(b, j, wf%n_v)    
-                     bl = index_two(b, l, wf%n_v)
-!  
-                     bldj = index_packed(bl, dj)
+      do j = 1, wf%n_o
+         do i = 1, wf%n_o
+            do d = 1, wf%n_v
 !
-                     t_dl_bj(dl, bj) = wf%t2am(bldj, 1)
+               dj = index_two(d, j, wf%n_v)
 !
-                  enddo
-               enddo
-            enddo
-         enddo
-!
-         call wf%destruct_amplitudes
-!
-         call wf%mem%alloc(X_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
-!        X_ck_bj = sum_dl t_bl,dj * L_kc,ld = sum_dl L_ck_dl t_dl_bj 
-!
-         call dgemm('N', 'N',           &
-                     (wf%n_o)*(wf%n_v), &
-                     (wf%n_o)*(wf%n_v), &
-                     (wf%n_o)*(wf%n_v), &
-                     one,               &
-                     L_ck_dl,           &
-                     (wf%n_o)*(wf%n_v), &
-                     t_dl_bj,           &
-                     (wf%n_o)*(wf%n_v), &
-                     zero,              &
-                     X_ck_bj,           &        
-                     (wf%n_o)*(wf%n_v))
-!
-         call wf%mem%dealloc(t_dl_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-         call wf%mem%dealloc(L_ck_dl,(wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
-!        rho_ai_bj =+ - sum_ck c_ai,ck X_ck_bj
-!
-         call dgemm('N', 'N',          &
-                    (wf%n_o)*(wf%n_v), &
-                    (wf%n_o)*(wf%n_v), &
-                    (wf%n_o)*(wf%n_v), &
-                    -one,              &
-                    c_ai_bj,           &
-                    (wf%n_o)*(wf%n_v), &
-                    X_ck_bj,           &
-                    (wf%n_o)*(wf%n_v), &
-                    one,               &
-                    rho_ai_bj,         &        
-                    (wf%n_o)*(wf%n_v))
-!
-         call wf%mem%dealloc(X_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
-!        :: Term 2: - sum_ckdl t_ck_bl * L_kc,ld * c_ai,dj
-!
-         !
-         call wf%mem%alloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
-         integral_type = 'electronic_repulsion'
-         call wf%get_ov_ov(integral_type, g_kc_ld)
-!
-!        Reorder L_ck_dl to L_d_clk
-!
-         call wf%mem%alloc(L_d_clk, wf%n_v, (wf%n_v)*((wf%n_o)**2))
-         L_d_clk = zero
-!
-         do k = 1, wf%n_o
-            do l = 1, wf%n_o
-               do c = 1, wf%n_v
-!
-                  clk = index_three(c, l, k, wf%n_v, wf%n_o)
-!
-                  kc = index_two(k, c, wf%n_o)
-                  lc = index_two(l, c, wf%n_o)
-!
-                  do d = 1, wf%n_v
-!
-                     ld = index_two(l, d, wf%n_o)
-                     kd = index_two(k, d, wf%n_o)
-!
-                     L_d_clk(d, clk) = two*g_kc_ld(kc, ld) - g_kc_ld(kd, lc)
-!
-                  enddo
-               enddo
-            enddo
-         enddo
-         call wf%mem%dealloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
-!        Reorder t_ck,bl as t_clk_b
-!        
-         call wf%initialize_amplitudes
-         call wf%read_double_amplitudes
-!
-         call wf%mem%alloc(t_clk_b, (wf%n_v)*((wf%n_o)**2), wf%n_v)
-         t_clk_b = zero
-!
-         do k = 1, wf%n_o
-            do l = 1, wf%n_o
-               do c = 1, wf%n_v
-!  
-                  ck = index_two(c, k, wf%n_v)
-!
-                  clk = index_three(c, l, k, wf%n_v, wf%n_o)
-!
-                  do b = 1, wf%n_v
-!
-                     bl = index_two(b, l, wf%n_v)
-!
-                     ckbl = index_packed(ck, bl)
-!
-                     t_clk_b(clk, b) = wf%t2am(ckbl, 1)
-!
-                 enddo
-               enddo
-            enddo
-         enddo
-!
-         call wf%destruct_amplitudes
-!
-!        Y_d_b = sum_clk L_d_clk * c_clk_b 
-!
-         call wf%mem%alloc(Y_d_b, wf%n_v, wf%n_v)
-!
-         call dgemm('N', 'N',              &
-                     wf%n_v,               &
-                     wf%n_v,               &
-                     ((wf%n_o)**2)*wf%n_v, &
-                     one,                  &
-                     L_d_clk,              &
-                     wf%n_v,               &
-                     t_clk_b,              &
-                     ((wf%n_o)**2)*wf%n_v, &
-                     zero,                 &
-                     Y_d_b,                &
-                     wf%n_v)
-!
-         call wf%mem%dealloc(t_clk_b, (wf%n_v)*((wf%n_o)**2), wf%n_v)
-         call wf%mem%dealloc(L_d_clk, wf%n_v, (wf%n_v)*((wf%n_o)**2)) 
-!
-         call wf%mem%alloc(c_aij_d, (wf%n_v)*((wf%n_o)**2), wf%n_v)
-         c_aij_d = zero
-!
-!        Reorder c_ai_dj to c_aij_d
-!
-         do j = 1, wf%n_o
-            do i = 1, wf%n_o
-               do d = 1, wf%n_v
-!
-                  dj = index_two(d, j, wf%n_v)
-!
-                  do a = 1, wf%n_v
-!
-                     ai = index_two(a, i, wf%n_v)
-!
-                     aij = index_three(a, i, j, wf%n_v, wf%n_o)
-!
-                     c_aij_d(aij, d) = c_ai_bj(ai, dj)
-!
-                  enddo
-               enddo
-            enddo
-         enddo
-!
-         call wf%destruct_amplitudes
-!
-         call wf%mem%alloc(rho_aij_b, (wf%n_v)*((wf%n_o)**2), wf%n_v)
-!
-!        rho_aij_b = sum_d c_aij_d * Y_d_b
-!
-         call dgemm('N','N',                 &
-                     ((wf%n_o)**2)*(wf%n_v), &
-                     wf%n_v,                 &
-                     wf%n_v,                 &
-                     -one,                   &
-                     c_aij_d,                &
-                     ((wf%n_o)**2)*(wf%n_v), &
-                     Y_d_b,                  &
-                     wf%n_v,                 &
-                     zero,                   &
-                     rho_aij_b,              &
-                     ((wf%n_o)**2)*(wf%n_v))
-!
-         call wf%mem%dealloc(c_aij_d, (wf%n_v)*((wf%n_o)**2), wf%n_v)
-         call wf%mem%dealloc(Y_d_b, wf%n_v, wf%n_v)
-!
-!        Adding term 2 to rho_ai_bj
-!
-         do j = 1, wf%n_o
-            do i = 1, wf%n_o
                do a = 1, wf%n_v
-!
-                  aij = index_three(a, i, j, wf%n_v, wf%n_o)
 !
                   ai = index_two(a, i, wf%n_v)
 !
-                  do b = 1, wf%n_v
+                  aij = index_three(a, i, j, wf%n_v, wf%n_o)
 !
-                     bj = index_two(b, j, wf%n_v)
+                  c_aij_d(aij, d) = c_ai_bj(ai, dj)
 !
-                     rho_ai_bj(ai,bj) = rho_ai_bj(ai,bj) + rho_aij_b(aij, b) 
-!
-                  enddo
                enddo
             enddo
          enddo
+      enddo
 !
-         call wf%mem%dealloc(rho_aij_b, (wf%n_v)*((wf%n_o)**2), wf%n_v)
+      call wf%destruct_amplitudes
 !
-!        :: Term 3: - sum_ckld t_ck,dj * L_kc,ld * c_ai,bl ::
+      call wf%mem%alloc(rho_aij_b, (wf%n_v)*((wf%n_o)**2), wf%n_v)
 !
+!     rho_aij_b = sum_d c_aij_d * Y_d_b
 !
-         call wf%mem%alloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call dgemm('N','N',                 &
+                  ((wf%n_o)**2)*(wf%n_v), &
+                  wf%n_v,                 &
+                  wf%n_v,                 &
+                  -one,                   &
+                  c_aij_d,                &
+                  ((wf%n_o)**2)*(wf%n_v), &
+                  Y_d_b,                  &
+                  wf%n_v,                 &
+                  zero,                   &
+                  rho_aij_b,              &
+                  ((wf%n_o)**2)*(wf%n_v))
 !
-         integral_type = 'electronic_repulsion'
-         call wf%get_ov_ov(integral_type, g_kc_ld)
+      call wf%mem%dealloc(c_aij_d, (wf%n_v)*((wf%n_o)**2), wf%n_v)
+      call wf%mem%dealloc(Y_d_b, wf%n_v, wf%n_v)
+!
+!     Adding term 2 to rho_ai_bj
+!
+      do j = 1, wf%n_o
+         do i = 1, wf%n_o
+            do a = 1, wf%n_v
+!
+               aij = index_three(a, i, j, wf%n_v, wf%n_o)
+!
+               ai = index_two(a, i, wf%n_v)
+!
+               do b = 1, wf%n_v
+!
+                  bj = index_two(b, j, wf%n_v)
+!
+                  rho_ai_bj(ai,bj) = rho_ai_bj(ai,bj) + rho_aij_b(aij, b) 
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      call wf%mem%dealloc(rho_aij_b, (wf%n_v)*((wf%n_o)**2), wf%n_v)
+!
+!     :: Term 3: - sum_ckld t_ck,dj * L_kc,ld * c_ai,bl ::
+!
+      call wf%mem%alloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+      integral_type = 'electronic_repulsion'
+      call wf%get_ov_ov(integral_type, g_kc_ld)
 !   
-         call wf%mem%alloc(L_l_ckd,(wf%n_o), (wf%n_o)*((wf%n_v)**2))
-         L_l_ckd = zero
+      call wf%mem%alloc(L_l_ckd,(wf%n_o), (wf%n_o)*((wf%n_v)**2))
+      L_l_ckd = zero
 !
-!        Construct L_kc_ld ordered as  L_l_ckd
-
+!     Construct L_kc_ld ordered as  L_l_ckd
 !             
-         do c = 1, wf%n_v
-            do k = 1, wf%n_o
+      do c = 1, wf%n_v
+         do k = 1, wf%n_o
 !
-               kc = index_two(k, c, wf%n_o)
+            kc = index_two(k, c, wf%n_o)
 !
-               do d = 1, wf%n_v
-                  do l = 1, wf%n_o
+            do d = 1, wf%n_v
+               do l = 1, wf%n_o
 !
-                     lc = index_two(l, c, wf%n_o)
-                     ld = index_two(l, d, wf%n_o)
-                     kd = index_two(k, d, wf%n_o)
+                  lc = index_two(l, c, wf%n_o)
+                  ld = index_two(l, d, wf%n_o)
+                  kd = index_two(k, d, wf%n_o)
 !
-                     ckd = index_three(c, k, d, wf%n_v, wf%n_o)
+                  ckd = index_three(c, k, d, wf%n_v, wf%n_o)
 !
-                     L_l_ckd(l, ckd) = two*g_kc_ld(kc, ld) - g_kc_ld(kd, lc)
+                  L_l_ckd(l, ckd) = two*g_kc_ld(kc, ld) - g_kc_ld(kd, lc)
 !
-                  enddo
                enddo
             enddo
          enddo
+      enddo
 !
-         call wf%mem%dealloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-!        Reorder t_ck,dj to t_ckd_j 
+!     Reorder t_ck,dj to t_ckd_j 
 !
-         call wf%initialize_amplitudes
-         call wf%read_double_amplitudes
+      call wf%initialize_amplitudes
+      call wf%read_double_amplitudes
 !
-         call wf%mem%alloc(t_ckd_j, ((wf%n_v))*(wf%n_o), wf%n_o*(wf%n_v))
-         t_ckd_j = zero
-         call squareup(wf%t2am, t_ckd_j, wf%n_o*(wf%n_v))
+      call wf%mem%alloc(t_ckd_j, ((wf%n_v))*(wf%n_o), wf%n_o*(wf%n_v))
+      t_ckd_j = zero
+      call squareup(wf%t2am, t_ckd_j, wf%n_o*(wf%n_v))
 !
-         call wf%destruct_amplitudes
+      call wf%destruct_amplitudes
 !
-         call wf%mem%alloc(Z_l_j, wf%n_o, wf%n_o)
+      call wf%mem%alloc(Z_l_j, wf%n_o, wf%n_o)
 !
-!        Z_l_j = sum_ckd L_l_ckd*t_ckd_j
+!     Z_l_j = sum_ckd L_l_ckd*t_ckd_j
 !
-         call dgemm('N', 'N',              &
-                     wf%n_o,               &
-                     wf%n_o,               &
-                     ((wf%n_v)**2)*wf%n_o, &
-                     one,                  &
-                     L_l_ckd,              &
-                     wf%n_o,               &
-                     t_ckd_j,              &
-                     ((wf%n_v)**2)*wf%n_o, &
-                     zero,                 &
-                     Z_l_j,                &
-                     wf%n_o)
+      call dgemm('N', 'N',              &
+                  wf%n_o,               &
+                  wf%n_o,               &
+                  ((wf%n_v)**2)*wf%n_o, &
+                  one,                  &
+                  L_l_ckd,              &
+                  wf%n_o,               &
+                  t_ckd_j,              &
+                  ((wf%n_v)**2)*wf%n_o, &
+                  zero,                 &
+                  Z_l_j,                &
+                  wf%n_o)
 !
-         call wf%mem%dealloc(L_l_ckd,(wf%n_o), (wf%n_o)*((wf%n_v)**2)) 
-         call wf%mem%dealloc(t_ckd_j, ((wf%n_v))*(wf%n_o), wf%n_o*(wf%n_v))
+      call wf%mem%dealloc(L_l_ckd,(wf%n_o), (wf%n_o)*((wf%n_v)**2)) 
+      call wf%mem%dealloc(t_ckd_j, ((wf%n_v))*(wf%n_o), wf%n_o*(wf%n_v))
 !
-!        rho_aib_j = sum_l c_aib_l*Z_l_j
+!     rho_aib_j = sum_l c_aib_l*Z_l_j
 !
-         call dgemm('N','N',                 &
-                     ((wf%n_v)**2)*(wf%n_o), &
-                     wf%n_o,                 &
-                     wf%n_o,                 &
-                     -one,                   &
-                     c_ai_bj,                &
-                     ((wf%n_v)**2)*(wf%n_o), &
-                     Z_l_j,                  &
-                     wf%n_o,                 &
-                     one,                    &
-                     rho_ai_bj,              &
-                     ((wf%n_v)**2)*(wf%n_o))
+      call dgemm('N','N',                 &
+                  ((wf%n_v)**2)*(wf%n_o), &
+                  wf%n_o,                 &
+                  wf%n_o,                 &
+                  -one,                   &
+                  c_ai_bj,                &
+                  ((wf%n_v)**2)*(wf%n_o), &
+                  Z_l_j,                  &
+                  wf%n_o,                 &
+                  one,                    &
+                  rho_ai_bj,              &
+                  ((wf%n_v)**2)*(wf%n_o))
 !
-         call wf%mem%dealloc(Z_l_j, wf%n_o, wf%n_o)
+      call wf%mem%dealloc(Z_l_j, wf%n_o, wf%n_o)
 ! 
-      end subroutine jacobian_ccsd_g2_ccsd
+   end subroutine jacobian_ccsd_g2_ccsd
 !
       module subroutine jacobian_ccsd_h2_ccsd(wf, rho_ai_bj, c_ai_bj)
 !!
