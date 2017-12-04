@@ -1201,10 +1201,15 @@ contains
 !
 !     Batching and memory handling
 !
-      integer(i15) :: required = 0, available = 0
+      integer(i15) :: required = 0
+      integer(i15) :: current_a_batch = 0
 !
-      integer(i15) :: n_batch = 0, max_batch_length = 0
-      integer(i15) :: a_batch = 0, a_start = 0, a_end = 0, a_length = 0 
+      type(batching_index) :: batch_a 
+!
+!       integer(i15) :: required = 0, available = 0
+! !
+!       integer(i15) :: n_batch = 0, max_batch_length = 0
+!       integer(i15) :: a_batch = 0, a_start = 0, a_end = 0, a_length = 0 
 !
 !     Allocate and construct g_kd_lc 
 !
@@ -1310,25 +1315,29 @@ contains
 !     Setup of variables needed for batching
       required = 2*(wf%n_v**2)*(wf%n_J) + 2*(wf%n_v)*(wf%n_o)*(wf%n_J) &
                + (wf%n_o**2)*(wf%n_v**2)
-      required = 4*required
-      call num_batch(required, wf%mem%available, max_batch_length, n_batch, wf%n_v)
 !
-      a_start  = 1
-      a_end    = 0
-      a_length = 0
+!       call num_batch(required, wf%mem%available, max_batch_length, n_batch, wf%n_v)
+! !
+!       a_start  = 1
+!       a_end    = 0
+!       a_length = 0
 !
-!     Start looping over batches
+!     Initialize batching variable 
 !
-      do a_batch = 1,n_batch
+      call batch_a%init(wf%n_v)
+      call wf%mem%num_batch(batch_a, required)
 !
-!        Get batch limits  and  length of batch
+!     Start looping over a-batches 
 !
-         call batch_limits(a_start, a_end, a_batch, max_batch_length, wf%n_v)
-         a_length = a_end - a_start + 1
+      do current_a_batch = 1, batch_a%num_batches
+!
+!        Determine batch limits for the a-batch 
+!
+         call batch_a%determine_limits(current_a_batch)
 !
 !        Allocate and construct g_ki_ac
 !
-         call wf%mem%alloc(g_ki_ac, (wf%n_o)**2, a_length*(wf%n_v))
+         call wf%mem%alloc(g_ki_ac, (wf%n_o)**2, (batch_a%length)*(wf%n_v))
 !
          integral_type = 'electronic_repulsion'
          call wf%get_oo_vv(integral_type, & 
@@ -1337,8 +1346,8 @@ contains
                            wf%n_o,        &
                            1,             & 
                            wf%n_o,        &
-                           a_start,       & 
-                           a_end,         &
+                           batch_a%first, & 
+                           batch_a%last,  &
                            1,             &
                            wf%n_v)
 !
@@ -1353,10 +1362,10 @@ contains
 !
                   ck = index_two(c, k, wf%n_v)
 !
-                  do a = 1, a_length
+                  do a = 1, batch_a%length
 !
-                     ai = index_two(a + a_start -1, i, wf%n_v)
-                     ac = index_two(a, c, a_length)
+                     ai = index_two(a + batch_a%first -1, i, wf%n_v)
+                     ac = index_two(a, c, batch_a%length)
 !
                      X_ai_ck(ai, ck) = X_ai_ck(ai, ck) + g_ki_ac(ki, ac)
 !
@@ -1371,7 +1380,7 @@ contains
 !
 !        Reorder g_ac_ki to g_ai_kc 
 !
-         call wf%mem%alloc(g_ai_ck, a_length*(wf%n_o), (wf%n_o)*(wf%n_v))
+         call wf%mem%alloc(g_ai_ck, (batch_a%length)*(wf%n_o), (wf%n_o)*(wf%n_v))
          g_ai_ck = zero
 !
          do k = 1, wf%n_o 
@@ -1383,10 +1392,10 @@ contains
 !
                   ki = index_two(k, i, wf%n_o)
 !
-                  do a = 1, a_length
+                  do a = 1, batch_a%length
 !
-                     ac = index_two(a, c, a_length)
-                     ai = index_two(a, i, a_length)
+                     ac = index_two(a, c, batch_a%length)
+                     ai = index_two(a, i, batch_a%length)
 !
                      g_ai_ck(ai, ck) = g_ki_ac(ki, ac) ! g_acki 
 !
@@ -1395,26 +1404,26 @@ contains
             enddo
          enddo
 !
-         call wf%mem%dealloc(g_ki_ac, (wf%n_o)**2, a_length*(wf%n_v))
+         call wf%mem%dealloc(g_ki_ac, (wf%n_o)**2, (batch_a%length)*(wf%n_v))
 !
 !        - 1/2 * sum_ck u_jk^bc g_acki = -1/2 * sum_ck g_ai_ck u_ck_bj
 !
-         ai_offset = index_two(a_start, 1, wf%n_v)
+         ai_offset = index_two(batch_a%first, 1, wf%n_v)
 !
          call dgemm('N','N',                 &
-                  (wf%n_o)*a_length,         &
+                  (wf%n_o)*(batch_a%length), &
                   (wf%n_o)*(wf%n_v),         &
                   (wf%n_o)*(wf%n_v),         &
                   -one/two,                  &
                   g_ai_ck,                   &
-                  (wf%n_o)*a_length,         &
+                  (wf%n_o)*(batch_a%length), &
                   u_ck_bj,                   &
                   (wf%n_o)*(wf%n_v),         &
                   zero,                      &
                   omega2_ai_bj(ai_offset,1), &
                   (wf%n_o)*(wf%n_v))
 !
-         call wf%mem%dealloc(g_ki_ac, (wf%n_o)**2, a_length*(wf%n_v))
+         call wf%mem%dealloc(g_ki_ac, (wf%n_o)**2, (batch_a%length)*(wf%n_v))
 !
       enddo ! End of batching
 !
