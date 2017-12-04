@@ -80,13 +80,12 @@ module ccsd_class
    contains
 !
 !
-!     -::- Initialization and driver routines -::-
-!     --------------------------------------------
+!     -::- Initialization routines -::-
+!     ---------------------------------
 !
       procedure :: init => init_ccsd
 !
       procedure :: initialize_amplitudes => initialize_amplitudes_ccsd
-      procedure :: initialize_omega      => initialize_omega_ccsd
 !
 !
 !     -::- Ground state submodule routine pointers -::-
@@ -102,17 +101,20 @@ module ccsd_class
 !     -::- Omega submodule routine pointers -::-
 !     ------------------------------------------
 !
-      procedure :: construct_omega => construct_omega_ccsd
+      procedure :: destruct_omega   => destruct_omega_ccsd
+      procedure :: initialize_omega => initialize_omega_ccsd
 !
-      procedure :: omega_ccsd_a1 => omega_ccsd_a1_ccsd 
-      procedure :: omega_ccsd_b1 => omega_ccsd_b1_ccsd 
-      procedure :: omega_ccsd_c1 => omega_ccsd_c1_ccsd
+      procedure :: construct_omega  => construct_omega_ccsd
 !
-      procedure :: omega_ccsd_a2 => omega_ccsd_a2_ccsd 
-      procedure :: omega_ccsd_b2 => omega_ccsd_b2_ccsd 
-      procedure :: omega_ccsd_c2 => omega_ccsd_c2_ccsd 
-      procedure :: omega_ccsd_d2 => omega_ccsd_d2_ccsd 
-      procedure :: omega_ccsd_e2 => omega_ccsd_e2_ccsd   
+      procedure :: omega_ccsd_a1    => omega_ccsd_a1_ccsd 
+      procedure :: omega_ccsd_b1    => omega_ccsd_b1_ccsd 
+      procedure :: omega_ccsd_c1    => omega_ccsd_c1_ccsd
+!
+      procedure :: omega_ccsd_a2    => omega_ccsd_a2_ccsd 
+      procedure :: omega_ccsd_b2    => omega_ccsd_b2_ccsd 
+      procedure :: omega_ccsd_c2    => omega_ccsd_c2_ccsd 
+      procedure :: omega_ccsd_d2    => omega_ccsd_d2_ccsd 
+      procedure :: omega_ccsd_e2    => omega_ccsd_e2_ccsd   
 !
 !
 !     -::- Excited state submodule routine pointers -::-
@@ -203,10 +205,11 @@ module ccsd_class
       procedure :: read_amplitudes        => read_amplitudes_ccsd
       procedure :: read_double_amplitudes => read_double_amplitudes_ccsd
 !
-!     Routines to deallocate amplitudes and omega 
+!     Routines to deallocate amplitudes 
 !
       procedure :: destruct_amplitudes => destruct_amplitudes_ccsd
-      procedure :: destruct_omega      => destruct_omega_ccsd
+!
+!     Set the double amplitudes to the MP2 guess
 !
       procedure :: construct_perturbative_doubles => construct_perturbative_doubles_ccsd
 !
@@ -308,6 +311,18 @@ module ccsd_class
          class(ccsd) :: wf
 !
       end subroutine initialize_omega_ccsd
+!
+!
+      module subroutine destruct_omega_ccsd(wf)
+!!
+!!       Destruct Omega (CCSD)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+         implicit none
+!
+         class(ccsd) :: wf
+!
+      end subroutine destruct_omega_ccsd
 !
 !
       module subroutine construct_omega_ccsd(wf)
@@ -1435,23 +1450,6 @@ contains
       if (allocated(wf%t2am)) call wf%mem%dealloc(wf%t2am, wf%n_t2am, 1)
 !
    end subroutine destruct_amplitudes_ccsd
-!
-!
-   subroutine destruct_omega_ccsd(wf)
-!!
-!!    Destruct Omega (CCSD)
-!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
-!!
-!!    Deallocates the projection vector.
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      if (allocated(wf%omega1)) call wf%mem%dealloc(wf%omega1, wf%n_v, wf%n_o)
-      if (allocated(wf%omega2)) call wf%mem%dealloc(wf%omega2, wf%n_t2am, 1)
-!
-   end subroutine destruct_omega_ccsd
 !
 !
    subroutine save_amplitudes_ccsd(wf)
