@@ -266,11 +266,6 @@ contains
 ! 
       wf%tasks%current = 'excited_state'
 !
-!
-!     Set current task to excited state calculation 
-! 
-      wf%tasks%current = 'excited_state'
-!
 !     Set filename for solution vectors
 !
       if (wf%tasks%core_excited_state .or. wf%tasks%core_ionized_state) then   ! Core excitation

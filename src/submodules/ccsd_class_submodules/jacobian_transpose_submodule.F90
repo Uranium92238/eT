@@ -9,6 +9,7 @@ submodule (ccsd_class) jacobian_transpose
 !!    jacobian_transpose_ccsd_transformation: performs the transformation by the CCSD
 !!                                            Jacobian transpose matrix A^T, placing the result in the
 !!                                            incoming vector. 
+!!
 !!    jacobian_transpose_ccsd_x1:             adds the X1 term to the transformed singles vector; 
 !!                                            x = a, b, c, ..., g 
 !!    jacobian_transpose_ccsd_x2:             adds the X2 term to the transformed doubles vector; 
@@ -936,16 +937,17 @@ contains
       real(dp), dimension(:,:), allocatable :: L_a_eld ! L_dale
 !
       real(dp), dimension(:,:), allocatable :: g_de_ia ! g_deia 
-      real(dp), dimension(:,:), allocatable :: L_ai_de ! L_deia 
+      real(dp), dimension(:,:), allocatable :: L_ai_ed ! L_deia 
 !
       real(dp), dimension(:,:), allocatable :: X_el_di ! An intermediate, term 1
 !
       real(dp), dimension(:,:), allocatable :: X_d_e ! An intermediate, term 2
+      real(dp), dimension(:,:), allocatable :: X_e_d ! Reordered intermediate, term 2
 !
       integer(i15) :: ml = 0, md = 0, ma = 0, m = 0, lck = 0, l = 0, il = 0, ck = 0, i = 0
       integer(i15) :: dm = 0, ckd = 0, k = 0, id = 0, ia = 0, c = 0, d = 0, al = 0, ai = 0
       integer(i15) :: a = 0, le = 0, la = 0, eld = 0, e = 0, de = 0, da = 0, ie = 0, el = 0
-      integer(i15) :: dl = 0, ckl = 0
+      integer(i15) :: dl = 0, ckl = 0, ed = 0
 !
 !     Batching variables 
 !
@@ -954,7 +956,9 @@ contains
 !
       integer(i15) :: a_batch = 0, a_length = 0, a_first = 0, a_last = 0
 !
-      integer(i15) :: e_batch = 0, e_length = 0, e_first = 0, e_last = 0
+      integer(i15) :: current_d_batch
+!  
+      type(batching_index) :: batch_d 
 !
 !     :: Term 3. - sum_ckdlm b_ckal L_ilmd t_km^cd ::
 !
@@ -1271,58 +1275,63 @@ contains
 !
       call wf%mem%dealloc(t_el_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
-!     sum_ckdle b_ckdl L_deia t_kl^ce = sum_de L_deia X_d_e
+!     Reorder to X_e_d 
 !
-!     Prepare batching over index e
+      call wf%mem%alloc(X_e_d, wf%n_v, wf%n_v)
+      X_e_d = zero 
 !
-      required = 1 ! Not a correct estimate - needs to be set!
-!     
-      required  = 4*required ! In words
+      do e = 1, wf%n_v 
+         do d = 1, wf%n_v
 !
-      batch_dimension  = wf%n_v ! Batch over the virtual index a
-      max_batch_length = 0      ! Initilization of unset variables 
-      n_batch          = 0
+            X_e_d(e,d) = X_d_e(d,e)
 !
-      call num_batch(required, wf%mem%available, max_batch_length, n_batch, batch_dimension)           
+         enddo
+      enddo
 !
-!     Loop over the number of a batches 
+      call wf%mem%dealloc(X_d_e, wf%n_v, wf%n_v)
 !
-      do e_batch = 1, n_batch
+!     sum_ckdle b_ckdl L_deia t_kl^ce = sum_de L_deia X_e_d
 !
-!        For each batch, get the limits for the a index 
+!     Prepare batching over index d 
 !
-         call batch_limits(e_first, e_last, e_batch, max_batch_length, batch_dimension)
-         e_length = e_last - e_first + 1    
+      required = 1
+!
+      call batch_d%init(wf%n_v)
+      call wf%mem%num_batch(batch_d, required)
+!
+      do current_d_batch = 1, batch_d%num_batches
+!
+!        For each batch, get the limits for the d index 
+!
+         call batch_d%determine_limits(current_d_batch)
 !
 !        Form g_de_ia = g_deia 
 !
-         call wf%mem%alloc(g_de_ia, (wf%n_v)*e_length, (wf%n_v)*(wf%n_o))
+         call wf%mem%alloc(g_de_ia, (wf%n_v)*(batch_d%length), (wf%n_v)*(wf%n_o))
 !
          integral_type = 'electronic_repulsion'
          call wf%get_vv_ov(integral_type, &
                            g_de_ia,       &
+                           batch_d%first, &
+                           batch_d%last,  &
                            1,             &
                            wf%n_v,        &
-                           e_first,       &
-                           e_last,        &
                            1,             &
                            wf%n_o,        &
                            1,             &
                            wf%n_v)
 !
-!        Form L_ai_de = L_deia = 2 * g_deia - g_daie
+!        Form L_ai_ed = L_deia = 2 * g_deia - g_daie
 !                              = 2 * g_de_ia(de,ia) - g_de_ia(da,ie)
 !
-!        E: This will not work when batching. We need to split it up in two 
-!        g terms, and batch for each particular contribution.
+         call wf%mem%alloc(L_ai_ed, (wf%n_o)*(wf%n_v), (wf%n_v)*(batch_d%length))
+         L_ai_ed = zero
 !
-         call wf%mem%alloc(L_ai_de, (wf%n_o)*(wf%n_v), (wf%n_v)*e_length)
-         L_ai_de = zero
+         do e = 1, wf%n_v
+            do d = 1, batch_d%length 
 !
-         do e = 1, e_length
-            do d = 1, wf%n_v
-!
-               de = index_two(d, e, wf%n_v)
+               de = index_two(d, e, batch_d%length)
+               ed = index_two(e, d, wf%n_v)
 !
                do i = 1, wf%n_o
 !
@@ -1330,43 +1339,43 @@ contains
 !
                   do a = 1, wf%n_v
 !
-                     da = index_two(d, a, wf%n_v)
+                     da = index_two(d, a, batch_d%length)
                      ia = index_two(i, a, wf%n_o)
                      ai = index_two(a, i, wf%n_v)
 !
-                     L_ai_de(ai, de) = two*g_de_ia(de, ia) - g_de_ia(da, ie) ! L_deia
+                     L_ai_ed(ai, ed) = two*g_de_ia(de, ia) - g_de_ia(da, ie) ! L_deia
 !
                   enddo
                enddo
             enddo
          enddo
 !
-         call wf%mem%dealloc(g_de_ia, (wf%n_v)*e_length, (wf%n_o)*(wf%n_v))
+         call wf%mem%dealloc(g_de_ia, (wf%n_v)*(batch_d%length), (wf%n_o)*(wf%n_v))
 !
 !        Calculate the contribution to the sum, 
 !
-!           sum_de L_ai_de X_d_e 
+!           sum_de L_ai_ed X_e_d 
 !
-!        for the given batch of e:
+!        for the given batch of d
 !
-         call dgemm('N','N',            &
-                     (wf%n_v)*(wf%n_o), &
-                     1,                 &
-                     (wf%n_v)*e_length, &
-                     one,               &
-                     L_ai_de,           &
-                     (wf%n_v)*(wf%n_o), &
-                     X_d_e(1,e_first),  & ! Trick dgemm into thinking this is an X_de array,
-                     (wf%n_v)*e_length, & ! with e restricted. 
-                     one,               &
-                     sigma_a_i,         &
+         call dgemm('N','N',                    &
+                     (wf%n_v)*(wf%n_o),         &
+                     1,                         &
+                     (wf%n_v)*(batch_d%length), &
+                     one,                       &
+                     L_ai_ed,                   &
+                     (wf%n_v)*(wf%n_o),         &
+                     X_e_d(1,batch_d%first),    & ! Trick dgemm into thinking this is an X_ed array,
+                     (wf%n_v)*(batch_d%length), & ! with e restricted. 
+                     one,                       &
+                     sigma_a_i,                 &
                      (wf%n_v)*(wf%n_o))
 !
-         call wf%mem%dealloc(L_ai_de, (wf%n_o)*(wf%n_v), (wf%n_v)*e_length)
+         call wf%mem%dealloc(L_ai_ed, (wf%n_o)*(wf%n_v), (wf%n_v)*(batch_d%length))
 !
       enddo ! End of batches over e 
 !
-      call wf%mem%dealloc(X_d_e, wf%n_v, wf%n_v)
+      call wf%mem%dealloc(X_e_d, wf%n_v, wf%n_v)
 !
    end subroutine jacobian_transpose_ccsd_e1_ccsd
 !

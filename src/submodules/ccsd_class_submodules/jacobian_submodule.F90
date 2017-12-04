@@ -9,6 +9,7 @@ submodule (ccsd_class) jacobian
 !!    jacobian_transformation: performs the transformation by the CCSD
 !!                             Jacobian matrix A, placing the result in the
 !!                             incoming vector. 
+!!
 !!    jacobian_ccsd_x1:        adds the X1 term to the transformed singles vector; x = a, b, c, d
 !!    jacobian_ccsd_x2:        adds the X2 term to the transformed doubles vector; x = a, b, ..., k
 !!
