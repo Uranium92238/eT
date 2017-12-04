@@ -278,6 +278,9 @@ module ccs_class
       procedure :: read_t1_vv_ov_electronic_repulsion  => read_t1_vv_ov_electronic_repulsion_ccs
 !
       procedure :: get_vvvv_required_mem               => get_vvvv_required_mem_ccs
+      procedure :: get_vvvo_required_mem               => get_vvvo_required_mem_ccs
+      procedure :: get_vvov_required_mem               => get_vvov_required_mem_ccs
+      procedure :: get_vvoo_required_mem               => get_vvoo_required_mem_ccs
 !
 !
 !     -::- Fock submodule routine pointers -::-
@@ -2128,6 +2131,54 @@ module ccs_class
          integer(i15) :: get_vvvv_required_mem_ccs
 !
       end function get_vvvv_required_mem_ccs
+!
+!
+      module function get_vvvo_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
+!
+!        Get vvvo required memory (CCS)
+!        Written by Eirik F. Kjønstad and Sarai D. Folkestad, Dec 2017
+!
+         implicit none
+!
+         class(ccs), intent(in)              :: wf 
+! 
+         integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
+!
+         integer(i15) :: get_vvvo_required_mem_ccs
+!
+      end function get_vvvo_required_mem_ccs
+!
+!
+      module function get_vvov_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
+!
+!        Get vvov required memory (CCS)
+!        Written by Eirik F. Kjønstad and Sarai D. Folkestad, Dec 2017
+!
+         implicit none
+
+         class(ccs), intent(in)              :: wf 
+!     
+         integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
+!
+         integer(i15) :: get_vvov_required_mem_ccs
+!
+      end function get_vvov_required_mem_ccs
+!
+!
+      module function get_vvoo_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
+!
+!        Get vvoo required memory (CCS)
+!        Written by Eirik F. Kjønstad and Sarai D. Folkestad, Dec 2017
+!
+         implicit none
+!
+         class(ccs), intent(in)              :: wf 
+!     
+         integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
+!
+         integer(i15) :: get_vvoo_required_mem_ccs
+!
+      end function get_vvoo_required_mem_ccs
 !
    end interface
 !
