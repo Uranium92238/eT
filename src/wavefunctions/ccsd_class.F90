@@ -205,9 +205,11 @@ module ccsd_class
       procedure :: read_amplitudes        => read_amplitudes_ccsd
       procedure :: read_double_amplitudes => read_double_amplitudes_ccsd
 !
-!     Routines to deallocate amplitudes and omega 
+!     Routines to deallocate amplitudes 
 !
       procedure :: destruct_amplitudes => destruct_amplitudes_ccsd
+!
+!     Set the double amplitudes to the MP2 guess
 !
       procedure :: construct_perturbative_doubles => construct_perturbative_doubles_ccsd
 !
