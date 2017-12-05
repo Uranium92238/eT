@@ -6,7 +6,6 @@ module ccsd_class
 !!              Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017         
 !!                                                                           
 !!
-!!
 !!    This module contains the definition of the coupled cluster singles
 !!    and doubles (CCSD) wavefunction class. It is structured into four sections:
 !!
@@ -42,7 +41,7 @@ module ccsd_class
 !! 
 !
 !
-!  :::::::::::::::::::::::::::::::::::::
+!  ::::::::::::::::::::::::::::::::::::::
 !  -::- 1. Modules used by the class -::-
 !  ::::::::::::::::::::::::::::::::::::::
 !
@@ -150,7 +149,7 @@ module ccsd_class
       procedure :: jacobian_ccsd_j2 => jacobian_ccsd_j2_ccsd
       procedure :: jacobian_ccsd_k2 => jacobian_ccsd_k2_ccsd
 !
-      procedure :: jacobi_test => jacobi_test_ccsd ! A debug routine
+      procedure :: jacobi_test      => jacobi_test_ccsd      ! A debug routine
 !
 !
 !     -::- Jacobian transpose submodule routine pointers -::-
@@ -200,7 +199,7 @@ module ccsd_class
 !
 !     Routine to save and read the amplitudes 
 !
-      procedure :: save_amplitudes => save_amplitudes_ccsd
+      procedure :: save_amplitudes        => save_amplitudes_ccsd
 !
       procedure :: read_amplitudes        => read_amplitudes_ccsd
       procedure :: read_double_amplitudes => read_double_amplitudes_ccsd
@@ -467,6 +466,7 @@ module ccsd_class
          integer(i15), intent(in) :: first_trial, last_trial ! Which trial_vectors we are to transform
 !
       end subroutine transform_trial_vectors_ccsd
+!
 !
       module subroutine print_excitation_vector_ccsd(wf, vec, unit_id)
 !!
@@ -1277,32 +1277,14 @@ contains
       integer(i15) :: i = 0, j = 0, a = 0, b = 0
       integer(i15) :: ai = 0, bj = 0, ia = 0, jb = 0, aibj = 0 
 !
-!     Allocate L_ia_J and g_ia_jb
+      character(len=40) :: integral_type
 !
-      call wf%mem%alloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+!     Form g_ia_jb
+!
       call wf%mem%alloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      L_ia_J = zero
-      g_ia_jb = zero
-!
-!     Get the Cholesky IA vector 
-!
-      call wf%get_cholesky_ia(L_ia_J)
-!
-!     Calculate g_ia_jb = g_iajb
-!
-      call dgemm('N','T',            &
-                  (wf%n_o)*(wf%n_v), & 
-                  (wf%n_o)*(wf%n_v), &
-                  wf%n_J,            &
-                  one,               &
-                  L_ia_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  L_ia_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  g_ia_jb,           &
-                  (wf%n_o)*(wf%n_v))
+      integral_type = 'electronic_repulsion'
+      call wf%get_ov_ov(integral_type, g_ia_jb)
 !
 !     Set the doubles amplitudes
 !
@@ -1325,9 +1307,9 @@ contains
                      aibj = index_packed(ai,bj)
 !
                      wf%t2am(aibj, 1) = - g_ia_jb(ia,jb)/(wf%fock_diagonal(wf%n_o + a, 1) + &
-                                                            wf%fock_diagonal(wf%n_o + b, 1) - &
-                                                            wf%fock_diagonal(i, 1) - &
-                                                            wf%fock_diagonal(j, 1))
+                                                          wf%fock_diagonal(wf%n_o + b, 1) - &
+                                                          wf%fock_diagonal(i, 1) -          &
+                                                          wf%fock_diagonal(j, 1))
 !
                   endif
 !
@@ -1338,7 +1320,6 @@ contains
 !
 !     Deallocations
 !
-      call wf%mem%dealloc(L_ia_J, (wf%n_o)*(wf%n_v), (wf%n_J))
       call wf%mem%dealloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) 
 !
    end subroutine construct_perturbative_doubles_ccsd
