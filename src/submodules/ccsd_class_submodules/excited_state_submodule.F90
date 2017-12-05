@@ -270,18 +270,26 @@ contains
 !
       if (wf%tasks%core_excited_state .or. wf%tasks%core_ionized_state) then   ! Core excitation
 !
-         if (wf%excited_state_specifications%right) then                         ! Right vectors
+         if (wf%excited_state_specifications%right) then ! Right vectors
+!
             wf%excited_state_specifications%solution_file = 'right_core'
-         else                                                                    ! Left vectors
+!
+         else ! Left vectors 
+!                             
             wf%excited_state_specifications%solution_file = 'left_core'
+!
          endif
 !
-      else                                                                    ! Valence excitation
+      else ! Valence excitation
 !
-         if (wf%excited_state_specifications%left) then                          ! Right vectors
+         if (wf%excited_state_specifications%left) then ! Left vectors
+!
             wf%excited_state_specifications%solution_file = 'left_valence'
-         else                                                                    ! Left vectors
+!
+         else ! Right vectors
+!
             wf%excited_state_specifications%solution_file = 'right_valence'
+!
          endif
 !
       endif
@@ -291,7 +299,12 @@ contains
 !
    module subroutine analyze_double_excitation_vector_ccsd(wf, vec, n, sorted_short_vec, index_list)
 !!
+!!    Analyze double excitation vector 
+!!    Written by Sarai D. Folkestad, Oct 2017
 !!
+!!    Sorts the double excitation part of the excited state according to size,
+!!    in order for the print routine to show the largest contributions 
+!!    in the printout information.
 !!
       implicit none
 !  
@@ -413,9 +426,13 @@ contains
        end subroutine analyze_double_excitation_vector_ccsd
 !
 !
-      module subroutine summary_excited_state_info_ccsd(wf, energies)
+   module subroutine summary_excited_state_info_ccsd(wf, energies)
 !!
+!!    Summary of excited state info 
+!!    Written by Sarai D. Folkestad, Oct 2017
 !!
+!!    Prints the analysis of the excitation vectors to the main 
+!!    output file.
 !!
       implicit none
 !  
