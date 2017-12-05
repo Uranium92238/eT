@@ -1361,38 +1361,14 @@ contains
       integer(i15) :: a = 0, i = 0, b = 0, j = 0, ai = 0
       integer(i15) :: bj = 0, aibj = 0, ia = 0, jb = 0, ib = 0, ja = 0
 !
-!     Allocate the Cholesky vector L_ia_J = L_ia^J and set to zero 
+      character(len=40) :: integral_type
 !
-      call wf%mem%alloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
-      L_ia_J = zero
-!
-!     Get the Cholesky vector L_ia_J 
-!
-      call wf%get_cholesky_ia(L_ia_J)
-!
-!     Allocate g_ia_jb = g_iajb and set it to zero
+!     Get g_ia_jb = g_iajb 
 !
       call wf%mem%alloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      g_ia_jb = zero
 !
-!     Calculate the integrals g_ia_jb from the Cholesky vector L_ia_J 
-!
-      call dgemm('N','T',            &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  wf%n_J,            &
-                  one,               &
-                  L_ia_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  L_ia_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  g_ia_jb,           &
-                  (wf%n_o)*(wf%n_v))
-!
-!     Deallocate the Cholesky vector L_ia_J 
-!
-      call wf%mem%dealloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      integral_type = 'electronic_repulsion'
+      call wf%get_ov_ov(integral_type, g_ia_jb)
 !
 !     Set the initial value of the energy 
 !
@@ -2066,10 +2042,10 @@ contains
 !
       real(dp), dimension(wf%n_parameters, 1) :: eta ! eta = ( eta_ai eta_aibj )
 !
-      real(dp), dimension(:,:), allocatable :: L_ia_J 
       real(dp), dimension(:,:), allocatable :: g_ia_jb 
-!
       real(dp), dimension(:,:), allocatable :: eta_ai_bj
+!
+      character(len=40) :: integral_type
 !
       integer(i15) :: i = 0, a = 0, j = 0, b = 0, aibj = 0
       integer(i15) :: ib = 0, ja = 0, jb = 0, ia = 0, bj = 0, ai = 0
@@ -2087,25 +2063,10 @@ contains
 !
 !     Form g_ia_jb = g_iajb 
 !
-      call wf%mem%alloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
-      call wf%get_cholesky_ia(L_ia_J)
-!
       call wf%mem%alloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      call dgemm('N','T',            &
-                  (wf%n_o)*(wf%n_v), & 
-                  (wf%n_o)*(wf%n_v), &
-                  wf%n_J,            &
-                  one,               &
-                  L_ia_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  L_ia_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  g_ia_jb,           &
-                  (wf%n_o)*(wf%n_v))
-!
-      call wf%mem%dealloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      integral_type = 'electronic_repulsion'
+      call wf%get_ov_ov(integral_type, g_ia_jb)
 !
 !     Form eta_ai_bj = 2* L_iajb = 2 * ( 2 * g_iajb - g_ibja) 
 !                                = 4 * g_ia_jb(ia,jb) - 2 * g_ia_jb(ib,ja)
@@ -2135,6 +2096,8 @@ contains
             enddo
          enddo
       enddo
+!
+      call wf%mem%dealloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     Pack vector into doubles eta 
 !
