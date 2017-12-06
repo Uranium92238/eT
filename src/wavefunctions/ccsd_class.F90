@@ -6,7 +6,6 @@ module ccsd_class
 !!              Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017         
 !!                                                                           
 !!
-!!
 !!    This module contains the definition of the coupled cluster singles
 !!    and doubles (CCSD) wavefunction class. It is structured into four sections:
 !!
@@ -42,7 +41,7 @@ module ccsd_class
 !! 
 !
 !
-!  :::::::::::::::::::::::::::::::::::::
+!  ::::::::::::::::::::::::::::::::::::::
 !  -::- 1. Modules used by the class -::-
 !  ::::::::::::::::::::::::::::::::::::::
 !
@@ -150,7 +149,7 @@ module ccsd_class
       procedure :: jacobian_ccsd_j2 => jacobian_ccsd_j2_ccsd
       procedure :: jacobian_ccsd_k2 => jacobian_ccsd_k2_ccsd
 !
-      procedure :: jacobi_test => jacobi_test_ccsd ! A debug routine
+      procedure :: jacobi_test      => jacobi_test_ccsd      ! A debug routine
 !
 !
 !     -::- Jacobian transpose submodule routine pointers -::-
@@ -200,7 +199,7 @@ module ccsd_class
 !
 !     Routine to save and read the amplitudes 
 !
-      procedure :: save_amplitudes => save_amplitudes_ccsd
+      procedure :: save_amplitudes        => save_amplitudes_ccsd
 !
       procedure :: read_amplitudes        => read_amplitudes_ccsd
       procedure :: read_double_amplitudes => read_double_amplitudes_ccsd
@@ -467,6 +466,7 @@ module ccsd_class
          integer(i15), intent(in) :: first_trial, last_trial ! Which trial_vectors we are to transform
 !
       end subroutine transform_trial_vectors_ccsd
+!
 !
       module subroutine print_excitation_vector_ccsd(wf, vec, unit_id)
 !!
@@ -1277,32 +1277,14 @@ contains
       integer(i15) :: i = 0, j = 0, a = 0, b = 0
       integer(i15) :: ai = 0, bj = 0, ia = 0, jb = 0, aibj = 0 
 !
-!     Allocate L_ia_J and g_ia_jb
+      character(len=40) :: integral_type
 !
-      call wf%mem%alloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+!     Form g_ia_jb
+!
       call wf%mem%alloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      L_ia_J = zero
-      g_ia_jb = zero
-!
-!     Get the Cholesky IA vector 
-!
-      call wf%get_cholesky_ia(L_ia_J)
-!
-!     Calculate g_ia_jb = g_iajb
-!
-      call dgemm('N','T',            &
-                  (wf%n_o)*(wf%n_v), & 
-                  (wf%n_o)*(wf%n_v), &
-                  wf%n_J,            &
-                  one,               &
-                  L_ia_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  L_ia_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  g_ia_jb,           &
-                  (wf%n_o)*(wf%n_v))
+      integral_type = 'electronic_repulsion'
+      call wf%get_ov_ov(integral_type, g_ia_jb)
 !
 !     Set the doubles amplitudes
 !
@@ -1325,9 +1307,9 @@ contains
                      aibj = index_packed(ai,bj)
 !
                      wf%t2am(aibj, 1) = - g_ia_jb(ia,jb)/(wf%fock_diagonal(wf%n_o + a, 1) + &
-                                                            wf%fock_diagonal(wf%n_o + b, 1) - &
-                                                            wf%fock_diagonal(i, 1) - &
-                                                            wf%fock_diagonal(j, 1))
+                                                          wf%fock_diagonal(wf%n_o + b, 1) - &
+                                                          wf%fock_diagonal(i, 1) -          &
+                                                          wf%fock_diagonal(j, 1))
 !
                   endif
 !
@@ -1338,7 +1320,6 @@ contains
 !
 !     Deallocations
 !
-      call wf%mem%dealloc(L_ia_J, (wf%n_o)*(wf%n_v), (wf%n_J))
       call wf%mem%dealloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) 
 !
    end subroutine construct_perturbative_doubles_ccsd
@@ -1361,38 +1342,14 @@ contains
       integer(i15) :: a = 0, i = 0, b = 0, j = 0, ai = 0
       integer(i15) :: bj = 0, aibj = 0, ia = 0, jb = 0, ib = 0, ja = 0
 !
-!     Allocate the Cholesky vector L_ia_J = L_ia^J and set to zero 
+      character(len=40) :: integral_type
 !
-      call wf%mem%alloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
-      L_ia_J = zero
-!
-!     Get the Cholesky vector L_ia_J 
-!
-      call wf%get_cholesky_ia(L_ia_J)
-!
-!     Allocate g_ia_jb = g_iajb and set it to zero
+!     Get g_ia_jb = g_iajb 
 !
       call wf%mem%alloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      g_ia_jb = zero
 !
-!     Calculate the integrals g_ia_jb from the Cholesky vector L_ia_J 
-!
-      call dgemm('N','T',            &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  wf%n_J,            &
-                  one,               &
-                  L_ia_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  L_ia_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  g_ia_jb,           &
-                  (wf%n_o)*(wf%n_v))
-!
-!     Deallocate the Cholesky vector L_ia_J 
-!
-      call wf%mem%dealloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      integral_type = 'electronic_repulsion'
+      call wf%get_ov_ov(integral_type, g_ia_jb)
 !
 !     Set the initial value of the energy 
 !
@@ -2066,10 +2023,10 @@ contains
 !
       real(dp), dimension(wf%n_parameters, 1) :: eta ! eta = ( eta_ai eta_aibj )
 !
-      real(dp), dimension(:,:), allocatable :: L_ia_J 
       real(dp), dimension(:,:), allocatable :: g_ia_jb 
-!
       real(dp), dimension(:,:), allocatable :: eta_ai_bj
+!
+      character(len=40) :: integral_type
 !
       integer(i15) :: i = 0, a = 0, j = 0, b = 0, aibj = 0
       integer(i15) :: ib = 0, ja = 0, jb = 0, ia = 0, bj = 0, ai = 0
@@ -2087,25 +2044,10 @@ contains
 !
 !     Form g_ia_jb = g_iajb 
 !
-      call wf%mem%alloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
-      call wf%get_cholesky_ia(L_ia_J)
-!
       call wf%mem%alloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      call dgemm('N','T',            &
-                  (wf%n_o)*(wf%n_v), & 
-                  (wf%n_o)*(wf%n_v), &
-                  wf%n_J,            &
-                  one,               &
-                  L_ia_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  L_ia_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  g_ia_jb,           &
-                  (wf%n_o)*(wf%n_v))
-!
-      call wf%mem%dealloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      integral_type = 'electronic_repulsion'
+      call wf%get_ov_ov(integral_type, g_ia_jb)
 !
 !     Form eta_ai_bj = 2* L_iajb = 2 * ( 2 * g_iajb - g_ibja) 
 !                                = 4 * g_ia_jb(ia,jb) - 2 * g_ia_jb(ib,ja)
@@ -2135,6 +2077,8 @@ contains
             enddo
          enddo
       enddo
+!
+      call wf%mem%dealloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     Pack vector into doubles eta 
 !

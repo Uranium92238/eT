@@ -32,8 +32,6 @@ submodule (ccsd_class) omega
 !!    omega_ccsd_e2: adds E2 term to omega2
 !!
 !
-   use batching_index_class
-!
    implicit none 
 !
    logical :: debug = .false.
@@ -48,7 +46,7 @@ contains
 !
    module subroutine initialize_omega_ccsd(wf)
 !!
-!!    Initialize Omega (CCSD)
+!!    Initialize omega (CCSD)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
 !!    Allocates the projection vector (omega1, omega2) and sets it
@@ -69,7 +67,7 @@ contains
 !
    module subroutine destruct_omega_ccsd(wf)
 !!
-!!    Destruct Omega (CCSD)
+!!    Destruct omega (CCSD)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
 !!
 !!    Deallocates the projection vector.
@@ -86,7 +84,7 @@ contains
 !
    module subroutine construct_omega_ccsd(wf)
 !!
-!!     Construct Omega (CCSD)
+!!     Construct omega (CCSD)
 !!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
 !!     Directs the construction of the projection vector < mu | exp(-T) H exp(T) | R >
@@ -320,15 +318,15 @@ contains
 !
    module subroutine omega_ccsd_b1_ccsd(wf)
 !!
-!!       Omega B1
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!    Omega B1
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!       Calculates the B1 term, 
+!!    Calculates the B1 term, 
 !!
 !!        B1:  - sum_ckl u_kl^ac * g_kilc,
 !! 
-!!       and adds it to the singles projection vector (omeg1) of
-!!       the wavefunction object wf
+!!    and adds it to the singles projection vector (omeg1) of
+!!    the wavefunction object wf
 !!
       implicit none
 !
@@ -495,7 +493,6 @@ contains
                   wf%omega1,         &
                   (wf%n_o)*(wf%n_v))
 !
-!
       call wf%mem%dealloc(u_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine omega_ccsd_c1_ccsd
@@ -503,8 +500,10 @@ contains
 !
    module subroutine omega_ccsd_a2_ccsd(wf)
 !!
-!!    Omega A2 term: Omega A2 = g_ai_bj + sum_(cd)g_ac_bd * t_ci_dj = A2.1 + A.2.2
+!!    Omega A2 term
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 10 Mar 2017
+!!
+!!    A2 = g_ai_bj + sum_(cd)g_ac_bd * t_ci_dj = A2.1 + A.2.2
 !!
 !!    Structure: Batching over both a and b for A2.2.
 !!                t^+_ci_dj = t_ci_dj + t_di_cj
@@ -566,13 +565,11 @@ contains
       real(dp) :: a2_begin_time, a2_end_time
       real(dp) :: a2_begin_time_1, a2_end_time_1
 !
-   !   write(unit_output,'(t3,a/)') 'Breakdown of A2 term:'
-!
       time_non_integral_part = zero
 !
       call cpu_time(a2_begin_time)
 !
-!     ::  Calculate the A2.1 term of omega ::
+!     :: Calculate the A2.1 term of omega ::
 !
 !     Create g_ai_bj
 !
@@ -656,7 +653,7 @@ contains
 !
             call cpu_time(a2_end_time_1)
             time_non_integral_part = time_non_integral_part & 
-                                    - a2_end_time_1 + a2_begin_time_1 
+                                   - a2_end_time_1 + a2_begin_time_1 
 !
             if (current_b_batch .eq. current_a_batch) then
 !
@@ -938,7 +935,6 @@ contains
                               bj = index_two(b + batch_b%first - 1, j, wf%n_v) ! B is full-space b index
                               bi = index_two(b + batch_b%first - 1, i, wf%n_v) ! B is full-space b index
 !
-!
                               ab = index_two(a, b, batch_a%length)
 !     
                               aibj = index_packed(ai, bj)
@@ -950,8 +946,10 @@ contains
                                           + omega2_p_ab_ij(ab, ij) + omega2_m_ab_ij(ab, ij)
 !
                               if (aibj .ne. biaj) then
+!
                                  wf%omega2(biaj,1) = wf%omega2(biaj, 1) &
                                           + omega2_p_ab_ij(ab, ij) - omega2_m_ab_ij(ab, ij)
+!
                               endif   
 !     
                         enddo
@@ -963,6 +961,7 @@ contains
 !
                call wf%mem%dealloc(omega2_p_ab_ij, (batch_a%length)*(batch_b%length), packed_size(wf%n_o))
                call wf%mem%dealloc(omega2_m_ab_ij, (batch_a%length)*(batch_b%length), packed_size(wf%n_o))
+!
             endif
 !
          enddo ! End batching over b

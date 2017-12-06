@@ -28,10 +28,13 @@ contains
 !
 !
    module subroutine calc_ampeqs_norm_ccsd(wf, ampeqs_norm)
-!
-!     Calculate Amplitude Equations Norm (CCSD)
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!
+!!
+!!    Calculate amplitude equations norm (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!    Calculates the norm^2 of the omega vector (i.e., the amplitude 
+!!    equations for the CCSD model).
+!!
       implicit none 
 !
       class(ccsd) :: wf 
@@ -50,7 +53,7 @@ contains
 !
    module subroutine new_amplitudes_ccsd(wf)
 !
-!     New Amplitudes (CCSD)
+!     New amplitudes (CCSD)
 !     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !
 !     Directs the calculation of the quasi-Newton estimate Δ t_i, 
@@ -106,7 +109,7 @@ contains
 !
    module subroutine calc_quasi_Newton_doubles_ccsd(wf,dt)
 !
-!     Calculate quasi-Newtoni doubles estimate (CCSD)
+!     Calculate quasi-Newton doubles estimate (CCSD)
 !     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !
 !     Calculates the quasi-Newton estimate Δ t_i (doubbles part)
@@ -123,8 +126,7 @@ contains
       integer(i15) :: ai = 0, bj = 0, aibj = 0, offset = 0
 !
 !     Calculate the doubles Δ t_i contribution
-!
-         
+!        
       do a = 1, wf%n_v
          do i = 1, wf%n_o
             do b = 1, wf%n_v
@@ -154,11 +156,14 @@ contains
 !
    module subroutine initialize_ground_state_ccsd(wf)
 !!
-!!    Initialize Ground State (CCSD)
+!!    Initialize ground state (CCSD)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
 !!    Initializes the amplitudes and the projection vector for the ground
 !!    state solver.
+!!
+!!    E: should this stuff be moved to the ground state preparations routine?
+!!       I think that would be best.
 !!
       implicit none 
 !
@@ -176,7 +181,7 @@ contains
 !
    module subroutine ground_state_preparations_ccsd(wf)
 !!
-!!    Ground State Preparations (CCSD)
+!!    Ground state preparations (CCSD)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
 !!    A routine for preparation tasks (if any). Can be overwritten
