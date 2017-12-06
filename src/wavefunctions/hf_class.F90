@@ -63,10 +63,10 @@ module hf_class
       type(calc_tasks) :: tasks
       type(calc_tasks) :: implemented
 !
-      type(ground_state_specs)         :: ground_state_specifications
-      type(excited_state_specs)        :: excited_state_specifications
-      type(core_excited_state_specs)   :: core_excited_state_specifications
-      type(response_calc_specs)        :: response_specifications
+      type(ground_state_specs)       :: ground_state_specifications
+      type(excited_state_specs)      :: excited_state_specifications
+      type(core_excited_state_specs) :: core_excited_state_specifications
+      type(response_calc_specs)      :: response_specifications
 !
 !     Memory manager 
 !
@@ -116,8 +116,8 @@ contains
 !!
 !!    Performs the following tasks:
 !!
-!!    1. Sets HF orbital and energy information by reading from file
-!!    2. Transforms AO Cholesky vectors to MO basis and saves to file
+!!    - Sets HF orbital and energy information by reading from file
+!!    - Reads and transforms AO Cholesky vectors to MO basis and saves to file
 !!
       implicit none
 !
@@ -158,7 +158,7 @@ contains
 !
    subroutine read_hf_info_hf(wf)
 !!
-!!    Read HF Info
+!!    Read HF info
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
 !!    Reads the file mlcc_hf_info and sets the following HF variables: 
@@ -219,7 +219,7 @@ contains
 !
    subroutine read_transform_cholesky_hf(wf)
 !!
-!!    Read and Transform Cholesky
+!!    Read and transform Cholesky
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 20 Apr 2017
 !!
 !!    Reads the AO Cholesky vectors from file, transforms the vectors 
@@ -229,14 +229,16 @@ contains
 !
       class(hf) :: wf
 !
-      integer(i15) :: unit_chol_ao    = -1 ! Unit identifier for mlcc_cholesky file
-      integer(i15) :: unit_chol_mo_ij = -1 ! cholesky_ij file
-      integer(i15) :: unit_chol_mo_ia = -1 ! cholesky_ia file
-      integer(i15) :: unit_chol_mo_ab = -1 ! cholesky_ab file
+      integer(i15) :: unit_chol_ao           = -1 ! Unit identifier for mlcc_cholesky file
+      integer(i15) :: unit_chol_mo_ij        = -1 ! cholesky_ij file
+      integer(i15) :: unit_chol_mo_ia        = -1 ! cholesky_ia file
+      integer(i15) :: unit_chol_mo_ab        = -1 ! cholesky_ab file
       integer(i15) :: unit_chol_mo_ij_direct = -1 ! cholesky_ij direct access file
       integer(i15) :: unit_chol_mo_ia_direct = -1 ! cholesky_ia direct access file
       integer(i15) :: unit_chol_mo_ab_direct = -1 ! cholesky_ab direct access file
+!
       integer(i15) :: ioerror = 0
+!
       integer(i15) :: throw_away_index = 0
       real(dp)     :: throw_away
 !
@@ -259,9 +261,10 @@ contains
 !
 !     Batching variables
 !
-      integer(i15) :: b_batch = 0, b_first = 0, b_last = 0, b_length = 0
-      integer(i15) :: required = 0, available = 0, n_batch = 0, batch_dimension = 0
-      integer(i15) :: max_batch_length = 0
+      integer(i15) :: required = 0 
+      integer(i15) :: current_b_batch = 0
+!
+      type(batching_index) :: batch_b
 !
       call cpu_time(begin_timer)
 !
@@ -426,7 +429,7 @@ contains
            access='direct', form='unformatted', recl=dp*(wf%n_J), iostat=ioerror)
 !
       do ia = 1, wf%n_o*wf%n_v
-            write(unit_chol_mo_ia_direct, rec=ia) (L_ia_J(ia,j), j = 1, wf%n_J)
+         write(unit_chol_mo_ia_direct, rec=ia) (L_ia_J(ia,j), j = 1, wf%n_J)
       enddo
 !
       call wf%mem%dealloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
@@ -442,44 +445,45 @@ contains
       open(unit=unit_chol_mo_ab_direct, file='cholesky_ab_direct', action='write', status='unknown', &
            access='direct', form='unformatted', recl=dp*(wf%n_J), iostat=ioerror)
       if (ioerror .ne. 0) then
-            write(unit_output,*)'WARNING: error while creating cholesky_ab_direct'
-            stop
-         endif
+         write(unit_output,*) 'Error: could not create cholesky_ab_direct file'
+         stop
+      endif
 !
 !     Read L_ab_J in batches over b
 !
       required = ((wf%n_v)**2)*(wf%n_J)
 !
-      required = 4*required ! In words
-      available = get_available()
+!     Initialize batching variable 
 !
-      batch_dimension  = wf%n_v ! Batch over the virtual index b
-      max_batch_length = 0      ! Initilization of unset variables 
-      n_batch          = 0
+      call batch_b%init(wf%n_v)
+      call wf%mem%num_batch(batch_b, required)         
 !
-      call num_batch(required, available, max_batch_length, n_batch, batch_dimension)           
+!     Loop over the b-batches
 !
-!     Loop over the number of a batches 
+      do current_b_batch = 1, batch_b%num_batches
 !
-      do b_batch = 1, n_batch
+!        Determine limits of the b-batch 
 !
-         call batch_limits(b_first, b_last, b_batch, max_batch_length, batch_dimension)
-         b_length = b_last - b_first + 1 
+         call batch_b%determine_limits(current_b_batch)
 !
-         call wf%mem%alloc(L_ab_J, (((b_length + 1)*b_length/2)+(wf%n_v - b_length - b_first + 1)*b_length), wf%n_J)
+         call wf%mem%alloc(L_ab_J,                                           & 
+            (((batch_b%length + 1)*(batch_b%length)/2) +                     &
+            (wf%n_v - batch_b%length - batch_b%first + 1)*(batch_b%length)), &
+            wf%n_J)
 !
-         if (b_first .ne. 1) then
+         if (batch_b%first .ne. 1) then
 !  
 !           Calculate index of last element to throw away
 !  
-            throw_away_index = index_packed(wf%n_v, b_first - 1)
+            throw_away_index = index_packed(wf%n_v, batch_b%first - 1)
 !  
 !           Throw away all elements from 1 to throw_away_index, then read from batch start
 !  
             do j = 1, wf%n_J
 !
               read(unit_chol_mo_ab) (throw_away, i = 1, throw_away_index), &
-                                    (L_ab_J(a,j), a = 1,(((b_length + 1)*b_length/2)+(wf%n_v - b_length - b_first + 1)*b_length))
+                  (L_ab_J(a,j), a = 1, (((batch_b%length + 1)*(batch_b%length)/2) + &
+                                       (wf%n_v - batch_b%length - batch_b%first + 1)*(batch_b%length)))
 !
             enddo
 !
@@ -489,20 +493,23 @@ contains
 !  
             do j = 1, wf%n_J
 !
-              read(unit_chol_mo_ab) (L_ab_J(a,j), a = 1, (((b_length + 1)*b_length/2)+(wf%n_v - b_length - b_first + 1)*b_length))
+              read(unit_chol_mo_ab) (L_ab_J(a,j), a = 1, (((batch_b%length + 1)*(batch_b%length)/2) + &
+                                    (wf%n_v - batch_b%length - batch_b%first + 1)*(batch_b%length)))
 !
             enddo
 !
          endif
 !
          do a = 1, wf%n_v
-            do b = b_first, b_last
+            do b = batch_b%first, batch_b%last
                ab = index_packed(a, b)
                write(unit_chol_mo_ab_direct, rec=ab) (L_ab_J(ab, J), J = 1, wf%n_J)
             enddo
          enddo
 !
-         call wf%mem%dealloc(L_ab_J, (((b_length+1)*b_length/2)+(wf%n_v - b_length - b_first + 1)*b_length), wf%n_J)
+         call wf%mem%dealloc(L_ab_J, (((batch_b%length+1)*(batch_b%length)/2) +               &
+                             (wf%n_v - batch_b%length - batch_b%first + 1)*(batch_b%length)), &
+                             wf%n_J)
 !
       enddo
       close(unit_chol_mo_ab, status='delete')
@@ -609,7 +616,7 @@ contains
 !
       else
 !
-         write(unit_output, *) 'WARNING: Error in call to read_cholesky_ij'
+         write(unit_output, *) 'Error: the call to read_cholesky_ij is not valid'
          stop
 !
       endif   

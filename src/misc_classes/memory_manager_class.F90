@@ -93,7 +93,7 @@ contains
 !
    subroutine init_memory_manager(mem, total)
 !!
-!!    Init (Memory Manager)
+!!    Init (memory manager)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017 
 !!
 !!    Initializes the memory manager object by setting the 
@@ -119,7 +119,7 @@ contains
 !
    subroutine alloc_memory_manager(mem, array, M, N)
 !!
-!!    Alloc (Memory Manager)
+!!    Alloc (memory manager)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
 !!
 !!    Allocates a double precision array and updates the available 
@@ -172,7 +172,7 @@ contains
 !
    subroutine dealloc_memory_manager(mem, array, M, N)
 !!
-!!    Dealloc (Memory Manager)
+!!    Dealloc (memory manager)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
 !!
 !!    Deallocates a double precision array and updates the available 
@@ -215,7 +215,7 @@ contains
 !
    subroutine alloc_int_memory_manager(mem, array, M, N)
 !!
-!!    Alloc Int (Memory Manager)
+!!    Alloc int (memory manager)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
 !!
 !!    Allocates an integer array and updates the available 
@@ -268,7 +268,7 @@ contains
 !
    subroutine dealloc_int_memory_manager(mem, array, M, N)
 !!
-!!    Dealloc Int (Memory Manager)
+!!    Dealloc int (memory manager)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
 !!
 !!    Deallocates an integer array and updates the available 
