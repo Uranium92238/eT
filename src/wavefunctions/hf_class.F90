@@ -95,7 +95,6 @@ module hf_class
       procedure, non_overridable :: read_hf_info                => read_hf_info_hf
       procedure, non_overridable :: read_transform_cholesky     => read_transform_cholesky_hf
       procedure, non_overridable :: construct_ao_fock           => construct_ao_fock_hf 
-      procedure, non_overridable :: construct_ao_fock_new       => construct_ao_fock_new_hf 
       procedure, non_overridable :: construct_density_matrices  => construct_density_matrices_hf
       procedure, non_overridable :: construct_density_matrix    => construct_density_matrix_hf
       procedure, non_overridable :: construct_density_matrix_v  => construct_density_matrix_v_hf
@@ -862,130 +861,11 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !
    end subroutine read_cholesky_ab_hf
 !
+!
    subroutine construct_ao_fock_hf(wf, ao_fock)
 !!
-!!
-   implicit none
-!
-      class(hf) :: wf
-      real(dp), dimension(wf%n_ao, wf%n_ao) :: ao_fock
-!
-      real(dp), dimension(:, :), allocatable :: density
-!
-      real(dp), dimension(:,:), allocatable :: h1ao
-      real(dp), dimension(:,:), allocatable :: chol_ao
-      real(dp), dimension(:,:), allocatable :: chol_ao_sq
-      real(dp), dimension(:,:), allocatable :: g_J_mn_ps
-      real(dp), dimension(:,:), allocatable :: L_J_mn_ps
-!
-      integer(i15) :: i = 0, J = 0, m = 0, n = 0, p = 0, s = 0
-      integer(i15) :: mn = 0, ms = 0, ps = 0, pn = 0
-!
-      integer(i15) :: unit_identifier_ao_integrals = 0, unit_chol_ao = 0
-!
-      call wf%mem%alloc(h1ao, wf%n_ao*(wf%n_ao+1)/2, 1)
-      h1ao = zero
-!
-!     Open mlcc_aoint file
-!
-      call generate_unit_identifier(unit_identifier_ao_integrals)
-      open(unit=unit_identifier_ao_integrals,file='MLCC_AOINT',status='old',form='formatted')
-      rewind(unit_identifier_ao_integrals)
-!
-!     Read in one-electron AO integrals
-!
-      read(unit_identifier_ao_integrals,*) (h1ao(i,1), i = 1, wf%n_ao*(wf%n_ao+1)/2)
-!
-!     Close mlcc_aoint
-!
-      close(unit_identifier_ao_integrals)
-!
-!     Allocate the AO Fock matrix and add the one-electron contributions
-!
-      ao_fock = zero
-!
-      call squareup(h1ao, ao_fock, wf%n_ao)  
-!
-!     Deallocation of one-electron AO integrals
-!   
-      call wf%mem%dealloc(h1ao, wf%n_ao*(wf%n_ao+1)/2, 1)
-!
-!     Read Cholesky in ao basis
-!
-      call generate_unit_identifier(unit_chol_ao)
-      open(unit=unit_chol_ao, file='MLCC_CHOLESKY', status='old', form='formatted')
-      rewind(unit_chol_ao)
-!
-!     Read the number of Cholesky vectors (n_J) and 
-!     the number of atomic orbitals (n_ao)
-!
-      read(unit_chol_ao,*) wf%n_ao, wf%n_J
-!
-      call wf%mem%alloc(chol_ao, wf%n_ao*(wf%n_ao+1)/2, wf%n_J)    
-!
-         chol_ao    = zero
-!
-!        Read Cholesky AO vector
-!
-         do j = 1, wf%n_J
-            read(unit_chol_ao,*) (chol_ao(i,j), i = 1, wf%n_ao*(wf%n_ao+1)/2)
-         enddo
-         
-!
-!
-      call wf%mem%alloc(g_J_mn_ps, (wf%n_ao)*(wf%n_ao+1)/2,(wf%n_ao)*(wf%n_ao+1)/2)
-!
-!
-            call dgemm('N', 'T', &
-                     wf%n_ao*(wf%n_ao+1)/2, &
-                     wf%n_ao*(wf%n_ao+1)/2, &
-                     wf%n_J,                &
-                     one,                   &
-                     chol_ao,               &
-                     wf%n_ao*(wf%n_ao+1)/2, &
-                     chol_ao,               &
-                     wf%n_ao*(wf%n_ao+1)/2, &
-                     zero,                  &
-                     g_J_mn_ps,             &
-                     wf%n_ao*(wf%n_ao+1)/2)
-!
-            call wf%mem%dealloc(chol_ao, wf%n_ao*(wf%n_ao+1)/2, wf%n_J)
-            call wf%mem%alloc(density, wf%n_ao, wf%n_ao)
-            density = zero     
-!
-            call wf%construct_density_matrix(density, wf%mo_coef, wf%n_o, wf%n_v) 
-!
-            do m = 1, wf%n_ao
-               do n = 1, wf%n_ao
-!
-                  mn = index_packed(m, n)
-!
-                  do p = 1, wf%n_ao 
-!
-                     pn = index_packed(p,n)
-!
-                     do s = 1, wf%n_ao 
-!                    
-                        ms = index_packed(m, s)
-!
-                        ps = index_packed(p, s)                                         
-!
-                        ao_fock(m,n) = ao_fock(m,n) + (two*g_J_mn_ps(mn,ps) - g_J_mn_ps(ms, pn))*density(p,s)    
-!     
-                     enddo
-                  enddo
-               enddo
-            enddo
-!
-         call wf%mem%dealloc(g_J_mn_ps, (wf%n_ao)*(wf%n_ao+1)/2,(wf%n_ao)*(wf%n_ao+1)/2)
-         call wf%mem%dealloc(density, wf%n_ao, wf%n_ao)
-!
-      close(unit_chol_ao)
-      close(unit_identifier_ao_integrals)
-!
-   end subroutine construct_ao_fock_hf
-   subroutine construct_ao_fock_new_hf(wf, ao_fock)
-!!
+!!    Construct AO Fock matrix (HF)
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jun 2017
 !!
       implicit none
 !
@@ -1131,11 +1011,14 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
       close(unit_chol_ao)
       close(unit_identifier_ao_integrals)
 !
-   end subroutine construct_ao_fock_new_hf
+   end subroutine construct_ao_fock_hf
 !
    subroutine construct_density_matrices_hf(wf, density_o, density_v, C_matrix, n_o, n_v)
+!! 
+!!    Construct density matrices (HF)
+!!    Written by  Eirik F. Kjønstad and Sarai D. Folkestad, Jun 2017
 !!
-!!
+!!    Constructs both occupied and virtual density matrices
 !!
       implicit none
 !
@@ -1190,6 +1073,12 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !
    subroutine construct_density_matrix_hf(wf, density_o, C_matrix, n_o, n_v)
 !!
+!!    Construct density matrix, (HF)
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jun 2017
+!!
+!!    Constructs the occupied ao density matrix
+!!
+!!    D_pq^AO = sum_{r}C_pr^(occ)*C_rq^(occ)
 !!
       implicit none
 !
@@ -1215,7 +1104,12 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !
    subroutine construct_density_matrix_v_hf(wf, density_v, C_matrix,  n_o, n_v)
 !!
+!!    Construct density matrix virtual, (HF)
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jun 2017
 !!
+!!    Constructs the virtual ao density matrix
+!!
+!!    D_pq^AO,virt = sum_{r}C_pr^(virt)*C_rq^(virt)
 !!
       implicit none
 !

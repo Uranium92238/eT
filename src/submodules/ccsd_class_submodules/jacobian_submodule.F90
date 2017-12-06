@@ -173,7 +173,7 @@ contains
 !     Done with singles vector c; overwrite it with 
 !     transformed vector for exit
 !
-      call dcopy((wf%n_o)*(wf%n_v), rho_a_i, 1, c_a_i, 1)
+      call dcopy((wf%n_o)*(wf%n_v), rho_a_i, 1, c_a_i, 1)   
 !
 !     Contributions from doubles vector c
 !
