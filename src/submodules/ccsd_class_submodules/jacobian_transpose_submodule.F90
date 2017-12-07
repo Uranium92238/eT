@@ -2164,7 +2164,7 @@ contains
 !
 !     Prepare for batching over d 
 !
-      required = wf%get_required_vvov_mem() + (wf%n_v**3)*(wf%n_o)
+      required = wf%get_vvov_required_mem() + (wf%n_v**3)*(wf%n_o)
 !     
 !     Initialize batching variable 
 !
