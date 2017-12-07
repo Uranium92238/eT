@@ -31,9 +31,9 @@ module mlcc2_class
 !
    type, extends(ccs) :: mlcc2
 !
-!     ML variables
-!
       type(mlcc_calculation_settings)  :: mlcc_settings
+!
+!     ML variables
 !
       integer(i15) :: n_CCS_o = 0
       integer(i15) :: n_CCS_v = 0
@@ -76,6 +76,7 @@ module mlcc2_class
       procedure :: cnto_orbital_drv                => cnto_orbital_drv_mlcc2
       procedure :: cc2_cnto_lower_level_method     => cc2_cnto_lower_level_method_mlcc2
       procedure :: cc2_cnto_orbitals               => cc2_cnto_orbitals_mlcc2
+!
       procedure :: print_orbital_info              => print_orbital_info_mlcc2
 !
 !     ML helper routines
@@ -171,10 +172,6 @@ module mlcc2_class
 !!       Orbital partitioning,
 !!       Written by Sarai D. Folkestad, June 2017
 !!
-!!       Directs the partitioning for mlcc calculations.
-!!
-!!       So far only Cholesky decomposition is available. 
-!!
          implicit none
 !
          class(mlcc2) :: wf
@@ -186,16 +183,6 @@ module mlcc2_class
 !!
 !!       Cholesky orbital localization. driver,
 !!       Written by Sarai D. Folkestad, June 2017
-!!
-!!       Driver for Cholesky density decomposition.  
-!!
-!!       - Collects atom and ao-basis information.
-!!       - Constructs occupied and vacant densities.
-!!       - Constructs AO Fock matrix.  (This is currently an N^5 operation, should be optimized/removed)
-!!       - By looping over active spaces, the occupied and virtual densities are Cholesky decomposed
-!!         and the cholesky vectors are used to generate new localized MO's.
-!!       - New orbitals are tested for orthonormality (Not implemented yet, only need overlap matrix from DALTON)    
-!!
 !!
          implicit none
 !
@@ -211,13 +198,6 @@ module mlcc2_class
 !!       Cholesky decomposition, 
 !!       Written by Sarai dery Folkestad, June 2017.
 !!
-!!       Cholesky decomposes the density (occupied/virtual).
-!!       Pivoting elements are chosen according to the active ao-list if it is pressent.
-!!       If not, maximum diagonal elements are chosen as pivoting elements.
-!!
-!!       The Cholesky vectors are subtracted from the incoming density matrix, and the returned density can be furteh decomposed
-!!       for inactive region.
-!! 
          implicit none
 !
          class(mlcc2)                                       :: wf
@@ -236,10 +216,6 @@ module mlcc2_class
 !!       Cholesky orbitals,
 !!       Written by Sarai Dery Folkestad, June 2017
 !!
-!!       Makes the new MO's fromthe Cholesky vectors   
-!!       - Transforms the AO fock matrix by the Cholesky vectors
-!!       - Diagonalize the MO fock to get orbital energies and new orbitals.
-!!
          implicit none
 !
          class(mlcc2)                              :: wf
@@ -256,11 +232,6 @@ module mlcc2_class
 !!
 !!       Cholesky orbital constructor,
 !!       Written by Sarai Dery Folkestad, June 2017
-!!
-!!       Constructs new localized orbitals (occupied/virtual) by 
-!!       - Decomposing the density (occupied/virual)
-!!       - Transforming Fock matrix with Cholesky vectors, and diagonalizing it.
-!!         New orbitals are eigenvectors, orbital energies are eigenvectors.
 !!
          implicit none
 !
@@ -283,8 +254,6 @@ module mlcc2_class
 !!       Construct active ao index list,
 !!       Written by Sarai Dery Folkestad, June 2017.
 !!
-!!       Constructs list of active ao's for cholesky decomposition.
-!!
          implicit none
 !
          integer(i15)                               :: n_active_aos
@@ -302,28 +271,6 @@ module mlcc2_class
 !!       CNTO orbital driver,
 !!       Written by Sarai D. Folkestad, June 2017.
 !!
-!!       Directs the construction of CNTOs and the selection of the active space
-!!       A CCS calculation ground state and excited states is performed.
-!!       The M and N matrices are then constructed, 
-!! 
-!!          M_ij = 1/n sum_{k=1,n} (sum_a R^k_ai*R1_aj)
-!!          N_ab = 1/n sum_{k=1,n} (sum_i R^k_ai*R1_bi)
-!!
-!!       where n > 1.
-!!   
-!!       Ri_ai is the i'th single excitation vector obtained from the CCS calculation. 
-!!       The transformation matrices for the occupied and virtual part
-!!       are constructed by diagonalizing M and N. The number of active occupied
-!!       and virtual orbitals are determined from δ_o and δ_v
-!!
-!!          1 - sum_i λ^o_i < δ_o
-!!          1 - sum_i λ^v_i < δ_v
-!!
-!!       Where the orbitals of highest eigenvalues λ^o/λ^v are selected first.
-!!
-!!       Fock matrix is block diagonalized in active and inactive blocks in order to obtain 
-!!       the orbitals and orbital energies used in the CC2 calculation.
-!!
          implicit none 
 !
          class(mlcc2) :: wf
@@ -336,9 +283,6 @@ module mlcc2_class
 !!       CNTO lower level calculation (MLCC2),
 !!       Written by Sarai D. Folkestad, June 2017.
 !!
-!!       Runs lower level method for CNTOs
-!!
-
          implicit none 
 !
          class(mlcc2) :: wf
@@ -350,9 +294,7 @@ module mlcc2_class
 !!
 !!       CNTO Oritals (MLCC2),
 !!       Written by Sarai D. Folkestad Aug. 2017
-!!
-!!       Constructs the CNTO orbitals based on exitation vectors from lower level method
-!!    
+!!   
          implicit none
 !
          class(mlcc2) :: wf
@@ -364,8 +306,6 @@ module mlcc2_class
 !!
 !!       Print CNTO info, 
 !!       Written by Sarai D. Folkestad, Aug. 2017
-!!
-!!       Prints information on CNTO partitioning
 !!
          implicit none 
 !
@@ -387,15 +327,6 @@ module mlcc2_class
 !!       Omega A1
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!  
-!!       Calculates the A1 term of omega, 
-!!  
-!!       A1: sum_ckd g_adkc * u_ki^cd,
-!! 
-!!       and adds it to the projection vector (omega1) of
-!!       the wavefunction object wf
-!!
-!!       u_ki^cd = 2*s_ki^cd - s_ik^cd 
-!! 
          implicit none
 !
          class(mlcc2)   :: wf
@@ -407,10 +338,6 @@ module mlcc2_class
 !!
 !!       Omega B1
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!  
-!!       Calculates the B1 term of omega, 
-!!  
-!!       B1: - sum_bjk u_jk^ab*g_jikb
 !!
          implicit none
 !
@@ -424,16 +351,6 @@ module mlcc2_class
 !!       Construct Omega (CC2)
 !!       Written by Eirik F. Kjønstad and Sarai Folkestad, Apr 2017
 !! 
-!!       Constructs t2-amplitudes on the fly, according to the CC2
-!!       expression for the doubles amplitudes,
-!! 
-!!       t_ij^ab = - g_ai_bj / (e_a + e_b - e_i - e_j),
-!! 
-!!       where g_ai_bj are T1-transformed two-electron integrals 
-!!       and e_x is the orbital enegy of orbital x.
-!!        
-!!       The routine also sets up timing variables.    
-!! 
          implicit none 
 !
          class(mlcc2) :: wf
@@ -444,12 +361,6 @@ module mlcc2_class
 !!
 !!       Get S_2 amplitudes, 
 !!       Written by Sarai D. Folkestad, July 2017 
-!!
-!!       Construct
-!!
-!!          s_ai_bj = - 1/ε_ij^ab * g_aibj,
-!!
-!!       while batching over b.
 !!
          implicit none
 !
@@ -475,9 +386,6 @@ module mlcc2_class
 !!       Excited State Preparations (MLCC2)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
-!!       A routine for preparation tasks (if any). Can be overwritten
-!!       in descendants if other preparations prove necessary.    
-!!
          class(mlcc2) :: wf 
 !
 !        Do nothing for mlcc2
@@ -489,9 +397,6 @@ module mlcc2_class
 !!       Initialize excited states
 !!       Written by Sarai D. Folkestad, June 2017
 !!
-!!       Calculates and sets n_s2am, and updates n_parameters
-!!       for excited state calculation
-!! 
          implicit none 
 !    
          class(mlcc2) :: wf
@@ -502,15 +407,8 @@ module mlcc2_class
 
       module subroutine calculate_orbital_differences_mlcc2(wf, orbital_diff)
 !!
-!!       Calculate Orbital Differences (CCSD)
+!!       Calculate Orbital Differences (MLCC2)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad May 2017
-!!
-!!       Calculates orbital differences
-!!
-!!          1) ε_I^A = ε_A - ε_I
-!!          2) ε_ij^ab = ε_a + ε_b - ε_i - ε_j (for active spaces only)
-!!
-!!       and puts them in orbital_diff, which is a vector of length n_parameters.        
 !!
          implicit none
 !
@@ -525,12 +423,6 @@ module mlcc2_class
 !!
 !!       Transformation Trial Vectors (MLCC2)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!! 
-!!       Each trial vector in first_trial to last_trial is read from file and
-!!       transformed before the transformed vector is written to file.
-!! 
-!!       Singles and doubles part of the transformed vectors are written to 
-!!       the same record in file transformed_vec, record length is n_parameters long.
 !!
          implicit none
 !
@@ -556,7 +448,8 @@ module mlcc2_class
 !
      module subroutine print_excitation_vector_mlcc2(wf, vec, unit_id)
 !!
-!!
+!!       Print excitation vector,
+!!       Written by Eirik F. Kjønstad and Sarai D. Folekstad,Jun 2017
 !!
          implicit none
 !  
@@ -571,7 +464,8 @@ module mlcc2_class
 !
       module subroutine analyze_double_excitation_vector_mlcc2(wf, vec, n, sorted_short_vec, index_list)
 !!
-!!
+!!       Analze double excitation vector,
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jun 2017
 !!
          implicit none
 !  
@@ -592,7 +486,8 @@ module mlcc2_class
 !
       module subroutine summary_excited_state_info_mlcc2(wf, energies)
 !!
-!!
+!!       Summary of excited state information,
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad
 !!
          implicit none
 !  
@@ -616,19 +511,6 @@ module mlcc2_class
 !!       Jacobian transformation (MLCC2)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
 !!
-!!       Directs the transformation by the CCSD Jacobi matrix,
-!!
-!!          A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >,
-!!
-!!       where the basis employed for the brackets is biorthonormal. 
-!!       The transformation is rho = A c, i.e., 
-!!
-!!          rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck 
-!!                  + 1/2 sum_ckdl A_mu,ckdl c_ckdl (1 + delta_ck,dl).
-!!
-!!       On exit, c is overwritten by rho. That is, c_a_i = rho_a_i,
-!!       and c_aibj = rho_aibj. 
-!!
          implicit none
 !
          class(mlcc2) :: wf 
@@ -645,17 +527,6 @@ module mlcc2_class
 !!
 !!       Jacobian tem A1
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
-!!
-!!       Calculates the A1 contribution to the jacobi transformation,
-!!
-!!          A1: 2*sum_BJck u_ik^ac*g_kc,JB*c_BJ - sum_Bjck u_kj^ca*g_kc,jB*c_BI
-!!            - sum_BJck u_ik^ac*g_kB,Jc*c_BJ - sum_bJck u_ki^cb*g_kc,Jb*c_AJ, 
-!!
-!!       with, 
-!!
-!!       u_ik^ac = 2*s_ik^ac - 2*s_ik^ca,
-!!
-!!       which is constructed while batching over c
 !!
          implicit none
 !
@@ -674,14 +545,6 @@ module mlcc2_class
 !!       Jacobian tem B1
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
 !!
-!!       Calculates the B1 contribution to the jacobi transformation,
-!!
-!!       B1:   sum_ck F_kc*(2c_ai,ck - c_ak,ci) 
-!!           - sum_ckj L_jIkc * c_aj,ck + sum_cbk L_Abkc * c_bi,ck
-!!
-!!
-!!       L_Abkc is constructed while batching over A.
-!!
          implicit none
 !  
          class(mlcc2) :: wf
@@ -696,13 +559,7 @@ module mlcc2_class
 !!
 !!       Jacobian tem A2
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
-!! 
-!!       Calculates the A2 contribution to the jacobi transformation,
-!! 
-!!          A2:   sum_C g_ai,bC * c_Cj - sum_K g_ai,Kj * C_bK.
-!! 
-!!       g_ai,bC is constructed in batches of C.
-!! 
+!!
          implicit none
 !     
          class(mlcc2) :: wf
@@ -717,11 +574,6 @@ module mlcc2_class
 !!
 !!       Jacobian tem B2
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
-!!
-!!       Calculates the B2 contribution to the jacobi transformation,
-!!
-!!          B2:   ε_ij^ab*c_ai,bj.
-!!
 !!
          implicit none
 !  
