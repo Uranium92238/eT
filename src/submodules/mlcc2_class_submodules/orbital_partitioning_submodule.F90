@@ -145,7 +145,7 @@ contains
 !     :: Construct AO fock matrix ::
 !
       call wf%mem%alloc(ao_fock, wf%n_ao, wf%n_ao)
-      call wf%construct_ao_fock_new(ao_fock)
+      call wf%construct_ao_fock(ao_fock)
 !
       call wf%mem%alloc(density_o, wf%n_ao, wf%n_ao)
       density_o = zero     
