@@ -265,8 +265,7 @@ contains
       integer(i15) :: id = 0, la = 0, ia = 0, ai = 0
 !
 !     Read the amplitudes from disk 
-!
-      call wf%initialize_amplitudes 
+! 
       call wf%read_double_amplitudes 
 !
 !     Form u_ld_ck = u_kl^cd = 2 * t_kl^cd - t_lk^cd 
@@ -450,7 +449,6 @@ contains
 !
 !     Form t_l_kcd = t_kl^cd 
 !
-      call wf%initialize_amplitudes
       call wf%read_double_amplitudes
 !
       call wf%mem%alloc(t_l_kcd, wf%n_o, (wf%n_o)*(wf%n_v)**2)
@@ -778,7 +776,6 @@ contains
 !
 !     Read amplitudes and order as t_lck_d = t_kl^cd 
 !
-      call wf%initialize_amplitudes
       call wf%read_double_amplitudes
 !
       call wf%mem%alloc(t_lck_d, (wf%n_v)*(wf%n_o)**2, wf%n_v)
@@ -957,7 +954,6 @@ contains
 !
 !     Read the amplitudes from disk 
 !
-      call wf%initialize_amplitudes
       call wf%read_double_amplitudes
 !
       call wf%mem%alloc(t_dm_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
@@ -1128,7 +1124,6 @@ contains
 !
 !     Read amplitudes from disk 
 !
-      call wf%initialize_amplitudes
       call wf%read_double_amplitudes
 !
       call wf%mem%alloc(t_el_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
@@ -1416,7 +1411,6 @@ contains
 !
 !     Order amplitudes as t_mc_dl = t_lm^cd 
 !
-      call wf%initialize_amplitudes
       call wf%read_double_amplitudes
 ! 
       call wf%mem%alloc(t_mc_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
@@ -1859,7 +1853,6 @@ contains
 !
 !     Order amplitudes as t_cl_ek = t_kl^ce
 !
-      call wf%initialize_amplitudes
       call wf%read_double_amplitudes
 !
       call wf%mem%alloc(t_cl_ek, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
@@ -3134,7 +3127,6 @@ contains
 !
 !     Form t_ck_dl = t_kl^cd 
 !
-      call wf%initialize_amplitudes
       call wf%read_double_amplitudes
 !
       call wf%mem%alloc(t_ck_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
@@ -3267,7 +3259,6 @@ contains
 !
 !     Form t_ck_dl = t_kl^cd 
 !
-      call wf%initialize_amplitudes
       call wf%read_double_amplitudes
 !
       call wf%mem%alloc(t_ck_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
@@ -3579,7 +3570,6 @@ contains
 !
 !     Form t_lck_d = t_kl^cd
 !
-      call wf%initialize_amplitudes
       call wf%read_double_amplitudes
 !
       call wf%mem%alloc(t_lck_d, (wf%n_v)*(wf%n_o)**2, wf%n_v)
@@ -3939,7 +3929,6 @@ contains
 !
 !     Form t_cl_dk = t_kl^cd 
 !
-      call wf%initialize_amplitudes
       call wf%read_double_amplitudes
 !
       call wf%mem%alloc(t_cl_dk, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
@@ -4099,7 +4088,6 @@ contains
 !
 !     Form t_cl_kd = t_kl^cd 
 !
-      call wf%initialize_amplitudes
       call wf%read_double_amplitudes
 !
       call wf%mem%alloc(t_cl_kd, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
@@ -4466,7 +4454,6 @@ contains
 !
 !     Form t_kl_cd = t_kl^cd 
 !
-      call wf%initialize_amplitudes
       call wf%read_double_amplitudes
 !
       call wf%mem%alloc(t_kl_cd, (wf%n_o)**2, (wf%n_v)**2)

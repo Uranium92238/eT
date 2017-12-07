@@ -79,21 +79,19 @@ module ccsd_class
    contains
 !
 !
-!     -::- Initialization routines -::-
+!     -::- Initialization routine -::-
 !     ---------------------------------
 !
       procedure :: init => init_ccsd
-!
-      procedure :: initialize_amplitudes => initialize_amplitudes_ccsd
 !
 !
 !     -::- Ground state submodule routine pointers -::-
 !     ------------------------------------------------- 
 !
-      procedure :: initialize_ground_state   => initialize_ground_state_ccsd
       procedure :: calc_ampeqs_norm          => calc_ampeqs_norm_ccsd
       procedure :: new_amplitudes            => new_amplitudes_ccsd
       procedure :: calc_quasi_Newton_doubles => calc_quasi_Newton_doubles_ccsd
+!
       procedure :: ground_state_preparations => ground_state_preparations_ccsd
 !
 !
@@ -197,16 +195,22 @@ module ccsd_class
 !
       procedure :: construct_eta => construct_eta_ccsd
 !
+!     Routine to allocate the amplitudes 
+!
+      procedure :: initialize_amplitudes        => initialize_amplitudes_ccsd
+      procedure :: initialize_double_amplitudes => initialize_double_amplitudes_ccsd
+!
+!     Routines to deallocate amplitudes 
+!
+      procedure :: destruct_amplitudes        => destruct_amplitudes_ccsd
+      procedure :: destruct_double_amplitudes => destruct_double_amplitudes_ccsd
+!
 !     Routine to save and read the amplitudes 
 !
       procedure :: save_amplitudes        => save_amplitudes_ccsd
 !
-      procedure :: read_amplitudes        => read_amplitudes_ccsd
+      procedure :: read_amplitudes        => read_amplitudes_ccsd ! On its way out I think
       procedure :: read_double_amplitudes => read_double_amplitudes_ccsd
-!
-!     Routines to deallocate amplitudes 
-!
-      procedure :: destruct_amplitudes => destruct_amplitudes_ccsd
 !
 !     Set the double amplitudes to the MP2 guess
 !
@@ -268,18 +272,6 @@ module ccsd_class
          real(dp), dimension(wf%n_parameters, 1) :: dt
 !
       end subroutine calc_quasi_Newton_doubles_ccsd
-!
-!
-      module subroutine initialize_ground_state_ccsd(wf)
-!!
-!!       Initialize ground state (CCSD)
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!!
-         implicit none 
-!
-         class(ccsd) :: wf
-!
-      end subroutine initialize_ground_state_ccsd
 !
 !
       module subroutine ground_state_preparations_ccsd(wf)
@@ -1221,7 +1213,7 @@ contains
 !
       call wf%read_transform_cholesky 
 !
-!     Initialize (singles and doubles) amplitudes
+!     Set (singles and doubles) amplitude attributes
 !
       wf%n_t1am = (wf%n_o)*(wf%n_v) 
       wf%n_t2am = (wf%n_t1am)*(wf%n_t1am + 1)/2 
@@ -1230,21 +1222,36 @@ contains
 !
 !     Initialize the Fock matrix (allocate and construct given the initial amplitudes)
 !
-      if (.not. allocated(wf%t1am)) call wf%mem%alloc(wf%t1am, wf%n_v, wf%n_o)
-      wf%t1am = zero
-!
+      call wf%initialize_single_amplitudes ! t1am = zero 
       call wf%initialize_fock_matrix
+      call wf%destruct_single_amplitudes
 !
    end subroutine init_ccsd
 !
 !
    subroutine initialize_amplitudes_ccsd(wf)
 !!
-!!     Initialize Amplitudes (CCSD)
-!!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!    Initialize Amplitudes (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!     Allocates the amplitudes, sets them to zero, and calculates
-!!     the number of amplitudes.
+!!    Allocates the amplitudes, sets them to zero.
+!!
+      implicit none 
+!
+      class(ccsd) :: wf
+!
+      call wf%initialize_single_amplitudes 
+      call wf%initialize_double_amplitudes
+!
+   end subroutine initialize_amplitudes_ccsd
+!
+!
+   subroutine initialize_double_amplitudes_ccsd(wf)
+!!
+!!    Initialize double amplitudes (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!    Allocates the doubles amplitudes, sets them to zero.
 !!
       implicit none 
 !
@@ -1252,10 +1259,18 @@ contains
 !
 !     Allocate the doubles amplitudes and set to zero
 !
-      if (.not. allocated(wf%t2am)) call wf%mem%alloc(wf%t2am, wf%n_t2am, 1)
-      wf%t2am = zero
+      if (.not. allocated(wf%t2am)) then
+! 
+         call wf%mem%alloc(wf%t2am, wf%n_t2am, 1)
+         wf%t1am = zero
 !
-   end subroutine initialize_amplitudes_ccsd
+      else
+!
+         write(unit_output,'(t3,a)') 'Warning: attempted to allocate and zero already allocated t2am'
+!
+      endif
+!
+   end subroutine initialize_double_amplitudes_ccsd
 !
 !
    subroutine construct_perturbative_doubles_ccsd(wf)
@@ -1409,12 +1424,28 @@ contains
    end subroutine destruct_amplitudes_ccsd
 !
 !
-   subroutine save_amplitudes_ccsd(wf)
+   subroutine destruct_double_amplitudes_ccsd(wf)
 !!
-!!    Save Amplitudes (CCSD)
+!!    Destruct Amplitudes (CCSD)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
 !!
-!!    Store the amplitudes to disk (T1AM, T2AM)
+!!    Deallocates the (doubles) amplitudes.
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      if (allocated(wf%t2am)) call wf%mem%dealloc(wf%t2am, wf%n_t2am, 1)
+!
+   end subroutine destruct_double_amplitudes_ccsd
+!
+!
+   subroutine save_amplitudes_ccsd(wf)
+!!
+!!    Save amplitudes (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
+!!
+!!    Store the amplitudes to disk (in the files t1am and t2am)
 !!
       implicit none 
 !
@@ -1446,21 +1477,26 @@ contains
 !
    end subroutine save_amplitudes_ccsd
 !
+!
    subroutine read_amplitudes_ccsd(wf)
 !!
 !!    Read Amplitudes (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
 !!
-!!    Reads the amplitudes from disk (T1AM)
+!!    Reads the single and double amplitudes (t1am and t2am) from disk.
+!!    If the arrays are not allocated, the routine also allocates them.
 !!
       implicit none 
 !
       class(ccsd) :: wf
 !
+!     Read the amplitudes from disk
+!
       call wf%read_single_amplitudes
       call wf%read_double_amplitudes
 !
    end subroutine read_amplitudes_ccsd
+!
 !
    subroutine read_double_amplitudes_ccsd(wf)
 !!
@@ -1491,9 +1527,16 @@ contains
 !
          rewind(unit_t2am)
 !
-!        Read from file & close
+!        Allocate doubles amplitudes if they aren't allocated 
 !
-         wf%t2am = zero
+         if (.not. allocated(wf%t2am)) then 
+!
+            call wf%mem%alloc(wf%t2am, wf%n_t2am, 1)
+            wf%t2am = zero 
+!
+         endif
+!
+!        Read from file & close
 !
          read(unit_t2am) wf%t2am
 !
@@ -1501,7 +1544,7 @@ contains
 !
       else
 !
-         write(unit_output,'(t3,a)') 'Error: amplitude files do not exist.'
+         write(unit_output,'(t3,a)') 'Error: double amplitudes file does not exist.'
          stop
 !
       endif
@@ -1538,7 +1581,6 @@ contains
 !
 !     Calculate the transformation of the t1 amplitudes 
 !
-      call wf%initialize_amplitudes
       call wf%read_double_amplitudes
 !
       call wf%mem%alloc(r1am, wf%n_v, wf%n_o)

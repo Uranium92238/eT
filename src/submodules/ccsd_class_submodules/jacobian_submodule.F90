@@ -467,8 +467,9 @@ contains
 !
 !     Form u_ai_lc = u_li^ca = 2 * t_li^ca - t_il^ca = 2 * t2am(clai,1) - t2am(cial,1)
 !
-      call wf%initialize_amplitudes  ! Allocate t amplitudes, then set them to zero 
-      call wf%read_double_amplitudes ! Read the converged amplitudes from disk 
+!     Allocate & read double amplitudes 
+!
+      call wf%read_double_amplitudes
 !
       call wf%mem%alloc(u_ai_lc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       u_ai_lc = zero
@@ -549,7 +550,7 @@ contains
 !
 !     Done with doubles amplitudes: deallocate 
 !
-      call wf%destruct_amplitudes
+      call wf%destruct_double_amplitudes
 !
 !     Calculate X_i_k = sum_cdl L_lcd_k t_i_lcd
 !
@@ -1197,9 +1198,8 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
 !     :: Term 1. - sum_kc F_kc t_ij^ac c_bk ::
 !
-!     Read the amplitudes from disk 
+!     Allocate & read the amplitudes from disk 
 !
-      call wf%initialize_amplitudes
       call wf%read_double_amplitudes
 !
 !     Order the amplitudes as t_c_aij = t_ij^ac 
@@ -1335,7 +1335,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
 !     Deallocate doubles amplitudes    
 !
-      call wf%destruct_amplitudes
+      call wf%destruct_double_amplitudes
 ! 
 !     Form rho_aib_j = - sum_k t_aib_k X_k_j
 !     (Interpret rho_ai_bj as rho_aib_j)
@@ -1411,7 +1411,6 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
 !     Read the amplitudes from disk
 !
-      call wf%initialize_amplitudes
       call wf%read_double_amplitudes
 !
 !     Order as t_kc_ai = t_ki^ac 
@@ -1893,7 +1892,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
       call wf%mem%dealloc(L_lj_ck, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
       call wf%mem%dealloc(rho_b_jai, (wf%n_v), (wf%n_v)*(wf%n_o)**2)
 !
-      call wf%destruct_amplitudes 
+      call wf%destruct_double_amplitudes 
 !
    end subroutine jacobian_ccsd_c2_ccsd
 !
@@ -1961,8 +1960,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
       integer(i15) :: aj = 0, ck = 0, ckb = 0, ciak = 0, aib = 0, aidj = 0, aij = 0
 !
 !     Read amplitudes from disk
-! 
-      call wf%initialize_amplitudes ! Move into batching loop
+!  ! Move into batching loop
       call wf%read_double_amplitudes
 !
 !     Determine batch size, etc.
@@ -2609,7 +2607,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
 !    Destroy amplitudes from memory
 !
-     call wf%destruct_amplitudes
+     call wf%destruct_double_amplitudes
 !
    end subroutine jacobian_ccsd_d2_ccsd
 !
@@ -2638,7 +2636,6 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
 !     Read T2 amplitudes from disk
 !
-      call wf%initialize_amplitudes
       call wf%read_double_amplitudes
 !
       call wf%mem%alloc(t_dl_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
@@ -2646,7 +2643,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
       call squareup(wf%t2am, t_dl_bj, (wf%n_o)*(wf%n_v))
 !
-      call wf%destruct_amplitudes
+      call wf%destruct_double_amplitudes
 !
 !     Construct g_kcld 
 !
@@ -2856,14 +2853,13 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
       call wf%mem%dealloc(c_dl_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call wf%mem%dealloc(L_ck_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      call wf%initialize_amplitudes
       call wf%read_double_amplitudes
 !
       call wf%mem%alloc(t_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       t_ai_ck = zero
 !
       call squareup(wf%t2am, t_ai_ck, (wf%n_o)*(wf%n_v))
-      call wf%destruct_amplitudes
+      call wf%destruct_double_amplitudes
 !
 !     rho_ai_bj = sum_ck t_ai_ck*X_ck_bj
 !
@@ -2938,7 +2934,6 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
       call wf%mem%dealloc(L_d_lck, wf%n_v, (wf%n_v)*((wf%n_o)**2)) 
 !
-      call wf%initialize_amplitudes
       call wf%read_double_amplitudes
 !
       call wf%mem%alloc(t_aij_d, (wf%n_v)*((wf%n_o)**2), wf%n_v)
@@ -2967,7 +2962,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
          enddo
       enddo
 !
-      call wf%destruct_amplitudes
+      call wf%destruct_double_amplitudes
 !
       call wf%mem%alloc(rho_aij_b, (wf%n_v)*((wf%n_o)**2), wf%n_v)
 !
@@ -3067,7 +3062,6 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
       call wf%mem%dealloc(L_l_ckd,(wf%n_o), (wf%n_o)*((wf%n_v)**2))
 !
-      call wf%initialize_amplitudes
       call wf%read_double_amplitudes
 !
       call wf%mem%alloc(t_aib_l, (wf%n_o)*((wf%n_v)), wf%n_o*(wf%n_v))
@@ -3075,7 +3069,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
       call squareup(wf%t2am, t_aib_l, wf%n_o*(wf%n_v))
 
 !
-      call wf%destruct_amplitudes
+      call wf%destruct_double_amplitudes
 !
 !     rho_ai_bj = sum_l t_aib_l * Z_l_j
 !
@@ -3184,7 +3178,6 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
 !     Reorder t_bl_dj as t_dl_bj
 !
-      call wf%initialize_amplitudes
       call wf%read_double_amplitudes
 !
       call wf%mem%alloc(t_dl_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
@@ -3211,7 +3204,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
          enddo
       enddo
 !
-      call wf%destruct_amplitudes
+      call wf%destruct_double_amplitudes
 !
       call wf%mem%alloc(X_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
@@ -3287,7 +3280,6 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
 !     Reorder t_ck,bl as t_clk_b
 !        
-      call wf%initialize_amplitudes
       call wf%read_double_amplitudes
 !
       call wf%mem%alloc(t_clk_b, (wf%n_v)*((wf%n_o)**2), wf%n_v)
@@ -3314,7 +3306,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
          enddo
       enddo
 !
-      call wf%destruct_amplitudes
+      call wf%destruct_double_amplitudes
 !
 !     Y_d_b = sum_clk L_d_clk * c_clk_b 
 !
@@ -3360,7 +3352,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
          enddo
       enddo
 !
-      call wf%destruct_amplitudes
+      call wf%destruct_double_amplitudes
 !
       call wf%mem%alloc(rho_aij_b, (wf%n_v)*((wf%n_o)**2), wf%n_v)
 !
@@ -3442,14 +3434,13 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
 !     Reorder t_ck,dj to t_ckd_j 
 !
-      call wf%initialize_amplitudes
       call wf%read_double_amplitudes
 !
       call wf%mem%alloc(t_ckd_j, ((wf%n_v))*(wf%n_o), wf%n_o*(wf%n_v))
       t_ckd_j = zero
       call squareup(wf%t2am, t_ckd_j, wf%n_o*(wf%n_v))
 !
-      call wf%destruct_amplitudes
+      call wf%destruct_double_amplitudes
 !
       call wf%mem%alloc(Z_l_j, wf%n_o, wf%n_o)
 !
@@ -3538,7 +3529,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
 !        t_ak,ci ordered as t_ai_kc
 !  
-         call wf%initialize_amplitudes
+
          call wf%read_double_amplitudes
 !
          call wf%mem%alloc(t_ai_kc, (wf%n_o)*(wf%n_v),(wf%n_o)*(wf%n_v))
@@ -3565,7 +3556,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
             enddo
          enddo
 !
-         call wf%destruct_amplitudes
+         call wf%destruct_double_amplitudes
 !  
          call wf%mem%alloc(X_ai_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
@@ -3668,7 +3659,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
 !        t_al,cj ordered as t_aj_lc
 !  
-         call wf%initialize_amplitudes
+
          call wf%read_double_amplitudes
 !
          call wf%mem%alloc(t_aj_lc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
@@ -3697,7 +3688,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
             enddo
          enddo
 !
-         call wf%destruct_amplitudes
+         call wf%destruct_double_amplitudes
 !
          call wf%mem%alloc(Y_aj_kd, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
@@ -4239,7 +4230,6 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
 !     Reordered T2 amplitudes        
 !
-      call wf%initialize_amplitudes
       call wf%read_double_amplitudes
 !
       call wf%mem%alloc(t_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
@@ -4268,7 +4258,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
          enddo
       enddo
 
-      call wf%destruct_amplitudes
+      call wf%destruct_double_amplitudes
 !
 !     X_kl_ij = g_kl_cd * t_cd_ij
 !

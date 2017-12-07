@@ -21,8 +21,6 @@ submodule (ccs_class) ground_state
 !!    calc_ampeqs:                Updates the amplitude equations for the current amplitudes.
 !!    calc_ampeqs_norm:           Calculates the norm of the amplitude equations.
 !!    calc_quasi_Newton_singles:  Calculates the singles part of the quasi-Newton estimate.
-!!    initialize_ground_state:    Initializes the amplitudes and the amplitude equations.
-!!    destruct_ground_state:      Deallocates the amplitudes and the amplitude equations.
 !!
 !!    Can be inherited by models of the same level (e.g. CC2) without modification.
 !!
@@ -60,6 +58,17 @@ contains
 !
       class(ccs) :: wf  
 !
+!     Let the user know the ground state solver is running
+!
+      write(unit_output,'(//t3,a)')   ':: Ground state solver (DIIS)'
+      write(unit_output,'(t3,a/)')   ':: S. D. Folkestad, E. F. Kjønstad, May 2017'
+!
+      write(unit_output,'(t3,a,a,a/)')  'Settings for ',trim(wf%name), ' ground state calculation:'
+!
+      write(unit_output,'(t6,a20,e9.2)') 'Energy threshold:   ', wf%ground_state_specifications%energy_threshold
+      write(unit_output,'(t6,a20,e9.2)') 'Residual threshold: ', wf%ground_state_specifications%residual_threshold
+      flush(unit_output)
+!
 !     Preparations for ground state solver 
 !
       call wf%ground_state_preparations
@@ -87,6 +96,14 @@ contains
 !
       wf%tasks%current = 'ground_state'
 !
+!     Allocate amplitudes (if not allocated) and calculate number of amplitudes 
+!
+      call wf%initialize_amplitudes 
+!
+!     Allocate projection vector 
+!
+      call wf%initialize_omega   
+!
    end subroutine ground_state_preparations_ccs
 !
 !
@@ -100,7 +117,7 @@ contains
 !!
       class(ccs) :: wf 
 !
-!     Nothing yet!
+!     Nothing yet...
 !
    end subroutine ground_state_cleanup_ccs
 !
@@ -132,27 +149,12 @@ contains
 !
       logical :: converged = .false. ! True iff both the energy and the equations have converged 
 !
-!     Let the user know the ground state solver is running
-!
-      write(unit_output,'(//t3,a)')   ':: Ground state solver (DIIS)'
-      write(unit_output,'(t3,a/)')   ':: S. D. Folkestad, E. F. Kjønstad, May 2017'
-!
-      write(unit_output,'(t3,a,a,a/)')  'Settings for ',trim(wf%name), ' ground state calculation:'
-!
-      write(unit_output,'(t6,a20,e9.2)') 'Energy threshold:   ',   wf%ground_state_specifications%energy_threshold
-      write(unit_output,'(t6,a20,e9.2)') 'Residual threshold: ', wf%ground_state_specifications%residual_threshold
-      flush(unit_output)
-!
-!     Initialize amplitudes & amplitude equations 
-!
-      call wf%initialize_ground_state
-!
 !     If restart, read amplitudes from disk 
 !
       if (wf%ground_state_specifications%restart) then 
 !
-         write(unit_output,'(/t3,a)') 'Requested restart. Reading amplitudes from file.'
-         call wf%read_amplitudes
+         write(unit_output,'(/t3,a)') 'Requested restart. Preparing for restart.'
+         call wf%ground_state_restart
 !
       endif
 !
@@ -220,6 +222,9 @@ contains
 !
             converged = .true.
 !
+            if (iteration .eq. 1) write(unit_output,'(t3,a,/t3,a)') 'Note: residual converged in first iteration.', &
+                                                                    'Energy convergence therefore not tested in this calculation.'
+!
             write(unit_output,'(/t3,a,i2,a/)')  'Converged in ', iteration, ' iterations!'
 !
          else
@@ -247,21 +252,35 @@ contains
       write(unit_output,'(t6,a25,f14.8)')  'Total energy (hartrees):  ', wf%energy
       write(unit_output,'(t6,a25,f14.8/)') 'Total time CPU (seconds): ', end_gs_solver - start_gs_solver
       flush(unit_output)
-!
-!     Save the amplitudes 
-!
-      call wf%save_amplitudes
-!
-!     Destroy amplitudes and amplitude equations 
-!
-      call wf%destruct_ground_state
+! !
+! !     Save the amplitudes 
+! !
+!       call wf%save_amplitudes
+! !
+! !     Destroy amplitudes and amplitude equations 
+! !
+!       call wf%destruct_ground_state
 !
    end subroutine ground_state_solver_ccs
 !
 !
-    module subroutine calc_ampeqs_ccs(wf)
+   module subroutine ground_state_restart_ccs(wf)
 !!
-!!    Calculate Amplitude Equations (CCS)
+!!    Ground state restart (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
+!!
+!!    Called if restart of the ground state is requested.   
+!!
+      class(ccs) :: wf 
+!
+      call wf%read_amplitudes   
+!
+   end subroutine ground_state_restart_ccs
+!
+!
+   module subroutine calc_ampeqs_ccs(wf)
+!!
+!!    Calculate amplitude e quations (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
 !!    Constructs the amplitude equations vector (the projection vector 
@@ -554,9 +573,14 @@ contains
       implicit none 
 !
       class(ccs) :: wf
-!
-      call wf%initialize_amplitudes ! Allocate amplitudes 
-      call wf%initialize_omega      ! Allocate projection vector 
+! !
+! !     Allocate amplitudes (if not allocated) and calculate number of amplitudes 
+! !
+!       call wf%initialize_amplitudes 
+! !
+! !     Allocate projection vector 
+! !
+!       call wf%initialize_omega     
 !
    end subroutine initialize_ground_state_ccs
 !

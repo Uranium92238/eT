@@ -13,9 +13,9 @@ module excited_state_specs_class
 !
    use types
 !
-!  :::::::::::::::::::::::::::::::::::::::::::::::::
+!  :::::::::::::::::::::::::::::::::::::::::::::::::::::
 !  -::- Definition of the excited_state_specs class -::-
-!  :::::::::::::::::::::::::::::::::::::::::::::::::
+!  :::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
    type :: excited_state_specs
 !
@@ -45,6 +45,9 @@ module excited_state_specs_class
 !
       character(len=40) :: solution_file = 'right_valence' ! Should be 'right_valence', 'left_valence'
 !                                                            'right_core' or 'left_core'.
+!     Logical for printing excitation vectors 
+!
+      logical :: print_vectors = .true.
 !
    end type excited_state_specs                                                                          
 !
