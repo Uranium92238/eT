@@ -256,6 +256,10 @@ contains
 !
       if (wf%settings%print_level == 'developer') write(unit_output,'(/t3,a/)') 'Preparing for excited state calculation:'
 !
+!     Read single amplitudes 
+!
+      call wf%read_single_amplitudes
+!
 !     Store vvvv-electronic repulsion integrals to file if there is space 
 !
       call wf%store_t1_vv_vv_electronic_repulsion
@@ -272,6 +276,9 @@ contains
 !     Set current task to excited state calculation 
 ! 
       wf%tasks%current = 'excited_state'
+!
+      wf%excited_state_specifications%right = .false.
+      wf%excited_state_specifications%left  = .true.
 !
 !     Set filename for solution vectors
 !

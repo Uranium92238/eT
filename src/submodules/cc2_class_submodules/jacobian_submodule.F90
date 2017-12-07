@@ -74,11 +74,9 @@ contains
       call wf%mem%alloc(rho_a_i, wf%n_v, wf%n_o)
       rho_a_i = zero
 !
-!     :: ccS contributions to the singles c vector ::  
+!     :: CCS contributions to the singles c vector ::  
 ! 
-      call wf%initialize_amplitudes
       call wf%read_amplitudes
-!
 !
       call wf%jacobian_ccs_a1(rho_a_i, c_a_i)
       call wf%jacobian_ccs_b1(rho_a_i, c_a_i)
