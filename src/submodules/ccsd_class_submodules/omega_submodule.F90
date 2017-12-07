@@ -7,26 +7,30 @@ submodule (ccsd_class) omega
 !!
 !!    Contains the following family of procedures of the CCSD class:
 !!
-!!    initialize_omega: allocates the projection vector (omega1, omega2)
-!!                          and sets it to zero.
+!!    initialize_omega: allocates the projection vector (omega1, omega2),
+!!                      if it is not allocated, and sets it to zero.
+!!
+!!    destruct_omega:   deallocates the projection vector (omega1, omega2), 
+!!                      if it is allocated.
 !!
 !!    construct_omega:  constructs the projection vector (omega1, omega2) 
-!!                          for the current amplitudes (t1am, t2am) for the
-!!                          wavefunction object wf. The routine assumes that
-!!                          the projection vector is allocated.
+!!                      for the current amplitudes (t1am, t2am) for the
+!!                      wavefunction object wf. The routine assumes that
+!!                      the projection vector is allocated.
 !!
-!!    omega_ccsd_a1:         adds A1 term to omega1
-!!    omega_ccsd_b1:         adds B1 term to omega1
-!!    omega_ccsd_c1:         adds C1 term to omega1
+!!    The construct omega routine adds the CCS as well as the CCSD contributions,
+!!    which are defined in the following routines (defined below):
 !!
-!!    omega_ccsd_a2:         adds A2 term to omega2
-!!    omega_ccsd_b2:         adds B2 term to omega2
-!!    omega_ccsd_c2:         adds C2 term to omega2
-!!    omega_ccsd_d2:         adds D2 term to omega2
-!!    omega_ccsd_e2:         adds E2 term to omega2
+!!    omega_ccsd_a1: adds A1 term to omega1
+!!    omega_ccsd_b1: adds B1 term to omega1
+!!    omega_ccsd_c1: adds C1 term to omega1
 !!
-!
-   use batching_index_class
+!!    omega_ccsd_a2: adds A2 term to omega2
+!!    omega_ccsd_b2: adds B2 term to omega2
+!!    omega_ccsd_c2: adds C2 term to omega2
+!!    omega_ccsd_d2: adds D2 term to omega2
+!!    omega_ccsd_e2: adds E2 term to omega2
+!!
 !
    implicit none 
 !
@@ -42,7 +46,7 @@ contains
 !
    module subroutine initialize_omega_ccsd(wf)
 !!
-!!    Initialize Omega (CCSD)
+!!    Initialize omega (CCSD)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
 !!    Allocates the projection vector (omega1, omega2) and sets it
@@ -61,9 +65,26 @@ contains
    end subroutine initialize_omega_ccsd
 !
 !
+   module subroutine destruct_omega_ccsd(wf)
+!!
+!!    Destruct omega (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
+!!
+!!    Deallocates the projection vector.
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      if (allocated(wf%omega1)) call wf%mem%dealloc(wf%omega1, wf%n_v, wf%n_o)
+      if (allocated(wf%omega2)) call wf%mem%dealloc(wf%omega2, wf%n_t2am, 1)
+!
+   end subroutine destruct_omega_ccsd
+!
+!
    module subroutine construct_omega_ccsd(wf)
 !!
-!!     Construct Omega (CCSD)
+!!     Construct omega (CCSD)
 !!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
 !!     Directs the construction of the projection vector < mu | exp(-T) H exp(T) | R >
@@ -181,12 +202,12 @@ contains
 !
 !     Batching variables 
 !
+      integer(i15) :: required        = 0
+      integer(i15) :: current_a_batch = 0
+!
       type(batching_index) :: batch_a 
 !
-      integer(i15)         :: current_a_batch = 0
-      integer(i15)         :: required        = 0
-!
-!     Indices 
+!     Various indices 
 !
       integer(i15) :: i = 0, j = 0, a = 0, c = 0, k = 0, d = 0
       integer(i15) :: ad = 0, ad_dim = 0, ci = 0, cidk = 0, ck = 0, da = 0 
@@ -230,13 +251,9 @@ contains
 !
 !     Prepare for batching 
 !
-!     Estimated memory required to construct g_adkc 
-!     (clearly an underestimate, see Cholesky routines when updating)
+!     Estimated memory required to construct g_adkc
 !
-      required = (wf%n_o)*(wf%n_v)**3                                & ! g_adkc 
-               + (wf%n_J)*(wf%n_v)**2                                & ! L_ad^J
-               + (wf%n_J)*(wf%n_v)*(wf%n_o)                          & ! L_kc^J 
-               + (wf%n_J)*(wf%n_v)**2 + 2*(wf%n_J)*(wf%n_o)*(wf%n_v)   ! To construct L_ad^J
+      required = wf%get_vvov_required_mem()
 !
 !     Initialization of the batching variable
 !
@@ -301,15 +318,15 @@ contains
 !
    module subroutine omega_ccsd_b1_ccsd(wf)
 !!
-!!       Omega B1
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!    Omega B1
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!       Calculates the B1 term, 
+!!    Calculates the B1 term, 
 !!
 !!        B1:  - sum_ckl u_kl^ac * g_kilc,
 !! 
-!!       and adds it to the singles projection vector (omeg1) of
-!!       the wavefunction object wf
+!!    and adds it to the singles projection vector (omeg1) of
+!!    the wavefunction object wf
 !!
       implicit none
 !
@@ -476,7 +493,6 @@ contains
                   wf%omega1,         &
                   (wf%n_o)*(wf%n_v))
 !
-!
       call wf%mem%dealloc(u_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine omega_ccsd_c1_ccsd
@@ -484,8 +500,10 @@ contains
 !
    module subroutine omega_ccsd_a2_ccsd(wf)
 !!
-!!    Omega A2 term: Omega A2 = g_ai_bj + sum_(cd)g_ac_bd * t_ci_dj = A2.1 + A.2.2
+!!    Omega A2 term
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 10 Mar 2017
+!!
+!!    A2 = g_ai_bj + sum_(cd)g_ac_bd * t_ci_dj = A2.1 + A.2.2
 !!
 !!    Structure: Batching over both a and b for A2.2.
 !!                t^+_ci_dj = t_ci_dj + t_di_cj
@@ -530,12 +548,16 @@ contains
 !
 !     Batching and memory handling variables
 !
-      integer(i15) :: a_n_batch = 0, a_first = 0, a_last = 0, a_length = 0, a_max_length = 0, a_batch = 0
-      integer(i15) :: b_n_batch = 0, b_first = 0, b_last = 0, b_length = 0, b_max_length = 0, b_batch = 0
-
-      integer(i15) :: required = 0, available = 0, threads = 0
+      integer(i15) :: required = 0
 !
-      integer :: omp_get_num_threads
+      integer(i15) :: current_a_batch = 0
+      integer(i15) :: current_b_batch = 0
+!
+      type(batching_index) :: batch_a 
+      type(batching_index) :: batch_b
+!
+      integer(i15) :: threads = 0
+      integer(i15) :: omp_get_num_threads
 !
 !     Timing variables
 !
@@ -543,13 +565,11 @@ contains
       real(dp) :: a2_begin_time, a2_end_time
       real(dp) :: a2_begin_time_1, a2_end_time_1
 !
-   !   write(unit_output,'(t3,a/)') 'Breakdown of A2 term:'
-!
       time_non_integral_part = zero
 !
       call cpu_time(a2_begin_time)
 !
-!     ::  Calculate the A2.1 term of omega ::
+!     :: Calculate the A2.1 term of omega ::
 !
 !     Create g_ai_bj
 !
@@ -586,48 +606,34 @@ contains
 !
 !    ::  Calculate the A2.2 term  of omega ::
 !
-     required = max(3*(wf%n_v)**2*(wf%n_J) + 2*(wf%n_v)*(wf%n_o)*(wf%n_J),      & ! Needed to get  L_db_J
-                    (wf%n_v)**4 + 2*(wf%n_v)**2*(wf%n_J), &                       ! Needed to get g_ac_bd
-                    (wf%n_v)**4 + 2*(packed_size(wf%n_v))*(packed_size(wf%n_v)) & ! Needed to get g+- and t+-
-                    + 2*(packed_size(wf%n_v))*(packed_size(wf%n_o)), &            !
-                      2*(packed_size(wf%n_v))*(packed_size(wf%n_v)) &             ! Needed for g+- and t+- and Omega+-
-                    + 2*(packed_size(wf%n_v))*(packed_size(wf%n_o)) &             !
-                    + 2*(wf%n_v)**2*(packed_size(wf%n_v)))                        !
+     required = wf%get_vvvv_required_mem() + (4*(wf%n_o**2)*(wf%n_v**2) + 2*(wf%n_v**4))*dp
 !
-     required = required*4  ! Words
+!     Initialize batching variables 
 !
-     a_max_length = 0
-     call num_two_batch(required, wf%mem%available, a_max_length, a_n_batch, wf%n_v)
+      call batch_a%init(wf%n_v)
+      call batch_b%init(wf%n_v)
 !
-!    Initialize some variables for batching
-!
-     a_first  = 0
-     a_last   = 0
-     a_length = 0
+      call wf%mem%num_two_batch(batch_a, batch_b, required)
 !
 !    Start looping over a-batches
 !
-     do a_batch = 1,a_n_batch
+     do current_a_batch = 1, batch_a%num_batches 
 !  
-        call batch_limits(a_first ,a_last ,a_batch, a_max_length, wf%n_v)
-        a_length = a_last - a_first + 1     
+!        Determine the limits for the a-batch 
 !
-!       Start looping over batches of b
+         call batch_a%determine_limits(current_a_batch)
 !
-        b_first  = 0
-        b_last   = 0
-        b_length = 0
+!        Start looping over b-batches
 !
-        b_max_length = a_max_length
+         do current_b_batch = 1, batch_b%num_batches 
+!  
+!           Determine the limits for the b-batch 
 !
-        do b_batch = 1, a_batch
-!
-            call batch_limits(b_first ,b_last ,b_batch, b_max_length, wf%n_v)
-            b_length = b_last - b_first + 1 
+            call batch_b%determine_limits(current_b_batch)
 ! 
 !           Allocate g_ca_db
 !
-            call wf%mem%alloc(g_ac_bd, (wf%n_v)*a_length, (wf%n_v)*b_length)
+            call wf%mem%alloc(g_ac_bd, (wf%n_v)*(batch_a%length), (wf%n_v)*(batch_b%length))
 !
 !           Get g_ac_bd
 !
@@ -636,26 +642,26 @@ contains
             integral_type = 'electronic_repulsion'
             call wf%get_vv_vv(integral_type, & 
                               g_ac_bd,       &
-                              a_first,       &
-                              a_last,        &
+                              batch_a%first, &
+                              batch_a%last,  &
                               1,             & 
                               wf%n_v,        &
-                              b_first,       & 
-                              b_last,        &
+                              batch_b%first, & 
+                              batch_b%last,  &
                               1,             & 
                               wf%n_v)  
 !
             call cpu_time(a2_end_time_1)
             time_non_integral_part = time_non_integral_part & 
-                                    - a2_end_time_1 + a2_begin_time_1 
+                                   - a2_end_time_1 + a2_begin_time_1 
 !
-            if (b_batch .eq. a_batch) then
+            if (current_b_batch .eq. current_a_batch) then
 !
 !
 !           Allocate for +-g, +-t
 !
-               call wf%mem%alloc(g_p_ab_cd, packed_size(a_length), packed_size(wf%n_v))
-               call wf%mem%alloc(g_m_ab_cd, packed_size(a_length), packed_size(wf%n_v))
+               call wf%mem%alloc(g_p_ab_cd, packed_size(batch_a%length), packed_size(wf%n_v))
+               call wf%mem%alloc(g_m_ab_cd, packed_size(batch_a%length), packed_size(wf%n_v))
                call wf%mem%alloc(t_p_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
                call wf%mem%alloc(t_m_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
 !
@@ -668,21 +674,21 @@ contains
 ! 
 !$omp parallel do schedule(static) private(d,b,a,ac,cd,bd,bc,ab,ad,i,j,ij,ci,dj,cj,di,cidj,dicj)
                do c = 1, wf%n_v
-
+!
                   do d = 1, c
 !
                      cd = index_packed(c, d)
 !
-                     do a = 1, a_length
+                     do a = 1, batch_a%length
 !
-                        ac = index_two(a, c, a_length)
-                        ad = index_two(a, d, a_length)
+                        ac = index_two(a, c, batch_a%length)
+                        ad = index_two(a, d, batch_a%length)
 !
-                        do  b = 1, b_length
-                           if ((a+a_first-1) .ge. (b+b_first-1)) then
+                        do  b = 1, batch_b%length
+                           if ((a+batch_a%first-1) .ge. (b+batch_b%first-1)) then
 !                            
-                              bd = index_two(b, d, b_length)
-                              bc = index_two(b, c, b_length)
+                              bd = index_two(b, d, batch_b%length)
+                              bc = index_two(b, c, batch_b%length)
 !
                               ab = index_packed(a, b)
 ! 
@@ -722,65 +728,63 @@ contains
 !
 !              Dellocate g_ac_bd 
 !
-               call wf%mem%dealloc(g_ac_bd, (wf%n_v)*a_length, (wf%n_v)*b_length)
+               call wf%mem%dealloc(g_ac_bd, (wf%n_v)*(batch_a%length), (wf%n_v)*(batch_b%length))
 !
 !              Allocate omega +-
 !
-              call wf%mem%alloc(omega2_p_ab_ij, packed_size(a_length), packed_size(wf%n_o))
-              call wf%mem%alloc(omega2_m_ab_ij, packed_size(a_length), packed_size(wf%n_o))
+              call wf%mem%alloc(omega2_p_ab_ij, packed_size(batch_a%length), packed_size(wf%n_o))
+              call wf%mem%alloc(omega2_m_ab_ij, packed_size(batch_a%length), packed_size(wf%n_o))
 ! 
 !              omega2_ab_ij = sum_(cd) g_ab_cd*t_cd_ij
 ! 
-              call dgemm('N','N',                & 
-                          packed_size(a_length), &
-                          packed_size(wf%n_o),   &
-                          packed_size(wf%n_v),   &
-                          one/four,              &
-                          g_p_ab_cd,             &
-                          packed_size(a_length), &
-                          t_p_cd_ij,             &
-                          packed_size(wf%n_v),   &
-                          zero,                  &
-                          omega2_p_ab_ij,        &
-                          packed_size(a_length))
+              call dgemm('N','N',                      & 
+                          packed_size(batch_a%length), &
+                          packed_size(wf%n_o),         &
+                          packed_size(wf%n_v),         &
+                          one/four,                    &
+                          g_p_ab_cd,                   &
+                          packed_size(batch_a%length), &
+                          t_p_cd_ij,                   &
+                          packed_size(wf%n_v),         &
+                          zero,                        &
+                          omega2_p_ab_ij,              &
+                          packed_size(batch_a%length))
 !
-              call dgemm('N','N',                & 
-                          packed_size(a_length), &
-                          packed_size(wf%n_o),   &
-                          packed_size(wf%n_v),   &
-                          one/four,              &
-                          g_m_ab_cd,             &
-                          packed_size(a_length), &
-                          t_m_cd_ij,             &
-                          packed_size(wf%n_v),   &
-                          zero,                  &
-                          omega2_m_ab_ij,        &
-                          packed_size(a_length) )
+              call dgemm('N','N',                      & 
+                          packed_size(batch_a%length), &
+                          packed_size(wf%n_o),         &
+                          packed_size(wf%n_v),         &
+                          one/four,                    &
+                          g_m_ab_cd,                   &
+                          packed_size(batch_a%length), &
+                          t_m_cd_ij,                   &
+                          packed_size(wf%n_v),         &
+                          zero,                        &
+                          omega2_m_ab_ij,              &
+                          packed_size(batch_a%length) )
 !
 !             Deallocate +-g, +-t
 ! 
-              call wf%mem%dealloc(g_p_ab_cd, packed_size(a_length), packed_size(wf%n_v))
-              call wf%mem%dealloc(g_m_ab_cd, packed_size(a_length), packed_size(wf%n_v))
+              call wf%mem%dealloc(g_p_ab_cd, packed_size(batch_a%length), packed_size(wf%n_v))
+              call wf%mem%dealloc(g_m_ab_cd, packed_size(batch_a%length), packed_size(wf%n_v))
               call wf%mem%dealloc(t_p_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
               call wf%mem%dealloc(t_m_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
 !
               do i = 1, wf%n_o
                  do j = 1, i
 !
-                    
                     ij = index_packed(i, j)
 !
-                    do a = 1, a_length
+                    do a = 1, batch_a%length
 !
-                       ai = index_two(a + a_first - 1, i, wf%n_v) ! A is full-CCSD-space a index
-                       aj = index_two(a + a_first - 1, j, wf%n_v) ! A is full-CCSD-space a index
+                       ai = index_two(a + batch_a%first - 1, i, wf%n_v) ! A is full-CCSD-space a index
+                       aj = index_two(a + batch_a%first - 1, j, wf%n_v) ! A is full-CCSD-space a index
 !
-                       do b = 1, b_length
+                       do b = 1, batch_b%length
 !                
-                          if ((a+a_first-1) .ge. (b+b_first-1)) then
-                             bj = index_two(b + b_first - 1, j, wf%n_v) ! B is full-CCSD-space b index
-                             bi = index_two(b + b_first - 1, i, wf%n_v) ! B is full-CCSD-space b index
-!
+                          if ((a+batch_a%first-1) .ge. (b+batch_b%first-1)) then
+                             bj = index_two(b + batch_b%first - 1, j, wf%n_v) ! B is full-CCSD-space b index
+                             bi = index_two(b + batch_b%first - 1, i, wf%n_v) ! B is full-CCSD-space b index
 !
                              ab = index_packed(a, b)
 !    
@@ -805,14 +809,14 @@ contains
 !
 !              Deallocate omega +-
 !
-               call wf%mem%dealloc(omega2_p_ab_ij, packed_size(a_length), packed_size(wf%n_o))
-               call wf%mem%dealloc(omega2_m_ab_ij, packed_size(a_length), packed_size(wf%n_o))
+               call wf%mem%dealloc(omega2_p_ab_ij, packed_size(batch_a%length), packed_size(wf%n_o))
+               call wf%mem%dealloc(omega2_m_ab_ij, packed_size(batch_a%length), packed_size(wf%n_o))
             else
 !
 !              Allocate for +-g, +-t
 !
-               call wf%mem%alloc(g_p_ab_cd, a_length*b_length, packed_size(wf%n_v))
-               call wf%mem%alloc(g_m_ab_cd, a_length*b_length, packed_size(wf%n_v))
+               call wf%mem%alloc(g_p_ab_cd, (batch_a%length)*(batch_b%length), packed_size(wf%n_v))
+               call wf%mem%alloc(g_m_ab_cd, (batch_a%length)*(batch_b%length), packed_size(wf%n_v))
                call wf%mem%alloc(t_p_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
                call wf%mem%alloc(t_m_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
 !
@@ -827,17 +831,17 @@ contains
 !
                      cd = index_packed(c, d)
 !
-                     do a = 1, a_length
+                     do a = 1, batch_a%length
 !
-                        ac = index_two(a, c, a_length)
-                        ad = index_two(a, d, a_length)
+                        ac = index_two(a, c, batch_a%length)
+                        ad = index_two(a, d, batch_a%length)
 !
-                        do  b = 1, b_length
+                        do  b = 1, batch_b%length
 !                            
-                             bd = index_two(b, d, b_length)
-                             bc = index_two(b, c, b_length)
+                             bd = index_two(b, d, batch_b%length)
+                             bc = index_two(b, c, batch_b%length)
 !
-                             ab = index_two(a, b, a_length)
+                             ab = index_two(a, b, batch_a%length)
 ! 
                              g_p_ab_cd(ab, cd) = g_ac_bd(ac, bd) + g_ac_bd(ad, bc)
                              g_m_ab_cd(ab, cd) = g_ac_bd(ac, bd) - g_ac_bd(ad, bc)
@@ -874,68 +878,64 @@ contains
 !
 !              Dellocate g_ac_bd 
 !
-               call wf%mem%dealloc(g_ac_bd, (wf%n_v)*a_length, (wf%n_v)*b_length)
+               call wf%mem%dealloc(g_ac_bd, (wf%n_v)*(batch_a%length), (wf%n_v)*(batch_b%length))
 !
 !              Allocate omega +-
 !
-
-               call wf%mem%alloc(omega2_p_ab_ij, b_length*a_length, packed_size(wf%n_o))
-               call wf%mem%alloc(omega2_m_ab_ij, b_length*a_length, packed_size(wf%n_o))
+               call wf%mem%alloc(omega2_p_ab_ij, (batch_a%length)*(batch_b%length), packed_size(wf%n_o))
+               call wf%mem%alloc(omega2_m_ab_ij, (batch_a%length)*(batch_b%length), packed_size(wf%n_o))
 !  
 !               omega2_ab_ij = sum_(cd) g_ab_cd*t_cd_ij
 ! 
-              call dgemm('N','N',                  & 
-                          b_length*a_length,       &
-                          packed_size(wf%n_o),     &
-                          packed_size(wf%n_v),     &
-                          one/four,                &
-                          g_p_ab_cd,               &
-                          b_length*a_length,       &
-                          t_p_cd_ij,               &
-                          packed_size(wf%n_v),     &
-                          zero,                    &
-                          omega2_p_ab_ij,          &
-                          b_length*a_length)
+              call dgemm('N','N',                            & 
+                          (batch_a%length)*(batch_b%length), &
+                          packed_size(wf%n_o),               &
+                          packed_size(wf%n_v),               &
+                          one/four,                          &
+                          g_p_ab_cd,                         &
+                          (batch_a%length)*(batch_b%length), &
+                          t_p_cd_ij,                         &
+                          packed_size(wf%n_v),               &
+                          zero,                              &
+                          omega2_p_ab_ij,                    &
+                          (batch_a%length)*(batch_b%length))
 !
-              call dgemm('N','N',                  & 
-                          b_length*a_length,       &
-                          packed_size(wf%n_o),     &
-                          packed_size(wf%n_v),     &
-                          one/four,                &
-                          g_m_ab_cd,               &
-                          b_length*a_length,       &
-                          t_m_cd_ij,               &
-                          packed_size(wf%n_v),     &
-                          zero,                    &
-                          omega2_m_ab_ij,          &
-                          b_length*a_length)
+              call dgemm('N','N',                            & 
+                          (batch_a%length)*(batch_b%length), &
+                          packed_size(wf%n_o),               &
+                          packed_size(wf%n_v),               &
+                          one/four,                          &
+                          g_m_ab_cd,                         &
+                          (batch_a%length)*(batch_b%length), &
+                          t_m_cd_ij,                         &
+                          packed_size(wf%n_v),               &
+                          zero,                              &
+                          omega2_m_ab_ij,                    &
+                          (batch_a%length)*(batch_b%length))
 !
 !          Deallocate +-g, +-t
 ! 
-              call wf%mem%dealloc(g_p_ab_cd, b_length*a_length, packed_size(wf%n_v))
-              call wf%mem%dealloc(g_m_ab_cd, b_length*a_length, packed_size(wf%n_v))
+              call wf%mem%dealloc(g_p_ab_cd, (batch_a%length)*(batch_b%length), packed_size(wf%n_v))
+              call wf%mem%dealloc(g_m_ab_cd, (batch_a%length)*(batch_b%length), packed_size(wf%n_v))
               call wf%mem%dealloc(t_p_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
               call wf%mem%dealloc(t_m_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
 !
                do i = 1, wf%n_o
                   do j = 1, i
-!
-                     
+!   
                      ij = index_packed(i, j)
 !
-                     do a = 1, a_length
+                     do a = 1, batch_a%length
 !
-                        ai = index_two(a + a_first - 1, i, wf%n_v) ! A is full-space a index
-                        aj = index_two(a + a_first - 1, j, wf%n_v) ! A is full-space a index
+                        ai = index_two(a + batch_a%first - 1, i, wf%n_v) ! A is full-space a index
+                        aj = index_two(a + batch_a%first - 1, j, wf%n_v) ! A is full-space a index
 !
-                        do b = 1, b_length
+                        do b = 1, batch_b%length
 !                 
-                              bj = index_two(b + b_first - 1, j, wf%n_v) ! B is full-space b index
-                              bi = index_two(b + b_first - 1, i, wf%n_v) ! B is full-space b index
+                              bj = index_two(b + batch_b%first - 1, j, wf%n_v) ! B is full-space b index
+                              bi = index_two(b + batch_b%first - 1, i, wf%n_v) ! B is full-space b index
 !
-!
-                              ab = index_two(a, b, a_length)
-
+                              ab = index_two(a, b, batch_a%length)
 !     
                               aibj = index_packed(ai, bj)
                               biaj = index_packed(bi, aj)
@@ -946,8 +946,10 @@ contains
                                           + omega2_p_ab_ij(ab, ij) + omega2_m_ab_ij(ab, ij)
 !
                               if (aibj .ne. biaj) then
+!
                                  wf%omega2(biaj,1) = wf%omega2(biaj, 1) &
                                           + omega2_p_ab_ij(ab, ij) - omega2_m_ab_ij(ab, ij)
+!
                               endif   
 !     
                         enddo
@@ -957,17 +959,13 @@ contains
 !
 !              Deallocate omega +-
 !
-               call wf%mem%dealloc(omega2_p_ab_ij, b_length*a_length, packed_size(wf%n_o))
-               call wf%mem%dealloc(omega2_m_ab_ij, b_length*a_length, packed_size(wf%n_o))
+               call wf%mem%dealloc(omega2_p_ab_ij, (batch_a%length)*(batch_b%length), packed_size(wf%n_o))
+               call wf%mem%dealloc(omega2_m_ab_ij, (batch_a%length)*(batch_b%length), packed_size(wf%n_o))
+!
             endif
 !
          enddo ! End batching over b
       enddo ! End batching over a
-!
-   !   call cpu_time(a2_end_time)
-   !   time_non_integral_part = time_non_integral_part + a2_end_time - a2_begin_time
-!
-   !   write(unit_output,'(t6,a27,f14.8/)') 'Non-integral part (seconds):', time_non_integral_part
 !
    end subroutine omega_ccsd_a2_ccsd
 !
@@ -1214,10 +1212,10 @@ contains
 !
 !     Batching and memory handling
 !
-      integer(i15) :: required = 0, available = 0
+      integer(i15) :: required = 0
+      integer(i15) :: current_a_batch = 0
 !
-      integer(i15) :: n_batch = 0, max_batch_length = 0
-      integer(i15) :: a_batch = 0, a_start = 0, a_end = 0, a_length = 0 
+      type(batching_index) :: batch_a 
 !
 !     Allocate and construct g_kd_lc 
 !
@@ -1320,28 +1318,24 @@ contains
 !
 !     Constructing g_ki_ac
 !
-!     Setup of variables needed for batching
-      required = 2*(wf%n_v**2)*(wf%n_J) + 2*(wf%n_v)*(wf%n_o)*(wf%n_J) &
-               + (wf%n_o**2)*(wf%n_v**2)
-      required = 4*required
-      call num_batch(required, wf%mem%available, max_batch_length, n_batch, wf%n_v)
+      required = wf%get_vvoo_required_mem()
 !
-      a_start  = 1
-      a_end    = 0
-      a_length = 0
+!     Initialize batching variable 
 !
-!     Start looping over batches
+      call batch_a%init(wf%n_v)
+      call wf%mem%num_batch(batch_a, required)
 !
-      do a_batch = 1,n_batch
+!     Start looping over a-batches 
 !
-!        Get batch limits  and  length of batch
+      do current_a_batch = 1, batch_a%num_batches
 !
-         call batch_limits(a_start, a_end, a_batch, max_batch_length, wf%n_v)
-         a_length = a_end - a_start + 1
+!        Determine batch limits for the a-batch 
+!
+         call batch_a%determine_limits(current_a_batch)
 !
 !        Allocate and construct g_ki_ac
 !
-         call wf%mem%alloc(g_ki_ac, (wf%n_o)**2, a_length*(wf%n_v))
+         call wf%mem%alloc(g_ki_ac, (wf%n_o)**2, (batch_a%length)*(wf%n_v))
 !
          integral_type = 'electronic_repulsion'
          call wf%get_oo_vv(integral_type, & 
@@ -1350,8 +1344,8 @@ contains
                            wf%n_o,        &
                            1,             & 
                            wf%n_o,        &
-                           a_start,       & 
-                           a_end,         &
+                           batch_a%first, & 
+                           batch_a%last,  &
                            1,             &
                            wf%n_v)
 !
@@ -1366,10 +1360,10 @@ contains
 !
                   ck = index_two(c, k, wf%n_v)
 !
-                  do a = 1, a_length
+                  do a = 1, batch_a%length
 !
-                     ai = index_two(a + a_start -1, i, wf%n_v)
-                     ac = index_two(a, c, a_length)
+                     ai = index_two(a + batch_a%first -1, i, wf%n_v)
+                     ac = index_two(a, c, batch_a%length)
 !
                      X_ai_ck(ai, ck) = X_ai_ck(ai, ck) + g_ki_ac(ki, ac)
 !
@@ -1384,7 +1378,7 @@ contains
 !
 !        Reorder g_ac_ki to g_ai_kc 
 !
-         call wf%mem%alloc(g_ai_ck, a_length*(wf%n_o), (wf%n_o)*(wf%n_v))
+         call wf%mem%alloc(g_ai_ck, (batch_a%length)*(wf%n_o), (wf%n_o)*(wf%n_v))
          g_ai_ck = zero
 !
          do k = 1, wf%n_o 
@@ -1396,10 +1390,10 @@ contains
 !
                   ki = index_two(k, i, wf%n_o)
 !
-                  do a = 1, a_length
+                  do a = 1, batch_a%length
 !
-                     ac = index_two(a, c, a_length)
-                     ai = index_two(a, i, a_length)
+                     ac = index_two(a, c, batch_a%length)
+                     ai = index_two(a, i, batch_a%length)
 !
                      g_ai_ck(ai, ck) = g_ki_ac(ki, ac) ! g_acki 
 !
@@ -1408,26 +1402,26 @@ contains
             enddo
          enddo
 !
-         call wf%mem%dealloc(g_ki_ac, (wf%n_o)**2, a_length*(wf%n_v))
+         call wf%mem%dealloc(g_ki_ac, (wf%n_o)**2, (batch_a%length)*(wf%n_v))
 !
 !        - 1/2 * sum_ck u_jk^bc g_acki = -1/2 * sum_ck g_ai_ck u_ck_bj
 !
-         ai_offset = index_two(a_start, 1, wf%n_v)
+         ai_offset = index_two(batch_a%first, 1, wf%n_v)
 !
          call dgemm('N','N',                 &
-                  (wf%n_o)*a_length,         &
+                  (wf%n_o)*(batch_a%length), &
                   (wf%n_o)*(wf%n_v),         &
                   (wf%n_o)*(wf%n_v),         &
                   -one/two,                  &
                   g_ai_ck,                   &
-                  (wf%n_o)*a_length,         &
+                  (wf%n_o)*(batch_a%length), &
                   u_ck_bj,                   &
                   (wf%n_o)*(wf%n_v),         &
                   zero,                      &
                   omega2_ai_bj(ai_offset,1), &
                   (wf%n_o)*(wf%n_v))
 !
-         call wf%mem%dealloc(g_ki_ac, (wf%n_o)**2, a_length*(wf%n_v))
+         call wf%mem%dealloc(g_ki_ac, (wf%n_o)**2, (batch_a%length)*(wf%n_v))
 !
       enddo ! End of batching
 !

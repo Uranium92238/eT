@@ -79,9 +79,7 @@ contains
 !
 !     :: CCS contributions to the singles c vector ::  
 !
-      call wf%initialize_amplitudes
       call wf%read_amplitudes
-!
 !
       call wf%jacobian_ccs_a1(rho_a_i, c_a_i)
       call wf%jacobian_ccs_b1(rho_a_i, c_a_i)

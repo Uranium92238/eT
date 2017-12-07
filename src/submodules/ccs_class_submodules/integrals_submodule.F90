@@ -4841,7 +4841,7 @@ contains
          inquire(file='g_abcd',exist=vvvv_on_file)
          inquire(file='g_t1_abcd',exist=t1_vvvv_on_file)
 !
-         if ( t1_vvvv_on_file) then
+         if ( t1_vvvv_on_file  .and. .not. wf%tasks%current == 'ground_state') then
 !
 !           We are reading T1 transformed vvvv electronic repulsion integral, 
 !           this only requires the size of the array itself
@@ -4865,6 +4865,16 @@ contains
             get_vvvv_required_mem_ccs = get_vvvv_required_mem_ccs*dp
             return
 !
+         else
+!
+!           We are constructing the integral from T1-transformed Cholesky vectors
+!
+            get_vvvv_required_mem_ccs = get_vvvv_required_mem_ccs + (dim_1)*(dim_2)*(wf%n_J)
+!
+            get_vvvv_required_mem_ccs = get_vvvv_required_mem_ccs + max(2*(wf%n_o)*(dim_2)*(wf%n_J), &
+                                       (wf%n_o)*(dim_2)*(wf%n_J) + (dim_1)*(dim_2)*(wf%n_J), &
+                                       (dim_3)*(dim_4)*(wf%n_J) + 2*(wf%n_o)*(dim_4)*(wf%n_J), &
+                                       2*(dim_3)*(dim_4)*(wf%n_J) + (wf%n_o)*(dim_4)*(wf%n_J))
          endif
 !
       elseif (.not. (present(dim_1) .and. present(dim_2) .and. present(dim_3) .and. present(dim_4))) then
@@ -4876,7 +4886,7 @@ contains
          inquire(file='g_abcd',exist=vvvv_on_file)
          inquire(file='g_t1_abcd',exist=t1_vvvv_on_file)
 !
-         if ( t1_vvvv_on_file) then
+         if ( t1_vvvv_on_file  .and. .not. wf%tasks%current == 'ground_state') then
 !
 !           We are reading T1 transformed vvvv electronic repulsion integral, 
 !           this only requires the size of the array itself
@@ -4899,6 +4909,16 @@ contains
             get_vvvv_required_mem_ccs = get_vvvv_required_mem_ccs*dp
             return
 !
+         else
+!
+!           We are constructing the integral from T1-transformed Cholesky vectors
+!
+            get_vvvv_required_mem_ccs = get_vvvv_required_mem_ccs + (wf%n_v**2)*(wf%n_J)
+!
+            get_vvvv_required_mem_ccs = get_vvvv_required_mem_ccs + max(2*(wf%n_o)*(wf%n_v)*(wf%n_J), &
+                                       (wf%n_o)*(wf%n_v)*(wf%n_J) + (wf%n_v**2)*(wf%n_J), &
+                                       (wf%n_v**2)*(wf%n_J) + 2*(wf%n_o)*(wf%n_v)*(wf%n_J), &
+                                       2*(wf%n_v**2)*(wf%n_J) + (wf%n_o)*(wf%n_v)*(wf%n_J))
          endif
 !
       else
@@ -4907,15 +4927,6 @@ contains
          stop
 !
       endif
-!
-!     We are constructing the integral from T1-transformed Cholesky vectors
-!
-      get_vvvv_required_mem_ccs = get_vvvv_required_mem_ccs + (dim_1)*(dim_2)*(wf%n_J)
-!
-      get_vvvv_required_mem_ccs = get_vvvv_required_mem_ccs + max(2*(wf%n_o)*(dim_2)*(wf%n_J), &
-                                       (wf%n_o)*(dim_2)*(wf%n_J) + (dim_1)*(dim_2)*(wf%n_J), &
-                                       (dim_3)*(dim_4)*(wf%n_J) + 2*(wf%n_o)*(dim_4)*(wf%n_J), &
-                                       2*(dim_3)*(dim_4)*(wf%n_J) + (wf%n_o)*(dim_4)*(wf%n_J))
 !
       get_vvvv_required_mem_ccs = get_vvvv_required_mem_ccs*dp
 !
@@ -4941,6 +4952,81 @@ contains
 !
       integer(i15) :: get_vvvo_required_mem_ccs
 !
+      logical :: t1_vvvo_on_file = .false.
+!
+      if (present(dim_1) .and. present(dim_2) .and. present(dim_3) .and. present(dim_4)) then
+!
+         get_vvvo_required_mem_ccs = (dim_1*dim_2*dim_3*dim_4)
+!
+!        Check if vvvv integrals are on file
+!
+         inquire(file='g_t1_abci',exist=t1_vvvo_on_file)
+!
+         if ( t1_vvvo_on_file .and. .not. wf%tasks%current == 'ground_state') then
+!
+!           We are reading T1 transformed vvvv electronic repulsion integral, 
+!           this only requires the size of the array itself
+!
+            get_vvvo_required_mem_ccs = get_vvvo_required_mem_ccs*dp
+            return
+!
+         else
+            get_vvvo_required_mem_ccs = get_vvvo_required_mem_ccs + &
+                                       (dim_1)*(dim_2)*(wf%n_J) + (dim_3)*(dim_4)*(wf%n_J)
+!
+            get_vvvo_required_mem_ccs = get_vvvo_required_mem_ccs + &
+                  max(2*(dim_2)*(wf%n_o)*(wf%n_J), &
+                     (dim_2)*(wf%n_o)*(wf%n_J)+ (dim_1)*(dim_2)*(wf%n_J), &
+                     (dim_3)*(dim_4)*(wf%n_J) + 2*(dim_3)*(wf%n_v)*(wf%n_J), &
+                     2*(dim_4)*(dim_3)*(wf%n_J) + 2*(dim_4)*(wf%n_o)*(wf%n_J), &
+                     2*(wf%n_o)*(wf%n_v)*(wf%n_J), &
+                     (wf%n_o)*(wf%n_v)*(wf%n_J) + (dim_4)*(wf%n_o)*(wf%n_J), &
+                     2*(dim_4)*(wf%n_o)*(wf%n_J), &
+                     (dim_4)*(wf%n_o)*(wf%n_J) + (dim_3)*(dim_4)*(wf%n_J))
+         endif
+!
+      elseif (.not. (present(dim_1) .and. present(dim_2) .and. present(dim_3) .and. present(dim_4))) then
+!
+         get_vvvo_required_mem_ccs = (wf%n_v**3)*(wf%n_o)*dp
+!
+!        Check if vvvv integrals are on file
+!
+         inquire(file='g_t1_abci',exist=t1_vvvo_on_file)
+!
+         if ( t1_vvvo_on_file .and. .not. wf%tasks%current == 'ground_state') then
+!
+!           We are reading T1 transformed vvvv electronic repulsion integral, 
+!           this only requires the size of the array itself
+!
+            get_vvvo_required_mem_ccs = get_vvvo_required_mem_ccs*dp
+            return
+!
+         else
+!
+            get_vvvo_required_mem_ccs = get_vvvo_required_mem_ccs + &
+                                       (wf%n_v)*(wf%n_v)*(wf%n_J) + (wf%n_v)*(wf%n_o)*(wf%n_J)
+!
+            get_vvvo_required_mem_ccs = get_vvvo_required_mem_ccs + &
+                  max(2*(wf%n_v)*(wf%n_o)*(wf%n_J), &
+                     (wf%n_v)*(wf%n_o)*(wf%n_J)+ (wf%n_v**2)*(wf%n_J), &
+                     2*(wf%n_v**2)*(wf%n_J) + (wf%n_v)*(wf%n_o)*(wf%n_J), &
+                     (wf%n_v)*(wf%n_o)*(wf%n_J) + 2*(wf%n_o**2)*(wf%n_J), &
+                     2*(wf%n_v)*(wf%n_o)*(wf%n_J), &
+                     (wf%n_v)*(wf%n_o)*(wf%n_J) + (wf%n_o**2)*(wf%n_J), &
+                     2*(wf%n_o**2)*(wf%n_J), &
+                     (wf%n_o**2)*(wf%n_J) + (wf%n_v)*(wf%n_o)*(wf%n_J))
+         endif
+!
+      else
+!
+         write(unit_output,*) 'Error: call to get_vvvv_required_mem is missing some arguments'
+         stop
+!
+      endif
+!
+      get_vvvo_required_mem_ccs = get_vvvo_required_mem_ccs*dp
+!
+!
    end function get_vvvo_required_mem_ccs
 !
 !
@@ -4961,7 +5047,67 @@ contains
 !  
       integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
 !
-      integer(i15) :: get_vvvo_required_mem_ccs
+      integer(i15) :: get_vvov_required_mem_ccs
+!
+      logical :: vvov_t1_on_file = .false.
+!
+!     Test if we have T1-transformed on file
+!
+      inquire(file='g_t1_bcia',exist=vvov_t1_on_file)
+!
+      if (present(dim_1) .and. present(dim_2) .and. present(dim_3) .and. present(dim_4)) then
+!
+         get_vvov_required_mem_ccs = (dim_1*dim_2*dim_3*dim_4)
+!
+         if (vvov_t1_on_file .and. .not. wf%tasks%current == 'ground_state') then
+!
+!           We are reading T1 transformed vvvv electronic repulsion integral, 
+!           this only requires the size of the array itself
+!
+            get_vvov_required_mem_ccs = get_vvov_required_mem_ccs*dp
+            return
+!
+         else
+!
+            get_vvov_required_mem_ccs = get_vvov_required_mem_ccs + &
+                                       (dim_1)*(dim_2)*(wf%n_J) + (dim_3)*(dim_4)*(wf%n_J)
+!
+            get_vvov_required_mem_ccs = get_vvov_required_mem_ccs + &
+                  max(2*(dim_2)*(wf%n_o)*(wf%n_J), &
+                     (dim_2)*(wf%n_o)*(wf%n_J)+ (dim_1)*(dim_2)*(wf%n_J))
+           
+         endif
+!
+      elseif (.not. (present(dim_1) .and. present(dim_2) .and. present(dim_3) .and. present(dim_4))) then
+!
+         get_vvov_required_mem_ccs = (wf%n_v**3)*(wf%n_o)*dp
+!
+         if (vvov_t1_on_file .and. .not. wf%tasks%current == 'ground_state') then
+!
+!           We are reading T1 transformed vvvv electronic repulsion integral, 
+!           this only requires the size of the array itself
+!
+            get_vvov_required_mem_ccs = get_vvov_required_mem_ccs*dp
+            return
+!
+         else
+!
+            get_vvov_required_mem_ccs = get_vvov_required_mem_ccs + &
+                                       (wf%n_v**2)*(wf%n_J) + (wf%n_o)*(wf%n_v)*(wf%n_J)
+!
+            get_vvov_required_mem_ccs = get_vvov_required_mem_ccs + &
+                  max(2*(wf%n_v)*(wf%n_o)*(wf%n_J), &
+                     (wf%n_v)*(wf%n_o)*(wf%n_J)+ (wf%n_v**2)*(wf%n_J))
+         endif
+!
+      else
+!
+         write(unit_output,*) 'Error: call to get_vvvv_required_mem is missing some arguments'
+         stop
+!
+      endif
+!
+      get_vvov_required_mem_ccs = get_vvov_required_mem_ccs*dp
 !
    end function get_vvov_required_mem_ccs
 !
@@ -4983,7 +5129,43 @@ contains
 !  
       integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
 !
-      integer(i15) :: get_vvvo_required_mem_ccs
+      integer(i15) :: get_vvoo_required_mem_ccs
+!
+      if (present(dim_1) .and. present(dim_2) .and. present(dim_3) .and. present(dim_4)) then
+!
+         get_vvoo_required_mem_ccs = (dim_1*dim_2*dim_3*dim_4)
+!
+         get_vvoo_required_mem_ccs = get_vvoo_required_mem_ccs + &
+                                    (dim_1)*(dim_2)*(wf%n_J) + (dim_3)*(dim_4)*(wf%n_J)
+!
+         get_vvoo_required_mem_ccs = get_vvoo_required_mem_ccs + &
+                  max(2*(dim_2)*(wf%n_o)*(wf%n_J), &
+                     (dim_2)*(wf%n_o)*(wf%n_J)+ (dim_1)*(dim_2)*(wf%n_J), &
+                     2*(wf%n_v)*(dim_3)*(wf%n_J), &
+                     dim_3*(wf%n_v)*(wf%n_J) + (dim_4)*(dim_3)*(wf%n_J))
+           
+!
+      elseif (.not. (present(dim_1) .and. present(dim_2) .and. present(dim_3) .and. present(dim_4))) then
+!
+         get_vvoo_required_mem_ccs = (wf%n_v**2)*(wf%n_o**2)*dp
+!
+         get_vvoo_required_mem_ccs = get_vvoo_required_mem_ccs + &
+                                    (wf%n_v**2)*(wf%n_J) + (wf%n_o**2)*(wf%n_J)
+!
+         get_vvoo_required_mem_ccs = get_vvoo_required_mem_ccs + &
+                  max(2*(wf%n_v)*(wf%n_o)*(wf%n_J), &
+                     (wf%n_v)*(wf%n_o)*(wf%n_J)+ (wf%n_v**2)*(wf%n_J), &
+                     2*(wf%n_v)*(wf%n_o)*(wf%n_J), &
+                     (wf%n_o)*(wf%n_v)*(wf%n_J) + (wf%n_o**2)*(wf%n_J))
+!
+      else
+!
+         write(unit_output,*) 'Error: call to get_vvvv_required_mem is missing some arguments'
+         stop
+!
+      endif
+!
+      get_vvoo_required_mem_ccs = get_vvoo_required_mem_ccs*dp
 !
    end function get_vvoo_required_mem_ccs
 !

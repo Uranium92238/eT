@@ -63,10 +63,10 @@ module hf_class
       type(calc_tasks) :: tasks
       type(calc_tasks) :: implemented
 !
-      type(ground_state_specs)         :: ground_state_specifications
-      type(excited_state_specs)        :: excited_state_specifications
-      type(core_excited_state_specs)   :: core_excited_state_specifications
-      type(response_calc_specs)        :: response_specifications
+      type(ground_state_specs)       :: ground_state_specifications
+      type(excited_state_specs)      :: excited_state_specifications
+      type(core_excited_state_specs) :: core_excited_state_specifications
+      type(response_calc_specs)      :: response_specifications
 !
 !     Memory manager 
 !
@@ -95,7 +95,6 @@ module hf_class
       procedure, non_overridable :: read_hf_info                => read_hf_info_hf
       procedure, non_overridable :: read_transform_cholesky     => read_transform_cholesky_hf
       procedure, non_overridable :: construct_ao_fock           => construct_ao_fock_hf 
-      procedure, non_overridable :: construct_ao_fock_new       => construct_ao_fock_new_hf 
       procedure, non_overridable :: construct_density_matrices  => construct_density_matrices_hf
       procedure, non_overridable :: construct_density_matrix    => construct_density_matrix_hf
       procedure, non_overridable :: construct_density_matrix_v  => construct_density_matrix_v_hf
@@ -116,8 +115,8 @@ contains
 !!
 !!    Performs the following tasks:
 !!
-!!    1. Sets HF orbital and energy information by reading from file
-!!    2. Transforms AO Cholesky vectors to MO basis and saves to file
+!!    - Sets HF orbital and energy information by reading from file
+!!    - Reads and transforms AO Cholesky vectors to MO basis and saves to file
 !!
       implicit none
 !
@@ -158,7 +157,7 @@ contains
 !
    subroutine read_hf_info_hf(wf)
 !!
-!!    Read HF Info
+!!    Read HF info
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
 !!    Reads the file mlcc_hf_info and sets the following HF variables: 
@@ -219,7 +218,7 @@ contains
 !
    subroutine read_transform_cholesky_hf(wf)
 !!
-!!    Read and Transform Cholesky
+!!    Read and transform Cholesky
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 20 Apr 2017
 !!
 !!    Reads the AO Cholesky vectors from file, transforms the vectors 
@@ -229,14 +228,16 @@ contains
 !
       class(hf) :: wf
 !
-      integer(i15) :: unit_chol_ao    = -1 ! Unit identifier for mlcc_cholesky file
-      integer(i15) :: unit_chol_mo_ij = -1 ! cholesky_ij file
-      integer(i15) :: unit_chol_mo_ia = -1 ! cholesky_ia file
-      integer(i15) :: unit_chol_mo_ab = -1 ! cholesky_ab file
+      integer(i15) :: unit_chol_ao           = -1 ! Unit identifier for mlcc_cholesky file
+      integer(i15) :: unit_chol_mo_ij        = -1 ! cholesky_ij file
+      integer(i15) :: unit_chol_mo_ia        = -1 ! cholesky_ia file
+      integer(i15) :: unit_chol_mo_ab        = -1 ! cholesky_ab file
       integer(i15) :: unit_chol_mo_ij_direct = -1 ! cholesky_ij direct access file
       integer(i15) :: unit_chol_mo_ia_direct = -1 ! cholesky_ia direct access file
       integer(i15) :: unit_chol_mo_ab_direct = -1 ! cholesky_ab direct access file
+!
       integer(i15) :: ioerror = 0
+!
       integer(i15) :: throw_away_index = 0
       real(dp)     :: throw_away
 !
@@ -259,9 +260,10 @@ contains
 !
 !     Batching variables
 !
-      integer(i15) :: b_batch = 0, b_first = 0, b_last = 0, b_length = 0
-      integer(i15) :: required = 0, available = 0, n_batch = 0, batch_dimension = 0
-      integer(i15) :: max_batch_length = 0
+      integer(i15) :: required = 0 
+      integer(i15) :: current_b_batch = 0
+!
+      type(batching_index) :: batch_b
 !
       call cpu_time(begin_timer)
 !
@@ -426,7 +428,7 @@ contains
            access='direct', form='unformatted', recl=dp*(wf%n_J), iostat=ioerror)
 !
       do ia = 1, wf%n_o*wf%n_v
-            write(unit_chol_mo_ia_direct, rec=ia) (L_ia_J(ia,j), j = 1, wf%n_J)
+         write(unit_chol_mo_ia_direct, rec=ia) (L_ia_J(ia,j), j = 1, wf%n_J)
       enddo
 !
       call wf%mem%dealloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
@@ -442,44 +444,45 @@ contains
       open(unit=unit_chol_mo_ab_direct, file='cholesky_ab_direct', action='write', status='unknown', &
            access='direct', form='unformatted', recl=dp*(wf%n_J), iostat=ioerror)
       if (ioerror .ne. 0) then
-            write(unit_output,*)'WARNING: error while creating cholesky_ab_direct'
-            stop
-         endif
+         write(unit_output,*) 'Error: could not create cholesky_ab_direct file'
+         stop
+      endif
 !
 !     Read L_ab_J in batches over b
 !
       required = ((wf%n_v)**2)*(wf%n_J)
 !
-      required = 4*required ! In words
-      available = get_available()
+!     Initialize batching variable 
 !
-      batch_dimension  = wf%n_v ! Batch over the virtual index b
-      max_batch_length = 0      ! Initilization of unset variables 
-      n_batch          = 0
+      call batch_b%init(wf%n_v)
+      call wf%mem%num_batch(batch_b, required)         
 !
-      call num_batch(required, available, max_batch_length, n_batch, batch_dimension)           
+!     Loop over the b-batches
 !
-!     Loop over the number of a batches 
+      do current_b_batch = 1, batch_b%num_batches
 !
-      do b_batch = 1, n_batch
+!        Determine limits of the b-batch 
 !
-         call batch_limits(b_first, b_last, b_batch, max_batch_length, batch_dimension)
-         b_length = b_last - b_first + 1 
+         call batch_b%determine_limits(current_b_batch)
 !
-         call wf%mem%alloc(L_ab_J, (((b_length + 1)*b_length/2)+(wf%n_v - b_length - b_first + 1)*b_length), wf%n_J)
+         call wf%mem%alloc(L_ab_J,                                           & 
+            (((batch_b%length + 1)*(batch_b%length)/2) +                     &
+            (wf%n_v - batch_b%length - batch_b%first + 1)*(batch_b%length)), &
+            wf%n_J)
 !
-         if (b_first .ne. 1) then
+         if (batch_b%first .ne. 1) then
 !  
 !           Calculate index of last element to throw away
 !  
-            throw_away_index = index_packed(wf%n_v, b_first - 1)
+            throw_away_index = index_packed(wf%n_v, batch_b%first - 1)
 !  
 !           Throw away all elements from 1 to throw_away_index, then read from batch start
 !  
             do j = 1, wf%n_J
 !
               read(unit_chol_mo_ab) (throw_away, i = 1, throw_away_index), &
-                                    (L_ab_J(a,j), a = 1,(((b_length + 1)*b_length/2)+(wf%n_v - b_length - b_first + 1)*b_length))
+                  (L_ab_J(a,j), a = 1, (((batch_b%length + 1)*(batch_b%length)/2) + &
+                                       (wf%n_v - batch_b%length - batch_b%first + 1)*(batch_b%length)))
 !
             enddo
 !
@@ -489,20 +492,23 @@ contains
 !  
             do j = 1, wf%n_J
 !
-              read(unit_chol_mo_ab) (L_ab_J(a,j), a = 1, (((b_length + 1)*b_length/2)+(wf%n_v - b_length - b_first + 1)*b_length))
+              read(unit_chol_mo_ab) (L_ab_J(a,j), a = 1, (((batch_b%length + 1)*(batch_b%length)/2) + &
+                                    (wf%n_v - batch_b%length - batch_b%first + 1)*(batch_b%length)))
 !
             enddo
 !
          endif
 !
          do a = 1, wf%n_v
-            do b = b_first, b_last
+            do b = batch_b%first, batch_b%last
                ab = index_packed(a, b)
                write(unit_chol_mo_ab_direct, rec=ab) (L_ab_J(ab, J), J = 1, wf%n_J)
             enddo
          enddo
 !
-         call wf%mem%dealloc(L_ab_J, (((b_length+1)*b_length/2)+(wf%n_v - b_length - b_first + 1)*b_length), wf%n_J)
+         call wf%mem%dealloc(L_ab_J, (((batch_b%length+1)*(batch_b%length)/2) +               &
+                             (wf%n_v - batch_b%length - batch_b%first + 1)*(batch_b%length)), &
+                             wf%n_J)
 !
       enddo
       close(unit_chol_mo_ab, status='delete')
@@ -609,7 +615,7 @@ contains
 !
       else
 !
-         write(unit_output, *) 'WARNING: Error in call to read_cholesky_ij'
+         write(unit_output, *) 'Error: the call to read_cholesky_ij is not valid'
          stop
 !
       endif   
@@ -624,7 +630,6 @@ contains
 !!
 !!    Reads the MO Cholesky IA (occ-vir) vectors from file and
 !!    places them in the incoming L_ia_J matrix
-!!
 !!
 !!    Optional arguments: i_first, i_last, a_first, a_last can be used in order to restrict indices
 !!
@@ -698,14 +703,16 @@ contains
 !
          close(unit_chol_mo_ia)
       else
-         write(unit_output, *) 'WARNING: Error in call to read_cholesky_ia'
-            stop
+!
+         write(unit_output, *) 'Error: call to read_cholesky_ia is not valid'
+         stop
+!
       endif    
 !   
    end subroutine read_cholesky_ia_hf
 !
 !   
-subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
+   subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !!
 !!    Read Cholesky AI 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -718,8 +725,10 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
       implicit none
 !
       class(hf)                 :: wf
-      integer(i15), optional    :: i_first, a_first     ! First index (can differ from 1 when batching or for mlcc) 
-      integer(i15), optional    :: i_last, a_last      ! Last index (can differ from n_o when batching or for mlcc) 
+!
+      integer(i15), optional    :: i_first, a_first ! First index (can differ from 1 when batching or for mlcc) 
+      integer(i15), optional    :: i_last, a_last   ! Last index (can differ from n_o when batching or for mlcc)
+! 
       real(dp), dimension(:, :) :: L_ai_J ! L_ai^J
 !
 !     Local routine variables
@@ -730,6 +739,7 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
       integer(i15) :: i_length, a_length
 !
       if (present(i_first) .and. present(i_last) .and. present(a_first) .and. present(a_last)) then
+!
          i_length = i_last - i_first + 1
          a_length = a_last - a_first + 1
 !
@@ -764,7 +774,7 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !        Deallocate temporary vector 
 !
          call wf%mem%dealloc(L_ia_J, a_length*i_length, wf%n_J)   
-
+!
       elseif (.not.(present(i_first) .and. present(i_last) .and. present(a_first) .and. present(a_last))) then
 !
 !        Allocation
@@ -797,10 +807,13 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !
 !        Deallocate temporary vector 
 !
-         call wf%mem%dealloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)   
+         call wf%mem%dealloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J) 
+!  
       else
-         write(unit_output, *) 'WARNING: Error in call to read_cholesky_ia'
-            stop
+!
+         write(unit_output, *) 'Error: call to read_cholesky_ia is not valid'
+         stop
+!
       endif    
 !
    end subroutine read_cholesky_ai_hf
@@ -820,10 +833,11 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
       implicit none
 !
       class(hf)                :: wf
+!
       integer(i15), intent(in) :: a_first, b_first   ! First index (can differ from 1 when batching  or for mlcc)
       integer(i15), intent(in) :: a_last, b_last    ! Last index  (can differ from n_v when batching or for mlcc)
-      real(dp), dimension(((a_last - a_first + 1)*(b_last - b_first + 1)), wf%n_J) :: L_ab_J ! L_ab^J
 !
+      real(dp), dimension(((a_last - a_first + 1)*(b_last - b_first + 1)), wf%n_J) :: L_ab_J ! L_ab^J
 !
       integer(i15) :: unit_chol_mo_ab_direct = -1 ! Unit identifier for cholesky_ab file
       integer(i15) :: ioerror = 0
@@ -843,155 +857,39 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 
 !
       if (ioerror .ne. 0) then
-         write(unit_output,*)'WARNING: error while reading cholesky_ab_direct.', ioerror
+!
+         write(unit_output,*) 'Error: could not read cholesky_ab_direct'
          stop
+!
       endif
 !
-         do a = 1, a_length
-            do b = 1, b_length
-               ab_full = index_packed(a + a_first - 1,b + b_first - 1)
-               ab = index_two(a, b, a_length)
-               read(unit_chol_mo_ab_direct, rec=ab_full) (L_ab_J(ab, J), J = 1, wf%n_J)
-            enddo
-         enddo
+      do a = 1, a_length
+         do b = 1, b_length
 !
-!        Close file
+            ab_full = index_packed(a + a_first - 1,b + b_first - 1)
+            ab = index_two(a, b, a_length)
+            read(unit_chol_mo_ab_direct, rec=ab_full) (L_ab_J(ab, J), J = 1, wf%n_J)
+!
+         enddo
+      enddo
+!
+!     Close file
 !        
       close(unit_chol_mo_ab_direct)
 !
-!
    end subroutine read_cholesky_ab_hf
+!
 !
    subroutine construct_ao_fock_hf(wf, ao_fock)
 !!
-!!
-   implicit none
-!
-      class(hf) :: wf
-      real(dp), dimension(wf%n_ao, wf%n_ao) :: ao_fock
-!
-      real(dp), dimension(:, :), allocatable :: density
-!
-      real(dp), dimension(:,:), allocatable :: h1ao
-      real(dp), dimension(:,:), allocatable :: chol_ao
-      real(dp), dimension(:,:), allocatable :: chol_ao_sq
-      real(dp), dimension(:,:), allocatable :: g_J_mn_ps
-      real(dp), dimension(:,:), allocatable :: L_J_mn_ps
-!
-      integer(i15) :: i = 0, J = 0, m = 0, n = 0, p = 0, s = 0
-      integer(i15) :: mn = 0, ms = 0, ps = 0, pn = 0
-!
-      integer(i15) :: unit_identifier_ao_integrals = 0, unit_chol_ao = 0
-!
-      call wf%mem%alloc(h1ao, wf%n_ao*(wf%n_ao+1)/2, 1)
-      h1ao = zero
-!
-!     Open mlcc_aoint file
-!
-      call generate_unit_identifier(unit_identifier_ao_integrals)
-      open(unit=unit_identifier_ao_integrals,file='MLCC_AOINT',status='old',form='formatted')
-      rewind(unit_identifier_ao_integrals)
-!
-!     Read in one-electron AO integrals
-!
-      read(unit_identifier_ao_integrals,*) (h1ao(i,1), i = 1, wf%n_ao*(wf%n_ao+1)/2)
-!
-!     Close mlcc_aoint
-!
-      close(unit_identifier_ao_integrals)
-!
-!     Allocate the AO Fock matrix and add the one-electron contributions
-!
-      ao_fock = zero
-!
-      call squareup(h1ao, ao_fock, wf%n_ao)  
-!
-!     Deallocation of one-electron AO integrals
-!   
-      call wf%mem%dealloc(h1ao, wf%n_ao*(wf%n_ao+1)/2, 1)
-!
-!     Read Cholesky in ao basis
-!
-      call generate_unit_identifier(unit_chol_ao)
-      open(unit=unit_chol_ao, file='MLCC_CHOLESKY', status='old', form='formatted')
-      rewind(unit_chol_ao)
-!
-!     Read the number of Cholesky vectors (n_J) and 
-!     the number of atomic orbitals (n_ao)
-!
-      read(unit_chol_ao,*) wf%n_ao, wf%n_J
-!
-      call wf%mem%alloc(chol_ao, wf%n_ao*(wf%n_ao+1)/2, wf%n_J)    
-!
-         chol_ao    = zero
-!
-!        Read Cholesky AO vector
-!
-         do j = 1, wf%n_J
-            read(unit_chol_ao,*) (chol_ao(i,j), i = 1, wf%n_ao*(wf%n_ao+1)/2)
-         enddo
-         
-!
-!
-      call wf%mem%alloc(g_J_mn_ps, (wf%n_ao)*(wf%n_ao+1)/2,(wf%n_ao)*(wf%n_ao+1)/2)
-!
-!
-            call dgemm('N', 'T', &
-                     wf%n_ao*(wf%n_ao+1)/2, &
-                     wf%n_ao*(wf%n_ao+1)/2, &
-                     wf%n_J,                &
-                     one,                   &
-                     chol_ao,               &
-                     wf%n_ao*(wf%n_ao+1)/2, &
-                     chol_ao,               &
-                     wf%n_ao*(wf%n_ao+1)/2, &
-                     zero,                  &
-                     g_J_mn_ps,             &
-                     wf%n_ao*(wf%n_ao+1)/2)
-!
-            call wf%mem%dealloc(chol_ao, wf%n_ao*(wf%n_ao+1)/2, wf%n_J)
-            call wf%mem%alloc(density, wf%n_ao, wf%n_ao)
-            density = zero     
-!
-            call wf%construct_density_matrix(density, wf%mo_coef, wf%n_o, wf%n_v) 
-!
-            do m = 1, wf%n_ao
-               do n = 1, wf%n_ao
-!
-                  mn = index_packed(m, n)
-!
-                  do p = 1, wf%n_ao 
-!
-                     pn = index_packed(p,n)
-!
-                     do s = 1, wf%n_ao 
-!                    
-                        ms = index_packed(m, s)
-!
-                        ps = index_packed(p, s)                                         
-!
-                        ao_fock(m,n) = ao_fock(m,n) + (two*g_J_mn_ps(mn,ps) - g_J_mn_ps(ms, pn))*density(p,s)    
-!     
-                     enddo
-                  enddo
-               enddo
-            enddo
-!
-         call wf%mem%dealloc(g_J_mn_ps, (wf%n_ao)*(wf%n_ao+1)/2,(wf%n_ao)*(wf%n_ao+1)/2)
-         call wf%mem%dealloc(density, wf%n_ao, wf%n_ao)
-!
-      close(unit_chol_ao)
-      close(unit_identifier_ao_integrals)
-!
-   end subroutine construct_ao_fock_hf
-   subroutine construct_ao_fock_new_hf(wf, ao_fock)
-!!
+!!    Construct AO Fock matrix (HF)
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jun 2017
 !!
       implicit none
 !
       class(hf) :: wf
-      real(dp), dimension(wf%n_ao, wf%n_ao) :: ao_fock
 !
+      real(dp), dimension(wf%n_ao, wf%n_ao)  :: ao_fock
       real(dp), dimension(:, :), allocatable :: density
 !
       real(dp), dimension(:,:), allocatable :: h1ao
@@ -1011,7 +909,6 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
       integer(i15) :: m_batch = 0, m_first = 0, m_last = 0, m_length = 0
       integer(i15) :: required = 0, available = 0, n_batch = 0, batch_dimension = 0
       integer(i15) :: max_batch_length = 0
-!
 !
       call wf%mem%alloc(h1ao, wf%n_ao*(wf%n_ao+1)/2, 1)
       h1ao = zero
@@ -1055,7 +952,7 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !
          call wf%mem%alloc(chol_ao, wf%n_ao*(wf%n_ao+1)/2, 1)    
 !
-         chol_ao    = zero
+         chol_ao = zero
 !
 !        Read Cholesky AO vector
 !
@@ -1089,7 +986,6 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
                      1)
 !
          call daxpy(wf%n_ao**2, X, chol_ao_sq, 1, ao_fock, 1)
-         
 !
 !        Exchange term: - sum_Jps  L^J_ms * D_p,s * L^J_pn
 !
@@ -1110,17 +1006,17 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !
          call wf%mem%dealloc(density, wf%n_ao, wf%n_ao)
 !
-         call dgemm('N', 'N', &
-                     wf%n_ao, &
-                     wf%n_ao, &
-                     wf%n_ao, &
-                     -one, &
-                     Y, &
-                     wf%n_ao, &
+         call dgemm('N', 'N',    &
+                     wf%n_ao,    &
+                     wf%n_ao,    &
+                     wf%n_ao,    &
+                     -one,       &
+                     Y,          &
+                     wf%n_ao,    &
                      chol_ao_sq, &
-                     wf%n_ao, &
-                     one, &
-                     ao_fock, &
+                     wf%n_ao,    &
+                     one,        &
+                     ao_fock,    &
                      wf%n_ao)
 !
          call wf%mem%dealloc(Y, wf%n_ao, wf%n_ao)
@@ -1131,11 +1027,14 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
       close(unit_chol_ao)
       close(unit_identifier_ao_integrals)
 !
-   end subroutine construct_ao_fock_new_hf
+   end subroutine construct_ao_fock_hf
 !
    subroutine construct_density_matrices_hf(wf, density_o, density_v, C_matrix, n_o, n_v)
+!! 
+!!    Construct density matrices (HF)
+!!    Written by  Eirik F. Kjønstad and Sarai D. Folkestad, Jun 2017
 !!
-!!
+!!    Constructs both occupied and virtual density matrices
 !!
       implicit none
 !
@@ -1190,6 +1089,12 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !
    subroutine construct_density_matrix_hf(wf, density_o, C_matrix, n_o, n_v)
 !!
+!!    Construct density matrix, (HF)
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jun 2017
+!!
+!!    Constructs the occupied ao density matrix
+!!
+!!    D_pq^AO = sum_{r}C_pr^(occ)*C_rq^(occ)
 !!
       implicit none
 !
@@ -1215,7 +1120,12 @@ subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !
    subroutine construct_density_matrix_v_hf(wf, density_v, C_matrix,  n_o, n_v)
 !!
+!!    Construct density matrix virtual, (HF)
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jun 2017
 !!
+!!    Constructs the virtual ao density matrix
+!!
+!!    D_pq^AO,virt = sum_{r}C_pr^(virt)*C_rq^(virt)
 !!
       implicit none
 !

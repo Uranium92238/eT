@@ -100,9 +100,6 @@ module ccs_class
 !
       procedure :: init => init_ccs ! Initialization of class 
       procedure :: drv  => drv_ccs  ! Driver of class 
-!  
-      procedure :: initialize_amplitudes => initialize_amplitudes_ccs ! Initialize cluster amplitudes 
-      procedure :: initialize_omega      => initialize_omega_ccs      ! Initialize projection vector 
 !
 !
 !     -::- Ground state submodule routine pointers -::-
@@ -110,16 +107,17 @@ module ccs_class
 !
 !     Driver and solver 
 !
-      procedure :: ground_state_driver => ground_state_driver_ccs
-      procedure :: ground_state_solver => ground_state_solver_ccs
+      procedure :: ground_state_driver       => ground_state_driver_ccs
+      procedure :: ground_state_solver       => ground_state_solver_ccs
 !
 !     Preparations and cleanup routines (before and after solver)
 !
       procedure :: ground_state_preparations => ground_state_preparations_ccs
       procedure :: ground_state_cleanup      => ground_state_cleanup_ccs
 !
-      procedure :: initialize_ground_state   => initialize_ground_state_ccs
-      procedure :: destruct_ground_state     => destruct_ground_state_ccs
+!     Ground state restart routine 
+! 
+      procedure :: ground_state_restart      => ground_state_restart_ccs
 !
 !     DIIS component of solver, with helper routines 
 !
@@ -130,10 +128,6 @@ module ccs_class
       procedure :: calc_ampeqs_norm          => calc_ampeqs_norm_ccs
       procedure :: calc_quasi_Newton_singles => calc_quasi_Newton_singles_ccs
 !
-!     Ground state energy calculation routine 
-!
-      procedure :: calc_energy => calc_energy_ccs
-!
 !
 !     -::- Excited state submodule routine pointers -::-
 !     --------------------------------------------------
@@ -143,14 +137,17 @@ module ccs_class
       procedure                  :: excited_state_driver => excited_state_driver_ccs 
       procedure, non_overridable :: excited_state_solver => excited_state_solver_ccs
 !
-!     Preparations and cleanup (before and after solver)
+!     Preparations and cleanup routines (before and after solver)
 !
       procedure :: excited_state_preparations => excited_state_preparations_ccs
       procedure :: excited_state_cleanup      => excited_state_cleanup_ccs
 !
+!     Excited state restart routine 
+! 
+      procedure :: excited_state_restart      => excited_state_restart_ccs
+!
 !     Helper routines for excited state solver 
 !
-      procedure :: initialize_excited_states        => initialize_excited_states_ccs
       procedure :: transform_trial_vectors          => transform_trial_vectors_ccs
       procedure :: calculate_orbital_differences    => calculate_orbital_differences_ccs 
 !
@@ -278,6 +275,9 @@ module ccs_class
       procedure :: read_t1_vv_ov_electronic_repulsion  => read_t1_vv_ov_electronic_repulsion_ccs
 !
       procedure :: get_vvvv_required_mem               => get_vvvv_required_mem_ccs
+      procedure :: get_vvvo_required_mem               => get_vvvo_required_mem_ccs
+      procedure :: get_vvov_required_mem               => get_vvov_required_mem_ccs
+      procedure :: get_vvoo_required_mem               => get_vvoo_required_mem_ccs
 !
 !
 !     -::- Fock submodule routine pointers -::-
@@ -335,21 +335,37 @@ module ccs_class
       procedure :: construct_omega => construct_omega_ccs
       procedure :: omega_ccs_a1    => omega_ccs_a1_ccs
 !
+!     Ground state energy calculation routine 
+!
+      procedure :: calc_energy => calc_energy_ccs
+!
 !     Routine to construct eta, or right projection, vector
 !
       procedure :: construct_eta => construct_eta_ccs 
 !
-!     Routine to save and read the amplitudes (to/from disk)
+!     Routines to allocate amplitudes
+!
+      procedure :: initialize_amplitudes        => initialize_single_amplitudes_ccs ! Note: points to the same 
+      procedure :: initialize_single_amplitudes => initialize_single_amplitudes_ccs ! routine in CCS, for obvious reasons
+!
+!     Routines to deallocate amplitudes
+!
+      procedure :: destruct_amplitudes        => destruct_single_amplitudes_ccs ! Note: points to the same 
+      procedure :: destruct_single_amplitudes => destruct_single_amplitudes_ccs ! routine in CCS, for obvious reasons
+!
+!     Routine to save the amplitudes to disk 
 !
       procedure :: save_amplitudes        => save_amplitudes_ccs
 !
-      procedure :: read_amplitudes        => read_amplitudes_ccs
-      procedure :: read_single_amplitudes => read_single_amplitudes_ccs
+!     Routines to read the amplitudes from disk (and allocate if necessary)
 !
-!     Routines to deallocate amplitudes and omega 
+      procedure :: read_amplitudes        => read_single_amplitudes_ccs ! Note: points to the same 
+      procedure :: read_single_amplitudes => read_single_amplitudes_ccs ! routine in CCS, for obvious reasons
 !
-      procedure :: destruct_amplitudes => destruct_amplitudes_ccs
-      procedure :: destruct_omega      => destruct_omega_ccs
+!     Routines to allocate and deallocate omega
+!
+      procedure :: initialize_omega => initialize_omega_ccs ! Allocate and zero projection vector
+      procedure :: destruct_omega   => destruct_omega_ccs   ! Deallocate projection vector
 !
 !
    end type ccs
@@ -388,16 +404,6 @@ module ccs_class
       end subroutine ground_state_preparations_ccs
 !
 !
-      module subroutine ground_state_cleanup_ccs(wf)
-!!
-!!       Ground State Cleanup (CCS)
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
-!!
-         class(ccs) :: wf 
-!
-      end subroutine ground_state_cleanup_ccs
-!
-!
       module subroutine ground_state_solver_ccs(wf)
 !!
 !!       Ground State Solver 
@@ -408,6 +414,26 @@ module ccs_class
          class(ccs) :: wf 
 !
       end subroutine ground_state_solver_ccs
+!
+!
+      module subroutine ground_state_cleanup_ccs(wf)
+!!
+!!       Ground State Cleanup (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+         class(ccs) :: wf 
+!
+      end subroutine ground_state_cleanup_ccs
+!
+!
+      module subroutine ground_state_restart_ccs(wf)
+!!
+!!       Ground state restart (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
+!!
+         class(ccs) :: wf   
+!
+      end subroutine ground_state_restart_ccs
 !
 !
       module subroutine calc_ampeqs_ccs(wf)
@@ -588,6 +614,16 @@ module ccs_class
          class(ccs) :: wf
 !
       end subroutine excited_state_solver_ccs
+!
+!
+      module subroutine excited_state_restart_ccs(wf)
+!!
+!!       Excited state restart (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
+!!
+         class(ccs) :: wf  
+!
+      end subroutine excited_state_restart_ccs
 !
 !
       module subroutine solve_reduced_eigenvalue_equation_ccs(wf, eigenvalues_Re, eigenvalues_Im, &
@@ -2129,6 +2165,54 @@ module ccs_class
 !
       end function get_vvvv_required_mem_ccs
 !
+!
+      module function get_vvvo_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
+!
+!        Get vvvo required memory (CCS)
+!        Written by Eirik F. Kjønstad and Sarai D. Folkestad, Dec 2017
+!
+         implicit none
+!
+         class(ccs), intent(in)              :: wf 
+! 
+         integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
+!
+         integer(i15) :: get_vvvo_required_mem_ccs
+!
+      end function get_vvvo_required_mem_ccs
+!
+!
+      module function get_vvov_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
+!
+!        Get vvov required memory (CCS)
+!        Written by Eirik F. Kjønstad and Sarai D. Folkestad, Dec 2017
+!
+         implicit none
+
+         class(ccs), intent(in)              :: wf 
+!     
+         integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
+!
+         integer(i15) :: get_vvov_required_mem_ccs
+!
+      end function get_vvov_required_mem_ccs
+!
+!
+      module function get_vvoo_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
+!
+!        Get vvoo required memory (CCS)
+!        Written by Eirik F. Kjønstad and Sarai D. Folkestad, Dec 2017
+!
+         implicit none
+!
+         class(ccs), intent(in)              :: wf 
+!     
+         integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
+!
+         integer(i15) :: get_vvoo_required_mem_ccs
+!
+      end function get_vvoo_required_mem_ccs
+!
    end interface
 !
 !
@@ -2479,21 +2563,14 @@ contains
 !
       call wf%read_transform_cholesky
 !
-!     Initialize amplitudes and associated attributes
+!     Set amplitude attributes
 !
-      call wf%initialize_amplitudes
-!
-!     Set the number of parameters in the wavefunction
-!     (that are solved for in the ground and excited state solvers) 
-!
-      wf%n_parameters = wf%n_t1am
-!
-!     Initialize the projection vector 
-!
-      call wf%initialize_omega
+      wf%n_t1am = (wf%n_o)*(wf%n_v) 
+      wf%n_parameters = wf%n_t1am ! The number of variables solved for by the solvers 
 !
 !     Allocate Fock matrix and set to zero
 !
+      call wf%initialize_single_amplitudes ! t1am allocated, then set to zero
       call wf%initialize_fock_matrix
 !
    end subroutine init_ccs
@@ -2621,29 +2698,32 @@ contains
    end subroutine drv_ccs
 !
 !
-   subroutine initialize_amplitudes_ccs(wf)
+   subroutine initialize_single_amplitudes_ccs(wf)
 !!
-!!    Initialize Amplitudes (CCS)
+!!    Initialize single amplitudes (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!    Allocates the singles amplitudes, sets them to zero, and calculates
-!!    the number of singles amplitudes.
+!!    Allocates the singles amplitudes, sets them to zero.
 !!
       implicit none 
 !
       class(ccs) :: wf
 !
-!     Calculate the number of singles amplitudes
-!
-      wf%n_t1am = (wf%n_o)*(wf%n_v) 
-!
 !     Allocate the singles amplitudes and set to zero
 !     (which is also the value that solves the projected Scrödinger eq.)
 !
-      if (.not. allocated(wf%t1am)) call wf%mem%alloc(wf%t1am, wf%n_v, wf%n_o)
-      wf%t1am = zero
+      if (.not. allocated(wf%t1am)) then
+! 
+         call wf%mem%alloc(wf%t1am, wf%n_v, wf%n_o)
+         wf%t1am = zero
 !
-   end subroutine initialize_amplitudes_ccs
+      else
+!
+         write(unit_output,'(t3,a)') 'Warning: attempted to allocate and zero already allocated t1am'
+!
+      endif
+!
+   end subroutine initialize_single_amplitudes_ccs
 !
 !
    subroutine initialize_omega_ccs(wf)
@@ -2658,8 +2738,16 @@ contains
 !
       class(ccs) :: wf
 !
-      if (.not. allocated(wf%omega1)) call wf%mem%alloc(wf%omega1, wf%n_v, wf%n_o)
-      wf%omega1 = zero
+      if (.not. allocated(wf%omega1)) then 
+!
+         call wf%mem%alloc(wf%omega1, wf%n_v, wf%n_o)
+         wf%omega1 = zero
+!
+      else
+!
+         write(unit_output,'(t3,a)') 'Warning: attempted to allocate and zero already allocated omega1'
+!
+      endif
 !
    end subroutine initialize_omega_ccs
 !
@@ -2742,7 +2830,7 @@ contains
 !
    subroutine save_amplitudes_ccs(wf)
 !!
-!!    Save Amplitudes (CCS)
+!!    Save amplitudes (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
 !!
 !!    Store the amplitudes to disk (T1AM)
@@ -2768,27 +2856,13 @@ contains
    end subroutine save_amplitudes_ccs
 !
 !
-   subroutine read_amplitudes_ccs(wf)
-!!
-!!    Read Amplitudes (CCS)
-!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
-!!
-!!    Reads the amplitudes from disk (T1AM)
-!!
-      implicit none 
-!
-      class(ccs) :: wf
-!
-      call wf%read_single_amplitudes
-!
-   end subroutine read_amplitudes_ccs
-!
    subroutine read_single_amplitudes_ccs(wf)
 !!
-!!    Read Amplitudes (CCSD)
+!!    Read single amplitudes (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
 !!
-!!    Reads the amplitudes from disk (T1AM, T2AM)
+!!    Reads the single amplitudes from disk. If the amplitudes are not allocated,
+!!    the routine automatically allocates them.
 !!
       implicit none 
 !
@@ -2812,17 +2886,26 @@ contains
 !
          rewind(unit_t1am)
 !
-!        Read from file & close
+!        Allocate amplitudes if they aren't allocated 
 !
-         wf%t1am = zero
+         if (.not. allocated(wf%t1am)) then 
+!
+            call wf%mem%alloc(wf%t1am, wf%n_v, wf%n_o)
+            wf%t1am = zero 
+!
+         endif
+!
+!        Read from file
 !
          read(unit_t1am) wf%t1am 
-!  
+!
+!        Close file
+!
          close(unit_t1am)
 !
       else
 !
-         write(unit_output,'(t3,a)') 'Error: amplitude files do not exist.'
+         write(unit_output,'(t3,a)') 'Error: amplitude file t1am does not exist.'
          stop
 !
       endif
@@ -2832,8 +2915,8 @@ contains
 !
    subroutine destruct_amplitudes_ccs(wf)
 !!
-!!    Destruct Amplitudes (CCS)
-!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
+!!    Destruct amplitudes (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
 !!    Deallocates the amplitudes.
 !!
@@ -2841,17 +2924,31 @@ contains
 !
       class(ccs) :: wf
 !
-      if (allocated(wf%t1am)) then
-         call wf%mem%dealloc(wf%t1am, wf%n_v, wf%n_o)
-      endif
+      if (allocated(wf%t1am)) call wf%mem%dealloc(wf%t1am, wf%n_v, wf%n_o)
 !
    end subroutine destruct_amplitudes_ccs
 !
 !
+   subroutine destruct_single_amplitudes_ccs(wf)
+!!
+!!    Destruct single amplitudes (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!    Deallocates the single amplitudes.
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      if (allocated(wf%t1am)) call wf%mem%dealloc(wf%t1am, wf%n_v, wf%n_o)
+!
+   end subroutine destruct_single_amplitudes_ccs
+!
+!
    subroutine destruct_omega_ccs(wf)
 !!
-!!    Destruct Omega (CCS)
-!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
+!!    Destruct omega (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
 !!    Deallocates the projection vector.
 !!
@@ -2859,9 +2956,7 @@ contains
 !
       class(ccs) :: wf
 !
-      if (allocated(wf%omega1)) then
-         call wf%mem%dealloc(wf%omega1, wf%n_v, wf%n_o)
-      endif
+      if (allocated(wf%omega1)) call wf%mem%dealloc(wf%omega1, wf%n_v, wf%n_o)
 !
    end subroutine destruct_omega_ccs
 !

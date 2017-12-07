@@ -1,69 +1,73 @@
 submodule (ccsd_class) excited_state
 !
 !!
-!!    Excited state  submodule (CCSD)
-!!    Written by Eirik F. Kjønstad and Sarai Dery Folkestad, May 2017
+!!    Excited state submodule (CCSD)
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
 !!    Contains the following family of procedures of the CCSD class:
 !!
-!!    calculate_orbital_differences: calculates the orbital energy differences.
-!!    transform_trial_vectors:       transform trial vectors by the Jacobian (or Jacobian^T).
+!!    calculate_orbital_differences:    calculates the orbital energy differences.
+!!    transform_trial_vectors:          transform trial vectors by the Jacobian (or Jacobian^T).
 !!
+!!    print_excitation_vector:          description missing
+!!    analyze_double_excitation_vector: -/-
+!!    summary_excited_state_info:       -/-
+!!    
 !
 contains 
 !
 !
    module subroutine calculate_orbital_differences_ccsd(wf,orbital_diff)
 !!
-!!       Calculate Orbital Differences (CCSD)
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!    Calculate orbital differences (CCSD)
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!       Calculates orbital differences
+!!    Calculates orbital differences
 !!
 !!          1) ε_i^a = ε_a - ε_i
 !!          2) ε_ij^ab = ε_a + ε_b - ε_i - ε_j
 !!
-!!       and puts them in orbital_diff, which is a vector of length n_parameters.        
+!!    and puts them in orbital_diff, which is a vector of length n_parameters.        
 !!
-         implicit none
+      implicit none
 !
-         class(ccsd) :: wf
+      class(ccsd) :: wf
 !
-         real(dp), dimension(wf%n_parameters, 1) :: orbital_diff
+      real(dp), dimension(wf%n_parameters, 1) :: orbital_diff
 !
-         integer(i15) :: a = 0, i = 0, b = 0, j = 0
-         integer(i15) :: ai = 0, bj = 0
-         integer(i15) :: aibj = 0
+      integer(i15) :: a = 0, i = 0, b = 0, j = 0
+      integer(i15) :: ai = 0, bj = 0
+      integer(i15) :: aibj = 0
 !
-         do i = 1, wf%n_o
-            do a = 1, wf%n_v
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
 !
-               ai = index_two(a, i, wf%n_v)
+            ai = index_two(a, i, wf%n_v)
 !
-               orbital_diff(ai, 1) = wf%fock_diagonal(a + wf%n_o, 1) - wf%fock_diagonal(i, 1)
+            orbital_diff(ai, 1) = wf%fock_diagonal(a + wf%n_o, 1) - wf%fock_diagonal(i, 1)
 !
-               do j = 1, wf%n_o
-                  do b = 1, wf%n_v
+            do j = 1, wf%n_o
+               do b = 1, wf%n_v
 !
-                     bj = index_two(b, j, wf%n_v)
+                  bj = index_two(b, j, wf%n_v)
 !
-                     aibj = index_packed(ai, bj)
+                  aibj = index_packed(ai, bj)
 !
-                     orbital_diff((wf%n_o)*(wf%n_v)+aibj, 1) = wf%fock_diagonal(a + wf%n_o, 1) - wf%fock_diagonal(i, 1) &
-                                                               + wf%fock_diagonal(b + wf%n_o, 1) - wf%fock_diagonal(j, 1)
+                  orbital_diff((wf%n_o)*(wf%n_v)+aibj, 1) = wf%fock_diagonal(a + wf%n_o, 1) - wf%fock_diagonal(i, 1) &
+                                                          + wf%fock_diagonal(b + wf%n_o, 1) - wf%fock_diagonal(j, 1)
 
 !
-                  enddo
                enddo
             enddo
          enddo
+      enddo
 !
    end subroutine calculate_orbital_differences_ccsd
 !
 !
    module subroutine transform_trial_vectors_ccsd(wf, first_trial, last_trial)
 !!
-!!    Transformation Trial Vectors (CCSD)
+!!    Transformation trial vectors (CCSD)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
 !!    Each trial vector in first_trial to last_trial is read from file and
@@ -184,6 +188,9 @@ contains
 !
    module subroutine print_excitation_vector_ccsd(wf, vec, unit_id)
 !!
+!!    Print excitation vector 
+!!    Written by Sarai D. Folkestad, Oct 2017
+!!
       implicit none
 !  
       class(ccsd) :: wf
@@ -239,7 +246,7 @@ contains
 !
    module subroutine excited_state_preparations_ccsd(wf)
 !!
-!!    Excited State Preparations (CCSD)
+!!    Excited state preparations (CCSD)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
 !!    A routine for preparation tasks (if any). Can be overwritten
@@ -248,6 +255,10 @@ contains
       class(ccsd) :: wf 
 !
       if (wf%settings%print_level == 'developer') write(unit_output,'(/t3,a/)') 'Preparing for excited state calculation:'
+!
+!     Read single amplitudes 
+!
+      call wf%read_single_amplitudes
 !
 !     Store vvvv-electronic repulsion integrals to file if there is space 
 !
@@ -266,27 +277,33 @@ contains
 ! 
       wf%tasks%current = 'excited_state'
 !
-!
-!     Set current task to excited state calculation 
-! 
-      wf%tasks%current = 'excited_state'
+      wf%excited_state_specifications%right = .false.
+      wf%excited_state_specifications%left  = .true.
 !
 !     Set filename for solution vectors
 !
       if (wf%tasks%core_excited_state .or. wf%tasks%core_ionized_state) then   ! Core excitation
 !
-         if (wf%excited_state_specifications%right) then                         ! Right vectors
+         if (wf%excited_state_specifications%right) then ! Right vectors
+!
             wf%excited_state_specifications%solution_file = 'right_core'
-         else                                                                    ! Left vectors
+!
+         else ! Left vectors 
+!                             
             wf%excited_state_specifications%solution_file = 'left_core'
+!
          endif
 !
-      else                                                                    ! Valence excitation
+      else ! Valence excitation
 !
-         if (wf%excited_state_specifications%left) then                          ! Right vectors
+         if (wf%excited_state_specifications%left) then ! Left vectors
+!
             wf%excited_state_specifications%solution_file = 'left_valence'
-         else                                                                    ! Left vectors
+!
+         else ! Right vectors
+!
             wf%excited_state_specifications%solution_file = 'right_valence'
+!
          endif
 !
       endif
@@ -296,7 +313,12 @@ contains
 !
    module subroutine analyze_double_excitation_vector_ccsd(wf, vec, n, sorted_short_vec, index_list)
 !!
+!!    Analyze double excitation vector 
+!!    Written by Sarai D. Folkestad, Oct 2017
 !!
+!!    Sorts the double excitation part of the excited state according to size,
+!!    in order for the print routine to show the largest contributions 
+!!    in the printout information.
 !!
       implicit none
 !  
@@ -415,12 +437,16 @@ contains
        enddo
 ! 
 !
-       end subroutine analyze_double_excitation_vector_ccsd
+   end subroutine analyze_double_excitation_vector_ccsd
 !
 !
-      module subroutine summary_excited_state_info_ccsd(wf, energies)
+   module subroutine summary_excited_state_info_ccsd(wf, energies)
 !!
+!!    Summary of excited state info 
+!!    Written by Sarai D. Folkestad, Oct 2017
 !!
+!!    Prints the analysis of the excitation vectors to the main 
+!!    output file.
 !!
       implicit none
 !  

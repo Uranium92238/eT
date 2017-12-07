@@ -1,13 +1,17 @@
 submodule(ccs_class) excited_state
 !
 !!
-!!    Excited state sub(CCS)
-!!    Written by Eirik F. Kjønstad and Sarai Dery Folkestad, May 2017
+!!    Excited state submodule (CCS)
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
 !!    Contains the following family of procedures of the CCS class:
 !!
 !!    excited_state_driver:                directs the solution of excited state problems.
+!!
+!!    excited_state_preparations:          performs preparatory tasks for the excited state solver.
 !!    excited_state_solver:                solves the excited state problem.
+!!    excited_state_cleanup:               performs cleanup tasks after excited state solver.
+!!
 !!    solve_reduced_eigenvalue_equation:   solves the excited state problem in the projected/reduced space 
 !!                                         of trial vectors (in a given iteration).
 !!    construct_next_trial_vectors:        finds the new trial vectors resulting from the residuals found 
@@ -31,8 +35,6 @@ submodule(ccs_class) excited_state
 !
    logical :: converged_energy   = .false.
    logical :: converged_residual = .false.
-!
-   logical :: print_vectors = .true.
 !
 !
 contains
@@ -66,6 +68,12 @@ contains
                                      ' ', trim(wf%name), ' triplet states.' 
       flush(unit_output)    
 !
+      write(unit_output,'(/t3,a,a,a/)')  'Settings for ',trim(wf%name), ' excited state calculation:'
+!
+      write(unit_output,'(t6,a20,e9.2)') 'Energy threshold:   ', wf%excited_state_specifications%energy_threshold
+      write(unit_output,'(t6,a20,e9.2)') 'Residual threshold: ', wf%excited_state_specifications%residual_threshold
+      flush(unit_output)
+!
 !     Preparations for excited state solver 
 !
       call wf%excited_state_preparations
@@ -95,7 +103,6 @@ contains
 !
 !     Store electronic repulsion integrals to file if there is space
 !
-      call wf%mem%alloc(wf%t1am, wf%n_v, wf%n_o)
       call wf%read_single_amplitudes
 !
       call wf%store_t1_vo_ov_electronic_repulsion
@@ -109,40 +116,31 @@ contains
 !
       if (wf%tasks%core_excited_state .or. wf%tasks%core_ionized_state) then   ! Core excitation
 !
-         if (wf%excited_state_specifications%right) then                         ! Right vectors
+         if (wf%excited_state_specifications%right) then ! Right vectors
+!
             wf%excited_state_specifications%solution_file = 'right_core'
-         else                                                                    ! Left vectors
+!
+         else ! Left vectors
+!
             wf%excited_state_specifications%solution_file = 'left_core'
+!
          endif
 !
-      else                                                                    ! Valence excitation
+      else ! Valence excitation
 !
-         if (wf%excited_state_specifications%left) then                          ! Right vectors
+         if (wf%excited_state_specifications%left) then ! Right vectors
+!
             wf%excited_state_specifications%solution_file = 'left_valence'
-         else                                                                    ! Left vectors
+!
+         else ! Left vectors
+!
             wf%excited_state_specifications%solution_file = 'right_valence'
+!
          endif
 !
       endif
 !
-      call deallocator(wf%t1am, wf%n_v, wf%n_o)
-!
    end subroutine excited_state_preparations_ccs
-!
-!
-   module subroutine excited_state_cleanup_ccs(wf)
-!!
-!!    Excited State Cleanup (CCS)
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
-!!
-!!    A routine for cleanup tasks (if any). Can be overwritten
-!!    in descendants if other cleanups prove necessary.    
-!!
-      class(ccs) :: wf 
-!
-!     Nothing yet!
-!
-   end subroutine excited_state_cleanup_ccs
 !
 !
    module subroutine excited_state_solver_ccs(wf)
@@ -216,28 +214,42 @@ contains
 !     Test for triplet calculation, and stop if so - not yet implemented
 !
       if (.not. wf%excited_state_specifications%n_triplet_states .eq. 0) then
-         write(unit_output,'(/t3,a/)') 'Triplet excitations not implemented.'
+!
+         write(unit_output,'(/t3,a/)') 'Triplet excitations not yet implemented.'
+!
       endif
+!
       flush(unit_output)
 !
-      converged = .false. 
+!     Initialize convergence logicals & iteration integer
 !
+      converged          = .false. 
       converged_energy   = .false.
       converged_residual = .false.
 !
       iteration = 1
 !
-!     Initialize for excited state calculation
+!     Set the reduced space dimension of number of new trials for the first iteration 
 !
       reduced_dim  = wf%excited_state_specifications%n_singlet_states
       n_new_trials = wf%excited_state_specifications%n_singlet_states
 !
+!     If restart use old solution vectors for first start vectors
 !
-      call wf%initialize_excited_states
+      if (wf%excited_state_specifications%restart) then 
 !
-!     Find start trial vectors and store them to the trial_vec file
+!        Restart (standard: use old solutions as initial trial vectors)
 !
-      call wf%initialize_trial_vectors
+         write(unit_output,'(/t3,a)') 'Requested restart. Preparing for restart.'
+         call wf%excited_state_restart
+!
+      else
+!
+!        Find start trial vectors and store them to the trial_vec file
+!
+         call wf%initialize_trial_vectors
+!
+      endif
 !
 !     Allocate and initialize eigenvalue arrays
 !
@@ -254,6 +266,7 @@ contains
 !     Enter iterative loop
 !
       do while (.not. converged .and. iteration .le. wf%excited_state_specifications%max_iterations) 
+!
          call cpu_time(start_excited_state_iter)
 !
 !        Prints 
@@ -300,20 +313,40 @@ contains
 !        Get next trial vectors and test for convergence of residuals 
 !
          call wf%construct_next_trial_vectors(eigenvalues_Re_new, eigenvalues_Im_new, &
-                                                solution_vectors_reduced, reduced_dim, n_new_trials)
+                                              solution_vectors_reduced, reduced_dim, n_new_trials)
 !
 !        Test for convergence of the energies and residuals
 !
-         if (converged_energy .and. converged_residual) then
-            converged = .true.
+         if (converged_residual) then ! Converged residual 
+!
+!           Tests for convergence of energy or restart
+!
+            if (converged_energy .or. iteration .eq. 1) then 
+!
+               converged = .true.
+!
+               if (iteration .eq. 1) write(unit_output,'(t3,a,/t3,a)') 'Note: residual converged in first iteration.', &
+                                                               'Energy convergence therefore not tested in this calculation.'
+!
+            endif
+!
+!           Stop timer & print CPU time for the final iteration 
+!
             call cpu_time(end_excited_state_iter)
-            if (wf%settings%print_level == 'developer') &
-                           write(unit_output,'(t3,a35,i5,a5,f14.8/)') 'Total CPU time (seconds) of iteration ',&
-                                     iteration, ' : ' ,end_excited_state_iter - start_excited_state_iter
+!
+            if (wf%settings%print_level == 'developer') then 
+!
+               write(unit_output,'(t3,a35,i5,a5,f14.8/)') 'Total CPU time (seconds) of iteration ',&
+                        iteration, ' : ' ,end_excited_state_iter - start_excited_state_iter
+!
+            endif 
+!
             flush(unit_output)
 !
-         else
+         else ! Not yet converged 
+!
             iteration = iteration + 1
+!
          endif
 !
          call wf%mem%dealloc(solution_vectors_reduced, reduced_dim, wf%excited_state_specifications%n_singlet_states)
@@ -322,17 +355,20 @@ contains
 !
 !     Prints
 !
-      if ( converged ) then
+      if (converged) then
+!
          write(unit_output,'(/t3,a,i2,a/)')  'Converged in ', iteration, ' iterations!'
 !
-         if (print_vectors) then
+         if (wf%excited_state_specifications%print_vectors) then
 !
             call wf%print_excited_state_info
 !
          endif  
 !
       else
+!
          write(unit_output,'(/t3,a/)') 'Max number of iterations performed without convergence!'
+!
       endif
 !
 !     End and print timings
@@ -370,6 +406,23 @@ contains
       call wf%mem%dealloc(eigenvalues_Re_new, reduced_dim, 1)
 !
    end subroutine excited_state_solver_ccs
+!
+!
+   module subroutine excited_state_cleanup_ccs(wf)
+!!
+!!    Excited State Cleanup (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!    A routine for cleanup tasks (if any). Can be overwritten
+!!    in descendants if other cleanups prove necessary.    
+!!
+      class(ccs) :: wf 
+!
+!     Deallocate the single amplitudes 
+!
+      call wf%destruct_single_amplitudes
+!
+   end subroutine excited_state_cleanup_ccs
 !
 !
    module subroutine solve_reduced_eigenvalue_equation_ccs(wf, eigenvalues_Re, eigenvalues_Im, &
@@ -544,8 +597,10 @@ contains
                   info)
 !
       if (info .ne. 0) then 
-         write(unit_output,*)  'WARNING: Error while finding solution', info
+!
+         write(unit_output,*)  'Error: could not solve reduced Jacobi equation', info
          stop
+!
       endif
 !
       call wf%mem%dealloc(work, 4*reduced_dim, 1)
@@ -822,6 +877,22 @@ contains
    end subroutine construct_next_trial_vectors_ccs
 !
 !
+   module subroutine excited_state_restart_ccs(wf)
+!!
+!!    Excited state restart (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
+!!
+!!    Called if restart of the excited state is requested.  
+!!
+      class(ccs) :: wf 
+!
+      write(unit_output, '(t3,a)') 'Using old solution vectors as trial vectors.'
+!
+      call wf%trial_vectors_from_stored_solutions   
+!
+   end subroutine excited_state_restart_ccs
+!
+!
    module subroutine initialize_trial_vectors_ccs(wf)
 !!
 !!    Initialize trial vectors (CCS)
@@ -829,30 +900,16 @@ contains
 !!
 !!    Wrapper for initialization of trial vectors:
 !!
-!!    If restart, then checks if old solution file exists, 
-!!    then uses old solutions as new trial vectors
-!!
-!!    If not restart: 
-!!    initialize_trial_vectors_valence is called for regular excited state calculation
-!!    initialize_trial_vectors_core is called for cvs calculation
+!!       initialize_trial_vectors_valence is called for regular excited state calculation
+!!       initialize_trial_vectors_core is called for CVS calculation
 !!     
 !!
       implicit none
 !
       class(ccs) :: wf
-!     
 !
-!     If restart use old solution vectors for first start vectors
-!
-      if (wf%excited_state_specifications%restart) then 
-!
-         write(unit_output,'(/t3,a)') 'Requested restart. Using old solution vectors as trial vectors.'
-         call wf%trial_vectors_from_stored_solutions
-         return
-!
-      endif
-!
-!     Test for ionization or excitation, core or valence
+!     Test for ionization or excitation, core or valence,
+!     and call appropriate initialization routine
 !
       if (wf%tasks%excited_state) then
 !
@@ -1248,49 +1305,38 @@ contains
    end subroutine transform_trial_vectors_ccs
 !
 !
-      module subroutine initialize_excited_states_ccs(wf)
+   module subroutine precondition_residual_ccs(wf, residual)
 !!
-         implicit none 
-!    
-         class(ccs) :: wf
-!
-         call wf%initialize_amplitudes
-!
-      end subroutine initialize_excited_states_ccs
-!
-!
-      module subroutine precondition_residual_ccs(wf, residual)
+!!    Precondition residual
+!!    Written by Sarai D. Folkestad, Aug. 2017
 !!
-!!       Precondition residual
-!!       Written by Sarai D. Folkestad, Aug. 2017
+!!    Calls precondition_residual_valence for normal excited state calculation
+!!    Calls precondition_residual_core for cvs calculation
 !!
-!!       Calls precondition_residual_valence for normal excited state calculation
-!!       Calls precondition_residual_core for cvs calculation
-!!
-         implicit none
+      implicit none
 !
-         class(ccs) :: wf
-         real(dp), dimension(wf%n_parameters ,1) :: residual
+      class(ccs) :: wf
+      real(dp), dimension(wf%n_parameters, 1) :: residual
 !
-         if (wf%tasks%excited_state) then       
+      if (wf%tasks%excited_state) then       
 !
-               call wf%precondition_residual_valence(residual)
+         call wf%precondition_residual_valence(residual)
 !
-         elseif (wf%tasks%core_excited_state) then
+      elseif (wf%tasks%core_excited_state) then
 !
-               call wf%precondition_residual_core(residual)
+         call wf%precondition_residual_core(residual)
 !
-         elseif (wf%tasks%ionized_state) then
+      elseif (wf%tasks%ionized_state) then
 !
-            call wf%precondition_residual_valence_ionization(residual)
+         call wf%precondition_residual_valence_ionization(residual)
 !
-         elseif (wf%tasks%core_ionized_state) then
+      elseif (wf%tasks%core_ionized_state) then
 !
-            call wf%precondition_residual_core_ionization(residual)
+         call wf%precondition_residual_core_ionization(residual)
 !
-         endif
+      endif
 !
-      end subroutine precondition_residual_ccs
+   end subroutine precondition_residual_ccs
 !
 !
       module subroutine precondition_residual_valence_ccs(wf, residual)
@@ -1585,5 +1631,6 @@ contains
          close(unit_solution)
 !
       end subroutine summary_excited_state_info_ccs
+!
 !
 end submodule excited_state

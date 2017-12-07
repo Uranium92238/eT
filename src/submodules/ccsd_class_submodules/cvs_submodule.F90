@@ -1,12 +1,12 @@
 submodule(ccsd_class) cvs
 !
 !!
-!!    CVS submodule(CCSD)
-!!    Written by Eirik F. Kjønstad and Sarai Dery Folkestad, May 2017
+!!    CVS submodule (CCSD)
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
 !!    Contains the CVS routines for the CCSD class.
 !!    Note that this submodule contains both excited state routines and jacobian transformation routines.
-!
+!!
 !
 contains
 !

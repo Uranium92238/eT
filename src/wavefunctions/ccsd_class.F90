@@ -6,7 +6,6 @@ module ccsd_class
 !!              Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017         
 !!                                                                           
 !!
-!!
 !!    This module contains the definition of the coupled cluster singles
 !!    and doubles (CCSD) wavefunction class. It is structured into four sections:
 !!
@@ -42,7 +41,7 @@ module ccsd_class
 !! 
 !
 !
-!  :::::::::::::::::::::::::::::::::::::
+!  ::::::::::::::::::::::::::::::::::::::
 !  -::- 1. Modules used by the class -::-
 !  ::::::::::::::::::::::::::::::::::::::
 !
@@ -80,39 +79,39 @@ module ccsd_class
    contains
 !
 !
-!     -::- Initialization and driver routines -::-
-!     --------------------------------------------
+!     -::- Initialization routine -::-
+!     ---------------------------------
 !
       procedure :: init => init_ccsd
-!
-      procedure :: initialize_amplitudes => initialize_amplitudes_ccsd
-      procedure :: initialize_omega      => initialize_omega_ccsd
 !
 !
 !     -::- Ground state submodule routine pointers -::-
 !     ------------------------------------------------- 
 !
-      procedure :: initialize_ground_state   => initialize_ground_state_ccsd
       procedure :: calc_ampeqs_norm          => calc_ampeqs_norm_ccsd
       procedure :: new_amplitudes            => new_amplitudes_ccsd
       procedure :: calc_quasi_Newton_doubles => calc_quasi_Newton_doubles_ccsd
+!
       procedure :: ground_state_preparations => ground_state_preparations_ccsd
 !
 !
 !     -::- Omega submodule routine pointers -::-
 !     ------------------------------------------
 !
-      procedure :: construct_omega => construct_omega_ccsd
+      procedure :: destruct_omega   => destruct_omega_ccsd
+      procedure :: initialize_omega => initialize_omega_ccsd
 !
-      procedure :: omega_ccsd_a1 => omega_ccsd_a1_ccsd 
-      procedure :: omega_ccsd_b1 => omega_ccsd_b1_ccsd 
-      procedure :: omega_ccsd_c1 => omega_ccsd_c1_ccsd
+      procedure :: construct_omega  => construct_omega_ccsd
 !
-      procedure :: omega_ccsd_a2 => omega_ccsd_a2_ccsd 
-      procedure :: omega_ccsd_b2 => omega_ccsd_b2_ccsd 
-      procedure :: omega_ccsd_c2 => omega_ccsd_c2_ccsd 
-      procedure :: omega_ccsd_d2 => omega_ccsd_d2_ccsd 
-      procedure :: omega_ccsd_e2 => omega_ccsd_e2_ccsd   
+      procedure :: omega_ccsd_a1    => omega_ccsd_a1_ccsd 
+      procedure :: omega_ccsd_b1    => omega_ccsd_b1_ccsd 
+      procedure :: omega_ccsd_c1    => omega_ccsd_c1_ccsd
+!
+      procedure :: omega_ccsd_a2    => omega_ccsd_a2_ccsd 
+      procedure :: omega_ccsd_b2    => omega_ccsd_b2_ccsd 
+      procedure :: omega_ccsd_c2    => omega_ccsd_c2_ccsd 
+      procedure :: omega_ccsd_d2    => omega_ccsd_d2_ccsd 
+      procedure :: omega_ccsd_e2    => omega_ccsd_e2_ccsd   
 !
 !
 !     -::- Excited state submodule routine pointers -::-
@@ -148,7 +147,7 @@ module ccsd_class
       procedure :: jacobian_ccsd_j2 => jacobian_ccsd_j2_ccsd
       procedure :: jacobian_ccsd_k2 => jacobian_ccsd_k2_ccsd
 !
-      procedure :: jacobi_test => jacobi_test_ccsd ! A debug routine
+      procedure :: jacobi_test      => jacobi_test_ccsd      ! A debug routine
 !
 !
 !     -::- Jacobian transpose submodule routine pointers -::-
@@ -196,17 +195,24 @@ module ccsd_class
 !
       procedure :: construct_eta => construct_eta_ccsd
 !
+!     Routine to allocate the amplitudes 
+!
+      procedure :: initialize_amplitudes        => initialize_amplitudes_ccsd
+      procedure :: initialize_double_amplitudes => initialize_double_amplitudes_ccsd
+!
+!     Routines to deallocate amplitudes 
+!
+      procedure :: destruct_amplitudes        => destruct_amplitudes_ccsd
+      procedure :: destruct_double_amplitudes => destruct_double_amplitudes_ccsd
+!
 !     Routine to save and read the amplitudes 
 !
-      procedure :: save_amplitudes => save_amplitudes_ccsd
+      procedure :: save_amplitudes        => save_amplitudes_ccsd
 !
-      procedure :: read_amplitudes        => read_amplitudes_ccsd
+      procedure :: read_amplitudes        => read_amplitudes_ccsd ! On its way out I think
       procedure :: read_double_amplitudes => read_double_amplitudes_ccsd
 !
-!     Routines to deallocate amplitudes and omega 
-!
-      procedure :: destruct_amplitudes => destruct_amplitudes_ccsd
-      procedure :: destruct_omega      => destruct_omega_ccsd
+!     Set the double amplitudes to the MP2 guess
 !
       procedure :: construct_perturbative_doubles => construct_perturbative_doubles_ccsd
 !
@@ -268,18 +274,6 @@ module ccsd_class
       end subroutine calc_quasi_Newton_doubles_ccsd
 !
 !
-      module subroutine initialize_ground_state_ccsd(wf)
-!!
-!!       Initialize ground state (CCSD)
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!!
-         implicit none 
-!
-         class(ccsd) :: wf
-!
-      end subroutine initialize_ground_state_ccsd
-!
-!
       module subroutine ground_state_preparations_ccsd(wf)
 !!
 !!       Ground state preparations (CCSD)
@@ -308,6 +302,18 @@ module ccsd_class
          class(ccsd) :: wf
 !
       end subroutine initialize_omega_ccsd
+!
+!
+      module subroutine destruct_omega_ccsd(wf)
+!!
+!!       Destruct Omega (CCSD)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+         implicit none
+!
+         class(ccsd) :: wf
+!
+      end subroutine destruct_omega_ccsd
 !
 !
       module subroutine construct_omega_ccsd(wf)
@@ -452,6 +458,7 @@ module ccsd_class
          integer(i15), intent(in) :: first_trial, last_trial ! Which trial_vectors we are to transform
 !
       end subroutine transform_trial_vectors_ccsd
+!
 !
       module subroutine print_excitation_vector_ccsd(wf, vec, unit_id)
 !!
@@ -1206,7 +1213,7 @@ contains
 !
       call wf%read_transform_cholesky 
 !
-!     Initialize (singles and doubles) amplitudes
+!     Set (singles and doubles) amplitude attributes
 !
       wf%n_t1am = (wf%n_o)*(wf%n_v) 
       wf%n_t2am = (wf%n_t1am)*(wf%n_t1am + 1)/2 
@@ -1215,21 +1222,36 @@ contains
 !
 !     Initialize the Fock matrix (allocate and construct given the initial amplitudes)
 !
-      if (.not. allocated(wf%t1am)) call wf%mem%alloc(wf%t1am, wf%n_v, wf%n_o)
-      wf%t1am = zero
-!
+      call wf%initialize_single_amplitudes ! t1am = zero 
       call wf%initialize_fock_matrix
+      call wf%destruct_single_amplitudes
 !
    end subroutine init_ccsd
 !
 !
    subroutine initialize_amplitudes_ccsd(wf)
 !!
-!!     Initialize Amplitudes (CCSD)
-!!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!    Initialize Amplitudes (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!     Allocates the amplitudes, sets them to zero, and calculates
-!!     the number of amplitudes.
+!!    Allocates the amplitudes, sets them to zero.
+!!
+      implicit none 
+!
+      class(ccsd) :: wf
+!
+      call wf%initialize_single_amplitudes 
+      call wf%initialize_double_amplitudes
+!
+   end subroutine initialize_amplitudes_ccsd
+!
+!
+   subroutine initialize_double_amplitudes_ccsd(wf)
+!!
+!!    Initialize double amplitudes (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!    Allocates the doubles amplitudes, sets them to zero.
 !!
       implicit none 
 !
@@ -1237,10 +1259,18 @@ contains
 !
 !     Allocate the doubles amplitudes and set to zero
 !
-      if (.not. allocated(wf%t2am)) call wf%mem%alloc(wf%t2am, wf%n_t2am, 1)
-      wf%t2am = zero
+      if (.not. allocated(wf%t2am)) then
+! 
+         call wf%mem%alloc(wf%t2am, wf%n_t2am, 1)
+         wf%t1am = zero
 !
-   end subroutine initialize_amplitudes_ccsd
+      else
+!
+         write(unit_output,'(t3,a)') 'Warning: attempted to allocate and zero already allocated t2am'
+!
+      endif
+!
+   end subroutine initialize_double_amplitudes_ccsd
 !
 !
    subroutine construct_perturbative_doubles_ccsd(wf)
@@ -1262,32 +1292,14 @@ contains
       integer(i15) :: i = 0, j = 0, a = 0, b = 0
       integer(i15) :: ai = 0, bj = 0, ia = 0, jb = 0, aibj = 0 
 !
-!     Allocate L_ia_J and g_ia_jb
+      character(len=40) :: integral_type
 !
-      call wf%mem%alloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+!     Form g_ia_jb
+!
       call wf%mem%alloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      L_ia_J = zero
-      g_ia_jb = zero
-!
-!     Get the Cholesky IA vector 
-!
-      call wf%get_cholesky_ia(L_ia_J)
-!
-!     Calculate g_ia_jb = g_iajb
-!
-      call dgemm('N','T',            &
-                  (wf%n_o)*(wf%n_v), & 
-                  (wf%n_o)*(wf%n_v), &
-                  wf%n_J,            &
-                  one,               &
-                  L_ia_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  L_ia_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  g_ia_jb,           &
-                  (wf%n_o)*(wf%n_v))
+      integral_type = 'electronic_repulsion'
+      call wf%get_ov_ov(integral_type, g_ia_jb)
 !
 !     Set the doubles amplitudes
 !
@@ -1310,9 +1322,9 @@ contains
                      aibj = index_packed(ai,bj)
 !
                      wf%t2am(aibj, 1) = - g_ia_jb(ia,jb)/(wf%fock_diagonal(wf%n_o + a, 1) + &
-                                                            wf%fock_diagonal(wf%n_o + b, 1) - &
-                                                            wf%fock_diagonal(i, 1) - &
-                                                            wf%fock_diagonal(j, 1))
+                                                          wf%fock_diagonal(wf%n_o + b, 1) - &
+                                                          wf%fock_diagonal(i, 1) -          &
+                                                          wf%fock_diagonal(j, 1))
 !
                   endif
 !
@@ -1323,7 +1335,6 @@ contains
 !
 !     Deallocations
 !
-      call wf%mem%dealloc(L_ia_J, (wf%n_o)*(wf%n_v), (wf%n_J))
       call wf%mem%dealloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) 
 !
    end subroutine construct_perturbative_doubles_ccsd
@@ -1346,38 +1357,14 @@ contains
       integer(i15) :: a = 0, i = 0, b = 0, j = 0, ai = 0
       integer(i15) :: bj = 0, aibj = 0, ia = 0, jb = 0, ib = 0, ja = 0
 !
-!     Allocate the Cholesky vector L_ia_J = L_ia^J and set to zero 
+      character(len=40) :: integral_type
 !
-      call wf%mem%alloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
-      L_ia_J = zero
-!
-!     Get the Cholesky vector L_ia_J 
-!
-      call wf%get_cholesky_ia(L_ia_J)
-!
-!     Allocate g_ia_jb = g_iajb and set it to zero
+!     Get g_ia_jb = g_iajb 
 !
       call wf%mem%alloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      g_ia_jb = zero
 !
-!     Calculate the integrals g_ia_jb from the Cholesky vector L_ia_J 
-!
-      call dgemm('N','T',            &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  wf%n_J,            &
-                  one,               &
-                  L_ia_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  L_ia_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  g_ia_jb,           &
-                  (wf%n_o)*(wf%n_v))
-!
-!     Deallocate the Cholesky vector L_ia_J 
-!
-      call wf%mem%dealloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      integral_type = 'electronic_repulsion'
+      call wf%get_ov_ov(integral_type, g_ia_jb)
 !
 !     Set the initial value of the energy 
 !
@@ -1437,29 +1424,28 @@ contains
    end subroutine destruct_amplitudes_ccsd
 !
 !
-   subroutine destruct_omega_ccsd(wf)
+   subroutine destruct_double_amplitudes_ccsd(wf)
 !!
-!!    Destruct Omega (CCSD)
+!!    Destruct Amplitudes (CCSD)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
 !!
-!!    Deallocates the projection vector.
+!!    Deallocates the (doubles) amplitudes.
 !!
       implicit none
 !
       class(ccsd) :: wf
 !
-      if (allocated(wf%omega1)) call wf%mem%dealloc(wf%omega1, wf%n_v, wf%n_o)
-      if (allocated(wf%omega2)) call wf%mem%dealloc(wf%omega2, wf%n_t2am, 1)
+      if (allocated(wf%t2am)) call wf%mem%dealloc(wf%t2am, wf%n_t2am, 1)
 !
-   end subroutine destruct_omega_ccsd
+   end subroutine destruct_double_amplitudes_ccsd
 !
 !
    subroutine save_amplitudes_ccsd(wf)
 !!
-!!    Save Amplitudes (CCSD)
+!!    Save amplitudes (CCSD)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
 !!
-!!    Store the amplitudes to disk (T1AM, T2AM)
+!!    Store the amplitudes to disk (in the files t1am and t2am)
 !!
       implicit none 
 !
@@ -1491,21 +1477,26 @@ contains
 !
    end subroutine save_amplitudes_ccsd
 !
+!
    subroutine read_amplitudes_ccsd(wf)
 !!
 !!    Read Amplitudes (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
 !!
-!!    Reads the amplitudes from disk (T1AM)
+!!    Reads the single and double amplitudes (t1am and t2am) from disk.
+!!    If the arrays are not allocated, the routine also allocates them.
 !!
       implicit none 
 !
       class(ccsd) :: wf
 !
+!     Read the amplitudes from disk
+!
       call wf%read_single_amplitudes
       call wf%read_double_amplitudes
 !
    end subroutine read_amplitudes_ccsd
+!
 !
    subroutine read_double_amplitudes_ccsd(wf)
 !!
@@ -1536,9 +1527,16 @@ contains
 !
          rewind(unit_t2am)
 !
-!        Read from file & close
+!        Allocate doubles amplitudes if they aren't allocated 
 !
-         wf%t2am = zero
+         if (.not. allocated(wf%t2am)) then 
+!
+            call wf%mem%alloc(wf%t2am, wf%n_t2am, 1)
+            wf%t2am = zero 
+!
+         endif
+!
+!        Read from file & close
 !
          read(unit_t2am) wf%t2am
 !
@@ -1546,7 +1544,7 @@ contains
 !
       else
 !
-         write(unit_output,'(t3,a)') 'Error: amplitude files do not exist.'
+         write(unit_output,'(t3,a)') 'Error: double amplitudes file does not exist.'
          stop
 !
       endif
@@ -1583,7 +1581,6 @@ contains
 !
 !     Calculate the transformation of the t1 amplitudes 
 !
-      call wf%initialize_amplitudes
       call wf%read_double_amplitudes
 !
       call wf%mem%alloc(r1am, wf%n_v, wf%n_o)
@@ -2068,10 +2065,10 @@ contains
 !
       real(dp), dimension(wf%n_parameters, 1) :: eta ! eta = ( eta_ai eta_aibj )
 !
-      real(dp), dimension(:,:), allocatable :: L_ia_J 
       real(dp), dimension(:,:), allocatable :: g_ia_jb 
-!
       real(dp), dimension(:,:), allocatable :: eta_ai_bj
+!
+      character(len=40) :: integral_type
 !
       integer(i15) :: i = 0, a = 0, j = 0, b = 0, aibj = 0
       integer(i15) :: ib = 0, ja = 0, jb = 0, ia = 0, bj = 0, ai = 0
@@ -2089,25 +2086,10 @@ contains
 !
 !     Form g_ia_jb = g_iajb 
 !
-      call wf%mem%alloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
-      call wf%get_cholesky_ia(L_ia_J)
-!
       call wf%mem%alloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      call dgemm('N','T',            &
-                  (wf%n_o)*(wf%n_v), & 
-                  (wf%n_o)*(wf%n_v), &
-                  wf%n_J,            &
-                  one,               &
-                  L_ia_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  L_ia_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  g_ia_jb,           &
-                  (wf%n_o)*(wf%n_v))
-!
-      call wf%mem%dealloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      integral_type = 'electronic_repulsion'
+      call wf%get_ov_ov(integral_type, g_ia_jb)
 !
 !     Form eta_ai_bj = 2* L_iajb = 2 * ( 2 * g_iajb - g_ibja) 
 !                                = 4 * g_ia_jb(ia,jb) - 2 * g_ia_jb(ib,ja)
@@ -2137,6 +2119,8 @@ contains
             enddo
          enddo
       enddo
+!
+      call wf%mem%dealloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     Pack vector into doubles eta 
 !

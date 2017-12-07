@@ -3,29 +3,31 @@ cmake_minimum_required(VERSION 2.8)
 # set project name and languanges that are involved
 project(eT Fortran)
 
-# To link with fortran not c++
-#set(CMAKE_CXX_LINKER_PREFERENCE_PROPAGATES FALSE)
-
 # these are paths that CMake will search for cmake
 # module files that end with .cmake
 set(CMAKE_MODULE_PATH
     ${CMAKE_SOURCE_DIR}/cmake
+    ${CMAKE_SOURCE_DIR}/cmake/math
     /usr/local/share/cmake/Modules
     )
 
-option(ENABLE_64BIT_INTEGERS "Enable 64-bit integers"       ON)
+option(ENABLE_64BIT_INTEGERS "Enable 64-bit integers"       					ON)
+option(ENABLE_AUTO_BLAS      "Enable CMake to autodetect BLAS"                  ON)
+option(ENABLE_AUTO_LAPACK    "Enable CMake to autodetect LAPACK"                ON)
+option(ENABLE_OMP            "Enable OpenMP parallelization"                    ON)
 
 # Including the source files
 include(eT_sources)
 include(Fortran_flags)
-include(FindBLAS)
-include(FindLAPACK)
 
-find_package(BLAS)
-find_package(LAPACK)
+# math detection
+set(BLAS_LANG "Fortran")
+set(LAPACK_LANG "Fortran")
+set(MKL_COMPILER_BINDINGS ${CMAKE_Fortran_COMPILER_ID})
+include(ConfigMath)
 
 if(LAPACK_FOUND AND BLAS_FOUND)
-   set(lapackblas_libraries ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+  set(lapackblas_libraries ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 endif()
 
 set(eT_fortran_sources
