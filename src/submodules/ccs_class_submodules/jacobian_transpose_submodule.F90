@@ -161,7 +161,7 @@ contains
 !
 !     Prepare for batching over index a
 ! 
-      required = 1 ! Not a correct estimate - needs to be set!
+      required = wf%get_vvoo_required_mem()
 !     
       required  = 4*required ! In words
 !

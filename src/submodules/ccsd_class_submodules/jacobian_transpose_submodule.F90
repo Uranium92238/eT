@@ -667,7 +667,7 @@ contains
 !
 !     Prepare batching over index a 
 !
-      required = 1 ! Not a correct estimate - needs to be set!
+      required = wf%get_vvvo_required_mem()
 !     
       call batch_a%init(wf%n_v)
       call wf%mem%num_batch(batch_a, required)        
@@ -1161,7 +1161,7 @@ contains
 !
 !     Prepare batching over index a 
 !
-      required = 1 ! Not a correct estimate - needs to be set!
+      required =  wf%get_vvov_required_mem() + (wf%n_v**3)*(wf%n_o)
 !     
 !     Initialize batching variable 
 !
@@ -1283,7 +1283,7 @@ contains
 !
 !     Prepare batching over index d 
 !
-      required = 1
+      required = wf%get_vvov_required_mem() + (wf%n_v**3)*(wf%n_o)
 !
       call batch_d%init(wf%n_v)
       call wf%mem%num_batch(batch_d, required)
@@ -1939,7 +1939,7 @@ contains
 !
 !     Prepare batching over index e
 !
-      required = 1 ! Not a correct estimate - needs to be set!
+      required = wf%get_vvov_required_mem() + (wf%n_v**3)*(wf%n_o)
 !     
 !     Initialize batching variable 
 !
@@ -2076,7 +2076,7 @@ contains
 !
 !     Prepare batching over a 
 !
-      required = 1 ! Not a correct estimate - needs to be set!
+      required = wf%get_vvov_required_mem()
 !     
 !     Initialize batching variable 
 !
@@ -2171,7 +2171,7 @@ contains
 !
 !     Prepare for batching over d 
 !
-      required = 1 ! Not a correct estimate - needs to be set!
+      required = wf%get_required_vvov_mem() + (wf%n_v**3)*(wf%n_o)
 !     
 !     Initialize batching variable 
 !
@@ -2433,7 +2433,7 @@ contains
 !
 !     Prepare for batching over a 
 !
-      required = 1 ! Not a correct estimate - needs to be set!
+      required = wf%get_vvov_required_mem() + (wf%n_o**2)*(wf%n_v**2)
 !     
 !     Initialize batching variable 
 !
@@ -2510,7 +2510,7 @@ contains
 !
 !     Prepare for batching over b 
 !
-      required = 1 ! Not a correct estimate - needs to be set!
+      required = wf%get_vvov_required_mem() + (wf%n_v**2)*(wf%n_o**2)
 !     
 !     Initialize batching variable          
 !
@@ -2767,7 +2767,7 @@ contains
       call wf%mem%alloc(g_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) ! g_cbjk reordered
       g_ck_bj = zero
 !
-      required = 1 ! Not a correct estimate - needs to be set!
+      required = wf%get_vvoo_required_mem()
 !     
 !     Initialize batching variable 
 !
@@ -2940,7 +2940,7 @@ contains
       call wf%mem%alloc(g_ck_bi, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       g_ck_bi = zero
 !
-      required = 1 ! Not a correct estimate - needs to be set!
+      required = wf%get_vvoo_required_mem()
 !     
 !     Initialize batching variable 
 !
@@ -4310,7 +4310,7 @@ contains
 !
 !     Prepare batching over a and b 
 !
-      required = 1 ! Not a correct estimate - needs to be set!
+      required = wf%get_vvvv_required_mem() + (wf%n_v**4) + (wf%n_o**2)*(wf%n_v**2)
 !     
 !     Initialize batching indices 
 !
