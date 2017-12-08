@@ -1,31 +1,44 @@
 set(eT_fortran_sources
+   src/eT_program.F90
+   src/wavefunctions/hf_class.F90
+   src/wavefunctions/mp2_class.F90
+   src/wavefunctions/ccs_class.F90
+   src/wavefunctions/ccsd_class.F90
+   src/wavefunctions/cc2_class.F90
+   src/wavefunctions/cc3_class.F90
+   src/wavefunctions/ccsdpt_class.F90
+   src/wavefunctions/mlcc2_class.F90
+   src/wavefunctions/mlccsd_class.F90
+   src/misc_classes/ground_state_specs_class.F90
+   src/misc_classes/excited_state_specs_class.F90
+   src/misc_classes/core_excited_state_specs_class.F90
+   src/misc_classes/response_calc_specs_class.F90
+   src/misc_classes/calc_tasks_class.F90
+   src/misc_classes/calc_settings_class.F90
+   src/misc_classes/mlcc_calculation_settings_class.F90
+   src/misc_classes/mlcc_orbitals_class.F90
+   src/misc_classes/memory_manager_class.F90
+   src/misc_classes/batching_index_class.F90
    src/tools/types.F90
    src/tools/workspace.F90
    src/tools/input_output.F90
    src/tools/input_reader.F90
    src/tools/utils.F90
-   src/calc_procedures_class.F90
-   src/calc_settings_class.F90
-   src/hf_class.F90
-   src/mp2_class.F90
-   src/ccs_class.F90
-   src/ccsd_class.F90
-   src/cc2_class.F90
-   src/cc3_class.F90
-   src/ccsdpt_class.F90
-   src/mlcc2_class.F90
-   src/mlccsd_class.F90
-   src/mlcc_calculation_settings_class.F90
+   src/submodules/ccs_class_submodules/input_reader_submodule.F90
    src/submodules/ccs_class_submodules/cholesky_submodule.F90
    src/submodules/ccs_class_submodules/ground_state_submodule.F90
    src/submodules/ccs_class_submodules/fock_submodule.F90
    src/submodules/ccs_class_submodules/jacobian_submodule.F90
    src/submodules/ccs_class_submodules/jacobian_transpose_submodule.F90
    src/submodules/ccs_class_submodules/excited_state_submodule.F90
+   src/submodules/ccs_class_submodules/ionized_state_submodule.F90
+   src/submodules/ccs_class_submodules/cvs_submodule.F90
    src/submodules/ccs_class_submodules/response_submodule.F90
    src/submodules/ccs_class_submodules/integrals_submodule.F90
    src/submodules/ccsd_class_submodules/ground_state_submodule.F90
    src/submodules/ccsd_class_submodules/excited_state_submodule.F90
+   src/submodules/ccsd_class_submodules/cvs_submodule.F90
+   src/submodules/ccsd_class_submodules/ionized_state_submodule.F90
    src/submodules/ccsd_class_submodules/omega_submodule.F90
    src/submodules/ccsd_class_submodules/jacobian_submodule.F90
    src/submodules/ccsd_class_submodules/jacobian_transpose_submodule.F90
@@ -35,15 +48,16 @@ set(eT_fortran_sources
    src/submodules/cc3_class_submodules/omega_submodule.F90
    src/submodules/ccsdpt_class_submodules/ground_state_submodule.F90
    src/submodules/ccsdpt_class_submodules/omega_submodule.F90
+   src/submodules/mlcc2_class_submodules/input_reader_submodule.F90
    src/submodules/mlcc2_class_submodules/orbital_partitioning_submodule.F90
    src/submodules/mlcc2_class_submodules/omega_submodule.F90
    src/submodules/mlcc2_class_submodules/jacobian_submodule.F90
    src/submodules/mlcc2_class_submodules/excited_state_submodule.F90
+   src/submodules/mlccsd_class_submodules/input_reader_submodule.F90
    src/submodules/mlccsd_class_submodules/omega_submodule.F90
    src/submodules/mlccsd_class_submodules/orbital_partitioning_submodule.F90
    src/submodules/mlccsd_class_submodules/cholesky_submodule.F90
    src/submodules/mlccsd_class_submodules/ground_state_submodule.F90
    src/submodules/mlccsd_class_submodules/jacobian_submodule.F90
    src/submodules/mlccsd_class_submodules/excited_state_submodule.F90
-   src/eT_program.F90
 )

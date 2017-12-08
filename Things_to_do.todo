@@ -1,53 +1,14 @@
 Programmering:
-  ✔ Fjerdedelsfaktoren i A2-leddet & sikre på at vi har fem kasser (så kan vi teste store systemer på stallo) @done (17-05-11 22:24)
-  ✔ Input-struktur og lesing av input-fil. @done (17-05-11 22:24)
-  ✔ Klasser for implementert og oppgave(fra input) @done (17-05-08 17:01)
-  ✔ DIIS-løser @done (17-05-05 13:31)
-  ✔ CC2 @done (17-05-11 22:24)
-  ✔ Jacobi @done (17-05-29 15:30)
-  ☐ Jacobi venstre
-  ✔ Testing av batching i grunntilstand @done (17-05-11 22:24)
-  ✔ CC3 grunntilstand @done (17-05-18 20:27)
-  ☐ Optimering av CC3 grunntilstand
-  ✔ Løser for eksiterte tilstander @done (17-05-29 15:30)
-  ☐ MLCCSD
-  ✔ Rutiner som deallokerer omega etter grunntilstanden er laget. @done (17-05-18 20:28)
-  ✔ Clean up of excited state solver and jacobi @done (17-06-08 11:38)
-  ☐ Optimere Jacobi K2 og time exciterte tilstander
-  ☐ Respons solver
-  ☐ EOM
-  ☐ MLCC design
-  ☐ omega_ccsd_a1... rename
-
-
- Omstrukturering:
-   ✔ Oppryddning i grunntilstandskoden @done (17-05-11 22:24)
-   ✔ cmake @done (17-05-29 15:31)
-   ✔ Git-repo @done (17-05-08 17:12)
-   ✔ Navn @done (17-05-08 17:12)
-   ✔ Gi omega D1 til CCS @done (17-05-29 15:31)
-   ✔ Én driver @done (17-05-18 20:28)
-
-
-----------------------------------------------------
-Tirsdag 08.05 :
- Input-leser
- cmake
-
-Mai:
-CCSD, CC2 (GS)
-Jacobi CCSD
-Jacobi venstre CCSD
-
-Juni:
-Solver for multiplier ligningen + eta
-Solver eksiterte tilstander
-
-Juli:
-MLCCSD
-SCCSD
-
-------------------------------------------------------
-Ting som må diskuteres:
-  ✔ Required mem for batching @done (17-05-11 22:24)
-  ☐ Integralene tar tid
+  ☐ Estimater for batching må fikses, både i omega og jacobi
+  ☐ Ta stilling til "current task, response task, excited state task". Kan vi være smartere med det her?
+  ☐ Den delen av Omega D2 som ble flyttet inn i Omega C2 inngår nå i en UTESTET batch-dgemm!
+  ✔ Vi må fjerne memory-hacken... den har nå ikke noen formening av available memory @done (17-11-21 15:23)
+  ☐ Vi trenger en available_disk_space tilsvarende en available_memory. Sikkert lurt å ta en gjennomgang av workspace-modulen
+  ☐ Analysegreier for eksiterte tilstander i summary of excited state ...
+Opprydding:
+  ☐ Rekkefølge i en rekke interfaces og submoduler kan med fordel være kronologisk
+  ☐ Interface og rutiner må ha dokumentasjon, og dokumentasjonen må samsvare mellom de ulike filene
+Omstrukturering:
+  ☐ E: burde vi omstrukturere CCS-driveren noe? Ser at vi kanskje bør gi litt av arbeidet til under-drivere? For eksempel, er det en ide å droppe "ionized driver", som bare kaller excited state-driver etter et par steg. 
+Hva som er sjekket (av minnelekkasjer):
+  ☐ Jacobi er fri for minnelekkasje (memory inn lik memory ut)

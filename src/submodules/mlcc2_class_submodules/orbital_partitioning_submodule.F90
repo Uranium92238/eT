@@ -51,13 +51,13 @@ contains
 !
       class(mlcc2) :: wf
 !
-      if (wf%mlcc_settings%cholesky) then
+      if (wf%CC2_orbitals%cholesky) then
 !
 !        If cholesky - do Cholesky decomposition
 !
          call wf%cholesky_localization_drv
 !
-      elseif (wf%mlcc_settings%cnto) then
+      elseif (wf%CC2_orbitals%cnto) then
 !
          call wf%cnto_orbital_drv
 !
@@ -89,12 +89,10 @@ contains
       real(dp), dimension(:,:), allocatable :: orbital_energies
 !  
       integer(i15) :: n_nuclei
-      integer(i15) :: n_CC2_atoms = 0
       integer(i15) :: offset_o = 0, offset_v = 0
       integer(i15) :: n_active_aos = 0
 !
       integer(i15), dimension(:,:), allocatable :: ao_center_info, n_ao_on_center
-      integer(i15), dimension(:,:), allocatable :: active_atoms
       integer(i15), dimension(:,:), allocatable :: active_ao_index_list
       integer(i15) :: n_vectors_o = 0, n_vectors_v = 0
 !
@@ -128,31 +126,17 @@ contains
 !
 !     Prints
 !
-      write(unit_output,'(/t3,a/)')    ':: Cholesky decomposition '
+      write(unit_output,'(//t3,a)')    ':: Cholesky orbital construction'
+      write(unit_output,'(t3,a/)')   ':: E. F. Kjønstad, S. D. Folkestad, Jun 2017'
 !
 !     :: Get center info ::
 !
       call read_atom_info(n_nuclei, wf%n_ao)
 !
-      call allocator_int(n_ao_on_center, n_nuclei, 1)      
-      call allocator_int(ao_center_info, wf%n_ao, 2)
+      call wf%mem%alloc_int(n_ao_on_center, n_nuclei, 1)      
+      call wf%mem%alloc_int(ao_center_info, wf%n_ao, 2)
 !
       call read_center_info(n_nuclei, wf%n_ao, n_ao_on_center, ao_center_info)
-!
-!     Check that cholesky.inp exists
-!
-      inquire(file='cholesky.inp', exist=file_exists)
-      if (.not. file_exists) then
-         write(unit_output,*) 'WARNING: Input file for cholesky decomposition is not found.'
-         stop
-      endif
-!
-!     Open cholesky.inp
-!
-      call generate_unit_identifier(unit_cholesky_decomp)
-      open(unit=unit_cholesky_decomp, file='cholesky.inp', status='unknown', form='formatted', iostat=ioerror)
-      if (ioerror .ne. 0) write(unit_output,*)'WARNING: Error while opening cholesky.inp'
-      rewind(unit_cholesky_decomp)
 !
 !     :::::::::::::::::::::::
 !     -::- Occupied part -::-
@@ -160,10 +144,10 @@ contains
 !
 !     :: Construct AO fock matrix ::
 !
-      call allocator(ao_fock, wf%n_ao, wf%n_ao)
-      call wf%construct_ao_fock_new(ao_fock)
+      call wf%mem%alloc(ao_fock, wf%n_ao, wf%n_ao)
+      call wf%construct_ao_fock(ao_fock)
 !
-      call allocator(density_o, wf%n_ao, wf%n_ao)
+      call wf%mem%alloc(density_o, wf%n_ao, wf%n_ao)
       density_o = zero     
 !
       call wf%construct_density_matrix(density_o, wf%mo_coef, wf%n_o, wf%n_v)
@@ -178,28 +162,16 @@ contains
       call allocator (orbitals, wf%n_ao, wf%n_mo)
       call allocator (orbital_energies, wf%n_mo, 1)
 !
-!     Get CC2-active atoms
-!
-      n_CC2_atoms =  get_number_of_active_atoms(unit_cholesky_decomp, 'CC2  ')
-!
-!     Allocate active atoms list
-!
-      call allocator_int(active_atoms, n_CC2_atoms, 1)
-!
-!     Get list of active atoms
-!
-      call get_active_atoms(unit_cholesky_decomp, active_atoms,  n_CC2_atoms, 'CC2  ')
-!
 !     Sanity check on active atoms
 !
-      if (n_CC2_atoms .gt. n_nuclei) then
-         write(unit_output,*) 'WARNING: Illegal chioce of atoms in cholesky.inp.'
+      if (wf%CC2_orbitals%n_active_atoms .gt. n_nuclei) then
+         write(unit_output,*) 'WARNING: Illegal chioce of atoms in cholesky section of eT.inp.'
          stop
       endif
 !
-      do i = 1, n_CC2_atoms
-         if (active_atoms(i,1) .gt. n_nuclei) then
-            write(unit_output,*) 'WARNING: Illegal chioce of atoms in cholesky.inp.'
+      do i = 1, wf%CC2_orbitals%n_active_atoms
+         if (wf%CC2_orbitals%active_atoms(i,1) .gt. n_nuclei) then
+            write(unit_output,*) 'WARNING: Illegal chioce of atomss in cholesky section of eT.inp.'
             stop
          endif
       enddo
@@ -207,15 +179,15 @@ contains
 !     :: Constructing active (CC2) localized Cholesky orbitals ::
 !
       n_active_aos = 0
-      do i = 1, n_CC2_atoms
-         n_active_aos = n_active_aos + n_ao_on_center(active_atoms(i,1),1)
+      do i = 1, wf%CC2_orbitals%n_active_atoms
+         n_active_aos = n_active_aos + n_ao_on_center(wf%CC2_orbitals%active_atoms(i,1),1)
       enddo
 !
 !     Construct active_ao_index_list
 !
-      call allocator_int(active_ao_index_list, n_active_aos, 1)
-      call construct_active_ao_index_list(active_ao_index_list, n_active_aos, active_atoms, &
-                                               n_CC2_atoms, ao_center_info, wf%n_ao)
+      call wf%mem%alloc_int(active_ao_index_list, n_active_aos, 1)
+      call construct_active_ao_index_list(active_ao_index_list, n_active_aos, wf%CC2_orbitals%active_atoms, &
+                                               wf%CC2_orbitals%n_active_atoms, ao_center_info, wf%n_ao)
 !
       call wf%cholesky_orbital_constructor(orbitals, orbital_energies, offset_o, ao_fock, &
                                            density_o, n_vectors_o,&
@@ -231,8 +203,7 @@ contains
 !
       offset_o = offset_o + n_vectors_o
 !
-      call deallocator_int(active_atoms, n_CC2_atoms, 1)
-      call deallocator_int(active_ao_index_list, n_active_aos, 1)
+      call wf%mem%dealloc_int(active_ao_index_list, n_active_aos, 1)
 !
 !     :: CCS  localized Cholesky orbitals  ::
 !
@@ -244,7 +215,7 @@ contains
 !
       wf%first_CCS_o = offset_o
 !
-      call deallocator(density_o, wf%n_ao, wf%n_ao)
+      call wf%mem%dealloc(density_o, wf%n_ao, wf%n_ao)
 !
 !     ::::::::::::::::::::::
 !     -::- Virtual part -::-
@@ -253,34 +224,22 @@ contains
 !
 !     Allocations for Cholesky localized orbitals
 !   
-      call allocator(density_v, wf%n_ao, wf%n_ao)
+      call wf%mem%alloc(density_v, wf%n_ao, wf%n_ao)
       density_v = zero
 !
       call wf%construct_density_matrix_v(density_v, wf%mo_coef, wf%n_o, wf%n_v)
 !
       offset_v = 1 + wf%n_o
 !
-!     Get CC2-active atoms
-!
-      n_CC2_atoms =  get_number_of_active_atoms(unit_cholesky_decomp, 'CC2  ')
-!
-!     Allocate active atoms list
-!
-      call allocator_int(active_atoms, n_CC2_atoms, 1)
-!
-!     Get list of active atoms
-!
-      call get_active_atoms(unit_cholesky_decomp, active_atoms,  n_CC2_atoms, 'CC2  ')
-!
 !     Sanity check on active atoms
 !
-      if (n_CC2_atoms .gt. n_nuclei) then
+      if (wf%CC2_orbitals%n_active_atoms .gt. n_nuclei) then
          write(unit_output,*) 'WARNING: Illegal chioce of atoms in cholesky.inp.'
          stop
       endif
 !
-      do i = 1, n_CC2_atoms
-         if (active_atoms(i,1) .gt. n_nuclei) then
+      do i = 1, wf%CC2_orbitals%n_active_atoms
+         if (wf%CC2_orbitals%active_atoms(i,1) .gt. n_nuclei) then
             write(unit_output,*) 'WARNING: Illegal chioce of atoms in cholesky.inp.'
             stop
          endif
@@ -289,15 +248,15 @@ contains
 !     :: Constructing active (CC2) localized Cholesky orbitals ::
 !
       n_active_aos = 0
-      do i = 1, n_CC2_atoms
-         n_active_aos = n_active_aos + n_ao_on_center(active_atoms(i,1),1)
+      do i = 1, wf%CC2_orbitals%n_active_atoms
+         n_active_aos = n_active_aos + n_ao_on_center(wf%CC2_orbitals%active_atoms(i,1),1)
       enddo
 !
 !     Construct active_ao_index_list
 !
-      call allocator_int(active_ao_index_list, n_active_aos, 1)
-      call construct_active_ao_index_list(active_ao_index_list, n_active_aos, active_atoms, &
-                                                  n_CC2_atoms, ao_center_info, wf%n_ao)
+      call wf%mem%alloc_int(active_ao_index_list, n_active_aos, 1)
+      call construct_active_ao_index_list(active_ao_index_list, n_active_aos, wf%CC2_orbitals%active_atoms, &
+                                                  wf%CC2_orbitals%n_active_atoms, ao_center_info, wf%n_ao)
 !
       call wf%cholesky_orbital_constructor(orbitals, orbital_energies, offset_v, ao_fock, &
                                               density_v, n_vectors_v, &
@@ -313,8 +272,8 @@ contains
 !
       offset_v = offset_v + n_vectors_v
 !
-      call deallocator_int(active_atoms, n_CC2_atoms, 1)
-      call deallocator_int(active_ao_index_list, n_active_aos, 1)
+      !call wf%mem%dealloc_int(active_atoms, n_CC2_atoms, 1)
+      call wf%mem%dealloc_int(active_ao_index_list, n_active_aos, 1)
 
 !
 !
@@ -325,8 +284,8 @@ contains
                                            density_v, n_vectors_v,&
                                            .false., n_active_aos)
 !
-      call deallocator(density_v, wf%n_ao, wf%n_ao)     
-      call deallocator(ao_fock, wf%n_ao, wf%n_ao)
+      call wf%mem%dealloc(density_v, wf%n_ao, wf%n_ao)     
+      call wf%mem%dealloc(ao_fock, wf%n_ao, wf%n_ao)
 !
 !     Save inactive space information
 !
@@ -349,17 +308,17 @@ contains
       if (ioerror .ne. 0) write(unit_output,*)'WARNING: Error while opening MLCC_OVERLAP'
       rewind(unit_overlap)
 !
-      call allocator(S_packed, wf%n_ao*(wf%n_ao+1)/2,1)
+      call wf%mem%alloc(S_packed, wf%n_ao*(wf%n_ao+1)/2,1)
       read(unit_overlap,*)S_packed
       close(unit_overlap)
 !
-      call allocator(S, wf%n_ao, wf%n_ao)
+      call wf%mem%alloc(S, wf%n_ao, wf%n_ao)
 !
       call squareup(S_packed, S, wf%n_ao)
 !
-      call deallocator(S_packed, wf%n_ao*(wf%n_ao+1)/2,1)
+      call wf%mem%dealloc(S_packed, wf%n_ao*(wf%n_ao+1)/2,1)
 !
-      call allocator(Y_1, wf%n_mo, wf%n_ao)
+      call wf%mem%alloc(Y_1, wf%n_mo, wf%n_ao)
       call dgemm('T', 'N',    &
                   wf%n_mo,    &
                   wf%n_ao,    &
@@ -373,8 +332,8 @@ contains
                   Y_1, &
                   wf%n_mo)
 !
-      call deallocator(S, wf%n_ao, wf%n_ao)
-      call allocator(Y_2, wf%n_mo, wf%n_mo)
+      call wf%mem%dealloc(S, wf%n_ao, wf%n_ao)
+      call wf%mem%alloc(Y_2, wf%n_mo, wf%n_mo)
 !
       call dgemm('N', 'N',    &
                   wf%n_mo,    &
@@ -389,45 +348,40 @@ contains
                   Y_2, &
                   wf%n_mo)
 !
-      call deallocator(Y_1, wf%n_mo, wf%n_ao)
+      call wf%mem%dealloc(Y_1, wf%n_mo, wf%n_ao)
 !
       if (.not. (check_orthogonality(Y_2, wf%n_mo, wf%n_mo))) then
          write(unit_output,*)'New orbitals not orthogonal'
          stop
       endif
 !
-      call deallocator(Y_2, wf%n_mo, wf%n_mo)
+      call wf%mem%dealloc(Y_2, wf%n_mo, wf%n_mo)
 !
 !     :: Save new orbitals and orbital energies ::
 !
 !
-      call deallocator_int(n_ao_on_center, n_nuclei, 2)
-      call deallocator_int(ao_center_info, wf%n_ao, 2)
+      call wf%mem%dealloc_int(n_ao_on_center, n_nuclei, 2)
+      call wf%mem%dealloc_int(ao_center_info, wf%n_ao, 2)
 !     
 !     Close cholesky.inp
 !
       close(unit_cholesky_decomp)
 !
-!     Print decomposition info
-!
-      write(unit_output, '(/t3,a15, i3/)')'Active space:  '
-      write(unit_output,'(t3,a40, i3)') 'Number of active occupied orbitals:  ', wf%n_CC2_o
-      write(unit_output,'(t3,a40, i3/)')'Number of active virtual orbitals:   ', wf%n_CC2_v
-!
-      write(unit_output, '(/t3,a15/)')'Inactive space:  '
-      write(unit_output,'(t3,a40, i3)') 'Number of inactive occupied orbitals:  ', wf%n_CCS_o
-      write(unit_output,'(t3,a40, i3/)')'Number of inactive virtual orbitals:   ', wf%n_CCS_v
+!     Print summary
+!     
+      write(unit_output,'(t3,a,a,a/)')'Summary of ', trim(wf%name), ' Cholesky orbital construction:'
 !
 !     Print timings
 !
       call cpu_time(end_chol_deco)
-      if (timings) write(unit_output,'(/t3,a50,f14.8/)') 'Total time in Cholesky orbital construction (seconds):',&
+      write(unit_output,'(t6,a25,f14.8/)') 'Total CPU time (seconds):',&
                             end_chol_deco - start_chol_deco
+!
+      call wf%print_orbital_info
       flush(unit_output)
 !
 !
    end subroutine cholesky_localization_drv_mlcc2
-!
 !
    module subroutine cholesky_orbital_constructor_mlcc2(wf, orbitals, orbital_energies, offset, ao_fock, density, n_vectors,&
                               selection, n_active_aos, active_ao_index_list)
@@ -463,7 +417,7 @@ contains
             stop
       endif
 !
-      call allocator(cholesky, wf%n_ao, wf%n_ao)     
+      call wf%mem%alloc(cholesky, wf%n_ao, wf%n_ao)     
         
       cholesky = zero   
 !
@@ -479,8 +433,8 @@ contains
 !
 !     :: Construct cholesky orbitals ::
 !
-      call allocator(orbitals_temp, wf%n_ao, n_vectors)
-      call allocator(orbital_energies_temp, n_vectors,1)
+      call wf%mem%alloc(orbitals_temp, wf%n_ao, n_vectors)
+      call wf%mem%alloc(orbital_energies_temp, n_vectors,1)
       orbitals_temp = zero     
       orbital_energies_temp = zero
 !
@@ -497,9 +451,9 @@ contains
 !
 !     Deallocations
 !
-      call deallocator(cholesky, wf%n_ao, wf%n_ao)
-      call deallocator(orbitals_temp, wf%n_ao, n_vectors)
-      call deallocator(orbital_energies_temp, n_vectors,1)
+      call wf%mem%dealloc(cholesky, wf%n_ao, wf%n_ao)
+      call wf%mem%dealloc(orbitals_temp, wf%n_ao, n_vectors)
+      call wf%mem%dealloc(orbital_energies_temp, n_vectors,1)
 !
    end subroutine cholesky_orbital_constructor_mlcc2
 !
@@ -646,7 +600,7 @@ contains
 !
      if (n_vectors == 0) return
 !
-      call allocator(X, n_vectors, wf%n_ao)
+      call wf%mem%alloc(X, n_vectors, wf%n_ao)
 !
 !     :: Transform AO Fock :: 
 !
@@ -663,7 +617,7 @@ contains
                   X,                &
                   n_vectors)
 !
-      call allocator(mo_fock, n_vectors, n_vectors)
+      call wf%mem%alloc(mo_fock, n_vectors, n_vectors)
 !
       call dgemm('N', 'N',          &
                   n_vectors,        &
@@ -678,11 +632,11 @@ contains
                   mo_fock,          &
                   n_vectors)
 !
-      call deallocator(X, n_vectors, wf%n_ao)
+      call wf%mem%dealloc(X, n_vectors, wf%n_ao)
 !
 !     :: Diagonalize MO fock ::
 !
-      call allocator(work, 4*n_vectors, 1)
+      call wf%mem%alloc(work, 4*n_vectors, 1)
       work = zero
 !
       call dsyev('V','U', &
@@ -694,7 +648,7 @@ contains
                   4*n_vectors, &
                   info)
 !
-      call deallocator(work, 4*n_vectors, 1)
+      call wf%mem%dealloc(work, 4*n_vectors, 1)
 !
       if (info .ne. 0) then
          write(unit_output,*)'WARNING: Diagonalization not successful.'
@@ -717,111 +671,9 @@ contains
                   wf%n_ao)
 !
 !
-      call deallocator(mo_fock, n_vectors, n_vectors)
+      call wf%mem%dealloc(mo_fock, n_vectors, n_vectors)
 !
    end subroutine cholesky_orbitals_mlcc2
-!
-!
-   module function get_number_of_active_atoms(unit_cholesky_decomp, ml_level)
-!!
-!!    Get number of active atoms
-!!    Written by Sarai D. Folkestad June 2017
-!!
-!!    Reads cholesky.inp, and returns the number of atoms treated at ml_level of the CC hierarchy
-!!    in active space of question.
-!!
-      implicit none
-!
-      integer(i15)      :: get_number_of_active_atoms
-      integer(i15)      :: unit_cholesky_decomp 
-      character(len=5)  :: ml_level             ! CC2/CCSD/CC3
-!
-      character(len=40) :: line
-      integer(i15)      :: ioerror = 0
-      integer(i15)      :: previous_spaces, previous_atoms, previous_n_atoms
-!
-      rewind(unit_cholesky_decomp)
-!
-      do
-         read(unit_cholesky_decomp,'(a40)')line
-!
-         do while (line(1:1) == '!' .or. trim(line) == '') ! Comment or blank line: read the next line
-!
-            read(unit_cholesky_decomp,'(a40)') line
-         enddo
-!  
-         if (trim(line) == ml_level) then
-!
-            read(unit_cholesky_decomp,'(i5)', iostat=ioerror) get_number_of_active_atoms
-!
-            if (ioerror .ne. 0) then
-               write(unit_output,*)'WARNING: Error while reading number of active spaces from cholesky.inp'
-               stop
-            endif
-            exit
-!
-         elseif(trim(line) == '#end of Cholesky input') then
-!
-            backspace(unit_cholesky_decomp)
-            get_number_of_active_atoms = 0
-            return
-!
-         endif
-      enddo
-!
-   end function get_number_of_active_atoms
-!
-!
-   module subroutine get_active_atoms(unit_cholesky_decomp, active_atoms, n_active_atoms ,ml_level)
-!!
-!!    Get active atoms
-!!    Written by Sarai D. Folkestad June 2017
-!!
-!!    Reads cholesky.inp, and returns the indices of the active atoms treated at ml_level of the CC hierarchy
-!!    in active space of question.
-!!
-      implicit none
-!
-      integer(i15)      :: unit_cholesky_decomp
-      integer(i15)      :: n_active_atoms
-      character(len=5)  :: ml_level
-!
-      integer(i15), dimension(n_active_atoms,1) :: active_atoms
-!
-      character(len=40) :: line
-      integer(i15)      :: ioerror = 0
-      integer(i15)      :: n_atoms
-!
-      rewind(unit_cholesky_decomp)
-      do
-         read(unit_cholesky_decomp,'(a40)')line
-!
-         do while (line(1:1) == '!' .or. trim(line) == '') 
-!
-            read(unit_cholesky_decomp,'(a40)') line
-         enddo
-!  
-         if (trim(line) == ml_level) then
-!
-            read(unit_cholesky_decomp,*, iostat=ioerror) n_atoms
-!
-            read(unit_cholesky_decomp,*, iostat=ioerror) active_atoms
-!
-            if (ioerror .ne. 0) then
-               write(unit_output,*)ioerror
-               write(unit_output,*)'WARNING: Error while reading number of active atoms from cholesky.inp'
-               stop
-            endif
-            exit
-!
-         elseif(trim(line) == '#end of Cholesky input') then
-!
-            backspace(unit_cholesky_decomp)
-            return
-!
-         endif
-      enddo
-   end subroutine get_active_atoms
 !
 !
       module subroutine construct_active_ao_index_list(active_ao_index_list, n_active_aos, active_atoms, &
@@ -897,9 +749,10 @@ contains
 !     
 !     Prints
 !     
-      write(unit_output,'(/t3,a/)') ':: CNTO orbital partitioning for MLCC2 calculation '
-      write(unit_output,'(/a35,e10.2)')'Threshold for occupied orbitals:',wf%mlcc_settings%delta_o
-      write(unit_output,'(a35,e10.2/)')'Threshold for virtual orbitals: ',wf%mlcc_settings%delta_v
+      write(unit_output,'(//t3,a)') ':: CNTO orbital partitioning for MLCC2 calculation '
+      write(unit_output,'(t3,a/)')   ':: E. F. Kjønstad, S. D. Folkestad, Jun 2017'
+      write(unit_output,'(/a35,e10.2)')'Threshold for occupied orbitals:',wf%CC2_orbitals%delta_o
+      write(unit_output,'(a35,e10.2/)')'Threshold for virtual orbitals: ',wf%CC2_orbitals%delta_v
 !
 !     Timings 
 !
@@ -907,15 +760,9 @@ contains
 !
 !     CNTO orbital selection for CCSD
 !
-      if (wf%tasks%excited_state) then
+      if (wf%tasks%excited_state .or.  wf%tasks%core_excited_state) then
 !  
-         wf%excited_state_task = 'right_valence'
          call wf%cc2_cnto_lower_level_method
-!
-      elseif (wf%tasks%core_excited_state) then
-!
-         wf%excited_state_task = 'right_core'
-         call wf%cc2_cnto_lower_level_method_cvs
 !
       else
 !
@@ -926,14 +773,18 @@ contains
 !
       call wf%cc2_cnto_orbitals
 !
-      call wf%print_cnto_info     
+!     Print summary
+!     
+      write(unit_output,'(/t3,a,a,a/)')'Summary of ', trim(wf%name), ' CNTO orbital construction:'
 !
 !     Print timings
 !
       call cpu_time(end_cnto)
 !
-      if (timings) write(unit_output,'(/t3,a50,f14.8/)') 'Total time in cnto orbital construction (seconds):', end_cnto - start_cnto
+      if (timings) write(unit_output,'(/t6,a26,f14.8/)') 'Total CPU time (seconds): ', end_cnto - start_cnto
       flush(unit_output)
+!
+      call wf%print_orbital_info     
 !
    end subroutine cnto_orbital_drv_mlcc2
 !
@@ -966,76 +817,130 @@ contains
 !
       allocate(ccs_wf)
 !
-!     Set calculation tasks
+!     :: Set calculation tasks ::
 !
-      ccs_wf%tasks%ground_state = .true.
-      ccs_wf%tasks%excited_state = .true.
+      ccs_wf%tasks = wf%tasks
 !
-!     Set calculation settings
+!     :: Set calculation settings ::
 !
-      ccs_wf%settings = wf%settings
+      ccs_wf%settings                           = wf%settings
+      ccs_wf%core_excited_state_specifications  = wf%core_excited_state_specifications
 ! 
-!     Set number of excitations to use for cnto generation
-!        - Should be some function of wf%tasks%n_singlet_states@
+!     :: Set number of excitations to use for cnto generation ::
+!        - Should be some function of wf%excited_state_specifications%n_singlet_states
 !
-      lower_level_n_singlet_states = CCS_factor_n_singlet_states*wf%tasks%n_singlet_states
+      lower_level_n_singlet_states = CCS_factor_n_singlet_states*wf%excited_state_specifications%n_singlet_states
 ! 
-      ccs_wf%tasks%n_singlet_states = lower_level_n_singlet_states
+      ccs_wf%excited_state_specifications%n_singlet_states = lower_level_n_singlet_states
 !
-!     Set convergence threshold for lower lying method
+!     :: Set convergence threshold for lower lying method ::
 !
-      ccs_wf%settings%energy_threshold = 1.0D-04 
-      ccs_wf%settings%equation_threshold = 1.0D-04 
+      ccs_wf%ground_state_specifications%energy_threshold = 1.0D-04 
+      ccs_wf%ground_state_specifications%residual_threshold = 1.0D-04 
 !
-!     :: Initialize lower level method ::
-!  
-      call ccs_wf%init
+      ccs_wf%excited_state_specifications%energy_threshold = 1.0D-04 
+      ccs_wf%excited_state_specifications%residual_threshold = 1.0D-04 
 !
 !     :: User specified start vectors for excited state calculation ::
 !
 !     Test for user specified start vector
 !
-      if (wf%tasks%user_specified_start_vector) then
+!     We must do some cumbersome tricks since n_singlet_states for ccs_wf is higher than for wf
 !
-!        Construct list of lowest orbital differences
+      if (wf%excited_state_specifications%user_specified_start_vector) then
 !
-         call allocator_int(index_list, ccs_wf%tasks%n_singlet_states, 1)
+!        Find indices lowest orbital differences (either core or valence) and place in index_list
 !
-         call ccs_wf%find_start_trial_indices(index_list)
+         call wf%mem%alloc_int(index_list, ccs_wf%excited_state_specifications%n_singlet_states, 1)
 !
-!        Exchange highest with the CC2 user specified start vectors, if it is not there already.
+         if (wf%tasks%excited_state) then
 !
-         do i = 1, wf%tasks%n_singlet_states
+            call ccs_wf%find_start_trial_indices(index_list)
 !
-!           Test if start vector i is in index_list
+         elseif (wf%tasks%core_excited_state) then
 !
+            call ccs_wf%find_start_trial_indices_core(index_list)
+!
+         endif
+!
+!        Loop through user specified start vectors and ...
+!
+         do i = 1, wf%excited_state_specifications%n_singlet_states
             start_vec_exists = .false.
-            do j = 1, ccs_wf%tasks%n_singlet_states 
-               if (wf%tasks%start_vectors(i ,1) .eq. index_list(j,1)) start_vec_exists = .true.
+!
+!           ... Check if it is contained in index list already
+!
+            do j = 1, ccs_wf%excited_state_specifications%n_singlet_states
+               if (wf%excited_state_specifications%start_vectors(i,1) == index_list(j,1)) &
+                  start_vec_exists = .true.
             enddo
 !
-!           If not, place start vector i in index_list
+!           ... If not, exchange it with an element of index_list (starting at the end of index_list)
 !
             if (.not. start_vec_exists) then
-               index_list(ccs_wf%tasks%n_singlet_states - i + 1, 1) = wf%tasks%start_vectors(i,1) 
+               index_list(ccs_wf%excited_state_specifications%n_singlet_states - i + 1, 1) &
+                = wf%excited_state_specifications%start_vectors(i,1)
             endif
 !
          enddo
 !
-!        Set CCS user specified vectors
+!        Set user_specified_start_vector to true for lower level method
 !
-         ccs_wf%tasks%user_specified_start_vector = .true.
-         call allocator_int(ccs_wf%tasks%start_vectors, ccs_wf%tasks%n_singlet_states, 1)
-         ccs_wf%tasks%start_vectors = index_list
+!        OBS: It is crusial that tis is done AFTER the call to 
+!             find_start_trial_indices/find_start_trial_indices_core
 !
-         call deallocator_int(index_list, ccs_wf%tasks%n_singlet_states, 1)
+         ccs_wf%excited_state_specifications%user_specified_start_vector = .true.
+!
+!        Let index_list be the user specified start vector.
+!
+         call wf%mem%alloc_int(ccs_wf%excited_state_specifications%start_vectors, &
+                            ccs_wf%excited_state_specifications%n_singlet_states, 1)
+!
+         ccs_wf%excited_state_specifications%start_vectors = index_list
+!
+         call wf%mem%dealloc_int(index_list, ccs_wf%excited_state_specifications%n_singlet_states, 1)
 !
 !        Since orbitals will swap order, start vector in higher level method must be removed
 !
-         wf%tasks%user_specified_start_vector = .false.
-         call deallocator_int(wf%tasks%start_vectors, wf%tasks%n_singlet_states, 1)
+         wf%excited_state_specifications%user_specified_start_vector = .false.
+         call wf%mem%dealloc_int(wf%excited_state_specifications%start_vectors, wf%excited_state_specifications%n_singlet_states, 1)
 !
       endif
+!
+!     :: Initialize lower level method ::
+!  
+      ccs_wf%name = 'CCS'
+!
+!     Set implemented generic methods
+!
+      ccs_wf%implemented%ground_state         = .true.
+      ccs_wf%implemented%excited_state        = .true.
+      ccs_wf%implemented%core_excited_state   = .true.
+!
+!     Read Hartree-Fock info from SIRIUS
+!
+      call ccs_wf%read_hf_info
+!
+!     Read Cholesky AO integrals and transform to MO basis
+!
+      call ccs_wf%read_transform_cholesky
+!
+!     Initialize amplitudes and associated attributes
+!
+      call ccs_wf%initialize_amplitudes
+!
+!     Set the number of parameters in the wavefunction
+!     (that are solved for in the ground and excited state solvers) 
+!
+      ccs_wf%n_parameters = ccs_wf%n_t1am
+!
+!     Initialize the projection vector 
+!
+      call ccs_wf%initialize_omega
+!
+!     Allocate Fock matrix and set to zero
+!
+      call ccs_wf%initialize_fock_matrix
 !
 !     :: Driver of lower level method ::
 !
@@ -1046,70 +951,6 @@ contains
       deallocate(ccs_wf)
 !
    end subroutine cc2_cnto_lower_level_method_mlcc2
-!
-!
-   module subroutine cc2_cnto_lower_level_method_cvs_mlcc2(wf)
-!!
-!!    CNTO lower level calculation for CVS (MLCC2),
-!!    Written by Sarai D. Folkestad, June 2017.
-!!
-!!    Runs lower level method for CNTOs for CVS calculation
-!!
-      implicit none 
-!
-      class(mlcc2) :: wf
-!
-      type(ccs), allocatable :: ccs_wf
-!
-      integer(i15) :: lower_level_n_singlet_states
-!
-!     ::::::::::::::::::::::::::::::::::::::::::::::::
-!     -::- Running lower level method calculation -::-
-!     ::::::::::::::::::::::::::::::::::::::::::::::::
-!
-!     Allocate lower level method
-!
-      allocate(ccs_wf)
-!
-!     Set calculation tasks
-!
-      ccs_wf%tasks%ground_state = .true.
-      ccs_wf%tasks%core_excited_state = .true.
-      ccs_wf%tasks%n_cores = wf%tasks%n_cores
-!
-      call allocator_int(ccs_wf%tasks%cores, ccs_wf%tasks%n_cores, 1)
-      ccs_wf%tasks%cores = wf%tasks%cores
-!
-!
-!     Set calculation settings
-!
-      ccs_wf%settings = wf%settings
-! 
-!     Set number of excitations to use for cnto generation
-!        - Should be some function of wf%tasks%n_singlet_states@
-!
-      lower_level_n_singlet_states = CCS_factor_n_singlet_states*wf%tasks%n_singlet_states
-! 
-      ccs_wf%tasks%n_singlet_states = lower_level_n_singlet_states
-!
-!     Set convergence threshold for lower lying method
-!
-      ccs_wf%settings%energy_threshold = 1.0D-04 
-      ccs_wf%settings%equation_threshold = 1.0D-04 
-!
-!     Initialize lower level method
-!  
-      call ccs_wf%init
-!
-!     Call driver of lower level method
-!
-      call ccs_wf%drv
-!
-!     Done with lower lying method
-!
-      deallocate(ccs_wf)
-!
-   end subroutine cc2_cnto_lower_level_method_cvs_mlcc2
 !
 !
    module subroutine cc2_cnto_orbitals_mlcc2(wf)
@@ -1160,24 +1001,30 @@ contains
 !
       call generate_unit_identifier(unit_solution)
 !
-      open(unit=unit_solution, file=wf%excited_state_task, action='read', status='unknown', &
-        access='direct', form='unformatted', recl=dp*((wf%n_o)*(wf%n_v)), iostat=ioerror)  
+!     Determine file name
 !
-     if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file', ioerror, wf%excited_state_task
+      if (wf%tasks%excited_state) wf%excited_state_specifications%solution_file = 'right_valence'
+      if (wf%tasks%core_excited_state) wf%excited_state_specifications%solution_file = 'right_core'
+!
+      open(unit=unit_solution, file=wf%excited_state_specifications%solution_file,&
+            action='read', status='unknown', &
+            access='direct', form='unformatted', recl=dp*((wf%n_o)*(wf%n_v)), iostat=ioerror)  
+!
+     if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file', ioerror
 !
 !     Allocations
 !
-      call allocator(R_a_i, (wf%n_o)*(wf%n_v), 1)
+      call wf%mem%alloc(R_a_i, (wf%n_o)*(wf%n_v), 1)
 !
-      call allocator(M_i_j, wf%n_o, wf%n_o)
+      call wf%mem%alloc(M_i_j, wf%n_o, wf%n_o)
       M_i_j = zero
 !
-      call allocator(N_a_b, wf%n_v, wf%n_v)
+      call wf%mem%alloc(N_a_b, wf%n_v, wf%n_v)
       N_a_b = zero
 !
 !     Construct M and N
 !
-      lower_level_n_singlet_states = CCS_factor_n_singlet_states*(wf%tasks%n_singlet_states)
+      lower_level_n_singlet_states = CCS_factor_n_singlet_states*(wf%excited_state_specifications%n_singlet_states)
 !
       do state = 1, lower_level_n_singlet_states
          read(unit=unit_solution, rec=state) (R_a_i(i , 1), i = 1, (wf%n_o)*(wf%n_v))
@@ -1210,7 +1057,7 @@ contains
 !
       enddo
 !
-      call deallocator(R_a_i,(wf%n_o)*(wf%n_v), 1)
+      call wf%mem%dealloc(R_a_i,(wf%n_o)*(wf%n_v), 1)
 !
 !     Done with file
 !
@@ -1236,8 +1083,8 @@ contains
 !
 !     :: Diagonalize M and N matrix ::
 !
-      call allocator(eigenvalues_o, wf%n_o, 1)
-      call allocator(work, 4*(wf%n_o), 1)
+      call wf%mem%alloc(eigenvalues_o, wf%n_o, 1)
+      call wf%mem%alloc(work, 4*(wf%n_o), 1)
       work = zero
 !
       call dsyev('V','U', &
@@ -1249,10 +1096,10 @@ contains
                   4*(wf%n_o), &
                   info)
 !
-      call deallocator(work, 4*(wf%n_o), 1)
+      call wf%mem%dealloc(work, 4*(wf%n_o), 1)
 !
-      call allocator(eigenvalues_v, wf%n_v, 1)
-      call allocator(work, 4*(wf%n_v), 1)
+      call wf%mem%alloc(eigenvalues_v, wf%n_v, 1)
+      call wf%mem%alloc(work, 4*(wf%n_v), 1)
       work = zero
 !
       call dsyev('V','U', &
@@ -1264,14 +1111,14 @@ contains
                   4*(wf%n_v), &
                   info)
 !
-      call deallocator(work, 4*(wf%n_v), 1)
+      call wf%mem%dealloc(work, 4*(wf%n_v), 1)
 !
 !     :: Reorder M and N ::
 !
 !     dsyev orderes eigenvalues and corresponding eigenvectors in ascending order.
 !     We wish to select active space according to highest eigenvalues, thus we must reorder
 !
-      call allocator(M, wf%n_o, wf%n_o)
+      call wf%mem%alloc(M, wf%n_o, wf%n_o)
 !
       do i = 1, wf%n_o
 !
@@ -1280,9 +1127,9 @@ contains
 !
       enddo
 !
-      call deallocator(M_i_j, wf%n_o, wf%n_o)
+      call wf%mem%dealloc(M_i_j, wf%n_o, wf%n_o)
 !
-      call allocator(N, wf%n_v, wf%n_v)
+      call wf%mem%alloc(N, wf%n_v, wf%n_v)
 !
       do a = 1, wf%n_v
 !
@@ -1291,12 +1138,12 @@ contains
 !
       enddo
 !
-      call deallocator(N_a_b, wf%n_v, wf%n_v)
+      call wf%mem%dealloc(N_a_b, wf%n_v, wf%n_v)
 !
 !     Transform C to CNTO
 !
-      call allocator(C_o, wf%n_ao, wf%n_o)
-      call allocator(C_v, wf%n_ao, wf%n_v)
+      call wf%mem%alloc(C_o, wf%n_ao, wf%n_o)
+      call wf%mem%alloc(C_v, wf%n_ao, wf%n_v)
       C_o = zero
       C_v = zero      
 !
@@ -1314,7 +1161,7 @@ contains
 !
      enddo
 !
-      call allocator(C_o_transformed, wf%n_ao, wf%n_o)
+      call wf%mem%alloc(C_o_transformed, wf%n_ao, wf%n_o)
       call dgemm('N', 'N',    &
                   wf%n_ao,    &
                   wf%n_o,     &
@@ -1328,9 +1175,9 @@ contains
                   C_o_transformed, &
                   wf%n_ao)
 !
-      call deallocator(C_o, wf%n_ao, wf%n_o)
+      call wf%mem%dealloc(C_o, wf%n_ao, wf%n_o)
 !
-      call allocator(C_v_transformed, wf%n_ao, wf%n_v)
+      call wf%mem%alloc(C_v_transformed, wf%n_ao, wf%n_v)
       call dgemm('N', 'N',                   &
                   wf%n_ao,                   &
                   wf%n_v,                    &
@@ -1344,7 +1191,7 @@ contains
                   C_v_transformed,           &
                   wf%n_ao)
 !
-      call deallocator(C_v, wf%n_ao, wf%n_v)
+      call wf%mem%dealloc(C_v, wf%n_ao, wf%n_v)
 ! 
       do i = 1, wf%n_ao
 !
@@ -1361,28 +1208,28 @@ contains
 !
       enddo
 !
-      call deallocator(C_o_transformed, wf%n_ao, wf%n_o)
-      call deallocator(C_v_transformed, wf%n_ao, wf%n_v)
+      call wf%mem%dealloc(C_o_transformed, wf%n_ao, wf%n_o)
+      call wf%mem%dealloc(C_v_transformed, wf%n_ao, wf%n_v)
 
 !
 !     :: Determine number of active orbitals ::
 !
-      sum_o      = 1
+      sum_o      = 1 - eigenvalues_o(wf%n_o, 1)
       wf%n_CC2_o = 1
 !
-      do while ((sum_o .gt. wf%mlcc_settings%delta_o) .and. (wf%n_CC2_o .le. wf%n_o))
+      do while ((sum_o .gt. wf%CC2_orbitals%delta_o) .and. (wf%n_CC2_o .le. wf%n_o))
 !
-         sum_o = sum_o - eigenvalues_o(wf%n_o - (wf%n_CC2_o - 1), 1)
+         sum_o = sum_o - eigenvalues_o(wf%n_o - (wf%n_CC2_o), 1)
          wf%n_CC2_o = wf%n_CC2_o + 1
 !
       enddo
 !
-      sum_v      = 1
+      sum_v      = 1- eigenvalues_v(wf%n_v, 1)
       wf%n_CC2_v = 1
 !
-      do while (sum_v .gt. wf%mlcc_settings%delta_v .and. (wf%n_CC2_v .le. wf%n_v))
+      do while (sum_v .gt. wf%CC2_orbitals%delta_v .and. (wf%n_CC2_v .le. wf%n_v))
 !
-         sum_v = sum_v - eigenvalues_v(wf%n_v - (wf%n_CC2_v - 1), 1)
+         sum_v = sum_v - eigenvalues_v(wf%n_v - (wf%n_CC2_v), 1)
          wf%n_CC2_v = wf%n_CC2_v + 1
 !
       enddo
@@ -1398,8 +1245,8 @@ contains
       wf%first_CCS_o = 1 + wf%n_CC2_o
       wf%first_CCS_v = 1 + wf%n_CC2_v
 !
-      call deallocator(eigenvalues_o, wf%n_o, 1)
-      call deallocator(eigenvalues_v, wf%n_v, 1)
+      call wf%mem%dealloc(eigenvalues_o, wf%n_o, 1)
+      call wf%mem%dealloc(eigenvalues_v, wf%n_v, 1)
 !
 !     ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !     -::- Finding orbital energies and new block diagonal C matrix -::-
@@ -1428,8 +1275,8 @@ contains
 !
 !     Diagonalize active-active block
 !
-      call allocator(work, 4*(wf%n_CC2_o), 1)
-      call allocator(orbital_energies, (wf%n_CC2_o), 1)
+      call wf%mem%alloc(work, 4*(wf%n_CC2_o), 1)
+      call wf%mem%alloc(orbital_energies, (wf%n_CC2_o), 1)
       work = zero
 !
       call dsyev('V','U',              &
@@ -1441,7 +1288,7 @@ contains
                   4*(wf%n_CC2_o),      &
                   info)
 !
-      call deallocator(work, 4*(wf%n_CC2_o), 1)
+      call wf%mem%dealloc(work, 4*(wf%n_CC2_o), 1)
 !
       if (info .ne. 0) then
          write(unit_output,*)'WARNING: Diagonalization of active virtual block not successful. '
@@ -1456,12 +1303,12 @@ contains
 !
       enddo
 !
-     call deallocator(orbital_energies, (wf%n_CC2_o), 1)
+     call wf%mem%dealloc(orbital_energies, (wf%n_CC2_o), 1)
 !
 !     Diagonalize inactive-inactive block 
 !
-      call allocator(work, 4*wf%n_CCS_o, 1)
-      call allocator(orbital_energies, wf%n_CCS_o, 1)
+      call wf%mem%alloc(work, 4*wf%n_CCS_o, 1)
+      call wf%mem%alloc(orbital_energies, wf%n_CCS_o, 1)
       orbital_energies = zero
       work = zero
 !
@@ -1474,7 +1321,7 @@ contains
                   4*wf%n_CCS_o,                             &
                   info)
 !
-      call deallocator(work, 4*wf%n_CCS_o, 1)
+      call wf%mem%dealloc(work, 4*wf%n_CCS_o, 1)
 !
       if (info .ne. 0) then
          write(unit_output,*)'WARNING: Diagonalization of inactive virtual block not successful.'
@@ -1488,11 +1335,11 @@ contains
          wf%fock_diagonal(j + wf%first_CCS_o - 1,1) = orbital_energies(j,1)
 !
       enddo
-      call deallocator(orbital_energies, wf%n_CCS_o, 1)
+      call wf%mem%dealloc(orbital_energies, wf%n_CCS_o, 1)
 !
 !     Transform C-matrix (active occupied block)
 !
-      call allocator(C_o, wf%n_ao, wf%n_o)
+      call wf%mem%alloc(C_o, wf%n_ao, wf%n_o)
       C_o = zero     
 !
      do i = 1, wf%n_ao
@@ -1504,7 +1351,7 @@ contains
 !
      enddo
 !
-      call allocator(C_o_transformed, wf%n_ao, wf%n_CC2_o)
+      call wf%mem%alloc(C_o_transformed, wf%n_ao, wf%n_CC2_o)
       call dgemm('N', 'N',    &
                   wf%n_ao,    &
                   wf%n_CC2_o, &
@@ -1527,11 +1374,11 @@ contains
 !
       enddo
 !
-      call deallocator(C_o_transformed, wf%n_ao, wf%n_CC2_o)
+      call wf%mem%dealloc(C_o_transformed, wf%n_ao, wf%n_CC2_o)
 !
 !     Transform C-matrix (inactive occupied block)
 !
-      call allocator(C_o_transformed, wf%n_ao, wf%n_CCS_o)
+      call wf%mem%alloc(C_o_transformed, wf%n_ao, wf%n_CCS_o)
       call dgemm('N', 'N',    &
                   wf%n_ao,    &
                   wf%n_CCS_o, &
@@ -1545,7 +1392,7 @@ contains
                   C_o_transformed, &
                   wf%n_ao)
 !
-      call deallocator(C_o, wf%n_ao, wf%n_o)
+      call wf%mem%dealloc(C_o, wf%n_ao, wf%n_o)
 !
       do i = 1, wf%n_ao
 !
@@ -1556,14 +1403,14 @@ contains
 !
       enddo
 !
-      call deallocator(C_o_transformed, wf%n_ao, wf%n_CCS_o)
+      call wf%mem%dealloc(C_o_transformed, wf%n_ao, wf%n_CCS_o)
 !
 !     :: Vacant orbitals ::
 !
 !     Diagonalize active-active block
 !
-      call allocator(work, 4*(wf%n_CC2_v), 1)
-      call allocator(orbital_energies, (wf%n_CC2_v), 1)
+      call wf%mem%alloc(work, 4*(wf%n_CC2_v), 1)
+      call wf%mem%alloc(orbital_energies, (wf%n_CC2_v), 1)
       work = zero
 !
       call dsyev('V','U',              &
@@ -1575,7 +1422,7 @@ contains
                   4*(wf%n_CC2_v), &
                   info)
 !
-      call deallocator(work, 4*(wf%n_CC2_v), 1)
+      call wf%mem%dealloc(work, 4*(wf%n_CC2_v), 1)
 !
       if (info .ne. 0) then
          write(unit_output,*)'WARNING: Diagonalization of active virtual block not successful. ', orbital_energies
@@ -1590,12 +1437,12 @@ contains
 !
       enddo
 !
-     call deallocator(orbital_energies, (wf%n_CC2_v), 1)
+     call wf%mem%dealloc(orbital_energies, (wf%n_CC2_v), 1)
 !
 !     Diagonalize inactive-inactive block 
 !
-      call allocator(work, 4*wf%n_CCS_v, 1)
-      call allocator(orbital_energies, wf%n_CCS_v, 1)
+      call wf%mem%alloc(work, 4*wf%n_CCS_v, 1)
+      call wf%mem%alloc(orbital_energies, wf%n_CCS_v, 1)
       orbital_energies = zero
       work = zero
 !
@@ -1608,7 +1455,7 @@ contains
                   4*wf%n_CCS_v,                             &
                   info)
 !
-      call deallocator(work, 4*wf%n_CCS_v, 1)
+      call wf%mem%dealloc(work, 4*wf%n_CCS_v, 1)
 !
       if (info .ne. 0) then
          write(unit_output,*)'WARNING: Diagonalization of inactive virtual block not successful.'
@@ -1622,11 +1469,11 @@ contains
          wf%fock_diagonal(j + wf%n_o + wf%first_CCS_v - 1,1) = orbital_energies(j,1)
 !
       enddo
-      call deallocator(orbital_energies, wf%n_CCS_v, 1)
+      call wf%mem%dealloc(orbital_energies, wf%n_CCS_v, 1)
 !
 !     Transform C-matrix (active virtual block)
 !
-      call allocator(C_v, wf%n_ao, wf%n_v)
+      call wf%mem%alloc(C_v, wf%n_ao, wf%n_v)
       C_v = zero     
 !
      do i = 1, wf%n_ao
@@ -1638,7 +1485,7 @@ contains
 !
      enddo
 !
-      call allocator(C_v_transformed, wf%n_ao, wf%n_CC2_v)
+      call wf%mem%alloc(C_v_transformed, wf%n_ao, wf%n_CC2_v)
       call dgemm('N', 'N',    &
                   wf%n_ao,    &
                   wf%n_CC2_v,     &
@@ -1661,11 +1508,11 @@ contains
 !
       enddo
 !
-      call deallocator(C_v_transformed, wf%n_ao, wf%n_CC2_v)
+      call wf%mem%dealloc(C_v_transformed, wf%n_ao, wf%n_CC2_v)
 !
 !     Transform C-matrix (inactive virtual block)
 !
-      call allocator(C_v_transformed, wf%n_ao, wf%n_CCS_v)
+      call wf%mem%alloc(C_v_transformed, wf%n_ao, wf%n_CCS_v)
       call dgemm('N', 'N',    &
                   wf%n_ao,    &
                   wf%n_CCS_v, &
@@ -1688,16 +1535,16 @@ contains
 !
       enddo
 !
-      call deallocator(C_v_transformed, wf%n_ao, wf%n_CCS_v)
-      call deallocator(C_v, wf%n_ao, wf%n_v)
+      call wf%mem%dealloc(C_v_transformed, wf%n_ao, wf%n_CCS_v)
+      call wf%mem%dealloc(C_v, wf%n_ao, wf%n_v)
 !
 !
    end subroutine cc2_cnto_orbitals_mlcc2
 !
 !
-   module subroutine print_cnto_info_mlcc2(wf)
+   module subroutine print_orbital_info_mlcc2(wf)
 !!
-!!    Print CNTO info, 
+!!    Print orbital info, 
 !!    Written by Sarai D. Folkestad, Aug. 2017
 !!
 !!    Prints information on CNTO partitioning
@@ -1706,12 +1553,14 @@ contains
 !
       class(mlcc2) :: wf
 !
-      write(unit_output,'(t3,a40, i3)') 'Number of CC2 occupied orbitals:       ', wf%n_CC2_o
-      write(unit_output,'(t3,a40, i3/)')'Number of CC2 virtual orbitals:        ', wf%n_CC2_v
+      write(unit_output, '(t6,a10)')'CC2 space:'
+      write(unit_output,'(t6,a30, i3)') 'Number of occupied orbitals:  ', wf%n_CC2_o
+      write(unit_output,'(t6,a30, i3/)')'Number of virtual orbitals:   ', wf%n_CC2_v
 !
-      write(unit_output,'(t3,a40, i3)') 'Number of inactive occupied orbitals:  ', wf%n_CCS_o
-      write(unit_output,'(t3,a40, i3/)')'Number of inactive virtual orbitals:   ', wf%n_CCS_v
+      write(unit_output, '(t6,a10)')'CCS space:'
+      write(unit_output,'(t6,a30, i3)') 'Number of occupied orbitals:  ', wf%n_CCS_o
+      write(unit_output,'(t6,a30, i3/)')'Number of virtual orbitals:   ', wf%n_CCS_v
       flush(unit_output)
 !
-   end subroutine print_cnto_info_mlcc2
+   end subroutine print_orbital_info_mlcc2
 end submodule orbital_partitioning

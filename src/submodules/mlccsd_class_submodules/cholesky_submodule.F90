@@ -43,8 +43,8 @@ contains
       integer(i15) :: throw_away_index = 0
       real(dp)     :: throw_away
 !
-      call allocator(C_o, wf%n_ao, wf%n_o)
-      call allocator(C_v, wf%n_ao, wf%n_v)
+      call wf%mem%alloc(C_o, wf%n_ao, wf%n_o)
+      call wf%mem%alloc(C_v, wf%n_ao, wf%n_v)
 !   
       do i = 1, wf%n_o
 !
@@ -103,13 +103,13 @@ contains
             stop
          endif
 !
-      call allocator(L_ai_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call wf%mem%alloc(L_ai_J, (wf%n_o)*(wf%n_v), wf%n_J)
       L_ai_J = zero
 !
       do J = 1, wf%n_J
 !
-         call allocator(chol_ao, wf%n_ao*(wf%n_ao+1)/2, 1)
-         call allocator(chol_ao_sq, wf%n_ao, wf%n_ao)
+         call wf%mem%alloc(chol_ao, wf%n_ao*(wf%n_ao+1)/2, 1)
+         call wf%mem%alloc(chol_ao_sq, wf%n_ao, wf%n_ao)
          chol_ao = zero
          chol_ao_sq = zero
 !
@@ -117,9 +117,9 @@ contains
 !         
          call squareup(chol_ao, chol_ao_sq, wf%n_ao)
 !
-         call deallocator(chol_ao, wf%n_ao*(wf%n_ao+1)/2, 1)
+         call wf%mem%dealloc(chol_ao, wf%n_ao*(wf%n_ao+1)/2, 1)
 !
-         call allocator(X, wf%n_ao, wf%n_o)
+         call wf%mem%alloc(X, wf%n_ao, wf%n_o)
 !
          call dgemm('N','N',     &
                      wf%n_ao,    &
@@ -134,7 +134,7 @@ contains
                      X,          &
                      wf%n_ao)
 !
-         call deallocator(chol_ao_sq, wf%n_ao, wf%n_ao)
+         call wf%mem%dealloc(chol_ao_sq, wf%n_ao, wf%n_ao)
 !
          call dgemm('T','N',     &
                      wf%n_v,     &
@@ -149,7 +149,7 @@ contains
                      L_ai_J(1,J),&
                      wf%n_v)
 !
-         call deallocator(X, wf%n_ao, wf%n_o)
+         call wf%mem%dealloc(X, wf%n_ao, wf%n_o)
       enddo
 !      
 !     ai-type
@@ -168,9 +168,9 @@ contains
          enddo
       enddo
 
-      call deallocator(L_ai_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call wf%mem%dealloc(L_ai_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
-      call allocator(L_ij_J, (wf%n_o)*(wf%n_o), wf%n_J)
+      call wf%mem%alloc(L_ij_J, (wf%n_o)*(wf%n_o), wf%n_J)
       L_ij_J = zero
 !
 !     Rewind ao cholesky file
@@ -181,8 +181,8 @@ contains
 !
       do J = 1, wf%n_J
 !
-         call allocator(chol_ao, wf%n_ao*(wf%n_ao+1)/2, 1)
-         call allocator(chol_ao_sq, wf%n_ao, wf%n_ao)
+         call wf%mem%alloc(chol_ao, wf%n_ao*(wf%n_ao+1)/2, 1)
+         call wf%mem%alloc(chol_ao_sq, wf%n_ao, wf%n_ao)
          chol_ao = zero
          chol_ao_sq = zero
 !
@@ -190,9 +190,9 @@ contains
 !         
          call squareup(chol_ao, chol_ao_sq, wf%n_ao)
 !
-         call deallocator(chol_ao, wf%n_ao*(wf%n_ao+1)/2, 1)
+         call wf%mem%dealloc(chol_ao, wf%n_ao*(wf%n_ao+1)/2, 1)
 !
-         call allocator(X, wf%n_ao, wf%n_o)
+         call wf%mem%alloc(X, wf%n_ao, wf%n_o)
 !
          call dgemm('N','N',     &
                      wf%n_ao,    &
@@ -207,7 +207,7 @@ contains
                      X,          &
                      wf%n_ao)
 !
-         call deallocator(chol_ao_sq, wf%n_ao, wf%n_ao)
+         call wf%mem%dealloc(chol_ao_sq, wf%n_ao, wf%n_ao)
 !
          call dgemm('T','N',     &
                      wf%n_o,     &
@@ -222,7 +222,7 @@ contains
                      L_ij_J(1,J),&
                      wf%n_o)
 !
-         call deallocator(X, wf%n_ao, wf%n_o)
+         call wf%mem%dealloc(X, wf%n_ao, wf%n_o)
       enddo
 !
 !     ij-type
@@ -231,12 +231,12 @@ contains
             write(unit_chol_mo_ij, rec=ij) (L_ij_J(ij,j), j = 1, wf%n_J)
       enddo
 !
-      call deallocator(L_ij_J, (wf%n_o)*(wf%n_o), wf%n_J)
+      call wf%mem%dealloc(L_ij_J, (wf%n_o)*(wf%n_o), wf%n_J)
 !
 !     Cannot hold all vectors, must first write for each J, 
 !     then read and write to direct access file in batches of b
 !     
-      call allocator(L_ab_J, wf%n_v, wf%n_v)
+      call wf%mem%alloc(L_ab_J, wf%n_v, wf%n_v)
 !
       rewind(unit_chol_ao) 
       read(unit_chol_ao,*) wf%n_ao, wf%n_J
@@ -248,8 +248,8 @@ contains
 !
       do J = 1, wf%n_J
 !
-         call allocator(chol_ao, wf%n_ao*(wf%n_ao+1)/2, 1)
-         call allocator(chol_ao_sq, wf%n_ao, wf%n_ao)
+         call wf%mem%alloc(chol_ao, wf%n_ao*(wf%n_ao+1)/2, 1)
+         call wf%mem%alloc(chol_ao_sq, wf%n_ao, wf%n_ao)
          chol_ao = zero
          chol_ao_sq = zero
 !
@@ -257,9 +257,9 @@ contains
 !         
          call squareup(chol_ao, chol_ao_sq, wf%n_ao)
 !
-         call deallocator(chol_ao, wf%n_ao*(wf%n_ao+1)/2, 1)
+         call wf%mem%dealloc(chol_ao, wf%n_ao*(wf%n_ao+1)/2, 1)
 !
-         call allocator(X, wf%n_ao, wf%n_v)
+         call wf%mem%alloc(X, wf%n_ao, wf%n_v)
 !
          call dgemm('N','N',     &
                      wf%n_ao,    &
@@ -274,7 +274,7 @@ contains
                      X,          &
                      wf%n_ao)
 !
-         call deallocator(chol_ao_sq, wf%n_ao, wf%n_ao)
+         call wf%mem%dealloc(chol_ao_sq, wf%n_ao, wf%n_ao)
 !
          call dgemm('T','N',     &
                      wf%n_v,     &
@@ -289,13 +289,13 @@ contains
                      L_ab_J,     &
                      wf%n_v)
 !
-         call deallocator(X, wf%n_ao, wf%n_v)
+         call wf%mem%dealloc(X, wf%n_ao, wf%n_v)
 !
          write(unit_chol_mo_ab_tmp) ((L_ab_J(a,b), b = 1, a), a = 1, wf%n_v)
 !
       enddo
 !
-      call deallocator(L_ab_J, (wf%n_v),(wf%n_v))
+      call wf%mem%dealloc(L_ab_J, (wf%n_v),(wf%n_v))
 !
 !     Read L_ab_J in batches over b
 !
@@ -319,7 +319,7 @@ contains
          call batch_limits(b_first, b_last, b_batch, max_batch_length, batch_dimension)
          b_length = b_last - b_first + 1 
 !
-         call allocator(L_ab_J, (((b_length + 1)*b_length/2)+(wf%n_v - b_length - b_first + 1)*b_length), wf%n_J)
+         call wf%mem%alloc(L_ab_J, (((b_length + 1)*b_length/2)+(wf%n_v - b_length - b_first + 1)*b_length), wf%n_J)
 !
          if (b_first .ne. 1) then
 !  
@@ -356,7 +356,7 @@ contains
             enddo
          enddo
 !
-         call deallocator(L_ab_J, (((b_length+1)*b_length/2)+(wf%n_v - b_length - b_first + 1)*b_length), wf%n_J)
+         call wf%mem%dealloc(L_ab_J, (((b_length+1)*b_length/2)+(wf%n_v - b_length - b_first + 1)*b_length), wf%n_J)
 !
       enddo
       close(unit_chol_mo_ab_tmp, status='delete')
@@ -368,8 +368,8 @@ contains
       close(unit_chol_mo_ij)
       close(unit_chol_mo_ab)
 !
-      call deallocator(C_o, wf%n_ao, wf%n_o)
-      call deallocator(C_v, wf%n_ao, wf%n_v)
+      call wf%mem%dealloc(C_o, wf%n_ao, wf%n_o)
+      call wf%mem%dealloc(C_v, wf%n_ao, wf%n_v)
 !
    end subroutine read_transform_cholesky_for_CC2_amplitude_mlccsd
 !
@@ -671,7 +671,7 @@ contains
       n_active_v = a_last - a_first + 1
 !
       
-      call allocator(X1_a_I, wf%n_v, wf%n_o)
+      call wf%mem%alloc(X1_a_I, wf%n_v, wf%n_o)
 !
       call dgemm('T','N',  &
                   wf%n_v,  &
@@ -686,7 +686,7 @@ contains
                   X1_a_I,  &
                   wf%n_v)
 !
-      call allocator(t1_a_i, wf%n_v, wf%n_o)
+      call wf%mem%alloc(t1_a_i, wf%n_v, wf%n_o)
 !
       call dgemm('N', 'N', &
                   wf%n_v,  &
@@ -701,7 +701,7 @@ contains
                   t1_a_i,  &
                   wf%n_v)
 !
-         call deallocator(X1_a_I, wf%n_v, wf%n_o)
+         call wf%mem%dealloc(X1_a_I, wf%n_v, wf%n_o)
 !
 !     Read L_ai^J from file 
 !
@@ -712,7 +712,7 @@ contains
 !
 !     Allocate L_Ja_i
 !
-      call allocator(L_Ja_i, (wf%n_J)*n_active_v, n_active_o)
+      call wf%mem%alloc(L_Ja_i, (wf%n_J)*n_active_v, n_active_o)
       L_Ja_i = zero
 !
 !     Set batching variables 
@@ -739,14 +739,14 @@ contains
          call batch_limits(batch_start, batch_end, a_batch, max_batch_length, n_active_v)
          batch_length = batch_end - batch_start + 1
 !
-         call allocator(L_ab_J, batch_length*(wf%n_v), wf%n_J) ! L_ab^J
+         call wf%mem%alloc(L_ab_J, batch_length*(wf%n_v), wf%n_J) ! L_ab^J
          L_ab_J = zero
 !
 !        Read Cholesky AB vectors, batching over a
 ! 
          call wf%read_cholesky_ab_for_cc2_amplitudes(L_ab_J, batch_start, batch_end, 1, wf%n_v)
 !
-         call allocator(L_ba_J, (wf%n_v)*batch_length, wf%n_J) ! L_ab^J = L_ba_J(ba,J)
+         call wf%mem%alloc(L_ba_J, (wf%n_v)*batch_length, wf%n_J) ! L_ab^J = L_ba_J(ba,J)
 !
          L_ba_J = zero
 !
@@ -764,9 +764,9 @@ contains
            enddo
          enddo
 !
-         call deallocator(L_ab_J, batch_length*(wf%n_v), wf%n_J)
+         call wf%mem%dealloc(L_ab_J, batch_length*(wf%n_v), wf%n_J)
 !
-         call allocator(L_Ja_b, batch_length*(wf%n_J), wf%n_v)
+         call wf%mem%alloc(L_Ja_b, batch_length*(wf%n_J), wf%n_v)
          L_Ja_b = zero
 !
 !        Reorder the Cholesky array L_ba_J
@@ -785,7 +785,7 @@ contains
                enddo
             enddo
          enddo
-         call deallocator(L_ba_J, (wf%n_v)*batch_length, wf%n_J)    
+         call wf%mem%dealloc(L_ba_J, (wf%n_v)*batch_length, wf%n_J)    
 !
 !        Calculate sum_b L_Ja_b*t_b_i = L_Ja_i 
 !        
@@ -808,7 +808,7 @@ contains
 !
 !        Deallocate  L_Ja_b
 !
-         call deallocator(L_Ja_b, batch_length*(wf%n_J), wf%n_v)
+         call wf%mem%dealloc(L_Ja_b, batch_length*(wf%n_J), wf%n_v)
 !
       enddo ! batching over a 
 !
@@ -831,7 +831,7 @@ contains
 !
 !     Deallocate L_Ja_i
 !
-      call deallocator(L_Ja_i, (wf%n_J)*n_active_v, n_active_o)
+      call wf%mem%dealloc(L_Ja_i, (wf%n_J)*n_active_v, n_active_o)
 !
 !
 !     :: L_ij_J contributions ::
@@ -839,10 +839,10 @@ contains
 !
 !     Allocate L_a_iJ, L_ik_J, L_k_iJ
 !
-      call allocator(L_a_iJ, n_active_v, (wf%n_J)*n_active_o)
-      call allocator(L_k_iJ, wf%n_o, n_active_o*(wf%n_J))
+      call wf%mem%alloc(L_a_iJ, n_active_v, (wf%n_J)*n_active_o)
+      call wf%mem%alloc(L_k_iJ, wf%n_o, n_active_o*(wf%n_J))
 !
-      call allocator(L_ik_J, (wf%n_o)*n_active_o, wf%n_J)
+      call wf%mem%alloc(L_ik_J, (wf%n_o)*n_active_o, wf%n_J)
 !  
 !     Read Cholesky IJ vectors
 !
@@ -899,17 +899,17 @@ contains
 !
 !     Deallocate L_a_iJ, L_ik_J, L_k_iJ
 !
-      call deallocator(L_a_iJ, n_active_v, (wf%n_J)*n_active_o)      
-      call deallocator(L_k_iJ, wf%n_o, n_active_o*(wf%n_J))
+      call wf%mem%dealloc(L_a_iJ, n_active_v, (wf%n_J)*n_active_o)      
+      call wf%mem%dealloc(L_k_iJ, wf%n_o, n_active_o*(wf%n_J))
 !
-      call deallocator(L_ik_J, (wf%n_o)*n_active_o, wf%n_J)
+      call wf%mem%dealloc(L_ik_J, (wf%n_o)*n_active_o, wf%n_J)
 !
 !
 !     :: L_jb_J contributions ::    
 !
 !
-      call allocator(L_kJ_b, (wf%n_o)*(wf%n_J), wf%n_v)
-      call allocator(L_kb_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call wf%mem%alloc(L_kJ_b, (wf%n_o)*(wf%n_J), wf%n_v)
+      call wf%mem%alloc(L_kb_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
 !     Read the Cholesky vector L_kb_J
 !
@@ -933,11 +933,11 @@ contains
 !
 !     Deallocate L_kb_J
 !
-      call deallocator(L_kb_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      call wf%mem%dealloc(L_kb_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
 !     Allocate L_kJ_i 
 !
-      call allocator(L_kJ_i, (wf%n_o)*(wf%n_J), n_active_o)
+      call wf%mem%alloc(L_kJ_i, (wf%n_o)*(wf%n_J), n_active_o)
 !
 !     Calculate sum_b L_kJ_b*t_b_i = L_kJ_i
 !
@@ -956,11 +956,11 @@ contains
 !
 !     Deallocate L_kJ_b
 !
-      call deallocator(L_kJ_b, (wf%n_o)*(wf%n_J), wf%n_v)
+      call wf%mem%dealloc(L_kJ_b, (wf%n_o)*(wf%n_J), wf%n_v)
 !
 !     Allocate L_k_iJ
 !  
-      call allocator(L_k_iJ, (wf%n_o), n_active_o*(wf%n_J))
+      call wf%mem%alloc(L_k_iJ, (wf%n_o), n_active_o*(wf%n_J))
 !
 !     Reorder L_kJ_i to L_k_iJ    
 !
@@ -979,11 +979,11 @@ contains
 !
 !     Deallocate L_kJ_i
 !
-      call deallocator(L_kJ_i, (wf%n_o)*(wf%n_J), n_active_o)
+      call wf%mem%dealloc(L_kJ_i, (wf%n_o)*(wf%n_J), n_active_o)
 !
 !     Allocate L_a_iJ
 !
-      call allocator(L_a_iJ, n_active_v, n_active_o*(wf%n_J))
+      call wf%mem%alloc(L_a_iJ, n_active_v, n_active_o*(wf%n_J))
 !      
 !     Calculate sum_k t_a_k*L_k_iJ = L_a_iJ
 !
@@ -1017,9 +1017,9 @@ contains
 !
 !     Deallocations
 !
-      call deallocator(L_a_iJ, n_active_v, n_active_o*(wf%n_J))
-      call deallocator(L_k_iJ, wf%n_o, n_active_o*(wf%n_J))
-      call deallocator(t1_a_i, wf%n_v, wf%n_o)
+      call wf%mem%dealloc(L_a_iJ, n_active_v, n_active_o*(wf%n_J))
+      call wf%mem%dealloc(L_k_iJ, wf%n_o, n_active_o*(wf%n_J))
+      call wf%mem%dealloc(t1_a_i, wf%n_v, wf%n_o)
 !
    end subroutine get_cholesky_ai_for_cc2_amplitudes_mlccsd
 !

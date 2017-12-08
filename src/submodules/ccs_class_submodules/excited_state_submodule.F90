@@ -1,13 +1,17 @@
 submodule(ccs_class) excited_state
 !
 !!
-!!    Excited state sub(CCS)
-!!    Written by Eirik F. Kjønstad and Sarai Dery Folkestad, May 2017
+!!    Excited state submodule (CCS)
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
 !!    Contains the following family of procedures of the CCS class:
 !!
 !!    excited_state_driver:                directs the solution of excited state problems.
+!!
+!!    excited_state_preparations:          performs preparatory tasks for the excited state solver.
 !!    excited_state_solver:                solves the excited state problem.
+!!    excited_state_cleanup:               performs cleanup tasks after excited state solver.
+!!
 !!    solve_reduced_eigenvalue_equation:   solves the excited state problem in the projected/reduced space 
 !!                                         of trial vectors (in a given iteration).
 !!    construct_next_trial_vectors:        finds the new trial vectors resulting from the residuals found 
@@ -24,7 +28,6 @@ submodule(ccs_class) excited_state
 !  Some variables available to all routines of the module
 !
    integer(i15) :: iteration = 1
-   integer(i15) :: max_iterations = 70! E: we move this to calculation settings later
 !
 !  Variables to handle convergence criterea
 !
@@ -32,9 +35,6 @@ submodule(ccs_class) excited_state
 !
    logical :: converged_energy   = .false.
    logical :: converged_residual = .false.
-!
-   logical :: timings = .true.
-   logical :: print_vectors = .true.
 !
 !
 contains
@@ -58,20 +58,25 @@ contains
 !
 !     Let the user know the excited state driver is running
 !
-      write(unit_output,'(t3,a)')    ':: Excited state solver (Davidson)'
+      write(unit_output,'(/t3,a)')    ':: Excited state solver (Davidson)'
       write(unit_output,'(t3,a/)')   ':: E. F. Kjønstad, S. D. Folkestad, May 2017'
-      write(unit_output,'(t3,a,i3,a,a,a)') &
-                                     'Requested ',wf%tasks%n_singlet_states,' ', trim(wf%name), ' singlet states.'
-      write(unit_output,'(t3,a,i3,a,a,a)') &
-                                     'Requested ',wf%tasks%n_triplet_states,' ', trim(wf%name), ' triplet states.'     
+      write(unit_output,'(t3,a,i2,a,a,a)') &
+                                     'Requested',wf%excited_state_specifications%n_singlet_states,&
+                                     ' ', trim(wf%name), ' singlet states.'
+      write(unit_output,'(t3,a,i2,a,a,a)') &
+                                     'Requested',wf%excited_state_specifications%n_triplet_states,&
+                                     ' ', trim(wf%name), ' triplet states.' 
+      flush(unit_output)    
 !
-!     Set the response task 
+      write(unit_output,'(/t3,a,a,a/)')  'Settings for ',trim(wf%name), ' excited state calculation:'
 !
-      if (wf%tasks%excited_state) then
-         wf%excited_state_task = 'right_valence'
-      elseif (wf%tasks%core_excited_state) then
-         wf%excited_state_task = 'right_core'
-      endif
+      write(unit_output,'(t6,a20,e9.2)') 'Energy threshold:   ', wf%excited_state_specifications%energy_threshold
+      write(unit_output,'(t6,a20,e9.2)') 'Residual threshold: ', wf%excited_state_specifications%residual_threshold
+      flush(unit_output)
+!
+!     Preparations for excited state solver 
+!
+      call wf%excited_state_preparations
 !
 !     Run the general solver routine (file names are given
 !     by the task, i.e., the file 'right_valence' contains
@@ -79,7 +84,63 @@ contains
 !
       call wf%excited_state_solver
 !
+!     Final work and preparations for other tasks (such as property calculations)
+!
+      call wf%excited_state_cleanup
+!
    end subroutine excited_state_driver_ccs
+!
+!
+   module subroutine excited_state_preparations_ccs(wf)
+!!
+!!    Excited State Preparations (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!    A routine for preparation tasks (if any). Can be overwritten
+!!    in descendants if other preparations prove necessary.    
+!!
+      class(ccs) :: wf 
+!
+!     Store electronic repulsion integrals to file if there is space
+!
+      call wf%read_single_amplitudes
+!
+      call wf%store_t1_vo_ov_electronic_repulsion
+      call wf%store_t1_vv_ov_electronic_repulsion
+!
+!     Set current task to excited state calculation 
+! 
+      wf%tasks%current = 'excited_state'
+!
+!     Set filename for solution vectors
+!
+      if (wf%tasks%core_excited_state .or. wf%tasks%core_ionized_state) then   ! Core excitation
+!
+         if (wf%excited_state_specifications%right) then ! Right vectors
+!
+            wf%excited_state_specifications%solution_file = 'right_core'
+!
+         else ! Left vectors
+!
+            wf%excited_state_specifications%solution_file = 'left_core'
+!
+         endif
+!
+      else ! Valence excitation
+!
+         if (wf%excited_state_specifications%left) then ! Right vectors
+!
+            wf%excited_state_specifications%solution_file = 'left_valence'
+!
+         else ! Left vectors
+!
+            wf%excited_state_specifications%solution_file = 'right_valence'
+!
+         endif
+!
+      endif
+!
+   end subroutine excited_state_preparations_ccs
 !
 !
    module subroutine excited_state_solver_ccs(wf)
@@ -141,7 +202,7 @@ contains
       real(dp), dimension(:,:), allocatable :: solution_vectors_reduced
       real(dp), dimension(:,:), allocatable :: solution
 !
-      integer(i15) :: state = 0, unit_solution = 0, ioerror = 0 ! For looping over the states
+      integer(i15) :: state = 0, unit_solution = 0, ioerror = 0, i = 0 ! For looping over the states
 !
       real(dp) :: start_excited_state_solver, end_excited_state_solver
       real(dp) :: start_excited_state_iter, end_excited_state_iter
@@ -152,36 +213,50 @@ contains
 !
 !     Test for triplet calculation, and stop if so - not yet implemented
 !
-      if (.not. wf%tasks%n_triplet_states .eq. 0) then
-         write(unit_output,'(/t3,a/)') 'Triplet excitations not implemented.'
+      if (.not. wf%excited_state_specifications%n_triplet_states .eq. 0) then
+!
+         write(unit_output,'(/t3,a/)') 'Triplet excitations not yet implemented.'
+!
       endif
+!
       flush(unit_output)
 !
-      converged = .false. 
+!     Initialize convergence logicals & iteration integer
 !
+      converged          = .false. 
       converged_energy   = .false.
       converged_residual = .false.
 !
       iteration = 1
 !
-!     Initialize for excited state calculation
+!     Set the reduced space dimension of number of new trials for the first iteration 
 !
-      reduced_dim  = wf%tasks%n_singlet_states
-      n_new_trials = wf%tasks%n_singlet_states
+      reduced_dim  = wf%excited_state_specifications%n_singlet_states
+      n_new_trials = wf%excited_state_specifications%n_singlet_states
 !
+!     If restart use old solution vectors for first start vectors
 !
-      call wf%initialize_excited_states
+      if (wf%excited_state_specifications%restart) then 
 !
-!     Find start trial vectors and store them to the trial_vec file
+!        Restart (standard: use old solutions as initial trial vectors)
 !
-      call wf%initialize_trial_vectors
+         write(unit_output,'(/t3,a)') 'Requested restart. Preparing for restart.'
+         call wf%excited_state_restart
+!
+      else
+!
+!        Find start trial vectors and store them to the trial_vec file
+!
+         call wf%initialize_trial_vectors
+!
+      endif
 !
 !     Allocate and initialize eigenvalue arrays
 !
-      call allocator(eigenvalues_Im_old, wf%tasks%n_singlet_states, 1)
-      call allocator(eigenvalues_Re_old, wf%tasks%n_singlet_states, 1)
-      call allocator(eigenvalues_Im_new, wf%tasks%n_singlet_states, 1)
-      call allocator(eigenvalues_Re_new, wf%tasks%n_singlet_states, 1)
+      call wf%mem%alloc(eigenvalues_Im_old, wf%excited_state_specifications%n_singlet_states, 1)
+      call wf%mem%alloc(eigenvalues_Re_old, wf%excited_state_specifications%n_singlet_states, 1)
+      call wf%mem%alloc(eigenvalues_Im_new, wf%excited_state_specifications%n_singlet_states, 1)
+      call wf%mem%alloc(eigenvalues_Re_new, wf%excited_state_specifications%n_singlet_states, 1)
 !
       eigenvalues_Im_old = zero
       eigenvalues_Re_old = zero
@@ -190,8 +265,9 @@ contains
 !
 !     Enter iterative loop
 !
-      do while (.not. converged .and. iteration .le. max_iterations) 
-         if (timings) call cpu_time(start_excited_state_iter)
+      do while (.not. converged .and. iteration .le. wf%excited_state_specifications%max_iterations) 
+!
+         call cpu_time(start_excited_state_iter)
 !
 !        Prints 
 !
@@ -206,7 +282,7 @@ contains
 !
 !        Allocate solution vectors for reduced problem
 !
-         call allocator(solution_vectors_reduced, reduced_dim, wf%tasks%n_singlet_states)
+         call wf%mem%alloc(solution_vectors_reduced, reduced_dim, wf%excited_state_specifications%n_singlet_states)
          solution_vectors_reduced = zero
 !
 !        Solve the reduced eigenvalue problem
@@ -218,9 +294,10 @@ contains
 !
          converged_energy = .true.
 !
-         do state = 1, wf%tasks%n_singlet_states
+         do state = 1, wf%excited_state_specifications%n_singlet_states
 !
-            if (abs(eigenvalues_Re_new(state,1)-eigenvalues_Re_old(state,1)) .gt. wf%settings%energy_threshold) then
+            if (abs(eigenvalues_Re_new(state,1)-eigenvalues_Re_old(state,1)) &
+                  .gt. wf%excited_state_specifications%energy_threshold) then
 !
                converged_energy = .false.
 !
@@ -230,64 +307,122 @@ contains
 !
 !        Save excitation energies for next iteration 
 !
-         call dcopy(wf%tasks%n_singlet_states, eigenvalues_Im_new, 1, eigenvalues_Im_old, 1)
-         call dcopy(wf%tasks%n_singlet_states, eigenvalues_Re_new, 1, eigenvalues_Re_old, 1)
+         call dcopy(wf%excited_state_specifications%n_singlet_states, eigenvalues_Im_new, 1, eigenvalues_Im_old, 1)
+         call dcopy(wf%excited_state_specifications%n_singlet_states, eigenvalues_Re_new, 1, eigenvalues_Re_old, 1)
 !
 !        Get next trial vectors and test for convergence of residuals 
 !
          call wf%construct_next_trial_vectors(eigenvalues_Re_new, eigenvalues_Im_new, &
-                                                solution_vectors_reduced, reduced_dim, n_new_trials)
+                                              solution_vectors_reduced, reduced_dim, n_new_trials)
 !
 !        Test for convergence of the energies and residuals
 !
-         if (converged_energy .and. converged_residual) then
-            converged = .true.
-         else
-            iteration = iteration + 1
-         endif
+         if (converged_residual) then ! Converged residual 
 !
-         call deallocator(solution_vectors_reduced, reduced_dim, wf%tasks%n_singlet_states)
+!           Tests for convergence of energy or restart
 !
-         if (timings) then
+            if (converged_energy .or. iteration .eq. 1) then 
+!
+               converged = .true.
+!
+               if (iteration .eq. 1) write(unit_output,'(t3,a,/t3,a)') 'Note: residual converged in first iteration.', &
+                                                               'Energy convergence therefore not tested in this calculation.'
+!
+            endif
+!
+!           Stop timer & print CPU time for the final iteration 
+!
             call cpu_time(end_excited_state_iter)
-            write(unit_output,'(t3,a35,i5,a5,f14.8/)') 'Total time (seconds) of iteration ',&
-                                     iteration, ' : ' ,end_excited_state_iter - start_excited_state_iter
+!
+            if (wf%settings%print_level == 'developer') then 
+!
+               write(unit_output,'(t3,a35,i5,a5,f14.8/)') 'Total CPU time (seconds) of iteration ',&
+                        iteration, ' : ' ,end_excited_state_iter - start_excited_state_iter
+!
+            endif 
+!
             flush(unit_output)
 !
+         else ! Not yet converged 
+!
+            iteration = iteration + 1
+!
          endif
+!
+         call wf%mem%dealloc(solution_vectors_reduced, reduced_dim, wf%excited_state_specifications%n_singlet_states)
 !
       enddo ! End of iterative loop 
 !
 !     Prints
 !
-      if ( converged ) then
+      if (converged) then
+!
          write(unit_output,'(/t3,a,i2,a/)')  'Converged in ', iteration, ' iterations!'
 !
-         if (print_vectors) then
+         if (wf%excited_state_specifications%print_vectors) then
 !
             call wf%print_excited_state_info
 !
          endif  
 !
       else
+!
          write(unit_output,'(/t3,a/)') 'Max number of iterations performed without convergence!'
+!
       endif
-!
-!     Final deallocations
-!
-      call deallocator(eigenvalues_Im_old, reduced_dim, 1)
-      call deallocator(eigenvalues_Re_old, reduced_dim, 1)
-      call deallocator(eigenvalues_Im_new, reduced_dim, 1)
-      call deallocator(eigenvalues_Re_new, reduced_dim, 1)
 !
 !     End and print timings
 !
       call cpu_time(end_excited_state_solver)
 !
-      write(unit_output,'(t3,a27,f14.8/)') 'Total time (seconds):', end_excited_state_solver - start_excited_state_solver
+!
+      call wf%summary_excited_state_info(eigenvalues_Re_new)
+!
+!     Print summary
+!
+      write(unit_output,'(//t3,a,a,a/)')'Summary of ', trim(wf%name), ' excited state calculation:'
+      write(unit_output,'(t6,a25,f14.8/)') 'Total CPU time (seconds):    ', end_excited_state_solver - start_excited_state_solver
       flush(unit_output)
+
+      write(unit_output,'(t6,a10,a18,a17,a20)')'Excitation', 'energy [a.u.]', 'energy [eV]', 'energy [cm^-1]'
+      write(unit_output,'(t6,a)')'--------------------------------------------------------------------'
+      do i = 1, wf%excited_state_specifications%n_singlet_states
+!
+!     Print energy of excitation in eV, hartree and cm^-1
+!
+      write(unit_output,'(t6,i3,12x,f12.8,7x,f12.8,5x,f16.8)') i, eigenvalues_Re_new(i,1),&
+                                                eigenvalues_Re_new(i,1)*27.211399, &
+                                                eigenvalues_Re_new(i,1)*219474.63
+      enddo
+      write(unit_output,'(t6,a)')'--------------------------------------------------------------------'
+      write(unit_output,'(t6,a)') '1 a.u. = 27.211399 eV'
+      write(unit_output,'(t6,a)') '1 a.u. = 219474.63 cm^-1'
+!
+!     Final deallocations
+!
+      call wf%mem%dealloc(eigenvalues_Im_old, reduced_dim, 1)
+      call wf%mem%dealloc(eigenvalues_Re_old, reduced_dim, 1)
+      call wf%mem%dealloc(eigenvalues_Im_new, reduced_dim, 1)
+      call wf%mem%dealloc(eigenvalues_Re_new, reduced_dim, 1)
 !
    end subroutine excited_state_solver_ccs
+!
+!
+   module subroutine excited_state_cleanup_ccs(wf)
+!!
+!!    Excited State Cleanup (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!    A routine for cleanup tasks (if any). Can be overwritten
+!!    in descendants if other cleanups prove necessary.    
+!!
+      class(ccs) :: wf 
+!
+!     Deallocate the single amplitudes 
+!
+      call wf%destruct_single_amplitudes
+!
+   end subroutine excited_state_cleanup_ccs
 !
 !
    module subroutine solve_reduced_eigenvalue_equation_ccs(wf, eigenvalues_Re, eigenvalues_Im, &
@@ -306,10 +441,10 @@ contains
 !
       integer(i15) :: reduced_dim, n_new_trials
 !
-      real(dp), dimension(wf%tasks%n_singlet_states,1) :: eigenvalues_Re
-      real(dp), dimension(wf%tasks%n_singlet_states,1) :: eigenvalues_Im
+      real(dp), dimension(wf%excited_state_specifications%n_singlet_states,1) :: eigenvalues_Re
+      real(dp), dimension(wf%excited_state_specifications%n_singlet_states,1) :: eigenvalues_Im
 ! 
-      real(dp), dimension(reduced_dim, wf%tasks%n_singlet_states) :: solution_vectors_reduced
+      real(dp), dimension(reduced_dim, wf%excited_state_specifications%n_singlet_states) :: solution_vectors_reduced
 !
       real(dp), dimension(:,:), allocatable :: A_red
       real(dp), dimension(:,:), allocatable :: c_i
@@ -329,7 +464,7 @@ contains
 !
       integer :: info = -1 
 !
-      call allocator(A_red, reduced_dim, reduced_dim)
+      call wf%mem%alloc(A_red, reduced_dim, reduced_dim)
       A_red = zero
 !
 !     -::- Prepare to solve the eigenvalue problem -::-
@@ -363,8 +498,8 @@ contains
 !
 !     Allocate c and rho
 !
-      call allocator(c_i, wf%n_parameters, 1)
-      call allocator(rho_j, wf%n_parameters, 1)
+      call wf%mem%alloc(c_i, wf%n_parameters, 1)
+      call wf%mem%alloc(rho_j, wf%n_parameters, 1)
       c_i   = zero
       rho_j = zero
 !
@@ -412,8 +547,8 @@ contains
 !
       endif
 !
-      call deallocator(c_i, wf%n_parameters, 1)
-      call deallocator(rho_j, wf%n_parameters, 1)
+      call wf%mem%dealloc(c_i, wf%n_parameters, 1)
+      call wf%mem%dealloc(rho_j, wf%n_parameters, 1)
 !
 !     Close files for trial vectors and transformed vectors
 !
@@ -433,15 +568,15 @@ contains
 !
 !     Allocate arrays for eigenvalues and eigenvectors
 !
-      call allocator(solution_vectors_reduced_all, reduced_dim, reduced_dim)
+      call wf%mem%alloc(solution_vectors_reduced_all, reduced_dim, reduced_dim)
       solution_vectors_reduced_all = zero
 !
-      call allocator(eigenvalues_Re_all, reduced_dim, 1)
-      call allocator(eigenvalues_Im_all, reduced_dim, 1)
+      call wf%mem%alloc(eigenvalues_Re_all, reduced_dim, 1)
+      call wf%mem%alloc(eigenvalues_Im_all, reduced_dim, 1)
       eigenvalues_Re_all = zero
       eigenvalues_Im_all = zero
 !
-      call allocator(work, 4*reduced_dim, 1)
+      call wf%mem%alloc(work, 4*reduced_dim, 1)
       work = zero
 !
 !     Solve reduced eigenvalue problem
@@ -460,29 +595,33 @@ contains
                   work,                         &
                   4*reduced_dim,                &
                   info)
+!
       if (info .ne. 0) then 
-         write(unit_output,*)  'WARNING: Error while finding solution', info
+!
+         write(unit_output,*)  'Error: could not solve reduced Jacobi equation', info
          stop
+!
       endif
 !
-      call deallocator(work, 4*reduced_dim, 1)
+      call wf%mem%dealloc(work, 4*reduced_dim, 1)
 !
 !     Deallocate reduced Jacobi matrix
 !
-      call deallocator(A_red, reduced_dim, reduced_dim)
+      call wf%mem%dealloc(A_red, reduced_dim, reduced_dim)
 !
 !     Find lowest eigenvalues and sort them (the corresponding indices
 !     are placed in the integer array index_list)
 !
-      call allocator_int(index_list, wf%tasks%n_singlet_states, 1)
+      call wf%mem%alloc_int(index_list, wf%excited_state_specifications%n_singlet_states, 1)
       index_list = 0
 !
-      call get_n_lowest(wf%tasks%n_singlet_states, reduced_dim, eigenvalues_Re_all, eigenvalues_Re, index_list)
+      call get_n_lowest(wf%excited_state_specifications%n_singlet_states,&
+           reduced_dim, eigenvalues_Re_all, eigenvalues_Re, index_list)
 !
 !     Pick out solution vectors and imaginary parts of eigenvalues according to index_list 
 !
       do i = 1, reduced_dim
-         do j = 1, wf%tasks%n_singlet_states
+         do j = 1, wf%excited_state_specifications%n_singlet_states
 !
             solution_vectors_reduced(i,j) = solution_vectors_reduced_all(i,index_list(j,1))
             eigenvalues_Im = eigenvalues_Im_all(index_list(j,1), 1)
@@ -492,11 +631,11 @@ contains
 !
 !     Final deallocatons
 !
-      call deallocator(solution_vectors_reduced_all, reduced_dim, reduced_dim)
-      call deallocator(eigenvalues_Im_all, reduced_dim, 1)
-      call deallocator(eigenvalues_Re_all, reduced_dim, 1)
+      call wf%mem%dealloc(solution_vectors_reduced_all, reduced_dim, reduced_dim)
+      call wf%mem%dealloc(eigenvalues_Im_all, reduced_dim, 1)
+      call wf%mem%dealloc(eigenvalues_Re_all, reduced_dim, 1)
 !
-      call deallocator_int(index_list,wf%tasks%n_singlet_states,1)
+      call wf%mem%dealloc_int(index_list,wf%excited_state_specifications%n_singlet_states,1)
 !
    end subroutine solve_reduced_eigenvalue_equation_ccs
 !
@@ -529,13 +668,13 @@ contains
 !
       class(ccs) :: wf
 !
-      real(dp), dimension(wf%tasks%n_singlet_states,1) :: eigenvalues_Re
-      real(dp), dimension(wf%tasks%n_singlet_states,1) :: eigenvalues_Im
+      real(dp), dimension(wf%excited_state_specifications%n_singlet_states,1) :: eigenvalues_Re
+      real(dp), dimension(wf%excited_state_specifications%n_singlet_states,1) :: eigenvalues_Im
 !
       integer(i15) :: reduced_dim
       integer(i15) :: n_new_trials
 !
-      real(dp), dimension(reduced_dim, wf%tasks%n_singlet_states) :: solution_vectors_reduced
+      real(dp), dimension(reduced_dim, wf%excited_state_specifications%n_singlet_states) :: solution_vectors_reduced
 
 !
 !     Local variables 
@@ -576,11 +715,12 @@ contains
       if (ioerror .ne. 0) write(unit_output,*) 'Error while opening transformed vecs file'
 !
       call generate_unit_identifier(unit_solution)
-      open(unit=unit_solution, file=wf%excited_state_task, action='write', status='unknown', &
+      open(unit=unit_solution, file=wf%excited_state_specifications%solution_file,&
+      action='write', status='unknown', &
       access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
       if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file'
 !
-      call allocator(residual, wf%n_parameters, 1)
+      call wf%mem%alloc(residual, wf%n_parameters, 1)
 !
       n_new_trials = 0
       converged_residual = .true.
@@ -590,16 +730,16 @@ contains
 !
 !     For each of the roots
 !
-      do root = 1, wf%tasks%n_singlet_states
+      do root = 1, wf%excited_state_specifications%n_singlet_states
 !
          residual = zero
 !
 !        :: Create fullspace vector X and calculate norm ||X|| ::
 !
-         call allocator(solution_vector, wf%n_parameters, 1)
+         call wf%mem%alloc(solution_vector, wf%n_parameters, 1)
          solution_vector = zero
 !
-         call allocator(c_i, wf%n_parameters, 1)
+         call wf%mem%alloc(c_i, wf%n_parameters, 1)
 !
 !        Calculate X_j = sum_i x_j_i * c_i (for the root j)
 !
@@ -613,7 +753,7 @@ contains
 !
          enddo
 !
-         call deallocator(c_i, wf%n_parameters, 1)
+         call wf%mem%dealloc(c_i, wf%n_parameters, 1)
 !
 !        Calculate norm of solution vector
 !
@@ -628,7 +768,7 @@ contains
 !
          call dcopy(wf%n_parameters, solution_vector, 1, residual, 1) ! R = X 
 !        
-         call deallocator(solution_vector, wf%n_parameters, 1)
+         call wf%mem%dealloc(solution_vector, wf%n_parameters, 1)
 !
 !        Residual = AX - eX
 !
@@ -638,7 +778,7 @@ contains
 !
 !        + AX : 
 !
-         call allocator(rho_i, wf%n_parameters, 1)
+         call wf%mem%alloc(rho_i, wf%n_parameters, 1)
 !
          do trial = 1, reduced_dim
 !
@@ -650,7 +790,7 @@ contains
 !
          enddo
 !
-         call deallocator(rho_i, wf%n_parameters, 1)
+         call wf%mem%dealloc(rho_i, wf%n_parameters, 1)
 !
 !        Calculate norm of residual || AX - eX ||
 !
@@ -661,7 +801,7 @@ contains
 !
          conv_test = norm_residual/norm_solution_vector
 !
-         if (conv_test .gt. wf%settings%equation_threshold) converged_residual = .false.
+         if (conv_test .gt. wf%excited_state_specifications%residual_threshold) converged_residual = .false.
 !
 !        Prints
 !
@@ -685,7 +825,7 @@ contains
 !
 !        Orthogonalize new trial vector (the residual) against old trial vectors
 !
-         call allocator(c_i, wf%n_parameters, 1)
+         call wf%mem%alloc(c_i, wf%n_parameters, 1)
 !
 !        prod_i (I - c_i*c_i^T)*Res = prod_i (Res - c_i*c_i^T*Res)
 !
@@ -700,7 +840,7 @@ contains
 !
          enddo
 !
-         call deallocator(c_i, wf%n_parameters, 1)
+         call wf%mem%dealloc(c_i, wf%n_parameters, 1)
 !
 !        Calculate norm of residual
 !
@@ -709,7 +849,8 @@ contains
 !        Test for linear dependency on old trial vectors
 !        If norm sufficiently high new vector is normalized and written to file
 !
-         if ((norm_new_trial .gt. wf%settings%equation_threshold) .and. (conv_test .gt. wf%settings%equation_threshold)) then
+         if ((norm_new_trial .gt. wf%excited_state_specifications%residual_threshold) &
+            .and. (conv_test .gt. wf%excited_state_specifications%residual_threshold)) then
 !
             n_new_trials = n_new_trials + 1
             call dscal(wf%n_parameters, one/norm_new_trial, residual, 1)
@@ -729,11 +870,27 @@ contains
 !
       reduced_dim = reduced_dim + n_new_trials
 !
-      call deallocator(residual, wf%n_parameters, 1)
+      call wf%mem%dealloc(residual, wf%n_parameters, 1)
 !
       write(unit_output,'(t3,a)') '-------------------------------------------------------------------'
 !
    end subroutine construct_next_trial_vectors_ccs
+!
+!
+   module subroutine excited_state_restart_ccs(wf)
+!!
+!!    Excited state restart (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
+!!
+!!    Called if restart of the excited state is requested.  
+!!
+      class(ccs) :: wf 
+!
+      write(unit_output, '(t3,a)') 'Using old solution vectors as trial vectors.'
+!
+      call wf%trial_vectors_from_stored_solutions   
+!
+   end subroutine excited_state_restart_ccs
 !
 !
    module subroutine initialize_trial_vectors_ccs(wf)
@@ -743,37 +900,32 @@ contains
 !!
 !!    Wrapper for initialization of trial vectors:
 !!
-!!    If restart, then checks if old solution file exists, 
-!!    then uses old solutions as new trial vectors
-!!
-!!    If not restart: 
-!!    initialize_trial_vectors_valence is called for regular excited state calculation
-!!    initialize_trial_vectors_core is called for cvs calculation
+!!       initialize_trial_vectors_valence is called for regular excited state calculation
+!!       initialize_trial_vectors_core is called for CVS calculation
 !!     
 !!
       implicit none
 !
       class(ccs) :: wf
-!     
 !
-!     If restart use old solution vectors for first start vectors
+!     Test for ionization or excitation, core or valence,
+!     and call appropriate initialization routine
 !
-      if (wf%settings%restart) then 
+      if (wf%tasks%excited_state) then
 !
-         write(unit_output,'(/t3,a)') 'Requested restart. Using old solution vectors as trial vectors.'
-         call wf%trial_vectors_from_stored_solutions
-         return
+            call wf%initialize_trial_vectors_valence
 !
-      endif
+      elseif (wf%tasks%core_excited_state) then
 !
-      if ((wf%excited_state_task .eq. 'right_valence') .or. &
-          (wf%excited_state_task .eq. 'left_valence')) then
+            call wf%initialize_trial_vectors_core
 !
-         call wf%initialize_trial_vectors_valence
+      elseif (wf%tasks%ionized_state) then
 !
-      elseif (wf%excited_state_task .eq. 'right_core') then
+            call wf%initialize_trial_vectors_valence_ionization
 !
-         call wf%initialize_trial_vectors_core
+      elseif (wf%tasks%core_ionized_state) then
+!
+            call wf%initialize_trial_vectors_core_ionization
 !
       endif
 !
@@ -808,7 +960,7 @@ contains
 !
 !     Allocate array for the indices of the lowest orbital differences
 !
-      call allocator_int( index_lowest_obital_diff, wf%tasks%n_singlet_states, 1)
+      call wf%mem%alloc_int( index_lowest_obital_diff, wf%excited_state_specifications%n_singlet_states, 1)
       index_lowest_obital_diff = zero
 
 !
@@ -818,7 +970,7 @@ contains
 !
 !     Generate start trial vectors c and write to file
 !
-      call allocator(c, wf%n_parameters, 1)
+      call wf%mem%alloc(c, wf%n_parameters, 1)
 !
 !     Prepare for writing trial vectors to file
 !
@@ -826,7 +978,7 @@ contains
       open(unit=unit_trial_vecs, file='trial_vec', action='write', status='unknown', &
            access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror)
 !
-      do i = 1, (wf%tasks%n_singlet_states)
+      do i = 1, (wf%excited_state_specifications%n_singlet_states)
          c = zero
          c(index_lowest_obital_diff(i,1),1) = one
          write(unit_trial_vecs, rec=i, iostat=ioerror) (c(j,1), j = 1, wf%n_parameters)
@@ -838,74 +990,13 @@ contains
 !
 !     Deallocate c
 !
-      call deallocator(c, wf%n_parameters, 1)
+      call wf%mem%dealloc(c, wf%n_parameters, 1)
 !
 !     Deallocate index_lowest_obital_diff
 !
-      call deallocator_int( index_lowest_obital_diff, wf%tasks%n_singlet_states, 1)
+      call wf%mem%dealloc_int( index_lowest_obital_diff, wf%excited_state_specifications%n_singlet_states, 1)
 !
       end subroutine initialize_trial_vectors_valence_ccs
-!
-!
-      module subroutine initialize_trial_vectors_core_ccs(wf)
-!!
-!!       Initialize trial vectors, for CVS calculation 
-!!       Written by Sarai D. Folkestad, Aug. 2017
-!!
-!!       Finds correct core MO, and selects the n_singlet_state lowest 
-!!       orbital differences where one of the occupied indices corresponds to the 
-!!       core MO
-!!
-         implicit none
-!
-         class(ccs) :: wf
-!
-         integer(i15), dimension(:,:), allocatable :: index_core_obital
-!
-         real(dp), dimension(:,:), allocatable :: c
-! 
-         integer(i15) :: i = 0, j = 0
-!
-         integer(i15) :: unit_trial_vecs = 0, unit_rho = 0, ioerror = 0
-!
-!        Allocate array for the indices of the lowest orbital differences
-!
-         call allocator_int( index_core_obital, wf%tasks%n_singlet_states, 1)
-         index_core_obital = zero
-!
-!        Find indecies of lowest orbital differences
-!
-         call wf%find_start_trial_indices_core(index_core_obital)
-!
-!        Generate start trial vectors c and write to file
-!
-         call allocator(c, wf%n_parameters, 1)
-!
-!        Prepare for writing trial vectors to file
-!
-         call generate_unit_identifier(unit_trial_vecs)
-         open(unit=unit_trial_vecs, file='trial_vec', action='write', status='unknown', &
-           access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror)
-!
-         do i = 1, (wf%tasks%n_singlet_states)
-            c = zero
-            c(index_core_obital(i,1),1) = one
-            write(unit_trial_vecs, rec=i, iostat=ioerror) (c(j,1), j = 1, wf%n_parameters)
-         enddo
-!
-!        Close file
-!     
-         close(unit_trial_vecs)
-!
-!        Deallocate c
-!
-         call deallocator(c, wf%n_parameters, 1)
-!
-!        Deallocate index_lowest_obital_diff
-!
-         call deallocator_int(index_core_obital, wf%tasks%n_singlet_states, 1)
-!
-      end subroutine initialize_trial_vectors_core_ccs
 !
 !
    module subroutine trial_vectors_from_stored_solutions_ccs(wf)
@@ -938,7 +1029,7 @@ contains
 !
 !     Open solution vector file - if it does not exist return
 !
-      inquire(file=wf%excited_state_task, exist=solution_exists)
+      inquire(file=wf%excited_state_specifications%solution_file, exist=solution_exists)
 !
 !     If no solution vector file, return and use orbital differences.
 !
@@ -952,17 +1043,18 @@ contains
 !
       call generate_unit_identifier(unit_solution)
 !
-      open(unit=unit_solution, file=wf%excited_state_task, action='read', status='unknown', &
+      open(unit=unit_solution, file=wf%excited_state_specifications%solution_file,&
+         action='read', status='unknown', &
          access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
 !
 !     Allocate c_i
 !
-      call allocator(c_i, wf%n_parameters, 1)
+      call wf%mem%alloc(c_i, wf%n_parameters, 1)
       c_i = zero
 !
       i = 1
 !
-      do while ((i .le. wf%tasks%n_singlet_states) .and. more_trials)
+      do while ((i .le. wf%excited_state_specifications%n_singlet_states) .and. more_trials)
 !
 !        Read old solutions and count them
 !
@@ -985,7 +1077,7 @@ contains
 !
 !     Deallocate c_i 
 !
-      call deallocator(c_i, wf%n_parameters, 1)
+      call wf%mem%dealloc(c_i, wf%n_parameters, 1)
 !
 !     Close solution file
 !
@@ -993,14 +1085,14 @@ contains
 !
 !     Allocate c_i and c_j
 !
-      call allocator(c_i, wf%n_parameters, 1)
-      call allocator(c_j, wf%n_parameters, 1)
+      call wf%mem%alloc(c_i, wf%n_parameters, 1)
+      call wf%mem%alloc(c_j, wf%n_parameters, 1)
       c_i = zero
       c_j = zero
 !
 !     Reorthonormalize trial vectors
 !
-      do i = 1, wf%tasks%n_singlet_states
+      do i = 1, wf%excited_state_specifications%n_singlet_states
 !
          read(unit_trial_vecs, rec=i, iostat=ioerror) c_i
 !
@@ -1017,8 +1109,8 @@ contains
          write(unit_trial_vecs, rec = i)c_i
       enddo
 !  
-      call deallocator(c_i, wf%n_parameters, 1)
-      call deallocator(c_j, wf%n_parameters, 1)  
+      call wf%mem%dealloc(c_i, wf%n_parameters, 1)
+      call wf%mem%dealloc(c_j, wf%n_parameters, 1)  
 !
 !     Close trial vector file
 !
@@ -1035,7 +1127,7 @@ contains
       implicit none
 !
       class(ccs) :: wf
-      integer(i15), dimension(wf%tasks%n_singlet_states,1), intent(inout) :: index_list
+      integer(i15), dimension(wf%excited_state_specifications%n_singlet_states,1), intent(inout) :: index_list
 !
       real(dp), dimension(:,:), allocatable :: orbital_diff
       real(dp), dimension(:,:), allocatable :: lowest_orbital_diff
@@ -1052,13 +1144,13 @@ contains
 !
 !     Test if there are user specified trial vectors
 !
-      if (wf%tasks%user_specified_start_vector) then
-         index_list = wf%tasks%start_vectors
+      if (wf%excited_state_specifications%user_specified_start_vector) then
+         index_list = wf%excited_state_specifications%start_vectors
       else
 !
 !        Allocate orbital_diff
 !
-         call allocator(orbital_diff,wf%n_parameters,1)
+         call wf%mem%alloc(orbital_diff,wf%n_parameters,1)
          orbital_diff = zero
 !
 !        Calculate orbital differences
@@ -1067,149 +1159,20 @@ contains
 !
 !        Finding lowest orbital differences
 !
-         call allocator(lowest_orbital_diff, wf%tasks%n_singlet_states, 1)
+         call wf%mem%alloc(lowest_orbital_diff, wf%excited_state_specifications%n_singlet_states, 1)
 !        
          lowest_orbital_diff = zero
 !
-         call get_n_lowest(wf%tasks%n_singlet_states, wf%n_parameters, orbital_diff, lowest_orbital_diff, index_list)
+         call get_n_lowest(wf%excited_state_specifications%n_singlet_states,&
+                 wf%n_parameters, orbital_diff, lowest_orbital_diff, index_list)
 !
-         call deallocator(orbital_diff,wf%n_parameters,1)
+         call wf%mem%dealloc(orbital_diff,wf%n_parameters,1)
 !
-         call deallocator(lowest_orbital_diff, wf%tasks%n_singlet_states, 1)
+         call wf%mem%dealloc(lowest_orbital_diff, wf%excited_state_specifications%n_singlet_states, 1)
 !
       endif
 !
    end subroutine find_start_trial_indices_ccs
-!
-!
-   module subroutine find_start_trial_indices_core_ccs(wf, index_list)
-!!
-!!    Find indices for lowest orbital differences
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad
-!!
-!!
-      implicit none
-!
-      class(ccs) :: wf
-      integer(i15), dimension(wf%tasks%n_singlet_states,1), intent(inout) :: index_list
-!
-      real(dp), dimension(:,:), allocatable     ::  sorted_short_vec
-!
-      integer(i15) :: a, i, counter
-!
-!     Find core mo(s)
-!
-      call allocator_int(wf%tasks%index_core_mo, wf%tasks%n_cores, 1)
-!
-      call wf%find_core_mo
-!
-      counter = 1
-      do a = 1, wf%n_v
-         if ( counter .le.  wf%tasks%n_singlet_states)  then
-            do i = 1, wf%tasks%n_cores
-!
-               index_list(counter, 1) = index_two(a, wf%tasks%index_core_mo(i, 1), wf%n_v)
-!
-               counter = counter + 1
-!
-               if ( counter .gt.  wf%tasks%n_singlet_states) exit
-!
-            enddo
-         endif
-      enddo
-!
-   end subroutine find_start_trial_indices_core_ccs
-!
-   module subroutine find_core_mo_ccs(wf)
-!!
-!!    Find which mo are core mos
-!!    Written by Sarai D. Folkestad, Aug. 2017
-!!
-      implicit none
-!
-      class(ccs) :: wf
-!
-      integer(i15) :: n_nuclei = 0, core = 0, ao = 0, mo = 0, ao_mo_index = 0
-      integer(i15) :: first_ao_on_core = 0, counter = 0, n_aos_on_atoms = 0, i = 0, j = 0
-      integer(i15), dimension(:,:), allocatable :: n_ao_on_center, ao_center_info, aos_on_atoms
-!
-!     :: Get center info ::
-!
-      call read_atom_info(n_nuclei, wf%n_ao)
-!
-      call allocator_int(n_ao_on_center, n_nuclei, 1)      
-      call allocator_int(ao_center_info, wf%n_ao, 2)
-!
-      call read_center_info(n_nuclei, wf%n_ao, n_ao_on_center, ao_center_info)
-!
-!     :: Find index of first ao on atom ::
-!   
-      n_aos_on_atoms = 0
-      do i = 1, wf%tasks%n_cores
-         n_aos_on_atoms = n_aos_on_atoms + n_ao_on_center(wf%tasks%cores(i,1),1)
-      enddo
-!
-      call allocator_int(aos_on_atoms, n_aos_on_atoms, 1)
-!
-      counter = 0    
-      do i = 1, wf%tasks%n_cores 
-         do j = 1, wf%n_ao
-            if (ao_center_info(j,1) == wf%tasks%cores(i,1)) then
-               counter = counter + 1
-               aos_on_atoms(counter,1) = ao_center_info(j,2)
-            endif
-         enddo
-      enddo
-!
-      call deallocator_int(ao_center_info, wf%n_ao, 2)
-!
-!     :: Find core mo that has large ao component on the atom in question ::
-!
-      wf%tasks%index_core_mo = zero
-      counter = 0
-!
-      do ao = 1, n_aos_on_atoms
-!
-         do  mo = 1, wf%n_o
-!
-!           Determine wether orbital in core mo
-!
-            if(wf%fock_diagonal(mo, 1) .lt. -5.0d0) then
-!
-!              Determine wether the core orbital sits on the corect atom(s)
-!
-               ao_mo_index = index_two(aos_on_atoms(ao, 1), mo, wf%n_ao)
-!
-               if(abs(wf%mo_coef(ao_mo_index, 1)) .gt. 0.5d0) then
-                  counter = counter + 1
-!
-                  if (counter .le. wf%tasks%n_cores) then
-                     wf%tasks%index_core_mo(counter, 1) = mo
-                  endif
-!
-                     
-               endif
-!
-            endif
-!
-         enddo
-!
-      enddo
-!
-!
-      call deallocator_int(n_ao_on_center, n_nuclei, 1) 
-      call deallocator_int(aos_on_atoms, n_aos_on_atoms, 1) 
-!
-!     Sanity check
-!
-      do core = 1, wf%tasks%n_cores
-         if (wf%tasks%index_core_mo(core, 1) .eq. 0) then
-            write(unit_output,*)'WARNING: Found no core orbitals for core', wf%tasks%cores(core, 1)
-            stop
-         endif
-      enddo
-!
-   end subroutine find_core_mo_ccs
 !
 !
    module subroutine calculate_orbital_differences_ccs(wf,orbital_diff)
@@ -1257,7 +1220,7 @@ contains
 !
 !     Allocate c_a_i
 !
-      call allocator(c_a_i, wf%n_v, wf%n_o)
+      call wf%mem%alloc(c_a_i, wf%n_v, wf%n_o)
       c_a_i = zero 
 !
 !     Open trial vector and transformed vector files
@@ -1276,29 +1239,53 @@ contains
 !
          read(unit_trial_vecs, rec=trial, iostat=ioerror) c_a_i
 !
-         if (wf%excited_state_task=='right_valence') then
-
+         if (wf%tasks%current == 'excited_state') then
 !
-         call wf%jacobian_ccs_transformation(c_a_i)
+            if (wf%excited_state_specifications%right) then
 !
-         elseif (wf%excited_state_task=='right_core') then
+               call wf%jacobian_ccs_transformation(c_a_i)
 !
-            call wf%cvs_jacobian_ccs_transformation(c_a_i)
+            elseif (wf%excited_state_specifications%left) then
+!               
+               call wf%jacobian_transpose_ccs_transformation(c_a_i)
 !
-         elseif (wf%excited_state_task=='left_valence') then
+            else
 !
-         elseif (wf%response_task=='left_eigenvectors') then
+               write(unit_output,*) 'Error: Excited state task not recognized'
+               stop
 !
-            call wf%jacobian_transpose_ccs_transformation(c_a_i)
+            endif
 !
-         elseif (wf%response_task=='multipliers') then 
+         elseif(wf%tasks%current == 'multipliers') then
 !
-            call wf%jacobian_transpose_ccs_transformation(c_a_i)
+               call wf%jacobian_transpose_ccs_transformation(c_a_i)
 !
          else
 !
-            write(unit_output,*) 'Error: Response task not recognized'
+            write(unit_output,*) 'Error: Current task not recognized'
             stop
+!
+         endif
+!
+!        -::- Projections -::-
+!
+!        Test for core calculation 
+!
+         if (wf%tasks%core_excited_state .or. wf%tasks%core_ionized_state) then
+!  
+!           Project out contamination from valence contributions
+!
+            call wf%cvs_rho_a_i_projection(c_a_i)
+!
+         endif
+!
+!        Test for ionization calculation
+!
+         if (wf%tasks%ionized_state .or. wf%tasks%core_ionized_state) then
+!
+!           Project out contamination from regular excitations
+!
+            call wf%ionization_rho_a_i_projection(c_a_i)
 !
          endif
 !
@@ -1313,48 +1300,43 @@ contains
 !
 !     Deallocate c_a_i
 !
-      call deallocator(c_a_i, wf%n_v, wf%n_o)
+      call wf%mem%dealloc(c_a_i, wf%n_v, wf%n_o)
 !
    end subroutine transform_trial_vectors_ccs
 !
 !
-      module subroutine initialize_excited_states_ccs(wf)
+   module subroutine precondition_residual_ccs(wf, residual)
 !!
-         implicit none 
-!    
-         class(ccs) :: wf
-!
-         call wf%initialize_amplitudes
-!
-      end subroutine initialize_excited_states_ccs
-!
-!
-      module subroutine precondition_residual_ccs(wf, residual)
+!!    Precondition residual
+!!    Written by Sarai D. Folkestad, Aug. 2017
 !!
-!!       Precondition residual
-!!       Written by Sarai D. Folkestad, Aug. 2017
+!!    Calls precondition_residual_valence for normal excited state calculation
+!!    Calls precondition_residual_core for cvs calculation
 !!
-!!       Calls precondition_residual_valence for normal excited state calculation
-!!       Calls precondition_residual_core for cvs calculation
-!!
-         implicit none
+      implicit none
 !
-         class(ccs) :: wf
-         real(dp), dimension(wf%n_parameters ,1) :: residual
-!       
+      class(ccs) :: wf
+      real(dp), dimension(wf%n_parameters, 1) :: residual
 !
-         if ((wf%excited_state_task .eq. 'right_valence') .or. &
-             (wf%excited_state_task .eq. 'left_valence')) then
+      if (wf%tasks%excited_state) then       
 !
-            call wf%precondition_residual_valence(residual)
+         call wf%precondition_residual_valence(residual)
 !
-         elseif (wf%excited_state_task .eq. 'right_core') then
+      elseif (wf%tasks%core_excited_state) then
 !
-            call wf%precondition_residual_core(residual)
+         call wf%precondition_residual_core(residual)
 !
-         endif
+      elseif (wf%tasks%ionized_state) then
 !
-      end subroutine precondition_residual_ccs
+         call wf%precondition_residual_valence_ionization(residual)
+!
+      elseif (wf%tasks%core_ionized_state) then
+!
+         call wf%precondition_residual_core_ionization(residual)
+!
+      endif
+!
+   end subroutine precondition_residual_ccs
 !
 !
       module subroutine precondition_residual_valence_ccs(wf, residual)
@@ -1373,7 +1355,7 @@ contains
 !
          real(dp), dimension(:,:), allocatable :: orbital_diff
 !   
-         call allocator(orbital_diff, wf%n_parameters, 1)
+         call wf%mem%alloc(orbital_diff, wf%n_parameters, 1)
          orbital_diff = zero
 !
          call wf%calculate_orbital_differences(orbital_diff)
@@ -1384,81 +1366,12 @@ contains
 !
          enddo
 !
-         call deallocator(orbital_diff, wf%n_parameters, 1)
+         call wf%mem%dealloc(orbital_diff, wf%n_parameters, 1)
 !
       end subroutine precondition_residual_valence_ccs
 !
 !
-      module subroutine precondition_residual_core_ccs(wf, residual)
-!!
-!!       Precondition residual core
-!!       Written by Sarai D. Folkestad, Aug. 2017
-!!
-!!       Project out elements not corresponding to the core excitation
-!!       Divide elements of residual by orbital difference
-!!
-         implicit none
-!
-         class(ccs) :: wf
-         real(dp), dimension(wf%n_parameters ,1) :: residual
-! 
-         real(dp), dimension(:,:), allocatable :: orbital_diff
-!
-         integer(i15) :: i = 0, a = 0, ai = 0
-!      
-         call wf%cvs_residual_projection(residual)
-!
-         call allocator(orbital_diff, wf%n_parameters, 1)
-         orbital_diff = zero
-!
-         call wf%calculate_orbital_differences(orbital_diff)
-!
-         do i = 1, wf%n_parameters
-!
-            residual(i, 1) = residual(i,1)/orbital_diff(i,1)
-!
-         enddo
-!
-         call deallocator(orbital_diff, wf%n_parameters, 1)
-!
-      end subroutine precondition_residual_core_ccs
-!
-!
-      module subroutine cvs_residual_projection_ccs(wf, residual)
-!!
-!!       Residual projection for CVS
-!!       Written by Sarai D. Folkestad, Aug. 2017
-!!
-         implicit none
-!
-         class(ccs) :: wf
-         real(dp), dimension(wf%n_parameters, 1) :: residual
-!
-         integer(i15) :: i = 0, a = 0, core = 0, ai = 0
-!
-         logical :: core_orbital
-!
-         do i = 1, wf%n_o
-!
-            core_orbital = .false.
-            do core = 1, wf%tasks%n_cores
-!
-               if (i .eq. wf%tasks%index_core_mo(core, 1)) core_orbital = .true.
-!
-            enddo
-!
-            if (.not. core_orbital) then
-               do a = 1, wf%n_v
-                  ai = index_two(a, i, wf%n_v)
-                  residual(ai, 1) = zero
-               enddo
-            endif
-!
-         enddo
-!
-      end subroutine cvs_residual_projection_ccs
-!
-!
+     
       module subroutine print_excited_state_info_ccs(wf)
 !!
 !!
@@ -1476,8 +1389,9 @@ contains
 !  
          call generate_unit_identifier(unit_solution)
 !
-         open(unit=unit_solution, file=wf%excited_state_task, action='read', status='unknown', &
-         access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
+         open(unit=unit_solution, file=wf%excited_state_specifications%solution_file, &
+               action='read', status='unknown', &
+               access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
 !
          if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file'
 !
@@ -1491,8 +1405,8 @@ contains
 !
          if (ioerror .ne. 0) write(unit_output,*) 'Error while opening excited_state_information file'
 
-         call allocator(solution, wf%n_parameters, 1)
-         do state = 1, wf%tasks%n_singlet_states
+         call wf%mem%alloc(solution, wf%n_parameters, 1)
+         do state = 1, wf%excited_state_specifications%n_singlet_states
 !  
             solution = zero
             read(unit_solution, rec=state) solution
@@ -1504,7 +1418,7 @@ contains
 !  
          enddo
 !
-         call deallocator(solution, wf%n_parameters,1) 
+         call wf%mem%dealloc(solution, wf%n_parameters,1) 
 !
          close(unit_solution)
          close(unit_es_info)
@@ -1541,6 +1455,182 @@ contains
       enddo
 !
       end subroutine print_excitation_vector_ccs
+!
+!
+      module subroutine analyze_single_excitation_vector_ccs(wf, vec, n, sorted_short_vec, index_list)
+!!
+!!
+!!
+         implicit none
+!  
+         class(ccs) :: wf
+!
+         real(dp), dimension(wf%n_o*wf%n_v, 1) :: vec    
+!
+         integer(i15) :: a = 0, i = 0, ai = 0
+!
+         integer(i15) :: n    ! Number of elements wanted
+!  
+         real(dp), dimension(n, 1)    :: sorted_short_vec
+!  
+         integer(i15), dimension(n, 2) ::index_list
+!  
+!        Variables for sorting
+!  
+         real(dp)     :: min
+         integer(i15) :: min_pos
+!  
+         real(dp)     :: swap     = zero
+         integer(i15) :: swap_i = 0, swap_a = 0
+!  
+         integer(i15) :: i = 0, j = 0
+!
+!        Placing the n first elements of vec into sorted_short_vec
+!
+         sorted_short_vec(1,1) = vec(1,1)
+         index_list(1,1) = 1
+         index_list(1,2) = 1
+!
+         min = abs(sorted_short_vec(1,1))
+         min_pos = 1
+!
+         do i = 1, wf%n_o
+            do a = 1, wf%n_v
+!
+               ai = index_two(a,i, wf%n_v)
+!
+               if (ai .le. n) then
+                  sorted_short_vec(ai,1) = vec(ai,1)
+                  index_list(ai, 1) = a
+                  index_list(ai, 2) = i
+!
+                  if (abs(sorted_short_vec(i,1)) .le. min) then
+!
+                     min = abs(sorted_short_vec(i,1))
+                     min_pos = i
+!
+                  endif
+               
+               else
+                  if (abs(vec(ai,1)) .ge. min) then
+!
+                     sorted_short_vec(min_pos,1) = vec(ai,1)
+                     index_list(min_pos,1) = a
+                     index_list(min_pos,2) = i
+                     min = abs(vec(ai,1))
+!
+                  endif
+!
+                  do j = 1, n
+                     if (abs(sorted_short_vec(j, 1)) .lt. min) then
+!
+                        min = abs(sorted_short_vec(j, 1))
+                        min_pos = j
+!
+                     endif
+                  enddo
+               endif
+            enddo
+         enddo 
+! 
+!         Sorting sorted_short_vec
+! 
+          do i = 1, n
+             do j = 1, n - 1
+                if (abs(sorted_short_vec(j,1)) .lt. abs(sorted_short_vec(j+1, 1))) then
+! 
+                   swap = sorted_short_vec(j,1)
+                   sorted_short_vec(j,1) = sorted_short_vec(j+1, 1)
+                   sorted_short_vec(j+1, 1) = swap
+! 
+                   swap_a = index_list(j, 1)
+                   swap_i = index_list(j, 2)
+!
+                   index_list(j,1) = index_list(j + 1,1)
+                   index_list(j,2) = index_list(j + 1,2)
+                   index_list(j + 1,1) = swap_a
+                   index_list(j + 1,2) = swap_i
+! 
+                endif
+             enddo
+          enddo
+! 
+!
+      end subroutine analyze_single_excitation_vector_ccs
+!
+!
+      module subroutine summary_excited_state_info_ccs(wf, energies)
+!!
+!!
+!!
+         implicit none
+!  
+         class(ccs) :: wf
+!
+         real(dp), dimension(wf%excited_state_specifications%n_singlet_states,1) :: energies
+!
+         integer(i15) :: unit_solution = -1, ioerror = 0
+         integer(i15) :: state = 0, i = 0
+         real(dp), dimension(:,:), allocatable :: solution, sorted_max_vec
+         integer(i15), dimension(:,:), allocatable :: index_list
+         real(dp) :: ddot, norm
+!  
+!        Read solution vectors 
+!  
+         call generate_unit_identifier(unit_solution)
+!
+         open(unit=unit_solution, file=wf%excited_state_specifications%solution_file, &
+               action='read', status='unknown', &
+               access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
+!
+         if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file'
+
+         call wf%mem%alloc(solution, wf%n_parameters, 1)
+         call wf%mem%alloc_int(index_list, 20, 2)
+         call wf%mem%alloc(sorted_max_vec, 20, 1)
+!
+         do state = 1, wf%excited_state_specifications%n_singlet_states
+!
+            write(unit_output,'(/t3,a30,i3,a1/)')'Analysis of excitation vector ',state, ':' 
+            write(unit_output,'(t6, a, f14.8)')'Excitation energy [a.u.]:   ', energies(state,1)
+            write(unit_output,'(t6, a, f14.8)')'Excited state energy [a.u.]:', wf%energy + energies(state,1)
+! 
+            solution = zero
+            read(unit_solution, rec=state) solution
+!
+            norm = sqrt(ddot(wf%n_t1am, solution,1,solution,1))
+            write(unit_output,'(/t6,a,f6.4)')'Single excitation contribution to excitation vector: ', norm
+!
+            write(unit_output,'(/t6,a)') 'Largest contributions to excitation vector:' 
+!
+            write(unit_output,'(t6,a32)')'--------------------------------'
+            write(unit_output,'(t6,a3, 8x, a3, 8x, a10)')'a', 'i','amplitude'
+            write(unit_output,'(t6,a32)')'--------------------------------'
+!
+!           Get 20 highest amplitudes
+!
+            call wf%analyze_single_excitation_vector(solution, 20, sorted_max_vec, index_list)
+
+            do i = 1, 20
+               if (abs(sorted_max_vec(i, 1)) .lt. 1.0D-03) then
+                  exit 
+               else
+                  write(unit_output,'(t6,i3, 8x, i3, 10x, f8.5)')index_list(i, 1),&
+                                                                index_list(i, 2),&
+                                                                sorted_max_vec(i, 1) 
+               endif
+            enddo
+            write(unit_output,'(t6,a32/)')'--------------------------------'
+!  
+         enddo
+!
+         call wf%mem%dealloc(solution, wf%n_parameters,1) 
+         call wf%mem%dealloc_int(index_list, 20, 2)
+         call wf%mem%dealloc(sorted_max_vec, 20, 1)
+!
+         close(unit_solution)
+!
+      end subroutine summary_excited_state_info_ccs
 !
 !
 end submodule excited_state

@@ -27,6 +27,8 @@ submodule (mlcc2_class) omega
    logical :: debug   = .false.
    logical :: timings = .false.
 !
+   character(len=40) :: integral_type
+!
 !
 contains
   module subroutine construct_omega_mlcc2(wf)
@@ -50,6 +52,7 @@ contains
 !
       real(dp) :: omega_start = zero
       real(dp) :: omega_end   = zero
+!
 !
 !     Start timing of omega
 !
@@ -108,16 +111,13 @@ contains
       integer(i15) :: i = 0, j = 0, a = 0, c = 0, b = 0
 !
       integer(i15) :: ba = 0, ab = 0, bi = 0
-      integer(i15) :: ic = 0, ib = 0, jc = 0, jb = 0 
+      integer(i15) :: ci = 0, bi = 0, cj = 0, bj = 0 
       integer(i15) :: bjc = 0
 !
 !     Allocatables
 !
-      real(dp), dimension(:,:), allocatable :: L_ib_J 
-      real(dp), dimension(:,:), allocatable :: L_bi_J 
-      real(dp), dimension(:,:), allocatable :: L_jc_J
       real(dp), dimension(:,:), allocatable :: g_ib_jc 
-      real(dp), dimension(:,:), allocatable :: s_ib_jc 
+      real(dp), dimension(:,:), allocatable :: s_bi_cj 
       real(dp), dimension(:,:), allocatable :: u_bjc_i 
       real(dp), dimension(:,:), allocatable :: g_Ab_jc 
       real(dp), dimension(:,:), allocatable :: L_Ab_J  ! L_Ab^J; A is batched over
@@ -152,10 +152,8 @@ contains
 !
       required = required*4  ! Words
 
-      available = get_available()
-
       max_length = 0
-      call num_two_batch(required, available, max_length, c_n_batch, wf%n_v)
+      call num_two_batch(required, wf%mem%available, max_length, c_n_batch, wf%n_v)
 !
 !     Initialize some variables for batching
 !
@@ -184,33 +182,33 @@ contains
 !
 !        u_ij^bc = 2*s_ij^bc - s_ij^cb =  (2*g_ij^bc - g_ij^cb)/ε_ij^cb
 !
-         call allocator(s_ib_jc, (n_active_o)*(n_active_v), (n_active_o)*c_length )
-         call wf%get_s2am(s_ib_jc, c_first, c_length)
+         call wf%mem%alloc(s_bi_cj, (n_active_o)*(n_active_v), (n_active_o)*c_length )
+         call wf%get_s2am(s_bi_cj, c_first, c_length)
 !
-         call allocator(u_bjc_i, n_active_v*n_active_o*c_length, n_active_o)
+         call wf%mem%alloc(u_bjc_i, n_active_v*n_active_o*c_length, n_active_o)
 !
          do b = 1, n_active_v
             do i = 1, n_active_o
 !
-               ib = index_two(i, b, n_active_o)
+               bi = index_two(b, i, n_active_v)
 !
                do c = 1, c_length
                   do j = 1, n_active_o
 !
-                     jc = index_two(j, c, n_active_o)
-                     jb = index_two(j, b, n_active_o)
-                     ic = index_two(i, c, n_active_o)
+                     cj = index_two(c, j, c_length)
+                     bj = index_two(b, j, n_active_v)
+                     ci = index_two(c, i, c_length)
 !
                      bjc = index_three(b, j, c, n_active_v, n_active_o)
 !
-                     u_bjc_i(bjc,i) = (two*s_ib_jc(ib,jc)-s_ib_jc(ic, jb))
+                     u_bjc_i(bjc,i) = (two*s_bi_cj(bi,cj)-s_bi_cj(bj, ci))
 !
                   enddo
                enddo
             enddo
          enddo
 !         
-         call deallocator(s_ib_jc, (n_active_o)*(n_active_v), (n_active_o)*c_length)
+         call wf%mem%dealloc(s_bi_cj, (n_active_o)*(n_active_v), (n_active_o)*c_length)
 !
 !        Prepare for batching over A
 !
@@ -228,36 +226,14 @@ contains
 !
 !           :: Construct integral g_Ab,jc ::
 !
-!           Get cholesky vectors
-!
-            call allocator(L_jc_J, n_active_o*c_length, wf%n_J)
-            L_jc_J = zero
-            call wf%get_cholesky_ia(L_jc_J, first_active_o, last_active_o, c_first, c_last)
-!
-            call allocator(L_Ab_J, (n_active_v)*a_length, wf%n_J) 
-            L_Ab_J = zero
-!
-            call wf%get_cholesky_ab(L_Ab_J, a_first, a_last, first_active_v, last_active_v)
-!
-            call allocator(g_Ab_jc, n_active_v*a_length, n_active_o*c_length)      
-!
-!           g_Ab,jc = sum_J L_Ab^J*L_jc^J
-!
-            call dgemm('N', 'T',                  &
-                        (n_active_v)*a_length,    &
-                        (n_active_o)*c_length,    &
-                        (wf%n_J),                 &
-                        one,                      &
-                        L_Ab_J,                   &
-                        (n_active_v)*a_length,    &
-                        L_jc_J,                   &
-                        (n_active_o)*c_length,    &
-                        zero,                     &
-                        g_Ab_jc,                  &
-                        (n_active_v)*a_length) 
-!
-            call deallocator(L_jc_J, (n_active_o)*(c_length), wf%n_J)
-            call deallocator(L_Ab_J, (n_active_v)*(a_length), wf%n_J)
+            call wf%mem%alloc(g_Ab_jc, n_active_v*a_length, n_active_o*c_length)
+! 
+            integral_type = 'electronic_repulsion'
+            call wf%get_vv_ov(integral_type, g_Ab_jc, &
+                              A_first, A_last, &
+                              first_active_v, last_active_v, &     
+                              first_active_o, last_active_o, &     
+                              first_active_v, last_active_v)     
 !
 !           :: Add contributions to omega ::
 !
@@ -274,11 +250,11 @@ contains
                         wf%omega1(A_first,1),               &
                         wf%n_v)
 ! 
-            call deallocator(g_Ab_jc, n_active_v*a_length, n_active_o*c_length)
+            call wf%mem%dealloc(g_Ab_jc, n_active_v*a_length, n_active_o*c_length)
 !
          enddo ! Batching over a
 !
-         call deallocator(u_bjc_i, n_active_v*n_active_o*c_length, n_active_o)
+         call wf%mem%dealloc(u_bjc_i, n_active_v*n_active_o*c_length, n_active_o)
 !
          if (c_last .eq. last_active_v) exit ! exit loop over c; This is necessary because n_active_v may be less than n_v
 !
@@ -312,11 +288,7 @@ contains
 !
 !     Allocatables
 !
-      real(dp), dimension(:,:), allocatable :: L_aj_J 
-      real(dp), dimension(:,:), allocatable :: L_ja_J 
-      real(dp), dimension(:,:), allocatable :: L_kb_J 
-      real(dp), dimension(:,:), allocatable :: L_ji_J 
-      real(dp), dimension(:,:), allocatable :: s_ja_kb 
+      real(dp), dimension(:,:), allocatable :: s_aj_bk 
       real(dp), dimension(:,:), allocatable :: u_a_kbj 
       real(dp), dimension(:,:), allocatable :: g_kb_ji 
 !
@@ -324,7 +296,7 @@ contains
 !
       integer(i15) :: i = 0, j = 0, k = 0, a  = 0, b = 0
       integer(i15) :: I_full = 0, J_full = 0, A_full  = 0, B_full = 0
-      integer(i15) :: ja = 0, kb = 0, ka  = 0, jb = 0, aj = 0
+      integer(i15) :: aj = 0, bk = 0, ak  = 0, bj = 0
       integer(i15) :: kbj = 0, jbi = 0
 !
 !     Active space variables
@@ -352,10 +324,8 @@ contains
 !
       required = required*4  ! Words
 
-      available = get_available()
-
       max_length = 0
-      call num_batch(required, available, max_length, b_n_batch, n_active_v)
+      call num_batch(required, wf%mem%available, max_length, b_n_batch, n_active_v)
 !
 !     Initialize some variables for batching
 !
@@ -380,68 +350,46 @@ contains
 !  
 !        u_jk^ab = 2*s_jk^ab - s_jk^ba  (place in u_a_jkb)        
 !  
-         call allocator(s_ja_kb, (n_active_o)*n_active_v, (n_active_o)*b_length)
-         call wf%get_s2am(s_ja_kb, b_first, b_length)
+         call wf%mem%alloc(s_aj_bk, (n_active_o)*n_active_v, (n_active_o)*b_length)
+         call wf%get_s2am(s_aj_bk, b_first, b_length)
 !
-         call allocator(u_a_kbj, n_active_v, (n_active_o**2)*b_length)
+         call wf%mem%alloc(u_a_kbj, n_active_v, (n_active_o**2)*b_length)
 
          do k = 1, n_active_o
             do b = 1, b_length         
 !  
-                kb = index_two(k, b, n_active_o)
+                bk = index_two(b, k, b_length)
 !  
                do j = 1, n_active_o
 !
-                  jb = index_two(j, b, n_active_o)
+                  bj = index_two(b, j, b_length)
                   kbj = index_three(k, b, j, n_active_o, b_length)
 !
                   do a = 1, n_active_v             
 !  
-                     ja = index_two(j, a, n_active_o)
-                     ka = index_two(k, a, n_active_o)
+                     aj = index_two(a, j, n_active_v)
+                     ak = index_two(a, k, n_active_v)
                      
 !  
-                     u_a_kbj(a,kbj) = (two*s_ja_kb(ja,kb)-s_ja_kb(jb, ka))
+                     u_a_kbj(a,kbj) = (two*s_aj_bk(aj,bk)-s_aj_bk(ak, bj))
 !
                   enddo
                enddo
             enddo
          enddo
 !
-         call deallocator(s_ja_kb, (n_active_o)*(n_active_v), (n_active_o)*(b_length))
+         call wf%mem%dealloc(s_aj_bk, (n_active_o)*(n_active_v), (n_active_o)*(b_length))
 !
 !        :: - sum_bjk u_ja_kb * g_kb_jI ::
 !
-!        Get cholesky vectors
-! 
-         call allocator(L_jI_J, n_active_o*(wf%n_o), wf%n_J)
+         call wf%mem%alloc(g_kb_jI, n_active_o*b_length, n_active_o*(wf%n_o) )
 !
-         call wf%get_cholesky_ij(L_jI_J, first_active_o, last_active_o, 1, wf%n_o)
-
-!
-         call allocator(L_kb_J, n_active_o*b_length, wf%n_J)
-!
-         call wf%get_cholesky_ia(L_kb_J, first_active_o, last_active_o, b_first, b_last)
-!
-         call allocator(g_kb_jI, n_active_o*b_length, n_active_o*(wf%n_o) )
-!
-!        g_kb_jI = sum_J L_kb^J*L_jI_J
-!
-         call dgemm('N', 'T',                    &
-                     (n_active_o)*b_length,      &
-                     (n_active_o)*(wf%n_o),      &
-                     (wf%n_J),                   &
-                     one,                        &
-                     L_kb_J,                     &
-                     (n_active_o)*b_length,      &
-                     L_ji_J,                     &
-                     (n_active_o)*(wf%n_o),      &
-                     zero,                       &
-                     g_kb_jI,                    &
-                     (n_active_o)*b_length)
-!
-         call deallocator(L_jI_J, n_active_o*(wf%n_o), wf%n_J)
-         call deallocator(L_kb_J, n_active_o*b_length, wf%n_J)
+         integral_type = 'electronic_repulsion'
+         call wf%get_ov_oo(integral_type, g_kb_jI,        &
+                           first_active_o, last_active_o, &
+                           b_first, b_last,               &
+                           first_active_o, last_active_o, &
+                           1, wf%n_o)
 !
 !        Add contributions to omega
 !
@@ -458,7 +406,7 @@ contains
                      wf%omega1(first_active_v, 1),   &
                      (wf%n_v))
 !
-         call deallocator(g_kb_jI, n_active_o*b_length, n_active_o*(wf%n_o))
+         call wf%mem%dealloc(g_kb_jI, n_active_o*b_length, n_active_o*(wf%n_o))
 !
 !        :: sum_jb F_jb u_ij^ab ::
 !
@@ -487,13 +435,13 @@ contains
             enddo
          enddo
 ! 
-         call deallocator(u_a_kbj, n_active_v, (n_active_o**2)*b_length)
+         call wf%mem%dealloc(u_a_kbj, n_active_v, (n_active_o**2)*b_length)
 !
       enddo 
 !      
    end subroutine omega_mlcc2_b1_mlcc2
 !
-   module subroutine get_s2am_mlcc2(wf, s_ia_jb, b_first, b_length)
+   module subroutine get_s2am_mlcc2(wf, s_ai_bj, b_first, b_length)
 !!
 !!    Get S_2 amplitudes, 
 !!    Written by Sarai D. Folkestad, July 2017 
@@ -509,11 +457,9 @@ contains
       class(mlcc2) :: wf
 ! 
       integer(i15) :: b_first, b_length
-      real(dp), dimension((wf%n_CC2_v)*(wf%n_CC2_o), b_length*(wf%n_CC2_o)) :: s_ia_jb
+      real(dp), dimension((wf%n_CC2_v)*(wf%n_CC2_o), b_length*(wf%n_CC2_o)) :: s_ai_bj
 !
-      real(dp), dimension(:,:), allocatable :: L_ia_J
-      real(dp), dimension(:,:), allocatable :: L_ai_J
-      real(dp), dimension(:,:), allocatable :: g_ia_jb
+      real(dp), dimension(:,:), allocatable :: g_ai_bj
 !
 !     Active space variables
 !
@@ -525,73 +471,38 @@ contains
 !
       integer(i15) :: offset
 !
-      integer(i15) :: i = 0, j = 0, a = 0, b = 0, ia = 0, jb = 0, ai = 0
+      integer(i15) :: i = 0, j = 0, a = 0, b = 0, ia = 0, jb = 0, ai = 0, bj = 0
 !
       call wf%get_CC2_active_indices(first_active_o, first_active_v)
 !
       call wf%get_CC2_n_active(n_active_o, n_active_v)
 !
+      write(unit_output,*)'hei'
+!
       last_active_o = first_active_o + n_active_o - 1
       last_active_v = first_active_v + n_active_v - 1
 !
-      call allocator(L_ai_J, n_active_o*n_active_v, wf%n_J)
-      L_ai_J = zero
+      call wf%mem%alloc(g_ai_bj, (n_active_o)*(n_active_v), (n_active_o)*b_length)
 !
-      call wf%get_cholesky_ai(L_ai_J, first_active_v, last_active_v, first_active_o, last_active_o)
-!
-      call allocator(L_ia_J, (n_active_o)*(n_active_v), wf%n_J)
-!
-!     Reorder L_bi_J to L_ib_J
-!
-      do a = 1, n_active_v
-         do i = 1, n_active_o
-!
-            ia = index_two(i, a, n_active_o)
-            ai = index_two(a, i, n_active_v)
-!
-            do J = 1, wf%n_J
-!
-               L_ia_J(ia, J) = L_ai_J(ai, J) 
-!
-            enddo
-         enddo
-      enddo
-!
-      call deallocator(L_ai_J, n_active_o*n_active_v, wf%n_J)
-!
-      call allocator(g_ia_jb, (n_active_o)*(n_active_v), (n_active_o)*b_length)
-!
-      offset = index_two(1, b_first, n_active_o)
-!
-!     g_ib_jc = g_bi,cj = sum_J L_bj^J*L_ci^J
-!
-      call dgemm('N', 'T',                    &
-                  (n_active_o)*(n_active_v),  &
-                  (n_active_o)*b_length,      &
-                  (wf%n_J),                   &
-                  one,                        &
-                  L_ia_J,                     &
-                  (n_active_o)*(n_active_v),  &
-                  L_ia_J(offset,1),           &
-                  (n_active_o)*(n_active_v),  &
-                  zero,                       &
-                  g_ia_jb,                    &
-                  (n_active_o)*(n_active_v))
-!
-      call deallocator(L_ia_J, (n_active_o)*(n_active_v), wf%n_J)
+      integral_type = 'electronic_repulsion'
+      call wf%get_vo_vo(integral_type, g_ai_bj,          &
+                        first_active_v, last_active_v,   &
+                        first_active_o, last_active_o,   &
+                        b_first, b_first + b_length - 1, &
+                        first_active_o, last_active_o)
 !
 !
          do a = 1, n_active_v
             do i = 1, n_active_o
 !
-               ia = index_two(i, a, n_active_o)
+               ai = index_two(a, i, n_active_v)
 !
                do b = 1, b_length
                   do j = 1, n_active_o
 !
-                     jb = index_two(j, b, n_active_o)
+                     bj = index_two(b, j, b_length)
 !
-                     s_ia_jb(ia, jb) = g_ia_jb(ia, jb)/(wf%fock_diagonal(i + first_active_o - 1,1)&
+                     s_ai_bj(ai, bj) = g_ai_bj(ai, bj)/(wf%fock_diagonal(i + first_active_o - 1,1)&
                                            + wf%fock_diagonal(j+ first_active_o - 1,1) &
                                            - wf%fock_diagonal(wf%n_o + b + b_first - 1,1) &
                                            - wf%fock_diagonal(wf%n_o + a + first_active_v - 1,1))
@@ -601,7 +512,7 @@ contains
             enddo
          enddo
 !
-      call deallocator(g_ia_jb, (n_active_o)*(n_active_v), (n_active_o)*b_length)
+      call wf%mem%dealloc(g_ai_bj, (n_active_o)*(n_active_v), (n_active_o)*b_length)
 !
    end subroutine get_s2am_mlcc2
 !

@@ -1,0 +1,1887 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+	 
+	 <meta name="description" content="The eT coupled cluster program">
+    
+    <meta name="author" content="Eirik F. Kjønstad and Sarai D. Folkestad" >
+    <link rel="icon" href="../favicon.png">
+
+    <title>precondition_residual_core_ionization_ccs &ndash; The eT program</title>
+
+    <link href="../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/pygments.css" rel="stylesheet">
+    <link href="../css/font-awesome.min.css" rel="stylesheet">
+    <link href="../css/local.css" rel="stylesheet">
+    
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    
+    <script src="../js/jquery-2.1.3.min.js"></script>
+    <script src="../js/svg-pan-zoom.min.js"></script>
+
+    
+    <script src="../tipuesearch/tipuesearch_content.js"></script>
+    <link  href="../tipuesearch/tipuesearch.css" rel="stylesheet">
+    <script src="../tipuesearch/tipuesearch_set.js"></script>
+    <script src="../tipuesearch/tipuesearch.js"></script>
+    
+
+  </head>
+
+  <body>
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../index.html">The eT program </a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+				
+            <li class="dropdown hidden-xs visible-sm visible-md hidden-lg">
+              <a href="#" class="dropdown-toggle"
+              data-toggle="dropdown" role="button"
+              aria-haspopup="true"
+		 aria-expanded="false">Contents <span class="caret"></span></a>
+	      <ul class="dropdown-menu">
+              
+            <li><a href="../lists/files.html">Source Files</a></li>
+				
+				
+            <li><a href="../lists/modules.html">Modules</a></li>
+				
+            
+                                
+            <li><a href="../lists/procedures.html">Procedures</a></li>
+				
+								
+            <li><a href="../lists/types.html">Derived Types</a></li>
+				
+				
+            <li><a href="../program/et_program.html">Program</a></li>
+	    
+            </ul>
+            </li>
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/files.html">Source Files</a></li>
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/modules.html">Modules</a></li>
+
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/procedures.html">Procedures</a></li>
+
+                             
+<li class="visible-xs hidden-sm visible-lg"><a href="../lists/types.html">Derived Types</a></li>
+
+
+<li class="visible-xs hidden-sm visible-lg"><a href="../program/et_program.html">Program</a></li>
+
+          </ul>
+        
+        <form action="../search.html" class="navbar-form navbar-right" role="search">
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Search" name="q" id="tipue_search_input" autocomplete="off" required>
+        </div>
+<!--
+        <button type="submit" class="btn btn-default">Submit</button>
+-->
+        </form>
+        
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+    <div class="container">
+    
+  
+  <div class="row">
+    <h1>precondition_residual_core_ionization_ccs
+	 <small>Interface</small>
+    
+    </h1>
+    
+    
+<div class="row">
+  <div class="col-lg-12">
+<div class="well well-sm">
+  <ul class="list-inline" style="margin-bottom:0px;display:inline">
+     
+     
+     
+     
+    
+    
+     <li><i class="fa fa-list-ol"></i>
+       <a data-toggle="tooltip"
+	  data-placement="bottom" data-html="true"
+	  title=" 0.1% of total for procedures.">34 statements</a>
+     </li> 
+     
+     
+    <li><i class="fa fa-code"></i><a href="../src/ccs_class.F90"> Source File</a></li>
+     
+  </ul>
+  <ol class="breadcrumb in-well text-right">
+  
+     <li><a href='../sourcefile/ccs_class.f90.html'>ccs_class.F90</a></li>
+  
+     <li><a href='../module/ccs_class.html'>ccs_class</a></li>
+  
+     <li class="active">precondition_residual_core_ionization_ccs</li>
+  </ol>
+</div>
+</div>
+</div>
+<script>
+  $(function () {
+  $('[data-toggle="tooltip"]').tooltip()
+  })
+</script>
+
+    
+  </div>
+  
+  <div class="row">
+    <div class="col-md-3 hidden-xs hidden-sm visible-md visible-lg">
+    
+<div id="sidebar">
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <hr>
+  
+
+<div class="panel panel-default">
+  <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#allprocs-0">All Procedures</a></h3></div>
+  <div id="allprocs-0" class="panel-collapse collapse">
+    <div class="list-group">
+      
+      <a class="list-group-item" href="../proc/alloc_int_memory_manager.html">alloc_int_memory_manager</a>
+      
+      <a class="list-group-item" href="../proc/alloc_memory_manager.html">alloc_memory_manager</a>
+      
+      <a class="list-group-item" href="../proc/allocator.html">allocator</a>
+      
+      <a class="list-group-item" href="../proc/allocator_int.html">allocator_int</a>
+      
+      <a class="list-group-item" href="../interface/analyze_double_excitation_vector_cc2.html">analyze_double_excitation_vector_cc2</a>
+      
+      <a class="list-group-item" href="../interface/analyze_double_excitation_vector_ccsd.html">analyze_double_excitation_vector_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/analyze_double_excitation_vector_mlcc2.html">analyze_double_excitation_vector_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/analyze_single_excitation_vector_ccs.html">analyze_single_excitation_vector_ccs</a>
+      
+      <a class="list-group-item" href="../proc/batch_limits.html">batch_limits</a>
+      
+      <a class="list-group-item" href="../interface/calc_ampeqs_ccs.html">calc_ampeqs_ccs</a>
+      
+      <a class="list-group-item" href="../interface/calc_ampeqs_norm_ccs.html">calc_ampeqs_norm_ccs</a>
+      
+      <a class="list-group-item" href="../interface/calc_ampeqs_norm_ccsd.html">calc_ampeqs_norm_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/calc_ampeqs_norm_mlccsd.html">calc_ampeqs_norm_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/calc_energy_cc2.html">calc_energy_cc2</a>
+      
+      <a class="list-group-item" href="../proc/calc_energy_ccs.html">calc_energy_ccs</a>
+      
+      <a class="list-group-item" href="../proc/calc_energy_ccsd.html">calc_energy_ccsd</a>
+      
+      <a class="list-group-item" href="../proc/calc_energy_correction_ccsdpt.html">calc_energy_correction_ccsdpt</a>
+      
+      <a class="list-group-item" href="../proc/calc_energy_mlcc2.html">calc_energy_mlcc2</a>
+      
+      <a class="list-group-item" href="../proc/calc_energy_mlccsd.html">calc_energy_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/calc_energy_mp2.html">calc_energy_mp2</a>
+      
+      <a class="list-group-item" href="../interface/calc_quasi_newton_doubles_ccsd.html">calc_quasi_Newton_doubles_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/calc_quasi_newton_doubles_mlccsd.html">calc_quasi_Newton_doubles_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/calc_quasi_newton_singles_ccs.html">calc_quasi_Newton_singles_ccs</a>
+      
+      <a class="list-group-item" href="../interface/calc_triples_cc3.html">calc_triples_cc3</a>
+      
+      <a class="list-group-item" href="../interface/calculate_orbital_differences_cc2.html">calculate_orbital_differences_cc2</a>
+      
+      <a class="list-group-item" href="../interface/calculate_orbital_differences_ccs.html">calculate_orbital_differences_ccs</a>
+      
+      <a class="list-group-item" href="../interface/calculate_orbital_differences_ccsd.html">calculate_orbital_differences_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/calculate_orbital_differences_mlcc2.html">calculate_orbital_differences_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/calculation_reader_ccs.html">calculation_reader_ccs</a>
+      
+      <a class="list-group-item" href="../interface/cc2_cnto_lower_level_method_mlcc2.html">cc2_cnto_lower_level_method_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/cc2_cnto_orbitals_mlcc2.html">cc2_cnto_orbitals_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/ccsd_cnto_lower_level_method_mlccsd.html">ccsd_cnto_lower_level_method_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/ccsd_cnto_orbitals_mlccsd.html">ccsd_cnto_orbitals_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/check_orthogonality.html">check_orthogonality</a>
+      
+      <a class="list-group-item" href="../interface/cholesky_decomposition_mlcc2.html">cholesky_decomposition_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/cholesky_localization_ccsd_cc2_ccs_mlccsd.html">cholesky_localization_CCSD_CC2_CCS_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/cholesky_localization_ccsd_cc2_mlccsd.html">cholesky_localization_CCSD_CC2_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/cholesky_localization_ccsd_ccs_mlccsd.html">cholesky_localization_CCSD_CCS_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/cholesky_localization_drv_mlcc2.html">cholesky_localization_drv_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/cholesky_localization_drv_mlccsd.html">cholesky_localization_drv_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/cholesky_orbital_constructor_mlcc2.html">cholesky_orbital_constructor_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/cholesky_orbitals_mlcc2.html">cholesky_orbitals_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/cnto_orbital_drv_mlcc2.html">cnto_orbital_drv_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/cnto_orbital_drv_mlccsd.html">cnto_orbital_drv_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/construct_active_ao_index_list.html">construct_active_ao_index_list</a>
+      
+      <a class="list-group-item" href="../proc/construct_ao_fock_hf.html">construct_ao_fock_hf</a>
+      
+      <a class="list-group-item" href="../proc/construct_ao_fock_new_hf.html">construct_ao_fock_new_hf</a>
+      
+      <a class="list-group-item" href="../proc/construct_density_matrices_hf.html">construct_density_matrices_hf</a>
+      
+      <a class="list-group-item" href="../proc/construct_density_matrix_hf.html">construct_density_matrix_hf</a>
+      
+      <a class="list-group-item" href="../proc/construct_density_matrix_v_hf.html">construct_density_matrix_v_hf</a>
+      
+      <a class="list-group-item" href="../proc/construct_eta_ccs.html">construct_eta_ccs</a>
+      
+      <a class="list-group-item" href="../proc/construct_eta_ccsd.html">construct_eta_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/construct_fock_ccs.html">construct_fock_ccs</a>
+      
+      <a class="list-group-item" href="../interface/construct_gradient_vector_ccs.html">construct_gradient_vector_ccs</a>
+      
+      <a class="list-group-item" href="../interface/construct_mo_transformation_matrix_mlccsd.html">construct_MO_transformation_matrix_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/construct_next_response_trial_vectors_ccs.html">construct_next_response_trial_vectors_ccs</a>
+      
+      <a class="list-group-item" href="../interface/construct_next_trial_vectors_ccs.html">construct_next_trial_vectors_ccs</a>
+      
+      <a class="list-group-item" href="../interface/construct_omega_cc2.html">construct_omega_cc2</a>
+      
+      <a class="list-group-item" href="../interface/construct_omega_cc3.html">construct_omega_cc3</a>
+      
+      <a class="list-group-item" href="../proc/construct_omega_ccs.html">construct_omega_ccs</a>
+      
+      <a class="list-group-item" href="../interface/construct_omega_ccsd.html">construct_omega_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/construct_omega_ccsdpt.html">construct_omega_ccsdpt</a>
+      
+      <a class="list-group-item" href="../interface/construct_omega_mlcc2.html">construct_omega_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/construct_omega_mlccsd.html">construct_omega_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/construct_orbital_coef_cc2_ccs_mlccsd.html">construct_orbital_coef_CC2_CCS_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/construct_orbital_energy_cc2_ccs_mlccsd.html">construct_orbital_energy_CC2_CCS_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/construct_perturbative_doubles_ccsd.html">construct_perturbative_doubles_ccsd</a>
+      
+      <a class="list-group-item" href="../proc/construct_perturbative_doubles_mlccsd.html">construct_perturbative_doubles_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/construct_reduced_gradient_ccs.html">construct_reduced_gradient_ccs</a>
+      
+      <a class="list-group-item" href="../interface/construct_reduced_matrix_ccs.html">construct_reduced_matrix_ccs</a>
+      
+      <a class="list-group-item" href="../interface/core_ionization_jacobian_ccsd_transformation_ccsd.html">core_ionization_jacobian_ccsd_transformation_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/cvs_jacobian_ccsd_transformation_ccsd.html">cvs_jacobian_ccsd_transformation_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/cvs_residual_projection_cc2.html">cvs_residual_projection_cc2</a>
+      
+      <a class="list-group-item" href="../interface/cvs_residual_projection_ccs.html">cvs_residual_projection_ccs</a>
+      
+      <a class="list-group-item" href="../interface/cvs_residual_projection_ccsd.html">cvs_residual_projection_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/cvs_residual_projection_mlcc2.html">cvs_residual_projection_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/cvs_rho_a_i_projection_ccs.html">cvs_rho_a_i_projection_ccs</a>
+      
+      <a class="list-group-item" href="../interface/cvs_rho_aibj_projection_cc2.html">cvs_rho_aibj_projection_cc2</a>
+      
+      <a class="list-group-item" href="../interface/cvs_rho_aibj_projection_ccsd.html">cvs_rho_aibj_projection_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/cvs_rho_aibj_projection_mlcc2.html">cvs_rho_aibj_projection_mlcc2</a>
+      
+      <a class="list-group-item" href="../proc/dealloc_int_memory_manager.html">dealloc_int_memory_manager</a>
+      
+      <a class="list-group-item" href="../proc/dealloc_memory_manager.html">dealloc_memory_manager</a>
+      
+      <a class="list-group-item" href="../proc/deallocator.html">deallocator</a>
+      
+      <a class="list-group-item" href="../proc/deallocator_int.html">deallocator_int</a>
+      
+      <a class="list-group-item" href="../proc/destruct_amplitudes_ccs.html">destruct_amplitudes_ccs</a>
+      
+      <a class="list-group-item" href="../proc/destruct_amplitudes_ccsd.html">destruct_amplitudes_ccsd</a>
+      
+      <a class="list-group-item" href="../proc/destruct_amplitudes_mlccsd.html">destruct_amplitudes_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/destruct_double_amplitudes_mlccsd.html">destruct_double_amplitudes_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/destruct_ground_state_ccs.html">destruct_ground_state_ccs</a>
+      
+      <a class="list-group-item" href="../interface/destruct_ground_state_ccsdpt.html">destruct_ground_state_ccsdpt</a>
+      
+      <a class="list-group-item" href="../proc/destruct_omega_ccs.html">destruct_omega_ccs</a>
+      
+      <a class="list-group-item" href="../proc/destruct_omega_ccsd.html">destruct_omega_ccsd</a>
+      
+      <a class="list-group-item" href="../proc/destruct_orbital_coef_cc2_ccs_mlccsd.html">destruct_orbital_coef_CC2_CCS_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/destruct_orbital_energy_cc2_ccs_mlccsd.html">destruct_orbital_energy_CC2_CCS_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/destruct_s2am_cc2.html">destruct_s2am_cc2</a>
+      
+      <a class="list-group-item" href="../proc/destruct_x2am_mlcc2.html">destruct_x2am_mlcc2</a>
+      
+      <a class="list-group-item" href="../proc/determine_limits_batching_index.html">determine_limits_batching_index</a>
+      
+      <a class="list-group-item" href="../interface/diis_ccs.html">diis_ccs</a>
+      
+      <a class="list-group-item" href="../proc/drv_ccs.html">drv_ccs</a>
+      
+      <a class="list-group-item" href="../proc/drv_hf.html">drv_hf</a>
+      
+      <a class="list-group-item" href="../proc/drv_mp2.html">drv_mp2</a>
+      
+      <a class="list-group-item" href="../interface/excited_state_cleanup_ccs.html">excited_state_cleanup_ccs</a>
+      
+      <a class="list-group-item" href="../interface/excited_state_driver_ccs.html">excited_state_driver_ccs</a>
+      
+      <a class="list-group-item" href="../interface/excited_state_preparations_cc2.html">excited_state_preparations_cc2</a>
+      
+      <a class="list-group-item" href="../interface/excited_state_preparations_ccs.html">excited_state_preparations_ccs</a>
+      
+      <a class="list-group-item" href="../interface/excited_state_preparations_ccsd.html">excited_state_preparations_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/excited_state_preparations_mlcc2.html">excited_state_preparations_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/excited_state_solver_ccs.html">excited_state_solver_ccs</a>
+      
+      <a class="list-group-item" href="../interface/find_core_mo_ccs.html">find_core_mo_ccs</a>
+      
+      <a class="list-group-item" href="../interface/find_start_trial_indices_ccs.html">find_start_trial_indices_ccs</a>
+      
+      <a class="list-group-item" href="../interface/find_start_trial_indices_core_ccs.html">find_start_trial_indices_core_ccs</a>
+      
+      <a class="list-group-item" href="../interface/general_specs_reader_ccs.html">general_specs_reader_ccs</a>
+      
+      <a class="list-group-item" href="../proc/generate_unit_identifier.html">generate_unit_identifier</a>
+      
+      <a class="list-group-item" href="../proc/get_available.html">get_available</a>
+      
+      <a class="list-group-item" href="../proc/get_cc2_active_indices_mlcc2.html">get_CC2_active_indices_mlcc2</a>
+      
+      <a class="list-group-item" href="../proc/get_cc2_active_indices_mlccsd.html">get_CC2_active_indices_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/get_cc2_n_active_mlcc2.html">get_CC2_n_active_mlcc2</a>
+      
+      <a class="list-group-item" href="../proc/get_cc2_n_active_mlccsd.html">get_CC2_n_active_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/get_ccsd_active_indices_mlccsd.html">get_CCSD_active_indices_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/get_ccsd_n_active_mlccsd.html">get_CCSD_n_active_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/get_cholesky_ab_ccs.html">get_cholesky_ab_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_cholesky_ai_ccs.html">get_cholesky_ai_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_cholesky_ai_for_cc2_amplitudes_mlccsd.html">get_cholesky_ai_for_cc2_amplitudes_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/get_cholesky_ia_ccs.html">get_cholesky_ia_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_cholesky_ij_ccs.html">get_cholesky_ij_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_mlccsd_x2am_mlccsd.html">get_mlccsd_x2am_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/get_n_lowest.html">get_n_lowest</a>
+      
+      <a class="list-group-item" href="../interface/get_oo_oo_ccs.html">get_oo_oo_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_oo_oo_electronic_repulsion_ccs.html">get_oo_oo_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_oo_ov_ccs.html">get_oo_ov_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_oo_ov_electronic_repulsion_ccs.html">get_oo_ov_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_oo_vo_ccs.html">get_oo_vo_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_oo_vo_electronic_repulsion_ccs.html">get_oo_vo_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_oo_vv_ccs.html">get_oo_vv_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_oo_vv_electronic_repulsion_ccs.html">get_oo_vv_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_ov_oo_ccs.html">get_ov_oo_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_ov_oo_electronic_repulsion_ccs.html">get_ov_oo_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_ov_ov_ccs.html">get_ov_ov_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_ov_ov_electronic_repulsion_ccs.html">get_ov_ov_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_ov_vo_ccs.html">get_ov_vo_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_ov_vo_electronic_repulsion_ccs.html">get_ov_vo_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_ov_vv_ccs.html">get_ov_vv_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_ov_vv_electronic_repulsion_ccs.html">get_ov_vv_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_s2am_cc2.html">get_s2am_cc2</a>
+      
+      <a class="list-group-item" href="../interface/get_s2am_mlcc2.html">get_s2am_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/get_vo_oo_ccs.html">get_vo_oo_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_vo_oo_electronic_repulsion_ccs.html">get_vo_oo_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_vo_ov_ccs.html">get_vo_ov_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_vo_ov_electronic_repulsion_ccs.html">get_vo_ov_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_vo_vo_ccs.html">get_vo_vo_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_vo_vo_electronic_repulsion_ccs.html">get_vo_vo_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_vo_vv_ccs.html">get_vo_vv_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_vo_vv_electronic_repulsion_ccs.html">get_vo_vv_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_vv_oo_ccs.html">get_vv_oo_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_vv_oo_electronic_repulsion_ccs.html">get_vv_oo_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_vv_ov_ccs.html">get_vv_ov_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_vv_ov_electronic_repulsion_ccs.html">get_vv_ov_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_vv_vo_ccs.html">get_vv_vo_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_vv_vo_electronic_repulsion_ccs.html">get_vv_vo_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_vv_vv_ccs.html">get_vv_vv_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_vv_vv_electronic_repulsion_ccs.html">get_vv_vv_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/ground_state_cleanup_ccs.html">ground_state_cleanup_ccs</a>
+      
+      <a class="list-group-item" href="../interface/ground_state_driver_ccs.html">ground_state_driver_ccs</a>
+      
+      <a class="list-group-item" href="../interface/ground_state_preparations_ccs.html">ground_state_preparations_ccs</a>
+      
+      <a class="list-group-item" href="../interface/ground_state_preparations_ccsd.html">ground_state_preparations_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/ground_state_solver_ccs.html">ground_state_solver_ccs</a>
+      
+      <a class="list-group-item" href="../proc/index_packed.html">index_packed</a>
+      
+      <a class="list-group-item" href="../proc/index_three.html">index_three</a>
+      
+      <a class="list-group-item" href="../proc/index_two.html">index_two</a>
+      
+      <a class="list-group-item" href="../proc/init_batching_index.html">init_batching_index</a>
+      
+      <a class="list-group-item" href="../proc/init_cc2.html">init_cc2</a>
+      
+      <a class="list-group-item" href="../proc/init_cc3.html">init_cc3</a>
+      
+      <a class="list-group-item" href="../proc/init_ccs.html">init_ccs</a>
+      
+      <a class="list-group-item" href="../proc/init_ccsd.html">init_ccsd</a>
+      
+      <a class="list-group-item" href="../proc/init_ccsdpt.html">init_ccsdpt</a>
+      
+      <a class="list-group-item" href="../proc/init_hf.html">init_hf</a>
+      
+      <a class="list-group-item" href="../proc/init_memory_manager.html">init_memory_manager</a>
+      
+      <a class="list-group-item" href="../proc/init_mlcc2.html">init_mlcc2</a>
+      
+      <a class="list-group-item" href="../proc/init_mlccsd.html">init_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/init_mp2.html">init_mp2</a>
+      
+      <a class="list-group-item" href="../proc/initialize_amplitudes_ccs.html">initialize_amplitudes_ccs</a>
+      
+      <a class="list-group-item" href="../proc/initialize_amplitudes_ccsd.html">initialize_amplitudes_ccsd</a>
+      
+      <a class="list-group-item" href="../proc/initialize_amplitudes_mlccsd.html">initialize_amplitudes_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/initialize_excited_states_cc2.html">initialize_excited_states_cc2</a>
+      
+      <a class="list-group-item" href="../interface/initialize_excited_states_ccs.html">initialize_excited_states_ccs</a>
+      
+      <a class="list-group-item" href="../interface/initialize_excited_states_mlcc2.html">initialize_excited_states_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/initialize_excited_states_mlccsd.html">initialize_excited_states_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/initialize_fock_matrix_ccs.html">initialize_fock_matrix_ccs</a>
+      
+      <a class="list-group-item" href="../interface/initialize_ground_state_ccs.html">initialize_ground_state_ccs</a>
+      
+      <a class="list-group-item" href="../interface/initialize_ground_state_ccsd.html">initialize_ground_state_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/initialize_ground_state_mlccsd.html">initialize_ground_state_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/initialize_omega_ccs.html">initialize_omega_ccs</a>
+      
+      <a class="list-group-item" href="../interface/initialize_omega_ccsd.html">initialize_omega_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/initialize_omega_mlccsd.html">initialize_omega_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/initialize_response_ccs.html">initialize_response_ccs</a>
+      
+      <a class="list-group-item" href="../interface/initialize_trial_vectors_ccs.html">initialize_trial_vectors_ccs</a>
+      
+      <a class="list-group-item" href="../interface/initialize_trial_vectors_core_ccs.html">initialize_trial_vectors_core_ccs</a>
+      
+      <a class="list-group-item" href="../interface/initialize_trial_vectors_core_ionization_ccs.html">initialize_trial_vectors_core_ionization_ccs</a>
+      
+      <a class="list-group-item" href="../interface/initialize_trial_vectors_valence_ccs.html">initialize_trial_vectors_valence_ccs</a>
+      
+      <a class="list-group-item" href="../interface/initialize_trial_vectors_valence_ionization_ccs.html">initialize_trial_vectors_valence_ionization_ccs</a>
+      
+      <a class="list-group-item" href="../interface/ionization_jacobian_ccsd_transformation_ccsd.html">ionization_jacobian_ccsd_transformation_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/ionization_residual_projection_ccs.html">ionization_residual_projection_ccs</a>
+      
+      <a class="list-group-item" href="../interface/ionization_residual_projection_ccsd.html">ionization_residual_projection_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/ionization_rho_a_i_projection_ccs.html">ionization_rho_a_i_projection_ccs</a>
+      
+      <a class="list-group-item" href="../interface/ionization_rho_aibj_projection_ccsd.html">ionization_rho_aibj_projection_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/ionized_state_driver_ccs.html">ionized_state_driver_ccs</a>
+      
+      <a class="list-group-item" href="../proc/jacobi_test_ccs.html">jacobi_test_ccs</a>
+      
+      <a class="list-group-item" href="../proc/jacobi_test_ccsd.html">jacobi_test_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_cc2_a1_cc2.html">jacobian_cc2_a1_cc2</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_cc2_a2_cc2.html">jacobian_cc2_a2_cc2</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_cc2_b1_cc2.html">jacobian_cc2_b1_cc2</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_cc2_b2_cc2.html">jacobian_cc2_b2_cc2</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_cc2_transformation_cc2.html">jacobian_cc2_transformation_cc2</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccs_a1_ccs.html">jacobian_ccs_a1_ccs</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccs_b1_ccs.html">jacobian_ccs_b1_ccs</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccs_transformation_ccs.html">jacobian_ccs_transformation_ccs</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccsd_a1_ccsd.html">jacobian_ccsd_a1_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccsd_a2_ccsd.html">jacobian_ccsd_a2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccsd_b1_ccsd.html">jacobian_ccsd_b1_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccsd_b2_ccsd.html">jacobian_ccsd_b2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccsd_c1_ccsd.html">jacobian_ccsd_c1_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccsd_c2_ccsd.html">jacobian_ccsd_c2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccsd_d1_ccsd.html">jacobian_ccsd_d1_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccsd_d2_ccsd.html">jacobian_ccsd_d2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccsd_e2_ccsd.html">jacobian_ccsd_e2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccsd_f2_ccsd.html">jacobian_ccsd_f2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccsd_g2_ccsd.html">jacobian_ccsd_g2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccsd_h2_ccsd.html">jacobian_ccsd_h2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccsd_i2_ccsd.html">jacobian_ccsd_i2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccsd_j2_ccsd.html">jacobian_ccsd_j2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccsd_k2_ccsd.html">jacobian_ccsd_k2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccsd_transformation_ccsd.html">jacobian_ccsd_transformation_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_mlcc2_a1_mlcc2.html">jacobian_mlcc2_a1_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_mlcc2_a2_mlcc2.html">jacobian_mlcc2_a2_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_mlcc2_b1_mlcc2.html">jacobian_mlcc2_b1_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_mlcc2_b2_mlcc2.html">jacobian_mlcc2_b2_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_mlcc2_transformation_mlcc2.html">jacobian_mlcc2_transformation_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_mlccsd_b2_mlccsd.html">jacobian_mlccsd_b2_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_mlccsd_c2_mlccsd.html">jacobian_mlccsd_c2_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_mlccsd_d2_mlccsd.html">jacobian_mlccsd_d2_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_mlccsd_e2_mlccsd.html">jacobian_mlccsd_e2_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_mlccsd_f2_mlccsd.html">jacobian_mlccsd_f2_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_mlccsd_g2_mlccsd.html">jacobian_mlccsd_g2_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_mlccsd_h2_mlccsd.html">jacobian_mlccsd_h2_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_mlccsd_i2_mlccsd.html">jacobian_mlccsd_i2_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_mlccsd_j2_mlccsd.html">jacobian_mlccsd_j2_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_mlccsd_k2_mlccsd.html">jacobian_mlccsd_k2_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_mlccsd_transformation_mlccsd.html">jacobian_mlccsd_transformation_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccs_a1_ccs.html">jacobian_transpose_ccs_a1_ccs</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccs_b1_ccs.html">jacobian_transpose_ccs_b1_ccs</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccs_transformation_ccs.html">jacobian_transpose_ccs_transformation_ccs</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_a1_ccsd.html">jacobian_transpose_ccsd_a1_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_a2_ccsd.html">jacobian_transpose_ccsd_a2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_b1_ccsd.html">jacobian_transpose_ccsd_b1_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_b2_ccsd.html">jacobian_transpose_ccsd_b2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_c1_ccsd.html">jacobian_transpose_ccsd_c1_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_c2_ccsd.html">jacobian_transpose_ccsd_c2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_d1_ccsd.html">jacobian_transpose_ccsd_d1_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_d2_ccsd.html">jacobian_transpose_ccsd_d2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_e1_ccsd.html">jacobian_transpose_ccsd_e1_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_e2_ccsd.html">jacobian_transpose_ccsd_e2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_f1_ccsd.html">jacobian_transpose_ccsd_f1_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_f2_ccsd.html">jacobian_transpose_ccsd_f2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_g1_ccsd.html">jacobian_transpose_ccsd_g1_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_g2_ccsd.html">jacobian_transpose_ccsd_g2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_h2_ccsd.html">jacobian_transpose_ccsd_h2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_i2_ccsd.html">jacobian_transpose_ccsd_i2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_transformation_ccsd.html">jacobian_transpose_ccsd_transformation_ccsd</a>
+      
+      <a class="list-group-item" href="../proc/method_reader.html">method_reader</a>
+      
+      <a class="list-group-item" href="../interface/mlcc_reader_mlcc2.html">mlcc_reader_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/mlcc_reader_mlccsd.html">mlcc_reader_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/new_amplitudes_ccs.html">new_amplitudes_ccs</a>
+      
+      <a class="list-group-item" href="../interface/new_amplitudes_ccsd.html">new_amplitudes_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/new_amplitudes_mlccsd.html">new_amplitudes_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/num_batch.html">num_batch</a>
+      
+      <a class="list-group-item" href="../proc/num_batch_memory_manager.html">num_batch_memory_manager</a>
+      
+      <a class="list-group-item" href="../proc/num_two_batch.html">num_two_batch</a>
+      
+      <a class="list-group-item" href="../proc/num_two_batch_memory_manager.html">num_two_batch_memory_manager</a>
+      
+      <a class="list-group-item" href="../interface/omega_cc2_a1_cc2.html">omega_cc2_a1_cc2</a>
+      
+      <a class="list-group-item" href="../interface/omega_cc2_b1_cc2.html">omega_cc2_b1_cc2</a>
+      
+      <a class="list-group-item" href="../interface/omega_cc3_a1_cc3.html">omega_cc3_a1_cc3</a>
+      
+      <a class="list-group-item" href="../interface/omega_cc3_a2_cc3.html">omega_cc3_a2_cc3</a>
+      
+      <a class="list-group-item" href="../interface/omega_cc3_b2_cc3.html">omega_cc3_b2_cc3</a>
+      
+      <a class="list-group-item" href="../proc/omega_ccs_a1_ccs.html">omega_ccs_a1_ccs</a>
+      
+      <a class="list-group-item" href="../interface/omega_ccsd_a1_ccsd.html">omega_ccsd_a1_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/omega_ccsd_a2_ccsd.html">omega_ccsd_a2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/omega_ccsd_b1_ccsd.html">omega_ccsd_b1_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/omega_ccsd_b2_ccsd.html">omega_ccsd_b2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/omega_ccsd_c1_ccsd.html">omega_ccsd_c1_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/omega_ccsd_c2_ccsd.html">omega_ccsd_c2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/omega_ccsd_d2_ccsd.html">omega_ccsd_d2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/omega_ccsd_e2_ccsd.html">omega_ccsd_e2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/omega_integrals_cc3.html">omega_integrals_cc3</a>
+      
+      <a class="list-group-item" href="../interface/omega_mlcc2_a1_mlcc2.html">omega_mlcc2_a1_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/omega_mlcc2_b1_mlcc2.html">omega_mlcc2_b1_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/omega_mlccsd_a1_mlccsd.html">omega_mlccsd_a1_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/omega_mlccsd_a2_mlccsd.html">omega_mlccsd_a2_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/omega_mlccsd_b1_mlccsd.html">omega_mlccsd_b1_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/omega_mlccsd_b2_mlccsd.html">omega_mlccsd_b2_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/omega_mlccsd_c2_mlccsd.html">omega_mlccsd_c2_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/omega_mlccsd_d2_mlccsd.html">omega_mlccsd_d2_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/omega_mlccsd_e2_mlccsd.html">omega_mlccsd_e2_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/one_electron_t1_ccs.html">one_electron_t1_ccs</a>
+      
+      <a class="list-group-item" href="../interface/orbital_partitioning_mlcc2.html">orbital_partitioning_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/orbital_partitioning_mlccsd.html">orbital_partitioning_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/orbital_reader_mlcc_orb.html">orbital_reader_mlcc_orb</a>
+      
+      <a class="list-group-item" href="../proc/packed_size.html">packed_size</a>
+      
+      <a class="list-group-item" href="../proc/packin.html">packin</a>
+      
+      <a class="list-group-item" href="../interface/precondition_residual_ccs.html">precondition_residual_ccs</a>
+      
+      <a class="list-group-item" href="../interface/precondition_residual_core_ccs.html">precondition_residual_core_ccs</a>
+      
+      <a class="list-group-item" href="../interface/precondition_residual_core_ionization_ccs.html">precondition_residual_core_ionization_ccs</a>
+      
+      <a class="list-group-item" href="../interface/precondition_residual_valence_ccs.html">precondition_residual_valence_ccs</a>
+      
+      <a class="list-group-item" href="../interface/precondition_residual_valence_ionization_ccs.html">precondition_residual_valence_ionization_ccs</a>
+      
+      <a class="list-group-item" href="../interface/print_excitation_vector_ccs.html">print_excitation_vector_ccs</a>
+      
+      <a class="list-group-item" href="../interface/print_excitation_vector_ccsd.html">print_excitation_vector_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/print_excitation_vector_mlcc2.html">print_excitation_vector_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/print_excitation_vector_mlccsd.html">print_excitation_vector_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/print_excited_state_info_ccs.html">print_excited_state_info_ccs</a>
+      
+      <a class="list-group-item" href="../interface/print_orbital_info_mlcc2.html">print_orbital_info_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/print_orbital_info_mlccsd.html">print_orbital_info_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/read_amplitudes_cc2.html">read_amplitudes_cc2</a>
+      
+      <a class="list-group-item" href="../proc/read_amplitudes_ccs.html">read_amplitudes_ccs</a>
+      
+      <a class="list-group-item" href="../proc/read_amplitudes_ccsd.html">read_amplitudes_ccsd</a>
+      
+      <a class="list-group-item" href="../proc/read_amplitudes_mlcc2.html">read_amplitudes_mlcc2</a>
+      
+      <a class="list-group-item" href="../proc/read_amplitudes_mlccsd.html">read_amplitudes_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/read_atom_info.html">read_atom_info</a>
+      
+      <a class="list-group-item" href="../proc/read_cc2_double_amplitudes_cc2.html">read_cc2_double_amplitudes_cc2</a>
+      
+      <a class="list-group-item" href="../proc/read_cc2_double_amplitudes_mlcc2.html">read_cc2_double_amplitudes_mlcc2</a>
+      
+      <a class="list-group-item" href="../proc/read_center_info.html">read_center_info</a>
+      
+      <a class="list-group-item" href="../interface/read_cholesky_ab_for_cc2_amplitudes_mlccsd.html">read_cholesky_ab_for_cc2_amplitudes_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/read_cholesky_ab_hf.html">read_cholesky_ab_hf</a>
+      
+      <a class="list-group-item" href="../interface/read_cholesky_ai_for_cc2_amplitudes_mlccsd.html">read_cholesky_ai_for_cc2_amplitudes_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/read_cholesky_ai_hf.html">read_cholesky_ai_hf</a>
+      
+      <a class="list-group-item" href="../interface/read_cholesky_ia_for_cc2_amplitudes_mlccsd.html">read_cholesky_ia_for_cc2_amplitudes_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/read_cholesky_ia_hf.html">read_cholesky_ia_hf</a>
+      
+      <a class="list-group-item" href="../interface/read_cholesky_ij_for_cc2_amplitudes_mlccsd.html">read_cholesky_ij_for_cc2_amplitudes_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/read_cholesky_ij_hf.html">read_cholesky_ij_hf</a>
+      
+      <a class="list-group-item" href="../proc/read_double_amplitudes_ccsd.html">read_double_amplitudes_ccsd</a>
+      
+      <a class="list-group-item" href="../proc/read_double_amplitudes_mlccsd.html">read_double_amplitudes_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/read_excited_state_specs_ccs.html">read_excited_state_specs_ccs</a>
+      
+      <a class="list-group-item" href="../interface/read_ground_state_specs_ccs.html">read_ground_state_specs_ccs</a>
+      
+      <a class="list-group-item" href="../proc/read_hf_info_hf.html">read_hf_info_hf</a>
+      
+      <a class="list-group-item" href="../proc/read_mlccsd_double_amplitudes_mlccsd.html">read_mlccsd_double_amplitudes_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/read_orbital_info_mlcc2.html">read_orbital_info_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/read_orbital_info_mlccsd.html">read_orbital_info_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/read_property_specs_ccs.html">read_property_specs_ccs</a>
+      
+      <a class="list-group-item" href="../proc/read_single_amplitudes_ccs.html">read_single_amplitudes_ccs</a>
+      
+      <a class="list-group-item" href="../interface/read_t1_vo_ov_electronic_repulsion_ccs.html">read_t1_vo_ov_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/read_t1_vv_ov_electronic_repulsion_ccs.html">read_t1_vv_ov_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/read_t1_vv_vo_electronic_repulsion_ccs.html">read_t1_vv_vo_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/read_t1_vv_vv_electronic_repulsion_ccs.html">read_t1_vv_vv_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/read_transform_cholesky_for_cc2_amplitude_mlccsd.html">read_transform_cholesky_for_CC2_amplitude_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/read_transform_cholesky_hf.html">read_transform_cholesky_hf</a>
+      
+      <a class="list-group-item" href="../interface/read_vv_vv_electronic_repulsion_ccs.html">read_vv_vv_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../proc/remove_preceding_blanks.html">remove_preceding_blanks</a>
+      
+      <a class="list-group-item" href="../interface/response_driver_ccs.html">response_driver_ccs</a>
+      
+      <a class="list-group-item" href="../interface/response_preparations_ccs.html">response_preparations_ccs</a>
+      
+      <a class="list-group-item" href="../interface/response_solver_ccs.html">response_solver_ccs</a>
+      
+      <a class="list-group-item" href="../proc/save_amplitudes_cc2.html">save_amplitudes_cc2</a>
+      
+      <a class="list-group-item" href="../proc/save_amplitudes_ccs.html">save_amplitudes_ccs</a>
+      
+      <a class="list-group-item" href="../proc/save_amplitudes_ccsd.html">save_amplitudes_ccsd</a>
+      
+      <a class="list-group-item" href="../proc/save_amplitudes_mlcc2.html">save_amplitudes_mlcc2</a>
+      
+      <a class="list-group-item" href="../proc/save_amplitudes_mlccsd.html">save_amplitudes_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/solve_reduced_eigenvalue_equation_ccs.html">solve_reduced_eigenvalue_equation_ccs</a>
+      
+      <a class="list-group-item" href="../interface/solve_reduced_response_equation_ccs.html">solve_reduced_response_equation_ccs</a>
+      
+      <a class="list-group-item" href="../proc/squareup.html">squareup</a>
+      
+      <a class="list-group-item" href="../proc/squareup_to_compound.html">squareup_to_compound</a>
+      
+      <a class="list-group-item" href="../interface/store_t1_vo_ov_electronic_repulsion_ccs.html">store_t1_vo_ov_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/store_t1_vv_ov_electronic_repulsion_ccs.html">store_t1_vv_ov_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/store_t1_vv_vo_electronic_repulsion_ccs.html">store_t1_vv_vo_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/store_t1_vv_vv_electronic_repulsion_ccs.html">store_t1_vv_vv_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/store_vv_vv_electronic_repulsion_ccs.html">store_vv_vv_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/summary_excited_state_info_cc2.html">summary_excited_state_info_cc2</a>
+      
+      <a class="list-group-item" href="../interface/summary_excited_state_info_ccs.html">summary_excited_state_info_ccs</a>
+      
+      <a class="list-group-item" href="../interface/summary_excited_state_info_ccsd.html">summary_excited_state_info_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/summary_excited_state_info_mlcc2.html">summary_excited_state_info_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/summary_excited_state_info_mlccsd.html">summary_excited_state_info_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/t1_transform_vv_vv_ccs.html">t1_transform_vv_vv_ccs</a>
+      
+      <a class="list-group-item" href="../interface/transform_trial_vectors_cc2.html">transform_trial_vectors_cc2</a>
+      
+      <a class="list-group-item" href="../interface/transform_trial_vectors_ccs.html">transform_trial_vectors_ccs</a>
+      
+      <a class="list-group-item" href="../interface/transform_trial_vectors_ccsd.html">transform_trial_vectors_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/transform_trial_vectors_mlcc2.html">transform_trial_vectors_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/transform_trial_vectors_mlccsd.html">transform_trial_vectors_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/trial_vectors_from_stored_solutions_ccs.html">trial_vectors_from_stored_solutions_ccs</a>
+      
+      <a class="list-group-item" href="../proc/vec_print.html">vec_print</a>
+      
+      <a class="list-group-item" href="../proc/vec_print_nonzero_elm.html">vec_print_nonzero_elm</a>
+      
+      <a class="list-group-item" href="../proc/work_init.html">work_init</a>
+      
+    </div>
+  </div>
+</div>
+
+
+</div>  
+
+    </div>
+    
+    <div class="col-md-9" id='text'>
+	
+    
+    <h2>interface <br>
+    
+public module subroutine precondition_residual_core_ionization_ccs(wf, residual)
+    
+    
+	 
+</h2>    
+    
+
+    
+  
+
+
+    <h3>Arguments</h3>
+    
+      
+<table class="table table-striped varlist">
+<thead><tr><th>Type</th>
+<th>Intent</th><th>Optional</th>
+<th>Attributes</th><th></th><th>Name</th><th></th></thead>
+
+
+
+<tbody>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" id="variable-wf%7E269"></span>class(<a href='../type/ccs.html'>ccs</a>)</td>
+  <td></td>
+  <td></td>
+  
+  <td></td><td>::</td>
+  <td><strong>wf</strong></td><td></td>
+  
+</tr>
+
+  
+  
+  
+  
+<tr>
+  
+  <td><span class="anchor" id="variable-residual%7E8"></span>real(kind=dp),</td>
+  <td></td>
+  <td></td>
+  
+  <td>dimension(wf%n_parameters ,1)</td><td>::</td>
+  <td><strong>residual</strong></td><td></td>
+  
+</tr>
+
+</tbody>
+</table>
+
+    
+    
+    
+    <h3>Description</h3>
+    <div class="codehilite"><pre><span></span>   Precondition Residual Valence
+   Written by Sarai D. Folkestad, Aug 2017
+</pre></div>
+    
+    <br>
+
+ </div>
+</div>
+
+  <section class="visible-xs visible-sm hidden-md">
+    <hr>
+    
+
+<div class="panel panel-default">
+  <div class="panel-heading text-left"><h3 class="panel-title"><a data-toggle="collapse" href="#allprocs-1">All Procedures</a></h3></div>
+  <div id="allprocs-1" class="panel-collapse collapse">
+    <div class="list-group">
+      
+      <a class="list-group-item" href="../proc/alloc_int_memory_manager.html">alloc_int_memory_manager</a>
+      
+      <a class="list-group-item" href="../proc/alloc_memory_manager.html">alloc_memory_manager</a>
+      
+      <a class="list-group-item" href="../proc/allocator.html">allocator</a>
+      
+      <a class="list-group-item" href="../proc/allocator_int.html">allocator_int</a>
+      
+      <a class="list-group-item" href="../interface/analyze_double_excitation_vector_cc2.html">analyze_double_excitation_vector_cc2</a>
+      
+      <a class="list-group-item" href="../interface/analyze_double_excitation_vector_ccsd.html">analyze_double_excitation_vector_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/analyze_double_excitation_vector_mlcc2.html">analyze_double_excitation_vector_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/analyze_single_excitation_vector_ccs.html">analyze_single_excitation_vector_ccs</a>
+      
+      <a class="list-group-item" href="../proc/batch_limits.html">batch_limits</a>
+      
+      <a class="list-group-item" href="../interface/calc_ampeqs_ccs.html">calc_ampeqs_ccs</a>
+      
+      <a class="list-group-item" href="../interface/calc_ampeqs_norm_ccs.html">calc_ampeqs_norm_ccs</a>
+      
+      <a class="list-group-item" href="../interface/calc_ampeqs_norm_ccsd.html">calc_ampeqs_norm_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/calc_ampeqs_norm_mlccsd.html">calc_ampeqs_norm_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/calc_energy_cc2.html">calc_energy_cc2</a>
+      
+      <a class="list-group-item" href="../proc/calc_energy_ccs.html">calc_energy_ccs</a>
+      
+      <a class="list-group-item" href="../proc/calc_energy_ccsd.html">calc_energy_ccsd</a>
+      
+      <a class="list-group-item" href="../proc/calc_energy_correction_ccsdpt.html">calc_energy_correction_ccsdpt</a>
+      
+      <a class="list-group-item" href="../proc/calc_energy_mlcc2.html">calc_energy_mlcc2</a>
+      
+      <a class="list-group-item" href="../proc/calc_energy_mlccsd.html">calc_energy_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/calc_energy_mp2.html">calc_energy_mp2</a>
+      
+      <a class="list-group-item" href="../interface/calc_quasi_newton_doubles_ccsd.html">calc_quasi_Newton_doubles_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/calc_quasi_newton_doubles_mlccsd.html">calc_quasi_Newton_doubles_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/calc_quasi_newton_singles_ccs.html">calc_quasi_Newton_singles_ccs</a>
+      
+      <a class="list-group-item" href="../interface/calc_triples_cc3.html">calc_triples_cc3</a>
+      
+      <a class="list-group-item" href="../interface/calculate_orbital_differences_cc2.html">calculate_orbital_differences_cc2</a>
+      
+      <a class="list-group-item" href="../interface/calculate_orbital_differences_ccs.html">calculate_orbital_differences_ccs</a>
+      
+      <a class="list-group-item" href="../interface/calculate_orbital_differences_ccsd.html">calculate_orbital_differences_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/calculate_orbital_differences_mlcc2.html">calculate_orbital_differences_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/calculation_reader_ccs.html">calculation_reader_ccs</a>
+      
+      <a class="list-group-item" href="../interface/cc2_cnto_lower_level_method_mlcc2.html">cc2_cnto_lower_level_method_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/cc2_cnto_orbitals_mlcc2.html">cc2_cnto_orbitals_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/ccsd_cnto_lower_level_method_mlccsd.html">ccsd_cnto_lower_level_method_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/ccsd_cnto_orbitals_mlccsd.html">ccsd_cnto_orbitals_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/check_orthogonality.html">check_orthogonality</a>
+      
+      <a class="list-group-item" href="../interface/cholesky_decomposition_mlcc2.html">cholesky_decomposition_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/cholesky_localization_ccsd_cc2_ccs_mlccsd.html">cholesky_localization_CCSD_CC2_CCS_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/cholesky_localization_ccsd_cc2_mlccsd.html">cholesky_localization_CCSD_CC2_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/cholesky_localization_ccsd_ccs_mlccsd.html">cholesky_localization_CCSD_CCS_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/cholesky_localization_drv_mlcc2.html">cholesky_localization_drv_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/cholesky_localization_drv_mlccsd.html">cholesky_localization_drv_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/cholesky_orbital_constructor_mlcc2.html">cholesky_orbital_constructor_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/cholesky_orbitals_mlcc2.html">cholesky_orbitals_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/cnto_orbital_drv_mlcc2.html">cnto_orbital_drv_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/cnto_orbital_drv_mlccsd.html">cnto_orbital_drv_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/construct_active_ao_index_list.html">construct_active_ao_index_list</a>
+      
+      <a class="list-group-item" href="../proc/construct_ao_fock_hf.html">construct_ao_fock_hf</a>
+      
+      <a class="list-group-item" href="../proc/construct_ao_fock_new_hf.html">construct_ao_fock_new_hf</a>
+      
+      <a class="list-group-item" href="../proc/construct_density_matrices_hf.html">construct_density_matrices_hf</a>
+      
+      <a class="list-group-item" href="../proc/construct_density_matrix_hf.html">construct_density_matrix_hf</a>
+      
+      <a class="list-group-item" href="../proc/construct_density_matrix_v_hf.html">construct_density_matrix_v_hf</a>
+      
+      <a class="list-group-item" href="../proc/construct_eta_ccs.html">construct_eta_ccs</a>
+      
+      <a class="list-group-item" href="../proc/construct_eta_ccsd.html">construct_eta_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/construct_fock_ccs.html">construct_fock_ccs</a>
+      
+      <a class="list-group-item" href="../interface/construct_gradient_vector_ccs.html">construct_gradient_vector_ccs</a>
+      
+      <a class="list-group-item" href="../interface/construct_mo_transformation_matrix_mlccsd.html">construct_MO_transformation_matrix_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/construct_next_response_trial_vectors_ccs.html">construct_next_response_trial_vectors_ccs</a>
+      
+      <a class="list-group-item" href="../interface/construct_next_trial_vectors_ccs.html">construct_next_trial_vectors_ccs</a>
+      
+      <a class="list-group-item" href="../interface/construct_omega_cc2.html">construct_omega_cc2</a>
+      
+      <a class="list-group-item" href="../interface/construct_omega_cc3.html">construct_omega_cc3</a>
+      
+      <a class="list-group-item" href="../proc/construct_omega_ccs.html">construct_omega_ccs</a>
+      
+      <a class="list-group-item" href="../interface/construct_omega_ccsd.html">construct_omega_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/construct_omega_ccsdpt.html">construct_omega_ccsdpt</a>
+      
+      <a class="list-group-item" href="../interface/construct_omega_mlcc2.html">construct_omega_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/construct_omega_mlccsd.html">construct_omega_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/construct_orbital_coef_cc2_ccs_mlccsd.html">construct_orbital_coef_CC2_CCS_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/construct_orbital_energy_cc2_ccs_mlccsd.html">construct_orbital_energy_CC2_CCS_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/construct_perturbative_doubles_ccsd.html">construct_perturbative_doubles_ccsd</a>
+      
+      <a class="list-group-item" href="../proc/construct_perturbative_doubles_mlccsd.html">construct_perturbative_doubles_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/construct_reduced_gradient_ccs.html">construct_reduced_gradient_ccs</a>
+      
+      <a class="list-group-item" href="../interface/construct_reduced_matrix_ccs.html">construct_reduced_matrix_ccs</a>
+      
+      <a class="list-group-item" href="../interface/core_ionization_jacobian_ccsd_transformation_ccsd.html">core_ionization_jacobian_ccsd_transformation_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/cvs_jacobian_ccsd_transformation_ccsd.html">cvs_jacobian_ccsd_transformation_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/cvs_residual_projection_cc2.html">cvs_residual_projection_cc2</a>
+      
+      <a class="list-group-item" href="../interface/cvs_residual_projection_ccs.html">cvs_residual_projection_ccs</a>
+      
+      <a class="list-group-item" href="../interface/cvs_residual_projection_ccsd.html">cvs_residual_projection_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/cvs_residual_projection_mlcc2.html">cvs_residual_projection_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/cvs_rho_a_i_projection_ccs.html">cvs_rho_a_i_projection_ccs</a>
+      
+      <a class="list-group-item" href="../interface/cvs_rho_aibj_projection_cc2.html">cvs_rho_aibj_projection_cc2</a>
+      
+      <a class="list-group-item" href="../interface/cvs_rho_aibj_projection_ccsd.html">cvs_rho_aibj_projection_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/cvs_rho_aibj_projection_mlcc2.html">cvs_rho_aibj_projection_mlcc2</a>
+      
+      <a class="list-group-item" href="../proc/dealloc_int_memory_manager.html">dealloc_int_memory_manager</a>
+      
+      <a class="list-group-item" href="../proc/dealloc_memory_manager.html">dealloc_memory_manager</a>
+      
+      <a class="list-group-item" href="../proc/deallocator.html">deallocator</a>
+      
+      <a class="list-group-item" href="../proc/deallocator_int.html">deallocator_int</a>
+      
+      <a class="list-group-item" href="../proc/destruct_amplitudes_ccs.html">destruct_amplitudes_ccs</a>
+      
+      <a class="list-group-item" href="../proc/destruct_amplitudes_ccsd.html">destruct_amplitudes_ccsd</a>
+      
+      <a class="list-group-item" href="../proc/destruct_amplitudes_mlccsd.html">destruct_amplitudes_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/destruct_double_amplitudes_mlccsd.html">destruct_double_amplitudes_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/destruct_ground_state_ccs.html">destruct_ground_state_ccs</a>
+      
+      <a class="list-group-item" href="../interface/destruct_ground_state_ccsdpt.html">destruct_ground_state_ccsdpt</a>
+      
+      <a class="list-group-item" href="../proc/destruct_omega_ccs.html">destruct_omega_ccs</a>
+      
+      <a class="list-group-item" href="../proc/destruct_omega_ccsd.html">destruct_omega_ccsd</a>
+      
+      <a class="list-group-item" href="../proc/destruct_orbital_coef_cc2_ccs_mlccsd.html">destruct_orbital_coef_CC2_CCS_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/destruct_orbital_energy_cc2_ccs_mlccsd.html">destruct_orbital_energy_CC2_CCS_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/destruct_s2am_cc2.html">destruct_s2am_cc2</a>
+      
+      <a class="list-group-item" href="../proc/destruct_x2am_mlcc2.html">destruct_x2am_mlcc2</a>
+      
+      <a class="list-group-item" href="../proc/determine_limits_batching_index.html">determine_limits_batching_index</a>
+      
+      <a class="list-group-item" href="../interface/diis_ccs.html">diis_ccs</a>
+      
+      <a class="list-group-item" href="../proc/drv_ccs.html">drv_ccs</a>
+      
+      <a class="list-group-item" href="../proc/drv_hf.html">drv_hf</a>
+      
+      <a class="list-group-item" href="../proc/drv_mp2.html">drv_mp2</a>
+      
+      <a class="list-group-item" href="../interface/excited_state_cleanup_ccs.html">excited_state_cleanup_ccs</a>
+      
+      <a class="list-group-item" href="../interface/excited_state_driver_ccs.html">excited_state_driver_ccs</a>
+      
+      <a class="list-group-item" href="../interface/excited_state_preparations_cc2.html">excited_state_preparations_cc2</a>
+      
+      <a class="list-group-item" href="../interface/excited_state_preparations_ccs.html">excited_state_preparations_ccs</a>
+      
+      <a class="list-group-item" href="../interface/excited_state_preparations_ccsd.html">excited_state_preparations_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/excited_state_preparations_mlcc2.html">excited_state_preparations_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/excited_state_solver_ccs.html">excited_state_solver_ccs</a>
+      
+      <a class="list-group-item" href="../interface/find_core_mo_ccs.html">find_core_mo_ccs</a>
+      
+      <a class="list-group-item" href="../interface/find_start_trial_indices_ccs.html">find_start_trial_indices_ccs</a>
+      
+      <a class="list-group-item" href="../interface/find_start_trial_indices_core_ccs.html">find_start_trial_indices_core_ccs</a>
+      
+      <a class="list-group-item" href="../interface/general_specs_reader_ccs.html">general_specs_reader_ccs</a>
+      
+      <a class="list-group-item" href="../proc/generate_unit_identifier.html">generate_unit_identifier</a>
+      
+      <a class="list-group-item" href="../proc/get_available.html">get_available</a>
+      
+      <a class="list-group-item" href="../proc/get_cc2_active_indices_mlcc2.html">get_CC2_active_indices_mlcc2</a>
+      
+      <a class="list-group-item" href="../proc/get_cc2_active_indices_mlccsd.html">get_CC2_active_indices_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/get_cc2_n_active_mlcc2.html">get_CC2_n_active_mlcc2</a>
+      
+      <a class="list-group-item" href="../proc/get_cc2_n_active_mlccsd.html">get_CC2_n_active_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/get_ccsd_active_indices_mlccsd.html">get_CCSD_active_indices_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/get_ccsd_n_active_mlccsd.html">get_CCSD_n_active_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/get_cholesky_ab_ccs.html">get_cholesky_ab_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_cholesky_ai_ccs.html">get_cholesky_ai_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_cholesky_ai_for_cc2_amplitudes_mlccsd.html">get_cholesky_ai_for_cc2_amplitudes_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/get_cholesky_ia_ccs.html">get_cholesky_ia_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_cholesky_ij_ccs.html">get_cholesky_ij_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_mlccsd_x2am_mlccsd.html">get_mlccsd_x2am_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/get_n_lowest.html">get_n_lowest</a>
+      
+      <a class="list-group-item" href="../interface/get_oo_oo_ccs.html">get_oo_oo_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_oo_oo_electronic_repulsion_ccs.html">get_oo_oo_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_oo_ov_ccs.html">get_oo_ov_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_oo_ov_electronic_repulsion_ccs.html">get_oo_ov_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_oo_vo_ccs.html">get_oo_vo_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_oo_vo_electronic_repulsion_ccs.html">get_oo_vo_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_oo_vv_ccs.html">get_oo_vv_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_oo_vv_electronic_repulsion_ccs.html">get_oo_vv_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_ov_oo_ccs.html">get_ov_oo_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_ov_oo_electronic_repulsion_ccs.html">get_ov_oo_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_ov_ov_ccs.html">get_ov_ov_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_ov_ov_electronic_repulsion_ccs.html">get_ov_ov_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_ov_vo_ccs.html">get_ov_vo_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_ov_vo_electronic_repulsion_ccs.html">get_ov_vo_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_ov_vv_ccs.html">get_ov_vv_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_ov_vv_electronic_repulsion_ccs.html">get_ov_vv_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_s2am_cc2.html">get_s2am_cc2</a>
+      
+      <a class="list-group-item" href="../interface/get_s2am_mlcc2.html">get_s2am_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/get_vo_oo_ccs.html">get_vo_oo_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_vo_oo_electronic_repulsion_ccs.html">get_vo_oo_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_vo_ov_ccs.html">get_vo_ov_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_vo_ov_electronic_repulsion_ccs.html">get_vo_ov_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_vo_vo_ccs.html">get_vo_vo_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_vo_vo_electronic_repulsion_ccs.html">get_vo_vo_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_vo_vv_ccs.html">get_vo_vv_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_vo_vv_electronic_repulsion_ccs.html">get_vo_vv_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_vv_oo_ccs.html">get_vv_oo_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_vv_oo_electronic_repulsion_ccs.html">get_vv_oo_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_vv_ov_ccs.html">get_vv_ov_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_vv_ov_electronic_repulsion_ccs.html">get_vv_ov_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_vv_vo_ccs.html">get_vv_vo_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_vv_vo_electronic_repulsion_ccs.html">get_vv_vo_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_vv_vv_ccs.html">get_vv_vv_ccs</a>
+      
+      <a class="list-group-item" href="../interface/get_vv_vv_electronic_repulsion_ccs.html">get_vv_vv_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/ground_state_cleanup_ccs.html">ground_state_cleanup_ccs</a>
+      
+      <a class="list-group-item" href="../interface/ground_state_driver_ccs.html">ground_state_driver_ccs</a>
+      
+      <a class="list-group-item" href="../interface/ground_state_preparations_ccs.html">ground_state_preparations_ccs</a>
+      
+      <a class="list-group-item" href="../interface/ground_state_preparations_ccsd.html">ground_state_preparations_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/ground_state_solver_ccs.html">ground_state_solver_ccs</a>
+      
+      <a class="list-group-item" href="../proc/index_packed.html">index_packed</a>
+      
+      <a class="list-group-item" href="../proc/index_three.html">index_three</a>
+      
+      <a class="list-group-item" href="../proc/index_two.html">index_two</a>
+      
+      <a class="list-group-item" href="../proc/init_batching_index.html">init_batching_index</a>
+      
+      <a class="list-group-item" href="../proc/init_cc2.html">init_cc2</a>
+      
+      <a class="list-group-item" href="../proc/init_cc3.html">init_cc3</a>
+      
+      <a class="list-group-item" href="../proc/init_ccs.html">init_ccs</a>
+      
+      <a class="list-group-item" href="../proc/init_ccsd.html">init_ccsd</a>
+      
+      <a class="list-group-item" href="../proc/init_ccsdpt.html">init_ccsdpt</a>
+      
+      <a class="list-group-item" href="../proc/init_hf.html">init_hf</a>
+      
+      <a class="list-group-item" href="../proc/init_memory_manager.html">init_memory_manager</a>
+      
+      <a class="list-group-item" href="../proc/init_mlcc2.html">init_mlcc2</a>
+      
+      <a class="list-group-item" href="../proc/init_mlccsd.html">init_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/init_mp2.html">init_mp2</a>
+      
+      <a class="list-group-item" href="../proc/initialize_amplitudes_ccs.html">initialize_amplitudes_ccs</a>
+      
+      <a class="list-group-item" href="../proc/initialize_amplitudes_ccsd.html">initialize_amplitudes_ccsd</a>
+      
+      <a class="list-group-item" href="../proc/initialize_amplitudes_mlccsd.html">initialize_amplitudes_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/initialize_excited_states_cc2.html">initialize_excited_states_cc2</a>
+      
+      <a class="list-group-item" href="../interface/initialize_excited_states_ccs.html">initialize_excited_states_ccs</a>
+      
+      <a class="list-group-item" href="../interface/initialize_excited_states_mlcc2.html">initialize_excited_states_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/initialize_excited_states_mlccsd.html">initialize_excited_states_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/initialize_fock_matrix_ccs.html">initialize_fock_matrix_ccs</a>
+      
+      <a class="list-group-item" href="../interface/initialize_ground_state_ccs.html">initialize_ground_state_ccs</a>
+      
+      <a class="list-group-item" href="../interface/initialize_ground_state_ccsd.html">initialize_ground_state_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/initialize_ground_state_mlccsd.html">initialize_ground_state_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/initialize_omega_ccs.html">initialize_omega_ccs</a>
+      
+      <a class="list-group-item" href="../interface/initialize_omega_ccsd.html">initialize_omega_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/initialize_omega_mlccsd.html">initialize_omega_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/initialize_response_ccs.html">initialize_response_ccs</a>
+      
+      <a class="list-group-item" href="../interface/initialize_trial_vectors_ccs.html">initialize_trial_vectors_ccs</a>
+      
+      <a class="list-group-item" href="../interface/initialize_trial_vectors_core_ccs.html">initialize_trial_vectors_core_ccs</a>
+      
+      <a class="list-group-item" href="../interface/initialize_trial_vectors_core_ionization_ccs.html">initialize_trial_vectors_core_ionization_ccs</a>
+      
+      <a class="list-group-item" href="../interface/initialize_trial_vectors_valence_ccs.html">initialize_trial_vectors_valence_ccs</a>
+      
+      <a class="list-group-item" href="../interface/initialize_trial_vectors_valence_ionization_ccs.html">initialize_trial_vectors_valence_ionization_ccs</a>
+      
+      <a class="list-group-item" href="../interface/ionization_jacobian_ccsd_transformation_ccsd.html">ionization_jacobian_ccsd_transformation_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/ionization_residual_projection_ccs.html">ionization_residual_projection_ccs</a>
+      
+      <a class="list-group-item" href="../interface/ionization_residual_projection_ccsd.html">ionization_residual_projection_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/ionization_rho_a_i_projection_ccs.html">ionization_rho_a_i_projection_ccs</a>
+      
+      <a class="list-group-item" href="../interface/ionization_rho_aibj_projection_ccsd.html">ionization_rho_aibj_projection_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/ionized_state_driver_ccs.html">ionized_state_driver_ccs</a>
+      
+      <a class="list-group-item" href="../proc/jacobi_test_ccs.html">jacobi_test_ccs</a>
+      
+      <a class="list-group-item" href="../proc/jacobi_test_ccsd.html">jacobi_test_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_cc2_a1_cc2.html">jacobian_cc2_a1_cc2</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_cc2_a2_cc2.html">jacobian_cc2_a2_cc2</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_cc2_b1_cc2.html">jacobian_cc2_b1_cc2</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_cc2_b2_cc2.html">jacobian_cc2_b2_cc2</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_cc2_transformation_cc2.html">jacobian_cc2_transformation_cc2</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccs_a1_ccs.html">jacobian_ccs_a1_ccs</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccs_b1_ccs.html">jacobian_ccs_b1_ccs</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccs_transformation_ccs.html">jacobian_ccs_transformation_ccs</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccsd_a1_ccsd.html">jacobian_ccsd_a1_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccsd_a2_ccsd.html">jacobian_ccsd_a2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccsd_b1_ccsd.html">jacobian_ccsd_b1_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccsd_b2_ccsd.html">jacobian_ccsd_b2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccsd_c1_ccsd.html">jacobian_ccsd_c1_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccsd_c2_ccsd.html">jacobian_ccsd_c2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccsd_d1_ccsd.html">jacobian_ccsd_d1_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccsd_d2_ccsd.html">jacobian_ccsd_d2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccsd_e2_ccsd.html">jacobian_ccsd_e2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccsd_f2_ccsd.html">jacobian_ccsd_f2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccsd_g2_ccsd.html">jacobian_ccsd_g2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccsd_h2_ccsd.html">jacobian_ccsd_h2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccsd_i2_ccsd.html">jacobian_ccsd_i2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccsd_j2_ccsd.html">jacobian_ccsd_j2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccsd_k2_ccsd.html">jacobian_ccsd_k2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_ccsd_transformation_ccsd.html">jacobian_ccsd_transformation_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_mlcc2_a1_mlcc2.html">jacobian_mlcc2_a1_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_mlcc2_a2_mlcc2.html">jacobian_mlcc2_a2_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_mlcc2_b1_mlcc2.html">jacobian_mlcc2_b1_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_mlcc2_b2_mlcc2.html">jacobian_mlcc2_b2_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_mlcc2_transformation_mlcc2.html">jacobian_mlcc2_transformation_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_mlccsd_b2_mlccsd.html">jacobian_mlccsd_b2_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_mlccsd_c2_mlccsd.html">jacobian_mlccsd_c2_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_mlccsd_d2_mlccsd.html">jacobian_mlccsd_d2_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_mlccsd_e2_mlccsd.html">jacobian_mlccsd_e2_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_mlccsd_f2_mlccsd.html">jacobian_mlccsd_f2_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_mlccsd_g2_mlccsd.html">jacobian_mlccsd_g2_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_mlccsd_h2_mlccsd.html">jacobian_mlccsd_h2_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_mlccsd_i2_mlccsd.html">jacobian_mlccsd_i2_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_mlccsd_j2_mlccsd.html">jacobian_mlccsd_j2_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_mlccsd_k2_mlccsd.html">jacobian_mlccsd_k2_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_mlccsd_transformation_mlccsd.html">jacobian_mlccsd_transformation_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccs_a1_ccs.html">jacobian_transpose_ccs_a1_ccs</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccs_b1_ccs.html">jacobian_transpose_ccs_b1_ccs</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccs_transformation_ccs.html">jacobian_transpose_ccs_transformation_ccs</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_a1_ccsd.html">jacobian_transpose_ccsd_a1_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_a2_ccsd.html">jacobian_transpose_ccsd_a2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_b1_ccsd.html">jacobian_transpose_ccsd_b1_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_b2_ccsd.html">jacobian_transpose_ccsd_b2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_c1_ccsd.html">jacobian_transpose_ccsd_c1_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_c2_ccsd.html">jacobian_transpose_ccsd_c2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_d1_ccsd.html">jacobian_transpose_ccsd_d1_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_d2_ccsd.html">jacobian_transpose_ccsd_d2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_e1_ccsd.html">jacobian_transpose_ccsd_e1_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_e2_ccsd.html">jacobian_transpose_ccsd_e2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_f1_ccsd.html">jacobian_transpose_ccsd_f1_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_f2_ccsd.html">jacobian_transpose_ccsd_f2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_g1_ccsd.html">jacobian_transpose_ccsd_g1_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_g2_ccsd.html">jacobian_transpose_ccsd_g2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_h2_ccsd.html">jacobian_transpose_ccsd_h2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_i2_ccsd.html">jacobian_transpose_ccsd_i2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/jacobian_transpose_ccsd_transformation_ccsd.html">jacobian_transpose_ccsd_transformation_ccsd</a>
+      
+      <a class="list-group-item" href="../proc/method_reader.html">method_reader</a>
+      
+      <a class="list-group-item" href="../interface/mlcc_reader_mlcc2.html">mlcc_reader_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/mlcc_reader_mlccsd.html">mlcc_reader_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/new_amplitudes_ccs.html">new_amplitudes_ccs</a>
+      
+      <a class="list-group-item" href="../interface/new_amplitudes_ccsd.html">new_amplitudes_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/new_amplitudes_mlccsd.html">new_amplitudes_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/num_batch.html">num_batch</a>
+      
+      <a class="list-group-item" href="../proc/num_batch_memory_manager.html">num_batch_memory_manager</a>
+      
+      <a class="list-group-item" href="../proc/num_two_batch.html">num_two_batch</a>
+      
+      <a class="list-group-item" href="../proc/num_two_batch_memory_manager.html">num_two_batch_memory_manager</a>
+      
+      <a class="list-group-item" href="../interface/omega_cc2_a1_cc2.html">omega_cc2_a1_cc2</a>
+      
+      <a class="list-group-item" href="../interface/omega_cc2_b1_cc2.html">omega_cc2_b1_cc2</a>
+      
+      <a class="list-group-item" href="../interface/omega_cc3_a1_cc3.html">omega_cc3_a1_cc3</a>
+      
+      <a class="list-group-item" href="../interface/omega_cc3_a2_cc3.html">omega_cc3_a2_cc3</a>
+      
+      <a class="list-group-item" href="../interface/omega_cc3_b2_cc3.html">omega_cc3_b2_cc3</a>
+      
+      <a class="list-group-item" href="../proc/omega_ccs_a1_ccs.html">omega_ccs_a1_ccs</a>
+      
+      <a class="list-group-item" href="../interface/omega_ccsd_a1_ccsd.html">omega_ccsd_a1_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/omega_ccsd_a2_ccsd.html">omega_ccsd_a2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/omega_ccsd_b1_ccsd.html">omega_ccsd_b1_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/omega_ccsd_b2_ccsd.html">omega_ccsd_b2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/omega_ccsd_c1_ccsd.html">omega_ccsd_c1_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/omega_ccsd_c2_ccsd.html">omega_ccsd_c2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/omega_ccsd_d2_ccsd.html">omega_ccsd_d2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/omega_ccsd_e2_ccsd.html">omega_ccsd_e2_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/omega_integrals_cc3.html">omega_integrals_cc3</a>
+      
+      <a class="list-group-item" href="../interface/omega_mlcc2_a1_mlcc2.html">omega_mlcc2_a1_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/omega_mlcc2_b1_mlcc2.html">omega_mlcc2_b1_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/omega_mlccsd_a1_mlccsd.html">omega_mlccsd_a1_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/omega_mlccsd_a2_mlccsd.html">omega_mlccsd_a2_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/omega_mlccsd_b1_mlccsd.html">omega_mlccsd_b1_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/omega_mlccsd_b2_mlccsd.html">omega_mlccsd_b2_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/omega_mlccsd_c2_mlccsd.html">omega_mlccsd_c2_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/omega_mlccsd_d2_mlccsd.html">omega_mlccsd_d2_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/omega_mlccsd_e2_mlccsd.html">omega_mlccsd_e2_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/one_electron_t1_ccs.html">one_electron_t1_ccs</a>
+      
+      <a class="list-group-item" href="../interface/orbital_partitioning_mlcc2.html">orbital_partitioning_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/orbital_partitioning_mlccsd.html">orbital_partitioning_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/orbital_reader_mlcc_orb.html">orbital_reader_mlcc_orb</a>
+      
+      <a class="list-group-item" href="../proc/packed_size.html">packed_size</a>
+      
+      <a class="list-group-item" href="../proc/packin.html">packin</a>
+      
+      <a class="list-group-item" href="../interface/precondition_residual_ccs.html">precondition_residual_ccs</a>
+      
+      <a class="list-group-item" href="../interface/precondition_residual_core_ccs.html">precondition_residual_core_ccs</a>
+      
+      <a class="list-group-item" href="../interface/precondition_residual_core_ionization_ccs.html">precondition_residual_core_ionization_ccs</a>
+      
+      <a class="list-group-item" href="../interface/precondition_residual_valence_ccs.html">precondition_residual_valence_ccs</a>
+      
+      <a class="list-group-item" href="../interface/precondition_residual_valence_ionization_ccs.html">precondition_residual_valence_ionization_ccs</a>
+      
+      <a class="list-group-item" href="../interface/print_excitation_vector_ccs.html">print_excitation_vector_ccs</a>
+      
+      <a class="list-group-item" href="../interface/print_excitation_vector_ccsd.html">print_excitation_vector_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/print_excitation_vector_mlcc2.html">print_excitation_vector_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/print_excitation_vector_mlccsd.html">print_excitation_vector_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/print_excited_state_info_ccs.html">print_excited_state_info_ccs</a>
+      
+      <a class="list-group-item" href="../interface/print_orbital_info_mlcc2.html">print_orbital_info_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/print_orbital_info_mlccsd.html">print_orbital_info_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/read_amplitudes_cc2.html">read_amplitudes_cc2</a>
+      
+      <a class="list-group-item" href="../proc/read_amplitudes_ccs.html">read_amplitudes_ccs</a>
+      
+      <a class="list-group-item" href="../proc/read_amplitudes_ccsd.html">read_amplitudes_ccsd</a>
+      
+      <a class="list-group-item" href="../proc/read_amplitudes_mlcc2.html">read_amplitudes_mlcc2</a>
+      
+      <a class="list-group-item" href="../proc/read_amplitudes_mlccsd.html">read_amplitudes_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/read_atom_info.html">read_atom_info</a>
+      
+      <a class="list-group-item" href="../proc/read_cc2_double_amplitudes_cc2.html">read_cc2_double_amplitudes_cc2</a>
+      
+      <a class="list-group-item" href="../proc/read_cc2_double_amplitudes_mlcc2.html">read_cc2_double_amplitudes_mlcc2</a>
+      
+      <a class="list-group-item" href="../proc/read_center_info.html">read_center_info</a>
+      
+      <a class="list-group-item" href="../interface/read_cholesky_ab_for_cc2_amplitudes_mlccsd.html">read_cholesky_ab_for_cc2_amplitudes_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/read_cholesky_ab_hf.html">read_cholesky_ab_hf</a>
+      
+      <a class="list-group-item" href="../interface/read_cholesky_ai_for_cc2_amplitudes_mlccsd.html">read_cholesky_ai_for_cc2_amplitudes_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/read_cholesky_ai_hf.html">read_cholesky_ai_hf</a>
+      
+      <a class="list-group-item" href="../interface/read_cholesky_ia_for_cc2_amplitudes_mlccsd.html">read_cholesky_ia_for_cc2_amplitudes_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/read_cholesky_ia_hf.html">read_cholesky_ia_hf</a>
+      
+      <a class="list-group-item" href="../interface/read_cholesky_ij_for_cc2_amplitudes_mlccsd.html">read_cholesky_ij_for_cc2_amplitudes_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/read_cholesky_ij_hf.html">read_cholesky_ij_hf</a>
+      
+      <a class="list-group-item" href="../proc/read_double_amplitudes_ccsd.html">read_double_amplitudes_ccsd</a>
+      
+      <a class="list-group-item" href="../proc/read_double_amplitudes_mlccsd.html">read_double_amplitudes_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/read_excited_state_specs_ccs.html">read_excited_state_specs_ccs</a>
+      
+      <a class="list-group-item" href="../interface/read_ground_state_specs_ccs.html">read_ground_state_specs_ccs</a>
+      
+      <a class="list-group-item" href="../proc/read_hf_info_hf.html">read_hf_info_hf</a>
+      
+      <a class="list-group-item" href="../proc/read_mlccsd_double_amplitudes_mlccsd.html">read_mlccsd_double_amplitudes_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/read_orbital_info_mlcc2.html">read_orbital_info_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/read_orbital_info_mlccsd.html">read_orbital_info_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/read_property_specs_ccs.html">read_property_specs_ccs</a>
+      
+      <a class="list-group-item" href="../proc/read_single_amplitudes_ccs.html">read_single_amplitudes_ccs</a>
+      
+      <a class="list-group-item" href="../interface/read_t1_vo_ov_electronic_repulsion_ccs.html">read_t1_vo_ov_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/read_t1_vv_ov_electronic_repulsion_ccs.html">read_t1_vv_ov_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/read_t1_vv_vo_electronic_repulsion_ccs.html">read_t1_vv_vo_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/read_t1_vv_vv_electronic_repulsion_ccs.html">read_t1_vv_vv_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/read_transform_cholesky_for_cc2_amplitude_mlccsd.html">read_transform_cholesky_for_CC2_amplitude_mlccsd</a>
+      
+      <a class="list-group-item" href="../proc/read_transform_cholesky_hf.html">read_transform_cholesky_hf</a>
+      
+      <a class="list-group-item" href="../interface/read_vv_vv_electronic_repulsion_ccs.html">read_vv_vv_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../proc/remove_preceding_blanks.html">remove_preceding_blanks</a>
+      
+      <a class="list-group-item" href="../interface/response_driver_ccs.html">response_driver_ccs</a>
+      
+      <a class="list-group-item" href="../interface/response_preparations_ccs.html">response_preparations_ccs</a>
+      
+      <a class="list-group-item" href="../interface/response_solver_ccs.html">response_solver_ccs</a>
+      
+      <a class="list-group-item" href="../proc/save_amplitudes_cc2.html">save_amplitudes_cc2</a>
+      
+      <a class="list-group-item" href="../proc/save_amplitudes_ccs.html">save_amplitudes_ccs</a>
+      
+      <a class="list-group-item" href="../proc/save_amplitudes_ccsd.html">save_amplitudes_ccsd</a>
+      
+      <a class="list-group-item" href="../proc/save_amplitudes_mlcc2.html">save_amplitudes_mlcc2</a>
+      
+      <a class="list-group-item" href="../proc/save_amplitudes_mlccsd.html">save_amplitudes_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/solve_reduced_eigenvalue_equation_ccs.html">solve_reduced_eigenvalue_equation_ccs</a>
+      
+      <a class="list-group-item" href="../interface/solve_reduced_response_equation_ccs.html">solve_reduced_response_equation_ccs</a>
+      
+      <a class="list-group-item" href="../proc/squareup.html">squareup</a>
+      
+      <a class="list-group-item" href="../proc/squareup_to_compound.html">squareup_to_compound</a>
+      
+      <a class="list-group-item" href="../interface/store_t1_vo_ov_electronic_repulsion_ccs.html">store_t1_vo_ov_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/store_t1_vv_ov_electronic_repulsion_ccs.html">store_t1_vv_ov_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/store_t1_vv_vo_electronic_repulsion_ccs.html">store_t1_vv_vo_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/store_t1_vv_vv_electronic_repulsion_ccs.html">store_t1_vv_vv_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/store_vv_vv_electronic_repulsion_ccs.html">store_vv_vv_electronic_repulsion_ccs</a>
+      
+      <a class="list-group-item" href="../interface/summary_excited_state_info_cc2.html">summary_excited_state_info_cc2</a>
+      
+      <a class="list-group-item" href="../interface/summary_excited_state_info_ccs.html">summary_excited_state_info_ccs</a>
+      
+      <a class="list-group-item" href="../interface/summary_excited_state_info_ccsd.html">summary_excited_state_info_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/summary_excited_state_info_mlcc2.html">summary_excited_state_info_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/summary_excited_state_info_mlccsd.html">summary_excited_state_info_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/t1_transform_vv_vv_ccs.html">t1_transform_vv_vv_ccs</a>
+      
+      <a class="list-group-item" href="../interface/transform_trial_vectors_cc2.html">transform_trial_vectors_cc2</a>
+      
+      <a class="list-group-item" href="../interface/transform_trial_vectors_ccs.html">transform_trial_vectors_ccs</a>
+      
+      <a class="list-group-item" href="../interface/transform_trial_vectors_ccsd.html">transform_trial_vectors_ccsd</a>
+      
+      <a class="list-group-item" href="../interface/transform_trial_vectors_mlcc2.html">transform_trial_vectors_mlcc2</a>
+      
+      <a class="list-group-item" href="../interface/transform_trial_vectors_mlccsd.html">transform_trial_vectors_mlccsd</a>
+      
+      <a class="list-group-item" href="../interface/trial_vectors_from_stored_solutions_ccs.html">trial_vectors_from_stored_solutions_ccs</a>
+      
+      <a class="list-group-item" href="../proc/vec_print.html">vec_print</a>
+      
+      <a class="list-group-item" href="../proc/vec_print_nonzero_elm.html">vec_print_nonzero_elm</a>
+      
+      <a class="list-group-item" href="../proc/work_init.html">work_init</a>
+      
+    </div>
+  </div>
+</div>
+
+
+  </section>
+
+    <hr>    
+    </div> <!-- /container -->
+    <footer>
+      <div class="container">
+      <div class="row">
+        <div class="col-xs-6 col-md-4"><p>&copy; 2017 </p></div>
+        <div class="col-xs-6 col-md-4 col-md-push-4">
+          <p class="text-right">
+            Documentation generated by 
+            <a href="https://github.com/cmacmackin/ford">FORD</a>
+            
+          </p>
+        </div>
+        <div class="col-xs-12 col-md-4 col-md-pull-4"><p class="text-center"> The eT program was developed by Eirik F. Kjønstad and Sarai D. Folkestad</p></div>
+      </div>
+      <br>
+      </div> <!-- /container -->    
+    </footer>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+<!--
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+-->
+    <script src="../js/bootstrap.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="../js/ie10-viewport-bug-workaround.js"></script>
+
+    <!-- MathJax JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } },
+        jax: ['input/TeX','input/MathML','output/HTML-CSS'],
+        extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js'],
+        'HTML-CSS': { 
+           styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: '#000000 ! important'} }
+        }
+      });
+    </script>
+    <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  </body>
+</html>

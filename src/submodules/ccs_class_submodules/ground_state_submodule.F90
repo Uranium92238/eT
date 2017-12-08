@@ -21,8 +21,6 @@ submodule (ccs_class) ground_state
 !!    calc_ampeqs:                Updates the amplitude equations for the current amplitudes.
 !!    calc_ampeqs_norm:           Calculates the norm of the amplitude equations.
 !!    calc_quasi_Newton_singles:  Calculates the singles part of the quasi-Newton estimate.
-!!    initialize_ground_state:    Initializes the amplitudes and the amplitude equations.
-!!    destruct_ground_state:      Deallocates the amplitudes and the amplitude equations.
 !!
 !!    Can be inherited by models of the same level (e.g. CC2) without modification.
 !!
@@ -46,6 +44,82 @@ submodule (ccs_class) ground_state
 !
 !
 contains
+!
+!
+   module subroutine ground_state_driver_ccs(wf)
+!!
+!!    Ground state driver (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!    Directs the solution of the ground state problem for CCS. The
+!!    routine is written so as to be inherited unaltered in the CC hierarchy. 
+!!
+      implicit none 
+!
+      class(ccs) :: wf  
+!
+!     Let the user know the ground state solver is running
+!
+      write(unit_output,'(//t3,a)')   ':: Ground state solver (DIIS)'
+      write(unit_output,'(t3,a/)')   ':: S. D. Folkestad, E. F. Kjønstad, May 2017'
+!
+      write(unit_output,'(t3,a,a,a/)')  'Settings for ',trim(wf%name), ' ground state calculation:'
+!
+      write(unit_output,'(t6,a20,e9.2)') 'Energy threshold:   ', wf%ground_state_specifications%energy_threshold
+      write(unit_output,'(t6,a20,e9.2)') 'Residual threshold: ', wf%ground_state_specifications%residual_threshold
+      flush(unit_output)
+!
+!     Preparations for ground state solver 
+!
+      call wf%ground_state_preparations
+!
+!     Run the solver routine
+!
+      call wf%ground_state_solver
+!
+!     Final work and preparations for other tasks (such as excited state calculations)
+!
+      call wf%ground_state_cleanup
+!
+   end subroutine ground_state_driver_ccs
+!
+!
+   module subroutine ground_state_preparations_ccs(wf)
+!!
+!!    Ground State Preparations (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!    A routine for preparation tasks (if any). Can be overwritten
+!!    in descendants if other preparations prove necessary.    
+!!
+      class(ccs) :: wf 
+!
+      wf%tasks%current = 'ground_state'
+!
+!     Allocate amplitudes (if not allocated) and calculate number of amplitudes 
+!
+      call wf%initialize_amplitudes 
+!
+!     Allocate projection vector 
+!
+      call wf%initialize_omega   
+!
+   end subroutine ground_state_preparations_ccs
+!
+!
+   module subroutine ground_state_cleanup_ccs(wf)
+!!
+!!    Ground State Cleanup (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!    A routine for cleanup tasks (if any). Can be overwritten
+!!    in descendants if other cleanups prove necessary.    
+!!
+      class(ccs) :: wf 
+!
+!     Nothing yet...
+!
+   end subroutine ground_state_cleanup_ccs
 !
 !
    module subroutine ground_state_solver_ccs(wf)
@@ -75,29 +149,12 @@ contains
 !
       logical :: converged = .false. ! True iff both the energy and the equations have converged 
 !
-!     Let the user know the ground state solver is running
-!
-      write(unit_output,'(/t3,a)')   ':: Ground state solver (DIIS)'
-      write(unit_output,'(t3,a/)')   ':: S. D. Folkestad, E. F. Kjønstad, May 2017'
-      write(unit_output,'(t3,a,a,a)') &
-                                     'Requested the ground state for: ', trim(wf%name),'.'   
-!
-      write(unit_output,'(/t3,a/)')  'Settings for this calculation:'
-!
-      write(unit_output,'(t6,a20,e9.2)') 'Energy threshold:',   wf%settings%energy_threshold
-      write(unit_output,'(t6,a20,e9.2)') 'Equation threshold:', wf%settings%equation_threshold
-      flush(unit_output)
-!
-!     Initialize amplitudes & amplitude equations 
-!
-      call wf%initialize_ground_state
-!
 !     If restart, read amplitudes from disk 
 !
-      if (wf%settings%restart) then 
+      if (wf%ground_state_specifications%restart) then 
 !
-         write(unit_output,'(/t3,a)') 'Requested restart. Reading amplitudes from file.'
-         call wf%read_amplitudes
+         write(unit_output,'(/t3,a)') 'Requested restart. Preparing for restart.'
+         call wf%ground_state_restart
 !
       endif
 !
@@ -129,7 +186,7 @@ contains
 !
       call cpu_time(start_gs_solver)
 !
-      do while ((.not. converged) .and. (iteration .le. wf%settings%ground_state_max_iterations))
+      do while ((.not. converged) .and. (iteration .le. wf%ground_state_specifications%max_iterations))
 !
 !        Save the previous energy 
 !
@@ -151,8 +208,8 @@ contains
 !
 !        Check for convergence of the energy and the amplitude equations
 !
-         converged_energy = abs(wf%energy-prev_energy) .lt. wf%settings%energy_threshold
-         converged_ampeqs = ampeqs_norm                .lt. wf%settings%equation_threshold
+         converged_energy = abs(wf%energy-prev_energy) .lt. wf%ground_state_specifications%energy_threshold
+         converged_ampeqs = ampeqs_norm                .lt. wf%ground_state_specifications%residual_threshold
 !
 !        Print information to output 
 !
@@ -165,8 +222,10 @@ contains
 !
             converged = .true.
 !
+            if (iteration .eq. 1) write(unit_output,'(t3,a,/t3,a)') 'Note: residual converged in first iteration.', &
+                                                                    'Energy convergence therefore not tested in this calculation.'
+!
             write(unit_output,'(/t3,a,i2,a/)')  'Converged in ', iteration, ' iterations!'
-            write(unit_output,'(t3,a27,f14.8)') 'Total energy (hartrees):', wf%energy
 !
          else
 !
@@ -187,23 +246,41 @@ contains
 !
       call cpu_time(end_gs_solver)
 !
-      write(unit_output,'(t3,a27,f14.8/)') 'Total time (seconds):', end_gs_solver - start_gs_solver
+!     Print summary
+!
+      write(unit_output,'(t3,a,a,a/)')'Summary of ', trim(wf%name), ' ground state calculation:'
+      write(unit_output,'(t6,a25,f14.8)')  'Total energy (hartrees):  ', wf%energy
+      write(unit_output,'(t6,a25,f14.8/)') 'Total time CPU (seconds): ', end_gs_solver - start_gs_solver
       flush(unit_output)
-!
-!     Save the amplitudes 
-!
-      call wf%save_amplitudes
-!
-!     Destroy amplitudes and amplitude equations 
-!
-      call wf%destruct_ground_state
+! !
+! !     Save the amplitudes 
+! !
+!       call wf%save_amplitudes
+! !
+! !     Destroy amplitudes and amplitude equations 
+! !
+!       call wf%destruct_ground_state
 !
    end subroutine ground_state_solver_ccs
 !
 !
-    module subroutine calc_ampeqs_ccs(wf)
+   module subroutine ground_state_restart_ccs(wf)
 !!
-!!    Calculate Amplitude Equations (CCS)
+!!    Ground state restart (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
+!!
+!!    Called if restart of the ground state is requested.   
+!!
+      class(ccs) :: wf 
+!
+      call wf%read_amplitudes   
+!
+   end subroutine ground_state_restart_ccs
+!
+!
+   module subroutine calc_ampeqs_ccs(wf)
+!!
+!!    Calculate amplitude e quations (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
 !!    Constructs the amplitude equations vector (the projection vector 
@@ -260,8 +337,8 @@ contains
 !
 !     Allocate Δ t_i and t_i + Δ t_i vectors 
 ! 
-      call allocator(dt, wf%n_parameters, 1)
-      call allocator(t_dt, wf%n_parameters, 1)
+      call wf%mem%alloc(dt, wf%n_parameters, 1)
+      call wf%mem%alloc(t_dt, wf%n_parameters, 1)
 !
       dt   = zero 
       t_dt = zero 
@@ -286,8 +363,8 @@ contains
 !
 !     Deallocate vectors 
 !
-      call deallocator(dt, wf%n_parameters, 1)
-      call deallocator(t_dt, wf%n_parameters, 1)
+      call wf%mem%dealloc(dt, wf%n_parameters, 1)
+      call wf%mem%dealloc(t_dt, wf%n_parameters, 1)
 !
    end subroutine new_amplitudes_ccs
 !
@@ -387,12 +464,12 @@ contains
 !
 !     First set the DIIS vector to one 
 !
-      call allocator(diis_vector,current_index+1,1)
+      call wf%mem%alloc(diis_vector,current_index+1,1)
       diis_vector = zero 
 !
 !     Allocate the DIIS matrix and read in previous matrix elements
 !
-      call allocator(diis_matrix, current_index+1, current_index+1)
+      call wf%mem%alloc(diis_matrix, current_index+1, current_index+1)
       diis_matrix = zero 
 !
       if (current_index .gt. 1) then 
@@ -412,7 +489,7 @@ contains
 !     Get the parts of the DIIS matrix G not constructed in 
 !     the previous iterations 
 !
-      call allocator(dt_i, wf%n_parameters, 1) ! Allocate temporary holder of quasi-Newton estimates
+      call wf%mem%alloc(dt_i, wf%n_parameters, 1) ! Allocate temporary holder of quasi-Newton estimates
       dt_i = zero 
 !
       rewind(unit_dt)
@@ -478,9 +555,9 @@ contains
 !
 !     Deallocations 
 !
-      call deallocator(dt_i, wf%n_parameters, 1)
-      call deallocator(diis_vector, current_index + 1, 1)
-      call deallocator(diis_matrix, current_index + 1, current_index+1)
+      call wf%mem%dealloc(dt_i, wf%n_parameters, 1)
+      call wf%mem%dealloc(diis_vector, current_index + 1, 1)
+      call wf%mem%dealloc(diis_matrix, current_index + 1, current_index+1)
 !
    end subroutine diis_ccs
 !
@@ -496,9 +573,14 @@ contains
       implicit none 
 !
       class(ccs) :: wf
-!
-      call wf%initialize_amplitudes ! Allocate amplitudes 
-      call wf%initialize_omega      ! Allocate projection vector 
+! !
+! !     Allocate amplitudes (if not allocated) and calculate number of amplitudes 
+! !
+!       call wf%initialize_amplitudes 
+! !
+! !     Allocate projection vector 
+! !
+!       call wf%initialize_omega     
 !
    end subroutine initialize_ground_state_ccs
 !

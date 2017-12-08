@@ -4,6 +4,9 @@ module workspace
 !!    Workspace module
 !!    Written by Henrik Koch, Rolf H. Myhre, Eirik Kjønstad and Sarai Folkestad, Jan 2017
 !!
+!!    NB! THIS IS BEING PHASED OUT & HAS BEEN REPLACED BY THE MEMORY MANAGER OBJECT.
+!!        THE MANY CALLS TO "GET_AVAILABLE" MEANS THAT WE CANNOT REMOVE IT JUST YET.
+!!
 !!    Manages program memory usage and contains:
 !!
 !!    work_init:       Initializes the memory management variables.
@@ -78,7 +81,7 @@ contains
          stop
       endif
 !
-      if(debug) write(unit_output,*)work_remains, 4*size
+      if(debug) write(unit_output,*) work_remains, 4*size
 !  
       work_remains = work_remains - 4*size
       work_used    = work_used    + 4*size
@@ -115,7 +118,7 @@ contains
          stop
 !
       endif
-!  
+!   
       work_remains = work_remains + 4*size
       work_used    = work_used    - 4*size
 !
@@ -162,13 +165,11 @@ contains
 !
    subroutine deallocator_int(elm, M, N)
 !
-!
 !     Deallocator Integer Arrays 
 !     Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2017
 !  
 !     Deallocates array and updates memory information
 !
-!  
       implicit none
 !  
       integer, dimension(:,:), allocatable :: elm
