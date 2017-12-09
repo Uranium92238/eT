@@ -25,11 +25,6 @@ module scc_calculation_settings_class
 !
       real(dp) :: overlap_threshold = 1.0D-6
 !
-!     Logical determining whether to constrain the left, or the right,
-!     excited state vectors 
-!
-      logical :: constrain_right_eigenvectors = .true.
-!
    contains
 !
 !     Nothing yet

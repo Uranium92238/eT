@@ -65,6 +65,8 @@ contains
 !     Make a copy of the doubles contribution (which is needed for the later,
 !     SCCSD terms)
 !
+      write(unit_output,*) 'Doing left transformation'
+!
       call allocator(b_aibj_copy, wf%n_t2am, 1)
       b_aibj_copy = b_aibj
 !

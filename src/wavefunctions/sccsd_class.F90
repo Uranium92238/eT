@@ -61,12 +61,11 @@ module sccsd_class
 !
    type, extends(ccsd) :: sccsd
 !
-!     The triples amplitude that enforces similarity 
+!     The triple amplitude that enforces similarity (= t_IJK^ABC)
 !
-      real(dp) :: triples = zero ! = t_IJK^ABC
+      real(dp) :: triples = zero 
 !
-!     The triples excitation indices corresponding to 
-!     that amplitude (= tau_IJK^ABC)
+!     The associated triple excitation operator (= tau_IJK^ABC)
 !
       integer(i15) :: I = 0
       integer(i15) :: J = 0
@@ -76,18 +75,16 @@ module sccsd_class
       integer(i15) :: B = 0
       integer(i15) :: C = 0
 !
-!     The excited states that are constrained to be similar,
-!     i.e. the two states that might intersect 
+!     The excited states that are constrained to be similar
 !
       integer(i15) :: state_A = 0
       integer(i15) :: state_B = 0
 !
-!     The generalized overlap between the two constrained states;
-!     equals zero for converged, or similarity constrained, states
+!     The generalized overlap between the two constrained states
 !
       real(dp) :: overlap = zero
 !
-!     SCC-specific calculation settings object
+!     Calculation settings object for SCC calculations
 !
       type(scc_calculation_settings) :: scc_settings
 !
@@ -161,6 +158,7 @@ module sccsd_class
 !
       procedure :: read_triples => read_triples_sccsd
 !
+!
    end type sccsd 
 !
 !
@@ -216,8 +214,8 @@ module sccsd_class
 !
          class(sccsd) :: wf
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai 
-         real(dp), dimension(wf%n_t2am, 1)   :: c_aibj ! c_aibj 
+         real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  
+         real(dp), dimension(wf%n_t2am, 1)   :: c_aibj 
 !
       end subroutine jacobian_ccsd_transformation_sccsd
 !
@@ -231,8 +229,8 @@ module sccsd_class
 !
          class(sccsd) :: wf 
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: X                         ! X(l,d) = X_ld 
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho ! rho(ai,bj) = rho_aibj 
+         real(dp), dimension(wf%n_v, wf%n_o) :: X                         
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho 
 !
       end subroutine jacobian_sccsd_a2_sccsd
 !
@@ -246,8 +244,8 @@ module sccsd_class
 !
          class(sccsd) :: wf 
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: Y ! Y(kc,lj) = Y_kclj 
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho ! rho(ai,bj) = rho_aibj
+         real(dp), dimension(wf%n_v, wf%n_o) :: Y 
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho 
 !
       end subroutine jacobian_sccsd_b2_sccsd
 !
@@ -261,8 +259,8 @@ module sccsd_class
 !
          class(sccsd) :: wf 
 !
-         real(dp), dimension((wf%n_v)**2, (wf%n_o)*(wf%n_v)) :: Z ! Z(ac,ld) = Z_acld 
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho ! rho(ai,bj) = rho_aibj
+         real(dp), dimension((wf%n_v)**2, (wf%n_o)*(wf%n_v)) :: Z  
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho 
 !
       end subroutine jacobian_sccsd_c2_sccsd
 !
@@ -299,9 +297,9 @@ module sccsd_class
 !
          class(sccsd) :: wf 
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: sigma                      !  sigma(a, i) = sigma_ai 
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: L    !    L(ia, jb) = t * L_iajb 
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: b2am ! b2am(ai, bj) = b_aibj 
+         real(dp), dimension(wf%n_v, wf%n_o) :: sigma                      
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: L    
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: b2am 
 !
       end subroutine jacobian_transpose_sccsd_a1_sccsd
 !
@@ -315,9 +313,9 @@ module sccsd_class
 !
          class(sccsd) :: wf 
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: sigma                      !  sigma(a, i) = sigma_ai 
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: g    !    g(ia, jb) = t * g_iajb 
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: b2am ! b2am(ai, bj) = b_aibj 
+         real(dp), dimension(wf%n_v, wf%n_o) :: sigma                       
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: g    
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: b2am 
 !
       end subroutine jacobian_transpose_sccsd_b1_sccsd 
 !
@@ -331,9 +329,9 @@ module sccsd_class
 !
          class(sccsd) :: wf 
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: sigma                      !  sigma(a, i) = sigma_ai 
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: g    !    g(ia, jb) = t * g_iajb 
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: b2am ! b2am(ai, bj) = b_aibj 
+         real(dp), dimension(wf%n_v, wf%n_o) :: sigma                      
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: g    
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: b2am 
 !
       end subroutine jacobian_transpose_sccsd_c1_sccsd  
 !
@@ -523,6 +521,15 @@ contains
 !
       close(unit_input)
 !
+!     Set ground state & response thresholds to equal the
+!     excited state thresholds set by user 
+!
+      wf%ground_state_specifications%energy_threshold   = wf%excited_state_specifications%energy_threshold
+      wf%ground_state_specifications%residual_threshold = wf%excited_state_specifications%residual_threshold
+!
+      wf%response_specifications%energy_threshold       = wf%excited_state_specifications%energy_threshold
+      wf%response_specifications%residual_threshold     = wf%excited_state_specifications%residual_threshold
+!
 !     Do not do a ground state calculation
 !
       wf%tasks%ground_state = .false.
@@ -563,7 +570,7 @@ contains
 !
    subroutine read_triples_sccsd(wf)
 !!
-!!    Read Triples (SCCSD)
+!!    Read triples (SCCSD)
 !!    Written by Eirik F. Kjønstad, June 2017
 !!
       implicit none 
@@ -574,8 +581,7 @@ contains
 !
       integer(i15) :: unit_triples = -1
 !
-!     Check to see whether file exists   -175.166774830901     28  -175.166774830898    0.7422E-12 -175.166774830898
-!
+!     Check to see whether file exists  
 !
       inquire(file='triples',exist=file_exists)
 !
