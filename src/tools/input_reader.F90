@@ -39,7 +39,7 @@ contains
 !
          line = remove_preceding_blanks(line)
 !
-         if (trim(line) == 'CC') then
+         if (trim(line) == 'CC' .or. trim(line) == 'SCC') then
 !
             read(unit_input,'(a40)') line
             line = remove_preceding_blanks(line)
@@ -79,7 +79,6 @@ contains
 !
          elseif (trim(line) == 'MLCC') then
 !
-!
 !           Determine what type of MLCC method
 !
             read(unit_input,'(a40)') line
@@ -118,13 +117,6 @@ contains
 !
             endif
             exit
-!
-         elseif (trim(line) == 'SCC') then
-!
-!           Go to SCC specific reader
-!
-            write(unit_output, '(t3,a)') 'Error: similarity constrained CC calculation requested, but it has not been implemented'
-            stop
 !
          elseif (trim(line) == 'end of eT input') then
 !

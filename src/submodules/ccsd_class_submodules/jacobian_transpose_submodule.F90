@@ -297,7 +297,7 @@ contains
          enddo
       enddo
 !
-      call wf%destruct_amplitudes
+      call wf%destruct_double_amplitudes
 !
 !     Form the intermediate X_ld = sum_ck u_ld_ck b_ck  
 !
@@ -475,7 +475,7 @@ contains
          enddo
       enddo
 !
-      call wf%destruct_amplitudes
+      call wf%destruct_double_amplitudes
 !
 !     Calculate the intermediate X_l_i = sum_kcd t_l_kcd L_kcd_i
 !
@@ -802,7 +802,7 @@ contains
          enddo
       enddo
 !
-      call wf%destruct_amplitudes
+      call wf%destruct_double_amplitudes
 !
 !     Form the intermediate X_a_d = sum_ckl b_a_lck t_lck_d = sum_ckl b_ckal t_kl^cd
 !  
@@ -961,7 +961,7 @@ contains
 !
       call squareup(wf%t2am, t_dm_ck, (wf%n_o)*(wf%n_v)) ! t_dm_ck(dm,ck) = t_mk^dc = t_km^cd 
 !
-      call wf%destruct_amplitudes
+      call wf%destruct_double_amplitudes
 !
 !     Form g_il_md = g_ilmd 
 !
@@ -1131,7 +1131,7 @@ contains
 !
       call squareup(wf%t2am, t_el_ck, (wf%n_o)*(wf%n_v))
 !
-      call wf%destruct_amplitudes
+      call wf%destruct_double_amplitudes
 !
 !     Form the intermediate X_el_di = sum_ck t_kl^ce b_ckdi = sum_ck t_lk^ec b_ckdi
 !                                   = sum_ck t_el_ck b_ck_di  
@@ -1439,7 +1439,7 @@ contains
          enddo
       enddo
 !
-      call wf%destruct_amplitudes
+      call wf%destruct_double_amplitudes
 !
 !     Form the integral g_ik_mc 
 !
@@ -1881,7 +1881,7 @@ contains
          enddo
       enddo
 !
-      call wf%destruct_amplitudes
+      call wf%destruct_double_amplitudes
 !
 !     Form the intermediate X_di_ek = sum_cl b_di_cl t_cl_ek
 !
@@ -3134,7 +3134,7 @@ contains
 !
       call squareup(wf%t2am, t_ck_dl, (wf%n_o)*(wf%n_v))
 !
-      call wf%destruct_amplitudes
+      call wf%destruct_double_amplitudes
 !
 !     Form the intermediate X_ck_bj = sum_dl t_ck_dl L_dl_bj
 !
@@ -3266,7 +3266,7 @@ contains
 !
       call squareup(wf%t2am, t_ck_dl, (wf%n_o)*(wf%n_v))
 !
-      call wf%destruct_amplitudes
+      call wf%destruct_double_amplitudes
 !
 !     Form the intermediate X_j_l = sum_kcd L_kcjd t_kl^cd 
 !                                 = sum_kcd L_j_ckd t_ckd_l
@@ -3596,7 +3596,7 @@ contains
          enddo
       enddo
 !
-      call wf%destruct_amplitudes
+      call wf%destruct_double_amplitudes
 !
 !     Form the intermediate X_a_d = sum_lck b_a_lck t_lck_d
 !
@@ -3957,7 +3957,7 @@ contains
          enddo
       enddo
 !
-      call wf%destruct_amplitudes
+      call wf%destruct_double_amplitudes
 !
 !     Form g_kb_id = g_kbid
 !
@@ -4116,7 +4116,7 @@ contains
          enddo
       enddo
 !
-      call wf%destruct_amplitudes
+      call wf%destruct_double_amplitudes
 !
 !     Form the intermediate X_aj_kd = sum_cl b_aj_cl t_cl_kd 
 !
@@ -4482,7 +4482,7 @@ contains
          enddo
       enddo
 !
-      call wf%destruct_amplitudes
+      call wf%destruct_double_amplitudes
 !
 !     Form the intermediate X_kl_ij = sum_cd t_kl_cd b_cd_ij 
 !

@@ -116,9 +116,7 @@ contains
    end subroutine general_specs_reader_ccs
 !
 !
- 
-   module subroutine calculation_reader_ccs(wf, unit_input)
-                                 
+   module subroutine calculation_reader_ccs(wf, unit_input)                             
 !!
 !!    Calculation reader,
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Nov. 2017

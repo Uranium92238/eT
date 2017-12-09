@@ -390,7 +390,7 @@ contains
 !
 !     Print energy of excitation in eV, hartree and cm^-1
 !
-      write(unit_output,'(t6,i3,12x,f12.8,7x,f12.8,5x,f16.8)') i, eigenvalues_Re_new(i,1),&
+      write(unit_output,'(t6,i3,12x,f12.8,7x,f14.10,5x,f16.8)') i, eigenvalues_Re_new(i,1),&
                                                 eigenvalues_Re_new(i,1)*27.211399, &
                                                 eigenvalues_Re_new(i,1)*219474.63
       enddo
@@ -805,7 +805,7 @@ contains
 !
 !        Prints
 !
-         write(unit_output,'(t3,i2,5x,f14.8,7x,f14.8,11x,e10.4)') root, eigenvalues_Re(root, 1), &
+         write(unit_output,'(t3,i2,5x,f16.12,7x,f16.12,11x,e10.4)') root, eigenvalues_Re(root, 1), &
                                                                 eigenvalues_Im(root, 1), norm_residual/norm_solution_vector
          flush(unit_output)
 !
@@ -1256,7 +1256,7 @@ contains
 !
             endif
 !
-         elseif(wf%tasks%current == 'multipliers') then
+         elseif (wf%tasks%current == 'multipliers') then
 !
                call wf%jacobian_transpose_ccs_transformation(c_a_i)
 !

@@ -1,10 +1,42 @@
 module sccsd_class
 !
 !!
-!!       Similarity constrained CCSD (SCCSD) class module                                 
-!!            Written by Eirik F. Kjønstad, June 2017         
+!!                Similarity constrained coupled cluster singles and doubles (SCCSD) class module                                 
+!!                            Written by Eirik F. Kjønstad, June 2017         
 !!                                                                           
-!
+!!
+!!    This module contains the definition of the similarity constrained coupled cluster singles
+!!    and doubles (SCCSD) wavefunction class. It is structured into four sections:
+!!
+!!       1. Modules used by the class: 
+!!
+!!             Basic utilities and the ancestor class (CCSD)
+!!
+!!       2. Definition of the class: 
+!!
+!!             Non-inherited variables, followed by non-inherited or overridden procedures
+!!
+!!       3. Interfaces to submodules:
+!!
+!!             The procedures in the class are grouped according to functionality, with
+!!             detailed definitions given in the following class submodules:
+!!
+!!                - Excited state 
+!!                - Omega 
+!!                - Jacobian (right transformation)
+!!                - Jacobian transpose (left transformation)
+!!                - Input reader 
+!!                - Metric (overlap between constrained states)
+!!
+!!             The interfaces shows incoming variables and their type, but contains 
+!!             no information of the procedure itself. The procedure is shown in full 
+!!             in the corresponding submodule. 
+!!
+!!       4. Class module routines (i.e., non-submodule procedures). These include
+!!          the initialization and driver routines of the class, along with procedures that
+!!          are not (yet, at least) easily gathered in a submodule.
+!!         
+!! 
 !  ::::::::::::::::::::::::::::::::::::::
 !  -::- 1. Modules used by the class -::-
 !  ::::::::::::::::::::::::::::::::::::::
@@ -15,6 +47,7 @@ module sccsd_class
    use utils
    use workspace
    use input_output
+   use scc_calculation_settings_class
 !
 !  Ancestor class module (CCSD)
 !
@@ -30,10 +63,10 @@ module sccsd_class
 !
 !     The triples amplitude that enforces similarity 
 !
-      real(dp) :: triples = zero ! t = t_IJK^ABC
+      real(dp) :: triples = zero ! = t_IJK^ABC
 !
 !     The triples excitation indices corresponding to 
-!     that amplitude (tau_IJK^ABC)
+!     that amplitude (= tau_IJK^ABC)
 !
       integer(i15) :: I = 0
       integer(i15) :: J = 0
@@ -43,20 +76,20 @@ module sccsd_class
       integer(i15) :: B = 0
       integer(i15) :: C = 0
 !
-!     The excited states that are constrained to be similar 
+!     The excited states that are constrained to be similar,
+!     i.e. the two states that might intersect 
 !
       integer(i15) :: state_A = 0
       integer(i15) :: state_B = 0
 !
-!     The generalized overlap between the two constrained states 
+!     The generalized overlap between the two constrained states;
+!     equals zero for converged, or similarity constrained, states
 !
       real(dp) :: overlap = zero
-      real(dp) :: overlap_threshold = 1.0D-6
 !
-!     Logical that determines whether to constrain the left or right 
-!     eigenstates (note: there is not a rigorous left/right equivalency)
+!     SCC-specific calculation settings object
 !
-      logical :: constrain_right_eigenvectors = .true.
+      type(scc_calculation_settings) :: scc_settings
 !
    contains
 !
@@ -67,12 +100,18 @@ module sccsd_class
       procedure :: init => init_sccsd
 !
 !
+!     -::- Excited state submodule routine pointers -::-
+!     --------------------------------------------------
+!
+      procedure :: excited_state_driver => excited_state_driver_sccsd 
+!
+!
 !     -::- Omega submodule routine pointers -::-
 !     ------------------------------------------
 !
       procedure :: construct_omega => construct_omega_sccsd
 !
-      procedure :: omega_sccsd_a1 => omega_sccsd_a1_sccsd
+      procedure :: omega_sccsd_a1  => omega_sccsd_a1_sccsd
 !
 !
 !     -::- Jacobian submodule routine pointers -::-
@@ -102,21 +141,19 @@ module sccsd_class
 !
 !     Helper routines for the metric transformation 
 !
-      procedure :: construct_q      => construct_q_sccsd       ! q_mu 
+      procedure :: construct_q      => construct_q_sccsd       ! q_mu
       procedure :: Q_transformation => Q_transformation_sccsd  ! Q_mu,nu
       procedure :: S_transformation => S_transformation_sccsd  ! S_mu,nu  
 !
-!     Routine to calculate the overlap between the similarity constrained 
-!     states (zero if equations are satisfied)
+!     Routine to calculate the overlap between the similarity constrained states
 !
-      procedure :: calc_overlap      => calc_overlap_sccsd      ! Between the right eigenstates
-      procedure :: calc_left_overlap => calc_left_overlap_sccsd ! Between the left eigenstates
+      procedure :: calc_overlap => calc_overlap_sccsd
 !
 !
-!     -::- Excited state submodule routine pointers -::-
-!     --------------------------------------------------
+!     -::- Input reader submodule routine pointers -::-
+!     -------------------------------------------------
 !
-      procedure :: excited_state_driver => excited_state_driver_sccsd
+      procedure :: scc_reader => scc_reader_sccsd
 !
 !
 !     -::- Other class routine pointers not located in submodules -::-
@@ -321,18 +358,6 @@ module sccsd_class
       end subroutine calc_overlap_sccsd
 !
 !
-      module subroutine calc_left_overlap_sccsd(wf)
-!!
-!!       Calculate Left Overlap (SCCSD)
-!!       Written by Eirik F. Kjønstad, June 2017
-!!
-         implicit none 
-!
-         class(sccsd) :: wf 
-!
-      end subroutine calc_left_overlap_sccsd
-!
-!
       module subroutine metric_transformation_sccsd(wf, r_a_i, r_aibj)
 !!
 !!       Metric Transformation (SCCSD)
@@ -418,6 +443,29 @@ module sccsd_class
    end interface
 !
 !
+   interface
+!
+!
+!     -::- Input reader submodule interface -::-
+!     ------------------------------------------
+!
+      module subroutine scc_reader_sccsd(wf, unit_input)
+!!
+!!       SCC reader (SCCSD)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
+!!
+         implicit none
+!
+         integer(i15)      :: unit_input
+!
+         class(sccsd)      :: wf
+!
+      end subroutine scc_reader_sccsd
+!
+!
+   end interface
+!
+!
 contains
 !
 !
@@ -431,30 +479,53 @@ contains
 !!    Initialize SCCSD object
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-!!    Performs the following tasks:
-!!
-!!    - Sets HF orbital and energy information by reading from file (read_hf_info)
-!!    - Transforms AO Cholesky vectors to MO basis and saves to file (read_transform_cholesky)
-!!    - Allocates the Fock matrix and sets it to zero
-!!    - Initializes the amplitudes (sets their initial values and associated variables)
-!!
       implicit none 
 !
       class(sccsd) :: wf
+!
+      integer(i15) :: unit_input = -1
 !
 !     Set model name 
 !
       wf%name = 'SCCSD'
 !
+!     Open input file eT.inp
+!
+      call generate_unit_identifier(unit_input)
+      open(unit=unit_input, file='eT.inp', status='old', form='formatted')
+      rewind(unit_input)
+!
+!     Read general specifications (memory and diskspace for calculation)
+!
+      call wf%general_specs_reader(unit_input)
+!
 !     Set implemented methods
 !
-      wf%implemented%ground_state  = .true.
-      wf%implemented%excited_state = .true.
-      wf%implemented%properties    = .false.
+      wf%implemented%ground_state       = .true.
+      wf%implemented%excited_state      = .true.
+      wf%implemented%core_excited_state = .false.
+      wf%implemented%ionized_state      = .false.
+      wf%implemented%multipliers        = .false.
+!
+!     Read calculation tasks from input file eT.inp
+!     
+      call wf%calculation_reader(unit_input)
 !
 !     Initialize the triples amplitude 
 !
       wf%triples = zero
+!
+!     Read SCC specific information 
+!
+      call wf%scc_reader(unit_input)
+!
+!     Close input file
+!
+      close(unit_input)
+!
+!     Do not do a ground state calculation
+!
+      wf%tasks%ground_state = .false.
 !
 !     Read Hartree-Fock info from SIRIUS
 !
@@ -474,19 +545,18 @@ contains
       call wf%read_triples
 !
 !     The number of parameters solved for in the ground state 
-!     and excited state equations is, still, the number of singles
-!     and doules - it is a CCSD model, and the triples parameter 
+!     and excited state equations is the number of singles
+!     and doules - it is a CCSD model. The triples parameter 
 !     is only used to set the non-CCSD part of the model (i.e., the 
-!     generalized orthogonality).
+!     generalized orthogonality enforcing similarity).
 !
       wf%n_parameters = wf%n_t1am + wf%n_t2am
 !
 !     Initialize the Fock matrix (allocate and construct given the initial amplitudes)
 !
-      if (.not. allocated(wf%t1am)) call allocator(wf%t1am, wf%n_v, wf%n_o)
-      wf%t1am = zero
-!
+      call wf%initialize_single_amplitudes ! t1am = zero
       call wf%initialize_fock_matrix
+      call wf%destruct_single_amplitudes
 !
    end subroutine init_sccsd
 !
@@ -504,7 +574,8 @@ contains
 !
       integer(i15) :: unit_triples = -1
 !
-!     Check to see whether file exists 
+!     Check to see whether file exists   -175.166774830901     28  -175.166774830898    0.7422E-12 -175.166774830898
+!
 !
       inquire(file='triples',exist=file_exists)
 !

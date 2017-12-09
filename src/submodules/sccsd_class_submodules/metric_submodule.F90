@@ -9,14 +9,15 @@ submodule (sccsd_class) metric
 !!    calc_overlap:          calculates the generalized overlap r_A^T M r_B between 
 !!                           the constrained eigenstates. For r_B -> M r_B, it uses
 !!                           the metric_transformation routine.
-!!    calc_left_overlap:     calculates the generalized overlap l_A^T K l_B between
-!!                           (if so selected) the constrained left eigenstates. See 
-!!                           the routine for the definition of K.
+!!
 !!    metric_transformation: transforms a vector r by the SCCSD metric M: r -> M * r.
 !!                           See the routine for the definition of M.
+!!
 !!    construct_q:           constructs the vector q_mu = < mu | e^T | R >.
+!!
 !!    Q_transformation:      transforms a vector r by the matrix Q_mu,nu = < mu | e^T | nu >,
 !!                           or its transpose.
+!!
 !!    S_transformation:      transforms a vector r by the elementary overlap matrix, 
 !!                           S_mu,nu = < mu | nu >. At the moment used solely for debug 
 !!                           purposes.
@@ -56,8 +57,15 @@ contains
 !     Read eigenvectors from disk 
 !
       call generate_unit_identifier(unit_solution)
-      open(unit=unit_solution, file='right_eigenvectors', action='read', status='unknown', &
+      open(unit=unit_solution, file='right_valence', action='read', status='unknown', &
             access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
+!
+      if (ioerror .ne. 0) then 
+!
+         write(unit_output,'(t3,a)') 'Could not read excited state vectors in calc_overlap_sccsd'
+         stop
+!
+      endif
 !
 !     Read state A from disk
 !
@@ -137,6 +145,8 @@ contains
 !!       Q_mu,nu = < mu | e^T | nu >,
 !!       S_mu,nu = < mu | nu> (elementary overlap; that is, mu is not tilde basis)
 !!
+!!    Here, q and Q are in biorthonormal elementary basis. 
+!!
       implicit none
 !
       class(sccsd) :: wf 
@@ -166,8 +176,7 @@ contains
 !
 !     We need the amplitudes to use the Q and q routines
 !
-      call wf%initialize_amplitudes
-      call wf%read_double_amplitudes
+      call wf%read_amplitudes
 !
 !     Allocate the array that holds the transformed vector,
 !     and the temporary vector used for each individual contribution
@@ -244,12 +253,24 @@ contains
       open(unit=unit_multipliers, file='multipliers', action='read', status='unknown', &
       access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
 !
+      if (ioerror .ne. 0) then 
+!
+         write(unit_output,'(t3,a)') 'Could not open multipliers file in metric_transformation_sccsd'
+         stop
+!
+      endif
+!
       call allocator(multipliers, wf%n_parameters, 1) ! (t-bar_ai, t-bar_aibj)
       multipliers = zero
 !
       read(unit_multipliers, rec=1, iostat=ioerror) multipliers
 !
-      if (ioerror .ne. 0) write(unit_output,*) 'Error: could not read multipliers.'
+      if (ioerror .ne. 0) then 
+!
+         write(unit_output,'(t3,a)') 'Could not read multipliers in metric_transformation_sccsd'
+         stop
+!
+      endif
 !
       close(unit_multipliers)
 !
@@ -484,246 +505,6 @@ contains
       call deallocator(transformed_aibj, wf%n_t2am, 1)
 !
    end subroutine Q_transformation_sccsd
-!
-!
-   module subroutine calc_left_overlap_sccsd(wf)
-!!
-!!    Calculate Left Overlap (SCCSD)
-!!    Written by Eirik F. Kjønstad, June 2017
-!!
-!!    Calculates the overlap between the two constrained (left) states,
-!!    i.e., the value of l_A^T K l_B, where
-!!
-!!       K = Q^-1 (1 + q^T q) (Q^-1)^T. 
-!!
-      implicit none 
-!
-      class(sccsd) :: wf 
-!
-      real(dp), dimension(:,:), allocatable :: lA      ! (l_ai^A l_aibj^A)
-      real(dp), dimension(:,:), allocatable :: lA_a_i  ! l_ai^A 
-      real(dp), dimension(:,:), allocatable :: lA_aibj ! l_aibj^A
-!
-      real(dp), dimension(:,:), allocatable :: lB      ! (l_ai^B l_aibj^B)
-      real(dp), dimension(:,:), allocatable :: lB_a_i  ! l_ai^B
-      real(dp), dimension(:,:), allocatable :: lB_aibj ! l_aibj^B
-!
-      real(dp), dimension(:,:), allocatable :: temporary_a_i
-      real(dp), dimension(:,:), allocatable :: temporary_aibj
-!
-      real(dp), dimension(:,:), allocatable :: q_a_i
-      real(dp), dimension(:,:), allocatable :: q_aibj
-!
-      integer(i15) :: unit_solution = 0
-      integer(i15) :: ioerror = 0, i = 0, a = 0
-!
-      real(dp) :: overlap 
-!
-      real(dp) :: dotproduct_A, dotproduct_B
-!
-      logical :: transpose
-!
-      real(dp) :: ddot 
-!
-!     Read eigenvectors from disk 
-!
-      call generate_unit_identifier(unit_solution)
-      open(unit=unit_solution, file='left_eigenvectors', action='read', status='unknown', &
-            access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
-!
-!     Read state A from disk
-!
-      call allocator(lA, wf%n_parameters, 1)
-      lA = zero
-!
-      read(unit_solution, rec=wf%state_A, iostat=ioerror) lA 
-!
-      call allocator(lA_a_i, wf%n_v, wf%n_o)
-      call allocator(lA_aibj, wf%n_t2am, 1)
-!
-      lA_a_i  = zero
-      lA_aibj = zero
-!
-      call dcopy(wf%n_t1am, lA, 1, lA_a_i, 1)
-      call dcopy(wf%n_t2am, lA(wf%n_t1am + 1, 1), 1, lA_aibj, 1)
-!
-      call deallocator(lA, wf%n_parameters, 1)
-!
-!     Read state B from disk
-!
-      call allocator(lB, wf%n_parameters, 1)
-      lB = zero
-!
-      read(unit_solution, rec=wf%state_B, iostat=ioerror) lB
-!
-      call allocator(lB_a_i, wf%n_v, wf%n_o)
-      call allocator(lB_aibj, wf%n_t2am, 1)
-!
-      lB_a_i  = zero
-      lB_aibj = zero
-!
-      call dcopy(wf%n_t1am, lB, 1, lB_a_i, 1)
-      call dcopy(wf%n_t2am, lB(wf%n_t1am + 1, 1), 1, lB_aibj, 1)
-!
-      call deallocator(lB, wf%n_parameters, 1)
-!
-      close(unit_solution)
-!
-!     Because Q^-1 = Q(-t), where t is the amplitude vector, 
-!     we temporarily change the sign of the amplitudes within 
-!     the routine 
-!
-      call wf%initialize_amplitudes
-      call wf%read_double_amplitudes
-!
-!     Term 1. lA Q(-t) Q(-t)^T lB
-!
-!     temp = lB
-!
-      call allocator(temporary_a_i, wf%n_v, wf%n_o)
-      call allocator(temporary_aibj, wf%n_t2am, 1)
-!
-      temporary_a_i  = lB_a_i
-      temporary_aibj = lB_aibj
-!.... DEBUG TESTS
-!
-!     temp = Q lB 
-!
-      transpose = .false.
-      call wf%Q_transformation(temporary_a_i, temporary_aibj, transpose)
-!
-!     temp = Q(-t) Q lB 
-!
-      wf%t1am = - wf%t1am ! t -> -t 
-      wf%t2am = - wf%t2am 
-!
-      transpose = .false.
-      call wf%Q_transformation(temporary_a_i, temporary_aibj, transpose)   
-!
-      write(unit_output,*) 'lB'
-      write(unit_output,*) (lB_a_i(a,1),a=1,5)
-      write(unit_output,*) (lB_aibj(i,1),i=1,20)
-!
-      write(unit_output,*) 'Q(-t) Q lB'
-      write(unit_output,*) (temporary_a_i(a,1),a=1,5)
-      write(unit_output,*) (temporary_aibj(i,1),i=1,20)
-!
-      wf%t1am = - wf%t1am ! -t -> t 
-      wf%t2am = - wf%t2am 
-!
-      temporary_a_i  = lB_a_i
-      temporary_aibj = lB_aibj
-!
-!     temp = Q(t)^T lB 
-!
-      transpose = .true.
-      call wf%Q_transformation(temporary_a_i, temporary_aibj, transpose)
-!
-!     temp = Q(-t) Q lB 
-!
-      wf%t1am = - wf%t1am ! t -> -t 
-      wf%t2am = - wf%t2am 
-! 
-      transpose = .true.
-      call wf%Q_transformation(temporary_a_i, temporary_aibj, transpose) 
-!
-!
-      write(unit_output,*) 'lB'
-      write(unit_output,*) (lB_a_i(a,1),a=1,5)
-      write(unit_output,*) (lB_aibj(i,1),i=1,20)
-!
-      write(unit_output,*) 'Q(-t)^T Q^T lB'
-      write(unit_output,*) (temporary_a_i(a,1),a=1,5)
-      write(unit_output,*) (temporary_aibj(i,1),i=1,20)
-!
-      wf%t1am = - wf%t1am ! -t -> t 
-      wf%t2am = - wf%t2am 
-!
-!.... END OF DEBUG TESTS
-      temporary_a_i  = lB_a_i ! reset
-      temporary_aibj = lB_aibj
-!
-!     temp = Q(-t)^T lB 
-!
-      wf%t1am = - wf%t1am ! t -> -t 
-      wf%t2am = - wf%t2am 
-!
-      transpose = .true.
-      call wf%Q_transformation(temporary_a_i, temporary_aibj, transpose)
-!
-!     temp = Q(-t) Q(-t)^T lB 
-!
-      transpose = .false.
-      call wf%Q_transformation(temporary_a_i, temporary_aibj, transpose)
-!
-!     Set overlap to lA Q(-t) Q(-t)^T lB
-!
-      overlap = zero 
-      overlap = ddot(wf%n_t1am, lA_a_i, 1, temporary_a_i, 1) &
-                 + ddot(wf%n_t2am, lA_aibj, 1, temporary_aibj, 1)
-!
-!     Term 2. lA Q(-t) (1 + q q^T) Q(-t)^T lB
-!
-      temporary_a_i  = lB_a_i
-      temporary_aibj = lB_aibj
-!
-!     temp = Q(-t)^T lB
-!
-      transpose = .true.
-      call wf%Q_transformation(temporary_a_i, temporary_aibj, transpose)
-!
-      wf%t1am = - wf%t1am ! -t -> t 
-      wf%t2am = - wf%t2am 
-!
-!     dotproduct_B = q^T Q(-t)^T lB 
-!
-      call allocator(q_a_i, wf%n_v, wf%n_o)
-      call allocator(q_aibj, wf%n_t2am, 1)
-!
-      call wf%construct_q(q_a_i, q_aibj)
-!
-      dotproduct_B = zero
-      dotproduct_B = ddot(wf%n_t1am, q_a_i, 1, temporary_a_i, 1) &
-                     + ddot(wf%n_t2am, q_aibj, 1, temporary_aibj, 1)
-!
-      temporary_a_i  = lA_a_i
-      temporary_aibj = lA_aibj
-!
-!     temp = Q(-t)^T lA 
-!
-      wf%t1am = - wf%t1am ! t -> -t 
-      wf%t2am = - wf%t2am 
-!
-      transpose = .true.
-      call wf%Q_transformation(temporary_a_i, temporary_aibj, transpose)
-!
-!     dotproduct_A = q^T Q(-t)^T lA
-!
-      dotproduct_A = zero
-      dotproduct_A = ddot(wf%n_t1am, q_a_i, 1, temporary_a_i, 1) &
-                     + ddot(wf%n_t2am, q_aibj, 1, temporary_aibj, 1)      
-!
-      overlap = overlap + dotproduct_A*dotproduct_B
-      wf%overlap = overlap
-!
-      wf%t1am = - wf%t1am ! -t -> t 
-      wf%t2am = - wf%t2am 
-!
-      call wf%destruct_amplitudes
-!
-      call deallocator(q_a_i, wf%n_v, wf%n_o)
-      call deallocator(q_aibj, wf%n_t2am, 1)
-!
-      call deallocator(temporary_a_i, wf%n_v, wf%n_o)
-      call deallocator(temporary_aibj, wf%n_t2am, 1)
-!
-      call deallocator(lA_a_i, wf%n_v, wf%n_o)
-      call deallocator(lA_aibj, wf%n_t2am, 1)
-!
-      call deallocator(lB_a_i, wf%n_v, wf%n_o)
-      call deallocator(lB_aibj, wf%n_t2am, 1)
-!
-   end subroutine calc_left_overlap_sccsd   
 ! 
 !
    module subroutine S_transformation_sccsd(wf, r_a_i, r_aibj)

@@ -24,7 +24,7 @@ module excited_state_specs_class
       real(dp) :: energy_threshold   = 1.0D-06 ! Threshold for energies 
       real(dp) :: residual_threshold = 1.0D-06 ! Threshold for equation residuals
 !
-      integer(i15) :: max_iterations = 50 ! excited state maximum number of iterations 
+      integer(i15) :: max_iterations = 150 ! excited state maximum number of iterations 
 !
       logical :: restart = .false.
 !

@@ -117,7 +117,8 @@ contains
 !!
       class(ccs) :: wf 
 !
-!     Nothing yet...
+      call wf%destruct_amplitudes
+      call wf%destruct_omega
 !
    end subroutine ground_state_cleanup_ccs
 !
@@ -252,14 +253,10 @@ contains
       write(unit_output,'(t6,a25,f14.8)')  'Total energy (hartrees):  ', wf%energy
       write(unit_output,'(t6,a25,f14.8/)') 'Total time CPU (seconds): ', end_gs_solver - start_gs_solver
       flush(unit_output)
-! !
-! !     Save the amplitudes 
-! !
-!       call wf%save_amplitudes
-! !
-! !     Destroy amplitudes and amplitude equations 
-! !
-!       call wf%destruct_ground_state
+!
+!     Save the amplitudes 
+!
+       call wf%save_amplitudes
 !
    end subroutine ground_state_solver_ccs
 !

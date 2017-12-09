@@ -9,6 +9,7 @@ set(eT_fortran_sources
    src/wavefunctions/ccsdpt_class.F90
    src/wavefunctions/mlcc2_class.F90
    src/wavefunctions/mlccsd_class.F90
+   src/wavefunctions/sccsd_class.F90
    src/misc_classes/ground_state_specs_class.F90
    src/misc_classes/excited_state_specs_class.F90
    src/misc_classes/core_excited_state_specs_class.F90
@@ -19,6 +20,7 @@ set(eT_fortran_sources
    src/misc_classes/mlcc_orbitals_class.F90
    src/misc_classes/memory_manager_class.F90
    src/misc_classes/batching_index_class.F90
+   src/misc_classes/scc_calculation_settings_class.F90
    src/tools/types.F90
    src/tools/workspace.F90
    src/tools/input_output.F90
@@ -60,4 +62,10 @@ set(eT_fortran_sources
    src/submodules/mlccsd_class_submodules/ground_state_submodule.F90
    src/submodules/mlccsd_class_submodules/jacobian_submodule.F90
    src/submodules/mlccsd_class_submodules/excited_state_submodule.F90
+   src/submodules/sccsd_class_submodules/excited_state_submodule.F90
+   src/submodules/sccsd_class_submodules/jacobian_submodule.F90
+   src/submodules/sccsd_class_submodules/jacobian_transpose_submodule.F90
+   src/submodules/sccsd_class_submodules/metric_submodule.F90
+   src/submodules/sccsd_class_submodules/omega_submodule.F90
+   src/submodules/sccsd_class_submodules/input_reader_submodule.F90
 )

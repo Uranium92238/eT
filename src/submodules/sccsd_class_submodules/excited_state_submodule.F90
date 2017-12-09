@@ -45,9 +45,9 @@ contains
       write(unit_output,'(/t3,a)')    ':: Excited state solver (DIIS for the ground state, Davidson for the excited states)'
       write(unit_output,'(t3,a/)')    ':: E. F. Kjønstad, S. D. Folkestad, May-June 2017'
       write(unit_output,'(t3,a,i2,a,a,a)') &
-                                     'Requested ',wf%tasks%n_singlet_states,' ', trim(wf%name), ' singlet states.'
+               'Requested ',wf%excited_state_specifications%n_singlet_states,' ', trim(wf%name), ' singlet states.'
       write(unit_output,'(t3,a,i2,a,a,a)') &
-                                     'Requested ',wf%tasks%n_triplet_states,' ', trim(wf%name), ' triplet states.'     
+               'Requested ',wf%excited_state_specifications%n_triplet_states,' ', trim(wf%name), ' triplet states.'     
 !      
       write(unit_output, '(/t3,a,/t3,a,i1,a,i1,a)') &
                                      'Constraining the Jacobian matrix to be nondefective in', &
@@ -60,13 +60,37 @@ contains
 !
 !     Set displacement for numerical differentiation 
 !
-      displacement = wf%overlap_threshold/10D0
+      displacement = wf%scc_settings%overlap_threshold/10D0
 !
-!     Converge residuals and energies to at least the accuracy
-!     of the overlap 
+!     Converge residuals and energies of the ground state to, at least, 
+!     the accuracy of the overlap 
 !
-      if (wf%settings%energy_threshold   .gt. wf%overlap_threshold) wf%settings%energy_threshold   = wf%overlap_threshold
-      if (wf%settings%equation_threshold .gt. wf%overlap_threshold) wf%settings%equation_threshold = wf%overlap_threshold
+      if (wf%excited_state_specifications%energy_threshold .gt. wf%scc_settings%overlap_threshold) then 
+! 
+         wf%excited_state_specifications%energy_threshold = wf%scc_settings%overlap_threshold
+!
+      endif 
+!
+      if (wf%excited_state_specifications%residual_threshold .gt. wf%scc_settings%overlap_threshold) then 
+! 
+         wf%excited_state_specifications%residual_threshold = wf%scc_settings%overlap_threshold
+!
+      endif 
+!
+!     Converge residuals and energies of the excited states to, at least, 
+!     the accuracy of the overlap 
+!
+      if (wf%excited_state_specifications%energy_threshold .gt. wf%scc_settings%overlap_threshold) then 
+! 
+         wf%excited_state_specifications%energy_threshold = wf%scc_settings%overlap_threshold
+!
+      endif 
+!
+      if (wf%excited_state_specifications%residual_threshold .gt. wf%scc_settings%overlap_threshold) then 
+!
+         wf%excited_state_specifications%residual_threshold = wf%scc_settings%overlap_threshold
+!
+      endif
 !
 !     Enter self-consistent similarity constrained CC loop 
 !
@@ -77,54 +101,42 @@ contains
 !        Solve for the ground state 
 !
          write(unit_output,'(/t3,a,i2)') 'I. Solving the equations for the ground state:'
-         call wf%ground_state_solver
+         wf%tasks%current = 'ground_state'
+         call wf%ground_state_driver
 !
-         if (wf%constrain_right_eigenvectors) then ! Constrain the right eigenvectors (standard)
+!        Solve for the multipliers
 !
-!           Solve for the multipliers
+         write(unit_output,'(/t3,a,i2)') 'II. Solving the equations for the multipliers:'
 !
-            write(unit_output,'(/t3,a,i2)') 'II. Solving the equations for the multipliers:'
+         call wf%excited_state_preparations
 !
-            wf%tasks%current = 'multipliers'
-            wf%excited_state_specifications%right = .false.
-            wf%excited_state_specifications%left  = .true.
+         wf%tasks%multipliers = .true.
+         wf%tasks%current = 'multipliers'
+         call wf%response_solver
+         wf%tasks%multipliers = .false.
 !
-            call wf%response_solver
+!        Solve for the right excited states 
 !
-!           Solve for the right excited states !! Needs to beb modified
+         write(unit_output,'(/t3,a)') 'III. Solving the eigenvalue equation for the right eigenvectors:'
 !
-            write(unit_output,'(/t3,a)') 'III. Solving the eigenvalue equation for the right eigenvectors:'
+         wf%excited_state_specifications%right = .true.  ! Use A transformation
+         wf%excited_state_specifications%left  = .false. ! Not A^T transformation
+         wf%tasks%current = 'excited_state'
 !
-            wf%response_task = 'right_eigenvectors'
-            call wf%excited_state_solver
+         call wf%excited_state_solver
+         call wf%excited_state_cleanup
 !
-!           Calculate the overlap between the similarity constrained states 
+!        Calculate the overlap between the similarity constrained states 
 !
-            write(unit_output,'(/t3,a)') 'IV. Computing the generalized overlap between the constrained states.'
-            call wf%calc_overlap
-!
-         else ! Constrain the left eigenvectors (non-standard)
-!
-!           Solve for the left excited states 
-!
-            write(unit_output,'(/t3,a)') 'II. Solving the eigenvalue equation for the left eigenvectors:'
-! 
-            wf%response_task = 'left_eigenvectors'
-            call wf%excited_state_solver
-!
-!           Calculate the generalized overlap between the left constrained states
-!
-            write(unit_output,'(/t3,a)') 'III. Computing the generalized overlap between the left constrained states.'
-            call wf%calc_left_overlap
-!
-         endif
+         write(unit_output,'(/t3,a)') 'IV. Computing the generalized overlap between the constrained states.'
+         call wf%calc_overlap
 !
          if (iteration .ne. 1) then 
 !
 !           Control whether one of the vectors have flipped (r -> -r), 
 !           causing a change in the sign of the overlap 
 !
-            if (abs(previous_overlap + wf%overlap) .lt. wf%overlap_threshold) then 
+            if (abs(previous_overlap + wf%overlap) .lt. wf%scc_settings%overlap_threshold) then 
 !
                write(unit_output,'(/t3,a)') 'It seems that the overlap has switched sign. Reversing.'
                wf%overlap = - wf%overlap 
@@ -135,22 +147,21 @@ contains
 !
          write(unit_output,'(//t3,a,i2)') 'Similarity constrained CC summary, iteration', iteration 
 !
-         write(unit_output,'(/t3,a21,f14.10)') 'Triples amplitude:', wf%triples
-         write(unit_output,'(t3,a21,f14.10)')  'Q*Q overlap:',       wf%overlap 
+         write(unit_output,'(/t3,a21,f16.12)') 'Triples amplitude:', wf%triples
+         write(unit_output,'(t3,a21,f16.12)')  'Q*Q overlap:',       wf%overlap 
 !
 !        Check for convergence of the overlap 
 !
-         if (abs(wf%overlap) .le. wf%overlap_threshold) then 
+         if (abs(wf%overlap) .le. wf%scc_settings%overlap_threshold) then 
 !
             converged = .true.
             write(unit_output,'(/t3,a,i2,a/)')  'Converged in ', iteration, ' iterations!'
 !
             call generate_unit_identifier(unit_triples)
             open(unit_triples, file='triples', status='unknown', form='unformatted')
+!
             rewind(unit_triples)
-!
             write(unit_triples) wf%triples 
-!
             close(unit_triples)
 !
          else

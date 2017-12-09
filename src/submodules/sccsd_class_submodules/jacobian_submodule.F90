@@ -114,6 +114,8 @@ contains
 !
 !     Form g_kc_ld = g_kcld 
 !
+      call wf%read_single_amplitudes
+!
       call allocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
       call wf%get_cholesky_ia(L_kc_J)
 !
