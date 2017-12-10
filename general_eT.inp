@@ -1,0 +1,140 @@
+start of eT input
+
+CC
+{
+   method:
+   CCSD
+   disk_space:
+   50
+   memory:
+   50
+}
+
+MLCC
+{
+   method:
+   MLCCSD
+   {
+      CCSD
+      CC2
+      CCS
+   }
+
+   CCSD orbitals
+   {
+      cnto
+      {
+         delta_o:
+         1.0D-5
+         delta_v:
+         1.0D-5
+      }
+   }
+
+   CC2 orbitals
+   {
+      cholesky
+      {
+         n_active_atoms:
+         4
+         active_atoms:
+         1 2 3 4
+      }
+   }
+
+   disk_space:
+   50
+   
+   memory:
+   50
+}
+
+SCC
+{
+   method:
+   SCCSD
+   {
+      states:
+      3 4
+      overlap_threshold:
+      1.0D-7
+      virtual:
+      2 2 1
+      occupied:
+      8 7 5
+      triple_amplitude:
+      0.142565512228
+   }
+   disk_space:
+   50
+   memory:
+   50
+   print_level:
+   not developer
+}
+
+ground state
+{
+   restart
+   energy_threshold:
+   1.0D-6
+   residual_threshold:
+   1.0D-6
+   max_iterations:
+   50
+}
+
+excited state
+{
+   restart
+   energy_threshold:
+   1.0D-6
+   residual_threshold:
+   1.0D-6
+   max_iterations:
+   50
+   n_singlet_states:
+   2
+   n_triplet_states:
+   0
+   start_vectors:
+   1 2
+   core excited state
+   {
+      n_equivalent_cores:
+      1
+      cores:
+      3
+   }
+}
+
+
+ionized state
+{
+   restart  
+   energy_threshold:
+   1.0D-6
+   residual_threshold:
+   1.0D-6
+   max_iterations:
+   50
+   n_singlet_states:
+   2
+   n_triplet_states:
+   0
+   core ionized state
+   {
+      n_equivalent_cores:
+      1
+      cores:
+      3
+   }
+}
+
+
+properties
+{
+}
+
+
+end of eT input
