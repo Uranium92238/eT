@@ -60,7 +60,7 @@ contains
 !
 !     Let the user know the ground state solver is running
 !
-      write(unit_output,'(//t3,a)')   ':: Ground state solver (DIIS)'
+      write(unit_output,'(/t3,a)')   ':: Ground state solver (DIIS)'
       write(unit_output,'(t3,a/)')   ':: S. D. Folkestad, E. F. Kjønstad, May 2017'
 !
       write(unit_output,'(t3,a,a,a/)')  'Settings for ',trim(wf%name), ' ground state calculation:'
@@ -172,7 +172,7 @@ contains
 !
 !     Enter iterative loop
 !
-      write(unit_output,'(/t3,a)')   'Iter.      Energy             Norm of amplitude eq.'
+      write(unit_output,'(/t3,a)')   'Iter.    Energy               Norm of amplitude eq.'
       write(unit_output,'(t3,a)')    '---------------------------------------------------' 
       flush(unit_output)
 !

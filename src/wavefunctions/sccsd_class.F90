@@ -202,8 +202,9 @@ module sccsd_class
 !
    interface 
 !
+!
 !     -::- Jacobian submodule interface -::-
-!     ::::::::::::::::::::::::::::::::::::::
+!     --------------------------------------
 !
       module subroutine jacobian_ccsd_transformation_sccsd(wf, c_a_i, c_aibj)
 !!
@@ -270,8 +271,9 @@ module sccsd_class
 !
    interface 
 !
+!
 !     -::- Jacobian transpose submodule interface -::-
-!     ::::::::::::::::::::::::::::::::::::::::::::::::
+!     ------------------------------------------------
 !
       module subroutine jacobian_transpose_ccsd_transformation_sccsd(wf, b_a_i, b_aibj)
 !!
@@ -341,8 +343,9 @@ module sccsd_class
 !
    interface 
 !
+!
 !     -::- Metric submodule interface -::-
-!     ::::::::::::::::::::::::::::::::::::
+!     ------------------------------------
 !
       module subroutine calc_overlap_sccsd(wf)
 !!
@@ -421,8 +424,9 @@ module sccsd_class
 !
    interface 
 !
+!
 !     -::- Excited state submodule interface -::-
-!     :::::::::::::::::::::::::::::::::::::::::::
+!     -------------------------------------------
 !
       module subroutine excited_state_driver_sccsd(wf)
 !!
@@ -454,9 +458,9 @@ module sccsd_class
 !!
          implicit none
 !
-         integer(i15)      :: unit_input
+         integer(i15) :: unit_input
 !
-         class(sccsd)      :: wf
+         class(sccsd) :: wf
 !
       end subroutine scc_reader_sccsd
 !
@@ -521,8 +525,23 @@ contains
 !
       close(unit_input)
 !
+!     The thresholds for energies and residuals should be, at least, as strict as the 
+!     overlap threshold 
+!
+      if (wf%excited_state_specifications%energy_threshold .gt. wf%scc_settings%overlap_threshold .or. &
+          wf%excited_state_specifications%residual_threshold .gt. wf%scc_settings%overlap_threshold) then 
+!
+         write(unit_output,'(/t3,a/)') 'Warning: energy or residual threshold too low; changed to equal overlap threshold.'
+         flush(unit_output)
+!
+         wf%excited_state_specifications%energy_threshold   = wf%scc_settings%overlap_threshold
+         wf%excited_state_specifications%residual_threshold = wf%scc_settings%overlap_threshold
+!
+      endif
+!
 !     Set ground state & response thresholds to equal the
-!     excited state thresholds set by user 
+!     excited state thresholds set by user (these should be consistent,
+!     otherwise accuracy is limited by the lowest threshold)
 !
       wf%ground_state_specifications%energy_threshold   = wf%excited_state_specifications%energy_threshold
       wf%ground_state_specifications%residual_threshold = wf%excited_state_specifications%residual_threshold
@@ -530,9 +549,22 @@ contains
       wf%response_specifications%energy_threshold       = wf%excited_state_specifications%energy_threshold
       wf%response_specifications%residual_threshold     = wf%excited_state_specifications%residual_threshold
 !
-!     Do not do a ground state calculation
+!     Print SCC-specific settings to output file 
 !
-      wf%tasks%ground_state = .false.
+      write(unit_output,'(/t3,a)') 'General settings for SCC calculation:'
+!
+      write(unit_output,'(/t6,a20,e9.2)') 'Overlap threshold:  ', wf%scc_settings%overlap_threshold
+      write(unit_output,'(t6,a20,e9.2)')  'Energy thresholds:  ', wf%excited_state_specifications%energy_threshold
+      write(unit_output,'(t6,a20,e9.2)')  'Residual thresholds:', wf%excited_state_specifications%residual_threshold
+!
+      write(unit_output, '(/t6,a,/t6,a,i1,a,i1,a)') &
+                                     'Constraining the Jacobian to be nondefective in', &
+                                     'the subspace spanned by the states ', wf%state_A, ' and ', wf%state_B, '.'
+!
+      write(unit_output,'(/t6,a)') 'Triple excitation:'
+!
+      write(unit_output,'(/t9,a,3i2)') 'Occupied indices:', wf%I, wf%J, wf%K
+      write(unit_output,'(t9,a,3i2/)') 'Virtual indices: ', wf%A, wf%B, wf%C
 !
 !     Read Hartree-Fock info from SIRIUS
 !
@@ -547,15 +579,8 @@ contains
       wf%n_t1am = (wf%n_o)*(wf%n_v) 
       wf%n_t2am = (wf%n_t1am)*(wf%n_t1am + 1)/2 
 !
-!     Read the triples amplitude (if it exists)
-!
-      call wf%read_triples
-!
-!     The number of parameters solved for in the ground state 
-!     and excited state equations is the number of singles
-!     and doules - it is a CCSD model. The triples parameter 
-!     is only used to set the non-CCSD part of the model (i.e., the 
-!     generalized orthogonality enforcing similarity).
+!     Set the number of parameters solved for in the ground state 
+!     and excited state equations
 !
       wf%n_parameters = wf%n_t1am + wf%n_t2am
 !
@@ -572,6 +597,9 @@ contains
 !!
 !!    Read triples (SCCSD)
 !!    Written by Eirik F. Kjønstad, June 2017
+!!
+!!    Reads the triple amplitude from file, if the file exists. 
+!!    Note: the assumption is that if it exists it should and will be read.
 !!
       implicit none 
 !
@@ -592,8 +620,8 @@ contains
          rewind(unit_triples)
          read(unit_triples) wf%triples 
 !
-         write(unit_output,'(/t3,a,f12.10)') &
-            'Found a triple amplitude on file. Restarting with amplitude equal to ', wf%triples
+         write(unit_output,'(/t3,a,/t3,a)') &
+            'Found a triple amplitude on file.', 'Restarting with stored triple amplitude.'
 !
          close(unit_triples)
 !

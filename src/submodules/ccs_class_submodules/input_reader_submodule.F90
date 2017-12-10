@@ -140,11 +140,7 @@ contains
 !
 !     Prints
 !
-      write(unit_output,'(t3,a/)')'Calculations requested:'
-!
-!     Always do ground state calculation
-!
-      wf%tasks%ground_state = .true.
+      write(unit_output,'(t3,a/)')'Calculations requested:'  
 !
 !     Start at the begining of eT.inp
 !
@@ -165,6 +161,8 @@ contains
 !           Prints
 !
             write(unit_output,'(t6,a,a)')  trim(wf%name),' ground state'
+!
+            wf%tasks%ground_state = .true.
 !
             read(unit_input,'(a40)') line
             line = remove_preceding_blanks(line)

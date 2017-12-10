@@ -92,6 +92,10 @@ module ccs_class
       real(dp), dimension(:,:), allocatable :: fock_ai
       real(dp), dimension(:,:), allocatable :: fock_ab
 !
+!     Excitation energies
+!
+      real(dp), dimension(:,:), allocatable :: excitation_energies
+!
    contains 
 !
 !

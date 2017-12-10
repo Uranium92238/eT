@@ -62,6 +62,30 @@ contains
       integer(i15) :: a = 0, ab = 0, ai = 0, b = 0 
       integer(i15) :: bj = 0, i = 0, ij = 0, j = 0, aibj = 0
 !
+!     Timings 
+!
+      real(dp) :: begin_timer, end_timer
+!
+      real(dp) :: ccsd_a1_time
+      real(dp) :: ccsd_b1_time 
+      real(dp) :: ccsd_c1_time
+      real(dp) :: ccsd_d1_time
+      real(dp) :: ccsd_e1_time
+      real(dp) :: ccsd_f1_time 
+      real(dp) :: ccsd_g1_time
+      real(dp) :: ccs_a1_time 
+      real(dp) :: ccs_b1_time 
+!
+      real(dp) :: ccsd_a2_time
+      real(dp) :: ccsd_b2_time 
+      real(dp) :: ccsd_c2_time 
+      real(dp) :: ccsd_d2_time 
+      real(dp) :: ccsd_e2_time  
+      real(dp) :: ccsd_f2_time
+      real(dp) :: ccsd_g2_time 
+      real(dp) :: ccsd_h2_time 
+      real(dp) :: ccsd_i2_time 
+!
 !     Allocate the transformed singles vector 
 !
       call wf%mem%alloc(sigma_a_i, wf%n_v, wf%n_o)
@@ -70,25 +94,58 @@ contains
 !     Calculate and add the CCS contributions to the 
 !     singles transformed vector 
 !
+      call cpu_time(begin_timer)
       call wf%jacobian_transpose_ccs_a1(sigma_a_i, b_a_i) 
+      call cpu_time(end_timer)
+      ccs_a1_time = end_timer - begin_timer
+!
+      call cpu_time(begin_timer)
       call wf%jacobian_transpose_ccs_b1(sigma_a_i, b_a_i) 
+      call cpu_time(end_timer)
+      ccs_b1_time = end_timer - begin_timer
 !
 !     Calculate and add the CCSD contributions to the
 !     singles transformed vector 
 !
+      call cpu_time(begin_timer)
       call wf%jacobian_transpose_ccsd_a1(sigma_a_i, b_a_i) 
+      call cpu_time(end_timer)
+      ccsd_a1_time = end_timer - begin_timer
+!
+      call cpu_time(begin_timer)
       call wf%jacobian_transpose_ccsd_b1(sigma_a_i, b_a_i) 
+      call cpu_time(end_timer)
+      ccsd_b1_time = end_timer - begin_timer
 !
       call wf%mem%alloc(b_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
       b_ai_bj = zero 
 !
       call squareup(b_aibj, b_ai_bj, (wf%n_v)*(wf%n_o))
 !
+      call cpu_time(begin_timer)
       call wf%jacobian_transpose_ccsd_c1(sigma_a_i, b_ai_bj) 
+      call cpu_time(end_timer)
+      ccsd_c1_time = end_timer - begin_timer
+!
+      call cpu_time(begin_timer)
       call wf%jacobian_transpose_ccsd_d1(sigma_a_i, b_ai_bj) 
+      call cpu_time(end_timer)
+      ccsd_d1_time = end_timer - begin_timer
+!
+      call cpu_time(begin_timer)
       call wf%jacobian_transpose_ccsd_e1(sigma_a_i, b_ai_bj) 
+      call cpu_time(end_timer)
+      ccsd_e1_time = end_timer - begin_timer
+!
+      call cpu_time(begin_timer)
       call wf%jacobian_transpose_ccsd_f1(sigma_a_i, b_ai_bj)
+      call cpu_time(end_timer)
+      ccsd_f1_time = end_timer - begin_timer
+!
+      call cpu_time(begin_timer)
       call wf%jacobian_transpose_ccsd_g1(sigma_a_i, b_ai_bj)
+      call cpu_time(end_timer)
+      ccsd_g1_time = end_timer - begin_timer
 !
 !     Add the CCSD contributions to the doubles vector arising from 
 !     the incoming singles vector  
@@ -96,7 +153,10 @@ contains
       call wf%mem%alloc(sigma_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       sigma_ai_bj = zero 
 !
+      call cpu_time(begin_timer)
       call wf%jacobian_transpose_ccsd_a2(sigma_ai_bj, b_a_i)
+      call cpu_time(end_timer)
+      ccsd_a2_time = end_timer - begin_timer
 !
 !     Done with singles vector b; overwrite it with 
 !     transformed vector for exit
@@ -111,12 +171,35 @@ contains
 !
       call squareup(b_aibj, b_ai_bj, (wf%n_o)*(wf%n_v))
 !
+      call cpu_time(begin_timer)
       call wf%jacobian_transpose_ccsd_b2(sigma_ai_bj, b_ai_bj)
+      call cpu_time(end_timer)
+      ccsd_b2_time = end_timer - begin_timer
+!
+      call cpu_time(begin_timer)
       call wf%jacobian_transpose_ccsd_c2(sigma_ai_bj, b_ai_bj) 
+      call cpu_time(end_timer)
+      ccsd_c2_time = end_timer - begin_timer
+!
+      call cpu_time(begin_timer)
       call wf%jacobian_transpose_ccsd_d2(sigma_ai_bj, b_ai_bj)
+      call cpu_time(end_timer)
+      ccsd_d2_time = end_timer - begin_timer
+!
+      call cpu_time(begin_timer)
       call wf%jacobian_transpose_ccsd_e2(sigma_ai_bj, b_ai_bj)
+      call cpu_time(end_timer)
+      ccsd_e2_time = end_timer - begin_timer
+!
+      call cpu_time(begin_timer)
       call wf%jacobian_transpose_ccsd_f2(sigma_ai_bj, b_ai_bj)
+      call cpu_time(end_timer)
+      ccsd_f2_time = end_timer - begin_timer
+!
+      call cpu_time(begin_timer)
       call wf%jacobian_transpose_ccsd_g2(sigma_ai_bj, b_ai_bj)
+      call cpu_time(end_timer)
+      ccsd_g2_time = end_timer - begin_timer
 !
 !     Last two terms are already symmetric (h2 and i2). Perform the symmetrization 
 !     sigma_ai_bj = P_ij^ab sigma_ai_bj now, for convenience 
@@ -183,8 +266,15 @@ contains
       call wf%mem%dealloc(b_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call wf%mem%dealloc(sigma_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
+      call cpu_time(begin_timer)
       call wf%jacobian_transpose_ccsd_h2(sigma_ab_ij, b_ab_ij)
+      call cpu_time(end_timer)
+      ccsd_h2_time = end_timer - begin_timer
+!
+      call cpu_time(begin_timer)
       call wf%jacobian_transpose_ccsd_i2(sigma_ab_ij, b_ab_ij)
+      call cpu_time(end_timer)
+      ccsd_i2_time = end_timer - begin_timer
 !
 !     Done with reordered doubles b; deallocate 
 !
@@ -231,6 +321,35 @@ contains
       call wf%mem%dealloc(sigma_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       call wf%mem%dealloc(b_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+!
+!     Print timings
+!
+      if (wf%settings%print_level == 'developer') then 
+!
+         write(unit_output,'(/t3,a/)') 'Breakdown of CCSD Jacobian transpose timings:'
+!
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCS  A1 (seconds):', ccs_a1_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCS  B1 (seconds):', ccs_b1_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD A1 (seconds):', ccsd_a1_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD B1 (seconds):', ccsd_b1_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD C1 (seconds):', ccsd_c1_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD D1 (seconds):', ccsd_d1_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD B1 (seconds):', ccsd_e1_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD C1 (seconds):', ccsd_f1_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD D1 (seconds):', ccsd_g1_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD A2 (seconds):', ccsd_a2_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD B2 (seconds):', ccsd_b2_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD C2 (seconds):', ccsd_c2_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD D2 (seconds):', ccsd_d2_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD E2 (seconds):', ccsd_e2_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD F2 (seconds):', ccsd_f2_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD G2 (seconds):', ccsd_g2_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD H2 (seconds):', ccsd_h2_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD I2 (seconds):', ccsd_i2_time
+!
+         flush(unit_output)
+!
+      endif
 !
    end subroutine jacobian_transpose_ccsd_transformation_ccsd
 !

@@ -15,6 +15,8 @@ submodule (sccsd_class) jacobian
 !
    implicit none 
 !
+   character(len=40) :: integral_type
+!
 !
 contains 
 !
@@ -55,8 +57,6 @@ contains
                                                               ! temporarily. 
 !
       real(dp), dimension(:,:), allocatable :: c_a_i_copy ! Copy of c_ai 
-!
-      real(dp), dimension(:,:), allocatable :: L_kc_J  ! L_kc^J
 !  
       real(dp), dimension(:,:), allocatable :: g_kc_ld ! g_kcld 
       real(dp), dimension(:,:), allocatable :: L_ld_ck ! L_kcld
@@ -71,6 +71,9 @@ contains
       integer(i15) :: lc = 0, ld = 0, i = 0, a = 0, j = 0, b = 0, ai = 0
       integer(i15) :: bj = 0
 !
+      real(dp) :: begin_timer
+      real(dp) :: end_timer
+!
 !     :: The CCSD contributions ::
 !     ::::::::::::::::::::::::::::
 !
@@ -82,7 +85,17 @@ contains
 !
 !     Performs CCSD Jacobian transformation (non-T3 terms)
 !
+      call cpu_time(begin_timer)
       call jacobian_ccsd_transformation_ccsd(wf, c_a_i, c_aibj)
+      call cpu_time(end_timer)
+!
+      if (wf%settings%print_level == 'developer') then 
+!
+         write(unit_output,'(t6,a27,f15.8)') 'Time in CC  part (seconds):', end_timer-begin_timer
+!
+      endif
+!
+      call cpu_time(begin_timer)
 !
 !     Copy the transformed vector (c_a_i, c_aibj) into (rho_a_i, rho_ai_bj)
 !
@@ -116,25 +129,10 @@ contains
 !
       call wf%read_single_amplitudes
 !
-      call allocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
-      call wf%get_cholesky_ia(L_kc_J)
-!
       call allocator(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      call dgemm('N','T',            &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  wf%n_J,            &
-                  one,               &
-                  L_kc_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  L_kc_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  g_kc_ld,           &
-                  (wf%n_o)*(wf%n_v))
-!
-      call deallocator(L_kc_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      integral_type = 'electronic_repulsion'
+      call wf%get_ov_ov(integral_type, g_kc_ld)
 !
 !     Form Y_kc_lj = sum_d g_kc_ld c_dj
 !
@@ -278,9 +276,6 @@ contains
          enddo
       enddo
 !
-      ! norm_correction = ddot((wf%n_o)*(wf%n_v)*(wf%n_o)*(wf%n_v), rho_ai_bj_corr, 1, rho_ai_bj_corr, 1)
-      ! write(unit_output,*) 'Norm of correction:',norm_correction; flush(unit_output)
-!
       call deallocator(rho_ai_bj_corr, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     Pack the transformed vector into the incoming doubles
@@ -296,6 +291,14 @@ contains
 !     Final deallocations 
 !
       call deallocator(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+      call cpu_time(end_timer)
+!
+      if (wf%settings%print_level == 'developer') then 
+!
+         write(unit_output,'(t6,a27,f15.8/)') 'Time in SCC part (seconds):', end_timer-begin_timer
+!
+      endif
 !
    end subroutine jacobian_ccsd_transformation_sccsd
 !
@@ -695,7 +698,7 @@ contains
          aB = index_two(a, wf%B, wf%n_v)
          JA = index_two(wf%J, wf%A, wf%n_o)
 !
-         rho(aI, CK) = rho(aI, CK) - Z(aB, JA)
+         rho(aI, CK) = rho(aI, CK) - Z(aB, JA) ! 18
 !
       enddo
 !

@@ -209,7 +209,7 @@ contains
       enddo
 !
       call cpu_time(end_property_solver)
-      write(unit_output,'(//t3,a,a,a,a,a/)')'Summary of ', trim(wf%name), ' ', trim(wf%tasks%current), ' calculation:'
+      write(unit_output,'(/t3,a,a,a,a,a/)')'Summary of ', trim(wf%name), ' ', trim(wf%tasks%current), ' calculation:'
       write(unit_output,'(t6,a25,f14.8/)') 'Total CPU time (seconds):    ', end_property_solver - start_property_solver
       flush(unit_output)
 !
@@ -417,7 +417,7 @@ contains
 !
       if (wf%tasks%multipliers) then 
 !
-         write(unit_output,'(/t3,a)') 'Solving the multiplier equation (t-bar)'
+         write(unit_output,'(/t3,a)') 'Requested the multipliers (t-bar, lambda)'
          call wf%construct_eta(gradient_vector)
          gradient_vector = -gradient_vector
 !

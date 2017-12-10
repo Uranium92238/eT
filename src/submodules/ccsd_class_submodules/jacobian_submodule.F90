@@ -337,23 +337,23 @@ contains
 !
          write(unit_output,'(t3,a/)') 'Breakdown of CCSD Jacobian timings:'
 !
-         write(unit_output,'(t3,a27,f14.8)')  'Time in CCS  A1 (seconds):', ccs_a1_time
-         write(unit_output,'(t3,a27,f14.8)')  'Time in CCS  B1 (seconds):', ccs_b1_time
-         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD A1 (seconds):', ccsd_a1_time
-         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD B1 (seconds):', ccsd_b1_time
-         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD C1 (seconds):', ccsd_c1_time
-         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD D1 (seconds):', ccsd_d1_time
-         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD A2 (seconds):', ccsd_a2_time
-         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD B2 (seconds):', ccsd_b2_time
-         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD C2 (seconds):', ccsd_c2_time
-         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD D2 (seconds):', ccsd_d2_time
-         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD E2 (seconds):', ccsd_e2_time
-         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD F2 (seconds):', ccsd_f2_time
-         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD G2 (seconds):', ccsd_g2_time
-         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD H2 (seconds):', ccsd_h2_time
-         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD I2 (seconds):', ccsd_i2_time
-         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD J2 (seconds):', ccsd_j2_time
-         write(unit_output,'(t3,a27,f14.8/)') 'Time in CCSD K2 (seconds):', ccsd_k2_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCS  A1 (seconds):', ccs_a1_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCS  B1 (seconds):', ccs_b1_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD A1 (seconds):', ccsd_a1_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD B1 (seconds):', ccsd_b1_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD C1 (seconds):', ccsd_c1_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD D1 (seconds):', ccsd_d1_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD A2 (seconds):', ccsd_a2_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD B2 (seconds):', ccsd_b2_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD C2 (seconds):', ccsd_c2_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD D2 (seconds):', ccsd_d2_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD E2 (seconds):', ccsd_e2_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD F2 (seconds):', ccsd_f2_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD G2 (seconds):', ccsd_g2_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD H2 (seconds):', ccsd_h2_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD I2 (seconds):', ccsd_i2_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD J2 (seconds):', ccsd_j2_time
+         write(unit_output,'(t6,a26,f14.8/)') 'Time in CCSD K2 (seconds):', ccsd_k2_time
 !
          flush(unit_output)
 !

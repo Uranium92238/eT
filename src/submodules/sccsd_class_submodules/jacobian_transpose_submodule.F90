@@ -15,6 +15,8 @@ submodule (sccsd_class) jacobian_transpose
 !
    implicit none 
 !
+   character(len=40) :: integral_type
+!
 !
 contains 
 !
@@ -52,27 +54,35 @@ contains
       real(dp), dimension(:,:), allocatable :: b_aibj_copy
       real(dp), dimension(:,:), allocatable :: sigma_a_i_corr ! Holds the correction to sigma_ai
 !
-      real(dp), dimension(:,:), allocatable :: L_ia_J 
-!
       real(dp), dimension(:,:), allocatable :: L_ia_jb ! L_iajb 
       real(dp), dimension(:,:), allocatable :: g_ia_jb ! g_iajb
 !
       integer(i15) :: b = 0, j = 0, a = 0, i = 0, jb = 0, ja = 0, ib = 0, ia = 0
 !
+      real(dp) :: begin_timer
+      real(dp) :: end_timer
+!
 !     :: The CCSD contributions ::
 !     ::::::::::::::::::::::::::::
 !
-!     Make a copy of the doubles contribution (which is needed for the later,
-!     SCCSD terms)
-!
-      write(unit_output,*) 'Doing left transformation'
+!     Make a copy of the doubles contribution
 !
       call allocator(b_aibj_copy, wf%n_t2am, 1)
       b_aibj_copy = b_aibj
 !
 !     Perform the CCSD Jacobian tranpose transformation (non-T3 terms)
 !
+      call cpu_time(begin_timer)
       call jacobian_transpose_ccsd_transformation_ccsd(wf, b_a_i, b_aibj)
+      call cpu_time(end_timer)
+!
+      if (wf%settings%print_level == 'developer') then 
+!
+         write(unit_output,'(/t6,a27,f15.8)') 'Time in CC  part (seconds):', end_timer-begin_timer
+!
+      endif
+!
+      call cpu_time(begin_timer)
 !
 !     Copy the transformed vector (b_a_i, b_aibj) into (sigma_a_i, sigma_ai_bj)
 !
@@ -98,25 +108,10 @@ contains
 ! 
 !     Form g_ia_jb 
 !
-      call allocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
-      call wf%get_cholesky_ia(L_ia_J)
-!
       call allocator(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      call dgemm('N','T',            &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  wf%n_J,            &
-                  one,               &
-                  L_ia_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  L_ia_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  g_ia_jb,           &
-                  (wf%n_o)*(wf%n_v))
-!
-      call deallocator(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      integral_type = 'electronic_repulsion'
+      call wf%get_ov_ov(integral_type, g_ia_jb)
 !
 !     Square up the doubles vector 
 !
@@ -178,6 +173,14 @@ contains
 !
       call deallocator(sigma_a_i, wf%n_v, wf%n_o)
       call deallocator(sigma_aibj, wf%n_t2am, 1)
+!
+      call cpu_time(end_timer)
+!
+      if (wf%settings%print_level == 'developer') then 
+!
+         write(unit_output,'(t6,a27,f15.8/)') 'Time in SCC part (seconds):', end_timer-begin_timer
+!
+      endif
 !
    end subroutine jacobian_transpose_ccsd_transformation_sccsd
 !

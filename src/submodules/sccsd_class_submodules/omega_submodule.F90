@@ -11,6 +11,8 @@ submodule (sccsd_class) omega
 !
    implicit none 
 !
+   character(len=40) :: integral_type
+!
 !
 contains 
 !
@@ -27,10 +29,6 @@ contains
 !
       class(sccsd) :: wf
 !
-      real(dp), dimension(:,:), allocatable :: L_ki_J
-      real(dp), dimension(:,:), allocatable :: L_ac_J
-      real(dp), dimension(:,:), allocatable :: L_kd_J
-!
       real(dp), dimension(:,:), allocatable :: F_i_a ! F_ia
 !
       real(dp), dimension(:,:), allocatable :: g_ac_kd ! g_ackd 
@@ -42,9 +40,22 @@ contains
 !
       integer(i15) :: j = 0, b = 0, i = 0, a = 0, ai = 0, bj = 0, aibj = 0
 !
+      real(dp) :: begin_timer
+      real(dp) :: end_timer
+!
 !     Calculate the CCSD omega vector 
 !
+      call cpu_time(begin_timer)
       call construct_omega_ccsd(wf)
+      call cpu_time(end_timer)
+!
+      if (wf%settings%print_level == 'developer') then 
+!
+         write(unit_output,'(t6,a27,f15.8)') 'Time in CC  part (seconds):', end_timer-begin_timer
+!
+      endif
+!
+      call cpu_time(begin_timer)
 !
 !     Add the SCCSD singles contribution
 !
@@ -63,53 +74,19 @@ contains
 !     fock_ia array), and so we need only calcuate the Y and Z inter-
 !     mediates.
 !
-      call allocator(L_ki_J, (wf%n_o)**2, wf%n_J)
-      call wf%get_cholesky_ij(L_ki_J)
-!
-      call allocator(L_ac_J, (wf%n_v)**2, wf%n_J)
-      call wf%get_cholesky_ab(L_ac_J, 1, wf%n_v, 1, wf%n_v)
-!
-      call allocator(L_kd_J, (wf%n_o)*(wf%n_v), wf%n_J)
-      call wf%get_cholesky_ia(L_kd_J)
-!
 !     Form Z_ackd = g_ac_kd 
 !
       call allocator(g_ac_kd, (wf%n_v)**2, (wf%n_o)*(wf%n_v))
 !
-      call dgemm('N','T',            &
-                  (wf%n_v)**2,       & 
-                  (wf%n_o)*(wf%n_v), &
-                  wf%n_J,            &
-                  one,               &
-                  L_ac_J,            &
-                  (wf%n_v)**2,       &
-                  L_kd_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  g_ac_kd,           &
-                  (wf%n_v)**2)
-!
-      call deallocator(L_ac_J, (wf%n_v)**2, wf%n_J)
+      integral_type = 'electronic_repulsion'
+      call wf%get_vv_ov(integral_type, g_ac_kd)
 !
 !     Form Y_lcki = g_lc_ki    
 !
       call allocator(g_lc_ki, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
 !
-      call dgemm('N','T',            &
-                  (wf%n_o)*(wf%n_v), & 
-                  (wf%n_o)**2,       &
-                  wf%n_J,            &
-                  one,               &
-                  L_kd_J,            & ! "L_lc_J"
-                  (wf%n_o)*(wf%n_v), &
-                  L_ki_J,            &
-                  (wf%n_o)**2,       &
-                  zero,              &
-                  g_lc_ki,           &
-                  (wf%n_o)*(wf%n_v))
-!
-      call deallocator(L_kd_J, (wf%n_o)*(wf%n_v), wf%n_J)
-      call deallocator(L_ki_J, (wf%n_o)**2, wf%n_J)
+      integral_type = 'electronic_repulsion'
+      call wf%get_ov_oo(integral_type, g_lc_ki)
 !
 !     Make X_ia = F_i_a
 !
@@ -152,10 +129,15 @@ contains
          enddo
       enddo
 !
-      ! norm_correction = ddot((wf%n_o)*(wf%n_v)*(wf%n_o)*(wf%n_v), omega_ai_bj_corr, 1, omega_ai_bj_corr, 1)
-      ! write(unit_output,*) 'Norm of correction:',norm_correction; flush(unit_output)
-!
       call deallocator(omega_ai_bj_corr, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+      call cpu_time(end_timer)
+!
+      if (wf%settings%print_level == 'developer') then 
+!
+         write(unit_output,'(t6,a27,f15.8/)') 'Time in SCC part (seconds):', end_timer-begin_timer
+!
+      endif
 !
    end subroutine construct_omega_sccsd
 !
@@ -187,25 +169,10 @@ contains
 !
 !     Form L(jb, kc) = 2 * g_jb_kc(jb, kc) - g_jb_kc(jc, kb)
 !
-      call allocator(L_jb_J, (wf%n_o)*(wf%n_v), wf%n_J)
-      call wf%get_cholesky_ia(L_jb_J)
-!
       call allocator(g_jb_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      call dgemm('N','T',            &
-                  (wf%n_o)*(wf%n_v), &
-                  (wf%n_o)*(wf%n_v), &
-                  wf%n_J,            &
-                  one,               &
-                  L_jb_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  L_jb_J,            &
-                  (wf%n_o)*(wf%n_v), &
-                  zero,              &
-                  g_jb_kc,           &
-                  (wf%n_o)*(wf%n_v))
-!
-      call deallocator(L_jb_J, (wf%n_o)*(wf%n_v), wf%n_J)
+      integral_type = 'electronic_repulsion'
+      call wf%get_ov_ov(integral_type, g_jb_kc)
 !
       call allocator(L, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       L = zero 
