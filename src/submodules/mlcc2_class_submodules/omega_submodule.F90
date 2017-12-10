@@ -53,6 +53,7 @@ contains
       real(dp) :: omega_start = zero
       real(dp) :: omega_end   = zero
 !
+!
 !     Start timing of omega
 !
       call cpu_time(omega_start)
@@ -475,6 +476,8 @@ contains
       call wf%get_CC2_active_indices(first_active_o, first_active_v)
 !
       call wf%get_CC2_n_active(n_active_o, n_active_v)
+!
+      write(unit_output,*)'hei'
 !
       last_active_o = first_active_o + n_active_o - 1
       last_active_v = first_active_v + n_active_v - 1

@@ -696,6 +696,7 @@ contains
 !     Set the number of parameters in the wavefunction
 !     (that are solved for in the ground and excited state solvers) 
 !
+      wf%n_t1am = (wf%n_o)*(wf%n_v)
       wf%n_parameters = wf%n_t1am
 !
 !     Read Cholesky AO integrals and transform to MO basis
