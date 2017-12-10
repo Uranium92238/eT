@@ -1413,13 +1413,14 @@ contains
 !!    Destruct Amplitudes (CCSD)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
 !!
-!!    Deallocates the (doubles) amplitudes.
+!!    Deallocates the amplitudes.
 !!
       implicit none
 !
       class(ccsd) :: wf
 !
-      if (allocated(wf%t2am)) call wf%mem%dealloc(wf%t2am, wf%n_t2am, 1)
+      call wf%destruct_single_amplitudes
+      call wf%destruct_double_amplitudes
 !
    end subroutine destruct_amplitudes_ccsd
 !
@@ -2072,6 +2073,8 @@ contains
 !
       integer(i15) :: i = 0, a = 0, j = 0, b = 0, aibj = 0
       integer(i15) :: ib = 0, ja = 0, jb = 0, ia = 0, bj = 0, ai = 0
+!
+      call wf%construct_fock
 !
       eta = zero 
 !

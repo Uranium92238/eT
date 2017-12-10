@@ -198,8 +198,8 @@ contains
      call wf%mem%dealloc(L_iJ_k, (wf%n_o)*(wf%n_J), wf%n_o)
      call wf%mem%dealloc(L_iJ_a, (wf%n_o)*(wf%n_J), wf%n_v)
     else
-            write(unit_output, *) 'Error: in call to get_cholesky_ij'
-            stop
+      write(unit_output, *) 'Error: in call to get_cholesky_ij'
+      stop
    endif   
 ! 
    end subroutine get_cholesky_ij_ccs

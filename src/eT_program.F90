@@ -23,6 +23,7 @@ program eT_program
    use ccsdpt_class
    use mlcc2_class
    use mlccsd_class
+   use sccsd_class
 !
    implicit none
 !
@@ -37,8 +38,12 @@ program eT_program
 !
 !  Multi-level methods
 !
-   type(mlcc2), allocatable, target  :: mlcc2_wf
+   type(mlcc2),  allocatable, target :: mlcc2_wf
    type(mlccsd), allocatable, target :: mlccsd_wf
+!
+!  Similarity-constrained methods 
+!
+   type(sccsd), allocatable, target :: sccsd_wf
 !
 !  Wavefunction pointer
 !
@@ -131,7 +136,13 @@ program eT_program
       allocate(mlccsd_wf)
       wf => mlccsd_wf
 !
+   elseif (trim(method) == 'SCCSD') then
+!
+      allocate(sccsd_wf)
+      wf => sccsd_wf
+!
    else
+!
       write(unit_output,*) 'Method ', trim(method), ' not recognized.'
       flush(unit_output)
       stop

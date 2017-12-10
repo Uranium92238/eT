@@ -92,6 +92,10 @@ module ccs_class
       real(dp), dimension(:,:), allocatable :: fock_ai
       real(dp), dimension(:,:), allocatable :: fock_ab
 !
+!     Excitation energies
+!
+      real(dp), dimension(:,:), allocatable :: excitation_energies
+!
    contains 
 !
 !
@@ -189,6 +193,7 @@ module ccs_class
 !     Helper routines for solver 
 !
       procedure :: response_preparations                 => response_preparations_ccs
+      procedure :: response_cleanup                      => response_cleanup_ccs
       procedure :: initialize_response                   => initialize_response_ccs
       procedure :: solve_reduced_response_equation       => solve_reduced_response_equation_ccs
       procedure :: construct_reduced_matrix              => construct_reduced_matrix_ccs
@@ -900,6 +905,18 @@ module ccs_class
          class(ccs) :: wf 
 !
       end subroutine response_preparations_ccs
+!
+!
+      module subroutine response_cleanup_ccs(wf)
+!!
+!!       Response cleanup (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
+!!
+         implicit none
+!
+         class(ccs) :: wf 
+!
+      end subroutine response_cleanup_ccs
 !
 !
       module subroutine initialize_response_ccs(wf)

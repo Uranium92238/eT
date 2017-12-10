@@ -63,16 +63,36 @@ contains
 !
       call wf%response_solver
 !
+      call wf%response_cleanup
+!
    end subroutine response_driver_ccs
 !
 !
    module subroutine response_preparations_ccs(wf)
 !!
-!!
+!!    Response preparations (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
 !!
       implicit none
 !
       class(ccs) :: wf 
+!
+!     Read single amplitudes from disk
+!  
+      call wf%read_single_amplitudes
+!
+!     Store vvvv-electronic repulsion integrals to file if there is space 
+!
+      call wf%store_t1_vv_vv_electronic_repulsion
+!
+!     Store voov-electronic repulsion integrals to file if there is space
+!
+      call wf%store_t1_vo_ov_electronic_repulsion
+!
+!     Store vvvo and vvov-electronic repulsion integrals to file if there is space
+!
+      call wf%store_t1_vv_vo_electronic_repulsion
+      call wf%store_t1_vv_ov_electronic_repulsion
 !
       if (wf%tasks%multipliers) then
 !
@@ -81,19 +101,23 @@ contains
          wf%excited_state_specifications%right = .false.
          wf%excited_state_specifications%left  = .true.
 !
-         if (wf%tasks%core_excited_state) then
-!
-            wf%excited_state_specifications%solution_file = 'left_core'
-!
-         else
-!
-            wf%excited_state_specifications%solution_file = 'left_valence'
-!
-         endif
-!
       endif
 !
    end subroutine response_preparations_ccs
+!
+!
+   module subroutine response_cleanup_ccs(wf)
+!!
+!!    Response cleanup (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
+!!
+      implicit none
+!
+      class(ccs) :: wf 
+!
+      call wf%destruct_single_amplitudes
+!
+   end subroutine response_cleanup_ccs
 !
 !
    module subroutine response_solver_ccs(wf)
@@ -136,6 +160,8 @@ contains
 !
       reduced_dim  = 1
       n_new_trials = 1
+      iteration = 1
+      converged = .false.
 !
 !     Initialization: - construct the gradient vector and save to file
 !                     - use the gradient vector and the orbital differences 
@@ -156,9 +182,11 @@ contains
 !
 !        Transform new trial vector (rho_i = A c_i for new trials i)
 !
+!
          call wf%transform_trial_vectors(reduced_dim - n_new_trials + 1, reduced_dim)
 !
 !        Solve the reduced linear equation (A X = F)
+!
 !
          call wf%solve_reduced_response_equation(solution_vector_reduced, reduced_dim, n_new_trials)
 !
@@ -179,8 +207,9 @@ contains
          endif
 !
       enddo
+!
       call cpu_time(end_property_solver)
-      write(unit_output,'(//t3,a,a,a,a,a/)')'Summary of ', trim(wf%name), ' ', trim(wf%tasks%current), ' calculation:'
+      write(unit_output,'(/t3,a,a,a,a,a/)')'Summary of ', trim(wf%name), ' ', trim(wf%tasks%current), ' calculation:'
       write(unit_output,'(t6,a25,f14.8/)') 'Total CPU time (seconds):    ', end_property_solver - start_property_solver
       flush(unit_output)
 !
@@ -222,6 +251,13 @@ contains
       open(unit=unit_resp_trial_vecs, file='trial_vec', action='write', status='unknown', &
            access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror)  
 !
+      if (ioerror .ne. 0) then
+!
+         write(unit_output,'(t3,a)') 'Error: could not open trial_vec file'
+         stop
+!
+      endif
+!
 !     Construct the gradient vector 
 !    
       call wf%construct_gradient_vector
@@ -232,11 +268,24 @@ contains
       open(unit=unit_grad_vec, file='gradient_vec', action='read', status='unknown', &
            access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
 !
+      if (ioerror .ne. 0) then
+!
+         write(unit_output,'(t3,a)') 'Error: could not open gradient_vec file'
+         stop
+!
+      endif
+!
       call wf%mem%alloc(gradient_vector, wf%n_parameters, 1)
       gradient_vector = zero 
 !
       read(unit_grad_vec, rec=1, iostat=ioerror) gradient_vector
-      if (ioerror .ne. 0) write(unit_output,*) 'WARNING!!'
+!
+      if (ioerror .ne. 0) then
+!
+         write(unit_output,'(t3,a)') 'Error: could not read gradient vector from file gradient_vec'
+         stop
+!
+      endif
 !
       close(unit_grad_vec)
 !
@@ -368,12 +417,13 @@ contains
 !
       if (wf%tasks%multipliers) then 
 !
-         write(unit_output,'(/t3,a)') 'Requested the solution of the multiplier equation (t-bar).'
+         write(unit_output,'(/t3,a)') 'Requested the multipliers (t-bar, lambda)'
          call wf%construct_eta(gradient_vector)
+         gradient_vector = -gradient_vector
 !
       else
 !
-         write(unit_output,*) 'Error: Requested gradient vector not recognized.'
+         write(unit_output,*) 'Error: requested gradient vector not recognized'
          stop
 !
       endif
@@ -388,6 +438,13 @@ contains
 !
       write(unit_grad_vec, rec=1, iostat=ioerror) gradient_vector
       call wf%mem%dealloc(gradient_vector, wf%n_parameters, 1)
+!
+      if (ioerror .ne. 0) then
+!
+         write(unit_output,'(t3,a)') 'Error: could not write to gradient_vec file'
+         stop
+!
+      endif
 !
 !     Close file 
 !
@@ -430,9 +487,23 @@ contains
       open(unit=unit_trial_vecs, file='trial_vec', action='read', status='old', &
            access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror)
 !
+      if (ioerror .ne. 0) then 
+!
+         write(unit_output,'(t3,a)') 'Error: could not open trial_vec file in construct_reduced_matrix_ccs'
+         stop 
+!
+      endif
+!
       call generate_unit_identifier(unit_rho)
       open(unit=unit_rho, file='transformed_vec', action='read', status='old', &
            access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
+!
+      if (ioerror .ne. 0) then 
+!
+         write(unit_output,'(t3,a)') 'Error: could not open transformed_vec file in construct_reduced_matrix_ccs'
+         stop 
+!
+      endif
 !
 !     If first iteration, create reduced matrix file. Otherwise,
 !     read the part of the reduced matrix already stored on file. 
@@ -452,6 +523,13 @@ contains
          rewind(unit_reduced_jacobi)
          read(unit_reduced_jacobi) &
                ((A_reduced(i,j), i = 1, reduced_dim-n_new_trials), j = 1, reduced_dim - n_new_trials)     
+!
+      endif
+!
+      if (ioerror .ne. 0) then 
+!
+         write(unit_output,'(t3,a)') 'Error: could not open reduced_jacobi file in construct_reduced_matrix_ccs'
+         stop 
 !
       endif
 !
@@ -508,6 +586,14 @@ contains
             enddo
 !
          enddo
+!
+      endif
+!
+      if (ioerror .ne. 0) then
+!
+         write(unit_output,'(t3,a,/t3,a)') 'Error: could not read from trial_vec or transformed_vec', &
+                                           'in construct_reduced_matrix_ccs'
+         stop
 !
       endif
 !
@@ -583,6 +669,13 @@ contains
 !
       endif
 !
+      if (ioerror .ne. 0) then 
+!
+         write(unit_output,'(t3,a)') 'Error: could not read from reduced_gradient file in construct_reduced_gradient_ccs'
+         stop 
+!
+      endif
+!
 !     Allocate trial (c) vector
 !
       call wf%mem%alloc(c_i, wf%n_parameters, 1)
@@ -600,6 +693,13 @@ contains
            access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
 !
       read(unit_grad_vec, rec=1, iostat=ioerror) F
+!
+      if (ioerror .ne. 0) then 
+!
+         write(unit_output,'(t3,a)') 'Error: could not read from gradient_vec file in construct_reduced_gradient_ccs'
+         stop 
+!
+      endif
 !
       close(unit_grad_vec)
 !
