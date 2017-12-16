@@ -16,6 +16,9 @@ submodule (ccsd_class) jacobian
 !
    implicit none 
 !
+   real(dp) :: t0 
+   real(dp) :: t1 
+!
    character(len=40) :: integral_type
 !
 contains
@@ -240,30 +243,8 @@ contains
       call wf%mem%alloc(rho_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
       call wf%mem%alloc(c_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
 ! 
-      rho_ab_ij = zero
-      c_ab_ij   = zero
-! 
-      do j = 1, wf%n_o
-         do i = 1, wf%n_o
-! 
-            ij = index_two(i, j, wf%n_o)
-! 
-            do b = 1, wf%n_v
-! 
-               bj = index_two(b, j, wf%n_v)
-! 
-               do a = 1, wf%n_v
-! 
-                  ai = index_two(a, i, wf%n_v)
-                  ab = index_two(a, b, wf%n_v)
-! 
-                  c_ab_ij(ab, ij)   = c_ai_bj(ai, bj)
-                  rho_ab_ij(ab, ij) = rho_ai_bj(ai, bj)
-! 
-               enddo
-            enddo
-         enddo
-      enddo
+      call sort_1234_to_1324(c_ai_bj, c_ab_ij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call sort_1234_to_1324(rho_ai_bj, rho_ab_ij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 ! 
       call wf%mem%dealloc(c_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call wf%mem%dealloc(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
@@ -378,7 +359,7 @@ contains
 !
 !     Vectors sent to the routine 
 !
-      real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i   ! c_ai 
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_a_i   ! c_ai 
       real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i ! rho_ai
 !
 !     Integrals
@@ -694,7 +675,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension((wf%n_o)*(wf%n_v),(wf%n_o)*(wf%n_v))   :: c_ai_bj 
+      real(dp), dimension((wf%n_o)*(wf%n_v),(wf%n_o)*(wf%n_v)), intent(in) :: c_ai_bj 
       real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i ! rho_ai
 !
       real(dp), dimension(:,:), allocatable :: v_ai_jb 
@@ -766,7 +747,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension((wf%n_o)*(wf%n_v),(wf%n_o)*(wf%n_v))   :: c_ai_bj 
+      real(dp), dimension((wf%n_o)*(wf%n_v),(wf%n_o)*(wf%n_v)), intent(in) :: c_ai_bj 
       real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i ! rho_ai
 !
       real(dp), dimension(:,:), allocatable :: g_ji_kb
@@ -856,8 +837,10 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension((wf%n_o)*(wf%n_v),(wf%n_o)*(wf%n_v)) :: c_bi_cj 
+      real(dp), dimension((wf%n_o)*(wf%n_v),(wf%n_o)*(wf%n_v)), intent(in) :: c_bi_cj 
       real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i 
+!
+      real(dp), dimension(:,:), allocatable :: c_bj_ci
 !
 !     Variables for batching
 !
@@ -869,7 +852,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !     Integrals
 !
       real(dp), dimension(:,:), allocatable :: g_ab_jc ! g_abjc
-      real(dp), dimension(:,:), allocatable :: L_a_cjb
+      real(dp), dimension(:,:), allocatable :: L_ab_jc ! L_abjc 
 !
       integer(i15) :: a = 0, b = 0, c = 0
       integer(i15) :: i = 0, j = 0 
@@ -914,32 +897,18 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
                            1,             &
                            wf%n_v)
 !
-!        Construct L_abjc ordered as L_a_cjb
+!        Construct L_ab_jc
 !
-         call wf%mem%alloc(L_a_cjb, (batch_a%length), ((wf%n_v)**2)*(wf%n_o))
-         L_a_cjb = zero
 !       
-         do b = 1, wf%n_v
-            do j = 1, wf%n_o
-               do c = 1, wf%n_v
+         call wf%mem%alloc(L_ab_jc, (batch_a%length)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-                  cjb = index_three(c, j, b, wf%n_v, wf%n_o)
+         call add_sorted_1234_to_1432(zero, L_ab_jc, -one, g_ab_jc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
+         call daxpy((batch_a%length)*(wf%n_v)**2*(wf%n_o), two, g_ab_jc, 1, L_ab_jc, 1)
 !
-                  jb = index_two(j, b, wf%n_o)
-                  jc = index_two(j, c, wf%n_o)
+!        Reorder c_bi_cj to c_bj_ci 
 !
-                  do a = 1, batch_a%length 
-!
-                     ac = index_two(a, c, batch_a%length )
-                     ab = index_two(a, b, batch_a%length )
-!
-                     L_a_cjb(a, cjb) = two*g_ab_jc(ab, jc) - g_ab_jc(ac, jb)
-!
-                  enddo
-!
-               enddo
-            enddo
-         enddo
+         call wf%mem%alloc(c_bj_ci, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+         call sort_1234_to_1432(c_bi_cj, c_bj_ci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
          call wf%mem%dealloc(g_ab_jc, (batch_a%length)*(wf%n_v), (wf%n_v)*(wf%n_o))
 !
@@ -948,15 +917,16 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
                      wf%n_o,                    &
                      (wf%n_o)*(wf%n_v)**2,      &
                      one,                       &
-                     L_a_cjb,                   &
+                     L_ab_jc,                   & ! L_a_bjc 
                      batch_a%length,            &
-                     c_bi_cj,                   & ! c_cjb_i
+                     c_bj_ci,                   & ! c_bjc_i
                      (wf%n_o)*(wf%n_v)**2,      &
                      one,                       &
                      rho_a_i(batch_a%first, 1), &
                      wf%n_v)
 !
-         call wf%mem%dealloc(L_a_cjb, batch_a%length, (wf%n_o)*(wf%n_v)**2)
+         call wf%mem%dealloc(L_ab_jc, (batch_a%length)*(wf%n_v), (wf%n_o)*(wf%n_v))
+         call wf%mem%dealloc(c_bj_ci, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
       enddo ! End batching over a
 !
@@ -977,16 +947,17 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
       class(ccsd) :: wf 
 !
-      real(dp), dimension(wf%n_v, wf%n_o)                       :: c_a_i
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)           :: c_a_i
       real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
 !
       real(dp), dimension(:,:), allocatable :: g_ai_kj ! g_aikj 
-      real(dp), dimension(:,:), allocatable :: g_k_aij ! g_aikj reordered 
+      real(dp), dimension(:,:), allocatable :: g_ai_jk ! g_aikj reordered 
       real(dp), dimension(:,:), allocatable :: g_ai_bc ! g_aibc, batching over b
       real(dp), dimension(:,:), allocatable :: g_bc_ai ! g_aibc = g_bcai, batching over b 
 !
       real(dp), dimension(:,:), allocatable :: rho_b_aij ! rho_ai_bj, term 1 (see below)
       real(dp), dimension(:,:), allocatable :: rho_aib_j ! rho_ai_bj, term 2 (batching over b)
+      real(dp), dimension(:,:), allocatable :: rho_ai_bj_term
 !
       integer(i15) :: a = 0, ai = 0, aij = 0, b = 0, bj = 0, i = 0, j = 0
       integer(i15) :: k = 0, kj = 0, c = 0, cb = 0, aib = 0, bc = 0
@@ -1013,73 +984,44 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
       integral_type = 'electronic_repulsion'
       call wf%get_vo_oo(integral_type, g_ai_kj)
 !
-!     Reorder to g_k_aij = g_aikj = g_ai_kj
+!     Reorder to g_ai_jk = g_aikj = g_ai_kj
 !
-      call wf%mem%alloc(g_k_aij, wf%n_o, (wf%n_v)*(wf%n_o)**2)
-      g_k_aij = zero
+      call wf%mem%alloc(g_ai_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
 !
-      do j = 1, wf%n_o
-         do i = 1, wf%n_o
-            do a = 1, wf%n_v
-!
-               ai = index_two(a, i, wf%n_v)
-!
-               aij = index_three(a, i, j, wf%n_v, wf%n_o)
-!
-               do k = 1, wf%n_o
-!
-                  kj = index_two(k, j, wf%n_o)
-!  
-                  g_k_aij(k, aij) = g_ai_kj(ai, kj) ! g_aikj
-!
-               enddo
-            enddo
-         enddo
-      enddo
+      call sort_1234_to_1243(g_ai_kj, g_ai_jk, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
       call wf%mem%dealloc(g_ai_kj, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
 !
 !     Calculate rho_b_aij = - sum_k c_bk g_aikj = - sum_k c_a_i(b, k) g_k_aij(k, aij)
 !
-      call wf%mem%alloc(rho_b_aij, wf%n_v, (wf%n_v)*(wf%n_o)**2)
+      call wf%mem%alloc(rho_b_aij, (wf%n_v)**2, (wf%n_o)**2)
 !
-      call dgemm('N', 'N',              &
+      call dgemm('N', 'T',              &
                   wf%n_v,               &
                   (wf%n_v)*(wf%n_o)**2, &
                   wf%n_o,               &
                   -one,                 &
                   c_a_i,                &
                   wf%n_v,               &
-                  g_k_aij,              &
-                  wf%n_o,               &
+                  g_ai_jk,              & ! g_aij_k 
+                  (wf%n_v)*(wf%n_o)**2, &
                   zero,                 &
                   rho_b_aij,            &
                   wf%n_v)
 !
-      call wf%mem%dealloc(g_k_aij, wf%n_o, (wf%n_v)*(wf%n_o)**2)
+      call wf%mem%dealloc(g_ai_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
 !
 !     Add rho_b_aij to rho_ai_bj 
 !
-      do j = 1, wf%n_o
-         do i = 1, wf%n_o
-            do a = 1, wf%n_v
+      call wf%mem%alloc(rho_ai_bj_term, (wf%n_o)*(wf%n_v),  (wf%n_o)*(wf%n_v))
 !
-               ai = index_two(a, i, wf%n_v)
+      call sort_1234_to_2314(rho_b_aij, rho_ai_bj_term, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-               aij = index_three(a, i, j, wf%n_v, wf%n_o)
+      call wf%mem%dealloc(rho_b_aij, (wf%n_v)**2, (wf%n_o)**2)
 !
-               do b = 1, wf%n_v
+      call daxpy((wf%n_o)**2*(wf%n_v)**2, one, rho_ai_bj_term, 1, rho_ai_bj, 1)
 !
-                  bj = index_two(b, j, wf%n_v)
-!
-                  rho_ai_bj(ai, bj) = rho_ai_bj(ai, bj) + rho_b_aij(b, aij)
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!
-      call wf%mem%dealloc(rho_b_aij, wf%n_v, (wf%n_v)*(wf%n_o)**2)
+      call wf%mem%dealloc(rho_ai_bj_term, (wf%n_o)*(wf%n_v),  (wf%n_o)*(wf%n_v))
 !
 !     
 !     :: Term 2. rho_ai_bj =+ sum_c g_aibc c_cj ::
@@ -1140,24 +1082,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
 !     Now that rho_aib_j has been made in batches, add it to rho_ai_bj 
 !
-      do j = 1, wf%n_o
-         do b = 1, wf%n_v
-!
-            bj = index_two(b, j, wf%n_v)
-!
-            do i = 1, wf%n_o
-               do a = 1, wf%n_v
-!
-                  ai = index_two(a, i, wf%n_v)
-!
-                  aib = index_three(a, i, b, wf%n_v, wf%n_o)
-!  
-                  rho_ai_bj(ai, bj) = rho_ai_bj(ai, bj) + rho_aib_j(aib, j)
-!
-               enddo
-            enddo
-         enddo
-      enddo
+      call daxpy((wf%n_v)**2*(wf%n_o)**2, one, rho_aib_j, 1, rho_ai_bj, 1)
 !
 !     Deallocations
 !
@@ -1180,10 +1105,10 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
       class(ccsd) :: wf 
 !
-      real(dp), dimension(wf%n_v, wf%n_o)                       :: c_a_i
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)           :: c_a_i
       real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
 !
-      real(dp), dimension(:,:), allocatable :: t_c_aij ! t_ij^ac 
+      real(dp), dimension(:,:), allocatable :: t_ca_ij ! t_ij^ac 
       real(dp), dimension(:,:), allocatable :: t_aib_k ! t_ik^ab 
 ! 
       real(dp), dimension(:,:), allocatable :: X_k_aij ! An intermediate
@@ -1202,30 +1127,12 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
       call wf%read_double_amplitudes
 !
-!     Order the amplitudes as t_c_aij = t_ij^ac 
+!     Order the amplitudes as t_ca_ij = t_ij^ac 
 !
-      call wf%mem%alloc(t_c_aij, wf%n_v, (wf%n_v)*(wf%n_o)**2)
+!     t_ai_cj to t_ca_ij 
 !
-      do j = 1, wf%n_o
-         do i = 1, wf%n_o
-            do a = 1, wf%n_v
-!
-               ai = index_two(a, i, wf%n_v)
-!
-               aij = index_three(a, i, j, wf%n_v, wf%n_o)
-!
-               do c = 1, wf%n_v
-!
-                  cj = index_two(c, j, wf%n_v)
-!
-                  aicj = index_packed(ai, cj)
-!
-                  t_c_aij(c, aij) = wf%t2am(aicj, 1)
-!
-               enddo
-            enddo
-         enddo
-      enddo
+      call wf%mem%alloc(t_ca_ij, (wf%n_v)**2, (wf%n_o)**2)
+      call squareup_and_sort_1234_to_3124(wf%t2am, t_ca_ij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Form the intermediate X_k_aij = sum_c F_k_c t_c_aij 
 !
@@ -1238,13 +1145,13 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
                   one,                  &
                   wf%fock_ia,           &
                   wf%n_o,               &
-                  t_c_aij,              &
+                  t_ca_ij,              & ! t_c_aij 
                   wf%n_v,               &
                   zero,                 &
                   X_k_aij,              &
                   wf%n_o)
 !
-      call wf%mem%dealloc(t_c_aij, wf%n_v, (wf%n_v)*(wf%n_o)**2)
+      call wf%mem%dealloc(t_ca_ij, (wf%n_v)**2, (wf%n_o)**2)
 !
 !     Form rho_b_aij = sum_k c_a_i(b,k) X_k_aij(k,aij)
 !
@@ -1371,7 +1278,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
       class(ccsd) :: wf 
 !
-      real(dp), dimension(wf%n_v, wf%n_o)                       :: c_a_i
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)           :: c_a_i
       real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
 !
       real(dp), dimension(:,:), allocatable :: g_lj_kc ! g_ljkc
@@ -1917,7 +1824,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !
       class(ccsd) :: wf 
 !
-      real(dp), dimension(wf%n_v, wf%n_o)                       :: c_a_i
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)           :: c_a_i
       real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
 !
       real(dp), dimension(:,:), allocatable :: g_bd_kc ! g_kcbd 
@@ -2003,30 +1910,11 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
                            1,             &
                            wf%n_v)
 !
-!        Reorder to g_cd_kb = g_kc_db = g_kcbd 
+!        Reorder g_bd_kc to g_cd_kb (= g_kcbd), i.e. 1234 to 4231
 !
          call wf%mem%alloc(g_cd_kb, (wf%n_v)**2, (wf%n_o)*(batch_b%length))
 !
-         do b = 1, batch_b%length
-            do k = 1, wf%n_o
-!
-               kb = index_two(k, b, wf%n_o)
-!
-               do d = 1, wf%n_v
-!
-                  bd = index_two(b, d, batch_b%length)
-!
-                  do c = 1, wf%n_v
-!
-                     kc = index_two(k, c, wf%n_o)
-                     cd = index_two(c, d, wf%n_v)
-!
-                     g_cd_kb(cd, kb) = g_bd_kc(bd, kc) ! g_kcbd 
-!
-                  enddo
-               enddo
-            enddo
-         enddo
+         call sort_1234_to_4231(g_bd_kc, g_cd_kb, batch_b%length, wf%n_v, wf%n_o, wf%n_v)
 !
          call wf%mem%dealloc(g_bd_kc, (wf%n_v)*(batch_b%length), (wf%n_o)*(wf%n_v))
 !
@@ -2624,7 +2512,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
       class(ccsd) :: wf 
 !
       real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
-      real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: c_ai_ck
+      real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)), intent(in) :: c_ai_ck
 !
       real(dp), dimension(:,:), allocatable :: t_dl_bj
       real(dp), dimension(:,:), allocatable :: g_kc_ld
@@ -2738,7 +2626,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
       class(ccsd) :: wf 
 !
       real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
-      real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: c_ai_bj
+      real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)), intent(in) :: c_ai_bj
 !
       real(dp), dimension(:,:), allocatable :: L_ia_J
       real(dp), dimension(:,:), allocatable :: g_kc_ld
@@ -3108,7 +2996,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
       class(ccsd) :: wf 
 !
       real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
-      real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: c_ai_bj
+      real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)), intent(in) :: c_ai_bj
 !         
       real(dp), dimension(:,:), allocatable :: g_kc_ld
 !
@@ -3494,7 +3382,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
          class(ccsd) :: wf 
 !
          real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: c_ai_bj
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)), intent(in) :: c_ai_bj
 !         
          real(dp), dimension(:,:), allocatable :: L_ia_J
          real(dp), dimension(:,:), allocatable :: g_kc_ld
@@ -3798,7 +3686,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
       class(ccsd) :: wf 
 !
       real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
-      real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: c_ai_bj
+      real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)), intent(in) :: c_ai_bj
 !
       real(dp), dimension(:,:), allocatable :: c_aij_c 
       real(dp), dimension(:,:), allocatable :: c_aib_k
@@ -4173,7 +4061,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
       class(ccsd) :: wf 
 !
       real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: rho_ab_ij
-      real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: c_ab_ij
+      real(dp), dimension((wf%n_v)**2, (wf%n_o)**2), intent(in) :: c_ab_ij
 !
       real(dp), dimension(:,:), allocatable :: L_ia_J
       real(dp), dimension(:,:), allocatable :: g_kc_ld
@@ -4345,7 +4233,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
       class(ccsd) :: wf 
 !
       real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: rho_ab_ij
-      real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: c_ab_ij
+      real(dp), dimension((wf%n_v)**2, (wf%n_o)**2), intent(in) :: c_ab_ij
 !
       real(dp), dimension(:,:), allocatable :: g_ki_lj
       real(dp), dimension(:,:), allocatable :: g_kl_ij

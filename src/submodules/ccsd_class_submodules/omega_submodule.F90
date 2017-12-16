@@ -36,8 +36,8 @@ submodule (ccsd_class) omega
 !
    logical :: debug = .false.
 !
-   real(dp) :: begin_timer
-   real(dp) :: end_timer 
+   real(dp) :: t0 
+   real(dp) :: t1
 !
    character(len=40) :: integral_type ! Here: electronic repulsion, 1/r_ij, g_pqrs 
 !
@@ -207,47 +207,28 @@ contains
 !
       type(batching_index) :: batch_a 
 !
-!     Various indices 
-!
-      integer(i15) :: i = 0, j = 0, a = 0, c = 0, k = 0, d = 0
-      integer(i15) :: ad = 0, ad_dim = 0, ci = 0, cidk = 0, ck = 0, da = 0 
-      integer(i15) :: dkc = 0, ckdi = 0, di = 0, dk = 0, kc = 0
+      integer(i15) :: ad_dim = 0
 !
       real(dp), dimension(:,:), allocatable :: g_ad_kc ! g_adkc; a is being batched over
-      real(dp), dimension(:,:), allocatable :: u_dkc_i ! u_ki^cd
+      real(dp), dimension(:,:), allocatable :: u_dk_ci ! u_ki^cd
+      real(dp), dimension(:,:), allocatable :: t_ck_di ! t_ki^cd 
+      real(dp), dimension(:,:), allocatable :: t_dk_ci ! t_ki^cd 
 !
-!     Allocate u_dkc_i = u_ki^cd
+!     Form u_ck_di = u_ki^cd 
 !
-      call wf%mem%alloc(u_dkc_i, (wf%n_o)*(wf%n_v)**2, wf%n_o)
-      u_dkc_i = zero
+!     Let t_dk_ci = t_ki^cd 
+!     Then u_dk_ci = 2 * t_ki^cd - t_ik^cd = 2 * t_dk_ci - t_di_ck
 !
-!     Calculate u_dkc_i = u_ki^cd
+      call wf%mem%alloc(t_dk_ci, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call squareup_and_sort_1234_to_3214(wf%t2am, t_dk_ci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      do i = 1, wf%n_o
-         do c = 1, wf%n_v 
+      call wf%mem%alloc(u_dk_ci, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-            ci = index_two(c, i, wf%n_v)
+      call add_sorted_1234_to_1432(zero, u_dk_ci, -one, t_dk_ci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-            do k = 1, wf%n_o
+      call daxpy((wf%n_o)**2*(wf%n_v)**2, two, t_dk_ci, 1, u_dk_ci, 1)
 !
-               ck = index_two(c, k, wf%n_v)
-!
-               do d = 1, wf%n_v
-!
-                  dk = index_two(d, k, wf%n_v)
-                  di = index_two(d, i, wf%n_v)
-!
-                  dkc = index_three(d, k, c, wf%n_v, wf%n_o)
-!
-                  ckdi = index_packed(ck, di)
-                  cidk = index_packed(ci, dk)
-!
-                  u_dkc_i(dkc, i) = two*(wf%t2am(ckdi, 1)) - wf%t2am(cidk, 1)
-!
-               enddo
-            enddo
-         enddo
-      enddo
+      call wf%mem%dealloc(t_dk_ci, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     Prepare for batching 
 !
@@ -299,7 +280,7 @@ contains
                      one,                        &
                      g_ad_kc,                    & ! g_a_dkc
                      batch_a%length,             &
-                     u_dkc_i,                    &
+                     u_dk_ci,                    & ! u_dkc_i
                      (wf%n_o)*(wf%n_v)**2,       &
                      one,                        &
                      wf%omega1(batch_a%first,1), & 
@@ -311,7 +292,7 @@ contains
 !
 !     Deallocate vectors 
 !
-      call wf%mem%dealloc(u_dkc_i, (wf%n_o)*(wf%n_v)**2, wf%n_o)
+      call wf%mem%dealloc(u_dk_ci, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine omega_ccsd_a1_ccsd
 !
@@ -336,55 +317,31 @@ contains
       integer(i15) :: ak = 0, akcl = 0, al = 0, alck = 0, ck = 0, ai = 0
       integer(i15) :: cl = 0, lc = 0, i = 0, j = 0
 !
-      real(dp), dimension(:,:), allocatable :: g_ki_lc ! g_kilc 
-      real(dp), dimension(:,:), allocatable :: g_ckl_i ! g_kilc 
-      real(dp), dimension(:,:), allocatable :: u_a_ckl ! u_kl^ac = 2 t_kl^ac - t_lk^ac
+      real(dp), dimension(:,:), allocatable :: g_lc_ki ! g_kilc 
+      real(dp), dimension(:,:), allocatable :: t_al_ck ! t_kl^ac
+      real(dp), dimension(:,:), allocatable :: u_al_ck ! u_kl^ac = 2 t_kl^ac - t_lk^ac
 !
-!     Get g_ki_lc = g_kilc
+!     Get g_lc_ki = g_kilc = g_lcki 
 !
-      call wf%mem%alloc(g_ki_lc, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(g_lc_ki, (wf%n_v)*(wf%n_o), (wf%n_o)**2)
 !
       integral_type = 'electronic_repulsion'
-      call wf%get_oo_ov(integral_type, g_ki_lc)
+      call wf%get_ov_oo(integral_type, g_lc_ki)
 !
-!     Form the reordered integrals g_ckl_i = g_kilc 
+!     Form u_al_ck = u_kl^ac = 2 * t_kl^ac - t_lk^ac
 !
-      call wf%mem%alloc(g_ckl_i, (wf%n_v)*(wf%n_o), (wf%n_o)**2)
+!     Squareup amplitudes and reorder: t_ak_cl to t_al_ck
+!     u_al_ck = 2 * t_kl^ac - t_lk^ac = 2 * t_al_ck(al,ck) - t_al_ck(ak,cl) 
+!     
+      call wf%mem%alloc(t_al_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      call squareup_and_sort_1234_to_1432(wf%t2am, t_al_ck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call sort_1234_to_4132(g_ki_lc, g_ckl_i, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+      call wf%mem%alloc(u_al_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
-!     Deallocate unordered integrals g_ki_lc
+      call add_sorted_1234_to_1432(zero, u_al_ck, -one, t_al_ck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call daxpy((wf%n_v)**2*(wf%n_o)**2, two, t_al_ck, 1, u_al_ck, 1)
 !
-      call wf%mem%dealloc(g_ki_lc, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
-!
-!     Form the redordered u_a_ckl = u_kl^ac
-!
-      call wf%mem%alloc(u_a_ckl, wf%n_v, (wf%n_v)*(wf%n_o)**2)
-!
-      do l = 1, wf%n_o
-         do k = 1, wf%n_o
-            do c = 1, wf%n_v
-!
-               cl  = index_two(c, l, wf%n_v)
-               ck  = index_two(c, k, wf%n_v)
-               ckl = index_three(c, k, l, wf%n_v, wf%n_o) 
-!
-               do a = 1, wf%n_v
-!
-                  ak   = index_two(a, k, wf%n_v)
-                  al   = index_two(a, l, wf%n_v)
-!
-                  akcl = index_packed(ak, cl)
-                  alck = index_packed(al, ck)
-!
-!                 Set the value of u_a_ckl = u_kl^ac = 2*t_kl^ac - t_lk^ac = 2*t_ak,cl - t_al,ck 
-!
-                  u_a_ckl(a, ckl) = two*(wf%t2am(akcl, 1)) - wf%t2am(alck, 1)
-!                  
-               enddo
-            enddo
-         enddo
-      enddo
+      call wf%mem%dealloc(t_al_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
 !     Calculate the B1 term, - sum_ckl u_a_ckl g_ckl_i
 !
@@ -393,9 +350,9 @@ contains
                   wf%n_o,                 &
                   (wf%n_v)*((wf%n_o)**2), &
                   -one,                   &
-                  u_a_ckl,                &
+                  u_al_ck,                & ! u_a_lck 
                   wf%n_v,                 &
-                  g_ckl_i,                &
+                  g_lc_ki,                & ! g_lck_i
                   (wf%n_v)*((wf%n_o)**2), &
                   one,                    &
                   wf%omega1,              &
@@ -403,8 +360,8 @@ contains
 !
 !     Deallocate remaining vectors 
 !
-      call wf%mem%dealloc(u_a_ckl, wf%n_v, (wf%n_v)*((wf%n_o)**2))
-      call wf%mem%dealloc(g_ckl_i, (wf%n_v)*((wf%n_o)**2), wf%n_o)
+      call wf%mem%dealloc(u_al_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      call wf%mem%dealloc(g_lc_ki, (wf%n_v)*(wf%n_o), (wf%n_o)**2)
 !
    end subroutine omega_ccsd_b1_ccsd
 !
@@ -427,57 +384,44 @@ contains
 !
       class(ccsd) :: wf 
 !  
-      real(dp), dimension(:,:), allocatable :: u_ai_kc  
+      real(dp), dimension(:,:), allocatable :: F_c_k ! F_kc 
 !
-      integer(i15) :: i = 0, k = 0, c = 0, a = 0
-      integer(i15) :: ck = 0, ai = 0, ak = 0, ci = 0, kc = 0
-      integer(i15) :: aick = 0, akci = 0
+      real(dp), dimension(:,:), allocatable :: u_ai_ck  
+      real(dp), dimension(:,:), allocatable :: t_ai_ck 
 !
-!     Allocate u_ai_ck
+      integer(i15) :: k, c 
 !
-      call wf%mem%alloc(u_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))  
+!     Form u_ai_ck = u_ik^ac = 2*t_ik^ac - t_ki^ac
 !
-!     Set up u_ai_kc
+      call wf%mem%alloc(t_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call squareup(wf%t2am, t_ai_ck, (wf%n_o)*(wf%n_v))
 !
-      do i = 1, wf%n_o 
-         do c = 1, wf%n_v
+      call wf%mem%alloc(u_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))  
 !
-            ci = index_two(c, i, wf%n_v)
+      call add_sorted_1234_to_1432(zero, u_ai_ck, -one, t_ai_ck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call daxpy((wf%n_o)**2*(wf%n_v)**2, two, t_ai_ck, 1, u_ai_ck, 1)
 !
-            do k = 1, wf%n_o
-!  
-               ck = index_two(c, k, wf%n_v)
-               kc = index_two(k, c, wf%n_o)
+!     Reorder the Fock matrix F_ck = F_kc 
 !
-               do a = 1, wf%n_v
+      call wf%mem%alloc(F_c_k, wf%n_v, wf%n_o)
 !
-                  ai = index_two(a, i, wf%n_v)
-                  ak = index_two(a, k, wf%n_v)
-!
-                  aick = index_packed(ck, ai)
-                  akci = index_packed(ci, ak)
-!
-                  u_ai_kc(ai, kc) = two*(wf%t2am(aick, 1)) - wf%t2am(akci, 1)
-!
-               enddo
-            enddo
-         enddo
-      enddo
+      call sort_12_to_21(wf%fock_ia, F_c_k, wf%n_o, wf%n_v)
 !
       call dgemm('N','N',            &
                   (wf%n_o)*(wf%n_v), &
                   1,                 &
                   (wf%n_o)*(wf%n_v), &
                   one,               &
-                  u_ai_kc,           &
+                  u_ai_ck,           &
                   (wf%n_o)*(wf%n_v), &
-                  wf%fock_ia,        & ! F_kc
+                  F_c_k,             & ! Equal to F_kc 
                   (wf%n_o)*(wf%n_v), &
                   one,               &
                   wf%omega1,         &
                   (wf%n_o)*(wf%n_v))
 !
-      call wf%mem%dealloc(u_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(u_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(F_c_k, wf%n_v, wf%n_o)
 !
    end subroutine omega_ccsd_c1_ccsd
 !
@@ -505,6 +449,7 @@ contains
 !     Integrals
 !
       real(dp), dimension(:,:), allocatable :: g_ai_bj 
+      real(dp), dimension(:,:), allocatable :: g_aibj 
       real(dp), dimension(:,:), allocatable :: g_ac_bd 
       real(dp), dimension(:,:), allocatable :: g_p_ab_cd
       real(dp), dimension(:,:), allocatable :: g_m_ab_cd
@@ -563,34 +508,14 @@ contains
       call wf%get_vo_vo(integral_type, g_ai_bj)
 !
 !     Add A2.1 to Omega 2
-!     
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
 !
-            ai = index_two(a, i, wf%n_v)
-!
-            do j = 1, wf%n_o
-               do b = 1, wf%n_v
-!
-                  bj = index_two(b, j, wf%n_v)
-!
-                  if(ai .ge. bj) then
-!
-                     aibj = index_packed(ai, bj)
-!
-                     wf%omega2(aibj, 1) = wf%omega2(aibj, 1) + g_ai_bj(ai, bj)
-!
-                  endif
-               enddo
-            enddo
-         enddo
-      enddo
-!
+      call add_to_packed(wf%omega2, g_ai_bj, (wf%n_o)*(wf%n_v))
+
       call wf%mem%dealloc(g_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !    ::  Calculate the A2.2 term  of omega ::
 !
-     required = wf%get_vvvv_required_mem() + (4*(wf%n_o**2)*(wf%n_v**2) + 2*(wf%n_v**4))*dp
+      required = wf%get_vvvv_required_mem() + 4*(wf%n_o**2)*(wf%n_v**2) + 2*(wf%n_v**4)
 !
 !     Initialize batching variables 
 !
@@ -599,9 +524,9 @@ contains
 !
       call wf%mem%num_two_batch(batch_a, batch_b, required)
 !
-!    Start looping over a-batches
+!     Start looping over a-batches
 !
-     do current_a_batch = 1, batch_a%num_batches 
+      do current_a_batch = 1, batch_a%num_batches 
 !  
 !        Determine the limits for the a-batch 
 !
@@ -641,8 +566,7 @@ contains
 !
             if (current_b_batch .eq. current_a_batch) then
 !
-!
-!           Allocate for +-g, +-t
+!              Allocate for +-g, +-t
 !
                call wf%mem%alloc(g_p_ab_cd, packed_size(batch_a%length), packed_size(wf%n_v))
                call wf%mem%alloc(g_m_ab_cd, packed_size(batch_a%length), packed_size(wf%n_v))
@@ -897,12 +821,12 @@ contains
                           omega2_m_ab_ij,                    &
                           (batch_a%length)*(batch_b%length))
 !
-!          Deallocate +-g, +-t
+!              Deallocate +-g, +-t
 ! 
-              call wf%mem%dealloc(g_p_ab_cd, (batch_a%length)*(batch_b%length), packed_size(wf%n_v))
-              call wf%mem%dealloc(g_m_ab_cd, (batch_a%length)*(batch_b%length), packed_size(wf%n_v))
-              call wf%mem%dealloc(t_p_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
-              call wf%mem%dealloc(t_m_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
+               call wf%mem%dealloc(g_p_ab_cd, (batch_a%length)*(batch_b%length), packed_size(wf%n_v))
+               call wf%mem%dealloc(g_m_ab_cd, (batch_a%length)*(batch_b%length), packed_size(wf%n_v))
+               call wf%mem%dealloc(t_p_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
+               call wf%mem%dealloc(t_m_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
 !
                do i = 1, wf%n_o
                   do j = 1, i
@@ -979,7 +903,8 @@ contains
 !     Reordered T2 apmlitudes
 !   
       real(dp), dimension(:,:), allocatable :: t_cd_ij    
-      real(dp), dimension(:,:), allocatable :: t_ab_kl   
+      real(dp), dimension(:,:), allocatable :: t_ab_kl 
+      real(dp), dimension(:,:), allocatable :: t_ci_dj  
 !
 !     Intermediate for matrix multiplication
 ! 
@@ -988,6 +913,7 @@ contains
 !     Reordered omega
 !   
       real(dp), dimension(:,:), allocatable :: omega_ab_ij
+      real(dp), dimension(:,:), allocatable :: omega_ai_bj
 !
 !     Indices
 !   
@@ -1011,26 +937,6 @@ contains
       call wf%mem%alloc(g_kl_ij, (wf%n_o)*(wf%n_o),(wf%n_o)*(wf%n_o))
 !
       call sort_1234_to_1324(g_ki_lj, g_kl_ij, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
-!       do k = 1, wf%n_o
-!          do l = 1, wf%n_o
-!             do i = 1, wf%n_o
-!                do j=1, wf%n_o
-! !
-! !                 Calculate compound indices
-! !
-!                   ki = index_two(k, i, wf%n_o)
-!                   lj = index_two(l, j, wf%n_o)
-!                   kl = index_two(k, l, wf%n_o)
-!                   ij = index_two(i, j, wf%n_o)
-! !
-! !                 Reordering g_ki_lj to g_kl_ij (1234 to 1324)
-! !
-!                   g_kl_ij(kl, ij) = g_ki_lj(ki, lj)
-! !
-!                enddo
-!             enddo
-!          enddo
-!       enddo
 !
       call wf%mem%dealloc(g_ki_lj, (wf%n_o)*(wf%n_o), (wf%n_o)*(wf%n_o))
 !
@@ -1041,41 +947,18 @@ contains
       integral_type = 'electronic_repulsion'
       call wf%get_ov_ov(integral_type, g_kc_ld)
 !
-!     Reorder g_kc_ld as g_kl_cd, also reordering t_ci_dj as t_cd_ij
+!     Reorder g_kc_ld as g_kl_cd
 !
-      call wf%mem%alloc(t_cd_ij, (wf%n_v)*(wf%n_v), (wf%n_o)*(wf%n_o))
       call wf%mem%alloc(g_kl_cd, (wf%n_o)*(wf%n_o), (wf%n_v)*(wf%n_v))
 !
-      do d = 1, wf%n_v
-         do c = 1, wf%n_v
-!
-            cd = index_two(c, d, wf%n_v)
-!
-            do l = 1, wf%n_o
-!  
-               ld = index_two(l, d, wf%n_o)
-               dj = index_two(d, l, wf%n_v)
-!
-               do k = 1, wf%n_o              
-!
-                  kl = index_two(k, l, wf%n_o)
-                  kc = index_two(k, c, wf%n_o)
-                  ci = index_two(c, k, wf%n_v)
-                  ij = kl
-!
-                  cidj = index_packed(ci, dj)
-!
-                  g_kl_cd(kl, cd) = g_kc_ld(kc, ld)
-                  t_cd_ij(cd, ij) = wf%t2am(cidj, 1)
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!
-!     Deallocate g_kc_ld
+      call sort_1234_to_1324(g_kc_ld, g_kl_cd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
       call wf%mem%dealloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!     Reorder t_ci_dj as t_cd_ij
+!
+      call wf%mem%alloc(t_cd_ij, (wf%n_v)**2, (wf%n_o)**2)
+      call squareup_and_sort_1234_to_1324(wf%t2am, t_cd_ij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call dgemm('N','N',      &
                   (wf%n_o)**2, &
@@ -1116,35 +999,13 @@ contains
 !
 !     Reorder into omega2
 !
-      do i = 1, wf%n_o
-         do j = 1, wf%n_o
+      call wf%mem%alloc(omega_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call sort_1234_to_1324(omega_ab_ij, omega_ai_bj, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-            ij = index_two(i, j, wf%n_o)
+      call wf%mem%dealloc(omega_ab_ij, (wf%n_v)**2, (wf%n_o)**2) 
 !
-            do b = 1, wf%n_v
-!
-               bj = index_two(b, j, wf%n_v)
-!
-               do a = 1, wf%n_v
-!
-                  ai = index_two(a, i, wf%n_v)                 
-!
-                  if (ai .ge. bj) then
-!
-                     ab = index_two(a, b, wf%n_v)
-!
-                     aibj = index_packed(ai, bj)
-!
-                     wf%omega2(aibj, 1) = wf%omega2(aibj, 1) + omega_ab_ij(ab, ij)
-!
-                  endif
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!
-      call wf%mem%dealloc(omega_ab_ij,(wf%n_v)*(wf%n_v),(wf%n_o)*(wf%n_o))  
+      call add_to_packed(wf%omega2, omega_ai_bj, (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(omega_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine omega_ccsd_b2_ccsd
 !
@@ -1171,8 +1032,10 @@ contains
 !
 !     Reordered T2 amplitudes
 !
+      real(dp), dimension(:,:), allocatable :: t_al_di
       real(dp), dimension(:,:), allocatable :: t_ai_dl
       real(dp), dimension(:,:), allocatable :: t_ck_bj
+      real(dp), dimension(:,:), allocatable :: t_bk_cj
 !
 !     Intermediates for matrix multiplication
 !
@@ -1202,6 +1065,12 @@ contains
 !
       type(batching_index) :: batch_a 
 !
+!     Sort t_al_di = t_li^ad as t_ai_dl (1234 to 1432)
+!
+      call wf%mem%alloc(t_ai_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+      call squareup_and_sort_1234_to_1432(wf%t2am, t_ai_dl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
 !     Allocate and construct g_kd_lc 
 !
       call wf%mem%alloc(g_kd_lc,(wf%n_o)*(wf%n_v),(wf%n_o)*(wf%n_v))
@@ -1209,37 +1078,12 @@ contains
       integral_type = 'electronic_repulsion'
       call wf%get_ov_ov(integral_type, g_kd_lc)
 !
-!     Reorder g_kd_lc as g_dl_ck and t_al_di as t_ai_dl
+!     Sort g_kd_lc to g_dl_ck (1234 to 2341)
 !
       call wf%mem%alloc(g_dl_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call wf%mem%alloc(t_ai_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      do k = 1, wf%n_o        
-         do d = 1, wf%n_v
+      call sort_1234_to_2341(g_kd_lc, g_dl_ck, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-            kd = index_two(k, d, wf%n_o)
-            dk = index_two(d, k, wf%n_v)
-!
-            do l = 1, wf%n_o
-!
-               dl = index_two(d, l, wf%n_v)
-!
-               do c = 1, wf%n_v               
-!  
-                  lc = index_two(l, c, wf%n_o)
-                  ck = index_two(c, k, wf%n_v)
-                  cl = index_two(c, l, wf%n_v)
-!
-                  cldk = index_packed(cl, dk)
-!
-                  g_dl_ck(dl, ck) = g_kd_lc(kd, lc)
-                  t_ai_dl(ck, dl) = wf%t2am(cldk, 1)
-!
-               enddo
-            enddo
-         enddo
-      enddo
-
       call wf%mem%dealloc(g_kd_lc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     -1/2*sum_(dl) t_ai_dl*g_dl_ck = X_ai_ck
@@ -1264,36 +1108,16 @@ contains
       call wf%mem%dealloc(g_dl_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call wf%mem%dealloc(t_ai_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-!     Allocate the u_ck_bj = u_jk^bc vector
+!     Form u_ck_bj = u_jk^bc = u_kj^cb = 2 * t_jk^bc - t_kj^bc 
+!
+      call wf%mem%alloc(t_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call squareup(wf%t2am, t_ck_bj, (wf%n_o)*(wf%n_v))
 !
       call wf%mem%alloc(u_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      u_ck_bj = zero
+      call add_sorted_1234_to_1432(zero, u_ck_bj, -one, t_ck_bj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call daxpy((wf%n_o)**2*(wf%n_v)**2, two, t_ck_bj, 1, u_ck_bj, 1)
 !
-!     Form u_ck_bj = u_jk^bc = 2 * t_jk^bc - t_kj^bc 
-!
-      do j = 1, wf%n_o 
-         do b = 1, wf%n_v 
-!
-            bj = index_two(b, j, wf%n_v)
-!
-            do k = 1, wf%n_o 
-!
-               bk = index_two(b, k, wf%n_v)
-!
-               do c = 1, wf%n_v 
-!
-                  ck = index_two(c, k, wf%n_v)
-                  cj = index_two(c, j, wf%n_v)
-!
-                  bjck = index_packed(bj, ck)
-                  bkcj = index_packed(bk, cj)
-!
-                  u_ck_bj(ck, bj) = two*(wf%t2am(bjck, 1)) - wf%t2am(bkcj, 1)
-!
-               enddo
-            enddo
-         enddo
-      enddo
+      call wf%mem%dealloc(t_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     Allocate a holder for - 1/2 * sum_ck u_jk^bc g_acki,
 !     constructed in batches over the a index below
@@ -1361,31 +1185,11 @@ contains
 !
 !           omega_ai_bj = - 1/2 * sum_ck u_jk^bc g_acki
 !
-!        Reorder g_ac_ki to g_ai_kc 
+!        Reorder g_ki_ac to g_ai_ck (1234 to 3241)
 !
          call wf%mem%alloc(g_ai_ck, (batch_a%length)*(wf%n_o), (wf%n_o)*(wf%n_v))
-         g_ai_ck = zero
 !
-         do k = 1, wf%n_o 
-            do c = 1, wf%n_v
-!
-               ck = index_two(c, k, wf%n_v)
-!
-               do i = 1, wf%n_o
-!
-                  ki = index_two(k, i, wf%n_o)
-!
-                  do a = 1, batch_a%length
-!
-                     ac = index_two(a, c, batch_a%length)
-                     ai = index_two(a, i, batch_a%length)
-!
-                     g_ai_ck(ai, ck) = g_ki_ac(ki, ac) ! g_acki 
-!
-                  enddo
-               enddo
-            enddo
-         enddo
+         call sort_1234_to_3241(g_ki_ac, g_ai_ck, wf%n_o, wf%n_o, batch_a%length, wf%n_v)
 !
          call wf%mem%dealloc(g_ki_ac, (wf%n_o)**2, (batch_a%length)*(wf%n_v))
 !
@@ -1406,7 +1210,7 @@ contains
                   omega2_ai_bj(ai_offset,1), &
                   (wf%n_o)*(wf%n_v))
 !
-         call wf%mem%dealloc(g_ki_ac, (wf%n_o)**2, (batch_a%length)*(wf%n_v))
+         call wf%mem%dealloc(g_ai_ck, (batch_a%length)*(wf%n_o), (wf%n_o)*(wf%n_v))
 !
       enddo ! End of batching
 !
@@ -1416,56 +1220,21 @@ contains
 !
 !     Add the - 1/2 * sum_ck u_jk^bc g_acki term to omega  
 !
-      do j = 1, wf%n_o 
-         do b = 1, wf%n_v
+!     Omega2(aibj, 1) =+ omega2_ai_bj(ai,bj) + omega2_bj_ai(bj,ai)
 !
-            bj = index_two(b, j, wf%n_v)
-!
-            do i = 1, wf%n_o 
-               do a = 1, wf%n_v
-!
-                  ai = index_two(a, i, wf%n_v)
-!
-                  aibj = index_packed(ai, bj)
-! 
-                  if (ai .ge. bj) then
-!
-                     wf%omega2(aibj, 1) = wf%omega2(aibj, 1) + omega2_ai_bj(ai, bj) & 
-                                                               + omega2_ai_bj(bj, ai)
-!
-                  endif
-!
-               enddo
-            enddo
-         enddo
-      enddo 
+      call symmetrize_and_add_to_packed(wf%omega2, omega2_ai_bj, (wf%n_o)*(wf%n_v))
 !
       call wf%mem%dealloc(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) 
 !
-!     Reorder t_bkcj_1 as t_ck_bj
+!     Reorder t_bk_cj = t_kj^bc as t_ck_bj
+!
+      call wf%mem%alloc(t_bk_cj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call squareup(wf%t2am, t_bk_cj, (wf%n_o)*(wf%n_v))
 !
       call wf%mem%alloc(t_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call sort_1234_to_3214(t_bk_cj, t_ck_bj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      do j = 1, wf%n_o
-         do k = 1, wf%n_o
-            do b = 1, wf%n_v
-!
-               bk = index_two(b, k, wf%n_v)
-               bj = index_two(b, j, wf%n_v)
-!
-               do c = 1, wf%n_v
-!
-                  cj = index_two(c, j, wf%n_v)
-                  ck = index_two(c, k, wf%n_v)
-!
-                  bkcj = index_packed(bk, cj)
-!
-                  t_ck_bj(ck, bj) = wf%t2am(bkcj, 1)
-!
-               enddo
-            enddo
-         enddo
-      enddo
+      call wf%mem%dealloc(t_bk_cj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     Allocate intermediate Y_ai_bj
 !
@@ -1566,6 +1335,8 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: g_ld_kc ! g_ldkc 
       real(dp), dimension(:,:), allocatable :: L_ld_kc ! L_ldkc = 2 * g_ldkc - g_lckd 
+      real(dp), dimension(:,:), allocatable :: t_ai_dl ! t_il^ad
+      real(dp), dimension(:,:), allocatable :: u_ai_dl ! u_il^ad = 2 * t_il^ad - t_li^ad
       real(dp), dimension(:,:), allocatable :: u_ai_ld ! u_il^ad = 2 * t_il^ad - t_li^ad 
       real(dp), dimension(:,:), allocatable :: Z_ai_kc ! An intermediate, see below
 !
@@ -1587,30 +1358,13 @@ contains
       integral_type = 'electronic_repulsion'
       call wf%get_ov_ov(integral_type, g_ld_kc)
 !
-!     Form L_ld_kc = L_ldkc    
+!     Form L_ld_kc = L_ldkc = 2*g_ld_kc(ld,kc) - g_ld_kc(lc,kd)    
 !
       call wf%mem%alloc(L_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      do c = 1, wf%n_v
-         do k = 1, wf%n_o 
-!
-            kc = index_two(k, c, wf%n_o)
-!
-            do d = 1, wf%n_v
-!
-               kd = index_two(k, d, wf%n_o)
-!
-               do l = 1, wf%n_o
-!
-                  lc = index_two(l, c, wf%n_o)
-                  ld = index_two(l, d, wf%n_o)
-! 
-                  L_ld_kc(ld, kc) = two*g_ld_kc(ld, kc) - g_ld_kc(lc, kd)
-!
-               enddo
-            enddo
-         enddo
-      enddo
+   !   call set_two_1234_minus_1432(g_ld_kc, L_ld_kc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call add_sorted_1234_to_1432(zero, L_ld_kc, -one, g_ld_kc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call daxpy((wf%n_o)**2*(wf%n_v)**2, two, g_ld_kc, 1, L_ld_kc, 1)
 !
 !     Deallocate g_ld_kc and L_kc_J
 !
@@ -1618,32 +1372,21 @@ contains
 ! 
 !     Form u_ai_ld = u_il^ad = 2 * t_il^ad - t_li^ad 
 !
+      call wf%mem%alloc(t_ai_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call squareup(wf%t2am, t_ai_dl, (wf%n_o)*(wf%n_v))
+!
+      call wf%mem%alloc(u_ai_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+   !   call set_two_1234_minus_1432(t_ai_dl, u_ai_dl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call add_sorted_1234_to_1432(zero, u_ai_dl, -one, t_ai_dl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call daxpy((wf%n_o)**2*(wf%n_v)**2, two, t_ai_dl, 1, u_ai_dl, 1)
+!
+      call wf%mem%dealloc(t_ai_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
       call wf%mem%alloc(u_ai_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call sort_1234_to_1243(u_ai_dl, u_ai_ld, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      do d = 1, wf%n_v 
-         do l = 1, wf%n_o 
-!
-            ld = index_two(l, d, wf%n_o)
-            dl = index_two(d, l, wf%n_v)
-!
-            do i = 1, wf%n_o 
-!
-               di = index_two(d, i, wf%n_v)
-!
-               do a = 1, wf%n_v 
-!
-                  ai = index_two(a, i, wf%n_v)
-                  al = index_two(a, l, wf%n_v)
-!
-                  aidl = index_packed(ai, dl)
-                  aldi = index_packed(al, di)
-!
-                  u_ai_ld(ai, ld) = two*(wf%t2am(aidl, 1)) - wf%t2am(aldi, 1)
-!
-               enddo
-            enddo
-         enddo
-      enddo
+      call wf%mem%dealloc(u_ai_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     Allocate the intermediate Z_ai_kc = sum_dl u_ai_ld L_ld_kc and set it to zero
 !
@@ -1721,36 +1464,12 @@ contains
                   (wf%n_o)*(wf%n_v))
 !
       call wf%mem%dealloc(u_ai_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) 
+      call wf%mem%dealloc(g_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     Add the D2.1 term to the omega vector 
 !
-      do j = 1, wf%n_o 
-         do b = 1, wf%n_v
+      call symmetrize_and_add_to_packed(wf%omega2, omega2_ai_bj, (wf%n_o)*(wf%n_v))
 !
-            bj = index_two(b, j, wf%n_v)
-!
-            do i = 1, wf%n_o 
-               do a = 1, wf%n_v
-!
-                  ai = index_two(a, i, wf%n_v)
-!
-                  aibj = index_packed(ai, bj)
-! 
-                  if (ai .ge. bj) then
-!
-                     wf%omega2(aibj, 1) = wf%omega2(aibj, 1) + omega2_ai_bj(ai, bj) & 
-                                                               + omega2_ai_bj(bj, ai)
-!
-                  endif
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!
-!     Deallocate g_ai_kc, u_kc_bj, and the omega2_ai_bj vectors 
-!
-      call wf%mem%dealloc(g_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call wf%mem%dealloc(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine omega_ccsd_d2_ccsd
@@ -1791,7 +1510,9 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: omega2_bj_ai ! For storing the E2.1 term temporarily
       real(dp), dimension(:,:), allocatable :: g_ld_kc      ! g_ldkc 
-      real(dp), dimension(:,:), allocatable :: u_b_ldk      ! u_kl^bd 
+      real(dp), dimension(:,:), allocatable :: u_bl_dk      ! u_kl^bd 
+      real(dp), dimension(:,:), allocatable :: t_bk_dl      ! t_kl^bd 
+      real(dp), dimension(:,:), allocatable :: u_bk_dl      ! u_kl^bd 
       real(dp), dimension(:,:), allocatable :: X_b_c        ! An intermediate, see below for definition
       real(dp), dimension(:,:), allocatable :: t_cj_ai      ! t_ij^ac
 !
@@ -1802,42 +1523,29 @@ contains
 !
 !     :: Calculate the E2.1 term of omega ::
 !
+!     Form u_bl_dk = u_kl^bd = u_bk_dl 
+!
+!     = 2 * t_kl^bd - t_lk^bd = 2 * t_bk_dl(bk,dl) - t_bk_dl(bl, dk)
+! 
+      call wf%mem%alloc(t_bk_dl, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      call squareup(wf%t2am, t_bk_dl, (wf%n_v)*(wf%n_o))
+!
+      call wf%mem%alloc(u_bk_dl, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+!
+      call add_sorted_1234_to_1432(zero, u_bk_dl, -one, t_bk_dl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call daxpy((wf%n_v)**2*(wf%n_o)**2, two, t_bk_dl, 1, u_bk_dl, 1)
+!
+      call wf%mem%alloc(u_bl_dk, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call sort_1234_to_1432(u_bk_dl, u_bl_dk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call wf%mem%dealloc(u_bk_dl, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+!
 !     Form g_ld_kc = g_ldkc 
 !
       call wf%mem%alloc(g_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       integral_type = 'electronic_repulsion'
       call wf%get_ov_ov(integral_type, g_ld_kc)
-!
-!     Form u_b_ldk = u_kl^bd
-! 
-      call wf%mem%alloc(u_b_ldk, wf%n_v, (wf%n_v)*((wf%n_o)**2))
-!
-      do k = 1, wf%n_o 
-         do d = 1, wf%n_v
-!
-            dk = index_two(d, k, wf%n_v)
-! 
-            do l = 1, wf%n_o
-!
-               dl = index_two(d, l, wf%n_v)
-!
-               ldk = index_three(l, d, k, wf%n_o, wf%n_v)
-!
-               do c = 1, wf%n_v ! Pretend that c is b below
-!
-                  cl = index_two(c, l, wf%n_v)
-                  ck = index_two(c, k, wf%n_v)
-!
-                  ckdl = index_packed(ck, dl)
-                  cldk = index_packed(cl, dk)
-!
-                  u_b_ldk(c, ldk) = two*(wf%t2am(ckdl, 1)) - wf%t2am(cldk, 1)
-!
-               enddo
-            enddo
-         enddo
-      enddo
 !
 !     Allocate the intermediate X_b_c = F_bc - sum_dkl g_ldkc u_kl^bd and set to zero
 !
@@ -1855,7 +1563,7 @@ contains
                   wf%n_v,               &
                   (wf%n_v)*(wf%n_o)**2, &
                   -one,                 &
-                  u_b_ldk,              &
+                  u_bl_dk,              & ! u_b_ldk 
                   wf%n_v,               &
                   g_ld_kc,              & ! g_ldk_c
                   (wf%n_v)*(wf%n_o)**2, &
@@ -1887,29 +1595,7 @@ contains
 !
 !     Add the E2.1 term to the omega vector 
 !
-      do j = 1, wf%n_o 
-         do b = 1, wf%n_v
-!
-            bj = index_two(b, j, wf%n_v)
-!
-            do i = 1, wf%n_o 
-               do a = 1, wf%n_v
-!
-                  ai = index_two(a, i, wf%n_v)
-!
-                  aibj = index_packed(ai, bj)
-! 
-                  if (ai .ge. bj) then
-!
-                     wf%omega2(aibj, 1) = wf%omega2(aibj, 1) + omega2_bj_ai(ai, bj) & 
-                                                               + omega2_bj_ai(bj, ai)
-!
-                  endif
-!
-               enddo
-            enddo
-         enddo
-      enddo
+      call symmetrize_and_add_to_packed(wf%omega2, omega2_bj_ai, (wf%n_o)*(wf%n_v))
 !
 !     Deallocate the E2.1 term, the X intermediate, keep the amplitudes 
 !
@@ -1943,7 +1629,7 @@ contains
                  one,                  &
                  g_ld_kc,              & ! g_k_cld
                  wf%n_o,               &
-                 u_b_ldk,              & ! u_cld_j
+                 u_bl_dk,              & ! u_cld_j
                  (wf%n_o)*(wf%n_v)**2, &
                  one,                  &
                  Y_k_j,                &
@@ -1951,7 +1637,7 @@ contains
 !
 !     Deallocate u_b_ldk and g_ld_kc
 !
-      call wf%mem%dealloc(u_b_ldk, wf%n_v, (wf%n_v)*(wf%n_o)**2)
+      call wf%mem%dealloc(u_bl_dk, (wf%n_o)*(wf%n_v), (wf%n_v)*(wf%n_o))
       call wf%mem%dealloc(g_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !    Allocate the E2.2 term and set to zero 
@@ -1964,7 +1650,7 @@ contains
 !    Note: t_cj_ai = t_ji^ca => t_cj_ai(ai,bk) = t_ik^ab;
 !    thus, we can treat t_cj_ai as t_aib_k = t_ik^ab.
 !
-      call dgemm('N','N',               &
+      call dgemm('N','N',              &
                  (wf%n_o)*(wf%n_v)**2, &
                  wf%n_o,               &
                  wf%n_o,               &
@@ -1977,40 +1663,18 @@ contains
                  omega2_ai_bj,         & ! omega2_aib_j 
                  (wf%n_o)*(wf%n_v)**2)
 !
-!    Deallocate Y_k_j and the amplitudes 
+!     Deallocate Y_k_j and the amplitudes 
 !
       call wf%mem%dealloc(Y_k_j, wf%n_o, wf%n_o)
       call wf%mem%dealloc(t_cj_ai, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
-!    Add the E2.2 term to the omega vector 
+!     Add the E2.2 term to the omega vector 
 !
-      do j = 1, wf%n_o 
-         do b = 1, wf%n_v
+      call symmetrize_and_add_to_packed(wf%omega2, omega2_ai_bj, (wf%n_o)*(wf%n_v))
 !
-            bj = index_two(b, j, wf%n_v)
+!     Deallocate the E2.2 term 
 !
-            do i = 1, wf%n_o 
-               do a = 1, wf%n_v
-!
-                  ai = index_two(a, i, wf%n_v)
-!
-                  aibj = index_packed(ai, bj)
-! 
-                  if (ai .ge. bj) then
-!
-                     wf%omega2(aibj, 1) = wf%omega2(aibj, 1) + omega2_ai_bj(ai, bj) & 
-                                                               + omega2_ai_bj(bj, ai)
-!
-                  endif
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!
-!    Deallocate the E2.2 term 
-!
-     call wf%mem%dealloc(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine omega_ccsd_e2_ccsd
 !
