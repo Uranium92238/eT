@@ -286,7 +286,7 @@ contains
 !
       enddo ! Looping over batches
 !
-      call wf%mem%dealloc(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*b_length)
+      call wf%mem%dealloc(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine jacobian_ccs_b1_ccs
 !

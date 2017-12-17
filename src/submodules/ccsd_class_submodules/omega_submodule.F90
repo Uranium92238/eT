@@ -224,7 +224,7 @@ contains
 !
       call wf%mem%alloc(u_dk_ci, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      call add_sorted_1234_to_1432(zero, u_dk_ci, -one, t_dk_ci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call add_1432_to_1234(-one, t_dk_ci, zero, u_dk_ci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call daxpy((wf%n_o)**2*(wf%n_v)**2, two, t_dk_ci, 1, u_dk_ci, 1)
 !
@@ -338,7 +338,7 @@ contains
 !
       call wf%mem%alloc(u_al_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
-      call add_sorted_1234_to_1432(zero, u_al_ck, -one, t_al_ck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call add_1432_to_1234(-one, t_al_ck, zero, u_al_ck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call daxpy((wf%n_v)**2*(wf%n_o)**2, two, t_al_ck, 1, u_al_ck, 1)
 !
       call wf%mem%dealloc(t_al_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
@@ -398,7 +398,7 @@ contains
 !
       call wf%mem%alloc(u_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))  
 !
-      call add_sorted_1234_to_1432(zero, u_ai_ck, -one, t_ai_ck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call add_1432_to_1234(-one, t_ai_ck, zero, u_ai_ck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call daxpy((wf%n_o)**2*(wf%n_v)**2, two, t_ai_ck, 1, u_ai_ck, 1)
 !
 !     Reorder the Fock matrix F_ck = F_kc 
@@ -1114,7 +1114,7 @@ contains
       call squareup(wf%t2am, t_ck_bj, (wf%n_o)*(wf%n_v))
 !
       call wf%mem%alloc(u_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call add_sorted_1234_to_1432(zero, u_ck_bj, -one, t_ck_bj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call add_1432_to_1234(-one, t_ck_bj, zero, u_ck_bj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call daxpy((wf%n_o)**2*(wf%n_v)**2, two, t_ck_bj, 1, u_ck_bj, 1)
 !
       call wf%mem%dealloc(t_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
@@ -1362,8 +1362,7 @@ contains
 !
       call wf%mem%alloc(L_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-   !   call set_two_1234_minus_1432(g_ld_kc, L_ld_kc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call add_sorted_1234_to_1432(zero, L_ld_kc, -one, g_ld_kc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call add_1432_to_1234(-one, g_ld_kc, zero, L_ld_kc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
       call daxpy((wf%n_o)**2*(wf%n_v)**2, two, g_ld_kc, 1, L_ld_kc, 1)
 !
 !     Deallocate g_ld_kc and L_kc_J
@@ -1377,8 +1376,7 @@ contains
 !
       call wf%mem%alloc(u_ai_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-   !   call set_two_1234_minus_1432(t_ai_dl, u_ai_dl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call add_sorted_1234_to_1432(zero, u_ai_dl, -one, t_ai_dl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call add_1432_to_1234(-one, t_ai_dl, zero, u_ai_dl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call daxpy((wf%n_o)**2*(wf%n_v)**2, two, t_ai_dl, 1, u_ai_dl, 1)
 !
       call wf%mem%dealloc(t_ai_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
@@ -1532,7 +1530,7 @@ contains
 !
       call wf%mem%alloc(u_bk_dl, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
-      call add_sorted_1234_to_1432(zero, u_bk_dl, -one, t_bk_dl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call add_1432_to_1234(-one, t_bk_dl, zero, u_bk_dl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call daxpy((wf%n_v)**2*(wf%n_o)**2, two, t_bk_dl, 1, u_bk_dl, 1)
 !
       call wf%mem%alloc(u_bl_dk, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
