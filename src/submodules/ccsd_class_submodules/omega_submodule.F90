@@ -223,8 +223,9 @@ contains
       call squareup_and_sort_1234_to_3214(wf%t2am, t_dk_ci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call wf%mem%alloc(u_dk_ci, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      u_dk_ci = zero 
 !
-      call add_1432_to_1234(-one, t_dk_ci, zero, u_dk_ci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call add_1432_to_1234(-one, t_dk_ci, u_dk_ci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call daxpy((wf%n_o)**2*(wf%n_v)**2, two, t_dk_ci, 1, u_dk_ci, 1)
 !
@@ -337,8 +338,9 @@ contains
       call squareup_and_sort_1234_to_1432(wf%t2am, t_al_ck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call wf%mem%alloc(u_al_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      u_al_ck = zero 
 !
-      call add_1432_to_1234(-one, t_al_ck, zero, u_al_ck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call add_1432_to_1234(-one, t_al_ck, u_al_ck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call daxpy((wf%n_v)**2*(wf%n_o)**2, two, t_al_ck, 1, u_al_ck, 1)
 !
       call wf%mem%dealloc(t_al_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
@@ -397,8 +399,9 @@ contains
       call squareup(wf%t2am, t_ai_ck, (wf%n_o)*(wf%n_v))
 !
       call wf%mem%alloc(u_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))  
+      u_ai_ck = zero
 !
-      call add_1432_to_1234(-one, t_ai_ck, zero, u_ai_ck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call add_1432_to_1234(-one, t_ai_ck, u_ai_ck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call daxpy((wf%n_o)**2*(wf%n_v)**2, two, t_ai_ck, 1, u_ai_ck, 1)
 !
 !     Reorder the Fock matrix F_ck = F_kc 
@@ -1114,7 +1117,9 @@ contains
       call squareup(wf%t2am, t_ck_bj, (wf%n_o)*(wf%n_v))
 !
       call wf%mem%alloc(u_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call add_1432_to_1234(-one, t_ck_bj, zero, u_ck_bj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      u_ck_bj = zero 
+!
+      call add_1432_to_1234(-one, t_ck_bj, u_ck_bj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call daxpy((wf%n_o)**2*(wf%n_v)**2, two, t_ck_bj, 1, u_ck_bj, 1)
 !
       call wf%mem%dealloc(t_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
@@ -1222,7 +1227,8 @@ contains
 !
 !     Omega2(aibj, 1) =+ omega2_ai_bj(ai,bj) + omega2_bj_ai(bj,ai)
 !
-      call symmetrize_and_add_to_packed(wf%omega2, omega2_ai_bj, (wf%n_o)*(wf%n_v))
+      call symmetric_sum(omega2_ai_bj, (wf%n_o)*(wf%n_v))            ! symmetrize 
+      call add_to_packed(wf%omega2, omega2_ai_bj, (wf%n_o)*(wf%n_v)) ! add to packed 
 !
       call wf%mem%dealloc(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) 
 !
@@ -1361,8 +1367,9 @@ contains
 !     Form L_ld_kc = L_ldkc = 2*g_ld_kc(ld,kc) - g_ld_kc(lc,kd)    
 !
       call wf%mem%alloc(L_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      L_ld_kc = zero 
 !
-      call add_1432_to_1234(-one, g_ld_kc, zero, L_ld_kc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call add_1432_to_1234(-one, g_ld_kc, L_ld_kc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
       call daxpy((wf%n_o)**2*(wf%n_v)**2, two, g_ld_kc, 1, L_ld_kc, 1)
 !
 !     Deallocate g_ld_kc and L_kc_J
@@ -1375,8 +1382,9 @@ contains
       call squareup(wf%t2am, t_ai_dl, (wf%n_o)*(wf%n_v))
 !
       call wf%mem%alloc(u_ai_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      u_ai_dl = zero 
 !
-      call add_1432_to_1234(-one, t_ai_dl, zero, u_ai_dl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call add_1432_to_1234(-one, t_ai_dl, u_ai_dl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call daxpy((wf%n_o)**2*(wf%n_v)**2, two, t_ai_dl, 1, u_ai_dl, 1)
 !
       call wf%mem%dealloc(t_ai_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
@@ -1529,8 +1537,9 @@ contains
       call squareup(wf%t2am, t_bk_dl, (wf%n_v)*(wf%n_o))
 !
       call wf%mem%alloc(u_bk_dl, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      u_bk_dl = zero
 !
-      call add_1432_to_1234(-one, t_bk_dl, zero, u_bk_dl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call add_1432_to_1234(-one, t_bk_dl, u_bk_dl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call daxpy((wf%n_v)**2*(wf%n_o)**2, two, t_bk_dl, 1, u_bk_dl, 1)
 !
       call wf%mem%alloc(u_bl_dk, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))

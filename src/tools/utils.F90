@@ -62,7 +62,49 @@ contains
    end subroutine sort_12_to_21 
 !
 !
-   pure subroutine sort_1234_to_4132(x_pq_rs, x_sp_rq, dim_p, dim_q, dim_r, dim_s)
+   subroutine symmetric_sum(x, dim)
+!!
+!!    Symmetric sum 
+!!    Written by Eirik F. Kjønstad, Dec 2017
+!!
+!!    Performs the action
+!!
+!!       x(p,q) = x(p,q) + x(q,p)
+!!
+!!    without making a separate copy of x.
+!!
+      implicit none 
+!
+      integer(i15), intent(in) :: dim
+!
+      real(dp), dimension(dim, dim), intent(inout) :: x
+!
+      integer(i15) :: p, q
+!
+!     Overwrite the lower triangular part of the matrix 
+!
+      do q = 1, dim
+         do p = q, dim 
+!
+            x(p,q) = x(p,q) + x(q,p)
+!
+         enddo
+      enddo
+!
+!     Copy the lower triangular part to the upper triangular part 
+!
+      do p = 1, dim 
+         do q = p + 1, dim
+!
+            x(p,q) = x(q,p)
+!
+         enddo
+      enddo 
+!
+   end subroutine symmetric_sum  
+!
+!
+   subroutine sort_1234_to_4132(x_pq_rs, x_sp_rq, dim_p, dim_q, dim_r, dim_s)
 !!
 !!    Sort 1234 to 4132
 !!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
@@ -504,21 +546,66 @@ contains
    end subroutine sort_1234_to_4312
 !
 !
-   subroutine add_1432_to_1234(gamma, x, delta, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
+   subroutine sort_1234_to_1423(x_pq_rs, x_ps_qr, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Sort 1234 to 1423
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Reorders the array x_pq_rs to x_ps_qr (i.e., 1234 to 1423).
+!!
+!!    The unordered array x_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s.
+!!    The ordered array x_ps_qr is assumed allocated as dim_p*dim_s x dim_q*dim_r. 
+!!
+      implicit none 
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s 
+!
+      real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in)    :: x_pq_rs 
+      real(dp), dimension(dim_p*dim_s, dim_r*dim_q), intent(inout) :: x_ps_qr
+!
+      integer(i15) :: p, q, r, s, pq, rs, ps, qr
+!
+!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+      do s = 1, dim_s
+         do r = 1, dim_r
+!
+            rs = dim_r*(s-1) + r 
+!
+            do q = 1, dim_q 
+!
+               qr = dim_q*(r-1) + q 
+!
+               do p = 1, dim_p 
+!
+                  pq = dim_p*(q-1) + p 
+                  ps = dim_p*(s-1) + p 
+!
+                  x_ps_qr(ps, qr) = x_pq_rs(pq, rs) 
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!!$omp end parallel do
+!
+   end subroutine sort_1234_to_1423
+!
+!
+   subroutine add_1432_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
 !!
 !!    Add 1432 to 1234 
 !!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
 !!
 !!    Performs:
 !!
-!!       y_pq_rs(pq,rs) = delta*y_pq_rs(pq,rs) + gamma * x(ps, rq)
+!!       y_pq_rs(pq,rs) = y_pq_rs(pq,rs) + gamma * x(ps, rq)
 !!
 !!    The unordered array y_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s,
 !!    and x accordingly.
 !!
       implicit none 
 !
-      real(dp), intent(in) :: gamma, delta 
+      real(dp), intent(in) :: gamma
 !
       integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s 
 !
@@ -542,7 +629,7 @@ contains
                   pq = dim_p*(q-1) + p 
                   ps = dim_p*(s-1) + p 
 !
-                  y_pq_rs(pq, rs) = delta*y_pq_rs(pq, rs) + gamma*x(ps, rq)
+                  y_pq_rs(pq, rs) = y_pq_rs(pq, rs) + gamma*x(ps, rq)
 !
                enddo
             enddo
@@ -553,21 +640,70 @@ contains
    end subroutine add_1432_to_1234
 !
 !
-   subroutine add_1243_to_1234(gamma, x, delta, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
+   subroutine add_1342_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
 !!
-!!    Add 1243 to 1234
+!!    Add 1342 to 1234 
 !!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
 !!
 !!    Performs:
 !!
-!!       y_pq_rs(pq,rs) = delta*y_pq_rs(pq,rs) + gamma * x(pq, sr)
+!!       y_pq_rs(pq,rs) = y_pq_rs(pq,rs) + gamma * x(pr, sq)
 !!
 !!    The unordered array y_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s,
 !!    and x accordingly.
 !!
       implicit none 
 !
-      real(dp), intent(in) :: gamma, delta 
+      real(dp), intent(in) :: gamma 
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s 
+!
+      real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs 
+      real(dp), dimension(dim_p*dim_r, dim_s*dim_q), intent(in) :: x
+!
+      integer(i15) :: p, q, r, s, pq, rs, pr, sq
+!
+!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+      do s = 1, dim_s
+         do r = 1, dim_r
+!
+            rs = dim_r*(s-1) + r 
+!
+            do q = 1, dim_q
+!
+               sq = dim_s*(q-1) + s
+!
+               do p = 1, dim_p 
+!
+                  pq = dim_p*(q-1) + p 
+                  pr = dim_p*(r-1) + p 
+!
+                  y_pq_rs(pq, rs) = y_pq_rs(pq, rs) + gamma*x(pr, sq)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!!$omp end parallel do
+!
+   end subroutine add_1342_to_1234
+!
+!
+   subroutine add_1243_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Add 1243 to 1234
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Performs:
+!!
+!!       y_pq_rs(pq,rs) = y_pq_rs(pq,rs) + gamma * x(pq, sr)
+!!
+!!    The unordered array y_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s,
+!!    and x accordingly.
+!!
+      implicit none 
+!
+      real(dp), intent(in) :: gamma 
 !
       integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s 
 !
@@ -589,7 +725,7 @@ contains
 !
                   pq = dim_p*(q-1) + p 
 !
-                  y_pq_rs(pq, rs) = delta*y_pq_rs(pq, rs) + gamma*x(pq, sr)
+                  y_pq_rs(pq, rs) = y_pq_rs(pq, rs) + gamma*x(pq, sr)
 !
                enddo
             enddo
@@ -600,21 +736,21 @@ contains
    end subroutine add_1243_to_1234
 !
 !
-   subroutine add_3412_to_1234(gamma, x, delta, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
+   subroutine add_3412_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
 !!
 !!    Add 3412 to 1234
 !!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
 !!
 !!    Performs:
 !!
-!!       y_pq_rs(pq,rs) = delta*y_pq_rs(pq,rs) + gamma * x(rs, pq)
+!!       y_pq_rs(pq,rs) = y_pq_rs(pq,rs) + gamma * x(rs, pq)
 !!
 !!    The unordered array y_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s,
 !!    and x accordingly.
 !!
       implicit none 
 !
-      real(dp), intent(in) :: gamma, delta 
+      real(dp), intent(in) :: gamma
 !
       integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s 
 !
@@ -635,7 +771,7 @@ contains
 !
                   pq = dim_p*(q-1) + p 
 !
-                  y_pq_rs(pq, rs) = delta*y_pq_rs(pq, rs) + gamma*x(rs, pq)
+                  y_pq_rs(pq, rs) = y_pq_rs(pq, rs) + gamma*x(rs, pq)
 !
                enddo
             enddo
@@ -646,21 +782,21 @@ contains
    end subroutine add_3412_to_1234
 !
 !
-   subroutine add_2341_to_1234(gamma, x, delta, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
+   subroutine add_2341_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
 !!
 !!    Add 2341 to 1234
 !!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
 !!
 !!    Performs:
 !!
-!!       y_pq_rs(pq,rs) = delta*y_pq_rs(pq,rs) + gamma * x(qr, sp)
+!!       y_pq_rs(pq,rs) = y_pq_rs(pq,rs) + gamma * x(qr, sp)
 !!
 !!    The unordered array y_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s,
 !!    and x accordingly.
 !!
       implicit none 
 !
-      real(dp), intent(in) :: gamma, delta 
+      real(dp), intent(in) :: gamma 
 !
       integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s 
 !
@@ -684,7 +820,7 @@ contains
                   pq = dim_p*(q-1) + p 
                   sp = dim_s*(p-1) + s 
 !
-                  y_pq_rs(pq, rs) = delta*y_pq_rs(pq, rs) + gamma*x(qr, sp)
+                  y_pq_rs(pq, rs) = y_pq_rs(pq, rs) + gamma*x(qr, sp)
 !
                enddo
             enddo
@@ -695,21 +831,21 @@ contains
    end subroutine add_2341_to_1234
 !
 !
-   subroutine add_2143_to_1234(gamma, x, delta, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
+   subroutine add_2143_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
 !!
 !!    Add 2143 to 1234
 !!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
 !!
 !!    Performs:
 !!
-!!       y_pq_rs(pq,rs) = delta*y_pq_rs(pq,rs) + gamma * x(qp, sr)
+!!       y_pq_rs(pq,rs) = y_pq_rs(pq,rs) + gamma * x(qp, sr)
 !!
 !!    The unordered array y_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s,
 !!    and x accordingly.
 !!
       implicit none 
 !
-      real(dp), intent(in) :: gamma, delta 
+      real(dp), intent(in) :: gamma 
 !
       integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s 
 !
@@ -732,7 +868,7 @@ contains
                   pq = dim_p*(q-1) + p 
                   qp = dim_q*(p-1) + q 
 !
-                  y_pq_rs(pq, rs) = delta*y_pq_rs(pq, rs) + gamma*x(qp, sr)
+                  y_pq_rs(pq, rs) = y_pq_rs(pq, rs) + gamma*x(qp, sr)
 !
                enddo
             enddo
@@ -743,21 +879,21 @@ contains
    end subroutine add_2143_to_1234
 !
 !
-   subroutine add_3214_to_1234(gamma, x, delta, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
+   subroutine add_3214_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
 !!
 !!    Add 3214 to 1234
 !!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
 !!
 !!    Performs:
 !!
-!!       y_pq_rs(pq,rs) = delta*y_pq_rs(pq,rs) + gamma * x(rq, ps)
+!!       y_pq_rs(pq,rs) = y_pq_rs(pq,rs) + gamma * x(rq, ps)
 !!
 !!    The unordered array y_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s,
 !!    and x accordingly.
 !!
       implicit none 
 !
-      real(dp), intent(in) :: gamma, delta 
+      real(dp), intent(in) :: gamma 
 !
       integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s 
 !
@@ -765,8 +901,6 @@ contains
       real(dp), dimension(dim_r*dim_q, dim_p*dim_s), intent(in) :: x
 !
       integer(i15) :: p, q, r, s, pq, rs, rq, ps 
-!
-   !   call dscal(dim_p*dim_q*dim_r*dim_s, delta, y_pq_rs, 1)
 !
 !!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
       do s = 1, dim_s
@@ -783,7 +917,7 @@ contains
                   pq = dim_p*(q-1) + p 
                   ps = dim_p*(s-1) + p
 !
-                  y_pq_rs(pq, rs) = delta*y_pq_rs(pq, rs) + gamma*x(rq, ps)
+                  y_pq_rs(pq, rs) = y_pq_rs(pq, rs) + gamma*x(rq, ps)
 !
                enddo
             enddo
@@ -794,21 +928,21 @@ contains
    end subroutine add_3214_to_1234
 !
 !
-   subroutine add_4231_to_1234(gamma, x, delta, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
+   subroutine add_4231_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
 !!
 !!    Add 4231 to 1234
 !!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
 !!
 !!    Performs:
 !!
-!!       y_pq_rs(pq,rs) = delta*y_pq_rs(pq,rs) + gamma * x(sq, rp)
+!!       y_pq_rs(pq,rs) = y_pq_rs(pq,rs) + gamma * x(sq, rp)
 !!
 !!    The unordered array y_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s,
 !!    and x accordingly.
 !!
       implicit none 
 !
-      real(dp), intent(in) :: gamma, delta 
+      real(dp), intent(in) :: gamma 
 !
       integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s 
 !
@@ -832,7 +966,7 @@ contains
                   pq = dim_p*(q-1) + p 
                   rp = dim_r*(p-1) + r 
 !
-                  y_pq_rs(pq, rs) = delta*y_pq_rs(pq, rs) + gamma*x(sq, rp)
+                  y_pq_rs(pq, rs) = y_pq_rs(pq, rs) + gamma*x(sq, rp)
 !
                enddo
             enddo
@@ -841,6 +975,197 @@ contains
 !!$omp end parallel do
 !
    end subroutine add_4231_to_1234
+!
+!
+   subroutine add_4213_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Add 4213 to 1234
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Performs:
+!!
+!!       y_pq_rs(pq,rs) = y_pq_rs(pq,rs) + gamma * x(sq, pr)
+!!
+!!    The unordered array y_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s,
+!!    and x accordingly.
+!!
+      implicit none 
+!
+      real(dp), intent(in) :: gamma 
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s 
+!
+      real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs 
+      real(dp), dimension(dim_s*dim_q, dim_p*dim_r), intent(in) :: x
+!
+      integer(i15) :: p, q, r, s, pq, rs, sq, pr 
+!
+!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+      do s = 1, dim_s
+         do r = 1, dim_r
+!
+            rs = dim_r*(s-1) + r 
+!
+            do q = 1, dim_q
+!
+               sq = dim_s*(q-1) + s 
+!
+               do p = 1, dim_p 
+!
+                  pq = dim_p*(q-1) + p 
+                  pr = dim_p*(r-1) + p 
+!
+                  y_pq_rs(pq, rs) = y_pq_rs(pq, rs) + gamma*x(sq, pr)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!!$omp end parallel do
+!
+   end subroutine add_4213_to_1234
+!
+!
+   subroutine add_4321_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Add 4321 to 1234
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Performs:
+!!
+!!       y_pq_rs(pq,rs) = y_pq_rs(pq,rs) + gamma * x(sr, qp)
+!!
+!!    The unordered array y_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s,
+!!    and x accordingly.
+!!
+      implicit none 
+!
+      real(dp), intent(in) :: gamma 
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s 
+!
+      real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs 
+      real(dp), dimension(dim_s*dim_r, dim_q*dim_p), intent(in) :: x
+!
+      integer(i15) :: p, q, r, s, pq, rs, sr, qp 
+!
+!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+      do s = 1, dim_s
+         do r = 1, dim_r
+!
+            rs = dim_r*(s-1) + r 
+            sr = dim_s*(r-1) + s 
+!
+            do q = 1, dim_q
+               do p = 1, dim_p 
+!
+                  pq = dim_p*(q-1) + p 
+                  qp = dim_q*(p-1) + q 
+!
+                  y_pq_rs(pq, rs) = y_pq_rs(pq, rs) + gamma*x(sr, qp)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!!$omp end parallel do
+!
+   end subroutine add_4321_to_1234
+!
+!
+   subroutine add_4312_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Add 4312 to 1234
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Performs:
+!!
+!!       y_pq_rs(pq,rs) = y_pq_rs(pq,rs) + gamma * x(sr, pq)
+!!
+!!    The unordered array y_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s,
+!!    and x accordingly.
+!!
+      implicit none 
+!
+      real(dp), intent(in) :: gamma 
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s 
+!
+      real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs 
+      real(dp), dimension(dim_s*dim_r, dim_p*dim_q), intent(in) :: x
+!
+      integer(i15) :: p, q, r, s, pq, rs, sr 
+!
+!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+      do s = 1, dim_s
+         do r = 1, dim_r
+!
+            rs = dim_r*(s-1) + r 
+            sr = dim_s*(r-1) + s 
+!
+            do q = 1, dim_q
+               do p = 1, dim_p 
+!
+                  pq = dim_p*(q-1) + p  
+!
+                  y_pq_rs(pq, rs) = y_pq_rs(pq, rs) + gamma*x(sr, pq)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!!$omp end parallel do
+!
+   end subroutine add_4312_to_1234
+!
+!
+   subroutine add_4123_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Add 4123 to 1234
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Performs:
+!!
+!!       y_pq_rs(pq,rs) = y_pq_rs(pq,rs) + gamma * x(sp, qr)
+!!
+!!    The unordered array y_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s,
+!!    and x accordingly.
+!!
+      implicit none 
+!
+      real(dp), intent(in) :: gamma 
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s 
+!
+      real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs 
+      real(dp), dimension(dim_s*dim_p, dim_q*dim_r), intent(in) :: x
+!
+      integer(i15) :: p, q, r, s, pq, rs, sp, qr 
+!
+!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+      do s = 1, dim_s
+         do r = 1, dim_r
+!
+            rs = dim_r*(s-1) + r 
+!
+            do q = 1, dim_q
+!
+               qr = dim_q*(r-1) + q 
+!
+               do p = 1, dim_p 
+!
+                  pq = dim_p*(q-1) + p 
+                  sp = dim_s*(p-1) + s 
+!
+                  y_pq_rs(pq, rs) = y_pq_rs(pq, rs) + gamma*x(sp, qr)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!!$omp end parallel do
+!
+   end subroutine add_4123_to_1234
 !
 !
    subroutine squareup_and_sort_1234_to_1432(x_pqrs, x_ps_rq, dim_p, dim_q, dim_r, dim_s)
@@ -1073,6 +1398,51 @@ contains
 !!$omp end parallel do
 !
    end subroutine sort_1234_to_4231
+!
+!
+   subroutine sort_1234_to_4213(x_pq_rs, x_sq_pr, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Sort 1234 to 4213
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Reorders the array x_pq_rs to x_sq_pr (i.e., 1234 to 4213).
+!!
+!!    The unordered array x_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s.
+!!    The ordered array x_sq_pr is assumed allocated as dim_s*dim_q x dim_p*dim_r. 
+!!
+      implicit none 
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s 
+!
+      real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs 
+      real(dp), dimension(dim_s*dim_q, dim_r*dim_p) :: x_sq_pr
+!
+      integer(i15) :: p, q, r, s, pq, rs, sq, pr 
+!
+!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+      do s = 1, dim_s
+         do r = 1, dim_r
+!
+            rs = dim_r*(s-1) + r 
+!
+            do q = 1, dim_q
+!
+               sq = dim_s*(q-1) + s
+!
+               do p = 1, dim_p 
+!
+                  pq = dim_p*(q-1) + p 
+                  pr = dim_p*(r-1) + p 
+!
+                  x_sq_pr(sq, pr) = x_pq_rs(pq, rs)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!!$omp end parallel do
+!
+   end subroutine sort_1234_to_4213
 !
 !
    subroutine squareup_and_sort_1234_to_3214(x_pqrs, x_rq_ps, dim_p, dim_q, dim_r, dim_s)
@@ -1338,7 +1708,7 @@ contains
 !
       integer(i15), intent(in) :: N
 !
-      real(dp), dimension(:,:) :: packed
+      real(dp), dimension(:,:), intent(inout) :: packed
       real(dp), dimension(:,:), intent(in) :: unpacked
 !
       integer(i15) :: i, j, ij 
