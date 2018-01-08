@@ -167,15 +167,15 @@ contains
 !
          write(unit_output,'(/t3,a)') 'Breakdown of CCSD omega timings:'
 !
-         write(unit_output,'(/t3,a27,f14.8)') 'Time in CCSD A1 (seconds):', ccsd_a1_time
-         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD B1 (seconds):', ccsd_b1_time
-         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD C1 (seconds):', ccsd_c1_time
-         write(unit_output,'(t3,a27,f14.8)')  'Time in CCS  A1 (seconds):', ccs_a1_time
-         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD A2 (seconds):', ccsd_a2_time
-         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD B2 (seconds):', ccsd_b2_time
-         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD C2 (seconds):', ccsd_c2_time
-         write(unit_output,'(t3,a27,f14.8)')  'Time in CCSD D2 (seconds):', ccsd_d2_time
-         write(unit_output,'(t3,a27,f14.8/)') 'Time in CCSD E2 (seconds):', ccsd_e2_time
+         write(unit_output,'(/t6,a26,f14.8)') 'Time in CCSD A1 (seconds):', ccsd_a1_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD B1 (seconds):', ccsd_b1_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD C1 (seconds):', ccsd_c1_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCS  A1 (seconds):', ccs_a1_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD A2 (seconds):', ccsd_a2_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD B2 (seconds):', ccsd_b2_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD C2 (seconds):', ccsd_c2_time
+         write(unit_output,'(t6,a26,f14.8)')  'Time in CCSD D2 (seconds):', ccsd_d2_time
+         write(unit_output,'(t6,a26,f14.8/)') 'Time in CCSD E2 (seconds):', ccsd_e2_time
 !
          flush(unit_output)
 !
@@ -349,25 +349,9 @@ contains
 !
 !     Form the reordered integrals g_ckl_i = g_kilc 
 !
-      call wf%mem%alloc(g_ckl_i, (wf%n_v)*((wf%n_o)**2), wf%n_o)
+      call wf%mem%alloc(g_ckl_i, (wf%n_v)*(wf%n_o), (wf%n_o)**2)
 !
-      do i = 1, wf%n_o
-         do l = 1, wf%n_o
-            do k = 1, wf%n_o
-!
-               ki  = index_two(k, i, wf%n_o)
-!
-               do c = 1, wf%n_v
-!
-                  ckl = index_three(c, k, l, wf%n_v, wf%n_o)                    
-                  lc  = index_two(l, c, wf%n_o)           
-!
-                  g_ckl_i(ckl, i) = g_ki_lc(ki, lc)
-!
-               enddo
-            enddo
-         enddo
-      enddo
+      call sort_1234_to_4132(g_ki_lc, g_ckl_i, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
 !
 !     Deallocate unordered integrals g_ki_lc
 !
@@ -1026,26 +1010,27 @@ contains
 !
       call wf%mem%alloc(g_kl_ij, (wf%n_o)*(wf%n_o),(wf%n_o)*(wf%n_o))
 !
-      do k = 1, wf%n_o
-         do l = 1, wf%n_o
-            do i = 1, wf%n_o
-               do j=1, wf%n_o
-!
-!                 Calculate compound indices
-!
-                  ki = index_two(k, i, wf%n_o)
-                  lj = index_two(l, j, wf%n_o)
-                  kl = index_two(k, l, wf%n_o)
-                  ij = index_two(i, j, wf%n_o)
-!
-!                 Reordering g_ki_lj to g_kl_ij
-!
-                  g_kl_ij(kl, ij) = g_ki_lj(ki, lj)
-!
-               enddo
-            enddo
-         enddo
-      enddo
+      call sort_1234_to_1324(g_ki_lj, g_kl_ij, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
+!       do k = 1, wf%n_o
+!          do l = 1, wf%n_o
+!             do i = 1, wf%n_o
+!                do j=1, wf%n_o
+! !
+! !                 Calculate compound indices
+! !
+!                   ki = index_two(k, i, wf%n_o)
+!                   lj = index_two(l, j, wf%n_o)
+!                   kl = index_two(k, l, wf%n_o)
+!                   ij = index_two(i, j, wf%n_o)
+! !
+! !                 Reordering g_ki_lj to g_kl_ij (1234 to 1324)
+! !
+!                   g_kl_ij(kl, ij) = g_ki_lj(ki, lj)
+! !
+!                enddo
+!             enddo
+!          enddo
+!       enddo
 !
       call wf%mem%dealloc(g_ki_lj, (wf%n_o)*(wf%n_o), (wf%n_o)*(wf%n_o))
 !

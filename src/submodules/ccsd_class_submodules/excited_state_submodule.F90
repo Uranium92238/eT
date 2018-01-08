@@ -111,10 +111,9 @@ contains
       do trial = first_trial, last_trial
 !
          read(unit_trial_vecs, rec=trial, iostat=ioerror) c_a_i, c_aibj
-
+!
 !        Test for left or right transformation
 !
-
          if (wf%tasks%current == 'excited_state') then
 !
             if (wf%excited_state_specifications%right) then
@@ -134,7 +133,7 @@ contains
 !
          elseif (wf%tasks%current == 'multipliers') then
 !
-               call wf%jacobian_transpose_ccsd_transformation(c_a_i, c_aibj)
+            call wf%jacobian_transpose_ccsd_transformation(c_a_i, c_aibj)
 !
          else
 !
@@ -276,9 +275,6 @@ contains
 !     Set current task to excited state calculation 
 ! 
       wf%tasks%current = 'excited_state'
-!
-      wf%excited_state_specifications%right = .false.
-      wf%excited_state_specifications%left  = .true.
 !
 !     Set filename for solution vectors
 !

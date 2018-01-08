@@ -116,9 +116,7 @@ contains
    end subroutine general_specs_reader_ccs
 !
 !
- 
-   module subroutine calculation_reader_ccs(wf, unit_input)
-                                 
+   module subroutine calculation_reader_ccs(wf, unit_input)                             
 !!
 !!    Calculation reader,
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Nov. 2017
@@ -142,11 +140,7 @@ contains
 !
 !     Prints
 !
-      write(unit_output,'(t3,a/)')'Calculations requested:'
-!
-!     Always do ground state calculation
-!
-      wf%tasks%ground_state = .true.
+      write(unit_output,'(t3,a/)')'Calculations requested:'  
 !
 !     Start at the begining of eT.inp
 !
@@ -167,6 +161,8 @@ contains
 !           Prints
 !
             write(unit_output,'(t6,a,a)')  trim(wf%name),' ground state'
+!
+            wf%tasks%ground_state = .true.
 !
             read(unit_input,'(a40)') line
             line = remove_preceding_blanks(line)

@@ -399,8 +399,9 @@ contains
          local_index2_last = wf%n_o
          local_index3_last = wf%n_v
          local_index4_last = wf%n_o
-!         
+!       
       else
+!
          write(unit_output,*) 'Error: some optionals missing in call to get_oo_vo'
          stop
 !
@@ -3015,7 +3016,8 @@ contains
       integer(i15) :: index3_first, index3_last
       integer(i15) :: index4_first, index4_last
 !
-      real(dp), dimension(:,:), allocatable :: L_ij_J, L_ak_J
+      real(dp), dimension(:,:), allocatable :: L_ij_J
+      real(dp), dimension(:,:), allocatable :: L_ak_J
 !
       integer(i15) :: length_1 = 0, length_2 = 0, length_3 = 0, length_4 = 0
 !
@@ -3034,6 +3036,7 @@ contains
 !     Get T1-transformed Cholesky vectors
 !
       call wf%get_cholesky_ij(L_ij_J, index1_first, index1_last, index2_first, index2_last)
+!
       call wf%get_cholesky_ai(L_ak_J, index3_first, index3_last, index4_first, index4_last)
 !
 !     Construct integral
@@ -4242,7 +4245,7 @@ contains
 !
       character(len=40) :: integral_type 
 !
-      integer(i15) :: a = 0, i = 0, ai = 0
+      integer(i15) :: i = 0, ai = 0
       integer(i15) :: jb = 0
 !
 !     Disk space required to store g_vo_vv 
@@ -4747,7 +4750,7 @@ contains
 !
       call cpu_time(begin_timer)
 !  
-!     Open file for reading integrals - record (ai), record length (n_o)*(n_v) (bj)
+!     Open file for reading integrals - record (ab), record length (n_o)*(n_v) (ci)
 !
       call generate_unit_identifier(unit_g_t1_abci)
       open(unit=unit_g_t1_abci, file='g_t1_abci', action='read', status='unknown', &
@@ -4933,7 +4936,7 @@ contains
    end function get_vvvv_required_mem_ccs
 !
 !
-   integer function get_vvvo_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
+   module function get_vvvo_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
 !!
 !!    Get vvvo required memory (CCS)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Dec 2017
@@ -5030,7 +5033,7 @@ contains
    end function get_vvvo_required_mem_ccs
 !
 !
-   integer function get_vvov_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
+   module function get_vvov_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
 !!
 !!    Get vvvo required memory (CCS)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Dec 2017
@@ -5112,7 +5115,7 @@ contains
    end function get_vvov_required_mem_ccs
 !
 !
-   integer function get_vvoo_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
+   module function get_vvoo_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
 !!
 !!    Get vvvo required memory (CCS)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Dec 2017

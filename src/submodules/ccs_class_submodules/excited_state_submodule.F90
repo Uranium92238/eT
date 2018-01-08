@@ -384,19 +384,31 @@ contains
       write(unit_output,'(t6,a25,f14.8/)') 'Total CPU time (seconds):    ', end_excited_state_solver - start_excited_state_solver
       flush(unit_output)
 
-      write(unit_output,'(t6,a10,a18,a17,a20)')'Excitation', 'energy [a.u.]', 'energy [eV]', 'energy [cm^-1]'
-      write(unit_output,'(t6,a)')'--------------------------------------------------------------------'
+      write(unit_output,'(t6,a10,4x,a13,11x,a11,9x,a14)')'Excitation', 'energy [a.u.]', 'energy [eV]', 'energy [cm^-1]'
+      write(unit_output,'(t6,a)')'---------------------------------------------------------------------------------'
+!
       do i = 1, wf%excited_state_specifications%n_singlet_states
 !
-!     Print energy of excitation in eV, hartree and cm^-1
+!        Print energy of excitation in eV, hartree and cm^-1
 !
-      write(unit_output,'(t6,i3,12x,f12.8,7x,f12.8,5x,f16.8)') i, eigenvalues_Re_new(i,1),&
-                                                eigenvalues_Re_new(i,1)*27.211399, &
-                                                eigenvalues_Re_new(i,1)*219474.63
+         write(unit_output,'(t6,i3,6x,f19.12,5x,f19.12,5x,f19.12)') i, eigenvalues_Re_new(i,1),           &
+                                                                       eigenvalues_Re_new(i,1)*27.211399, &
+                                                                       eigenvalues_Re_new(i,1)*219474.63
       enddo
-      write(unit_output,'(t6,a)')'--------------------------------------------------------------------'
+!
+      write(unit_output,'(t6,a)')'---------------------------------------------------------------------------------'
       write(unit_output,'(t6,a)') '1 a.u. = 27.211399 eV'
       write(unit_output,'(t6,a)') '1 a.u. = 219474.63 cm^-1'
+!
+!     Save excitation energies 
+!
+      if (.not. allocated(wf%excitation_energies)) then 
+!
+         call wf%mem%alloc(wf%excitation_energies, wf%excited_state_specifications%n_singlet_states, 1)
+!
+      endif
+!
+      wf%excitation_energies = eigenvalues_Re_new ! Only save the real part 
 !
 !     Final deallocations
 !
@@ -725,7 +737,7 @@ contains
       n_new_trials = 0
       converged_residual = .true.
 !
-      write(unit_output,'(t3,a)') 'Root       Eigenvalue (Re)      Eigenvalue (Im)      Residual norm'
+      write(unit_output,'(t3,a)') 'Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm'
       write(unit_output,'(t3,a)') '-------------------------------------------------------------------'
 !
 !     For each of the roots
@@ -805,7 +817,7 @@ contains
 !
 !        Prints
 !
-         write(unit_output,'(t3,i2,5x,f14.8,7x,f14.8,11x,e10.4)') root, eigenvalues_Re(root, 1), &
+         write(unit_output,'(t3,i2,5x,f16.12,7x,f16.12,11x,e10.4)') root, eigenvalues_Re(root, 1), &
                                                                 eigenvalues_Im(root, 1), norm_residual/norm_solution_vector
          flush(unit_output)
 !
@@ -1256,7 +1268,7 @@ contains
 !
             endif
 !
-         elseif(wf%tasks%current == 'multipliers') then
+         elseif (wf%tasks%current == 'multipliers') then
 !
                call wf%jacobian_transpose_ccs_transformation(c_a_i)
 !
@@ -1483,7 +1495,7 @@ contains
          real(dp)     :: swap     = zero
          integer(i15) :: swap_i = 0, swap_a = 0
 !  
-         integer(i15) :: i = 0, j = 0
+         integer(i15) ::  j = 0
 !
 !        Placing the n first elements of vec into sorted_short_vec
 !
