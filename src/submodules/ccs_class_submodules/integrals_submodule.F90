@@ -4245,7 +4245,7 @@ contains
 !
       character(len=40) :: integral_type 
 !
-      integer(i15) :: a = 0, i = 0, ai = 0
+      integer(i15) :: i = 0, ai = 0
       integer(i15) :: jb = 0
 !
 !     Disk space required to store g_vo_vv 
@@ -4936,7 +4936,7 @@ contains
    end function get_vvvv_required_mem_ccs
 !
 !
-   integer function get_vvvo_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
+   module function get_vvvo_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
 !!
 !!    Get vvvo required memory (CCS)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Dec 2017
@@ -5033,7 +5033,7 @@ contains
    end function get_vvvo_required_mem_ccs
 !
 !
-   integer function get_vvov_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
+   module function get_vvov_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
 !!
 !!    Get vvvo required memory (CCS)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Dec 2017
@@ -5115,7 +5115,7 @@ contains
    end function get_vvov_required_mem_ccs
 !
 !
-   integer function get_vvoo_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
+   module function get_vvoo_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
 !!
 !!    Get vvvo required memory (CCS)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Dec 2017

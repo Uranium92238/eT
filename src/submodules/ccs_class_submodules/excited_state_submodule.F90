@@ -1495,7 +1495,7 @@ contains
          real(dp)     :: swap     = zero
          integer(i15) :: swap_i = 0, swap_a = 0
 !  
-         integer(i15) :: i = 0, j = 0
+         integer(i15) ::  j = 0
 !
 !        Placing the n first elements of vec into sorted_short_vec
 !
