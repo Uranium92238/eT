@@ -171,7 +171,7 @@ contains
 !
       do i = 1, wf%CC2_orbitals%n_active_atoms
          if (wf%CC2_orbitals%active_atoms(i,1) .gt. n_nuclei) then
-            write(unit_output,*) 'WARNING: Illegal chioce of atomss in cholesky section of eT.inp.'
+            write(unit_output,*) 'WARNING: Illegal chioce of atoms in cholesky section of eT.inp.'
             stop
          endif
       enddo
@@ -220,7 +220,6 @@ contains
 !     ::::::::::::::::::::::
 !     -::- Virtual part -::-
 !     ::::::::::::::::::::::
-
 !
 !     Allocations for Cholesky localized orbitals
 !   
@@ -272,10 +271,7 @@ contains
 !
       offset_v = offset_v + n_vectors_v
 !
-      !call wf%mem%dealloc_int(active_atoms, n_CC2_atoms, 1)
       call wf%mem%dealloc_int(active_ao_index_list, n_active_aos, 1)
-
-!
 !
 !     :: CCS ::
 !
@@ -707,7 +703,6 @@ contains
 !
     end subroutine construct_active_ao_index_list
 !
-!
 !     :::::::::::::::::::::::
 !     -::- CNTO Routines -::-
 !     :::::::::::::::::::::::
@@ -762,16 +757,18 @@ contains
 !
       if (wf%tasks%excited_state .or.  wf%tasks%core_excited_state) then
 !  
-         call wf%cc2_cnto_lower_level_method
+         call wf%cnto_lower_level_method
 !
       else
 !
-         write(unit_output,*)'WARNING: cntos without excited state calculation makes no sense.'
+         write(unit_output,*)'Error: cntos without excited state calculation makes no sense.'
+         stop
+!
       endif
 !
 !     Print info
 !
-      call wf%cc2_cnto_orbitals
+      call wf%cnto_orbitals
 !
 !     Print summary
 !     
@@ -789,7 +786,7 @@ contains
    end subroutine cnto_orbital_drv_mlcc2
 !
 !
-   module subroutine cc2_cnto_lower_level_method_mlcc2(wf)
+    module subroutine cnto_lower_level_method_mlcc2(wf)
 !!
 !!    CNTO lower level calculation (MLCC2),
 !!    Written by Sarai D. Folkestad, June 2017.
@@ -802,13 +799,6 @@ contains
 !
       type(ccs), allocatable :: ccs_wf
 !
-      integer(i15) :: lower_level_n_singlet_states
-      integer(i15) :: i = 0, j = 0
-!
-      integer(i15), dimension(:,:), allocatable :: index_list
-!
-      logical :: start_vec_exists
-!
 !     ::::::::::::::::::::::::::::::::::::::::::::::::
 !     -::- Running lower level method calculation -::-
 !     ::::::::::::::::::::::::::::::::::::::::::::::::
@@ -817,130 +807,9 @@ contains
 !
       allocate(ccs_wf)
 !
-!     :: Set calculation tasks ::
+!     Initialize lower level method
 !
-      ccs_wf%tasks = wf%tasks
-!
-!     :: Set calculation settings ::
-!
-      ccs_wf%settings                           = wf%settings
-      ccs_wf%core_excited_state_specifications  = wf%core_excited_state_specifications
-! 
-!     :: Set number of excitations to use for cnto generation ::
-!        - Should be some function of wf%excited_state_specifications%n_singlet_states
-!
-      lower_level_n_singlet_states = CCS_factor_n_singlet_states*wf%excited_state_specifications%n_singlet_states
-! 
-      ccs_wf%excited_state_specifications%n_singlet_states = lower_level_n_singlet_states
-!
-!     :: Set convergence threshold for lower lying method ::
-!
-      ccs_wf%ground_state_specifications%energy_threshold = 1.0D-04 
-      ccs_wf%ground_state_specifications%residual_threshold = 1.0D-04 
-!
-      ccs_wf%excited_state_specifications%energy_threshold = 1.0D-04 
-      ccs_wf%excited_state_specifications%residual_threshold = 1.0D-04 
-!
-!     :: User specified start vectors for excited state calculation ::
-!
-!     Test for user specified start vector
-!
-!     We must do some cumbersome tricks since n_singlet_states for ccs_wf is higher than for wf
-!
-      if (wf%excited_state_specifications%user_specified_start_vector) then
-!
-!        Find indices lowest orbital differences (either core or valence) and place in index_list
-!
-         call wf%mem%alloc_int(index_list, ccs_wf%excited_state_specifications%n_singlet_states, 1)
-!
-         if (wf%tasks%excited_state) then
-!
-            call ccs_wf%find_start_trial_indices(index_list)
-!
-         elseif (wf%tasks%core_excited_state) then
-!
-            call ccs_wf%find_start_trial_indices_core(index_list)
-!
-         endif
-!
-!        Loop through user specified start vectors and ...
-!
-         do i = 1, wf%excited_state_specifications%n_singlet_states
-            start_vec_exists = .false.
-!
-!           ... Check if it is contained in index list already
-!
-            do j = 1, ccs_wf%excited_state_specifications%n_singlet_states
-               if (wf%excited_state_specifications%start_vectors(i,1) == index_list(j,1)) &
-                  start_vec_exists = .true.
-            enddo
-!
-!           ... If not, exchange it with an element of index_list (starting at the end of index_list)
-!
-            if (.not. start_vec_exists) then
-               index_list(ccs_wf%excited_state_specifications%n_singlet_states - i + 1, 1) &
-                = wf%excited_state_specifications%start_vectors(i,1)
-            endif
-!
-         enddo
-!
-!        Set user_specified_start_vector to true for lower level method
-!
-!        OBS: It is crusial that tis is done AFTER the call to 
-!             find_start_trial_indices/find_start_trial_indices_core
-!
-         ccs_wf%excited_state_specifications%user_specified_start_vector = .true.
-!
-!        Let index_list be the user specified start vector.
-!
-         call wf%mem%alloc_int(ccs_wf%excited_state_specifications%start_vectors, &
-                            ccs_wf%excited_state_specifications%n_singlet_states, 1)
-!
-         ccs_wf%excited_state_specifications%start_vectors = index_list
-!
-         call wf%mem%dealloc_int(index_list, ccs_wf%excited_state_specifications%n_singlet_states, 1)
-!
-!        Since orbitals will swap order, start vector in higher level method must be removed
-!
-         wf%excited_state_specifications%user_specified_start_vector = .false.
-         call wf%mem%dealloc_int(wf%excited_state_specifications%start_vectors, wf%excited_state_specifications%n_singlet_states, 1)
-!
-      endif
-!
-!     :: Initialize lower level method ::
-!  
-      ccs_wf%name = 'CCS'
-!
-!     Set implemented generic methods
-!
-      ccs_wf%implemented%ground_state         = .true.
-      ccs_wf%implemented%excited_state        = .true.
-      ccs_wf%implemented%core_excited_state   = .true.
-!
-!     Read Hartree-Fock info from SIRIUS
-!
-      call ccs_wf%read_hf_info
-!
-!     Read Cholesky AO integrals and transform to MO basis
-!
-      call ccs_wf%read_transform_cholesky
-!
-!     Initialize amplitudes and associated attributes
-!
-      call ccs_wf%initialize_amplitudes
-!
-!     Set the number of parameters in the wavefunction
-!     (that are solved for in the ground and excited state solvers) 
-!
-      ccs_wf%n_parameters = ccs_wf%n_t1am
-!
-!     Initialize the projection vector 
-!
-      call ccs_wf%initialize_omega
-!
-!     Allocate Fock matrix and set to zero
-!
-      call ccs_wf%initialize_fock_matrix
+      call wf%cnto_init_ccs(ccs_wf)
 !
 !     :: Driver of lower level method ::
 !
@@ -950,10 +819,10 @@ contains
 !
       deallocate(ccs_wf)
 !
-   end subroutine cc2_cnto_lower_level_method_mlcc2
+   end subroutine cnto_lower_level_method_mlcc2
 !
 !
-   module subroutine cc2_cnto_orbitals_mlcc2(wf)
+   module subroutine cnto_orbitals_mlcc2(wf)
 !!
 !!    CNTO Oritals (MLCC2),
 !!    Written by Sarai D. Folkestad Aug. 2017
@@ -1210,7 +1079,6 @@ contains
 !
       call wf%mem%dealloc(C_o_transformed, wf%n_ao, wf%n_o)
       call wf%mem%dealloc(C_v_transformed, wf%n_ao, wf%n_v)
-
 !
 !     :: Determine number of active orbitals ::
 !
@@ -1254,7 +1122,9 @@ contains
 !
 !     Initialize amplitudes and associated attributes
 !
-      call wf%initialize_amplitudes
+      wf%n_t1am = (wf%n_o)*(wf%n_v)
+!
+      call wf%initialize_single_amplitudes
       call wf%initialize_omega
 !
 !     Set the number of parameters in the wavefunction
@@ -1272,204 +1142,217 @@ contains
 !
 !     :: Occupied Orbitals ::
 !
-!
 !     Diagonalize active-active block
 !
-      call wf%mem%alloc(work, 4*(wf%n_CC2_o), 1)
-      call wf%mem%alloc(orbital_energies, (wf%n_CC2_o), 1)
-      work = zero
+      if (wf%n_CC2_o .gt. 0) then
+         call wf%mem%alloc(work, 4*(wf%n_CC2_o), 1)
+         call wf%mem%alloc(orbital_energies, (wf%n_CC2_o), 1)
+         work = zero
 !
-      call dsyev('V','U',              &
-                  (wf%n_CC2_o),        &
-                  wf%fock_ij,          &
-                  wf%n_o,              &
-                  orbital_energies,    &
-                  work,                & 
-                  4*(wf%n_CC2_o),      &
-                  info)
+         call dsyev('V','U',              &
+                     (wf%n_CC2_o),        &
+                     wf%fock_ij,          &
+                     wf%n_o,              &
+                     orbital_energies,    &
+                     work,                & 
+                     4*(wf%n_CC2_o),      &
+                     info)
 !
-      call wf%mem%dealloc(work, 4*(wf%n_CC2_o), 1)
+         call wf%mem%dealloc(work, 4*(wf%n_CC2_o), 1)
 !
-      if (info .ne. 0) then
-         write(unit_output,*)'WARNING: Diagonalization of active virtual block not successful. '
+         if (info .ne. 0) then
+            write(unit_output,*)'ERROR: Diagonalization of active virtual block not successful. '
                stop
+         endif
+!
+!        Setting orbital energies
+!
+         do j = 1, wf%n_CC2_o
+!
+            wf%fock_diagonal(j,1) = orbital_energies(j,1)
+!
+         enddo
+!
+         call wf%mem%dealloc(orbital_energies, (wf%n_CC2_o), 1)
+!
       endif
-!
-!     Setting orbital energies
-!
-      do j = 1, wf%n_CC2_o
-!
-         wf%fock_diagonal(j,1) = orbital_energies(j,1)
-!
-      enddo
-!
-     call wf%mem%dealloc(orbital_energies, (wf%n_CC2_o), 1)
 !
 !     Diagonalize inactive-inactive block 
 !
-      call wf%mem%alloc(work, 4*wf%n_CCS_o, 1)
-      call wf%mem%alloc(orbital_energies, wf%n_CCS_o, 1)
-      orbital_energies = zero
-      work = zero
+      if (wf%n_CCS_o .gt. 0) then
+         call wf%mem%alloc(work, 4*wf%n_CCS_o, 1)
+         call wf%mem%alloc(orbital_energies, wf%n_CCS_o, 1)
+         orbital_energies = zero
+         work = zero
 !
-      call dsyev('V','U',                                   &
-                  wf%n_CCS_o,                               &
-                  wf%fock_ij(wf%first_CCS_o, wf%first_CCS_o), &
-                  wf%n_o,                                   &
-                  orbital_energies,                         &
-                  work,                                     & 
-                  4*wf%n_CCS_o,                             &
-                  info)
+         call dsyev('V','U',                                      &
+                     wf%n_CCS_o,                                  &
+                     wf%fock_ij(wf%first_CCS_o, wf%first_CCS_o),  &
+                     wf%n_o,                                      &
+                     orbital_energies,                            &
+                     work,                                        & 
+                     4*wf%n_CCS_o,                                &
+                     info)
 !
-      call wf%mem%dealloc(work, 4*wf%n_CCS_o, 1)
+         call wf%mem%dealloc(work, 4*wf%n_CCS_o, 1)
 !
-      if (info .ne. 0) then
-         write(unit_output,*)'WARNING: Diagonalization of inactive virtual block not successful.'
-               stop
+         if (info .ne. 0) then
+            write(unit_output,*)'ERROR: Diagonalization of inactive virtual block not successful.'
+            stop
+         endif
+!
+!        Setting orbital energies
+!
+         do j = 1, wf%n_CCS_o
+!
+            wf%fock_diagonal(j + wf%first_CCS_o - 1,1) = orbital_energies(j,1)
+!
+         enddo
+         call wf%mem%dealloc(orbital_energies, wf%n_CCS_o, 1)
+!
       endif
-!
-!     Setting orbital energies
-!
-      do j = 1, wf%n_CCS_o
-!
-         wf%fock_diagonal(j + wf%first_CCS_o - 1,1) = orbital_energies(j,1)
-!
-      enddo
-      call wf%mem%dealloc(orbital_energies, wf%n_CCS_o, 1)
 !
 !     Transform C-matrix (active occupied block)
 !
       call wf%mem%alloc(C_o, wf%n_ao, wf%n_o)
       C_o = zero     
 !
-     do i = 1, wf%n_ao
+      do i = 1, wf%n_ao
 !
         do j = 1, wf%n_o
            ij = index_two(i, j, wf%n_ao)
            C_o(i, j) = wf%mo_coef(ij, 1) 
         enddo
 !
-     enddo
-!
-      call wf%mem%alloc(C_o_transformed, wf%n_ao, wf%n_CC2_o)
-      call dgemm('N', 'N',    &
-                  wf%n_ao,    &
-                  wf%n_CC2_o, &
-                  wf%n_CC2_o, &
-                  one,        &
-                  C_o,        &
-                  wf%n_ao,    &
-                  wf%fock_ij, &
-                  wf%n_o,     &
-                  zero,       &
-                  C_o_transformed, &
-                  wf%n_ao)
-!
-      do i = 1, wf%n_ao
-!
-         do j = 1, wf%n_CC2_o
-            ij = index_two(i, j, wf%n_ao)
-            wf%mo_coef(ij, 1) = C_o_transformed(i, j) 
-         enddo
-!
       enddo
 !
-      call wf%mem%dealloc(C_o_transformed, wf%n_ao, wf%n_CC2_o)
+      if (wf%n_CC2_o .gt. 0) then
+         call wf%mem%alloc(C_o_transformed, wf%n_ao, wf%n_CC2_o)
+         call dgemm('N', 'N',    &
+                     wf%n_ao,    &
+                     wf%n_CC2_o, &
+                     wf%n_CC2_o, &
+                     one,        &
+                     C_o,        &
+                     wf%n_ao,    &
+                     wf%fock_ij, &
+                     wf%n_o,     &
+                     zero,       &
+                     C_o_transformed, &
+                     wf%n_ao)
+!
+         do i = 1, wf%n_ao
+!
+            do j = 1, wf%n_CC2_o
+               ij = index_two(i, j, wf%n_ao)
+               wf%mo_coef(ij, 1) = C_o_transformed(i, j) 
+            enddo
+!
+         enddo
+!
+         call wf%mem%dealloc(C_o_transformed, wf%n_ao, wf%n_CC2_o)
+      endif
 !
 !     Transform C-matrix (inactive occupied block)
 !
-      call wf%mem%alloc(C_o_transformed, wf%n_ao, wf%n_CCS_o)
-      call dgemm('N', 'N',    &
-                  wf%n_ao,    &
-                  wf%n_CCS_o, &
-                  wf%n_CCS_o, &
-                  one,        &
-                  C_o(1, wf%first_CCS_o),        &
-                  wf%n_ao,    &
-                  wf%fock_ij(wf%first_CCS_o, wf%first_CCS_o), &
-                  wf%n_o,     &
-                  zero,       &
-                  C_o_transformed, &
-                  wf%n_ao)
+      if (wf%n_CCS_o .gt. 0) then
+         call wf%mem%alloc(C_o_transformed, wf%n_ao, wf%n_CCS_o)
+         call dgemm('N', 'N',    &
+                     wf%n_ao,    &
+                     wf%n_CCS_o, &
+                     wf%n_CCS_o, &
+                     one,        &
+                     C_o(1, wf%first_CCS_o),        &
+                     wf%n_ao,    &
+                     wf%fock_ij(wf%first_CCS_o, wf%first_CCS_o), &
+                     wf%n_o,     &
+                     zero,       &
+                     C_o_transformed, &
+                     wf%n_ao)
 !
-      call wf%mem%dealloc(C_o, wf%n_ao, wf%n_o)
+         call wf%mem%dealloc(C_o, wf%n_ao, wf%n_o)
 !
-      do i = 1, wf%n_ao
+         do i = 1, wf%n_ao
 !
-         do j = 1, wf%n_CCS_o
-            ij = index_two(i, j + wf%first_CCS_o -1, wf%n_ao)
-            wf%mo_coef(ij, 1) = C_o_transformed(i, j) 
+            do j = 1, wf%n_CCS_o
+               ij = index_two(i, j + wf%first_CCS_o -1, wf%n_ao)
+               wf%mo_coef(ij, 1) = C_o_transformed(i, j) 
+            enddo
+!
          enddo
 !
-      enddo
-!
-      call wf%mem%dealloc(C_o_transformed, wf%n_ao, wf%n_CCS_o)
+         call wf%mem%dealloc(C_o_transformed, wf%n_ao, wf%n_CCS_o)
+      endif
 !
 !     :: Vacant orbitals ::
 !
 !     Diagonalize active-active block
 !
-      call wf%mem%alloc(work, 4*(wf%n_CC2_v), 1)
-      call wf%mem%alloc(orbital_energies, (wf%n_CC2_v), 1)
-      work = zero
+      if ((wf%n_CC2_v) .gt. 0) then
+         call wf%mem%alloc(work, 4*(wf%n_CC2_v), 1)
+         call wf%mem%alloc(orbital_energies, (wf%n_CC2_v), 1)
+         work = zero
 !
-      call dsyev('V','U',              &
-                  (wf%n_CC2_v),   &
-                  wf%fock_ab,          &
-                  wf%n_v,              &
-                  orbital_energies,    &
-                  work,                & 
-                  4*(wf%n_CC2_v), &
-                  info)
+         call dsyev('V','U',              &
+                     (wf%n_CC2_v),        &
+                     wf%fock_ab,          &
+                     wf%n_v,              &
+                     orbital_energies,    &
+                     work,                & 
+                     4*(wf%n_CC2_v), &
+                     info)
 !
-      call wf%mem%dealloc(work, 4*(wf%n_CC2_v), 1)
+         call wf%mem%dealloc(work, 4*(wf%n_CC2_v), 1)
 !
-      if (info .ne. 0) then
-         write(unit_output,*)'WARNING: Diagonalization of active virtual block not successful. ', orbital_energies
-               stop
+         if (info .ne. 0) then
+            write(unit_output,*)'ERROR Diagonalization of active virtual block not successful. '
+            stop
+         endif
+!
+!        Setting orbital energies
+!
+         do j = 1, wf%n_CC2_v
+!
+            wf%fock_diagonal(j + wf%n_o ,1) = orbital_energies(j,1)
+!
+         enddo
+!
+         call wf%mem%dealloc(orbital_energies, (wf%n_CC2_v), 1)
       endif
-!
-!     Setting orbital energies
-!
-      do j = 1, wf%n_CC2_v
-!
-         wf%fock_diagonal(j + wf%n_o ,1) = orbital_energies(j,1)
-!
-      enddo
-!
-     call wf%mem%dealloc(orbital_energies, (wf%n_CC2_v), 1)
 !
 !     Diagonalize inactive-inactive block 
 !
-      call wf%mem%alloc(work, 4*wf%n_CCS_v, 1)
-      call wf%mem%alloc(orbital_energies, wf%n_CCS_v, 1)
-      orbital_energies = zero
-      work = zero
+      if ((wf%n_CCS_v) .gt. 0) then
+         call wf%mem%alloc(work, 4*wf%n_CCS_v, 1)
+         call wf%mem%alloc(orbital_energies, wf%n_CCS_v, 1)
+         orbital_energies = zero
+         work = zero
 !
-      call dsyev('V','U',                                   &
-                  wf%n_CCS_v,                               &
-                  wf%fock_ab(wf%first_CCS_v, wf%first_CCS_v),   &
-                  wf%n_v,                                   &
-                  orbital_energies,                         &
-                  work,                                     & 
-                  4*wf%n_CCS_v,                             &
-                  info)
+         call dsyev('V','U',                                   &
+                     wf%n_CCS_v,                               &
+                     wf%fock_ab(wf%first_CCS_v, wf%first_CCS_v),   &
+                     wf%n_v,                                   &
+                     orbital_energies,                         &
+                     work,                                     & 
+                     4*wf%n_CCS_v,                             &
+                     info)
 !
-      call wf%mem%dealloc(work, 4*wf%n_CCS_v, 1)
+         call wf%mem%dealloc(work, 4*wf%n_CCS_v, 1)
 !
-      if (info .ne. 0) then
-         write(unit_output,*)'WARNING: Diagonalization of inactive virtual block not successful.'
-               stop
+         if (info .ne. 0) then
+            write(unit_output,*)'WARNING: Diagonalization of inactive virtual block not successful.'
+                  stop
+         endif
+!
+!        Setting orbital energies
+!
+         do j = 1, wf%n_CCS_v
+!
+            wf%fock_diagonal(j + wf%n_o + wf%first_CCS_v - 1,1) = orbital_energies(j,1)
+!
+         enddo
+         call wf%mem%dealloc(orbital_energies, wf%n_CCS_v, 1)
       endif
-!
-!     Setting orbital energies
-!
-      do j = 1, wf%n_CCS_v
-!
-         wf%fock_diagonal(j + wf%n_o + wf%first_CCS_v - 1,1) = orbital_energies(j,1)
-!
-      enddo
-      call wf%mem%dealloc(orbital_energies, wf%n_CCS_v, 1)
 !
 !     Transform C-matrix (active virtual block)
 !
@@ -1485,61 +1368,65 @@ contains
 !
      enddo
 !
-      call wf%mem%alloc(C_v_transformed, wf%n_ao, wf%n_CC2_v)
-      call dgemm('N', 'N',    &
-                  wf%n_ao,    &
-                  wf%n_CC2_v,     &
-                  wf%n_CC2_v,     &
-                  one,        &
-                  C_v,        &
-                  wf%n_ao,    &
-                  wf%fock_ab, &
-                  wf%n_v,     &
-                  zero,       &
-                  C_v_transformed, &
-                  wf%n_ao)
+      if (wf%n_CC2_v .gt. 0) then
+         call wf%mem%alloc(C_v_transformed, wf%n_ao, wf%n_CC2_v)
+         call dgemm('N', 'N',    &
+                     wf%n_ao,    &
+                     wf%n_CC2_v,     &
+                     wf%n_CC2_v,     &
+                     one,        &
+                     C_v,        &
+                     wf%n_ao,    &
+                     wf%fock_ab, &
+                     wf%n_v,     &
+                     zero,       &
+                     C_v_transformed, &
+                     wf%n_ao)
 !
-      do i = 1, wf%n_ao
+         do i = 1, wf%n_ao
 !
-         do j = 1, wf%n_CC2_v
-            ij = index_two(i, j + wf%n_o, wf%n_ao)
-            wf%mo_coef(ij, 1) = C_v_transformed(i, j) 
+            do j = 1, wf%n_CC2_v
+               ij = index_two(i, j + wf%n_o, wf%n_ao)
+               wf%mo_coef(ij, 1) = C_v_transformed(i, j) 
+            enddo
+!
          enddo
 !
-      enddo
-!
-      call wf%mem%dealloc(C_v_transformed, wf%n_ao, wf%n_CC2_v)
+         call wf%mem%dealloc(C_v_transformed, wf%n_ao, wf%n_CC2_v)
+      endif
 !
 !     Transform C-matrix (inactive virtual block)
 !
-      call wf%mem%alloc(C_v_transformed, wf%n_ao, wf%n_CCS_v)
-      call dgemm('N', 'N',    &
-                  wf%n_ao,    &
-                  wf%n_CCS_v, &
-                  wf%n_CCS_v, &
-                  one,        &
-                  C_v(1, wf%first_CCS_v),        &
-                  wf%n_ao,    &
-                  wf%fock_ab(wf%first_CCS_v, wf%first_CCS_v), &
-                  wf%n_v,     &
-                  zero,       &
-                  C_v_transformed, &
-                  wf%n_ao)
+      if (wf%n_CCS_v .gt. 0) then
+         call wf%mem%alloc(C_v_transformed, wf%n_ao, wf%n_CCS_v)
+         call dgemm('N', 'N',    &
+                     wf%n_ao,    &
+                     wf%n_CCS_v, &
+                     wf%n_CCS_v, &
+                     one,        &
+                     C_v(1, wf%first_CCS_v),        &
+                     wf%n_ao,    &
+                     wf%fock_ab(wf%first_CCS_v, wf%first_CCS_v), &
+                     wf%n_v,     &
+                     zero,       &
+                     C_v_transformed, &
+                     wf%n_ao)
 !
-      do i = 1, wf%n_ao
+         do i = 1, wf%n_ao
 !
-         do j = 1, wf%n_CCS_v
-            ij = index_two(i, j + wf%n_o + wf%first_CCS_v - 1, wf%n_ao)
-            wf%mo_coef(ij, 1) = C_v_transformed(i, j) 
+            do j = 1, wf%n_CCS_v
+               ij = index_two(i, j + wf%n_o + wf%first_CCS_v - 1, wf%n_ao)
+               wf%mo_coef(ij, 1) = C_v_transformed(i, j) 
+            enddo
+!
          enddo
 !
-      enddo
-!
-      call wf%mem%dealloc(C_v_transformed, wf%n_ao, wf%n_CCS_v)
+         call wf%mem%dealloc(C_v_transformed, wf%n_ao, wf%n_CCS_v)
+      endif
       call wf%mem%dealloc(C_v, wf%n_ao, wf%n_v)
 !
 !
-   end subroutine cc2_cnto_orbitals_mlcc2
+   end subroutine cnto_orbitals_mlcc2
 !
 !
    module subroutine print_orbital_info_mlcc2(wf)
@@ -1563,4 +1450,148 @@ contains
       flush(unit_output)
 !
    end subroutine print_orbital_info_mlcc2
+!
+!
+   module subroutine cnto_init_ccs_mlcc2(wf, ccs_wf)
+!!
+!!
+      implicit none
+!
+      class(mlcc2) :: wf
+!
+      type(ccs)    :: ccs_wf
+!
+      integer(i15) :: lower_level_n_singlet_states
+      integer(i15) :: i = 0, j = 0
+!
+      integer(i15), dimension(:,:), allocatable :: index_list
+!
+      logical :: start_vec_exists
+!
+!     :: Set calculation tasks ::
+!
+      ccs_wf%tasks = wf%tasks
+!
+      call ccs_wf%mem%init(int(wf%mem%available/1.0D9))
+!
+!     :: Set calculation settings ::
+!
+      ccs_wf%settings                           = wf%settings
+      ccs_wf%core_excited_state_specifications  = wf%core_excited_state_specifications
+! 
+!     :: Set number of excitations to use for cnto generation ::
+!        - Should be some function of wf%excited_state_specifications%n_singlet_states
+!
+      lower_level_n_singlet_states = (CCS_factor_n_singlet_states)*(wf%excited_state_specifications%n_singlet_states)
+! 
+      ccs_wf%excited_state_specifications%n_singlet_states = lower_level_n_singlet_states
+!
+!     :: Set convergence threshold for lower lying method ::
+!
+      ccs_wf%ground_state_specifications%energy_threshold = 1.0D-04 
+      ccs_wf%ground_state_specifications%residual_threshold = 1.0D-04 
+!
+      ccs_wf%excited_state_specifications%energy_threshold = 1.0D-04 
+      ccs_wf%excited_state_specifications%residual_threshold = 1.0D-04 
+!
+!     :: User specified start vectors for excited state calculation ::
+!
+!     Test for user specified start vector
+!
+!     We must do some tricks since n_singlet_states for ccs_wf is higher than for wf
+!
+      if (ccs_wf%excited_state_specifications%user_specified_start_vector) then
+!
+!        Find indices lowest orbital differences (either core or valence) and place in index_list
+!
+         call wf%mem%alloc_int(index_list, ccs_wf%excited_state_specifications%n_singlet_states, 1)
+!
+         if (wf%tasks%excited_state) then
+!
+            call ccs_wf%find_start_trial_indices(index_list)
+!
+         elseif (wf%tasks%core_excited_state) then
+!
+            call ccs_wf%find_start_trial_indices_core(index_list)
+!
+         endif
+!
+!        Loop through user specified start vectors and ...
+!
+         do i = 1, wf%excited_state_specifications%n_singlet_states
+            start_vec_exists = .false.
+!
+!           ... Check if it is contained in index list already
+!
+            do j = 1, ccs_wf%excited_state_specifications%n_singlet_states
+               if (wf%excited_state_specifications%start_vectors(i,1) == index_list(j,1)) &
+                  start_vec_exists = .true.
+            enddo
+!
+!           ... If not, exchange it with an element of index_list (starting at the end of index_list)
+!
+            if (.not. start_vec_exists) then
+               index_list(ccs_wf%excited_state_specifications%n_singlet_states - i + 1, 1) &
+                = wf%excited_state_specifications%start_vectors(i,1)
+            endif
+!
+         enddo
+!
+!        Set user_specified_start_vector to true for lower level method
+!
+!        OBS: It is crusial that tis is done AFTER the call to 
+!             find_start_trial_indices/find_start_trial_indices_core
+!
+         ccs_wf%excited_state_specifications%user_specified_start_vector = .true.
+!
+!        Let index_list be the user specified start vector.
+!
+         call ccs_wf%mem%alloc_int(ccs_wf%excited_state_specifications%start_vectors, &
+                            ccs_wf%excited_state_specifications%n_singlet_states, 1)
+!
+         ccs_wf%excited_state_specifications%start_vectors = index_list
+!
+         call ccs_wf%mem%dealloc_int(index_list, ccs_wf%excited_state_specifications%n_singlet_states, 1)
+!
+!        Since orbitals will swap order, start vector in higher level method must be removed
+!
+         wf%excited_state_specifications%user_specified_start_vector = .false.
+         call wf%mem%dealloc_int(wf%excited_state_specifications%start_vectors, wf%excited_state_specifications%n_singlet_states, 1)
+!
+      endif
+!
+!     :: Initialize lower level method ::
+!  
+      ccs_wf%name = 'CCS'
+!
+!     Set implemented generic methods
+!
+      ccs_wf%implemented%ground_state         = .true.
+      ccs_wf%implemented%excited_state        = .true.
+      ccs_wf%implemented%core_excited_state   = .true.
+!
+!     Read Hartree-Fock info from SIRIUS
+!
+      call ccs_wf%read_hf_info
+!
+!     Set the number of parameters in the wavefunction
+!     (that are solved for in the ground and excited state solvers) 
+!
+      ccs_wf%n_t1am = (wf%n_o)*(wf%n_v)
+      ccs_wf%n_parameters = ccs_wf%n_t1am
+!
+!     Read Cholesky AO integrals and transform to MO basis
+!
+      call ccs_wf%read_transform_cholesky
+!
+!     Initialize amplitudes and associated attributes
+!
+      call ccs_wf%initialize_amplitudes
+!
+!     Allocate Fock matrix and set to zero
+!
+      call ccs_wf%initialize_fock_matrix
+      call ccs_wf%destruct_amplitudes
+!
+   end subroutine cnto_init_ccs_mlcc2
 end submodule orbital_partitioning

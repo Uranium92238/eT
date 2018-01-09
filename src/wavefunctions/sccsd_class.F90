@@ -245,7 +245,7 @@ module sccsd_class
 !
          class(sccsd) :: wf 
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: Y 
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)**2) :: Y  
          real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho 
 !
       end subroutine jacobian_sccsd_b2_sccsd

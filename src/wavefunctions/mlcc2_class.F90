@@ -1,9 +1,45 @@
 module mlcc2_class
 !
 !!
-!!                 Multi-level CC2 (MLCC2) class module                                
-!!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017         
-!!                                                                           
+!!
+!!
+!!         Multilevel Coupled cluster singles and perturbative doubles (MLCC2) class module                                 
+!!                Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jun 2017         
+!! 
+!!
+!!    This module contains the definition of the multilevel Coupled cluster singles and perturbative doubles (MLCC2)
+!!    wavefunction class. It is structured into four sections:
+!!
+!!       1. Modules used by the class: 
+!!
+!!             Basic utilities and the ancestor class
+!!
+!!       2. Definition of the class: 
+!!
+!!             Non-inherited variables, followed by non-inherited or overridden procedures
+!!
+!!       3. Interfaces to submodules:
+!!
+!!             The procedures in the class are grouped according to functionality, with
+!!             detailed definitions given in the following class submodules:
+!!                
+!!                - Input Reader
+!!                - Orbital partitioning
+!!                - Ground state
+!!                - Omega
+!!                - Excited state 
+!!                - Jacobian (right transformation)
+!!                 
+!!
+!!             The interfaces shows incoming variables and their type, but contains 
+!!             no information of the procedure itself. The procedure is shown in full 
+!!             in the corresponding submodule. 
+!!
+!!       4. Class module routines (i.e., non-submodule procedures). These include
+!!          the initialization and driver routines of the class, along with procedures that
+!!          are not (yet, at least) easily gathered in a submodule.
+!!                                                                    
+!
 !
 !  :::::::::::::::::::::::::::::::::::
 !  -::- Modules used by the class -::-
@@ -25,9 +61,11 @@ module mlcc2_class
 !
    implicit none 
 !
-!  :::::::::::::::::::::::::::::::::::::::
-!  -::- Definition of the MLCC2 class -::-
-!  ::::::::::::::::::::::::::::::::::::::: 
+!
+!  ::::::::::::::::::::::::::::::::::::::::::
+!  -::- 2. Definition of the MLCC2 class -::-
+!  ::::::::::::::::::::::::::::::::::::::::::
+!
 !
    type, extends(ccs) :: mlcc2
 !
@@ -56,83 +94,120 @@ module mlcc2_class
 !
    contains
 !
-!     Reading eT.inp
+!
+!     -::- Initialization routine -::-
+!     --------------------------------
+!
+      procedure :: init => init_mlcc2
+!
+!
+!     -::- Other class routine pointers not located in submodules -::-
+!     ----------------------------------------------------------------
+!
+      procedure :: get_CC2_active_indices       => get_CC2_active_indices_mlcc2
+      procedure :: get_CC2_n_active             => get_CC2_n_active_mlcc2
+!
+      procedure :: calc_energy                  => calc_energy_mlcc2
+!
+!     Routines to allocate amplitudes
+!
+!      procedure :: initialize_amplitudes        => initialize_amplitudes_mlcc2
+!      procedure :: initialize_double_amplitudes => initialize_double_amplitudes_mlcc2
+!
+!     Routines to deallocate amplitudes
+!
+!      procedure :: destruct_amplitudes           => destruct_amplitudes_mlcc2
+      procedure :: destruct_double_amplitudes    => destruct_double_amplitudes_mlcc2
+!
+!     Routine to save the amplitudes to disk 
+!
+      procedure :: save_amplitudes              => save_amplitudes_mlcc2
+!
+!!    Routines to read the amplitudes from disk (and allocate if necessary)
+!
+      procedure :: read_amplitudes              => read_amplitudes_mlcc2
+      procedure :: read_cc2_double_amplitudes   => read_cc2_double_amplitudes_mlcc2
+!
+!     -::- Input reader submodule routine pointers -::-
+!     -------------------------------------------------
 !
       procedure :: mlcc_reader         => mlcc_reader_mlcc2
       procedure :: read_orbital_info   => read_orbital_info_mlcc2
 !
-!     Initialization and driver routines
 !
-      procedure :: init => init_mlcc2
+!     -::- Orbital partitioning submodule routine pointers -::-
+!     ---------------------------------------------------------
 !
-!     Orbital partitioning
+      procedure :: orbital_partitioning         => orbital_partitioning_mlcc2
+      procedure :: cholesky_decomposition       => cholesky_decomposition_mlcc2
+      procedure :: cholesky_localization_drv    => cholesky_localization_drv_mlcc2
+      procedure :: cholesky_orbitals            => cholesky_orbitals_mlcc2
+      procedure :: cholesky_orbital_constructor => cholesky_orbital_constructor_mlcc2
 !
-      procedure :: orbital_partitioning          => orbital_partitioning_mlcc2
-      procedure :: cholesky_decomposition        => cholesky_decomposition_mlcc2
-      procedure :: cholesky_localization_drv     => cholesky_localization_drv_mlcc2
-      procedure :: cholesky_orbitals             => cholesky_orbitals_mlcc2
-      procedure :: cholesky_orbital_constructor  => cholesky_orbital_constructor_mlcc2
+      procedure :: cnto_orbital_drv             => cnto_orbital_drv_mlcc2
+      procedure :: cnto_lower_level_method      => cnto_lower_level_method_mlcc2
+      procedure :: cnto_orbitals                => cnto_orbitals_mlcc2
+      procedure :: cnto_init_ccs                => cnto_init_ccs_mlcc2
 !
-      procedure :: cnto_orbital_drv                => cnto_orbital_drv_mlcc2
-      procedure :: cc2_cnto_lower_level_method     => cc2_cnto_lower_level_method_mlcc2
-      procedure :: cc2_cnto_orbitals               => cc2_cnto_orbitals_mlcc2
+      procedure :: print_orbital_info           => print_orbital_info_mlcc2
 !
-      procedure :: print_orbital_info              => print_orbital_info_mlcc2
 !
-!     ML helper routines
+!     -::- Ground state submodule routine pointers -::-
+!     -------------------------------------------------
 !
-      procedure :: get_CC2_active_indices => get_CC2_active_indices_mlcc2
-      procedure :: get_CC2_n_active       => get_CC2_n_active_mlcc2
+!      procedure :: ground_state_preparations => ground_state_preparations_mlcc2
+!      procedure :: ground_state_cleanup      => ground_state_cleanup_mlcc2
 !
-!     Amplitude routines
 !
-      procedure :: save_amplitudes              => save_amplitudes_mlcc2
-      procedure :: read_amplitudes              => read_amplitudes_mlcc2
-      procedure :: read_cc2_double_amplitudes   => read_cc2_double_amplitudes_mlcc2
-      procedure :: destruct_x2am                => destruct_x2am_mlcc2
+!     -::- Omega submodule routine pointers -::-
+!     ------------------------------------------
 !
-!     Omega
+      procedure :: omega_mlcc2_a1                     => omega_mlcc2_a1_mlcc2
+      procedure :: omega_mlcc2_b1                     => omega_mlcc2_b1_mlcc2
+      procedure :: construct_omega                    => construct_omega_mlcc2
+      procedure :: get_s2am                           => get_s2am_mlcc2
 !
-      procedure :: omega_mlcc2_a1   => omega_mlcc2_a1_mlcc2
-      procedure :: omega_mlcc2_b1   => omega_mlcc2_b1_mlcc2
-      procedure :: construct_omega  => construct_omega_mlcc2
-      procedure :: get_s2am         => get_s2am_mlcc2
 !
-!     Ground state energy calculation
+!     -::- Excited state submodule routine pointers -::-
+!     --------------------------------------------------
 !
-      procedure :: calc_energy => calc_energy_mlcc2
+!      procedure :: excited_state_preparations        => excited_state_preparations_mlcc2
+!      procedure :: excited_state_cleanup             => excited_state_cleanup_mlcc2
 !
-!     Excited states
+      procedure :: calculate_orbital_differences      => calculate_orbital_differences_mlcc2
+      procedure :: transform_trial_vectors            => transform_trial_vectors_mlcc2
 !
-      procedure :: excited_state_preparations    => excited_state_preparations_mlcc2
-      procedure :: initialize_excited_states     => initialize_excited_states_mlcc2
-      procedure :: calculate_orbital_differences => calculate_orbital_differences_mlcc2
-      procedure :: transform_trial_vectors       => transform_trial_vectors_mlcc2
-      procedure :: cvs_residual_projection       => cvs_residual_projection_mlcc2 
+      procedure :: cvs_residual_projection            => cvs_residual_projection_mlcc2 
 !
       procedure :: analyze_double_excitation_vector   => analyze_double_excitation_vector_mlcc2
       procedure :: summary_excited_state_info         => summary_excited_state_info_mlcc2
+      procedure :: print_excitation_vector            => print_excitation_vector_mlcc2
 !
-      procedure :: print_excitation_vector => print_excitation_vector_mlcc2
 !
-!     Jacobian
+!     -::- Jacobian submodule routine pointers -::-
+!     ---------------------------------------------
 !
-      procedure :: jacobian_mlcc2_transformation      => jacobian_mlcc2_transformation_mlcc2
+      procedure :: jacobian_mlcc2_transformation   => jacobian_mlcc2_transformation_mlcc2
+      procedure :: jacobian_mlcc2_a1               => jacobian_mlcc2_a1_mlcc2
+      procedure :: jacobian_mlcc2_b1               => jacobian_mlcc2_b1_mlcc2
+      procedure :: jacobian_mlcc2_a2               => jacobian_mlcc2_a2_mlcc2
+      procedure :: jacobian_mlcc2_b2               => jacobian_mlcc2_b2_mlcc2
 !
-      procedure :: cvs_rho_aibj_projection            => cvs_rho_aibj_projection_mlcc2
-!
-      procedure :: jacobian_mlcc2_a1                  => jacobian_mlcc2_a1_mlcc2
-      procedure :: jacobian_mlcc2_b1                  => jacobian_mlcc2_b1_mlcc2
-      procedure :: jacobian_mlcc2_a2                  => jacobian_mlcc2_a2_mlcc2
-      procedure :: jacobian_mlcc2_b2                  => jacobian_mlcc2_b2_mlcc2
+      procedure :: cvs_rho_aibj_projection         => cvs_rho_aibj_projection_mlcc2
 !
    end type mlcc2
 !
 !
+!  ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!  -::- 3. Interfaces to the submodules of the CCS class -::- 
+!  ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+!
+!
    interface
 !
-!     -::- Input reader submodule interface -::-
-!     ::::::::::::::::::::::::::::::::::::::::::
+!
+!     -::- Input reader submodule routine interface -::-
+!     --------------------------------------------------
 !
       module subroutine mlcc_reader_mlcc2(wf, unit_input)
 !!
@@ -278,7 +353,7 @@ module mlcc2_class
       end subroutine cnto_orbital_drv_mlcc2
 !
 !
-      module subroutine cc2_cnto_lower_level_method_mlcc2(wf)
+      module subroutine cnto_lower_level_method_mlcc2(wf)
 !!
 !!       CNTO lower level calculation (MLCC2),
 !!       Written by Sarai D. Folkestad, June 2017.
@@ -287,10 +362,10 @@ module mlcc2_class
 !
          class(mlcc2) :: wf
 !
-      end subroutine cc2_cnto_lower_level_method_mlcc2
+      end subroutine cnto_lower_level_method_mlcc2
 !
 !
-      module subroutine cc2_cnto_orbitals_mlcc2(wf)
+      module subroutine cnto_orbitals_mlcc2(wf)
 !!
 !!       CNTO Oritals (MLCC2),
 !!       Written by Sarai D. Folkestad Aug. 2017
@@ -299,7 +374,7 @@ module mlcc2_class
 !
          class(mlcc2) :: wf
 !
-      end subroutine cc2_cnto_orbitals_mlcc2
+      end subroutine cnto_orbitals_mlcc2
 !
 !
       module subroutine print_orbital_info_mlcc2(wf)
@@ -312,6 +387,19 @@ module mlcc2_class
          class(mlcc2) :: wf
 !
       end subroutine print_orbital_info_mlcc2
+!
+!
+      module subroutine cnto_init_ccs_mlcc2(wf, ccs_wf)
+!!
+!!       CNTO Oritals (MLCC2),
+!!       Written by Sarai D. Folkestad Aug. 2017
+!!   
+         implicit none
+!
+         class(mlcc2)   :: wf
+         type(ccs)      :: ccs_wf
+!
+      end subroutine cnto_init_ccs_mlcc2
 !
 !
    end interface
@@ -620,7 +708,6 @@ contains
 !
       write(unit_output,'(//t3,a/)')    ':: Initialization' 
 !
-!
 !     Set model name 
 !
       wf%name = 'MLCC2'
@@ -690,13 +777,14 @@ contains
 !
 !     Initialize amplitudes and associated attributes
 !
+      wf%n_t1am = (wf%n_o)*(wf%n_v)
+!
       call wf%initialize_amplitudes
       call wf%initialize_omega
 !
 !     Set the number of parameters in the wavefunction
 !     (that are solved for in the ground and excited state solvers) 
 !
-      wf%n_t1am = (wf%n_o)*(wf%n_v)
       wf%n_parameters = wf%n_t1am
 !
 !     Read Cholesky AO integrals and transform to MO basis
@@ -706,6 +794,8 @@ contains
 !     Initialize fock matrix
 !
       call wf%initialize_fock_matrix
+!
+      call wf%destruct_single_amplitudes
 !
    end subroutine init_mlcc2
 !
@@ -1157,7 +1247,7 @@ contains
 !
    end subroutine read_cc2_double_amplitudes_mlcc2
 !
-   subroutine destruct_x2am_mlcc2(wf)
+   subroutine destruct_double_amplitudes_mlcc2(wf)
 !!
 !!
 !!
@@ -1167,6 +1257,6 @@ contains
 !
    if (allocated(wf%x2am)) call wf%mem%dealloc(wf%x2am, wf%n_x2am, 1)
 !
-   end subroutine destruct_x2am_mlcc2
+   end subroutine destruct_double_amplitudes_mlcc2
 !
 end module mlcc2_class

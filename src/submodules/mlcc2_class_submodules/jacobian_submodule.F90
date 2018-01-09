@@ -290,7 +290,7 @@ contains
          enddo
       enddo
 !
-      call wf%destruct_x2am
+      call wf%destruct_double_amplitudes
 !           
 !     :: Term 1 ::
 !     2* sum_BJck u_ai_kc * g_kc_BJ * c_BJ ( = sum_BJck u_ik^ac * g_kc,JB * c_BJ )
