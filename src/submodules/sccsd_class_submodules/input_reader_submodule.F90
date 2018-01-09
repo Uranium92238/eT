@@ -9,7 +9,7 @@ submodule (sccsd_class) input_reader
 contains 
 !
 !
-   subroutine scc_reader_sccsd(wf, unit_input)
+   module subroutine scc_reader_sccsd(wf, unit_input)
 !!
 !!    SCC reader (SCCSD)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
