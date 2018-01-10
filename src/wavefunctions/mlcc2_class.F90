@@ -111,12 +111,12 @@ module mlcc2_class
 !
 !     Routines to allocate amplitudes
 !
-!      procedure :: initialize_amplitudes        => initialize_amplitudes_mlcc2
-!      procedure :: initialize_double_amplitudes => initialize_double_amplitudes_mlcc2
+      procedure :: initialize_amplitudes        => initialize_amplitudes_mlcc2
+      procedure :: initialize_double_amplitudes => initialize_double_amplitudes_mlcc2
 !
 !     Routines to deallocate amplitudes
 !
-!      procedure :: destruct_amplitudes           => destruct_amplitudes_mlcc2
+      procedure :: destruct_amplitudes           => destruct_amplitudes_mlcc2
       procedure :: destruct_double_amplitudes    => destruct_double_amplitudes_mlcc2
 !
 !     Routine to save the amplitudes to disk 
@@ -765,7 +765,7 @@ contains
 !
 !        Do full space CC2 calculation
 !
-         write(unit_output,'(/t3,a50/)')'Full CC2 requested, orbital partitioning skipped.'
+         write(unit_output,'(/t6,a50/)')'Full CC2 requested, orbital partitioning skipped.'
 !
          wf%n_CC2_o = wf%n_o
          wf%n_CC2_v = wf%n_v
@@ -779,8 +779,7 @@ contains
 !
       wf%n_t1am = (wf%n_o)*(wf%n_v)
 !
-      call wf%initialize_amplitudes
-      call wf%initialize_omega
+      call wf%initialize_single_amplitudes
 !
 !     Set the number of parameters in the wavefunction
 !     (that are solved for in the ground and excited state solvers) 
@@ -1255,8 +1254,74 @@ contains
 !
    class(mlcc2) :: wf
 !
+   wf%n_x2am = + ((wf%n_CC2_v)*(wf%n_CC2_o))&
+                   *((wf%n_CC2_v )*(wf%n_CC2_o)+1)/2 
+!
    if (allocated(wf%x2am)) call wf%mem%dealloc(wf%x2am, wf%n_x2am, 1)
 !
    end subroutine destruct_double_amplitudes_mlcc2
 !
+!
+   subroutine initialize_amplitudes_mlcc2(wf)
+!!
+!!    Initialize Amplitudes (MLCC2)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!    Allocates the amplitudes, sets them to zero.
+!!
+      implicit none 
+!
+      class(mlcc2) :: wf
+!
+      call wf%initialize_single_amplitudes 
+      call wf%initialize_double_amplitudes
+!
+   end subroutine initialize_amplitudes_mlcc2
+!
+!
+   subroutine initialize_double_amplitudes_mlcc2(wf)
+!!
+!!    Initialize double amplitudes (MLCC2)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!    Allocates the doubles amplitudes, sets them to zero.
+!!
+      implicit none 
+!
+      class(mlcc2) :: wf
+!
+!     Allocate the doubles amplitudes and set to zero
+!
+      if (.not. allocated(wf%x2am)) then
+!
+         wf%n_x2am = + ((wf%n_CC2_v)*(wf%n_CC2_o))&
+                   *((wf%n_CC2_v )*(wf%n_CC2_o)+1)/2 
+!
+         call wf%mem%alloc(wf%x2am, wf%n_x2am, 1)
+         wf%x2am = zero
+!
+      else
+!
+         write(unit_output,'(t3,a)') 'Warning: attempted to allocate and zero already allocated x2am'
+!
+      endif
+!
+   end subroutine initialize_double_amplitudes_mlcc2
+!
+!
+   subroutine destruct_amplitudes_mlcc2(wf)
+!!
+!!    Destruct Amplitudes (MLCC2)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
+!!
+!!    Deallocates the (doubles) amplitudes.
+!!
+      implicit none
+!
+      class(mlcc2) :: wf
+!
+      call wf%destruct_single_amplitudes
+      call wf%destruct_double_amplitudes
+!
+   end subroutine destruct_amplitudes_mlcc2
 end module mlcc2_class

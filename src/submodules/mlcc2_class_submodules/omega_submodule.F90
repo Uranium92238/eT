@@ -477,8 +477,6 @@ contains
 !
       call wf%get_CC2_n_active(n_active_o, n_active_v)
 !
-      write(unit_output,*)'hei'
-!
       last_active_o = first_active_o + n_active_o - 1
       last_active_v = first_active_v + n_active_v - 1
 !
