@@ -155,8 +155,8 @@ module mlcc2_class
 !     -::- Ground state submodule routine pointers -::-
 !     -------------------------------------------------
 !
-!      procedure :: ground_state_preparations => ground_state_preparations_mlcc2
-!      procedure :: ground_state_cleanup      => ground_state_cleanup_mlcc2
+      procedure :: ground_state_preparations => ground_state_preparations_mlcc2
+      procedure :: ground_state_cleanup      => ground_state_cleanup_mlcc2
 !
 !
 !     -::- Omega submodule routine pointers -::-
@@ -461,6 +461,35 @@ module mlcc2_class
 !
 !
    end interface 
+!
+!
+   interface
+!
+!
+!     -::- Ground state submodule routine  interface -::-
+!     ---------------------------------------------------
+!
+      module subroutine ground_state_preparations_mlcc2(wf)
+!!
+!!       Ground State Preparations (mlcc2)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+         class(mlcc2) :: wf 
+!
+      end subroutine ground_state_preparations_mlcc2
+!
+!
+      module subroutine ground_state_cleanup_mlcc2(wf)
+!!
+!!       Ground State Cleanup (mlcc2)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+         class(mlcc2) :: wf 
+!
+      end subroutine ground_state_cleanup_mlcc2
+!  
+!
+   end interface
 !
 !
    interface 
