@@ -38,6 +38,15 @@ contains
 ! 
       wf%tasks%current = 'excited_state'
 !
+!     Now we have explicit double vectors (trials)
+!
+      wf%n_x2am = ((wf%n_CC2_v)*(wf%n_CC2_o))&
+                   *((wf%n_CC2_v )*(wf%n_CC2_o)+1)/2 
+!
+      wf%n_parameters = wf%n_parameters + wf%n_x2am
+!
+      call wf%read_single_amplitudes
+!
 !     Set filename for solution vectors
 !
       if (wf%tasks%core_excited_state .or. wf%tasks%core_ionized_state) then   ! Core excitation
@@ -62,26 +71,23 @@ contains
    end subroutine excited_state_preparations_mlcc2
 !
 !
-   module subroutine initialize_excited_states_mlcc2(wf)
+   module subroutine excited_state_cleanup_mlcc2(wf)
 !!
-!!    Initialize excited states
-!!    Written by Sarai D. Folkestad, June 2017
+!!    Excited State Cleanup (MLCC2)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
-!!    Calculates and sets n_s2am, and updates n_parameters
-!!    for excited state calculation
+!!    A routine for cleanup tasks (if any). Can be overwritten
+!!    in descendants if other cleanups prove necessary.    
 !!
-      implicit none 
-!    
-      class(mlcc2) :: wf
+      implicit none
 !
-      wf%n_x2am = ((wf%n_CC2_v)*(wf%n_CC2_o))&
-                   *((wf%n_CC2_v )*(wf%n_CC2_o)+1)/2 
+      class(mlcc2) :: wf 
 !
-      
-      wf%n_parameters = wf%n_parameters + wf%n_x2am
-                       
+!     Deallocate the amplitudes 
 !
-   end subroutine initialize_excited_states_mlcc2
+      call wf%destruct_amplitudes
+!
+   end subroutine excited_state_cleanup_mlcc2
 !
 !
    module subroutine calculate_orbital_differences_mlcc2(wf, orbital_diff)

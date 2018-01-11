@@ -171,7 +171,7 @@ module mlcc2_class
 !     -::- Excited state submodule routine pointers -::-
 !     --------------------------------------------------
 !
-!      procedure :: excited_state_preparations        => excited_state_preparations_mlcc2
+      procedure :: excited_state_preparations        => excited_state_preparations_mlcc2
 !      procedure :: excited_state_cleanup             => excited_state_cleanup_mlcc2
 !
       procedure :: calculate_orbital_differences      => calculate_orbital_differences_mlcc2
@@ -508,17 +508,6 @@ module mlcc2_class
 !        Do nothing for mlcc2
 !
       end subroutine excited_state_preparations_mlcc2
-!
-      module subroutine initialize_excited_states_mlcc2(wf)
-!!
-!!       Initialize excited states
-!!       Written by Sarai D. Folkestad, June 2017
-!!
-         implicit none 
-!    
-         class(mlcc2) :: wf
-!
-      end subroutine initialize_excited_states_mlcc2
 !  
 !
 
