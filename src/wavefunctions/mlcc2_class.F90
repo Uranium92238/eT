@@ -510,7 +510,18 @@ module mlcc2_class
       end subroutine excited_state_preparations_mlcc2
 !  
 !
-
+      module subroutine excited_state_cleanup_mlcc2(wf)
+!!
+!!       Excited State Cleanup (MLCC2)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+         implicit none
+!
+         class(mlcc2) :: wf 
+!
+      end subroutine excited_state_cleanup_mlcc2
+!  
+!
       module subroutine calculate_orbital_differences_mlcc2(wf, orbital_diff)
 !!
 !!       Calculate Orbital Differences (MLCC2)
