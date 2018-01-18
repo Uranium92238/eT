@@ -111,13 +111,13 @@ module mlcc2_class
 !
 !     Routines to allocate amplitudes
 !
-      procedure :: initialize_amplitudes        => initialize_amplitudes_mlcc2
-      procedure :: initialize_double_amplitudes => initialize_double_amplitudes_mlcc2
+      procedure :: initialize_amplitudes              => initialize_amplitudes_mlcc2
+      procedure :: initialize_cc2_double_amplitudes   => initialize_cc2_double_amplitudes_mlcc2
 !
 !     Routines to deallocate amplitudes
 !
-      procedure :: destruct_amplitudes           => destruct_amplitudes_mlcc2
-      procedure :: destruct_double_amplitudes    => destruct_double_amplitudes_mlcc2
+      procedure :: destruct_amplitudes             => destruct_amplitudes_mlcc2
+      procedure :: destruct_cc2_double_amplitudes  => destruct_cc2_double_amplitudes_mlcc2
 !
 !     Routine to save the amplitudes to disk 
 !
@@ -1258,7 +1258,7 @@ contains
 !
 !        Read from file & close
 !
-         wf%n_x2am = + ((wf%n_CC2_v)*(wf%n_CC2_o))&
+         wf%n_x2am = ((wf%n_CC2_v)*(wf%n_CC2_o))&
                    *((wf%n_CC2_v )*(wf%n_CC2_o)+1)/2 
 !
          if (.not. allocated(wf%x2am)) call wf%mem%alloc(wf%x2am, wf%n_x2am, 1) 
@@ -1275,20 +1275,24 @@ contains
 !
    end subroutine read_cc2_double_amplitudes_mlcc2
 !
-   subroutine destruct_double_amplitudes_mlcc2(wf)
+   subroutine destruct_cc2_double_amplitudes_mlcc2(wf)
 !!
 !!
 !!
-   implicit none
+      implicit none
 !
-   class(mlcc2) :: wf
+      class(mlcc2) :: wf
+
 !
-   wf%n_x2am = + ((wf%n_CC2_v)*(wf%n_CC2_o))&
-                   *((wf%n_CC2_v )*(wf%n_CC2_o)+1)/2 
+      integer(i15) :: n_active_v, n_active_o 
 !
-   if (allocated(wf%x2am)) call wf%mem%dealloc(wf%x2am, wf%n_x2am, 1)
+      call wf%get_CC2_n_active(n_active_o, n_active_v)
+       wf%n_x2am = ((n_active_v)*(n_active_o))&
+                   *((n_active_v)*(n_active_o)+1)/2  
 !
-   end subroutine destruct_double_amplitudes_mlcc2
+      if (allocated(wf%x2am)) call wf%mem%dealloc(wf%x2am, wf%n_x2am, 1)
+!
+   end subroutine destruct_cc2_double_amplitudes_mlcc2
 !
 !
    subroutine initialize_amplitudes_mlcc2(wf)
@@ -1302,13 +1306,13 @@ contains
 !
       class(mlcc2) :: wf
 !
-      call wf%initialize_single_amplitudes 
-      call wf%initialize_double_amplitudes
+      write(unit_output,*) 'Error: do not use initialize_amplitudes for ML'
+      stop
 !
    end subroutine initialize_amplitudes_mlcc2
 !
 !
-   subroutine initialize_double_amplitudes_mlcc2(wf)
+   subroutine initialize_cc2_double_amplitudes_mlcc2(wf)
 !!
 !!    Initialize double amplitudes (MLCC2)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
@@ -1318,13 +1322,17 @@ contains
       implicit none 
 !
       class(mlcc2) :: wf
+
+!
+      integer(i15) :: n_active_v, n_active_o 
 !
 !     Allocate the doubles amplitudes and set to zero
 !
       if (.not. allocated(wf%x2am)) then
 !
-         wf%n_x2am = + ((wf%n_CC2_v)*(wf%n_CC2_o))&
-                   *((wf%n_CC2_v )*(wf%n_CC2_o)+1)/2 
+         call wf%get_CC2_n_active(n_active_o, n_active_v)
+         wf%n_x2am = ((n_active_v)*(n_active_o))&
+                   *((n_active_v)*(n_active_o)+1)/2 
 !
          call wf%mem%alloc(wf%x2am, wf%n_x2am, 1)
          wf%x2am = zero
@@ -1335,7 +1343,7 @@ contains
 !
       endif
 !
-   end subroutine initialize_double_amplitudes_mlcc2
+   end subroutine initialize_cc2_double_amplitudes_mlcc2
 !
 !
    subroutine destruct_amplitudes_mlcc2(wf)
@@ -1349,8 +1357,10 @@ contains
 !
       class(mlcc2) :: wf
 !
-      call wf%destruct_single_amplitudes
-      call wf%destruct_double_amplitudes
+      write(unit_output,*) 'Error: do not use destruct_amplitudes for ML'
+      stop
 !
    end subroutine destruct_amplitudes_mlcc2
+!
+!
 end module mlcc2_class

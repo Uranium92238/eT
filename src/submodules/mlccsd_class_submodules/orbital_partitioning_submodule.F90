@@ -24,8 +24,6 @@ contains
 !!
 !!    Directs the partitioning for mlcc calculations.
 !!
-!!    So far only Cholesky decomposition is available. 
-!!
       implicit none
 !
       class(mlccsd) :: wf
@@ -40,6 +38,13 @@ contains
 !
 !        If CNTO - do CNTO
 !     
+         if (.not. wf%mlcc_settings%CC2) then
+!
+            write(unit_output,*)'Error: CC2 space required for MLCCSD with cntos'
+            stop
+!
+         endif
+!
          call wf%cnto_orbital_drv
 !
       endif
@@ -62,7 +67,6 @@ contains
 !!    - New orbitals are tested for orthonormality (Not implemented yet, only need overlap matrix from DALTON)    
 !!
 !!
-
       implicit none
 !
       class(mlccsd) :: wf
@@ -230,7 +234,6 @@ contains
 !
       call wf%mem%dealloc(Y_2, wf%n_mo, wf%n_mo)
 !
-!
 !     Deallocate ao-fock
 !
       call wf%mem%dealloc(ao_fock, wf%n_ao, wf%n_ao)
@@ -374,7 +377,6 @@ contains
                                            density_v, n_vectors_v,&
                                            .true., n_active_aos, active_ao_index_list)
 !
-!
 !     Save CC2 space information
 !
       wf%n_CC2_o = n_vectors_o
@@ -386,8 +388,7 @@ contains
       offset_v = offset_v + n_vectors_v
 !  
       call wf%mem%dealloc_int(active_atoms, wf%CC2_orbitals%n_active_atoms + wf%CCSD_orbitals%n_active_atoms, 1)
-      call wf%mem%dealloc_int(active_ao_index_list, n_active_aos, 1)
-!     
+      call wf%mem%dealloc_int(active_ao_index_list, n_active_aos, 1)   
 !
 !     :: CCS localized Cholesky orbitals  ::
 !
@@ -474,8 +475,6 @@ contains
 !
       call construct_active_ao_index_list(active_ao_index_list, n_active_aos, wf%CCSD_orbitals%active_atoms, &
                                                wf%CCSD_orbitals%n_active_atoms, ao_center_info, wf%n_ao)
-!
-   !   call wf%mem%dealloc_int(active_atoms, wf%CCSD_orbitals%n_active_atoms, 1)
 !  
 !     Occupied part
 !  
@@ -1012,15 +1011,6 @@ contains
       real(dp) :: start_cnto = 0, end_cnto = 0
 !
       integer(i15) :: cc2_n_parameters = 0, cc2_n_x2am = 0, n_cc2_o = 0, n_cc2_v = 0
-!     
-!     Prints
-!     
-!     
-      write(unit_output,'(//t3,a)') ':: CNTO orbital partitioning for MLCC2 calculation '
-      write(unit_output,'(t3,a/)')   ':: E. F. Kjønstad, S. D. Folkestad, Jun 2017'
-      write(unit_output,'(/a35,e10.2)')'Threshold for occupied orbitals:',wf%CC2_orbitals%delta_o
-      write(unit_output,'(a35,e10.2/)')'Threshold for virtual orbitals: ',wf%CC2_orbitals%delta_v
-!
 !
 !     Timings 
 !
@@ -1030,16 +1020,18 @@ contains
 !
       if (wf%tasks%excited_state .or. wf%tasks%core_excited_state) then
 !
-         call wf%ccsd_cnto_lower_level_method(cc2_n_parameters, cc2_n_x2am, n_cc2_o, n_cc2_v)
+         call wf%cnto_lower_level_method
 !
       else
 !
-         write(unit_output,*)'WARNING: cntos without excited state calculation makes no sense.'
+         write(unit_output,*)'Error: cntos without excited state calculation makes no sense.'
+         stop
+!
       endif
 !
 !     :: Construct orbitals ::
 !
-      call wf%ccsd_cnto_orbitals(cc2_n_parameters, cc2_n_x2am, n_cc2_o, n_cc2_v)
+      call wf%cnto_orbitals
 !
 !     Print summary
 !     
@@ -1057,7 +1049,7 @@ contains
    end subroutine cnto_orbital_drv_mlccsd
 !
 !
-   module subroutine ccsd_cnto_lower_level_method_mlccsd(wf, cc2_n_parameters, cc2_n_x2am, n_cc2_o, n_cc2_v)
+      module subroutine cnto_lower_level_method_mlccsd(wf)
 !!
 !!    CNTO lower level calculation (MLCCSD),
 !!    Written by Sarai D. Folkestad, Aug. 2017
@@ -1067,9 +1059,6 @@ contains
       implicit none 
 !
       class(mlccsd) :: wf
-!
-      integer(i15) :: cc2_n_x2am, cc2_n_parameters
-      integer(i15) :: n_CC2_o, n_CC2_v
 !
       type(mlcc2), allocatable :: cc2_wf
 !
@@ -1083,98 +1072,15 @@ contains
 !
       allocate(cc2_wf)
 !
-!     Set calculation tasks
+!     Initialize cc2_wf
 !
-      cc2_wf%tasks = wf%tasks
-!
-!     Set calculation settings
-!
-      cc2_wf%settings = wf%settings
-!
-      cc2_wf%core_excited_state_specifications  = wf%core_excited_state_specifications
-      cc2_wf%excited_state_specifications       = wf%excited_state_specifications
-!
-!     Set convergence threshold for lower lying method
-!
-      cc2_wf%ground_state_specifications%energy_threshold = 1.0D-04 
-      cc2_wf%ground_state_specifications%residual_threshold = 1.0D-04 
-!
-      cc2_wf%excited_state_specifications%energy_threshold = 1.0D-04 
-      cc2_wf%excited_state_specifications%residual_threshold = 1.0D-04 
-!
-!     Set mlcc settings
-!
-!
-      cc2_wf%mlcc_settings = wf%mlcc_settings
-      cc2_wf%mlcc_settings%CCSD = .false.
-!
-      cc2_wf%CC2_orbitals = wf%CC2_orbitals
-!
-!     Test for user specified start vector
-!
-      if (wf%excited_state_specifications%user_specified_start_vector) then
-!
-!        Since orbitals will swap order, start vector in higher level method must be removed
-!
-         wf%excited_state_specifications%user_specified_start_vector = .false.
-         call wf%mem%dealloc_int(wf%excited_state_specifications%start_vectors, wf%excited_state_specifications%n_singlet_states, 1)
-!        
-      endif
-!
-!     :: Initialize lower level method ::
-!  
-      cc2_wf%name = 'CC2'
-!
-!     Set implemented generic methods
-!
-      cc2_wf%implemented%ground_state         = .true.
-      cc2_wf%implemented%excited_state        = .true.
-      cc2_wf%implemented%core_excited_state   = .true.
-!
-!     Read Hartree-Fock info from SIRIUS
-!
-      call cc2_wf%read_hf_info
-!
-      if (cc2_wf%mlcc_settings%CCS) then
-!
-         call cc2_wf%orbital_partitioning
-!
-      else
-!
-!        Do full space CC2 calculation
-!
-         cc2_wf%n_CC2_o = wf%n_o
-         cc2_wf%n_CC2_v = wf%n_v
-!
-         cc2_wf%first_CC2_o = 1
-         cc2_wf%first_CC2_v = 1         
-!
-      endif
-!
-!     Initialize amplitudes and associated attributes
-!
-      call cc2_wf%initialize_amplitudes
-      call cc2_wf%initialize_omega
-!
-!     Set the number of parameters in the wavefunction
-!     (that are solved for in the ground and excited state solvers) 
-!
-      cc2_wf%n_parameters = cc2_wf%n_t1am
-!
-!     Read Cholesky AO integrals and transform to MO basis
-!
-      call cc2_wf%read_transform_cholesky
-!
-!     Initialize fock matrix
-!
-      call cc2_wf%initialize_fock_matrix
+      call wf%cnto_init_cc2(cc2_wf)
 !
 !     Call driver of lower level method
 !
       call cc2_wf%drv
 !
-      cc2_n_parameters = cc2_wf%n_parameters
-      cc2_n_x2am = cc2_wf%n_x2am
+!     Set cc2 mo coefficients
 !
       do i = 1, wf%n_ao
          do j = 1, wf%n_mo
@@ -1183,13 +1089,15 @@ contains
          enddo
       enddo
 !
+!     Set cc2 fock matrix diagonal
+!
       wf%fock_diagonal_cc2_ccs = cc2_wf%fock_diagonal
 !
       wf%mo_coef = cc2_wf%mo_coef
       wf%fock_diagonal = cc2_wf%fock_diagonal
 !
-      n_CC2_o = cc2_wf%n_CC2_o
-      n_CC2_v = cc2_wf%n_CC2_v
+      wf%n_CC2_o = cc2_wf%n_CC2_o
+      wf%n_CC2_v = cc2_wf%n_CC2_v
 !
 !     Save info on CCS space
 !
@@ -1203,10 +1111,10 @@ contains
 !
       deallocate(cc2_wf)     
 !
-   end subroutine ccsd_cnto_lower_level_method_mlccsd
+   end subroutine cnto_lower_level_method_mlccsd
 !
 !
-   module subroutine ccsd_cnto_orbitals_mlccsd(wf, cc2_n_parameters, cc2_n_x2am, n_cc2_o, n_cc2_v)
+   module subroutine cnto_orbitals_mlccsd(wf)
 !!
 !!    CNTO Oritals (MLCCSD),
 !!    Written by Sarai D. Folkestad Aug. 2017
@@ -1259,10 +1167,16 @@ contains
 !     -::- Construct CNTO transformation matrices -::-
 !     ::::::::::::::::::::::::::::::::::::::::::::::::
 !
+!     Set some local variables
+!
+      cc2_n_x2am = (wf%n_CC2_o)*(wf%n_CC2_v)*((wf%n_CC2_o)*(wf%n_CC2_v) + 1)/2
+      cc2_n_parameters = (wf%n_v)*(wf%n_o) + cc2_n_x2am
+      n_cc2_o = wf%n_cc2_o
+      n_cc2_v = wf%n_cc2_v
+!
 !     Open file of CC2 solution vectors
 !
       call generate_unit_identifier(unit_solution)
-
 !
 !     Determine file name
 !
@@ -1581,7 +1495,6 @@ contains
 !
       do i = 1, wf%n_ao
 !
-
          do j = 1, n_cc2_o
             ij = index_two(i, j, wf%n_ao)
             wf%mo_coef(ij, 1) = C_o_transformed(i, j) 
@@ -1610,7 +1523,6 @@ contains
          wf%n_CCSD_o = wf%n_CCSD_o + 1
 !
       enddo
-
 !
       sum_v       = 1 - eigenvalues_v(n_CC2_v, 1)
       wf%n_CCSD_v = 1
@@ -1642,7 +1554,7 @@ contains
 !
 !     Initialize amplitudes and associated attributes
 !
-      call wf%initialize_amplitudes
+      call wf%initialize_single_amplitudes
 !
 !     Read Cholesky AO integrals and transform to MO basis
 !
@@ -1902,8 +1814,10 @@ contains
 !
          do i = 1, wf%n_ao
             do j = 1, wf%n_CCSD_v
+!
                ij = index_two(i, j + wf%n_o, wf%n_ao)
                wf%mo_coef(ij, 1) = C_v_transformed(i, j) 
+!
             enddo
          enddo
 !
@@ -1943,7 +1857,120 @@ contains
 !
       call wf%mem%dealloc(C_v, wf%n_ao, wf%n_v)     
 !
-   end subroutine ccsd_cnto_orbitals_mlccsd
+      call wf%destruct_single_amplitudes
+!
+   end subroutine cnto_orbitals_mlccsd
+!
+!
+   module subroutine cnto_init_cc2_mlccsd(wf, cc2_wf)
+!!
+!!    Initialize lower level method,
+!!    Written by Sarai D. Folkestad, Dec 2017  
+!!
+!!    Initializes 
+!!
+      implicit none
+!
+      class(mlccsd) :: wf
+!
+      type(mlcc2)    :: cc2_wf
+!
+      integer(i15) :: lower_level_n_singlet_states
+      integer(i15) :: i = 0, j = 0
+!
+      integer(i15), dimension(:,:), allocatable :: index_list
+!
+      logical :: start_vec_exists
+!
+!     Set calculation tasks
+!
+      cc2_wf%tasks = wf%tasks
+!
+!     Set calculation settings
+!
+      cc2_wf%settings = wf%settings
+!
+      call cc2_wf%mem%init(int(wf%mem%available/1.0D9))
+!
+      cc2_wf%core_excited_state_specifications  = wf%core_excited_state_specifications
+      cc2_wf%excited_state_specifications       = wf%excited_state_specifications
+!
+!     Set convergence threshold for lower lying method
+!
+      cc2_wf%ground_state_specifications%energy_threshold = 1.0D-04 
+      cc2_wf%ground_state_specifications%residual_threshold = 1.0D-04 
+!
+      cc2_wf%excited_state_specifications%energy_threshold = 1.0D-04 
+      cc2_wf%excited_state_specifications%residual_threshold = 1.0D-04  
+!
+!     Set mlcc settings
+!
+      cc2_wf%mlcc_settings = wf%mlcc_settings
+      cc2_wf%mlcc_settings%CCSD = .false.
+!
+      cc2_wf%CC2_orbitals = wf%CC2_orbitals
+!
+!     Test for user specified start vector
+!
+      if (wf%excited_state_specifications%user_specified_start_vector) then
+!
+!        Since orbitals will swap order, start vector in higher level method must be removed
+!
+         wf%excited_state_specifications%user_specified_start_vector = .false.
+         call wf%mem%dealloc_int(wf%excited_state_specifications%start_vectors, wf%excited_state_specifications%n_singlet_states, 1)
+!        
+      endif
+!
+!     :: Initialize lower level method ::
+!  
+      cc2_wf%name = 'CC2'
+!
+!     Set implemented generic methods
+!
+      cc2_wf%implemented%ground_state         = .true.
+      cc2_wf%implemented%excited_state        = .true.
+      cc2_wf%implemented%core_excited_state   = .true.
+!
+!     Read Hartree-Fock info from SIRIUS
+!
+      call cc2_wf%read_hf_info
+!
+      if (cc2_wf%mlcc_settings%CCS) then
+!
+         call cc2_wf%orbital_partitioning
+!
+      else
+!
+!        Do full space CC2 calculation
+!
+         cc2_wf%n_CC2_o = wf%n_o
+         cc2_wf%n_CC2_v = wf%n_v
+!
+         cc2_wf%first_CC2_o = 1
+         cc2_wf%first_CC2_v = 1         
+!
+      endif
+!
+!     Initialize amplitudes and associated attributes
+!
+      call cc2_wf%initialize_single_amplitudes
+!
+!     Set the number of parameters in the wavefunction
+!     (that are solved for in the ground and excited state solvers) 
+!
+      cc2_wf%n_t1am = (cc2_wf%n_o)*(cc2_wf%n_v)
+      cc2_wf%n_parameters = cc2_wf%n_t1am
+!
+!     Read Cholesky AO integrals and transform to MO basis
+!
+      call cc2_wf%read_transform_cholesky
+!
+!     Initialize fock matrix
+!
+      call cc2_wf%initialize_fock_matrix
+      call cc2_wf%destruct_single_amplitudes
+!
+   end subroutine cnto_init_cc2_mlccsd
 !
 !
    module subroutine print_orbital_info_mlccsd(wf)

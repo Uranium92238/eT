@@ -324,7 +324,7 @@ contains
          enddo
       enddo
 !
-      call wf%destruct_double_amplitudes
+      call wf%destruct_cc2_double_amplitudes
 !
 !     Form the intermediate I_k_aij = sum_c F_k_c * x_c_aij 
 !
@@ -441,7 +441,7 @@ contains
 !
 !     Deallocate doubles amplitudes    
 !
-      call wf%destruct_double_amplitudes
+      call wf%destruct_cc2_double_amplitudes
 ! 
 !     Form rho_aib_j = - sum_k x_aib_k I_k_j
 !
@@ -595,7 +595,7 @@ contains
          enddo
       enddo
 !
-      call wf%destruct_double_amplitudes
+      call wf%destruct_cc2_double_amplitudes
 !
 !     :: Term 1 ::
 !     sum_kcl (g_ljkc * t_ki^ac * c_bl)
@@ -819,7 +819,7 @@ contains
          enddo
       enddo
 !
-      call wf%destruct_double_amplitudes
+      call wf%destruct_cc2_double_amplitudes
 !
       call wf%mem%alloc(g_lj_kc, (n_CC2_o)*(n_CCSD_o), (n_CC2_o)*(wf%n_v))
 !
@@ -951,7 +951,7 @@ contains
          enddo
       enddo
 !
-      call wf%destruct_double_amplitudes
+      call wf%destruct_cc2_double_amplitudes
 !
 !     :: 4a ::
 !     - 2 sum_(klc) g_ljkc * t_ik^ac * c_bl
@@ -1124,7 +1124,7 @@ contains
          enddo
       enddo
 !
-      call wf%destruct_double_amplitudes
+      call wf%destruct_cc2_double_amplitudes
 !
 !     :: 5a ::
 !     - 2 sum_(klc) g_ljkc * t_il^ab * c_ck
@@ -1445,7 +1445,7 @@ contains
             enddo
          enddo
 !
-         call wf%destruct_double_amplitudes
+         call wf%destruct_cc2_double_amplitudes
 !
 !        Reorder g_kc_bd to g_kb_cd with c and d restricted to the CC2 space 
 !
@@ -1611,7 +1611,7 @@ contains
             enddo
          enddo
 !
-         call wf%destruct_double_amplitudes
+         call wf%destruct_cc2_double_amplitudes
 !
 !        rho_aj_bi = -sum_(kd) I_kdb_i * x_aj_kd
 !
@@ -1724,7 +1724,7 @@ contains
             enddo
          enddo
 !
-         call wf%destruct_double_amplitudes
+         call wf%destruct_cc2_double_amplitudes
 !
 !        rho_ai_bj_CCSD = -sum_(kc) x_ai_kc * I_kcb_j
 !
@@ -1871,7 +1871,7 @@ contains
             enddo
          enddo
 !
-         call wf%destruct_double_amplitudes
+         call wf%destruct_cc2_double_amplitudes
 !
 !        rho_ai_bj_CCSD = x_ai_kc * I_kcb_j
 !
@@ -1993,7 +1993,7 @@ contains
             enddo
          enddo
 !
-         call wf%destruct_double_amplitudes
+         call wf%destruct_cc2_double_amplitudes
 !
 !        rho_b_aij = sum(d) I_bd * x_d_aij
 !
@@ -2123,7 +2123,7 @@ contains
          enddo
       enddo
 !
-      call wf%destruct_double_amplitudes
+      call wf%destruct_cc2_double_amplitudes
 !
       call wf%mem%alloc(g_kc_ld, (n_CC2_o)*(n_CC2_v), (n_CC2_o)*(n_CC2_v))
 !
@@ -2416,7 +2416,7 @@ contains
             enddo
          enddo
 !
-         call wf%destruct_double_amplitudes
+         call wf%destruct_cc2_double_amplitudes
 !
 !        rho_ai_bj = sum_ck t_ai_ck*I_ck_bj
 !
@@ -2546,7 +2546,7 @@ contains
             enddo
          enddo
 !
-         call wf%destruct_double_amplitudes
+         call wf%destruct_cc2_double_amplitudes
 !
          call wf%mem%alloc(rho_aij_b, (n_CCSD_v)*((n_CCSD_o)**2), n_CCSD_v)
 !
@@ -2674,7 +2674,7 @@ contains
             enddo
          enddo
 !
-         call wf%destruct_double_amplitudes
+         call wf%destruct_cc2_double_amplitudes
 !
 !        rho_ai_bj_CCSD = sum_L x_aib_L * I_L_j
 !
@@ -2857,7 +2857,7 @@ contains
             enddo
          enddo
 !
-         call wf%destruct_double_amplitudes
+         call wf%destruct_cc2_double_amplitudes
 !
          call wf%mem%alloc(I_CK_bj, (n_CC2_o)*(n_CC2_v), (n_CCSD_o)*(n_CCSD_v))
 !
@@ -3000,7 +3000,7 @@ contains
             enddo
          enddo
 !
-         call wf%destruct_double_amplitudes
+         call wf%destruct_cc2_double_amplitudes
 !
 !        I_D_b = sum_CLK L_D_CLK * c_CLK_b 
 !
@@ -3157,7 +3157,7 @@ contains
             enddo
          enddo
 !
-         call wf%destruct_double_amplitudes
+         call wf%destruct_cc2_double_amplitudes
 !
          call wf%mem%alloc(I_L_j, n_CC2_o, n_CCSD_o)
 !
@@ -3343,7 +3343,7 @@ contains
             enddo
          enddo
 !
-         call wf%destruct_double_amplitudes
+         call wf%destruct_cc2_double_amplitudes
 !  
          call wf%mem%alloc(I_ai_ld, (n_CCSD_o)*(n_CCSD_v), (n_CC2_o)*(n_CC2_v))
 !
@@ -3498,7 +3498,7 @@ contains
             enddo
          enddo
 !
-         call wf%destruct_double_amplitudes
+         call wf%destruct_cc2_double_amplitudes
 !
          call wf%mem%alloc(I_aj_kd, (n_CCSD_o)*(n_CCSD_v), (n_CC2_o)*(n_CC2_v))
 !
@@ -4234,7 +4234,7 @@ contains
          enddo
          
 
-         call wf%destruct_double_amplitudes
+         call wf%destruct_cc2_double_amplitudes
 !
 !        I_kl_ij = g_kl_cd * t_cd_ij
 !
@@ -4350,7 +4350,7 @@ contains
             enddo
          enddo
 
-         call wf%destruct_double_amplitudes
+         call wf%destruct_cc2_double_amplitudes
 !
 !        rho_ab_ij += t_ab_kl * X_kl_ij
 !
