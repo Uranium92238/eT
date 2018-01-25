@@ -178,8 +178,8 @@ module mlccsd_class
       procedure :: calc_ampeqs_norm          => calc_ampeqs_norm_mlccsd
       procedure :: new_amplitudes            => new_amplitudes_mlccsd
       procedure :: calc_quasi_Newton_doubles => calc_quasi_Newton_doubles_mlccsd
-!      procedure :: ground_state_preparations => ground_state_preparations_mlccsd
-!      procedure :: ground_state_cleanup      => ground_state_cleanup_mlccsd
+      procedure :: ground_state_preparations => ground_state_preparations_mlccsd
+      procedure :: ground_state_cleanup      => ground_state_cleanup_mlccsd
 !
 !
 !     -::- Omega submodule routine pointers -::-
@@ -454,9 +454,6 @@ module mlccsd_class
 !!       Read Cholesky IA 
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!       Reads the MO Cholesky IA (occ-vir) vectors from file and
-!!       places them in the incoming L_ia_J matrix
-!!
 !!
          implicit none
 !
@@ -474,23 +471,6 @@ module mlccsd_class
 !!       Get Cholesky AI
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!       Read and T1-transform Cholesky AI vectors:
-!!    
-!!        L_ai_J_T1 = L_ia_J - sum_j  t_aj*L_ji_J 
-!!                            + sum_b  t_bi*L_ab_J
-!!                            - sum_bj t_aj*t_bi*L_jb_J
-!!
-!!       Allocations in routine:
-!!
-!!       (1) n_J*(i_length)*(a_length) + 2*n_J*(a_length)*batch_length  ->  for L_ab_J contribution (batches of b)
-!!       (2) n_J*(i_length)*n_v + 2*n_J*n_o*(i_length)                  ->  for L_ij_J contribution
-!!       (3) 2*n_J*n_o*n_v                                              ->  for L_jb_J contribution
-!!
-!!       i_length = i_last - i_first + 1          
-!!       a_length = a_last - a_first + 1          
-!!
-!!       (1) determines memory requirement. 
-!!
          implicit none 
 !
          class(mlccsd)            :: wf
@@ -505,12 +485,6 @@ module mlccsd_class
 !!
 !!    Read Cholesky AB 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!!
-!!    Reads the MO Cholesky AB (vir-vir) vectors from file and
-!!    places them in the incoming L_ab_J matrix, with batching 
-!!    if necessary
-!!
-!!    Optional arguments: b_first, b_last, a_first, a_last can be used in order to restrict indices
 !!
       implicit none
 !
@@ -527,12 +501,6 @@ module mlccsd_class
 !!    Read Cholesky IA 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!    Reads the MO Cholesky IA (occ-vir) vectors from file and
-!!    places them in the incoming L_ia_J matrix
-!!
-!!
-!!    Optional arguments: i_first, i_last, a_first, a_last can be used in order to restrict indices
-!!
       implicit none
 !
       class(mlccsd)                 :: wf    
@@ -547,11 +515,6 @@ module mlccsd_class
 !!
 !!    Read Cholesky IJ 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!!
-!!    Reads the MO Cholesky IJ (occ-occ) vectors from file and 
-!!    places them in the incoming L_ij_J matrix
-!!
-!!    Optional arguments: i_first, i_last, j_first, j_last can be used in order to restrict indices
 !!
       implicit none
 !
@@ -572,13 +535,10 @@ module mlccsd_class
 !     :::::::::::::::::::::::::::::::::::
 !
       module subroutine initialize_omega_mlccsd(wf)
-!
-!        Initialize Omega (MLCCSD)
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!
-!        Allocates the projection vector (omega1, omega2) and sets it
-!        to zero.
-!
+!!
+!!        Initialize Omega (MLCCSD)
+!!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
          implicit none 
 !
          class(mlccsd) :: wf
@@ -591,29 +551,12 @@ module mlccsd_class
 !!       Construct Omega (MLCCSD)
 !!       Written by Eirik F. Kjønstad and Sarai Folkestad, Apr 2017
 !!
-!!       Constructs the MlCC2 omega.
-!! 
-!!       s2-amplitudes are constructed on the fly, according to the CC2
-!!       expression for the doubles amplitudes. 
-!!
-!!       Calculated by looping over active spaces, 
-!!       Adding the omega contribution from each active space in turn.
-!! 
          implicit none 
 !
          class(mlccsd) :: wf
 !
       end subroutine construct_omega_mlccsd
 !
-!
-!
-   end interface
-!
-!
-   interface
-!
-!     -::- Omega CC2 submodule interface -::-
-!     :::::::::::::::::::::::::::::::::::::::
 !
       module subroutine get_mlccsd_x2am_mlccsd(wf, x_ia_jb)
 !!
@@ -632,21 +575,6 @@ module mlccsd_class
 !!    Omega A1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!   
-!!    Calculates the A1 term of omega for the active space, 
-!!   
-!!    A1: sum_bcj g_Abjc * u_Ij^bc,
-!!
-!!    where upper case letters indicate CCS space, and 
-!!    lower case letters are the combined CC2/CCSD spaces.
-!!  
-!!    A1 is added to the projection vector (omega1) of
-!!    the wavefunction object wf.
-!! 
-!!    u_ij^bc = 2*x_ij^bc - x_ij^cb 
-!!
-!!    Batching over A.
-!!
-!! 
       implicit none
 !
       class(mlccsd)            :: wf
@@ -659,13 +587,7 @@ module mlccsd_class
 !! 
 !!       Omega B1
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!   
-!!       Calculates the B1 term of omega, 
-!!   
-!!       B1: - sum_bjk u_jk^ab*g_kbjI + sum_bj u_ij^ab F_jb,
-!!
-!!       with u_ij^ab = 2*x_ij^ab - x_ij^ba. 
-!!
+!!  
          implicit none
 !
          class(mlccsd)            :: wf
@@ -675,20 +597,11 @@ module mlccsd_class
 !
 !
       module subroutine omega_mlccsd_a2_mlccsd(wf, x_IC_JD)
-!
-!        Omega A2 term: Omega A2 = sum_(cd)g_aC_bD * x_Ci_Dj
-!
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, 10 Mar 2017
-!
-!        Structure: Batching over both a and b for A2.2.
-!                   x^+_Ci_Dj = x_Ci_Dj + x_Di_Cj
-!                   x^-_Ci_Dj = x_Ci_Dj - x_Di_Cj
-!                   g^+_aC_bD = g_aC_bD + g_bC_aD 
-!                   g^-_aC_bD = g_aC_bD - g_bC_aD 
-! 
-!                   omega_A2_ai_bj = 1/4*(g^+_aC_bD*x^+_Ci_Dj + g^-_aC_bD*x^-_Ci_Dj)
-!                   omega_A2_aj_bi = 1/4*(g^+_aC_bD*x^+_Ci_Dj - g^-_aC_bD*x^-_Ci_Dj)
-!
+!!
+!!        Omega A2 term: Omega A2 = sum_(cd)g_aC_bD * x_Ci_Dj
+!!
+!!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, 10 Mar 2017
+!!
          implicit none
 !
          class(mlccsd)  :: wf
@@ -702,12 +615,6 @@ module mlccsd_class
 !!       Omega B2
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, 11 Mar 2017
 !! 
-!!       Omega B2 = sum_(kl) x_ak_bl*(g_kilj + sum_(cd) x_ci_dj * g_kc_ld)
-!!
-!!       Structure: g_kilj is constructed first and reordered as g_kl_ij. 
-!!       Then the contraction over cd is performed, and the results added to g_kl_ij.
-!!       x_ka_lb is then reordered as x_ab_kl and the contraction over kl is performed.
-!!
          implicit none
 !
          class(mlccsd) :: wf 
@@ -720,12 +627,7 @@ module mlccsd_class
 !!
 !!       Omega C2 
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2017
-!!       
-!!       Z_ai_bj = - sum_(ck) x^bc_kj*( g_ki,ac - 1/2 * sum_(dl) x^ad_li*g_kd,cl )
-!!
-!!       Omega_ai_bj = P_ij^ab (1/2 Z_ai_bj + Z_aj_bi) = 1/2 Z_ai_bj + 1/2 Z_bj_ai + Z_aj_bi+ Z_bi_aj
-!!
-!!       
+!!      
          implicit none
 !
          class(mlccsd)            :: wf
@@ -739,23 +641,6 @@ module mlccsd_class
 !!       Omega D2 
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!       Calculates the D2 term,
-!!
-!!        D2: sum_ck u_jk^bc g_aikc 
-!!          - 1/2 * sum_ck u_jk^bc g_acki 
-!!          + 1/4 * sum_ck u_jk^bc sum_dl L_ldkc u_il^ad,
-!!
-!!       where 
-!!
-!!          u_jk^bc = 2 * t_jk^bc - t_kj^bc,
-!!          L_ldkc  = 2 * g_ldkc  - g_lckd.
-!!
-!!       The first, second, and third terms are referred to as D2.1, D2.2, and D2.3, 
-!!       and comes out ordered as (ai,bj). All terms are added to the omega vector of the 
-!!       wavefunction object wf.
-!
-!        The routine adds the terms in the following order: D2.3, D2.1, D2.2
-!
          implicit none 
 !
          class(mlccsd) :: wf 
@@ -768,21 +653,6 @@ module mlccsd_class
 !!
 !!     Omega E2
 !!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!!
-!!     Calculates the E2 term,
-!!
-!!      E2: sum_c t_ij^ac (F_bc - sum_dkl g_ldkc u_kl^bd) 
-!!        - sum_k t_ik^ab (F_kj + sum_cdl g_ldkc u_lj^dc),
-!!
-!!     where
-!!
-!!        u_kl^bc = 2 * t_kl^bc - t_lk^bc.
-!!
-!!     The first term is referred to as the E2.1 term, and comes out ordered as (b,jai).
-!!     The second term is referred to as the E2.2 term, and comes out ordered as (aib,j).
-!!
-!!     Both are permuted added to the projection vector element omega2(ai,bj) of
-!!     the wavefunction object wf.
 !!
        implicit none 
 !
@@ -815,14 +685,10 @@ module mlccsd_class
 !
 !
    module subroutine new_amplitudes_mlccsd(wf)
-!
-!     New Amplitudes (MLCCSD)
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!
-!     Directs the calculation of the quasi-Newton estimate Δ t_i, 
-!     and t_i + Δ t_i, and calls the DIIS routine to save & get 
-!     the amplitudes for the next iteration.
-!
+!!
+!!     New Amplitudes (MLCCSD)
+!!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
       implicit none 
 !
       class(mlccsd) :: wf 
@@ -831,14 +697,10 @@ module mlccsd_class
 !
 !
    module subroutine calc_quasi_Newton_doubles_mlccsd(wf,dt)
-!
-!     Calculate quasi-Newtoni doubles estimate (CCSD)
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!
-!     Calculates the quasi-Newton estimate Δ t_i (doubbles part)
-!     and places the contribution in the dt vector (of length n_parameters,
-!     with singles first, then doubles, etc. if inherited)
-!
+!!
+!!     Calculate quasi-Newtoni doubles estimate (CCSD)
+!!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
       implicit none 
 !
       class(mlccsd) :: wf 
@@ -854,15 +716,35 @@ module mlccsd_class
 !!    Initialize Ground State (CCSD)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-!!    Initializes the amplitudes and the projection vector for the ground
-!!    state solver.
-!!
       implicit none 
 !
       class(mlccsd) :: wf
 !
    end subroutine initialize_ground_state_mlccsd
 !
+!
+   module subroutine ground_state_preparations_mlccsd(wf)
+!!
+!!    Ground State Preparations (MLCCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+      implicit none
+!
+      class(mlccsd) :: wf 
+!
+   end subroutine ground_state_preparations_mlccsd
+!
+!
+   module subroutine ground_state_cleanup_mlccsd(wf)
+!!
+!!    Ground State Cleanup (MLCCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+      implicit none
+!
+      class(mlccsd) :: wf 
+!
+   end subroutine ground_state_cleanup_mlccsd
 !
    end interface
 !
