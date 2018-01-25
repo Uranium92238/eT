@@ -1166,8 +1166,7 @@ contains
       wf%n_t2am = ((wf%n_CCSD_v)*(wf%n_CCSD_o))*((wf%n_CCSD_v )*(wf%n_CCSD_o)+1)/2
 
 !
-      call wf%initialize_amplitudes
-      call wf%initialize_omega
+      call wf%initialize_single_amplitudes
 !
 !     Set the number of parameters in the wavefunction
 !     (that are solved for in the ground and excited state solvers) 
@@ -1189,6 +1188,7 @@ contains
 !     Initialize fock matrix
 !
       call wf%initialize_fock_matrix
+      call wf%destruct_single_amplitudes
 !
    end subroutine init_mlccsd
 !
