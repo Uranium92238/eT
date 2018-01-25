@@ -1163,7 +1163,8 @@ contains
 !
 !     Set number of amplitudes for CCSD active space
 !
-      wf%n_t2am = ((wf%n_CCSD_v)*(wf%n_CCSD_o))*((wf%n_CCSD_v )*(wf%n_CCSD_o)+1)/2
+      wf%n_t1am = (wf%n_o)*(wf%n_v)
+      wf%n_t2am = ((wf%n_CCSD_v)*(wf%n_CCSD_o))*((wf%n_CCSD_v)*(wf%n_CCSD_o)+1)/2
 
 !
       call wf%initialize_single_amplitudes

@@ -109,34 +109,28 @@ contains
 !
 !     Set the omega vector to zero 
 !
+
+      call vec_print(wf%t2am, 20, 1)
       wf%omega1 = zero
       wf%omega2 = zero
 !
 !     Construct singles contributions 
 !
-      write(unit_output,*)'a1'
-      flush(unit_output)
       call cpu_time(begin_timer)
       call wf%omega_ccsd_a1
       call cpu_time(end_timer)
       ccsd_a1_time = end_timer - begin_timer
 !
-      write(unit_output,*)'b1'
-      flush(unit_output)
       call cpu_time(begin_timer)
       call wf%omega_ccsd_b1
       call cpu_time(end_timer)
       ccsd_b1_time = end_timer - begin_timer
 !
-      write(unit_output,*)'c1'
-      flush(unit_output)
       call cpu_time(begin_timer)
       call wf%omega_ccsd_c1
       call cpu_time(end_timer)
       ccsd_c1_time = end_timer - begin_timer
 !
-      write(unit_output,*)'a1'
-      flush(unit_output)
       call cpu_time(begin_timer)
       call wf%omega_ccs_a1
       call cpu_time(end_timer)
@@ -144,36 +138,26 @@ contains
 !
 !     Construct doubles contributions 
 !
-      write(unit_output,*)'a2'
-      flush(unit_output)
       call cpu_time(begin_timer)
       call wf%omega_ccsd_a2
       call cpu_time(end_timer)
       ccsd_a2_time = end_timer - begin_timer
 !
-      write(unit_output,*)'b2'
-      flush(unit_output)
       call cpu_time(begin_timer)
       call wf%omega_ccsd_b2
       call cpu_time(end_timer)
       ccsd_b2_time = end_timer - begin_timer
 !
-      write(unit_output,*)'c2'
-      flush(unit_output)
       call cpu_time(begin_timer)
       call wf%omega_ccsd_c2
       call cpu_time(end_timer)
       ccsd_c2_time = end_timer - begin_timer
 !
-      write(unit_output,*)'d2'
-      flush(unit_output)
       call cpu_time(begin_timer)
       call wf%omega_ccsd_d2
       call cpu_time(end_timer)
       ccsd_d2_time = end_timer - begin_timer
 !
-      write(unit_output,*)'e2'
-      flush(unit_output)
       call cpu_time(begin_timer)
       call wf%omega_ccsd_e2
       call cpu_time(end_timer)

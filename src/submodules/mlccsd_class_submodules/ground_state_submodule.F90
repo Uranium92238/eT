@@ -93,6 +93,7 @@ contains
 !
 !     Deallocate vectors 
 !
+      write(unit_output,*)wf%n_parameters
       call wf%mem%dealloc(dt, wf%n_parameters, 1)
       call wf%mem%dealloc(t_dt, wf%n_parameters, 1)
 !
@@ -129,6 +130,7 @@ contains
 ! 
       call wf%get_CCSD_active_indices(first_active_o, first_active_v)
       call wf%get_CCSD_n_active(n_active_o, n_active_v)
+      write(unit_output,*)n_active_v, n_active_o
 !
       last_active_o = first_active_o + n_active_o - 1
       last_active_v = first_active_v + n_active_v - 1 
