@@ -100,7 +100,6 @@ contains
 !
 !     Deallocate vectors 
 !
-      write(unit_output,*)wf%n_parameters
       call wf%mem%dealloc(dt, wf%n_parameters, 1)
       call wf%mem%dealloc(t_dt, wf%n_parameters, 1)
 !
@@ -127,7 +126,6 @@ contains
 !
 !     Calculate the doubles Δ t_i contribution
 !        
-      write(unit_output,*)wf%n_v, wf%n_o
       do a = 1, wf%n_v
          do i = 1, wf%n_o
             do b = 1, wf%n_v

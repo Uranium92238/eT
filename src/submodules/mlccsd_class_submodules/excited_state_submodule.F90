@@ -14,22 +14,24 @@ submodule (mlccsd_class) excited_state
 !
 contains
 !
-   module subroutine initialize_excited_states_mlccsd(wf)
+      module subroutine excited_state_preparations_mlccsd(wf)
 !!
-!!    Initialize excited states
-!!    Written by Sarai D. Folkestad, Aug 2017
+!!    Excited State Preparations (MLCCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
-!!    Calculates and sets n_s2am, and updates n_parameters
-!!    for excited state calculation
+!!    A routine for preparation tasks (if any). Can be overwritten
+!!    in descendants if other preparations prove necessary.    
 !!
-      implicit none 
-!    
-      class(mlccsd) :: wf
+      class(mlccsd) :: wf 
 !
       integer(i15) :: n_o
       integer(i15) :: n_v
+!
+!     Set current task to excited state calculation 
+! 
+      wf%tasks%current = 'excited_state'
 !     
-!     Add packed number of double amplitudes 
+!     Set n_parameters
 !
       n_o = wf%n_CC2_o + wf%n_CCSD_o
       n_v = wf%n_CC2_v + wf%n_CCSD_v
@@ -38,7 +40,52 @@ contains
 !
       wf%n_parameters = wf%n_t1am + wf%n_x2am                     
 !
-   end subroutine initialize_excited_states_mlccsd
+      call wf%initialize_single_amplitudes
+      call wf%read_single_amplitudes
+!
+!     Set filename for solution vectors
+!
+      if (wf%tasks%core_excited_state .or. wf%tasks%core_ionized_state) then   ! Core excitation
+!
+         if (wf%excited_state_specifications%right) then                         ! Right vectors
+            wf%excited_state_specifications%solution_file = 'right_core'
+         else                                                                    ! Left vectors
+            write(unit_output,*)'Error: Jacobian transpose transformation not implemented for core excitations' ! S: should be able to get these with the same projections however so...
+            stop
+         endif
+!
+      else                                                                    ! Valence excitation
+!
+         if (wf%excited_state_specifications%left) then                          ! Right vectors
+            wf%excited_state_specifications%solution_file = 'left_valence'
+         else                                                                    ! Left vectors
+            wf%excited_state_specifications%solution_file = 'right_valence'
+         endif
+!
+      endif
+!
+   end subroutine excited_state_preparations_mlccsd
+!
+!
+   module subroutine excited_state_cleanup_mlccsd(wf)
+!!
+!!    Excited State Cleanup (MLCCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!    A routine for cleanup tasks (if any). Can be overwritten
+!!    in descendants if other cleanups prove necessary.    
+!!
+      implicit none
+!
+      class(mlccsd) :: wf 
+!
+!     Deallocate the amplitudes 
+!
+      call wf%destruct_single_amplitudes
+      call wf%destruct_cc2_double_amplitudes
+!
+   end subroutine excited_state_cleanup_mlccsd
+!
 !
 !
    module subroutine transform_trial_vectors_mlccsd(wf, first_trial, last_trial)

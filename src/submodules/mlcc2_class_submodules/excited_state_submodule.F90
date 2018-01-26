@@ -85,7 +85,8 @@ contains
 !
 !     Deallocate the amplitudes 
 !
-      call wf%destruct_amplitudes
+      call wf%destruct_single_amplitudes
+      call wf%destruct_cc2_double_amplitudes
 !
    end subroutine excited_state_cleanup_mlcc2
 !

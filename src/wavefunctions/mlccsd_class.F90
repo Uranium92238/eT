@@ -205,8 +205,8 @@ module mlccsd_class
       procedure :: transform_trial_vectors      => transform_trial_vectors_mlccsd
       procedure :: print_excitation_vector      => print_excitation_vector_mlccsd
       procedure :: summary_excited_state_info   => summary_excited_state_info_mlccsd
-!      procedure :: excited_state_preparations   => excited_state_preparations_mlccsd
-!      procedure :: excited_state_cleanup        => excited_state_cleanup_mlccsd
+      procedure :: excited_state_preparations   => excited_state_preparations_mlccsd
+      procedure :: excited_state_cleanup        => excited_state_cleanup_mlccsd
 !
 !
 !     -::- Jacobian submodule routine pointers -::-
@@ -759,19 +759,6 @@ module mlccsd_class
 !!    Jacobian transformation (MLCC2)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
 !!
-!!    Directs the transformation by the CCSD Jacobi matrix,
-!!
-!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >,
-!!
-!!    where the basis employed for the brackets is biorthonormal. 
-!!    The transformation is rho = A c, i.e., 
-!!
-!!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck 
-!!                  + 1/2 sum_ckdl A_mu,ckdl c_ckdl (1 + delta_ck,dl).
-!!
-!!    On exit, c is overwritten by rho. That is, c_a_i = rho_a_i,
-!!    and c_aibj = rho_aibj. 
-!!
       implicit none
 !
       class(mlccsd) :: wf 
@@ -789,11 +776,6 @@ module mlccsd_class
 !!    Jacobian CCSD B2 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-!!    rho_ai_bj^B2 = - sum_kc (F_kc t_ij^ac c_bk + F_kc t_ik^ab c_cj)
-!!
-!!    The term is added as rho_ai_bj(ai,bj) = rho_ai_bj(ai,bj) + rho_ai_bj^B2,
-!!    where c_a_i(a,i) = c_ai above.
-!!
       implicit none 
 !
       class(mlccsd) :: wf 
@@ -810,11 +792,6 @@ module mlccsd_class
 !!    Jacobian CCSD C2 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2017
 !!
-!!    rho_ai_bj^C2 = sum_kcl (g_ljkc * t_ki^ac * c_bl) + (g_ljkc * t_li^bc * c_ak) 
-!!                         + (g_ljkc * t_lk^ba * c_ci) 
-!!                         - (L_ljkc * t_ik^ac * c_bl)- (L_ljkc * t_il^ab * c_ck)
-!!                
-!!
       implicit none 
 !
       class(mlccsd) :: wf 
@@ -829,17 +806,6 @@ module mlccsd_class
 !!
 !!    Jacobian CCSD D2 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!!
-!!    rho_ai_bj^D2 = - sum_kcd g_kcbd (x_ij^cd c_ak + x_kj^ad c_ci + x_ik^ca c_dj)
-!!                       + sum_kcd L_kcbd (x_ik^ac c_dj + x_ij^ad c_ck)
-!!
-!!    Note: the code is structured so that we batch over the index b,
-!!          where the integrals are made as g_kc_db = g_kcbd and held
-!!          in some ordering or other throughout a given batch (i.e.,
-!!          all five terms are constructed gradually in the batches).
-!!
-!!    The term is added as rho_ai_bj(ai,bj) = rho_ai_bj(ai,bj) + rho_ai_bj^D2,
-!!    where c_a_i(a,i) = c_ai above.
 !!
       implicit none 
 !
@@ -856,8 +822,6 @@ module mlccsd_class
 !!    Jacobian MLCCSD E2 
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!    rho_ai_bj^E2 = 2 sum_dlck x_bj,DL * L_KC,LD * c_ai,CK 
-!!
       implicit none 
 !
       class(mlccsd) :: wf 
@@ -872,11 +836,6 @@ module mlccsd_class
 !!
 !!       Jacobian MLCCSD F2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!
-!!       rho_ai_bj^F2 =   - sum_(CKDL) x_ai,CK * L_KC,LD * c_bL,Dj 
-!!                        - sum_(CKDL) x_ai,Dj * L_KC,LD * c_bL,CK
-!!                        - sum_(CKDL) x_ai_bL * L_KC,LD * c_CK,Dj
-!!
 !!
          implicit none 
 !
@@ -893,11 +852,6 @@ module mlccsd_class
 !!       Jacobian MLCCSD G2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!       rho_ai_bj^G2 =  - sum_ckdl x_bL,Dj * L_KC,LD * c_ai,CK 
-!!                       - sum_ckdl x_CK_bL * L_KC,LD * c_ai,Dj 
-!!                       - sum_ckld x_CK,Dj * L_KC,LD * c_ai,bL 
-!!
-!!
          implicit none 
 !
          class(mlccsd) :: wf 
@@ -912,10 +866,7 @@ module mlccsd_class
 !!
 !!       Jacobian MLCCSD H2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!
-!!       rho_ai_bj^H2 =  sum_CKDL x_Ci,aK * g_KC,LD * c_bL,Dj 
-!!                     + sum_CKDL x_Cj,aL * g_KC,LD * c_bK,Di
-!!                
+!!              
          implicit none 
 !
          class(mlccsd) :: wf 
@@ -931,12 +882,6 @@ module mlccsd_class
 !!       Jacobian MLCCSD I2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!       rho_ai_bj^I2 =  sum_C F_bC * c_ai,Cj - sum_K F_jK * c_ai,bK
-!!                     + sum_ck L_bj,KC * c_ai,CK 
-!!                     - sum_ck ( g_KC,bj * c_aK,Ci + g_Ki,bC * c_aK,Cj ) 
-!!                
-!!       Batch over c to construct  g_ki_bC
-!! 
          implicit none 
 !
          class(mlccsd) :: wf 
@@ -951,10 +896,7 @@ module mlccsd_class
 !!
 !!       Jacobian CCSD J2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!
-!!       rho_ab_ij^J2 =    sum_ckld t_ci,dj * g_kc,ld * c_ak,bl 
-!!                       + sum_ckdl t_ak,bl * g_kc,ld * c_ci,dj
-!!             
+!!           
          implicit none 
 !
          class(mlccsd) :: wf 
@@ -969,12 +911,6 @@ module mlccsd_class
 !!
 !!       Jacobian MLCCSD K2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!
-!!       rho_ab_ij^K2 =    sum_kl g_Ki,Lj * c_aK,bL 
-!!                       + sum_cd g_aC,bD * c_Ci,Dj
-!! 
-!!       For the last term we batch over a and b and 
-!!       add each batch to rho_ai_bj 
 !!               
          implicit none 
 !
@@ -996,16 +932,32 @@ module mlccsd_class
 !     -::- Excited state submodule interface -::-
 !     :::::::::::::::::::::::::::::::::::::::::::
 !
+      module subroutine excited_state_preparations_mlccsd(wf)
+!!
+!!       Wxcited state preparations
+!!       Written by Sarai D. Folkestad, Aug 2017
+!!
+         implicit none 
+!       
+         class(mlccsd) :: wf
+!
+      end subroutine excited_state_preparations_mlccsd
+!
+!
+      module subroutine excited_state_cleanup_mlccsd(wf)
+!!
+!!       Excited state cleanup
+!!       Written by Sarai D. Folkestad, Aug 2017
+!!
+         implicit none 
+!       
+         class(mlccsd) :: wf
+!
+      end subroutine excited_state_cleanup_mlccsd
       module subroutine transform_trial_vectors_mlccsd(wf, first_trial, last_trial)
 !!
 !!    Transformation of Trial Vectors (MLCC2)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!
-!!    Each trial vector in first_trial to last_trial is read from file and
-!!    transformed before the transformed vector is written to file.
-!!
-!!    Singles and doubles part of the transformed vectors are written to 
-!!    the same record in file transformed_vec, record length is n_parameters long.
 !!
       implicit none
 !
@@ -1020,9 +972,6 @@ module mlccsd_class
 !!
 !!       Initialize excited states
 !!       Written by Sarai D. Folkestad, Aug 2017
-!!
-!!       Calculates and sets n_s2am, and updates n_parameters
-!!       for excited state calculation
 !!
          implicit none 
 !       
