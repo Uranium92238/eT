@@ -89,7 +89,9 @@ contains
       call wf%jacobian_mlcc2_a1(rho_a_i, c_a_i)
 !
 !     Calculatenumber of active indices
-! 
+!
+      write(unit_output,*)'hella'
+         flush(unit_output) 
       call wf%get_CC2_n_active(n_active_o, n_active_v)
 !
 !     Allocate the incoming unpacked doubles vector 
@@ -115,6 +117,8 @@ contains
 !
 !     Allocate unpacked transformed vector
 !
+      write(unit_output,*)'hella 2'
+         flush(unit_output)
       call wf%mem%alloc(rho_ai_bj, n_active_o*n_active_v, n_active_o*n_active_v) 
       rho_ai_bj = zero 
 !
@@ -617,10 +621,12 @@ contains
       real(dp), dimension(:,:)            :: c_ai_bj 
       real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i
 !
-!     Batching variables 
+!     Variables for batching
 !
-      integer(i15) :: required = 0, available = 0, max_length = 0, offset = 0
-      integer(i15) :: A_n_batch = 0, A_first = 0, A_last = 0, A_batch = 0, A_length = 0
+      integer(i15) :: required = 0 
+      integer(i15) :: current_A_batch = 0
+!
+      type(batching_index) :: batch_A 
 !
 !     Allocatables
 ! 
@@ -776,58 +782,52 @@ contains
                   n_active_v*n_active_o**2,   &
                   one,                        &
                   rho_a_i(first_active_v,1),  &
-                  wf%n_v) 
+                  wf%n_v)
 !
       call wf%mem%dealloc(L_jck_I, n_active_o*n_active_v*n_active_o, wf%n_o)
 !
 !     :: Term 3 ::
 !     sum_cbk L_Abkc * c_bi,ck
-!
+!!
 !     Prepare for batching over A
 !
-      required = max(2*(n_active_v**2)*(wf%n_v)*(n_active_o), &
-                     (n_active_v**2)*(wf%n_v)*(n_active_o) + n_active_o*n_active_v*(wf%n_J) + (wf%n_v)*n_active_v*(wf%n_J))
+      required = max(wf%get_vvov_required_mem(), 2*(wf%n_v**3)*(wf%n_o))
 !
-      required = required*4  ! Words
-
-      max_length = 0
-      call num_batch(required, wf%mem%available, max_length, A_n_batch, wf%n_v)
+!     Initialize batching variable 
 !
-!     Initialize some variables for batching
+      call batch_A%init(wf%n_v)
+      call wf%mem%num_batch(batch_A, required)         
 !
-      A_first  = 0
-      A_last   = 0
-      A_length = 0
+!     Loop over the number of a batches 
 !
-!     Start looping over a-batches
+      do current_A_batch = 1, batch_A%num_batches
 !
-      do A_batch = 1, A_n_batch
-!   
-         call batch_limits(A_first ,A_last ,A_batch, max_length, wf%n_v)
+!        Determine the limits for the current a-batch 
 !
-         A_length = A_last - A_first + 1
+         call batch_a%determine_limits(current_A_batch)
 !
-         call wf%mem%alloc(g_Ab_kc, n_active_v*A_length, n_active_o*n_active_v)
+         flush(unit_output)
+        call wf%mem%alloc(g_Ab_kc, n_active_v*(batch_A%length), n_active_o*n_active_v)
 !
          integral_type = 'electronic_repulsion'
          call wf%get_vv_ov(integral_type, g_Ab_kc, &
-                           A_first, A_last, &
+                           batch_A%first, batch_A%last, &
                            first_active_v, last_active_v, &
                            first_active_o, last_active_o, &
                            first_active_v, last_active_v)
 !
 !        Construct L_Ab_kc = 2*g_Ab_kc - g_Ac_kb 
 !
-         call wf%mem%alloc(L_Ab_kc, n_active_v*A_length, n_active_o*n_active_v)
-         do A = 1, A_length
+         call wf%mem%alloc(L_Ab_kc, n_active_v*(batch_A%length), n_active_o*n_active_v)
+         do A = 1, batch_A%length
             do b = 1, n_active_v
                do c = 1, n_active_v
                   do k = 1, n_active_o
 !
-                     Ab = index_two(A, b, A_length)
+                     Ab = index_two(A, b, batch_A%length)
                      kc = index_two(k, c, n_active_o)
                      kb = index_two(k, b, n_active_o)
-                     Ac = index_two(A, c, A_length)
+                     Ac = index_two(A, c, batch_A%length)
 !
                      L_Ab_kc(Ab, kc) = two*g_Ab_kc(Ab, kc) - g_Ab_kc(Ac, kb)
 !
@@ -836,7 +836,7 @@ contains
             enddo
          enddo
 !
-         call wf%mem%dealloc(g_Ab_kc, n_active_v*A_length, n_active_o*n_active_v)
+         call wf%mem%dealloc(g_Ab_kc, n_active_v*batch_A%length, n_active_o*n_active_v)
 !
 !        Reorder c_bi_ck to c_bkc_i
 !
@@ -860,20 +860,20 @@ contains
 !        Add contribution for current batch to rho
 !
 
-         call dgemm('N', 'N',                          &
-                     A_length,                         &
-                     n_active_o,                       &
-                     (n_active_v**2)*n_active_o,       &
-                     one,                              &
-                     L_Ab_kc,                          &
-                     A_length,                         &
-                     c_bkc_i,                          &
-                     (n_active_v**2)*n_active_o,       &
-                     one,                              &
-                     rho_a_i(A_first, first_active_o), &
+         call dgemm('N', 'N',                                &
+                     batch_A%length,                         &
+                     n_active_o,                             &
+                     (n_active_v**2)*n_active_o,             &
+                     one,                                    &
+                     L_Ab_kc,                                &
+                     batch_A%length,                         &
+                     c_bkc_i,                                &
+                     (n_active_v**2)*n_active_o,             &
+                     one,                                    &
+                     rho_a_i(batch_A%first, first_active_o), &
                      wf%n_v) 
 !
-         call wf%mem%dealloc(L_Ab_kc, n_active_v*A_length, n_active_o*n_active_v)
+         call wf%mem%dealloc(L_Ab_kc, n_active_v*(batch_A%length), n_active_o*n_active_v)
          call wf%mem%dealloc(c_bkc_i, (n_active_v**2)*n_active_o, n_active_o)
 !
       enddo ! Batching over A
@@ -902,8 +902,11 @@ contains
 !
 !     Batching variables 
 !
-      integer(i15) :: required = 0, available = 0, max_length = 0, batch_dimension = 0, offset = 0
-      integer(i15) :: c_n_batch = 0, c_first = 0, c_last = 0, c_batch = 0, c_length = 0
+      integer(i15) :: required = 0, offset = 0
+      integer(i15) :: current_c_batch = 0
+!
+      type(batching_index) :: batch_c 
+
 !
 !     Allocatables
 !
@@ -940,59 +943,52 @@ contains
 !     :: Term 1 ::
 !     sum_C g_aib_C * c_C_j(= sum_C g_ai,bC * c_Cj)
 !
-      required = max(2*n_active_v*(wf%n_v)*(wf%n_J) + 2*(wf%n_v)*(wf%n_o)*(wf%n_J), &
-                     n_active_v*(wf%n_v)*(wf%n_J) + (n_active_v**2)*(wf%n_v)*n_active_o)
+      required = wf%get_vvvo_required_mem()
 !
+!     Initialize batching variable 
 !
-      required = required*4  ! Words
-
-      max_length = 0
-      call num_batch(required, wf%mem%available, max_length, C_n_batch, wf%n_v)
+      call batch_c%init(wf%n_v)
+      call wf%mem%num_batch(batch_c, required)         
 !
-!     Initialize some variables for batching
+!     Loop over the number of a batches 
 !
-      C_first  = 0
-      C_last   = 0
-      C_length = 0
+      do current_c_batch = 1, batch_c%num_batches
 !
-!     Start looping over batches of c
+!        Determine the limits for the current a-batch 
 !
-      do C_batch = 1, C_n_batch
+         call batch_c%determine_limits(current_c_batch)
 !
-         call batch_limits(C_first, C_last, C_batch, max_length, wf%n_v)
-!
-!        Construct g_ai,bC ordered as g_ai_bC batching over C
-!
-         C_length = C_last - C_first + 1
-!
-         call wf%mem%alloc(g_ai_bC, n_active_v*n_active_o, n_active_v*C_length)
+         call wf%mem%alloc(g_ai_bC, n_active_v*n_active_o, n_active_v*batch_c%length)
 !
          integral_type = 'electronic_repulsion'
          call wf%get_vo_vv(integral_type, g_ai_bC, &
                            first_active_v, last_active_v, &
                            first_active_o, last_active_o, &
                            first_active_v, last_active_v, &
-                           C_first, C_last)
+                           batch_c%first, batch_c%last)
 !
 !        Add contribution tho rho
 !        
           call dgemm('N', 'N', &
                       (n_active_v**2)*n_active_o, &
                       n_active_o, &
-                      C_length, &
+                      batch_c%length, &
                       one, &
                       g_ai_bC, &
                       ((n_active_v)**2)*n_active_o, &
-                      c_a_i(c_first, first_active_o), &
+                      c_a_i(batch_c%first, first_active_o), &
                       wf%n_v, &
                       one, &
                       rho_ai_bj, &
                       (n_active_v**2)*n_active_o)
 !
-         call wf%mem%dealloc(g_ai_bC, n_active_v*n_active_o, n_active_v*C_length)
+         call wf%mem%dealloc(g_ai_bC, n_active_v*n_active_o, n_active_v*batch_c%length)
 
 !
       enddo ! batching over c
+      write(unit_output,*)'1'
+      flush(unit_output)
+
 ! 
 !     :: Term 2 ::
 !     - sum_K g_aij_K * C_K_b(= - sum_K g_ai,Kj * C_bK)
@@ -1000,6 +996,8 @@ contains
 !     Construct g_ai,Kj ordered as g_aij_K
 ! 
       call wf%mem%alloc(g_ai_Kj, n_active_v*n_active_o, n_active_o*(wf%n_o))
+      write(unit_output,*)'2.1'
+      flush(unit_output)
 !
       integral_type = 'electronic_repulsion'
       call wf%get_vo_oo(integral_type, g_ai_Kj, &
@@ -1007,11 +1005,15 @@ contains
                         first_active_o, last_active_o, &
                         1, wf%n_o,                     &
                         first_active_o, last_active_o)
+      write(unit_output,*)'2.2'
+      flush(unit_output)
 ! 
 !     Reorder g_ai_Kj to g_aij_K
 ! 
       call wf%mem%alloc(g_aij_K, n_active_v*n_active_o**2, wf%n_o)
       g_aij_K = zero
+      write(unit_output,*)'2.3'
+      flush(unit_output)
       do a = 1, n_active_v
          do j = 1, n_active_o
             do i = 1, n_active_o
@@ -1024,6 +1026,8 @@ contains
             enddo
          enddo
       enddo
+      write(unit_output,*)'2'
+      flush(unit_output)
       call wf%mem%dealloc(g_ai_Kj, n_active_v*n_active_o, n_active_o*(wf%n_o))
 ! 
       call wf%mem%alloc(rho_aij_b, n_active_v*n_active_o**2, n_active_v)
@@ -1048,6 +1052,8 @@ contains
 ! 
 !     Reorder into rho_ai_bj
 ! 
+    write(unit_output,*)'3'
+      flush(unit_output)
       do a = 1, n_active_v
          do b = 1, n_active_v
             do i = 1, n_active_o
@@ -1061,6 +1067,8 @@ contains
          enddo
       enddo
       call wf%mem%dealloc(rho_aij_b, n_active_v*n_active_o**2, n_active_v)
+      write(unit_output,*)'4'
+      flush(unit_output)
 !
    end subroutine jacobian_mlcc2_a2_mlcc2
 !
