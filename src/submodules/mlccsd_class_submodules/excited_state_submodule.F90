@@ -111,6 +111,8 @@ contains
       integer(i15) :: unit_trial_vecs = 0, unit_rho = 0, ioerror = 0
       integer(i15) :: trial = 0 
 !
+      write(unit_output,*)'hella'
+         flush(unit_output)
 !
 !     Allocate c_a_i and c_aibj
 !

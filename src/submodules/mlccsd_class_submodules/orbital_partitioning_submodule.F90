@@ -1923,7 +1923,7 @@ contains
 !
 !     :: Initialize lower level method ::
 !  
-      cc2_wf%name = 'CC2'
+      cc2_wf%name = 'MLCC2'
 !
 !     Set implemented generic methods
 !
