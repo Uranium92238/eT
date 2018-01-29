@@ -90,8 +90,6 @@ contains
 !
 !     Calculatenumber of active indices
 !
-      write(unit_output,*)'hella'
-         flush(unit_output) 
       call wf%get_CC2_n_active(n_active_o, n_active_v)
 !
 !     Allocate the incoming unpacked doubles vector 
@@ -117,8 +115,6 @@ contains
 !
 !     Allocate unpacked transformed vector
 !
-      write(unit_output,*)'hella 2'
-         flush(unit_output)
       call wf%mem%alloc(rho_ai_bj, n_active_o*n_active_v, n_active_o*n_active_v) 
       rho_ai_bj = zero 
 !
