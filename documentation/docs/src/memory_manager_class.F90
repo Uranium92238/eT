@@ -190,7 +190,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available + dp*size       
+      mem%available = mem%available + dp*size_array
 !
    end subroutine dealloc_memory_manager
 !
