@@ -3113,7 +3113,7 @@ contains
 !     Get T1-transformed Cholesky vectors
 !
       call wf%get_cholesky_ai(L_ai_J, index1_first, index1_last, index2_first, index2_last)
-      call wf%get_cholesky_ij(L_jk_J)
+      call wf%get_cholesky_ij(L_jk_J, index3_first, index3_last, index4_first, index4_last)
 !
 !     Construct integral
 !
