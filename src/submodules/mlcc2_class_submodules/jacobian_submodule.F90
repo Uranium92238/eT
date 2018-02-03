@@ -1177,7 +1177,7 @@ contains
                    bj = index_two(b, j, n_active_v)
                    aibj = index_packed(ai, bj)
 
-                   vec_aibj(ai, bj) = zero
+                   vec_aibj(aibj, 1) = zero
                 enddo
              enddo
           endif

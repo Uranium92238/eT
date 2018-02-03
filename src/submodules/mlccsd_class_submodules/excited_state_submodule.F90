@@ -423,7 +423,6 @@ contains
          a_active_i_inactive     = 0
          a_inactive_i_active     = 0
          a_inactive_i_inactive   = 0
-!
          call wf%get_CCSD_n_active(n_active_o, n_active_v)
          do a = 1, wf%n_v
          do i = 1, wf%n_o
