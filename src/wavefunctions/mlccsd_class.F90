@@ -415,7 +415,7 @@ module mlccsd_class
          implicit none
 !
          class(mlccsd)     :: wf
-         type(mlcc2)       :: cc2_wf
+         class(mlcc2)       :: cc2_wf
 !
       end subroutine cnto_init_cc2_mlccsd
 !
