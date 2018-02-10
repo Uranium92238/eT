@@ -34,11 +34,12 @@ contains
       real(dp), dimension(:,:), allocatable :: L_ab_J
       real(dp), dimension(:,:), allocatable :: X
 !
-!     Batching variables
+!     Batching variables 
 !
-      integer(i15) :: b_batch = 0, b_first = 0, b_last = 0, b_length = 0
-      integer(i15) :: required = 0, available = 0, n_batch = 0, batch_dimension = 0
-      integer(i15) :: max_batch_length = 0
+      integer(i15) :: required        = 0
+      integer(i15) :: current_b_batch = 0
+!
+      type(batching_index) :: batch_b 
 !
       integer(i15) :: throw_away_index = 0
       real(dp)     :: throw_away
@@ -299,40 +300,42 @@ contains
 !
 !     Read L_ab_J in batches over b
 !
-      required = ((wf%n_v)**2)*(wf%n_J)
+      required = index_packed(wf%n_v, wf%n_v)*(wf%n_J)
 !
       required = 4*required ! In words
-      available = get_available()
 !
-      batch_dimension  = wf%n_v ! Batch over the virtual index b
-      max_batch_length = 0      ! Initilization of unset variables 
-      n_batch          = 0
+!     Initialization of the batching variable
 !
-      call num_batch(required, available, max_batch_length, n_batch, batch_dimension)           
+      call batch_b%init(wf%n_v)                ! Initialize batching index a 
+      call wf%mem%num_batch(batch_b, required) ! Determine batching information   
 !
 !     Loop over the number of a batches 
 !
-      do b_batch = 1, n_batch
+      do current_b_batch = 1, batch_b%num_batches
+!
+!        For each batch, get the limits for the a index 
+!
+         call batch_b%determine_limits(current_b_batch)
+!
 !  
          rewind(unit_chol_mo_ab_tmp)
 !
-         call batch_limits(b_first, b_last, b_batch, max_batch_length, batch_dimension)
-         b_length = b_last - b_first + 1 
+         call wf%mem%alloc(L_ab_J, (((batch_b%length + 1)*batch_b%length/2)&
+               +(wf%n_v - batch_b%length - batch_b%first + 1)*batch_b%length), wf%n_J)
 !
-         call wf%mem%alloc(L_ab_J, (((b_length + 1)*b_length/2)+(wf%n_v - b_length - b_first + 1)*b_length), wf%n_J)
-!
-         if (b_first .ne. 1) then
+         if (batch_b%first .ne. 1) then
 !  
 !           Calculate index of last element to throw away
 !  
-            throw_away_index = index_packed(wf%n_v, b_first - 1)
+            throw_away_index = index_packed(batch_b%first, batch_b%first) - 1
 !  
 !           Throw away all elements from 1 to throw_away_index, then read from batch start
 !  
             do j = 1, wf%n_J
 !
               read(unit_chol_mo_ab_tmp) (throw_away, i = 1, throw_away_index), &
-                                    (L_ab_J(a,j), a = 1,(((b_length + 1)*b_length/2)+(wf%n_v - b_length - b_first + 1)*b_length))
+                                    (L_ab_J(a,j), a = 1,(((batch_b%length + 1)*batch_b%length/2)&
+                                       +(wf%n_v - batch_b%length - batch_b%first + 1)*batch_b%length))
 !
             enddo
 !
@@ -343,20 +346,22 @@ contains
             do j = 1, wf%n_J
 !
               read(unit_chol_mo_ab_tmp) (L_ab_J(a,j), &
-                        a = 1, (((b_length + 1)*b_length/2)+(wf%n_v - b_length - b_first + 1)*b_length))
+                        a = 1, (((batch_b%length + 1)*batch_b%length/2)&
+                           +(wf%n_v - batch_b%length - batch_b%first + 1)*batch_b%length))
 !
             enddo
 !
          endif
 !
          do a = 1, wf%n_v
-            do b = b_first, b_last
+            do b = batch_b%first, batch_b%last
                ab = index_packed(a, b)
                write(unit_chol_mo_ab, rec=ab) (L_ab_J(ab, J), J = 1, wf%n_J)
             enddo
          enddo
 !
-         call wf%mem%dealloc(L_ab_J, (((b_length+1)*b_length/2)+(wf%n_v - b_length - b_first + 1)*b_length), wf%n_J)
+         call wf%mem%dealloc(L_ab_J, (((batch_b%length+1)*batch_b%length/2)&
+                  +(wf%n_v - batch_b%length - batch_b%first + 1)*batch_b%length), wf%n_J)
 !
       enddo
       close(unit_chol_mo_ab_tmp, status='delete')
