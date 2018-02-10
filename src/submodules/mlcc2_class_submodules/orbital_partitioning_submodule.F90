@@ -1459,7 +1459,7 @@ contains
 !
       class(mlcc2) :: wf
 !
-      type(ccs)    :: ccs_wf
+      class(ccs)    :: ccs_wf
 !
       integer(i15) :: lower_level_n_singlet_states
       integer(i15) :: i = 0, j = 0
@@ -1594,4 +1594,6 @@ contains
       call ccs_wf%destruct_amplitudes
 !
    end subroutine cnto_init_ccs_mlcc2
+!
+!
 end submodule orbital_partitioning

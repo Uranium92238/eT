@@ -1873,7 +1873,7 @@ contains
 !
       class(mlccsd) :: wf
 !
-      type(mlcc2)    :: cc2_wf
+      class(mlcc2)    :: cc2_wf
 !
       integer(i15) :: lower_level_n_singlet_states
       integer(i15) :: i = 0, j = 0

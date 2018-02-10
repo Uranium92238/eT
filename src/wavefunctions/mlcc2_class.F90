@@ -397,7 +397,7 @@ module mlcc2_class
          implicit none
 !
          class(mlcc2)   :: wf
-         type(ccs)      :: ccs_wf
+         class(ccs)      :: ccs_wf
 !
       end subroutine cnto_init_ccs_mlcc2
 !
@@ -890,6 +890,7 @@ contains
       integer(i15) :: last_active_o ! first active occupied index 
       integer(i15) :: last_active_v ! first active virtual index
 !
+      write(unit_output,*)'Hei'
 !
 !     :: t1 contribution ::
 !
