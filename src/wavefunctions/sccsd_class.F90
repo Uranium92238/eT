@@ -102,6 +102,8 @@ module sccsd_class
 !
       procedure :: excited_state_driver => excited_state_driver_sccsd 
 !
+      procedure :: eigenvector_controller => eigenvector_controller_sccsd
+!
 !
 !     -::- Omega submodule routine pointers -::-
 !     ------------------------------------------
@@ -158,6 +160,7 @@ module sccsd_class
 !
       procedure :: read_triples => read_triples_sccsd
 !
+      procedure :: sccsd_diis => sccsd_diis_sccsd
 !
    end type sccsd 
 !
@@ -442,6 +445,38 @@ module sccsd_class
       end subroutine excited_state_driver_sccsd
 !
 !
+      module subroutine eigenvector_controller_sccsd(wf, iteration)
+!!
+!!       Eigenvector controller (SCCSD)
+!!       Written by Eirik F. Kjønstad, Dec 2017
+!!
+         implicit none 
+!
+         class(sccsd) :: wf 
+!
+         integer(i15), intent(in) :: iteration 
+!
+      end subroutine eigenvector_controller_sccsd
+!
+!
+      module subroutine sccsd_diis_sccsd(wf, dt, t_dt, iteration)
+!!
+!!    SCCSD DIIS routine
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+      implicit none 
+!
+      class(sccsd) :: wf 
+!
+      integer(i15), intent(in) :: iteration
+!
+      real(dp) :: dt 
+      real(dp) :: t_dt 
+!
+      end subroutine sccsd_diis_sccsd
+!
+!
+!
    end interface
 !
 !
@@ -517,6 +552,10 @@ contains
 !
       wf%triples = zero
 !
+!     Standard output setting is minimalist
+!
+      wf%settings%print_level = 'minimal'
+!
 !     Read SCC specific information 
 !
       call wf%scc_reader(unit_input)
@@ -589,6 +628,16 @@ contains
       call wf%initialize_single_amplitudes ! t1am = zero
       call wf%initialize_fock_matrix
       call wf%destruct_single_amplitudes
+!
+      if (wf%excited_state_specifications%restart) then
+!
+!           Set restarts to true 
+!
+            wf%ground_state_specifications%restart = .true.
+            wf%excited_state_specifications%restart = .true.
+            wf%response_specifications%restart = .true.
+!
+      endif
 !
    end subroutine init_sccsd
 !

@@ -271,9 +271,13 @@ contains
 !
 !        Prints 
 !
-         write(unit_output,'(/t3,a,i3)') 'Iteration:', iteration
-         write(unit_output,'(t3,a,i3/)') 'Reduced space dimension:', reduced_dim
-         flush(unit_output)
+         if (wf%settings%print_level .ne. 'minimal') then 
+!
+            write(unit_output,'(/t3,a,i3)') 'Iteration:', iteration
+            write(unit_output,'(t3,a,i3/)') 'Reduced space dimension:', reduced_dim
+            flush(unit_output)
+!
+         endif
 !
 !        Transform new trial vectors  
 !        rho_i = A * c_i
@@ -737,8 +741,12 @@ contains
       n_new_trials = 0
       converged_residual = .true.
 !
-      write(unit_output,'(t3,a)') 'Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm'
-      write(unit_output,'(t3,a)') '-------------------------------------------------------------------'
+      if (wf%settings%print_level .ne. 'minimal') then
+!
+         write(unit_output,'(t3,a)') 'Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm'
+         write(unit_output,'(t3,a)') '-------------------------------------------------------------------'
+!
+      endif
 !
 !     For each of the roots
 !
@@ -817,9 +825,13 @@ contains
 !
 !        Prints
 !
-         write(unit_output,'(t3,i2,5x,f16.12,7x,f16.12,11x,e10.4)') root, eigenvalues_Re(root, 1), &
+         if (wf%settings%print_level .ne. 'minimal') then
+!
+            write(unit_output,'(t3,i2,5x,f16.12,7x,f16.12,11x,e10.4)') root, eigenvalues_Re(root, 1), &
                                                                 eigenvalues_Im(root, 1), norm_residual/norm_solution_vector
-         flush(unit_output)
+            flush(unit_output)
+!
+         endif
 !
 !        :: Precondition the residual by inverse orbital energy differences ::
 !
@@ -884,7 +896,11 @@ contains
 !
       call wf%mem%dealloc(residual, wf%n_parameters, 1)
 !
-      write(unit_output,'(t3,a)') '-------------------------------------------------------------------'
+      if (wf%settings%print_level .ne. 'minimal') then
+!
+         write(unit_output,'(t3,a)') '-------------------------------------------------------------------'
+!
+      endif
 !
    end subroutine construct_next_trial_vectors_ccs
 !

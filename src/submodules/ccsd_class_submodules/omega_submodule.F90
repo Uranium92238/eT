@@ -340,6 +340,8 @@ contains
       real(dp), dimension(:,:), allocatable :: g_ckl_i ! g_kilc 
       real(dp), dimension(:,:), allocatable :: u_a_ckl ! u_kl^ac = 2 t_kl^ac - t_lk^ac
 !
+      real(dp) :: begin_timer, end_timer
+!
 !     Get g_ki_lc = g_kilc
 !
       call wf%mem%alloc(g_ki_lc, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
@@ -377,21 +379,31 @@ contains
 !
       call wf%mem%alloc(u_a_ckl, wf%n_v, (wf%n_v)*(wf%n_o)**2)
 !
+      call cpu_time(begin_timer)
+!
       do l = 1, wf%n_o
          do k = 1, wf%n_o
             do c = 1, wf%n_v
 !
-               cl  = index_two(c, l, wf%n_v)
-               ck  = index_two(c, k, wf%n_v)
-               ckl = index_three(c, k, l, wf%n_v, wf%n_o) 
+      !         cl  = index_two(c, l, wf%n_v)
+      !         ck  = index_two(c, k, wf%n_v)
+      !         ckl = index_three(c, k, l, wf%n_v, wf%n_o) 
+               cl  = wf%n_v*(l-1) + c 
+               ck  = wf%n_v*(k-1) + c 
+               ckl = wf%n_v*(wf%n_o*(l-1)+k-1)+c
 !
                do a = 1, wf%n_v
 !
-                  ak   = index_two(a, k, wf%n_v)
-                  al   = index_two(a, l, wf%n_v)
+       !           ak   = index_two(a, k, wf%n_v)
+        !          al   = index_two(a, l, wf%n_v)
+                   ak = wf%n_v*(k-1) + a 
+                   al = wf%n_v*(l-1) + a 
 !
-                  akcl = index_packed(ak, cl)
-                  alck = index_packed(al, ck)
+                  akcl = (max(ak,cl)*(max(ak,cl)-3)/2) + ak + cl 
+                  alck = (max(al,ck)*(max(al,ck)-3)/2) + al + ck
+!
+         !         akcl = index_packed(ak, cl)
+          !        alck = index_packed(al, ck)
 !
 !                 Set the value of u_a_ckl = u_kl^ac = 2*t_kl^ac - t_lk^ac = 2*t_ak,cl - t_al,ck 
 !
@@ -401,6 +413,10 @@ contains
             enddo
          enddo
       enddo
+!
+      call cpu_time(end_timer)
+      write(unit_output,*) 'Time for v2o2 reordering in omega B1:', end_timer - begin_timer
+      flush(unit_output)
 !
 !     Calculate the B1 term, - sum_ckl u_a_ckl g_ckl_i
 !

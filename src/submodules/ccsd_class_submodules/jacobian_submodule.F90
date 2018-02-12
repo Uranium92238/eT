@@ -399,6 +399,8 @@ contains
       real(dp), dimension(:,:), allocatable :: t_a_lkd ! t_lk^ad 
       real(dp), dimension(:,:), allocatable :: u_ai_lc ! u_li^ca reordered 
 !
+      real(dp) :: begin_timer, end_timer
+!
 !     Indices 
 !
       integer(i15) :: a = 0, c = 0, d = 0, i = 0, k = 0, l = 0
