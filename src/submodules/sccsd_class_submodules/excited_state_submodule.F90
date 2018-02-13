@@ -84,7 +84,6 @@ contains
                'Requested ',wf%excited_state_specifications%n_singlet_states,' ', trim(wf%name), ' singlet states.'
       write(unit_output,'(t3,a,i2,a,a,a)') &
                'Requested ',wf%excited_state_specifications%n_triplet_states,' ', trim(wf%name), ' triplet states.' 
-  
 !
 !     Read the triples amplitude (if it exists)
 !
@@ -103,53 +102,15 @@ contains
          write(unit_output,'(/t3,a29,i3)')     'Similarity constrained cycle:', iteration 
          write(unit_output,'(t3,a53,f16.12)')  'In this cycle, we use the following triple amplitude:', wf%triples
 !
-!        Part I. Solve for the ground state 
+         if (wf%state_A .eq. 0) then ! Ground state intersection
 !
-         write(unit_output,'(/t3,a,i2)') 'Part I. Solving the ground state equation'
-         wf%tasks%current = 'ground_state'
-         call wf%ground_state_driver
+            call wf%ground_state_intersection_cycle(iteration)
 !
-!        Part II. Solve for the multipliers
+         else
 !
-         write(unit_output,'(t3,a,i2)') 'Part II. Solving the multiplier equation'
+            call wf%excited_state_intersection_cycle(iteration)
 !
-         call wf%excited_state_preparations
-!
-         write(unit_output,'(/t3,a)')  ':: Response solver (Davidson)'
-         write(unit_output,'(t3,a)')   ':: E. F. Kjønstad, S. D. Folkestad, June 2017' 
-         flush(unit_output)  
-!
-         wf%tasks%multipliers = .true.
-         wf%tasks%current = 'multipliers'
-         call wf%response_solver
-         wf%tasks%multipliers = .false.
-!
-!        Part III. Solve for the right excited states 
-!
-         write(unit_output,'(t3,a)')  'Part III. Solving the eigenvalue equation for the right eigenvectors'
-!
-         write(unit_output,'(/t3,a)')  ':: Excited state solver (Davidson)'
-         write(unit_output,'(t3,a)')   ':: E. F. Kjønstad, S. D. Folkestad, May 2017'
-!
-         wf%excited_state_specifications%right = .true.  ! Use A transformation
-         wf%excited_state_specifications%left  = .false. ! Not A^T transformation
-         wf%tasks%current = 'excited_state'
-!
-         call wf%excited_state_solver
-         call wf%excited_state_cleanup
-!
-!        Part IV. Calculate the overlap between the similarity constrained states 
-!
-         write(unit_output,'(/t3,a)') 'Part IV. Computing the generalized overlap between the states'
-!
-!        Test whether one or both of the eigenvectors have flipped vis-a-vis
-!        the last iteration 
-!
-         call wf%eigenvector_controller(iteration) 
-!
-!        Compute the generalized overlap 
-!
-         call wf%calc_overlap
+         endif
 !
          write(unit_output,'(/t3,a)') 'Summary of similarity constrained cycle:' 
 !
@@ -186,7 +147,6 @@ contains
 !
 !           Update amplitudes according to DIIS, with dampings
 !
-      !      if (iteration - (diis_dim-1)*((iteration-1)/(diis_dim-1)) .eq. 1) then
             if (iteration .eq. 0) then
 !
                wf%triples = diis_damper_no_history*dt_local + (one-diis_damper_no_history)*wf%triples
@@ -266,6 +226,124 @@ contains
       close(unit_sccsd_cycles)
 !
    end subroutine excited_state_driver_sccsd
+!
+!
+   module subroutine excited_state_intersection_cycle_sccsd(wf, iteration)
+!!
+!!    Excited state intersection cycle (SCCSD)
+!!    Written by Eirik F. Kjønstad, June 2017
+!!
+!!    Performs all the tasks needed in a single cycle for an 
+!!    excited state intersection 
+!!
+      implicit none 
+!
+      class(sccsd) :: wf 
+!
+      integer(i15) :: iteration 
+!
+!     Part I. Solve for the ground state 
+!
+      write(unit_output,'(/t3,a,i2)') 'Part I. Solving the ground state equation'
+      wf%tasks%current = 'ground_state'
+      call wf%ground_state_driver
+!
+!     Part II. Solve for the multipliers
+!
+      write(unit_output,'(t3,a,i2)') 'Part II. Solving the multiplier equation'
+!
+      call wf%excited_state_preparations
+!
+      write(unit_output,'(/t3,a)')  ':: Response solver (Davidson)'
+      write(unit_output,'(t3,a)')   ':: E. F. Kjønstad, S. D. Folkestad, June 2017' 
+      flush(unit_output)  
+!
+      wf%tasks%multipliers = .true.
+      wf%tasks%current = 'multipliers'
+      call wf%response_solver
+      wf%tasks%multipliers = .false.
+!
+!     Part III. Solve for the right excited states 
+!
+      write(unit_output,'(t3,a)')  'Part III. Solving the eigenvalue equation for the right eigenvectors'
+!
+      write(unit_output,'(/t3,a)')  ':: Excited state solver (Davidson)'
+      write(unit_output,'(t3,a)')   ':: E. F. Kjønstad, S. D. Folkestad, May 2017'
+!
+      wf%excited_state_specifications%right = .true.  ! Use A transformation
+      wf%excited_state_specifications%left  = .false. ! Not A^T transformation
+      wf%tasks%current = 'excited_state'
+!
+      call wf%excited_state_solver
+      call wf%excited_state_cleanup
+!
+!     Part IV. Calculate the overlap between the similarity constrained states 
+!
+      write(unit_output,'(/t3,a)') 'Part IV. Computing the generalized overlap between the states'
+!
+!     Test whether one or both of the eigenvectors have flipped vis-a-vis
+!     the last iteration 
+!
+      call wf%eigenvector_controller(iteration) 
+!
+!     Compute the generalized overlap 
+!
+      call wf%calc_overlap
+!
+   end subroutine excited_state_intersection_cycle_sccsd
+!
+!
+   module subroutine ground_state_intersection_cycle_sccsd(wf, iteration)
+!!
+!!    Ground state intersection cycle (SCCSD)
+!!    Written by Eirik F. Kjønstad, June 2017
+!!
+!!    Performs all the tasks needed in a single cycle for a 
+!!    ground state intersection 
+!!
+      implicit none 
+!
+      class(sccsd) :: wf 
+!
+      integer(i15) :: iteration 
+!
+!     Part I. Solve for the ground state 
+!
+      write(unit_output,'(/t3,a,i2)') 'Part I. Solving the ground state equation'
+      wf%tasks%current = 'ground_state'
+      call wf%ground_state_driver
+!
+!     Part II. Solve for the right excited states 
+!
+      write(unit_output,'(t3,a)')  'Part III. Solving the eigenvalue equation for the right eigenvectors'
+!
+      write(unit_output,'(/t3,a)')  ':: Excited state solver (Davidson)'
+      write(unit_output,'(t3,a)')   ':: E. F. Kjønstad, S. D. Folkestad, May 2017'
+!
+      call wf%excited_state_preparations
+!
+      wf%excited_state_specifications%right = .true.  ! Use A transformation
+      wf%excited_state_specifications%left  = .false. ! Not A^T transformation
+      wf%tasks%current = 'excited_state'
+!
+      call wf%excited_state_solver
+      call wf%excited_state_cleanup
+!
+!     Part IV. Calculate the overlap between the similarity constrained states 
+!
+      write(unit_output,'(/t3,a)') 'Part IV. Computing the generalized overlap between the states'
+      flush(unit_output)
+!
+!     Test whether the excited eigenvector has flipped, vis-a-vis
+!     the last iteration 
+!
+      call wf%ground_state_eigenvector_controller(iteration) 
+!
+!     Compute the generalized overlap 
+!
+      call wf%calc_ground_state_overlap
+!
+   end subroutine ground_state_intersection_cycle_sccsd
 !
 !
    module subroutine sccsd_diis_sccsd(wf, dt, t_dt, iteration)
@@ -638,6 +716,97 @@ contains
       call deallocator(rB, wf%n_parameters, 1)
 !
    end subroutine eigenvector_controller_sccsd
+!
+!
+   module subroutine ground_state_eigenvector_controller_sccsd(wf, iteration)
+!!
+!!    Ground state eigenvector controller (SCCSD)
+!!    Written by Eirik F. Kjønstad, Feb 2018
+!!
+      implicit none 
+!
+      class(sccsd) :: wf 
+!
+      integer(i15), intent(in) :: iteration 
+!
+      real(dp), dimension(:,:), allocatable :: rB
+!
+      real(dp), dimension(:,:), allocatable :: prev_rB
+!
+      real(dp) :: ddot
+!
+      integer(i15) :: ioerror = 0
+!
+      real(dp) :: dot_product
+!
+      integer(i15) :: unit_prev_solution = -1
+      integer(i15) :: unit_solution = -1
+!
+!     Open the solutions file 
+!
+      call generate_unit_identifier(unit_solution)
+      open(unit=unit_solution, file='right_valence', action='readwrite', status='unknown', &
+            access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
+!
+!     Read state B from disk 
+!
+      call allocator(rB, wf%n_parameters, 1)
+      read(unit_solution, rec=wf%state_B, iostat=ioerror) rB 
+!
+!
+      if (iteration .eq. 1) then 
+!
+!        Simply write the current solutions to the previous solutions file 
+!
+         write(unit_prev_solution, rec=1, iostat=ioerror) rB
+!
+      else 
+!
+!        Read in previous solution 
+!
+         call allocator(prev_rB, wf%n_parameters, 1)
+         read(unit_prev_solution, rec=1, iostat=ioerror) prev_rB 
+!
+!        Calculate dot product between current and previous solution 
+!
+         dot_product = zero
+         dot_product = ddot(wf%n_parameters, prev_rB, 1, rB, 1)
+!
+!        If dot product is negative, then we are pretty sure the vector has flipped 
+!
+         if (dot_product .lt. zero) then 
+!
+            write(unit_output,'(/t6,a)')          'Eigencontroller: I think the excited state has flipped (r -> -r).'
+            write(unit_output,'(t6,a42,f16.12)')  'Overlap with solution from last iteration:', dot_product
+!
+            write(unit_output,'(/t6,a)')          'Flipping back & saving consistent solution to file for the overlap calculation.'
+!
+            rB = -rB 
+            write(unit_solution, rec=wf%state_B, iostat=ioerror) rB 
+            write(unit_prev_solution, rec=1, iostat=ioerror) rB
+!
+         else
+!
+            write(unit_prev_solution, rec=1, iostat=ioerror) rB
+!
+         endif 
+!
+         call deallocator(prev_rB, wf%n_parameters, 1)
+!
+      endif 
+!
+      call deallocator(rB, wf%n_parameters, 1)
+!
+!     Close files 
+!
+      close(unit_prev_solution)
+      close(unit_solution)
+!
+!     Deallocations 
+!
+      call deallocator(rB, wf%n_parameters, 1)
+!
+   end subroutine ground_state_eigenvector_controller_sccsd
 !
 !
 end submodule excited_state

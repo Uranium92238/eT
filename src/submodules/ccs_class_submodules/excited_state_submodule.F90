@@ -1399,7 +1399,6 @@ contains
       end subroutine precondition_residual_valence_ccs
 !
 !
-     
       module subroutine print_excited_state_info_ccs(wf)
 !!
 !!
@@ -1511,7 +1510,7 @@ contains
          real(dp)     :: swap     = zero
          integer(i15) :: swap_i = 0, swap_a = 0
 !  
-         integer(i15) :: i = 0, j = 0
+         integer(i15) ::  j = 0
 !
 !        Placing the n first elements of vec into sorted_short_vec
 !
@@ -1614,8 +1613,8 @@ contains
          if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file'
 
          call wf%mem%alloc(solution, wf%n_parameters, 1)
-         call wf%mem%alloc_int(index_list, 20, 2)
-         call wf%mem%alloc(sorted_max_vec, 20, 1)
+         call wf%mem%alloc_int(index_list, min(wf%n_t1am, 20), 2)
+         call wf%mem%alloc(sorted_max_vec, min(wf%n_t1am, 20), 1)
 !
          do state = 1, wf%excited_state_specifications%n_singlet_states
 !
@@ -1637,9 +1636,9 @@ contains
 !
 !           Get 20 highest amplitudes
 !
-            call wf%analyze_single_excitation_vector(solution, 20, sorted_max_vec, index_list)
+            call wf%analyze_single_excitation_vector(solution, min(wf%n_t1am, 20), sorted_max_vec, index_list)
 
-            do i = 1, 20
+            do i = 1, min(wf%n_t1am, 20)
                if (abs(sorted_max_vec(i, 1)) .lt. 1.0D-03) then
                   exit 
                else
@@ -1653,8 +1652,8 @@ contains
          enddo
 !
          call wf%mem%dealloc(solution, wf%n_parameters,1) 
-         call wf%mem%dealloc_int(index_list, 20, 2)
-         call wf%mem%dealloc(sorted_max_vec, 20, 1)
+         call wf%mem%dealloc_int(index_list, min(wf%n_t1am, 20), 2)
+         call wf%mem%dealloc(sorted_max_vec, min(wf%n_t1am, 20), 1)
 !
          close(unit_solution)
 !

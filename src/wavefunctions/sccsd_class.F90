@@ -100,9 +100,12 @@ module sccsd_class
 !     -::- Excited state submodule routine pointers -::-
 !     --------------------------------------------------
 !
-      procedure :: excited_state_driver => excited_state_driver_sccsd 
+      procedure :: excited_state_driver             => excited_state_driver_sccsd 
+      procedure :: excited_state_intersection_cycle => excited_state_intersection_cycle_sccsd
+      procedure :: eigenvector_controller           => eigenvector_controller_sccsd
 !
-      procedure :: eigenvector_controller => eigenvector_controller_sccsd
+      procedure :: ground_state_intersection_cycle     => ground_state_intersection_cycle_sccsd 
+      procedure :: ground_state_eigenvector_controller => ground_state_eigenvector_controller_sccsd
 !
 !
 !     -::- Omega submodule routine pointers -::-
@@ -146,7 +149,8 @@ module sccsd_class
 !
 !     Routine to calculate the overlap between the similarity constrained states
 !
-      procedure :: calc_overlap => calc_overlap_sccsd
+      procedure :: calc_overlap              => calc_overlap_sccsd
+      procedure :: calc_ground_state_overlap => calc_ground_state_overlap_sccsd
 !
 !
 !     -::- Input reader submodule routine pointers -::-
@@ -362,6 +366,18 @@ module sccsd_class
       end subroutine calc_overlap_sccsd
 !
 !
+      module subroutine calc_ground_state_overlap_sccsd(wf)
+!!
+!!       Calculate ground state overlap (SCCSD)
+!!       Written by Eirik F. Kjønstad, Feb 2018
+!!
+         implicit none 
+!
+         class(sccsd) :: wf 
+!
+      end subroutine calc_ground_state_overlap_sccsd
+!
+!
       module subroutine metric_transformation_sccsd(wf, r_a_i, r_aibj)
 !!
 !!       Metric Transformation (SCCSD)
@@ -436,13 +452,39 @@ module sccsd_class
 !!       Excited state driver (SCCSD)
 !!       Written by Eirik F. Kjønstad, June 2017
 !!
-!!       Directs the solution of the excited state problem for SCCSD. 
-!!
          implicit none 
 !
          class(sccsd) :: wf 
 !
       end subroutine excited_state_driver_sccsd
+!
+!
+      module subroutine excited_state_intersection_cycle_sccsd(wf, iteration)
+!!
+!!       Excited state intersection cycle (SCCSD)
+!!       Written by Eirik F. Kjønstad, June 2017
+!!
+         implicit none 
+!
+         class(sccsd) :: wf 
+!
+         integer(i15) :: iteration 
+!
+      end subroutine excited_state_intersection_cycle_sccsd
+!
+!
+      module subroutine ground_state_intersection_cycle_sccsd(wf, iteration)
+!!
+!!       Ground state intersection cycle (SCCSD)
+!!       Written by Eirik F. Kjønstad, June 2017
+!!
+         implicit none 
+!
+         class(sccsd) :: wf 
+!
+         integer(i15) :: iteration 
+!
+      end subroutine ground_state_intersection_cycle_sccsd
 !
 !
       module subroutine eigenvector_controller_sccsd(wf, iteration)
@@ -459,19 +501,33 @@ module sccsd_class
       end subroutine eigenvector_controller_sccsd
 !
 !
+      module subroutine ground_state_eigenvector_controller_sccsd(wf, iteration)
+!!
+!!       Ground state eigenvector controller (SCCSD)
+!!       Written by Eirik F. Kjønstad, Dec 2017
+!!
+         implicit none 
+!
+         class(sccsd) :: wf 
+!
+         integer(i15), intent(in) :: iteration 
+!
+      end subroutine ground_state_eigenvector_controller_sccsd
+!
+!
       module subroutine sccsd_diis_sccsd(wf, dt, t_dt, iteration)
 !!
-!!    SCCSD DIIS routine
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!       SCCSD DIIS routine
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-      implicit none 
+         implicit none 
 !
-      class(sccsd) :: wf 
+         class(sccsd) :: wf 
 !
-      integer(i15), intent(in) :: iteration
+         integer(i15), intent(in) :: iteration
 !
-      real(dp) :: dt 
-      real(dp) :: t_dt 
+         real(dp) :: dt 
+         real(dp) :: t_dt 
 !
       end subroutine sccsd_diis_sccsd
 !
@@ -602,8 +658,8 @@ contains
 !
       write(unit_output,'(/t6,a)') 'Triple excitation:'
 !
-      write(unit_output,'(/t9,a,3i2)') 'Occupied indices:', wf%I, wf%J, wf%K
-      write(unit_output,'(t9,a,3i2/)') 'Virtual indices: ', wf%A, wf%B, wf%C
+      write(unit_output,'(/t9,a,3i3)') 'Occupied indices:', wf%I, wf%J, wf%K
+      write(unit_output,'(t9,a,3i3/)') 'Virtual indices: ', wf%A, wf%B, wf%C
 !
 !     Read Hartree-Fock info from SIRIUS
 !

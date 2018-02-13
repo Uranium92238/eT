@@ -415,8 +415,8 @@ contains
       enddo
 !
       call cpu_time(end_timer)
-      write(unit_output,*) 'Time for v2o2 reordering in omega B1:', end_timer - begin_timer
-      flush(unit_output)
+      ! write(unit_output,*) 'Time for v2o2 reordering in omega B1:', end_timer - begin_timer
+      ! flush(unit_output)
 !
 !     Calculate the B1 term, - sum_ckl u_a_ckl g_ckl_i
 !
