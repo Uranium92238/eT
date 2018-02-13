@@ -342,10 +342,10 @@ contains
 !
       index_list = 0 
       sorted_short_vec(1,1) = vec(1,1)
-      index_list(1,1) = 1
-      index_list(1,2) = 1
-      index_list(1,3) = 1
-      index_list(1,4) = 1
+      index_list(1,1) = 1 ! a 
+      index_list(1,2) = 1 ! i 
+      index_list(1,3) = 1 ! b 
+      index_list(1,4) = 1 ! j
 !
       min = abs(sorted_short_vec(1,1))
       min_pos = 1
@@ -364,15 +364,15 @@ contains
 !
                      if (aibj .le. n) then
                         sorted_short_vec(aibj,1)   = vec(aibj,1)
-                        index_list(min_pos,1)      = a
-                        index_list(min_pos,2)      = i
-                        index_list(min_pos,3)      = b
-                        index_list(min_pos,4)      = j
+                        index_list(aibj,1)      = a
+                        index_list(aibj,2)      = i
+                        index_list(aibj,3)      = b
+                        index_list(aibj,4)      = j
 !
                         if (abs(sorted_short_vec(i,1)) .le. min) then
 !
                            min = abs(sorted_short_vec(i,1))
-                           min_pos = i
+                           min_pos = aibj
 !
                         endif
                      else
