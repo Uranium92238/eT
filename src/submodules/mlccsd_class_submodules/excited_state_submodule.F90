@@ -527,6 +527,81 @@ contains
 !
    end subroutine summary_excited_state_info_mlccsd
 !
+   module subroutine calculate_orbital_differences_mlccsd(wf, orbital_diff)
+!!
+!!    Calculate Orbital Differences (MLCC2)
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad May 2017
+!!
+!!    Calculates orbital differences
+!!
+!!       1) ε_I^A = ε_A - ε_I
+!!       2) ε_ij^ab = ε_a + ε_b - ε_i - ε_j (for active spaces only)
+!!
+!!    and puts them in orbital_diff, which is a vector of length n_parameters.        
+!!
+      implicit none
+!
+      class(mlccsd) :: wf
+!
+      real(dp), dimension(wf%n_parameters, 1) :: orbital_diff
+!
+!     Active space variables
+!
+      integer(i15) :: first_active_o ! first active occupied index 
+      integer(i15) :: first_active_v ! first active virtual index
+      integer(i15) :: last_active_o ! last active occupied index 
+      integer(i15) :: last_active_v ! last active virtual index
+      integer(i15) :: n_active_o
+      integer(i15) :: n_active_v         
+!
+      integer(i15) :: offset = 0
+!
+      integer(i15) :: A = 0, I = 0, b = 0, j = 0
+      integer(i15) :: AI = 0, bj = 0
+      integer(i15) :: aibj = 0
+!
+      do I = 1, wf%n_o
+         do A = 1, wf%n_v
+!
+            AI = index_two(A, I, wf%n_v)
+!
+            orbital_diff(AI, 1) = wf%fock_diagonal(A + wf%n_o, 1) - wf%fock_diagonal(I, 1)
+!
+         enddo
+      enddo
+!
+!     Calculate active space indices
+! 
+      call wf%get_CCSD_active_indices(first_active_o, first_active_v)
+      call wf%get_CC2_n_active(n_active_o, n_active_v)
+!
+      do i = 1, n_active_o
+!
+         do a = 1, n_active_v
+!
+            ai = index_two(a, i, n_active_v)
+!
+            do j = 1, n_active_o
+!
+               do b = 1, n_active_v
+!
+                  bj = index_two(b, j, n_active_v)
+!
+                  aibj = index_packed(ai, bj)
+!
+                  orbital_diff((wf%n_o)*(wf%n_v) + aibj, 1) &
+                                                 = wf%fock_diagonal(wf%n_o + a + first_active_v - 1, 1) &
+                                                 - wf%fock_diagonal(i + first_active_o - 1, 1) &
+                                                 + wf%fock_diagonal(wf%n_o + b + first_active_v - 1, 1) &
+                                                 - wf%fock_diagonal(j + first_active_o - 1, 1)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+   end subroutine calculate_orbital_differences_mlccsd
+!
 end submodule excited_state
 !            if (a .le. n_active_v .and. i .le. n_active_o) then
 !!

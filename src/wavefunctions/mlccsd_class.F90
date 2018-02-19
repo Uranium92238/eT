@@ -207,6 +207,7 @@ module mlccsd_class
       procedure :: summary_excited_state_info   => summary_excited_state_info_mlccsd
       procedure :: excited_state_preparations   => excited_state_preparations_mlccsd
       procedure :: excited_state_cleanup        => excited_state_cleanup_mlccsd
+      procedure :: calculate_orbital_differences=> calculate_orbital_differences_mlccsd
 !
 !
 !     -::- Jacobian submodule routine pointers -::-
@@ -1007,6 +1008,20 @@ module mlccsd_class
          real(dp), dimension(wf%excited_state_specifications%n_singlet_states,1) :: energies
 !
       end subroutine summary_excited_state_info_mlccsd
+!
+!
+      module subroutine calculate_orbital_differences_mlccsd(wf, orbital_diff)
+!!
+!!       Calculate Orbital Differences (MLCCSD)
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad May 2017
+!!
+         implicit none
+!
+         class(mlccsd) :: wf
+!
+         real(dp), dimension(wf%n_parameters, 1) :: orbital_diff
+!
+      end subroutine calculate_orbital_differences_mlccsd
 !
 !
    end interface
