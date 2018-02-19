@@ -1015,6 +1015,13 @@ contains
 !     Timings 
 !
       call cpu_time(start_cnto)
+!     
+!     Prints
+!     
+      write(unit_output,'(//t3,a)') ':: CNTO orbital partitioning for MLCCSD calculation '
+      write(unit_output,'(t3,a/)')   ':: E. F. Kjønstad, S. D. Folkestad, Jun 2017'
+      write(unit_output,'(/a35,e10.2)')'Threshold for occupied orbitals:',wf%CCSD_orbitals%delta_o
+      write(unit_output,'(a35,e10.2/)')'Threshold for virtual orbitals: ',wf%CCSD_orbitals%delta_v
 !
 !     :: Run lower level method ::
 !

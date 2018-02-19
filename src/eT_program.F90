@@ -57,7 +57,7 @@ program eT_program
 !
    integer(i15) :: unit_input = -1
 !
-   character(len=13) :: orbital_level
+   character(len=13) :: orbital_level 
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::::
 !  -::-     Set up memory controller         -::- 
@@ -77,8 +77,8 @@ program eT_program
 !  -::-         Print program banner         -::- 
 !  ::::::::::::::::::::::::::::::::::::::::::::::
 !
-   write(unit_output,'(//t18,a)')  'eT - a coupled cluster program'
-   write(unit_output,'(t15,a//)') 'S. D. Folkestad, E. F. Kjønstad, 2017'
+   write(unit_output,'(///t18,a)')  'eT - a coupled cluster program'
+   write(unit_output,'(/t15,a///)') 'S. D. Folkestad, E. F. Kjønstad, 2017'
 !
 !  Open input file
 !

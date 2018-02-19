@@ -735,8 +735,6 @@ contains
 !
       integer(i15) :: unit_input = -1
 !
-      write(unit_output,'(//t3,a/)')    ':: Initialization' 
-!
 !     Set model name 
 !
       wf%name = 'MLCC2'
@@ -889,8 +887,6 @@ contains
       integer(i15) :: first_active_v ! first active virtual index
       integer(i15) :: last_active_o ! first active occupied index 
       integer(i15) :: last_active_v ! first active virtual index
-!
-      write(unit_output,*)'Hei'
 !
 !     :: t1 contribution ::
 !

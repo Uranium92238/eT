@@ -731,11 +731,12 @@ contains
 !
       total = (a_active_i_active + a_active_i_inactive + a_inactive_i_active + a_inactive_i_inactive)
       write(unit_output,'(/t6, a10, 3a12)')'T->T:', 'S->T:', 'T->S:', 'S->S:'
-      write(unit_output,'(/t6, a50)')'--------------------------------------------------'
-      write(unit_output,'(/t6, 4f12.5)') a_active_i_active/total,&
+      write(unit_output,'(t6, a50)')'--------------------------------------------------'
+      write(unit_output,'(t6, 4f12.5)') a_active_i_active/total,&
          a_active_i_inactive/total, &
          a_inactive_i_active/total,&
          a_inactive_i_inactive/total
+      write(unit_output,'(t6, a50)')'--------------------------------------------------'
       enddo
 !
 !     Deallocations

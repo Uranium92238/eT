@@ -325,7 +325,8 @@ contains
 !
                converged = .true.
 !
-               if (iteration .eq. 1) write(unit_output,'(t3,a,/t3,a)') 'Note: residual converged in first iteration.', &
+               if (iteration .eq. 1 .and. wf%name .ne. 'CCS') write(unit_output,'(//t3,a,/t3,a)')&
+                                                               'Note: residual converged in first iteration.', &
                                                                'Energy convergence therefore not tested in this calculation.'
 !
             endif
@@ -391,7 +392,7 @@ contains
 !
 !        Print energy of excitation in eV, hartree and cm^-1
 !
-         write(unit_output,'(t6,i3,6x,f19.12,5x,f19.12,5x,f19.12)') i, eigenvalues_Re_new(i,1),           &
+         write(unit_output,'(t6,i3,6x,f19.12,5x,f19.12,5x,f25.12)') i, eigenvalues_Re_new(i,1),            &
                                                                        eigenvalues_Re_new(i,1)*27.211399, &
                                                                        eigenvalues_Re_new(i,1)*219474.63
       enddo
@@ -1598,8 +1599,8 @@ contains
          if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file'
 
          call wf%mem%alloc(solution, wf%n_parameters, 1)
-         call wf%mem%alloc_int(index_list, 20, 2)
-         call wf%mem%alloc(sorted_max_vec, 20, 1)
+         call wf%mem%alloc_int(index_list, min(wf%n_t1am, 20), 2)
+         call wf%mem%alloc(sorted_max_vec, min(wf%n_t1am, 20), 1)
 !
          do state = 1, wf%excited_state_specifications%n_singlet_states
 !
@@ -1621,9 +1622,9 @@ contains
 !
 !           Get 20 highest amplitudes
 !
-            call wf%analyze_single_excitation_vector(solution, 20, sorted_max_vec, index_list)
+            call wf%analyze_single_excitation_vector(solution, min(wf%n_t1am, 20), sorted_max_vec, index_list)
 
-            do i = 1, 20
+            do i = 1, min(wf%n_t1am, 20)
                if (abs(sorted_max_vec(i, 1)) .lt. 1.0D-03) then
                   exit 
                else
@@ -1637,8 +1638,8 @@ contains
          enddo
 !
          call wf%mem%dealloc(solution, wf%n_parameters,1) 
-         call wf%mem%dealloc_int(index_list, 20, 2)
-         call wf%mem%dealloc(sorted_max_vec, 20, 1)
+         call wf%mem%dealloc_int(index_list, min(wf%n_t1am, 20), 2)
+         call wf%mem%dealloc(sorted_max_vec, min(wf%n_t1am, 20), 1)
 !
          close(unit_solution)
 !

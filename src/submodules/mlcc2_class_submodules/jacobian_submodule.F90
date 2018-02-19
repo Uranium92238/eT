@@ -982,9 +982,6 @@ contains
 
 !
       enddo ! batching over c
-      write(unit_output,*)'1'
-      flush(unit_output)
-
 ! 
 !     :: Term 2 ::
 !     - sum_K g_aij_K * C_K_b(= - sum_K g_ai,Kj * C_bK)
@@ -992,8 +989,6 @@ contains
 !     Construct g_ai,Kj ordered as g_aij_K
 ! 
       call wf%mem%alloc(g_ai_Kj, n_active_v*n_active_o, n_active_o*(wf%n_o))
-      write(unit_output,*)'2.1'
-      flush(unit_output)
 !
       integral_type = 'electronic_repulsion'
       call wf%get_vo_oo(integral_type, g_ai_Kj, &
@@ -1001,15 +996,11 @@ contains
                         first_active_o, last_active_o, &
                         1, wf%n_o,                     &
                         first_active_o, last_active_o)
-      write(unit_output,*)'2.2'
-      flush(unit_output)
 ! 
 !     Reorder g_ai_Kj to g_aij_K
 ! 
       call wf%mem%alloc(g_aij_K, n_active_v*n_active_o**2, wf%n_o)
       g_aij_K = zero
-      write(unit_output,*)'2.3'
-      flush(unit_output)
       do a = 1, n_active_v
          do j = 1, n_active_o
             do i = 1, n_active_o
@@ -1022,8 +1013,6 @@ contains
             enddo
          enddo
       enddo
-      write(unit_output,*)'2'
-      flush(unit_output)
       call wf%mem%dealloc(g_ai_Kj, n_active_v*n_active_o, n_active_o*(wf%n_o))
 ! 
       call wf%mem%alloc(rho_aij_b, n_active_v*n_active_o**2, n_active_v)
@@ -1048,8 +1037,6 @@ contains
 ! 
 !     Reorder into rho_ai_bj
 ! 
-    write(unit_output,*)'3'
-      flush(unit_output)
       do a = 1, n_active_v
          do b = 1, n_active_v
             do i = 1, n_active_o
@@ -1063,8 +1050,6 @@ contains
          enddo
       enddo
       call wf%mem%dealloc(rho_aij_b, n_active_v*n_active_o**2, n_active_v)
-      write(unit_output,*)'4'
-      flush(unit_output)
 !
    end subroutine jacobian_mlcc2_a2_mlcc2
 !

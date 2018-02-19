@@ -111,9 +111,6 @@ contains
       integer(i15) :: unit_trial_vecs = 0, unit_rho = 0, ioerror = 0
       integer(i15) :: trial = 0 
 !
-      write(unit_output,*)'hella'
-         flush(unit_output)
-!
 !     Allocate c_a_i and c_aibj
 !
       call wf%mem%alloc(c_a_i, wf%n_v, wf%n_o)
@@ -321,9 +318,12 @@ contains
       integer(i15), dimension(:,:), allocatable :: index_list_singles, index_list_doubles
 !
       real(dp) :: norm, ddot
-      real(dp) :: a_active_i_active, a_active_i_inactive, a_inactive_i_active, a_inactive_i_inactive, total
+      real(dp) :: a_active_i_active, a_active_i_cc2_inactive, a_active_i_ccs_inactive 
+      real(dp) :: a_cc2_inactive_i_active, a_ccs_inactive_i_active, a_cc2_inactive_i_cc2_inactive
+      real(dp) :: a_cc2_inactive_i_ccs_inactive, a_ccs_inactive_i_ccs_inactive, a_ccs_inactive_i_cc2_inactive
+      real(dp) :: total
 !
-      integer(i15) :: n_active_o, n_active_v
+      integer(i15) :: n_active_o, n_active_v, n_active_o_cc2, n_active_v_cc2
 !  
 !     Open solution vector file
 !  
@@ -419,46 +419,97 @@ contains
 !        MLCC Specific print
 !
          
-         a_active_i_active       = 0
-         a_active_i_inactive     = 0
-         a_inactive_i_active     = 0
-         a_inactive_i_inactive   = 0
+         a_active_i_active       = 0 ! T->T
+!
+         a_active_i_cc2_inactive = 0 ! T->S
+         a_active_i_ccs_inactive = 0 ! T->R
+!
+         a_cc2_inactive_i_active = 0 ! S->T
+         a_ccs_inactive_i_active = 0 ! R->T
+!
+         a_cc2_inactive_i_cc2_inactive   = 0 ! S->S
+         a_cc2_inactive_i_ccs_inactive   = 0 ! S->R
+!
+         a_ccs_inactive_i_ccs_inactive   = 0 ! R->R 
+         a_ccs_inactive_i_cc2_inactive   = 0 ! R->S
+!
          call wf%get_CCSD_n_active(n_active_o, n_active_v)
+
+         call wf%get_CC2_n_active(n_active_o_CC2, n_active_v_cc2)
+!
          do a = 1, wf%n_v
          do i = 1, wf%n_o
 !
             ai = index_two(a, i, wf%n_v)
+!  
+            if (a .le. n_active_v) then ! T->
 !
-            if (a .le. n_active_v .and. i .le. n_active_o) then
+               if (i .le. n_active_o) then ! ->T
 !
-               a_active_i_active = a_active_i_active + (solution_ai(ai, 1))**2
+                  a_active_i_active = a_active_i_active + (solution_ai(ai, 1))**2
 !
-            elseif (a .le. n_active_v .and. i .gt. n_active_o) then
+               elseif (i .gt. n_active_o .and. i .le. n_active_o_cc2) then ! ->S
 !
-               a_active_i_inactive = a_active_i_inactive + (solution_ai(ai, 1))**2
+                  a_active_i_cc2_inactive = a_active_i_cc2_inactive + (solution_ai(ai, 1))**2
 !
-            elseif (a .gt. n_active_v .and. i .le. n_active_o) then
+               else ! ->R
 !
-               a_inactive_i_active = a_inactive_i_active + (solution_ai(ai, 1))**2
+                  a_active_i_ccs_inactive = a_active_i_ccs_inactive + (solution_ai(ai, 1))**2
 !
-            elseif (a .gt. n_active_v .and. i .gt. n_active_o) then
+               endif
 !
-               a_inactive_i_inactive = a_inactive_i_inactive + (solution_ai(ai, 1))**2
+            elseif (a .gt. n_active_v .and. a .le. n_active_v_cc2) then ! S->
 !
+               if (i .le. n_active_o) then ! ->T
+!
+                  a_cc2_inactive_i_active = a_cc2_inactive_i_active + (solution_ai(ai, 1))**2
+!
+               elseif (i .gt. n_active_o .and. i .le. n_active_o_cc2) then ! ->S
+!
+                  a_cc2_inactive_i_cc2_inactive = a_cc2_inactive_i_cc2_inactive + (solution_ai(ai, 1))**2
+!
+               else ! ->R
+!
+                  a_cc2_inactive_i_ccs_inactive = a_cc2_inactive_i_ccs_inactive + (solution_ai(ai, 1))**2
+!
+               endif
+!
+            else ! R->
+!
+               if (i .le. n_active_o) then ! ->T
+!
+                  a_ccs_inactive_i_active = a_ccs_inactive_i_active + (solution_ai(ai, 1))**2
+!
+               elseif (i .gt. n_active_o .and. i .le. n_active_o_cc2) then ! ->S
+!
+                  a_ccs_inactive_i_cc2_inactive = a_ccs_inactive_i_cc2_inactive + (solution_ai(ai, 1))**2
+!
+               else ! ->R
+!
+                  a_ccs_inactive_i_ccs_inactive = a_ccs_inactive_i_ccs_inactive + (solution_ai(ai, 1))**2
+!
+               endif
             endif
-
+!
          enddo
       enddo
 !
 !     Print active space stats:
 !
-      total = (a_active_i_active + a_active_i_inactive + a_inactive_i_active + a_inactive_i_inactive)
-      write(unit_output,'(/t6, a10, 3a12)')'T->T:', 'S->T:', 'T->S:', 'S->S:'
-      write(unit_output,'(/t6, a50)')'--------------------------------------------------'
-      write(unit_output,'(/t6, 4f12.5)') a_active_i_active/total,&
-         a_active_i_inactive/total, &
-         a_inactive_i_active/total,&
-         a_inactive_i_inactive/total
+      total = (a_active_i_active + a_active_i_cc2_inactive + a_active_i_ccs_inactive + a_cc2_inactive_i_active &
+               + a_ccs_inactive_i_active + a_cc2_inactive_i_cc2_inactive + a_cc2_inactive_i_ccs_inactive &
+               + a_ccs_inactive_i_ccs_inactive + a_ccs_inactive_i_cc2_inactive)
+!
+      write(unit_output,'(/t6, a7, 8a9)')'T->T:', 'T->S:', 'T->R:', 'S->T:', 'S->S:',&
+       'S->R', 'R->T:', 'R->S:', 'R->R:'
+      write(unit_output,'(t6, a83)')'-----------------------------------------------------------------------------------'
+      write(unit_output,'(t6, 9f9.5)')a_active_i_active/total, a_active_i_cc2_inactive/total, &
+                                     a_active_i_ccs_inactive/total, a_cc2_inactive_i_active/total, &
+                                     a_ccs_inactive_i_active/total, a_cc2_inactive_i_cc2_inactive/total, &
+                                     a_cc2_inactive_i_ccs_inactive/total, &
+                                     a_ccs_inactive_i_ccs_inactive/total , a_ccs_inactive_i_cc2_inactive/total
+      write(unit_output,'(t6, a83)')'-----------------------------------------------------------------------------------'
+
       enddo
 !
 !     Deallocations
@@ -474,11 +525,23 @@ contains
 !
       close(unit_solution)
 !
-      a_active_i_active       = 0
-      a_inactive_i_active     = 0
-      a_active_i_inactive     = 0
-      a_inactive_i_inactive   = 0
-!
    end subroutine summary_excited_state_info_mlccsd
 !
 end submodule excited_state
+!            if (a .le. n_active_v .and. i .le. n_active_o) then
+!!
+!               a_active_i_active = a_active_i_active + (solution_ai(ai, 1))**2
+!!
+!            elseif (a .le. n_active_v .and. i .gt. n_active_o) then
+!!
+!               a_active_i_inactive = a_active_i_inactive + (solution_ai(ai, 1))**2
+!!
+!            elseif (a .gt. n_active_v .and. i .le. n_active_o) then
+!!
+!               a_inactive_i_active = a_inactive_i_active + (solution_ai(ai, 1))**2
+!!
+!            elseif (a .gt. n_active_v .and. i .gt. n_active_o) then
+!!
+!               a_inactive_i_inactive = a_inactive_i_inactive + (solution_ai(ai, 1))**2
+!!
+!            endif

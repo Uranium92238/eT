@@ -1027,9 +1027,6 @@ contains
       integer(i15) :: unit_input = -1
 !
 !
-      write(unit_output,'(//t3,a/)')    ':: Initialization' 
-!
-!
 !     Set model name 
 !
       wf%name = 'MLCCSD'
