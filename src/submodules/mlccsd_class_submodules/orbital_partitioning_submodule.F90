@@ -1904,8 +1904,8 @@ contains
 !
 !     Set convergence threshold for lower lying method
 !
-      cc2_wf%ground_state_specifications%energy_threshold = 1.0D-04 
-      cc2_wf%ground_state_specifications%residual_threshold = 1.0D-04 
+      cc2_wf%ground_state_specifications%energy_threshold = 1.0D-08 
+      cc2_wf%ground_state_specifications%residual_threshold = 1.0D-08 
 !
       cc2_wf%excited_state_specifications%energy_threshold = 1.0D-04 
       cc2_wf%excited_state_specifications%residual_threshold = 1.0D-04  

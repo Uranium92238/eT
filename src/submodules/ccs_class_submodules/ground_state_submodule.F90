@@ -214,7 +214,7 @@ contains
 !
 !        Print information to output 
 !
-         write(unit_output,'(T3,i2,5x,f19.12,4x,e10.4)') iteration, wf%energy, ampeqs_norm 
+         write(unit_output,'(T3,i2,5x,f19.12,4x,e11.4)') iteration, wf%energy, ampeqs_norm 
          flush(unit_output) ! Flush so that the user can follow each iteration in real-time
 !
 !        Perform DIIS update if convergence hasn't been reached

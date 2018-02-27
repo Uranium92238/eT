@@ -720,18 +720,27 @@ contains
       call generate_unit_identifier(unit_trial_vecs)
       open(unit=unit_trial_vecs, file='trial_vec', action='readwrite', status='unknown', &
         access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror)
-      if (ioerror .ne. 0) write(unit_output,*) 'Error while opening trial vecs file'
+      if (ioerror .ne. 0) then
+         write(unit_output,*) 'Error while opening trial vecs file'
+         stop
+      endif
 !
       call generate_unit_identifier(unit_rho)
       open(unit=unit_rho, file='transformed_vec', action='read', status='unknown', &
       access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
-      if (ioerror .ne. 0) write(unit_output,*) 'Error while opening transformed vecs file'
+      if (ioerror .ne. 0)  then
+         write(unit_output,*)'Error while opening transformed vecs file'
+         stop
+      endif
 !
       call generate_unit_identifier(unit_solution)
       open(unit=unit_solution, file=wf%excited_state_specifications%solution_file,&
       action='write', status='unknown', &
       access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
-      if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file'
+      if (ioerror .ne. 0) then
+         write(unit_output,*) 'Error while opening solution file'
+         stop
+      endif
 !
       call wf%mem%alloc(residual, wf%n_parameters, 1)
 !
@@ -818,7 +827,7 @@ contains
 !
 !        Prints
 !
-         write(unit_output,'(t3,i2,5x,f16.12,7x,f16.12,11x,e10.4)') root, eigenvalues_Re(root, 1), &
+         write(unit_output,'(t3,i2,5x,f16.12,7x,f16.12,11x,e11.4)') root, eigenvalues_Re(root, 1), &
                                                                 eigenvalues_Im(root, 1), norm_residual/norm_solution_vector
          flush(unit_output)
 !

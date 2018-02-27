@@ -995,8 +995,6 @@ module mlccsd_class
       end subroutine print_excitation_vector_mlccsd
 !
 !
-!
-!
       module subroutine summary_excited_state_info_mlccsd(wf, energies)
 !!
 !!

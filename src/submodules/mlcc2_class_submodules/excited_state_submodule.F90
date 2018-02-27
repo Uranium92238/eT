@@ -293,14 +293,9 @@ contains
       integer(i15) :: first_active_v ! first active virtual index
       integer(i15) :: last_active_o ! first active occupied index 
       integer(i15) :: last_active_v ! first active virtual index
-!   
-!     Calculate first/last indeces
 !     
-      call wf%get_CC2_active_indices(first_active_o, first_active_v)
       call wf%get_CC2_n_active(n_active_o, n_active_v)
-!   
-      last_active_o = first_active_o + n_active_o - 1
-      last_active_v = first_active_v + n_active_v - 1   
+!
       do i = 1, wf%n_o
 !
          core_orbital = .false.

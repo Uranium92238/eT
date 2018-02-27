@@ -879,7 +879,7 @@ contains
 !
 !     Print information to output 
 !
-      write(unit_output,'(t3,i2,13x,e10.4)') iteration, conv_test 
+      write(unit_output,'(t3,i2,13x,e11.4)') iteration, conv_test 
       flush(unit_output)
 !
 !     Precondition the residual by inverse orbital energy differences
