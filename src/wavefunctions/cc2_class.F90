@@ -511,9 +511,7 @@ contains
 !
       wf%n_parameters = wf%n_t1am
 !
-!     Initialize omega vector
-!
-      call wf%initialize_omega
+      call wf%destruct_amplitudes
 !
    end subroutine init_cc2
 !

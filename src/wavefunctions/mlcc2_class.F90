@@ -445,7 +445,7 @@ module mlcc2_class
 !
       end subroutine construct_omega_mlcc2
 !
-      module subroutine get_s2am_mlcc2(wf, s_ai_bj, b_first, b_length)
+      module subroutine get_s2am_mlcc2(wf, s_ai_bj)
 !!
 !!       Get S_2 amplitudes, 
 !!       Written by Sarai D. Folkestad, July 2017 
@@ -454,8 +454,7 @@ module mlcc2_class
 !
          class(mlcc2) :: wf
 ! 
-         integer(i15) :: b_first, b_length
-         real(dp), dimension((wf%n_CC2_v)*(wf%n_CC2_o), b_length*(wf%n_CC2_o)) :: s_ai_bj
+         real(dp), dimension((wf%n_CC2_v)*(wf%n_CC2_o), (wf%n_CC2_v)*(wf%n_CC2_o)) :: s_ai_bj
 !
       end subroutine get_s2am_mlcc2
 !
@@ -1169,7 +1168,7 @@ contains
 !     Construct s2 amplitudes
 !
       call wf%mem%alloc(s_ai_bj, (wf%n_CC2_v)*(wf%n_CC2_o), (wf%n_CC2_v)*(wf%n_CC2_o))
-      call wf%get_s2am(s_ai_bj, wf%first_CC2_v, wf%first_CC2_v + wf%n_CC2_v - 1)
+      call wf%get_s2am(s_ai_bj)
 !  
 !     Reorder and pack in
 !

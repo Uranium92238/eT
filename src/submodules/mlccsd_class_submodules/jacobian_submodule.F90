@@ -72,17 +72,12 @@ contains
 !
       call wf%read_single_amplitudes
 !
-      write(unit_output,*)'mem 1', wf%mem%available
       call wf%jacobian_ccs_a1(rho_a_i, c_a_i)
-      write(unit_output,*)'mem 1', wf%mem%available
       call wf%jacobian_ccs_b1(rho_a_i, c_a_i)
 !
 !     :: MLCCSD contributions to transformed vector :: 
 !
-      write(unit_output,*)'mem 2', wf%mem%available
       call wf%jacobian_mlcc2_a1(rho_a_i, c_a_i)
-      write(unit_output,*)'mem 2', wf%mem%available
-
 !
 !     Calculate number of active indices
 ! 
@@ -104,35 +99,23 @@ contains
 !
       enddo
 !
-      write(unit_output,*)'mem 3', wf%mem%available
       call wf%jacobian_mlcc2_b1(rho_a_i, c_ai_bj)
-      write(unit_output,*)'mem 3', wf%mem%available
 !
 !     Allocate unpacked transformed vector
 !
       call wf%mem%alloc(rho_ai_bj, n_active_o*n_active_v, n_active_o*n_active_v) 
       rho_ai_bj = zero 
 !
-      write(unit_output,*)'mem 4', wf%mem%available
       call wf%jacobian_mlcc2_a2(rho_ai_bj, c_a_i)
-      write(unit_output,*)'mem 5', wf%mem%available
       call wf%jacobian_mlccsd_b2(rho_ai_bj, c_a_i)
-      write(unit_output,*)'mem 6', wf%mem%available
       call wf%jacobian_mlccsd_c2(rho_ai_bj, c_a_i)
-      write(unit_output,*)'mem 7', wf%mem%available
       call wf%jacobian_mlccsd_d2(rho_ai_bj, c_a_i)
-      write(unit_output,*)'mem 8', wf%mem%available
 !
       call wf%jacobian_mlccsd_e2(rho_ai_bj, c_ai_bj)
-      write(unit_output,*)'mem 9', wf%mem%available
       call wf%jacobian_mlccsd_f2(rho_ai_bj, c_ai_bj)
-      write(unit_output,*)'mem 10', wf%mem%available
       call wf%jacobian_mlccsd_g2(rho_ai_bj, c_ai_bj)
-      write(unit_output,*)'mem 11', wf%mem%available
       call wf%jacobian_mlccsd_h2(rho_ai_bj, c_ai_bj)
-      write(unit_output,*)'mem 12', wf%mem%available
       call wf%jacobian_mlccsd_i2(rho_ai_bj, c_ai_bj)
-      write(unit_output,*)'mem 13', wf%mem%available
 !
 !     Allocate temporary symmetric transformed vector 
 !
@@ -197,11 +180,8 @@ contains
       call wf%mem%dealloc(c_ai_bj, n_active_o*n_active_v, n_active_o*n_active_v)
       call wf%mem%dealloc(rho_ai_bj, n_active_o*n_active_v, n_active_o*n_active_v)
 ! 
-      write(unit_output,*)'mem 14', wf%mem%available
       call wf%jacobian_mlccsd_j2(rho_ab_ij, c_ab_ij)
-      write(unit_output,*)'mem 15', wf%mem%available
       call wf%jacobian_mlccsd_k2(rho_ab_ij, c_ab_ij)
-      write(unit_output,*)'mem 16', wf%mem%available
 ! 
 !     Done with reordered doubles c; deallocate 
 ! 

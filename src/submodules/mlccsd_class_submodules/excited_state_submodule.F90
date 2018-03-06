@@ -433,58 +433,58 @@ contains
          a_ccs_inactive_i_ccs_inactive   = 0 ! R->R 
          a_ccs_inactive_i_cc2_inactive   = 0 ! R->S
 !
-         call wf%get_CCSD_n_active(n_active_o, n_active_v)
+         call wf%get_CCSD_n_active(n_active_o, n_active_v)   ! n_CCSD_active
 
-         call wf%get_CC2_n_active(n_active_o_CC2, n_active_v_cc2)
+         call wf%get_CC2_n_active(n_active_o_CC2, n_active_v_cc2) ! n_CCSD_active + n_CC2_active
 !
          do a = 1, wf%n_v
          do i = 1, wf%n_o
 !
             ai = index_two(a, i, wf%n_v)
 !  
-            if (a .le. n_active_v) then ! T->
+            if (a .le. n_active_v) then ! ->T
 !
-               if (i .le. n_active_o) then ! ->T
+               if (i .le. n_active_o) then ! T->
 !
                   a_active_i_active = a_active_i_active + (solution_ai(ai, 1))**2
 !
-               elseif (i .gt. n_active_o .and. i .le. n_active_o_cc2) then ! ->S
+               elseif (i .gt. n_active_o .and. i .le. n_active_o_cc2) then ! S->
 !
                   a_active_i_cc2_inactive = a_active_i_cc2_inactive + (solution_ai(ai, 1))**2
 !
-               else ! ->R
+               else ! R->
 !
                   a_active_i_ccs_inactive = a_active_i_ccs_inactive + (solution_ai(ai, 1))**2
 !
                endif
 !
-            elseif (a .gt. n_active_v .and. a .le. n_active_v_cc2) then ! S->
+            elseif (a .gt. n_active_v .and. a .le. n_active_v_cc2) then ! ->S
 !
-               if (i .le. n_active_o) then ! ->T
+               if (i .le. n_active_o) then ! T->
 !
                   a_cc2_inactive_i_active = a_cc2_inactive_i_active + (solution_ai(ai, 1))**2
 !
-               elseif (i .gt. n_active_o .and. i .le. n_active_o_cc2) then ! ->S
+               elseif (i .gt. n_active_o .and. i .le. n_active_o_cc2) then ! S->
 !
                   a_cc2_inactive_i_cc2_inactive = a_cc2_inactive_i_cc2_inactive + (solution_ai(ai, 1))**2
 !
-               else ! ->R
+               else ! R->
 !
                   a_cc2_inactive_i_ccs_inactive = a_cc2_inactive_i_ccs_inactive + (solution_ai(ai, 1))**2
 !
                endif
 !
-            else ! R->
+            else ! ->R
 !
-               if (i .le. n_active_o) then ! ->T
+               if (i .le. n_active_o) then ! T->
 !
                   a_ccs_inactive_i_active = a_ccs_inactive_i_active + (solution_ai(ai, 1))**2
 !
-               elseif (i .gt. n_active_o .and. i .le. n_active_o_cc2) then ! ->S
+               elseif (i .gt. n_active_o .and. i .le. n_active_o_cc2) then ! S->
 !
                   a_ccs_inactive_i_cc2_inactive = a_ccs_inactive_i_cc2_inactive + (solution_ai(ai, 1))**2
 !
-               else ! ->R
+               else ! R->
 !
                   a_ccs_inactive_i_ccs_inactive = a_ccs_inactive_i_ccs_inactive + (solution_ai(ai, 1))**2
 !
@@ -503,11 +503,11 @@ contains
       write(unit_output,'(/t6, a7, 8a9)')'T->T:', 'T->S:', 'T->R:', 'S->T:', 'S->S:',&
        'S->R', 'R->T:', 'R->S:', 'R->R:'
       write(unit_output,'(t6, a83)')'-----------------------------------------------------------------------------------'
-      write(unit_output,'(t6, 9f9.5)')a_active_i_active/total, a_active_i_cc2_inactive/total, &
-                                     a_active_i_ccs_inactive/total, a_cc2_inactive_i_active/total, &
-                                     a_ccs_inactive_i_active/total, a_cc2_inactive_i_cc2_inactive/total, &
-                                     a_cc2_inactive_i_ccs_inactive/total, &
-                                     a_ccs_inactive_i_ccs_inactive/total , a_ccs_inactive_i_cc2_inactive/total
+      write(unit_output,'(t6, 9f9.5)')a_active_i_active/total, a_cc2_inactive_i_active/total, &
+                                     a_ccs_inactive_i_active/total, a_active_i_cc2_inactive/total, &
+                                     a_cc2_inactive_i_cc2_inactive/total, a_ccs_inactive_i_cc2_inactive/total, &
+                                     a_active_i_ccs_inactive/total, &
+                                     a_cc2_inactive_i_ccs_inactive/total , a_ccs_inactive_i_ccs_inactive/total
       write(unit_output,'(t6, a83)')'-----------------------------------------------------------------------------------'
 
       enddo
