@@ -3362,7 +3362,7 @@ contains
                      I_ai_LD,                &   
                      (n_CCSD_o)*(n_CCSD_v))
 !
-         call wf%mem%dealloc(x_ai_KC, (n_CCSD_o)*(n_CCSD_v), (n_CCSD_o)*(n_CCSD_v))
+         call wf%mem%dealloc(x_ai_KC, (n_CCSD_o)*(n_CCSD_v), (n_CC2_o)*(n_CC2_v))
          call wf%mem%dealloc(g_KC_LD, (n_CC2_o)*(n_CC2_v), (n_CC2_o)*(n_CC2_v))
 !
          call wf%mem%alloc(c_LD_bj, (n_CC2_o)*(n_CC2_v), (n_CCSD_o)*(n_CCSD_v))
@@ -3734,7 +3734,7 @@ contains
          enddo
 !
 !
-         call wf%mem%dealloc(rho_aij_b, (n_CCSD_v)*((n_CCSD_o)**2), n_CCSD_v)
+         call wf%mem%dealloc(rho_aij_b, (n_CC2_v)*((n_CC2_o)**2), n_CC2_v)
 !
 !       ::  - sum_k F_jk * c_ai,bk  ::
 !
@@ -4642,7 +4642,7 @@ contains
 !
                call wf%mem%dealloc(g_ac_bd, (n_CC2_v)*a_length, (n_CC2_v)*b_length) 
 !
-               call wf%mem%alloc(rho_batch_ab_ij, a_length*b_length, (n_CC2_o)**2)
+               call wf%mem%alloc(rho_batch_ab_ij, a_length*b_length, (n_CCSD_o)**2)
 !
 !              rho_ab_ij += sum_cd g_ac,bd * c_ci,dj = sum_cd g_ab_cd(ab, cd) c_ab_ij(cd, ij) 
 !
