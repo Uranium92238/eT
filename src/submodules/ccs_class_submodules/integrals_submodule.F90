@@ -4936,7 +4936,7 @@ contains
    end function get_vvvv_required_mem_ccs
 !
 !
-   integer function get_vvvo_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
+   module function get_vvvo_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
 !!
 !!    Get vvvo required memory (CCS)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Dec 2017
@@ -4953,7 +4953,7 @@ contains
 !  
       integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
 !
-!      integer(i15) :: get_vvvo_required_mem_ccs
+      integer(i15) :: get_vvvo_required_mem_ccs
 !
       logical :: t1_vvvo_on_file = .false.
 !
@@ -5033,7 +5033,7 @@ contains
    end function get_vvvo_required_mem_ccs
 !
 !
-   integer function get_vvov_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
+   module function get_vvov_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
 !!
 !!    Get vvvo required memory (CCS)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Dec 2017
@@ -5050,7 +5050,7 @@ contains
 !  
       integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
 !
-!      integer(i15) :: get_vvov_required_mem_ccs
+      integer(i15) :: get_vvov_required_mem_ccs
 !
       logical :: vvov_t1_on_file = .false.
 !
@@ -5115,7 +5115,7 @@ contains
    end function get_vvov_required_mem_ccs
 !
 !
-   integer function get_vvoo_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
+   module function get_vvoo_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
 !!
 !!    Get vvvo required memory (CCS)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Dec 2017
@@ -5132,7 +5132,7 @@ contains
 !  
       integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
 !
-!      integer(i15) :: get_vvoo_required_mem_ccs
+      integer(i15) :: get_vvoo_required_mem_ccs
 !
       if (present(dim_1) .and. present(dim_2) .and. present(dim_3) .and. present(dim_4)) then
 !
