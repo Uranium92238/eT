@@ -111,7 +111,7 @@ contains
       integer(i15) :: i = 0, j = 0, a = 0, c = 0, b = 0
 !
       integer(i15) :: ba = 0, ab = 0, bi = 0
-      integer(i15) :: ci = 0, bi = 0, cj = 0, bj = 0 
+      integer(i15) :: ci = 0, cj = 0, bj = 0 
       integer(i15) :: bjc = 0
 !
 !     Allocatables
