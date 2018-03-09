@@ -164,7 +164,7 @@ contains
 !
       integer(i15) :: c = 0, k = 0, j = 0, b = 0
 !
-      integer(i15) :: JB = 0, KC = 0, IA = 0, KC = 0, KA = 0
+      integer(i15) :: JB = 0, KC = 0, IA = 0, KA = 0
       integer(i15) :: JA = 0, KB = 0, IB = 0, JC = 0, IC = 0
 !
 !     Form L(jb, kc) = 2 * g_jb_kc(jb, kc) - g_jb_kc(jc, kb)
