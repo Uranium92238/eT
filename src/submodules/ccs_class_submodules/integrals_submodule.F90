@@ -4245,7 +4245,7 @@ contains
 !
       character(len=40) :: integral_type 
 !
-      integer(i15) :: a = 0, i = 0, ai = 0
+      integer(i15) :: i = 0, ai = 0
       integer(i15) :: jb = 0
 !
 !     Disk space required to store g_vo_vv 
@@ -4953,7 +4953,7 @@ contains
 !  
       integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
 !
-      integer(i15) :: get_vvvo_required_mem_ccs
+!      integer(i15) :: get_vvvo_required_mem_ccs
 !
       logical :: t1_vvvo_on_file = .false.
 !
@@ -5050,7 +5050,7 @@ contains
 !  
       integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
 !
-      integer(i15) :: get_vvov_required_mem_ccs
+!      integer(i15) :: get_vvov_required_mem_ccs
 !
       logical :: vvov_t1_on_file = .false.
 !
@@ -5132,7 +5132,7 @@ contains
 !  
       integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
 !
-      integer(i15) :: get_vvoo_required_mem_ccs
+!      integer(i15) :: get_vvoo_required_mem_ccs
 !
       if (present(dim_1) .and. present(dim_2) .and. present(dim_3) .and. present(dim_4)) then
 !
