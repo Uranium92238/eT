@@ -4359,7 +4359,7 @@ module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
       integer(i15) :: i = 0, j = 0, k = 0, l = 0  
       integer(i15) :: a = 0, b = 0, c = 0, d = 0  
 !
-      integer(i15) :: ab = 0, bd = 0, ac = 0, cd = 0, full_ab = 0, ac = 0, bd = 0
+      integer(i15) :: ab = 0, bd = 0, ac = 0, cd = 0, full_ab = 0
       integer(i15) :: ij = 0, ki = 0, kl = 0, lj = 0
 !
 !     Batching and memory handling variables
