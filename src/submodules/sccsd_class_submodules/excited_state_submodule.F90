@@ -32,6 +32,7 @@ contains
 !
       integer(i15) :: iteration = 1
       integer(i15) :: max_iterations = 100
+   !   integer(i15) :: max_iterations = 1 ! To run CCSD & compute overlap.
 !
 !     File unit identifiers & error integer 
 !
@@ -747,6 +748,12 @@ contains
       call generate_unit_identifier(unit_solution)
       open(unit=unit_solution, file='right_valence', action='readwrite', status='unknown', &
             access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
+!
+!     Open previous solution file 
+!
+      call generate_unit_identifier(unit_prev_solution)
+      open(unit=unit_prev_solution, file='prev_right_valence', action='readwrite', status='unknown', &
+            access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror)
 !
 !     Read state B from disk 
 !

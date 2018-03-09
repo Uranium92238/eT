@@ -610,7 +610,7 @@ contains
 !
 !     Standard output setting is minimalist
 !
-      wf%settings%print_level = 'minimal'
+   !   wf%settings%print_level = 'minimal'
 !
 !     Read SCC specific information 
 !
@@ -633,6 +633,10 @@ contains
          wf%excited_state_specifications%residual_threshold = wf%scc_settings%overlap_threshold
 !
       endif
+!
+!     Set maximum number of iterations to equal that of the excited state (temporary solution)
+!
+      wf%ground_state_specifications%max_iterations = wf%excited_state_specifications%max_iterations
 !
 !     Set ground state & response thresholds to equal the
 !     excited state thresholds set by user (these should be consistent,

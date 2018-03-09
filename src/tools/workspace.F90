@@ -35,7 +35,7 @@ module workspace
    integer, private :: work_remains = 0
    integer, private :: work_used    = 0
 !
-   integer(i15)     :: mem = 4000000000 ! ca. 30 gb
+   integer(i15)     :: mem = 4000000000000 ! ca. 30 gb
 !
 !
 contains

@@ -158,7 +158,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: eta ! (eta_ai eta_aibj)
 !
-      real(dp) :: ccnorm 
+      real(dp) :: etanorm, ccnorm 
 !
       logical :: transpose
 !
@@ -205,7 +205,11 @@ contains
 !
       wf%overlap = wf%overlap + ddot(wf%n_parameters, eta, 1, rB, 1)
 !
-      write(unit_output,'(t6,a17,f16.12)')  'Value of eta^T r:', wf%overlap
+      etanorm = zero 
+      etanorm = etanorm + ddot(wf%n_parameters, eta, 1, eta, 1)
+      etanorm = sqrt(etanorm)
+!
+      write(unit_output,'(/t6,a26,f16.12)')  'Value of normalized eta*r:', wf%overlap/etanorm
 !
       call deallocator(eta, wf%n_parameters, 1)
 !
