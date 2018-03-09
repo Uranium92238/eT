@@ -1521,6 +1521,9 @@ contains
 !     -::- Active space selection -::-
 !     ::::::::::::::::::::::::::::::::
 !
+      write(unit_output,*)'M matrix eigenvalues:'
+      call vec_print(eigenvalues_o, n_CC2_o, 1)
+!
       sum_o       = 1 - eigenvalues_o(n_CC2_o, 1)
       wf%n_CCSD_o = 1
 !
