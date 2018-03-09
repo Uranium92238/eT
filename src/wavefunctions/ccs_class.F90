@@ -2178,7 +2178,7 @@ module ccs_class
 !  
          integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
 !
-      !   integer(i15) :: get_vvvv_required_mem_ccs
+         integer(i15) :: get_vvvv_required_mem_ccs
 !
       end function get_vvvv_required_mem_ccs
 !
@@ -2194,7 +2194,7 @@ module ccs_class
 ! 
          integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
 !
-      !   integer(i15) :: get_vvvo_required_mem_ccs
+         integer(i15) :: get_vvvo_required_mem_ccs
 !
       end function get_vvvo_required_mem_ccs
 !
@@ -2210,7 +2210,7 @@ module ccs_class
 !     
          integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
 !
-      !   integer(i15) :: get_vvov_required_mem_ccs
+         integer(i15) :: get_vvov_required_mem_ccs
 !
       end function get_vvov_required_mem_ccs
 !
@@ -2226,7 +2226,7 @@ module ccs_class
 !     
          integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
 !
-      !   integer(i15) :: get_vvoo_required_mem_ccs
+         integer(i15) :: get_vvoo_required_mem_ccs
 !
       end function get_vvoo_required_mem_ccs
 !
