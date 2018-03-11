@@ -1306,45 +1306,45 @@ contains
 !
 !
       call wf%mem%dealloc(R_a_i, n_cc2_v, n_cc2_o)
-!
-!     Doubles contribution
-!
-      call wf%mem%alloc(R_aib_k, (n_CC2_v**2)*(n_CC2_o), n_CC2_o)
-!
-      do a = 1, n_CC2_v
-         do b = 1, n_CC2_v
-            do k = 1, n_CC2_o
-               do i = 1, n_CC2_o
-                  aib = index_three(a, i, b, n_CC2_v, n_CC2_o)
-                  ai = index_two(a, i, n_CC2_v)
-                  bk = index_two(b, k, n_CC2_v)
-                  R_aib_k(aib, k) = R_ai_bj(ai, bk)
-               enddo
-            enddo
-         enddo
-      enddo
-!
-      call dgemm('T', 'N',                   &
-                     n_CC2_o,                &
-                     n_CC2_o,                &
-                     (n_CC2_v**2)*(n_CC2_o), &
-                     half,                   &
-                     R_aib_k,                & ! R_ai,bk
-                     (n_CC2_v**2)*(n_CC2_o), &
-                     R_aib_k,                & ! R_aj,bk
-                     (n_CC2_v**2)*(n_CC2_o), &
-                     one,                    &
-                     M_i_j,                  &
-                     n_CC2_o)
-!
-      call wf%mem%dealloc(R_aib_k, (n_CC2_v**2)*(n_CC2_o), n_CC2_o)
-!
-      do i = 1, n_CC2_o
-         do a = 1, n_CC2_v
-            ai = index_two(a, i, n_CC2_v)
-            M_i_j(i, i) = M_i_j(i, i) + half*R_ai_bj(ai, ai)
-         enddo
-      enddo
+!!
+!!     Doubles contribution
+!!
+ !     call wf%mem%alloc(R_aib_k, (n_CC2_v**2)*(n_CC2_o), n_CC2_o)
+!!
+ !     do a = 1, n_CC2_v
+ !        do b = 1, n_CC2_v
+ !           do k = 1, n_CC2_o
+ !              do i = 1, n_CC2_o
+ !                 aib = index_three(a, i, b, n_CC2_v, n_CC2_o)
+ !                 ai = index_two(a, i, n_CC2_v)
+ !                 bk = index_two(b, k, n_CC2_v)
+ !                 R_aib_k(aib, k) = R_ai_bj(ai, bk)
+ !              enddo
+ !           enddo
+ !        enddo
+ !     enddo
+!!
+ !     call dgemm('T', 'N',                   &
+ !                    n_CC2_o,                &
+ !                    n_CC2_o,                &
+ !                    (n_CC2_v**2)*(n_CC2_o), &
+ !                    half,                   &
+ !                    R_aib_k,                & ! R_ai,bk
+ !                    (n_CC2_v**2)*(n_CC2_o), &
+ !                    R_aib_k,                & ! R_aj,bk
+ !                    (n_CC2_v**2)*(n_CC2_o), &
+ !                    one,                    &
+ !                    M_i_j,                  &
+ !                    n_CC2_o)
+!!
+ !     call wf%mem%dealloc(R_aib_k, (n_CC2_v**2)*(n_CC2_o), n_CC2_o)
+!!
+ !     do i = 1, n_CC2_o
+ !        do a = 1, n_CC2_v
+ !           ai = index_two(a, i, n_CC2_v)
+ !           M_i_j(i, i) = M_i_j(i, i) + half*R_ai_bj(ai, ai)
+ !        enddo
+ !     enddo
 !
       call wf%mem%alloc(R_a_icj, n_CC2_v, (n_CC2_o**2)*(n_CC2_v))
 !
