@@ -1141,8 +1141,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: solution
       real(dp), dimension(:,:), allocatable :: R
-      real(dp), dimension(:,:), allocatable :: R_sum
-      real(dp), dimension(:,:), allocatable :: R_sum_restricted
+      real(dp), dimension(:,:), allocatable :: R_restricted
       real(dp), dimension(:,:), allocatable :: R_a_i
       real(dp), dimension(:,:), allocatable :: R_ai_bj
       real(dp), dimension(:,:), allocatable :: R_aib_k
@@ -1196,17 +1195,163 @@ contains
 !
       if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file', ioerror
 !
-!     Reading CC2 excitation vectors and summing them
+!     -::- Construct M and N -::-
 !
-      call wf%mem%alloc(R, cc2_n_parameters, 1)
-      call wf%mem%alloc(R_sum, cc2_n_parameters, 1)
-      R_sum = zero
+      call wf%mem%alloc(M_i_j, n_CC2_o, n_CC2_o)
+      call wf%mem%alloc(N_a_b, n_CC2_v, n_CC2_v)
+      M_i_j = zero
+      N_a_b = zero
+!
+!     Reading CC2 excitation vectors and summing them
 !
       do state = 1, wf%excited_state_specifications%n_singlet_states
 !
+         call wf%mem%alloc(R, cc2_n_parameters, 1)
+!
          read(unit=unit_solution, rec=state) R
 !
-         call daxpy(cc2_n_parameters, one, R, 1, R_sum, 1)
+!        Restict to CC2 active indices (only changes vector if there is a CCS space)
+!        This is done so that the CCSD space will always lie inside of the CC2 space
+!
+         call wf%mem%alloc(R_a_i, n_CC2_v, n_CC2_o)
+         call wf%mem%alloc(R_ai_bj, n_CC2_o*n_CC2_v, n_CC2_o*n_CC2_v)
+!
+         do a = 1, n_CC2_v
+            do i = 1, n_CC2_o
+!
+               ai_full = index_two(a, i, wf%n_v)
+!
+               R_a_i(a, i) = R(ai_full, 1)
+!
+            enddo
+         enddo
+!
+         do a = 1, n_CC2_v
+            do i = 1, n_CC2_o
+               ai = index_two(a, i, n_CC2_v)
+               do b = 1, n_CC2_v
+                  do j = 1, n_CC2_o
+                     bj = index_two(b, j, n_CC2_v)
+                     aibj = index_packed(ai, bj)
+                     R_ai_bj(ai, bj) = R((wf%n_o)*(wf%n_v) + aibj, 1)
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+         call wf%mem%dealloc(R, cc2_n_parameters, 1)
+!
+!
+!        -::- Construct M and N -::-
+!
+!        Singles contribution
+!
+         call dgemm('T', 'N',    &
+                        n_CC2_o, &
+                        n_CC2_o, &
+                        n_CC2_v, &
+                        one,     &
+                        R_a_i,   &
+                        n_CC2_v, &
+                        R_a_i,   &
+                        n_CC2_v, &
+                        one,     &
+                        M_i_j,   &
+                        n_CC2_o)
+!
+         call dgemm('N', 'T', &
+                        n_CC2_v, &
+                        n_CC2_v, &
+                        n_CC2_o, &
+                        one,     &
+                        R_a_i,   &
+                        n_CC2_v, &
+                        R_a_i,   &
+                        n_CC2_v, &
+                        one,    &
+                        N_a_b,   &
+                        n_CC2_v)
+!
+!
+         call wf%mem%dealloc(R_a_i, n_cc2_v, n_cc2_o)
+!
+!        Doubles contribution
+!
+         call wf%mem%alloc(R_aib_k, (n_CC2_v**2)*(n_CC2_o), n_CC2_o)
+!
+         do a = 1, n_CC2_v
+            do b = 1, n_CC2_v
+               do k = 1, n_CC2_o
+                  do i = 1, n_CC2_o
+                     aib = index_three(a, i, b, n_CC2_v, n_CC2_o)
+                     ai = index_two(a, i, n_CC2_v)
+                     bk = index_two(b, k, n_CC2_v)
+                     R_aib_k(aib, k) = R_ai_bj(ai, bk)
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+         call dgemm('T', 'N',                   &
+                        n_CC2_o,                &
+                        n_CC2_o,                &
+                        (n_CC2_v**2)*(n_CC2_o), &
+                        half,                   &
+                        R_aib_k,                & ! R_ai,bk
+                        (n_CC2_v**2)*(n_CC2_o), &
+                        R_aib_k,                & ! R_aj,bk
+                        (n_CC2_v**2)*(n_CC2_o), &
+                        one,                    &
+                        M_i_j,                  &
+                        n_CC2_o)
+!
+         call wf%mem%dealloc(R_aib_k, (n_CC2_v**2)*(n_CC2_o), n_CC2_o)
+!
+         do i = 1, n_CC2_o
+            do a = 1, n_CC2_v
+               ai = index_two(a, i, n_CC2_v)
+               M_i_j(i, i) = M_i_j(i, i) + half*R_ai_bj(ai, ai)
+            enddo
+         enddo
+!
+         call wf%mem%alloc(R_a_icj, n_CC2_v, (n_CC2_o**2)*(n_CC2_v))
+!
+         do a = 1, n_CC2_v
+            do c = 1, n_CC2_v
+               do j = 1, n_CC2_o
+                  do i = 1, n_CC2_o
+                     icj = index_three(i, c, j, n_CC2_o, n_CC2_v)
+                     ai = index_two(a, i, n_CC2_v)
+                     cj = index_two(c, j, n_CC2_v)
+                     R_a_icj(a, icj) = R_ai_bj(ai, cj)
+                  enddo
+               enddo
+            enddo
+         enddo
+!  
+         call dgemm('N', 'T',                   &
+                        n_CC2_v,                &
+                        n_CC2_v,                &
+                        (n_CC2_o**2)*(n_CC2_v), &
+                        half,                   &
+                        R_a_icj,                & ! R_ai,cj
+                        n_CC2_v,                &
+                        R_a_icj,                & ! R_bi,cj
+                        n_CC2_v,                &
+                        one,                    &
+                        N_a_b,                  &
+                        n_CC2_v)
+!
+         call wf%mem%dealloc(R_a_icj, n_CC2_v, (n_CC2_o**2)*(n_CC2_v))
+!
+         do a = 1, n_CC2_v
+            do i = 1, n_CC2_o
+               ai = index_two(a, i, n_CC2_v)
+               N_a_b(a, a) = N_a_b(a, a) + half*R_ai_bj(ai, ai)
+            enddo
+         enddo
+!
+         call wf%mem%dealloc(R_ai_bj, n_CC2_o*n_CC2_v, n_CC2_o*n_CC2_v)
 !
       enddo
 !
@@ -1214,175 +1359,10 @@ contains
 !
       close(unit_solution, status='delete')
 !
-      call wf%mem%dealloc(R, cc2_n_parameters, 1)
+!     Scale so that M and N are trace 1 matrices. ! OBS OBS OBS denne funker bare med CC2/CCSD tas ut når vi ikke bruker thresholds
 !
-      call wf%mem%alloc(R_sum_restricted, n_CC2_o*n_CC2_v + cc2_n_x2am, 1)
-!
-!     Restict to CC2 active indices (only changes vector if there is a CCS space)
-!     This is done so that the CCSD space will always lie inside of the CC2 space
-!
-      do a = 1, n_CC2_v
-         do i = 1, n_CC2_o
-            ai = index_two(a, i, n_CC2_v)
-            ai_full = index_two(a, i, wf%n_v)
-            R_sum_restricted(ai, 1) = R_sum(ai_full, 1)
-         enddo
-      enddo
-!
-      do a = 1, n_CC2_v
-         do i = 1, n_CC2_o
-            ai = index_two(a, i, n_CC2_v)
-            do b = 1, n_CC2_v
-               do j = 1, n_CC2_o
-                  bj = index_two(b, j, n_CC2_v)
-                  aibj = index_packed(ai, bj)
-                  R_sum_restricted((n_CC2_o)*(n_CC2_v) + aibj, 1) &
-                        = R_sum((wf%n_o)*(wf%n_v) + aibj, 1)
-               enddo
-            enddo
-         enddo
-      enddo
-!
-      call wf%mem%dealloc(R_sum, cc2_n_parameters, 1)
-!
-!     Normalize restricted sum of CC2 excitation vectors R_sum_restricted
-!     in order to get Tr(M) = 1, and Tr(N) = 1
-!
-      norm = sqrt(ddot(cc2_n_x2am + n_CC2_o*n_CC2_v, R_sum_restricted, 1, R_sum_restricted, 1))
-      call dscal(cc2_n_x2am + n_CC2_o*n_CC2_v, one/norm, R_sum_restricted, 1)
-!
-      call wf%mem%alloc(R_a_i, n_cc2_v, n_cc2_o)
-!
-      do a = 1, n_cc2_v
-         do i = 1, n_cc2_o
-            ai = index_two(a, i, n_CC2_v)
-            R_a_i(a, i) = R_sum_restricted(ai, 1)
-         enddo
-      enddo
-!
-      call wf%mem%alloc(R_ai_bj, n_cc2_o*n_cc2_v, n_cc2_o*n_cc2_v)
-!
-      do ai = 1, n_cc2_o*n_cc2_v
-         do bj = 1, n_cc2_o*n_cc2_v
-            aibj = index_packed(ai, bj)
-            R_ai_bj(ai, bj) = R_sum_restricted(aibj + n_cc2_o*n_cc2_v, 1)
-         enddo
-      enddo
-!
-      call wf%mem%dealloc(R_sum_restricted, n_CC2_o*n_CC2_v + cc2_n_x2am, 1)
-!
-!     -::- Construct M and N -::-
-!
-      call wf%mem%alloc(M_i_j, n_CC2_o, n_CC2_o)
-      call wf%mem%alloc(N_a_b, n_CC2_v, n_CC2_v)
-!
-!     Singles contribution
-!
-      call dgemm('T', 'N',    &
-                     n_CC2_o, &
-                     n_CC2_o, &
-                     n_CC2_v, &
-                     one,     &
-                     R_a_i,   &
-                     n_CC2_v, &
-                     R_a_i,   &
-                     n_CC2_v, &
-                     zero,    &
-                     M_i_j,   &
-                     n_CC2_o)
-!
-      call dgemm('N', 'T', &
-                     n_CC2_v, &
-                     n_CC2_v, &
-                     n_CC2_o, &
-                     one,     &
-                     R_a_i,   &
-                     n_CC2_v, &
-                     R_a_i,   &
-                     n_CC2_v, &
-                     zero,    &
-                     N_a_b,   &
-                     n_CC2_v)
-!
-!
-      call wf%mem%dealloc(R_a_i, n_cc2_v, n_cc2_o)
-!!
-!!     Doubles contribution
-!!
- !     call wf%mem%alloc(R_aib_k, (n_CC2_v**2)*(n_CC2_o), n_CC2_o)
-!!
- !     do a = 1, n_CC2_v
- !        do b = 1, n_CC2_v
- !           do k = 1, n_CC2_o
- !              do i = 1, n_CC2_o
- !                 aib = index_three(a, i, b, n_CC2_v, n_CC2_o)
- !                 ai = index_two(a, i, n_CC2_v)
- !                 bk = index_two(b, k, n_CC2_v)
- !                 R_aib_k(aib, k) = R_ai_bj(ai, bk)
- !              enddo
- !           enddo
- !        enddo
- !     enddo
-!!
- !     call dgemm('T', 'N',                   &
- !                    n_CC2_o,                &
- !                    n_CC2_o,                &
- !                    (n_CC2_v**2)*(n_CC2_o), &
- !                    half,                   &
- !                    R_aib_k,                & ! R_ai,bk
- !                    (n_CC2_v**2)*(n_CC2_o), &
- !                    R_aib_k,                & ! R_aj,bk
- !                    (n_CC2_v**2)*(n_CC2_o), &
- !                    one,                    &
- !                    M_i_j,                  &
- !                    n_CC2_o)
-!!
- !     call wf%mem%dealloc(R_aib_k, (n_CC2_v**2)*(n_CC2_o), n_CC2_o)
-!!
- !     do i = 1, n_CC2_o
- !        do a = 1, n_CC2_v
- !           ai = index_two(a, i, n_CC2_v)
- !           M_i_j(i, i) = M_i_j(i, i) + half*R_ai_bj(ai, ai)
- !        enddo
- !     enddo
-!
-      call wf%mem%alloc(R_a_icj, n_CC2_v, (n_CC2_o**2)*(n_CC2_v))
-!
-      do a = 1, n_CC2_v
-         do c = 1, n_CC2_v
-            do j = 1, n_CC2_o
-               do i = 1, n_CC2_o
-                  icj = index_three(i, c, j, n_CC2_o, n_CC2_v)
-                  ai = index_two(a, i, n_CC2_v)
-                  cj = index_two(c, j, n_CC2_v)
-                  R_a_icj(a, icj) = R_ai_bj(ai, cj)
-               enddo
-            enddo
-         enddo
-      enddo
-      call dgemm('N', 'T',                   &
-                     n_CC2_v,                &
-                     n_CC2_v,                &
-                     (n_CC2_o**2)*(n_CC2_v), &
-                     half,                   &
-                     R_a_icj,                & ! R_ai,cj
-                     n_CC2_v,                &
-                     R_a_icj,                & ! R_bi,cj
-                     n_CC2_v,                &
-                     one,                    &
-                     N_a_b,                  &
-                     n_CC2_v)
-!
-      call wf%mem%dealloc(R_a_icj, n_CC2_v, (n_CC2_o**2)*(n_CC2_v))
-!
-      do a = 1, n_CC2_v
-         do i = 1, n_CC2_o
-            ai = index_two(a, i, n_CC2_v)
-            N_a_b(a, a) = N_a_b(a, a) + half*R_ai_bj(ai, ai)
-         enddo
-      enddo
-!
-      call wf%mem%dealloc(R_ai_bj, n_cc2_o*n_cc2_v, n_cc2_o*n_cc2_v)
+      call dscal((wf%n_o)*(wf%n_o), one/wf%excited_state_specifications%n_singlet_states, M_i_j, 1)
+      call dscal((wf%n_v)*(wf%n_v), one/wf%excited_state_specifications%n_singlet_states, N_a_b, 1)
 !
 !     -::- Diagonalize M and N matrix -::-
 !
@@ -1398,6 +1378,7 @@ contains
                   work, & 
                   4*(n_cc2_o), &
                   info)
+      write(unit_output,*)'info', info
 !
       call wf%mem%dealloc(work, 4*(n_cc2_o), 1)
 !
@@ -1415,6 +1396,8 @@ contains
                   info)
 !
       call wf%mem%dealloc(work, 4*(n_cc2_v), 1)
+      write(unit_output,*)'M matrix eigenvalues:'
+      call vec_print(eigenvalues_o, n_CC2_o, 1)
 !
 !     -::- Reorder M and N -::-
 !
@@ -1520,9 +1503,6 @@ contains
 !     ::::::::::::::::::::::::::::::::
 !     -::- Active space selection -::-
 !     ::::::::::::::::::::::::::::::::
-!
-      write(unit_output,*)'M matrix eigenvalues:'
-      call vec_print(eigenvalues_o, n_CC2_o, 1)
 !
       sum_o       = 1 - eigenvalues_o(n_CC2_o, 1)
       wf%n_CCSD_o = 1

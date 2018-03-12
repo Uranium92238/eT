@@ -932,24 +932,6 @@ contains
 !
       close(unit_solution, status='delete')
 !
-!     :: Normalize Tr(N) and Tr(M) ::
-!
-      trace = 0
-!
-      do i = 1, wf%n_o
-         trace = trace + M_i_j(i, i)
-      enddo
-!
-      call dscal((wf%n_o)*(wf%n_o), one/trace, M_i_j, 1)
-!
-      trace = 0
-!
-      do i = 1, wf%n_v
-         trace = trace + N_a_b(i, i)
-      enddo
-!
-      call dscal((wf%n_v)*(wf%n_v), one/trace, N_a_b, 1)
-!
 !     :: Diagonalize M and N matrix ::
 !
       call wf%mem%alloc(eigenvalues_o, wf%n_o, 1)
@@ -991,11 +973,10 @@ contains
 !
       do i = 1, wf%n_o
 !
-         j = i -1
+         j = i - 1
          M(:,i) = M_i_j(:, wf%n_o - j)
 !
       enddo
-!
       call wf%mem%dealloc(M_i_j, wf%n_o, wf%n_o)
 !
       call wf%mem%alloc(N, wf%n_v, wf%n_v)
@@ -1081,6 +1062,8 @@ contains
       call wf%mem%dealloc(C_v_transformed, wf%n_ao, wf%n_v)
 !
 !     :: Determine number of active orbitals ::
+!
+      call vec_print(eigenvalues_o, wf%n_o, 1)
 !
       sum_o      = 1 - eigenvalues_o(wf%n_o, 1)
       wf%n_CC2_o = 1
