@@ -932,6 +932,24 @@ contains
 !
       close(unit_solution, status='delete')
 !
+!     :: Normalize Tr(N) and Tr(M) ::
+!
+      trace = 0
+!
+      do i = 1, wf%n_o
+         trace = trace + M_i_j(i, i)
+      enddo
+!
+      call dscal((wf%n_o)*(wf%n_o), one/trace, M_i_j, 1)
+!
+      trace = 0
+!
+      do i = 1, wf%n_v
+         trace = trace + N_a_b(i, i)
+      enddo
+!
+      call dscal((wf%n_v)*(wf%n_v), one/trace, N_a_b, 1)
+!
 !     :: Diagonalize M and N matrix ::
 !
       call wf%mem%alloc(eigenvalues_o, wf%n_o, 1)
@@ -984,7 +1002,7 @@ contains
       do a = 1, wf%n_v
 !
          b = a -1
-         N(:,a) = N_a_b(:,wf%n_v-b)
+         N(:,a) = N_a_b(:,wf%n_v - b)
 !
       enddo
 !
@@ -1063,24 +1081,18 @@ contains
 !
 !     :: Determine number of active orbitals ::
 !
-      call vec_print(eigenvalues_o, wf%n_o, 1)
-!
-      sum_o      = 1 - eigenvalues_o(wf%n_o, 1)
       wf%n_CC2_o = 1
 !
-      do while ((sum_o .gt. wf%CC2_orbitals%delta_o) .and. (wf%n_CC2_o .le. wf%n_o))
+      do while (((real(wf%n_CC2_o)/real(wf%n_o)) .lt. wf%CC2_orbitals%delta_o) .and. (wf%n_CC2_o .le. wf%n_o))
 !
-         sum_o = sum_o - eigenvalues_o(wf%n_o - (wf%n_CC2_o), 1)
          wf%n_CC2_o = wf%n_CC2_o + 1
 !
       enddo
 !
-      sum_v      = 1- eigenvalues_v(wf%n_v, 1)
       wf%n_CC2_v = 1
 !
-      do while (sum_v .gt. wf%CC2_orbitals%delta_v .and. (wf%n_CC2_v .le. wf%n_v))
+      do while ((real(wf%n_CC2_v)/real(wf%n_v) .lt. wf%CC2_orbitals%delta_o ).and. (wf%n_CC2_v .le. wf%n_v))
 !
-         sum_v = sum_v - eigenvalues_v(wf%n_v - (wf%n_CC2_v), 1)
          wf%n_CC2_v = wf%n_CC2_v + 1
 !
       enddo
