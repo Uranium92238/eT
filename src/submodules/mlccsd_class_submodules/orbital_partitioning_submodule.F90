@@ -1195,14 +1195,14 @@ contains
 !
       if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file', ioerror
 !
-!     -::- Construct M and N -::-
+!     Allocate M and N 
 !
       call wf%mem%alloc(M_i_j, n_CC2_o, n_CC2_o)
       call wf%mem%alloc(N_a_b, n_CC2_v, n_CC2_v)
       M_i_j = zero
       N_a_b = zero
 !
-!     Reading CC2 excitation vectors and summing them
+!     Reading CC2 excitation accumulating contributions to M and N
 !
       do state = 1, wf%excited_state_specifications%n_singlet_states
 !
@@ -1282,11 +1282,16 @@ contains
          do a = 1, n_CC2_v
             do b = 1, n_CC2_v
                do k = 1, n_CC2_o
+!                  
+                     bk = index_two(b, k, n_CC2_v)
+!
                   do i = 1, n_CC2_o
+!
                      aib = index_three(a, i, b, n_CC2_v, n_CC2_o)
                      ai = index_two(a, i, n_CC2_v)
-                     bk = index_two(b, k, n_CC2_v)
+!
                      R_aib_k(aib, k) = R_ai_bj(ai, bk)
+!
                   enddo
                enddo
             enddo
@@ -1309,8 +1314,11 @@ contains
 !
          do i = 1, n_CC2_o
             do a = 1, n_CC2_v
+!
                ai = index_two(a, i, n_CC2_v)
+!
                M_i_j(i, i) = M_i_j(i, i) + half*R_ai_bj(ai, ai)
+!
             enddo
          enddo
 !
@@ -1319,11 +1327,16 @@ contains
          do a = 1, n_CC2_v
             do c = 1, n_CC2_v
                do j = 1, n_CC2_o
+!
+                  cj = index_two(c, j, n_CC2_v)
+!
                   do i = 1, n_CC2_o
+!
                      icj = index_three(i, c, j, n_CC2_o, n_CC2_v)
                      ai = index_two(a, i, n_CC2_v)
-                     cj = index_two(c, j, n_CC2_v)
+!
                      R_a_icj(a, icj) = R_ai_bj(ai, cj)
+!
                   enddo
                enddo
             enddo
@@ -1346,8 +1359,11 @@ contains
 !
          do a = 1, n_CC2_v
             do i = 1, n_CC2_o
+!
                ai = index_two(a, i, n_CC2_v)
+!
                N_a_b(a, a) = N_a_b(a, a) + half*R_ai_bj(ai, ai)
+!
             enddo
          enddo
 !
@@ -1358,11 +1374,6 @@ contains
 !     Done with file, delete it
 !
       close(unit_solution, status='delete')
-!
-!     Scale so that M and N are trace 1 matrices. ! OBS OBS OBS denne funker bare med CC2/CCSD tas ut når vi ikke bruker thresholds
-!
-      call dscal((wf%n_o)*(wf%n_o), one/wf%excited_state_specifications%n_singlet_states, M_i_j, 1)
-      call dscal((wf%n_v)*(wf%n_v), one/wf%excited_state_specifications%n_singlet_states, N_a_b, 1)
 !
 !     -::- Diagonalize M and N matrix -::-
 !
@@ -1398,6 +1409,11 @@ contains
       call wf%mem%dealloc(work, 4*(n_cc2_v), 1)
       write(unit_output,*)'M matrix eigenvalues:'
       call vec_print(eigenvalues_o, n_CC2_o, 1)
+!
+!     deallocate eigenvalues, not used for orbital selection
+!
+      call wf%mem%dealloc(eigenvalues_o, n_cc2_o, 1)
+      call wf%mem%dealloc(eigenvalues_v, n_cc2_v, 1)
 !
 !     -::- Reorder M and N -::-
 !
@@ -1486,13 +1502,19 @@ contains
       do i = 1, wf%n_ao
 !
          do j = 1, n_cc2_o
+!
             ij = index_two(i, j, wf%n_ao)
+!
             wf%mo_coef(ij, 1) = C_o_transformed(i, j) 
+ !
          enddo
 !
          do j = 1, n_cc2_v 
+!
             ij = index_two(i, j + wf%n_o, wf%n_ao)
+!
             wf%mo_coef(ij, 1) = C_v_transformed(i, j) 
+! 
          enddo
 !
       enddo
@@ -1504,22 +1526,21 @@ contains
 !     -::- Active space selection -::-
 !     ::::::::::::::::::::::::::::::::
 !
-      sum_o       = 1 - eigenvalues_o(n_CC2_o, 1)
+!     Active space selected as fraction of total number of orbitals.
+!     Wanted fraction can be set in input file. Default is 0.5.
+!
       wf%n_CCSD_o = 1
 !
-      do while ((sum_o .gt. wf%CCSD_orbitals%delta_o) .and. (wf%n_CCSD_o .lt. n_cc2_o))
+      do while (((real(wf%n_CCSD_o)/real(n_cc2_o)) .lt. wf%CCSD_orbitals%delta_o) .and. (wf%n_CCSD_o .lt. n_cc2_o))
 !
-         sum_o = sum_o - eigenvalues_o(n_CC2_o - (wf%n_CCSD_o), 1)
          wf%n_CCSD_o = wf%n_CCSD_o + 1
 !
       enddo
 !
-      sum_v       = 1 - eigenvalues_v(n_CC2_v, 1)
       wf%n_CCSD_v = 1
 !
-      do while (sum_v .gt. wf%CCSD_orbitals%delta_v .and. (wf%n_CCSD_v .lt. n_cc2_v))
+      do while ((real(wf%n_CCSD_v)/real(n_cc2_v) .lt. wf%CCSD_orbitals%delta_v) .and. (wf%n_CCSD_v .lt. n_cc2_v))
 !
-         sum_v = sum_v - eigenvalues_v(n_CC2_v - (wf%n_CCSD_v), 1)
          wf%n_CCSD_v = wf%n_CCSD_v + 1
 !
       enddo 
@@ -1534,9 +1555,6 @@ contains
 !
       wf%first_CC2_o = 1 + wf%n_CCSD_o
       wf%first_CC2_v = 1 + wf%n_CCSD_v
-!
-      call wf%mem%dealloc(eigenvalues_o, n_cc2_o, 1)
-      call wf%mem%dealloc(eigenvalues_v, n_cc2_v, 1)
 !
 !     ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !     -::- Finding orbital energies and new block diagonal C matrix -::-

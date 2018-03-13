@@ -932,24 +932,6 @@ contains
 !
       close(unit_solution, status='delete')
 !
-!     :: Normalize Tr(N) and Tr(M) ::
-!
-      trace = 0
-!
-      do i = 1, wf%n_o
-         trace = trace + M_i_j(i, i)
-      enddo
-!
-      call dscal((wf%n_o)*(wf%n_o), one/trace, M_i_j, 1)
-!
-      trace = 0
-!
-      do i = 1, wf%n_v
-         trace = trace + N_a_b(i, i)
-      enddo
-!
-      call dscal((wf%n_v)*(wf%n_v), one/trace, N_a_b, 1)
-!
 !     :: Diagonalize M and N matrix ::
 !
       call wf%mem%alloc(eigenvalues_o, wf%n_o, 1)
@@ -1313,11 +1295,13 @@ contains
          enddo
 !
          call wf%mem%dealloc(orbital_energies, (wf%n_CC2_v), 1)
+!
       endif
 !
 !     Diagonalize inactive-inactive block 
 !
       if ((wf%n_CCS_v) .gt. 0) then
+!
          call wf%mem%alloc(work, 4*wf%n_CCS_v, 1)
          call wf%mem%alloc(orbital_energies, wf%n_CCS_v, 1)
          orbital_energies = zero
@@ -1347,6 +1331,7 @@ contains
 !
          enddo
          call wf%mem%dealloc(orbital_energies, wf%n_CCS_v, 1)
+!
       endif
 !
 !     Transform C-matrix (active virtual block)

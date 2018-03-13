@@ -20,8 +20,8 @@ module mlcc_orbitals_class
    logical :: cholesky = .false.
    logical :: cnto     = .true.
 !
-   real(dp) :: delta_o = 1.0D-06
-   real(dp) :: delta_v = 1.0D-06
+   real(dp) :: delta_o = 0.5
+   real(dp) :: delta_v = 0.5
 !
 !  Cholesky specific variables
 !
