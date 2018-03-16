@@ -742,6 +742,11 @@ contains
       call dcopy(wf%n_t1am,transformed_a_i,1,r_a_i,1)
       call dcopy(wf%n_t2am,transformed_aibj,1,r_aibj,1)
 !
+!     Deallocations 
+!
+      call wf%mem%dealloc(transformed_a_i, wf%n_v, wf%n_o)
+      call wf%mem%dealloc(transformed_aibj, wf%n_t2am, 1)
+!
    end subroutine S_transformation_sccsd
 !
 !

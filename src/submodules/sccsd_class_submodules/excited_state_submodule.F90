@@ -106,6 +106,8 @@ contains
          write(unit_output,'(/t3,a29,i3)')     'Similarity constrained cycle:', iteration 
          write(unit_output,'(t3,a53,f16.12)')  'In this cycle, we use the following triple amplitude:', wf%triples
 !
+         write(unit_output,*) '...and the memory is:', wf%mem%available
+!
          if (wf%state_A .eq. 0) then ! Ground state intersection
 !
             call wf%ground_state_intersection_cycle(iteration)
@@ -314,8 +316,6 @@ contains
 !
 !     Part I. Solve for the ground state 
 !
-      write(unit_output,*) 'Memory in this iteration:', wf%mem%available
-!
       write(unit_output,'(/t3,a,i2)') 'Part I. Solving the ground state equation'
       wf%tasks%current = 'ground_state'
       call wf%ground_state_driver
@@ -328,8 +328,6 @@ contains
       write(unit_output,'(t3,a)')   ':: E. F. Kjønstad, S. D. Folkestad, May 2017'
 !
       call wf%excited_state_preparations
-!
-      write(unit_output,*) 'Memory:', wf%mem%available
 !
       wf%excited_state_specifications%right = .true.  ! Use A transformation
       wf%excited_state_specifications%left  = .false. ! Not A^T transformation
@@ -818,10 +816,6 @@ contains
 !
       close(unit_prev_solution)
       close(unit_solution)
-!
-!     Deallocations 
-!
-      call wf%mem%dealloc(rB, wf%n_parameters, 1)
 !
    end subroutine ground_state_eigenvector_controller_sccsd
 !
