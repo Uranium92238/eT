@@ -27,6 +27,98 @@ module utils
    use types
 !
 contains
+!  ::::::::::::::::::::::::::
+!  -::- Sorting routines -::-
+!  ::::::::::::::::::::::::::
+!
+   subroutine sort_1234_to_4132(x_pq_rs, x_sp_rq, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Sort 1234 to 4132
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Reorders the array x_pq_rs to x_sp_rq (i.e., 1234 to 4132).
+!!
+!!    The unordered array x_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s.
+!!    The ordered array x_sp_rq is assumed allocated as dim_s*dim_p x dim_r*dim_q. 
+!!
+      implicit none 
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s 
+!
+      real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: x_pq_rs 
+      real(dp), dimension(dim_s*dim_p, dim_r*dim_q) :: x_sp_rq
+!
+      integer(i15) :: p, q, r, s, rs, pq, sp, rq
+!
+!$omp parallel do schedule(static) private(r,rs,q,rq,p,pq,sp)
+      do s = 1, dim_s
+         do r = 1, dim_r
+!
+            rs = dim_r*(s-1) + r 
+!
+            do q = 1, dim_q
+!
+               rq = dim_r*(q-1) + r
+!
+               do p = 1, dim_p 
+!
+                  pq = dim_p*(q-1) + p 
+                  sp = dim_s*(p-1) + s 
+!
+                  x_sp_rq(sp, rq) = x_pq_rs(pq, rs)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine sort_1234_to_4132
+!
+!
+   subroutine sort_1234_to_1324(x_pq_rs, x_pr_qs, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Sort 1234 to 1324
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Reorders the array x_pq_rs to x_pr_qs (i.e., 1234 to 1324).
+!!
+!!    The unordered array x_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s.
+!!    The ordered array x_pr_qs is assumed allocated as dim_p*dim_r x dim_q*dim_s. 
+!!
+      implicit none 
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s 
+!
+      real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: x_pq_rs 
+      real(dp), dimension(dim_p*dim_r, dim_q*dim_s) :: x_pr_qs
+!
+      integer(i15) :: p, q, r, s, rs, qs, pq, pr
+!
+!$omp parallel do schedule(static) private(r,rs,q,qs,p,pq,pr)
+      do s = 1, dim_s
+         do r = 1, dim_r
+!
+            rs = dim_r*(s-1) + r 
+!
+            do q = 1, dim_q
+!
+               qs = dim_q*(s-1) + q
+!
+               do p = 1, dim_p 
+!
+                  pq = dim_p*(q-1) + p 
+                  pr = dim_p*(r-1) + p 
+!
+                  x_pr_qs(pr, qs) = x_pq_rs(pq, rs)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine sort_1234_to_1324
 !
 !  :::::::::::::::::::::::::
 !  -::- Index functions -::-

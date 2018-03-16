@@ -32,7 +32,7 @@ contains
 !
       integer(i15) :: iteration = 1
       integer(i15) :: max_iterations = 100
-   !   integer(i15) :: max_iterations = 1 ! To run CCSD & compute overlap.
+   !   integer(i15) :: max_iterations = 1 ! To run CCSD & compute overlap & then quit.
 !
 !     File unit identifiers & error integer 
 !
@@ -45,7 +45,7 @@ contains
 !
 !     Damping parameters for DIIS solver 
 !
-      real(dp) :: diis_damper = 0.80D0
+      real(dp)            :: diis_damper = 0.80D0
       real(dp), parameter :: diis_damper_no_history = 0.5D0
 !
 !     Timings
@@ -74,9 +74,12 @@ contains
       write(unit_output,'(t3,a/)') 'A single cycle consists of four steps:'
 !
       write(unit_output,'(t6,a)')     '  I. Solve ground state equations'
-      write(unit_output,'(t6,a)')     ' II. Solve multiplier equation'
+      write(unit_output,'(t6,a)')     ' II. Solve multiplier equation*'
       write(unit_output,'(t6,a)')     'III. Solve excited state eigenvalue problem'
       write(unit_output,'(t6,a/)')    ' IV. Calculate overlap'
+!
+      write(unit_output,'(t6,a)')     '* This step is (currently) omitted for ground state intersections,'
+      write(unit_output,'(t6,a/)')    '  and will in the future also be omitted for excited states.'
 !
       write(unit_output,'(t3,a)')  'A DIIS-algorithm updates the triple amplitude to make'
       write(unit_output,'(t3,a/)') 'the generalized overlap vanish.'
@@ -121,7 +124,7 @@ contains
 !        Store to cycles file (triples, then overlap)
 !
          write(unit_sccsd_cycles, rec=2*iteration-1, iostat=ioerror) wf%triples
-         write(unit_sccsd_cycles, rec=2*iteration, iostat=ioerror) wf%overlap
+         write(unit_sccsd_cycles, rec=2*iteration, iostat=ioerror)   wf%overlap
 !
 !        Check for convergence of the overlap 
 !
@@ -162,9 +165,9 @@ contains
 !
 !              Set restarts to true for subsequent iterations 
 !
-               wf%ground_state_specifications%restart = .true.
+               wf%ground_state_specifications%restart  = .true.
                wf%excited_state_specifications%restart = .true.
-               wf%response_specifications%restart = .true.
+               wf%response_specifications%restart      = .true.
 !
             endif
 !
@@ -176,7 +179,8 @@ contains
 !
       if (.not. converged) then ! Let the user know before quitting
 !
-         write(unit_output,'(/t3,a)') 'Reached maximum number of cycles without convergence.'
+         write(unit_output,'(/t3,a)') 'Error: reached maximum number of cycles without convergence.'
+         stop
 !
       else ! Display the final energies, etc. 
 !
@@ -310,6 +314,8 @@ contains
 !
 !     Part I. Solve for the ground state 
 !
+      write(unit_output,*) 'Memory in this iteration:', wf%mem%available
+!
       write(unit_output,'(/t3,a,i2)') 'Part I. Solving the ground state equation'
       wf%tasks%current = 'ground_state'
       call wf%ground_state_driver
@@ -322,6 +328,8 @@ contains
       write(unit_output,'(t3,a)')   ':: E. F. Kjønstad, S. D. Folkestad, May 2017'
 !
       call wf%excited_state_preparations
+!
+      write(unit_output,*) 'Memory:', wf%mem%available
 !
       wf%excited_state_specifications%right = .true.  ! Use A transformation
       wf%excited_state_specifications%left  = .false. ! Not A^T transformation
@@ -350,7 +358,9 @@ contains
    module subroutine sccsd_diis_sccsd(wf, dt, t_dt, iteration)
 !!
 !!    SCCSD DIIS routine
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!    Written by Eirik F. Kjønstad, 2017
+!!
+!!    Adapted from the CCS DIIS routine by Sarai D. Folkestad and Eirik F. Kjønstad.
 !!
 !!    The next amplitude is 
 !!
@@ -363,7 +373,7 @@ contains
 !!
 !!    with the constraint that g(w_k) = sum_k w_k - 1 = 0.
 !!
-!!    In the SCCSD loop, the quasi-Newton estimate is the overlap function. 
+!!    In the SCCSD loop, the quasi-Newton estimate is the value of the overlap. 
 !!
       implicit none 
 !
@@ -437,7 +447,7 @@ contains
 !
 !     :: Solve the least squares problem, G * w = H ::
 !
-!        G : DIIS matrix, G_ij = Δ t_i Δ t_j,
+!        G : DIIS matrix,  G_ij = Δ t_i Δ t_j,
 !        H : DIIS vector,  H_i = 0,
 !
 !     where i, j = 1, 2, ..., current_index. To enforce normality
@@ -605,7 +615,7 @@ contains
 !
 !     Read state A from disk 
 !
-      call allocator(rA, wf%n_parameters, 1)
+      call wf%mem%alloc(rA, wf%n_parameters, 1)
       read(unit_solution, rec=wf%state_A, iostat=ioerror) rA 
 !
 !     Open previous solution file 
@@ -624,7 +634,7 @@ contains
 !
 !        Read in previous solution 
 !
-         call allocator(prev_rA, wf%n_parameters, 1)
+         call wf%mem%alloc(prev_rA, wf%n_parameters, 1)
          read(unit_prev_solution, rec=1, iostat=ioerror) prev_rA 
 !
 !        Calculate dot product between current and previous solution 
@@ -651,15 +661,15 @@ contains
 !
          endif 
 !
-         call deallocator(prev_rA, wf%n_parameters, 1)
+         call wf%mem%dealloc(prev_rA, wf%n_parameters, 1)
 !
       endif 
 !
-      call deallocator(rA, wf%n_parameters, 1)
+      call wf%mem%dealloc(rA, wf%n_parameters, 1)
 !
 !     Read state B from disk 
 !
-      call allocator(rB, wf%n_parameters, 1)
+      call wf%mem%alloc(rB, wf%n_parameters, 1)
       read(unit_solution, rec=wf%state_B, iostat=ioerror) rB 
 !
 !
@@ -673,7 +683,7 @@ contains
 !
 !        Read in previous solution 
 !
-         call allocator(prev_rB, wf%n_parameters, 1)
+         call wf%mem%alloc(prev_rB, wf%n_parameters, 1)
          read(unit_prev_solution, rec=2, iostat=ioerror) prev_rB 
 !
 !        Calculate dot product between current and previous solution 
@@ -700,11 +710,11 @@ contains
 !
          endif 
 !
-         call deallocator(prev_rB, wf%n_parameters, 1)
+         call wf%mem%dealloc(prev_rB, wf%n_parameters, 1)
 !
       endif 
 !
-      call deallocator(rB, wf%n_parameters, 1)
+      call wf%mem%dealloc(rB, wf%n_parameters, 1)
 !
 !     Close files 
 !
@@ -713,8 +723,8 @@ contains
 !
 !     Deallocations 
 !
-      call deallocator(rA, wf%n_parameters, 1)
-      call deallocator(rB, wf%n_parameters, 1)
+      call wf%mem%dealloc(rA, wf%n_parameters, 1)
+      call wf%mem%dealloc(rB, wf%n_parameters, 1)
 !
    end subroutine eigenvector_controller_sccsd
 !
@@ -757,7 +767,7 @@ contains
 !
 !     Read state B from disk 
 !
-      call allocator(rB, wf%n_parameters, 1)
+      call wf%mem%alloc(rB, wf%n_parameters, 1)
       read(unit_solution, rec=wf%state_B, iostat=ioerror) rB 
 !
 !
@@ -771,7 +781,7 @@ contains
 !
 !        Read in previous solution 
 !
-         call allocator(prev_rB, wf%n_parameters, 1)
+         call wf%mem%alloc(prev_rB, wf%n_parameters, 1)
          read(unit_prev_solution, rec=1, iostat=ioerror) prev_rB 
 !
 !        Calculate dot product between current and previous solution 
@@ -798,11 +808,11 @@ contains
 !
          endif 
 !
-         call deallocator(prev_rB, wf%n_parameters, 1)
+         call wf%mem%dealloc(prev_rB, wf%n_parameters, 1)
 !
       endif 
 !
-      call deallocator(rB, wf%n_parameters, 1)
+      call wf%mem%dealloc(rB, wf%n_parameters, 1)
 !
 !     Close files 
 !
@@ -811,7 +821,7 @@ contains
 !
 !     Deallocations 
 !
-      call deallocator(rB, wf%n_parameters, 1)
+      call wf%mem%dealloc(rB, wf%n_parameters, 1)
 !
    end subroutine ground_state_eigenvector_controller_sccsd
 !

@@ -112,6 +112,7 @@ contains
 !
       integer(i15) :: ba = 0, ab = 0, bi = 0
       integer(i15) :: ci = 0, cj = 0, bj = 0 
+!
       integer(i15) :: bjc = 0
 !
 !     Allocatables
