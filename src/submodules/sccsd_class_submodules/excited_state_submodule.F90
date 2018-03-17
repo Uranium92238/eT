@@ -78,8 +78,9 @@ contains
       write(unit_output,'(t6,a)')     'III. Solve excited state eigenvalue problem'
       write(unit_output,'(t6,a/)')    ' IV. Calculate overlap'
 !
-      write(unit_output,'(t6,a)')     '* This step is (currently) omitted for ground state intersections,'
-      write(unit_output,'(t6,a/)')    '  and will in the future also be omitted for excited states.'
+      write(unit_output,'(t6,a)')     '* This step is now omitted for ground state intersections,'
+      write(unit_output,'(t6,a)')     '  and will, in the future, also be omitted for excited state'
+      write(unit_output,'(t6,a/)')    '  intersections.'
 !
       write(unit_output,'(t3,a)')  'A DIIS-algorithm updates the triple amplitude to make'
       write(unit_output,'(t3,a/)') 'the generalized overlap vanish.'
