@@ -396,7 +396,7 @@ contains
       real(dp), dimension(:,:), allocatable :: diis_vector
       real(dp), dimension(:,:), allocatable :: diis_matrix
 !
-      integer(i15), dimension(9) :: ipiv = 0 ! Pivot integers (see dgesv routine)
+      integer(i15), dimension(7) :: ipiv = 0 ! Pivot integers (see dgesv routine, NB: dimension: diis_dim)
 !
 !     Set the current index 
 !

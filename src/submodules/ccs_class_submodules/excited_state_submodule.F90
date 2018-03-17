@@ -353,7 +353,10 @@ contains
 !
          endif
 !
-         call wf%mem%dealloc(solution_vectors_reduced, reduced_dim, wf%excited_state_specifications%n_singlet_states)
+!        Note: since reduced_dim = reduced_dim + n_new_trials during the iteration, we should subtract it 
+!              when deallocating the reduced solution vector 
+!
+         call wf%mem%dealloc(solution_vectors_reduced, reduced_dim - n_new_trials, wf%excited_state_specifications%n_singlet_states)
 !
       enddo ! End of iterative loop 
 !
@@ -416,10 +419,10 @@ contains
 !
 !     Final deallocations
 !
-      call wf%mem%dealloc(eigenvalues_Im_old, reduced_dim, 1)
-      call wf%mem%dealloc(eigenvalues_Re_old, reduced_dim, 1)
-      call wf%mem%dealloc(eigenvalues_Im_new, reduced_dim, 1)
-      call wf%mem%dealloc(eigenvalues_Re_new, reduced_dim, 1)
+      call wf%mem%dealloc(eigenvalues_Im_old, wf%excited_state_specifications%n_singlet_states, 1)
+      call wf%mem%dealloc(eigenvalues_Re_old, wf%excited_state_specifications%n_singlet_states, 1)
+      call wf%mem%dealloc(eigenvalues_Im_new, wf%excited_state_specifications%n_singlet_states, 1)
+      call wf%mem%dealloc(eigenvalues_Re_new, wf%excited_state_specifications%n_singlet_states, 1)
 !
    end subroutine excited_state_solver_ccs
 !
