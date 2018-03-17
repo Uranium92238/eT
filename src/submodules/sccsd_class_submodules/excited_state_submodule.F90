@@ -112,7 +112,7 @@ contains
 !
             call wf%ground_state_intersection_cycle(iteration)
 !
-         else
+         else ! Excited state intersection
 !
             call wf%excited_state_intersection_cycle(iteration)
 !
@@ -189,7 +189,7 @@ contains
 !        Display cycle information
 !
          write(unit_output,'(/t6,a5,4x,a16,5x,a19)')'Cycle', 'triple amplitude', 'generalized overlap'
-         write(unit_output,'(t6,a)')'--------------------------------------------------'
+         write(unit_output,'(t6,a)')                '--------------------------------------------------'
 !
          do i = 1, iteration
 !
@@ -200,7 +200,7 @@ contains
 !
          enddo
 !
-         write(unit_output,'(t6,a)')'--------------------------------------------------'
+         write(unit_output,'(t6,a)') '--------------------------------------------------'
 !
 !        Display converged amplitudes and energies
 !
@@ -216,9 +216,9 @@ contains
 !
 !           Print energy of excitation in eV, hartree and cm^-1
 !
-            write(unit_output,'(t6,i3,6x,f19.12,5x,f19.12,5x,f19.12)') i, wf%excitation_energies(i,1),        &
-                                                                         wf%excitation_energies(i,1)*27.211399, &
-                                                                         wf%excitation_energies(i,1)*219474.63
+            write(unit_output,'(t6,i3,6x,f19.12,5x,f19.12,5x,f19.12)') i, wf%excitation_energies(i,1),           &
+                                                                          wf%excitation_energies(i,1)*27.211399, &
+                                                                          wf%excitation_energies(i,1)*219474.63
          enddo
 !
          write(unit_output,'(t6,a)')'---------------------------------------------------------------------------------'
@@ -322,7 +322,7 @@ contains
 !
 !     Part II. Solve for the right excited states 
 !
-      write(unit_output,'(t3,a)')  'Part III. Solving the eigenvalue equation for the right eigenvectors'
+      write(unit_output,'(t3,a)')   'Part III. Solving the eigenvalue equation for the right eigenvectors'
 !
       write(unit_output,'(/t3,a)')  ':: Excited state solver (Davidson)'
       write(unit_output,'(t3,a)')   ':: E. F. Kjønstad, S. D. Folkestad, May 2017'
@@ -342,7 +342,7 @@ contains
       flush(unit_output)
 !
 !     Test whether the excited eigenvector has flipped, vis-a-vis
-!     the last iteration 
+!     the last iteration (to wit: check if the overlap is close to 1 or -1)
 !
       call wf%ground_state_eigenvector_controller(iteration) 
 !
@@ -584,6 +584,21 @@ contains
 !!    Eigenvector controller (SCCSD)
 !!    Written by Eirik F. Kjønstad, Dec 2017
 !!
+!!    Routine to keep DIIS sane. As the overlap changes 
+!!    sign if one vector changes sign (which often happens
+!!    in Davidson, even when restarting), we avoid this by
+!!    flipping back any sign that has changed. And for DIIS
+!!    to provide a reasonable next guess, each previous error
+!!    must be based a consistent sign of the eigenvector. 
+!!
+!!    Usually, | r_n+1 * r_n | ~ 1. Currently, if r_n+1 * r_n is 
+!!    below zero, the eigenvalue controller assumes a flip has occurred. 
+!!    The overlap (r_n+1 * r_n) is printed in the output file whenever 
+!!    the routine flips a vector. 
+!!
+!!    Note: this is the excited state intersection version of this routine,
+!!          which controls both constrained excited states.
+!!
       implicit none 
 !
       class(sccsd) :: wf 
@@ -732,6 +747,22 @@ contains
 !!    Ground state eigenvector controller (SCCSD)
 !!    Written by Eirik F. Kjønstad, Feb 2018
 !!
+!!    Routine to keep DIIS sane. As the overlap changes 
+!!    sign if one vector changes sign (which often happens
+!!    in Davidson, even when restarting), we avoid this by
+!!    flipping back any sign that has changed. And for DIIS
+!!    to provide a reasonable next guess, each previous error
+!!    must be based a consistent sign of the eigenvector. 
+!!
+!!    Usually, | r_n+1 * r_n | ~ 1. Currently, if r_n+1 * r_n is 
+!!    below zero, the eigenvalue controller assumes a flip has occurred. 
+!!    The overlap (r_n+1 * r_n) is printed in the output file whenever 
+!!    the routine flips a vector. 
+!!
+!!    Note: this is the ground state intersection version of this routine,
+!!          which controls the first excited state (the ground state is 
+!!          always taken to be (1 0)^T, of course)
+!!
       implicit none 
 !
       class(sccsd) :: wf 
@@ -791,10 +822,10 @@ contains
 !
          if (dot_product .lt. zero) then 
 !
-            write(unit_output,'(/t6,a)')          'Eigencontroller: I think the excited state has flipped (r -> -r).'
-            write(unit_output,'(t6,a42,f16.12)')  'Overlap with solution from last iteration:', dot_product
+            write(unit_output,'(/t6,a)') 'Eigencontroller: I think the excited state has flipped (r -> -r).'
+            write(unit_output,'(t6,a42,f16.12)') 'Overlap with solution from last iteration:', dot_product
 !
-            write(unit_output,'(/t6,a)')          'Flipping back & saving consistent solution to file for the overlap calculation.'
+            write(unit_output,'(/t6,a)') 'Flipping back & saving consistent solution to file for the overlap calculation.'
 !
             rB = -rB 
             write(unit_solution, rec=wf%state_B, iostat=ioerror) rB 

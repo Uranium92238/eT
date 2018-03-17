@@ -988,9 +988,8 @@ contains
 !
 !     Allocate array for the indices of the lowest orbital differences
 !
-      call wf%mem%alloc_int( index_lowest_obital_diff, wf%excited_state_specifications%n_singlet_states, 1)
+      call wf%mem%alloc_int(index_lowest_obital_diff, wf%excited_state_specifications%n_singlet_states, 1)
       index_lowest_obital_diff = zero
-
 !
 !     Find indecies of lowest orbital differences
 !
@@ -1022,7 +1021,7 @@ contains
 !
 !     Deallocate index_lowest_obital_diff
 !
-      call wf%mem%dealloc_int( index_lowest_obital_diff, wf%excited_state_specifications%n_singlet_states, 1)
+      call wf%mem%dealloc_int(index_lowest_obital_diff, wf%excited_state_specifications%n_singlet_states, 1)
 !
       end subroutine initialize_trial_vectors_valence_ccs
 !
@@ -1173,12 +1172,14 @@ contains
 !     Test if there are user specified trial vectors
 !
       if (wf%excited_state_specifications%user_specified_start_vector) then
+!
          index_list = wf%excited_state_specifications%start_vectors
+!
       else
 !
 !        Allocate orbital_diff
 !
-         call wf%mem%alloc(orbital_diff,wf%n_parameters,1)
+         call wf%mem%alloc(orbital_diff, wf%n_parameters, 1)
          orbital_diff = zero
 !
 !        Calculate orbital differences
@@ -1194,7 +1195,7 @@ contains
          call get_n_lowest(wf%excited_state_specifications%n_singlet_states,&
                  wf%n_parameters, orbital_diff, lowest_orbital_diff, index_list)
 !
-         call wf%mem%dealloc(orbital_diff,wf%n_parameters,1)
+         call wf%mem%dealloc(orbital_diff, wf%n_parameters, 1)
 !
          call wf%mem%dealloc(lowest_orbital_diff, wf%excited_state_specifications%n_singlet_states, 1)
 !
@@ -1204,10 +1205,9 @@ contains
 !
 !
    module subroutine calculate_orbital_differences_ccs(wf,orbital_diff)
-
 !!
 !!    Calculate Orbital Differences (CCS)
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad May 2017
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
       implicit none
 !
@@ -1430,9 +1430,15 @@ contains
          access='sequential', form='formatted', iostat=ioerror)
          rewind(unit_es_info) 
 !
-         if (ioerror .ne. 0) write(unit_output,*) 'Error while opening excited_state_information file'
+         if (ioerror .ne. 0) then
+!
+            write(unit_output,*) 'Error: could not open excited_state_information file'
+            stop
+!
+         endif
 
          call wf%mem%alloc(solution, wf%n_parameters, 1)
+!
          do state = 1, wf%excited_state_specifications%n_singlet_states
 !  
             solution = zero
@@ -1445,7 +1451,7 @@ contains
 !  
          enddo
 !
-         call wf%mem%dealloc(solution, wf%n_parameters,1) 
+         call wf%mem%dealloc(solution, wf%n_parameters, 1) 
 !
          close(unit_solution)
          close(unit_es_info)
@@ -1455,7 +1461,8 @@ contains
 !
       module subroutine print_excitation_vector_ccs(wf, vec, unit_id)
 !!
-!!
+!!       Print excitation vector (CCS)
+!!       Written by Sarai D. Folkestad, 2017
 !!
          implicit none
 !  
@@ -1478,15 +1485,16 @@ contains
                   write(unit_id,'(2i6,f12.4)') a, i, vec(ai, 1)
                endif
 !
+            enddo
          enddo
-      enddo
 !
       end subroutine print_excitation_vector_ccs
 !
 !
       module subroutine analyze_single_excitation_vector_ccs(wf, vec, n, sorted_short_vec, index_list)
 !!
-!!
+!!       Analyze single excitation vector (CCS)
+!!       Written by Sarai D. Folkestad, 2017
 !!
          implicit none
 !  
@@ -1588,7 +1596,8 @@ contains
 !
       module subroutine summary_excited_state_info_ccs(wf, energies)
 !!
-!!
+!!       Summary excited state info (CCS)
+!!       Written by Sarai D. Folkestad, 2017
 !!
          implicit none
 !  
@@ -1610,7 +1619,12 @@ contains
                action='read', status='unknown', &
                access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
 !
-         if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file'
+         if (ioerror .ne. 0) then 
+!
+            write(unit_output,*) 'Error: could not open solution file in summary_excited_state_info_ccs'
+            stop
+!
+         endif
 
          call wf%mem%alloc(solution, wf%n_parameters, 1)
          call wf%mem%alloc_int(index_list, min(wf%n_t1am, 20), 2)

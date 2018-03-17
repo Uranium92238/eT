@@ -168,7 +168,7 @@ contains
 !     integrals if possible
 !
       call wf%initialize_single_amplitudes
-   !   call wf%store_vv_vv_electronic_repulsion
+      call wf%store_vv_vv_electronic_repulsion
 !
 !     Allocate double amplitudes,
 !     and set the amplitudes to the MP2 guess 

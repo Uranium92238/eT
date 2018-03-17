@@ -230,7 +230,7 @@ contains
          else
 !
 !           Update the amplitudes for the next iteration 
-!
+!       
             call wf%new_amplitudes
             iteration = iteration + 1
 !
