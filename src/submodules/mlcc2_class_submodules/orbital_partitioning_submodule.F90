@@ -1073,7 +1073,7 @@ contains
 !
       wf%n_CC2_v = 1
 !
-      do while ((real(wf%n_CC2_v)/real(wf%n_v) .lt. wf%CC2_orbitals%delta_o ).and. (wf%n_CC2_v .le. wf%n_v))
+      do while ((real(wf%n_CC2_v)/real(wf%n_v) .lt. wf%CC2_orbitals%delta_v ).and. (wf%n_CC2_v .le. wf%n_v))
 !
          wf%n_CC2_v = wf%n_CC2_v + 1
 !
