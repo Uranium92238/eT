@@ -45,9 +45,7 @@ contains
 !
 !     Calculate the CCSD omega vector 
 !
-      call cpu_time(begin_timer)
       call construct_omega_ccsd(wf)
-      call cpu_time(end_timer)
 !
       if (wf%settings%print_level == 'developer') then 
 !
@@ -76,31 +74,37 @@ contains
 !
 !     Form Z_ackd = g_ac_kd 
 !
-      call allocator(g_ac_kd, (wf%n_v)**2, (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(g_ac_kd, (wf%n_v)**2, (wf%n_o)*(wf%n_v))
 !
       integral_type = 'electronic_repulsion'
       call wf%get_vv_ov(integral_type, g_ac_kd)
 !
 !     Form Y_lcki = g_lc_ki    
 !
-      call allocator(g_lc_ki, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
+      call wf%mem%alloc(g_lc_ki, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
 !
       integral_type = 'electronic_repulsion'
       call wf%get_ov_oo(integral_type, g_lc_ki)
 !
 !     Make X_ia = F_i_a
 !
-      call allocator(F_i_a, wf%n_o, wf%n_v)
+      call wf%mem%alloc(F_i_a, wf%n_o, wf%n_v)
       F_i_a = wf%fock_ia
 !
 !     Allocate correction & add the doubles terms 
 !
-      call allocator(omega_ai_bj_corr, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(omega_ai_bj_corr, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       omega_ai_bj_corr = zero
 !
       call wf%jacobian_sccsd_a2(omega_ai_bj_corr, F_i_a)   ! X
       call wf%jacobian_sccsd_b2(omega_ai_bj_corr, g_lc_ki) ! Y 
       call wf%jacobian_sccsd_c2(omega_ai_bj_corr, g_ac_kd) ! Z 
+!
+!     Deallocate integrals & the Fock matrix
+!
+      call wf%mem%dealloc(g_ac_kd, (wf%n_v)**2, (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(g_lc_ki, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
+      call wf%mem%dealloc(F_i_a, wf%n_o, wf%n_v)
 !
 !     Permute ai <-> bj and add to omega 
 !
@@ -129,7 +133,7 @@ contains
          enddo
       enddo
 !
-      call deallocator(omega_ai_bj_corr, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(omega_ai_bj_corr, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       call cpu_time(end_timer)
 !
@@ -164,17 +168,17 @@ contains
 !
       integer(i15) :: c = 0, k = 0, j = 0, b = 0
 !
-      integer(i15) :: JB = 0, KC = 0, IA = 0, KC = 0, KA = 0
+      integer(i15) :: JB = 0, KC = 0, IA = 0, KA = 0
       integer(i15) :: JA = 0, KB = 0, IB = 0, JC = 0, IC = 0
 !
 !     Form L(jb, kc) = 2 * g_jb_kc(jb, kc) - g_jb_kc(jc, kb)
 !
-      call allocator(g_jb_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(g_jb_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       integral_type = 'electronic_repulsion'
       call wf%get_ov_ov(integral_type, g_jb_kc)
 !
-      call allocator(L, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(L, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       L = zero 
 !
       do c = 1, wf%n_v
@@ -198,7 +202,7 @@ contains
          enddo
       enddo
 !
-      call deallocator(g_jb_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(g_jb_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     Scale L by the triples amplitude 
 !
@@ -226,6 +230,10 @@ contains
       wf%omega1(wf%A, wf%J) = wf%omega1(wf%A, wf%J) - L(KC, IB)     ! 7
       wf%omega1(wf%B, wf%K) = wf%omega1(wf%B, wf%K) - L(IA, JC)     ! 8
       wf%omega1(wf%A, wf%K) = wf%omega1(wf%A, wf%K) - L(JB, IC)     ! 9
+!
+!     Deallocate L 
+!
+      call wf%mem%dealloc(L, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine omega_sccsd_a1_sccsd
 !

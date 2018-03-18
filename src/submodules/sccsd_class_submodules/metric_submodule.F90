@@ -69,13 +69,13 @@ contains
 !
 !     Read state A from disk
 !
-      call allocator(rA, wf%n_parameters, 1)
+      call wf%mem%alloc(rA, wf%n_parameters, 1)
       rA = zero
 !
       read(unit_solution, rec=wf%state_A, iostat=ioerror) rA 
 !
-      call allocator(rA_a_i, wf%n_v, wf%n_o)
-      call allocator(rA_aibj, wf%n_t2am, 1)
+      call wf%mem%alloc(rA_a_i, wf%n_v, wf%n_o)
+      call wf%mem%alloc(rA_aibj, wf%n_t2am, 1)
 !
       rA_a_i  = zero
       rA_aibj = zero
@@ -83,17 +83,17 @@ contains
       call dcopy(wf%n_t1am, rA, 1, rA_a_i, 1)
       call dcopy(wf%n_t2am, rA(wf%n_t1am + 1, 1), 1, rA_aibj, 1)
 !
-      call deallocator(rA, wf%n_parameters, 1)
+      call wf%mem%dealloc(rA, wf%n_parameters, 1)
 !
 !     Read state B from disk
 !
-      call allocator(rB, wf%n_parameters, 1)
+      call wf%mem%alloc(rB, wf%n_parameters, 1)
       rB = zero
 !
       read(unit_solution, rec=wf%state_B, iostat=ioerror) rB
 !
-      call allocator(rB_a_i, wf%n_v, wf%n_o)
-      call allocator(rB_aibj, wf%n_t2am, 1)
+      call wf%mem%alloc(rB_a_i, wf%n_v, wf%n_o)
+      call wf%mem%alloc(rB_aibj, wf%n_t2am, 1)
 !
       rB_a_i  = zero
       rB_aibj = zero
@@ -101,7 +101,7 @@ contains
       call dcopy(wf%n_t1am, rB, 1, rB_a_i, 1)
       call dcopy(wf%n_t2am, rB(wf%n_t1am + 1, 1), 1, rB_aibj, 1)
 !
-      call deallocator(rB, wf%n_parameters, 1)
+      call wf%mem%dealloc(rB, wf%n_parameters, 1)
 !
 !     rB = M rB 
 !
@@ -119,13 +119,179 @@ contains
 !
 !     Final deallocations
 !
-      call deallocator(rA_a_i, wf%n_v, wf%n_o)
-      call deallocator(rA_aibj, wf%n_t2am, 1)   
+      call wf%mem%dealloc(rA_a_i, wf%n_v, wf%n_o)
+      call wf%mem%dealloc(rA_aibj, wf%n_t2am, 1)   
 !
-      call deallocator(rB_a_i, wf%n_v, wf%n_o)
-      call deallocator(rB_aibj, wf%n_t2am, 1)   
+      call wf%mem%dealloc(rB_a_i, wf%n_v, wf%n_o)
+      call wf%mem%dealloc(rB_aibj, wf%n_t2am, 1)   
 !
    end subroutine calc_overlap_sccsd
+!
+!
+   module subroutine calc_ground_state_overlap_sccsd(wf)
+!!
+!!    Calculate ground state overlap (SCCSD)
+!!    Written by Eirik F. Kjønstad, Feb 2018
+!!
+!!    Calculates the overlap between the two constrained states,
+!!    i.e., the value of r_A^T M r_B, where r_A is the ground state,
+!!    i.e., (1 0) in full space.
+!!
+!!    In this case, since r_A is known, it is more convenient to compute 
+!!    the overlap directly in this routine. 
+!!
+!!       r_A^T M r_B = eta^T r_B + q^T S Q A r_B / (1 + q^T S q)
+!!
+      implicit none 
+!
+      class(sccsd) :: wf 
+!
+      real(dp), dimension(:,:), allocatable :: rB      ! (r_ai^B r_aibj^B)
+      real(dp), dimension(:,:), allocatable :: rB_a_i  ! r_ai^B
+      real(dp), dimension(:,:), allocatable :: rB_aibj ! r_aibj^B
+!
+      real(dp), dimension(:,:), allocatable :: q_a_i  ! q_ai
+      real(dp), dimension(:,:), allocatable :: q_aibj ! q_aibj
+!
+      real(dp), dimension(:,:), allocatable :: tmp_q_a_i  ! q_ai
+      real(dp), dimension(:,:), allocatable :: tmp_q_aibj ! q_aibj
+!
+      real(dp), dimension(:,:), allocatable :: eta ! (eta_ai eta_aibj)
+!
+      real(dp) :: etanorm, ccnorm 
+!
+      logical :: transpose
+!
+      integer(i15) :: unit_solution = 0
+      integer(i15) :: ioerror = 0
+!
+      real(dp) :: ddot 
+!
+      wf%overlap = zero 
+!
+!     Construct the eta vector 
+!
+      call wf%mem%alloc(eta, wf%n_parameters, 1)
+      eta = zero 
+!
+!     We need the amplitudes to use the Q and q routines,
+!     and for constructing the eta vector 
+!
+      call wf%read_amplitudes
+!
+      call wf%construct_eta(eta)
+!
+!     Read eigenvectors from disk 
+!
+      call generate_unit_identifier(unit_solution)
+      open(unit=unit_solution, file='right_valence', action='read', status='unknown', &
+            access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
+!
+      if (ioerror .ne. 0) then 
+!
+         write(unit_output,'(t3,a)') 'Could not read excited state vectors in calc_ground_state_overlap_sccsd'
+         stop
+!
+      endif
+!
+!     Read state B from disk
+!
+      call wf%mem%alloc(rB, wf%n_parameters, 1)
+      rB = zero
+!
+      read(unit_solution, rec=wf%state_B, iostat=ioerror) rB
+!
+!     Compute the eta^T r_B contribution to the overlap 
+!
+      wf%overlap = wf%overlap + ddot(wf%n_parameters, eta, 1, rB, 1)
+!
+      etanorm = zero 
+      etanorm = etanorm + ddot(wf%n_parameters, eta, 1, eta, 1)
+      etanorm = sqrt(etanorm)
+!
+      write(unit_output,'(/t6,a26,f16.12)')  'Value of normalized eta*r:', wf%overlap/etanorm
+!
+      call wf%mem%dealloc(eta, wf%n_parameters, 1)
+!
+      call wf%mem%alloc(rB_a_i, wf%n_v, wf%n_o)
+      call wf%mem%alloc(rB_aibj, wf%n_t2am, 1)
+!
+      rB_a_i  = zero
+      rB_aibj = zero
+!
+      call dcopy(wf%n_t1am, rB, 1, rB_a_i, 1)
+      call dcopy(wf%n_t2am, rB(wf%n_t1am + 1, 1), 1, rB_aibj, 1)
+!
+      call wf%mem%dealloc(rB, wf%n_parameters, 1)
+!
+!     r_B <- A r_B 
+!
+      call wf%jacobian_ccsd_transformation(rB_a_i, rB_aibj)
+!
+!     This transformation destructs the amplitudes,
+!     therefore re-read to avoid problems 
+!
+      call wf%read_amplitudes
+!
+!     r_B <- Q A r_B 
+!
+      transpose = .false.
+      call wf%Q_transformation(rB_a_i, rB_aibj, transpose)
+!
+!     r_B <- S Q A r_B 
+!
+      call wf%S_transformation(rB_a_i, rB_aibj)
+!
+!     Construct the q vector in two copies 
+!
+      call wf%mem%alloc(q_a_i, wf%n_v, wf%n_o)
+      call wf%mem%alloc(q_aibj, wf%n_t2am, 1)
+!
+      q_a_i  = zero
+      q_aibj = zero 
+!
+      call wf%construct_q(q_a_i, q_aibj)
+!
+      call wf%mem%alloc(tmp_q_a_i, wf%n_v, wf%n_o)
+      call wf%mem%alloc(tmp_q_aibj, wf%n_t2am, 1)
+!
+      tmp_q_a_i  = zero
+      tmp_q_aibj = zero 
+!
+      call wf%construct_q(tmp_q_a_i, tmp_q_aibj)
+!
+!     tmp_q <- S q 
+!
+      call wf%S_transformation(tmp_q_a_i, tmp_q_aibj)
+!
+!     Calculate coupled cluster norm, 1 + q^T S q 
+!
+      ccnorm = one + ddot(wf%n_t1am, q_a_i, 1, tmp_q_a_i, 1) &
+                   + ddot(wf%n_t2am, q_aibj, 1, tmp_q_aibj, 1) ! 1 + q^T S q
+!
+      call wf%mem%dealloc(tmp_q_a_i, wf%n_v, wf%n_o)
+      call wf%mem%dealloc(tmp_q_aibj, wf%n_t2am, 1)
+!
+!     Calculate the second overlap contribution, q^T S Q A r_B / (1 + q^T S q)
+!
+      wf%overlap = wf%overlap + (one/ccnorm)*(ddot(wf%n_t1am, q_a_i, 1, rB_a_i, 1) + &
+                                              ddot(wf%n_t2am, q_aibj, 1, rB_aibj, 1))
+!
+!     Close file with eigenvectors 
+!
+      close(unit_solution)
+!
+!     Final deallocations 
+!
+      call wf%mem%dealloc(q_a_i, wf%n_v, wf%n_o)
+      call wf%mem%dealloc(q_aibj, wf%n_t2am, 1)
+!
+      call wf%mem%dealloc(rB_a_i, wf%n_v, wf%n_o)
+      call wf%mem%dealloc(rB_aibj, wf%n_t2am, 1)   
+!
+      call wf%destruct_amplitudes
+!
+   end subroutine calc_ground_state_overlap_sccsd
 !
 !
    module subroutine metric_transformation_sccsd(wf, r_a_i, r_aibj)
@@ -181,11 +347,11 @@ contains
 !     Allocate the array that holds the transformed vector,
 !     and the temporary vector used for each individual contribution
 !
-      call allocator(temporary_a_i, wf%n_v, wf%n_o)
-      call allocator(temporary_aibj, wf%n_t2am, 1)
+      call wf%mem%alloc(temporary_a_i, wf%n_v, wf%n_o)
+      call wf%mem%alloc(temporary_aibj, wf%n_t2am, 1)
 !
-      call allocator(transformed_a_i, wf%n_v, wf%n_o)
-      call allocator(transformed_aibj, wf%n_t2am, 1)
+      call wf%mem%alloc(transformed_a_i, wf%n_v, wf%n_o)
+      call wf%mem%alloc(transformed_aibj, wf%n_t2am, 1)
 !
       temporary_a_i  = zero 
       temporary_aibj = zero
@@ -235,8 +401,8 @@ contains
 !
 !     dotproduct = q^T S Q r 
 !
-      call allocator(temporary_two_a_i, wf%n_v, wf%n_o)
-      call allocator(temporary_two_aibj, wf%n_t2am, 1)
+      call wf%mem%alloc(temporary_two_a_i, wf%n_v, wf%n_o)
+      call wf%mem%alloc(temporary_two_aibj, wf%n_t2am, 1)
 !
       temporary_two_a_i  = zero
       temporary_two_aibj = zero 
@@ -260,7 +426,7 @@ contains
 !
       endif
 !
-      call allocator(multipliers, wf%n_parameters, 1) ! (t-bar_ai, t-bar_aibj)
+      call wf%mem%alloc(multipliers, wf%n_parameters, 1) ! (t-bar_ai, t-bar_aibj)
       multipliers = zero
 !
       read(unit_multipliers, rec=1, iostat=ioerror) multipliers
@@ -321,19 +487,19 @@ contains
       call daxpy(wf%n_t1am, dotproduct*ccnorm, multipliers, 1, transformed_a_i, 1)
       call daxpy(wf%n_t2am, dotproduct*ccnorm, multipliers(wf%n_t1am + 1, 1), 1, transformed_aibj, 1)
 !
-      call deallocator(temporary_two_a_i, wf%n_v, wf%n_o)
-      call deallocator(temporary_two_aibj, wf%n_t2am, 1)
+      call wf%mem%dealloc(temporary_two_a_i, wf%n_v, wf%n_o)
+      call wf%mem%dealloc(temporary_two_aibj, wf%n_t2am, 1)
 !
-      call deallocator(temporary_a_i, wf%n_v, wf%n_o)
-      call deallocator(temporary_aibj, wf%n_t2am, 1)
+      call wf%mem%dealloc(temporary_a_i, wf%n_v, wf%n_o)
+      call wf%mem%dealloc(temporary_aibj, wf%n_t2am, 1)
 !
       r_a_i  = transformed_a_i
       r_aibj = transformed_aibj
 !
-      call deallocator(transformed_a_i, wf%n_v, wf%n_o)
-      call deallocator(transformed_aibj, wf%n_t2am, 1)
+      call wf%mem%dealloc(transformed_a_i, wf%n_v, wf%n_o)
+      call wf%mem%dealloc(transformed_aibj, wf%n_t2am, 1)
 !
-      call deallocator(multipliers, wf%n_parameters, 1)
+      call wf%mem%dealloc(multipliers, wf%n_parameters, 1)
 !
       call wf%destruct_amplitudes
 !
@@ -420,8 +586,8 @@ contains
       integer(i15) :: j = 0, b = 0, i = 0, a = 0, bj = 0, ai = 0, aibj = 0
       integer(i15) :: c = 0, k = 0, ck = 0, aick = 0
 !
-      call allocator(transformed_a_i, wf%n_v, wf%n_o)
-      call allocator(transformed_aibj, wf%n_t2am, 1)
+      call wf%mem%alloc(transformed_a_i, wf%n_v, wf%n_o)
+      call wf%mem%alloc(transformed_aibj, wf%n_t2am, 1)
 !
       transformed_a_i  = zero
       transformed_aibj = zero
@@ -501,8 +667,8 @@ contains
       r_a_i  = transformed_a_i
       r_aibj = transformed_aibj
 !
-      call deallocator(transformed_a_i, wf%n_v, wf%n_o)
-      call deallocator(transformed_aibj, wf%n_t2am, 1)
+      call wf%mem%dealloc(transformed_a_i, wf%n_v, wf%n_o)
+      call wf%mem%dealloc(transformed_aibj, wf%n_t2am, 1)
 !
    end subroutine Q_transformation_sccsd
 ! 
@@ -528,8 +694,8 @@ contains
       integer(i15) :: i = 0, a = 0, j = 0, b = 0, ai = 0, bj = 0, aj = 0, bi = 0, aibj = 0, ajbi = 0
       real(dp) :: bnf
 !
-      call allocator(transformed_a_i, wf%n_v, wf%n_o)
-      call allocator(transformed_aibj, wf%n_t2am, 1)
+      call wf%mem%alloc(transformed_a_i, wf%n_v, wf%n_o)
+      call wf%mem%alloc(transformed_aibj, wf%n_t2am, 1)
 !
       transformed_a_i = zero 
       transformed_aibj = zero
@@ -575,6 +741,11 @@ contains
 !
       call dcopy(wf%n_t1am,transformed_a_i,1,r_a_i,1)
       call dcopy(wf%n_t2am,transformed_aibj,1,r_aibj,1)
+!
+!     Deallocations 
+!
+      call wf%mem%dealloc(transformed_a_i, wf%n_v, wf%n_o)
+      call wf%mem%dealloc(transformed_aibj, wf%n_t2am, 1)
 !
    end subroutine S_transformation_sccsd
 !

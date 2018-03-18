@@ -56,7 +56,7 @@ module memory_manager_class
 !     The amount of memory currently available, based on the arrays currently allocated 
 !     (memory used by objects and local variables are not included in this estimate)
 !
-      integer(i15) :: available = 30000000000 
+      integer(i15) :: available = 30000000000
 !
 !     Buffer for handling batches (standard: 10%). This means in practice that 'required
 !     memory' estimates are increased by 10% in case they miss they slightly underestimate

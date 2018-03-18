@@ -271,9 +271,13 @@ contains
 !
 !        Prints 
 !
-         write(unit_output,'(/t3,a,i3)') 'Iteration:', iteration
-         write(unit_output,'(t3,a,i3/)') 'Reduced space dimension:', reduced_dim
-         flush(unit_output)
+         if (wf%settings%print_level .ne. 'minimal') then 
+!
+            write(unit_output,'(/t3,a,i3)') 'Iteration:', iteration
+            write(unit_output,'(t3,a,i3/)') 'Reduced space dimension:', reduced_dim
+            flush(unit_output)
+!
+         endif
 !
 !        Transform new trial vectors  
 !        rho_i = A * c_i
@@ -349,7 +353,10 @@ contains
 !
          endif
 !
-         call wf%mem%dealloc(solution_vectors_reduced, reduced_dim, wf%excited_state_specifications%n_singlet_states)
+!        Note: since reduced_dim = reduced_dim + n_new_trials during the iteration, we should subtract it 
+!              when deallocating the reduced solution vector 
+!
+         call wf%mem%dealloc(solution_vectors_reduced, reduced_dim - n_new_trials, wf%excited_state_specifications%n_singlet_states)
 !
       enddo ! End of iterative loop 
 !
@@ -412,10 +419,10 @@ contains
 !
 !     Final deallocations
 !
-      call wf%mem%dealloc(eigenvalues_Im_old, reduced_dim, 1)
-      call wf%mem%dealloc(eigenvalues_Re_old, reduced_dim, 1)
-      call wf%mem%dealloc(eigenvalues_Im_new, reduced_dim, 1)
-      call wf%mem%dealloc(eigenvalues_Re_new, reduced_dim, 1)
+      call wf%mem%dealloc(eigenvalues_Im_old, wf%excited_state_specifications%n_singlet_states, 1)
+      call wf%mem%dealloc(eigenvalues_Re_old, wf%excited_state_specifications%n_singlet_states, 1)
+      call wf%mem%dealloc(eigenvalues_Im_new, wf%excited_state_specifications%n_singlet_states, 1)
+      call wf%mem%dealloc(eigenvalues_Re_new, wf%excited_state_specifications%n_singlet_states, 1)
 !
    end subroutine excited_state_solver_ccs
 !
@@ -737,8 +744,12 @@ contains
       n_new_trials = 0
       converged_residual = .true.
 !
-      write(unit_output,'(t3,a)') 'Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm'
-      write(unit_output,'(t3,a)') '-------------------------------------------------------------------'
+      if (wf%settings%print_level .ne. 'minimal') then
+!
+         write(unit_output,'(t3,a)') 'Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm'
+         write(unit_output,'(t3,a)') '-------------------------------------------------------------------'
+!
+      endif
 !
 !     For each of the roots
 !
@@ -817,9 +828,13 @@ contains
 !
 !        Prints
 !
-         write(unit_output,'(t3,i2,5x,f16.12,7x,f16.12,11x,e10.4)') root, eigenvalues_Re(root, 1), &
+         if (wf%settings%print_level .ne. 'minimal') then
+!
+            write(unit_output,'(t3,i2,5x,f16.12,7x,f16.12,11x,e10.4)') root, eigenvalues_Re(root, 1), &
                                                                 eigenvalues_Im(root, 1), norm_residual/norm_solution_vector
-         flush(unit_output)
+            flush(unit_output)
+!
+         endif
 !
 !        :: Precondition the residual by inverse orbital energy differences ::
 !
@@ -884,7 +899,11 @@ contains
 !
       call wf%mem%dealloc(residual, wf%n_parameters, 1)
 !
-      write(unit_output,'(t3,a)') '-------------------------------------------------------------------'
+      if (wf%settings%print_level .ne. 'minimal') then
+!
+         write(unit_output,'(t3,a)') '-------------------------------------------------------------------'
+!
+      endif
 !
    end subroutine construct_next_trial_vectors_ccs
 !
@@ -972,9 +991,8 @@ contains
 !
 !     Allocate array for the indices of the lowest orbital differences
 !
-      call wf%mem%alloc_int( index_lowest_obital_diff, wf%excited_state_specifications%n_singlet_states, 1)
+      call wf%mem%alloc_int(index_lowest_obital_diff, wf%excited_state_specifications%n_singlet_states, 1)
       index_lowest_obital_diff = zero
-
 !
 !     Find indecies of lowest orbital differences
 !
@@ -1006,7 +1024,7 @@ contains
 !
 !     Deallocate index_lowest_obital_diff
 !
-      call wf%mem%dealloc_int( index_lowest_obital_diff, wf%excited_state_specifications%n_singlet_states, 1)
+      call wf%mem%dealloc_int(index_lowest_obital_diff, wf%excited_state_specifications%n_singlet_states, 1)
 !
       end subroutine initialize_trial_vectors_valence_ccs
 !
@@ -1157,12 +1175,14 @@ contains
 !     Test if there are user specified trial vectors
 !
       if (wf%excited_state_specifications%user_specified_start_vector) then
+!
          index_list = wf%excited_state_specifications%start_vectors
+!
       else
 !
 !        Allocate orbital_diff
 !
-         call wf%mem%alloc(orbital_diff,wf%n_parameters,1)
+         call wf%mem%alloc(orbital_diff, wf%n_parameters, 1)
          orbital_diff = zero
 !
 !        Calculate orbital differences
@@ -1178,7 +1198,7 @@ contains
          call get_n_lowest(wf%excited_state_specifications%n_singlet_states,&
                  wf%n_parameters, orbital_diff, lowest_orbital_diff, index_list)
 !
-         call wf%mem%dealloc(orbital_diff,wf%n_parameters,1)
+         call wf%mem%dealloc(orbital_diff, wf%n_parameters, 1)
 !
          call wf%mem%dealloc(lowest_orbital_diff, wf%excited_state_specifications%n_singlet_states, 1)
 !
@@ -1188,10 +1208,9 @@ contains
 !
 !
    module subroutine calculate_orbital_differences_ccs(wf,orbital_diff)
-
 !!
 !!    Calculate Orbital Differences (CCS)
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad May 2017
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
       implicit none
 !
@@ -1383,7 +1402,6 @@ contains
       end subroutine precondition_residual_valence_ccs
 !
 !
-     
       module subroutine print_excited_state_info_ccs(wf)
 !!
 !!
@@ -1415,9 +1433,15 @@ contains
          access='sequential', form='formatted', iostat=ioerror)
          rewind(unit_es_info) 
 !
-         if (ioerror .ne. 0) write(unit_output,*) 'Error while opening excited_state_information file'
+         if (ioerror .ne. 0) then
+!
+            write(unit_output,*) 'Error: could not open excited_state_information file'
+            stop
+!
+         endif
 
          call wf%mem%alloc(solution, wf%n_parameters, 1)
+!
          do state = 1, wf%excited_state_specifications%n_singlet_states
 !  
             solution = zero
@@ -1430,7 +1454,7 @@ contains
 !  
          enddo
 !
-         call wf%mem%dealloc(solution, wf%n_parameters,1) 
+         call wf%mem%dealloc(solution, wf%n_parameters, 1) 
 !
          close(unit_solution)
          close(unit_es_info)
@@ -1440,7 +1464,8 @@ contains
 !
       module subroutine print_excitation_vector_ccs(wf, vec, unit_id)
 !!
-!!
+!!       Print excitation vector (CCS)
+!!       Written by Sarai D. Folkestad, 2017
 !!
          implicit none
 !  
@@ -1463,15 +1488,16 @@ contains
                   write(unit_id,'(2i6,f12.4)') a, i, vec(ai, 1)
                endif
 !
+            enddo
          enddo
-      enddo
 !
       end subroutine print_excitation_vector_ccs
 !
 !
       module subroutine analyze_single_excitation_vector_ccs(wf, vec, n, sorted_short_vec, index_list)
 !!
-!!
+!!       Analyze single excitation vector (CCS)
+!!       Written by Sarai D. Folkestad, 2017
 !!
          implicit none
 !  
@@ -1573,7 +1599,8 @@ contains
 !
       module subroutine summary_excited_state_info_ccs(wf, energies)
 !!
-!!
+!!       Summary excited state info (CCS)
+!!       Written by Sarai D. Folkestad, 2017
 !!
          implicit none
 !  
@@ -1595,11 +1622,16 @@ contains
                action='read', status='unknown', &
                access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
 !
-         if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file'
+         if (ioerror .ne. 0) then 
+!
+            write(unit_output,*) 'Error: could not open solution file in summary_excited_state_info_ccs'
+            stop
+!
+         endif
 
          call wf%mem%alloc(solution, wf%n_parameters, 1)
-         call wf%mem%alloc_int(index_list, 20, 2)
-         call wf%mem%alloc(sorted_max_vec, 20, 1)
+         call wf%mem%alloc_int(index_list, min(wf%n_t1am, 20), 2)
+         call wf%mem%alloc(sorted_max_vec, min(wf%n_t1am, 20), 1)
 !
          do state = 1, wf%excited_state_specifications%n_singlet_states
 !
@@ -1621,9 +1653,9 @@ contains
 !
 !           Get 20 highest amplitudes
 !
-            call wf%analyze_single_excitation_vector(solution, 20, sorted_max_vec, index_list)
+            call wf%analyze_single_excitation_vector(solution, min(wf%n_t1am, 20), sorted_max_vec, index_list)
 
-            do i = 1, 20
+            do i = 1, min(wf%n_t1am, 20)
                if (abs(sorted_max_vec(i, 1)) .lt. 1.0D-03) then
                   exit 
                else
@@ -1637,8 +1669,8 @@ contains
          enddo
 !
          call wf%mem%dealloc(solution, wf%n_parameters,1) 
-         call wf%mem%dealloc_int(index_list, 20, 2)
-         call wf%mem%dealloc(sorted_max_vec, 20, 1)
+         call wf%mem%dealloc_int(index_list, min(wf%n_t1am, 20), 2)
+         call wf%mem%dealloc(sorted_max_vec, min(wf%n_t1am, 20), 1)
 !
          close(unit_solution)
 !

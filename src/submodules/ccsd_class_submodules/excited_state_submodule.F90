@@ -342,10 +342,10 @@ contains
 !
       index_list = 0 
       sorted_short_vec(1,1) = vec(1,1)
-      index_list(1,1) = 1
-      index_list(1,2) = 1
-      index_list(1,3) = 1
-      index_list(1,4) = 1
+      index_list(1,1) = 1 ! a 
+      index_list(1,2) = 1 ! i 
+      index_list(1,3) = 1 ! b 
+      index_list(1,4) = 1 ! j
 !
       min = abs(sorted_short_vec(1,1))
       min_pos = 1
@@ -364,15 +364,15 @@ contains
 !
                      if (aibj .le. n) then
                         sorted_short_vec(aibj,1)   = vec(aibj,1)
-                        index_list(min_pos,1)      = a
-                        index_list(min_pos,2)      = i
-                        index_list(min_pos,3)      = b
-                        index_list(min_pos,4)      = j
+                        index_list(aibj,1)      = a
+                        index_list(aibj,2)      = i
+                        index_list(aibj,3)      = b
+                        index_list(aibj,4)      = j
 !
                         if (abs(sorted_short_vec(i,1)) .le. min) then
 !
                            min = abs(sorted_short_vec(i,1))
-                           min_pos = i
+                           min_pos = aibj
 !
                         endif
                      else
@@ -472,11 +472,11 @@ contains
       call wf%mem%alloc(solution_ai, wf%n_t1am, 1)
       call wf%mem%alloc(solution_aibj, wf%n_t2am, 1)
 !
-      call wf%mem%alloc(sorted_max_vec_singles, 20, 1)
-      call wf%mem%alloc(sorted_max_vec_doubles, 20, 1)
+      call wf%mem%alloc(sorted_max_vec_singles, min(wf%n_t1am, 20), 1)
+      call wf%mem%alloc(sorted_max_vec_doubles, min(wf%n_t2am, 20), 1)
 !
-      call wf%mem%alloc_int(index_list_singles, 20, 2)
-      call wf%mem%alloc_int(index_list_doubles, 20, 4)
+      call wf%mem%alloc_int(index_list_singles, min(wf%n_t1am, 20), 2)
+      call wf%mem%alloc_int(index_list_doubles, min(wf%n_t2am, 20), 4)
 !
       do state = 1, wf%excited_state_specifications%n_singlet_states
 !
@@ -505,12 +505,14 @@ contains
 !
 !        Get 20 highest amplitudes
 !
-         call wf%analyze_single_excitation_vector(solution_ai, 20, sorted_max_vec_singles, index_list_singles)
-         call wf%analyze_double_excitation_vector(solution_aibj, 20, sorted_max_vec_doubles, index_list_doubles)
+         call wf%analyze_single_excitation_vector(solution_ai, min(wf%n_t1am, 20), &
+                         sorted_max_vec_singles, index_list_singles)
+         call wf%analyze_double_excitation_vector(solution_aibj, min(wf%n_t2am, 20), &
+                         sorted_max_vec_doubles, index_list_doubles)
 !
 !        And print them
 !
-         do i = 1, 20
+         do i = 1, min(wf%n_t1am, 20)
 !
             if    (abs(sorted_max_vec_singles(i, 1)) .lt. 1.0D-03) then
 !
@@ -530,7 +532,7 @@ contains
          write(unit_output,'(t6,a3, 8x, a3, 8x, a3, 8x, a3, 8x, a10)')'a','i','b','j', 'amplitude'
          write(unit_output,'(t6,a54)')'------------------------------------------------------'
 !
-         do i = 1, 20
+         do i = 1, min(wf%n_t2am, 20)
 !
             if    (abs(sorted_max_vec_doubles(i, 1)) .lt. 1.0D-03) then
 !
@@ -555,11 +557,11 @@ contains
       call wf%mem%dealloc(solution_ai, wf%n_t1am, 1)
       call wf%mem%dealloc(solution_aibj, wf%n_t2am, 1)
 !
-      call wf%mem%dealloc(sorted_max_vec_singles, 20, 1)
-      call wf%mem%dealloc(sorted_max_vec_doubles, 20, 1)
+      call wf%mem%dealloc(sorted_max_vec_singles, min(wf%n_t1am, 20), 1)
+      call wf%mem%dealloc(sorted_max_vec_doubles, min(wf%n_t2am, 20), 1)
 !
-      call wf%mem%dealloc_int(index_list_singles, 20, 2)
-      call wf%mem%dealloc_int(index_list_doubles, 20, 4)
+      call wf%mem%dealloc_int(index_list_singles, min(wf%n_t1am, 20), 2)
+      call wf%mem%dealloc_int(index_list_doubles, min(wf%n_t2am, 20), 4)
 !
       close(unit_solution)
 !
