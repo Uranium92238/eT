@@ -8,9 +8,10 @@ This will create a folder called "eT". Change to this directory:
 ```
 cd eT
 ```
-Now make a directory for the compiled program:
+Now make a directory for the compiled program, and enter the directory:
 ```
 mkdir build
+cd build
 ```
 Prepare the files with CMake:
 ```
