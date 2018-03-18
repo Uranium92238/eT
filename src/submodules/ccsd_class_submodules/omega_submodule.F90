@@ -322,7 +322,9 @@ contains
       real(dp), dimension(:,:), allocatable :: t_al_ck ! t_kl^ac
       real(dp), dimension(:,:), allocatable :: u_al_ck ! u_kl^ac = 2 t_kl^ac - t_lk^ac
 !
-!     Get g_lc_ki = g_kilc = g_lcki 
+      real(dp) :: begin_timer, end_timer
+!
+!     Get g_ki_lc = g_kilc
 !
       call wf%mem%alloc(g_lc_ki, (wf%n_v)*(wf%n_o), (wf%n_o)**2)
 !

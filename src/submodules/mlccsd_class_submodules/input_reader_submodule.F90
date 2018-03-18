@@ -12,7 +12,7 @@ submodule (mlccsd_class) input_reader
 contains 
 !
 !
-      subroutine mlcc_reader_mlccsd(wf, unit_input)
+      module subroutine mlcc_reader_mlccsd(wf, unit_input)
 !!
 !!
 !!

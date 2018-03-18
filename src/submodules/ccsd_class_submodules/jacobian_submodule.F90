@@ -385,7 +385,6 @@ contains
       real(dp), dimension(:,:), allocatable :: t_cl_ai ! t_li^ca 
       real(dp), dimension(:,:), allocatable :: u_ai_lc ! u_li^ca reordered 
 !
-!
 !     :: Term 1: sum_ckdl L_lckd u_li^ca c_dk ::
 !
 !     g_lc_kd = g_lckd 
@@ -3306,7 +3305,7 @@ contains
       real(dp), dimension(:,:), allocatable :: g_ab_cd
 !
       real(dp), dimension(:,:), allocatable :: rho_batch_ab_ij
-! 
+!
       integer(i15) :: a = 0, b = 0, i = 0, j = 0, ab = 0, full_ab = 0, ij = 0
 !
 !     Batching and memory handling variables

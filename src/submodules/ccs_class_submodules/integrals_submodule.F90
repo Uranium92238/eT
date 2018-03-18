@@ -4245,7 +4245,7 @@ contains
 !
       character(len=40) :: integral_type 
 !
-      integer(i15) :: a = 0, i = 0, ai = 0
+      integer(i15) :: i = 0, ai = 0
       integer(i15) :: jb = 0
 !
 !     Disk space required to store g_vo_vv 
@@ -4554,30 +4554,30 @@ contains
             call wf%mem%alloc(L_bc_J, b_length*(wf%n_v), wf%n_J)
             call wf%mem%alloc(L_ia_J, (wf%n_v)*(wf%n_o), wf%n_J)
 !
-!        Get T1-transformed Cholesky vectors
+!           Get T1-transformed Cholesky vectors
 !
-         call wf%get_cholesky_ab(L_bc_J,b_first, b_last, 1, wf%n_v)
-         call wf%get_cholesky_ia(L_ia_J)
+            call wf%get_cholesky_ab(L_bc_J,b_first, b_last, 1, wf%n_v)
+            call wf%get_cholesky_ia(L_ia_J)
 !
-!        Construct integral
+!           Construct integral
 !
-         call dgemm('N', 'T',             &
-                     b_length*(wf%n_v),   &
-                     (wf%n_v)*(wf%n_o),   &
-                     wf%n_J,              &
-                     one,                 &
-                     L_bc_J,              &
-                     b_length*(wf%n_v),   &
-                     L_ia_J,              &
-                     (wf%n_v)*(wf%n_o),   &
-                     zero,                &
-                     g_bc_ia,             &
-                     b_length*(wf%n_v))
+            call dgemm('N', 'T',             &
+                        b_length*(wf%n_v),   &
+                        (wf%n_v)*(wf%n_o),   &
+                        wf%n_J,              &
+                        one,                 &
+                        L_bc_J,              &
+                        b_length*(wf%n_v),   &
+                        L_ia_J,              &
+                        (wf%n_v)*(wf%n_o),   &
+                        zero,                &
+                        g_bc_ia,             &
+                        b_length*(wf%n_v))
 !
-!        Deallocate Cholesky vectors
+!           Deallocate Cholesky vectors
 !
-         call wf%mem%dealloc(L_bc_J, b_length*(wf%n_v), wf%n_J)
-         call wf%mem%dealloc(L_ia_J, (wf%n_v)*(wf%n_o), wf%n_J)
+            call wf%mem%dealloc(L_bc_J, b_length*(wf%n_v), wf%n_J)
+            call wf%mem%dealloc(L_ia_J, (wf%n_v)*(wf%n_o), wf%n_J)
 !
 !           Save the integrals to disk 
 !
@@ -4593,6 +4593,7 @@ contains
                enddo
             enddo
 !
+            call wf%mem%dealloc(g_bc_ia, b_length*(wf%n_v), (wf%n_v)*(wf%n_o))
 !
          enddo ! End of batches over b 
 !
@@ -4936,7 +4937,7 @@ contains
    end function get_vvvv_required_mem_ccs
 !
 !
-   integer function get_vvvo_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
+   module function get_vvvo_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
 !!
 !!    Get vvvo required memory (CCS)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Dec 2017
@@ -5033,7 +5034,7 @@ contains
    end function get_vvvo_required_mem_ccs
 !
 !
-   integer function get_vvov_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
+   module function get_vvov_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
 !!
 !!    Get vvvo required memory (CCS)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Dec 2017
@@ -5115,7 +5116,7 @@ contains
    end function get_vvov_required_mem_ccs
 !
 !
-   integer function get_vvoo_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
+   module function get_vvoo_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
 !!
 !!    Get vvvo required memory (CCS)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Dec 2017

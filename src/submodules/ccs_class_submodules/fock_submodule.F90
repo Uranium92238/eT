@@ -33,7 +33,6 @@ contains
       if (.not. allocated(wf%fock_ia)) call wf%mem%alloc(wf%fock_ia, wf%n_o, wf%n_v)
       if (.not. allocated(wf%fock_ai)) call wf%mem%alloc(wf%fock_ai, wf%n_v, wf%n_o)
       if (.not. allocated(wf%fock_ab)) call wf%mem%alloc(wf%fock_ab, wf%n_v, wf%n_v)
-
 !
       wf%fock_ij = zero
       wf%fock_ia = zero
