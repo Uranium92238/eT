@@ -335,48 +335,21 @@ contains
             if (batch_end .gt. a_last) batch_end = a_last
             batch_length = batch_end - batch_start + 1
 !
-!           Allocate L_ab_J and L_Ja_b
+!           Read L_ab_J 
 ! 
             call wf%mem%alloc(L_ab_J, (wf%n_v)*batch_length, wf%n_J) ! L_ab^J 
             L_ab_J = zero
-             call wf%read_cholesky_ab(L_ab_J, batch_start, batch_end, 1, wf%n_v)
 !
-!           Read Cholesky AB vectors, batching over a
-!
-            call wf%mem%alloc(L_ba_J, (wf%n_v)*batch_length, wf%n_J) ! L_ab^J = L_ba_J(ba,J)
-            L_ba_J = zero
-!
-            do b = 1, wf%n_v
-              do a = 1, batch_length
-                ba = index_two(b, a, wf%n_v)
-                ab = index_two(a, b, batch_length)
-                do J = 1, wf%n_J
-                  L_ba_J(ba, J) = L_ab_J(ab, J)
-                enddo
-              enddo
-            enddo
-!
-            call wf%mem%dealloc(L_ab_J, (wf%n_v)*batch_length, wf%n_J)
-            
+             call wf%read_cholesky_ab(L_ab_J, batch_start, batch_end, 1, wf%n_v)           
+!         
             call wf%mem%alloc(L_Ja_b, batch_length*(wf%n_J), wf%n_v)
             L_Ja_b = zero           
 !
-!           Reorder the Cholesky array L_ba_J
+!           Reorder the Cholesky array L_ab_J
 !
-            do a = 1, batch_length
-               do b = 1, wf%n_v
-                  do J = 1, wf%n_J
+            call sort_123_to_312(L_ab_J, L_Ja_b, batch_length, wf%n_v, wf%n_J)     
 !
-!                    Needed indices
-!
-                     ba = index_two(b, a, wf%n_v)
-                     Ja = index_two(J, a, wf%n_J)
-!
-                     L_Ja_b(Ja, b) = L_ba_J(ba, J) ! L_ab^J
-!
-                  enddo
-               enddo
-            enddo       
+            call wf%mem%dealloc(L_ab_J, (wf%n_v)*batch_length, wf%n_J)   
 !
 !           Calculate sum_b L_Ja_b*t_b_i = L_Ja_i 
 !           
@@ -395,9 +368,6 @@ contains
                         L_Ja_i(L_off, 1),      &
                         a_length*(wf%n_J))
 !
-!           Deallocate L_ab_J and L_Ja_b
-!
-            call wf%mem%dealloc(L_ba_J, (wf%n_v)*batch_length, wf%n_J)
             call wf%mem%dealloc(L_Ja_b, batch_length*(wf%n_J), wf%n_v)
 !
          enddo ! batching over a 
@@ -654,44 +624,18 @@ contains
 ! 
             call wf%read_cholesky_ab(L_ab_J, batch_start, batch_end, 1, wf%n_v)
 !
-            call wf%mem%alloc(L_ba_J, (wf%n_v)*batch_length, wf%n_J) ! L_ab^J = L_ba_J(ba,J)
-            L_ba_J = zero
-            do b = 1, wf%n_v
-              do a = 1, batch_length
-                ba = index_two(b, a, wf%n_v)
-                ab = index_two(a, b, batch_length)
-                do J = 1, wf%n_J
-                  L_ba_J(ba, J) = L_ab_J(ab, J)
-                enddo
-              enddo
-            enddo
-            call wf%mem%dealloc(L_ab_J, batch_length*(wf%n_v), wf%n_J)
-!
             call wf%mem%alloc(L_Ja_b, batch_length*(wf%n_J), wf%n_v)
             L_Ja_b = zero
 !
-!           Reorder the Cholesky array L_ba_J
+!           Reorder the Cholesky array L_ab_J
 !
-            do a = 1, batch_length
-               do b = 1, wf%n_v
-                  do J = 1, wf%n_J
+            call sort_123_to_312(L_ab_J, L_Ja_b, batch_length, wf%n_v, wf%n_J)     
 !
-!                    Needed indices
-!
-                     ba = index_two(b, a, wf%n_v)
-                     Ja = index_two(J, a, wf%n_J)
-!
-                     L_Ja_b(Ja, b) = L_ba_J(ba, J) ! L_ab^J
-!
-                  enddo
-               enddo
-            enddo
-            call wf%mem%dealloc(L_ba_J, (wf%n_v)*batch_length, wf%n_J)    
+            call wf%mem%dealloc(L_ab_J, (wf%n_v)*batch_length, wf%n_J)    
 !
 !           Calculate sum_b L_Ja_b*t_b_i = L_Ja_i 
 !           
             L_off = index_two(1, batch_start, wf%n_J)
-!
 !
             call dgemm('N','N',                &
                         batch_length*(wf%n_J), &
@@ -705,7 +649,6 @@ contains
                         one,                   &
                         L_Ja_i(L_off, 1),      &
                         (wf%n_v)*(wf%n_J))
-!
 !
 !           Deallocate  L_Ja_b
 !
@@ -1031,18 +974,19 @@ contains
 !
 !     Add terms of L_Jb_a to L_ab_J
 !
-      do a = 1, a_length
-         do b = 1, b_length
-            do J = 1, wf%n_J
-!
-               Jb = index_two(J, b, wf%n_J)
-               ab = index_two(a, b, a_length)
-!
-               L_ab_J(ab, J) = L_ab_J(ab, J) + L_Jb_a(Jb, a)
-!
-            enddo
-         enddo
-      enddo
+      call add_321_to_123(one, L_Jb_a, L_ab_J, wf%n_v, b_length, wf%n_J)
+!       do a = 1, a_length
+!          do b = 1, b_length
+!             do J = 1, wf%n_J
+! !
+!                Jb = index_two(J, b, wf%n_J)
+!                ab = index_two(a, b, a_length)
+! !
+!                L_ab_J(ab, J) = L_ab_J(ab, J) + L_Jb_a(Jb, a)
+! !
+!             enddo
+!          enddo
+!       enddo
 !
 !     Dellocate L_Jb,i and L_Jb_a for batch of b
 !
