@@ -406,6 +406,8 @@ contains
       call add_1432_to_1234(-one, t_ai_ck, u_ai_ck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call daxpy((wf%n_o)**2*(wf%n_v)**2, two, t_ai_ck, 1, u_ai_ck, 1)
 !
+      call wf%mem%dealloc(t_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
 !     Reorder the Fock matrix F_ck = F_kc 
 !
       call wf%mem%alloc(F_c_k, wf%n_v, wf%n_o)
@@ -1543,6 +1545,8 @@ contains
 !
       call add_1432_to_1234(-one, t_bk_dl, u_bk_dl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call daxpy((wf%n_v)**2*(wf%n_o)**2, two, t_bk_dl, 1, u_bk_dl, 1)
+!
+      call wf%mem%dealloc(t_bk_dl, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
       call wf%mem%alloc(u_bl_dk, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call sort_1234_to_1432(u_bk_dl, u_bl_dk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
