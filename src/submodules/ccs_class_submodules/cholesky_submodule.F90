@@ -54,6 +54,7 @@ contains
       integer(i15) :: i_length, j_length
 !
       if (present(i_first) .and. present(i_last) .and. present(j_first) .and. present(j_last)) then
+!
          i_length = i_last - i_first + 1
          j_length = j_last - j_first + 1
 !
@@ -975,18 +976,6 @@ contains
 !     Add terms of L_Jb_a to L_ab_J
 !
       call add_321_to_123(one, L_Jb_a, L_ab_J, wf%n_v, b_length, wf%n_J)
-!       do a = 1, a_length
-!          do b = 1, b_length
-!             do J = 1, wf%n_J
-! !
-!                Jb = index_two(J, b, wf%n_J)
-!                ab = index_two(a, b, a_length)
-! !
-!                L_ab_J(ab, J) = L_ab_J(ab, J) + L_Jb_a(Jb, a)
-! !
-!             enddo
-!          enddo
-!       enddo
 !
 !     Dellocate L_Jb,i and L_Jb_a for batch of b
 !

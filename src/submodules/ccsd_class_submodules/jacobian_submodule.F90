@@ -93,24 +93,15 @@ contains
 !
 !     :: CCS contributions to the singles c vector ::  
 !
-      write(unit_output,*) 'Hello 1'
-      flush(unit_output)
-!
       call cpu_time(begin_timer)
       call wf%jacobian_ccs_a1(rho_a_i, c_a_i)
       call cpu_time(end_timer)
       ccs_a1_time = end_timer - begin_timer
 !
-      write(unit_output,*) 'Hello 2'
-      flush(unit_output)
-!
       call cpu_time(begin_timer)
       call wf%jacobian_ccs_b1(rho_a_i, c_a_i)
       call cpu_time(end_timer)
       ccs_b1_time = end_timer - begin_timer
-!
-      write(unit_output,*) 'Hello 3'
-      flush(unit_output)
 !
 !     :: CCSD contributions to the transformed singles vector :: 
 !
@@ -118,9 +109,6 @@ contains
       call wf%jacobian_ccsd_a1(rho_a_i, c_a_i)
       call cpu_time(end_timer)
       ccsd_a1_time = end_timer - begin_timer
-!
-      write(unit_output,*) 'Hello 4'
-      flush(unit_output)
 !
 !     Allocate the incoming unpacked doubles vector 
 !
@@ -143,24 +131,15 @@ contains
       call cpu_time(end_timer)
       ccsd_b1_time = end_timer - begin_timer
 !
-      write(unit_output,*) 'Hello 5'
-      flush(unit_output)
-!
       call cpu_time(begin_timer)
       call wf%jacobian_ccsd_c1(rho_a_i, c_ai_bj)
       call cpu_time(end_timer)
       ccsd_c1_time = end_timer - begin_timer
 !
-      write(unit_output,*) 'Hello 6'
-      flush(unit_output)
-!
       call cpu_time(begin_timer)
       call wf%jacobian_ccsd_d1(rho_a_i, c_ai_bj)
       call cpu_time(end_timer)
       ccsd_d1_time = end_timer - begin_timer
-!
-      write(unit_output,*) 'Hello 7'
-      flush(unit_output)
 !
 !     :: CCSD contributions to the transformed doubles vector ::  
 !
@@ -176,32 +155,20 @@ contains
       call cpu_time(end_timer)
       ccsd_a2_time = end_timer - begin_timer
 !
-      write(unit_output,*) 'Hello 8'
-      flush(unit_output)
-!
       call cpu_time(begin_timer)
       call wf%jacobian_ccsd_b2(rho_ai_bj, c_a_i)
       call cpu_time(end_timer)
       ccsd_b2_time = end_timer - begin_timer
-!
-      write(unit_output,*) 'Hello 9'
-      flush(unit_output)
 !
       call cpu_time(begin_timer)
       call wf%jacobian_ccsd_c2(rho_ai_bj, c_a_i)
       call cpu_time(end_timer)
       ccsd_c2_time = end_timer - begin_timer
 !
-      write(unit_output,*) 'Hello 10'
-      flush(unit_output)
-!
       call cpu_time(begin_timer)
       call wf%jacobian_ccsd_d2(rho_ai_bj, c_a_i)
       call cpu_time(end_timer)
       ccsd_d2_time = end_timer - begin_timer
-!
-      write(unit_output,*) 'Hello 11'
-      flush(unit_output)
 !
 !     Done with singles vector c; overwrite it with 
 !     transformed vector for exit
@@ -215,40 +182,25 @@ contains
       call cpu_time(end_timer)
       ccsd_e2_time = end_timer - begin_timer
 !
-      write(unit_output,*) 'Hello 12'
-      flush(unit_output)
-!
       call cpu_time(begin_timer)
       call wf%jacobian_ccsd_f2(rho_ai_bj, c_ai_bj)
       call cpu_time(end_timer)
       ccsd_f2_time = end_timer - begin_timer
-!
-      write(unit_output,*) 'Hello 13'
-      flush(unit_output)
 !
       call cpu_time(begin_timer)
       call wf%jacobian_ccsd_g2(rho_ai_bj, c_ai_bj) 
       call cpu_time(end_timer)
       ccsd_g2_time = end_timer - begin_timer
 !
-      write(unit_output,*) 'Hello 14'
-      flush(unit_output)
-!
       call cpu_time(begin_timer)
       call wf%jacobian_ccsd_h2(rho_ai_bj, c_ai_bj)
       call cpu_time(end_timer)
       ccsd_h2_time = end_timer - begin_timer
 !
-      write(unit_output,*) 'Hello 15'
-      flush(unit_output)
-!
       call cpu_time(begin_timer)
       call wf%jacobian_ccsd_i2(rho_ai_bj, c_ai_bj)
       call cpu_time(end_timer)
       ccsd_i2_time = end_timer - begin_timer
-!
-      write(unit_output,*) 'Hello 16'
-      flush(unit_output)
 !
 !     Last two terms are already symmetric (J2 and K2). Perform the symmetrization 
 !     rho_ai_bj = P_ij^ab rho_ai_bj now, for convenience 
@@ -263,9 +215,6 @@ contains
 ! 
       call sort_1234_to_1324(c_ai_bj, c_ab_ij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call sort_1234_to_1324(rho_ai_bj, rho_ab_ij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      write(unit_output,*) 'Hello 17'
-      flush(unit_output)
 ! 
       call wf%mem%dealloc(c_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call wf%mem%dealloc(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
@@ -275,16 +224,10 @@ contains
       call cpu_time(end_timer)
       ccsd_j2_time = end_timer - begin_timer
 !
-      write(unit_output,*) 'Hello 18'
-      flush(unit_output)
-!
       call cpu_time(begin_timer)
       call wf%jacobian_ccsd_k2(rho_ab_ij, c_ab_ij)
       call cpu_time(end_timer)
       ccsd_k2_time = end_timer - begin_timer
-!
-      write(unit_output,*) 'Hello 19'
-      flush(unit_output)
 ! 
 !     Done with reordered doubles c; deallocate 
 ! 

@@ -1796,54 +1796,6 @@ contains
 !
    end subroutine sort_1234_to_1243
 !
-!
-   subroutine set_two_1234_minus_1432(x_pq_rs, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
-!!
-!!    Set two 1234 minus 1432
-!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
-!!
-!!    A two-Coulomb minus exchange routine. More precisely,
-!!    the routine sets 
-!!
-!!       y_pq_rs(pq,rs) = 2*x_pq_rs(pq,rs) - x_pq_rs(ps,rq),
-!!
-!!    where the array x_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s,
-!!    with dim_q = dim_s 
-!!
-      implicit none 
-!
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s 
-!
-      real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs 
-      real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs
-!
-      integer(i15) :: p, q, r, s, pq, rs, ps, rq
-!
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
-      do s = 1, dim_s
-         do r = 1, dim_r
-!
-            rs = dim_r*(s-1) + r 
-!
-            do q = 1, dim_q
-!
-               rq = dim_r*(q-1) + r
-!
-               do p = 1, dim_p 
-!
-                  pq = dim_p*(q-1) + p 
-                  ps = dim_p*(s-1) + p 
-!
-                  y_pq_rs(pq, rs) = two*x_pq_rs(pq, rs)-x_pq_rs(ps, rq)
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!!$omp end parallel do
-!
-   end subroutine set_two_1234_minus_1432
-!
 !  :::::::::::::::::::::::::
 !  -::- Index functions -::-
 !  :::::::::::::::::::::::::
