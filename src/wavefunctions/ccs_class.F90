@@ -507,30 +507,6 @@ module ccs_class
       end subroutine diis_ccs
 !
 !
-      module subroutine initialize_ground_state_ccs(wf)
-!!
-!!       Initialize Ground State (CCS)
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!!
-         implicit none 
-!
-         class(ccs) :: wf
-!
-      end subroutine initialize_ground_state_ccs
-!
-!
-      module subroutine destruct_ground_state_ccs(wf)
-!!
-!!       Destruct Ground State (CCS)
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!!
-         implicit none
-!
-         class(ccs) :: wf
-!
-      end subroutine destruct_ground_state_ccs
-!
-!
    end interface 
 !
 !

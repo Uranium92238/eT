@@ -81,19 +81,6 @@ contains
 !  
       call wf%read_single_amplitudes
 !
-!     Store vvvv-electronic repulsion integrals to file if there is space 
-!
-      call wf%store_t1_vv_vv_electronic_repulsion
-!
-!     Store voov-electronic repulsion integrals to file if there is space
-!
-      call wf%store_t1_vo_ov_electronic_repulsion
-!
-!     Store vvvo and vvov-electronic repulsion integrals to file if there is space
-!
-      call wf%store_t1_vv_vo_electronic_repulsion
-      call wf%store_t1_vv_ov_electronic_repulsion
-!
       if (wf%tasks%multipliers) then
 !
          wf%tasks%current = 'multipliers'
@@ -244,6 +231,7 @@ contains
       integer(i15) :: ioerror = 0
       integer(i15) :: unit_resp_trial_vecs = 0
       integer(i15) :: unit_grad_vec = 0 
+      integer(i15) :: unit_solution = 0
 !
 !     Open response trial vectors file    
 !
@@ -289,28 +277,52 @@ contains
 !
       close(unit_grad_vec)
 !
-!     Calculate the orbital differences
+!     Set the initial trial vector 
 !
-      call wf%mem%alloc(orbital_diff, wf%n_parameters, 1)
-      orbital_diff = zero 
+      if (.not. wf%response_specifications%restart) then
 !
-      call wf%calculate_orbital_differences(orbital_diff)
+!        Calculate the orbital differences
 !
-!     Transform by D^-1 - i.e., scale by orbital differences (F <- D^-1 F)
+         call wf%mem%alloc(orbital_diff, wf%n_parameters, 1)
+         orbital_diff = zero 
 !
-      do I = 1, wf%n_parameters
+         call wf%calculate_orbital_differences(orbital_diff)
 !
-         gradient_vector(I, 1) = gradient_vector(I, 1)/orbital_diff(I, 1)
+!        Transform by D^-1 - i.e., scale by orbital differences (F <- D^-1 F)
 !
-      enddo
+         do I = 1, wf%n_parameters
 !
-!     Write the trial vector to file 
+            gradient_vector(I, 1) = gradient_vector(I, 1)/orbital_diff(I, 1)
 !
-      write(unit_resp_trial_vecs, rec=1, iostat=ioerror) & 
+         enddo
+!
+!        Write the trial vector to file 
+!
+         write(unit_resp_trial_vecs, rec=1, iostat=ioerror) & 
                            (gradient_vector(I,1), I = 1, wf%n_parameters)
 !
+         call wf%mem%dealloc(orbital_diff, wf%n_parameters, 1)
+!
+      else ! Restart from previous solution 
+!
+         call generate_unit_identifier(unit_solution)
+         open(unit=unit_solution, file=wf%tasks%current, action='read', status='unknown', &
+         access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
+!
+!        Read previous solution into gradient vector temporarily 
+!
+         read(unit_solution, rec=1, iostat=ioerror) gradient_vector 
+!
+         close(unit_solution)
+!
+!        Write the trial vector to file 
+!
+         write(unit_resp_trial_vecs, rec=1, iostat=ioerror) & 
+                           (gradient_vector(I,1), I = 1, wf%n_parameters)
+!
+      endif
+!
       call wf%mem%dealloc(gradient_vector, wf%n_parameters, 1)
-      call wf%mem%dealloc(orbital_diff, wf%n_parameters, 1)
 !
 !     Close response trial vectors file
 !

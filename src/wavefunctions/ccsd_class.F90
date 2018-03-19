@@ -648,7 +648,7 @@ module ccsd_class
 !
          class(ccsd) :: wf
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i   ! c_ai 
+         real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_a_i   ! c_ai 
          real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i ! rho_ai
 !
       end subroutine jacobian_ccsd_a1_ccsd
@@ -663,7 +663,7 @@ module ccsd_class
 !
          class(ccsd) :: wf
 !
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: c_ai_bj   ! c_aibj 
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)), intent(in) :: c_ai_bj   ! c_aibj 
          real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i ! rho_ai
 !
       end subroutine jacobian_ccsd_b1_ccsd
@@ -678,7 +678,7 @@ module ccsd_class
 !
          class(ccsd) :: wf
 !
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: c_ai_bj
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)), intent(in) :: c_ai_bj
          real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i ! rho_ai
 !
       end subroutine jacobian_ccsd_c1_ccsd
@@ -693,7 +693,7 @@ module ccsd_class
 !
          class(ccsd) :: wf
 !
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: c_bi_cj
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)), intent(in) :: c_bi_cj
          real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i ! rho_ai
 !
       end subroutine jacobian_ccsd_d1_ccsd
@@ -709,7 +709,7 @@ module ccsd_class
          class(ccsd) :: wf 
 !
          real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
-         real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i
+         real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_a_i
 !
       end subroutine jacobian_ccsd_a2_ccsd
 !
@@ -723,7 +723,7 @@ module ccsd_class
 !
          class(ccsd) :: wf 
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i
+         real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_a_i
 !
          real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
 !
@@ -739,7 +739,7 @@ module ccsd_class
 !
          class(ccsd) :: wf 
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i
+         real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_a_i
 !
          real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
 !
@@ -755,7 +755,7 @@ module ccsd_class
 !
          class(ccsd) :: wf 
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i
+         real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_a_i
 !
          real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
 !
@@ -773,7 +773,7 @@ module ccsd_class
 !
          real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
 !
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: c_ai_ck
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)), intent(in) :: c_ai_ck
 !
       end subroutine jacobian_ccsd_e2_ccsd
 !
@@ -789,7 +789,7 @@ module ccsd_class
 !
          real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
 !
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: c_ai_bj
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)), intent(in) :: c_ai_bj
 !
       end subroutine jacobian_ccsd_f2_ccsd
 !
@@ -804,7 +804,7 @@ module ccsd_class
          class(ccsd) :: wf 
 !
          real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: c_ai_bj
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)), intent(in) :: c_ai_bj
 !
       end subroutine jacobian_ccsd_g2_ccsd
 !
@@ -819,7 +819,7 @@ module ccsd_class
          class(ccsd) :: wf 
 !
          real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: c_ai_bj
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)), intent(in) :: c_ai_bj
 !
       end subroutine jacobian_ccsd_h2_ccsd
 !
@@ -834,7 +834,7 @@ module ccsd_class
          class(ccsd) :: wf 
 !
          real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: c_ai_bj
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)), intent(in) :: c_ai_bj
 !
       end subroutine jacobian_ccsd_i2_ccsd
 !
@@ -849,7 +849,7 @@ module ccsd_class
          class(ccsd) :: wf 
 !
          real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: rho_ab_ij
-         real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: c_ab_ij
+         real(dp), dimension((wf%n_v)**2, (wf%n_o)**2), intent(in) :: c_ab_ij
 !
       end subroutine jacobian_ccsd_j2_ccsd
 !
@@ -864,7 +864,7 @@ module ccsd_class
          class(ccsd) :: wf 
 !
          real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: rho_ab_ij
-         real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: c_ab_ij
+         real(dp), dimension((wf%n_v)**2, (wf%n_o)**2), intent(in) :: c_ab_ij
 !
       end subroutine jacobian_ccsd_k2_ccsd
 !
