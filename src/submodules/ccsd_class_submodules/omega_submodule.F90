@@ -557,8 +557,6 @@ contains
 !
             call cpu_time(a2_begin_time_1)
 !
-            write(unit_output,*)'1'
-            flush(unit_output)
             integral_type = 'electronic_repulsion'
             call wf%get_vv_vv(integral_type, & 
                               g_ac_bd,       &
@@ -569,9 +567,7 @@ contains
                               batch_b%first, & 
                               batch_b%last,  &
                               1,             & 
-                              wf%n_v)
-            write(unit_output,*)'2'
-            flush(unit_output)  
+                              wf%n_v) 
 !
             call cpu_time(a2_end_time_1)
             time_non_integral_part = time_non_integral_part & 
@@ -658,9 +654,6 @@ contains
 ! 
 !              omega2_ab_ij = sum_(cd) g_ab_cd*t_cd_ij
 ! 
-            
-            write(unit_output,*)'3'
-            flush(unit_output)
               call dgemm('N','N',                      & 
                           packed_size(batch_a%length), &
                           packed_size(wf%n_o),         &
@@ -674,8 +667,6 @@ contains
                           omega2_p_ab_ij,              &
                           packed_size(batch_a%length))
 !
-            write(unit_output,*)'4'
-            flush(unit_output)
               call dgemm('N','N',                      & 
                           packed_size(batch_a%length), &
                           packed_size(wf%n_o),         &
@@ -688,8 +679,6 @@ contains
                           zero,                        &
                           omega2_m_ab_ij,              &
                           packed_size(batch_a%length) )
-              write(unit_output,*)'5'
-      flush(unit_output)
 !
 !             Deallocate +-g, +-t
 ! 
@@ -815,9 +804,6 @@ contains
 !  
 !               omega2_ab_ij = sum_(cd) g_ab_cd*t_cd_ij
 ! 
-            
-            write(unit_output,*)'6'
-            flush(unit_output)
               call dgemm('N','N',                            & 
                           (batch_a%length)*(batch_b%length), &
                           packed_size(wf%n_o),               &
@@ -831,8 +817,6 @@ contains
                           omega2_p_ab_ij,                    &
                           (batch_a%length)*(batch_b%length))
 !
-write(unit_output,*)'7'
-      flush(unit_output)
               call dgemm('N','N',                            & 
                           (batch_a%length)*(batch_b%length), &
                           packed_size(wf%n_o),               &
@@ -845,8 +829,6 @@ write(unit_output,*)'7'
                           zero,                              &
                           omega2_m_ab_ij,                    &
                           (batch_a%length)*(batch_b%length))
-              write(unit_output,*)'8'
-      flush(unit_output)
 !
 !              Deallocate +-g, +-t
 ! 

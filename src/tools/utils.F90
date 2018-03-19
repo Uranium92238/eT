@@ -59,7 +59,7 @@ contains
          enddo
       enddo
 !
-   end subroutine sort_12_to_21 
+   end subroutine sort_12_to_21
 !
 !
    subroutine symmetric_sum(x, dim)
@@ -101,7 +101,7 @@ contains
          enddo
       enddo 
 !
-   end subroutine symmetric_sum  
+   end subroutine symmetric_sum
 !
 !
    subroutine sort_1234_to_3412(x_pq_rs, x_rs_pq, dim_p, dim_q, dim_r, dim_s)
