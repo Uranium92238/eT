@@ -109,8 +109,6 @@ contains
 !
 !     Set the omega vector to zero 
 !
-
-      call vec_print(wf%t2am, 20, 1)
       wf%omega1 = zero
       wf%omega2 = zero
 !
