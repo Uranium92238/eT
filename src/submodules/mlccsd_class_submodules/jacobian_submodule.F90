@@ -297,7 +297,7 @@ contains
 !
 !     Read the amplitudes from disk 
 !
-      call wf%read_amplitudes
+      call wf%read_mlccsd_double_amplitudes
 !
 !     Order the amplitudes as t_c_aij = t_ij^ac 
 !
@@ -324,7 +324,7 @@ contains
          enddo
       enddo
 !
-      call wf%destruct_x2am
+      call wf%destruct_cc2_double_amplitudes
 !
 !     Form the intermediate I_k_aij = sum_c F_k_c * x_c_aij 
 !
@@ -413,7 +413,7 @@ contains
 !
 !     Order the amplitudes as x_aib_k = t_ik^ab 
 !
-      call wf%read_amplitudes
+      call wf%read_mlccsd_double_amplitudes
 !
       call wf%mem%alloc(x_aib_k, ((n_CCSD_v)**2)*(n_CCSD_o), n_CC2_o)
       x_aib_k = zero
@@ -441,7 +441,7 @@ contains
 !
 !     Deallocate doubles amplitudes    
 !
-      call wf%destruct_x2am
+      call wf%destruct_cc2_double_amplitudes
 ! 
 !     Form rho_aib_j = - sum_k x_aib_k I_k_j
 !
@@ -568,7 +568,7 @@ contains
 !     Construct x_ai_kc (= t_ki^ac) for term 1
 !     Will also be used as t_li^bc for term 2
 !
-      call wf%read_amplitudes
+      call wf%read_mlccsd_double_amplitudes
 !
       call wf%mem%alloc(x_ai_kc, n_CCSD_v*n_CCSD_o, n_CC2_v*n_CC2_o)
 !
@@ -595,7 +595,7 @@ contains
          enddo
       enddo
 !
-      call wf%destruct_x2am
+      call wf%destruct_cc2_double_amplitudes
 !
 !     :: Term 1 ::
 !     sum_kcl (g_ljkc * t_ki^ac * c_bl)
@@ -793,7 +793,7 @@ contains
 !
 !     Construct and reorder t_kl^ab to t_ab_kl
 !
-      call wf%read_amplitudes
+      call wf%read_mlccsd_double_amplitudes
 !
       call wf%mem%alloc(x_ab_kl, n_CCSD_v**2, n_CC2_o**2)
 !
@@ -819,7 +819,7 @@ contains
          enddo
       enddo
 !
-      call wf%destruct_x2am
+      call wf%destruct_cc2_double_amplitudes
 !
       call wf%mem%alloc(g_lj_kc, (n_CC2_o)*(n_CCSD_o), (n_CC2_o)*(wf%n_v))
 !
@@ -927,7 +927,7 @@ contains
 !
 !     Construct t_ik^ac ordered as t_kc_ai
 !
-      call wf%read_amplitudes
+      call wf%read_mlccsd_double_amplitudes
 !
       call wf%mem%alloc(x_kc_ai, n_CC2_o*n_CC2_v, n_CCSD_o*n_CCSD_v)
 !
@@ -951,7 +951,7 @@ contains
          enddo
       enddo
 !
-      call wf%destruct_x2am
+      call wf%destruct_cc2_double_amplitudes
 !
 !     :: 4a ::
 !     - 2 sum_(klc) g_ljkc * t_ik^ac * c_bl
@@ -1099,7 +1099,7 @@ contains
 !         + sum_(klc) g_kjlc * t_il^ab * c_ck
 !     = (5a) + (5b)
 !
-      call wf%read_amplitudes
+      call wf%read_mlccsd_double_amplitudes
 !
       call wf%mem%alloc(x_aib_l, (n_CCSD_o)*(n_CCSD_v**2), n_CC2_o)
 !
@@ -1124,7 +1124,7 @@ contains
          enddo
       enddo
 !
-      call wf%destruct_x2am
+      call wf%destruct_cc2_double_amplitudes
 !
 !     :: 5a ::
 !     - 2 sum_(klc) g_ljkc * t_il^ab * c_ck
@@ -1419,7 +1419,7 @@ contains
 !
 !        Construct and order x_ij^cd as x_cd_ij 
 !
-         call wf%read_amplitudes
+         call wf%read_mlccsd_double_amplitudes
 !
          call wf%mem%alloc(x_cd_ij, n_CC2_v**2, n_CCSD_o**2)
 !
@@ -1445,7 +1445,7 @@ contains
             enddo
          enddo
 !
-         call wf%destruct_x2am
+         call wf%destruct_cc2_double_amplitudes
 !
 !        Reorder g_kc_bd to g_kb_cd with c and d restricted to the CC2 space 
 !
@@ -1587,7 +1587,7 @@ contains
 !
 !        Construct and order  x_kj^ad to x_aj_kd
 !
-         call wf%read_amplitudes
+         call wf%read_mlccsd_double_amplitudes
 !
          call wf%mem%alloc(x_aj_kd, (n_CCSD_o)*(n_CCSD_v), (n_CC2_v)*(n_CC2_o))
 !
@@ -1611,7 +1611,7 @@ contains
             enddo
          enddo
 !
-         call wf%destruct_x2am
+         call wf%destruct_cc2_double_amplitudes
 !
 !        rho_aj_bi = -sum_(kd) I_kdb_i * x_aj_kd
 !
@@ -1700,7 +1700,7 @@ contains
 !
 !        Construct and order x_ik^ca as x_ai_kc
 !
-         call wf%read_amplitudes
+         call wf%read_mlccsd_double_amplitudes
 !
          call wf%mem%alloc(x_ai_kc, (n_CCSD_o)*(n_CCSD_v), (n_CC2_v)*(n_CC2_o))
 !
@@ -1724,7 +1724,7 @@ contains
             enddo
          enddo
 !
-         call wf%destruct_x2am
+         call wf%destruct_cc2_double_amplitudes
 !
 !        rho_ai_bj_CCSD = -sum_(kc) x_ai_kc * I_kcb_j
 !
@@ -1846,7 +1846,7 @@ contains
 !
 !        Construct x_ik^ac ordered as x_ai_kc with
 !
-         call wf%read_amplitudes
+         call wf%read_mlccsd_double_amplitudes
 !
          call wf%mem%alloc(x_ai_kc, (n_CCSD_o)*(n_CCSD_v), (n_CC2_v)*(n_CC2_o))
 !
@@ -1871,7 +1871,7 @@ contains
             enddo
          enddo
 !
-         call wf%destruct_x2am
+         call wf%destruct_cc2_double_amplitudes
 !
 !        rho_ai_bj_CCSD = x_ai_kc * I_kcb_j
 !
@@ -1969,7 +1969,7 @@ contains
 !
 !        Construct x_ij^ad ordered as x_d_aij
 !
-         call wf%read_amplitudes
+         call wf%read_mlccsd_double_amplitudes
 !
          call wf%mem%alloc(x_d_aij, (n_CC2_v), (n_CCSD_o**2)*(n_CCSD_v))
 !
@@ -1993,7 +1993,7 @@ contains
             enddo
          enddo
 !
-         call wf%destruct_x2am
+         call wf%destruct_cc2_double_amplitudes
 !
 !        rho_b_aij = sum(d) I_bd * x_d_aij
 !
@@ -2100,7 +2100,7 @@ contains
 !
 !     Read X2 amplitudes from disk
 !
-      call wf%read_amplitudes
+      call wf%read_mlccsd_double_amplitudes
 !
       call wf%mem%alloc(x_dl_bj, (n_CC2_o)*(n_CC2_v), (n_CCSD_o)*(n_CCSD_v))
 !
@@ -2123,7 +2123,7 @@ contains
          enddo
       enddo
 !
-      call wf%destruct_x2am
+      call wf%destruct_cc2_double_amplitudes
 !
       call wf%mem%alloc(g_kc_ld, (n_CC2_o)*(n_CC2_v), (n_CC2_o)*(n_CC2_v))
 !
@@ -2393,7 +2393,7 @@ contains
          call wf%mem%dealloc(c_DL_bj, (n_CC2_o)*(n_CC2_v), (n_CCSD_o)*(n_CCSD_v))
          call wf%mem%dealloc(L_CK_DL, (n_CC2_o)*(n_CC2_v), (n_CC2_o)*(n_CC2_v))
 !
-         call wf%read_amplitudes
+         call wf%read_mlccsd_double_amplitudes
 !
          call wf%mem%alloc(x_ai_ck, (n_CCSD_o)*(n_CCSD_v), (n_CC2_o)*(n_CC2_v))
 !
@@ -2416,7 +2416,7 @@ contains
             enddo
          enddo
 !
-         call wf%destruct_x2am
+         call wf%destruct_cc2_double_amplitudes
 !
 !        rho_ai_bj = sum_ck t_ai_ck*I_ck_bj
 !
@@ -2519,7 +2519,7 @@ contains
 !
          call wf%mem%dealloc(L_D_LCK, n_CC2_v, (n_CC2_v)*((n_CC2_o)**2))
 !
-         call wf%read_amplitudes
+         call wf%read_mlccsd_double_amplitudes
 !
          call wf%mem%alloc(x_aij_d, (n_CCSD_v)*((n_CCSD_o)**2), n_CC2_v)
 !
@@ -2546,7 +2546,7 @@ contains
             enddo
          enddo
 !
-         call wf%destruct_x2am
+         call wf%destruct_cc2_double_amplitudes
 !
          call wf%mem%alloc(rho_aij_b, (n_CCSD_v)*((n_CCSD_o)**2), n_CCSD_v)
 !
@@ -2649,7 +2649,7 @@ contains
 !
          call wf%mem%dealloc(L_L_CKD, (n_CC2_o), (n_CC2_o)*((n_CC2_v)**2))
 !
-         call wf%read_amplitudes
+         call wf%read_mlccsd_double_amplitudes
 !
          call wf%mem%alloc(x_aib_L, (n_CCSD_o)*((n_CCSD_v)**2), n_CC2_o)
 !
@@ -2674,7 +2674,7 @@ contains
             enddo
          enddo
 !
-         call wf%destruct_x2am
+         call wf%destruct_cc2_double_amplitudes
 !
 !        rho_ai_bj_CCSD = sum_L x_aib_L * I_L_j
 !
@@ -2832,7 +2832,7 @@ contains
 !
 !        Reorder t_bl_dj as t_dl_bj
 !
-         call wf%read_amplitudes
+         call wf%read_mlccsd_double_amplitudes
 !
          call wf%mem%alloc(x_DL_bj, (n_CC2_o)*(n_CC2_v), (n_CCSD_o)*(n_CCSD_v))
 !
@@ -2857,7 +2857,7 @@ contains
             enddo
          enddo
 !
-         call wf%destruct_x2am
+         call wf%destruct_cc2_double_amplitudes
 !
          call wf%mem%alloc(I_CK_bj, (n_CC2_o)*(n_CC2_v), (n_CCSD_o)*(n_CCSD_v))
 !
@@ -2975,7 +2975,7 @@ contains
 !
 !        Reorder x_ck,bl as x_clk_b
 !        
-         call wf%read_amplitudes
+         call wf%read_mlccsd_double_amplitudes
 !
          call wf%mem%alloc(x_CLK_b, (n_CC2_v)*((n_CC2_o)**2), n_CCSD_v)
 !
@@ -3000,7 +3000,7 @@ contains
             enddo
          enddo
 !
-         call wf%destruct_x2am
+         call wf%destruct_cc2_double_amplitudes
 !
 !        I_D_b = sum_CLK L_D_CLK * c_CLK_b 
 !
@@ -3131,7 +3131,7 @@ contains
 !
 !        Reorder x_ck,dj to x_ckd_j 
 !
-         call wf%read_amplitudes
+         call wf%read_mlccsd_double_amplitudes
 !
          call wf%mem%alloc(x_ckd_j, (n_CC2_v**2)*(n_CC2_o), n_CCSD_o)
 !
@@ -3157,7 +3157,7 @@ contains
             enddo
          enddo
 !
-         call wf%destruct_x2am
+         call wf%destruct_cc2_double_amplitudes
 !
          call wf%mem%alloc(I_L_j, n_CC2_o, n_CCSD_o)
 !
@@ -3318,7 +3318,7 @@ contains
 !
 !        x_ak,ci ordered as x_ai_kc
 !  
-         call wf%read_amplitudes
+         call wf%read_mlccsd_double_amplitudes
 !
          call wf%mem%alloc(x_ai_kc, (n_CCSD_o)*(n_CCSD_v), (n_CC2_o)*(n_CC2_v))
 !
@@ -3343,7 +3343,7 @@ contains
             enddo
          enddo
 !
-         call wf%destruct_x2am
+         call wf%destruct_cc2_double_amplitudes
 !  
          call wf%mem%alloc(I_ai_ld, (n_CCSD_o)*(n_CCSD_v), (n_CC2_o)*(n_CC2_v))
 !
@@ -3362,7 +3362,7 @@ contains
                      I_ai_LD,                &   
                      (n_CCSD_o)*(n_CCSD_v))
 !
-         call wf%mem%dealloc(x_ai_KC, (n_CCSD_o)*(n_CCSD_v), (n_CCSD_o)*(n_CCSD_v))
+         call wf%mem%dealloc(x_ai_KC, (n_CCSD_o)*(n_CCSD_v), (n_CC2_o)*(n_CC2_v))
          call wf%mem%dealloc(g_KC_LD, (n_CC2_o)*(n_CC2_v), (n_CC2_o)*(n_CC2_v))
 !
          call wf%mem%alloc(c_LD_bj, (n_CC2_o)*(n_CC2_v), (n_CCSD_o)*(n_CCSD_v))
@@ -3471,7 +3471,7 @@ contains
 !
 !       x_al,cj ordered as x_aj_lc
 !  
-         call wf%read_amplitudes
+         call wf%read_mlccsd_double_amplitudes
 !
          call wf%mem%alloc(x_aj_lc, (n_CCSD_o)*(n_CCSD_v), (n_CC2_o)*(n_CC2_v))
 !
@@ -3498,7 +3498,7 @@ contains
             enddo
          enddo
 !
-         call wf%destruct_x2am
+         call wf%destruct_cc2_double_amplitudes
 !
          call wf%mem%alloc(I_aj_kd, (n_CCSD_o)*(n_CCSD_v), (n_CC2_o)*(n_CC2_v))
 !
@@ -3734,7 +3734,7 @@ contains
          enddo
 !
 !
-         call wf%mem%dealloc(rho_aij_b, (n_CCSD_v)*((n_CCSD_o)**2), n_CCSD_v)
+         call wf%mem%dealloc(rho_aij_b, (n_CC2_v)*((n_CC2_o)**2), n_CC2_v)
 !
 !       ::  - sum_k F_jk * c_ai,bk  ::
 !
@@ -4206,7 +4206,7 @@ contains
 !
 !        Reordered X2 amplitudes  
 !
-         call wf%read_amplitudes
+         call wf%read_mlccsd_double_amplitudes
 !
          call wf%mem%alloc(x_cd_ij, (n_CC2_v)**2, (n_CCSD_o)**2)
 !
@@ -4234,7 +4234,7 @@ contains
          enddo
          
 
-         call wf%destruct_x2am
+         call wf%destruct_cc2_double_amplitudes
 !
 !        I_kl_ij = g_kl_cd * t_cd_ij
 !
@@ -4323,7 +4323,7 @@ contains
 !
 !        Reordered X2 amplitudes        
 !
-         call wf%read_amplitudes
+         call wf%read_mlccsd_double_amplitudes
 !
          call wf%mem%alloc(x_ab_kl, (n_CCSD_v)**2, (n_CC2_o)**2)
 !
@@ -4350,7 +4350,7 @@ contains
             enddo
          enddo
 
-         call wf%destruct_x2am
+         call wf%destruct_cc2_double_amplitudes
 !
 !        rho_ab_ij += t_ab_kl * X_kl_ij
 !
@@ -4642,7 +4642,7 @@ contains
 !
                call wf%mem%dealloc(g_ac_bd, (n_CC2_v)*a_length, (n_CC2_v)*b_length) 
 !
-               call wf%mem%alloc(rho_batch_ab_ij, a_length*b_length, (n_CC2_o)**2)
+               call wf%mem%alloc(rho_batch_ab_ij, a_length*b_length, (n_CCSD_o)**2)
 !
 !              rho_ab_ij += sum_cd g_ac,bd * c_ci,dj = sum_cd g_ab_cd(ab, cd) c_ab_ij(cd, ij) 
 !

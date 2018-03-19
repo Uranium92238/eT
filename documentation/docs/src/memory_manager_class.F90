@@ -115,11 +115,11 @@ contains
 !
       integer(i15), intent(in) :: M, N ! First and second dimension of array that is being allocated 
 !
-      integer(i15) :: size ! Total size of array (M*N)
+      integer(i15) :: size_array ! Total size of array (M*N)
       integer(i15) :: stat = 0
       integer(i15) :: error = 0
 !
-      size = M*N 
+      size_array = M*N 
 !
 !     Allocate array and check whether allocation was successful
 !
@@ -127,7 +127,7 @@ contains
 !
       if (stat .ne. 0) then 
 !
-         write(unit_output,'(t3,a,i15)') 'Error: could not allocate array with #elements =', size
+         write(unit_output,'(t3,a,i15)') 'Error: could not allocate array with #elements =', size_array
          stop
 !
       endif
@@ -137,7 +137,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available - dp*size 
+      mem%available = mem%available - dp*size_array 
 !
 !     Check if there is no more memory (defined as being no more memory
 !     left of what was specified by user as available)
@@ -168,11 +168,11 @@ contains
 !
       integer(i15), intent(in) :: M, N ! First and second dimension of array that is being allocated 
 !
-      integer(i15) :: size ! Total size of array (M*N)
+      integer(i15) :: size_array ! Total size of array (M*N)
       integer(i15) :: stat = 0
       integer(i15) :: error = 0
 !
-      size = M*N 
+      size_array = M*N 
 !
 !     Deallocate array and check whether deallocation was successful
 !
@@ -180,7 +180,7 @@ contains
 !
       if (stat .ne. 0) then 
 !
-         write(unit_output,'(t3,a,i15)') 'Error: could not deallocate array with #elements =', size
+         write(unit_output,'(t3,a,i15)') 'Error: could not deallocate array with #elements =', size_array
          stop
 !
       endif
@@ -190,7 +190,7 @@ contains
 !     The 'double precision' type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available + dp*size       
+      mem%available = mem%available + dp*size_array
 !
    end subroutine dealloc_memory_manager
 !

@@ -329,7 +329,8 @@ contains
 !
                converged = .true.
 !
-               if (iteration .eq. 1) write(unit_output,'(t3,a,/t3,a)') 'Note: residual converged in first iteration.', &
+               if (iteration .eq. 1 .and. wf%name .ne. 'CCS') write(unit_output,'(//t3,a,/t3,a)')&
+                                                               'Note: residual converged in first iteration.', &
                                                                'Energy convergence therefore not tested in this calculation.'
 !
             endif
@@ -398,7 +399,7 @@ contains
 !
 !        Print energy of excitation in eV, hartree and cm^-1
 !
-         write(unit_output,'(t6,i3,6x,f19.12,5x,f19.12,5x,f19.12)') i, eigenvalues_Re_new(i,1),           &
+         write(unit_output,'(t6,i3,6x,f19.12,5x,f19.12,5x,f25.12)') i, eigenvalues_Re_new(i,1),            &
                                                                        eigenvalues_Re_new(i,1)*27.211399, &
                                                                        eigenvalues_Re_new(i,1)*219474.63
       enddo
@@ -726,18 +727,27 @@ contains
       call generate_unit_identifier(unit_trial_vecs)
       open(unit=unit_trial_vecs, file='trial_vec', action='readwrite', status='unknown', &
         access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror)
-      if (ioerror .ne. 0) write(unit_output,*) 'Error while opening trial vecs file'
+      if (ioerror .ne. 0) then
+         write(unit_output,*) 'Error while opening trial vecs file'
+         stop
+      endif
 !
       call generate_unit_identifier(unit_rho)
       open(unit=unit_rho, file='transformed_vec', action='read', status='unknown', &
       access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
-      if (ioerror .ne. 0) write(unit_output,*) 'Error while opening transformed vecs file'
+      if (ioerror .ne. 0)  then
+         write(unit_output,*)'Error while opening transformed vecs file'
+         stop
+      endif
 !
       call generate_unit_identifier(unit_solution)
       open(unit=unit_solution, file=wf%excited_state_specifications%solution_file,&
       action='write', status='unknown', &
       access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
-      if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file'
+      if (ioerror .ne. 0) then
+         write(unit_output,*) 'Error while opening solution file'
+         stop
+      endif
 !
       call wf%mem%alloc(residual, wf%n_parameters, 1)
 !

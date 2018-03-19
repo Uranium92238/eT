@@ -130,9 +130,6 @@ contains
       call wf%get_CCSD_active_indices(first_active_o, first_active_v)
       call wf%get_CCSD_n_active(n_active_o, n_active_v)
 !
-      last_active_o = first_active_o + n_active_o - 1
-      last_active_v = first_active_v + n_active_v - 1 
-!
 !     Calculate the doubles Δ t_i contribution
 !
       do a = 1, n_active_v
@@ -162,23 +159,55 @@ contains
    end subroutine calc_quasi_Newton_doubles_mlccsd
 !
 !
-   module subroutine initialize_ground_state_mlccsd(wf)
-!!
-!!    Initialize Ground State (CCSD)
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!!
-!!    Initializes the amplitudes and the projection vector for the ground
-!!    state solver.
-!!
-      implicit none 
 !
-      class(mlccsd) :: wf
+   module subroutine ground_state_preparations_mlccsd(wf)
+!!
+!!    Ground State Preparations (mlccsd)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!    A routine for preparation tasks (if any). Can be overwritten
+!!    in descendants if other preparations prove necessary.    
+!!
+      implicit none
 !
-      call wf%initialize_amplitudes          ! Allocate amplitudes
+      class(mlccsd) :: wf 
+!
+      wf%tasks%current = 'ground_state'
+!
+!     Allocate amplitudes (if not allocated) and calculate number of amplitudes 
+!
+      call wf%initialize_single_amplitudes 
+      call wf%initialize_ccsd_double_amplitudes 
+
       call wf%construct_perturbative_doubles ! Set doubles amplitudes to MP2 guess 
-      call wf%initialize_omega               ! Allocate projection vector 
 !
-   end subroutine initialize_ground_state_mlccsd
+!     Allocate projection vector 
+!
+      call wf%initialize_omega   
+!
+   end subroutine ground_state_preparations_mlccsd
+!
+!
+   module subroutine ground_state_cleanup_mlccsd(wf)
+!!
+!!    Ground State Cleanup (mlccsd)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+!!    A routine for cleanup tasks (if any). Can be overwritten
+!!    in descendants if other cleanups prove necessary.    
+!!
+      implicit none
+!
+      class(mlccsd) :: wf 
+!
+      call wf%save_amplitudes
+!
+      call wf%destruct_single_amplitudes
+      call wf%destruct_ccsd_double_amplitudes
+!
+      call wf%destruct_omega
+!
+   end subroutine ground_state_cleanup_mlccsd
 !
 !
 end submodule ground_state 

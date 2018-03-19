@@ -38,6 +38,15 @@ contains
 ! 
       wf%tasks%current = 'excited_state'
 !
+!     Now we have explicit double vectors (trials)
+!
+      wf%n_x2am = ((wf%n_CC2_v)*(wf%n_CC2_o))&
+                   *((wf%n_CC2_v )*(wf%n_CC2_o)+1)/2 
+!
+      wf%n_parameters = wf%n_parameters + wf%n_x2am
+!
+      call wf%read_single_amplitudes
+!
 !     Set filename for solution vectors
 !
       if (wf%tasks%core_excited_state .or. wf%tasks%core_ionized_state) then   ! Core excitation
@@ -62,26 +71,24 @@ contains
    end subroutine excited_state_preparations_mlcc2
 !
 !
-   module subroutine initialize_excited_states_mlcc2(wf)
+   module subroutine excited_state_cleanup_mlcc2(wf)
 !!
-!!    Initialize excited states
-!!    Written by Sarai D. Folkestad, June 2017
+!!    Excited State Cleanup (MLCC2)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
-!!    Calculates and sets n_s2am, and updates n_parameters
-!!    for excited state calculation
+!!    A routine for cleanup tasks (if any). Can be overwritten
+!!    in descendants if other cleanups prove necessary.    
 !!
-      implicit none 
-!    
-      class(mlcc2) :: wf
+      implicit none
 !
-      wf%n_x2am = ((wf%n_CC2_v)*(wf%n_CC2_o))&
-                   *((wf%n_CC2_v )*(wf%n_CC2_o)+1)/2 
+      class(mlcc2) :: wf 
 !
-      
-      wf%n_parameters = wf%n_parameters + wf%n_x2am
-                       
+!     Deallocate the amplitudes 
 !
-   end subroutine initialize_excited_states_mlcc2
+      call wf%destruct_single_amplitudes
+      call wf%destruct_cc2_double_amplitudes
+!
+   end subroutine excited_state_cleanup_mlcc2
 !
 !
    module subroutine calculate_orbital_differences_mlcc2(wf, orbital_diff)
@@ -286,14 +293,9 @@ contains
       integer(i15) :: first_active_v ! first active virtual index
       integer(i15) :: last_active_o ! first active occupied index 
       integer(i15) :: last_active_v ! first active virtual index
-!   
-!     Calculate first/last indeces
 !     
-      call wf%get_CC2_active_indices(first_active_o, first_active_v)
       call wf%get_CC2_n_active(n_active_o, n_active_v)
-!   
-      last_active_o = first_active_o + n_active_o - 1
-      last_active_v = first_active_v + n_active_v - 1   
+!
       do i = 1, wf%n_o
 !
          core_orbital = .false.
@@ -690,6 +692,10 @@ contains
 !  
 !        MLCC Specific print
 !
+         a_active_i_active       = 0
+         a_active_i_inactive     = 0
+         a_inactive_i_active     = 0
+         a_inactive_i_inactive   = 0
          do a = 1, wf%n_v
          do i = 1, wf%n_o
 !
@@ -720,11 +726,12 @@ contains
 !
       total = (a_active_i_active + a_active_i_inactive + a_inactive_i_active + a_inactive_i_inactive)
       write(unit_output,'(/t6, a10, 3a12)')'T->T:', 'S->T:', 'T->S:', 'S->S:'
-      write(unit_output,'(/t6, a50)')'--------------------------------------------------'
-      write(unit_output,'(/t6, 4f12.5)') a_active_i_active/total,&
+      write(unit_output,'(t6, a50)')'--------------------------------------------------'
+      write(unit_output,'(t6, 4f12.5)') a_active_i_active/total,&
          a_active_i_inactive/total, &
          a_inactive_i_active/total,&
          a_inactive_i_inactive/total
+      write(unit_output,'(t6, a50)')'--------------------------------------------------'
       enddo
 !
 !     Deallocations

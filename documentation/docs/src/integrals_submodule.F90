@@ -1800,7 +1800,7 @@ contains
 !
       inquire(file='g_t1_aijb',exist=voov_t1_on_file)
 !
-      if (voov_t1_on_file .and. wf%tasks%current .ne. 'ground_state') then
+      if (voov_t1_on_file .and. wf%tasks%current .ne. 'ground_state' .and. wf%name .ne. 'MLCC2' .and. wf%name .ne. 'MLCCSD' ) then
 !  
          call wf%read_t1_vo_ov_electronic_repulsion(x_vo_ov,      & 
                                        index1_first, index1_last, &
@@ -1968,7 +1968,7 @@ contains
 !
       inquire(file='g_t1_bcia',exist=vvov_t1_on_file)
 !
-      if (vvov_t1_on_file .and. wf%tasks%current .ne. 'ground_state') then
+      if (vvov_t1_on_file .and. wf%tasks%current .ne. 'ground_state'  .and. wf%name .ne. 'MLCC2' .and. wf%name .ne. 'MLCCSD') then
 !  
          call wf%read_t1_vv_ov_electronic_repulsion(x_vv_ov,      & 
                                        index1_first, index1_last, &
@@ -2078,7 +2078,7 @@ contains
 !
       inquire(file='g_t1_abci',exist=t1_vvvo_on_file)
 !
-      if (t1_vvvo_on_file .and. wf%tasks%current .ne. 'ground_state') then 
+      if (t1_vvvo_on_file .and. wf%tasks%current .ne. 'ground_state'  .and. wf%name .ne. 'MLCC2' .and. wf%name .ne. 'MLCCSD') then 
 !
 !        Read the integrals from file 
 !
@@ -2187,7 +2187,7 @@ contains
 !
       inquire(file='g_t1_abci',exist=t1_vvvo_on_file)
 !
-      if (t1_vvvo_on_file .and. wf%tasks%current .ne. 'ground_state') then 
+      if (t1_vvvo_on_file .and. wf%tasks%current .ne. 'ground_state' .and. wf%name .ne. 'MLCC2' .and. wf%name .ne. 'MLCCSD') then 
 !
 !        Read the integrals from file 
 !
@@ -2280,7 +2280,7 @@ contains
       inquire(file='g_abcd',exist=vvvv_on_file)
       inquire(file='g_t1_abcd',exist=t1_vvvv_on_file)
 !
-      if (vvvv_on_file) then
+      if (vvvv_on_file  .and. wf%name .ne. 'MLCC2' .and. wf%name .ne. 'MLCCSD') then
 !
 !        Read x_vv_vv
 !

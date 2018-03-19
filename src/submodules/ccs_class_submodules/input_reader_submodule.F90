@@ -61,7 +61,7 @@ contains
 !
                   if (trim(line) == 'disk_space:') then
 !
-                     read(unit_input,*) disk_space
+                     read(unit_input,*)disk_space
 !
 !                    Converting from gb to words
 !
@@ -71,7 +71,7 @@ contains
 !
                   elseif (trim(line) == 'memory:') then
 !
-                     read(unit_input,*) memory
+                     read(unit_input,*)memory
 !
 !                    Initialize memory object for the specified memory 
 !

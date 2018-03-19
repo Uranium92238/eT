@@ -41,22 +41,6 @@ contains
 !
       class(cc2) :: wf
 !
-!     Integrals
-!
-      real(dp), dimension(:,:), allocatable :: g_ia_bj ! Reordered g_aibj
-!
-!     Batching variables
-!  
-      integer(i15) :: a_batch, a_first, a_last, a_length
-      integer(i15) :: required, available, n_batch, batch_dimension, max_batch_length
-!
-!     Indices
-!  
-      integer(i15) :: a = 0, b = 0
-      integer(i15) :: i = 0, j = 0
-!
-      integer(i15) :: bj = 0, ai = 0, ia = 0
-!
 !     Timing variables
 !
       real(dp) :: omega_start = zero

@@ -1,13 +1,49 @@
 module mlccsd_class
 !
 !!
-!!                 Multi-level CCSD (MLCCSD) class module                                
-!!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017         
-!!                                                                           
+!!
+!!
+!!         Multilevel Coupled cluster singles and perturbative doubles (MLCCSD) class module                                 
+!!                Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jun 2017         
+!! 
+!!
+!!    This module contains the definition of the multilevel Coupled cluster singles and perturbative doubles (MLCCSD)
+!!    wavefunction class. It is structured into four sections:
+!!
+!!       1. Modules used by the class: 
+!!
+!!             Basic utilities and the ancestor class
+!!
+!!       2. Definition of the class: 
+!!
+!!             Non-inherited variables, followed by non-inherited or overridden procedures
+!!
+!!       3. Interfaces to submodules:
+!!
+!!             The procedures in the class are grouped according to functionality, with
+!!             detailed definitions given in the following class submodules:
+!!                
+!!                - Input Reader
+!!                - Orbital partitioning
+!!                - Ground state
+!!                - Omega
+!!                - Excited state 
+!!                - Jacobian (right transformation)
+!!                 
+!!
+!!             The interfaces shows incoming variables and their type, but contains 
+!!             no information of the procedure itself. The procedure is shown in full 
+!!             in the corresponding submodule. 
+!!
+!!       4. Class module routines (i.e., non-submodule procedures). These include
+!!          the initialization and driver routines of the class, along with procedures that
+!!          are not (yet, at least) easily gathered in a submodule.
+!!                                                                    
 !
-!  :::::::::::::::::::::::::::::::::::
-!  -::- Modules used by the class -::-
-!  :::::::::::::::::::::::::::::::::::
+!
+!  ::::::::::::::::::::::::::::::::::::::
+!  -::- 1. Modules used by the class -::-
+!  ::::::::::::::::::::::::::::::::::::::
 !
 !  General tools
 !
@@ -23,9 +59,11 @@ module mlccsd_class
 !
    implicit none 
 !
-!  :::::::::::::::::::::::::::::::::::::::
-!  -::- Definition of the MLCCSD class -::-
-!  ::::::::::::::::::::::::::::::::::::::: 
+!
+!  ::::::::::::::::::::::::::::::::::::::::::
+!  -::- 2. Definition of the MLCC2 class -::-
+!  ::::::::::::::::::::::::::::::::::::::::::
+!
 !
    type, extends(mlcc2) :: mlccsd
 !
@@ -61,21 +99,49 @@ module mlccsd_class
 !
    contains
 !
-      procedure :: mlcc_reader       => mlcc_reader_mlccsd
-      procedure :: read_orbital_info => read_orbital_info_mlccsd
+!
+!     -::- Initialization routine -::-
+!     --------------------------------
 !
       procedure :: init => init_mlccsd
 !
-!     Initialization routines
 !
-      procedure :: initialize_amplitudes   => initialize_amplitudes_mlccsd
-      procedure :: initialize_omega        => initialize_omega_mlccsd
+!     -::- Other class routine pointers not located in submodules -::-
+!     ----------------------------------------------------------------
 !
-!     Energy calculation routine
+      procedure :: get_CC2_active_indices             => get_CC2_active_indices_mlccsd
+      procedure :: get_CC2_n_active                   => get_CC2_n_active_mlccsd
+      procedure :: get_CCSD_active_indices            => get_CCSD_active_indices_mlccsd
+      procedure :: get_CCSD_n_active                  => get_CCSD_n_active_mlccsd
 !
-      procedure :: calc_energy             => calc_energy_mlccsd
+      procedure :: initialize_ccsd_double_amplitudes  => initialize_ccsd_double_amplitudes_mlccsd
+      procedure :: initialize_omega                   => initialize_omega_mlccsd
 !
-!     Orbital partitioning
+      procedure :: construct_orbital_coef_CC2_CCS     => construct_orbital_coef_CC2_CCS_mlccsd
+      procedure :: construct_orbital_energy_CC2_CCS   => construct_orbital_energy_CC2_CCS_mlccsd
+!
+      procedure :: destruct_orbital_coef_CC2_CCS      => destruct_orbital_coef_CC2_CCS_mlccsd
+      procedure :: destruct_orbital_energy_CC2_CCS    => destruct_orbital_energy_CC2_CCS_mlccsd
+!
+      procedure :: destruct_ccsd_double_amplitudes    => destruct_ccsd_double_amplitudes_mlccsd
+!
+      procedure :: save_amplitudes                    => save_amplitudes_mlccsd
+!
+      procedure :: read_amplitudes                    => read_amplitudes_mlccsd
+      procedure :: read_mlccsd_double_amplitudes      => read_mlccsd_double_amplitudes_mlccsd
+      procedure :: read_double_amplitudes             => read_double_amplitudes_mlccsd
+!
+      procedure :: calc_energy                        => calc_energy_mlccsd
+!
+!     -::- Input reader submodule routine pointers -::-
+!     -------------------------------------------------
+!
+      procedure :: mlcc_reader       => mlcc_reader_mlccsd
+      procedure :: read_orbital_info => read_orbital_info_mlccsd
+!
+!
+!     -::- Orbital partitioning submodule routine pointers -::-
+!     ---------------------------------------------------------
 !
       procedure :: orbital_partitioning               => orbital_partitioning_mlccsd
       procedure :: cholesky_localization_drv          => cholesky_localization_drv_mlccsd
@@ -87,11 +153,16 @@ module mlccsd_class
       procedure :: construct_MO_transformation_matrix => construct_MO_transformation_matrix_mlccsd
 !
       procedure :: cnto_orbital_drv                   => cnto_orbital_drv_mlccsd
-      procedure :: ccsd_cnto_lower_level_method       => ccsd_cnto_lower_level_method_mlccsd
-      procedure :: ccsd_cnto_orbitals                 => ccsd_cnto_orbitals_mlccsd
+      procedure :: cnto_lower_level_method            => cnto_lower_level_method_mlccsd
+      procedure :: cnto_orbitals                      => cnto_orbitals_mlccsd
+      procedure :: cnto_init_cc2                      => cnto_init_cc2_mlccsd
+!
       procedure :: print_orbital_info                 => print_orbital_info_mlccsd
 !
-!     Cholesky vector routines for CC2 space
+!
+!     -::- Cholesky submodule routine pointers -::-
+!     ---------------------------------------------
+!
 !
       procedure :: read_transform_cholesky_for_CC2_amplitude   => read_transform_cholesky_for_CC2_amplitude_mlccsd
       procedure :: read_cholesky_ai_for_cc2_amplitudes         => read_cholesky_ai_for_cc2_amplitudes_mlccsd
@@ -100,19 +171,24 @@ module mlccsd_class
       procedure :: read_cholesky_ab_for_cc2_amplitudes         => read_cholesky_ab_for_cc2_amplitudes_mlccsd
       procedure :: get_cholesky_ai_for_cc2_amplitudes          => get_cholesky_ai_for_cc2_amplitudes_mlccsd
 !
-!     ML helper routines
 !
-      procedure :: get_CC2_active_indices    => get_CC2_active_indices_mlccsd
-      procedure :: get_CC2_n_active          => get_CC2_n_active_mlccsd
-      procedure :: get_CCSD_active_indices   => get_CCSD_active_indices_mlccsd
-      procedure :: get_CCSD_n_active         => get_CCSD_n_active_mlccsd
+!     -::- Ground state submodule routine pointers -::-
+!     -------------------------------------------------
 !
-!     Omega routines
+      procedure :: calc_ampeqs_norm          => calc_ampeqs_norm_mlccsd
+      procedure :: new_amplitudes            => new_amplitudes_mlccsd
+      procedure :: calc_quasi_Newton_doubles => calc_quasi_Newton_doubles_mlccsd
+      procedure :: ground_state_preparations => ground_state_preparations_mlccsd
+      procedure :: ground_state_cleanup      => ground_state_cleanup_mlccsd
+!
+!
+!     -::- Omega submodule routine pointers -::-
+!     ------------------------------------------
 !
       procedure :: construct_omega  => construct_omega_mlccsd
 !
-      procedure :: omega_mlccsd_a1   => omega_mlccsd_a1_mlccsd
-      procedure :: omega_mlccsd_b1   => omega_mlccsd_b1_mlccsd
+      procedure :: omega_mlccsd_a1  => omega_mlccsd_a1_mlccsd
+      procedure :: omega_mlccsd_b1  => omega_mlccsd_b1_mlccsd
 !
       procedure :: get_mlccsd_x2am  => get_mlccsd_x2am_mlccsd
 !
@@ -122,29 +198,20 @@ module mlccsd_class
       procedure :: omega_mlccsd_d2  => omega_mlccsd_d2_mlccsd
       procedure :: omega_mlccsd_e2  => omega_mlccsd_e2_mlccsd
 !
-!     Ground state solver routines
 !
-      procedure :: calc_ampeqs_norm          => calc_ampeqs_norm_mlccsd
-      procedure :: new_amplitudes            => new_amplitudes_mlccsd
-      procedure :: calc_quasi_Newton_doubles => calc_quasi_Newton_doubles_mlccsd
-      procedure :: initialize_ground_state   => initialize_ground_state_mlccsd
+!     -::- Excited state submodule routine pointers -::-
+!     --------------------------------------------------
 !
-!     Helper routines for onstruction, destruction, saving and reading
+      procedure :: transform_trial_vectors      => transform_trial_vectors_mlccsd
+      procedure :: print_excitation_vector      => print_excitation_vector_mlccsd
+      procedure :: summary_excited_state_info   => summary_excited_state_info_mlccsd
+      procedure :: excited_state_preparations   => excited_state_preparations_mlccsd
+      procedure :: excited_state_cleanup        => excited_state_cleanup_mlccsd
+      procedure :: calculate_orbital_differences=> calculate_orbital_differences_mlccsd
 !
-      procedure :: construct_orbital_coef_CC2_CCS     => construct_orbital_coef_CC2_CCS_mlccsd
-      procedure :: construct_orbital_energy_CC2_CCS   => construct_orbital_energy_CC2_CCS_mlccsd
 !
-      procedure :: destruct_orbital_coef_CC2_CCS     => destruct_orbital_coef_CC2_CCS_mlccsd
-      procedure :: destruct_orbital_energy_CC2_CCS   => destruct_orbital_energy_CC2_CCS_mlccsd
-      procedure :: destruct_amplitudes               => destruct_amplitudes_mlccsd
-      procedure :: destruct_double_amplitudes        => destruct_double_amplitudes_mlccsd
-!
-      procedure :: save_amplitudes                 => save_amplitudes_mlccsd
-      procedure :: read_amplitudes                 => read_amplitudes_mlccsd
-      procedure :: read_mlccsd_double_amplitudes   => read_mlccsd_double_amplitudes_mlccsd
-      procedure :: read_double_amplitudes          => read_double_amplitudes_mlccsd
-!
-!     Jacobian 
+!     -::- Jacobian submodule routine pointers -::-
+!     ---------------------------------------------
 !
       procedure :: jacobian_mlccsd_transformation => jacobian_mlccsd_transformation_mlccsd
 !
@@ -159,20 +226,13 @@ module mlccsd_class
       procedure :: jacobian_mlccsd_j2 => jacobian_mlccsd_j2_mlccsd
       procedure :: jacobian_mlccsd_k2 => jacobian_mlccsd_k2_mlccsd
 !
-!     Excited states
-!
-      procedure :: transform_trial_vectors   => transform_trial_vectors_mlccsd
-      procedure :: initialize_excited_states => initialize_excited_states_mlccsd
-      procedure :: print_excitation_vector   => print_excitation_vector_mlccsd
-      procedure :: summary_excited_state_info=> summary_excited_state_info_mlccsd
-!
    end type mlccsd
 !
 !
    interface
 !
-!    -::- Input reader submodule interface -::-
-!    :::::::::::::::::::::::::::::::::::::::::: 
+!     -::- Input reader submodule routine interface -::-
+!     --------------------------------------------------
 !
       module subroutine mlcc_reader_mlccsd(wf, unit_input)
 !!
@@ -203,18 +263,14 @@ module mlccsd_class
 !
    interface
 !
-!    -::- Orbital partitioning submodule interface -::-
-!    :::::::::::::::::::::::::::::::::::::::::::::::::: 
 !
+!     -::- Orbital partitioning submodule routine interface -::-
+!     ----------------------------------------------------------
 !
       module subroutine orbital_partitioning_mlccsd(wf)
 !!
 !!       Orbital partitioning,
 !!       Written by Sarai D. Folkestad, June 2017
-!! 
-!!       Directs the partitioning for mlcc calculations.
-!! 
-!!       So far only Cholesky decomposition is available. 
 !! 
          implicit none
 !  
@@ -228,16 +284,6 @@ module mlccsd_class
 !!       Cholesky orbital localization driver,
 !!       Written by Sarai D. Folkestad, July 2017.
 !!
-!!       Driver for Cholesky density decomposition 
-!!
-!!       - Collects atom and ao-basis information.
-!!       - Constructs occupied and vacant densities.
-!!       - Constructs AO Fock matrix.  (This is currently an N^5 operation, should be optimized/removed)
-!!       - By looping over active spaces, the occupied and virtual densities are Cholesky decomposed
-!!         and the cholesky vectors are used to generate new localized MO's.
-!!       - New orbitals are tested for orthonormality (Not implemented yet, only need overlap matrix from DALTON)    
-!!
-!!
          implicit none
 !
          class(mlccsd) :: wf
@@ -250,8 +296,6 @@ module mlccsd_class
 !!
 !!       Cholesky orbital localization CCS/CC2/CCSD,
 !!       Written by Sarai D. Folkestad, July 2017
-!!
-!!       Cholesky partitiining routine for CCS/CC2/CCSD calculation
 !!
          implicit none
 !
@@ -276,8 +320,6 @@ module mlccsd_class
 !!       Cholesky orbital localization CCS/CCSD,
 !!       Written by Sarai D. Folkestad, July 2017
 !!
-!!       Cholesky partitiining routine for CCS/CCSD calculation
-!!
          implicit none
 !
 !        Input arguments
@@ -301,8 +343,6 @@ module mlccsd_class
 !!       Cholesky orbital localization CC2/CCSD
 !!       Written by Sarai D. Folkestad, July 2017
 !!
-!!       Cholesky partitiining routine for CC2/CCSD calculation
-!!
          implicit none
 !
 !        Input arguments
@@ -325,13 +365,6 @@ module mlccsd_class
 !!       Construct MO transformation matrix,
 !!       Written by Sarai D. Fokestad, July 2017
 !!
-!!       Constructs transformation matrix,
-!!
-!!          T = (C_CCSD)^T * S * C_CC2
-!!
-!!       between CC2 basis and CCSD basis. 
-!!       Needed for transforming s_ij_ab from CC2 to CCSD basis.
-!!
          implicit none
 !
          class(mlccsd) :: wf
@@ -344,25 +377,6 @@ module mlccsd_class
 !!       CNTO orbital driver,
 !!       Written by Sarai D. Folkestad, July 2017.
 !!
-!!       A CCS calculation ground state and excited states is performed.
-!!       The M and N matrices are then constructed, 
-!! 
-!!          M_ij = sum_a R1_ai*R1_aj + sum_a R2_ai*R2_aj + ...
-!!          N_ab = sum_i R1_ai*R1_bi + sum_a R2_ai*R2_bi + ...
-!!   
-!!       where Ri_ai is the i'th single excitation vector obtained from the CCS calculation. 
-!!       The transformation matrices for the occupied and virtual part
-!!       are constructed by diagonalizing M and N. The number of active occupied
-!!       and virtual orbitals are determined from δ_o and δ_v
-!!
-!!          1 - sum_i λ^o_i < δ_o
-!!          1 - sum_i λ^v_i < δ_v
-!!
-!!       Where the orbitals of highest eigenvalues λ^o/λ^v are selected first.
-!!
-!!       Fock matrix is block diagonalized in active and inactive blocks in order to obtain 
-!!       the orbitals and orbital energies used in the CC2 calculation.
-!!
          implicit none 
 !
          class(mlccsd) :: wf
@@ -370,46 +384,47 @@ module mlccsd_class
       end subroutine cnto_orbital_drv_mlccsd
 !
 !
-      module subroutine ccsd_cnto_lower_level_method_mlccsd(wf, cc2_n_parameters, cc2_n_x2am, n_cc2_o, n_cc2_v)
+      module subroutine cnto_lower_level_method_mlccsd(wf)
 !!
 !!    CNTO constructor (MLCCSD),
 !!    Written by Sarai D. Folkestad, Aug. 2017
-!!
-!!    Constructs CNTOs and partitions orbital space
 !!
       implicit none 
 !
       class(mlccsd) :: wf
 !
-      integer(i15) :: cc2_n_x2am, cc2_n_parameters
-      integer(i15) :: n_CC2_o, n_CC2_v
-!
-      end subroutine ccsd_cnto_lower_level_method_mlccsd
+      end subroutine cnto_lower_level_method_mlccsd
 !
 !
-      module subroutine ccsd_cnto_orbitals_mlccsd(wf, cc2_n_parameters, cc2_n_x2am, n_cc2_o, n_cc2_v)
+      module subroutine cnto_orbitals_mlccsd(wf)
 !!
 !!       CNTO Oritals (MLCCSD),
 !!       Written by Sarai D. Folkestad Aug. 2017
-!!
-!!       Constructs the CNTO orbitals based on exitation vectors from lower level method
-!!    
+!!   
          implicit none
 !
          class(mlccsd) :: wf
 !
-         integer(i15) :: cc2_n_x2am, cc2_n_parameters
-         integer(i15) :: n_CC2_o, n_CC2_v
+      end subroutine cnto_orbitals_mlccsd
 !
-      end subroutine ccsd_cnto_orbitals_mlccsd
+!
+      module subroutine cnto_init_cc2_mlccsd(wf, cc2_wf)
+!!
+!!       CNTO Oritals (MLCCSD),
+!!       Written by Sarai D. Folkestad Aug. 2017
+!!   
+         implicit none
+!
+         class(mlccsd)     :: wf
+         class(mlcc2)       :: cc2_wf
+!
+      end subroutine cnto_init_cc2_mlccsd
 !
 !
       module subroutine print_orbital_info_mlccsd(wf)
 !!
 !!       Print CNTO info, 
 !!       Written by Sarai D. Folkestad, Aug. 2017
-!!
-!!       Prints information on CNTO partitioning
 !!
          implicit none 
 !
@@ -440,9 +455,6 @@ module mlccsd_class
 !!       Read Cholesky IA 
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!       Reads the MO Cholesky IA (occ-vir) vectors from file and
-!!       places them in the incoming L_ia_J matrix
-!!
 !!
          implicit none
 !
@@ -460,23 +472,6 @@ module mlccsd_class
 !!       Get Cholesky AI
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!       Read and T1-transform Cholesky AI vectors:
-!!    
-!!        L_ai_J_T1 = L_ia_J - sum_j  t_aj*L_ji_J 
-!!                            + sum_b  t_bi*L_ab_J
-!!                            - sum_bj t_aj*t_bi*L_jb_J
-!!
-!!       Allocations in routine:
-!!
-!!       (1) n_J*(i_length)*(a_length) + 2*n_J*(a_length)*batch_length  ->  for L_ab_J contribution (batches of b)
-!!       (2) n_J*(i_length)*n_v + 2*n_J*n_o*(i_length)                  ->  for L_ij_J contribution
-!!       (3) 2*n_J*n_o*n_v                                              ->  for L_jb_J contribution
-!!
-!!       i_length = i_last - i_first + 1          
-!!       a_length = a_last - a_first + 1          
-!!
-!!       (1) determines memory requirement. 
-!!
          implicit none 
 !
          class(mlccsd)            :: wf
@@ -491,12 +486,6 @@ module mlccsd_class
 !!
 !!    Read Cholesky AB 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!!
-!!    Reads the MO Cholesky AB (vir-vir) vectors from file and
-!!    places them in the incoming L_ab_J matrix, with batching 
-!!    if necessary
-!!
-!!    Optional arguments: b_first, b_last, a_first, a_last can be used in order to restrict indices
 !!
       implicit none
 !
@@ -513,12 +502,6 @@ module mlccsd_class
 !!    Read Cholesky IA 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!    Reads the MO Cholesky IA (occ-vir) vectors from file and
-!!    places them in the incoming L_ia_J matrix
-!!
-!!
-!!    Optional arguments: i_first, i_last, a_first, a_last can be used in order to restrict indices
-!!
       implicit none
 !
       class(mlccsd)                 :: wf    
@@ -533,11 +516,6 @@ module mlccsd_class
 !!
 !!    Read Cholesky IJ 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!!
-!!    Reads the MO Cholesky IJ (occ-occ) vectors from file and 
-!!    places them in the incoming L_ij_J matrix
-!!
-!!    Optional arguments: i_first, i_last, j_first, j_last can be used in order to restrict indices
 !!
       implicit none
 !
@@ -558,13 +536,10 @@ module mlccsd_class
 !     :::::::::::::::::::::::::::::::::::
 !
       module subroutine initialize_omega_mlccsd(wf)
-!
-!        Initialize Omega (MLCCSD)
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!
-!        Allocates the projection vector (omega1, omega2) and sets it
-!        to zero.
-!
+!!
+!!        Initialize Omega (MLCCSD)
+!!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
          implicit none 
 !
          class(mlccsd) :: wf
@@ -577,29 +552,12 @@ module mlccsd_class
 !!       Construct Omega (MLCCSD)
 !!       Written by Eirik F. Kjønstad and Sarai Folkestad, Apr 2017
 !!
-!!       Constructs the MlCC2 omega.
-!! 
-!!       s2-amplitudes are constructed on the fly, according to the CC2
-!!       expression for the doubles amplitudes. 
-!!
-!!       Calculated by looping over active spaces, 
-!!       Adding the omega contribution from each active space in turn.
-!! 
          implicit none 
 !
          class(mlccsd) :: wf
 !
       end subroutine construct_omega_mlccsd
 !
-!
-!
-   end interface
-!
-!
-   interface
-!
-!     -::- Omega CC2 submodule interface -::-
-!     :::::::::::::::::::::::::::::::::::::::
 !
       module subroutine get_mlccsd_x2am_mlccsd(wf, x_ia_jb)
 !!
@@ -618,21 +576,6 @@ module mlccsd_class
 !!    Omega A1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!   
-!!    Calculates the A1 term of omega for the active space, 
-!!   
-!!    A1: sum_bcj g_Abjc * u_Ij^bc,
-!!
-!!    where upper case letters indicate CCS space, and 
-!!    lower case letters are the combined CC2/CCSD spaces.
-!!  
-!!    A1 is added to the projection vector (omega1) of
-!!    the wavefunction object wf.
-!! 
-!!    u_ij^bc = 2*x_ij^bc - x_ij^cb 
-!!
-!!    Batching over A.
-!!
-!! 
       implicit none
 !
       class(mlccsd)            :: wf
@@ -645,13 +588,7 @@ module mlccsd_class
 !! 
 !!       Omega B1
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!   
-!!       Calculates the B1 term of omega, 
-!!   
-!!       B1: - sum_bjk u_jk^ab*g_kbjI + sum_bj u_ij^ab F_jb,
-!!
-!!       with u_ij^ab = 2*x_ij^ab - x_ij^ba. 
-!!
+!!  
          implicit none
 !
          class(mlccsd)            :: wf
@@ -661,20 +598,11 @@ module mlccsd_class
 !
 !
       module subroutine omega_mlccsd_a2_mlccsd(wf, x_IC_JD)
-!
-!        Omega A2 term: Omega A2 = sum_(cd)g_aC_bD * x_Ci_Dj
-!
-!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, 10 Mar 2017
-!
-!        Structure: Batching over both a and b for A2.2.
-!                   x^+_Ci_Dj = x_Ci_Dj + x_Di_Cj
-!                   x^-_Ci_Dj = x_Ci_Dj - x_Di_Cj
-!                   g^+_aC_bD = g_aC_bD + g_bC_aD 
-!                   g^-_aC_bD = g_aC_bD - g_bC_aD 
-! 
-!                   omega_A2_ai_bj = 1/4*(g^+_aC_bD*x^+_Ci_Dj + g^-_aC_bD*x^-_Ci_Dj)
-!                   omega_A2_aj_bi = 1/4*(g^+_aC_bD*x^+_Ci_Dj - g^-_aC_bD*x^-_Ci_Dj)
-!
+!!
+!!        Omega A2 term: Omega A2 = sum_(cd)g_aC_bD * x_Ci_Dj
+!!
+!!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, 10 Mar 2017
+!!
          implicit none
 !
          class(mlccsd)  :: wf
@@ -688,12 +616,6 @@ module mlccsd_class
 !!       Omega B2
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, 11 Mar 2017
 !! 
-!!       Omega B2 = sum_(kl) x_ak_bl*(g_kilj + sum_(cd) x_ci_dj * g_kc_ld)
-!!
-!!       Structure: g_kilj is constructed first and reordered as g_kl_ij. 
-!!       Then the contraction over cd is performed, and the results added to g_kl_ij.
-!!       x_ka_lb is then reordered as x_ab_kl and the contraction over kl is performed.
-!!
          implicit none
 !
          class(mlccsd) :: wf 
@@ -706,12 +628,7 @@ module mlccsd_class
 !!
 !!       Omega C2 
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2017
-!!       
-!!       Z_ai_bj = - sum_(ck) x^bc_kj*( g_ki,ac - 1/2 * sum_(dl) x^ad_li*g_kd,cl )
-!!
-!!       Omega_ai_bj = P_ij^ab (1/2 Z_ai_bj + Z_aj_bi) = 1/2 Z_ai_bj + 1/2 Z_bj_ai + Z_aj_bi+ Z_bi_aj
-!!
-!!       
+!!      
          implicit none
 !
          class(mlccsd)            :: wf
@@ -725,23 +642,6 @@ module mlccsd_class
 !!       Omega D2 
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!       Calculates the D2 term,
-!!
-!!        D2: sum_ck u_jk^bc g_aikc 
-!!          - 1/2 * sum_ck u_jk^bc g_acki 
-!!          + 1/4 * sum_ck u_jk^bc sum_dl L_ldkc u_il^ad,
-!!
-!!       where 
-!!
-!!          u_jk^bc = 2 * t_jk^bc - t_kj^bc,
-!!          L_ldkc  = 2 * g_ldkc  - g_lckd.
-!!
-!!       The first, second, and third terms are referred to as D2.1, D2.2, and D2.3, 
-!!       and comes out ordered as (ai,bj). All terms are added to the omega vector of the 
-!!       wavefunction object wf.
-!
-!        The routine adds the terms in the following order: D2.3, D2.1, D2.2
-!
          implicit none 
 !
          class(mlccsd) :: wf 
@@ -754,21 +654,6 @@ module mlccsd_class
 !!
 !!     Omega E2
 !!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!!
-!!     Calculates the E2 term,
-!!
-!!      E2: sum_c t_ij^ac (F_bc - sum_dkl g_ldkc u_kl^bd) 
-!!        - sum_k t_ik^ab (F_kj + sum_cdl g_ldkc u_lj^dc),
-!!
-!!     where
-!!
-!!        u_kl^bc = 2 * t_kl^bc - t_lk^bc.
-!!
-!!     The first term is referred to as the E2.1 term, and comes out ordered as (b,jai).
-!!     The second term is referred to as the E2.2 term, and comes out ordered as (aib,j).
-!!
-!!     Both are permuted added to the projection vector element omega2(ai,bj) of
-!!     the wavefunction object wf.
 !!
        implicit none 
 !
@@ -801,14 +686,10 @@ module mlccsd_class
 !
 !
    module subroutine new_amplitudes_mlccsd(wf)
-!
-!     New Amplitudes (MLCCSD)
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!
-!     Directs the calculation of the quasi-Newton estimate Δ t_i, 
-!     and t_i + Δ t_i, and calls the DIIS routine to save & get 
-!     the amplitudes for the next iteration.
-!
+!!
+!!     New Amplitudes (MLCCSD)
+!!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
       implicit none 
 !
       class(mlccsd) :: wf 
@@ -817,14 +698,10 @@ module mlccsd_class
 !
 !
    module subroutine calc_quasi_Newton_doubles_mlccsd(wf,dt)
-!
-!     Calculate quasi-Newtoni doubles estimate (CCSD)
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!
-!     Calculates the quasi-Newton estimate Δ t_i (doubbles part)
-!     and places the contribution in the dt vector (of length n_parameters,
-!     with singles first, then doubles, etc. if inherited)
-!
+!!
+!!     Calculate quasi-Newtoni doubles estimate (CCSD)
+!!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
       implicit none 
 !
       class(mlccsd) :: wf 
@@ -840,15 +717,35 @@ module mlccsd_class
 !!    Initialize Ground State (CCSD)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-!!    Initializes the amplitudes and the projection vector for the ground
-!!    state solver.
-!!
       implicit none 
 !
       class(mlccsd) :: wf
 !
    end subroutine initialize_ground_state_mlccsd
 !
+!
+   module subroutine ground_state_preparations_mlccsd(wf)
+!!
+!!    Ground State Preparations (MLCCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+      implicit none
+!
+      class(mlccsd) :: wf 
+!
+   end subroutine ground_state_preparations_mlccsd
+!
+!
+   module subroutine ground_state_cleanup_mlccsd(wf)
+!!
+!!    Ground State Cleanup (MLCCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
+!!
+      implicit none
+!
+      class(mlccsd) :: wf 
+!
+   end subroutine ground_state_cleanup_mlccsd
 !
    end interface
 !
@@ -862,19 +759,6 @@ module mlccsd_class
 !!
 !!    Jacobian transformation (MLCC2)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
-!!
-!!    Directs the transformation by the CCSD Jacobi matrix,
-!!
-!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >,
-!!
-!!    where the basis employed for the brackets is biorthonormal. 
-!!    The transformation is rho = A c, i.e., 
-!!
-!!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck 
-!!                  + 1/2 sum_ckdl A_mu,ckdl c_ckdl (1 + delta_ck,dl).
-!!
-!!    On exit, c is overwritten by rho. That is, c_a_i = rho_a_i,
-!!    and c_aibj = rho_aibj. 
 !!
       implicit none
 !
@@ -893,11 +777,6 @@ module mlccsd_class
 !!    Jacobian CCSD B2 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-!!    rho_ai_bj^B2 = - sum_kc (F_kc t_ij^ac c_bk + F_kc t_ik^ab c_cj)
-!!
-!!    The term is added as rho_ai_bj(ai,bj) = rho_ai_bj(ai,bj) + rho_ai_bj^B2,
-!!    where c_a_i(a,i) = c_ai above.
-!!
       implicit none 
 !
       class(mlccsd) :: wf 
@@ -914,11 +793,6 @@ module mlccsd_class
 !!    Jacobian CCSD C2 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2017
 !!
-!!    rho_ai_bj^C2 = sum_kcl (g_ljkc * t_ki^ac * c_bl) + (g_ljkc * t_li^bc * c_ak) 
-!!                         + (g_ljkc * t_lk^ba * c_ci) 
-!!                         - (L_ljkc * t_ik^ac * c_bl)- (L_ljkc * t_il^ab * c_ck)
-!!                
-!!
       implicit none 
 !
       class(mlccsd) :: wf 
@@ -933,17 +807,6 @@ module mlccsd_class
 !!
 !!    Jacobian CCSD D2 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!!
-!!    rho_ai_bj^D2 = - sum_kcd g_kcbd (x_ij^cd c_ak + x_kj^ad c_ci + x_ik^ca c_dj)
-!!                       + sum_kcd L_kcbd (x_ik^ac c_dj + x_ij^ad c_ck)
-!!
-!!    Note: the code is structured so that we batch over the index b,
-!!          where the integrals are made as g_kc_db = g_kcbd and held
-!!          in some ordering or other throughout a given batch (i.e.,
-!!          all five terms are constructed gradually in the batches).
-!!
-!!    The term is added as rho_ai_bj(ai,bj) = rho_ai_bj(ai,bj) + rho_ai_bj^D2,
-!!    where c_a_i(a,i) = c_ai above.
 !!
       implicit none 
 !
@@ -960,8 +823,6 @@ module mlccsd_class
 !!    Jacobian MLCCSD E2 
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!    rho_ai_bj^E2 = 2 sum_dlck x_bj,DL * L_KC,LD * c_ai,CK 
-!!
       implicit none 
 !
       class(mlccsd) :: wf 
@@ -976,11 +837,6 @@ module mlccsd_class
 !!
 !!       Jacobian MLCCSD F2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!
-!!       rho_ai_bj^F2 =   - sum_(CKDL) x_ai,CK * L_KC,LD * c_bL,Dj 
-!!                        - sum_(CKDL) x_ai,Dj * L_KC,LD * c_bL,CK
-!!                        - sum_(CKDL) x_ai_bL * L_KC,LD * c_CK,Dj
-!!
 !!
          implicit none 
 !
@@ -997,11 +853,6 @@ module mlccsd_class
 !!       Jacobian MLCCSD G2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!       rho_ai_bj^G2 =  - sum_ckdl x_bL,Dj * L_KC,LD * c_ai,CK 
-!!                       - sum_ckdl x_CK_bL * L_KC,LD * c_ai,Dj 
-!!                       - sum_ckld x_CK,Dj * L_KC,LD * c_ai,bL 
-!!
-!!
          implicit none 
 !
          class(mlccsd) :: wf 
@@ -1016,10 +867,7 @@ module mlccsd_class
 !!
 !!       Jacobian MLCCSD H2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!
-!!       rho_ai_bj^H2 =  sum_CKDL x_Ci,aK * g_KC,LD * c_bL,Dj 
-!!                     + sum_CKDL x_Cj,aL * g_KC,LD * c_bK,Di
-!!                
+!!              
          implicit none 
 !
          class(mlccsd) :: wf 
@@ -1035,12 +883,6 @@ module mlccsd_class
 !!       Jacobian MLCCSD I2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!       rho_ai_bj^I2 =  sum_C F_bC * c_ai,Cj - sum_K F_jK * c_ai,bK
-!!                     + sum_ck L_bj,KC * c_ai,CK 
-!!                     - sum_ck ( g_KC,bj * c_aK,Ci + g_Ki,bC * c_aK,Cj ) 
-!!                
-!!       Batch over c to construct  g_ki_bC
-!! 
          implicit none 
 !
          class(mlccsd) :: wf 
@@ -1055,10 +897,7 @@ module mlccsd_class
 !!
 !!       Jacobian CCSD J2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!
-!!       rho_ab_ij^J2 =    sum_ckld t_ci,dj * g_kc,ld * c_ak,bl 
-!!                       + sum_ckdl t_ak,bl * g_kc,ld * c_ci,dj
-!!             
+!!           
          implicit none 
 !
          class(mlccsd) :: wf 
@@ -1073,12 +912,6 @@ module mlccsd_class
 !!
 !!       Jacobian MLCCSD K2 
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!
-!!       rho_ab_ij^K2 =    sum_kl g_Ki,Lj * c_aK,bL 
-!!                       + sum_cd g_aC,bD * c_Ci,Dj
-!! 
-!!       For the last term we batch over a and b and 
-!!       add each batch to rho_ai_bj 
 !!               
          implicit none 
 !
@@ -1100,16 +933,32 @@ module mlccsd_class
 !     -::- Excited state submodule interface -::-
 !     :::::::::::::::::::::::::::::::::::::::::::
 !
+      module subroutine excited_state_preparations_mlccsd(wf)
+!!
+!!       Wxcited state preparations
+!!       Written by Sarai D. Folkestad, Aug 2017
+!!
+         implicit none 
+!       
+         class(mlccsd) :: wf
+!
+      end subroutine excited_state_preparations_mlccsd
+!
+!
+      module subroutine excited_state_cleanup_mlccsd(wf)
+!!
+!!       Excited state cleanup
+!!       Written by Sarai D. Folkestad, Aug 2017
+!!
+         implicit none 
+!       
+         class(mlccsd) :: wf
+!
+      end subroutine excited_state_cleanup_mlccsd
       module subroutine transform_trial_vectors_mlccsd(wf, first_trial, last_trial)
 !!
 !!    Transformation of Trial Vectors (MLCC2)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!
-!!    Each trial vector in first_trial to last_trial is read from file and
-!!    transformed before the transformed vector is written to file.
-!!
-!!    Singles and doubles part of the transformed vectors are written to 
-!!    the same record in file transformed_vec, record length is n_parameters long.
 !!
       implicit none
 !
@@ -1124,9 +973,6 @@ module mlccsd_class
 !!
 !!       Initialize excited states
 !!       Written by Sarai D. Folkestad, Aug 2017
-!!
-!!       Calculates and sets n_s2am, and updates n_parameters
-!!       for excited state calculation
 !!
          implicit none 
 !       
@@ -1149,8 +995,6 @@ module mlccsd_class
       end subroutine print_excitation_vector_mlccsd
 !
 !
-!
-!
       module subroutine summary_excited_state_info_mlccsd(wf, energies)
 !!
 !!
@@ -1162,6 +1006,20 @@ module mlccsd_class
          real(dp), dimension(wf%excited_state_specifications%n_singlet_states,1) :: energies
 !
       end subroutine summary_excited_state_info_mlccsd
+!
+!
+      module subroutine calculate_orbital_differences_mlccsd(wf, orbital_diff)
+!!
+!!       Calculate Orbital Differences (MLCCSD)
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad May 2017
+!!
+         implicit none
+!
+         class(mlccsd) :: wf
+!
+         real(dp), dimension(wf%n_parameters, 1) :: orbital_diff
+!
+      end subroutine calculate_orbital_differences_mlccsd
 !
 !
    end interface
@@ -1180,9 +1038,6 @@ contains
       integer(i15) :: i, j, active_space
 !
       integer(i15) :: unit_input = -1
-!
-!
-      write(unit_output,'(//t3,a/)')    ':: Initialization' 
 !
 !
 !     Set model name 
@@ -1267,11 +1122,11 @@ contains
 !
 !     Set number of amplitudes for CCSD active space
 !
-      wf%n_t2am = ((wf%n_CCSD_v)*(wf%n_CCSD_o))*((wf%n_CCSD_v )*(wf%n_CCSD_o)+1)/2
+      wf%n_t1am = (wf%n_o)*(wf%n_v)
+      wf%n_t2am = ((wf%n_CCSD_v)*(wf%n_CCSD_o))*((wf%n_CCSD_v)*(wf%n_CCSD_o)+1)/2
 
 !
-      call wf%initialize_amplitudes
-      call wf%initialize_omega
+      call wf%initialize_single_amplitudes
 !
 !     Set the number of parameters in the wavefunction
 !     (that are solved for in the ground and excited state solvers) 
@@ -1293,6 +1148,7 @@ contains
 !     Initialize fock matrix
 !
       call wf%initialize_fock_matrix
+      call wf%destruct_single_amplitudes
 !
    end subroutine init_mlccsd
 !
@@ -1697,28 +1553,22 @@ contains
    end subroutine destruct_orbital_energy_CC2_CCS_mlccsd
 !
 !
-   subroutine destruct_double_amplitudes_mlccsd(wf)
+   subroutine destruct_ccsd_double_amplitudes_mlccsd(wf)
 !!
 !!
       implicit none
 !
       class(mlccsd) :: wf
+!
+      
+      integer(i15) :: n_active_v, n_active_o 
+!
+      call wf%get_CCSD_n_active(n_active_o, n_active_v)
+      wf%n_t2am = (n_active_v)*(n_active_o)*((n_active_v)*(n_active_o)+1)/2
 !
       if (allocated(wf%t2am)) call wf%mem%dealloc(wf%t2am, wf%n_t2am, 1)
 !
-   end subroutine destruct_double_amplitudes_mlccsd
-!
-   subroutine destruct_amplitudes_mlccsd(wf)
-!!
-!!
-      implicit none
-!
-      class(mlccsd) :: wf
-!
-      call wf%destruct_double_amplitudes
-      call destruct_amplitudes_ccs(wf)
-!
-   end subroutine destruct_amplitudes_mlccsd
+   end subroutine destruct_ccsd_double_amplitudes_mlccsd
 !
 !
    subroutine save_amplitudes_mlccsd(wf)
@@ -1920,4 +1770,30 @@ contains
       endif
 !
    end subroutine read_double_amplitudes_mlccsd
+!
+!
+   subroutine initialize_ccsd_double_amplitudes_mlccsd(wf)
+!!
+!!     Initialize Amplitudes (MLCCSD)
+!!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!!     Allocates the amplitudes, sets them to zero, and calculates
+!!     the number of amplitudes.
+!!
+      implicit none 
+!
+      class(mlccsd) :: wf
+!
+      integer(i15) :: n_active_v, n_active_o 
+!
+!     Allocate the doubles amplitudes and set to zero
+!
+      call wf%get_CCSD_n_active(n_active_o, n_active_v)
+      wf%n_t2am = (n_active_v)*(n_active_o)*((n_active_v)*(n_active_o)+1)/2
+!
+      if(.not. allocated(wf%t2am)) call wf%mem%alloc(wf%t2am, wf%n_t2am, 1)
+!
+   end subroutine initialize_ccsd_double_amplitudes_mlccsd
+!
+!
 end module mlccsd_class

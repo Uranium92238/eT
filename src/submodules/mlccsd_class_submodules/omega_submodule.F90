@@ -73,6 +73,7 @@ contains
 !     :: Calculate CCS omega contributions ::
 !
       call wf%omega_ccs_a1
+
 !
 !     OBS! T2 could be deleted here to be allocated and read from file
 !           at the end of this routine for memory savings.
@@ -105,7 +106,7 @@ contains
       call wf%mem%dealloc(x_IA_JB, (n_CC2_o)*(n_CC2_v), (n_CC2_o)*(n_CC2_v))
 !
       call cpu_time(omega_end)
-      if (timings) write(unit_output,*)'Time in omega:', omega_end-omega_start    
+      if (timings) write(unit_output,*)'Time in omega:', omega_end-omega_start   
 !
    end subroutine construct_omega_mlccsd
 !
@@ -754,7 +755,7 @@ contains
                         first_CCSD_o, last_CCSD_o)
 !
 !     Add A2.1 to Omega 2
-!     
+!   
       do i = 1, n_CCSD_o
          do a = 1, n_CCSD_v
 !
@@ -775,7 +776,7 @@ contains
                enddo
             enddo
          enddo
-      enddo
+      enddo 
 !
       call wf%mem%dealloc(g_ai_bj, n_CCSD_o*n_CCSD_v, n_CCSD_o*n_CCSD_v)
 !
@@ -825,13 +826,14 @@ contains
 !          Allocate g_ca_db
 !
            call wf%mem%alloc(g_aC_bD, (n_CC2_v)*a_length, (n_CC2_v)*b_length)
-!
+! 
             integral_type = 'electronic_repulsion'
             call wf%get_vv_vv(integral_type, g_aC_bD,  &
                               a_first, a_last,         & 
                               first_CC2_v, last_CC2_v, &
                               b_first, b_last,         &
                               first_CC2_v, last_CC2_v)
+
 !
 !         
 !

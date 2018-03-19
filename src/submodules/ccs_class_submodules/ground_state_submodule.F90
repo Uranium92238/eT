@@ -222,7 +222,9 @@ contains
 !
             converged = .true.
 !
-            if (iteration .eq. 1) write(unit_output,'(t3,a,/t3,a)') 'Note: residual converged in first iteration.', &
+            write(unit_output,'(t3,a)')    '---------------------------------------------------' 
+            if (iteration .eq. 1 .and. wf%name .ne. 'CCS') write(unit_output,'(/t3,a,/t3,a)') &
+                                                                  'Note: residual converged in first iteration.', &
                                                                     'Energy convergence therefore not tested in this calculation.'
 !
             write(unit_output,'(/t3,a,i3,a/)')  'Converged in ', iteration, ' iterations!'
@@ -248,7 +250,7 @@ contains
 !
 !     Print summary
 !
-      write(unit_output,'(t3,a,a,a/)')'Summary of ', trim(wf%name), ' ground state calculation:'
+      write(unit_output,'(/t3,a,a,a/)')'Summary of ', trim(wf%name), ' ground state calculation:'
       write(unit_output,'(t6,a25,f14.8)')  'Total energy (hartrees):  ', wf%energy
       write(unit_output,'(t6,a25,f14.8/)') 'Total time CPU (seconds): ', end_gs_solver - start_gs_solver
       flush(unit_output)
