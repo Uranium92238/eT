@@ -32,7 +32,7 @@ submodule (mlcc2_class) orbital_partitioning
    logical :: debug   = .false.
    logical :: timings = .true.
 !
-   integer(i15) :: CCS_factor_n_singlet_states = 4
+   integer(i15) :: CCS_factor_n_singlet_states = 5
 !
 !
 contains

@@ -61,7 +61,7 @@ contains
       real(dp), dimension(:,:), allocatable :: g_kc_ld ! g_kcld 
       real(dp), dimension(:,:), allocatable :: L_ld_ck ! L_kcld
 !
-      real(dp), dimension(:,:), allocatable :: X_l_d    ! An intermediate, see below 
+      real(dp), dimension(:,:), allocatable :: X_l_d   ! An intermediate, see below 
       real(dp), dimension(:,:), allocatable :: Y_kc_lj ! An intermediate, see below 
       real(dp), dimension(:,:), allocatable :: Z_ac_ld ! An intermediate, see below
 !
@@ -80,7 +80,7 @@ contains
 !     Make a copy of the singles contribution (which
 !     is needed for the later, SCCSD terms)
 !
-      call allocator(c_a_i_copy, wf%n_v, wf%n_o)
+      call wf%mem%alloc(c_a_i_copy, wf%n_v, wf%n_o)
       c_a_i_copy = c_a_i
 !
 !     Performs CCSD Jacobian transformation (non-T3 terms)
@@ -99,10 +99,10 @@ contains
 !
 !     Copy the transformed vector (c_a_i, c_aibj) into (rho_a_i, rho_ai_bj)
 !
-      call allocator(rho_a_i, wf%n_v, wf%n_o)
+      call wf%mem%alloc(rho_a_i, wf%n_v, wf%n_o)
       rho_a_i = zero
 !
-      call allocator(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       rho_ai_bj = zero
 !
       rho_a_i = c_a_i
@@ -111,7 +111,7 @@ contains
 !     Place back the copy of the singles c 
 !
       c_a_i = c_a_i_copy 
-      call deallocator(c_a_i_copy, wf%n_v, wf%n_o)
+      call wf%mem%dealloc(c_a_i_copy, wf%n_v, wf%n_o)
 !
 !
 !     :: The SCCSD contributions ::
@@ -129,7 +129,7 @@ contains
 !
       call wf%read_single_amplitudes
 !
-      call allocator(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       integral_type = 'electronic_repulsion'
       call wf%get_ov_ov(integral_type, g_kc_ld)
@@ -139,7 +139,7 @@ contains
 !     Note: we interpret g_kc_ld as g_kcl_d and 
 !           Y_kc_lj as Y_kcl_j
 !
-      call allocator(Y_kc_lj, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
+      call wf%mem%alloc(Y_kc_lj, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
 !
       call dgemm('N','N',               &
                   (wf%n_v)*(wf%n_o)**2, &
@@ -161,7 +161,7 @@ contains
 !     Note: we interpret g_kc_ld as g_k_cld and
 !           Z_ac_ld as Z_a_cld 
 !
-      call allocator(Z_ac_ld, (wf%n_v)**2, (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(Z_ac_ld, (wf%n_v)**2, (wf%n_o)*(wf%n_v))
 !
       call dgemm('N','N',               &
                   wf%n_v,               &
@@ -181,7 +181,7 @@ contains
 !     Form L_ld_ck = L_kcld = 2 * g_kcld - g_kdlc
 !                           = 2 * g_kc_ld(kc,ld) - g_kc_ld(kd,lc)
 !
-      call allocator(L_ld_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(L_ld_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       L_ld_ck = zero 
 !
       do k = 1, wf%n_o
@@ -206,14 +206,14 @@ contains
          enddo
       enddo
 !
-      call deallocator(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     Form X_ld = sum_ck L_ld_ck c_ck
 !
 !     Note: we interpret X_l_d as X_ld 
 !           and c_a_i as c_ai 
 !
-      call allocator(X_l_d, wf%n_o, wf%n_v)
+      call wf%mem%alloc(X_l_d, wf%n_o, wf%n_v)
 !
       call dgemm('N','N',            &
                   (wf%n_o)*(wf%n_v), &
@@ -228,21 +228,21 @@ contains
                   X_l_d,             & ! "X_ld"
                   (wf%n_o)*(wf%n_v))
 !
-      call deallocator(L_ld_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(L_ld_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     Add the contributions to the Jacobi transformation
 !     resulting from, respectively, the X, Y, and Z intermediates
 !
-      call allocator(rho_ai_bj_corr, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(rho_ai_bj_corr, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       rho_ai_bj_corr = zero
 !
       call wf%jacobian_sccsd_a2(rho_ai_bj_corr, X_l_d)
       call wf%jacobian_sccsd_b2(rho_ai_bj_corr, Y_kc_lj)
       call wf%jacobian_sccsd_c2(rho_ai_bj_corr, Z_ac_ld)
 !
-      call deallocator(Y_kc_lj, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
-      call deallocator(Z_ac_ld, (wf%n_v)**2, (wf%n_o)*(wf%n_v))
-      call deallocator(X_l_d, wf%n_o, wf%n_v)
+      call wf%mem%dealloc(Y_kc_lj, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
+      call wf%mem%dealloc(Z_ac_ld, (wf%n_v)**2, (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(X_l_d, wf%n_o, wf%n_v)
 !
 !     Permute ai <-> bj, multiply by 1/(1+delta_ai,bj),
 !     and add the correction to the transformed vector 
@@ -276,7 +276,7 @@ contains
          enddo
       enddo
 !
-      call deallocator(rho_ai_bj_corr, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(rho_ai_bj_corr, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     Pack the transformed vector into the incoming doubles
 !
@@ -286,11 +286,11 @@ contains
 !     Set the singles transformed vector 
 !
       c_a_i = rho_a_i
-      call deallocator(rho_a_i, wf%n_v, wf%n_o)
+      call wf%mem%dealloc(rho_a_i, wf%n_v, wf%n_o)
 !
 !     Final deallocations 
 !
-      call deallocator(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       call cpu_time(end_timer)
 !

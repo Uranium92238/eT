@@ -67,7 +67,7 @@ contains
 !
 !     Make a copy of the doubles contribution
 !
-      call allocator(b_aibj_copy, wf%n_t2am, 1)
+      call wf%mem%alloc(b_aibj_copy, wf%n_t2am, 1)
       b_aibj_copy = b_aibj
 !
 !     Perform the CCSD Jacobian tranpose transformation (non-T3 terms)
@@ -86,10 +86,10 @@ contains
 !
 !     Copy the transformed vector (b_a_i, b_aibj) into (sigma_a_i, sigma_ai_bj)
 !
-      call allocator(sigma_a_i, wf%n_v, wf%n_o)
+      call wf%mem%alloc(sigma_a_i, wf%n_v, wf%n_o)
       sigma_a_i = zero
 !
-      call allocator(sigma_aibj, wf%n_t2am, 1)
+      call wf%mem%alloc(sigma_aibj, wf%n_t2am, 1)
       sigma_aibj = zero 
 !
       sigma_a_i  = b_a_i
@@ -98,7 +98,7 @@ contains
 !     Place back the copy of the doubles b 
 !
       b_aibj = b_aibj_copy
-      call deallocator(b_aibj_copy, wf%n_t2am, 1)
+      call wf%mem%dealloc(b_aibj_copy, wf%n_t2am, 1)
 !
 !     :: The SCCSD contributions ::
 !     :::::::::::::::::::::::::::::
@@ -108,14 +108,14 @@ contains
 ! 
 !     Form g_ia_jb 
 !
-      call allocator(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       integral_type = 'electronic_repulsion'
       call wf%get_ov_ov(integral_type, g_ia_jb)
 !
 !     Square up the doubles vector 
 !
-      call allocator(b_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(b_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       b_ai_bj = zero
 !
       call squareup(b_aibj, b_ai_bj, (wf%n_o)*(wf%n_v))
@@ -131,7 +131,7 @@ contains
 !
 !     Form L_ia_jb = 2 * g_ia_jb - g_ia_jb(ib,ja)
 !
-      call allocator(L_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%alloc(L_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       L_ia_jb = zero 
 !
       do b = 1, wf%n_v
@@ -155,14 +155,14 @@ contains
          enddo
       enddo
 !
-      call deallocator(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     Add the X term 
 !
       call wf%jacobian_transpose_sccsd_a1(sigma_a_i, b_ai_bj, L_ia_jb)
 !
-      call deallocator(L_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call deallocator(b_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(L_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(b_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     Overwrite the incoming vector with the corrected one
 !
@@ -171,8 +171,8 @@ contains
 !
 !     Final deallocations 
 !
-      call deallocator(sigma_a_i, wf%n_v, wf%n_o)
-      call deallocator(sigma_aibj, wf%n_t2am, 1)
+      call wf%mem%dealloc(sigma_a_i, wf%n_v, wf%n_o)
+      call wf%mem%dealloc(sigma_aibj, wf%n_t2am, 1)
 !
       call cpu_time(end_timer)
 !
