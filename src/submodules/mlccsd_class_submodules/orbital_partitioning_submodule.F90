@@ -1407,8 +1407,6 @@ contains
                   info)
 !
       call wf%mem%dealloc(work, 4*(n_cc2_v), 1)
-      write(unit_output,*)'M matrix eigenvalues:'
-      call vec_print(eigenvalues_o, n_CC2_o, 1)
 !
 !     deallocate eigenvalues, not used for orbital selection
 !

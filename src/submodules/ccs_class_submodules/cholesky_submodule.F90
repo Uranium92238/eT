@@ -347,7 +347,7 @@ contains
             L_Ja_b = zero           
 !
 !           Reorder the Cholesky array L_ab_J
-!
+!   
             call sort_123_to_312(L_ab_J, L_Ja_b, batch_length, wf%n_v, wf%n_J)     
 !
             call wf%mem%dealloc(L_ab_J, (wf%n_v)*batch_length, wf%n_J)   
@@ -975,7 +975,7 @@ contains
 !
 !     Add terms of L_Jb_a to L_ab_J
 !
-      call add_321_to_123(one, L_Jb_a, L_ab_J, wf%n_v, b_length, wf%n_J)
+      call add_321_to_123(one, L_Jb_a, L_ab_J, a_length, b_length, wf%n_J)
 !
 !     Dellocate L_Jb,i and L_Jb_a for batch of b
 !
