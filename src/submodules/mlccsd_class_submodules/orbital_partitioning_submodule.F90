@@ -1317,7 +1317,7 @@ contains
 !
                ai = index_two(a, i, n_CC2_v)
 !
-               M_i_j(i, i) = M_i_j(i, i) + half*R_ai_bj(ai, ai)
+               M_i_j(i, i) = M_i_j(i, i) + half*R_ai_bj(ai, ai)**2
 !
             enddo
          enddo
@@ -1362,7 +1362,7 @@ contains
 !
                ai = index_two(a, i, n_CC2_v)
 !
-               N_a_b(a, a) = N_a_b(a, a) + half*R_ai_bj(ai, ai)
+               N_a_b(a, a) = N_a_b(a, a) + half*R_ai_bj(ai, ai)**2
 !
             enddo
          enddo
