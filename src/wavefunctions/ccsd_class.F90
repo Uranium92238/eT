@@ -1452,29 +1452,26 @@ contains
 !
       class(ccsd) :: wf
 !
-      integer(i15) :: unit_t1am = -1
-      integer(i15) :: unit_t2am = -1
+      type(file) :: t1am_file
+      type(file) :: t2am_file
 !
 !     Open amplitude files
 !
-      call generate_unit_identifier(unit_t1am)
-      call generate_unit_identifier(unit_t2am)
+      t1am_file%name = 't1am'
+      t2am_file%name = 't2am'
 !
-      open(unit_t1am, file='t1am', status='unknown', form='unformatted')
-      open(unit_t2am, file='t2am', status='unknown', form='unformatted')
-!
-      rewind(unit_t1am)
-      rewind(unit_t2am)
+      call wf%disk%open_file(t1am_file, 'unformatted', 'write', 'sequential')
+      call wf%disk%open_file(t2am_file, 'unformatted', 'write', 'sequential')
 !
 !     Write amplitudes to files
 !
-      write(unit_t1am) wf%t1am 
-      write(unit_t2am) wf%t2am
+      write(t1am_file%unit) wf%t1am 
+      write(t2am_file%unit) wf%t2am 
 !
 !     Close amplitude files
 !
-      close(unit_t1am)
-      close(unit_t2am)
+      call wf%disk%close_file(t1am_file)
+      call wf%disk%close_file(t2am_file)
 !
    end subroutine save_amplitudes_ccsd
 !
