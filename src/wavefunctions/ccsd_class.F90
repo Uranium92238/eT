@@ -1205,6 +1205,11 @@ contains
 !
       close(unit_input)
 !
+!     Figure out the size of the calculation folder, and update 
+!     the available disk space by subtracting it
+!
+      call wf%disk%subtract_folder_size
+!
 !     Read Hartree-Fock info from SIRIUS
 !
       call wf%read_hf_info

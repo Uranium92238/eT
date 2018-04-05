@@ -66,6 +66,7 @@ contains
 !                    Converting from gb to words
 !
                      wf%settings%disk_space = disk_space*134500000
+                     call wf%disk%init(disk_space) ! Should replace the above 
 !
                      cycle
 !

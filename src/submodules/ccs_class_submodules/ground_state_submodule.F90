@@ -259,6 +259,16 @@ contains
 !
        call wf%save_amplitudes
 !
+!     Issue an error & stop if the equations did not converge 
+!
+      if (.not. converged) then 
+!
+         write(unit_output,'(/t3,a)') 'Error: Ground state equations did not converge.'
+         write(unit_output,'(t3,a/)') 'Consider increasing the maximum number of iterations.'
+         stop
+!
+      endif
+!
    end subroutine ground_state_solver_ccs
 !
 !
