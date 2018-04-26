@@ -858,8 +858,6 @@ contains
 !
                call wf%mem%alloc(c_i, wf%n_parameters, 1)
 !
-!              Calculate X_j = sum_i x_j_i * c_i (for the root j)
-!
                do trial = 1, reduced_dim
 !
                   c_i = zero
@@ -896,8 +894,6 @@ contains
                prev_solution_vector = zero
 !
                call wf%mem%alloc(c_i, wf%n_parameters, 1)
-!
-!              Calculate X_j = sum_i x_j_i * c_i (for the root j)
 !
                do trial = 1, reduced_dim
 !
