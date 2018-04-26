@@ -644,7 +644,7 @@ contains
          do j = 1, wf%excited_state_specifications%n_singlet_states
 !
             solution_vectors_reduced(i,j) = solution_vectors_reduced_all(i,index_list(j,1))
-            eigenvalues_Im = eigenvalues_Im_all(index_list(j,1), 1)
+            eigenvalues_Im(j,1) = eigenvalues_Im_all(index_list(j,1), 1)
 !
          enddo
       enddo
@@ -684,6 +684,8 @@ contains
 !!    Routine also constructs full space solution vectors and stores them
 !!    in file solution_vectors 
 !! 
+!!    Modified by Eirik F. Kjønstad, Apr 2018. Modification of residuals to handle complex pairs of energies. 
+!!
       implicit none
 !
       class(ccs) :: wf
@@ -695,7 +697,6 @@ contains
       integer(i15) :: n_new_trials
 !
       real(dp), dimension(reduced_dim, wf%excited_state_specifications%n_singlet_states) :: solution_vectors_reduced
-
 !
 !     Local variables 
 !
@@ -718,6 +719,12 @@ contains
 !
       integer(i15) :: ioerror = 0
       integer(i15) :: unit_trial_vecs = 0, unit_rho = 0, unit_solution = 0 ! Unit identifiers for files 
+!
+      real(dp), dimension(:,:), allocatable :: next_solution_vector ! For handling complex roots
+      real(dp), dimension(:,:), allocatable :: prev_solution_vector
+!
+      real(dp) :: norm_next_solution_vector
+      real(dp) :: norm_prev_solution_vector
 !
       real(dp) :: ddot
       character(100) :: iostring
@@ -797,6 +804,10 @@ contains
          call dscal(wf%n_parameters, one/norm_solution_vector, solution_vector, 1)
          write(unit_solution, rec=root, iostat=ioerror) solution_vector
 !
+!        Scale back for later normalization (needed in case of complex roots)
+!
+         call dscal(wf%n_parameters, norm_solution_vector, solution_vector, 1)
+!
 !        :: Calculate residual ::
 !
          call dcopy(wf%n_parameters, solution_vector, 1, residual, 1) ! R = X 
@@ -824,6 +835,105 @@ contains
          enddo
 !
          call wf%mem%dealloc(rho_i, wf%n_parameters, 1)
+!
+!        If the current root is part of a complex pair, the dgeev routine places the real and imaginary pairs
+!        of the solutions, R_+- = R^(R) +- i R^(I), in the positions root and root+1. 
+!
+!        For the (root)-residual, we shall construct the real residual:        (A X^(R) - e^(R) X^(R)) + e^(I) X^(I)
+!        For the (root+1)-residual, we shall construct the imaginary residual: (A X^(I) - e^(R) X^(I)) - e^(I) X^(R)
+!
+!        Note: to normalize, we use the norm of X^(R) + i X^(I) for both residuals, instead of the norm of X,
+!        which would give a greater weight to X^(I) than is warranted. 
+!
+         if (eigenvalues_Im(root, 1) .ne. zero) then ! Complex root
+!
+            if (eigenvalues_Re(root, 1) .eq. eigenvalues_Re(root+1, 1)) then ! First complex root 
+!
+!              Construct the real residual. What is missing is + e^(I) X^(I).
+!
+!              Create X^(I) - this is the next root 
+!
+               call wf%mem%alloc(next_solution_vector, wf%n_parameters, 1)
+               next_solution_vector = zero
+!
+               call wf%mem%alloc(c_i, wf%n_parameters, 1)
+!
+!              Calculate X_j = sum_i x_j_i * c_i (for the root j)
+!
+               do trial = 1, reduced_dim
+!
+                  c_i = zero
+                  read(unit_trial_vecs, rec=trial, iostat=ioerror, iomsg = iostring) c_i
+                  call daxpy(wf%n_parameters, solution_vectors_reduced(trial,root+1), c_i, 1, next_solution_vector, 1)
+!
+                  if (ioerror .ne. 0) write(unit_output,*) 'Error reading trial vecs in get_next_trial_vectors', ioerror, iostring
+!
+               enddo
+!
+               call wf%mem%dealloc(c_i, wf%n_parameters, 1)
+!
+!              Calculate norm of the next solution vector and normalize 
+!
+               norm_next_solution_vector = sqrt(ddot(wf%n_parameters, next_solution_vector, 1, next_solution_vector, 1))
+!
+!              + e^(I) X^(I)
+!
+               call daxpy(wf%n_parameters, eigenvalues_Im(root, 1), next_solution_vector, 1, residual, 1)
+!
+               call wf%mem%dealloc(next_solution_vector, wf%n_parameters, 1)
+!
+!              Scale the residual with the appropriate norm 
+!
+               call dscal(wf%n_parameters, one/(sqrt(norm_solution_vector**2+norm_next_solution_vector**2)), residual, 1)
+!
+            else ! Second complex root 
+!
+!              Construct the imaginary residual. What is missing is - e^(I) X^(R)
+!
+!              Create X^(R) - this is the previous root 
+!
+               call wf%mem%alloc(prev_solution_vector, wf%n_parameters, 1)
+               prev_solution_vector = zero
+!
+               call wf%mem%alloc(c_i, wf%n_parameters, 1)
+!
+!              Calculate X_j = sum_i x_j_i * c_i (for the root j)
+!
+               do trial = 1, reduced_dim
+!
+                  c_i = zero
+                  read(unit_trial_vecs, rec=trial, iostat=ioerror, iomsg = iostring) c_i
+                  call daxpy(wf%n_parameters, solution_vectors_reduced(trial,root-1), c_i, 1, prev_solution_vector, 1)
+!
+                  if (ioerror .ne. 0) write(unit_output,*) 'Error reading trial vecs in get_next_trial_vectors', ioerror, iostring
+!
+               enddo
+!
+               call wf%mem%dealloc(c_i, wf%n_parameters, 1)
+!
+!              Calculate norm of the previous solution vector and normalize 
+!
+               norm_prev_solution_vector = sqrt(ddot(wf%n_parameters, prev_solution_vector, 1, prev_solution_vector, 1))
+!
+!              - e^(I) X^(R)
+!
+               call daxpy(wf%n_parameters, eigenvalues_Im(root, 1), prev_solution_vector, 1, residual, 1)
+!
+               call wf%mem%dealloc(prev_solution_vector, wf%n_parameters, 1)
+!
+!              Scale the residual with the appropriate norm 
+!
+               call dscal(wf%n_parameters, one/(sqrt(norm_solution_vector**2+norm_prev_solution_vector**2)), residual, 1)
+!
+            endif 
+!
+         else ! Not a complex root
+!
+!           Scale the residual with the appropriate norm (when the root is not complex)
+!
+            call dscal(wf%n_parameters, one/norm_solution_vector, residual, 1)
+!
+         endif ! End of complex root modification to routine 
 !
 !        Calculate norm of residual || AX - eX ||
 !
