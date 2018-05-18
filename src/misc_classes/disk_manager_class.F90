@@ -105,7 +105,7 @@ contains
 !
       read(scratch_size%unit, *) size_of_directory
 !
-      write(unit_output,'(/t3,a32,i15)') 'Size of scratch directory (MB): ',size_of_directory
+      write(unit_output,'(/t3,a36,i15)') 'Size of calculation directory (MB): ',size_of_directory
 !
       size_of_directory = size_of_directory*1000 ! Megabytes to bytes 
 !

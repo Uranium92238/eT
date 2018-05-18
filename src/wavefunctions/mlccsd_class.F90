@@ -685,7 +685,7 @@ module mlccsd_class
       end subroutine calc_ampeqs_norm_mlccsd
 !
 !
-   module subroutine new_amplitudes_mlccsd(wf)
+   module subroutine new_amplitudes_mlccsd(wf, diis_ground_state)
 !!
 !!     New Amplitudes (MLCCSD)
 !!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -693,6 +693,8 @@ module mlccsd_class
       implicit none 
 !
       class(mlccsd) :: wf 
+!
+      class(diis) :: diis_ground_state
 !
    end subroutine new_amplitudes_mlccsd
 !

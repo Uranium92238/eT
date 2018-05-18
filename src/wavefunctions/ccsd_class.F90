@@ -248,7 +248,7 @@ module ccsd_class
       end subroutine calc_ampeqs_norm_ccsd
 !
 !
-      module subroutine new_amplitudes_ccsd(wf)
+      module subroutine new_amplitudes_ccsd(wf, diis_ground_state)
 !!
 !!       New amplitudes (CCSD)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -256,6 +256,8 @@ module ccsd_class
          implicit none 
 !
          class(ccsd) :: wf 
+!
+         class(diis) :: diis_ground_state
 !
       end subroutine new_amplitudes_ccsd
 !

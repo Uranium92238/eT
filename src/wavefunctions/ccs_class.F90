@@ -466,7 +466,7 @@ module ccs_class
       end subroutine calc_ampeqs_norm_ccs
 !
 !
-      module subroutine new_amplitudes_ccs(wf)
+      module subroutine new_amplitudes_ccs(wf, diis_ground_state)
 !!
 !!       New Amplitudes (CCS)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -474,6 +474,8 @@ module ccs_class
          implicit none 
 !
          class(ccs) :: wf 
+!
+         class(diis) :: diis_ground_state
 !
       end subroutine new_amplitudes_ccs
 !

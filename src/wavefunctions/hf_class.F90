@@ -24,6 +24,7 @@ module hf_class
    use response_calc_specs_class
    use memory_manager_class
    use disk_manager_class
+   use diis_solver_class
 !
    implicit none
 !

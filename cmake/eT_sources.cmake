@@ -10,6 +10,7 @@ set(eT_fortran_sources
    src/wavefunctions/mlcc2_class.F90
    src/wavefunctions/mlccsd_class.F90
    src/wavefunctions/sccsd_class.F90
+   src/solvers/diis_solver_class.F90
    src/misc_classes/ground_state_specs_class.F90
    src/misc_classes/excited_state_specs_class.F90
    src/misc_classes/core_excited_state_specs_class.F90
