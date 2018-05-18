@@ -126,6 +126,7 @@ module ccs_class
 !     DIIS component of solver, with helper routines 
 !
       procedure, non_overridable :: diis     => diis_ccs
+      procedure, non_overridable :: diis_2     => diis_2_ccs
 !
       procedure :: new_amplitudes            => new_amplitudes_ccs
       procedure :: calc_ampeqs               => calc_ampeqs_ccs
@@ -138,8 +139,9 @@ module ccs_class
 !
 !     Driver and solver 
 !
-      procedure                  :: excited_state_driver => excited_state_driver_ccs 
-      procedure, non_overridable :: excited_state_solver => excited_state_solver_ccs
+      procedure                  :: excited_state_driver      => excited_state_driver_ccs 
+      procedure, non_overridable :: excited_state_solver      => excited_state_solver_ccs
+      procedure, non_overridable :: excited_state_solver_diis => excited_state_solver_diis_ccs
 !
 !     Preparations and cleanup routines (before and after solver)
 !
@@ -507,6 +509,21 @@ module ccs_class
       end subroutine diis_ccs
 !
 !
+      module subroutine diis_2_ccs(wf,dt,t_dt)
+!!
+!!       DIIS (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+         implicit none 
+!
+         class(ccs), intent(in)   :: wf 
+!
+         real(dp), dimension(wf%n_parameters, 1) :: dt 
+         real(dp), dimension(wf%n_parameters, 1) :: t_dt 
+!
+      end subroutine diis_2_ccs
+!
+!
    end interface 
 !
 !
@@ -587,7 +604,7 @@ module ccs_class
 !
       module subroutine excited_state_solver_ccs(wf)
 !!
-!!       Excited State Solver
+!!       Excited state solver
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!  
          implicit none
@@ -595,6 +612,18 @@ module ccs_class
          class(ccs) :: wf
 !
       end subroutine excited_state_solver_ccs
+!
+!
+      module subroutine excited_state_solver_diis_ccs(wf)
+!!
+!!       Excited state diis solver
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2018
+!!  
+         implicit none
+!  
+         class(ccs) :: wf
+!
+      end subroutine excited_state_solver_diis_ccs
 !
 !
       module subroutine excited_state_restart_ccs(wf)

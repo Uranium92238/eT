@@ -398,6 +398,11 @@ contains
             read(unit_input, *) wf%excited_state_specifications%n_triplet_states
             cycle
 !
+         elseif (trim(line) == 'algorithm:') then ! Which algorithm to use 
+!
+            read(unit_input, *) wf%excited_state_specifications%algorithm
+            cycle
+!
          elseif (trim(line) == 'start_vectors:') then ! Start vector provided in eT.inp
 !
             wf%excited_state_specifications%user_specified_start_vector = .true.

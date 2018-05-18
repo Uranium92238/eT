@@ -36,6 +36,12 @@ submodule(ccs_class) excited_state
    logical :: converged_energy   = .false.
    logical :: converged_residual = .false.
 !
+   integer(i15) :: unit_dt          = -1   ! Unit identifier for Δ t_i file 
+   integer(i15) :: unit_t_dt        = -1   ! Unit identifier for t_i + Δ t_i file
+   integer(i15) :: unit_diis_matrix = -1   ! Unit identifier for DIIS matrix file
+!
+   integer(i15), parameter :: diis_dim = 9 ! The maximum dimension of the DIIS matrix, plus 1 
+!
 !
 contains
 !
@@ -82,7 +88,18 @@ contains
 !     by the task, i.e., the file 'right_valence' contains
 !     the right eigenvectors)
 !
-      call wf%excited_state_solver
+      if (trim(wf%excited_state_specifications%algorithm) .eq. 'diis') then
+! 
+         write(unit_output,*) 'Calling diis for excited states!'
+         flush(unit_output)
+!
+         call wf%excited_state_solver_diis ! DIIS solver 
+!
+      else
+!
+         call wf%excited_state_solver      ! Davidson solver 
+!
+      endif 
 !
 !     Final work and preparations for other tasks (such as property calculations)
 !
@@ -426,6 +443,404 @@ contains
       call wf%mem%dealloc(eigenvalues_Re_new, wf%excited_state_specifications%n_singlet_states, 1)
 !
    end subroutine excited_state_solver_ccs
+!
+!
+   module subroutine excited_state_solver_diis_ccs(wf)
+!!
+!!    Excited state diis solver
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2018
+!!
+!!    Directs the solution of the excited states using a DIIS algorithm.
+!!    The routine aims to solve the eigenvalue problem
+!!
+!!       A X = e X,  
+!!
+!!    where the eigenvalues are the excitation energies. 
+!!
+!!    The algorithm proceeds by solving the residual equation,
+!!
+!!       R = (A X - e X) / || X ||,
+!!
+!!    where e = X^T A X / X^T X is the excitation energy. The residual is
+!!    preconditioned by the orbital differences, as in the Davidson algorithm.
+!!
+!!    Note: initial implementation will be a single-root algorithm, though
+!!    it should obviously be generalized to an arbitrary numer of roots eventually
+!!
+      implicit none
+!  
+      class(ccs) :: wf
+!
+      real(dp)                              :: excitation_energy ! e 
+      real(dp), dimension(:,:), allocatable :: excitation_vector ! X 
+      real(dp), dimension(:,:), allocatable :: excitation_vector_copy ! X
+!
+      real(dp), dimension(:,:), allocatable :: transformed_excitation_vector ! A X 
+      real(dp), dimension(:,:), allocatable :: excitation_vector_residual    ! A X - e X / || X || 
+!
+      integer(i15) :: unit_trial_vecs = 0, unit_rho = 0, unit_solution = 0, ioerror = 0
+!
+      real(dp) :: ddot, norm_excitation_vector, norm_excitation_vector_residual
+!
+      real(dp), parameter :: diis_damping = 1.0D0
+!
+!     Initialize convergence logicals & iteration integer
+!
+      converged          = .false. 
+      converged_energy   = .false.
+      converged_residual = .false.
+!
+      iteration = 1
+!
+!     Test whether the user requested more than one root & quit if this is the case 
+!
+      if (wf%excited_state_specifications%n_singlet_states .gt. 1) then 
+!
+         write(unit_output,'(/t3,a)') 'Error: DIIS solver currently only supports one root.'
+         stop
+!
+      endif
+!
+!     If restart use old solution vectors for first start vectors
+!
+      if (wf%excited_state_specifications%restart) then 
+!
+!        Restart (standard: use old solutions as initial trial vectors)
+!
+         write(unit_output,'(/t3,a)') 'Requested restart. Preparing for restart.'
+         call wf%excited_state_restart
+!
+      else
+!
+!        Find start trial vectors and store them to the trial_vec file
+!
+         call wf%initialize_trial_vectors
+!
+      endif
+!
+!     Read the perturbative estimate of the excitation vector (the first trial vector)
+!
+      call wf%mem%alloc(excitation_vector, wf%n_parameters, 1)
+      excitation_vector = zero 
+!
+      call generate_unit_identifier(unit_trial_vecs)
+      open(unit=unit_trial_vecs, file='trial_vec', action='readwrite', status='unknown', &
+           access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror)
+!
+      read(unit_trial_vecs, rec=1, iostat=ioerror) excitation_vector
+!
+      close(unit_trial_vecs)
+!
+      if (ioerror .ne. 0) then 
+!
+         write(unit_output, '(/t3,a)') 'Could not read initial excitation vector from trial vector file.'
+         stop
+!
+      endif
+!
+!     Open DIIS files 
+!
+      call generate_unit_identifier(unit_dt)
+      open(unit=unit_dt,file='diis_xt',status='unknown',form='unformatted')
+!
+      call generate_unit_identifier(unit_t_dt)
+      open(unit=unit_t_dt,file='diis_x_dx',status='unknown',form='unformatted')
+!
+      call generate_unit_identifier(unit_diis_matrix)
+      open(unit=unit_diis_matrix,file='diis_matrix_exc',status='unknown',form='unformatted')
+!
+!     Enter iterative loop
+!
+      do while (.not. converged .and. iteration .le. wf%excited_state_specifications%max_iterations) 
+!
+!        Transform trial vector (i.e., current estimate of excitation vector) 
+!
+         call wf%transform_trial_vectors(1, 1) ! Only one vector to transform (from 1 to 1)
+!
+         call wf%mem%alloc(transformed_excitation_vector, wf%n_parameters, 1)
+         transformed_excitation_vector = zero 
+!
+!        Read the transformed vector, A X 
+!
+         call generate_unit_identifier(unit_rho)
+         open(unit=unit_rho, file='transformed_vec', action='read', status='unknown', &
+           access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
+!
+         read(unit_rho, rec=1, iostat=ioerror) transformed_excitation_vector
+!
+         close(unit_rho)
+!
+         if (ioerror .ne. 0) then 
+!
+            write(unit_output, '(/t3,a)') 'Could not read transformed excitation vector from transformed vector file.'
+            stop
+!
+         endif
+!
+!        Calculate the excitation energy, X^T A X / X^T X 
+!
+         norm_excitation_vector = ddot(wf%n_parameters, excitation_vector, 1, excitation_vector, 1)
+!
+         excitation_energy = ddot(wf%n_parameters, excitation_vector, 1, transformed_excitation_vector, 1)/norm_excitation_vector
+!
+         write(unit_output, *) 'Iteration:', iteration
+         write(unit_output, *) 'Excitation energy:', excitation_energy
+!
+!        Calculate the residual, R = A X - e X 
+!
+         call wf%mem%alloc(excitation_vector_residual, wf%n_parameters, 1)
+         excitation_vector_residual = zero 
+!
+         call daxpy(wf%n_parameters, one, transformed_excitation_vector, 1, excitation_vector_residual, 1)
+         call daxpy(wf%n_parameters, -excitation_energy, excitation_vector, 1, excitation_vector_residual, 1)
+!
+         excitation_vector_residual = excitation_vector_residual/sqrt(norm_excitation_vector)
+!
+!        Precondition the residual 
+!
+     !    call wf%precondition_residual(excitation_vector_residual)
+!
+!        Calculate the residual norm & print to output 
+!
+         norm_excitation_vector_residual = ddot(wf%n_parameters, excitation_vector_residual, 1, excitation_vector_residual, 1)
+!
+         write(unit_output,*) 'Residual:', sqrt(norm_excitation_vector_residual)
+         write(unit_output,*)
+         flush(unit_output)
+!
+         call wf%mem%dealloc(transformed_excitation_vector, wf%n_parameters, 1)
+!
+!        If not converged, find a new estimate for the excitation vector 
+!
+         if (sqrt(norm_excitation_vector_residual) .gt. wf%excited_state_specifications%residual_threshold) then 
+!
+!           Perform DIIS update
+!
+            call wf%mem%alloc(excitation_vector_copy, wf%n_parameters, 1)
+            excitation_vector_copy = zero 
+            excitation_vector_copy = excitation_vector
+!
+            call daxpy(wf%n_parameters, one, excitation_vector_residual, 1, excitation_vector, 1)
+!
+            call wf%diis_2(excitation_vector_residual, excitation_vector) ! A copy of the routine... must soon be generalized 
+                                                                        ! On exit, the estimate is placed in the first argument
+!
+            excitation_vector = (one-diis_damping)*excitation_vector_copy+diis_damping*excitation_vector_residual
+            call wf%mem%dealloc(excitation_vector_copy, wf%n_parameters, 1)
+!
+!           Save this in the trial vector file
+!
+            norm_excitation_vector = ddot(wf%n_parameters, excitation_vector, 1, excitation_vector, 1)
+            write(unit_output,*) 'norm of solution estimate:', norm_excitation_vector
+        !    excitation_vector = excitation_vector/sqrt(norm_excitation_vector)
+!
+            call generate_unit_identifier(unit_trial_vecs)
+            open(unit=unit_trial_vecs, file='trial_vec', action='readwrite', status='unknown', &
+               access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror)
+!
+            write(unit_trial_vecs, rec=1, iostat=ioerror) excitation_vector
+!
+            close(unit_trial_vecs)
+!
+            if (ioerror .ne. 0) then 
+!
+               write(unit_output, '(/t3,a)') 'Could not write trial excitation vector to trial vector file.'
+               stop
+!
+            endif
+!
+            iteration = iteration + 1
+!
+         else 
+!
+            write(unit_output,*) 'Converged!'
+!
+            call generate_unit_identifier(unit_solution)
+            open(unit=unit_solution, file=wf%excited_state_specifications%solution_file,&
+            action='write', status='unknown', &
+            access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
+!
+            write(unit_solution, rec=1, iostat=ioerror) excitation_vector/sqrt(norm_excitation_vector)
+!
+            close(unit_solution)
+!
+            stop
+!
+         endif 
+!
+         call wf%mem%dealloc(excitation_vector_residual, wf%n_parameters, 1)
+!
+      enddo
+!
+!     Close the DIIS files
+!
+      close(unit_dt)
+      close(unit_t_dt)
+      close(unit_diis_matrix)
+!
+      call wf%mem%dealloc(excitation_vector, wf%n_parameters, 1)
+!
+   end subroutine excited_state_solver_diis_ccs
+!
+!
+    module subroutine diis_2_ccs(wf, dt, t_dt)
+!!
+!!    DIIS routine
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!    The next amplitudes are 
+!!
+!!       t_n+1 = sum_k w_k (t_k + dt_k), 
+!! 
+!!    where the weights w_k in front of the quasi-Newton estimate dt_k
+!!    are determined so as to minimize 
+!!
+!!       f(w_k) = sum_k w_k dt_k, 
+!!
+!!    with the constraint that g(w_k) = sum_k w_k - 1 = 0.
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_parameters, 1) :: dt 
+      real(dp), dimension(wf%n_parameters, 1) :: t_dt 
+!
+      real(dp), dimension(:,:), allocatable :: dt_i ! To hold previous Δ t_i temporarily
+!
+      real(dp) :: ddot
+!
+      integer(i15) :: i = 0, j = 0
+!
+      integer      :: info = -1         ! Error integer for dgesv routine (LU factorization)
+      integer(i15) :: current_index = 0 ! Progressing as follows: 1,2,...,7,8,1,2,...
+!
+      real(dp), dimension(:,:), allocatable :: diis_vector
+      real(dp), dimension(:,:), allocatable :: diis_matrix
+!
+      integer(i15), dimension(diis_dim) :: ipiv = 0 ! Pivot integers (see dgesv routine)
+!
+!     Set the current index 
+!
+      current_index = iteration - (diis_dim-1)*((iteration-1)/(diis_dim-1)) ! 1,2,...,7,8,1,2,...
+!
+!     :: Save (Δ t_i) and (t_i + Δ t_i) to files ::
+!
+      if (current_index .eq. 1) then  
+         rewind(unit_dt)
+         rewind(unit_t_dt)
+      endif
+!
+      write(unit_dt)   (dt(i,1), i = 1, wf%n_parameters)
+      write(unit_t_dt) (t_dt(i,1), i = 1, wf%n_parameters)
+!
+!     :: Solve the least squares problem, G * w = H ::
+!
+!        G : DIIS matrix, G_ij = Δ t_i Δ t_j,
+!        H : DIIS vector,  H_i = 0,
+!
+!     where i, j = 1, 2, ..., current_index. To enforce normality
+!     of the solution, G is extended with a row & column of -1's 
+!     and H with a -1 at the end.
+!
+!     First set the DIIS vector to one 
+!
+      call wf%mem%alloc(diis_vector,current_index+1,1)
+      diis_vector = zero 
+!
+!     Allocate the DIIS matrix and read in previous matrix elements
+!
+      call wf%mem%alloc(diis_matrix, current_index+1, current_index+1)
+      diis_matrix = zero 
+!
+      if (current_index .gt. 1) then 
+!
+         rewind(unit_diis_matrix)
+!
+         do j = 1, current_index - 1
+            do i = 1, current_index - 1
+!
+               read(unit_diis_matrix) diis_matrix(i,j)
+!
+            enddo
+         enddo
+!
+      endif
+!
+!     Get the parts of the DIIS matrix G not constructed in 
+!     the previous iterations 
+!
+      call wf%mem%alloc(dt_i, wf%n_parameters, 1) ! Allocate temporary holder of quasi-Newton estimates
+      dt_i = zero 
+!
+      rewind(unit_dt)
+!
+      do i = 1, current_index
+!
+         read(unit_dt) (dt_i(j,1), j = 1, wf%n_parameters) 
+!
+         diis_matrix(current_index,i) = ddot(wf%n_parameters, dt, 1, dt_i, 1) 
+         diis_matrix(i,current_index) = diis_matrix(current_index,i)
+!
+         diis_matrix(current_index+1,i) = -one
+         diis_matrix(i,current_index+1) = -one 
+!
+      enddo
+!
+      diis_vector(current_index+1,1) = -one
+!
+!     Write the current DIIS matrix to file 
+!
+      rewind(unit_diis_matrix)
+!
+      do j = 1, current_index
+         do i = 1, current_index
+!
+            write(unit_diis_matrix) diis_matrix(i,j)
+!
+         enddo
+      enddo
+!
+!     Solve the DIIS equation 
+!
+!     Note: on exit, the solution is in the diis_vector,
+!     provided info = 0 (see LAPACK documentation for more)
+!
+      call dgesv(current_index+1,  &
+                  1,               &
+                  diis_matrix,     &
+                  current_index+1, &
+                  ipiv,            &
+                  diis_vector,     &
+                  current_index+1, &
+                  info)
+!
+!     :: Update the amplitudes (placed in dt on exit) ::
+!
+      dt = zero
+!
+      rewind(unit_t_dt)
+!
+      do i = 1, current_index
+!
+!        Read the t_i + Δ t_i vector 
+!
+         t_dt = zero
+         read(unit_t_dt) (t_dt(j, 1), j = 1, wf%n_parameters)
+!
+!        Add w_i (t_i + Δ t_i) to the amplitudes 
+!
+         call daxpy(wf%n_parameters, diis_vector(i, 1), t_dt, 1, dt, 1)
+!
+      enddo
+!
+!     Deallocations 
+!
+      call wf%mem%dealloc(dt_i, wf%n_parameters, 1)
+      call wf%mem%dealloc(diis_vector, current_index + 1, 1)
+      call wf%mem%dealloc(diis_matrix, current_index + 1, current_index+1)
+!
+   end subroutine diis_2_ccs
 !
 !
    module subroutine excited_state_cleanup_ccs(wf)
