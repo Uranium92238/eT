@@ -64,8 +64,8 @@ contains
 !
 !     Let the user know the excited state driver is running
 !
-      write(unit_output,'(/t3,a)')    ':: Excited state solver (Davidson)'
-      write(unit_output,'(t3,a/)')   ':: E. F. Kjønstad, S. D. Folkestad, May 2017'
+      write(unit_output,'(/t3,a)')    ':: Excited state solver'
+      write(unit_output,'(t3,a/)')   ':: E. F. Kjønstad, S. D. Folkestad, 2017-2018'
       write(unit_output,'(t3,a,i2,a,a,a)') &
                                      'Requested',wf%excited_state_specifications%n_singlet_states,&
                                      ' ', trim(wf%name), ' singlet states.'
@@ -90,12 +90,15 @@ contains
 !
       if (trim(wf%excited_state_specifications%algorithm) .eq. 'diis') then
 ! 
-         write(unit_output,*) 'Calling diis for excited states!'
+         write(unit_output,'(t6,a)') 'Solver:              DIIS'
          flush(unit_output)
 !
          call wf%excited_state_solver_diis ! DIIS solver 
 !
       else
+!
+         write(unit_output,'(t6,a)') 'Solver:              Davidson'
+         flush(unit_output)
 !
          call wf%excited_state_solver      ! Davidson solver 
 !
@@ -471,7 +474,11 @@ contains
 !  
       class(ccs) :: wf
 !
-      real(dp)                              :: excitation_energy ! e 
+      type(diis) :: excited_state_diis 
+!
+      real(dp), dimension(1,1) :: excitation_energy ! e 
+      real(dp), dimension(1,1) :: prev_excitation_energy
+!
       real(dp), dimension(:,:), allocatable :: excitation_vector ! X 
       real(dp), dimension(:,:), allocatable :: excitation_vector_copy ! X
 !
@@ -484,7 +491,17 @@ contains
 !
       real(dp) :: ddot, norm_excitation_vector, norm_excitation_vector_residual
 !
+      real(dp) :: start_excited_state_solver, end_excited_state_solver
+!
       real(dp), parameter :: diis_damping = 1.0D0
+!
+!     Being timings
+!
+      call cpu_time(start_excited_state_solver)
+!
+!     Initialize DIIS object 
+!
+      call excited_state_diis%init('excited_state', wf%n_parameters)
 !
 !     Initialize convergence logicals & iteration integer
 !
@@ -540,20 +557,19 @@ contains
 !
       endif
 !
-!     Open DIIS files 
-!
-      call generate_unit_identifier(unit_dt)
-      open(unit=unit_dt,file='diis_xt',status='unknown',form='unformatted')
-!
-      call generate_unit_identifier(unit_t_dt)
-      open(unit=unit_t_dt,file='diis_x_dx',status='unknown',form='unformatted')
-!
-      call generate_unit_identifier(unit_diis_matrix)
-      open(unit=unit_diis_matrix,file='diis_matrix_exc',status='unknown',form='unformatted')
-!
 !     Enter iterative loop
 !
+      write(unit_output,'(/t3,a)')   'Iter.    Excitation energy    Norm of residual vec.'
+      write(unit_output,'(t3,a)')    '---------------------------------------------------' 
+      flush(unit_output)
+!
+      excitation_energy = zero ! Initial value, to avoid issues with first iteration of loop
+!
       do while (.not. converged .and. iteration .le. wf%excited_state_specifications%max_iterations) 
+!
+!        Save the previous energy 
+!
+         prev_excitation_energy = excitation_energy
 !
 !        Transform trial vector (i.e., current estimate of excitation vector) 
 !
@@ -583,10 +599,8 @@ contains
 !
          norm_excitation_vector = ddot(wf%n_parameters, excitation_vector, 1, excitation_vector, 1)
 !
-         excitation_energy = ddot(wf%n_parameters, excitation_vector, 1, transformed_excitation_vector, 1)/norm_excitation_vector
-!
-         write(unit_output, *) 'Iteration:', iteration
-         write(unit_output, *) 'Excitation energy:', excitation_energy
+         excitation_energy(1,1) = &
+               ddot(wf%n_parameters, excitation_vector, 1, transformed_excitation_vector, 1)/norm_excitation_vector
 !
 !        Calculate the residual, R = A X - e X 
 !
@@ -594,7 +608,7 @@ contains
          excitation_vector_residual = zero 
 !
          call daxpy(wf%n_parameters, one, transformed_excitation_vector, 1, excitation_vector_residual, 1)
-         call daxpy(wf%n_parameters, -excitation_energy, excitation_vector, 1, excitation_vector_residual, 1)
+         call daxpy(wf%n_parameters, -excitation_energy(1,1), excitation_vector, 1, excitation_vector_residual, 1)
 !
          excitation_vector_residual = excitation_vector_residual/sqrt(norm_excitation_vector)
 !
@@ -607,26 +621,34 @@ contains
 !
          do i = 1, wf%n_parameters
 !
-            excitation_vector_residual(i, 1) = excitation_vector_residual(i, 1)/(orbital_diff(i,1)-excitation_energy)
+            excitation_vector_residual(i, 1) = excitation_vector_residual(i, 1)/(orbital_diff(i,1)-excitation_energy(1,1))
 !
          enddo 
 !
          call wf%mem%dealloc(orbital_diff, wf%n_parameters, 1)
-     !    call wf%precondition_residual(excitation_vector_residual)
 !
 !        Calculate the residual norm & print to output 
 !
          norm_excitation_vector_residual = ddot(wf%n_parameters, excitation_vector_residual, 1, excitation_vector_residual, 1)
 !
-         write(unit_output,*) 'Residual:', sqrt(norm_excitation_vector_residual)
-         write(unit_output,*)
-         flush(unit_output)
+!        Print information to output 
+!
+         write(unit_output,'(t3,i3,5x,f15.12,7x,e10.4)') iteration, excitation_energy, sqrt(norm_excitation_vector_residual) 
+         flush(unit_output) ! Flush so that the user can follow each iteration in real-time
 !
          call wf%mem%dealloc(transformed_excitation_vector, wf%n_parameters, 1)
 !
+!        Do convergence tests 
+!
+         converged_energy   = abs(excitation_energy(1,1)-prev_excitation_energy(1,1)) &
+                                 .lt. wf%excited_state_specifications%energy_threshold
+!
+         converged_residual = norm_excitation_vector_residual .lt. wf%excited_state_specifications%residual_threshold
+!
 !        If not converged, find a new estimate for the excitation vector 
 !
-         if (sqrt(norm_excitation_vector_residual) .gt. wf%excited_state_specifications%residual_threshold) then 
+         if ((.not. (converged_energy .and. converged_residual)) .and. &
+             (.not. (converged_residual .and. iteration .eq. 1))) then ! Perform a DIIS step
 !
 !           Perform DIIS update
 !
@@ -636,8 +658,7 @@ contains
 !
             call daxpy(wf%n_parameters, one, excitation_vector_residual, 1, excitation_vector, 1)
 !
-            call wf%diis_2(excitation_vector_residual, excitation_vector) ! A copy of the routine... must soon be generalized 
-                                                                        ! On exit, the estimate is placed in the first argument
+            call excited_state_diis%update(excitation_vector_residual, excitation_vector, wf%disk, wf%mem)
 !
             excitation_vector = (one-diis_damping)*excitation_vector_copy+diis_damping*excitation_vector_residual
             call wf%mem%dealloc(excitation_vector_copy, wf%n_parameters, 1)
@@ -645,8 +666,6 @@ contains
 !           Save this in the trial vector file
 !
             norm_excitation_vector = ddot(wf%n_parameters, excitation_vector, 1, excitation_vector, 1)
-            write(unit_output,*) 'norm of solution estimate:', norm_excitation_vector
-        !    excitation_vector = excitation_vector/sqrt(norm_excitation_vector)
 !
             call generate_unit_identifier(unit_trial_vecs)
             open(unit=unit_trial_vecs, file='trial_vec', action='readwrite', status='unknown', &
@@ -667,7 +686,14 @@ contains
 !
          else 
 !
-            write(unit_output,*) 'Converged!'
+            converged = .true.
+!
+            write(unit_output,'(t3,a)')    '---------------------------------------------------' 
+            if (iteration .eq. 1 .and. wf%name .ne. 'CCS') write(unit_output,'(/t3,a,/t3,a)') &
+                                                                  'Note: residual converged in first iteration.', &
+                                                                    'Energy convergence therefore not tested in this calculation.'
+!
+            write(unit_output,'(/t3,a,i3,a/)')  'Converged in ', iteration, ' iterations!'
 !
             call generate_unit_identifier(unit_solution)
             open(unit=unit_solution, file=wf%excited_state_specifications%solution_file,&
@@ -678,19 +704,40 @@ contains
 !
             close(unit_solution)
 !
-            stop
+            call wf%summary_excited_state_info(excitation_energy)
+!
+!           End and print timings
+!
+            call cpu_time(end_excited_state_solver)
+!
+!           Print summary
+!
+            write(unit_output,'(//t3,a,a,a/)')'Summary of ', trim(wf%name), ' excited state calculation:'
+            write(unit_output,'(t6,a25,f14.8/)') 'Total CPU time (seconds):    ', &
+                                                end_excited_state_solver - start_excited_state_solver
+            flush(unit_output)
+
+            write(unit_output,'(t6,a10,4x,a13,11x,a11,9x,a14)')'Excitation', 'energy [a.u.]', 'energy [eV]', 'energy [cm^-1]'
+            write(unit_output,'(t6,a)')'---------------------------------------------------------------------------------'
+!
+            do i = 1, wf%excited_state_specifications%n_singlet_states
+!
+!           Print energy of excitation in eV, hartree and cm^-1
+!
+               write(unit_output,'(t6,i3,6x,f19.12,5x,f19.12,5x,f25.12)') 1, excitation_energy,           &
+                                                                             excitation_energy*27.211399, &
+                                                                             excitation_energy*219474.63
+            enddo
+!
+            write(unit_output,'(t6,a)')'---------------------------------------------------------------------------------'
+            write(unit_output,'(t6,a)') '1 a.u. = 27.211399 eV'
+            write(unit_output,'(t6,a)') '1 a.u. = 219474.63 cm^-1'
 !
          endif 
 !
          call wf%mem%dealloc(excitation_vector_residual, wf%n_parameters, 1)
 !
       enddo
-!
-!     Close the DIIS files
-!
-      close(unit_dt)
-      close(unit_t_dt)
-      close(unit_diis_matrix)
 !
       call wf%mem%dealloc(excitation_vector, wf%n_parameters, 1)
 !

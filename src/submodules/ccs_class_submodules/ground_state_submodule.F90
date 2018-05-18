@@ -258,8 +258,8 @@ contains
 !     Print summary
 !
       write(unit_output,'(/t3,a,a,a/)')'Summary of ', trim(wf%name), ' ground state calculation:'
-      write(unit_output,'(t6,a25,f14.8)')  'Total energy (hartrees):  ', wf%energy
-      write(unit_output,'(t6,a25,f14.8/)') 'Total time CPU (seconds): ', end_gs_solver - start_gs_solver
+      write(unit_output,'(t6,a25,f19.12)')  'Total energy (hartrees):  ', wf%energy
+      write(unit_output,'(t6,a25,f19.12/)') 'Total time CPU (seconds): ', end_gs_solver - start_gs_solver
       flush(unit_output)
 !
 !     Save the amplitudes 
