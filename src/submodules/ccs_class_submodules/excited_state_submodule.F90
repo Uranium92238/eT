@@ -478,7 +478,9 @@ contains
       real(dp), dimension(:,:), allocatable :: transformed_excitation_vector ! A X 
       real(dp), dimension(:,:), allocatable :: excitation_vector_residual    ! A X - e X / || X || 
 !
-      integer(i15) :: unit_trial_vecs = 0, unit_rho = 0, unit_solution = 0, ioerror = 0
+      real(dp), dimension(:,:), allocatable :: orbital_diff
+!
+      integer(i15) :: unit_trial_vecs = 0, unit_rho = 0, unit_solution = 0, ioerror = 0, i = 0
 !
       real(dp) :: ddot, norm_excitation_vector, norm_excitation_vector_residual
 !
@@ -598,6 +600,18 @@ contains
 !
 !        Precondition the residual 
 !
+         call wf%mem%alloc(orbital_diff, wf%n_parameters, 1)
+         orbital_diff = zero
+!
+         call wf%calculate_orbital_differences(orbital_diff)
+!
+         do i = 1, wf%n_parameters
+!
+            excitation_vector_residual(i, 1) = excitation_vector_residual(i, 1)/(orbital_diff(i,1)-excitation_energy)
+!
+         enddo 
+!
+         call wf%mem%dealloc(orbital_diff, wf%n_parameters, 1)
      !    call wf%precondition_residual(excitation_vector_residual)
 !
 !        Calculate the residual norm & print to output 
