@@ -50,7 +50,7 @@ contains
    end subroutine calc_ampeqs_norm_ccsd
 !
 !
-   module subroutine new_amplitudes_ccsd(wf)
+   module subroutine new_amplitudes_ccsd(wf, diis_ground_state)
 !
 !     New amplitudes (CCSD)
 !     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -62,6 +62,8 @@ contains
       implicit none 
 !
       class(ccsd) :: wf 
+!
+      class(diis) :: diis_ground_state
 !
       integer(i15) :: i = 0 ! for debug purposes
 !
@@ -91,7 +93,8 @@ contains
 !     Save estimates to file and get the next amplitudes
 !     (they are placed in dt on exit from diis) 
 !
-      call wf%diis(dt, t_dt)
+   !   call wf%diis(dt, t_dt)
+      call diis_ground_state%update(dt, t_dt, wf%disk, wf%mem)
 !
 !     Set the new amplitudes 
 !

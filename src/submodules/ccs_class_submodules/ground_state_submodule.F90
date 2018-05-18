@@ -139,6 +139,8 @@ contains
 !
       class(ccs) :: wf 
 !
+      type(diis) :: ground_state_diis 
+!
       real(dp) :: prev_energy
       real(dp) :: ampeqs_norm
 !
@@ -158,16 +160,20 @@ contains
 !
       endif
 !
+!     Initialize DIIS object  
+!
+      call ground_state_diis%init('ground_state', wf%n_parameters)
+!
 !     Open DIIS files 
 !
-      call generate_unit_identifier(unit_dt)
-      open(unit=unit_dt,file='diis_dt',status='unknown',form='unformatted')
-!
-      call generate_unit_identifier(unit_t_dt)
-      open(unit=unit_t_dt,file='diis_t_dt',status='unknown',form='unformatted')
-!
-      call generate_unit_identifier(unit_diis_matrix)
-      open(unit=unit_diis_matrix,file='diis_matrix',status='unknown',form='unformatted')
+!       call generate_unit_identifier(unit_dt)
+!       open(unit=unit_dt,file='diis_dt',status='unknown',form='unformatted')
+! !
+!       call generate_unit_identifier(unit_t_dt)
+!       open(unit=unit_t_dt,file='diis_t_dt',status='unknown',form='unformatted')
+! !
+!       call generate_unit_identifier(unit_diis_matrix)
+!       open(unit=unit_diis_matrix,file='diis_matrix',status='unknown',form='unformatted')
 !
 !     Enter iterative loop
 !
@@ -233,7 +239,8 @@ contains
 !
 !           Update the amplitudes for the next iteration 
 !       
-            call wf%new_amplitudes
+        !    call wf%new_amplitudes
+            call wf%new_amplitudes(ground_state_diis)
             iteration = iteration + 1
 !
          endif
@@ -242,9 +249,9 @@ contains
 !
 !     Close the DIIS files
 !
-      close(unit_dt)
-      close(unit_t_dt)
-      close(unit_diis_matrix)
+      ! close(unit_dt)
+      ! close(unit_t_dt)
+      ! close(unit_diis_matrix)
 !
       call cpu_time(end_gs_solver)
 !
@@ -258,6 +265,16 @@ contains
 !     Save the amplitudes 
 !
        call wf%save_amplitudes
+!
+!     Issue an error & stop if the equations did not converge 
+!
+      if (.not. converged) then 
+!
+         write(unit_output,'(/t3,a)') 'Error: Ground state equations did not converge.'
+         write(unit_output,'(t3,a/)') 'Consider increasing the maximum number of iterations.'
+         stop
+!
+      endif
 !
    end subroutine ground_state_solver_ccs
 !
@@ -317,7 +334,7 @@ contains
    end subroutine calc_ampeqs_norm_ccs
 !
 !
-    module subroutine new_amplitudes_ccs(wf)
+    module subroutine new_amplitudes_ccs(wf, diis_ground_state)
 !!
 !!    New Amplitudes (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
@@ -329,6 +346,8 @@ contains
       implicit none 
 !
       class(ccs) :: wf 
+!
+      class(diis) :: diis_ground_state
 !
       real(dp), dimension(:,:), allocatable :: dt   ! Δ t_i
       real(dp), dimension(:,:), allocatable :: t_dt ! t_i + Δ t_i

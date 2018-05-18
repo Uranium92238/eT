@@ -15,6 +15,7 @@ module hf_class
    use utils
    use workspace
    use input_output
+   use file_class
    use calc_tasks_class
    use calc_settings_class
    use ground_state_specs_class
@@ -22,6 +23,8 @@ module hf_class
    use core_excited_state_specs_class
    use response_calc_specs_class
    use memory_manager_class
+   use disk_manager_class
+   use diis_solver_class
 !
    implicit none
 !
@@ -71,6 +74,10 @@ module hf_class
 !     Memory manager 
 !
       type(memory_manager) :: mem 
+!
+!     Disk space manager 
+!
+      type(disk_manager) :: disk 
 !
    contains
 !

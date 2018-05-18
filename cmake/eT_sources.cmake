@@ -10,6 +10,7 @@ set(eT_fortran_sources
    src/wavefunctions/mlcc2_class.F90
    src/wavefunctions/mlccsd_class.F90
    src/wavefunctions/sccsd_class.F90
+   src/solvers/diis_solver_class.F90
    src/misc_classes/ground_state_specs_class.F90
    src/misc_classes/excited_state_specs_class.F90
    src/misc_classes/core_excited_state_specs_class.F90
@@ -19,6 +20,8 @@ set(eT_fortran_sources
    src/misc_classes/mlcc_calculation_settings_class.F90
    src/misc_classes/mlcc_orbitals_class.F90
    src/misc_classes/memory_manager_class.F90
+   src/misc_classes/disk_manager_class.F90
+   src/misc_classes/file_class.F90
    src/misc_classes/batching_index_class.F90
    src/misc_classes/scc_calculation_settings_class.F90
    src/tools/types.F90
