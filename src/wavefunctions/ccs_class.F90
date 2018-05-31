@@ -2530,11 +2530,11 @@ module ccs_class
    end interface
 !
 !
-!     -::- Vector analysis submodule interface -::-
-!     ------------------------------------------
-!
    interface
 !
+!
+!     -::- Vector analysis submodule interface -::-
+!     ------------------------------------------
 !
       module subroutine print_dominant_singles_ccs(wf, vec)
 !!
