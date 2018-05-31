@@ -643,7 +643,7 @@ contains
          converged_energy   = abs(excitation_energy(1,1)-prev_excitation_energy(1,1)) &
                                  .lt. wf%excited_state_specifications%energy_threshold
 !
-         converged_residual = norm_excitation_vector_residual .lt. wf%excited_state_specifications%residual_threshold
+         converged_residual = sqrt(norm_excitation_vector_residual) .lt. wf%excited_state_specifications%residual_threshold
 !
 !        If not converged, find a new estimate for the excitation vector
 !
@@ -740,6 +740,13 @@ contains
       enddo
 !
       call wf%mem%dealloc(excitation_vector, wf%n_parameters, 1)
+!
+      if (.not. converged) then
+!
+         write(unit_output,'(/t3,a)') 'Error: maximum number of iterations reached without convergence.'
+         stop
+!
+      endif
 !
    end subroutine excited_state_solver_diis_ccs
 !
