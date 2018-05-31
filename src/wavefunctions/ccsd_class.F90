@@ -94,7 +94,6 @@ module ccsd_class
       procedure :: calc_quasi_Newton_doubles => calc_quasi_Newton_doubles_ccsd
 !
       procedure :: ground_state_preparations => ground_state_preparations_ccsd
-!
       procedure :: summary_ground_state_info => summary_ground_state_info_ccsd
 !
 !
