@@ -2044,19 +2044,18 @@ contains
       module subroutine summary_excited_state_info_ccs(wf, energies)
 !!
 !!       Summary excited state info (CCS)
-!!       Written by Sarai D. Folkestad, 2017
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017 / May 2018
 !!
          implicit none
 !
          class(ccs) :: wf
 !
-         real(dp), dimension(wf%excited_state_specifications%n_singlet_states,1) :: energies
+         real(dp), dimension(wf%excited_state_specifications%n_singlet_states, 1) :: energies
 !
          integer(i15) :: unit_solution = -1, ioerror = 0
-         integer(i15) :: state = 0, i = 0
-         real(dp), dimension(:,:), allocatable :: solution, sorted_max_vec
-         integer(i15), dimension(:,:), allocatable :: index_list
-         real(dp) :: ddot, norm
+         integer(i15) :: state = 0
+!
+         real(dp), dimension(:,:), allocatable :: solution
 !
 !        Read solution vectors
 !
@@ -2074,8 +2073,6 @@ contains
          endif
 
          call wf%mem%alloc(solution, wf%n_parameters, 1)
-         call wf%mem%alloc_int(index_list, min(wf%n_t1am, 20), 2)
-         call wf%mem%alloc(sorted_max_vec, min(wf%n_t1am, 20), 1)
 !
          do state = 1, wf%excited_state_specifications%n_singlet_states
 !
@@ -2086,35 +2083,13 @@ contains
             solution = zero
             read(unit_solution, rec=state) solution
 !
-            norm = sqrt(ddot(wf%n_t1am, solution,1,solution,1))
-            write(unit_output,'(/t6,a,f6.4)')'Single excitation contribution to excitation vector: ', norm
+!           Print dominant single excitations
 !
-            write(unit_output,'(/t6,a)') 'Largest contributions to excitation vector:'
-!
-            write(unit_output,'(t6,a32)')'--------------------------------'
-            write(unit_output,'(t6,a3, 8x, a3, 8x, a10)')'a', 'i','amplitude'
-            write(unit_output,'(t6,a32)')'--------------------------------'
-!
-!           Get 20 highest amplitudes
-!
-            call wf%analyze_single_excitation_vector(solution, min(wf%n_t1am, 20), sorted_max_vec, index_list)
-
-            do i = 1, min(wf%n_t1am, 20)
-               if (abs(sorted_max_vec(i, 1)) .lt. 1.0D-03) then
-                  exit
-               else
-                  write(unit_output,'(t6,i3, 8x, i3, 10x, f8.5)')index_list(i, 1),&
-                                                                index_list(i, 2),&
-                                                                sorted_max_vec(i, 1)
-               endif
-            enddo
-            write(unit_output,'(t6,a32/)')'--------------------------------'
+            call wf%print_dominant_singles(solution)
 !
          enddo
 !
          call wf%mem%dealloc(solution, wf%n_parameters,1)
-         call wf%mem%dealloc_int(index_list, min(wf%n_t1am, 20), 2)
-         call wf%mem%dealloc(sorted_max_vec, min(wf%n_t1am, 20), 1)
 !
          close(unit_solution)
 !
