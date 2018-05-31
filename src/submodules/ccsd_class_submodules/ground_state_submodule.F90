@@ -1,26 +1,26 @@
 submodule (ccsd_class) ground_state
 !
-!!    
+!!
 !!     Ground state submodule (CCSD)
 !!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
-!!    
-!!    
+!!
+!!
 !!     Consists of the following module subroutines of the CCSD module:
-!!     
+!!
 !!     ground_state_preparations:  makes preparations for the ground state solver
-!!     new_amplitudes:             calculates the quasi-Newton estimate and passes the 
+!!     new_amplitudes:             calculates the quasi-Newton estimate and passes the
 !!                                 information needed by the DIIS routine.
 !!     calc_ampeqs_norm:           calculates the norm of the amplitude equations.
 !!     calc_quasi_Newton_doubles:  calculates the doubles part of the quasi-Newton estimate.
-!!    
+!!
 !!     Can be inherited by models of the same level (e.g. CC3) without modification.
-!!    
+!!
 !!     When inherited by higher level models (e.g. CCSDT), the new_amplitudes and calc_ampeqs_norm
-!!     routines should be overridden to account for the triples quasi-Newton estimate, amplitudes, 
+!!     routines should be overridden to account for the triples quasi-Newton estimate, amplitudes,
 !!     and projection vector.
-!!    
+!!
 !
-   implicit none 
+   implicit none
 !
 !
 contains
@@ -31,14 +31,14 @@ contains
 !!    Calculate amplitude equations norm (CCSD)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-!!    Calculates the norm^2 of the omega vector (i.e., the amplitude 
+!!    Calculates the norm^2 of the omega vector (i.e., the amplitude
 !!    equations for the CCSD model).
 !!
-      implicit none 
+      implicit none
 !
-      class(ccsd) :: wf 
+      class(ccsd) :: wf
 !
-      real(dp) :: ampeqs_norm 
+      real(dp) :: ampeqs_norm
 !
       real(dp) :: ddot ! For dot product
 !
@@ -55,13 +55,13 @@ contains
 !     New amplitudes (CCSD)
 !     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !
-!     Directs the calculation of the quasi-Newton estimate Δ t_i, 
-!     and t_i + Δ t_i, and calls the DIIS routine to save & get 
+!     Directs the calculation of the quasi-Newton estimate Δ t_i,
+!     and t_i + Δ t_i, and calls the DIIS routine to save & get
 !     the amplitudes for the next iteration.
 !
-      implicit none 
+      implicit none
 !
-      class(ccsd) :: wf 
+      class(ccsd) :: wf
 !
       class(diis) :: diis_ground_state
 !
@@ -70,38 +70,38 @@ contains
       real(dp), dimension(:,:), allocatable :: dt   ! Δ t_i
       real(dp), dimension(:,:), allocatable :: t_dt ! t_i + Δ t_i
 !
-!     Allocate Δ t_i and t_i + Δ t_i vectors 
-! 
+!     Allocate Δ t_i and t_i + Δ t_i vectors
+!
       call wf%mem%alloc(dt, wf%n_parameters, 1)
       call wf%mem%alloc(t_dt, wf%n_parameters, 1)
 !
-      dt   = zero 
-      t_dt = zero 
+      dt   = zero
+      t_dt = zero
 !
 !     Calculate Δ t_i
 !
       call wf%calc_quasi_Newton_singles(dt)
       call wf%calc_quasi_Newton_doubles(dt)
 !
-!     Set t_i + Δ t_i 
+!     Set t_i + Δ t_i
 !
-      call dcopy(wf%n_parameters, dt, 1, t_dt, 1) ! t_dt = Δ t_i 
+      call dcopy(wf%n_parameters, dt, 1, t_dt, 1) ! t_dt = Δ t_i
 !
-      call daxpy(wf%n_t1am, one, wf%t1am, 1, t_dt, 1)                   ! t_dt = t_i + Δ t_i singles 
-      call daxpy(wf%n_t2am, one, wf%t2am, 1, t_dt(wf%n_t1am + 1, 1), 1) ! t_dt = t_i + Δ t_i doubles     
+      call daxpy(wf%n_t1am, one, wf%t1am, 1, t_dt, 1)                   ! t_dt = t_i + Δ t_i singles
+      call daxpy(wf%n_t2am, one, wf%t2am, 1, t_dt(wf%n_t1am + 1, 1), 1) ! t_dt = t_i + Δ t_i doubles
 !
 !     Save estimates to file and get the next amplitudes
-!     (they are placed in dt on exit from diis) 
+!     (they are placed in dt on exit from diis)
 !
    !   call wf%diis(dt, t_dt)
       call diis_ground_state%update(dt, t_dt, wf%disk, wf%mem)
 !
-!     Set the new amplitudes 
+!     Set the new amplitudes
 !
       call dcopy(wf%n_t1am, dt, 1, wf%t1am, 1)
       call dcopy(wf%n_t2am, dt(wf%n_t1am + 1, 1), 1, wf%t2am, 1)
 !
-!     Deallocate vectors 
+!     Deallocate vectors
 !
       call wf%mem%dealloc(dt, wf%n_parameters, 1)
       call wf%mem%dealloc(t_dt, wf%n_parameters, 1)
@@ -118,9 +118,9 @@ contains
 !     and places the contribution in the dt vector (of length n_parameters,
 !     with singles first, then doubles, etc. if inherited)
 !
-      implicit none 
+      implicit none
 !
-      class(ccsd) :: wf 
+      class(ccsd) :: wf
 !
       real(dp), dimension(wf%n_parameters, 1) :: dt
 !
@@ -128,20 +128,20 @@ contains
       integer(i15) :: ai = 0, bj = 0, aibj = 0, offset = 0
 !
 !     Calculate the doubles Δ t_i contribution
-!        
+!
       do a = 1, wf%n_v
          do i = 1, wf%n_o
             do b = 1, wf%n_v
                do j = 1, wf%n_o
 !
-!                 Calculate the necessary indices 
+!                 Calculate the necessary indices
 !
                   ai = index_two(a, i, wf%n_v)
                   bj = index_two(b, j, wf%n_v)
 !
-                  aibj = index_packed(ai, bj) 
+                  aibj = index_packed(ai, bj)
 !
-                  offset = wf%n_t1am + aibj ! dt has singles first, then doubles 
+                  offset = wf%n_t1am + aibj ! dt has singles first, then doubles
 !
                   dt(offset,1) = - wf%omega2(aibj, 1)/(wf%fock_diagonal(wf%n_o + a, 1) + &
                                                        wf%fock_diagonal(wf%n_o + b, 1) - &
@@ -162,9 +162,9 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
 !!    A routine for preparation tasks (if any). Can be overwritten
-!!    in descendants if other preparations prove necessary.    
+!!    in descendants if other preparations prove necessary.
 !!
-      class(ccsd) :: wf 
+      class(ccsd) :: wf
 !
 !     Test for the possibility of storing vir-vir-vir-vir
 !     electronic repulsion integrals (g_abcd), storing the
@@ -174,15 +174,95 @@ contains
       call wf%store_vv_vv_electronic_repulsion
 !
 !     Allocate double amplitudes,
-!     and set the amplitudes to the MP2 guess 
+!     and set the amplitudes to the MP2 guess
 !
       call wf%initialize_double_amplitudes   ! Allocate double amplitudes
-      call wf%construct_perturbative_doubles ! Set doubles amplitudes to MP2 guess 
+      call wf%construct_perturbative_doubles ! Set doubles amplitudes to MP2 guess
 !
-!     Allocate the projection vector 
+!     Allocate the projection vector
 !
-      call wf%initialize_omega 
+      call wf%initialize_omega
 !
    end subroutine ground_state_preparations_ccsd
-
-end submodule ground_state 
+!
+!
+   module subroutine summary_ground_state_info_ccsd(wf, time)
+!!
+!!    Summary ground state info (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      real(dp) :: time
+!
+!     Print energy and CPU time
+!
+      write(unit_output,'(/t3,a,a,a/)')'Summary of ', trim(wf%name), ' ground state calculation:'
+      write(unit_output,'(t6,a25,f19.12)')  'Total energy [a.u.]:     ', wf%energy
+      write(unit_output,'(t6,a25,f19.12)')  'Total time CPU (seconds): ', time
+!
+!     Print the dominant single excitations
+!
+      call wf%print_dominant_singles(wf%t1am)
+!
+!     Print the dominant double excitations
+!
+      call wf%print_dominant_doubles(wf%t2am)
+!
+   end subroutine summary_ground_state_info_ccsd
+!
+!
+   module subroutine print_dominant_doubles_ccsd(wf, vec)
+!!
+!!    Print dominant singles (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      real(dp), dimension(:, :) :: vec ! Assumed to have n_t2am number of elements
+!
+      real(dp), dimension(:,:), allocatable :: sorted_max_vec_doubles
+      integer(i15), dimension(:,:), allocatable :: index_list_doubles
+!
+      integer(i15) :: i = 0
+!
+      call wf%mem%alloc(sorted_max_vec_doubles, min(wf%n_t2am, 20), 1)
+      call wf%mem%alloc_int(index_list_doubles, min(wf%n_t2am, 20), 4)
+!
+      call wf%analyze_double_excitation_vector(vec, min(wf%n_t2am, 20), &
+                                               sorted_max_vec_doubles, index_list_doubles)
+!
+      write(unit_output,'(/t6,a)') 'Largest contributions to doubles vector:'
+!
+      write(unit_output,'(t6,a54)')'------------------------------------------------------'
+      write(unit_output,'(t6,a3, 8x, a3, 8x, a3, 8x, a3, 8x, a10)')'a','i','b','j', 'amplitude'
+      write(unit_output,'(t6,a54)')'------------------------------------------------------'
+!
+      do i = 1, min(wf%n_t2am, 20)
+!
+         if (abs(sorted_max_vec_doubles(i, 1)) .lt. 1.0D-03) then
+!
+            exit ! Never print very, very small amplitudes
+!
+         else
+!
+            write(unit_output,'(t6,i3, 8x,i3, 8x,i3, 8x, i3, 10x, f8.5)')         &
+                                                      index_list_doubles(i, 1),   &
+                                                      index_list_doubles(i, 2),   &
+                                                      index_list_doubles(i, 3),   &
+                                                      index_list_doubles(i, 4),   &
+                                                      sorted_max_vec_doubles(i, 1)
+         endif
+!
+      enddo
+!
+      write(unit_output,'(t6,a54)')'------------------------------------------------------'
+!
+   end subroutine print_dominant_doubles_ccsd
+!
+!
+end submodule ground_state

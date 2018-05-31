@@ -132,6 +132,11 @@ module ccs_class
       procedure :: calc_ampeqs_norm          => calc_ampeqs_norm_ccs
       procedure :: calc_quasi_Newton_singles => calc_quasi_Newton_singles_ccs
 !
+!     Vector analysis and print routines
+!
+      procedure :: summary_ground_state_info => summary_ground_state_info_ccs
+      procedure :: print_dominant_singles    => print_dominant_singles_ccs
+!
 !
 !     -::- Excited state submodule routine pointers -::-
 !     --------------------------------------------------
@@ -329,8 +334,8 @@ module ccs_class
 !     -::- CVS submodule routine pointers -::-
 !     ----------------------------------------
 !
-      procedure :: cvs_rho_a_i_projection             => cvs_rho_a_i_projection_ccs
-      procedure :: cvs_residual_projection            => cvs_residual_projection_ccs
+      procedure :: cvs_rho_a_i_projection  => cvs_rho_a_i_projection_ccs
+      procedure :: cvs_residual_projection => cvs_residual_projection_ccs
 !
 !
 !     -::- Other class routine pointers not located in submodules -::-
@@ -495,6 +500,20 @@ module ccs_class
       end subroutine calc_quasi_Newton_singles_ccs
 !
 !
+      module subroutine print_dominant_singles_ccs(wf, vec)
+!!
+!!       Print dominant singles (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+         real(dp), dimension(:, :) :: vec
+!
+      end subroutine print_dominant_singles_ccs
+!
+!
       module subroutine diis_ccs(wf,dt,t_dt)
 !!
 !!       DIIS (CCS)
@@ -508,6 +527,20 @@ module ccs_class
          real(dp), dimension(wf%n_parameters, 1) :: t_dt
 !
       end subroutine diis_ccs
+!
+!
+      module subroutine summary_ground_state_info_ccs(wf, time)
+!!
+!!       Summary ground state info (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+         real(dp) :: time
+!
+      end subroutine summary_ground_state_info_ccs
 !
 !
    end interface

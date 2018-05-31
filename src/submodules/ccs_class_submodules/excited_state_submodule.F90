@@ -467,8 +467,8 @@ contains
 !!    where e = X^T A X / X^T X is the excitation energy. The residual is
 !!    preconditioned by the orbital differences, as in the Davidson algorithm.
 !!
-!!    Note: initial implementation will be a single-root algorithm, though
-!!    it should obviously be generalized to an arbitrary numer of roots eventually
+!!    Note: this initial implementation is a single-root algorithm, though
+!!    it should be generalized to an arbitrary numer of roots eventually
 !!
       implicit none
 !
@@ -516,6 +516,9 @@ contains
       if (wf%excited_state_specifications%n_singlet_states .gt. 1) then
 !
          write(unit_output,'(/t3,a)') 'Error: DIIS solver currently only supports one root.'
+         write(unit_output,'(t3,a)')  'Note that this root is either the first root on restart,'
+         write(unit_output,'(t3,a)')  'or it starts from the first trial vector according to orbital'
+         write(unit_output,'(t3,a)')  'energy differences.'
          stop
 !
       endif
@@ -694,6 +697,8 @@ contains
                                                                     'Energy convergence therefore not tested in this calculation.'
 !
             write(unit_output,'(/t3,a,i3,a/)')  'Converged in ', iteration, ' iterations!'
+!
+!           Save normalized solution to file (DIIS does not in general keep this vector's norm equal to 1)
 !
             call generate_unit_identifier(unit_solution)
             open(unit=unit_solution, file=wf%excited_state_specifications%solution_file,&

@@ -94,6 +94,9 @@ module ccsd_class
 !
       procedure :: ground_state_preparations => ground_state_preparations_ccsd
 !
+      procedure :: summary_ground_state_info => summary_ground_state_info_ccsd
+      procedure :: print_dominant_doubles    => print_dominant_doubles_ccsd
+!
 !
 !     -::- Omega submodule routine pointers -::-
 !     ------------------------------------------
@@ -284,6 +287,35 @@ module ccsd_class
          class(ccsd) :: wf
 !
       end subroutine ground_state_preparations_ccsd
+!
+!
+      module subroutine summary_ground_state_info_ccsd(wf, time)
+!!
+!!       Summary ground state info (CCSD)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
+!!
+         implicit none
+!
+         class(ccsd) :: wf
+!
+         real(dp) :: time
+!
+      end subroutine summary_ground_state_info_ccsd
+!
+!
+      module subroutine print_dominant_doubles_ccsd(wf, vec)
+!!
+!!       Print dominant singles (CCSD)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
+!!
+         implicit none
+!
+         class(ccsd) :: wf
+!
+         real(dp), dimension(:, :) :: vec
+!
+      end subroutine print_dominant_doubles_ccsd
+!
 !
    end interface
 !
