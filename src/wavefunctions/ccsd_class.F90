@@ -1212,18 +1212,36 @@ contains
 !!    Initialize CCSD object
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!    Performs the following tasks:
+!!    Wavefunction initialization. The tasks performed are, in broad terms:
 !!
-!!    - Sets HF orbital and energy information by reading from file (read_hf_info)
-!!    - Transforms AO Cholesky vectors to MO basis and saves to file (read_transform_cholesky)
-!!    - Allocates the Fock matrix and sets it to zero
-!!    - Initializes the amplitudes (sets their initial values and associated variables)
+!!    a) Read the input file to determine general specifications
+!!       (model type, memory, disk space, etc.), the requested
+!!       calculations (ground state, excited state, etc.) with associated
+!!       settings (thresholds, number of iterations, etc.). For more information,
+!!       see the input reader submodule for the reader-type routines.
+!!
+!!    b) Set wavefunction settings. This includes the name of the object,
+!!       used mainly for printing, and also which methods are implemented,
+!!       which is used to stop calculations that are not possible to execute
+!!       given what is currently implemented. Moreover, a couple of central
+!!       attributes are set (number of occupied and virtual orbitals, single
+!!       and double amplitudes, and the number of variables, which is used
+!!       by solvers in particular)
+!!
+!!    c) Hartree-Fock Dalton interface. This includes reading Hartree-Fock
+!!       results (orbital coefficients and orbital attributes, see b)) and
+!!       Cholesky decomposition files (for atomic Cholesky vectors).
+!!
+!!    One or more of a)-c) are different for different wavefunctions,
+!!    so most new wavefunction has to have an overwritten initialization
+!!    routine. This is in contrast to the driver subroutines, which are
+!!    mostly kept in the CCS form for the entire hierarchy.
 !!
       implicit none
 !
       class(ccsd) :: wf
 !
-      integer(i15) :: unit_input = -1
+      type(file) :: input_file
 !
 !     Set model name
 !
@@ -1231,13 +1249,12 @@ contains
 !
 !     Open input file eT.inp
 !
-      call generate_unit_identifier(unit_input)
-      open(unit=unit_input, file='eT.inp', status='old', form='formatted')
-      rewind(unit_input)
+      input_file%name = 'eT.inp'
+      call wf%disk%open_file(input_file, 'formatted', 'read', 'sequential')
 !
 !     Read general specifications (memory and diskspace for calculation)
 !
-      call wf%general_specs_reader(unit_input)
+      call wf%general_specs_reader(input_file%unit)
 !
 !     Set implemented methods
 !
@@ -1249,11 +1266,11 @@ contains
 !
 !     Read calculation tasks from input file eT.inp
 !
-      call wf%calculation_reader(unit_input)
+      call wf%calculation_reader(input_file%unit)
 !
 !     Close input file
 !
-      close(unit_input)
+      call wf%disk%close_file(input_file)
 !
 !     Figure out the size of the calculation folder, and update
 !     the available disk space by subtracting it
@@ -1268,7 +1285,7 @@ contains
 !
       call wf%read_transform_cholesky
 !
-!     Set (singles and doubles) amplitude attributes
+!     Set single and double amplitude attributes & the total number of variables
 !
       wf%n_t1am = (wf%n_o)*(wf%n_v)
       wf%n_t2am = (wf%n_t1am)*(wf%n_t1am + 1)/2
@@ -1277,8 +1294,10 @@ contains
 !
 !     Initialize the Fock matrix (allocate and construct given the initial amplitudes)
 !
-      call wf%initialize_single_amplitudes ! t1am = zero
+      call wf%initialize_single_amplitudes
+!
       call wf%initialize_fock_matrix
+!
       call wf%destruct_single_amplitudes
 !
    end subroutine init_ccsd
@@ -1286,10 +1305,10 @@ contains
 !
    subroutine initialize_amplitudes_ccsd(wf)
 !!
-!!    Initialize Amplitudes (CCSD)
+!!    Initialize amplitudes (CCSD)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!    Allocates the amplitudes, sets them to zero.
+!!    Allocates the amplitudes and sets them to zero.
 !!
       implicit none
 !
@@ -1306,7 +1325,8 @@ contains
 !!    Initialize double amplitudes (CCSD)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!    Allocates the doubles amplitudes, sets them to zero.
+!!    Allocates the doubles amplitudes if they are not allocated,
+!!    then sets them to zero.
 !!
       implicit none
 !
@@ -1317,13 +1337,15 @@ contains
       if (.not. allocated(wf%t2am)) then
 !
          call wf%mem%alloc(wf%t2am, wf%n_t2am, 1)
-         wf%t1am = zero
 !
       else
 !
-         write(unit_output,'(t3,a)') 'Warning: attempted to allocate and zero already allocated t2am'
+         write(unit_output,'(/t3,a)') 'Warning: attempted to allocate and zero already allocated t2am.'
+         write(unit_output,'(t3,a)')  'This is a bug. Be aware that the vector is zeroed anyway.'
 !
       endif
+!
+      wf%t2am = zero
 !
    end subroutine initialize_double_amplitudes_ccsd
 !
@@ -1341,7 +1363,6 @@ contains
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension(:,:), allocatable :: L_ia_J
       real(dp), dimension(:,:), allocatable :: g_ia_jb
 !
       integer(i15) :: i = 0, j = 0, a = 0, b = 0
@@ -1397,10 +1418,11 @@ contains
 !
    subroutine calc_energy_ccsd(wf)
 !!
-!!     Calculate Energy (CCSD)
+!!     Calculate energy (CCSD)
 !!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!     Calculates the CCSD energy for the wavefunction's current amplitudes.
+!!     Calculates the CCSD energy. This is only equal to the actual
+!!     energy when the ground state equations are solved, of course.
 !!
       implicit none
 !
@@ -1465,10 +1487,13 @@ contains
 !
    subroutine destruct_amplitudes_ccsd(wf)
 !!
-!!    Destruct Amplitudes (CCSD)
+!!    Destruct amplitudes (CCSD)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
 !!
-!!    Deallocates the amplitudes.
+!!    Deallocates the amplitudes. The reason for including a special
+!!    destruct routine is that sometimes one may want to make sure the
+!!    amplitudes are deallocated, without wanting to actually deallocate
+!!    an existing vector (introducing errors in available memory estimation)
 !!
       implicit none
 !
@@ -1482,10 +1507,10 @@ contains
 !
    subroutine destruct_double_amplitudes_ccsd(wf)
 !!
-!!    Destruct Amplitudes (CCSD)
+!!    Destruct double amplitudes (CCSD)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
 !!
-!!    Deallocates the (doubles) amplitudes.
+!!    Deallocates the doubles amplitudes if they are allocated.
 !!
       implicit none
 !
@@ -1544,7 +1569,7 @@ contains
 !
    subroutine read_amplitudes_ccsd(wf)
 !!
-!!    Read Amplitudes (CCS)
+!!    Read amplitudes (CCSD)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
 !!
 !!    Reads the single and double amplitudes (t1am and t2am) from disk.

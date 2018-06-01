@@ -2633,7 +2633,7 @@ contains
 !
 !     Allocate Fock matrix and set to zero
 !
-      call wf%initialize_single_amplitudes ! t1am allocated, then set to zero
+      call wf%initialize_single_amplitudes
       call wf%initialize_fock_matrix
 !
    end subroutine init_ccs
@@ -2766,7 +2766,8 @@ contains
 !!    Initialize single amplitudes (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!    Allocates the singles amplitudes, sets them to zero.
+!!    Allocates the singles amplitudes if they are not allocated,
+!!    then sets them to zero.
 !!
       implicit none
 !
@@ -2778,13 +2779,15 @@ contains
       if (.not. allocated(wf%t1am)) then
 !
          call wf%mem%alloc(wf%t1am, wf%n_v, wf%n_o)
-         wf%t1am = zero
 !
       else
 !
-         write(unit_output,'(t3,a)') 'Warning: attempted to allocate and zero already allocated t1am'
+         write(unit_output,'(/t3,a)') 'Warning: attempted to allocate and zero already allocated t2am.'
+         write(unit_output,'(t3,a)')  'This is a bug. Be aware that the vector is zeroed anyway.'
 !
       endif
+!
+      wf%t1am = zero
 !
    end subroutine initialize_single_amplitudes_ccs
 !
@@ -2996,7 +2999,10 @@ contains
 !!    Destruct amplitudes (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-!!    Deallocates the amplitudes.
+!!    Deallocates the amplitudes. The reason for including a special
+!!    destruct routine is that sometimes one may want to make sure the
+!!    amplitudes are deallocated, without wanting to actually deallocate
+!!    an existing vector (introducing errors in available memory estimation)
 !!
       implicit none
 !
