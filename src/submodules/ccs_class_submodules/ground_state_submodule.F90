@@ -1,4 +1,4 @@
-submodule (ccs_class) ground_state 
+submodule (ccs_class) ground_state
 !
 !!
 !!    Ground state submodule (CCS)
@@ -7,16 +7,16 @@ submodule (ccs_class) ground_state
 !!    Consists of the following module subroutines of the CCS:
 !!
 !!    ground_state_solver:        Controls the iterative loop, calling in turn
-!!                                the calculation of the energy, the amplitude equations 
+!!                                the calculation of the energy, the amplitude equations
 !!                                (and its norm), and the new_amplitudes routine.
 !!
-!!    new_amplitudes:             Calculates the quasi-Newton estimate and passes the 
+!!    new_amplitudes:             Calculates the quasi-Newton estimate and passes the
 !!                                information needed by the DIIS routine.
 !!
 !!    diis_ccs:                   This routine saves the quasi-Newton estimate Δ t and
 !!                                t + Δ t to file. It uses the previous estimates to
 !!                                select the amplitudes t for the next iteration.
-!!    
+!!
 !!
 !!    calc_ampeqs:                Updates the amplitude equations for the current amplitudes.
 !!    calc_ampeqs_norm:           Calculates the norm of the amplitude equations.
@@ -25,7 +25,7 @@ submodule (ccs_class) ground_state
 !!    Can be inherited by models of the same level (e.g. CC2) without modification.
 !!
 !!    When inherited by higher level models (e.g. CCSD), the new_amplitudes and calc_ampeqs_norm
-!!    routines should be overridden to account for the doubles quasi-Newton estimate, amplitudes, 
+!!    routines should be overridden to account for the doubles quasi-Newton estimate, amplitudes,
 !!    and projection vector.
 !!
 !
@@ -33,13 +33,13 @@ submodule (ccs_class) ground_state
 !
 !  Some variables available to all routines of the module
 !
-   integer(i15) :: iteration = -1 
+   integer(i15) :: iteration = -1
 !
-   integer(i15) :: unit_dt          = -1   ! Unit identifier for Δ t_i file 
+   integer(i15) :: unit_dt          = -1   ! Unit identifier for Δ t_i file
    integer(i15) :: unit_t_dt        = -1   ! Unit identifier for t_i + Δ t_i file
    integer(i15) :: unit_diis_matrix = -1   ! Unit identifier for DIIS matrix file
 !
-   integer(i15), parameter :: diis_dim = 9 ! The maximum dimension of the DIIS matrix, plus 1 
+   integer(i15), parameter :: diis_dim = 9 ! The maximum dimension of the DIIS matrix, plus 1
 !
 !
 contains
@@ -51,11 +51,11 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
 !!    Directs the solution of the ground state problem for CCS. The
-!!    routine is written so as to be inherited unaltered in the CC hierarchy. 
+!!    routine is written so as to be inherited unaltered in the CC hierarchy.
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs) :: wf  
+      class(ccs) :: wf
 !
 !     Let the user know the ground state solver is running
 !
@@ -68,7 +68,7 @@ contains
       write(unit_output,'(t6,a20,e9.2)') 'Residual threshold: ', wf%ground_state_specifications%residual_threshold
       flush(unit_output)
 !
-!     Preparations for ground state solver 
+!     Preparations for ground state solver
 !
       call wf%ground_state_preparations
 !
@@ -89,19 +89,19 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
 !!    A routine for preparation tasks (if any). Can be overwritten
-!!    in descendants if other preparations prove necessary.    
+!!    in descendants if other preparations prove necessary.
 !!
-      class(ccs) :: wf 
+      class(ccs) :: wf
 !
       wf%tasks%current = 'ground_state'
 !
-!     Allocate amplitudes (if not allocated) and calculate number of amplitudes 
+!     Allocate amplitudes (if not allocated) and calculate number of amplitudes
 !
-      call wf%initialize_amplitudes 
+      call wf%initialize_amplitudes
 !
-!     Allocate projection vector 
+!     Allocate projection vector
 !
-      call wf%initialize_omega   
+      call wf%initialize_omega
 !
    end subroutine ground_state_preparations_ccs
 !
@@ -112,9 +112,9 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
 !!    A routine for cleanup tasks (if any). Can be overwritten
-!!    in descendants if other cleanups prove necessary.    
+!!    in descendants if other cleanups prove necessary.
 !!
-      class(ccs) :: wf 
+      class(ccs) :: wf
 !
       call wf%destruct_amplitudes
       call wf%destruct_omega
@@ -124,59 +124,54 @@ contains
 !
    module subroutine ground_state_solver_ccs(wf)
 !!
-!!    Ground State Solver 
+!!    Ground State Solver
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
 !!    Directs the solution of the ground state amplitude equations
-!!    using a DIIS algorithm. The problem the routine solves is 
+!!    using a DIIS algorithm. The problem the routine solves is
 !!
-!!       X_mu(t) = 0, where t = { t_mu }_mu 
+!!       X_mu(t) = 0, where t = { t_mu }_mu
 !!
 !!    For standard coupled cluster theories, the vector X is the
 !!    projection vector (omega).
 !!
       implicit none
 !
-      class(ccs) :: wf 
+      class(ccs) :: wf
+!
+      type(diis) :: ground_state_diis
 !
       real(dp) :: prev_energy
       real(dp) :: ampeqs_norm
 !
-      real(dp) :: start_gs_solver, end_gs_solver
-!
       logical :: converged_energy = .false.
       logical :: converged_ampeqs = .false.
 !
-      logical :: converged = .false. ! True iff both the energy and the equations have converged 
+      logical :: converged = .false. ! True iff both the energy and the equations have converged
 !
-!     If restart, read amplitudes from disk 
+      real(dp) :: start_gs_solver, end_gs_solver
 !
-      if (wf%ground_state_specifications%restart) then 
+!     If restart, read amplitudes from disk
+!
+      if (wf%ground_state_specifications%restart) then
 !
          write(unit_output,'(/t3,a)') 'Requested restart. Preparing for restart.'
          call wf%ground_state_restart
 !
       endif
 !
-!     Open DIIS files 
+!     Initialize DIIS object
 !
-      call generate_unit_identifier(unit_dt)
-      open(unit=unit_dt,file='diis_dt',status='unknown',form='unformatted')
-!
-      call generate_unit_identifier(unit_t_dt)
-      open(unit=unit_t_dt,file='diis_t_dt',status='unknown',form='unformatted')
-!
-      call generate_unit_identifier(unit_diis_matrix)
-      open(unit=unit_diis_matrix,file='diis_matrix',status='unknown',form='unformatted')
+      call ground_state_diis%init('ground_state', wf%n_parameters)
 !
 !     Enter iterative loop
 !
       write(unit_output,'(/t3,a)')   'Iter.    Energy               Norm of amplitude eq.'
-      write(unit_output,'(t3,a)')    '---------------------------------------------------' 
+      write(unit_output,'(t3,a)')    '---------------------------------------------------'
       flush(unit_output)
 !
 !     Make sure the initial energy is up to date for first iteration
-!  
+!
       call wf%calc_energy
 !
       iteration = 1
@@ -188,15 +183,15 @@ contains
 !
       do while ((.not. converged) .and. (iteration .le. wf%ground_state_specifications%max_iterations))
 !
-!        Save the previous energy 
+!        Save the previous energy
 !
-         prev_energy = wf%energy 
+         prev_energy = wf%energy
 !
-!        Update the energy 
+!        Update the energy
 !
          call wf%calc_energy
 !
-!        Update the Fock matrix 
+!        Update the Fock matrix
 !
          call wf%construct_fock
 !
@@ -211,9 +206,9 @@ contains
          converged_energy = abs(wf%energy-prev_energy) .lt. wf%ground_state_specifications%energy_threshold
          converged_ampeqs = ampeqs_norm                .lt. wf%ground_state_specifications%residual_threshold
 !
-!        Print information to output 
+!        Print information to output
 !
-         write(unit_output,'(t3,i3,4x,f19.12,4x,e10.4)') iteration, wf%energy, ampeqs_norm 
+         write(unit_output,'(t3,i3,4x,f19.12,4x,e10.4)') iteration, wf%energy, ampeqs_norm
          flush(unit_output) ! Flush so that the user can follow each iteration in real-time
 !
 !        Perform DIIS update if convergence hasn't been reached
@@ -222,7 +217,7 @@ contains
 !
             converged = .true.
 !
-            write(unit_output,'(t3,a)')    '---------------------------------------------------' 
+            write(unit_output,'(t3,a)')    '---------------------------------------------------'
             if (iteration .eq. 1 .and. wf%name .ne. 'CCS') write(unit_output,'(/t3,a,/t3,a)') &
                                                                   'Note: residual converged in first iteration.', &
                                                                     'Energy convergence therefore not tested in this calculation.'
@@ -231,33 +226,34 @@ contains
 !
          else
 !
-!           Update the amplitudes for the next iteration 
-!       
-            call wf%new_amplitudes
+!           Update the amplitudes for the next iteration
+!
+            call wf%new_amplitudes(ground_state_diis)
             iteration = iteration + 1
 !
          endif
 !
       enddo
 !
-!     Close the DIIS files
-!
-      close(unit_dt)
-      close(unit_t_dt)
-      close(unit_diis_matrix)
-!
       call cpu_time(end_gs_solver)
 !
-!     Print summary
+!     Print summary of ground state
 !
-      write(unit_output,'(/t3,a,a,a/)')'Summary of ', trim(wf%name), ' ground state calculation:'
-      write(unit_output,'(t6,a25,f14.8)')  'Total energy (hartrees):  ', wf%energy
-      write(unit_output,'(t6,a25,f14.8/)') 'Total time CPU (seconds): ', end_gs_solver - start_gs_solver
-      flush(unit_output)
+      call wf%summary_ground_state_info(end_gs_solver-start_gs_solver)
 !
-!     Save the amplitudes 
+!     Save the amplitudes
 !
        call wf%save_amplitudes
+!
+!     Issue an error & stop if the equations did not converge
+!
+      if (.not. converged) then
+!
+         write(unit_output,'(/t3,a)') 'Error: Ground state equations did not converge.'
+         write(unit_output,'(t3,a/)') 'Consider increasing the maximum number of iterations.'
+         stop
+!
+      endif
 !
    end subroutine ground_state_solver_ccs
 !
@@ -267,11 +263,11 @@ contains
 !!    Ground state restart (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
 !!
-!!    Called if restart of the ground state is requested.   
+!!    Called if restart of the ground state is requested.
 !!
-      class(ccs) :: wf 
+      class(ccs) :: wf
 !
-      call wf%read_amplitudes   
+      call wf%read_amplitudes
 !
    end subroutine ground_state_restart_ccs
 !
@@ -281,16 +277,16 @@ contains
 !!    Calculate amplitude e quations (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-!!    Constructs the amplitude equations vector (the projection vector 
-!!    in CCS) for the amplitudes of the current iteration of the ground 
-!!    state solver. It also calculates the norm of the amplitude equations, 
+!!    Constructs the amplitude equations vector (the projection vector
+!!    in CCS) for the amplitudes of the current iteration of the ground
+!!    state solver. It also calculates the norm of the amplitude equations,
 !!    which is zero when the equations are exactly solved.
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs) :: wf 
+      class(ccs) :: wf
 !
-!     Update the projection vector 
+!     Update the projection vector
 !
       call wf%construct_omega
 !
@@ -302,11 +298,11 @@ contains
 !!     Calculate Amplitude Equations Norm (CCS)
 !!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs) :: wf 
+      class(ccs) :: wf
 !
-      real(dp) :: ampeqs_norm 
+      real(dp) :: ampeqs_norm
 !
       real(dp) :: ddot ! For dot product
 !
@@ -317,49 +313,51 @@ contains
    end subroutine calc_ampeqs_norm_ccs
 !
 !
-    module subroutine new_amplitudes_ccs(wf)
+    module subroutine new_amplitudes_ccs(wf, diis_ground_state)
 !!
 !!    New Amplitudes (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-!!    Directs the calculation of the quasi-Newton estimate Δ t_i, 
-!!    and t_i + Δ t_i, and calls the DIIS routine to save & get 
+!!    Directs the calculation of the quasi-Newton estimate Δ t_i,
+!!    and t_i + Δ t_i, and calls the DIIS routine to save & get
 !!    the amplitudes for the next iteration.
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs) :: wf 
+      class(ccs) :: wf
+!
+      class(diis) :: diis_ground_state
 !
       real(dp), dimension(:,:), allocatable :: dt   ! Δ t_i
       real(dp), dimension(:,:), allocatable :: t_dt ! t_i + Δ t_i
 !
-!     Allocate Δ t_i and t_i + Δ t_i vectors 
-! 
+!     Allocate Δ t_i and t_i + Δ t_i vectors
+!
       call wf%mem%alloc(dt, wf%n_parameters, 1)
       call wf%mem%alloc(t_dt, wf%n_parameters, 1)
 !
-      dt   = zero 
-      t_dt = zero 
+      dt   = zero
+      t_dt = zero
 !
 !     Calculate Δ t_i
 !
       call wf%calc_quasi_Newton_singles(dt)
 !
-!     Set t_i + Δ t_i 
+!     Set t_i + Δ t_i
 !
-      call dcopy(wf%n_t1am, dt, 1, t_dt, 1)           ! t_dt = Δ t_i 
+      call dcopy(wf%n_t1am, dt, 1, t_dt, 1)           ! t_dt = Δ t_i
       call daxpy(wf%n_t1am, one, wf%t1am, 1, t_dt, 1) ! t_dt = t_i + Δ t_i
 !
 !     Save estimates to file and get the next amplitudes
-!     (they are placed in dt on exit from diis) 
+!     (they are placed in dt on exit from diis)
 !
       call wf%diis(dt, t_dt)
 !
-!     Set the new amplitudes 
+!     Set the new amplitudes
 !
       call dcopy(wf%n_t1am, dt, 1, wf%t1am, 1)
 !
-!     Deallocate vectors 
+!     Deallocate vectors
 !
       call wf%mem%dealloc(dt, wf%n_parameters, 1)
       call wf%mem%dealloc(t_dt, wf%n_parameters, 1)
@@ -376,9 +374,9 @@ contains
 !!    and places the contribution in the dt vector (of length n_parameters,
 !!    with singles first, then doubles, etc. if inherited)
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs) :: wf 
+      class(ccs) :: wf
 !
       real(dp), dimension(wf%n_parameters, 1) :: dt
 !
@@ -405,23 +403,23 @@ contains
 !!    DIIS routine
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-!!    The next amplitudes are 
+!!    The next amplitudes are
 !!
-!!       t_n+1 = sum_k w_k (t_k + dt_k), 
-!! 
+!!       t_n+1 = sum_k w_k (t_k + dt_k),
+!!
 !!    where the weights w_k in front of the quasi-Newton estimate dt_k
-!!    are determined so as to minimize 
+!!    are determined so as to minimize
 !!
-!!       f(w_k) = sum_k w_k dt_k, 
+!!       f(w_k) = sum_k w_k dt_k,
 !!
 !!    with the constraint that g(w_k) = sum_k w_k - 1 = 0.
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs), intent(in) :: wf 
+      class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_parameters, 1) :: dt 
-      real(dp), dimension(wf%n_parameters, 1) :: t_dt 
+      real(dp), dimension(wf%n_parameters, 1) :: dt
+      real(dp), dimension(wf%n_parameters, 1) :: t_dt
 !
       real(dp), dimension(:,:), allocatable :: dt_i ! To hold previous Δ t_i temporarily
 !
@@ -437,13 +435,13 @@ contains
 !
       integer(i15), dimension(diis_dim) :: ipiv = 0 ! Pivot integers (see dgesv routine)
 !
-!     Set the current index 
+!     Set the current index
 !
       current_index = iteration - (diis_dim-1)*((iteration-1)/(diis_dim-1)) ! 1,2,...,7,8,1,2,...
 !
 !     :: Save (Δ t_i) and (t_i + Δ t_i) to files ::
 !
-      if (current_index .eq. 1) then  
+      if (current_index .eq. 1) then
          rewind(unit_dt)
          rewind(unit_t_dt)
       endif
@@ -457,20 +455,20 @@ contains
 !        H : DIIS vector,  H_i = 0,
 !
 !     where i, j = 1, 2, ..., current_index. To enforce normality
-!     of the solution, G is extended with a row & column of -1's 
+!     of the solution, G is extended with a row & column of -1's
 !     and H with a -1 at the end.
 !
-!     First set the DIIS vector to one 
+!     First set the DIIS vector to one
 !
       call wf%mem%alloc(diis_vector,current_index+1,1)
-      diis_vector = zero 
+      diis_vector = zero
 !
 !     Allocate the DIIS matrix and read in previous matrix elements
 !
       call wf%mem%alloc(diis_matrix, current_index+1, current_index+1)
-      diis_matrix = zero 
+      diis_matrix = zero
 !
-      if (current_index .gt. 1) then 
+      if (current_index .gt. 1) then
 !
          rewind(unit_diis_matrix)
 !
@@ -484,29 +482,29 @@ contains
 !
       endif
 !
-!     Get the parts of the DIIS matrix G not constructed in 
-!     the previous iterations 
+!     Get the parts of the DIIS matrix G not constructed in
+!     the previous iterations
 !
       call wf%mem%alloc(dt_i, wf%n_parameters, 1) ! Allocate temporary holder of quasi-Newton estimates
-      dt_i = zero 
+      dt_i = zero
 !
       rewind(unit_dt)
 !
       do i = 1, current_index
 !
-         read(unit_dt) (dt_i(j,1), j = 1, wf%n_parameters) 
+         read(unit_dt) (dt_i(j,1), j = 1, wf%n_parameters)
 !
-         diis_matrix(current_index,i) = ddot(wf%n_parameters, dt, 1, dt_i, 1) 
+         diis_matrix(current_index,i) = ddot(wf%n_parameters, dt, 1, dt_i, 1)
          diis_matrix(i,current_index) = diis_matrix(current_index,i)
 !
          diis_matrix(current_index+1,i) = -one
-         diis_matrix(i,current_index+1) = -one 
+         diis_matrix(i,current_index+1) = -one
 !
       enddo
 !
       diis_vector(current_index+1,1) = -one
 !
-!     Write the current DIIS matrix to file 
+!     Write the current DIIS matrix to file
 !
       rewind(unit_diis_matrix)
 !
@@ -518,7 +516,7 @@ contains
          enddo
       enddo
 !
-!     Solve the DIIS equation 
+!     Solve the DIIS equation
 !
 !     Note: on exit, the solution is in the diis_vector,
 !     provided info = 0 (see LAPACK documentation for more)
@@ -540,24 +538,51 @@ contains
 !
       do i = 1, current_index
 !
-!        Read the t_i + Δ t_i vector 
+!        Read the t_i + Δ t_i vector
 !
          t_dt = zero
          read(unit_t_dt) (t_dt(j, 1), j = 1, wf%n_parameters)
 !
-!        Add w_i (t_i + Δ t_i) to the amplitudes 
+!        Add w_i (t_i + Δ t_i) to the amplitudes
 !
          call daxpy(wf%n_parameters, diis_vector(i, 1), t_dt, 1, dt, 1)
 !
       enddo
 !
-!     Deallocations 
+!     Deallocations
 !
       call wf%mem%dealloc(dt_i, wf%n_parameters, 1)
       call wf%mem%dealloc(diis_vector, current_index + 1, 1)
       call wf%mem%dealloc(diis_matrix, current_index + 1, current_index+1)
 !
    end subroutine diis_ccs
+!
+!
+   module subroutine summary_ground_state_info_ccs(wf, time)
+!!
+!!    Summary ground state info (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      real(dp) :: time
+!
+!     Print energy and CPU time
+!
+      write(unit_output,'(/t3,a,a,a/)')'Summary of ', trim(wf%name), ' ground state calculation:'
+      write(unit_output,'(t6,a25,f19.12)')  'Total energy [a.u.]:     ', wf%energy
+      write(unit_output,'(t6,a25,f19.12)')  'Total time CPU (seconds): ', time
+!
+      write(unit_output,'(/t3,a42/)')'Analysis of ground state amplitude vector.'
+      write(unit_output,'(t6,a,f14.8)')'Ground state energy [a.u.]:   ', wf%energy
+!
+!     Print the dominant single excitations
+!
+      call wf%print_dominant_singles(wf%t1am)
+!
+   end subroutine summary_ground_state_info_ccs
 !
 !
 end submodule ground_state

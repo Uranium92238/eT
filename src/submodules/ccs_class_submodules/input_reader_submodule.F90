@@ -66,6 +66,7 @@ contains
 !                    Converting from gb to words
 !
                      wf%settings%disk_space = disk_space*134500000
+                     call wf%disk%init(disk_space) ! Should replace the above 
 !
                      cycle
 !
@@ -396,6 +397,11 @@ contains
          elseif (trim(line) == 'n_triplet_states:') then ! Number of triplets
 !
             read(unit_input, *) wf%excited_state_specifications%n_triplet_states
+            cycle
+!
+         elseif (trim(line) == 'algorithm:') then ! Which algorithm to use 
+!
+            read(unit_input, *) wf%excited_state_specifications%algorithm
             cycle
 !
          elseif (trim(line) == 'start_vectors:') then ! Start vector provided in eT.inp

@@ -2,18 +2,18 @@ module ccsd_class
 !
 !!
 !!
-!!                Coupled cluster singles and doubles (CCSD) class module                                 
-!!              Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017         
-!!                                                                           
+!!                Coupled cluster singles and doubles (CCSD) class module
+!!              Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
 !!
 !!    This module contains the definition of the coupled cluster singles
 !!    and doubles (CCSD) wavefunction class. It is structured into four sections:
 !!
-!!       1. Modules used by the class: 
+!!       1. Modules used by the class:
 !!
 !!             Basic utilities and the ancestor class (CCS)
 !!
-!!       2. Definition of the class: 
+!!       2. Definition of the class:
 !!
 !!             Non-inherited variables, followed by non-inherited or overridden procedures
 !!
@@ -23,22 +23,23 @@ module ccsd_class
 !!             detailed definitions given in the following class submodules:
 !!
 !!                - Ground state
-!!                - Omega 
-!!                - Excited state 
+!!                - Omega
+!!                - Excited state
 !!                - Jacobian (right transformation)
-!!                - Jacobian Transpose (left transformation)
-!!                - Ionized State
+!!                - Jacobian transpose (left transformation)
+!!                - Ionized state
 !!                - CVS
+!!                - Vector analysis
 !!
-!!             The interfaces shows incoming variables and their type, but contains 
-!!             no information of the procedure itself. The procedure is shown in full 
-!!             in the corresponding submodule. 
+!!             The interfaces shows incoming variables and their type, but contains
+!!             no information of the procedure itself. The procedure is shown in full
+!!             in the corresponding submodule.
 !!
 !!       4. Class module routines (i.e., non-submodule procedures). These include
 !!          the initialization and driver routines of the class, along with procedures that
 !!          are not (yet, at least) easily gathered in a submodule.
-!!         
-!! 
+!!
+!!
 !
 !
 !  ::::::::::::::::::::::::::::::::::::::
@@ -56,7 +57,7 @@ module ccsd_class
 !
    use ccs_class
 !
-   implicit none 
+   implicit none
 !
 !
 !  :::::::::::::::::::::::::::::::::::::::::
@@ -66,14 +67,14 @@ module ccsd_class
 !
    type, extends(ccs) :: ccsd
 !
-!     Cluster amplitudes 
+!     Cluster amplitudes
 !
       integer(i15) :: n_t2am = 0 ! Number of doubles excitation amplitudes
 !
-      real(dp), dimension(:,:), allocatable :: t2am ! Doubles amplitude vector, t_ij^ab 
+      real(dp), dimension(:,:), allocatable :: t2am ! Doubles amplitude vector, t_ij^ab
 !
 !     The omega, or projection, vector < mu | exp(-T) H exp(T) | R >
-! 
+!
       real(dp), dimension(:,:), allocatable :: omega2 ! Doubles projection vector
 !
    contains
@@ -86,13 +87,14 @@ module ccsd_class
 !
 !
 !     -::- Ground state submodule routine pointers -::-
-!     ------------------------------------------------- 
+!     -------------------------------------------------
 !
       procedure :: calc_ampeqs_norm          => calc_ampeqs_norm_ccsd
       procedure :: new_amplitudes            => new_amplitudes_ccsd
       procedure :: calc_quasi_Newton_doubles => calc_quasi_Newton_doubles_ccsd
 !
       procedure :: ground_state_preparations => ground_state_preparations_ccsd
+      procedure :: summary_ground_state_info => summary_ground_state_info_ccsd
 !
 !
 !     -::- Omega submodule routine pointers -::-
@@ -103,15 +105,15 @@ module ccsd_class
 !
       procedure :: construct_omega  => construct_omega_ccsd
 !
-      procedure :: omega_ccsd_a1    => omega_ccsd_a1_ccsd 
-      procedure :: omega_ccsd_b1    => omega_ccsd_b1_ccsd 
+      procedure :: omega_ccsd_a1    => omega_ccsd_a1_ccsd
+      procedure :: omega_ccsd_b1    => omega_ccsd_b1_ccsd
       procedure :: omega_ccsd_c1    => omega_ccsd_c1_ccsd
 !
-      procedure :: omega_ccsd_a2    => omega_ccsd_a2_ccsd 
-      procedure :: omega_ccsd_b2    => omega_ccsd_b2_ccsd 
-      procedure :: omega_ccsd_c2    => omega_ccsd_c2_ccsd 
-      procedure :: omega_ccsd_d2    => omega_ccsd_d2_ccsd 
-      procedure :: omega_ccsd_e2    => omega_ccsd_e2_ccsd   
+      procedure :: omega_ccsd_a2    => omega_ccsd_a2_ccsd
+      procedure :: omega_ccsd_b2    => omega_ccsd_b2_ccsd
+      procedure :: omega_ccsd_c2    => omega_ccsd_c2_ccsd
+      procedure :: omega_ccsd_d2    => omega_ccsd_d2_ccsd
+      procedure :: omega_ccsd_e2    => omega_ccsd_e2_ccsd
 !
 !
 !     -::- Excited state submodule routine pointers -::-
@@ -133,7 +135,7 @@ module ccsd_class
       procedure :: jacobian_ccsd_a1 => jacobian_ccsd_a1_ccsd
       procedure :: jacobian_ccsd_b1 => jacobian_ccsd_b1_ccsd
       procedure :: jacobian_ccsd_c1 => jacobian_ccsd_c1_ccsd
-      procedure :: jacobian_ccsd_d1 => jacobian_ccsd_d1_ccsd 
+      procedure :: jacobian_ccsd_d1 => jacobian_ccsd_d1_ccsd
 !
       procedure :: jacobian_ccsd_a2 => jacobian_ccsd_a2_ccsd
       procedure :: jacobian_ccsd_b2 => jacobian_ccsd_b2_ccsd
@@ -156,8 +158,8 @@ module ccsd_class
       procedure :: jacobian_transpose_ccsd_transformation => jacobian_transpose_ccsd_transformation_ccsd
 !
       procedure :: jacobian_transpose_ccsd_a1 => jacobian_transpose_ccsd_a1_ccsd
-      procedure :: jacobian_transpose_ccsd_b1 => jacobian_transpose_ccsd_b1_ccsd 
-      procedure :: jacobian_transpose_ccsd_c1 => jacobian_transpose_ccsd_c1_ccsd 
+      procedure :: jacobian_transpose_ccsd_b1 => jacobian_transpose_ccsd_b1_ccsd
+      procedure :: jacobian_transpose_ccsd_c1 => jacobian_transpose_ccsd_c1_ccsd
       procedure :: jacobian_transpose_ccsd_d1 => jacobian_transpose_ccsd_d1_ccsd
       procedure :: jacobian_transpose_ccsd_e1 => jacobian_transpose_ccsd_e1_ccsd
       procedure :: jacobian_transpose_ccsd_f1 => jacobian_transpose_ccsd_f1_ccsd
@@ -188,6 +190,12 @@ module ccsd_class
       procedure :: cvs_residual_projection => cvs_residual_projection_ccsd
 !
 !
+!     -::- Vector analysis submodule routine pointers -::-
+!     ----------------------------------------
+!
+      procedure :: print_dominant_doubles => print_dominant_doubles_ccsd
+!
+!
 !     -::- Other class routine pointers not located in submodules -::-
 !     ----------------------------------------------------------------
 !
@@ -195,17 +203,17 @@ module ccsd_class
 !
       procedure :: construct_eta => construct_eta_ccsd
 !
-!     Routine to allocate the amplitudes 
+!     Routine to allocate the amplitudes
 !
       procedure :: initialize_amplitudes        => initialize_amplitudes_ccsd
       procedure :: initialize_double_amplitudes => initialize_double_amplitudes_ccsd
 !
-!     Routines to deallocate amplitudes 
+!     Routines to deallocate amplitudes
 !
       procedure :: destruct_amplitudes        => destruct_amplitudes_ccsd
       procedure :: destruct_double_amplitudes => destruct_double_amplitudes_ccsd
 !
-!     Routine to save and read the amplitudes 
+!     Routine to save and read the amplitudes
 !
       procedure :: save_amplitudes        => save_amplitudes_ccsd
 !
@@ -218,17 +226,17 @@ module ccsd_class
 !
 !     Routine to calculate the energy
 !
-      procedure :: calc_energy => calc_energy_ccsd 
+      procedure :: calc_energy => calc_energy_ccsd
 !
    end type ccsd
 !
 !
 !  :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-!  -::- 3. Interfaces to the submodules of the CCSD class -::- 
+!  -::- 3. Interfaces to the submodules of the CCSD class -::-
 !  :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
 !
-   interface 
+   interface
 !
 !
 !     -::- Ground state submodule interface -::-
@@ -239,23 +247,25 @@ module ccsd_class
 !!       Calculate amplitude equations norm (CCSD)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(ccsd) :: wf 
+         class(ccsd) :: wf
 !
-         real(dp) :: ampeqs_norm 
+         real(dp) :: ampeqs_norm
 !
       end subroutine calc_ampeqs_norm_ccsd
 !
 !
-      module subroutine new_amplitudes_ccsd(wf)
+      module subroutine new_amplitudes_ccsd(wf, diis_ground_state)
 !!
 !!       New amplitudes (CCSD)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(ccsd) :: wf 
+         class(ccsd) :: wf
+!
+         class(diis) :: diis_ground_state
 !
       end subroutine new_amplitudes_ccsd
 !
@@ -265,9 +275,9 @@ module ccsd_class
 !!       Calculate quasi-Newton estimate (CCSD)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(ccsd) :: wf 
+         class(ccsd) :: wf
 !
          real(dp), dimension(wf%n_parameters, 1) :: dt
 !
@@ -279,11 +289,26 @@ module ccsd_class
 !!       Ground state preparations (CCSD)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
-         class(ccsd) :: wf 
+         class(ccsd) :: wf
 !
       end subroutine ground_state_preparations_ccsd
 !
-   end interface 
+!
+      module subroutine summary_ground_state_info_ccsd(wf, time)
+!!
+!!       Summary ground state info (CCSD)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
+!!
+         implicit none
+!
+         class(ccsd) :: wf
+!
+         real(dp) :: time
+!
+      end subroutine summary_ground_state_info_ccsd
+!
+!
+   end interface
 !
 !
    interface
@@ -297,7 +322,7 @@ module ccsd_class
 !!       Initialize omega (CCSD)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccsd) :: wf
 !
@@ -321,9 +346,9 @@ module ccsd_class
 !!       Construct omega (CCSD)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(ccsd) :: wf 
+         class(ccsd) :: wf
 !
       end subroutine construct_omega_ccsd
 !
@@ -332,8 +357,8 @@ module ccsd_class
 !!
 !!       Omega CCSD A1 term
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!!  
-         implicit none 
+!!
+         implicit none
 !
          class(ccsd) :: wf
 !
@@ -345,21 +370,21 @@ module ccsd_class
 !!       Omega CCSD B1
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(ccsd) :: wf 
+         class(ccsd) :: wf
 !
       end subroutine omega_ccsd_b1_ccsd
 !
 !
       module subroutine omega_ccsd_c1_ccsd(wf)
-!!  
+!!
 !!       Omega CCSD C1
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!  
-         implicit none 
+!!
+         implicit none
 !
-         class(ccsd) :: wf 
+         class(ccsd) :: wf
 !
       end subroutine omega_ccsd_c1_ccsd
 !
@@ -369,7 +394,7 @@ module ccsd_class
 !!       Omega CCSD A2
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccsd) :: wf
 !
@@ -380,8 +405,8 @@ module ccsd_class
 !!
 !!       Omega CCSD B2
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2017
-!! 
-         implicit none 
+!!
+         implicit none
 !
          class(ccsd) :: wf
 !
@@ -390,10 +415,10 @@ module ccsd_class
 !
       module subroutine omega_ccsd_c2_ccsd(wf)
 !!
-!!       Omega CCSD C2 
+!!       Omega CCSD C2
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2017
-!!     
-         implicit none 
+!!
+         implicit none
 !
          class(ccsd) :: wf
 !
@@ -405,7 +430,7 @@ module ccsd_class
 !!       Omega CCSD D2
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccsd) :: wf
 !
@@ -417,7 +442,7 @@ module ccsd_class
 !!       Omega E2
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccsd) :: wf
 !
@@ -427,7 +452,7 @@ module ccsd_class
    end interface
 !
 !
-   interface 
+   interface
 !
 !
 !     -::- Excited state submodule interface -::-
@@ -462,24 +487,24 @@ module ccsd_class
 !
       module subroutine print_excitation_vector_ccsd(wf, vec, unit_id)
 !!
-!!       Print excitation vector 
+!!       Print excitation vector
 !!       Written by Sarai D. Folkestad, Oct 2017
 !!
          implicit none
-!  
+!
          class(ccsd) :: wf
 !
          real(dp), dimension(wf%n_parameters, 1) :: vec
 !
-         integer(i15) :: unit_id    
+         integer(i15) :: unit_id
 !
       end subroutine print_excitation_vector_ccsd
 !
 !
       module subroutine cvs_residual_projection_ccsd(wf, residual)
 !!
-!!       CVS residual projection (CCSD) 
-!!       Written by Sarai D. Folkestad, Aug 2017    
+!!       CVS residual projection (CCSD)
+!!       Written by Sarai D. Folkestad, Aug 2017
 !!
          implicit none
 !
@@ -494,40 +519,40 @@ module ccsd_class
 !!       Excited State Preparations (CCSD)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
-         class(ccsd) :: wf 
+         class(ccsd) :: wf
 !
       end subroutine excited_state_preparations_ccsd
 !
 !
       module subroutine analyze_double_excitation_vector_ccsd(wf, vec, n, sorted_short_vec, index_list)
 !!
-!!       Analyze double excitation vector 
+!!       Analyze double excitation vector
 !!       Written by Sarai D. Folkestad, Oct 2017
 !!
          implicit none
-!  
+!
          class(ccsd) :: wf
 !
-         real(dp), dimension(wf%n_t2am, 1) :: vec    
+         real(dp), dimension(wf%n_t2am, 1) :: vec
 !
          integer(i15) :: a = 0, i = 0, ai = 0, b = 0, j = 0, bj = 0, aibj = 0, k = 0
 !
-         integer(i15) :: n 
-!  
+         integer(i15) :: n
+!
          real(dp), dimension(n, 1)    :: sorted_short_vec
-!  
+!
          integer(i15), dimension(n, 4) ::index_list
-!  
+!
       end subroutine analyze_double_excitation_vector_ccsd
 !
 !
       module subroutine summary_excited_state_info_ccsd(wf, energies)
 !!
-!!       Summary of excited state info 
+!!       Summary of excited state info
 !!       Written by Sarai D. Folkestad, Oct 2017
 !!
          implicit none
-!  
+!
          class(ccsd) :: wf
 !
          real(dp), dimension(wf%excited_state_specifications%n_singlet_states,1) :: energies
@@ -535,7 +560,7 @@ module ccsd_class
       end subroutine summary_excited_state_info_ccsd
 !
 !
-   end interface 
+   end interface
 !
 !
    interface
@@ -543,7 +568,7 @@ module ccsd_class
 !
 !     -::- Ionized state submodule interface -::-
 !     -------------------------------------------
-!     
+!
       module subroutine ionization_residual_projection_ccsd(wf, residual)
 !!
 !!       Residual projection for CVS
@@ -577,10 +602,10 @@ module ccsd_class
 !!
         implicit none
 !
-        class(ccsd) :: wf 
+        class(ccsd) :: wf
 !
-        real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai 
-        real(dp), dimension(wf%n_t2am, 1)   :: c_aibj ! c_aibj     
+        real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai
+        real(dp), dimension(wf%n_t2am, 1)   :: c_aibj ! c_aibj
 !
       end subroutine ionization_jacobian_ccsd_transformation_ccsd
 !
@@ -592,10 +617,10 @@ module ccsd_class
 !!
          implicit none
 !
-         class(ccsd) :: wf 
+         class(ccsd) :: wf
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai 
-         real(dp), dimension(wf%n_t2am, 1)   :: c_aibj ! c_aibj 
+         real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai
+         real(dp), dimension(wf%n_t2am, 1)   :: c_aibj ! c_aibj
 !
       end subroutine core_ionization_jacobian_ccsd_transformation_ccsd
 !
@@ -603,7 +628,7 @@ module ccsd_class
    end interface
 !
 !
-   interface 
+   interface
 !
 !
 !     -::- Jacobian submodule interface -::-
@@ -616,10 +641,10 @@ module ccsd_class
 !!
          implicit none
 !
-         class(ccsd) :: wf 
+         class(ccsd) :: wf
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai 
-         real(dp), dimension(wf%n_t2am, 1)   :: c_aibj ! c_aibj 
+         real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai
+         real(dp), dimension(wf%n_t2am, 1)   :: c_aibj ! c_aibj
 !
       end subroutine jacobian_ccsd_transformation_ccsd
 !
@@ -631,24 +656,24 @@ module ccsd_class
 !!
          implicit none
 !
-         class(ccsd) :: wf 
+         class(ccsd) :: wf
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai 
+         real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai
          real(dp), dimension(wf%n_t2am, 1)   :: c_aibj ! c_aibj
-! 
+!
       end subroutine cvs_jacobian_ccsd_transformation_ccsd
 !
 !
       module subroutine jacobian_ccsd_a1_ccsd(wf, rho_a_i, c_a_i)
 !!
 !!       Jacobian CCSD A1
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017 
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccsd) :: wf
 !
-         real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_a_i   ! c_ai 
+         real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_a_i   ! c_ai
          real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i ! rho_ai
 !
       end subroutine jacobian_ccsd_a1_ccsd
@@ -657,13 +682,13 @@ module ccsd_class
       module subroutine jacobian_ccsd_b1_ccsd(wf, rho_a_i, c_ai_bj)
 !!
 !!       Jacobian CCSD B1
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017 
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccsd) :: wf
 !
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)), intent(in) :: c_ai_bj   ! c_aibj 
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)), intent(in) :: c_ai_bj   ! c_aibj
          real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i ! rho_ai
 !
       end subroutine jacobian_ccsd_b1_ccsd
@@ -672,9 +697,9 @@ module ccsd_class
       module subroutine jacobian_ccsd_c1_ccsd(wf, rho_a_i, c_ai_bj)
 !!
 !!       Jacobian CCSD C1
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017 
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccsd) :: wf
 !
@@ -687,9 +712,9 @@ module ccsd_class
       module subroutine jacobian_ccsd_d1_ccsd(wf, rho_a_i, c_bi_cj)
 !!
 !!       Jacobian CCSD D1
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017 
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccsd) :: wf
 !
@@ -701,12 +726,12 @@ module ccsd_class
 !
       module subroutine jacobian_ccsd_a2_ccsd(wf, rho_ai_bj, c_a_i)
 !!
-!!       Jacobian CCSD A2 
+!!       Jacobian CCSD A2
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(ccsd) :: wf 
+         class(ccsd) :: wf
 !
          real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
          real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_a_i
@@ -716,12 +741,12 @@ module ccsd_class
 !
       module subroutine jacobian_ccsd_b2_ccsd(wf, rho_ai_bj, c_a_i)
 !!
-!!       Jacobian CCSD B2 
+!!       Jacobian CCSD B2
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(ccsd) :: wf 
+         class(ccsd) :: wf
 !
          real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_a_i
 !
@@ -732,12 +757,12 @@ module ccsd_class
 !
       module subroutine jacobian_ccsd_c2_ccsd(wf, rho_ai_bj, c_a_i)
 !!
-!!       Jacobian CCSD C2 
+!!       Jacobian CCSD C2
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(ccsd) :: wf 
+         class(ccsd) :: wf
 !
          real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_a_i
 !
@@ -748,12 +773,12 @@ module ccsd_class
 !
       module subroutine jacobian_ccsd_d2_ccsd(wf, rho_ai_bj, c_a_i)
 !!
-!!       Jacobian CCSD D2 
+!!       Jacobian CCSD D2
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(ccsd) :: wf 
+         class(ccsd) :: wf
 !
          real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_a_i
 !
@@ -764,12 +789,12 @@ module ccsd_class
 !
       module subroutine jacobian_ccsd_e2_ccsd(wf, rho_ai_bj, c_ai_ck)
 !!
-!!       Jacobian CCSD E2 
+!!       Jacobian CCSD E2
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(ccsd) :: wf 
+         class(ccsd) :: wf
 !
          real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
 !
@@ -780,12 +805,12 @@ module ccsd_class
 !
       module subroutine jacobian_ccsd_f2_ccsd(wf, rho_ai_bj, c_ai_bj)
 !!
-!!       Jacobian CCSD F2 
+!!       Jacobian CCSD F2
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(ccsd) :: wf 
+         class(ccsd) :: wf
 !
          real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
 !
@@ -796,12 +821,12 @@ module ccsd_class
 !
       module subroutine jacobian_ccsd_g2_ccsd(wf, rho_ai_bj, c_ai_bj)
 !!
-!!       Jacobian CCSD G2 
+!!       Jacobian CCSD G2
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(ccsd) :: wf 
+         class(ccsd) :: wf
 !
          real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
          real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)), intent(in) :: c_ai_bj
@@ -811,12 +836,12 @@ module ccsd_class
 !
       module subroutine jacobian_ccsd_h2_ccsd(wf, rho_ai_bj, c_ai_bj)
 !!
-!!       Jacobian CCSD H2 
+!!       Jacobian CCSD H2
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(ccsd) :: wf 
+         class(ccsd) :: wf
 !
          real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
          real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)), intent(in) :: c_ai_bj
@@ -826,12 +851,12 @@ module ccsd_class
 !
       module subroutine jacobian_ccsd_i2_ccsd(wf, rho_ai_bj, c_ai_bj)
 !!
-!!       Jacobian CCSD I2 
+!!       Jacobian CCSD I2
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(ccsd) :: wf 
+         class(ccsd) :: wf
 !
          real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
          real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)), intent(in) :: c_ai_bj
@@ -841,12 +866,12 @@ module ccsd_class
 !
       module subroutine jacobian_ccsd_j2_ccsd(wf, rho_ab_ij, c_ab_ij)
 !!
-!!       Jacobian CCSD J2 
+!!       Jacobian CCSD J2
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(ccsd) :: wf 
+         class(ccsd) :: wf
 !
          real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: rho_ab_ij
          real(dp), dimension((wf%n_v)**2, (wf%n_o)**2), intent(in) :: c_ab_ij
@@ -856,12 +881,12 @@ module ccsd_class
 !
       module subroutine jacobian_ccsd_k2_ccsd(wf, rho_ab_ij, c_ab_ij)
 !!
-!!       Jacobian CCSD K2 
+!!       Jacobian CCSD K2
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!  
-         implicit none 
+!!
+         implicit none
 !
-         class(ccsd) :: wf 
+         class(ccsd) :: wf
 !
          real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: rho_ab_ij
          real(dp), dimension((wf%n_v)**2, (wf%n_o)**2), intent(in) :: c_ab_ij
@@ -869,10 +894,10 @@ module ccsd_class
       end subroutine jacobian_ccsd_k2_ccsd
 !
 !
-   end interface 
+   end interface
 !
 !
-   interface 
+   interface
 !
 !
 !     -::- Jacobian transpose submodule interface -::-
@@ -883,191 +908,191 @@ module ccsd_class
 !!       Jacobian transpose transformation (CCSD)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(ccsd) :: wf 
+         class(ccsd) :: wf
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i 
-         real(dp), dimension(wf%n_t2am, 1)   :: b_aibj 
+         real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i
+         real(dp), dimension(wf%n_t2am, 1)   :: b_aibj
 !
       end subroutine jacobian_transpose_ccsd_transformation_ccsd
 !
 !
       module subroutine jacobian_transpose_ccsd_a1_ccsd(wf, sigma_a_i, b_a_i)
 !!
-!!       Jacobian transpose CCSD A1 
+!!       Jacobian transpose CCSD A1
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccsd) :: wf
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i 
-         real(dp), dimension(wf%n_v, wf%n_o) :: sigma_a_i 
+         real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i
+         real(dp), dimension(wf%n_v, wf%n_o) :: sigma_a_i
 !
       end subroutine jacobian_transpose_ccsd_a1_ccsd
 !
 !
       module subroutine jacobian_transpose_ccsd_b1_ccsd(wf, sigma_a_i, b_a_i)
 !!
-!!       Jacobian transpose CCSD B1 
+!!       Jacobian transpose CCSD B1
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccsd) :: wf
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i 
-         real(dp), dimension(wf%n_v, wf%n_o) :: sigma_a_i 
+         real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i
+         real(dp), dimension(wf%n_v, wf%n_o) :: sigma_a_i
 !
       end subroutine jacobian_transpose_ccsd_b1_ccsd
 !
 !
       module subroutine jacobian_transpose_ccsd_c1_ccsd(wf, sigma_a_i, b_ai_bj)
 !!
-!!       Jacobian transpose CCSD C1 
+!!       Jacobian transpose CCSD C1
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccsd) :: wf
 !
-         real(dp), dimension(wf%n_v, wf%n_o)                       :: sigma_a_i 
-         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
+         real(dp), dimension(wf%n_v, wf%n_o)                       :: sigma_a_i
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj
 !
       end subroutine jacobian_transpose_ccsd_c1_ccsd
 !
 !
       module subroutine jacobian_transpose_ccsd_d1_ccsd(wf, sigma_a_i, b_ai_bj)
 !!
-!!       Jacobian transpose CCSD D1 
+!!       Jacobian transpose CCSD D1
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccsd) :: wf
 !
-         real(dp), dimension(wf%n_v, wf%n_o)                       :: sigma_a_i 
-         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
+         real(dp), dimension(wf%n_v, wf%n_o)                       :: sigma_a_i
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj
 !
       end subroutine jacobian_transpose_ccsd_d1_ccsd
 !
 !
       module subroutine jacobian_transpose_ccsd_e1_ccsd(wf, sigma_a_i, b_ai_bj)
 !!
-!!       Jacobian transpose CCSD E1 
+!!       Jacobian transpose CCSD E1
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccsd) :: wf
 !
-         real(dp), dimension(wf%n_v, wf%n_o)                       :: sigma_a_i 
-         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
+         real(dp), dimension(wf%n_v, wf%n_o)                       :: sigma_a_i
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj
 !
       end subroutine jacobian_transpose_ccsd_e1_ccsd
 !
 !
       module subroutine jacobian_transpose_ccsd_f1_ccsd(wf, sigma_a_i, b_ai_bj)
 !!
-!!       Jacobian transpose CCSD F1 
+!!       Jacobian transpose CCSD F1
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccsd) :: wf
 !
-         real(dp), dimension(wf%n_v, wf%n_o)                       :: sigma_a_i 
-         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
+         real(dp), dimension(wf%n_v, wf%n_o)                       :: sigma_a_i
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj
 !
       end subroutine jacobian_transpose_ccsd_f1_ccsd
 !
 !
       module subroutine jacobian_transpose_ccsd_g1_ccsd(wf, sigma_a_i, b_ai_bj)
 !!
-!!       Jacobian transpose CCSD G1 
+!!       Jacobian transpose CCSD G1
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccsd) :: wf
 !
-         real(dp), dimension(wf%n_v, wf%n_o)                       :: sigma_a_i 
-         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
+         real(dp), dimension(wf%n_v, wf%n_o)                       :: sigma_a_i
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj
 !
       end subroutine jacobian_transpose_ccsd_g1_ccsd
 !
 !
       module subroutine jacobian_transpose_ccsd_a2_ccsd(wf, sigma_ai_bj, b_a_i)
 !!
-!!       Jacobian transpose CCSD A2 
+!!       Jacobian transpose CCSD A2
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccsd) :: wf
 !
-         real(dp), dimension(wf%n_v, wf%n_o)                       :: b_a_i  
-         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ai_bj 
+         real(dp), dimension(wf%n_v, wf%n_o)                       :: b_a_i
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ai_bj
 !
       end subroutine jacobian_transpose_ccsd_a2_ccsd
 !
 !
       module subroutine jacobian_transpose_ccsd_b2_ccsd(wf, sigma_ai_bj, b_ai_bj)
 !!
-!!       Jacobian transpose CCSD B2 
+!!       Jacobian transpose CCSD B2
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccsd) :: wf
 !
-         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
-         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ai_bj 
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ai_bj
 !
       end subroutine jacobian_transpose_ccsd_b2_ccsd
 !
 !
       module subroutine jacobian_transpose_ccsd_c2_ccsd(wf, sigma_ai_bj, b_ai_bj)
 !!
-!!       Jacobian transpose CCSD C2 
+!!       Jacobian transpose CCSD C2
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccsd) :: wf
 !
-         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
-         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ai_bj 
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ai_bj
 !
       end subroutine jacobian_transpose_ccsd_c2_ccsd
 !
 !
       module subroutine jacobian_transpose_ccsd_d2_ccsd(wf, sigma_ai_bj, b_ai_bj)
 !!
-!!       Jacobian transpose CCSD D2 
+!!       Jacobian transpose CCSD D2
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccsd) :: wf
 !
-         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
-         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ai_bj 
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ai_bj
 !
       end subroutine jacobian_transpose_ccsd_d2_ccsd
 !
 !
       module subroutine jacobian_transpose_ccsd_e2_ccsd(wf, sigma_ai_bj, b_ai_bj)
 !!
-!!       Jacobian transpose CCSD E2 
+!!       Jacobian transpose CCSD E2
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccsd) :: wf
 !
-         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj
          real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ai_bj
 !
       end subroutine jacobian_transpose_ccsd_e2_ccsd
@@ -1075,14 +1100,14 @@ module ccsd_class
 !
       module subroutine jacobian_transpose_ccsd_f2_ccsd(wf, sigma_ai_bj, b_ai_bj)
 !!
-!!       Jacobian transpose CCSD F2 
+!!       Jacobian transpose CCSD F2
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccsd) :: wf
 !
-         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj
          real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ai_bj
 !
       end subroutine jacobian_transpose_ccsd_f2_ccsd
@@ -1090,14 +1115,14 @@ module ccsd_class
 !
       module subroutine jacobian_transpose_ccsd_g2_ccsd(wf, sigma_ai_bj, b_ai_bj)
 !!
-!!       Jacobian transpose CCSD G2 
+!!       Jacobian transpose CCSD G2
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccsd) :: wf
 !
-         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj
          real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: sigma_ai_bj
 !
       end subroutine jacobian_transpose_ccsd_g2_ccsd
@@ -1105,10 +1130,10 @@ module ccsd_class
 !
       module subroutine jacobian_transpose_ccsd_h2_ccsd(wf, sigma_ab_ij, b_ab_ij)
 !!
-!!       Jacobian transpose CCSD H2 
+!!       Jacobian transpose CCSD H2
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccsd) :: wf
 !
@@ -1120,10 +1145,10 @@ module ccsd_class
 !
       module subroutine jacobian_transpose_ccsd_i2_ccsd(wf, sigma_ab_ij, b_ab_ij)
 !!
-!!       Jacobian transpose CCSD I2 
+!!       Jacobian transpose CCSD I2
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccsd) :: wf
 !
@@ -1149,11 +1174,34 @@ module ccsd_class
    end interface
 !
 !
+   interface
+!
+!
+!     -::- Vector analysis submodule interface -::-
+!     ------------------------------------------
+!
+      module subroutine print_dominant_doubles_ccsd(wf, vec)
+!!
+!!       Print dominant singles (CCSD)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
+!!
+         implicit none
+!
+         class(ccsd) :: wf
+!
+         real(dp), dimension(:, :) :: vec
+!
+      end subroutine print_dominant_doubles_ccsd
+!
+!
+   end interface
+!
+!
 contains
 !
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::
-!  -::- 4. Class subroutines and functions -::- 
+!  -::- 4. Class subroutines and functions -::-
 !  ::::::::::::::::::::::::::::::::::::::::::::
 !
 !
@@ -1169,13 +1217,13 @@ contains
 !!    - Allocates the Fock matrix and sets it to zero
 !!    - Initializes the amplitudes (sets their initial values and associated variables)
 !!
-      implicit none 
+      implicit none
 !
       class(ccsd) :: wf
 !
       integer(i15) :: unit_input = -1
 !
-!     Set model name 
+!     Set model name
 !
       wf%name = 'CCSD'
 !
@@ -1198,12 +1246,17 @@ contains
       wf%implemented%multipliers        = .true.
 !
 !     Read calculation tasks from input file eT.inp
-!     
+!
       call wf%calculation_reader(unit_input)
 !
 !     Close input file
 !
       close(unit_input)
+!
+!     Figure out the size of the calculation folder, and update
+!     the available disk space by subtracting it
+!
+      call wf%disk%subtract_folder_size
 !
 !     Read Hartree-Fock info from SIRIUS
 !
@@ -1211,18 +1264,18 @@ contains
 !
 !     Read Cholesky AO integrals and transform to MO basis
 !
-      call wf%read_transform_cholesky 
+      call wf%read_transform_cholesky
 !
 !     Set (singles and doubles) amplitude attributes
 !
-      wf%n_t1am = (wf%n_o)*(wf%n_v) 
-      wf%n_t2am = (wf%n_t1am)*(wf%n_t1am + 1)/2 
+      wf%n_t1am = (wf%n_o)*(wf%n_v)
+      wf%n_t2am = (wf%n_t1am)*(wf%n_t1am + 1)/2
 !
       wf%n_parameters = wf%n_t1am + wf%n_t2am
 !
 !     Initialize the Fock matrix (allocate and construct given the initial amplitudes)
 !
-      call wf%initialize_single_amplitudes ! t1am = zero 
+      call wf%initialize_single_amplitudes ! t1am = zero
       call wf%initialize_fock_matrix
       call wf%destruct_single_amplitudes
 !
@@ -1236,11 +1289,11 @@ contains
 !!
 !!    Allocates the amplitudes, sets them to zero.
 !!
-      implicit none 
+      implicit none
 !
       class(ccsd) :: wf
 !
-      call wf%initialize_single_amplitudes 
+      call wf%initialize_single_amplitudes
       call wf%initialize_double_amplitudes
 !
    end subroutine initialize_amplitudes_ccsd
@@ -1253,14 +1306,14 @@ contains
 !!
 !!    Allocates the doubles amplitudes, sets them to zero.
 !!
-      implicit none 
+      implicit none
 !
       class(ccsd) :: wf
 !
 !     Allocate the doubles amplitudes and set to zero
 !
       if (.not. allocated(wf%t2am)) then
-! 
+!
          call wf%mem%alloc(wf%t2am, wf%n_t2am, 1)
          wf%t1am = zero
 !
@@ -1279,10 +1332,10 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
 !!    Sets the doubles amplitudes (t2am) to its MP2 estimate. This is
-!!    the initial guess used in the solver for the ground state amplitude 
+!!    the initial guess used in the solver for the ground state amplitude
 !!    equations.
 !!
-      implicit none 
+      implicit none
 !
       class(ccsd) :: wf
 !
@@ -1290,7 +1343,7 @@ contains
       real(dp), dimension(:,:), allocatable :: g_ia_jb
 !
       integer(i15) :: i = 0, j = 0, a = 0, b = 0
-      integer(i15) :: ai = 0, bj = 0, ia = 0, jb = 0, aibj = 0 
+      integer(i15) :: ai = 0, bj = 0, ia = 0, jb = 0, aibj = 0
 !
       character(len=40) :: integral_type
 !
@@ -1311,7 +1364,7 @@ contains
 !
             do j = 1, wf%n_o
                do b = 1, wf%n_v
-!    
+!
                   jb = index_two(j, b, wf%n_o)
                   bj = index_two(b, j, wf%n_v)
 !
@@ -1335,7 +1388,7 @@ contains
 !
 !     Deallocations
 !
-      call wf%mem%dealloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) 
+      call wf%mem%dealloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine construct_perturbative_doubles_ccsd
 !
@@ -1347,9 +1400,9 @@ contains
 !!
 !!     Calculates the CCSD energy for the wavefunction's current amplitudes.
 !!
-      implicit none 
+      implicit none
 !
-      class(ccsd) :: wf 
+      class(ccsd) :: wf
 !
       real(dp), dimension(:,:), allocatable :: L_ia_J  ! L_ia^J
       real(dp), dimension(:,:), allocatable :: g_ia_jb ! g_iajb
@@ -1359,14 +1412,14 @@ contains
 !
       character(len=40) :: integral_type
 !
-!     Get g_ia_jb = g_iajb 
+!     Get g_ia_jb = g_iajb
 !
       call wf%mem%alloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       integral_type = 'electronic_repulsion'
       call wf%get_ov_ov(integral_type, g_ia_jb)
 !
-!     Set the initial value of the energy 
+!     Set the initial value of the energy
 !
       wf%energy = wf%scf_energy
 !
@@ -1383,16 +1436,16 @@ contains
                ja = index_two(j, a, wf%n_o)
 !
                do b = 1, wf%n_v
-! 
+!
                   bj = index_two(b, j, wf%n_v)
                   jb = index_two(j, b, wf%n_o)
                   ib = index_two(i, b, wf%n_o)
 !
                   aibj = index_packed(ai, bj)
 !
-!                 Add the correlation energy 
+!                 Add the correlation energy
 !
-                  wf%energy = wf%energy +                                           & 
+                  wf%energy = wf%energy +                                           &
                                  (wf%t2am(aibj,1) + (wf%t1am(a,i))*(wf%t1am(b,j)))* &
                                  (two*g_ia_jb(ia,jb) - g_ia_jb(ib,ja))
 !
@@ -1448,33 +1501,30 @@ contains
 !!
 !!    Store the amplitudes to disk (in the files t1am and t2am)
 !!
-      implicit none 
+      implicit none
 !
       class(ccsd) :: wf
 !
-      integer(i15) :: unit_t1am = -1
-      integer(i15) :: unit_t2am = -1
+      type(file) :: t1am_file
+      type(file) :: t2am_file
 !
 !     Open amplitude files
 !
-      call generate_unit_identifier(unit_t1am)
-      call generate_unit_identifier(unit_t2am)
+      t1am_file%name = 't1am'
+      t2am_file%name = 't2am'
 !
-      open(unit_t1am, file='t1am', status='unknown', form='unformatted')
-      open(unit_t2am, file='t2am', status='unknown', form='unformatted')
-!
-      rewind(unit_t1am)
-      rewind(unit_t2am)
+      call wf%disk%open_file(t1am_file, 'unformatted', 'write', 'sequential')
+      call wf%disk%open_file(t2am_file, 'unformatted', 'write', 'sequential')
 !
 !     Write amplitudes to files
 !
-      write(unit_t1am) wf%t1am 
-      write(unit_t2am) wf%t2am
+      write(t1am_file%unit) wf%t1am
+      write(t2am_file%unit) wf%t2am
 !
 !     Close amplitude files
 !
-      close(unit_t1am)
-      close(unit_t2am)
+      call wf%disk%close_file(t1am_file)
+      call wf%disk%close_file(t2am_file)
 !
    end subroutine save_amplitudes_ccsd
 !
@@ -1487,7 +1537,7 @@ contains
 !!    Reads the single and double amplitudes (t1am and t2am) from disk.
 !!    If the arrays are not allocated, the routine also allocates them.
 !!
-      implicit none 
+      implicit none
 !
       class(ccsd) :: wf
 !
@@ -1506,11 +1556,11 @@ contains
 !!
 !!    Reads the amplitudes from disk (T1AM, T2AM)
 !!
-      implicit none 
+      implicit none
 !
       class(ccsd) :: wf
 !
-      integer(i15) :: unit_t2am = -1 
+      integer(i15) :: unit_t2am = -1
 !
       logical :: file_exists = .false.
 !
@@ -1518,7 +1568,7 @@ contains
 !
       inquire(file='t2am',exist=file_exists)
 !
-      if (file_exists) then 
+      if (file_exists) then
 !
 !        Open amplitude files if they exist
 !
@@ -1528,12 +1578,12 @@ contains
 !
          rewind(unit_t2am)
 !
-!        Allocate doubles amplitudes if they aren't allocated 
+!        Allocate doubles amplitudes if they aren't allocated
 !
-         if (.not. allocated(wf%t2am)) then 
+         if (.not. allocated(wf%t2am)) then
 !
             call wf%mem%alloc(wf%t2am, wf%n_t2am, 1)
-            wf%t2am = zero 
+            wf%t2am = zero
 !
          endif
 !
@@ -1558,18 +1608,18 @@ contains
 !!    Jacobian test (CCSD)
 !!    Written by Eirik F. Kjønstad, June 2017
 !!
-!!    Calculates the Jacobian matrix by numerically differentiating 
+!!    Calculates the Jacobian matrix by numerically differentiating
 !!    the projection vector:
 !!
 !!       A_mu,nu = d Omega_mu / d t_nu.
 !!
 !!    Used to debug Jacobian transformation.
 !!
-      implicit none 
+      implicit none
 !
-      class(ccsd) :: wf 
+      class(ccsd) :: wf
 !
-      real(dp), dimension(:,:), allocatable :: c_a_i  
+      real(dp), dimension(:,:), allocatable :: c_a_i
       real(dp), dimension(:,:), allocatable :: c_aibj
 !
       integer(i15) :: a = 0, i = 0, b = 0, j = 0, ai = 0, bj = 0, aibj = 0
@@ -1580,7 +1630,7 @@ contains
 !
       real(dp) :: displacement
 !
-!     Calculate the transformation of the t1 amplitudes 
+!     Calculate the transformation of the t1 amplitudes
 !
       call wf%read_double_amplitudes
 !
@@ -1588,9 +1638,9 @@ contains
       call wf%mem%alloc(r2am, wf%n_t2am, 1)
 !
       r1am = wf%t1am
-      r2am = wf%t2am 
+      r2am = wf%t2am
 !
-!     Make sure fock matrix is up to date 
+!     Make sure fock matrix is up to date
 !
       call wf%construct_fock
 !
@@ -1632,13 +1682,13 @@ contains
          write(unit_output,*) j, r2am(j,1)
       enddo
 !
-!     We wish to calculate A_mu,nu = d(omega)_mu / dt_nu, 
+!     We wish to calculate A_mu,nu = d(omega)_mu / dt_nu,
 !     in two different ways:
 !
 !        - By transforming c_tau = delta_tau,nu with A. Then (A c)_mu = sum_tau A_mu,tau c_tau = A_mu,nu
 !        - By calculating A_mu,nu = (omega(t+Dt_nu)_mu - omega(t)_mu)/Dt_nu.
 !
-!     :: First approach: transform by A :: 
+!     :: First approach: transform by A ::
 !
       call wf%mem%alloc(c_a_i, wf%n_v, wf%n_o)
       call wf%mem%alloc(c_aibj, wf%n_t2am, 1)
@@ -1651,11 +1701,11 @@ contains
       do j = 1, wf%n_o
          do b = 1, wf%n_v
 !
-!           Let c have a one for the excitation bj, zero otherwise 
+!           Let c have a one for the excitation bj, zero otherwise
 !
-            c_a_i(b, j) = one 
+            c_a_i(b, j) = one
 !
-!           Transform c by A. The result should be A_mu,bj 
+!           Transform c by A. The result should be A_mu,bj
 !
             call wf%jacobian_ccsd_transformation(c_a_i,c_aibj)
 !
@@ -1676,18 +1726,18 @@ contains
             c_aibj = zero
 !
          enddo
-      enddo 
+      enddo
 !
       write(unit_output,*) 'A_ckdl,bj, singles, by transformation ZZ'
 !
       do j = 1, wf%n_o
          do b = 1, wf%n_v
 !
-!           Let c have a one for the excitation bj, zero otherwise 
+!           Let c have a one for the excitation bj, zero otherwise
 !
-            c_a_i(b, j) = one 
+            c_a_i(b, j) = one
 !
-!           Transform c by A. The result should be A_mu,bj 
+!           Transform c by A. The result should be A_mu,bj
 !
             call wf%jacobian_ccsd_transformation(c_a_i,c_aibj)
 !
@@ -1717,7 +1767,7 @@ contains
             c_aibj = zero
 !
          enddo
-      enddo 
+      enddo
 !
       c_a_i  = zero
       c_aibj = zero
@@ -1738,11 +1788,11 @@ contains
 !
                   c_aibj(aibj,1) = one
 !
-!                 Transform c by A. The result should be A_mu,aibj 
+!                 Transform c by A. The result should be A_mu,aibj
 !
                   call wf%jacobian_ccsd_transformation(c_a_i,c_aibj)
 !
-!                 Print singles-doubles block 
+!                 Print singles-doubles block
 !
                   do k = 1, wf%n_o
                      do c = 1, wf%n_v
@@ -1778,11 +1828,11 @@ contains
 !
                   c_aibj(aibj,1) = one
 !
-!                 Transform c by A. The result should be A_mu,aibj 
+!                 Transform c by A. The result should be A_mu,aibj
 !
                   call wf%jacobian_ccsd_transformation(c_a_i,c_aibj)
 !
-!                 Print singles-doubles block 
+!                 Print singles-doubles block
 !
                   do k = 1, wf%n_o
                      do c = 1, wf%n_v
@@ -1809,7 +1859,7 @@ contains
          enddo
       enddo
 !
-!     :: Second approach: differentaition of omega :: 
+!     :: Second approach: differentaition of omega ::
 !
       write(unit_output,*) 'A_mu,nu, singles, by derivation'
 !
@@ -1823,7 +1873,7 @@ contains
       do j = 1, wf%n_o
          do b = 1, wf%n_v
 !
-!           Construct omega and save in c 
+!           Construct omega and save in c
 !
             wf%omega1 = zero
             wf%omega2 = zero
@@ -1834,17 +1884,17 @@ contains
             c_a_i  = wf%omega1
             c_aibj = wf%omega2
 !
-!           Shift the j,b amplitude 
+!           Shift the j,b amplitude
 !
             wf%t1am(b,j) = wf%t1am(b,j) + displacement
 !
-!           Construct omega 
+!           Construct omega
 !
             wf%omega1 = zero
             wf%omega2 = zero
 !
             call wf%construct_fock
-            call wf%construct_omega 
+            call wf%construct_omega
 !
             do i = 1, wf%n_o
                do a = 1, wf%n_v
@@ -1862,9 +1912,9 @@ contains
             wf%t1am(b,j) = wf%t1am(b,j) - displacement
 !
          enddo
-      enddo 
+      enddo
 !
-      write(unit_output,*) 'A_ck,aibj, doubles, by differentiation XX'     
+      write(unit_output,*) 'A_ck,aibj, doubles, by differentiation XX'
 !
       do j = 1, wf%n_o
          do b = 1, wf%n_v
@@ -1876,8 +1926,8 @@ contains
                   bj = index_two(b, j, wf%n_v)
 !
                   aibj = index_packed(ai, bj)
-!  
-!                 Construct omega and save in c 
+!
+!                 Construct omega and save in c
 !
                   wf%omega1 = zero
                   wf%omega2 = zero
@@ -1888,17 +1938,17 @@ contains
                   c_a_i  = wf%omega1
                   c_aibj = wf%omega2
 !
-!                 Shift the aibj amplitude 
+!                 Shift the aibj amplitude
 !
                   wf%t2am(aibj,1) = wf%t2am(aibj,1) + displacement
 !
-!                 Construct omega 
+!                 Construct omega
 !
                   wf%omega1 = zero
                   wf%omega2 = zero
 !
                   call wf%construct_fock
-                  call wf%construct_omega 
+                  call wf%construct_omega
 !
                   do k = 1, wf%n_o
                      do c = 1, wf%n_v
@@ -1919,7 +1969,7 @@ contains
       enddo
 !
 !
-      write(unit_output,*) 'A_ckdl,aibj, doubles, by differentiation YY'     
+      write(unit_output,*) 'A_ckdl,aibj, doubles, by differentiation YY'
 !
       do j = 1, wf%n_o
          do b = 1, wf%n_v
@@ -1931,8 +1981,8 @@ contains
                   bj = index_two(b, j, wf%n_v)
 !
                   aibj = index_packed(ai, bj)
-!  
-!                 Construct omega and save in c 
+!
+!                 Construct omega and save in c
 !
                   wf%omega1 = zero
                   wf%omega2 = zero
@@ -1943,17 +1993,17 @@ contains
                   c_a_i  = wf%omega1
                   c_aibj = wf%omega2
 !
-!                 Shift the aibj amplitude 
+!                 Shift the aibj amplitude
 !
                   wf%t2am(aibj,1) = wf%t2am(aibj,1) + displacement
 !
-!                 Construct omega 
+!                 Construct omega
 !
                   wf%omega1 = zero
                   wf%omega2 = zero
 !
                   call wf%construct_fock
-                  call wf%construct_omega 
+                  call wf%construct_omega
 !
                   do k = 1, wf%n_o
                      do c = 1, wf%n_v
@@ -1966,11 +2016,11 @@ contains
                               ckdl = index_packed(ck, dl)
 !
                               if (c .eq. d .and. k .eq. l) then
-                                 write(unit_output,*) 'ckdl, aibj, A_ckdl, aibj', & 
+                                 write(unit_output,*) 'ckdl, aibj, A_ckdl, aibj', &
                                           ckdl, aibj, half*(wf%omega2(ckdl,1)-c_aibj(ckdl,1))/displacement
                               else
 !
-                                 write(unit_output,*) 'ckdl, aibj, A_ckdl, aibj', & 
+                                 write(unit_output,*) 'ckdl, aibj, A_ckdl, aibj', &
                                           ckdl, aibj, (wf%omega2(ckdl,1)-c_aibj(ckdl,1))/displacement
                               endif
 !
@@ -1992,7 +2042,7 @@ contains
       do j = 1, wf%n_o
          do b = 1, wf%n_v
 !
-!           Construct omega and save in c 
+!           Construct omega and save in c
 !
             wf%omega1 = zero
             wf%omega2 = zero
@@ -2003,17 +2053,17 @@ contains
             c_a_i  = wf%omega1
             c_aibj = wf%omega2
 !
-!           Shift the j,b amplitude 
+!           Shift the j,b amplitude
 !
             wf%t1am(b,j) = wf%t1am(b,j) + displacement
 !
-!           Construct omega 
+!           Construct omega
 !
             wf%omega1 = zero
             wf%omega2 = zero
 !
             call wf%construct_fock
-            call wf%construct_omega 
+            call wf%construct_omega
 !
             do k = 1, wf%n_o
                do c = 1, wf%n_v
@@ -2028,7 +2078,7 @@ contains
 !
                         ckdl = index_packed(ck, dl)
 !
-                        if (c .eq. d .and. k .eq. l) then 
+                        if (c .eq. d .and. k .eq. l) then
 !
                            write(unit_output,*) 'ckdl, bj, A_ckdl,bj', ckdl, bj, &
                                     half*(wf%omega2(ckdl,1)-c_aibj(ckdl,1))/displacement
@@ -2047,7 +2097,7 @@ contains
             wf%t1am(b,j) = wf%t1am(b,j) - displacement
 !
          enddo
-      enddo 
+      enddo
 !
    end subroutine jacobi_test_ccsd
 !
@@ -2060,13 +2110,13 @@ contains
 !!    Note: the routine assumes that eta is initialized and that the Fock matrix
 !!    has been constructed.
 !!
-      implicit none 
+      implicit none
 !
-      class(ccsd) :: wf 
+      class(ccsd) :: wf
 !
       real(dp), dimension(wf%n_parameters, 1) :: eta ! eta = ( eta_ai eta_aibj )
 !
-      real(dp), dimension(:,:), allocatable :: g_ia_jb 
+      real(dp), dimension(:,:), allocatable :: g_ia_jb
       real(dp), dimension(:,:), allocatable :: eta_ai_bj
 !
       character(len=40) :: integral_type
@@ -2076,25 +2126,25 @@ contains
 !
       call wf%construct_fock
 !
-      eta = zero 
+      eta = zero
 !
       do i = 1, wf%n_o
-         do a = 1, wf%n_v 
+         do a = 1, wf%n_v
 !
             ai = index_two(a, i, wf%n_v)
-            eta(ai, 1) = two*(wf%fock_ia(i, a)) ! eta_ai = 2 F_ia 
+            eta(ai, 1) = two*(wf%fock_ia(i, a)) ! eta_ai = 2 F_ia
 !
          enddo
       enddo
 !
-!     Form g_ia_jb = g_iajb 
+!     Form g_ia_jb = g_iajb
 !
       call wf%mem%alloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       integral_type = 'electronic_repulsion'
       call wf%get_ov_ov(integral_type, g_ia_jb)
 !
-!     Form eta_ai_bj = 2* L_iajb = 2 * ( 2 * g_iajb - g_ibja) 
+!     Form eta_ai_bj = 2* L_iajb = 2 * ( 2 * g_iajb - g_ibja)
 !                                = 4 * g_ia_jb(ia,jb) - 2 * g_ia_jb(ib,ja)
 !
       call wf%mem%alloc(eta_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
@@ -2110,7 +2160,7 @@ contains
 !
                ib = index_two(i, b, wf%n_o)
 !
-               do a = 1, wf%n_v 
+               do a = 1, wf%n_v
 !
                   ai = index_two(a, i, wf%n_v)
                   ia = index_two(i, a, wf%n_o)
@@ -2125,7 +2175,7 @@ contains
 !
       call wf%mem%dealloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-!     Pack vector into doubles eta 
+!     Pack vector into doubles eta
 !
       do j = 1, wf%n_o
          do b = 1, wf%n_v

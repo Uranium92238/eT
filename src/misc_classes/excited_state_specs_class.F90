@@ -49,6 +49,10 @@ module excited_state_specs_class
 !
       logical :: print_vectors = .true.
 !
+!     Solver algorithm (Davidson is standard, but DIIS is also available)
+!
+      character(len=40) :: algorithm = 'davidson' 
+!
    end type excited_state_specs                                                                          
 !
 contains

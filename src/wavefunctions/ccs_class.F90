@@ -3,19 +3,19 @@ module ccs_class
 !!
 !!
 !!
-!!                      Coupled cluster singles (CCS) class module                                 
-!!                Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017         
-!! 
+!!                      Coupled cluster singles (CCS) class module
+!!                Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
 !!
 !!
 !!    This module contains the definition of the coupled cluster singles (CCS)
 !!    wavefunction class. It is structured into four sections:
 !!
-!!       1. Modules used by the class: 
+!!       1. Modules used by the class:
 !!
 !!             Basic utilities and the ancestor class (HF)
 !!
-!!       2. Definition of the class: 
+!!       2. Definition of the class:
 !!
 !!             Non-inherited variables, followed by non-inherited or overridden procedures
 !!
@@ -25,27 +25,28 @@ module ccs_class
 !!             detailed definitions given in the following class submodules:
 !!
 !!                - Ground state
-!!                - Excited state 
-!!                - Response 
-!!                - Input Reader 
+!!                - Excited state
+!!                - Response
+!!                - Input Reader
 !!                - Cholesky
-!!                - Integrals 
-!!                - Fock 
+!!                - Integrals
+!!                - Fock
 !!                - Jacobian (right transformation)
 !!                - Jacobian Transpose (left transformation)
 !!                - Ionized State
 !!                - CVS
+!!                - Vector analysis
 !!
-!!             The interfaces shows incoming variables and their type, but contains 
-!!             no information of the procedure itself. The procedure is shown in full 
-!!             in the corresponding submodule. 
+!!             The interfaces shows incoming variables and their type, but contains
+!!             no information of the procedure itself. The procedure is shown in full
+!!             in the corresponding submodule.
 !!
 !!       4. Class module routines (i.e., non-submodule procedures). These include
 !!          the initialization and driver routines of the class, along with procedures that
 !!          are not (yet, at least) easily gathered in a submodule.
-!!         
-!! 
-!!                                                              
+!!
+!!
+!!
 !
 !
 !  ::::::::::::::::::::::::::::::::::::::
@@ -64,7 +65,7 @@ module ccs_class
 !
    use hf_class
 !
-   implicit none 
+   implicit none
 !
 !
 !  ::::::::::::::::::::::::::::::::::::::::
@@ -79,11 +80,11 @@ module ccs_class
       integer(i15) :: n_t1am       = 0 ! Number of single excitation amplitudes
       integer(i15) :: n_parameters = 0 ! Number of parameters in the wavefunction
 !
-      real(dp), dimension(:,:), allocatable :: t1am ! Single excitation amplitudes vector, t_i^a 
+      real(dp), dimension(:,:), allocatable :: t1am ! Single excitation amplitudes vector, t_i^a
 !
 !     The omega, or projection, vector < mu | exp(-T) H exp(T) | R >
-! 
-      real(dp), dimension(:,:), allocatable :: omega1 ! Singles projection vector 
+!
+      real(dp), dimension(:,:), allocatable :: omega1 ! Singles projection vector
 !
 !     The T1-transformed Fock matrix
 !
@@ -96,20 +97,20 @@ module ccs_class
 !
       real(dp), dimension(:,:), allocatable :: excitation_energies
 !
-   contains 
+   contains
 !
 !
 !     -::- Initialization and driver routines -::-
 !     --------------------------------------------
 !
-      procedure :: init => init_ccs ! Initialization of class 
-      procedure :: drv  => drv_ccs  ! Driver of class 
+      procedure :: init => init_ccs ! Initialization of class
+      procedure :: drv  => drv_ccs  ! Driver of class
 !
 !
 !     -::- Ground state submodule routine pointers -::-
 !     -------------------------------------------------
 !
-!     Driver and solver 
+!     Driver and solver
 !
       procedure :: ground_state_driver       => ground_state_driver_ccs
       procedure :: ground_state_solver       => ground_state_solver_ccs
@@ -119,11 +120,11 @@ module ccs_class
       procedure :: ground_state_preparations => ground_state_preparations_ccs
       procedure :: ground_state_cleanup      => ground_state_cleanup_ccs
 !
-!     Ground state restart routine 
-! 
+!     Ground state restart routine
+!
       procedure :: ground_state_restart      => ground_state_restart_ccs
 !
-!     DIIS component of solver, with helper routines 
+!     DIIS component of solver, with helper routines
 !
       procedure, non_overridable :: diis     => diis_ccs
 !
@@ -132,33 +133,38 @@ module ccs_class
       procedure :: calc_ampeqs_norm          => calc_ampeqs_norm_ccs
       procedure :: calc_quasi_Newton_singles => calc_quasi_Newton_singles_ccs
 !
+!     Vector analysis and print routines
+!
+      procedure :: summary_ground_state_info => summary_ground_state_info_ccs
+!
 !
 !     -::- Excited state submodule routine pointers -::-
 !     --------------------------------------------------
 !
-!     Driver and solver 
+!     Driver and solver
 !
-      procedure                  :: excited_state_driver => excited_state_driver_ccs 
-      procedure, non_overridable :: excited_state_solver => excited_state_solver_ccs
+      procedure                  :: excited_state_driver      => excited_state_driver_ccs
+      procedure, non_overridable :: excited_state_solver      => excited_state_solver_ccs
+      procedure, non_overridable :: excited_state_solver_diis => excited_state_solver_diis_ccs
 !
 !     Preparations and cleanup routines (before and after solver)
 !
       procedure :: excited_state_preparations => excited_state_preparations_ccs
       procedure :: excited_state_cleanup      => excited_state_cleanup_ccs
 !
-!     Excited state restart routine 
-! 
+!     Excited state restart routine
+!
       procedure :: excited_state_restart      => excited_state_restart_ccs
 !
-!     Helper routines for excited state solver 
+!     Helper routines for excited state solver
 !
       procedure :: transform_trial_vectors          => transform_trial_vectors_ccs
-      procedure :: calculate_orbital_differences    => calculate_orbital_differences_ccs 
+      procedure :: calculate_orbital_differences    => calculate_orbital_differences_ccs
 !
       procedure :: precondition_residual            => precondition_residual_ccs
       procedure :: precondition_residual_valence    => precondition_residual_valence_ccs
 !
-      procedure :: print_excited_state_info         => print_excited_state_info_ccs      
+      procedure :: print_excited_state_info         => print_excited_state_info_ccs
       procedure :: print_excitation_vector          => print_excitation_vector_ccs
 !
       procedure :: analyze_single_excitation_vector => analyze_single_excitation_vector_ccs
@@ -185,12 +191,12 @@ module ccs_class
 !     -::- Response submodule routine pointers -::-
 !     ---------------------------------------------
 !
-!     Driver and solver 
+!     Driver and solver
 !
       procedure :: response_driver => response_driver_ccs
       procedure :: response_solver => response_solver_ccs
 !
-!     Helper routines for solver 
+!     Helper routines for solver
 !
       procedure :: response_preparations                 => response_preparations_ccs
       procedure :: response_cleanup                      => response_cleanup_ccs
@@ -215,10 +221,10 @@ module ccs_class
 !     -::- Cholesky submodule routine pointers -::-
 !     ---------------------------------------------
 !
-      procedure, non_overridable :: get_cholesky_ij => get_cholesky_ij_ccs 
-      procedure, non_overridable :: get_cholesky_ia => get_cholesky_ia_ccs 
-      procedure, non_overridable :: get_cholesky_ai => get_cholesky_ai_ccs 
-      procedure, non_overridable :: get_cholesky_ab => get_cholesky_ab_ccs 
+      procedure, non_overridable :: get_cholesky_ij => get_cholesky_ij_ccs
+      procedure, non_overridable :: get_cholesky_ia => get_cholesky_ia_ccs
+      procedure, non_overridable :: get_cholesky_ai => get_cholesky_ai_ccs
+      procedure, non_overridable :: get_cholesky_ab => get_cholesky_ab_ccs
 !
 !
 !     -::- Integral submodule routine pointers -::-
@@ -226,23 +232,23 @@ module ccs_class
 !
 !     Get integral routines
 !
-      procedure :: get_oo_oo => get_oo_oo_ccs 
-      procedure :: get_oo_ov => get_oo_ov_ccs 
-      procedure :: get_ov_oo => get_ov_oo_ccs 
-      procedure :: get_oo_vo => get_oo_vo_ccs 
+      procedure :: get_oo_oo => get_oo_oo_ccs
+      procedure :: get_oo_ov => get_oo_ov_ccs
+      procedure :: get_ov_oo => get_ov_oo_ccs
+      procedure :: get_oo_vo => get_oo_vo_ccs
       procedure :: get_vo_oo => get_vo_oo_ccs
       procedure :: get_oo_vv => get_oo_vv_ccs
       procedure :: get_vv_oo => get_vv_oo_ccs
-      procedure :: get_ov_ov => get_ov_ov_ccs 
+      procedure :: get_ov_ov => get_ov_ov_ccs
 !
-      procedure :: get_vo_vo => get_vo_vo_ccs 
+      procedure :: get_vo_vo => get_vo_vo_ccs
       procedure :: get_ov_vo => get_ov_vo_ccs
-      procedure :: get_vo_ov => get_vo_ov_ccs 
+      procedure :: get_vo_ov => get_vo_ov_ccs
       procedure :: get_ov_vv => get_ov_vv_ccs
       procedure :: get_vv_ov => get_vv_ov_ccs
       procedure :: get_vo_vv => get_vo_vv_ccs
       procedure :: get_vv_vo => get_vv_vo_ccs
-      procedure :: get_vv_vv => get_vv_vv_ccs 
+      procedure :: get_vv_vv => get_vv_vv_ccs
 !
       procedure :: get_oo_oo_electronic_repulsion => get_oo_oo_electronic_repulsion_ccs
       procedure :: get_oo_ov_electronic_repulsion => get_oo_ov_electronic_repulsion_ccs
@@ -288,9 +294,9 @@ module ccs_class
 !     -::- Fock submodule routine pointers -::-
 !     -----------------------------------------
 !
-      procedure, non_overridable :: initialize_fock_matrix => initialize_fock_matrix_ccs 
-      procedure, non_overridable :: construct_fock         => construct_fock_ccs  
-      procedure, non_overridable :: one_electron_t1        => one_electron_t1_ccs 
+      procedure, non_overridable :: initialize_fock_matrix => initialize_fock_matrix_ccs
+      procedure, non_overridable :: construct_fock         => construct_fock_ccs
+      procedure, non_overridable :: one_electron_t1        => one_electron_t1_ccs
 !
 !
 !     -::- Jacobian submodule routine pointers -::-
@@ -298,7 +304,7 @@ module ccs_class
 !
       procedure :: jacobian_ccs_transformation      => jacobian_ccs_transformation_ccs
 !
-      procedure, non_overridable :: jacobian_ccs_a1 => jacobian_ccs_a1_ccs 
+      procedure, non_overridable :: jacobian_ccs_a1 => jacobian_ccs_a1_ccs
       procedure, non_overridable :: jacobian_ccs_b1 => jacobian_ccs_b1_ccs
 !
       procedure :: jacobi_test => jacobi_test_ccs ! A debug routine
@@ -310,7 +316,7 @@ module ccs_class
       procedure :: jacobian_transpose_ccs_transformation      => jacobian_transpose_ccs_transformation_ccs
 !
       procedure, non_overridable :: jacobian_transpose_ccs_a1 => jacobian_transpose_ccs_a1_ccs
-      procedure, non_overridable :: jacobian_transpose_ccs_b1 => jacobian_transpose_ccs_b1_ccs 
+      procedure, non_overridable :: jacobian_transpose_ccs_b1 => jacobian_transpose_ccs_b1_ccs
 !
 !
 !     -::- Ionized state submodule routine pointers -::-
@@ -328,8 +334,14 @@ module ccs_class
 !     -::- CVS submodule routine pointers -::-
 !     ----------------------------------------
 !
-      procedure :: cvs_rho_a_i_projection             => cvs_rho_a_i_projection_ccs
-      procedure :: cvs_residual_projection            => cvs_residual_projection_ccs
+      procedure :: cvs_rho_a_i_projection  => cvs_rho_a_i_projection_ccs
+      procedure :: cvs_residual_projection => cvs_residual_projection_ccs
+!
+!
+!     -::- Vector analysis submodule routine pointers -::-
+!     ----------------------------------------
+!
+      procedure :: print_dominant_singles => print_dominant_singles_ccs
 !
 !
 !     -::- Other class routine pointers not located in submodules -::-
@@ -340,31 +352,31 @@ module ccs_class
       procedure :: construct_omega => construct_omega_ccs
       procedure :: omega_ccs_a1    => omega_ccs_a1_ccs
 !
-!     Ground state energy calculation routine 
+!     Ground state energy calculation routine
 !
       procedure :: calc_energy => calc_energy_ccs
 !
 !     Routine to construct eta, or right projection, vector
 !
-      procedure :: construct_eta => construct_eta_ccs 
+      procedure :: construct_eta => construct_eta_ccs
 !
 !     Routines to allocate amplitudes
 !
-      procedure :: initialize_amplitudes        => initialize_single_amplitudes_ccs ! Note: points to the same 
+      procedure :: initialize_amplitudes        => initialize_single_amplitudes_ccs ! Note: points to the same
       procedure :: initialize_single_amplitudes => initialize_single_amplitudes_ccs ! routine in CCS, for obvious reasons
 !
 !     Routines to deallocate amplitudes
 !
-      procedure :: destruct_amplitudes        => destruct_single_amplitudes_ccs ! Note: points to the same 
+      procedure :: destruct_amplitudes        => destruct_single_amplitudes_ccs ! Note: points to the same
       procedure :: destruct_single_amplitudes => destruct_single_amplitudes_ccs ! routine in CCS, for obvious reasons
 !
-!     Routine to save the amplitudes to disk 
+!     Routine to save the amplitudes to disk
 !
       procedure :: save_amplitudes        => save_amplitudes_ccs
 !
 !     Routines to read the amplitudes from disk (and allocate if necessary)
 !
-      procedure :: read_amplitudes        => read_single_amplitudes_ccs ! Note: points to the same 
+      procedure :: read_amplitudes        => read_single_amplitudes_ccs ! Note: points to the same
       procedure :: read_single_amplitudes => read_single_amplitudes_ccs ! routine in CCS, for obvious reasons
 !
 !     Routines to allocate and deallocate omega
@@ -377,7 +389,7 @@ module ccs_class
 !
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-!  -::- 3. Interfaces to the submodules of the CCS class -::- 
+!  -::- 3. Interfaces to the submodules of the CCS class -::-
 !  ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
 !
@@ -392,9 +404,9 @@ module ccs_class
 !!       Ground State Driver (CCS)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(ccs) :: wf  
+         class(ccs) :: wf
 !
       end subroutine ground_state_driver_ccs
 !
@@ -404,19 +416,19 @@ module ccs_class
 !!       Ground State Preparations (CCS)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
-         class(ccs) :: wf 
+         class(ccs) :: wf
 !
       end subroutine ground_state_preparations_ccs
 !
 !
       module subroutine ground_state_solver_ccs(wf)
 !!
-!!       Ground State Solver 
+!!       Ground State Solver
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(ccs) :: wf 
+         class(ccs) :: wf
 !
       end subroutine ground_state_solver_ccs
 !
@@ -426,7 +438,7 @@ module ccs_class
 !!       Ground State Cleanup (CCS)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
-         class(ccs) :: wf 
+         class(ccs) :: wf
 !
       end subroutine ground_state_cleanup_ccs
 !
@@ -436,7 +448,7 @@ module ccs_class
 !!       Ground state restart (CCS)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
 !!
-         class(ccs) :: wf   
+         class(ccs) :: wf
 !
       end subroutine ground_state_restart_ccs
 !
@@ -446,11 +458,11 @@ module ccs_class
 !!       Calculate Amplitude Equations (CCS)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(ccs) :: wf 
+         class(ccs) :: wf
 !
-      end subroutine calc_ampeqs_ccs 
+      end subroutine calc_ampeqs_ccs
 !
 !
       module subroutine calc_ampeqs_norm_ccs(wf, ampeqs_norm)
@@ -458,22 +470,24 @@ module ccs_class
 !!       Calculate Amplitude Equations Norm (CCS)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(ccs) :: wf 
-         real(dp)   :: ampeqs_norm 
+         class(ccs) :: wf
+         real(dp)   :: ampeqs_norm
 !
       end subroutine calc_ampeqs_norm_ccs
 !
 !
-      module subroutine new_amplitudes_ccs(wf)
+      module subroutine new_amplitudes_ccs(wf, diis_ground_state)
 !!
 !!       New Amplitudes (CCS)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(ccs) :: wf 
+         class(ccs) :: wf
+!
+         class(diis) :: diis_ground_state
 !
       end subroutine new_amplitudes_ccs
 !
@@ -483,9 +497,9 @@ module ccs_class
 !!       Calculate quasi-Newton Singles (CCS)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(ccs) :: wf 
+         class(ccs) :: wf
 !
          real(dp), dimension(wf%n_parameters, 1) :: dt
 !
@@ -497,20 +511,34 @@ module ccs_class
 !!       DIIS (CCS)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(ccs), intent(in)   :: wf 
+         class(ccs), intent(in)   :: wf
 !
-         real(dp), dimension(wf%n_parameters, 1) :: dt 
-         real(dp), dimension(wf%n_parameters, 1) :: t_dt 
+         real(dp), dimension(wf%n_parameters, 1) :: dt
+         real(dp), dimension(wf%n_parameters, 1) :: t_dt
 !
       end subroutine diis_ccs
 !
 !
-   end interface 
+      module subroutine summary_ground_state_info_ccs(wf, time)
+!!
+!!       Summary ground state info (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+         real(dp) :: time
+!
+      end subroutine summary_ground_state_info_ccs
 !
 !
-   interface 
+   end interface
+!
+!
+   interface
 !
 !     -::- Excited state submodule interface -::-
 !     -------------------------------------------
@@ -529,14 +557,14 @@ module ccs_class
 !
       module subroutine find_start_trial_indices_ccs(wf, index_list)
 !!
-!!       Find Start Trial Indices (CCS) 
+!!       Find Start Trial Indices (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
          implicit none
 !
          class(ccs) :: wf
          integer(i15), dimension(wf%excited_state_specifications%n_singlet_states,1), intent(inout) :: index_list
-! 
+!
       end subroutine find_start_trial_indices_ccs
 !
 !
@@ -547,8 +575,8 @@ module ccs_class
 !!
          implicit none
 !
-         class(ccs) :: wf 
-         integer(i15), intent(in) :: first_trial, last_trial       
+         class(ccs) :: wf
+         integer(i15), intent(in) :: first_trial, last_trial
 !
       end subroutine transform_trial_vectors_ccs
 !
@@ -558,9 +586,9 @@ module ccs_class
 !!       Excited state driver (CCS)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(ccs) :: wf 
+         class(ccs) :: wf
 !
       end subroutine excited_state_driver_ccs
 !
@@ -570,7 +598,7 @@ module ccs_class
 !!       Excited State Preparations (CCS)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
-         class(ccs) :: wf 
+         class(ccs) :: wf
 !
       end subroutine excited_state_preparations_ccs
 !
@@ -580,21 +608,33 @@ module ccs_class
 !!       Excited State Cleanup (CCS)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
-         class(ccs) :: wf 
+         class(ccs) :: wf
 !
       end subroutine excited_state_cleanup_ccs
 !
 !
       module subroutine excited_state_solver_ccs(wf)
 !!
-!!       Excited State Solver
+!!       Excited state solver
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!  
+!!
          implicit none
-!  
+!
          class(ccs) :: wf
 !
       end subroutine excited_state_solver_ccs
+!
+!
+      module subroutine excited_state_solver_diis_ccs(wf)
+!!
+!!       Excited state diis solver
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2018
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+      end subroutine excited_state_solver_diis_ccs
 !
 !
       module subroutine excited_state_restart_ccs(wf)
@@ -602,7 +642,7 @@ module ccs_class
 !!       Excited state restart (CCS)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
 !!
-         class(ccs) :: wf  
+         class(ccs) :: wf
 !
       end subroutine excited_state_restart_ccs
 !
@@ -621,17 +661,17 @@ module ccs_class
 !
          real(dp), dimension(wf%excited_state_specifications%n_singlet_states,1) :: eigenvalues_Re
          real(dp), dimension(wf%excited_state_specifications%n_singlet_states,1) :: eigenvalues_Im
-! 
+!
          real(dp), dimension(reduced_dim, wf%excited_state_specifications%n_singlet_states) :: solution_vectors_reduced
 !
       end subroutine solve_reduced_eigenvalue_equation_ccs
 !
 !
      module subroutine construct_next_trial_vectors_ccs(wf, eigenvalues_Re, eigenvalues_Im, &
-                                                   solution_vectors_reduced, & 
+                                                   solution_vectors_reduced, &
                                                    reduced_dim, n_new_trials)
 !!
-!!       Construct Next Trial Vectors    
+!!       Construct Next Trial Vectors
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
          implicit none
@@ -663,7 +703,7 @@ module ccs_class
 !
       module subroutine initialize_trial_vectors_core_ccs(wf)
 !!
-!!       Initialize trial vectors, for CVS calculation 
+!!       Initialize trial vectors, for CVS calculation
 !!       Written by Sarai D. Folkestad, Aug 2017
 !!
          implicit none
@@ -728,8 +768,8 @@ module ccs_class
 !!       Initialize Excited States
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
 !!
-         implicit none 
-!    
+         implicit none
+!
          class(ccs) :: wf
 !
       end subroutine initialize_excited_states_ccs
@@ -757,7 +797,7 @@ module ccs_class
 !
          class(ccs) :: wf
          real(dp), dimension(wf%n_parameters ,1) :: residual
-!   
+!
       end subroutine precondition_residual_valence_ccs
 !
 !
@@ -770,7 +810,7 @@ module ccs_class
 !
          class(ccs) :: wf
          real(dp), dimension(wf%n_parameters ,1) :: residual
-!       
+!
 !
       end subroutine precondition_residual_core_ccs
 !
@@ -781,7 +821,7 @@ module ccs_class
 !!       Written by Sarai D. Folkestad, Aug 2017
 !!
          implicit none
-!  
+!
          class(ccs) :: wf
 !
       end subroutine print_excited_state_info_ccs
@@ -793,12 +833,12 @@ module ccs_class
 !!       Written by Sarai D. Folkestad, Aug 2017
 !!
          implicit none
-!  
+!
          class(ccs) :: wf
 !
          real(dp), dimension(wf%n_parameters, 1) :: vec
 !
-         integer(i15) :: unit_id     
+         integer(i15) :: unit_id
 !
       end subroutine print_excitation_vector_ccs
 !
@@ -809,17 +849,17 @@ module ccs_class
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Nov 2017
 !!
          implicit none
-!  
+!
          class(ccs) :: wf
 !
-         real(dp), dimension(wf%n_o*wf%n_v, 1) :: vec    
+         real(dp), dimension(wf%n_o*wf%n_v, 1) :: vec
 !
          integer(i15) :: a = 0, i = 0, ai = 0
 !
          integer(i15) :: n    ! Number of elements wanted
-!  
+!
          real(dp), dimension(n, 1)    :: sorted_short_vec
-!  
+!
          integer(i15), dimension(n, 2) ::index_list
 !
       end subroutine analyze_single_excitation_vector_ccs
@@ -831,7 +871,7 @@ module ccs_class
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Nov 2017
 !!
          implicit none
-!  
+!
          class(ccs) :: wf
 !
          real(dp), dimension(wf%excited_state_specifications%n_singlet_states,1) :: energies
@@ -842,7 +882,7 @@ module ccs_class
    end interface
 !
 !
-   interface 
+   interface
 !
 !     -::- Response submodule interface -::-
 !     --------------------------------------
@@ -852,9 +892,9 @@ module ccs_class
 !!       Response Driver (CCS)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(ccs) :: wf 
+         class(ccs) :: wf
 !
       end subroutine response_driver_ccs
 !
@@ -864,7 +904,7 @@ module ccs_class
 !!       Response Solver (CCS)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccs) :: wf
 !
@@ -876,9 +916,9 @@ module ccs_class
 !!       Response calculation preparations (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Dec 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(ccs) :: wf 
+         class(ccs) :: wf
 !
       end subroutine response_preparations_ccs
 !
@@ -890,7 +930,7 @@ module ccs_class
 !!
          implicit none
 !
-         class(ccs) :: wf 
+         class(ccs) :: wf
 !
       end subroutine response_cleanup_ccs
 !
@@ -900,9 +940,9 @@ module ccs_class
 !!       Initialize Response (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(ccs) :: wf 
+         class(ccs) :: wf
 !
       end subroutine initialize_response_ccs
 !
@@ -917,7 +957,7 @@ module ccs_class
          class(ccs) :: wf
 !
          integer(i15) :: reduced_dim, n_new_trials
-! 
+!
          real(dp), dimension(reduced_dim, 1) :: solution_vector_reduced
 !
       end subroutine solve_reduced_response_equation_ccs
@@ -960,7 +1000,7 @@ module ccs_class
 !!       Construct Gradient Vector (CCS)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccs) :: wf
 !
@@ -978,19 +1018,19 @@ module ccs_class
 !
          integer(i15) :: reduced_dim, n_new_trials
 !
-         real(dp), dimension(reduced_dim, 1) :: solution_vector_reduced ! X_reduced 
+         real(dp), dimension(reduced_dim, 1) :: solution_vector_reduced ! X_reduced
 !
       end subroutine construct_next_response_trial_vectors_ccs
 !
 !
-    end interface 
+    end interface
 !
 !
    interface
 !
 !
 !     -::- Input reader submodule interface -::-
-!     ------------------------------------------ 
+!     ------------------------------------------
 !
       module subroutine general_specs_reader_ccs(wf, unit_input)
 !!
@@ -1007,7 +1047,7 @@ module ccs_class
       end subroutine general_specs_reader_ccs
 !
 !
-      module subroutine calculation_reader_ccs(wf, unit_input)                                   
+      module subroutine calculation_reader_ccs(wf, unit_input)
 !!
 !!       Calculation Reader
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Nov. 2017
@@ -1066,7 +1106,7 @@ module ccs_class
    end interface
 !
 !
-   interface 
+   interface
 !
 !
 !     -::- Cholesky submodule interface -::-
@@ -1076,8 +1116,8 @@ module ccs_class
 !!
 !!       Get Cholesky IJ
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
-!!  
-         implicit none 
+!!
+         implicit none
 !
          class(ccs)               :: wf
          integer(i15), optional   :: i_first, j_first ! First index (can differ from 1 when batching or for mlcc)
@@ -1092,7 +1132,7 @@ module ccs_class
 !!       Get Cholesky IA
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccs)               :: wf
          integer(i15), optional   :: i_first, a_first   ! First index (can differ from 1 when batching or for mlcc)
@@ -1107,7 +1147,7 @@ module ccs_class
 !!       Get Cholesky AI
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccs)               :: wf
          integer(i15), optional   :: i_first, a_first     ! First index (can differ from 1 when batching or for mlcc)
@@ -1132,7 +1172,7 @@ module ccs_class
       end subroutine get_cholesky_ab_ccs
 !
 !
-   end interface 
+   end interface
 !
 !
 
@@ -1143,74 +1183,74 @@ module ccs_class
 !
       module subroutine store_vv_vv_electronic_repulsion_ccs(wf)
 !!
-!!       Store vvvv Electronic Repulsion 
+!!       Store vvvv Electronic Repulsion
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(ccs) :: wf 
+         class(ccs) :: wf
 !
       end subroutine store_vv_vv_electronic_repulsion_ccs
 !
 !
       module subroutine store_t1_vv_vv_electronic_repulsion_ccs(wf)
 !!
-!!       Store t1 vvvv Electronic Repulsion Integrals 
+!!       Store t1 vvvv Electronic Repulsion Integrals
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(ccs) :: wf 
+         class(ccs) :: wf
 !
       end subroutine store_t1_vv_vv_electronic_repulsion_ccs
 !
 !
       module subroutine store_t1_vo_ov_electronic_repulsion_ccs(wf)
 !!
-!!       Store t1 voov Electronic Repulsion Integrals 
+!!       Store t1 voov Electronic Repulsion Integrals
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
-!! 
-         implicit none 
-!  
-         class(ccs) :: wf 
+!!
+         implicit none
+!
+         class(ccs) :: wf
 !
       end subroutine store_t1_vo_ov_electronic_repulsion_ccs
 !
 !
       module subroutine store_t1_vv_ov_electronic_repulsion_ccs(wf)
 !!
-!!       Store t1 voov Electronic Repulsion Integrals 
+!!       Store t1 voov Electronic Repulsion Integrals
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
-!! 
-         implicit none 
-!  
-         class(ccs) :: wf 
+!!
+         implicit none
+!
+         class(ccs) :: wf
 !
       end subroutine store_t1_vv_ov_electronic_repulsion_ccs
 !
 !
       module subroutine store_t1_vv_vo_electronic_repulsion_ccs(wf)
 !!
-!!       Store t1 vvvo Electronic Repulsion Integrals 
+!!       Store t1 vvvo Electronic Repulsion Integrals
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(ccs) :: wf 
+         class(ccs) :: wf
 !
       end subroutine store_t1_vv_vo_electronic_repulsion_ccs
 !
 !
-      module subroutine read_vv_vv_electronic_repulsion_ccs(wf, x_vv_vv,    & 
+      module subroutine read_vv_vv_electronic_repulsion_ccs(wf, x_vv_vv,    &
                                        index1_first, index1_last, &
                                        index2_first, index2_last, &
                                        index3_first, index3_last, &
                                        index4_first, index4_last)
 !!
-!!       Read vvvv Electronic Repulsion 
+!!       Read vvvv Electronic Repulsion
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccs) :: wf
 !
@@ -1219,21 +1259,21 @@ module ccs_class
          integer(i15) :: index1_first, index1_last
          integer(i15) :: index2_first, index2_last
          integer(i15) :: index3_first, index3_last
-         integer(i15) :: index4_first, index4_last 
+         integer(i15) :: index4_first, index4_last
 !
       end subroutine read_vv_vv_electronic_repulsion_ccs
 !
 !
-      module subroutine read_t1_vv_vv_electronic_repulsion_ccs(wf, x_vv_vv,    & 
+      module subroutine read_t1_vv_vv_electronic_repulsion_ccs(wf, x_vv_vv,    &
                                        index1_first, index1_last, &
                                        index2_first, index2_last, &
                                        index3_first, index3_last, &
                                        index4_first, index4_last)
 !!
-!!       Read t1 vvvv Electronic Repulsion 
+!!       Read t1 vvvv Electronic Repulsion
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccs) :: wf
 !
@@ -1242,21 +1282,21 @@ module ccs_class
          integer(i15) :: index1_first, index1_last
          integer(i15) :: index2_first, index2_last
          integer(i15) :: index3_first, index3_last
-         integer(i15) :: index4_first, index4_last 
+         integer(i15) :: index4_first, index4_last
 !
       end subroutine read_t1_vv_vv_electronic_repulsion_ccs
 !
 !
-      module subroutine read_t1_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    & 
+      module subroutine read_t1_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov,    &
                                        index1_first, index1_last, &
                                        index2_first, index2_last, &
                                        index3_first, index3_last, &
                                        index4_first, index4_last)
 !!
-!!       Read t1 voov Electronic Repulsion 
+!!       Read t1 voov Electronic Repulsion
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccs) :: wf
 !
@@ -1265,21 +1305,21 @@ module ccs_class
          integer(i15) :: index1_first, index1_last
          integer(i15) :: index2_first, index2_last
          integer(i15) :: index3_first, index3_last
-         integer(i15) :: index4_first, index4_last 
+         integer(i15) :: index4_first, index4_last
 !
       end subroutine read_t1_vo_ov_electronic_repulsion_ccs
 !
 !
-      module subroutine read_t1_vv_vo_electronic_repulsion_ccs(wf, x_vv_vo,    & 
+      module subroutine read_t1_vv_vo_electronic_repulsion_ccs(wf, x_vv_vo,    &
                                        index1_first, index1_last, &
                                        index2_first, index2_last, &
                                        index3_first, index3_last, &
                                        index4_first, index4_last)
 !!
-!!       Read t1 vvvo Electronic Repulsion Integrals 
+!!       Read t1 vvvo Electronic Repulsion Integrals
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccs) :: wf
 !
@@ -1295,16 +1335,16 @@ module ccs_class
       end subroutine read_t1_vv_vo_electronic_repulsion_ccs
 !
 !
-      module subroutine read_t1_vv_ov_electronic_repulsion_ccs(wf, x_vv_ov,    & 
+      module subroutine read_t1_vv_ov_electronic_repulsion_ccs(wf, x_vv_ov,    &
                                        index1_first, index1_last, &
                                        index2_first, index2_last, &
                                        index3_first, index3_last, &
                                        index4_first, index4_last)
 !!
-!!       Read t1 vvov Electronic Repulsion Integrals 
+!!       Read t1 vvov Electronic Repulsion Integrals
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccs) :: wf
 !
@@ -1320,7 +1360,7 @@ module ccs_class
       end subroutine read_t1_vv_ov_electronic_repulsion_ccs
 !
 !
-      module subroutine get_oo_oo_ccs(wf, integral_type, x_oo_oo,    & 
+      module subroutine get_oo_oo_ccs(wf, integral_type, x_oo_oo,    &
                                           index1_first, index1_last, &
                                           index2_first, index2_last, &
                                           index3_first, index3_last, &
@@ -1328,12 +1368,12 @@ module ccs_class
 !!
 !!       Get x_oo,oo integral (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
-!! 
-         implicit none 
+!!
+         implicit none
 !
-         class(ccs) :: wf 
+         class(ccs) :: wf
 !
-         character(len=40) :: integral_type 
+         character(len=40) :: integral_type
 !
          real(dp), dimension(:, :) :: x_oo_oo
 !
@@ -1345,7 +1385,7 @@ module ccs_class
       end subroutine get_oo_oo_ccs
 !
 !
-      module subroutine get_oo_ov_ccs(wf, integral_type, x_oo_ov,    & 
+      module subroutine get_oo_ov_ccs(wf, integral_type, x_oo_ov,    &
                                           index1_first, index1_last, &
                                           index2_first, index2_last, &
                                           index3_first, index3_last, &
@@ -1353,24 +1393,24 @@ module ccs_class
 !!
 !!       Get x_oo,ov integral (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
-!!   
-         implicit none 
-!  
-         class(ccs) :: wf 
-!  
-         character(len=40) :: integral_type 
-!  
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+         character(len=40) :: integral_type
+!
          real(dp), dimension(:,:) :: x_oo_ov
-!  
+!
          integer(i15), optional :: index1_first, index1_last
          integer(i15), optional :: index2_first, index2_last
          integer(i15), optional :: index3_first, index3_last
          integer(i15), optional :: index4_first, index4_last
-!  
+!
       end subroutine get_oo_ov_ccs
 !
 !
-      module subroutine get_ov_oo_ccs(wf, integral_type, x_ov_oo,    & 
+      module subroutine get_ov_oo_ccs(wf, integral_type, x_ov_oo,    &
                                           index1_first, index1_last, &
                                           index2_first, index2_last, &
                                           index3_first, index3_last, &
@@ -1378,24 +1418,24 @@ module ccs_class
 !!
 !!       Get x_ov,oo integral (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
-!!  
-         implicit none 
-!  
-         class(ccs) :: wf 
-!  
-         character(len=40) :: integral_type 
-!  
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+         character(len=40) :: integral_type
+!
          real(dp), dimension(:,:) :: x_ov_oo
-!  
+!
          integer(i15), optional :: index1_first, index1_last
          integer(i15), optional :: index2_first, index2_last
          integer(i15), optional :: index3_first, index3_last
          integer(i15), optional :: index4_first, index4_last
-!  
+!
       end subroutine get_ov_oo_ccs
 !
 !
-      module subroutine get_oo_vo_ccs(wf, integral_type, x_oo_vo,    & 
+      module subroutine get_oo_vo_ccs(wf, integral_type, x_oo_vo,    &
                                           index1_first, index1_last, &
                                           index2_first, index2_last, &
                                           index3_first, index3_last, &
@@ -1403,24 +1443,24 @@ module ccs_class
 !!
 !!       Get x_oo,vo integral (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
-!!  
-         implicit none 
-!  
-         class(ccs) :: wf 
-!  
-         character(len=40) :: integral_type 
-!  
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+         character(len=40) :: integral_type
+!
          real(dp), dimension(:,:) :: x_oo_vo
-!  
+!
          integer(i15), optional :: index1_first, index1_last
          integer(i15), optional :: index2_first, index2_last
          integer(i15), optional :: index3_first, index3_last
          integer(i15), optional :: index4_first, index4_last
-!  
+!
       end subroutine get_oo_vo_ccs
 !
 !
-      module subroutine get_vo_oo_ccs(wf, integral_type, x_vo_oo,    & 
+      module subroutine get_vo_oo_ccs(wf, integral_type, x_vo_oo,    &
                                           index1_first, index1_last, &
                                           index2_first, index2_last, &
                                           index3_first, index3_last, &
@@ -1428,24 +1468,24 @@ module ccs_class
 !!
 !!       Get x_vo,oo integral (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
-!!  
-         implicit none 
-!  
-         class(ccs) :: wf 
-!  
-         character(len=40) :: integral_type 
-!  
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+         character(len=40) :: integral_type
+!
          real(dp), dimension(:,:) :: x_vo_oo
-!  
+!
          integer(i15), optional :: index1_first, index1_last
          integer(i15), optional :: index2_first, index2_last
          integer(i15), optional :: index3_first, index3_last
          integer(i15), optional :: index4_first, index4_last
-!  
+!
       end subroutine get_vo_oo_ccs
 !
 !
-      module subroutine get_oo_vv_ccs(wf, integral_type, x_oo_vv,    & 
+      module subroutine get_oo_vv_ccs(wf, integral_type, x_oo_vv,    &
                                           index1_first, index1_last, &
                                           index2_first, index2_last, &
                                           index3_first, index3_last, &
@@ -1453,24 +1493,24 @@ module ccs_class
 !!
 !!       Get x_oo,vv integral (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
-!! 
-         implicit none 
-!  
-         class(ccs) :: wf 
-!  
-         character(len=40) :: integral_type 
-!  
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+         character(len=40) :: integral_type
+!
          real(dp), dimension(:,:) :: x_oo_vv
-!  
+!
          integer(i15), optional :: index1_first, index1_last
          integer(i15), optional :: index2_first, index2_last
          integer(i15), optional :: index3_first, index3_last
          integer(i15), optional :: index4_first, index4_last
-!  
+!
       end subroutine get_oo_vv_ccs
 !
 !
-      module subroutine get_vv_oo_ccs(wf, integral_type, x_vv_oo,    & 
+      module subroutine get_vv_oo_ccs(wf, integral_type, x_vv_oo,    &
                                           index1_first, index1_last, &
                                           index2_first, index2_last, &
                                           index3_first, index3_last, &
@@ -1478,24 +1518,24 @@ module ccs_class
 !!
 !!       Get x_vv,oo integral (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
-!!   
-         implicit none 
-!  
-         class(ccs) :: wf 
-!  
-         character(len=40) :: integral_type 
-!  
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+         character(len=40) :: integral_type
+!
          real(dp), dimension(:,:) :: x_vv_oo
-!  
+!
          integer(i15), optional :: index1_first, index1_last
          integer(i15), optional :: index2_first, index2_last
          integer(i15), optional :: index3_first, index3_last
          integer(i15), optional :: index4_first, index4_last
-!  
+!
       end subroutine get_vv_oo_ccs
 !
 !
-      module subroutine get_ov_ov_ccs(wf, integral_type, x_ov_ov,    & 
+      module subroutine get_ov_ov_ccs(wf, integral_type, x_ov_ov,    &
                                           index1_first, index1_last, &
                                           index2_first, index2_last, &
                                           index3_first, index3_last, &
@@ -1503,24 +1543,24 @@ module ccs_class
 !!
 !!       Get x_ov,ov integral (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
-!!   
-         implicit none 
-!  
-         class(ccs) :: wf 
-!  
-         character(len=40) :: integral_type 
-!  
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+         character(len=40) :: integral_type
+!
          real(dp), dimension(:,:) :: x_ov_ov
-!  
+!
          integer(i15), optional :: index1_first, index1_last
          integer(i15), optional :: index2_first, index2_last
          integer(i15), optional :: index3_first, index3_last
          integer(i15), optional :: index4_first, index4_last
-!  
+!
       end subroutine get_ov_ov_ccs
 !
 !
-      module subroutine get_vo_vo_ccs(wf, integral_type, x_vo_vo,    & 
+      module subroutine get_vo_vo_ccs(wf, integral_type, x_vo_vo,    &
                                           index1_first, index1_last, &
                                           index2_first, index2_last, &
                                           index3_first, index3_last, &
@@ -1528,24 +1568,24 @@ module ccs_class
 !!
 !!       Get x_vo,vo integral (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
-!!  
-         implicit none 
-!  
-         class(ccs) :: wf 
-!  
-         character(len=40) :: integral_type 
-!  
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+         character(len=40) :: integral_type
+!
          real(dp), dimension(:,:) :: x_vo_vo
-!  
+!
          integer(i15), optional :: index1_first, index1_last
          integer(i15), optional :: index2_first, index2_last
          integer(i15), optional :: index3_first, index3_last
          integer(i15), optional :: index4_first, index4_last
-!  
+!
       end subroutine get_vo_vo_ccs
 !
 !
-      module subroutine get_ov_vo_ccs(wf, integral_type, x_ov_vo,    & 
+      module subroutine get_ov_vo_ccs(wf, integral_type, x_ov_vo,    &
                                           index1_first, index1_last, &
                                           index2_first, index2_last, &
                                           index3_first, index3_last, &
@@ -1553,24 +1593,24 @@ module ccs_class
 !!
 !!       Get x_ov,vo integral (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
-!! 
-         implicit none 
-!  
-         class(ccs) :: wf 
-!  
-         character(len=40) :: integral_type 
-!  
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+         character(len=40) :: integral_type
+!
          real(dp), dimension(:,:) :: x_ov_vo
-!  
+!
          integer(i15), optional :: index1_first, index1_last
          integer(i15), optional :: index2_first, index2_last
          integer(i15), optional :: index3_first, index3_last
          integer(i15), optional :: index4_first, index4_last
-!  
+!
       end subroutine get_ov_vo_ccs
 !
 !
-      module subroutine get_vo_ov_ccs(wf, integral_type, x_vo_ov,    & 
+      module subroutine get_vo_ov_ccs(wf, integral_type, x_vo_ov,    &
                                           index1_first, index1_last, &
                                           index2_first, index2_last, &
                                           index3_first, index3_last, &
@@ -1578,24 +1618,24 @@ module ccs_class
 !!
 !!       Get x_vo,ov integral (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
-!!  
-         implicit none 
-!  
-         class(ccs) :: wf 
-!  
-         character(len=40) :: integral_type 
-!  
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+         character(len=40) :: integral_type
+!
          real(dp), dimension(:,:) :: x_vo_ov
-!  
+!
          integer(i15), optional :: index1_first, index1_last
          integer(i15), optional :: index2_first, index2_last
          integer(i15), optional :: index3_first, index3_last
          integer(i15), optional :: index4_first, index4_last
-!  
+!
       end subroutine get_vo_ov_ccs
 !
 !
-      module subroutine get_ov_vv_ccs(wf, integral_type, x_ov_vv,    & 
+      module subroutine get_ov_vv_ccs(wf, integral_type, x_ov_vv,    &
                                           index1_first, index1_last, &
                                           index2_first, index2_last, &
                                           index3_first, index3_last, &
@@ -1603,24 +1643,24 @@ module ccs_class
 !!
 !!       Get x_ov,vv integral (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
-!!  
-         implicit none 
-!  
-         class(ccs) :: wf 
-!  
-         character(len=40) :: integral_type 
-!  
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+         character(len=40) :: integral_type
+!
          real(dp), dimension(:,:) :: x_ov_vv
-!  
+!
          integer(i15), optional :: index1_first, index1_last
          integer(i15), optional :: index2_first, index2_last
          integer(i15), optional :: index3_first, index3_last
          integer(i15), optional :: index4_first, index4_last
-!  
+!
       end subroutine get_ov_vv_ccs
 !
 !
-      module subroutine get_vv_ov_ccs(wf, integral_type, x_vv_ov,    & 
+      module subroutine get_vv_ov_ccs(wf, integral_type, x_vv_ov,    &
                                           index1_first, index1_last, &
                                           index2_first, index2_last, &
                                           index3_first, index3_last, &
@@ -1628,24 +1668,24 @@ module ccs_class
 !!
 !!       Get x_vv,ov integral (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
-!!  
-         implicit none 
-!  
-         class(ccs) :: wf 
-!  
-         character(len=40) :: integral_type 
-!  
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+         character(len=40) :: integral_type
+!
          real(dp), dimension(:,:) :: x_vv_ov
-!  
+!
          integer(i15), optional :: index1_first, index1_last
          integer(i15), optional :: index2_first, index2_last
          integer(i15), optional :: index3_first, index3_last
          integer(i15), optional :: index4_first, index4_last
-!  
+!
       end subroutine get_vv_ov_ccs
 !
 !
-      module subroutine get_vo_vv_ccs(wf, integral_type, x_vo_vv,    & 
+      module subroutine get_vo_vv_ccs(wf, integral_type, x_vo_vv,    &
                                           index1_first, index1_last, &
                                           index2_first, index2_last, &
                                           index3_first, index3_last, &
@@ -1653,24 +1693,24 @@ module ccs_class
 !!
 !!       Get x_vo,vv integral (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
-!!  
-         implicit none 
-!  
-         class(ccs) :: wf 
-!  
-         character(len=40) :: integral_type 
-!  
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+         character(len=40) :: integral_type
+!
          real(dp), dimension(:,:) :: x_vo_vv
-!  
+!
          integer(i15), optional :: index1_first, index1_last
          integer(i15), optional :: index2_first, index2_last
          integer(i15), optional :: index3_first, index3_last
          integer(i15), optional :: index4_first, index4_last
-!  
+!
       end subroutine get_vo_vv_ccs
 !
 !
-      module subroutine get_vv_vo_ccs(wf, integral_type, x_vv_vo,    & 
+      module subroutine get_vv_vo_ccs(wf, integral_type, x_vv_vo,    &
                                           index1_first, index1_last, &
                                           index2_first, index2_last, &
                                           index3_first, index3_last, &
@@ -1678,24 +1718,24 @@ module ccs_class
 !!
 !!       Get x_vv,vo integral (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
-!!  
-         implicit none 
-!  
-         class(ccs) :: wf 
-!  
-         character(len=40) :: integral_type 
-!  
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+         character(len=40) :: integral_type
+!
          real(dp), dimension(:,:) :: x_vv_vo
-!  
+!
          integer(i15), optional :: index1_first, index1_last
          integer(i15), optional :: index2_first, index2_last
          integer(i15), optional :: index3_first, index3_last
          integer(i15), optional :: index4_first, index4_last
-!  
+!
       end subroutine get_vv_vo_ccs
 !
 !
-      module subroutine get_vv_vv_ccs(wf, integral_type, x_vv_vv,    & 
+      module subroutine get_vv_vv_ccs(wf, integral_type, x_vv_vv,    &
                                           index1_first, index1_last, &
                                           index2_first, index2_last, &
                                           index3_first, index3_last, &
@@ -1703,24 +1743,24 @@ module ccs_class
 !!
 !!       Get x_vv,vv integral (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
-!!  
-         implicit none 
-!  
-         class(ccs) :: wf 
-!  
-         character(len=40) :: integral_type 
-!  
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+         character(len=40) :: integral_type
+!
          real(dp), dimension(:,:) :: x_vv_vv
-!  
+!
          integer(i15), optional :: index1_first, index1_last
          integer(i15), optional :: index2_first, index2_last
          integer(i15), optional :: index3_first, index3_last
          integer(i15), optional :: index4_first, index4_last
-!  
+!
       end subroutine get_vv_vv_ccs
 !
 !
-      module subroutine get_oo_oo_electronic_repulsion_ccs(wf, x_oo_oo,             & 
+      module subroutine get_oo_oo_electronic_repulsion_ccs(wf, x_oo_oo,             &
                                                          index1_first, index1_last, &
                                                          index2_first, index2_last, &
                                                          index3_first, index3_last, &
@@ -1728,8 +1768,8 @@ module ccs_class
 !!
 !!       Get oooo Electronic Repulsion (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
-!! 
-         implicit none 
+!!
+         implicit none
 !
          class(ccs) :: wf
 !
@@ -1747,7 +1787,7 @@ module ccs_class
       end subroutine get_oo_oo_electronic_repulsion_ccs
 !
 !
-      module subroutine get_oo_ov_electronic_repulsion_ccs(wf, x_oo_ov,             & 
+      module subroutine get_oo_ov_electronic_repulsion_ccs(wf, x_oo_ov,             &
                                                          index1_first, index1_last, &
                                                          index2_first, index2_last, &
                                                          index3_first, index3_last, &
@@ -1755,8 +1795,8 @@ module ccs_class
 !!
 !!       Get ooov Electronic Repulsion (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
-!! 
-         implicit none 
+!!
+         implicit none
 !
          class(ccs) :: wf
 !
@@ -1774,7 +1814,7 @@ module ccs_class
       end subroutine get_oo_ov_electronic_repulsion_ccs
 !
 !
-      module subroutine get_ov_oo_electronic_repulsion_ccs(wf, x_ov_oo,             & 
+      module subroutine get_ov_oo_electronic_repulsion_ccs(wf, x_ov_oo,             &
                                                          index1_first, index1_last, &
                                                          index2_first, index2_last, &
                                                          index3_first, index3_last, &
@@ -1782,8 +1822,8 @@ module ccs_class
 !!
 !!       Get ovoo Electronic Repulsion (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
-!! 
-         implicit none 
+!!
+         implicit none
 !
          class(ccs) :: wf
 !
@@ -1801,7 +1841,7 @@ module ccs_class
       end subroutine get_ov_oo_electronic_repulsion_ccs
 !
 !
-      module subroutine get_oo_vo_electronic_repulsion_ccs(wf, x_oo_vo,             & 
+      module subroutine get_oo_vo_electronic_repulsion_ccs(wf, x_oo_vo,             &
                                                          index1_first, index1_last, &
                                                          index2_first, index2_last, &
                                                          index3_first, index3_last, &
@@ -1809,8 +1849,8 @@ module ccs_class
 !!
 !!       Get oovo Electronic Repulsion (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
-!! 
-         implicit none 
+!!
+         implicit none
 !
          class(ccs) :: wf
 !
@@ -1828,7 +1868,7 @@ module ccs_class
       end subroutine get_oo_vo_electronic_repulsion_ccs
 !
 !
-      module subroutine get_oo_vv_electronic_repulsion_ccs(wf, x_oo_vv,             & 
+      module subroutine get_oo_vv_electronic_repulsion_ccs(wf, x_oo_vv,             &
                                                          index1_first, index1_last, &
                                                          index2_first, index2_last, &
                                                          index3_first, index3_last, &
@@ -1836,8 +1876,8 @@ module ccs_class
 !!
 !!       Get oovv Electronic Repulsion (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
-!! 
-         implicit none 
+!!
+         implicit none
 !
          class(ccs) :: wf
 !
@@ -1855,7 +1895,7 @@ module ccs_class
       end subroutine get_oo_vv_electronic_repulsion_ccs
 !
 !
-      module subroutine get_vv_oo_electronic_repulsion_ccs(wf, x_vv_oo,             & 
+      module subroutine get_vv_oo_electronic_repulsion_ccs(wf, x_vv_oo,             &
                                                          index1_first, index1_last, &
                                                          index2_first, index2_last, &
                                                          index3_first, index3_last, &
@@ -1863,8 +1903,8 @@ module ccs_class
 !!
 !!       Get vvoo Electronic Repulsion (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
-!! 
-         implicit none 
+!!
+         implicit none
 !
          class(ccs) :: wf
 !
@@ -1882,7 +1922,7 @@ module ccs_class
       end subroutine get_vv_oo_electronic_repulsion_ccs
 !
 !
-      module subroutine get_ov_ov_electronic_repulsion_ccs(wf, x_ov_ov,             & 
+      module subroutine get_ov_ov_electronic_repulsion_ccs(wf, x_ov_ov,             &
                                                          index1_first, index1_last, &
                                                          index2_first, index2_last, &
                                                          index3_first, index3_last, &
@@ -1890,8 +1930,8 @@ module ccs_class
 !!
 !!       Get ovov Electronic Repulsion (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
-!! 
-         implicit none 
+!!
+         implicit none
 !
          class(ccs) :: wf
 !
@@ -1909,7 +1949,7 @@ module ccs_class
       end subroutine get_ov_ov_electronic_repulsion_ccs
 !
 !
-      module subroutine get_vo_oo_electronic_repulsion_ccs(wf, x_vo_oo,             & 
+      module subroutine get_vo_oo_electronic_repulsion_ccs(wf, x_vo_oo,             &
                                                          index1_first, index1_last, &
                                                          index2_first, index2_last, &
                                                          index3_first, index3_last, &
@@ -1917,8 +1957,8 @@ module ccs_class
 !!
 !!       Get vooo Electronic Repulsion (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
-!! 
-         implicit none 
+!!
+         implicit none
 !
          class(ccs) :: wf
 !
@@ -1936,7 +1976,7 @@ module ccs_class
       end subroutine get_vo_oo_electronic_repulsion_ccs
 !
 !
-      module subroutine get_vo_vo_electronic_repulsion_ccs(wf, x_vo_vo, & 
+      module subroutine get_vo_vo_electronic_repulsion_ccs(wf, x_vo_vo, &
                                           index1_first, index1_last,    &
                                           index2_first, index2_last,    &
                                           index3_first, index3_last,    &
@@ -1944,22 +1984,22 @@ module ccs_class
 !!
 !!       Get vovo Electronic Repulsion (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
-!! 
-         implicit none 
-!  
-         class(ccs) :: wf 
-!  
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
          real(dp), dimension(:,:) :: x_vo_vo
-!  
+!
          integer(i15) :: index1_first, index1_last
          integer(i15) :: index2_first, index2_last
          integer(i15) :: index3_first, index3_last
          integer(i15) :: index4_first, index4_last
-!  
+!
       end subroutine get_vo_vo_electronic_repulsion_ccs
 !
 !
-      module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo, & 
+      module subroutine get_ov_vo_electronic_repulsion_ccs(wf, x_ov_vo, &
                                           index1_first, index1_last,    &
                                           index2_first, index2_last,    &
                                           index3_first, index3_last,    &
@@ -1967,22 +2007,22 @@ module ccs_class
 !!
 !!       Get ovvo Electronic Repulsion (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
-!! 
-         implicit none 
-!  
-         class(ccs) :: wf 
-!  
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
          real(dp), dimension(:,:) :: x_ov_vo
-!  
+!
          integer(i15) :: index1_first, index1_last
          integer(i15) :: index2_first, index2_last
          integer(i15) :: index3_first, index3_last
          integer(i15) :: index4_first, index4_last
-!  
+!
       end subroutine get_ov_vo_electronic_repulsion_ccs
 !
 !
-      module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov, & 
+      module subroutine get_vo_ov_electronic_repulsion_ccs(wf, x_vo_ov, &
                                           index1_first, index1_last,    &
                                           index2_first, index2_last,    &
                                           index3_first, index3_last,    &
@@ -1990,22 +2030,22 @@ module ccs_class
 !!
 !!       Get voov Electronic Repulsion (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
-!!  
-         implicit none 
-!  
-         class(ccs) :: wf 
-!  
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
          real(dp), dimension(:,:) :: x_vo_ov
-!  
+!
          integer(i15) :: index1_first, index1_last
          integer(i15) :: index2_first, index2_last
          integer(i15) :: index3_first, index3_last
          integer(i15) :: index4_first, index4_last
-!  
+!
       end subroutine get_vo_ov_electronic_repulsion_ccs
 !
 !
-      module subroutine get_ov_vv_electronic_repulsion_ccs(wf, x_ov_vv, & 
+      module subroutine get_ov_vv_electronic_repulsion_ccs(wf, x_ov_vv, &
                                           index1_first, index1_last,    &
                                           index2_first, index2_last,    &
                                           index3_first, index3_last,    &
@@ -2013,22 +2053,22 @@ module ccs_class
 !!
 !!       Get ovvv Electronic Repulsion (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
-!!  
-         implicit none 
-!  
-         class(ccs) :: wf 
-!  
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
          real(dp), dimension(:,:) :: x_ov_vv
-!  
+!
          integer(i15) :: index1_first, index1_last
          integer(i15) :: index2_first, index2_last
          integer(i15) :: index3_first, index3_last
          integer(i15) :: index4_first, index4_last
-!  
+!
       end subroutine get_ov_vv_electronic_repulsion_ccs
 !
 !
-      module subroutine get_vv_ov_electronic_repulsion_ccs(wf, x_vv_ov, & 
+      module subroutine get_vv_ov_electronic_repulsion_ccs(wf, x_vv_ov, &
                                           index1_first, index1_last,    &
                                           index2_first, index2_last,    &
                                           index3_first, index3_last,    &
@@ -2036,22 +2076,22 @@ module ccs_class
 !!
 !!       Get vvov Electronic Repulsion (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
-!!  
-         implicit none 
-!  
-         class(ccs) :: wf 
-!  
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
          real(dp), dimension(:,:) :: x_vv_ov
-!  
+!
          integer(i15) :: index1_first, index1_last
          integer(i15) :: index2_first, index2_last
          integer(i15) :: index3_first, index3_last
          integer(i15) :: index4_first, index4_last
-!  
+!
       end subroutine get_vv_ov_electronic_repulsion_ccs
 !
 !
-      module subroutine get_vo_vv_electronic_repulsion_ccs(wf, x_vo_vv, & 
+      module subroutine get_vo_vv_electronic_repulsion_ccs(wf, x_vo_vv, &
                                           index1_first, index1_last,    &
                                           index2_first, index2_last,    &
                                           index3_first, index3_last,    &
@@ -2059,22 +2099,22 @@ module ccs_class
 !!
 !!       Get vovv Electronic Repulsion (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
-!!  
-         implicit none 
-!  
-         class(ccs) :: wf 
-!  
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
          real(dp), dimension(:,:) :: x_vo_vv
-!  
+!
          integer(i15) :: index1_first, index1_last
          integer(i15) :: index2_first, index2_last
          integer(i15) :: index3_first, index3_last
          integer(i15) :: index4_first, index4_last
-!  
+!
       end subroutine get_vo_vv_electronic_repulsion_ccs
 !
 !
-      module subroutine get_vv_vo_electronic_repulsion_ccs(wf, x_vv_vo, & 
+      module subroutine get_vv_vo_electronic_repulsion_ccs(wf, x_vv_vo, &
                                           index1_first, index1_last,    &
                                           index2_first, index2_last,    &
                                           index3_first, index3_last,    &
@@ -2082,22 +2122,22 @@ module ccs_class
 !!
 !!       Get vvvo Electronic Repulsion (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
-!!  
-         implicit none 
-!  
-         class(ccs) :: wf 
-!  
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
          real(dp), dimension(:,:) :: x_vv_vo
-!  
+!
          integer(i15) :: index1_first, index1_last
          integer(i15) :: index2_first, index2_last
          integer(i15) :: index3_first, index3_last
          integer(i15) :: index4_first, index4_last
-!  
+!
       end subroutine get_vv_vo_electronic_repulsion_ccs
 !
 !
-      module subroutine get_vv_vv_electronic_repulsion_ccs(wf, x_vv_vv, & 
+      module subroutine get_vv_vv_electronic_repulsion_ccs(wf, x_vv_vv, &
                                           index1_first, index1_last,    &
                                           index2_first, index2_last,    &
                                           index3_first, index3_last,    &
@@ -2105,31 +2145,31 @@ module ccs_class
 !!
 !!       Get vvvv Electronic Repulsion (CCS)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2017
-!!  
-         implicit none 
-!  
-         class(ccs) :: wf 
-!  
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
          real(dp), dimension(:,:) :: x_vv_vv
-!  
+!
          integer(i15) :: index1_first, index1_last
          integer(i15) :: index2_first, index2_last
          integer(i15) :: index3_first, index3_last
          integer(i15) :: index4_first, index4_last
-!  
+!
       end subroutine get_vv_vv_electronic_repulsion_ccs
 !
 !
-      module subroutine t1_transform_vv_vv_ccs(wf, g_vv_vv,                & 
+      module subroutine t1_transform_vv_vv_ccs(wf, g_vv_vv,                &
                                              index1_first, index1_last, &
                                              index2_first, index2_last, &
                                              index3_first, index3_last, &
                                              index4_first, index4_last)
 !!
 !!       T1 Transformation of g_vv_vv Integrals (CCS)
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Oct 2017. 
+!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Oct 2017.
 !!
-         implicit none 
+         implicit none
 !
          class(ccs) :: wf
 !
@@ -2142,7 +2182,7 @@ module ccs_class
 !
          end subroutine t1_transform_vv_vv_ccs
 !
-!   
+!
       module function get_vvvv_required_mem_ccs(wf, dim_1, dim_2, dim_3, dim_4)
 !!
 !!       Get vvvv required memory (CCS)
@@ -2150,8 +2190,8 @@ module ccs_class
 !!
          implicit none
 !
-         class(ccs), intent(in)              :: wf 
-!  
+         class(ccs), intent(in)              :: wf
+!
          integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
 !
          integer(i15) :: get_vvvv_required_mem_ccs
@@ -2166,8 +2206,8 @@ module ccs_class
 !
          implicit none
 !
-         class(ccs), intent(in)              :: wf 
-! 
+         class(ccs), intent(in)              :: wf
+!
          integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
 !
          integer(i15) :: get_vvvo_required_mem_ccs
@@ -2182,8 +2222,8 @@ module ccs_class
 !
          implicit none
 
-         class(ccs), intent(in)              :: wf 
-!     
+         class(ccs), intent(in)              :: wf
+!
          integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
 !
          integer(i15) :: get_vvov_required_mem_ccs
@@ -2198,8 +2238,8 @@ module ccs_class
 !
          implicit none
 !
-         class(ccs), intent(in)              :: wf 
-!     
+         class(ccs), intent(in)              :: wf
+!
          integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
 !
          integer(i15) :: get_vvoo_required_mem_ccs
@@ -2216,23 +2256,23 @@ module ccs_class
 !    ----------------------------------
 !
       module subroutine initialize_fock_matrix_ccs(wf)
-!!  
+!!
 !!       Initialize Fock Matrix
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccs) :: wf
-!     
+!
       end subroutine initialize_fock_matrix_ccs
 !
 !
       module subroutine construct_fock_ccs(wf)
 !!
-!!       Construct Fock 
+!!       Construct Fock
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccs) :: wf
 !
@@ -2241,20 +2281,20 @@ module ccs_class
 !
       module subroutine one_electron_t1_ccs(wf, h1 ,h1_T1)
 !!
-!!       One-electron T1 
+!!       One-electron T1
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccs) :: wf
 !
          real(dp), dimension(wf%n_mo, wf%n_mo) :: h1
          real(dp), dimension(wf%n_mo, wf%n_mo) :: h1_T1
-!  
+!
       end subroutine one_electron_t1_ccs
 !
 !
-   end interface 
+   end interface
 !
 !
    interface
@@ -2268,7 +2308,7 @@ module ccs_class
 !!       Ionized State Driver (CCS)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccs) :: wf
 !
@@ -2339,10 +2379,10 @@ module ccs_class
 !
 !
       module subroutine precondition_residual_core_ionization_ccs(wf, residual)
-!!     
+!!
 !!       Precondition Residual Valence
 !!       Written by Sarai D. Folkestad, Aug 2017
-!!       
+!!
          implicit none
 !
          class(ccs) :: wf
@@ -2354,7 +2394,7 @@ module ccs_class
    end interface
 !
 !
-   interface 
+   interface
 !
 !
 !     -::- Jacobian submodule interface -::-
@@ -2367,8 +2407,8 @@ module ccs_class
 !!
          implicit none
 !
-         class(ccs) :: wf 
-         real(dp), dimension(wf%n_v, wf%n_o)   :: c_a_i       
+         class(ccs) :: wf
+         real(dp), dimension(wf%n_v, wf%n_o)   :: c_a_i
 !
       end subroutine jacobian_ccs_transformation_ccs
 !
@@ -2381,29 +2421,29 @@ module ccs_class
          implicit none
 !
          class(ccs) :: wf
-         real(dp), dimension(wf%n_o,wf%n_v) :: c1 
-         real(dp), dimension(wf%n_o,wf%n_v) :: rho                               
+         real(dp), dimension(wf%n_o,wf%n_v) :: c1
+         real(dp), dimension(wf%n_o,wf%n_v) :: rho
 !
       end subroutine jacobian_ccs_a1_ccs
 !
 !
       module subroutine jacobian_ccs_b1_ccs(wf,rho,c1)
 !!
-!!       Jacobian CCS B1 
+!!       Jacobian CCS B1
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
          implicit none
 !
          class(ccs) :: wf
          real(dp), dimension(wf%n_o,wf%n_v) :: c1
-         real(dp), dimension(wf%n_o,wf%n_v) :: rho                
+         real(dp), dimension(wf%n_o,wf%n_v) :: rho
 !
       end subroutine jacobian_ccs_b1_ccs
 !
    end interface
 !
 !
-   interface 
+   interface
 !
 !
 !     -::- Jacobian transpose submodule interface -::-
@@ -2414,11 +2454,11 @@ module ccs_class
 !!       Jacobian transpose transformation (CCS)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(ccs) :: wf 
+         class(ccs) :: wf
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i 
+         real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i
 !
       end subroutine jacobian_transpose_ccs_transformation_ccs
 !
@@ -2428,12 +2468,12 @@ module ccs_class
 !!       Jacobian transpose A1 (CCS)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccs) :: wf
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: sigma_a_i 
-         real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i 
+         real(dp), dimension(wf%n_v, wf%n_o) :: sigma_a_i
+         real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i
 !
       end subroutine jacobian_transpose_ccs_a1_ccs
 !
@@ -2443,12 +2483,12 @@ module ccs_class
 !!       Jacobian transpose B1 (CCS)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
          class(ccs) :: wf
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: sigma_a_i 
-         real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i 
+         real(dp), dimension(wf%n_v, wf%n_o) :: sigma_a_i
+         real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i
 !
       end subroutine jacobian_transpose_ccs_b1_ccs
 !
@@ -2463,7 +2503,7 @@ module ccs_class
 !
       module subroutine cvs_rho_a_i_projection_ccs(wf, vec_a_i)
 !!
-!!       CVS rho_a_i Projection 
+!!       CVS rho_a_i Projection
 !!       Written by Sarai D. Folkestad, Aug 2017
 !!
          implicit none
@@ -2487,14 +2527,37 @@ module ccs_class
       end subroutine cvs_residual_projection_ccs
 !
 !
-   end interface 
+   end interface
+!
+!
+   interface
+!
+!
+!     -::- Vector analysis submodule interface -::-
+!     ------------------------------------------
+!
+      module subroutine print_dominant_singles_ccs(wf, vec)
+!!
+!!       Print dominant singles (CCS)
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+         real(dp), dimension(:, :) :: vec
+!
+      end subroutine print_dominant_singles_ccs
+!
+!
+   end interface
 !
 !
 contains
 !
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::
-!  -::- 4. Class subroutines and functions -::- 
+!  -::- 4. Class subroutines and functions -::-
 !  ::::::::::::::::::::::::::::::::::::::::::::
 !
 !
@@ -2506,18 +2569,18 @@ contains
 !!    Performs the following tasks
 !!
 !!    - Sets HF orbital and energy information by reading from file
-!!    - Transforms AO Cholesky vectors to MO basis and saves to file 
-!!    - Allocates the singles amplitudes and sets them to zero, and sets associated properties 
+!!    - Transforms AO Cholesky vectors to MO basis and saves to file
+!!    - Allocates the singles amplitudes and sets them to zero, and sets associated properties
 !!    - Allocates the omega vector and sets it to zero
-!!    - Initializes the Fock matrix and sets it to zero 
+!!    - Initializes the Fock matrix and sets it to zero
 !!
-      implicit none 
+      implicit none
 !
       class(ccs) :: wf
 !
       integer(i15) :: unit_input = -1
 !
-!     Set model name 
+!     Set model name
 !
       wf%name = 'CCS'
 !
@@ -2541,12 +2604,17 @@ contains
       wf%implemented%multipliers          = .false.
 !
 !     Read calculation tasks from input file eT.inp
-!     
+!
       call wf%calculation_reader(unit_input)
 !
 !     Close input file
 !
       close(unit_input)
+!
+!     Figure out the size of the calculation folder, and update
+!     the available disk space by subtracting it
+!
+      call wf%disk%subtract_folder_size
 !
 !     Read Hartree-Fock info from SIRIUS
 !
@@ -2558,8 +2626,8 @@ contains
 !
 !     Set amplitude attributes
 !
-      wf%n_t1am = (wf%n_o)*(wf%n_v) 
-      wf%n_parameters = wf%n_t1am ! The number of variables solved for by the solvers 
+      wf%n_t1am = (wf%n_o)*(wf%n_v)
+      wf%n_parameters = wf%n_t1am ! The number of variables solved for by the solvers
 !
 !     Allocate Fock matrix and set to zero
 !
@@ -2576,19 +2644,19 @@ contains
 !!
 !!    The driver for CCS is written so as to be inherited unaltered.
 !!    It finds which calculations are requested by the user, and controls
-!!    that the calculation can be done. If the method is implemented, it 
+!!    that the calculation can be done. If the method is implemented, it
 !!    calls the driver for that particular calculation (e.g., ground state
 !!    energy).
 !!
-      implicit none 
+      implicit none
 !
       class(ccs) :: wf
 !
-      if (wf%tasks%ground_state) then 
+      if (wf%tasks%ground_state) then
 !
 !        Ground state calculation requested
 !
-         if (wf%implemented%ground_state) then 
+         if (wf%implemented%ground_state) then
 !
             call wf%ground_state_driver
 !
@@ -2603,9 +2671,9 @@ contains
 !
       if (wf%tasks%excited_state) then
 !
-         if (wf%implemented%excited_state) then 
-!     
-            call wf%excited_state_driver 
+         if (wf%implemented%excited_state) then
+!
+            call wf%excited_state_driver
 !
          else
 !
@@ -2622,9 +2690,9 @@ contains
 !
 !        Excited state calculation requested
 !
-         if (wf%implemented%core_excited_state) then 
-!     
-            call wf%excited_state_driver 
+         if (wf%implemented%core_excited_state) then
+!
+            call wf%excited_state_driver
 !
          else
 !
@@ -2639,9 +2707,9 @@ contains
 !
       if (wf%tasks%ionized_state) then
 !
-         if (wf%implemented%ionized_state) then 
-!     
-            call wf%ionized_state_driver 
+         if (wf%implemented%ionized_state) then
+!
+            call wf%ionized_state_driver
 !
          else
 !
@@ -2656,9 +2724,9 @@ contains
 !
       if (wf%tasks%core_ionized_state) then
 !
-         if (wf%implemented%core_ionized_state) then 
-!     
-            call wf%ionized_state_driver 
+         if (wf%implemented%core_ionized_state) then
+!
+            call wf%ionized_state_driver
 !
          else
 !
@@ -2675,7 +2743,7 @@ contains
 !
 !        Multipliers calculation requested
 !
-         if (wf%implemented%multipliers) then 
+         if (wf%implemented%multipliers) then
 !
             call wf%response_driver
 !
@@ -2698,7 +2766,7 @@ contains
 !!
 !!    Allocates the singles amplitudes, sets them to zero.
 !!
-      implicit none 
+      implicit none
 !
       class(ccs) :: wf
 !
@@ -2706,7 +2774,7 @@ contains
 !     (which is also the value that solves the projected Scrödinger eq.)
 !
       if (.not. allocated(wf%t1am)) then
-! 
+!
          call wf%mem%alloc(wf%t1am, wf%n_v, wf%n_o)
          wf%t1am = zero
 !
@@ -2727,11 +2795,11 @@ contains
 !!    Allocates and sets the projection vector to zero (which is
 !!    also its correct value, by Brillouin)
 !!
-      implicit none 
+      implicit none
 !
       class(ccs) :: wf
 !
-      if (.not. allocated(wf%omega1)) then 
+      if (.not. allocated(wf%omega1)) then
 !
          call wf%mem%alloc(wf%omega1, wf%n_v, wf%n_o)
          wf%omega1 = zero
@@ -2744,15 +2812,15 @@ contains
 !
    end subroutine initialize_omega_ccs
 !
-! 
+!
    subroutine calc_energy_ccs(wf)
 !!
 !!    Calculate Energy (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs) :: wf 
+      class(ccs) :: wf
 !
       wf%energy = wf%scf_energy
 !
@@ -2764,9 +2832,9 @@ contains
 !!    Construct Omega (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs) :: wf 
+      class(ccs) :: wf
 !
       wf%omega1 = zero ! Brillouin
 !
@@ -2799,21 +2867,21 @@ contains
 !!    Note: the routine assumes that the Fock matrix
 !!    has been constructed.
 !!
-      implicit none 
+      implicit none
 !
-      class(ccs) :: wf 
+      class(ccs) :: wf
 !
       real(dp), dimension(wf%n_parameters, 1) :: eta ! eta_ai
 !
       integer(i15) :: i = 0, a = 0, ai = 0
 !
-      eta = zero 
+      eta = zero
 !
       do i = 1, wf%n_o
-         do a = 1, wf%n_v 
+         do a = 1, wf%n_v
 !
             ai = index_two(a, i, wf%n_v)
-            eta(ai, 1) = two*(wf%fock_ia(i, a)) ! eta_ai = 2 F_ia 
+            eta(ai, 1) = two*(wf%fock_ia(i, a)) ! eta_ai = 2 F_ia
 !
          enddo
       enddo
@@ -2828,11 +2896,11 @@ contains
 !!
 !!    Store the amplitudes to disk (T1AM)
 !!
-      implicit none 
+      implicit none
 !
       class(ccs) :: wf
 !
-      integer(i15) :: unit_t1am = -1 
+      integer(i15) :: unit_t1am = -1
 !
 !     Open amplitude file
 !
@@ -2840,7 +2908,7 @@ contains
       open(unit_t1am, file='t1am', status='unknown', form='unformatted')
       rewind(unit_t1am)
 !
-      write(unit_t1am) wf%t1am 
+      write(unit_t1am) wf%t1am
 !
 !     Close amplitude file
 !
@@ -2857,7 +2925,7 @@ contains
 !!    Reads the single amplitudes from disk. If the amplitudes are not allocated,
 !!    the routine automatically allocates them.
 !!
-      implicit none 
+      implicit none
 !
       class(ccs) :: wf
 !
@@ -2869,7 +2937,7 @@ contains
 !
       inquire(file='t1am',exist=file_exists)
 !
-      if (file_exists) then 
+      if (file_exists) then
 !
 !        Open amplitude files if they exist
 !
@@ -2879,18 +2947,18 @@ contains
 !
          rewind(unit_t1am)
 !
-!        Allocate amplitudes if they aren't allocated 
+!        Allocate amplitudes if they aren't allocated
 !
-         if (.not. allocated(wf%t1am)) then 
+         if (.not. allocated(wf%t1am)) then
 !
             call wf%mem%alloc(wf%t1am, wf%n_v, wf%n_o)
-            wf%t1am = zero 
+            wf%t1am = zero
 !
          endif
 !
 !        Read from file
 !
-         read(unit_t1am) wf%t1am 
+         read(unit_t1am) wf%t1am
 !
 !        Close file
 !
@@ -2956,9 +3024,9 @@ contains
 !
    subroutine jacobi_test_ccs(wf)
 !
-      implicit none 
+      implicit none
 !
-      class(ccs) :: wf 
+      class(ccs) :: wf
 !
    end subroutine jacobi_test_ccs
 !
@@ -2975,7 +3043,7 @@ contains
 !!
       implicit none
 !
-      integer(i15) :: n_nuclei,n_ao 
+      integer(i15) :: n_nuclei,n_ao
 !
       integer(i15) :: unit_center = 0
       integer(i15) :: ioerror     = 0
@@ -3020,7 +3088,7 @@ contains
       if (ioerror .ne. 0) write(unit_output,*)'WARNING: Error while opening center_info'
       rewind(unit_center)
 !
-!     Empty read 
+!     Empty read
 !
       read(unit_center)
 !

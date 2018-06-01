@@ -1,10 +1,10 @@
 module hf_class
 !
 !!
-!!                      Hartree-Fock (HF) class module                                 
-!!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017         
-!!                       
-!                                                    
+!!                      Hartree-Fock (HF) class module
+!!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
+!
 !  :::::::::::::::::::::::::::::::::::
 !  -::- Modules used by the class -::-
 !  :::::::::::::::::::::::::::::::::::
@@ -15,6 +15,7 @@ module hf_class
    use utils
    use workspace
    use input_output
+   use file_class
    use calc_tasks_class
    use calc_settings_class
    use ground_state_specs_class
@@ -22,16 +23,18 @@ module hf_class
    use core_excited_state_specs_class
    use response_calc_specs_class
    use memory_manager_class
+   use disk_manager_class
+   use diis_solver_class
 !
    implicit none
 !
 !  ::::::::::::::::::::::::::::::::::::
 !  -::- Definition of the HF class -::-
 !  ::::::::::::::::::::::::::::::::::::
-!   
+!
    type :: hf
 !
-!     Model name 
+!     Model name
 !
       character(len=40) :: name = 'HF'
 !
@@ -68,9 +71,13 @@ module hf_class
       type(core_excited_state_specs) :: core_excited_state_specifications
       type(response_calc_specs)      :: response_specifications
 !
-!     Memory manager 
+!     Memory manager
 !
-      type(memory_manager) :: mem 
+      type(memory_manager) :: mem
+!
+!     Disk space manager
+!
+      type(disk_manager) :: disk
 !
    contains
 !
@@ -86,7 +93,7 @@ module hf_class
       procedure, non_overridable :: read_cholesky_ai => read_cholesky_ai_hf ! vir-occ
       procedure, non_overridable :: read_cholesky_ab => read_cholesky_ab_hf ! vir-vir
 !
-!     Routines needed to initialize HF     
+!     Routines needed to initialize HF
 !
 !     read_info                      : sets variables from file (n_o, n_v, scf_energy,...)
 !     cholesky_density_decomposition : orbital localization routine
@@ -94,7 +101,7 @@ module hf_class
 !
       procedure, non_overridable :: read_hf_info                => read_hf_info_hf
       procedure, non_overridable :: read_transform_cholesky     => read_transform_cholesky_hf
-      procedure, non_overridable :: construct_ao_fock           => construct_ao_fock_hf 
+      procedure, non_overridable :: construct_ao_fock           => construct_ao_fock_hf
       procedure, non_overridable :: construct_density_matrices  => construct_density_matrices_hf
       procedure, non_overridable :: construct_density_matrix    => construct_density_matrix_hf
       procedure, non_overridable :: construct_density_matrix_v  => construct_density_matrix_v_hf
@@ -102,12 +109,12 @@ module hf_class
    end type hf
 !
 !
-contains 
+contains
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::
 !  -::- Initialization and driver routines -::-
 !  ::::::::::::::::::::::::::::::::::::::::::::
-! 
+!
    subroutine init_hf(wf)
 !!
 !!    Initialization of Hartree-Fock object
@@ -124,10 +131,10 @@ contains
 !
 !     Initialize HF variables
 !
-      call wf%read_hf_info        
+      call wf%read_hf_info
 !
 !     Initialize Cholesky vectors
-!     
+!
       call wf%read_transform_cholesky
 !
    end subroutine init_hf
@@ -139,10 +146,10 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
 !!    Lets the user know there is no driver for Hartree-Fock and exits
-!!    the program if called. The module reads Hartree-Fock information 
+!!    the program if called. The module reads Hartree-Fock information
 !!    from files and contains no independent solver.
 !!
-      implicit none 
+      implicit none
 !
       class(hf) :: wf
 !
@@ -160,10 +167,10 @@ contains
 !!    Read HF info
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!    Reads the file mlcc_hf_info and sets the following HF variables: 
+!!    Reads the file mlcc_hf_info and sets the following HF variables:
 !!    n_o, n_v, n_mo, orbital_coef, and the fock_diagonal.
 !!
-!!    The file mlcc_hf_info is written in the mlcc_write_sirifc 
+!!    The file mlcc_hf_info is written in the mlcc_write_sirifc
 !!    subroutine, which is called from the wr_sirifc subroutine in
 !!    the siropt module of the DALTON suite.
 !!
@@ -183,7 +190,7 @@ contains
       rewind(unit_hf)
 !
 !     Read mlcc_hf_info into HF variables
-!  
+!
       read(unit_hf,*) wf%n_mo, wf%n_o, n_lambda, &
                         wf%nuclear_potential, wf%scf_energy
 !
@@ -194,7 +201,7 @@ contains
 !     Calculate the number of virtuals
 !
       wf%n_v = wf%n_mo - wf%n_o
-!      
+!
 !     Allocate the Fock diagonal and the MO coefficients
 !
       call wf%mem%alloc(wf%fock_diagonal, wf%n_mo, 1)
@@ -206,11 +213,11 @@ contains
 !     Read in the Fock diagonal and MO coefficients
 !
       read(unit_hf,*) (wf%fock_diagonal(i,1), i = 1, wf%n_mo)
-      read(unit_hf,*) (wf%mo_coef(i,1), i = 1, n_lambda) 
+      read(unit_hf,*) (wf%mo_coef(i,1), i = 1, n_lambda)
       wf%n_ao = n_lambda/wf%n_mo
 !
 !     Close the mlcc_hf_info file
-!    
+!
       close(unit_hf)
 !
    end subroutine read_hf_info_hf
@@ -221,7 +228,7 @@ contains
 !!    Read and transform Cholesky
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 20 Apr 2017
 !!
-!!    Reads the AO Cholesky vectors from file, transforms the vectors 
+!!    Reads the AO Cholesky vectors from file, transforms the vectors
 !!    to the MO basis, and saves the MO vectors to file
 !!
       implicit none
@@ -250,17 +257,17 @@ contains
       real(dp), dimension(:,:), allocatable :: X ! An intermediate matrix
       real(dp), dimension(:,:), allocatable :: L_ij_J
       real(dp), dimension(:,:), allocatable :: L_ia_J
-      real(dp), dimension(:,:), allocatable :: L_ab_J 
+      real(dp), dimension(:,:), allocatable :: L_ab_J
 !
       integer(i15) :: i,j,a,b,k,ij,ia, ab
 !
-!     Timing variables 
+!     Timing variables
 !
-      real(dp) :: begin_timer, end_timer 
+      real(dp) :: begin_timer, end_timer
 !
 !     Batching variables
 !
-      integer(i15) :: required = 0 
+      integer(i15) :: required = 0
       integer(i15) :: current_b_batch = 0
 !
       type(batching_index) :: batch_b
@@ -268,7 +275,7 @@ contains
       call cpu_time(begin_timer)
 !
 !     Open Dalton file mlcc_cholesky (see mlcc_write_cholesky.F)
-! 
+!
       call generate_unit_identifier(unit_chol_ao)
       open(unit=unit_chol_ao, file='MLCC_CHOLESKY', status='old', form='formatted', iostat = ioerror)
       if (ioerror .ne. 0) then
@@ -277,13 +284,13 @@ contains
       endif
       rewind(unit_chol_ao)
 !
-!     Read the number of Cholesky vectors (n_J) and 
+!     Read the number of Cholesky vectors (n_J) and
 !     the number of atomic orbitals (n_ao)
 !
       read(unit_chol_ao,*) wf%n_ao, wf%n_J
 !
-!     Open files for MO Cholesky vectors 
-! 
+!     Open files for MO Cholesky vectors
+!
       call generate_unit_identifier(unit_chol_mo_ij)
       call generate_unit_identifier(unit_chol_mo_ia)
       call generate_unit_identifier(unit_chol_mo_ab)
@@ -297,13 +304,13 @@ contains
       open(unit_chol_mo_ab, file='cholesky_ab', status='unknown', form='unformatted')
       rewind(unit_chol_mo_ab)
 !
-!     Allocate packed and unpacked Cholesky AO, and 
+!     Allocate packed and unpacked Cholesky AO, and
 !     unpacked Cholesky MO vectors
 !
       n_ao_sq_packed = packed_size(wf%n_ao)
 !
       call wf%mem%alloc(chol_ao, n_ao_sq_packed, 1)
-      call wf%mem%alloc(chol_ao_sq, wf%n_ao, wf%n_ao) 
+      call wf%mem%alloc(chol_ao_sq, wf%n_ao, wf%n_ao)
       call wf%mem%alloc(chol_mo_sq, wf%n_mo, wf%n_mo)
 !
       chol_ao    = zero
@@ -317,7 +324,7 @@ contains
       X = zero
 !
 !     Loop over the number of Cholesky vectors,
-!     reading them one by one 
+!     reading them one by one
 !
       do j = 1, wf%n_J
 !
@@ -325,7 +332,7 @@ contains
 !
          read(unit_chol_ao,*) (chol_ao(i,1), i = 1, n_ao_sq_packed)
 !
-!        Unpack/square up AO vector 
+!        Unpack/square up AO vector
 !
          call squareup(chol_ao, chol_ao_sq, wf%n_ao)
 !
@@ -365,15 +372,15 @@ contains
 !
       enddo
 !
-!     Close files 
+!     Close files
 !
       close(unit_chol_ao)
       close(unit_chol_mo_ij)
       close(unit_chol_mo_ia)
       close(unit_chol_mo_ab)
-! 
+!
 !     Rewrite to direct access file, delete sequential file
-! 
+!
 !     :: L_ij_J ::
 !
       call generate_unit_identifier(unit_chol_mo_ij)
@@ -405,7 +412,7 @@ contains
       call wf%mem%dealloc(L_ij_J,  wf%n_o*(wf%n_o+1)/2, wf%n_J)
       close(unit_chol_mo_ij_direct)
 !
-!     :: L_ia_J :: 
+!     :: L_ia_J ::
 !
       call generate_unit_identifier(unit_chol_mo_ia)
       open(unit_chol_mo_ia, file='cholesky_ia', status='unknown', form='unformatted')
@@ -452,32 +459,32 @@ contains
 !
       required = ((wf%n_v)**2)*(wf%n_J)
 !
-!     Initialize batching variable 
+!     Initialize batching variable
 !
       call batch_b%init(wf%n_v)
-      call wf%mem%num_batch(batch_b, required)         
+      call wf%mem%num_batch(batch_b, required)
 !
 !     Loop over the b-batches
 !
       do current_b_batch = 1, batch_b%num_batches
 !
-!        Determine limits of the b-batch 
+!        Determine limits of the b-batch
 !
          call batch_b%determine_limits(current_b_batch)
 !
-         call wf%mem%alloc(L_ab_J,                                           & 
+         call wf%mem%alloc(L_ab_J,                                           &
             (((batch_b%length + 1)*(batch_b%length)/2) +                     &
             (wf%n_v - batch_b%length - batch_b%first + 1)*(batch_b%length)), &
             wf%n_J)
 !
          if (batch_b%first .ne. 1) then
-!  
+!
 !           Calculate index of last element to throw away
-!  
+!
             throw_away_index = index_packed(wf%n_v, batch_b%first - 1)
-!  
+!
 !           Throw away all elements from 1 to throw_away_index, then read from batch start
-!  
+!
             do j = 1, wf%n_J
 !
               read(unit_chol_mo_ab) (throw_away, i = 1, throw_away_index), &
@@ -487,9 +494,9 @@ contains
             enddo
 !
          else
-!  
+!
 !           Read from the start of each entry
-!  
+!
             do j = 1, wf%n_J
 !
               read(unit_chol_mo_ab) (L_ab_J(a,j), a = 1, (((batch_b%length + 1)*(batch_b%length)/2) + &
@@ -514,11 +521,11 @@ contains
       close(unit_chol_mo_ab, status='delete')
       close(unit_chol_mo_ab_direct)
 !
-!     Print timings 
-!   
+!     Print timings
+!
       call cpu_time(end_timer)
 !
-      if (wf%settings%print_level == 'developer') then 
+      if (wf%settings%print_level == 'developer') then
 !
          write(unit_output,'(/t3,a36,f14.8)') 'Time to store Cholesky (seconds):   ', end_timer - begin_timer
          flush(unit_output)
@@ -530,10 +537,10 @@ contains
 !
    subroutine read_cholesky_ij_hf(wf, L_ij_J , i_first, i_last, j_first, j_last)
 !!
-!!    Read Cholesky IJ 
+!!    Read Cholesky IJ
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!    Reads the MO Cholesky IJ (occ-occ) vectors from file and 
+!!    Reads the MO Cholesky IJ (occ-occ) vectors from file and
 !!    places them in the incoming L_ij_J matrix
 !!
 !!    Optional arguments: i_first, i_last, j_first, j_last can be used in order to restrict indices
@@ -541,11 +548,11 @@ contains
       implicit none
 !
       class(hf)                :: wf
-      integer(i15), optional   :: i_first, j_first     ! First index (can differ from 1 when batching or for mlcc) 
-      integer(i15), optional   :: i_last, j_last      ! Last index (can differ from n_o when batching or for mlcc)   
+      integer(i15), optional   :: i_first, j_first     ! First index (can differ from 1 when batching or for mlcc)
+      integer(i15), optional   :: i_last, j_last      ! Last index (can differ from n_o when batching or for mlcc)
       real(dp), dimension(:,:) :: L_ij_J ! L_ij^J
 !
-!     Local routine variables 
+!     Local routine variables
 !
       integer(i15) :: unit_chol_mo_ij = -1 ! Unit identifier for cholesky_ij file
       integer(i15) :: ioerror
@@ -585,7 +592,7 @@ contains
 !
 !        Close file
 !
-         close(unit_chol_mo_ij) 
+         close(unit_chol_mo_ij)
 !
       elseif (.not. (present(i_first) .and. present(i_last) .and. present(j_first) .and. present(j_last))) then
 !
@@ -611,21 +618,21 @@ contains
 !
 !        Close file
 !
-         close(unit_chol_mo_ij) 
+         close(unit_chol_mo_ij)
 !
       else
 !
          write(unit_output, *) 'Error: the call to read_cholesky_ij is not valid'
          stop
 !
-      endif   
+      endif
 !
    end subroutine read_cholesky_ij_hf
 !
 !
    subroutine read_cholesky_ia_hf(wf,L_ia_J, i_first, i_last, a_first, a_last)
 !!
-!!    Read Cholesky IA 
+!!    Read Cholesky IA
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
 !!    Reads the MO Cholesky IA (occ-vir) vectors from file and
@@ -635,9 +642,9 @@ contains
 !!
       implicit none
 !
-      class(hf)                :: wf    
-      integer(i15), optional   :: i_first, a_first     ! First index (can differ from 1 when batching or for mlcc) 
-      integer(i15), optional   :: i_last, a_last      ! Last index (can differ from n_o when batching or for mlcc) 
+      class(hf)                :: wf
+      integer(i15), optional   :: i_first, a_first     ! First index (can differ from 1 when batching or for mlcc)
+      integer(i15), optional   :: i_last, a_last      ! Last index (can differ from n_o when batching or for mlcc)
       real(dp), dimension(:,:) :: L_ia_J ! L_ia^J
 !
 !     Local routine variables
@@ -707,14 +714,14 @@ contains
          write(unit_output, *) 'Error: call to read_cholesky_ia is not valid'
          stop
 !
-      endif    
-!   
+      endif
+!
    end subroutine read_cholesky_ia_hf
 !
-!   
+!
    subroutine read_cholesky_ai_hf(wf, L_ai_J, a_first, a_last, i_first, i_last)
 !!
-!!    Read Cholesky AI 
+!!    Read Cholesky AI
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
 !!    Reads the MO Cholesky AI (vir-occ) vectors from file and
@@ -726,14 +733,14 @@ contains
 !
       class(hf)                 :: wf
 !
-      integer(i15), optional    :: i_first, a_first ! First index (can differ from 1 when batching or for mlcc) 
+      integer(i15), optional    :: i_first, a_first ! First index (can differ from 1 when batching or for mlcc)
       integer(i15), optional    :: i_last, a_last   ! Last index (can differ from n_o when batching or for mlcc)
-! 
+!
       real(dp), dimension(:, :) :: L_ai_J ! L_ai^J
 !
 !     Local routine variables
 !
-      real(dp), dimension(:,:), allocatable :: L_ia_J       
+      real(dp), dimension(:,:), allocatable :: L_ia_J
 !
       integer(i15) :: i = 0, j = 0, a = 0, ia = 0, ai = 0
       integer(i15) :: i_length, a_length
@@ -747,13 +754,13 @@ contains
 !
          call wf%mem%alloc(L_ia_J, i_length*a_length, wf%n_J)
          L_ia_J = zero
-!        
-!        Get Cholesky IA vector 
+!
+!        Get Cholesky IA vector
 !
          call wf%read_cholesky_ia(L_ia_J, i_first, i_last, a_first, a_last)
 !
-!        Reorder and save in AI vector 
-!         
+!        Reorder and save in AI vector
+!
          do i = 1, i_length
             do a = 1, a_length
 !
@@ -771,9 +778,9 @@ contains
             enddo
          enddo
 !
-!        Deallocate temporary vector 
+!        Deallocate temporary vector
 !
-         call wf%mem%dealloc(L_ia_J, a_length*i_length, wf%n_J)   
+         call wf%mem%dealloc(L_ia_J, a_length*i_length, wf%n_J)
 !
       elseif (.not.(present(i_first) .and. present(i_last) .and. present(a_first) .and. present(a_last))) then
 !
@@ -781,13 +788,13 @@ contains
 !
          call wf%mem%alloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
          L_ia_J = zero
-!        
-!        Get Cholesky IA vector 
+!
+!        Get Cholesky IA vector
 !
          call wf%read_cholesky_ia(L_ia_J)
 !
-!        Reorder and save in AI vector 
-!         
+!        Reorder and save in AI vector
+!
          do i = 1, wf%n_o
             do a = 1, wf%n_v
 !
@@ -805,27 +812,27 @@ contains
             enddo
          enddo
 !
-!        Deallocate temporary vector 
+!        Deallocate temporary vector
 !
-         call wf%mem%dealloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J) 
-!  
+         call wf%mem%dealloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
+!
       else
 !
          write(unit_output, *) 'Error: call to read_cholesky_ia is not valid'
          stop
 !
-      endif    
+      endif
 !
    end subroutine read_cholesky_ai_hf
 !
 !
     subroutine read_cholesky_ab_hf(wf, L_ab_J, a_first, a_last, b_first, b_last)
 !!
-!!    Read Cholesky AB 
+!!    Read Cholesky AB
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
 !!    Reads the MO Cholesky AB (vir-vir) vectors from file and
-!!    places them in the incoming L_ab_J matrix, with batching 
+!!    places them in the incoming L_ab_J matrix, with batching
 !!    if necessary
 !!
 !!    Optional arguments: b_first, b_last, a_first, a_last can be used in order to restrict indices
@@ -850,7 +857,7 @@ contains
 
 !
 !     Prepare for reading: generate unit identifier, open, and rewind file
-!  
+!
       call generate_unit_identifier(unit_chol_mo_ab_direct)
       open(unit=unit_chol_mo_ab_direct, file='cholesky_ab_direct', action='read', status='unknown', &
             access='direct', form='unformatted', recl=dp*(wf%n_J), iostat=ioerror)
@@ -874,7 +881,7 @@ contains
       enddo
 !
 !     Close file
-!        
+!
       close(unit_chol_mo_ab_direct)
 !
    end subroutine read_cholesky_ab_hf
@@ -931,10 +938,10 @@ contains
 !
       ao_fock = zero
 !
-      call squareup(h1ao, ao_fock, wf%n_ao) 
+      call squareup(h1ao, ao_fock, wf%n_ao)
 !
 !     Deallocation of one-electron AO integrals
-!   
+!
       call wf%mem%dealloc(h1ao, wf%n_ao*(wf%n_ao+1)/2, 1)
 !
 !     Read Cholesky in ao basis
@@ -943,14 +950,14 @@ contains
       open(unit=unit_chol_ao, file='MLCC_CHOLESKY', status='old', form='formatted')
       rewind(unit_chol_ao)
 !
-!     Read the number of Cholesky vectors (n_J) and 
+!     Read the number of Cholesky vectors (n_J) and
 !     the number of atomic orbitals (n_ao)
 !
       read(unit_chol_ao,*) wf%n_ao, wf%n_J
 !
       do j = 1, wf%n_J
 !
-         call wf%mem%alloc(chol_ao, wf%n_ao*(wf%n_ao+1)/2, 1)    
+         call wf%mem%alloc(chol_ao, wf%n_ao*(wf%n_ao+1)/2, 1)
 !
          chol_ao = zero
 !
@@ -963,10 +970,10 @@ contains
 !
          call squareup(chol_ao, chol_ao_sq, wf%n_ao)
 !
-         call wf%mem%dealloc(chol_ao, wf%n_ao*(wf%n_ao+1)/2, 1) 
+         call wf%mem%dealloc(chol_ao, wf%n_ao*(wf%n_ao+1)/2, 1)
 
          call wf%mem%alloc(density, wf%n_ao, wf%n_ao)
-         density = zero   
+         density = zero
 !
 !        Coulomb term: sum_Jps 2 * L^J_ps * D_p,s * L^J_mn
 !
@@ -1020,7 +1027,7 @@ contains
                      wf%n_ao)
 !
          call wf%mem%dealloc(Y, wf%n_ao, wf%n_ao)
-         call wf%mem%dealloc(chol_ao_sq, wf%n_ao, wf%n_ao) 
+         call wf%mem%dealloc(chol_ao_sq, wf%n_ao, wf%n_ao)
 !
       enddo ! looping over J
 !
@@ -1030,7 +1037,7 @@ contains
    end subroutine construct_ao_fock_hf
 !
    subroutine construct_density_matrices_hf(wf, density_o, density_v, C_matrix, n_o, n_v)
-!! 
+!!
 !!    Construct density matrices (HF)
 !!    Written by  Eirik F. Kjønstad and Sarai D. Folkestad, Jun 2017
 !!
@@ -1047,7 +1054,7 @@ contains
       real(dp), dimension(:,:), allocatable :: C
 !
       integer(i15) :: i = 0, j = 0, ij = 0
-!      
+!
       call dgemm('N', 'T',    &
                   wf%n_ao,    &
                   wf%n_ao,    &
@@ -1102,7 +1109,7 @@ contains
       real(dp), dimension(wf%n_ao, wf%n_ao)   :: density_o
       real(dp), dimension(wf%n_ao, n_o + n_v) :: C_matrix
       integer(i15)                            :: n_o, n_v
-!      
+!
       call dgemm('N', 'T',    &
                   wf%n_ao,    &
                   wf%n_ao,    &
