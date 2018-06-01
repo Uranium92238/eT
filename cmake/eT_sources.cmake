@@ -29,6 +29,7 @@ set(eT_fortran_sources
    src/tools/input_output.F90
    src/tools/input_reader.F90
    src/tools/utils.F90
+   src/tools/vector_analysis.F90
    src/submodules/ccs_class_submodules/input_reader_submodule.F90
    src/submodules/ccs_class_submodules/cholesky_submodule.F90
    src/submodules/ccs_class_submodules/ground_state_submodule.F90

@@ -199,6 +199,8 @@ contains
       real(dp) :: norm_singles
       real(dp) :: norm_doubles
 !
+      real(dp) :: t1, t2
+!
 !     Print energy and CPU time
 !
       write(unit_output,'(/t3,a,a,a/)')'Summary of ', trim(wf%name), ' ground state calculation:'
@@ -207,11 +209,12 @@ contains
 !
 !     Print the dominant single excitations
 !
-      call wf%print_dominant_singles(wf%t1am, norm_singles)
+      call print_dominant_two_index(wf%t1am, wf%n_v, wf%n_o, 'a', 'i')
 !
 !     Print the dominant double excitations
 !
-      call wf%print_dominant_doubles(wf%t2am, norm_doubles)
+      call print_dominant_four_index(wf%t2am, wf%n_v, wf%n_o, wf%n_v, wf%n_o, &
+                                                'a', 'i', 'b', 'j')
 !
       write(unit_output,'(/t6,a41,f14.12/)')                &
                'Singles contribution to the full vector: ', &

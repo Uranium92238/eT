@@ -13,6 +13,7 @@ module hf_class
 !
    use types
    use utils
+   use vector_analysis
    use workspace
    use input_output
    use file_class
