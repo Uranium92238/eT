@@ -897,4 +897,5 @@ contains
 !
    end subroutine read_cc2_double_amplitudes_cc2
 !
+!
 end module cc2_class
