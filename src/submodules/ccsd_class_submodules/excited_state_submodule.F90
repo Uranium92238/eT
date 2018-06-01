@@ -454,6 +454,8 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: solution_ai, solution_aibj
 !
+      real(dp) :: norm_singles ! Note: the total vector is normalized in this case
+!
 !     Open solution vector file
 !
       call generate_unit_identifier(unit_solution)
@@ -483,8 +485,11 @@ contains
 !
 !        Print dominant single & double excitations
 !
-         call wf%print_dominant_singles(solution_ai)
+         call wf%print_dominant_singles(solution_ai, norm_singles)
          call wf%print_dominant_doubles(solution_aibj)
+!
+         write(unit_output,'(/t6,a41,f14.12/)') &
+               'Singles contribution to the full vector: ', norm_singles**2
 !
       enddo
 !

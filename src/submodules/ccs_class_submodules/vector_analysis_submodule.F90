@@ -9,7 +9,7 @@ submodule (ccs_class) vector_analysis
 contains
 !
 !
-   module subroutine print_dominant_singles_ccs(wf, vec)
+   module subroutine print_dominant_singles_ccs(wf, vec, norm)
 !!
 !!    Print dominant singles (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
@@ -21,18 +21,22 @@ contains
       class(ccs) :: wf
 !
       real(dp), dimension(:, :) :: vec ! Assumed to have n_o*n_v number of elements
+      real(dp), optional :: norm
 !
-      real(dp) :: ddot, norm
+      real(dp) :: ddot
 !
       integer(i15) :: i = 0
 !
       real(dp), dimension(:,:), allocatable :: sorted_max_vec_singles
       integer(i15), dimension(:,:), allocatable :: index_list_singles
 !
-!     Calculate the contribution from single excitations
+      if (present(norm)) then
 !
-      norm = sqrt(ddot(wf%n_t1am, vec, 1, vec,1))
-      write(unit_output,'(/t6,a,f6.4)')'Single excitation contribution: ', norm
+!        Calculate the vector norm
+!
+         norm = sqrt(ddot(wf%n_t1am, vec, 1, vec,1))
+!
+      endif
 !
 !     Analysis of vector
 !

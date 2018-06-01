@@ -2536,7 +2536,7 @@ module ccs_class
 !     -::- Vector analysis submodule interface -::-
 !     ------------------------------------------
 !
-      module subroutine print_dominant_singles_ccs(wf, vec)
+      module subroutine print_dominant_singles_ccs(wf, vec, norm)
 !!
 !!       Print dominant singles (CCS)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
@@ -2546,6 +2546,7 @@ module ccs_class
          class(ccs) :: wf
 !
          real(dp), dimension(:, :) :: vec
+         real(dp), optional :: norm
 !
       end subroutine print_dominant_singles_ccs
 !

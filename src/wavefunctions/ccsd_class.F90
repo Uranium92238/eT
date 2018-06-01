@@ -1180,7 +1180,7 @@ module ccsd_class
 !     -::- Vector analysis submodule interface -::-
 !     ------------------------------------------
 !
-      module subroutine print_dominant_doubles_ccsd(wf, vec)
+      module subroutine print_dominant_doubles_ccsd(wf, vec, norm)
 !!
 !!       Print dominant singles (CCSD)
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
@@ -1190,6 +1190,7 @@ module ccsd_class
          class(ccsd) :: wf
 !
          real(dp), dimension(:, :) :: vec
+         real(dp), optional :: norm
 !
       end subroutine print_dominant_doubles_ccsd
 !
