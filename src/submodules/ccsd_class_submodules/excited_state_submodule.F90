@@ -449,22 +449,18 @@ contains
 !
       real(dp), dimension(wf%excited_state_specifications%n_singlet_states, 1) :: energies
 !
-      integer(i15) :: unit_solution = -1, ioerror = 0
+      type(file) :: solution_file
+!
       integer(i15) :: state = 0
 !
       real(dp), dimension(:,:), allocatable :: solution_ai, solution_aibj
 !
-      real(dp) :: norm_singles ! Note: the total vector is normalized in this case
+      real(dp) :: norm_sq_singles ! Note: the total vector is normalized in this case
 !
 !     Open solution vector file
 !
-      call generate_unit_identifier(unit_solution)
-!
-      open(unit=unit_solution, file=wf%excited_state_specifications%solution_file, &
-            action='read', status='unknown', &
-            access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror)
-!
-      if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file'
+      solution_file%name = wf%excited_state_specifications%solution_file
+      call wf%disk%open_file(solution_file, 'unformatted', 'read', 'direct', dp*(wf%n_parameters))
 !
 !     Allocations
 !
@@ -473,23 +469,25 @@ contains
 !
       do state = 1, wf%excited_state_specifications%n_singlet_states
 !
-         write(unit_output,'(/t3,a30,i3,a1/)')'Analysis of excitation vector ',state, ':'
-         write(unit_output,'(t6, a, f14.8)')'Excitation energy [a.u.]:   ', energies(state,1)
-         write(unit_output,'(t6, a, f14.8)')'Excited state energy [a.u.]:', wf%energy + energies(state,1)
+         write(unit_output,'(/t3,a30,i3,a1/)') 'Analysis of excitation vector ',state, ':'
+         write(unit_output,'(t6, a, f14.8)')    'Excitation energy [a.u.]:   ', energies(state,1)
+         write(unit_output,'(t6, a, f14.8/)')   'Excited state energy [a.u.]:', wf%energy + energies(state,1)
 !
 !        Read the solution
 !
-         solution_ai    = zero
-         solution_aibj  = zero
-         read(unit_solution, rec=state) solution_ai, solution_aibj
+         solution_ai   = zero
+         solution_aibj = zero
+!
+         read(solution_file%unit, rec=state) solution_ai, solution_aibj
 !
 !        Print dominant single & double excitations
 !
-         call wf%print_dominant_singles(solution_ai, norm_singles)
-         call wf%print_dominant_doubles(solution_aibj)
-!
+         norm_sq_singles = dot_product(solution_ai, solution_ai, wf%n_t1am)
+         call print_dominant_two_index(solution_ai, wf%n_v, wf%n_o, 'a', 'i')
+         call print_dominant_four_index(solution_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o, &
+                                                         'a', 'i', 'b', 'j')
          write(unit_output,'(/t6,a41,f14.12/)') &
-               'Singles contribution to the full vector: ', norm_singles**2
+               'Singles contribution to the full vector: ', norm_sq_singles
 !
       enddo
 !
@@ -498,7 +496,7 @@ contains
       call wf%mem%dealloc(solution_ai, wf%n_t1am, 1)
       call wf%mem%dealloc(solution_aibj, wf%n_t2am, 1)
 !
-      close(unit_solution)
+      call wf%disk%close_file(solution_file)
 !
    end subroutine summary_excited_state_info_ccsd
 !
