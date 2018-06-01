@@ -203,7 +203,7 @@ module ccsd_class
 !
       procedure :: construct_eta => construct_eta_ccsd
 !
-!     Routine to allocate the amplitudes
+!     Routine to allocate & zero the amplitudes
 !
       procedure :: initialize_amplitudes        => initialize_amplitudes_ccsd
       procedure :: initialize_double_amplitudes => initialize_double_amplitudes_ccsd
@@ -216,8 +216,9 @@ module ccsd_class
 !     Routine to save and read the amplitudes
 !
       procedure :: save_amplitudes        => save_amplitudes_ccsd
+      procedure :: save_double_amplitudes => save_double_amplitudes_ccsd
 !
-      procedure :: read_amplitudes        => read_amplitudes_ccsd ! On its way out I think
+      procedure :: read_amplitudes        => read_amplitudes_ccsd
       procedure :: read_double_amplitudes => read_double_amplitudes_ccsd
 !
 !     Set the double amplitudes to the MP2 guess
@@ -1506,28 +1507,39 @@ contains
 !
       class(ccsd) :: wf
 !
-      type(file) :: t1am_file
+      call wf%save_single_amplitudes
+      call wf%save_double_amplitudes
+!
+   end subroutine save_amplitudes_ccsd
+!
+!
+   subroutine save_double_amplitudes_ccsd(wf)
+!!
+!!    Save double amplitudes
+!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
+!!
+!!    Stores the double amplitudes to disk
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+!
       type(file) :: t2am_file
 !
-!     Open amplitude files
+!     Open amplitude file
 !
-      t1am_file%name = 't1am'
       t2am_file%name = 't2am'
-!
-      call wf%disk%open_file(t1am_file, 'unformatted', 'write', 'sequential')
       call wf%disk%open_file(t2am_file, 'unformatted', 'write', 'sequential')
 !
-!     Write amplitudes to files
+!     Write amplitudes to file
 !
-      write(t1am_file%unit) wf%t1am
       write(t2am_file%unit) wf%t2am
 !
 !     Close amplitude files
 !
-      call wf%disk%close_file(t1am_file)
       call wf%disk%close_file(t2am_file)
 !
-   end subroutine save_amplitudes_ccsd
+   end subroutine save_double_amplitudes_ccsd
 !
 !
    subroutine read_amplitudes_ccsd(wf)

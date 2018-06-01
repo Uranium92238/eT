@@ -373,6 +373,7 @@ module ccs_class
 !     Routine to save the amplitudes to disk
 !
       procedure :: save_amplitudes        => save_amplitudes_ccs
+      procedure :: save_single_amplitudes => save_single_amplitudes_ccs
 !
 !     Routines to read the amplitudes from disk (and allocate if necessary)
 !
@@ -2895,27 +2896,44 @@ contains
 !!    Save amplitudes (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
 !!
-!!    Store the amplitudes to disk (T1AM)
+!!    Stores the amplitudes to disk
 !!
       implicit none
 !
       class(ccs) :: wf
 !
-      integer(i15) :: unit_t1am = -1
+      call wf%save_single_amplitudes
+!
+   end subroutine save_amplitudes_ccs
+!
+!
+   subroutine save_single_amplitudes_ccs(wf)
+!!
+!!    Save single amplitudes
+!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
+!!
+!!    Stores the single amplitudes to disk
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      type(file) :: t1am_file
 !
 !     Open amplitude file
 !
-      call generate_unit_identifier(unit_t1am)
-      open(unit_t1am, file='t1am', status='unknown', form='unformatted')
-      rewind(unit_t1am)
+      t1am_file%name = 't1am'
+      call wf%disk%open_file(t1am_file, 'unformatted', 'write', 'sequential')
 !
-      write(unit_t1am) wf%t1am
+!     Write the amplitudes
+!
+      write(t1am_file%unit) wf%t1am
 !
 !     Close amplitude file
 !
-      close(unit_t1am)
+      call wf%disk%close_file(t1am_file)
 !
-   end subroutine save_amplitudes_ccs
+   end subroutine save_single_amplitudes_ccs
 !
 !
    subroutine read_single_amplitudes_ccs(wf)
