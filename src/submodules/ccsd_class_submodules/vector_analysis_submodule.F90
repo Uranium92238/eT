@@ -9,7 +9,7 @@ submodule (ccsd_class) vector_analysis
 contains
 !
 !
-   module subroutine print_dominant_doubles_ccsd(wf, vec)
+   module subroutine print_dominant_doubles_ccsd(wf, vec, norm)
 !!
 !!    Print dominant singles (CCSD)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
@@ -19,11 +19,22 @@ contains
       class(ccsd) :: wf
 !
       real(dp), dimension(:, :) :: vec ! Assumed to have n_t2am number of elements
+      real(dp), optional :: norm
 !
       real(dp), dimension(:,:), allocatable :: sorted_max_vec_doubles
       integer(i15), dimension(:,:), allocatable :: index_list_doubles
 !
+      real(dp) :: ddot
+!
       integer(i15) :: i = 0
+!
+      if (present(norm)) then
+!
+!        Calculate the vector norm
+!
+         norm = sqrt(ddot(wf%n_t2am, vec, 1, vec,1))
+!
+      endif
 !
       call wf%mem%alloc(sorted_max_vec_doubles, min(wf%n_t2am, 20), 1)
       call wf%mem%alloc_int(index_list_doubles, min(wf%n_t2am, 20), 4)

@@ -151,6 +151,13 @@ contains
 !
       real(dp) :: start_gs_solver, end_gs_solver
 !
+!     The routines that use the now obsolete DIIS routine still requires
+!     that the files have valid unit identifiers! (To remove later.)
+!
+      call generate_unit_identifier(unit_dt)
+      call generate_unit_identifier(unit_t_dt)
+      call generate_unit_identifier(unit_diis_matrix)
+!
 !     If restart, read amplitudes from disk
 !
       if (wf%ground_state_specifications%restart) then
@@ -574,9 +581,6 @@ contains
       write(unit_output,'(/t3,a,a,a/)')'Summary of ', trim(wf%name), ' ground state calculation:'
       write(unit_output,'(t6,a25,f19.12)')  'Total energy [a.u.]:     ', wf%energy
       write(unit_output,'(t6,a25,f19.12)')  'Total time CPU (seconds): ', time
-!
-      write(unit_output,'(/t3,a42/)')'Analysis of ground state amplitude vector.'
-      write(unit_output,'(t6,a,f14.8)')'Ground state energy [a.u.]:   ', wf%energy
 !
 !     Print the dominant single excitations
 !

@@ -196,6 +196,8 @@ contains
       class(ccsd) :: wf
 !
       real(dp) :: time
+      real(dp) :: norm_singles
+      real(dp) :: norm_doubles
 !
 !     Print energy and CPU time
 !
@@ -205,11 +207,15 @@ contains
 !
 !     Print the dominant single excitations
 !
-      call wf%print_dominant_singles(wf%t1am)
+      call wf%print_dominant_singles(wf%t1am, norm_singles)
 !
 !     Print the dominant double excitations
 !
-      call wf%print_dominant_doubles(wf%t2am)
+      call wf%print_dominant_doubles(wf%t2am, norm_doubles)
+!
+      write(unit_output,'(/t6,a41,f14.12/)')                &
+               'Singles contribution to the full vector: ', &
+               norm_singles**2/(norm_singles**2 + norm_doubles**2)
 !
    end subroutine summary_ground_state_info_ccsd
 !

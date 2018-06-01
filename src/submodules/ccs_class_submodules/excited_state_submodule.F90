@@ -408,7 +408,7 @@ contains
 !
 !     Print summary
 !
-      write(unit_output,'(//t3,a,a,a/)')'Summary of ', trim(wf%name), ' excited state calculation:'
+      write(unit_output,'(/t3,a,a,a/)')'Summary of ', trim(wf%name), ' excited state calculation:'
       write(unit_output,'(t6,a25,f14.8/)') 'Total CPU time (seconds):    ', end_excited_state_solver - start_excited_state_solver
       flush(unit_output)
 
