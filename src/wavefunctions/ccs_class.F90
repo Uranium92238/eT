@@ -35,7 +35,6 @@ module ccs_class
 !!                - Jacobian Transpose (left transformation)
 !!                - Ionized State
 !!                - CVS
-!!                - Vector analysis
 !!
 !!             The interfaces shows incoming variables and their type, but contains
 !!             no information of the procedure itself. The procedure is shown in full
@@ -336,12 +335,6 @@ module ccs_class
 !
       procedure :: cvs_rho_a_i_projection  => cvs_rho_a_i_projection_ccs
       procedure :: cvs_residual_projection => cvs_residual_projection_ccs
-!
-!
-!     -::- Vector analysis submodule routine pointers -::-
-!     ----------------------------------------
-!
-      procedure :: print_dominant_singles => print_dominant_singles_ccs
 !
 !
 !     -::- Other class routine pointers not located in submodules -::-
@@ -2526,30 +2519,6 @@ module ccs_class
          real(dp), dimension(wf%n_parameters, 1) :: residual
 !
       end subroutine cvs_residual_projection_ccs
-!
-!
-   end interface
-!
-!
-   interface
-!
-!
-!     -::- Vector analysis submodule interface -::-
-!     ------------------------------------------
-!
-      module subroutine print_dominant_singles_ccs(wf, vec, norm)
-!!
-!!       Print dominant singles (CCS)
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
-!!
-         implicit none
-!
-         class(ccs) :: wf
-!
-         real(dp), dimension(:, :) :: vec
-         real(dp), optional :: norm
-!
-      end subroutine print_dominant_singles_ccs
 !
 !
    end interface

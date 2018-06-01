@@ -29,7 +29,6 @@ module ccsd_class
 !!                - Jacobian transpose (left transformation)
 !!                - Ionized state
 !!                - CVS
-!!                - Vector analysis
 !!
 !!             The interfaces shows incoming variables and their type, but contains
 !!             no information of the procedure itself. The procedure is shown in full
@@ -188,12 +187,6 @@ module ccsd_class
 !
       procedure :: cvs_rho_aibj_projection => cvs_rho_aibj_projection_ccsd
       procedure :: cvs_residual_projection => cvs_residual_projection_ccsd
-!
-!
-!     -::- Vector analysis submodule routine pointers -::-
-!     ----------------------------------------
-!
-      procedure :: print_dominant_doubles => print_dominant_doubles_ccsd
 !
 !
 !     -::- Other class routine pointers not located in submodules -::-
@@ -549,7 +542,7 @@ module ccsd_class
 !
       module subroutine summary_excited_state_info_ccsd(wf, energies)
 !!
-!!       Summary of excited state info
+!!       Summary of excited state info (CCSD)
 !!       Written by Sarai D. Folkestad, Oct 2017
 !!
          implicit none
@@ -578,6 +571,7 @@ module ccsd_class
          implicit none
 !
          class(ccsd) :: wf
+!
          real(dp), dimension(wf%n_parameters, 1) :: residual
 !
       end subroutine ionization_residual_projection_ccsd
@@ -591,6 +585,7 @@ module ccsd_class
          implicit none
 !
          class(ccsd) :: wf
+!
          real(dp), dimension(:,:) :: rho_aibj
 !
       end subroutine ionization_rho_aibj_projection_ccsd
@@ -605,8 +600,8 @@ module ccsd_class
 !
         class(ccsd) :: wf
 !
-        real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai
-        real(dp), dimension(wf%n_t2am, 1)   :: c_aibj ! c_aibj
+        real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i
+        real(dp), dimension(wf%n_t2am, 1)   :: c_aibj
 !
       end subroutine ionization_jacobian_ccsd_transformation_ccsd
 !
@@ -620,8 +615,8 @@ module ccsd_class
 !
          class(ccsd) :: wf
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai
-         real(dp), dimension(wf%n_t2am, 1)   :: c_aibj ! c_aibj
+         real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i
+         real(dp), dimension(wf%n_t2am, 1)   :: c_aibj
 !
       end subroutine core_ionization_jacobian_ccsd_transformation_ccsd
 !
@@ -1161,7 +1156,7 @@ module ccsd_class
 !
       module subroutine cvs_rho_aibj_projection_ccsd(wf, vec_aibj)
 !!
-!!       CVS Rho_aibj projection (CCSD)
+!!       CVS rho_aibj projection (CCSD)
 !!       Written by Sarai D. Folkestad, Aug 2017
 !!
          implicit none
@@ -1170,30 +1165,6 @@ module ccsd_class
          real(dp), dimension(:, :) :: vec_aibj
 !
       end subroutine cvs_rho_aibj_projection_ccsd
-!
-!
-   end interface
-!
-!
-   interface
-!
-!
-!     -::- Vector analysis submodule interface -::-
-!     ------------------------------------------
-!
-      module subroutine print_dominant_doubles_ccsd(wf, vec, norm)
-!!
-!!       Print dominant singles (CCSD)
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
-!!
-         implicit none
-!
-         class(ccsd) :: wf
-!
-         real(dp), dimension(:, :) :: vec
-         real(dp), optional :: norm
-!
-      end subroutine print_dominant_doubles_ccsd
 !
 !
    end interface

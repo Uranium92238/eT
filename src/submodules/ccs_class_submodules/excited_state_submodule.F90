@@ -2085,7 +2085,7 @@ contains
 !
 !           Print dominant single excitations
 !
-            call wf%print_dominant_singles(solution)
+            call print_dominant_two_index(solution, wf%n_v, wf%n_o, 'a', 'i')
 !
          enddo
 !
