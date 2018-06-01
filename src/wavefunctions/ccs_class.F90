@@ -2537,13 +2537,30 @@ contains
 !!    Initialize CCS object
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!    Performs the following tasks
+!!    Wavefunction initialization. The tasks performed are, in broad terms:
 !!
-!!    - Sets HF orbital and energy information by reading from file
-!!    - Transforms AO Cholesky vectors to MO basis and saves to file
-!!    - Allocates the singles amplitudes and sets them to zero, and sets associated properties
-!!    - Allocates the omega vector and sets it to zero
-!!    - Initializes the Fock matrix and sets it to zero
+!!    a) Read the input file to determine general specifications
+!!       (model type, memory, disk space, etc.), the requested
+!!       calculations (ground state, excited state, etc.) with associated
+!!       settings (thresholds, number of iterations, etc.). For more information,
+!!       see the input reader submodule for the reader-type routines.
+!!
+!!    b) Set wavefunction settings. This includes the name of the object,
+!!       used mainly for printing, and also which methods are implemented,
+!!       which is used to stop calculations that are not possible to execute
+!!       given what is currently implemented. Moreover, a couple of central
+!!       attributes are set (number of occupied and virtual orbitals, single
+!!       and double amplitudes, and the number of variables, which is used
+!!       by solvers in particular)
+!!
+!!    c) Hartree-Fock Dalton interface. This includes reading Hartree-Fock
+!!       results (orbital coefficients and orbital attributes, see b)) and
+!!       Cholesky decomposition files (for atomic Cholesky vectors).
+!!
+!!    One or more of a)-c) are different for different wavefunctions,
+!!    so most new wavefunction has to have an overwritten initialization
+!!    routine. This is in contrast to the driver subroutines, which are
+!!    mostly kept in the CCS form for the entire hierarchy.
 !!
       implicit none
 !
