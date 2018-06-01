@@ -196,8 +196,8 @@ contains
       class(ccsd) :: wf
 !
       real(dp) :: time
-      real(dp) :: norm_singles
-      real(dp) :: norm_doubles
+      real(dp) :: norm_sq_singles
+      real(dp) :: norm_sq_doubles
 !
       real(dp) :: t1, t2
 !
@@ -205,20 +205,22 @@ contains
 !
       write(unit_output,'(/t3,a,a,a/)')'Summary of ', trim(wf%name), ' ground state calculation:'
       write(unit_output,'(t6,a25,f19.12)')  'Total energy [a.u.]:     ', wf%energy
-      write(unit_output,'(t6,a25,f19.12)')  'Total time CPU (seconds): ', time
+      write(unit_output,'(t6,a25,f19.12/)') 'Total time CPU (seconds): ', time
 !
 !     Print the dominant single excitations
 !
+      norm_sq_singles = dot_product(wf%t1am, wf%t1am, wf%n_t1am)
       call print_dominant_two_index(wf%t1am, wf%n_v, wf%n_o, 'a', 'i')
 !
 !     Print the dominant double excitations
 !
+      norm_sq_doubles = dot_product(wf%t2am, wf%t2am, wf%n_t2am)
       call print_dominant_four_index(wf%t2am, wf%n_v, wf%n_o, wf%n_v, wf%n_o, &
                                                 'a', 'i', 'b', 'j')
 !
       write(unit_output,'(/t6,a41,f14.12/)')                &
                'Singles contribution to the full vector: ', &
-               norm_singles**2/(norm_singles**2 + norm_doubles**2)
+               norm_sq_singles/(norm_sq_singles + norm_sq_doubles)
 !
    end subroutine summary_ground_state_info_ccsd
 !

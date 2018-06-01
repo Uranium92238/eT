@@ -911,6 +911,8 @@ contains
 !
       real(dp) :: time
 !
+      real(dp) :: norm_sq_singles, norm_sq_doubles
+!
 !     Print energy and CPU time
 !
       write(unit_output,'(/t3,a,a,a/)')'Summary of ', trim(wf%name), ' ground state calculation:'
@@ -921,13 +923,18 @@ contains
 !
       call wf%read_amplitudes
 !
+      norm_sq_singles = dot_product(wf%t1am, wf%t1am, wf%n_t1am)
       call print_dominant_two_index(wf%t1am, wf%n_v, wf%n_o, 'a', 'i')
 !
-!
+      norm_sq_doubles = dot_product(wf%s2am, wf%s2am, wf%n_s2am)
       call print_dominant_four_index(wf%s2am, wf%n_v, wf%n_o, wf%n_v, wf%n_o, &
                                                 'a', 'i', 'b', 'j')
 !
       call wf%destruct_amplitudes
+!
+      write(unit_output,'(/t6,a41,f14.12/)')                &
+               'Singles contribution to the full vector: ', &
+               norm_sq_singles/(norm_sq_singles + norm_sq_doubles)
 !
    end subroutine summary_ground_state_info_cc2
 !
