@@ -1,9 +1,9 @@
 module cc2_class
 !
 !!
-!!            Coupled cluster perturbative doubles (CC2) class module                                 
-!!         Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017         
-!!                                                                           
+!!            Coupled cluster perturbative doubles (CC2) class module
+!!         Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
 !
 !  :::::::::::::::::::::::::::::::::::
 !  -::- Modules used by the class -::-
@@ -21,11 +21,11 @@ module cc2_class
    use ccs_class
 !
 !
-   implicit none 
+   implicit none
 !
 !  :::::::::::::::::::::::::::::::::::::
 !  -::- Definition of the CC2 class -::-
-!  ::::::::::::::::::::::::::::::::::::: 
+!  :::::::::::::::::::::::::::::::::::::
 !
    type, extends(ccs) :: cc2
 !
@@ -33,7 +33,7 @@ module cc2_class
 !
       integer(dp) :: n_s2am
 !
-   contains 
+   contains
 !
 !     Initialization and driver routines
 !
@@ -45,14 +45,14 @@ module cc2_class
 !
 !     Helper routines for construct_omega
 !
-      procedure :: omega_cc2_a1 => omega_cc2_a1_cc2 
-      procedure :: omega_cc2_b1 => omega_cc2_b1_cc2 
-      procedure :: get_s2am => get_s2am_cc2  
+      procedure :: omega_cc2_a1 => omega_cc2_a1_cc2
+      procedure :: omega_cc2_b1 => omega_cc2_b1_cc2
+      procedure :: get_s2am     => get_s2am_cc2
 !
-      procedure ::read_cc2_double_amplitudes => read_cc2_double_amplitudes_cc2  
-      procedure ::read_amplitudes            => read_amplitudes_cc2  
-      procedure ::save_amplitudes            => save_amplitudes_cc2  
-      procedure ::destruct_s2am              => destruct_s2am_cc2 
+      procedure :: read_cc2_double_amplitudes => read_cc2_double_amplitudes_cc2
+      procedure :: read_amplitudes            => read_amplitudes_cc2
+      procedure :: save_amplitudes            => save_amplitudes_cc2
+      procedure :: destruct_s2am              => destruct_s2am_cc2
 !
 !     Ground state solver helper routines
 !
@@ -71,11 +71,11 @@ module cc2_class
 !
 !     Excited states
 !
-      procedure :: initialize_excited_states     => initialize_excited_states_cc2
-      procedure :: calculate_orbital_differences => calculate_orbital_differences_cc2
-      procedure :: transform_trial_vectors       => transform_trial_vectors_cc2
-      procedure :: cvs_residual_projection       => cvs_residual_projection_cc2 
-      procedure :: excited_state_preparations    => excited_state_preparations_cc2
+      procedure :: initialize_excited_states        => initialize_excited_states_cc2
+      procedure :: calculate_orbital_differences    => calculate_orbital_differences_cc2
+      procedure :: transform_trial_vectors          => transform_trial_vectors_cc2
+      procedure :: cvs_residual_projection          => cvs_residual_projection_cc2
+      procedure :: excited_state_preparations       => excited_state_preparations_cc2
 !
       procedure :: analyze_double_excitation_vector => analyze_double_excitation_vector_cc2
       procedure :: summary_excited_state_info       => summary_excited_state_info_cc2
@@ -83,7 +83,7 @@ module cc2_class
    end type cc2
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::::::::::
-!  -::- Interface to the submodule routines of CCS -::- 
+!  -::- Interface to the submodule routines of CCS -::-
 !  ::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
    interface
@@ -93,15 +93,15 @@ module cc2_class
 !
       module subroutine construct_omega_cc2(wf)
 !!
-!!        Construct Omega 
+!!        Construct Omega
 !!        Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
 !!        Directs the construction of the projection vector < mu | exp(-T) H exp(T) | R >
-!!        for the current amplitudes of the object wf 
+!!        for the current amplitudes of the object wf
 !!
          implicit none
 !
-         class(cc2) :: wf 
+         class(cc2) :: wf
 !
       end subroutine construct_omega_cc2
 !
@@ -110,15 +110,15 @@ module cc2_class
 !!
 !!        Omega A1
 !!        Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!  
-!!        Calculates the A1 term of omega, 
-!!  
+!!
+!!        Calculates the A1 term of omega,
+!!
 !!        A1: sum_ckd g_adkc * u_ki^cd,
-!! 
+!!
 !!        and adds it to the projection vector (omega1) of
 !!        the wavefunction object wf
 !!
-!!        u_ki^cd = 2*t_ki^cd - t_ik^cd 
+!!        u_ki^cd = 2*t_ki^cd - t_ik^cd
 !!
          implicit none
 !
@@ -132,26 +132,26 @@ module cc2_class
 !!        Omega B1
 !!        Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!        Calculates the B1 term of omega, 
+!!        Calculates the B1 term of omega,
 !!
 !!        B1: - sum_ckl u_kl^ac * g_kilc,
-!! 
+!!
 !!        and adds it to the projection vector (omeg1) of
 !!        the wavefunction object wf
 !!
-!!        u_kl^ac = 2*t_kl^ac - t_lk^ac 
+!!        u_kl^ac = 2*t_kl^ac - t_lk^ac
 !!
          implicit none
 !
-         class(cc2) :: wf 
+         class(cc2) :: wf
 !
       end subroutine omega_cc2_b1_cc2
 !
 !
       module subroutine get_s2am_cc2(wf, s_ia_jb, b_first, b_length)
 !!
-!!       Get S_2 amplitudes, 
-!!       Written by Sarai D. Folkestad, July 2017 
+!!       Get S_2 amplitudes,
+!!       Written by Sarai D. Folkestad, July 2017
 !!
 !!       Construct
 !!
@@ -162,7 +162,7 @@ module cc2_class
          implicit none
 !
          class(cc2) :: wf
-! 
+!
          integer(i15) :: b_first, b_length
          real(dp), dimension((wf%n_v)*(wf%n_o), b_length*(wf%n_o)) :: s_ia_jb
 !
@@ -186,24 +186,24 @@ module cc2_class
 !!
 !!          A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >,
 !!
-!!       where the basis employed for the brackets is biorthonormal. 
-!!       The transformation is rho = A c, i.e., 
+!!       where the basis employed for the brackets is biorthonormal.
+!!       The transformation is rho = A c, i.e.,
 !!
-!!          rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck 
+!!          rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck
 !!                  + 1/2 sum_ckdl A_mu,ckdl c_ckdl (1 + delta_ck,dl).
 !!
 !!       On exit, c is overwritten by rho. That is, c_a_i = rho_a_i,
-!!       and c_aibj = rho_aibj. 
+!!       and c_aibj = rho_aibj.
 !!
          implicit none
 !
-         class(cc2) :: wf 
+         class(cc2) :: wf
 !
-!        Incoming vector c 
+!        Incoming vector c
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai 
-         real(dp), dimension(wf%n_s2am, 1)   :: c_aibj ! c_aibj  
-!  
+         real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai
+         real(dp), dimension(wf%n_s2am, 1)   :: c_aibj ! c_aibj
+!
       end subroutine jacobian_cc2_transformation_cc2
 !
 !
@@ -215,9 +215,9 @@ module cc2_class
 !!       Calculates the A1 contribution to the jacobi transformation,
 !!
 !!          A1: 2*sum_BJck u_ik^ac*g_kc,JB*c_BJ - sum_Bjck u_kj^ca*g_kc,jB*c_BI
-!!            - sum_BJck u_ik^ac*g_kB,Jc*c_BJ - sum_bJck u_ki^cb*g_kc,Jb*c_AJ, 
+!!            - sum_BJck u_ik^ac*g_kB,Jc*c_BJ - sum_bJck u_ki^cb*g_kc,Jb*c_AJ,
 !!
-!!       with, 
+!!       with,
 !!
 !!       u_ik^ac = 2*s_ik^ac - 2*s_ik^ca,
 !!
@@ -225,12 +225,12 @@ module cc2_class
 !!
          implicit none
 !
-         class(cc2) :: wf 
+         class(cc2) :: wf
 !
-!        Incoming vectors c and rho 
+!        Incoming vectors c and rho
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i 
-         real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i 
+         real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i
+         real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i
 !
       end subroutine jacobian_cc2_a1_cc2
 !
@@ -242,17 +242,17 @@ module cc2_class
 !!
 !!       Calculates the B1 contribution to the jacobi transformation,
 !!
-!!       B1:   sum_ck F_kc*(2c_ai,ck - c_ak,ci) 
+!!       B1:   sum_ck F_kc*(2c_ai,ck - c_ak,ci)
 !!           - sum_ckj L_jIkc * c_aj,ck + sum_cbk L_Abkc * c_bi,ck
 !!
 !!
 !!       L_Abkc is constructed while batching over A.
 !!
          implicit none
-!  
+!
          class(cc2) :: wf
 !
-         real(dp), dimension(:,:)            :: c_ai_bj 
+         real(dp), dimension(:,:)            :: c_ai_bj
          real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i
 !
       end subroutine jacobian_cc2_b1_cc2
@@ -262,19 +262,19 @@ module cc2_class
 !!
 !!       Jacobian tem A2
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
-!! 
+!!
 !!       Calculates the A2 contribution to the jacobi transformation,
-!! 
+!!
 !!          A2:   sum_C g_ai,bC * c_Cj - sum_K g_ai,Kj * C_bK.
-!! 
+!!
 !!       g_ai,bC is constructed in batches of C.
-!! 
+!!
          implicit none
-!     
+!
          class(cc2) :: wf
-!  
-         real(dp), dimension(:,:)            :: rho_ai_bj 
-         real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i 
+!
+         real(dp), dimension(:,:)            :: rho_ai_bj
+         real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i
 !
       end subroutine jacobian_cc2_a2_cc2
 !
@@ -290,10 +290,10 @@ module cc2_class
 !!
 !!
          implicit none
-!  
+!
          class(cc2) :: wf
 !
-         real(dp), dimension(:,:)   :: c_ai_bj 
+         real(dp), dimension(:,:)   :: c_ai_bj
          real(dp), dimension(:,:)   :: rho_ai_bj
 !
 !
@@ -316,7 +316,7 @@ module cc2_class
    end interface
 !
 !
-   interface 
+   interface
 !
 !     -::- Excited state submodule interface -::-
 !     :::::::::::::::::::::::::::::::::::::::::::
@@ -328,13 +328,13 @@ module cc2_class
 !!
 !!       Calculates and sets n_s2am, and updates n_parameters
 !!       for excited state calculation
-!! 
-         implicit none 
-!    
+!!
+         implicit none
+!
          class(cc2) :: wf
 !
       end subroutine initialize_excited_states_cc2
-!  
+!
 !
 
       module subroutine calculate_orbital_differences_cc2(wf, orbital_diff)
@@ -347,7 +347,7 @@ module cc2_class
 !!          1) ε_I^A = ε_A - ε_I
 !!          2) ε_ij^ab = ε_a + ε_b - ε_i - ε_j (for active spaces only)
 !!
-!!       and puts them in orbital_diff, which is a vector of length n_parameters.        
+!!       and puts them in orbital_diff, which is a vector of length n_parameters.
 !!
          implicit none
 !
@@ -362,11 +362,11 @@ module cc2_class
 !!
 !!       Transformation Trial Vectors (CC2)
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!! 
+!!
 !!       Each trial vector in first_trial to last_trial is read from file and
 !!       transformed before the transformed vector is written to file.
-!! 
-!!       Singles and doubles part of the transformed vectors are written to 
+!!
+!!       Singles and doubles part of the transformed vectors are written to
 !!       the same record in file transformed_vec, record length is n_parameters long.
 !!
          implicit none
@@ -380,8 +380,8 @@ module cc2_class
 !
       module subroutine cvs_residual_projection_cc2(wf, residual)
 !!
-!!       Residual projection (CC2), 
-!!       Written by Sarai D. Folkestad Aug. 2017    
+!!       Residual projection (CC2),
+!!       Written by Sarai D. Folkestad Aug. 2017
 !!
          implicit none
 !
@@ -397,9 +397,9 @@ module cc2_class
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
 !!       A routine for preparation tasks (if any). Can be overwritten
-!!       in descendants if other preparations prove necessary.    
+!!       in descendants if other preparations prove necessary.
 !!
-         class(cc2) :: wf 
+         class(cc2) :: wf
 !
       end subroutine excited_state_preparations_cc2
 !
@@ -409,19 +409,19 @@ module cc2_class
 !!
 !!
          implicit none
-!  
+!
          class(cc2) :: wf
 !
-         real(dp), dimension(wf%n_s2am, 1) :: vec    
+         real(dp), dimension(wf%n_s2am, 1) :: vec
 !
          integer(i15) :: a = 0, i = 0, ai = 0, b = 0, j = 0, bj = 0, aibj = 0, k = 0
 !
          integer(i15) :: n    ! Number of elements wanted
-!  
+!
          real(dp), dimension(n, 1)    :: sorted_short_vec
-!  
+!
          integer(i15), dimension(n, 4) ::index_list
-!  
+!
       end subroutine analyze_double_excitation_vector_cc2
 !
 !
@@ -430,7 +430,7 @@ module cc2_class
 !!
 !!
          implicit none
-!  
+!
          class(cc2) :: wf
 !
          real(dp), dimension(wf%excited_state_specifications%n_singlet_states,1) :: energies
@@ -442,7 +442,7 @@ module cc2_class
 contains
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::
-!  -::- Initialization and driver routines -::- 
+!  -::- Initialization and driver routines -::-
 !  ::::::::::::::::::::::::::::::::::::::::::::
 !
    subroutine init_cc2(wf)
@@ -454,9 +454,9 @@ contains
 !!
 !!     1. Sets HF orbital and energy information by reading from file (read_hf_info)
 !!     2. Transforms AO Cholesky vectors to MO basis and saves to file (read_transform_cholesky)
-!!     3. Allocates the Fock matrix and sets it to zero (note: the matrix is constructed in 
-!!        the descendant classes) 
-!!     4. Allocates the singles amplitudes and sets them to zero, and sets associated properties 
+!!     3. Allocates the Fock matrix and sets it to zero (note: the matrix is constructed in
+!!        the descendant classes)
+!!     4. Allocates the singles amplitudes and sets them to zero, and sets associated properties
 !!     5. Allocate Omega vector
 !!
       implicit none
@@ -486,7 +486,7 @@ contains
       wf%implemented%core_excited_state   = .true.
 !
 !     Read calculation tasks from input file eT.inp
-!     
+!
       call wf%calculation_reader(unit_input)
 !
 !     Close input file
@@ -501,6 +501,11 @@ contains
 !
       call wf%read_transform_cholesky
 !
+!     Set amplitude attributes
+!
+      wf%n_t1am = (wf%n_o)*(wf%n_v)
+      wf%n_parameters = wf%n_t1am ! The number of variables solved for by the solvers
+!
 !     Initialize amplitudes and associated attributes
 !
       call wf%initialize_amplitudes
@@ -509,15 +514,13 @@ contains
 !
       call wf%initialize_fock_matrix
 !
-      wf%n_parameters = wf%n_t1am
-!
       call wf%destruct_amplitudes
 !
    end subroutine init_cc2
 !
 !
 !  :::::::::::::::::::::::::::::::::::::::::
-!  -::- Class subroutines and functions -::- 
+!  -::- Class subroutines and functions -::-
 !  :::::::::::::::::::::::::::::::::::::::::
 !
    subroutine calc_energy_cc2(wf)
@@ -526,11 +529,11 @@ contains
 !!
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!    Calculates the CC2 energy, 
+!!    Calculates the CC2 energy,
 !!
 !!    E_CC2 = E_HF + sum_aibj L_iajb*(t_ij^ab + t_i^a*t_j^b),
-!!   
-!!    with t_ij^ab = - g_aibj/(e_a + e_b - e_i - e_j) where 
+!!
+!!    with t_ij^ab = - g_aibj/(e_a + e_b - e_i - e_j) where
 !!    g_aibj are T1-transformed integrals.
 !!    Batching over a.
 !!
@@ -543,14 +546,14 @@ contains
       real(dp), dimension(:,:), allocatable :: L_bj_J
       real(dp), dimension(:,:), allocatable :: L_ia_J
       real(dp), dimension(:,:), allocatable :: g_ia_bj ! = g_aibj
-      real(dp), dimension(:,:), allocatable :: g_ia_jb 
+      real(dp), dimension(:,:), allocatable :: g_ia_jb
 !
 !     t2 amplitudes
 !
       real(dp), dimension(:,:), allocatable :: t_ia_bj ! = g_aibj/(e_a + e_b - e_i - e_j)
 !
 !     Batching variables
-!  
+!
       integer(i15) :: a_batch, a_first, a_last, a_length
       integer(i15) :: required, available, n_batch, batch_dimension, max_batch_length
 !
@@ -565,29 +568,29 @@ contains
       integer(i15) :: aibj = 0
 !
 !     Prepare for batching over index a
-!  
-      required = (2*(wf%n_v)*(wf%n_o)*(wf%n_J) &                           !    
-               + 2*(wf%n_v)*(wf%n_o)*(wf%n_J) &                            ! Needed for g_aibj  
-               + 2*((wf%n_v)**2)*(wf%n_J) + ((wf%n_o)**2)*(wf%n_J) &       ! and 't2' amplitudes  
+!
+      required = (2*(wf%n_v)*(wf%n_o)*(wf%n_J) &                           !
+               + 2*(wf%n_v)*(wf%n_o)*(wf%n_J) &                            ! Needed for g_aibj
+               + 2*((wf%n_v)**2)*(wf%n_J) + ((wf%n_o)**2)*(wf%n_J) &       ! and 't2' amplitudes
                + 2*(wf%n_v)**2*(wf%n_o)**2)                                !
-!      
+!
       required = 4*required ! In words
       available = get_available()
 !
       batch_dimension  = wf%n_v ! Batch over the virtual index a
-      max_batch_length = 0      ! Initilization of unset variables 
+      max_batch_length = 0      ! Initilization of unset variables
       n_batch          = 0
 !
-      call num_batch(required, available, max_batch_length, n_batch, batch_dimension)           
+      call num_batch(required, available, max_batch_length, n_batch, batch_dimension)
 !
-!     Loop over the number of a batches 
+!     Loop over the number of a batches
 !
       do a_batch = 1, n_batch
 !
-!        For each batch, get the limits for the a index 
+!        For each batch, get the limits for the a index
 !
          call batch_limits(a_first, a_last, a_batch, max_batch_length, batch_dimension)
-         a_length = a_last - a_first + 1 
+         a_length = a_last - a_first + 1
 !
 !        :: Calculate cc2 doubles amplitudes ::
 !
@@ -672,12 +675,12 @@ contains
 !
          call wf%mem%dealloc(g_ia_bj, a_length*(wf%n_o), (wf%n_o)*(wf%n_v))
 !
-!        Allocate the Cholesky vector L_ia_J = L_ia^J and set to zero 
+!        Allocate the Cholesky vector L_ia_J = L_ia^J and set to zero
 !
          call wf%mem%alloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
          L_ia_J = zero
 !
-!         Get the Cholesky vector L_ia_J 
+!         Get the Cholesky vector L_ia_J
 !
          call wf%get_cholesky_ia(L_ia_J)
 !
@@ -686,7 +689,7 @@ contains
          call wf%mem%alloc(g_ia_jb, (wf%n_o)*a_length, (wf%n_o)*(wf%n_v))
          g_ia_jb = zero
 !
-!        Calculate the integrals g_ia_jb from the Cholesky vector L_ia_J 
+!        Calculate the integrals g_ia_jb from the Cholesky vector L_ia_J
 !
          call dgemm('N','T',                                   &
                      (wf%n_o)*a_length,                        &
@@ -701,11 +704,11 @@ contains
                      g_ia_jb,                                  &
                      (wf%n_o)*a_length)
 !
-!     Deallocate the Cholesky vector L_ia_J 
+!     Deallocate the Cholesky vector L_ia_J
 !
       call wf%mem%dealloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
-!     Set the initial value of the energy 
+!     Set the initial value of the energy
 !
       wf%energy = wf%scf_energy
 !
@@ -722,18 +725,18 @@ contains
                   ja = index_two(j, a, wf%n_o)
 !
                  do b = 1, wf%n_v
-! 
+!
                      bj = index_two(b, j, wf%n_v)
                      jb = index_two(j, b, wf%n_o)
                      ib = index_two(i, b, wf%n_o)
 !
                      aibj = index_packed(ai, bj)
 !
-!                    Add the correlation energy 
+!                    Add the correlation energy
 !
                      wf%energy = wf%energy + &
                      (two*g_ia_jb(ia,jb) - g_ia_jb(ja, ib))*(t_ia_bj(ia, bj) + (wf%t1am(a,i))*(wf%t1am(b,j)))
-                              
+
 !
                   enddo
                enddo
@@ -745,7 +748,7 @@ contains
          call wf%mem%dealloc(g_ia_jb, (wf%n_o)*a_length, (wf%n_o)*(wf%n_v))
 !
 !        Deallocate t_ia_bj
-!  
+!
          call wf%mem%dealloc(t_ia_bj, a_length*(wf%n_o), (wf%n_o)*(wf%n_v))
 !
       enddo ! End of batching
@@ -760,12 +763,12 @@ contains
 !!
 !!    Store the amplitudes to disk (T1AM)
 !!
-      implicit none 
+      implicit none
 !
       class(cc2) :: wf
 !
-      integer(i15) :: unit_t1am = -1 
-      integer(i15) :: unit_s2am = -1 
+      integer(i15) :: unit_t1am = -1
+      integer(i15) :: unit_s2am = -1
 !
       real(dp), dimension(:,:), allocatable :: s_ia_jb
       real(dp), dimension(:,:), allocatable :: s2am
@@ -791,7 +794,7 @@ contains
 !
       call wf%mem%alloc(s_ia_jb, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
       call wf%get_s2am(s_ia_jb, 1, wf%n_v)
-!  
+!
 !     Reorder and pack in
 !
       call wf%mem%alloc(s2am, (wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2, 1)
@@ -817,7 +820,7 @@ contains
 !
       call wf%mem%dealloc(s_ia_jb, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
-!     Write s2 amplitudes 
+!     Write s2 amplitudes
 !
       write(unit_s2am) s2am
 !
@@ -849,7 +852,7 @@ contains
 !!
 !!    Reads the amplitudes from disk (T1AM)
 !!
-      implicit none 
+      implicit none
 !
       class(cc2) :: wf
 !
@@ -866,11 +869,11 @@ contains
 !!
 !!    Reads the amplitudes from disk (T1AM, S2AM)
 !!
-      implicit none 
+      implicit none
 !
       class(cc2) :: wf
 !
-      integer(i15) :: unit_s2am = -1 
+      integer(i15) :: unit_s2am = -1
 !
       logical :: file_exists = .false.
 !
@@ -878,7 +881,7 @@ contains
 !
       inquire(file='s2am',exist=file_exists)
 !
-      if (file_exists) then 
+      if (file_exists) then
 !
 !        Open amplitude files if they exist
 !
@@ -891,9 +894,9 @@ contains
 !        Read from file & close
 !
          wf%n_s2am = + ((wf%n_v)*(wf%n_o))&
-                   *((wf%n_v )*(wf%n_o)+1)/2 
+                   *((wf%n_v )*(wf%n_o)+1)/2
 !
-         if (.not. allocated(wf%s2am)) call wf%mem%alloc(wf%s2am, wf%n_s2am, 1) 
+         if (.not. allocated(wf%s2am)) call wf%mem%alloc(wf%s2am, wf%n_s2am, 1)
          read(unit_s2am) wf%s2am
 !
          close(unit_s2am)

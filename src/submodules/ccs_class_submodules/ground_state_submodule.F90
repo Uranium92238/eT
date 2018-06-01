@@ -151,6 +151,13 @@ contains
 !
       real(dp) :: start_gs_solver, end_gs_solver
 !
+!     The routines that use the now obsolete DIIS routine still requires
+!     that the files have valid unit identifiers! (To remove later.)
+!
+      call generate_unit_identifier(unit_dt)
+      call generate_unit_identifier(unit_t_dt)
+      call generate_unit_identifier(unit_diis_matrix)
+!
 !     If restart, read amplitudes from disk
 !
       if (wf%ground_state_specifications%restart) then
