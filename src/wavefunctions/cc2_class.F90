@@ -71,7 +71,6 @@ module cc2_class
 !
 !     Excited states
 !
-      procedure :: initialize_excited_states        => initialize_excited_states_cc2
       procedure :: calculate_orbital_differences    => calculate_orbital_differences_cc2
       procedure :: transform_trial_vectors          => transform_trial_vectors_cc2
       procedure :: cvs_residual_projection          => cvs_residual_projection_cc2
@@ -320,21 +319,6 @@ module cc2_class
 !
 !     -::- Excited state submodule interface -::-
 !     :::::::::::::::::::::::::::::::::::::::::::
-!
-      module subroutine initialize_excited_states_cc2(wf)
-!!
-!!       Initialize excited states
-!!       Written by Sarai D. Folkestad, June 2017
-!!
-!!       Calculates and sets n_s2am, and updates n_parameters
-!!       for excited state calculation
-!!
-         implicit none
-!
-         class(cc2) :: wf
-!
-      end subroutine initialize_excited_states_cc2
-!
 !
 
       module subroutine calculate_orbital_differences_cc2(wf, orbital_diff)
@@ -836,14 +820,17 @@ contains
 !
    subroutine destruct_s2am_cc2(wf)
 !!
+!!    Destruct s2am (CC2)
+!!    Written by Sarai D. Folkestad, 2017
 !!
-   implicit none
+      implicit none
 !
-   class(cc2) :: wf
+      class(cc2) :: wf
 !
-   if (allocated(wf%s2am)) call wf%mem%dealloc(wf%s2am, wf%n_s2am, 1)
+      if (allocated(wf%s2am)) call wf%mem%dealloc(wf%s2am, wf%n_s2am, 1)
 !
    end subroutine destruct_s2am_cc2
+!
 !
    subroutine read_amplitudes_cc2(wf)
 !!
