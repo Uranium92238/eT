@@ -2930,7 +2930,7 @@ contains
 !
       class(ccs) :: wf
 !
-      integer(i15) :: unit_t1am = -1
+      type(file) :: t1am_file
 !
       logical :: file_exists = .false.
 !
@@ -2942,11 +2942,8 @@ contains
 !
 !        Open amplitude files if they exist
 !
-         call generate_unit_identifier(unit_t1am)
-!
-         open(unit_t1am, file='t1am', status='unknown', form='unformatted')
-!
-         rewind(unit_t1am)
+         t1am_file%name = 't1am'
+         call wf%disk%open_file(t1am_file, 'unformatted', 'read', 'sequential')
 !
 !        Allocate amplitudes if they aren't allocated
 !
@@ -2959,15 +2956,16 @@ contains
 !
 !        Read from file
 !
-         read(unit_t1am) wf%t1am
+         read(t1am_file%unit) wf%t1am
 !
 !        Close file
 !
-         close(unit_t1am)
+         call wf%disk%close_file(t1am_file)
 !
       else
 !
-         write(unit_output,'(t3,a)') 'Error: amplitude file t1am does not exist.'
+         write(unit_output,'(t3,a)') 'Error: attempted to read single amplitudes from file,'
+         write(unit_output,'(t3,a)') 'but the file does not appear to exist.'
          stop
 !
       endif

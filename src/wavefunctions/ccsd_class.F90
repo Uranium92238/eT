@@ -1552,16 +1552,16 @@ contains
 !
    subroutine read_double_amplitudes_ccsd(wf)
 !!
-!!    Read Amplitudes (CCSD)
-!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
+!!    Read double amplitudes
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017 / June 2018
 !!
-!!    Reads the amplitudes from disk (T1AM, T2AM)
+!!    Reads the double amplitudes from disk
 !!
       implicit none
 !
       class(ccsd) :: wf
 !
-      integer(i15) :: unit_t2am = -1
+      type(file) :: t2am_file
 !
       logical :: file_exists = .false.
 !
@@ -1573,11 +1573,8 @@ contains
 !
 !        Open amplitude files if they exist
 !
-         call generate_unit_identifier(unit_t2am)
-!
-         open(unit_t2am, file='t2am', status='unknown', form='unformatted')
-!
-         rewind(unit_t2am)
+         t2am_file%name = 't2am'
+         call wf%disk%open_file(t2am_file, 'unformatted', 'read', 'sequential')
 !
 !        Allocate doubles amplitudes if they aren't allocated
 !
@@ -1590,13 +1587,14 @@ contains
 !
 !        Read from file & close
 !
-         read(unit_t2am) wf%t2am
+         read(t2am_file%unit) wf%t2am
 !
-         close(unit_t2am)
+         call wf%disk%close_file(t2am_file)
 !
       else
 !
-         write(unit_output,'(t3,a)') 'Error: double amplitudes file does not exist.'
+         write(unit_output,'(t3,a)') 'Error: attempted to read double amplitudes from file,'
+         write(unit_output,'(t3,a)') 'but the file does not appear to exist.'
          stop
 !
       endif
@@ -2103,9 +2101,9 @@ contains
    end subroutine jacobi_test_ccsd
 !
 !
-   subroutine construct_eta_ccsd(wf,eta)
+   subroutine construct_eta_ccsd(wf, eta)
 !!
-!!    Construct Eta (CCSD)
+!!    Construct eta (CCSD)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
 !!    Note: the routine assumes that eta is initialized and that the Fock matrix

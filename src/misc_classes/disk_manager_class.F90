@@ -156,6 +156,9 @@ contains
 !!       - record_length (length, in bytes, of every record/entry in the file; multiply
 !!                        the number of elements with dp or i15 for real and integers)
 !!
+!!    Be aware that when opening sequential files, this routine automatically
+!!    rewinds them. So, the first read will always be the first record.
+!!
       implicit none
 !
       class(disk_manager) :: disk
