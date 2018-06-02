@@ -636,69 +636,10 @@ contains
 !
          norm_sq_singles = dot_product(solution_ai, solution_ai, wf%n_t1am)
          call print_dominant_two_index(solution_ai, wf%n_v, wf%n_o, 'a', 'i')
-         call print_dominant_four_index(solution_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o, &
+         call print_dominant_four_index(solution_aibj, n_active_v, n_active_o, n_active_v, n_active_o, &
                                                          'a', 'i', 'b', 'j')
          write(unit_output,'(/t6,a41,f14.12/)') &
                'Singles contribution to the full vector: ', norm_sq_singles
-!
-!
-!        Calculate the contribution from single excitations
-!
-!          norm = sqrt(ddot(wf%n_t1am, solution_ai,1,solution_ai,1))
-!          write(unit_output,'(/t6,a,f6.4)')'Single excitation contribution to excitation vector: ', norm
-! !
-! !        Analysis of excitation vectors
-! !
-!          write(unit_output,'(/t6,a)') 'Largest contributions to excitation vector:'
-! !
-!          write(unit_output,'(t6,a32)')'------------------------------------------------------'
-!          write(unit_output,'(t6,a3, 8x, a3, 8x, a10)')'a', 'i', 'amplitude'
-!          write(unit_output,'(t6,a32)')'------------------------------------------------------'
-! !
-! !        Get 20 highest amplitudes
-! !
-!          call wf%analyze_single_excitation_vector(solution_ai, 20, sorted_max_vec_singles, index_list_singles)
-!          call wf%analyze_double_excitation_vector(solution_aibj, 20, sorted_max_vec_doubles, index_list_doubles)
-! !
-! !        And print them
-! !
-!          do i = 1, 20
-! !
-!             if    (abs(sorted_max_vec_singles(i, 1)) .lt. 1.0D-03) then
-! !
-!                exit
-! !
-!             else
-! !
-!                write(unit_output,'(t6,i3, 8x,i3, 10x, f8.5)') &
-!                                                                index_list_singles(i, 1),&
-!                                                                index_list_singles(i, 2),&
-!                                                                sorted_max_vec_singles(i, 1)
-!             endif
-!          enddo
-! !
-!          write(unit_output,'(t6,a32)')'------------------------------------------------------'
-!          write(unit_output,'(t6,a54)')'------------------------------------------------------'
-!          write(unit_output,'(t6,a3, 8x, a3, 8x, a3, 8x, a3, 8x, a10)')'a','i','b','j', 'amplitude'
-!          write(unit_output,'(t6,a54)')'------------------------------------------------------'
-! !
-!          do i = 1, 20
-! !
-!             if    (abs(sorted_max_vec_doubles(i, 1)) .lt. 1.0D-03) then
-! !
-!                exit
-! !
-!             else
-! !
-!                write(unit_output,'(t6,i3, 8x,i3, 8x,i3, 8x, i3, 10x, f8.5)')&
-!                                                                index_list_doubles(i, 1),&
-!                                                                index_list_doubles(i, 2),&
-!                                                                index_list_doubles(i, 3),&
-!                                                                index_list_doubles(i, 4),&
-!                                                                sorted_max_vec_doubles(i, 1)
-!             endif
-!          enddo
-!          write(unit_output,'(t6,a54)')'------------------------------------------------------'
 !
 !        MLCC Specific print
 !

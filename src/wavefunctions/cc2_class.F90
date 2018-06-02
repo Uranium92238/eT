@@ -78,7 +78,6 @@ module cc2_class
       procedure :: cvs_residual_projection          => cvs_residual_projection_cc2
       procedure :: excited_state_preparations       => excited_state_preparations_cc2
 !
-      procedure :: analyze_double_excitation_vector => analyze_double_excitation_vector_cc2
       procedure :: summary_excited_state_info       => summary_excited_state_info_cc2
 !
    end type cc2
