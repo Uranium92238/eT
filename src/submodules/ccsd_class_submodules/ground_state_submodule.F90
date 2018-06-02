@@ -12,6 +12,7 @@ submodule (ccsd_class) ground_state
 !!                                 information needed by the DIIS routine.
 !!     calc_ampeqs_norm:           calculates the norm of the amplitude equations.
 !!     calc_quasi_Newton_doubles:  calculates the doubles part of the quasi-Newton estimate.
+!!     summary_ground_state_info:  prints the energy and the largest amplitudes. 
 !!
 !!     Can be inherited by models of the same level (e.g. CC3) without modification.
 !!
@@ -93,7 +94,6 @@ contains
 !     Save estimates to file and get the next amplitudes
 !     (they are placed in dt on exit from diis)
 !
-   !   call wf%diis(dt, t_dt)
       call diis_ground_state%update(dt, t_dt, wf%disk, wf%mem)
 !
 !     Set the new amplitudes
@@ -198,8 +198,6 @@ contains
       real(dp) :: time
       real(dp) :: norm_sq_singles
       real(dp) :: norm_sq_doubles
-!
-      real(dp) :: t1, t2
 !
 !     Print energy and CPU time
 !
