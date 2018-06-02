@@ -442,113 +442,184 @@ contains
        end subroutine analyze_double_excitation_vector_cc2
 !
 !
-      module subroutine summary_excited_state_info_cc2(wf, energies)
+!       module subroutine summary_excited_state_info_cc2(wf, energies)
+! !!
+! !!
+! !!
+!       implicit none
+! !
+!       class(cc2) :: wf
+! !
+!       real(dp), dimension(wf%excited_state_specifications%n_singlet_states,1) :: energies
+! !
+!       integer(i15) :: unit_solution = -1, ioerror = 0
+!       integer(i15) :: state = 0, i = 0
+!       real(dp), dimension(:,:), allocatable :: solution_ai, solution_aibj
+!       real(dp), dimension(:,:), allocatable :: sorted_max_vec_singles, sorted_max_vec_doubles
+!       integer(i15), dimension(:,:), allocatable :: index_list_singles, index_list_doubles
+!       real(dp) :: norm, ddot
+! !
+! !     Open solution vector file
+! !
+!       call generate_unit_identifier(unit_solution)
+! !
+!       open(unit=unit_solution, file=wf%excited_state_specifications%solution_file, &
+!             action='read', status='unknown', &
+!             access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror)
+! !
+!       if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file'
+! !
+! !     Allocations
+! !
+!       call wf%mem%alloc(solution_ai, wf%n_t1am, 1)
+!       call wf%mem%alloc(solution_aibj, wf%n_s2am, 1)
+! !
+!       call wf%mem%alloc(sorted_max_vec_singles, 20, 1)
+!       call wf%mem%alloc(sorted_max_vec_doubles, 20, 1)
+! !
+!       call wf%mem%alloc_int(index_list_singles, 20, 2)
+!       call wf%mem%alloc_int(index_list_doubles, 20, 4)
+! !
+!       do state = 1, wf%excited_state_specifications%n_singlet_states
+! !
+!          write(unit_output,'(/t3,a30,i3,a1/)')'Analysis of excitation vector ',state, ':'
+!          write(unit_output,'(t6, a, f14.8)')'Excitation energy [a.u.]:   ', energies(state,1)
+!          write(unit_output,'(t6, a, f14.8)')'Excited state energy [a.u.]:', wf%energy + energies(state,1)
+! !
+! !        Read the solution
+! !
+!          solution_ai    = zero
+!          solution_aibj  = zero
+!          read(unit_solution, rec=state) solution_ai, solution_aibj
+! !
+! !        Calculate the contribution from single excitations
+! !
+!          norm = sqrt(ddot(wf%n_t1am, solution_ai,1,solution_ai,1))
+!          write(unit_output,'(/t6,a,f6.4)')'Single excitation contribution to excitation vector: ', norm
+! !
+! !        Analysis of excitation vectors
+! !
+!          write(unit_output,'(/t6,a)') 'Largest contributions to excitation vector:'
+! !
+!          write(unit_output,'(t6,a32)')'------------------------------------------------------'
+!          write(unit_output,'(t6,a3, 8x, a3, 8x, a10)')'a', 'i', 'amplitude'
+!          write(unit_output,'(t6,a32)')'------------------------------------------------------'
+! !
+! !        Get 20 highest amplitudes
+! !
+!          call wf%analyze_single_excitation_vector(solution_ai, 20, sorted_max_vec_singles, index_list_singles)
+!          call wf%analyze_double_excitation_vector(solution_aibj, 20, sorted_max_vec_doubles, index_list_doubles)
+! !
+! !        And print them
+! !
+!          do i = 1, 20
+! !
+!             if    (abs(sorted_max_vec_singles(i, 1)) .lt. 1.0D-03) then
+! !
+!                exit
+! !
+!             else
+! !
+!                write(unit_output,'(t6,i3, 8x,i3, 10x, f8.5)') &
+!                                                                index_list_singles(i, 1),&
+!                                                                index_list_singles(i, 2),&
+!                                                                sorted_max_vec_singles(i, 1)
+!             endif
+!          enddo
+! !
+!          write(unit_output,'(t6,a32)')'------------------------------------------------------'
+!          write(unit_output,'(t6,a54)')'------------------------------------------------------'
+!          write(unit_output,'(t6,a3, 8x, a3, 8x, a3, 8x, a3, 8x, a10)')'a','i','b','j', 'amplitude'
+!          write(unit_output,'(t6,a54)')'------------------------------------------------------'
+! !
+!          do i = 1, 20
+! !
+!             if    (abs(sorted_max_vec_doubles(i, 1)) .lt. 1.0D-03) then
+! !
+!                exit
+! !
+!             else
+! !
+!                write(unit_output,'(t6,i3, 8x,i3, 8x,i3, 8x, i3, 10x, f8.5)')&
+!                                                                index_list_doubles(i, 1),&
+!                                                                index_list_doubles(i, 2),&
+!                                                                index_list_doubles(i, 3),&
+!                                                                index_list_doubles(i, 4),&
+!                                                                sorted_max_vec_doubles(i, 1)
+!             endif
+!          enddo
+!          write(unit_output,'(t6,a54)')'------------------------------------------------------'
+! !
+!       enddo
+! !
+! !     Deallocations
+! !
+!       call wf%mem%dealloc(solution_ai, wf%n_t1am, 1)
+!       call wf%mem%dealloc(solution_aibj, wf%n_s2am, 1)
+! !
+!       call wf%mem%dealloc(sorted_max_vec_singles, 20, 1)
+!       call wf%mem%dealloc(sorted_max_vec_doubles, 20, 1)
+! !
+!       call wf%mem%dealloc_int(index_list_singles, 20, 2)
+!       call wf%mem%dealloc_int(index_list_doubles, 20, 4)
+! !
+!       close(unit_solution)
+! !
+!    end subroutine summary_excited_state_info_cc2
+!
+!
+   module subroutine summary_excited_state_info_cc2(wf, energies)
 !!
+!!    Summary of excited state info (CC2)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017 / May 2018
 !!
+!!    Prints the analysis of the excitation vectors
 !!
       implicit none
 !
       class(cc2) :: wf
 !
-      real(dp), dimension(wf%excited_state_specifications%n_singlet_states,1) :: energies
+      real(dp), dimension(wf%excited_state_specifications%n_singlet_states, 1) :: energies
 !
-      integer(i15) :: unit_solution = -1, ioerror = 0
-      integer(i15) :: state = 0, i = 0
+      type(file) :: solution_file
+!
+      integer(i15) :: state = 0
+!
       real(dp), dimension(:,:), allocatable :: solution_ai, solution_aibj
-      real(dp), dimension(:,:), allocatable :: sorted_max_vec_singles, sorted_max_vec_doubles
-      integer(i15), dimension(:,:), allocatable :: index_list_singles, index_list_doubles
-      real(dp) :: norm, ddot
+!
+      real(dp) :: norm_sq_singles ! Note: the total vector is normalized in this case
 !
 !     Open solution vector file
 !
-      call generate_unit_identifier(unit_solution)
-!
-      open(unit=unit_solution, file=wf%excited_state_specifications%solution_file, &
-            action='read', status='unknown', &
-            access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror)
-!
-      if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file'
+      solution_file%name = wf%excited_state_specifications%solution_file
+      call wf%disk%open_file(solution_file, 'unformatted', 'read', 'direct', dp*(wf%n_parameters))
 !
 !     Allocations
 !
       call wf%mem%alloc(solution_ai, wf%n_t1am, 1)
       call wf%mem%alloc(solution_aibj, wf%n_s2am, 1)
 !
-      call wf%mem%alloc(sorted_max_vec_singles, 20, 1)
-      call wf%mem%alloc(sorted_max_vec_doubles, 20, 1)
-!
-      call wf%mem%alloc_int(index_list_singles, 20, 2)
-      call wf%mem%alloc_int(index_list_doubles, 20, 4)
-!
       do state = 1, wf%excited_state_specifications%n_singlet_states
 !
-         write(unit_output,'(/t3,a30,i3,a1/)')'Analysis of excitation vector ',state, ':'
-         write(unit_output,'(t6, a, f14.8)')'Excitation energy [a.u.]:   ', energies(state,1)
-         write(unit_output,'(t6, a, f14.8)')'Excited state energy [a.u.]:', wf%energy + energies(state,1)
+         write(unit_output,'(/t3,a30,i3,a1/)') 'Analysis of excitation vector ',state, ':'
+         write(unit_output,'(t6, a, f14.8)')    'Excitation energy [a.u.]:   ', energies(state,1)
+         write(unit_output,'(t6, a, f14.8/)')   'Excited state energy [a.u.]:', wf%energy + energies(state,1)
 !
 !        Read the solution
 !
-         solution_ai    = zero
-         solution_aibj  = zero
-         read(unit_solution, rec=state) solution_ai, solution_aibj
+         solution_ai   = zero
+         solution_aibj = zero
 !
-!        Calculate the contribution from single excitations
+         read(solution_file%unit, rec=state) solution_ai, solution_aibj
 !
-         norm = sqrt(ddot(wf%n_t1am, solution_ai,1,solution_ai,1))
-         write(unit_output,'(/t6,a,f6.4)')'Single excitation contribution to excitation vector: ', norm
+!        Print dominant single & double excitations
 !
-!        Analysis of excitation vectors
-!
-         write(unit_output,'(/t6,a)') 'Largest contributions to excitation vector:'
-!
-         write(unit_output,'(t6,a32)')'------------------------------------------------------'
-         write(unit_output,'(t6,a3, 8x, a3, 8x, a10)')'a', 'i', 'amplitude'
-         write(unit_output,'(t6,a32)')'------------------------------------------------------'
-!
-!        Get 20 highest amplitudes
-!
-         call wf%analyze_single_excitation_vector(solution_ai, 20, sorted_max_vec_singles, index_list_singles)
-         call wf%analyze_double_excitation_vector(solution_aibj, 20, sorted_max_vec_doubles, index_list_doubles)
-!
-!        And print them
-!
-         do i = 1, 20
-!
-            if    (abs(sorted_max_vec_singles(i, 1)) .lt. 1.0D-03) then
-!
-               exit
-!
-            else
-!
-               write(unit_output,'(t6,i3, 8x,i3, 10x, f8.5)') &
-                                                               index_list_singles(i, 1),&
-                                                               index_list_singles(i, 2),&
-                                                               sorted_max_vec_singles(i, 1)
-            endif
-         enddo
-!
-         write(unit_output,'(t6,a32)')'------------------------------------------------------'
-         write(unit_output,'(t6,a54)')'------------------------------------------------------'
-         write(unit_output,'(t6,a3, 8x, a3, 8x, a3, 8x, a3, 8x, a10)')'a','i','b','j', 'amplitude'
-         write(unit_output,'(t6,a54)')'------------------------------------------------------'
-!
-         do i = 1, 20
-!
-            if    (abs(sorted_max_vec_doubles(i, 1)) .lt. 1.0D-03) then
-!
-               exit
-!
-            else
-!
-               write(unit_output,'(t6,i3, 8x,i3, 8x,i3, 8x, i3, 10x, f8.5)')&
-                                                               index_list_doubles(i, 1),&
-                                                               index_list_doubles(i, 2),&
-                                                               index_list_doubles(i, 3),&
-                                                               index_list_doubles(i, 4),&
-                                                               sorted_max_vec_doubles(i, 1)
-            endif
-         enddo
-         write(unit_output,'(t6,a54)')'------------------------------------------------------'
+         norm_sq_singles = dot_product(solution_ai, solution_ai, wf%n_t1am)
+         call print_dominant_two_index(solution_ai, wf%n_v, wf%n_o, 'a', 'i')
+         call print_dominant_four_index(solution_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o, &
+                                                         'a', 'i', 'b', 'j')
+         write(unit_output,'(/t6,a41,f14.12/)') &
+               'Singles contribution to the full vector: ', norm_sq_singles
 !
       enddo
 !
@@ -557,15 +628,10 @@ contains
       call wf%mem%dealloc(solution_ai, wf%n_t1am, 1)
       call wf%mem%dealloc(solution_aibj, wf%n_s2am, 1)
 !
-      call wf%mem%dealloc(sorted_max_vec_singles, 20, 1)
-      call wf%mem%dealloc(sorted_max_vec_doubles, 20, 1)
-!
-      call wf%mem%dealloc_int(index_list_singles, 20, 2)
-      call wf%mem%dealloc_int(index_list_doubles, 20, 4)
-!
-      close(unit_solution)
+      call wf%disk%close_file(solution_file)
 !
    end subroutine summary_excited_state_info_cc2
+!
 !
 !
 !

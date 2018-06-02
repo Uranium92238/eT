@@ -166,7 +166,7 @@ module ccs_class
       procedure :: print_excited_state_info         => print_excited_state_info_ccs
       procedure :: print_excitation_vector          => print_excitation_vector_ccs
 !
-      procedure :: analyze_single_excitation_vector => analyze_single_excitation_vector_ccs
+  !    procedure :: analyze_single_excitation_vector => analyze_single_excitation_vector_ccs
       procedure :: summary_excited_state_info       => summary_excited_state_info_ccs
 !
 !     Valence excited states specific routines
@@ -2652,9 +2652,11 @@ contains
 !
             write(unit_output,'(t3,a,a)') &
                'Error: ground state solver not implemented for ',trim(wf%name)
+            flush(unit_output)
             stop
 !
          endif
+!
       endif
 !
       if (wf%tasks%excited_state) then

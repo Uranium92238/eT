@@ -1938,107 +1938,107 @@ contains
       end subroutine print_excitation_vector_ccs
 !
 !
-      module subroutine analyze_single_excitation_vector_ccs(wf, vec, n, sorted_short_vec, index_list)
-!!
-!!       Analyze single excitation vector (CCS)
-!!       Written by Sarai D. Folkestad, 2017
-!!
-         implicit none
+!       module subroutine analyze_single_excitation_vector_ccs(wf, vec, n, sorted_short_vec, index_list)
+! !!
+! !!       Analyze single excitation vector (CCS)
+! !!       Written by Sarai D. Folkestad, 2017
+! !!
+!          implicit none
+! !
+!          class(ccs) :: wf
+! !
+!          real(dp), dimension(wf%n_o*wf%n_v, 1) :: vec
+! !
+!          integer(i15) :: a = 0, i = 0, ai = 0
+! !
+!          integer(i15) :: n    ! Number of elements wanted
+! !
+!          real(dp), dimension(n, 1)    :: sorted_short_vec
+! !
+!          integer(i15), dimension(n, 2) ::index_list
+! !
+! !        Variables for sorting
+! !
+!          real(dp)     :: min
+!          integer(i15) :: min_pos
+! !
+!          real(dp)     :: swap     = zero
+!          integer(i15) :: swap_i = 0, swap_a = 0
+! !
+!          integer(i15) ::  j = 0
+! !
+! !        Placing the n first elements of vec into sorted_short_vec
+! !
+!          sorted_short_vec(1,1) = vec(1,1)
+!          index_list(1,1) = 1
+!          index_list(1,2) = 1
+! !
+!          min = abs(sorted_short_vec(1,1))
+!          min_pos = 1
+! !
+!          do i = 1, wf%n_o
+!             do a = 1, wf%n_v
+! !
+!                ai = index_two(a,i, wf%n_v)
+! !
+!                if (ai .le. n) then
+!                   sorted_short_vec(ai,1) = vec(ai,1)
+!                   index_list(ai, 1) = a
+!                   index_list(ai, 2) = i
+! !
+!                   if (abs(sorted_short_vec(i,1)) .le. min) then
+! !
+!                      min = abs(sorted_short_vec(i,1))
+!                      min_pos = i
+! !
+!                   endif
 !
-         class(ccs) :: wf
-!
-         real(dp), dimension(wf%n_o*wf%n_v, 1) :: vec
-!
-         integer(i15) :: a = 0, i = 0, ai = 0
-!
-         integer(i15) :: n    ! Number of elements wanted
-!
-         real(dp), dimension(n, 1)    :: sorted_short_vec
-!
-         integer(i15), dimension(n, 2) ::index_list
-!
-!        Variables for sorting
-!
-         real(dp)     :: min
-         integer(i15) :: min_pos
-!
-         real(dp)     :: swap     = zero
-         integer(i15) :: swap_i = 0, swap_a = 0
-!
-         integer(i15) ::  j = 0
-!
-!        Placing the n first elements of vec into sorted_short_vec
-!
-         sorted_short_vec(1,1) = vec(1,1)
-         index_list(1,1) = 1
-         index_list(1,2) = 1
-!
-         min = abs(sorted_short_vec(1,1))
-         min_pos = 1
-!
-         do i = 1, wf%n_o
-            do a = 1, wf%n_v
-!
-               ai = index_two(a,i, wf%n_v)
-!
-               if (ai .le. n) then
-                  sorted_short_vec(ai,1) = vec(ai,1)
-                  index_list(ai, 1) = a
-                  index_list(ai, 2) = i
-!
-                  if (abs(sorted_short_vec(i,1)) .le. min) then
-!
-                     min = abs(sorted_short_vec(i,1))
-                     min_pos = i
-!
-                  endif
-
-               else
-                  if (abs(vec(ai,1)) .ge. min) then
-!
-                     sorted_short_vec(min_pos,1) = vec(ai,1)
-                     index_list(min_pos,1) = a
-                     index_list(min_pos,2) = i
-                     min = abs(vec(ai,1))
-!
-                  endif
-!
-                  do j = 1, n
-                     if (abs(sorted_short_vec(j, 1)) .lt. min) then
-!
-                        min = abs(sorted_short_vec(j, 1))
-                        min_pos = j
-!
-                     endif
-                  enddo
-               endif
-            enddo
-         enddo
-!
-!         Sorting sorted_short_vec
-!
-          do i = 1, n
-             do j = 1, n - 1
-                if (abs(sorted_short_vec(j,1)) .lt. abs(sorted_short_vec(j+1, 1))) then
-!
-                   swap = sorted_short_vec(j,1)
-                   sorted_short_vec(j,1) = sorted_short_vec(j+1, 1)
-                   sorted_short_vec(j+1, 1) = swap
-!
-                   swap_a = index_list(j, 1)
-                   swap_i = index_list(j, 2)
-!
-                   index_list(j,1) = index_list(j + 1,1)
-                   index_list(j,2) = index_list(j + 1,2)
-                   index_list(j + 1,1) = swap_a
-                   index_list(j + 1,2) = swap_i
-!
-                endif
-             enddo
-          enddo
-!
-!
-      end subroutine analyze_single_excitation_vector_ccs
+!                else
+!                   if (abs(vec(ai,1)) .ge. min) then
+! !
+!                      sorted_short_vec(min_pos,1) = vec(ai,1)
+!                      index_list(min_pos,1) = a
+!                      index_list(min_pos,2) = i
+!                      min = abs(vec(ai,1))
+! !
+!                   endif
+! !
+!                   do j = 1, n
+!                      if (abs(sorted_short_vec(j, 1)) .lt. min) then
+! !
+!                         min = abs(sorted_short_vec(j, 1))
+!                         min_pos = j
+! !
+!                      endif
+!                   enddo
+!                endif
+!             enddo
+!          enddo
+! !
+! !         Sorting sorted_short_vec
+! !
+!           do i = 1, n
+!              do j = 1, n - 1
+!                 if (abs(sorted_short_vec(j,1)) .lt. abs(sorted_short_vec(j+1, 1))) then
+! !
+!                    swap = sorted_short_vec(j,1)
+!                    sorted_short_vec(j,1) = sorted_short_vec(j+1, 1)
+!                    sorted_short_vec(j+1, 1) = swap
+! !
+!                    swap_a = index_list(j, 1)
+!                    swap_i = index_list(j, 2)
+! !
+!                    index_list(j,1) = index_list(j + 1,1)
+!                    index_list(j,2) = index_list(j + 1,2)
+!                    index_list(j + 1,1) = swap_a
+!                    index_list(j + 1,2) = swap_i
+! !
+!                 endif
+!              enddo
+!           enddo
+! !
+! !
+!       end subroutine analyze_single_excitation_vector_ccs
 !
 !
       module subroutine summary_excited_state_info_ccs(wf, energies)
