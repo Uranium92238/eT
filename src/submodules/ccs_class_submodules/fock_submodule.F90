@@ -40,9 +40,26 @@ contains
       wf%fock_ai = zero
       wf%fock_ab = zero
 !
-   !   call wf%construct_fock
-!
    end subroutine initialize_fock_matrix_ccs
+!
+!
+    module subroutine destruct_fock_matrix_ccs(wf)
+!!
+!!     Destruct Fock matrix
+!!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2018
+!!
+!!     Deallocates the Fock matrix blocks if they are allocated.
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      if (allocated(wf%fock_ij)) call wf%mem%dealloc(wf%fock_ij, wf%n_o, wf%n_o)
+      if (allocated(wf%fock_ia)) call wf%mem%dealloc(wf%fock_ia, wf%n_o, wf%n_v)
+      if (allocated(wf%fock_ai)) call wf%mem%dealloc(wf%fock_ai, wf%n_v, wf%n_o)
+      if (allocated(wf%fock_ab)) call wf%mem%dealloc(wf%fock_ab, wf%n_v, wf%n_v)
+!
+   end subroutine destruct_fock_matrix_ccs
 !
 !
    module subroutine construct_fock_ccs(wf)

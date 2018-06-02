@@ -293,6 +293,8 @@ module ccs_class
 !     -----------------------------------------
 !
       procedure, non_overridable :: initialize_fock_matrix => initialize_fock_matrix_ccs
+      procedure, non_overridable :: destruct_fock_matrix   => destruct_fock_matrix_ccs
+!
       procedure, non_overridable :: construct_fock         => construct_fock_ccs
       procedure, non_overridable :: one_electron_t1        => one_electron_t1_ccs
 !
@@ -2228,7 +2230,7 @@ module ccs_class
 !
       module subroutine initialize_fock_matrix_ccs(wf)
 !!
-!!       Initialize Fock Matrix
+!!       Initialize Fock matrix
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
          implicit none
@@ -2236,6 +2238,18 @@ module ccs_class
          class(ccs) :: wf
 !
       end subroutine initialize_fock_matrix_ccs
+!
+!
+      module subroutine destruct_fock_matrix_ccs(wf)
+!!
+!!       Destruct Fock matrix
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2018
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+      end subroutine destruct_fock_matrix_ccs
 !
 !
       module subroutine construct_fock_ccs(wf)
