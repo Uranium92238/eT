@@ -1415,7 +1415,7 @@ contains
       integer(i15) :: aj = 0, ck = 0, ckb = 0, ciak = 0, aib = 0, aidj = 0, aij = 0
 !
 !     Read amplitudes from disk
-!  ! Move into batching loop
+!
       call wf%read_double_amplitudes
 !
 !     Determine batch size, etc.
@@ -1466,33 +1466,13 @@ contains
 !
          call wf%mem%dealloc(g_bd_kc, (wf%n_v)*(batch_b%length), (wf%n_o)*(wf%n_v))
 !
-!        Order amplitudes as t_ij_cd = t_ij^cd
+!        Order amplitudes as t_ij_cd = t_ij^cd = t_ci_dj
+!                              2413                1234
 !
          call wf%mem%alloc(t_ij_cd, (wf%n_o)**2, (wf%n_v)**2)
          t_ij_cd = zero
 !
-         do d = 1, wf%n_v
-            do c = 1, wf%n_v
-!
-               cd = index_two(c, d, wf%n_v)
-!
-               do j = 1, wf%n_o
-!
-                  dj = index_two(d, j, wf%n_v)
-!
-                  do i = 1, wf%n_o
-!
-                     ci = index_two(c, i, wf%n_v)
-                     ij = index_two(i, j, wf%n_o)
-!
-                     cidj = index_packed(ci, dj)
-!
-                     t_ij_cd(ij, cd) = wf%t2am(cidj, 1) ! t_ij^cd
-!
-                  enddo
-               enddo
-            enddo
-         enddo
+         call squareup_and_sort_1234_to_2413(wf%t2am, t_ij_cd, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !        Form intermediate X_ij_kb = sum_cd g_kcdb t_ij^cd
 !                                  = sum_cd t_ij_cd g_cd_kb
