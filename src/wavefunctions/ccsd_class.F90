@@ -121,7 +121,6 @@ module ccsd_class
       procedure :: calculate_orbital_differences    => calculate_orbital_differences_ccsd
       procedure :: transform_trial_vectors          => transform_trial_vectors_ccsd
       procedure :: print_excitation_vector          => print_excitation_vector_ccsd
-      procedure :: analyze_double_excitation_vector => analyze_double_excitation_vector_ccsd
       procedure :: summary_excited_state_info       => summary_excited_state_info_ccsd
       procedure :: excited_state_preparations       => excited_state_preparations_ccsd
 !
@@ -516,28 +515,6 @@ module ccsd_class
          class(ccsd) :: wf
 !
       end subroutine excited_state_preparations_ccsd
-!
-!
-      module subroutine analyze_double_excitation_vector_ccsd(wf, vec, n, sorted_short_vec, index_list)
-!!
-!!       Analyze double excitation vector
-!!       Written by Sarai D. Folkestad, Oct 2017
-!!
-         implicit none
-!
-         class(ccsd) :: wf
-!
-         real(dp), dimension(wf%n_t2am, 1) :: vec
-!
-         integer(i15) :: a = 0, i = 0, ai = 0, b = 0, j = 0, bj = 0, aibj = 0, k = 0
-!
-         integer(i15) :: n
-!
-         real(dp), dimension(n, 1)    :: sorted_short_vec
-!
-         integer(i15), dimension(n, 4) ::index_list
-!
-      end subroutine analyze_double_excitation_vector_ccsd
 !
 !
       module subroutine summary_excited_state_info_ccsd(wf, energies)
