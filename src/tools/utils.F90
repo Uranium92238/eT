@@ -2183,7 +2183,7 @@ contains
       real(dp), dimension(size, 1) :: vec
       real(dp), dimension(n, 1)    :: sorted_short_vec
 !
-      integer(i15), dimension(n, 1) ::index_list
+      integer(i15), dimension(n, 1) :: index_list
 !
 !     Variables for sorting
 !

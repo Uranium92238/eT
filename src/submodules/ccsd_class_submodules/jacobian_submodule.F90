@@ -1742,7 +1742,6 @@ contains
 !
          call wf%mem%dealloc(rho_aib_j, (wf%n_o)*(wf%n_v)*(batch_b%length), wf%n_o)
 !
-!
 !        :: Term 4.  sum_kcd L_kcbd t_ik^ac c_dj ::
 !
 !        sum_d L_kcbd c_dj = sum_d L_ckb_d c_dj
