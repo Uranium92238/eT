@@ -1,13 +1,20 @@
-module vector_analysis
+module array_analysis
 !
 !!
-!!    Vector analysis module
+!!    Array analysis module
 !!    Written by Sarai D. Folkstad and Eirik F. Kjønstad, May 2018
+!!
+!!    This module contains routines that are used to analyze excitation
+!!    vectors (i.e., not change them). In particular, routines to print the
+!!    dominant excitation vector elements (two-index for X_ai; four-index
+!!    for X_aibj), though indices can be general (X_pq, X_pqrs).
 !!
 !
    use input_output
-   use utils
+   use index
    use types
+!
+   implicit none
 !
 contains
 !
@@ -252,114 +259,138 @@ contains
    end subroutine determine_dominant_elements
 !
 !
-   subroutine invert_compound_index(pq, p, q, dim_p, dim_q)
+   subroutine get_n_lowest(n, size, vec, sorted_short_vec, index_list)
 !!
-!!    Invert compound index
-!!    Written by Eirik F. Kjønstad, May 2018
+!!    Get n lowest elements
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-!!    Given the compound index pq = dim_p*(q-1) + p, this routine
-!!    determines p and q.
-!!
-      implicit none
-!
-      integer(i15), intent(in) :: pq
-!
-      integer(i15) :: p, q
-      integer(i15), intent(in) :: dim_p, dim_q
-!
-      integer(i15) :: I = 0
-!
-!     Since dim_p*q >= pq > dim_p*(q-1) by construction, we can determine q
-!
-      do I = 1, dim_q
-!
-         if  (pq .gt. dim_p*(I-1) .and. pq .le. dim_p*I) then
-!
-            q = I
-!
-         endif
-!
-      enddo
-!
-!     From q, it is straight-forward to determine p
-!
-      p = pq - dim_p*(q-1)
-!
-!     Sanity test
-!
-      if (index_two(p, q, dim_p) .ne. pq) then
-!
-         write(unit_output,'(/t3,a)') 'Error: inversion of compound index unsuccessful'
-         stop
-!
-      endif
-!
-   end subroutine invert_compound_index
-!
-!
-   subroutine invert_packed_index(pq, p, q, dim)
-!!
-!!    Invert packed index
-!!    Written by Eirik F. Kjønstad, June 2018
-!!
-!!    Returns the indices (p, q) in the upper triangular part of the symmetric matrix.
+!!    Finds the n lowest values of vec, sorts them, and returns them
+!!    in sorted_short_vec, together with an index list refering to the
+!!    indices of the lowest elements in the original vector.
 !!
       implicit none
 !
-      integer(i15) :: pq
+      integer(i15) :: n    ! Number of elements wanted
+      integer(i15) :: size ! Size of original vector
 !
-      integer(i15) :: p, q
+      real(dp), dimension(size, 1) :: vec
+      real(dp), dimension(n, 1)    :: sorted_short_vec
 !
-      integer(i15) :: dim
+      integer(i15), dimension(n, 1) :: index_list
 !
-      integer(i15) :: I = 0, J = 0
+!     Variables for sorting
 !
-!     Loop through upper triangular part until the index matches
+      real(dp)     :: max
+      integer(i15) :: max_pos
 !
-      do I = 1, dim
-         do J = I, dim
+      real(dp)     :: swap     = zero
+      integer(i15) :: swap_int = 0
 !
-            if (index_packed(I, J) .eq. pq) then
+      integer(i15) :: i = 0, j = 0
 !
-               p = I
-               q = J
+!        Placing the n first elements of vec into sorted_short_vec
+!
+         sorted_short_vec(1,1) = vec(1,1)
+         index_list(1,1) = 1
+!
+         max = sorted_short_vec(1,1)
+         max_pos = 1
+!
+         do i = 2, n
+!
+            sorted_short_vec(i,1) = vec(i,1)
+            index_list(i,1) = i
+!
+            if (sorted_short_vec(i,1) .ge. max) then
+!
+               max = sorted_short_vec(i,1)
+               max_pos = i
 !
             endif
+         enddo
 !
+!        Looping through the rest of vec to find lowest values
+!
+         do i = n + 1, size
+            if (vec(i,1) .lt. max) then
+!
+               sorted_short_vec(max_pos,1) = vec(i,1)
+               index_list(max_pos,1) = i
+               max = vec(i,1)
+!
+               do j = 1, n
+                  if (sorted_short_vec(j, 1) .gt. max) then
+!
+                     max = sorted_short_vec(j, 1)
+                     max_pos = j
+!
+                  endif
+               enddo
+            endif
+         enddo
+!
+!        Sorting sorted_short_vec
+!
+         do i = 1, n
+            do j = 1, n - 1
+               if (sorted_short_vec(j,1) .gt. sorted_short_vec(j+1, 1)) then
+!
+                  swap = sorted_short_vec(j,1)
+                  sorted_short_vec(j,1) = sorted_short_vec(j+1, 1)
+                  sorted_short_vec(j+1, 1) = swap
+!
+                  swap_int = index_list(j, 1)
+                  index_list(j,1) = index_list(j + 1,1)
+                  index_list(j + 1,1) = swap_int
+!
+               endif
+            enddo
+         enddo
+!
+   end subroutine get_n_lowest
+!
+!
+   function check_orthogonality(A, M, N)
+!!
+!!    Check orthogonality
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
+!!
+!!    Check if columns of A are orthogonal. A is (M x N) matrix.
+!!    Returns logical.
+!!
+      use workspace
+!
+      implicit none
+!
+      integer(i15)             :: M
+      integer(i15)             :: N
+      real(dp), dimension(M,N) :: A
+      logical                  :: check_orthogonality
+!
+      integer(i15) :: i = 0, j = 0
+      real(dp), dimension(:,:), allocatable :: a_i, a_j
+      real(dp) :: ddot
+!
+      check_orthogonality = .true.
+!
+      call allocator(a_i, M, 1)
+      call allocator(a_j, M, 1)
+!
+      do i = 1, N
+         a_i(:,1) = A(:,i)
+         do j = 1, i-1
+            a_j(:,1) = A(:,j)
+            if (abs(ddot(M,a_i, 1, a_j, 1)) .gt. 1.0d-07) then
+               check_orthogonality = .false.
+               return
+            endif
          enddo
       enddo
 !
-!     Sanity check
+      call deallocator(a_i, M, 1)
+      call deallocator(a_j, M, 1)
 !
-      if (index_packed(p, q) .ne. pq) then
-!
-         write(unit_output,'(/t6,a)') 'Error: inversion of packed index unsuccessful'
-         stop
-!
-      endif
-!
-   end subroutine invert_packed_index
+   end function check_orthogonality
 !
 !
-   real(dp) function dot_product(x, y, n)
-!!
-!!    Calculate dot product
-!!    Written by Eirik F. Kjønstad, June 2018
-!!
-!!    Returns the dot product of x and y, two vectors of length n
-!!
-      implicit none
-!
-      integer(i15), intent(in) :: n
-!
-      real(dp), dimension(:,:), intent(in) :: x
-      real(dp), dimension(:,:), intent(in) :: y
-!
-      real(dp) :: ddot
-!
-      dot_product = ddot(n, x, 1, y, 1)
-!
-   end function dot_product
-!
-!
-end module vector_analysis
+end module array_analysis

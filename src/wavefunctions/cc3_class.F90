@@ -9,18 +9,11 @@ module cc3_class
 !  -::- Modules used by the class -::-
 !  :::::::::::::::::::::::::::::::::::
 !
-!  General tools
-!
-   use types
-   use utils
-   use workspace
-   use input_output
-!
 !  Ancestor class module (CCSD)
 !
    use ccsd_class
 !
-   implicit none 
+   implicit none
 !
 !  :::::::::::::::::::::::::::::::::::::
 !  -::- Definition of the CC3 class -::-
@@ -32,7 +25,7 @@ module cc3_class
 !
    contains
 !
-!     Initialization routine 
+!     Initialization routine
 !
       procedure :: init => init_cc3
 !
@@ -40,7 +33,7 @@ module cc3_class
 !
       procedure :: construct_omega => construct_omega_cc3
 !
-!     Helper routines 
+!     Helper routines
 !
       procedure :: omega_integrals => omega_integrals_cc3
       procedure :: calc_triples    => calc_triples_cc3
@@ -50,13 +43,13 @@ module cc3_class
       procedure :: omega_cc3_a2 => omega_cc3_a2_cc3
       procedure :: omega_cc3_b2 => omega_cc3_b2_cc3
 !
-   end type cc3 
+   end type cc3
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::::::::::
-!  -::- Interface to the submodule routines of CC3 -::- 
+!  -::- Interface to the submodule routines of CC3 -::-
 !  ::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
-   interface 
+   interface
 !
 !
       module subroutine construct_omega_cc3(wf)
@@ -67,7 +60,7 @@ module cc3_class
 !!       Directs the calculation of the projection vector (omega1, omega2)
 !!       for the CC3 level of theory.
 !!
-         implicit none 
+         implicit none
 !
          class(cc3) :: wf
 !
@@ -85,9 +78,9 @@ module cc3_class
 !!       Calculates g_ilkc and saves to disk in the order cl, ik (one record per i and k)
 !!       Calculates g_dbkc and saves to disk in the order bcd, k (one record per d and k)
 !!
-         implicit none 
+         implicit none
 !
-         class(cc3) :: wf 
+         class(cc3) :: wf
 !
       end subroutine omega_integrals_cc3
 !
@@ -102,9 +95,9 @@ module cc3_class
 !!       w_abc = t_abc, the CC3 triples amplitude t_ijk^abc for a given set of occupied
 !!       indices i, j, and k.
 !!
-         implicit none 
+         implicit none
 !
-         class(cc3) :: wf 
+         class(cc3) :: wf
 !
          real(dp), dimension((wf%n_v)**3, 1) :: w_abc
 !
@@ -119,17 +112,17 @@ module cc3_class
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
 !!       Calculates the A1 term,
-!! 
+!!
 !!          sum_bc (t_ijk^abc - t_ijk^cba) L_jbkc,
 !!
-!!       for a given set of i, j, and k, and adds the contribution to 
+!!       for a given set of i, j, and k, and adds the contribution to
 !!       the singles projection vector (omega1).
 !!
-         implicit none 
+         implicit none
 !
-         class(cc3) :: wf 
+         class(cc3) :: wf
 !
-         real(dp), dimension((wf%n_v)**3, 1) :: t_abc 
+         real(dp), dimension((wf%n_v)**3, 1) :: t_abc
 !
          integer(i15), intent(in) :: i, j, k
 !
@@ -142,18 +135,18 @@ module cc3_class
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
 !!       Calculates the A2 term,
-!! 
+!!
 !!          sum_c (t_ijk^abc - t_ijk^cba) F_kc,
 !!
-!!       for a given set of i, j, and k, and adds the contribution to 
+!!       for a given set of i, j, and k, and adds the contribution to
 !!       the doubles projection vector (omega2), element ai_bj.
 !!
-         implicit none 
+         implicit none
 !
-         class(cc3) :: wf 
+         class(cc3) :: wf
 !
-         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: omega_ai_bj 
-         real(dp), dimension((wf%n_v)**3, 1) :: t_abc 
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: omega_ai_bj
+         real(dp), dimension((wf%n_v)**3, 1) :: t_abc
 !
          integer(i15), intent(in) :: i, j, k
 !
@@ -166,19 +159,19 @@ module cc3_class
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
 !!       Calculates the B2 term,
-!! 
+!!
 !!          omega(al,bj) = - sum_c  (2 t_ijk^abc - t_ijk^cba - t_ijk^acb) g_ilkc
 !!          omega(ai,dj) = + sum_bc (2 t_ijk^abc - t_ijk^cba - t_ijk^acb) g_dbkc
 !!
-!!       for a given set of i, j, and k, and adds the contribution to 
+!!       for a given set of i, j, and k, and adds the contribution to
 !!       the doubles projection vector (omega2).
 !!
-         implicit none 
+         implicit none
 !
-         class(cc3) :: wf 
+         class(cc3) :: wf
 !
-         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: omega_ai_bj 
-         real(dp), dimension((wf%n_v)**3, 1) :: t_abc 
+         real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: omega_ai_bj
+         real(dp), dimension((wf%n_v)**3, 1) :: t_abc
 !
          integer(i15), intent(in) :: i, j, k
 !
@@ -211,13 +204,13 @@ contains
 !!    Note: this routine does not calculate the energy, which is postponed until the wavefunction
 !!    is passed to the ground-state solver.
 !!
-      implicit none 
+      implicit none
 !
       class(cc3) :: wf
 !
       integer(i15) :: unit_input = -1
 !
-!     Set model name 
+!     Set model name
 !
       wf%name = 'CC3'
 
@@ -236,7 +229,7 @@ contains
       wf%implemented%ground_state = .true.
 !
 !     Read calculation tasks from input file eT.inp
-!     
+!
       call wf%calculation_reader(unit_input)
 !
 !     Close input file
@@ -249,12 +242,12 @@ contains
 !
 !     Read Cholesky AO integrals and transform to MO basis
 !
-      call wf%read_transform_cholesky 
+      call wf%read_transform_cholesky
 !
 !     Initialize (singles and doubles) amplitudes
 !
-      wf%n_t1am = (wf%n_o)*(wf%n_v) 
-      wf%n_t2am = (wf%n_t1am)*(wf%n_t1am + 1)/2 
+      wf%n_t1am = (wf%n_o)*(wf%n_v)
+      wf%n_t2am = (wf%n_t1am)*(wf%n_t1am + 1)/2
 !
       wf%n_parameters = wf%n_t1am + wf%n_t2am
 !

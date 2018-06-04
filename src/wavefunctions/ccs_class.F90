@@ -13,7 +13,7 @@ module ccs_class
 !!
 !!       1. Modules used by the class:
 !!
-!!             Basic utilities and the ancestor class (HF)
+!!             The ancestor class (HF) and all modules therein
 !!
 !!       2. Definition of the class:
 !!
@@ -51,14 +51,6 @@ module ccs_class
 !  ::::::::::::::::::::::::::::::::::::::
 !  -::- 1. Modules used by the class -::-
 !  ::::::::::::::::::::::::::::::::::::::
-!
-!
-!  General tools
-!
-   use types
-   use utils
-   use workspace
-   use input_output
 !
 !  The ancestor class module (HF)
 !

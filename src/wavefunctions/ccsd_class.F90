@@ -11,7 +11,7 @@ module ccsd_class
 !!
 !!       1. Modules used by the class:
 !!
-!!             Basic utilities and the ancestor class (CCS)
+!!             The ancestor class (CCS) and all modules therein
 !!
 !!       2. Definition of the class:
 !!
@@ -48,7 +48,7 @@ module ccsd_class
 !  General tools
 !
    use types
-   use utils
+ !  use utils
    use workspace
    use input_output
 !

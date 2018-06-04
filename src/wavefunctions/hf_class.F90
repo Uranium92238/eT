@@ -9,13 +9,19 @@ module hf_class
 !  -::- Modules used by the class -::-
 !  :::::::::::::::::::::::::::::::::::
 !
-!  General tools
+!  Various tools and definitions
 !
    use types
-   use utils
-   use vector_analysis
+   use reordering
+   use batching
+   use index
+   use array_analysis
+   use array_utilities
    use workspace
    use input_output
+!
+!  Classes
+!
    use file_class
    use calc_tasks_class
    use calc_settings_class

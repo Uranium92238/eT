@@ -9,17 +9,9 @@ module cc2_class
 !  -::- Modules used by the class -::-
 !  :::::::::::::::::::::::::::::::::::
 !
-!  General tools
-!
-   use types
-   use utils
-   use workspace
-   use input_output
-!
 !  The ancestor class module (CCS)
 !
    use ccs_class
-!
 !
    implicit none
 !

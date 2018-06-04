@@ -229,10 +229,6 @@ contains
       integer(i15) :: required = 0, available = 0, max_batch_length = 0, n_batch = 0, L_off = 0
       integer(i15) :: a_batch = 0, batch_start = 0, batch_end = 0, batch_length = 0
 !
-!     Indices
-!
-      integer(i15) :: a = 0, b = 0, J = 0, i = 0, ai = 0, Ja = 0
-      integer(i15) :: ba = 0, k = 0, ik = 0, iJ = 0, kb = 0, kJ = 0, ab = 0
       integer(i15) :: a_length, i_length
 !
 !     Cholesky vectors (in many different orderings)
@@ -676,20 +672,10 @@ contains
                      L_a_iJ,            &
                      wf%n_v)
 !
-!        Add contribution to L ai_J
+!        Add contribution to L ai_J:
+!        L_ai_J(ai, J) = L_ai_J(ai, J) + L_a_iJ(a, iJ)
 !
-         do a = 1, wf%n_v
-            do i = 1, wf%n_o
-               do J = 1, wf%n_J
-!
-                  iJ = index_two(i, J, wf%n_o)
-                  ai = index_two(a, i, wf%n_v)
-!
-                  L_ai_J(ai, J) = L_ai_J(ai, J) + L_a_iJ(a, iJ)
-!
-               enddo
-            enddo
-         enddo
+         call daxpy((wf%n_v)*(wf%n_o)*(wf%n_J), one, L_a_iJ, 1, L_ai_J, 1)
 !
 !        Deallocations
 !
@@ -697,8 +683,10 @@ contains
          call wf%mem%dealloc(L_k_iJ, wf%n_o, (wf%n_o)*(wf%n_J))
 !
       else
-         write(unit_output, *) 'WARNING: Error in call to read_cholesky_ia'
+!
+         write(unit_output, *) 'Error: in call to read_cholesky_ia'
          stop
+!
       endif
 !
    end subroutine get_cholesky_ai_ccs

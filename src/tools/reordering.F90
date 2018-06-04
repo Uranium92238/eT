@@ -1,36 +1,26 @@
-module utils
+module reordering
 !
 !!
-!!    Utilities module
-!!    Written by Sarai D. Folkstad and Eirik F. Kjønstad, 28 Feb 2017
+!!    Reordering module
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2018
 !!
-!!    Contains:
-!!
-!!    Index functions:
-!!       index_packed: Calculates the packed index of symetric matrix
-!!       index_two:    Calculates the compound index of two indices
-!!       index_three   Calculates the compound index given by three indices
-!!
-!!    Matrix utilities:
-!!       packin:      packs in symetric matrix
-!!       packed_size: Returns size of packed matrix
-!!       squeareup:   squares up symmetric matrix
-!!
-!!    Batching subroutines:
-!!        num_batch:     Calculates the number of batches needed.
-!!        num_two_batch: Calculates the number of batches needed
-!!                       for to batching variables with equal number of batches.
-!!        batch_limits:  Returns batch start index and batch end index.
+!!    Here are all routines that are used to re-sort arrays and (e.g., sort_123_to_132)
+!!    performing re-sort-addition (add_132_to_123), along with routines that both squareup
+!!    (e.g., t2am -> t_ai_bj) and re-sort (t_ai_bj -> t_aj_bi) in a single step; also included
+!!    are routines that squareup (t_aibj -> t_ai_bj) and packin (t_ai_bj -> t_aibj) and
+!!    related routines.
 !!
 !
    use input_output
    use types
+   use index
+!
+   implicit none
 !
 contains
-!  ::::::::::::::::::::::::::
-!  -::- Sorting routines -::-
-!  ::::::::::::::::::::::::::
 !
+!     -::- Two-index re-sort and re-sort-add routines -::-
+!     ----------------------------------------------------
 !
    subroutine sort_12_to_21(x_p_q, x_q_p, dim_p, dim_q)
 !!
@@ -62,6 +52,40 @@ contains
    end subroutine sort_12_to_21
 !
 !
+   subroutine add_21_to_12(gamma, x, y_p_q, dim_p, dim_q)
+!!
+!!    Add 21 to 12
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Performs:
+!!
+!!       y_p_q(p,q) = y_p_q(p,q) + gamma*x(q,p)
+!!
+!!    The unordered array y_p_q is assumed allocated as dim_p x dim_q,
+!!    and x accordingly.
+!!
+      implicit none
+!
+      real(dp), intent(in) :: gamma
+!
+      integer(i15), intent(in) :: dim_p, dim_q
+!
+      real(dp), dimension(dim_p, dim_q) :: y_p_q
+      real(dp), dimension(dim_q, dim_p), intent(in) :: x
+!
+      integer(i15) :: p, q
+!
+      do q = 1, dim_q
+         do p = 1, dim_p
+!
+               y_p_q(p,q) = y_p_q(p,q) + gamma*x(q,p)
+!
+         enddo
+      enddo
+!
+   end subroutine add_21_to_12
+!
+!
    subroutine symmetric_sum(x, dim)
 !!
 !!    Symmetric sum
@@ -72,6 +96,9 @@ contains
 !!       x(p,q) = x(p,q) + x(q,p)
 !!
 !!    without making a separate copy of x.
+!!
+!!    Note: the effect is equal to the routine "add_21_to_12" with gamma = 1,
+!!          where a second copy of x is not needed.
 !!
       implicit none
 !
@@ -102,6 +129,283 @@ contains
       enddo
 !
    end subroutine symmetric_sum
+!
+!
+!     -::- Three-index re-sort and re-sort-add routines -::-
+!     ------------------------------------------------------
+!
+   subroutine sort_123_to_312(x_pqr, x_rpq, dim_p, dim_q, dim_r)
+!!
+!!    Sort 123 to 312
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Performs:
+!!
+!!       x_rpq(rpq, 1) = x_pqr(pqr, 1)
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r
+!
+      real(dp), dimension(:, :), intent(in)    :: x_pqr
+      real(dp), dimension(:, :), intent(inout) :: x_rpq
+!
+      integer(i15) :: pqr, rpq, r, q, p
+!
+!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+      do r = 1, dim_r
+         do q = 1, dim_q
+            do p = 1, dim_p
+!
+               pqr = dim_p*(dim_q*(r-1)+q-1)+p
+               rpq = dim_r*(dim_p*(q-1)+p-1)+r
+!
+               x_rpq(rpq, 1) = x_pqr(pqr, 1)
+!
+            enddo
+         enddo
+      enddo
+!!$omp end parallel do
+!
+   end subroutine sort_123_to_312
+!
+!
+   subroutine sort_123_to_132(x_pqr, x_prq, dim_p, dim_q, dim_r)
+!!
+!!    Sort 123 to 132
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Performs:
+!!
+!!       x_prq(prq, 1) = x_pqr(pqr, 1)
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r
+!
+      real(dp), dimension(:, :), intent(in)    :: x_pqr
+      real(dp), dimension(:, :), intent(inout) :: x_prq
+!
+      integer(i15) :: pqr, prq, r, q, p
+!
+!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+      do r = 1, dim_r
+         do q = 1, dim_q
+            do p = 1, dim_p
+!
+               pqr = dim_p*(dim_q*(r-1)+q-1)+p
+               prq = dim_p*(dim_r*(q-1)+r-1)+p
+!
+               x_prq(prq, 1) = x_pqr(pqr, 1)
+!
+            enddo
+         enddo
+      enddo
+!!$omp end parallel do
+!
+   end subroutine sort_123_to_132
+!
+!
+   subroutine sort_123_to_213(x_pqr, x_qpr, dim_p, dim_q, dim_r)
+!!
+!!    Sort 123 to 132
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Performs:
+!!
+!!       x_qpr(qpr, 1) = x_pqr(pqr, 1)
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r
+!
+      real(dp), dimension(:, :), intent(in)    :: x_pqr
+      real(dp), dimension(:, :), intent(inout) :: x_qpr
+!
+      integer(i15) :: pqr, qpr, r, q, p
+!
+!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+      do r = 1, dim_r
+         do q = 1, dim_q
+            do p = 1, dim_p
+!
+               pqr = dim_p*(dim_q*(r-1)+q-1)+p
+               qpr = dim_q*(dim_p*(r-1)+p-1)+q
+!
+               x_qpr(qpr, 1) = x_pqr(pqr, 1)
+!
+            enddo
+         enddo
+      enddo
+!!$omp end parallel do
+!
+   end subroutine sort_123_to_213
+!
+!
+   subroutine add_321_to_123(gamma, x, y_pqr, dim_p, dim_q, dim_r)
+!!
+!!    Add 1243 to 1234
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Performs:
+!!
+!!       y_pqr(pqr,1) = y_pqr(pqr,1) + gamma*x(rqp,1)
+!!
+!!
+      implicit none
+!
+      real(dp), intent(in) :: gamma
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r
+!
+      real(dp), dimension(:, :) :: y_pqr
+      real(dp), dimension(:, :), intent(in) :: x
+!
+      integer(i15) :: pqr, rqp, r, q, p
+!
+!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+      do r = 1, dim_r
+         do q = 1, dim_q
+            do p = 1, dim_p
+!
+               pqr = dim_p*(dim_q*(r-1)+q-1)+p
+               rqp = dim_r*(dim_q*(p-1)+q-1)+r
+!
+               y_pqr(pqr, 1) = y_pqr(pqr, 1) + gamma*x(rqp, 1)
+!
+            enddo
+         enddo
+      enddo
+!!$omp end parallel do
+!
+   end subroutine add_321_to_123
+!
+!
+   subroutine add_132_to_123(gamma, x, y_pqr, dim_p, dim_q, dim_r)
+!!
+!!    Add 132 to 123
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Performs:
+!!
+!!       y_pqr(pqr,1) = y_pqr(pqr, 1) + gamma * x(prq, 1)
+!!
+      implicit none
+!
+      real(dp), intent(in) :: gamma
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r
+!
+      real(dp), dimension(dim_p*dim_q*dim_r, 1) :: y_pqr
+      real(dp), dimension(dim_r*dim_p*dim_q, 1), intent(in) :: x
+!
+      integer(i15) :: p, q, r, pqr, prq
+!
+!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+      do r = 1, dim_r
+         do q = 1, dim_q
+            do p = 1, dim_p
+!
+               pqr = dim_p*(dim_q*(r-1)+q-1)+p
+               prq = dim_p*(dim_r*(q-1)+r-1)+p
+!
+               y_pqr(pqr, 1) = y_pqr(pqr, 1) + gamma*x(prq, 1)
+!
+            enddo
+         enddo
+      enddo
+!!$omp end parallel do
+!
+   end subroutine add_132_to_123
+!
+!
+   subroutine add_312_to_123(gamma, x, y_pqr, dim_p, dim_q, dim_r)
+!!
+!!    Add 312 to 123
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Performs:
+!!
+!!       y_pqr(pqr,1) = y_pqr(pqr, 1) + gamma * x(rpq, 1)
+!!
+      implicit none
+!
+      real(dp), intent(in) :: gamma
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r
+!
+      real(dp), dimension(dim_p*dim_q*dim_r, 1) :: y_pqr
+      real(dp), dimension(dim_r*dim_p*dim_q, 1), intent(in) :: x
+!
+      integer(i15) :: p, q, r, pqr, rpq
+!
+!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+      do r = 1, dim_r
+         do q = 1, dim_q
+            do p = 1, dim_p
+!
+               pqr = dim_p*(dim_q*(r-1)+q-1)+p
+               rpq = dim_r*(dim_p*(q-1)+p-1)+r
+!
+               y_pqr(pqr, 1) = y_pqr(pqr, 1) + gamma*x(rpq, 1)
+!
+            enddo
+         enddo
+      enddo
+!!$omp end parallel do
+!
+   end subroutine add_312_to_123
+!
+!     -::- Four-index re-sort and re-sort-add routines -::-
+!     -----------------------------------------------------
+!
+   subroutine add_3124_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Add 3124 to 1234
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Performs:
+!!
+!!       y_pq_rs(pq,rs) = y_pq_rs(pq,rs) + gamma * x(rp, qs)
+!!
+!!    The unordered array y_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s,
+!!    and x accordingly.
+!!
+      implicit none
+!
+      real(dp), intent(in) :: gamma
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+!
+      real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs
+      real(dp), dimension(dim_r*dim_p, dim_q*dim_s), intent(in) :: x
+!
+      integer(i15) :: p, q, r, s, pq, rs, rp, qs
+!
+!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+      do s = 1, dim_s
+         do r = 1, dim_r
+!
+            rs = dim_r*(s-1) + r
+!
+            do q = 1, dim_q
+!
+               qs = dim_q*(s-1) + q
+!
+               do p = 1, dim_p
+!
+                  rp = dim_r*(p-1) + r
+                  pq = dim_p*(q-1) + p
+!
+                  y_pq_rs(pq, rs) = y_pq_rs(pq, rs) + gamma*x(rp, qs)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!!$omp end parallel do
+!
+   end subroutine add_3124_to_1234
 !
 !
    subroutine sort_1234_to_3412(x_pq_rs, x_rs_pq, dim_p, dim_q, dim_r, dim_s)
@@ -820,229 +1124,6 @@ contains
    end subroutine add_1243_to_1234
 !
 !
-   subroutine add_321_to_123(gamma, x, y_pqr, dim_p, dim_q, dim_r)
-!!
-!!    Add 1243 to 1234
-!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
-!!
-!!    Performs:
-!!
-!!       y_pqr(pqr,1) = y_pqr(pqr,1) + gamma*x(rqp,1)
-!!
-!!
-      implicit none
-!
-      real(dp), intent(in) :: gamma
-!
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r
-!
-      real(dp), dimension(:, :) :: y_pqr
-      real(dp), dimension(:, :), intent(in) :: x
-!
-      integer(i15) :: pqr, rqp, r, q, p
-!
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
-      do r = 1, dim_r
-         do q = 1, dim_q
-            do p = 1, dim_p
-!
-               pqr = dim_p*(dim_q*(r-1)+q-1)+p
-               rqp = dim_r*(dim_q*(p-1)+q-1)+r
-!
-               y_pqr(pqr, 1) = y_pqr(pqr, 1) + gamma*x(rqp, 1)
-!
-            enddo
-         enddo
-      enddo
-!!$omp end parallel do
-!
-   end subroutine add_321_to_123
-!
-!
-   subroutine sort_123_to_312(x_pqr, x_rpq, dim_p, dim_q, dim_r)
-!!
-!!    Sort 123 to 312
-!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
-!!
-!!    Performs:
-!!
-!!       x_rpq(rpq, 1) = x_pqr(pqr, 1)
-!!
-      implicit none
-!
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r
-!
-      real(dp), dimension(:, :), intent(in)    :: x_pqr
-      real(dp), dimension(:, :), intent(inout) :: x_rpq
-!
-      integer(i15) :: pqr, rpq, r, q, p
-!
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
-      do r = 1, dim_r
-         do q = 1, dim_q
-            do p = 1, dim_p
-!
-               pqr = dim_p*(dim_q*(r-1)+q-1)+p
-               rpq = dim_r*(dim_p*(q-1)+p-1)+r
-!
-               x_rpq(rpq, 1) = x_pqr(pqr, 1)
-!
-            enddo
-         enddo
-      enddo
-!!$omp end parallel do
-!
-   end subroutine sort_123_to_312
-!
-!
-   subroutine sort_123_to_132(x_pqr, x_prq, dim_p, dim_q, dim_r)
-!!
-!!    Sort 123 to 132
-!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
-!!
-!!    Performs:
-!!
-!!       x_prq(prq, 1) = x_pqr(pqr, 1)
-!!
-      implicit none
-!
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r
-!
-      real(dp), dimension(:, :), intent(in)    :: x_pqr
-      real(dp), dimension(:, :), intent(inout) :: x_prq
-!
-      integer(i15) :: pqr, prq, r, q, p
-!
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
-      do r = 1, dim_r
-         do q = 1, dim_q
-            do p = 1, dim_p
-!
-               pqr = dim_p*(dim_q*(r-1)+q-1)+p
-               prq = dim_p*(dim_r*(q-1)+r-1)+p
-!
-               x_prq(prq, 1) = x_pqr(pqr, 1)
-!
-            enddo
-         enddo
-      enddo
-!!$omp end parallel do
-!
-   end subroutine sort_123_to_132
-!
-!
-   subroutine sort_123_to_213(x_pqr, x_qpr, dim_p, dim_q, dim_r)
-!!
-!!    Sort 123 to 132
-!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
-!!
-!!    Performs:
-!!
-!!       x_qpr(qpr, 1) = x_pqr(pqr, 1)
-!!
-      implicit none
-!
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r
-!
-      real(dp), dimension(:, :), intent(in)    :: x_pqr
-      real(dp), dimension(:, :), intent(inout) :: x_qpr
-!
-      integer(i15) :: pqr, qpr, r, q, p
-!
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
-      do r = 1, dim_r
-         do q = 1, dim_q
-            do p = 1, dim_p
-!
-               pqr = dim_p*(dim_q*(r-1)+q-1)+p
-               qpr = dim_q*(dim_p*(r-1)+p-1)+q
-!
-               x_qpr(qpr, 1) = x_pqr(pqr, 1)
-!
-            enddo
-         enddo
-      enddo
-!!$omp end parallel do
-!
-   end subroutine sort_123_to_213
-!
-!
-   subroutine add_132_to_123(gamma, x, y_pqr, dim_p, dim_q, dim_r)
-!!
-!!    Add 132 to 123
-!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
-!!
-!!    Performs:
-!!
-!!       y_pqr(pqr,1) = y_pqr(pqr, 1) + gamma * x(prq, 1)
-!!
-      implicit none
-!
-      real(dp), intent(in) :: gamma
-!
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r
-!
-      real(dp), dimension(dim_p*dim_q*dim_r, 1) :: y_pqr
-      real(dp), dimension(dim_r*dim_p*dim_q, 1), intent(in) :: x
-!
-      integer(i15) :: p, q, r, pqr, prq
-!
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
-      do r = 1, dim_r
-         do q = 1, dim_q
-            do p = 1, dim_p
-!
-               pqr = dim_p*(dim_q*(r-1)+q-1)+p
-               prq = dim_p*(dim_r*(q-1)+r-1)+p
-!
-               y_pqr(pqr, 1) = y_pqr(pqr, 1) + gamma*x(prq, 1)
-!
-            enddo
-         enddo
-      enddo
-!!$omp end parallel do
-!
-   end subroutine add_132_to_123
-!
-!
-   subroutine add_312_to_123(gamma, x, y_pqr, dim_p, dim_q, dim_r)
-!!
-!!    Add 312 to 123
-!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
-!!
-!!    Performs:
-!!
-!!       y_pqr(pqr,1) = y_pqr(pqr, 1) + gamma * x(rpq, 1)
-!!
-      implicit none
-!
-      real(dp), intent(in) :: gamma
-!
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r
-!
-      real(dp), dimension(dim_p*dim_q*dim_r, 1) :: y_pqr
-      real(dp), dimension(dim_r*dim_p*dim_q, 1), intent(in) :: x
-!
-      integer(i15) :: p, q, r, pqr, rpq
-!
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
-      do r = 1, dim_r
-         do q = 1, dim_q
-            do p = 1, dim_p
-!
-               pqr = dim_p*(dim_q*(r-1)+q-1)+p
-               rpq = dim_r*(dim_p*(q-1)+p-1)+r
-!
-               y_pqr(pqr, 1) = y_pqr(pqr, 1) + gamma*x(rpq, 1)
-!
-            enddo
-         enddo
-      enddo
-!!$omp end parallel do
-!
-   end subroutine add_312_to_123
-!
-!
    subroutine add_3412_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
 !!
 !!    Add 3412 to 1234
@@ -1108,89 +1189,6 @@ contains
       enddo
 !
    end subroutine add_3421_to_1234
-!
-!
-   subroutine add_21_to_12(gamma, x, y_p_q, dim_p, dim_q)
-!!
-!!    Add 21 to 12
-!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
-!!
-!!    Performs:
-!!
-!!       y_p_q(p,q) = y_p_q(p,q) + gamma*x(q,p)
-!!
-!!    The unordered array y_p_q is assumed allocated as dim_p x dim_q,
-!!    and x accordingly.
-!!
-      implicit none
-!
-      real(dp), intent(in) :: gamma
-!
-      integer(i15), intent(in) :: dim_p, dim_q
-!
-      real(dp), dimension(dim_p, dim_q) :: y_p_q
-      real(dp), dimension(dim_q, dim_p), intent(in) :: x
-!
-      integer(i15) :: p, q
-!
-      do q = 1, dim_q
-         do p = 1, dim_p
-!
-               y_p_q(p,q) = y_p_q(p,q) + gamma*x(q,p)
-!
-         enddo
-      enddo
-!
-   end subroutine add_21_to_12
-!
-!
-   subroutine add_3124_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
-!!
-!!    Add 3124 to 1234
-!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
-!!
-!!    Performs:
-!!
-!!       y_pq_rs(pq,rs) = y_pq_rs(pq,rs) + gamma * x(rp, qs)
-!!
-!!    The unordered array y_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s,
-!!    and x accordingly.
-!!
-      implicit none
-!
-      real(dp), intent(in) :: gamma
-!
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
-!
-      real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs
-      real(dp), dimension(dim_r*dim_p, dim_q*dim_s), intent(in) :: x
-!
-      integer(i15) :: p, q, r, s, pq, rs, rp, qs
-!
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
-      do s = 1, dim_s
-         do r = 1, dim_r
-!
-            rs = dim_r*(s-1) + r
-!
-            do q = 1, dim_q
-!
-               qs = dim_q*(s-1) + q
-!
-               do p = 1, dim_p
-!
-                  rp = dim_r*(p-1) + r
-                  pq = dim_p*(q-1) + p
-!
-                  y_pq_rs(pq, rs) = y_pq_rs(pq, rs) + gamma*x(rp, qs)
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!!$omp end parallel do
-!
-   end subroutine add_3124_to_1234
 !
 !
    subroutine add_2341_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
@@ -1987,77 +1985,9 @@ contains
 !
    end subroutine sort_1234_to_1243
 !
-!  :::::::::::::::::::::::::
-!  -::- Index functions -::-
-!  :::::::::::::::::::::::::
 !
-   integer(i15) function index_packed(i,j)
-!!
-!!    Packed index
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2017
-!!
-!!    Calculates the packed index of symetric matrix.
-!!
-      implicit none
-!
-      integer(i15), intent(in) :: i,j
-!
-      index_packed = (max(i,j)*(max(i,j)-3)/2) + i + j
-!
-   end function index_packed
-!
-!
-   integer(i15) function index_three(p,q,r,dim_p,dim_q)
-!!
-!!    Three index compound
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2017
-!!
-!!    Returns the compound index (pqr)
-!!
-      implicit none
-!
-      integer(i15), intent(in) :: p, q, r, dim_p, dim_q
-!
-      index_three = dim_p*(dim_q*(r-1)+q-1)+p
-!
-   end function index_three
-!
-!
-   integer(i15) function index_two(p,q,dim_p)
-!!
-!!    Two index compound
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2017
-!!
-!!    Returns the compound index (pq)
-!!
-      implicit none
-!
-      integer(i15), intent(in) :: p,q,dim_p
-!
-      index_two = dim_p*(q-1)+p
-!
-   end function index_two
-!
-! ::::::::::::::::::::::::
-! -:- Matrix utilities -:-
-! ::::::::::::::::::::::::
-!
-   integer(i15) function packed_size(N)
-!!
-!!    Packed size
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2017
-!!
-!!    Returns size of packed symmetric matrices
-!!    of dimension N x N (triangular elements)
-!!
-      implicit none
-!
-      integer(i15), intent(in) :: N
-!
-      packed_size = N*(N+1)/2
-!
-   end function packed_size
-!
+!     -::- Squareup and packin and related routines -::-
+!     --------------------------------------------------
 !
    subroutine add_to_packed(packed, unpacked, N)
 !!
@@ -2141,7 +2071,7 @@ contains
       enddo
 !!$omp end parallel do
 !
-   end subroutine
+   end subroutine squareup
 !
    subroutine squareup_to_compound(packed,unpacked,N,M)
 !!
@@ -2192,258 +2122,7 @@ contains
          enddo
       enddo
 !
-   end subroutine
+   end subroutine packin
 !
-! :::::::::::::::::::::::::::::::
-!  -:- Batching functionality -:-
-! :::::::::::::::::::::::::::::::
 !
-   subroutine num_batch(required,available,max_batch_length,n_batch,batch_dimension)
-!!
-!!    Number of batches
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2017
-!!
-!!    Calculates number of batches
-!!
-!!    Batching structure will be:
-!!    With rest:     (n_batch-1)*(max_batch_length) + rest = required
-!!    Without rest:  (n_batch)*(max_batch_length) = required
-!!
-      implicit none
-!
-!
-      integer(i15), intent(in)           :: available, batch_dimension
-      integer(i15)                       :: max_batch_length,n_batch
-      integer(i15)                       :: required
-      integer(i15)                       :: buffer
-!
-!     Adding buffer for required
-!
-      buffer = required/10
-!
-      required = required + buffer
-!
-      if (required .lt. available) then
-         n_batch = 1
-         max_batch_length = batch_dimension
-         return
-      endif
-!
-!     Max batch size
-!
-      max_batch_length = available/(required/batch_dimension)
-!
-!     Number of full batches
-!
-      n_batch=batch_dimension/max_batch_length
-!
-!     Test for rest
-!
-      if (n_batch*max_batch_length .lt. batch_dimension) then
-         n_batch = n_batch+1
-      endif
-!
-   end subroutine num_batch
-!
-   subroutine num_two_batch(required,available,max_batch_length,n_batch,batch_dimension)
-!!
-!!    Number of batches
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2017
-!!
-!!    Calculates number of batches when two batching variables are needed
-!!
-!!    Batching structure will be:
-!!    With rest:     (n_batch-1)*(max_batch_length) + rest = required
-!!    Without rest:  (n_batch)*(max_batch_length) = required
-!!
-      implicit none
-!
-      integer(i15), intent(in) :: available, batch_dimension
-      integer(i15)             :: max_batch_length,n_batch,i,buffer,required
-!
-      buffer = required/10
-!
-      required = required + buffer
-!
-      n_batch = 1
-!
-      if (required .lt. available) then
-            n_batch = 1
-            max_batch_length = batch_dimension
-            return
-      endif
-!
-      do i = 1, batch_dimension
-         if (available .gt. required/i**2) then
-!
-            n_batch = i
-            max_batch_length = batch_dimension/n_batch
-!
-!           Test for rest
-!
-            if (n_batch*max_batch_length .lt. batch_dimension) then
-               n_batch = n_batch + 1
-            endif
-!
-            return
-         endif
-      enddo
-!
-   end subroutine num_two_batch
-!
-!
-   subroutine batch_limits(first,last,batch_number,max_batch_length,batch_dimension)
-!!
-!!     Batch limits
-!!     Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2017
-!!
-!!     Find batch limits (first and last)
-!!
-!!     batch_number: the current batch (1,2,...,n_batch)
-!!     max_batch_length: the length of each batch (except the last, which may be a rest, see n_one_batch routine)
-!!     batch_dimension: the dimensionality of the batching variable (e.g., n_vir for a virtual index)
-!!
-      implicit none
-!
-      integer(i15) :: first,last
-      integer(i15), intent(in) :: batch_number,max_batch_length,batch_dimension
-!
-      first = 1 + (batch_number-1)*max_batch_length
-      last  = min(max_batch_length+(batch_number-1)*max_batch_length,batch_dimension)
-!
-   end subroutine batch_limits
-!
-   subroutine get_n_lowest(n, size, vec, sorted_short_vec, index_list)
-!!
-!!    Get n lowest elements
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!
-!!    Finds the n lowest values of vec,
-!!    sorts them, and returns them in sorted_short_vec
-!!    together with an index list refering to the indices of the
-!!    lowest elements in the original vector.
-!!
-      implicit none
-!
-      integer(i15) :: n    ! Number of elements wanted
-      integer(i15) :: size ! Size of original vector
-!
-      real(dp), dimension(size, 1) :: vec
-      real(dp), dimension(n, 1)    :: sorted_short_vec
-!
-      integer(i15), dimension(n, 1) :: index_list
-!
-!     Variables for sorting
-!
-      real(dp)     :: max
-      integer(i15) :: max_pos
-!
-      real(dp)     :: swap     = zero
-      integer(i15) :: swap_int = 0
-!
-      integer(i15) :: i = 0, j = 0
-!
-!        Placing the n first elements of vec into sorted_short_vec
-!
-         sorted_short_vec(1,1) = vec(1,1)
-         index_list(1,1) = 1
-!
-         max = sorted_short_vec(1,1)
-         max_pos = 1
-!
-         do i = 2, n
-!
-            sorted_short_vec(i,1) = vec(i,1)
-            index_list(i,1) = i
-!
-            if (sorted_short_vec(i,1) .ge. max) then
-!
-               max = sorted_short_vec(i,1)
-               max_pos = i
-!
-            endif
-         enddo
-!
-!        Looping through the rest of vec to find lowest values
-!
-         do i = n + 1, size
-            if (vec(i,1) .lt. max) then
-!
-               sorted_short_vec(max_pos,1) = vec(i,1)
-               index_list(max_pos,1) = i
-               max = vec(i,1)
-!
-               do j = 1, n
-                  if (sorted_short_vec(j, 1) .gt. max) then
-!
-                     max = sorted_short_vec(j, 1)
-                     max_pos = j
-!
-                  endif
-               enddo
-            endif
-         enddo
-!
-!        Sorting sorted_short_vec
-!
-         do i = 1, n
-            do j = 1, n - 1
-               if (sorted_short_vec(j,1) .gt. sorted_short_vec(j+1, 1)) then
-!
-                  swap = sorted_short_vec(j,1)
-                  sorted_short_vec(j,1) = sorted_short_vec(j+1, 1)
-                  sorted_short_vec(j+1, 1) = swap
-!
-                  swap_int = index_list(j, 1)
-                  index_list(j,1) = index_list(j + 1,1)
-                  index_list(j + 1,1) = swap_int
-!
-               endif
-            enddo
-         enddo
-!
-   end subroutine get_n_lowest
-!
-   function check_orthogonality(A, M, N)
-!!
-!!   Check orthogonality
-!!   Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
-!!
-!!    Check if columns of A are orthogonal. A is (M x N) matrix.
-!!    Returns logical.
-!!
-      use workspace
-!
-      implicit none
-!
-      integer(i15)             :: M
-      integer(i15)             :: N
-      real(dp), dimension(M,N) :: A
-      logical                  :: check_orthogonality
-!
-      integer(i15) :: i = 0, j = 0
-      real(dp), dimension(:,:), allocatable :: a_i, a_j
-      real(dp) :: ddot
-!
-      check_orthogonality = .true.
-!
-      call allocator(a_i, M, 1)
-      call allocator(a_j, M, 1)
-!
-      do i = 1, N
-         a_i(:,1) = A(:,i)
-         do j = 1, i-1
-            a_j(:,1) = A(:,j)
-            if (abs(ddot(M,a_i, 1, a_j, 1)) .gt. 1.0d-07) then
-               check_orthogonality = .false.
-               return
-            endif
-         enddo
-      enddo
-!
-      call deallocator(a_i, M, 1)
-      call deallocator(a_j, M, 1)
-!
-   end function check_orthogonality
-!
-end module utils
+end module reordering

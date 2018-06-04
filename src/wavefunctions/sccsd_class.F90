@@ -1,18 +1,19 @@
 module sccsd_class
 !
 !!
-!!                Similarity constrained coupled cluster singles and doubles (SCCSD) class module                                 
-!!                            Written by Eirik F. Kjønstad, June 2017         
-!!                                                                           
+!!                Similarity constrained coupled cluster singles and doubles (SCCSD) class module
+!!                            Written by Eirik F. Kjønstad, June 2017
+!!
 !!
 !!    This module contains the definition of the similarity constrained coupled cluster singles
 !!    and doubles (SCCSD) wavefunction class. It is structured into four sections:
 !!
-!!       1. Modules used by the class: 
+!!       1. Modules used by the class:
 !!
-!!             Basic utilities and the ancestor class (CCSD)
+!!             Similarity constrained CC tools, the ancestor class (CCSD),
+!!             and all modules therein
 !!
-!!       2. Definition of the class: 
+!!       2. Definition of the class:
 !!
 !!             Non-inherited variables, followed by non-inherited or overridden procedures
 !!
@@ -21,39 +22,35 @@ module sccsd_class
 !!             The procedures in the class are grouped according to functionality, with
 !!             detailed definitions given in the following class submodules:
 !!
-!!                - Excited state 
-!!                - Omega 
+!!                - Excited state
+!!                - Omega
 !!                - Jacobian (right transformation)
 !!                - Jacobian transpose (left transformation)
-!!                - Input reader 
+!!                - Input reader
 !!                - Metric (overlap between constrained states)
 !!
-!!             The interfaces shows incoming variables and their type, but contains 
-!!             no information of the procedure itself. The procedure is shown in full 
-!!             in the corresponding submodule. 
+!!             The interfaces shows incoming variables and their type, but contains
+!!             no information of the procedure itself. The procedure is shown in full
+!!             in the corresponding submodule.
 !!
 !!       4. Class module routines (i.e., non-submodule procedures). These include
 !!          the initialization and driver routines of the class, along with procedures that
 !!          are not (yet, at least) easily gathered in a submodule.
-!!         
-!! 
+!!
+!!
 !  ::::::::::::::::::::::::::::::::::::::
 !  -::- 1. Modules used by the class -::-
 !  ::::::::::::::::::::::::::::::::::::::
 !
 !  General tools
 !
-   use types
-   use utils
-   use workspace
-   use input_output
    use scc_calculation_settings_class
 !
 !  Ancestor class module (CCSD)
 !
    use ccsd_class
 !
-   implicit none 
+   implicit none
 !
 !  ::::::::::::::::::::::::::::::::::::::::::
 !  -::- 2. Definition of the SCCSD class -::-
@@ -63,7 +60,7 @@ module sccsd_class
 !
 !     The triple amplitude that enforces similarity (= t_IJK^ABC)
 !
-      real(dp) :: triples = zero 
+      real(dp) :: triples = zero
 !
 !     The associated triple excitation operator (= tau_IJK^ABC)
 !
@@ -100,11 +97,11 @@ module sccsd_class
 !     -::- Excited state submodule routine pointers -::-
 !     --------------------------------------------------
 !
-      procedure :: excited_state_driver             => excited_state_driver_sccsd 
+      procedure :: excited_state_driver             => excited_state_driver_sccsd
       procedure :: excited_state_intersection_cycle => excited_state_intersection_cycle_sccsd
       procedure :: eigenvector_controller           => eigenvector_controller_sccsd
 !
-      procedure :: ground_state_intersection_cycle     => ground_state_intersection_cycle_sccsd 
+      procedure :: ground_state_intersection_cycle     => ground_state_intersection_cycle_sccsd
       procedure :: ground_state_eigenvector_controller => ground_state_eigenvector_controller_sccsd
 !
 !
@@ -119,10 +116,10 @@ module sccsd_class
 !     -::- Jacobian submodule routine pointers -::-
 !     ---------------------------------------------
 !
-      procedure :: jacobian_ccsd_transformation => jacobian_ccsd_transformation_sccsd 
+      procedure :: jacobian_ccsd_transformation => jacobian_ccsd_transformation_sccsd
 !
       procedure :: jacobian_sccsd_a2 => jacobian_sccsd_a2_sccsd
-      procedure :: jacobian_sccsd_b2 => jacobian_sccsd_b2_sccsd 
+      procedure :: jacobian_sccsd_b2 => jacobian_sccsd_b2_sccsd
       procedure :: jacobian_sccsd_c2 => jacobian_sccsd_c2_sccsd
 !
 !
@@ -132,7 +129,7 @@ module sccsd_class
       procedure :: jacobian_transpose_ccsd_transformation => jacobian_transpose_ccsd_transformation_sccsd
 !
       procedure :: jacobian_transpose_sccsd_a1 => jacobian_transpose_sccsd_a1_sccsd
-      procedure :: jacobian_transpose_sccsd_b1 => jacobian_transpose_sccsd_b1_sccsd 
+      procedure :: jacobian_transpose_sccsd_b1 => jacobian_transpose_sccsd_b1_sccsd
       procedure :: jacobian_transpose_sccsd_c1 => jacobian_transpose_sccsd_c1_sccsd
 !
 !
@@ -141,11 +138,11 @@ module sccsd_class
 !
       procedure :: metric_transformation => metric_transformation_sccsd
 !
-!     Helper routines for the metric transformation 
+!     Helper routines for the metric transformation
 !
       procedure :: construct_q      => construct_q_sccsd       ! q_mu
       procedure :: Q_transformation => Q_transformation_sccsd  ! Q_mu,nu
-      procedure :: S_transformation => S_transformation_sccsd  ! S_mu,nu  
+      procedure :: S_transformation => S_transformation_sccsd  ! S_mu,nu
 !
 !     Routine to calculate the overlap between the similarity constrained states
 !
@@ -166,15 +163,15 @@ module sccsd_class
 !
       procedure :: sccsd_diis => sccsd_diis_sccsd
 !
-   end type sccsd 
+   end type sccsd
 !
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-!  -::- 3. Interfaces to the submodules of the SCCSD class -::- 
+!  -::- 3. Interfaces to the submodules of the SCCSD class -::-
 !  ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
 !
-   interface 
+   interface
 !
 !
 !     -::- Omega submodule interface -::-
@@ -185,7 +182,7 @@ module sccsd_class
 !!       Construct Omega (SCCSD)
 !!       Written by Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
          class(sccsd) :: wf
 !
@@ -194,12 +191,12 @@ module sccsd_class
 !
       module subroutine omega_sccsd_a1_sccsd(wf)
 !!
-!!       Omega SCCSD A1 
+!!       Omega SCCSD A1
 !!       Written by Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(sccsd) :: wf 
+         class(sccsd) :: wf
 !
       end subroutine omega_sccsd_a1_sccsd
 !
@@ -207,7 +204,7 @@ module sccsd_class
    end interface
 !
 !
-   interface 
+   interface
 !
 !
 !     -::- Jacobian submodule interface -::-
@@ -218,27 +215,27 @@ module sccsd_class
 !!       Jacobian transformation (SCCSD)
 !!       Written by Eirik F. Kjønstad, May 2017
 !!
-         implicit none 
+         implicit none
 !
          class(sccsd) :: wf
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  
-         real(dp), dimension(wf%n_t2am, 1)   :: c_aibj 
+         real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i
+         real(dp), dimension(wf%n_t2am, 1)   :: c_aibj
 !
       end subroutine jacobian_ccsd_transformation_sccsd
 !
 !
       module subroutine jacobian_sccsd_a2_sccsd(wf, rho, X)
 !!
-!!       Jacobian SCCSD A2 
+!!       Jacobian SCCSD A2
 !!       Written by Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(sccsd) :: wf 
+         class(sccsd) :: wf
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: X                         
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho 
+         real(dp), dimension(wf%n_v, wf%n_o) :: X
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho
 !
       end subroutine jacobian_sccsd_a2_sccsd
 !
@@ -248,12 +245,12 @@ module sccsd_class
 !!       Jacobian SCCSD B2
 !!       Written by Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(sccsd) :: wf 
+         class(sccsd) :: wf
 !
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)**2) :: Y 
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho 
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)**2) :: Y
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho
 !
       end subroutine jacobian_sccsd_b2_sccsd
 !
@@ -263,20 +260,20 @@ module sccsd_class
 !!       Jacobian SCCSD C2
 !!       Written by Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(sccsd) :: wf 
+         class(sccsd) :: wf
 !
-         real(dp), dimension((wf%n_v)**2, (wf%n_o)*(wf%n_v)) :: Z  
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho 
+         real(dp), dimension((wf%n_v)**2, (wf%n_o)*(wf%n_v)) :: Z
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho
 !
       end subroutine jacobian_sccsd_c2_sccsd
 !
 !
-   end interface 
+   end interface
 !
 !
-   interface 
+   interface
 !
 !
 !     -::- Jacobian transpose submodule interface -::-
@@ -287,12 +284,12 @@ module sccsd_class
 !!       Jacobian transpose CCSD transformation (SCCSD)
 !!       Written by Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(sccsd) :: wf 
+         class(sccsd) :: wf
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i 
-         real(dp), dimension(wf%n_t2am, 1)   :: b_aibj 
+         real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i
+         real(dp), dimension(wf%n_t2am, 1)   :: b_aibj
 !
       end subroutine jacobian_transpose_ccsd_transformation_sccsd
 !
@@ -302,13 +299,13 @@ module sccsd_class
 !!       Jacobian transpose SCCSD A1
 !!       Written by Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(sccsd) :: wf 
+         class(sccsd) :: wf
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: sigma                      
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: L    
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: b2am 
+         real(dp), dimension(wf%n_v, wf%n_o) :: sigma
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: L
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: b2am
 !
       end subroutine jacobian_transpose_sccsd_a1_sccsd
 !
@@ -318,15 +315,15 @@ module sccsd_class
 !!       Jacobian transpose SCCSD B1
 !!       Written by Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(sccsd) :: wf 
+         class(sccsd) :: wf
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: sigma                       
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: g    
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: b2am 
+         real(dp), dimension(wf%n_v, wf%n_o) :: sigma
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: g
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: b2am
 !
-      end subroutine jacobian_transpose_sccsd_b1_sccsd 
+      end subroutine jacobian_transpose_sccsd_b1_sccsd
 !
 !
       module subroutine jacobian_transpose_sccsd_c1_sccsd(wf, sigma, b2am, g)
@@ -334,21 +331,21 @@ module sccsd_class
 !!       Jacobian transpose SCCSD C1
 !!       Written by Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(sccsd) :: wf 
+         class(sccsd) :: wf
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: sigma                      
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: g    
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: b2am 
+         real(dp), dimension(wf%n_v, wf%n_o) :: sigma
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: g
+         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: b2am
 !
-      end subroutine jacobian_transpose_sccsd_c1_sccsd  
+      end subroutine jacobian_transpose_sccsd_c1_sccsd
 !
-!  
+!
    end interface
 !
 !
-   interface 
+   interface
 !
 !
 !     -::- Metric submodule interface -::-
@@ -359,9 +356,9 @@ module sccsd_class
 !!       Calculate Overlap (SCCSD)
 !!       Written by Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(sccsd) :: wf 
+         class(sccsd) :: wf
 !
       end subroutine calc_overlap_sccsd
 !
@@ -371,9 +368,9 @@ module sccsd_class
 !!       Calculate ground state overlap (SCCSD)
 !!       Written by Eirik F. Kjønstad, Feb 2018
 !!
-         implicit none 
+         implicit none
 !
-         class(sccsd) :: wf 
+         class(sccsd) :: wf
 !
       end subroutine calc_ground_state_overlap_sccsd
 !
@@ -385,10 +382,10 @@ module sccsd_class
 !!
          implicit none
 !
-         class(sccsd) :: wf 
+         class(sccsd) :: wf
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: r_a_i  ! r_ai 
-         real(dp), dimension(wf%n_t2am, 1)   :: r_aibj ! r_aibj 
+         real(dp), dimension(wf%n_v, wf%n_o) :: r_a_i  ! r_ai
+         real(dp), dimension(wf%n_t2am, 1)   :: r_aibj ! r_aibj
 !
       end subroutine metric_transformation_sccsd
 !
@@ -398,12 +395,12 @@ module sccsd_class
 !!       Construct q (SCCSD)
 !!       Written by Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(sccsd) :: wf 
+         class(sccsd) :: wf
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: q_a_i  ! q_ai 
-         real(dp), dimension(wf%n_t2am, 1)   :: q_aibj ! q_aibj 
+         real(dp), dimension(wf%n_v, wf%n_o) :: q_a_i  ! q_ai
+         real(dp), dimension(wf%n_t2am, 1)   :: q_aibj ! q_aibj
 !
       end subroutine construct_q_sccsd
 !
@@ -413,16 +410,16 @@ module sccsd_class
 !!       Q transformation (SCCSD)
 !!       Written by Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(sccsd) :: wf 
+         class(sccsd) :: wf
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: r_a_i  ! r_ai 
+         real(dp), dimension(wf%n_v, wf%n_o) :: r_a_i  ! r_ai
          real(dp), dimension(wf%n_t2am, 1)   :: r_aibj ! r_aibj
 !
-         logical :: transpose ! If true, transform by Q^T instead of Q  
+         logical :: transpose ! If true, transform by Q^T instead of Q
 !
-      end subroutine Q_transformation_sccsd    
+      end subroutine Q_transformation_sccsd
 !
 !
       module subroutine S_transformation_sccsd(wf, r_a_i, r_aibj)
@@ -432,16 +429,16 @@ module sccsd_class
 !!
          class(sccsd) :: wf
 !
-         real(dp), dimension(wf%n_v, wf%n_o) :: r_a_i 
+         real(dp), dimension(wf%n_v, wf%n_o) :: r_a_i
          real(dp), dimension(wf%n_t2am, 1)   :: r_aibj
 !
       end subroutine S_transformation_sccsd
 !
 !
-   end interface 
+   end interface
 !
 !
-   interface 
+   interface
 !
 !
 !     -::- Excited state submodule interface -::-
@@ -452,9 +449,9 @@ module sccsd_class
 !!       Excited state driver (SCCSD)
 !!       Written by Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(sccsd) :: wf 
+         class(sccsd) :: wf
 !
       end subroutine excited_state_driver_sccsd
 !
@@ -464,11 +461,11 @@ module sccsd_class
 !!       Excited state intersection cycle (SCCSD)
 !!       Written by Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(sccsd) :: wf 
+         class(sccsd) :: wf
 !
-         integer(i15) :: iteration 
+         integer(i15) :: iteration
 !
       end subroutine excited_state_intersection_cycle_sccsd
 !
@@ -478,11 +475,11 @@ module sccsd_class
 !!       Ground state intersection cycle (SCCSD)
 !!       Written by Eirik F. Kjønstad, June 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(sccsd) :: wf 
+         class(sccsd) :: wf
 !
-         integer(i15) :: iteration 
+         integer(i15) :: iteration
 !
       end subroutine ground_state_intersection_cycle_sccsd
 !
@@ -492,11 +489,11 @@ module sccsd_class
 !!       Eigenvector controller (SCCSD)
 !!       Written by Eirik F. Kjønstad, Dec 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(sccsd) :: wf 
+         class(sccsd) :: wf
 !
-         integer(i15), intent(in) :: iteration 
+         integer(i15), intent(in) :: iteration
 !
       end subroutine eigenvector_controller_sccsd
 !
@@ -506,11 +503,11 @@ module sccsd_class
 !!       Ground state eigenvector controller (SCCSD)
 !!       Written by Eirik F. Kjønstad, Dec 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(sccsd) :: wf 
+         class(sccsd) :: wf
 !
-         integer(i15), intent(in) :: iteration 
+         integer(i15), intent(in) :: iteration
 !
       end subroutine ground_state_eigenvector_controller_sccsd
 !
@@ -520,14 +517,14 @@ module sccsd_class
 !!       SCCSD DIIS routine
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(sccsd) :: wf 
+         class(sccsd) :: wf
 !
          integer(i15), intent(in) :: iteration
 !
-         real(dp) :: dt 
-         real(dp) :: t_dt 
+         real(dp) :: dt
+         real(dp) :: t_dt
 !
       end subroutine sccsd_diis_sccsd
 !
@@ -563,7 +560,7 @@ contains
 !
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::
-!  -::- 4. Class subroutines and functions -::- 
+!  -::- 4. Class subroutines and functions -::-
 !  ::::::::::::::::::::::::::::::::::::::::::::
 !
 !
@@ -572,13 +569,13 @@ contains
 !!    Initialize SCCSD object
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
 !!
-      implicit none 
+      implicit none
 !
       class(sccsd) :: wf
 !
       integer(i15) :: unit_input = -1
 !
-!     Set model name 
+!     Set model name
 !
       wf%name = 'SCCSD'
 !
@@ -601,10 +598,10 @@ contains
       wf%implemented%multipliers        = .false.
 !
 !     Read calculation tasks from input file eT.inp
-!     
+!
       call wf%calculation_reader(unit_input)
 !
-!     Initialize the triples amplitude 
+!     Initialize the triples amplitude
 !
       wf%triples = zero
 !
@@ -612,7 +609,7 @@ contains
 !
    !   wf%settings%print_level = 'minimal'
 !
-!     Read SCC specific information 
+!     Read SCC specific information
 !
       call wf%scc_reader(unit_input)
 !
@@ -620,11 +617,11 @@ contains
 !
       close(unit_input)
 !
-!     The thresholds for energies and residuals should be, at least, as strict as the 
-!     overlap threshold 
+!     The thresholds for energies and residuals should be, at least, as strict as the
+!     overlap threshold
 !
       if (wf%excited_state_specifications%energy_threshold .gt. wf%scc_settings%overlap_threshold .or. &
-          wf%excited_state_specifications%residual_threshold .gt. wf%scc_settings%overlap_threshold) then 
+          wf%excited_state_specifications%residual_threshold .gt. wf%scc_settings%overlap_threshold) then
 !
          write(unit_output,'(/t3,a/)') 'Warning: energy or residual threshold too low; changed to equal overlap threshold.'
          flush(unit_output)
@@ -648,7 +645,7 @@ contains
       wf%response_specifications%energy_threshold       = wf%excited_state_specifications%energy_threshold
       wf%response_specifications%residual_threshold     = wf%excited_state_specifications%residual_threshold
 !
-!     Print SCC-specific settings to output file 
+!     Print SCC-specific settings to output file
 !
       write(unit_output,'(/t3,a)') 'General settings for SCC calculation:'
 !
@@ -671,14 +668,14 @@ contains
 !
 !     Read Cholesky AO integrals and transform to MO basis
 !
-      call wf%read_transform_cholesky 
+      call wf%read_transform_cholesky
 !
 !     Initialize (singles and doubles) amplitudes
 !
-      wf%n_t1am = (wf%n_o)*(wf%n_v) 
-      wf%n_t2am = (wf%n_t1am)*(wf%n_t1am + 1)/2 
+      wf%n_t1am = (wf%n_o)*(wf%n_v)
+      wf%n_t2am = (wf%n_t1am)*(wf%n_t1am + 1)/2
 !
-!     Set the number of parameters solved for in the ground state 
+!     Set the number of parameters solved for in the ground state
 !     and excited state equations
 !
       wf%n_parameters = wf%n_t1am + wf%n_t2am
@@ -691,7 +688,7 @@ contains
 !
       if (wf%excited_state_specifications%restart) then
 !
-!           Set restarts to true 
+!           Set restarts to true
 !
             wf%ground_state_specifications%restart = .true.
             wf%excited_state_specifications%restart = .true.
@@ -707,27 +704,27 @@ contains
 !!    Read triples (SCCSD)
 !!    Written by Eirik F. Kjønstad, June 2017
 !!
-!!    Reads the triple amplitude from file, if the file exists. 
+!!    Reads the triple amplitude from file, if the file exists.
 !!    Note: the assumption is that if it exists it should and will be read.
 !!
-      implicit none 
+      implicit none
 !
-      class(sccsd) :: wf 
+      class(sccsd) :: wf
 !
       logical :: file_exists = .false.
 !
       integer(i15) :: unit_triples = -1
 !
-!     Check to see whether file exists  
+!     Check to see whether file exists
 !
       inquire(file='triples',exist=file_exists)
 !
-      if (file_exists) then 
+      if (file_exists) then
 !
          call generate_unit_identifier(unit_triples)
          open(unit_triples, file='triples', status='unknown', form='unformatted')
          rewind(unit_triples)
-         read(unit_triples) wf%triples 
+         read(unit_triples) wf%triples
 !
          write(unit_output,'(/t3,a,/t3,a)') &
             'Found a triple amplitude on file.', 'Restarting with stored triple amplitude.'

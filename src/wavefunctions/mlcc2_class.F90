@@ -12,7 +12,7 @@ module mlcc2_class
 !!
 !!       1. Modules used by the class:
 !!
-!!             Basic utilities and the ancestor class
+!!             Multilevel tools, the ancestor class (CCS), and all modules therein
 !!
 !!       2. Definition of the class:
 !!
@@ -47,11 +47,6 @@ module mlcc2_class
 !
 !  General tools
 !
-   use types
-   use utils
-   use workspace
-   use input_output
-   use input_reader
    use mlcc_orbitals_class
    use mlcc_calculation_settings_class
 !
