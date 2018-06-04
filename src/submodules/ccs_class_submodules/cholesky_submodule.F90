@@ -1,7 +1,7 @@
-submodule(ccs_class) cholesky
+submodule (ccs_class) cholesky
 !
 !!
-!!    Cholesky sub(CCS)
+!!    Cholesky submodule (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
 !!    Contains the following family of procedures of the CCS class:
@@ -553,7 +553,6 @@ contains
 !
 !        :: L_ij_J contributions ::
 !
-!
 !        Allocate L_a_iJ, L_ik_J, L_k_iJ
 !
          call wf%mem%alloc(L_a_iJ, wf%n_v, (wf%n_J)*(wf%n_o))
@@ -599,7 +598,6 @@ contains
 !
 !
 !        :: L_jb_J contributions ::
-!
 !
          call wf%mem%alloc(L_kJ_b, (wf%n_o)*(wf%n_J), wf%n_v)
          call wf%mem%alloc(L_kb_J, (wf%n_o)*(wf%n_v), wf%n_J)
@@ -701,7 +699,6 @@ contains
 !!
 !!       L_ab_J_T1 = L_ab_J - sum_i t_ai*L_ib_J
 !!
-!!
 !!    Required memory:
 !!
 !!       n_J*b_length*a_length       ->   For reordering of L_ab_J / L_ba_J
@@ -722,8 +719,6 @@ contains
       integer(i15) :: memory_lef = 0
 !
       integer :: unit_chol_ab = -1 ! Unit identifier for cholesky_ab file
-!
-      integer :: a = 0, b = 0, J = 0, i = 0, ia = 0, aJ = 0, ib = 0, Jb = 0, ab = 0, ba = 0
 !
       real(dp), dimension(:,:), allocatable :: L_ib_J
       real(dp), dimension(:,:), allocatable :: L_Jb_i
@@ -756,19 +751,9 @@ contains
       call wf%mem%alloc(L_Jb_i, (wf%n_J)*b_length, wf%n_o)
 !
 !     Reorder L_ib_J to L_Jb_i
+!     L_Jb_i(Jb, i) = L_ib_J(ib, J)
 !
-      do i = 1, wf%n_o
-         do b = 1, b_length
-            do J = 1, wf%n_J
-!
-               ib = index_two(i, b, wf%n_o)
-               Jb = index_two(J, b, wf%n_J)
-!
-               L_Jb_i(Jb, i) = L_ib_J(ib, J)
-!
-            enddo
-         enddo
-      enddo
+      call sort_123_to_321(L_ib_J, L_Jb_i, wf%n_o, b_length, wf%n_J)
 !
 !     Dellocate L_ib_J
 !
@@ -803,5 +788,6 @@ contains
       call wf%mem%dealloc(L_Jb_i, (wf%n_J)*b_length, wf%n_o)
 !
    end subroutine get_cholesky_ab_ccs
+!
 !
 end submodule cholesky
