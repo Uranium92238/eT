@@ -20,7 +20,6 @@ submodule (ccs_class) cholesky
 contains
 !
 !
-
    module subroutine get_cholesky_ij_ccs(wf, L_ij_J, i_first, i_last, j_first, j_last)
 !!
 !!    Get Cholesky IJ
