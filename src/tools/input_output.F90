@@ -5,17 +5,21 @@ module input_output
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, April 2017
 !!
 !!    Handles input and output and contains:
-!! 
-!!    generate_unit_identifier: Returns a free unit_identifier which can be assigned to a file that is opened. 
-!!    vec_print:                Prints vector in compound index order.  
-!!            
+!!
+!!    generate_unit_identifier: Returns a free unit_identifier which can be assigned to a file that is opened.
+!!    vec_print:                Prints vector in compound index order.
+!!
+!!    Note, June 2018, EFK. THIS MODULE SHOULD BE REMOVED ONCE ALL CALLS TO
+!!    GENERATE UNIT IDENTIFIER ARE GONE. REMEMBER TO MOVE "UNIT_OUTPUT"
+!!    TO SOME OTHER POSITION WHEN DELETING THE MODULE.
+!!
 !
    use types
 !
    implicit none
 !
-   integer(i15) :: unit_output = 0 
-   integer, private :: n_files = 0 
+   integer(i15) :: unit_output = 0
+   integer, private :: n_files = 0
 !
 contains
 !
@@ -25,7 +29,7 @@ contains
 !!    Generate unit identifier
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, April 2017
 !!
-!!    Returns a valid unit identifier for opening file. 
+!!    Returns a valid unit identifier for opening file.
 !!
       implicit none
 !

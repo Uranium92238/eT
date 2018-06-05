@@ -13,7 +13,7 @@ module ccs_class
 !!
 !!       1. Modules used by the class:
 !!
-!!             Basic utilities and the ancestor class (HF)
+!!             The ancestor class (HF) and all modules therein
 !!
 !!       2. Definition of the class:
 !!
@@ -35,7 +35,6 @@ module ccs_class
 !!                - Jacobian Transpose (left transformation)
 !!                - Ionized State
 !!                - CVS
-!!                - Vector analysis
 !!
 !!             The interfaces shows incoming variables and their type, but contains
 !!             no information of the procedure itself. The procedure is shown in full
@@ -52,14 +51,6 @@ module ccs_class
 !  ::::::::::::::::::::::::::::::::::::::
 !  -::- 1. Modules used by the class -::-
 !  ::::::::::::::::::::::::::::::::::::::
-!
-!
-!  General tools
-!
-   use types
-   use utils
-   use workspace
-   use input_output
 !
 !  The ancestor class module (HF)
 !
@@ -167,7 +158,6 @@ module ccs_class
       procedure :: print_excited_state_info         => print_excited_state_info_ccs
       procedure :: print_excitation_vector          => print_excitation_vector_ccs
 !
-      procedure :: analyze_single_excitation_vector => analyze_single_excitation_vector_ccs
       procedure :: summary_excited_state_info       => summary_excited_state_info_ccs
 !
 !     Valence excited states specific routines
@@ -295,6 +285,8 @@ module ccs_class
 !     -----------------------------------------
 !
       procedure, non_overridable :: initialize_fock_matrix => initialize_fock_matrix_ccs
+      procedure, non_overridable :: destruct_fock_matrix   => destruct_fock_matrix_ccs
+!
       procedure, non_overridable :: construct_fock         => construct_fock_ccs
       procedure, non_overridable :: one_electron_t1        => one_electron_t1_ccs
 !
@@ -338,12 +330,6 @@ module ccs_class
       procedure :: cvs_residual_projection => cvs_residual_projection_ccs
 !
 !
-!     -::- Vector analysis submodule routine pointers -::-
-!     ----------------------------------------
-!
-      procedure :: print_dominant_singles => print_dominant_singles_ccs
-!
-!
 !     -::- Other class routine pointers not located in submodules -::-
 !     ----------------------------------------------------------------
 !
@@ -373,6 +359,7 @@ module ccs_class
 !     Routine to save the amplitudes to disk
 !
       procedure :: save_amplitudes        => save_amplitudes_ccs
+      procedure :: save_single_amplitudes => save_single_amplitudes_ccs
 !
 !     Routines to read the amplitudes from disk (and allocate if necessary)
 !
@@ -841,28 +828,6 @@ module ccs_class
          integer(i15) :: unit_id
 !
       end subroutine print_excitation_vector_ccs
-!
-!
-      module subroutine analyze_single_excitation_vector_ccs(wf, vec, n, sorted_short_vec, index_list)
-!!
-!!       Analyze Single Excitation Vector (CCS)
-!!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, Nov 2017
-!!
-         implicit none
-!
-         class(ccs) :: wf
-!
-         real(dp), dimension(wf%n_o*wf%n_v, 1) :: vec
-!
-         integer(i15) :: a = 0, i = 0, ai = 0
-!
-         integer(i15) :: n    ! Number of elements wanted
-!
-         real(dp), dimension(n, 1)    :: sorted_short_vec
-!
-         integer(i15), dimension(n, 2) ::index_list
-!
-      end subroutine analyze_single_excitation_vector_ccs
 !
 !
       module subroutine summary_excited_state_info_ccs(wf, energies)
@@ -2257,7 +2222,7 @@ module ccs_class
 !
       module subroutine initialize_fock_matrix_ccs(wf)
 !!
-!!       Initialize Fock Matrix
+!!       Initialize Fock matrix
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
          implicit none
@@ -2265,6 +2230,18 @@ module ccs_class
          class(ccs) :: wf
 !
       end subroutine initialize_fock_matrix_ccs
+!
+!
+      module subroutine destruct_fock_matrix_ccs(wf)
+!!
+!!       Destruct Fock matrix
+!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2018
+!!
+         implicit none
+!
+         class(ccs) :: wf
+!
+      end subroutine destruct_fock_matrix_ccs
 !
 !
       module subroutine construct_fock_ccs(wf)
@@ -2530,30 +2507,6 @@ module ccs_class
    end interface
 !
 !
-   interface
-!
-!
-!     -::- Vector analysis submodule interface -::-
-!     ------------------------------------------
-!
-      module subroutine print_dominant_singles_ccs(wf, vec, norm)
-!!
-!!       Print dominant singles (CCS)
-!!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
-!!
-         implicit none
-!
-         class(ccs) :: wf
-!
-         real(dp), dimension(:, :) :: vec
-         real(dp), optional :: norm
-!
-      end subroutine print_dominant_singles_ccs
-!
-!
-   end interface
-!
-!
 contains
 !
 !
@@ -2567,13 +2520,30 @@ contains
 !!    Initialize CCS object
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!    Performs the following tasks
+!!    Wavefunction initialization. The tasks performed are, in broad terms:
 !!
-!!    - Sets HF orbital and energy information by reading from file
-!!    - Transforms AO Cholesky vectors to MO basis and saves to file
-!!    - Allocates the singles amplitudes and sets them to zero, and sets associated properties
-!!    - Allocates the omega vector and sets it to zero
-!!    - Initializes the Fock matrix and sets it to zero
+!!    a) Read the input file to determine general specifications
+!!       (model type, memory, disk space, etc.), the requested
+!!       calculations (ground state, excited state, etc.) with associated
+!!       settings (thresholds, number of iterations, etc.). For more information,
+!!       see the input reader submodule for the reader-type routines.
+!!
+!!    b) Set wavefunction settings. This includes the name of the object,
+!!       used mainly for printing, and also which methods are implemented,
+!!       which is used to stop calculations that are not possible to execute
+!!       given what is currently implemented. Moreover, a couple of central
+!!       attributes are set (number of occupied and virtual orbitals, single
+!!       and double amplitudes, and the number of variables, which is used
+!!       by solvers in particular)
+!!
+!!    c) Hartree-Fock Dalton interface. This includes reading Hartree-Fock
+!!       results (orbital coefficients and orbital attributes, see b)) and
+!!       Cholesky decomposition files (for atomic Cholesky vectors).
+!!
+!!    One or more of a)-c) are different for different wavefunctions,
+!!    so most new wavefunction has to have an overwritten initialization
+!!    routine. This is in contrast to the driver subroutines, which are
+!!    mostly kept in the CCS form for the entire hierarchy.
 !!
       implicit none
 !
@@ -2632,7 +2602,7 @@ contains
 !
 !     Allocate Fock matrix and set to zero
 !
-      call wf%initialize_single_amplitudes ! t1am allocated, then set to zero
+      call wf%initialize_single_amplitudes
       call wf%initialize_fock_matrix
 !
    end subroutine init_ccs
@@ -2665,9 +2635,11 @@ contains
 !
             write(unit_output,'(t3,a,a)') &
                'Error: ground state solver not implemented for ',trim(wf%name)
+            flush(unit_output)
             stop
 !
          endif
+!
       endif
 !
       if (wf%tasks%excited_state) then
@@ -2765,7 +2737,8 @@ contains
 !!    Initialize single amplitudes (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-!!    Allocates the singles amplitudes, sets them to zero.
+!!    Allocates the singles amplitudes if they are not allocated,
+!!    then sets them to zero.
 !!
       implicit none
 !
@@ -2777,13 +2750,15 @@ contains
       if (.not. allocated(wf%t1am)) then
 !
          call wf%mem%alloc(wf%t1am, wf%n_v, wf%n_o)
-         wf%t1am = zero
 !
       else
 !
-         write(unit_output,'(t3,a)') 'Warning: attempted to allocate and zero already allocated t1am'
+         write(unit_output,'(/t3,a)') 'Warning: attempted to allocate and zero already allocated t2am.'
+         write(unit_output,'(t3,a)')  'This is a bug. Be aware that the vector is zeroed anyway.'
 !
       endif
+!
+      wf%t1am = zero
 !
    end subroutine initialize_single_amplitudes_ccs
 !
@@ -2895,27 +2870,44 @@ contains
 !!    Save amplitudes (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
 !!
-!!    Store the amplitudes to disk (T1AM)
+!!    Stores the amplitudes to disk
 !!
       implicit none
 !
       class(ccs) :: wf
 !
-      integer(i15) :: unit_t1am = -1
+      call wf%save_single_amplitudes
+!
+   end subroutine save_amplitudes_ccs
+!
+!
+   subroutine save_single_amplitudes_ccs(wf)
+!!
+!!    Save single amplitudes
+!!    Written by Sarai D. Folkestad and Eirik F. Kjøsntad, May 2017
+!!
+!!    Stores the single amplitudes to disk
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      type(file) :: t1am_file
 !
 !     Open amplitude file
 !
-      call generate_unit_identifier(unit_t1am)
-      open(unit_t1am, file='t1am', status='unknown', form='unformatted')
-      rewind(unit_t1am)
+      t1am_file%name = 't1am'
+      call wf%disk%open_file(t1am_file, 'unformatted', 'write', 'sequential')
 !
-      write(unit_t1am) wf%t1am
+!     Write the amplitudes
+!
+      write(t1am_file%unit) wf%t1am
 !
 !     Close amplitude file
 !
-      close(unit_t1am)
+      call wf%disk%close_file(t1am_file)
 !
-   end subroutine save_amplitudes_ccs
+   end subroutine save_single_amplitudes_ccs
 !
 !
    subroutine read_single_amplitudes_ccs(wf)
@@ -2930,7 +2922,7 @@ contains
 !
       class(ccs) :: wf
 !
-      integer(i15) :: unit_t1am = -1
+      type(file) :: t1am_file
 !
       logical :: file_exists = .false.
 !
@@ -2942,11 +2934,8 @@ contains
 !
 !        Open amplitude files if they exist
 !
-         call generate_unit_identifier(unit_t1am)
-!
-         open(unit_t1am, file='t1am', status='unknown', form='unformatted')
-!
-         rewind(unit_t1am)
+         t1am_file%name = 't1am'
+         call wf%disk%open_file(t1am_file, 'unformatted', 'read', 'sequential')
 !
 !        Allocate amplitudes if they aren't allocated
 !
@@ -2959,15 +2948,16 @@ contains
 !
 !        Read from file
 !
-         read(unit_t1am) wf%t1am
+         read(t1am_file%unit) wf%t1am
 !
 !        Close file
 !
-         close(unit_t1am)
+         call wf%disk%close_file(t1am_file)
 !
       else
 !
-         write(unit_output,'(t3,a)') 'Error: amplitude file t1am does not exist.'
+         write(unit_output,'(t3,a)') 'Error: attempted to read single amplitudes from file,'
+         write(unit_output,'(t3,a)') 'but the file does not appear to exist.'
          stop
 !
       endif
@@ -2980,7 +2970,10 @@ contains
 !!    Destruct amplitudes (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-!!    Deallocates the amplitudes.
+!!    Deallocates the amplitudes. The reason for including a special
+!!    destruct routine is that sometimes one may want to make sure the
+!!    amplitudes are deallocated, without wanting to actually deallocate
+!!    an existing vector (introducing errors in available memory estimation)
 !!
       implicit none
 !

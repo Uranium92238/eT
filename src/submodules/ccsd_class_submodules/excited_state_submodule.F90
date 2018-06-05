@@ -307,135 +307,6 @@ contains
    end subroutine excited_state_preparations_ccsd
 !
 !
-   module subroutine analyze_double_excitation_vector_ccsd(wf, vec, n, sorted_short_vec, index_list)
-!!
-!!    Analyze double excitation vector
-!!    Written by Sarai D. Folkestad, Oct 2017
-!!
-!!    Sorts the double excitation part of the excited state according to size,
-!!    in order for the print routine to show the largest contributions
-!!    in the printout information.
-!!
-      implicit none
-!
-      class(ccsd) :: wf
-!
-      real(dp), dimension(wf%n_t2am, 1) :: vec
-!
-      integer(i15) :: a = 0, i = 0, ai = 0, b = 0, j = 0, bj = 0, aibj = 0, k = 0
-!
-      integer(i15) :: n    ! Number of elements wanted
-!
-      real(dp), dimension(n, 1)    :: sorted_short_vec
-!
-      integer(i15), dimension(n, 4) ::index_list
-!
-!     Variables for sorting
-!
-      real(dp)     :: min
-      integer(i15) :: min_pos
-!
-      real(dp)     :: swap     = zero
-      integer(i15) :: swap_i = 0, swap_a = 0, swap_j = 0, swap_b = 0
-!
-!     Placing the n first elements of vec into sorted_short_vec
-!
-      index_list = 0
-      sorted_short_vec(1,1) = vec(1,1)
-      index_list(1,1) = 1 ! a
-      index_list(1,2) = 1 ! i
-      index_list(1,3) = 1 ! b
-      index_list(1,4) = 1 ! j
-!
-      min = abs(sorted_short_vec(1,1))
-      min_pos = 1
-!
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
-            do j = 1, wf%n_o
-               do b = 1, wf%n_v
-!
-                  ai = index_two(a,i, wf%n_v)
-                  bj = index_two(b,j, wf%n_v)
-!
-                  if (ai .ge. bj) then
-!
-                     aibj = index_packed(ai,bj)
-!
-                     if (aibj .le. n) then
-                        sorted_short_vec(aibj,1)   = vec(aibj,1)
-                        index_list(aibj,1)      = a
-                        index_list(aibj,2)      = i
-                        index_list(aibj,3)      = b
-                        index_list(aibj,4)      = j
-!
-                        if (abs(sorted_short_vec(i,1)) .le. min) then
-!
-                           min = abs(sorted_short_vec(i,1))
-                           min_pos = aibj
-!
-                        endif
-                     else
-!
-                     if (abs(vec(aibj,1)) .ge. min) then
-!
-                        sorted_short_vec(min_pos,1) = vec(aibj,1)
-                        index_list(min_pos,1) = a
-                        index_list(min_pos,2) = i
-                        index_list(min_pos,3) = b
-                        index_list(min_pos,4) = j
-                        min = abs(vec(aibj,1))
-!
-                     endif
-                  endif
-!
-                  do k = 1, n
-                     if (abs(sorted_short_vec(k, 1)) .lt. min) then
-!
-                        min = abs(sorted_short_vec(k, 1))
-                        min_pos = k
-!
-                     endif
-                  enddo
-               endif
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!
-!      Sorting sorted_short_vec
-!
-       do i = 1, n
-          do j = 1, n - 1
-             if (abs(sorted_short_vec(j,1)) .lt. abs(sorted_short_vec(j+1, 1))) then
-!
-                swap = sorted_short_vec(j,1)
-                sorted_short_vec(j,1) = sorted_short_vec(j+1, 1)
-                sorted_short_vec(j+1, 1) = swap
-!
-                swap_a = index_list(j, 1)
-                swap_i = index_list(j, 2)
-                swap_b = index_list(j, 3)
-                swap_j = index_list(j, 4)
-!
-                index_list(j,1) = index_list(j + 1,1)
-                index_list(j,2) = index_list(j + 1,2)
-                index_list(j,3) = index_list(j + 1,3)
-                index_list(j,4) = index_list(j + 1,4)
-                index_list(j + 1,1) = swap_a
-                index_list(j + 1,2) = swap_i
-                index_list(j + 1,3) = swap_b
-                index_list(j + 1,4) = swap_j
-!
-             endif
-          enddo
-       enddo
-!
-!
-   end subroutine analyze_double_excitation_vector_ccsd
-!
-!
    module subroutine summary_excited_state_info_ccsd(wf, energies)
 !!
 !!    Summary of excited state info (CCSD)
@@ -449,22 +320,18 @@ contains
 !
       real(dp), dimension(wf%excited_state_specifications%n_singlet_states, 1) :: energies
 !
-      integer(i15) :: unit_solution = -1, ioerror = 0
+      type(file) :: solution_file
+!
       integer(i15) :: state = 0
 !
       real(dp), dimension(:,:), allocatable :: solution_ai, solution_aibj
 !
-      real(dp) :: norm_singles ! Note: the total vector is normalized in this case
+      real(dp) :: norm_sq_singles ! Note: the total vector is normalized in this case
 !
 !     Open solution vector file
 !
-      call generate_unit_identifier(unit_solution)
-!
-      open(unit=unit_solution, file=wf%excited_state_specifications%solution_file, &
-            action='read', status='unknown', &
-            access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror)
-!
-      if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file'
+      solution_file%name = wf%excited_state_specifications%solution_file
+      call wf%disk%open_file(solution_file, 'unformatted', 'read', 'direct', dp*(wf%n_parameters))
 !
 !     Allocations
 !
@@ -473,23 +340,25 @@ contains
 !
       do state = 1, wf%excited_state_specifications%n_singlet_states
 !
-         write(unit_output,'(/t3,a30,i3,a1/)')'Analysis of excitation vector ',state, ':'
-         write(unit_output,'(t6, a, f14.8)')'Excitation energy [a.u.]:   ', energies(state,1)
-         write(unit_output,'(t6, a, f14.8)')'Excited state energy [a.u.]:', wf%energy + energies(state,1)
+         write(unit_output,'(/t3,a30,i3,a1/)') 'Analysis of excitation vector ',state, ':'
+         write(unit_output,'(t6, a, f14.8)')    'Excitation energy [a.u.]:   ', energies(state,1)
+         write(unit_output,'(t6, a, f14.8/)')   'Excited state energy [a.u.]:', wf%energy + energies(state,1)
 !
 !        Read the solution
 !
-         solution_ai    = zero
-         solution_aibj  = zero
-         read(unit_solution, rec=state) solution_ai, solution_aibj
+         solution_ai   = zero
+         solution_aibj = zero
+!
+         read(solution_file%unit, rec=state) solution_ai, solution_aibj
 !
 !        Print dominant single & double excitations
 !
-         call wf%print_dominant_singles(solution_ai, norm_singles)
-         call wf%print_dominant_doubles(solution_aibj)
-!
+         norm_sq_singles = dot_product(solution_ai, solution_ai, wf%n_t1am)
+         call print_dominant_two_index(solution_ai, wf%n_v, wf%n_o, 'a', 'i')
+         call print_dominant_four_index(solution_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o, &
+                                                         'a', 'i', 'b', 'j')
          write(unit_output,'(/t6,a41,f14.12/)') &
-               'Singles contribution to the full vector: ', norm_singles**2
+               'Singles contribution to the full vector: ', norm_sq_singles
 !
       enddo
 !
@@ -498,7 +367,7 @@ contains
       call wf%mem%dealloc(solution_ai, wf%n_t1am, 1)
       call wf%mem%dealloc(solution_aibj, wf%n_t2am, 1)
 !
-      close(unit_solution)
+      call wf%disk%close_file(solution_file)
 !
    end subroutine summary_excited_state_info_ccsd
 !

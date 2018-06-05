@@ -1,21 +1,21 @@
 submodule (mlcc2_class) excited_state
 !
 !!
-!!    Excited state submodule (MLCC2) 
+!!    Excited state submodule (MLCC2)
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, June 2017
 !!
 !!    Contains the following family of procedures of the MLCC2 class:
 !!
 !!    inititialize_excited_states: Initializes number of s2 amplitudes (n_x2am), and adds it n_parameters
-!!    calculate_orbital_differences: Calculates the orbital differences, including the double excitation differences 
+!!    calculate_orbital_differences: Calculates the orbital differences, including the double excitation differences
 !!                                   in the active CC2 spaces
 !!    transform_trial_vectors: Transforms the new trial vectors. rho = Ac
 !!
 !!    Upper case indices are general indices, lower case indices are restricted
 !!    to the CC2 orbital space.
-!! 
+!!
 !
-   implicit none 
+   implicit none
 !
    logical :: debug   = .false.
    logical :: timings = .false.
@@ -30,18 +30,18 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
 !!    A routine for preparation tasks (if any). Can be overwritten
-!!    in descendants if other preparations prove necessary.    
+!!    in descendants if other preparations prove necessary.
 !!
-      class(mlcc2) :: wf 
+      class(mlcc2) :: wf
 !
-!     Set current task to excited state calculation 
-! 
+!     Set current task to excited state calculation
+!
       wf%tasks%current = 'excited_state'
 !
 !     Now we have explicit double vectors (trials)
 !
       wf%n_x2am = ((wf%n_CC2_v)*(wf%n_CC2_o))&
-                   *((wf%n_CC2_v )*(wf%n_CC2_o)+1)/2 
+                   *((wf%n_CC2_v )*(wf%n_CC2_o)+1)/2
 !
       wf%n_parameters = wf%n_parameters + wf%n_x2am
 !
@@ -77,13 +77,13 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2017
 !!
 !!    A routine for cleanup tasks (if any). Can be overwritten
-!!    in descendants if other cleanups prove necessary.    
+!!    in descendants if other cleanups prove necessary.
 !!
       implicit none
 !
-      class(mlcc2) :: wf 
+      class(mlcc2) :: wf
 !
-!     Deallocate the amplitudes 
+!     Deallocate the amplitudes
 !
       call wf%destruct_single_amplitudes
       call wf%destruct_cc2_double_amplitudes
@@ -101,7 +101,7 @@ contains
 !!       1) ε_I^A = ε_A - ε_I
 !!       2) ε_ij^ab = ε_a + ε_b - ε_i - ε_j (for active spaces only)
 !!
-!!    and puts them in orbital_diff, which is a vector of length n_parameters.        
+!!    and puts them in orbital_diff, which is a vector of length n_parameters.
 !!
       implicit none
 !
@@ -111,12 +111,12 @@ contains
 !
 !     Active space variables
 !
-      integer(i15) :: first_active_o ! first active occupied index 
+      integer(i15) :: first_active_o ! first active occupied index
       integer(i15) :: first_active_v ! first active virtual index
-      integer(i15) :: last_active_o ! last active occupied index 
+      integer(i15) :: last_active_o ! last active occupied index
       integer(i15) :: last_active_v ! last active virtual index
       integer(i15) :: n_active_o
-      integer(i15) :: n_active_v         
+      integer(i15) :: n_active_v
 !
       integer(i15) :: offset = 0
 !
@@ -135,7 +135,7 @@ contains
       enddo
 !
 !     Calculate active space indices
-! 
+!
       call wf%get_CC2_active_indices(first_active_o, first_active_v)
       call wf%get_CC2_n_active(n_active_o, n_active_v)
 !
@@ -175,7 +175,7 @@ contains
 !!    Each trial vector in first_trial to last_trial is read from file and
 !!    transformed before the transformed vector is written to file.
 !!
-!!    Singles and doubles part of the transformed vectors are written to 
+!!    Singles and doubles part of the transformed vectors are written to
 !!    the same record in file transformed_vec, record length is n_parameters long.
 !!
       implicit none
@@ -188,16 +188,16 @@ contains
       real(dp), dimension(:,:), allocatable :: c_aibj
 !
       integer(i15) :: unit_trial_vecs = 0, unit_rho = 0, ioerror = 0
-      integer(i15) :: trial = 0 
+      integer(i15) :: trial = 0
 !
 !
 !     Allocate c_a_i and c_aibj
 !
       call wf%mem%alloc(c_a_i, wf%n_v, wf%n_o)
-      c_a_i = zero 
+      c_a_i = zero
 !
       call wf%mem%alloc(c_aibj, wf%n_x2am, 1)
-      c_aibj = zero 
+      c_aibj = zero
 !
 !     Open trial vector- and transformed vector files
 !
@@ -209,8 +209,8 @@ contains
       open(unit=unit_rho, file='transformed_vec', action='write', status='unknown', &
            access='direct', form='unformatted', recl=dp*wf%n_parameters, iostat=ioerror)
 !
-!     For each trial vector: read, transform and write  
-!  
+!     For each trial vector: read, transform and write
+!
       do trial = first_trial, last_trial
 !
          read(unit_trial_vecs, rec=trial, iostat=ioerror) c_a_i, c_aibj
@@ -232,10 +232,10 @@ contains
 !
 !        -::- Projections -::-
 !
-!        Test for core calculation 
+!        Test for core calculation
 !
          if (wf%tasks%core_excited_state .or. wf%tasks%core_ionized_state) then
-!  
+!
 !           Project out contamination from valence contributions
 !
             call wf%cvs_rho_a_i_projection(c_a_i)
@@ -252,17 +252,17 @@ contains
             write(unit_output,*)'Error: Ionized state not implemented for mlcc2'
             stop
 !
-         endif     
+         endif
 !
          write(unit_rho, rec=trial, iostat=ioerror) c_a_i, c_aibj
 !
       enddo
-            
+
 !
 !     Close files
 !
-      close(unit_trial_vecs) 
-      close(unit_rho)                                
+      close(unit_trial_vecs)
+      close(unit_rho)
 !
 !     Deallocate c_a_i and c_aibj
 !
@@ -274,8 +274,8 @@ contains
 !
    module subroutine cvs_residual_projection_mlcc2(wf, residual)
 !!
-!!    Residual projection (MLCC2), 
-!!    Written by Sarai D. Folkestad Aug. 2017    
+!!    Residual projection (MLCC2),
+!!    Written by Sarai D. Folkestad Aug. 2017
 !!
       implicit none
 !
@@ -287,13 +287,13 @@ contains
       logical :: core_orbital
 !
 !     Active space variables
-!     
+!
       integer(i15) :: n_active_o = 0, n_active_v = 0
-      integer(i15) :: first_active_o ! first active occupied index 
+      integer(i15) :: first_active_o ! first active occupied index
       integer(i15) :: first_active_v ! first active virtual index
-      integer(i15) :: last_active_o ! first active occupied index 
+      integer(i15) :: last_active_o ! first active occupied index
       integer(i15) :: last_active_v ! first active virtual index
-!     
+!
       call wf%get_CC2_n_active(n_active_o, n_active_v)
 !
       do i = 1, wf%n_o
@@ -347,12 +347,12 @@ contains
 !!
 !!
          implicit none
-!  
+!
          class(mlcc2) :: wf
 !
          real(dp), dimension(wf%n_parameters, 1) :: vec
 !
-         integer(i15) :: unit_id     
+         integer(i15) :: unit_id
 !
          integer(i15) :: a = 0, i = 0, ai = 0, b = 0, j = 0, bj = 0, aibj = 0
          integer(i15) :: n_active_o, n_active_v
@@ -365,7 +365,7 @@ contains
 !
          do a = 1, wf%n_v
             do i = 1, wf%n_o
-!  
+!
                ai = index_two(a, i, wf%n_v)
                if (abs(vec(ai, 1)) .gt. 1.0D-03) then
                   write(unit_id,'(2i6,f12.4)') a, i, vec(ai, 1)
@@ -400,7 +400,7 @@ contains
          enddo
       enddo
 !
-!    
+!
 !
       a_active_i_active       = 0
       a_inactive_i_active     = 0
@@ -451,24 +451,24 @@ contains
 !!
 !!
       implicit none
-!  
+!
       class(mlcc2) :: wf
 !
-      real(dp), dimension(wf%n_x2am, 1) :: vec    
+      real(dp), dimension(wf%n_x2am, 1) :: vec
 !
       integer(i15) :: a = 0, i = 0, ai = 0, b = 0, j = 0, bj = 0, aibj = 0, k = 0
 !
       integer(i15) :: n    ! Number of elements wanted
-!  
+!
       real(dp), dimension(n, 1)    :: sorted_short_vec
-!  
+!
       integer(i15), dimension(n, 4) ::index_list
-!  
+!
 !     Variables for sorting
-!  
+!
       real(dp)     :: min
       integer(i15) :: min_pos
-!  
+!
       real(dp)     :: swap     = zero
       integer(i15) :: swap_i = 0, swap_a = 0, swap_j = 0, swap_b = 0
 !
@@ -478,7 +478,7 @@ contains
 !
 !     Placing the n first elements of vec into sorted_short_vec
 !
-      index_list = 0 
+      index_list = 0
       sorted_short_vec(1,1) = vec(1,1)
       index_list(1,1) = 1
       index_list(1,2) = 1
@@ -540,18 +540,18 @@ contains
                enddo
             enddo
          enddo
-      enddo  
-! 
+      enddo
+!
 !      Sorting sorted_short_vec
-! 
+!
        do i = 1, n
           do j = 1, n - 1
              if (abs(sorted_short_vec(j,1)) .lt. abs(sorted_short_vec(j+1, 1))) then
-! 
+!
                 swap = sorted_short_vec(j,1)
                 sorted_short_vec(j,1) = sorted_short_vec(j+1, 1)
                 sorted_short_vec(j+1, 1) = swap
-! 
+!
                 swap_a = index_list(j, 1)
                 swap_i = index_list(j, 2)
                 swap_b = index_list(j, 3)
@@ -565,11 +565,11 @@ contains
                 index_list(j + 1,2) = swap_i
                 index_list(j + 1,3) = swap_b
                 index_list(j + 1,4) = swap_j
-! 
+!
              endif
           enddo
        enddo
-! 
+!
 !
        end subroutine analyze_double_excitation_vector_mlcc2
 !
@@ -579,7 +579,7 @@ contains
 !!
 !!
       implicit none
-!  
+!
       class(mlcc2) :: wf
 !
       real(dp), dimension(wf%excited_state_specifications%n_singlet_states,1) :: energies
@@ -592,20 +592,20 @@ contains
  !
       integer(i15), dimension(:,:), allocatable :: index_list_singles, index_list_doubles
 !
-      real(dp) :: norm, ddot
+      real(dp) :: norm_sq_singles, ddot
       real(dp) :: a_active_i_active, a_active_i_inactive, a_inactive_i_active, a_inactive_i_inactive, total
 !
       integer(i15) :: n_active_o, n_active_v
 !
       call wf%get_CC2_n_active(n_active_o, n_active_v)
-!  
+!
 !     Open solution vector file
-!  
+!
       call generate_unit_identifier(unit_solution)
 !
       open(unit=unit_solution, file=wf%excited_state_specifications%solution_file,&
             action='read', status='unknown', &
-            access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror) 
+            access='direct', form='unformatted', recl=dp*(wf%n_parameters), iostat=ioerror)
 !
       if (ioerror .ne. 0) write(unit_output,*) 'Error while opening solution file'
 !
@@ -622,74 +622,25 @@ contains
 !
       do state = 1, wf%excited_state_specifications%n_singlet_states
 !
-         write(unit_output,'(/t3,a30,i3,a1/)')'Analysis of excitation vector ',state, ':' 
+         write(unit_output,'(/t3,a30,i3,a1/)')'Analysis of excitation vector ',state, ':'
          write(unit_output,'(t6, a, f14.8)')'Excitation energy [a.u.]:   ', energies(state,1)
-         write(unit_output,'(t6, a, f14.8)')'Excited state energy [a.u.]:', wf%energy + energies(state,1)
-! 
+         write(unit_output,'(t6, a, f14.8/)')'Excited state energy [a.u.]:', wf%energy + energies(state,1)
+!
 !        Read the solution
 !
          solution_ai    = zero
          solution_aibj  = zero
          read(unit_solution, rec=state) solution_ai, solution_aibj
 !
-!        Calculate the contribution from single excitations
+!        Print dominant single & double excitations
 !
-         norm = sqrt(ddot(wf%n_t1am, solution_ai,1,solution_ai,1))
-         write(unit_output,'(/t6,a,f6.4)')'Single excitation contribution to excitation vector: ', norm
+         norm_sq_singles = dot_product(solution_ai, solution_ai, wf%n_t1am)
+         call print_dominant_two_index(solution_ai, wf%n_v, wf%n_o, 'a', 'i')
+         call print_dominant_four_index(solution_aibj, n_active_v, n_active_o, n_active_v, n_active_o, &
+                                                         'a', 'i', 'b', 'j')
+         write(unit_output,'(/t6,a41,f14.12/)') &
+               'Singles contribution to the full vector: ', norm_sq_singles
 !
-!        Analysis of excitation vectors
-!
-         write(unit_output,'(/t6,a)') 'Largest contributions to excitation vector:' 
-!
-         write(unit_output,'(t6,a32)')'------------------------------------------------------'
-         write(unit_output,'(t6,a3, 8x, a3, 8x, a10)')'a', 'i', 'amplitude'
-         write(unit_output,'(t6,a32)')'------------------------------------------------------'
-!
-!        Get 20 highest amplitudes
-!
-         call wf%analyze_single_excitation_vector(solution_ai, 20, sorted_max_vec_singles, index_list_singles)
-         call wf%analyze_double_excitation_vector(solution_aibj, 20, sorted_max_vec_doubles, index_list_doubles)
-!
-!        And print them
-!
-         do i = 1, 20
-!
-            if    (abs(sorted_max_vec_singles(i, 1)) .lt. 1.0D-03) then
-!
-               exit 
-!
-            else
-!
-               write(unit_output,'(t6,i3, 8x,i3, 10x, f8.5)') &
-                                                               index_list_singles(i, 1),&
-                                                               index_list_singles(i, 2),&
-                                                               sorted_max_vec_singles(i, 1) 
-            endif
-         enddo
-!
-         write(unit_output,'(t6,a32)')'------------------------------------------------------'
-         write(unit_output,'(t6,a54)')'------------------------------------------------------'
-         write(unit_output,'(t6,a3, 8x, a3, 8x, a3, 8x, a3, 8x, a10)')'a','i','b','j', 'amplitude'
-         write(unit_output,'(t6,a54)')'------------------------------------------------------'
-!
-         do i = 1, 20
-!
-            if    (abs(sorted_max_vec_doubles(i, 1)) .lt. 1.0D-03) then
-!
-               exit 
-!
-            else
-!
-               write(unit_output,'(t6,i3, 8x,i3, 8x,i3, 8x, i3, 10x, f8.5)')&
-                                                               index_list_doubles(i, 1),&
-                                                               index_list_doubles(i, 2),&
-                                                               index_list_doubles(i, 3),&
-                                                               index_list_doubles(i, 4),&
-                                                               sorted_max_vec_doubles(i, 1) 
-            endif
-         enddo
-         write(unit_output,'(t6,a54)')'------------------------------------------------------'
-!  
 !        MLCC Specific print
 !
          a_active_i_active       = 0

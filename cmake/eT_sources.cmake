@@ -28,7 +28,11 @@ set(eT_fortran_sources
    src/tools/workspace.F90
    src/tools/input_output.F90
    src/tools/input_reader.F90
-   src/tools/utils.F90
+   src/tools/reordering.F90
+   src/tools/index.F90
+   src/tools/batching.F90
+   src/tools/array_analysis.F90
+   src/tools/array_utilities.F90
    src/submodules/ccs_class_submodules/input_reader_submodule.F90
    src/submodules/ccs_class_submodules/cholesky_submodule.F90
    src/submodules/ccs_class_submodules/ground_state_submodule.F90
@@ -40,7 +44,6 @@ set(eT_fortran_sources
    src/submodules/ccs_class_submodules/cvs_submodule.F90
    src/submodules/ccs_class_submodules/response_submodule.F90
    src/submodules/ccs_class_submodules/integrals_submodule.F90
-   src/submodules/ccs_class_submodules/vector_analysis_submodule.F90
    src/submodules/ccsd_class_submodules/ground_state_submodule.F90
    src/submodules/ccsd_class_submodules/excited_state_submodule.F90
    src/submodules/ccsd_class_submodules/cvs_submodule.F90
@@ -48,7 +51,6 @@ set(eT_fortran_sources
    src/submodules/ccsd_class_submodules/omega_submodule.F90
    src/submodules/ccsd_class_submodules/jacobian_submodule.F90
    src/submodules/ccsd_class_submodules/jacobian_transpose_submodule.F90
-   src/submodules/ccsd_class_submodules/vector_analysis_submodule.F90
    src/submodules/cc2_class_submodules/omega_submodule.F90
    src/submodules/cc2_class_submodules/jacobian_submodule.F90
    src/submodules/cc2_class_submodules/excited_state_submodule.F90

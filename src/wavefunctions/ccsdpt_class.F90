@@ -9,18 +9,11 @@ module ccsdpt_class
 !  -::- Modules used by the class -::-
 !  :::::::::::::::::::::::::::::::::::
 !
-!  General tools
-!
-   use types
-   use utils
-   use workspace
-   use input_output
-!
 !  Ancestor class module (CC3)
 !
    use cc3_class
 !
-   implicit none 
+   implicit none
 !
 !  :::::::::::::::::::::::::::::::::::::::::
 !  -::- Definition of the CCSD(T) class -::-
@@ -32,7 +25,7 @@ module ccsdpt_class
 !
    contains
 !
-!     Initialization routine 
+!     Initialization routine
 !
       procedure :: init => init_ccsdpt
 !
@@ -40,7 +33,7 @@ module ccsdpt_class
 !
       procedure :: construct_omega => construct_omega_ccsdpt
 !
-!     Energy correction routine 
+!     Energy correction routine
 !
       procedure :: calc_energy_correction => calc_energy_correction_ccsdpt
 !
@@ -48,13 +41,13 @@ module ccsdpt_class
 !
       procedure :: destruct_ground_state => destruct_ground_state_ccsdpt
 !
-   end type ccsdpt 
+   end type ccsdpt
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-!  -::- Interface to the submodule routines of CCSD(T) -::- 
+!  -::- Interface to the submodule routines of CCSD(T) -::-
 !  ::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 !
-   interface 
+   interface
 !
 !
       module subroutine construct_omega_ccsdpt(wf)
@@ -63,10 +56,10 @@ module ccsdpt_class
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
 !!       Directs the calculation of the projection vector (omega1, omega2)
-!!       for the CCSD(T) level of theory. This is simply the calculation of 
-!!       the CCSD omega vector. 
+!!       for the CCSD(T) level of theory. This is simply the calculation of
+!!       the CCSD omega vector.
 !!
-         implicit none 
+         implicit none
 !
          class(ccsdpt) :: wf
 !
@@ -79,7 +72,7 @@ module ccsdpt_class
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
 !!       Calculates the CCSD(T) energy correction to the CCSD
-!!       energy, thereafter deallocating the amplitudes and the 
+!!       energy, thereafter deallocating the amplitudes and the
 !!       projection vector.
 !!
          implicit none
@@ -115,13 +108,13 @@ contains
 !!    Note: this routine does not calculate the energy, which is postponed until the wavefunction
 !!    is passed to the ground-state solver.
 !!
-      implicit none 
+      implicit none
 !
       class(ccsdpt) :: wf
 !
       integer(i15) :: unit_input = -1
 !
-!     Set model name 
+!     Set model name
 !
       wf%name = 'CCSD(T)'
 !
@@ -140,7 +133,7 @@ contains
       wf%implemented%ground_state = .true.
 !
 !     Read calculation tasks from input file eT.inp
-!     
+!
       call wf%calculation_reader(unit_input)
 !
 !     Close input file
@@ -153,12 +146,12 @@ contains
 !
 !     Read Cholesky AO integrals and transform to MO basis
 !
-      call wf%read_transform_cholesky 
+      call wf%read_transform_cholesky
 !
 !     Initialize (singles and doubles) amplitudes
 !
-      wf%n_t1am = (wf%n_o)*(wf%n_v) 
-      wf%n_t2am = (wf%n_t1am)*(wf%n_t1am + 1)/2 
+      wf%n_t1am = (wf%n_o)*(wf%n_v)
+      wf%n_t2am = (wf%n_t1am)*(wf%n_t1am + 1)/2
 !
       wf%n_parameters = wf%n_t1am + wf%n_t2am
 !
@@ -183,41 +176,41 @@ contains
 !!
 !!    where
 !!
-!!       v_ai    = sum_cdkl (t_ikl^acd - t_lki^acd) L_kcld 
+!!       v_ai    = sum_cdkl (t_ikl^acd - t_lki^acd) L_kcld
 !!       v_ai_bj = sum_cdk (t_ijk^acd L_bckd - t_kji^acd g_kdbc) -
 !!                 sum_ckl (t_ikl^abc L_kjlc - t_lki^abc g_kjlc)
 !!
 !!    and
 !!
-!!       u_ai    = 2 * t_i^a 
-!!       u_ai_bj = 4 t_ij^ab - 2 t_ji^ab. 
+!!       u_ai    = 2 * t_i^a
+!!       u_ai_bj = 4 t_ij^ab - 2 t_ji^ab.
 !!
-!!    Note: the vector v is similar to the CC3 omega vector. The 
-!!    routine therefore relies heavily on the omega routines of 
+!!    Note: the vector v is similar to the CC3 omega vector. The
+!!    routine therefore relies heavily on the omega routines of
 !!    the parent CC3 class.
 !!
 !!    Note: as is the case for CC3 omega, this routine (in particular
 !!    the i >= j >= k saving) is not optimized. Both CC3 and CCSD(T)
 !!    should be optimized simultaneously.
 !!
-      class(ccsdpt) :: wf 
+      class(ccsdpt) :: wf
 !
       real(dp), dimension(:,:), allocatable :: u_ai
-      real(dp), dimension(:,:), allocatable :: u_ai_bj 
+      real(dp), dimension(:,:), allocatable :: u_ai_bj
 !
       real(dp), dimension(:,:), allocatable :: v_ai
       real(dp), dimension(:,:), allocatable :: v_ai_bj
 !
-      integer(i15) :: a = 0, i = 0, j = 0, k = 0, b = 0, ai = 0 
+      integer(i15) :: a = 0, i = 0, j = 0, k = 0, b = 0, ai = 0
       integer(i15) :: bj = 0, aj = 0, bi = 0, aibj = 0, ajbi = 0
 !
       real(dp), dimension(:,:), allocatable :: t_abc ! Triples, t_ijk^abc, fixed ijk
 !
-      real(dp) :: ddot, correction 
+      real(dp) :: ddot, correction
 !
 !     Let the user know the CCSD(T) correction is being computed
 !
-      write(unit_output,'(t3,a/,t3,a/)') 'Adding the CCSD(T) correction to the above,',& 
+      write(unit_output,'(t3,a/,t3,a/)') 'Adding the CCSD(T) correction to the above,',&
                                          'iterated CCSD energy.'
       flush(unit_output)
 !
@@ -231,21 +224,21 @@ contains
 !           T1 transformation. We therefore reuse this routine.
 !
       v_ai = wf%t1am          ! Make a copy of the singles
-      wf%t1am = zero          ! Set the singles to zero 
+      wf%t1am = zero          ! Set the singles to zero
 !
       call wf%omega_integrals ! Get the (non-T1) transformed integrals
-! 
-      wf%t1am = v_ai          ! Put the singles amplitudes back
-      v_ai = zero             ! Reset the W_ai vector 
 !
-      wf%omega1 = zero        ! Will hold the singles part of W, 
-                              ! arising from the E1 term 
+      wf%t1am = v_ai          ! Put the singles amplitudes back
+      v_ai = zero             ! Reset the W_ai vector
+!
+      wf%omega1 = zero        ! Will hold the singles part of W,
+                              ! arising from the E1 term
 !
       call wf%mem%alloc(t_abc, (wf%n_v)**3, 1)
       t_abc = zero
 !
       call wf%mem%alloc(v_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
-      v_ai_bj = zero 
+      v_ai_bj = zero
 !
       do i = 1, wf%n_o
          do j = 1, wf%n_o
@@ -257,9 +250,9 @@ contains
 !              and divide by orbital energy difference, t_abc = - W_abc / e_abc
 !
                t_abc = zero
-               call wf%calc_triples(t_abc,i,j,k)         
+               call wf%calc_triples(t_abc,i,j,k)
 !
-!              Note: v_ai is identical to the CC3 omega1(a,i), 
+!              Note: v_ai is identical to the CC3 omega1(a,i),
 !              with non-transformed integrals:
 !
                call wf%omega_cc3_a1(t_abc,i,j,k)
@@ -275,19 +268,19 @@ contains
 !
       call dcopy((wf%n_o)*(wf%n_v), wf%omega1, 1, v_ai, 1)
 !
-!     Deallocate the triples amplitude 
+!     Deallocate the triples amplitude
 !
       call wf%mem%dealloc(t_abc, (wf%n_v)**3, 1)
 !
-!     Calculate the u vector 
+!     Calculate the u vector
 !
       call wf%mem%alloc(u_ai, wf%n_v, wf%n_o)
-      u_ai = zero 
+      u_ai = zero
 !
       call wf%mem%alloc(u_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
-      u_ai_bj = zero 
+      u_ai_bj = zero
 !
-      call daxpy((wf%n_o)*(wf%n_v), two, wf%t1am, 1, u_ai, 1) ! u_ai = 2 * t_ai 
+      call daxpy((wf%n_o)*(wf%n_v), two, wf%t1am, 1, u_ai, 1) ! u_ai = 2 * t_ai
 !
       do i = 1, wf%n_o
          do a = 1, wf%n_v
@@ -319,16 +312,16 @@ contains
       correction = zero
       correction = ddot((wf%n_o)*(wf%n_v), u_ai, 1, v_ai, 1)
 !
-      wf%energy = wf%energy + correction  
+      wf%energy = wf%energy + correction
 !
-      correction = zero 
+      correction = zero
       correction = ddot((wf%n_o)*(wf%n_v)*(wf%n_o)*(wf%n_v), u_ai_bj, 1, v_ai_bj, 1)
 !
       wf%energy = wf%energy + correction
 !
       write(unit_output,'(t3,a27,f14.8)') 'CCSD(T) energy (hartrees):', wf%energy
 !
-!     Deallocations 
+!     Deallocations
 !
       call wf%mem%dealloc(u_ai, wf%n_v, wf%n_o)
       call wf%mem%dealloc(u_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))

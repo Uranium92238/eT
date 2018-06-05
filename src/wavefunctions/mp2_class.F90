@@ -1,30 +1,23 @@
 module mp2_class
 !
 !!
-!!              Second-order Möller-Plesset (MP2) class module                                 
-!!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017         
-!!                                                                           
+!!              Second-order Möller-Plesset (MP2) class module
+!!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
+!!
 !
 !  :::::::::::::::::::::::::::::::::::
 !  -::- Modules used by the class -::-
 !  :::::::::::::::::::::::::::::::::::
 !
-!  General tools
-!
-   use types
-   use utils
-   use workspace
-   use input_output
-!
 !  The ancestor class module (HF)
 !
    use hf_class
 !
-   implicit none 
+   implicit none
 !
 !  :::::::::::::::::::::::::::::::::::::
 !  -::- Definition of the MP2 class -::-
-!  ::::::::::::::::::::::::::::::::::::: 
+!  :::::::::::::::::::::::::::::::::::::
 !
    type, extends(hf) :: mp2
 !
@@ -47,7 +40,7 @@ module mp2_class
 contains
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::
-!  -::- Initialization and driver routines -::- 
+!  -::- Initialization and driver routines -::-
 !  ::::::::::::::::::::::::::::::::::::::::::::
 !
    subroutine init_mp2(wf)
@@ -58,13 +51,13 @@ contains
 !!    Performs the following tasks
 !!
 !!    - Sets HF orbital and energy information by reading from file
-!!    - Transforms AO Cholesky vectors to MO basis and saves to file 
+!!    - Transforms AO Cholesky vectors to MO basis and saves to file
 !!
-      implicit none 
+      implicit none
 !
       class(mp2) :: wf
 !
-!     Set model name 
+!     Set model name
 !
       wf%name = 'MP2'
 !
@@ -91,15 +84,15 @@ contains
 !!    The driver for MP2 checks whether the ground state is requested,
 !!    and if so, calls the calculation of the MP2 energy.
 !!
-      implicit none 
+      implicit none
 !
       class(mp2) :: wf
 !
-      if (wf%tasks%ground_state) then 
+      if (wf%tasks%ground_state) then
 !
 !        Ground state calculation requested
 !
-         if (wf%implemented%ground_state) then 
+         if (wf%implemented%ground_state) then
 !
             call wf%calc_energy
 !
@@ -122,19 +115,19 @@ contains
    end subroutine drv_mp2
 !
 !  :::::::::::::::::::::::::::::::::::::::::
-!  -::- Class subroutines and functions -::- 
+!  -::- Class subroutines and functions -::-
 !  :::::::::::::::::::::::::::::::::::::::::
 !
    subroutine calc_energy_mp2(wf)
 !!
 !!    Calculate Energy (MP2)
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-!!    Calculates the MP2 energy. 
+!!    Calculates the MP2 energy.
 !!
-      implicit none 
+      implicit none
 !
-      class(mp2) :: wf 
+      class(mp2) :: wf
 !
       real(dp), dimension(:,:), allocatable :: L_ia_J  ! L_ia^J
       real(dp), dimension(:,:), allocatable :: g_ia_jb ! g_iajb
@@ -149,7 +142,7 @@ contains
 !
       call cpu_time(begin_timer)
 !
-!     Read L_ia^J from disk 
+!     Read L_ia^J from disk
 !
       call wf%mem%alloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
       call wf%read_cholesky_ia(L_ia_J)
@@ -173,7 +166,7 @@ contains
 !
       call wf%mem%dealloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
-!     Add the MP2 correction to the Hartree-Fock energy 
+!     Add the MP2 correction to the Hartree-Fock energy
 !
       do a = 1, wf%n_v
          do i = 1, wf%n_o

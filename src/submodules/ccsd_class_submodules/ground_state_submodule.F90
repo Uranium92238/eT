@@ -12,6 +12,7 @@ submodule (ccsd_class) ground_state
 !!                                 information needed by the DIIS routine.
 !!     calc_ampeqs_norm:           calculates the norm of the amplitude equations.
 !!     calc_quasi_Newton_doubles:  calculates the doubles part of the quasi-Newton estimate.
+!!     summary_ground_state_info:  prints the energy and the largest amplitudes. 
 !!
 !!     Can be inherited by models of the same level (e.g. CC3) without modification.
 !!
@@ -93,7 +94,6 @@ contains
 !     Save estimates to file and get the next amplitudes
 !     (they are placed in dt on exit from diis)
 !
-   !   call wf%diis(dt, t_dt)
       call diis_ground_state%update(dt, t_dt, wf%disk, wf%mem)
 !
 !     Set the new amplitudes
@@ -196,26 +196,29 @@ contains
       class(ccsd) :: wf
 !
       real(dp) :: time
-      real(dp) :: norm_singles
-      real(dp) :: norm_doubles
+      real(dp) :: norm_sq_singles
+      real(dp) :: norm_sq_doubles
 !
 !     Print energy and CPU time
 !
       write(unit_output,'(/t3,a,a,a/)')'Summary of ', trim(wf%name), ' ground state calculation:'
       write(unit_output,'(t6,a25,f19.12)')  'Total energy [a.u.]:     ', wf%energy
-      write(unit_output,'(t6,a25,f19.12)')  'Total time CPU (seconds): ', time
+      write(unit_output,'(t6,a25,f19.12/)') 'Total time CPU (seconds): ', time
 !
 !     Print the dominant single excitations
 !
-      call wf%print_dominant_singles(wf%t1am, norm_singles)
+      norm_sq_singles = dot_product(wf%t1am, wf%t1am, wf%n_t1am)
+      call print_dominant_two_index(wf%t1am, wf%n_v, wf%n_o, 'a', 'i')
 !
 !     Print the dominant double excitations
 !
-      call wf%print_dominant_doubles(wf%t2am, norm_doubles)
+      norm_sq_doubles = dot_product(wf%t2am, wf%t2am, wf%n_t2am)
+      call print_dominant_four_index(wf%t2am, wf%n_v, wf%n_o, wf%n_v, wf%n_o, &
+                                                'a', 'i', 'b', 'j')
 !
       write(unit_output,'(/t6,a41,f14.12/)')                &
                'Singles contribution to the full vector: ', &
-               norm_singles**2/(norm_singles**2 + norm_doubles**2)
+               norm_sq_singles/(norm_sq_singles + norm_sq_doubles)
 !
    end subroutine summary_ground_state_info_ccsd
 !

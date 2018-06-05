@@ -9,17 +9,9 @@ module cc2_class
 !  -::- Modules used by the class -::-
 !  :::::::::::::::::::::::::::::::::::
 !
-!  General tools
-!
-   use types
-   use utils
-   use workspace
-   use input_output
-!
 !  The ancestor class module (CCS)
 !
    use ccs_class
-!
 !
    implicit none
 !
@@ -54,6 +46,8 @@ module cc2_class
       procedure :: save_amplitudes            => save_amplitudes_cc2
       procedure :: destruct_s2am              => destruct_s2am_cc2
 !
+      procedure :: summary_ground_state_info  => summary_ground_state_info_cc2
+!
 !     Ground state solver helper routines
 !
       procedure :: calc_energy => calc_energy_cc2
@@ -76,7 +70,6 @@ module cc2_class
       procedure :: cvs_residual_projection          => cvs_residual_projection_cc2
       procedure :: excited_state_preparations       => excited_state_preparations_cc2
 !
-      procedure :: analyze_double_excitation_vector => analyze_double_excitation_vector_cc2
       procedure :: summary_excited_state_info       => summary_excited_state_info_cc2
 !
    end type cc2
@@ -896,6 +889,45 @@ contains
       endif
 !
    end subroutine read_cc2_double_amplitudes_cc2
+!
+!
+   module subroutine summary_ground_state_info_cc2(wf, time)
+!!
+!!    Summary ground state info (CC2)
+!!    Written by Eirik F. Kjønstad, June 2018
+!!
+      implicit none
+!
+      class(cc2) :: wf
+!
+      real(dp) :: time
+!
+      real(dp) :: norm_sq_singles, norm_sq_doubles
+!
+!     Print energy and CPU time
+!
+      write(unit_output,'(/t3,a,a,a/)')'Summary of ', trim(wf%name), ' ground state calculation:'
+      write(unit_output,'(t6,a25,f19.12)')  'Total energy [a.u.]:     ', wf%energy
+      write(unit_output,'(t6,a25,f19.12/)') 'Total time CPU (seconds): ', time
+!
+!     Print the dominant single and double excitations
+!
+      call wf%read_amplitudes
+!
+      norm_sq_singles = dot_product(wf%t1am, wf%t1am, wf%n_t1am)
+      call print_dominant_two_index(wf%t1am, wf%n_v, wf%n_o, 'a', 'i')
+!
+      norm_sq_doubles = dot_product(wf%s2am, wf%s2am, wf%n_s2am)
+      call print_dominant_four_index(wf%s2am, wf%n_v, wf%n_o, wf%n_v, wf%n_o, &
+                                                'a', 'i', 'b', 'j')
+!
+      call wf%destruct_amplitudes
+!
+      write(unit_output,'(/t6,a41,f14.12/)')                &
+               'Singles contribution to the full vector: ', &
+               norm_sq_singles/(norm_sq_singles + norm_sq_doubles)
+!
+   end subroutine summary_ground_state_info_cc2
 !
 !
 end module cc2_class

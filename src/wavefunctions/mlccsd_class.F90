@@ -3,18 +3,18 @@ module mlccsd_class
 !!
 !!
 !!
-!!         Multilevel Coupled cluster singles and perturbative doubles (MLCCSD) class module                                 
-!!                Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jun 2017         
-!! 
+!!         Multilevel Coupled cluster singles and perturbative doubles (MLCCSD) class module
+!!                Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jun 2017
+!!
 !!
 !!    This module contains the definition of the multilevel Coupled cluster singles and perturbative doubles (MLCCSD)
 !!    wavefunction class. It is structured into four sections:
 !!
-!!       1. Modules used by the class: 
+!!       1. Modules used by the class:
 !!
-!!             Basic utilities and the ancestor class
+!!             The ancestor class (MLCC2) and all modules therein
 !!
-!!       2. Definition of the class: 
+!!       2. Definition of the class:
 !!
 !!             Non-inherited variables, followed by non-inherited or overridden procedures
 !!
@@ -22,42 +22,34 @@ module mlccsd_class
 !!
 !!             The procedures in the class are grouped according to functionality, with
 !!             detailed definitions given in the following class submodules:
-!!                
+!!
 !!                - Input Reader
 !!                - Orbital partitioning
 !!                - Ground state
 !!                - Omega
-!!                - Excited state 
+!!                - Excited state
 !!                - Jacobian (right transformation)
-!!                 
 !!
-!!             The interfaces shows incoming variables and their type, but contains 
-!!             no information of the procedure itself. The procedure is shown in full 
-!!             in the corresponding submodule. 
+!!
+!!             The interfaces shows incoming variables and their type, but contains
+!!             no information of the procedure itself. The procedure is shown in full
+!!             in the corresponding submodule.
 !!
 !!       4. Class module routines (i.e., non-submodule procedures). These include
 !!          the initialization and driver routines of the class, along with procedures that
 !!          are not (yet, at least) easily gathered in a submodule.
-!!                                                                    
+!!
 !
 !
 !  ::::::::::::::::::::::::::::::::::::::
 !  -::- 1. Modules used by the class -::-
 !  ::::::::::::::::::::::::::::::::::::::
 !
-!  General tools
-!
-   use types
-   use utils
-   use workspace
-   use input_output
-   use input_reader
-!
 !  The ancestor class module (MLCC2)
 !
    use mlcc2_class
 !
-   implicit none 
+   implicit none
 !
 !
 !  ::::::::::::::::::::::::::::::::::::::::::
@@ -92,7 +84,7 @@ module mlccsd_class
       real(dp), dimension(:,:), allocatable :: t2am ! Doubles amplitude vector
 !
 !     Schrödinger equation projection vector (the omega vector)
-! 
+!
 !        < mu | exp(-T) H exp(T) | R >
 !
       real(dp), dimension(:,:), allocatable :: omega2 ! Doubles vector
@@ -271,11 +263,11 @@ module mlccsd_class
 !!
 !!       Orbital partitioning,
 !!       Written by Sarai D. Folkestad, June 2017
-!! 
+!!
          implicit none
-!  
+!
          class(mlccsd) :: wf
-!  
+!
       end subroutine orbital_partitioning_mlccsd
 !
 !
@@ -377,7 +369,7 @@ module mlccsd_class
 !!       CNTO orbital driver,
 !!       Written by Sarai D. Folkestad, July 2017.
 !!
-         implicit none 
+         implicit none
 !
          class(mlccsd) :: wf
 !
@@ -389,7 +381,7 @@ module mlccsd_class
 !!    CNTO constructor (MLCCSD),
 !!    Written by Sarai D. Folkestad, Aug. 2017
 !!
-      implicit none 
+      implicit none
 !
       class(mlccsd) :: wf
 !
@@ -400,7 +392,7 @@ module mlccsd_class
 !!
 !!       CNTO Oritals (MLCCSD),
 !!       Written by Sarai D. Folkestad Aug. 2017
-!!   
+!!
          implicit none
 !
          class(mlccsd) :: wf
@@ -412,7 +404,7 @@ module mlccsd_class
 !!
 !!       CNTO Oritals (MLCCSD),
 !!       Written by Sarai D. Folkestad Aug. 2017
-!!   
+!!
          implicit none
 !
          class(mlccsd)     :: wf
@@ -423,10 +415,10 @@ module mlccsd_class
 !
       module subroutine print_orbital_info_mlccsd(wf)
 !!
-!!       Print CNTO info, 
+!!       Print CNTO info,
 !!       Written by Sarai D. Folkestad, Aug. 2017
 !!
-         implicit none 
+         implicit none
 !
          class(mlccsd) :: wf
 !
@@ -452,7 +444,7 @@ module mlccsd_class
 !
       module subroutine read_cholesky_ai_for_cc2_amplitudes_mlccsd(wf,L_ai_J, a_first, a_last, i_first, i_last)
 !!
-!!       Read Cholesky IA 
+!!       Read Cholesky IA
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
 !!
@@ -472,7 +464,7 @@ module mlccsd_class
 !!       Get Cholesky AI
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-         implicit none 
+         implicit none
 !
          class(mlccsd)            :: wf
          real(dp), dimension(:,:) :: L_ai_J
@@ -484,7 +476,7 @@ module mlccsd_class
 !
     module subroutine read_cholesky_ab_for_cc2_amplitudes_mlccsd(wf, L_ab_J, a_first, a_last, b_first, b_last)
 !!
-!!    Read Cholesky AB 
+!!    Read Cholesky AB
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
       implicit none
@@ -496,17 +488,17 @@ module mlccsd_class
 !
       end subroutine read_cholesky_ab_for_cc2_amplitudes_mlccsd
 !
-!!   
+!!
    module subroutine read_cholesky_ia_for_cc2_amplitudes_mlccsd(wf,L_ia_J, i_first, i_last, a_first, a_last)
 !!
-!!    Read Cholesky IA 
+!!    Read Cholesky IA
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
       implicit none
 !
-      class(mlccsd)                 :: wf    
-      integer(i15)                  :: i_first, a_first     ! First index (can differ from 1 when batching or for mlcc) 
-      integer(i15)                  :: i_last, a_last      ! Last index (can differ from n_o when batching or for mlcc) 
+      class(mlccsd)                 :: wf
+      integer(i15)                  :: i_first, a_first     ! First index (can differ from 1 when batching or for mlcc)
+      integer(i15)                  :: i_last, a_last      ! Last index (can differ from n_o when batching or for mlcc)
       real(dp), dimension(:,:)      :: L_ia_J ! L_ia^J
 !
    end subroutine read_cholesky_ia_for_cc2_amplitudes_mlccsd
@@ -514,14 +506,14 @@ module mlccsd_class
 !
    module subroutine read_cholesky_ij_for_cc2_amplitudes_mlccsd(wf,L_ij_J , i_first, i_last, j_first, j_last)
 !!
-!!    Read Cholesky IJ 
+!!    Read Cholesky IJ
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
       implicit none
 !
       class(mlccsd)            :: wf
-      integer(i15)             :: i_first, j_first     ! First index (can differ from 1 when batching or for mlcc) 
-      integer(i15)             :: i_last, j_last      ! Last index (can differ from n_o when batching or for mlcc)   
+      integer(i15)             :: i_first, j_first     ! First index (can differ from 1 when batching or for mlcc)
+      integer(i15)             :: i_last, j_last      ! Last index (can differ from n_o when batching or for mlcc)
       real(dp), dimension(:,:) :: L_ij_J ! L_ij^J
 !
    end subroutine read_cholesky_ij_for_cc2_amplitudes_mlccsd
@@ -540,7 +532,7 @@ module mlccsd_class
 !!        Initialize Omega (MLCCSD)
 !!        Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-         implicit none 
+         implicit none
 !
          class(mlccsd) :: wf
 !
@@ -548,11 +540,11 @@ module mlccsd_class
 !
 !
       module subroutine construct_omega_mlccsd(wf)
-!! 
+!!
 !!       Construct Omega (MLCCSD)
 !!       Written by Eirik F. Kjønstad and Sarai Folkestad, Apr 2017
 !!
-         implicit none 
+         implicit none
 !
          class(mlccsd) :: wf
 !
@@ -572,10 +564,10 @@ module mlccsd_class
 !
 !
     module subroutine omega_mlccsd_a1_mlccsd(wf, x_ib_jc)
-!! 
+!!
 !!    Omega A1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!   
+!!
       implicit none
 !
       class(mlccsd)            :: wf
@@ -585,14 +577,14 @@ module mlccsd_class
 !
 !
       module subroutine omega_mlccsd_b1_mlccsd(wf, x_ja_kb)
-!! 
+!!
 !!       Omega B1
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!  
+!!
          implicit none
 !
          class(mlccsd)            :: wf
-         real(dp), dimension(:,:) :: x_ja_kb  
+         real(dp), dimension(:,:) :: x_ja_kb
 !
       end subroutine omega_mlccsd_b1_mlccsd
 !
@@ -615,20 +607,20 @@ module mlccsd_class
 !!
 !!       Omega B2
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, 11 Mar 2017
-!! 
+!!
          implicit none
 !
-         class(mlccsd) :: wf 
-         real(dp), dimension(:,:) :: x_kc_ld 
+         class(mlccsd) :: wf
+         real(dp), dimension(:,:) :: x_kc_ld
 !
       end subroutine omega_mlccsd_b2_mlccsd
 !
 !
       module subroutine omega_mlccsd_c2_mlccsd(wf, x_lc_kd)
 !!
-!!       Omega C2 
+!!       Omega C2
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2017
-!!      
+!!
          implicit none
 !
          class(mlccsd)            :: wf
@@ -639,12 +631,12 @@ module mlccsd_class
 !
       module subroutine omega_mlccsd_d2_mlccsd(wf, x_KC_LD)
 !!
-!!       Omega D2 
+!!       Omega D2
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(mlccsd) :: wf 
+         class(mlccsd) :: wf
          real(dp), dimension(:,:) :: x_KC_LD
 !
       end subroutine omega_mlccsd_d2_mlccsd
@@ -655,9 +647,9 @@ module mlccsd_class
 !!     Omega E2
 !!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2017
 !!
-       implicit none 
+       implicit none
 !
-      class(mlccsd) :: wf 
+      class(mlccsd) :: wf
       real(dp), dimension(:,:) :: x_kc_ld
 !
    end subroutine omega_mlccsd_e2_mlccsd
@@ -676,11 +668,11 @@ module mlccsd_class
 !        Calculate Amplitude Equations Norm (MLCCSD)
 !        Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !
-         implicit none 
+         implicit none
 !
-         class(mlccsd) :: wf 
+         class(mlccsd) :: wf
 !
-         real(dp) :: ampeqs_norm 
+         real(dp) :: ampeqs_norm
 !
       end subroutine calc_ampeqs_norm_mlccsd
 !
@@ -690,9 +682,9 @@ module mlccsd_class
 !!     New Amplitudes (MLCCSD)
 !!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-      implicit none 
+      implicit none
 !
-      class(mlccsd) :: wf 
+      class(mlccsd) :: wf
 !
       class(diis) :: diis_ground_state
 !
@@ -704,9 +696,9 @@ module mlccsd_class
 !!     Calculate quasi-Newtoni doubles estimate (CCSD)
 !!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-      implicit none 
+      implicit none
 !
-      class(mlccsd) :: wf 
+      class(mlccsd) :: wf
 !
       real(dp), dimension(wf%n_parameters, 1) :: dt
 !
@@ -719,7 +711,7 @@ module mlccsd_class
 !!    Initialize Ground State (CCSD)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-      implicit none 
+      implicit none
 !
       class(mlccsd) :: wf
 !
@@ -733,7 +725,7 @@ module mlccsd_class
 !!
       implicit none
 !
-      class(mlccsd) :: wf 
+      class(mlccsd) :: wf
 !
    end subroutine ground_state_preparations_mlccsd
 !
@@ -745,7 +737,7 @@ module mlccsd_class
 !!
       implicit none
 !
-      class(mlccsd) :: wf 
+      class(mlccsd) :: wf
 !
    end subroutine ground_state_cleanup_mlccsd
 !
@@ -764,24 +756,24 @@ module mlccsd_class
 !!
       implicit none
 !
-      class(mlccsd) :: wf 
+      class(mlccsd) :: wf
 !
-!      Incoming vector c 
+!      Incoming vector c
 !
-      real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai 
-      real(dp), dimension(wf%n_x2am, 1)   :: c_aibj ! c_aibj  
+      real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i  ! c_ai
+      real(dp), dimension(wf%n_x2am, 1)   :: c_aibj ! c_aibj
 !
       end subroutine jacobian_mlccsd_transformation_mlccsd
 !
 !
       module subroutine jacobian_mlccsd_b2_mlccsd(wf, rho_ai_bj, c_a_i)
 !!
-!!    Jacobian CCSD B2 
+!!    Jacobian CCSD B2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-      implicit none 
+      implicit none
 !
-      class(mlccsd) :: wf 
+      class(mlccsd) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o)                       :: c_a_i
       real(dp), dimension(:, :) :: rho_ai_bj
@@ -792,12 +784,12 @@ module mlccsd_class
 !
       module subroutine jacobian_mlccsd_c2_mlccsd(wf, rho_ai_bj, c_a_i)
 !!
-!!    Jacobian CCSD C2 
+!!    Jacobian CCSD C2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2017
 !!
-      implicit none 
+      implicit none
 !
-      class(mlccsd) :: wf 
+      class(mlccsd) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o) :: c_a_i
       real(dp), dimension(:,:)            :: rho_ai_bj
@@ -807,12 +799,12 @@ module mlccsd_class
 !
       module subroutine jacobian_mlccsd_d2_mlccsd(wf, rho_ai_bj, c_a_i)
 !!
-!!    Jacobian CCSD D2 
+!!    Jacobian CCSD D2
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
-      implicit none 
+      implicit none
 !
-      class(mlccsd) :: wf 
+      class(mlccsd) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o)                       :: c_a_i
       real(dp), dimension(:,:) :: rho_ai_bj
@@ -822,12 +814,12 @@ module mlccsd_class
 !
       module subroutine jacobian_mlccsd_e2_mlccsd(wf, rho_ai_bj, c_ai_ck)
 !!
-!!    Jacobian MLCCSD E2 
+!!    Jacobian MLCCSD E2
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-      implicit none 
+      implicit none
 !
-      class(mlccsd) :: wf 
+      class(mlccsd) :: wf
 !
       real(dp), dimension(:,:) :: rho_ai_bj
       real(dp), dimension(:,:) :: c_ai_ck
@@ -837,12 +829,12 @@ module mlccsd_class
 !
       module subroutine jacobian_mlccsd_f2_mlccsd(wf, rho_ai_bj, c_ai_bj)
 !!
-!!       Jacobian MLCCSD F2 
+!!       Jacobian MLCCSD F2
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(mlccsd) :: wf 
+         class(mlccsd) :: wf
 !
          real(dp), dimension(:,:) :: rho_ai_bj
          real(dp), dimension(:,:) :: c_ai_bj
@@ -852,12 +844,12 @@ module mlccsd_class
 !
      module subroutine jacobian_mlccsd_g2_mlccsd(wf, rho_ai_bj, c_ai_bj)
 !!
-!!       Jacobian MLCCSD G2 
+!!       Jacobian MLCCSD G2
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(mlccsd) :: wf 
+         class(mlccsd) :: wf
 !
          real(dp), dimension(:,:) :: rho_ai_bj
          real(dp), dimension(:,:) :: c_ai_bj
@@ -867,12 +859,12 @@ module mlccsd_class
 !
      module subroutine jacobian_mlccsd_h2_mlccsd(wf, rho_ai_bj, c_ai_bj)
 !!
-!!       Jacobian MLCCSD H2 
+!!       Jacobian MLCCSD H2
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!              
-         implicit none 
+!!
+         implicit none
 !
-         class(mlccsd) :: wf 
+         class(mlccsd) :: wf
 !
          real(dp), dimension(:,:) :: rho_ai_bj
          real(dp), dimension(:,:) :: c_ai_bj
@@ -882,12 +874,12 @@ module mlccsd_class
 !
       module subroutine jacobian_mlccsd_i2_mlccsd(wf, rho_ai_bj, c_ai_bj)
 !!
-!!       Jacobian MLCCSD I2 
+!!       Jacobian MLCCSD I2
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
 !!
-         implicit none 
+         implicit none
 !
-         class(mlccsd) :: wf 
+         class(mlccsd) :: wf
 !
          real(dp), dimension(:,:) :: rho_ai_bj
          real(dp), dimension(:,:) :: c_ai_bj
@@ -897,12 +889,12 @@ module mlccsd_class
 !
       module subroutine jacobian_mlccsd_j2_mlccsd(wf, rho_ab_ij, c_ab_ij)
 !!
-!!       Jacobian CCSD J2 
+!!       Jacobian CCSD J2
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!           
-         implicit none 
+!!
+         implicit none
 !
-         class(mlccsd) :: wf 
+         class(mlccsd) :: wf
 !
          real(dp), dimension(:,:) :: rho_ab_ij
          real(dp), dimension(:,:) :: c_ab_ij
@@ -912,12 +904,12 @@ module mlccsd_class
 !
       module subroutine jacobian_mlccsd_k2_mlccsd(wf, rho_ab_ij, c_ab_ij)
 !!
-!!       Jacobian MLCCSD K2 
+!!       Jacobian MLCCSD K2
 !!       Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
-!!               
-         implicit none 
+!!
+         implicit none
 !
-         class(mlccsd) :: wf 
+         class(mlccsd) :: wf
 !
          real(dp), dimension(:,:) :: rho_ab_ij
          real(dp), dimension(:,:) :: c_ab_ij
@@ -940,8 +932,8 @@ module mlccsd_class
 !!       Wxcited state preparations
 !!       Written by Sarai D. Folkestad, Aug 2017
 !!
-         implicit none 
-!       
+         implicit none
+!
          class(mlccsd) :: wf
 !
       end subroutine excited_state_preparations_mlccsd
@@ -952,8 +944,8 @@ module mlccsd_class
 !!       Excited state cleanup
 !!       Written by Sarai D. Folkestad, Aug 2017
 !!
-         implicit none 
-!       
+         implicit none
+!
          class(mlccsd) :: wf
 !
       end subroutine excited_state_cleanup_mlccsd
@@ -976,8 +968,8 @@ module mlccsd_class
 !!       Initialize excited states
 !!       Written by Sarai D. Folkestad, Aug 2017
 !!
-         implicit none 
-!       
+         implicit none
+!
          class(mlccsd) :: wf
       end subroutine initialize_excited_states_mlccsd
 !
@@ -987,12 +979,12 @@ module mlccsd_class
 !!
 !!
          implicit none
-!  
+!
          class(mlccsd) :: wf
 !
          real(dp), dimension(wf%n_parameters, 1) :: vec
 !
-         integer(i15) :: unit_id     
+         integer(i15) :: unit_id
 !
       end subroutine print_excitation_vector_mlccsd
 !
@@ -1002,7 +994,7 @@ module mlccsd_class
 !!
 !!
          implicit none
-!  
+!
          class(mlccsd) :: wf
 !
          real(dp), dimension(wf%excited_state_specifications%n_singlet_states,1) :: energies
@@ -1042,7 +1034,7 @@ contains
       integer(i15) :: unit_input = -1
 !
 !
-!     Set model name 
+!     Set model name
 !
       wf%name = 'MLCCSD'
 !
@@ -1056,7 +1048,7 @@ contains
 !
       call wf%general_specs_reader(unit_input)
 !
-!     Read MLCC info 
+!     Read MLCC info
 !
       call wf%mlcc_reader(unit_input)
 !
@@ -1074,10 +1066,10 @@ contains
        wf%implemented%core_excited_state = .true.
 !
 !     Read calculation tasks from input file eT.inp
-!     
+!
       call wf%calculation_reader(unit_input)
 !
-!     Read orbital info 
+!     Read orbital info
 !
       call wf%read_orbital_info(unit_input)
 !
@@ -1131,7 +1123,7 @@ contains
       call wf%initialize_single_amplitudes
 !
 !     Set the number of parameters in the wavefunction
-!     (that are solved for in the ground and excited state solvers) 
+!     (that are solved for in the ground and excited state solvers)
 !
       wf%n_parameters = wf%n_t1am + wf%n_t2am
 !
@@ -1163,7 +1155,7 @@ contains
 !!     Allocates the amplitudes, sets them to zero, and calculates
 !!     the number of amplitudes.
 !!
-      implicit none 
+      implicit none
 !
       class(mlccsd) :: wf
 !
@@ -1186,10 +1178,10 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
 !!
 !!    Sets the doubles amplitudes (t2am) to its MP2 estimate. This is
-!!    the initial guess used in the solver for the ground state amplitude 
+!!    the initial guess used in the solver for the ground state amplitude
 !!    equations.
 !!
-      implicit none 
+      implicit none
 !
       class(mlccsd) :: wf
 !
@@ -1197,23 +1189,23 @@ contains
       real(dp), dimension(:,:), allocatable :: g_ai_bj
 !
       integer(i15) :: i = 0, j = 0, a = 0, b = 0
-      integer(i15) :: ai = 0, bj = 0, ia = 0, jb = 0, aibj = 0 
+      integer(i15) :: ai = 0, bj = 0, ia = 0, jb = 0, aibj = 0
 !
 !     Active space variables
 !
       integer(i15) :: n_active_o = 0, n_active_v = 0
-      integer(i15) :: first_active_o ! first active occupied index 
+      integer(i15) :: first_active_o ! first active occupied index
       integer(i15) :: first_active_v ! first active virtual index
-      integer(i15) :: last_active_o ! first active occupied index 
+      integer(i15) :: last_active_o ! first active occupied index
       integer(i15) :: last_active_v ! first active virtual index
 !
 !     Calculate first/last indeces
-! 
+!
       call wf%get_CCSD_active_indices(first_active_o, first_active_v)
       call wf%get_CCSD_n_active(n_active_o, n_active_v)
 !
       last_active_o = first_active_o + n_active_o - 1
-      last_active_v = first_active_v + n_active_v - 1 
+      last_active_v = first_active_v + n_active_v - 1
 !
 !     Allocate L_ia_J and g_ia_jb
 !
@@ -1223,14 +1215,14 @@ contains
       L_ai_J = zero
       g_ai_bj = zero
 !
-!     Get the Cholesky IA vector 
+!     Get the Cholesky IA vector
 !
       call wf%get_cholesky_ai(L_ai_J, first_active_v, last_active_v, first_active_o, last_active_o)
 !
 !     Calculate g_ia_jb = g_iajb
 !
       call dgemm('N','T',                 &
-                  n_active_o*n_active_v,  & 
+                  n_active_o*n_active_v,  &
                   n_active_o*n_active_v,  &
                   wf%n_J,                 &
                   one,                    &
@@ -1251,7 +1243,7 @@ contains
 !
             do j = 1, n_active_o
                do b = 1, n_active_v
-!     
+!
                   bj = index_two(b, j, n_active_v)
 !
 !                 Set the doubles amplitudes
@@ -1275,7 +1267,7 @@ contains
 !     Deallocations
 !
       call wf%mem%dealloc(L_ai_J, (n_active_o)*(n_active_v), wf%n_J)
-      call wf%mem%dealloc(g_ai_bj, (n_active_o)*(n_active_v), (n_active_o)*(n_active_v)) 
+      call wf%mem%dealloc(g_ai_bj, (n_active_o)*(n_active_v), (n_active_o)*(n_active_v))
 !
    end subroutine construct_perturbative_doubles_mlccsd
 !
@@ -1284,7 +1276,7 @@ contains
 !!    Get CC2 active indices,
 !!    Written by Sarai D. Folkestad, June 2017
 !!
-!!    Returns the first active occupied and virtual indices 
+!!    Returns the first active occupied and virtual indices
 !!    of the active space.
 !!
    implicit none
@@ -1292,7 +1284,7 @@ contains
    class(mlccsd) :: wf
    integer(i15) :: first_o
    integer(i15) :: first_v
-! 
+!
    first_o = wf%first_CCSD_o
    first_v = wf%first_CCSD_v
 !
@@ -1304,7 +1296,7 @@ contains
 !!    Get CC2 active indices,
 !!    Written by Sarai D. Folkestad, June 2017
 !!
-!!    Returns the first active occupied and virtual indices 
+!!    Returns the first active occupied and virtual indices
 !!    of the active space.
 !!
       implicit none
@@ -1324,7 +1316,7 @@ contains
 !!    Get CC2 active indices,
 !!    Written by Sarai D. Folkestad, June 2017
 !!
-!!    Returns the first active occupied and virtual indices 
+!!    Returns the first active occupied and virtual indices
 !!    of the active space.
 !!
       implicit none
@@ -1344,7 +1336,7 @@ contains
 !!    Get CC2 active indices,
 !!    Written by Sarai D. Folkestad, June 2017
 !!
-!!    Returns the first active occupied and virtual indices 
+!!    Returns the first active occupied and virtual indices
 !!    of the active space.
 !!
       implicit none
@@ -1374,9 +1366,9 @@ contains
 !!     s^ab_ij is zero in the CCSD region, and t^ab_ij is zero in the CC2 region.
 !!
 !!
-      implicit none 
+      implicit none
 !
-      class(mlccsd) :: wf 
+      class(mlccsd) :: wf
 !
       real(dp), dimension(:,:), allocatable :: L_ia_J  ! L_ia^J
       real(dp), dimension(:,:), allocatable :: g_ia_jb ! g_iajb
@@ -1389,17 +1381,17 @@ contains
 !     Active space variables
 !
       integer(i15) :: n_active_o = 0, n_active_v = 0
-      integer(i15) :: first_active_o ! first active occupied index 
+      integer(i15) :: first_active_o ! first active occupied index
       integer(i15) :: first_active_v ! first active virtual index
-      integer(i15) :: last_active_o ! first active occupied index 
+      integer(i15) :: last_active_o ! first active occupied index
       integer(i15) :: last_active_v ! first active virtual index
 !
-!     Allocate the Cholesky vector L_ia_J = L_ia^J and set to zero 
+!     Allocate the Cholesky vector L_ia_J = L_ia^J and set to zero
 !
       call wf%mem%alloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
       L_ia_J = zero
 !
-!     Get the Cholesky vector L_ia_J 
+!     Get the Cholesky vector L_ia_J
 !
       call wf%get_cholesky_ia(L_ia_J)
 !
@@ -1408,7 +1400,7 @@ contains
       call wf%mem%alloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       g_ia_jb = zero
 !
-!     Calculate the integrals g_ia_jb from the Cholesky vector L_ia_J 
+!     Calculate the integrals g_ia_jb from the Cholesky vector L_ia_J
 !
       call dgemm('N','T',            &
                   (wf%n_o)*(wf%n_v), &
@@ -1423,11 +1415,11 @@ contains
                   g_ia_jb,           &
                   (wf%n_o)*(wf%n_v))
 !
-!     Deallocate the Cholesky vector L_ia_J 
+!     Deallocate the Cholesky vector L_ia_J
 !
       call wf%mem%dealloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%n_J)
 !
-!     Set the initial value of the energy 
+!     Set the initial value of the energy
 !
       wf%energy = wf%scf_energy
 !
@@ -1450,7 +1442,7 @@ contains
 !
 !                 Add the correlation energy from the single amplitudes
 !
-                  wf%energy = wf%energy +                       & 
+                  wf%energy = wf%energy +                       &
                                  (wf%t1am(a,i))*(wf%t1am(b,j))* &
                                  (two*g_ia_jb(ia,jb) - g_ia_jb(ib,ja))
 !
@@ -1462,7 +1454,7 @@ contains
 !     t2 amplitude contribution to the energy
 !
 !     Calculate first/last indeces
-! 
+!
       call wf%get_CCSD_active_indices(first_active_o, first_active_v)
       call wf%get_CC2_n_active(n_active_o, n_active_v)
 !
@@ -1489,7 +1481,7 @@ contains
 !
 !                 Add the correlation energy from the double amplitudes
 !
-                  wf%energy = wf%energy +              & 
+                  wf%energy = wf%energy +              &
                                  (x_ia_jb(ia, jb))*    &
                                  (two*g_ia_jb(ia_full, jb_full) - g_ia_jb(ib,ja))
 !
@@ -1562,8 +1554,8 @@ contains
 !
       class(mlccsd) :: wf
 !
-      
-      integer(i15) :: n_active_v, n_active_o 
+
+      integer(i15) :: n_active_v, n_active_o
 !
       call wf%get_CCSD_n_active(n_active_o, n_active_v)
       wf%n_t2am = (n_active_v)*(n_active_o)*((n_active_v)*(n_active_o)+1)/2
@@ -1580,7 +1572,7 @@ contains
 !!
 !!    Store the amplitudes to disk (T1AM, T2AM)
 !!
-      implicit none 
+      implicit none
 !
       class(mlccsd) :: wf
 !
@@ -1617,7 +1609,7 @@ contains
       call wf%get_CC2_n_active(n_active_o, n_active_v)
       wf%n_x2am = (n_active_v)*(n_active_o)*((n_active_v)*(n_active_o)+1)/2
 !
-      call wf%mem%alloc(x_ia_jb, (n_active_v)*(n_active_o), (n_active_v)*(n_active_o)) 
+      call wf%mem%alloc(x_ia_jb, (n_active_v)*(n_active_o), (n_active_v)*(n_active_o))
       call wf%get_mlccsd_x2am(x_ia_jb)
 !
 !     Reorder and pack in
@@ -1643,7 +1635,7 @@ contains
          enddo
       enddo
 !
-      call wf%mem%dealloc(x_ia_jb, (n_active_v)*(n_active_o), (n_active_v)*(n_active_o)) 
+      call wf%mem%dealloc(x_ia_jb, (n_active_v)*(n_active_o), (n_active_v)*(n_active_o))
 !
       write(unit_x2am) wf%x2am
       call wf%mem%dealloc(wf%x2am, wf%n_x2am, 1)
@@ -1663,7 +1655,7 @@ contains
 !!
 !!    Reads the amplitudes from disk (T1AM)
 !!
-      implicit none 
+      implicit none
 !
       class(mlccsd) :: wf
 !
@@ -1679,12 +1671,12 @@ contains
 !!
 !!    Reads the amplitudes from disk (T1AM, T2AM)
 !!
-      implicit none 
+      implicit none
 !
       class(mlccsd) :: wf
 !
-      integer(i15) :: unit_x2am = -1 
-      integer(i15) :: n_active_v, n_active_o 
+      integer(i15) :: unit_x2am = -1
+      integer(i15) :: n_active_v, n_active_o
 !
       logical :: file_exists = .false.
 !
@@ -1692,7 +1684,7 @@ contains
 !
       inquire(file='x2am',exist=file_exists)
 !
-      if (file_exists) then 
+      if (file_exists) then
 !
 !        Open amplitude files if they exist
 !
@@ -1730,12 +1722,12 @@ contains
 !!
 !!    Reads the amplitudes from disk (T1AM, T2AM)
 !!
-      implicit none 
+      implicit none
 !
       class(mlccsd) :: wf
 !
-      integer(i15) :: unit_t2am = -1 
-      integer(i15) :: n_active_v, n_active_o 
+      integer(i15) :: unit_t2am = -1
+      integer(i15) :: n_active_v, n_active_o
 !
       logical :: file_exists = .false.
 !
@@ -1743,7 +1735,7 @@ contains
 !
       inquire(file='t2am',exist=file_exists)
 !
-      if (file_exists) then 
+      if (file_exists) then
 !
 !        Open amplitude files if they exist
 !
@@ -1782,11 +1774,11 @@ contains
 !!     Allocates the amplitudes, sets them to zero, and calculates
 !!     the number of amplitudes.
 !!
-      implicit none 
+      implicit none
 !
       class(mlccsd) :: wf
 !
-      integer(i15) :: n_active_v, n_active_o 
+      integer(i15) :: n_active_v, n_active_o
 !
 !     Allocate the doubles amplitudes and set to zero
 !

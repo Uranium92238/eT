@@ -45,8 +45,8 @@ module diis_solver_class
       type(file), private :: x_dx        ! File containing the X + dX vector from previous iterations
       type(file), private :: diis_matrix ! File containing the previously computed elements of the DIIS matrix
 !
-      integer(i15), private :: iteration = 1        ! Variable keeping track of the current DIIS iteration
-                                           ! Note: defined to increment by +1 each time 'update' is called.
+      integer(i15), private :: iteration = 1 ! Variable keeping track of the current DIIS iteration
+                                             ! Note: defined to increment by +1 each time 'update' is called.
 !
       integer(i15), private :: diis_dimension = 8   ! Standard is 8, though it might be useful to change this value
       integer(i15), private :: n_parameters         ! The length of the O, X and dX vectors

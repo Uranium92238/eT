@@ -244,13 +244,13 @@ contains
 !
       call cpu_time(end_gs_solver)
 !
+!     Save the amplitudes
+!
+      call wf%save_amplitudes
+!
 !     Print summary of ground state
 !
       call wf%summary_ground_state_info(end_gs_solver-start_gs_solver)
-!
-!     Save the amplitudes
-!
-       call wf%save_amplitudes
 !
 !     Issue an error & stop if the equations did not converge
 !
@@ -584,7 +584,7 @@ contains
 !
 !     Print the dominant single excitations
 !
-      call wf%print_dominant_singles(wf%t1am)
+      call print_dominant_two_index(wf%t1am, wf%n_v, wf%n_o, 'a', 'i')
 !
    end subroutine summary_ground_state_info_ccs
 !

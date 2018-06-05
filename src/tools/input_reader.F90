@@ -1,12 +1,14 @@
 module input_reader
 !
 !!
-!!    Input reader module                                 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017 
+!!    Input reader module
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+!!    This module contains the routine that determines the wavefunction
+!!    (method_reader) with a helping routine (remove_preceding_blanks).
 !!
 !
    use types
-   use workspace
    use input_output
 !
    implicit none
@@ -16,10 +18,12 @@ contains
 !
    subroutine method_reader(unit_input, method)
 !!
-!!    Method Reader
+!!    Method reader
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2017
 !!
-      implicit none 
+!!    Determines which type of wavefunction to allocated (CCSD, or CC2, or ...).
+!!
+      implicit none
 !
       integer(i15), intent(in) :: unit_input
 !
@@ -33,7 +37,7 @@ contains
 !
       do ! General do loop - ends when it reaches 'exit'. Either when method is specified or if no method is given.
 !
-         read(unit_input,'(a40)') line 
+         read(unit_input,'(a40)') line
 !
 !        Remove blanks preceding text
 !
@@ -51,7 +55,7 @@ contains
                   read(unit_input,'(a40)') line
                   line = remove_preceding_blanks(line)
 !
-                  if (trim(line) == 'method:') then ! Set method 
+                  if (trim(line) == 'method:') then ! Set method
 !
                      read(unit_input,'(a40)') line
                      line = remove_preceding_blanks(line)
@@ -61,20 +65,22 @@ contains
                      exit
 !
                   elseif (trim(line) == '}') then
+!
                      write(unit_output,*)'Error: method was not specified in eT.inp.'
                      stop
-                  endif 
+!
+                  endif
 !
                enddo ! End general do loop
 !
-            else 
+            else
 !
                write(unit_output,*)'Error: method was not specified in eT.inp.'
                stop
 !
             endif
 !
-!           
+!
             exit
 !
          elseif (trim(line) == 'MLCC') then
@@ -106,11 +112,11 @@ contains
                      write(unit_output,*)'Error: method was not specified in eT.inp.'
                      stop
 !
-                  endif 
+                  endif
 !
                enddo ! End general do loop
 !
-            else 
+            else
 !
                write(unit_output,*)'Error: method was not specified in eT.inp.'
                stop
@@ -132,9 +138,9 @@ contains
 !
    function remove_preceding_blanks(line)
 !!
-!!    Remove Preceding Blanks. 
+!!    Remove preceding blanks
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2017
-!!    
+!!
 !!    Removes white spaces before text from line
 !!
       implicit none
