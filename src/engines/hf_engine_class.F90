@@ -3,31 +3,31 @@ module hf_engine_class
 !!
 !!		HF engine class module
 !!		Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
-!! h
+!!
 !
-	use kinds
-	use file_class
-	use hf_class
-	use disk_manager_class
+   use kinds
+   use file_class
+   use hf_class
+   use disk_manager_class
 !
-	implicit none
+   implicit none
 !
-	type :: hf_engine
+   type :: hf_engine
 !
-		real(dp) :: energy_threshold   = 1.0D-6
-		real(dp) :: residual_threshold = 1.0D-6
+      real(dp) :: energy_threshold   = 1.0D-6
+      real(dp) :: residual_threshold = 1.0D-6
 !
-		integer(i15) :: max_iterations = 100
+      integer(i15) :: max_iterations = 100
 !
-		logical :: restart
+      logical :: restart
 !
-	contains
+   contains
 !
-		procedure :: initialize => initialize_hf_engine
-		procedure :: solve 		=> solve_hf_engine
-		procedure :: finalize 	=> finalize_hf_engine
+   procedure :: initialize => initialize_hf_engine
+   procedure :: solve      => solve_hf_engine
+   procedure :: finalize   => finalize_hf_engine
 !
-	end type hf_engine
+   end type hf_engine
 !
 !
 contains
