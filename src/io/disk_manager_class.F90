@@ -1,22 +1,13 @@
 module disk_manager_class
 !
 !!
-!!                            Disk manager class module
-!!             Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2018
+!!    Disk manager class module
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2018
 !!
 !!
 !
-!  :::::::::::::::::::::::::::::::::::
-!  -::- Modules used by the class -::-
-!  :::::::::::::::::::::::::::::::::::
-!
-   use types
+   use kinds
    use file_class
-   use input_output
-!
-!  ::::::::::::::::::::::::::::::::::::::::::::::
-!  -::- Definition of the disk_manager class -::-
-!  ::::::::::::::::::::::::::::::::::::::::::::::
 !
    type :: disk_manager
 !
@@ -53,6 +44,7 @@ module disk_manager_class
 !
    end type disk_manager
 !
+   type(disk_manager) :: disk
 !
 contains
 !
@@ -84,8 +76,8 @@ contains
 !
 !     Open file to read the size
 !
-      scratch_size%name = 'scratch_size'
-      call disk%open_file(scratch_size, 'formatted', 'readwrite', 'sequential')
+      call scratch_size%init('scratch_size', 'sequential', 'formatted')
+      call disk%open_file(output, 'readwrite')
 !
       read(scratch_size%unit, *) scratch_size_entry
 !
@@ -108,7 +100,7 @@ contains
 !
       read(scratch_size%unit, *) size_of_directory
 !
-      write(unit_output,'(/t3,a36,i15)') 'Size of calculation directory (MB): ',size_of_directory
+      write(output%unit,'(/t3,a36,i15)') 'Size of calculation directory (MB): ',size_of_directory
 !
       size_of_directory = size_of_directory*1000 ! Megabytes to bytes
 !
@@ -141,7 +133,7 @@ contains
    end subroutine init_disk_manager
 !
 !
- subroutine open_file_disk_manager(disk, the_file, permissions, position)
+ subroutine open_file_disk_manager(disk, the_file, permissions, pos)
 !!
 !!    Open file
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2018
@@ -153,7 +145,7 @@ contains
 !!       - the_file (an object of type "file"). It is assumed that a file name
 !!         has been set: i.e., the_file%name = 'filename'.
 !!       - permissions ('read', 'write', 'readwrite')
-!!       - position ('rewind', 'append'). Optional argument specified for overwriting or appending 
+!!       - pos ('rewind', 'append'). Optional argument specified for overwriting or appending 
 !!         sequential file. Default is writing to current position where ever that might be.
 !!
       implicit none
@@ -163,22 +155,22 @@ contains
       class(file) :: the_file ! the file
 !
       character(len=*) :: permissions
-      character(len=*), optional :: position 
+      character(len=*), optional :: pos 
 !
       integer(i15) :: io_error = -1
 !
 !     Sanity checks
 !
-      if ( present(position)) then
+      if ( present(pos)) then
          if (the_file%access  == 'direct') then
 !
-            write(unit_output,'(/t3,a)') 'Warning: position specifier is disregarded for direct access file.'
+            write(output%unit,'(/t3,a)') 'Warning: position specifier is disregarded for direct access file.'
             stop
 !
          endif
       elseif (the_file%access .ne. 'direct' .and. the_file%access .ne. 'sequential' ) then
 !
-         write(unit_output,'(/t3,a)') 'Error: illegal access type for file: ', the_file%name
+         write(output%unit,'(/t3,a)') 'Error: illegal access type for file: ', the_file%name
          stop
 !
       endif
@@ -189,14 +181,14 @@ contains
 !
       elseif (the_file%access  == 'sequential') then
 !
-         call disk%open_file_sequential(the_file, permissions, position)
+         call disk%open_file_sequential(the_file, permissions, pos)
 !
       endif
 !
    end subroutine open_file_disk_manager
 !
 !
-   subroutine open_file_sequential_disk_manager(disk, the_file, permissions, position)
+   subroutine open_file_sequential_disk_manager(disk, the_file, permissions, pos)
 !!
 !!    Open sequential file
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2018
@@ -218,7 +210,7 @@ contains
       class(file) :: the_file ! the file
 !
       character(len=*) :: permissions
-      character(len=*), optional :: position 
+      character(len=*), optional :: pos 
 !
       integer(i15) :: io_error = -1
 !
@@ -226,29 +218,29 @@ contains
 !
       if (the_file%name == 'no_name') then
 !
-         write(unit_output,'(/t3,a)') 'Error: to open a file, you must set the name of the file.'
+         write(output%unit,'(/t3,a)') 'Error: to open a file, you must set the name of the file.'
          stop
 !
       elseif (the_file%format == 'unknown') then
 !
-         write(unit_output,'(/t3,a)') 'Error: to open a file, you must set the format of the file.'
+         write(output%unit,'(/t3,a)') 'Error: to open a file, you must set the format of the file.'
          stop
 !
       elseif (the_file%access == 'direct') then
 !
-         write(unit_output,'(/t3,a)') 'Error: tried to open sequential access file as a direct access file.'
+         write(output%unit,'(/t3,a)') 'Error: tried to open sequential access file as a direct access file.'
          stop
 !
       endif
 !
 !     Open file
 !
-      if (present(position)) then
+      if (present(pos)) then
 !
          io_error = -1
 !
          open(newunit=the_file%unit, file=the_file%name, access='sequential', &
-              action=permissions, status='unknown', form=the_file%format, pos=position, iostat=io_error)
+              action=permissions, status='unknown', form=the_file%format, position=pos, iostat=io_error)
 !
       else
 !
@@ -263,7 +255,7 @@ contains
 !
       if (io_error .ne. 0) then
 !
-         write(unit_output,'(/t3,a)') 'Error: could not open file: ', the_file%name
+         write(output%unit,'(/t3,a)') 'Error: could not open file: ', the_file%name
          stop
 !
       endif
@@ -279,7 +271,7 @@ contains
 !
       if (disk%available .lt. 0 .and. (permissions == 'write' .or. permissions == 'readwrite')) then
 !
-         write(unit_output,'(t3,a/,t3,a)') 'Error: the specified disk space is used up and', &
+         write(output%unit,'(t3,a/,t3,a)') 'Error: the specified disk space is used up and', &
                                            'a file was opened with permission to write.'
          stop
 !
@@ -315,22 +307,22 @@ contains
 !
       if (the_file%name == 'no_name') then
 !
-         write(unit_output,'(/t3,a)') 'Error: to open a file, you must set the name of the file.'
+         write(output%unit,'(/t3,a)') 'Error: to open a file, you must set the name of the file.'
          stop
 !
       elseif (the_file%format == 'unknown') then
 !
-         write(unit_output,'(/t3,a)') 'Error: to open a file, you must set the format of the file.'
+         write(output%unit,'(/t3,a)') 'Error: to open a file, you must set the format of the file.'
          stop
 !
       elseif (the_file%access == 'sequential') then
 !
-         write(unit_output,'(/t3,a)') 'Error: tried to open direct access file as a sequential access file.'
+         write(output%unit,'(/t3,a)') 'Error: tried to open direct access file as a sequential access file.'
          stop
 !
       elseif (the_file%record_length == 0) then
 !
-         write(unit_output,'(/t3,a)') 'Error: tried to open direct access file without a set record length.'
+         write(output%unit,'(/t3,a)') 'Error: tried to open direct access file without a set record length.'
          stop
 !
       endif
@@ -347,7 +339,7 @@ contains
 !
       if (io_error .ne. 0) then
 !
-         write(unit_output,'(/t3,a)') 'Error: could not open file: ', the_file%name
+         write(output%unit,'(/t3,a)') 'Error: could not open file: ', the_file%name
          stop
 !
       endif
@@ -363,7 +355,7 @@ contains
 !
       if (disk%available .lt. 0 .and. (permissions == 'write' .or. permissions == 'readwrite')) then
 !
-         write(unit_output,'(t3,a/,t3,a)') 'Error: the specified disk space is used up and', &
+         write(output%unit,'(t3,a/,t3,a)') 'Error: the specified disk space is used up and', &
                                            'a file was opened with permission to write.'
          stop
 !
@@ -395,17 +387,17 @@ contains
 !
       if (.not. the_file%opened) then
 !
-         write(unit_output,'(t3,a)') 'Error: tried to close a file that has not been opened.'
+         write(output%unit,'(t3,a)') 'Error: tried to close a file that has not been opened.'
          stop
 !
       elseif (the_file%access == 'unknown') then
 !
-         write(unit_output,'(/t3,a)') 'Error: to open a file, you must set the access type of the file.'
+         write(output%unit,'(/t3,a)') 'Error: to open a file, you must set the access type of the file.'
          stop
 !
       elseif (the_file%access == 'sequential') then
 !
-         write(unit_output,'(/t3,a)') 'Error: tried to open sequential access file as a direct access file.'
+         write(output%unit,'(/t3,a)') 'Error: tried to open sequential access file as a direct access file.'
          stop
 !!
       endif
@@ -424,8 +416,8 @@ contains
 !
          if (.not. (destiny == 'keep' .or. destiny == 'delete')) then
 !
-            write(unit_output,'(t3,a)') 'Error: could not recognize status when closing file.'
-            write(unit_output,'(t3,a)') 'Must equal keep or delete.'
+            write(output%unit,'(t3,a)') 'Error: could not recognize status when closing file.'
+            write(output%unit,'(t3,a)') 'Must equal keep or delete.'
             stop
 !
          else
@@ -444,9 +436,9 @@ contains
 !
                   if (file_size_when_opened .ne. file_size_when_closed) then
 !
-                     write(unit_output,'(t3,a)') 'Warning: deleting a file that has been written to since'
-                     write(unit_output,'(t3,a)') 'it was opened. To avoid an apparent accumulation of storage space,'
-                     write(unit_output,'(t3,a)') 'the estimated freed up space is taken to be the initial file size.'
+                     write(output%unit,'(t3,a)') 'Warning: deleting a file that has been written to since'
+                     write(output%unit,'(t3,a)') 'it was opened. To avoid an apparent accumulation of storage space,'
+                     write(output%unit,'(t3,a)') 'the estimated freed up space is taken to be the initial file size.'
                      bytes_written_to_disk = -file_size_when_opened
 !
                   endif
@@ -467,12 +459,12 @@ contains
 !
 !       if (bytes_written_to_disk .gt. 0) then
 ! !
-!          write(unit_output,'(/t3,a,a,a,i14)') 'Number of bytes written to file ', &
+!          write(output%unit,'(/t3,a,a,a,i14)') 'Number of bytes written to file ', &
 !                            trim(the_file%name), ': ', bytes_written_to_disk
 ! !
 !       elseif (bytes_written_to_disk .lt. 0) then
 ! !
-!          write(unit_output,'(/t3,a,a,a,i14)') 'File ', &
+!          write(output%unit,'(/t3,a,a,a,i14)') 'File ', &
 !                         trim(the_file%name),  ' modified or deleted, with bytes freed up: ', bytes_written_to_disk
 ! !
 !       endif
@@ -483,7 +475,7 @@ contains
 !
       if (disk%available .lt. 0) then
 !
-         write(unit_output,'(t3,a/,t3,a)') 'Warning: the specified disk space is now used up. If any', &
+         write(output%unit,'(t3,a/,t3,a)') 'Warning: the specified disk space is now used up. If any', &
                                            'more has to be stored, the calculation will stop.'
 !
       endif
@@ -518,7 +510,7 @@ contains
 !
       if (the_file%size .eq. -1) then
 !
-         write(unit_output,*) 'Error: Could not calculate file size of the file ', trim(the_file%name)
+         write(output%unit,*) 'Error: Could not calculate file size of the file ', trim(the_file%name)
          stop
 !
       endif

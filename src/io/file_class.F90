@@ -1,21 +1,12 @@
 module file_class
 !
 !!
-!!                               File class module                                 
-!!             Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2018         
+!!    File class module                                 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2018         
 !!
 !! 
 !
-!  :::::::::::::::::::::::::::::::::::
-!  -::- Modules used by the class -::-
-!  :::::::::::::::::::::::::::::::::::
-!
-   use types
-   use input_output
-!
-!  ::::::::::::::::::::::::::::::::::::::
-!  -::- Definition of the file class -::-
-!  ::::::::::::::::::::::::::::::::::::::
+   use kinds
 !
    type :: file 
 !
@@ -48,6 +39,7 @@ module file_class
 !
    end type file                                                                             
 !
+      type(file) :: output
 !
 contains
 !
@@ -81,18 +73,18 @@ contains
       if (.not. present(record_length)) then
         if (access == 'direct') then
 !
-            write(unit_output,'(/t3,a)') 'Error: for direct access files a record length must be specified.'
+            write(output%unit,'(/t3,a)') 'Error: for direct access files a record length must be specified.'
             stop
          endif
 !
       elseif (access .ne. 'direct' .and. access .ne. 'sequential') then
 !
-         write(unit_output,'(/t3,a)') 'Error: illegal access type specified for file: ', name
+         write(output%unit,'(/t3,a)') 'Error: illegal access type specified for file: ', name
          stop
 !
       elseif (format .ne. 'unformatted' .and. format .ne. 'formatted') then
 !
-         write(unit_output,'(/t3,a)') 'Error: illegal format specified for file: ', name
+         write(output%unit,'(/t3,a)') 'Error: illegal format specified for file: ', name
          stop
 !
       endif
@@ -138,19 +130,19 @@ contains
 !
       if (.not. the_file%opened) then
 !
-         write(unit_output,'(/t3,a)') 'Error: attempted to read unopened file.'
+         write(output%unit,'(/t3,a)') 'Error: attempted to read unopened file.'
          stop
 !
       elseif (the_file%access == 'direct') then
 !
-         write(unit_output,'(/t3,a)') 'Warning: no need to prepare to read line for a direct access file.'
+         write(output%unit,'(/t3,a)') 'Warning: no need to prepare to read line for a direct access file.'
          return
 !
       endif
 !
       rewind(the_file%unit)
 !
-      if (the_file%format == 'unformatted')
+      if (the_file%format == 'unformatted') then
 !
          do i = 1, (line - 1)
 !
@@ -158,7 +150,7 @@ contains
 !
          enddo
 !
-      elseif (the_file%format == 'formatted')
+      elseif (the_file%format == 'formatted') then
 !
          do i = 1, (line - 1)
 !

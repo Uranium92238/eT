@@ -17,8 +17,8 @@ program eT_program
 !
    type(hf) :: wf
 !
-   output%name = 'eT.out'
-   call disk%open_file(output, 'formatted', 'write', 'sequential')
+   call output%init('eT.out', 'sequential', 'formatted')
+   call disk%open_file(output, 'write', 'rewind')
 !
 ! 	Create an SCF engine and ask it to solve the HF wavefunction
 !

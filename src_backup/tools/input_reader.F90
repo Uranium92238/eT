@@ -136,33 +136,4 @@ contains
    end subroutine method_reader
 !
 !
-   function remove_preceding_blanks(line)
-!!
-!!    Remove preceding blanks
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2017
-!!
-!!    Removes white spaces before text from line
-!!
-      implicit none
-!
-      character(len=40) :: line
-!
-      character(len=40) :: remove_preceding_blanks
-!
-      integer(i15) :: i = 0, j = 0, length = 0
-!
-      do i = 1, 40
-         if (line(i:i) == ' ') then
-            continue
-         else
-            length = 40 - (i - 1)
-            remove_preceding_blanks(1:length) = line(i:40)
-            remove_preceding_blanks(length+1:40) = ' '
-            return
-         endif
-      enddo
-!
-   end function remove_preceding_blanks
-!
-!
 end module input_reader
