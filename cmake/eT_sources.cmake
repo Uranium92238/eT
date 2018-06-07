@@ -10,4 +10,5 @@ set(eT_fortran_sources
    src/various/parameters.F90
    src/wavefunctions/hf_class.F90
    src/molecule/atom_class.F90
+   src/molecule/molecule_class.F90
 )

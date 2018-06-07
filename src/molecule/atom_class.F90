@@ -13,9 +13,11 @@ module atom_class
 !
    integer(i15) :: number
 !
-   real(dp) :: x
-   real(dp) :: y
-   real(dp) :: z
+      character(len=40) :: basis
+!
+      real(dp) :: x
+      real(dp) :: y
+      real(dp) :: z
 !
    character(len=40) :: basis
 !
