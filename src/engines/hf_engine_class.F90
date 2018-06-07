@@ -3,7 +3,7 @@ module hf_engine_class
 !!
 !!		HF engine class module
 !!		Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
-!!
+!! h
 !
 	use kinds
 	use file_class
