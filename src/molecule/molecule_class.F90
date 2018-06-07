@@ -55,7 +55,7 @@ contains
 !
    subroutine set_molecule(mol)
 !!
-!!    Set ....
+!!    Set
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    Sets number of atoms, charge and name of system  
@@ -131,7 +131,7 @@ contains
 !!    Read
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Read atoms 
+!!    Read atoms and their coordinates
 !!
       implicit none
 !
@@ -174,9 +174,7 @@ contains
               mol%atoms(current_atom, 1)%type = trim(line(1:2))
 !   
               line = line(3:100)
-              line = remove_preceding_blanks(line) 
-              write(output%unit,*)line  
-              flush(output%unit)         
+              line = remove_preceding_blanks(line)     
               read(line, *) mol%atoms(current_atom,1)%x, &
                                     mol%atoms(current_atom,1)%y, &
                                     mol%atoms(current_atom,1)%z
@@ -221,7 +219,9 @@ contains
       write(mol_file%unit, '(i3/)') mol%n_atoms
 !
       do atom = 1, mol%n_atoms
-         write(mol_file%unit, '(a3, 5x, f8.5, 5x, f9.6, 5x, f9.6)') mol%atoms(atom, 1)%type, mol%atoms(atom, 1)%x, &
+         write(mol_file%unit, '(a3, 3x, f12.5, 3x, f12.5, 3x, f12.5)') &
+                                 mol%atoms(atom, 1)%type, &
+                                 mol%atoms(atom, 1)%x, &
                                  mol%atoms(atom, 1)%y, &
                                  mol%atoms(atom, 1)%z
       enddo

@@ -4,7 +4,6 @@ module disk_manager_class
 !!    Disk manager class module
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2018
 !!
-!!
 !
    use kinds
    use file_class
