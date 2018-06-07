@@ -5,6 +5,7 @@ program eT_program
 !!         Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !
+   use kinds
    use file_class
    use disk_manager_class
    use io_utilities
@@ -19,6 +20,10 @@ program eT_program
    type(hf) :: wf
 !
    type(file) :: input
+!
+   character(len=40) :: line
+!
+   integer(i15) :: i = 0
 !
 !  Initialize memory and disk here
 !
@@ -35,9 +40,13 @@ program eT_program
 !
    call disk%close_file(output)
 !
-   call input%init('eT.inp', 'sequential', 'formatted')
-   call disk%open_file(input, 'read')
-   call disk%close_file(input)
+  ! call input%init('eT.inp', 'sequential', 'formatted')
+  ! call disk%open_file(input, 'read')
+  ! do i = 1, 5
+  !    read(input%unit) line
+  !    write(output%unit,*) check_if_blank(line)
+  ! enddo
+  ! call disk%close_file(input)
 !
 !
 end program eT_program

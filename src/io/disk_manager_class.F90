@@ -227,6 +227,7 @@ contains
          stop
 !
       elseif (the_file%access == 'direct') then
+
 !
          write(output%unit,'(/t3,a)') 'Error: tried to open sequential access file as a direct access file.'
          stop
@@ -390,16 +391,6 @@ contains
          write(output%unit,'(t3,a)') 'Error: tried to close a file that has not been opened.'
          stop
 !
-      elseif (the_file%access == 'unknown') then
-!
-         write(output%unit,'(/t3,a)') 'Error: to open a file, you must set the access type of the file.'
-         stop
-!
-      elseif (the_file%access == 'sequential') then
-!
-         write(output%unit,'(/t3,a)') 'Error: tried to open sequential access file as a direct access file.'
-         stop
-!!
       endif
 !
 !     Get the file size (both when opened & closed)
