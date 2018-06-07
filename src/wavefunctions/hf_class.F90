@@ -29,13 +29,13 @@ module hf_class
       procedure :: initialize => initialize_hf
       procedure :: finalize   => finalize_hf
 !
-	end type hf
+   end type hf
 !
 !
 contains
 !
 !
-	subroutine initialize_hf(wf)
+   subroutine initialize_hf(wf)
 !!
 !! 	Initialize
 !!  	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018

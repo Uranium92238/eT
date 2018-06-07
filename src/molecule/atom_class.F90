@@ -5,13 +5,13 @@ module atom_class
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !
-	use kinds
+   use kinds
 !
-	implicit none
+   implicit none
 !
-	type :: atom
+   type :: atom
 !
-      integer(i15) :: number
+   integer(i15) :: number
 !
       character(len=40) :: basis
 !
