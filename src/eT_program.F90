@@ -7,6 +7,7 @@ program eT_program
 !
    use file_class
    use disk_manager_class
+   use io_utilities
 !
    use hf_class
    use hf_engine_class
@@ -16,6 +17,10 @@ program eT_program
    type(hf_engine) :: engine
 !
    type(hf) :: wf
+!
+   type(file) :: input
+!
+!  Initialize memory and disk here
 !
    call output%init('eT.out', 'sequential', 'formatted')
    call disk%open_file(output, 'write', 'rewind')
@@ -29,5 +34,10 @@ program eT_program
    call wf%finalize()
 !
    call disk%close_file(output)
+!
+   call input%init('eT.inp', 'sequential', 'formatted')
+   call disk%open_file(input, 'read')
+   call disk%close_file(input)
+!
 !
 end program eT_program
