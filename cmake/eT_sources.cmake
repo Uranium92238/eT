@@ -1,6 +1,6 @@
 set(eT_fortran_sources
    src/eT_program.F90
-   src/engines/scf_engine_class.F90
+   src/engines/hf_engine_class.F90
    src/io/disk_manager_class.F90
    src/io/file_class.F90
    src/memory/batching_index_class.F90

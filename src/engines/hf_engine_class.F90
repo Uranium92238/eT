@@ -33,65 +33,65 @@ module hf_engine_class
 contains
 !
 !
-	subroutine initialize_scf_engine(engine, wf)
+   subroutine initialize_hf_engine(engine, wf)
 !!
-!! 	Initialize SCF engine
-!! 	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!    Initialize HF engine
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-		implicit none
+      implicit none
 !
-		class(hf_engine) :: engine
+      class(hf_engine) :: engine
 !
-		class(hf) :: wf
+      class(hf) :: wf
 !
-! 		A dummy routine for now, but this routine should read from
-! 		file possible changes in the engines variables (thresholds, restart, etc.)
+!     A dummy routine for now, but this routine should read from
+!     file possible changes in the engines variables (thresholds, restart, etc.)
 !
-	end subroutine initialize_scf_engine
+   end subroutine initialize_hf_engine
 !
 !
-	subroutine solve_scf_engine(engine, wf)
+   subroutine solve_hf_engine(engine, wf)
 !!
-!!	 	Solve
-!! 	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!    Solve
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!! 	Routine that solves the reference state equations associated with a
-!! 	wavefunction
+!!    Routine that solves the reference state equations associated with a
+!!    wavefunction
 !!
-		implicit none
+      implicit none
 !
-		class(hf_engine) :: engine
+      class(hf_engine) :: engine
 !
-		class(hf) :: wf
+      class(hf) :: wf
 !
-! 		Initialize engine (read thresholds, restart, etc., from file,
-! 		but also ask the wavefunction for the number of parameters to solve
-! 		for and related information)
+!     Initialize engine (read thresholds, restart, etc., from file,
+!     but also ask the wavefunction for the number of parameters to solve
+!     for and related information)
 !
-		call engine%initialize(wf)
+      call engine%initialize(wf)
 !
-! 		Solve the equations!
-!
-!
-! 		Initialize engine (make final deallocations, and other stuff)
-!
-		call engine%finalize()
-!
-	end subroutine solve_hf_engine
+!     Solve the equations!
 !
 !
-	subroutine finalize_hf_engine(engine)
+!     Initialize engine (make final deallocations, and other stuff)
+!
+      call engine%finalize()
+!
+   end subroutine solve_hf_engine
+!
+!
+   subroutine finalize_hf_engine(engine)
 !!
 !! 	Finalize SCF engine
 !! 	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-		implicit none
+      implicit none
 !
-		class(hf_engine) :: engine
+      class(hf_engine) :: engine
 !
-! 		A dummy routine for now
+!     A dummy routine for now
 !
-	end subroutine finalize_hf_engine
+   end subroutine finalize_hf_engine
 !
 !
 end module hf_engine_class
