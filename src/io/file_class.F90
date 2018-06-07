@@ -40,6 +40,7 @@ module file_class
    end type file                                                                             
 !
       type(file) :: output
+      type(file) :: input
 !
 contains
 !

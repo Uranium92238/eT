@@ -11,15 +11,11 @@ module atom_class
 !
    type :: atom
 !
-   integer(i15) :: number
+      character(len=2) :: type
 !
       character(len=40) :: basis
 !
-      real(dp) :: x
-      real(dp) :: y
-      real(dp) :: z
-!
-   character(len=40) :: basis
+      real(dp), dimension(3, 1) :: xyz
 !
    contains
 !
