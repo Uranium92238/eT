@@ -79,6 +79,9 @@ module memory_manager_class
 !
    end type memory_manager
 !
+!  Main memory object
+!
+   type(memory_manager) :: mem
 !
 contains
 !

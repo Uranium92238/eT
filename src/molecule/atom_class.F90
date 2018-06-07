@@ -1,8 +1,8 @@
 module atom_class
 !
 !!
-!!		Atom class module
-!!		Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
+!!    Atom class module
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !
 	use kinds
@@ -11,14 +11,14 @@ module atom_class
 !
 	type :: atom
 !
-		integer(i15) :: number
+      integer(i15) :: number
 !
-		real(dp) :: x
-		real(dp) :: y
-		real(dp) :: z
+   real(dp) :: x
+   real(dp) :: y
+   real(dp) :: z
 !
-	contains
+   contains
 !
-	end type atom
+   end type atom
 !
 end module atom_class

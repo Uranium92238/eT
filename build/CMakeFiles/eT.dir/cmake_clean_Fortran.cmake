@@ -31,8 +31,4 @@ FILE(REMOVE
   "parameters.mod"
   "PARAMETERS.mod"
   "CMakeFiles/eT.dir/parameters.mod.stamp"
-
-  "scf_engine_class.mod"
-  "SCF_ENGINE_CLASS.mod"
-  "CMakeFiles/eT.dir/scf_engine_class.mod.stamp"
   )

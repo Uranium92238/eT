@@ -1,32 +1,32 @@
 module hf_class
 !
 !!
-!!		Hartree-Fock (HF) class module
-!!		Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
+!!    Hartree-Fock (HF) class module
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !
-	use kinds
-	use file_class
-	use atom_class
-	use disk_manager_class
+   use kinds
+   use file_class
+   use atom_class
+   use disk_manager_class
 !
-	implicit none
+   implicit none
 !
-	type :: hf
+   type :: hf
 !
-		character(len=40) :: name = 'HF'
+      character(len=40) :: name = 'HF'
 !
-		real(dp) :: n_ao
-		real(dp) :: n_mo
+      real(dp) :: n_ao
+      real(dp) :: n_mo
 !
-		real(dp), dimension(:,:), allocatable :: mo_coefficients
+      real(dp), dimension(:,:), allocatable :: mo_coefficients
 !
-		type(atom), dimension(:,:), allocatable :: molecule
+      type(atom), dimension(:,:), allocatable :: molecule
 !
 	contains
 !
-		procedure :: initialize => initialize_hf
-		procedure :: finalize   => finalize_hf
+      procedure :: initialize => initialize_hf
+      procedure :: finalize   => finalize_hf
 !
 	end type hf
 !
@@ -39,29 +39,29 @@ contains
 !! 	Initialize
 !!  	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-		implicit none
+      implicit none
 !
-		class(hf) :: wf
+      class(hf) :: wf
 !
-		write(output%unit, '(/t6,a,a,a)') &
-				'A wavefunction of type ', trim(wf%name), ' was initialized!'
+      write(output%unit, '(/t6,a,a,a)') &
+      'A wavefunction of type ', trim(wf%name), ' was initialized!'
 !
-	end subroutine initialize_hf
+   end subroutine initialize_hf
 !
 !
-	subroutine finalize_hf(wf)
+   subroutine finalize_hf(wf)
 !!
-!! 	Finalize
-!!  	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!    Finalize
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-		implicit none
+      implicit none
 !
-		class(hf) :: wf
+      class(hf) :: wf
 !
-		write(output%unit, '(/t6,a,a,a)') &
-				'A wavefunction of type ', trim(wf%name), ' was finalized!'
+      write(output%unit, '(/t6,a,a,a)') &
+         'A wavefunction of type ', trim(wf%name), ' was finalized!'
 !
-	end subroutine finalize_hf
+   end subroutine finalize_hf
 !
 !
 end module hf_class

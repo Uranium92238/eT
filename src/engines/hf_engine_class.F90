@@ -1,7 +1,7 @@
-module scf_engine_class
+module hf_engine_class
 !
 !!
-!!		SCF engine class module
+!!		HF engine class module
 !!		Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !
@@ -12,7 +12,7 @@ module scf_engine_class
 !
 	implicit none
 !
-	type :: scf_engine
+	type :: hf_engine
 !
 		real(dp) :: energy_threshold   = 1.0D-6
 		real(dp) :: residual_threshold = 1.0D-6
@@ -23,11 +23,11 @@ module scf_engine_class
 !
 	contains
 !
-		procedure :: initialize => initialize_scf_engine
-		procedure :: solve 		=> solve_scf_engine
-		procedure :: finalize 	=> finalize_scf_engine
+		procedure :: initialize => initialize_hf_engine
+		procedure :: solve 		=> solve_hf_engine
+		procedure :: finalize 	=> finalize_hf_engine
 !
-	end type scf_engine
+	end type hf_engine
 !
 !
 contains
@@ -40,7 +40,7 @@ contains
 !!
 		implicit none
 !
-		class(scf_engine) :: engine
+		class(hf_engine) :: engine
 !
 		class(hf) :: wf
 !
@@ -60,15 +60,9 @@ contains
 !!
 		implicit none
 !
-		class(scf_engine) :: engine
+		class(hf_engine) :: engine
 !
 		class(hf) :: wf
-!
-! 		Initialize wavefunction (this includes reading the molecular
-! 		geometry and basis set, fixing parameters, like the number of
-! 		atomic orbitals, and initializing arrays to keep in memory)
-!
-		call wf%initialize()
 !
 ! 		Initialize engine (read thresholds, restart, etc., from file,
 ! 		but also ask the wavefunction for the number of parameters to solve
@@ -78,32 +72,26 @@ contains
 !
 ! 		Solve the equations!
 !
-! ......
-!
-! 		Finalize wavefunction (save converged solution to file, for easy
-! 		restart, and deallocate arrays that have been kept in memory)
-!
-		call wf%finalize()
 !
 ! 		Initialize engine (make final deallocations, and other stuff)
 !
 		call engine%finalize()
 !
-	end subroutine solve_scf_engine
+	end subroutine solve_hf_engine
 !
 !
-	subroutine finalize_scf_engine(engine)
+	subroutine finalize_hf_engine(engine)
 !!
 !! 	Finalize SCF engine
 !! 	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 		implicit none
 !
-		class(scf_engine) :: engine
+		class(hf_engine) :: engine
 !
 ! 		A dummy routine for now
 !
-	end subroutine finalize_scf_engine
+	end subroutine finalize_hf_engine
 !
 !
-end module scf_engine_class
+end module hf_engine_class
