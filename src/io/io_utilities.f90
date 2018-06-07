@@ -24,6 +24,8 @@ contains
 !
       integer(i15) :: i = 0, j = 0, length = 0
 !
+      remove_preceding_blanks = ' '
+!
       do i = 1, 40
          if (line(i:i) == ' ') then
 !
@@ -57,10 +59,7 @@ contains
 !
       check_if_blank = .false.
 !
-      if (line == '') then
-          check_if_blank = .true.
-          write(*,*)'halla'
-      endif
+      if (trim(line) == '') check_if_blank = .true.
 !
    end function check_if_blank
 !

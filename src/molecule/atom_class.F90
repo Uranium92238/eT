@@ -17,6 +17,8 @@ module atom_class
    real(dp) :: y
    real(dp) :: z
 !
+   character(len=40) :: basis
+!
    contains
 !
    end type atom
