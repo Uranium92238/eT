@@ -8,6 +8,7 @@ module hf_class
    use kinds
    use file_class
    use atom_class
+   use molecule_class
    use disk_manager_class
 !
    implicit none
@@ -21,7 +22,7 @@ module hf_class
 !
       real(dp), dimension(:,:), allocatable :: mo_coefficients
 !
-      type(atom), dimension(:,:), allocatable :: molecule
+      type(molecule) :: molecule
 !
 	contains
 !
@@ -42,6 +43,9 @@ contains
       implicit none
 !
       class(hf) :: wf
+!
+      call wf%molecule%initialize()
+      call wf%molecule%write()
 !
       write(output%unit, '(/t6,a,a,a)') &
       'A wavefunction of type ', trim(wf%name), ' was initialized!'

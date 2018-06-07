@@ -23,9 +23,9 @@ module hf_engine_class
 !
    contains
 !
-   procedure :: initialize => initialize_hf_engine
-   procedure :: solve      => solve_hf_engine
-   procedure :: finalize   => finalize_hf_engine
+      procedure :: initialize => initialize_hf_engine
+      procedure :: solve      => solve_hf_engine
+      procedure :: finalize   => finalize_hf_engine
 !
    end type hf_engine
 !
