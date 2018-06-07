@@ -13,9 +13,11 @@ module atom_class
 !
       character(len=2) :: type
 !
-      character(len=40) :: basis
+      character(len=100) :: basis
 !
-      real(dp), dimension(3, 1) :: xyz
+      real(dp) :: x
+      real(dp) :: y
+      real(dp) :: z
 !
    contains
 !

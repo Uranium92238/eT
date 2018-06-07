@@ -18,24 +18,24 @@ contains
 !  
       implicit none
 !
-      character(len=40) :: line
+      character(len=100) :: line
 !
-      character(len=40) :: remove_preceding_blanks
+      character(len=100) :: remove_preceding_blanks
 !
       integer(i15) :: i = 0, j = 0, length = 0
 !
       remove_preceding_blanks = ' '
 !
-      do i = 1, 40
+      do i = 1, 100
          if (line(i:i) == ' ') then
 !
             continue
 !
          else
 !
-            length = 40 - (i - 1)
-            remove_preceding_blanks(1:length) = line(i:40)
-            remove_preceding_blanks(length+1:40) = ' '
+            length = 100 - (i - 1)
+            remove_preceding_blanks(1:length) = line(i:100)
+            remove_preceding_blanks(length+1:100) = ' '
             return
 !
          endif
@@ -53,7 +53,7 @@ contains
 !  
       implicit none
 !
-      character(len=40) :: line
+      character(len=100) :: line
 !
       logical :: check_if_blank
 !
