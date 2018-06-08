@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 
 # set project name and languanges that are involved
-project(eT Fortran)
+project(eT Fortran CXX)
 
 # these are paths that CMake will search for cmake
 # module files that end with .cmake
@@ -19,6 +19,8 @@ option(ENABLE_OMP            "Enable OpenMP parallelization"                    
 # Including the source files
 include(eT_sources)
 include(Fortran_flags)
+include(eT_CXX_sources)
+include(CXX_flags)
 
 # math detection
 set(BLAS_LANG "Fortran")
@@ -34,7 +36,11 @@ set(eT_fortran_sources
         ${eT_fortran_sources}
         )
 
-add_executable(eT ${eT_fortran_sources})
+set(eT_CXX_sources
+        ${eT_CXX_sources}
+        )
+
+add_executable(eT ${eT_fortran_sources} ${eT_CXX_sources})
 
 target_link_libraries(eT ${lapackblas_libraries})
 
