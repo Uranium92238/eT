@@ -271,7 +271,7 @@ contains
              endif
 !
              nuclear_repulsion_molecule = nuclear_repulsion_molecule &
-                          + (mol%atoms(i, 1)%number)*(mol%atoms(j, 1)%number)
+                          + (mol%atoms(i, 1)%number)*(mol%atoms(j, 1)%number)/r_ij
 !
          enddo
       enddo
