@@ -44,7 +44,6 @@ contains
       class(atom) :: a 
 !
       call a%symbol_2_number()
-      write(output%unit,*) a%number
 !
    end subroutine set_number_atom
 !
@@ -64,6 +63,8 @@ contains
       class(atom) :: a
 !
       integer(i15) :: i = 0
+!
+      a%number = 0
 !
       do i = 1, size_periodic_table
          if (atomic_symbol(i) == a%symbol) then
