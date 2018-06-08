@@ -44,24 +44,5 @@ contains
    end function remove_preceding_blanks
 !
 !
-   function check_if_blank(line)
-!  
-!     Check if blank
-!     Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2018
-!  
-!     Checks if line is blank
-!  
-      implicit none
-!
-      character(len=100) :: line
-!
-      logical :: check_if_blank
-!
-      check_if_blank = .false.
-!
-      if (trim(line) == '') check_if_blank = .true.
-!
-   end function check_if_blank
-!
 end module
 !
