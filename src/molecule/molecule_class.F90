@@ -263,7 +263,7 @@ contains
             y_ij = mol%atoms(i, 1)%y - mol%atoms(j, 1)%y
             z_ij = mol%atoms(i, 1)%x - mol%atoms(j, 1)%z
 !
-            r_ij = sqrt(x_ij**2 + y_ij**2 +z_ij**2)
+            r_ij = sqrt(x_ij**2 + y_ij**2 + z_ij**2)
 !
              if (abs(r_ij) .lt. 1.d-7) then
                 write(output%unit,'(/t3,a)') 'Error: Two atoms are placed on top of each other'
