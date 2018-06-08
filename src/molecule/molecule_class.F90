@@ -27,8 +27,8 @@ module molecule_class
       procedure :: initialize => initialize_molecule
       procedure :: write      => write_molecule
 !
-      procedure, private :: set => set_molecule
-      procedure, private :: read => read_molecule
+      procedure, private :: read_info => read_info_molecule
+      procedure, private :: read_geometry => read_geometry_molecule
 !
    end type molecule
 !
@@ -44,16 +44,16 @@ contains
 !
       class(molecule) :: mol
 !
-      call mol%set
+      call mol%read_info
 !
       allocate(mol%atoms(mol%n_atoms, 1))
 !
-      call mol%read
+      call mol%read_geometry
 !
    end subroutine initialize_molecule
 !
 !
-   subroutine set_molecule(mol)
+   subroutine read_info_molecule(mol)
 !!
 !!    Set
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -123,10 +123,10 @@ contains
       
       call disk%close_file(input)
 !
-   end subroutine set_molecule
+   end subroutine read_info_molecule
 !
 !
-   subroutine read_molecule(mol)
+   subroutine read_geometry_molecule(mol)
 !!
 !!    Read
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -196,7 +196,7 @@ contains
       
       call disk%close_file(input)
 !
-   end subroutine read_molecule
+   end subroutine read_geometry_molecule
 !
 !
    subroutine write_molecule(mol)
