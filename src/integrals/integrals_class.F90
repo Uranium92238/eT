@@ -5,6 +5,9 @@ module integrals_class
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !
+   use kinetic
+   use file_class
+!
    implicit none
 !
    type :: integrals
@@ -25,6 +28,16 @@ contains
       implicit none
 !
       class(integrals) :: int
+!
+      real(dp) :: g
+!
+      g = 1.2D0
+!
+      write(output%unit,*) 'Hello from fortran, g is now: ', g
+!
+      call get_ao_xy_kinetic(g)
+!
+      write(output%unit,*) 'Back in fortran, g is now: ', g
 !
    end subroutine get_ao_xy_integrals
 !
