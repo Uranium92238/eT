@@ -11,4 +11,5 @@ set(eT_fortran_sources
    src/wavefunctions/hf_class.F90
    src/molecule/atom_class.F90
    src/molecule/molecule_class.F90
+   src/molecule/periodic_table.F90
 )

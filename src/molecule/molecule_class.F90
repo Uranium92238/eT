@@ -5,9 +5,6 @@ module molecule_class
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !
-   use kinds
-   use file_class
-   use disk_manager_class
    use atom_class
    use io_utilities
 !
@@ -44,11 +41,20 @@ contains
 !
       class(molecule) :: mol
 !
+      integer(i15) :: i = 0
+!
       call mol%read_info
 !
       allocate(mol%atoms(mol%n_atoms, 1))
 !
       call mol%read_geometry
+!
+      do i = 1, mol%n_atoms
+!
+        call mol%atoms(i, 1)%set_number
+        write(output%unit, *)mol%atoms(i, 1)%number
+!
+      enddo
 !
    end subroutine initialize_molecule
 !
@@ -171,7 +177,7 @@ contains
               current_atom = current_atom + 1 
 !
               mol%atoms(current_atom, 1)%basis = current_basis
-              mol%atoms(current_atom, 1)%type = trim(line(1:2))
+              mol%atoms(current_atom, 1)%symbol = trim(line(1:2))
 !   
               line = line(3:100)
               line = remove_preceding_blanks(line)     
@@ -219,16 +225,58 @@ contains
       write(mol_file%unit, '(i3/)') mol%n_atoms
 !
       do atom = 1, mol%n_atoms
-         write(mol_file%unit, '(a3, 3x, f12.5, 3x, f12.5, 3x, f12.5)') &
-                                 mol%atoms(atom, 1)%type, &
-                                 mol%atoms(atom, 1)%x, &
-                                 mol%atoms(atom, 1)%y, &
+         write(mol_file%unit, '(a3, 3x, f12.5, 3x, f12.5, 3x, f12.5)')  &
+                                 mol%atoms(atom, 1)%symbol,             &   
+                                 mol%atoms(atom, 1)%x,                  &
+                                 mol%atoms(atom, 1)%y,                  &
                                  mol%atoms(atom, 1)%z
       enddo
 !
       call disk%close_file(mol_file)
 !
    end subroutine write_molecule
+!
+!
+   function nuclear_repulsion_molecule(mol)
+!!
+!!    Nuclear repulsion
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Calculates and returns nuclear repulsion for the molecule
+!!
+      implicit none
+!
+      class(molecule) :: mol
+!
+      real(dp) :: nuclear_repulsion_molecule
+!
+      integer(i15) :: i = 0, j = 0
+!
+      real(dp) :: x_ij, y_ij, z_ij, r_ij
+!
+      nuclear_repulsion_molecule = 0
+!
+      do i = 1, mol%n_atoms
+         do j = i + 1, mol%n_atoms
+!
+            x_ij = mol%atoms(i, 1)%x - mol%atoms(j, 1)%x
+            y_ij = mol%atoms(i, 1)%y - mol%atoms(j, 1)%y
+            z_ij = mol%atoms(i, 1)%x - mol%atoms(j, 1)%z
+!
+            r_ij = sqrt(x_ij**2 + y_ij**2 +z_ij**2)
+!
+             if (abs(r_ij) .lt. 1.d-7) then
+                write(output%unit,'(/t3,a)') 'Error: Two atoms are placed on top of each other'
+                stop
+             endif
+!
+             nuclear_repulsion_molecule = nuclear_repulsion_molecule &
+                          + (mol%atoms(i, 1)%number)*(mol%atoms(j, 1)%number)
+!
+         enddo
+      enddo
+!
+  end function nuclear_repulsion_molecule
 !
 !
 end module molecule_class
