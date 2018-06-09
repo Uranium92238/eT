@@ -5,6 +5,7 @@ module molecule_class
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !
+   use parameters
    use atom_class
    use io_utilities
 !
@@ -23,6 +24,8 @@ module molecule_class
 !
       procedure :: initialize => initialize_molecule
       procedure :: write      => write_molecule
+!
+      procedure :: nuclear_repulsion => nuclear_repulsion_molecule
 !
       procedure, private :: read_info => read_info_molecule
       procedure, private :: read_geometry => read_geometry_molecule
@@ -64,7 +67,7 @@ contains
 !!    Set
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Sets number of atoms, charge and name of system  
+!!    Sets number of atoms, charge and name of system
 !!
       implicit none
 !
@@ -85,48 +88,48 @@ contains
       line = remove_preceding_blanks(line)
 !
       do while (trim(line) .ne. 'end geometry')
-      
+
          if (line(1:6) == 'basis:' .or.  &
              line(1:6) == 'Basis:' .or.  &
              line(1:6) == 'BASIS:' ) then
-      
+
             read(input%unit,'(a)') line
             line = remove_preceding_blanks(line)
-      
+
             do while (trim(line) .ne. 'end geometry'  .and.  &
                        line(1:6) .ne. 'basis:'        .and.  &
                        line(1:6) .ne. 'Basis:'        .and.  &
                        line(1:6) .ne. 'BASIS:')
-      
+
                mol%n_atoms = mol%n_atoms + 1
-      
+
                read(input%unit,'(a)') line
                line = remove_preceding_blanks(line)
-      
+
             enddo
-      
+
             backspace(input%unit)
-      
+
             elseif (line(1:5) == 'name:' .or.  &
                     line(1:5) == 'Name:' .or.  &
                     line(1:5) == 'NAME:' ) then
-      
+
                mol%name = trim(line(6:100))
                mol%name = remove_preceding_blanks(mol%name)
-      
+
             elseif (line(1:7) == 'charge:' .or.  &
                     line(1:7) == 'Charge:' .or.  &
                     line(1:7) == 'CHARGE:' ) then
-      
+
                read(line(8:100),*) mol%charge
-      
+
          endif
-       
+
          read(input%unit,'(a)') line
          line = remove_preceding_blanks(line)
-      
+
       enddo
-      
+
       call disk%close_file(input)
 !
    end subroutine read_info_molecule
@@ -148,6 +151,9 @@ contains
 !
       integer(i15) :: i = 0, current_atom = 0
 !
+      integer(i15) :: cursor
+      character(len=100) :: coordinate
+!
       call disk%open_file(input, 'read')
       rewind(input%unit)
 !
@@ -157,7 +163,7 @@ contains
       current_atom = 0
 !
       do while (trim(line) .ne. 'end geometry')
-      
+
          if (line(1:6) == 'basis:' .or.  &
              line(1:6) == 'Basis:' .or.  &
              line(1:6) == 'BASIS:' ) then
@@ -168,38 +174,83 @@ contains
             read(input%unit,'(a)') line
             line = remove_preceding_blanks(line)
 
-      
+
            do while (trim(line) .ne. 'end geometry'  .and.  &
                       line(1:6) .ne. 'basis:'        .and.  &
                       line(1:6) .ne. 'Basis:'        .and.  &
                       line(1:6) .ne. 'BASIS:')
 !
-              current_atom = current_atom + 1 
+               current_atom = current_atom + 1
 !
-              mol%atoms(current_atom, 1)%basis = current_basis
-              mol%atoms(current_atom, 1)%symbol = trim(line(1:2))
-!   
-              line = line(3:100)
-              line = remove_preceding_blanks(line)     
-              read(line, *) mol%atoms(current_atom,1)%x, &
-                                    mol%atoms(current_atom,1)%y, &
-                                    mol%atoms(current_atom,1)%z
+               mol%atoms(current_atom, 1)%basis = current_basis
+               mol%atoms(current_atom, 1)%symbol = trim(line(1:2))
+!
+               line = line(3:100)
+               line = remove_preceding_blanks(line)
+!
+               cursor = 1
+!
+               do
+                  if (line(cursor:cursor) .eq. ' ') then
+                     exit
+                  else
+                     cursor = cursor + 1
+                     cycle
+                  endif
+               enddo
+!
+               coordinate = line(1:cursor)
+               read(coordinate, '(f30.25)') mol%atoms(current_atom,1)%x
+!
+               cursor = cursor + 1
+!
+               line = line(cursor:100)
+               line = remove_preceding_blanks(line)
+!
+               cursor = 1 ! Initial value
+!
+               do
+                  if (line(cursor:cursor) .eq. ' ') then
+                     exit
+                  else
+                     cursor = cursor + 1
+                     cycle
+                  endif
+               enddo
+!
+               coordinate = line(1:cursor)
+               read(coordinate, '(f30.25)') mol%atoms(current_atom,1)%y
+!
+               cursor = cursor + 1
+!
+               coordinate = line(cursor:100)
+               coordinate = remove_preceding_blanks(coordinate)
+!
+               read(coordinate, '(f30.25)') mol%atoms(current_atom,1)%z
+!
+               write(output%unit, *) mol%atoms(current_atom,1)%x
+write(output%unit, *) mol%atoms(current_atom,1)%y
+write(output%unit, *) mol%atoms(current_atom,1)%z
+!
+              ! read(line, *) mol%atoms(current_atom,1)%x, &
+              !               mol%atoms(current_atom,1)%y, &
+              !               mol%atoms(current_atom,1)%z
 !
               read(input%unit,'(a)') line
               line = remove_preceding_blanks(line)
-      
+
            enddo
-!      
+!
            backspace(input%unit)
-!      
+!
          endif
-       
+
          read(input%unit,'(a)') line
          line = remove_preceding_blanks(line)
 
-!      
+!
       enddo
-      
+
       call disk%close_file(input)
 !
    end subroutine read_geometry_molecule
@@ -210,7 +261,7 @@ contains
 !!    Write
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Write xyz file for libint 
+!!    Write xyz file for libint
 !!
       implicit none
 !
@@ -225,10 +276,10 @@ contains
       write(mol_file%unit, '(i3/)') mol%n_atoms
 !
       do atom = 1, mol%n_atoms
-         write(mol_file%unit, '(a3, 3x, f12.5, 3x, f12.5, 3x, f12.5)')  &
-                                 mol%atoms(atom, 1)%symbol,             &   
-                                 mol%atoms(atom, 1)%x,                  &
-                                 mol%atoms(atom, 1)%y,                  &
+         write(mol_file%unit, '(a3, 3x, f30.25, 3x, f30.25, 3x, f30.25)')  &
+                                 mol%atoms(atom, 1)%symbol,                &
+                                 mol%atoms(atom, 1)%x,                     &
+                                 mol%atoms(atom, 1)%y,                     &
                                  mol%atoms(atom, 1)%z
       enddo
 !
@@ -254,10 +305,12 @@ contains
 !
       real(dp) :: x_ij, y_ij, z_ij, r_ij
 !
-      nuclear_repulsion_molecule = 0
+      nuclear_repulsion_molecule = zero
 !
       do i = 1, mol%n_atoms
          do j = i + 1, mol%n_atoms
+!
+            write(output%unit,*) 'i j', i, j
 !
             x_ij = mol%atoms(i, 1)%x - mol%atoms(j, 1)%x
             y_ij = mol%atoms(i, 1)%y - mol%atoms(j, 1)%y
@@ -265,13 +318,15 @@ contains
 !
             r_ij = sqrt(x_ij**2 + y_ij**2 + z_ij**2)
 !
-             if (abs(r_ij) .lt. 1.d-7) then
-                write(output%unit,'(/t3,a)') 'Error: Two atoms are placed on top of each other'
-                stop
-             endif
+            if (abs(r_ij) .lt. 1.d-7) then
 !
-             nuclear_repulsion_molecule = nuclear_repulsion_molecule &
-                          + (mol%atoms(i, 1)%number)*(mol%atoms(j, 1)%number)/r_ij
+               write(output%unit,'(/t3,a)') 'Error: Two atoms are placed on top of each other'
+               stop
+!
+            endif
+!
+            nuclear_repulsion_molecule = nuclear_repulsion_molecule &
+                  + ((mol%atoms(i, 1)%number)*(mol%atoms(j, 1)%number))/r_ij
 !
          enddo
       enddo
@@ -280,5 +335,3 @@ contains
 !
 !
 end module molecule_class
-
-               
