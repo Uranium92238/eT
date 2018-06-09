@@ -49,6 +49,8 @@ contains
       call wf%molecule%initialize
       call wf%molecule%write
 !
+      call wf%integrals%get_ao_xy
+!
    end subroutine initialize_hf
 !
 !

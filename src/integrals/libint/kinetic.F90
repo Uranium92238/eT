@@ -7,14 +7,14 @@ module kinetic
 !
 contains
 !
-   subroutine get_ao_xy_kinetic(h)
+   subroutine get_ao_xy_kinetics(h)
 !
       implicit none
 !
-      real(dp) :: h
+      real(kind=8), intent(inout) :: h
 !
       call get_ao_xy_kinetic_c(h)
 !
-   end subroutine get_ao_xy_kinetic
+   end subroutine get_ao_xy_kinetics
 !
 end module kinetic

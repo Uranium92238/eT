@@ -29,13 +29,13 @@ contains
 !
       class(integrals) :: int
 !
-      real(dp) :: g
+      real(kind=8) :: g
 !
       g = 1.2D0
 !
       write(output%unit,*) 'Hello from fortran, g is now: ', g
 !
-      call get_ao_xy_kinetic(g)
+      call get_ao_xy_kinetics(g)
 !
       write(output%unit,*) 'Back in fortran, g is now: ', g
 !

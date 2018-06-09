@@ -1,7 +1,7 @@
 #
 # Testing for Fortran compiler and setting compiler flags
 #
-## GNU ##  
+## GNU ##
 if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
     add_definitions(-DVAR_GFORTRAN)
     set(CMAKE_Fortran_FLAGS         "-DVAR_GFORTRAN -O3 -ffloat-store -fcray-pointer -finit-local-zero -fopenmp")
