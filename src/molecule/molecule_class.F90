@@ -25,10 +25,10 @@ module molecule_class
       procedure :: initialize => initialize_molecule
       procedure :: write      => write_molecule
 !
-      procedure :: nuclear_repulsion => nuclear_repulsion_molecule
-!
-      procedure, private :: read_info => read_info_molecule
+      procedure, private :: read_info     => read_info_molecule
       procedure, private :: read_geometry => read_geometry_molecule
+!
+      procedure :: nuclear_repulsion => nuclear_repulsion_molecule
 !
    end type molecule
 !
@@ -64,10 +64,10 @@ contains
 !
    subroutine read_info_molecule(mol)
 !!
-!!    Set
+!!    Read information
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Sets number of atoms, charge and name of system
+!!    Sets the number of atoms, charge and name of the molecule.
 !!
       implicit none
 !
@@ -140,7 +140,7 @@ contains
 !!    Read
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Read atoms and their coordinates
+!!    Read atoms and their coordinates, assumed to be in units of Ångstrøm.
 !!
       implicit none
 !
@@ -229,12 +229,8 @@ contains
                read(coordinate, '(f30.25)') mol%atoms(current_atom,1)%z
 !
                write(output%unit, *) mol%atoms(current_atom,1)%x
-write(output%unit, *) mol%atoms(current_atom,1)%y
-write(output%unit, *) mol%atoms(current_atom,1)%z
-!
-              ! read(line, *) mol%atoms(current_atom,1)%x, &
-              !               mol%atoms(current_atom,1)%y, &
-              !               mol%atoms(current_atom,1)%z
+               write(output%unit, *) mol%atoms(current_atom,1)%y
+               write(output%unit, *) mol%atoms(current_atom,1)%z
 !
               read(input%unit,'(a)') line
               line = remove_preceding_blanks(line)
@@ -261,11 +257,13 @@ write(output%unit, *) mol%atoms(current_atom,1)%z
 !!    Write
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Write xyz file for libint
+!!    Writes to disk an xyz file, which is used by the libint package
+!!    to calculate integrals.
 !!
       implicit none
 !
       class(molecule) :: mol
+!
       integer(i15) :: atom = 0
 !
       type(file) :: mol_file
@@ -276,11 +274,13 @@ write(output%unit, *) mol%atoms(current_atom,1)%z
       write(mol_file%unit, '(i3/)') mol%n_atoms
 !
       do atom = 1, mol%n_atoms
+!
          write(mol_file%unit, '(a3, 3x, f30.25, 3x, f30.25, 3x, f30.25)')  &
                                  mol%atoms(atom, 1)%symbol,                &
                                  mol%atoms(atom, 1)%x,                     &
                                  mol%atoms(atom, 1)%y,                     &
                                  mol%atoms(atom, 1)%z
+!
       enddo
 !
       call disk%close_file(mol_file)
@@ -293,7 +293,9 @@ write(output%unit, *) mol%atoms(current_atom,1)%z
 !!    Nuclear repulsion
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Calculates and returns nuclear repulsion for the molecule
+!!    Calculates, and returns, the nuclear repulsion term for the molecule,
+!!    in units of Hartree. Makes use of the Ångstrøm to Bohr conversion
+!!    factor defined in the parameters module.
 !!
       implicit none
 !
@@ -310,15 +312,15 @@ write(output%unit, *) mol%atoms(current_atom,1)%z
       do i = 1, mol%n_atoms
          do j = i + 1, mol%n_atoms
 !
-            write(output%unit,*) 'i j', i, j
-!
             x_ij = mol%atoms(i, 1)%x - mol%atoms(j, 1)%x
             y_ij = mol%atoms(i, 1)%y - mol%atoms(j, 1)%y
             z_ij = mol%atoms(i, 1)%z - mol%atoms(j, 1)%z
 !
             r_ij = sqrt(x_ij**2 + y_ij**2 + z_ij**2)
 !
-            if (abs(r_ij) .lt. 1.d-7) then
+            r_ij = angstrom_to_bohr*r_ij
+!
+            if (abs(r_ij) .lt. 1.0D-7) then
 !
                write(output%unit,'(/t3,a)') 'Error: Two atoms are placed on top of each other'
                stop
