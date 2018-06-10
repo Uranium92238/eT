@@ -314,7 +314,7 @@ write(output%unit, *) mol%atoms(current_atom,1)%z
 !
             x_ij = mol%atoms(i, 1)%x - mol%atoms(j, 1)%x
             y_ij = mol%atoms(i, 1)%y - mol%atoms(j, 1)%y
-            z_ij = mol%atoms(i, 1)%x - mol%atoms(j, 1)%z
+            z_ij = mol%atoms(i, 1)%z - mol%atoms(j, 1)%z
 !
             r_ij = sqrt(x_ij**2 + y_ij**2 + z_ij**2)
 !
