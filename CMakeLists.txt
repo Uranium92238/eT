@@ -32,6 +32,8 @@ if(LAPACK_FOUND AND BLAS_FOUND)
   set(lapackblas_libraries ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
 endif()
 
+set(libint_libraries "/usr/local/libint/2.4.2/lib/libint2.a")
+
 set(eT_fortran_sources
         ${eT_fortran_sources}
         )
@@ -42,6 +44,6 @@ set(eT_CXX_sources
 
 add_executable(eT ${eT_fortran_sources} ${eT_CXX_sources})
 
-target_link_libraries(eT ${lapackblas_libraries})
+target_link_libraries(eT ${lapackblas_libraries} ${libint_libraries})
 
 set_target_properties(eT PROPERTIES LINKER_LANGUAGE Fortran)

@@ -1,5 +1,5 @@
 if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
-    set(CMAKE_CXX_FLAGS         "-g -Wall -fno-rtti -fno-exceptions")
+    set(CMAKE_CXX_FLAGS         "-g -Wall -fno-exceptions")
     if(NOT DEVELOPMENT_CODE)
         # suppress warnings in exported code
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
@@ -17,6 +17,13 @@ if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
     set(CMAKE_CXX_FLAGS_DEBUG   "-O0 -g3")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffast-math -funroll-loops -ftree-vectorize -Wno-unused")
     set(CMAKE_CXX_FLAGS_PROFILE "${CMAKE_CXX_FLAGS_RELEASE} -g -pg")
+#
+#   Flags needed for libint package
+#
+    set(CMAKE_CXX_FLAGS
+        "${CMAKE_CXX_FLAGS} -fexceptions -I /usr/local/libint/2.4.2/include -I /usr/local/include/eigen3 -I /usr/local/libint/2.4.2/include/libint2/ -lint2 -std=c++11 -DPREP_LIBINT2_SKIP_BOOST"
+        )
+#
     if(NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
         # radovan: vpotdamp code needs this
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
@@ -39,7 +46,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
 endif()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES Intel)
-    set(CMAKE_CXX_FLAGS         "-g -wd981 -wd279 -wd383 -vec-report0 -wd1572 -wd177 -fno-rtti -fno-exceptions")
+    set(CMAKE_CXX_FLAGS         "-g -wd981 -wd279 -wd383 -vec-report0 -wd1572 -wd177 -fno-exceptions")
     if(DEVELOPMENT_CODE)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
     else()
