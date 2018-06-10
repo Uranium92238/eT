@@ -29,9 +29,10 @@ contains
 !
       class(integrals) :: int
 !
-      real(kind=8) :: g
+      real(kind=8), dimension(2,1) :: g
 !
-      g = 1.2D0
+      g(1,1) = 1.2D0
+      g(2,1) = 1.3D0
 !
       write(output%unit,*) 'Hello from fortran, g is now: ', g
 !

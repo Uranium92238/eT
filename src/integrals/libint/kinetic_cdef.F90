@@ -5,7 +5,7 @@ interface
       use iso_c_binding
       implicit none
 !
-      real(c_double), value :: h
+      real(c_double), dimension(2,1) :: h
 !
    end subroutine get_ao_xy_kinetic_c
 !

@@ -11,7 +11,7 @@ contains
 !
       implicit none
 !
-      real(kind=8), intent(inout) :: h
+      real(kind=8), dimension(2,1), intent(inout) :: h
 !
       call get_ao_xy_kinetic_c(h)
 !

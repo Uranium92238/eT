@@ -8,6 +8,15 @@
 using namespace libint2;
 using namespace std;
 
+int index_two(int a, int b, int dim_a){
+//
+// C++ version for pointers has -1,
+// since the pointer refers to index 1,
+// which is accessed as *(h + index_two(1, 1, dim_a))
+//
+	return -1 + dim_a*(b-1) + a;
+}
+
 void get_ao_xy_kinetic(double *h){
 //
 // ** Initialize libint calculator **
@@ -93,11 +102,19 @@ void get_ao_xy_kinetic(double *h){
 
     		// integrals are packed into ints_shellset in row-major (C) form
     		// this iterates over integrals in this order
-    		for(auto f1=0; f1!=n1; ++f1)
-      		for(auto f2=0; f2!=n2; ++f2)
+    		for(auto f1=0; f1!=n1; ++f1){
+      		for(auto f2=0; f2!=n2; ++f2){
         			cout << "  " << bf1+f1 << " " << bf2+f2 << " " << ints_shellset[f1*n2+f2] << endl;
-  			}
-		}
+					*(h + index_two(1, 1, 2)) = ints_shellset[f1*n2+f2]; // sets first element of array
+					*(h + index_two(2, 1, 2)) = 1.9E0; // sets second element of array
+				}
+			}
+//
+  		}
+	}
+//
+	cout << index_two(1, 1, 2) << " should be zero!" << endl;
+	cout << index_two(2, 1, 2) << " should be one!" << endl;
 //
 // ** Finalize libint calculator **
 //
