@@ -1,4 +1,12 @@
-#include "kinetic.h"
+/*
+/
+/ 	One-electron integral routines (for h_xy = h_αβ)
+/ 	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+/
+*/
+#include "utils.h"
+#include "h_xy.h"
+
 #include <libint2.hpp>
 #include <iostream>
 #include <fstream>
@@ -8,13 +16,28 @@
 using namespace libint2;
 using namespace std;
 
-int index_two(int a, int b, int dim_a){
+void get_n_aos(int *n_ao){
 //
-// C++ version for pointers has -1,
-// since the pointer refers to index 1,
-// which is accessed as *(h + index_two(1, 1, dim_a))
+	initialize();
 //
-	return -1 + dim_a*(b-1) + a;
+	string xyzfilename = "Water.xyz"; // see XYZ format description at http://en.wikipedia.org/wiki/XYZ_file_format
+	ifstream input_file(xyzfilename);
+	vector<Atom> atoms = read_dotxyz(input_file);
+//
+	BasisSet obs("cc-pVDZ", atoms);
+//
+	*n_ao = 0;
+//
+	for(auto s1=0; s1!=obs.size(); ++s1){
+//
+		*n_ao = *n_ao + obs[s1].size(); // Add number of basis functions in the given shell
+//
+	}
+//
+	finalize();
+//
+	return;
+//
 }
 
 void get_ao_xy_kinetic(double *h){
@@ -33,6 +56,18 @@ void get_ao_xy_kinetic(double *h){
 //
 	BasisSet obs("cc-pVDZ", atoms);
 //
+// ** Calculate number of basis functions from the basis object
+//
+	int num_aos = 0;
+//
+	for(auto s1=0; s1!=obs.size(); ++s1){
+//
+		num_aos = num_aos + obs[s1].size(); // Add number of basis functions in the given shell
+//
+	}
+//
+	cout << "There are " << num_aos << " number of basis functions for H2O/cc-pVDZ" << endl;
+//
 // ** Compute the kinetic energy part of one-electron integrals **
 //
 	Engine k_engine(Operator::kinetic,  // will compute kinetic ints overlap
@@ -46,6 +81,8 @@ void get_ao_xy_kinetic(double *h){
                                    // ...
 //
 	const auto& buf_vec = k_engine.results(); // will point to computed shell sets
+//
+	int counter = 0; /// must be smarter with the calculation of position... this is incorrect...
 //
 	for(auto s1=0; s1!=obs.size(); ++s1) {
   		for(auto s2=0; s2!=obs.size(); ++s2) {
@@ -64,11 +101,15 @@ void get_ao_xy_kinetic(double *h){
 
     		// integrals are packed into ints_shellset in row-major (C) form
     		// this iterates over integrals in this order
-    		for(auto f1=0; f1!=n1; ++f1)
-      		for(auto f2=0; f2!=n2; ++f2)
-        			cout << "  " << bf1+f1 << " " << bf2+f2 << " " << ints_shellset[f1*n2+f2] << endl;
-  			}
-		}
+    		for(auto f1=0; f1!=n1; ++f1){
+      		for(auto f2=0; f2!=n2; ++f2){
+					*(h + counter) = *(h + counter) + ints_shellset[f1*n2+f2];
+					counter = counter + 1;
+    //    			cout << "  " << bf1+f1 << " " << bf2+f2 << " " << ints_shellset[f1*n2+f2] << endl;
+				}
+			}
+  		}
+	}
 //
 //	** Compute the nuclear attraction energy part of one-electron integrals **
 //
@@ -84,6 +125,8 @@ void get_ao_xy_kinetic(double *h){
 //
 	const auto& buf_vec_n = n_engine.results(); // will point to computed shell sets
                                           	  // const auto& is very important!
+//
+	counter = 0;
 //
 	for(auto s1=0; s1!=obs.size(); ++s1) {
   		for(auto s2=0; s2!=obs.size(); ++s2) {
@@ -105,8 +148,8 @@ void get_ao_xy_kinetic(double *h){
     		for(auto f1=0; f1!=n1; ++f1){
       		for(auto f2=0; f2!=n2; ++f2){
         			cout << "  " << bf1+f1 << " " << bf2+f2 << " " << ints_shellset[f1*n2+f2] << endl;
-					*(h + index_two(1, 1, 2)) = ints_shellset[f1*n2+f2]; // sets first element of array
-					*(h + index_two(2, 1, 2)) = 1.9E0; // sets second element of array
+			//		*(h + counter) = *(h + counter) + ints_shellset[f1*n2+f2];
+					counter = counter + 1;
 				}
 			}
 //

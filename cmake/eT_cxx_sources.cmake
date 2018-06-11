@@ -1,3 +1,4 @@
 set(eT_CXX_sources
-   src/integrals/libint/kinetic.cpp
+   src/integrals/libint/utils.cpp
+   src/integrals/libint/h_xy.cpp
 )

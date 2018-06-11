@@ -5,8 +5,9 @@ module integrals_class
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !
-   use kinetic
+   use h_xy
    use file_class
+   use memory_manager_class
 !
    implicit none
 !
@@ -20,7 +21,7 @@ module integrals_class
 !
 contains
 !
-   subroutine get_ao_xy_integrals(int)
+   subroutine get_ao_xy_integrals(int, n_ao)
 !!
 !!    Get AO XY integrals
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -29,16 +30,26 @@ contains
 !
       class(integrals) :: int
 !
-      real(kind=8), dimension(2,1) :: g
+      integer(i15) :: n_ao
 !
-      g(1,1) = 1.2D0
-      g(2,1) = 1.3D0
+      real(kind=8), dimension(:,:), allocatable :: h
 !
-      write(output%unit,*) 'Hello from fortran, g is now: ', g
+      integer(i15) :: i = 0, j = 0
 !
-      call get_ao_xy_kinetics(g)
+      call mem%alloc(h, n_ao, n_ao)
+      h = zero
 !
-      write(output%unit,*) 'Back in fortran, g is now: ', g
+    !  write(output%unit,*) 'Hello from fortran, g is now: ', g
+!
+      call get_ao_xy_kinetics(h)
+!
+      do i = 1, n_ao
+         do j = 1, n_ao
+            write(output%unit,*) 'i j h_ij', i, j, h(i, j)
+         enddo
+      enddo
+!
+    !  write(output%unit,*) 'Back in fortran, g is now: ', g
 !
    end subroutine get_ao_xy_integrals
 !

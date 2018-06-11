@@ -5,7 +5,7 @@ set(eT_fortran_sources
    src/io/file_class.F90
    src/io/io_utilities.F90
    src/integrals/integrals_class.F90
-   src/integrals/libint/kinetic.F90
+   src/integrals/libint/h_xy.F90
    src/memory/batching_index_class.F90
    src/memory/memory_manager_class.F90
    src/various/kinds.F90

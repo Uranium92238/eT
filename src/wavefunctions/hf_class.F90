@@ -18,8 +18,8 @@ module hf_class
 !
       character(len=40) :: name = 'HF'
 !
-      real(dp) :: n_ao
-      real(dp) :: n_mo
+      integer(i15) :: n_ao
+      integer(i15) :: n_mo
 !
       real(dp), dimension(:,:), allocatable :: mo_coefficients
 !
@@ -48,10 +48,17 @@ contains
 !
       real(dp) :: repulsion
 !
-      call wf%molecule%initialize
-      call wf%molecule%write
+!     Initialize molecule
 !
-      call wf%integrals%get_ao_xy
+      call wf%molecule%initialize ! Read atoms
+      call wf%molecule%write      ! Write an xyz file for the read geometry
+!
+!     Get the number of atomic orbitals
+!
+      wf%n_ao = 0
+      call get_n_aos(wf%n_ao)
+!
+      call wf%integrals%get_ao_xy(wf%n_ao)
 !
       repulsion = wf%molecule%nuclear_repulsion()
       write(output%unit,*) 'The nuclear repulsion:', repulsion

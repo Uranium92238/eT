@@ -9,4 +9,13 @@ interface
 !
    end subroutine get_ao_xy_kinetic_c
 !
+   subroutine get_n_aos_c(n_ao) bind(C, name='get_n_aos')
+!
+      use iso_c_binding
+      implicit none
+!
+      integer(C_INT64_T) :: n_ao
+!
+   end subroutine get_n_aos_c
+!
 end interface
