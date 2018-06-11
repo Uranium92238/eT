@@ -82,7 +82,7 @@ void get_ao_xy_kinetic(double *h){
 //
 	const auto& buf_vec = k_engine.results(); // will point to computed shell sets
 //
-	int counter = 0; /// must be smarter with the calculation of position... this is incorrect...
+//	int counter = 0; /// must be smarter with the calculation of position... this is incorrect...
 //
 	for(auto s1=0; s1!=obs.size(); ++s1) {
   		for(auto s2=0; s2!=obs.size(); ++s2) {
@@ -103,9 +103,8 @@ void get_ao_xy_kinetic(double *h){
     		// this iterates over integrals in this order
     		for(auto f1=0; f1!=n1; ++f1){
       		for(auto f2=0; f2!=n2; ++f2){
-					*(h + counter) = *(h + counter) + ints_shellset[f1*n2+f2];
-					counter = counter + 1;
-    //    			cout << "  " << bf1+f1 << " " << bf2+f2 << " " << ints_shellset[f1*n2+f2] << endl;
+					*(h + index_two(bf1+1+f1, bf2+1+f2, num_aos)) = *(h + index_two(bf1+1+f1, bf2+1+f2, num_aos)) + ints_shellset[f1*n2+f2];
+        			cout << "  " << bf1+f1 << " " << bf2+f2 << " " << ints_shellset[f1*n2+f2] << endl;
 				}
 			}
   		}
@@ -126,7 +125,7 @@ void get_ao_xy_kinetic(double *h){
 	const auto& buf_vec_n = n_engine.results(); // will point to computed shell sets
                                           	  // const auto& is very important!
 //
-	counter = 0;
+//	counter = 0;
 //
 	for(auto s1=0; s1!=obs.size(); ++s1) {
   		for(auto s2=0; s2!=obs.size(); ++s2) {
@@ -148,8 +147,7 @@ void get_ao_xy_kinetic(double *h){
     		for(auto f1=0; f1!=n1; ++f1){
       		for(auto f2=0; f2!=n2; ++f2){
         			cout << "  " << bf1+f1 << " " << bf2+f2 << " " << ints_shellset[f1*n2+f2] << endl;
-			//		*(h + counter) = *(h + counter) + ints_shellset[f1*n2+f2];
-					counter = counter + 1;
+					*(h + index_two(bf1+1+f1, bf2+1+f2, num_aos)) = *(h + index_two(bf1+1+f1, bf2+1+f2, num_aos)) + ints_shellset[f1*n2+f2];
 				}
 			}
 //

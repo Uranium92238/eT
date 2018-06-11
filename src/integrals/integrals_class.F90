@@ -44,9 +44,9 @@ contains
       call get_ao_xy_kinetics(h)
 !
       do i = 1, n_ao
-         do j = 1, n_ao
-            write(output%unit,*) 'i j h_ij', i, j, h(i, j)
-         enddo
+    !     do j = 1, n_ao
+            write(output%unit,*) 'i i h_ii', i, i, h(i, i)
+      !   enddo
       enddo
 !
     !  write(output%unit,*) 'Back in fortran, g is now: ', g
