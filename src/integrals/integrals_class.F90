@@ -34,19 +34,19 @@ contains
 !
       real(kind=8), dimension(:,:), allocatable :: h
 !
+      real(kind=8), dimension(:,:), allocatable :: temp
+!
       integer(i15) :: i = 0, j = 0
 !
       call mem%alloc(h, n_ao, n_ao)
       h = zero
 !
-    !  write(output%unit,*) 'Hello from fortran, g is now: ', g
-!
-      call get_ao_xy_kinetics(h)
+      call get_ao_xy(h)
 !
       do i = 1, n_ao
-    !     do j = 1, n_ao
-            write(output%unit,*) 'i i h_ii', i, i, h(i, i)
-      !   enddo
+         do j = 1, n_ao
+            write(output%unit,*) 'i j h_ij', i, j, h(i, j)
+         enddo
       enddo
 !
     !  write(output%unit,*) 'Back in fortran, g is now: ', g

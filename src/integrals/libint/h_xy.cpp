@@ -40,7 +40,7 @@ void get_n_aos(int *n_ao){
 //
 }
 
-void get_ao_xy_kinetic(double *h){
+void get_ao_xy(double *h){
 //
 // ** Initialize libint calculator **
 //
@@ -65,8 +65,6 @@ void get_ao_xy_kinetic(double *h){
 		num_aos = num_aos + obs[s1].size(); // Add number of basis functions in the given shell
 //
 	}
-//
-	cout << "There are " << num_aos << " number of basis functions for H2O/cc-pVDZ" << endl;
 //
 // ** Compute the kinetic energy part of one-electron integrals **
 //
@@ -103,8 +101,9 @@ void get_ao_xy_kinetic(double *h){
     		// this iterates over integrals in this order
     		for(auto f1=0; f1!=n1; ++f1){
       		for(auto f2=0; f2!=n2; ++f2){
-					*(h + index_two(bf1+1+f1, bf2+1+f2, num_aos)) = *(h + index_two(bf1+1+f1, bf2+1+f2, num_aos)) + ints_shellset[f1*n2+f2];
-        			cout << "  " << bf1+f1 << " " << bf2+f2 << " " << ints_shellset[f1*n2+f2] << endl;
+					cout << "Computing contribution to element " << bf1+1+f1 << " " << bf2+1+f2 << endl;
+					*(h - 1 + index_two(bf1+1+f1, bf2+1+f2, num_aos)) = ints_shellset[f1*n2+f2];
+   //     			cout << "  " << bf1+f1 << " " << bf2+f2 << " " << ints_shellset[f1*n2+f2] << endl;
 				}
 			}
   		}
@@ -133,8 +132,8 @@ void get_ao_xy_kinetic(double *h){
     		cout << "compute shell set {" << s1 << "," << s2 << "} ... ";
     		n_engine.compute(obs[s1], obs[s2]);
     		cout << "done" << endl;
-    		auto ints_shellset = buf_vec_n[0];  // location of the computed integrals
-    		if (ints_shellset == nullptr)
+    		auto ints_shellset_n = buf_vec_n[0];  // location of the computed integrals
+    		if (ints_shellset_n == nullptr)
       		continue;  // nullptr returned if the entire shell-set was screened out
 
     		auto bf1 = shell2bf[s1];  // first basis function in first shell
@@ -146,16 +145,22 @@ void get_ao_xy_kinetic(double *h){
     		// this iterates over integrals in this order
     		for(auto f1=0; f1!=n1; ++f1){
       		for(auto f2=0; f2!=n2; ++f2){
-        			cout << "  " << bf1+f1 << " " << bf2+f2 << " " << ints_shellset[f1*n2+f2] << endl;
-					*(h + index_two(bf1+1+f1, bf2+1+f2, num_aos)) = *(h + index_two(bf1+1+f1, bf2+1+f2, num_aos)) + ints_shellset[f1*n2+f2];
+        			cout << "Computing contribution to element " << bf1+1+f1 << " " << bf2+1+f2 << " " << ints_shellset_n[f1*n2+f2] << endl;
+					cout << "Value at location before: " << *(h - 1 + index_two(bf1+1+f1, bf2+1+f2, num_aos)) << endl;
+					*(h - 1 + index_two(bf1+1+f1, bf2+1+f2, num_aos)) = *(h - 1 + index_two(bf1+1+f1, bf2+1+f2, num_aos)) + ints_shellset_n[f1*n2+f2];
+					cout << "Value at location after: " << *(h - 1 + index_two(bf1+1+f1, bf2+1+f2, num_aos)) << endl;
 				}
 			}
 //
   		}
 	}
-//
-	cout << index_two(1, 1, 2) << " should be zero!" << endl;
-	cout << index_two(2, 1, 2) << " should be one!" << endl;
+
+// Engine s_engine(Operator::overlap,  // will compute overlap ints
+//                 obs.max_nprim(),    // max # of primitives in shells this engine will accept
+//                 obs.max_l()         // max angular momentum of shells this engine will accept
+//                );
+
+
 //
 // ** Finalize libint calculator **
 //
