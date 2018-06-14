@@ -5,8 +5,9 @@ module integrals_class
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !
-   use h_xy ! For one electron integrals, h_xy
-   use s_xy ! For one electron overlaps, s_xy
+   use h_xy    ! For one electron integrals, h_xy
+   use s_xy    ! For one electron overlaps, s_xy
+   use g_xyzw  ! For two electron integrals, g_xyzw
 !
    use file_class
    use memory_manager_class
@@ -34,7 +35,7 @@ contains
 !
       integer(i15) :: n_ao
 !
-      real(kind=8), dimension(:,:), allocatable :: h, s
+      real(kind=8), dimension(:,:), allocatable :: h, s, g
 !
       real(kind=8), dimension(:,:), allocatable :: temp
 !
@@ -54,10 +55,21 @@ contains
 !
       call get_ao_s_xy(s)
 !
+!     Get g_xyzw
+!
+      call mem%alloc(g, n_ao**2, n_ao**2)
+      g = zero
+!
+      call get_ao_g_xyzw(g)
+!
 !     Print norms and diagonal elements
 !
       do i = 1, n_ao
          write(output%unit, *) 'i s_ii h_ii', i, s(i,i), h(i,i)
+      enddo
+!
+      do i = 1, n_ao**2
+         write(output%unit, *) 'i g_ii', i, g(i,i)
       enddo
 !
    end subroutine get_ao_xy_integrals
