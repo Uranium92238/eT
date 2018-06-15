@@ -42,21 +42,21 @@ void get_n_aos(int *n_ao){
 
 void get_ao_xy(double *h){
 //
-// ** Initialize libint calculator **
+// Initialize libint calculator
 //
 	initialize();
 //
-// ** Read molecular geometry and make atoms array **
+// Read molecular geometry and make atoms array
 //
-	string xyzfilename = "Water.xyz"; // see XYZ format description at http://en.wikipedia.org/wiki/XYZ_file_format
+	string xyzfilename = "Water.xyz";
 	ifstream input_file(xyzfilename);
 	vector<Atom> atoms = read_dotxyz(input_file);
 //
-// ** Set basis set to use for the atoms **
+// Set basis set to use for the atoms
 //
 	BasisSet obs("cc-pVDZ", atoms);
 //
-// ** Calculate number of basis functions from the basis object
+// Calculate number of basis functions from the basis object
 //
 	int num_aos = 0;
 //
@@ -80,14 +80,10 @@ void get_ao_xy(double *h){
 //
 	const auto& buf_vec = k_engine.results(); // will point to computed shell sets
 //
-//	int counter = 0; /// must be smarter with the calculation of position... this is incorrect...
-//
 	for(auto s1=0; s1!=obs.size(); ++s1) {
   		for(auto s2=0; s2!=obs.size(); ++s2) {
 //
-    		cout << "compute shell set {" << s1 << "," << s2 << "} ... ";
     		k_engine.compute(obs[s1], obs[s2]);
-    		cout << "done" << endl;
     		auto ints_shellset = buf_vec[0];  // location of the computed integrals
     		if (ints_shellset == nullptr)
       		continue;  // nullptr returned if the entire shell-set was screened out
@@ -101,15 +97,13 @@ void get_ao_xy(double *h){
     		// this iterates over integrals in this order
     		for(auto f1=0; f1!=n1; ++f1){
       		for(auto f2=0; f2!=n2; ++f2){
-					cout << "Computing contribution to element " << bf1+1+f1 << " " << bf2+1+f2 << endl;
 					*(h - 1 + index_two(bf1+1+f1, bf2+1+f2, num_aos)) = ints_shellset[f1*n2+f2];
-   //     			cout << "  " << bf1+f1 << " " << bf2+f2 << " " << ints_shellset[f1*n2+f2] << endl;
 				}
 			}
   		}
 	}
 //
-//	** Compute the nuclear attraction energy part of one-electron integrals **
+//	Compute the nuclear attraction energy part of one-electron integrals
 //
 	Engine n_engine(Operator::nuclear,  // will compute kinetic ints overlap
                 	obs.max_nprim(),     // max # of primitives in shells this engine will accept
@@ -124,14 +118,10 @@ void get_ao_xy(double *h){
 	const auto& buf_vec_n = n_engine.results(); // will point to computed shell sets
                                           	  // const auto& is very important!
 //
-//	counter = 0;
-//
 	for(auto s1=0; s1!=obs.size(); ++s1) {
   		for(auto s2=0; s2!=obs.size(); ++s2) {
 
-    		cout << "compute shell set {" << s1 << "," << s2 << "} ... ";
     		n_engine.compute(obs[s1], obs[s2]);
-    		cout << "done" << endl;
     		auto ints_shellset_n = buf_vec_n[0];  // location of the computed integrals
     		if (ints_shellset_n == nullptr)
       		continue;  // nullptr returned if the entire shell-set was screened out
@@ -145,24 +135,12 @@ void get_ao_xy(double *h){
     		// this iterates over integrals in this order
     		for(auto f1=0; f1!=n1; ++f1){
       		for(auto f2=0; f2!=n2; ++f2){
-        			cout << "Computing contribution to element " << bf1+1+f1 << " " << bf2+1+f2 << " " << ints_shellset_n[f1*n2+f2] << endl;
-					cout << "Value at location before: " << *(h - 1 + index_two(bf1+1+f1, bf2+1+f2, num_aos)) << endl;
 					*(h - 1 + index_two(bf1+1+f1, bf2+1+f2, num_aos)) = *(h - 1 + index_two(bf1+1+f1, bf2+1+f2, num_aos)) + ints_shellset_n[f1*n2+f2];
-					cout << "Value at location after: " << *(h - 1 + index_two(bf1+1+f1, bf2+1+f2, num_aos)) << endl;
 				}
 			}
 //
   		}
 	}
-
-// Engine s_engine(Operator::overlap,  // will compute overlap ints
-//                 obs.max_nprim(),    // max # of primitives in shells this engine will accept
-//                 obs.max_l()         // max angular momentum of shells this engine will accept
-//                );
-
-
-//
-// ** Finalize libint calculator **
 //
 	finalize();
 //
