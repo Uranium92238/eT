@@ -28,7 +28,8 @@ module molecule_class
       procedure, private :: read_info     => read_info_molecule
       procedure, private :: read_geometry => read_geometry_molecule
 !
-      procedure :: nuclear_repulsion => nuclear_repulsion_molecule
+      procedure :: get_nuclear_repulsion   => get_nuclear_repulsion_molecule
+      procedure :: get_n_electrons         => get_n_electrons_molecule
 !
    end type molecule
 !
@@ -55,7 +56,6 @@ contains
       do i = 1, mol%n_atoms
 !
         call mol%atoms(i, 1)%set_number
-        write(output%unit, *)mol%atoms(i, 1)%number
 !
       enddo
 !
@@ -228,10 +228,6 @@ contains
 !
                read(coordinate, '(f30.25)') mol%atoms(current_atom,1)%z
 !
-               write(output%unit, *) mol%atoms(current_atom,1)%x
-               write(output%unit, *) mol%atoms(current_atom,1)%y
-               write(output%unit, *) mol%atoms(current_atom,1)%z
-!
               read(input%unit,'(a)') line
               line = remove_preceding_blanks(line)
 
@@ -243,7 +239,6 @@ contains
 
          read(input%unit,'(a)') line
          line = remove_preceding_blanks(line)
-
 !
       enddo
 
@@ -288,9 +283,9 @@ contains
    end subroutine write_molecule
 !
 !
-   function nuclear_repulsion_molecule(mol)
+   function get_nuclear_repulsion_molecule(mol)
 !!
-!!    Nuclear repulsion
+!!    Get nuclear repulsion
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    Calculates, and returns, the nuclear repulsion term for the molecule,
@@ -301,13 +296,13 @@ contains
 !
       class(molecule) :: mol
 !
-      real(dp) :: nuclear_repulsion_molecule
+      real(dp) :: get_nuclear_repulsion_molecule
 !
       integer(i15) :: i = 0, j = 0
 !
       real(dp) :: x_ij, y_ij, z_ij, r_ij
 !
-      nuclear_repulsion_molecule = zero
+      get_nuclear_repulsion_molecule = zero
 !
       do i = 1, mol%n_atoms
          do j = i + 1, mol%n_atoms
@@ -327,13 +322,41 @@ contains
 !
             endif
 !
-            nuclear_repulsion_molecule = nuclear_repulsion_molecule &
+            get_nuclear_repulsion_molecule = get_nuclear_repulsion_molecule &
                   + ((mol%atoms(i, 1)%number)*(mol%atoms(j, 1)%number))/r_ij
 !
          enddo
       enddo
 !
-  end function nuclear_repulsion_molecule
+  end function get_nuclear_repulsion_molecule
+!
+!
+   function get_n_electrons_molecule(mol)
+!!
+!!    Get number of electrons
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Calculates and returns the number of electrons.
+!!
+      implicit none
+!
+      class(molecule) :: mol
+!
+      integer(i15) :: get_n_electrons_molecule
+!
+      integer(i15) :: i = 0
+!
+      get_n_electrons_molecule = 0
+!
+      do i = 1, mol%n_atoms
+!
+         get_n_electrons_molecule = get_n_electrons_molecule + mol%atoms(i,1)%number
+!
+      enddo
+!
+      get_n_electrons_molecule = get_n_electrons_molecule - mol%charge
+!
+  end function get_n_electrons_molecule
 !
 !
 end module molecule_class

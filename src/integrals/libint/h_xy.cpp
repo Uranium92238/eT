@@ -40,7 +40,7 @@ void get_n_aos(int *n_ao){
 //
 }
 
-void get_ao_xy(double *h){
+void get_ao_h_xy(double *h){
 //
 // Initialize libint calculator
 //

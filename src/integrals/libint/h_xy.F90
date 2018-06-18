@@ -7,19 +7,20 @@ module h_xy
 !
 contains
 !
-   subroutine get_ao_xy(h)
+   subroutine get_ao_h_xy(h)
 !
       implicit none
 !
       real(kind=8), dimension(1,1) :: h
 !
-      call get_ao_xy_c(h)
+      call get_ao_h_xy_c(h)
 !
-   end subroutine get_ao_xy
+   end subroutine get_ao_h_xy
 !
    subroutine get_n_aos(n_ao)
 !
       use iso_c_binding
+!
       implicit none
 !
       integer(i15) :: n_ao

@@ -4,7 +4,7 @@ extern "C" {
 #else
 #endif
 
-void get_ao_xy(double *h);
+void get_ao_h_xy(double *h);
 void get_n_aos(int *n_ao);
 
 #ifdef __cplusplus

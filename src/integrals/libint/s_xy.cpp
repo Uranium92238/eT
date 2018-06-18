@@ -49,9 +49,7 @@ void get_ao_s_xy(double *s){
 	for(auto s1=0; s1!=obs.size(); ++s1) {
   		for(auto s2=0; s2!=obs.size(); ++s2) {
 
-    		cout << "compute shell set {" << s1 << "," << s2 << "} ... ";
     		s_engine.compute(obs[s1], obs[s2]);
-    		cout << "done" << endl;
     		auto ints_shellset = buf_vec[0];  // location of the computed integrals
     		if (ints_shellset == nullptr)
       		continue;  // nullptr returned if the entire shell-set was screened out
@@ -65,7 +63,6 @@ void get_ao_s_xy(double *s){
     		// this iterates over integrals in this order
     		for(auto f1=0; f1!=n1; ++f1){
       		for(auto f2=0; f2!=n2; ++f2){
-					cout << "Computing contribution to element " << bf1+1+f1 << " " << bf2+1+f2 << endl;
 					*(s - 1 + index_two(bf1+1+f1, bf2+1+f2, num_aos)) = ints_shellset[f1*n2+f2];
 				}
 			}
