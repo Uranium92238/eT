@@ -52,6 +52,8 @@ module diis_solver_class
       procedure :: init   => init_diis   ! Called to set up a DIIS solver
       procedure :: update => update_diis ! Called to perform a DIIS step
 !
+      procedure :: get_current_index => get_current_index_diis
+!
    end type diis
 !
 !
@@ -106,7 +108,7 @@ contains
 !
       integer(i15) :: i = 0, j = 0
 !
-      integer      :: info = -1         ! Error integer for dgesv routine (LU factorization)
+      integer(kind=4) :: info = -1 ! Error integer for dgesv
       integer(i15) :: current_index = 0 ! Progressing as follows: 1,2,...,7,8,1,2,...
 !
       integer(i15) :: dummy = 0
@@ -241,6 +243,13 @@ contains
                   current_index+1, &
                   info)
 !
+      if (info .ne. 0) then
+!
+         write(output%unit, *) 'Something went wrong in DIIS (dgesv). Info: ', info
+         stop
+!
+      endif
+!
 !     :: Update the parameters (placed in x on exit)
 !
       call mem%dealloc(o_i, solver%n_equations, 1)
@@ -257,12 +266,10 @@ contains
 !
       do i = 1, current_index
 !
-!        Read the x_i vector
+!        Add w_i x_i to the parameters x
 !
          x_i = zero
          read(solver%x%unit) (x_i(j, 1), j = 1, solver%n_parameters)
-!
-!        Add w_i (x_i + Δ x_i) to the amplitudes
 !
          call daxpy(solver%n_parameters, diis_vector(i, 1), x_i, 1, x, 1)
 !
@@ -284,6 +291,20 @@ contains
       solver%iteration = solver%iteration + 1
 !
    end subroutine update_diis
+!
+!
+   function get_current_index_diis(solver)
+!
+      implicit none
+!
+      class(diis) :: solver
+!
+      integer(i15) :: get_current_index_diis
+!
+      get_current_index_diis = solver%iteration - &
+               ((solver%diis_dimension)-1)*((solver%iteration-1)/((solver%diis_dimension)-1))
+!
+   end function get_current_index_diis
 !
 !
 end module diis_solver_class

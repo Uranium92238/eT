@@ -74,10 +74,12 @@ contains
 !
       logical :: converged = .false.
 !
+      real(dp) :: error, ddot
+!
       integer(i15) :: iteration = 1
 !
-      real(dp), dimension(:,:), allocatable :: X ! Parameters
-      real(dp), dimension(:,:), allocatable :: O ! Equations
+      real(dp), dimension(:,:), allocatable :: D ! Parameters, D_αβ
+      real(dp), dimension(:,:), allocatable :: F ! Equations, F_ia
 !
 !     Initialize engine (read thresholds, restart, etc., from file,
 !     but also ask the wavefunction for the number of parameters to solve
@@ -89,32 +91,86 @@ contains
 !
       call solver%init('hf_diis', engine%n_parameters, engine%n_equations)
 !
-      call mem%alloc(X, engine%n_parameters, 1)
-      call mem%alloc(O, engine%n_equations, 1)
+      call mem%alloc(D, engine%n_parameters, 1)
+      call mem%alloc(F, engine%n_equations, 1)
 !
-      X = zero
-      O = zero
+      D = zero
+      F = zero
 !
-      call wf%set_initial_hf_parameters(X)
+!     Get an initial AO density and initial MO coefficients for loop
+!
+      call wf%initialize_ao_density()
+      call wf%set_ao_density_to_soad_guess() ! D^AO = D^SOAD
+!
+      call wf%initialize_ao_fock()
+      call wf%construct_ao_fock() ! From current D^AO
+!
+      call wf%initialize_mo_coefficients()
+      call wf%solve_roothan_hall() ! F^AO C = S C e to get new MOs C
+!
+      call wf%construct_ao_density() ! Construct AO density from C
+      call wf%get_ao_density(D)
+      call wf%construct_ao_fock()    ! Update the AO Fock
+!
+!     Iterative solution loop
 !
       iteration = 1
+      converged = .false.
 !
-      do while (.not. converged .and. iteration .lt. 100)
+      do while (.not. converged .and. iteration .le. engine%max_iterations)
 !
-         call wf%calculate_hf_equations(O, X)
-      !   call solver%update(O, X)
+!        Calculate the occ-vir block from the current AO density
+!        and MO coefficients
 !
-         if (iteration .eq. 1) then
+         F = zero
+         call wf%get_hf_equations(F)
 !
-       !     call wf%get_ao_density_from_mo_coefficients(X)
+!        Check the error
+!
+         error = ddot(engine%n_equations, F, 1, F, 1)
+         error = sqrt(error)
+!
+         if (error .lt. 1.0D-6) then
+!
+            converged = .true.
+!
+         else
+!
+            call wf%calculate_hf_energy()
+!
+            write(output%unit, '(/t3,a11,i3)')     'Iteration: ', iteration
+            write(output%unit, '(t3,a11,f17.12)')  'Error:     ', error
+            write(output%unit, '(t3,a11,f17.12/)') 'Energy:    ', wf%hf_energy
+            flush(output%unit)
+!
+!           Get an averaged density matrix by DIIS
+!
+            call solver%update(F, D)
+!
+!           Construct the AO fock matrix
+!
+            call wf%set_ao_density(D)
+!
+            call wf%construct_ao_fock()
+!
+            call wf%solve_roothan_hall() ! Updates the MO coefficients
+!
+!           Get the new AO density and new AO Fock matrix
+!
+            call wf%construct_ao_density()
+            call wf%construct_ao_fock()
+!
+            call wf%get_ao_density(D)
 !
          endif
-!
-         call wf%get_ao_density_from_mo_coefficients(X)
 !
          iteration = iteration + 1
 !
       enddo
+!
+      call wf%destruct_mo_coefficients()
+      call wf%destruct_ao_density()
+      call wf%destruct_ao_fock()
 !
 !     Initialize engine (make final deallocations, and other stuff)
 !
@@ -131,8 +187,6 @@ contains
       implicit none
 !
       class(hf_engine) :: engine
-!
-!     A dummy routine for now
 !
    end subroutine finalize_hf_engine
 !

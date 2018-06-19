@@ -45,16 +45,28 @@ module hf_class
 !
       procedure :: construct_ao_density => construct_ao_density_hf
       procedure :: construct_ao_fock    => construct_ao_fock_hf
+      procedure :: construct_mo_fock    => construct_mo_fock_hf
 !
       procedure :: calculate_hf_energy  => calculate_hf_energy_hf
 !
       procedure :: get_n_hf_parameters => get_n_hf_parameters_hf
       procedure :: get_n_hf_equations  => get_n_hf_equations_hf
 !
-      procedure :: set_initial_hf_parameters => set_initial_hf_parameters_hf
-      procedure :: calculate_hf_equations    => calculate_hf_equations_hf
+      procedure :: set_ao_density_to_soad_guess => set_ao_density_to_soad_guess_hf
+      procedure :: set_ao_density => set_ao_density_hf
 !
-      procedure :: get_ao_density_from_mo_coefficients => get_ao_density_from_mo_coefficients_hf
+      procedure :: solve_roothan_hall => solve_roothan_hall_hf
+!
+      procedure :: get_hf_equations => get_hf_equations_hf
+      procedure :: get_ao_density   => get_ao_density_hf
+!
+      procedure :: initialize_ao_density      => initialize_ao_density_hf
+      procedure :: initialize_ao_fock         => initialize_ao_fock_hf
+      procedure :: initialize_mo_coefficients => initialize_mo_coefficients_hf
+!
+      procedure :: destruct_ao_density      => destruct_ao_density_hf
+      procedure :: destruct_ao_fock         => destruct_ao_fock_hf
+      procedure :: destruct_mo_coefficients => destruct_mo_coefficients_hf
 !
    end type hf
 !
@@ -95,18 +107,6 @@ contains
       wf%n_o = (wf%molecule%get_n_electrons())/2
       wf%n_v = wf%n_mo - wf%n_o
 !
-!     Allocate member arrays
-!
-      call mem%alloc(wf%mo_coefficients, wf%n_ao, wf%n_ao)
-      call mem%alloc(wf%ao_density, wf%n_ao, wf%n_ao)
-      call mem%alloc(wf%ao_fock, wf%n_ao, wf%n_ao)
-      call mem%alloc(wf%ao_overlap, wf%n_ao, wf%n_ao)
-!
-      wf%mo_coefficients = zero
-      wf%ao_density = zero
-      wf%ao_fock = zero
-      wf%ao_overlap = zero
-!
    end subroutine initialize_hf
 !
 !
@@ -122,6 +122,93 @@ contains
    end subroutine finalize_hf
 !
 !
+   subroutine initialize_ao_density_hf(wf)
+!!
+!!    Initialize AO density
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      call mem%alloc(wf%ao_density, wf%n_ao, wf%n_ao)
+      wf%ao_density = zero
+!
+   end subroutine initialize_ao_density_hf
+!
+!
+   subroutine initialize_ao_fock_hf(wf)
+!!
+!!    Initialize AO Fock
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      call mem%alloc(wf%ao_fock, wf%n_ao, wf%n_ao)
+      wf%ao_fock = zero
+!
+   end subroutine initialize_ao_fock_hf
+!
+!
+   subroutine initialize_mo_coefficients_hf(wf)
+!!
+!!    Initialize MO coefficients
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      call mem%alloc(wf%mo_coefficients, wf%n_ao, wf%n_ao)
+      wf%mo_coefficients = zero
+!
+   end subroutine initialize_mo_coefficients_hf
+!
+!
+   subroutine destruct_ao_density_hf(wf)
+!!
+!!    Destruct AO density
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      call mem%dealloc(wf%ao_density, wf%n_ao, wf%n_ao)
+!
+   end subroutine destruct_ao_density_hf
+!
+!
+   subroutine destruct_ao_fock_hf(wf)
+!!
+!!    Destruct AO Fock
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      call mem%dealloc(wf%ao_fock, wf%n_ao, wf%n_ao)
+!
+   end subroutine destruct_ao_fock_hf
+!
+!
+   subroutine destruct_mo_coefficients_hf(wf)
+!!
+!!    Destruct MO coefficients
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      call mem%dealloc(wf%mo_coefficients, wf%n_ao, wf%n_ao)
+!
+   end subroutine destruct_mo_coefficients_hf
+!
+!
    subroutine construct_ao_density_hf(wf)
 !!
 !!    Construct AO density
@@ -133,6 +220,8 @@ contains
       implicit none
 !
       class(hf) :: wf
+!
+      wf%ao_density = zero
 !
       call dgemm('N', 'T',            &
                   wf%n_ao,            &
@@ -352,27 +441,44 @@ contains
    end function get_n_hf_equations_hf
 !
 !
-   subroutine set_initial_hf_parameters_hf(wf, D_xy)
+   subroutine set_ao_density_to_soad_guess_hf(wf)
 !!
-!!    Set initial HF parameters
+!!    Set AO density to SOAD guess
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Sets the initial AO density by using the superposition of
-!!    atomic densities (SAD) guess
+!!    Sets the AO density by using the superposition of
+!!    atomic densities (SOAD) guess.
 !!
       implicit none
 !
       class(hf) :: wf
 !
-      real(dp), dimension(:,:) :: D_xy ! AO density, D_αβ, packed
+      wf%ao_density(1, 1) = one
+      wf%ao_density(6, 6) = one
 !
-      D_xy(index_packed(1,1), 1) = one
-      D_xy(index_packed(6,6), 1) = one
-!
-   end subroutine set_initial_hf_parameters_hf
+   end subroutine set_ao_density_to_soad_guess_hf
 !
 !
-   subroutine calculate_hf_equations_hf(wf, F_ia, D_xy)
+   subroutine set_ao_density_hf(wf, D)
+!!
+!!    Set AO density
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Sets the AO density from input
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      real(dp), dimension(:,:) :: D ! Packed
+!
+      wf%ao_density = zero
+      call squareup(D, wf%ao_density, wf%n_ao)
+!
+   end subroutine set_ao_density_hf
+!
+!
+   subroutine solve_roothan_hall_hf(wf)
 !!
 !!    Calculate HF equations
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -381,39 +487,21 @@ contains
 !
       class(hf) :: wf
 !
-      real(dp), dimension(:,:) :: D_xy ! AO density, D_αβ, packed
-      real(dp), dimension(wf%n_o, wf%n_v) :: F_ia ! Occ-vir block of MO Fock matrix
-!
       real(dp), dimension(:,:), allocatable :: work
       real(dp), dimension(:,:), allocatable :: ao_fock_copy
 !
-      real(dp), dimension(:,:), allocatable :: X_mat, Y_mat
+      real(dp), dimension(:,:), allocatable :: X
+      real(dp), dimension(:,:), allocatable :: Y
 !
       real(dp) :: ddot, norm
 !
       integer(i15) :: info = 0, i = 0, a = 0, ia = 0
 !
-!     Square up the AO density and save it
-!
-      wf%ao_density = zero
-      call squareup(D_xy, wf%ao_density, wf%n_ao)
-!
-!     Calculate the energy from the AO density
-!
-      call wf%calculate_hf_energy()
-!
-      write(output%unit, *) 'Energy: ', wf%hf_energy
-      flush(output%unit)
-!
-!     Calculate the AO Fock matrix from the AO density
-!
-      wf%ao_fock = zero
-      call wf%construct_ao_fock()
-!
-!     Solve the Roothan-Hall equations
-!
       call mem%alloc(wf%orbital_energies, wf%n_ao, 1)
       wf%orbital_energies = zero
+!
+      call mem%alloc(wf%ao_overlap, wf%n_ao, wf%n_ao)
+      wf%ao_overlap = zero
 !
       call get_ao_s_xy(wf%ao_overlap)
 !
@@ -428,7 +516,7 @@ contains
       call dsygv(1, 'V',               &
                   'L',                 &
                   wf%n_ao,             &
-                  wf%ao_fock,          & ! contains the orbital coefficients on exit
+                  wf%ao_fock,          & ! orbital coefficients on exit
                   wf%n_ao,             &
                   wf%ao_overlap,       & ! gets scrambled
                   wf%n_ao,             &
@@ -437,23 +525,34 @@ contains
                   4*(wf%n_ao),         &
                   info)
 !
-      write(output%unit,*) 'info:', info
-!
       call mem%dealloc(work, 4*wf%n_ao, 1)
 !
       wf%mo_coefficients = zero
       wf%mo_coefficients = wf%ao_fock
 !
-     ! wf%ao_fock = ao_fock_copy
-      call wf%construct_ao_density()
-      call wf%construct_ao_fock()
+      wf%ao_fock = ao_fock_copy
 !
       call mem%dealloc(ao_fock_copy, wf%n_ao, wf%n_ao)
+      call mem%dealloc(wf%ao_overlap, wf%n_ao, wf%n_ao)
+      call mem%dealloc(wf%orbital_energies, wf%n_ao, 1)
 !
-!     Transform AO Fock matrix to MO Fock matrix and set F_ia
+   end subroutine solve_roothan_hall_hf
 !
-      call mem%alloc(X_mat, wf%n_ao, wf%n_ao)
-      call mem%alloc(Y_mat, wf%n_ao, wf%n_ao)
+!
+   subroutine construct_mo_fock_hf(wf, F_pq)
+!!
+!!    Construct MO Fock
+!!    Written by Sarai D. Folkestad and
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      real(dp), dimension(:,:) :: F_pq
+!
+      real(dp), dimension(:,:), allocatable :: X
+!
+      call mem%alloc(X, wf%n_ao, wf%n_ao)
 !
       call dgemm('N', 'N',            &
                   wf%n_ao,            &
@@ -465,7 +564,7 @@ contains
                   wf%mo_coefficients, &
                   wf%n_ao,            &
                   zero,               &
-                  X_mat,              & ! X = F^ao C
+                  X,                  & ! X = F^ao C
                   wf%n_ao)
 !
       call dgemm('T', 'N',            &
@@ -475,50 +574,69 @@ contains
                   one,                &
                   wf%mo_coefficients, &
                   wf%n_ao,            &
-                  X_mat,              &
+                  X,                  &
                   wf%n_ao,            &
                   zero,               &
-                  Y_mat,              & ! Y = C^T F^ao C
+                  F_pq,               & ! F = C^T F^ao C
                   wf%n_ao)
 !
-      call mem%dealloc(X_mat, wf%n_ao, wf%n_ao)
+      call mem%dealloc(X, wf%n_ao, wf%n_ao)
 !
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
-!
-            ia = index_two(i,a,wf%n_o)
-            F_ia(ia, 1) = Y_mat(i, wf%n_o + a)
-!
-            write(output%unit,*) 'f_ia', F_ia(ia, 1), Y_mat(i, wf%n_o + a)
-!
-         enddo
-      enddo
-!
-      norm = ddot((wf%n_o)*(wf%n_v), F_ia, 1, F_ia, 1)
-!
-      write(output%unit, *) 'Error norm: ', sqrt(norm)
-      flush(output%unit)
-!
-      call mem%dealloc(Y_mat, wf%n_ao, wf%n_ao)
-      call mem%dealloc(wf%orbital_energies, wf%n_ao, 1)
-!
-   end subroutine calculate_hf_equations_hf
+   end subroutine construct_mo_fock_hf
 !
 !
-   subroutine get_ao_density_from_mo_coefficients_hf(wf, D_xy)
+   subroutine get_hf_equations_hf(wf, F)
 !!
-!!    Get AO density from MO coefficients
+!!    Get HF equations
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Constructs the MO Fock matrix and returns the occupied-virtual
+!!    block of the full matrix.
 !!
       implicit none
 !
       class(hf) :: wf
 !
-      real(dp), dimension(:,:) :: D_xy
+      real(dp), dimension(wf%n_o, wf%n_v) :: F ! F_ia
 !
-      call wf%construct_ao_density()
-      call packin(D_xy, wf%ao_density, wf%n_ao)
+      real(dp), dimension(:,:), allocatable :: F_pq
 !
-   end subroutine get_ao_density_from_mo_coefficients_hf
+      integer(i15) :: i = 0, a = 0
+!
+      call mem%alloc(F_pq, wf%n_ao, wf%n_ao)
+      F_pq = zero
+!
+      call wf%construct_mo_fock(F_pq)
+!
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
+!
+            F(i,a) = F_pq(i, wf%n_o + a)
+!
+         enddo
+      enddo
+!
+      call mem%dealloc(F_pq, wf%n_ao, wf%n_ao)
+!
+   end subroutine get_hf_equations_hf
+!
+!
+   subroutine get_ao_density_hf(wf, D)
+!!
+!!    Get AO density
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Packs the wavefunction's AO density into D.
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      real(dp), dimension(:,:) :: D
+!
+      call packin(D, wf%ao_density, wf%n_ao)
+!
+   end subroutine get_ao_density_hf
+!
 !
 end module hf_class
