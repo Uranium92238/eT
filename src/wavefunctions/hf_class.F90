@@ -92,8 +92,8 @@ contains
 !
    subroutine initialize_hf(wf)
 !!
-!! 	Initialize
-!!  	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!    Initialize
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !

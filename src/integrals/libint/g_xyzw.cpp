@@ -25,7 +25,9 @@ void get_ao_g_xyzw(double *g){
 	ifstream input_file(xyzfilename);
 	vector<Atom> atoms = read_dotxyz(input_file);
 
+	std::cout.setstate(std::ios_base::failbit);
 	BasisSet obs("cc-pVDZ", atoms);
+	std::cout.clear();
 
 	int num_aos = 0;
 

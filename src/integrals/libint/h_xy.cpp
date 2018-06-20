@@ -24,7 +24,9 @@ void get_n_aos(int *n_ao){
 	ifstream input_file(xyzfilename);
 	vector<Atom> atoms = read_dotxyz(input_file);
 //
+	cout.setstate(ios_base::failbit);
 	BasisSet obs("cc-pVDZ", atoms);
+	cout.clear();
 //
 	*n_ao = 0;
 //
