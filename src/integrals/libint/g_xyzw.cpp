@@ -12,6 +12,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <ctime>
 
 using namespace libint2;
 using namespace std;
@@ -42,6 +43,10 @@ void get_ao_g_xyzw(double *g){
                                    // ...
 
 	const auto& buf_vec = eri_engine.results(); // will point to computed shell sets
+
+	clock_t t;
+	double tacc;
+	tacc = 0;
 
 	for(auto s1=0; s1!=obs.size(); ++s1) {
 

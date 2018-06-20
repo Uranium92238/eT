@@ -76,6 +76,8 @@ contains
 !
       real(dp) :: error, ddot
 !
+      real(dp) :: t0, t1
+!
       integer(i15) :: iteration = 1
 !
       real(dp), dimension(:,:), allocatable :: D ! Parameters, D_αβ
@@ -99,6 +101,9 @@ contains
 !
 !     Get an initial AO density and initial MO coefficients for loop
 !
+      call wf%initialize_g_xyzw()
+      call wf%initialize_orbital_energies()
+!
       call wf%initialize_ao_density()
       call wf%set_ao_density_to_soad_guess() ! D^AO = D^SOAD
 !
@@ -106,6 +111,9 @@ contains
       call wf%construct_ao_fock() ! From current D^AO
 !
       call wf%initialize_mo_coefficients()
+      call wf%initialize_ao_overlap()
+      call wf%construct_ao_overlap()
+!
       call wf%solve_roothan_hall() ! F^AO C = S C e to get new MOs C
 !
       call wf%construct_ao_density() ! Construct AO density from C
@@ -136,7 +144,12 @@ contains
 !
          else
 !
+            call cpu_time(t0)
+!
             call wf%calculate_hf_energy()
+!
+            call cpu_time(t1)
+            write(output%unit,*) 'Calculate HF energy (sec)', t1-t0
 !
             write(output%unit, '(/t3,a11,i3)')     'Iteration: ', iteration
             write(output%unit, '(t3,a11,f17.12)')  'Error:     ', error
@@ -151,13 +164,23 @@ contains
 !
             call wf%set_ao_density(D)
 !
+            call cpu_time(t0)
             call wf%construct_ao_fock()
+            call cpu_time(t1)
+            write(output%unit,*) 'Construct AO Fock (sec)', t1-t0
 !
+            call cpu_time(t0)
             call wf%solve_roothan_hall() ! Updates the MO coefficients
+            call cpu_time(t1)
+            write(output%unit,*) 'Solve Roothan Hall (sec)', t1-t0
 !
 !           Get the new AO density and new AO Fock matrix
 !
+            call cpu_time(t0)
             call wf%construct_ao_density()
+            call cpu_time(t1)
+            write(output%unit,*) 'Construct AO density (sec)', t1-t0
+!
             call wf%construct_ao_fock()
 !
             call wf%get_ao_density(D)
@@ -171,6 +194,9 @@ contains
       call wf%destruct_mo_coefficients()
       call wf%destruct_ao_density()
       call wf%destruct_ao_fock()
+      call wf%destruct_ao_overlap()
+      call wf%destruct_orbital_energies()
+      call wf%destruct_g_xyzw()
 !
 !     Initialize engine (make final deallocations, and other stuff)
 !

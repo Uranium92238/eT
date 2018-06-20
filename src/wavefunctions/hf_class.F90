@@ -35,6 +35,8 @@ module hf_class
       real(dp), dimension(:,:), allocatable :: mo_coefficients
       real(dp), dimension(:,:), allocatable :: orbital_energies
 !
+      real(dp), dimension(:,:), allocatable :: g_xyzw
+!
       type(molecule)  :: molecule
       type(integrals) :: integrals
 !
@@ -43,30 +45,44 @@ module hf_class
       procedure :: initialize => initialize_hf
       procedure :: finalize   => finalize_hf
 !
+!     Construct various HF arrays (density, AO Fock, ...)
+!
       procedure :: construct_ao_density => construct_ao_density_hf
       procedure :: construct_ao_fock    => construct_ao_fock_hf
       procedure :: construct_mo_fock    => construct_mo_fock_hf
+      procedure :: construct_ao_overlap => construct_ao_overlap_hf
 !
       procedure :: calculate_hf_energy  => calculate_hf_energy_hf
 !
-      procedure :: get_n_hf_parameters => get_n_hf_parameters_hf
-      procedure :: get_n_hf_equations  => get_n_hf_equations_hf
-!
       procedure :: set_ao_density_to_soad_guess => set_ao_density_to_soad_guess_hf
-      procedure :: set_ao_density => set_ao_density_hf
+!
+!     Solve Roothan Hall equations
 !
       procedure :: solve_roothan_hall => solve_roothan_hall_hf
 !
-      procedure :: get_hf_equations => get_hf_equations_hf
-      procedure :: get_ao_density   => get_ao_density_hf
+!     Get and set routines
 !
-      procedure :: initialize_ao_density      => initialize_ao_density_hf
-      procedure :: initialize_ao_fock         => initialize_ao_fock_hf
-      procedure :: initialize_mo_coefficients => initialize_mo_coefficients_hf
+      procedure :: get_hf_equations    => get_hf_equations_hf
+      procedure :: get_ao_density      => get_ao_density_hf
+      procedure :: get_n_hf_parameters => get_n_hf_parameters_hf
+      procedure :: get_n_hf_equations  => get_n_hf_equations_hf
+      procedure :: set_ao_density      => set_ao_density_hf
 !
-      procedure :: destruct_ao_density      => destruct_ao_density_hf
-      procedure :: destruct_ao_fock         => destruct_ao_fock_hf
-      procedure :: destruct_mo_coefficients => destruct_mo_coefficients_hf
+!     Initialize and destruct routines
+!
+      procedure :: initialize_ao_density       => initialize_ao_density_hf
+      procedure :: initialize_ao_fock          => initialize_ao_fock_hf
+      procedure :: initialize_mo_coefficients  => initialize_mo_coefficients_hf
+      procedure :: initialize_ao_overlap       => initialize_ao_overlap_hf
+      procedure :: initialize_orbital_energies => initialize_orbital_energies_hf
+      procedure :: initialize_g_xyzw           => initialize_g_xyzw_hf
+!
+      procedure :: destruct_ao_density       => destruct_ao_density_hf
+      procedure :: destruct_ao_fock          => destruct_ao_fock_hf
+      procedure :: destruct_mo_coefficients  => destruct_mo_coefficients_hf
+      procedure :: destruct_ao_overlap       => destruct_ao_overlap_hf
+      procedure :: destruct_orbital_energies => destruct_orbital_energies_hf
+      procedure :: destruct_g_xyzw           => destruct_g_xyzw_hf
 !
    end type hf
 !
@@ -137,6 +153,52 @@ contains
    end subroutine initialize_ao_density_hf
 !
 !
+   subroutine initialize_orbital_energies_hf(wf)
+!!
+!!    Initialize orbital energies
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      call mem%alloc(wf%orbital_energies, wf%n_ao, 1)
+      wf%orbital_energies = zero
+!
+   end subroutine initialize_orbital_energies_hf
+!
+!
+   subroutine initialize_g_xyzw_hf(wf)
+!!
+!!    Initialize g_xyzw
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      call mem%alloc(wf%g_xyzw, (wf%n_ao)**2, (wf%n_ao)**2)
+      wf%g_xyzw = zero
+!
+      call get_ao_g_xyzw(wf%g_xyzw)
+!
+   end subroutine initialize_g_xyzw_hf
+!
+!
+   subroutine destruct_g_xyzw_hf(wf)
+!!
+!!    Initialize g_xyzw
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      call mem%dealloc(wf%g_xyzw, (wf%n_ao)**2, (wf%n_ao)**2)
+!
+   end subroutine destruct_g_xyzw_hf
+!
+!
    subroutine initialize_ao_fock_hf(wf)
 !!
 !!    Initialize AO Fock
@@ -165,6 +227,49 @@ contains
       wf%mo_coefficients = zero
 !
    end subroutine initialize_mo_coefficients_hf
+!
+!
+   subroutine initialize_ao_overlap_hf(wf)
+!!
+!!    Initialize AO overlap
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      call mem%alloc(wf%ao_overlap, wf%n_ao, wf%n_ao)
+      wf%ao_overlap = zero
+!
+   end subroutine initialize_ao_overlap_hf
+!
+!
+   subroutine destruct_ao_overlap_hf(wf)
+!!
+!!    Destruct AO overlap
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      call mem%dealloc(wf%ao_overlap, wf%n_ao, wf%n_ao)
+!
+   end subroutine destruct_ao_overlap_hf
+!
+!
+   subroutine destruct_orbital_energies_hf(wf)
+!!
+!!    Destruct AO overlap
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      call mem%dealloc(wf%orbital_energies, wf%n_ao, 1)
+!
+   end subroutine destruct_orbital_energies_hf
 !
 !
    subroutine destruct_ao_density_hf(wf)
@@ -254,8 +359,9 @@ contains
 !
       class(hf) :: wf
 !
-      real(dp), dimension(:,:), allocatable :: g_xyzw
       real(dp), dimension(:,:), allocatable :: g_xwzy
+!
+      real(dp) :: t0,t1
 !
 !     F_αβ = h_αβ
 !
@@ -264,17 +370,12 @@ contains
 !
 !     F_αβ =+ sum_γδ g_αβγδ D_γδ
 !
-      call mem%alloc(g_xyzw, (wf%n_ao)**2, (wf%n_ao)**2)
-      g_xyzw = zero
-!
-      call get_ao_g_xyzw(g_xyzw)
-!
       call dgemm('N', 'N',       &
                   (wf%n_ao)**2,  &
                   1,             &
                   (wf%n_ao)**2,  &
                   one,           &
-                  g_xyzw,        & ! g_αβ_γδ
+                  wf%g_xyzw,     & ! g_αβ_γδ
                   (wf%n_ao)**2,  &
                   wf%ao_density, & ! D_γδ
                   (wf%n_ao)**2,  &
@@ -287,9 +388,7 @@ contains
 !
 !     F_αβ =+ (-1/2)*sum_γδ g_αδγβ D_γδ
 !
-      call sort_1234_to_1432(g_xyzw, g_xwzy, wf%n_ao, wf%n_ao, wf%n_ao, wf%n_ao)
-!
-      call mem%dealloc(g_xyzw, (wf%n_ao)**2, (wf%n_ao)**2)
+      call sort_1234_to_1432(wf%g_xyzw, g_xwzy, wf%n_ao, wf%n_ao, wf%n_ao, wf%n_ao)
 !
       call dgemm('N', 'N',       &
                   (wf%n_ao)**2,  &
@@ -335,15 +434,9 @@ contains
       real(dp), dimension(:,:), allocatable :: GD_xy
 !
       real(dp), dimension(:,:), allocatable :: h_xy
-      real(dp), dimension(:,:), allocatable :: g_xyzw
       real(dp), dimension(:,:), allocatable :: g_xwzy
 !
 !     Construct G(D)
-!
-      call mem%alloc(g_xyzw, (wf%n_ao)**2, (wf%n_ao)**2)
-      g_xyzw = zero
-!
-      call get_ao_g_xyzw(g_xyzw)
 !
 !     G(D)_αβ = 2 sum_γδ g_αβγδ D_γδ
 !
@@ -354,7 +447,7 @@ contains
                   1,             &
                   (wf%n_ao)**2,  &
                   two,           &
-                  g_xyzw,        & ! g_αβ_γδ
+                  wf%g_xyzw,     & ! g_αβ_γδ
                   (wf%n_ao)**2,  &
                   wf%ao_density, & ! D_γδ
                   (wf%n_ao)**2,  &
@@ -367,9 +460,7 @@ contains
       call mem%alloc(g_xwzy, (wf%n_ao)**2, (wf%n_ao)**2)
       g_xwzy = zero
 !
-      call sort_1234_to_1432(g_xyzw, g_xwzy, wf%n_ao, wf%n_ao, wf%n_ao, wf%n_ao)
-!
-      call mem%dealloc(g_xyzw, (wf%n_ao)**2, (wf%n_ao)**2)
+      call sort_1234_to_1432(wf%g_xyzw, g_xwzy, wf%n_ao, wf%n_ao, wf%n_ao, wf%n_ao)
 !
       call dgemm('N', 'N',       &
                   (wf%n_ao)**2,  &
@@ -453,8 +544,33 @@ contains
 !
       class(hf) :: wf
 !
-      wf%ao_density(1, 1) = one
-      wf%ao_density(6, 6) = one
+      integer(i15) :: offset = 0
+!
+      offset = 1
+!
+    !  do I = 1, wf%molecule%n_atoms
+!
+!        For the Ith atom, place electrons in the AOs
+!
+      !   if (wf%molecule%atoms(I, 1).number .eq. 1) then ! H
+!
+      !      wf%ao_density(offset, offset) =
+!
+       !  endif
+!
+      !enddo
+      wf%ao_density(1, 1) = one ! 5 orbitals for first H
+      wf%ao_density(6, 6) = one ! 5 orbitals for second H
+      wf%ao_density(11, 11) = two ! 1s^2
+      wf%ao_density(12, 12) = one ! 2s first
+      wf%ao_density(13, 13) = one ! 2s second
+! Then, 2p^4
+      wf%ao_density(14,14) = one
+      wf%ao_density(15,15) = one
+      wf%ao_density(16,16) = half
+      wf%ao_density(17,17) = half
+      wf%ao_density(18,18) = half
+      wf%ao_density(19,19) = half
 !
    end subroutine set_ao_density_to_soad_guess_hf
 !
@@ -480,7 +596,7 @@ contains
 !
    subroutine solve_roothan_hall_hf(wf)
 !!
-!!    Calculate HF equations
+!!    Solve Roothan Hall
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
@@ -489,36 +605,32 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: work
       real(dp), dimension(:,:), allocatable :: ao_fock_copy
-!
-      real(dp), dimension(:,:), allocatable :: X
-      real(dp), dimension(:,:), allocatable :: Y
+      real(dp), dimension(:,:), allocatable :: ao_overlap_copy
 !
       real(dp) :: ddot, norm
 !
-      integer(i15) :: info = 0, i = 0, a = 0, ia = 0
+      integer(i15) :: info = 0
 !
-      call mem%alloc(wf%orbital_energies, wf%n_ao, 1)
       wf%orbital_energies = zero
-!
-      call mem%alloc(wf%ao_overlap, wf%n_ao, wf%n_ao)
-      wf%ao_overlap = zero
-!
-      call get_ao_s_xy(wf%ao_overlap)
 !
       call mem%alloc(work, 4*wf%n_ao, 1)
       work = zero
 !
       call mem%alloc(ao_fock_copy, wf%n_ao, wf%n_ao)
+      call mem%alloc(ao_overlap_copy, wf%n_ao, wf%n_ao)
 !
-      ao_fock_copy = zero
-      ao_fock_copy = wf%ao_fock
+      ao_fock_copy    = zero
+      ao_fock_copy    = wf%ao_fock
+!
+      ao_overlap_copy = zero
+      ao_overlap_copy = wf%ao_overlap
 !
       call dsygv(1, 'V',               &
                   'L',                 &
                   wf%n_ao,             &
                   wf%ao_fock,          & ! orbital coefficients on exit
                   wf%n_ao,             &
-                  wf%ao_overlap,       & ! gets scrambled
+                  wf%ao_overlap,       &
                   wf%n_ao,             &
                   wf%orbital_energies, &
                   work,                &
@@ -527,22 +639,36 @@ contains
 !
       call mem%dealloc(work, 4*wf%n_ao, 1)
 !
-      wf%mo_coefficients = zero
       wf%mo_coefficients = wf%ao_fock
 !
       wf%ao_fock = ao_fock_copy
+      wf%ao_overlap = ao_overlap_copy
 !
       call mem%dealloc(ao_fock_copy, wf%n_ao, wf%n_ao)
-      call mem%dealloc(wf%ao_overlap, wf%n_ao, wf%n_ao)
-      call mem%dealloc(wf%orbital_energies, wf%n_ao, 1)
+      call mem%dealloc(ao_overlap_copy, wf%n_ao, wf%n_ao)
 !
    end subroutine solve_roothan_hall_hf
+!
+!
+   subroutine construct_ao_overlap_hf(wf)
+!!
+!!    Construct AO overlap
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      wf%ao_overlap = zero
+      call get_ao_s_xy(wf%ao_overlap)
+!
+   end subroutine construct_ao_overlap_hf
 !
 !
    subroutine construct_mo_fock_hf(wf, F_pq)
 !!
 !!    Construct MO Fock
-!!    Written by Sarai D. Folkestad and
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
