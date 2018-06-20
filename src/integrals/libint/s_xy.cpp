@@ -29,12 +29,7 @@ void get_ao_s_xy(double *s){
 	cout.clear();
 
 	int num_aos = 0;
-
-	for(auto s1=0; s1!=obs.size(); ++s1){
-
-		num_aos = num_aos + obs[s1].size(); // Add number of basis functions in the given shell
-
-	}
+	num_aos = obs.nbf();
 
 	Engine s_engine(Operator::overlap,  // will compute overlap integrals
                 	obs.max_nprim(),     // max # of primitives in shells this engine will accept

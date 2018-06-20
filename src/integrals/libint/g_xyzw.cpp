@@ -25,17 +25,12 @@ void get_ao_g_xyzw(double *g){
 	ifstream input_file(xyzfilename);
 	vector<Atom> atoms = read_dotxyz(input_file);
 
-	std::cout.setstate(std::ios_base::failbit);
+	cout.setstate(ios_base::failbit);
 	BasisSet obs("cc-pVDZ", atoms);
-	std::cout.clear();
+	cout.clear();
 
 	int num_aos = 0;
-
-	for(auto s1=0; s1!=obs.size(); ++s1){
-
-		num_aos = num_aos + obs[s1].size(); // Add number of basis functions in the given shell
-
-	}
+	num_aos = obs.nbf();
 
 	Engine eri_engine(Operator::coulomb, obs.max_nprim(), obs.max_l());
 

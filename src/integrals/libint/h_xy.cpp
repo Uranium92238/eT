@@ -28,15 +28,7 @@ void get_n_aos(int *n_ao){
 	BasisSet obs("cc-pVDZ", atoms);
 	cout.clear();
 //
-	*n_ao = 0;
-//
-	for(auto s1=0; s1!=obs.size(); ++s1){
-//
-		*n_ao = *n_ao + obs[s1].size(); // Add number of basis functions in the given shell
-//
-	}
-//
-	finalize();
+	*n_ao = obs.nbf();
 //
 	return;
 //
@@ -61,12 +53,7 @@ void get_ao_h_xy(double *h){
 // Calculate number of basis functions from the basis object
 //
 	int num_aos = 0;
-//
-	for(auto s1=0; s1!=obs.size(); ++s1){
-//
-		num_aos = num_aos + obs[s1].size(); // Add number of basis functions in the given shell
-//
-	}
+	num_aos = obs.nbf();
 //
 // ** Compute the kinetic energy part of one-electron integrals **
 //
