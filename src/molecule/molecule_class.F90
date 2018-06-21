@@ -46,39 +46,41 @@ contains
 !
       class(molecule) :: mol
 !
-      integer(i15) :: i = 0
+      integer(kind=4) :: i = 0, j = 0
 !
-      integer(kind=4), dimension(:,:), allocatable :: n_shells_on_atom
+      integer(kind=4), dimension(:,:), allocatable :: n_shells_on_atoms
+      integer(kind=4), dimension(:,:), allocatable :: n_basis_in_shells
 !
       call mol%read_info
 !
       allocate(mol%atoms(mol%n_atoms, 1))
 !
-      allocate(n_shells_on_atom(mol%n_atoms,1))
-      n_shells_on_atom = 0
+      allocate(n_shells_on_atoms(mol%n_atoms,1))
+      n_shells_on_atoms = 0
 !
       call mol%read_geometry
 !
-      call get_n_shells_on_atom(n_shells_on_atom)
+      call get_n_shells_on_atoms(n_shells_on_atoms)
 !
       do i = 1, mol%n_atoms
 !
-!        Determine the number of shells on atom i
+!        For atom i, allocate and initialize the corresponding shells
 !
-         write(output%unit,*) 'Num shells on atom ', i, ' is ', n_shells_on_atom(i,1)
-     !    call get_n_shells_on_atom(n_shells_on_atom)
+         allocate(mol%atoms(i,1)%shells(n_shells_on_atoms(i,1), 1))
 !
-!        Allocate and initialize the corresponding shells
+!        For atom i, determine the number of basis functions in each shell
 !
-      !   allocate(mol%atoms(i,1)%shells(n_shells, 1))
-!
-       !  do j = 1, n_shells
-!
-!           Get shell size of the jth shell on the ith atom
-!
-      !      mol%atoms(i,1)%shells(j,1)%size = get_shell_size(i,j)
-!
-       !  enddo
+         allocate(n_basis_in_shells(n_shells_on_atoms(i,1), 1))
+         call get_n_basis_in_shells(i, n_basis_in_shells)
+
+         do j = 1, n_shells_on_atoms(i,1)
+
+            mol%atoms(i,1)%shells(j,1)%size = n_basis_in_shells(j,1)
+            write(output%unit,*) 'The nbf in shell ', j, 'on atom ', i, " is ",  mol%atoms(i,1)%shells(j,1)%size
+
+         enddo
+
+         deallocate(n_basis_in_shells)
 !
 !        Set atomic number
 !

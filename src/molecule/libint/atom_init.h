@@ -4,7 +4,8 @@ extern "C" {
 #else
 #endif
 
-void get_n_shells_on_atom(int *nsoa);
+void get_n_shells_on_atoms(int *nsoa);
+void get_n_basis_in_shells(int *atom, int *nbis);
 
 #ifdef __cplusplus
 }
