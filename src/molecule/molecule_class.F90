@@ -82,6 +82,15 @@ contains
 
          deallocate(n_basis_in_shells)
 !
+!        Next -> find the first index in each shell
+!        (same structure as get_n_basis_in_shells)
+!
+!        then, maybe make a similar routine to get angular momentum
+!        (though not needed yet.. & maybe we can just let a routine
+!        in the shell figure it out - more beautiful... : 2l + 1)
+!
+
+!
 !        Set atomic number
 !
          call mol%atoms(i, 1)%set_number()
