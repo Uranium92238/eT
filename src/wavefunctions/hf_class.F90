@@ -23,6 +23,8 @@ module hf_class
       integer(i15) :: n_ao
       integer(i15) :: n_mo
 !
+      integer(i15) :: n_shells
+!
       integer(i15) :: n_o
       integer(i15) :: n_v
 !
@@ -122,6 +124,13 @@ contains
 !
       wf%n_o = (wf%molecule%get_n_electrons())/2
       wf%n_v = wf%n_mo - wf%n_o
+!
+!     Determine the number of shells
+!
+      wf%n_shells = 0
+      call get_n_shells(wf%n_shells)
+!
+      write(output%unit, *) 'Number of shells: ', wf%n_shells
 !
    end subroutine initialize_hf
 !

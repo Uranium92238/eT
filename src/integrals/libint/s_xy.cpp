@@ -16,6 +16,26 @@
 using namespace libint2;
 using namespace std;
 
+void get_n_shells(int *ns){
+
+	initialize();
+
+	string xyzfilename = "Water.xyz"; // see XYZ format description at http://en.wikipedia.org/wiki/XYZ_file_format
+	ifstream input_file(xyzfilename);
+	vector<Atom> atoms = read_dotxyz(input_file);
+
+	cout.setstate(ios_base::failbit);
+	BasisSet obs("cc-pVDZ", atoms);
+	cout.clear();
+
+	*ns = obs.size();
+
+	finalize();
+
+	return;
+
+}
+
 void get_ao_s_xy(double *s){
 
 	initialize();

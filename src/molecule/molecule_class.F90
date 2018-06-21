@@ -8,6 +8,7 @@ module molecule_class
    use parameters
    use atom_class
    use io_utilities
+   use atom_init
 !
    implicit none
 !
@@ -47,6 +48,8 @@ contains
 !
       integer(i15) :: i = 0
 !
+      integer(kind=4) :: n_shells
+!
       call mol%read_info
 !
       allocate(mol%atoms(mol%n_atoms, 1))
@@ -55,7 +58,14 @@ contains
 !
       do i = 1, mol%n_atoms
 !
-        call mol%atoms(i, 1)%set_number
+!        Determine the number of shells on atom i
+!
+         n_shells = get_n_shells_on_atom(i)
+         write(output%unit,*) 'The number of shells on atom ', i, ' is ', n_shells
+!
+!        Set atomic number
+!
+         call mol%atoms(i, 1)%set_number()
 !
       enddo
 !

@@ -7,16 +7,20 @@ module atom_class
 !
    use kinds
    use file_class
+   use shell_class
    use disk_manager_class
 !
    implicit none
 !
    type :: atom
 !
-      character(len=2)  :: symbol
-      integer(i15)      :: number 
+      character(len=2) :: symbol
+      integer(i15)     :: number
 !
       character(len=100) :: basis
+!
+      integer(i15) :: n_shells
+      type(shell), dimension(:,:), allocatable :: shells
 !
       real(dp) :: x
       real(dp) :: y
@@ -24,8 +28,8 @@ module atom_class
 !
    contains
 !
-      procedure            :: set_number      => set_number_atom
-      procedure, private   :: symbol_2_number => symbol_2_number_atom
+      procedure          :: set_number      => set_number_atom
+      procedure, private :: symbol_2_number => symbol_2_number_atom
 !
    end type atom
 !
@@ -41,7 +45,7 @@ contains
 !!
       implicit none
 !
-      class(atom) :: a 
+      class(atom) :: a
 !
       call a%symbol_2_number()
 !

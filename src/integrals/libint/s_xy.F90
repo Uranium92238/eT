@@ -7,6 +7,16 @@ module s_xy
 !
 contains
 !
+   subroutine get_n_shells(ns)
+!
+      implicit none
+!
+      integer(kind=8) :: ns
+!
+      call get_n_shells_c(ns)
+!
+   end subroutine get_n_shells
+!
    subroutine get_ao_s_xy(s)
 !
       implicit none
