@@ -48,20 +48,37 @@ contains
 !
       integer(i15) :: i = 0
 !
-      integer(kind=4) :: n_shells
+      integer(kind=4), dimension(:,:), allocatable :: n_shells_on_atom
 !
       call mol%read_info
 !
       allocate(mol%atoms(mol%n_atoms, 1))
 !
+      allocate(n_shells_on_atom(mol%n_atoms,1))
+      n_shells_on_atom = 0
+!
       call mol%read_geometry
+!
+      call get_n_shells_on_atom(n_shells_on_atom)
 !
       do i = 1, mol%n_atoms
 !
 !        Determine the number of shells on atom i
 !
-         n_shells = get_n_shells_on_atom(i)
-         write(output%unit,*) 'The number of shells on atom ', i, ' is ', n_shells
+         write(output%unit,*) 'Num shells on atom ', i, ' is ', n_shells_on_atom(i,1)
+     !    call get_n_shells_on_atom(n_shells_on_atom)
+!
+!        Allocate and initialize the corresponding shells
+!
+      !   allocate(mol%atoms(i,1)%shells(n_shells, 1))
+!
+       !  do j = 1, n_shells
+!
+!           Get shell size of the jth shell on the ith atom
+!
+      !      mol%atoms(i,1)%shells(j,1)%size = get_shell_size(i,j)
+!
+       !  enddo
 !
 !        Set atomic number
 !

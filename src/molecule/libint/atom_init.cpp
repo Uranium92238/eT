@@ -15,7 +15,7 @@
 using namespace libint2;
 using namespace std;
 
-int get_n_shells_on_atom(int *i){
+void get_n_shells_on_atom(int *nsoa){
 
 	initialize();
 
@@ -27,23 +27,14 @@ int get_n_shells_on_atom(int *i){
 	BasisSet obs("cc-pVDZ", atoms);
 	cout.clear();
 
-	int num_aos = 0;
-	num_aos = obs.nbf();
-
- 	ofstream outputFile("debug.txt");
-
 	auto a2s_list = obs.atom2shell(atoms); // Vector of vectors
+	int n_shells = 0;
 
 	for (auto j = 0; j < atoms.size(); j++){
 
-		if (j != (*i-1)) {
-			// Do nothing; wrong atom
-		} else {
-			int n_shells = 0;
-			n_shells = a2s_list[j].size();
-			outputFile << "The number of shells is: " << n_shells << ' or: ' << a2s_list[j].size() << endl;
-			return n_shells;
-		}
+		n_shells = a2s_list[j].size();
+		cout << "num shells? " << n_shells << endl;
+		*(nsoa + j) = n_shells;
 
 	}
 

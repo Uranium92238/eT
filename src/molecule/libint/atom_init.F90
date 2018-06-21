@@ -7,14 +7,14 @@ module atom_init
 !
 contains
 !
-   integer(i15) function get_n_shells_on_atom(i)
+   subroutine get_n_shells_on_atom(nsoa)
 !
       implicit none
 !
-      integer(i15) :: i
+      integer(kind=4), dimension(1,1) :: nsoa
 !
-      get_n_shells_on_atom = get_n_shells_on_atom_c(i)
+      call get_n_shells_on_atom_c(nsoa)
 !
-   end function get_n_shells_on_atom
+   end subroutine get_n_shells_on_atom
 !
 end module atom_init
