@@ -7,6 +7,17 @@ module atom_init
 !
 contains
 !
+   subroutine get_first_ao_in_shells(atom, faois)
+!
+      implicit none
+!
+      integer(kind=4) :: atom
+      integer(kind=4), dimension(1,1) :: faois
+!
+      call get_first_ao_in_shells_c(atom, faois)
+!
+   end subroutine get_first_ao_in_shells
+!
    subroutine get_n_basis_in_shells(atom, nbis)
 !
       implicit none

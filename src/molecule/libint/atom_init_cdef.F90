@@ -1,5 +1,16 @@
 interface
 !
+   subroutine get_first_ao_in_shells_c(atom, faois) bind(C, name='get_first_ao_in_shells')
+!
+      use iso_c_binding
+!
+      implicit none
+!
+      integer(c_int) :: atom
+      integer(c_int), dimension(1,1) :: faois
+!
+   end subroutine get_first_ao_in_shells_c
+!
    subroutine get_n_basis_in_shells_c(atom, nbis) bind(C, name='get_n_basis_in_shells')
 !
       use iso_c_binding

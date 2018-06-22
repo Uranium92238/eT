@@ -50,6 +50,7 @@ contains
 !
       integer(kind=4), dimension(:,:), allocatable :: n_shells_on_atoms
       integer(kind=4), dimension(:,:), allocatable :: n_basis_in_shells
+      integer(kind=4), dimension(:,:), allocatable :: first_ao_in_shells
 !
       call mol%read_info
 !
@@ -68,7 +69,7 @@ contains
 !
          allocate(mol%atoms(i,1)%shells(n_shells_on_atoms(i,1), 1))
 !
-!        For atom i, determine the number of basis functions in each shell
+!        Then determine the number of basis functions in each shell
 !
          allocate(n_basis_in_shells(n_shells_on_atoms(i,1), 1))
          call get_n_basis_in_shells(i, n_basis_in_shells)
@@ -82,14 +83,24 @@ contains
 
          deallocate(n_basis_in_shells)
 !
-!        Next -> find the first index in each shell
-!        (same structure as get_n_basis_in_shells)
+!        And the first AO index in each shell
+!
+         allocate(first_ao_in_shells(n_shells_on_atoms(i,1), 1))
+         call get_first_ao_in_shells(i, first_ao_in_shells)
+!
+         do j = 1, n_shells_on_atoms(i,1)
+
+            mol%atoms(i,1)%shells(j,1)%first = first_ao_in_shells(j,1)
+            write(output%unit,*) 'The first ao in shell ', j, 'on atom ', i, " is ",  mol%atoms(i,1)%shells(j,1)%first
+
+         enddo
+!
+         deallocate(first_ao_in_shells)
 !
 !        then, maybe make a similar routine to get angular momentum
 !        (though not needed yet.. & maybe we can just let a routine
 !        in the shell figure it out - more beautiful... : 2l + 1)
 !
-
 !
 !        Set atomic number
 !
