@@ -97,10 +97,18 @@ contains
 !
          deallocate(first_ao_in_shells)
 !
-!        then, maybe make a similar routine to get angular momentum
-!        (though not needed yet.. & maybe we can just let a routine
-!        in the shell figure it out - more beautiful... : 2l + 1)
+!        Determine the angular momentum of shells & the last AO index
 !
+         do j = 1, n_shells_on_atoms(i,1)
+!
+            call mol%atoms(i,1)%shells(j,1)%determine_angular_momentum()
+            write(output%unit,*) 'The angmom of shell ', j, ' on atom ', i, ' is ', mol%atoms(i,1)%shells(j,1)%l
+!
+            call mol%atoms(i,1)%shells(j,1)%determine_last_ao_index()
+            write(output%unit, *) 'For shell ', j, ' on atom ', i, ' the first AO is ', &
+                  mol%atoms(i,1)%shells(j,1)%first, ' and the last is ', mol%atoms(i,1)%shells(j,1)%last  
+!
+         enddo
 !
 !        Set atomic number
 !
