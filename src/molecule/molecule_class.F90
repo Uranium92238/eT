@@ -51,6 +51,7 @@ contains
       integer(kind=4), dimension(:,:), allocatable :: n_shells_on_atoms
       integer(kind=4), dimension(:,:), allocatable :: n_basis_in_shells
       integer(kind=4), dimension(:,:), allocatable :: first_ao_in_shells
+      integer(kind=4), dimension(:,:), allocatable :: shell_numbers
 !
       call mol%read_info
 !
@@ -71,7 +72,8 @@ contains
 !
 !        Allocate and initialize the corresponding shells
 !
-         allocate(mol%atoms(i,1)%shells(n_shells_on_atoms(i,1), 1))
+         mol%atoms(i,1)%n_shells = n_shells_on_atoms(i,1)
+         allocate(mol%atoms(i,1)%shells(mol%atoms(i,1)%n_shells, 1))
 !
 !        Then determine the number of basis functions in each shell
 !
@@ -85,6 +87,20 @@ contains
          enddo
 
          deallocate(n_basis_in_shells)
+!
+!        Get shell numbers
+!
+         allocate(shell_numbers(n_shells_on_atoms(i,1), 1))
+         call get_shell_numbers(i, shell_numbers)
+!
+         do j = 1, n_shells_on_atoms(i,1)
+!
+            mol%atoms(i,1)%shells(j,1)%number = shell_numbers(j, 1)
+            write(output%unit, *) 'The ', j, 'th shell on atom ', i, ' has shell nr. ', mol%atoms(i,1)%shells(j,1)%number
+!
+         enddo
+!
+         deallocate(shell_numbers)
 !
 !        And the first AO index in each shell
 !

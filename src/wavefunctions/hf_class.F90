@@ -9,6 +9,7 @@ module hf_class
    use file_class
    use atom_class
    use reordering
+   use interval_class
    use index
    use integrals_class
    use molecule_class
@@ -68,6 +69,9 @@ module hf_class
       procedure :: get_ao_density      => get_ao_density_hf
       procedure :: get_n_hf_parameters => get_n_hf_parameters_hf
       procedure :: get_n_hf_equations  => get_n_hf_equations_hf
+      procedure :: get_n_shells        => get_n_shells_hf
+      procedure :: get_shell_limits    => get_shell_limits_hf
+!
       procedure :: set_ao_density      => set_ao_density_hf
 !
 !     Initialize and destruct routines
@@ -145,6 +149,28 @@ contains
       class(hf) :: wf
 !
    end subroutine finalize_hf
+!
+!
+   integer(i15) function get_n_shells_hf(wf)
+!!
+!!    Get number of shells
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      integer(i15) :: I = 0
+!
+      get_n_shells_hf = 0
+!
+      do I = 1, wf%molecule%n_atoms
+!
+         get_n_shells_hf = get_n_shells_hf + wf%molecule%atoms(I,1)%n_shells
+!
+      enddo
+!
+   end function get_n_shells_hf
 !
 !
    subroutine initialize_ao_density_hf(wf)
@@ -353,6 +379,38 @@ contains
    end subroutine construct_ao_density_hf
 !
 !
+   type(interval) function get_shell_limits_hf(wf, A)
+!!
+!!    Get shell limits
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      integer(kind=4) :: A
+!
+      integer(kind=4) :: I, J
+!
+      do I = 1, wf%molecule%n_atoms
+!
+         do J = 1, wf%molecule%atoms(I,1)%n_shells
+!
+            if (A .eq. wf%molecule%atoms(I,1)%shells(J,1)%number) then
+!
+               get_shell_limits_hf%first = wf%molecule%atoms(I,1)%shells(J,1)%first
+               get_shell_limits_hf%last  = wf%molecule%atoms(I,1)%shells(J,1)%last
+               get_shell_limits_hf%size  = wf%molecule%atoms(I,1)%shells(J,1)%size
+!
+            endif
+!
+         enddo
+!
+      enddo
+!
+   end function get_shell_limits_hf
+!
+!
    subroutine construct_ao_fock_hf(wf)
 !!
 !!    Construct AO Fock matrix
@@ -369,50 +427,107 @@ contains
       class(hf) :: wf
 !
       real(dp), dimension(:,:), allocatable :: g_xwzy
+      real(dp), dimension(:,:), allocatable :: L_xyzw
 !
-      real(dp) :: t0,t1
+      integer(i15) :: n_shells = 0
+      integer(kind=4) :: A = 0, C = 0
+!
+      integer(i15) :: x,y,z,w,xy,zw
+!
+      type(interval) :: A_intval
+      type(interval) :: C_intval
+!
+      real(dp) :: t0, t1
 !
 !     F_αβ = h_αβ
 !
       wf%ao_fock = zero
       call get_ao_h_xy(wf%ao_fock)
 !
+!     Loop over shells A and C, calculating L_ABCD = 2*g_ABCD - g_ADCB
+!
+      n_shells = wf%get_n_shells()
+!
+      call cpu_time(t0)
+!
+      do A = 1, n_shells
+!
+         A_intval = wf%get_shell_limits(A)
+!
+         do C = 1, n_shells
+!
+            C_intval = wf%get_shell_limits(C)
+!
+            call mem%alloc(L_xyzw, (A_intval%size)*(wf%n_ao), (C_intval%size)*(wf%n_ao))
+            L_xyzw = zero
+!
+            call get_ao_L_xyzw(L_xyzw, A, C) ! This is veeery time-consuming... something with libint
+!
+            do x = 1, A_intval%size
+               do y = 1, wf%n_ao
+                  do z = 1, C_intval%size
+                     do w = 1, wf%n_ao
+!
+                        xy = index_two(x, y, A_intval%size)
+                        zw = index_two(z, w, C_intval%size)
+!
+                        wf%ao_fock(x + A_intval%first - 1, y) = wf%ao_fock(x + A_intval%first - 1, y) + &
+                                                   half*(wf%ao_density(z + C_intval%first - 1, w))*L_xyzw(xy, zw)
+!
+                     enddo
+                  enddo
+               enddo
+            enddo
+!
+            call mem%dealloc(L_xyzw, (A_intval%size)*(wf%n_ao), (C_intval%size)*(wf%n_ao))
+!
+         enddo
+      enddo
+!
+      call cpu_time(t1)
+      write(output%unit, *) 'Time?? ', t1-t0
+!
+      ! call cpu_time(t0)
+      ! call get_ao_g_xyzw(wf%g_xyzw)
+      ! call cpu_time(t1)
+      ! write(output%unit, *) 'Timesdsd?? ', t1-t0
+!
 !     F_αβ =+ sum_γδ g_αβγδ D_γδ
 !
-      call dgemm('N', 'N',       &
-                  (wf%n_ao)**2,  &
-                  1,             &
-                  (wf%n_ao)**2,  &
-                  one,           &
-                  wf%g_xyzw,     & ! g_αβ_γδ
-                  (wf%n_ao)**2,  &
-                  wf%ao_density, & ! D_γδ
-                  (wf%n_ao)**2,  &
-                  one,           &
-                  wf%ao_fock,    & ! F_αβ
-                  (wf%n_ao)**2)
-!
-      call mem%alloc(g_xwzy, (wf%n_ao)**2, (wf%n_ao)**2)
-      g_xwzy = zero
-!
-!     F_αβ =+ (-1/2)*sum_γδ g_αδγβ D_γδ
-!
-      call sort_1234_to_1432(wf%g_xyzw, g_xwzy, wf%n_ao, wf%n_ao, wf%n_ao, wf%n_ao)
-!
-      call dgemm('N', 'N',       &
-                  (wf%n_ao)**2,  &
-                  1,             &
-                  (wf%n_ao)**2,  &
-                  -half,         &
-                  g_xwzy,        & ! g_αβ_γδ = g_αδγβ
-                  (wf%n_ao)**2,  &
-                  wf%ao_density, & ! D_γδ
-                  (wf%n_ao)**2,  &
-                  one,           &
-                  wf%ao_fock,    & ! F_αβ
-                  (wf%n_ao)**2)
-!
-      call mem%dealloc(g_xwzy, (wf%n_ao)**2, (wf%n_ao)**2)
+      ! call dgemm('N', 'N',       &
+      !             (wf%n_ao)**2,  &
+      !             1,             &
+      !             (wf%n_ao)**2,  &
+      !             one,           &
+      !             wf%g_xyzw,     & ! g_αβ_γδ
+      !             (wf%n_ao)**2,  &
+      !             wf%ao_density, & ! D_γδ
+      !             (wf%n_ao)**2,  &
+      !             one,           &
+      !             wf%ao_fock,    & ! F_αβ
+      !             (wf%n_ao)**2)
+! !
+!       call mem%alloc(g_xwzy, (wf%n_ao)**2, (wf%n_ao)**2)
+!       g_xwzy = zero
+! !
+! !     F_αβ =+ (-1/2)*sum_γδ g_αδγβ D_γδ
+! !
+!       call sort_1234_to_1432(wf%g_xyzw, g_xwzy, wf%n_ao, wf%n_ao, wf%n_ao, wf%n_ao)
+! !
+!       call dgemm('N', 'N',       &
+!                   (wf%n_ao)**2,  &
+!                   1,             &
+!                   (wf%n_ao)**2,  &
+!                   -half,         &
+!                   g_xwzy,        & ! g_αβ_γδ = g_αδγβ
+!                   (wf%n_ao)**2,  &
+!                   wf%ao_density, & ! D_γδ
+!                   (wf%n_ao)**2,  &
+!                   one,           &
+!                   wf%ao_fock,    & ! F_αβ
+!                   (wf%n_ao)**2)
+! !
+!       call mem%dealloc(g_xwzy, (wf%n_ao)**2, (wf%n_ao)**2)
 !
    end subroutine construct_ao_fock_hf
 !

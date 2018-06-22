@@ -10,6 +10,7 @@ module integrals_class
    use h_xy
    use s_xy
    use g_xyzw
+   use L_xyzw
 !
 !  Disk & memory class modules
 !

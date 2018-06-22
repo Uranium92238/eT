@@ -19,6 +19,9 @@ using namespace std;
 
 void get_ao_L_xyzw(double *L, int *s1, int *s3){
 
+	auto sh1 = *s1 - 1;
+	auto sh3 = *s3 - 1; // C++ arrays start at index 0!
+
 	initialize();
 
 	string xyzfilename = "Water.xyz"; // see XYZ format description at http://en.wikipedia.org/wiki/XYZ_file_format
@@ -45,56 +48,47 @@ void get_ao_L_xyzw(double *L, int *s1, int *s3){
 	double tacc;
 	tacc = 0;
 
-	for(auto s1=0; s1!=obs.size(); ++s1) {
+//	cout << "The first shell is " << sh1 << " and the size of shell is " << obs[sh1].size() << endl;
+//	cout << "The third shell is " << sh3 << " and the size of shell is " << obs[sh3].size() << endl;
 
-		auto bf1 = shell2bf[s1];  // First basis function in shell 1
-		auto n1 = obs[s1].size(); // Number of basis functions in shell 1
+	auto bf1 = shell2bf[sh1];  // First basis function in shell 1
+	auto n1 = obs[sh1].size(); // Number of basis functions in shell 1
 
-  		for(auto s2=0; s2!=obs.size(); ++s2) {
+	auto bf3 = shell2bf[sh3];  // First basis function in shell 3
+	auto n3 = obs[sh3].size(); // Number of basis functions in shell 3
 
-			auto bf2 = shell2bf[s2];  // First basis function in shell 2
-			auto n2 = obs[s2].size(); // Number of basis functions in shell 2
+  	for(auto s2=0; s2!=obs.size(); ++s2) {
 
-			for (auto s3=0; s3!=obs.size(); ++s3) {
+		auto bf2 = shell2bf[s2];  // First basis function in shell 2
+		auto n2 = obs[s2].size(); // Number of basis functions in shell 2
 
-				auto bf3 = shell2bf[s3];  // First basis function in shell 3
-				auto n3 = obs[s3].size(); // Number of basis functions in shell 3
+		for (auto s4=0; s4!=obs.size(); ++s4) {
 
-				for (auto s4=0; s4!=obs.size(); ++s4) {
+			auto bf4 = shell2bf[s4];  // First basis function in shell 4
+			auto n4 = obs[s4].size(); // Number of basis functions in shell 4
 
-					auto bf4 = shell2bf[s4];  // First basis function in shell 4
-					auto n4 = obs[s4].size(); // Number of basis functions in shell 4
+			eri_engine.compute(obs[sh1], obs[s2], obs[sh3], obs[s4]);
 
-					eri_engine.compute(obs[s1], obs[s2], obs[s3], obs[s4]);
-
-					auto ints_1234 = buf_vec[0]; // Location of computed integrals
-    				if (ints_1234 == nullptr)
+			auto ints_1234 = buf_vec[0]; // Location of computed integrals
+    		if (ints_1234 == nullptr)
       					continue;  // nullptr returned if all integrals were screened out
 
-    				for(auto f1=0, f1234=0; f1!=n1; ++f1){
+    		for(auto f1=0, f1234=0; f1!=n1; ++f1){
+      		for(auto f2=0; f2!=n2; ++f2){
 
-						auto bf1_ind = bf1 + f1;
+					auto bf2_ind = bf2 + f2;
 
-      				for(auto f2=0; f2!=n2; ++f2){
+      			for(auto f3=0; f3!=n3; ++f3){
+      				for(auto f4=0; f4!=n4; ++f4, ++f1234){
 
-							auto bf2_ind = bf2 + f2;
-
-      					for(auto f3=0; f3!=n3; ++f3){
-
-								auto bf3_ind = bf3 + f3;
-
-      						for(auto f4=0; f4!=n4; ++f4, ++f1234){
-
-									auto bf4_ind = bf4 + f4;
-
-							//		*(g - 1 + index_four(bf1_ind+1,bf2_ind+1,bf3_ind+1,bf4_ind+1,num_aos,num_aos,num_aos)) = ints_1234[f1234];
-								}
-							}
+							auto bf4_ind = bf4 + f4;
+				    		*(L - 1 + index_four(f1+1,bf2_ind+1,f3+1,bf4_ind+1,n1,num_aos,n3)) = *(L - 1 + index_four(f1+1,bf2_ind+1,f3+1,bf4_ind+1,n1,num_aos,n3)) + 2.0e0*ints_1234[f1234];
+							*(L - 1 + index_four(f1+1,bf4_ind+1,f3+1,bf2_ind+1,n1,num_aos,n3)) = *(L - 1 + index_four(f1+1,bf4_ind+1,f3+1,bf2_ind+1,n1,num_aos,n3)) - 1.0e0*ints_1234[f1234];
 						}
 					}
 				}
 			}
-  		}
+		}
 	}
 
 	finalize();

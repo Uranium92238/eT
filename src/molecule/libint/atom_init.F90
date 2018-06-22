@@ -7,6 +7,17 @@ module atom_init
 !
 contains
 !
+   subroutine get_shell_numbers(atom, sn)
+!
+      implicit none
+!
+      integer(kind=4) :: atom
+      integer(kind=4), dimension(1,1) :: sn
+!
+      call get_shell_numbers_c(atom, sn)
+!
+   end subroutine get_shell_numbers
+!
    subroutine get_first_ao_in_shells(atom, faois)
 !
       implicit none

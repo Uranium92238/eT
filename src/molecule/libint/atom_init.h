@@ -4,6 +4,7 @@ extern "C" {
 #else
 #endif
 
+void get_shell_numbers(int *atom, int *sn);
 void get_first_ao_in_shells(int *atom, int *faois);
 void get_n_shells_on_atoms(int *nsoa);
 void get_n_basis_in_shells(int *atom, int *nbis);
