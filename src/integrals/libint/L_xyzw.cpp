@@ -19,8 +19,8 @@ using namespace std;
 
 void get_ao_L_xyzw(double *L, int *s1, int *s3){
 
-	auto sh1 = *s1 - 1;
-	auto sh3 = *s3 - 1; // C++ arrays start at index 0!
+	const int sh1 = *s1 - 1;
+	const int sh3 = *s3 - 1; // C++ arrays start at index 0!
 
 	initialize();
 
@@ -36,6 +36,7 @@ void get_ao_L_xyzw(double *L, int *s1, int *s3){
 	num_aos = obs.nbf();
 
 	Engine eri_engine(Operator::coulomb, obs.max_nprim(), obs.max_l());
+	eri_engine.set_braket(BraKet::xx_xx);
 
 	auto shell2bf = obs.shell2bf(); // maps shell index to basis function index
                                    // shell2bf[0] = index of the first basis function in shell 0
@@ -51,11 +52,11 @@ void get_ao_L_xyzw(double *L, int *s1, int *s3){
 //	cout << "The first shell is " << sh1 << " and the size of shell is " << obs[sh1].size() << endl;
 //	cout << "The third shell is " << sh3 << " and the size of shell is " << obs[sh3].size() << endl;
 
-	auto bf1 = shell2bf[sh1];  // First basis function in shell 1
-	auto n1 = obs[sh1].size(); // Number of basis functions in shell 1
+	const auto bf1 = shell2bf[sh1];  // First basis function in shell 1
+	const auto n1 = obs[sh1].size(); // Number of basis functions in shell 1
 
-	auto bf3 = shell2bf[sh3];  // First basis function in shell 3
-	auto n3 = obs[sh3].size(); // Number of basis functions in shell 3
+	const auto bf3 = shell2bf[sh3];  // First basis function in shell 3
+	const auto n3 = obs[sh3].size(); // Number of basis functions in shell 3
 
   	for(auto s2=0; s2!=obs.size(); ++s2) {
 
