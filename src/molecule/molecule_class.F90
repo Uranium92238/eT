@@ -63,9 +63,13 @@ contains
 !
       call get_n_shells_on_atoms(n_shells_on_atoms)
 !
-      do i = 1, mol%n_atoms
+      do i = 1, mol%n_atoms ! Loop over atoms
 !
-!        For atom i, allocate and initialize the corresponding shells
+!        Set atomic number
+!
+         call mol%atoms(i, 1)%set_number()
+!
+!        Allocate and initialize the corresponding shells
 !
          allocate(mol%atoms(i,1)%shells(n_shells_on_atoms(i,1), 1))
 !
@@ -77,7 +81,6 @@ contains
          do j = 1, n_shells_on_atoms(i,1)
 
             mol%atoms(i,1)%shells(j,1)%size = n_basis_in_shells(j,1)
-            write(output%unit,*) 'The nbf in shell ', j, 'on atom ', i, " is ",  mol%atoms(i,1)%shells(j,1)%size
 
          enddo
 
@@ -91,28 +94,19 @@ contains
          do j = 1, n_shells_on_atoms(i,1)
 
             mol%atoms(i,1)%shells(j,1)%first = first_ao_in_shells(j,1)
-            write(output%unit,*) 'The first ao in shell ', j, 'on atom ', i, " is ",  mol%atoms(i,1)%shells(j,1)%first
-
+!
          enddo
 !
          deallocate(first_ao_in_shells)
 !
-!        Determine the angular momentum of shells & the last AO index
+!        Then determine the angular momentum of shells & the last AO index
 !
          do j = 1, n_shells_on_atoms(i,1)
 !
             call mol%atoms(i,1)%shells(j,1)%determine_angular_momentum()
-            write(output%unit,*) 'The angmom of shell ', j, ' on atom ', i, ' is ', mol%atoms(i,1)%shells(j,1)%l
-!
             call mol%atoms(i,1)%shells(j,1)%determine_last_ao_index()
-            write(output%unit, *) 'For shell ', j, ' on atom ', i, ' the first AO is ', &
-                  mol%atoms(i,1)%shells(j,1)%first, ' and the last is ', mol%atoms(i,1)%shells(j,1)%last  
 !
          enddo
-!
-!        Set atomic number
-!
-         call mol%atoms(i, 1)%set_number()
 !
       enddo
 !

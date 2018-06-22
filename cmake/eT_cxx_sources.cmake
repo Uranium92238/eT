@@ -3,5 +3,6 @@ set(eT_CXX_sources
    src/integrals/libint/h_xy.cpp
    src/integrals/libint/s_xy.cpp
    src/integrals/libint/g_xyzw.cpp
+   src/integrals/libint/L_xyzw.cpp
    src/molecule/libint/atom_init.cpp
 )
