@@ -432,7 +432,7 @@ contains
       integer(i15) :: n_shells = 0
       integer(kind=4) :: A = 0, C = 0
 !
-      integer(i15) :: x,y,z,w,xy,zw
+      integer(i15) :: x, y, z, w, xy, zw
 !
       type(interval) :: A_intval
       type(interval) :: C_intval
@@ -483,14 +483,6 @@ contains
 !
          enddo
       enddo
-!
-      call cpu_time(t1)
-      write(output%unit, *) 'Time?? ', t1-t0
-!
-      ! call cpu_time(t0)
-      ! call get_ao_g_xyzw(wf%g_xyzw)
-      ! call cpu_time(t1)
-      ! write(output%unit, *) 'Timesdsd?? ', t1-t0
 !
 !     F_αβ =+ sum_γδ g_αβγδ D_γδ
 !
