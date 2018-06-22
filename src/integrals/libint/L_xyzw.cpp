@@ -36,7 +36,6 @@ void get_ao_L_xyzw(double *L, int *s1, int *s3){
 	num_aos = obs.nbf();
 
 	Engine eri_engine(Operator::coulomb, obs.max_nprim(), obs.max_l());
-	eri_engine.set_braket(BraKet::xx_xx);
 
 	auto shell2bf = obs.shell2bf(); // maps shell index to basis function index
                                    // shell2bf[0] = index of the first basis function in shell 0
@@ -44,13 +43,6 @@ void get_ao_L_xyzw(double *L, int *s1, int *s3){
                                    // ...
 
 	const auto& buf_vec = eri_engine.results(); // will point to computed shell sets
-
-	clock_t t;
-	double tacc;
-	tacc = 0;
-
-//	cout << "The first shell is " << sh1 << " and the size of shell is " << obs[sh1].size() << endl;
-//	cout << "The third shell is " << sh3 << " and the size of shell is " << obs[sh3].size() << endl;
 
 	const auto bf1 = shell2bf[sh1];  // First basis function in shell 1
 	const auto n1 = obs[sh1].size(); // Number of basis functions in shell 1
@@ -83,8 +75,10 @@ void get_ao_L_xyzw(double *L, int *s1, int *s3){
       				for(auto f4=0; f4!=n4; ++f4, ++f1234){
 
 							auto bf4_ind = bf4 + f4;
+
 				    		*(L - 1 + index_four(f1+1,bf2_ind+1,f3+1,bf4_ind+1,n1,num_aos,n3)) = *(L - 1 + index_four(f1+1,bf2_ind+1,f3+1,bf4_ind+1,n1,num_aos,n3)) + 2.0e0*ints_1234[f1234];
 							*(L - 1 + index_four(f1+1,bf4_ind+1,f3+1,bf2_ind+1,n1,num_aos,n3)) = *(L - 1 + index_four(f1+1,bf4_ind+1,f3+1,bf2_ind+1,n1,num_aos,n3)) - 1.0e0*ints_1234[f1234];
+
 						}
 					}
 				}
