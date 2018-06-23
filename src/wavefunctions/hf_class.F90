@@ -136,6 +136,9 @@ contains
 !
       write(output%unit, *) 'Number of shells: ', wf%n_shells
 !
+      call initialize_basis()
+      call initialize_coulomb()
+!
    end subroutine initialize_hf
 !
 !

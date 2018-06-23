@@ -7,6 +7,22 @@ module L_xyzw
 !
 contains
 !
+   subroutine initialize_coulomb()
+!
+      implicit none
+!
+      call initialize_coulomb_c()
+!
+   end subroutine initialize_coulomb
+!
+   subroutine initialize_basis()
+!
+      implicit none
+!
+      call initialize_basis_c()
+!
+   end subroutine initialize_basis
+!
    subroutine get_ao_L_xyzw(L, s1, s3)
 !
       implicit none

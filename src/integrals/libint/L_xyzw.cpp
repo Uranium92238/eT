@@ -17,10 +17,10 @@
 using namespace libint2;
 using namespace std;
 
-void get_ao_L_xyzw(double *L, int *s1, int *s3){
+BasisSet obs;
+Engine eri_engine;
 
-	const int sh1 = *s1 - 1;
-	const int sh3 = *s3 - 1; // C++ arrays start at index 0!
+void initialize_basis(){
 
 	initialize();
 
@@ -29,13 +29,48 @@ void get_ao_L_xyzw(double *L, int *s1, int *s3){
 	vector<Atom> atoms = read_dotxyz(input_file);
 
 	cout.setstate(ios_base::failbit);
-	BasisSet obs("cc-pVDZ", atoms);
+	BasisSet obsi("cc-pVDZ", atoms);
 	cout.clear();
+
+	obs = obsi;
+
+	finalize();
+
+}
+
+void initialize_coulomb(){
+
+	initialize();
+
+	Engine erii_engine(Operator::coulomb, obs.max_nprim(), obs.max_l());
+	eri_engine = erii_engine;
+
+	finalize();
+
+}
+
+void get_ao_L_xyzw(double *L, int *s1, int *s3){
+
+	const int sh1 = *s1 - 1;
+	const int sh3 = *s3 - 1; // C++ arrays start at index 0!
+
+	// initialize_basis();
+	// initialize_coulomb();
+
+	initialize();
+
+	// string xyzfilename = "Water.xyz"; // see XYZ format description at http://en.wikipedia.org/wiki/XYZ_file_format
+	// ifstream input_file(xyzfilename);
+	// vector<Atom> atoms = read_dotxyz(input_file);
+	//
+	// cout.setstate(ios_base::failbit);
+	// BasisSet obs("cc-pVDZ", atoms);
+	// cout.clear();
 
 	int num_aos = 0;
 	num_aos = obs.nbf();
 
-	Engine eri_engine(Operator::coulomb, obs.max_nprim(), obs.max_l());
+//	Engine eri_engine(Operator::coulomb, obs.max_nprim(), obs.max_l());
 
 	auto shell2bf = obs.shell2bf(); // maps shell index to basis function index
                                    // shell2bf[0] = index of the first basis function in shell 0
