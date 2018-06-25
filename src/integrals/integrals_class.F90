@@ -11,6 +11,7 @@ module integrals_class
    use s_xy
    use g_xyzw
    use L_xyzw
+   use libint_initialization
 !
 !  Disk & memory class modules
 !

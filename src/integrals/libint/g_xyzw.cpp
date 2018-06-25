@@ -14,6 +14,8 @@
 #include <vector>
 #include <ctime>
 
+#include "globals.h"
+
 using namespace libint2;
 using namespace std;
 
@@ -21,51 +23,41 @@ void get_ao_g_xyzw(double *g){
 
 	initialize();
 
-	string xyzfilename = "Water.xyz"; // see XYZ format description at http://en.wikipedia.org/wiki/XYZ_file_format
-	ifstream input_file(xyzfilename);
-	vector<Atom> atoms = read_dotxyz(input_file);
-
-	cout.setstate(ios_base::failbit);
-	BasisSet obs("cc-pVDZ", atoms);
-	cout.clear();
-
 	int num_aos = 0;
-	num_aos = obs.nbf();
+	num_aos = basis.nbf();
 
-	Engine eri_engine(Operator::coulomb, obs.max_nprim(), obs.max_l());
-
-	auto shell2bf = obs.shell2bf(); // maps shell index to basis function index
+	auto shell2bf = basis.shell2bf(); // maps shell index to basis function index
                                    // shell2bf[0] = index of the first basis function in shell 0
                                    // shell2bf[1] = index of the first basis function in shell 1
                                    // ...
 
-	const auto& buf_vec = eri_engine.results(); // will point to computed shell sets
+	const auto& buf_vec = electronic_repulsion.results(); // will point to computed shell sets
 
 	clock_t t;
 	double tacc;
 	tacc = 0;
 
-	for(auto s1=0; s1!=obs.size(); ++s1) {
+	for(auto s1=0; s1!=basis.size(); ++s1) {
 
 		auto bf1 = shell2bf[s1];  // First basis function in shell 1
-		auto n1 = obs[s1].size(); // Number of basis functions in shell 1
+		auto n1 = basis[s1].size(); // Number of basis functions in shell 1
 
-  		for(auto s2=0; s2!=obs.size(); ++s2) {
+  		for(auto s2=0; s2!=basis.size(); ++s2) {
 
 			auto bf2 = shell2bf[s2];  // First basis function in shell 2
-			auto n2 = obs[s2].size(); // Number of basis functions in shell 2
+			auto n2 = basis[s2].size(); // Number of basis functions in shell 2
 
-			for (auto s3=0; s3!=obs.size(); ++s3) {
+			for (auto s3=0; s3!=basis.size(); ++s3) {
 
 				auto bf3 = shell2bf[s3];  // First basis function in shell 3
-				auto n3 = obs[s3].size(); // Number of basis functions in shell 3
+				auto n3 = basis[s3].size(); // Number of basis functions in shell 3
 
-				for (auto s4=0; s4!=obs.size(); ++s4) {
+				for (auto s4=0; s4!=basis.size(); ++s4) {
 
 					auto bf4 = shell2bf[s4];  // First basis function in shell 4
-					auto n4 = obs[s4].size(); // Number of basis functions in shell 4
+					auto n4 = basis[s4].size(); // Number of basis functions in shell 4
 
-					eri_engine.compute(obs[s1], obs[s2], obs[s3], obs[s4]);
+					electronic_repulsion.compute(basis[s1], basis[s2], basis[s3], basis[s4]);
 
 					auto ints_1234 = buf_vec[0]; // Location of computed integrals
     				if (ints_1234 == nullptr)

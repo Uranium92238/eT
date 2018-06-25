@@ -4,7 +4,8 @@ extern "C" {
 #else
 #endif
 
-void get_ao_L_xyzw(double *L, int *s1, int *s3);
+void initialize_coulomb();
+void initialize_basis();
 
 #ifdef __cplusplus
 }
