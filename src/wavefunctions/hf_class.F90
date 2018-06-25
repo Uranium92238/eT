@@ -119,6 +119,8 @@ contains
 !     Determine the number of atomic orbitals and (standard) number
 !     of molecular orbitals
 !
+      call initialize_basis()
+!
       wf%n_ao = 0
       call get_n_aos(wf%n_ao)
 !
@@ -134,10 +136,11 @@ contains
       wf%n_shells = 0
       call get_n_shells(wf%n_shells)
 !
-      write(output%unit, *) 'Number of shells: ', wf%n_shells
+      write(output%unit, *) 'Number of shells: ', wf%n_shells, wf%n_ao
 !
-      call initialize_basis()
       call initialize_coulomb()
+      call initialize_kinetic()
+      call initialize_nuclear()
 !
    end subroutine initialize_hf
 !
@@ -464,7 +467,7 @@ contains
             call mem%alloc(L_xyzw, (A_intval%size)*(wf%n_ao), (C_intval%size)*(wf%n_ao))
             L_xyzw = zero
 !
-            call get_ao_L_xyzw(L_xyzw, A, C) ! This is veeery time-consuming... something with libint
+            call get_ao_L_xyzw(L_xyzw, A, C)
 !
             do x = 1, A_intval%size
                do y = 1, wf%n_ao

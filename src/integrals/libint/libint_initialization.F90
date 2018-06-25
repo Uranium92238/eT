@@ -15,6 +15,22 @@ contains
 !
    end subroutine initialize_coulomb
 !
+   subroutine initialize_kinetic()
+!
+      implicit none
+!
+      call initialize_kinetic_c()
+!
+   end subroutine initialize_kinetic
+!
+   subroutine initialize_nuclear()
+!
+      implicit none
+!
+      call initialize_nuclear_c()
+!
+   end subroutine initialize_nuclear
+!
    subroutine initialize_basis()
 !
       implicit none

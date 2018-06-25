@@ -16,7 +16,7 @@ interface
 !
       implicit none
 !
-      integer(c_int64_t) :: n_ao
+      integer(c_long) :: n_ao
 !
    end subroutine get_n_aos_c
 !

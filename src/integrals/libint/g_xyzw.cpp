@@ -9,6 +9,9 @@
 
 #include <libint2.hpp>
 #include <iostream>
+
+using namespace std;
+
 #include <fstream>
 #include <string>
 #include <vector>
@@ -17,7 +20,6 @@
 #include "globals.h"
 
 using namespace libint2;
-using namespace std;
 
 void get_ao_g_xyzw(double *g){
 

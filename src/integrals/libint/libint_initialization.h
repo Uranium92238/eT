@@ -6,6 +6,8 @@ extern "C" {
 
 void initialize_coulomb();
 void initialize_basis();
+void initialize_kinetic();
+void initialize_nuclear();
 
 #ifdef __cplusplus
 }
