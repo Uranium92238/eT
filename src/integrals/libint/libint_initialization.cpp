@@ -28,6 +28,9 @@ extern Engine kinetic;
 Engine nuclear;
 extern Engine nuclear;
 
+Engine overlap;
+extern Engine overlap;
+
 vector<Atom> atoms;
 extern vector<Atom> atoms;
 
@@ -78,6 +81,17 @@ void initialize_nuclear(){
 
 	Engine temporary(Operator::nuclear, basis.max_nprim(), basis.max_l());
 	nuclear = temporary;
+
+	finalize();
+
+}
+
+void initialize_overlap(){
+
+	initialize();
+
+	Engine temporary(Operator::overlap, basis.max_nprim(), basis.max_l());
+	overlap = temporary;
 
 	finalize();
 

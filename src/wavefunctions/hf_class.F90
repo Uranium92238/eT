@@ -141,6 +141,7 @@ contains
       call initialize_coulomb()
       call initialize_kinetic()
       call initialize_nuclear()
+      call initialize_overlap()
 !
    end subroutine initialize_hf
 !

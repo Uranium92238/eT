@@ -7,6 +7,14 @@ module libint_initialization
 !
 contains
 !
+   subroutine initialize_overlap()
+!
+      implicit none
+!
+      call initialize_overlap_c()
+!
+   end subroutine initialize_overlap
+!
    subroutine initialize_coulomb()
 !
       implicit none
