@@ -1,4 +1,4 @@
-module molecule_class
+module molecular_system_class
 !
 !!
 !!    Molecule class module
@@ -6,45 +6,45 @@ module molecule_class
 !!
 !
    use parameters
-   use atom_class
+   use atomic_class
    use io_utilities
    use atom_init
 !
    implicit none
 !
-   type :: molecule
+   type :: molecular_system
 !
       character(len=100) :: name
 !
       integer(i15) :: n_atoms
       integer(i15) :: charge
 !
-      type(atom), dimension(:,:), allocatable :: atoms
+      type(atomic), dimension(:,:), allocatable :: atoms
 !
    contains
 !
-      procedure :: initialize => initialize_molecule
-      procedure :: write      => write_molecule
+      procedure :: initialize => initialize_molecular_system
+      procedure :: write      => write_molecular_system
 !
-      procedure, private :: read_info     => read_info_molecule
-      procedure, private :: read_geometry => read_geometry_molecule
+      procedure, private :: read_info     => read_info_molecular_system
+      procedure, private :: read_geometry => read_geometry_molecular_system
 !
-      procedure :: get_nuclear_repulsion   => get_nuclear_repulsion_molecule
-      procedure :: get_n_electrons         => get_n_electrons_molecule
+      procedure :: get_nuclear_repulsion   => get_nuclear_repulsion_molecular_system
+      procedure :: get_n_electrons         => get_n_electrons_molecular_system
 !
-   end type molecule
+   end type molecular_system
 !
 contains
 !
 !
-   subroutine initialize_molecule(mol)
+   subroutine initialize_molecular_system(molecule)
 !!
 !!    Initialize
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(molecule) :: mol
+      class(molecular_system) :: molecule
 !
       integer(kind=4) :: i = 0, j = 0
 !
@@ -53,27 +53,27 @@ contains
       integer(kind=4), dimension(:,:), allocatable :: first_ao_in_shells
       integer(kind=4), dimension(:,:), allocatable :: shell_numbers
 !
-      call mol%read_info
+      call molecule%read_info
 !
-      allocate(mol%atoms(mol%n_atoms, 1))
+      allocate(molecule%atoms(molecule%n_atoms, 1))
 !
-      allocate(n_shells_on_atoms(mol%n_atoms,1))
+      allocate(n_shells_on_atoms(molecule%n_atoms,1))
       n_shells_on_atoms = 0
 !
-      call mol%read_geometry
+      call molecule%read_geometry
 !
       call get_n_shells_on_atoms(n_shells_on_atoms)
 !
-      do i = 1, mol%n_atoms ! Loop over atoms
+      do i = 1, molecule%n_atoms ! Loop over atoms
 !
 !        Set atomic number
 !
-         call mol%atoms(i, 1)%set_number()
+         call molecule%atoms(i, 1)%set_number()
 !
 !        Allocate and initialize the corresponding shells
 !
-         mol%atoms(i,1)%n_shells = n_shells_on_atoms(i,1)
-         allocate(mol%atoms(i,1)%shells(mol%atoms(i,1)%n_shells, 1))
+         molecule%atoms(i,1)%n_shells = n_shells_on_atoms(i,1)
+         allocate(molecule%atoms(i,1)%shells(molecule%atoms(i,1)%n_shells, 1))
 !
 !        Then determine the number of basis functions in each shell
 !
@@ -82,7 +82,7 @@ contains
 
          do j = 1, n_shells_on_atoms(i,1)
 
-            mol%atoms(i,1)%shells(j,1)%size = n_basis_in_shells(j,1)
+            molecule%atoms(i,1)%shells(j,1)%size = n_basis_in_shells(j,1)
 
          enddo
 
@@ -95,8 +95,8 @@ contains
 !
          do j = 1, n_shells_on_atoms(i,1)
 !
-            mol%atoms(i,1)%shells(j,1)%number = shell_numbers(j, 1)
-            write(output%unit, *) 'The ', j, 'th shell on atom ', i, ' has shell nr. ', mol%atoms(i,1)%shells(j,1)%number
+            molecule%atoms(i,1)%shells(j,1)%number = shell_numbers(j, 1)
+            write(output%unit, *) 'The ', j, 'th shell on atom ', i, ' has shell nr. ', molecule%atoms(i,1)%shells(j,1)%number
 !
          enddo
 !
@@ -109,7 +109,7 @@ contains
 !
          do j = 1, n_shells_on_atoms(i,1)
 
-            mol%atoms(i,1)%shells(j,1)%first = first_ao_in_shells(j,1)
+            molecule%atoms(i,1)%shells(j,1)%first = first_ao_in_shells(j,1)
 !
          enddo
 !
@@ -119,17 +119,17 @@ contains
 !
          do j = 1, n_shells_on_atoms(i,1)
 !
-            call mol%atoms(i,1)%shells(j,1)%determine_angular_momentum()
-            call mol%atoms(i,1)%shells(j,1)%determine_last_ao_index()
+            call molecule%atoms(i,1)%shells(j,1)%determine_angular_momentum()
+            call molecule%atoms(i,1)%shells(j,1)%determine_last_ao_index()
 !
          enddo
 !
       enddo
 !
-   end subroutine initialize_molecule
+   end subroutine initialize_molecular_system
 !
 !
-   subroutine read_info_molecule(mol)
+   subroutine read_info_molecular_system(molecule)
 !!
 !!    Read information
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -138,7 +138,7 @@ contains
 !!
       implicit none
 !
-      class(molecule) :: mol
+      class(molecular_system) :: molecule
 !
       character(len=100) :: line
       character(len=100) :: current_basis
@@ -149,7 +149,7 @@ contains
       call disk%open_file(input, 'read')
       rewind(input%unit)
 !
-      mol%n_atoms = 0
+      molecule%n_atoms = 0
 !
       read(input%unit,'(a)') line
       line = remove_preceding_blanks(line)
@@ -168,7 +168,7 @@ contains
                        line(1:6) .ne. 'Basis:'        .and.  &
                        line(1:6) .ne. 'BASIS:')
 
-               mol%n_atoms = mol%n_atoms + 1
+               molecule%n_atoms = molecule%n_atoms + 1
 
                read(input%unit,'(a)') line
                line = remove_preceding_blanks(line)
@@ -181,14 +181,14 @@ contains
                     line(1:5) == 'Name:' .or.  &
                     line(1:5) == 'NAME:' ) then
 
-               mol%name = trim(line(6:100))
-               mol%name = remove_preceding_blanks(mol%name)
+               molecule%name = trim(line(6:100))
+               molecule%name = remove_preceding_blanks(molecule%name)
 
             elseif (line(1:7) == 'charge:' .or.  &
                     line(1:7) == 'Charge:' .or.  &
                     line(1:7) == 'CHARGE:' ) then
 
-               read(line(8:100),*) mol%charge
+               read(line(8:100),*) molecule%charge
 
          endif
 
@@ -199,10 +199,10 @@ contains
 
       call disk%close_file(input)
 !
-   end subroutine read_info_molecule
+   end subroutine read_info_molecular_system
 !
 !
-   subroutine read_geometry_molecule(mol)
+   subroutine read_geometry_molecular_system(molecule)
 !!
 !!    Read
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -211,7 +211,7 @@ contains
 !!
       implicit none
 !
-      class(molecule) :: mol
+      class(molecular_system) :: molecule
 !
       character(len=100) :: line
       character(len=100) :: current_basis
@@ -249,8 +249,8 @@ contains
 !
                current_atom = current_atom + 1
 !
-               mol%atoms(current_atom, 1)%basis = current_basis
-               mol%atoms(current_atom, 1)%symbol = trim(line(1:2))
+               molecule%atoms(current_atom, 1)%basis = current_basis
+               molecule%atoms(current_atom, 1)%symbol = trim(line(1:2))
 !
                line = line(3:100)
                line = remove_preceding_blanks(line)
@@ -267,7 +267,7 @@ contains
                enddo
 !
                coordinate = line(1:cursor)
-               read(coordinate, '(f30.25)') mol%atoms(current_atom,1)%x
+               read(coordinate, '(f30.25)') molecule%atoms(current_atom,1)%x
 !
                cursor = cursor + 1
 !
@@ -286,14 +286,14 @@ contains
                enddo
 !
                coordinate = line(1:cursor)
-               read(coordinate, '(f30.25)') mol%atoms(current_atom,1)%y
+               read(coordinate, '(f30.25)') molecule%atoms(current_atom,1)%y
 !
                cursor = cursor + 1
 !
                coordinate = line(cursor:100)
                coordinate = remove_preceding_blanks(coordinate)
 !
-               read(coordinate, '(f30.25)') mol%atoms(current_atom,1)%z
+               read(coordinate, '(f30.25)') molecule%atoms(current_atom,1)%z
 !
               read(input%unit,'(a)') line
               line = remove_preceding_blanks(line)
@@ -311,10 +311,10 @@ contains
 
       call disk%close_file(input)
 !
-   end subroutine read_geometry_molecule
+   end subroutine read_geometry_molecular_system
 !
 !
-   subroutine write_molecule(mol)
+   subroutine write_molecular_system(molecule)
 !!
 !!    Write
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -324,33 +324,33 @@ contains
 !!
       implicit none
 !
-      class(molecule) :: mol
+      class(molecular_system) :: molecule
 !
       integer(i15) :: atom = 0
 !
       type(file) :: mol_file
 !
-      call mol_file%init(trim(mol%name) // '.xyz', 'sequential', 'formatted')
+      call mol_file%init(trim(molecule%name) // '.xyz', 'sequential', 'formatted')
       call disk%open_file(mol_file, 'write', 'rewind')
 !
-      write(mol_file%unit, '(i3/)') mol%n_atoms
+      write(mol_file%unit, '(i3/)') molecule%n_atoms
 !
-      do atom = 1, mol%n_atoms
+      do atom = 1, molecule%n_atoms
 !
          write(mol_file%unit, '(a3, 3x, f30.25, 3x, f30.25, 3x, f30.25)')  &
-                                 mol%atoms(atom, 1)%symbol,                &
-                                 mol%atoms(atom, 1)%x,                     &
-                                 mol%atoms(atom, 1)%y,                     &
-                                 mol%atoms(atom, 1)%z
+                                 molecule%atoms(atom, 1)%symbol,           &
+                                 molecule%atoms(atom, 1)%x,                &
+                                 molecule%atoms(atom, 1)%y,                &
+                                 molecule%atoms(atom, 1)%z
 !
       enddo
 !
       call disk%close_file(mol_file)
 !
-   end subroutine write_molecule
+   end subroutine write_molecular_system
 !
 !
-   function get_nuclear_repulsion_molecule(mol)
+   function get_nuclear_repulsion_molecular_system(molecule)
 !!
 !!    Get nuclear repulsion
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -361,22 +361,22 @@ contains
 !!
       implicit none
 !
-      class(molecule) :: mol
+      class(molecular_system) :: molecule
 !
-      real(dp) :: get_nuclear_repulsion_molecule
+      real(dp) :: get_nuclear_repulsion_molecular_system
 !
       integer(i15) :: i = 0, j = 0
 !
       real(dp) :: x_ij, y_ij, z_ij, r_ij
 !
-      get_nuclear_repulsion_molecule = zero
+      get_nuclear_repulsion_molecular_system = zero
 !
-      do i = 1, mol%n_atoms
-         do j = i + 1, mol%n_atoms
+      do i = 1, molecule%n_atoms
+         do j = i + 1, molecule%n_atoms
 !
-            x_ij = mol%atoms(i, 1)%x - mol%atoms(j, 1)%x
-            y_ij = mol%atoms(i, 1)%y - mol%atoms(j, 1)%y
-            z_ij = mol%atoms(i, 1)%z - mol%atoms(j, 1)%z
+            x_ij = molecule%atoms(i, 1)%x - molecule%atoms(j, 1)%x
+            y_ij = molecule%atoms(i, 1)%y - molecule%atoms(j, 1)%y
+            z_ij = molecule%atoms(i, 1)%z - molecule%atoms(j, 1)%z
 !
             r_ij = sqrt(x_ij**2 + y_ij**2 + z_ij**2)
 !
@@ -389,16 +389,16 @@ contains
 !
             endif
 !
-            get_nuclear_repulsion_molecule = get_nuclear_repulsion_molecule &
-                  + ((mol%atoms(i, 1)%number)*(mol%atoms(j, 1)%number))/r_ij
+            get_nuclear_repulsion_molecular_system = get_nuclear_repulsion_molecular_system &
+                  + ((molecule%atoms(i, 1)%number)*(molecule%atoms(j, 1)%number))/r_ij
 !
          enddo
       enddo
 !
-  end function get_nuclear_repulsion_molecule
+  end function get_nuclear_repulsion_molecular_system
 !
 !
-   function get_n_electrons_molecule(mol)
+   function get_n_electrons_molecular_system(molecule)
 !!
 !!    Get number of electrons
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -407,23 +407,23 @@ contains
 !!
       implicit none
 !
-      class(molecule) :: mol
+      class(molecular_system) :: molecule
 !
-      integer(i15) :: get_n_electrons_molecule
+      integer(i15) :: get_n_electrons_molecular_system
 !
       integer(i15) :: i = 0
 !
-      get_n_electrons_molecule = 0
+      get_n_electrons_molecular_system = 0
 !
-      do i = 1, mol%n_atoms
+      do i = 1, molecule%n_atoms
 !
-         get_n_electrons_molecule = get_n_electrons_molecule + mol%atoms(i,1)%number
+         get_n_electrons_molecular_system = get_n_electrons_molecular_system + molecule%atoms(i,1)%number
 !
       enddo
 !
-      get_n_electrons_molecule = get_n_electrons_molecule - mol%charge
+      get_n_electrons_molecular_system = get_n_electrons_molecular_system - molecule%charge
 !
-  end function get_n_electrons_molecule
+  end function get_n_electrons_molecular_system
 !
 !
-end module molecule_class
+end module molecular_system_class

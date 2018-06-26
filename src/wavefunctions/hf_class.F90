@@ -7,12 +7,12 @@ module hf_class
 !
    use kinds
    use file_class
-   use atom_class
+   use atomic_class
    use reordering
    use interval_class
    use index
    use integrals_class
-   use molecule_class
+   use molecular_system_class
    use disk_manager_class
 !
    implicit none
@@ -40,7 +40,7 @@ module hf_class
 !
       real(dp), dimension(:,:), allocatable :: g_wxyz
 !
-      type(molecule)  :: molecule
+      type(molecular_system) :: molecule
       type(integrals) :: integrals
 !
 	contains

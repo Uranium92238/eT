@@ -34,5 +34,4 @@ program eT_program
 !
    call disk%close_file(output)
 !
-!
 end program eT_program

@@ -17,6 +17,7 @@ module integral_manager_class
 !
    use file_class
    use memory_manager_class
+   use molecular_system_class
 !
    implicit none
 !

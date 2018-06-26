@@ -1,4 +1,4 @@
-module atom_class
+module atomic_class
 !
 !!
 !!    Atom class module
@@ -12,7 +12,7 @@ module atom_class
 !
    implicit none
 !
-   type :: atom
+   type :: atomic
 !
       character(len=2) :: symbol
       integer(i15)     :: number
@@ -31,12 +31,12 @@ module atom_class
       procedure          :: set_number      => set_number_atom
       procedure, private :: symbol_2_number => symbol_2_number_atom
 !
-   end type atom
+   end type atomic
 !
 contains
 !
 !
-   subroutine set_number_atom(a)
+   subroutine set_number_atom(atom)
 !!
 !!    Set number
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
@@ -45,14 +45,14 @@ contains
 !!
       implicit none
 !
-      class(atom) :: a
+      class(atomic) :: atom
 !
-      call a%symbol_2_number()
+      call atom%symbol_2_number()
 !
    end subroutine set_number_atom
 !
 !
-   subroutine symbol_2_number_atom(a)
+   subroutine symbol_2_number_atom(atom)
 !!
 !!    Symbol to number
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
@@ -64,23 +64,23 @@ contains
 !
       implicit none
 !
-      class(atom) :: a
+      class(atomic) :: atom
 !
       integer(i15) :: i = 0
 !
-      a%number = 0
+      atom%number = 0
 !
       do i = 1, size_periodic_table
-         if (atomic_symbol(i) == a%symbol) then
+         if (atomic_symbol(i) == atom%symbol) then
 !
-            a%number = i
+            atom%number = i
 !
             return
 !
          endif
       enddo
 !
-      if (a%number == 0) then
+      if (atom%number == 0) then
 !
          write(output%unit,'(/t3,a)') 'Error: illegal atomic symbol, check the eT.inp file '
          stop
@@ -90,4 +90,4 @@ contains
    end subroutine symbol_2_number_atom
 !
 !
-end module atom_class
+end module atomic_class
