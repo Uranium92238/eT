@@ -7,8 +7,8 @@ set(eT_fortran_sources
    src/integrals/integrals_class.F90
    src/integrals/libint/h_xy.F90
    src/integrals/libint/s_xy.F90
-   src/integrals/libint/g_xyzw.F90
-   src/integrals/libint/L_xyzw.F90
+   src/integrals/libint/g_wxyz.F90
+   src/integrals/libint/L_wxyz.F90
    src/integrals/libint/libint_initialization.F90
    src/memory/batching_index_class.F90
    src/memory/memory_manager_class.F90
