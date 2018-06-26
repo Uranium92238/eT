@@ -22,7 +22,6 @@ contains
       write(output%unit,*) ' Hei hei! '
 !
    end subroutine cholesky_decompose_integral_manager
-
 !
 !
 end submodule cholesky
