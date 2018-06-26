@@ -30,6 +30,7 @@ module integral_manager_class
    contains
 !
       procedure :: cholesky_decompose => cholesky_decompose_integral_manager
+      procedure :: construct_two_electron_diagonal => construct_two_electron_diagonal_integral_manager
 !
       procedure :: get_ao_h_xy   => get_ao_h_xy_integral_manager   ! h_αβ
       procedure :: get_ao_s_xy   => get_ao_s_xy_integral_manager   ! s_αβ

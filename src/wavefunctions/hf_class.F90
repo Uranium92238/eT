@@ -24,8 +24,6 @@ module hf_class
       integer(i15) :: n_ao
       integer(i15) :: n_mo
 !
-      integer(i15) :: n_shells
-!
       integer(i15) :: n_o
       integer(i15) :: n_v
 !
@@ -69,8 +67,6 @@ module hf_class
       procedure :: get_ao_density      => get_ao_density_hf
       procedure :: get_n_hf_parameters => get_n_hf_parameters_hf
       procedure :: get_n_hf_equations  => get_n_hf_equations_hf
-      procedure :: get_n_shells        => get_n_shells_hf
-      procedure :: get_shell_limits    => get_shell_limits_hf
 !
       procedure :: set_ao_density      => set_ao_density_hf
 !
@@ -131,13 +127,6 @@ contains
       wf%n_o = (wf%molecule%get_n_electrons())/2
       wf%n_v = wf%n_mo - wf%n_o
 !
-!     Determine the number of shells
-!
-      wf%n_shells = 0
-      call get_n_shells(wf%n_shells)
-!
-      write(output%unit, *) 'Number of shells: ', wf%n_shells, wf%n_ao
-!
       call initialize_coulomb()
       call initialize_kinetic()
       call initialize_nuclear()
@@ -156,28 +145,6 @@ contains
       class(hf) :: wf
 !
    end subroutine finalize_hf
-!
-!
-   integer(i15) function get_n_shells_hf(wf)
-!!
-!!    Get number of shells
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      integer(i15) :: I = 0
-!
-      get_n_shells_hf = 0
-!
-      do I = 1, wf%molecule%n_atoms
-!
-         get_n_shells_hf = get_n_shells_hf + wf%molecule%atoms(I,1)%n_shells
-!
-      enddo
-!
-   end function get_n_shells_hf
 !
 !
    subroutine initialize_ao_density_hf(wf)
@@ -386,38 +353,6 @@ contains
    end subroutine construct_ao_density_hf
 !
 !
-   type(interval) function get_shell_limits_hf(wf, A)
-!!
-!!    Get shell limits
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      integer(kind=4) :: A
-!
-      integer(kind=4) :: I, J
-!
-      do I = 1, wf%molecule%n_atoms
-!
-         do J = 1, wf%molecule%atoms(I,1)%n_shells
-!
-            if (A .eq. wf%molecule%atoms(I,1)%shells(J,1)%number) then
-!
-               get_shell_limits_hf%first = wf%molecule%atoms(I,1)%shells(J,1)%first
-               get_shell_limits_hf%last  = wf%molecule%atoms(I,1)%shells(J,1)%last
-               get_shell_limits_hf%size  = wf%molecule%atoms(I,1)%shells(J,1)%size
-!
-            endif
-!
-         enddo
-!
-      enddo
-!
-   end function get_shell_limits_hf
-!
-!
    subroutine construct_ao_fock_hf(wf)
 !!
 !!    Construct AO Fock matrix
@@ -453,17 +388,17 @@ contains
 !
 !     Loop over shells A and C, calculating L_ABCD = 2*g_ABCD - g_ADCB
 !
-      n_shells = wf%get_n_shells()
+      n_shells = wf%molecule%get_n_shells()
 !
       call cpu_time(t0)
 !
       do A = 1, n_shells
 !
-         A_intval = wf%get_shell_limits(A)
+         A_intval = wf%molecule%get_shell_limits(A)
 !
          do C = 1, n_shells
 !
-            C_intval = wf%get_shell_limits(C)
+            C_intval = wf%molecule%get_shell_limits(C)
 !
             call mem%alloc(L_wxyz, (A_intval%size)*(wf%n_ao), (C_intval%size)*(wf%n_ao))
             L_wxyz = zero
