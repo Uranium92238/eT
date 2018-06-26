@@ -4,7 +4,7 @@ extern "C" {
 #else
 #endif
 
-void get_ao_g_wxyz(double *g);
+void get_ao_g_wxyz(double *g, long s1, long s2, long s3, long s4);
 
 #ifdef __cplusplus
 }

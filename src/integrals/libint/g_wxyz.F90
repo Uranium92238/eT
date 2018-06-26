@@ -7,13 +7,15 @@ module g_wxyz
 !
 contains
 !
-   subroutine get_ao_g_wxyz(g)
+   subroutine get_ao_g_wxyz(g, s1, s2, s3, s4)
 !
       implicit none
 !
       real(kind=8), dimension(1,1) :: g
 !
-      call get_ao_g_wxyz_c(g)
+      integer(kind=8) :: s1, s2, s3, s4
+!
+      call get_ao_g_wxyz_c(g, s1, s2, s3, s4)
 !
    end subroutine get_ao_g_wxyz
 !
