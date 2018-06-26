@@ -11,7 +11,7 @@ module hf_class
    use reordering
    use interval_class
    use index
-   use integrals_class
+   use integral_manager_class
    use molecular_system_class
    use disk_manager_class
 !
@@ -41,7 +41,7 @@ module hf_class
       real(dp), dimension(:,:), allocatable :: g_wxyz
 !
       type(molecular_system) :: molecule
-      type(integrals) :: integrals
+      type(integral_manager) :: integrals
 !
 	contains
 !
@@ -222,7 +222,7 @@ contains
       call mem%alloc(wf%g_wxyz, (wf%n_ao)**2, (wf%n_ao)**2)
       wf%g_wxyz = zero
 !
-      call get_ao_g_wxyz(wf%g_wxyz)
+   !   call get_ao_g_wxyz(wf%g_wxyz)
 !
    end subroutine initialize_g_wxyz_hf
 !

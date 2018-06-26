@@ -5,6 +5,7 @@ set(eT_fortran_sources
    src/io/file_class.F90
    src/io/io_utilities.F90
    src/integrals/integral_manager_class.F90
+   src/integrals/submodules/cholesky_submodule.F90
    src/integrals/libint/h_xy.F90
    src/integrals/libint/s_xy.F90
    src/integrals/libint/g_wxyz.F90

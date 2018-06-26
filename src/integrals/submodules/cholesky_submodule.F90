@@ -9,13 +9,19 @@ submodule (integral_manager_class) cholesky
 contains
 !
 !
-   module subroutine cholesky_decompose(integral, molecule)
+   module subroutine cholesky_decompose_integral_manager(integral, molecule)
+!!
 !!
 !!
 !!
       implicit none
 !
-   end subroutine cholesky_decompose
+      class(integral_manager) :: integral
+      class(molecular_system) :: molecule
+!
+      write(output%unit,*) ' Hei hei! '
+!
+   end subroutine cholesky_decompose_integral_manager
 
 !
 !

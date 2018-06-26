@@ -29,11 +29,27 @@ module integral_manager_class
 !
    contains
 !
+      procedure :: cholesky_decompose => cholesky_decompose_integral_manager
+!
       procedure :: get_ao_h_xy   => get_ao_h_xy_integral_manager   ! h_αβ
       procedure :: get_ao_s_xy   => get_ao_s_xy_integral_manager   ! s_αβ
       procedure :: get_ao_g_wxyz => get_ao_g_wxyz_integral_manager ! g_αβγδ
 !
    end type integral_manager
+!
+!
+   interface
+!
+      module subroutine cholesky_decompose_integral_manager(integral, molecule)
+!
+         implicit none
+!
+         class(integral_manager) :: integral
+         class(molecular_system) :: molecule
+!
+      end subroutine cholesky_decompose_integral_manager
+!
+   end interface
 !
 !
 contains
