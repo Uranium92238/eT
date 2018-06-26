@@ -22,13 +22,26 @@ extern BasisSet basis;
 Engine electronic_repulsion;
 extern Engine electronic_repulsion;
 
+Engine kinetic;
+extern Engine kinetic;
+
+Engine nuclear;
+extern Engine nuclear;
+
+Engine overlap;
+extern Engine overlap;
+
+vector<Atom> atoms;
+extern vector<Atom> atoms;
+
 void initialize_basis(){
 
 	initialize();
 
 	string xyzfilename = "Water.xyz"; // see XYZ format description at http://en.wikipedia.org/wiki/XYZ_file_format
 	ifstream input_file(xyzfilename);
-	vector<Atom> atoms = read_dotxyz(input_file);
+	vector<Atom> temporary_atoms = read_dotxyz(input_file);
+	atoms = temporary_atoms;
 
 	cout.setstate(ios_base::failbit);
 	BasisSet temporary("cc-pVDZ", atoms);
@@ -46,6 +59,39 @@ void initialize_coulomb(){
 
 	Engine temporary(Operator::coulomb, basis.max_nprim(), basis.max_l());
 	electronic_repulsion = temporary;
+
+	finalize();
+
+}
+
+void initialize_kinetic(){
+
+	initialize();
+
+	Engine temporary(Operator::kinetic, basis.max_nprim(), basis.max_l());
+	kinetic = temporary;
+
+	finalize();
+
+}
+
+void initialize_nuclear(){
+
+	initialize();
+
+	Engine temporary(Operator::nuclear, basis.max_nprim(), basis.max_l());
+	nuclear = temporary;
+
+	finalize();
+
+}
+
+void initialize_overlap(){
+
+	initialize();
+
+	Engine temporary(Operator::overlap, basis.max_nprim(), basis.max_l());
+	overlap = temporary;
 
 	finalize();
 

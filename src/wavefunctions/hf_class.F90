@@ -119,6 +119,8 @@ contains
 !     Determine the number of atomic orbitals and (standard) number
 !     of molecular orbitals
 !
+      call initialize_basis()
+!
       wf%n_ao = 0
       call get_n_aos(wf%n_ao)
 !
@@ -134,10 +136,12 @@ contains
       wf%n_shells = 0
       call get_n_shells(wf%n_shells)
 !
-      write(output%unit, *) 'Number of shells: ', wf%n_shells
+      write(output%unit, *) 'Number of shells: ', wf%n_shells, wf%n_ao
 !
-      call initialize_basis()
       call initialize_coulomb()
+      call initialize_kinetic()
+      call initialize_nuclear()
+      call initialize_overlap()
 !
    end subroutine initialize_hf
 !

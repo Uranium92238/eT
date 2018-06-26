@@ -6,6 +6,9 @@ extern "C" {
 
 void initialize_coulomb();
 void initialize_basis();
+void initialize_kinetic();
+void initialize_nuclear();
+void initialize_overlap();
 
 #ifdef __cplusplus
 }
