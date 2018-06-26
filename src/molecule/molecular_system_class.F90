@@ -8,6 +8,7 @@ module molecular_system_class
    use parameters
    use atomic_class
    use io_utilities
+   use interval_class
    use atom_init
 !
    implicit none
@@ -29,8 +30,11 @@ module molecular_system_class
       procedure, private :: read_info     => read_info_molecular_system
       procedure, private :: read_geometry => read_geometry_molecular_system
 !
-      procedure :: get_nuclear_repulsion   => get_nuclear_repulsion_molecular_system
-      procedure :: get_n_electrons         => get_n_electrons_molecular_system
+      procedure :: get_nuclear_repulsion => get_nuclear_repulsion_molecular_system
+      procedure :: get_n_electrons       => get_n_electrons_molecular_system
+!
+      procedure :: get_n_shells => get_n_shells_molecular_system
+      procedure :: get_shell_limits => get_shell_limits_molecular_system
 !
    end type molecular_system
 !
@@ -424,6 +428,60 @@ contains
       get_n_electrons_molecular_system = get_n_electrons_molecular_system - molecule%charge
 !
   end function get_n_electrons_molecular_system
+!
+!
+   integer(i15) function get_n_shells_molecular_system(molecule)
+!!
+!!    Get number of shells
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(molecular_system) :: molecule
+!
+      integer(i15) :: I = 0
+!
+      get_n_shells_molecular_system = 0
+!
+      do I = 1, molecule%n_atoms
+!
+         get_n_shells_molecular_system = get_n_shells_molecular_system + molecule%atoms(I,1)%n_shells
+!
+      enddo
+!
+   end function get_n_shells_molecular_system
+!
+!
+   type(interval) function get_shell_limits_molecular_system(molecule, A)
+!!
+!!    Get shell limits
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(molecular_system) :: molecule
+!
+      integer(kind=4) :: A
+!
+      integer(kind=4) :: I, J
+!
+      do I = 1, molecule%n_atoms
+!
+         do J = 1, molecule%atoms(I,1)%n_shells
+!
+            if (A .eq. molecule%atoms(I,1)%shells(J,1)%number) then
+!
+               get_shell_limits_molecular_system%first = molecule%atoms(I,1)%shells(J,1)%first
+               get_shell_limits_molecular_system%last  = molecule%atoms(I,1)%shells(J,1)%last
+               get_shell_limits_molecular_system%size  = molecule%atoms(I,1)%shells(J,1)%size
+!
+            endif
+!
+         enddo
+!
+      enddo
+!
+   end function get_shell_limits_molecular_system
 !
 !
 end module molecular_system_class
