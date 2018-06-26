@@ -38,7 +38,7 @@ module hf_class
       real(dp), dimension(:,:), allocatable :: mo_coefficients
       real(dp), dimension(:,:), allocatable :: orbital_energies
 !
-      real(dp), dimension(:,:), allocatable :: g_xyzw
+      real(dp), dimension(:,:), allocatable :: g_wxyz
 !
       type(molecule)  :: molecule
       type(integrals) :: integrals
@@ -81,14 +81,14 @@ module hf_class
       procedure :: initialize_mo_coefficients  => initialize_mo_coefficients_hf
       procedure :: initialize_ao_overlap       => initialize_ao_overlap_hf
       procedure :: initialize_orbital_energies => initialize_orbital_energies_hf
-      procedure :: initialize_g_xyzw           => initialize_g_xyzw_hf
+      procedure :: initialize_g_wxyz           => initialize_g_wxyz_hf
 !
       procedure :: destruct_ao_density       => destruct_ao_density_hf
       procedure :: destruct_ao_fock          => destruct_ao_fock_hf
       procedure :: destruct_mo_coefficients  => destruct_mo_coefficients_hf
       procedure :: destruct_ao_overlap       => destruct_ao_overlap_hf
       procedure :: destruct_orbital_energies => destruct_orbital_energies_hf
-      procedure :: destruct_g_xyzw           => destruct_g_xyzw_hf
+      procedure :: destruct_g_wxyz           => destruct_g_wxyz_hf
 !
    end type hf
 !
@@ -200,41 +200,41 @@ contains
 !
       class(hf) :: wf
 !
-      call mem%alloc(wf%orbital_energies, wf%n_ao, 1)
+      call mem%alloc(wf%orbital_energies, wf%n_mo, 1)
       wf%orbital_energies = zero
 !
    end subroutine initialize_orbital_energies_hf
 !
 !
-   subroutine initialize_g_xyzw_hf(wf)
+   subroutine initialize_g_wxyz_hf(wf)
 !!
-!!    Initialize g_xyzw
+!!    Initialize g_wxyz
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
       class(hf) :: wf
 !
-      call mem%alloc(wf%g_xyzw, (wf%n_ao)**2, (wf%n_ao)**2)
-      wf%g_xyzw = zero
+      call mem%alloc(wf%g_wxyz, (wf%n_ao)**2, (wf%n_ao)**2)
+      wf%g_wxyz = zero
 !
-      call get_ao_g_xyzw(wf%g_xyzw)
+      call get_ao_g_wxyz(wf%g_wxyz)
 !
-   end subroutine initialize_g_xyzw_hf
+   end subroutine initialize_g_wxyz_hf
 !
 !
-   subroutine destruct_g_xyzw_hf(wf)
+   subroutine destruct_g_wxyz_hf(wf)
 !!
-!!    Initialize g_xyzw
+!!    Initialize g_wxyz
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
       class(hf) :: wf
 !
-      call mem%dealloc(wf%g_xyzw, (wf%n_ao)**2, (wf%n_ao)**2)
+      call mem%dealloc(wf%g_wxyz, (wf%n_ao)**2, (wf%n_ao)**2)
 !
-   end subroutine destruct_g_xyzw_hf
+   end subroutine destruct_g_wxyz_hf
 !
 !
    subroutine initialize_ao_fock_hf(wf)
@@ -261,7 +261,7 @@ contains
 !
       class(hf) :: wf
 !
-      call mem%alloc(wf%mo_coefficients, wf%n_ao, wf%n_ao)
+      call mem%alloc(wf%mo_coefficients, wf%n_ao, wf%n_mo)
       wf%mo_coefficients = zero
 !
    end subroutine initialize_mo_coefficients_hf
@@ -305,7 +305,7 @@ contains
 !
       class(hf) :: wf
 !
-      call mem%dealloc(wf%orbital_energies, wf%n_ao, 1)
+      call mem%dealloc(wf%orbital_energies, wf%n_mo, 1)
 !
    end subroutine destruct_orbital_energies_hf
 !
@@ -347,7 +347,7 @@ contains
 !
       class(hf) :: wf
 !
-      call mem%dealloc(wf%mo_coefficients, wf%n_ao, wf%n_ao)
+      call mem%dealloc(wf%mo_coefficients, wf%n_ao, wf%n_mo)
 !
    end subroutine destruct_mo_coefficients_hf
 !
@@ -430,7 +430,7 @@ contains
       class(hf) :: wf
 !
       real(dp), dimension(:,:), allocatable :: g_xwzy
-      real(dp), dimension(:,:), allocatable :: L_xyzw
+      real(dp), dimension(:,:), allocatable :: L_wxyz
 !
       integer(i15) :: n_shells = 0
       integer(kind=4) :: A = 0, C = 0
@@ -461,10 +461,10 @@ contains
 !
             C_intval = wf%get_shell_limits(C)
 !
-            call mem%alloc(L_xyzw, (A_intval%size)*(wf%n_ao), (C_intval%size)*(wf%n_ao))
-            L_xyzw = zero
+            call mem%alloc(L_wxyz, (A_intval%size)*(wf%n_ao), (C_intval%size)*(wf%n_ao))
+            L_wxyz = zero
 !
-            call get_ao_L_xyzw(L_xyzw, A, C) ! This is veeery time-consuming... something with libint
+            call get_ao_L_wxyz(L_wxyz, A, C)
 !
             do x = 1, A_intval%size
                do y = 1, wf%n_ao
@@ -475,54 +475,17 @@ contains
                         zw = index_two(z, w, C_intval%size)
 !
                         wf%ao_fock(x + A_intval%first - 1, y) = wf%ao_fock(x + A_intval%first - 1, y) + &
-                                                   half*(wf%ao_density(z + C_intval%first - 1, w))*L_xyzw(xy, zw)
+                                                   half*(wf%ao_density(z + C_intval%first - 1, w))*L_wxyz(xy, zw)
 !
                      enddo
                   enddo
                enddo
             enddo
 !
-            call mem%dealloc(L_xyzw, (A_intval%size)*(wf%n_ao), (C_intval%size)*(wf%n_ao))
+            call mem%dealloc(L_wxyz, (A_intval%size)*(wf%n_ao), (C_intval%size)*(wf%n_ao))
 !
          enddo
       enddo
-!
-!     F_αβ =+ sum_γδ g_αβγδ D_γδ
-!
-      ! call dgemm('N', 'N',       &
-      !             (wf%n_ao)**2,  &
-      !             1,             &
-      !             (wf%n_ao)**2,  &
-      !             one,           &
-      !             wf%g_xyzw,     & ! g_αβ_γδ
-      !             (wf%n_ao)**2,  &
-      !             wf%ao_density, & ! D_γδ
-      !             (wf%n_ao)**2,  &
-      !             one,           &
-      !             wf%ao_fock,    & ! F_αβ
-      !             (wf%n_ao)**2)
-! !
-!       call mem%alloc(g_xwzy, (wf%n_ao)**2, (wf%n_ao)**2)
-!       g_xwzy = zero
-! !
-! !     F_αβ =+ (-1/2)*sum_γδ g_αδγβ D_γδ
-! !
-!       call sort_1234_to_1432(wf%g_xyzw, g_xwzy, wf%n_ao, wf%n_ao, wf%n_ao, wf%n_ao)
-! !
-!       call dgemm('N', 'N',       &
-!                   (wf%n_ao)**2,  &
-!                   1,             &
-!                   (wf%n_ao)**2,  &
-!                   -half,         &
-!                   g_xwzy,        & ! g_αβ_γδ = g_αδγβ
-!                   (wf%n_ao)**2,  &
-!                   wf%ao_density, & ! D_γδ
-!                   (wf%n_ao)**2,  &
-!                   one,           &
-!                   wf%ao_fock,    & ! F_αβ
-!                   (wf%n_ao)**2)
-! !
-!       call mem%dealloc(g_xwzy, (wf%n_ao)**2, (wf%n_ao)**2)
 !
    end subroutine construct_ao_fock_hf
 !
@@ -550,64 +513,64 @@ contains
 !
       real(dp) :: ddot
 !
-      real(dp), dimension(:,:), allocatable :: GD_xy
+      real(dp), dimension(:,:), allocatable :: GD_wx
 !
-      real(dp), dimension(:,:), allocatable :: h_xy
-      real(dp), dimension(:,:), allocatable :: g_xwzy
+      real(dp), dimension(:,:), allocatable :: h_wx
+      real(dp), dimension(:,:), allocatable :: g_wyzx
 !
 !     Construct G(D)
 !
 !     G(D)_αβ = 2 sum_γδ g_αβγδ D_γδ
 !
-      call mem%alloc(GD_xy, wf%n_ao, wf%n_ao)
+      call mem%alloc(GD_wx, wf%n_ao, wf%n_ao)
 !
       call dgemm('N', 'N',       &
                   (wf%n_ao)**2,  &
                   1,             &
                   (wf%n_ao)**2,  &
                   two,           &
-                  wf%g_xyzw,     & ! g_αβ_γδ
+                  wf%g_wxyz,     & ! g_αβ_γδ
                   (wf%n_ao)**2,  &
                   wf%ao_density, & ! D_γδ
                   (wf%n_ao)**2,  &
                   zero,          &
-                  GD_xy,         & ! G(D)_αβ
+                  GD_wx,         & ! G(D)_αβ
                   (wf%n_ao)**2)
 !
 !     G(D)_αβ =+ (-1) sum_γδ g_αδγβ D_γδ
 !
-      call mem%alloc(g_xwzy, (wf%n_ao)**2, (wf%n_ao)**2)
-      g_xwzy = zero
+      call mem%alloc(g_wyzx, (wf%n_ao)**2, (wf%n_ao)**2)
+      g_wyzx = zero
 !
-      call sort_1234_to_1432(wf%g_xyzw, g_xwzy, wf%n_ao, wf%n_ao, wf%n_ao, wf%n_ao)
+      call sort_1234_to_1432(wf%g_wxyz, g_wyzx, wf%n_ao, wf%n_ao, wf%n_ao, wf%n_ao)
 !
       call dgemm('N', 'N',       &
                   (wf%n_ao)**2,  &
                   1,             &
                   (wf%n_ao)**2,  &
                   -one,          &
-                  g_xwzy,        & ! g_αβ_γδ = g_αδγβ
+                  g_wyzx,        & ! g_αβ_γδ = g_αδγβ
                   (wf%n_ao)**2,  &
                   wf%ao_density, & ! D_γδ
                   (wf%n_ao)**2,  &
                   one,           &
-                  GD_xy,         & ! G(D)_αβ
+                  GD_wx,         & ! G(D)_αβ
                   (wf%n_ao)**2)
 !
-      call mem%dealloc(g_xwzy, (wf%n_ao)**2, (wf%n_ao)**2)
+      call mem%dealloc(g_wyzx, (wf%n_ao)**2, (wf%n_ao)**2)
 !
-      call mem%alloc(h_xy, wf%n_ao, wf%n_ao)
-      h_xy = zero
+      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
+      h_wx = zero
 !
-      call get_ao_h_xy(h_xy)
+      call get_ao_h_xy(h_wx)
 !
       wf%hf_energy = wf%molecule%get_nuclear_repulsion()
 !
-      wf%hf_energy = wf%hf_energy + ddot((wf%n_ao)**2, h_xy, 1, wf%ao_density, 1)
-      wf%hf_energy = wf%hf_energy + (one/four)*ddot((wf%n_ao)**2, wf%ao_density, 1, GD_xy, 1)
+      wf%hf_energy = wf%hf_energy + ddot((wf%n_ao)**2, h_wx, 1, wf%ao_density, 1)
+      wf%hf_energy = wf%hf_energy + (one/four)*ddot((wf%n_ao)**2, wf%ao_density, 1, GD_wx, 1)
 !
-      call mem%dealloc(h_xy, wf%n_ao, wf%n_ao)
-      call mem%dealloc(GD_xy, wf%n_ao, wf%n_ao)
+      call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
+      call mem%dealloc(GD_wx, wf%n_ao, wf%n_ao)
 !
    end subroutine calculate_hf_energy_hf
 !

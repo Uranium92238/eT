@@ -4,17 +4,20 @@
 / 	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 /
 */
-#include "utils.h"
-#include "h_xy.h"
 
-#include <libint2.hpp>
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
 
-using namespace libint2;
+#include <libint2.hpp>
+
+#include "utils.h"
+#include "h_xy.h"
+
+
 using namespace std;
+using namespace libint2;
 
 void get_n_aos(int *n_ao){
 //

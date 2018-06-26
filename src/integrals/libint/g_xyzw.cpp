@@ -4,20 +4,21 @@
 / 	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 /
 */
-#include "utils.h"
-#include "g_xyzw.h"
-
-#include <libint2.hpp>
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
 #include <ctime>
 
+#include "utils.h"
+#include "g_xyzw.h"
+
+#include <libint2.hpp>
+
 #include "globals.h"
 
-using namespace libint2;
 using namespace std;
+using namespace libint2;
 
 void get_ao_g_xyzw(double *g){
 

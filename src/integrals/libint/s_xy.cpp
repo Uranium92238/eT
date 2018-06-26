@@ -4,17 +4,17 @@
 / 	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 /
 */
-#include "utils.h"
-#include "s_xy.h"
-
-#include <libint2.hpp>
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
+#include "utils.h"
+#include "s_xy.h"
 
-using namespace libint2;
+#include <libint2.hpp>
+
 using namespace std;
+using namespace libint2;
 
 void get_n_shells(int *ns){
 

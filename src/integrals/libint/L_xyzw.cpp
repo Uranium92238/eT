@@ -4,10 +4,6 @@
 / 	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 /
 */
-#include "utils.h"
-#include "L_xyzw.h"
-
-#include <libint2.hpp>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -16,8 +12,13 @@
 
 #include "globals.h"
 
-using namespace libint2;
+#include "utils.h"
+#include "L_xyzw.h"
+
+#include <libint2.hpp>
+
 using namespace std;
+using namespace libint2;
 
 // extern BasisSet basis;
 // extern Engine electronic_repulsion;
