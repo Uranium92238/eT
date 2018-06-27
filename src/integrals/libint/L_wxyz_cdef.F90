@@ -5,8 +5,8 @@ interface
       use iso_c_binding
       implicit none
 !
-      integer(c_int) :: s1
-      integer(c_int) :: s3
+      integer(c_long) :: s1
+      integer(c_long) :: s3
 !
       real(c_double), dimension(1,1) :: L
 !

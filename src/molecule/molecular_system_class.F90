@@ -10,6 +10,7 @@ module molecular_system_class
    use io_utilities
    use interval_class
    use atom_init
+   use libint_initialization
 !
    implicit none
 !
@@ -35,6 +36,7 @@ module molecular_system_class
 !
       procedure :: get_n_shells => get_n_shells_molecular_system
       procedure :: get_shell_limits => get_shell_limits_molecular_system
+      procedure :: basis2shell => basis2shell_molecular_system
 !
    end type molecular_system
 !
@@ -59,6 +61,9 @@ contains
 !
       call molecule%read_info
 !
+      write(output%unit, *) 'N atoms? ', molecule%n_atoms
+      flush(output%unit)
+!
       allocate(molecule%atoms(molecule%n_atoms, 1))
 !
       allocate(n_shells_on_atoms(molecule%n_atoms,1))
@@ -66,17 +71,33 @@ contains
 !
       call molecule%read_geometry
 !
+      do i = 1, molecule%n_atoms
+!
+         call molecule%atoms(i, 1)%set_number()
+!
+      enddo
+!
+      call molecule%write      ! Write an xyz file for the read geometry
+!
+         write(output%unit, *) 'hei???'
+         flush(output%unit)
+!
+      call initialize_basis()
       call get_n_shells_on_atoms(n_shells_on_atoms)
+         write(output%unit, *) 'here maybe???'
+         flush(output%unit)
 !
       do i = 1, molecule%n_atoms ! Loop over atoms
 !
 !        Set atomic number
 !
-         call molecule%atoms(i, 1)%set_number()
+       !  call molecule%atoms(i, 1)%set_number()
 !
 !        Allocate and initialize the corresponding shells
 !
          molecule%atoms(i,1)%n_shells = n_shells_on_atoms(i,1)
+         write(output%unit, *) 'n_shells', molecule%atoms(i,1)%n_shells
+         flush(output%unit)
          allocate(molecule%atoms(i,1)%shells(molecule%atoms(i,1)%n_shells, 1))
 !
 !        Then determine the number of basis functions in each shell
@@ -461,9 +482,9 @@ contains
 !
       class(molecular_system) :: molecule
 !
-      integer(kind=4) :: A
+      integer(kind=8) :: A
 !
-      integer(kind=4) :: I, J
+      integer(kind=8) :: I, J
 !
       do I = 1, molecule%n_atoms
 !
@@ -482,6 +503,35 @@ contains
       enddo
 !
    end function get_shell_limits_molecular_system
+!
+!
+   integer(i15) function basis2shell_molecular_system(molecule, basis_function)
+!!
+!!    Basis2shell
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(molecular_system) :: molecule
+!
+      integer(i15), intent(in) :: basis_function
+!
+      integer(i15) :: I, J
+!
+      do I = 1, molecule%n_atoms
+         do J = 1, molecule%atoms(I,1)%n_shells
+!
+            if (molecule%atoms(I,1)%shells(J,1)%last  .ge. basis_function .and. &
+                molecule%atoms(I,1)%shells(J,1)%first .le. basis_function) then
+!
+               basis2shell_molecular_system = molecule%atoms(I,1)%shells(J,1)%number
+!
+            endif
+!
+         enddo
+      enddo
+!
+   end function basis2shell_molecular_system
 !
 !
 end module molecular_system_class

@@ -11,8 +11,8 @@ contains
 !
       implicit none
 !
-      integer(kind=4) :: s1
-      integer(kind=4) :: s3
+      integer(kind=8) :: s1
+      integer(kind=8) :: s3
 !
       real(kind=8), dimension(1,1) :: L
 !

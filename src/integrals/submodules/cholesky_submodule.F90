@@ -5,6 +5,10 @@ submodule (integral_manager_class) cholesky
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !
+   use index
+   use array_utilities
+   use array_analysis
+!
    implicit none
 !
 !
@@ -24,25 +28,34 @@ contains
       integer(i15) :: n_shells
       integer(i15) :: n_shell_pairs
 !
-      integer(i15) :: offset, counter
+      integer(i15) :: offset, counter, counter_reduced
 !
       logical, dimension(:), allocatable        :: screened
       integer(i15), dimension(:), allocatable   :: offsets, reduced_offsets
 !
       real(dp), dimension(:,:), allocatable :: D_xy, g_wxyz
-!  
+!
       integer(i15), dimension(:,:), allocatable :: index_list
 !
-      integer(kind = 4)   :: A, B
-      integer(i15)        :: AB = 0
+      integer(i15)   :: A, B
+      integer(i15)   :: AB = 0, shell_pair = 0
       type(interval) :: A_intval, B_intval
 !
       integer(i15) :: x = 0, y = 0, xy = 0, xy_packed = 0, I = 0
 !
+      integer(i15) :: max_index = 0, first = 0, last = 0
+!
       integer(i15) :: dim_screened_diagonal, dim_screened_shell_pairs
+!
+      integer(i15), dimension(:), allocatable :: shell_max_indices
+      integer(i15), dimension(:,:), allocatable :: sorted_shell_max_indices
+      real(dp), dimension(:,:), allocatable :: shell_max, sorted_shell_max
 !
       n_shells = molecule%get_n_shells()
       n_shell_pairs = n_shells*(n_shells + 1)/2
+!
+      write(output%unit, *) 'Number of shells: ', n_shells
+      write(output%unit, *) 'Number of shell pairs: ', n_shell_pairs
 !
 !     Determine the number of screened diagonals without storing
 !
@@ -51,8 +64,11 @@ contains
 !
       dim_screened_shell_pairs = 0
       dim_screened_diagonal    = 0
+      offsets = 0
 !
-      offsets = 1
+      screened = .true.
+      counter = 1
+      offset = 1
 !
       do B = 1, n_shells
          do A = B, n_shells
@@ -61,20 +77,21 @@ contains
             B_intval = molecule%get_shell_limits(B)
 !
             call mem%alloc(g_wxyz, (A_intval%size)*(B_intval%size), (A_intval%size)*(B_intval%size))
+            g_wxyz = zero
+!
             call integrals%get_ao_g_wxyz(g_wxyz, A, B, A, B)
 !
-            AB = index_packed(A, B)
-            offsets(AB) = offset
+            offsets(counter) = offset
 !
 !           Determine whether shell pair is screened out
 !
-            screened(AB) = .true.
+            screened(counter) = .true.
 !
             do I = 1, (A_intval%size)*(B_intval%size)
 !
                if (g_wxyz(I,I) .gt. 1.0D-8) then
 !
-                  screened(AB) = .false.
+                  screened(counter) = .false.
 !
                endif
 !
@@ -97,7 +114,7 @@ contains
 !           Add contribution to screened diagonal dimension, if not screened,
 !           and set +1 to the dimension of surviving shell pairs
 !
-            if (.not. screened(AB)) then
+            if (.not. screened(counter)) then
 !
                dim_screened_shell_pairs = dim_screened_shell_pairs + 1
 !
@@ -115,8 +132,13 @@ contains
 !
             endif
 !
+            counter = counter + 1
+!
          enddo
       enddo
+!
+      write(output%unit, *) 'Dim of screened diagonal: ', dim_screened_diagonal
+      flush(output%unit)
 !
       call mem%alloc(D_xy, dim_screened_diagonal, 1)
       D_xy = zero
@@ -124,9 +146,13 @@ contains
       call mem%alloc_int(index_list, dim_screened_diagonal, 2)
       index_list = 0
 !
-!     Construct the screened diagonal
+!     Construct the screened diagonal and simultaneously get new offsets
 !
       offset = 1
+      counter = 1
+      counter_reduced = 1
+!
+      allocate(reduced_offsets(dim_screened_shell_pairs))
 !
       do B = 1, n_shells
          do A = B, n_shells
@@ -134,9 +160,9 @@ contains
             A_intval = molecule%get_shell_limits(A)
             B_intval = molecule%get_shell_limits(B)
 !
-            AB = index_packed(A, B)
+            if (.not. screened(counter)) then
 !
-            if (.not. screened(AB)) then
+               reduced_offsets(counter_reduced) = offset
 !
                call mem%alloc(g_wxyz, (A_intval%size)*(B_intval%size), (A_intval%size)*(B_intval%size))
                call integrals%get_ao_g_wxyz(g_wxyz, A, B, A, B)
@@ -177,177 +203,78 @@ contains
 !
                endif
 !
+               call mem%dealloc(g_wxyz, (A_intval%size)*(B_intval%size), (A_intval%size)*(B_intval%size))
+!
+               counter_reduced = counter_reduced + 1
+!
             endif
+!
+            counter = counter + 1
 !
          enddo
       enddo
 !
-!     Make reduced offset list for the diagonals that are kept
+!     Find the index of the maximum value of D_xy
 !
-      call mem%alloc(reduced_offsets, dim_screened_shell_pairs, 1)
+      max_index = get_max_index(D_xy, dim_screened_diagonal)
 !
-      counter = 1
+!     Shell maximums and shell maximums indices vectors
 !
-      do AB = 1, n_shell_pairs
+      allocate(shell_max_indices(dim_screened_shell_pairs))
+      call mem%alloc(shell_max, dim_screened_shell_pairs, 1)
 !
-         if (.not. screened(AB)) then
+      shell_max = zero
 !
-            reduced_offsets(counter, 1) = offsets(AB, 1)
-            counter = counter + 1
+      do shell_pair = 1, dim_screened_shell_pairs
+!
+!        Get first and last indices of shell pair
+!
+         first = reduced_offsets(shell_pair)
+!
+         if (shell_pair .eq. dim_screened_shell_pairs) then
+!
+            last = dim_screened_diagonal
+!
+         else
+!
+            last = reduced_offsets(shell_pair + 1) - 1
 !
          endif
 !
+!        Determine the largest elements
+!
+         do I = first, last
+!
+            if (D_xy(I, 1) .gt. shell_max(shell_pair, 1)) then
+!
+               shell_max(shell_pair, 1) = D_xy(I, 1)
+               shell_max_indices(shell_pair) = I
+!
+            endif
+!
+         enddo
+!
       enddo
-
-
-
-!     Old code below
 !
-!     Determine the number of diagonals and offsets for shell pairs
+!     Sort from largest to smallest by determining an index array
 !
+      allocate(sorted_shell_max_indices(dim_screened_shell_pairs,1))
+      sorted_shell_max_indices = 0
 !
-!       dim_D_xy = 0
-!       offset = 1
-! !
-!       do B = 1, n_shells
-!          do A = B, n_shells
-! !
-!             A_intval = molecule%get_shell_limits(A)
-!             B_intval = molecule%get_shell_limits(B)
-! !
-!             AB = index_packed(A, B)
-!             offsets(AB) = offset
-! !
-!             if (A .eq. B) then
-! !
-!                dim_D_xy = dim_D_xy + A_intval%size*(A_intval%size + 1)/2
-!                offset = offset + A_intval%size*(A_intval%size + 1)/2
-! !
-!             else
-! !
-!                dim_D_xy = dim_D_xy + (A_intval%size)*(B_intval%size)
-!                offset = offset + (A_intval%size)*(B_intval%size)
-! !
-!             endif
-! !
-!          enddo
-!       enddo
-! !
-! !     Construct the diagonal and screen if below a threshold
-! !
-!       call mem%alloc(D_xy, dim_D_xy, 1)
-!       D_xy = zero
-! !
-!       screened = .true.
-! !
-!       counter = 1
-! !
-!        do B = 1, n_shells
-!          do A = B, n_shells
-! !
-!             A_intval = molecule%get_shell_limits(A)
-!             B_intval = molecule%get_shell_limits(B)
-! !
-!             call mem%alloc(g_wxyz, (A_intval%size)*(B_intval%size), (A_intval%size)*(B_intval%size))
-!             call integrals%get_g_wxyz(g_wxyz, A, B, A, B)
-! !
-!             if (A == B) then
-! !
-!                do x = 1, A_intval%size
-!                   do y = 1, x
-! !
-!                      xy = A_intval%size*(y-1)+x
-!                      xy_packed = (max(i,j)*(max(i,j)-3)/2) + i + j
-! !
-!                      D_xy(offsets(counter, 1) + xy_packed - 1, 1) = g_wxyz(xy, xy)
-! !
-!                      if (D_xy(offsets(counter) + xy_packed - 1, 1) > 1.0d-8) then
-! !
-!                         screened(counter) = .false.
-! !
-!                      endif
-! !
-!                   enddo
-!                enddo
-! !
-!             else
-! !
-!                do x = 1, A_intval%size
-!                   do y = 1, B_intval%size
-! !
-!                      xy = A_intval%size*(y-1)+x
-! !
-!                      D_xy(offsets(counter, 1) + xy - 1, 1) = g_wxyz(xy, xy)
-! !
-!                      if (D_xy(offsets(counter) + xy - 1, 1) > 1.0d-8) then
-! !
-!                         screened(counter) = .false.
-! !
-!                      endif
-! !
-!                   enddo
-!                enddo
-! !
-!             endif
-! !
-!             call mem%dealloc(g_wxyz, (A_intval%size)*(B_intval%size), (A_intval%size)*(B_intval%size))
-! !
-!             counter = counter + 1
-! !
-!          enddo
-!       enddo
-! !
-! !     Determine the dimension of screened diagonal array
-! !
-!       new_dim_D_xy = 0
-! !
-!       do AB = 1, n_shell_pairs
-! !
-!          if (.not. screened(AB)) then
-! !
-!             if (AB == n_shell_pairs) then
-! !
-!                new_dim_D_xy = new_dim_D_xy + (dim_D_xy - offset(AB) + 1)
-! !
-!             else
-! !
-!                new_dim_D_xy = new_dim_D_xy + (offset(AB + 1) - offset(AB) + 1)
-! !
-!             endif
-! !
-!          endif
-! !
-!       enddo
-! !
-! !     Set the screened diagonals from the full diagonal array
-! !
-!       mem%alloc(new_D_xy, new_dim_D_xy, 1)
-!       new_D_xy = zero
-! !
-!       offset = 0
-!       do AB = 1, n_shell_pairs
-! !
-!          if (.not. screened(AB)) then
-! !
-!             if (AB .eq. n_shell_pairs) then
-! !
-!                length = dim_D_xy - offsets(AB)
-!                new_D_xy(offset:new_dim_D_xy) = D_xy(offsets(AB):dim_D_xy)
-! !
-!             else
-! !
-!                length = offsets(AB + 1) - offsets(AB)
-!                new_D_xy(offset:(offset + length - 1)) = D_xy(offsets(AB):(offsets(AB + 1) - 1))
-! !
-!             endif
-! !
-!             offset = offset + length
-! !
-!          endif
-! !
-!       enddo
-! !
-!       call mem%dealloc(D_xy, dim_D_xy, 1)
+      call mem%alloc(sorted_shell_max, dim_screened_shell_pairs, 1)
+      sorted_shell_max = zero
+!
+      call get_n_lowest(dim_screened_shell_pairs, dim_screened_shell_pairs, &
+                        shell_max, sorted_shell_max, sorted_shell_max_indices)
+!
+      do shell_pair = 1, dim_screened_shell_pairs
+!
+         write(output%unit, *) 'The ', shell_pair, ' smallest shell is ', sorted_shell_max_indices(shell_pair, 1), &
+                                 'with the value ', shell_max(sorted_shell_max_indices(shell_pair, 1), 1)
+!
+      enddo
+!
+      deallocate(reduced_offsets)
 !
    end subroutine cholesky_decompose_integral_manager
 !

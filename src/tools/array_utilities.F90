@@ -9,13 +9,41 @@ module array_utilities
 !!    where all such routines are gathered for convenience).
 !!
 !
-   use input_output
    use index
-   use types
+   use kinds
 !
    implicit none
 !
 contains
+!
+!
+   integer(i15) function get_max_index(x, dim)
+!!
+!!    Get max index
+!!    Written by Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: dim
+      real(dp), dimension(dim,1), intent(in) :: x
+!
+      integer(i15) :: I
+      real(dp)     :: maxval
+!
+      get_max_index = 1
+      maxval = x(1,1)
+      do I = 2, dim
+!
+         if (x(I,1) .gt. maxval) then
+!
+            get_max_index = I
+            maxval = x(I,1)
+!
+         endif
+!
+      enddo
+!
+   end function get_max_index
 !
 !
    real(dp) function dot_product(x, y, n)

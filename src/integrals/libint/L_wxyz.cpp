@@ -23,10 +23,10 @@ using namespace libint2;
 // extern BasisSet basis;
 // extern Engine electronic_repulsion;
 
-void get_ao_L_wxyz(double *L, int *s1, int *s3){
+void get_ao_L_wxyz(double *L, long *s1, long *s3){
 
-	const int sh1 = *s1 - 1;
-	const int sh3 = *s3 - 1; // C++ arrays start at index 0!
+	const long sh1 = *s1 - 1;
+	const long sh3 = *s3 - 1; // C++ arrays start at index 0!
 
 	// initialize_basis();
 	// initialize_coulomb();

@@ -109,13 +109,7 @@ contains
 !
 !     Initialize molecule
 !
-      call wf%molecule%initialize ! Read atoms
-      call wf%molecule%write      ! Write an xyz file for the read geometry
-!
-!     Determine the number of atomic orbitals and (standard) number
-!     of molecular orbitals
-!
-      call initialize_basis()
+      call wf%molecule%initialize() ! Read atoms
 !
       wf%n_ao = 0
       call get_n_aos(wf%n_ao)
@@ -372,7 +366,7 @@ contains
       real(dp), dimension(:,:), allocatable :: L_wxyz
 !
       integer(i15) :: n_shells = 0
-      integer(kind=4) :: A = 0, C = 0
+      integer(kind=8) :: A = 0, C = 0
 !
       integer(i15) :: x, y, z, w, xy, zw
 !
