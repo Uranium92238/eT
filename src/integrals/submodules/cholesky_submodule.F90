@@ -24,17 +24,22 @@ contains
       integer(i15) :: n_shells
       integer(i15) :: n_shell_pairs
 !
-      integer(i15) :: offset
+      integer(i15) :: offset, counter
 !
       logical, dimension(:), allocatable        :: screened
-      integer(i15), dimension(:), allocatable   :: offsets
+      integer(i15), dimension(:), allocatable   :: offsets, reduced_offsets
 !
-      real(dp), dimension(:,:), allocatable :: D_xy
+      real(dp), dimension(:,:), allocatable :: D_xy, g_wxyz
+!  
+      integer(i15), dimension(:,:), allocatable :: index_list
 !
-      integer(i15)   :: A, B, AB = 0
+      integer(kind = 4)   :: A, B
+      integer(i15)        :: AB = 0
       type(interval) :: A_intval, B_intval
 !
-      integer(i15) :: xy = 0, xy_packed = 0
+      integer(i15) :: x = 0, y = 0, xy = 0, xy_packed = 0, I = 0
+!
+      integer(i15) :: dim_screened_diagonal, dim_screened_shell_pairs
 !
       n_shells = molecule%get_n_shells()
       n_shell_pairs = n_shells*(n_shells + 1)/2
@@ -52,8 +57,11 @@ contains
       do B = 1, n_shells
          do A = B, n_shells
 !
+            A_intval = molecule%get_shell_limits(A)
+            B_intval = molecule%get_shell_limits(B)
+!
             call mem%alloc(g_wxyz, (A_intval%size)*(B_intval%size), (A_intval%size)*(B_intval%size))
-            call integrals%get_g_wxyz(g_wxyz, A, B, A, B)
+            call integrals%get_ao_g_wxyz(g_wxyz, A, B, A, B)
 !
             AB = index_packed(A, B)
             offsets(AB) = offset
@@ -123,12 +131,15 @@ contains
       do B = 1, n_shells
          do A = B, n_shells
 !
+            A_intval = molecule%get_shell_limits(A)
+            B_intval = molecule%get_shell_limits(B)
+!
             AB = index_packed(A, B)
 !
             if (.not. screened(AB)) then
 !
                call mem%alloc(g_wxyz, (A_intval%size)*(B_intval%size), (A_intval%size)*(B_intval%size))
-               call integrals%get_g_wxyz(g_wxyz, A, B, A, B)
+               call integrals%get_ao_g_wxyz(g_wxyz, A, B, A, B)
 !
                if (A .eq. B) then
 !
