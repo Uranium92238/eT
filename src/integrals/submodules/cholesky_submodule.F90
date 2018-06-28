@@ -170,6 +170,9 @@ contains
       do B = 1, n_s
          do A = B, n_s
 !
+            write(output%unit, *) '1'
+            flush(output%unit)
+!
             A_interval = molecule%get_shell_limits(A)
             B_interval = molecule%get_shell_limits(B)
 !
@@ -191,7 +194,7 @@ contains
                         diag_xy(offset + xy_packed - 1, 1) = g_wxyz(xy, xy)
 !
                         diag_to_aos(offset + xy_packed - 1, 1) = A_interval%first + x - 1
-                        diag_to_aos(offset + xy_packed - 1, 1) = B_interval%first + y - 1
+                        diag_to_aos(offset + xy_packed - 1, 2) = B_interval%first + y - 1
 !
                      enddo
                   enddo
@@ -207,7 +210,7 @@ contains
                         diag_xy(offset + xy - 1, 1) = g_wxyz(xy,xy)
 !
                         diag_to_aos(offset + xy - 1, 1) = A_interval%first + x - 1
-                        diag_to_aos(offset + xy - 1, 1) = B_interval%first + y - 1
+                        diag_to_aos(offset + xy - 1, 2) = B_interval%first + y - 1
 !
                      enddo
                   enddo
@@ -282,8 +285,8 @@ contains
       span           = 1.0D-3
       max_qualified  = 100
 !
-      call mem%alloc_int(qualified_aop, 100, 2)
-      call mem%alloc_int(qualified_sp, n_s, 3)
+      call mem%alloc_int(qualified_aop, 100, 3)
+      call mem%alloc_int(qualified_sp, n_sp, 3)
 !
       do sp = 1, n_screened_sp
 !
@@ -291,7 +294,7 @@ contains
 !
          first_screened_aop = screened_sp_offsets(current_screened_sp)
 !
-         if (sp == n_screened_sp) then
+         if (current_screened_sp .eq. n_screened_sp) then
 !
             last_screened_aop = dim_screened
 !
@@ -305,7 +308,7 @@ contains
 !
          do aop = first_screened_aop, last_screened_aop
 !
-            if ((diag_xy(aop, 1) .le. span*diag_max ) .and. (n_qualified .lt. max_qualified)) then
+            if ((diag_xy(aop, 1) .ge. span*diag_max ) .and. (n_qualified .lt. max_qualified)) then
 !
                n_qualified_in_sp = n_qualified_in_sp + 1
                n_qualified       = n_qualified + 1
@@ -322,7 +325,7 @@ contains
             call mem%alloc(sorted_qualified_in_sp, n_qualified_in_sp, 1)
 !
             call get_n_highest(n_qualified_in_sp, last_screened_aop - first_screened_aop + 1, &
-                              diag_xy(first:last, 1), sorted_qualified_in_sp, &
+                              diag_xy(first_screened_aop:last_screened_aop, 1), sorted_qualified_in_sp, &
                               sorted_qualified_in_sp_indices)
 !
             n_old_qualified = (n_qualified - n_qualified_in_sp)
@@ -331,8 +334,12 @@ contains
 !
                qualified_aop(aop + n_old_qualified, 1) = diag_to_aos(sorted_qualified_in_sp_indices(aop, 1) &
                                                             + first_screened_aop - 1, 1)
+!
                qualified_aop(aop + n_old_qualified, 2) = diag_to_aos(sorted_qualified_in_sp_indices(aop, 1) &
                                                             + first_screened_aop - 1, 2)
+!
+               qualified_aop(aop + n_old_qualified, 3) = sorted_qualified_in_sp_indices(aop, 1) &
+                                                            + first_screened_aop - 1
 !
             enddo
 !
@@ -341,7 +348,10 @@ contains
 !
             qualified_sp(sp, 1) = molecule%basis2shell(first_x)
             qualified_sp(sp, 2) = molecule%basis2shell(first_y)
-            qualified_sp(sp, 3) = molecule%basis2shell(n_qualified_sp)
+            qualified_sp(sp, 3) = n_qualified_in_sp
+!
+            call mem%dealloc_int(sorted_qualified_in_sp_indices, n_qualified_in_sp, 1)
+            call mem%dealloc(sorted_qualified_in_sp, n_qualified_in_sp, 1)
 !
          endif
 !
@@ -355,25 +365,23 @@ contains
 !
 !     Cut out the qualified parts of the aop and sp lists
 !
-      call mem%alloc_int(qualified_aop_copy, n_qualified, 2)
+      call mem%alloc_int(qualified_aop_copy, n_qualified, 3)
       call mem%alloc_int(qualified_sp_copy, n_qualified_sp, 3)
 !
       qualified_aop_copy(:, :) = qualified_aop(1:n_qualified, :)
       qualified_sp_copy(:, :)  = qualified_sp(1:n_qualified_sp, :)
 !
-      call mem%dealloc_int(qualified_aop, 100, 2)
-      call mem%dealloc_int(qualified_sp, n_s, 3)
+      call mem%dealloc_int(qualified_aop, 100, 3)
+      call mem%dealloc_int(qualified_sp, n_sp, 3)
 !
-      call mem%alloc_int(qualified_aop, n_qualified, 2)
+      call mem%alloc_int(qualified_aop, n_qualified, 3)
       call mem%alloc_int(qualified_sp, n_qualified_sp, 3)
 !
       qualified_aop = qualified_aop_copy
       qualified_sp = qualified_sp_copy
 !
-      call mem%dealloc_int(qualified_aop_copy, n_qualified, 2)
+      call mem%dealloc_int(qualified_aop_copy, n_qualified, 3)
       call mem%dealloc_int(qualified_sp_copy, n_qualified_sp, 3)
-!
-
 !
       J = 0
       offset = 0
@@ -396,6 +404,7 @@ contains
 !
          ab_sp = 1
          screened_ab_sp = 1
+         offset = 0
 !
          do B = 1, n_s
             do A = B, n_s
@@ -465,8 +474,9 @@ contains
 !
       enddo ! cd_sp
 !
-!
       deallocate(screened_sp_offsets)
+      call mem%dealloc_int(qualified_aop, n_qualified, 3)
+      call mem%dealloc_int(qualified_sp, n_qualified_sp, 3)
 !
    end subroutine cholesky_decompose_integral_manager
 !

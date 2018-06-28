@@ -386,6 +386,7 @@ contains
 !
 !        Placing the n first elements of vec into sorted_short_vec
 !
+         sorted_short_vec = zero
          sorted_short_vec(1,1) = vec(1,1)
          index_list(1,1) = 1
 !
