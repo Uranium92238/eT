@@ -30,11 +30,12 @@ contains
       integer(i15) :: first, last
       integer(i15) :: sp, screened_sp, ab_sp, ao, cd_sp, screened_ab_sp
       integer(i15) :: aop, current_screened_sp
-      integer(i15) :: A, B, I, C, D, J
+      integer(i15) :: A, B, I, C, D, J, K
       integer(i15) :: x, y, xy, xy_packed, w, wx, wx_packed, z, yz
       integer(i15) :: offset
       integer(i15) :: first_screened_aop, last_screened_aop, first_x, first_y
       integer(i15) :: max_qualified, n_qualified_in_sp, n_qualified, n_old_qualified, n_qualified_sp
+      integer(i15) :: current_qual, qual_offset, qual, qual_max
 !
       real(dp) :: diag_max, span
 !
@@ -49,6 +50,7 @@ contains
       real(dp), dimension(:,:), allocatable     :: max_in_sp
       real(dp), dimension(:,:), allocatable     :: sorted_max_in_sp
       real(dp), dimension(:,:), allocatable     :: sorted_qualified_in_sp
+      real(dp), dimension(:,:), allocatable     :: cholesky
 !
       integer(i15), dimension(:), allocatable   :: max_in_sp_indices, screened_sp_offsets
 !
@@ -383,7 +385,7 @@ contains
       call mem%dealloc_int(qualified_aop_copy, n_qualified, 3)
       call mem%dealloc_int(qualified_sp_copy, n_qualified_sp, 3)
 !
-      J = 0
+      qual_offset = 0
       offset = 0
 !
       call mem%alloc(g_wxyz, &
@@ -435,7 +437,7 @@ contains
                               wx_packed = (max(w,x)*(max(w,x)-3)/2) + w + x
                               wx = A_interval%size*(x-1) + w
 !
-                              g_wxyz(screened_sp_offsets(screened_ab_sp) + wx_packed - 1, ao + J) = g_ABCD(wx, yz)
+                              g_wxyz(screened_sp_offsets(screened_ab_sp) + wx_packed - 1, ao + qual_offset) = g_ABCD(wx, yz)
 !
                            enddo
                         enddo
@@ -447,7 +449,7 @@ contains
 !
                               wx = A_interval%size*(x-1) + w
 !
-                              g_wxyz(screened_sp_offsets(screened_ab_sp) + wx - 1, ao + J) = g_ABCD(wx, yz)
+                              g_wxyz(screened_sp_offsets(screened_ab_sp) + wx - 1, ao + qual_offset) = g_ABCD(wx, yz)
 !
                            enddo
                         enddo
@@ -469,10 +471,54 @@ contains
             enddo ! A
          enddo ! B
 !
-         J = J + n_qualified_in_sp
+         qual_offset = qual_offset + n_qualified_in_sp
          offset = offset + n_qualified_in_sp
 !
       enddo ! cd_sp
+!
+      call mem%alloc(cholesky, dim_screened, n_qualified )
+      cholesky = zero
+!
+      current_qual = 1
+!
+      diag_max = one
+!
+      do while ((current_qual .lt. n_qualified) .and. (diag_max .gt. 1.0d-8)) 
+!
+         diag_max = zero
+!
+         do qual = 1, n_qualified
+!
+            xy = qualified_aop(qual, 3)
+!
+            if (diag_xy(xy, 1) .ge. diag_max) then
+!
+               qual_max = qual
+               diag_max = diag_xy(xy, 1)
+!
+            endif
+!
+         enddo
+!
+         cholesky(: , current_qual) = g_wxyz (:, qual_max)/sqrt(diag_max)
+!
+         do xy = 1, dim_screened
+!
+            diag_xy(xy, 1) = diag_xy(xy, 1) - cholesky(xy, current_qual)**2
+!
+            do K = 1, n_qualified
+!
+               g_wxyz(xy, K) = g_wxyz(xy, K) - cholesky(xy, current_qual)*cholesky(K, current_qual)
+!
+            enddo
+!
+         enddo
+!
+         current_qual = current_qual + 1
+!
+      enddo
+!
+      call mem%dealloc(cholesky, dim_screened, n_qualified)
 !
       deallocate(screened_sp_offsets)
       call mem%dealloc_int(qualified_aop, n_qualified, 3)
