@@ -280,8 +280,8 @@ contains
       span           = 1.0D-3
       max_qualified  = 100
 !
-      call mem%alloc_int(qualified_aop, 100, 2) 
-      call mem%alloc_int(qualified_sp, n_s, 2) 
+      call mem%alloc_int(qualified_aop, 100, 2)
+      call mem%alloc_int(qualified_sp, n_s, 2)
 !
       do sp = 1, n_screened_sp
 !
@@ -346,13 +346,86 @@ contains
 !
             exit
 !
-         endif 
+         endif
 !
       enddo
 !
-      
+!     Cut out the qualified parts of the aop and sp lists
+!
+      call mem%alloc_int(qualified_aop_copy, n_qualified, 2)
+      call mem%alloc_int(qualified_sp_copy, n_qualified_sp, 2)
+!
+      qualified_aop_copy(:, :) = qualified_aop(1:n_qualified, :)
+      qualified_sp_copy(:, :)  = qualified_sp(1:n_qualified_sp, :)
+!
+      call mem%dealloc_int(qualified_aop, 100, 2)
+      call mem%dealloc_int(qualified_sp, n_s, 2)
+!
+      call mem%alloc_int(qualified_aop, n_qualified, 2)
+      call mem%alloc_int(qualified_sp, n_qualified_sp, 2)
+!
+      qualified_aop = qualified_aop_copy
+      qualified_sp = qualified_sp_copy
+!
+      call mem%dealloc_int(qualified_aop_copy, n_qualified, 2)
+      call mem%dealloc_int(qualified_sp_copy, n_qualified_sp, 2)
 !
 
+
+
+
+!
+      J = 1
+!
+      do cd_sp = 1, n_qualified_sp
+!
+         C = qualified_sp(sp, 1)
+         D = qualified_sp(sp, 2)
+!
+         C_interval = get_shell_limits(C)
+         D_interval = get_shell_limits(D)
+!
+!        Calculate the ({wx} | J) integrals,
+!        where {wx} is the screened list of integrals
+!
+         call mem%alloc(g_wxyz, &
+                        dim_screened_diagonal, &
+                        n_qualified)
+!
+         ab_sp = 1
+         screened_ab_sp = 1
+!
+         do B = 1, n_shells
+            do A = B, n_shells
+!
+               if (.not. screened(ab_sp)) then
+!
+                  A_interval = get_shell_limits(A)
+                  B_interval = get_shell_limits(B)
+!
+                  call mem%alloc(g_ABCD, &
+                                 (A_interval%size)*(B_interval%size),
+                                 (C_interval%size)*(D_interval%size))
+!
+                  call integrals%get_ao_g_wxyz(g_ABCD, A, B, C, D)
+!
+
+!
+                  call mem%dealloc(g_ABCD, &
+                                    (A_interval%size)*(B_interval%size),
+                                    (C_interval%size)*(D_interval%size))
+!
+                  screened_ab_sp = screened_ab_sp + 1
+!
+               endif
+!
+               ab_sp = ab_sp + 1
+!
+            enddo ! A
+         enddo ! B
+!
+      enddo ! cd_sp
+!
 !
       deallocate(screened_sp_offsets)
 !
