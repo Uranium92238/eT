@@ -28,34 +28,36 @@ contains
       integer(i15) :: n_s, n_sp
       integer(i15) :: dim_screened, n_screened_sp
       integer(i15) :: first, last
-      integer(i15) :: sp, screened_sp
+      integer(i15) :: sp, screened_sp, ab_sp, ao, cd_sp, screened_ab_sp
       integer(i15) :: aop, current_screened_sp
-      integer(i15) :: A, B, I
-      integer(i15) :: x, y, xy, xy_packed
+      integer(i15) :: A, B, I, C, D, J
+      integer(i15) :: x, y, xy, xy_packed, w, wx, wx_packed, z, yz
       integer(i15) :: offset
       integer(i15) :: first_screened_aop, last_screened_aop, first_x, first_y
-      integer(i15) :: max_qualified, n_qualified_in_sp, n_qualified, n_old_qualified
+      integer(i15) :: max_qualified, n_qualified_in_sp, n_qualified, n_old_qualified, n_qualified_sp
 !
       real(dp) :: diag_max, span
 !
-      type(interval) :: A_interval, B_interval
+      type(interval) :: A_interval, B_interval, C_interval, D_interval
 !
       logical, dimension(:), allocatable        :: screened
 !
-      real(dp), dimension(:), allocatable       :: sp_offsets, screened_sp_offsets
+      real(dp), dimension(:), allocatable       :: sp_offsets
 !
-      real(dp), dimension(:,:), allocatable     :: g_wxyz
+      real(dp), dimension(:,:), allocatable     :: g_wxyz, g_ABCD
       real(dp), dimension(:,:), allocatable     :: diag_xy
       real(dp), dimension(:,:), allocatable     :: max_in_sp
       real(dp), dimension(:,:), allocatable     :: sorted_max_in_sp
       real(dp), dimension(:,:), allocatable     :: sorted_qualified_in_sp
 !
-      integer(i15), dimension(:), allocatable   :: max_in_sp_indices
+      integer(i15), dimension(:), allocatable   :: max_in_sp_indices, screened_sp_offsets
 !
       integer(i15), dimension(:,:), allocatable :: diag_to_aos
       integer(i15), dimension(:,:), allocatable :: sorted_max_sp
       integer(i15), dimension(:,:), allocatable :: qualified_aop
+      integer(i15), dimension(:,:), allocatable :: qualified_aop_copy
       integer(i15), dimension(:,:), allocatable :: qualified_sp
+      integer(i15), dimension(:,:), allocatable :: qualified_sp_copy
       integer(i15), dimension(:,:), allocatable :: sorted_qualified_in_sp_indices
 !
       n_s   = molecule%get_n_shells()     ! number of shells
@@ -281,7 +283,7 @@ contains
       max_qualified  = 100
 !
       call mem%alloc_int(qualified_aop, 100, 2)
-      call mem%alloc_int(qualified_sp, n_s, 2)
+      call mem%alloc_int(qualified_sp, n_s, 3)
 !
       do sp = 1, n_screened_sp
 !
@@ -339,6 +341,7 @@ contains
 !
             qualified_sp(sp, 1) = molecule%basis2shell(first_x)
             qualified_sp(sp, 2) = molecule%basis2shell(first_y)
+            qualified_sp(sp, 3) = molecule%basis2shell(n_qualified_sp)
 !
          endif
 !
@@ -353,66 +356,99 @@ contains
 !     Cut out the qualified parts of the aop and sp lists
 !
       call mem%alloc_int(qualified_aop_copy, n_qualified, 2)
-      call mem%alloc_int(qualified_sp_copy, n_qualified_sp, 2)
+      call mem%alloc_int(qualified_sp_copy, n_qualified_sp, 3)
 !
       qualified_aop_copy(:, :) = qualified_aop(1:n_qualified, :)
       qualified_sp_copy(:, :)  = qualified_sp(1:n_qualified_sp, :)
 !
       call mem%dealloc_int(qualified_aop, 100, 2)
-      call mem%dealloc_int(qualified_sp, n_s, 2)
+      call mem%dealloc_int(qualified_sp, n_s, 3)
 !
       call mem%alloc_int(qualified_aop, n_qualified, 2)
-      call mem%alloc_int(qualified_sp, n_qualified_sp, 2)
+      call mem%alloc_int(qualified_sp, n_qualified_sp, 3)
 !
       qualified_aop = qualified_aop_copy
       qualified_sp = qualified_sp_copy
 !
       call mem%dealloc_int(qualified_aop_copy, n_qualified, 2)
-      call mem%dealloc_int(qualified_sp_copy, n_qualified_sp, 2)
+      call mem%dealloc_int(qualified_sp_copy, n_qualified_sp, 3)
 !
 
-
-
-
 !
-      J = 1
+      J = 0
+      offset = 0
+!
+      call mem%alloc(g_wxyz, &
+                        dim_screened, &
+                        n_qualified)
 !
       do cd_sp = 1, n_qualified_sp
 !
-         C = qualified_sp(sp, 1)
-         D = qualified_sp(sp, 2)
+         C                 = qualified_sp(sp, 1)
+         D                 = qualified_sp(sp, 2)
+         n_qualified_in_sp = qualified_sp(sp, 3)
 !
-         C_interval = get_shell_limits(C)
-         D_interval = get_shell_limits(D)
+         C_interval = molecule%get_shell_limits(C)
+         D_interval = molecule%get_shell_limits(D)
 !
 !        Calculate the ({wx} | J) integrals,
 !        where {wx} is the screened list of integrals
 !
-         call mem%alloc(g_wxyz, &
-                        dim_screened_diagonal, &
-                        n_qualified)
-!
          ab_sp = 1
          screened_ab_sp = 1
 !
-         do B = 1, n_shells
-            do A = B, n_shells
+         do B = 1, n_s
+            do A = B, n_s
 !
                if (.not. screened(ab_sp)) then
 !
-                  A_interval = get_shell_limits(A)
-                  B_interval = get_shell_limits(B)
+                  A_interval = molecule%get_shell_limits(A)
+                  B_interval = molecule%get_shell_limits(B)
 !
                   call mem%alloc(g_ABCD, &
-                                 (A_interval%size)*(B_interval%size),
+                                 (A_interval%size)*(B_interval%size), &
                                  (C_interval%size)*(D_interval%size))
 !
                   call integrals%get_ao_g_wxyz(g_ABCD, A, B, C, D)
 !
-
+                  do ao = 1, n_qualified_in_sp
+!
+                     y = qualified_aop(ao + offset, 1)
+                     z = qualified_aop(ao + offset, 2)
+!
+                     yz = C_interval%size*(z - D_interval%first) + y - C_interval%first + 1
+!
+                     if (A == B) then
+!
+                        do w = 1, A_interval%size
+                           do x = w, B_interval%size
+!
+                              wx_packed = (max(w,x)*(max(w,x)-3)/2) + w + x
+                              wx = A_interval%size*(x-1) + w
+!
+                              g_wxyz(screened_sp_offsets(screened_ab_sp) + wx_packed - 1, ao + J) = g_ABCD(wx, yz)
+!
+                           enddo
+                        enddo
+!
+                     else
+!
+                        do w = 1, A_interval%size
+                           do x = 1, B_interval%size
+!
+                              wx = A_interval%size*(x-1) + w
+!
+                              g_wxyz(screened_sp_offsets(screened_ab_sp) + wx - 1, ao + J) = g_ABCD(wx, yz)
+!
+                           enddo
+                        enddo
+!
+                     endif
+!
+                  enddo
 !
                   call mem%dealloc(g_ABCD, &
-                                    (A_interval%size)*(B_interval%size),
+                                    (A_interval%size)*(B_interval%size), &
                                     (C_interval%size)*(D_interval%size))
 !
                   screened_ab_sp = screened_ab_sp + 1
@@ -423,6 +459,9 @@ contains
 !
             enddo ! A
          enddo ! B
+!
+         J = J + n_qualified_in_sp
+         offset = offset + n_qualified_in_sp
 !
       enddo ! cd_sp
 !
