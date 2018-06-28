@@ -29,9 +29,14 @@ contains
       integer(i15) :: dim_screened, n_screened_sp
       integer(i15) :: first, last
       integer(i15) :: sp, screened_sp
+      integer(i15) :: aop, current_screened_sp
       integer(i15) :: A, B, I
       integer(i15) :: x, y, xy, xy_packed
       integer(i15) :: offset
+      integer(i15) :: first_screened_aop, last_screened_aop, first_x, first_y
+      integer(i15) :: max_qualified, n_qualified_in_sp, n_qualified, n_old_qualified
+!
+      real(dp) :: diag_max, span
 !
       type(interval) :: A_interval, B_interval
 !
@@ -43,11 +48,15 @@ contains
       real(dp), dimension(:,:), allocatable     :: diag_xy
       real(dp), dimension(:,:), allocatable     :: max_in_sp
       real(dp), dimension(:,:), allocatable     :: sorted_max_in_sp
+      real(dp), dimension(:,:), allocatable     :: sorted_qualified_in_sp
 !
       integer(i15), dimension(:), allocatable   :: max_in_sp_indices
 !
       integer(i15), dimension(:,:), allocatable :: diag_to_aos
       integer(i15), dimension(:,:), allocatable :: sorted_max_sp
+      integer(i15), dimension(:,:), allocatable :: qualified_aop
+      integer(i15), dimension(:,:), allocatable :: qualified_sp
+      integer(i15), dimension(:,:), allocatable :: sorted_qualified_in_sp_indices
 !
       n_s   = molecule%get_n_shells()     ! number of shells
       n_sp  = n_s*(n_s + 1)/2             ! number of shell pairs packed
@@ -264,6 +273,86 @@ contains
 !
       call get_n_highest(n_screened_sp, n_screened_sp, &
                         max_in_sp, sorted_max_in_sp, sorted_max_sp)
+!
+      diag_max       = sorted_max_in_sp(1, 1)
+      n_qualified    = 0
+      n_qualified_sp = 0
+      span           = 1.0D-3
+      max_qualified  = 100
+!
+      call mem%alloc_int(qualified_aop, 100, 2) 
+      call mem%alloc_int(qualified_sp, n_s, 2) 
+!
+      do sp = 1, n_screened_sp
+!
+         current_screened_sp = sorted_max_sp(sp, 1)
+!
+         first_screened_aop = screened_sp_offsets(current_screened_sp)
+!
+         if (sp == n_screened_sp) then
+!
+            last_screened_aop = dim_screened
+!
+         else
+!
+            last_screened_aop = screened_sp_offsets(current_screened_sp + 1) - 1
+!
+         endif
+!
+         n_qualified_in_sp = 0
+!
+         do aop = first_screened_aop, last_screened_aop
+!
+            if ((diag_xy(aop, 1) .le. span*diag_max ) .and. (n_qualified .lt. max_qualified)) then
+!
+               n_qualified_in_sp = n_qualified_in_sp + 1
+               n_qualified       = n_qualified + 1
+!
+            endif
+!
+         enddo
+!
+         if (n_qualified_in_sp .ne. 0) then
+!
+            n_qualified_sp = n_qualified_sp + 1
+!
+            call mem%alloc_int(sorted_qualified_in_sp_indices, n_qualified_in_sp, 1)
+            call mem%alloc(sorted_qualified_in_sp, n_qualified_in_sp, 1)
+!
+            call get_n_highest(n_qualified_in_sp, last_screened_aop - first_screened_aop + 1, &
+                              diag_xy(first:last, 1), sorted_qualified_in_sp, &
+                              sorted_qualified_in_sp_indices)
+!
+            n_old_qualified = (n_qualified - n_qualified_in_sp)
+!
+            do aop = 1, n_qualified_in_sp
+!
+               qualified_aop(aop + n_old_qualified, 1) = diag_to_aos(sorted_qualified_in_sp_indices(aop, 1) &
+                                                            + first_screened_aop - 1, 1)
+               qualified_aop(aop + n_old_qualified, 2) = diag_to_aos(sorted_qualified_in_sp_indices(aop, 1) &
+                                                            + first_screened_aop - 1, 2)
+!
+            enddo
+!
+            first_x = diag_to_aos(first_screened_aop, 1) ! alpha
+            first_y = diag_to_aos(first_screened_aop, 2) ! beta
+!
+            qualified_sp(sp, 1) = molecule%basis2shell(first_x)
+            qualified_sp(sp, 2) = molecule%basis2shell(first_y)
+!
+         endif
+!
+         if (n_qualified == max_qualified) then
+!
+            exit
+!
+         endif 
+!
+      enddo
+!
+      
+!
+
 !
       deallocate(screened_sp_offsets)
 !

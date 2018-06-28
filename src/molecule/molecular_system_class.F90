@@ -483,7 +483,7 @@ contains
 !
       class(molecular_system) :: molecule
 !
-      integer(i15) :: I = 0
+      integer(i15) :: I = 0, J = 0
 !
       get_n_aos_molecular_system = 0
 !
