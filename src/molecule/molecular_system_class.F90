@@ -34,6 +34,7 @@ module molecular_system_class
       procedure :: get_nuclear_repulsion => get_nuclear_repulsion_molecular_system
       procedure :: get_n_electrons       => get_n_electrons_molecular_system
 !
+      procedure :: get_n_aos => get_n_aos_molecular_system
       procedure :: get_n_shells => get_n_shells_molecular_system
       procedure :: get_shell_limits => get_shell_limits_molecular_system
       procedure :: basis2shell => basis2shell_molecular_system
@@ -471,6 +472,33 @@ contains
       enddo
 !
    end function get_n_shells_molecular_system
+!
+!
+   integer(i15) function get_n_aos_molecular_system(molecule)
+!!
+!!    Get number of AOs
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(molecular_system) :: molecule
+!
+      integer(i15) :: I = 0
+!
+      get_n_aos_molecular_system = 0
+!
+      do I = 1, molecule%n_atoms
+!
+         do J = 1, molecule%atoms(I,1)%n_shells
+!
+            get_n_aos_molecular_system = get_n_aos_molecular_system &
+                           + molecule%atoms(I,1)%shells(J,1)%size
+!
+         enddo
+!
+      enddo
+!
+   end function get_n_aos_molecular_system
 !
 !
    type(interval) function get_shell_limits_molecular_system(molecule, A)
