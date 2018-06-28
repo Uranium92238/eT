@@ -46,7 +46,7 @@ contains
 !
       integer(i15), dimension(:), allocatable   :: max_in_sp_indices
 !
-      integer(i15), dimension(:,:), allocatable :: diag_to_aos     
+      integer(i15), dimension(:,:), allocatable :: diag_to_aos
       integer(i15), dimension(:,:), allocatable :: sorted_max_sp
 !
       n_s   = molecule%get_n_shells()     ! number of shells
@@ -262,15 +262,8 @@ contains
       call mem%alloc(sorted_max_in_sp, n_screened_sp, 1)
       sorted_max_in_sp = zero
 !
-      call get_n_lowest(n_screened_sp, n_screened_sp, &
+      call get_n_highest(n_screened_sp, n_screened_sp, &
                         max_in_sp, sorted_max_in_sp, sorted_max_sp)
-!
-      do sp = 1, n_screened_sp
-!
-         write(output%unit, *) 'The ', sp, ' smallest shell pair is ', sorted_max_sp(sp, 1), &
-                               'with the value ', sorted_max_in_sp(sp, 1)
-!
-      enddo
 !
       deallocate(screened_sp_offsets)
 !

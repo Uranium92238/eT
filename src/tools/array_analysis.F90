@@ -214,6 +214,9 @@ contains
 !!    the index_list array before sending it to the routine. If  dim_x < n_to_sort,
 !!    index_list(K,1) will remain 0 for K > dim_x.
 !!
+!!    Note, EFK June 2018. There is a bug in this routine if two elements
+!!    are identical. Use get_n_lowest routine instead, if possible.
+!!
       implicit none
 !
       real(dp), dimension(:,:) :: x
@@ -350,6 +353,97 @@ contains
          enddo
 !
    end subroutine get_n_lowest
+!
+!
+   subroutine get_n_highest(n, size, vec, sorted_short_vec, index_list)
+!!
+!!    Get n highest elements
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!    Finds the n highest values of vec, sorts them, and returns them
+!!    in sorted_short_vec, together with an index list refering to the
+!!    indices of the highest elements in the original vector.
+!!
+      implicit none
+!
+      integer(i15) :: n    ! Number of elements wanted
+      integer(i15) :: size ! Size of original vector
+!
+      real(dp), dimension(size, 1) :: vec
+      real(dp), dimension(n, 1)    :: sorted_short_vec
+!
+      integer(i15), dimension(n, 1) :: index_list
+!
+!     Variables for sorting
+!
+      real(dp)     :: min
+      integer(i15) :: min_pos
+!
+      real(dp)     :: swap     = zero
+      integer(i15) :: swap_int = 0
+!
+      integer(i15) :: i = 0, j = 0
+!
+!        Placing the n first elements of vec into sorted_short_vec
+!
+         sorted_short_vec(1,1) = vec(1,1)
+         index_list(1,1) = 1
+!
+         min = sorted_short_vec(1,1)
+         min_pos = 1
+!
+         do i = 2, n
+!
+            sorted_short_vec(i,1) = vec(i,1)
+            index_list(i,1) = i
+!
+            if (sorted_short_vec(i,1) .le. min) then
+!
+               min = sorted_short_vec(i,1)
+               min_pos = i
+!
+            endif
+         enddo
+!
+!        Looping through the rest of vec to find lowest values
+!
+         do i = n + 1, size
+            if (vec(i,1) .gt. min) then
+!
+               sorted_short_vec(min_pos,1) = vec(i,1)
+               index_list(min_pos,1) = i
+               min = vec(i,1)
+!
+               do j = 1, n
+                  if (sorted_short_vec(j, 1) .lt. min) then
+!
+                     min = sorted_short_vec(j, 1)
+                     min_pos = j
+!
+                  endif
+               enddo
+            endif
+         enddo
+!
+!        Sorting sorted_short_vec
+!
+         do i = 1, n
+            do j = 1, n - 1
+               if (sorted_short_vec(j,1) .lt. sorted_short_vec(j+1, 1)) then
+!
+                  swap = sorted_short_vec(j,1)
+                  sorted_short_vec(j,1) = sorted_short_vec(j+1, 1)
+                  sorted_short_vec(j+1, 1) = swap
+!
+                  swap_int = index_list(j, 1)
+                  index_list(j,1) = index_list(j + 1,1)
+                  index_list(j + 1,1) = swap_int
+!
+               endif
+            enddo
+         enddo
+!
+   end subroutine get_n_highest
 !
 !
    function check_orthogonality(A, M, N)
