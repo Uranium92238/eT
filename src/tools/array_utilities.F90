@@ -170,4 +170,42 @@ contains
    end subroutine reduce_vector
 !
 !
+   subroutine reduce_array(array, array_vec, block_firsts, block_significant, n_blocks, dim, dim_reduced, columns)
+!!
+!!    Reduce array
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Cuts the significant row blocks out of a array and places them in a reduced size
+!!    array
+!!
+      implicit none
+!
+      integer(i15) :: dim, dim_reduced, n_blocks, columns
+!
+      logical, dimension(n_blocks, 1) :: block_significant
+      integer(i15), dimension(n_blocks, 1) :: block_significant
+!
+      real(dp), dimension(dim, :) :: array
+      real(dp), dimension(dim_reduced, :) :: array_reduced
+!
+      current_pos = 1
+!
+      do block = 1, n_blocks
+!
+         if (block_significant(block, 1)) then
+!
+            first = block_firsts(block)
+            last  = block_firsts(block + 1) - 1
+            size  = last - first + 1
+!
+            reduce_vec(current_pos : current_pos + size - 1, 1 : columns) = vec(first : last, 1 : columns)
+            current_pos = current_pos + size
+!
+         endif
+!
+      enddo
+!
+   end subroutine reduce_array
+!
+!
 end module array_utilities

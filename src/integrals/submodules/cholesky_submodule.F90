@@ -422,14 +422,18 @@ contains
 !
          endif
 !
-         call mem%alloc(cholesky_new, n_sig_aop, n_qual)
+         call mem%alloc(cholesky_new, n_sig_aop, n_qual_aop)
          cholesky_new = zero
 !
-         current_qual = 1
+         current_qual = 0
 !
          D_max = one
 !
-         do while ((current_qual .lt. n_qual_aop) .and. (D_max .gt. 1.0d-8))
+         construct_more_choleskys = .true.
+!
+         do while ((current_qual .lt. n_qual_aop) .and. construct_more_choleskys)
+!
+            current_qual = current_qual + 1
 !
             D_max = zero
 !
@@ -440,29 +444,41 @@ contains
                if (D_xy(xy, 1) .ge. D_max) then
 !
                   qual_max = qual
+                  max_xy = xy
                   D_max    = D_xy(xy, 1)
 !
                endif
 !
             enddo
 !
-            cholesky_new(: , current_qual) = g_wxyz(:, qual_max)/sqrt(diag_max)
+            if (D_max .gt. threshold) then
 !
-            do xy = 1, n_sig_aop
+               cholesky_basis(n_cholesky + current_qual, 1) = qual_aop(qual_max, 1)
+               cholesky_basis(n_cholesky + current_qual, 2) = qual_aop(qual_max, 2)
 !
-               D_xy(xy, 1) = D_xy(xy, 1) - cholesky_new(xy, current_qual)**2
+               cholesky_new(: , current_qual) = g_wxyz(:, qual_max)/sqrt(D_max)
 !
-               do K = 1, n_qual_aop
+               do xy = 1, n_sig_aop
 !
-                  g_wxyz(xy, K) = g_wxyz(xy, K) - cholesky_new(xy, current_qual)*cholesky_new(K, current_qual)
+                  D_xy(xy, 1) = D_xy(xy, 1) - cholesky_new(xy, current_qual)**2
+!
+                  do K = 1, n_qual_aop
+!
+                     g_wxyz(xy, K) = g_wxyz(xy, K) - cholesky_new(xy, current_qual)*cholesky_new(K, current_qual)
+!
+                  enddo
 !
                enddo
 !
-            enddo
+            else
 !
-            current_qual = current_qual + 1
+               construct_more_choleskys = .false.
+!
+            endif
 !
          enddo
+!
+         n_new_cholesky = current_qual
 !
 !        Find new significant diagonals
 !
@@ -519,13 +535,64 @@ contains
                             n_sig_aop,               &
                             n_new_sig_aop)
 !
+         call mem%alloc(D_xy_new, n_new_sig_sp, 1)
+!
+         call reduce_vector(D_xy, D_xy_new, sig_sp_to_first_sig_aop, new_sig, n_sig_sp, n_sig_aop, n_new_sig_aop)
+!
+         call mem%dealloc(D_xy, n_sig_aop, 1)
+         call mem%alloc(D_xy, n_new_sig_aop, 1)
+!
+         call dcopy(n_new_sig_aop, D_xy_new, 1, D_xy, 1)
+!
+         call mem%dealloc(D_xy_new, n_new_sig_aop)
+!
+         if (n_cholesky == 0) then
+!
+            call mem%alloc(cholesky, n_new_sig_aop, n_new_cholesky)
+!
+            call reduce_array(cholesky_new,             &
+                               cholesky,                 &
+                               sig_sp_to_first_sig_aop,  &
+                               new_sig,                  &
+                               n_sig_sp,                 &
+                               n_sig_aop,                &
+                               n_new_sig_aop,            &
+                               n_new_cholesky)
+!
+            call mem%dealloc(cholesky_new, n_sig_aop, n_qual_aop)
+!
+         else
+!
+            call mem%alloc(cholesky_copy, n_new_sig_aop, n_new_cholesky + n_cholesky)
+!
+            call reduce_array(cholesky,                  &
+                               cholesky_copy,            &
+                               sig_sp_to_first_sig_aop,  &
+                               new_sig,                  &
+                               n_sig_sp,                 &
+                               n_sig_aop,                &
+                               n_new_sig_aop,            &
+                               n_cholesky)
+!!
+            call reduce_array(cholesky_new,                       &
+                               cholesky_copy(1, n_cholesky + 1),  &
+                               sig_sp_to_first_sig_aop,           &
+                               new_sig,                           &
+                               n_sig_sp,                          &
+                               n_sig_aop,                         &
+                               n_new_sig_aop,                     &
+                               n_new_cholesky)
+!
+            call mem%dealloc(cholesky_new, n_sig_aop, n_qual_aop)
+!
+         endif
+!
 !        Deallocate old lists & reallocate + copy over new lists
+!
+         n_cholesky = n_cholesky + n_new_cholesky
 !
       enddo
 !
-      call mem%alloc(D_xy_new, n_new_sig_sp, 1)
-!
-      call reduce_vector(D_xy, D_xy_new, sig_sp_to_first_sig_aop, new_sig, n_sig_sp, n_sig_aop, n_new_sig_sp)
 !
    end subroutine cholesky_decompose_integral_manager
 !
