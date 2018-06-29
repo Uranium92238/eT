@@ -483,8 +483,14 @@ contains
 !
          enddo
 !
+!        Update index lists: sps -> aops and aops -> aos
+!
          call mem%alloc_int(new_sig_sp_to_first_sig_aop, n_new_sig_sp, 1)
          new_sig_sp_to_first_sig_aop = 0
+!
+         new_sig_sp    = 1
+         n_new_sig_aop = 0
+         first_sig_aop = 1
 !
          do sp = 1, n_sig_sp
 !
@@ -496,11 +502,24 @@ contains
                A_interval = get_shell_limits(A)
                B_interval = get_shell_limits(B)
 !
-               size_AB = get_size_sp(A_interval, B_interval)
+               new_sig_sp_to_first_sig_aop(new_sig_sp, 1) = first_sig_aop
 !
+               first_sig_aop = first_sig_aop + get_size_sp(A_interval, B_interval)
+               n_new_sig_aop = first_sig_aop - 1
+               new_sig_sp    = new_sig_sp + 1
             endif
 !
          enddo
+!
+         call reduce_vector(sig_aop_to_aos,          &
+                            new_sig_aop_to_aos,      &
+                            sig_sp_to_first_sig_aop, &
+                            new_sig_sp,              &
+                            n_sig_sp,                &
+                            n_sig_aop,               &
+                            n_new_sig_aop)
+!
+!        Deallocate old lists & reallocate + copy over new lists
 !
       enddo
 !
@@ -533,7 +552,7 @@ contains
 !
       endif
 !
-   end function get_size_AB
+   end function get_size_sp
 !
 !
 end submodule cholesky

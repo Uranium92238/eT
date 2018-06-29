@@ -71,7 +71,7 @@ contains
 !!
 !!    Is vector significant ?
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkstad, June 2018
-!!    
+!!
 !!    Returns true if all elements are below threshold
 !!
       implicit none
@@ -102,9 +102,9 @@ contains
 !
    integer(i15) function n_significant(vec, dim, threshold)
 !!
-!!    Number of significant in vector 
+!!    Number of significant in vector
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkstad, June 2018
-!!    
+!!
 !!    Returns the number of elements in vector larger than threshold
 !!
       implicit none
@@ -137,8 +137,8 @@ contains
 !!    Reduce vector
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Cuts the significant blocks out of a vector and places them in a reduced size 
-!!    vector 
+!!    Cuts the significant blocks out of a vector and places them in a reduced size
+!!    vector
 !!
       implicit none
 !
@@ -147,8 +147,8 @@ contains
       logical, dimension(n_blocks, 1) :: block_significant
       integer(i15), dimension(n_blocks, 1) :: block_significant
 !
-      real(dp), dimension(dim, 1) :: vec    
-      real(dp), dimension(dim_reduced, 1) :: vec_reduced    
+      real(dp), dimension(dim, 1) :: vec
+      real(dp), dimension(dim_reduced, 1) :: vec_reduced
 !
       current_pos = 1
 !
