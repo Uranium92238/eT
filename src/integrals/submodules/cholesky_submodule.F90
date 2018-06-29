@@ -509,12 +509,10 @@ contains
 !
       enddo
 !
-
-
    end subroutine cholesky_decompose_integral_manager
 !
 !
-   module function get_size_sp(A_interval, B_interval)
+   function get_size_sp(A_interval, B_interval)
 !!
 !!    Get size shell pair
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018

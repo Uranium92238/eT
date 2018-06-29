@@ -132,4 +132,42 @@ contains
    end function is_significant
 !
 !
+   subroutine reduce_vector(vec, reduced_vec, block_firsts, block_significant, n_blocks, dim, dim_reduced)
+!!
+!!    Reduce vector
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Cuts the significant blocks out of a vector and places them in a reduced size 
+!!    vector 
+!!
+      implicit none
+!
+      integer(i15) :: dim, dim_reduced, n_blocks
+!
+      logical, dimension(n_blocks, 1) :: block_significant
+      integer(i15), dimension(n_blocks, 1) :: block_significant
+!
+      real(dp), dimension(dim, 1) :: vec    
+      real(dp), dimension(dim_reduced, 1) :: vec_reduced    
+!
+      current_pos = 1
+!
+      do block = 1, n_blocks
+!
+         if (block_significant(block, 1)) then
+!
+            first = block_firsts(block)
+            last  = block_firsts(block + 1) - 1
+            size  = last - first + 1
+!
+            reduce_vec(current_pos : current_pos + size - 1, 1) = vec(first : last, 1)
+            current_pos = current_pos + size
+!
+         endif
+!
+      enddo
+!
+   end subroutine reduce_vector
+!
+!
 end module array_utilities
