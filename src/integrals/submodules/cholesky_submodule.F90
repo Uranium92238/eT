@@ -459,13 +459,13 @@ contains
 !
             current_qual = current_qual + 1
 !
-      enddo
+         enddo
 !
-      call mem%dealloc(cholesky, dim_screened, n_qualified)
+         call mem%dealloc(cholesky, dim_screened, n_qualified)
 !
-      deallocate(screened_sp_offsets)
-      call mem%dealloc_int(qualified_aop, n_qualified, 3)
-      call mem%dealloc_int(qualified_sp, n_qualified_sp, 3)
+         deallocate(screened_sp_offsets)
+         call mem%dealloc_int(qual_aop, n_qual, 3)
+         call mem%dealloc_int(qual_sp, n_qual_sp, 3)
 !
       enddo
 !
