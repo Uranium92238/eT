@@ -26,8 +26,9 @@ contains
 !!
 !!       g_αβ,γδ = sum_J L_αβ,J L_αβ,J^T.
 !!
-!!    This reconstruction is handled by specialized get-routines and should never be
-!!    be performed directly by the developer.
+!!    This reconstruction of g_αβ,γδ should not be performed directly by the developer.
+!!    Specialized get-routines for integrals in MO basis is implemented, and AO integrals 
+!!    could be calculated directly using the libint-interface routine get_ao_g_wxyz.
 !!
 !!    The algorithm in the routine is based on the algorithm given on p. 333-334,
 !!    Chapter 13, "Cholesky Decomposition Techniques in Electronic Structure Theory"
@@ -36,9 +37,9 @@ contains
 !!
 !!    To prepare, the diagonal terms, D_αβ = g_αβ,αβ, are screened in shell-pairs (AB),
 !!    where shell-pairs for which all diagonals are less than a given threshold (e.g., 10-8)
-!!    are ignored. Afterwards, a number (<= max_qual) of AO pairs are qualified to be decomposed,
+!!    are ignored. Afterwards, a number (<= max_qual) of diagonals are qualified to be decomposed,
 !!    Max_qual is 100 by default, but fewer AO pairs are qualified if there are less than 100
-!!    diagonal elements which satisfy D_αβ > span * max(D_αβ), the qualification criterion. The
+!!    diagonal elements which satisfy the qualification criterion, D_αβ > span * max(D_αβ). The
 !!    ordering of the qualified diagonals are from the largest to the smallest diagonal within
 !!    each shell pair, which themselves are ordered according to their maximum element (from
 !!    largest to smallest). The span factor is by deafult 10-3. From the qualified AO pairs {γδ*},
@@ -667,7 +668,13 @@ contains
 !
          call mem%alloc(D_xy_new, n_new_sig_sp, 1)
 !
-         call reduce_vector(D_xy, D_xy_new, sig_sp_to_first_sig_aop, new_sig_sp, n_sig_sp, n_sig_aop, n_new_sig_aop)
+         call reduce_vector(D_xy,                     &
+                           D_xy_new,                  &
+                           sig_sp_to_first_sig_aop,   &
+                           new_sig_sp,                &
+                           n_sig_sp,                  &
+                           n_sig_aop,                 &
+                           n_new_sig_aop)
 !
          call mem%dealloc(D_xy, n_sig_aop, 1)
          call mem%alloc(D_xy, n_new_sig_aop, 1)
