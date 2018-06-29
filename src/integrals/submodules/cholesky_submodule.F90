@@ -605,7 +605,10 @@ contains
 !
    module function get_size_sp(A_interval, B_interval)
 !!
+!!    Get size shell pair
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+!!    Returns size of diagonal for a given shell pair.
 !!
       implicit none
 !
