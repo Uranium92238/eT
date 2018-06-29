@@ -20,6 +20,11 @@ contains
 !!    Cholesky decompose
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+!!    The routine has the following index mappings:
+!!
+!!    ....
+!!
+!!
       implicit none
 !
       class(integral_manager) :: integrals
@@ -97,9 +102,12 @@ contains
 !
 !     Construct significant diagonal
 !
-      call mem%alloc_int(significant_sp_to_first_significant_aop(n_significant_sp))
+      call mem%alloc_int(significant_sp_to_first_significant_aop, n_significant_sp, 1)
       significant_sp_to_first_significant_aop = 0
       first_significant_aop = 1
+!
+      call mem%alloc_int(significant_sp_to_shells, n_significant_sp, 2) ! A and B for AB pair
+      significant_sp_to_shells = 0
 !
       sp = 1
       significant_sp = 1
@@ -113,6 +121,9 @@ contains
 !
                A_interval = molecule%get_shell_limits(A)
                B_interval = molecule%get_shell_limits(B)
+!
+               significant_sp_to_shells(significant_sp, 1) = A
+               significant_sp_to_shells(significant_sp, 2) = B
 !
                call mem%alloc(g_AB_AB, &
                      (A_interval%size)*(B_interval%size), &
@@ -166,6 +177,7 @@ contains
 !
          enddo
       enddo
+!
 !
 !
    end subroutine cholesky_decompose_integral_manager
