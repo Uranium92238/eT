@@ -20,10 +20,56 @@ contains
 !!    Cholesky decompose
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    The routine has the following index mappings:
+!!    In this routine, the electronic repulsion AO integrals g_αβ,γδ = (αβ|γδ)
+!!    are Cholesky decomposed, yielding a set of Cholesky vectors L_αβ,J, J = 1,
+!!    2, 3, ..., n_J. From these, the integrals can be reconstructed as
 !!
-!!    ....
+!!       g_αβ,γδ = sum_J L_αβ,J L_αβ,J^T.
 !!
+!!    This reconstruction is handled by specialized get-routines and should never be
+!!    be performed directly by the developer.
+!!
+!!    The algorithm in the routine is based on the algorithm given on p. 333-334,
+!!    Chapter 13, "Cholesky Decomposition Techniques in Electronic Structure Theory"
+!!    (Aquilante et al.), in the monograph "Linear-Scaling Techniques in Computational
+!!    Chemistry and Physics" (2011, R. Zalesny et al.)
+!!
+!!    To prepare, the diagonal terms, D_αβ = g_αβ,αβ, are screened in shell-pairs (AB),
+!!    where shell-pairs for which all diagonals are less than a given threshold (e.g., 10-8)
+!!    are ignored. Afterwards, a number (<= max_qual) of AO pairs are qualified to be decomposed,
+!!    Max_qual is 100 by default, but fewer AO pairs are qualified if there are less than 100
+!!    diagonal elements which satisfy D_αβ > span * max(D_αβ), the qualification criterion. The
+!!    ordering of the qualified diagonals are from the largest to the smallest diagonal within
+!!    each shell pair, which themselves are ordered according to their maximum element (from
+!!    largest to smallest). The span factor is by deafult 10-3. From the qualified AO pairs {γδ*},
+!!    a set of Cholesky vectors are formed as follows:
+!!
+!!       L_αβ^J = (αβ|γδ*)/sqrt(D_γδ*),
+!!
+!!    where γδ* refers to the AO index pair that corresponds to a qualified AO pair. Each qualified
+!!    AO pair gives rise to one Cholesky vector (labeled by J = 1, 2, 3, ...).
+!!
+!!    A qualified diagonal will only give rise to a Cholesky vector if the corresponding diagonal is
+!!    above 10-8 after updating the diagonal elements using the larger diagonals among the qualified
+!!    AO pairs. In particular, for a batch of qualified AO pairs, the diagonal is updated as
+!!
+!!       D_αβ <- D_αβ - (L_αβ^J)^2,
+!!
+!!    implying that certain qualified AO pairs γδ* might be ignored, since the associated diagonal elements
+!!    D_γδ* could become less than the given threshold (e.g., 1.0D-8). The non-diagonal elements are similarly
+!!    updated as
+!!
+!!       (αβ|γδ*) <- (αβ|γδ*) - L_αβ^J L_γδ*^J, (1)
+!!
+!!    where γδ* is restricted by the qualified AO pairs and αβ runs over all the significant AO pairs
+!!    in the given cycle.
+!!
+!!    In each new cycle, the previously made Cholesky vectors are used to subtract from (αβ|γδ),
+!!    according to (1), and the new qualified AO pairs are used as described above. The αβ index
+!!    is restricted to significant diagonals (e.g., >= 1.0D-8), which is reduced from cycle to
+!!    cycle. Only the significant parts {αβ} of the previous L_αβ^J vectors are held in memory,
+!!    and the end result is a Cholesky basis: a set of AO pairs {γδ} that are to be used to construct
+!!    the full set of Cholesky vectors. 
 !!
       implicit none
 !
@@ -556,7 +602,9 @@ contains
 !
                first_sig_aop = first_sig_aop + get_size_sp(A_interval, B_interval)
                n_new_sig_aop = first_sig_aop - 1
+!
                current_new_sig_sp    = current_new_sig_sp + 1
+
             endif
 !
          enddo
@@ -607,7 +655,7 @@ contains
                                n_sig_aop,                &
                                n_new_sig_aop,            &
                                n_cholesky)
-!!
+!
             call reduce_array(cholesky_new,                       &
                                cholesky_copy(1, n_cholesky + 1),  &
                                sig_sp_to_first_sig_aop,           &
