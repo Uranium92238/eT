@@ -20,6 +20,11 @@ contains
 !!    Cholesky decompose
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+!!    The routine has the following index mappings:
+!!
+!!    ....
+!!
+!!
       implicit none
 !
       class(integral_manager) :: integrals
@@ -121,6 +126,9 @@ contains
                A_interval = molecule%get_shell_limits(A)
                B_interval = molecule%get_shell_limits(B)
 !
+               significant_sp_to_shells(significant_sp, 1) = A
+               significant_sp_to_shells(significant_sp, 2) = B
+!
                call mem%alloc(g_AB_AB, &
                      (A_interval%size)*(B_interval%size), &
                      (A_interval%size)*(B_interval%size))
@@ -176,7 +184,7 @@ contains
 !
       n_cholesky = 0
 !
-      do while( .not. done) 
+      do while (.not. done)
 !
 !        Shell maximums and shell maximums indices vectors
 !
