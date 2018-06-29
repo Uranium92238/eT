@@ -38,6 +38,8 @@ contains
       n_s   = molecule%get_n_shells() ! Number of shells
       n_sp  = n_s*(n_s + 1)/2         ! Number of shell pairs packed
 !
+!     Pre-screening of full diagonal
+!
       allocate(significant(n_sp, 1))
       significant = .false.
 !
@@ -79,17 +81,8 @@ contains
 !
             if (significant(sp)) then
 !
-               if (A .eq. B) then
-!
-                  n_significant_aop = n_significant_aop + &
-                           (A_interval%size)*(A_interval%size + 1)/2
-!
-               else
-!
-                  n_significant_aop = n_significant_aop + &
-                           (A_interval%size)*(B_interval%size)
-!
-               endif
+               n_significant_aop = n_significant_aop + &
+                              get_size_sp(A_interval, B_interval)
 !
             endif
 !
@@ -97,6 +90,10 @@ contains
 !
          enddo
       enddo
+!
+!     Construct significant diagonal
+!
+
 !
    end subroutine cholesky_decompose_integral_manager
 !
@@ -246,6 +243,9 @@ contains
 !
       do B = 1, n_s
          do A = B, n_s
+!
+            write(output%unit, *) '1'
+            flush(output%unit)
 !
             A_interval = molecule%get_shell_limits(A)
             B_interval = molecule%get_shell_limits(B)
@@ -572,25 +572,21 @@ contains
 !
          enddo
 !
-         if ( diag_max .gt. 1.0d-8) then
+         cholesky(: , current_qual) = g_wxyz (:, qual_max)/sqrt(diag_max)
 !
-            cholesky(: , current_qual) = g_wxyz (:, qual_max)/sqrt(diag_max)
+         do xy = 1, dim_screened
 !
-            do xy = 1, dim_screened
+            diag_xy(xy, 1) = diag_xy(xy, 1) - cholesky(xy, current_qual)**2
 !
-               diag_xy(xy, 1) = diag_xy(xy, 1) - cholesky(xy, current_qual)**2
+            do K = 1, n_qualified
 !
-               do K = 1, n_qualified
-!
-                  g_wxyz(xy, K) = g_wxyz(xy, K) - cholesky(xy, current_qual)*cholesky(K, current_qual)
-!
-               enddo
+               g_wxyz(xy, K) = g_wxyz(xy, K) - cholesky(xy, current_qual)*cholesky(K, current_qual)
 !
             enddo
 !
-            current_qual = current_qual + 1
+         enddo
 !
-         endif
+         current_qual = current_qual + 1
 !
       enddo
 !
