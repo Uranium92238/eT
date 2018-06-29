@@ -44,8 +44,8 @@ contains
 !
 !     Pre-screening of full diagonal
 !
-      allocate(sig(n_sp, 1))
-      sig = .false.
+      allocate(sig_sp(n_sp, 1))
+      sig_sp = .false.
 !
       sp = 1                ! Shell pair number
       n_sig_aop = 0 ! Number of significant AO pairs
@@ -80,11 +80,11 @@ contains
 !
 !           Determine whether shell pair is significant
 !
-            sig(sp) = is_significant(D_AB, (A_interval%size)*(B_interval%size), threshold))
+            sig_sp(sp) = is_significant(D_AB, (A_interval%size)*(B_interval%size), threshold))
 !
             call mem%dealloc(D_AB, (A_interval%size)*(B_interval%size), 1)
 !
-            if (sig(sp)) then
+            if (sig_sp(sp)) then
 !
                n_sig_aop = n_sig_aop + &
                               get_size_sp(A_interval, B_interval)
@@ -108,21 +108,21 @@ contains
 !     This is convenient because significant_sp_to_first_significant_aop will be used to calculate lengths.
 !
       sp              = 1
-      sig_sp          = 1
+      current_sig_sp  = 1
       first_sig_aop   = 1
 !
       do B = 1, n_s
          do A = B, n_s
 !
-            if (sig(sp)) then
+            if (sig_sp(sp)) then
 !
-               sig_sp_to_first_sig_aop(sig_sp, 1) = first_sig_aop
+               sig_sp_to_first_sig_aop(current_sig_sp, 1) = first_sig_aop
 !
                A_interval = molecule%get_shell_limits(A)
                B_interval = molecule%get_shell_limits(B)
 !
-               sig_sp_to_shells(sig_sp, 1) = A
-               sig_sp_to_shells(sig_sp, 2) = B
+               sig_sp_to_shells(current_sig_sp, 1) = A
+               sig_sp_to_shells(current_sig_sp, 2) = B
 !
                call mem%alloc(g_AB_AB, &
                      (A_interval%size)*(B_interval%size), &
@@ -168,7 +168,7 @@ contains
 !
                first_sig_aop = first_sig_aop + get_size_sp(A_interval, B_interval)
 !
-               sig_sp = sig_sp + 1
+               current_sig_sp = current_sig_sp + 1
 !
             endif ! End of if (significant)
 !
@@ -225,8 +225,7 @@ contains
          n_qual_sp   = 0
 !
          call mem%alloc_int(qual_aop, max_qual, 3)
-         call mem%alloc_int(qual_sp_to_shells, n_sp, 2)
-         call mem%alloc_int(qual_sp_to_n_qual, n_sp, 1)
+         call mem%alloc_int(qual_sp_to_shells, n_sp, 3)
 !
          do sp = 1, n_sig_sp
 !
@@ -337,7 +336,7 @@ contains
             do B = 1, n_s
                do A = B, n_s
 !
-                  if (sig(AB_sp)) then
+                  if (sig_sp(AB_sp)) then
 !
                      A_interval = molecule%get_shell_limits(A)
                      B_interval = molecule%get_shell_limits(B)
@@ -390,7 +389,7 @@ contains
                                        (A_interval%size)*(B_interval%size), &
                                        (C_interval%size)*(D_interval%size))
 !
-                     sig_ab_sp = sig_ab_sp + 1
+                     sig_AB_sp = sig_AB_sp + 1
 !
                   endif
 !
@@ -568,7 +567,7 @@ contains
             call reduce_array(cholesky,                  &
                                cholesky_copy,            &
                                sig_sp_to_first_sig_aop,  &
-                               new_sig,                  &
+                               new_sig_sp,               &
                                n_sig_sp,                 &
                                n_sig_aop,                &
                                n_new_sig_aop,            &
@@ -577,7 +576,7 @@ contains
             call reduce_array(cholesky_new,                       &
                                cholesky_copy(1, n_cholesky + 1),  &
                                sig_sp_to_first_sig_aop,           &
-                               new_sig,                           &
+                               new_sig_sp,                        &
                                n_sig_sp,                          &
                                n_sig_aop,                         &
                                n_new_sig_aop,                     &
@@ -589,7 +588,27 @@ contains
 !
 !        Deallocate old lists & reallocate + copy over new lists
 !
+         deallocate(sig_sp)
+         allocate(sig_sp(n_new_sig_sp,1))
+         sig_sp = new_sig_sp
+         deallocate(new_sig_sp)
+!
+         call mem%dealloc_int(sig_sp_to_first_sig_aop, n_sig_sp + 1, 1)
+         call mem%alloc_int(sig_sp_to_first_sig_aop, n_new_sig_sp + 1, 1)
+         sig_sp_to_first_sig_aop = new_sig_sp_to_first_sig_aop
+         call mem%dealloc_int(new_sig_sp_to_first_sig_aop, n_new_sig_sp + 1, 1)
+!
+         call mem%dealloc_int(sig_sp_to_first_sig_aop, n_sig_sp, 1)
+         call mem%alloc_int(sig_sp_to_first_sig_aop, n_new_sig_sp, 1)
+         sig_sp_to_first_sig_aop = new_sig_sp_to_first_sig_aop
+         call mem%dealloc_int(new_sig_sp_to_first_sig_aop, n_new_sig_sp, 1)
+!
+         n_sig_sp = n_new_sig_sp
+!
          n_cholesky = n_cholesky + n_new_cholesky
+!
+         call mem%dealloc_int(qual_aop, n_qual_aop, 3)
+         call mem%dealloc_int(qual_sp, n_qual_sp, 3)
 !
       enddo
 !
