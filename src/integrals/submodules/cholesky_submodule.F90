@@ -30,6 +30,7 @@ contains
       integer(i15) :: A, B
 !
       integer(i15) :: n_significant_aop
+      integer(i15) :: n_significant_sp
 !
       logical, dimension(:,:), allocatable :: significant
 !
@@ -45,6 +46,7 @@ contains
 !
       sp = 1                ! Shell pair number
       n_significant_aop = 0 ! Number of significant AO pairs
+      n_significant_sp  = 0 ! Number of significant shell pairs
 !
       do B = 1, n_s
          do A = B, n_s
@@ -84,6 +86,8 @@ contains
                n_significant_aop = n_significant_aop + &
                               get_size_sp(A_interval, B_interval)
 !
+               n_significant_sp = n_significant_sp + 1
+!
             endif
 !
             sp = sp + 1
@@ -93,7 +97,76 @@ contains
 !
 !     Construct significant diagonal
 !
-
+      call mem%alloc_int(significant_sp_to_first_significant_aop(n_significant_sp))
+      significant_sp_to_first_significant_aop = 0
+      first_significant_aop = 1
+!
+      sp = 1
+      significant_sp = 1
+!
+      do B = 1, n_s
+         do A = B, n_s
+!
+            if (significant(sp)) then
+!
+               significant_sp_to_first_significant_aop(significant_sp, 1) = first_significant_aop
+!
+               A_interval = molecule%get_shell_limits(A)
+               B_interval = molecule%get_shell_limits(B)
+!
+               call mem%alloc(g_AB_AB, &
+                     (A_interval%size)*(B_interval%size), &
+                     (A_interval%size)*(B_interval%size))
+!
+               g_AB_AB = zero
+               call integrals%get_ao_g_wxyz(g_AB_AB, A, B, A, B)
+!
+               if (A .eq. B) then
+!
+                  do x = 1, A_interval%size
+                     do y = 1, B_interval%size
+!
+                        xy = A_interval%size*(y - 1) + x
+                        xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
+!
+                        D_xy(xy_packed + first_significant_aop - 1, 1) = g_wxyz(xy, xy)
+!
+                        significant_aop_to_aos(xy_packed + first_significant_aop - 1, 1) = &
+                                                                           A_interval%first + x - 1
+!
+                        significant_aop_to_aos(xy_packed + first_significant_aop - 1, 2) = &
+                                                                           B_interval%first + y - 1
+!
+                     enddo
+                  enddo
+!
+               else ! A ≠ B
+!
+                  do x = 1, (A_interval%size)
+                     do y = 1, (B_interval%size)
+!
+                        xy = A_interval%size*(y - 1) + x
+                        D_xy(xy + first_significant_aop - 1, 1) = g_wxyz(xy,xy)
+!
+                        significant_aop_to_aos(xy + first_significant_aop - 1, 1) = A_interval%first + x - 1
+                        significant_aop_to_aos(xy + first_significant_aop - 1, 2) = B_interval%first + y - 1
+!
+                     enddo
+                  enddo
+!
+               endif
+!
+               first_significant_aop = first_significant_aop + get_size_sp(A_interval, B_interval)
+!
+               significant_sp = significant_sp + 1
+!
+            endif ! End of if (significant)
+!
+            sp = sp + 1
+!
+         enddo
+      enddo
+!
 !
    end subroutine cholesky_decompose_integral_manager
 !
