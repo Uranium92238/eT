@@ -31,8 +31,44 @@ contains
       class(molecular_system) :: molecule
 !
       integer(i15) :: n_s, n_sp
+      integer(i15) :: n_cholesky, n_new_cholesky
+      integer(i15) :: n_new_sig_sp, n_new_sig_aop
+      integer(i15) :: n_sig_sp, n_sig_aop, n_qual_sp, sig_AB_sp
+      integer(i15) :: n_old_qual_aop, n_qual_aop, n_qual_aop_in_sp,  n_qual_aop_in_prev_sps
 !
-      integer(i15) :: A, B
+      integer(i15) :: A, B, C, D, AB_sp, CD_sp
+      integer(i15) :: I, K
+      integer(i15) :: w, x, y, z, xy, yz, wx, xy_packed, wx_packed
+      integer(i15) :: first, last, first_sig_aop, last_sig_aop, first_x, first_y
+      integer(i15) :: sp, aop, current_qual, current_sig_sp, qual, qual_max, current_new_sig_sp
+!
+      type(interval) :: A_interval, B_interval, C_interval, D_interval
+!
+      logical, dimension(:, :), allocatable :: sig_sp, new_sig_sp
+!
+      real(dp), dimension(:,:), allocatable :: D_AB, D_xy, D_xy_new
+      real(dp), dimension(:,:), allocatable :: g_AB_AB, g_AB_CD, g_wxyz
+      real(dp), dimension(:,:), allocatable :: cholesky, cholesky_new
+      real(dp), dimension(:,:), allocatable :: cholesky_copy, cholesky_basis
+      real(dp), dimension(:,:), allocatable :: sorted_max_in_sig_sp
+      real(dp), dimension(:,:), allocatable :: sorted_qual_aop_in_sp  
+      real(dp), dimension(:,:), allocatable :: max_in_sig_sp 
+!
+      integer(i15), dimension(:,:), allocatable :: sig_sp_to_first_sig_aop
+      integer(i15), dimension(:,:), allocatable :: new_sig_sp_to_first_sig_aop
+      integer(i15), dimension(:,:), allocatable :: new_sig_aop_to_aos
+      integer(i15), dimension(:,:), allocatable :: sig_aop_to_aos
+      integer(i15), dimension(:,:), allocatable :: max_in_sig_sp_indices
+      integer(i15), dimension(:,:), allocatable :: qual_aop, qual_sp
+      integer(i15), dimension(:,:), allocatable :: qual_aop_copy, qual_sp_copy
+      integer(i15), dimension(:,:), allocatable :: sorted_qual_aop_in_sp_indices
+      integer(i15), dimension(:,:), allocatable :: qual_sp_to_shells
+      integer(i15), dimension(:,:), allocatable :: sorted_max_sig_sp
+      integer(i15), dimension(:,:), allocatable :: sig_sp_to_shells
+!
+      logical :: construct_more_choleskys, done
+!
+      real(dp) :: D_max, max_in_sp
 !
       real(dp), parameter :: threshold = 1.0D-8
       real(dp), parameter :: span      = 1.0D-3
@@ -54,8 +90,8 @@ contains
       do B = 1, n_s
          do A = B, n_s
 !
-            A_interval = get_shell_limits(A)
-            B_interval = get_shell_limits(B)
+            A_interval = molecule%get_shell_limits(A)
+            B_interval = molecule%get_shell_limits(B)
 !
 !           Construct diagonal D_AB for the given shell pair
 !
@@ -80,11 +116,11 @@ contains
 !
 !           Determine whether shell pair is significant
 !
-            sig_sp(sp) = is_significant(D_AB, (A_interval%size)*(B_interval%size), threshold))
+            sig_sp(sp, 1) = is_significant(D_AB, (A_interval%size)*(B_interval%size), threshold)
 !
             call mem%dealloc(D_AB, (A_interval%size)*(B_interval%size), 1)
 !
-            if (sig_sp(sp)) then
+            if (sig_sp(sp, 1)) then
 !
                n_sig_aop = n_sig_aop + &
                               get_size_sp(A_interval, B_interval)
@@ -114,7 +150,7 @@ contains
       do B = 1, n_s
          do A = B, n_s
 !
-            if (sig_sp(sp)) then
+            if (sig_sp(sp, 1)) then
 !
                sig_sp_to_first_sig_aop(current_sig_sp, 1) = first_sig_aop
 !
@@ -199,10 +235,10 @@ contains
 !
             do I = first, last
 !
-               if (diag_xy(I, 1) .gt. max_in_sig_sp(sp, 1)) then
+               if (D_xy(I, 1) .gt. max_in_sig_sp(sp, 1)) then
 !
                   max_in_sig_sp(sp, 1)       = D_xy(I, 1)
-                  max_in_sig_sp_indices(sp)  = I
+                  max_in_sig_sp_indices(sp, 1)  = I
 !
                endif
 !
@@ -212,15 +248,15 @@ contains
 !
 !        Sort from largest to smallest by determining an index array
 !
-         call mem%alloc(sorted_max_sig_sp, n_sig_sp,1)
+         call mem%alloc_int(sorted_max_sig_sp, n_sig_sp,1)
          sorted_max_sig_sp = 0
 !
          call mem%alloc(sorted_max_in_sig_sp, n_sig_sp, 1)
          sorted_max_in_sig_sp = zero
 !
-         call get_n_highest(n_sig_sp, n_sig_sp, max_in_sig_sp, sorted_max_in_sig_sp, sorted_max_siq_sp)
+         call get_n_highest(n_sig_sp, n_sig_sp, max_in_sig_sp, sorted_max_in_sig_sp, sorted_max_sig_sp)
 !
-         D_max       = sorted_max_in_siq_sp(1, 1)
+         D_max       = sorted_max_in_sig_sp(1, 1)
          n_qual_aop  = 0
          n_qual_sp   = 0
 !
@@ -280,8 +316,8 @@ contains
                qual_sp(sp, 2) = molecule%basis2shell(first_y)
                qual_sp(sp, 1) = n_qual_aop_in_sp
 !
-               call mem%dealloc_int(sorted_qual_aop_in_sp_indices, n_qual_in_sp, 1)
-               call mem%dealloc(sorted_qual_aop_in_sp, n_qual_in_sp, 1)
+               call mem%dealloc_int(sorted_qual_aop_in_sp_indices, n_qual_aop_in_sp, 1)
+               call mem%dealloc(sorted_qual_aop_in_sp, n_qual_aop_in_sp, 1)
 !
             endif
 !
@@ -336,7 +372,7 @@ contains
             do B = 1, n_s
                do A = B, n_s
 !
-                  if (sig_sp(AB_sp)) then
+                  if (sig_sp(AB_sp, 1)) then
 !
                      A_interval = molecule%get_shell_limits(A)
                      B_interval = molecule%get_shell_limits(B)
@@ -362,8 +398,8 @@ contains
                                  wx_packed = (max(w,x)*(max(w,x)-3)/2) + w + x
                                  wx = A_interval%size*(x-1) + w
 !
-                                 g_wxyz(sig_sp_to_first_sig_aop(sig_AB_sp) + wx_packed - 1, aop + n_qual_aop_in_prev_sps) &
-                                       = g_ABCD(wx, yz)
+                                 g_wxyz(sig_sp_to_first_sig_aop(sig_AB_sp, 1) + wx_packed - 1, aop + n_qual_aop_in_prev_sps) &
+                                       = g_AB_CD(wx, yz)
 !
                               enddo
                            enddo
@@ -375,8 +411,8 @@ contains
 !
                                  wx = A_interval%size*(x-1) + w
 !
-                                 g_wxyz(sig_sp_to_first_sig_aop(sig_AB_sp) + wx - 1, aop + n_qual_aop_in_prev_sps) &
-                                       = g_ABCD(wx, yz)
+                                 g_wxyz(sig_sp_to_first_sig_aop(sig_AB_sp, 1) + wx - 1, aop + n_qual_aop_in_prev_sps) &
+                                       = g_AB_CD(wx, yz)
 !
                               enddo
                            enddo
@@ -385,7 +421,7 @@ contains
 !
                      enddo
 !
-                     call mem%dealloc(g_ABCD, &
+                     call mem%dealloc(g_AB_CD, &
                                        (A_interval%size)*(B_interval%size), &
                                        (C_interval%size)*(D_interval%size))
 !
@@ -443,7 +479,6 @@ contains
                if (D_xy(xy, 1) .ge. D_max) then
 !
                   qual_max = qual
-                  max_xy = xy
                   D_max    = D_xy(xy, 1)
 !
                endif
@@ -490,11 +525,11 @@ contains
             first = sig_sp_to_first_sig_aop(sp, 1)
             last  = sig_sp_to_first_sig_aop(sp + 1, 1) - 1
 !
-            new_sig_sp(sp) = is_significant(D_xy(first:last, 1), &
+            new_sig_sp(sp, 1) = is_significant(D_xy(first:last, 1), &
                                             last - first + 1,    &
                                             threshold)
 !
-            if (new_sig_sp(sp)) n_new_sig_sp = n_new_sig_sp + 1
+            if (new_sig_sp(sp, 1)) n_new_sig_sp = n_new_sig_sp + 1
 !
          enddo
 !
@@ -503,30 +538,30 @@ contains
          call mem%alloc_int(new_sig_sp_to_first_sig_aop, n_new_sig_sp, 1)
          new_sig_sp_to_first_sig_aop = 0
 !
-         new_sig_sp    = 1
+         current_new_sig_sp    = 1
          n_new_sig_aop = 0
          first_sig_aop = 1
 !
          do sp = 1, n_sig_sp
 !
-            if (new_sig_sp(sp)) then
+            if (new_sig_sp(sp, 1)) then
 !
                A = sig_sp_to_shells(sp, 1)
                B = sig_sp_to_shells(sp, 2)
 !
-               A_interval = get_shell_limits(A)
-               B_interval = get_shell_limits(B)
+               A_interval = molecule%get_shell_limits(A)
+               B_interval = molecule%get_shell_limits(B)
 !
-               new_sig_sp_to_first_sig_aop(new_sig_sp, 1) = first_sig_aop
+               new_sig_sp_to_first_sig_aop(current_new_sig_sp, 1) = first_sig_aop
 !
                first_sig_aop = first_sig_aop + get_size_sp(A_interval, B_interval)
                n_new_sig_aop = first_sig_aop - 1
-               new_sig_sp    = new_sig_sp + 1
+               current_new_sig_sp    = current_new_sig_sp + 1
             endif
 !
          enddo
 !
-         call reduce_vector(sig_aop_to_aos,          &
+         call reduce_vector_int(sig_aop_to_aos,          &
                             new_sig_aop_to_aos,      &
                             sig_sp_to_first_sig_aop, &
                             new_sig_sp,              &
@@ -536,14 +571,14 @@ contains
 !
          call mem%alloc(D_xy_new, n_new_sig_sp, 1)
 !
-         call reduce_vector(D_xy, D_xy_new, sig_sp_to_first_sig_aop, new_sig, n_sig_sp, n_sig_aop, n_new_sig_aop)
+         call reduce_vector(D_xy, D_xy_new, sig_sp_to_first_sig_aop, new_sig_sp, n_sig_sp, n_sig_aop, n_new_sig_aop)
 !
          call mem%dealloc(D_xy, n_sig_aop, 1)
          call mem%alloc(D_xy, n_new_sig_aop, 1)
 !
          call dcopy(n_new_sig_aop, D_xy_new, 1, D_xy, 1)
 !
-         call mem%dealloc(D_xy_new, n_new_sig_aop)
+         call mem%dealloc(D_xy_new, n_new_sig_aop, 1)
 !
          if (n_cholesky == 0) then
 !
@@ -552,7 +587,7 @@ contains
             call reduce_array(cholesky_new,             &
                                cholesky,                 &
                                sig_sp_to_first_sig_aop,  &
-                               new_sig,                  &
+                               new_sig_sp,                  &
                                n_sig_sp,                 &
                                n_sig_aop,                &
                                n_new_sig_aop,            &
@@ -616,7 +651,7 @@ contains
    end subroutine cholesky_decompose_integral_manager
 !
 !
-   function get_size_sp(A_interval, B_interval)
+   integer(i15) function get_size_sp(A_interval, B_interval)
 !!
 !!    Get size shell pair
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
