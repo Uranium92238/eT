@@ -69,7 +69,7 @@ contains
 !
    logical function is_significant(vec, dim, threshold)
 !!
-!!    Is vector screened 
+!!    Is vector significant ?
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkstad, June 2018
 !!    
 !!    Returns true if all elements are below threshold
@@ -92,6 +92,38 @@ contains
 !
             is_significant = .true.
             return
+!
+         endif
+!
+      enddo
+!
+   end function is_significant
+!
+!
+   integer(i15) function n_significant(vec, dim, threshold)
+!!
+!!    Number of significant in vector 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkstad, June 2018
+!!    
+!!    Returns the number of elements in vector larger than threshold
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: dim
+!
+      real(dp), dimension(dim,1), intent(in)  :: vec
+!
+      real(dp), intent(in)  :: threshold
+!
+      integer(i15) :: i = 0
+!
+      n_significant = 0
+!
+      do i = 1, dim
+!
+         if (abs(vec(i, 1)) .gt. threshold) then
+!
+            n_significant = n_significant + 1
 !
          endif
 !

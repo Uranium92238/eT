@@ -599,4 +599,29 @@ contains
    end subroutine cholesky_decompose_integral_manager
 !
 !
+   module function get_size_sp(A_interval, B_interval)
+!!
+!!    Get size shell pair
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Returns size of diagonal for a given shell pair.
+!!
+      implicit none
+!
+      type(interval) :: A_interval
+      type(interval) :: B_interval
+!
+      if (A_interval%first == B_interval%first) then
+!
+         get_size_sp = A_interval%size*(A_interval%size + 1)/2
+!
+      else
+!
+         get_size_sp = (A_interval%size)*(B_interval%size)
+!
+      endif
+!
+   end function get_size_AB
+!
+!
 end submodule cholesky
