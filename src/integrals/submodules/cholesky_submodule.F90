@@ -34,11 +34,6 @@ contains
 !
       integer(i15) :: A, B
 !
-      integer(i15) :: n_significant_aop
-      integer(i15) :: n_significant_sp
-!
-      logical, dimension(:,:), allocatable :: significant
-!
       real(dp), parameter :: threshold = 1.0D-8
       real(dp), parameter :: span      = 1.0D-3
 !
@@ -126,8 +121,8 @@ contains
                A_interval = molecule%get_shell_limits(A)
                B_interval = molecule%get_shell_limits(B)
 !
-               significant_sp_to_shells(significant_sp, 1) = A
-               significant_sp_to_shells(significant_sp, 2) = B
+               sig_sp_to_shells(sig_sp, 1) = A
+               sig_sp_to_shells(sig_sp, 2) = B
 !
                call mem%alloc(g_AB_AB, &
                      (A_interval%size)*(B_interval%size), &
@@ -197,8 +192,8 @@ contains
 !
 !           Get first and last indices of shell pair
 !
-            first = significant_sp_to_first_significant_aop(sp, 1)
-            last  = significant_sp_to_first_significant_aop(sp + 1, 1) - 1
+            first = sig_sp_to_first_sig_aop(sp, 1)
+            last  = sig_sp_to_first_sig_aop(sp + 1, 1) - 1
 !
 !           Determine the largest elements
 !
@@ -463,7 +458,7 @@ contains
 !
          call mem%dealloc(cholesky, dim_screened, n_qualified)
 !
-         deallocate(screened_sp_offsets)
+       !  deallocate(screened_sp_offsets)
          call mem%dealloc_int(qual_aop, n_qual, 3)
          call mem%dealloc_int(qual_sp, n_qual_sp, 3)
 !
