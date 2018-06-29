@@ -26,6 +26,81 @@ contains
       class(molecular_system) :: molecule
 !
       integer(i15) :: n_s, n_sp
+!
+      integer(i15) :: A, B
+!
+      integer(i15) :: n_significant_aop
+!
+      logical, dimension(:,:), allocatable :: significant
+!
+      real(dp), parameter :: threshold = 1.0D-8
+!
+      n_s   = molecule%get_n_shells() ! Number of shells
+      n_sp  = n_s*(n_s + 1)/2         ! Number of shell pairs packed
+!
+      allocate(significant(n_sp, 1))
+      significant = .false.
+!
+      sp = 1                ! Shell pair number
+      n_significant_aop = 0 ! Number of significant AO pairs
+!
+      do B = 1, n_s
+         do A = B, n_s
+!
+            A_interval = get_shell_limits(A)
+            B_interval = get_shell_limits(B)
+!
+!           Construct diagonal D_AB for the given shell pair
+!
+            call mem%alloc(g_AB_AB, &
+                     (A_interval%size)*(B_interval%size), &
+                     (A_interval%size)*(B_interval%size))
+!
+            g_AB_AB = zero
+            call integrals%get_ao_g_wxyz(g_AB_AB, A, B, A, B)
+!
+            call mem%alloc(D_AB, (A_interval%size)*(B_interval%size), 1)
+!
+            do xy = 1, (A_interval%size)*(B_interval%size)
+!
+               D_AB(xy, 1) = g_AB_AB(xy, xy)
+!
+            enddo
+!
+            call mem%dealloc(g_AB_AB, &
+                     (A_interval%size)*(B_interval%size), &
+                     (A_interval%size)*(B_interval%size))
+!
+!           Determine whether shell pair is significant
+!
+            significant(sp) = is_significant(D_AB, (A_interval%size)*(B_interval%size), threshold))
+!
+            call mem%dealloc(D_AB, (A_interval%size)*(B_interval%size), 1)
+!
+            if (significant(sp)) then
+!
+               if (A .eq. B) then
+!
+                  n_significant_aop = n_significant_aop + &
+                           (A_interval%size)*(A_interval%size + 1)/2
+!
+               else
+!
+                  n_significant_aop = n_significant_aop + &
+                           (A_interval%size)*(B_interval%size)
+!
+               endif
+!
+            endif
+!
+            sp = sp + 1
+!
+         enddo
+      enddo
+!
+   end subroutine cholesky_decompose_integral_manager
+!
+      integer(i15) :: n_s, n_sp
       integer(i15) :: dim_screened, n_screened_sp
       integer(i15) :: first, last
       integer(i15) :: sp, screened_sp, ab_sp, ao, cd_sp, screened_ab_sp
@@ -480,7 +555,7 @@ contains
 !
       diag_max = one
 !
-      do while ((current_qual .lt. n_qualified) .and. (diag_max .gt. 1.0d-8)) 
+      do while ((current_qual .lt. n_qualified) .and. (diag_max .gt. 1.0d-8))
 !
          diag_max = zero
 !
