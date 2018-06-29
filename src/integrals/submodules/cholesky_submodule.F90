@@ -100,7 +100,7 @@ contains
 !
 !     Construct significant diagonal
 !
-      call mem%alloc_int(sig_sp_to_first_sig_aop, n_sig_sp + 1, 1) 
+      call mem%alloc_int(sig_sp_to_first_sig_aop, n_sig_sp + 1, 1)
       sig_sp_to_first_sig_aop = 0
       sig_sp_to_first_sig_aop(n_sig_sp + 1, 1) = n_sig_aop + 1
 !
@@ -402,51 +402,59 @@ contains
             n_qual_aop_in_prev_sps = n_qual_aop_in_prev_sps + n_qual_aop_in_sp
 !
          enddo ! cd_sp
-
-
-
-
-
-
 !
 !        Subtract old cholesky vectors
 !
          if (n_cholesky .ne. 0) then
+!
+            call dgemm('N', 'T',    &
+                        n_sig_aop,  &
+                        n_qual_aop, &
+                        n_cholesky, &
+                        -one,       &
+                        cholesky,   &
+                        n_sig_aop,  &
+                        cholesky,   &
+                        n_sig_aop,  &
+                        one,        &
+                        g_wxyz,     &
+                        n_sig_aop)
+!
          endif
 !
-         call mem%alloc(cholesky, dim_screened, n_qualified )
-         cholesky = zero
+         call mem%alloc(cholesky_new, n_sig_aop, n_qual)
+         cholesky_new = zero
 !
          current_qual = 1
 !
-         diag_max = one
+         D_max = one
 !
-         do while ((current_qual .lt. n_qualified) .and. (diag_max .gt. 1.0d-8))
+         do while ((current_qual .lt. n_qual_aop) .and. (D_max .gt. 1.0d-8))
 !
-            diag_max = zero
+            D_max = zero
 !
-            do qual = 1, n_qualified
+            do qual = 1, n_qual_aop
 !
-               xy = qualified_aop(qual, 3)
+               xy = qual_aop(qual, 3)
 !
-               if (diag_xy(xy, 1) .ge. diag_max) then
+               if (D_xy(xy, 1) .ge. D_max) then
 !
                   qual_max = qual
-                  diag_max = diag_xy(xy, 1)
+                  D_max    = D_xy(xy, 1)
 !
                endif
 !
             enddo
 !
-            cholesky(: , current_qual) = g_wxyz (:, qual_max)/sqrt(diag_max)
+            cholesky_new(: , current_qual) = g_wxyz(:, qual_max)/sqrt(diag_max)
 !
-            do xy = 1, dim_screened
+            do xy = 1, n_sig_aop
 !
-               diag_xy(xy, 1) = diag_xy(xy, 1) - cholesky(xy, current_qual)**2
+               D_xy(xy, 1) = D_xy(xy, 1) - cholesky_new(xy, current_qual)**2
 !
-               do K = 1, n_qualified
+               do K = 1, n_qual_aop
 !
-                  g_wxyz(xy, K) = g_wxyz(xy, K) - cholesky(xy, current_qual)*cholesky(K, current_qual)
+                  g_wxyz(xy, K) = g_wxyz(xy, K) - cholesky_new(xy, current_qual)*cholesky_new(K, current_qual)
 !
                enddo
 !
@@ -456,13 +464,49 @@ contains
 !
          enddo
 !
-         call mem%dealloc(cholesky, dim_screened, n_qualified)
+!        Find new significant diagonals
 !
-       !  deallocate(screened_sp_offsets)
-         call mem%dealloc_int(qual_aop, n_qual, 3)
-         call mem%dealloc_int(qual_sp, n_qual_sp, 3)
+         n_new_sig_sp = 0
+         allocate(new_sig_sp(n_sig_sp,1))
+         new_sig_sp = .false.
+!
+         do sp = 1, n_sig_sp
+!
+            first = sig_sp_to_first_sig_aop(sp, 1)
+            last  = sig_sp_to_first_sig_aop(sp + 1, 1) - 1
+!
+            new_sig_sp(sp) = is_significant(D_xy(first:last, 1), &
+                                            last - first + 1,    &
+                                            threshold)
+!
+            if (new_sig_sp(sp)) n_new_sig_sp = n_new_sig_sp + 1
+!
+         enddo
+!
+         call mem%alloc_int(new_sig_sp_to_first_sig_aop, n_new_sig_sp, 1)
+         new_sig_sp_to_first_sig_aop = 0
+!
+         do sp = 1, n_sig_sp
+!
+            if (new_sig_sp(sp)) then
+!
+               A = sig_sp_to_shells(sp, 1)
+               B = sig_sp_to_shells(sp, 2)
+!
+               A_interval = get_shell_limits(A)
+               B_interval = get_shell_limits(B)
+!
+               size_AB = get_size_sp(A_interval, B_interval)
+!
+            endif
+!
+         enddo
 !
       enddo
+!
+      call mem%alloc(D_xy_new, n_new_sig_sp, 1)
+!
+      call reduce_vector(D_xy, D_xy_new, sig_sp_to_first_sig_aop, new_sig, n_sig_sp, n_sig_aop, n_new_sig_sp)
 !
    end subroutine cholesky_decompose_integral_manager
 !

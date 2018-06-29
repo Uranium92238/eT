@@ -129,7 +129,7 @@ contains
 !
       enddo
 !
-   end function is_significant
+   end function n_significant
 !
 !
    subroutine reduce_vector(vec, reduced_vec, block_firsts, block_significant, n_blocks, dim, dim_reduced)
