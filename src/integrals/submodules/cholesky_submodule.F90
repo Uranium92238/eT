@@ -247,9 +247,6 @@ contains
       do B = 1, n_s
          do A = B, n_s
 !
-            write(output%unit, *) '1'
-            flush(output%unit)
-!
             A_interval = molecule%get_shell_limits(A)
             B_interval = molecule%get_shell_limits(B)
 !
@@ -575,21 +572,25 @@ contains
 !
          enddo
 !
-         cholesky(: , current_qual) = g_wxyz (:, qual_max)/sqrt(diag_max)
+         if ( diag_max .gt. 1.0d-8) then
 !
-         do xy = 1, dim_screened
+            cholesky(: , current_qual) = g_wxyz (:, qual_max)/sqrt(diag_max)
 !
-            diag_xy(xy, 1) = diag_xy(xy, 1) - cholesky(xy, current_qual)**2
+            do xy = 1, dim_screened
 !
-            do K = 1, n_qualified
+               diag_xy(xy, 1) = diag_xy(xy, 1) - cholesky(xy, current_qual)**2
 !
-               g_wxyz(xy, K) = g_wxyz(xy, K) - cholesky(xy, current_qual)*cholesky(K, current_qual)
+               do K = 1, n_qualified
+!
+                  g_wxyz(xy, K) = g_wxyz(xy, K) - cholesky(xy, current_qual)*cholesky(K, current_qual)
+!
+               enddo
 !
             enddo
 !
-         enddo
+            current_qual = current_qual + 1
 !
-         current_qual = current_qual + 1
+         endif
 !
       enddo
 !
