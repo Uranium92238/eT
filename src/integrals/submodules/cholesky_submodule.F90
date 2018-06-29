@@ -69,7 +69,7 @@ contains
 !!    is restricted to significant diagonals (e.g., >= 1.0D-8), which is reduced from cycle to
 !!    cycle. Only the significant parts {αβ} of the previous L_αβ^J vectors are held in memory,
 !!    and the end result is a Cholesky basis: a set of AO pairs {γδ} that are to be used to construct
-!!    the full set of Cholesky vectors. 
+!!    the full set of Cholesky vectors.
 !!
       implicit none
 !
@@ -97,8 +97,8 @@ contains
       real(dp), dimension(:,:), allocatable :: cholesky, cholesky_new
       real(dp), dimension(:,:), allocatable :: cholesky_copy, cholesky_basis
       real(dp), dimension(:,:), allocatable :: sorted_max_in_sig_sp
-      real(dp), dimension(:,:), allocatable :: sorted_qual_aop_in_sp  
-      real(dp), dimension(:,:), allocatable :: max_in_sig_sp 
+      real(dp), dimension(:,:), allocatable :: sorted_qual_aop_in_sp
+      real(dp), dimension(:,:), allocatable :: max_in_sig_sp
 !
       integer(i15), dimension(:,:), allocatable :: sig_sp_to_first_sig_aop
       integer(i15), dimension(:,:), allocatable :: new_sig_sp_to_first_sig_aop
@@ -121,6 +121,9 @@ contains
 !
       integer(i15), parameter :: max_qual = 100
 !
+      write(output%unit, *) 'Now doing Cholesky decomposition'
+      flush(output%unit)
+!
       n_s   = molecule%get_n_shells() ! Number of shells
       n_sp  = n_s*(n_s + 1)/2         ! Number of shell pairs packed
 !
@@ -129,9 +132,12 @@ contains
       allocate(sig_sp(n_sp, 1))
       sig_sp = .false.
 !
-      sp = 1                ! Shell pair number
+      sp = 1        ! Shell pair number
       n_sig_aop = 0 ! Number of significant AO pairs
       n_sig_sp  = 0 ! Number of significant shell pairs
+!
+      write(output%unit, *) '1'
+      flush(output%unit)
 !
       do B = 1, n_s
          do A = B, n_s
@@ -180,11 +186,17 @@ contains
          enddo
       enddo
 !
+      write(output%unit, *) '2'
+      flush(output%unit)
+!
 !     Construct significant diagonal
 !
       call mem%alloc_int(sig_sp_to_first_sig_aop, n_sig_sp + 1, 1)
       sig_sp_to_first_sig_aop = 0
       sig_sp_to_first_sig_aop(n_sig_sp + 1, 1) = n_sig_aop + 1
+!
+      call mem%alloc_int(sig_sp_to_shells, n_sig_sp, 2) ! A B
+      sig_sp_to_shells = 0
 !
 !     Note: allocated with length n_significant_sp + 1, last element is used for n_significant_aop
 !     This is convenient because significant_sp_to_first_significant_aop will be used to calculate lengths.
@@ -198,13 +210,22 @@ contains
 !
             if (sig_sp(sp, 1)) then
 !
+      write(output%unit, *) '2a'
+      flush(output%unit)
+!
                sig_sp_to_first_sig_aop(current_sig_sp, 1) = first_sig_aop
 !
                A_interval = molecule%get_shell_limits(A)
                B_interval = molecule%get_shell_limits(B)
 !
+      write(output%unit, *) '2b'
+      flush(output%unit)
+!
                sig_sp_to_shells(current_sig_sp, 1) = A
                sig_sp_to_shells(current_sig_sp, 2) = B
+!
+      write(output%unit, *) '2c'
+      flush(output%unit)
 !
                call mem%alloc(g_AB_AB, &
                      (A_interval%size)*(B_interval%size), &
@@ -212,6 +233,9 @@ contains
 !
                g_AB_AB = zero
                call integrals%get_ao_g_wxyz(g_AB_AB, A, B, A, B)
+!
+      write(output%unit, *) '2d'
+      flush(output%unit)
 !
                if (A .eq. B) then
 !
@@ -248,6 +272,9 @@ contains
 !
                endif
 !
+      write(output%unit, *) '2e'
+      flush(output%unit)
+!
                first_sig_aop = first_sig_aop + get_size_sp(A_interval, B_interval)
 !
                current_sig_sp = current_sig_sp + 1
@@ -258,6 +285,9 @@ contains
 !
          enddo
       enddo
+!
+      write(output%unit, *) '3 - entering Cholesky do loop'
+      flush(output%unit)
 !
       n_cholesky = 0
 !
@@ -579,7 +609,7 @@ contains
 !
          enddo
 !
-!        Update index lists: sps -> aops and aops -> aos
+!        Update index lists: sps -> aops, aops -> aos, and sps -> full sps
 !
          call mem%alloc_int(new_sig_sp_to_first_sig_aop, n_new_sig_sp, 1)
          new_sig_sp_to_first_sig_aop = 0
@@ -609,13 +639,31 @@ contains
 !
          enddo
 !
-         call reduce_vector_int(sig_aop_to_aos,          &
+         call reduce_vector_int(sig_aop_to_aos,      &
                             new_sig_aop_to_aos,      &
                             sig_sp_to_first_sig_aop, &
                             new_sig_sp,              &
                             n_sig_sp,                &
                             n_sig_aop,               &
                             n_new_sig_aop)
+!
+         call mem%alloc_int(new_sig_sp_to_shells, n_new_sig_sp, 2)
+         new_sig_sp_to_shells = 0
+!
+         call reduce_array_int(sig_sp_to_shells,        &
+                               new_sig_sp_to_shells,    &
+                               sig_sp_to_first_sig_aop, &
+                               new_sig_sp,              &
+                               n_sig_sp,                &
+                               n_sig_aop,               &
+                               n_new_sig_aop,           &
+                               2)
+!
+         call mem%dealloc_int(sig_sp_to_shells, n_sig_sp, 2)
+         call mem%alloc_int(sig_sp_to_shells, n_new_sig_sp, 2)
+!
+         sig_sp_to_shells = new_sig_sp_to_shells
+         call mem%dealloc_int(new_sig_sp_to_shells, n_new_sig_sp, 2)
 !
          call mem%alloc(D_xy_new, n_new_sig_sp, 1)
 !
@@ -632,10 +680,10 @@ contains
 !
             call mem%alloc(cholesky, n_new_sig_aop, n_new_cholesky)
 !
-            call reduce_array(cholesky_new,             &
+            call reduce_array(cholesky_new,              &
                                cholesky,                 &
                                sig_sp_to_first_sig_aop,  &
-                               new_sig_sp,                  &
+                               new_sig_sp,               &
                                n_sig_sp,                 &
                                n_sig_aop,                &
                                n_new_sig_aop,            &
