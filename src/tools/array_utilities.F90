@@ -289,7 +289,7 @@ contains
 !
       enddo
 !
-   end subroutine reduce_array
+   end subroutine reduce_array_int
 !
 !
 end module array_utilities
