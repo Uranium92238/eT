@@ -145,7 +145,7 @@ contains
       integer(i15) :: dim, dim_reduced, n_blocks
 !
       logical, dimension(n_blocks, 1) :: block_significant
-      integer(i15), dimension(n_blocks, 1) :: block_firsts
+      integer(i15), dimension(n_blocks + 1, 1) :: block_firsts
 !
       real(dp), dimension(dim, 1) :: vec
       real(dp), dimension(dim_reduced, 1) :: vec_reduced
@@ -185,7 +185,7 @@ contains
       integer(i15) :: dim, dim_reduced, n_blocks
 !
       logical, dimension(n_blocks, 1) :: block_significant
-      integer(i15), dimension(n_blocks, 1) :: block_firsts
+      integer(i15), dimension(n_blocks + 1, 1) :: block_firsts
 !
       integer(i15), dimension(dim, 1) :: vec
       integer(i15), dimension(dim_reduced, 1) :: vec_reduced
@@ -225,7 +225,7 @@ contains
       integer(i15) :: dim, dim_reduced, n_blocks, columns
 !
       logical, dimension(n_blocks, 1) :: block_significant
-      integer(i15), dimension(n_blocks, 1) :: block_firsts
+      integer(i15), dimension(n_blocks + 1, 1) :: block_firsts
 !
       real(dp), dimension(dim, columns) :: array
       real(dp), dimension(dim_reduced, columns) :: array_reduced
@@ -265,7 +265,7 @@ contains
       integer(i15) :: dim, dim_reduced, n_blocks, columns
 !
       logical, dimension(n_blocks, 1) :: block_significant
-      integer(i15), dimension(n_blocks, 1) :: block_firsts
+      integer(i15), dimension(n_blocks + 1, 1) :: block_firsts
 !
       integer(i15), dimension(dim, columns) :: array
       integer(i15), dimension(dim_reduced, columns) :: array_reduced
@@ -283,6 +283,7 @@ contains
             size  = last - first + 1
 !
             array_reduced(current_pos : (current_pos + size - 1), :) = array(first : last, :)
+!
             current_pos = current_pos + size
 !
          endif

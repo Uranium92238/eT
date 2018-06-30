@@ -113,6 +113,7 @@ contains
       integer(i15), dimension(:,:), allocatable :: sig_sp_to_shells
       integer(i15), dimension(:,:), allocatable :: new_sig_sp_to_shells
       integer(i15), dimension(:,:), allocatable :: cholesky_basis, cholesky_basis_new
+      integer(i15), dimension(:,:), allocatable :: sig_sp_to_first_sig_sp
 !
       logical :: construct_more_choleskys, done
 !
@@ -137,9 +138,6 @@ contains
       sp = 1        ! Shell pair number
       n_sig_aop = 0 ! Number of significant AO pairs
       n_sig_sp  = 0 ! Number of significant shell pairs
-!
-      write(output%unit, *) '1'
-      flush(output%unit)
 !
       do B = 1, n_s
          do A = B, n_s
@@ -188,9 +186,6 @@ contains
          enddo
       enddo
 !
-      write(output%unit, *) '2'
-      flush(output%unit)
-!
 !     Construct significant diagonal
 !
       call mem%alloc_int(sig_sp_to_first_sig_aop, n_sig_sp + 1, 1)
@@ -218,22 +213,13 @@ contains
 !
             if (sig_sp(sp, 1)) then
 !
-      write(output%unit, *) '2a'
-      flush(output%unit)
-!
                sig_sp_to_first_sig_aop(current_sig_sp, 1) = first_sig_aop
 !
                A_interval = molecule%get_shell_limits(A)
                B_interval = molecule%get_shell_limits(B)
 !
-      write(output%unit, *) '2b'
-      flush(output%unit)
-!
                sig_sp_to_shells(current_sig_sp, 1) = A
                sig_sp_to_shells(current_sig_sp, 2) = B
-!
-      write(output%unit, *) '2c'
-      flush(output%unit)
 !
                call mem%alloc(g_AB_AB, &
                      (A_interval%size)*(B_interval%size), &
@@ -241,9 +227,6 @@ contains
 !
                g_AB_AB = zero
                call integrals%get_ao_g_wxyz(g_AB_AB, A, B, A, B)
-!
-      write(output%unit, *) '2d'
-      flush(output%unit)
 !
                if (A .eq. B) then
 !
@@ -280,9 +263,6 @@ contains
 !
                endif
 !
-      write(output%unit, *) '2e'
-      flush(output%unit)
-!
                call mem%dealloc(g_AB_AB, &
                      (A_interval%size)*(B_interval%size), &
                      (A_interval%size)*(B_interval%size))
@@ -307,10 +287,9 @@ contains
 !
 !        Shell maximums and shell maximums indices vectors
 !
-         call mem%alloc_int(max_in_sig_sp_indices, n_sig_sp, 1)
          call mem%alloc(max_in_sig_sp, n_sig_sp, 1)
 !
-         max_in_sp = zero
+         max_in_sig_sp = zero
 !
          do sp = 1, n_sig_sp
 !
@@ -325,17 +304,13 @@ contains
 !
                if (D_xy(I, 1) .gt. max_in_sig_sp(sp, 1)) then
 !
-                  max_in_sig_sp(sp, 1)       = D_xy(I, 1)
-                  max_in_sig_sp_indices(sp, 1)  = I
+                  max_in_sig_sp(sp, 1) = D_xy(I, 1)
 !
                endif
 !
             enddo
 !
          enddo
-!
-          write(output%unit, *) '3a'
-          flush(output%unit)
 !
 !        Sort from largest to smallest by determining an index array
 !
@@ -351,18 +326,22 @@ contains
          n_qual_aop  = 0
          n_qual_sp   = 0
 !
+         call mem%dealloc(sorted_max_in_sig_sp, n_sig_sp, 1)
+!
          call mem%alloc_int(qual_aop, max_qual, 3)
          call mem%alloc_int(qual_sp, n_sp, 3)
          qual_sp = 0
-         write(output%unit, *) '3b'
-         flush(output%unit)
+!
+         write(output%unit, *) 'sorted max sig sp', sorted_max_sig_sp
 !
          do sp = 1, n_sig_sp
 !
             current_sig_sp = sorted_max_sig_sp(sp, 1)
 !
-            first_sig_aop  = sig_sp_to_first_sig_aop(current_sig_sp, 1)
-            last_sig_aop   = sig_sp_to_first_sig_aop(current_sig_sp + 1, 1) - 1
+            first_sig_aop = sig_sp_to_first_sig_aop(current_sig_sp, 1)
+            last_sig_aop  = sig_sp_to_first_sig_aop(current_sig_sp + 1, 1) - 1
+!
+            write(output%unit, *) 'first & last sig aop', first_sig_aop, last_sig_aop
 !
             n_qual_aop_in_sp = 0
 !
@@ -376,8 +355,8 @@ contains
                endif
 !
             enddo
-            write(output%unit, *) '3b.1'
-            flush(output%unit)
+!
+            write(output%unit, *) 'n qual aop, & in this shell pair', n_qual_aop, n_qual_aop_in_sp
 !
             if (n_qual_aop_in_sp .ne. 0) then
 !
@@ -392,6 +371,8 @@ contains
 !
                n_old_qual_aop = (n_qual_aop - n_qual_aop_in_sp)
 !
+               write(output%unit, *) 'n old qual aop', n_old_qual_aop
+!
                do aop = 1, n_qual_aop_in_sp
 !
                   qual_aop(aop + n_old_qual_aop, 1) = sig_aop_to_aos(sorted_qual_aop_in_sp_indices(aop, 1) &
@@ -404,28 +385,16 @@ contains
                                                                + first_sig_aop - 1
 !
                enddo
-write(output%unit, *) '3b.2'
-flush(output%unit)
 !
                first_x = sig_aop_to_aos(first_sig_aop, 1) ! alpha
                first_y = sig_aop_to_aos(first_sig_aop, 2) ! beta
 !
-write(output%unit, *) '3b.3 first_x first_y', first_x, first_y
-flush(output%unit)
-!
-               if (first_x .lt. 1 .or. first_x .gt. 48) write(output%unit, *)'bad', first_x
-!
                qual_sp(n_qual_sp, 1) = molecule%basis2shell(first_x)
                qual_sp(n_qual_sp, 2) = molecule%basis2shell(first_y)
                qual_sp(n_qual_sp, 3) = n_qual_aop_in_sp
-write(output%unit, *) '3b.4'
-flush(output%unit)
 !
                call mem%dealloc_int(sorted_qual_aop_in_sp_indices, n_qual_aop_in_sp, 1)
                call mem%dealloc(sorted_qual_aop_in_sp, n_qual_aop_in_sp, 1)
-write(output%unit, *) '3b.5'
-flush(output%unit)
-!
 !
             endif
 !
@@ -436,18 +405,28 @@ flush(output%unit)
             endif
 !
          enddo
-          write(output%unit, *) '3c qual sp bf', qual_sp(:, 1:2)
-          flush(output%unit)
+!
+         write(output%unit, *) 'qual aop 1', qual_aop(:,1)
+         write(output%unit, *) 'qual aop 2', qual_aop(:,2)
+         write(output%unit, *) 'qual aop 3', qual_aop(:,3)
+!
+         write(output%unit, *) 'qual sp 1', qual_sp(:,1)
+         write(output%unit, *) 'qual sp 2', qual_sp(:,2)
+         write(output%unit, *) 'qual sp 3', qual_sp(:,3)
+!
+         write(output%unit, *) 'n_qual_aop n_qual_sp', n_qual_aop, n_qual_sp
+!
+         call mem%dealloc_int(sorted_max_sig_sp, n_sig_sp, 1)
 !
 !        Cut out the qualified parts of the aop and sp lists
 !
          call mem%alloc_int(qual_aop_copy, n_qual_aop, 3)
          call mem%alloc_int(qual_sp_copy, n_qual_sp, 3)
 !
-         qual_aop_copy(:, :) = qual_aop(1 : n_qual_aop, : )
-         qual_sp_copy(:, :)  = qual_sp(1 : n_qual_sp, : )
+         qual_aop_copy(:, :) = qual_aop(1 : n_qual_aop, :)
+         qual_sp_copy(:, :)  = qual_sp(1 : n_qual_sp, :)
 !
-         call mem%dealloc_int(qual_aop, 100, 3)
+         call mem%dealloc_int(qual_aop, max_qual, 3)
          call mem%dealloc_int(qual_sp, n_sp, 3)
 !
          call mem%alloc_int(qual_aop, n_qual_aop, 3)
@@ -462,20 +441,12 @@ flush(output%unit)
          n_qual_aop_in_prev_sps = 0
 !
          call mem%alloc(g_wxyz, n_sig_aop, n_qual_aop)
-          write(output%unit, *) '3c qual sp', qual_sp(:,1:2)
-          flush(output%unit)
 !
          do CD_sp = 1, n_qual_sp
-!
-          write(output%unit, *) '3c.1'
-          flush(output%unit)
 !
             C                = qual_sp(CD_sp, 1)
             D                = qual_sp(CD_sp, 2)
             n_qual_aop_in_sp = qual_sp(CD_sp, 3)
-!
-          write(output%unit, *) '3c.2 C D n_qual_aop_in_sp', C, D, n_qual_aop_in_sp
-          flush(output%unit)
 !
             C_interval = molecule%get_shell_limits(C)
             D_interval = molecule%get_shell_limits(D)
@@ -485,15 +456,11 @@ flush(output%unit)
 !
             AB_sp                  = 1
             sig_AB_sp              = 1
-         !   n_qual_aop_in_prev_sps = 0
 !
             do B = 1, n_s
                do A = B, n_s
 !
                   if (sig_sp(AB_sp, 1)) then
-!
-          write(output%unit, *) '3c.3'
-          flush(output%unit)
 !
                      A_interval = molecule%get_shell_limits(A)
                      B_interval = molecule%get_shell_limits(B)
@@ -504,16 +471,10 @@ flush(output%unit)
 !
                      call integrals%get_ao_g_wxyz(g_AB_CD, A, B, C, D)
 !
-          write(output%unit, *) '3c.4 n qual in prev sps', n_qual_aop_in_prev_sps
-          flush(output%unit)
-!
                      do aop = 1, n_qual_aop_in_sp
 !
-                           y = qual_aop(aop + n_qual_aop_in_prev_sps, 1)
+                        y = qual_aop(aop + n_qual_aop_in_prev_sps, 1)
                         z = qual_aop(aop + n_qual_aop_in_prev_sps, 2)
-!
-          write(output%unit, *) '3c.5 y z', y, z
-          flush(output%unit)
 !
                         yz = C_interval%size*(z - D_interval%first) + y - C_interval%first + 1
 !
@@ -525,11 +486,8 @@ flush(output%unit)
                                  wx_packed = (max(w,x)*(max(w,x)-3)/2) + w + x
                                  wx = A_interval%size*(x-1) + w
 !
- write(output%unit, *) 'hellu', g_AB_CD(wx, yz), wx, yz
-flush(output%unit)
-!
-                             !    g_wxyz(sig_sp_to_first_sig_aop(sig_AB_sp, 1) + wx_packed - 1, aop + n_qual_aop_in_prev_sps) &
-                               !        = g_AB_CD(wx, yz)
+                                 g_wxyz(sig_sp_to_first_sig_aop(sig_AB_sp, 1) + wx_packed - 1, aop + n_qual_aop_in_prev_sps) &
+                                       = g_AB_CD(wx, yz)
 !
                               enddo
                            enddo
@@ -541,16 +499,13 @@ flush(output%unit)
 !
                                  wx = A_interval%size*(x-1) + w
 !
-                             !    g_wxyz(sig_sp_to_first_sig_aop(sig_AB_sp, 1) + wx - 1, aop + n_qual_aop_in_prev_sps) &
-                                      ! = g_AB_CD(wx, yz)
+                                 g_wxyz(sig_sp_to_first_sig_aop(sig_AB_sp, 1) + wx - 1, aop + n_qual_aop_in_prev_sps) &
+                                       = g_AB_CD(wx, yz)
 !
                               enddo
                            enddo
 !
                         endif
-!
-          write(output%unit, *) '3c.6'
-          flush(output%unit)
 !
                      enddo
 !
@@ -567,11 +522,17 @@ flush(output%unit)
                enddo ! A
             enddo ! B
 !
+            write(output%unit, *) '301 and 157?', AB_sp, sig_AB_sp
+!
             n_qual_aop_in_prev_sps = n_qual_aop_in_prev_sps + n_qual_aop_in_sp
 !
          enddo ! cd_sp
-          write(output%unit, *) '3d'
-          flush(output%unit)
+!
+         write(output%unit, *) 'n_qual_aop_in_prev_sps', n_qual_aop_in_prev_sps
+!
+         write(output%unit, *) 'g matrix 1', g_wxyz(:, 1)
+         write(output%unit, *) 'g matrix 2', g_wxyz(:, 2)
+         write(output%unit, *) 'g matrix 3', g_wxyz(:, 3)
 !
 !        Subtract old cholesky vectors
 !
@@ -600,8 +561,6 @@ flush(output%unit)
             cholesky_basis = 0
 !
          endif
-          write(output%unit, *) '3e'
-          flush(output%unit)
 !
          call mem%alloc(cholesky_new, n_sig_aop, n_qual_aop)
          cholesky_new = zero
@@ -630,9 +589,6 @@ flush(output%unit)
                endif
 !
             enddo
-
-            write(output%unit, *) '3f'
-            flush(output%unit)
 !
             if (D_max .gt. threshold) then
 !
@@ -660,6 +616,8 @@ flush(output%unit)
             endif
 !
          enddo
+!
+         call mem%dealloc(g_wxyz, n_sig_aop, n_qual_aop)
 
          write(output%unit, *) '3g'
          flush(output%unit)
@@ -693,11 +651,16 @@ flush(output%unit)
          call mem%alloc_int(new_sig_sp_to_first_sig_aop, n_new_sig_sp + 1, 1)
          new_sig_sp_to_first_sig_aop = 0
 !
+         call mem%alloc_int(sig_sp_to_first_sig_sp, n_sig_sp + 1, 1) ! 1 2 3 4 ... n_sig_sp, n_sig_sp + 1
+         sig_sp_to_first_sig_sp(n_sig_sp + 1, 1) = n_sig_sp + 1
+!
          current_new_sig_sp    = 1
          n_new_sig_aop = 0
          first_sig_aop = 1
 !
          do sp = 1, n_sig_sp
+!
+            sig_sp_to_first_sig_sp(sp, 1) = sp
 !
             if (new_sig_sp(sp, 1)) then
 !
@@ -720,12 +683,6 @@ flush(output%unit)
 !
          new_sig_sp_to_first_sig_aop(current_new_sig_sp, 1) = n_new_sig_aop + 1
 !
-stop
-         ! below
-!
-         write(output%unit, *) '3i'
-         flush(output%unit)
-!
          call mem%alloc_int(new_sig_aop_to_aos, n_new_sig_aop, 2)
 !
          call reduce_array_int(sig_aop_to_aos,       &
@@ -736,57 +693,42 @@ stop
                             n_sig_aop,               &
                             n_new_sig_aop,           &
                             2)
-write(output%unit, *) '3i.1'
-flush(output%unit)
-
-
 !
          call mem%alloc_int(new_sig_sp_to_shells, n_new_sig_sp, 2)
          new_sig_sp_to_shells = 0
 !
          call reduce_array_int(sig_sp_to_shells,        &
                                new_sig_sp_to_shells,    &
-                               sig_sp_to_first_sig_aop, &
+                               sig_sp_to_first_sig_sp,  &
                                new_sig_sp,              &
                                n_sig_sp,                &
-                               n_sig_aop,               &
-                               n_new_sig_aop,           &
+                               n_sig_sp,                &
+                               n_new_sig_sp,            &
                                2)
-stop
-write(output%unit, *) '3i.2'
-flush(output%unit)
 !
+         call mem%dealloc_int(sig_sp_to_first_sig_sp, n_sig_sp + 1, 1)
          call mem%dealloc_int(sig_sp_to_shells, n_sig_sp, 2)
          call mem%alloc_int(sig_sp_to_shells, n_new_sig_sp, 2)
-write(output%unit, *) '3i.3'
-flush(output%unit)
 !
          sig_sp_to_shells = new_sig_sp_to_shells
          call mem%dealloc_int(new_sig_sp_to_shells, n_new_sig_sp, 2)
 !
          call mem%alloc(D_xy_new, n_new_sig_aop, 1)
-write(output%unit, *) '3i.4'
-flush(output%unit)
 !
-         call reduce_vector(D_xy,                     &
-                           D_xy_new,                  &
-                           sig_sp_to_first_sig_aop,   &
-                           new_sig_sp,                &
-                           n_sig_sp,                  &
-                           n_sig_aop,                 &
-                           n_new_sig_aop)
+        call reduce_vector(D_xy,                     &
+                          D_xy_new,                  &
+                          sig_sp_to_first_sig_aop,   &
+                          new_sig_sp,                &
+                          n_sig_sp,                  &
+                          n_sig_aop,                 &
+                          n_new_sig_aop)
 !
          call mem%dealloc(D_xy, n_sig_aop, 1)
          call mem%alloc(D_xy, n_new_sig_aop, 1)
-write(output%unit, *) '3i.5'
-flush(output%unit)
 !
          call dcopy(n_new_sig_aop, D_xy_new, 1, D_xy, 1)
 !
          call mem%dealloc(D_xy_new, n_new_sig_aop, 1)
-
-         write(output%unit, *) '3j'
-         flush(output%unit)
 !
          if (n_cholesky == 0) then
 !
@@ -828,15 +770,10 @@ flush(output%unit)
             call mem%dealloc(cholesky_new, n_sig_aop, n_qual_aop)
 !
          endif
-
-         write(output%unit, *) '3k'
-         flush(output%unit)
 !
          call mem%alloc_int(cholesky_basis_new, n_cholesky + n_new_cholesky, 2)
          cholesky_basis_new(:, :) = cholesky_basis(1 : n_cholesky + n_new_cholesky, :)
          call mem%dealloc_int(cholesky_basis, n_cholesky + n_qual_aop, 2)
-write(output%unit, *) '3k. 1'
-flush(output%unit)
 !
 !        Deallocate old lists & reallocate + copy over new lists
 !
@@ -844,36 +781,24 @@ flush(output%unit)
          allocate(sig_sp(n_new_sig_sp,1))
          sig_sp = new_sig_sp
          deallocate(new_sig_sp)
-write(output%unit, *) '3k.2'
-flush(output%unit)
 !
          call mem%dealloc_int(sig_sp_to_first_sig_aop, n_sig_sp + 1, 1)
          call mem%alloc_int(sig_sp_to_first_sig_aop, n_new_sig_sp + 1, 1)
          sig_sp_to_first_sig_aop = new_sig_sp_to_first_sig_aop
          call mem%dealloc_int(new_sig_sp_to_first_sig_aop, n_new_sig_sp + 1, 1)
 !
-write(output%unit, *) '3k.4'
-flush(output%unit)
-!
          call mem%dealloc_int(sig_aop_to_aos, n_sig_aop, 2)
          call mem%alloc_int(sig_aop_to_aos, n_new_sig_aop, 2)
          sig_aop_to_aos = new_sig_aop_to_aos
          call mem%dealloc_int(new_sig_aop_to_aos, n_new_sig_aop, 2)
-write(output%unit, *) '3k.5'
-flush(output%unit)
 !
          n_sig_sp = n_new_sig_sp
          n_sig_aop = n_new_sig_aop
 !
          n_cholesky = n_cholesky + n_new_cholesky
-write(output%unit, *) '3k.6'
-flush(output%unit)
 !
          call mem%dealloc_int(qual_aop, n_qual_aop, 3)
          call mem%dealloc_int(qual_sp, n_qual_sp, 3)
-
-         write(output%unit, *) '3l'
-         flush(output%unit)
 !
          stop
 !
