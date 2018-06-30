@@ -474,7 +474,7 @@ flush(output%unit)
             D                = qual_sp(CD_sp, 2)
             n_qual_aop_in_sp = qual_sp(CD_sp, 3)
 !
-          write(output%unit, *) '3c.2 C D', C, D
+          write(output%unit, *) '3c.2 C D n_qual_aop_in_sp', C, D, n_qual_aop_in_sp
           flush(output%unit)
 !
             C_interval = molecule%get_shell_limits(C)
@@ -485,7 +485,7 @@ flush(output%unit)
 !
             AB_sp                  = 1
             sig_AB_sp              = 1
-            n_qual_aop_in_prev_sps = 0
+         !   n_qual_aop_in_prev_sps = 0
 !
             do B = 1, n_s
                do A = B, n_s
@@ -504,15 +504,15 @@ flush(output%unit)
 !
                      call integrals%get_ao_g_wxyz(g_AB_CD, A, B, C, D)
 !
-          write(output%unit, *) '3c.4'
+          write(output%unit, *) '3c.4 n qual in prev sps', n_qual_aop_in_prev_sps
           flush(output%unit)
 !
                      do aop = 1, n_qual_aop_in_sp
 !
-                        y = qual_aop(aop + n_qual_aop_in_prev_sps, 1)
+                           y = qual_aop(aop + n_qual_aop_in_prev_sps, 1)
                         z = qual_aop(aop + n_qual_aop_in_prev_sps, 2)
 !
-          write(output%unit, *) '3c.5'
+          write(output%unit, *) '3c.5 y z', y, z
           flush(output%unit)
 !
                         yz = C_interval%size*(z - D_interval%first) + y - C_interval%first + 1
@@ -525,7 +525,7 @@ flush(output%unit)
                                  wx_packed = (max(w,x)*(max(w,x)-3)/2) + w + x
                                  wx = A_interval%size*(x-1) + w
 !
- write(output%unit, *) 'hellu', g_AB_CD(wx, 1)
+ write(output%unit, *) 'hellu', g_AB_CD(wx, yz), wx, yz
 flush(output%unit)
 !
                              !    g_wxyz(sig_sp_to_first_sig_aop(sig_AB_sp, 1) + wx_packed - 1, aop + n_qual_aop_in_prev_sps) &
