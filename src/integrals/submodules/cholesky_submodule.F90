@@ -27,7 +27,7 @@ contains
 !!       g_αβ,γδ = sum_J L_αβ,J L_αβ,J^T.
 !!
 !!    This reconstruction of g_αβ,γδ should not be performed directly by the developer.
-!!    Specialized get-routines for integrals in MO basis is implemented, and AO integrals 
+!!    Specialized get-routines for integrals in MO basis is implemented, and AO integrals
 !!    could be calculated directly using the libint-interface routine get_ao_g_wxyz.
 !!
 !!    The algorithm in the routine is based on the algorithm given on p. 333-334,
@@ -70,7 +70,7 @@ contains
 !!    is restricted to significant diagonals (e.g., >= 1.0D-8), which is reduced from cycle to
 !!    cycle. Only the significant parts {αβ} of the previous L_αβ^J vectors are held in memory,
 !!    and the end result is a Cholesky basis: a set of AO pairs {γδ} that are to be used to construct
-!!    the full set of Cholesky vectors. 
+!!    the full set of Cholesky vectors.
 !!
       implicit none
 !
@@ -96,10 +96,10 @@ contains
       real(dp), dimension(:,:), allocatable :: D_AB, D_xy, D_xy_new
       real(dp), dimension(:,:), allocatable :: g_AB_AB, g_AB_CD, g_wxyz
       real(dp), dimension(:,:), allocatable :: cholesky, cholesky_new
-      real(dp), dimension(:,:), allocatable :: cholesky_copy, cholesky_basis
+      real(dp), dimension(:,:), allocatable :: cholesky_copy
       real(dp), dimension(:,:), allocatable :: sorted_max_in_sig_sp
-      real(dp), dimension(:,:), allocatable :: sorted_qual_aop_in_sp  
-      real(dp), dimension(:,:), allocatable :: max_in_sig_sp 
+      real(dp), dimension(:,:), allocatable :: sorted_qual_aop_in_sp
+      real(dp), dimension(:,:), allocatable :: max_in_sig_sp
 !
       integer(i15), dimension(:,:), allocatable :: sig_sp_to_first_sig_aop
       integer(i15), dimension(:,:), allocatable :: new_sig_sp_to_first_sig_aop
@@ -109,9 +109,10 @@ contains
       integer(i15), dimension(:,:), allocatable :: qual_aop, qual_sp
       integer(i15), dimension(:,:), allocatable :: qual_aop_copy, qual_sp_copy
       integer(i15), dimension(:,:), allocatable :: sorted_qual_aop_in_sp_indices
-      integer(i15), dimension(:,:), allocatable :: qual_sp_to_shells
       integer(i15), dimension(:,:), allocatable :: sorted_max_sig_sp
       integer(i15), dimension(:,:), allocatable :: sig_sp_to_shells
+      integer(i15), dimension(:,:), allocatable :: new_sig_sp_to_shells
+      integer(i15), dimension(:,:), allocatable :: cholesky_basis, cholesky_basis_new
 !
       logical :: construct_more_choleskys, done
 !
@@ -122,6 +123,9 @@ contains
 !
       integer(i15), parameter :: max_qual = 100
 !
+      write(output%unit, *) 'Now doing Cholesky decomposition'
+      flush(output%unit)
+!
       n_s   = molecule%get_n_shells() ! Number of shells
       n_sp  = n_s*(n_s + 1)/2         ! Number of shell pairs packed
 !
@@ -130,9 +134,12 @@ contains
       allocate(sig_sp(n_sp, 1))
       sig_sp = .false.
 !
-      sp = 1                ! Shell pair number
+      sp = 1        ! Shell pair number
       n_sig_aop = 0 ! Number of significant AO pairs
       n_sig_sp  = 0 ! Number of significant shell pairs
+!
+      write(output%unit, *) '1'
+      flush(output%unit)
 !
       do B = 1, n_s
          do A = B, n_s
@@ -181,11 +188,23 @@ contains
          enddo
       enddo
 !
+      write(output%unit, *) '2'
+      flush(output%unit)
+!
 !     Construct significant diagonal
 !
       call mem%alloc_int(sig_sp_to_first_sig_aop, n_sig_sp + 1, 1)
       sig_sp_to_first_sig_aop = 0
       sig_sp_to_first_sig_aop(n_sig_sp + 1, 1) = n_sig_aop + 1
+!
+      call mem%alloc_int(sig_sp_to_shells, n_sig_sp, 2) ! A B
+      sig_sp_to_shells = 0
+!
+      call mem%alloc(D_xy, n_sig_aop, 1)
+      D_xy = zero
+!
+      call mem%alloc_int(sig_aop_to_aos, n_sig_aop, 2)
+      sig_aop_to_aos = 0
 !
 !     Note: allocated with length n_significant_sp + 1, last element is used for n_significant_aop
 !     This is convenient because significant_sp_to_first_significant_aop will be used to calculate lengths.
@@ -199,13 +218,22 @@ contains
 !
             if (sig_sp(sp, 1)) then
 !
+      write(output%unit, *) '2a'
+      flush(output%unit)
+!
                sig_sp_to_first_sig_aop(current_sig_sp, 1) = first_sig_aop
 !
                A_interval = molecule%get_shell_limits(A)
                B_interval = molecule%get_shell_limits(B)
 !
+      write(output%unit, *) '2b'
+      flush(output%unit)
+!
                sig_sp_to_shells(current_sig_sp, 1) = A
                sig_sp_to_shells(current_sig_sp, 2) = B
+!
+      write(output%unit, *) '2c'
+      flush(output%unit)
 !
                call mem%alloc(g_AB_AB, &
                      (A_interval%size)*(B_interval%size), &
@@ -213,6 +241,9 @@ contains
 !
                g_AB_AB = zero
                call integrals%get_ao_g_wxyz(g_AB_AB, A, B, A, B)
+!
+      write(output%unit, *) '2d'
+      flush(output%unit)
 !
                if (A .eq. B) then
 !
@@ -222,7 +253,7 @@ contains
                         xy = A_interval%size*(y - 1) + x
                         xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
 !
-                        D_xy(xy_packed + first_sig_aop - 1, 1) = g_wxyz(xy, xy)
+                        D_xy(xy_packed + first_sig_aop - 1, 1) = g_AB_AB(xy, xy)
 !
                         sig_aop_to_aos(xy_packed + first_sig_aop - 1, 1) = &
                                                       A_interval%first + x - 1
@@ -239,7 +270,7 @@ contains
                      do y = 1, (B_interval%size)
 !
                         xy = A_interval%size*(y - 1) + x
-                        D_xy(xy + first_sig_aop - 1, 1) = g_wxyz(xy,xy)
+                        D_xy(xy + first_sig_aop - 1, 1) = g_AB_AB(xy,xy)
 !
                         sig_aop_to_aos(xy + first_sig_aop - 1, 1) = A_interval%first + x - 1
                         sig_aop_to_aos(xy + first_sig_aop - 1, 2) = B_interval%first + y - 1
@@ -248,6 +279,13 @@ contains
                   enddo
 !
                endif
+!
+      write(output%unit, *) '2e'
+      flush(output%unit)
+!
+               call mem%dealloc(g_AB_AB, &
+                     (A_interval%size)*(B_interval%size), &
+                     (A_interval%size)*(B_interval%size))
 !
                first_sig_aop = first_sig_aop + get_size_sp(A_interval, B_interval)
 !
@@ -259,6 +297,9 @@ contains
 !
          enddo
       enddo
+!
+      write(output%unit, *) '3 - entering Cholesky do loop'
+      flush(output%unit)
 !
       n_cholesky = 0
 !
@@ -293,6 +334,9 @@ contains
 !
          enddo
 !
+          write(output%unit, *) '3a'
+          flush(output%unit)
+!
 !        Sort from largest to smallest by determining an index array
 !
          call mem%alloc_int(sorted_max_sig_sp, n_sig_sp,1)
@@ -308,7 +352,10 @@ contains
          n_qual_sp   = 0
 !
          call mem%alloc_int(qual_aop, max_qual, 3)
-         call mem%alloc_int(qual_sp_to_shells, n_sp, 3)
+         call mem%alloc_int(qual_sp, n_sp, 3)
+         qual_sp = 0
+         write(output%unit, *) '3b'
+         flush(output%unit)
 !
          do sp = 1, n_sig_sp
 !
@@ -329,6 +376,8 @@ contains
                endif
 !
             enddo
+            write(output%unit, *) '3b.1'
+            flush(output%unit)
 !
             if (n_qual_aop_in_sp .ne. 0) then
 !
@@ -355,16 +404,28 @@ contains
                                                                + first_sig_aop - 1
 !
                enddo
+write(output%unit, *) '3b.2'
+flush(output%unit)
 !
                first_x = sig_aop_to_aos(first_sig_aop, 1) ! alpha
                first_y = sig_aop_to_aos(first_sig_aop, 2) ! beta
 !
-               qual_sp(sp, 1) = molecule%basis2shell(first_x)
-               qual_sp(sp, 2) = molecule%basis2shell(first_y)
-               qual_sp(sp, 1) = n_qual_aop_in_sp
+write(output%unit, *) '3b.3 first_x first_y', first_x, first_y
+flush(output%unit)
+!
+               if (first_x .lt. 1 .or. first_x .gt. 48) write(output%unit, *)'bad', first_x
+!
+               qual_sp(n_qual_sp, 1) = molecule%basis2shell(first_x)
+               qual_sp(n_qual_sp, 2) = molecule%basis2shell(first_y)
+               qual_sp(n_qual_sp, 3) = n_qual_aop_in_sp
+write(output%unit, *) '3b.4'
+flush(output%unit)
 !
                call mem%dealloc_int(sorted_qual_aop_in_sp_indices, n_qual_aop_in_sp, 1)
                call mem%dealloc(sorted_qual_aop_in_sp, n_qual_aop_in_sp, 1)
+write(output%unit, *) '3b.5'
+flush(output%unit)
+!
 !
             endif
 !
@@ -375,6 +436,8 @@ contains
             endif
 !
          enddo
+          write(output%unit, *) '3c qual sp bf', qual_sp(:, 1:2)
+          flush(output%unit)
 !
 !        Cut out the qualified parts of the aop and sp lists
 !
@@ -399,12 +462,20 @@ contains
          n_qual_aop_in_prev_sps = 0
 !
          call mem%alloc(g_wxyz, n_sig_aop, n_qual_aop)
+          write(output%unit, *) '3c qual sp', qual_sp(:,1:2)
+          flush(output%unit)
 !
          do CD_sp = 1, n_qual_sp
 !
-            C                = qual_sp(sp, 1)
-            D                = qual_sp(sp, 2)
-            n_qual_aop_in_sp = qual_sp(sp, 3)
+          write(output%unit, *) '3c.1'
+          flush(output%unit)
+!
+            C                = qual_sp(CD_sp, 1)
+            D                = qual_sp(CD_sp, 2)
+            n_qual_aop_in_sp = qual_sp(CD_sp, 3)
+!
+          write(output%unit, *) '3c.2 C D n_qual_aop_in_sp', C, D, n_qual_aop_in_sp
+          flush(output%unit)
 !
             C_interval = molecule%get_shell_limits(C)
             D_interval = molecule%get_shell_limits(D)
@@ -414,12 +485,15 @@ contains
 !
             AB_sp                  = 1
             sig_AB_sp              = 1
-            n_qual_aop_in_prev_sps = 0
+         !   n_qual_aop_in_prev_sps = 0
 !
             do B = 1, n_s
                do A = B, n_s
 !
                   if (sig_sp(AB_sp, 1)) then
+!
+          write(output%unit, *) '3c.3'
+          flush(output%unit)
 !
                      A_interval = molecule%get_shell_limits(A)
                      B_interval = molecule%get_shell_limits(B)
@@ -430,10 +504,16 @@ contains
 !
                      call integrals%get_ao_g_wxyz(g_AB_CD, A, B, C, D)
 !
+          write(output%unit, *) '3c.4 n qual in prev sps', n_qual_aop_in_prev_sps
+          flush(output%unit)
+!
                      do aop = 1, n_qual_aop_in_sp
 !
-                        y = qual_aop(aop + n_qual_aop_in_prev_sps, 1)
+                           y = qual_aop(aop + n_qual_aop_in_prev_sps, 1)
                         z = qual_aop(aop + n_qual_aop_in_prev_sps, 2)
+!
+          write(output%unit, *) '3c.5 y z', y, z
+          flush(output%unit)
 !
                         yz = C_interval%size*(z - D_interval%first) + y - C_interval%first + 1
 !
@@ -445,8 +525,11 @@ contains
                                  wx_packed = (max(w,x)*(max(w,x)-3)/2) + w + x
                                  wx = A_interval%size*(x-1) + w
 !
-                                 g_wxyz(sig_sp_to_first_sig_aop(sig_AB_sp, 1) + wx_packed - 1, aop + n_qual_aop_in_prev_sps) &
-                                       = g_AB_CD(wx, yz)
+ write(output%unit, *) 'hellu', g_AB_CD(wx, yz), wx, yz
+flush(output%unit)
+!
+                             !    g_wxyz(sig_sp_to_first_sig_aop(sig_AB_sp, 1) + wx_packed - 1, aop + n_qual_aop_in_prev_sps) &
+                               !        = g_AB_CD(wx, yz)
 !
                               enddo
                            enddo
@@ -458,13 +541,16 @@ contains
 !
                                  wx = A_interval%size*(x-1) + w
 !
-                                 g_wxyz(sig_sp_to_first_sig_aop(sig_AB_sp, 1) + wx - 1, aop + n_qual_aop_in_prev_sps) &
-                                       = g_AB_CD(wx, yz)
+                             !    g_wxyz(sig_sp_to_first_sig_aop(sig_AB_sp, 1) + wx - 1, aop + n_qual_aop_in_prev_sps) &
+                                      ! = g_AB_CD(wx, yz)
 !
                               enddo
                            enddo
 !
                         endif
+!
+          write(output%unit, *) '3c.6'
+          flush(output%unit)
 !
                      enddo
 !
@@ -484,6 +570,8 @@ contains
             n_qual_aop_in_prev_sps = n_qual_aop_in_prev_sps + n_qual_aop_in_sp
 !
          enddo ! cd_sp
+          write(output%unit, *) '3d'
+          flush(output%unit)
 !
 !        Subtract old cholesky vectors
 !
@@ -502,7 +590,18 @@ contains
                         g_wxyz,     &
                         n_sig_aop)
 !
+            call mem%alloc_int(cholesky_basis, n_cholesky + n_qual_aop, 2)
+            cholesky_basis(1 : n_cholesky, :) = cholesky_basis_new(:, :)
+            call mem%dealloc_int(cholesky_basis_new, n_cholesky, 2)
+!
+         else
+!
+            call mem%alloc_int(cholesky_basis, n_qual_aop, 2)
+            cholesky_basis = 0
+!
          endif
+          write(output%unit, *) '3e'
+          flush(output%unit)
 !
          call mem%alloc(cholesky_new, n_sig_aop, n_qual_aop)
          cholesky_new = zero
@@ -531,6 +630,9 @@ contains
                endif
 !
             enddo
+
+            write(output%unit, *) '3f'
+            flush(output%unit)
 !
             if (D_max .gt. threshold) then
 !
@@ -558,6 +660,9 @@ contains
             endif
 !
          enddo
+
+         write(output%unit, *) '3g'
+         flush(output%unit)
 !
          n_new_cholesky = current_qual
 !
@@ -579,10 +684,13 @@ contains
             if (new_sig_sp(sp, 1)) n_new_sig_sp = n_new_sig_sp + 1
 !
          enddo
+
+         write(output%unit, *) '3h'
+         flush(output%unit)
 !
-!        Update index lists: sps -> aops and aops -> aos
+!        Update index lists: sps -> aops, aops -> aos, and sps -> full sps
 !
-         call mem%alloc_int(new_sig_sp_to_first_sig_aop, n_new_sig_sp, 1)
+         call mem%alloc_int(new_sig_sp_to_first_sig_aop, n_new_sig_sp + 1, 1)
          new_sig_sp_to_first_sig_aop = 0
 !
          current_new_sig_sp    = 1
@@ -610,15 +718,55 @@ contains
 !
          enddo
 !
-         call reduce_vector_int(sig_aop_to_aos,      &
+         new_sig_sp_to_first_sig_aop(current_new_sig_sp, 1) = n_new_sig_aop + 1
+!
+stop
+         ! below
+!
+         write(output%unit, *) '3i'
+         flush(output%unit)
+!
+         call mem%alloc_int(new_sig_aop_to_aos, n_new_sig_aop, 2)
+!
+         call reduce_array_int(sig_aop_to_aos,       &
                             new_sig_aop_to_aos,      &
                             sig_sp_to_first_sig_aop, &
                             new_sig_sp,              &
                             n_sig_sp,                &
                             n_sig_aop,               &
-                            n_new_sig_aop)
+                            n_new_sig_aop,           &
+                            2)
+write(output%unit, *) '3i.1'
+flush(output%unit)
+
+
 !
-         call mem%alloc(D_xy_new, n_new_sig_sp, 1)
+         call mem%alloc_int(new_sig_sp_to_shells, n_new_sig_sp, 2)
+         new_sig_sp_to_shells = 0
+!
+         call reduce_array_int(sig_sp_to_shells,        &
+                               new_sig_sp_to_shells,    &
+                               sig_sp_to_first_sig_aop, &
+                               new_sig_sp,              &
+                               n_sig_sp,                &
+                               n_sig_aop,               &
+                               n_new_sig_aop,           &
+                               2)
+stop
+write(output%unit, *) '3i.2'
+flush(output%unit)
+!
+         call mem%dealloc_int(sig_sp_to_shells, n_sig_sp, 2)
+         call mem%alloc_int(sig_sp_to_shells, n_new_sig_sp, 2)
+write(output%unit, *) '3i.3'
+flush(output%unit)
+!
+         sig_sp_to_shells = new_sig_sp_to_shells
+         call mem%dealloc_int(new_sig_sp_to_shells, n_new_sig_sp, 2)
+!
+         call mem%alloc(D_xy_new, n_new_sig_aop, 1)
+write(output%unit, *) '3i.4'
+flush(output%unit)
 !
          call reduce_vector(D_xy,                     &
                            D_xy_new,                  &
@@ -630,10 +778,15 @@ contains
 !
          call mem%dealloc(D_xy, n_sig_aop, 1)
          call mem%alloc(D_xy, n_new_sig_aop, 1)
+write(output%unit, *) '3i.5'
+flush(output%unit)
 !
          call dcopy(n_new_sig_aop, D_xy_new, 1, D_xy, 1)
 !
          call mem%dealloc(D_xy_new, n_new_sig_aop, 1)
+
+         write(output%unit, *) '3j'
+         flush(output%unit)
 !
          if (n_cholesky == 0) then
 !
@@ -675,6 +828,15 @@ contains
             call mem%dealloc(cholesky_new, n_sig_aop, n_qual_aop)
 !
          endif
+
+         write(output%unit, *) '3k'
+         flush(output%unit)
+!
+         call mem%alloc_int(cholesky_basis_new, n_cholesky + n_new_cholesky, 2)
+         cholesky_basis_new(:, :) = cholesky_basis(1 : n_cholesky + n_new_cholesky, :)
+         call mem%dealloc_int(cholesky_basis, n_cholesky + n_qual_aop, 2)
+write(output%unit, *) '3k. 1'
+flush(output%unit)
 !
 !        Deallocate old lists & reallocate + copy over new lists
 !
@@ -682,25 +844,43 @@ contains
          allocate(sig_sp(n_new_sig_sp,1))
          sig_sp = new_sig_sp
          deallocate(new_sig_sp)
+write(output%unit, *) '3k.2'
+flush(output%unit)
 !
          call mem%dealloc_int(sig_sp_to_first_sig_aop, n_sig_sp + 1, 1)
          call mem%alloc_int(sig_sp_to_first_sig_aop, n_new_sig_sp + 1, 1)
          sig_sp_to_first_sig_aop = new_sig_sp_to_first_sig_aop
          call mem%dealloc_int(new_sig_sp_to_first_sig_aop, n_new_sig_sp + 1, 1)
 !
-         call mem%dealloc_int(sig_sp_to_first_sig_aop, n_sig_sp, 1)
-         call mem%alloc_int(sig_sp_to_first_sig_aop, n_new_sig_sp, 1)
-         sig_sp_to_first_sig_aop = new_sig_sp_to_first_sig_aop
-         call mem%dealloc_int(new_sig_sp_to_first_sig_aop, n_new_sig_sp, 1)
+write(output%unit, *) '3k.4'
+flush(output%unit)
+!
+         call mem%dealloc_int(sig_aop_to_aos, n_sig_aop, 2)
+         call mem%alloc_int(sig_aop_to_aos, n_new_sig_aop, 2)
+         sig_aop_to_aos = new_sig_aop_to_aos
+         call mem%dealloc_int(new_sig_aop_to_aos, n_new_sig_aop, 2)
+write(output%unit, *) '3k.5'
+flush(output%unit)
 !
          n_sig_sp = n_new_sig_sp
+         n_sig_aop = n_new_sig_aop
 !
          n_cholesky = n_cholesky + n_new_cholesky
+write(output%unit, *) '3k.6'
+flush(output%unit)
 !
          call mem%dealloc_int(qual_aop, n_qual_aop, 3)
          call mem%dealloc_int(qual_sp, n_qual_sp, 3)
+
+         write(output%unit, *) '3l'
+         flush(output%unit)
+!
+         stop
 !
       enddo
+
+ write(output%unit, *) '4 - done'
+ flush(output%unit)
 !
 !
    end subroutine cholesky_decompose_integral_manager

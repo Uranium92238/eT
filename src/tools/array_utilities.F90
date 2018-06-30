@@ -282,7 +282,7 @@ contains
             last  = block_firsts(block + 1, 1) - 1
             size  = last - first + 1
 !
-            array_reduced(current_pos : current_pos + size - 1, 1 : columns) = array(first : last, 1 : columns)
+            array_reduced(current_pos : (current_pos + size - 1), :) = array(first : last, :)
             current_pos = current_pos + size
 !
          endif
