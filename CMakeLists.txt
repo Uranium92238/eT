@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 
 # set project name and languanges that are involved
-set(CMAKE_CXX_COMPILER "g++-8")
+#set(CMAKE_CXX_COMPILER "g++-8")
 project(eT Fortran CXX)
 
 # these are paths that CMake will search for cmake
