@@ -4,11 +4,8 @@
 ## GNU ##
 if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
     add_definitions(-DVAR_GFORTRAN)
-<<<<<<< HEAD
     set(CMAKE_Fortran_FLAGS         "-DVAR_GFORTRAN -O3 -ffloat-store -fcray-pointer -finit-local-zero -fopenmp -g -fcheck=all")
-=======
-    set(CMAKE_Fortran_FLAGS         "-DVAR_GFORTRAN -O3 -ffloat-store -fcray-pointer -finit-local-zero -fopenmp -g -fcheck=all -fbacktrace")
->>>>>>> e35054703b6795c8c2608ef9b73d0c35c8004411
+
 #
 #   Testing processor 32-bit or 64-bit
 #
