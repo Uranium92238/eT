@@ -62,9 +62,6 @@ contains
 !
       call molecule%read_info
 !
-      write(output%unit, *) 'N atoms? ', molecule%n_atoms
-      flush(output%unit)
-!
       allocate(molecule%atoms(molecule%n_atoms, 1))
 !
       allocate(n_shells_on_atoms(molecule%n_atoms,1))
@@ -80,13 +77,8 @@ contains
 !
       call molecule%write      ! Write an xyz file for the read geometry
 !
-         write(output%unit, *) 'hei???'
-         flush(output%unit)
-!
       call initialize_basis()
       call get_n_shells_on_atoms(n_shells_on_atoms)
-         write(output%unit, *) 'here maybe???'
-         flush(output%unit)
 !
       do i = 1, molecule%n_atoms ! Loop over atoms
 !
@@ -97,8 +89,8 @@ contains
 !        Allocate and initialize the corresponding shells
 !
          molecule%atoms(i,1)%n_shells = n_shells_on_atoms(i,1)
-         write(output%unit, *) 'n_shells', molecule%atoms(i,1)%n_shells
-         flush(output%unit)
+       !  write(output%unit, *) 'n_shells', molecule%atoms(i,1)%n_shells
+       !  flush(output%unit)
          allocate(molecule%atoms(i,1)%shells(molecule%atoms(i,1)%n_shells, 1))
 !
 !        Then determine the number of basis functions in each shell
@@ -122,7 +114,7 @@ contains
          do j = 1, n_shells_on_atoms(i,1)
 !
             molecule%atoms(i,1)%shells(j,1)%number = shell_numbers(j, 1)
-            write(output%unit, *) 'The ', j, 'th shell on atom ', i, ' has shell nr. ', molecule%atoms(i,1)%shells(j,1)%number
+          !  write(output%unit, *) 'The ', j, 'th shell on atom ', i, ' has shell nr. ', molecule%atoms(i,1)%shells(j,1)%number
 !
          enddo
 !

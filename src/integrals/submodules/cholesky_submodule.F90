@@ -125,7 +125,7 @@ contains
 !
       integer(i15), parameter :: max_qual = 100
 !
-      write(output%unit, *) 'Now doing Cholesky decomposition'
+      write(output%unit, *) 'Cholesky decomposition of two-electron integrals'
       flush(output%unit)
 !
       n_s   = molecule%get_n_shells() ! Number of shells
@@ -186,6 +186,9 @@ contains
 !
          enddo
       enddo
+!
+      write(output%unit, '(/a33, 2x, i4, 3x, i4)')'Initial reduction of shell pairs:', n_sp, n_sig_sp
+      write(output%unit, '(a30, 5x, i9, 3x, i4/)')'Initial reduction of ao pairs:', 184*185/2, n_sig_aop
 !
 !     Construct significant diagonal
 !
@@ -286,8 +289,9 @@ contains
 !
       do while (.not. done)
 !
-         write(output%unit, *) 'starting loop'
-         flush(output%unit)
+         write(output%unit,'(/a)') '-- New iteration:'
+         write(output%unit, '(a34, 3x, i4)')'Number of significant shell pairs:', n_sig_sp
+         write(output%unit, '(a34, 3x, i4)')'Number of significant diagonals:  ', n_sig_aop
 !
 !        Shell maximums and shell maximums indices vectors
 !
@@ -325,6 +329,8 @@ contains
          sorted_max_in_sig_sp = zero
 !
          call get_n_highest(n_sig_sp, n_sig_sp, max_in_sig_sp, sorted_max_in_sig_sp, sorted_max_sig_sp)
+         write(output%unit,'(/a27, 3x, e15.8)') 'Largest screened diagonal: ',sorted_max_in_sig_sp(1, 1)
+         flush(output%unit)
 !
          D_max       = sorted_max_in_sig_sp(1, 1)
          n_qual_aop  = 0
@@ -401,6 +407,10 @@ contains
             endif
 !
          enddo
+!
+         write(output%unit,'(/a32, 3x, i4)')  'Number of qualified shell pairs ', n_qual_sp
+         write(output%unit,'(a32, 3x, i4/)') 'Number of qualified ao pairs    ', n_qual_aop
+         flush(output%unit)
 !
          call mem%dealloc_int(sorted_max_sig_sp, n_sig_sp, 1)
 !
@@ -527,19 +537,6 @@ contains
                enddo
             enddo
 !
-   !        call dgemm('N', 'T',    &
-   !                    n_sig_aop,  &
-   !                    n_qual_aop, &
-   !                    n_cholesky, &
-   !                    -one,       &
-   !                    cholesky,   &
-   !                    n_sig_aop,  &
-   !                    cholesky,   &
-   !                    n_sig_aop,  &
-   !                    one,        &
-   !                    g_wxyz,     &
-   !                    n_sig_aop)
-!
             call mem%alloc_int(cholesky_basis, n_cholesky + n_qual_aop, 2)
             cholesky_basis(1 : n_cholesky, :) = cholesky_basis_new(:, :)
             call mem%dealloc_int(cholesky_basis_new, n_cholesky, 2)
@@ -579,8 +576,6 @@ contains
 !
             enddo
 !
-            write(output%unit, *) 'dmax', D_max
-!
             if (D_max .gt. threshold) then
 !
                cholesky_basis(n_cholesky + current_qual, 1) = qual_aop(qual_max, 1)
@@ -607,10 +602,6 @@ contains
             endif
 !
          enddo
-!
-         write(output%unit,*) 'TheDiagonal', D_xy
-!
-     !    stop
 !
          call mem%dealloc(g_wxyz, n_sig_aop, n_qual_aop)
 !
@@ -648,49 +639,9 @@ contains
 !
          enddo
 !
-   !     do sp = 1, n_sig_sp
-!
-   !        first = sig_sp_to_first_sig_aop(sp, 1)
-   !        last  = sig_sp_to_first_sig_aop(sp + 1, 1) - 1
-!
-   !        new_sig_sp(sp, 1) = is_significant(D_xy(first:last, 1), &
-   !                                        last - first + 1,    &
-   !                                        threshold)
-!
-   !        if (new_sig_sp(sp, 1)) then
-!
-   !           n_new_sig_sp = n_new_sig_sp + 1
-!
-   !        endif
-!
-   !     enddo
-!
- !       inc_new_sig_sp = 1
- !       inc_sig_sp = 1
-!
- !       do sp = 1, n_sp
-!
- !          if (sig_sp(inc_sig_sp,1)) then
-!
- !             inc_sig_sp = inc_sig_sp + 1
-!
- !             if (new_sig_sp(inc_new_sig_sp,1)) then
-!
- !                inc_new_sig_sp = inc_new_sig_sp + 1
-!
- !                sig_sp(sp, 1) = .true.
-!
- !             endif
-!
- !          endif
-!
- !       enddo
-!
-         write(output%unit, *) 'n_sig_sp n_new_sig_sp', n_sig_sp, n_new_sig_sp
-!
          if (n_new_sig_sp .gt. 0) then
 !
-   !        Update index lists: sps -> aops, aops -> aos, and sps -> full sps
+!           Update index lists: sps -> aops, aops -> aos, and sps -> full sps
 !
             call mem%alloc_int(new_sig_sp_to_first_sig_aop, n_new_sig_sp + 1, 1)
             new_sig_sp_to_first_sig_aop = 0
@@ -701,8 +652,6 @@ contains
             current_new_sig_sp    = 1
             n_new_sig_aop = 0
             first_sig_aop = 1
-!
-            write(output%unit, *) 'n_sig_sp, n_new_sig_sp??', n_sig_sp, n_new_sig_sp
 !
             do sp = 1, n_sig_sp
 !
@@ -726,8 +675,6 @@ contains
                endif
 !
             enddo
-!
-            write(output%unit,*) 'new_sig_sp_to_first_sig_aop', new_sig_sp_to_first_sig_aop
 !
             new_sig_sp_to_first_sig_aop(current_new_sig_sp, 1) = n_new_sig_aop + 1
 !
@@ -776,10 +723,7 @@ contains
 !
             call dcopy(n_new_sig_aop, D_xy_new, 1, D_xy, 1)
 !
-            call mem%dealloc(D_xy_new, n_new_sig_aop, 1)
-!
-            write(output%unit, *) 'n_cholesky n_new_cholesky', &
-                        n_cholesky, n_new_cholesky
+            call mem%dealloc(D_xy_new, n_new_sig_aop, 1)  
 !
             if (n_cholesky == 0) then
 !
@@ -852,19 +796,31 @@ contains
 !
             call mem%dealloc_int(qual_aop, n_qual_aop, 3)
             call mem%dealloc_int(qual_sp, n_qual_sp, 3)
+
+            write(output%unit, '(a47, 3x, i4)')'Number of cholesky vectors:                    ', n_cholesky
+            write(output%unit, '(a47, 3x, i4)')'Length of cholesky vectors after new screening:', n_sig_aop
+            write(output%unit, '(a47, 3x, i9)')'Size of cholesky array:                        ', n_sig_aop*n_cholesky
+            flush(output%unit)
 !
          else
 !
+            n_cholesky = n_cholesky + n_new_cholesky
+!
             done = .true.
+            write(output%unit, '(a47, 3x, i4)')'Number of cholesky vectors:                    ', n_cholesky
+            write(output%unit, '(a47, 3x, i4)')'Length of cholesky vectors after new screening:', 0
+            write(output%unit, '(a47, 3x, i9)')'Size of cholesky array:                        ', 0
+            flush(output%unit)
 !
          endif
 !
-     !    stop
-!
       enddo
 
- write(output%unit, *) '4 - done'
- flush(output%unit)
+      write(output%unit, *) '4 - done with loop'
+      flush(output%unit)
+!
+      write(output%unit, *) '5 - Building auxiliary basis'
+      flush(output%unit)
 !
 !
    end subroutine cholesky_decompose_integral_manager

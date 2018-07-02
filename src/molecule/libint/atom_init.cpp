@@ -36,7 +36,7 @@ void get_shell_numbers(int *atom, int *sn){
 		auto the_shell = a2s_list[*atom-1][j];
 
 		*(sn + j) = the_shell + 1;
-		cout << "The " << j << " th shell on atom " << *atom-1 << " is " << the_shell + 1 << endl;
+		//cout << "The " << j << " th shell on atom " << *atom-1 << " is " << the_shell + 1 << endl;
 
 	}
 
