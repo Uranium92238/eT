@@ -114,8 +114,6 @@ contains
       wf%n_ao = 0
       call get_n_aos(wf%n_ao)
 !
-      write(output%unit,*) 'naos:', wf%n_ao
-!
       wf%n_mo = wf%n_ao
 !
 !     Determine the number of occupied and virtual molecular orbitals

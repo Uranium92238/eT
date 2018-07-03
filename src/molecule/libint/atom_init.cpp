@@ -119,7 +119,7 @@ void get_n_shells_on_atoms(int *nsoa){
 	for (auto j = 0; j < atoms.size(); j++){
 
 		n_shells = a2s_list[j].size();
-		cout << "num shells? " << n_shells << endl;
+		//cout << "num shells? " << n_shells << endl;
 		*(nsoa + j) = n_shells;
 
 	}

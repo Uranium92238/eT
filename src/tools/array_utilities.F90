@@ -293,4 +293,138 @@ contains
    end subroutine reduce_array_int
 !
 !
+   module subroutine full_cholesky_decomposition(matrix, cholesky_vectors, dim, n_vectors,&
+                                        threshold, used_diag)
+!!
+!!    Cholesky decomposition, 
+!!    Written by Sarai Dery Folkestad, June 2017.
+!!
+!! 
+      implicit none
+!
+      integer(i15), intent(in) :: dim
+      integer(i15), intent(out) :: n_vectors
+!
+      real(dp), intent(in) :: threshold 
+!
+      real(dp), dimension(dim, dim), intent(inout) :: matrix
+      real(dp), dimension(dim, dim), intent(out) :: cholesky_vectors
+!
+      integer(i15), dimension(dim, 1), optional, intent(out) :: used_diag
+!
+      integer(i15) :: i, j, k, index_max
+      real(dp) :: max_diagonal
+!
+      real(dp), parameter :: tolerance = 1.0d-10
+!
+      if (present(used_diag)) used_diag = 0
+!
+!     Looping over the number of cholesky vectors   
+!
+      do i = 1, dim
+         n_vectors = i
+!
+!        Find the maximum diagonal
+!
+         index_max = 0
+         max_diagonal = 0.0d0
+!
+         do j = 1, dim
+!
+            if (matrix(j,j) .gt. max_diagonal) then
+!
+               max_diagonal = matrix(j,j)
+               index_max    = j
+!
+            endif
+!
+         enddo
+!
+!        Check against threshold and whether diagonal is negative
+!
+         if (max_diagonal .lt. 0.0d0) then
+            if (abs(max_diagonal) .gt. tolerance) then
+!
+               write(output%unit,*)'Error: Found negative diagonal in cholesky decomposition.'
+               stop
+!
+            endif
+         endif
+!
+         if (abs(max_diagonal) .lt. threshold) then
+            n_vectors = n_vectors - 1                
+            return
+         else
+            if (present(used_diag)) used_diag(n_vectors, 1) = index_max
+         endif
+!
+!        Cholesky vectors
+!
+         do j = 1, dim
+!
+            cholesky_vectors(j,i) = matrix(j, index_max)/sqrt(max_diagonal)
+!
+         enddo
+!
+!        Subtract from density
+!
+         do j = 1, dim
+            do k = 1, dim
+!
+               matrix(k,j) = matrix(k,j) - cholesky_vectors(k,i)*cholesky_vectors(j,i)
+!
+            enddo
+         enddo
+!
+         do j = 1, dim
+            matrix(j,index_max) = 0.0D0
+            matrix(index_max,j) = 0.0D0
+         enddo
+!
+      enddo
+
+   end subroutine full_cholesky_decomposition
+!
+!
+   function inv(A, dim) result(Ainv)
+!!
+!!    Invert matrix A
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: dim
+!
+      real(dp), dimension(dim,dim), intent(in) :: A
+      real(dp), dimension(dim,dim) :: Ainv
+
+      real(dp), dimension(dim) :: work  ! work array for LAPACK
+      integer(kind=4), dimension(dim) :: ipiv   ! pivot indices
+      integer(kind=4) :: n, info
+!
+!     Store A in Ainv to prevent it from being overwritten by LAPACK
+!
+      Ainv = A
+      n = int(dim, kind=4)
+!
+!     DGETRF computes an LU factorization of a general M-by-N matrix A
+!     using partial pivoting with row interchanges.
+!
+      call DGETRF(n, n, Ainv, n, ipiv, info)
+!
+      if (info /= 0) then
+         stop 'Matrix is numerically singular!'
+      end if
+!
+!     DGETRI computes the inverse of a matrix using the LU factorization
+!     computed by DGETRF.
+!
+      call DGETRI(n, Ainv, n, ipiv, work, n, info)
+!
+      if (info /= 0) then
+         stop 'Matrix inversion failed!'
+      end if
+!
+   end function inv
+!
+!
 end module array_utilities
