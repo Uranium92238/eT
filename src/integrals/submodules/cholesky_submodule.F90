@@ -88,17 +88,17 @@ contains
 !
       integer(i15) :: A, B, C, D, AB_sp, CD_sp, AB
       integer(i15) :: I, K, J, L, KL, I_counter, J_counter, IJ
-      integer(i15) :: w, x, y, z, xy, yz, wx, xy_packed, wx_packed, wxyz
+      integer(i15) :: w, x, y, z, xy, yz, wx, xy_packed, wx_packed, wxyz, yz_packed
       integer(i15) :: first, last, first_sig_aop, last_sig_aop, first_x, first_y
       integer(i15) :: sp, aop, current_qual, current_sig_sp, qual, qual_max, current_new_sig_sp
-      integer(i15) :: current_aop_in_sp, n_left_out, n_vectors
+      integer(i15) :: current_aop_in_sp, n_left_out, n_vectors, size_AB, offset_yz
 !
       type(interval) :: A_interval, B_interval, C_interval, D_interval
 !
-      logical, dimension(:, :), allocatable :: sig_sp, new_sig_sp
+      logical, dimension(:, :), allocatable :: sig_sp, new_sig_sp, first_sig_sp
 !
       real(dp), dimension(:,:), allocatable :: D_AB, D_xy, D_xy_new
-      real(dp), dimension(:,:), allocatable :: g_AB_AB, g_AB_CD, g_wxyz
+      real(dp), dimension(:,:), allocatable :: g_AB_AB, g_AB_CD, g_CD_AB, g_wxyz, g_J_yz, L_K_yz
       real(dp), dimension(:,:), allocatable :: cholesky, cholesky_new
       real(dp), dimension(:,:), allocatable :: cholesky_copy
       real(dp), dimension(:,:), allocatable :: cholesky_tmp
@@ -110,6 +110,7 @@ contains
       real(dp), dimension(:,:), allocatable :: integrals_auxiliary_new
       real(dp), dimension(:,:), allocatable :: auxiliary_basis
       real(dp), dimension(:,:), allocatable :: auxiliary_basis_inverse
+      real(dp), dimension(:,:), allocatable :: approximate_diagonal, first_sig_D_xy, difference
 !
       integer(i15), dimension(:,:), allocatable :: sig_sp_to_first_sig_aop
       integer(i15), dimension(:,:), allocatable :: new_sig_sp_to_first_sig_aop
@@ -131,20 +132,24 @@ contains
 !
       logical :: construct_more_choleskys, done, found
 !
-      real(dp) :: D_max, max_in_sp, D_max_full, D_max_full_after_subtraction
+      real(dp) :: D_max, max_in_sp, D_max_full, D_max_full_after_subtraction, max_diff
 !
       real(dp), parameter :: threshold = 1.0D-8
       real(dp), parameter :: span      = 1.0D-3
 !
       integer(i15), parameter :: max_qual = 100
 !
-      !real(dp) :: start_time, end_time, start_integral_time, end_integral_time
+      real(dp) :: s_prep_time, e_prep_time, s_select_basis_time, e_select_basis_time
+      real(dp) :: s_build_basis_time, e_build_basis_time, s_decomp_time, e_decomp_time, full_decomp_time
+      real(dp) :: e_invert_time, s_invert_time, e_build_vectors_time, s_build_vectors_time
 !
-      write(output%unit, '(/a48)') 'Cholesky decomposition of two-electron integrals'
+      write(output%unit, '(/a51)') ':: Cholesky decomposition of two-electron integrals'
       flush(output%unit)
 !
       write(output%unit, '(/a)') ' - Preparations'
       flush(output%unit)
+!
+      call cpu_time(s_prep_time)
 !
       n_s   = molecule%get_n_shells() ! Number of shells
       n_sp  = n_s*(n_s + 1)/2         ! Number of shell pairs packed
@@ -204,6 +209,8 @@ contains
 !
          enddo
       enddo
+!
+      first_sig_sp = sig_sp
 !
       write(output%unit, '(/a)')'Initial reduction of shell pairs:'
       write(output%unit, '(a33, 2x, i6)')'Total number of shell pairs:     ', n_sp
@@ -301,8 +308,15 @@ contains
          enddo
       enddo
 !
+      call mem%alloc(first_sig_D_xy, n_sig_aop, 1)
+      first_sig_D_xy = D_xy
+!
+      call cpu_time(e_prep_time)
+      write(output%unit, '(/a17, e10.4, a5)')'Time to prepare: ', e_prep_time - s_prep_time, ' sec.'
+!
       write(output%unit, '(/a)') ' - Determinig the elements of the basis'
       flush(output%unit)
+      call cpu_time(s_select_basis_time)
 !
       n_cholesky = 0
       write(output%unit, '(/a)') 'Iter.    Max diagonal    #Qualified    #Cholesky    Cholesky array size'
@@ -314,10 +328,6 @@ contains
       do while (.not. done)
 !
       iteration = iteration + 1
-!
-      !   write(output%unit,'(/a)') '-- New iteration:'
-      !   write(output%unit, '(a34, 3x, i4)')'Number of significant shell pairs:', n_sig_sp
-      !   write(output%unit, '(a34, 3x, i4)')'Number of significant diagonals:  ', n_sig_aop
 !
 !        Shell maximums and shell maximums indices vectors
 !
@@ -868,11 +878,13 @@ contains
       write(output%unit, '(a)') '----------------------------------------------------------------------'
       flush(output%unit)
 !
+      call cpu_time(e_select_basis_time)
+      write(output%unit, '(/a22, e10.4, a5)')'Time to select basis: ',&
+                            e_select_basis_time - s_select_basis_time, ' sec.'
+!
       write(output%unit, '(/a)') '- Building auxiliary basis'
       flush(output%unit)
-!
-!     1. Constructing matrix (J | J') only for the aop selected
-!        - Need to find which shellpairs they are in
+      call cpu_time(s_build_basis_time)
 !
 !     Construct a list of all shell pairs and shells that include elements of the basis 
 !
@@ -998,11 +1010,11 @@ contains
 !
             call mem%dealloc_int(basis_aops_in_AB_sp, basis_shell_info(AB_sp, 4), 3)       
 !
-         enddo
+         enddo ! AB
 !
          call mem%dealloc_int(basis_aops_in_CD_sp, basis_shell_info(CD_sp, 4), 3)
 !
-      enddo
+      enddo ! CD
 !
       call mem%dealloc_int(basis_shell_info, n_sp_in_basis, 4)
 !
@@ -1013,9 +1025,13 @@ contains
 !
       n_vectors = 0
       call mem%alloc_int(keep_vectors, n_cholesky, 1)
-
-      call full_cholesky_decomposition(integrals_auxiliary, auxiliary_basis, &
+!
+      call cpu_time(s_decomp_time)
+!
+      call full_cholesky_decomposition_effective(integrals_auxiliary, auxiliary_basis, &
                                           n_cholesky, n_vectors, threshold, keep_vectors)
+      call cpu_time(e_decomp_time)
+      full_decomp_time = e_decomp_time - s_decomp_time
 !
       call mem%dealloc(integrals_auxiliary, n_cholesky, n_cholesky) 
 !
@@ -1042,9 +1058,9 @@ contains
                endif
             enddo
 !
-            cholesky_basis(I_counter, :) = cholesky_basis_new(I, :)
-!
             if (found) then
+!
+            cholesky_basis(I_counter, :) = cholesky_basis_new(I, :)
 !
                J_counter = 0
 !
@@ -1079,10 +1095,13 @@ contains
 !
          n_cholesky = n_vectors
 !
-         call mem%alloc(auxiliary_basis, n_cholesky, n_cholesky)
+         call mem%alloc(auxiliary_basis, n_vectors, n_vectors)
 !
-         call full_cholesky_decomposition(integrals_auxiliary, auxiliary_basis, &
+         call cpu_time(s_decomp_time)
+         call full_cholesky_decomposition_effective(integrals_auxiliary, auxiliary_basis, &
                                           n_cholesky, n_vectors, threshold)
+         call cpu_time(e_decomp_time)
+         full_decomp_time = full_decomp_time + e_decomp_time - s_decomp_time
 !
          if (n_cholesky .ne. n_vectors) then
             write(output%unit, '(a)')'Error: could not find auxiliary basis in Cholesky decomposition'
@@ -1104,24 +1123,263 @@ contains
       call mem%dealloc_int(keep_vectors, n_cholesky, 1)
       call mem%dealloc(integrals_auxiliary_packed, n_cholesky*(n_cholesky + 1)/2, 1)
 !
+      call mem%alloc_int(basis_shell_info_full, n_sp, 4) ! A, B, AB, n_basis_aops_in_sp
+      basis_shell_info_full = 0
+!
+      n_sp_in_basis = 0
+!
+      do i = 1, n_cholesky
+!
+         A = molecule%basis2shell(cholesky_basis(i, 1))
+         B = molecule%basis2shell(cholesky_basis(i, 2))
+!
+         AB = get_sp_from_shells(A, B, n_s)
+!
+         found = .false.
+!
+         do sp_in_basis = 1, n_sp_in_basis
+!
+              if (AB == basis_shell_info_full(sp_in_basis, 3)) then
+                 found = .true.
+                 basis_shell_info_full(sp_in_basis, 4) = basis_shell_info_full(sp_in_basis, 4) + 1 
+                 exit
+              endif
+!
+         enddo
+!
+         if(.not. found) then
+!
+            n_sp_in_basis = n_sp_in_basis + 1
+!
+            basis_shell_info_full(n_sp_in_basis, 1) = A
+            basis_shell_info_full(n_sp_in_basis, 2) = B
+            basis_shell_info_full(n_sp_in_basis, 3) = AB         
+            basis_shell_info_full(n_sp_in_basis, 4) = 1         
+!
+         endif
+!
+      enddo
+!
+      call mem%alloc_int(basis_shell_info, n_sp_in_basis, 4)
+      basis_shell_info(:, :) = basis_shell_info_full(1:n_sp_in_basis, :)
+      call mem%dealloc_int(basis_shell_info_full, n_sp, 4)
+!
+      call cpu_time(e_build_basis_time)
+      write(output%unit, '(/a21, e10.4, a15, e10.4, a31)')'Time to build basis: ',&
+                            e_build_basis_time - s_build_basis_time, ' sec, of which ', &
+                            full_decomp_time, ' sec is used to decompose (J|K)'                 
+!
       write(output%unit, '(/a)') '- Inverting auxiliary basis'
       flush(output%unit)
+      call cpu_time(s_invert_time)
 !
       call mem%alloc(auxiliary_basis_inverse, n_cholesky, n_cholesky)
       auxiliary_basis_inverse = inv(auxiliary_basis, n_cholesky)
 !
-      call mem%dealloc(auxiliary_basis, n_cholesky, n_cholesky)
-      call mem%dealloc(auxiliary_basis_inverse, n_cholesky, n_cholesky)
+      call cpu_time(e_invert_time)
+      write(output%unit, '(a16, e11.4, a5)')'Time to invert: ',&
+                            e_invert_time - s_invert_time, ' sec.' 
 !
       write(output%unit, '(/a)') '- Construct Cholesky vectors'
       flush(output%unit)
+      call cpu_time(s_build_vectors_time)
 !
-!     Calculate memory requirement for baching 
+      done = .false.
 !
-!     Need info on original screening
-!           
-!     need to hold (dim_alfa,beta)*n_cholesky*2 - calculate batches for 
-!     (dim_alfa,beta)
+      do while (.not. done)
+!
+         sp = 0
+         size_AB = 0
+!
+         do B = 1, n_s
+            do A = B, n_s
+!
+               sp = sp + 1
+!
+               A_interval = molecule%get_shell_limits(A)
+               B_interval = molecule%get_shell_limits(B)
+!
+               if (first_sig_sp(sp, 1)) then
+!
+                  size_AB = size_AB + get_size_sp(A_interval, B_interval)
+!
+                  if (2*size_AB*n_cholesky .gt. mem%available) then
+!
+                     size_AB = size_AB - get_size_sp(A_interval, B_interval)
+                     sp = sp - 1
+!
+                  endif
+!
+               endif
+!
+            enddo
+         enddo
+!
+         call mem%alloc(g_J_yz, n_cholesky, size_AB)
+         g_J_yz = zero
+         offset_yz = 0
+!
+         do B = 1, n_s 
+            do A = B, n_s
+!
+               AB_sp = get_sp_from_shells(A, B, n_s)
+!
+
+               if (first_sig_sp(AB_sp, 1) .and. AB_sp .le. sp) then
+!
+                  first_sig_sp(AB_sp, 1) = .false.
+!
+                  A_interval = molecule%get_shell_limits(A)
+                  B_interval = molecule%get_shell_limits(B)
+!
+                  do CD_sp = 1, n_sp_in_basis
+
+!
+                     C = basis_shell_info(CD_sp, 1)
+                     D = basis_shell_info(CD_sp, 2)
+!
+                     C_interval = molecule%get_shell_limits(C)
+                     D_interval = molecule%get_shell_limits(D)
+!
+                     call mem%alloc_int(basis_aops_in_CD_sp, basis_shell_info(CD_sp, 4), 3)
+!
+                     current_aop_in_sp = 0
+!
+                     do I = 1, n_cholesky
+                        if (cholesky_basis(I,3) == basis_shell_info(CD_sp, 3)) then
+!
+                           current_aop_in_sp = current_aop_in_sp + 1
+!
+                           basis_aops_in_CD_sp(current_aop_in_sp, 1) = cholesky_basis(I,1) - C_interval%first + 1
+                           basis_aops_in_CD_sp(current_aop_in_sp, 2) = cholesky_basis(I,2) - D_interval%first + 1
+                           basis_aops_in_CD_sp(current_aop_in_sp, 3) = I
+!
+                        endif
+                     enddo
+!
+                     call mem%alloc(g_CD_AB, &
+                              (C_interval%size)*(D_interval%size), &
+                              (A_interval%size)*(B_interval%size))
+!
+                     call integrals%get_ao_g_wxyz(g_CD_AB, C, D, A, B)
+!
+                     if (A == B) then
+!
+                        do J = 1, basis_shell_info(CD_sp, 4)
+                           w = basis_aops_in_CD_sp(J, 1)
+                           x = basis_aops_in_CD_sp(J, 2)
+                           L = basis_aops_in_CD_sp(J, 3)
+!
+                           wx = C_interval%size*(x-1)+w
+!
+                           do y = 1, A_interval%size
+                              do z = 1, B_interval%size
+                                 
+!
+                                    yz_packed = (max(y,z)*(max(y,z)-3)/2) + y + z
+                                    yz = A_interval%size*(z-1) + y
+!
+                                    g_J_yz(L, yz_packed + offset_yz) = g_CD_AB(wx, yz)
+!
+                                 enddo
+                              enddo
+                           enddo
+!
+                        else
+!
+                           do J = 1, basis_shell_info(CD_sp, 4)
+                              w = basis_aops_in_CD_sp(J, 1)
+                              x = basis_aops_in_CD_sp(J, 2)
+                              L = basis_aops_in_CD_sp(J, 3)
+!
+                              wx = C_interval%size*(x-1) + w
+!
+                              do y = 1, A_interval%size
+                                 do z = 1, B_interval%size
+!
+                                    yz = A_interval%size*(z-1) + y
+!
+                                    g_J_yz(L, yz + offset_yz) = g_CD_AB(wx, yz)
+!
+                                 enddo
+                              enddo
+                           enddo
+!
+                        endif
+!
+                        call mem%dealloc(g_CD_AB,                 &
+                           (C_interval%size)*(D_interval%size),   &
+                           (A_interval%size)*(B_interval%size))
+!
+                     call mem%dealloc_int(basis_aops_in_CD_sp, basis_shell_info(CD_sp, 4), 3)
+!
+                  enddo ! CD
+!
+                  offset_yz = offset_yz + get_size_sp(A_interval, B_interval)
+!
+               endif
+!
+            enddo ! B
+!        
+         enddo ! A
+!
+         call mem%alloc(L_K_yz, n_cholesky, size_AB)
+!
+         call dgemm('N', 'N',                     &
+                       n_cholesky,                &
+                       size_AB,                   &
+                       n_cholesky,                &
+                       one,                       &
+                       auxiliary_basis_inverse,   &
+                       n_cholesky,                &
+                       g_J_yz,                    &
+                       n_cholesky,                &
+                       zero,                      &
+                       L_K_yz,                    &
+                       n_cholesky)
+!
+         call mem%dealloc(g_J_yz, n_cholesky, size_AB)
+!
+      call mem%alloc(approximate_diagonal, size_AB, 1)
+!
+      approximate_diagonal = zero
+!
+      do I = 1, size_AB
+         do K = 1, n_cholesky
+            approximate_diagonal(I,1) = approximate_diagonal(I,1) + L_K_yz(K, I)**2
+         enddo
+      enddo
+!
+      call mem%alloc(difference, size_AB, 1)
+      difference = zero
+      do I = 1, size_AB
+            difference(I, 1) = approximate_diagonal(I,1) - first_sig_D_xy(I, 1)
+      enddo
+!
+      max_diff = zero
+       do I = 1, size_AB
+         if (abs(difference(I, 1)) .gt. max_diff) max_diff = abs(difference(I, 1))
+      enddo
+      write(output%unit, '(a60, e12.4)')'Maximal difference between approximate and actual diagonal: ', max_diff
+      call mem%dealloc(L_K_yz, n_cholesky, size_AB)
+!
+         done = .true.
+!
+         do I = 1, n_sp
+            if (first_sig_sp(I, 1)) then
+               done = .false.
+               exit
+            endif
+         enddo
+!
+      enddo ! done
+      call cpu_time(e_build_vectors_time)
+      write(output%unit, '(a23, e11.4, a5)')'Time to build vectors: ',&
+                            e_build_vectors_time - s_build_vectors_time, ' sec.' 
+
+!
+      call mem%dealloc(auxiliary_basis, n_cholesky, n_cholesky)
+      call mem%dealloc(auxiliary_basis_inverse, n_cholesky, n_cholesky)
 !
    end subroutine cholesky_decompose_integral_manager
 !

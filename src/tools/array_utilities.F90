@@ -11,6 +11,7 @@ module array_utilities
 !
    use index
    use kinds
+   use memory_manager_class
 !
    implicit none
 !
@@ -331,7 +332,7 @@ contains
 !
          do j = 1, dim
 !
-            if (matrix(j,j) .gt. max_diagonal) then
+            if (abs(matrix(j, j)) .gt. abs(max_diagonal)) then
 !
                max_diagonal = matrix(j,j)
                index_max    = j
@@ -366,7 +367,7 @@ contains
 !
          enddo
 !
-!        Subtract from density
+!        Subtract from matrix
 !
          do j = 1, dim
             do k = 1, dim
@@ -384,6 +385,129 @@ contains
       enddo
 
    end subroutine full_cholesky_decomposition
+!
+!
+   module subroutine full_cholesky_decomposition_effective(matrix, cholesky_vectors, dim, n_vectors,&
+                                        threshold, used_diag)
+!!
+!!    Cholesky decomposition, 
+!!    Written by Sarai Dery Folkestad, June 2017.
+!!
+!! 
+      implicit none
+!
+      integer(i15), intent(in) :: dim
+      integer(i15), intent(out) :: n_vectors
+!
+      real(dp), intent(in) :: threshold 
+!
+      real(dp), dimension(dim, dim), intent(inout) :: matrix
+      real(dp), dimension(dim, dim), intent(out) :: cholesky_vectors
+!
+      integer(i15), dimension(dim, 1), optional, intent(out) :: used_diag
+!
+      integer(i15) :: i, j, k, index_max
+      real(dp) :: max_diagonal
+!
+      real(dp), dimension(:,:), allocatable :: diagonal, temp_cholesky_vector
+!
+      real(dp), parameter :: tolerance = 1.0d-10
+!
+      if (present(used_diag)) used_diag = 0
+!
+!     Looping over the number of cholesky vectors   
+!
+      call mem%alloc(diagonal, dim, 1)
+!
+      do i = 1, dim 
+!
+         diagonal(i, 1) = matrix(i, i)
+!
+      enddo
+!
+      do i = 1, dim
+!
+         n_vectors = i
+!
+!        Find the maximum diagonal
+!
+         index_max = 0
+         max_diagonal = 0.0d0
+!
+         do j = 1, dim
+!
+            if (abs(diagonal(j, 1)) .gt. abs(max_diagonal)) then
+!
+               max_diagonal = diagonal(j, 1)
+               index_max    = j
+!
+            endif
+!
+         enddo
+!
+!        Check against threshold and whether diagonal is negative
+!
+         if (max_diagonal .lt. 0.0d0) then
+            if (abs(max_diagonal) .gt. tolerance) then
+!
+               write(output%unit,*)'Error: Found negative diagonal in cholesky decomposition.'
+               stop
+!
+            endif
+         endif
+!
+         if (abs(max_diagonal) .lt. threshold) then
+!
+            n_vectors = n_vectors - 1 
+            call mem%dealloc(diagonal, dim, 1)
+!            
+            return
+!
+         else
+!
+            if (present(used_diag)) used_diag(n_vectors, 1) = index_max
+!
+         endif
+!
+!        Cholesky vectors
+!
+         cholesky_vectors(:, n_vectors) = matrix(:, index_max)
+!
+         if (n_vectors .gt. 1) then
+!
+            call mem%alloc(temp_cholesky_vector, 1, n_vectors - 1)
+            temp_cholesky_vector(1, :) = cholesky_vectors(index_max, 1 : n_vectors - 1)
+!
+            call dgemm('N', 'T',                         &
+                        dim,                             &
+                        1, &
+                        n_vectors - 1,                   &
+                        -one,                            &
+                        cholesky_vectors,                &
+                        dim,                             &
+                        temp_cholesky_vector,            &
+                        1,                               &
+                        one,                             &
+                        cholesky_vectors(1, n_vectors),  &
+                        dim) 
+!
+            call mem%dealloc(temp_cholesky_vector, n_vectors - 1, 1)  
+!
+         endif
+!
+         call dscal(dim, one/sqrt(max_diagonal), cholesky_vectors(1, n_vectors), 1)
+!
+         do j = 1, dim
+!
+            diagonal(j, 1) = diagonal(j, 1) - cholesky_vectors(j, n_vectors)**2
+!
+         enddo
+!
+      enddo
+!
+      call mem%dealloc(diagonal, dim, 1)
+!
+   end subroutine full_cholesky_decomposition_effective
 !
 !
    function inv(A, dim) result(Ainv)
