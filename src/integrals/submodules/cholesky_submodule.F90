@@ -91,7 +91,7 @@ contains
       integer(i15) :: w, x, y, z, xy, yz, wx, xy_packed, wx_packed, wxyz, yz_packed
       integer(i15) :: first, last, first_sig_aop, last_sig_aop, first_x, first_y
       integer(i15) :: sp, aop, current_qual, current_sig_sp, qual, qual_max, current_new_sig_sp
-      integer(i15) :: current_aop_in_sp, n_left_out, n_vectors, size_AB, offset_yz
+      integer(i15) :: current_aop_in_sp, n_left_out, n_vectors, size_AB, offset_yz, new_position
 !
       type(interval) :: A_interval, B_interval, C_interval, D_interval
 !
@@ -108,6 +108,7 @@ contains
       real(dp), dimension(:,:), allocatable :: integrals_auxiliary
       real(dp), dimension(:,:), allocatable :: integrals_auxiliary_packed
       real(dp), dimension(:,:), allocatable :: integrals_auxiliary_new
+      real(dp), dimension(:,:), allocatable :: auxiliary_basis_new
       real(dp), dimension(:,:), allocatable :: auxiliary_basis
       real(dp), dimension(:,:), allocatable :: auxiliary_basis_inverse
       real(dp), dimension(:,:), allocatable :: approximate_diagonal, first_sig_D_xy, difference
@@ -132,7 +133,7 @@ contains
 !
       logical :: construct_more_choleskys, done, found
 !
-      real(dp) :: D_max, max_in_sp, D_max_full, D_max_full_after_subtraction, max_diff
+      real(dp) :: D_max, max_in_sp, D_max_full, max_diff
 !
       real(dp), parameter :: threshold = 1.0D-8
       real(dp), parameter :: span      = 1.0D-3
@@ -142,6 +143,9 @@ contains
       real(dp) :: s_prep_time, e_prep_time, s_select_basis_time, e_select_basis_time
       real(dp) :: s_build_basis_time, e_build_basis_time, s_decomp_time, e_decomp_time, full_decomp_time
       real(dp) :: e_invert_time, s_invert_time, e_build_vectors_time, s_build_vectors_time
+      real(dp) :: s_integral_time, e_integral_time, full_integral_time
+      real(dp) :: s_reduce_time, e_reduce_time, full_reduce_time
+      real(dp) :: s_construct_time, e_construct_time, full_construct_time
 !
       write(output%unit, '(/a51)') ':: Cholesky decomposition of two-electron integrals'
       flush(output%unit)
@@ -325,6 +329,10 @@ contains
 !
       iteration = 0
 !
+      full_integral_time = 0
+      full_reduce_time = 0
+      full_construct_time = 0
+!
       do while (.not. done)
 !
       iteration = iteration + 1
@@ -466,6 +474,8 @@ contains
 !
          n_qual_aop_in_prev_sps = 0
 !
+         call cpu_time(s_integral_time)
+!
          call mem%alloc(g_wxyz, n_sig_aop, n_qual_aop)
 !
          do CD_sp = 1, n_qual_sp
@@ -551,8 +561,12 @@ contains
             n_qual_aop_in_prev_sps = n_qual_aop_in_prev_sps + n_qual_aop_in_sp
 !
          enddo ! cd_sp 
+         call cpu_time(e_integral_time)
+         full_integral_time = full_integral_time + e_integral_time - s_integral_time
 !
 !        Subtract old cholesky vectors
+!
+         call cpu_time(s_construct_time)
 !
          if (n_cholesky .ne. 0) then
 !
@@ -592,8 +606,6 @@ contains
 !
          current_qual = 0
 !
-         D_max = one
-!
          construct_more_choleskys = .true.
 !
          do while ((current_qual .lt. n_qual_aop) .and. construct_more_choleskys)
@@ -615,9 +627,7 @@ contains
 !
             enddo
 !
-            D_max_full_after_subtraction = D_max_full
-!
-            if ((D_max .gt. threshold) .and. (D_max .gt. span*D_max_full_after_subtraction)) then
+            if ((D_max .gt. threshold) .and. (D_max .gt. span*D_max_full)) then
 !
                cholesky_basis(n_cholesky + current_qual, 1) = qual_aop(qual_max, 1)
                cholesky_basis(n_cholesky + current_qual, 2) = qual_aop(qual_max, 2)
@@ -627,25 +637,36 @@ contains
 !
                cholesky_basis(n_cholesky + current_qual, 3) = get_sp_from_shells(A, B, n_s)
 !
-               cholesky_new(: , current_qual) = g_wxyz(:, qual_max)/sqrt(D_max)
+               cholesky_new(: , current_qual) = g_wxyz(:, qual_max)
 !
-               D_max_full_after_subtraction = 0.0d0
+               if (current_qual .gt. 1) then
+!
+                  call mem%alloc(cholesky_tmp, 1, current_qual - 1)
+   !
+                  cholesky_tmp(1, :) = cholesky_new(qual_aop(qual_max, 3), 1 : current_qual - 1)
+!
+                  call dgemm('N', 'T',                      &
+                           n_sig_aop,                       &
+                           1,                               &
+                           current_qual - 1,                &
+                           -one,                            &
+                           cholesky_new,                    &
+                           n_sig_aop,                       &
+                           cholesky_tmp,                    &
+                           1,                               &
+                           one,                             &
+                           cholesky_new(1, current_qual),   &
+                           n_sig_aop) 
+!
+               call mem%dealloc(cholesky_tmp, 1, current_qual - 1)  
+!
+            endif
+!
+            call dscal(n_sig_aop, one/sqrt(D_max), cholesky_new(1, current_qual), 1)
 !
                do xy = 1, n_sig_aop
 !
                   D_xy(xy, 1) = D_xy(xy, 1) - cholesky_new(xy, current_qual)**2
-!
-                  if (D_xy(xy, 1) .gt. D_max_full_after_subtraction) then
-!
-                     D_max_full_after_subtraction = D_xy(xy, 1)
-!
-                  endif
-!
-                  do K = 1, n_qual_aop
-!
-                     g_wxyz(xy, K) = g_wxyz(xy, K) - cholesky_new(xy, current_qual)*cholesky_new(qual_aop(K,3), current_qual)
-!
-                  enddo
 !
                enddo
 !
@@ -658,6 +679,8 @@ contains
 !
          enddo
 !
+         call cpu_time(e_construct_time)
+         full_construct_time = full_construct_time + e_construct_time - s_construct_time
          call mem%dealloc(g_wxyz, n_sig_aop, n_qual_aop)
 !
          n_new_cholesky = current_qual
@@ -694,9 +717,13 @@ contains
 !
          enddo
 !
+         call cpu_time(s_reduce_time)
+!
          if (n_new_sig_sp .gt. 0) then
 !
 !           Update index lists: sps -> aops, aops -> aos, and sps -> full sps
+!
+            
 !
             call mem%alloc_int(new_sig_sp_to_first_sig_aop, n_new_sig_sp + 1, 1)
             new_sig_sp_to_first_sig_aop = 0
@@ -869,10 +896,12 @@ contains
 !
             done = .true.
 !
-            write(output%unit, '(i4, 5x,  e12.5, 4x, i4, 11x, i4, 6x, i10)') iteration, D_max_full, n_qual_aop, n_cholesky, 0 
+            write(output%unit, '(i4, 5x,  e12.5, 4x, i4, 11x, i7, 3x, i10)') iteration, D_max_full, n_qual_aop, n_cholesky, 0 
             flush(output%unit)
 !
          endif
+         call cpu_time(e_reduce_time)
+         full_reduce_time = full_reduce_time + e_reduce_time - s_reduce_time
 !
       enddo
       write(output%unit, '(a)') '----------------------------------------------------------------------'
@@ -881,6 +910,13 @@ contains
       call cpu_time(e_select_basis_time)
       write(output%unit, '(/a22, e10.4, a5)')'Time to select basis: ',&
                             e_select_basis_time - s_select_basis_time, ' sec.'
+      write(output%unit, '(t6, a36, e10.4, a5)')'Time to construct integrals: ',&
+                            full_integral_time, ' sec.'
+      write(output%unit, '(t6, a36, e10.4, a5)')'Time to reduce arrays:       ',&
+                            full_reduce_time, ' sec.'
+      write(output%unit, '(t6, a48, e10.4, a5)')'Time to make vectors, and subtract old and new: ',&
+                            full_construct_time, ' sec.'
+
 !
       write(output%unit, '(/a)') '- Building auxiliary basis'
       flush(output%unit)
@@ -1022,6 +1058,7 @@ contains
 !
       call mem%alloc(integrals_auxiliary, n_cholesky, n_cholesky)
       call squareup(integrals_auxiliary_packed, integrals_auxiliary, n_cholesky)
+      call mem%dealloc(integrals_auxiliary_packed, n_cholesky*(n_cholesky + 1)/2, 1)
 !
       n_vectors = 0
       call mem%alloc_int(keep_vectors, n_cholesky, 1)
@@ -1030,98 +1067,48 @@ contains
 !
       call full_cholesky_decomposition_effective(integrals_auxiliary, auxiliary_basis, &
                                           n_cholesky, n_vectors, threshold, keep_vectors)
+!
       call cpu_time(e_decomp_time)
       full_decomp_time = e_decomp_time - s_decomp_time
 !
       call mem%dealloc(integrals_auxiliary, n_cholesky, n_cholesky) 
 !
-      if (n_cholesky .gt. n_vectors) then
+      call mem%alloc(auxiliary_basis_new, n_vectors, n_vectors)
+      call mem%alloc_int(cholesky_basis, n_vectors, 3)
 !
-         call mem%dealloc(auxiliary_basis, n_cholesky, n_cholesky)
+      do I = 1, n_cholesky
 !
-         call mem%alloc(integrals_auxiliary, n_vectors, n_vectors)
-         call mem%alloc_int(cholesky_basis, n_vectors, 3)
+         found = .false.
 !
-         I_counter = 0
+         do K = 1, n_vectors
+            if (keep_vectors(K, 1) == I) then
 !
-         do I = 1, n_cholesky
+               found = .true.
+               exit
 !
-            found = .false.
-!
-            do K = 1, n_vectors
-               if (keep_vectors(K, 1) == I) then
-!
-                  found = .true.
-                  I_counter = I_counter + 1
-                  exit
-!
-               endif
-            enddo
-!
-            if (found) then
-!
-            cholesky_basis(I_counter, :) = cholesky_basis_new(I, :)
-!
-               J_counter = 0
-!
-               do J = 1, n_cholesky
-!
-                  found = .false.
-!
-                  do K = 1, n_vectors
-                     if (keep_vectors(K, 1) == J) then
-!
-                        found = .true.
-                        J_counter = J_counter + 1
-                        exit
-!
-                     endif
-                  enddo
-!
-                  if (found) then
-!
-                     IJ = (max(I,J)*(max(I,J)-3)/2) + I + J
-!
-                     integrals_auxiliary(I_counter, J_counter) = integrals_auxiliary_packed(IJ, 1)
-!
-                  endif
-!
-               enddo
             endif
-
          enddo
-
-         call mem%dealloc_int(cholesky_basis_new, n_cholesky, 3)
 !
-         n_cholesky = n_vectors
+         if (found) then
 !
-         call mem%alloc(auxiliary_basis, n_vectors, n_vectors)
+            cholesky_basis(K, :) = cholesky_basis_new(I, :)
+            auxiliary_basis_new(K, :) = auxiliary_basis(I, 1 : n_vectors)
 !
-         call cpu_time(s_decomp_time)
-         call full_cholesky_decomposition_effective(integrals_auxiliary, auxiliary_basis, &
-                                          n_cholesky, n_vectors, threshold)
-         call cpu_time(e_decomp_time)
-         full_decomp_time = full_decomp_time + e_decomp_time - s_decomp_time
-!
-         if (n_cholesky .ne. n_vectors) then
-            write(output%unit, '(a)')'Error: could not find auxiliary basis in Cholesky decomposition'
-            stop
-         else
-            write(output%unit, '(a34, i6)')'Final number of cholesky vectors: ', n_vectors
          endif
-!
-         call mem%dealloc(integrals_auxiliary, n_cholesky, n_cholesky)
-!
-      else
-!
-         call mem%alloc_int(cholesky_basis, n_cholesky, 3)
-         cholesky_basis = cholesky_basis_new
-         call mem%dealloc_int(cholesky_basis_new, n_cholesky, 3)
-!
-      endif
-!
+
+      enddo
+
+      call mem%dealloc_int(cholesky_basis_new, n_cholesky, 3)
       call mem%dealloc_int(keep_vectors, n_cholesky, 1)
-      call mem%dealloc(integrals_auxiliary_packed, n_cholesky*(n_cholesky + 1)/2, 1)
+!
+      call mem%dealloc(auxiliary_basis, n_cholesky, n_cholesky)
+      call mem%alloc(auxiliary_basis, n_vectors, n_vectors)
+      auxiliary_basis = auxiliary_basis_new
+      call mem%dealloc(auxiliary_basis_new, n_vectors, n_vectors)
+!
+      n_cholesky = n_vectors
+!
+      write(output%unit, '(/a34, i6/)')'Final number of cholesky vectors: ', n_cholesky
 !
       call mem%alloc_int(basis_shell_info_full, n_sp, 4) ! A, B, AB, n_basis_aops_in_sp
       basis_shell_info_full = 0
@@ -1174,7 +1161,7 @@ contains
       call cpu_time(s_invert_time)
 !
       call mem%alloc(auxiliary_basis_inverse, n_cholesky, n_cholesky)
-      auxiliary_basis_inverse = inv(auxiliary_basis, n_cholesky)
+      auxiliary_basis_inverse = inv_lower_tri(auxiliary_basis, n_cholesky)
 !
       call cpu_time(e_invert_time)
       write(output%unit, '(a16, e11.4, a5)')'Time to invert: ',&
@@ -1183,11 +1170,15 @@ contains
       write(output%unit, '(/a)') '- Construct Cholesky vectors'
       flush(output%unit)
       call cpu_time(s_build_vectors_time)
+      full_integral_time = 0
+      full_construct_time = 0
 !
       done = .false.
 !
       do while (.not. done)
 !
+         call cpu_time(s_integral_time) 
+!   
          sp = 0
          size_AB = 0
 !
@@ -1322,6 +1313,10 @@ contains
             enddo ! B
 !        
          enddo ! A
+         call cpu_time(e_integral_time) 
+         full_integral_time = full_integral_time + e_integral_time - s_integral_time
+!
+         call cpu_time(s_construct_time)
 !
          call mem%alloc(L_K_yz, n_cholesky, size_AB)
 !
@@ -1339,29 +1334,31 @@ contains
                        n_cholesky)
 !
          call mem%dealloc(g_J_yz, n_cholesky, size_AB)
+         call cpu_time(e_construct_time)
+         full_construct_time = full_construct_time + e_construct_time - s_construct_time
 !
-      call mem%alloc(approximate_diagonal, size_AB, 1)
+     !call mem%alloc(approximate_diagonal, size_AB, 1)
 !
-      approximate_diagonal = zero
+     !approximate_diagonal = zero
 !
-      do I = 1, size_AB
-         do K = 1, n_cholesky
-            approximate_diagonal(I,1) = approximate_diagonal(I,1) + L_K_yz(K, I)**2
-         enddo
-      enddo
+     !do I = 1, size_AB
+     !   do K = 1, n_cholesky
+     !      approximate_diagonal(I,1) = approximate_diagonal(I,1) + L_K_yz(K, I)**2
+     !   enddo
+     !enddo
 !
-      call mem%alloc(difference, size_AB, 1)
-      difference = zero
-      do I = 1, size_AB
-            difference(I, 1) = approximate_diagonal(I,1) - first_sig_D_xy(I, 1)
-      enddo
+     !call mem%alloc(difference, size_AB, 1)
+     !difference = zero
+     !do I = 1, size_AB
+     !      difference(I, 1) = approximate_diagonal(I,1) - first_sig_D_xy(I, 1)
+     !enddo
 !
-      max_diff = zero
-       do I = 1, size_AB
-         if (abs(difference(I, 1)) .gt. max_diff) max_diff = abs(difference(I, 1))
-      enddo
-      write(output%unit, '(a60, e12.4)')'Maximal difference between approximate and actual diagonal: ', max_diff
-      call mem%dealloc(L_K_yz, n_cholesky, size_AB)
+     !max_diff = zero
+     ! do I = 1, size_AB
+     !   if (abs(difference(I, 1)) .gt. max_diff) max_diff = abs(difference(I, 1))
+     !enddo
+     !write(output%unit, '(a60, e12.4)')'Maximal difference between approximate and actual diagonal: ', max_diff
+     !call mem%dealloc(L_K_yz, n_cholesky, size_AB)
 !
          done = .true.
 !
@@ -1373,9 +1370,14 @@ contains
          enddo
 !
       enddo ! done
+!
       call cpu_time(e_build_vectors_time)
       write(output%unit, '(a23, e11.4, a5)')'Time to build vectors: ',&
                             e_build_vectors_time - s_build_vectors_time, ' sec.' 
+      write(output%unit, '(t6, a36, e10.4, a5)')'Time to construct integrals: ',&
+                            full_integral_time, ' sec.'
+      write(output%unit, '(t6, a36, e10.4, a5)')'Time to make vectors:        ',&
+                            full_construct_time, ' sec.'
 
 !
       call mem%dealloc(auxiliary_basis, n_cholesky, n_cholesky)

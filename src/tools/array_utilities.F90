@@ -353,6 +353,7 @@ contains
          endif
 !
          if (abs(max_diagonal) .lt. threshold) then
+!
             n_vectors = n_vectors - 1                
             return
          else
@@ -480,7 +481,7 @@ contains
 !
             call dgemm('N', 'T',                         &
                         dim,                             &
-                        1, &
+                        1,                               &
                         n_vectors - 1,                   &
                         -one,                            &
                         cholesky_vectors,                &
@@ -491,7 +492,7 @@ contains
                         cholesky_vectors(1, n_vectors),  &
                         dim) 
 !
-            call mem%dealloc(temp_cholesky_vector, n_vectors - 1, 1)  
+            call mem%dealloc(temp_cholesky_vector, 1, n_vectors - 1)  
 !
          endif
 !
@@ -549,6 +550,36 @@ contains
       end if
 !
    end function inv
+!
+!
+   function inv_lower_tri(A, dim) result(Ainv)
+!!
+!!    Invert lower triagonal matrix A
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: dim
+!
+      real(dp), dimension(dim,dim), intent(in) :: A
+      real(dp), dimension(dim,dim) :: Ainv
+!
+      integer(kind=4) :: n, info
+!
+!     Store A in Ainv to prevent it from being overwritten by LAPACK
+!
+      Ainv = A
+      n = int(dim, kind=4)
+!
+!     DTRTRI computes the inverse of a real upper or lower triangular
+!     matrix A.
+!
+      call DTRTRI('l','n', n, Ainv, n, info)
+!
+      if (info /= 0) then
+         stop 'Matrix inversion failed!'
+      end if
+!
+   end function inv_lower_tri
 !
 !
 end module array_utilities
