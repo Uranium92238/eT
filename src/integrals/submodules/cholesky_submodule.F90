@@ -336,7 +336,7 @@ contains
 !     Timings
 !
       call cpu_time(e_prep_time)
-      write(output%unit, '(/a17, e10.4, a5)')'Time to prepare: ', e_prep_time - s_prep_time, ' sec.'
+      write(output%unit, '(/a17, e11.4, a5)')'Time to prepare: ', e_prep_time - s_prep_time, ' sec.'
       flush(output%unit)
 !
 !     Determining the basis
@@ -932,13 +932,13 @@ contains
 !     Timings
 !
       call cpu_time(e_select_basis_time)
-      write(output%unit, '(/a22, e10.4, a5)')'Time to select basis: ',&
+      write(output%unit, '(/a22, e11.4, a5)')'Time to select basis: ',&
                             e_select_basis_time - s_select_basis_time, ' sec.'
-      write(output%unit, '(t6, a36, e10.4, a5)')'Time to construct integrals: ',&
+      write(output%unit, '(t6, a36, e11.4, a5)')'Time to construct integrals: ',&
                             full_integral_time, ' sec.'
-      write(output%unit, '(t6, a36, e10.4, a5)')'Time to reduce arrays:       ',&
+      write(output%unit, '(t6, a36, e11.4, a5)')'Time to reduce arrays:       ',&
                             full_reduce_time, ' sec.'
-      write(output%unit, '(t6, a36, e10.4, a5)')'Time to make vectors:        ',&
+      write(output%unit, '(t6, a36, e11.4, a5)')'Time to make vectors:        ',&
                             full_construct_time, ' sec.'
 
 !
@@ -1200,9 +1200,9 @@ contains
       call mem%dealloc_int(basis_shell_info_full, n_sp, 4)
 !
       call cpu_time(e_build_basis_time)
-      write(output%unit, '(/a21, e10.4, a5)')'Time to build basis: ',&
+      write(output%unit, '(/a21, e11.4, a5)')'Time to build basis: ',&
                             e_build_basis_time - s_build_basis_time, ' sec.'
-      write(output%unit, '(t6, a25, e10.4, a5)')'Time to decompose (J|K): ',&
+      write(output%unit, '(t6, a25, e11.4, a5)')'Time to decompose (J|K): ',&
                             full_decomp_time, ' sec'  
 !
 !     Write auxiliary basis to file               
@@ -1453,9 +1453,9 @@ contains
       call cpu_time(e_build_vectors_time)
       write(output%unit, '(/a23, e11.4, a5)')'Time to build vectors: ',&
                             e_build_vectors_time - s_build_vectors_time, ' sec.' 
-      write(output%unit, '(t6, a36, e10.4, a5)')'Time to construct integrals: ',&
+      write(output%unit, '(t6, a36, e11.4, a5)')'Time to construct integrals: ',&
                             full_integral_time, ' sec.'
-      write(output%unit, '(t6, a36, e10.4, a5)')'Time to make vectors:        ',&
+      write(output%unit, '(t6, a36, e11.4, a5)')'Time to make vectors:        ',&
                             full_construct_time, ' sec.'
 
 !
