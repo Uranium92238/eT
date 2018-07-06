@@ -157,6 +157,10 @@ contains
 !
       call cpu_time(s_prep_time)
 !
+      write(output%unit, '(a20, i10)')'Number of aos:      ', molecule%get_n_aos()
+      write(output%unit, '(a20, i10)')'Number of ao pairs: ', &
+                                          molecule%get_n_aos()*(molecule%get_n_aos()+1)/2
+!
       n_s   = molecule%get_n_shells() ! Number of shells
       n_sp  = n_s*(n_s + 1)/2         ! Number of shell pairs packed
 !

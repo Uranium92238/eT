@@ -60,7 +60,7 @@ module diis_solver_class
 contains
 !
 !
-   module subroutine init_diis(solver, name, n_parameters, n_equations, diis_dimension)
+   subroutine init_diis(solver, name, n_parameters, n_equations, diis_dimension)
 !!
 !!    Init DIIS
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
@@ -83,7 +83,7 @@ contains
    end subroutine init_diis
 !
 !
-    module subroutine update_diis(solver, o, x)
+   subroutine update_diis(solver, o, x)
 !!
 !!    Update (DIIS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
