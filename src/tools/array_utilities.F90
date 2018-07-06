@@ -294,7 +294,7 @@ contains
    end subroutine reduce_array_int
 !
 !
-   module subroutine full_cholesky_decomposition(matrix, cholesky_vectors, dim, n_vectors,&
+   subroutine full_cholesky_decomposition(matrix, cholesky_vectors, dim, n_vectors,&
                                         threshold, used_diag)
 !!
 !!    Cholesky decomposition, 
@@ -388,7 +388,7 @@ contains
    end subroutine full_cholesky_decomposition
 !
 !
-   module subroutine full_cholesky_decomposition_effective(matrix, cholesky_vectors, dim, n_vectors,&
+   subroutine full_cholesky_decomposition_effective(matrix, cholesky_vectors, dim, n_vectors,&
                                         threshold, used_diag)
 !!
 !!    Cholesky decomposition, 
