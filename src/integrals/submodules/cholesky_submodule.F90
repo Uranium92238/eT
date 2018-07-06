@@ -78,6 +78,8 @@ contains
       class(integral_manager) :: integrals
       class(molecular_system) :: molecule
 !
+      type(file) :: screening_info, cholesky_ao_vectors, auxiliary, auxiliary_inverse
+!
       integer(i15) :: n_s, n_sp
       integer(i15) :: n_cholesky, n_new_cholesky
       integer(i15) :: n_new_sig_sp, n_new_sig_aop
@@ -91,7 +93,7 @@ contains
       integer(i15) :: w, x, y, z, xy, yz, wx, xy_packed, wx_packed, wxyz, yz_packed
       integer(i15) :: first, last, first_sig_aop, last_sig_aop, first_x, first_y
       integer(i15) :: sp, aop, current_qual, current_sig_sp, qual, qual_max, current_new_sig_sp
-      integer(i15) :: current_aop_in_sp, n_left_out, n_vectors, size_AB, offset_yz, new_position
+      integer(i15) :: current_aop_in_sp, n_left_out, n_vectors, size_AB, offset_yz, new_position, rec_offset
 !
       type(interval) :: A_interval, B_interval, C_interval, D_interval
 !
@@ -312,14 +314,32 @@ contains
          enddo
       enddo
 !
-      call mem%alloc(first_sig_D_xy, n_sig_aop, 1)
-      first_sig_D_xy = D_xy
+!     Write screening_info_file containing 
+!
+!        1. number of significant shell pairs, number of significant ao pairs
+!        2. sig_sp - vector of logicals to describe which shell pairs are significant 
+!        3. D_xy = ( xy | xy ), the significant diagonal.
+!
+      call screening_info%init('screening_info', 'sequential', 'unformatted')
+      call disk%open_file(screening_info, 'write')
+!
+      write(screening_info%unit) n_sig_sp, n_sig_aop
+      write(screening_info%unit) sig_sp
+      write(screening_info%unit) D_xy
+!
+      call disk%close_file(screening_info)
+!
+!     Timings
 !
       call cpu_time(e_prep_time)
       write(output%unit, '(/a17, e10.4, a5)')'Time to prepare: ', e_prep_time - s_prep_time, ' sec.'
+      flush(output%unit)
+!
+!     Determining the basis
 !
       write(output%unit, '(/a)') ' - Determinig the elements of the basis'
       flush(output%unit)
+!
       call cpu_time(s_select_basis_time)
 !
       n_cholesky = 0
@@ -721,9 +741,7 @@ contains
 !
          if (n_new_sig_sp .gt. 0) then
 !
-!           Update index lists: sps -> aops, aops -> aos, and sps -> full sps
-!
-            
+!           Update index lists: sps -> aops, aops -> aos, and sps -> full sps           
 !
             call mem%alloc_int(new_sig_sp_to_first_sig_aop, n_new_sig_sp + 1, 1)
             new_sig_sp_to_first_sig_aop = 0
@@ -879,7 +897,7 @@ contains
             call mem%dealloc_int(qual_aop, n_qual_aop, 3)
             call mem%dealloc_int(qual_sp, n_qual_sp, 3)
 !
-            write(output%unit, '(i4, 5x,  e12.5, 4x, i4, 11x, i4, 6x, i10)') &
+            write(output%unit, '(i4, 5x,  e12.5, 4x, i4, 8x, i7, 6x, i10)') &
             iteration, D_max_full , n_qual_aop, n_cholesky, n_cholesky*n_sig_aop 
             flush(output%unit)
 !
@@ -896,7 +914,7 @@ contains
 !
             done = .true.
 !
-            write(output%unit, '(i4, 5x,  e12.5, 4x, i4, 11x, i7, 3x, i10)') iteration, D_max_full, n_qual_aop, n_cholesky, 0 
+            write(output%unit, '(i4, 5x,  e12.5, 4x, i4, 8x, i7, 6x, i10)') iteration, D_max_full, n_qual_aop, n_cholesky, 0 
             flush(output%unit)
 !
          endif
@@ -907,6 +925,8 @@ contains
       write(output%unit, '(a)') '----------------------------------------------------------------------'
       flush(output%unit)
 !
+!     Timings
+!
       call cpu_time(e_select_basis_time)
       write(output%unit, '(/a22, e10.4, a5)')'Time to select basis: ',&
                             e_select_basis_time - s_select_basis_time, ' sec.'
@@ -914,15 +934,18 @@ contains
                             full_integral_time, ' sec.'
       write(output%unit, '(t6, a36, e10.4, a5)')'Time to reduce arrays:       ',&
                             full_reduce_time, ' sec.'
-      write(output%unit, '(t6, a48, e10.4, a5)')'Time to make vectors, and subtract old and new: ',&
+      write(output%unit, '(t6, a36, e10.4, a5)')'Time to make vectors:        ',&
                             full_construct_time, ' sec.'
 
+!
+!     Building the auxiliary_basis
 !
       write(output%unit, '(/a)') '- Building auxiliary basis'
       flush(output%unit)
       call cpu_time(s_build_basis_time)
 !
-!     Construct a list of all shell pairs and shells that include elements of the basis 
+!     Construct a list of all shell pairs (and shells) that contain elements of the basis 
+!     and how many elements of the basis they contain 
 !
       call mem%alloc_int(basis_shell_info_full, n_sp, 4) ! A, B, AB, n_basis_aops_in_sp
       basis_shell_info_full = 0
@@ -964,6 +987,8 @@ contains
       call mem%alloc_int(basis_shell_info, n_sp_in_basis, 4)
       basis_shell_info(:, :) = basis_shell_info_full(1:n_sp_in_basis, :)
       call mem%dealloc_int(basis_shell_info_full, n_sp, 4)
+!
+!     Construct integrals (J | J')
 !     
       call mem%alloc(integrals_auxiliary_packed, n_cholesky*(n_cholesky+1)/2, 1)
 !
@@ -976,6 +1001,8 @@ contains
          D_interval = molecule%get_shell_limits(D)
 !
          call mem%alloc_int(basis_aops_in_CD_sp, basis_shell_info(CD_sp, 4), 3)
+!
+!        Determine which elements in the shell pair CD are elements of the basis
 !
          current_aop_in_sp = 0
 !
@@ -1001,6 +1028,8 @@ contains
 !
             call mem%alloc_int(basis_aops_in_AB_sp, basis_shell_info(AB_sp, 4), 3)
 !
+!           Determine which elements in the shell pair AB are elements of the basis
+!
             current_aop_in_sp = 0
 !
             do I = 1, n_cholesky
@@ -1014,11 +1043,16 @@ contains
 !
                endif
             enddo
+!
+!           Construct integrals
+!
             call mem%alloc(g_AB_CD, &
                      (A_interval%size)*(B_interval%size), &
                      (C_interval%size)*(D_interval%size))
 !
             call integrals%get_ao_g_wxyz(g_AB_CD, A, B, C, D)
+!
+!           Only keep those that correspond to elements of the basis
 !
             do I = 1, basis_shell_info(AB_sp, 4)
                do J = 1, basis_shell_info(CD_sp, 4)
@@ -1060,6 +1094,8 @@ contains
       call squareup(integrals_auxiliary_packed, integrals_auxiliary, n_cholesky)
       call mem%dealloc(integrals_auxiliary_packed, n_cholesky*(n_cholesky + 1)/2, 1)
 !
+!     Cholesky decomposition of (J | J') to find auxiliary basis using full pivoting
+!
       n_vectors = 0
       call mem%alloc_int(keep_vectors, n_cholesky, 1)
 !
@@ -1072,6 +1108,11 @@ contains
       full_decomp_time = e_decomp_time - s_decomp_time
 !
       call mem%dealloc(integrals_auxiliary, n_cholesky, n_cholesky) 
+!
+!     There might be a reduction in the number of Cholesky vectors at this point (n_vectors < n_cholesky)
+!     We only keep the rows (and columns) corresponding to the diagonals used for the decomposition,
+!     also the cholesky vectors should be ordered as a lower triangular matrix for effective inversion.
+!     The cholesky_basis array is updated.
 !
       call mem%alloc(auxiliary_basis_new, n_vectors, n_vectors)
       call mem%alloc_int(cholesky_basis, n_vectors, 3)
@@ -1108,7 +1149,10 @@ contains
 !
       n_cholesky = n_vectors
 !
-      write(output%unit, '(/a34, i6/)')'Final number of cholesky vectors: ', n_cholesky
+      write(output%unit, '(t6, a34, i7)')'Final number of cholesky vectors: ', n_cholesky
+!
+!     Update the basis_shell_info array which contains information of which shell pairs (and shells)
+!     contain elements of the basis and how many elements of the basis they contain. 
 !
       call mem%alloc_int(basis_shell_info_full, n_sp, 4) ! A, B, AB, n_basis_aops_in_sp
       basis_shell_info_full = 0
@@ -1152,9 +1196,19 @@ contains
       call mem%dealloc_int(basis_shell_info_full, n_sp, 4)
 !
       call cpu_time(e_build_basis_time)
-      write(output%unit, '(/a21, e10.4, a15, e10.4, a31)')'Time to build basis: ',&
-                            e_build_basis_time - s_build_basis_time, ' sec, of which ', &
-                            full_decomp_time, ' sec is used to decompose (J|K)'                 
+      write(output%unit, '(/a21, e10.4, a5)')'Time to build basis: ',&
+                            e_build_basis_time - s_build_basis_time, ' sec.'
+      write(output%unit, '(t6, a25, e10.4, a5)')'Time to decompose (J|K): ',&
+                            full_decomp_time, ' sec'  
+!
+!     Write auxiliary basis to file               
+!
+      call auxiliary%init('auxiliary_basis', 'sequential', 'unformatted')
+      call disk%open_file(auxiliary, 'write')
+!
+      write(auxiliary%unit) auxiliary_basis
+!
+      call disk%close_file(auxiliary)
 !
       write(output%unit, '(/a)') '- Inverting auxiliary basis'
       flush(output%unit)
@@ -1162,9 +1216,21 @@ contains
 !
       call mem%alloc(auxiliary_basis_inverse, n_cholesky, n_cholesky)
       auxiliary_basis_inverse = inv_lower_tri(auxiliary_basis, n_cholesky)
+      call mem%dealloc(auxiliary_basis, n_cholesky, n_cholesky)
+!
+!     Write inverse of auxiliary basis to file               
+!
+      call auxiliary_inverse%init('auxiliary_basis_inverse', 'sequential', 'unformatted')
+      call disk%open_file(auxiliary_inverse, 'write')
+!
+      write(auxiliary_inverse%unit) auxiliary_basis_inverse
+!
+      call disk%close_file(auxiliary_inverse)
+!
+!     Timings
 !
       call cpu_time(e_invert_time)
-      write(output%unit, '(a16, e11.4, a5)')'Time to invert: ',&
+      write(output%unit, '(/a16, e11.4, a5)')'Time to invert: ',&
                             e_invert_time - s_invert_time, ' sec.' 
 !
       write(output%unit, '(/a)') '- Construct Cholesky vectors'
@@ -1173,11 +1239,22 @@ contains
       full_integral_time = 0
       full_construct_time = 0
 !
+!     Prepare file for AO Cholesky vectors
+!
+      call cholesky_ao_vectors%init('cholesky_ao_xy', 'direct', 'unformatted', dp*n_cholesky)
+!
+      rec_offset = 0
+!
+!     Construct (K | yz) and do matrix multiplication 
+!     sum_K (K | J)^-1 (J | yz) in batches of yz
+!
       done = .false.
 !
       do while (.not. done)
 !
          call cpu_time(s_integral_time) 
+!
+!        Determine size of batch
 !   
          sp = 0
          size_AB = 0
@@ -1205,6 +1282,8 @@ contains
 !
             enddo
          enddo
+!
+!        Construct g_J_yz = (J | yz)
 !
          call mem%alloc(g_J_yz, n_cholesky, size_AB)
          g_J_yz = zero
@@ -1313,10 +1392,13 @@ contains
             enddo ! B
 !        
          enddo ! A
+!
          call cpu_time(e_integral_time) 
          full_integral_time = full_integral_time + e_integral_time - s_integral_time
 !
          call cpu_time(s_construct_time)
+!
+!        L_K_yz = sum_K (K | J)^-1 (J | yz)
 !
          call mem%alloc(L_K_yz, n_cholesky, size_AB)
 !
@@ -1337,28 +1419,19 @@ contains
          call cpu_time(e_construct_time)
          full_construct_time = full_construct_time + e_construct_time - s_construct_time
 !
-     !call mem%alloc(approximate_diagonal, size_AB, 1)
+!        Write vectors to file
+!   
+         call disk%open_file(cholesky_ao_vectors, 'write')
 !
-     !approximate_diagonal = zero
+         do I = 1, size_AB
 !
-     !do I = 1, size_AB
-     !   do K = 1, n_cholesky
-     !      approximate_diagonal(I,1) = approximate_diagonal(I,1) + L_K_yz(K, I)**2
-     !   enddo
-     !enddo
+            write(cholesky_ao_vectors%unit, rec=I + rec_offset) (L_K_yz(J, I), J = 1, n_cholesky)
 !
-     !call mem%alloc(difference, size_AB, 1)
-     !difference = zero
-     !do I = 1, size_AB
-     !      difference(I, 1) = approximate_diagonal(I,1) - first_sig_D_xy(I, 1)
-     !enddo
+         enddo
 !
-     !max_diff = zero
-     ! do I = 1, size_AB
-     !   if (abs(difference(I, 1)) .gt. max_diff) max_diff = abs(difference(I, 1))
-     !enddo
-     !write(output%unit, '(a60, e12.4)')'Maximal difference between approximate and actual diagonal: ', max_diff
-     !call mem%dealloc(L_K_yz, n_cholesky, size_AB)
+         rec_offset = rec_offset + size_AB
+!
+         call disk%close_file(cholesky_ao_vectors)
 !
          done = .true.
 !
@@ -1371,8 +1444,10 @@ contains
 !
       enddo ! done
 !
+!     Timings
+!
       call cpu_time(e_build_vectors_time)
-      write(output%unit, '(a23, e11.4, a5)')'Time to build vectors: ',&
+      write(output%unit, '(/a23, e11.4, a5)')'Time to build vectors: ',&
                             e_build_vectors_time - s_build_vectors_time, ' sec.' 
       write(output%unit, '(t6, a36, e10.4, a5)')'Time to construct integrals: ',&
                             full_integral_time, ' sec.'
@@ -1380,7 +1455,6 @@ contains
                             full_construct_time, ' sec.'
 
 !
-      call mem%dealloc(auxiliary_basis, n_cholesky, n_cholesky)
       call mem%dealloc(auxiliary_basis_inverse, n_cholesky, n_cholesky)
 !
    end subroutine cholesky_decompose_integral_manager
@@ -1439,3 +1513,26 @@ contains
 !
 !
 end submodule cholesky
+!
+     !call mem%alloc(approximate_diagonal, size_AB, 1)
+!
+     !approximate_diagonal = zero
+!
+     !do I = 1, size_AB
+     !   do K = 1, n_cholesky
+     !      approximate_diagonal(I,1) = approximate_diagonal(I,1) + L_K_yz(K, I)**2
+     !   enddo
+     !enddo
+!
+     !call mem%alloc(difference, size_AB, 1)
+     !difference = zero
+     !do I = 1, size_AB
+     !      difference(I, 1) = approximate_diagonal(I,1) - first_sig_D_xy(I, 1)
+     !enddo
+!
+     !max_diff = zero
+     ! do I = 1, size_AB
+     !   if (abs(difference(I, 1)) .gt. max_diff) max_diff = abs(difference(I, 1))
+     !enddo
+     !write(output%unit, '(a60, e12.4)')'Maximal difference between approximate and actual diagonal: ', max_diff
+     !call mem%dealloc(L_K_yz, n_cholesky, size_AB)
