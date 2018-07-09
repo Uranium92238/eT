@@ -66,7 +66,7 @@ module integral_manager_class
 contains
 !
 !
-module subroutine cholesky_decompose_integral_manager(integrals, molecule)
+   subroutine cholesky_decompose_integral_manager(integrals, molecule)
 !!
 !!    Cholesky decompose
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
