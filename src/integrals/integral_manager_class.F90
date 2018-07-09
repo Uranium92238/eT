@@ -1269,7 +1269,7 @@ contains
       call cpu_time(s_invert_time)
 !
       call mem%alloc(auxiliary_basis_inverse, n_cholesky, n_cholesky)
-      auxiliary_basis_inverse = inv_lower_tri(auxiliary_basis, n_cholesky)
+      call inv_lower_tri(auxiliary_basis_inverse, auxiliary_basis, n_cholesky)
       call mem%dealloc(auxiliary_basis, n_cholesky, n_cholesky)
 !
 !     Write inverse of auxiliary basis to file               

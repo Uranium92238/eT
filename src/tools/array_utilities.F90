@@ -552,29 +552,27 @@ contains
    end function inv
 !
 !
-   function inv_lower_tri(A, n_dim) result(Ainv)
+   subroutine inv_lower_tri(Ainv, A, n)
 !!
 !!    Invert lower triagonal matrix A
 !!
       implicit none
 !
-      integer(i15), intent(in) :: n_dim
+      integer(i15), intent(in) :: n
 !
-      real(dp), dimension(n_dim,n_dim), intent(in) :: A
-      real(dp), dimension(n_dim,n_dim) :: Ainv
+      real(dp), dimension(n, n), intent(in) :: A
+      real(dp), dimension(n, n), intent(out) :: Ainv
 !
-      integer(i15) :: n
       integer(kind=4) :: info
 !
 !     Store A in Ainv to prevent it from being overwritten by LAPACK
 !
       Ainv = A
-      n = n_dim
 !
 !     DTRTRI computes the inverse of a real upper or lower triangular
 !     matrix A.
 !
-!      call DTRTRI('l','n', n, Ainv, n, info)
+      call DTRTRI('l','n', n, Ainv, n, info)
 !
       if (info /= 0) then
          stop 'Matrix inversion failed!'
@@ -582,7 +580,7 @@ contains
 !
       stop
 !
-   end function inv_lower_tri
+   end subroutine inv_lower_tri
 !
 !
 end module array_utilities
