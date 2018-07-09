@@ -17,6 +17,7 @@ module integral_manager_class
 !
    use file_class
    use memory_manager_class
+!
    use molecular_system_class
 !
    implicit none
@@ -38,23 +39,23 @@ module integral_manager_class
    end type integral_manager
 !
 !
-   interface
+!   interface
 !
 !
-      module subroutine cholesky_decompose_integral_manager(integrals, molecule)
+!      module subroutine cholesky_decompose_integral_manager(integrals, molecule)
 !!
 !!       Cholesky decompose
 !!       Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-         implicit none
+!         implicit none
 !
-         class(integral_manager) :: integrals
-         class(molecular_system) :: molecule
+!         class(integral_manager) :: integrals
+!         class(molecular_system) :: molecule
 !
-      end subroutine cholesky_decompose_integral_manager
+!      end subroutine cholesky_decompose_integral_manager
 !
 !
-   end interface
+!   end interface
 !
 !
 contains

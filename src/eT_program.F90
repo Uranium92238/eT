@@ -10,6 +10,8 @@ program eT_program
    use disk_manager_class
    use io_utilities
 !
+   use integral_manager_class
+!
    use hf_class
    use hf_engine_class
 !
@@ -28,7 +30,7 @@ program eT_program
 !
    call wf%initialize()
 !
-   call wf%integrals%cholesky_decompose(wf%molecule)
+    call wf%integrals%cholesky_decompose(wf%molecule)
   ! call engine%solve(wf) ! solves Hartree Fock
 !
    call wf%finalize()
