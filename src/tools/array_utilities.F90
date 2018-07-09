@@ -511,25 +511,24 @@ contains
    end subroutine full_cholesky_decomposition_effective
 !
 !
-   function inv(A, dim) result(Ainv)
+   subroutine inv(Ainv, A, n)
 !!
 !!    Invert matrix A
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim
+      integer(i15), intent(in) :: n
 !
-      real(dp), dimension(dim,dim), intent(in) :: A
-      real(dp), dimension(dim,dim) :: Ainv
+      real(dp), dimension(n,n), intent(in) :: A
+      real(dp), dimension(n,n), intent(out) :: Ainv
 
-      real(dp), dimension(dim) :: work  ! work array for LAPACK
-      integer(kind=4), dimension(dim) :: ipiv   ! pivot indices
-      integer(kind=4) :: n, info
+      real(dp), dimension(n) :: work  ! work array for LAPACK
+      integer(i15), dimension(n) :: ipiv   ! pivot indices
+      integer(kind=4) :: info
 !
 !     Store A in Ainv to prevent it from being overwritten by LAPACK
 !
       Ainv = A
-      n = int(dim, kind=4)
 !
 !     DGETRF computes an LU factorization of a general M-by-N matrix A
 !     using partial pivoting with row interchanges.
@@ -549,7 +548,7 @@ contains
          stop 'Matrix inversion failed!'
       end if
 !
-   end function inv
+   end subroutine inv
 !
 !
    subroutine inv_lower_tri(Ainv, A, n)
@@ -577,8 +576,6 @@ contains
       if (info /= 0) then
          stop 'Matrix inversion failed!'
       end if
-!
-      stop
 !
    end subroutine inv_lower_tri
 !
