@@ -44,7 +44,7 @@ void initialize_basis(){
 	atoms = temporary_atoms;
 
 	cout.setstate(ios_base::failbit);
-	BasisSet temporary("cc-pVDZ", atoms);
+	BasisSet temporary("aug-cc-pVDZ", atoms);
 	cout.clear();
 
 	basis = temporary;
