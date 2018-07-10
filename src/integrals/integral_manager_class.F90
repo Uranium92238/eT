@@ -185,7 +185,7 @@ contains
 !
       logical :: construct_more_choleskys, done, found
 !
-      real(dp) :: D_max, max_in_sp, D_max_full, max_diff
+      real(dp) :: D_max, max_in_sp, D_max_full, max_diff, ddot
 !
       real(dp), parameter :: threshold = 1.0D-8
       real(dp), parameter :: span      = 1.0D-3
@@ -1537,19 +1537,7 @@ contains
 !
          read(cholesky_ao_vectors%unit, rec=aop) (L_K_yz(J, 1), J = 1, n_cholesky)
 !
-!
-         call dgemm('T', 'N', &
-                     1, &
-                     1, &
-                     n_cholesky, &
-                     -one, &
-                     L_K_yz, &
-                     n_cholesky, &
-                     L_K_yz, &
-                     n_cholesky, &
-                     one, &
-                     D_diff(aop, 1), &
-                     n_sig_aop)
+         D_diff(aop, 1) = D_diff(aop, 1) - ddot(n_cholesky, L_K_yz, 1, L_K_yz, 1)
 !
       enddo
 !
