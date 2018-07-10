@@ -188,7 +188,7 @@ contains
       real(dp) :: D_max, max_in_sp, D_max_full, max_diff, ddot
 !
       real(dp), parameter :: threshold = 1.0D-8
-      real(dp), parameter :: span      = 1.0D-3
+      real(dp), parameter :: span      = 1.0D-2
 !
       integer(i15), parameter :: max_qual = 100
 !
@@ -640,6 +640,7 @@ contains
             n_qual_aop_in_prev_sps = n_qual_aop_in_prev_sps + n_qual_aop_in_sp
 !
          enddo ! cd_sp 
+!
          call cpu_time(e_integral_time)
          full_integral_time = full_integral_time + e_integral_time - s_integral_time
 !
@@ -650,9 +651,13 @@ contains
          if (n_cholesky .ne. 0) then
 !
             call mem%alloc(cholesky_tmp, n_cholesky, n_qual_aop)
+!
             do K = 1, n_qual_aop
+!
                cholesky_tmp(:, K) = cholesky(qual_aop(K, 3), :)
+!
             enddo
+!
             call dgemm('N', 'N',          &
                         n_sig_aop,        &
                         n_qual_aop,       &
@@ -697,7 +702,7 @@ contains
 !
                xy = qual_aop(qual, 3)
 !
-               if (D_xy(xy, 1) .ge. D_max) then
+               if (D_xy(xy, 1) .gt. D_max) then
 !
                   qual_max = qual
                   D_max    = D_xy(xy, 1)
@@ -706,7 +711,7 @@ contains
 !
             enddo
 !
-            if ((D_max .gt. threshold) .and. (D_max .gt. span*D_max_full)) then
+            if ((D_max .gt. threshold) .and. (D_max .ge. span*D_max_full)) then
 !
                cholesky_basis(n_cholesky + current_qual, 1) = qual_aop(qual_max, 1)
                cholesky_basis(n_cholesky + current_qual, 2) = qual_aop(qual_max, 2)
@@ -768,6 +773,7 @@ contains
 !
          n_new_sig_sp = 0
          allocate(new_sig_sp(n_sig_sp,1))
+!
          new_sig_sp = .false.
 !
          sig_sp_counter = 0
