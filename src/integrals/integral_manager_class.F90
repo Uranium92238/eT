@@ -163,7 +163,7 @@ contains
       real(dp), dimension(:,:), allocatable :: auxiliary_basis_new
       real(dp), dimension(:,:), allocatable :: auxiliary_basis
       real(dp), dimension(:,:), allocatable :: auxiliary_basis_inverse
-      real(dp), dimension(:,:), allocatable :: approximate_diagonal, first_sig_D_xy, difference
+      real(dp), dimension(:,:), allocatable :: D_diff
 !
       integer(i15), dimension(:,:), allocatable :: sig_sp_to_first_sig_aop
       integer(i15), dimension(:,:), allocatable :: new_sig_sp_to_first_sig_aop
@@ -185,7 +185,7 @@ contains
 !
       logical :: construct_more_choleskys, done, found
 !
-      real(dp) :: D_max, max_in_sp, D_max_full, max_diff
+      real(dp) :: D_max, max_in_sp, D_max_full, max_diff, ddot
 !
       real(dp), parameter :: threshold = 1.0D-8
       real(dp), parameter :: span      = 1.0D-3
@@ -374,12 +374,12 @@ contains
 !        2. sig_sp - vector of logicals to describe which shell pairs are significant 
 !        3. D_xy = ( xy | xy ), the significant diagonal.
 !
-      call screening_info%init('screening_info', 'sequential', 'unformatted')
+      call screening_info%init('screening_info', 'sequential', 'formatted')
       call disk%open_file(screening_info, 'write')
 !
-      write(screening_info%unit) n_sig_sp, n_sig_aop
-      write(screening_info%unit) sig_sp
-      write(screening_info%unit) D_xy
+      write(screening_info%unit,*) n_sig_sp, n_sig_aop
+      write(screening_info%unit,*) sig_sp
+      write(screening_info%unit,*) D_xy
 !
       call disk%close_file(screening_info)
 !
@@ -431,6 +431,11 @@ contains
                if (D_xy(I, 1) .gt. max_in_sig_sp(sp, 1)) then
 !
                   max_in_sig_sp(sp, 1) = D_xy(I, 1)
+!
+               elseif ((D_xy(I, 1) .lt. 0.0d0) .and. (abs(D_xy(I, 1)) .gt. 1.0d-10)) then
+!
+                  write(output%unit, '(a44, e12.5)')'Error: found significant negative diagonal: ',D_xy(I, 1)
+                  stop 
 !
                endif
 !
@@ -1511,10 +1516,49 @@ contains
 !
       call mem%dealloc(auxiliary_basis_inverse, n_cholesky, n_cholesky)
 !
+!     Test diagonal
+!
+      call disk%open_file(screening_info, 'read')
+!
+      read(screening_info%unit, *) n_sig_sp, n_sig_aop
+!
+      call mem%alloc(D_diff, n_sig_aop, 1)
+!
+      read(screening_info%unit, *) sig_sp
+      read(screening_info%unit, *) D_diff
+!
+      call disk%close_file(screening_info)
+!
+      call mem%alloc(L_K_yz, n_cholesky, 1)
+!
+      call disk%open_file(cholesky_ao_vectors, 'read')
+!
+      do aop = 1, n_sig_aop
+!
+         read(cholesky_ao_vectors%unit, rec=aop) (L_K_yz(J, 1), J = 1, n_cholesky)
+!
+         D_diff(aop, 1) = D_diff(aop, 1) - ddot(n_cholesky, L_K_yz, 1, L_K_yz, 1)
+!
+      enddo
+!
+      call disk%close_file(cholesky_ao_vectors)
+!
+      call mem%dealloc(L_K_yz, n_cholesky, 1)
+!
+      max_diff = zero
+!
+      do aop = 1, n_sig_aop
+         if (abs(D_diff(aop, 1)) .gt. max_diff) max_diff = abs(D_diff(aop, 1))
+      enddo
+!
+      write(output%unit, '(a60, e12.4)')'Maximal difference between approximate and actual diagonal: ', max_diff
+      
+      call mem%dealloc(D_diff, n_sig_aop, 1)
+!
    end subroutine cholesky_decompose_integral_manager
 !
 !
-integer(i15) function get_size_sp(A_interval, B_interval)
+   integer(i15) function get_size_sp(A_interval, B_interval)
 !!
 !!    Get size shell pair
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
