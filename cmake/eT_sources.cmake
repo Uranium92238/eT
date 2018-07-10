@@ -19,6 +19,7 @@ set(eT_fortran_sources
    src/tools/reordering.F90
    src/tools/array_utilities.F90
    src/tools/array_analysis.F90
+   src/wavefunctions/wavefunction_class.F90
    src/wavefunctions/hf_class.F90
    src/molecule/atomic_class.F90
    src/molecule/molecular_system_class.F90

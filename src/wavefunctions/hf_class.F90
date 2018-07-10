@@ -5,27 +5,16 @@ module hf_class
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !
-   use kinds
-   use file_class
-   use atomic_class
+   use wavefunction_class
+!
    use reordering
    use interval_class
    use index
    use integral_manager_class
-   use molecular_system_class
-   use disk_manager_class
 !
    implicit none
 !
-   type :: hf
-!
-      character(len=40) :: name = 'HF'
-!
-      integer(i15) :: n_ao
-      integer(i15) :: n_mo
-!
-      integer(i15) :: n_o
-      integer(i15) :: n_v
+   type, extends(wavefunction):: hf
 !
       real(dp) :: hf_energy
 !
@@ -33,12 +22,10 @@ module hf_class
       real(dp), dimension(:,:), allocatable :: ao_overlap
       real(dp), dimension(:,:), allocatable :: ao_fock
 !
-      real(dp), dimension(:,:), allocatable :: mo_coefficients
       real(dp), dimension(:,:), allocatable :: orbital_energies
 !
       real(dp), dimension(:,:), allocatable :: g_wxyz
 !
-      type(molecular_system) :: molecule
       type(integral_manager) :: integrals
 !
 	contains
@@ -101,25 +88,19 @@ contains
 !
       class(hf) :: wf
 !
-      real(dp) :: repulsion
+      wf%name = 'HF'
 !
-      real(dp), dimension(:,:), allocatable :: h
-!
-      integer(i15) :: i = 0
-!
-!     Initialize molecule
-!
-      call wf%molecule%initialize() ! Read atoms
+      call wf%system%initialize() ! Initialize molecular system -> Should include SOAD
 !
       wf%n_ao = 0
-      call get_n_aos(wf%n_ao)
+      call get_n_aos(wf%n_ao) ! Should this be a molecular system routine?
 !
       wf%n_mo = wf%n_ao
 !
-!     Determine the number of occupied and virtual molecular orbitals
-!
-      wf%n_o = (wf%molecule%get_n_electrons())/2
+      wf%n_o = (wf%system%get_n_electrons())/2 ! We only treat closed shell systems
       wf%n_v = wf%n_mo - wf%n_o
+!
+!     Initialize libint engines
 !
       call initialize_coulomb()
       call initialize_kinetic()
@@ -165,8 +146,8 @@ contains
 !
       class(hf) :: wf
 !
-      call mem%alloc(wf%orbital_energies, wf%n_mo, 1)
-      wf%orbital_energies = zero
+       call mem%alloc(wf%orbital_energies, wf%n_mo, 1)
+       wf%orbital_energies = zero
 !
    end subroutine initialize_orbital_energies_hf
 !
@@ -182,8 +163,6 @@ contains
 !
       call mem%alloc(wf%g_wxyz, (wf%n_ao)**2, (wf%n_ao)**2)
       wf%g_wxyz = zero
-!
-   !   call get_ao_g_wxyz(wf%g_wxyz)
 !
    end subroutine initialize_g_wxyz_hf
 !
@@ -226,8 +205,8 @@ contains
 !
       class(hf) :: wf
 !
-      call mem%alloc(wf%mo_coefficients, wf%n_ao, wf%n_mo)
-      wf%mo_coefficients = zero
+      call mem%alloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
+      wf%orbital_coefficients = zero
 !
    end subroutine initialize_mo_coefficients_hf
 !
@@ -312,7 +291,7 @@ contains
 !
       class(hf) :: wf
 !
-      call mem%dealloc(wf%mo_coefficients, wf%n_ao, wf%n_mo)
+      call mem%dealloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
 !
    end subroutine destruct_mo_coefficients_hf
 !
@@ -331,17 +310,17 @@ contains
 !
       wf%ao_density = zero
 !
-      call dgemm('N', 'T',            &
-                  wf%n_ao,            &
-                  wf%n_ao,            &
-                  wf%n_o,             &
-                  two,                &
-                  wf%mo_coefficients, &
-                  wf%n_ao,            &
-                  wf%mo_coefficients, &
-                  wf%n_ao,            &
-                  zero,               &
-                  wf%ao_density,      &
+      call dgemm('N', 'T',                   &
+                  wf%n_ao,                   &
+                  wf%n_ao,                   &
+                  wf%n_o,                    &
+                  two,                       &
+                  wf%orbital_coefficients,   &
+                  wf%n_ao,                   &
+                  wf%orbital_coefficients,   &
+                  wf%n_ao,                   &
+                  zero,                      &
+                  wf%ao_density,             &
                   wf%n_ao)
 !
    end subroutine construct_ao_density_hf
@@ -362,7 +341,6 @@ contains
 !
       class(hf) :: wf
 !
-      real(dp), dimension(:,:), allocatable :: g_xwzy
       real(dp), dimension(:,:), allocatable :: L_wxyz
 !
       integer(i15) :: n_shells = 0
@@ -373,8 +351,6 @@ contains
       type(interval) :: A_intval
       type(interval) :: C_intval
 !
-      real(dp) :: t0, t1
-!
 !     F_αβ = h_αβ
 !
       wf%ao_fock = zero
@@ -382,17 +358,15 @@ contains
 !
 !     Loop over shells A and C, calculating L_ABCD = 2*g_ABCD - g_ADCB
 !
-      n_shells = wf%molecule%get_n_shells()
-!
-      call cpu_time(t0)
+      n_shells = wf%system%get_n_shells()
 !
       do A = 1, n_shells
 !
-         A_intval = wf%molecule%get_shell_limits(A)
+         A_intval = wf%system%get_shell_limits(A)
 !
          do C = 1, n_shells
 !
-            C_intval = wf%molecule%get_shell_limits(C)
+            C_intval = wf%system%get_shell_limits(C)
 !
             call mem%alloc(L_wxyz, (A_intval%size)*(wf%n_ao), (C_intval%size)*(wf%n_ao))
             L_wxyz = zero
@@ -497,7 +471,7 @@ contains
 !
       call get_ao_h_xy(h_wx)
 !
-      wf%hf_energy = wf%molecule%get_nuclear_repulsion()
+      wf%hf_energy = wf%system%get_nuclear_repulsion()
 !
       wf%hf_energy = wf%hf_energy + ddot((wf%n_ao)**2, h_wx, 1, wf%ao_density, 1)
       wf%hf_energy = wf%hf_energy + (one/four)*ddot((wf%n_ao)**2, wf%ao_density, 1, GD_wx, 1)
@@ -573,19 +547,19 @@ contains
 !
        !  endif
 !
-      !enddo
-      wf%ao_density(1, 1) = one ! 5 orbitals for first H
-      wf%ao_density(6, 6) = one ! 5 orbitals for second H
-      wf%ao_density(11, 11) = two ! 1s^2
-      wf%ao_density(12, 12) = one ! 2s first
-      wf%ao_density(13, 13) = one ! 2s second
+  !    !enddo
+  !    wf%ao_density(1, 1) = one ! 5 orbitals for first H
+  !    wf%ao_density(6, 6) = one ! 5 orbitals for second H
+  !    wf%ao_density(11, 11) = two ! 1s^2
+  !    wf%ao_density(12, 12) = one ! 2s first
+  !    wf%ao_density(13, 13) = one ! 2s second
 ! Then, 2p^4
-      wf%ao_density(14,14) = one
-      wf%ao_density(15,15) = one
-      wf%ao_density(16,16) = half
-      wf%ao_density(17,17) = half
-      wf%ao_density(18,18) = half
-      wf%ao_density(19,19) = half
+  !   wf%ao_density(14,14) = one
+  !   wf%ao_density(15,15) = one
+  !   wf%ao_density(16,16) = half
+  !   wf%ao_density(17,17) = half
+  !   wf%ao_density(18,18) = half
+  !   wf%ao_density(19,19) = half
 !
    end subroutine set_ao_density_to_soad_guess_hf
 !
@@ -619,7 +593,6 @@ contains
       class(hf) :: wf
 !
       real(dp), dimension(:,:), allocatable :: work
-      real(dp), dimension(:,:), allocatable :: ao_fock_copy
       real(dp), dimension(:,:), allocatable :: ao_overlap_copy
 !
       real(dp) :: ddot, norm
@@ -631,35 +604,24 @@ contains
       call mem%alloc(work, 4*wf%n_ao, 1)
       work = zero
 !
-      call mem%alloc(ao_fock_copy, wf%n_ao, wf%n_ao)
       call mem%alloc(ao_overlap_copy, wf%n_ao, wf%n_ao)
 !
-      ao_fock_copy    = zero
-      ao_fock_copy    = wf%ao_fock
+      wf%orbital_coefficients = wf%ao_fock
 !
-      ao_overlap_copy = zero
       ao_overlap_copy = wf%ao_overlap
 !
-      call dsygv(1, 'V',               &
-                  'L',                 &
-                  wf%n_ao,             &
-                  wf%ao_fock,          & ! orbital coefficients on exit
-                  wf%n_ao,             &
-                  wf%ao_overlap,       &
-                  wf%n_ao,             &
-                  wf%orbital_energies, &
-                  work,                &
-                  4*(wf%n_ao),         &
+      call dsygv(1, 'V', 'L',                &
+                  wf%n_ao,                   &
+                  wf%orbital_coefficients,   & ! ao_fock on entry orbital coefficients on exit
+                  wf%n_ao,                   &
+                  ao_overlap_copy,           &
+                  wf%n_ao,                   &
+                  wf%orbital_energies,       &
+                  work,                      &
+                  4*(wf%n_ao),               &
                   info)
 !
       call mem%dealloc(work, 4*wf%n_ao, 1)
-!
-      wf%mo_coefficients = wf%ao_fock
-!
-      wf%ao_fock = ao_fock_copy
-      wf%ao_overlap = ao_overlap_copy
-!
-      call mem%dealloc(ao_fock_copy, wf%n_ao, wf%n_ao)
       call mem%dealloc(ao_overlap_copy, wf%n_ao, wf%n_ao)
 !
    end subroutine solve_roothan_hall_hf
@@ -695,30 +657,30 @@ contains
 !
       call mem%alloc(X, wf%n_ao, wf%n_ao)
 !
-      call dgemm('N', 'N',            &
-                  wf%n_ao,            &
-                  wf%n_ao,            &
-                  wf%n_ao,            &
-                  one,                &
-                  wf%ao_fock,         &
-                  wf%n_ao,            &
-                  wf%mo_coefficients, &
-                  wf%n_ao,            &
-                  zero,               &
-                  X,                  & ! X = F^ao C
+      call dgemm('N', 'N',                   &
+                  wf%n_ao,                   &
+                  wf%n_ao,                   &
+                  wf%n_ao,                   &
+                  one,                       &
+                  wf%ao_fock,                &
+                  wf%n_ao,                   &
+                  wf%orbital_coefficients,   &
+                  wf%n_ao,                   &
+                  zero,                      &
+                  X,                         & ! X = F^ao C
                   wf%n_ao)
 !
-      call dgemm('T', 'N',            &
-                  wf%n_ao,            &
-                  wf%n_ao,            &
-                  wf%n_ao,            &
-                  one,                &
-                  wf%mo_coefficients, &
-                  wf%n_ao,            &
-                  X,                  &
-                  wf%n_ao,            &
-                  zero,               &
-                  F_pq,               & ! F = C^T F^ao C
+      call dgemm('T', 'N',                   &
+                  wf%n_ao,                   &
+                  wf%n_ao,                   &
+                  wf%n_ao,                   &
+                  one,                       &
+                  wf%orbital_coefficients,   &
+                  wf%n_ao,                   &
+                  X,                         &
+                  wf%n_ao,                   &
+                  zero,                      &
+                  F_pq,                      & ! F = C^T F^ao C
                   wf%n_ao)
 !
       call mem%dealloc(X, wf%n_ao, wf%n_ao)

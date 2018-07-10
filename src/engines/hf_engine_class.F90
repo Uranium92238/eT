@@ -105,7 +105,7 @@ contains
       call wf%initialize_orbital_energies()
 !
       call wf%initialize_ao_density()
-      call wf%set_ao_density_to_soad_guess() ! D^AO = D^SOAD
+!      call wf%set_ao_density_to_soad_guess() ! D^AO = D^SOAD
 !
       call wf%initialize_ao_fock()
       call wf%construct_ao_fock() ! From current D^AO

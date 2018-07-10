@@ -23,7 +23,7 @@ module wavefunction_class
 !
       type(molecular_system) :: system
 !
-      real(dp), dimension(:,:) :: orbital_coefficients
+      real(dp), dimension(:,:), allocatable :: orbital_coefficients
 !
    contains
 !
