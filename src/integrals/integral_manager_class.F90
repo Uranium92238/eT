@@ -142,7 +142,7 @@ contains
       integer(i15) :: I, K, J, L, KL, I_counter, J_counter, IJ
       integer(i15) :: w, x, y, z, xy, yz, wx, xy_packed, wx_packed, wxyz, yz_packed
       integer(i15) :: first, last, first_sig_aop, last_sig_aop, first_x, first_y
-      integer(i15) :: sp, aop, current_qual, current_sig_sp, qual, qual_max, current_new_sig_sp
+      integer(i15) :: sp, aop, current_qual, current_sig_sp, qual, current_new_sig_sp
       integer(i15) :: current_aop_in_sp, n_left_out, n_vectors, size_AB, offset_yz, new_position, rec_offset
 !
       type(interval) :: A_interval, B_interval, C_interval, D_interval
@@ -182,6 +182,7 @@ contains
       integer(i15), dimension(:,:), allocatable :: basis_shell_info
       integer(i15), dimension(:,:), allocatable :: basis_aops_in_CD_sp, basis_aops_in_AB_sp
       integer(i15), dimension(:,:), allocatable :: keep_vectors, leave_out
+      integer(i15), dimension(:,:), allocatable :: qual_max
 !
       logical :: construct_more_choleskys, done, found
 !
@@ -692,6 +693,8 @@ contains
 !
          construct_more_choleskys = .true.
 !
+         call mem%alloc_int(qual_max, n_qual_aop, 1)
+!
          do while ((current_qual .lt. n_qual_aop) .and. construct_more_choleskys)
 !
             current_qual = current_qual + 1
@@ -704,7 +707,7 @@ contains
 !
                if (D_xy(xy, 1) .gt. D_max) then
 !
-                  qual_max = qual
+                  qual_max(current_qual, 1) = qual
                   D_max    = D_xy(xy, 1)
 !
                endif
@@ -713,21 +716,21 @@ contains
 !
             if ((D_max .gt. threshold) .and. (D_max .ge. span*D_max_full)) then
 !
-               cholesky_basis(n_cholesky + current_qual, 1) = qual_aop(qual_max, 1)
-               cholesky_basis(n_cholesky + current_qual, 2) = qual_aop(qual_max, 2)
+               cholesky_basis(n_cholesky + current_qual, 1) = qual_aop(qual_max(current_qual, 1), 1)
+               cholesky_basis(n_cholesky + current_qual, 2) = qual_aop(qual_max(current_qual, 1), 2)
 !
-               A = molecule%basis2shell(qual_aop(qual_max, 1))
-               B = molecule%basis2shell(qual_aop(qual_max, 2))
+               A = molecule%basis2shell(qual_aop(qual_max(current_qual, 1), 1))
+               B = molecule%basis2shell(qual_aop(qual_max(current_qual, 1), 2))
 !
                cholesky_basis(n_cholesky + current_qual, 3) = get_sp_from_shells(A, B, n_s)
 !
-               cholesky_new(: , current_qual) = g_wxyz(:, qual_max)
+               cholesky_new(: , current_qual) = g_wxyz(:, qual_max(current_qual, 1))
 !
                if (current_qual .gt. 1) then
 !
                   call mem%alloc(cholesky_tmp, 1, current_qual - 1)
    !
-                  cholesky_tmp(1, :) = cholesky_new(qual_aop(qual_max, 3), 1 : current_qual - 1)
+                  cholesky_tmp(1, :) = cholesky_new(qual_aop(qual_max(current_qual, 1), 3), 1 : current_qual - 1)
 !
                   call dgemm('N', 'T',                      &
                            n_sig_aop,                       &
@@ -746,9 +749,13 @@ contains
 !
             endif
 !
-            g_wxyz(qual_aop(qual_max, 3), :) = zero
-!
             call dscal(n_sig_aop, one/sqrt(D_max), cholesky_new(1, current_qual), 1)
+!
+            do i = 1, current_qual - 1
+!
+               cholesky_new(qual_aop(qual_max(i, 1), 3), current_qual) = zero
+!
+            enddo
 !
                do xy = 1, n_sig_aop
 !
@@ -764,6 +771,8 @@ contains
             endif
 !
          enddo
+!
+         call mem%dealloc_int(qual_max, n_qual_aop, 1)
 !
          call cpu_time(e_construct_time)
          full_construct_time = full_construct_time + e_construct_time - s_construct_time
