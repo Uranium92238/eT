@@ -1194,7 +1194,7 @@ contains
       call cpu_time(s_decomp_time)
 !
       call full_cholesky_decomposition_effective(integrals_auxiliary, auxiliary_basis, &
-                                          n_cholesky, n_vectors, threshold, keep_vectors)
+                                          n_cholesky, n_vectors, threshold*1.0d-2, keep_vectors)
 !
       call cpu_time(e_decomp_time)
       full_decomp_time = e_decomp_time - s_decomp_time
