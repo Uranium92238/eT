@@ -24,7 +24,7 @@ module atomic_class
       integer(i15) :: n_ao ! Number of aos sentered on this atom
 !
       integer(i15) :: n_shells
-      type(shell), dimension(:,:), allocatable :: shells ! dimension (:) ? we cannot allocate with mem manager anyhow! 
+      type(shell), dimension(:), allocatable :: shells ! dimension (:) ? we cannot allocate with mem manager anyhow! 
 !
       real(dp) :: x
       real(dp) :: y
@@ -38,7 +38,7 @@ module atomic_class
       procedure, private :: get_n_Aufbau => get_n_Aufbau_atom
       procedure, private :: get_Aufbau_info => get_Aufbau_info_atom
 !
-      procedure :: SOAD => SOAD_atom
+      procedure :: AD => AD_atom
 !
    end type atomic
 !
@@ -99,9 +99,9 @@ contains
    end subroutine symbol_to_number_atom
 !
 !
-   subroutine SOAD_atom(atom, density_diagonal_for_atom)
+   subroutine AD_atom(atom, density_diagonal_for_atom)
 !!
-!!    Superposition of atomic densities
+!!    Atomic density
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !!    Relies on the ordering from libint: 
@@ -111,6 +111,8 @@ contains
 !!
 !!    OBS! Note that for orbitals to be filled
 !!         all s-orbitals are given first, then all p-orbitals and so on.
+!!
+!!    To be used for Superposition of atomic densities (SOAD)
 !!
       implicit none
 !
@@ -151,12 +153,12 @@ contains
 !
             shell = shell + 1
 !  
-            density_diagonal_for_atom(ao_offset + 1 : ao_offset + atom%shells(shell, 1)%size, 1) &
-                 = real(min(n_electrons , 2*atom%shells(shell, 1)%size), kind=dp)&
-                  /(real(atom%shells(shell, 1)%size, kind=dp))&
+            density_diagonal_for_atom(ao_offset + 1 : ao_offset + atom%shells(shell)%size, 1) &
+                 = real(min(n_electrons , 2*atom%shells(shell)%size), kind=dp)&
+                  /(real(atom%shells(shell)%size, kind=dp))&
                   /(real(Aufbau_shell_info(shell, 1), kind=dp))
 !
-                  ao_offset = ao_offset + atom%shells(shell, 1)%size
+                  ao_offset = ao_offset + atom%shells(shell)%size
 !
          enddo
        
@@ -164,7 +166,7 @@ contains
 !
       enddo
 !
-   end subroutine SOAD_atom
+   end subroutine AD_atom
 !
 !
    integer function get_n_Aufbau_atom(atom)

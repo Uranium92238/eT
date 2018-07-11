@@ -21,7 +21,7 @@ module molecular_system_class
       integer(i15) :: n_atoms
       integer(i15) :: charge
 !
-      type(atomic), dimension(:,:), allocatable :: atoms
+      type(atomic), dimension(:), allocatable :: atoms
 !
    contains
 !
@@ -38,6 +38,8 @@ module molecular_system_class
       procedure :: get_n_shells => get_n_shells_molecular_system
       procedure :: get_shell_limits => get_shell_limits_molecular_system
       procedure :: basis2shell => basis2shell_molecular_system
+!
+      procedure :: SOAD => SOAD_molecular_system
 !
    end type molecular_system
 !
@@ -62,48 +64,45 @@ contains
 !
       call molecule%read_info
 !
-      allocate(molecule%atoms(molecule%n_atoms, 1))
+      allocate(molecule%atoms(molecule%n_atoms))
 !
-      allocate(n_shells_on_atoms(molecule%n_atoms,1))
+      allocate(n_shells_on_atoms(molecule%n_atoms, 1))
       n_shells_on_atoms = 0
 !
       call molecule%read_geometry
 !
       do i = 1, molecule%n_atoms
 !
-         call molecule%atoms(i, 1)%set_number()
+         call molecule%atoms(i)%set_number()
 !
       enddo
 !
-      call molecule%write      ! Write an xyz file for the read geometry
+      call molecule%write()  ! Write an xyz file for the read geometry
 !
       call initialize_basis()
-      call get_n_shells_on_atoms(n_shells_on_atoms) ! Should this belong to atom class and only take care of single atom?
+      call get_n_shells_on_atoms(n_shells_on_atoms)
 !
       do i = 1, molecule%n_atoms ! Loop over atoms
 !
-!        Set atomic number
-!
-         call molecule%atoms(i, 1)%set_number()
-!
 !        Allocate and initialize the corresponding shells
 !
-         molecule%atoms(i,1)%n_shells = n_shells_on_atoms(i,1)
-       !  write(output%unit, *) 'n_shells', molecule%atoms(i,1)%n_shells
-       !  flush(output%unit)
-         allocate(molecule%atoms(i,1)%shells(molecule%atoms(i,1)%n_shells, 1))
+         molecule%atoms(i)%n_shells = n_shells_on_atoms(i, 1)
+!
+         allocate(molecule%atoms(i)%shells(molecule%atoms(i)%n_shells))
 !
 !        Then determine the number of basis functions in each shell
+!        and save number of aos per atom
 !
          allocate(n_basis_in_shells(n_shells_on_atoms(i,1), 1))
          call get_n_basis_in_shells(i, n_basis_in_shells)
 !  
-         molecule%atoms(i,1)%n_ao = 0
+         molecule%atoms(i)%n_ao = 0
 !
-         do j = 1, n_shells_on_atoms(i,1)
+         do j = 1, n_shells_on_atoms(i, 1)
 
-            molecule%atoms(i,1)%shells(j,1)%size = n_basis_in_shells(j,1)
-            molecule%atoms(i,1)%n_ao = molecule%atoms(i,1)%n_ao + n_basis_in_shells(j,1)
+            molecule%atoms(i)%shells(j)%size = n_basis_in_shells(j,1)
+!
+            molecule%atoms(i)%n_ao = molecule%atoms(i)%n_ao + n_basis_in_shells(j,1)
 
          enddo
 
@@ -116,8 +115,7 @@ contains
 !
          do j = 1, n_shells_on_atoms(i,1)
 !
-            molecule%atoms(i,1)%shells(j,1)%number = shell_numbers(j, 1)
-          !  write(output%unit, *) 'The ', j, 'th shell on atom ', i, ' has shell nr. ', molecule%atoms(i,1)%shells(j,1)%number
+            molecule%atoms(i)%shells(j)%number = shell_numbers(j, 1)
 !
          enddo
 !
@@ -130,25 +128,25 @@ contains
 !
          do j = 1, n_shells_on_atoms(i,1)
 
-            molecule%atoms(i,1)%shells(j,1)%first = first_ao_in_shells(j,1)
+            molecule%atoms(i)%shells(j)%first = first_ao_in_shells(j,1)
 !
          enddo
 !
-         deallocate(first_ao_in_shells)
+         deallocate(shell_numbers)
 !
 !        Then determine the angular momentum of shells & the last AO index
 !
          do j = 1, n_shells_on_atoms(i,1)
 !
-            call molecule%atoms(i,1)%shells(j,1)%determine_angular_momentum()
-            call molecule%atoms(i,1)%shells(j,1)%determine_last_ao_index()
+            call molecule%atoms(i)%shells(j)%determine_angular_momentum()
+            call molecule%atoms(i)%shells(j)%determine_last_ao_index()
 !
          enddo
 !
       enddo
 !
       if (molecule%charge .ne. 0) then
-         write(output%unit) 'Error: SOAD not implemented for charged species yet!'
+         write(output%unit) 'Error: SOAD not yet implemented for charged species!'
          stop
       endif 
 !
@@ -275,8 +273,8 @@ contains
 !
                current_atom = current_atom + 1
 !
-               molecule%atoms(current_atom, 1)%basis = current_basis
-               molecule%atoms(current_atom, 1)%symbol = trim(line(1:2))
+               molecule%atoms(current_atom)%basis = current_basis
+               molecule%atoms(current_atom)%symbol = trim(line(1:2))
 !
                line = line(3:100)
                line = remove_preceding_blanks(line)
@@ -293,7 +291,7 @@ contains
                enddo
 !
                coordinate = line(1:cursor)
-               read(coordinate, '(f30.25)') molecule%atoms(current_atom,1)%x
+               read(coordinate, '(f30.25)') molecule%atoms(current_atom)%x
 !
                cursor = cursor + 1
 !
@@ -312,14 +310,14 @@ contains
                enddo
 !
                coordinate = line(1:cursor)
-               read(coordinate, '(f30.25)') molecule%atoms(current_atom,1)%y
+               read(coordinate, '(f30.25)') molecule%atoms(current_atom)%y
 !
                cursor = cursor + 1
 !
                coordinate = line(cursor:100)
                coordinate = remove_preceding_blanks(coordinate)
 !
-               read(coordinate, '(f30.25)') molecule%atoms(current_atom,1)%z
+               read(coordinate, '(f30.25)') molecule%atoms(current_atom)%z
 !
               read(input%unit,'(a)') line
               line = remove_preceding_blanks(line)
@@ -364,10 +362,10 @@ contains
       do atom = 1, molecule%n_atoms
 !
          write(mol_file%unit, '(a3, 3x, f30.25, 3x, f30.25, 3x, f30.25)')  &
-                                 molecule%atoms(atom, 1)%symbol,           &
-                                 molecule%atoms(atom, 1)%x,                &
-                                 molecule%atoms(atom, 1)%y,                &
-                                 molecule%atoms(atom, 1)%z
+                                 molecule%atoms(atom)%symbol,           &
+                                 molecule%atoms(atom)%x,                &
+                                 molecule%atoms(atom)%y,                &
+                                 molecule%atoms(atom)%z
 !
       enddo
 !
@@ -400,9 +398,9 @@ contains
       do i = 1, molecule%n_atoms
          do j = i + 1, molecule%n_atoms
 !
-            x_ij = molecule%atoms(i, 1)%x - molecule%atoms(j, 1)%x
-            y_ij = molecule%atoms(i, 1)%y - molecule%atoms(j, 1)%y
-            z_ij = molecule%atoms(i, 1)%z - molecule%atoms(j, 1)%z
+            x_ij = molecule%atoms(i)%x - molecule%atoms(j)%x
+            y_ij = molecule%atoms(i)%y - molecule%atoms(j)%y
+            z_ij = molecule%atoms(i)%z - molecule%atoms(j)%z
 !
             r_ij = sqrt(x_ij**2 + y_ij**2 + z_ij**2)
 !
@@ -416,7 +414,7 @@ contains
             endif
 !
             get_nuclear_repulsion_molecular_system = get_nuclear_repulsion_molecular_system &
-                  + ((molecule%atoms(i, 1)%number)*(molecule%atoms(j, 1)%number))/r_ij
+                  + ((molecule%atoms(i)%number)*(molecule%atoms(j)%number))/r_ij
 !
          enddo
       enddo
@@ -443,7 +441,7 @@ contains
 !
       do i = 1, molecule%n_atoms
 !
-         get_n_electrons_molecular_system = get_n_electrons_molecular_system + molecule%atoms(i,1)%number
+         get_n_electrons_molecular_system = get_n_electrons_molecular_system + molecule%atoms(i)%number
 !
       enddo
 !
@@ -467,7 +465,7 @@ contains
 !
       do I = 1, molecule%n_atoms
 !
-         get_n_shells_molecular_system = get_n_shells_molecular_system + molecule%atoms(I,1)%n_shells
+         get_n_shells_molecular_system = get_n_shells_molecular_system + molecule%atoms(I)%n_shells
 !
       enddo
 !
@@ -489,10 +487,10 @@ contains
 !
       do I = 1, molecule%n_atoms
 !
-         do J = 1, molecule%atoms(I,1)%n_shells
+         do J = 1, molecule%atoms(I)%n_shells
 !
             get_n_aos_molecular_system = get_n_aos_molecular_system &
-                           + molecule%atoms(I,1)%shells(J,1)%size
+                           + molecule%atoms(I)%shells(J)%size
 !
          enddo
 !
@@ -516,13 +514,13 @@ contains
 !
       do I = 1, molecule%n_atoms
 !
-         do J = 1, molecule%atoms(I,1)%n_shells
+         do J = 1, molecule%atoms(I)%n_shells
 !
-            if (A .eq. molecule%atoms(I,1)%shells(J,1)%number) then
+            if (A .eq. molecule%atoms(I)%shells(J)%number) then
 !
-               get_shell_limits_molecular_system%first = molecule%atoms(I,1)%shells(J,1)%first
-               get_shell_limits_molecular_system%last  = molecule%atoms(I,1)%shells(J,1)%last
-               get_shell_limits_molecular_system%size  = molecule%atoms(I,1)%shells(J,1)%size
+               get_shell_limits_molecular_system%first = molecule%atoms(I)%shells(J)%first
+               get_shell_limits_molecular_system%last  = molecule%atoms(I)%shells(J)%last
+               get_shell_limits_molecular_system%size  = molecule%atoms(I)%shells(J)%size
 !
             endif
 !
@@ -547,12 +545,12 @@ contains
       integer(i15) :: I, J
 !
       do I = 1, molecule%n_atoms
-         do J = 1, molecule%atoms(I,1)%n_shells
+         do J = 1, molecule%atoms(I)%n_shells
 !
-            if (molecule%atoms(I,1)%shells(J,1)%last  .ge. basis_function .and. &
-                molecule%atoms(I,1)%shells(J,1)%first .le. basis_function) then
+            if (molecule%atoms(I)%shells(J)%last  .ge. basis_function .and. &
+                molecule%atoms(I)%shells(J)%first .le. basis_function) then
 !
-               basis2shell_molecular_system = molecule%atoms(I,1)%shells(J,1)%number
+               basis2shell_molecular_system = molecule%atoms(I)%shells(J)%number
 !
             endif
 !
@@ -560,6 +558,47 @@ contains
       enddo
 !
    end function basis2shell_molecular_system
+!
+!
+   subroutine SOAD_molecular_system(molecule, n_ao, density_diagonal)
+!!
+!!    Superposition of atomic desities
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Initial guess for HF-calculation
+!!
+      implicit none
+!
+      class(molecular_system) :: molecule
+!
+      integer(i15) :: n_ao
+!
+      real(dp), dimension(n_ao, 1) :: density_diagonal
+!
+      integer(i15) :: I, offset_diagonal
+!
+      real(dp), dimension(:,:), allocatable :: atom_density_diagonal
+!
+!     Loop over atoms and let them set their own density diagonal
+!
+      offset_diagonal = 0
+!
+      do I = 1, molecule%n_atoms
+! 
+         call mem%alloc(atom_density_diagonal, molecule%atoms(I)%n_ao, 1)
+!
+         call molecule%atoms(I)%AD(atom_density_diagonal)
+!
+         density_diagonal(offset_diagonal + 1 : offset_diagonal + molecule%atoms(I)%n_ao, 1) = &
+            atom_density_diagonal(:,1)
+!
+         call mem%dealloc(atom_density_diagonal, molecule%atoms(I)%n_ao, 1)
+!
+         offset_diagonal = offset_diagonal + molecule%atoms(I)%n_ao
+!
+      enddo
+!
+   end subroutine SOAD_molecular_system
 !
 !
 end module molecular_system_class

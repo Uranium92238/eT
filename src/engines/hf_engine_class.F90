@@ -78,10 +78,12 @@ contains
 !
       real(dp) :: t0, t1
 !
-      integer(i15) :: iteration = 1
+      integer(i15) :: iteration = 1, ao = 0 
 !
       real(dp), dimension(:,:), allocatable :: D ! Parameters, D_αβ
       real(dp), dimension(:,:), allocatable :: F ! Equations, F_ia
+!
+      real(dp), dimension(:,:), allocatable :: density_diagonal ! Equations, F_ia
 !
 !     Initialize engine (read thresholds, restart, etc., from file,
 !     but also ask the wavefunction for the number of parameters to solve
@@ -105,7 +107,15 @@ contains
       call wf%initialize_orbital_energies()
 !
       call wf%initialize_ao_density()
-!      call wf%set_ao_density_to_soad_guess() ! D^AO = D^SOAD
+!
+      call mem%alloc(density_diagonal, wf%n_ao, 1)
+      call wf%system%SOAD(wf%n_ao, density_diagonal)
+      do ao = 1, wf%n_ao
+!
+         wf%ao_density(ao, ao) = density_diagonal(ao, 1)
+!
+      enddo
+      call mem%dealloc(density_diagonal, wf%n_ao, 1)
 !
       call wf%initialize_ao_fock()
       call wf%construct_ao_fock() ! From current D^AO
