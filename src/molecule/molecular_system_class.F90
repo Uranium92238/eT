@@ -78,13 +78,13 @@ contains
       call molecule%write      ! Write an xyz file for the read geometry
 !
       call initialize_basis()
-      call get_n_shells_on_atoms(n_shells_on_atoms)
+      call get_n_shells_on_atoms(n_shells_on_atoms) ! Should this belong to atom class and only take care of single atom?
 !
       do i = 1, molecule%n_atoms ! Loop over atoms
 !
 !        Set atomic number
 !
-       !  call molecule%atoms(i, 1)%set_number()
+         call molecule%atoms(i, 1)%set_number()
 !
 !        Allocate and initialize the corresponding shells
 !
@@ -97,10 +97,13 @@ contains
 !
          allocate(n_basis_in_shells(n_shells_on_atoms(i,1), 1))
          call get_n_basis_in_shells(i, n_basis_in_shells)
-
+!  
+         molecule%atoms(i,1)%n_ao = 0
+!
          do j = 1, n_shells_on_atoms(i,1)
 
             molecule%atoms(i,1)%shells(j,1)%size = n_basis_in_shells(j,1)
+            molecule%atoms(i,1)%n_ao = molecule%atoms(i,1)%n_ao + n_basis_in_shells(j,1)
 
          enddo
 
@@ -143,6 +146,11 @@ contains
          enddo
 !
       enddo
+!
+      if (molecule%charge .ne. 0) then
+         write(output%unit) 'Error: SOAD not implemented for charged species yet!'
+         stop
+      endif 
 !
    end subroutine initialize_molecular_system
 !

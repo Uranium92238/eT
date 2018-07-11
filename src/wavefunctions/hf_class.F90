@@ -42,8 +42,6 @@ module hf_class
 !
       procedure :: calculate_hf_energy  => calculate_hf_energy_hf
 !
-      procedure :: set_ao_density_to_soad_guess => set_ao_density_to_soad_guess_hf
-!
 !     Solve Roothan Hall equations
 !
       procedure :: solve_roothan_hall => solve_roothan_hall_hf
@@ -519,49 +517,6 @@ contains
       get_n_hf_equations_hf = (wf%n_o)*(wf%n_v)
 !
    end function get_n_hf_equations_hf
-!
-!
-   subroutine set_ao_density_to_soad_guess_hf(wf)
-!!
-!!    Set AO density to SOAD guess
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-!!    Sets the AO density by using the superposition of
-!!    atomic densities (SOAD) guess.
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      integer(i15) :: offset = 0
-!
-      offset = 1
-!
-    !  do I = 1, wf%molecule%n_atoms
-!
-!        For the Ith atom, place electrons in the AOs
-!
-      !   if (wf%molecule%atoms(I, 1).number .eq. 1) then ! H
-!
-      !      wf%ao_density(offset, offset) =
-!
-       !  endif
-!
-  !    !enddo
-  !    wf%ao_density(1, 1) = one ! 5 orbitals for first H
-  !    wf%ao_density(6, 6) = one ! 5 orbitals for second H
-  !    wf%ao_density(11, 11) = two ! 1s^2
-  !    wf%ao_density(12, 12) = one ! 2s first
-  !    wf%ao_density(13, 13) = one ! 2s second
-! Then, 2p^4
-  !   wf%ao_density(14,14) = one
-  !   wf%ao_density(15,15) = one
-  !   wf%ao_density(16,16) = half
-  !   wf%ao_density(17,17) = half
-  !   wf%ao_density(18,18) = half
-  !   wf%ao_density(19,19) = half
-!
-   end subroutine set_ao_density_to_soad_guess_hf
 !
 !
    subroutine set_ao_density_hf(wf, D)

@@ -17,10 +17,11 @@ module atomic_class
       character(len=2) :: symbol
       integer(i15)     :: number
 !
-      character(len=100) :: basis
+      character(len=100) :: basis ! name of basis set
+      integer(i15) :: n_ao ! Number of aos sentered on this atom
 !
       integer(i15) :: n_shells
-      type(shell), dimension(:,:), allocatable :: shells
+      type(shell), dimension(:,:), allocatable :: shells ! dimension (:) ? we cannot allocate with mem manager anyhow! 
 !
       real(dp) :: x
       real(dp) :: y
@@ -29,7 +30,7 @@ module atomic_class
    contains
 !
       procedure          :: set_number      => set_number_atom
-      procedure, private :: symbol_2_number => symbol_2_number_atom
+      procedure, private :: symbol_to_number => symbol_to_number_atom
 !
    end type atomic
 !
@@ -47,12 +48,12 @@ contains
 !
       class(atomic) :: atom
 !
-      call atom%symbol_2_number()
+      call atom%symbol_to_number()
 !
    end subroutine set_number_atom
 !
 !
-   subroutine symbol_2_number_atom(atom)
+   subroutine symbol_to_number_atom(atom)
 !!
 !!    Symbol to number
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
@@ -87,7 +88,148 @@ contains
 !
       endif
 !
-   end subroutine symbol_2_number_atom
+   end subroutine symbol_to_number_atom
+!
+!
+   subroutine SOAD_atom(atom, density_diagonal_for_atom)
+!!
+!!    Superposition of atomic densities
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
+!!
+!!    Relies on the ordering from libint: 
+!!       - core and valence (s, p, d, ...) (To be filled)
+!!       - polerization (p, d, ...) 
+!!       - augmentation (s, p, d)
+!!
+!!    OBS! Note that for orbitals to be filled
+!!         all s-orbitals are given first, then all p-orbitals and so on.
+!!
+      implicit none
+!
+      class(atomic) :: atom
+!
+      real(dp), dimension(atom%n_ao, 1) :: density_diagonal_for_atom
+!
+      integer(i15) :: n_Aufbau_shells
+      integer(i15), dimension(:,:), allocatable :: Aufbau_shell_info
+!
+!     Find number of sub-shells to fill, allocate array for information on how many 
+!     instances of a certain sub-shell (depends on the basis set) there are 
+!     and how many electrons into this sub-shell (depends on angular momentum of sub-shell)
+!
+      n_Aufbau_shells = atom%get_n_Aufbau_atom()
+!
+      call mem%alloc_int(Aufbau_shell_info, n_Aufbau_shells, 2) ![number of instances of specific (n,l) combination, 2*m (number of electrons to fill shell)] 
+!
+      call atom%get_Aufbau_info(n_Aufbau_shells, Aufbau_shell_info)
+!
+!     Sanity checks ?!
+!
+      shell = 0
+!
+      density_diagonal_for_atom = zero
+      ao_offset = 0
+      shell = 0
+      n_electrons = atom%number
+!
+      do Aufbau_shell = 1, n_Aufbau_shells        
+!
+         if (n_electrons == 0) return 
+!
+         do i = 1, Aufbau_shell_info(Aufbau_shell, 1)
+!
+            shell = shell + 1
+!  
+            density_diagonal_for_atom(ao_offset + 1 : ao_offset + atom%shells(shell, 1)%size) &
+                 = real(min(n_electrons , 2*atom%shells(shell, 1)%size), kind=dp)&
+                  /(real(atom%shells(shell, 1)%size, kind=dp))&
+                  /(real(Aufbau_shell_info(shell, 1), kind=dp))
+!
+                  ao_offset = ao_offset + atom%shells(shell, 1)%size
+!
+         enddo
+       
+         n_electrons = n_electrons - min(n_electrons, Aufbau_shell_info(shell, 2))
+!
+      enddo
+!
+   end subroutine SOAD_atom
+!
+!
+   integer function get_n_Aufbau_atom(atom)
+!!
+!!    Get number of Aufbau orbitals
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
+!!
+!!    Returns the number of subshells filled according to Aufbau principle 
+!!
+      implicit none
+!
+      class(atomic) :: atom 
+!
+      if (atom%number .le. 0) then 
+!
+         write(output%unit, *) 'Error: Illegal atomic number!'
+         stop 
+!
+      elseif ((atom%number .gt. 0) .and. (atom%number .le. 2)) then ! H - He
+!
+         get_n_Aufbau_atom = 1 ! Fill in 1s
+!
+      elseif ((atom%number .gt. 2) .and. (atom%number .le. 10)) then ! Li - Ne
+!
+         get_n_Aufbau_atom = 3 ! Fill in 1s, 2s, 2p
+!
+      elseif ((atom%number .gt. 10) .and. (atom%number .le. 18)) then ! Na - Ar
+!
+         get_n_Aufbau_atom = 5 ! Fill in 1s, 2s, 3s, 2p, 3p
+!
+      else
+!
+         write(output%unit, *) 'Error: eT cannot handle atoms heavier than Ar yet!'
+         stop 
+!
+      endif
+!
+   end function get_n_Aufbau_atom
+!
+!
+   subroutine get_Aufbau_info_atom(atom, n_Aufbau_shells, Aufbau_shell_info)
+!!
+!!
+!!
+      implicit none
+!
+      class(atomic) :: atom
+!
+      integer(i15) :: n_Aufbau_shells
+      integer(i15), dimension(n_Aufbau_shells, 1), allocatable :: Aufbau_shell_info
+!
+      if (atom%number .le. 0) then 
+!
+         write(output%unit, *) 'Error: Illegal atomic number!'
+         stop 
+!
+      elseif ((atom%number .gt. 0) .and. (atom%number .le. 2)) then ! H - He
+!
+         call get_shells_to_fill_H_to_He(atom%basis,  Aufbau_shell_info)
+!
+      elseif ((atom%number .gt. 2) .and. (atom%number .le. 10)) then ! Li - Ne
+!
+         call get_shells_to_fill_Li_to_Ne(atom%basis,  Aufbau_shell_info)
+!
+      elseif ((atom%number .gt. 10) .and. (atom%number .le. 18)) then ! Na - Ar
+!
+         call get_shells_to_fill_Na_to_Ar(atom%basis,  Aufbau_shell_info)
+!
+      else
+!
+         write(output%unit, *) 'Error: eT cannot handle atoms heavier than Ar yet!'
+         stop 
+!
+      endif
+!
+   end subroutine get_Aufbau_info_atom
 !
 !
 end module atomic_class
