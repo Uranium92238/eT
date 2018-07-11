@@ -474,14 +474,6 @@ contains
 !
          cholesky_vectors(:, n_vectors) = matrix(:, index_max)
 !
-         do j = 1, dim
-!
-            if (diagonal(j, 1) .gt. zero .and. diagonal(j, 1) .lt. threshold) diagonal(j, 1) = zero 
-!
-            if (diagonal(j, 1) == zero) cholesky_vectors(j, n_vectors) = zero
-!
-         enddo
-!
          if (n_vectors .gt. 1) then
 !
             call mem%alloc(temp_cholesky_vector, 1, n_vectors - 1)
@@ -519,6 +511,13 @@ contains
          enddo
 !
          diagonal(index_max, 1) = zero
+!
+         do j = 1, dim
+!
+            matrix(j,index_max) = 0.0D0
+            matrix(index_max,j) = 0.0D0
+!
+         enddo
 !
       enddo
 !
