@@ -746,6 +746,8 @@ contains
 !
             endif
 !
+            g_wxyz(qual_aop(qual_max, 3), :) = zero
+!
             call dscal(n_sig_aop, one/sqrt(D_max), cholesky_new(1, current_qual), 1)
 !
                do xy = 1, n_sig_aop

@@ -114,7 +114,7 @@ contains
          do j = 1, n_shells_on_atoms(i,1)
 !
             molecule%atoms(i,1)%shells(j,1)%number = shell_numbers(j, 1)
-          !  write(output%unit, *) 'The ', j, 'th shell on atom ', i, ' has shell nr. ', molecule%atoms(i,1)%shells(j,1)%number
+            !write(*, *) 'The ', j, 'th shell on atom ', i, ' has shell nr. ', molecule%atoms(i,1)%shells(j,1)%number
 !
          enddo
 !
@@ -138,6 +138,9 @@ contains
          do j = 1, n_shells_on_atoms(i,1)
 !
             call molecule%atoms(i,1)%shells(j,1)%determine_angular_momentum()
+!
+           ! write(*, *)'atom: ', i, 'angular momentum:', molecule%atoms(i,1)%shells(j,1)%l
+!
             call molecule%atoms(i,1)%shells(j,1)%determine_last_ao_index()
 !
          enddo
