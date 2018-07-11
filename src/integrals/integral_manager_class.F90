@@ -188,7 +188,7 @@ contains
       real(dp) :: D_max, max_in_sp, D_max_full, max_diff, ddot
 !
       real(dp), parameter :: threshold = 1.0D-8
-      real(dp), parameter :: span      = 1.0D-2
+      real(dp), parameter :: span      = 1.0D-3
 !
       integer(i15), parameter :: max_qual = 100
 !
@@ -745,6 +745,8 @@ contains
                call mem%dealloc(cholesky_tmp, 1, current_qual - 1)  
 !
             endif
+!
+            g_wxyz(qual_aop(qual_max, 3), :) = zero
 !
             call dscal(n_sig_aop, one/sqrt(D_max), cholesky_new(1, current_qual), 1)
 !
