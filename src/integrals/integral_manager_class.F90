@@ -387,7 +387,7 @@ contains
 !     Timings
 !
       call cpu_time(e_prep_time)
-      write(output%unit, '(/a17, e11.4, a5)')'Time to prepare: ', e_prep_time - s_prep_time, ' sec.'
+      write(output%unit, '(/a17, f11.2, a9)')'Time to prepare: ', e_prep_time - s_prep_time, ' seconds.'
       flush(output%unit)
 !
 !     Determining the basis
@@ -1020,14 +1020,14 @@ contains
 !     Timings
 !
       call cpu_time(e_select_basis_time)
-      write(output%unit, '(/a22, e11.4, a5)')'Time to select basis: ',&
-                            e_select_basis_time - s_select_basis_time, ' sec.'
-      write(output%unit, '(t6, a36, e11.4, a5)')'Time to construct integrals: ',&
-                            full_integral_time, ' sec.'
-      write(output%unit, '(t6, a36, e11.4, a5)')'Time to reduce arrays:       ',&
-                            full_reduce_time, ' sec.'
-      write(output%unit, '(t6, a36, e11.4, a5)')'Time to make vectors:        ',&
-                            full_construct_time, ' sec.'
+      write(output%unit, '(/a22, f11.2, a9)')'Time to select basis: ',&
+                            e_select_basis_time - s_select_basis_time, ' seconds.'
+      write(output%unit, '(t6, a36, f11.2, a9)')'Time to construct integrals: ',&
+                            full_integral_time, ' seconds.'
+      write(output%unit, '(t6, a36, f11.2, a9)')'Time to reduce arrays:       ',&
+                            full_reduce_time, ' seconds.'
+      write(output%unit, '(t6, a36, f11.2, a9)')'Time to make vectors:        ',&
+                            full_construct_time, ' seconds.'
 
 !
 !     Building the auxiliary_basis
@@ -1288,9 +1288,9 @@ contains
       call mem%dealloc_int(basis_shell_info_full, n_sp, 4)
 !
       call cpu_time(e_build_basis_time)
-      write(output%unit, '(/a21, e11.4, a5)')'Time to build basis: ',&
-                            e_build_basis_time - s_build_basis_time, ' sec.'
-      write(output%unit, '(t6, a25, e11.4, a5)')'Time to decompose (J|K): ',&
+      write(output%unit, '(/a21, f11.2, a9)')'Time to build basis: ',&
+                            e_build_basis_time - s_build_basis_time, ' seconds.'
+      write(output%unit, '(t6, a25, f11.2, a9)')'Time to decompose (J|K): ',&
                             full_decomp_time, ' sec'  
 !
 !     Write auxiliary basis to file               
@@ -1322,8 +1322,8 @@ contains
 !     Timings
 !
       call cpu_time(e_invert_time)
-      write(output%unit, '(/a16, e11.4, a5)')'Time to invert: ',&
-                            e_invert_time - s_invert_time, ' sec.' 
+      write(output%unit, '(/a16, f11.2, a9)')'Time to invert: ',&
+                            e_invert_time - s_invert_time, ' seconds.' 
 !
       write(output%unit, '(/a)') '- Construct Cholesky vectors'
       flush(output%unit)
@@ -1539,12 +1539,12 @@ contains
 !     Timings
 !
       call cpu_time(e_build_vectors_time)
-      write(output%unit, '(/a23, e11.4, a5)')'Time to build vectors: ',&
-                            e_build_vectors_time - s_build_vectors_time, ' sec.' 
-      write(output%unit, '(t6, a36, e11.4, a5)')'Time to construct integrals: ',&
-                            full_integral_time, ' sec.'
-      write(output%unit, '(t6, a36, e11.4, a5)')'Time to make vectors:        ',&
-                            full_construct_time, ' sec.'
+      write(output%unit, '(/a23, f11.2, a9)')'Time to build vectors: ',&
+                            e_build_vectors_time - s_build_vectors_time, ' seconds.' 
+      write(output%unit, '(t6, a36, f11.2, a9)')'Time to construct integrals: ',&
+                            full_integral_time, ' seconds.'
+      write(output%unit, '(t6, a36, f11.2, a9)')'Time to make vectors:        ',&
+                            full_construct_time, ' seconds.'
 
 !
       call mem%dealloc(auxiliary_basis_inverse, n_cholesky, n_cholesky)
@@ -1584,7 +1584,7 @@ contains
          if (abs(D_diff(aop, 1)) .gt. max_diff) max_diff = abs(D_diff(aop, 1))
       enddo
 !
-      write(output%unit, '(a60, e12.4)')'Maximal difference between approximate and actual diagonal: ', max_diff
+      write(output%unit, '(/a60, e12.4)')'Maximal difference between approximate and actual diagonal: ', max_diff
       
       call mem%dealloc(D_diff, n_sig_aop, 1)
 !
