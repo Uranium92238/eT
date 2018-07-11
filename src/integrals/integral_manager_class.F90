@@ -686,6 +686,14 @@ contains
 !
          endif
 !
+         do xy = 1, n_sig_aop
+!
+            if (D_xy(xy, 1) == zero) then
+               g_wxyz(xy, :) = zero
+            endif
+!
+         enddo
+!
          call mem%alloc(cholesky_new, n_sig_aop, n_qual_aop)
          cholesky_new = zero
 !
@@ -763,12 +771,20 @@ contains
 !
                enddo
 !
+               D_xy(qual_aop(qual_max(current_qual, 1), 3), 1) = zero
+!
             else
 !
                construct_more_choleskys = .false.
                current_qual = current_qual - 1
 !
             endif
+!
+         enddo
+!
+         do xy = 1, n_sig_aop
+!
+            if (D_xy(xy, 1) .gt. zero .and. D_xy(xy, 1) .lt. threshold) D_xy(xy, 1) = zero
 !
          enddo
 !
