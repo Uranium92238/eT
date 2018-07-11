@@ -6,8 +6,11 @@ module atomic_class
 !!
 !
    use kinds
+   use parameters
    use file_class
    use shell_class
+   use basis_set_info
+   use memory_manager_class
    use disk_manager_class
 !
    implicit none
@@ -31,6 +34,11 @@ module atomic_class
 !
       procedure          :: set_number      => set_number_atom
       procedure, private :: symbol_to_number => symbol_to_number_atom
+!
+      procedure, private :: get_n_Aufbau => get_n_Aufbau_atom
+      procedure, private :: get_Aufbau_info => get_Aufbau_info_atom
+!
+      procedure :: SOAD => SOAD_atom
 !
    end type atomic
 !
@@ -113,11 +121,14 @@ contains
       integer(i15) :: n_Aufbau_shells
       integer(i15), dimension(:,:), allocatable :: Aufbau_shell_info
 !
+      integer(i15) :: i, Aufbau_shell, shell, ao_offset, n_electrons
+!
+!
 !     Find number of sub-shells to fill, allocate array for information on how many 
 !     instances of a certain sub-shell (depends on the basis set) there are 
 !     and how many electrons into this sub-shell (depends on angular momentum of sub-shell)
 !
-      n_Aufbau_shells = atom%get_n_Aufbau_atom()
+      n_Aufbau_shells = atom%get_n_Aufbau()
 !
       call mem%alloc_int(Aufbau_shell_info, n_Aufbau_shells, 2) ![number of instances of specific (n,l) combination, 2*m (number of electrons to fill shell)] 
 !
@@ -140,7 +151,7 @@ contains
 !
             shell = shell + 1
 !  
-            density_diagonal_for_atom(ao_offset + 1 : ao_offset + atom%shells(shell, 1)%size) &
+            density_diagonal_for_atom(ao_offset + 1 : ao_offset + atom%shells(shell, 1)%size, 1) &
                  = real(min(n_electrons , 2*atom%shells(shell, 1)%size), kind=dp)&
                   /(real(atom%shells(shell, 1)%size, kind=dp))&
                   /(real(Aufbau_shell_info(shell, 1), kind=dp))
@@ -203,7 +214,7 @@ contains
       class(atomic) :: atom
 !
       integer(i15) :: n_Aufbau_shells
-      integer(i15), dimension(n_Aufbau_shells, 1), allocatable :: Aufbau_shell_info
+      integer(i15), dimension(n_Aufbau_shells, 1) :: Aufbau_shell_info
 !
       if (atom%number .le. 0) then 
 !

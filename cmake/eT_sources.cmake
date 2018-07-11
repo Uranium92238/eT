@@ -25,6 +25,7 @@ set(eT_fortran_sources
    src/molecule/molecular_system_class.F90
    src/molecule/periodic_table.F90
    src/molecule/shell_class.F90
+   src/molecule/basis_set_info.F90
    src/molecule/libint/atom_init.F90
    src/solvers/diis.F90
 )
