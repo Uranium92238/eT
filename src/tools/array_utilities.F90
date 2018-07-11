@@ -405,7 +405,7 @@ contains
       real(dp), dimension(dim, dim), intent(inout) :: matrix
       real(dp), dimension(dim, dim), intent(out) :: cholesky_vectors
 !
-      integer(i15), dimension(dim, 1), optional, intent(out) :: used_diag
+      integer(i15), dimension(dim, 1), intent(out) :: used_diag
 !
       integer(i15) :: i, j, k, index_max
       real(dp) :: max_diagonal
@@ -414,7 +414,7 @@ contains
 !
       real(dp), parameter :: tolerance = 1.0d-10
 !
-      if (present(used_diag)) used_diag = 0
+      used_diag = 0
 !
 !     Looping over the number of cholesky vectors   
 !
@@ -466,13 +466,21 @@ contains
 !
          else
 !
-            if (present(used_diag)) used_diag(n_vectors, 1) = index_max
+            used_diag(n_vectors, 1) = index_max
 !
          endif
 !
 !        Cholesky vectors
 !
          cholesky_vectors(:, n_vectors) = matrix(:, index_max)
+!
+         do j = 1, dim
+!
+            if (diagonal(j, 1) .gt. zero .and. diagonal(j, 1) .lt. threshold) diagonal(j, 1) = zero 
+!
+            if (diagonal(j, 1) == zero) cholesky_vectors(j, n_vectors) = zero
+!
+         enddo
 !
          if (n_vectors .gt. 1) then
 !
@@ -496,6 +504,12 @@ contains
 !
          endif
 !
+         do j = 1, n_vectors - 1
+!
+            cholesky_vectors(used_diag(j,1), n_vectors) = zero
+!
+         enddo
+!
          call dscal(dim, one/sqrt(max_diagonal), cholesky_vectors(1, n_vectors), 1)
 !
          do j = 1, dim
@@ -503,6 +517,8 @@ contains
             diagonal(j, 1) = diagonal(j, 1) - cholesky_vectors(j, n_vectors)**2
 !
          enddo
+!
+         diagonal(index_max, 1) = zero
 !
       enddo
 !
