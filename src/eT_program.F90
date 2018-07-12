@@ -29,6 +29,7 @@ program eT_program
 ! 	Create an SCF engine and ask it to solve the HF wavefunction
 !
    call wf%initialize()
+   call engine%initialize(wf)
 !
   !  call wf%integrals%cholesky_decompose(wf%molecule)
   ! call engine%solve(wf) ! solves Hartree Fock

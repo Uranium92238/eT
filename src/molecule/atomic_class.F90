@@ -112,7 +112,7 @@ contains
 !!    OBS! Note that for orbitals to be filled
 !!         all s-orbitals are given first, then all p-orbitals and so on.
 !!
-!!    To be used for Superposition of atomic densities (SOAD)
+!!    To be used for superposition of atomic densities (SOAD)
 !!
       implicit none
 !
@@ -132,11 +132,9 @@ contains
 !
       n_Aufbau_shells = atom%get_n_Aufbau()
 !
-      call mem%alloc_int(Aufbau_shell_info, n_Aufbau_shells, 2) ![number of instances of specific (n,l) combination, 2*m (number of electrons to fill shell)] 
+      call mem%alloc_int(Aufbau_shell_info, n_Aufbau_shells, 1) ![number of instances of specific (n,l) combination, 2*m (number of electrons to fill shell)] 
 !
       call atom%get_Aufbau_info(n_Aufbau_shells, Aufbau_shell_info)
-!
-!     Sanity checks ?!
 !
       shell = 0
 !
@@ -145,7 +143,7 @@ contains
       shell = 0
       n_electrons = atom%number
 !
-      do Aufbau_shell = 1, n_Aufbau_shells        
+      do Aufbau_shell = 1, n_Aufbau_shells 
 !
          if (n_electrons == 0) return 
 !
@@ -156,13 +154,13 @@ contains
             density_diagonal_for_atom(ao_offset + 1 : ao_offset + atom%shells(shell)%size, 1) &
                  = real(min(n_electrons , 2*atom%shells(shell)%size), kind=dp)&
                   /(real(atom%shells(shell)%size, kind=dp))&
-                  /(real(Aufbau_shell_info(shell, 1), kind=dp))
+                  /(real(Aufbau_shell_info(Aufbau_shell, 1), kind=dp))
 !
                   ao_offset = ao_offset + atom%shells(shell)%size
 !
          enddo
-       
-         n_electrons = n_electrons - min(n_electrons, Aufbau_shell_info(shell, 2))
+!
+         n_electrons = n_electrons - min(n_electrons, 2*atom%shells(shell)%size)
 !
       enddo
 !

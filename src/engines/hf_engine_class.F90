@@ -48,10 +48,26 @@ contains
 !
       class(hf) :: wf
 !
+      integer(i15) :: ao
+!
+      real(dp), dimension(:,:), allocatable :: density_diagonal
+!
 !     Get number of parameters and equations to solve for
 !
       engine%n_parameters = wf%get_n_hf_parameters()
       engine%n_equations  = wf%get_n_hf_equations()
+!
+!
+      call wf%initialize_ao_density()
+!
+      call mem%alloc(density_diagonal, wf%n_ao, 1)
+      call wf%system%SOAD(wf%n_ao, density_diagonal)
+      do ao = 1, wf%n_ao
+!
+         wf%ao_density(ao, ao) = density_diagonal(ao, 1)
+!
+      enddo
+      call mem%dealloc(density_diagonal, wf%n_ao, 1)
 !
    end subroutine initialize_hf_engine
 !
@@ -83,8 +99,6 @@ contains
       real(dp), dimension(:,:), allocatable :: D ! Parameters, D_αβ
       real(dp), dimension(:,:), allocatable :: F ! Equations, F_ia
 !
-      real(dp), dimension(:,:), allocatable :: density_diagonal ! Equations, F_ia
-!
 !     Initialize engine (read thresholds, restart, etc., from file,
 !     but also ask the wavefunction for the number of parameters to solve
 !     for and related information)
@@ -105,17 +119,6 @@ contains
 !
       call wf%initialize_g_wxyz()
       call wf%initialize_orbital_energies()
-!
-      call wf%initialize_ao_density()
-!
-      call mem%alloc(density_diagonal, wf%n_ao, 1)
-      call wf%system%SOAD(wf%n_ao, density_diagonal)
-      do ao = 1, wf%n_ao
-!
-         wf%ao_density(ao, ao) = density_diagonal(ao, 1)
-!
-      enddo
-      call mem%dealloc(density_diagonal, wf%n_ao, 1)
 !
       call wf%initialize_ao_fock()
       call wf%construct_ao_fock() ! From current D^AO

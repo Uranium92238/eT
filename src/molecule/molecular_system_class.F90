@@ -132,7 +132,7 @@ contains
 !
          enddo
 !
-         deallocate(shell_numbers)
+         deallocate(first_ao_in_shells)
 !
 !        Then determine the angular momentum of shells & the last AO index
 !
@@ -140,6 +140,7 @@ contains
 !
             call molecule%atoms(i)%shells(j)%determine_angular_momentum()
             call molecule%atoms(i)%shells(j)%determine_last_ao_index()
+            write(*, *)'atom: ', i, 'angular momentum:', molecule%atoms(i)%shells(j)%l
 !
          enddo
 !
@@ -577,6 +578,8 @@ contains
 !
       integer(i15) :: I, offset_diagonal
 !
+      real(dp) :: electrons
+!
       real(dp), dimension(:,:), allocatable :: atom_density_diagonal
 !
 !     Loop over atoms and let them set their own density diagonal
@@ -597,6 +600,17 @@ contains
          offset_diagonal = offset_diagonal + molecule%atoms(I)%n_ao
 !
       enddo
+!
+      electrons = 0
+!
+      do I = 1, n_ao
+         write(*,*) density_diagonal(I, 1)
+         electrons = electrons + density_diagonal(I, 1)
+      enddo
+!
+      if (abs(electrons - molecule%get_n_electrons()) .gt. 1.0d-7) then
+         write(output%unit, '(a)') 'Error: Mismatch in electron number SOAD'
+      endif
 !
    end subroutine SOAD_molecular_system
 !
