@@ -690,7 +690,7 @@ contains
 !
          do xy = 1, n_sig_aop
 !
-            if (D_xy(xy, 1) == zero) then
+            if (D_xy(xy, 1) .lt. threshold) then
                g_wxyz(xy, :) = zero
             endif
 !
@@ -755,17 +755,17 @@ contains
                            cholesky_new(1, current_qual),   &
                            n_sig_aop) 
 !
-               call mem%dealloc(cholesky_tmp, 1, current_qual - 1)  
+                  call mem%dealloc(cholesky_tmp, 1, current_qual - 1)  
 !
-            endif
+               endif
 !
-            call dscal(n_sig_aop, one/sqrt(D_max), cholesky_new(1, current_qual), 1)
+               call dscal(n_sig_aop, one/sqrt(D_max), cholesky_new(1, current_qual), 1)
 !
-            do i = 1, current_qual - 1
+               do i = 1, current_qual - 1
 !
-               cholesky_new(qual_aop(qual_max(i, 1), 3), current_qual) = zero
+                  cholesky_new(qual_aop(qual_max(i, 1), 3), current_qual) = zero
 !
-            enddo
+               enddo
 !
                do xy = 1, n_sig_aop
 !
@@ -787,15 +787,15 @@ contains
          do xy = 1, n_sig_aop
 !
             if (D_xy(xy, 1) .lt. zero) then
-               write(output%unit, '(a33, e11.4)') 'Warning: Found negative diagonal ', D_xy(xy, 1)
-               if (D_xy(xy, 1) .gt. 1.0d-10) then
+               !write(output%unit, '(a33, e11.4)') 'Warning: Found negative diagonal ', D_xy(xy, 1)
+               if (abs(D_xy(xy, 1)) .gt. 1.0d-10) then
                   sig_neg = sig_neg + 1
                endif
             endif
 !
-            if (D_xy(xy, 1) .lt. threshold) then
-               D_xy(xy, 1) = zero
-            endif
+            !if (D_xy(xy, 1) .lt. threshold) then
+            !   D_xy(xy, 1) = zero
+            !endif
 !
          enddo
 !
