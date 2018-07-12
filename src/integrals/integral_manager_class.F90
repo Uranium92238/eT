@@ -136,7 +136,7 @@ contains
       integer(i15) :: sig_sp_counter
       integer(i15) :: n_sig_sp, n_sig_aop, n_qual_sp, sig_AB_sp
       integer(i15) :: n_old_qual_aop, n_qual_aop, n_qual_aop_in_sp,  n_qual_aop_in_prev_sps
-      integer(i15) :: n_sp_in_basis, sp_in_basis, iteration
+      integer(i15) :: n_sp_in_basis, sp_in_basis, iteration, sig_neg
 !
       integer(i15) :: A, B, C, D, AB_sp, CD_sp, AB
       integer(i15) :: I, K, J, L, KL, I_counter, J_counter, IJ
@@ -407,6 +407,8 @@ contains
       full_integral_time = 0
       full_reduce_time = 0
       full_construct_time = 0
+!  
+      sig_neg = 0
 !
       do while (.not. done)
 !
@@ -786,6 +788,9 @@ contains
 !
             if (D_xy(xy, 1) .lt. zero) then
                write(output%unit, '(a33, e11.4)') 'Warning: Found negative diagonal ', D_xy(xy, 1)
+               if (D_xy(xy, 1) .gt. 1.0d-10) then
+                  sig_neg = sig_neg + 1
+               endif
             endif
 !
             if (D_xy(xy, 1) .lt. threshold) then
@@ -1034,6 +1039,7 @@ contains
                             full_reduce_time, ' seconds.'
       write(output%unit, '(t6, a36, f11.2, a9)')'Time to make vectors:        ',&
                             full_construct_time, ' seconds.'
+      write(output%unit,'(a42, i7)')'Number of signigicant negative diagonals: ', sig_neg
 
 !
 !     Building the auxiliary_basis
