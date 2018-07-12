@@ -398,8 +398,8 @@ contains
       call cpu_time(s_select_basis_time)
 !
       n_cholesky = 0
-      write(output%unit, '(/a)') 'Iter.    Max diagonal    #Qualified    #Cholesky    Cholesky array size'
-      write(output%unit, '(a)') '----------------------------------------------------------------------'
+      write(output%unit, '(/a)') 'Iter.  #Sign. ao pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size'
+      write(output%unit, '(a)') '----------------------------------------------------------------------------------------'
       flush(output%unit)
 !
       iteration = 0
@@ -690,8 +690,8 @@ contains
 !
          do xy = 1, n_sig_aop
 !
-            if (D_xy(xy, 1) == zero) then
-               g_wxyz(xy, :) = zero
+            if (D_xy(xy, 1) .lt. threshold) then
+                g_wxyz(xy, :) = zero
             endif
 !
          enddo
@@ -787,15 +787,16 @@ contains
          do xy = 1, n_sig_aop
 !
             if (D_xy(xy, 1) .lt. zero) then
-               write(output%unit, '(a33, e11.4)') 'Warning: Found negative diagonal ', D_xy(xy, 1)
-               if (D_xy(xy, 1) .gt. 1.0d-10) then
+             !  write(output%unit, '(a33, e11.4)') 'Warning: Found negative diagonal ', D_xy(xy, 1)
+               if (abs(D_xy(xy, 1)) .gt. 1.0d-10) then
                   sig_neg = sig_neg + 1
                endif
-            endif
-!
-            if (D_xy(xy, 1) .lt. threshold) then
                D_xy(xy, 1) = zero
             endif
+!
+          !  if (D_xy(xy, 1) .lt. threshold) then
+          !     D_xy(xy, 1) = zero
+          !  endif
 !
          enddo
 !
@@ -1000,8 +1001,8 @@ contains
             call mem%dealloc_int(qual_aop, n_qual_aop, 3)
             call mem%dealloc_int(qual_sp, n_qual_sp, 3)
 !
-            write(output%unit, '(i4, 5x,  e12.5, 4x, i4, 8x, i7, 6x, i10)') &
-            iteration, D_max_full , n_qual_aop, n_cholesky, n_cholesky*n_sig_aop 
+            write(output%unit, '(i4, 1x, i9, 11x,  e12.5, 4x, i4, 8x, i7, 6x, i10)') &
+            iteration, n_sig_aop, D_max_full , n_qual_aop, n_cholesky, n_cholesky*n_sig_aop 
             flush(output%unit)
 !
          else
@@ -1017,7 +1018,8 @@ contains
 !
             done = .true.
 !
-            write(output%unit, '(i4, 5x,  e12.5, 4x, i4, 8x, i7, 6x, i10)') iteration, D_max_full, n_qual_aop, n_cholesky, 0 
+            write(output%unit, '(i4, 1x, i9, 11x,  e12.5, 4x, i4, 8x, i7, 6x, i10)') &
+            iteration, 0, D_max_full, n_qual_aop, n_cholesky, 0 
             flush(output%unit)
 !
          endif
@@ -1025,7 +1027,7 @@ contains
          full_reduce_time = full_reduce_time + e_reduce_time - s_reduce_time
 !
       enddo
-      write(output%unit, '(a)') '----------------------------------------------------------------------'
+      write(output%unit, '(a)') '----------------------------------------------------------------------------------------'
       flush(output%unit)
 !
 !     Timings
