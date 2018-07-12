@@ -784,7 +784,13 @@ contains
 !
          do xy = 1, n_sig_aop
 !
-            if (D_xy(xy, 1) .gt. zero .and. D_xy(xy, 1) .lt. threshold) D_xy(xy, 1) = zero
+            if (D_xy(xy, 1) .lt. zero) then
+               write(output%unit, '(a33, e11.4)') 'Warning: Found negative diagonal ', D_xy(xy, 1)
+            endif
+!
+            if (D_xy(xy, 1) .lt. threshold) then
+               D_xy(xy, 1) = zero
+            endif
 !
          enddo
 !
@@ -1291,7 +1297,7 @@ contains
       write(output%unit, '(/a21, f11.2, a9)')'Time to build basis: ',&
                             e_build_basis_time - s_build_basis_time, ' seconds.'
       write(output%unit, '(t6, a25, f11.2, a9)')'Time to decompose (J|K): ',&
-                            full_decomp_time, ' sec'  
+                            full_decomp_time, ' seconds.'  
 !
 !     Write auxiliary basis to file               
 !
