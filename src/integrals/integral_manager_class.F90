@@ -1047,8 +1047,6 @@ contains
       write(output%unit, '(t6, a36, f11.2, a9)')'Time to make vectors:        ',&
                             full_construct_time, ' seconds.'
       write(output%unit,'(a42, i7)')'Number of signigicant negative diagonals: ', sig_neg
-      stop
-
 !
 !     Building the auxiliary_basis
 !
