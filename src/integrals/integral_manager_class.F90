@@ -771,6 +771,26 @@ contains
 !
                D_xy(qual_aop(qual_max(current_qual, 1), 3), 1) = zero
 !
+               do xy = 1, n_sig_aop
+!
+                  if (D_xy(xy, 1) .lt. zero) then
+
+                     !write(output%unit, '(a33, e11.4)') 'Warning: Found negative diagonal ', D_xy(xy, 1)
+                     if (abs(D_xy(xy, 1)) .gt. 1.0d-10) then
+                        sig_neg = sig_neg + 1
+                     endif
+!
+                     D_xy(xy, 1) = zero
+!
+                  elseif (D_xy(xy, 1) .lt. 1.0D-8) then
+
+!
+                     D_xy(xy, 1) = zero
+!
+                  endif
+!
+               enddo
+!
             else
 !
                construct_more_choleskys = .false.
@@ -779,25 +799,6 @@ contains
             endif
 !
          enddo ! End of decomposition
-!
-         do xy = 1, n_sig_aop
-!
-            if (D_xy(xy, 1) .lt. zero) then
-
-               !write(output%unit, '(a33, e11.4)') 'Warning: Found negative diagonal ', D_xy(xy, 1)
-               if (abs(D_xy(xy, 1)) .gt. 1.0d-10) then
-                  sig_neg = sig_neg + 1
-               endif
-!
-               D_xy(xy, 1) = zero
-!
-            elseif (D_xy(xy, 1) .lt. threshold) then
-!
-            !   D_xy(xy, 1) = zero
-!
-            endif
-!
-         enddo
 !
          call mem%dealloc_int(qual_max, n_qual_aop, 1)
 !
@@ -808,11 +809,6 @@ contains
          n_new_cholesky = current_qual
 !
 !        Find new significant diagonals
-!
-        ! write(output%unit,*) 'Diagonal', iteration
-        ! do xy = 1, n_sig_aop
-        !    write(output%unit,*)D_xy(xy, 1)
-        ! enddo
 !
          n_new_sig_sp = 0
          allocate(new_sig_sp(n_sig_sp,1))
@@ -832,6 +828,11 @@ contains
 !
                new_sig_sp(sig_sp_counter, 1) = is_significant(D_xy(first:last, 1), &
                                                 last - first + 1, threshold)
+            write(output%unit,*) sig_sp_counter, is_significant(D_xy(first:last, 1), &
+                                                last - first + 1, threshold)
+            do xy = first, last
+               write(output%unit,*)D_xy(xy, 1)
+            enddo
 !
                sig_sp(sp, 1) = new_sig_sp(sig_sp_counter, 1)
 !
@@ -844,9 +845,6 @@ contains
             endif
 !
          enddo
-!
-       !  write(output%unit,*) 'New sig sp', n_new_sig_sp
-!
 !
          call cpu_time(s_reduce_time)
 !
@@ -1049,6 +1047,7 @@ contains
       write(output%unit, '(t6, a36, f11.2, a9)')'Time to make vectors:        ',&
                             full_construct_time, ' seconds.'
       write(output%unit,'(a42, i7)')'Number of signigicant negative diagonals: ', sig_neg
+      stop
 
 !
 !     Building the auxiliary_basis
