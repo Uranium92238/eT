@@ -41,7 +41,7 @@ module memory_manager_class
 !
    type :: memory_manager
 !
-!     The total amount of memory specified by user (standard: 30 GB)
+!     The total amount of memory specified by user (standard: 128 GB)
 !
       integer(i15) :: total = 128000000000
 !

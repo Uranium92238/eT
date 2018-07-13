@@ -189,7 +189,7 @@ contains
       real(dp) :: D_max, max_in_sp, D_max_full, max_diff, ddot
 !
       real(dp), parameter :: threshold = 1.0D-8
-      real(dp), parameter :: span      = 1.0D-3
+      real(dp), parameter :: span      = 1.0D-2
 !
       integer(i15), parameter :: max_qual = 100
 !
@@ -688,14 +688,6 @@ contains
 !
          endif
 !
-         do xy = 1, n_sig_aop
-!
-            if (D_xy(xy, 1) .lt. threshold) then
-                g_wxyz(xy, :) = zero
-            endif
-!
-         enddo
-!
          call mem%alloc(cholesky_new, n_sig_aop, n_qual_aop)
          cholesky_new = zero
 !
@@ -755,17 +747,21 @@ contains
                            cholesky_new(1, current_qual),   &
                            n_sig_aop) 
 !
-               call mem%dealloc(cholesky_tmp, 1, current_qual - 1)  
+                  call mem%dealloc(cholesky_tmp, 1, current_qual - 1)  
 !
-            endif
+               endif
 !
-            call dscal(n_sig_aop, one/sqrt(D_max), cholesky_new(1, current_qual), 1)
+               call dscal(n_sig_aop, one/sqrt(D_max), cholesky_new(1, current_qual), 1)
 !
-            do i = 1, current_qual - 1
+               do xy = 1, n_sig_aop
 !
-               cholesky_new(qual_aop(qual_max(i, 1), 3), current_qual) = zero
+                  if (D_xy(xy, 1) == zero) then
 !
-            enddo
+                     cholesky_new(xy, current_qual) = zero
+!
+                  endif
+!
+               enddo
 !
                do xy = 1, n_sig_aop
 !
@@ -787,16 +783,15 @@ contains
          do xy = 1, n_sig_aop
 !
             if (D_xy(xy, 1) .lt. zero) then
-             !  write(output%unit, '(a33, e11.4)') 'Warning: Found negative diagonal ', D_xy(xy, 1)
+
+               !write(output%unit, '(a33, e11.4)') 'Warning: Found negative diagonal ', D_xy(xy, 1)
                if (abs(D_xy(xy, 1)) .gt. 1.0d-10) then
                   sig_neg = sig_neg + 1
                endif
-               D_xy(xy, 1) = zero
-            endif
 !
-          !  if (D_xy(xy, 1) .lt. threshold) then
-          !     D_xy(xy, 1) = zero
-          !  endif
+               D_xy(xy, 1) = zero
+!
+            endif
 !
          enddo
 !
@@ -809,6 +804,11 @@ contains
          n_new_cholesky = current_qual
 !
 !        Find new significant diagonals
+!
+        ! write(output%unit,*) 'Diagonal', iteration
+        ! do xy = 1, n_sig_aop
+        !    write(output%unit,*)D_xy(xy, 1)
+        ! enddo
 !
          n_new_sig_sp = 0
          allocate(new_sig_sp(n_sig_sp,1))
@@ -840,6 +840,9 @@ contains
             endif
 !
          enddo
+!
+       !  write(output%unit,*) 'New sig sp', n_new_sig_sp
+!
 !
          call cpu_time(s_reduce_time)
 !
@@ -1208,7 +1211,7 @@ contains
       call cpu_time(s_decomp_time)
 !
       call full_cholesky_decomposition_effective(integrals_auxiliary, auxiliary_basis, &
-                                          n_cholesky, n_vectors, threshold*1.0d-2, keep_vectors)
+                                          n_cholesky, n_vectors, threshold*1.0d-1, keep_vectors)
 !
       call cpu_time(e_decomp_time)
       full_decomp_time = e_decomp_time - s_decomp_time
@@ -1377,7 +1380,7 @@ contains
 !
                   size_AB = size_AB + get_size_sp(A_interval, B_interval)
 !
-                  if (2*size_AB*n_cholesky .gt. mem%available) then
+                  if ((2*size_AB*n_cholesky*dp)*1.1d0 .gt. mem%available) then ! 10 percent buffer
 !
                      size_AB = size_AB - get_size_sp(A_interval, B_interval)
                      sp = sp - 1
