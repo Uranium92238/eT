@@ -828,11 +828,6 @@ contains
 !
                new_sig_sp(sig_sp_counter, 1) = is_significant(D_xy(first:last, 1), &
                                                 last - first + 1, threshold)
-            write(output%unit,*) sig_sp_counter, is_significant(D_xy(first:last, 1), &
-                                                last - first + 1, threshold)
-            do xy = first, last
-               write(output%unit,*)D_xy(xy, 1)
-            enddo
 !
                sig_sp(sp, 1) = new_sig_sp(sig_sp_counter, 1)
 !
