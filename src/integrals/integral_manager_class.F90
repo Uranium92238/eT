@@ -778,7 +778,7 @@ contains
 !
             endif
 !
-         enddo
+         enddo ! End of decomposition
 !
          do xy = 1, n_sig_aop
 !
@@ -790,6 +790,10 @@ contains
                endif
 !
                D_xy(xy, 1) = zero
+!
+            elseif (D_xy(xy, 1) .lt. threshold) then
+!
+            !   D_xy(xy, 1) = zero
 !
             endif
 !
