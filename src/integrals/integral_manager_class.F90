@@ -398,8 +398,10 @@ contains
       call cpu_time(s_select_basis_time)
 !
       n_cholesky = 0
-      write(output%unit, '(/a)') 'Iter.  #Sign. ao pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size'
-      write(output%unit, '(a)') '----------------------------------------------------------------------------------------'
+      write(output%unit, '(/a)')&
+      'Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size'
+      write(output%unit, '(a)') &
+      '-------------------------------------------------------------------------------------------------------'
       flush(output%unit)
 !
       iteration = 0
@@ -1001,8 +1003,8 @@ contains
             call mem%dealloc_int(qual_aop, n_qual_aop, 3)
             call mem%dealloc_int(qual_sp, n_qual_sp, 3)
 !
-            write(output%unit, '(i4, 1x, i9, 11x,  e12.5, 4x, i4, 8x, i7, 6x, i10)') &
-            iteration, n_sig_aop, D_max_full , n_qual_aop, n_cholesky, n_cholesky*n_sig_aop 
+            write(output%unit, '(i4, 8x, i9, 2x, a1, i6, 9x, e12.5, 4x, i4, 8x, i7, 6x, i10)') &
+            iteration, n_sig_aop,'/', n_sig_sp, D_max_full , n_qual_aop, n_cholesky, n_cholesky*n_sig_aop 
             flush(output%unit)
 !
          else
@@ -1018,8 +1020,8 @@ contains
 !
             done = .true.
 !
-            write(output%unit, '(i4, 1x, i9, 11x,  e12.5, 4x, i4, 8x, i7, 6x, i10)') &
-            iteration, 0, D_max_full, n_qual_aop, n_cholesky, 0 
+            write(output%unit, '(i4, 8x, i9, 2x, a1, i6, 9x, e12.5, 4x, i4, 8x, i7, 6x, i10)') &
+            iteration, 0,'/',0, D_max_full, n_qual_aop, n_cholesky, 0 
             flush(output%unit)
 !
          endif
@@ -1027,7 +1029,8 @@ contains
          full_reduce_time = full_reduce_time + e_reduce_time - s_reduce_time
 !
       enddo
-      write(output%unit, '(a)') '----------------------------------------------------------------------------------------'
+      write(output%unit, '(a)')&
+       '----------------------------------------------------------------------------------------------------'
       flush(output%unit)
 !
 !     Timings
