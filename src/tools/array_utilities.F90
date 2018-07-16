@@ -233,29 +233,28 @@ contains
 !
       integer(i15) :: block, current_pos, first, last, size, I
 !
-      current_pos = 1
+!$omp parallel do schedule(static) private(I, current_pos, block, first, last, size)
+      do I = 1, columns
 !
-      do block = 1, n_blocks
+         current_pos = 1
 !
-         if (block_significant(block, 1)) then
+         do block = 1, n_blocks
 !
-            first = block_firsts(block, 1)
-            last  = block_firsts(block + 1, 1) - 1
-            size  = last - first + 1
+            if (block_significant(block, 1)) then
 !
-!$omp parallel do schedule(static) private(I)
-            do I = 1, columns
+               first = block_firsts(block, 1)
+               last  = block_firsts(block + 1, 1) - 1
+               size  = last - first + 1
 !
                array_reduced(current_pos : current_pos + size - 1, I) = array(first : last, I)
 !
-            enddo
-!$omp end parallel do
+               current_pos = current_pos + size
 !
-            current_pos = current_pos + size
+            endif
 !
-         endif
-!
+         enddo
       enddo
+!$omp end parallel do
 !
    end subroutine reduce_array
 !
