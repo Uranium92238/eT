@@ -191,7 +191,7 @@ contains
       real(dp), parameter :: threshold = 1.0D-8
       real(dp), parameter :: span      = 1.0D-2
 !
-      integer(i15), parameter :: max_qual = 100
+      integer(i15), parameter :: max_qual = 1000
 !
       real(dp) :: s_prep_time, e_prep_time, s_select_basis_time, e_select_basis_time
       real(dp) :: s_build_basis_time, e_build_basis_time, s_decomp_time, e_decomp_time, full_decomp_time
@@ -1379,7 +1379,7 @@ contains
 !
                   size_AB = size_AB + get_size_sp(A_interval, B_interval)
 !
-                  if ((2*size_AB*n_cholesky*dp)*1.1d0 .gt. mem%available) then ! 10 percent buffer
+                  if ((2*size_AB*n_cholesky*dp + (n_cholesky**2)*dp)*1.1d0 .gt. mem%available) then ! 10 percent buffer
 !
                      size_AB = size_AB - get_size_sp(A_interval, B_interval)
                      sp = sp - 1
@@ -1527,6 +1527,9 @@ contains
          call cpu_time(e_construct_time)
          full_construct_time = full_construct_time + e_construct_time - s_construct_time
 !
+         write(output%unit,*) 'done dgemm'
+         flush(output%unit)
+!
 !        Write vectors to file
 !   
          call disk%open_file(cholesky_ao_vectors, 'write')
@@ -1561,11 +1564,15 @@ contains
                             full_integral_time, ' seconds.'
       write(output%unit, '(t6, a36, f11.2, a9)')'Time to make vectors:        ',&
                             full_construct_time, ' seconds.'
+      flush(output%unit)
 
 !
       call mem%dealloc(auxiliary_basis_inverse, n_cholesky, n_cholesky)
 !
 !     Test diagonal
+!
+      write(output%unit,*) 'read diagonal'
+      flush(output%unit)     
 !
       call disk%open_file(screening_info, 'read')
 !
@@ -1578,9 +1585,15 @@ contains
 !
       call disk%close_file(screening_info)
 !
+      write(output%unit,*) 'read vectors'
+      flush(output%unit)
+!
       call mem%alloc(L_K_yz, n_cholesky, 1)
 !
       call disk%open_file(cholesky_ao_vectors, 'read')
+!
+      write(output%unit,*) 'make diff'
+      flush(output%unit)
 !
       do aop = 1, n_sig_aop
 !
@@ -1601,6 +1614,8 @@ contains
       enddo
 !
       write(output%unit, '(/a60, e12.4)')'Maximal difference between approximate and actual diagonal: ', max_diff
+      flush(output%unit)
+!
       
       call mem%dealloc(D_diff, n_sig_aop, 1)
 !
