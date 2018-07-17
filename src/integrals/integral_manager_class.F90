@@ -188,7 +188,7 @@ contains
 !
       real(dp) :: D_max, max_in_sp, D_max_full, max_diff, ddot
 !
-      real(dp), parameter :: threshold = 1.0D-8
+      real(dp), parameter :: threshold = 1.0D-9
       real(dp), parameter :: span      = 1.0D-2
 !
       integer(i15), parameter :: max_qual = 1000
