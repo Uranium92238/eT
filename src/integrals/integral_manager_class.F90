@@ -203,6 +203,10 @@ contains
       write(output%unit, '(/a51)') ':: Cholesky decomposition of two-electron integrals'
       flush(output%unit)
 !
+      write(output%unit, '(/a32, e12.4)') 'Threshold for decomposition is: ', threshold
+      write(output%unit, '(/a32, e12.4)') 'Span factor is:                 ', span
+      flush(output%unit)
+!
       write(output%unit, '(/a)') ' - Preparations'
       flush(output%unit)
 !
@@ -789,7 +793,7 @@ contains
 !
                      D_xy(xy, 1) = zero
 !
-                  elseif (D_xy(xy, 1) .lt. 1.0D-8) then
+                  elseif (D_xy(xy, 1) .lt. threshold) then
 
 !
                      D_xy(xy, 1) = zero
