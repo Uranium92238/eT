@@ -163,7 +163,7 @@ contains
       real(dp), dimension(:,:), allocatable :: auxiliary_basis_new
       real(dp), dimension(:,:), allocatable :: auxiliary_basis
       real(dp), dimension(:,:), allocatable :: auxiliary_basis_inverse
-      real(dp), dimension(:,:), allocatable :: D_diff
+      real(dp), dimension(:,:), allocatable :: D_diff, D_approx
 !
       integer(i15), dimension(:,:), allocatable :: sig_sp_to_first_sig_aop
       integer(i15), dimension(:,:), allocatable :: new_sig_sp_to_first_sig_aop
@@ -184,9 +184,9 @@ contains
       integer(i15), dimension(:,:), allocatable :: keep_vectors, leave_out
       integer(i15), dimension(:,:), allocatable :: qual_max
 !
-      logical :: construct_more_choleskys, done, found
+      logical :: construct_more_choleskys, done, found, write_warning
 !
-      real(dp) :: D_max, max_in_sp, D_max_full, max_diff, ddot
+      real(dp) :: D_max, max_in_sp, D_max_full, max_diff, ddot, min_approx
 !
       real(dp), parameter :: threshold = 1.0D-9
       real(dp), parameter :: span      = 1.0D-2
@@ -414,7 +414,9 @@ contains
 !
       do while (.not. done)
 !
-      iteration = iteration + 1
+         write_warning = .true.
+!
+         iteration = iteration + 1
 !
 !        Shell maximums and shell maximums indices vectors
 !
@@ -776,9 +778,12 @@ contains
                do xy = 1, n_sig_aop
 !
                   if (D_xy(xy, 1) .lt. zero) then
-
-                     !write(output%unit, '(a33, e11.4)') 'Warning: Found negative diagonal ', D_xy(xy, 1)
+!
                      if (abs(D_xy(xy, 1)) .gt. 1.0d-10) then
+                        if (write_warning) then
+                           write(output%unit, '(a)') 'Warning: Found significant negative diagonal! '
+                           write_warning = .false.
+                        endif
                         sig_neg = sig_neg + 1
                      endif
 !
@@ -1595,11 +1600,15 @@ contains
       write(output%unit,*) 'make diff'
       flush(output%unit)
 !
+      call mem%alloc(D_approx, n_sig_aop, 1)
+      D_approx = zero
+!
       do aop = 1, n_sig_aop
 !
          read(cholesky_ao_vectors%unit, rec=aop) (L_K_yz(J, 1), J = 1, n_cholesky)
 !
-         D_diff(aop, 1) = D_diff(aop, 1) - ddot(n_cholesky, L_K_yz, 1, L_K_yz, 1)
+         D_approx = ddot(n_cholesky, L_K_yz, 1, L_K_yz, 1)
+         D_diff(aop, 1) = D_diff(aop, 1) - D_approx(aop, 1)
 !
       enddo
 !
@@ -1613,11 +1622,19 @@ contains
          if (abs(D_diff(aop, 1)) .gt. max_diff) max_diff = abs(D_diff(aop, 1))
       enddo
 !
+      min_approx =1.0d5
+!
+      do aop = 1, n_sig_aop
+         if (D_approx(aop, 1) .lt. min_approx) min_approx = D_approx(aop, 1)
+      enddo
+!
       write(output%unit, '(/a60, e12.4)')'Maximal difference between approximate and actual diagonal: ', max_diff
+      write(output%unit, '(/a60, e12.4)')'Minimal element of approximate diagonal                     ', min_approx
       flush(output%unit)
 !
       
       call mem%dealloc(D_diff, n_sig_aop, 1)
+      call mem%dealloc(D_approx, n_sig_aop, 1)
 !
    end subroutine cholesky_decompose_integral_manager
 !
