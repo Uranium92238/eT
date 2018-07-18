@@ -2933,7 +2933,7 @@ contains
       call auxiliary_inverse%init('auxiliary_basis_inverse', 'sequential', 'unformatted')
       call disk%open_file(auxiliary_inverse, 'write')
 !
-      write(auxiliary%unit) n_cholesky
+      write(auxiliary_inverse%unit) n_cholesky
 !
       write(auxiliary_inverse%unit) aux_chol_inverse
 !
@@ -2990,6 +2990,7 @@ contains
       n_s   = molecule%get_n_shells() ! Number of shells
       n_sp  = n_s*(n_s + 1)/2         ! Number of shell pairs packed
 !
+      call screening_info%init('screening_info', 'sequential', 'unformatted')
       call disk%open_file(screening_info, 'read')
 !
       allocate(sig_sp(n_sp, 1))
@@ -3002,6 +3003,7 @@ contains
       full_integral_time = 0
       full_construct_time = 0
 !
+      call auxiliary_inverse%init('auxiliary_basis_inverse', 'sequential', 'unformatted')
       call disk%open_file(auxiliary_inverse, 'read')
 !
       read(auxiliary_inverse%unit) n_cholesky
@@ -3056,8 +3058,10 @@ contains
             enddo
          enddo
 !
+
          call disk%open_file(basis_shell_data, 'read')
 !
+         call basis_shell_data%init('basis_shell_info', 'sequential', 'unformatted')
          read(basis_shell_data%unit) n_sp_in_basis
 !
          call mem%alloc_int(basis_shell_info, n_sp_in_basis, 4)
