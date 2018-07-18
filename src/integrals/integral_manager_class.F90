@@ -103,6 +103,8 @@ contains
       call integrals%invert_overlap_cholesky_vecs()
       call integrals%construct_cholesky_vectors(molecule, 'target_diagonal')
 !
+      threshold = 1.0D-8
+!
       call integrals%determine_auxilliary_cholesky_basis(molecule, threshold, span, 'target_diagonal', .true.)
       call integrals%invert_overlap_cholesky_vecs()
       call integrals%construct_cholesky_vectors(molecule, 'target_diagonal')
@@ -198,6 +200,7 @@ contains
       write(output%unit, '(/a)')'Initial reduction of shell pairs:'
       write(output%unit, '(a33, 2x, i6)')'Total number of shell pairs:     ', n_sp
       write(output%unit, '(a33, 2x, i6)')'Significant shell pairs:         ', n_sig_sp
+      write(output%unit, '(a33, 2x, i6)')'Significant ao pairs:            ', n_sig_aop
 !
 !     Construct significant diagonal
 !
@@ -273,12 +276,13 @@ contains
 !        2. sig_sp - vector of logicals to describe which shell pairs are significant
 !        3. D_xy = ( xy | xy ), the significant diagonal.
 !
-      call diagonal_info%init(diagonal_info_name, 'sequential', 'formatted')
+      call diagonal_info%init(diagonal_info_name, 'sequential', 'unformatted')
       call disk%open_file(diagonal_info, 'write')
+      rewind(diagonal_info%unit)
 !
-      write(diagonal_info%unit,*) n_sig_sp, n_sig_aop
-      write(diagonal_info%unit,*) sig_sp
-      write(diagonal_info%unit,*) D_xy
+      write(diagonal_info%unit) n_sig_sp, n_sig_aop
+      write(diagonal_info%unit) sig_sp
+      write(diagonal_info%unit) D_xy
 !
       call disk%close_file(diagonal_info)
 !
@@ -339,6 +343,7 @@ contains
       real(dp), dimension(:,:), allocatable :: auxiliary_basis
       real(dp), dimension(:,:), allocatable :: auxiliary_basis_inverse
       real(dp), dimension(:,:), allocatable :: D_diff, D_approx
+      real(dp), dimension(:,:), allocatable :: L_J_wx
 !
       integer(i15), dimension(:,:), allocatable :: sig_sp_to_first_sig_aop
       integer(i15), dimension(:,:), allocatable :: new_sig_sp_to_first_sig_aop
@@ -406,6 +411,8 @@ contains
 !
       call diagonal_info%init(diagonal_info_name, 'sequential', 'unformatted')
       call disk%open_file(diagonal_info, 'read')
+!
+      rewind(diagonal_info%unit)
 !
       read(diagonal_info%unit) n_sig_sp, n_sig_aop
 !
@@ -521,29 +528,51 @@ contains
 !
       sig_neg = 0
 !
-      if (present(read_old_vecs)) then 
+      if (present(read_old_vecs)) then
          if (read_old_vecs) then
 !
             call auxiliary_inverse%init('auxiliary_basis_inverse', 'sequential', 'unformatted')
             call disk%open_file(auxiliary_inverse, 'read')
 !
+            rewind(auxiliary_inverse%unit)
             read(auxiliary_inverse%unit) n_cholesky
+! !
+             call disk%close_file(auxiliary_inverse, 'delete')
 !
-            call disk%close_file(auxiliary_inverse)
+            call basis_shell_data%init('basis_shell_info', 'sequential', 'unformatted')
+            call disk%open_file(basis_shell_data, 'read')
+            rewind(basis_shell_data%unit)
 !
-            call mem%alloc(cholesky, n_sig_aop, n_cholesky)
+            call mem%alloc_int(cholesky_basis_new, n_cholesky, 3)
 !
+            read(basis_shell_data%unit)
+            read(basis_shell_data%unit)
+            read(basis_shell_data%unit) cholesky_basis_new
+!
+            call disk%close_file(basis_shell_data, 'delete')
+! 
+             call mem%alloc(cholesky, n_sig_aop, n_cholesky)
+            cholesky = zero
+! !
             call cholesky_ao_vectors%init('cholesky_ao_xy', 'direct', 'unformatted', dp*n_cholesky)
             call disk%open_file(cholesky_ao_vectors, 'read')
-!
+! !
             do aop = 1, n_sig_aop
 !
                read(cholesky_ao_vectors%unit, rec=aop) (cholesky(aop, J), J = 1, n_cholesky)
+! !
+               call mem%alloc(L_J_wx, 1, n_cholesky)
+!
+               L_J_wx(1,:) = cholesky(aop, :)
+!
+               D_xy(aop, 1) = D_xy(aop, 1) - ddot(n_cholesky, L_J_wx, 1, L_J_wx, 1)
+!
+               call mem%dealloc(L_J_wx, 1, n_cholesky)
 !
             enddo
 !
-            call disk%close_file(cholesky_ao_vectors, 'delete')
-!
+             call disk%close_file(cholesky_ao_vectors, 'delete')
+! !
          endif
       endif
 !
@@ -2341,6 +2370,9 @@ contains
 !
             if (n_cholesky == 0) then
 !
+               write(output%unit, *) 'Number of cholesky is now zero!'
+               flush(output%unit)
+!
                call mem%alloc(cholesky, n_new_sig_aop, n_new_cholesky)
 !
                call reduce_array(cholesky_new,              &
@@ -2618,7 +2650,7 @@ contains
       call cpu_time(s_decomp_time)
 !
       call full_cholesky_decomposition_effective(integrals_auxiliary, auxiliary_basis, &
-                                          n_cholesky, n_vectors, threshold*1.0d-1, keep_vectors)
+                                          n_cholesky, n_vectors, 1.0d-10, keep_vectors)
 !
       call cpu_time(e_decomp_time)
       full_decomp_time = e_decomp_time - s_decomp_time
