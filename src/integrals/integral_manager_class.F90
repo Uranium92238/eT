@@ -43,6 +43,7 @@ module integral_manager_class
       procedure :: invert_overlap_cholesky_vecs        => invert_overlap_cholesky_vecs_integral_manager
       procedure :: construct_cholesky_vectors          => construct_cholesky_vectors_integral_manager
       procedure :: cholesky_vecs_diagonal_test         => cholesky_vecs_diagonal_test_integral_manager
+      procedure :: construct_significant_diagonal      => construct_significant_diagonal_integral_manager
 !
       procedure :: get_ao_h_xy   => get_ao_h_xy_integral_manager   ! h_αβ
       procedure :: get_ao_s_xy   => get_ao_s_xy_integral_manager   ! s_αβ
@@ -88,15 +89,197 @@ contains
 !
       span = 1.0D-2
 !
-!     Do preliminary decomposition to 10-4
+!     Determine significant diagonal to 10-8, and store as target diagonal
 !
       threshold = 1.0D-8
-      call integrals%determine_auxilliary_cholesky_basis(molecule, threshold, span)
+      call integrals%construct_significant_diagonal(molecule, 'target_diagonal', threshold)
+      threshold = 1.0D-4
+      call integrals%construct_significant_diagonal(molecule, 'initial_diagonal', threshold)
+
+
+      call integrals%determine_auxilliary_cholesky_basis(molecule, threshold, span, 'initial_diagonal')
       call integrals%invert_overlap_cholesky_vecs()
-      call integrals%construct_cholesky_vectors(molecule)
-      call integrals%cholesky_vecs_diagonal_test()
+      call integrals%construct_cholesky_vectors(molecule, 'initial_diagonal')
+      call integrals%cholesky_vecs_diagonal_test('initial_diagonal')
 !
    end subroutine cholesky_decomposition_driver_integral_manager
+!
+!
+   subroutine construct_significant_diagonal_integral_manager(integrals, molecule, diagonal_info_name, threshold)
+!!
+!!    ...
+!!
+!!
+      implicit none
+!
+      class(integral_manager) :: integrals
+      class(molecular_system) :: molecule
+!
+      real(dp), intent(in) :: threshold
+!
+      character(len=*) :: diagonal_info_name
+      type(file)       :: diagonal_info
+!
+      integer(i15) :: n_s, n_sp, sp, n_sig_aop, n_sig_sp, current_sig_sp
+!
+      real(dp), dimension(:,:), allocatable :: g_AB_AB, D_AB, D_xy
+!
+      integer(i15) :: x, y, xy, xy_packed, first_sig_sp, first_sig_aop, A, B
+!
+      type(interval) :: A_interval, B_interval
+!
+      logical, dimension(:, :), allocatable :: sig_sp
+!
+      n_s   = molecule%get_n_shells() ! Number of shells
+      n_sp  = n_s*(n_s + 1)/2         ! Number of shell pairs packed
+!
+!     Pre-screening of full diagonal
+!
+      allocate(sig_sp(n_sp, 1))
+      sig_sp = .false.
+!
+      sp = 1        ! Shell pair number
+      n_sig_aop = 0 ! Number of significant AO pairs
+      n_sig_sp  = 0 ! Number of significant shell pairs
+!
+      do B = 1, n_s
+         do A = B, n_s
+!
+            A_interval = molecule%get_shell_limits(A)
+            B_interval = molecule%get_shell_limits(B)
+!
+!           Construct diagonal D_AB for the given shell pair
+!
+            call mem%alloc(g_AB_AB, &
+                     (A_interval%size)*(B_interval%size), &
+                     (A_interval%size)*(B_interval%size))
+!
+            g_AB_AB = zero
+            call integrals%get_ao_g_wxyz(g_AB_AB, A, B, A, B)
+!
+            call mem%alloc(D_AB, (A_interval%size)*(B_interval%size), 1)
+!
+            do xy = 1, (A_interval%size)*(B_interval%size)
+!
+               D_AB(xy, 1) = g_AB_AB(xy, xy)
+!
+            enddo
+!
+            call mem%dealloc(g_AB_AB, &
+                     (A_interval%size)*(B_interval%size), &
+                     (A_interval%size)*(B_interval%size))
+!
+!           Determine whether shell pair is significant
+!
+            sig_sp(sp, 1) = is_significant(D_AB, (A_interval%size)*(B_interval%size), threshold)
+!
+            call mem%dealloc(D_AB, (A_interval%size)*(B_interval%size), 1)
+!
+            if (sig_sp(sp, 1)) then
+!
+               n_sig_aop = n_sig_aop + &
+                              get_size_sp(A_interval, B_interval)
+!
+               n_sig_sp = n_sig_sp + 1
+!
+            endif
+!
+            sp = sp + 1
+!
+         enddo
+      enddo
+!
+      write(output%unit, '(/a)')'Initial reduction of shell pairs:'
+      write(output%unit, '(a33, 2x, i6)')'Total number of shell pairs:     ', n_sp
+      write(output%unit, '(a33, 2x, i6)')'Significant shell pairs:         ', n_sig_sp
+!
+!     Construct significant diagonal
+!
+      call mem%alloc(D_xy, n_sig_aop, 1)
+      D_xy = zero
+!
+!     Note: allocated with length n_significant_sp + 1, last element is used for n_significant_aop
+!     This is convenient because significant_sp_to_first_significant_aop will be used to calculate lengths.
+!
+      sp              = 1
+      current_sig_sp  = 1
+      first_sig_aop   = 1
+!
+      do B = 1, n_s
+         do A = B, n_s
+!
+            if (sig_sp(sp, 1)) then
+!
+               A_interval = molecule%get_shell_limits(A)
+               B_interval = molecule%get_shell_limits(B)
+!
+               call mem%alloc(g_AB_AB, &
+                     (A_interval%size)*(B_interval%size), &
+                     (A_interval%size)*(B_interval%size))
+!
+               g_AB_AB = zero
+               call integrals%get_ao_g_wxyz(g_AB_AB, A, B, A, B)
+!
+               if (A .eq. B) then
+!
+                  do x = 1, A_interval%size
+                     do y = 1, B_interval%size
+!
+                        xy = A_interval%size*(y - 1) + x
+                        xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
+!
+                        D_xy(xy_packed + first_sig_aop - 1, 1) = g_AB_AB(xy, xy)
+!
+                     enddo
+                  enddo
+!
+               else ! A ≠ B
+!
+                  do x = 1, (A_interval%size)
+                     do y = 1, (B_interval%size)
+!
+                        xy = A_interval%size*(y - 1) + x
+                        D_xy(xy + first_sig_aop - 1, 1) = g_AB_AB(xy,xy)
+!
+                     enddo
+                  enddo
+!
+               endif
+!
+               call mem%dealloc(g_AB_AB, &
+                     (A_interval%size)*(B_interval%size), &
+                     (A_interval%size)*(B_interval%size))
+!
+               first_sig_aop = first_sig_aop + get_size_sp(A_interval, B_interval)
+!
+               current_sig_sp = current_sig_sp + 1
+!
+            endif ! End of if (significant)
+!
+            sp = sp + 1
+!
+         enddo
+      enddo
+!
+!     Write screening_info_file containing
+!
+!        1. number of significant shell pairs, number of significant ao pairs
+!        2. sig_sp - vector of logicals to describe which shell pairs are significant
+!        3. D_xy = ( xy | xy ), the significant diagonal.
+!
+      call diagonal_info%init(diagonal_info_name, 'sequential', 'formatted')
+      call disk%open_file(diagonal_info, 'write')
+!
+      write(diagonal_info%unit,*) n_sig_sp, n_sig_aop
+      write(diagonal_info%unit,*) sig_sp
+      write(diagonal_info%unit,*) D_xy
+!
+      call disk%close_file(diagonal_info)
+!
+      deallocate(sig_sp)
+      call mem%dealloc(D_xy, n_sig_aop, 1)
+!
+   end subroutine construct_significant_diagonal_integral_manager
 !
 !
    subroutine determine_auxilliary_cholesky_basis_integral_manager(integrals, molecule, threshold, span, diagonal_info_name)
