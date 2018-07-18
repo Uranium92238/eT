@@ -99,7 +99,7 @@ contains
    end subroutine cholesky_decomposition_driver_integral_manager
 !
 !
-   subroutine determine_auxilliary_cholesky_basis_integral_manager(integrals, molecule, threshold, span)
+   subroutine determine_auxilliary_cholesky_basis_integral_manager(integrals, molecule, threshold, span, diagonal_info_name)
 !!
 !!    ....
 !!
@@ -109,7 +109,9 @@ contains
       class(integral_manager) :: integrals
       class(molecular_system) :: molecule
 !
-      type(file) :: screening_info, cholesky_ao_vectors, auxiliary, auxiliary_inverse, basis_shell_data
+      character(len=*) :: diagonal_info_name
+!
+      type(file) :: diagonal_info, cholesky_ao_vectors, auxiliary, auxiliary_inverse, basis_shell_data
 !
       integer(i15) :: n_s, n_sp
       integer(i15) :: n_cholesky, n_new_cholesky
@@ -203,70 +205,27 @@ contains
 !
       n_s   = molecule%get_n_shells() ! Number of shells
       n_sp  = n_s*(n_s + 1)/2         ! Number of shell pairs packed
+
+!     Read diagonal info file containing (name given as argument)
 !
-!     Pre-screening of full diagonal
+!        1. number of significant shell pairs, number of significant ao pairs
+!        2. sig_sp - vector of logicals to describe which shell pairs are significant
+!        3. D_xy = ( xy | xy ), the significant diagonal.
 !
+      call diagonal_info%init(diagonal_info_name, 'sequential', 'unformatted')
+      call disk%open_file(diagonal_info, 'read')
+!
+      read(diagonal_info%unit) n_sig_sp, n_sig_aop
+!
+      call mem%alloc(D_xy, n_sig_aop, 1)
       allocate(sig_sp(n_sp, 1))
-      sig_sp = .false.
 !
-      sp = 1        ! Shell pair number
-      n_sig_aop = 0 ! Number of significant AO pairs
-      n_sig_sp  = 0 ! Number of significant shell pairs
+      read(diagonal_info%unit) sig_sp
+      read(diagonal_info%unit) D_xy
 !
-      do B = 1, n_s
-         do A = B, n_s
+      call disk%close_file(diagonal_info)
 !
-            A_interval = molecule%get_shell_limits(A)
-            B_interval = molecule%get_shell_limits(B)
-!
-!           Construct diagonal D_AB for the given shell pair
-!
-            call mem%alloc(g_AB_AB, &
-                     (A_interval%size)*(B_interval%size), &
-                     (A_interval%size)*(B_interval%size))
-!
-            g_AB_AB = zero
-            call integrals%get_ao_g_wxyz(g_AB_AB, A, B, A, B)
-!
-            call mem%alloc(D_AB, (A_interval%size)*(B_interval%size), 1)
-!
-            do xy = 1, (A_interval%size)*(B_interval%size)
-!
-               D_AB(xy, 1) = g_AB_AB(xy, xy)
-!
-            enddo
-!
-            call mem%dealloc(g_AB_AB, &
-                     (A_interval%size)*(B_interval%size), &
-                     (A_interval%size)*(B_interval%size))
-!
-!           Determine whether shell pair is significant
-!
-            sig_sp(sp, 1) = is_significant(D_AB, (A_interval%size)*(B_interval%size), sig_threshold)
-!
-            call mem%dealloc(D_AB, (A_interval%size)*(B_interval%size), 1)
-!
-            if (sig_sp(sp, 1)) then
-!
-               n_sig_aop = n_sig_aop + &
-                              get_size_sp(A_interval, B_interval)
-!
-               n_sig_sp = n_sig_sp + 1
-!
-            endif
-!
-            sp = sp + 1
-!
-         enddo
-      enddo
-!
-      first_sig_sp = sig_sp
-!
-      write(output%unit, '(/a)')'Initial reduction of shell pairs:'
-      write(output%unit, '(a33, 2x, i6)')'Total number of shell pairs:     ', n_sp
-      write(output%unit, '(a33, 2x, i6)')'Significant shell pairs:         ', n_sig_sp
-!
-!     Construct significant diagonal
+!     Construct info arrays
 !
       call mem%alloc_int(sig_sp_to_first_sig_aop, n_sig_sp + 1, 1)
       sig_sp_to_first_sig_aop = 0
@@ -274,9 +233,6 @@ contains
 !
       call mem%alloc_int(sig_sp_to_shells, n_sig_sp, 2) ! A B
       sig_sp_to_shells = 0
-!
-      call mem%alloc(D_xy, n_sig_aop, 1)
-      D_xy = zero
 !
       call mem%alloc_int(sig_aop_to_aos, n_sig_aop, 2)
       sig_aop_to_aos = 0
@@ -301,13 +257,6 @@ contains
                sig_sp_to_shells(current_sig_sp, 1) = A
                sig_sp_to_shells(current_sig_sp, 2) = B
 !
-               call mem%alloc(g_AB_AB, &
-                     (A_interval%size)*(B_interval%size), &
-                     (A_interval%size)*(B_interval%size))
-!
-               g_AB_AB = zero
-               call integrals%get_ao_g_wxyz(g_AB_AB, A, B, A, B)
-!
                if (A .eq. B) then
 !
                   do x = 1, A_interval%size
@@ -315,8 +264,6 @@ contains
 !
                         xy = A_interval%size*(y - 1) + x
                         xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
-!
-                        D_xy(xy_packed + first_sig_aop - 1, 1) = g_AB_AB(xy, xy)
 !
                         sig_aop_to_aos(xy_packed + first_sig_aop - 1, 1) = &
                                                       A_interval%first + x - 1
@@ -333,7 +280,6 @@ contains
                      do y = 1, (B_interval%size)
 !
                         xy = A_interval%size*(y - 1) + x
-                        D_xy(xy + first_sig_aop - 1, 1) = g_AB_AB(xy,xy)
 !
                         sig_aop_to_aos(xy + first_sig_aop - 1, 1) = A_interval%first + x - 1
                         sig_aop_to_aos(xy + first_sig_aop - 1, 2) = B_interval%first + y - 1
@@ -342,10 +288,6 @@ contains
                   enddo
 !
                endif
-!
-               call mem%dealloc(g_AB_AB, &
-                     (A_interval%size)*(B_interval%size), &
-                     (A_interval%size)*(B_interval%size))
 !
                first_sig_aop = first_sig_aop + get_size_sp(A_interval, B_interval)
 !
@@ -357,21 +299,6 @@ contains
 !
          enddo
       enddo
-!
-!     Write screening_info_file containing
-!
-!        1. number of significant shell pairs, number of significant ao pairs
-!        2. sig_sp - vector of logicals to describe which shell pairs are significant
-!        3. D_xy = ( xy | xy ), the significant diagonal.
-!
-      call screening_info%init('screening_info', 'sequential', 'formatted')
-      call disk%open_file(screening_info, 'write')
-!
-      write(screening_info%unit,*) n_sig_sp, n_sig_aop
-      write(screening_info%unit,*) sig_sp
-      write(screening_info%unit,*) D_xy
-!
-      call disk%close_file(screening_info)
 !
 !     Timings
 !
@@ -2955,7 +2882,7 @@ contains
    end subroutine invert_overlap_cholesky_vecs_integral_manager
 !
 !
-   subroutine construct_cholesky_vectors_integral_manager(integrals, molecule)
+   subroutine construct_cholesky_vectors_integral_manager(integrals, molecule, diagonal_info_name)
 !!
 !!
 !!
@@ -2965,10 +2892,12 @@ contains
 !
       type(molecular_system) :: molecule
 !
+      character(len=*) :: diagonal_info_name
+!
       real(dp) :: s_build_vectors_time, e_build_vectors_time, full_integral_time, full_construct_time
       real(dp) :: s_integral_time, e_integral_time, s_construct_time, e_construct_time
 !
-      type(file) :: auxiliary_inverse, cholesky_ao_vectors, basis_shell_data, screening_info
+      type(file) :: auxiliary_inverse, cholesky_ao_vectors, basis_shell_data, diagonal_info
 !
       integer(i15) :: n_cholesky, n_s, n_sp, n_sig_aop, n_sig_sp
       integer(i15) :: A, B, C, D, AB_sp, CD_sp, size_AB
@@ -2995,15 +2924,15 @@ contains
       n_s   = molecule%get_n_shells() ! Number of shells
       n_sp  = n_s*(n_s + 1)/2         ! Number of shell pairs packed
 !
-      call screening_info%init('screening_info', 'sequential', 'formatted')
-      call disk%open_file(screening_info, 'read')
+      call diagonal_info%init(diagonal_info_name, 'sequential', 'unformatted')
+      call disk%open_file(diagonal_info, 'read')
 !
       allocate(sig_sp(n_sp, 1))
 !
-      read(screening_info%unit,*) n_sig_sp, n_sig_aop
-      read(screening_info%unit,*) sig_sp
+      read(diagonal_info%unit) n_sig_sp, n_sig_aop
+      read(diagonal_info%unit) sig_sp
 !
-      call disk%close_file(screening_info)
+      call disk%close_file(diagonal_info)
 !
       full_integral_time = 0
       full_construct_time = 0
@@ -3262,7 +3191,7 @@ contains
    end subroutine construct_cholesky_vectors_integral_manager
 !
 !
-   subroutine cholesky_vecs_diagonal_test_integral_manager(integrals)
+   subroutine cholesky_vecs_diagonal_test_integral_manager(integrals, diagonal_info_name)
 !!
 !!
 !!
@@ -3270,7 +3199,9 @@ contains
 !
       class(Integral_manager) :: integrals
 !
-      type(file) :: screening_info, cholesky_ao_vectors, auxiliary_inverse
+      character(len=*) :: diagonal_info_name
+!
+      type(file) :: diagonal_info, cholesky_ao_vectors, auxiliary_inverse
 !
       real(dp), dimension(:,:), allocatable :: D_diff, L_K_yz
 !
@@ -3281,17 +3212,17 @@ contains
       write(output%unit, '(/a)') '- Test Cholesky vectors'
       flush(output%unit)
 !
-      call screening_info%init('screening_info', 'sequential', 'unformatted')
-      call disk%open_file(screening_info, 'read')
+      call diagonal_info%init(diagonal_info_name, 'sequential', 'unformatted')
+      call disk%open_file(diagonal_info, 'read')
 !
-      read(screening_info%unit, *) n_sig_sp, n_sig_aop
+      read(diagonal_info%unit) n_sig_sp, n_sig_aop
 !
       call mem%alloc(D_diff, n_sig_aop, 1)
 !
-      read(screening_info%unit, *)
-      read(screening_info%unit, *) D_diff
+      read(diagonal_info%unit)
+      read(diagonal_info%unit) D_diff
 !
-      call disk%close_file(screening_info)
+      call disk%close_file(diagonal_info)
 !
       call auxiliary_inverse%init('auxiliary_basis_inverse', 'sequential', 'unformatted')
       call disk%open_file(auxiliary_inverse, 'read')
