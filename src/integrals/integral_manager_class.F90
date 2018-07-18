@@ -1315,6 +1315,7 @@ contains
       call auxiliary%init('auxiliary_basis', 'sequential', 'unformatted')
       call disk%open_file(auxiliary, 'write')
 !
+      write(auxiliary%unit) n_cholesky
       write(auxiliary%unit) auxiliary_basis
 !
       call disk%close_file(auxiliary)
@@ -2935,7 +2936,7 @@ contains
       call auxiliary_inverse%init('auxiliary_basis_inverse', 'sequential', 'unformatted')
       call disk%open_file(auxiliary_inverse, 'write')
 !
-      write(auxiliary%unit) n_cholesky
+      write(auxiliary_inverse%unit) n_cholesky
 !
       write(auxiliary_inverse%unit) aux_chol_inverse
 !
