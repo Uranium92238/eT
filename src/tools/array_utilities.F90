@@ -568,6 +568,14 @@ contains
 !
       enddo
 !
+      do j = 1, dim
+!
+            if (diagonal(j, 1) .lt. zero .and. abs(diagonal(j, 1)) .gt. 1.0d-10) then
+               write(output%unit, '(a)') 'Warning: Found significant negative diagonal in full Cholesky decomposition'
+            endif
+!
+      enddo
+!
       call mem%dealloc(diagonal, dim, 1)
 !
    end subroutine full_cholesky_decomposition_effective
