@@ -2846,7 +2846,10 @@ contains
    end subroutine cholesky_decompose_integral_manager
 !
 !
-   subroutine invert_overlap_cholesky_vecs_integral_manager(integral, n_cholesky)
+   subroutine invert_overlap_cholesky_vecs_integral_manager(integral)
+!!
+!!    Invert cholesky vectors of auxiliary basis overlap
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, July 2018 
 !!
 !!
       implicit none
@@ -2867,9 +2870,11 @@ contains
 !
 !     Read Cholesky vectors of auxiliary basis overlap               
 !
-      call mem%alloc(aux_chol, n_cholesky, n_cholesky)
-!
       call disk%open_file(auxiliary, 'read')
+!
+      read(auxiliary%unit) n_cholesky
+!
+      call mem%alloc(aux_chol, n_cholesky, n_cholesky)
 !
       read(auxiliary%unit) aux_chol
 !
@@ -2885,6 +2890,8 @@ contains
 !
       call auxiliary_inverse%init('auxiliary_basis_inverse', 'sequential', 'unformatted')
       call disk%open_file(auxiliary_inverse, 'write')
+!
+      write(auxiliary%unit) n_cholesky
 !
       write(auxiliary_inverse%unit) aux_chol_inverse
 !
