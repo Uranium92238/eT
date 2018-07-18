@@ -35,7 +35,7 @@ module integral_manager_class
 !
    contains
 !
-      procedure :: cholesky_decompose => cholesky_decompose_integral_manager
+!procedure :: cholesky_decompose => cholesky_decompose_integral_manager
 !
       procedure :: cholesky_decomposition_driver => cholesky_decomposition_driver_integral_manager
 !
