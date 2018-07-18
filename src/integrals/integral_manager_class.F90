@@ -2995,7 +2995,7 @@ contains
       n_s   = molecule%get_n_shells() ! Number of shells
       n_sp  = n_s*(n_s + 1)/2         ! Number of shell pairs packed
 !
-      call screening_info%init('screening_info', 'sequential', 'unformatted')
+      call screening_info%init('screening_info', 'sequential', 'formatted')
       call disk%open_file(screening_info, 'read')
 !
       allocate(sig_sp(n_sp, 1))
@@ -3063,10 +3063,9 @@ contains
             enddo
          enddo
 !
-
+         call basis_shell_data%init('basis_shell_info', 'sequential', 'unformatted')
          call disk%open_file(basis_shell_data, 'read')
 !
-         call basis_shell_data%init('basis_shell_info', 'sequential', 'unformatted')
          read(basis_shell_data%unit) n_sp_in_basis
 !
          call mem%alloc_int(basis_shell_info, n_sp_in_basis, 4)
