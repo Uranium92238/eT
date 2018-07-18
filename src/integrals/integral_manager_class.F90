@@ -2911,6 +2911,7 @@ contains
 !
 !     Read Cholesky vectors of auxiliary basis overlap
 !
+      call auxiliary%init('auxiliary_basis', 'sequential', 'unformatted')
       call disk%open_file(auxiliary, 'read')
 !
       read(auxiliary%unit) n_cholesky
