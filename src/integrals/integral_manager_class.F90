@@ -188,9 +188,9 @@ contains
 !
       real(dp) :: D_max, max_in_sp, D_max_full, max_diff, ddot, min_approx
 !
-      real(dp), parameter :: threshold = 1.0D-8
-      real(dp), parameter :: sig_threshold = 1.0D-11
-      real(dp), parameter :: span      = 1.0D-2
+      real(dp), parameter :: threshold     = 1.0D-4
+      real(dp), parameter :: sig_threshold = 1.0D-4
+      real(dp), parameter :: span          = 1.0D-2
 !
       integer(i15), parameter :: max_qual = 1000
 !
@@ -1599,15 +1599,11 @@ contains
       write(output%unit,*) 'make diff'
       flush(output%unit)
 !
-      call mem%alloc(D_approx, n_sig_aop, 1)
-      D_approx = zero
-!
       do aop = 1, n_sig_aop
 !
          read(cholesky_ao_vectors%unit, rec=aop) (L_K_yz(J, 1), J = 1, n_cholesky)
 !
-         D_approx = ddot(n_cholesky, L_K_yz, 1, L_K_yz, 1)
-         D_diff(aop, 1) = D_diff(aop, 1) - D_approx(aop, 1)
+         D_diff(aop, 1) = D_diff(aop, 1) - ddot(n_cholesky, L_K_yz, 1, L_K_yz, 1)
 !
       enddo
 !
@@ -1624,7 +1620,7 @@ contains
       min_approx =1.0d5
 !
       do aop = 1, n_sig_aop
-         if (D_approx(aop, 1) .lt. min_approx) min_approx = D_approx(aop, 1)
+         if (D_diff(aop, 1) .lt. min_approx) min_approx = D_diff(aop, 1)
       enddo
 !
       write(output%unit, '(/a60, e12.4)')'Maximal difference between approximate and actual diagonal: ', max_diff
