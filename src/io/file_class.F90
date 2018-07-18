@@ -1,28 +1,28 @@
 module file_class
 !
 !!
-!!    File class module                                 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2018         
+!!    File class module
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2018
 !!
-!! 
+!!
 !
    use kinds
 !
-   type :: file 
+   type :: file
 !
-!     Filename 
+!     Filename
 !
       character(len=40) :: name = 'no_name'
 !
-!     Unit identifier 
+!     Unit identifier
 !
-      integer(i15) :: unit = -1     
+      integer(i15) :: unit = -1
 !
 !     File size (in bytes)
-! 
-      integer(i15) :: size = -1  
 !
-!     Logical for whether the file is currently opened or not 
+      integer(i15) :: size = -1
+!
+!     Logical for whether the file is currently opened or not
 !
       logical :: opened = .false.
 !
@@ -31,13 +31,13 @@ module file_class
 !
       integer(i15) :: record_length = 0
 !
-   contains 
+   contains
 !
       procedure :: init => init_file
 !
       procedure :: prepare_to_read_line => prepare_to_read_line_file
 !
-   end type file                                                                             
+   end type file
 !
       type(file) :: output
       type(file) :: input
@@ -54,7 +54,7 @@ contains
 !!
 !!       - access ('direct' or 'sequential')
 !!       - format ('formatted' or unformatted)
-!!       - record_length, optional argument which must be provided if 
+!!       - record_length, optional argument which must be provided if
 !!         the_file is direct access
 !!
 !!    File is closed, to open it use disk_manager
@@ -63,13 +63,15 @@ contains
 !
       class(file) :: the_file
 !
-      character(len=*) :: name 
-      character(len=*) :: access 
+      character(len=*) :: name
+      character(len=*) :: access
       character(len=*) :: format
 !
-      integer(i15), optional :: record_length 
+      integer(i15), optional :: record_length
 !
 !     Sanity checks
+!
+      the_file%name = name
 !
       if (.not. present(record_length)) then
         if (access == 'direct') then
@@ -80,7 +82,7 @@ contains
 !
       elseif (access .ne. 'direct' .and. access .ne. 'sequential') then
 !
-         write(output%unit,'(/t3,a)') 'Error: illegal access type specified for file: ', name
+         write(output%unit,'(/t3,a)') 'Error: illegal access type specified for file: ', name, access
          stop
 !
       elseif (format .ne. 'unformatted' .and. format .ne. 'formatted') then
@@ -92,7 +94,6 @@ contains
 !
       the_file%opened = .false.
 !
-      the_file%name = name
       the_file%access = access
       the_file%format = format
 !
@@ -102,7 +103,7 @@ contains
 !
       else
 !
-        the_file%record_length = 0 
+        the_file%record_length = 0
 !
       endif
 !
@@ -117,7 +118,7 @@ contains
 !!    Places cursor for reading a sequential file at the position line
 !!    by rewinding and doing (line - 1) emply reads
 !!
-!!    Requires file to be initialized and open. Files are opened by the disk_manager 
+!!    Requires file to be initialized and open. Files are opened by the disk_manager
 !!
       implicit none
 !

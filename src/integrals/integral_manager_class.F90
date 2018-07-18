@@ -41,6 +41,7 @@ module integral_manager_class
 !
       procedure :: determine_auxilliary_cholesky_basis => determine_auxilliary_cholesky_basis_integral_manager
       procedure :: invert_overlap_cholesky_vecs        => invert_overlap_cholesky_vecs_integral_manager
+      procedure :: construct_cholesky_vectors => construct_cholesky_vectors_integral_manager
 !
       procedure :: get_ao_h_xy   => get_ao_h_xy_integral_manager   ! h_αβ
       procedure :: get_ao_s_xy   => get_ao_s_xy_integral_manager   ! s_αβ
@@ -88,9 +89,10 @@ contains
 !
 !     Do preliminary decomposition to 10-4
 !
-      threshold = 1.0D-4
+      threshold = 1.0D-8
       call integrals%determine_auxilliary_cholesky_basis(molecule, threshold, span)
       call integrals%invert_overlap_cholesky_vecs()
+      call integrals%construct_cholesky_vectors(molecule)
 !
    end subroutine cholesky_decomposition_driver_integral_manager
 !
@@ -2890,7 +2892,7 @@ contains
    subroutine invert_overlap_cholesky_vecs_integral_manager(integral)
 !!
 !!    Invert cholesky vectors of auxiliary basis overlap
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, July 2018 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, July 2018
 !!
 !!
       implicit none
@@ -3249,7 +3251,7 @@ contains
       call mem%dealloc_int(cholesky_basis, n_cholesky, 3)
       call mem%dealloc_int(basis_shell_info, n_sp_in_basis, 4)
       deallocate(sig_sp)
-!   
+!
    end subroutine construct_cholesky_vectors_integral_manager
 !
 !
