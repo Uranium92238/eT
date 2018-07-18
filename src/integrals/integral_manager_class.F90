@@ -1634,6 +1634,61 @@ contains
    end subroutine cholesky_decompose_integral_manager
 !
 !
+   subroutine invert_overlap_cholesky_vecs(integral, n_cholesky)
+!!
+!!
+      implicit none
+!
+      class(integral_manager) :: integral
+!
+      integer(i15) :: n_cholesky
+!
+      real(dp), dimension(:,:), allocatable :: aux_chol, aux_chol_inverse
+!
+      type(file) :: auxiliary, auxiliary_inverse
+!
+      real(dp):: s_invert_time, e_invert_time
+!
+      write(output%unit, '(/a)') '- Inverting auxiliary basis'
+      flush(output%unit)
+      call cpu_time(s_invert_time)
+!
+!     Read Cholesky vectors of auxiliary basis overlap               
+!
+      call mem%alloc(aux_chol, n_cholesky, n_cholesky)
+!
+      call disk%open_file(auxiliary, 'read')
+!
+      read(auxiliary%unit) aux_chol
+!
+      call disk%close_file(auxiliary)
+!
+      call mem%alloc(aux_chol_inverse, n_cholesky, n_cholesky)
+!
+      call inv_lower_tri(aux_chol_inverse, aux_chol, n_cholesky)
+!
+      call mem%dealloc(aux_chol, n_cholesky, n_cholesky)
+!
+!     Write inverse Cholesky vectors of auxiliary basis overlap               
+!
+      call auxiliary_inverse%init('auxiliary_basis_inverse', 'sequential', 'unformatted')
+      call disk%open_file(auxiliary_inverse, 'write')
+!
+      write(auxiliary_inverse%unit) aux_chol_inverse
+!
+      call disk%close_file(auxiliary_inverse)
+!
+      call mem%dealloc(aux_chol_inverse, n_cholesky, n_cholesky)
+!
+!     Timings
+!
+      call cpu_time(e_invert_time)
+      write(output%unit, '(/a16, f11.2, a9)')'Time to invert: ',&
+                            e_invert_time - s_invert_time, ' seconds.' 
+!
+   end subroutine invert_overlap_cholesky_vecs
+!
+!
    integer(i15) function get_size_sp(A_interval, B_interval)
 !!
 !!    Get size shell pair
