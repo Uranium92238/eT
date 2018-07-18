@@ -93,13 +93,19 @@ contains
 !
       threshold = 1.0D-8
       call integrals%construct_significant_diagonal(molecule, 'target_diagonal', threshold)
+!
+!     Determine significant diagonal to 10-8, and store as initial diagonal
+!
       threshold = 1.0D-4
       call integrals%construct_significant_diagonal(molecule, 'initial_diagonal', threshold)
-
-
+!
       call integrals%determine_auxilliary_cholesky_basis(molecule, threshold, span, 'initial_diagonal')
       call integrals%invert_overlap_cholesky_vecs()
-      call integrals%construct_cholesky_vectors(molecule, 'initial_diagonal')
+      call integrals%construct_cholesky_vectors(molecule, 'target_diagonal')
+!
+      call integrals%determine_auxilliary_cholesky_basis(molecule, threshold, span, 'target_diagonal', .true.)
+      call integrals%invert_overlap_cholesky_vecs()
+      call integrals%construct_cholesky_vectors(molecule, 'target_diagonal')
       call integrals%cholesky_vecs_diagonal_test('target_diagonal')
 !
    end subroutine cholesky_decomposition_driver_integral_manager
@@ -282,7 +288,8 @@ contains
    end subroutine construct_significant_diagonal_integral_manager
 !
 !
-   subroutine determine_auxilliary_cholesky_basis_integral_manager(integrals, molecule, threshold, span, diagonal_info_name)
+   subroutine determine_auxilliary_cholesky_basis_integral_manager(integrals, molecule, threshold, span, &
+                                                                        diagonal_info_name, read_old_vecs)
 !!
 !!    ....
 !!
@@ -293,6 +300,8 @@ contains
       class(molecular_system) :: molecule
 !
       character(len=*) :: diagonal_info_name
+!
+      logical, optional :: read_old_vecs
 !
       type(file) :: diagonal_info, cholesky_ao_vectors, auxiliary, auxiliary_inverse, basis_shell_data
 !
@@ -496,7 +505,6 @@ contains
 !
       call cpu_time(s_select_basis_time)
 !
-      n_cholesky = 0
       write(output%unit, '(/a)')&
       'Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size'
       write(output%unit, '(a)') &
@@ -505,11 +513,39 @@ contains
 !
       iteration = 0
 !
+      n_cholesky = 0
+!
       full_integral_time = 0
       full_reduce_time = 0
       full_construct_time = 0
 !
       sig_neg = 0
+!
+      if (present(read_old_vecs)) then 
+         if (read_old_vecs) then
+!
+            call auxiliary_inverse%init('auxiliary_basis_inverse', 'sequential', 'unformatted')
+            call disk%open_file(auxiliary_inverse, 'read')
+!
+            read(auxiliary_inverse%unit) n_cholesky
+!
+            call disk%close_file(auxiliary_inverse)
+!
+            call mem%alloc(cholesky, n_sig_aop, n_cholesky)
+!
+            call cholesky_ao_vectors%init('cholesky_ao_xy', 'direct', 'unformatted', dp*n_cholesky)
+            call disk%open_file(cholesky_ao_vectors, 'read')
+!
+            do aop = 1, n_sig_aop
+!
+               read(cholesky_ao_vectors%unit, rec=aop) (cholesky(aop, J), J = 1, n_cholesky)
+!
+            enddo
+!
+            call disk%close_file(cholesky_ao_vectors, 'delete')
+!
+         endif
+      endif
 !
       do while (.not. done)
 !
