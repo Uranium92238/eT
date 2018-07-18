@@ -100,7 +100,7 @@ contains
       call integrals%determine_auxilliary_cholesky_basis(molecule, threshold, span, 'initial_diagonal')
       call integrals%invert_overlap_cholesky_vecs()
       call integrals%construct_cholesky_vectors(molecule, 'initial_diagonal')
-      call integrals%cholesky_vecs_diagonal_test('initial_diagonal')
+      call integrals%cholesky_vecs_diagonal_test('target_diagonal')
 !
    end subroutine cholesky_decomposition_driver_integral_manager
 !
