@@ -38,6 +38,7 @@ module integral_manager_class
       procedure :: cholesky_decompose => cholesky_decompose_integral_manager
 !
       procedure :: determine_auxilliary_cholesky_basis => determine_auxilliary_cholesky_basis_integral_manager
+      procedure :: invert_overlap_cholesky_vecs        => invert_overlap_cholesky_vecs_integral_manager
 !
       procedure :: get_ao_h_xy   => get_ao_h_xy_integral_manager   ! h_αβ
       procedure :: get_ao_s_xy   => get_ao_s_xy_integral_manager   ! s_αβ
@@ -2845,7 +2846,7 @@ contains
    end subroutine cholesky_decompose_integral_manager
 !
 !
-   subroutine invert_overlap_cholesky_vecs(integral, n_cholesky)
+   subroutine invert_overlap_cholesky_vecs_integral_manager(integral, n_cholesky)
 !!
 !!
       implicit none
@@ -2897,7 +2898,7 @@ contains
       write(output%unit, '(/a16, f11.2, a9)')'Time to invert: ',&
                             e_invert_time - s_invert_time, ' seconds.' 
 !
-   end subroutine invert_overlap_cholesky_vecs
+   end subroutine invert_overlap_cholesky_vecs_integral_manager
 !
 !
    integer(i15) function get_size_sp(A_interval, B_interval)
