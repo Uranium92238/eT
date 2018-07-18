@@ -188,7 +188,8 @@ contains
 !
       real(dp) :: D_max, max_in_sp, D_max_full, max_diff, ddot, min_approx
 !
-      real(dp), parameter :: threshold = 1.0D-9
+      real(dp), parameter :: threshold = 1.0D-8
+      real(dp), parameter :: sig_threshold = 1.0D-11
       real(dp), parameter :: span      = 1.0D-2
 !
       integer(i15), parameter :: max_qual = 1000
@@ -257,7 +258,7 @@ contains
 !
 !           Determine whether shell pair is significant
 !
-            sig_sp(sp, 1) = is_significant(D_AB, (A_interval%size)*(B_interval%size), threshold)
+            sig_sp(sp, 1) = is_significant(D_AB, (A_interval%size)*(B_interval%size), sig_threshold)
 !
             call mem%dealloc(D_AB, (A_interval%size)*(B_interval%size), 1)
 !
@@ -442,11 +443,6 @@ contains
                if (D_xy(I, 1) .gt. max_in_sig_sp(sp, 1)) then
 !
                   max_in_sig_sp(sp, 1) = D_xy(I, 1)
-!
-               elseif ((D_xy(I, 1) .lt. 0.0d0) .and. (abs(D_xy(I, 1)) .gt. 1.0d-10)) then
-!
-                  write(output%unit, '(a44, e12.5)')'Error: found significant negative diagonal: ',D_xy(I, 1)
-                  stop 
 !
                endif
 !
@@ -793,8 +789,7 @@ contains
 !
                      D_xy(xy, 1) = zero
 !
-                  elseif (D_xy(xy, 1) .lt. threshold) then
-
+                  elseif (D_xy(xy, 1) .lt. sig_threshold) then
 !
                      D_xy(xy, 1) = zero
 !
@@ -838,7 +833,7 @@ contains
                last  = sig_sp_to_first_sig_aop(sig_sp_counter + 1, 1) - 1
 !
                new_sig_sp(sig_sp_counter, 1) = is_significant(D_xy(first:last, 1), &
-                                                last - first + 1, threshold)
+                                                last - first + 1, sig_threshold)
 !
                sig_sp(sp, 1) = new_sig_sp(sig_sp_counter, 1)
 !
