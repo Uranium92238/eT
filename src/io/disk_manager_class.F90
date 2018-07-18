@@ -144,7 +144,7 @@ contains
 !!       - the_file (an object of type "file"). It is assumed that a file name
 !!         has been set: i.e., the_file%name = 'filename'.
 !!       - permissions ('read', 'write', 'readwrite')
-!!       - pos ('rewind', 'append'). Optional argument specified for overwriting or appending 
+!!       - pos ('rewind', 'append'). Optional argument specified for overwriting or appending
 !!         sequential file. Default is writing to current position where ever that might be.
 !!
       implicit none
@@ -154,7 +154,7 @@ contains
       class(file) :: the_file ! the file
 !
       character(len=*) :: permissions
-      character(len=*), optional :: pos 
+      character(len=*), optional :: pos
 !
       integer(i15) :: io_error = -1
 !
@@ -169,7 +169,7 @@ contains
          endif
       elseif (the_file%access .ne. 'direct' .and. the_file%access .ne. 'sequential' ) then
 !
-         write(output%unit,'(/t3,a)') 'Error: illegal access type for file: ', the_file%name
+         write(output%unit,'(/t3,a)') 'Error: illegal access type for file: ', the_file%name, the_file%access
          stop
 !
       endif
@@ -199,7 +199,7 @@ contains
 !!       - the_file (an object of type "file"). It is assumed that a file name
 !!         has been set: i.e., the_file%name = 'filename'.
 !!       - permissions ('read', 'write', 'readwrite')
-!!       - position ('rewind', 'append'). Optional argument specified for overwriting or appending. 
+!!       - position ('rewind', 'append'). Optional argument specified for overwriting or appending.
 !!                                        Default is writing to current position whatever that might be.
 !!
       implicit none
@@ -209,7 +209,7 @@ contains
       class(file) :: the_file ! the file
 !
       character(len=*) :: permissions
-      character(len=*), optional :: pos 
+      character(len=*), optional :: pos
 !
       integer(i15) :: io_error = -1
 !
