@@ -37,6 +37,8 @@ module integral_manager_class
 !
       procedure :: cholesky_decompose => cholesky_decompose_integral_manager
 !
+      procedure :: cholesky_decomposition_driver => cholesky_decomposition_driver_integral_manager
+!
       procedure :: determine_auxilliary_cholesky_basis => determine_auxilliary_cholesky_basis_integral_manager
       procedure :: invert_overlap_cholesky_vecs        => invert_overlap_cholesky_vecs_integral_manager
 !
@@ -67,6 +69,30 @@ module integral_manager_class
 !
 !
 contains
+!
+!
+   subroutine cholesky_decomposition_driver_integral_manager(integrals, molecule)
+!!
+!!    ...
+!!
+!!
+      implicit none
+!
+      class(integral_manager) :: integrals
+      class(molecular_system) :: molecule
+!
+      real(dp) :: threshold
+      real(dp) :: span
+!
+      span = 1.0D-2
+!
+!     Do preliminary decomposition to 10-4
+!
+      threshold = 1.0D-4
+      call integrals%determine_auxilliary_cholesky_basis(molecule, threshold, span)
+      call integrals%invert_overlap_cholesky_vecs()
+!
+   end subroutine cholesky_decomposition_driver_integral_manager
 !
 !
    subroutine determine_auxilliary_cholesky_basis_integral_manager(integrals, molecule, threshold, span)
@@ -2865,7 +2891,7 @@ contains
       flush(output%unit)
       call cpu_time(s_invert_time)
 !
-!     Read Cholesky vectors of auxiliary basis overlap               
+!     Read Cholesky vectors of auxiliary basis overlap
 !
       call mem%alloc(aux_chol, n_cholesky, n_cholesky)
 !
@@ -2881,7 +2907,7 @@ contains
 !
       call mem%dealloc(aux_chol, n_cholesky, n_cholesky)
 !
-!     Write inverse Cholesky vectors of auxiliary basis overlap               
+!     Write inverse Cholesky vectors of auxiliary basis overlap
 !
       call auxiliary_inverse%init('auxiliary_basis_inverse', 'sequential', 'unformatted')
       call disk%open_file(auxiliary_inverse, 'write')
@@ -2896,7 +2922,7 @@ contains
 !
       call cpu_time(e_invert_time)
       write(output%unit, '(/a16, f11.2, a9)')'Time to invert: ',&
-                            e_invert_time - s_invert_time, ' seconds.' 
+                            e_invert_time - s_invert_time, ' seconds.'
 !
    end subroutine invert_overlap_cholesky_vecs_integral_manager
 !
