@@ -3261,6 +3261,82 @@ contains
    end subroutine construct_cholesky_vectors_integral_manager
 !
 !
+   subroutine cholesky_vecs_diagonal_test_integral_manager(integrals)
+!!
+!!
+!!
+      implicit none
+!
+      class(Integral_manager) :: integrals
+!
+      type(file) :: screening_info, cholesky_ao_vectors, auxiliary_inverse
+!
+      real(dp), dimension(:,:), allocatable :: D_diff, L_K_yz
+!
+      real(dp) :: ddot, max_diff, min_diff
+!
+      integer(i15) :: aop, n_sig_sp, n_sig_aop, n_cholesky, J
+!
+      write(output%unit, '(/a)') '- Test Cholesky vectors'
+      flush(output%unit)
+!
+      call screening_info%init('screening_info', 'sequential', 'unformatted')
+      call disk%open_file(screening_info, 'read')
+!
+      read(screening_info%unit, *) n_sig_sp, n_sig_aop
+!
+      call mem%alloc(D_diff, n_sig_aop, 1)
+!
+      read(screening_info%unit, *)
+      read(screening_info%unit, *) D_diff
+!
+      call disk%close_file(screening_info)
+!
+      call auxiliary_inverse%init('auxiliary_basis_inverse', 'sequential', 'unformatted')
+      call disk%open_file(auxiliary_inverse, 'read')
+!
+      read(auxiliary_inverse%unit) n_cholesky
+!
+      call disk%close_file(auxiliary_inverse)
+!
+      call mem%alloc(L_K_yz, n_cholesky, 1)
+!
+      call cholesky_ao_vectors%init('cholesky_ao_xy', 'direct', 'unformatted', dp*n_cholesky)
+      call disk%open_file(cholesky_ao_vectors, 'read')
+!
+      do aop = 1, n_sig_aop
+!
+         read(cholesky_ao_vectors%unit, rec=aop) (L_K_yz(J, 1), J = 1, n_cholesky)
+!
+         D_diff(aop, 1) = D_diff(aop, 1) - ddot(n_cholesky, L_K_yz, 1, L_K_yz, 1)
+!
+      enddo
+!
+      call disk%close_file(cholesky_ao_vectors)
+!
+      call mem%dealloc(L_K_yz, n_cholesky, 1)
+!
+      max_diff = zero
+!
+      do aop = 1, n_sig_aop
+         if (abs(D_diff(aop, 1)) .gt. max_diff) max_diff = abs(D_diff(aop, 1))
+      enddo
+!
+      min_diff =1.0d5
+!
+      do aop = 1, n_sig_aop
+         if (D_diff(aop, 1) .lt. min_diff) min_diff = D_diff(aop, 1)
+      enddo
+!
+      write(output%unit, '(/a71, e12.4)')'Maximal difference between approximate and actual diagonal:            ', max_diff
+      write(output%unit, '(/a71, e12.4)')'Minimal element of difference between approximate and actual diagonal: ', min_diff
+      flush(output%unit)
+!
+      call mem%dealloc(D_diff, n_sig_aop, 1)
+!
+   end subroutine cholesky_vecs_diagonal_test_integral_manager
+!
+!
    integer(i15) function get_size_sp(A_interval, B_interval)
 !!
 !!    Get size shell pair
