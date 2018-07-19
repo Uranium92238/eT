@@ -35,8 +35,6 @@ module integral_manager_class
 !
    contains
 !
-      procedure :: cholesky_decompose => cholesky_decompose_integral_manager
-!
       procedure :: cholesky_decomposition_driver => cholesky_decomposition_driver_integral_manager
 !
       procedure :: determine_auxilliary_cholesky_basis => determine_auxilliary_cholesky_basis_integral_manager
@@ -87,7 +85,7 @@ contains
       real(dp) :: threshold
       real(dp) :: span
 !
-      write(output%unit, '(/a51)') ':: Cholesky decomposition of two-electron integrals'
+      write(output%unit, '(/a51/)') ':: Cholesky decomposition of two-electron integrals'
       flush(output%unit)
 !
       write(output%unit, '(a20, i10)')'Number of aos:      ', molecule%get_n_aos()
@@ -99,8 +97,8 @@ contains
 !
       threshold = 1.0D-8
 !
-      write(output%unit, '(/a32, e12.4)') 'Target threshold for is: ', threshold
-      write(output%unit, '(/a32, e12.4)') 'Span factor is:          ', span
+      write(output%unit, '(/a21, e12.4)') 'Target threshold is: ', threshold
+      write(output%unit, '(/a21, e12.4)') 'Span factor:         ', span
       flush(output%unit)
 !
       call integrals%construct_significant_diagonal(molecule, 'target_diagonal', threshold)
@@ -109,7 +107,7 @@ contains
 !
       threshold = 1.0D-4
 !
-      write(output%unit, '(/a32, e12.4)') 'Initial threshold for is: ', threshold
+      write(output%unit, '(/a22, e12.4)') 'Initial threshold is: ', threshold
       flush(output%unit)
 !
       call integrals%construct_significant_diagonal(molecule, 'initial_diagonal', threshold)
@@ -213,9 +211,9 @@ contains
       enddo
 !
       write(output%unit, '(/a)')'Reduction of shell pairs:'
-      write(output%unit, '(a33, 2x, i6)')'Total number of shell pairs:     ', n_sp
-      write(output%unit, '(a33, 2x, i6)')'Significant shell pairs:         ', n_sig_sp
-      write(output%unit, '(a33, 2x, i6)')'Significant ao pairs:            ', n_sig_aop
+      write(output%unit, '(a33, 2x, i9)')'Total number of shell pairs:     ', n_sp
+      write(output%unit, '(a33, 2x, i9)')'Significant shell pairs:         ', n_sig_sp
+      write(output%unit, '(a33, 2x, i9)')'Significant ao pairs:            ', n_sig_aop
 !
 !     Construct significant diagonal
 !

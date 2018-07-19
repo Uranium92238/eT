@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.6)
 
 # set project name and languanges that are involved
 #set(CMAKE_CXX_COMPILER "g++-6")
