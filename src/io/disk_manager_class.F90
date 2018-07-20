@@ -12,12 +12,12 @@ module disk_manager_class
 !
 !     The total amount of disk space specified by user (standard: 30 GB)
 !
-      integer(i15), private :: total = 30000000000
+      integer(i15), private :: total = 3000000000000
 !
 !     The amount of disk space currently available, based on the files
 !     currently stored on file
 !
-      integer(i15), private :: available = 30000000000
+      integer(i15), private :: available = 3000000000000
 !
    contains
 !

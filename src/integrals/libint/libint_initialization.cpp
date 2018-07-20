@@ -59,7 +59,7 @@ void initialize_coulomb(){
 
 	Engine temporary(Operator::coulomb, basis.max_nprim(), basis.max_l());
 	electronic_repulsion = temporary;
-	electronic_repulsion.set_precision(1.0e-25);
+	electronic_repulsion.set_precision(1.0e-16);
 
 	finalize();
 
