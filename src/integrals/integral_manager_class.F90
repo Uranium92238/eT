@@ -214,6 +214,7 @@ contains
       write(output%unit, '(a33, 2x, i9)')'Total number of shell pairs:     ', n_sp
       write(output%unit, '(a33, 2x, i9)')'Significant shell pairs:         ', n_sig_sp
       write(output%unit, '(a33, 2x, i9)')'Significant ao pairs:            ', n_sig_aop
+      flush(output%unit)
 !
 !     Construct significant diagonal
 !
@@ -1652,7 +1653,7 @@ contains
 !
                   size_AB = size_AB + get_size_sp(A_interval, B_interval)
 !
-                  if ((2*size_AB*n_cholesky*dp + (n_cholesky**2)*dp)*1.1d0 .gt. mem%available) then ! 10 percent buffer
+                  if ((2*size_AB*n_cholesky*dp + (n_cholesky**2)*dp)*1.2d0 .gt. mem%available) then ! 20 percent buffer
 !
                      size_AB = size_AB - get_size_sp(A_interval, B_interval)
                      sp = sp - 1
@@ -1786,27 +1787,37 @@ contains
 !
          enddo ! A
 !
+          write(output%unit, *)'Done with integrals'
+         flush(output%unit)
+!
          call cpu_time(e_integral_time)
          full_integral_time = full_integral_time + e_integral_time - s_integral_time
 !
          call cpu_time(s_construct_time)
 !
-!        L_K_yz = sum_K (K | J)^-1 (J | yz)
+!        L_K_yz = sum_J (K | J)^-1 (J | yz)
+!
+         write(output%unit, *)'Allocation'
+         flush(output%unit)
 !
          call mem%alloc(L_K_yz, n_cholesky, size_AB)
+         write(output%unit, *)'Entering dgemm', n_cholesky, size_AB
+         flush(output%unit)
 !
          call dgemm('N', 'N',             &
                        n_cholesky,        &
                        size_AB,           &
                        n_cholesky,        &
                        one,               &
-                       aux_chol_inverse,  &
+                       aux_chol_inverse,  & !(K|J)^-1
                        n_cholesky,        &
                        g_J_yz,            &
                        n_cholesky,        &
                        zero,              &
                        L_K_yz,            &
                        n_cholesky)
+          write(output%unit, *)'Exiting dgemm'
+         flush(output%unit)
 !
          call mem%dealloc(g_J_yz, n_cholesky, size_AB)
 !
