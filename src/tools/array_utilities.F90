@@ -455,7 +455,7 @@ contains
       integer(i15), dimension(dim, 1), intent(out) :: used_diag
 !
       integer(i15) :: i, j, k, index_max
-      real(dp) :: max_diagonal
+      real(dp) :: max_diagonal, min_diagonal
 !
       real(dp), dimension(:,:), allocatable :: diagonal, temp_cholesky_vector
 !
@@ -568,13 +568,16 @@ contains
 !
       enddo
 !
+      min_diagonal = 1.0D10
+!
       do j = 1, dim
 !
-            if (diagonal(j, 1) .lt. zero .and. abs(diagonal(j, 1)) .gt. 1.0d-10) then
-               write(output%unit, '(a)') 'Warning: Found significant negative diagonal in full Cholesky decomposition'
-            endif
+            if (diagonal(j, 1) .lt. min_diagonal) min_diagonal = diagonal(j, 1)
+
 !
       enddo
+!
+      write(output%unit,'(a46, e12.4)') 'The smallest diagonal after decomposition is: ', min_diagonal
 !
       call mem%dealloc(diagonal, dim, 1)
 !

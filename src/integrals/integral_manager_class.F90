@@ -110,11 +110,17 @@ contains
       write(output%unit, '(/a22, e12.4)') 'Initial threshold is: ', threshold
       flush(output%unit)
 !
+      write(output%unit, *)'Available mem: ', mem%available
+!
       call integrals%construct_significant_diagonal(molecule, 'initial_diagonal', threshold)
+      write(output%unit, *)'Available mem: ', mem%available
 !
       call integrals%determine_auxilliary_cholesky_basis(molecule, threshold, span, 'initial_diagonal')
+      write(output%unit, *)'Available mem: ', mem%available
       call integrals%invert_overlap_cholesky_vecs()
+      write(output%unit, *)'Available mem: ', mem%available
       call integrals%construct_cholesky_vectors(molecule, 'target_diagonal')
+      write(output%unit, *)'Available mem: ', mem%available
 !
       threshold = 1.0D-8
 !
@@ -1854,6 +1860,7 @@ contains
          rec_offset = rec_offset + size_AB
 !
          call disk%close_file(cholesky_ao_vectors)
+         call mem%dealloc(L_K_yz, n_cholesky, size_AB)
 !
          done = .true.
 !
