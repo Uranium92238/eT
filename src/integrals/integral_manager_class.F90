@@ -527,6 +527,9 @@ contains
       sig_neg = 0
 !
       if (present(read_old_vecs)) then
+!
+         write(output%unit,*) 'old vecs present'
+!
          if (read_old_vecs) then
 !
             call auxiliary_inverse%init('auxiliary_basis_inverse', 'sequential', 'unformatted')
@@ -549,7 +552,7 @@ contains
 !
             call disk%close_file(basis_shell_data, 'delete')
 ! 
-             call mem%alloc(cholesky, n_sig_aop, n_cholesky)
+            call mem%alloc(cholesky, n_sig_aop, n_cholesky)
             cholesky = zero
 ! 
             call cholesky_ao_vectors%init('cholesky_ao_xy', 'direct', 'unformatted', dp*n_cholesky)
@@ -571,166 +574,166 @@ contains
 !
              call disk%close_file(cholesky_ao_vectors, 'delete')
 !
-!         !  Screen diagonal
+!            Screen diagonal
 !
-          ! n_new_sig_sp = 0
-          ! allocate(new_sig_sp(n_sig_sp,1))
+            n_new_sig_sp = 0
+            allocate(new_sig_sp(n_sig_sp,1))
 !
-          ! new_sig_sp = .false.
+            new_sig_sp = .false.
 !
-          ! sig_sp_counter = 0
+            sig_sp_counter = 0
 !
-          ! do sp = 1, n_sp
+            do sp = 1, n_sp
 !
-          !    if (sig_sp(sp, 1)) then
+               if (sig_sp(sp, 1)) then
 !
-          !       sig_sp_counter = sig_sp_counter + 1
+                  sig_sp_counter = sig_sp_counter + 1
 !
-          !       first = sig_sp_to_first_sig_aop(sig_sp_counter, 1)
-          !       last  = sig_sp_to_first_sig_aop(sig_sp_counter + 1, 1) - 1
+                  first = sig_sp_to_first_sig_aop(sig_sp_counter, 1)
+                  last  = sig_sp_to_first_sig_aop(sig_sp_counter + 1, 1) - 1
 !
-          !       new_sig_sp(sig_sp_counter, 1) = is_significant(D_xy(first:last, 1), &
-          !                                        last - first + 1, sig_threshold)
+                  new_sig_sp(sig_sp_counter, 1) = is_significant(D_xy(first:last, 1), &
+                                                   last - first + 1, sig_threshold)
 !
-          !       sig_sp(sp, 1) = new_sig_sp(sig_sp_counter, 1)
+                  sig_sp(sp, 1) = new_sig_sp(sig_sp_counter, 1)
 !
-          !       if (new_sig_sp(sig_sp_counter, 1)) then
+                  if (new_sig_sp(sig_sp_counter, 1)) then
 !
-          !          n_new_sig_sp = n_new_sig_sp + 1
+                     n_new_sig_sp = n_new_sig_sp + 1
 !
-          !       endif
+                  endif
 !
-          !    endif
+               endif
 !
-          ! enddo
+            enddo
 !
-          ! if (n_new_sig_sp .gt. 0) then
+            if (n_new_sig_sp .gt. 0) then
 !
-!         !    Update index lists: sps -> aops, aops -> aos, and sps -> full sps
+!              Update index lists: sps -> aops, aops -> aos, and sps -> full sps
 !
-          !    call mem%alloc_int(new_sig_sp_to_first_sig_aop, n_new_sig_sp + 1, 1)
-          !    new_sig_sp_to_first_sig_aop = 0
+               call mem%alloc_int(new_sig_sp_to_first_sig_aop, n_new_sig_sp + 1, 1)
+               new_sig_sp_to_first_sig_aop = 0
 !
-          !    call mem%alloc_int(sig_sp_to_first_sig_sp, n_sig_sp + 1, 1) ! 1 2 3 4 ... n_sig_sp, n_sig_sp + 1
-          !    sig_sp_to_first_sig_sp(n_sig_sp + 1, 1) = n_sig_sp + 1
+               call mem%alloc_int(sig_sp_to_first_sig_sp, n_sig_sp + 1, 1) ! 1 2 3 4 ... n_sig_sp, n_sig_sp + 1
+               sig_sp_to_first_sig_sp(n_sig_sp + 1, 1) = n_sig_sp + 1
 !
-          !    current_new_sig_sp = 1
-          !    n_new_sig_aop = 0
-          !    first_sig_aop = 1
+               current_new_sig_sp = 1
+               n_new_sig_aop = 0
+               first_sig_aop = 1
 !
-          !    do sp = 1, n_sig_sp
+               do sp = 1, n_sig_sp
 !
-          !       sig_sp_to_first_sig_sp(sp, 1) = sp
+                  sig_sp_to_first_sig_sp(sp, 1) = sp
 !
-          !       if (new_sig_sp(sp, 1)) then
+                  if (new_sig_sp(sp, 1)) then
 !
-          !          A = sig_sp_to_shells(sp, 1)
-          !          B = sig_sp_to_shells(sp, 2)
+                     A = sig_sp_to_shells(sp, 1)
+                     B = sig_sp_to_shells(sp, 2)
 !
-          !          A_interval = molecule%get_shell_limits(A)
-          !          B_interval = molecule%get_shell_limits(B)
+                     A_interval = molecule%get_shell_limits(A)
+                     B_interval = molecule%get_shell_limits(B)
 !
-          !          new_sig_sp_to_first_sig_aop(current_new_sig_sp, 1) = first_sig_aop
+                     new_sig_sp_to_first_sig_aop(current_new_sig_sp, 1) = first_sig_aop
 !
-          !          first_sig_aop = first_sig_aop + get_size_sp(A_interval, B_interval)
-          !          n_new_sig_aop = first_sig_aop - 1
+                     first_sig_aop = first_sig_aop + get_size_sp(A_interval, B_interval)
+                     n_new_sig_aop = first_sig_aop - 1
 !
-          !          current_new_sig_sp = current_new_sig_sp + 1
+                     current_new_sig_sp = current_new_sig_sp + 1
 
-          !       endif
+                  endif
 !
-          !    enddo
+               enddo
 !
-          !    new_sig_sp_to_first_sig_aop(current_new_sig_sp, 1) = n_new_sig_aop + 1
+               new_sig_sp_to_first_sig_aop(current_new_sig_sp, 1) = n_new_sig_aop + 1
 !
-          !    call mem%alloc_int(new_sig_aop_to_aos, n_new_sig_aop, 2)
+               call mem%alloc_int(new_sig_aop_to_aos, n_new_sig_aop, 2)
 !
-          !    call reduce_array_int(sig_aop_to_aos,       &
-          !                       new_sig_aop_to_aos,      &
-          !                       sig_sp_to_first_sig_aop, &
-          !                       new_sig_sp,              &
-          !                       n_sig_sp,                &
-          !                       n_sig_aop,               &
-          !                       n_new_sig_aop,           &
-          !                       2)
+               call reduce_array_int(sig_aop_to_aos,       &
+                                  new_sig_aop_to_aos,      &
+                                  sig_sp_to_first_sig_aop, &
+                                  new_sig_sp,              &
+                                  n_sig_sp,                &
+                                  n_sig_aop,               &
+                                  n_new_sig_aop,           &
+                                  2)
 !
-          !    call mem%alloc_int(new_sig_sp_to_shells, n_new_sig_sp, 2)
-          !    new_sig_sp_to_shells = 0
+               call mem%alloc_int(new_sig_sp_to_shells, n_new_sig_sp, 2)
+               new_sig_sp_to_shells = 0
 !
-          !    call reduce_array_int(sig_sp_to_shells,        &
-          !                          new_sig_sp_to_shells,    &
-          !                          sig_sp_to_first_sig_sp,  &
-          !                          new_sig_sp,              &
-          !                          n_sig_sp,                &
-          !                          n_sig_sp,                &
-          !                          n_new_sig_sp,            &
-          !                          2)
+               call reduce_array_int(sig_sp_to_shells,        &
+                                     new_sig_sp_to_shells,    &
+                                     sig_sp_to_first_sig_sp,  &
+                                     new_sig_sp,              &
+                                     n_sig_sp,                &
+                                     n_sig_sp,                &
+                                     n_new_sig_sp,            &
+                                     2)
 !
-          !    call mem%dealloc_int(sig_sp_to_first_sig_sp, n_sig_sp + 1, 1)
-          !    call mem%dealloc_int(sig_sp_to_shells, n_sig_sp, 2)
-          !    call mem%alloc_int(sig_sp_to_shells, n_new_sig_sp, 2)
+               call mem%dealloc_int(sig_sp_to_first_sig_sp, n_sig_sp + 1, 1)
+               call mem%dealloc_int(sig_sp_to_shells, n_sig_sp, 2)
+               call mem%alloc_int(sig_sp_to_shells, n_new_sig_sp, 2)
 !
-          !    sig_sp_to_shells = new_sig_sp_to_shells
-          !    call mem%dealloc_int(new_sig_sp_to_shells, n_new_sig_sp, 2)
+               sig_sp_to_shells = new_sig_sp_to_shells
+               call mem%dealloc_int(new_sig_sp_to_shells, n_new_sig_sp, 2)
 !
-          !    call mem%alloc(D_xy_new, n_new_sig_aop, 1)
+               call mem%alloc(D_xy_new, n_new_sig_aop, 1)
 !
-          !    call reduce_vector(D_xy,                     &
-          !                      D_xy_new,                  &
-          !                      sig_sp_to_first_sig_aop,   &
-          !                      new_sig_sp,                &
-          !                      n_sig_sp,                  &
-          !                      n_sig_aop,                 &
-          !                      n_new_sig_aop)
+               call reduce_vector(D_xy,                     &
+                                 D_xy_new,                  &
+                                 sig_sp_to_first_sig_aop,   &
+                                 new_sig_sp,                &
+                                 n_sig_sp,                  &
+                                 n_sig_aop,                 &
+                                 n_new_sig_aop)
 !
-          !    call mem%dealloc(D_xy, n_sig_aop, 1)
-          !    call mem%alloc(D_xy, n_new_sig_aop, 1)
+               call mem%dealloc(D_xy, n_sig_aop, 1)
+               call mem%alloc(D_xy, n_new_sig_aop, 1)
 !
-          !    call dcopy(n_new_sig_aop, D_xy_new, 1, D_xy, 1)
+               call dcopy(n_new_sig_aop, D_xy_new, 1, D_xy, 1)
 !
-          !    call mem%dealloc(D_xy_new, n_new_sig_aop, 1)
+               call mem%dealloc(D_xy_new, n_new_sig_aop, 1)
 !
-          !    call mem%alloc(cholesky_copy, n_new_sig_aop, n_cholesky)
+               call mem%alloc(cholesky_copy, n_new_sig_aop, n_cholesky)
 !
-          !    call reduce_array(cholesky,                  &
-          !                       cholesky_copy,            &
-          !                       sig_sp_to_first_sig_aop,  &
-          !                       new_sig_sp,               &
-          !                       n_sig_sp,                 &
-          !                       n_sig_aop,                &
-          !                       n_new_sig_aop,            &
-          !                       n_cholesky)
+               call reduce_array(cholesky,                  &
+                                  cholesky_copy,            &
+                                  sig_sp_to_first_sig_aop,  &
+                                  new_sig_sp,               &
+                                  n_sig_sp,                 &
+                                  n_sig_aop,                &
+                                  n_new_sig_aop,            &
+                                  n_cholesky)
 !
-          !    call mem%dealloc(cholesky, n_sig_aop, n_cholesky)
-          !    call mem%alloc(cholesky, n_new_sig_aop, n_cholesky)
-          !    cholesky = cholesky_copy
-          !    call mem%dealloc(cholesky_copy, n_new_sig_aop, n_cholesky)
-          !    call mem%dealloc(cholesky_new, n_sig_aop, n_qual_aop)
+               call mem%dealloc(cholesky, n_sig_aop, n_cholesky)
+               call mem%alloc(cholesky, n_new_sig_aop, n_cholesky)
+               cholesky = cholesky_copy
+               call mem%dealloc(cholesky_copy, n_new_sig_aop, n_cholesky)
+               call mem%dealloc(cholesky_new, n_sig_aop, n_qual_aop)
 !
-!         !     Deallocate old lists & reallocate + copy over new lists
+!               Deallocate old lists & reallocate + copy over new lists
 !
-          !    deallocate(new_sig_sp)
+               deallocate(new_sig_sp)
 !
-          !    call mem%dealloc_int(sig_sp_to_first_sig_aop, n_sig_sp + 1, 1)
-          !    call mem%alloc_int(sig_sp_to_first_sig_aop, n_new_sig_sp + 1, 1)
-          !    sig_sp_to_first_sig_aop = new_sig_sp_to_first_sig_aop
-          !    call mem%dealloc_int(new_sig_sp_to_first_sig_aop, n_new_sig_sp + 1, 1)
+               call mem%dealloc_int(sig_sp_to_first_sig_aop, n_sig_sp + 1, 1)
+               call mem%alloc_int(sig_sp_to_first_sig_aop, n_new_sig_sp + 1, 1)
+               sig_sp_to_first_sig_aop = new_sig_sp_to_first_sig_aop
+               call mem%dealloc_int(new_sig_sp_to_first_sig_aop, n_new_sig_sp + 1, 1)
 !
-          !    call mem%dealloc_int(sig_aop_to_aos, n_sig_aop, 2)
-          !    call mem%alloc_int(sig_aop_to_aos, n_new_sig_aop, 2)
-          !    sig_aop_to_aos = new_sig_aop_to_aos
-          !    call mem%dealloc_int(new_sig_aop_to_aos, n_new_sig_aop, 2)
+               call mem%dealloc_int(sig_aop_to_aos, n_sig_aop, 2)
+               call mem%alloc_int(sig_aop_to_aos, n_new_sig_aop, 2)
+               sig_aop_to_aos = new_sig_aop_to_aos
+               call mem%dealloc_int(new_sig_aop_to_aos, n_new_sig_aop, 2)
 !
-          !    n_sig_sp = n_new_sig_sp
-          !    n_sig_aop = n_new_sig_aop
+               n_sig_sp = n_new_sig_sp
+               n_sig_aop = n_new_sig_aop
 !
-          !    write(output%unit,*)n_sig_aop, n_sig_sp 
+               write(output%unit,*)n_sig_aop, n_sig_sp 
 !
-          ! else
+            else
 !
-          !    done = .true.
+               done = .true.
 !
-          ! endif
+            endif
 !
          endif
 
@@ -1796,10 +1799,11 @@ contains
 !     sum_K (K | J)^-1 (J | yz) in batches of yz
 !
       done = .false.
+
+      full_integral_time = 0
+      full_construct_time = 0
 !
       do while (.not. done)
-         full_integral_time = 0
-         full_construct_time = 0
 !
 !        Determine size of batch
 !
