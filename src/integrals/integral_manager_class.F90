@@ -551,14 +551,14 @@ contains
 ! 
              call mem%alloc(cholesky, n_sig_aop, n_cholesky)
             cholesky = zero
-! !
+! 
             call cholesky_ao_vectors%init('cholesky_ao_xy', 'direct', 'unformatted', dp*n_cholesky)
             call disk%open_file(cholesky_ao_vectors, 'read')
-! !
+! 
             do aop = 1, n_sig_aop
 !
                read(cholesky_ao_vectors%unit, rec=aop) (cholesky(aop, J), J = 1, n_cholesky)
-! !
+! 
                call mem%alloc(L_J_wx, 1, n_cholesky)
 !
                L_J_wx(1,:) = cholesky(aop, :)
@@ -879,7 +879,6 @@ contains
 !
          n_qual_aop_in_prev_sps = 0
 !
-         call cpu_time(s_integral_time)
 !
          call mem%alloc(g_wxyz, n_sig_aop, n_qual_aop)
 !
@@ -910,7 +909,10 @@ contains
                                     (A_interval%size)*(B_interval%size), &
                                     (C_interval%size)*(D_interval%size))
 !
+                     call cpu_time(s_integral_time)
                      call integrals%get_ao_g_wxyz(g_AB_CD, A, B, C, D)
+                     call cpu_time(e_integral_time)
+                     full_integral_time = full_integral_time + e_integral_time - s_integral_time
 !
                      do aop = 1, n_qual_aop_in_sp
 !
@@ -967,8 +969,6 @@ contains
 !
          enddo ! cd_sp
 !
-         call cpu_time(e_integral_time)
-         full_integral_time = full_integral_time + e_integral_time - s_integral_time
 !
 !        Subtract old cholesky vectors
 !
@@ -1775,9 +1775,6 @@ contains
 !
       call disk%close_file(diagonal_info)
 !
-      full_integral_time = 0
-      full_construct_time = 0
-!
       call auxiliary_inverse%init('auxiliary_basis_inverse', 'sequential', 'unformatted')
       call disk%open_file(auxiliary_inverse, 'read')
 !
@@ -1801,8 +1798,8 @@ contains
       done = .false.
 !
       do while (.not. done)
-!
-         call cpu_time(s_integral_time)
+         full_integral_time = 0
+         full_construct_time = 0
 !
 !        Determine size of batch
 !
@@ -1909,8 +1906,11 @@ contains
                      call mem%alloc(g_CD_AB, &
                               (C_interval%size)*(D_interval%size), &
                               (A_interval%size)*(B_interval%size))
+                     call cpu_time(s_integral_time)
 !
                      call integrals%get_ao_g_wxyz(g_CD_AB, C, D, A, B)
+                     call cpu_time(e_integral_time)
+                     full_integral_time = full_integral_time + e_integral_time - s_integral_time
 !
                      if (A == B) then
 !
@@ -1975,8 +1975,6 @@ contains
          write(output%unit, *)'Done with integrals'
          flush(output%unit)
 !
-         call cpu_time(e_integral_time)
-         full_integral_time = full_integral_time + e_integral_time - s_integral_time
 !
          call cpu_time(s_construct_time)
 !
