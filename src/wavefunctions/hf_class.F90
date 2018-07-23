@@ -175,19 +175,17 @@ contains
       call mem%alloc(wf%g_wxyz, (wf%n_ao)**2, (wf%n_ao)**2)
       wf%g_wxyz = zero
 !
-<<<<<<< HEAD
-=======
-      n_s = wf%molecule%get_n_shells()
+      n_s = wf%system%get_n_shells()
 !
       do D_s = 1, n_s
          do C_s = 1, n_s
             do B_s = 1, n_s
                do A_s = 1, n_s
 !
-                  A_interval = wf%molecule%get_shell_limits(A_s)
-                  B_interval = wf%molecule%get_shell_limits(B_s)
-                  C_interval = wf%molecule%get_shell_limits(C_s)
-                  D_interval = wf%molecule%get_shell_limits(D_s)
+                  A_interval = wf%system%get_shell_limits(A_s)
+                  B_interval = wf%system%get_shell_limits(B_s)
+                  C_interval = wf%system%get_shell_limits(C_s)
+                  D_interval = wf%system%get_shell_limits(D_s)
 !
                   call mem%alloc(g_AB_CD, &
                      (A_interval%size)*(B_interval%size), &
@@ -222,7 +220,6 @@ contains
          enddo
       enddo
 !
->>>>>>> d0a3b65d6ebde1d0ea70d8db1afd58d256ccf727
    end subroutine initialize_g_wxyz_hf
 !
 !

@@ -5,7 +5,7 @@ module basis_set_info
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !!
-!  
+!
    use kinds
    use disk_manager_class
 !
@@ -36,6 +36,10 @@ contains
       elseif (trim(basis) == 'cc-pV5Z' .or. trim(basis) == 'aug-cc-pV5Z') then ! 5Z -> 5*(1s)
 !
          info(1, 1) = 5
+!
+      elseif (trim(basis) == 'sto-3g') then ! TZ -> 1*(1s)
+!
+         info(1, 1) = 1
 !
       else
 !
@@ -78,6 +82,11 @@ contains
 !
          info(2, 1) = 5
          info(3, 1) = 5
+!
+      elseif (trim(basis) == 'sto-3g') then ! SZ -> 1*(1s)
+!
+         info(2, 1) = 1
+         info(3, 1) = 1
 !
       else
 !
@@ -134,6 +143,14 @@ contains
 !
          info(4,1) = 5
          info(5,1) = 5
+!
+      elseif (trim(basis) == 'sto-3g') then ! SZ -> 1*(1s,2s,2p,3s,3p)
+!
+         info(1, 1) = 1
+         info(2, 1) = 1
+         info(3, 1) = 1
+         info(4, 1) = 1
+         info(5, 1) = 1
 !
       else
 !

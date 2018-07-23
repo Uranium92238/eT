@@ -24,7 +24,7 @@ module atomic_class
       integer(i15) :: n_ao ! Number of aos sentered on this atom
 !
       integer(i15) :: n_shells
-      type(shell), dimension(:), allocatable :: shells ! dimension (:) ? we cannot allocate with mem manager anyhow! 
+      type(shell), dimension(:), allocatable :: shells ! dimension (:) ? we cannot allocate with mem manager anyhow!
 !
       real(dp) :: x
       real(dp) :: y
@@ -104,9 +104,9 @@ contains
 !!    Atomic density
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
-!!    Relies on the ordering from libint: 
+!!    Relies on the ordering from libint:
 !!       - core and valence (s, p, d, ...) (To be filled)
-!!       - polerization (p, d, ...) 
+!!       - polerization (p, d, ...)
 !!       - augmentation (s, p, d)
 !!
 !!    OBS! Note that for orbitals to be filled
@@ -126,13 +126,13 @@ contains
       integer(i15) :: i, Aufbau_shell, shell, ao_offset, n_electrons
 !
 !
-!     Find number of sub-shells to fill, allocate array for information on how many 
-!     instances of a certain sub-shell (depends on the basis set) there are 
+!     Find number of sub-shells to fill, allocate array for information on how many
+!     instances of a certain sub-shell (depends on the basis set) there are
 !     and how many electrons into this sub-shell (depends on angular momentum of sub-shell)
 !
       n_Aufbau_shells = atom%get_n_Aufbau()
 !
-      call mem%alloc_int(Aufbau_shell_info, n_Aufbau_shells, 1) ![number of instances of specific (n,l) combination, 2*m (number of electrons to fill shell)] 
+      call mem%alloc_int(Aufbau_shell_info, n_Aufbau_shells, 1) ![number of instances of specific (n,l) combination, 2*m (number of electrons to fill shell)]
 !
       call atom%get_Aufbau_info(n_Aufbau_shells, Aufbau_shell_info)
 !
@@ -143,14 +143,18 @@ contains
       shell = 0
       n_electrons = atom%number
 !
-      do Aufbau_shell = 1, n_Aufbau_shells 
+      write(output%unit,*) 'n aufbau shells', n_Aufbau_shells
 !
-         if (n_electrons == 0) return 
+      do Aufbau_shell = 1, n_Aufbau_shells
+!
+         if (n_electrons == 0) return
+!
+         write(output%unit,*) 'Aufbau_shell_info(Aufbau_shell, 1)', Aufbau_shell_info(Aufbau_shell, 1)
 !
          do i = 1, Aufbau_shell_info(Aufbau_shell, 1)
 !
             shell = shell + 1
-!  
+!
             density_diagonal_for_atom(ao_offset + 1 : ao_offset + atom%shells(shell)%size, 1) &
                  = real(min(n_electrons , 2*atom%shells(shell)%size), kind=dp)&
                   /(real(atom%shells(shell)%size, kind=dp))&
@@ -172,16 +176,16 @@ contains
 !!    Get number of Aufbau orbitals
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
-!!    Returns the number of subshells filled according to Aufbau principle 
+!!    Returns the number of subshells filled according to Aufbau principle
 !!
       implicit none
 !
-      class(atomic) :: atom 
+      class(atomic) :: atom
 !
-      if (atom%number .le. 0) then 
+      if (atom%number .le. 0) then
 !
          write(output%unit, *) 'Error: Illegal atomic number!'
-         stop 
+         stop
 !
       elseif ((atom%number .gt. 0) .and. (atom%number .le. 2)) then ! H - He
 !
@@ -198,7 +202,7 @@ contains
       else
 !
          write(output%unit, *) 'Error: eT cannot handle atoms heavier than Ar yet!'
-         stop 
+         stop
 !
       endif
 !
@@ -216,10 +220,10 @@ contains
       integer(i15) :: n_Aufbau_shells
       integer(i15), dimension(n_Aufbau_shells, 1) :: Aufbau_shell_info
 !
-      if (atom%number .le. 0) then 
+      if (atom%number .le. 0) then
 !
          write(output%unit, *) 'Error: Illegal atomic number!'
-         stop 
+         stop
 !
       elseif ((atom%number .gt. 0) .and. (atom%number .le. 2)) then ! H - He
 !
@@ -236,7 +240,7 @@ contains
       else
 !
          write(output%unit, *) 'Error: eT cannot handle atoms heavier than Ar yet!'
-         stop 
+         stop
 !
       endif
 !

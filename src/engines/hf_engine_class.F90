@@ -15,8 +15,8 @@ module hf_engine_class
 !
    type :: hf_engine
 !
-      real(dp) :: energy_threshold   = 1.0D-11
-      real(dp) :: residual_threshold = 1.0D-11
+      real(dp) :: energy_threshold   = 1.0D-12
+      real(dp) :: residual_threshold = 1.0D-12
 !
       integer(i15) :: max_iterations = 100
 !
@@ -94,7 +94,7 @@ contains
 !
       real(dp) :: t0, t1
 !
-      integer(i15) :: iteration = 1, ao = 0 
+      integer(i15) :: iteration = 1, ao = 0
 !
       real(dp), dimension(:,:), allocatable :: D ! Parameters, D_αβ
       real(dp), dimension(:,:), allocatable :: F ! Equations, F_ia

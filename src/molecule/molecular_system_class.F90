@@ -138,17 +138,9 @@ contains
 !
          do j = 1, n_shells_on_atoms(i,1)
 !
-<<<<<<< HEAD
             call molecule%atoms(i)%shells(j)%determine_angular_momentum()
             call molecule%atoms(i)%shells(j)%determine_last_ao_index()
             write(*, *)'atom: ', i, 'angular momentum:', molecule%atoms(i)%shells(j)%l
-=======
-            call molecule%atoms(i,1)%shells(j,1)%determine_angular_momentum()
-!
-           ! write(*, *)'atom: ', i, 'angular momentum:', molecule%atoms(i,1)%shells(j,1)%l
-!
-            call molecule%atoms(i,1)%shells(j,1)%determine_last_ao_index()
->>>>>>> d0a3b65d6ebde1d0ea70d8db1afd58d256ccf727
 !
          enddo
 !
@@ -427,6 +419,8 @@ contains
 !
          enddo
       enddo
+!
+      write(output%unit, *) 'Nuclear respulsion: ', get_nuclear_repulsion_molecular_system
 !
   end function get_nuclear_repulsion_molecular_system
 !

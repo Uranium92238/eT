@@ -25,7 +25,7 @@ module parameters
 !
 !  Conversion factors
 !
-   real(dp), parameter :: bohr_to_angstrom = 0.52917721067D0 ! 2014 CODATA
+   real(dp), parameter :: bohr_to_angstrom = 0.52917721092D0      ! 2010 CODATA
    real(dp), parameter :: angstrom_to_bohr = one/bohr_to_angstrom
 !
 end module parameters
