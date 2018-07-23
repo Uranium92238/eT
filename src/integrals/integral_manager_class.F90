@@ -91,6 +91,8 @@ contains
       write(output%unit, '(a20, i10)')'Number of aos:      ', molecule%get_n_aos()
       write(output%unit, '(a20, i10)')'Number of ao pairs: ', &
                                           molecule%get_n_aos()*(molecule%get_n_aos()+1)/2
+      write(output%unit, '(a20, i10)')'Number of shells:   ', &
+                                          molecule%get_n_shells()
       span = 1.0D-2
 !
 !     Determine significant diagonal to 10-8, and store as target diagonal
@@ -103,28 +105,7 @@ contains
 !
       call integrals%construct_significant_diagonal(molecule, 'target_diagonal', threshold)
 !
-!     Determine significant diagonal to 10-8, and store as initial diagonal
-!
-      threshold = 1.0D-4
-!
-      write(output%unit, '(/a22, e12.4)') 'Initial threshold is: ', threshold
-      flush(output%unit)
-!
-      write(output%unit, *)'Available mem: ', mem%available
-!
-      call integrals%construct_significant_diagonal(molecule, 'initial_diagonal', threshold)
-      write(output%unit, *)'Available mem: ', mem%available
-!
-      call integrals%determine_auxilliary_cholesky_basis(molecule, threshold, span, 'initial_diagonal')
-      write(output%unit, *)'Available mem: ', mem%available
-      call integrals%invert_overlap_cholesky_vecs()
-      write(output%unit, *)'Available mem: ', mem%available
-      call integrals%construct_cholesky_vectors(molecule, 'target_diagonal')
-      write(output%unit, *)'Available mem: ', mem%available
-!
-      threshold = 1.0D-8
-!
-      call integrals%determine_auxilliary_cholesky_basis(molecule, threshold, span, 'target_diagonal', .true.)
+      call integrals%determine_auxilliary_cholesky_basis(molecule, threshold, span, 'target_diagonal')
       call integrals%invert_overlap_cholesky_vecs()
       call integrals%construct_cholesky_vectors(molecule, 'target_diagonal')
       call integrals%cholesky_vecs_diagonal_test('target_diagonal')
