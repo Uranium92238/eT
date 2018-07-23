@@ -1897,7 +1897,6 @@ contains
                   B_interval = molecule%get_shell_limits(B)
 !
                   do CD_sp = 1, n_sp_in_basis
-
 !
                      C = basis_shell_info(CD_sp, 1)
                      D = basis_shell_info(CD_sp, 2)
@@ -1938,15 +1937,14 @@ contains
 !
                      if (A == B) then
 !
-                        do J = 1, basis_shell_info(CD_sp, 4)
-                           w = basis_aops_in_CD_sp(J, 1)
-                           x = basis_aops_in_CD_sp(J, 2)
-                           L = basis_aops_in_CD_sp(J, 3)
+                        do y = 1, A_interval%size
+                           do z = y, B_interval%size
+                              do J = 1, basis_shell_info(CD_sp, 4)
+                                 w = basis_aops_in_CD_sp(J, 1)
+                                 x = basis_aops_in_CD_sp(J, 2)
+                                 L = basis_aops_in_CD_sp(J, 3)
 !
-                           wx = C_interval%size*(x-1)+w
-!
-                           do y = 1, A_interval%size
-                              do z = y, B_interval%size
+                                 wx = C_interval%size*(x-1)+w
 
 !
                                     yz_packed = (max(y,z)*(max(y,z)-3)/2) + y + z
@@ -1960,15 +1958,14 @@ contains
 !
                         else
 !
-                           do J = 1, basis_shell_info(CD_sp, 4)
-                              w = basis_aops_in_CD_sp(J, 1)
-                              x = basis_aops_in_CD_sp(J, 2)
-                              L = basis_aops_in_CD_sp(J, 3)
+                           do y = 1, A_interval%size
+                              do z = 1, B_interval%size
+                                 do J = 1, basis_shell_info(CD_sp, 4)
+                                    w = basis_aops_in_CD_sp(J, 1)
+                                    x = basis_aops_in_CD_sp(J, 2)
+                                    L = basis_aops_in_CD_sp(J, 3)
 !
-                              wx = C_interval%size*(x-1) + w
-!
-                              do y = 1, A_interval%size
-                                 do z = 1, B_interval%size
+                                    wx = C_interval%size*(x-1) + w
 !
                                     yz = A_interval%size*(z-1) + y
 !
@@ -1980,9 +1977,12 @@ contains
 !
                         endif
 !
+                        call cpu_time(s_alloc_time)
                         call mem%dealloc(g_CD_AB,                 &
                            (C_interval%size)*(D_interval%size),   &
                            (A_interval%size)*(B_interval%size))
+                        call cpu_time(e_alloc_time)
+                        full_alloc_time = full_alloc_time + e_alloc_time - s_alloc_time
 !
                      call mem%dealloc_int(basis_aops_in_CD_sp, basis_shell_info(CD_sp, 4), 3)
 !
