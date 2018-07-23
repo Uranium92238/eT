@@ -401,7 +401,9 @@ contains
       real(dp) :: s_integral_time, e_integral_time, full_integral_time
       real(dp) :: s_reduce_time, e_reduce_time, full_reduce_time
       real(dp) :: s_construct_time, e_construct_time, full_construct_time
+      real(dp) :: s_alloc_time, e_alloc_time, full_alloc_time
 !
+      call cpu_time(s_select_basis_time)
       done = .false.
 !
       sig_threshold = threshold ! Maybe remove later
@@ -510,8 +512,6 @@ contains
       write(output%unit, '(/a)') ' - Determinig the elements of the basis'
       flush(output%unit)
 !
-      call cpu_time(s_select_basis_time)
-!
       write(output%unit, '(/a)')&
       'Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size'
       write(output%unit, '(a)') &
@@ -521,10 +521,6 @@ contains
       iteration = 0
 !
       n_cholesky = 0
-!
-      full_integral_time = 0
-      full_reduce_time = 0
-      full_construct_time = 0
 !
       sig_neg = 0
 !
@@ -741,6 +737,11 @@ contains
 
       endif
 !
+      full_alloc_time = zero
+      full_integral_time   = zero
+      full_reduce_time     = zero
+      full_construct_time  = zero
+!
       do while (.not. done)
 !
          write_warning = .true.
@@ -910,9 +911,13 @@ contains
                      A_interval = molecule%get_shell_limits(A)
                      B_interval = molecule%get_shell_limits(B)
 !
+                     call cpu_time(s_alloc_time)
+!
                      call mem%alloc(g_AB_CD, &
                                     (A_interval%size)*(B_interval%size), &
                                     (C_interval%size)*(D_interval%size))
+                     call cpu_time(e_alloc_time)
+                     full_alloc_time = full_alloc_time + e_alloc_time - s_alloc_time 
 !
                      call cpu_time(s_integral_time)
                      call integrals%get_ao_g_wxyz(g_AB_CD, A, B, C, D)
@@ -957,9 +962,12 @@ contains
 !
                      enddo
 !
+                     call cpu_time(s_alloc_time)
                      call mem%dealloc(g_AB_CD, &
                                        (A_interval%size)*(B_interval%size), &
                                        (C_interval%size)*(D_interval%size))
+                     call cpu_time(e_alloc_time)
+                     full_alloc_time = full_alloc_time + e_alloc_time - s_alloc_time
 !
                      sig_AB_sp = sig_AB_sp + 1
 !
@@ -1372,6 +1380,8 @@ contains
                             full_reduce_time, ' seconds.'
       write(output%unit, '(t6, a36, f11.2, a9)')'Time to make vectors:        ',&
                             full_construct_time, ' seconds.'
+      write(output%unit, '(t6, a39, f11.2, a9)')'Time to allocate and deallocate g_ABCD:',&
+                            full_alloc_time, ' seconds.'
       write(output%unit,'(a42, i7)')'Number of signigicant negative diagonals: ', sig_neg
 !
 !     Building the auxiliary_basis
@@ -1742,6 +1752,7 @@ contains
 !
       real(dp) :: s_build_vectors_time, e_build_vectors_time, full_integral_time, full_construct_time
       real(dp) :: s_integral_time, e_integral_time, s_construct_time, e_construct_time
+      real(dp) :: s_alloc_time, e_alloc_time, full_alloc_time
 !
       type(file) :: auxiliary_inverse, cholesky_ao_vectors, basis_shell_data, diagonal_info
 !
@@ -1802,8 +1813,9 @@ contains
 !
       done = .false.
 
-      full_integral_time = 0
-      full_construct_time = 0
+      full_integral_time = zero
+      full_construct_time = zero
+      full_alloc_time = zero
 !
       do while (.not. done)
 !
@@ -1909,9 +1921,15 @@ contains
                         endif
                      enddo
 !
+                     call cpu_time(s_alloc_time)
+!
                      call mem%alloc(g_CD_AB, &
                               (C_interval%size)*(D_interval%size), &
                               (A_interval%size)*(B_interval%size))
+
+                     call cpu_time(e_alloc_time)
+                     full_alloc_time = full_alloc_time + e_alloc_time - s_alloc_time
+!                  
                      call cpu_time(s_integral_time)
 !
                      call integrals%get_ao_g_wxyz(g_CD_AB, C, D, A, B)
@@ -2050,6 +2068,8 @@ contains
                             full_integral_time, ' seconds.'
       write(output%unit, '(t6, a36, f11.2, a9)')'Time to make vectors:        ',&
                             full_construct_time, ' seconds.'
+      write(output%unit, '(t6, a39, f11.2, a9)')'Time to allocate and deallocate g_ABCD:',&
+                            full_alloc_time, ' seconds.'
       flush(output%unit)
 
 !
