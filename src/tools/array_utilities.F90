@@ -231,6 +231,51 @@ contains
       real(dp), dimension(dim, columns) :: array
       real(dp), dimension(dim_reduced, columns) :: array_reduced
 !
+      integer(i15) :: block, current_pos, first, last, size, I
+!
+!$omp parallel do schedule(static) private(I, current_pos, block, first, last, size)
+      do I = 1, columns
+!
+         current_pos = 1
+!
+         do block = 1, n_blocks
+!
+            if (block_significant(block, 1)) then
+!
+               first = block_firsts(block, 1)
+               last  = block_firsts(block + 1, 1) - 1
+               size  = last - first + 1
+!
+               array_reduced(current_pos : current_pos + size - 1, I) = array(first : last, I)
+!
+               current_pos = current_pos + size
+!
+            endif
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine reduce_array
+!
+!
+   subroutine reduce_array_column(array, array_reduced, block_firsts, block_significant, n_blocks, dim, dim_reduced, rows)
+!!
+!!    Reduce array column
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Cuts the significant column blocks out of a array and places them in a reduced size array
+!!
+      implicit none
+!
+      integer(i15) :: dim, dim_reduced, n_blocks, rows
+!
+      logical, dimension(n_blocks, 1) :: block_significant
+      integer(i15), dimension(n_blocks + 1, 1) :: block_firsts
+!
+      real(dp), dimension(rows, dim) :: array
+      real(dp), dimension(rows, dim_reduced) :: array_reduced
+!
       integer(i15) :: block, current_pos, first, last, size
 !
       current_pos = 1
@@ -243,14 +288,16 @@ contains
             last  = block_firsts(block + 1, 1) - 1
             size  = last - first + 1
 !
-            array_reduced(current_pos : current_pos + size - 1, 1 : columns) = array(first : last, 1 : columns)
+            array_reduced(:, current_pos : current_pos + size - 1) = array(:, first : last)
+         !   array_reduced(current_pos : current_pos + size - 1, 1 : columns) = array(first : last, 1 : columns)
+!
             current_pos = current_pos + size
 !
          endif
 !
       enddo
 !
-   end subroutine reduce_array
+   end subroutine reduce_array_column
 !
 !
    subroutine reduce_array_int(array, array_reduced, block_firsts, block_significant, n_blocks, dim, dim_reduced, columns)
@@ -297,16 +344,16 @@ contains
    subroutine full_cholesky_decomposition(matrix, cholesky_vectors, dim, n_vectors,&
                                         threshold, used_diag)
 !!
-!!    Cholesky decomposition, 
+!!    Cholesky decomposition,
 !!    Written by Sarai Dery Folkestad, June 2017.
 !!
-!! 
+!!
       implicit none
 !
       integer(i15), intent(in) :: dim
       integer(i15), intent(out) :: n_vectors
 !
-      real(dp), intent(in) :: threshold 
+      real(dp), intent(in) :: threshold
 !
       real(dp), dimension(dim, dim), intent(inout) :: matrix
       real(dp), dimension(dim, dim), intent(out) :: cholesky_vectors
@@ -320,7 +367,7 @@ contains
 !
       if (present(used_diag)) used_diag = 0
 !
-!     Looping over the number of cholesky vectors   
+!     Looping over the number of cholesky vectors
 !
       do i = 1, dim
          n_vectors = i
@@ -354,7 +401,7 @@ contains
 !
          if (abs(max_diagonal) .lt. threshold) then
 !
-            n_vectors = n_vectors - 1                
+            n_vectors = n_vectors - 1
             return
          else
             if (present(used_diag)) used_diag(n_vectors, 1) = index_max
@@ -391,36 +438,36 @@ contains
    subroutine full_cholesky_decomposition_effective(matrix, cholesky_vectors, dim, n_vectors,&
                                         threshold, used_diag)
 !!
-!!    Cholesky decomposition, 
+!!    Cholesky decomposition,
 !!    Written by Sarai Dery Folkestad, June 2017.
 !!
-!! 
+!!
       implicit none
 !
       integer(i15), intent(in) :: dim
       integer(i15), intent(out) :: n_vectors
 !
-      real(dp), intent(in) :: threshold 
+      real(dp), intent(in) :: threshold
 !
       real(dp), dimension(dim, dim), intent(inout) :: matrix
       real(dp), dimension(dim, dim), intent(out) :: cholesky_vectors
 !
-      integer(i15), dimension(dim, 1), optional, intent(out) :: used_diag
+      integer(i15), dimension(dim, 1), intent(out) :: used_diag
 !
       integer(i15) :: i, j, k, index_max
-      real(dp) :: max_diagonal
+      real(dp) :: max_diagonal, min_diagonal
 !
       real(dp), dimension(:,:), allocatable :: diagonal, temp_cholesky_vector
 !
       real(dp), parameter :: tolerance = 1.0d-10
 !
-      if (present(used_diag)) used_diag = 0
+      used_diag = 0
 !
-!     Looping over the number of cholesky vectors   
+!     Looping over the number of cholesky vectors
 !
       call mem%alloc(diagonal, dim, 1)
 !
-      do i = 1, dim 
+      do i = 1, dim
 !
          diagonal(i, 1) = matrix(i, i)
 !
@@ -459,14 +506,14 @@ contains
 !
          if (abs(max_diagonal) .lt. threshold) then
 !
-            n_vectors = n_vectors - 1 
+            n_vectors = n_vectors - 1
             call mem%dealloc(diagonal, dim, 1)
-!            
+!
             return
 !
          else
 !
-            if (present(used_diag)) used_diag(n_vectors, 1) = index_max
+            used_diag(n_vectors, 1) = index_max
 !
          endif
 !
@@ -490,11 +537,17 @@ contains
                         1,                               &
                         one,                             &
                         cholesky_vectors(1, n_vectors),  &
-                        dim) 
+                        dim)
 !
-            call mem%dealloc(temp_cholesky_vector, 1, n_vectors - 1)  
+            call mem%dealloc(temp_cholesky_vector, 1, n_vectors - 1)
 !
          endif
+!
+         do j = 1, n_vectors - 1
+!
+            cholesky_vectors(used_diag(j,1), n_vectors) = zero
+!
+         enddo
 !
          call dscal(dim, one/sqrt(max_diagonal), cholesky_vectors(1, n_vectors), 1)
 !
@@ -504,7 +557,27 @@ contains
 !
          enddo
 !
+         diagonal(index_max, 1) = zero
+!
+         do j = 1, dim
+!
+            matrix(j,index_max) = 0.0D0
+            matrix(index_max,j) = 0.0D0
+!
+         enddo
+!
       enddo
+!
+      min_diagonal = 1.0D10
+!
+      do j = 1, dim
+!
+            if (diagonal(j, 1) .lt. min_diagonal) min_diagonal = diagonal(j, 1)
+
+!
+      enddo
+!
+      write(output%unit,'(a46, e12.4)') 'The smallest diagonal after decomposition is: ', min_diagonal
 !
       call mem%dealloc(diagonal, dim, 1)
 !

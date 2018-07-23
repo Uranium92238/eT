@@ -159,9 +159,70 @@ contains
 !
       class(hf) :: wf
 !
+      integer(i15) :: n_s
+!
+      real(dp), dimension(:,:), allocatable :: g_AB_CD
+!
+      type(interval) :: A_interval
+      type(interval) :: B_interval
+      type(interval) :: C_interval
+      type(interval) :: D_interval
+!
+      integer(i15) :: A_s, B_s, C_s, D_s
+!
+      integer(i15) :: a, b, c, d, ab_full, cd_full, ab_reduced, cd_reduced
+!
       call mem%alloc(wf%g_wxyz, (wf%n_ao)**2, (wf%n_ao)**2)
       wf%g_wxyz = zero
 !
+<<<<<<< HEAD
+=======
+      n_s = wf%molecule%get_n_shells()
+!
+      do D_s = 1, n_s
+         do C_s = 1, n_s
+            do B_s = 1, n_s
+               do A_s = 1, n_s
+!
+                  A_interval = wf%molecule%get_shell_limits(A_s)
+                  B_interval = wf%molecule%get_shell_limits(B_s)
+                  C_interval = wf%molecule%get_shell_limits(C_s)
+                  D_interval = wf%molecule%get_shell_limits(D_s)
+!
+                  call mem%alloc(g_AB_CD, &
+                     (A_interval%size)*(B_interval%size), &
+                     (C_interval%size)*(D_interval%size))
+!
+                  call wf%integrals%get_ao_g_wxyz(g_AB_CD, A_s, B_s, C_s, D_s)
+!
+                  do d = 1, D_interval%size
+                     do c = 1, C_interval%size
+                        do b = 1, B_interval%size
+                           do a = 1, A_interval%size
+!
+                              ab_reduced = index_two(a, b, A_interval%size)
+                              cd_reduced = index_two(c, d, C_interval%size)
+!
+                              ab_full = index_two(a + A_interval%first - 1, b + B_interval%first - 1, wf%n_ao)
+                              cd_full = index_two(c + C_interval%first - 1, d + D_interval%first - 1, wf%n_ao)
+!
+                              wf%g_wxyz(ab_full, cd_full) = g_AB_CD(ab_reduced, cd_reduced)
+!
+                           enddo
+                        enddo
+                     enddo
+                  enddo
+!
+                  call mem%dealloc(g_AB_CD, &
+                     (A_interval%size)*(B_interval%size), &
+                     (C_interval%size)*(D_interval%size))
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+>>>>>>> d0a3b65d6ebde1d0ea70d8db1afd58d256ccf727
    end subroutine initialize_g_wxyz_hf
 !
 !

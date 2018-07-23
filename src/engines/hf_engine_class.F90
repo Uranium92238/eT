@@ -15,8 +15,8 @@ module hf_engine_class
 !
    type :: hf_engine
 !
-      real(dp) :: energy_threshold   = 1.0D-6
-      real(dp) :: residual_threshold = 1.0D-6
+      real(dp) :: energy_threshold   = 1.0D-11
+      real(dp) :: residual_threshold = 1.0D-11
 !
       integer(i15) :: max_iterations = 100
 !
@@ -151,7 +151,7 @@ contains
          error = ddot(engine%n_equations, F, 1, F, 1)
          error = sqrt(error)
 !
-         if (error .lt. 1.0D-6) then
+         if (error .lt. engine%residual_threshold) then
 !
             converged = .true.
 !

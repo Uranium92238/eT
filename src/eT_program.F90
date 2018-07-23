@@ -32,7 +32,7 @@ program eT_program
    call engine%initialize(wf)
 !
   !  call wf%integrals%cholesky_decompose(wf%molecule)
-  ! call engine%solve(wf) ! solves Hartree Fock
+   call engine%solve(wf) ! solves Hartree Fock
 !
    call wf%finalize()
 !

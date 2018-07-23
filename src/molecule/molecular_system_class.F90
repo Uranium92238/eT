@@ -95,7 +95,7 @@ contains
 !
          allocate(n_basis_in_shells(n_shells_on_atoms(i,1), 1))
          call get_n_basis_in_shells(i, n_basis_in_shells)
-!  
+!
          molecule%atoms(i)%n_ao = 0
 !
          do j = 1, n_shells_on_atoms(i, 1)
@@ -138,9 +138,17 @@ contains
 !
          do j = 1, n_shells_on_atoms(i,1)
 !
+<<<<<<< HEAD
             call molecule%atoms(i)%shells(j)%determine_angular_momentum()
             call molecule%atoms(i)%shells(j)%determine_last_ao_index()
             write(*, *)'atom: ', i, 'angular momentum:', molecule%atoms(i)%shells(j)%l
+=======
+            call molecule%atoms(i,1)%shells(j,1)%determine_angular_momentum()
+!
+           ! write(*, *)'atom: ', i, 'angular momentum:', molecule%atoms(i,1)%shells(j,1)%l
+!
+            call molecule%atoms(i,1)%shells(j,1)%determine_last_ao_index()
+>>>>>>> d0a3b65d6ebde1d0ea70d8db1afd58d256ccf727
 !
          enddo
 !
@@ -149,7 +157,7 @@ contains
       if (molecule%charge .ne. 0) then
          write(output%unit) 'Error: SOAD not yet implemented for charged species!'
          stop
-      endif 
+      endif
 !
    end subroutine initialize_molecular_system
 !
@@ -587,7 +595,7 @@ contains
       offset_diagonal = 0
 !
       do I = 1, molecule%n_atoms
-! 
+!
          call mem%alloc(atom_density_diagonal, molecule%atoms(I)%n_ao, 1)
 !
          call molecule%atoms(I)%AD(atom_density_diagonal)

@@ -44,7 +44,7 @@ void initialize_basis(){
 	atoms = temporary_atoms;
 
 	cout.setstate(ios_base::failbit);
-	BasisSet temporary("aug-cc-pVDZ", atoms);
+	BasisSet temporary("aug-cc-pVTZ", atoms);
 	cout.clear();
 
 	basis = temporary;
@@ -59,6 +59,7 @@ void initialize_coulomb(){
 
 	Engine temporary(Operator::coulomb, basis.max_nprim(), basis.max_l());
 	electronic_repulsion = temporary;
+	electronic_repulsion.set_precision(1.0e-16);
 
 	finalize();
 

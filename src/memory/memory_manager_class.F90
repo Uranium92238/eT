@@ -41,14 +41,14 @@ module memory_manager_class
 !
    type :: memory_manager
 !
-!     The total amount of memory specified by user (standard: 30 GB)
+!     The total amount of memory specified by user (standard: 256 GB)
 !
-      integer(i15) :: total = 30000000000
+      integer(i15) :: total = 256000000000
 !
 !     The amount of memory currently available, based on the arrays currently allocated
 !     (memory used by objects and local variables are not included in this estimate)
 !
-      integer(i15) :: available = 30000000000
+      integer(i15) :: available = 256000000000
 !
 !     Buffer for handling batches (standard: 10%). This means in practice that 'required
 !     memory' estimates are increased by 10% in case they miss they slightly underestimate
