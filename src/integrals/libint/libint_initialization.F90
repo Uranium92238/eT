@@ -7,6 +7,14 @@ module libint_initialization
 !
 contains
 !
+   subroutine initialize_libint()
+!
+      implicit none
+!
+      call initialize_libint_c()
+!
+   end subroutine initialize_libint()
+!
    subroutine initialize_overlap()
 !
       implicit none
