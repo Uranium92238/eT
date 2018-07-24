@@ -5,7 +5,7 @@ extern "C" {
 #endif
 
 void initialize_coulomb();
-void initialize_basis();
+void initialize_basis(char *basisset);
 void initialize_kinetic();
 void initialize_nuclear();
 void initialize_overlap();

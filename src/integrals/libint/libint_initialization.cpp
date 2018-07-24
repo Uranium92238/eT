@@ -37,7 +37,7 @@ extern Engine overlap;
 vector<Atom> atoms;
 extern vector<Atom> atoms;
 
-void initialize_basis(){
+void initialize_basis(char *basisset){
 
 	initialize();
 
@@ -47,7 +47,7 @@ void initialize_basis(){
 	atoms = temporary_atoms;
 
 	cout.setstate(ios_base::failbit);
-	BasisSet temporary("cc-pVDZ", atoms);
+	BasisSet temporary(basisset, atoms);
 	cout.clear();
 
 	basis = temporary;
