@@ -25,7 +25,7 @@ void get_ao_L_wxyz(double *L, long *s1, long *s3){
 	const long sh1 = *s1 - 1;
 	const long sh3 = *s3 - 1; // C++ arrays start at index 0!
 
-	initialize();
+	//initialize();
 
 	int thread = omp_get_thread_num();
 
@@ -81,7 +81,7 @@ void get_ao_L_wxyz(double *L, long *s1, long *s3){
 		}
 	}
 
-	finalize();
+	//finalize();
 
 	return;
 }

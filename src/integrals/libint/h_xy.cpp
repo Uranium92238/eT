@@ -24,11 +24,11 @@ using namespace libint2;
 
 void get_n_aos(long *n_ao){
 
-	initialize();
+	//initialize();
 
 	*n_ao = basis.nbf();
 
-	finalize();
+	//finalize();
 
 	return;
 
@@ -38,7 +38,7 @@ void get_ao_h_xy(double *h){
 //
 // Initialize libint calculator
 //
-	initialize();
+	//initialize();
 //
 // Calculate number of basis functions from the basis object
 //
@@ -110,7 +110,7 @@ void get_ao_h_xy(double *h){
   		}
 	}
 //
-	finalize();
+	// finalize();
 //
 	return;
 }

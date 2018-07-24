@@ -37,9 +37,25 @@ extern Engine overlap;
 vector<Atom> atoms;
 extern vector<Atom> atoms;
 
+<<<<<<< HEAD
 void initialize_basis(char *basisset){
+=======
+void initialize_libint(){
+>>>>>>> 96b7e7e6529d91b3b6ce74c7aa5429b5c557f235
 
 	initialize();
+
+}
+
+void finalize_libint(){
+
+	finalize();
+
+}
+
+void initialize_basis(){
+
+	//initialize();
 
 	string xyzfilename = "Water.xyz"; // see XYZ format description at http://en.wikipedia.org/wiki/XYZ_file_format
 	ifstream input_file(xyzfilename);
@@ -52,13 +68,13 @@ void initialize_basis(char *basisset){
 
 	basis = temporary;
 
-	finalize();
+	//finalize();
 
 }
 
 void initialize_coulomb(){
 
-	initialize();
+	//initialize();
 
 	cout << "Initializing " << omp_get_max_threads() << " electronic repulsion engines for parallellization." << endl;
 
@@ -71,39 +87,39 @@ void initialize_coulomb(){
 		electronic_repulsion_engines[i] = temporary; // One engine per thread
 	}
 
-	finalize();
+	//finalize();
 
 }
 
 void initialize_kinetic(){
 
-	initialize();
+	//initialize();
 
 	Engine temporary(Operator::kinetic, basis.max_nprim(), basis.max_l());
 	kinetic = temporary;
 
-	finalize();
+	//finalize();
 
 }
 
 void initialize_nuclear(){
 
-	initialize();
+	//initialize();
 
 	Engine temporary(Operator::nuclear, basis.max_nprim(), basis.max_l());
 	nuclear = temporary;
 
-	finalize();
+	//finalize();
 
 }
 
 void initialize_overlap(){
 
-	initialize();
+	//initialize();
 
 	Engine temporary(Operator::overlap, basis.max_nprim(), basis.max_l());
 	overlap = temporary;
 
-	finalize();
+	//finalize();
 
 }

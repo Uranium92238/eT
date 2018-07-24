@@ -19,7 +19,7 @@ using namespace std;
 
 void get_shell_numbers(int *atom, int *sn){
 
-	initialize();
+	//initialize();
 
 	// string xyzfilename = "Water.xyz"; // see XYZ format description at http://en.wikipedia.org/wiki/XYZ_file_format
 	// ifstream input_file(xyzfilename);
@@ -40,13 +40,13 @@ void get_shell_numbers(int *atom, int *sn){
 
 	}
 
-	finalize();
+	//finalize();
 
 }
 
 void get_first_ao_in_shells(int *atom, int *faois){
 
-	initialize();
+	//initialize();
 
 	// string xyzfilename = "Water.xyz"; // see XYZ format description at http://en.wikipedia.org/wiki/XYZ_file_format
 	// ifstream input_file(xyzfilename);
@@ -69,13 +69,13 @@ void get_first_ao_in_shells(int *atom, int *faois){
 
 	}
 
-	finalize();
+	//finalize();
 
 }
 
 void get_n_basis_in_shells(int *atom, int *nbis){
 
-	initialize();
+	//initialize();
 
 	// string xyzfilename = "Water.xyz"; // see XYZ format description at http://en.wikipedia.org/wiki/XYZ_file_format
 	// ifstream input_file(xyzfilename);
@@ -97,13 +97,13 @@ void get_n_basis_in_shells(int *atom, int *nbis){
 
 	}
 
-	finalize();
+	//finalize();
 
 }
 
 void get_n_shells_on_atoms(int *nsoa){
 
-	initialize();
+	//initialize();
 
 	// string xyzfilename = "Water.xyz"; // see XYZ format description at http://en.wikipedia.org/wiki/XYZ_file_format
 	// ifstream input_file(xyzfilename);
@@ -124,6 +124,6 @@ void get_n_shells_on_atoms(int *nsoa){
 
 	}
 
-	finalize();
+	//finalize();
 
 }

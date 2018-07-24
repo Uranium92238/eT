@@ -22,11 +22,11 @@ using namespace libint2;
 
 void get_n_shells(int *ns){
 
-	initialize();
+	//initialize();
 
 	*ns = basis.size();
 
-	finalize();
+	//finalize();
 
 	return;
 
@@ -34,7 +34,7 @@ void get_n_shells(int *ns){
 
 void get_ao_s_xy(double *s){
 
-	initialize();
+	//initialize();
 
 	int num_aos = 0;
 	num_aos = basis.nbf();
@@ -69,7 +69,7 @@ void get_ao_s_xy(double *s){
   		}
 	}
 
-	finalize();
+	//finalize();
 
 	return;
 }

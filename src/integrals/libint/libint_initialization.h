@@ -4,6 +4,9 @@ extern "C" {
 #else
 #endif
 
+void initialize_libint();
+void finalize_libint();
+
 void initialize_coulomb();
 void initialize_basis(char *basisset);
 void initialize_kinetic();
