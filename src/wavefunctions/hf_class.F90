@@ -509,7 +509,7 @@ contains
    end subroutine construct_ao_fock_hf
 !
 !
-   subroutine calculate_hf_energy_hf(wf, GD_wx)
+   subroutine calculate_hf_energy_hf(wf, half_GD_wx)
 !!
 !!    Calculate HF energy
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -533,7 +533,7 @@ contains
       real(dp) :: ddot
 !
    !  real(dp), dimension(:,:), allocatable :: GD_wx
-      real(dp), dimension(wf%n_ao, wf%n_ao) :: GD_wx
+      real(dp), dimension(wf%n_ao, wf%n_ao) :: half_GD_wx
 !
       real(dp), dimension(:,:), allocatable :: h_wx
       real(dp), dimension(:,:), allocatable :: g_wyzx
@@ -542,7 +542,7 @@ contains
 !
 !     G(D)_αβ = 2 sum_γδ g_αβγδ D_γδ
 !
-GD_wx = two*GD_wx
+!GD_wx = two*GD_wx
 !       call mem%alloc(GD_wx, wf%n_ao, wf%n_ao)
 ! !
 !       call dgemm('N', 'N',       &
@@ -588,7 +588,7 @@ GD_wx = two*GD_wx
       wf%hf_energy = wf%system%get_nuclear_repulsion()
 !
       wf%hf_energy = wf%hf_energy + ddot((wf%n_ao)**2, h_wx, 1, wf%ao_density, 1)
-      wf%hf_energy = wf%hf_energy + (one/four)*ddot((wf%n_ao)**2, wf%ao_density, 1, GD_wx, 1)
+      wf%hf_energy = wf%hf_energy + two*(one/four)*ddot((wf%n_ao)**2, wf%ao_density, 1, half_GD_wx, 1)
 !
       call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
    !   call mem%dealloc(GD_wx, wf%n_ao, wf%n_ao)
