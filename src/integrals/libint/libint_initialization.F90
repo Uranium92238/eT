@@ -13,7 +13,7 @@ contains
 !
       call initialize_libint_c()
 !
-   end subroutine initialize_libint()
+   end subroutine initialize_libint
 !
    subroutine finalize_libint()
 !
@@ -21,7 +21,7 @@ contains
 !
       call finalize_libint_c()
 !
-   end subroutine finalize_libint()
+   end subroutine finalize_libint
 !
    subroutine initialize_overlap()
 !

@@ -1895,146 +1895,145 @@ contains
             enddo
          enddo
          write(*,*) 'parallel loop start'
-!$omp parallel do &
-!$omp private(A, B, C, D, g_CD_AB, &
-!$omp A_interval, B_interval, C_interval, D_interval)
-         do a = 1, n_s
-            do b = 1, n_s
-               do c = 1, n_s 
-                  do d = 1, n_s 
-                     A_interval = molecule%get_shell_limits(A)
-                     B_interval = molecule%get_shell_limits(B)
-                     C_interval = molecule%get_shell_limits(C)
-                     D_interval = molecule%get_shell_limits(D)
-!
-                     call mem%alloc(g_CD_AB, &
-                       (C_interval%size)*(D_interval%size), &
-                       (A_interval%size)*(B_interval%size))
-!
-                     call integrals%get_ao_g_wxyz(g_CD_AB, C, D, A, B)
-!
-                     call mem%dealloc(g_CD_AB, &
-                       (C_interval%size)*(D_interval%size), &
-                       (A_interval%size)*(B_interval%size))
-                  enddo
-               enddo
-            enddo
-         enddo
-!$omp end parallel do
-stop
-!
 !!$omp parallel do &
-!!$omp private(AB_sp, CD_sp, I, A, B, A_interval, &
-!!$omp B_interval, C, D, C_interval, D_interval, &
-!!$omp basis_aops_in_CD_sp, current_aop_in_sp, g_CD_AB, &
-!!$omp w, x, y, z, wx, yz, yz_packed, L, J) &
-!!$omp shared(g_J_yz, offset_yz, basis_shell_info, cholesky_basis)
+!!$omp private(A, B, C, D, g_CD_AB, &
+!!$omp A_interval, B_interval, C_interval, D_interval)
+!         do a = 1, n_s
+!            do b = 1, n_s
+!               do c = 1, n_s 
+!                  do d = 1, n_s 
+!                     A_interval = molecule%get_shell_limits(A)
+!                     B_interval = molecule%get_shell_limits(B)
+!                     C_interval = molecule%get_shell_limits(C)
+!                     D_interval = molecule%get_shell_limits(D)
 !!
-!         do AB_sp = 1, AB_counter
-!! 
-!            A = offset_yz(AB_sp, 2)
-!            B = offset_yz(AB_sp, 3)
-!!
-!            A_interval = molecule%get_shell_limits(A)
-!            B_interval = molecule%get_shell_limits(B)
-!!
-!            do CD_sp = 1, n_sp_in_basis
-!!
-!               C = basis_shell_info(CD_sp, 1)
-!               D = basis_shell_info(CD_sp, 2)
-!!
-!               C_interval = molecule%get_shell_limits(C)
-!               D_interval = molecule%get_shell_limits(D)
-!!
-!               call mem%alloc_int(basis_aops_in_CD_sp, basis_shell_info(CD_sp, 4), 3)
-!!
-!               current_aop_in_sp = 0
-!!
-!               do I = 1, n_cholesky
-!                  if (cholesky_basis(I,3) == basis_shell_info(CD_sp, 3)) then
-!!
-!                     current_aop_in_sp = current_aop_in_sp + 1
-!!
-!                     basis_aops_in_CD_sp(current_aop_in_sp, 1) = cholesky_basis(I,1) - C_interval%first + 1
-!                     basis_aops_in_CD_sp(current_aop_in_sp, 2) = cholesky_basis(I,2) - D_interval%first + 1
-!                     basis_aops_in_CD_sp(current_aop_in_sp, 3) = I
-!!
-!                  endif
-!               enddo
-!!
-!      !       ! call cpu_time(s_alloc_time)
-!!
-!              call mem%alloc(g_CD_AB, &
+!                     call mem%alloc(g_CD_AB, &
 !                       (C_interval%size)*(D_interval%size), &
 !                       (A_interval%size)*(B_interval%size))
-!              g_CD_AB = zero
-!              !write(*,*) OMP_GET_THREAD_NUM(), C, D, A, B, &
-!              !(C_interval%size), (D_interval%size), (A_interval%size),(B_interval%size)
-!
-!      !       ! call cpu_time(e_alloc_time)
-!      !       ! full_alloc_time = full_alloc_time + e_alloc_time - s_alloc_time
-!!     !         
-!      !       ! call cpu_time(s_integral_time)
-!              ! write(output%unit, *)C, D, A, B, (C_interval%size)*(D_interval%size), (A_interval%size)*(B_interval%size)
-!              call integrals%get_ao_g_wxyz(g_CD_AB, C, D, A, B)
-!      !       ! call cpu_time(e_integral_time)
-!      !       ! full_integral_time = full_integral_time + e_integral_time - s_integral_time
 !!
-!      !        if (A == B) then
+!                     call integrals%get_ao_g_wxyz(g_CD_AB, C, D, A, B)
 !!
-!      !           do y = 1, A_interval%size
-!      !              do z = y, B_interval%size
-!!
-!      !                 yz_packed = (max(y,z)*(max(y,z)-3)/2) + y + z
-!      !                 yz = A_interval%size*(z-1) + y
-!!
-!      !                 do J = 1, basis_shell_info(CD_sp, 4)
-!      !                    w = basis_aops_in_CD_sp(J, 1)
-!      !                    x = basis_aops_in_CD_sp(J, 2)
-!      !                    L = basis_aops_in_CD_sp(J, 3)
-!      !                    wx = C_interval%size*(x-1)+w
-!
-!      !                    g_J_yz(L, yz_packed + offset_yz(AB_sp, 1)) = g_CD_AB(wx, yz)
-!!
-!      !                    enddo
-!      !                 enddo
-!      !              enddo
-!!
-!      !           else
-!!
-!      !              do y = 1, A_interval%size
-!      !                 do z = 1, B_interval%size
-!      !                    do J = 1, basis_shell_info(CD_sp, 4)
-!      !                       w = basis_aops_in_CD_sp(J, 1)
-!      !                       x = basis_aops_in_CD_sp(J, 2)
-!      !                       L = basis_aops_in_CD_sp(J, 3)
-!!
-!      !                       wx = C_interval%size*(x-1) + w
-!!
-!      !                       yz = A_interval%size*(z-1) + y
-!!
-!      !                       g_J_yz(L, yz + offset_yz(AB_sp, 1)) = g_CD_AB(wx, yz)
-!!
-!      !                    enddo
-!      !                 enddo
-!      !              enddo
-!!
-!      !           endif
-!!
-!      !      !     call cpu_time(s_alloc_time)
-!                  call mem%dealloc(g_CD_AB,                 &
-!                     (C_interval%size)*(D_interval%size),   &
-!                     (A_interval%size)*(B_interval%size))
-!      !        !   call cpu_time(e_alloc_time)
-!      !        !   full_alloc_time = full_alloc_time + e_alloc_time - s_alloc_time
-!!
-!               call mem%dealloc_int(basis_aops_in_CD_sp, basis_shell_info(CD_sp, 4), 3)
-!!
-!            enddo ! CD
-!!
-!         enddo ! AB
+!                     call mem%dealloc(g_CD_AB, &
+!                       (C_interval%size)*(D_interval%size), &
+!                       (A_interval%size)*(B_interval%size))
+!                  enddo
+!               enddo
+!            enddo
+!         enddo
 !!$omp end parallel do
-stop
+!stop
+!
+!$omp parallel do &
+!$omp private(AB_sp, CD_sp, I, A, B, A_interval, &
+!$omp B_interval, C, D, C_interval, D_interval, &
+!$omp basis_aops_in_CD_sp, current_aop_in_sp, g_CD_AB, &
+!$omp w, x, y, z, wx, yz, yz_packed, L, J) &
+!$omp shared(g_J_yz, offset_yz, basis_shell_info, cholesky_basis)
+!
+         do AB_sp = 1, AB_counter
+! 
+            A = offset_yz(AB_sp, 2)
+            B = offset_yz(AB_sp, 3)
+!
+            A_interval = molecule%get_shell_limits(A)
+            B_interval = molecule%get_shell_limits(B)
+!
+            do CD_sp = 1, n_sp_in_basis
+!
+               C = basis_shell_info(CD_sp, 1)
+               D = basis_shell_info(CD_sp, 2)
+!
+               C_interval = molecule%get_shell_limits(C)
+               D_interval = molecule%get_shell_limits(D)
+!
+               call mem%alloc_int(basis_aops_in_CD_sp, basis_shell_info(CD_sp, 4), 3)
+!
+               current_aop_in_sp = 0
+!
+               do I = 1, n_cholesky
+                  if (cholesky_basis(I,3) == basis_shell_info(CD_sp, 3)) then
+!
+                     current_aop_in_sp = current_aop_in_sp + 1
+!
+                     basis_aops_in_CD_sp(current_aop_in_sp, 1) = cholesky_basis(I,1) - C_interval%first + 1
+                     basis_aops_in_CD_sp(current_aop_in_sp, 2) = cholesky_basis(I,2) - D_interval%first + 1
+                     basis_aops_in_CD_sp(current_aop_in_sp, 3) = I
+!
+                  endif
+               enddo
+!
+              ! call cpu_time(s_alloc_time)
+!
+              call mem%alloc(g_CD_AB, &
+                       (C_interval%size)*(D_interval%size), &
+                       (A_interval%size)*(B_interval%size))
+              g_CD_AB = zero
+              !write(*,*) OMP_GET_THREAD_NUM(), C, D, A, B, &
+              !(C_interval%size), (D_interval%size), (A_interval%size),(B_interval%size)
+
+              ! call cpu_time(e_alloc_time)
+              ! full_alloc_time = full_alloc_time + e_alloc_time - s_alloc_time
+!               
+              ! call cpu_time(s_integral_time)
+              ! write(output%unit, *)C, D, A, B, (C_interval%size)*(D_interval%size), (A_interval%size)*(B_interval%size)
+              call integrals%get_ao_g_wxyz(g_CD_AB, C, D, A, B)
+              ! call cpu_time(e_integral_time)
+              ! full_integral_time = full_integral_time + e_integral_time - s_integral_time
+!
+               if (A == B) then
+!
+                  do y = 1, A_interval%size
+                     do z = y, B_interval%size
+!
+                        yz_packed = (max(y,z)*(max(y,z)-3)/2) + y + z
+                        yz = A_interval%size*(z-1) + y
+!
+                        do J = 1, basis_shell_info(CD_sp, 4)
+                           w = basis_aops_in_CD_sp(J, 1)
+                           x = basis_aops_in_CD_sp(J, 2)
+                           L = basis_aops_in_CD_sp(J, 3)
+                           wx = C_interval%size*(x-1)+w
+
+                           g_J_yz(L, yz_packed + offset_yz(AB_sp, 1)) = g_CD_AB(wx, yz)
+!
+                           enddo
+                        enddo
+                     enddo
+!
+                  else
+!
+                     do y = 1, A_interval%size
+                        do z = 1, B_interval%size
+                           do J = 1, basis_shell_info(CD_sp, 4)
+                              w = basis_aops_in_CD_sp(J, 1)
+                              x = basis_aops_in_CD_sp(J, 2)
+                              L = basis_aops_in_CD_sp(J, 3)
+!
+                              wx = C_interval%size*(x-1) + w
+!
+                              yz = A_interval%size*(z-1) + y
+!
+                              g_J_yz(L, yz + offset_yz(AB_sp, 1)) = g_CD_AB(wx, yz)
+!
+                           enddo
+                        enddo
+                     enddo
+!
+                  endif
+!
+             !     call cpu_time(s_alloc_time)
+                  call mem%dealloc(g_CD_AB,                 &
+                     (C_interval%size)*(D_interval%size),   &
+                     (A_interval%size)*(B_interval%size))
+               !   call cpu_time(e_alloc_time)
+               !   full_alloc_time = full_alloc_time + e_alloc_time - s_alloc_time
+!
+               call mem%dealloc_int(basis_aops_in_CD_sp, basis_shell_info(CD_sp, 4), 3)
+!
+            enddo ! CD
+!
+         enddo ! AB
+!$omp end parallel do
 !
          write(output%unit, *)'Done with integrals'
          flush(output%unit)

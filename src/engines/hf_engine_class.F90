@@ -10,6 +10,7 @@ module hf_engine_class
    use file_class
    use hf_class
    use disk_manager_class
+   use libint_initialization
 !
    implicit none
 !
@@ -47,6 +48,7 @@ contains
       class(hf_engine) :: engine
 !
       class(hf) :: wf
+!
 !
 !     Get number of parameters and equations to solve for
 !

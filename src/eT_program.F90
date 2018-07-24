@@ -26,6 +26,8 @@ program eT_program
    call output%init('eT.out', 'sequential', 'formatted')
    call disk%open_file(output, 'write', 'rewind')
 !
+   call initialize_libint()
+!
 ! 	Create an SCF engine and ask it to solve the HF wavefunction
 !
    call wf%initialize()
@@ -34,6 +36,7 @@ program eT_program
   ! call engine%solve(wf) ! solves Hartree Fock
 !
    call wf%finalize()
+   call finalize_libint()
 !
    call disk%close_file(output)
 !
