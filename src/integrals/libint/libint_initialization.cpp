@@ -19,8 +19,11 @@ using namespace std;
 BasisSet basis;
 extern BasisSet basis;
 
-Engine electronic_repulsion;
-extern Engine electronic_repulsion;
+//Engine electronic_repulsion; // Old, to be deprecated
+//extern Engine electronic_repulsion;
+
+vector<Engine> electronic_repulsion_engines(omp_get_max_threads());
+extern vector<Engine> electronic_repulsion_engines;
 
 Engine kinetic;
 extern Engine kinetic;
@@ -57,9 +60,16 @@ void initialize_coulomb(){
 
 	initialize();
 
+	cout << "Initializing " << omp_get_max_threads() << " electronic repulsion engines for parallellization." << endl;
+
 	Engine temporary(Operator::coulomb, basis.max_nprim(), basis.max_l());
-	electronic_repulsion = temporary;
-	electronic_repulsion.set_precision(1.0e-30);
+	temporary.set_precision(1.0e-16);
+
+//	electronic_repulsion = temporary; // Old, to be deprecated
+
+	for (int i = 0; i != omp_get_max_threads(); i++){
+		electronic_repulsion_engines[i] = temporary; // One engine per thread
+	}
 
 	finalize();
 
