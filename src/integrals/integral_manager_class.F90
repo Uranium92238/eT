@@ -91,6 +91,8 @@ contains
       write(output%unit, '(a20, i10)')'Number of aos:      ', molecule%get_n_aos()
       write(output%unit, '(a20, i10)')'Number of ao pairs: ', &
                                           molecule%get_n_aos()*(molecule%get_n_aos()+1)/2
+      write(output%unit, '(a20, i10)')'Number of shells:   ', &
+                                          molecule%get_n_shells()
       span = 1.0D-2
 !
 !     Determine significant diagonal to 10-8, and store as target diagonal
@@ -103,28 +105,7 @@ contains
 !
       call integrals%construct_significant_diagonal(molecule, 'target_diagonal', threshold)
 !
-!     Determine significant diagonal to 10-8, and store as initial diagonal
-!
-      threshold = 1.0D-4
-!
-      write(output%unit, '(/a22, e12.4)') 'Initial threshold is: ', threshold
-      flush(output%unit)
-!
-      write(output%unit, *)'Available mem: ', mem%available
-!
-      call integrals%construct_significant_diagonal(molecule, 'initial_diagonal', threshold)
-      write(output%unit, *)'Available mem: ', mem%available
-!
-      call integrals%determine_auxilliary_cholesky_basis(molecule, threshold, span, 'initial_diagonal')
-      write(output%unit, *)'Available mem: ', mem%available
-      call integrals%invert_overlap_cholesky_vecs()
-      write(output%unit, *)'Available mem: ', mem%available
-      call integrals%construct_cholesky_vectors(molecule, 'target_diagonal')
-      write(output%unit, *)'Available mem: ', mem%available
-!
-      threshold = 1.0D-8
-!
-      call integrals%determine_auxilliary_cholesky_basis(molecule, threshold, span, 'target_diagonal', .true.)
+      call integrals%determine_auxilliary_cholesky_basis(molecule, threshold, span, 'target_diagonal')
       call integrals%invert_overlap_cholesky_vecs()
       call integrals%construct_cholesky_vectors(molecule, 'target_diagonal')
       call integrals%cholesky_vecs_diagonal_test('target_diagonal')
@@ -401,7 +382,9 @@ contains
       real(dp) :: s_integral_time, e_integral_time, full_integral_time
       real(dp) :: s_reduce_time, e_reduce_time, full_reduce_time
       real(dp) :: s_construct_time, e_construct_time, full_construct_time
+      real(dp) :: s_alloc_time, e_alloc_time, full_alloc_time
 !
+      call cpu_time(s_select_basis_time)
       done = .false.
 !
       sig_threshold = threshold ! Maybe remove later
@@ -510,8 +493,6 @@ contains
       write(output%unit, '(/a)') ' - Determinig the elements of the basis'
       flush(output%unit)
 !
-      call cpu_time(s_select_basis_time)
-!
       write(output%unit, '(/a)')&
       'Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size'
       write(output%unit, '(a)') &
@@ -521,10 +502,6 @@ contains
       iteration = 0
 !
       n_cholesky = 0
-!
-      full_integral_time = 0
-      full_reduce_time = 0
-      full_construct_time = 0
 !
       sig_neg = 0
 !
@@ -741,6 +718,11 @@ contains
 
       endif
 !
+      full_alloc_time = zero
+      full_integral_time   = zero
+      full_reduce_time     = zero
+      full_construct_time  = zero
+!
       do while (.not. done)
 !
          write_warning = .true.
@@ -910,9 +892,13 @@ contains
                      A_interval = molecule%get_shell_limits(A)
                      B_interval = molecule%get_shell_limits(B)
 !
+                     call cpu_time(s_alloc_time)
+!
                      call mem%alloc(g_AB_CD, &
                                     (A_interval%size)*(B_interval%size), &
                                     (C_interval%size)*(D_interval%size))
+                     call cpu_time(e_alloc_time)
+                     full_alloc_time = full_alloc_time + e_alloc_time - s_alloc_time 
 !
                      call cpu_time(s_integral_time)
                      call integrals%get_ao_g_wxyz(g_AB_CD, A, B, C, D)
@@ -957,9 +943,12 @@ contains
 !
                      enddo
 !
+                     call cpu_time(s_alloc_time)
                      call mem%dealloc(g_AB_CD, &
                                        (A_interval%size)*(B_interval%size), &
                                        (C_interval%size)*(D_interval%size))
+                     call cpu_time(e_alloc_time)
+                     full_alloc_time = full_alloc_time + e_alloc_time - s_alloc_time
 !
                      sig_AB_sp = sig_AB_sp + 1
 !
@@ -1372,6 +1361,8 @@ contains
                             full_reduce_time, ' seconds.'
       write(output%unit, '(t6, a36, f11.2, a9)')'Time to make vectors:        ',&
                             full_construct_time, ' seconds.'
+      write(output%unit, '(t6, a39, f11.2, a9)')'Time to allocate and deallocate g_ABCD:',&
+                            full_alloc_time, ' seconds.'
       write(output%unit,'(a42, i7)')'Number of signigicant negative diagonals: ', sig_neg
 !
 !     Building the auxiliary_basis
@@ -1742,6 +1733,7 @@ contains
 !
       real(dp) :: s_build_vectors_time, e_build_vectors_time, full_integral_time, full_construct_time
       real(dp) :: s_integral_time, e_integral_time, s_construct_time, e_construct_time
+      real(dp) :: s_alloc_time, e_alloc_time, full_alloc_time
 !
       type(file) :: auxiliary_inverse, cholesky_ao_vectors, basis_shell_data, diagonal_info
 !
@@ -1802,8 +1794,9 @@ contains
 !
       done = .false.
 
-      full_integral_time = 0
-      full_construct_time = 0
+      full_integral_time = zero
+      full_construct_time = zero
+      full_alloc_time = zero
 !
       do while (.not. done)
 !
@@ -1885,7 +1878,6 @@ contains
                   B_interval = molecule%get_shell_limits(B)
 !
                   do CD_sp = 1, n_sp_in_basis
-
 !
                      C = basis_shell_info(CD_sp, 1)
                      D = basis_shell_info(CD_sp, 2)
@@ -1909,9 +1901,15 @@ contains
                         endif
                      enddo
 !
+                     call cpu_time(s_alloc_time)
+!
                      call mem%alloc(g_CD_AB, &
                               (C_interval%size)*(D_interval%size), &
                               (A_interval%size)*(B_interval%size))
+
+                     call cpu_time(e_alloc_time)
+                     full_alloc_time = full_alloc_time + e_alloc_time - s_alloc_time
+!                  
                      call cpu_time(s_integral_time)
 !
                      call integrals%get_ao_g_wxyz(g_CD_AB, C, D, A, B)
@@ -1920,15 +1918,14 @@ contains
 !
                      if (A == B) then
 !
-                        do J = 1, basis_shell_info(CD_sp, 4)
-                           w = basis_aops_in_CD_sp(J, 1)
-                           x = basis_aops_in_CD_sp(J, 2)
-                           L = basis_aops_in_CD_sp(J, 3)
+                        do y = 1, A_interval%size
+                           do z = y, B_interval%size
+                              do J = 1, basis_shell_info(CD_sp, 4)
+                                 w = basis_aops_in_CD_sp(J, 1)
+                                 x = basis_aops_in_CD_sp(J, 2)
+                                 L = basis_aops_in_CD_sp(J, 3)
 !
-                           wx = C_interval%size*(x-1)+w
-!
-                           do y = 1, A_interval%size
-                              do z = y, B_interval%size
+                                 wx = C_interval%size*(x-1)+w
 
 !
                                     yz_packed = (max(y,z)*(max(y,z)-3)/2) + y + z
@@ -1942,15 +1939,14 @@ contains
 !
                         else
 !
-                           do J = 1, basis_shell_info(CD_sp, 4)
-                              w = basis_aops_in_CD_sp(J, 1)
-                              x = basis_aops_in_CD_sp(J, 2)
-                              L = basis_aops_in_CD_sp(J, 3)
+                           do y = 1, A_interval%size
+                              do z = 1, B_interval%size
+                                 do J = 1, basis_shell_info(CD_sp, 4)
+                                    w = basis_aops_in_CD_sp(J, 1)
+                                    x = basis_aops_in_CD_sp(J, 2)
+                                    L = basis_aops_in_CD_sp(J, 3)
 !
-                              wx = C_interval%size*(x-1) + w
-!
-                              do y = 1, A_interval%size
-                                 do z = 1, B_interval%size
+                                    wx = C_interval%size*(x-1) + w
 !
                                     yz = A_interval%size*(z-1) + y
 !
@@ -1962,9 +1958,12 @@ contains
 !
                         endif
 !
+                        call cpu_time(s_alloc_time)
                         call mem%dealloc(g_CD_AB,                 &
                            (C_interval%size)*(D_interval%size),   &
                            (A_interval%size)*(B_interval%size))
+                        call cpu_time(e_alloc_time)
+                        full_alloc_time = full_alloc_time + e_alloc_time - s_alloc_time
 !
                      call mem%dealloc_int(basis_aops_in_CD_sp, basis_shell_info(CD_sp, 4), 3)
 !
@@ -2050,6 +2049,8 @@ contains
                             full_integral_time, ' seconds.'
       write(output%unit, '(t6, a36, f11.2, a9)')'Time to make vectors:        ',&
                             full_construct_time, ' seconds.'
+      write(output%unit, '(t6, a39, f11.2, a9)')'Time to allocate and deallocate g_ABCD:',&
+                            full_alloc_time, ' seconds.'
       flush(output%unit)
 
 !
