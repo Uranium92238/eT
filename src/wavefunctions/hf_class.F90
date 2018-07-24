@@ -190,9 +190,9 @@ contains
       copy_time = zero
       alloc_time = zero
 !
-!!$omp parallel do &
-!!$omp private(A_s, B_s, C_s, D_s, g_AB_CD, a, b, c, d, ab_reduced, cd_reduced, ab_full, cd_full, &
-!!$omp A_interval, B_interval, C_interval, D_interval, s_timer, e_timer)
+!$omp parallel do &
+!$omp private(A_s, B_s, C_s, D_s, g_AB_CD, a, b, c, d, ab_reduced, cd_reduced, ab_full, cd_full, &
+!$omp A_interval, B_interval, C_interval, D_interval, s_timer, e_timer)
       do D_s = 1, n_s
          do C_s = 1, n_s
             do B_s = 1, n_s
@@ -251,7 +251,7 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
       call cpu_time(e_constr_g)
       write(output%unit, *) 'CPU time to construct g (sec) : ', e_constr_g - s_constr_g
@@ -264,8 +264,6 @@ contains
 !
       write(output%unit, *) 'Done with constructing g_xyzw'
       flush(output%unit)
-!
-      stop
 !
    end subroutine initialize_g_wxyz_hf
 !
@@ -444,94 +442,48 @@ contains
 !
       class(hf) :: wf
 !
-      real(dp), dimension(:,:), allocatable :: L_wxyz
+      real(dp), dimension(:,:), allocatable :: ao_fock_packed
+      real(dp), dimension(:,:), allocatable :: X_wz
 !
-      real(dp), dimension(:,:), allocatable :: g_wyzx
+      real(dp) :: ddot
 !
-      integer(i15) :: n_shells = 0
-      integer(kind=8) :: A = 0, C = 0
+      integer(i15) :: x, y, w, z, xy, xy_packed, wz, xz, wy
 !
-      integer(i15) :: x, y, z, w, xy, zw
+      call mem%alloc(ao_fock_packed, packed_size(wf%n_ao), 1)
+      ao_fock_packed = zero
 !
-      type(interval) :: A_intval
-      type(interval) :: C_intval
+      call mem%alloc(X_wz, 1, (wf%n_ao)**2) ! Intermediate, holds coulomb and exchange contributions
 !
-!     F_αβ = h_αβ
+      do y = 1, wf%n_ao
+         do x = y, wf%n_ao
 !
-      wf%ao_fock = zero
-      call get_ao_h_xy(wf%ao_fock)
+            xy = (wf%n_ao)*(y-1) + x
+            xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
 !
-!     Loop over shells A and C, calculating L_ABCD = 2*g_ABCD - g_ADCB
+            X_wz(1, :) = wf%g_wxyz(xy, :)
 !
-      call dgemm('N', 'N',       &
-                  (wf%n_ao)**2,  &
-                  1,             &
-                  (wf%n_ao)**2,  &
-                  one,           &
-                  wf%g_wxyz,     & ! g_αβ_γδ
-                  (wf%n_ao)**2,  &
-                  wf%ao_density, & ! D_γδ
-                  (wf%n_ao)**2,  &
-                  one,           &
-                  wf%ao_fock,    & ! G(D)_αβ
-                  (wf%n_ao)**2)
+            ao_fock_packed(xy_packed, 1) = ao_fock_packed(xy_packed, 1) + ddot((wf%n_ao)**2, X_wz, 1, wf%ao_density, 1)
 !
-!     G(D)_αβ =+ (-1) sum_γδ g_αδγβ D_γδ
+            do z = 1, wf%n_ao
+               do w = 1, wf%n_ao
 !
-      call mem%alloc(g_wyzx, (wf%n_ao)**2, (wf%n_ao)**2)
-      g_wyzx = zero
+                  wz = (wf%n_ao)*(z-1) + w
+                  xz = (wf%n_ao)*(z-1) + x
+                  wy = (wf%n_ao)*(y-1) + w
 !
-      call sort_1234_to_1432(wf%g_wxyz, g_wyzx, wf%n_ao, wf%n_ao, wf%n_ao, wf%n_ao)
+                  X_wz(1, wz) = wf%g_wxyz(xz, wy)
 !
-      call dgemm('N', 'N',       &
-                  (wf%n_ao)**2,  &
-                  1,             &
-                  (wf%n_ao)**2,  &
-                  -half,         &
-                  g_wyzx,        & ! g_αβ_γδ = g_αδγβ
-                  (wf%n_ao)**2,  &
-                  wf%ao_density, & ! D_γδ
-                  (wf%n_ao)**2,  &
-                  one,           &
-                  wf%ao_fock,    & ! G(D)_αβ
-                  (wf%n_ao)**2)
+               enddo
+            enddo
 !
-      call mem%dealloc(g_wyzx, (wf%n_ao)**2, (wf%n_ao)**2)
-!       n_shells = wf%system%get_n_shells()
-! !
-!       do A = 1, n_shells
-! !
-!          A_intval = wf%system%get_shell_limits(A)
-! !
-!          do C = 1, n_shells
-! !
-!             C_intval = wf%system%get_shell_limits(C)
+            ao_fock_packed(xy_packed, 1) = ao_fock_packed(xy_packed, 1) - half*ddot((wf%n_ao)**2, X_wz, 1, wf%ao_density, 1)
 !
-!             call mem%alloc(L_wxyz, (A_intval%size)*(wf%n_ao), (C_intval%size)*(wf%n_ao))
-!             L_wxyz = zero
-! !
-!             call get_ao_L_wxyz(L_wxyz, A, C)
-! !
-!             do x = 1, A_intval%size
-!                do y = 1, wf%n_ao
-!                   do z = 1, C_intval%size
-!                      do w = 1, wf%n_ao
-! !
-!                         xy = index_two(x, y, A_intval%size)
-!                         zw = index_two(z, w, C_intval%size)
-! !
-!                         wf%ao_fock(x + A_intval%first - 1, y) = wf%ao_fock(x + A_intval%first - 1, y) + &
-!                                                    half*(wf%ao_density(z + C_intval%first - 1, w))*L_wxyz(xy, zw)
-! !
-!                      enddo
-!                   enddo
-!                enddo
-!             enddo
-! !
-!             call mem%dealloc(L_wxyz, (A_intval%size)*(wf%n_ao), (C_intval%size)*(wf%n_ao))
-! !
-!          enddo
-!       enddo
+         enddo
+      enddo
+!
+      call squareup(ao_fock_packed, wf%ao_fock, wf%n_ao)
+!
+      call mem%dealloc(ao_fock_packed, packed_size(wf%n_ao), 1)
 !
    end subroutine construct_ao_fock_hf
 !
