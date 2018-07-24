@@ -15,6 +15,14 @@ contains
 !
    end subroutine initialize_libint()
 !
+   subroutine finalize_libint()
+!
+      implicit none
+!
+      call finalize_libint_c()
+!
+   end subroutine finalize_libint()
+!
    subroutine initialize_overlap()
 !
       implicit none

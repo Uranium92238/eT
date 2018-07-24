@@ -43,6 +43,12 @@ void initialize_libint(){
 
 }
 
+void finalize_libint(){
+
+	finalize();
+
+}
+
 void initialize_basis(){
 
 	initialize();
