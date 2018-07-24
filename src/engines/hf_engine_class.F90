@@ -202,6 +202,8 @@ contains
 !
          iteration = iteration + 1
 !
+         stop ! temporary for time testing
+!
       enddo
 !
       call wf%destruct_mo_coefficients()

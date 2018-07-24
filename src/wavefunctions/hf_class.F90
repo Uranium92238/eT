@@ -449,11 +449,17 @@ contains
 !
       integer(i15) :: x, y, w, z, xy, xy_packed, wz, xz, wy
 !
+      real(dp) :: s_timer, e_timer
+!
+      call cpu_time(s_timer)
+!
       call mem%alloc(ao_fock_packed, packed_size(wf%n_ao), 1)
       ao_fock_packed = zero
 !
       call mem%alloc(X_wz, 1, (wf%n_ao)**2) ! Intermediate, holds coulomb and exchange contributions
 !
+!$omp parallel do &
+!$omp private(y, x, xy, xy_packed, X_wz, z, w, wz, xz, wy)
       do y = 1, wf%n_ao
          do x = y, wf%n_ao
 !
@@ -480,10 +486,15 @@ contains
 !
          enddo
       enddo
+!$omp end parallel do
 !
       call squareup(ao_fock_packed, wf%ao_fock, wf%n_ao)
 !
       call mem%dealloc(ao_fock_packed, packed_size(wf%n_ao), 1)
+!
+      call cpu_time(e_timer)
+!
+      write(output%unit, *) 'CPU time to construct Fock matrix: ', e_timer - s_timer
 !
    end subroutine construct_ao_fock_hf
 !
