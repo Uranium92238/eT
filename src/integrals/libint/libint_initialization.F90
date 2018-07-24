@@ -39,11 +39,29 @@ contains
 !
    end subroutine initialize_nuclear
 !
-   subroutine initialize_basis()
+   subroutine initialize_basis(basis_set)
 !
+      use iso_c_binding, only: C_CHAR, C_NULL_CHAR
       implicit none
 !
-      call initialize_basis_c()
+      character(len=*) :: basis_set
+      character(len=40) :: basis_set_temp
+      character(kind=c_char),dimension(40) :: cpp_temp
+!
+      integer(kind=4) :: j
+!
+      basis_set_temp = trim(basis_set)//c_null_char
+      basis_set_temp = trim(basis_set_temp)
+!
+      write(*,*)basis_set_temp, len_trim(basis_set_temp)
+!
+      do j=1,len_trim(basis_set_temp)
+!
+         cpp_temp(j) = basis_set_temp(j:j)  
+!
+      enddo
+!
+      call initialize_basis_c(cpp_temp)
 !
    end subroutine initialize_basis
 !
