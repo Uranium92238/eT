@@ -34,11 +34,17 @@ extern Engine overlap;
 vector<Atom> atoms;
 extern vector<Atom> atoms;
 
-void initialize_basis(char *basisset){
+void initialize_basis(char *basisset, char *name){
 
 	initialize();
 
-	string xyzfilename = "Water.xyz"; // see XYZ format description at http://en.wikipedia.org/wiki/XYZ_file_format
+	cout << "Basis set: " << basisset << endl;
+	cout << "Molecule name: " << name << endl;
+
+    string xyzfilename(strcat(name,".xyz"));
+  
+    cout << "XYZ-file name: " << xyzfilename << endl;
+
 	ifstream input_file(xyzfilename);
 	vector<Atom> temporary_atoms = read_dotxyz(input_file);
 	atoms = temporary_atoms;
@@ -50,7 +56,6 @@ void initialize_basis(char *basisset){
 	basis = temporary;
 
 	finalize();
-
 }
 
 void initialize_coulomb(){

@@ -79,7 +79,7 @@ contains
 !
       call molecule%write()  ! Write an xyz file for the read geometry
 !
-      call initialize_basis(molecule%atoms(1)%basis) ! Currently basis is equal to basis on first atom
+      call initialize_basis(molecule%atoms(1)%basis, molecule%name) ! Currently basis is equal to basis on first
       call get_n_shells_on_atoms(n_shells_on_atoms)
 !
       do i = 1, molecule%n_atoms ! Loop over atoms
