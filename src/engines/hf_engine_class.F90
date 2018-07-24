@@ -202,7 +202,7 @@ contains
 !
          iteration = iteration + 1
 !
-         stop ! temporary for time testing
+      !   stop ! temporary for time testing
 !
       enddo
 !
