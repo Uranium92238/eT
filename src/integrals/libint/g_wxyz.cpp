@@ -24,9 +24,10 @@ using namespace libint2;
 
 void get_ao_g_wxyz(double *g, long *s1, long *s2, long *s3, long *s4){
 
-	initialize();
+//	initialize();
 
 	int thread = omp_get_thread_num();
+	printf ("Now starting on thread %i \n", thread);
 
 	const long shell1 = *s1 - 1;
 	const long shell2 = *s2 - 1;
@@ -98,7 +99,8 @@ void get_ao_g_wxyz(double *g, long *s1, long *s2, long *s3, long *s4){
       }
    }
 
-	finalize();
+//	finalize();
+	printf ("Now ending on thread %i \n", thread);
 
 	return;
 }
