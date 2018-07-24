@@ -192,7 +192,7 @@ contains
 !
 !$omp parallel do &
 !$omp private(A_s, B_s, C_s, D_s, g_AB_CD, a, b, c, d, ab_reduced, cd_reduced, ab_full, cd_full, &
-!$omp A_interval, B_interval, C_interval, D_interval)
+!$omp A_interval, B_interval, C_interval, D_interval, s_timer, e_timer)
       do D_s = 1, n_s
          do C_s = 1, n_s
             do B_s = 1, n_s
