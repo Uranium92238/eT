@@ -58,7 +58,6 @@ contains
       engine%n_parameters = wf%get_n_hf_parameters()
       engine%n_equations  = wf%get_n_hf_equations()
 !
-!
       call wf%initialize_ao_density()
 !
       call mem%alloc(density_diagonal, wf%n_ao, 1)

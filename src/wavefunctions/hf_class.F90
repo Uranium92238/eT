@@ -172,11 +172,21 @@ contains
 !
       integer(i15) :: a, b, c, d, ab_full, cd_full, ab_reduced, cd_reduced
 !
+      real(dp) :: s_constr_g, e_constr_g
+!
+      call cpu_time(s_constr_g)
+!
       call mem%alloc(wf%g_wxyz, (wf%n_ao)**2, (wf%n_ao)**2)
       wf%g_wxyz = zero
 !
       n_s = wf%system%get_n_shells()
 !
+      write(output%unit, *) 'Starting to construct g_xyzw...'
+      flush(output%unit)
+!
+!$omp parallel do &
+!$omp private(A_s, B_s, C_s, D_s, g_AB_CD, a, b, c, d, ab_reduced, cd_reduced, ab_full, cd_full, &
+!$omp A_interval, B_interval, C_interval, D_interval)
       do D_s = 1, n_s
          do C_s = 1, n_s
             do B_s = 1, n_s
@@ -219,6 +229,14 @@ contains
             enddo
          enddo
       enddo
+!
+      call cpu_time(e_constr_g)
+      write(output%unit, *) 'CPU time to construct g (sec) : ', e_constr_g - s_constr_g
+!
+      write(output%unit, *) 'Done with constructing g_xyzw'
+      flush(output%unit)
+!
+      stop
 !
    end subroutine initialize_g_wxyz_hf
 !
@@ -399,6 +417,8 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: L_wxyz
 !
+      real(dp), dimension(:,:), allocatable :: g_wyzx
+!
       integer(i15) :: n_shells = 0
       integer(kind=8) :: A = 0, C = 0
 !
@@ -414,41 +434,75 @@ contains
 !
 !     Loop over shells A and C, calculating L_ABCD = 2*g_ABCD - g_ADCB
 !
-      n_shells = wf%system%get_n_shells()
+      call dgemm('N', 'N',       &
+                  (wf%n_ao)**2,  &
+                  1,             &
+                  (wf%n_ao)**2,  &
+                  one,           &
+                  wf%g_wxyz,     & ! g_αβ_γδ
+                  (wf%n_ao)**2,  &
+                  wf%ao_density, & ! D_γδ
+                  (wf%n_ao)**2,  &
+                  one,           &
+                  wf%ao_fock,    & ! G(D)_αβ
+                  (wf%n_ao)**2)
 !
-      do A = 1, n_shells
+!     G(D)_αβ =+ (-1) sum_γδ g_αδγβ D_γδ
 !
-         A_intval = wf%system%get_shell_limits(A)
+      call mem%alloc(g_wyzx, (wf%n_ao)**2, (wf%n_ao)**2)
+      g_wyzx = zero
 !
-         do C = 1, n_shells
+      call sort_1234_to_1432(wf%g_wxyz, g_wyzx, wf%n_ao, wf%n_ao, wf%n_ao, wf%n_ao)
 !
-            C_intval = wf%system%get_shell_limits(C)
+      call dgemm('N', 'N',       &
+                  (wf%n_ao)**2,  &
+                  1,             &
+                  (wf%n_ao)**2,  &
+                  -half,         &
+                  g_wyzx,        & ! g_αβ_γδ = g_αδγβ
+                  (wf%n_ao)**2,  &
+                  wf%ao_density, & ! D_γδ
+                  (wf%n_ao)**2,  &
+                  one,           &
+                  wf%ao_fock,    & ! G(D)_αβ
+                  (wf%n_ao)**2)
 !
-            call mem%alloc(L_wxyz, (A_intval%size)*(wf%n_ao), (C_intval%size)*(wf%n_ao))
-            L_wxyz = zero
+      call mem%dealloc(g_wyzx, (wf%n_ao)**2, (wf%n_ao)**2)
+!       n_shells = wf%system%get_n_shells()
+! !
+!       do A = 1, n_shells
+! !
+!          A_intval = wf%system%get_shell_limits(A)
+! !
+!          do C = 1, n_shells
+! !
+!             C_intval = wf%system%get_shell_limits(C)
 !
-            call get_ao_L_wxyz(L_wxyz, A, C)
-!
-            do x = 1, A_intval%size
-               do y = 1, wf%n_ao
-                  do z = 1, C_intval%size
-                     do w = 1, wf%n_ao
-!
-                        xy = index_two(x, y, A_intval%size)
-                        zw = index_two(z, w, C_intval%size)
-!
-                        wf%ao_fock(x + A_intval%first - 1, y) = wf%ao_fock(x + A_intval%first - 1, y) + &
-                                                   half*(wf%ao_density(z + C_intval%first - 1, w))*L_wxyz(xy, zw)
-!
-                     enddo
-                  enddo
-               enddo
-            enddo
-!
-            call mem%dealloc(L_wxyz, (A_intval%size)*(wf%n_ao), (C_intval%size)*(wf%n_ao))
-!
-         enddo
-      enddo
+!             call mem%alloc(L_wxyz, (A_intval%size)*(wf%n_ao), (C_intval%size)*(wf%n_ao))
+!             L_wxyz = zero
+! !
+!             call get_ao_L_wxyz(L_wxyz, A, C)
+! !
+!             do x = 1, A_intval%size
+!                do y = 1, wf%n_ao
+!                   do z = 1, C_intval%size
+!                      do w = 1, wf%n_ao
+! !
+!                         xy = index_two(x, y, A_intval%size)
+!                         zw = index_two(z, w, C_intval%size)
+! !
+!                         wf%ao_fock(x + A_intval%first - 1, y) = wf%ao_fock(x + A_intval%first - 1, y) + &
+!                                                    half*(wf%ao_density(z + C_intval%first - 1, w))*L_wxyz(xy, zw)
+! !
+!                      enddo
+!                   enddo
+!                enddo
+!             enddo
+! !
+!             call mem%dealloc(L_wxyz, (A_intval%size)*(wf%n_ao), (C_intval%size)*(wf%n_ao))
+! !
+!          enddo
+!       enddo
 !
    end subroutine construct_ao_fock_hf
 !
