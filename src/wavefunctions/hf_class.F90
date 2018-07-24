@@ -458,8 +458,8 @@ contains
 !
       call mem%alloc(X_wz, 1, (wf%n_ao)**2) ! Intermediate, holds coulomb and exchange contributions
 !
-!!$omp parallel do &
-!!$omp private(y, x, xy, xy_packed, X_wz, z, w, wz, xz, wy)
+!$omp parallel do &
+!$omp private(y, x, xy, xy_packed, X_wz, z, w, wz, xz, wy)
       do y = 1, wf%n_ao
          do x = y, wf%n_ao
 !
@@ -486,7 +486,7 @@ contains
 !
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
       call squareup(ao_fock_packed, wf%ao_fock, wf%n_ao)
 !
