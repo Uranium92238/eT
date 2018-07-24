@@ -173,6 +173,8 @@ contains
       integer(i15) :: a, b, c, d, ab_full, cd_full, ab_reduced, cd_reduced
 !
       real(dp) :: s_constr_g, e_constr_g
+      real(dp) :: s_timer, e_timer
+      real(dp) :: integral_time, copy_time, alloc_time
 !
       call cpu_time(s_constr_g)
 !
@@ -183,6 +185,10 @@ contains
 !
       write(output%unit, *) 'Starting to construct g_xyzw...'
       flush(output%unit)
+!
+      integral_time = zero
+      copy_time = zero
+      alloc_time = zero
 !
 !$omp parallel do &
 !$omp private(A_s, B_s, C_s, D_s, g_AB_CD, a, b, c, d, ab_reduced, cd_reduced, ab_full, cd_full, &
@@ -197,11 +203,21 @@ contains
                   C_interval = wf%system%get_shell_limits(C_s)
                   D_interval = wf%system%get_shell_limits(D_s)
 !
+                  call cpu_time(s_timer)
+!
                   call mem%alloc(g_AB_CD, &
                      (A_interval%size)*(B_interval%size), &
                      (C_interval%size)*(D_interval%size))
 !
+                  call cpu_time(e_timer); alloc_time = alloc_time + e_timer - s_timer
+!
+                  call cpu_time(s_timer)
+!
                   call wf%integrals%get_ao_g_wxyz(g_AB_CD, A_s, B_s, C_s, D_s)
+!
+                  call cpu_time(e_timer); integral_time = integral_time + e_timer - s_timer
+!
+                  call cpu_time(s_timer)
 !
                   do d = 1, D_interval%size
                      do c = 1, C_interval%size
@@ -221,9 +237,15 @@ contains
                      enddo
                   enddo
 !
+                  call cpu_time(e_timer); copy_time = copy_time + e_timer - s_timer
+!
+                  call cpu_time(s_timer)
+!
                   call mem%dealloc(g_AB_CD, &
                      (A_interval%size)*(B_interval%size), &
                      (C_interval%size)*(D_interval%size))
+!
+                  call cpu_time(e_timer); alloc_time = alloc_time + e_timer - s_timer
 !
                enddo
             enddo
@@ -232,6 +254,12 @@ contains
 !
       call cpu_time(e_constr_g)
       write(output%unit, *) 'CPU time to construct g (sec) : ', e_constr_g - s_constr_g
+!
+      write(output%unit, *) 'Breakdown of CPU time: '
+!
+      write(output%unit, *) 'Integral time: ', integral_time
+      write(output%unit, *) 'Alloc time: ', alloc_time
+      write(output%unit, *) 'Copy time: ', copy_time
 !
       write(output%unit, *) 'Done with constructing g_xyzw'
       flush(output%unit)
