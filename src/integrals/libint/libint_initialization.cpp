@@ -37,6 +37,18 @@ extern Engine overlap;
 vector<Atom> atoms;
 extern vector<Atom> atoms;
 
+void initialize_libint(){
+
+	initialize();
+
+}
+
+void finalize_libint(){
+
+	finalize();
+
+}
+
 void initialize_basis(){
 
 	//initialize();
