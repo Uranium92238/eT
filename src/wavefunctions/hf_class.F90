@@ -443,7 +443,7 @@ contains
       class(hf) :: wf
 !
       real(dp), dimension(:,:), allocatable :: ao_fock_packed
-      real(dp), dimension(:,:), allocatable :: X_wz
+      real(dp), dimension(:,:), allocatable :: X_wz, h_wx
 !
       real(dp) :: ddot
 !
@@ -491,6 +491,14 @@ contains
       call squareup(ao_fock_packed, wf%ao_fock, wf%n_ao)
 !
       call mem%dealloc(ao_fock_packed, packed_size(wf%n_ao), 1)
+!
+      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
+!
+      call get_ao_h_xy(h_wx)
+!
+      wf%ao_fock = wf%ao_fock + h_wx
+!
+      call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
 !
       call cpu_time(e_timer)
 !
