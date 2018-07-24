@@ -492,6 +492,8 @@ contains
 !
       call mem%dealloc(ao_fock_packed, packed_size(wf%n_ao), 1)
 !
+      call wf%calculate_hf_energy(wf%ao_fock)
+!
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
 !
       call get_ao_h_xy(h_wx)
@@ -507,7 +509,7 @@ contains
    end subroutine construct_ao_fock_hf
 !
 !
-   subroutine calculate_hf_energy_hf(wf)
+   subroutine calculate_hf_energy_hf(wf, GD_wx)
 !!
 !!    Calculate HF energy
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -530,7 +532,8 @@ contains
 !
       real(dp) :: ddot
 !
-      real(dp), dimension(:,:), allocatable :: GD_wx
+   !  real(dp), dimension(:,:), allocatable :: GD_wx
+      real(dp), dimension(wf%n_ao, wf%n_ao) :: GD_wx
 !
       real(dp), dimension(:,:), allocatable :: h_wx
       real(dp), dimension(:,:), allocatable :: g_wyzx
@@ -539,42 +542,43 @@ contains
 !
 !     G(D)_αβ = 2 sum_γδ g_αβγδ D_γδ
 !
-      call mem%alloc(GD_wx, wf%n_ao, wf%n_ao)
-!
-      call dgemm('N', 'N',       &
-                  (wf%n_ao)**2,  &
-                  1,             &
-                  (wf%n_ao)**2,  &
-                  two,           &
-                  wf%g_wxyz,     & ! g_αβ_γδ
-                  (wf%n_ao)**2,  &
-                  wf%ao_density, & ! D_γδ
-                  (wf%n_ao)**2,  &
-                  zero,          &
-                  GD_wx,         & ! G(D)_αβ
-                  (wf%n_ao)**2)
-!
-!     G(D)_αβ =+ (-1) sum_γδ g_αδγβ D_γδ
-!
-      call mem%alloc(g_wyzx, (wf%n_ao)**2, (wf%n_ao)**2)
-      g_wyzx = zero
-!
-      call sort_1234_to_1432(wf%g_wxyz, g_wyzx, wf%n_ao, wf%n_ao, wf%n_ao, wf%n_ao)
-!
-      call dgemm('N', 'N',       &
-                  (wf%n_ao)**2,  &
-                  1,             &
-                  (wf%n_ao)**2,  &
-                  -one,          &
-                  g_wyzx,        & ! g_αβ_γδ = g_αδγβ
-                  (wf%n_ao)**2,  &
-                  wf%ao_density, & ! D_γδ
-                  (wf%n_ao)**2,  &
-                  one,           &
-                  GD_wx,         & ! G(D)_αβ
-                  (wf%n_ao)**2)
-!
-      call mem%dealloc(g_wyzx, (wf%n_ao)**2, (wf%n_ao)**2)
+GD_wx = two*GD_wx
+!       call mem%alloc(GD_wx, wf%n_ao, wf%n_ao)
+! !
+!       call dgemm('N', 'N',       &
+!                   (wf%n_ao)**2,  &
+!                   1,             &
+!                   (wf%n_ao)**2,  &
+!                   two,           &
+!                   wf%g_wxyz,     & ! g_αβ_γδ
+!                   (wf%n_ao)**2,  &
+!                   wf%ao_density, & ! D_γδ
+!                   (wf%n_ao)**2,  &
+!                   zero,          &
+!                   GD_wx,         & ! G(D)_αβ
+!                   (wf%n_ao)**2)
+! !
+! !     G(D)_αβ =+ (-1) sum_γδ g_αδγβ D_γδ
+! !
+!       call mem%alloc(g_wyzx, (wf%n_ao)**2, (wf%n_ao)**2)
+!       g_wyzx = zero
+! !
+!       call sort_1234_to_1432(wf%g_wxyz, g_wyzx, wf%n_ao, wf%n_ao, wf%n_ao, wf%n_ao)
+! !
+!       call dgemm('N', 'N',       &
+!                   (wf%n_ao)**2,  &
+!                   1,             &
+!                   (wf%n_ao)**2,  &
+!                   -one,          &
+!                   g_wyzx,        & ! g_αβ_γδ = g_αδγβ
+!                   (wf%n_ao)**2,  &
+!                   wf%ao_density, & ! D_γδ
+!                   (wf%n_ao)**2,  &
+!                   one,           &
+!                   GD_wx,         & ! G(D)_αβ
+!                   (wf%n_ao)**2)
+! !
+!       call mem%dealloc(g_wyzx, (wf%n_ao)**2, (wf%n_ao)**2)
 !
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       h_wx = zero
@@ -587,7 +591,7 @@ contains
       wf%hf_energy = wf%hf_energy + (one/four)*ddot((wf%n_ao)**2, wf%ao_density, 1, GD_wx, 1)
 !
       call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
-      call mem%dealloc(GD_wx, wf%n_ao, wf%n_ao)
+   !   call mem%dealloc(GD_wx, wf%n_ao, wf%n_ao)
 !
    end subroutine calculate_hf_energy_hf
 !

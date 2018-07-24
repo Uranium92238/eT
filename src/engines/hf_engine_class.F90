@@ -159,7 +159,7 @@ contains
 !
             call cpu_time(t0)
 !
-            call wf%calculate_hf_energy()
+       !     call wf%calculate_hf_energy()
 !
             call cpu_time(t1)
             write(output%unit,*) 'Calculate HF energy (sec)', t1-t0
