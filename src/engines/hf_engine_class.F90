@@ -10,6 +10,7 @@ module hf_engine_class
    use file_class
    use hf_class
    use disk_manager_class
+   use libint_initialization
 !
    implicit none
 !

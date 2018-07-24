@@ -20,38 +20,24 @@ using namespace std;
 
 using namespace libint2;
 
-// extern BasisSet basis;
-// extern Engine electronic_repulsion;
-
 void get_ao_L_wxyz(double *L, long *s1, long *s3){
 
 	const long sh1 = *s1 - 1;
 	const long sh3 = *s3 - 1; // C++ arrays start at index 0!
 
-	// initialize_basis();
-	// initialize_coulomb();
+	//initialize();
 
-	initialize();
-
-	// string xyzfilename = "Water.xyz"; // see XYZ format description at http://en.wikipedia.org/wiki/XYZ_file_format
-	// ifstream input_file(xyzfilename);
-	// vector<Atom> atoms = read_dotxyz(input_file);
-	//
-	// cout.setstate(ios_base::failbit);
-	// BasisSet obs("cc-pVDZ", atoms);
-	// cout.clear();
+	int thread = omp_get_thread_num();
 
 	int num_aos = 0;
 	num_aos = basis.nbf();
-
-//	Engine eri_engine(Operator::coulomb, obs.max_nprim(), obs.max_l());
 
 	auto shell2bf = basis.shell2bf(); // maps shell index to basis function index
                                    // shell2bf[0] = index of the first basis function in shell 0
                                    // shell2bf[1] = index of the first basis function in shell 1
                                    // ...
 
-	const auto& buf_vec = electronic_repulsion.results(); // will point to computed shell sets
+	const auto& buf_vec = electronic_repulsion_engines[thread].results(); // will point to computed shell sets
 
 	const auto bf1 = shell2bf[sh1];  // First basis function in shell 1
 	const auto n1 = basis[sh1].size(); // Number of basis functions in shell 1
@@ -69,7 +55,7 @@ void get_ao_L_wxyz(double *L, long *s1, long *s3){
 			auto bf4 = shell2bf[s4];  // First basis function in shell 4
 			auto n4 = basis[s4].size(); // Number of basis functions in shell 4
 
-			electronic_repulsion.compute(basis[sh1], basis[s2], basis[sh3], basis[s4]);
+			electronic_repulsion_engines[thread].compute(basis[sh1], basis[s2], basis[sh3], basis[s4]);
 
 			auto ints_1234 = buf_vec[0]; // Location of computed integrals
     		if (ints_1234 == nullptr)
@@ -95,7 +81,7 @@ void get_ao_L_wxyz(double *L, long *s1, long *s3){
 		}
 	}
 
-	finalize();
+	//finalize();
 
 	return;
 }

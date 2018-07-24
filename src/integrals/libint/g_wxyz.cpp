@@ -24,7 +24,10 @@ using namespace libint2;
 
 void get_ao_g_wxyz(double *g, long *s1, long *s2, long *s3, long *s4){
 
-	initialize();
+//	initialize();
+
+	int thread = omp_get_thread_num();
+//	printf ("Now starting on thread %i \n", thread);
 
 	const long shell1 = *s1 - 1;
 	const long shell2 = *s2 - 1;
@@ -39,7 +42,7 @@ void get_ao_g_wxyz(double *g, long *s1, long *s2, long *s3, long *s4){
                                    // shell2bf[1] = index of the first basis function in shell 1
                                    // ...
 
-	const auto& buf_vec = electronic_repulsion.results(); // will point to computed shell sets
+	const auto& buf_vec = electronic_repulsion_engines[thread].results(); // will point to computed shell sets
 
 	clock_t t;
 	double tacc;
@@ -57,7 +60,7 @@ void get_ao_g_wxyz(double *g, long *s1, long *s2, long *s3, long *s4){
 	auto bf4 = shell2bf[shell4];  // First basis function in shell 4
 	auto n4 = basis[shell4].size(); // Number of basis functions in shell 4
 
-	electronic_repulsion.compute(basis[shell1], basis[shell2], basis[shell3], basis[shell4]);
+	electronic_repulsion_engines[thread].compute(basis[shell1], basis[shell2], basis[shell3], basis[shell4]);
 
 	auto ints_1234 = buf_vec[0]; // Location of computed integrals
 
@@ -96,7 +99,8 @@ void get_ao_g_wxyz(double *g, long *s1, long *s2, long *s3, long *s4){
       }
    }
 
-	finalize();
+//	finalize();
+//	printf ("Now ending on thread %i \n", thread);
 
 	return;
 }

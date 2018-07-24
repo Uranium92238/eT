@@ -10,6 +10,20 @@ interface
 !
    end subroutine initialize_basis_c
 !
+   subroutine initialize_libint_c() bind(C, name='initialize_libint')
+!
+      use iso_c_binding
+      implicit none
+!
+   end subroutine initialize_libint_c
+!
+   subroutine finalize_libint_c() bind(C, name='finalize_libint')
+!
+      use iso_c_binding
+      implicit none
+!
+   end subroutine finalize_libint_c
+!
    subroutine initialize_coulomb_c() bind(C, name='initialize_coulomb')
 !
       use iso_c_binding
