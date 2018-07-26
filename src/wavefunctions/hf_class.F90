@@ -129,8 +129,7 @@ contains
 !
       class(hf) :: wf
 !
-      call mem%alloc(wf%ao_density, wf%n_ao, wf%n_ao)
-      wf%ao_density = zero
+      call mem%alloc(wf%ao_density, wf%n_ao*(wf%n_ao+1)/2, 1)
 !
    end subroutine initialize_ao_density_hf
 !
@@ -364,7 +363,7 @@ contains
 !
       class(hf) :: wf
 !
-      call mem%dealloc(wf%ao_density, wf%n_ao, wf%n_ao)
+      call mem%dealloc(wf%ao_density, wf%n_ao*(wf%n_ao+1)/2, 1)
 !
    end subroutine destruct_ao_density_hf
 !
@@ -405,24 +404,46 @@ contains
 !!    Routine which calculates D_αβ = sum_i C_αi C_βi,
 !!    where C are the MO coefficients.
 !!
+!!    Density is packed
+!!
       implicit none
 !
       class(hf) :: wf
 !
-      wf%ao_density = zero
+      integer(i15) :: i, x, y, xy
 !
-      call dgemm('N', 'T',                   &
-                  wf%n_ao,                   &
-                  wf%n_ao,                   &
-                  wf%n_o,                    &
-                  two,                       &
-                  wf%orbital_coefficients,   &
-                  wf%n_ao,                   &
-                  wf%orbital_coefficients,   &
-                  wf%n_ao,                   &
-                  zero,                      &
-                  wf%ao_density,             &
-                  wf%n_ao)
+      wf%ao_density = zero
+
+!
+!$omp parallel do &
+!$omp private(y, x, xy, i)
+      do x = 1, wf%n_ao
+         do y = x, wf%n_ao
+!
+            xy = (max(x,y)*(max(x,y)-3)/2) + x + y
+!
+            do i = 1, wf%n_o
+!
+               wf%ao_density(xy, 1) = two*(wf%orbital_coefficients(x, i))*(wf%orbital_coefficients(y, i))
+!
+            enddo
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+     !call dgemm('N', 'T',                   &
+     !            wf%n_ao,                   &
+     !            wf%n_ao,                   &
+     !            wf%n_o,                    &
+     !            two,                       &
+     !            wf%orbital_coefficients,   &
+     !            wf%n_ao,                   &
+     !            wf%orbital_coefficients,   &
+     !            wf%n_ao,                   &
+     !            zero,                      &
+     !            wf%ao_density,             &
+     !            wf%n_ao)
 !
    end subroutine construct_ao_density_hf
 !
@@ -443,7 +464,7 @@ contains
       class(hf) :: wf
 !
       real(dp), dimension(:,:), allocatable :: ao_fock_packed
-      real(dp), dimension(:,:), allocatable :: X_wz, h_wx
+      real(dp), dimension(:,:), allocatable :: X_wz, h_wx, h_wx_square
 !
       real(dp) :: ddot
 !
@@ -492,15 +513,21 @@ contains
 !
       call mem%dealloc(ao_fock_packed, packed_size(wf%n_ao), 1)
 !
-      call wf%calculate_hf_energy(wf%ao_fock)
+      call mem%alloc(h_wx_square, wf%n_ao, wf%n_ao)
 !
-      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
+      call get_ao_h_xy(h_wx_square)
 !
-      call get_ao_h_xy(h_wx)
+      call mem%alloc(h_wx, wf%n_ao*(wf%n_ao+1)/2, 1)
+!
+      call packin(h_wx, h_wx_square, wf%n_ao)
+!
+      call mem%dealloc(h_wx_square, wf%n_ao, wf%n_ao)
+!
+      call wf%calculate_hf_energy(wf%ao_fock, h_wx)
 !
       wf%ao_fock = wf%ao_fock + h_wx
 !
-      call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
+      call mem%dealloc(h_wx, wf%n_ao*(wf%n_ao+1)/2, 1)
 !
       call cpu_time(e_timer)
 !
@@ -509,7 +536,7 @@ contains
    end subroutine construct_ao_fock_hf
 !
 !
-   subroutine calculate_hf_energy_hf(wf, half_GD_wx)
+   subroutine calculate_hf_energy_hf(wf, half_GD_wx, h_wx)
 !!
 !!    Calculate HF energy
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -533,9 +560,9 @@ contains
       real(dp) :: ddot
 !
    !  real(dp), dimension(:,:), allocatable :: GD_wx
-      real(dp), dimension(wf%n_ao, wf%n_ao) :: half_GD_wx
+      real(dp), dimension(wf%n_ao*(wf%n_ao+1)/1, 1) :: half_GD_wx
 !
-      real(dp), dimension(:,:), allocatable :: h_wx
+      real(dp), dimension(wf%n_ao*(wf%n_ao+1)/1, 1) :: h_wx
       real(dp), dimension(:,:), allocatable :: g_wyzx
 !
 !     Construct G(D)
@@ -580,17 +607,13 @@ contains
 ! !
 !       call mem%dealloc(g_wyzx, (wf%n_ao)**2, (wf%n_ao)**2)
 !
-      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
-      h_wx = zero
-!
-      call get_ao_h_xy(h_wx)
 !
       wf%hf_energy = wf%system%get_nuclear_repulsion()
 !
-      wf%hf_energy = wf%hf_energy + ddot((wf%n_ao)**2, h_wx, 1, wf%ao_density, 1)
-      wf%hf_energy = wf%hf_energy + two*(one/four)*ddot((wf%n_ao)**2, wf%ao_density, 1, half_GD_wx, 1)
+      wf%hf_energy = wf%hf_energy + ddot((wf%n_ao)*(wf%n_ao+1)/2, h_wx, 1, wf%ao_density, 1)
+      wf%hf_energy = wf%hf_energy + two*(one/four)*ddot((wf%n_ao)*(wf%n_ao+1)/2, wf%ao_density, 1, half_GD_wx, 1)
 !
-      call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
+    !  call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
    !   call mem%dealloc(GD_wx, wf%n_ao, wf%n_ao)
 !
    end subroutine calculate_hf_energy_hf
