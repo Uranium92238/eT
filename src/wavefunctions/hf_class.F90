@@ -671,8 +671,8 @@ contains
 !
       real(dp), dimension(:,:) :: D ! Packed
 !
-      wf%ao_density = zero
-      call squareup(D, wf%ao_density, wf%n_ao)
+      wf%ao_density = D
+      !call squareup(D, wf%ao_density, wf%n_ao)
 !
    end subroutine set_ao_density_hf
 !
