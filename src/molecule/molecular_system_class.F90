@@ -511,7 +511,7 @@ contains
 !
       class(molecular_system) :: molecule
 !
-      integer(kind=8) :: A
+      integer(kind=8), intent(in) :: A
 !
       integer(kind=8) :: I, J
 !

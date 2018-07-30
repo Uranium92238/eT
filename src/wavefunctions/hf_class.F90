@@ -442,55 +442,296 @@ contains
 !
       class(hf) :: wf
 !
-      real(dp), dimension(:,:), allocatable :: ao_fock_packed
-      real(dp), dimension(:,:), allocatable :: X_wz, h_wx
+      integer(i15) :: w, x, y, z, wx, yz, w_red, x_red, y_red, z_red
 !
-      real(dp) :: ddot
+      real(dp), dimension(:,:), allocatable :: h_wx
+      real(dp), dimension(:,:), allocatable :: F1
+      real(dp), dimension(:,:), allocatable :: F2
+      real(dp), dimension(:,:), allocatable :: F3
+      real(dp), dimension(:,:), allocatable :: F4
+      real(dp), dimension(:,:), allocatable :: F5
+      real(dp), dimension(:,:), allocatable :: F6
 !
-      integer(i15) :: x, y, w, z, xy, xy_packed, wz, xz, wy
+      integer(i15) :: s1, s2, s3, s4, s4_max, n_s, s1s2, s3s4
 !
-      real(dp) :: s_timer, e_timer
+      type(interval) :: A_interval
+      type(interval) :: B_interval
+      type(interval) :: C_interval
+      type(interval) :: D_interval
 !
-      call cpu_time(s_timer)
+      real(dp) :: deg_12, deg_34, deg_12_34, deg
+      real(dp) :: temp, temp1, temp2, temp3, temp4, temp5, temp6
 !
-      call mem%alloc(ao_fock_packed, packed_size(wf%n_ao), 1)
-      ao_fock_packed = zero
+      real(dp), dimension(:,:), allocatable :: degeneracy
 !
-      call mem%alloc(X_wz, 1, (wf%n_ao)**2) ! Intermediate, holds coulomb and exchange contributions
+      real(dp) :: start_timer, end_timer, omp_get_wtime
 !
-!$omp parallel do &
-!$omp private(y, x, xy, xy_packed, X_wz, z, w, wz, xz, wy)
-      do y = 1, wf%n_ao
-         do x = y, wf%n_ao
+      wf%ao_fock = zero
 !
-            xy = (wf%n_ao)*(y-1) + x
-            xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
+!     Loop over permutationally unique shell sets
 !
-            X_wz(1, :) = wf%g_wxyz(xy, :)
+      n_s = wf%system%get_n_shells()
 !
-            ao_fock_packed(xy_packed, 1) = ao_fock_packed(xy_packed, 1) + ddot((wf%n_ao)**2, X_wz, 1, wf%ao_density, 1)
+      start_timer = omp_get_wtime()
 !
-            do z = 1, wf%n_ao
-               do w = 1, wf%n_ao
+      call mem%alloc(degeneracy, n_s**2, n_s**2)
+      degeneracy = zero
 !
-                  wz = (wf%n_ao)*(z-1) + w
-                  xz = (wf%n_ao)*(z-1) + x
-                  wy = (wf%n_ao)*(y-1) + w
+!!$omp parallel do private(s1, s2, s3, s4, s1s2, s3s4, deg_12, deg_34, deg_12_34)
+      do s1 = 1, n_s
+         do s2 = 1, s1
 !
-                  X_wz(1, wz) = wf%g_wxyz(xz, wy)
+            s1s2 = n_s*(s2 - 1) + s1
+!
+            if (s1 .eq. s2) then
+!
+               deg_12 = one
+!
+            else
+!
+               deg_12 = two
+!
+            endif
+!
+            do s3 = 1, s1
+!
+               if (s3 .eq. s1) then
+!
+                  s4_max = s2
+!
+               else
+!
+                  s4_max = s3
+!
+               endif
+!
+               do s4 = 1, s4_max
+!
+                  if (s3 .eq. s4) then
+!
+                     deg_34 = one
+!
+                  else
+!
+                     deg_34 = two
+!
+                  endif
+!
+                  if (s3 .eq. s1) then
+!
+                     if (s2 .eq. s4) then
+!
+                        deg_12_34 = one
+!
+                     else
+!
+                        deg_12_34 = two
+!
+                     endif
+!
+                  else
+!
+                     deg_12_34 = two
+!
+                  endif
+!
+                  s3s4 = n_s*(s4 - 1) + s3
+!
+                  degeneracy(s1s2, s3s4) = deg_12*deg_34*deg_12_34
 !
                enddo
             enddo
+         enddo
+      enddo
+!!$omp end parallel do
 !
-            ao_fock_packed(xy_packed, 1) = ao_fock_packed(xy_packed, 1) - half*ddot((wf%n_ao)**2, X_wz, 1, wf%ao_density, 1)
+      end_timer = omp_get_wtime()
+      write(output%unit, *) 'Wall time used to make deg array (sec.): ', end_timer - start_timer
 !
+      start_timer = omp_get_wtime()
+!
+!$omp parallel do &
+!$omp private(s1, s2, s3, s4, deg_12, deg_34, deg_12_34, deg, s4_max, temp, s1s2, s3s4, &
+!$omp A_interval, B_interval, C_interval, D_interval, w, x, y, z, wx, yz, temp1, temp2, temp3, &
+!$omp temp4, temp5, temp6, F1, F2, F3, F4, F5, F6, w_red, x_red, y_red, z_red)
+      do s1 = 1, n_s
+         do s2 = 1, s1
+!
+            s1s2 = n_s*(s2 - 1) + s1
+!
+            do s3 = 1, s1
+!
+               if (s3 .eq. s1) then
+!
+                  s4_max = s2
+!
+               else
+!
+                  s4_max = s3
+!
+               endif
+!
+               do s4 = 1, s4_max
+!
+                  s3s4 = n_s*(s4 - 1) + s3
+                  deg = degeneracy(s1s2, s3s4) ! Shell degeneracy
+!
+                  A_interval = wf%system%get_shell_limits(s4)
+                  B_interval = wf%system%get_shell_limits(s3)
+                  C_interval = wf%system%get_shell_limits(s2)
+                  D_interval = wf%system%get_shell_limits(s1)
+!
+                  call mem%alloc(F1, A_interval%size, B_interval%size) ! F_wx
+                  call mem%alloc(F6, C_interval%size, B_interval%size) ! F_yx
+                  call mem%alloc(F2, C_interval%size, D_interval%size) ! F_yz
+                  call mem%alloc(F3, A_interval%size, D_interval%size) ! F_wz
+                  call mem%alloc(F4, B_interval%size, D_interval%size) ! F_xz
+                  call mem%alloc(F5, A_interval%size, C_interval%size) ! F_wy
+!
+                  F1 = zero
+                  F2 = zero
+                  F3 = zero
+                  F4 = zero
+                  F5 = zero
+                  F6 = zero
+!
+!                 Add Fock matrix contributions
+!
+                  do y = C_interval%first, C_interval%last
+                     do z = D_interval%first, D_interval%last
+!
+                        yz = (wf%n_ao)*(z - 1) + y
+!
+                        do w = A_interval%first, A_interval%last
+                           do x = B_interval%first, B_interval%last
+!
+                              wx = (wf%n_ao)*(x - 1) + w
+!
+                              temp = deg*wf%g_wxyz(wx, yz)
+!
+                              temp1 = (one/two)*temp*wf%ao_density(y, z)
+                              temp2 = (one/two)*temp*wf%ao_density(w, x)
+                              temp3 = (one/eight)*temp*wf%ao_density(y, x)
+                              temp4 = (one/eight)*temp*wf%ao_density(y, w)
+                              temp5 = (one/eight)*temp*wf%ao_density(z, x)
+                              temp6 = (one/eight)*temp*wf%ao_density(w, z)
+!!$omp atomic update
+!                               wf%ao_fock(w, x) = wf%ao_fock(w, x) + temp1
+! !!$omp atomic update
+!                               wf%ao_fock(y, x) = wf%ao_fock(y, x) - temp6
+! !!$omp atomic update
+!                               wf%ao_fock(y, z) = wf%ao_fock(y, z) + temp2
+! !!$omp atomic update
+!                               wf%ao_fock(w, z) = wf%ao_fock(w, z) - temp3
+! !!$omp atomic update
+!                               wf%ao_fock(x, z) = wf%ao_fock(x, z) - temp4
+! !!$omp atomic update
+!                               wf%ao_fock(w, y) = wf%ao_fock(w, y) - temp5
+!
+                              w_red = w - A_interval%first + 1
+                              x_red = x - B_interval%first + 1
+                              y_red = y - C_interval%first + 1
+                              z_red = z - D_interval%first + 1
+!
+                              F1(w_red, x_red) = F1(w_red, x_red) + temp1
+                              F2(y_red, z_red) = F2(y_red, z_red) + temp2
+                              F3(w_red, z_red) = F3(w_red, z_red) - temp3
+                              F4(x_red, z_red) = F4(x_red, z_red) - temp4
+                              F5(w_red, y_red) = F5(w_red, y_red) - temp5
+                              F6(y_red, x_red) = F6(y_red, x_red) - temp6
+!
+                           enddo
+                        enddo
+                     enddo
+                  enddo
+!
+                  do x = B_interval%first, B_interval%last
+                     do w = A_interval%first, A_interval%last
+!
+                        w_red = w - A_interval%first + 1
+                        x_red = x - B_interval%first + 1
+!$omp atomic update
+                        wf%ao_fock(w, x) = wf%ao_fock(w, x) + F1(w_red, x_red)
+!
+                     enddo
+                  enddo
+!
+                  do x = B_interval%first, B_interval%last
+                     do y = C_interval%first, C_interval%last
+!
+                        x_red = x - B_interval%first + 1
+                        y_red = y - C_interval%first + 1
+!$omp atomic update
+                        wf%ao_fock(y, x) = wf%ao_fock(y, x) + F6(y_red, x_red)
+!
+                     enddo
+                  enddo
+!
+                  do z = D_interval%first, D_interval%last
+                     do y = C_interval%first, C_interval%last
+!
+                        y_red = y - C_interval%first + 1
+                        z_red = z - D_interval%first + 1
+!$omp atomic update
+                        wf%ao_fock(y, z) = wf%ao_fock(y, z) + F2(y_red, z_red)
+!
+                     enddo
+                  enddo
+!
+                  do z = D_interval%first, D_interval%last
+                     do w = A_interval%first, A_interval%last
+!
+                        w_red = w - A_interval%first + 1
+                        z_red = z - D_interval%first + 1
+!$omp atomic update
+                        wf%ao_fock(w, z) = wf%ao_fock(w, z) + F3(w_red, z_red)
+!
+                     enddo
+                  enddo
+!
+                  do z = D_interval%first, D_interval%last
+                     do x = B_interval%first, B_interval%last
+!
+                        x_red = x - B_interval%first + 1
+                        z_red = z - D_interval%first + 1
+!$omp atomic update
+                        wf%ao_fock(x, z) = wf%ao_fock(x, z) + F4(x_red, z_red)
+!
+                     enddo
+                  enddo
+!
+                  do y = C_interval%first, C_interval%last
+                     do w = A_interval%first, A_interval%last
+!
+                        w_red = w - A_interval%first + 1
+                        y_red = y - C_interval%first + 1
+!$omp atomic update
+                        wf%ao_fock(w, y) = wf%ao_fock(w, y) + F5(w_red, y_red)
+!
+                     enddo
+                  enddo
+!
+                  call mem%dealloc(F1, A_interval%size, B_interval%size) ! F_wx
+                  call mem%dealloc(F6, C_interval%size, B_interval%size) ! F_yx
+                  call mem%dealloc(F2, C_interval%size, D_interval%size) ! F_yz
+                  call mem%dealloc(F3, A_interval%size, D_interval%size) ! F_wz
+                  call mem%dealloc(F4, B_interval%size, D_interval%size) ! F_xz
+                  call mem%dealloc(F5, A_interval%size, C_interval%size) ! F_wy
+!
+               enddo
+            enddo
          enddo
       enddo
 !$omp end parallel do
 !
-      call squareup(ao_fock_packed, wf%ao_fock, wf%n_ao)
+      call mem%dealloc(degeneracy, n_s**2, n_s**2)
 !
-      call mem%dealloc(ao_fock_packed, packed_size(wf%n_ao), 1)
+      call symmetric_sum(wf%ao_fock, wf%n_ao)
+!
+      wf%ao_fock = wf%ao_fock*half
+!
+      end_timer = omp_get_wtime()
+      write(output%unit, *) 'Wall time used for two-electron part of Fock matrix (sec.): ', end_timer - start_timer
 !
       call wf%calculate_hf_energy(wf%ao_fock)
 !
@@ -501,10 +742,6 @@ contains
       wf%ao_fock = wf%ao_fock + h_wx
 !
       call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
-!
-      call cpu_time(e_timer)
-!
-      write(output%unit, *) 'CPU time to construct Fock matrix: ', e_timer - s_timer
 !
    end subroutine construct_ao_fock_hf
 !
