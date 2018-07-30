@@ -117,7 +117,7 @@ contains
 !
 !     Get an initial AO density and initial MO coefficients for loop
 !
-      call wf%initialize_g_wxyz()
+   !   call wf%initialize_g_wxyz()
       call wf%initialize_orbital_energies()
 !
       call wf%initialize_ao_fock()
@@ -211,7 +211,7 @@ contains
       call wf%destruct_ao_fock()
       call wf%destruct_ao_overlap()
       call wf%destruct_orbital_energies()
-      call wf%destruct_g_wxyz()
+   !   call wf%destruct_g_wxyz()
 !
 !     Initialize engine (make final deallocations, and other stuff)
 !
