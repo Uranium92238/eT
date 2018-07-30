@@ -459,10 +459,12 @@ contains
       type(interval) :: C_interval
       type(interval) :: D_interval
 !
-      real(dp) :: deg_12, deg_34, deg_12_34, deg
+      real(dp) :: deg_12, deg_34, deg_12_34, deg, ddot, norm
       real(dp) :: temp, temp1, temp2, temp3, temp4, temp5, temp6
 !
       real(dp), dimension(:,:), allocatable :: degeneracy, g
+!
+      logical, dimension(:, :), allocatable :: schwarz
 !
       real(dp) :: start_timer, end_timer, omp_get_wtime
 !
@@ -548,6 +550,43 @@ contains
       end_timer = omp_get_wtime()
       write(output%unit, *) 'Wall time used to make deg array (sec.): ', end_timer - start_timer
 !
+! This can be moved outside!
+      start_timer = omp_get_wtime()
+!
+      allocate(schwarz(n_s, n_s))
+      schwarz = .false.
+!
+      do s1 = 1, n_s
+         do s2 = 1, s1
+!
+            A_interval = wf%system%get_shell_limits(s1)
+            B_interval = wf%system%get_shell_limits(s2)
+!
+            call mem%alloc(g, (A_interval%size)*(B_interval%size), &
+                              (A_interval%size)*(B_interval%size))
+!
+            call wf%integrals%get_ao_g_wxyz(g, s1, s2, s1, s2)
+!
+            norm = sqrt(ddot((A_interval%size)**2*(B_interval%size)**2, g, 1, g, 1))
+!
+            if (norm .lt. 1.0D-12) then
+!
+         !      write(output%unit, *) 'Shell pair was screened!'
+!
+               schwarz(s1,s2) = .true.
+               schwarz(s2,s1) = .true.
+!
+            endif
+!
+            call mem%dealloc(g, (A_interval%size)*(B_interval%size), &
+                                (A_interval%size)*(B_interval%size))
+!
+         enddo
+      enddo
+!
+      end_timer = omp_get_wtime()
+      write(output%unit, *) 'Time used to make schwarz array (sec.): ', end_timer - start_timer
+!
       start_timer = omp_get_wtime()
 !
 !$omp parallel do &
@@ -556,6 +595,8 @@ contains
 !$omp temp4, temp5, temp6, F1, F2, F3, F4, F5, F6, w_red, x_red, y_red, z_red, g) schedule(dynamic)
       do s1 = 1, n_s
          do s2 = 1, s1
+!
+            if (schwarz(s1, s2)) continue
 !
             s1s2 = n_s*(s2 - 1) + s1
 !
@@ -719,6 +760,8 @@ contains
          enddo
       enddo
 !$omp end parallel do
+!
+      deallocate(schwarz)
 !
       call mem%dealloc(degeneracy, n_s**2, n_s**2)
 !
