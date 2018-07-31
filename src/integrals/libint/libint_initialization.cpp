@@ -39,12 +39,7 @@ extern vector<Atom> atoms;
 
 void initialize_basis(char *basisset, char *name){
 
-	cout << "Basis set: " << basisset << endl;
-	cout << "Molecule name: " << name << endl;
-
     string xyzfilename(strcat(name,".xyz"));
-  
-    cout << "XYZ-file name: " << xyzfilename << endl;
 
     ifstream input_file(xyzfilename);
 	vector<Atom> temporary_atoms = read_dotxyz(input_file);
@@ -74,52 +69,32 @@ void finalize_libint(){
 
 void initialize_coulomb(){
 
-	//initialize();
-
-	cout << "Initializing " << omp_get_max_threads() << " electronic repulsion engines for parallellization." << endl;
-
 	Engine temporary(Operator::coulomb, basis.max_nprim(), basis.max_l());
 	temporary.set_precision(1.0e-16);
-
-//	electronic_repulsion = temporary; // Old, to be deprecated
 
 	for (int i = 0; i != omp_get_max_threads(); i++){
 		electronic_repulsion_engines[i] = temporary; // One engine per thread
 	}
 
-	//finalize();
-
 }
 
 void initialize_kinetic(){
 
-	//initialize();
-
 	Engine temporary(Operator::kinetic, basis.max_nprim(), basis.max_l());
 	kinetic = temporary;
-
-	//finalize();
 
 }
 
 void initialize_nuclear(){
 
-	//initialize();
-
 	Engine temporary(Operator::nuclear, basis.max_nprim(), basis.max_l());
 	nuclear = temporary;
-
-	//finalize();
 
 }
 
 void initialize_overlap(){
 
-	//initialize();
-
 	Engine temporary(Operator::overlap, basis.max_nprim(), basis.max_l());
 	overlap = temporary;
-
-	//finalize();
 
 }

@@ -73,18 +73,15 @@ contains
       basis_set_temp = trim(basis_set)//c_null_char
       mol_name_temp = trim(mol_name)//c_null_char
 !
-      write(*,*)basis_set_temp, len_trim(basis_set_temp)
-      write(*,*)mol_name_temp, len_trim(mol_name_temp)
-!
       do j=1,len_trim(basis_set_temp)
 !
-         cpp_temp_basis(j) = basis_set_temp(j:j)  
+         cpp_temp_basis(j) = basis_set_temp(j:j)
 !
       enddo
 !
       do j=1,len_trim(mol_name_temp)
 !
-         cpp_temp_mol_name(j) = mol_name_temp(j:j)  
+         cpp_temp_mol_name(j) = mol_name_temp(j:j)
 !
       enddo
 !

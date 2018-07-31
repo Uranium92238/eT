@@ -143,13 +143,9 @@ contains
       shell = 0
       n_electrons = atom%number
 !
-      write(output%unit,*) 'n aufbau shells', n_Aufbau_shells
-!
       do Aufbau_shell = 1, n_Aufbau_shells
 !
          if (n_electrons == 0) return
-!
-         write(output%unit,*) 'Aufbau_shell_info(Aufbau_shell, 1)', Aufbau_shell_info(Aufbau_shell, 1)
 !
          do i = 1, Aufbau_shell_info(Aufbau_shell, 1)
 !

@@ -103,15 +103,6 @@ void get_n_basis_in_shells(int *atom, int *nbis){
 
 void get_n_shells_on_atoms(int *nsoa){
 
-	//initialize();
-
-	// string xyzfilename = "Water.xyz"; // see XYZ format description at http://en.wikipedia.org/wiki/XYZ_file_format
-	// ifstream input_file(xyzfilename);
-	// vector<Atom> atoms = read_dotxyz(input_file);
-	//
-	// cout.setstate(ios_base::failbit);
-	// BasisSet obs("cc-pVDZ", atoms);
-	// cout.clear();
 
 	auto a2s_list = basis.atom2shell(atoms); // Vector of vectors
 	int n_shells = 0;
@@ -119,11 +110,8 @@ void get_n_shells_on_atoms(int *nsoa){
 	for (auto j = 0; j < atoms.size(); j++){
 
 		n_shells = a2s_list[j].size();
-		//cout << "num shells? " << n_shells << endl;
 		*(nsoa + j) = n_shells;
 
 	}
-
-	//finalize();
 
 }

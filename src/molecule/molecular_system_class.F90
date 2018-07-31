@@ -78,8 +78,8 @@ contains
       enddo
 !
       call molecule%write()  ! Write an xyz file for the read geometry
-!
       call initialize_basis(molecule%atoms(1)%basis, molecule%name) ! Currently basis is equal to basis on first
+!
       call get_n_shells_on_atoms(n_shells_on_atoms)
 !
       do i = 1, molecule%n_atoms ! Loop over atoms
@@ -140,15 +140,16 @@ contains
 !
             call molecule%atoms(i)%shells(j)%determine_angular_momentum()
             call molecule%atoms(i)%shells(j)%determine_last_ao_index()
-            write(*, *)'atom: ', i, 'angular momentum:', molecule%atoms(i)%shells(j)%l
 !
          enddo
 !
       enddo
 !
       if (molecule%charge .ne. 0) then
+!
          write(output%unit) 'Error: SOAD not yet implemented for charged species!'
          stop
+!
       endif
 !
    end subroutine initialize_molecular_system
@@ -420,7 +421,7 @@ contains
          enddo
       enddo
 !
-      write(output%unit, *) 'Nuclear respulsion: ', get_nuclear_repulsion_molecular_system
+   !   write(output%unit, *) 'Nuclear respulsion: ', get_nuclear_repulsion_molecular_system
 !
   end function get_nuclear_repulsion_molecular_system
 !
@@ -606,12 +607,13 @@ contains
       electrons = 0
 !
       do I = 1, n_ao
-         write(*,*) density_diagonal(I, 1)
          electrons = electrons + density_diagonal(I, 1)
       enddo
 !
       if (abs(electrons - molecule%get_n_electrons()) .gt. 1.0d-7) then
+!
          write(output%unit, '(a)') 'Error: Mismatch in electron number SOAD'
+!
       endif
 !
    end subroutine SOAD_molecular_system
