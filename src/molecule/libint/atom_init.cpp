@@ -48,24 +48,16 @@ void get_first_ao_in_shells(int *atom, int *faois){
 
 	//initialize();
 
-	// string xyzfilename = "Water.xyz"; // see XYZ format description at http://en.wikipedia.org/wiki/XYZ_file_format
-	// ifstream input_file(xyzfilename);
-	// vector<Atom> atoms = read_dotxyz(input_file);
-	//
-	// cout.setstate(ios_base::failbit);
-	// BasisSet obs("cc-pVDZ", atoms);
-	// cout.clear();
-
 	auto a2s_list = basis.atom2shell(atoms); // Vector of vectors
 	auto shell2bf = basis.shell2bf(); // shell2bf[0] -> first AO index of shell 0
-
+	cout << *atom << endl;
 	for (auto j = 0; j < a2s_list[*atom-1].size(); j++){ // loop over shells on atom
 
 		auto the_shell = a2s_list[*atom-1][j];
 		auto the_first_ao = shell2bf[the_shell];
 
 		*(faois + j) = the_first_ao + 1;
-	//	cout << "The first AO index in shell " << the_shell << " is " << the_first_ao << "." << endl;
+		cout << "The first AO index in shell " << the_shell << " is " << the_first_ao << "." << endl;
 
 	}
 
@@ -112,14 +104,18 @@ void get_n_shells_on_atoms(int *nsoa){
 	// cout.setstate(ios_base::failbit);
 	// BasisSet obs("cc-pVDZ", atoms);
 	// cout.clear();
+	auto a2s_list = basis.atom2shell(atoms);
+	for (int i = 0; i!=atoms.size(); i++){
+		cout << a2s_list[i].size()<< endl;
 
-	auto a2s_list = basis.atom2shell(atoms); // Vector of vectors
+	}
+	a2s_list = basis.atom2shell(atoms); // Vector of vectors
 	int n_shells = 0;
 
 	for (auto j = 0; j < atoms.size(); j++){
 
 		n_shells = a2s_list[j].size();
-		//cout << "num shells? " << n_shells << endl;
+		cout << "num shells? " << n_shells << endl;
 		*(nsoa + j) = n_shells;
 
 	}

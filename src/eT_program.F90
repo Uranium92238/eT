@@ -26,14 +26,18 @@ program eT_program
    call output%init('eT.out', 'sequential', 'formatted')
    call disk%open_file(output, 'write', 'rewind')
 !
+   write(*,*)'init libint'
    call initialize_libint()
 !
 ! 	Create an SCF engine and ask it to solve the HF wavefunction
 !
+   write(*,*)'init hf'
    call wf%initialize()
+   write(*,*)'init engine'
    call engine%initialize(wf)
 !
   !  call wf%integrals%cholesky_decompose(wf%molecule)
+  write(*,*)'solve hf'
    call engine%solve(wf) ! solves Hartree Fock
 !
    call wf%finalize()

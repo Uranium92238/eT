@@ -5,6 +5,7 @@
 /
 */
 #include "libint_initialization.h"
+#include "eT_basis.h"
 
 #include <libint2.hpp>
 #include <iostream>
@@ -16,11 +17,11 @@
 using namespace libint2;
 using namespace std;
 
-BasisSet basis;
-extern BasisSet basis;
+eTBasis basis;
+extern eTBasis basis;
 
-//Engine electronic_repulsion; // Old, to be deprecated
-//extern Engine electronic_repulsion;
+// BasisSet basis;
+// extern BasisSet basis;
 
 vector<Engine> electronic_repulsion_engines(omp_get_max_threads());
 extern vector<Engine> electronic_repulsion_engines;
@@ -37,24 +38,34 @@ extern Engine overlap;
 vector<Atom> atoms;
 extern vector<Atom> atoms;
 
-void initialize_basis(char *basisset, char *name){
-
-	cout << "Basis set: " << basisset << endl;
-	cout << "Molecule name: " << name << endl;
+void initialize_atoms(char *name){
 
     string xyzfilename(strcat(name,".xyz"));
-  
-    cout << "XYZ-file name: " << xyzfilename << endl;
+
+	cout << xyzfilename << endl;
 
     ifstream input_file(xyzfilename);
 	vector<Atom> temporary_atoms = read_dotxyz(input_file);
 	atoms = temporary_atoms;
 
+}
+
+void initialize_basis(char *basisset, char *filename){
+	
+	string xyzfilename(strcat(filename,".xyz"));
+
+	cout << xyzfilename << endl;
+	cout << basisset << endl;
+
+    ifstream input_file(xyzfilename);
+
+	vector<Atom> temporary_atoms = read_dotxyz(input_file);
+
 	cout.setstate(ios_base::failbit);
-	BasisSet temporary(basisset, atoms);
+	BasisSet temporary(basisset, temporary_atoms);
 	cout.clear();
 
-	basis = temporary;
+	basis.add(temporary);
 
 }
 
@@ -74,20 +85,18 @@ void finalize_libint(){
 
 void initialize_coulomb(){
 
-	//initialize();
 
 	cout << "Initializing " << omp_get_max_threads() << " electronic repulsion engines for parallellization." << endl;
+	cout << basis.max_nprim() <<  " " << basis.max_l()<< endl;
 
 	Engine temporary(Operator::coulomb, basis.max_nprim(), basis.max_l());
 	temporary.set_precision(1.0e-16);
 
-//	electronic_repulsion = temporary; // Old, to be deprecated
 
 	for (int i = 0; i != omp_get_max_threads(); i++){
 		electronic_repulsion_engines[i] = temporary; // One engine per thread
 	}
 
-	//finalize();
 
 }
 

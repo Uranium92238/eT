@@ -7,7 +7,9 @@
 / 	namely the basis set, atomic information, and integral engines.
 /
 */
-extern libint2::BasisSet basis; 										 // The basis set used throughout
+#include "eT_basis.h"
+
+extern eTBasis basis; 										 // The basis set used throughout
 //extern libint2::Engine electronic_repulsion; 					 // The electronic repulsion engine, deprecated
 extern vector<libint2::Engine> electronic_repulsion_engines; // The electronic repulsion engines vector for parallellization
 extern libint2::Engine kinetic; 										 // The kinetic energy engine

@@ -17,8 +17,10 @@ module molecular_system_class
    type :: molecular_system
 !
       character(len=100) :: name
+      character(len=40), dimension(:), allocatable :: basis_sets
 !
       integer(i15) :: n_atoms
+      integer(i15) :: n_basis_sets 
       integer(i15) :: charge
 !
       type(atomic), dimension(:), allocatable :: atoms
@@ -55,6 +57,8 @@ contains
 !
       class(molecular_system) :: molecule
 !
+      character(len=100) :: temp_name
+!
       integer(kind=4) :: i = 0, j = 0
 !
       integer(kind=4), dimension(:,:), allocatable :: n_shells_on_atoms
@@ -65,6 +69,7 @@ contains
       call molecule%read_info
 !
       allocate(molecule%atoms(molecule%n_atoms))
+      allocate(molecule%basis_sets(molecule%n_basis_sets))
 !
       allocate(n_shells_on_atoms(molecule%n_atoms, 1))
       n_shells_on_atoms = 0
@@ -77,9 +82,14 @@ contains
 !
       enddo
 !
-      call molecule%write()  ! Write an xyz file for the read geometry
+      call initialize_atoms(molecule%name)
 !
-      call initialize_basis(molecule%atoms(1)%basis, molecule%name) ! Currently basis is equal to basis on first
+      do i = 1, molecule%n_basis_sets ! Loop over atoms 
+         write(temp_name, '(a, a1, i4.4)')trim(molecule%name), '_', i
+         call initialize_basis(molecule%basis_sets(i), temp_name) ! Currently basis is equal to basis on first
+      enddo
+!
+      write(*,*)'hei a '
       call get_n_shells_on_atoms(n_shells_on_atoms)
 !
       do i = 1, molecule%n_atoms ! Loop over atoms
@@ -87,6 +97,7 @@ contains
 !        Allocate and initialize the corresponding shells
 !
          molecule%atoms(i)%n_shells = n_shells_on_atoms(i, 1)
+         write(*,*)'hei a1 '
 !
          allocate(molecule%atoms(i)%shells(molecule%atoms(i)%n_shells))
 !
@@ -95,6 +106,7 @@ contains
 !
          allocate(n_basis_in_shells(n_shells_on_atoms(i,1), 1))
          call get_n_basis_in_shells(i, n_basis_in_shells)
+         write(*,*)'hei a2 '
 !
          molecule%atoms(i)%n_ao = 0
 !
@@ -105,6 +117,7 @@ contains
             molecule%atoms(i)%n_ao = molecule%atoms(i)%n_ao + n_basis_in_shells(j,1)
 
          enddo
+         write(*,*)'hei a3'
 
          deallocate(n_basis_in_shells)
 !
@@ -118,19 +131,23 @@ contains
             molecule%atoms(i)%shells(j)%number = shell_numbers(j, 1)
 !
          enddo
+         write(*,*)'hei a4 '
 !
          deallocate(shell_numbers)
 !
 !        And the first AO index in each shell
 !
          allocate(first_ao_in_shells(n_shells_on_atoms(i,1), 1))
+         write(*,*)'hei a5', n_shells_on_atoms(i,1)
          call get_first_ao_in_shells(i, first_ao_in_shells)
+         write(*,*)'hei a6'
 !
          do j = 1, n_shells_on_atoms(i,1)
 
             molecule%atoms(i)%shells(j)%first = first_ao_in_shells(j,1)
 !
          enddo
+         write(*,*)'hei a7'
 !
          deallocate(first_ao_in_shells)
 !
@@ -145,11 +162,13 @@ contains
          enddo
 !
       enddo
+      write(*,*)'hei b'
 !
       if (molecule%charge .ne. 0) then
          write(output%unit) 'Error: SOAD not yet implemented for charged species!'
          stop
       endif
+
 !
    end subroutine initialize_molecular_system
 !
@@ -179,12 +198,16 @@ contains
       read(input%unit,'(a)') line
       line = remove_preceding_blanks(line)
 !
+      molecule%n_basis_sets = 0
+!
       do while (trim(line) .ne. 'end geometry')
 
          if (line(1:6) == 'basis:' .or.  &
              line(1:6) == 'Basis:' .or.  &
              line(1:6) == 'BASIS:' ) then
-
+!
+            molecule%n_basis_sets = molecule%n_basis_sets + 1
+!
             read(input%unit,'(a)') line
             line = remove_preceding_blanks(line)
 
@@ -221,7 +244,14 @@ contains
          line = remove_preceding_blanks(line)
 
       enddo
-
+!
+      if ((molecule%n_basis_sets .le. 0 ).or.( molecule%n_basis_sets .gt. molecule%n_atoms)) then
+!
+         write(output%unit, '(a)')'Error: Number of basis sets specified exceeds number of atoms or is zero.'
+         stop
+!
+      endif
+!
       call disk%close_file(input)
 !
    end subroutine read_info_molecular_system
@@ -239,12 +269,22 @@ contains
       class(molecular_system) :: molecule
 !
       character(len=100) :: line
-      character(len=100) :: current_basis
+      character(len=100) :: current_basis, temp_name
 !
-      integer(i15) :: i = 0, current_atom = 0
+      integer(i15) :: i = 0, current_atom = 0, current_basis_nbr = 0
+      integer(i15), dimension(:,:), allocatable :: atoms_with_current_basis
 !
       integer(i15) :: cursor
       character(len=100) :: coordinate
+!
+      type(file) :: basis_file, mol_file
+!
+      call mem%alloc_int(atoms_with_current_basis, molecule%n_basis_sets, 1)
+!
+      call mol_file%init(trim(molecule%name) // '.xyz', 'sequential', 'formatted')
+      call disk%open_file(mol_file, 'write', 'rewind')
+!
+      write(mol_file%unit, '(i4/)') molecule%n_atoms
 !
       call disk%open_file(input, 'read')
       rewind(input%unit)
@@ -253,15 +293,20 @@ contains
       line = remove_preceding_blanks(line)
 !
       current_atom = 0
+      current_basis_nbr = 0
 !
       do while (trim(line) .ne. 'end geometry')
 
          if (line(1:6) == 'basis:' .or.  &
              line(1:6) == 'Basis:' .or.  &
              line(1:6) == 'BASIS:' ) then
+!     
+            current_basis_nbr = current_basis_nbr + 1
+            atoms_with_current_basis(current_basis_nbr , 1) = 0
 !
             current_basis = trim(line(7:100))
             current_basis = remove_preceding_blanks(current_basis)
+            molecule%basis_sets(current_basis_nbr) = current_basis    
 !
             read(input%unit,'(a)') line
             line = remove_preceding_blanks(line)
@@ -271,6 +316,9 @@ contains
                       line(1:6) .ne. 'basis:'        .and.  &
                       line(1:6) .ne. 'Basis:'        .and.  &
                       line(1:6) .ne. 'BASIS:')
+!
+               write(mol_file%unit, '(a)') line 
+               atoms_with_current_basis(current_basis_nbr , 1) = atoms_with_current_basis(current_basis_nbr , 1) + 1
 !
                current_atom = current_atom + 1
 !
@@ -292,7 +340,7 @@ contains
                enddo
 !
                coordinate = line(1:cursor)
-               read(coordinate, '(f30.25)') molecule%atoms(current_atom)%x
+               read(coordinate, '(f21.16)') molecule%atoms(current_atom)%x
 !
                cursor = cursor + 1
 !
@@ -311,14 +359,14 @@ contains
                enddo
 !
                coordinate = line(1:cursor)
-               read(coordinate, '(f30.25)') molecule%atoms(current_atom)%y
+               read(coordinate, '(f21.16)') molecule%atoms(current_atom)%y
 !
                cursor = cursor + 1
 !
                coordinate = line(cursor:100)
                coordinate = remove_preceding_blanks(coordinate)
 !
-               read(coordinate, '(f30.25)') molecule%atoms(current_atom)%z
+               read(coordinate, '(f21.16)') molecule%atoms(current_atom)%z
 !
               read(input%unit,'(a)') line
               line = remove_preceding_blanks(line)
@@ -335,6 +383,33 @@ contains
       enddo
 
       call disk%close_file(input)
+      call disk%close_file(mol_file)
+!
+      call disk%open_file(mol_file, 'read')
+      rewind(mol_file%unit)
+      read(mol_file%unit, '(a)') line
+      read(mol_file%unit, '(a)') line
+!
+      do current_basis_nbr = 1, molecule%n_basis_sets
+!
+         write(temp_name, '(a, a1, i4.4, a4)')trim(molecule%name), '_', current_basis_nbr,  '.xyz'
+!
+         call basis_file%init(trim(temp_name), 'sequential', 'formatted')
+         call disk%open_file(basis_file, 'write', 'rewind')
+!
+         write(basis_file%unit, '(i4/)') atoms_with_current_basis(current_basis_nbr, 1)
+         do i = 1, atoms_with_current_basis(current_basis_nbr, 1)
+            read(mol_file%unit, '(a)') line 
+            write(basis_file%unit, '(a)') line 
+         enddo
+!
+         call disk%close_file(basis_file)
+!
+      enddo
+!
+      call mem%dealloc_int(atoms_with_current_basis, molecule%n_basis_sets, 1)
+!
+      call disk%close_file(mol_file)
 !
    end subroutine read_geometry_molecular_system
 !
@@ -353,7 +428,9 @@ contains
 !
       integer(i15) :: atom = 0
 !
-      type(file) :: mol_file
+      character(len=100) temp_name
+!
+      type(file) :: mol_file, basis_file
 !
       call mol_file%init(trim(molecule%name) // '.xyz', 'sequential', 'formatted')
       call disk%open_file(mol_file, 'write', 'rewind')
@@ -362,7 +439,7 @@ contains
 !
       do atom = 1, molecule%n_atoms
 !
-         write(mol_file%unit, '(a3, 3x, f30.25, 3x, f30.25, 3x, f30.25)')  &
+         write(mol_file%unit, '(a3, 3x, f21.16, 3x, f21.16, 3x, f21.16)')  &
                                  molecule%atoms(atom)%symbol,           &
                                  molecule%atoms(atom)%x,                &
                                  molecule%atoms(atom)%y,                &

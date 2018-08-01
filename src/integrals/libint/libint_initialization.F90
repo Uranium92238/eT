@@ -55,14 +55,10 @@ contains
 !
    end subroutine initialize_nuclear
 !
-   subroutine initialize_basis(basis_set, mol_name)
+   subroutine initialize_atoms(mol_name)
 !
       use iso_c_binding, only: C_CHAR, C_NULL_CHAR
       implicit none
-!
-      character(len=*) :: basis_set
-      character(len=40) :: basis_set_temp
-      character(kind=c_char),dimension(40) :: cpp_temp_basis
 !
       character(len=*) :: mol_name
       character(len=40) :: mol_name_temp
@@ -70,17 +66,7 @@ contains
 !
       integer(kind=4) :: j
 !
-      basis_set_temp = trim(basis_set)//c_null_char
       mol_name_temp = trim(mol_name)//c_null_char
-!
-      write(*,*)basis_set_temp, len_trim(basis_set_temp)
-      write(*,*)mol_name_temp, len_trim(mol_name_temp)
-!
-      do j=1,len_trim(basis_set_temp)
-!
-         cpp_temp_basis(j) = basis_set_temp(j:j)  
-!
-      enddo
 !
       do j=1,len_trim(mol_name_temp)
 !
@@ -88,7 +74,43 @@ contains
 !
       enddo
 !
-      call initialize_basis_c(cpp_temp_basis, cpp_temp_mol_name)
+      call initialize_atoms_c(cpp_temp_mol_name)
+!
+   end subroutine initialize_atoms
+!
+   subroutine initialize_basis(basis_set, file_name)
+!
+      use iso_c_binding, only: C_CHAR, C_NULL_CHAR, C_INT
+      implicit none
+!
+      character(len=*) :: basis_set
+      character(len=*) :: file_name
+!
+      character(len=40) :: basis_set_temp
+      character(len=40) :: file_name_temp
+!
+      character(kind=c_char),dimension(40) :: cpp_temp_basis
+      character(kind=c_char),dimension(40) :: cpp_temp_file
+!
+      integer(kind=4) :: j, atom
+!
+      basis_set_temp = trim(basis_set)//c_null_char
+!
+      do j=1,len_trim(basis_set_temp)
+!
+         cpp_temp_basis(j) = basis_set_temp(j:j)  
+!
+      enddo
+!
+      file_name_temp = trim(file_name)//c_null_char
+!
+      do j=1,len_trim(file_name_temp)
+!
+         cpp_temp_file(j) = file_name_temp(j:j)  
+!
+      enddo
+!
+      call initialize_basis_c(cpp_temp_basis, cpp_temp_file)
 !
    end subroutine initialize_basis
 !

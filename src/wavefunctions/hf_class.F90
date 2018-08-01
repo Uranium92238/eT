@@ -88,7 +88,10 @@ contains
 !
       wf%name = 'HF'
 !
+      write(*,*)'init molecule'
+!
       call wf%system%initialize() ! Initialize molecular system -> Should include SOAD
+      
 !
       wf%n_ao = 0
       call get_n_aos(wf%n_ao) ! Should this be a molecular system routine?
@@ -100,10 +103,16 @@ contains
 !
 !     Initialize libint engines
 !
+      write(*,*)'init libint engines'
+      write(*,*)'coulomb'
       call initialize_coulomb()
+      write(*,*)'kinetic'
       call initialize_kinetic()
+      write(*,*)'nuclear'
       call initialize_nuclear()
+      write(*,*)'overlap'
       call initialize_overlap() ! SHOULD THESE BE INITIALIZED IN THE ENGINE ?
+      write(*,*)'done'
 !
    end subroutine initialize_hf
 !
@@ -520,6 +529,9 @@ contains
       call mem%alloc(h_wx, wf%n_ao*(wf%n_ao+1)/2, 1)
 !
       call packin(h_wx, h_wx_square, wf%n_ao)
+!
+!     Prefactor here?
+!
 !
       call mem%dealloc(h_wx_square, wf%n_ao, wf%n_ao)
 !
