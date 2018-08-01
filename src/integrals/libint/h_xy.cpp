@@ -27,6 +27,7 @@ void get_n_aos(long *n_ao){
 	//initialize();
 
 	*n_ao = basis.nbf();
+  cout << *n_ao << endl;
 
 	//finalize();
 
@@ -54,8 +55,8 @@ void get_ao_h_xy(double *h){
 //
 	const auto& buf_vec = kinetic.results(); // will point to computed shell sets
 //
-	for(auto s1=0; s1!=basis.size(); ++s1) {
-  		for(auto s2=0; s2!=basis.size(); ++s2) {
+	for(auto s1=0; s1!=basis.nshells(); ++s1) {
+  		for(auto s2=0; s2!=basis.nshells(); ++s2) {
 //
     		kinetic.compute(basis[s1], basis[s2]);
     		auto ints_shellset = buf_vec[0];  // location of the computed integrals
@@ -86,8 +87,8 @@ void get_ao_h_xy(double *h){
 	const auto& buf_vec_n = nuclear.results(); // will point to computed shell sets
                                           	  // const auto& is very important!
 //
-	for(auto s1=0; s1!=basis.size(); ++s1) {
-  		for(auto s2=0; s2!=basis.size(); ++s2) {
+	for(auto s1=0; s1!=basis.nshells(); ++s1) {
+  		for(auto s2=0; s2!=basis.nshells(); ++s2) {
 
     		nuclear.compute(basis[s1], basis[s2]);
     		auto ints_shellset_n = buf_vec_n[0];  // location of the computed integrals

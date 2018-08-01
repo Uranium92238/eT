@@ -45,12 +45,12 @@ void get_ao_L_wxyz(double *L, long *s1, long *s3){
 	const auto bf3 = shell2bf[sh3];  // First basis function in shell 3
 	const auto n3 = basis[sh3].size(); // Number of basis functions in shell 3
 
-  	for(auto s2=0; s2!=basis.size(); ++s2) {
+  	for(auto s2=0; s2!=basis.nshells(); ++s2) {
 
 		auto bf2 = shell2bf[s2];  // First basis function in shell 2
 		auto n2 = basis[s2].size(); // Number of basis functions in shell 2
 
-		for (auto s4=0; s4!=basis.size(); ++s4) {
+		for (auto s4=0; s4!=basis.nshells(); ++s4) {
 
 			auto bf4 = shell2bf[s4];  // First basis function in shell 4
 			auto n4 = basis[s4].size(); // Number of basis functions in shell 4

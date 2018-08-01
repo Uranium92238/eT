@@ -75,8 +75,8 @@ contains
 !
       elseif (trim(basis) == 'cc-pVQZ' .or. trim(basis) == 'aug-cc-pVQZ') then ! QZ -> 1*(1s), 4*(2s,2p)
 !
-         info(2, 1) =4
-         info(3, 1) =4
+         info(2, 1) = 4
+         info(3, 1) = 4
 !
       elseif (trim(basis) == 'cc-pV5Z' .or. trim(basis) == 'aug-cc-pV5Z') then ! 5Z -> 1*(1s), 5*(2s,2p)
 !

@@ -22,6 +22,8 @@ module parameters
    real(dp), parameter :: four  = 4.0D0
    real(dp), parameter :: five  = 5.0D0
    real(dp), parameter :: six   = 6.0D0
+   real(dp), parameter :: seven = 7.0D0
+   real(dp), parameter :: eight = 8.0D0
 !
 !  Conversion factors
 !

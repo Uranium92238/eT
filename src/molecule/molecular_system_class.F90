@@ -88,8 +88,7 @@ contains
          write(temp_name, '(a, a1, i4.4)')trim(molecule%name), '_', i
          call initialize_basis(molecule%basis_sets(i), temp_name) ! Currently basis is equal to basis on first
       enddo
-!
-      write(*,*)'hei a '
+
       call get_n_shells_on_atoms(n_shells_on_atoms)
 !
       do i = 1, molecule%n_atoms ! Loop over atoms
@@ -97,7 +96,6 @@ contains
 !        Allocate and initialize the corresponding shells
 !
          molecule%atoms(i)%n_shells = n_shells_on_atoms(i, 1)
-         write(*,*)'hei a1 '
 !
          allocate(molecule%atoms(i)%shells(molecule%atoms(i)%n_shells))
 !
@@ -106,7 +104,6 @@ contains
 !
          allocate(n_basis_in_shells(n_shells_on_atoms(i,1), 1))
          call get_n_basis_in_shells(i, n_basis_in_shells)
-         write(*,*)'hei a2 '
 !
          molecule%atoms(i)%n_ao = 0
 !
@@ -117,7 +114,6 @@ contains
             molecule%atoms(i)%n_ao = molecule%atoms(i)%n_ao + n_basis_in_shells(j,1)
 
          enddo
-         write(*,*)'hei a3'
 
          deallocate(n_basis_in_shells)
 !
@@ -131,23 +127,19 @@ contains
             molecule%atoms(i)%shells(j)%number = shell_numbers(j, 1)
 !
          enddo
-         write(*,*)'hei a4 '
 !
          deallocate(shell_numbers)
 !
 !        And the first AO index in each shell
 !
          allocate(first_ao_in_shells(n_shells_on_atoms(i,1), 1))
-         write(*,*)'hei a5', n_shells_on_atoms(i,1)
          call get_first_ao_in_shells(i, first_ao_in_shells)
-         write(*,*)'hei a6'
 !
          do j = 1, n_shells_on_atoms(i,1)
 
             molecule%atoms(i)%shells(j)%first = first_ao_in_shells(j,1)
 !
          enddo
-         write(*,*)'hei a7'
 !
          deallocate(first_ao_in_shells)
 !
@@ -157,16 +149,16 @@ contains
 !
             call molecule%atoms(i)%shells(j)%determine_angular_momentum()
             call molecule%atoms(i)%shells(j)%determine_last_ao_index()
-            write(*, *)'atom: ', i, 'angular momentum:', molecule%atoms(i)%shells(j)%l
 !
          enddo
 !
       enddo
-      write(*,*)'hei b'
 !
       if (molecule%charge .ne. 0) then
+!
          write(output%unit) 'Error: SOAD not yet implemented for charged species!'
          stop
+!
       endif
 
 !
@@ -497,7 +489,7 @@ contains
          enddo
       enddo
 !
-      write(output%unit, *) 'Nuclear respulsion: ', get_nuclear_repulsion_molecular_system
+   !   write(output%unit, *) 'Nuclear respulsion: ', get_nuclear_repulsion_molecular_system
 !
   end function get_nuclear_repulsion_molecular_system
 !
@@ -588,7 +580,7 @@ contains
 !
       class(molecular_system) :: molecule
 !
-      integer(kind=8) :: A
+      integer(kind=8), intent(in) :: A
 !
       integer(kind=8) :: I, J
 !
@@ -683,12 +675,13 @@ contains
       electrons = 0
 !
       do I = 1, n_ao
-         write(*,*) density_diagonal(I, 1)
          electrons = electrons + density_diagonal(I, 1)
       enddo
 !
       if (abs(electrons - molecule%get_n_electrons()) .gt. 1.0d-7) then
+!
          write(output%unit, '(a)') 'Error: Mismatch in electron number SOAD'
+!
       endif
 !
    end subroutine SOAD_molecular_system

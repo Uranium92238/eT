@@ -21,26 +21,42 @@ program eT_program
 !
    type(hf) :: wf
 !
+!
 !  Initialize memory and disk here
 !
    call output%init('eT.out', 'sequential', 'formatted')
    call disk%open_file(output, 'write', 'rewind')
 !
-   write(*,*)'init libint'
+!  ::::::::::::::::::::::::::::::::::::::::::::::
+!  -::-         Print program banner         -::-
+!  ::::::::::::::::::::::::::::::::::::::::::::::
+!
+   write(output%unit,'(///t16,a)')    'eT - a coupled cluster program'
+   write(output%unit,'(t12,a//)') 'S. D. Folkestad, E. F. Kjønstad, 2017-2018'
+   flush(output%unit)
+!
+!  Initialize Libint integral library
+!
    call initialize_libint()
 !
-! 	Create an SCF engine and ask it to solve the HF wavefunction
+!  Initialize wavefunction
 !
-   write(*,*)'init hf'
    call wf%initialize()
-   write(*,*)'init engine'
+
    call engine%initialize(wf)
 !
-  !  call wf%integrals%cholesky_decompose(wf%molecule)
-  write(*,*)'solve hf'
-   call engine%solve(wf) ! solves Hartree Fock
+!  call wf%integrals%cholesky_decompose(wf%molecule)
+!
+!  Ask the Hartree-Fock (HF) engine to find the HF solution
+!
+   call engine%solve(wf)
+!
+!  Finalize the wavefunction
 !
    call wf%finalize()
+!
+!  Finalize the Libint integral library
+!
    call finalize_libint()
 !
    call disk%close_file(output)

@@ -21,7 +21,7 @@ class eTBasis: public vector<BasisSet> {
       }
 
       long nbf(){
-         long n = -1;
+         long n = 0;
          for (auto it = this->begin(); it != this->end(); ++it){
             n = n + (*it).nbf();
          }
@@ -85,7 +85,6 @@ class eTBasis: public vector<BasisSet> {
 
              result.push_back(n);
              n += this->operator[](i).size();
-             // cout << i << " "<< n << endl;
           }
 
          return result;

@@ -98,7 +98,7 @@ contains
 !
       do j=1,len_trim(basis_set_temp)
 !
-         cpp_temp_basis(j) = basis_set_temp(j:j)  
+         cpp_temp_basis(j) = basis_set_temp(j:j)
 !
       enddo
 !

@@ -30,46 +30,47 @@ module hf_class
 !
 	contains
 !
+!     Initialize and finalize wavefunction
+!
       procedure :: initialize => initialize_hf
       procedure :: finalize   => finalize_hf
 !
-!     Construct various HF arrays (density, AO Fock, ...)
+!     Construction routines for various wavefunction variables
 !
       procedure :: construct_ao_density => construct_ao_density_hf
       procedure :: construct_ao_fock    => construct_ao_fock_hf
       procedure :: construct_mo_fock    => construct_mo_fock_hf
       procedure :: construct_ao_overlap => construct_ao_overlap_hf
+      procedure :: construct_gradient   => construct_gradient_hf
 !
       procedure :: calculate_hf_energy  => calculate_hf_energy_hf
 !
-!     Solve Roothan Hall equations
+!     Solve the Roothan Hall equation FC = SCe by diagonalization
 !
       procedure :: solve_roothan_hall => solve_roothan_hall_hf
 !
-!     Get and set routines
+!     Get and set routines for wavefunction variables
 !
-      procedure :: get_hf_equations    => get_hf_equations_hf
       procedure :: get_ao_density      => get_ao_density_hf
       procedure :: get_n_hf_parameters => get_n_hf_parameters_hf
       procedure :: get_n_hf_equations  => get_n_hf_equations_hf
+      procedure :: get_hf_equations    => get_hf_equations_hf
 !
       procedure :: set_ao_density      => set_ao_density_hf
 !
-!     Initialize and destruct routines
+!     Initialize and destruct routines for wavefunction variables
 !
       procedure :: initialize_ao_density       => initialize_ao_density_hf
       procedure :: initialize_ao_fock          => initialize_ao_fock_hf
       procedure :: initialize_mo_coefficients  => initialize_mo_coefficients_hf
       procedure :: initialize_ao_overlap       => initialize_ao_overlap_hf
       procedure :: initialize_orbital_energies => initialize_orbital_energies_hf
-      procedure :: initialize_g_wxyz           => initialize_g_wxyz_hf
 !
       procedure :: destruct_ao_density       => destruct_ao_density_hf
       procedure :: destruct_ao_fock          => destruct_ao_fock_hf
       procedure :: destruct_mo_coefficients  => destruct_mo_coefficients_hf
       procedure :: destruct_ao_overlap       => destruct_ao_overlap_hf
       procedure :: destruct_orbital_energies => destruct_orbital_energies_hf
-      procedure :: destruct_g_wxyz           => destruct_g_wxyz_hf
 !
    end type hf
 !
@@ -82,37 +83,34 @@ contains
 !!    Initialize
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+!!    Sets low-memory member variables that are needed throughout - in contrast
+!!    to larger arrays, which are allocated when needed - and calls initialization
+!!    routines for the molecular system object and the Libint integral library.
+!!
       implicit none
 !
       class(hf) :: wf
 !
       wf%name = 'HF'
 !
-      write(*,*)'init molecule'
 !
       call wf%system%initialize() ! Initialize molecular system -> Should include SOAD
-      
 !
       wf%n_ao = 0
-      call get_n_aos(wf%n_ao) ! Should this be a molecular system routine?
+      call get_n_aos(wf%n_ao)
 !
       wf%n_mo = wf%n_ao
 !
-      wf%n_o = (wf%system%get_n_electrons())/2 ! We only treat closed shell systems
+      wf%n_o = (wf%system%get_n_electrons())/2
       wf%n_v = wf%n_mo - wf%n_o
 !
-!     Initialize libint engines
+!     Initialize Libint engines to be used
 !
-      write(*,*)'init libint engines'
-      write(*,*)'coulomb'
       call initialize_coulomb()
-      write(*,*)'kinetic'
       call initialize_kinetic()
-      write(*,*)'nuclear'
       call initialize_nuclear()
-      write(*,*)'overlap'
       call initialize_overlap() ! SHOULD THESE BE INITIALIZED IN THE ENGINE ?
-      write(*,*)'done'
+      call initialize_overlap()
 !
    end subroutine initialize_hf
 !
@@ -126,6 +124,8 @@ contains
 !
       class(hf) :: wf
 !
+!     Nothing here yet
+!
    end subroutine finalize_hf
 !
 !
@@ -138,7 +138,7 @@ contains
 !
       class(hf) :: wf
 !
-      call mem%alloc(wf%ao_density, wf%n_ao*(wf%n_ao+1)/2, 1)
+      call mem%alloc(wf%ao_density, wf%n_ao, wf%n_ao)
 !
    end subroutine initialize_ao_density_hf
 !
@@ -156,138 +156,6 @@ contains
        wf%orbital_energies = zero
 !
    end subroutine initialize_orbital_energies_hf
-!
-!
-   subroutine initialize_g_wxyz_hf(wf)
-!!
-!!    Initialize g_wxyz
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      integer(i15) :: n_s
-!
-      real(dp), dimension(:,:), allocatable :: g_AB_CD
-!
-      type(interval) :: A_interval
-      type(interval) :: B_interval
-      type(interval) :: C_interval
-      type(interval) :: D_interval
-!
-      integer(i15) :: A_s, B_s, C_s, D_s
-!
-      integer(i15) :: a, b, c, d, ab_full, cd_full, ab_reduced, cd_reduced
-!
-      real(dp) :: s_constr_g, e_constr_g
-      real(dp) :: s_timer, e_timer
-      real(dp) :: integral_time, copy_time, alloc_time
-!
-      call cpu_time(s_constr_g)
-!
-      call mem%alloc(wf%g_wxyz, (wf%n_ao)**2, (wf%n_ao)**2)
-      wf%g_wxyz = zero
-!
-      n_s = wf%system%get_n_shells()
-!
-      write(output%unit, *) 'Starting to construct g_xyzw...'
-      flush(output%unit)
-!
-      integral_time = zero
-      copy_time = zero
-      alloc_time = zero
-!
-!$omp parallel do &
-!$omp private(A_s, B_s, C_s, D_s, g_AB_CD, a, b, c, d, ab_reduced, cd_reduced, ab_full, cd_full, &
-!$omp A_interval, B_interval, C_interval, D_interval, s_timer, e_timer)
-      do D_s = 1, n_s
-         do C_s = 1, n_s
-            do B_s = 1, n_s
-               do A_s = 1, n_s
-!
-                  A_interval = wf%system%get_shell_limits(A_s)
-                  B_interval = wf%system%get_shell_limits(B_s)
-                  C_interval = wf%system%get_shell_limits(C_s)
-                  D_interval = wf%system%get_shell_limits(D_s)
-!
-                  call cpu_time(s_timer)
-!
-                  call mem%alloc(g_AB_CD, &
-                     (A_interval%size)*(B_interval%size), &
-                     (C_interval%size)*(D_interval%size))
-!
-                  call cpu_time(e_timer); alloc_time = alloc_time + e_timer - s_timer
-!
-                  call cpu_time(s_timer)
-!
-                  call wf%integrals%get_ao_g_wxyz(g_AB_CD, A_s, B_s, C_s, D_s)
-!
-                  call cpu_time(e_timer); integral_time = integral_time + e_timer - s_timer
-!
-                  call cpu_time(s_timer)
-!
-                  do d = 1, D_interval%size
-                     do c = 1, C_interval%size
-                        do b = 1, B_interval%size
-                           do a = 1, A_interval%size
-!
-                              ab_reduced = index_two(a, b, A_interval%size)
-                              cd_reduced = index_two(c, d, C_interval%size)
-!
-                              ab_full = index_two(a + A_interval%first - 1, b + B_interval%first - 1, wf%n_ao)
-                              cd_full = index_two(c + C_interval%first - 1, d + D_interval%first - 1, wf%n_ao)
-!
-                              wf%g_wxyz(ab_full, cd_full) = g_AB_CD(ab_reduced, cd_reduced)
-!
-                           enddo
-                        enddo
-                     enddo
-                  enddo
-!
-                  call cpu_time(e_timer); copy_time = copy_time + e_timer - s_timer
-!
-                  call cpu_time(s_timer)
-!
-                  call mem%dealloc(g_AB_CD, &
-                     (A_interval%size)*(B_interval%size), &
-                     (C_interval%size)*(D_interval%size))
-!
-                  call cpu_time(e_timer); alloc_time = alloc_time + e_timer - s_timer
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
-!
-      call cpu_time(e_constr_g)
-      write(output%unit, *) 'CPU time to construct g (sec) : ', e_constr_g - s_constr_g
-!
-      write(output%unit, *) 'Breakdown of CPU time: '
-!
-      write(output%unit, *) 'Integral time: ', integral_time
-      write(output%unit, *) 'Alloc time: ', alloc_time
-      write(output%unit, *) 'Copy time: ', copy_time
-!
-      write(output%unit, *) 'Done with constructing g_xyzw'
-      flush(output%unit)
-!
-   end subroutine initialize_g_wxyz_hf
-!
-!
-   subroutine destruct_g_wxyz_hf(wf)
-!!
-!!    Initialize g_wxyz
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      call mem%dealloc(wf%g_wxyz, (wf%n_ao)**2, (wf%n_ao)**2)
-!
-   end subroutine destruct_g_wxyz_hf
 !
 !
    subroutine initialize_ao_fock_hf(wf)
@@ -372,7 +240,7 @@ contains
 !
       class(hf) :: wf
 !
-      call mem%dealloc(wf%ao_density, wf%n_ao*(wf%n_ao+1)/2, 1)
+      call mem%dealloc(wf%ao_density, wf%n_ao, wf%n_ao)
 !
    end subroutine destruct_ao_density_hf
 !
@@ -422,37 +290,19 @@ contains
       integer(i15) :: i, x, y, xy
 !
       wf%ao_density = zero
-
 !
-!$omp parallel do &
-!$omp private(y, x, xy, i)
-      do x = 1, wf%n_ao
-         do y = x, wf%n_ao
-!
-            xy = (max(x,y)*(max(x,y)-3)/2) + x + y
-!
-            do i = 1, wf%n_o
-!
-               wf%ao_density(xy, 1) = two*(wf%orbital_coefficients(x, i))*(wf%orbital_coefficients(y, i))
-!
-            enddo
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-     !call dgemm('N', 'T',                   &
-     !            wf%n_ao,                   &
-     !            wf%n_ao,                   &
-     !            wf%n_o,                    &
-     !            two,                       &
-     !            wf%orbital_coefficients,   &
-     !            wf%n_ao,                   &
-     !            wf%orbital_coefficients,   &
-     !            wf%n_ao,                   &
-     !            zero,                      &
-     !            wf%ao_density,             &
-     !            wf%n_ao)
+      call dgemm('N', 'T',                   &
+                  wf%n_ao,                   &
+                  wf%n_ao,                   &
+                  wf%n_o,                    &
+                  two,                       &
+                  wf%orbital_coefficients,   &
+                  wf%n_ao,                   &
+                  wf%orbital_coefficients,   &
+                  wf%n_ao,                   &
+                  zero,                      &
+                  wf%ao_density,             &
+                  wf%n_ao)
 !
    end subroutine construct_ao_density_hf
 !
@@ -462,11 +312,12 @@ contains
 !!    Construct AO Fock matrix
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Routine which calculates
+!!    Calculates
 !!
 !!       F_αβ = h_αβ + sum_γδ g_αβγδ D_γδ - 1/2 * sum_γδ g_αδγβ D_γδ,
 !!
-!!    where D is the AO density.
+!!    where D is the AO density. This routine is integral direct, and
+!!    it calculates the Hartree-Fock energy by default.
 !!
       implicit none
 !
@@ -474,66 +325,332 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: ao_fock_packed
       real(dp), dimension(:,:), allocatable :: X_wz, h_wx, h_wx_square
+      integer(i15) :: w, x, y, z, wx, yz, w_red, x_red, y_red, z_red
 !
-      real(dp) :: ddot
+      real(dp), dimension(:,:), allocatable :: F1
+      real(dp), dimension(:,:), allocatable :: F2
+      real(dp), dimension(:,:), allocatable :: F3
+      real(dp), dimension(:,:), allocatable :: F4
+      real(dp), dimension(:,:), allocatable :: F5
+      real(dp), dimension(:,:), allocatable :: F6
 !
-      integer(i15) :: x, y, w, z, xy, xy_packed, wz, xz, wy
+      integer(i15) :: s1, s2, s3, s4, s4_max, n_s, s1s2, s3s4
 !
-      real(dp) :: s_timer, e_timer
+      type(interval) :: A_interval
+      type(interval) :: B_interval
+      type(interval) :: C_interval
+      type(interval) :: D_interval
 !
-      call cpu_time(s_timer)
+      real(dp) :: deg_12, deg_34, deg_12_34, deg, ddot, norm
+      real(dp) :: temp, temp1, temp2, temp3, temp4, temp5, temp6
 !
-      call mem%alloc(ao_fock_packed, packed_size(wf%n_ao), 1)
-      ao_fock_packed = zero
+      real(dp), dimension(:,:), allocatable :: degeneracy
+      real(dp), dimension(:,:), allocatable :: g
 !
-      call mem%alloc(X_wz, 1, (wf%n_ao)**2) ! Intermediate, holds coulomb and exchange contributions
+      logical, dimension(:, :), allocatable :: schwarz
 !
-!$omp parallel do &
-!$omp private(y, x, xy, xy_packed, X_wz, z, w, wz, xz, wy)
-      do y = 1, wf%n_ao
-         do x = y, wf%n_ao
+      real(dp) :: start_timer, end_timer, omp_get_wtime
 !
-            xy = (wf%n_ao)*(y-1) + x
-            xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
+      n_s = wf%system%get_n_shells()
 !
-            X_wz(1, :) = wf%g_wxyz(xy, :)
+      start_timer = omp_get_wtime()
 !
-            ao_fock_packed(xy_packed, 1) = ao_fock_packed(xy_packed, 1) + ddot((wf%n_ao)**2, X_wz, 1, wf%ao_density, 1)
+      call mem%alloc(degeneracy, n_s**2, n_s**2)
+      degeneracy = zero
 !
-            do z = 1, wf%n_ao
-               do w = 1, wf%n_ao
+!$omp parallel do private(s1, s2, s3, s4, s1s2, s3s4, deg_12, deg_34, deg_12_34)
+      do s1 = 1, n_s
+         do s2 = 1, s1
 !
-                  wz = (wf%n_ao)*(z-1) + w
-                  xz = (wf%n_ao)*(z-1) + x
-                  wy = (wf%n_ao)*(y-1) + w
+            s1s2 = n_s*(s2 - 1) + s1
 !
-                  X_wz(1, wz) = wf%g_wxyz(xz, wy)
+            if (s1 .eq. s2) then
+!
+               deg_12 = one
+!
+            else
+!
+               deg_12 = two
+!
+            endif
+!
+            do s3 = 1, s1
+!
+               if (s3 .eq. s1) then
+!
+                  s4_max = s2
+!
+               else
+!
+                  s4_max = s3
+!
+               endif
+!
+               do s4 = 1, s4_max
+!
+                  if (s3 .eq. s4) then
+!
+                     deg_34 = one
+!
+                  else
+!
+                     deg_34 = two
+!
+                  endif
+!
+                  if (s3 .eq. s1) then
+!
+                     if (s2 .eq. s4) then
+!
+                        deg_12_34 = one
+!
+                     else
+!
+                        deg_12_34 = two
+!
+                     endif
+!
+                  else
+!
+                     deg_12_34 = two
+!
+                  endif
+!
+                  s3s4 = n_s*(s4 - 1) + s3
+!
+                  degeneracy(s1s2, s3s4) = deg_12*deg_34*deg_12_34
 !
                enddo
             enddo
+         enddo
+      enddo
+!$omp end parallel do
 !
-            ao_fock_packed(xy_packed, 1) = ao_fock_packed(xy_packed, 1) - half*ddot((wf%n_ao)**2, X_wz, 1, wf%ao_density, 1)
+      end_timer = omp_get_wtime()
+   !   write(output%unit, '(t3,a44,f9.1)') 'Construct integral degeneracy array (sec.): ', end_timer - start_timer
+!
+      start_timer = omp_get_wtime()
+!
+      allocate(schwarz(n_s, n_s))
+      schwarz = .false.
+!
+!$omp parallel do private(s1, s2, A_interval, B_interval, g, norm)
+      do s1 = 1, n_s
+         do s2 = 1, s1
+!
+            A_interval = wf%system%get_shell_limits(s1)
+            B_interval = wf%system%get_shell_limits(s2)
+!
+            call mem%alloc(g, (A_interval%size)*(B_interval%size), &
+                              (A_interval%size)*(B_interval%size))
+!
+            call wf%integrals%get_ao_g_wxyz(g, s1, s2, s1, s2)
+!
+            norm = sqrt(ddot((A_interval%size)**2*(B_interval%size)**2, g, 1, g, 1))
+!
+            if (norm .lt. 1.0D-12) then
+!
+               schwarz(s1,s2) = .true.
+               schwarz(s2,s1) = .true.
+!
+            endif
+!
+            call mem%dealloc(g, (A_interval%size)*(B_interval%size), &
+                                (A_interval%size)*(B_interval%size))
 !
          enddo
       enddo
 !$omp end parallel do
 !
-      call squareup(ao_fock_packed, wf%ao_fock, wf%n_ao)
+      end_timer = omp_get_wtime()
+   !   write(output%unit, '(t3,a32,f9.1)') 'Schwarz screening array (sec.): ', end_timer - start_timer
 !
-      call mem%dealloc(ao_fock_packed, packed_size(wf%n_ao), 1)
+      start_timer = omp_get_wtime()
 !
-      call mem%alloc(h_wx_square, wf%n_ao, wf%n_ao)
+      wf%ao_fock = zero
 !
-      call get_ao_h_xy(h_wx_square)
+!$omp parallel do &
+!$omp private(s1, s2, s3, s4, deg, s4_max, temp, s1s2, s3s4, &
+!$omp A_interval, B_interval, C_interval, D_interval, w, x, y, z, wx, yz, temp1, temp2, temp3, &
+!$omp temp4, temp5, temp6, F1, F2, F3, F4, F5, F6, w_red, x_red, y_red, z_red, g) schedule(dynamic)
+      do s1 = 1, n_s
+         do s2 = 1, s1
 !
-      call mem%alloc(h_wx, wf%n_ao*(wf%n_ao+1)/2, 1)
+            if (schwarz(s1, s2)) continue
 !
-      call packin(h_wx, h_wx_square, wf%n_ao)
+            s1s2 = n_s*(s2 - 1) + s1
 !
-!     Prefactor here?
+            do s3 = 1, s1
 !
+               if (s3 .eq. s1) then
 !
-      call mem%dealloc(h_wx_square, wf%n_ao, wf%n_ao)
+                  s4_max = s2
+!
+               else
+!
+                  s4_max = s3
+!
+               endif
+!
+               do s4 = 1, s4_max
+!
+                  s3s4 = n_s*(s4 - 1) + s3
+                  deg = degeneracy(s1s2, s3s4) ! Shell degeneracy
+!
+                  A_interval = wf%system%get_shell_limits(s1)
+                  B_interval = wf%system%get_shell_limits(s2)
+                  C_interval = wf%system%get_shell_limits(s3)
+                  D_interval = wf%system%get_shell_limits(s4)
+!
+                  call mem%alloc(g, (A_interval%size)*(B_interval%size), &
+                                    (C_interval%size)*(D_interval%size))
+                  call wf%integrals%get_ao_g_wxyz(g, s1, s2, s3, s4)
+!
+                  call mem%alloc(F1, A_interval%size, B_interval%size) ! F_wx
+                  call mem%alloc(F6, C_interval%size, B_interval%size) ! F_yx
+                  call mem%alloc(F2, C_interval%size, D_interval%size) ! F_yz
+                  call mem%alloc(F3, A_interval%size, D_interval%size) ! F_wz
+                  call mem%alloc(F4, B_interval%size, D_interval%size) ! F_xz
+                  call mem%alloc(F5, A_interval%size, C_interval%size) ! F_wy
+!
+                  F1 = zero
+                  F2 = zero
+                  F3 = zero
+                  F4 = zero
+                  F5 = zero
+                  F6 = zero
+!
+!                 Add Fock matrix contributions
+!
+                  do y = C_interval%first, C_interval%last
+                     do z = D_interval%first, D_interval%last
+!
+                        y_red = y - C_interval%first + 1
+                        z_red = z - D_interval%first + 1
+!
+                        yz = (C_interval%size)*(z_red - 1) + y_red
+!
+                        do w = A_interval%first, A_interval%last
+                           do x = B_interval%first, B_interval%last
+!
+                              w_red = w - A_interval%first + 1
+                              x_red = x - B_interval%first + 1
+!
+                              wx = (A_interval%size)*(x_red - 1) + w_red
+!
+                              temp = deg*g(wx, yz)
+!
+                              temp1 = (one/two)*temp*wf%ao_density(y, z)
+                              temp2 = (one/two)*temp*wf%ao_density(w, x)
+                              temp3 = (one/eight)*temp*wf%ao_density(y, x)
+                              temp4 = (one/eight)*temp*wf%ao_density(y, w)
+                              temp5 = (one/eight)*temp*wf%ao_density(z, x)
+                              temp6 = (one/eight)*temp*wf%ao_density(w, z)
+!
+                              F1(w_red, x_red) = F1(w_red, x_red) + temp1
+                              F2(y_red, z_red) = F2(y_red, z_red) + temp2
+                              F3(w_red, z_red) = F3(w_red, z_red) - temp3
+                              F4(x_red, z_red) = F4(x_red, z_red) - temp4
+                              F5(w_red, y_red) = F5(w_red, y_red) - temp5
+                              F6(y_red, x_red) = F6(y_red, x_red) - temp6
+!
+                           enddo
+                        enddo
+                     enddo
+                  enddo
+!
+                  call mem%dealloc(g, (A_interval%size)*(B_interval%size), &
+                                    (C_interval%size)*(D_interval%size))
+!
+                  do x = B_interval%first, B_interval%last
+                     do w = A_interval%first, A_interval%last
+!
+                        w_red = w - A_interval%first + 1
+                        x_red = x - B_interval%first + 1
+!$omp atomic update
+                        wf%ao_fock(w, x) = wf%ao_fock(w, x) + F1(w_red, x_red)
+!
+                     enddo
+                  enddo
+!
+                  do x = B_interval%first, B_interval%last
+                     do y = C_interval%first, C_interval%last
+!
+                        x_red = x - B_interval%first + 1
+                        y_red = y - C_interval%first + 1
+!$omp atomic update
+                        wf%ao_fock(y, x) = wf%ao_fock(y, x) + F6(y_red, x_red)
+!
+                     enddo
+                  enddo
+!
+                  do z = D_interval%first, D_interval%last
+                     do y = C_interval%first, C_interval%last
+!
+                        y_red = y - C_interval%first + 1
+                        z_red = z - D_interval%first + 1
+!$omp atomic update
+                        wf%ao_fock(y, z) = wf%ao_fock(y, z) + F2(y_red, z_red)
+!
+                     enddo
+                  enddo
+!
+                  do z = D_interval%first, D_interval%last
+                     do w = A_interval%first, A_interval%last
+!
+                        w_red = w - A_interval%first + 1
+                        z_red = z - D_interval%first + 1
+!$omp atomic update
+                        wf%ao_fock(w, z) = wf%ao_fock(w, z) + F3(w_red, z_red)
+!
+                     enddo
+                  enddo
+!
+                  do z = D_interval%first, D_interval%last
+                     do x = B_interval%first, B_interval%last
+!
+                        x_red = x - B_interval%first + 1
+                        z_red = z - D_interval%first + 1
+!$omp atomic update
+                        wf%ao_fock(x, z) = wf%ao_fock(x, z) + F4(x_red, z_red)
+!
+                     enddo
+                  enddo
+!
+                  do y = C_interval%first, C_interval%last
+                     do w = A_interval%first, A_interval%last
+!
+                        w_red = w - A_interval%first + 1
+                        y_red = y - C_interval%first + 1
+!$omp atomic update
+                        wf%ao_fock(w, y) = wf%ao_fock(w, y) + F5(w_red, y_red)
+!
+                     enddo
+                  enddo
+!
+                  call mem%dealloc(F1, A_interval%size, B_interval%size) ! F_wx
+                  call mem%dealloc(F6, C_interval%size, B_interval%size) ! F_yx
+                  call mem%dealloc(F2, C_interval%size, D_interval%size) ! F_yz
+                  call mem%dealloc(F3, A_interval%size, D_interval%size) ! F_wz
+                  call mem%dealloc(F4, B_interval%size, D_interval%size) ! F_xz
+                  call mem%dealloc(F5, A_interval%size, C_interval%size) ! F_wy
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+      deallocate(schwarz)
+!
+      call mem%dealloc(degeneracy, n_s**2, n_s**2)
+!
+      call symmetric_sum(wf%ao_fock, wf%n_ao)
+!
+      wf%ao_fock = wf%ao_fock*half
+!
+      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
+      call get_ao_h_xy(h_wx)
 !
       call wf%calculate_hf_energy(wf%ao_fock, h_wx)
 !
@@ -541,9 +658,8 @@ contains
 !
       call mem%dealloc(h_wx, wf%n_ao*(wf%n_ao+1)/2, 1)
 !
-      call cpu_time(e_timer)
-!
-      write(output%unit, *) 'CPU time to construct Fock matrix: ', e_timer - s_timer
+      end_timer = omp_get_wtime()
+   !   write(output%unit, '(t3,a59,f9.1)') 'Actual Fock construction and calculation of energy (sec.): ', end_timer - start_timer
 !
    end subroutine construct_ao_fock_hf
 !
@@ -571,63 +687,14 @@ contains
 !
       real(dp) :: ddot
 !
-   !  real(dp), dimension(:,:), allocatable :: GD_wx
-      real(dp), dimension(wf%n_ao*(wf%n_ao+1)/1, 1) :: half_GD_wx
-!
-      real(dp), dimension(wf%n_ao*(wf%n_ao+1)/1, 1) :: h_wx
-      real(dp), dimension(:,:), allocatable :: g_wyzx
-!
-!     Construct G(D)
-!
-!     G(D)_αβ = 2 sum_γδ g_αβγδ D_γδ
-!
-!GD_wx = two*GD_wx
-!       call mem%alloc(GD_wx, wf%n_ao, wf%n_ao)
-! !
-!       call dgemm('N', 'N',       &
-!                   (wf%n_ao)**2,  &
-!                   1,             &
-!                   (wf%n_ao)**2,  &
-!                   two,           &
-!                   wf%g_wxyz,     & ! g_αβ_γδ
-!                   (wf%n_ao)**2,  &
-!                   wf%ao_density, & ! D_γδ
-!                   (wf%n_ao)**2,  &
-!                   zero,          &
-!                   GD_wx,         & ! G(D)_αβ
-!                   (wf%n_ao)**2)
-! !
-! !     G(D)_αβ =+ (-1) sum_γδ g_αδγβ D_γδ
-! !
-!       call mem%alloc(g_wyzx, (wf%n_ao)**2, (wf%n_ao)**2)
-!       g_wyzx = zero
-! !
-!       call sort_1234_to_1432(wf%g_wxyz, g_wyzx, wf%n_ao, wf%n_ao, wf%n_ao, wf%n_ao)
-! !
-!       call dgemm('N', 'N',       &
-!                   (wf%n_ao)**2,  &
-!                   1,             &
-!                   (wf%n_ao)**2,  &
-!                   -one,          &
-!                   g_wyzx,        & ! g_αβ_γδ = g_αδγβ
-!                   (wf%n_ao)**2,  &
-!                   wf%ao_density, & ! D_γδ
-!                   (wf%n_ao)**2,  &
-!                   one,           &
-!                   GD_wx,         & ! G(D)_αβ
-!                   (wf%n_ao)**2)
-! !
-!       call mem%dealloc(g_wyzx, (wf%n_ao)**2, (wf%n_ao)**2)
-!
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: half_GD_wx
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
 !
       wf%hf_energy = wf%system%get_nuclear_repulsion()
 !
-      wf%hf_energy = wf%hf_energy + ddot((wf%n_ao)*(wf%n_ao+1)/2, h_wx, 1, wf%ao_density, 1)
-      wf%hf_energy = wf%hf_energy + two*(one/four)*ddot((wf%n_ao)*(wf%n_ao+1)/2, wf%ao_density, 1, half_GD_wx, 1)
-!
-    !  call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
-   !   call mem%dealloc(GD_wx, wf%n_ao, wf%n_ao)
-!
+      wf%hf_energy = wf%hf_energy + ddot((wf%n_ao)**2, h_wx, 1, wf%ao_density, 1)
+      wf%hf_energy = wf%hf_energy + two*(one/four)*ddot((wf%n_ao)**2, wf%ao_density, 1, half_GD_wx, 1)
+
    end subroutine calculate_hf_energy_hf
 !
 !
@@ -661,7 +728,7 @@ contains
 !!
       implicit none
 !
-      class(hf) :: wf
+      class(hf), intent(in) :: wf
 !
       integer(i15) :: get_n_hf_equations_hf
 !
@@ -683,8 +750,7 @@ contains
 !
       real(dp), dimension(:,:) :: D ! Packed
 !
-      wf%ao_density = D
-      !call squareup(D, wf%ao_density, wf%n_ao)
+      call squareup(D, wf%ao_density, wf%n_ao)
 !
    end subroutine set_ao_density_hf
 !
@@ -742,7 +808,6 @@ contains
 !
       class(hf) :: wf
 !
-      wf%ao_overlap = zero
       call get_ao_s_xy(wf%ao_overlap)
 !
    end subroutine construct_ao_overlap_hf
@@ -755,7 +820,7 @@ contains
 !!
       implicit none
 !
-      class(hf) :: wf
+      class(hf), intent(in) :: wf
 !
       real(dp), dimension(:,:) :: F_pq
 !
@@ -799,33 +864,45 @@ contains
 !!    Get HF equations
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Constructs the MO Fock matrix and returns the occupied-virtual
-!!    block of the full matrix.
+!!    Constructs the occupied-virtual block of the Fock MO matrix,
+!!    and returns the result in the array F.
 !!
       implicit none
 !
-      class(hf) :: wf
+      class(hf), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_o, wf%n_v) :: F ! F_ia
+      real(dp), dimension(wf%n_o, wf%n_v)   :: F ! F_ia
+      real(dp), dimension(:,:), allocatable :: X
 !
-      real(dp), dimension(:,:), allocatable :: F_pq
+      call mem%alloc(X, wf%n_ao, wf%n_v)
 !
-      integer(i15) :: i = 0, a = 0
+      call dgemm('N', 'N',                                  &
+                  wf%n_ao,                                  &
+                  wf%n_v,                                   &
+                  wf%n_ao,                                  &
+                  one,                                      &
+                  wf%ao_fock,                               &
+                  wf%n_ao,                                  &
+                  wf%orbital_coefficients(1, wf%n_o + 1),   &
+                  wf%n_ao,                                  &
+                  zero,                                     &
+                  X,                                        &
+                  wf%n_ao)
 !
-      call mem%alloc(F_pq, wf%n_ao, wf%n_ao)
-      F_pq = zero
+      call dgemm('T', 'N',                   &
+                  wf%n_o,                    &
+                  wf%n_v,                    &
+                  wf%n_ao,                   &
+                  one,                       &
+                  wf%orbital_coefficients,   &
+                  wf%n_ao,                   &
+                  X,                         &
+                  wf%n_ao,                   &
+                  zero,                      &
+                  F,                         &
+                  wf%n_o)
 !
-      call wf%construct_mo_fock(F_pq)
-!
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
-!
-            F(i,a) = F_pq(i, wf%n_o + a)
-!
-         enddo
-      enddo
-!
-      call mem%dealloc(F_pq, wf%n_ao, wf%n_ao)
+      call mem%dealloc(X, wf%n_ao, wf%n_v)
 !
    end subroutine get_hf_equations_hf
 !
@@ -839,13 +916,101 @@ contains
 !!
       implicit none
 !
-      class(hf) :: wf
+      class(hf), intent(in) :: wf
 !
       real(dp), dimension(:,:) :: D
 !
       call packin(D, wf%ao_density, wf%n_ao)
 !
    end subroutine get_ao_density_hf
+!
+!
+   subroutine construct_gradient_hf(wf, gradient_norm)
+!!
+!!    Construct energy gradient
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Here, ∇E is understood as the derivative of the HF energy with
+!!    with respect to X, where the update
+!!
+!!       D^AO <- exp(-X S) D^AO exp(S X)
+!!
+!!    is used in density-based Hartree-Fock theory. The full matrix
+!!    is calculated as
+!!
+!!       ∇E = 8 ( M - M^T ),
+!!
+!!    where M = S D^AO F^AO.
+!!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+!
+      integer(i15) :: w, x
+!
+      real(dp) :: gradient_norm
+!
+      real(dp), dimension(:,:), allocatable :: M
+      real(dp), dimension(:,:), allocatable :: gradient ! ∇E
+!
+!     Calculate M matrix
+!
+      call mem%alloc(gradient, wf%n_ao, wf%n_ao)
+      call mem%alloc(M, wf%n_ao, wf%n_ao)
+!
+      call dgemm('N','N',        &
+                  wf%n_ao,       &
+                  wf%n_ao,       &
+                  wf%n_ao,       &
+                  one,           &
+                  wf%ao_density, &
+                  wf%n_ao,       &
+                  wf%ao_fock,    &
+                  wf%n_ao,       &
+                  zero,          &
+                  gradient,      & ! Used temporarily
+                  wf%n_ao)
+!
+      call dgemm('N','N',        &
+                  wf%n_ao,       &
+                  wf%n_ao,       &
+                  wf%n_ao,       &
+                  one,           &
+                  wf%ao_overlap, &
+                  wf%n_ao,       &
+                  gradient,      &
+                  wf%n_ao,       &
+                  zero,          &
+                  M,             &
+                  wf%n_ao)
+!
+!     Set gradient = M and subtract the transpose, with prefactor 8
+!
+      do x = 1, wf%n_ao
+         do w = 1, wf%n_ao
+!
+            gradient(w, x) = eight*(M(w, x) - M(x, w))
+!
+         enddo
+      enddo
+!
+      call mem%dealloc(M, wf%n_ao, wf%n_ao)
+!
+      gradient_norm = zero
+!
+      do x = 1, wf%n_ao
+         do w = 1, x
+!
+            gradient_norm = gradient_norm + gradient(w, x)**2
+!
+         enddo
+      enddo
+!
+      call mem%dealloc(gradient, wf%n_ao, wf%n_ao)
+!
+      gradient_norm = sqrt(gradient_norm)
+!
+   end subroutine construct_gradient_hf
 !
 !
 end module hf_class

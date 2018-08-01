@@ -60,8 +60,13 @@ contains
 !
       call wf%initialize_ao_density()
 !
+!     Set initial density to superposition of atomic densities (SOAD) guess
+!
+      ! call wf%set_density_to_soad()
+!
       call mem%alloc(density_diagonal, wf%n_ao, 1)
       call wf%system%SOAD(wf%n_ao, density_diagonal)
+!
       do ao = 1, wf%n_ao
 !
          wf%ao_density(ao, ao) = density_diagonal(ao, 1)
@@ -74,11 +79,8 @@ contains
 !
    subroutine solve_hf_engine(engine, wf)
 !!
-!!    Solve
+!!    Solve HF
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-!!    Routine that solves the reference state equations associated with a
-!!    wavefunction
 !!
       implicit none
 !
@@ -90,7 +92,7 @@ contains
 !
       logical :: converged = .false.
 !
-      real(dp) :: error, ddot
+      real(dp) :: error, ddot, omp_get_wtime, gradient_norm
 !
       real(dp) :: t0, t1
 !
@@ -98,6 +100,12 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: D ! Parameters, D_αβ
       real(dp), dimension(:,:), allocatable :: F ! Equations, F_ia
+!
+!     Print engine banner
+!
+      write(output%unit, '(/t3,a)') ':: Direct-integral Roothan-Hall-based Hartree-Fock engine'
+      write(output%unit, '(t3,a/)') ':: E. F. Kjønstad, S. D. Folkestad, 2018'
+      flush(output%unit)
 !
 !     Initialize engine (read thresholds, restart, etc., from file,
 !     but also ask the wavefunction for the number of parameters to solve
@@ -117,10 +125,9 @@ contains
 !
 !     Get an initial AO density and initial MO coefficients for loop
 !
-      call wf%initialize_g_wxyz()
       call wf%initialize_orbital_energies()
-!
       call wf%initialize_ao_fock()
+!
       call wf%construct_ao_fock() ! From current D^AO
 !
       call wf%initialize_mo_coefficients()
@@ -146,6 +153,8 @@ contains
          F = zero
          call wf%get_hf_equations(F)
 !
+         call wf%construct_gradient(gradient_norm)
+!
 !        Check the error
 !
          error = ddot(engine%n_equations, F, 1, F, 1)
@@ -157,16 +166,10 @@ contains
 !
          else
 !
-            call cpu_time(t0)
-!
-       !     call wf%calculate_hf_energy()
-!
-            call cpu_time(t1)
-            write(output%unit,*) 'Calculate HF energy (sec)', t1-t0
-!
-            write(output%unit, '(/t3,a11,i3)')     'Iteration: ', iteration
-            write(output%unit, '(t3,a11,f17.12)')  'Error:     ', error
-            write(output%unit, '(t3,a11,f17.12/)') 'Energy:    ', wf%hf_energy
+            write(output%unit, '(/t3,a15,i3)')     'Iteration:     ', iteration
+            write(output%unit, '(t3,a15,f17.12)')  'Error:         ', error
+            write(output%unit, '(t3,a15,f17.12)')  'Gradient norm: ', gradient_norm
+            write(output%unit, '(t3,a15,f17.12/)') 'Energy:        ', wf%hf_energy
             flush(output%unit)
 !
 !           Get an averaged density matrix by DIIS
@@ -177,22 +180,22 @@ contains
 !
             call wf%set_ao_density(D)
 !
-            call cpu_time(t0)
+            t0 = omp_get_wtime()
             call wf%construct_ao_fock()
-            call cpu_time(t1)
-            write(output%unit,*) 'Construct AO Fock (sec)', t1-t0
+            t1 = omp_get_wtime()
+            write(output%unit, '(t3, a41, f9.2)') 'Construct AO Fock and get energy (sec.): ', t1-t0
 !
-            call cpu_time(t0)
+            t0 = omp_get_wtime()
             call wf%solve_roothan_hall() ! Updates the MO coefficients
-            call cpu_time(t1)
-            write(output%unit,*) 'Solve Roothan Hall (sec)', t1-t0
+            t1 = omp_get_wtime()
+            write(output%unit, '(t3, a41, f9.2)') 'Solve Roothan Hall (sec.):               ', t1-t0
 !
 !           Get the new AO density and new AO Fock matrix
 !
-            call cpu_time(t0)
+            t0 = omp_get_wtime()
             call wf%construct_ao_density()
-            call cpu_time(t1)
-            write(output%unit,*) 'Construct AO density (sec)', t1-t0
+            t1 = omp_get_wtime()
+            write(output%unit, '(t3, a41, f9.2)') 'Construct AO density (sec.):             ', t1-t0
 !
             call wf%construct_ao_fock()
 !
@@ -202,8 +205,6 @@ contains
 !
          iteration = iteration + 1
 !
-      !   stop ! temporary for time testing
-!
       enddo
 !
       call wf%destruct_mo_coefficients()
@@ -211,7 +212,6 @@ contains
       call wf%destruct_ao_fock()
       call wf%destruct_ao_overlap()
       call wf%destruct_orbital_energies()
-      call wf%destruct_g_wxyz()
 !
 !     Initialize engine (make final deallocations, and other stuff)
 !

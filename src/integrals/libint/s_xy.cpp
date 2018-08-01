@@ -46,8 +46,8 @@ void get_ao_s_xy(double *s){
 
 	const auto& buf_vec = overlap.results(); // will point to computed shell sets
 
-	for(auto s1=0; s1!=basis.size(); ++s1) {
-  		for(auto s2=0; s2!=basis.size(); ++s2) {
+	for(auto s1=0; s1!=basis.nshells(); ++s1) {
+  		for(auto s2=0; s2!=basis.nshells(); ++s2) {
 
     		overlap.compute(basis[s1], basis[s2]);
     		auto ints_shellset = buf_vec[0];  // location of the computed integrals
