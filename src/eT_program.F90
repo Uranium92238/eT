@@ -51,7 +51,7 @@ program eT_program
 !  call wf%integrals%cholesky_decompose(wf%molecule)
 !
    call chol_engine%initialize()
-   call chol_engine%solve(wf)
+   call chol_engine%solve(wf%system)
    call chol_engine%finalize()
 !
 !  Ask the Hartree-Fock (HF) engine to find the HF solution
