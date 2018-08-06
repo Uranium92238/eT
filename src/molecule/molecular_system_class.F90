@@ -11,6 +11,7 @@ module molecular_system_class
    use interval_class
    use atom_init
    use libint_initialization
+   use integral_manager_class
 !
    implicit none
 !
@@ -24,6 +25,8 @@ module molecular_system_class
       integer(i15) :: charge
 !
       type(atomic), dimension(:), allocatable :: atoms
+!
+      type(integral_manager) :: ao_integrals
 !
    contains
 !
@@ -42,6 +45,8 @@ module molecular_system_class
       procedure :: basis2shell => basis2shell_molecular_system
 !
       procedure :: SOAD => SOAD_molecular_system
+!
+      procedure :: shell_to_atom => shell_to_atom_molecular_system
 !
    end type molecular_system
 !
@@ -685,6 +690,47 @@ contains
       endif
 !
    end subroutine SOAD_molecular_system
+!
+!
+   integer function shell_to_atom_molecular_system(molecule, shell)
+!!
+!!
+!!
+      implicit none
+!
+      class(molecular_system) :: molecule
+      integer(i15), intent(in) :: shell
+!
+      integer(i15) :: I, accumulated_shells
+!
+      if (shell .le. 0) then
+!
+         write(output%unit, '(a)') 'Error: shell number has illegal value 0.'
+         stop
+!
+      elseif (shell .gt. molecule%get_n_shells()) then
+!
+         write(output%unit, '(a)') 'Error: shell number exceeds total number of shells.'
+         stop
+!
+      endif
+!
+      accumulated_shells = 0
+!
+      do I = 1, molecule%n_atoms
+!
+         accumulated_shells = accumulated_shells + molecule%atoms(I)%n_shells
+!
+         if (shell .le. accumulated_shells) then
+            shell_to_atom_molecular_system = I
+            return
+!
+         endif    
+!
+      enddo
+!
+   end function shell_to_atom_molecular_system
+
 !
 !
 end module molecular_system_class

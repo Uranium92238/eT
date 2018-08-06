@@ -15,9 +15,12 @@ program eT_program
    use hf_class
    use hf_engine_class
 !
+   use eri_chol_decomp_engine_class
+!
    implicit none
 !
    type(hf_engine) :: engine
+   type(eri_chol_decomp_engine) :: chol_engine
 !
    type(hf) :: wf
 !
@@ -47,9 +50,13 @@ program eT_program
 !
 !  call wf%integrals%cholesky_decompose(wf%molecule)
 !
+   call chol_engine%initialize()
+   call chol_engine%solve(wf)
+   call chol_engine%finalize()
+!
 !  Ask the Hartree-Fock (HF) engine to find the HF solution
 !
-   call engine%solve(wf)
+!   call engine%solve(wf)
 !
 !  Finalize the wavefunction
 !

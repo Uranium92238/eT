@@ -10,7 +10,6 @@ module hf_class
    use reordering
    use interval_class
    use index
-   use integral_manager_class
 !
    implicit none
 !
@@ -25,8 +24,6 @@ module hf_class
       real(dp), dimension(:,:), allocatable :: orbital_energies
 !
       real(dp), dimension(:,:), allocatable :: g_wxyz
-!
-      type(integral_manager) :: integrals
 !
 	contains
 !
@@ -444,7 +441,7 @@ contains
             call mem%alloc(g, (A_interval%size)*(B_interval%size), &
                               (A_interval%size)*(B_interval%size))
 !
-            call wf%integrals%get_ao_g_wxyz(g, s1, s2, s1, s2)
+            call wf%system%ao_integrals%get_ao_g_wxyz(g, s1, s2, s1, s2)
 !
             norm = sqrt(ddot((A_interval%size)**2*(B_interval%size)**2, g, 1, g, 1))
 !
@@ -504,7 +501,7 @@ contains
 !
                   call mem%alloc(g, (A_interval%size)*(B_interval%size), &
                                     (C_interval%size)*(D_interval%size))
-                  call wf%integrals%get_ao_g_wxyz(g, s1, s2, s3, s4)
+                  call wf%system%ao_integrals%get_ao_g_wxyz(g, s1, s2, s3, s4)
 !
                   call mem%alloc(F1, A_interval%size, B_interval%size) ! F_wx
                   call mem%alloc(F6, C_interval%size, B_interval%size) ! F_yx

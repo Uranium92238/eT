@@ -1,10 +1,12 @@
 set(eT_fortran_sources
    src/eT_program.F90
    src/engines/hf_engine_class.F90
+   src/engines/eri_chol_decomp_engine_class.F90
    src/io/disk_manager_class.F90
    src/io/file_class.F90
    src/io/io_utilities.F90
    src/integrals/integral_manager_class.F90
+   src/integrals/cholesky_array_list_class.F90
    src/integrals/libint/h_xy.F90
    src/integrals/libint/s_xy.F90
    src/integrals/libint/g_wxyz.F90
@@ -19,6 +21,9 @@ set(eT_fortran_sources
    src/tools/reordering.F90
    src/tools/array_utilities.F90
    src/tools/array_analysis.F90
+   src/tools/linked_list/array_list_class.F90
+   src/tools/linked_list/array_node_class.F90
+   src/tools/dpstrf_eT.F90
    src/wavefunctions/wavefunction_class.F90
    src/wavefunctions/hf_class.F90
    src/molecule/atomic_class.F90
