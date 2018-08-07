@@ -26,6 +26,7 @@ set(eT_fortran_sources
    src/tools/dpstrf_eT.F90
    src/wavefunctions/wavefunction_class.F90
    src/wavefunctions/hf_class.F90
+   src/wavefunctions/mlhf_class.F90
    src/molecule/atomic_class.F90
    src/molecule/molecular_system_class.F90
    src/molecule/periodic_table.F90

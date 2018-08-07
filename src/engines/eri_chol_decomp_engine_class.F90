@@ -38,6 +38,7 @@ module eri_chol_decomp_engine_class
       type(file) :: basis_shell_data
 !
       integer(i15) :: n_cholesky
+      integer(i15) :: n_s, n_sp, n_ao, n_aop
 !
    contains
 !
@@ -48,7 +49,6 @@ module eri_chol_decomp_engine_class
       procedure :: invert_overlap_cholesky_vecs                => invert_overlap_cholesky_vecs_eri_chol_decomp_engine
       procedure :: cholesky_vecs_diagonal_test                 => cholesky_vecs_diagonal_test_eri_chol_decomp_engine
       procedure :: construct_significant_diagonal              => construct_significant_diagonal_eri_chol_decomp_engine
-      procedure :: construct_significant_diagonal_vec          => construct_significant_diagonal_vec_eri_chol_decomp_engine
       procedure :: construct_significant_diagonal_atomic       => construct_significant_diagonal_atomic_eri_chol_decomp_engine
       procedure :: determine_auxilliary_cholesky_basis         => determine_auxilliary_cholesky_basis_eri_chol_decomp_engine
       procedure :: construct_overlap_cholesky_vecs             => construct_overlap_cholesky_vecs_eri_chol_decomp_engine
@@ -62,14 +62,21 @@ module eri_chol_decomp_engine_class
 contains
 !
 !
-   subroutine initialize_eri_chol_decomp_engine(engine)
+   subroutine initialize_eri_chol_decomp_engine(engine, system)
 !!
 !!
       implicit none
 !
       class(eri_chol_decomp_engine) :: engine
+      type(molecular_system) :: system
 !
       call engine%read_info() 
+!
+      engine%n_aop   = system%get_n_aos()*(system%get_n_aos()+1)/2 ! Number of ao pairs packed
+      engine%n_ao    = system%get_n_aos() ! Number of ao pairs packed
+      engine%n_s     = system%get_n_shells()
+      engine%n_sp    = engine%n_s*(engine%n_s + 1)/2         ! Number of shell pairs packed
+!
 !
       call engine%diagonal_info_target%init('target_diagonal', 'sequential', 'unformatted')
       call engine%cholesky_aux%init('cholesky_aux', 'sequential', 'unformatted')
@@ -98,11 +105,9 @@ contains
       write(output%unit, '(/a51/)') ':: Cholesky decomposition of two-electron ao_integrals'
       flush(output%unit)
 !
-      write(output%unit, '(a20, i10)')'Number of aos:      ', system%get_n_aos()
-      write(output%unit, '(a20, i10)')'Number of ao pairs: ', &
-                                          system%get_n_aos()*(system%get_n_aos()+1)/2
-      write(output%unit, '(a20, i10)')'Number of shells:   ', &
-                                          system%get_n_shells()
+      write(output%unit, '(a20, i10)')'Number of aos:      ', engine%n_ao
+      write(output%unit, '(a20, i10)')'Number of ao pairs: ', engine%n_aop
+      write(output%unit, '(a20, i10)')'Number of shells:   ', engine%n_s
 !
       write(output%unit, '(/a21, e12.4)') 'Target threshold is: ', engine%threshold
       write(output%unit, '(a21, e12.4/)') 'Span factor:         ', engine%span
@@ -144,7 +149,7 @@ contains
    end subroutine finalize_eri_chol_decomp_engine
 !
 !
-   subroutine construct_significant_diagonal_eri_chol_decomp_engine(engine, system)
+   subroutine construct_significant_diagonal_eri_chol_decomp_engine(engine, system, screening_vector)
 !!
 !!
 !!
@@ -153,9 +158,11 @@ contains
       class(eri_chol_decomp_engine) :: engine
       class(molecular_system) :: system
 !
-      integer(i15) :: n_s, n_sp, sp, n_sig_aop, n_sig_sp, current_sig_sp
+      real(dp), dimension(engine%n_ao,1), optional :: screening_vector
 !
-      real(dp), dimension(:,:), allocatable :: g_AB_AB, D_AB, D_xy
+      integer(i15) ::sp, n_sig_aop, n_sig_sp, current_sig_sp
+!
+      real(dp), dimension(:,:), allocatable :: g_AB_AB, D_AB, D_xy, screening_vector_local, screening_vector_reduced
 !
       integer(i15) :: x, y, xy, xy_packed, first_sig_sp, first_sig_aop, A, B
 !
@@ -163,20 +170,29 @@ contains
 !
       logical, dimension(:), allocatable :: sig_sp
 !
-      n_s   = system%get_n_shells() ! Number of shells
-      n_sp  = n_s*(n_s + 1)/2         ! Number of shell pairs packed
+      call mem%alloc(screening_vector_local, engine%n_aop, 1)
+!
+      if (present(screening_vector)) then
+!
+         screening_vector_local = screening_vector
+!
+      else
+!
+         screening_vector_local = one
+!
+      endif
 !
 !     Pre-screening of full diagonal
 !
-      allocate(sig_sp(n_sp))
+      allocate(sig_sp(engine%n_sp))
       sig_sp = .false.
 !
       sp = 1        ! Shell pair number
       n_sig_aop = 0 ! Number of significant AO pairs
       n_sig_sp  = 0 ! Number of significant shell pairs
 !
-      do B = 1, n_s
-         do A = B, n_s
+      do B = 1, engine%n_s
+         do A = B, engine%n_s
 !
             A_interval = system%get_shell_limits(A)
             B_interval = system%get_shell_limits(B)
@@ -192,10 +208,16 @@ contains
 !
             call mem%alloc(D_AB, (A_interval%size)*(B_interval%size), 1)
 !
-            do xy = 1, (A_interval%size)*(B_interval%size)
+            do x = 1, (A_interval%size)
+               do y = 1, (B_interval%size)
 !
-               D_AB(xy, 1) = g_AB_AB(xy, xy)
+                  xy = (A_interval%size)*(y-1)+x
 !
+                  D_AB(xy, 1) = g_AB_AB(xy, xy)&
+                              *screening_vector_local(x + A_interval%first - 1,1)&
+                              *screening_vector_local(y + B_interval%first - 1,1)
+!
+               enddo
             enddo
 !
             call mem%dealloc(g_AB_AB, &
@@ -223,15 +245,19 @@ contains
       enddo
 !
       write(output%unit, '(/a)')'Reduction of shell pairs:'
-      write(output%unit, '(a33, 2x, i9)')'Total number of shell pairs:     ', n_sp
+      write(output%unit, '(a33, 2x, i9)')'Total number of shell pairs:     ', engine%n_sp
       write(output%unit, '(a33, 2x, i9)')'Significant shell pairs:         ', n_sig_sp
       write(output%unit, '(a33, 2x, i9)')'Significant ao pairs:            ', n_sig_aop
       flush(output%unit)
+!
 !
 !     Construct significant diagonal
 !
       call mem%alloc(D_xy, n_sig_aop, 1)
       D_xy = zero
+!
+      call mem%alloc(screening_vector_reduced, n_sig_aop, 1)
+      screening_vector_reduced = zero
 !
 !     Note: allocated with length n_significant_sp + 1, last element is used for n_significant_aop
 !     This is convenient because significant_sp_to_first_significant_aop will be used to calculate lengths.
@@ -240,8 +266,8 @@ contains
       current_sig_sp  = 1
       first_sig_aop   = 1
 !
-      do B = 1, n_s
-         do A = B, n_s
+      do B = 1, engine%n_s
+         do A = B, engine%n_s
 !
             if (sig_sp(sp)) then
 !
@@ -264,6 +290,9 @@ contains
                         xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
 !
                         D_xy(xy_packed + first_sig_aop - 1, 1) = g_AB_AB(xy, xy)
+                        screening_vector_reduced(xy_packed + first_sig_aop - 1, 1) = &
+                                                                  screening_vector_local(x + A_interval%first - 1, 1)*&
+                                                                  screening_vector_local(y + B_interval%first - 1, 1)
 !
                      enddo
                   enddo
@@ -275,6 +304,9 @@ contains
 !
                         xy = A_interval%size*(y - 1) + x
                         D_xy(xy + first_sig_aop - 1, 1) = g_AB_AB(xy,xy)
+                        screening_vector_reduced(xy + first_sig_aop - 1, 1) = &
+                                                                  screening_vector_local(x + A_interval%first - 1, 1)*&
+                                                                  screening_vector_local(y + B_interval%first - 1, 1)
 !
                      enddo
                   enddo
@@ -296,6 +328,8 @@ contains
          enddo
       enddo
 !
+      call mem%dealloc(screening_vector_local, engine%n_aop, 1)
+!
 !     Write screening_info_file containing
 !
 !        1. number of significant shell pairs, number of significant ao pairs
@@ -308,198 +342,19 @@ contains
       write(engine%diagonal_info_target%unit) n_sig_sp, n_sig_aop
       write(engine%diagonal_info_target%unit) sig_sp
       write(engine%diagonal_info_target%unit) D_xy
+      write(engine%diagonal_info_target%unit) screening_vector_reduced
 !
       call disk%close_file(engine%diagonal_info_target)
 !
       deallocate(sig_sp)
       call mem%dealloc(D_xy, n_sig_aop, 1)
+      call mem%dealloc(screening_vector_reduced, n_sig_aop, 1)
 !
    end subroutine construct_significant_diagonal_eri_chol_decomp_engine
 !
 !
-   subroutine construct_significant_diagonal_vec_eri_chol_decomp_engine(engine, system, screening_vector, n_aop)
-!!
-!!
-!!
-      implicit none
-!
-      class(eri_chol_decomp_engine) :: engine
-      class(molecular_system) :: system
-!
-      integer(i15) :: n_aop
-!
-      real(dp), dimension(n_aop, 1) :: screening_vector 
-!
-      integer(i15) :: n_s, n_sp, sp, n_sig_aop, n_sig_sp, current_sig_sp, aop_offset
-!
-      real(dp), dimension(:,:), allocatable :: g_AB_AB, D_AB, D_xy
-!
-      integer(i15) :: x, y, xy, xy_packed, first_sig_sp, first_sig_aop, A, B
-!
-      type(interval) :: A_interval, B_interval
-!
-      logical, dimension(:), allocatable :: sig_sp
-!
-      n_s   = system%get_n_shells() ! Number of shells
-      n_sp  = n_s*(n_s + 1)/2       ! Number of shell pairs packed
-!
-!     Pre-screening of full diagonal
-!
-      allocate(sig_sp(n_sp))
-      sig_sp = .false.
-!
-      sp = 1        ! Shell pair number
-      n_sig_aop = 0 ! Number of significant AO pairs
-      n_sig_sp  = 0 ! Number of significant shell pairs
-!
-      aop_offset = 0
-!
-      do B = 1, n_s
-         do A = B, n_s
-!
-            A_interval = system%get_shell_limits(A)
-            B_interval = system%get_shell_limits(B)
-!
-!           Construct diagonal D_AB for the given shell pair
-!
-            call mem%alloc(g_AB_AB, &
-                     (A_interval%size)*(B_interval%size), &
-                     (A_interval%size)*(B_interval%size))
-!
-            g_AB_AB = zero
-            call system%ao_integrals%get_ao_g_wxyz(g_AB_AB, A, B, A, B)
-!
-            call mem%alloc(D_AB, (A_interval%size)*(B_interval%size), 1)
-!
-            do xy = 1, (A_interval%size)*(B_interval%size)
-!
-               D_AB(xy, 1) = g_AB_AB(xy, xy)*screening_vector(xy + aop_offset, 1)
-!
-            enddo
-!
-            call mem%dealloc(g_AB_AB, &
-                     (A_interval%size)*(B_interval%size), &
-                     (A_interval%size)*(B_interval%size))
-!
-!           Determine whether shell pair is significant
-!
-            sig_sp(sp) = is_significant(D_AB, (A_interval%size)*(B_interval%size), engine%threshold)
-!
-            call mem%dealloc(D_AB, (A_interval%size)*(B_interval%size), 1)
-!
-            if (sig_sp(sp)) then
-!
-               n_sig_aop = n_sig_aop + &
-                              get_size_sp(A_interval, B_interval)
-!
-               n_sig_sp = n_sig_sp + 1
-!
-            endif
-!
-            sp = sp + 1
-!
-            aop_offset = aop_offset + get_size_sp(A_interval, B_interval)
-!
-         enddo
-      enddo
-!
-      write(output%unit, '(/a)')'Reduction of shell pairs:'
-      write(output%unit, '(a33, 2x, i9)')'Total number of shell pairs:     ', n_sp
-      write(output%unit, '(a33, 2x, i9)')'Significant shell pairs:         ', n_sig_sp
-      write(output%unit, '(a33, 2x, i9)')'Significant ao pairs:            ', n_sig_aop
-      flush(output%unit)
-!
-!     Construct significant diagonal
-!
-      call mem%alloc(D_xy, n_sig_aop, 1)
-      D_xy = zero
-!
-!     Note: allocated with length n_significant_sp + 1, last element is used for n_significant_aop
-!     This is convenient because significant_sp_to_first_significant_aop will be used to calculate lengths.
-!
-      sp              = 1
-      current_sig_sp  = 1
-      first_sig_aop   = 1
-!
-      do B = 1, n_s
-         do A = B, n_s
-!
-            if (sig_sp(sp)) then
-!
-               A_interval = system%get_shell_limits(A)
-               B_interval = system%get_shell_limits(B)
-!
-               call mem%alloc(g_AB_AB, &
-                     (A_interval%size)*(B_interval%size), &
-                     (A_interval%size)*(B_interval%size))
-!
-               g_AB_AB = zero
-               call system%ao_integrals%get_ao_g_wxyz(g_AB_AB, A, B, A, B)
-!
-               if (A .eq. B) then
-!
-                  do x = 1, A_interval%size
-                     do y = 1, B_interval%size
-!
-                        xy = A_interval%size*(y - 1) + x
-                        xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
-!
-                        D_xy(xy_packed + first_sig_aop - 1, 1) = g_AB_AB(xy, xy)
-!
-                     enddo
-                  enddo
-!
-               else ! A ≠ B
-!
-                  do x = 1, (A_interval%size)
-                     do y = 1, (B_interval%size)
-!
-                        xy = A_interval%size*(y - 1) + x
-                        D_xy(xy + first_sig_aop - 1, 1) = g_AB_AB(xy,xy)
-!
-                     enddo
-                  enddo
-!
-               endif
-!
-               call mem%dealloc(g_AB_AB, &
-                     (A_interval%size)*(B_interval%size), &
-                     (A_interval%size)*(B_interval%size))
-!
-               first_sig_aop = first_sig_aop + get_size_sp(A_interval, B_interval)
-!
-               current_sig_sp = current_sig_sp + 1
-!
-            endif ! End of if (significant)
-!
-            sp = sp + 1
-!
-         enddo
-      enddo
-!
-!     Write screening_info_file containing
-!
-!        1. number of significant shell pairs, number of significant ao pairs
-!        2. sig_sp - vector of logicals to describe which shell pairs are significant
-!        3. D_xy = ( xy | xy ), the significant diagonal.
-!
-      call disk%open_file(engine%diagonal_info_target, 'write')
-      rewind(engine%diagonal_info_target%unit)
-!
-      write(engine%diagonal_info_target%unit) n_sig_sp, n_sig_aop
-      write(engine%diagonal_info_target%unit) sig_sp
-      write(engine%diagonal_info_target%unit) D_xy
-!
-      call disk%close_file(engine%diagonal_info_target)
-!
-      deallocate(sig_sp)
-      call mem%dealloc(D_xy, n_sig_aop, 1)
-!
-   end subroutine construct_significant_diagonal_vec_eri_chol_decomp_engine
-!
-!
    subroutine construct_significant_diagonal_atomic_eri_chol_decomp_engine&
-                                    (engine, system)
+                                    (engine, system, screening_vector)
 !!
 !!    ...
 !!
@@ -508,10 +363,12 @@ contains
 !
       class(eri_chol_decomp_engine) :: engine
       class(molecular_system) :: system
+
+      real(dp), dimension(engine%n_ao,1), optional :: screening_vector
 !
-      integer(i15) :: n_s, n_sp, sp, n_sig_aop, n_sig_sp, current_sig_sp
+      integer(i15) :: sp, n_sig_aop, n_sig_sp, current_sig_sp
 !
-      real(dp), dimension(:,:), allocatable :: g_AB_AB, D_AB, D_xy
+      real(dp), dimension(:,:), allocatable :: g_AB_AB, D_AB, D_xy,screening_vector_local, screening_vector_reduced
 !
       integer(i15) :: x, y, xy, xy_packed, first_sig_aop, A, B 
 !
@@ -519,20 +376,29 @@ contains
 !
       logical, dimension(:), allocatable :: sig_sp
 !
-      n_s   = system%get_n_shells() ! Number of shells
-      n_sp  = n_s*(n_s + 1)/2         ! Number of shell pairs packed
+      call mem%alloc(screening_vector_local, engine%n_aop, 1)
+!
+      if (present(screening_vector)) then
+!
+         screening_vector_local = screening_vector
+!
+      else
+!
+         screening_vector_local = one
+!
+      endif
 !
 !     Pre-screening of full diagonal
 !
-      allocate(sig_sp(n_sp))
+      allocate(sig_sp(engine%n_sp))
       sig_sp = .false.
 !
       sp = 0        ! Shell pair number
       n_sig_aop = 0 ! Number of significant AO pairs
       n_sig_sp  = 0 ! Number of significant shell pairs
 !
-      do B = 1, n_s
-         do A = B, n_s
+      do B = 1, engine%n_s
+         do A = B, engine%n_s
 !
             sp = sp + 1
 !
@@ -552,10 +418,16 @@ contains
 !
                call mem%alloc(D_AB, (A_interval%size)*(B_interval%size), 1)
 !
-               do xy = 1, (A_interval%size)*(B_interval%size)
+               do x = 1, (A_interval%size)
+                  do y = 1, (B_interval%size)
 !
-                  D_AB(xy, 1) = g_AB_AB(xy, xy)
+                     xy = (A_interval%size)*(y-1)+x
 !
+                     D_AB(xy, 1) = g_AB_AB(xy, xy)&
+                                 *screening_vector_local(x + A_interval%first - 1,1)&
+                                 *screening_vector_local(y + B_interval%first - 1,1)
+!
+                  enddo
                enddo
 !
                call mem%dealloc(g_AB_AB, &
@@ -583,7 +455,7 @@ contains
       enddo
 !
       write(output%unit, '(/a)')'Reduction of shell pairs:'
-      write(output%unit, '(a33, 2x, i9)')'Total number of shell pairs:     ', n_sp
+      write(output%unit, '(a33, 2x, i9)')'Total number of shell pairs:     ', engine%n_sp
       write(output%unit, '(a33, 2x, i9)')'Significant shell pairs:         ', n_sig_sp
       write(output%unit, '(a33, 2x, i9)')'Significant ao pairs:            ', n_sig_aop
       flush(output%unit)
@@ -593,17 +465,18 @@ contains
       call mem%alloc(D_xy, n_sig_aop, 1)
       D_xy = zero
 !
+      call mem%alloc(screening_vector_reduced, n_sig_aop, 1)
+      screening_vector_reduced = zero
+!
 !     Note: allocated with length n_significant_sp + 1, last element is used for n_significant_aop
 !     This is convenient because significant_sp_to_first_significant_aop will be used to calculate lengths.
 !
-      sp              = 0
+      sp              = 1
       current_sig_sp  = 1
       first_sig_aop   = 1
 !
-      do B = 1, n_s
-         do A = B, n_s
-!
-            sp = sp + 1 
+      do B = 1, engine%n_s
+         do A = B, engine%n_s
 !
             if (sig_sp(sp)) then
 !
@@ -611,8 +484,8 @@ contains
                B_interval = system%get_shell_limits(B)
 !
                call mem%alloc(g_AB_AB, &
-                  (A_interval%size)*(B_interval%size), &
-                  (A_interval%size)*(B_interval%size))
+                     (A_interval%size)*(B_interval%size), &
+                     (A_interval%size)*(B_interval%size))
 !
                g_AB_AB = zero
                call system%ao_integrals%get_ao_g_wxyz(g_AB_AB, A, B, A, B)
@@ -626,6 +499,9 @@ contains
                         xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
 !
                         D_xy(xy_packed + first_sig_aop - 1, 1) = g_AB_AB(xy, xy)
+                        screening_vector_reduced(xy_packed + first_sig_aop - 1, 1) = &
+                                                                  screening_vector_local(x + A_interval%first - 1, 1)*&
+                                                                  screening_vector_local(y + B_interval%first - 1, 1)
 !
                      enddo
                   enddo
@@ -637,6 +513,9 @@ contains
 !
                         xy = A_interval%size*(y - 1) + x
                         D_xy(xy + first_sig_aop - 1, 1) = g_AB_AB(xy,xy)
+                        screening_vector_reduced(xy + first_sig_aop - 1, 1) = &
+                                                                  screening_vector_local(x + A_interval%first - 1, 1)*&
+                                                                  screening_vector_local(y + B_interval%first - 1, 1)
 !
                      enddo
                   enddo
@@ -644,17 +523,21 @@ contains
                endif
 !
                call mem%dealloc(g_AB_AB, &
-                  (A_interval%size)*(B_interval%size), &
-                  (A_interval%size)*(B_interval%size))
+                     (A_interval%size)*(B_interval%size), &
+                     (A_interval%size)*(B_interval%size))
 !
                first_sig_aop = first_sig_aop + get_size_sp(A_interval, B_interval)
 !
                current_sig_sp = current_sig_sp + 1
 !
-            endif
-!           
+            endif ! End of if (significant)
+!
+            sp = sp + 1
+!
          enddo
       enddo
+!
+      call mem%dealloc(screening_vector_local, engine%n_aop, 1)
 !
 !     Write screening_info_file containing
 !
@@ -668,11 +551,13 @@ contains
       write(engine%diagonal_info_one_center%unit) n_sig_sp, n_sig_aop
       write(engine%diagonal_info_one_center%unit) sig_sp
       write(engine%diagonal_info_one_center%unit) D_xy
+      write(engine%diagonal_info_one_center%unit) screening_vector_reduced
 !
       call disk%close_file(engine%diagonal_info_one_center)
 !
       deallocate(sig_sp)
       call mem%dealloc(D_xy, n_sig_aop, 1)
+      call mem%dealloc(screening_vector_reduced, n_sig_aop, 1)
 !
    end subroutine construct_significant_diagonal_atomic_eri_chol_decomp_engine
 !
@@ -693,8 +578,6 @@ contains
 !     Local variables
 !
 !     Integers
-!
-      integer(i15) :: n_s, n_sp
       integer(i15) :: n_sig_sp, n_sig_aop
       integer(i15) :: n_new_sig_sp, n_new_sig_aop, current_new_sig_sp
       integer(i15) :: n_qual_sp, n_qual_aop, n_previous_qual_aop, n_qual_aop_in_sp
@@ -704,7 +587,7 @@ contains
       integer(i15) :: C, D, CD_sp
       integer(i15) :: I, J
       integer(i15) :: w, x, y, z
-      integer(i15) :: xy, xy_packed, wx, wx_packed, yz
+      integer(i15) :: xy, xy_packed, xy_max, wx, wx_packed, yz
       integer(i15) :: sig_neg
       integer(i15) :: first, last
       integer(i15) :: first_x, first_y
@@ -765,6 +648,8 @@ contains
       real(dp), dimension(:,:), allocatable :: cholesky_tmp                   ! Array used for dgemm, reordered copy of cholesky vectors of current batch of qualified
       real(dp), dimension(:,:), allocatable :: max_in_sig_sp                  ! Maximum in each significant shell pair
       real(dp), dimension(:,:), allocatable :: sorted_qual_aop_in_sp          ! Sorted qualified ao pair in shell pair
+      real(dp), dimension(:,:), allocatable :: screening_vector               ! Screening vector for diagonal
+      real(dp), dimension(:,:), allocatable :: screening_vector_new           ! Screening vector for diagonal, used for reduction
 !
 !     Real pointers
 !
@@ -780,9 +665,6 @@ contains
       type(cholesky_array_list) :: cholesky_array
 !
       call cpu_time(s_select_basis_time)
-!
-      n_s   = system%get_n_shells() ! Number of shells
-      n_sp  = n_s*(n_s + 1)/2         ! Number of shell pairs packed
 
 !     Read diagonal info file containing (name given as argument)
 !
@@ -797,10 +679,12 @@ contains
       read(diagonal_info%unit) n_sig_sp, n_sig_aop
 !
       call mem%alloc(D_xy, n_sig_aop, 1)
-      allocate(sig_sp(n_sp))
+      call mem%alloc(screening_vector, n_sig_aop, 1)
+      allocate(sig_sp(engine%n_sp))
 !
       read(diagonal_info%unit) sig_sp
       read(diagonal_info%unit) D_xy
+      read(diagonal_info%unit) screening_vector
 !
       call disk%close_file(diagonal_info)
 !
@@ -824,8 +708,8 @@ contains
       current_sig_sp  = 1
       first_sig_aop   = 1
 !
-      do B = 1, n_s
-         do A = B, n_s
+      do B = 1, engine%n_s
+         do A = B, engine%n_s
 !
             if (sig_sp(sp)) then
 !
@@ -950,7 +834,7 @@ contains
          call mem%dealloc(max_in_sig_sp, n_sig_sp, 1)
 !
          call mem%alloc_int(qual_aop, engine%max_qual, 3)
-         call mem%alloc_int(qual_sp, n_sp, 3)
+         call mem%alloc_int(qual_sp, engine%n_sp, 3)
          qual_sp = 0
          qual_aop = 0
 !
@@ -1031,7 +915,7 @@ contains
          qual_sp_copy(:, :)  = qual_sp(1 : n_qual_sp, :)
 !
          call mem%dealloc_int(qual_aop, engine%max_qual, 3)
-         call mem%dealloc_int(qual_sp, n_sp, 3)
+         call mem%dealloc_int(qual_sp, engine%n_sp, 3)
 !
          call mem%alloc_int(qual_aop, n_qual_aop, 3)
          call mem%alloc_int(qual_sp, n_qual_sp, 3)
@@ -1212,12 +1096,14 @@ contains
 !
                   qual_max(current_qual, 1) = qual
                   D_max    = D_xy(xy, 1) - approx_diagonal_accumulative(xy, 1)
+                  xy_max = xy
 !
                endif
 !
             enddo
 !
-            if ((D_max .gt. engine%threshold) .and. (D_max .ge. engine%span*D_max_full)) then
+            if ((D_max*screening_vector(xy_max, 1) .gt. engine%threshold) &
+               .and. (D_max .ge. engine%span*D_max_full)) then
 !
                cholesky_basis(engine%n_cholesky + current_qual, 1) = qual_aop(qual_max(current_qual, 1), 1)
                cholesky_basis(engine%n_cholesky + current_qual, 2) = qual_aop(qual_max(current_qual, 1), 2)
@@ -1225,7 +1111,7 @@ contains
                A = system%basis2shell(qual_aop(qual_max(current_qual, 1), 1))
                B = system%basis2shell(qual_aop(qual_max(current_qual, 1), 2))
 !
-               cholesky_basis(engine%n_cholesky + current_qual, 3) = get_sp_from_shells(A, B, n_s)
+               cholesky_basis(engine%n_cholesky + current_qual, 3) = get_sp_from_shells(A, B, engine%n_s)
 !
                cholesky_new(: , current_qual) = g_wxyz(:, qual_max(current_qual, 1))
 !
@@ -1288,7 +1174,7 @@ contains
                      D_xy(xy, 1) = zero
                      approx_diagonal_accumulative(xy, 1) = zero
 !
-                  elseif (D_xy(xy, 1) - approx_diagonal_accumulative(xy, 1)  .lt. engine%threshold) then
+                  elseif ((D_xy(xy, 1) - approx_diagonal_accumulative(xy, 1))*screening_vector(xy,1) .lt. engine%threshold) then
 !
                      D_xy(xy, 1) = zero
                      approx_diagonal_accumulative(xy, 1) = zero
@@ -1332,7 +1218,7 @@ contains
 !
          sig_sp_counter = 0
 !
-         do sp = 1, n_sp
+         do sp = 1, engine%n_sp
 !
             if (sig_sp(sp)) then
 !
@@ -1342,7 +1228,8 @@ contains
                last  = sig_sp_to_first_sig_aop(sig_sp_counter + 1, 1) - 1
 !
                new_sig_sp(sig_sp_counter) = is_significant(D_xy(first:last, 1), &
-                                                last - first + 1, engine%threshold)
+                                                last - first + 1, engine%threshold, &
+                                                screening_vector(first:last, 1) )
 !
                sig_sp(sp) = new_sig_sp(sig_sp_counter)
 !
@@ -1444,6 +1331,23 @@ contains
 !
             call mem%dealloc(D_xy_new, n_new_sig_aop, 1)
 !
+            call mem%alloc(screening_vector_new, n_new_sig_aop, 1)
+!
+           call reduce_vector(screening_vector,         &
+                             screening_vector_new,      &
+                             sig_sp_to_first_sig_aop,   &
+                             new_sig_sp,                &
+                             n_sig_sp,                  &
+                             n_sig_aop,                 &
+                             n_new_sig_aop)
+!
+            call mem%dealloc(screening_vector, n_sig_aop, 1)
+            call mem%alloc(screening_vector, n_new_sig_aop, 1)
+!
+            call dcopy(n_new_sig_aop, screening_vector_new, 1, screening_vector, 1)
+!
+            call mem%dealloc(screening_vector_new, n_new_sig_aop, 1)
+!
 !           Remove the unused columns of cholesky new
 !
             call cholesky_array%keep_columns(cholesky_array%n_nodes, 1, n_new_cholesky)
@@ -1534,7 +1438,7 @@ contains
 !     Construct a list of all shell pairs (and shells) that contain elements of the basis
 !     and how many elements of the basis they contain
 !
-      call mem%alloc_int(basis_shell_info_full, n_sp, 4) ! A, B, AB, n_basis_aops_in_sp
+      call mem%alloc_int(basis_shell_info_full, engine%n_sp, 4) ! A, B, AB, n_basis_aops_in_sp
       basis_shell_info_full = 0
 !
       n_sp_in_basis = 0
@@ -1544,7 +1448,7 @@ contains
          A = system%basis2shell(cholesky_basis_new(i, 1))
          B = system%basis2shell(cholesky_basis_new(i, 2))
 !
-         AB = get_sp_from_shells(A, B, n_s)
+         AB = get_sp_from_shells(A, B, engine%n_s)
 !
          found = .false.
 !
@@ -1573,7 +1477,7 @@ contains
 !
       call mem%alloc_int(basis_shell_info, n_sp_in_basis, 4)
       basis_shell_info(:, :) = basis_shell_info_full(1:n_sp_in_basis, :)
-      call mem%dealloc_int(basis_shell_info_full, n_sp, 4) 
+      call mem%dealloc_int(basis_shell_info_full, engine%n_sp, 4) 
 !
 !     Write basis_shell_data file containing
 !
@@ -1609,7 +1513,6 @@ contains
 !
 !     Integers
 !
-      integer(i15) :: n_s, n_sp
       integer(i15) :: n_sp_in_basis, sp_in_basis
       integer(i15) :: n_vectors
       integer(i15) :: current_aop_in_sp
@@ -1634,7 +1537,7 @@ contains
 !
 !     Reals
 !
-      real(dp) :: s_decomp_time, e_decomp_time, full_decomp_time
+      real(dp) :: s_decomp_time, e_decomp_time, s_build_basis_time, e_build_basis_time
 !
 !     Real allocatable arrays
 !
@@ -1647,8 +1550,7 @@ contains
 !
       logical :: found
 !
-      n_s   = system%get_n_shells()    ! Number of shells
-      n_sp  = n_s*(n_s + 1)/2          ! Number of shell pairs packed
+      call cpu_time(s_build_basis_time)
 !
 !     Read basis_shell_data
 !
@@ -1790,7 +1692,6 @@ contains
                                                 engine%threshold*1.0d-1, keep_vectors)
 !
       call cpu_time(e_decomp_time)
-      full_decomp_time = e_decomp_time - s_decomp_time
 !
       call mem%dealloc(integrals_auxiliary, engine%n_cholesky, engine%n_cholesky)
 !
@@ -1825,7 +1726,7 @@ contains
 !     Update the basis_shell_info array which contains information of which shell pairs (and shells)
 !     contain elements of the basis and how many elements of the basis they contain.
 !
-      call mem%alloc_int(basis_shell_info_full, n_sp, 4) ! A, B, AB, n_basis_aops_in_sp
+      call mem%alloc_int(basis_shell_info_full, engine%n_sp, 4) ! A, B, AB, n_basis_aops_in_sp
       basis_shell_info_full = 0
 !
       n_sp_in_basis = 0
@@ -1835,7 +1736,7 @@ contains
          A = system%basis2shell(cholesky_basis_updated(i, 1))
          B = system%basis2shell(cholesky_basis_updated(i, 2))
 !
-         AB = get_sp_from_shells(A, B, n_s)
+         AB = get_sp_from_shells(A, B, engine%n_s)
 !
          found = .false.
 !
@@ -1864,7 +1765,7 @@ contains
 !
       call mem%alloc_int(basis_shell_info, n_sp_in_basis, 4)
       basis_shell_info(:, :) = basis_shell_info_full(1:n_sp_in_basis, :)
-      call mem%dealloc_int(basis_shell_info_full, n_sp, 4)
+      call mem%dealloc_int(basis_shell_info_full, engine%n_sp, 4)
 !
 !     Write basis_shell_data file containing
 !
@@ -1895,6 +1796,12 @@ contains
 !
       call mem%dealloc(cholesky_vecs, n_vectors, n_vectors)
 !
+      call cpu_time(e_build_basis_time)
+      write(output%unit, '(/a21, f11.2, a9)')'Time to build basis: ',&
+                            e_build_basis_time - s_build_basis_time, ' seconds.'
+      write(output%unit, '(t6, a25, f11.2, a9)')'Time to decompose (J|K): ',&
+                            e_decomp_time - s_decomp_time, ' seconds.'
+!
    end subroutine construct_overlap_cholesky_vecs_eri_chol_decomp_engine
 !
 !
@@ -1914,7 +1821,6 @@ contains
       integer(i15) :: A, B, AB_sp, C, D, CD_sp
       integer(i15) :: w, x, y, z, wx, yz, yz_packed
       integer(i15) :: L, J, I
-      integer(i15) :: n_s, n_sp
       integer(i15) :: n_sig_sp, n_sig_aop
       integer(i15) :: n_sp_in_basis, last_sp_included, sp_counter
       integer(i15) :: current_aop_in_sp 
@@ -1958,14 +1864,11 @@ contains
 !
       call cpu_time(s_build_vectors_time)
 !
-      n_s   = system%get_n_shells() ! Number of shells
-      n_sp  = n_s*(n_s + 1)/2         ! Number of shell pairs packed
-!
 !     Read diagonal info
 !
       call disk%open_file(engine%diagonal_info_target, 'read')
 !
-      allocate(sig_sp(n_sp))
+      allocate(sig_sp(engine%n_sp))
 !
       read(engine%diagonal_info_target%unit) n_sig_sp, n_sig_aop
       read(engine%diagonal_info_target%unit) sig_sp
@@ -2005,8 +1908,8 @@ contains
 !
          found_size = .false.
 !
-         do B = 1, n_s
-            do A = B, n_s
+         do B = 1, engine%n_s
+            do A = B, engine%n_s
 !
                sp_counter = sp_counter + 1
 !
@@ -2066,10 +1969,10 @@ contains
 !
          sp_counter = 0
 !
-         do B = 1, n_s
-            do A = B, n_s
+         do B = 1, engine%n_s
+            do A = B, engine%n_s
 !
-               AB_sp = get_sp_from_shells(A, B, n_s)
+               AB_sp = get_sp_from_shells(A, B, engine%n_s)
 !
                if (sig_sp(AB_sp) .and. AB_sp .le. last_sp_included) then
 !
@@ -2232,7 +2135,7 @@ contains
 !
          done = .true.
 !
-         do I = 1, n_sp
+         do I = 1, engine%n_sp
             if (sig_sp(I)) then
 !
                done = .false.

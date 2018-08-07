@@ -69,7 +69,7 @@ contains
    end function dot_product
 !
 !
-   logical function is_significant(vec, dim, threshold)
+   logical function is_significant(vec, dim, threshold, screening)
 !!
 !!    Is vector significant ?
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkstad, June 2018
@@ -81,6 +81,7 @@ contains
       integer(i15), intent(in) :: dim
 !
       real(dp), dimension(dim,1), intent(in)  :: vec
+      real(dp), dimension(dim,1), intent(in), optional  :: screening
 !
       real(dp), intent(in)  :: threshold
 !
@@ -88,16 +89,30 @@ contains
 !
       is_significant = .false.
 !
-      do i = 1, dim
+      if (present(screening)) then
+         do i = 1, dim
 !
-         if (abs(vec(i, 1)) .gt. threshold) then
+            if (abs(vec(i, 1)*screening(i, 1)) .gt. threshold) then
 !
-            is_significant = .true.
-            return
+               is_significant = .true.
+               return
 !
-         endif
+            endif
 !
-      enddo
+         enddo
+      else
+!
+         do i = 1, dim
+!
+            if (abs(vec(i, 1)) .gt. threshold) then
+!
+               is_significant = .true.
+               return
+!
+            endif
+!
+         enddo
+      endif
 !
    end function is_significant
 !

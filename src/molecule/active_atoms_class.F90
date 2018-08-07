@@ -12,9 +12,9 @@ module active_atoms_class
 !
    type :: active_atoms
 !
-      integer(i15) :: n_acitve_atoms
+      integer(i15) :: n_active_atoms
 !
-      real(dp), dimension(:,:), allocatable :: atoms
+      integer(i15), dimension(:,:), allocatable :: atoms
 !
    contains
 !
