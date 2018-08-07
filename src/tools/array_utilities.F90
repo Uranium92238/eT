@@ -596,6 +596,169 @@ contains
    end subroutine full_cholesky_decomposition_effective
 !
 !
+   module subroutine cholesky_decomposition_limited_diagonal(matrix, cholesky_vectors, dim, &
+                                                     n_vectors,threshold, n_included_diagonals, included_diagonals)
+!!
+!!    Cholesky decomposition reduced diagonal, 
+!!    Written by Sarai Dery Folkestad, June 2017.
+!! 
+!!    On exit matrix_xy = matrix_xy - sum_J L_xJ*LyJ
+!!
+      implicit none 
+!
+      integer(i15), intent(in) :: dim, n_included_diagonals
+      integer(i15), intent(out) :: n_vectors
+!
+      real(dp), intent(in) :: threshold
+!
+      real(dp), dimension(dim, dim), intent(inout) :: matrix
+      real(dp), dimension(dim, n_included_diagonals), intent(out) :: cholesky_vectors
+!
+      integer(i15), dimension(n_included_diagonals, 1), intent(in) :: included_diagonals
+!
+      integer(i15), dimension(:, :), allocatable :: used_diag
+!
+      integer(i15) :: i, j, k, index_max
+      real(dp) :: max_diagonal, min_diagonal
+!
+      real(dp), dimension(:,:), allocatable :: diagonal, temp_cholesky_vector
+!
+      real(dp), parameter :: tolerance = 1.0d-10
+      call mem%alloc(diagonal, dim, 1)
+!
+      do i = 1, dim
+!
+         diagonal(i, 1) = matrix(i, i)
+!
+      enddo
+!
+      call mem%alloc_int(used_diag, dim, 1)
+      used_diag = 0
+!
+      do i = 1, n_included_diagonals
+!
+         n_vectors = i
+!
+!        Find the maximum diagonal
+!
+         index_max = 0
+         max_diagonal = 0.0d0
+!
+         do j = 1, n_included_diagonals
+!
+            if (abs(diagonal(included_diagonals(j, 1))) .gt. abs(max_diagonal)) then
+!
+               max_diagonal = diagonal(included_diagonals(j, 1))
+               index_max    = included_diagonals(j, 1)
+!
+            endif
+!
+         enddo
+!
+!        Check against threshold and whether diagonal is negative
+!
+         if (max_diagonal .lt. 0.0d0) then
+            if (abs(max_diagonal) .gt. tolerance) then
+!
+               write(output%unit,*)'Error: Found negative diagonal in cholesky decomposition.'
+               stop
+!
+            endif
+         endif
+!
+         if (abs(max_diagonal) .lt. threshold) then
+!
+            n_vectors = n_vectors - 1
+!
+            call mem%dealloc_int(used_diag, dim, 1)
+!
+!           On exit, cholesky vectors subtracted from matrix
+!
+            call dgemm('N', 'T',          &
+                        dim,              &
+                        dim,              &
+                        n_vectors,        &
+                        one,              &
+                        cholesky_vectors, &
+                        dim,              &
+                        cholesky_vectors, &
+                        dim,              &
+                        -one,             &
+                        matrix,           &
+                        dim)
+!
+            return
+!
+         else
+!
+            used_diag(n_vectors, 1) = index_max
+!
+         endif
+!
+!        Cholesky vectors
+!
+         cholesky_vectors(:, n_vectors) = matrix(:, index_max)
+!
+         if (n_vectors .gt. 1) then
+!
+            call mem%alloc(temp_cholesky_vector, 1, n_vectors - 1)
+            temp_cholesky_vector(1, :) = cholesky_vectors(index_max, 1 : n_vectors - 1)
+!
+            call dgemm('N', 'T',                         &
+                        dim,                             &
+                        1,                               &
+                        n_vectors - 1,                   &
+                        -one,                            &
+                        cholesky_vectors,                &
+                        dim,                             &
+                        temp_cholesky_vector,            &
+                        1,                               &
+                        one,                             &
+                        cholesky_vectors(1, n_vectors),  &
+                        dim)
+!
+            call mem%dealloc(temp_cholesky_vector, 1, n_vectors - 1)
+!
+         endif
+!
+         do j = 1, n_vectors - 1
+!
+            cholesky_vectors(used_diag(j,1), n_vectors) = zero
+!
+         enddo
+!
+         call dscal(dim, one/sqrt(max_diagonal), cholesky_vectors(1, n_vectors), 1)
+!
+         do j = 1, dim
+!
+            diagonal(j, 1) = diagonal(j, 1) - cholesky_vectors(j, n_vectors)**2
+!
+         enddo
+!
+         diagonal(index_max, 1) = zero
+!
+      enddo
+!
+      call mem%dealloc_int(used_diag, dim, 1)
+!
+!     On exit, cholesky vectors subtracted from matrix
+!
+      call dgemm('N', 'T',    &
+                  dim,        &
+                  dim,        &
+                  n_vectors,  &
+                  one,        &
+                  n_cholesky, &
+                  dim,        &
+                  n_cholesky, &
+                  dim,        &
+                  -one,       &
+                  matrix,     &
+                  dim)
+!
+   end subroutine cholesky_decomposition_limited_diagonal
+!
+!
  subroutine full_cholesky_decomposition_system(matrix, cholesky_vectors, dim, n_vectors, &
                                                    threshold, used_diag)
 !!

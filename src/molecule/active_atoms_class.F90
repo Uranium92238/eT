@@ -12,7 +12,7 @@ module active_atoms_class
 !
       integer(i15) :: n_acitve_atoms
 !
-      real(15), dimension(:,:), allocatable :: active_atoms
+      real(15), dimension(:,:), allocatable :: atoms
 !
    contains
 !
@@ -22,5 +22,6 @@ module active_atoms_class
 !
 contains
 !
+!     Sanity checks for active atoms
 !
 end module active_atoms_class

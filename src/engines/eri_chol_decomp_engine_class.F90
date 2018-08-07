@@ -1669,6 +1669,7 @@ contains
       call mem%alloc(integrals_auxiliary_packed, engine%n_cholesky*(engine%n_cholesky+1)/2, 1)
 !
 !$omp parallel do &
+!$omp schedule(dynamic) &
 !$omp private(AB_sp, CD_sp, A, B, A_interval, B_interval, C, D, C_interval, D_interval, &
 !$omp w, x, y, z, wx, yz, g_AB_CD, I, J, K, L, KL,&
 !$omp current_aop_in_sp, basis_aops_in_CD_sp, basis_aops_in_AB_sp) &
@@ -2088,6 +2089,7 @@ contains
          enddo
 !
 !$omp parallel do &
+!$omp schedule(dynamic)
 !$omp private(AB_sp, CD_sp, I, A, B, A_interval, &
 !$omp B_interval, C, D, C_interval, D_interval, &
 !$omp basis_aops_in_CD_sp, current_aop_in_sp, g_CD_AB, &
