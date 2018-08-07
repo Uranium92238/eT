@@ -48,7 +48,7 @@ module eri_chol_decomp_engine_class
       procedure :: invert_overlap_cholesky_vecs                => invert_overlap_cholesky_vecs_eri_chol_decomp_engine
       procedure :: cholesky_vecs_diagonal_test                 => cholesky_vecs_diagonal_test_eri_chol_decomp_engine
       procedure :: construct_significant_diagonal              => construct_significant_diagonal_eri_chol_decomp_engine
-      procedure :: construct_significant_diagonal_screen_vec   => construct_significant_diagonal_screen_vec_eri_chol_decomp_engine
+      procedure :: construct_significant_diagonal_vec          => construct_significant_diagonal_vec_eri_chol_decomp_engine
       procedure :: construct_significant_diagonal_atomic       => construct_significant_diagonal_atomic_eri_chol_decomp_engine
       procedure :: determine_auxilliary_cholesky_basis         => determine_auxilliary_cholesky_basis_eri_chol_decomp_engine
       procedure :: construct_overlap_cholesky_vecs             => construct_overlap_cholesky_vecs_eri_chol_decomp_engine
@@ -317,7 +317,7 @@ contains
    end subroutine construct_significant_diagonal_eri_chol_decomp_engine
 !
 !
-   subroutine construct_significant_diagonal_screen_vec_eri_chol_decomp_engine(engine, system, screening_vector, n_aop)
+   subroutine construct_significant_diagonal_vec_eri_chol_decomp_engine(engine, system, screening_vector, n_aop)
 !!
 !!
 !!
@@ -325,6 +325,8 @@ contains
 !
       class(eri_chol_decomp_engine) :: engine
       class(molecular_system) :: system
+!
+      integer(i15) :: n_aop
 !
       real(dp), dimension(n_aop, 1) :: screening_vector 
 !
@@ -493,7 +495,7 @@ contains
       deallocate(sig_sp)
       call mem%dealloc(D_xy, n_sig_aop, 1)
 !
-   end subroutine construct_significant_diagonal_screen_vec_eri_chol_decomp_engine
+   end subroutine construct_significant_diagonal_vec_eri_chol_decomp_engine
 !
 !
    subroutine construct_significant_diagonal_atomic_eri_chol_decomp_engine&
@@ -2089,7 +2091,7 @@ contains
          enddo
 !
 !$omp parallel do &
-!$omp schedule(dynamic)
+!$omp schedule(dynamic) &
 !$omp private(AB_sp, CD_sp, I, A, B, A_interval, &
 !$omp B_interval, C, D, C_interval, D_interval, &
 !$omp basis_aops_in_CD_sp, current_aop_in_sp, g_CD_AB, &
@@ -2465,16 +2467,16 @@ contains
       character(len=100) :: line
       character(len=100) :: current_basis
 !
-      integer(i15) :: i = 0
+      integer(i15) :: i = 0, ioerror
 !
       call input%init('eT.inp', 'sequential', 'formatted')
       call disk%open_file(input, 'read')
       rewind(input%unit)
 !
-      read(input%unit,'(a)') line
+      read(input%unit,'(a)', iostat=ioerror) line
       line = remove_preceding_blanks(line)
 !
-      do while ((trim(line) .ne. 'end cholesky') .and.( trim(line) .ne. 'end of eT input'))
+      do while ((trim(line) .ne. 'end cholesky') .and.( ioerror .eq. 0))
 !
          read(input%unit,'(a)') line
          line = remove_preceding_blanks(line)

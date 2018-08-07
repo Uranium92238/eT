@@ -646,9 +646,9 @@ contains
 !
          do j = 1, n_included_diagonals
 !
-            if (abs(diagonal(included_diagonals(j, 1))) .gt. abs(max_diagonal)) then
+            if (abs(diagonal(included_diagonals(j, 1), 1)) .gt. abs(max_diagonal)) then
 !
-               max_diagonal = diagonal(included_diagonals(j, 1))
+               max_diagonal = diagonal(included_diagonals(j, 1), 1)
                index_max    = included_diagonals(j, 1)
 !
             endif
@@ -743,17 +743,17 @@ contains
 !
 !     On exit, cholesky vectors subtracted from matrix
 !
-      call dgemm('N', 'T',    &
-                  dim,        &
-                  dim,        &
-                  n_vectors,  &
-                  one,        &
-                  n_cholesky, &
-                  dim,        &
-                  n_cholesky, &
-                  dim,        &
-                  -one,       &
-                  matrix,     &
+      call dgemm('N', 'T',          &
+                  dim,              &
+                  dim,              &
+                  n_vectors,        &
+                  one,              &
+                  cholesky_vectors, &
+                  dim,              &
+                  cholesky_vectors, &
+                  dim,              &
+                  -one,             &
+                  matrix,           &
                   dim)
 !
    end subroutine cholesky_decomposition_limited_diagonal

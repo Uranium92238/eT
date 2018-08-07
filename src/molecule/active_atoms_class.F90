@@ -5,6 +5,8 @@ module active_atoms_class
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !
+   use kinds
+!
 !
    implicit none
 !
@@ -12,7 +14,7 @@ module active_atoms_class
 !
       integer(i15) :: n_acitve_atoms
 !
-      real(15), dimension(:,:), allocatable :: atoms
+      real(dp), dimension(:,:), allocatable :: atoms
 !
    contains
 !
