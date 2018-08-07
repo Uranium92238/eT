@@ -21,10 +21,7 @@ module hf_class
       real(dp), dimension(:,:), allocatable :: ao_density
       real(dp), dimension(:,:), allocatable :: ao_overlap
       real(dp), dimension(:,:), allocatable :: ao_fock
-!
       real(dp), dimension(:,:), allocatable :: orbital_energies
-!
-      real(dp), dimension(:,:), allocatable :: g_wxyz
 !
       type(integral_manager) :: integrals
 !
@@ -41,9 +38,17 @@ module hf_class
       procedure :: construct_ao_fock    => construct_ao_fock_hf
       procedure :: construct_mo_fock    => construct_mo_fock_hf
       procedure :: construct_ao_overlap => construct_ao_overlap_hf
-      procedure :: construct_gradient   => construct_gradient_hf
-!
       procedure :: calculate_hf_energy  => calculate_hf_energy_hf
+!
+!     Rotate and purification routines for the AO density
+!
+      procedure :: rotate_ao_density    => rotate_ao_density_hf
+      procedure :: purify_ao_density    => purify_ao_density_hf
+!
+!     Cholesky decomposition of AO density and overlap
+!
+      procedure :: decompose_ao_density => decompose_ao_density_hf
+      procedure :: decompose_ao_overlap => decompose_ao_overlap_hf
 !
 !     Solve the Roothan Hall equation FC = SCe by diagonalization
 !
@@ -51,12 +56,10 @@ module hf_class
 !
 !     Get and set routines for wavefunction variables
 !
-      procedure :: get_ao_density      => get_ao_density_hf
-      procedure :: get_n_hf_parameters => get_n_hf_parameters_hf
-      procedure :: get_n_hf_equations  => get_n_hf_equations_hf
-      procedure :: get_hf_equations    => get_hf_equations_hf
+      procedure :: get_ao_density => get_ao_density_hf
+      procedure :: get_fock_ov    => get_fock_ov_hf
 !
-      procedure :: set_ao_density      => set_ao_density_hf
+      procedure :: set_ao_density   => set_ao_density_hf
 !
 !     Initialize and destruct routines for wavefunction variables
 !
@@ -66,11 +69,19 @@ module hf_class
       procedure :: initialize_ao_overlap       => initialize_ao_overlap_hf
       procedure :: initialize_orbital_energies => initialize_orbital_energies_hf
 !
-      procedure :: destruct_ao_density       => destruct_ao_density_hf
-      procedure :: destruct_ao_fock          => destruct_ao_fock_hf
-      procedure :: destruct_mo_coefficients  => destruct_mo_coefficients_hf
-      procedure :: destruct_ao_overlap       => destruct_ao_overlap_hf
-      procedure :: destruct_orbital_energies => destruct_orbital_energies_hf
+      procedure :: destruct_ao_density         => destruct_ao_density_hf
+      procedure :: destruct_ao_fock            => destruct_ao_fock_hf
+      procedure :: destruct_mo_coefficients    => destruct_mo_coefficients_hf
+      procedure :: destruct_ao_overlap         => destruct_ao_overlap_hf
+      procedure :: destruct_orbital_energies   => destruct_orbital_energies_hf
+!
+!     Routines that construct different components of the Roothan-Hall 1st order Newton equations
+!
+      procedure :: construct_projection_matrices               => construct_projection_matrices_hf
+      procedure :: project_redundant_rotations                 => project_redundant_rotations_hf
+      procedure :: construct_roothan_hall_hessian              => construct_roothan_hall_hessian_hf
+      procedure :: construct_roothan_hall_gradient             => construct_roothan_hall_gradient_hf
+      procedure :: construct_stationary_roothan_hall_condition => construct_stationary_roothan_hall_condition_hf
 !
    end type hf
 !
@@ -654,7 +665,6 @@ contains
       call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
 !
       end_timer = omp_get_wtime()
-   !   write(output%unit, '(t3,a59,f9.1)') 'Actual Fock construction and calculation of energy (sec.): ', end_timer - start_timer
 !
    end subroutine construct_ao_fock_hf
 !
@@ -691,45 +701,6 @@ contains
       wf%hf_energy = wf%hf_energy + two*(one/four)*ddot((wf%n_ao)**2, wf%ao_density, 1, half_GD_wx, 1)
 !
    end subroutine calculate_hf_energy_hf
-!
-!
-   function get_n_hf_parameters_hf(wf)
-!!
-!!    Get number of HF parameters
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-!!    When solving the equations, we change the AO density matrix,
-!!    which we can change in packed form, giving n_ao*(n_ao + 1)/2
-!!    number of parameters.
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      integer(i15) :: get_n_hf_parameters_hf
-!
-      get_n_hf_parameters_hf = (wf%n_ao)*(wf%n_ao + 1)/2
-!
-   end function get_n_hf_parameters_hf
-!
-!
-   function get_n_hf_equations_hf(wf)
-!!
-!!    Get number of HF equations
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-!!    The equations to solve are F_ia = 0, where F is the MO Fock
-!!    matrix. The number of equations is n_o*n_v.
-!!
-      implicit none
-!
-      class(hf), intent(in) :: wf
-!
-      integer(i15) :: get_n_hf_equations_hf
-!
-      get_n_hf_equations_hf = (wf%n_o)*(wf%n_v)
-!
-   end function get_n_hf_equations_hf
 !
 !
    subroutine set_ao_density_hf(wf, D)
@@ -855,7 +826,7 @@ contains
    end subroutine construct_mo_fock_hf
 !
 !
-   subroutine get_hf_equations_hf(wf, F)
+   subroutine get_fock_ov_hf(wf, F)
 !!
 !!    Get HF equations
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -900,7 +871,7 @@ contains
 !
       call mem%dealloc(X, wf%n_ao, wf%n_v)
 !
-   end subroutine get_hf_equations_hf
+   end subroutine get_fock_ov_hf
 !
 !
    subroutine get_ao_density_hf(wf, D)
@@ -921,38 +892,194 @@ contains
    end subroutine get_ao_density_hf
 !
 !
-   subroutine construct_gradient_hf(wf, gradient_norm)
+   subroutine decompose_ao_density_hf(wf)
 !!
-!!    Construct energy gradient
+!!    Decompose AO density
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Here, ∇E is understood as the derivative of the HF energy with
-!!    with respect to X, where the update
+!!    Does a Cholesky decomposition of the AO density matrix,
 !!
-!!       D^AO <- exp(-X S) D^AO exp(S X)
+!!       D^AO_wx = sum_J L_w,J L_J,x^T,
 !!
-!!    is used in density-based Hartree-Fock theory. The full matrix
-!!    is calculated as
-!!
-!!       ∇E = 8 ( M - M^T ),
-!!
-!!    where M = S D^AO F^AO.
+!!    and sets the MO coefficients accordingly.
 !!
       implicit none
 !
-      class(hf), intent(in) :: wf
+      class(hf) :: wf
 !
-      integer(i15) :: w, x
+      integer(kind=4), dimension(:, :), allocatable :: used_diag
 !
-      real(dp) :: gradient_norm
+      real(dp), dimension(:,:), allocatable :: perm_matrix
+!
+      real(dp), dimension(:,:), allocatable :: csc
+      real(dp), dimension(:,:), allocatable :: tmp
+!
+      integer(i15) :: rank, i, j
+!
+      allocate(used_diag(wf%n_ao, 1))
+!
+      wf%ao_density = half*wf%ao_density
+      call full_cholesky_decomposition_system(wf%ao_density, wf%orbital_coefficients, wf%n_ao, rank,&
+                                                      1.0D-12, used_diag)
+      wf%ao_density = two*wf%ao_density
+!
+!     Make permutation matrix P
+!
+      call mem%alloc(perm_matrix, wf%n_ao, wf%n_ao)
+!
+      perm_matrix = zero
+!
+      do j = 1, wf%n_ao
+!
+         perm_matrix(used_diag(j,1), j) = one
+!
+      enddo
+!
+      deallocate(used_diag)
+!
+!     Sanity check
+!
+      call mem%alloc(tmp, wf%n_ao, wf%n_ao)
+!
+      call dgemm('N','N', &
+                  wf%n_ao, &
+                  wf%n_ao, &
+                  wf%n_ao, &
+                  one, &
+                  perm_matrix, &
+                  wf%n_ao, &
+                  wf%orbital_coefficients, &
+                  wf%n_ao, &
+                  zero, &
+                  tmp, &
+                  wf%n_ao)
+!
+      wf%orbital_coefficients = tmp
+!
+      call mem%dealloc(tmp, wf%n_ao, wf%n_ao)
+!
+   end subroutine decompose_ao_density_hf
+!
+!
+   subroutine decompose_ao_overlap_hf(wf, L)
+!!
+!!    Decompose AO overlap
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Does a Cholesky decomposition of the AO density matrix,
+!!
+!!       S^AO_wx = sum_J L_w,J L_J,x^T,
+!!
+!!    and sets the MO coefficients accordingly.
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      integer(kind=4), dimension(:, :), allocatable :: used_diag
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao) :: L
+!
+      real(dp), dimension(:,:), allocatable :: perm_matrix
+!
+      real(dp), dimension(:,:), allocatable :: csc
+      real(dp), dimension(:,:), allocatable :: tmp
+!
+      integer(i15) :: rank, i, j
+!
+      allocate(used_diag(wf%n_ao, 1))
+!
+      L = zero
+!
+      call full_cholesky_decomposition_system(wf%ao_overlap, L, wf%n_ao, rank,&
+                                                      1.0D-320, used_diag)
+!
+      if (rank .lt. wf%n_ao) write(output%unit, *) 'Warning: rank lower than full dim for S = L L^T'
+!
+!     Make permutation matrix P
+!
+      call mem%alloc(perm_matrix, wf%n_ao, wf%n_ao)
+!
+      perm_matrix = zero
+!
+      do j = 1, wf%n_ao
+!
+         perm_matrix(used_diag(j,1), j) = one
+!
+      enddo
+!
+      deallocate(used_diag)
+!
+!     Make matrix L
+!
+      call mem%alloc(tmp, wf%n_ao, wf%n_ao)
+!
+      call dgemm('N','N', &
+                  wf%n_ao, &
+                  wf%n_ao, &
+                  wf%n_ao, &
+                  one, &
+                  perm_matrix, &
+                  wf%n_ao, &
+                  L, &
+                  wf%n_ao, &
+                  zero, &
+                  tmp, &
+                  wf%n_ao)
+!
+      L = tmp
+!
+      call mem%dealloc(tmp, wf%n_ao, wf%n_ao)
+      call mem%dealloc(perm_matrix, wf%n_ao, wf%n_ao)
+!
+   end subroutine decompose_ao_overlap_hf
+!
+!
+   subroutine rotate_ao_density_hf(wf, X)
+!!
+!!    Rotate AO density
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Performs an update of the AO density according to a first-order
+!!    truncation of the BCH expansion:
+!!
+!!       D^AO <- exp(-X S) D^AO exp(S X) ~ D^AO + [D^AO, X]_S + 1/2 [[D^AO, X]_S, X]_S
+!!                                       ~ D_AO + C + D.
+!!
+!!    This routine does not - currently - use the second order term, D, although the
+!!    code is present (commented out).
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: X
 !
       real(dp), dimension(:,:), allocatable :: M
-      real(dp), dimension(:,:), allocatable :: gradient ! ∇E
+      real(dp), dimension(:,:), allocatable :: C
+      real(dp), dimension(:,:), allocatable :: prev_D
 !
-!     Calculate M matrix
+   !   real(dp), dimension(:,:), allocatable :: D
 !
-      call mem%alloc(gradient, wf%n_ao, wf%n_ao)
+!     Construct C = [D^AO, X]_S = D^AO S X - X S D^AO
+!
       call mem%alloc(M, wf%n_ao, wf%n_ao)
+!
+      call dgemm('N','N',        &
+                  wf%n_ao,       &
+                  wf%n_ao,       &
+                  wf%n_ao,       &
+                  one,           &
+                  wf%ao_overlap, &
+                  wf%n_ao,       &
+                  X,             &
+                  wf%n_ao,       &
+                  zero,          &
+                  M,             & ! M = S X
+                  wf%n_ao)
+!
+   !   call mem%alloc(D, wf%n_ao, wf%n_ao)
+      call mem%alloc(C, wf%n_ao, wf%n_ao)
 !
       call dgemm('N','N',        &
                   wf%n_ao,       &
@@ -961,10 +1088,10 @@ contains
                   one,           &
                   wf%ao_density, &
                   wf%n_ao,       &
-                  wf%ao_fock,    &
+                  M,             &
                   wf%n_ao,       &
                   zero,          &
-                  gradient,      & ! Used temporarily
+                  C,             & ! C = D^AO M = D^AO S X
                   wf%n_ao)
 !
       call dgemm('N','N',        &
@@ -974,39 +1101,529 @@ contains
                   one,           &
                   wf%ao_overlap, &
                   wf%n_ao,       &
-                  gradient,      &
+                  wf%ao_density, &
                   wf%n_ao,       &
                   zero,          &
-                  M,             &
+                  M,             & ! M = S D^AO
                   wf%n_ao)
 !
-!     Set gradient = M and subtract the transpose, with prefactor 8
+      call dgemm('N','N',        &
+                  wf%n_ao,       &
+                  wf%n_ao,       &
+                  wf%n_ao,       &
+                  -one,          &
+                  X,             &
+                  wf%n_ao,       &
+                  M,             &
+                  wf%n_ao,       &
+                  one,           &
+                  C,             & ! C = C - X M = C - X S D^AO = D^AO S X - X S D^AO
+                  wf%n_ao)
+!
+!     Calculate D = 1/2 [[D^AO, X]_S, X]_S = 1/2 [C, X]_S = 1/2 (C S X - X S C)
+!
+!       call dgemm('N','N',        &
+!                   wf%n_ao,       &
+!                   wf%n_ao,       &
+!                   wf%n_ao,       &
+!                   one,           &
+!                   wf%ao_overlap, &
+!                   wf%n_ao,       &
+!                   X,             &
+!                   wf%n_ao,       &
+!                   zero,          &
+!                   M,             & ! M = S X
+!                   wf%n_ao)
+! !
+!       call dgemm('N','N',        &
+!                   wf%n_ao,       &
+!                   wf%n_ao,       &
+!                   wf%n_ao,       &
+!                   half,          &
+!                   C,             &
+!                   wf%n_ao,       &
+!                   M,             &
+!                   wf%n_ao,       &
+!                   zero,          &
+!                   D,             & ! D = 1/2 * C S X
+!                   wf%n_ao)
+! !
+!       call dgemm('N','N',        &
+!                   wf%n_ao,       &
+!                   wf%n_ao,       &
+!                   wf%n_ao,       &
+!                   one,           &
+!                   X,             &
+!                   wf%n_ao,       &
+!                   wf%ao_overlap, &
+!                   wf%n_ao,       &
+!                   zero,          &
+!                   M,             & ! M = X S
+!                   wf%n_ao)
+! !
+!       call dgemm('N','N',        &
+!                   wf%n_ao,       &
+!                   wf%n_ao,       &
+!                   wf%n_ao,       &
+!                   -half,         &
+!                   M,             &
+!                   wf%n_ao,       &
+!                   C,             &
+!                   wf%n_ao,       &
+!                   one,           &
+!                   D,             & ! D = D - 1/2 * X S C
+!                   wf%n_ao)
+!
+      wf%ao_density = wf%ao_density + C
+   !   wf%ao_density = wf%ao_density + C + D
+!
+      call mem%dealloc(M, wf%n_ao, wf%n_ao)
+    !  call mem%dealloc(D, wf%n_ao, wf%n_ao)
+      call mem%dealloc(C, wf%n_ao, wf%n_ao)
+!
+   end subroutine rotate_ao_density_hf
+!
+!
+   subroutine purify_ao_density_hf(wf, threshold)
+!!
+!!    Purify AO density
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Purifies a non-idempotent AO density matrix - typically arising from
+!!    the non-exact rotation of the density - by the following fixed point algorithm:
+!!
+!!       D^AO <- 3/4 D^AO S D^AO - 1/2 D^AO S D^AO S D^AO
+!!
+!!    To check whether the final result is consistent, it is possible to verify that
+!!    1/2 D^AO S is idempotent (which was done during debug of routine).
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      real(dp), intent(in) :: threshold
+!
+      real(dp), dimension(:,:), allocatable :: M ! Arrays to temporarily hold matrix products
+      real(dp), dimension(:,:), allocatable :: N ! Arrays to temporarily hold matrix products
+!
+      real(dp), dimension(:,:), allocatable :: prev_ao_density ! Holds previous density matrix
+!
+      real(dp) :: ddot, error
+!
+      logical :: pure = .false.
+!
+      integer(i15) :: iteration, p, q
+      integer(i15), parameter :: max_iterations = 50
+!
+      iteration = 1
+!
+      call mem%alloc(M, wf%n_ao, wf%n_ao)
+      call mem%alloc(N, wf%n_ao, wf%n_ao)
+      call mem%alloc(prev_ao_density, wf%n_ao, wf%n_ao)
+!
+      pure = .false.
+      error = zero
+!
+      do while (.not. pure .and. iteration .le. max_iterations)
+!
+         prev_ao_density = wf%ao_density
+!
+         call dgemm('N','N',        &
+                     wf%n_ao,       &
+                     wf%n_ao,       &
+                     wf%n_ao,       &
+                     one,           &
+                     wf%ao_overlap, &
+                     wf%n_ao,       &
+                     wf%ao_density, &
+                     wf%n_ao,       &
+                     zero,          &
+                     M,             & ! M = S D^AO
+                     wf%n_ao)
+!
+         call dgemm('N','N',        &
+                     wf%n_ao,       &
+                     wf%n_ao,       &
+                     wf%n_ao,       &
+                     one,           &
+                     wf%ao_density, &
+                     wf%n_ao,       &
+                     M,             &
+                     wf%n_ao,       &
+                     zero,          &
+                     N,             & ! N = D^AO M = D^AO S D^AO
+                     wf%n_ao)
+!
+         wf%ao_density = (three/two)*N ! D^AO = 3 D^AO S D^AO
+!
+         call dgemm('N','N',        &
+                     wf%n_ao,       &
+                     wf%n_ao,       &
+                     wf%n_ao,       &
+                     one,           &
+                     wf%ao_overlap, &
+                     wf%n_ao,       &
+                     N,             &
+                     wf%n_ao,       &
+                     zero,          &
+                     M,             & ! M = S N = S D^AO S D^AO
+                     wf%n_ao)
+!
+         call dgemm('N','N',          &
+                     wf%n_ao,         &
+                     wf%n_ao,         &
+                     wf%n_ao,         &
+                     one,             &
+                     prev_ao_density, &
+                     wf%n_ao,         &
+                     M,               &
+                     wf%n_ao,         &
+                     zero,            &
+                     N,               & ! N = D^AO M = D^AO S D^AO S D^AO
+                     wf%n_ao)
+!
+         wf%ao_density = wf%ao_density - (one/two)*N
+!
+         M = wf%ao_density - prev_ao_density
+!
+         error = sqrt(ddot((wf%n_ao)**2, M, 1, M, 1))
+!
+         if (error .lt. threshold) then
+!
+            pure = .true.
+!
+         endif
+!
+         iteration = iteration + 1
+!
+      enddo
+!
+      if (.not. pure) then
+!
+         write(output%unit, '(t3,a49,f16.12)') 'Error: could not purify AO density. Final error: ', error
+         stop
+!
+      endif
+!
+      call mem%dealloc(M, wf%n_ao, wf%n_ao)
+      call mem%dealloc(N, wf%n_ao, wf%n_ao)
+      call mem%dealloc(prev_ao_density, wf%n_ao, wf%n_ao)
+!
+   end subroutine purify_ao_density_hf
+!
+!
+   subroutine construct_projection_matrices_hf(wf, Po, Pv)
+!!
+!!    Construct projection matrices
+!!    Written by Eirik F. Kjønstad, 2018
+!!
+!!    Constructs Po = D S
+!!               Pv = 1 - Po
+!!
+!!    D: AO density matrix, S: AO overlap matrix. Both are assumed
+!!    to be allocated and properly set.
+!!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao) :: Po
+      real(dp), dimension(wf%n_ao, wf%n_ao) :: Pv
+!
+      real(dp), dimension(:,:), allocatable :: tmp
+!
+      integer(i15) :: w, x
+!
+!     Po = D S
+!
+      call dgemm('N','N',        &
+                  wf%n_ao,       &
+                  wf%n_ao,       &
+                  wf%n_ao,       &
+                  half,          &
+                  wf%ao_density, &
+                  wf%n_ao,       &
+                  wf%ao_overlap, &
+                  wf%n_ao,       &
+                  zero,          &
+                  Po,            &
+                  wf%n_ao)
+!
+!     Pv = I
+!
+      Pv = zero
+!
+      do x = 1, wf%n_ao
+!
+         Pv(x, x) = one
+!
+      enddo
+!
+!     Pv = I - Po
 !
       do x = 1, wf%n_ao
          do w = 1, wf%n_ao
 !
-            gradient(w, x) = eight*(M(w, x) - M(x, w))
+            Pv(w, x) = Pv(w, x) - Po(w, x)
 !
          enddo
       enddo
 !
-      call mem%dealloc(M, wf%n_ao, wf%n_ao)
+   end subroutine construct_projection_matrices_hf
 !
-      gradient_norm = zero
 !
-      do x = 1, wf%n_ao
-         do w = 1, x
+   subroutine project_redundant_rotations_hf(wf, X, Po, Pv)
+!!
+!!    Project redundant rotations
+!!    Written by Eirik F. Kjønstad, 2018
+!!
+!!    Here, X is an antisymmetric rotations matrix on entering the routine,
+!!    where some parameters are redundant for rotating the AO density. On exit,
+!!    the redundant parameters have been projected out of X.
+!!
+!!    To achieve this, we set
+!!
+!!       X <- Po X Pv^T + Pv X Po^T,
+!!
+!!    where Po = D S and Pv = 1 - Po. In Po, D is the AO density and S
+!!    is the AO overlap matrix.
+!!
+      implicit none
 !
-            gradient_norm = gradient_norm + gradient(w, x)**2
+      class(hf), intent(in) :: wf
 !
-         enddo
-      enddo
+      real(dp), dimension(wf%n_ao, wf%n_ao) :: X
 !
-      call mem%dealloc(gradient, wf%n_ao, wf%n_ao)
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: Po
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: Pv
 !
-      gradient_norm = sqrt(gradient_norm)
+      real(dp), dimension(:, :), allocatable :: tmp
 !
-   end subroutine construct_gradient_hf
+      integer(i15) :: p, q
+!
+!     Construct
+!
+!        tmp = X Pv^T   =>   tmp^T = Pv X^T = - Pv X
+!
+      call mem%alloc(tmp, wf%n_ao, wf%n_ao)
+!
+      call dgemm('N', 'T', &
+                  wf%n_ao, &
+                  wf%n_ao, &
+                  wf%n_ao, &
+                  one,     &
+                  X,       &
+                  wf%n_ao, &
+                  Pv,      &
+                  wf%n_ao, &
+                  zero,    &
+                  tmp,     &
+                  wf%n_ao)
+!
+!     X = Po X Pv^T = Po tmp
+!
+      call dgemm('N', 'N', &
+                  wf%n_ao, &
+                  wf%n_ao, &
+                  wf%n_ao, &
+                  one,     &
+                  Po,      &
+                  wf%n_ao, &
+                  tmp,     &
+                  wf%n_ao, &
+                  zero,    &
+                  X,       &
+                  wf%n_ao)
+!
+!     X = X + Pv X Po^T = X - (-Pv X) Po^T = X - tmp^T Po^T
+!
+      call dgemm('T', 'T', &
+                  wf%n_ao, &
+                  wf%n_ao, &
+                  wf%n_ao, &
+                  -one,    &
+                  tmp,     &
+                  wf%n_ao, &
+                  Po,      &
+                  wf%n_ao, &
+                  one,     &
+                  X,       &
+                  wf%n_ao)
+!
+      call mem%dealloc(tmp, wf%n_ao, wf%n_ao)
+!
+   end subroutine project_redundant_rotations_hf
+!
+!
+   subroutine construct_roothan_hall_hessian_hf(wf, H, Po, Pv)
+!!
+!!    Construct Roothan-Hall Hessian
+!!    Written by Eirik F. Kjønstad, 2018
+!!
+!!    Constructs the Roothan-Hall Hessian,
+!!
+!!       H = Fvv - Foo = Pv^T F Pv - Po^T F Po,
+!!
+!!    where Po = D S and Pv = 1 - Po. In Po, D is the AO density and S
+!!    is the AO overlap matrix.
+!!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: Po
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: Pv
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao) :: H
+!
+      real(dp), dimension(:, :), allocatable :: tmp
+!
+!     Construct tmp = Fvv = Pv^T F Pv and set H = tmp = Fvv
+!
+      call mem%alloc(tmp, wf%n_ao, wf%n_ao)
+!
+      tmp = wf%ao_fock
+      call sandwich(tmp, Pv, Pv, wf%n_ao)
+!
+      H = tmp
+!
+!     Construct tmp = Foo = Po^T F Po and set H = H - tmp = Fvv - Foo
+!
+      tmp = wf%ao_fock
+      call sandwich(tmp, Po, Po, wf%n_ao)
+!
+      H = H - tmp
+!
+      call mem%dealloc(tmp, wf%n_ao, wf%n_ao)
+!
+   end subroutine construct_roothan_hall_hessian_hf
+!
+!
+   subroutine construct_roothan_hall_gradient_hf(wf, G, Po, Pv)
+!!
+!!    Construct Roothan-Hall gradient
+!!    Written by Eirik F. Kjønstad, 2018
+!!
+!!    Constructs the Roothan-Hall gradient,
+!!
+!!       G = Fov - Fvo = Po^T F Pv - Pv^T F Po,
+!!
+!!    where Po = D S and Pv = 1 - Po. In Po, D is the AO density and S
+!!    is the AO overlap matrix.
+!!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: Po
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: Pv
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao) :: G
+!
+      real(dp), dimension(:, :), allocatable :: tmp
+!
+!     Construct tmp = Fov = Po^T F Pv and set G = tmp = Fov
+!
+      call mem%alloc(tmp, wf%n_ao, wf%n_ao)
+!
+      tmp = wf%ao_fock
+      call sandwich(tmp, Po, Pv, wf%n_ao)
+!
+      G = tmp
+!
+!     Construct tmp = Fvo = Pv^T F Po and set H = H - tmp = Fov - Fvo
+!
+      tmp = wf%ao_fock
+      call sandwich(tmp, Pv, Po, wf%n_ao)
+!
+      G = G - tmp
+!
+      call mem%dealloc(tmp, wf%n_ao, wf%n_ao)
+!
+   end subroutine construct_roothan_hall_gradient_hf
+!
+!
+   subroutine construct_stationary_roothan_hall_condition_hf(wf, RHC, H, X, G, S)
+!!
+!!    Construct stationary Roothan-Hall condition
+!!    Written by Eirik F. Kjønstad, 2018
+!!
+!!    Sets
+!!
+!!       RHC = H X S + S X H + G,
+!!
+!!    which equals zero on convergence of the Roothan-Hall Newton equations.
+!!    Note that if similarity transformed H, S, and G are used (Y <- V-1 Y V-T),
+!!    then the iterated solution X' = V^T X V, from which the actual X is easily
+!!    extractable.
+!!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao) :: RHC
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: H
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: X
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: G
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: S
+!
+      real(dp), dimension(:,:), allocatable :: tmp
+!
+!     Construct tmp = X S => tmp^T = S^T X^T = S X^T = - S X
+!
+      call mem%alloc(tmp, wf%n_ao, wf%n_ao)
+!
+      call dgemm('N', 'N',       &
+                  wf%n_ao,       &
+                  wf%n_ao,       &
+                  wf%n_ao,       &
+                  one,           &
+                  X,             &
+                  wf%n_ao,       &
+                  S,             &
+                  wf%n_ao,       &
+                  zero,          &
+                  tmp,           &
+                  wf%n_ao)
+!
+!     RHC = H X S = H tmp
+!
+      call dgemm('N', 'N',       &
+                  wf%n_ao,       &
+                  wf%n_ao,       &
+                  wf%n_ao,       &
+                  one,           &
+                  H,             &
+                  wf%n_ao,       &
+                  tmp,           &
+                  wf%n_ao,       &
+                  zero,          &
+                  RHC,           &
+                  wf%n_ao)
+!
+!     RHC = RHC - (- S X) H = RHC - tmp^T H = H X S + S X H
+!
+      call dgemm('T', 'N',       &
+                  wf%n_ao,       &
+                  wf%n_ao,       &
+                  wf%n_ao,       &
+                  -one,          &
+                  tmp,           &
+                  wf%n_ao,       &
+                  H,             &
+                  wf%n_ao,       &
+                  one,           &
+                  RHC,           &
+                  wf%n_ao)
+!
+      call mem%dealloc(tmp, wf%n_ao, wf%n_ao)
+!
+!     RHC = RHC + G = H X S + S X H + G
+!
+      RHC = RHC + G
+!
+   end subroutine construct_stationary_roothan_hall_condition_hf
 !
 !
 end module hf_class

@@ -341,6 +341,59 @@ contains
    end subroutine reduce_array_int
 !
 !
+   subroutine full_cholesky_decomposition_system(matrix, cholesky_vectors, dim, n_vectors,&
+                                                   threshold, used_diag)
+!!
+!!    Cholesky decomposition
+!!    Written by Sarai Dery Folkestad, June 2017.
+!!
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: dim
+      integer(i15), intent(out) :: n_vectors
+!
+      real(dp), intent(in) :: threshold
+!
+      real(dp), dimension(dim, dim), intent(in) :: matrix
+      real(dp), dimension(dim, dim), intent(out) :: cholesky_vectors
+!
+      integer(kind=4), dimension(dim, 1), intent(out) :: used_diag
+!
+      real(dp), dimension(2*dim) :: work  ! work array for LAPACK
+!
+      integer(kind=4) :: info
+      integer(i15) :: I, J
+!
+      cholesky_vectors = matrix
+!
+!     DPSTRF computes the Cholesky factorization with complete pivoting
+!     of a real symmetric positive semidefinite matrix.
+!
+      call dpstrf('L',        &
+            dim,              &
+            cholesky_vectors, &
+            dim,              &
+            used_diag,        &
+            n_vectors,        &
+            threshold,        &
+            work,             &
+            info)
+!
+     do I = 1, dim
+        do J = I + 1, dim
+           cholesky_vectors(I, J) = zero
+        enddo
+     enddo
+!
+      if (info .ne. 0) then
+         write(output%unit,*) 'Cholesky decomposition failed! Something wrong in call to dpstrf', info
+         stop
+      end if
+!
+   end subroutine full_cholesky_decomposition_system
+!
+!
    subroutine full_cholesky_decomposition(matrix, cholesky_vectors, dim, n_vectors,&
                                         threshold, used_diag)
 !!
@@ -658,10 +711,130 @@ contains
       call DTRTRI('l','n', n, Ainv, n, info)
 !
       if (info /= 0) then
-         stop 'Matrix inversion failed!'
+         write(output%unit, *) 'Error: matrix inversion failed!', info
+         stop
       end if
 !
    end subroutine inv_lower_tri
+!
+!
+   subroutine symmetrize(M, n)
+!!
+!!    Symmetrize matrix
+!!    Written by Eirik F. Kjønstad, 2018
+!!
+!!     M <- 1/2 * (M + M^T)
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: n
+!
+      integer(i15) :: i, j
+!
+      real(dp), dimension(n, n) :: M
+      real(dp), dimension(:, :), allocatable :: MT
+!
+      call mem%alloc(MT, n, n)
+!
+      MT = transpose(M)
+!
+      do j = 1, n
+         do i = 1, n
+!
+            M(i, j) = half*(M(i, j) + MT(i, j))
+!
+         enddo
+      enddo
+!
+      call mem%dealloc(MT, n, n)
+!
+   end subroutine symmetrize
+!
+!
+   subroutine anti_symmetrize(M, n)
+!!
+!!    Antisymmetrize matrix
+!!    Written by Eirik F. Kjønstad, 2018
+!!
+!!     M <- 1/2 * (M - M^T)
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: n
+!
+      integer(i15) :: i, j
+!
+      real(dp), dimension(n, n) :: M
+      real(dp), dimension(:, :), allocatable :: MT
+!
+      call mem%alloc(MT, n, n)
+!
+      MT = transpose(M)
+!
+      do j = 1, n
+         do i = 1, n
+!
+            M(i, j) = half*(M(i, j) - MT(i, j))
+!
+         enddo
+      enddo
+!
+      call mem%dealloc(MT, n, n)
+!
+   end subroutine anti_symmetrize
+!
+!
+   subroutine sandwich(X, A, B, n)
+!!
+!!    Sandwich
+!!    Written by Eirik F. Kjønstad, 2018
+!!
+!!    Overwrites the n-by-n matrix X with a sandwich-ed X:
+!!
+!!       X <- A^T X B
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: n
+!
+      real(dp), dimension(n, n), intent(in) :: A
+      real(dp), dimension(n, n), intent(in) :: B
+!
+      real(dp), dimension(n, n) :: X
+!
+      real(dp), dimension(:, :), allocatable :: tmp
+!
+      call mem%alloc(tmp, n, n)
+!
+      call dgemm('N', 'N', &
+                  n,       &
+                  n,       &
+                  n,       &
+                  one,     &
+                  X,       &
+                  n,       &
+                  B,       &
+                  n,       &
+                  zero,    &
+                  tmp,     & ! tmp = X B
+                  n)
+!
+      call dgemm('T', 'N', &
+                  n,       &
+                  n,       &
+                  n,       &
+                  one,     &
+                  A,       &
+                  n,       &
+                  tmp,     &
+                  n,       &
+                  zero,    &
+                  X,       & ! X = A^T tmp = A^T X B
+                  n)
+!
+      call mem%dealloc(tmp, n, n)
+!
+   end subroutine sandwich
 !
 !
 end module array_utilities

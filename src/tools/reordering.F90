@@ -2084,6 +2084,46 @@ contains
    end subroutine symmetrize_and_add_to_packed
 !
 !
+   subroutine squareup_anti(packed, unpacked, N)
+!!
+!!    Square up packed antisymmetric matrix
+!!    Written by Eirik F. Kjønstad, 2018
+!!
+!!    Squares up to full dimension (N x N) of packed matrix. The packed
+!!    antisymmetric matrix contains the strictly lower triangular part
+!     of the full unpacked matrix.
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: N
+!
+      real(dp), dimension(:,:), intent(in) :: packed
+      real(dp), dimension(:,:)             :: unpacked
+!
+      integer(i15) :: i = 0, j = 0
+!
+!     Set diagonal to zero
+!
+      do i = 1, N
+!
+         unpacked(i, i) = zero
+!
+      enddo
+!
+!     Set lower and upper strictly triangular parts
+!
+      do i = 2, N
+         do j = 1, i - 1
+!
+            unpacked(i, j) = packed(index_packed(i - 1, j), 1)
+            unpacked(j, i) = -unpacked(i, j)
+!
+         enddo
+      enddo
+!
+   end subroutine squareup_anti
+!
+!
    subroutine squareup(packed,unpacked,N)
 !!
 !!    Square up packed symmetric matrix
@@ -2160,6 +2200,35 @@ contains
       enddo
 !
    end subroutine packin
+!
+!
+   subroutine packin_anti(packed, unpacked, N)
+!!
+!!    Pack in anti-symmetric matrix
+!!    Written by Eirik F. Kjønstad, 2018
+!!
+!!    Pack down full square anti-symmetric matrix of dimension N x N,
+!!    where the strictly lower triangular part of the unpacked matrix
+!!    is stored in packed form.
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: N
+!
+      real(dp), dimension(:,:) :: packed
+      real(dp), dimension(:,:), intent(in) :: unpacked
+!
+      integer(i15) :: i = 0, j = 0
+!
+      do i = 2, N
+         do j = 1, i - 1
+!
+            packed(index_packed(i - 1, j), 1) = unpacked(i, j)
+!
+         enddo
+      enddo
+!
+   end subroutine packin_anti
 !
 !
 end module reordering

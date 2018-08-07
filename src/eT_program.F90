@@ -14,10 +14,12 @@ program eT_program
 !
    use hf_class
    use hf_engine_class
+   use density_based_hf_engine_class
 !
    implicit none
 !
    type(hf_engine) :: engine
+   type(density_based_hf_engine) :: db_engine
 !
    type(hf) :: wf
 !
@@ -45,7 +47,8 @@ program eT_program
 !
 !  Ask the Hartree-Fock (HF) engine to find the HF solution
 !
-   call engine%solve(wf)
+ !  call engine%solve(wf)
+   call db_engine%solve(wf)
 !
 !  Finalize the wavefunction
 !
