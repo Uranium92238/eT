@@ -5,6 +5,7 @@
 /
 */
 #include "libint_initialization.h"
+#include "eT_basis.h"
 
 #include <libint2.hpp>
 #include <iostream>
@@ -16,11 +17,11 @@
 using namespace libint2;
 using namespace std;
 
-BasisSet basis;
-extern BasisSet basis;
+eTBasis basis;
+extern eTBasis basis;
 
-//Engine electronic_repulsion; // Old, to be deprecated
-//extern Engine electronic_repulsion;
+// BasisSet basis;
+// extern BasisSet basis;
 
 vector<Engine> electronic_repulsion_engines(omp_get_max_threads());
 extern vector<Engine> electronic_repulsion_engines;
@@ -37,7 +38,7 @@ extern Engine overlap;
 vector<Atom> atoms;
 extern vector<Atom> atoms;
 
-void initialize_basis(char *basisset, char *name){
+void initialize_atoms(char *name){
 
     string xyzfilename(strcat(name,".xyz"));
 
@@ -45,11 +46,24 @@ void initialize_basis(char *basisset, char *name){
 	vector<Atom> temporary_atoms = read_dotxyz(input_file);
 	atoms = temporary_atoms;
 
+}
+
+void initialize_basis(char *basisset, char *filename){
+	
+	string xyzfilename(strcat(filename,".xyz"));
+
+	cout << xyzfilename << endl;
+	cout << basisset << endl;
+
+    ifstream input_file(xyzfilename);
+
+	vector<Atom> temporary_atoms = read_dotxyz(input_file);
+
 	cout.setstate(ios_base::failbit);
-	BasisSet temporary(basisset, atoms);
+	BasisSet temporary(basisset, temporary_atoms);
 	cout.clear();
 
-	basis = temporary;
+	basis.add(temporary);
 
 }
 
@@ -68,6 +82,7 @@ void finalize_libint(){
 
 
 void initialize_coulomb(){
+
 
 	Engine temporary(Operator::coulomb, basis.max_nprim(), basis.max_l());
 	temporary.set_precision(1.0e-16);

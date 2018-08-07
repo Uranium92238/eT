@@ -489,4 +489,143 @@ contains
    end function check_orthogonality
 !
 !
+   recursive subroutine quicksort_recursive(vec, first, last)
+!!
+!!    Recursive implementation of quicksort (descending order)
+!!
+!!    Stolen from https://gist.github.com/t-nissie/479f0f16966925fa29ea
+!!
+      implicit none
+!
+      real(dp), dimension(:,:), intent(inout) :: vec
+      integer(i15), intent(in) :: first, last
+!
+      real(dp) :: pivot, temp
+      integer(i15) :: i, j
+
+      pivot = vec( (first+last) / 2, 1)
+!
+      i = first
+      j = last
+!
+      do
+!
+         do while (vec(i, 1) > pivot)
+!
+            i = i + 1
+!
+         end do
+!
+         do while (pivot > vec(j, 1))
+!
+            j = j - 1
+!
+         end do
+!
+         if (i >= j) exit
+!
+         temp = vec(i, 1)
+         vec(i, 1) = vec(j, 1)
+         vec(j, 1) = temp
+!
+         i = i + 1
+         j = j - 1
+!
+      end do
+!
+      if (first < i - 1) call quicksort_recursive(vec, first, i-1)
+      if (j + 1 < last)  call quicksort_recursive(vec, j+1, last)
+!
+   end subroutine quicksort_recursive
+!
+   recursive subroutine quicksort_with_index_recursive(vec, index_list, first, last)
+!!
+!!    Recursive implementation of quicksort with index list (descending order)
+!!
+!!    Adapted from https://gist.github.com/t-nissie/479f0f16966925fa29ea
+!!    index_list stuff added by Sarai D. Folkestad
+!!
+!!
+      implicit none
+!
+      real(dp), dimension(:,:), intent(inout) :: vec
+      integer(i15), dimension(:,:), intent(inout) :: index_list
+      integer(i15), intent(in) :: first, last
+!
+      real(dp) :: pivot, temp
+      integer(i15) :: temp_index
+      integer(i15) :: i, j
+
+      pivot = vec( (first+last) / 2, 1)
+!
+      i = first
+      j = last
+!
+      do
+!
+         do while (vec(i, 1) > pivot)
+!
+            i = i + 1
+!
+         end do
+!
+         do while (pivot > vec(j, 1))
+!
+            j = j - 1
+!
+         end do
+!
+         if (i >= j) exit
+!
+         temp = vec(i, 1)
+         temp_index = index_list(i, 1)
+!
+         vec(i, 1) = vec(j, 1)
+         vec(j, 1) = temp
+!
+         index_list(i, 1) = index_list(j, 1)
+         index_list(j, 1) = temp_index
+!
+         i = i + 1
+         j = j - 1
+!
+      end do
+!
+      if (first < i - 1) call quicksort_with_index_recursive(vec, index_list, first, i-1)
+      if (j + 1 < last)  call quicksort_with_index_recursive(vec, index_list, j+1, last)
+!
+   end subroutine quicksort_with_index_recursive
+!
+   subroutine quicksort(vec, dim)
+!!
+!!    Wrapper for recursive quicksort routine
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: dim
+      real(dp), dimension(dim,1), intent(inout) :: vec
+!
+      call quicksort_recursive(vec, 1, dim)
+!
+   end subroutine quicksort
+!
+   subroutine quicksort_with_index(vec, index_list, dim)
+!!
+!!    Wrapper for recursive quicksort with index list
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: dim
+      real(dp), dimension(dim,1), intent(inout) :: vec
+      integer(i15), dimension(dim,1), intent(inout) :: index_list
+!
+      integer(i15) :: i
+!
+      do i = 1, dim
+         index_list(i, 1) = i
+      enddo
+!
+      call quicksort_with_index_recursive(vec, index_list, 1, dim)
+!
+   end subroutine quicksort_with_index
 end module array_analysis

@@ -21,14 +21,6 @@ void get_shell_numbers(int *atom, int *sn){
 
 	//initialize();
 
-	// string xyzfilename = "Water.xyz"; // see XYZ format description at http://en.wikipedia.org/wiki/XYZ_file_format
-	// ifstream input_file(xyzfilename);
-	// vector<Atom> atoms = read_dotxyz(input_file);
-	//
-	// cout.setstate(ios_base::failbit);
-	// BasisSet obs("cc-pVDZ", atoms);
-	// cout.clear();
-
 	auto a2s_list = basis.atom2shell(atoms); // Vector of vectors
 
 	for (auto j = 0; j < a2s_list[*atom-1].size(); j++){ // loop over shells on atom
@@ -36,7 +28,6 @@ void get_shell_numbers(int *atom, int *sn){
 		auto the_shell = a2s_list[*atom-1][j];
 
 		*(sn + j) = the_shell + 1;
-		//cout << "The " << j << " th shell on atom " << *atom-1 << " is " << the_shell + 1 << endl;
 
 	}
 
@@ -48,24 +39,16 @@ void get_first_ao_in_shells(int *atom, int *faois){
 
 	//initialize();
 
-	// string xyzfilename = "Water.xyz"; // see XYZ format description at http://en.wikipedia.org/wiki/XYZ_file_format
-	// ifstream input_file(xyzfilename);
-	// vector<Atom> atoms = read_dotxyz(input_file);
-	//
-	// cout.setstate(ios_base::failbit);
-	// BasisSet obs("cc-pVDZ", atoms);
-	// cout.clear();
-
 	auto a2s_list = basis.atom2shell(atoms); // Vector of vectors
 	auto shell2bf = basis.shell2bf(); // shell2bf[0] -> first AO index of shell 0
-
+	cout << *atom << endl;
 	for (auto j = 0; j < a2s_list[*atom-1].size(); j++){ // loop over shells on atom
 
 		auto the_shell = a2s_list[*atom-1][j];
 		auto the_first_ao = shell2bf[the_shell];
 
 		*(faois + j) = the_first_ao + 1;
-	//	cout << "The first AO index in shell " << the_shell << " is " << the_first_ao << "." << endl;
+		cout << "The first AO index in shell " << the_shell << " is " << the_first_ao << "." << endl;
 
 	}
 
@@ -103,6 +86,7 @@ void get_n_basis_in_shells(int *atom, int *nbis){
 
 void get_n_shells_on_atoms(int *nsoa){
 
+	//initialize();
 
 	auto a2s_list = basis.atom2shell(atoms); // Vector of vectors
 	int n_shells = 0;
@@ -110,6 +94,7 @@ void get_n_shells_on_atoms(int *nsoa){
 	for (auto j = 0; j < atoms.size(); j++){
 
 		n_shells = a2s_list[j].size();
+
 		*(nsoa + j) = n_shells;
 
 	}

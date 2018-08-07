@@ -1,14 +1,23 @@
 interface
 !
-   subroutine initialize_basis_c(basisset, name) bind(C, name='initialize_basis')
+   subroutine initialize_basis_c(basisset,filename) bind(C, name='initialize_basis')
+!
+      use iso_c_binding, only: C_CHAR, C_LONG
+      implicit none
+!
+      character(kind = c_char) :: basisset(*)
+      character(kind = c_char) :: filename(*)
+!
+   end subroutine initialize_basis_c
+!
+   subroutine initialize_atoms_c(name) bind(C, name='initialize_atoms')
 !
       use iso_c_binding, only: C_CHAR
       implicit none
 !
-      character(kind = c_char) :: basisset(*)
       character(kind = c_char) :: name(*)
 !
-   end subroutine initialize_basis_c
+   end subroutine initialize_atoms_c
 !
    subroutine initialize_libint_c() bind(C, name='initialize_libint')
 !

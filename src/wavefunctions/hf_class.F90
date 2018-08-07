@@ -8,9 +8,9 @@ module hf_class
    use wavefunction_class
 !
    use reordering
+   use array_utilities
    use interval_class
    use index
-   use integral_manager_class
 !
    implicit none
 !
@@ -104,7 +104,8 @@ contains
 !
       wf%name = 'HF'
 !
-      call wf%system%initialize()
+!
+      call wf%system%initialize() ! Initialize molecular system -> Should include SOAD
 !
       wf%n_ao = 0
       call get_n_aos(wf%n_ao)
@@ -119,6 +120,7 @@ contains
       call initialize_coulomb()
       call initialize_kinetic()
       call initialize_nuclear()
+      call initialize_overlap() ! SHOULD THESE BE INITIALIZED IN THE ENGINE ?
       call initialize_overlap()
 !
    end subroutine initialize_hf
@@ -148,7 +150,6 @@ contains
       class(hf) :: wf
 !
       call mem%alloc(wf%ao_density, wf%n_ao, wf%n_ao)
-      wf%ao_density = zero
 !
    end subroutine initialize_ao_density_hf
 !
@@ -291,9 +292,13 @@ contains
 !!    Routine which calculates D_αβ = sum_i C_αi C_βi,
 !!    where C are the MO coefficients.
 !!
+!!    Density is packed
+!!
       implicit none
 !
       class(hf) :: wf
+!
+      integer(i15) :: i, x, y, xy
 !
       wf%ao_density = zero
 !
@@ -329,9 +334,9 @@ contains
 !
       class(hf) :: wf
 !
+      real(dp), dimension(:,:), allocatable :: ao_fock_packed
+      real(dp), dimension(:,:), allocatable :: X_wz, h_wx, h_wx_square
       integer(i15) :: w, x, y, z, wx, yz, w_red, x_red, y_red, z_red
-!
-      real(dp), dimension(:,:), allocatable :: h_wx
 !
       real(dp), dimension(:,:), allocatable :: F1
       real(dp), dimension(:,:), allocatable :: F2
@@ -450,7 +455,7 @@ contains
             call mem%alloc(g, (A_interval%size)*(B_interval%size), &
                               (A_interval%size)*(B_interval%size))
 !
-            call wf%integrals%get_ao_g_wxyz(g, s1, s2, s1, s2)
+            call wf%system%ao_integrals%get_ao_g_wxyz(g, s1, s2, s1, s2)
 !
             norm = sqrt(ddot((A_interval%size)**2*(B_interval%size)**2, g, 1, g, 1))
 !
@@ -510,7 +515,7 @@ contains
 !
                   call mem%alloc(g, (A_interval%size)*(B_interval%size), &
                                     (C_interval%size)*(D_interval%size))
-                  call wf%integrals%get_ao_g_wxyz(g, s1, s2, s3, s4)
+                  call wf%system%ao_integrals%get_ao_g_wxyz(g, s1, s2, s3, s4)
 !
                   call mem%alloc(F1, A_interval%size, B_interval%size) ! F_wx
                   call mem%alloc(F6, C_interval%size, B_interval%size) ! F_yx
@@ -662,7 +667,7 @@ contains
 !
       wf%ao_fock = wf%ao_fock + h_wx
 !
-      call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
+      call mem%dealloc(h_wx, wf%n_ao*(wf%n_ao+1)/2, 1)
 !
       end_timer = omp_get_wtime()
 !
@@ -699,7 +704,7 @@ contains
 !
       wf%hf_energy = wf%hf_energy + ddot((wf%n_ao)**2, h_wx, 1, wf%ao_density, 1)
       wf%hf_energy = wf%hf_energy + two*(one/four)*ddot((wf%n_ao)**2, wf%ao_density, 1, half_GD_wx, 1)
-!
+
    end subroutine calculate_hf_energy_hf
 !
 !
@@ -716,7 +721,6 @@ contains
 !
       real(dp), dimension(:,:) :: D ! Packed
 !
-      wf%ao_density = zero
       call squareup(D, wf%ao_density, wf%n_ao)
 !
    end subroutine set_ao_density_hf
