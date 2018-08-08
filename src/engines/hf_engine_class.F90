@@ -55,8 +55,8 @@ contains
 !
 !     Get number of parameters and equations to solve for
 !
-      engine%n_parameters = wf%get_n_hf_parameters()
-      engine%n_equations  = wf%get_n_hf_equations()
+      engine%n_parameters = (wf%n_ao)*(wf%n_ao + 1)/2
+      engine%n_equations  = (wf%n_o)*(wf%n_v)
 !
       call wf%initialize_ao_density()
 !
@@ -107,6 +107,10 @@ contains
       write(output%unit, '(t3,a/)') ':: E. F. Kjønstad, S. D. Folkestad, 2018'
       flush(output%unit)
 !
+      write(output%unit, '(t3,a)')  'DIIS solver is currently not functional for this case.'
+      write(output%unit, '(t3,a/)') 'Will be fixed in the near future. Use density based algorithm instead.'
+      stop
+!
 !     Initialize engine (read thresholds, restart, etc., from file,
 !     but also ask the wavefunction for the number of parameters to solve
 !     for and related information)
@@ -151,9 +155,7 @@ contains
 !        and MO coefficients
 !
          F = zero
-         call wf%get_hf_equations(F)
-!
-         call wf%construct_gradient(gradient_norm)
+         call wf%get_fock_ov(F)
 !
 !        Check the error
 !
@@ -168,7 +170,6 @@ contains
 !
             write(output%unit, '(/t3,a15,i3)')     'Iteration:     ', iteration
             write(output%unit, '(t3,a15,f17.12)')  'Error:         ', error
-            write(output%unit, '(t3,a15,f17.12)')  'Gradient norm: ', gradient_norm
             write(output%unit, '(t3,a15,f17.12/)') 'Energy:        ', wf%hf_energy
             flush(output%unit)
 !

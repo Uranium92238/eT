@@ -70,7 +70,7 @@ contains
       class(eri_chol_decomp_engine) :: engine
       type(molecular_system) :: system
 !
-      call engine%read_info() 
+      call engine%read_info()
 !
       engine%n_aop   = system%get_n_aos()*(system%get_n_aos()+1)/2 ! Number of ao pairs packed
       engine%n_ao    = system%get_n_aos() ! Number of ao pairs packed
@@ -82,7 +82,7 @@ contains
       call engine%cholesky_aux%init('cholesky_aux', 'sequential', 'unformatted')
       call engine%cholesky_aux_inverse%init('cholesky_aux_inverse', 'sequential', 'unformatted')
       call engine%basis_shell_data%init('basis_shell_info', 'sequential', 'unformatted')
-!      
+!
       if (engine%one_center) then
 !
          call engine%diagonal_info_one_center%init('one_center_diagonal', 'sequential', 'unformatted')
@@ -95,7 +95,7 @@ contains
 !
    subroutine solve_eri_chol_decomp_engine(engine, system)
 !!
-!!  
+!!
       implicit none
 !
       class(eri_chol_decomp_engine) :: engine
@@ -370,7 +370,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: g_AB_AB, D_AB, D_xy,screening_vector_local, screening_vector_reduced
 !
-      integer(i15) :: x, y, xy, xy_packed, first_sig_aop, A, B 
+      integer(i15) :: x, y, xy, xy_packed, first_sig_aop, A, B
 !
       type(interval) :: A_interval, B_interval
 !
@@ -570,8 +570,8 @@ contains
       implicit none
 !
       class(eri_chol_decomp_engine), intent(inout) :: engine
-!  
-      class(molecular_system), intent(in) :: system 
+!
+      class(molecular_system), intent(in) :: system
 !
       type(file), intent(in) :: diagonal_info
 !
@@ -606,20 +606,20 @@ contains
       integer(i15), dimension(:,:), allocatable :: sig_aop_to_aos                ! Maps significant ao pair to aos
       integer(i15), dimension(:,:), allocatable :: new_sig_aop_to_aos            ! Maps significant ao pair to aos
       integer(i15), dimension(:,:), allocatable :: sorted_max_sig_sp             ! Index array for sorting shell pairs according to their maximum values
-      integer(i15), dimension(:,:), allocatable :: qual_sp                       ! List of qualified shell pairs 
+      integer(i15), dimension(:,:), allocatable :: qual_sp                       ! List of qualified shell pairs
       integer(i15), dimension(:,:), allocatable :: qual_sp_copy                  ! List of qualified shell pairs, copy used to reduce size
       integer(i15), dimension(:,:), allocatable :: qual_aop                      ! List of qualified ao pairs
       integer(i15), dimension(:,:), allocatable :: qual_aop_copy                 ! List of qualified ao pairs, copy used to reduce size
       integer(i15), dimension(:,:), allocatable :: sorted_qual_aop_in_sp_indices ! Index array for sorting the qualified ao pairs in shell pair
       integer(i15), dimension(:,:), allocatable :: n_qual_aop_in_prev_sps        ! Offsets for omp-loop, number of qualified ao pairs in preceding shell pair
-      integer(i15), dimension(:,:), allocatable :: cholesky_basis                ! ao and ao pair indices of the elements of the cholesky basis 
-      integer(i15), dimension(:,:), allocatable :: cholesky_basis_new            ! ao and ao pair indices of the elements of the cholesky basis, written to file at end of routine 
-      integer(i15), dimension(:,:), allocatable :: qual_max                      ! Index list containing order in which qualified diagonals are selected in decomposition 
+      integer(i15), dimension(:,:), allocatable :: cholesky_basis                ! ao and ao pair indices of the elements of the cholesky basis
+      integer(i15), dimension(:,:), allocatable :: cholesky_basis_new            ! ao and ao pair indices of the elements of the cholesky basis, written to file at end of routine
+      integer(i15), dimension(:,:), allocatable :: qual_max                      ! Index list containing order in which qualified diagonals are selected in decomposition
       integer(i15), dimension(:,:), allocatable :: sig_sp_to_previous_sig_sp     ! Maps significant shell pair indices to significant shell pair indices of last iteration, used for reduction
       integer(i15), dimension(:,:), allocatable :: basis_shell_info_full         ! Info on shells containing elements of the basis
       integer(i15), dimension(:,:), allocatable :: basis_shell_info              ! Info on shells containing elements of the basis, written to file at end of routine
 !
-!     Logicals 
+!     Logicals
 !
       logical :: done, write_warning, construct_more_choleskys, found
 !
@@ -638,7 +638,7 @@ contains
       real(dp) :: full_reduce_time, s_reduce_time, e_reduce_time
       real(dp) :: full_construct_time, s_construct_time, e_construct_time
 !
-!     Real allocatable arrays 
+!     Real allocatable arrays
 !
       real(dp), dimension(:,:), allocatable :: D_xy                           ! Array for eri diagonal elements
       real(dp), dimension(:,:), allocatable :: D_xy_new                       ! Array for eri diagonal elements, used for reduction
@@ -1056,7 +1056,7 @@ contains
 !
                call mem%dealloc(cholesky_tmp, n_cholesky_in_node, n_qual_aop)
 !
-            enddo           
+            enddo
 !
             call mem%alloc_int(cholesky_basis, engine%n_cholesky + n_qual_aop, 3)
             cholesky_basis(1 : engine%n_cholesky, :) = cholesky_basis_new(:, :)
@@ -1194,7 +1194,7 @@ contains
 !
          do xy = 1, n_sig_aop
 !
-            D_xy(xy, 1) = D_xy(xy, 1) - approx_diagonal_accumulative(xy, 1) 
+            D_xy(xy, 1) = D_xy(xy, 1) - approx_diagonal_accumulative(xy, 1)
 !
          enddo
 !
@@ -1204,7 +1204,7 @@ contains
 !
          call cpu_time(e_construct_time)
          full_construct_time = full_construct_time + e_construct_time - s_construct_time
-!         
+!
          call mem%dealloc(g_wxyz, n_sig_aop, n_qual_aop)
 !
          n_new_cholesky = current_qual
@@ -1477,7 +1477,7 @@ contains
 !
       call mem%alloc_int(basis_shell_info, n_sp_in_basis, 4)
       basis_shell_info(:, :) = basis_shell_info_full(1:n_sp_in_basis, :)
-      call mem%dealloc_int(basis_shell_info_full, engine%n_sp, 4) 
+      call mem%dealloc_int(basis_shell_info_full, engine%n_sp, 4)
 !
 !     Write basis_shell_data file containing
 !
@@ -1522,10 +1522,10 @@ contains
 !
 !     Integer allocatable arrays
 !
-      integer(i15), dimension(:,:), allocatable :: basis_shell_info        ! Info on shells containing elements of the basis 
-      integer(i15), dimension(:,:), allocatable :: basis_shell_info_full   ! Info on shells containing elements of the basis 
-      integer(i15), dimension(:,:), allocatable :: cholesky_basis          ! ao and ao pair indices of the elements of the cholesky basis 
-      integer(i15), dimension(:,:), allocatable :: cholesky_basis_updated  ! ao and ao pair indices of the elements of the cholesky basis 
+      integer(i15), dimension(:,:), allocatable :: basis_shell_info        ! Info on shells containing elements of the basis
+      integer(i15), dimension(:,:), allocatable :: basis_shell_info_full   ! Info on shells containing elements of the basis
+      integer(i15), dimension(:,:), allocatable :: cholesky_basis          ! ao and ao pair indices of the elements of the cholesky basis
+      integer(i15), dimension(:,:), allocatable :: cholesky_basis_updated  ! ao and ao pair indices of the elements of the cholesky basis
       integer(i15), dimension(:,:), allocatable :: basis_aops_in_CD_sp     ! basis ao pairs in shell pair CD
       integer(i15), dimension(:,:), allocatable :: basis_aops_in_AB_sp     ! basis ao pairs in shell pair AB
 !
@@ -1546,7 +1546,7 @@ contains
       real(dp), dimension(:,:), allocatable :: cholesky_vecs
       real(dp), dimension(:,:), allocatable :: temp_cholesky
 !
-!     Logicals 
+!     Logicals
 !
       logical :: found
 !
@@ -1823,14 +1823,14 @@ contains
       integer(i15) :: L, J, I
       integer(i15) :: n_sig_sp, n_sig_aop
       integer(i15) :: n_sp_in_basis, last_sp_included, sp_counter
-      integer(i15) :: current_aop_in_sp 
+      integer(i15) :: current_aop_in_sp
       integer(i15) :: n_AB_included, n_AB_included_current
       integer(i15) :: rec_offset
       integer(i15) :: size_AB, size_AB_current
 !
 !     Integer allocatable arrays
 !
-      integer(i15), dimension(:,:), allocatable :: basis_shell_info     ! Info on shells containing elements of the basis 
+      integer(i15), dimension(:,:), allocatable :: basis_shell_info     ! Info on shells containing elements of the basis
       integer(i15), dimension(:,:), allocatable :: AB_info              ! Info on offsets and shells for OMP-loop [offset, A, B]
       integer(i15), dimension(:,:), allocatable :: basis_aops_in_CD_sp  ! Basis ao pairs in shell pair CD
       integer(i15), dimension(:,:), allocatable :: basis_aops_in_AB_sp  ! Basis ao pairs in shell pair AB
@@ -1847,7 +1847,7 @@ contains
       real(dp), dimension(:,:), allocatable :: L_K_yz
       real(dp), dimension(:,:), allocatable :: aux_chol_inverse
 !
-!     Logicals 
+!     Logicals
 !
       logical :: done, found_size
 !
@@ -2245,7 +2245,7 @@ contains
       flush(output%unit)
 !
 !     Read diagonal information
-!  
+!
       call disk%open_file(engine%diagonal_info_target, 'read')
 !
       read(engine%diagonal_info_target%unit) n_sig_sp, n_sig_aop
@@ -2393,7 +2393,7 @@ contains
 !
                if (line(1:10) == 'threshold:') then
 !
-                  read(line(11:100), '(d16.5)') engine%threshold 
+                  read(line(11:100), '(d16.5)') engine%threshold
 !
                elseif (line(1:5) == 'span:') then
 !

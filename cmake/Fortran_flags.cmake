@@ -4,7 +4,7 @@
 ## GNU ##
 if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
     add_definitions(-DVAR_GFORTRAN)
-    set(CMAKE_Fortran_FLAGS "-DVAR_GFORTRAN -O3 -ffloat-store -fcray-pointer -finit-local-zero -fopenmp -g -fbacktrace -fbounds-check -fcheck=all")
+    set(CMAKE_Fortran_FLAGS "-DVAR_GFORTRAN -O3 -ffloat-store -fcray-pointer -fopenmp")
 
 #
 #   Testing processor 32-bit or 64-bit
@@ -37,7 +37,7 @@ endif()
 #
 if(CMAKE_Fortran_COMPILER_ID MATCHES Intel)
     add_definitions(-DVAR_IFORT)
-    set(CMAKE_Fortran_FLAGS         "-mkl -fpp -assume byterecl -xHost -qopenmp -O3")
+    set(CMAKE_Fortran_FLAGS         "-fpp -assume byterecl -qopenmp -O3")
     set(CMAKE_Fortran_FLAGS_DEBUG   "-O0 -g -traceback -check all -fp-stack-check")
     set(CMAKE_Fortran_FLAGS_RELEASE "-O3 -ip -diag-disable 8290 -diag-disable 8291")
     set(CMAKE_Fortran_FLAGS_PROFILE "${CMAKE_Fortran_FLAGS_RELEASE} -g -pg")
