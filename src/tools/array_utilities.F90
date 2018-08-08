@@ -611,7 +611,7 @@ contains
    end subroutine full_cholesky_decomposition_effective
 !
 !
-   module subroutine cholesky_decomposition_limited_diagonal(matrix, cholesky_vectors, dim, &
+   subroutine cholesky_decomposition_limited_diagonal(matrix, cholesky_vectors, dim, &
                                                      n_vectors,threshold, n_included_diagonals, included_diagonals)
 !!
 !!    Cholesky decomposition reduced diagonal,
