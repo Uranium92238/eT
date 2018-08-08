@@ -1529,7 +1529,7 @@ contains
       integer(i15), dimension(:,:), allocatable :: basis_aops_in_CD_sp     ! basis ao pairs in shell pair CD
       integer(i15), dimension(:,:), allocatable :: basis_aops_in_AB_sp     ! basis ao pairs in shell pair AB
 !
-      integer(kind=4), dimension(:), allocatable :: keep_vectors
+      integer(i15), dimension(:), allocatable :: keep_vectors
 !
 !     Intervals
 !

@@ -911,7 +911,7 @@ contains
 !
       class(hf) :: wf
 !
-      integer(kind=4), dimension(:, :), allocatable :: used_diag
+      integer(i15), dimension(:, :), allocatable :: used_diag
 !
       real(dp), dimension(:,:), allocatable :: perm_matrix
 !
@@ -980,7 +980,7 @@ contains
 !
       class(hf) :: wf
 !
-      integer(kind=4), dimension(:, :), allocatable :: used_diag
+      integer(i15), dimension(:, :), allocatable :: used_diag
 !
       real(dp), dimension(wf%n_ao, wf%n_ao) :: L
 !

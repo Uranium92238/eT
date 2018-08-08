@@ -357,64 +357,11 @@ contains
    end subroutine reduce_array_int
 !
 !
-   subroutine full_cholesky_decomposition_system(matrix, cholesky_vectors, dim, n_vectors,&
-                                                   threshold, used_diag)
-!!
-!!    Cholesky decomposition
-!!    Written by Sarai Dery Folkestad, June 2017.
-!!
-!!
-      implicit none
-!
-      integer(i15), intent(in) :: dim
-      integer(i15), intent(out) :: n_vectors
-!
-      real(dp), intent(in) :: threshold
-!
-      real(dp), dimension(dim, dim), intent(in) :: matrix
-      real(dp), dimension(dim, dim), intent(out) :: cholesky_vectors
-!
-      integer(kind=4), dimension(dim, 1), intent(out) :: used_diag
-!
-      real(dp), dimension(2*dim) :: work  ! work array for LAPACK
-!
-      integer(kind=4) :: info
-      integer(i15) :: I, J
-!
-      cholesky_vectors = matrix
-!
-!     DPSTRF computes the Cholesky factorization with complete pivoting
-!     of a real symmetric positive semidefinite matrix.
-!
-      call dpstrf('L',        &
-            dim,              &
-            cholesky_vectors, &
-            dim,              &
-            used_diag,        &
-            n_vectors,        &
-            threshold,        &
-            work,             &
-            info)
-!
-     do I = 1, dim
-        do J = I + 1, dim
-           cholesky_vectors(I, J) = zero
-        enddo
-     enddo
-!
-      if (info .ne. 0) then
-         write(output%unit,*) 'Cholesky decomposition failed! Something wrong in call to dpstrf', info
-         stop
-      end if
-!
-   end subroutine full_cholesky_decomposition_system
-!
-!
    subroutine full_cholesky_decomposition(matrix, cholesky_vectors, dim, n_vectors,&
                                         threshold, used_diag)
 !!
 !!    Cholesky decomposition,
-!!    Written by Sarai Dery Folkestad, June 2017.
+!!    Written by Sarai Dery Folkestad, June 2017
 !!
 !!
       implicit none
@@ -827,63 +774,63 @@ contains
    end subroutine cholesky_decomposition_limited_diagonal
 !
 !
-!  subroutine full_cholesky_decomposition_system(matrix, cholesky_vectors, dim, n_vectors, &
-!                                                    threshold, used_diag)
-! !!
-! !!    Cholesky decomposition,
-! !!    Written by Sarai Dery Folkestad, June 2017.
-! !!
-! !!
-!       implicit none
-! !
-!       integer(i15), intent(in) :: dim
-!       integer(i15), intent(out) :: n_vectors
-! !
-!       real(dp), intent(in) :: threshold
-! !
-!       real(dp), dimension(dim, dim), intent(in)  :: matrix
-!       real(dp), dimension(dim, dim), intent(out) :: cholesky_vectors
-! !
-!       integer(i15), dimension(dim) :: used_diag
-! !
-!       real(dp), dimension(:), allocatable :: work  ! work array for LAPACK
-! !
-!       integer(i15) :: info
-!       integer(i15) :: I, J
-! !
-!       cholesky_vectors = matrix
-! !
-!       allocate(work(2*dim))
-! !
-! !     DPSTRF computes the Cholesky factorization with complete pivoting
-! !     of a real symmetric positive semidefinite matrix.
-! !
-!       call dpstrf_e('L',       &
-!             dim,              &
-!             cholesky_vectors, &
-!             dim,              &
-!             used_diag,        &
-!             n_vectors,        &
-!             threshold,        &
-!             work,             &
-!             info)
-! !
-!       deallocate(work)
-! !
-!       do I = 1, dim
-!          do J = 1, I - 1
-! !
-!             cholesky_vectors(J, I) = zero
-! !
-!          enddo
-!       enddo
-! !
-!       if (info < 0) then
-!          write(*,*)info
-!          stop 'Cholesky decomposition failed! Something wrong in call to dpstrf'
-!       end if
-! !
-!    end subroutine full_cholesky_decomposition_system
+ subroutine full_cholesky_decomposition_system(matrix, cholesky_vectors, dim, n_vectors, &
+                                                   threshold, used_diag)
+!!
+!!    Cholesky decomposition,
+!!    Written by Sarai Dery Folkestad, June 2017.
+!!
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: dim
+      integer(i15), intent(out) :: n_vectors
+!
+      real(dp), intent(in) :: threshold
+!
+      real(dp), dimension(dim, dim), intent(in)  :: matrix
+      real(dp), dimension(dim, dim), intent(out) :: cholesky_vectors
+!
+      integer(i15), dimension(dim) :: used_diag
+!
+      real(dp), dimension(:), allocatable :: work  ! work array for LAPACK
+!
+      integer(i15) :: info
+      integer(i15) :: I, J
+!
+      cholesky_vectors = matrix
+!
+      allocate(work(2*dim))
+!
+!     DPSTRF computes the Cholesky factorization with complete pivoting
+!     of a real symmetric positive semidefinite matrix.
+!
+      call dpstrf_e('L',      &
+            dim,              &
+            cholesky_vectors, &
+            dim,              &
+            used_diag,        &
+            n_vectors,        &
+            threshold,        &
+            work,             &
+            info)
+!
+      deallocate(work)
+!
+      do I = 1, dim ! Zero upper unreferenced triangle
+         do J = 1, I - 1
+!
+            cholesky_vectors(J, I) = zero
+!
+         enddo
+      enddo
+!
+      if (info < 0) then
+         write(*,*)info
+         stop 'Cholesky decomposition failed! Something wrong in call to dpstrf'
+      end if
+!
+   end subroutine full_cholesky_decomposition_system
 !
 !
    subroutine inv(Ainv, A, n)
