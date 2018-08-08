@@ -761,13 +761,13 @@ contains
       call dgemm('N', 'T',          &
                   dim,              &
                   dim,              &
-                  n_vectors,        &
-                  one,              &
-                  cholesky_vectors, &
-                  dim,              &
-                  cholesky_vectors, &
                   dim,              &
                   -one,             &
+                  cholesky_vectors, &
+                  dim,              &
+                  cholesky_vectors, &
+                  dim,              &
+                  one,              &
                   matrix,           &
                   dim)
 !

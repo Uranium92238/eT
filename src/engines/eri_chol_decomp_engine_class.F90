@@ -93,7 +93,7 @@ contains
    end subroutine initialize_eri_chol_decomp_engine
 !
 !
-   subroutine solve_eri_chol_decomp_engine(engine, system)
+   subroutine solve_eri_chol_decomp_engine(engine, system, screening_vector)
 !!
 !!
       implicit none
@@ -101,6 +101,8 @@ contains
       class(eri_chol_decomp_engine) :: engine
 !
       type(molecular_system) :: system
+!
+      real(dp), dimension(engine%n_ao,1), optional :: screening_vector
 !
       write(output%unit, '(/a51/)') ':: Cholesky decomposition of two-electron ao_integrals'
       flush(output%unit)
@@ -113,11 +115,24 @@ contains
       write(output%unit, '(a21, e12.4/)') 'Span factor:         ', engine%span
       flush(output%unit)
 !
-      call engine%construct_significant_diagonal(system)
+      if (present(screening_vector)) then
+         call engine%construct_significant_diagonal(system, screening_vector)
+      else 
+         call engine%construct_significant_diagonal(system)
+      endif
 !
      if (engine%one_center) then
 !
-        call engine%construct_significant_diagonal_atomic(system)
+      if (present(screening_vector)) then
+!
+         call engine%construct_significant_diagonal_atomic(system, screening_vector)
+!
+      else 
+!
+         call engine%construct_significant_diagonal_atomic(system)
+!
+      endif
+!
         call engine%determine_auxilliary_cholesky_basis(system, engine%diagonal_info_one_center)
 !
      else

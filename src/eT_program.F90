@@ -13,6 +13,7 @@ program eT_program
    use integral_manager_class
 !
    use hf_class
+   use mlhf_class
    use hf_engine_class
    use density_based_hf_engine_class
 !
@@ -23,9 +24,10 @@ program eT_program
    type(hf_engine) :: engine
 
    type(density_based_hf_engine) :: db_engine
- !  type(eri_chol_decomp_engine)  :: chol_engine
+   type(eri_chol_decomp_engine)  :: chol_engine
 !
-   type(hf) :: wf
+   !type(hf) :: wf
+   type(mlhf) :: wf
 !
 !
 !  Initialize memory and disk here
@@ -48,6 +50,8 @@ program eT_program
 !  Initialize wavefunction
 !
    call wf%initialize()
+   call wf%eri_decomp_test_w_active_dens()
+   stop
 !
 !  call wf%integrals%cholesky_decompose(wf%molecule)
 !
@@ -58,7 +62,7 @@ program eT_program
 !  Ask the Hartree-Fock (HF) engine to find the HF solution
 !
  !  call engine%solve(wf)
-   call db_engine%solve(wf)
+ !  call db_engine%solve(wf)
 !
 !  Finalize the wavefunction
 !

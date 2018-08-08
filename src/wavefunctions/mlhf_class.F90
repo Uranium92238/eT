@@ -12,6 +12,8 @@ module mlhf_class
    use index
    use active_atoms_class
 !
+   use eri_chol_decomp_engine_class
+!
    use array_utilities
 !
    implicit none
@@ -50,6 +52,24 @@ contains
 !
       call wf%read_info
 !
+      call wf%system%initialize() ! Initialize molecular system -> Should include SOAD
+!
+      wf%n_ao = 0
+      call get_n_aos(wf%n_ao)
+!
+      wf%n_mo = wf%n_ao
+!
+      wf%n_o = (wf%system%get_n_electrons())/2
+      wf%n_v = wf%n_mo - wf%n_o
+!
+!     Initialize Libint engines to be used
+!
+      call initialize_coulomb()
+      call initialize_kinetic()
+      call initialize_nuclear()
+      call initialize_overlap() ! SHOULD THESE BE INITIALIZED IN THE ENGINE ?
+      call initialize_overlap()
+!
    end subroutine initialize_mlhf
 !
 !
@@ -81,6 +101,51 @@ contains
       real(dp) :: max
 !
       integer(i15), dimension(:,:), allocatable :: active_aos
+!
+      integer(i15) :: ao
+!
+      real(dp), dimension(:,:), allocatable :: density_diagonal
+!
+      type(eri_chol_decomp_engine)  :: chol_engine
+!
+      call wf%initialize_ao_density()
+!
+!     Set initial density to superposition of atomic densities (SOAD) guess
+!
+      call mem%alloc(density_diagonal, wf%n_ao, 1)
+      call wf%system%SOAD(wf%n_ao, density_diagonal)
+!
+      do ao = 1, wf%n_ao
+!
+         wf%ao_density(ao, ao) = density_diagonal(ao, 1)
+!
+      enddo
+!
+      call mem%dealloc(density_diagonal, wf%n_ao, 1)
+!
+!     Construct initial AO Fock from the SOAD density
+!
+!
+      call wf%initialize_ao_fock()
+      call wf%construct_ao_fock() ! From current D^AO
+!
+!     Construct AO overlap matrix, Cholesky decompose it,
+!     followed by preconditioning (making it the identity matrix
+!     for this particular preconditioner - V)
+!
+      call wf%initialize_ao_overlap()
+      call wf%construct_ao_overlap()
+!
+!     Solve Roothan Hall once - using the SOAD guess - to get a decent AO density
+!     on  which to start the preconditioned conjugate gradient (PCG) algorithm
+!
+      call wf%initialize_orbital_energies()
+      call wf%initialize_mo_coefficients()
+      call wf%solve_roothan_hall() ! F^AO C = S C e to get new MOs C
+!
+!     Update the AO density
+!
+      call wf%construct_ao_density() ! Construct AO density from C
 !
       n_active_aos = 0
 !
@@ -116,16 +181,19 @@ contains
 !
       enddo 
 !
+      call mem%alloc(ao_density_v, wf%n_ao, wf%n_ao)
+      call wf%construct_virtual_density(ao_density_v)
+!
       call mem%alloc(cholesky_vectors_occ, wf%n_ao, n_active_aos)
+!
+      call dscal(wf%n_ao**2, half, wf%ao_density, 1)
 !
       call cholesky_decomposition_limited_diagonal(wf%ao_density, cholesky_vectors_occ, wf%n_ao, &
                                                      n_vectors_occ, 1.0d-9, n_active_aos, active_aos)
 !
 !
       call mem%alloc(cholesky_vectors_virt, wf%n_ao, n_active_aos)
-!
-      call mem%alloc(ao_density_v, wf%n_ao, wf%n_ao)
-      call wf%construct_virtual_density(ao_density_v)
+      cholesky_vectors_virt = zero
 !
       call cholesky_decomposition_limited_diagonal(ao_density_v, cholesky_vectors_virt, wf%n_ao, &
                                                      n_vectors_virt, 1.0d-9, n_active_aos, active_aos)
@@ -156,6 +224,10 @@ contains
 !
       call mem%dealloc(cholesky_vectors_virt, wf%n_ao, n_active_aos)
       call mem%dealloc(cholesky_vectors_occ, wf%n_ao, n_active_aos)
+!
+      call chol_engine%initialize(wf%system)
+      call chol_engine%solve(wf%system, V)
+      call chol_engine%finalize()
 !
 !     Cholesky decomposition
 !
@@ -235,7 +307,7 @@ contains
 !
             else ! specific atoms are given
 !
-               read(input%unit, *) wf%active_space%atoms
+               read(line, *) wf%active_space%atoms
 !
             endif
 !
@@ -268,7 +340,7 @@ contains
 !
       real(dp), dimension(wf%n_ao, wf%n_ao) :: D_v
 !
-      integer(i15) :: rank, i
+      integer(i15) :: rank, i, x, y
 !
       integer(i15), dimension(:), allocatable :: piv
 !
@@ -276,73 +348,72 @@ contains
 !
       rank = 0
 !
-      allocate(piv(wf%n_ao))
-      call mem%alloc(L, wf%n_ao, wf%n_ao)
+     allocate(piv(wf%n_ao))
+     call mem%alloc(L, wf%n_ao, wf%n_ao)
 !
-      call full_cholesky_decomposition_system(wf%ao_overlap, L, wf%n_ao, rank, &
-                                                1.0d-20, piv)
+     call full_cholesky_decomposition_system(wf%ao_overlap, L, wf%n_ao, rank, &
+                                               1.0d-16, piv)
 !
-      call mem%alloc(L_inv, wf%n_ao, wf%n_ao)
+     call mem%alloc(L_inv, wf%n_ao, wf%n_ao)
 !
-      if (rank .eq. wf%n_ao) then
+     if (rank .eq. wf%n_ao) then
 !
-         call inv_lower_tri(L_inv, L, wf%n_ao)
+        call inv_lower_tri(L_inv, L, wf%n_ao)
 !
-      else
+     else
 !
-         write(output%unit) 'Error: does not yet work if S has lin dep'
-         stop
+        write(output%unit) 'Error: does not yet work if S has lin dep'
+        stop
 !
-      endif
+     endif
 !
-      call mem%dealloc(L, wf%n_ao, wf%n_ao)
+     call mem%dealloc(L, wf%n_ao, wf%n_ao)
 !
-      call mem%alloc(P, wf%n_ao, wf%n_ao)
-      P = zero
+     call mem%alloc(P, wf%n_ao, wf%n_ao)
+     P = zero
 !
-      do i = 1, wf%n_ao 
+     do i = 1, wf%n_ao 
 !
-         P(piv(i), i) = one
+        P(piv(i), i) = one
 !
-      enddo
+     enddo
 !
-      deallocate(piv)
+     deallocate(piv)
 !
-      call mem%alloc(L_inv_P_trans, wf%n_ao, wf%n_ao)
+     call mem%alloc(L_inv_P_trans, wf%n_ao, wf%n_ao)
 !
-      call dgemm('N', 'T',       &
-                  wf%n_ao,       &
-                  wf%n_ao,       &
-                  wf%n_ao,       &
-                  one,           &
-                  L_inv,         &
-                  wf%n_ao,       &
-                  P,             &
-                  wf%n_ao,       &
-                  zero,          &
-                  L_inv_P_trans, &
-                  wf%n_ao)
-
+     call dgemm('N', 'T',       &
+                 wf%n_ao,       &
+                 wf%n_ao,       &
+                 wf%n_ao,       &
+                 one,           &
+                 L_inv,         &
+                 wf%n_ao,       &
+                 P,             &
+                 wf%n_ao,       &
+                 zero,          &
+                 L_inv_P_trans, &
+                 wf%n_ao)
 !
-      call mem%dealloc(L_inv, wf%n_ao, wf%n_ao)
-      call mem%dealloc(P, wf%n_ao, wf%n_ao)
+     call mem%dealloc(L_inv, wf%n_ao, wf%n_ao)
+     call mem%dealloc(P, wf%n_ao, wf%n_ao)
 !
-      D_v = - wf%ao_density
+     call dgemm('T', 'N',       &
+                 wf%n_ao,       &
+                 wf%n_ao,       &
+                 wf%n_ao,       &
+                 one,           &
+                 L_inv_P_trans, &
+                 wf%n_ao,       &
+                 L_inv_P_trans, &
+                 wf%n_ao,       &
+                 zero,          &
+                 D_v,           &
+                 wf%n_ao)
 !
-      call dgemm('T', 'N',       &
-                  wf%n_ao,       &
-                  wf%n_ao,       &
-                  wf%n_ao,       &
-                  one,           &
-                  L_inv_P_trans, &
-                  wf%n_ao,       &
-                  L_inv_P_trans, &
-                  wf%n_ao,       &
-                  one,           &
-                  D_v,           &
-                  wf%n_ao)
+     call mem%dealloc(L_inv_P_trans, wf%n_ao, wf%n_ao)
 !
-      call mem%dealloc(L_inv_P_trans, wf%n_ao, wf%n_ao)
+      call daxpy(wf%n_ao**2, -half, wf%ao_density, 1, D_v, 1)
 !
   end subroutine construct_virtual_density_mlhf
 !
