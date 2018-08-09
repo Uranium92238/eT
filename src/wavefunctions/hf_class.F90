@@ -1547,14 +1547,14 @@ contains
    end subroutine construct_roothan_hall_gradient_hf
 !
 !
-   subroutine construct_stationary_roothan_hall_condition_hf(wf, RHC, H, X, G, S)
+   subroutine construct_stationary_roothan_hall_condition_hf(wf, RHC, H, X, G, S, level_shift)
 !!
 !!    Construct stationary Roothan-Hall condition
 !!    Written by Eirik F. Kjønstad, 2018
 !!
 !!    Sets
 !!
-!!       RHC = H X S + S X H + G,
+!!       RHC = H X S + S X H + G - level_shift S,
 !!
 !!    which equals zero on convergence of the Roothan-Hall Newton equations.
 !!    Note that if similarity transformed H, S, and G are used (Y <- V-1 Y V-T),
@@ -1571,6 +1571,8 @@ contains
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: X
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: G
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: S
+!
+      real(dp), intent(in), optional :: level_shift
 !
       real(dp), dimension(:,:), allocatable :: tmp
 !
@@ -1626,6 +1628,14 @@ contains
 !     RHC = RHC + G = H X S + S X H + G
 !
       RHC = RHC + G
+!
+      if (present(level_shift)) then 
+!
+!        RHC = RHC - level_shift S = H X S + S X H + G - level_shift S
+!
+         RHC = RHC - level_shift*S
+!
+      endif
 !
    end subroutine construct_stationary_roothan_hall_condition_hf
 !

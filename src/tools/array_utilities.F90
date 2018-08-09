@@ -969,7 +969,35 @@ contains
    end subroutine anti_symmetrize
 !
 !
-   subroutine sandwich(X, A, B, n)
+   real(dp) function get_abs_max(X, n)
+!!
+!!    Get absolute maximum value of vector
+!!    Written by Eirik F. Kjønstad, 2018
+!!
+!!    Returns the largest element of |X|, i.e. the largest 
+!!    element in terms of absolute value
+!!
+      implicit none 
+!
+      integer(i15), intent(in) :: n
+!
+      real(dp), dimension(n, 1), intent(in) :: X
+!
+      integer(i15) :: i
+!
+      get_abs_max = zero
+!
+      do i = 1, n
+!
+         if (abs(X(i, 1)) .gt. get_abs_max) get_abs_max = abs(X(i, 1))
+!
+      enddo
+!
+   end function get_abs_max
+
+!
+!
+   subroutine sandwich(X, A, B, n, left)
 !!
 !!    Sandwich
 !!    Written by Eirik F. Kjønstad, 2018
@@ -987,35 +1015,103 @@ contains
 !
       real(dp), dimension(n, n) :: X
 !
+      logical, optional, intent(in) :: left 
+!
       real(dp), dimension(:, :), allocatable :: tmp
 !
       call mem%alloc(tmp, n, n)
 !
-      call dgemm('N', 'N', &
-                  n,       &
-                  n,       &
-                  n,       &
-                  one,     &
-                  X,       &
-                  n,       &
-                  B,       &
-                  n,       &
-                  zero,    &
-                  tmp,     & ! tmp = X B
-                  n)
+      if (present(left)) then 
 !
-      call dgemm('T', 'N', &
-                  n,       &
-                  n,       &
-                  n,       &
-                  one,     &
-                  A,       &
-                  n,       &
-                  tmp,     &
-                  n,       &
-                  zero,    &
-                  X,       & ! X = A^T tmp = A^T X B
-                  n)
+         if (left) then ! Transpose the left factor, X <- A^T X B
+!
+            call dgemm('N', 'N', &
+                        n,       &
+                        n,       &
+                        n,       &
+                        one,     &
+                        X,       &
+                        n,       &
+                        B,       &
+                        n,       &
+                        zero,    &
+                        tmp,     & ! tmp = X B
+                        n)
+!
+            call dgemm('T', 'N', &
+                        n,       &
+                        n,       &
+                        n,       &
+                        one,     &
+                        A,       &
+                        n,       &
+                        tmp,     &
+                        n,       &
+                        zero,    &
+                        X,       & ! X = A^T tmp = A^T X B
+                        n)
+!
+         else ! Transpose the right factor, X <- A X B^T
+!
+            call dgemm('N', 'T', &
+                        n,       &
+                        n,       &
+                        n,       &
+                        one,     &
+                        X,       &
+                        n,       &
+                        B,       &
+                        n,       &
+                        zero,    &
+                        tmp,     & ! tmp = X B^T
+                        n)
+!
+            call dgemm('N', 'N', &
+                        n,       &
+                        n,       &
+                        n,       &
+                        one,     &
+                        A,       &
+                        n,       &
+                        tmp,     &
+                        n,       &
+                        zero,    &
+                        X,       & ! X = A tmp = A X B^T
+                        n)
+!
+            endif
+!
+         else ! Transpose left factor (standard)
+!  
+            call dgemm('N', 'N', &
+                        n,       &
+                        n,       &
+                        n,       &
+                        one,     &
+                        X,       &
+                        n,       &
+                        B,       &
+                        n,       &
+                        zero,    &
+                        tmp,     & ! tmp = X B
+                        n)
+!
+            call dgemm('T', 'N', &
+                        n,       &
+                        n,       &
+                        n,       &
+                        one,     &
+                        A,       &
+                        n,       &
+                        tmp,     &
+                        n,       &
+                        zero,    &
+                        X,       & ! X = A^T tmp = A^T X B
+                        n)
+!
+         endif
+!
+
 !
       call mem%dealloc(tmp, n, n)
 !
