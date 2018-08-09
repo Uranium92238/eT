@@ -204,6 +204,9 @@ contains
       call cholesky_decomposition_limited_diagonal(ao_density_v, cholesky_vectors_virt, wf%n_ao, &
                                                      n_vectors_virt, 1.0d-9, n_active_aos, active_aos)
 !
+      write(output%unit, *)n_vectors_occ, n_vectors_virt
+      flush(output%unit)
+!
       call mem%dealloc_int(active_aos, n_active_aos, 1)
 !
       call mem%alloc(V, wf%n_ao, 1)
