@@ -351,7 +351,60 @@ contains
    end subroutine construct_ao_density_hf
 !
 !
-   subroutine construct_ao_fock_hf(wf)
+   subroutine construct_sp_eri_schwarz(wf, sp_eri_schwarz, n_s)
+!!
+!!
+!!
+      implicit none
+!
+      class(hf) :: wf 
+!
+      integer(i15) :: n_s
+!
+      real(dp), dimension(n_s, n_s) :: sp_eri_schwarz
+!
+!     Local variables
+!
+      integer(i15) :: s1, s2
+!
+      real(dp) :: max
+!
+      real(dp), dimension(:,:), allocatable :: g
+!
+      type(interval) :: A_interval, B_interval
+!
+!$omp parallel do private(s1, s2, A_interval, B_interval, g, max) schedule(dynamic)
+      do s1 = 1, n_s
+         do s2 = 1, s1
+!
+            A_interval = wf%system%get_shell_limits(s1)
+            B_interval = wf%system%get_shell_limits(s2)
+!
+            call mem%alloc(g, (A_interval%size)*(B_interval%size), &
+                              (A_interval%size)*(B_interval%size))
+!
+            call wf%system%ao_integrals%get_ao_g_wxyz(g, s1, s2, s1, s2)
+!
+            max = get_abs_max(g, (A_interval%size)*(B_interval%size)**2)
+!
+            call mem%dealloc(g, (A_interval%size)*(B_interval%size), &
+                                (A_interval%size)*(B_interval%size))
+!
+            if (max .lt. 1.0D-12) then
+!
+               sp_eri_schwarz(s1, s2) = max
+               sp_eri_schwarz(s2, s1) = max
+!
+            endif
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine construct_sp_eri_schwarz
+!
+!
+   subroutine construct_ao_fock_hf(wf, sp_eri_schwarz, n_s)
 !!
 !!    Construct AO Fock matrix
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -367,6 +420,10 @@ contains
 !
       class(hf) :: wf
 !
+      integer(i15) :: n_s
+!
+      real(dp), dimension(n_s, n_s) :: sp_eri_schwarz
+!
       real(dp), dimension(:,:), allocatable :: ao_fock_packed
       real(dp), dimension(:,:), allocatable :: X_wz, h_wx, h_wx_square
       integer(i15) :: w, x, y, z, wx, yz, w_red, x_red, y_red, z_red
@@ -378,7 +435,7 @@ contains
       real(dp), dimension(:,:), allocatable :: F5
       real(dp), dimension(:,:), allocatable :: F6
 !
-      integer(i15) :: s1, s2, s3, s4, s4_max, n_s, s1s2, s3s4
+      integer(i15) :: s1, s2, s3, s4, s4_max, s1s2, s3s4
 !
       type(interval) :: A_interval
       type(interval) :: B_interval
@@ -387,15 +444,12 @@ contains
 !
       real(dp) :: deg_12, deg_34, deg_12_34, deg, ddot, norm
       real(dp) :: temp, temp1, temp2, temp3, temp4, temp5, temp6
+      real(dp) :: max, max_D_schwarz, max_eri_schwarz
 !
       real(dp), dimension(:,:), allocatable :: degeneracy
-      real(dp), dimension(:,:), allocatable :: g
-!
-      logical, dimension(:, :), allocatable :: schwarz
+      real(dp), dimension(:,:), allocatable :: g, D, sp_density_schwarz
 !
       real(dp) :: start_timer, end_timer, omp_get_wtime
-!
-      n_s = wf%system%get_n_shells()
 !
       start_timer = omp_get_wtime()
 !
@@ -475,36 +529,38 @@ contains
 !
       start_timer = omp_get_wtime()
 !
-      allocate(schwarz(n_s, n_s))
-      schwarz = .false.
+      call mem%alloc(sp_density_schwarz, n_s, n_s)
 !
-!$omp parallel do private(s1, s2, A_interval, B_interval, g, norm)
+!$omp parallel do private(s1, s2, A_interval, B_interval, D, max)
       do s1 = 1, n_s
          do s2 = 1, s1
 !
             A_interval = wf%system%get_shell_limits(s1)
             B_interval = wf%system%get_shell_limits(s2)
 !
-            call mem%alloc(g, (A_interval%size)*(B_interval%size), &
-                              (A_interval%size)*(B_interval%size))
+            call mem%alloc(D, (A_interval%size), (B_interval%size))
 !
-            call wf%system%ao_integrals%get_ao_g_wxyz(g, s1, s2, s1, s2)
+            D = wf%ao_density(A_interval%first : A_interval%last, B_interval%first : B_interval%last)
 !
-            norm = sqrt(ddot((A_interval%size)**2*(B_interval%size)**2, g, 1, g, 1))
+            max = get_abs_max(D, (A_interval%size)*(B_interval%size))
 !
-            if (norm .lt. 1.0D-12) then
+            call mem%dealloc(D, (A_interval%size), (B_interval%size))
 !
-               schwarz(s1,s2) = .true.
-               schwarz(s2,s1) = .true.
+            if (max .lt. 1.0D-12) then
+!
+               sp_density_schwarz(s1, s2) = max
+               sp_density_schwarz(s2, s1) = max
 !
             endif
-!
-            call mem%dealloc(g, (A_interval%size)*(B_interval%size), &
-                                (A_interval%size)*(B_interval%size))
 !
          enddo
       enddo
 !$omp end parallel do
+!
+!     Calculate max' prescreening
+!
+      max_D_schwarz = get_abs_max(sp_density_schwarz, n_s**2)
+      max_eri_schwarz = get_abs_max(sp_eri_schwarz, n_s**2)
 !
       end_timer = omp_get_wtime()
    !   write(output%unit, '(t3,a32,f9.1)') 'Schwarz screening array (sec.): ', end_timer - start_timer
@@ -520,7 +576,7 @@ contains
       do s1 = 1, n_s
          do s2 = 1, s1
 !
-            if (schwarz(s1, s2)) continue
+            if (sp_eri_schwarz(s1, s2)*(max_D_schwarz)*(max_eri_schwarz) .lt. 1.0d-12) continue
 !
             s1s2 = n_s*(s2 - 1) + s1
 !
@@ -685,7 +741,7 @@ contains
       enddo
 !$omp end parallel do
 !
-      deallocate(schwarz)
+      call mem%dealloc(sp_density_schwarz, n_s, n_s)
 !
       call mem%dealloc(degeneracy, n_s**2, n_s**2)
 !

@@ -230,14 +230,7 @@ contains
          V(x, 1) = max
 !
       enddo
-!
-      write(output%unit, *) 'some elements of screening vec'
-      do i = 1, 100
-!
-         write(output%unit, *) V(i, 1)
-         flush(output%unit)
-!
-      enddo
+
 !
       call mem%dealloc(cholesky_vectors_virt, wf%n_ao, n_active_aos)
       call mem%dealloc(cholesky_vectors_occ, wf%n_ao, n_active_aos)
