@@ -2399,7 +2399,7 @@ contains
       read(input%unit,'(a)') line
       line = remove_preceding_blanks(line)
 !
-      do while ((trim(line) .ne. 'end cholesky') .and. (line(1:3) .ne. 'do '))
+      do while ((trim(line) .ne. 'end cholesky') .and. (line(1:2) .ne. 'do'))
 !
          read(input%unit,'(a)') line
          line = remove_preceding_blanks(line)

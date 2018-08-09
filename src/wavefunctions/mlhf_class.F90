@@ -52,6 +52,10 @@ contains
 !
       call wf%read_info
 !
+      write(output%unit, *)'Doing SAD/ml test'
+      write(output%unit, *)'Active atoms', wf%active_space%atoms
+      flush(output%unit)
+!
       call wf%system%initialize() ! Initialize molecular system -> Should include SOAD
 !
       wf%n_ao = 0
@@ -155,6 +159,9 @@ contains
 !
       enddo 
 !
+      write(output%unit, *)'n_active_aos', n_active_aos
+      flush(output%unit)
+!
       call mem%alloc_int(active_aos, n_active_aos, 1)
 !
       ao_offset = 0
@@ -221,6 +228,14 @@ contains
 !
       enddo
 !
+      write(output%unit, *) 'some elements of screening vec'
+      do i = 1, 100
+!
+         write(output%unit, *) V(x, 1)
+         flush(output%unit)
+!
+      enddo
+!
       call mem%dealloc(cholesky_vectors_virt, wf%n_ao, n_active_aos)
       call mem%dealloc(cholesky_vectors_occ, wf%n_ao, n_active_aos)
 !
@@ -262,7 +277,7 @@ contains
       read(input%unit,'(a)', iostat=ioerror) line
       line = remove_preceding_blanks(line)
 !
-      do while ((trim(line) .ne. 'end mlhf') .and. (line(1:3) .ne. 'do '))
+      do while ((trim(line) .ne. 'end mlhf') .and. (line(1:2) .ne. 'do'))
 !
          if (trim(line) == 'mlhf') then ! found cholesky section in input
 !
