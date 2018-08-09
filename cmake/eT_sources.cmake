@@ -2,7 +2,7 @@ set(eT_fortran_sources
    src/eT_program.F90
    src/engines/hf_engine_class.F90
    src/engines/density_based_hf_engine_class.F90
-   src/engines/eri_chol_decomp_engine_class.F90
+   src/engines/eri_cd_engine_class.F90
    src/io/disk_manager_class.F90
    src/io/file_class.F90
    src/io/io_utilities.F90

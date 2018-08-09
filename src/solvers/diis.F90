@@ -111,7 +111,7 @@ contains
    end subroutine init_diis
 !
 !
-    module subroutine update_diis(solver, dx, x_dx)
+    subroutine update_diis(solver, dx, x_dx)
 !!
 !!    Update (DIIS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018

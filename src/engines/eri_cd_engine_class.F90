@@ -1,4 +1,4 @@
-module eri_chol_decomp_engine_class
+module eri_cd_engine_class
 !
 !!
 !!    Electronic repulsion ao_integrals engine class module
@@ -21,7 +21,7 @@ module eri_chol_decomp_engine_class
 !
    implicit none
 !
-   type :: eri_chol_decomp_engine
+   type :: eri_cd_engine
 !
       real(dp) :: threshold   = 1.0D-8
       real(dp) :: span        = 1.0D-2
@@ -42,38 +42,38 @@ module eri_chol_decomp_engine_class
 !
    contains
 !
-      procedure :: initialize => initialize_eri_chol_decomp_engine
-      procedure :: solve      => solve_eri_chol_decomp_engine
-      procedure :: finalize   => finalize_eri_chol_decomp_engine
+      procedure :: initialize => initialize_eri_cd_engine
+      procedure :: solve      => solve_eri_cd_engine
+      procedure :: finalize   => finalize_eri_cd_engine
 !
-      procedure :: invert_overlap_cholesky_vecs                => invert_overlap_cholesky_vecs_eri_chol_decomp_engine
-      procedure :: cholesky_vecs_diagonal_test                 => cholesky_vecs_diagonal_test_eri_chol_decomp_engine
-      procedure :: construct_significant_diagonal              => construct_significant_diagonal_eri_chol_decomp_engine
-      procedure :: construct_significant_diagonal_atomic       => construct_significant_diagonal_atomic_eri_chol_decomp_engine
-      procedure :: determine_auxilliary_cholesky_basis         => determine_auxilliary_cholesky_basis_eri_chol_decomp_engine
-      procedure :: construct_overlap_cholesky_vecs             => construct_overlap_cholesky_vecs_eri_chol_decomp_engine
-      procedure :: construct_cholesky_vectors                  => construct_cholesky_vectors_eri_chol_decomp_engine
+      procedure :: invert_overlap_cholesky_vecs                => invert_overlap_cholesky_vecs_eri_cd_engine
+      procedure :: cholesky_vecs_diagonal_test                 => cholesky_vecs_diagonal_test_eri_cd_engine
+      procedure :: construct_significant_diagonal              => construct_significant_diagonal_eri_cd_engine
+      procedure :: construct_significant_diagonal_atomic       => construct_significant_diagonal_atomic_eri_cd_engine
+      procedure :: determine_auxilliary_cholesky_basis         => determine_auxilliary_cholesky_basis_eri_cd_engine
+      procedure :: construct_overlap_cholesky_vecs             => construct_overlap_cholesky_vecs_eri_cd_engine
+      procedure :: construct_cholesky_vectors                  => construct_cholesky_vectors_eri_cd_engine
 !
-      procedure :: read_info  => read_info_eri_chol_decomp_engine
+      procedure :: read_info  => read_info_eri_cd_engine
 !
-   end type eri_chol_decomp_engine
+   end type eri_cd_engine
 !
 !
 contains
 !
 !
-   subroutine initialize_eri_chol_decomp_engine(engine, system)
+   subroutine initialize_eri_cd_engine(engine, system)
 !!
 !!
       implicit none
 !
-      class(eri_chol_decomp_engine) :: engine
+      class(eri_cd_engine) :: engine
       type(molecular_system) :: system
 !
       call engine%read_info()
 !
       engine%n_aop   = system%get_n_aos()*(system%get_n_aos()+1)/2 ! Number of ao pairs packed
-      engine%n_ao    = system%get_n_aos() ! Number of ao pairs packed
+      engine%n_ao    = system%get_n_aos()
       engine%n_s     = system%get_n_shells()
       engine%n_sp    = engine%n_s*(engine%n_s + 1)/2         ! Number of shell pairs packed
 !
@@ -90,17 +90,19 @@ contains
       endif
 !
 
-   end subroutine initialize_eri_chol_decomp_engine
+   end subroutine initialize_eri_cd_engine
 !
 !
-   subroutine solve_eri_chol_decomp_engine(engine, system)
+   subroutine solve_eri_cd_engine(engine, system, screening_vector)
 !!
 !!
       implicit none
 !
-      class(eri_chol_decomp_engine) :: engine
+      class(eri_cd_engine) :: engine
 !
       type(molecular_system) :: system
+!
+      real(dp), dimension(engine%n_ao,1), optional :: screening_vector
 !
       write(output%unit, '(/a51/)') ':: Cholesky decomposition of two-electron ao_integrals'
       flush(output%unit)
@@ -113,12 +115,29 @@ contains
       write(output%unit, '(a21, e12.4/)') 'Span factor:         ', engine%span
       flush(output%unit)
 !
-      call engine%construct_significant_diagonal(system)
+      if (present(screening_vector)) then
 !
-     if (engine%one_center) then
+         call engine%construct_significant_diagonal(system, screening_vector)
 !
-        call engine%construct_significant_diagonal_atomic(system)
-        call engine%determine_auxilliary_cholesky_basis(system, engine%diagonal_info_one_center)
+      else 
+!
+         call engine%construct_significant_diagonal(system)
+!
+      endif
+!
+      if (engine%one_center) then
+!
+         if (present(screening_vector)) then
+!
+            call engine%construct_significant_diagonal_atomic(system, screening_vector)
+!
+         else 
+!
+            call engine%construct_significant_diagonal_atomic(system)
+!
+         endif
+!
+         call engine%determine_auxilliary_cholesky_basis(system, engine%diagonal_info_one_center)
 !
      else
 !
@@ -136,26 +155,26 @@ contains
 !
       endif
 !
-   end subroutine solve_eri_chol_decomp_engine
+   end subroutine solve_eri_cd_engine
 !
 !
-   subroutine finalize_eri_chol_decomp_engine(engine)
+   subroutine finalize_eri_cd_engine(engine)
 !!
 !!
       implicit none
 !
-      class(eri_chol_decomp_engine) :: engine
+      class(eri_cd_engine) :: engine
 !
-   end subroutine finalize_eri_chol_decomp_engine
+   end subroutine finalize_eri_cd_engine
 !
 !
-   subroutine construct_significant_diagonal_eri_chol_decomp_engine(engine, system, screening_vector)
+   subroutine construct_significant_diagonal_eri_cd_engine(engine, system, screening_vector)
 !!
 !!
 !!
       implicit none
 !
-      class(eri_chol_decomp_engine) :: engine
+      class(eri_cd_engine) :: engine
       class(molecular_system) :: system
 !
       real(dp), dimension(engine%n_ao,1), optional :: screening_vector
@@ -284,7 +303,7 @@ contains
                if (A .eq. B) then
 !
                   do x = 1, A_interval%size
-                     do y = 1, B_interval%size
+                     do y = x, B_interval%size
 !
                         xy = A_interval%size*(y - 1) + x
                         xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
@@ -305,8 +324,8 @@ contains
                         xy = A_interval%size*(y - 1) + x
                         D_xy(xy + first_sig_aop - 1, 1) = g_AB_AB(xy,xy)
                         screening_vector_reduced(xy + first_sig_aop - 1, 1) = &
-                                                                  screening_vector_local(x + A_interval%first - 1, 1)*&
-                                                                  screening_vector_local(y + B_interval%first - 1, 1)
+                                                               screening_vector_local(x + A_interval%first - 1, 1)*&
+                                                               screening_vector_local(y + B_interval%first - 1, 1)
 !
                      enddo
                   enddo
@@ -350,10 +369,10 @@ contains
       call mem%dealloc(D_xy, n_sig_aop, 1)
       call mem%dealloc(screening_vector_reduced, n_sig_aop, 1)
 !
-   end subroutine construct_significant_diagonal_eri_chol_decomp_engine
+   end subroutine construct_significant_diagonal_eri_cd_engine
 !
 !
-   subroutine construct_significant_diagonal_atomic_eri_chol_decomp_engine&
+   subroutine construct_significant_diagonal_atomic_eri_cd_engine&
                                     (engine, system, screening_vector)
 !!
 !!    ...
@@ -361,7 +380,7 @@ contains
 !!
       implicit none
 !
-      class(eri_chol_decomp_engine) :: engine
+      class(eri_cd_engine) :: engine
       class(molecular_system) :: system
 
       real(dp), dimension(engine%n_ao,1), optional :: screening_vector
@@ -493,7 +512,7 @@ contains
                if (A .eq. B) then
 !
                   do x = 1, A_interval%size
-                     do y = 1, B_interval%size
+                     do y = x, B_interval%size
 !
                         xy = A_interval%size*(y - 1) + x
                         xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
@@ -559,17 +578,17 @@ contains
       call mem%dealloc(D_xy, n_sig_aop, 1)
       call mem%dealloc(screening_vector_reduced, n_sig_aop, 1)
 !
-   end subroutine construct_significant_diagonal_atomic_eri_chol_decomp_engine
+   end subroutine construct_significant_diagonal_atomic_eri_cd_engine
 !
 !
-   subroutine determine_auxilliary_cholesky_basis_eri_chol_decomp_engine(engine, system, diagonal_info)
+   subroutine determine_auxilliary_cholesky_basis_eri_cd_engine(engine, system, diagonal_info)
 !!
 !!    ....
 !!
 !!
       implicit none
 !
-      class(eri_chol_decomp_engine), intent(inout) :: engine
+      class(eri_cd_engine), intent(inout) :: engine
 !
       class(molecular_system), intent(in) :: system
 !
@@ -849,7 +868,7 @@ contains
 !
             do aop = first_sig_aop, last_sig_aop
 !
-               if ((D_xy(aop, 1) .ge. engine%span*D_max_full ) .and. (n_qual_aop .lt. engine%max_qual)) then
+               if ((D_xy(aop, 1) .ge. engine%span*D_max_full) .and. (n_qual_aop .lt. engine%max_qual)) then
 !
                   n_qual_aop_in_sp  = n_qual_aop_in_sp + 1
                   n_qual_aop        = n_qual_aop + 1
@@ -1496,16 +1515,16 @@ contains
       call mem%dealloc_int(basis_shell_info, n_sp_in_basis, 4)
       call mem%dealloc_int(cholesky_basis_new, engine%n_cholesky, 3)
 !
-   end subroutine determine_auxilliary_cholesky_basis_eri_chol_decomp_engine
+   end subroutine determine_auxilliary_cholesky_basis_eri_cd_engine
 !
 !
-   subroutine construct_overlap_cholesky_vecs_eri_chol_decomp_engine(engine, system)
+   subroutine construct_overlap_cholesky_vecs_eri_cd_engine(engine, system)
 !!
 !!
 !!
       implicit none
 !
-      class(eri_chol_decomp_engine) :: engine
+      class(eri_cd_engine) :: engine
 !
       type(molecular_system) :: system
 !
@@ -1802,16 +1821,16 @@ contains
       write(output%unit, '(t6, a25, f11.2, a9)')'Time to decompose (J|K): ',&
                             e_decomp_time - s_decomp_time, ' seconds.'
 !
-   end subroutine construct_overlap_cholesky_vecs_eri_chol_decomp_engine
+   end subroutine construct_overlap_cholesky_vecs_eri_cd_engine
 !
 !
-   subroutine construct_cholesky_vectors_eri_chol_decomp_engine(engine, system)
+   subroutine construct_cholesky_vectors_eri_cd_engine(engine, system)
 !!
 !!
 !!
       implicit none
 !
-      class(eri_chol_decomp_engine) :: engine
+      class(eri_cd_engine) :: engine
       type(molecular_system) :: system
 !
 !     Local variables
@@ -2160,17 +2179,17 @@ contains
       call mem%dealloc_int(basis_shell_info, n_sp_in_basis, 4)
       deallocate(sig_sp)
 !
-   end subroutine construct_cholesky_vectors_eri_chol_decomp_engine
+   end subroutine construct_cholesky_vectors_eri_cd_engine
 !
 !
-   subroutine invert_overlap_cholesky_vecs_eri_chol_decomp_engine(engine)
+   subroutine invert_overlap_cholesky_vecs_eri_cd_engine(engine)
 !!
 !!    Invert cholesky vectors of auxiliary basis overlap
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, July 2018
 !!
       implicit none
 !
-      class(eri_chol_decomp_engine) :: engine
+      class(eri_cd_engine) :: engine
 !
       type(file) :: cholesky_file, cholesky_inverse_file
 !
@@ -2221,16 +2240,16 @@ contains
                             e_invert_time - s_invert_time, ' seconds.'
 !
 !
-   end subroutine invert_overlap_cholesky_vecs_eri_chol_decomp_engine
+   end subroutine invert_overlap_cholesky_vecs_eri_cd_engine
 !
 !
-   subroutine cholesky_vecs_diagonal_test_eri_chol_decomp_engine(engine)
+   subroutine cholesky_vecs_diagonal_test_eri_cd_engine(engine)
 !!
 !!
 !!
       implicit none
 !
-      class(eri_chol_decomp_engine) :: engine
+      class(eri_cd_engine) :: engine
 !
       type(file) :: cholesky_ao_vectors
 !
@@ -2295,7 +2314,7 @@ contains
       write(output%unit, '(/a71, e12.4)')'Minimal element of difference between approximate and actual diagonal: ', min_diff
       flush(output%unit)
 !
-   end subroutine cholesky_vecs_diagonal_test_eri_chol_decomp_engine
+   end subroutine cholesky_vecs_diagonal_test_eri_cd_engine
 !
 !
    integer(i15) function get_size_sp(A_interval, B_interval)
@@ -2349,7 +2368,7 @@ contains
    end function get_sp_from_shells
 !
 !
- subroutine read_info_eri_chol_decomp_engine(engine)
+ subroutine read_info_eri_cd_engine(engine)
 !!
 !!    Read information
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -2359,13 +2378,14 @@ contains
 !!        cholesky
 !!           threshold: 1.0d-8
 !!           span: 1.0d-2
+!!           qualified: 1000
 !!           one center
 !!           no vectors
 !!        end cholesky
 !!
       implicit none
 !
-      class(eri_chol_decomp_engine) :: engine
+      class(eri_cd_engine) :: engine
 !
       character(len=100) :: line
       character(len=100) :: current_basis
@@ -2376,10 +2396,10 @@ contains
       call disk%open_file(input, 'read')
       rewind(input%unit)
 !
-      read(input%unit,'(a)', iostat=ioerror) line
+      read(input%unit,'(a)') line
       line = remove_preceding_blanks(line)
 !
-      do while ((trim(line) .ne. 'end cholesky') .and.( ioerror .eq. 0))
+      do while ((trim(line) .ne. 'end cholesky') .and. (line(1:2) .ne. 'do'))
 !
          read(input%unit,'(a)') line
          line = remove_preceding_blanks(line)
@@ -2398,6 +2418,10 @@ contains
                elseif (line(1:5) == 'span:') then
 !
                   read(line(6:100), '(d16.5)') engine%span
+!
+               elseif (line(1:10) == 'qualified:') then
+!
+                  read(line(11:100), '(d16.5)') engine%max_qual
 !
                elseif (trim(line) == 'one center') then
 !
@@ -2420,7 +2444,7 @@ contains
 !
       call disk%close_file(input)
 !
-   end subroutine read_info_eri_chol_decomp_engine
+   end subroutine read_info_eri_cd_engine
 !
 !
-end module eri_chol_decomp_engine_class
+end module eri_cd_engine_class
