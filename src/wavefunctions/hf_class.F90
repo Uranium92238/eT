@@ -594,6 +594,8 @@ contains
 !
                do s4 = 1, s4_max
 !
+                  if (sp_eri_schwarz(s1, s2)*(max_D_schwarz)*sp_eri_schwarz(s3, s4) .lt. 1.0d-12) continue
+!
                   s3s4 = n_s*(s4 - 1) + s3
                   deg = degeneracy(s1s2, s3s4) ! Shell degeneracy
 !
