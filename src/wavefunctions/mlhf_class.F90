@@ -12,7 +12,7 @@ module mlhf_class
    use index
    use active_atoms_class
 !
-   use eri_chol_decomp_engine_class
+   use eri_cd_engine_class
 !
    use array_utilities
 !
@@ -106,14 +106,14 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: density_diagonal
 !
-      type(eri_chol_decomp_engine)  :: chol_engine
+      type(eri_cd_engine)  :: chol_engine
 !
       call wf%initialize_ao_density()
 !
 !     Set initial density to superposition of atomic densities (SOAD) guess
 !
       call mem%alloc(density_diagonal, wf%n_ao, 1)
-      call wf%system%SOAD(wf%n_ao, density_diagonal)
+      call wf%system%SAD(wf%n_ao, density_diagonal)
 !
       do ao = 1, wf%n_ao
 !
@@ -191,7 +191,6 @@ contains
       call cholesky_decomposition_limited_diagonal(wf%ao_density, cholesky_vectors_occ, wf%n_ao, &
                                                      n_vectors_occ, 1.0d-9, n_active_aos, active_aos)
 !
-!
       call mem%alloc(cholesky_vectors_virt, wf%n_ao, n_active_aos)
       cholesky_vectors_virt = zero
 !
@@ -263,7 +262,7 @@ contains
       read(input%unit,'(a)', iostat=ioerror) line
       line = remove_preceding_blanks(line)
 !
-      do while ((trim(line) .ne. 'end mlhf') .and. (ioerror .eq. 0))
+      do while ((trim(line) .ne. 'end mlhf') .and. (line(1:3) .ne. 'do '))
 !
          if (trim(line) == 'mlhf') then ! found cholesky section in input
 !

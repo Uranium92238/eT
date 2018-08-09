@@ -65,7 +65,7 @@ contains
       ! call wf%set_density_to_soad()
 !
       call mem%alloc(density_diagonal, wf%n_ao, 1)
-      call wf%system%SOAD(wf%n_ao, density_diagonal)
+      call wf%system%SAD(wf%n_ao, density_diagonal)
 !
       do ao = 1, wf%n_ao
 !

@@ -61,6 +61,8 @@ module hf_class
 !
       procedure :: set_ao_density   => set_ao_density_hf
 !
+      procedure :: set_SAD => set_SAD_hf
+!
 !     Initialize and destruct routines for wavefunction variables
 !
       procedure :: initialize_ao_density       => initialize_ao_density_hf
@@ -282,6 +284,37 @@ contains
       call mem%dealloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
 !
    end subroutine destruct_mo_coefficients_hf
+!
+!
+   subroutine set_SAD_hf(wf)
+!!
+!!    Set SAD
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      integer(i15) :: ao
+!
+      real(dp), dimension(:,:), allocatable :: density_diagonal
+!
+      call wf%initialize_ao_density()
+!
+!     Set initial density to superposition of atomic densities (SAD) guess
+!
+      call mem%alloc(density_diagonal, wf%n_ao, 1)
+      call wf%system%SAD(wf%n_ao, density_diagonal)
+!
+      do ao = 1, wf%n_ao
+!
+         wf%ao_density(ao, ao) = density_diagonal(ao, 1)
+!
+      enddo
+!
+      call mem%dealloc(density_diagonal, wf%n_ao, 1)
+!
+   end subroutine set_SAD_hf
 !
 !
    subroutine construct_ao_density_hf(wf)

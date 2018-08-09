@@ -44,7 +44,7 @@ module molecular_system_class
       procedure :: get_shell_limits => get_shell_limits_molecular_system
       procedure :: basis2shell => basis2shell_molecular_system
 !
-      procedure :: SOAD => SOAD_molecular_system
+      procedure :: SAD => SAD_molecular_system
 !
       procedure :: shell_to_atom => shell_to_atom_molecular_system
 !
@@ -161,7 +161,7 @@ contains
 !
       if (molecule%charge .ne. 0) then
 !
-         write(output%unit) 'Error: SOAD not yet implemented for charged species!'
+         write(output%unit) 'Error: SAD not yet implemented for charged species!'
          stop
 !
       endif
@@ -637,7 +637,7 @@ contains
    end function basis2shell_molecular_system
 !
 !
-   subroutine SOAD_molecular_system(molecule, n_ao, density_diagonal)
+   subroutine SAD_molecular_system(molecule, n_ao, density_diagonal)
 !!
 !!    Superposition of atomic desities
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -685,11 +685,11 @@ contains
 !
       if (abs(electrons - molecule%get_n_electrons()) .gt. 1.0d-7) then
 !
-         write(output%unit, '(a)') 'Error: Mismatch in electron number SOAD'
+         write(output%unit, '(a)') 'Error: Mismatch in electron number SAD'
 !
       endif
 !
-   end subroutine SOAD_molecular_system
+   end subroutine SAD_molecular_system
 !
 !
    integer function shell_to_atom_molecular_system(molecule, shell)
