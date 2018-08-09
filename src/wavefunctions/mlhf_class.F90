@@ -231,7 +231,7 @@ contains
       write(output%unit, *) 'some elements of screening vec'
       do i = 1, 100
 !
-         write(output%unit, *) V(x, 1)
+         write(output%unit, *) V(i, 1)
          flush(output%unit)
 !
       enddo
