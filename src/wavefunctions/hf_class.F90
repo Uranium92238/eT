@@ -59,7 +59,8 @@ module hf_class
       procedure :: get_ao_density => get_ao_density_hf
       procedure :: get_fock_ov    => get_fock_ov_hf
 !
-      procedure :: set_ao_density   => set_ao_density_hf
+      procedure :: set_ao_density        => set_ao_density_hf
+      procedure :: set_ao_density_to_sad => set_ao_density_to_sad_hf
 !
 !     Initialize and destruct routines for wavefunction variables
 !
@@ -153,6 +154,7 @@ contains
       class(hf) :: wf
 !
       call mem%alloc(wf%ao_density, wf%n_ao, wf%n_ao)
+      wf%ao_density = zero
 !
    end subroutine initialize_ao_density_hf
 !
@@ -300,10 +302,6 @@ contains
       implicit none
 !
       class(hf) :: wf
-!
-      integer(i15) :: i, x, y, xy
-!
-      wf%ao_density = zero
 !
       call dgemm('N', 'T',                   &
                   wf%n_ao,                   &
@@ -814,6 +812,40 @@ contains
       call squareup(D, wf%ao_density, wf%n_ao)
 !
    end subroutine set_ao_density_hf
+!
+!
+   subroutine set_ao_density_to_sad_hf(wf)
+!!
+!!    Set AO density to superposition of atomic densities (SAD) guess
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Careful! The AO density is allocated and zeroed by the initialize
+!!    AO density routine and to avoid zeroing twice, this routine assumes
+!!    that the non-diagonal terms of the density are already zero.
+!!
+!!    If called at a time when the density differs from zero, remember
+!!    to zero it before calling this routine.
+!!
+      implicit none 
+!
+      class(hf) :: wf 
+!
+      real(dp), dimension(:,:), allocatable :: density_diagonal
+!
+      integer(i15) :: ao
+!
+      call mem%alloc(density_diagonal, wf%n_ao, 1)
+      call wf%system%SAD(wf%n_ao, density_diagonal)
+!
+      do ao = 1, wf%n_ao
+!
+         wf%ao_density(ao, ao) = density_diagonal(ao, 1)
+!
+      enddo
+!
+      call mem%dealloc(density_diagonal, wf%n_ao, 1)
+!
+   end subroutine set_ao_density_to_sad_hf
 !
 !
    subroutine solve_roothan_hall_hf(wf)
