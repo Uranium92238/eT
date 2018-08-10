@@ -791,11 +791,13 @@ contains
       real(dp), dimension(dim, dim), intent(in)  :: matrix
       real(dp), dimension(dim, dim), intent(out) :: cholesky_vectors
 !
-      integer(i15), dimension(dim) :: used_diag
+      integer(kind=4), dimension(dim) :: used_diag
+!
+      integer(kind=4) :: n_vectors_4
 !
       real(dp), dimension(:), allocatable :: work  ! work array for LAPACK
 !
-      integer(i15) :: info
+      integer(kind=4) :: info
       integer(i15) :: I, J
 !
       cholesky_vectors = matrix
@@ -810,12 +812,14 @@ contains
             cholesky_vectors, &
             dim,              &
             used_diag,        &
-            n_vectors,        &
+            n_vectors_4,      &
             threshold,        &
             work,             &
             info)
 !
       deallocate(work)
+!
+      n_vectors = int(n_vectors_4, kind=i15)
 !
       do I = 1, dim ! Zero upper unreferenced triangle
          do J = 1, I - 1
@@ -825,8 +829,8 @@ contains
          enddo
       enddo
 !
-      if (info < 0) then
-         write(*,*)info
+      if (info .ne. 0) then
+         write(*,*) info
          stop 'Cholesky decomposition failed! Something wrong in call to dpstrf'
       end if
 !
