@@ -411,6 +411,8 @@ contains
       type(interval) :: C_interval
       type(interval) :: D_interval
 !
+      logical :: skip
+!
       real(dp) :: deg_12, deg_34, deg_12_34, deg, ddot, norm
       real(dp) :: temp, temp1, temp2, temp3, temp4, temp5, temp6
       real(dp) :: max, max_D_schwarz, max_eri_schwarz
@@ -537,7 +539,7 @@ contains
 !$omp parallel do &
 !$omp private(s1, s2, s3, s4, deg, s4_max, temp, s1s2, s3s4, &
 !$omp A_interval, B_interval, C_interval, D_interval, w, x, y, z, wx, yz, temp1, temp2, temp3, &
-!$omp temp4, temp5, temp6, F1, F2, F3, F4, F5, F6, w_red, x_red, y_red, z_red, g) schedule(dynamic)
+!$omp temp4, temp5, temp6, F1, F2, F3, F4, F5, F6, w_red, x_red, y_red, z_red, g, skip) schedule(dynamic)
       do s1 = 1, n_s
          do s2 = 1, s1
 !
@@ -561,6 +563,17 @@ contains
 !
                   if (sp_eri_schwarz(s1, s2)*(max_D_schwarz)*sp_eri_schwarz(s3, s4) .lt. 1.0d-12) continue
 !
+                  temp  = sp_eri_schwarz(s1, s2)*sp_eri_schwarz(s3, s4)
+!
+                  skip = temp*sp_density_schwarz(s3,s4) .lt. 1.0D-12 .and. & ! F1
+                         temp*sp_density_schwarz(s1,s2) .lt. 1.0D-12 .and. & ! F2
+                         temp*sp_density_schwarz(s3,s2) .lt. 1.0D-12 .and. & ! F3
+                         temp*sp_density_schwarz(s3,s1) .lt. 1.0D-12 .and. & ! F4
+                         temp*sp_density_schwarz(s4,s2) .lt. 1.0D-12 .and. & ! F5
+                         temp*sp_density_schwarz(s1,s4) .lt. 1.0D-12 ! F6
+!
+                  if (skip) continue
+!
                   s3s4 = n_s*(s4 - 1) + s3
                   deg = degeneracy(s1s2, s3s4) ! Shell degeneracy
 !
@@ -571,14 +584,15 @@ contains
 !
                   call mem%alloc(g, (A_interval%size)*(B_interval%size), &
                                     (C_interval%size)*(D_interval%size))
+!
                   call wf%system%ao_integrals%get_ao_g_wxyz(g, s1, s2, s3, s4)
 !
                   call mem%alloc(F1, A_interval%size, B_interval%size) ! F_wx
-                  call mem%alloc(F6, C_interval%size, B_interval%size) ! F_yx
                   call mem%alloc(F2, C_interval%size, D_interval%size) ! F_yz
                   call mem%alloc(F3, A_interval%size, D_interval%size) ! F_wz
                   call mem%alloc(F4, B_interval%size, D_interval%size) ! F_xz
                   call mem%alloc(F5, A_interval%size, C_interval%size) ! F_wy
+                  call mem%alloc(F6, C_interval%size, B_interval%size) ! F_yx
 !
                   F1 = zero
                   F2 = zero
@@ -1087,17 +1101,17 @@ contains
 !
       call mem%alloc(tmp, wf%n_ao, wf%n_ao)
 !
-      call dgemm('N','N', &
-                  wf%n_ao, &
-                  wf%n_ao, &
-                  wf%n_ao, &
-                  one, &
+      call dgemm('N','N',      &
+                  wf%n_ao,     &
+                  wf%n_ao,     &
+                  wf%n_ao,     &
+                  one,         &
                   perm_matrix, &
-                  wf%n_ao, &
-                  L, &
-                  wf%n_ao, &
-                  zero, &
-                  tmp, &
+                  wf%n_ao,     &
+                  L,           &
+                  wf%n_ao,     &
+                  zero,        &
+                  tmp,         &
                   wf%n_ao)
 !
       L = tmp
