@@ -131,7 +131,7 @@ contains
 !
 !
       call wf%initialize_ao_fock()
-      call wf%construct_ao_fock() ! From current D^AO
+    !  call wf%construct_ao_fock() ! From current D^AO
 !
 !     Construct AO overlap matrix, Cholesky decompose it,
 !     followed by preconditioning (making it the identity matrix
