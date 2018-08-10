@@ -359,8 +359,8 @@ contains
             call mem%dealloc(g, (A_interval%size)*(B_interval%size), &
                                 (A_interval%size)*(B_interval%size))
 !
-            sp_eri_schwarz(s1, s2) = max
-            sp_eri_schwarz(s2, s1) = max
+            sp_eri_schwarz(s1, s2) = sqrt(max)
+            sp_eri_schwarz(s2, s1) = sqrt(max)
 !
          enddo
       enddo
