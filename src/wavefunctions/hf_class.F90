@@ -402,21 +402,9 @@ contains
    end subroutine construct_sp_eri_schwarz_hf
 !
 !
-   !subroutine determine_degeneracy_hf(wf)
-   !end subroutine determine_degeneracy_hf
-!
-!
-   subroutine construct_ao_fock_hf(wf, sp_eri_schwarz, n_s)
+   subroutine determine_degeneracy_hf(wf, degeneracy, n_s)
 !!
-!!    Construct AO Fock matrix
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Calculates
-!!
-!!       F_αβ = h_αβ + sum_γδ g_αβγδ D_γδ - 1/2 * sum_γδ g_αδγβ D_γδ,
-!!
-!!    where D is the AO density. This routine is integral direct, and
-!!    it calculates the Hartree-Fock energy by default.
 !!
       implicit none
 !
@@ -424,39 +412,9 @@ contains
 !
       integer(i15) :: n_s
 !
-      real(dp), dimension(n_s, n_s) :: sp_eri_schwarz
+      real(dp), dimension(n_s**2, n_s**2), allocatable :: degeneracy
 !
-      real(dp), dimension(:,:), allocatable :: ao_fock_packed
-      real(dp), dimension(:,:), allocatable :: X_wz, h_wx, h_wx_square
-      integer(i15) :: w, x, y, z, wx, yz, w_red, x_red, y_red, z_red
-!
-      real(dp), dimension(:,:), allocatable :: F1
-      real(dp), dimension(:,:), allocatable :: F2
-      real(dp), dimension(:,:), allocatable :: F3
-      real(dp), dimension(:,:), allocatable :: F4
-      real(dp), dimension(:,:), allocatable :: F5
-      real(dp), dimension(:,:), allocatable :: F6
-!
-      integer(i15) :: s1, s2, s3, s4, s4_max, s1s2, s3s4
-!
-      type(interval) :: A_interval
-      type(interval) :: B_interval
-      type(interval) :: C_interval
-      type(interval) :: D_interval
-!
-      real(dp) :: deg_12, deg_34, deg_12_34, deg, ddot, norm
-      real(dp) :: temp, temp1, temp2, temp3, temp4, temp5, temp6
-      real(dp) :: max, max_D_schwarz, max_eri_schwarz
-!
-      real(dp), dimension(:,:), allocatable :: degeneracy
-      real(dp), dimension(:,:), allocatable :: g, D, sp_density_schwarz
-!
-      real(dp) :: start_timer, end_timer, omp_get_wtime
-!
-      start_timer = omp_get_wtime()
-!
-      call mem%alloc(degeneracy, n_s**2, n_s**2)
-      degeneracy = zero
+      integer(i15) :: s1, s2, s3, s4, s1s2, s3s4, deg_12, deg_34, deg_12_34
 !
 !$omp parallel do private(s1, s2, s3, s4, s1s2, s3s4, deg_12, deg_34, deg_12_34)
       do s1 = 1, n_s
@@ -526,8 +484,55 @@ contains
       enddo
 !$omp end parallel do
 !
-      end_timer = omp_get_wtime()
-   !   write(output%unit, '(t3,a44,f9.1)') 'Construct integral degeneracy array (sec.): ', end_timer - start_timer
+   end subroutine determine_degeneracy_hf
+!
+!
+   subroutine construct_ao_fock_hf(wf, sp_eri_schwarz, n_s)
+!!
+!!    Construct AO Fock matrix
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Calculates
+!!
+!!       F_αβ = h_αβ + sum_γδ g_αβγδ D_γδ - 1/2 * sum_γδ g_αδγβ D_γδ,
+!!
+!!    where D is the AO density. This routine is integral direct, and
+!!    it calculates the Hartree-Fock energy by default.
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      integer(i15) :: n_s
+!
+      real(dp), dimension(n_s, n_s) :: sp_eri_schwarz
+!
+      real(dp), dimension(:,:), allocatable :: ao_fock_packed
+      real(dp), dimension(:,:), allocatable :: X_wz, h_wx, h_wx_square
+      integer(i15) :: w, x, y, z, wx, yz, w_red, x_red, y_red, z_red
+!
+      real(dp), dimension(:,:), allocatable :: F1
+      real(dp), dimension(:,:), allocatable :: F2
+      real(dp), dimension(:,:), allocatable :: F3
+      real(dp), dimension(:,:), allocatable :: F4
+      real(dp), dimension(:,:), allocatable :: F5
+      real(dp), dimension(:,:), allocatable :: F6
+!
+      integer(i15) :: s1, s2, s3, s4, s4_max, s1s2, s3s4
+!
+      type(interval) :: A_interval
+      type(interval) :: B_interval
+      type(interval) :: C_interval
+      type(interval) :: D_interval
+!
+      real(dp) :: deg_12, deg_34, deg_12_34, deg, ddot, norm
+      real(dp) :: temp, temp1, temp2, temp3, temp4, temp5, temp6
+      real(dp) :: max, max_D_schwarz, max_eri_schwarz
+!
+      real(dp), dimension(:,:), allocatable :: degeneracy
+      real(dp), dimension(:,:), allocatable :: g, D, sp_density_schwarz
+!
+      real(dp) :: start_timer, end_timer, omp_get_wtime
 !
       start_timer = omp_get_wtime()
 !
