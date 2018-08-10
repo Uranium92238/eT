@@ -162,6 +162,11 @@ contains
 !
       real(dp) :: ddot
 !
+      integer(i15) :: n_s 
+!
+      real(dp), dimension(:,:), allocatable :: eri_deg
+      real(dp), dimension(:,:), allocatable :: sp_eri_schwarz
+!
 !     Print engine banner
 !
       call engine%print_banner()
@@ -170,10 +175,21 @@ contains
 !
       call engine%initialize(wf)
 !
+!     Construct screening vectors, as well as a degeneracy vector, 
+!     needed to construct AO Fock efficiently
+!
+      n_s = wf%system%get_n_shells()
+!
+      call mem%alloc(sp_eri_schwarz, n_s, n_s)
+      call wf%construct_sp_eri_schwarz(sp_eri_schwarz, n_s)
+!  
+      call mem%alloc(eri_deg, n_s**2, n_s**2)
+      call wf%determine_degeneracy(eri_deg, n_s)
+!
 !     Construct initial AO Fock from the SOAD density
 !
       call wf%initialize_ao_fock()
-      call wf%construct_ao_fock() 
+      call wf%construct_ao_fock(sp_eri_schwarz, eri_deg, n_s) 
 !
 !     Construct AO overlap matrix, Cholesky decompose it,
 !     then precondition (making it the identity matrix for this preconditioner, V)
@@ -208,7 +224,7 @@ contains
 !     and then use the density to construct the AO Fock matrix
 !
       call wf%construct_ao_density()
-      call wf%construct_ao_fock()   
+      call wf%construct_ao_fock(sp_eri_schwarz, eri_deg, n_s)   
 !
       call wf%destruct_mo_coefficients()
       call wf%destruct_orbital_energies()
@@ -417,7 +433,7 @@ contains
 !           for next conjugate gradient iteration
 !
             prev_energy = wf%hf_energy
-            call wf%construct_ao_fock()
+            call wf%construct_ao_fock(sp_eri_schwarz, eri_deg, n_s)
 !
             prev_g = cur_g
             prev_s = cur_s
@@ -450,6 +466,9 @@ contains
 !
       call mem%dealloc(tmp_pck, packed_size(wf%n_ao-1), 1)
       call mem%dealloc(tmp, wf%n_ao, wf%n_ao)
+!
+      call mem%dealloc(sp_eri_schwarz, n_s, n_s)
+      call mem%dealloc(eri_deg, n_s**2, n_s**2)
 !
 !     Initialize engine (make final deallocations, and other stuff)
 !

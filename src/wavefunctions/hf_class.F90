@@ -84,6 +84,7 @@ module hf_class
       procedure :: construct_stationary_roothan_hall_condition => construct_stationary_roothan_hall_condition_hf
 !
       procedure :: construct_sp_eri_schwarz =>  construct_sp_eri_schwarz_hf
+      procedure :: determine_degeneracy     => determine_degeneracy_hf
 !
    end type hf
 !
@@ -549,7 +550,7 @@ contains
       do s1 = 1, n_s
          do s2 = 1, s1
 !
-            if (sp_eri_schwarz(s1, s2)*(max_D_schwarz)*(max_eri_schwarz) .lt. 1.0d-12) continue
+            if (sp_eri_schwarz(s1, s2)*(max_D_schwarz)*(max_eri_schwarz) .lt. 1.0d-10) continue
 !
             s1s2 = n_s*(s2 - 1) + s1
 !
@@ -567,16 +568,16 @@ contains
 !
                do s4 = 1, s4_max
 !
-                  if (sp_eri_schwarz(s1, s2)*(max_D_schwarz)*sp_eri_schwarz(s3, s4) .lt. 1.0d-12) continue
+                  if (sp_eri_schwarz(s1, s2)*(max_D_schwarz)*sp_eri_schwarz(s3, s4) .lt. 1.0d-10) continue
 !
                   temp  = sp_eri_schwarz(s1, s2)*sp_eri_schwarz(s3, s4)
 !
-                  skip = temp*sp_density_schwarz(s3,s4) .lt. 1.0D-12 .and. & ! F1
-                         temp*sp_density_schwarz(s1,s2) .lt. 1.0D-12 .and. & ! F2
-                         temp*sp_density_schwarz(s3,s2) .lt. 1.0D-12 .and. & ! F3
-                         temp*sp_density_schwarz(s3,s1) .lt. 1.0D-12 .and. & ! F4
-                         temp*sp_density_schwarz(s4,s2) .lt. 1.0D-12 .and. & ! F5
-                         temp*sp_density_schwarz(s1,s4) .lt. 1.0D-12 ! F6
+                  skip = temp*sp_density_schwarz(s3,s4) .lt. 1.0D-10 .and. & ! F1
+                         temp*sp_density_schwarz(s1,s2) .lt. 1.0D-10 .and. & ! F2
+                         temp*sp_density_schwarz(s3,s2) .lt. 1.0D-8  .and. & ! F3
+                         temp*sp_density_schwarz(s3,s1) .lt. 1.0D-8  .and. & ! F4
+                         temp*sp_density_schwarz(s4,s2) .lt. 1.0D-8  .and. & ! F5
+                         temp*sp_density_schwarz(s1,s4) .lt. 1.0D-8 ! F6
 !
                   if (skip) continue
 !

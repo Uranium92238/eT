@@ -132,7 +132,7 @@ contains
       call wf%initialize_orbital_energies()
       call wf%initialize_ao_fock()
 !
-      call wf%construct_ao_fock() ! From current D^AO
+    !  call wf%construct_ao_fock() ! From current D^AO (not functioning presently)
 !
       call wf%initialize_mo_coefficients()
       call wf%initialize_ao_overlap()
@@ -142,7 +142,7 @@ contains
 !
       call wf%construct_ao_density() ! Construct AO density from C
       call wf%get_ao_density(D)
-      call wf%construct_ao_fock()    ! Update the AO Fock
+   !   call wf%construct_ao_fock()    ! Update the AO Fock
 !
 !     Iterative solution loop
 !
@@ -182,7 +182,7 @@ contains
             call wf%set_ao_density(D)
 !
             t0 = omp_get_wtime()
-            call wf%construct_ao_fock()
+         !   call wf%construct_ao_fock()
             t1 = omp_get_wtime()
             write(output%unit, '(t3, a41, f9.2)') 'Construct AO Fock and get energy (sec.): ', t1-t0
 !
@@ -198,7 +198,7 @@ contains
             t1 = omp_get_wtime()
             write(output%unit, '(t3, a41, f9.2)') 'Construct AO density (sec.):             ', t1-t0
 !
-            call wf%construct_ao_fock()
+       !     call wf%construct_ao_fock()
 !
             call wf%get_ao_density(D)
 !
