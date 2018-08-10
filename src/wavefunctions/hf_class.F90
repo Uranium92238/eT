@@ -383,7 +383,8 @@ contains
 !
       integer(i15) :: s1, s2, s3, s4, s1s2, s3s4, deg_12, deg_34, deg_12_34, s4_max
 !
-!$omp parallel do private(s1, s2, s3, s4, s1s2, s3s4, deg_12, deg_34, deg_12_34)
+!$omp parallel do private(s1, s2, s3, s4, s1s2, s3s4, deg_12, deg_34, deg_12_34)&
+!$omp schedule(dynamic)
       do s1 = 1, n_s
          do s2 = 1, s1
 !
