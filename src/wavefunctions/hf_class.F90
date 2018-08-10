@@ -390,12 +390,8 @@ contains
             call mem%dealloc(g, (A_interval%size)*(B_interval%size), &
                                 (A_interval%size)*(B_interval%size))
 !
-            if (max .lt. 1.0D-12) then
-!
-               sp_eri_schwarz(s1, s2) = max
-               sp_eri_schwarz(s2, s1) = max
-!
-            endif
+            sp_eri_schwarz(s1, s2) = max
+            sp_eri_schwarz(s2, s1) = max
 !
          enddo
       enddo
@@ -546,12 +542,8 @@ contains
 !
             call mem%dealloc(D, (A_interval%size), (B_interval%size))
 !
-            if (max .lt. 1.0D-12) then
-!
-               sp_density_schwarz(s1, s2) = max
-               sp_density_schwarz(s2, s1) = max
-!
-            endif
+            sp_density_schwarz(s1, s2) = max
+            sp_density_schwarz(s2, s1) = max
 !
          enddo
       enddo
@@ -559,8 +551,8 @@ contains
 !
 !     Calculate max' prescreening
 !
-      max_D_schwarz = get_abs_max(sp_density_schwarz, n_s**2)
-      max_eri_schwarz = get_abs_max(sp_eri_schwarz, n_s**2)
+      max_D_schwarz     = get_abs_max(sp_density_schwarz, n_s**2)
+      max_eri_schwarz   = get_abs_max(sp_eri_schwarz, n_s**2)
 !
       end_timer = omp_get_wtime()
    !   write(output%unit, '(t3,a32,f9.1)') 'Schwarz screening array (sec.): ', end_timer - start_timer
@@ -1071,7 +1063,7 @@ contains
 !
       class(hf) :: wf
 !
-      integer(i15), dimension(:, :), allocatable :: used_diag
+      integer(i15), dimension(:), allocatable :: used_diag
 !
       real(dp), dimension(wf%n_ao, wf%n_ao) :: L
 !
@@ -1082,12 +1074,12 @@ contains
 !
       integer(i15) :: rank, i, j
 !
-      allocate(used_diag(wf%n_ao, 1))
+      allocate(used_diag(wf%n_ao))
 !
       L = zero
 !
-      call full_cholesky_decomposition_system(wf%ao_overlap, L, wf%n_ao, rank,&
-                                                      1.0D-320, used_diag)
+      call full_cholesky_decomposition_system(wf%ao_overlap, L, wf%n_ao, rank, &
+                                                      1.0D-32, used_diag)
 !
       if (rank .lt. wf%n_ao) write(output%unit, *) 'Warning: rank lower than full dim for S = L L^T'
 !
@@ -1099,7 +1091,7 @@ contains
 !
       do j = 1, wf%n_ao
 !
-         perm_matrix(used_diag(j,1), j) = one
+         perm_matrix(used_diag(j), j) = one
 !
       enddo
 !
