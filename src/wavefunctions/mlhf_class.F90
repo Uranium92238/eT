@@ -352,7 +352,7 @@ contains
 !
       integer(i15) :: rank, i, x, y
 !
-      integer(i15), dimension(:), allocatable :: piv
+      integer(kind=4), dimension(:), allocatable :: piv
 !
       real(dp), dimension(:,:), allocatable :: L, L_inv, P,  L_inv_P_trans
 !

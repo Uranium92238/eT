@@ -8,12 +8,13 @@ module dpstrf_eT
 !
 !   .. Scalar Arguments ..
       DOUBLE PRECISION   TOL
-      INTEGER            INFO, LDA, N, RANK
+      INTEGER(KIND=4)    INFO, RANK
+      INTEGER            LDA, N
       CHARACTER          UPLO
 !   ..
 !   .. Array Arguments ..
       DOUBLE PRECISION   A( lda, * ), WORK( 2*n )
-      INTEGER            PIV( n )
+      INTEGER(KIND=4)    PIV( n )
 !   ..
 !
 !=====================================================================

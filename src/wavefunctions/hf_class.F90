@@ -61,8 +61,6 @@ module hf_class
 !
       procedure :: set_ao_density   => set_ao_density_hf
 !
-      procedure :: set_SAD => set_SAD_hf
-!
 !     Initialize and destruct routines for wavefunction variables
 !
       procedure :: initialize_ao_density       => initialize_ao_density_hf
@@ -286,37 +284,6 @@ contains
       call mem%dealloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
 !
    end subroutine destruct_mo_coefficients_hf
-!
-!
-   subroutine set_SAD_hf(wf)
-!!
-!!    Set SAD
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      integer(i15) :: ao
-!
-      real(dp), dimension(:,:), allocatable :: density_diagonal
-!
-      call wf%initialize_ao_density()
-!
-!     Set initial density to superposition of atomic densities (SAD) guess
-!
-      call mem%alloc(density_diagonal, wf%n_ao, 1)
-      call wf%system%SAD(wf%n_ao, density_diagonal)
-!
-      do ao = 1, wf%n_ao
-!
-         wf%ao_density(ao, ao) = density_diagonal(ao, 1)
-!
-      enddo
-!
-      call mem%dealloc(density_diagonal, wf%n_ao, 1)
-!
-   end subroutine set_SAD_hf
 !
 !
    subroutine construct_ao_density_hf(wf)
@@ -1003,14 +970,15 @@ contains
 !
       class(hf) :: wf
 !
-      integer(i15), dimension(:, :), allocatable :: used_diag
+      integer(kind=4), dimension(:, :), allocatable :: used_diag
 !
       real(dp), dimension(:,:), allocatable :: perm_matrix
 !
       real(dp), dimension(:,:), allocatable :: csc
       real(dp), dimension(:,:), allocatable :: tmp
 !
-      integer(i15) :: rank, i, j
+      integer(i15) :: rank
+      integer(i15) :: i, j
 !
       allocate(used_diag(wf%n_ao, 1))
 !
@@ -1068,11 +1036,17 @@ contains
 !!
 !!    and sets the MO coefficients accordingly.
 !!
+!!    There is something seriously wrong with the way we handle 
+!!    integers. For H2O/cc-pVDZ, used_diag becomes nonsense (large
+!!    integers instead of pivots, thus giving a seg. fault)!
+!!
+!!    First case where eT version of BLAS routine does not work...
+!!
       implicit none
 !
       class(hf) :: wf
 !
-      integer(i15), dimension(:), allocatable :: used_diag
+      integer(kind=4), dimension(:, :), allocatable :: used_diag
 !
       real(dp), dimension(wf%n_ao, wf%n_ao) :: L
 !
@@ -1081,9 +1055,11 @@ contains
       real(dp), dimension(:,:), allocatable :: csc
       real(dp), dimension(:,:), allocatable :: tmp
 !
-      integer(i15) :: rank, i, j
+      integer(i15) :: rank
+      integer(i15) :: i, j
 !
-      allocate(used_diag(wf%n_ao))
+      allocate(used_diag(wf%n_ao, 1))
+      used_diag = 0
 !
       L = zero
 !
@@ -1091,6 +1067,10 @@ contains
                                                       1.0D-32, used_diag)
 !
       if (rank .lt. wf%n_ao) write(output%unit, *) 'Warning: rank lower than full dim for S = L L^T'
+!
+     ! write(output%unit, *) 'rank:', rank
+     ! write(output%unit, *) 'used_diag:', used_diag
+     ! flush(output%unit)
 !
 !     Make permutation matrix P
 !
@@ -1100,7 +1080,7 @@ contains
 !
       do j = 1, wf%n_ao
 !
-         perm_matrix(used_diag(j), j) = one
+         perm_matrix(used_diag(j, 1), j) = one
 !
       enddo
 !

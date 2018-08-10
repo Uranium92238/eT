@@ -18,7 +18,7 @@ module density_based_hf_engine_class
    type :: density_based_hf_engine
 !
       integer(i15) :: max_iterations       = 150
-      integer(i15) :: max_micro_iterations = 150
+      integer(i15) :: max_micro_iterations = 500
 !
       real(dp) :: purification_threshold   = 1.0D-12
       real(dp) :: energy_threshold         = 1.0D-6
@@ -29,7 +29,9 @@ module density_based_hf_engine_class
 !
       real(dp) :: trust_radius                     = 0.1D0 
       real(dp) :: relative_trust_radius_threshold  = 0.1D0
-      real(dp) :: relative_shifted_micro_threshold = 1.0D-3 ! Level shifted Newton equations threshold
+      real(dp) :: relative_shifted_micro_threshold = 1.0D-2 ! Level shifted Newton equations threshold
+!
+      integer(i15) :: diis_dimension = 15
 !
       logical :: restart
 !
@@ -168,21 +170,18 @@ contains
 !
       call engine%initialize(wf)
 !
-!     :: Preparations for conjugate gradient loop
-!
 !     Construct initial AO Fock from the SOAD density
 !
       call wf%initialize_ao_fock()
-      call wf%construct_ao_fock() ! From current D^AO
+      call wf%construct_ao_fock() 
 !
 !     Construct AO overlap matrix, Cholesky decompose it,
-!     followed by preconditioning (making it the identity matrix
-!     for this particular preconditioner - V)
+!     then precondition (making it the identity matrix for this preconditioner, V)
 !
       call wf%initialize_ao_overlap()
       call wf%construct_ao_overlap()
 !
-      call mem%alloc(VT, wf%n_ao, wf%n_ao) ! Actual transformator
+      call mem%alloc(VT, wf%n_ao, wf%n_ao)
       call mem%alloc(inv_VT, wf%n_ao, wf%n_ao)
 !
       VT     = zero
@@ -198,25 +197,26 @@ contains
       S = wf%ao_overlap
       call sandwich(S, inv_VT, inv_VT, wf%n_ao) ! S <- (V-T)^T S V-T = I
 !
-!     Solve Roothan Hall once - using the SOAD guess - to get a decent AO density
-!     on  which to start the preconditioned conjugate gradient (PCG) algorithm
+!     Solve Roothan Hall once - using the SOAD guess - to get a decent N-representable 
+!     AO density on which to start doing conjugate gradient
 !
       call wf%initialize_orbital_energies()
       call wf%initialize_mo_coefficients()
-      call wf%solve_roothan_hall() ! F^AO C = S C e to get new MOs C
+      call wf%solve_roothan_hall() 
 !
-!     Update the AO density and Fock matrices
+!     From the obtained MO coefficients, update the AO density
+!     and then use the density to construct the AO Fock matrix
 !
-      call wf%construct_ao_density() ! Construct AO density from C
-      call wf%construct_ao_fock()    ! Update the AO Fock matrix
+      call wf%construct_ao_density()
+      call wf%construct_ao_fock()   
 !
       call wf%destruct_mo_coefficients()
       call wf%destruct_orbital_energies()
 !
-!     Prepare for PCG loop by allocating matrices and zeroing them
+!     Allocations and zeroing of matrices used in loop
 !
-      call mem%alloc(Po, wf%n_ao, wf%n_ao)            ! Projection matrices on orbital (Po) 
-      call mem%alloc(Pv, wf%n_ao, wf%n_ao)            ! and virtual (Pv) spaces
+      call mem%alloc(Po, wf%n_ao, wf%n_ao)             ! Projection matrices on orbital (Po) 
+      call mem%alloc(Pv, wf%n_ao, wf%n_ao)             ! and virtual (Pv) spaces
 !
       Po = zero
       Pv = zero
@@ -254,57 +254,60 @@ contains
       write(output%unit, '(t3,a)') '---------------------------------------------------'
 !
       iteration = 1
-      converged = .false.
+!
+      converged          = .false.
+      converged_energy   = .false.
+      converged_residual = .false.
 !
       prev_energy = zero 
 !
       do while (.not. converged .and. iteration .le. engine%max_iterations)
 !
 !        Construct the projection matrices Po and Pv
+!        from the current AO density
 !
          call wf%construct_projection_matrices(Po, Pv)
 !
-!        Construct the Roothan-Hall Hessian H and gradient G
+!        Use the projections to construct the gradient G
 !
-         call wf%construct_roothan_hall_hessian(H, Po, Pv)
          call wf%construct_roothan_hall_gradient(G, Po, Pv)
-!
-!        Precondition with V, i.e. replace matrix Y by V-1 Y V-T
-!        for H and G, where S is already preconditioned before do loop
-!
-         call sandwich(G, inv_VT, inv_VT, wf%n_ao)
-         call sandwich(H, inv_VT, inv_VT, wf%n_ao)
 !
 !        Pack-in gradient and determine its maximum (absolute) element
 !
          call packin_anti(cur_g, G, wf%n_ao)
-!
          max_grad = get_abs_max(cur_g, packed_size(wf%n_ao - 1))
 !
 !        Set current energy
 !
          energy = wf%hf_energy
 !
+!        Print current iteration information
+!
+         write(output%unit, '(t3,i3,10x,f17.12,4x,f17.12)') iteration, wf%hf_energy, max_grad
+         flush(output%unit)
+!
+!        Test for convergence:
+!
          converged_energy   = abs(energy-prev_energy) .lt. engine%energy_threshold
          converged_residual = max_grad                .lt. engine%residual_threshold
 !
          converged = converged_energy .and. converged_residual 
 !
-!        Print current iteration information
-!
-         write(output%unit, '(t3,i3,10x,f17.12,4x,f17.12)') iteration, wf%hf_energy, max_grad
-!
-         flush(output%unit)
-!
-!        Then test for convergence of residual
-!
-         if (converged) then ! Done!
+         if (converged) then ! Done, hooray
 !
             write(output%unit, '(t3,a)') '---------------------------------------------------'
             write(output%unit, '(/t3,a13,i3,a12/)') 'Converged in ', iteration, ' iterations!'
             converged = .true.
 !
-         else ! Determine next rotation of density matrix
+         else ! Rotate density matrix
+!
+!           :: Construct the Hessian H (one-electron terms) and precondition matrices,
+!           i.e. replace Y by V-1 Y V-T for Y = G and H
+!
+            call wf%construct_roothan_hall_hessian(H, Po, Pv)
+!
+            call sandwich(G, inv_VT, inv_VT, wf%n_ao)
+            call sandwich(H, inv_VT, inv_VT, wf%n_ao)
 !
 !           :: Perform micro-iterations to get a direction X in which to rotate
 !           (solves the equation of RH gradient equal to zero to first order in X)
@@ -313,8 +316,8 @@ contains
             call squareup_anti(X_pck, X, wf%n_ao)
 !
 !           :: Solve the augmented Hessian (i.e., level shifted Newton equation) if
-!           the converged step X is longer than the trust radius where the Roothan-Hall
-!           energy can be trusted to second order
+!           the converged step X is longer than the trust radius within which the Roothan-Hall
+!           energy expansion can (presumably) be trusted to second order in X
 !
             norm_X = sqrt(ddot(packed_size(wf%n_ao-1), X_pck, 1, X_pck, 1))
 !
@@ -336,10 +339,10 @@ contains
 !
             call packin_anti(cur_s, X, wf%n_ao) ! Save the transformed X as the uncorrected direction s
 !
-            call sandwich(G, VT, VT, wf%n_ao)
-            call packin_anti(cur_g, G, wf%n_ao) ! Save the transformed G as the current G
+        !    call sandwich(G, VT, VT, wf%n_ao)
+        !    call packin_anti(cur_g, G, wf%n_ao) ! Save the transformed G as the current G
 !
-!           :: Determine conjugacy factor beta, and adjust step direction
+!           :: Determine conjugacy factor beta, and adjust step direction accordingly
 !
             beta_denominator = ddot(packed_size(wf%n_ao-1), prev_g, 1, prev_g, 1)
 !
@@ -374,22 +377,20 @@ contains
             call engine%rotate_and_purify(wf, cur_s, alpha0) 
             call wf%construct_projection_matrices(Po, Pv)
             call engine%construct_and_pack_gradient(wf, tmp_pck, Po, Pv)
-
-            p0 = ddot(packed_size(wf%n_ao-1), cur_s, 1, tmp_pck, 1)
 !
+            p0    = ddot(packed_size(wf%n_ao-1), cur_s, 1, tmp_pck, 1)
             p1    = p0
             alpha = alpha0
 !
             do while (abs(p0/pinit) .gt. engine%line_search_threshold)
 !
-!              Adjust differentiation length,
-!              where smaller lengths are used for smaller fractions
+!              Set current differentiation length
 !
                alpha_diff_length = abs(p1/pinit)*(engine%line_search_threshold)
 
                alpha1 = alpha0 + alpha_diff_length
 !
-!              Rotate to get derivative
+!              Rotate by length to get approximate derivative
 !
                call engine%rotate_and_purify(wf, cur_s, alpha1-alpha0)
                call wf%construct_projection_matrices(Po, Pv)
@@ -397,11 +398,10 @@ contains
 !
                p1 = ddot(packed_size(wf%n_ao-1), cur_s, 1, tmp_pck, 1)
 !
-!              Do Newton step toward minimum
+!              Do Newton step toward minimum, then rotate to that value
+!              and evaluate new projected gradient p0
 !
-               alpha = alpha0 - p0/((p1-p0)/(alpha1-alpha0)) ! Newton step
-!
-!              Rotate to Newton updated alpha value
+               alpha = alpha0 - p0/((p1-p0)/(alpha1-alpha0)) 
 !
                call engine%rotate_and_purify(wf, cur_s, alpha-alpha1)
                call wf%construct_projection_matrices(Po, Pv)
@@ -412,14 +412,12 @@ contains
 !
             enddo
 !
+!           :: Construct AO Fock (and energy) with the new rotated density,
+!           and set previous gradient and step direction to current, in preparation 
+!           for next conjugate gradient iteration
+!
             prev_energy = wf%hf_energy
-!
-!           :: Construct AO Fock (and energy) with the new rotated density
-!
             call wf%construct_ao_fock()
-!
-!           :: Finally, set previous gradient and step direction to 
-!           current, in preparation for next conjugate gradient iteration
 !
             prev_g = cur_g
             prev_s = cur_s
@@ -487,8 +485,12 @@ contains
       write(output%unit, '(/t3,a)') 'This engine uses a preconditioned conjugate-gradient algorithm'
       write(output%unit, '(t3,a)')  'to minimize the gradient of the Roothan-Hall energy. In each step,'
       write(output%unit, '(t3,a)')  'the Newton equation is solved approximatively, giving a rotation of the'
-      write(output%unit, '(t3,a)')  'density matrix. If a step exceeds the trust radius, an optimal step is'
-      write(output%unit, '(t3,a/)') 'found on the boundary of the trust region (TR-DMM).'
+      write(output%unit, '(t3,a)')  'density matrix. If a step exceeds the trust radius, it is aborted and an'
+      write(output%unit, '(t3,a/)') 'optimal step is found on the boundary of the trust region.'
+!
+      write(output%unit, '(t3,a)')  'For more on this trust-region density matrix minimization (TR-DMM)'
+      write(output%unit, '(t3,a/)') 'method, see Høst et al., J. Chem. Phys., 126(11), 114110 (2007).'
+      flush(output%unit)
 !
    end subroutine print_banner_density_based_hf_engine
 !
@@ -621,7 +623,9 @@ contains
 !
       micro_iteration = 1
       micro_iterate = .true.
-      call diis_solver%init('hf_newton', packed_size(wf%n_ao - 1), 10)
+      call diis_solver%init('hf_newton', &
+                              packed_size(wf%n_ao - 1), &
+                              engine%diis_dimension)
 !
       call mem%alloc(RHC, wf%n_ao, wf%n_ao)
       call mem%alloc(RHC_pck, packed_size(wf%n_ao-1), 1)
@@ -772,7 +776,9 @@ contains
 !
          micro_iteration = 1
          micro_iterate = .true.
-         call diis_solver%init('level_shifted_hf_newton', packed_size(wf%n_ao - 1) + 1, 10)
+         call diis_solver%init('level_shifted_hf_newton', &
+                                 packed_size(wf%n_ao - 1) + 1, & 
+                                 engine%diis_dimension)
 !
          G = gamma*G
 !
@@ -850,10 +856,10 @@ contains
 !
          norm_X = sqrt(ddot(packed_size(wf%n_ao-1), X_pck, 1, X_pck, 1))
 !
-        ! write(output%unit, '(/t3,a28,i3)')    'Number of micro-iterations: ', micro_iteration
+         write(output%unit, '(/t6,a28,i3)')     'Number of micro-iterations: ', micro_iteration - 1
          write(output%unit, '(/t6,a13,f15.12)') 'Gamma:       ', gamma
          write(output%unit, '(t6,a13,f15.12/)') 'Level shift: ', level_shift
-         !write(output%unit, '(t3,a28,f15.12/)') 'Rotation norm/trust_radius: ', abs(norm_X/engine%trust_radius)
+      !   write(output%unit, '(t3,a28,f15.12/)') 'Rotation norm/trust_radius: ', abs(norm_X/engine%trust_radius)
 !
          X = X*gamma ! restore for next it
 !
