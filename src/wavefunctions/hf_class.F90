@@ -85,6 +85,8 @@ module hf_class
       procedure :: construct_roothan_hall_gradient             => construct_roothan_hall_gradient_hf
       procedure :: construct_stationary_roothan_hall_condition => construct_stationary_roothan_hall_condition_hf
 !
+      procedure :: construct_sp_eri_schwarz =>  construct_sp_eri_schwarz_hf
+!
    end type hf
 !
 !
@@ -351,7 +353,7 @@ contains
    end subroutine construct_ao_density_hf
 !
 !
-   subroutine construct_sp_eri_schwarz(wf, sp_eri_schwarz, n_s)
+   subroutine construct_sp_eri_schwarz_hf(wf, sp_eri_schwarz, n_s)
 !!
 !!
 !!
@@ -397,7 +399,11 @@ contains
       enddo
 !$omp end parallel do
 !
-   end subroutine construct_sp_eri_schwarz
+   end subroutine construct_sp_eri_schwarz_hf
+!
+!
+   !subroutine determine_degeneracy_hf(wf)
+   !end subroutine determine_degeneracy_hf
 !
 !
    subroutine construct_ao_fock_hf(wf, sp_eri_schwarz, n_s)
