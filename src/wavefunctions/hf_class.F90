@@ -412,9 +412,9 @@ contains
 !
       integer(i15) :: n_s
 !
-      real(dp), dimension(n_s**2, n_s**2), allocatable :: degeneracy
+      real(dp), dimension(n_s**2, n_s**2) :: degeneracy
 !
-      integer(i15) :: s1, s2, s3, s4, s1s2, s3s4, deg_12, deg_34, deg_12_34
+      integer(i15) :: s1, s2, s3, s4, s1s2, s3s4, deg_12, deg_34, deg_12_34, s4_max
 !
 !$omp parallel do private(s1, s2, s3, s4, s1s2, s3s4, deg_12, deg_34, deg_12_34)
       do s1 = 1, n_s
@@ -487,7 +487,7 @@ contains
    end subroutine determine_degeneracy_hf
 !
 !
-   subroutine construct_ao_fock_hf(wf, sp_eri_schwarz, n_s)
+   subroutine construct_ao_fock_hf(wf, sp_eri_schwarz, degeneracy, n_s)
 !!
 !!    Construct AO Fock matrix
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -506,6 +506,7 @@ contains
       integer(i15) :: n_s
 !
       real(dp), dimension(n_s, n_s) :: sp_eri_schwarz
+      real(dp), dimension(n_s**2,n_s**2) :: degeneracy
 !
       real(dp), dimension(:,:), allocatable :: ao_fock_packed
       real(dp), dimension(:,:), allocatable :: X_wz, h_wx, h_wx_square
@@ -529,7 +530,6 @@ contains
       real(dp) :: temp, temp1, temp2, temp3, temp4, temp5, temp6
       real(dp) :: max, max_D_schwarz, max_eri_schwarz
 !
-      real(dp), dimension(:,:), allocatable :: degeneracy
       real(dp), dimension(:,:), allocatable :: g, D, sp_density_schwarz
 !
       real(dp) :: start_timer, end_timer, omp_get_wtime
@@ -747,8 +747,6 @@ contains
 !$omp end parallel do
 !
       call mem%dealloc(sp_density_schwarz, n_s, n_s)
-!
-      call mem%dealloc(degeneracy, n_s**2, n_s**2)
 !
       call symmetric_sum(wf%ao_fock, wf%n_ao)
 !
