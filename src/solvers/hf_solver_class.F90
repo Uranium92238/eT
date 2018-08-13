@@ -1,7 +1,7 @@
-module hf_engine_class
+module hf_solver_class
 !
 !!
-!!		HF engine class module
+!!		HF solver class module
 !!		Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !
@@ -14,7 +14,7 @@ module hf_engine_class
 !
    implicit none
 !
-   type :: hf_engine
+   type :: hf_solver
 !
       real(dp) :: energy_threshold   = 1.0D-6
       real(dp) :: residual_threshold = 1.0D-6
@@ -30,43 +30,43 @@ module hf_engine_class
 !
    contains
 !
-      procedure :: initialize => initialize_hf_engine
-      procedure :: solve      => solve_hf_engine
-      procedure :: finalize   => finalize_hf_engine
+      procedure :: initialize => initialize_hf_solver
+      procedure :: run        => run_hf_solver
+      procedure :: finalize   => finalize_hf_solver
 !
-   end type hf_engine
+   end type hf_solver
 !
 !
 contains
 !
 !
-   subroutine initialize_hf_engine(engine, wf)
+   subroutine initialize_hf_solver(solver, wf)
 !!
-!!    Initialize HF engine
+!!    Initialize
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(hf_engine) :: engine
+      class(hf_solver) :: solver
 !
       class(hf) :: wf
 !
 !     Get number of parameters and equations to solve for
 !
-      engine%n_parameters = (wf%n_ao)*(wf%n_ao + 1)/2
-      engine%n_equations  = (wf%n_o)*(wf%n_v)
+      solver%n_parameters = (wf%n_ao)*(wf%n_ao + 1)/2
+      solver%n_equations  = (wf%n_o)*(wf%n_v)
 !
 !     Set AO density to superposition of atomic densities (SAD)
 !
       call wf%initialize_ao_density()
       call wf%set_ao_density_to_sad()
 !
-   end subroutine initialize_hf_engine
+   end subroutine initialize_hf_solver
 !
 !
-   subroutine solve_hf_engine(engine, wf)
+   subroutine run_hf_solver(solver, wf)
 !!
-!!    Solve 
+!!    Run 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    This routine solves the Roothan-Hall equations in each macro-iteration,
@@ -75,7 +75,7 @@ contains
 !!
       implicit none
 !
-      class(hf_engine) :: engine
+      class(hf_solver) :: solver
 !
       class(hf) :: wf
 !
@@ -101,17 +101,17 @@ contains
       real(dp), dimension(:,:), allocatable :: eri_deg
       real(dp), dimension(:,:), allocatable :: sp_eri_schwarz
 !
-!     Print engine banner
+!     Print solver banner
 !
-      write(output%unit, '(/t3,a)') ':: Direct-integral Hartree-Fock engine'
+      write(output%unit, '(/t3,a)') ':: Direct-integral Hartree-Fock solver'
       write(output%unit, '(t3,a/)') ':: E. F. Kjønstad, S. D. Folkestad, 2018'
       flush(output%unit)
 !
-!     Initialize engine (read thresholds, restart, etc., from file,
+!     Initialize solver (read thresholds, restart, etc., from file,
 !     but also ask the wavefunction for the number of parameters to solve
 !     for and related information)
 !
-      call engine%initialize(wf)
+      call solver%initialize(wf)
 !
 !     Construct screening vectors, as well as a degeneracy vector, 
 !     needed to construct AO Fock efficiently
@@ -126,10 +126,10 @@ contains
 !
 !     Solve the equations
 !
-      call diis_manager%init('hf_diis', engine%n_parameters, engine%n_equations, engine%diis_dimension)
+      call diis_manager%init('hf_diis', solver%n_parameters, solver%n_equations, solver%diis_dimension)
 !
-      call mem%alloc(D, engine%n_parameters, 1)
-      call mem%alloc(F, engine%n_equations, 1)
+      call mem%alloc(D, solver%n_parameters, 1)
+      call mem%alloc(F, solver%n_equations, 1)
 !
       D = zero
       F = zero
@@ -164,7 +164,7 @@ contains
       write(output%unit, '(t3,a)') 'Iteration    Energy (a.u.)           Max(gradient) '
       write(output%unit, '(t3,a)') '---------------------------------------------------'
 !
-      do while (.not. converged .and. iteration .le. engine%max_iterations)
+      do while (.not. converged .and. iteration .le. solver%max_iterations)
 !
 !        Calculate the occ-vir block, or gradient, from the current density
 !
@@ -186,8 +186,8 @@ contains
 !
 !        Test for convergence:
 !
-         converged_energy   = abs(energy-prev_energy) .lt. engine%energy_threshold
-         converged_residual = max_grad                .lt. engine%residual_threshold
+         converged_energy   = abs(energy-prev_energy) .lt. solver%energy_threshold
+         converged_residual = max_grad                .lt. solver%residual_threshold
 !
          converged = converged_residual .and. converged_energy
 !
@@ -237,7 +237,7 @@ contains
 !
 !     Initialize engine (make final deallocations, and other stuff)
 !
-      call engine%finalize()
+      call solver%finalize()
       call diis_manager%finalize()
 !
       if (.not. converged) then 
@@ -248,19 +248,19 @@ contains
 !
       endif 
 !
-   end subroutine solve_hf_engine
+   end subroutine run_hf_solver
 !
 !
-   subroutine finalize_hf_engine(engine)
+   subroutine finalize_hf_solver(solver)
 !!
-!! 	Finalize SCF engine
+!! 	Finalize
 !! 	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(hf_engine) :: engine
+      class(hf_solver) :: solver
 !
-   end subroutine finalize_hf_engine
+   end subroutine finalize_hf_solver
 !
 !
-end module hf_engine_class
+end module hf_solver_class

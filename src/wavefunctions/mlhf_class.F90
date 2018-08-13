@@ -12,7 +12,7 @@ module mlhf_class
    use index
    use active_atoms_class
 !
-   use eri_cd_engine_class
+   use eri_cd_solver_class
 !
    use array_utilities
 !
@@ -110,7 +110,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: density_diagonal
 !
-      type(eri_cd_engine)  :: chol_engine
+      type(eri_cd_solver)  :: chol_solver
 !
       call wf%initialize_ao_density()
 !
@@ -235,9 +235,9 @@ contains
       call mem%dealloc(cholesky_vectors_virt, wf%n_ao, n_active_aos)
       call mem%dealloc(cholesky_vectors_occ, wf%n_ao, n_active_aos)
 !
-      call chol_engine%initialize(wf%system)
-      call chol_engine%solve(wf%system, V)
-      call chol_engine%finalize()
+      call chol_solver%initialize(wf%system)
+      call chol_solver%solve(wf%system, V)
+      call chol_solver%finalize()
 !
 !     Cholesky decomposition
 !
