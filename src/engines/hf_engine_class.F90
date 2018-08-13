@@ -66,8 +66,12 @@ contains
 !
    subroutine solve_hf_engine(engine, wf)
 !!
-!!    Solve HF
+!!    Solve 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    This routine solves the Roothan-Hall equations in each macro-iteration,
+!!    using the resulting density and Fock matrix together with previous densities
+!!    and errors to make a new effective density matrix.
 !!
       implicit none
 !
@@ -99,7 +103,7 @@ contains
 !
 !     Print engine banner
 !
-      write(output%unit, '(/t3,a)') ':: Direct-integral Roothan-Hall-based Hartree-Fock engine'
+      write(output%unit, '(/t3,a)') ':: Direct-integral Hartree-Fock engine'
       write(output%unit, '(t3,a/)') ':: E. F. Kjønstad, S. D. Folkestad, 2018'
       flush(output%unit)
 !
@@ -235,6 +239,14 @@ contains
 !
       call engine%finalize()
       call diis_manager%finalize()
+!
+      if (.not. converged) then 
+!
+         write(output%unit, '(t3,a)')   '---------------------------------------------------'
+         write(output%unit, '(/t3,a)')  'Was not able to converge the equations in the given'
+         write(output%unit, '(t3,a/)')  'number of maximum iterations.'
+!
+      endif 
 !
    end subroutine solve_hf_engine
 !

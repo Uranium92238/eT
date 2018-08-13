@@ -288,7 +288,6 @@ contains
 !
             write(output%unit, '(t3,a)') '---------------------------------------------------'
             write(output%unit, '(/t3,a13,i3,a12/)') 'Converged in ', iteration, ' iterations!'
-            converged = .true.
 !
          else ! Rotate density matrix
 !
@@ -390,6 +389,14 @@ contains
 !     Initialize engine (make final deallocations, and other stuff)
 !
       call engine%finalize()
+!
+      if (.not. converged) then 
+!
+         write(output%unit, '(t3,a)')   '---------------------------------------------------'
+         write(output%unit, '(/t3,a)')  'Was not able to converge the equations in the given'
+         write(output%unit, '(t3,a/)')  'number of maximum iterations.'
+!
+      endif 
 !
    end subroutine solve_dmm_hf_engine
 !
