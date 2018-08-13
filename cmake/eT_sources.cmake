@@ -6,13 +6,12 @@ set(eT_fortran_sources
    src/io/disk_manager_class.F90
    src/io/file_class.F90
    src/io/io_utilities.F90
-   src/integrals/integral_manager_class.F90
-   src/integrals/cholesky_array_list_class.F90
-   src/integrals/libint/h_xy.F90
-   src/integrals/libint/s_xy.F90
-   src/integrals/libint/g_wxyz.F90
-   src/integrals/libint/L_wxyz.F90
-   src/integrals/libint/libint_initialization.F90
+   src/ao_integrals/ao_integral_manager_class.F90
+   src/ao_integrals/cholesky_array_list_class.F90
+   src/libint/h_xy.F90
+   src/libint/s_xy.F90
+   src/libint/g_wxyz.F90
+   src/libint/libint_initialization.F90
    src/memory/batching_index_class.F90
    src/memory/memory_manager_class.F90
    src/various/kinds.F90
@@ -33,7 +32,7 @@ set(eT_fortran_sources
    src/molecular_system/periodic_table.F90
    src/molecular_system/shell_class.F90
    src/molecular_system/basis_set_info.F90
-   src/molecular_system/libint/atom_init.F90
+   src/libint/atom_init.F90
    src/molecular_system/active_atoms_class.F90
    src/solvers/diis.F90
 )

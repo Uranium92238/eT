@@ -15,7 +15,7 @@
 using namespace libint2;
 using namespace std;
 
-#include "../../integrals/libint/globals.h"
+#include "globals.h"
 
 void get_shell_numbers(int *atom, int *sn){
 

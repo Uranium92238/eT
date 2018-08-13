@@ -10,7 +10,7 @@ program eT_program
    use disk_manager_class
    use io_utilities
 !
-   use integral_manager_class
+  !use ao_integral_manager_class
 !
    use hf_class
    use mlhf_class
