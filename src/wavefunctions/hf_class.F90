@@ -57,7 +57,8 @@ module hf_class
       procedure :: get_ao_density => get_ao_density_hf
       procedure :: get_fock_ov    => get_fock_ov_hf
 !
-      procedure :: set_ao_density   => set_ao_density_hf
+      procedure :: set_ao_density        => set_ao_density_hf
+      procedure :: set_ao_density_to_sad => set_ao_density_to_sad_hf
 !
 !     Initialize and destruct routines for wavefunction variables
 !
@@ -151,6 +152,7 @@ contains
       class(hf) :: wf
 !
       call mem%alloc(wf%ao_density, wf%n_ao, wf%n_ao)
+      wf%ao_density = zero
 !
    end subroutine initialize_ao_density_hf
 !
@@ -299,10 +301,6 @@ contains
 !
       class(hf) :: wf
 !
-      integer(i15) :: i, x, y, xy
-!
-      wf%ao_density = zero
-!
       call dgemm('N', 'T',                   &
                   wf%n_ao,                   &
                   wf%n_ao,                   &
@@ -321,7 +319,13 @@ contains
 !
    subroutine construct_sp_eri_schwarz_hf(wf, sp_eri_schwarz, n_s)
 !!
+!!    Construct shell-pair electronic-repulsion-integral Schwarz vector
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+!!    Computes a vector that contains the largest value (in absolute terms)
+!!    of g_wxwx^1/2 for each shell pair (A,B), where w and x is in A and B, 
+!!    respectively. These values are used to construct the AO Fock matrix
+!!    without calculating integrals that are not needed.
 !!
       implicit none
 !
@@ -370,7 +374,14 @@ contains
 !
    subroutine determine_degeneracy_hf(wf, degeneracy, n_s)
 !!
+!!    Determine degeneracy vector
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+!!    In the AO Fock construction, each shell quadruple has a degeneracy
+!!    given by how many times the same integral appears in the actual
+!!    unrestricted sum. The value degeneracy(s1s2,s3s4) gives the 
+!!    degeneracy of g_wxyz, where w, x, y, z belong to shells s1, s2,
+!!    s3 and s4, respectively.
 !!
       implicit none
 !
@@ -382,8 +393,7 @@ contains
 !
       integer(i15) :: s1, s2, s3, s4, s1s2, s3s4, deg_12, deg_34, deg_12_34, s4_max
 !
-!$omp parallel do private(s1, s2, s3, s4, s1s2, s3s4, deg_12, deg_34, deg_12_34)&
-!$omp schedule(dynamic)
+!$omp parallel do private(s1, s2, s3, s4, s1s2, s3s4, deg_12, deg_34, deg_12_34) schedule(dynamic)
       do s1 = 1, n_s
          do s2 = 1, s1
 !
@@ -503,11 +513,11 @@ contains
 !
       real(dp) :: start_timer, end_timer, omp_get_wtime
 !
-      start_timer = omp_get_wtime()
+    !  start_timer = omp_get_wtime()
 !
       call mem%alloc(sp_density_schwarz, n_s, n_s)
 !
-!$omp parallel do private(s1, s2, A_interval, B_interval, D, max)
+!$omp parallel do private(s1, s2, A_interval, B_interval, D, max) schedule(dynamic)
       do s1 = 1, n_s
          do s2 = 1, s1
 !
@@ -529,15 +539,15 @@ contains
       enddo
 !$omp end parallel do
 !
-!     Calculate max' prescreening
+!     Calculate maximum of all the shell pair maximums prescreening
 !
       max_D_schwarz     = get_abs_max(sp_density_schwarz, n_s**2)
       max_eri_schwarz   = get_abs_max(sp_eri_schwarz, n_s**2)
 !
-      end_timer = omp_get_wtime()
-   !   write(output%unit, '(t3,a32,f9.1)') 'Schwarz screening array (sec.): ', end_timer - start_timer
+   !   end_timer = omp_get_wtime()
+   !   write(output%unit, '(/t3,a59,f9.1)') 'Wall time to get Schwarz density screening info (sec.): ', end_timer - start_timer
 !
-      start_timer = omp_get_wtime()
+   !   start_timer = omp_get_wtime()
 !
       wf%ao_fock = zero
 !
@@ -568,7 +578,7 @@ contains
 !
                   if (sp_eri_schwarz(s1, s2)*(max_D_schwarz)*sp_eri_schwarz(s3, s4) .lt. 1.0d-10) continue
 !
-                  temp  = sp_eri_schwarz(s1, s2)*sp_eri_schwarz(s3, s4)
+                  temp = sp_eri_schwarz(s1, s2)*sp_eri_schwarz(s3, s4)
 !
                   skip = temp*sp_density_schwarz(s3,s4) .lt. 1.0D-10 .and. & ! F1
                          temp*sp_density_schwarz(s1,s2) .lt. 1.0D-10 .and. & ! F2
@@ -729,9 +739,14 @@ contains
 !
       call mem%dealloc(sp_density_schwarz, n_s, n_s)
 !
-      call symmetric_sum(wf%ao_fock, wf%n_ao)
-!
+      call symmetric_sum(wf%ao_fock, wf%n_ao) ! Slightly faster than 'symmetrize', because no copy is made
       wf%ao_fock = wf%ao_fock*half
+     !  call symmetrize(wf%ao_fock, wf%n_ao)
+!
+   !    end_timer = omp_get_wtime() 
+   !    write(output%unit, '(t3,a62,f9.1)')  'Wall time to compute two-electron part of Fock matrix (sec.): ', end_timer - start_timer  
+   !    write(output%unit, '(t3,a62,f9.1)')  'Wall time to compute integrals (sec.):                        ', integral_time           
+   !    write(output%unit, '(t3,a62,f9.1)')  'Wall time to construct and add Fock terms (sec.):             ', fock_construction_time
 !
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call get_ao_h_xy(h_wx)
@@ -741,8 +756,6 @@ contains
       wf%ao_fock = wf%ao_fock + h_wx
 !
       call mem%dealloc(h_wx, wf%n_ao*(wf%n_ao+1)/2, 1)
-!
-      end_timer = omp_get_wtime()
 !
    end subroutine construct_ao_fock_hf
 !
@@ -797,6 +810,40 @@ contains
       call squareup(D, wf%ao_density, wf%n_ao)
 !
    end subroutine set_ao_density_hf
+!
+!
+   subroutine set_ao_density_to_sad_hf(wf)
+!!
+!!    Set AO density to superposition of atomic densities (SAD) guess
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Careful! The AO density is allocated and zeroed by the initialize
+!!    AO density routine and to avoid zeroing twice, this routine assumes
+!!    that the non-diagonal terms of the density are already zero.
+!!
+!!    If called at a time when the density differs from zero, remember
+!!    to zero it before calling this routine.
+!!
+      implicit none 
+!
+      class(hf) :: wf 
+!
+      real(dp), dimension(:,:), allocatable :: density_diagonal
+!
+      integer(i15) :: ao
+!
+      call mem%alloc(density_diagonal, wf%n_ao, 1)
+      call wf%system%SAD(wf%n_ao, density_diagonal)
+!
+      do ao = 1, wf%n_ao
+!
+         wf%ao_density(ao, ao) = density_diagonal(ao, 1)
+!
+      enddo
+!
+      call mem%dealloc(density_diagonal, wf%n_ao, 1)
+!
+   end subroutine set_ao_density_to_sad_hf
 !
 !
    subroutine solve_roothan_hall_hf(wf)

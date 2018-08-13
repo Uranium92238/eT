@@ -1,7 +1,7 @@
-module density_based_hf_engine_class
+module dmm_hf_engine_class
 !
 !!
-!!		Density based HF engine class module
+!!		Density matrix minimization (DMM) HF engine class module
 !!		Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !
@@ -15,80 +15,69 @@ module density_based_hf_engine_class
 !
    implicit none
 !
-   type :: density_based_hf_engine
+   type :: dmm_hf_engine
 !
       integer(i15) :: max_iterations       = 150
       integer(i15) :: max_micro_iterations = 500
 !
-      real(dp) :: purification_threshold   = 1.0D-12
+      real(dp) :: purification_threshold   = 1.0D-10
       real(dp) :: energy_threshold         = 1.0D-6
       real(dp) :: residual_threshold       = 1.0D-6
       real(dp) :: relative_micro_threshold = 1.0D-2         ! Newton equations treshold
       real(dp) :: line_search_threshold    = 1.0D-4         ! Projected gradient must be 1.0D-4 times smaller
                                                             ! than initial projected gradient (s^T g(alpha))
 !
-      real(dp) :: trust_radius                     = 0.1D0 
+      real(dp) :: trust_radius                     = 0.01D0 
       real(dp) :: relative_trust_radius_threshold  = 0.1D0
-      real(dp) :: relative_shifted_micro_threshold = 1.0D-2 ! Level shifted Newton equations threshold
+      real(dp) :: relative_shifted_micro_threshold = 1.0D-3 ! Level shifted Newton equations threshold
 !
-      integer(i15) :: diis_dimension = 15
+      real(dp) :: rotation_norm_threshold = 0.05D0 ! Maximum rotation norm
+!
+      integer(i15) :: diis_dimension = 8
 !
       logical :: restart
 !
    contains
 !
-      procedure :: initialize => initialize_density_based_hf_engine
-      procedure :: solve      => solve_density_based_hf_engine
-      procedure :: finalize   => finalize_density_based_hf_engine
+      procedure :: initialize  => initialize_dmm_hf_engine
+      procedure :: solve       => solve_dmm_hf_engine
+      procedure :: finalize    => finalize_dmm_hf_engine
 !
-      procedure :: print_banner => print_banner_density_based_hf_engine
+      procedure, private :: print_banner                        => print_banner_dmm_hf_engine
 !
-      procedure :: rotate_and_purify           => rotate_and_purify_density_based_hf_engine
-      procedure :: construct_and_pack_gradient => construct_and_pack_gradient_density_based_hf_engine
+      procedure, private :: rotate_and_purify                   => rotate_and_purify_dmm_hf_engine
+      procedure, private :: construct_and_pack_gradient         => construct_and_pack_gradient_dmm_hf_engine
 !
-      procedure :: solve_Newton_equation               => solve_Newton_equation_density_based_hf_engine
-      procedure :: solve_level_shifted_Newton_equation => solve_level_shifted_Newton_equation_density_based_hf_engine
+      procedure, private :: solve_Newton_equation               => solve_Newton_equation_dmm_hf_engine
+      procedure, private :: solve_level_shifted_Newton_equation => solve_level_shifted_Newton_equation_dmm_hf_engine
 !
-   end type density_based_hf_engine
+      procedure, private :: determine_conjugacy_factor          => determine_conjugacy_factor_dmm_hf_engine
+      procedure, private :: do_line_search                      => do_line_search_dmm_hf_engine
+!
+   end type dmm_hf_engine
 !
 !
 contains
 !
 !
-   subroutine initialize_density_based_hf_engine(engine, wf)
+   subroutine initialize_dmm_hf_engine(engine, wf)
 !!
-!!    Initialize density based HF engine
+!!    Initialize
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(density_based_hf_engine) :: engine
+      class(dmm_hf_engine) :: engine
 !
       class(hf) :: wf
 !
-      integer(i15) :: ao
-!
-      real(dp), dimension(:,:), allocatable :: density_diagonal
-!
       call wf%initialize_ao_density()
+      call wf%set_ao_density_to_sad()
 !
-!     Set initial density to superposition of atomic densities (SOAD) guess
-!
-      call mem%alloc(density_diagonal, wf%n_ao, 1)
-      call wf%system%SAD(wf%n_ao, density_diagonal)
-!
-      do ao = 1, wf%n_ao
-!
-         wf%ao_density(ao, ao) = density_diagonal(ao, 1)
-!
-      enddo
-!
-      call mem%dealloc(density_diagonal, wf%n_ao, 1)
-!
-   end subroutine initialize_density_based_hf_engine
+   end subroutine initialize_dmm_hf_engine
 !
 !
-   subroutine solve_density_based_hf_engine(engine, wf)
+   subroutine solve_dmm_hf_engine(engine, wf)
 !!
 !!    Solve
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -99,14 +88,14 @@ contains
 !!    the length of steps in the search direction. The uncorrected search direction, before
 !!    using the conjugacy prefactor beta, is determined by solving the gradient equal to
 !!    zero to first order in the rotation matrix, preconditioned by the Cholesky AO basis.
-!!    These micro-iterations are performed with a direct inversion of the iterative subspace
-!!    algorithm (DIIS).
-!!
-!!    The procedure is based heavily on the
+!!    and the diagonal of an approximate Hessian. If the predicted step exceeds the trust 
+!!    radius, the level-shifted Newton equations are solved instead (more precisely, the 
+!!    augmented Hessian eigenvalue problem). The Newton equations are solved using a direct 
+!!    inversion of the iterative subspace algorithm (DIIS).
 !!
       implicit none
 !
-      class(density_based_hf_engine) :: engine
+      class(dmm_hf_engine) :: engine
 !
       class(hf) :: wf
 !
@@ -135,19 +124,11 @@ contains
       real(dp), dimension(:,:), allocatable :: cur_g
       real(dp), dimension(:,:), allocatable :: prev_g
 !
-      real(dp), dimension(:,:), allocatable :: tmp
-      real(dp), dimension(:,:), allocatable :: tmp_pck
-!
       real(dp) :: norm_X 
-!
-      real(dp) :: p0, p1, pinit
-      real(dp) :: alpha, alpha0, alpha1, alphainit, alpha_diff_length
 !
       logical :: transpose_left
 !
       real(dp) :: beta
-      real(dp) :: beta_numerator
-      real(dp) :: beta_denominator
 !
       integer(i15) :: iteration = 1
 !
@@ -160,7 +141,7 @@ contains
 !
       real(dp) :: max_grad
 !
-      real(dp) :: ddot
+      real(dp) :: ddot, norm_cur_s
 !
       integer(i15) :: n_s 
 !
@@ -260,12 +241,6 @@ contains
       cur_s  = zero
       prev_s = zero
 !
-      call mem%alloc(tmp_pck, packed_size(wf%n_ao-1), 1)
-      call mem%alloc(tmp, wf%n_ao, wf%n_ao)
-!
-      tmp     = zero
-      tmp_pck = zero
-!
       write(output%unit, '(t3,a)') 'Iteration    Energy (a.u.)           Max(gradient) '
       write(output%unit, '(t3,a)') '---------------------------------------------------'
 !
@@ -337,10 +312,11 @@ contains
 !
             norm_X = sqrt(ddot(packed_size(wf%n_ao-1), X_pck, 1, X_pck, 1))
 !
-            if (norm_X .gt. engine%trust_radius) then
+            if (norm_X .gt. engine%trust_radius .and. abs(norm_X-engine%trust_radius) .gt. & 
+                        engine%relative_trust_radius_threshold*engine%trust_radius) then
 !
-               write(output%unit, '(/t3,a/,t32, a)') 'Step outside trust region => solving the level shifted', &
-                                                                                   'Newton equations'
+               write(output%unit, '(/t6,a/,t6,a)') 'Step outside trust region. Will attempt to', &
+                                                   'solve the augmented Hessian equation.'
 !
                call engine%solve_level_shifted_Newton_equation(wf, X_pck, H, G, S, max_grad, norm_X)
                call squareup_anti(X_pck, X, wf%n_ao)
@@ -348,34 +324,19 @@ contains
             endif
 !
 !           :: Convert the converged direction X from the basis of the preconditioned system (X' = V^T X V)
-!           back to the original system (X -> V-T X V-1); same with the gradient (G -> V G V^T)
+!           back to the original system (X -> V-T X V-1)
 !
             transpose_left = .false.
             call sandwich(X, inv_VT, inv_VT, wf%n_ao, transpose_left) 
 !
             call packin_anti(cur_s, X, wf%n_ao) ! Save the transformed X as the uncorrected direction s
 !
-        !    call sandwich(G, VT, VT, wf%n_ao)
-        !    call packin_anti(cur_g, G, wf%n_ao) ! Save the transformed G as the current G
-!
 !           :: Determine conjugacy factor beta, and adjust step direction accordingly
 !
-            beta_denominator = ddot(packed_size(wf%n_ao-1), prev_g, 1, prev_g, 1)
+            call engine%determine_conjugacy_factor(beta, cur_g, prev_g, packed_size(wf%n_ao-1))
 !
-            if (beta_denominator .lt. 1.0D-15) then
-!
-               beta = zero
-!
-            else
-!
-               beta_numerator = ddot(packed_size(wf%n_ao-1), cur_g, 1, prev_g, 1) - &
-                           ddot(packed_size(wf%n_ao-1), cur_g, 1, cur_g, 1)
-!
-               beta = beta_numerator/beta_denominator
-!
-            endif
-!
-            cur_s = cur_s - beta*prev_s
+            cur_s      = cur_s - beta*prev_s
+            norm_cur_s = sqrt(ddot(packed_size(wf%n_ao-1), cur_s, 1, cur_s, 1))
 !
 !           :: Perform line search to determine how far to step in the direction of s
 !
@@ -385,48 +346,7 @@ contains
 !           The interpolation is toward p(alpha) = s^T g(alpha) = 0, i.e.
 !           the gradient is to be orthogonal to the search direction.
 !
-!
-            alphainit = zero
-            pinit     = ddot(packed_size(wf%n_ao-1), cur_s, 1, cur_g, 1) ! Projected gradient for current density
-!
-            alpha0 = one 
-            call engine%rotate_and_purify(wf, cur_s, alpha0) 
-            call wf%construct_projection_matrices(Po, Pv)
-            call engine%construct_and_pack_gradient(wf, tmp_pck, Po, Pv)
-!
-            p0    = ddot(packed_size(wf%n_ao-1), cur_s, 1, tmp_pck, 1)
-            p1    = p0
-            alpha = alpha0
-!
-            do while (abs(p0/pinit) .gt. engine%line_search_threshold)
-!
-!              Set current differentiation length
-!
-               alpha_diff_length = abs(p1/pinit)*(engine%line_search_threshold)
-
-               alpha1 = alpha0 + alpha_diff_length
-!
-!              Rotate by length to get approximate derivative
-!
-               call engine%rotate_and_purify(wf, cur_s, alpha1-alpha0)
-               call wf%construct_projection_matrices(Po, Pv)
-               call engine%construct_and_pack_gradient(wf, tmp_pck, Po, Pv)
-!
-               p1 = ddot(packed_size(wf%n_ao-1), cur_s, 1, tmp_pck, 1)
-!
-!              Do Newton step toward minimum, then rotate to that value
-!              and evaluate new projected gradient p0
-!
-               alpha = alpha0 - p0/((p1-p0)/(alpha1-alpha0)) 
-!
-               call engine%rotate_and_purify(wf, cur_s, alpha-alpha1)
-               call wf%construct_projection_matrices(Po, Pv)
-               call engine%construct_and_pack_gradient(wf, tmp_pck, Po, Pv)
-!
-               p0 = ddot(packed_size(wf%n_ao-1), cur_s, 1, tmp_pck, 1)
-               alpha0 = alpha
-!
-            enddo
+            call engine%do_line_search(wf, cur_s, norm_cur_s, cur_g, Po, Pv)
 !
 !           :: Construct AO Fock (and energy) with the new rotated density,
 !           and set previous gradient and step direction to current, in preparation 
@@ -464,9 +384,6 @@ contains
       call mem%dealloc(prev_s, packed_size(wf%n_ao-1), 1)
       call mem%dealloc(cur_s, packed_size(wf%n_ao-1), 1)
 !
-      call mem%dealloc(tmp_pck, packed_size(wf%n_ao-1), 1)
-      call mem%dealloc(tmp, wf%n_ao, wf%n_ao)
-!
       call mem%dealloc(sp_eri_schwarz, n_s, n_s)
       call mem%dealloc(eri_deg, n_s**2, n_s**2)
 !
@@ -474,47 +391,47 @@ contains
 !
       call engine%finalize()
 !
-   end subroutine solve_density_based_hf_engine
+   end subroutine solve_dmm_hf_engine
 !
 !
-   subroutine finalize_density_based_hf_engine(engine)
+   subroutine finalize_dmm_hf_engine(engine)
 !!
-!! 	Finalize SCF engine
+!! 	Finalize
 !! 	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(density_based_hf_engine) :: engine
+      class(dmm_hf_engine) :: engine
 !
-   end subroutine finalize_density_based_hf_engine
+   end subroutine finalize_dmm_hf_engine
 !
 !
-   subroutine print_banner_density_based_hf_engine(engine)
+   subroutine print_banner_dmm_hf_engine(engine)
 !!
 !!    Print banner
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(density_based_hf_engine) :: engine
+      class(dmm_hf_engine) :: engine
 !
-      write(output%unit, '(/t3,a)') ':: Direct-integral density-based Hartree-Fock engine'
+      write(output%unit, '(/t3,a)') ':: Direct-integral density matrix minimization Hartree-Fock engine'
       write(output%unit, '(t3,a)')  ':: E. F. Kjønstad, S. D. Folkestad, 2018'
 !
       write(output%unit, '(/t3,a)') 'This engine uses a preconditioned conjugate-gradient algorithm'
       write(output%unit, '(t3,a)')  'to minimize the gradient of the Roothan-Hall energy. In each step,'
-      write(output%unit, '(t3,a)')  'the Newton equation is solved approximatively, giving a rotation of the'
-      write(output%unit, '(t3,a)')  'density matrix. If a step exceeds the trust radius, it is aborted and an'
-      write(output%unit, '(t3,a/)') 'optimal step is found on the boundary of the trust region.'
+      write(output%unit, '(t3,a)')  'the Newton equation is solved approximatively, giving a rotation of'
+      write(output%unit, '(t3,a)')  'the density matrix. If a step exceeds the trust radius, it is aborted'
+      write(output%unit, '(t3,a/)') 'and an optimal step is found on the boundary of the trust region.'
 !
       write(output%unit, '(t3,a)')  'For more on this trust-region density matrix minimization (TR-DMM)'
-      write(output%unit, '(t3,a/)') 'method, see Høst et al., J. Chem. Phys., 126(11), 114110 (2007).'
+      write(output%unit, '(t3,a/)') 'method, see Høst et al., J. Chem. Phys. 126(11), 114110 (2007).'
       flush(output%unit)
 !
-   end subroutine print_banner_density_based_hf_engine
+   end subroutine print_banner_dmm_hf_engine
 !
 !
-   subroutine rotate_and_purify_density_based_hf_engine(engine, wf, X_pck, kappa)
+   subroutine rotate_and_purify_dmm_hf_engine(engine, wf, X_pck, kappa, norm_X)
 !!
 !!    Rotate and purify
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -523,39 +440,61 @@ contains
 !!    which is sent to the routine as a packed antisymmetric matrix,
 !!    and then purifies the resulting density (making it idempotent)
 !!
-!!    If the optional parameter kappa is passed to the routine, the 
-!!    rotation is by kappa X instead of X.
+!!    The parameter kappa is the prefactor on the rotation X.
+!!    We rotate 2^k times by 2^-k to make the errors in the 
+!!    rotation smaller, where k is a parameter determined by the 
+!!    rotation norm threshold.
 !!
       implicit none 
 !
-      class(density_based_hf_engine), intent(in) :: engine
+      class(dmm_hf_engine), intent(in) :: engine
 !
       class(hf) :: wf 
 !
       real(dp), dimension((wf%n_ao-1)*(wf%n_ao)/2, 1), intent(in) :: X_pck
 !
-      real(dp), optional, intent(in) :: kappa
+      real(dp), intent(in) :: kappa, norm_X 
+!
+      integer(i15) :: k
+!
+      integer(i15) :: i 
 !
       real(dp), dimension(:,:), allocatable :: X 
+!
+!     Square up and scale rotation vector by kappa
 !
       call mem%alloc(X, wf%n_ao, wf%n_ao)
       call squareup_anti(X_pck, X, wf%n_ao)
 !
-      if (present(kappa)) then 
+      X = kappa*X 
 !
-         X = kappa*X
+!     Determine k factor given the norm of X and the 
+!     threshold on acceptable rotation lengths
 !
-      endif
+      k = 0
+      do while ((two**(-k))*norm_X .gt. engine%rotation_norm_threshold)
 !
-      call wf%rotate_ao_density(X)
-      call wf%purify_ao_density(engine%purification_threshold)
+         k = k + 1
+!
+      enddo
+!
+!     Do the 2^-k X rotation, then purify, 2^k times 
+!
+      X = (two**(-k))*X 
+!
+      do i = 1, 2**k 
+!
+         call wf%rotate_ao_density(X)
+         call wf%purify_ao_density(engine%purification_threshold)
+!
+      enddo
 !
       call mem%dealloc(X, wf%n_ao, wf%n_ao)
 !
-   end subroutine rotate_and_purify_density_based_hf_engine
+   end subroutine rotate_and_purify_dmm_hf_engine
 !
 !
-   subroutine construct_and_pack_gradient_density_based_hf_engine(engine, wf, G_pck, Po, Pv)
+   subroutine construct_and_pack_gradient_dmm_hf_engine(engine, wf, G_pck, Po, Pv)
 !!
 !!    Construct and pack Roothan-Hall gradient
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -564,7 +503,7 @@ contains
 !!
       implicit none 
 !
-      class(density_based_hf_engine), intent(in) :: engine 
+      class(dmm_hf_engine), intent(in) :: engine 
 !
       class(hf), intent(in) :: wf
 !
@@ -582,10 +521,10 @@ contains
 !
       call mem%dealloc(G, wf%n_ao, wf%n_ao)
 !
-   end subroutine construct_and_pack_gradient_density_based_hf_engine
+   end subroutine construct_and_pack_gradient_dmm_hf_engine
 !
 !
-   subroutine solve_Newton_equation_density_based_hf_engine(engine, wf, X_pck, H, G, S, max_grad)
+   subroutine solve_Newton_equation_dmm_hf_engine(engine, wf, X_pck, H, G, S, max_grad)
 !!
 !!    Solve Newton equation
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -605,7 +544,7 @@ contains
 !!
       implicit none 
 !
-      class(density_based_hf_engine), intent(in) :: engine 
+      class(dmm_hf_engine), intent(in) :: engine 
 !
       class(hf) :: wf
 !
@@ -642,7 +581,8 @@ contains
 !
       micro_iteration = 1
       micro_iterate = .true.
-      call diis_solver%init('hf_newton', &
+      call diis_solver%init('hf_newton',                &
+                              packed_size(wf%n_ao - 1), &
                               packed_size(wf%n_ao - 1), &
                               engine%diis_dimension)
 !
@@ -678,8 +618,7 @@ contains
 !        Ask DIIS for updated (packed) rotation parameters X
 !
          X_pck = X_pck + RHC_pck
-         call diis_solver%update(RHC_pck, X_pck)
-         X_pck = RHC_pck
+         call diis_solver%update(RHC_pck, X_pck) ! Solution placed in X_pck on exit 
 !
 !        Squareup anti-symmetric rotation matrix gotten from DIIS
 !
@@ -707,10 +646,10 @@ contains
 !
       endif
 !
-   end subroutine solve_Newton_equation_density_based_hf_engine    
+   end subroutine solve_Newton_equation_dmm_hf_engine  
 !
 !
-   subroutine solve_level_shifted_Newton_equation_density_based_hf_engine(engine, wf, X_pck, H, G, S, max_grad, norm_X)
+   subroutine solve_level_shifted_Newton_equation_dmm_hf_engine(engine, wf, X_pck, H, G, S, max_grad, norm_X)
 !!
 !!    Solve level shifted Newton equation
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -736,7 +675,7 @@ contains
 !!
       implicit none 
 !
-      class(density_based_hf_engine), intent(in) :: engine 
+      class(dmm_hf_engine), intent(in) :: engine 
 !
       class(hf) :: wf
 !
@@ -795,8 +734,9 @@ contains
 !
          micro_iteration = 1
          micro_iterate = .true.
-         call diis_solver%init('level_shifted_hf_newton', &
+         call diis_solver%init('level_shifted_hf_newton',      &
                                  packed_size(wf%n_ao - 1) + 1, & 
+                                 packed_size(wf%n_ao - 1) + 1, &
                                  engine%diis_dimension)
 !
          G = gamma*G
@@ -846,10 +786,10 @@ contains
 !           z_dz = z_dz + dz = z + dz
 !
             z_dz = z_dz + dz 
-            call diis_solver%update(dz, z_dz) ! Updated z placed in dz on exit
+            call diis_solver%update(dz, z_dz) ! Updated z placed in z_dz on exit
 !
-            level_shift = dz(1, 1)
-            X_pck(:, 1) = dz(2:(packed_size(wf%n_ao - 1) + 1), 1)
+            level_shift = z_dz(1, 1)
+            X_pck(:, 1) = z_dz(2:(packed_size(wf%n_ao - 1) + 1), 1)
 !
 !           Squareup anti-symmetric rotation matrix gotten from DIIS
 !
@@ -875,9 +815,10 @@ contains
 !
          norm_X = sqrt(ddot(packed_size(wf%n_ao-1), X_pck, 1, X_pck, 1))
 !
-         write(output%unit, '(/t6,a28,i3)')     'Number of micro-iterations: ', micro_iteration - 1
-         write(output%unit, '(/t6,a13,f15.12)') 'Gamma:       ', gamma
+      !   write(output%unit, '(/t6,a28,i3)')     'Number of micro-iterations: ', micro_iteration - 1
+         write(output%unit, '(/t6,a13,f15.12)') 'Alpha:       ', gamma ! Alpha is the name used in literature
          write(output%unit, '(t6,a13,f15.12/)') 'Level shift: ', level_shift
+         flush(output%unit)
       !   write(output%unit, '(t3,a28,f15.12/)') 'Rotation norm/trust_radius: ', abs(norm_X/engine%trust_radius)
 !
          X = X*gamma ! restore for next it
@@ -901,7 +842,130 @@ contains
 !
       endif
 !
-   end subroutine solve_level_shifted_Newton_equation_density_based_hf_engine   
+   end subroutine solve_level_shifted_Newton_equation_dmm_hf_engine
 !
 !
-end module density_based_hf_engine_class
+   subroutine determine_conjugacy_factor_dmm_hf_engine(engine, beta, cur_g, prev_g, dim)
+!!
+!!    Determine conjugacy factor
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Determines the conjugacy factor (beta) in the conjugate gradient algorithm,
+!!    i.e. the weight along the previous direction to add to the current direction.
+!!
+      implicit none 
+!
+      class(dmm_hf_engine), intent(in) :: engine 
+!
+      real(dp) :: beta  
+!
+      integer(i15), intent(in) :: dim 
+!
+      real(dp), dimension(dim, 1), intent(in) :: cur_g 
+      real(dp), dimension(dim, 1), intent(in) :: prev_g 
+!
+      real(dp) :: ddot, beta_denominator, beta_numerator
+!
+      beta_denominator = ddot(dim, prev_g, 1, prev_g, 1)
+!
+      if (sqrt(beta_denominator) .lt. 1.0D-15) then 
+!
+!        In the first iteration, the 'previous' gradient is equal to 
+!        zero, which means that there should be no conjugacy factor 
+!
+         beta = zero
+!
+      else
+!
+!        Otherwise, calculate the conjugacy factor 
+!
+         beta_numerator = ddot(dim, cur_g, 1, prev_g, 1) - ddot(dim, cur_g, 1, cur_g, 1)
+!
+         beta = beta_numerator/beta_denominator
+!
+      endif
+!
+   end subroutine determine_conjugacy_factor_dmm_hf_engine
+!
+!
+   subroutine do_line_search_dmm_hf_engine(engine, wf, cur_s, norm_cur_s, cur_g, Po, Pv)
+!!
+!!    Do line search 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Uses a Newton method to determine a zero of the projected 
+!!    gradient (onto the search direction) to some threshold. 
+!!
+!!    There is room for improvement here. It uses numerical differentiation, 
+!!    and it might therefore prove necessary to alter this procedure if it 
+!!    turns out to be too unstable. Quadratic extrapolation of three points 
+!!    might improve convergence and stability, for instance.
+!!
+      implicit none 
+!
+      class(dmm_hf_engine), intent(in) :: engine 
+!
+      class(hf) :: wf 
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao) :: Po
+      real(dp), dimension(wf%n_ao, wf%n_ao) :: Pv
+!
+      real(dp), dimension((wf%n_ao-1)*(wf%n_ao)/2, 1), intent(in) :: cur_s 
+      real(dp), dimension((wf%n_ao-1)*(wf%n_ao)/2, 1), intent(in) :: cur_g 
+!
+      real(dp), intent(in) :: norm_cur_s
+!
+      real(dp) :: alphainit, pinit, alpha0, p0, p1, ddot, alpha, alpha1, alpha_diff_length
+!
+      real(dp), dimension(:,:), allocatable :: tmp_pck 
+!
+      call mem%alloc(tmp_pck, packed_size(wf%n_ao-1), 1)
+!
+      alphainit = zero
+      pinit     = ddot(packed_size(wf%n_ao-1), cur_s, 1, cur_g, 1) ! Projected gradient for current density
+!
+      alpha0 = one 
+      call engine%rotate_and_purify(wf, cur_s, alpha0, norm_cur_s) 
+      call wf%construct_projection_matrices(Po, Pv)
+      call engine%construct_and_pack_gradient(wf, tmp_pck, Po, Pv)
+!
+      p0    = ddot(packed_size(wf%n_ao-1), cur_s, 1, tmp_pck, 1)
+      p1    = p0
+      alpha = alpha0
+!
+      do while (abs(p0/pinit) .gt. engine%line_search_threshold)
+!
+!        Set current differentiation length
+!
+         alpha_diff_length = abs(p1/pinit)*(engine%line_search_threshold)
+
+         alpha1 = alpha0 + alpha_diff_length
+!
+!        Rotate by length to get approximate derivative
+!
+         call engine%rotate_and_purify(wf, cur_s, alpha1-alpha0, norm_cur_s)
+         call wf%construct_projection_matrices(Po, Pv)
+         call engine%construct_and_pack_gradient(wf, tmp_pck, Po, Pv)
+!
+         p1 = ddot(packed_size(wf%n_ao-1), cur_s, 1, tmp_pck, 1)
+!
+!        Do Newton step toward minimum, then rotate to that value
+!        and evaluate new projected gradient p0
+!
+         alpha = alpha0 - p0/((p1-p0)/(alpha1-alpha0)) 
+!
+         call engine%rotate_and_purify(wf, cur_s, alpha-alpha1, norm_cur_s)
+         call wf%construct_projection_matrices(Po, Pv)
+         call engine%construct_and_pack_gradient(wf, tmp_pck, Po, Pv)
+!
+         p0 = ddot(packed_size(wf%n_ao-1), cur_s, 1, tmp_pck, 1)
+         alpha0 = alpha
+!
+      enddo
+!
+      call mem%dealloc(tmp_pck, packed_size(wf%n_ao-1), 1)
+!
+   end subroutine do_line_search_dmm_hf_engine
+!
+!
+end module dmm_hf_engine_class
