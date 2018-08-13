@@ -33,7 +33,7 @@ module dmm_hf_engine_class
 !
       real(dp) :: rotation_norm_threshold = 0.05D0 ! Maximum rotation norm
 !
-      integer(i15) :: diis_dimension = 12
+      integer(i15) :: diis_dimension = 8
 !
       logical :: restart
 !
@@ -581,7 +581,8 @@ contains
 !
       micro_iteration = 1
       micro_iterate = .true.
-      call diis_solver%init('hf_newton', &
+      call diis_solver%init('hf_newton',                &
+                              packed_size(wf%n_ao - 1), &
                               packed_size(wf%n_ao - 1), &
                               engine%diis_dimension)
 !
@@ -617,8 +618,7 @@ contains
 !        Ask DIIS for updated (packed) rotation parameters X
 !
          X_pck = X_pck + RHC_pck
-         call diis_solver%update(RHC_pck, X_pck)
-         X_pck = RHC_pck
+         call diis_solver%update(RHC_pck, X_pck) ! Solution placed in X_pck on exit 
 !
 !        Squareup anti-symmetric rotation matrix gotten from DIIS
 !
@@ -734,8 +734,9 @@ contains
 !
          micro_iteration = 1
          micro_iterate = .true.
-         call diis_solver%init('level_shifted_hf_newton', &
+         call diis_solver%init('level_shifted_hf_newton',      &
                                  packed_size(wf%n_ao - 1) + 1, & 
+                                 packed_size(wf%n_ao - 1) + 1, &
                                  engine%diis_dimension)
 !
          G = gamma*G
@@ -785,10 +786,10 @@ contains
 !           z_dz = z_dz + dz = z + dz
 !
             z_dz = z_dz + dz 
-            call diis_solver%update(dz, z_dz) ! Updated z placed in dz on exit
+            call diis_solver%update(dz, z_dz) ! Updated z placed in z_dz on exit
 !
-            level_shift = dz(1, 1)
-            X_pck(:, 1) = dz(2:(packed_size(wf%n_ao - 1) + 1), 1)
+            level_shift = z_dz(1, 1)
+            X_pck(:, 1) = z_dz(2:(packed_size(wf%n_ao - 1) + 1), 1)
 !
 !           Squareup anti-symmetric rotation matrix gotten from DIIS
 !

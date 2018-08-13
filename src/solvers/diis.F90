@@ -93,8 +93,8 @@ contains
 !
       character(len=*), intent(in) :: name
 !
-      integer(i15), intent(in)     :: n_parameters
-      integer(i15), intent(in)     :: n_equations
+      integer(i15), intent(in) :: n_parameters
+      integer(i15), intent(in) :: n_equations
 !
       integer(i15), intent(in), optional :: diis_dimension
 !
@@ -126,10 +126,11 @@ contains
 !
       class(diis) :: solver
 !
-      real(dp), dimension(solver%n_parameters, 1) :: dx
+      real(dp), dimension(solver%n_equations, 1)  :: dx
       real(dp), dimension(solver%n_parameters, 1) :: x_dx
 !
-      real(dp), dimension(:,:), allocatable :: dx_i ! To hold previous Δ x_i temporarily
+      real(dp), dimension(:,:), allocatable :: dx_i   ! To hold previous Δ x_i temporarily
+      real(dp), dimension(:,:), allocatable :: x_dx_i ! To hold previous x_dx_i temporarily
 !
       real(dp) :: ddot
 !
@@ -156,7 +157,8 @@ contains
 !     :: Compute the current index
 !     (1,2,...,7,8,1,2,...) for the standard diis_dimension = 8
 !
-      current_index = solver%iteration - ((solver%diis_dimension)-1)*((solver%iteration-1)/((solver%diis_dimension)-1))
+      current_index = solver%iteration - &
+               ((solver%diis_dimension)-1)*((solver%iteration-1)/((solver%diis_dimension)-1))
 !
 !     :: Save (Δ x_i) and (x_i + Δ x_i) to files
 !
@@ -176,7 +178,7 @@ contains
 !
       endif
 !
-      write(solver%dx%unit)   (dx(i,1), i = 1, solver%n_parameters)
+      write(solver%dx%unit)   (dx(i,1), i = 1, solver%n_equations)
       write(solver%x_dx%unit) (x_dx(i,1), i = 1, solver%n_parameters)
 !
 !     :: Solve the least squares problem, G * w = H
@@ -215,16 +217,16 @@ contains
 !     Get the parts of the DIIS matrix G not constructed in
 !     the previous iterations
 !
-      call mem%alloc(dx_i, solver%n_parameters, 1) ! Allocate temporary holder of quasi-Newton estimates
+      call mem%alloc(dx_i, solver%n_equations, 1) ! Allocate temporary holder of quasi-Newton estimates
       dx_i = zero
 !
       rewind(solver%dx%unit)
 !
       do i = 1, current_index
 !
-         read(solver%dx%unit) (dx_i(j,1), j = 1, solver%n_parameters)
+         read(solver%dx%unit) (dx_i(j,1), j = 1, solver%n_equations)
 !
-         diis_matrix(current_index,i) = ddot(solver%n_parameters, dx, 1, dx_i, 1)
+         diis_matrix(current_index,i) = ddot(solver%n_equations, dx, 1, dx_i, 1)
          diis_matrix(i,current_index) = diis_matrix(current_index,i)
 !
          diis_matrix(current_index+1,i) = -one
@@ -263,9 +265,11 @@ contains
                   current_index+1, &
                   info)
 !
-!     :: Update the parameters (placed in dx on exit)
+!     :: Update the parameters (place in x_dx on exit)
 !
-      dx = zero
+      x_dx = zero 
+!
+      call mem%alloc(x_dx_i, solver%n_parameters, 1)
 !
       rewind(solver%x_dx%unit)
 !
@@ -273,18 +277,20 @@ contains
 !
 !        Read the x_i + Δ x_i vector
 !
-         x_dx = zero
-         read(solver%x_dx%unit) (x_dx(j, 1), j = 1, solver%n_parameters)
+         x_dx_i = zero
+         read(solver%x_dx%unit) (x_dx_i(j, 1), j = 1, solver%n_parameters)
 !
 !        Add w_i (x_i + Δ x_i) to the amplitudes
 !
-         call daxpy(solver%n_parameters, diis_vector(i, 1), x_dx, 1, dx, 1)
+         call daxpy(solver%n_parameters, diis_vector(i, 1), x_dx_i, 1, x_dx, 1)
 !
       enddo
 !
+      call mem%dealloc(x_dx_i, solver%n_parameters, 1)
+!
 !     Deallocations
 !
-      call mem%dealloc(dx_i, solver%n_parameters, 1)
+      call mem%dealloc(dx_i, solver%n_equations, 1)
       call mem%dealloc(diis_vector, current_index + 1, 1)
       call mem%dealloc(diis_matrix, current_index + 1, current_index+1)
 !
