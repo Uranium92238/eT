@@ -615,6 +615,7 @@ contains
       integer(i15) :: n_sp_in_basis
       integer(i15) :: sig_sp_counter
       integer(i15) :: sp_in_basis
+      integer(kind=4) :: omp_get_thread_num
 !
 !     Integer allocatable arrays
 !
@@ -966,6 +967,9 @@ contains
 !$omp  aop, w, x, y, z, wx, yz, wx_packed, g_AB_CD, n_qual_aop_in_sp) &
 !$omp shared(g_wxyz, n_qual_aop_in_prev_sps, qual_aop)
          do CD_sp = 1, n_qual_sp
+!
+            write(output%unit, *)omp_get_thread_num()
+            flush(output%unit)
 !
             C                = qual_sp(CD_sp, 1)
             D                = qual_sp(CD_sp, 2)

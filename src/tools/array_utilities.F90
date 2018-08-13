@@ -829,7 +829,7 @@ contains
          enddo
       enddo
 !
-      if (info .ne. 0) then
+      if (info .lt. 0) then
          write(*,*) info
          stop 'Cholesky decomposition failed! Something wrong in call to dpstrf'
       end if

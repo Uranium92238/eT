@@ -11,7 +11,7 @@ module molecular_system_class
    use interval_class
    use atom_init
    use libint_initialization
-   use integral_manager_class
+   use ao_integral_manager_class
 !
    implicit none
 !
@@ -26,7 +26,7 @@ module molecular_system_class
 !
       type(atomic), dimension(:), allocatable :: atoms
 !
-      type(integral_manager) :: ao_integrals
+      type(ao_integral_manager) :: ao_integrals
 !
    contains
 !

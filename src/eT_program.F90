@@ -26,8 +26,8 @@ program eT_program
    type(dmm_hf_engine) :: density_hf_engine
    type(eri_cd_engine) :: chol_engine
 !
-   type(hf) :: wf
-   !type(mlhf) :: wf
+  ! type(hf) :: wf
+   type(mlhf) :: wf
 !
 !
 !  Initialize memory and disk here
@@ -52,13 +52,16 @@ program eT_program
    call wf%initialize()
   ! call wf%eri_decomp_test_w_active_dens()
 !
-  !  call chol_engine%initialize(wf%system)
-  !  call chol_engine%solve(wf%system)
-  !  call chol_engine%finalize()
+  ! call chol_engine%initialize(wf%system)
+  ! call chol_engine%solve(wf%system)
+  ! call chol_engine%finalize()
 !!
 !  Ask the Hartree-Fock (HF) engine to find the HF solution
-!
-   call engine%solve(wf)
+
+   !call engine%solve(wf)
+    !call db_engine%solve(wf)
+
+!   call engine%solve(wf)
  !  call density_hf_engine%solve(wf)
 !
 !  Finalize the wavefunction

@@ -23,8 +23,6 @@ module hf_class
       real(dp), dimension(:,:), allocatable :: ao_fock
       real(dp), dimension(:,:), allocatable :: orbital_energies
 !
-      type(integral_manager) :: integrals
-!
 	contains
 !
 !     Initialize and finalize wavefunction
