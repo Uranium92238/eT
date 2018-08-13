@@ -16,6 +16,8 @@ module hf_class
 !
    type, extends(wavefunction):: hf
 !
+      integer(i15) :: n_so ! Number of linearly independent AOs
+!
       real(dp) :: hf_energy
 !
       real(dp), dimension(:,:), allocatable :: ao_density
@@ -82,7 +84,7 @@ module hf_class
       procedure :: construct_roothan_hall_gradient             => construct_roothan_hall_gradient_hf
       procedure :: construct_stationary_roothan_hall_condition => construct_stationary_roothan_hall_condition_hf
 !
-      procedure :: construct_sp_eri_schwarz =>  construct_sp_eri_schwarz_hf
+      procedure :: construct_sp_eri_schwarz => construct_sp_eri_schwarz_hf
       procedure :: determine_degeneracy     => determine_degeneracy_hf
 !
    end type hf
@@ -1127,11 +1129,10 @@ contains
       call full_cholesky_decomposition_system(wf%ao_overlap, L, wf%n_ao, rank, &
                                                       1.0D-32, used_diag)
 !
-      if (rank .lt. wf%n_ao) write(output%unit, *) 'Warning: rank lower than full dim for S = L L^T'
-!
-     ! write(output%unit, *) 'rank:', rank
-     ! write(output%unit, *) 'used_diag:', used_diag
-     ! flush(output%unit)
+      ! write(output%unit, *) 'n_ao:', wf%n_ao 
+      ! write(output%unit, *) 'rank:', rank
+      ! write(output%unit, *) 'used_diag:', used_diag
+      ! flush(output%unit)
 !
 !     Make permutation matrix P
 !

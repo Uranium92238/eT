@@ -28,7 +28,7 @@ module dmm_hf_solver_class
                                                             ! than initial projected gradient (s^T g(alpha))
 !
       real(dp) :: trust_radius                     = 0.01D0 
-      real(dp) :: relative_trust_radius_threshold  = 0.1D0
+      real(dp) :: relative_trust_radius_threshold  = 0.01D0
       real(dp) :: relative_shifted_micro_threshold = 1.0D-3 ! Level shifted Newton equations threshold
 !
       real(dp) :: rotation_norm_threshold = 0.05D0 ! Maximum rotation norm
