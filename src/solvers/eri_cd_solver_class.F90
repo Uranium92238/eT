@@ -1,7 +1,7 @@
-module eri_cd_engine_class
+module eri_cd_solver_class
 !
 !!
-!!    Electronic repulsion ao_integrals engine class module
+!!    Electronic repulsion ao_integrals solver class module
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !
@@ -21,7 +21,7 @@ module eri_cd_engine_class
 !
    implicit none
 !
-   type :: eri_cd_engine
+   type :: eri_cd_solver
 !
       real(dp) :: threshold   = 1.0D-8
       real(dp) :: span        = 1.0D-2
@@ -42,142 +42,142 @@ module eri_cd_engine_class
 !
    contains
 !
-      procedure :: initialize => initialize_eri_cd_engine
-      procedure :: solve      => solve_eri_cd_engine
-      procedure :: finalize   => finalize_eri_cd_engine
+      procedure :: initialize => initialize_eri_cd_solver
+      procedure :: solve      => solve_eri_cd_solver
+      procedure :: finalize   => finalize_eri_cd_solver
 !
-      procedure :: invert_overlap_cholesky_vecs                => invert_overlap_cholesky_vecs_eri_cd_engine
-      procedure :: cholesky_vecs_diagonal_test                 => cholesky_vecs_diagonal_test_eri_cd_engine
-      procedure :: construct_significant_diagonal              => construct_significant_diagonal_eri_cd_engine
-      procedure :: construct_significant_diagonal_atomic       => construct_significant_diagonal_atomic_eri_cd_engine
-      procedure :: determine_auxilliary_cholesky_basis         => determine_auxilliary_cholesky_basis_eri_cd_engine
-      procedure :: construct_overlap_cholesky_vecs             => construct_overlap_cholesky_vecs_eri_cd_engine
-      procedure :: construct_cholesky_vectors                  => construct_cholesky_vectors_eri_cd_engine
+      procedure :: invert_overlap_cholesky_vecs                => invert_overlap_cholesky_vecs_eri_cd_solver
+      procedure :: cholesky_vecs_diagonal_test                 => cholesky_vecs_diagonal_test_eri_cd_solver
+      procedure :: construct_significant_diagonal              => construct_significant_diagonal_eri_cd_solver
+      procedure :: construct_significant_diagonal_atomic       => construct_significant_diagonal_atomic_eri_cd_solver
+      procedure :: determine_auxilliary_cholesky_basis         => determine_auxilliary_cholesky_basis_eri_cd_solver
+      procedure :: construct_overlap_cholesky_vecs             => construct_overlap_cholesky_vecs_eri_cd_solver
+      procedure :: construct_cholesky_vectors                  => construct_cholesky_vectors_eri_cd_solver
 !
-      procedure :: read_info  => read_info_eri_cd_engine
+      procedure :: read_info  => read_info_eri_cd_solver
 !
-   end type eri_cd_engine
+   end type eri_cd_solver
 !
 !
 contains
 !
 !
-   subroutine initialize_eri_cd_engine(engine, system)
+   subroutine initialize_eri_cd_solver(solver, system)
 !!
 !!
       implicit none
 !
-      class(eri_cd_engine) :: engine
+      class(eri_cd_solver) :: solver
       type(molecular_system) :: system
 !
-      call engine%read_info()
+      call solver%read_info()
 !
-      engine%n_aop   = system%get_n_aos()*(system%get_n_aos()+1)/2 ! Number of ao pairs packed
-      engine%n_ao    = system%get_n_aos()
-      engine%n_s     = system%get_n_shells()
-      engine%n_sp    = engine%n_s*(engine%n_s + 1)/2         ! Number of shell pairs packed
+      solver%n_aop   = system%get_n_aos()*(system%get_n_aos()+1)/2 ! Number of ao pairs packed
+      solver%n_ao    = system%get_n_aos()
+      solver%n_s     = system%get_n_shells()
+      solver%n_sp    = solver%n_s*(solver%n_s + 1)/2         ! Number of shell pairs packed
 !
 !
-      call engine%diagonal_info_target%init('target_diagonal', 'sequential', 'unformatted')
-      call engine%cholesky_aux%init('cholesky_aux', 'sequential', 'unformatted')
-      call engine%cholesky_aux_inverse%init('cholesky_aux_inverse', 'sequential', 'unformatted')
-      call engine%basis_shell_data%init('basis_shell_info', 'sequential', 'unformatted')
+      call solver%diagonal_info_target%init('target_diagonal', 'sequential', 'unformatted')
+      call solver%cholesky_aux%init('cholesky_aux', 'sequential', 'unformatted')
+      call solver%cholesky_aux_inverse%init('cholesky_aux_inverse', 'sequential', 'unformatted')
+      call solver%basis_shell_data%init('basis_shell_info', 'sequential', 'unformatted')
 !
-      if (engine%one_center) then
+      if (solver%one_center) then
 !
-         call engine%diagonal_info_one_center%init('one_center_diagonal', 'sequential', 'unformatted')
+         call solver%diagonal_info_one_center%init('one_center_diagonal', 'sequential', 'unformatted')
 !
       endif
 !
 
-   end subroutine initialize_eri_cd_engine
+   end subroutine initialize_eri_cd_solver
 !
 !
-   subroutine solve_eri_cd_engine(engine, system, screening_vector)
+   subroutine solve_eri_cd_solver(solver, system, screening_vector)
 !!
 !!
       implicit none
 !
-      class(eri_cd_engine) :: engine
+      class(eri_cd_solver) :: solver
 !
       type(molecular_system) :: system
 !
-      real(dp), dimension(engine%n_ao,1), optional :: screening_vector
+      real(dp), dimension(solver%n_ao,1), optional :: screening_vector
 !
       write(output%unit, '(/a51/)') ':: Cholesky decomposition of two-electron ao_integrals'
       flush(output%unit)
 !
-      write(output%unit, '(a20, i10)')'Number of aos:      ', engine%n_ao
-      write(output%unit, '(a20, i10)')'Number of ao pairs: ', engine%n_aop
-      write(output%unit, '(a20, i10)')'Number of shells:   ', engine%n_s
+      write(output%unit, '(a20, i10)')'Number of aos:      ', solver%n_ao
+      write(output%unit, '(a20, i10)')'Number of ao pairs: ', solver%n_aop
+      write(output%unit, '(a20, i10)')'Number of shells:   ', solver%n_s
 !
-      write(output%unit, '(/a21, e12.4)') 'Target threshold is: ', engine%threshold
-      write(output%unit, '(a21, e12.4/)') 'Span factor:         ', engine%span
+      write(output%unit, '(/a21, e12.4)') 'Target threshold is: ', solver%threshold
+      write(output%unit, '(a21, e12.4/)') 'Span factor:         ', solver%span
       flush(output%unit)
 !
       if (present(screening_vector)) then
 !
-         call engine%construct_significant_diagonal(system, screening_vector)
+         call solver%construct_significant_diagonal(system, screening_vector)
 !
       else 
 !
-         call engine%construct_significant_diagonal(system)
+         call solver%construct_significant_diagonal(system)
 !
       endif
 !
-      if (engine%one_center) then
+      if (solver%one_center) then
 !
          if (present(screening_vector)) then
 !
-            call engine%construct_significant_diagonal_atomic(system, screening_vector)
+            call solver%construct_significant_diagonal_atomic(system, screening_vector)
 !
          else 
 !
-            call engine%construct_significant_diagonal_atomic(system)
+            call solver%construct_significant_diagonal_atomic(system)
 !
          endif
 !
-         call engine%determine_auxilliary_cholesky_basis(system, engine%diagonal_info_one_center)
+         call solver%determine_auxilliary_cholesky_basis(system, solver%diagonal_info_one_center)
 !
      else
 !
-        call engine%determine_auxilliary_cholesky_basis(system, engine%diagonal_info_target)
+        call solver%determine_auxilliary_cholesky_basis(system, solver%diagonal_info_target)
 !
      endif
 !
-     call engine%construct_overlap_cholesky_vecs(system)
-     call engine%invert_overlap_cholesky_vecs()
+     call solver%construct_overlap_cholesky_vecs(system)
+     call solver%invert_overlap_cholesky_vecs()
 !
-      if (engine%construct_vectors) then
+      if (solver%construct_vectors) then
 !
-         call engine%construct_cholesky_vectors(system)
-         call engine%cholesky_vecs_diagonal_test()
+         call solver%construct_cholesky_vectors(system)
+         call solver%cholesky_vecs_diagonal_test()
 !
       endif
 !
-   end subroutine solve_eri_cd_engine
+   end subroutine solve_eri_cd_solver
 !
 !
-   subroutine finalize_eri_cd_engine(engine)
+   subroutine finalize_eri_cd_solver(solver)
 !!
 !!
       implicit none
 !
-      class(eri_cd_engine) :: engine
+      class(eri_cd_solver) :: solver
 !
-   end subroutine finalize_eri_cd_engine
+   end subroutine finalize_eri_cd_solver
 !
 !
-   subroutine construct_significant_diagonal_eri_cd_engine(engine, system, screening_vector)
+   subroutine construct_significant_diagonal_eri_cd_solver(solver, system, screening_vector)
 !!
 !!
 !!
       implicit none
 !
-      class(eri_cd_engine) :: engine
+      class(eri_cd_solver) :: solver
       class(molecular_system) :: system
 !
-      real(dp), dimension(engine%n_ao,1), optional :: screening_vector
+      real(dp), dimension(solver%n_ao,1), optional :: screening_vector
 !
       integer(i15) ::sp, n_sig_aop, n_sig_sp, current_sig_sp
 !
@@ -189,7 +189,7 @@ contains
 !
       logical, dimension(:), allocatable :: sig_sp
 !
-      call mem%alloc(screening_vector_local, engine%n_aop, 1)
+      call mem%alloc(screening_vector_local, solver%n_aop, 1)
 !
       if (present(screening_vector)) then
 !
@@ -203,15 +203,15 @@ contains
 !
 !     Pre-screening of full diagonal
 !
-      allocate(sig_sp(engine%n_sp))
+      allocate(sig_sp(solver%n_sp))
       sig_sp = .false.
 !
       sp = 1        ! Shell pair number
       n_sig_aop = 0 ! Number of significant AO pairs
       n_sig_sp  = 0 ! Number of significant shell pairs
 !
-      do B = 1, engine%n_s
-         do A = B, engine%n_s
+      do B = 1, solver%n_s
+         do A = B, solver%n_s
 !
             A_interval = system%get_shell_limits(A)
             B_interval = system%get_shell_limits(B)
@@ -245,7 +245,7 @@ contains
 !
 !           Determine whether shell pair is significant
 !
-            sig_sp(sp) = is_significant(D_AB, (A_interval%size)*(B_interval%size), engine%threshold)
+            sig_sp(sp) = is_significant(D_AB, (A_interval%size)*(B_interval%size), solver%threshold)
 !
             call mem%dealloc(D_AB, (A_interval%size)*(B_interval%size), 1)
 !
@@ -264,7 +264,7 @@ contains
       enddo
 !
       write(output%unit, '(/a)')'Reduction of shell pairs:'
-      write(output%unit, '(a33, 2x, i9)')'Total number of shell pairs:     ', engine%n_sp
+      write(output%unit, '(a33, 2x, i9)')'Total number of shell pairs:     ', solver%n_sp
       write(output%unit, '(a33, 2x, i9)')'Significant shell pairs:         ', n_sig_sp
       write(output%unit, '(a33, 2x, i9)')'Significant ao pairs:            ', n_sig_aop
       flush(output%unit)
@@ -285,8 +285,8 @@ contains
       current_sig_sp  = 1
       first_sig_aop   = 1
 !
-      do B = 1, engine%n_s
-         do A = B, engine%n_s
+      do B = 1, solver%n_s
+         do A = B, solver%n_s
 !
             if (sig_sp(sp)) then
 !
@@ -347,7 +347,7 @@ contains
          enddo
       enddo
 !
-      call mem%dealloc(screening_vector_local, engine%n_aop, 1)
+      call mem%dealloc(screening_vector_local, solver%n_aop, 1)
 !
 !     Write screening_info_file containing
 !
@@ -355,35 +355,35 @@ contains
 !        2. sig_sp - vector of logicals to describe which shell pairs are significant
 !        3. D_xy = ( xy | xy ), the significant diagonal.
 !
-      call disk%open_file(engine%diagonal_info_target, 'write')
-      rewind(engine%diagonal_info_target%unit)
+      call disk%open_file(solver%diagonal_info_target, 'write')
+      rewind(solver%diagonal_info_target%unit)
 !
-      write(engine%diagonal_info_target%unit) n_sig_sp, n_sig_aop
-      write(engine%diagonal_info_target%unit) sig_sp
-      write(engine%diagonal_info_target%unit) D_xy
-      write(engine%diagonal_info_target%unit) screening_vector_reduced
+      write(solver%diagonal_info_target%unit) n_sig_sp, n_sig_aop
+      write(solver%diagonal_info_target%unit) sig_sp
+      write(solver%diagonal_info_target%unit) D_xy
+      write(solver%diagonal_info_target%unit) screening_vector_reduced
 !
-      call disk%close_file(engine%diagonal_info_target)
+      call disk%close_file(solver%diagonal_info_target)
 !
       deallocate(sig_sp)
       call mem%dealloc(D_xy, n_sig_aop, 1)
       call mem%dealloc(screening_vector_reduced, n_sig_aop, 1)
 !
-   end subroutine construct_significant_diagonal_eri_cd_engine
+   end subroutine construct_significant_diagonal_eri_cd_solver
 !
 !
-   subroutine construct_significant_diagonal_atomic_eri_cd_engine&
-                                    (engine, system, screening_vector)
+   subroutine construct_significant_diagonal_atomic_eri_cd_solver&
+                                    (solver, system, screening_vector)
 !!
 !!    ...
 !!
 !!
       implicit none
 !
-      class(eri_cd_engine) :: engine
+      class(eri_cd_solver) :: solver
       class(molecular_system) :: system
 
-      real(dp), dimension(engine%n_ao,1), optional :: screening_vector
+      real(dp), dimension(solver%n_ao,1), optional :: screening_vector
 !
       integer(i15) :: sp, n_sig_aop, n_sig_sp, current_sig_sp
 !
@@ -395,7 +395,7 @@ contains
 !
       logical, dimension(:), allocatable :: sig_sp
 !
-      call mem%alloc(screening_vector_local, engine%n_aop, 1)
+      call mem%alloc(screening_vector_local, solver%n_aop, 1)
 !
       if (present(screening_vector)) then
 !
@@ -409,15 +409,15 @@ contains
 !
 !     Pre-screening of full diagonal
 !
-      allocate(sig_sp(engine%n_sp))
+      allocate(sig_sp(solver%n_sp))
       sig_sp = .false.
 !
       sp = 0        ! Shell pair number
       n_sig_aop = 0 ! Number of significant AO pairs
       n_sig_sp  = 0 ! Number of significant shell pairs
 !
-      do B = 1, engine%n_s
-         do A = B, engine%n_s
+      do B = 1, solver%n_s
+         do A = B, solver%n_s
 !
             sp = sp + 1
 !
@@ -455,7 +455,7 @@ contains
 !
 !              Determine whether shell pair is significant
 !
-               sig_sp(sp) = is_significant(D_AB, (A_interval%size)*(B_interval%size), engine%threshold)
+               sig_sp(sp) = is_significant(D_AB, (A_interval%size)*(B_interval%size), solver%threshold)
 !
                call mem%dealloc(D_AB, (A_interval%size)*(B_interval%size), 1)
 !
@@ -474,7 +474,7 @@ contains
       enddo
 !
       write(output%unit, '(/a)')'Reduction of shell pairs:'
-      write(output%unit, '(a33, 2x, i9)')'Total number of shell pairs:     ', engine%n_sp
+      write(output%unit, '(a33, 2x, i9)')'Total number of shell pairs:     ', solver%n_sp
       write(output%unit, '(a33, 2x, i9)')'Significant shell pairs:         ', n_sig_sp
       write(output%unit, '(a33, 2x, i9)')'Significant ao pairs:            ', n_sig_aop
       flush(output%unit)
@@ -494,8 +494,8 @@ contains
       current_sig_sp  = 1
       first_sig_aop   = 1
 !
-      do B = 1, engine%n_s
-         do A = B, engine%n_s
+      do B = 1, solver%n_s
+         do A = B, solver%n_s
 !
             if (sig_sp(sp)) then
 !
@@ -556,7 +556,7 @@ contains
          enddo
       enddo
 !
-      call mem%dealloc(screening_vector_local, engine%n_aop, 1)
+      call mem%dealloc(screening_vector_local, solver%n_aop, 1)
 !
 !     Write screening_info_file containing
 !
@@ -564,31 +564,31 @@ contains
 !        2. sig_sp - vector of logicals to describe which shell pairs are significant
 !        3. D_xy = ( xy | xy ), the significant diagonal.
 !
-      call disk%open_file(engine%diagonal_info_one_center, 'write')
-      rewind(engine%diagonal_info_one_center%unit)
+      call disk%open_file(solver%diagonal_info_one_center, 'write')
+      rewind(solver%diagonal_info_one_center%unit)
 !
-      write(engine%diagonal_info_one_center%unit) n_sig_sp, n_sig_aop
-      write(engine%diagonal_info_one_center%unit) sig_sp
-      write(engine%diagonal_info_one_center%unit) D_xy
-      write(engine%diagonal_info_one_center%unit) screening_vector_reduced
+      write(solver%diagonal_info_one_center%unit) n_sig_sp, n_sig_aop
+      write(solver%diagonal_info_one_center%unit) sig_sp
+      write(solver%diagonal_info_one_center%unit) D_xy
+      write(solver%diagonal_info_one_center%unit) screening_vector_reduced
 !
-      call disk%close_file(engine%diagonal_info_one_center)
+      call disk%close_file(solver%diagonal_info_one_center)
 !
       deallocate(sig_sp)
       call mem%dealloc(D_xy, n_sig_aop, 1)
       call mem%dealloc(screening_vector_reduced, n_sig_aop, 1)
 !
-   end subroutine construct_significant_diagonal_atomic_eri_cd_engine
+   end subroutine construct_significant_diagonal_atomic_eri_cd_solver
 !
 !
-   subroutine determine_auxilliary_cholesky_basis_eri_cd_engine(engine, system, diagonal_info)
+   subroutine determine_auxilliary_cholesky_basis_eri_cd_solver(solver, system, diagonal_info)
 !!
 !!    ....
 !!
 !!
       implicit none
 !
-      class(eri_cd_engine), intent(inout) :: engine
+      class(eri_cd_solver), intent(inout) :: solver
 !
       class(molecular_system), intent(in) :: system
 !
@@ -700,7 +700,7 @@ contains
 !
       call mem%alloc(D_xy, n_sig_aop, 1)
       call mem%alloc(screening_vector, n_sig_aop, 1)
-      allocate(sig_sp(engine%n_sp))
+      allocate(sig_sp(solver%n_sp))
 !
       read(diagonal_info%unit) sig_sp
       read(diagonal_info%unit) D_xy
@@ -728,8 +728,8 @@ contains
       current_sig_sp  = 1
       first_sig_aop   = 1
 !
-      do B = 1, engine%n_s
-         do A = B, engine%n_s
+      do B = 1, solver%n_s
+         do A = B, solver%n_s
 !
             if (sig_sp(sp)) then
 !
@@ -795,8 +795,8 @@ contains
       '-------------------------------------------------------------------------------------------------------'
       flush(output%unit)
 !
-      engine%iteration   = 0
-      engine%n_cholesky  = 0
+      solver%iteration   = 0
+      solver%n_cholesky  = 0
 !
       sig_neg = 0 ! Counts number of significant neative diagonals (absolute value > 10^-10)
 !
@@ -811,7 +811,7 @@ contains
 !
          write_warning = .true. ! Logical used to ensure warning of significant negative diagonal only appears once per iteration
 !
-         engine%iteration = engine%iteration + 1
+         solver%iteration = solver%iteration + 1
 !
 !        Shell maximums and shell maximums indices vectors
 !
@@ -853,8 +853,8 @@ contains
 !
          call mem%dealloc(max_in_sig_sp, n_sig_sp, 1)
 !
-         call mem%alloc_int(qual_aop, engine%max_qual, 3)
-         call mem%alloc_int(qual_sp, engine%n_sp, 3)
+         call mem%alloc_int(qual_aop, solver%max_qual, 3)
+         call mem%alloc_int(qual_sp, solver%n_sp, 3)
          qual_sp = 0
          qual_aop = 0
 !
@@ -869,7 +869,7 @@ contains
 !
             do aop = first_sig_aop, last_sig_aop
 !
-               if ((D_xy(aop, 1) .ge. engine%span*D_max_full) .and. (n_qual_aop .lt. engine%max_qual)) then
+               if ((D_xy(aop, 1) .ge. solver%span*D_max_full) .and. (n_qual_aop .lt. solver%max_qual)) then
 !
                   n_qual_aop_in_sp  = n_qual_aop_in_sp + 1
                   n_qual_aop        = n_qual_aop + 1
@@ -916,7 +916,7 @@ contains
 !
             endif
 !
-            if (n_qual_aop == engine%max_qual) then
+            if (n_qual_aop == solver%max_qual) then
 !
                exit
 !
@@ -934,8 +934,8 @@ contains
          qual_aop_copy(:, :) = qual_aop(1 : n_qual_aop, :)
          qual_sp_copy(:, :)  = qual_sp(1 : n_qual_sp, :)
 !
-         call mem%dealloc_int(qual_aop, engine%max_qual, 3)
-         call mem%dealloc_int(qual_sp, engine%n_sp, 3)
+         call mem%dealloc_int(qual_aop, solver%max_qual, 3)
+         call mem%dealloc_int(qual_sp, solver%n_sp, 3)
 !
          call mem%alloc_int(qual_aop, n_qual_aop, 3)
          call mem%alloc_int(qual_sp, n_qual_sp, 3)
@@ -1048,7 +1048,7 @@ contains
 !
          call cpu_time(s_construct_time)
 !
-         if (engine%n_cholesky .ne. 0) then
+         if (solver%n_cholesky .ne. 0) then
 !
             do I = 1, cholesky_array%n_nodes
 !
@@ -1081,9 +1081,9 @@ contains
 !
             enddo
 !
-            call mem%alloc_int(cholesky_basis, engine%n_cholesky + n_qual_aop, 3)
-            cholesky_basis(1 : engine%n_cholesky, :) = cholesky_basis_new(:, :)
-            call mem%dealloc_int(cholesky_basis_new, engine%n_cholesky, 3)
+            call mem%alloc_int(cholesky_basis, solver%n_cholesky + n_qual_aop, 3)
+            cholesky_basis(1 : solver%n_cholesky, :) = cholesky_basis_new(:, :)
+            call mem%dealloc_int(cholesky_basis_new, solver%n_cholesky, 3)
 !
          else
 !
@@ -1125,16 +1125,16 @@ contains
 !
             enddo
 !
-            if ((D_max*screening_vector(xy_max, 1) .gt. engine%threshold) &
-               .and. (D_max .ge. engine%span*D_max_full)) then
+            if ((D_max*screening_vector(xy_max, 1) .gt. solver%threshold) &
+               .and. (D_max .ge. solver%span*D_max_full)) then
 !
-               cholesky_basis(engine%n_cholesky + current_qual, 1) = qual_aop(qual_max(current_qual, 1), 1)
-               cholesky_basis(engine%n_cholesky + current_qual, 2) = qual_aop(qual_max(current_qual, 1), 2)
+               cholesky_basis(solver%n_cholesky + current_qual, 1) = qual_aop(qual_max(current_qual, 1), 1)
+               cholesky_basis(solver%n_cholesky + current_qual, 2) = qual_aop(qual_max(current_qual, 1), 2)
 !
                A = system%basis2shell(qual_aop(qual_max(current_qual, 1), 1))
                B = system%basis2shell(qual_aop(qual_max(current_qual, 1), 2))
 !
-               cholesky_basis(engine%n_cholesky + current_qual, 3) = get_sp_from_shells(A, B, engine%n_s)
+               cholesky_basis(solver%n_cholesky + current_qual, 3) = get_sp_from_shells(A, B, solver%n_s)
 !
                cholesky_new(: , current_qual) = g_wxyz(:, qual_max(current_qual, 1))
 !
@@ -1197,7 +1197,7 @@ contains
                      D_xy(xy, 1) = zero
                      approx_diagonal_accumulative(xy, 1) = zero
 !
-                  elseif ((D_xy(xy, 1) - approx_diagonal_accumulative(xy, 1))*screening_vector(xy,1) .lt. engine%threshold) then
+                  elseif ((D_xy(xy, 1) - approx_diagonal_accumulative(xy, 1))*screening_vector(xy,1) .lt. solver%threshold) then
 !
                      D_xy(xy, 1) = zero
                      approx_diagonal_accumulative(xy, 1) = zero
@@ -1241,7 +1241,7 @@ contains
 !
          sig_sp_counter = 0
 !
-         do sp = 1, engine%n_sp
+         do sp = 1, solver%n_sp
 !
             if (sig_sp(sp)) then
 !
@@ -1251,7 +1251,7 @@ contains
                last  = sig_sp_to_first_sig_aop(sig_sp_counter + 1, 1) - 1
 !
                new_sig_sp(sig_sp_counter) = is_significant(D_xy(first:last, 1), &
-                                                last - first + 1, engine%threshold, &
+                                                last - first + 1, solver%threshold, &
                                                 screening_vector(first:last, 1) )
 !
                sig_sp(sp) = new_sig_sp(sig_sp_counter)
@@ -1383,9 +1383,9 @@ contains
             cholesky_new => null()
 !
 !
-            call mem%alloc_int(cholesky_basis_new, engine%n_cholesky + n_new_cholesky, 3)
-            cholesky_basis_new(:, :) = cholesky_basis(1 : engine%n_cholesky + n_new_cholesky, :)
-            call mem%dealloc_int(cholesky_basis, engine%n_cholesky + n_qual_aop, 3)
+            call mem%alloc_int(cholesky_basis_new, solver%n_cholesky + n_new_cholesky, 3)
+            cholesky_basis_new(:, :) = cholesky_basis(1 : solver%n_cholesky + n_new_cholesky, :)
+            call mem%dealloc_int(cholesky_basis, solver%n_cholesky + n_qual_aop, 3)
 !
    !        Deallocate old lists & reallocate + copy over new lists
 !
@@ -1404,13 +1404,13 @@ contains
             n_sig_sp = n_new_sig_sp
             n_sig_aop = n_new_sig_aop
 !
-            engine%n_cholesky = engine%n_cholesky + n_new_cholesky
+            solver%n_cholesky = solver%n_cholesky + n_new_cholesky
 !
             call mem%dealloc_int(qual_aop, n_qual_aop, 3)
             call mem%dealloc_int(qual_sp, n_qual_sp, 3)
 !
             write(output%unit, '(i4, 8x, i9, 2x, a1, i6, 9x, e12.5, 4x, i4, 8x, i7, 8x, i13)') &
-            engine%iteration, n_sig_aop,'/', n_sig_sp, D_max_full , n_qual_aop, engine%n_cholesky, engine%n_cholesky*n_sig_aop
+            solver%iteration, n_sig_aop,'/', n_sig_sp, D_max_full , n_qual_aop, solver%n_cholesky, solver%n_cholesky*n_sig_aop
             flush(output%unit)
 !
          else
@@ -1422,16 +1422,16 @@ contains
 !
             call mem%dealloc(D_xy, n_sig_aop, 1)
 !
-            call mem%alloc_int(cholesky_basis_new, engine%n_cholesky + n_new_cholesky, 3)
-            cholesky_basis_new(:, :) = cholesky_basis(1 : engine%n_cholesky + n_new_cholesky, :)
-            call mem%dealloc_int(cholesky_basis, engine%n_cholesky + n_qual_aop, 3)
+            call mem%alloc_int(cholesky_basis_new, solver%n_cholesky + n_new_cholesky, 3)
+            cholesky_basis_new(:, :) = cholesky_basis(1 : solver%n_cholesky + n_new_cholesky, :)
+            call mem%dealloc_int(cholesky_basis, solver%n_cholesky + n_qual_aop, 3)
 !
-            engine%n_cholesky = engine%n_cholesky + n_new_cholesky
+            solver%n_cholesky = solver%n_cholesky + n_new_cholesky
 !
             done = .true.
 !
             write(output%unit, '(i4, 8x, i9, 2x, a1, i6, 9x, e12.5, 4x, i4, 8x, i7, 8x, i13)') &
-            engine%iteration, 0,'/',0, D_max_full, n_qual_aop, engine%n_cholesky, 0
+            solver%iteration, 0,'/',0, D_max_full, n_qual_aop, solver%n_cholesky, 0
             flush(output%unit)
 !
          endif
@@ -1461,17 +1461,17 @@ contains
 !     Construct a list of all shell pairs (and shells) that contain elements of the basis
 !     and how many elements of the basis they contain
 !
-      call mem%alloc_int(basis_shell_info_full, engine%n_sp, 4) ! A, B, AB, n_basis_aops_in_sp
+      call mem%alloc_int(basis_shell_info_full, solver%n_sp, 4) ! A, B, AB, n_basis_aops_in_sp
       basis_shell_info_full = 0
 !
       n_sp_in_basis = 0
 !
-      do i = 1, engine%n_cholesky
+      do i = 1, solver%n_cholesky
 !
          A = system%basis2shell(cholesky_basis_new(i, 1))
          B = system%basis2shell(cholesky_basis_new(i, 2))
 !
-         AB = get_sp_from_shells(A, B, engine%n_s)
+         AB = get_sp_from_shells(A, B, solver%n_s)
 !
          found = .false.
 !
@@ -1500,7 +1500,7 @@ contains
 !
       call mem%alloc_int(basis_shell_info, n_sp_in_basis, 4)
       basis_shell_info(:, :) = basis_shell_info_full(1:n_sp_in_basis, :)
-      call mem%dealloc_int(basis_shell_info_full, engine%n_sp, 4)
+      call mem%dealloc_int(basis_shell_info_full, solver%n_sp, 4)
 !
 !     Write basis_shell_data file containing
 !
@@ -1508,27 +1508,27 @@ contains
 !        2. basis_shell_info
 !        3. cholesky_basis
 !
-      call disk%open_file(engine%basis_shell_data, 'write', 'rewind')
+      call disk%open_file(solver%basis_shell_data, 'write', 'rewind')
 !
-      write(engine%basis_shell_data%unit) n_sp_in_basis
-      write(engine%basis_shell_data%unit) basis_shell_info
-      write(engine%basis_shell_data%unit) cholesky_basis_new
+      write(solver%basis_shell_data%unit) n_sp_in_basis
+      write(solver%basis_shell_data%unit) basis_shell_info
+      write(solver%basis_shell_data%unit) cholesky_basis_new
 !
-      call disk%close_file(engine%basis_shell_data)
+      call disk%close_file(solver%basis_shell_data)
 !
       call mem%dealloc_int(basis_shell_info, n_sp_in_basis, 4)
-      call mem%dealloc_int(cholesky_basis_new, engine%n_cholesky, 3)
+      call mem%dealloc_int(cholesky_basis_new, solver%n_cholesky, 3)
 !
-   end subroutine determine_auxilliary_cholesky_basis_eri_cd_engine
+   end subroutine determine_auxilliary_cholesky_basis_eri_cd_solver
 !
 !
-   subroutine construct_overlap_cholesky_vecs_eri_cd_engine(engine, system)
+   subroutine construct_overlap_cholesky_vecs_eri_cd_solver(solver, system)
 !!
 !!
 !!
       implicit none
 !
-      class(eri_cd_engine) :: engine
+      class(eri_cd_solver) :: solver
 !
       type(molecular_system) :: system
 !
@@ -1577,23 +1577,23 @@ contains
 !
 !     Read basis_shell_data
 !
-      call disk%open_file(engine%basis_shell_data, 'read')
-      rewind(engine%basis_shell_data%unit)
+      call disk%open_file(solver%basis_shell_data, 'read')
+      rewind(solver%basis_shell_data%unit)
 !
-      read(engine%basis_shell_data%unit) n_sp_in_basis
+      read(solver%basis_shell_data%unit) n_sp_in_basis
 !
       call mem%alloc_int(basis_shell_info, n_sp_in_basis, 4)
-      call mem%alloc_int(cholesky_basis, engine%n_cholesky, 3)
+      call mem%alloc_int(cholesky_basis, solver%n_cholesky, 3)
 !
-      read(engine%basis_shell_data%unit) basis_shell_info
-      read(engine%basis_shell_data%unit) cholesky_basis
+      read(solver%basis_shell_data%unit) basis_shell_info
+      read(solver%basis_shell_data%unit) cholesky_basis
 !
-      call disk%close_file(engine%basis_shell_data, 'delete')
+      call disk%close_file(solver%basis_shell_data, 'delete')
 !
 !
 !     Construct integrals (J | J')
 !
-      call mem%alloc(integrals_auxiliary_packed, engine%n_cholesky*(engine%n_cholesky+1)/2, 1)
+      call mem%alloc(integrals_auxiliary_packed, solver%n_cholesky*(solver%n_cholesky+1)/2, 1)
 !
 !$omp parallel do &
 !$omp schedule(dynamic) &
@@ -1615,7 +1615,7 @@ contains
 !
          current_aop_in_sp = 0
 !
-         do I = 1, engine%n_cholesky
+         do I = 1, solver%n_cholesky
             if (cholesky_basis(I,3) == basis_shell_info(CD_sp, 3)) then
 !
                current_aop_in_sp = current_aop_in_sp + 1
@@ -1641,7 +1641,7 @@ contains
 !
             current_aop_in_sp = 0
 !
-            do I = 1, engine%n_cholesky
+            do I = 1, solver%n_cholesky
                if (cholesky_basis(I,3) == basis_shell_info(AB_sp, 3)) then
 !
                   current_aop_in_sp = current_aop_in_sp + 1
@@ -1700,23 +1700,23 @@ contains
 !
 !     Square up integrals
 !
-      call mem%alloc(integrals_auxiliary, engine%n_cholesky, engine%n_cholesky)
-      call squareup(integrals_auxiliary_packed, integrals_auxiliary, engine%n_cholesky)
-      call mem%dealloc(integrals_auxiliary_packed, engine%n_cholesky*(engine%n_cholesky + 1)/2, 1)
+      call mem%alloc(integrals_auxiliary, solver%n_cholesky, solver%n_cholesky)
+      call squareup(integrals_auxiliary_packed, integrals_auxiliary, solver%n_cholesky)
+      call mem%dealloc(integrals_auxiliary_packed, solver%n_cholesky*(solver%n_cholesky + 1)/2, 1)
 !
       n_vectors = 0
-      allocate(keep_vectors(engine%n_cholesky))
+      allocate(keep_vectors(solver%n_cholesky))
 !
       call cpu_time(s_decomp_time)
 !
-      call mem%alloc(temp_cholesky, engine%n_cholesky, engine%n_cholesky)
+      call mem%alloc(temp_cholesky, solver%n_cholesky, solver%n_cholesky)
 !
-      call full_cholesky_decomposition_system(integrals_auxiliary, temp_cholesky, engine%n_cholesky, n_vectors, &
-                                                engine%threshold*1.0d-1, keep_vectors)
+      call full_cholesky_decomposition_system(integrals_auxiliary, temp_cholesky, solver%n_cholesky, n_vectors, &
+                                                solver%threshold*1.0d-1, keep_vectors)
 !
       call cpu_time(e_decomp_time)
 !
-      call mem%dealloc(integrals_auxiliary, engine%n_cholesky, engine%n_cholesky)
+      call mem%dealloc(integrals_auxiliary, solver%n_cholesky, solver%n_cholesky)
 !
       call mem%alloc(cholesky_vecs, n_vectors, n_vectors)
 !
@@ -1728,7 +1728,7 @@ contains
          enddo
       enddo
 !
-      call mem%dealloc(temp_cholesky, engine%n_cholesky, engine%n_cholesky)
+      call mem%dealloc(temp_cholesky, solver%n_cholesky, solver%n_cholesky)
 !
       call mem%alloc_int(cholesky_basis_updated, n_vectors, 3)
 !
@@ -1738,28 +1738,28 @@ contains
 !
       enddo
 !
-      call mem%dealloc_int(cholesky_basis, engine%n_cholesky, 3)
+      call mem%dealloc_int(cholesky_basis, solver%n_cholesky, 3)
       deallocate(keep_vectors)
 !
-      engine%n_cholesky = n_vectors
+      solver%n_cholesky = n_vectors
 !
-      write(output%unit, '(t6, a34, i7)')'Final number of cholesky vectors: ', engine%n_cholesky
+      write(output%unit, '(t6, a34, i7)')'Final number of cholesky vectors: ', solver%n_cholesky
       flush(output%unit)
 !
 !     Update the basis_shell_info array which contains information of which shell pairs (and shells)
 !     contain elements of the basis and how many elements of the basis they contain.
 !
-      call mem%alloc_int(basis_shell_info_full, engine%n_sp, 4) ! A, B, AB, n_basis_aops_in_sp
+      call mem%alloc_int(basis_shell_info_full, solver%n_sp, 4) ! A, B, AB, n_basis_aops_in_sp
       basis_shell_info_full = 0
 !
       n_sp_in_basis = 0
 !
-      do i = 1, engine%n_cholesky
+      do i = 1, solver%n_cholesky
 !
          A = system%basis2shell(cholesky_basis_updated(i, 1))
          B = system%basis2shell(cholesky_basis_updated(i, 2))
 !
-         AB = get_sp_from_shells(A, B, engine%n_s)
+         AB = get_sp_from_shells(A, B, solver%n_s)
 !
          found = .false.
 !
@@ -1788,7 +1788,7 @@ contains
 !
       call mem%alloc_int(basis_shell_info, n_sp_in_basis, 4)
       basis_shell_info(:, :) = basis_shell_info_full(1:n_sp_in_basis, :)
-      call mem%dealloc_int(basis_shell_info_full, engine%n_sp, 4)
+      call mem%dealloc_int(basis_shell_info_full, solver%n_sp, 4)
 !
 !     Write basis_shell_data file containing
 !
@@ -1796,13 +1796,13 @@ contains
 !        2. basis_shell_info
 !        3. cholesky_basis
 !
-      call disk%open_file(engine%basis_shell_data, 'write')
+      call disk%open_file(solver%basis_shell_data, 'write')
 !
-      write(engine%basis_shell_data%unit) n_sp_in_basis
-      write(engine%basis_shell_data%unit) basis_shell_info
-      write(engine%basis_shell_data%unit) cholesky_basis_updated
+      write(solver%basis_shell_data%unit) n_sp_in_basis
+      write(solver%basis_shell_data%unit) basis_shell_info
+      write(solver%basis_shell_data%unit) cholesky_basis_updated
 !
-      call disk%close_file(engine%basis_shell_data)
+      call disk%close_file(solver%basis_shell_data)
 !
       call mem%dealloc_int(basis_shell_info, n_sp_in_basis, 4)
       call mem%dealloc_int(cholesky_basis_updated, n_vectors, 3)
@@ -1811,11 +1811,11 @@ contains
 !
 !        1. Cholesky vectors L_JK
 !
-      call disk%open_file(engine%cholesky_aux, 'write', 'rewind')
+      call disk%open_file(solver%cholesky_aux, 'write', 'rewind')
 !
-      write(engine%cholesky_aux%unit) cholesky_vecs
+      write(solver%cholesky_aux%unit) cholesky_vecs
 !
-      call disk%close_file(engine%cholesky_aux)
+      call disk%close_file(solver%cholesky_aux)
 !
       call mem%dealloc(cholesky_vecs, n_vectors, n_vectors)
 !
@@ -1825,16 +1825,16 @@ contains
       write(output%unit, '(t6, a25, f11.2, a9)')'Time to decompose (J|K): ',&
                             e_decomp_time - s_decomp_time, ' seconds.'
 !
-   end subroutine construct_overlap_cholesky_vecs_eri_cd_engine
+   end subroutine construct_overlap_cholesky_vecs_eri_cd_solver
 !
 !
-   subroutine construct_cholesky_vectors_eri_cd_engine(engine, system)
+   subroutine construct_cholesky_vectors_eri_cd_solver(solver, system)
 !!
 !!
 !!
       implicit none
 !
-      class(eri_cd_engine) :: engine
+      class(eri_cd_solver) :: solver
       type(molecular_system) :: system
 !
 !     Local variables
@@ -1889,28 +1889,28 @@ contains
 !
 !     Read diagonal info
 !
-      call disk%open_file(engine%diagonal_info_target, 'read')
+      call disk%open_file(solver%diagonal_info_target, 'read')
 !
-      allocate(sig_sp(engine%n_sp))
+      allocate(sig_sp(solver%n_sp))
 !
-      read(engine%diagonal_info_target%unit) n_sig_sp, n_sig_aop
-      read(engine%diagonal_info_target%unit) sig_sp
+      read(solver%diagonal_info_target%unit) n_sig_sp, n_sig_aop
+      read(solver%diagonal_info_target%unit) sig_sp
 !
-      call disk%close_file(engine%diagonal_info_target)
+      call disk%close_file(solver%diagonal_info_target)
 !
 !     Read inverse of cholesky vectors of auxiliary overlap
 !
-      call disk%open_file(engine%cholesky_aux_inverse, 'read')
+      call disk%open_file(solver%cholesky_aux_inverse, 'read')
 !
-      call mem%alloc(aux_chol_inverse, engine%n_cholesky, engine%n_cholesky)
+      call mem%alloc(aux_chol_inverse, solver%n_cholesky, solver%n_cholesky)
 !
-      read(engine%cholesky_aux_inverse%unit) aux_chol_inverse
+      read(solver%cholesky_aux_inverse%unit) aux_chol_inverse
 !
-      call disk%close_file(engine%cholesky_aux_inverse)
+      call disk%close_file(solver%cholesky_aux_inverse)
 !
 !     Prepare file for AO Cholesky vectors
 !
-      call engine%cholesky_ao_vectors%init('cholesky_ao', 'direct', 'unformatted', dp*engine%n_cholesky)
+      call solver%cholesky_ao_vectors%init('cholesky_ao', 'direct', 'unformatted', dp*solver%n_cholesky)
 !
       rec_offset = 0
 !
@@ -1931,8 +1931,8 @@ contains
 !
          found_size = .false.
 !
-         do B = 1, engine%n_s
-            do A = B, engine%n_s
+         do B = 1, solver%n_s
+            do A = B, solver%n_s
 !
                sp_counter = sp_counter + 1
 !
@@ -1944,7 +1944,7 @@ contains
                   size_AB_current = size_AB_current + get_size_sp(A_interval, B_interval)
                   n_AB_included_current = n_AB_included_current + 1
 !
-                  if ((2*size_AB_current*(engine%n_cholesky)*dp + (engine%n_cholesky**2)*dp)*1.1d0 .ge. mem%available) then ! 10 percent buffer
+                  if ((2*size_AB_current*(solver%n_cholesky)*dp + (solver%n_cholesky**2)*dp)*1.1d0 .ge. mem%available) then ! 10 percent buffer
 !
                      if (.not. found_size) then
 !
@@ -1972,30 +1972,30 @@ contains
 !
          endif
 !
-         call disk%open_file(engine%basis_shell_data, 'read')
+         call disk%open_file(solver%basis_shell_data, 'read')
 !
-         read(engine%basis_shell_data%unit) n_sp_in_basis
+         read(solver%basis_shell_data%unit) n_sp_in_basis
 !
          call mem%alloc_int(basis_shell_info, n_sp_in_basis, 4)
-         call mem%alloc_int(cholesky_basis, engine%n_cholesky, 3)
+         call mem%alloc_int(cholesky_basis, solver%n_cholesky, 3)
 !
-         read(engine%basis_shell_data%unit) basis_shell_info
-         read(engine%basis_shell_data%unit) cholesky_basis
+         read(solver%basis_shell_data%unit) basis_shell_info
+         read(solver%basis_shell_data%unit) cholesky_basis
 !
-         call disk%close_file(engine%basis_shell_data)
+         call disk%close_file(solver%basis_shell_data)
 !
 !        Construct g_J_yz = (J | yz)
 !
-         call mem%alloc(g_J_yz, engine%n_cholesky, size_AB)
+         call mem%alloc(g_J_yz, solver%n_cholesky, size_AB)
          call mem%alloc_int(AB_info, n_AB_included, 3) ! [offset, A, B]
          AB_info = zero
 !
          sp_counter = 0
 !
-         do B = 1, engine%n_s
-            do A = B, engine%n_s
+         do B = 1, solver%n_s
+            do A = B, solver%n_s
 !
-               AB_sp = get_sp_from_shells(A, B, engine%n_s)
+               AB_sp = get_sp_from_shells(A, B, solver%n_s)
 !
                if (sig_sp(AB_sp) .and. AB_sp .le. last_sp_included) then
 !
@@ -2043,7 +2043,7 @@ contains
 !
                current_aop_in_sp = 0
 !
-               do I = 1, engine%n_cholesky
+               do I = 1, solver%n_cholesky
                   if (cholesky_basis(I,3) == basis_shell_info(CD_sp, 3)) then
 !
                      current_aop_in_sp = current_aop_in_sp + 1
@@ -2121,44 +2121,44 @@ contains
 !
 !        L_K_yz = sum_J (K | J)^-1 (J | yz)
 !
-         call mem%alloc(L_K_yz, engine%n_cholesky, size_AB)
+         call mem%alloc(L_K_yz, solver%n_cholesky, size_AB)
 !
          call dgemm('N', 'N',             &
-                       engine%n_cholesky, &
+                       solver%n_cholesky, &
                        size_AB,           &
-                       engine%n_cholesky, &
+                       solver%n_cholesky, &
                        one,               &
                        aux_chol_inverse,  & !(K|J)^-1
-                       engine%n_cholesky, &
+                       solver%n_cholesky, &
                        g_J_yz,            &
-                       engine%n_cholesky, &
+                       solver%n_cholesky, &
                        zero,              &
                        L_K_yz,            &
-                       engine%n_cholesky)
+                       solver%n_cholesky)
 !
-         call mem%dealloc(g_J_yz, engine%n_cholesky, size_AB)
+         call mem%dealloc(g_J_yz, solver%n_cholesky, size_AB)
 !
          call cpu_time(e_construct_time)
          full_construct_time = full_construct_time + e_construct_time - s_construct_time
 !
 !        Write vectors to file
 !
-         call disk%open_file(engine%cholesky_ao_vectors, 'write')
+         call disk%open_file(solver%cholesky_ao_vectors, 'write')
 !
          do I = 1, size_AB
 !
-            write(engine%cholesky_ao_vectors%unit, rec=I + rec_offset) (L_K_yz(J, I), J = 1, engine%n_cholesky)
+            write(solver%cholesky_ao_vectors%unit, rec=I + rec_offset) (L_K_yz(J, I), J = 1, solver%n_cholesky)
 !
          enddo
 !
          rec_offset = rec_offset + size_AB
 !
-         call disk%close_file(engine%cholesky_ao_vectors)
-         call mem%dealloc(L_K_yz, engine%n_cholesky, size_AB)
+         call disk%close_file(solver%cholesky_ao_vectors)
+         call mem%dealloc(L_K_yz, solver%n_cholesky, size_AB)
 !
          done = .true.
 !
-         do I = 1, engine%n_sp
+         do I = 1, solver%n_sp
             if (sig_sp(I)) then
 !
                done = .false.
@@ -2178,22 +2178,22 @@ contains
                             full_construct_time, ' seconds.'
       flush(output%unit)
 !
-      call mem%dealloc(aux_chol_inverse, engine%n_cholesky, engine%n_cholesky)
-      call mem%dealloc_int(cholesky_basis, engine%n_cholesky, 3)
+      call mem%dealloc(aux_chol_inverse, solver%n_cholesky, solver%n_cholesky)
+      call mem%dealloc_int(cholesky_basis, solver%n_cholesky, 3)
       call mem%dealloc_int(basis_shell_info, n_sp_in_basis, 4)
       deallocate(sig_sp)
 !
-   end subroutine construct_cholesky_vectors_eri_cd_engine
+   end subroutine construct_cholesky_vectors_eri_cd_solver
 !
 !
-   subroutine invert_overlap_cholesky_vecs_eri_cd_engine(engine)
+   subroutine invert_overlap_cholesky_vecs_eri_cd_solver(solver)
 !!
 !!    Invert cholesky vectors of auxiliary basis overlap
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, July 2018
 !!
       implicit none
 !
-      class(eri_cd_engine) :: engine
+      class(eri_cd_solver) :: solver
 !
       type(file) :: cholesky_file, cholesky_inverse_file
 !
@@ -2207,35 +2207,35 @@ contains
 !
 !     Read Cholesky vectors of auxiliary basis overlap
 !
-      call disk%open_file(engine%cholesky_aux, 'read')
-      rewind(engine%cholesky_aux%unit)
+      call disk%open_file(solver%cholesky_aux, 'read')
+      rewind(solver%cholesky_aux%unit)
 !
-      call mem%alloc(cholesky, engine%n_cholesky, engine%n_cholesky)
+      call mem%alloc(cholesky, solver%n_cholesky, solver%n_cholesky)
 !
-      read(engine%cholesky_aux%unit) cholesky
+      read(solver%cholesky_aux%unit) cholesky
 !
-      call disk%close_file(engine%cholesky_aux)
+      call disk%close_file(solver%cholesky_aux)
 !
 !     Invert cholesky vectors
 !
-      call mem%alloc(cholesky_inverse, engine%n_cholesky, engine%n_cholesky)
+      call mem%alloc(cholesky_inverse, solver%n_cholesky, solver%n_cholesky)
 !
-      call inv_lower_tri(cholesky_inverse, cholesky, engine%n_cholesky)
+      call inv_lower_tri(cholesky_inverse, cholesky, solver%n_cholesky)
 !
-      call mem%dealloc(cholesky, engine%n_cholesky, engine%n_cholesky)
+      call mem%dealloc(cholesky, solver%n_cholesky, solver%n_cholesky)
 !
 !     Write inverse Cholesky vectors of auxiliary basis overlap
 !
 !        1. n_cholesky: Number of elements of the basis
 !        2. cholesky_inverse (n_cholesky, n_cholesky)
 !
-      call disk%open_file(engine%cholesky_aux_inverse, 'write', 'rewind')
+      call disk%open_file(solver%cholesky_aux_inverse, 'write', 'rewind')
 !
-      write(engine%cholesky_aux_inverse%unit) cholesky_inverse
+      write(solver%cholesky_aux_inverse%unit) cholesky_inverse
 !
-      call disk%close_file(engine%cholesky_aux_inverse)
+      call disk%close_file(solver%cholesky_aux_inverse)
 !
-      call mem%dealloc(cholesky_inverse, engine%n_cholesky, engine%n_cholesky)
+      call mem%dealloc(cholesky_inverse, solver%n_cholesky, solver%n_cholesky)
 !
 !     Timings
 !
@@ -2244,16 +2244,16 @@ contains
                             e_invert_time - s_invert_time, ' seconds.'
 !
 !
-   end subroutine invert_overlap_cholesky_vecs_eri_cd_engine
+   end subroutine invert_overlap_cholesky_vecs_eri_cd_solver
 !
 !
-   subroutine cholesky_vecs_diagonal_test_eri_cd_engine(engine)
+   subroutine cholesky_vecs_diagonal_test_eri_cd_solver(solver)
 !!
 !!
 !!
       implicit none
 !
-      class(eri_cd_engine) :: engine
+      class(eri_cd_solver) :: solver
 !
       type(file) :: cholesky_ao_vectors
 !
@@ -2269,34 +2269,34 @@ contains
 !
 !     Read diagonal information
 !
-      call disk%open_file(engine%diagonal_info_target, 'read')
+      call disk%open_file(solver%diagonal_info_target, 'read')
 !
-      read(engine%diagonal_info_target%unit) n_sig_sp, n_sig_aop
+      read(solver%diagonal_info_target%unit) n_sig_sp, n_sig_aop
 !
       call mem%alloc(D_diff, n_sig_aop, 1)
 !
-      read(engine%diagonal_info_target%unit)
-      read(engine%diagonal_info_target%unit) D_diff
+      read(solver%diagonal_info_target%unit)
+      read(solver%diagonal_info_target%unit) D_diff
 !
-      call disk%close_file(engine%diagonal_info_target)
+      call disk%close_file(solver%diagonal_info_target)
 !
-      call mem%alloc(L_K_yz, engine%n_cholesky, 1)
+      call mem%alloc(L_K_yz, solver%n_cholesky, 1)
 !
-      call disk%open_file(engine%cholesky_ao_vectors, 'read')
+      call disk%open_file(solver%cholesky_ao_vectors, 'read')
 !
 !     Calculate difference between actual and approximate diagonal
 !
       do aop = 1, n_sig_aop
 !
-         read(engine%cholesky_ao_vectors%unit, rec=aop) (L_K_yz(J, 1), J = 1, engine%n_cholesky)
+         read(solver%cholesky_ao_vectors%unit, rec=aop) (L_K_yz(J, 1), J = 1, solver%n_cholesky)
 !
-         D_diff(aop, 1) = D_diff(aop, 1) - ddot(engine%n_cholesky, L_K_yz, 1, L_K_yz, 1)
+         D_diff(aop, 1) = D_diff(aop, 1) - ddot(solver%n_cholesky, L_K_yz, 1, L_K_yz, 1)
 !
       enddo
 !
-      call disk%close_file(engine%cholesky_ao_vectors)
+      call disk%close_file(solver%cholesky_ao_vectors)
 !
-      call mem%dealloc(L_K_yz, engine%n_cholesky, 1)
+      call mem%dealloc(L_K_yz, solver%n_cholesky, 1)
 !
 !     Calculate maximal difference and minimal difference
 !
@@ -2318,7 +2318,7 @@ contains
       write(output%unit, '(/a71, e12.4)')'Minimal element of difference between approximate and actual diagonal: ', min_diff
       flush(output%unit)
 !
-   end subroutine cholesky_vecs_diagonal_test_eri_cd_engine
+   end subroutine cholesky_vecs_diagonal_test_eri_cd_solver
 !
 !
    integer(i15) function get_size_sp(A_interval, B_interval)
@@ -2372,7 +2372,7 @@ contains
    end function get_sp_from_shells
 !
 !
- subroutine read_info_eri_cd_engine(engine)
+ subroutine read_info_eri_cd_solver(solver)
 !!
 !!    Read information
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -2389,7 +2389,7 @@ contains
 !!
       implicit none
 !
-      class(eri_cd_engine) :: engine
+      class(eri_cd_solver) :: solver
 !
       character(len=100) :: line
       character(len=100) :: current_basis
@@ -2417,23 +2417,23 @@ contains
 !
                if (line(1:10) == 'threshold:') then
 !
-                  read(line(11:100), '(d16.5)') engine%threshold
+                  read(line(11:100), '(d16.5)') solver%threshold
 !
                elseif (line(1:5) == 'span:') then
 !
-                  read(line(6:100), '(d16.5)') engine%span
+                  read(line(6:100), '(d16.5)') solver%span
 !
                elseif (line(1:10) == 'qualified:') then
 !
-                  read(line(11:100), '(d16.5)') engine%max_qual
+                  read(line(11:100), '(d16.5)') solver%max_qual
 !
                elseif (trim(line) == 'one center') then
 !
-                  engine%one_center = .true.
+                  solver%one_center = .true.
 !
                elseif (trim(line) == 'no vectors') then
 !
-                  engine%construct_vectors = .false.
+                  solver%construct_vectors = .false.
 !
                endif
 !
@@ -2448,7 +2448,7 @@ contains
 !
       call disk%close_file(input)
 !
-   end subroutine read_info_eri_cd_engine
+   end subroutine read_info_eri_cd_solver
 !
 !
-end module eri_cd_engine_class
+end module eri_cd_solver_class

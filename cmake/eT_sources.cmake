@@ -1,8 +1,8 @@
 set(eT_fortran_sources
    src/eT_program.F90
-   src/engines/hf_engine_class.F90
-   src/engines/dmm_hf_engine_class.F90
-   src/engines/eri_cd_engine_class.F90
+   src/solvers/hf_solver_class.F90
+   src/solvers/dmm_hf_solver_class.F90
+   src/solvers/eri_cd_solver_class.F90
    src/io/disk_manager_class.F90
    src/io/file_class.F90
    src/io/io_utilities.F90
@@ -34,5 +34,5 @@ set(eT_fortran_sources
    src/molecular_system/basis_set_info.F90
    src/libint/atom_init.F90
    src/molecular_system/active_atoms_class.F90
-   src/solvers/diis.F90
+   src/solver_tools/diis.F90
 )
