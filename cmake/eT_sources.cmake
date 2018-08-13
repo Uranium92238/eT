@@ -28,12 +28,12 @@ set(eT_fortran_sources
    src/wavefunctions/wavefunction_class.F90
    src/wavefunctions/hf_class.F90
    src/wavefunctions/mlhf_class.F90
-   src/molecule/atomic_class.F90
-   src/molecule/molecular_system_class.F90
-   src/molecule/periodic_table.F90
-   src/molecule/shell_class.F90
-   src/molecule/basis_set_info.F90
-   src/molecule/libint/atom_init.F90
-   src/molecule/active_atoms_class.F90
+   src/molecular_system/atomic_class.F90
+   src/molecular_system/molecular_system_class.F90
+   src/molecular_system/periodic_table.F90
+   src/molecular_system/shell_class.F90
+   src/molecular_system/basis_set_info.F90
+   src/molecular_system/libint/atom_init.F90
+   src/molecular_system/active_atoms_class.F90
    src/solvers/diis.F90
 )
