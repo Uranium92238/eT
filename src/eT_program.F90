@@ -59,7 +59,7 @@ program eT_program
 !  Ask the Hartree-Fock (HF) engine to find the HF solution
 
    !call engine%solve(wf)
-    call db_engine%solve(wf)
+    !call db_engine%solve(wf)
 
 !   call engine%solve(wf)
  !  call density_hf_engine%solve(wf)
