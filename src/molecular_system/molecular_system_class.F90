@@ -680,7 +680,9 @@ contains
       electrons = 0
 !
       do I = 1, n_ao
+!
          electrons = electrons + density_diagonal(I, 1)
+!
       enddo
 !
       if (abs(electrons - molecule%get_n_electrons()) .gt. 1.0d-7) then

@@ -301,7 +301,7 @@ contains
 !
       real(dp), dimension(:, :), allocatable :: L
 !
-      real(dp) :: lin_dep_threshold = 1.0D-6
+      real(dp) :: lin_dep_threshold = 1.0D-3
 !
       integer(i15) :: i, j
 !
