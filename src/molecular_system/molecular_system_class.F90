@@ -64,7 +64,7 @@ contains
 !
       character(len=100) :: temp_name
 !
-      integer(kind=4) :: i = 0, j = 0
+      integer(kind=4) :: i = 0, j = 0, n_atoms_libint
 !
       integer(kind=4), dimension(:,:), allocatable :: n_shells_on_atoms
       integer(kind=4), dimension(:,:), allocatable :: n_basis_in_shells
@@ -165,6 +165,18 @@ contains
          stop
 !
       endif
+!
+      do i = 1, molecule%n_atoms
+!
+         if (molecule%atoms(i)%n_ao == 0) then
+!   
+            write(output%unit,*)'Error: Is basis defined for all atoms in input?'
+            stop
+!
+         endif
+!
+      enddo
+!
 
 !
    end subroutine initialize_molecular_system
@@ -660,20 +672,24 @@ contains
 !
 !     Loop over atoms and let them set their own density diagonal
 !
+      write(output%unit,*)'hei'
+      flush(output%unit)
+!
       offset_diagonal = 0
 !
       do I = 1, molecule%n_atoms
 !
-         call mem%alloc(atom_density_diagonal, molecule%atoms(I)%n_ao, 1)
+            call mem%alloc(atom_density_diagonal, molecule%atoms(I)%n_ao, 1)
 !
-         call molecule%atoms(I)%AD(atom_density_diagonal)
+            call molecule%atoms(I)%AD(atom_density_diagonal)
 !
-         density_diagonal(offset_diagonal + 1 : offset_diagonal + molecule%atoms(I)%n_ao, 1) = &
-            atom_density_diagonal(:,1)
+            density_diagonal(offset_diagonal + 1 : offset_diagonal + molecule%atoms(I)%n_ao, 1) = &
+               atom_density_diagonal(:,1)
 !
-         call mem%dealloc(atom_density_diagonal, molecule%atoms(I)%n_ao, 1)
+            call mem%dealloc(atom_density_diagonal, molecule%atoms(I)%n_ao, 1)
 !
-         offset_diagonal = offset_diagonal + molecule%atoms(I)%n_ao
+            offset_diagonal = offset_diagonal + molecule%atoms(I)%n_ao
+!
 !
       enddo
 !
@@ -682,6 +698,8 @@ contains
       do I = 1, n_ao
          electrons = electrons + density_diagonal(I, 1)
       enddo
+!
+      write(output%unit, *)electrons
 !
       if (abs(electrons - molecule%get_n_electrons()) .gt. 1.0d-7) then
 !

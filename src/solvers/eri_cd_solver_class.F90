@@ -180,10 +180,11 @@ contains
       real(dp), dimension(solver%n_ao,1), optional :: screening_vector
 !
       integer(i15) ::sp, n_sig_aop, n_sig_sp, current_sig_sp
+      integer(i15), dimension(:,:), allocatable :: sp_index, sig_sp_index, ao_offsets
 !
       real(dp), dimension(:,:), allocatable :: g_AB_AB, D_AB, D_xy, screening_vector_local, screening_vector_reduced
 !
-      integer(i15) :: x, y, xy, xy_packed, first_sig_sp, first_sig_aop, A, B
+      integer(i15) :: x, y, xy, xy_packed, first_sig_sp, first_sig_aop, A, B, I
 !
       type(interval) :: A_interval, B_interval
 !
@@ -201,66 +202,96 @@ contains
 !
       endif
 !
+!     Prepare for pre-screening
+!
+      call mem%alloc_int(sp_index, solver%n_sp, 2)
+!
+      sp = 0        ! Shell pair number
+!
+      do B = 1, solver%n_s
+         do A = B, solver%n_s
+!
+            sp = sp + 1
+!
+            sp_index(sp, 1) = A
+            sp_index(sp, 2) = B
+!
+         enddo
+      enddo
+!
 !     Pre-screening of full diagonal
 !
       allocate(sig_sp(solver%n_sp))
       sig_sp = .false.
 !
-      sp = 1        ! Shell pair number
+!$omp parallel do &
+!$omp schedule(guided) &
+!$omp private(I, A, B, A_interval, B_interval, x, y, xy, g_AB_AB, D_AB) &
+!$omp shared(sig_sp)
+      do I = 1, solver%n_sp
+!
+         A = sp_index(I, 1)
+         B = sp_index(I, 2)
+!
+         A_interval = system%get_shell_limits(A)
+         B_interval = system%get_shell_limits(B)
+!
+!        Construct diagonal D_AB for the given shell pair
+!
+         call mem%alloc(g_AB_AB, &
+                  (A_interval%size)*(B_interval%size), &
+                  (A_interval%size)*(B_interval%size))
+!
+         g_AB_AB = zero
+         call system%ao_integrals%get_ao_g_wxyz(g_AB_AB, A, B, A, B)
+!
+         call mem%alloc(D_AB, (A_interval%size)*(B_interval%size), 1)
+!
+         do x = 1, (A_interval%size)
+            do y = 1, (B_interval%size)
+!
+               xy = (A_interval%size)*(y-1)+x
+!
+               D_AB(xy, 1) = g_AB_AB(xy, xy)&
+                           *screening_vector_local(x + A_interval%first - 1,1)&
+                           *screening_vector_local(y + B_interval%first - 1,1)
+!
+            enddo
+         enddo
+!
+         call mem%dealloc(g_AB_AB, &
+                  (A_interval%size)*(B_interval%size), &
+                  (A_interval%size)*(B_interval%size))
+!
+!        Determine whether shell pair is significant
+!
+         sig_sp(I) = is_significant(D_AB, (A_interval%size)*(B_interval%size), solver%threshold)
+!
+         call mem%dealloc(D_AB, (A_interval%size)*(B_interval%size), 1)
+!
+      enddo
+!$omp end parallel do
+!
       n_sig_aop = 0 ! Number of significant AO pairs
       n_sig_sp  = 0 ! Number of significant shell pairs
 !
-      do B = 1, solver%n_s
-         do A = B, solver%n_s
+      do I = 1, solver%n_sp
+!
+         if (sig_sp(I)) then
+!
+            A = sp_index(I, 1)
+            B = sp_index(I, 2)
 !
             A_interval = system%get_shell_limits(A)
             B_interval = system%get_shell_limits(B)
 !
-!           Construct diagonal D_AB for the given shell pair
+            n_sig_aop = n_sig_aop + &
+                           get_size_sp(A_interval, B_interval)
 !
-            call mem%alloc(g_AB_AB, &
-                     (A_interval%size)*(B_interval%size), &
-                     (A_interval%size)*(B_interval%size))
+            n_sig_sp = n_sig_sp + 1
 !
-            g_AB_AB = zero
-            call system%ao_integrals%get_ao_g_wxyz(g_AB_AB, A, B, A, B)
+         endif
 !
-            call mem%alloc(D_AB, (A_interval%size)*(B_interval%size), 1)
-!
-            do x = 1, (A_interval%size)
-               do y = 1, (B_interval%size)
-!
-                  xy = (A_interval%size)*(y-1)+x
-!
-                  D_AB(xy, 1) = g_AB_AB(xy, xy)&
-                              *screening_vector_local(x + A_interval%first - 1,1)&
-                              *screening_vector_local(y + B_interval%first - 1,1)
-!
-               enddo
-            enddo
-!
-            call mem%dealloc(g_AB_AB, &
-                     (A_interval%size)*(B_interval%size), &
-                     (A_interval%size)*(B_interval%size))
-!
-!           Determine whether shell pair is significant
-!
-            sig_sp(sp) = is_significant(D_AB, (A_interval%size)*(B_interval%size), solver%threshold)
-!
-            call mem%dealloc(D_AB, (A_interval%size)*(B_interval%size), 1)
-!
-            if (sig_sp(sp)) then
-!
-               n_sig_aop = n_sig_aop + &
-                              get_size_sp(A_interval, B_interval)
-!
-               n_sig_sp = n_sig_sp + 1
-!
-            endif
-!
-            sp = sp + 1
-!
-         enddo
       enddo
 !
       write(output%unit, '(/a)')'Reduction of shell pairs:'
@@ -269,8 +300,44 @@ contains
       write(output%unit, '(a33, 2x, i9)')'Significant ao pairs:            ', n_sig_aop
       flush(output%unit)
 !
+!     Prepare for construction of diagonal and screening vector
+!     
+      call mem%alloc_int(ao_offsets, n_sig_sp, 1)
+      ao_offsets = 0
 !
-!     Construct significant diagonal
+      current_sig_sp = 0
+!
+      call mem%alloc_int(sig_sp_index, n_sig_sp, 2)
+!
+      do I = 1, solver%n_sp
+!
+         if (sig_sp(I)) then
+!
+            current_sig_sp = current_sig_sp + 1
+!
+            A = sp_index(I, 1)
+            B = sp_index(I, 2)
+!
+            A_interval = system%get_shell_limits(A)
+            B_interval = system%get_shell_limits(B)
+!
+            sig_sp_index(current_sig_sp, 1) = A
+            sig_sp_index(current_sig_sp, 2) = B
+!
+            if (current_sig_sp .lt. n_sig_sp) then
+!
+               ao_offsets(current_sig_sp + 1, 1) = ao_offsets(current_sig_sp, 1) + &
+                           get_size_sp(A_interval, B_interval)
+!
+            endif
+!
+         endif
+!
+      enddo
+!
+      call mem%dealloc_int(sp_index, solver%n_sp, 2)
+!
+!     Construct significant diagonal and screening vector
 !
       call mem%alloc(D_xy, n_sig_aop, 1)
       D_xy = zero
@@ -281,73 +348,67 @@ contains
 !     Note: allocated with length n_significant_sp + 1, last element is used for n_significant_aop
 !     This is convenient because significant_sp_to_first_significant_aop will be used to calculate lengths.
 !
-      sp              = 1
-      current_sig_sp  = 1
-      first_sig_aop   = 1
+!$omp parallel do &
+!$omp schedule(guided) &
+!$omp private(I, A, B, A_interval, B_interval, x, y, xy, xy_packed, g_AB_AB) &
+!$omp shared(D_xy, screening_vector_reduced, ao_offsets)
+      do I = 1, n_sig_sp
 !
-      do B = 1, solver%n_s
-         do A = B, solver%n_s
+         A = sig_sp_index(I, 1)
+         B = sig_sp_index(I, 2)
 !
-            if (sig_sp(sp)) then
+         A_interval = system%get_shell_limits(A)
+         B_interval = system%get_shell_limits(B)
 !
-               A_interval = system%get_shell_limits(A)
-               B_interval = system%get_shell_limits(B)
+         call mem%alloc(g_AB_AB, &
+               (A_interval%size)*(B_interval%size), &
+               (A_interval%size)*(B_interval%size))
 !
-               call mem%alloc(g_AB_AB, &
-                     (A_interval%size)*(B_interval%size), &
-                     (A_interval%size)*(B_interval%size))
+         g_AB_AB = zero
+         call system%ao_integrals%get_ao_g_wxyz(g_AB_AB, A, B, A, B)
 !
-               g_AB_AB = zero
-               call system%ao_integrals%get_ao_g_wxyz(g_AB_AB, A, B, A, B)
+         if (A .eq. B) then
 !
-               if (A .eq. B) then
+            do x = 1, A_interval%size
+               do y = x, B_interval%size
 !
-                  do x = 1, A_interval%size
-                     do y = x, B_interval%size
+                  xy = A_interval%size*(y - 1) + x
+                  xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
 !
-                        xy = A_interval%size*(y - 1) + x
-                        xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
+                  D_xy(xy_packed + ao_offsets(I, 1), 1) = g_AB_AB(xy, xy)
+                  screening_vector_reduced(xy_packed + ao_offsets(I, 1), 1) = &
+                                          screening_vector_local(x + A_interval%first - 1, 1)*&
+                                          screening_vector_local(y + B_interval%first - 1, 1)
 !
-                        D_xy(xy_packed + first_sig_aop - 1, 1) = g_AB_AB(xy, xy)
-                        screening_vector_reduced(xy_packed + first_sig_aop - 1, 1) = &
-                                                                  screening_vector_local(x + A_interval%first - 1, 1)*&
-                                                                  screening_vector_local(y + B_interval%first - 1, 1)
+               enddo
+            enddo
 !
-                     enddo
-                  enddo
+         else ! A ≠ B
 !
-               else ! A ≠ B
+            do x = 1, (A_interval%size)
+               do y = 1, (B_interval%size)
 !
-                  do x = 1, (A_interval%size)
-                     do y = 1, (B_interval%size)
+                  xy = A_interval%size*(y - 1) + x
+                  D_xy(xy + ao_offsets(I, 1), 1) = g_AB_AB(xy,xy)
+                  screening_vector_reduced(xy + ao_offsets(I, 1), 1) = &
+                                      screening_vector_local(x + A_interval%first - 1, 1)*&
+                                      screening_vector_local(y + B_interval%first - 1, 1)
 !
-                        xy = A_interval%size*(y - 1) + x
-                        D_xy(xy + first_sig_aop - 1, 1) = g_AB_AB(xy,xy)
-                        screening_vector_reduced(xy + first_sig_aop - 1, 1) = &
-                                                               screening_vector_local(x + A_interval%first - 1, 1)*&
-                                                               screening_vector_local(y + B_interval%first - 1, 1)
+               enddo
+            enddo
 !
-                     enddo
-                  enddo
+         endif
 !
-               endif
+         call mem%dealloc(g_AB_AB, &
+               (A_interval%size)*(B_interval%size), &
+               (A_interval%size)*(B_interval%size))
 !
-               call mem%dealloc(g_AB_AB, &
-                     (A_interval%size)*(B_interval%size), &
-                     (A_interval%size)*(B_interval%size))
-!
-               first_sig_aop = first_sig_aop + get_size_sp(A_interval, B_interval)
-!
-               current_sig_sp = current_sig_sp + 1
-!
-            endif ! End of if (significant)
-!
-            sp = sp + 1
-!
-         enddo
       enddo
+!$omp end parallel do
 !
       call mem%dealloc(screening_vector_local, solver%n_aop, 1)
+      call mem%dealloc_int(sig_sp_index, n_sig_sp, 2)
+!
 !
 !     Write screening_info_file containing
 !
@@ -372,24 +433,23 @@ contains
    end subroutine construct_significant_diagonal_eri_cd_solver
 !
 !
-   subroutine construct_significant_diagonal_atomic_eri_cd_solver&
-                                    (solver, system, screening_vector)
+   subroutine construct_significant_diagonal_atomic_eri_cd_solver(solver, system, screening_vector)
 !!
-!!    ...
 !!
 !!
       implicit none
 !
       class(eri_cd_solver) :: solver
       class(molecular_system) :: system
-
+!
       real(dp), dimension(solver%n_ao,1), optional :: screening_vector
 !
-      integer(i15) :: sp, n_sig_aop, n_sig_sp, current_sig_sp
+      integer(i15) ::sp, n_sig_aop, n_sig_sp, current_sig_sp
+      integer(i15), dimension(:,:), allocatable :: sp_index, sig_sp_index, ao_offsets
 !
-      real(dp), dimension(:,:), allocatable :: g_AB_AB, D_AB, D_xy,screening_vector_local, screening_vector_reduced
+      real(dp), dimension(:,:), allocatable :: g_AB_AB, D_AB, D_xy, screening_vector_local, screening_vector_reduced
 !
-      integer(i15) :: x, y, xy, xy_packed, first_sig_aop, A, B
+      integer(i15) :: x, y, xy, xy_packed, first_sig_sp, first_sig_aop, A, B, I
 !
       type(interval) :: A_interval, B_interval
 !
@@ -407,70 +467,100 @@ contains
 !
       endif
 !
-!     Pre-screening of full diagonal
+!     Prepare for pre-screening
 !
-      allocate(sig_sp(solver%n_sp))
-      sig_sp = .false.
+      call mem%alloc_int(sp_index, solver%n_sp, 2)
 !
       sp = 0        ! Shell pair number
-      n_sig_aop = 0 ! Number of significant AO pairs
-      n_sig_sp  = 0 ! Number of significant shell pairs
 !
       do B = 1, solver%n_s
          do A = B, solver%n_s
 !
             sp = sp + 1
 !
-            if (system%shell_to_atom(B) == system%shell_to_atom(A)) then
-!
-               A_interval = system%get_shell_limits(A)
-               B_interval = system%get_shell_limits(B)
-!
-!              Construct diagonal D_AB for the given shell pair
-!
-               call mem%alloc(g_AB_AB, &
-                        (A_interval%size)*(B_interval%size), &
-                        (A_interval%size)*(B_interval%size))
-!
-               g_AB_AB = zero
-               call system%ao_integrals%get_ao_g_wxyz(g_AB_AB, A, B, A, B)
-!
-               call mem%alloc(D_AB, (A_interval%size)*(B_interval%size), 1)
-!
-               do x = 1, (A_interval%size)
-                  do y = 1, (B_interval%size)
-!
-                     xy = (A_interval%size)*(y-1)+x
-!
-                     D_AB(xy, 1) = g_AB_AB(xy, xy)&
-                                 *screening_vector_local(x + A_interval%first - 1,1)&
-                                 *screening_vector_local(y + B_interval%first - 1,1)
-!
-                  enddo
-               enddo
-!
-               call mem%dealloc(g_AB_AB, &
-                        (A_interval%size)*(B_interval%size), &
-                        (A_interval%size)*(B_interval%size))
-!
-!              Determine whether shell pair is significant
-!
-               sig_sp(sp) = is_significant(D_AB, (A_interval%size)*(B_interval%size), solver%threshold)
-!
-               call mem%dealloc(D_AB, (A_interval%size)*(B_interval%size), 1)
-!
-               if (sig_sp(sp)) then
-!
-                  n_sig_aop = n_sig_aop + &
-                                 get_size_sp(A_interval, B_interval)
-!
-                  n_sig_sp = n_sig_sp + 1
-!
-               endif
-!
-            endif
+            sp_index(sp, 1) = A
+            sp_index(sp, 2) = B
 !
          enddo
+      enddo
+!
+!     Pre-screening of full diagonal
+!
+      allocate(sig_sp(solver%n_sp))
+      sig_sp = .false.
+!
+!$omp parallel do &
+!$omp schedule(guided) &
+!$omp private(I, A, B, A_interval, B_interval, x, y, xy, g_AB_AB, D_AB) &
+!$omp shared(sig_sp)
+      do I = 1, solver%n_sp
+!
+         A = sp_index(I, 1)
+         B = sp_index(I, 2)
+!
+         if (system%shell_to_atom(B) == system%shell_to_atom(A)) then
+!
+            A_interval = system%get_shell_limits(A)
+            B_interval = system%get_shell_limits(B)
+!
+!           Construct diagonal D_AB for the given shell pair
+!
+            call mem%alloc(g_AB_AB, &
+                  (A_interval%size)*(B_interval%size), &
+                  (A_interval%size)*(B_interval%size))
+!
+            g_AB_AB = zero
+            call system%ao_integrals%get_ao_g_wxyz(g_AB_AB, A, B, A, B)
+!
+            call mem%alloc(D_AB, (A_interval%size)*(B_interval%size), 1)
+!
+            do x = 1, (A_interval%size)
+               do y = 1, (B_interval%size)
+!
+                  xy = (A_interval%size)*(y-1)+x
+!
+                  D_AB(xy, 1) = g_AB_AB(xy, xy)&
+                           *screening_vector_local(x + A_interval%first - 1,1)&
+                           *screening_vector_local(y + B_interval%first - 1,1)
+!
+               enddo
+            enddo
+!
+            call mem%dealloc(g_AB_AB, &
+                  (A_interval%size)*(B_interval%size), &
+                  (A_interval%size)*(B_interval%size))
+!
+!        Determine whether shell pair is significant
+!
+            sig_sp(I) = is_significant(D_AB, (A_interval%size)*(B_interval%size), solver%threshold)
+!
+            call mem%dealloc(D_AB, (A_interval%size)*(B_interval%size), 1)
+!
+         endif
+!
+      enddo
+!$omp end parallel do
+!
+      n_sig_aop = 0 ! Number of significant AO pairs
+      n_sig_sp  = 0 ! Number of significant shell pairs
+!
+      do I = 1, solver%n_sp
+!
+         if (sig_sp(I)) then
+!
+            A = sp_index(I, 1)
+            B = sp_index(I, 2)
+!
+            A_interval = system%get_shell_limits(A)
+            B_interval = system%get_shell_limits(B)
+!
+            n_sig_aop = n_sig_aop + &
+                           get_size_sp(A_interval, B_interval)
+!
+            n_sig_sp = n_sig_sp + 1
+!
+         endif
+!
       enddo
 !
       write(output%unit, '(/a)')'Reduction of shell pairs:'
@@ -479,7 +569,44 @@ contains
       write(output%unit, '(a33, 2x, i9)')'Significant ao pairs:            ', n_sig_aop
       flush(output%unit)
 !
-!     Construct significant diagonal
+!     Prepare for construction of diagonal and screening vector
+!     
+      call mem%alloc_int(ao_offsets, n_sig_sp, 1)
+      ao_offsets = 0
+!
+      current_sig_sp = 0
+!
+      call mem%alloc_int(sig_sp_index, n_sig_sp, 2)
+!
+      do I = 1, solver%n_sp
+!
+         if (sig_sp(I)) then
+!
+            current_sig_sp = current_sig_sp + 1
+!
+            A = sp_index(I, 1)
+            B = sp_index(I, 2)
+!
+            A_interval = system%get_shell_limits(A)
+            B_interval = system%get_shell_limits(B)
+!
+            sig_sp_index(current_sig_sp, 1) = A
+            sig_sp_index(current_sig_sp, 2) = B
+!
+            if (current_sig_sp .lt. n_sig_sp) then
+!
+               ao_offsets(current_sig_sp + 1, 1) = ao_offsets(current_sig_sp, 1) + &
+                           get_size_sp(A_interval, B_interval)
+!
+            endif
+!
+         endif
+!
+      enddo
+!
+      call mem%dealloc_int(sp_index, solver%n_sp, 2)
+!
+!     Construct significant diagonal and screening vector
 !
       call mem%alloc(D_xy, n_sig_aop, 1)
       D_xy = zero
@@ -490,73 +617,67 @@ contains
 !     Note: allocated with length n_significant_sp + 1, last element is used for n_significant_aop
 !     This is convenient because significant_sp_to_first_significant_aop will be used to calculate lengths.
 !
-      sp              = 1
-      current_sig_sp  = 1
-      first_sig_aop   = 1
+!$omp parallel do &
+!$omp schedule(guided) &
+!$omp private(I, A, B, A_interval, B_interval, x, y, xy, xy_packed, g_AB_AB) &
+!$omp shared(D_xy, screening_vector_reduced, ao_offsets)
+      do I = 1, n_sig_sp
 !
-      do B = 1, solver%n_s
-         do A = B, solver%n_s
+         A = sig_sp_index(I, 1)
+         B = sig_sp_index(I, 2)
 !
-            if (sig_sp(sp)) then
+         A_interval = system%get_shell_limits(A)
+         B_interval = system%get_shell_limits(B)
 !
-               A_interval = system%get_shell_limits(A)
-               B_interval = system%get_shell_limits(B)
+         call mem%alloc(g_AB_AB, &
+               (A_interval%size)*(B_interval%size), &
+               (A_interval%size)*(B_interval%size))
 !
-               call mem%alloc(g_AB_AB, &
-                     (A_interval%size)*(B_interval%size), &
-                     (A_interval%size)*(B_interval%size))
+         g_AB_AB = zero
+         call system%ao_integrals%get_ao_g_wxyz(g_AB_AB, A, B, A, B)
 !
-               g_AB_AB = zero
-               call system%ao_integrals%get_ao_g_wxyz(g_AB_AB, A, B, A, B)
+         if (A .eq. B) then
 !
-               if (A .eq. B) then
+            do x = 1, A_interval%size
+               do y = x, B_interval%size
 !
-                  do x = 1, A_interval%size
-                     do y = x, B_interval%size
+                  xy = A_interval%size*(y - 1) + x
+                  xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
 !
-                        xy = A_interval%size*(y - 1) + x
-                        xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
+                  D_xy(xy_packed + ao_offsets(I, 1), 1) = g_AB_AB(xy, xy)
+                  screening_vector_reduced(xy_packed + ao_offsets(I, 1), 1) = &
+                                          screening_vector_local(x + A_interval%first - 1, 1)*&
+                                          screening_vector_local(y + B_interval%first - 1, 1)
 !
-                        D_xy(xy_packed + first_sig_aop - 1, 1) = g_AB_AB(xy, xy)
-                        screening_vector_reduced(xy_packed + first_sig_aop - 1, 1) = &
-                                                                  screening_vector_local(x + A_interval%first - 1, 1)*&
-                                                                  screening_vector_local(y + B_interval%first - 1, 1)
+               enddo
+            enddo
 !
-                     enddo
-                  enddo
+         else ! A ≠ B
 !
-               else ! A ≠ B
+            do x = 1, (A_interval%size)
+               do y = 1, (B_interval%size)
 !
-                  do x = 1, (A_interval%size)
-                     do y = 1, (B_interval%size)
+                  xy = A_interval%size*(y - 1) + x
+                  D_xy(xy + ao_offsets(I, 1), 1) = g_AB_AB(xy,xy)
+                  screening_vector_reduced(xy + ao_offsets(I, 1), 1) = &
+                                      screening_vector_local(x + A_interval%first - 1, 1)*&
+                                      screening_vector_local(y + B_interval%first - 1, 1)
 !
-                        xy = A_interval%size*(y - 1) + x
-                        D_xy(xy + first_sig_aop - 1, 1) = g_AB_AB(xy,xy)
-                        screening_vector_reduced(xy + first_sig_aop - 1, 1) = &
-                                                                  screening_vector_local(x + A_interval%first - 1, 1)*&
-                                                                  screening_vector_local(y + B_interval%first - 1, 1)
+               enddo
+            enddo
 !
-                     enddo
-                  enddo
+         endif
 !
-               endif
+         call mem%dealloc(g_AB_AB, &
+               (A_interval%size)*(B_interval%size), &
+               (A_interval%size)*(B_interval%size))
 !
-               call mem%dealloc(g_AB_AB, &
-                     (A_interval%size)*(B_interval%size), &
-                     (A_interval%size)*(B_interval%size))
-!
-               first_sig_aop = first_sig_aop + get_size_sp(A_interval, B_interval)
-!
-               current_sig_sp = current_sig_sp + 1
-!
-            endif ! End of if (significant)
-!
-            sp = sp + 1
-!
-         enddo
       enddo
+!$omp end parallel do
 !
       call mem%dealloc(screening_vector_local, solver%n_aop, 1)
+      call mem%dealloc_int(sig_sp_index, n_sig_sp, 2)
+!
 !
 !     Write screening_info_file containing
 !
@@ -564,15 +685,15 @@ contains
 !        2. sig_sp - vector of logicals to describe which shell pairs are significant
 !        3. D_xy = ( xy | xy ), the significant diagonal.
 !
-      call disk%open_file(solver%diagonal_info_one_center, 'write')
-      rewind(solver%diagonal_info_one_center%unit)
+      call disk%open_file(solver%diagonal_info_target, 'write')
+      rewind(solver%diagonal_info_target%unit)
 !
-      write(solver%diagonal_info_one_center%unit) n_sig_sp, n_sig_aop
-      write(solver%diagonal_info_one_center%unit) sig_sp
-      write(solver%diagonal_info_one_center%unit) D_xy
-      write(solver%diagonal_info_one_center%unit) screening_vector_reduced
+      write(solver%diagonal_info_target%unit) n_sig_sp, n_sig_aop
+      write(solver%diagonal_info_target%unit) sig_sp
+      write(solver%diagonal_info_target%unit) D_xy
+      write(solver%diagonal_info_target%unit) screening_vector_reduced
 !
-      call disk%close_file(solver%diagonal_info_one_center)
+      call disk%close_file(solver%diagonal_info_target)
 !
       deallocate(sig_sp)
       call mem%dealloc(D_xy, n_sig_aop, 1)
@@ -967,9 +1088,6 @@ contains
 !$omp  aop, w, x, y, z, wx, yz, wx_packed, g_AB_CD, n_qual_aop_in_sp) &
 !$omp shared(g_wxyz, n_qual_aop_in_prev_sps, qual_aop)
          do CD_sp = 1, n_qual_sp
-!
-            write(output%unit, *)omp_get_thread_num()
-            flush(output%unit)
 !
             C                = qual_sp(CD_sp, 1)
             D                = qual_sp(CD_sp, 2)
@@ -2452,3 +2570,212 @@ contains
 !
 !
 end module eri_cd_solver_class
+!
+!
+!   subroutine construct_significant_diagonal_atomic_eri_cd_solver&
+!                                    (solver, system, screening_vector)
+!!!
+!!!    ...
+!!!
+!!!
+!      implicit none
+!!
+!      class(eri_cd_solver) :: solver
+!      class(molecular_system) :: system
+!
+!      real(dp), dimension(solver%n_ao,1), optional :: screening_vector
+!!
+!      integer(i15) :: sp, n_sig_aop, n_sig_sp, current_sig_sp
+!!
+!      real(dp), dimension(:,:), allocatable :: g_AB_AB, D_AB, D_xy,screening_vector_local, screening_vector_reduced
+!!
+!      integer(i15) :: x, y, xy, xy_packed, first_sig_aop, A, B
+!!
+!      type(interval) :: A_interval, B_interval
+!!
+!      logical, dimension(:), allocatable :: sig_sp
+!!
+!      call mem%alloc(screening_vector_local, solver%n_aop, 1)
+!!
+!      if (present(screening_vector)) then
+!!
+!         screening_vector_local = screening_vector
+!!
+!      else
+!!
+!         screening_vector_local = one
+!!
+!      endif
+!!
+!!     Pre-screening of full diagonal
+!!
+!      allocate(sig_sp(solver%n_sp))
+!      sig_sp = .false.
+!!
+!      sp = 0        ! Shell pair number
+!      n_sig_aop = 0 ! Number of significant AO pairs
+!      n_sig_sp  = 0 ! Number of significant shell pairs
+!!
+!      do B = 1, solver%n_s
+!         do A = B, solver%n_s
+!!
+!            sp = sp + 1
+!!
+!            if (system%shell_to_atom(B) == system%shell_to_atom(A)) then
+!!
+!               A_interval = system%get_shell_limits(A)
+!               B_interval = system%get_shell_limits(B)
+!!
+!!              Construct diagonal D_AB for the given shell pair
+!!
+!               call mem%alloc(g_AB_AB, &
+!                        (A_interval%size)*(B_interval%size), &
+!                        (A_interval%size)*(B_interval%size))
+!!
+!               g_AB_AB = zero
+!               call system%ao_integrals%get_ao_g_wxyz(g_AB_AB, A, B, A, B)
+!!
+!               call mem%alloc(D_AB, (A_interval%size)*(B_interval%size), 1)
+!!
+!               do x = 1, (A_interval%size)
+!                  do y = 1, (B_interval%size)
+!!
+!                     xy = (A_interval%size)*(y-1)+x
+!!
+!                     D_AB(xy, 1) = g_AB_AB(xy, xy)&
+!                                 *screening_vector_local(x + A_interval%first - 1,1)&
+!                                 *screening_vector_local(y + B_interval%first - 1,1)
+!!
+!                  enddo
+!               enddo
+!!
+!               call mem%dealloc(g_AB_AB, &
+!                        (A_interval%size)*(B_interval%size), &
+!                        (A_interval%size)*(B_interval%size))
+!!
+!!              Determine whether shell pair is significant
+!!
+!               sig_sp(sp) = is_significant(D_AB, (A_interval%size)*(B_interval%size), solver%threshold)
+!!
+!               call mem%dealloc(D_AB, (A_interval%size)*(B_interval%size), 1)
+!!
+!               if (sig_sp(sp)) then
+!!
+!                  n_sig_aop = n_sig_aop + &
+!                                 get_size_sp(A_interval, B_interval)
+!!
+!                  n_sig_sp = n_sig_sp + 1
+!!
+!               endif
+!!
+!            endif
+!!
+!         enddo
+!      enddo
+!!
+!      write(output%unit, '(/a)')'Reduction of shell pairs:'
+!      write(output%unit, '(a33, 2x, i9)')'Total number of shell pairs:     ', solver%n_sp
+!      write(output%unit, '(a33, 2x, i9)')'Significant shell pairs:         ', n_sig_sp
+!      write(output%unit, '(a33, 2x, i9)')'Significant ao pairs:            ', n_sig_aop
+!      flush(output%unit)
+!!
+!!     Construct significant diagonal
+!!
+!      call mem%alloc(D_xy, n_sig_aop, 1)
+!      D_xy = zero
+!!
+!      call mem%alloc(screening_vector_reduced, n_sig_aop, 1)
+!      screening_vector_reduced = zero
+!!
+!!     Note: allocated with length n_significant_sp + 1, last element is used for n_significant_aop
+!!     This is convenient because significant_sp_to_first_significant_aop will be used to calculate lengths.
+!!
+!      sp              = 1
+!      current_sig_sp  = 1
+!      first_sig_aop   = 1
+!!
+!      do B = 1, solver%n_s
+!         do A = B, solver%n_s
+!!
+!            if (sig_sp(sp)) then
+!!
+!               A_interval = system%get_shell_limits(A)
+!               B_interval = system%get_shell_limits(B)
+!!
+!               call mem%alloc(g_AB_AB, &
+!                     (A_interval%size)*(B_interval%size), &
+!                     (A_interval%size)*(B_interval%size))
+!!
+!               g_AB_AB = zero
+!               call system%ao_integrals%get_ao_g_wxyz(g_AB_AB, A, B, A, B)
+!!
+!               if (A .eq. B) then
+!!
+!                  do x = 1, A_interval%size
+!                     do y = x, B_interval%size
+!!
+!                        xy = A_interval%size*(y - 1) + x
+!                        xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
+!!
+!                        D_xy(xy_packed + first_sig_aop - 1, 1) = g_AB_AB(xy, xy)
+!                        screening_vector_reduced(xy_packed + first_sig_aop - 1, 1) = &
+!                                                                  screening_vector_local(x + A_interval%first - 1, 1)*&
+!                                                                  screening_vector_local(y + B_interval%first - 1, 1)
+!!
+!                     enddo
+!                  enddo
+!!
+!               else ! A ≠ B
+!!
+!                  do x = 1, (A_interval%size)
+!                     do y = 1, (B_interval%size)
+!!
+!                        xy = A_interval%size*(y - 1) + x
+!                        D_xy(xy + first_sig_aop - 1, 1) = g_AB_AB(xy,xy)
+!                        screening_vector_reduced(xy + first_sig_aop - 1, 1) = &
+!                                                                  screening_vector_local(x + A_interval%first - 1, 1)*&
+!                                                                  screening_vector_local(y + B_interval%first - 1, 1)
+!!
+!                     enddo
+!                  enddo
+!!
+!               endif
+!!
+!               call mem%dealloc(g_AB_AB, &
+!                     (A_interval%size)*(B_interval%size), &
+!                     (A_interval%size)*(B_interval%size))
+!!
+!               first_sig_aop = first_sig_aop + get_size_sp(A_interval, B_interval)
+!!
+!               current_sig_sp = current_sig_sp + 1
+!!
+!            endif ! End of if (significant)
+!!
+!            sp = sp + 1
+!!
+!         enddo
+!      enddo
+!!
+!      call mem%dealloc(screening_vector_local, solver%n_aop, 1)
+!!
+!!     Write screening_info_file containing
+!!
+!!        1. number of significant shell pairs, number of significant ao pairs
+!!        2. sig_sp - vector of logicals to describe which shell pairs are significant
+!!        3. D_xy = ( xy | xy ), the significant diagonal.
+!!
+!      call disk%open_file(solver%diagonal_info_one_center, 'write')
+!      rewind(solver%diagonal_info_one_center%unit)
+!!
+!      write(solver%diagonal_info_one_center%unit) n_sig_sp, n_sig_aop
+!      write(solver%diagonal_info_one_center%unit) sig_sp
+!      write(solver%diagonal_info_one_center%unit) D_xy
+!      write(solver%diagonal_info_one_center%unit) screening_vector_reduced
+!!
+!      call disk%close_file(solver%diagonal_info_one_center)
+!!
+!      deallocate(sig_sp)
+!      call mem%dealloc(D_xy, n_sig_aop, 1)
+!      call mem%dealloc(screening_vector_reduced, n_sig_aop, 1)
+!!
+!   end subroutine construct_significant_diagonal_atomic_eri_cd_solver
