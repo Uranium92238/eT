@@ -28,14 +28,21 @@ module dmm_hf_solver_class
                                                             ! than initial projected gradient (s^T g(alpha))
 !
       real(dp) :: trust_radius                     = 0.01D0 
-      real(dp) :: relative_trust_radius_threshold  = 0.1D0
+      real(dp) :: relative_trust_radius_threshold  = 0.01D0
       real(dp) :: relative_shifted_micro_threshold = 1.0D-3 ! Level shifted Newton equations threshold
 !
       real(dp) :: rotation_norm_threshold = 0.05D0 ! Maximum rotation norm
 !
+      real(dp) :: linear_dependence_threshold = 1.0D-6
+!
       integer(i15) :: diis_dimension = 8
 !
       logical :: restart
+!
+      real(dp), dimension(:,:), allocatable :: cholesky_ao_overlap ! The non-zero leading rank-by-rank 
+                                                                   ! block L' in S = L L^T = (L', L'^T 0; 0, 0) 
+!
+      real(dp), dimension(:,:), allocatable :: permutation_matrix  ! Permutation matrix 
 !
    contains
 !
@@ -53,6 +60,9 @@ module dmm_hf_solver_class
 !
       procedure, private :: determine_conjugacy_factor          => determine_conjugacy_factor_dmm_hf_solver
       procedure, private :: do_line_search                      => do_line_search_dmm_hf_solver
+!
+      procedure :: decompose_ao_overlap => decompose_ao_overlap_dmm_hf_solver
+      procedure :: do_roothan_hall      => do_roothan_hall_dmm_hf_solver
 !
    end type dmm_hf_solver
 !
@@ -102,6 +112,7 @@ contains
       type(diis) :: diis_solver
 !
       real(dp), dimension(:,:), allocatable :: X       ! Full rotation matrix, antisymmetric
+      real(dp), dimension(:,:), allocatable :: Xf       ! Full rotation matrix, antisymmetric
       real(dp), dimension(:,:), allocatable :: X_pck   ! Packed rotation matrix: represents strictly lower
                                                        ! triangular part of X (excluding the diagonal)
 !
@@ -117,6 +128,8 @@ contains
       real(dp), dimension(:,:), allocatable :: S       ! Preconditioned S (probably just the identity matrix)
       real(dp), dimension(:,:), allocatable :: H       ! Roothan-Hall Hessian
       real(dp), dimension(:,:), allocatable :: G       ! Roothan-Hall gradient
+            real(dp), dimension(:,:), allocatable :: Hr       ! Roothan-Hall Hessian
+      real(dp), dimension(:,:), allocatable :: Gr      ! Roothan-Hall gradient
 !
       real(dp), dimension(:,:), allocatable :: cur_s
       real(dp), dimension(:,:), allocatable :: prev_s
@@ -143,7 +156,7 @@ contains
 !
       real(dp) :: ddot, norm_cur_s
 !
-      integer(i15) :: n_s 
+      integer(i15) :: n_s, i
 !
       real(dp), dimension(:,:), allocatable :: eri_deg
       real(dp), dimension(:,:), allocatable :: sp_eri_schwarz
@@ -177,58 +190,60 @@ contains
 !
       call wf%initialize_ao_overlap()
       call wf%construct_ao_overlap()
+      call solver%decompose_ao_overlap(wf) 
 !
-      call mem%alloc(VT, wf%n_ao, wf%n_ao)
-      call mem%alloc(inv_VT, wf%n_ao, wf%n_ao)
-!
-      VT     = zero
-      inv_VT = zero
-!
-      call wf%decompose_ao_overlap(VT)
-      VT = transpose(VT)
-!
-      call inv(inv_VT, VT, wf%n_ao)
-!
-      call mem%alloc(S, wf%n_ao, wf%n_ao)
-!
-      S = wf%ao_overlap
-      call sandwich(S, inv_VT, inv_VT, wf%n_ao) ! S <- (V-T)^T S V-T = I
-!
-!     Solve Roothan Hall once - using the SOAD guess - to get a decent N-representable 
+!     :: Solve Roothan Hall once - using the SOAD guess - to get a decent N-representable 
 !     AO density on which to start doing conjugate gradient
 !
-      call wf%initialize_orbital_energies()
       call wf%initialize_mo_coefficients()
-      call wf%solve_roothan_hall() 
+      call solver%do_roothan_hall(wf)
 !
-!     From the obtained MO coefficients, update the AO density
-!     and then use the density to construct the AO Fock matrix
+!     From the obtained MO coefficients, update the AO density and from it the AO Fock matrix
 !
       call wf%construct_ao_density()
+      call wf%destruct_mo_coefficients()
+!
       call wf%construct_ao_fock(sp_eri_schwarz, eri_deg, n_s)   
 !
-      call wf%destruct_mo_coefficients()
-      call wf%destruct_orbital_energies()
+!     :: Construct precondition matrices, used to transform H and G prior to solving the Newton equation 
 !
-!     Allocations and zeroing of matrices used in loop
+      call mem%alloc(VT, wf%n_so, wf%n_so)
+      call mem%alloc(inv_VT, wf%n_so, wf%n_so)
+!
+      VT = transpose(solver%cholesky_ao_overlap)
+!
+      call inv_lower_tri(inv_VT, solver%cholesky_ao_overlap, wf%n_so)
+      inv_VT = transpose(inv_VT)
+!
+      call mem%dealloc(solver%cholesky_ao_overlap, wf%n_so, wf%n_so)    
+!
+!     :: Construct the preconditioned S matrix, which is the identity matrix for the 
+!     particular case of preconditioner chosen here 
+!
+      call mem%alloc(S, wf%n_so, wf%n_so) ! P^T S P = V V^T 
+!
+      call dgemm('T','N',  &
+                  wf%n_so, &
+                  wf%n_so, &
+                  wf%n_so, &
+                  one,     &
+                  VT,      &
+                  wf%n_so, &
+                  VT,      &
+                  wf%n_so, &
+                  zero,    &
+                  S,       &
+                  wf%n_so)
+!
+      call sandwich(S, inv_VT, inv_VT, wf%n_so) ! S <- (V-T)^T S V-T = I
+!
+!     :: Allocations and zeroing of matrices used in the following loop
 !
       call mem%alloc(Po, wf%n_ao, wf%n_ao)             ! Projection matrices on orbital (Po) 
       call mem%alloc(Pv, wf%n_ao, wf%n_ao)             ! and virtual (Pv) spaces
 !
       Po = zero
       Pv = zero
-!
-      call mem%alloc(X, wf%n_ao, wf%n_ao)              ! Full antisymmetric rotation matrix
-      call mem%alloc(X_pck, packed_size(wf%n_ao-1), 1) ! Packed rotation matrix (strictly lower triangular part)
-!
-      X     = zero
-      X_pck = zero
-!
-      call mem%alloc(H, wf%n_ao, wf%n_ao)              ! Roothan-Hall Hessian
-      call mem%alloc(G, wf%n_ao, wf%n_ao)              ! Roothan-Hall gradient
-!
-      H = zero
-      G = zero
 !
       call mem%alloc(cur_g, packed_size(wf%n_ao-1), 1)
       call mem%alloc(prev_g, packed_size(wf%n_ao-1), 1)
@@ -259,14 +274,21 @@ contains
 !
          call wf%construct_projection_matrices(Po, Pv)
 !
-!        Use the projections to construct the gradient G
+!        Use the projections to construct the gradient G, then pack it in 
 !
+         call mem%alloc(G, wf%n_ao, wf%n_ao)
          call wf%construct_roothan_hall_gradient(G, Po, Pv)
 !
-!        Pack-in gradient and determine its maximum (absolute) element
-!
          call packin_anti(cur_g, G, wf%n_ao)
-         max_grad = get_abs_max(cur_g, packed_size(wf%n_ao - 1))
+!
+!        Make the reduced space G (where linearly dependent directions have been removed),
+!        and determine its maximum (absolute) element 
+!
+         call mem%alloc(Gr, wf%n_so, wf%n_so) 
+         call symmetric_sandwich(Gr, G, solver%permutation_matrix, wf%n_ao, wf%n_so)
+         call mem%dealloc(G, wf%n_ao, wf%n_ao)
+
+         max_grad = get_abs_max(Gr, wf%n_so*wf%n_so)
 !
 !        Set current energy
 !
@@ -291,44 +313,65 @@ contains
 !
          else ! Rotate density matrix
 !
-!           :: Construct the Hessian H (one-electron terms) and precondition matrices,
-!           i.e. replace Y by V-1 Y V-T for Y = G and H
+!           :: Construct the Hessian H (one-electron terms), transform it to the linearly independent
+!           basis, then precondition both it and G; i.e., replace Y by V-1 Y V-T for Y = G and H
 !
+            call mem%alloc(H, wf%n_ao, wf%n_ao)
             call wf%construct_roothan_hall_hessian(H, Po, Pv)
 !
-            call sandwich(G, inv_VT, inv_VT, wf%n_ao)
-            call sandwich(H, inv_VT, inv_VT, wf%n_ao)
+            call mem%alloc(Hr, wf%n_so, wf%n_so)
+            call symmetric_sandwich(Hr, H, solver%permutation_matrix, wf%n_ao, wf%n_so)
+            call mem%dealloc(H, wf%n_ao, wf%n_ao)
+!
+            call sandwich(Gr, inv_VT, inv_VT, wf%n_so)
+            call sandwich(Hr, inv_VT, inv_VT, wf%n_so)
 !
 !           :: Perform micro-iterations to get a direction X in which to rotate
 !           (solves the equation of RH gradient equal to zero to first order in X)
 !
-            call solver%solve_Newton_equation(wf, X_pck, H, G, S, max_grad)
-            call squareup_anti(X_pck, X, wf%n_ao)
+            call mem%alloc(X, wf%n_so, wf%n_so)              ! Full antisymmetric rotation matrix
+            call mem%alloc(X_pck, packed_size(wf%n_so-1), 1) ! Packed rotation matrix (strictly lower triangular part)
+!
+            X     = zero
+            X_pck = zero
+!
+            call solver%solve_Newton_equation(wf, X_pck, Hr, Gr, S, max_grad)
+            call squareup_anti(X_pck, X, wf%n_so)
 !
 !           :: Solve the augmented Hessian (i.e., level shifted Newton equation) if
 !           the converged step X is longer than the trust radius within which the Roothan-Hall
 !           energy expansion can (presumably) be trusted to second order in X
 !
-            norm_X = sqrt(ddot(packed_size(wf%n_ao-1), X_pck, 1, X_pck, 1))
+            norm_X = sqrt(ddot(packed_size(wf%n_so-1), X_pck, 1, X_pck, 1))
 !
             if (norm_X .gt. solver%trust_radius .and. abs(norm_X-solver%trust_radius) .gt. & 
                         solver%relative_trust_radius_threshold*solver%trust_radius) then
 !
                write(output%unit, '(/t6,a/,t6,a)') 'Step outside trust region. Will attempt to', &
                                                    'solve the augmented Hessian equation.'
+               flush(output%unit)
 !
-               call solver%solve_level_shifted_Newton_equation(wf, X_pck, H, G, S, max_grad, norm_X)
-               call squareup_anti(X_pck, X, wf%n_ao)
+               call solver%solve_level_shifted_Newton_equation(wf, X_pck, Hr, Gr, S, max_grad, norm_X)
+               call squareup_anti(X_pck, X, wf%n_so)
 ! 
             endif
 !
+            call mem%dealloc(Gr, wf%n_so, wf%n_so) 
+            call mem%dealloc(Hr, wf%n_so, wf%n_so)              
+            call mem%dealloc(X_pck, packed_size(wf%n_so-1), 1) 
+!
 !           :: Convert the converged direction X from the basis of the preconditioned system (X' = V^T X V)
-!           back to the original system (X -> V-T X V-1)
+!           back to the original system (X -> V-T X V-1), then transform the vector back to full (lin.dep.) 
+!           space, packing it into the current direction vector s
 !
             transpose_left = .false.
-            call sandwich(X, inv_VT, inv_VT, wf%n_ao, transpose_left) 
-!
-            call packin_anti(cur_s, X, wf%n_ao) ! Save the transformed X as the uncorrected direction s
+            call sandwich(X, inv_VT, inv_VT, wf%n_so, transpose_left) 
+! 
+            call mem%alloc(Xf, wf%n_ao, wf%n_ao)
+            call symmetric_sandwich_right(Xf, X, solver%permutation_matrix, wf%n_ao, wf%n_so)
+            call packin_anti(cur_s, Xf, wf%n_ao) 
+            call mem%dealloc(Xf, wf%n_ao, wf%n_ao)
+            call mem%dealloc(X, wf%n_so, wf%n_so) 
 !
 !           :: Determine conjugacy factor beta, and adjust step direction accordingly
 !
@@ -370,13 +413,7 @@ contains
       call mem%dealloc(Po, wf%n_ao, wf%n_ao)
       call mem%dealloc(Pv, wf%n_ao, wf%n_ao)
 !
-      call mem%dealloc(X, wf%n_ao, wf%n_ao)
-      call mem%dealloc(X_pck, packed_size(wf%n_ao-1), 1)
-!
-      call mem%dealloc(H, wf%n_ao, wf%n_ao)
-      call mem%dealloc(G, wf%n_ao, wf%n_ao)
-!
-      call mem%dealloc(S, wf%n_ao, wf%n_ao)
+      call mem%dealloc(S, wf%n_so, wf%n_so)
 !
       call mem%dealloc(cur_g, packed_size(wf%n_ao-1), 1)
       call mem%dealloc(prev_g, packed_size(wf%n_ao-1), 1)
@@ -385,6 +422,9 @@ contains
 !
       call mem%dealloc(sp_eri_schwarz, n_s, n_s)
       call mem%dealloc(eri_deg, n_s**2, n_s**2)
+!
+      call mem%dealloc(VT, wf%n_so, wf%n_so)
+      call mem%dealloc(inv_VT, wf%n_so, wf%n_so)
 !
 !     Initialize solver (make final deallocations, and other stuff)
 !
@@ -555,11 +595,11 @@ contains
 !
       class(hf) :: wf
 !
-      real(dp), dimension((wf%n_ao-1)*(wf%n_ao)/2, 1) :: X_pck
+      real(dp), dimension((wf%n_so-1)*(wf%n_so)/2, 1) :: X_pck
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: H
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: G
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: S
+      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: H
+      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: G
+      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: S
 !
       real(dp), intent(in) :: max_grad ! Maximum element of the gradient G
 !
@@ -581,20 +621,20 @@ contains
 !     Perform micro-iterations to get a direction X in which to rotate
 !     (solves the equation of RH gradient equal to zero to first order in X)
 !
-      call mem%alloc(X, wf%n_ao, wf%n_ao)
+      call mem%alloc(X, wf%n_so, wf%n_so)
 !
       X = -G
-      call packin_anti(X_pck, X, wf%n_ao)
+      call packin_anti(X_pck, X, wf%n_so)
 !
       micro_iteration = 1
       micro_iterate = .true.
       call diis_solver%init('hf_newton',                &
-                              packed_size(wf%n_ao - 1), &
-                              packed_size(wf%n_ao - 1), &
+                              packed_size(wf%n_so - 1), &
+                              packed_size(wf%n_so - 1), &
                               solver%diis_dimension)
 !
-      call mem%alloc(RHC, wf%n_ao, wf%n_ao)
-      call mem%alloc(RHC_pck, packed_size(wf%n_ao-1), 1)
+      call mem%alloc(RHC, wf%n_so, wf%n_so)
+      call mem%alloc(RHC_pck, packed_size(wf%n_so-1), 1)
 !
       do while (micro_iterate .and. micro_iteration .le. solver%max_micro_iterations)
 !
@@ -605,8 +645,8 @@ contains
 !
 !        Precondition the Roothan-Hall condition by the inverse of the linearized H matrix
 !
-         do i = 1, wf%n_ao
-            do j = 1, wf%n_ao
+         do i = 1, wf%n_so
+            do j = 1, wf%n_so
 !
                RHC(i,j) = RHC(i,j)/(H(i,i) + H(j,j))
 !
@@ -616,11 +656,11 @@ contains
 !        Packin the strictly lower triangular part of the preconditioned Roothan-Hall condition
 !
          RHC_pck = zero
-         call packin_anti(RHC_pck, RHC, wf%n_ao)
+         call packin_anti(RHC_pck, RHC, wf%n_so)
 !
 !        Compute the error (the L2 norm of the condition)
 !
-         micro_error = sqrt(ddot(packed_size(wf%n_ao-1), RHC_pck, 1, RHC_pck, 1))
+         micro_error = sqrt(ddot(packed_size(wf%n_so-1), RHC_pck, 1, RHC_pck, 1))
 !
 !        Ask DIIS for updated (packed) rotation parameters X
 !
@@ -630,7 +670,7 @@ contains
 !        Squareup anti-symmetric rotation matrix gotten from DIIS
 !
          X = zero
-         call squareup_anti(X_pck, X, wf%n_ao)
+         call squareup_anti(X_pck, X, wf%n_so)
 !
          micro_iteration = micro_iteration + 1
 !
@@ -644,7 +684,10 @@ contains
 !
       call diis_solver%finalize()
 !
-      call mem%dealloc(X, wf%n_ao, wf%n_ao)
+      call mem%dealloc(X, wf%n_so, wf%n_so)
+!
+      call mem%dealloc(RHC, wf%n_so, wf%n_so)
+      call mem%dealloc(RHC_pck, packed_size(wf%n_so-1), 1)
 !
       if (micro_iterate) then 
 !
@@ -653,7 +696,7 @@ contains
 !
       endif
 !
-   end subroutine solve_Newton_equation_dmm_hf_solver  
+   end subroutine solve_Newton_equation_dmm_hf_solver
 !
 !
    subroutine solve_level_shifted_Newton_equation_dmm_hf_solver(solver, wf, X_pck, H, G, S, max_grad, norm_X)
@@ -686,11 +729,11 @@ contains
 !
       class(hf) :: wf
 !
-      real(dp), dimension((wf%n_ao-1)*(wf%n_ao)/2, 1) :: X_pck
+      real(dp), dimension((wf%n_so-1)*(wf%n_so)/2, 1) :: X_pck
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: H
-      real(dp), dimension(wf%n_ao, wf%n_ao)             :: G ! G is not changed, but it is scaled by gamma and then restored 
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: S
+      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: H
+      real(dp), dimension(wf%n_so, wf%n_so)             :: G ! G is not changed, but it is scaled by gamma and then restored 
+      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: S
 !
       real(dp), intent(in) :: max_grad                       ! Maximum element of the gradient G
       real(dp)             :: norm_X                         ! Norm of the X vector (on input, from guess X; on exit, the final X norm)
@@ -719,17 +762,17 @@ contains
 !
       type(diis) :: diis_solver 
 !
-      call mem%alloc(dz, packed_size(wf%n_ao - 1) + 1, 1)
-      call mem%alloc(z_dz, packed_size(wf%n_ao - 1) + 1, 1)
+      call mem%alloc(dz, packed_size(wf%n_so - 1) + 1, 1)
+      call mem%alloc(z_dz, packed_size(wf%n_so - 1) + 1, 1)
 !
-      call mem%alloc(RHC, wf%n_ao, wf%n_ao)
-      call mem%alloc(RHC_pck, packed_size(wf%n_ao-1), 1)
+      call mem%alloc(RHC, wf%n_so, wf%n_so)
+      call mem%alloc(RHC_pck, packed_size(wf%n_so-1), 1)
 !
-      call mem%alloc(G_pck, packed_size(wf%n_ao-1), 1)
-      call packin_anti(G_pck, G, wf%n_ao)
+      call mem%alloc(G_pck, packed_size(wf%n_so-1), 1)
+      call packin_anti(G_pck, G, wf%n_so)
 !
-      call mem%alloc(X, wf%n_ao, wf%n_ao)
-      call squareup_anti(X_pck, X, wf%n_ao) 
+      call mem%alloc(X, wf%n_so, wf%n_so)
+      call squareup_anti(X_pck, X, wf%n_so) 
 !
       gamma = one
       do while (abs(norm_X-solver%trust_radius) .gt. solver%relative_trust_radius_threshold*solver%trust_radius)
@@ -737,13 +780,13 @@ contains
          level_shift = zero
          gamma = (solver%trust_radius/norm_X)*gamma ! Guess for gamma given current norm of X
 !
-         call packin_anti(X_pck, X, wf%n_ao)   
+         call packin_anti(X_pck, X, wf%n_so)   
 !
          micro_iteration = 1
          micro_iterate = .true.
          call diis_solver%init('level_shifted_hf_newton',      &
-                                 packed_size(wf%n_ao - 1) + 1, & 
-                                 packed_size(wf%n_ao - 1) + 1, &
+                                 packed_size(wf%n_so - 1) + 1, & 
+                                 packed_size(wf%n_so - 1) + 1, &
                                  solver%diis_dimension)
 !
          G = gamma*G
@@ -757,8 +800,8 @@ contains
 !
 !           Precondition the Roothan-Hall condition by the inverse of the linearized H matrix
 !
-            do i = 1, wf%n_ao
-               do j = 1, wf%n_ao
+            do i = 1, wf%n_so
+               do j = 1, wf%n_so
 !
                   RHC(i,j) = RHC(i,j)/(H(i,i) + H(j,j) - level_shift)
 !
@@ -768,27 +811,27 @@ contains
 !           Packin the strictly lower triangular part of the preconditioned Roothan-Hall condition
 !
             RHC_pck = zero
-            call packin_anti(RHC_pck, RHC, wf%n_ao)
+            call packin_anti(RHC_pck, RHC, wf%n_so)
 !
 !           Compute the projection equation, gamma * G^T X - level_shift
 !
-            projection_equation = ddot(packed_size(wf%n_ao - 1), G_pck, 1, X_pck, 1) ! G^T X
+            projection_equation = ddot(packed_size(wf%n_so - 1), G_pck, 1, X_pck, 1) ! G^T X
             projection_equation = projection_equation*gamma - level_shift
 !
 !           Compute the error (the L2 norm of the condition)
 !
-            micro_error = sqrt(ddot(packed_size(wf%n_ao-1), RHC_pck, 1, RHC_pck, 1) & 
+            micro_error = sqrt(ddot(packed_size(wf%n_so-1), RHC_pck, 1, RHC_pck, 1) & 
                                        + projection_equation**2)                
 !
 !           Ask DIIS for updated (packed) rotation parameters X
 !
             dz(1, 1) = projection_equation
-            dz(2:(packed_size(wf%n_ao - 1) + 1), 1) = RHC_pck(:, 1)
+            dz(2:(packed_size(wf%n_so - 1) + 1), 1) = RHC_pck(:, 1)
 !
 !           z_dz = z
 !
             z_dz(1, 1) = level_shift
-            z_dz(2:(packed_size(wf%n_ao - 1) + 1), 1) = X_pck(:, 1)
+            z_dz(2:(packed_size(wf%n_so - 1) + 1), 1) = X_pck(:, 1)
 !
 !           z_dz = z_dz + dz = z + dz
 !
@@ -796,12 +839,12 @@ contains
             call diis_solver%update(dz, z_dz) ! Updated z placed in z_dz on exit
 !
             level_shift = z_dz(1, 1)
-            X_pck(:, 1) = z_dz(2:(packed_size(wf%n_ao - 1) + 1), 1)
+            X_pck(:, 1) = z_dz(2:(packed_size(wf%n_so - 1) + 1), 1)
 !
 !           Squareup anti-symmetric rotation matrix gotten from DIIS
 !
             X = zero
-            call squareup_anti(X_pck, X, wf%n_ao)
+            call squareup_anti(X_pck, X, wf%n_so)
 !
             micro_iteration = micro_iteration + 1
 !
@@ -818,9 +861,9 @@ contains
          call diis_solver%finalize()
 !
          X = X/gamma
-         call squareup_anti(X_pck, X, wf%n_ao)
+         call squareup_anti(X_pck, X, wf%n_so)
 !
-         norm_X = sqrt(ddot(packed_size(wf%n_ao-1), X_pck, 1, X_pck, 1))
+         norm_X = sqrt(ddot(packed_size(wf%n_so-1), X_pck, 1, X_pck, 1))
 !
       !   write(output%unit, '(/t6,a28,i3)')     'Number of micro-iterations: ', micro_iteration - 1
          write(output%unit, '(/t6,a13,f15.12)') 'Alpha:       ', gamma ! Alpha is the name used in literature
@@ -832,14 +875,14 @@ contains
 !
       enddo ! End of gamma loop
 !
-      call mem%dealloc(dz, packed_size(wf%n_ao - 1) + 1, 1)
-      call mem%dealloc(z_dz, packed_size(wf%n_ao - 1) + 1, 1)
+      call mem%dealloc(dz, packed_size(wf%n_so - 1) + 1, 1)
+      call mem%dealloc(z_dz, packed_size(wf%n_so - 1) + 1, 1)
 !
-      call mem%dealloc(RHC, wf%n_ao, wf%n_ao)
-      call mem%dealloc(RHC_pck, packed_size(wf%n_ao-1), 1)
+      call mem%dealloc(RHC, wf%n_so, wf%n_so)
+      call mem%dealloc(RHC_pck, packed_size(wf%n_so-1), 1)
 !
-      call mem%dealloc(G_pck, packed_size(wf%n_ao-1), 1)
-      call mem%dealloc(X, wf%n_ao, wf%n_ao)
+      call mem%dealloc(G_pck, packed_size(wf%n_so-1), 1)
+      call mem%dealloc(X, wf%n_so, wf%n_so)
 !
       if (micro_iterate) then 
 !
@@ -973,6 +1016,181 @@ contains
       call mem%dealloc(tmp_pck, packed_size(wf%n_ao-1), 1)
 !
    end subroutine do_line_search_dmm_hf_solver
+!
+!
+   subroutine decompose_ao_overlap_dmm_hf_solver(solver, wf)
+!!
+!!    Decompose AO overlap
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(dmm_hf_solver) :: solver
+!
+      class(hf) :: wf
+!
+      integer(kind=4), dimension(:, :), allocatable :: used_diag
+!
+      real(dp), dimension(:, :), allocatable :: L
+!
+      integer(i15) :: i, j
+!
+      allocate(used_diag(wf%n_ao, 1))
+      used_diag = 0
+!
+      call mem%alloc(L, wf%n_ao, wf%n_ao) ! Full Cholesky vector
+      L = zero
+!
+      call full_cholesky_decomposition_system(wf%ao_overlap, L, wf%n_ao, wf%n_so, &
+                                          solver%linear_dependence_threshold, used_diag)
+!
+      call mem%alloc(solver%cholesky_ao_overlap, wf%n_so, wf%n_so) 
+      solver%cholesky_ao_overlap(:,:) = L(1:wf%n_so, 1:wf%n_so)
+!
+      call mem%dealloc(L, wf%n_ao, wf%n_ao)
+!
+!     Make permutation matrix P
+!
+      call mem%alloc(solver%permutation_matrix, wf%n_ao, wf%n_so)
+!
+      solver%permutation_matrix = zero
+!
+      do j = 1, wf%n_so
+!
+         solver%permutation_matrix(used_diag(j, 1), j) = one
+!
+      enddo
+!
+      deallocate(used_diag)
+!
+   end subroutine decompose_ao_overlap_dmm_hf_solver
+!
+!
+   subroutine do_roothan_hall_dmm_hf_solver(solver, wf)
+!!
+!!    Do Roothan Hall
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Solves P^T F P (P^T C) = P^T S P P^T C e = L L^T (P^T C) e
+!!
+      implicit none
+!
+      class(dmm_hf_solver) :: solver 
+!
+      class(hf) :: wf
+!
+      real(dp), dimension(:,:), allocatable :: work
+      real(dp), dimension(:,:), allocatable :: metric 
+      real(dp), dimension(:,:), allocatable :: ao_fock 
+      real(dp), dimension(:,:), allocatable :: orbital_energies 
+      real(dp), dimension(:,:), allocatable :: FP 
+!
+      real(dp) :: ddot, norm
+!
+      integer(i15) :: info = 0
+!
+      call mem%alloc(metric, wf%n_so, wf%n_so)
+!
+      call dgemm('N','T',                     &
+                  wf%n_so,                    &
+                  wf%n_so,                    &
+                  wf%n_so,                    &
+                  one,                        &
+                  solver%cholesky_ao_overlap, & 
+                  wf%n_so,                    &
+                  solver%cholesky_ao_overlap, &
+                  wf%n_so,                    &
+                  zero,                       &
+                  metric,                     & ! metric = L L^T
+                  wf%n_so)
+!
+!     Allocate reduced space matrices 
+!
+      call mem%alloc(ao_fock, wf%n_so, wf%n_so)
+      call mem%alloc(orbital_energies, wf%n_so, 1)
+!
+!     Construct reduced space Fock matrix, F' = P^T F P,
+!     which is to be diagonalized over the metric L L^T 
+!
+      call mem%alloc(FP, wf%n_ao, wf%n_so)
+!
+      call dgemm('N','N',                    &
+                  wf%n_ao,                   &
+                  wf%n_so,                   &
+                  wf%n_ao,                   &
+                  one,                       &
+                  wf%ao_fock,                &
+                  wf%n_ao,                   &
+                  solver%permutation_matrix, &
+                  wf%n_ao,                   &
+                  zero,                      &  
+                  FP,                        &
+                  wf%n_ao)
+!
+      call dgemm('T','N',                    &
+                  wf%n_so,                   &
+                  wf%n_so,                   &
+                  wf%n_ao,                   &
+                  one,                       &
+                  solver%permutation_matrix, &
+                  wf%n_ao,                   &
+                  FP,                        &
+                  wf%n_ao,                   &
+                  zero,                      &
+                  ao_fock,                   & ! F' = P^T F P
+                  wf%n_so)   
+!
+      call mem%dealloc(FP, wf%n_so, wf%n_ao)   
+!
+!     Solve F'C' = L L^T C' e
+!
+      info = 0
+!
+      call mem%alloc(work, 4*wf%n_so, 1)
+      work = zero
+!
+      call dsygv(1, 'V', 'L',       &
+                  wf%n_so,          &
+                  ao_fock,          & ! ao_fock on entry, orbital coefficients on exit
+                  wf%n_so,          &
+                  metric,           &
+                  wf%n_so,          &
+                  orbital_energies, &
+                  work,             &
+                  4*(wf%n_so),      &
+                  info)
+!
+      call mem%dealloc(metric, wf%n_so, wf%n_so)
+      call mem%dealloc(work, 4*wf%n_so, 1)
+      call mem%dealloc(orbital_energies, wf%n_so, 1)
+!
+      if (info .ne. 0) then 
+!
+         write(output%unit, '(/t3,a/)') 'Error: could not solve Roothan-Hall equations.'
+         stop
+!
+      endif
+!
+!     Transform back the solutions to original basis, C = P (P^T C) = P C'
+!
+      wf%orbital_coefficients = zero
+!
+      call dgemm('N','N',                    &
+                  wf%n_ao,                   &
+                  wf%n_so,                   &
+                  wf%n_so,                   &
+                  one,                       &
+                  solver%permutation_matrix, &
+                  wf%n_ao,                   &
+                  ao_fock,                   & ! orbital coefficients 
+                  wf%n_so,                   &
+                  zero,                      &
+                  wf%orbital_coefficients,   &
+                  wf%n_ao)
+!
+      call mem%dealloc(ao_fock, wf%n_so, wf%n_so)
+!
+   end subroutine do_roothan_hall_dmm_hf_solver
 !
 !
 end module dmm_hf_solver_class

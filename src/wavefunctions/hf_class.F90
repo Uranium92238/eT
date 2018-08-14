@@ -16,6 +16,8 @@ module hf_class
 !
    type, extends(wavefunction):: hf
 !
+      integer(i15) :: n_so ! Number of linearly independent AOs
+!
       real(dp) :: hf_energy
 !
       real(dp), dimension(:,:), allocatable :: ao_density
@@ -82,7 +84,7 @@ module hf_class
       procedure :: construct_roothan_hall_gradient             => construct_roothan_hall_gradient_hf
       procedure :: construct_stationary_roothan_hall_condition => construct_stationary_roothan_hall_condition_hf
 !
-      procedure :: construct_sp_eri_schwarz =>  construct_sp_eri_schwarz_hf
+      procedure :: construct_sp_eri_schwarz => construct_sp_eri_schwarz_hf
       procedure :: determine_degeneracy     => determine_degeneracy_hf
 !
    end type hf
@@ -1003,7 +1005,7 @@ contains
 !!    Get AO density
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Packs the wavefunction's AO density into D.
+!!    Packs the AO density into D.
 !!
       implicit none
 !
@@ -1127,11 +1129,10 @@ contains
       call full_cholesky_decomposition_system(wf%ao_overlap, L, wf%n_ao, rank, &
                                                       1.0D-32, used_diag)
 !
-      if (rank .lt. wf%n_ao) write(output%unit, *) 'Warning: rank lower than full dim for S = L L^T'
-!
-     ! write(output%unit, *) 'rank:', rank
-     ! write(output%unit, *) 'used_diag:', used_diag
-     ! flush(output%unit)
+      ! write(output%unit, *) 'n_ao:', wf%n_ao 
+      ! write(output%unit, *) 'rank:', rank
+      ! write(output%unit, *) 'used_diag:', used_diag
+      ! flush(output%unit)
 !
 !     Make permutation matrix P
 !
@@ -1454,7 +1455,7 @@ contains
 !!    Construct projection matrices
 !!    Written by Eirik F. Kjønstad, 2018
 !!
-!!    Constructs Po = D S
+!!    Constructs Po = 1/2 D S
 !!               Pv = 1 - Po
 !!
 !!    D: AO density matrix, S: AO overlap matrix. Both are assumed
@@ -1471,7 +1472,7 @@ contains
 !
       integer(i15) :: w, x
 !
-!     Po = D S
+!     Po = 1/2 D S
 !
       call dgemm('N','N',        &
                   wf%n_ao,       &
@@ -1522,7 +1523,7 @@ contains
 !!
 !!       X <- Po X Pv^T + Pv X Po^T,
 !!
-!!    where Po = D S and Pv = 1 - Po. In Po, D is the AO density and S
+!!    where Po = 1/2 D S and Pv = 1 - Po. In Po, D is the AO density and S
 !!    is the AO overlap matrix.
 !!
       implicit none
@@ -1698,12 +1699,12 @@ contains
 !
       class(hf), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao) :: RHC
+      real(dp), dimension(wf%n_so, wf%n_so) :: RHC
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: H
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: X
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: G
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: S
+      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: H
+      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: X
+      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: G
+      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: S
 !
       real(dp), intent(in), optional :: level_shift
 !
@@ -1711,52 +1712,52 @@ contains
 !
 !     Construct tmp = X S => tmp^T = S^T X^T = S X^T = - S X
 !
-      call mem%alloc(tmp, wf%n_ao, wf%n_ao)
+      call mem%alloc(tmp, wf%n_so, wf%n_so)
 !
       call dgemm('N', 'N',       &
-                  wf%n_ao,       &
-                  wf%n_ao,       &
-                  wf%n_ao,       &
+                  wf%n_so,       &
+                  wf%n_so,       &
+                  wf%n_so,       &
                   one,           &
                   X,             &
-                  wf%n_ao,       &
+                  wf%n_so,       &
                   S,             &
-                  wf%n_ao,       &
+                  wf%n_so,       &
                   zero,          &
                   tmp,           &
-                  wf%n_ao)
+                  wf%n_so)
 !
 !     RHC = H X S = H tmp
 !
       call dgemm('N', 'N',       &
-                  wf%n_ao,       &
-                  wf%n_ao,       &
-                  wf%n_ao,       &
+                  wf%n_so,       &
+                  wf%n_so,       &
+                  wf%n_so,       &
                   one,           &
                   H,             &
-                  wf%n_ao,       &
+                  wf%n_so,       &
                   tmp,           &
-                  wf%n_ao,       &
+                  wf%n_so,       &
                   zero,          &
                   RHC,           &
-                  wf%n_ao)
+                  wf%n_so)
 !
 !     RHC = RHC - (- S X) H = RHC - tmp^T H = H X S + S X H
 !
       call dgemm('T', 'N',       &
-                  wf%n_ao,       &
-                  wf%n_ao,       &
-                  wf%n_ao,       &
+                  wf%n_so,       &
+                  wf%n_so,       &
+                  wf%n_so,       &
                   -one,          &
                   tmp,           &
-                  wf%n_ao,       &
+                  wf%n_so,       &
                   H,             &
-                  wf%n_ao,       &
+                  wf%n_so,       &
                   one,           &
                   RHC,           &
-                  wf%n_ao)
+                  wf%n_so)
 !
-      call mem%dealloc(tmp, wf%n_ao, wf%n_ao)
+      call mem%dealloc(tmp, wf%n_so, wf%n_so)
 !
 !     RHC = RHC + G = H X S + S X H + G
 !

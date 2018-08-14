@@ -1122,4 +1122,110 @@ contains
    end subroutine sandwich
 !
 !
+   subroutine symmetric_sandwich(Xr, X, A, m, n)
+!!
+!!    Symmetric sandwich
+!!    Written by Eirik F. Kjønstad, 2018
+!!
+!!    Overwrites the n-by-n matrix X with a sandwich-ed X:
+!!
+!!       X <- A^T X A
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: m, n
+!
+      real(dp), dimension(m, n), intent(in) :: A
+!
+      real(dp), dimension(m, m) :: X
+      real(dp), dimension(n, n) :: Xr
+!
+      real(dp), dimension(:, :), allocatable :: tmp
+!
+      call mem%alloc(tmp, m, n)
+!
+      call dgemm('N', 'N', &
+                  m,       &
+                  n,       &
+                  m,       &
+                  one,     &
+                  X,       &
+                  m,       &
+                  A,       &
+                  m,       &
+                  zero,    &
+                  tmp,     & ! tmp = X A
+                  m)
+!
+      call dgemm('T', 'N', &
+                  n,       &
+                  n,       &
+                  m,       &
+                  one,     &
+                  A,       &
+                  m,       &
+                  tmp,     &
+                  m,       &
+                  zero,    &
+                  Xr,      & ! X = A^T tmp = A^T X B
+                  n)
+!
+      call mem%dealloc(tmp, m, n)
+!
+   end subroutine symmetric_sandwich
+!
+!
+   subroutine symmetric_sandwich_right(Xr, X, A, m, n)
+!!
+!!    Symmetric sandwich using right transposition
+!!    Written by Eirik F. Kjønstad, 2018
+!!
+!!    Overwrites the n-by-n matrix X with a sandwich-ed X:
+!!
+!!       X <- A X A^T
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: m, n
+!
+      real(dp), dimension(m, n), intent(in) :: A
+!
+      real(dp), dimension(n, n) :: X
+      real(dp), dimension(m, m) :: Xr
+!
+      real(dp), dimension(:, :), allocatable :: tmp
+!
+      call mem%alloc(tmp, n, m)
+!
+      call dgemm('N', 'T', &
+                  n,       &
+                  m,       &
+                  n,       &
+                  one,     &
+                  X,       &
+                  n,       &
+                  A,       &
+                  m,       &
+                  zero,    &
+                  tmp,     & ! tmp = X A^T
+                  n)
+!
+      call dgemm('N', 'N', &
+                  m,       &
+                  m,       &
+                  n,       &
+                  one,     &
+                  A,       &
+                  m,       &
+                  tmp,     &
+                  n,       &
+                  zero,    &
+                  Xr,      & ! X = A tmp = A X A^T 
+                  m)
+!
+      call mem%dealloc(tmp, n, m)
+!
+   end subroutine symmetric_sandwich_right
+!
+!
 end module array_utilities

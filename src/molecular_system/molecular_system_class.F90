@@ -696,7 +696,9 @@ contains
       electrons = 0
 !
       do I = 1, n_ao
+!
          electrons = electrons + density_diagonal(I, 1)
+!
       enddo
 !
       write(output%unit, *)electrons

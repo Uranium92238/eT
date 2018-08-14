@@ -225,9 +225,9 @@ contains
       sig_sp = .false.
 !
 !$omp parallel do &
-!$omp schedule(guided) &
 !$omp private(I, A, B, A_interval, B_interval, x, y, xy, g_AB_AB, D_AB) &
-!$omp shared(sig_sp)
+!$omp shared(sig_sp) &
+!$omp schedule(dynamic)
       do I = 1, solver%n_sp
 !
          A = sp_index(I, 1)
@@ -349,9 +349,9 @@ contains
 !     This is convenient because significant_sp_to_first_significant_aop will be used to calculate lengths.
 !
 !$omp parallel do &
-!$omp schedule(guided) &
 !$omp private(I, A, B, A_interval, B_interval, x, y, xy, xy_packed, g_AB_AB) &
-!$omp shared(D_xy, screening_vector_reduced, ao_offsets)
+!$omp shared(D_xy, screening_vector_reduced, ao_offsets) &
+!$omp schedule(dynamic)
       do I = 1, n_sig_sp
 !
          A = sig_sp_index(I, 1)
@@ -490,9 +490,9 @@ contains
       sig_sp = .false.
 !
 !$omp parallel do &
-!$omp schedule(guided) &
 !$omp private(I, A, B, A_interval, B_interval, x, y, xy, g_AB_AB, D_AB) &
-!$omp shared(sig_sp)
+!$omp shared(sig_sp) &
+!$omp schedule(dynamic)
       do I = 1, solver%n_sp
 !
          A = sp_index(I, 1)
@@ -618,9 +618,9 @@ contains
 !     This is convenient because significant_sp_to_first_significant_aop will be used to calculate lengths.
 !
 !$omp parallel do &
-!$omp schedule(guided) &
 !$omp private(I, A, B, A_interval, B_interval, x, y, xy, xy_packed, g_AB_AB) &
-!$omp shared(D_xy, screening_vector_reduced, ao_offsets)
+!$omp shared(D_xy, screening_vector_reduced, ao_offsets) &
+!$omp schedule(dynamic)
       do I = 1, n_sig_sp
 !
          A = sig_sp_index(I, 1)
@@ -1083,10 +1083,10 @@ contains
          call mem%alloc(g_wxyz, n_sig_aop, n_qual_aop)
 !
 !$omp parallel do &
-!$omp schedule(dynamic) &
 !$omp private(AB_sp, CD_sp, A, B, A_interval, B_interval, C, D, C_interval, D_interval, &
 !$omp  aop, w, x, y, z, wx, yz, wx_packed, g_AB_CD, n_qual_aop_in_sp) &
-!$omp shared(g_wxyz, n_qual_aop_in_prev_sps, qual_aop)
+!$omp shared(g_wxyz, n_qual_aop_in_prev_sps, qual_aop) &
+!$omp schedule(dynamic)
          do CD_sp = 1, n_qual_sp
 !
             C                = qual_sp(CD_sp, 1)
@@ -1714,11 +1714,11 @@ contains
       call mem%alloc(integrals_auxiliary_packed, solver%n_cholesky*(solver%n_cholesky+1)/2, 1)
 !
 !$omp parallel do &
-!$omp schedule(dynamic) &
 !$omp private(AB_sp, CD_sp, A, B, A_interval, B_interval, C, D, C_interval, D_interval, &
 !$omp w, x, y, z, wx, yz, g_AB_CD, I, J, K, L, KL,&
 !$omp current_aop_in_sp, basis_aops_in_CD_sp, basis_aops_in_AB_sp) &
-!$omp shared(integrals_auxiliary_packed, cholesky_basis, basis_shell_info)
+!$omp shared(integrals_auxiliary_packed, cholesky_basis, basis_shell_info) &
+!$omp schedule(dynamic)
       do CD_sp = 1, n_sp_in_basis
 !
          C = basis_shell_info(CD_sp, 1)
@@ -2135,12 +2135,12 @@ contains
          enddo
 !
 !$omp parallel do &
-!$omp schedule(dynamic) &
 !$omp private(AB_sp, CD_sp, I, A, B, A_interval, &
 !$omp B_interval, C, D, C_interval, D_interval, &
 !$omp basis_aops_in_CD_sp, current_aop_in_sp, g_CD_AB, &
 !$omp w, x, y, z, wx, yz, yz_packed, L, J) &
-!$omp shared(g_J_yz, AB_info, basis_shell_info, cholesky_basis)
+!$omp shared(g_J_yz, AB_info, basis_shell_info, cholesky_basis) &
+!$omp schedule(dynamic)
          do AB_sp = 1, n_AB_included
 !
             A = AB_info(AB_sp, 2)
