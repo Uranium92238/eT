@@ -466,7 +466,7 @@ contains
    end subroutine determine_degeneracy_hf
 !
 !
-   subroutine construct_ao_fock_hf(wf, sp_eri_schwarz, degeneracy, n_s)
+   subroutine construct_ao_fock_hf(wf, sp_eri_schwarz, n_s)
 !!
 !!    Construct AO Fock matrix
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -485,7 +485,6 @@ contains
       integer(i15) :: n_s
 !
       real(dp), dimension(n_s, n_s) :: sp_eri_schwarz
-      real(dp), dimension(n_s**2,n_s**2) :: degeneracy
 !
       real(dp), dimension(:,:), allocatable :: ao_fock_packed
       real(dp), dimension(:,:), allocatable :: X_wz, h_wx, h_wx_square
@@ -562,7 +561,15 @@ contains
 !
             if (sp_eri_schwarz(s1, s2)*(max_D_schwarz)*(max_eri_schwarz) .lt. 1.0d-10) continue
 !
-            s1s2 = n_s*(s2 - 1) + s1
+            if (s1 .eq. s2) then
+!
+               deg_12 = one
+!
+            else
+!
+               deg_12 = two
+!
+            endif
 !
             do s3 = 1, s1
 !
@@ -591,8 +598,35 @@ contains
 !
                   if (skip) continue
 !
-                  s3s4 = n_s*(s4 - 1) + s3
-                  deg = degeneracy(s1s2, s3s4) ! Shell degeneracy
+                  if (s3 .eq. s4) then
+!
+                     deg_34 = one
+!
+                  else
+!
+                     deg_34 = two
+!
+                  endif
+!
+                  if (s3 .eq. s1) then
+!
+                     if (s2 .eq. s4) then
+!
+                        deg_12_34 = one
+!
+                     else
+!
+                        deg_12_34 = two
+!
+                     endif
+!
+                  else
+!
+                     deg_12_34 = two
+!
+                  endif
+
+                  deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
 !
                   A_interval = wf%system%get_shell_limits(s1)
                   B_interval = wf%system%get_shell_limits(s2)

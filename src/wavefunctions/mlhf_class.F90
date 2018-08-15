@@ -139,9 +139,6 @@ contains
 !
       call mem%alloc(sp_eri_schwarz, n_s, n_s)
       call wf%construct_sp_eri_schwarz(sp_eri_schwarz, n_s)
-!  
-      call mem%alloc(eri_deg, n_s**2, n_s**2)
-      call wf%determine_degeneracy(eri_deg, n_s)
 !
 !     Construct initial AO Fock from the SOAD density
 !
@@ -150,9 +147,8 @@ contains
 !
 !
       call wf%initialize_ao_fock()
-      call wf%construct_ao_fock(sp_eri_schwarz, eri_deg, n_s)
+      call wf%construct_ao_fock(sp_eri_schwarz, n_s)
 !
-      call mem%dealloc(eri_deg, n_s**2, n_s**2)
       call mem%dealloc(sp_eri_schwarz, n_s, n_s)
 !
 !     Construct AO overlap matrix, Cholesky decompose it,
