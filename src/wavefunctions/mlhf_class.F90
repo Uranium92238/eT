@@ -106,9 +106,9 @@ contains
 !
       integer(i15), dimension(:,:), allocatable :: active_aos
 !
-      integer(i15) :: ao
+      integer(i15) :: ao, n_active_occ, n_active_vir, n_s
 !
-      real(dp), dimension(:,:), allocatable :: density_diagonal
+      real(dp), dimension(:,:), allocatable :: density_diagonal, eri_deg, sp_eri_schwarz
 !
       type(eri_cd_solver)  :: chol_solver
 !
@@ -129,9 +129,20 @@ contains
 !
 !     Construct initial AO Fock from the SOAD density
 !
+      n_s = wf%system%get_n_shells()
+!
+      call mem%alloc(sp_eri_schwarz, n_s, n_s)
+      call wf%construct_sp_eri_schwarz(sp_eri_schwarz, n_s)
+!  
+      call mem%alloc(eri_deg, n_s**2, n_s**2)
+      call wf%determine_degeneracy(eri_deg, n_s)
+!
+!     Construct initial AO Fock from the SOAD density
 !
       call wf%initialize_ao_fock()
-    !  call wf%construct_ao_fock() ! From current D^AO
+      call wf%construct_ao_fock(sp_eri_schwarz, eri_deg, n_s)
+      call mem%dealloc(eri_deg, n_s**2, n_s**2)
+      call mem%dealloc(sp_eri_schwarz, n_s, n_s)
 !
 !     Construct AO overlap matrix, Cholesky decompose it,
 !     followed by preconditioning (making it the identity matrix
@@ -159,9 +170,6 @@ contains
 !
       enddo 
 !
-      write(output%unit, *)'n_active_aos', n_active_aos
-      flush(output%unit)
-!
       call mem%alloc_int(active_aos, n_active_aos, 1)
 !
       ao_offset = 0
@@ -186,7 +194,23 @@ contains
 !
          ao_offset = ao_offset + wf%system%atoms(i)%n_ao
 !
-      enddo 
+      enddo
+!
+!     Determine number of active occupied
+!
+      n_active_occ = 0
+!
+      do i = 1, wf%active_space%n_active_atoms
+!
+        n_active_occ = n_active_occ + wf%system%atoms(wf%active_space%atoms(i, 1))%number
+!
+      enddo
+!
+      n_active_occ = n_active_occ/2
+!
+!     Determine number of active virtuals
+!
+      n_active_vir = n_active_occ * (wf%n_v/wf%n_o)
 !
       call mem%alloc(ao_density_v, wf%n_ao, wf%n_ao)
       call wf%construct_virtual_density(ao_density_v)
@@ -196,15 +220,15 @@ contains
       call dscal(wf%n_ao**2, half, wf%ao_density, 1)
 !
       call cholesky_decomposition_limited_diagonal(wf%ao_density, cholesky_vectors_occ, wf%n_ao, &
-                                                     n_vectors_occ, 1.0d-3, n_active_aos, active_aos)
+                                                     n_vectors_occ, 1.0d-9, n_active_aos, active_aos, n_active_occ)
 !
       call mem%alloc(cholesky_vectors_virt, wf%n_ao, n_active_aos)
       cholesky_vectors_virt = zero
 !
       call cholesky_decomposition_limited_diagonal(ao_density_v, cholesky_vectors_virt, wf%n_ao, &
-                                                     n_vectors_virt, 1.0d-3, n_active_aos, active_aos)
+                                                     n_vectors_virt, 1.0d-9, n_active_aos, active_aos, n_active_vir)
 !
-      write(output%unit, *)n_vectors_occ, n_vectors_virt
+      write(output%unit, *)n_vectors_occ, n_active_occ, n_vectors_virt, n_active_vir
       flush(output%unit)
 !
       call mem%dealloc_int(active_aos, n_active_aos, 1)

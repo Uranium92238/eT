@@ -612,7 +612,8 @@ contains
 !
 !
    subroutine cholesky_decomposition_limited_diagonal(matrix, cholesky_vectors, dim, &
-                                                     n_vectors,threshold, n_included_diagonals, included_diagonals)
+                                                     n_vectors, threshold, n_included_diagonals, &
+                                                     included_diagonals, n_vectors_requested)
 !!
 !!    Cholesky decomposition reduced diagonal,
 !!    Written by Sarai Dery Folkestad, June 2017.
@@ -625,6 +626,8 @@ contains
       integer(i15), intent(out) :: n_vectors
 !
       real(dp), intent(in) :: threshold
+!
+      integer(i15), intent(in) :: n_vectors_requested
 !
       real(dp), dimension(dim, dim), intent(inout) :: matrix
       real(dp), dimension(dim, n_included_diagonals), intent(out) :: cholesky_vectors
@@ -639,6 +642,7 @@ contains
       real(dp), dimension(:,:), allocatable :: diagonal, temp_cholesky_vector
 !
       real(dp), parameter :: tolerance = 1.0d-10
+!
       call mem%alloc(diagonal, dim, 1)
 !
       do i = 1, dim
@@ -650,7 +654,7 @@ contains
       call mem%alloc_int(used_diag, dim, 1)
       used_diag = 0
 !
-      do i = 1, n_included_diagonals
+      do i = 1, n_vectors_requested
 !
          n_vectors = i
 !

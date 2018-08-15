@@ -25,8 +25,8 @@ program eT_program
 !
    type(eri_cd_solver) :: chol_solver
 !
-   type(hf) :: wf
-  ! type(mlhf) :: wf
+  ! type(hf) :: wf
+   type(mlhf) :: wf
 !
 !
 !  Initialize memory and disk here
@@ -49,11 +49,11 @@ program eT_program
 !  Initialize wavefunction
 !
    call wf%initialize()
-  ! call wf%eri_decomp_test_w_active_dens()
+   call wf%eri_decomp_test_w_active_dens()
 !
-    call chol_solver%initialize(wf%system)
-    call chol_solver%solve(wf%system)
-    call chol_solver%finalize()
+  !  call chol_solver%initialize(wf%system)
+  !  call chol_solver%solve(wf%system)
+  !  call chol_solver%finalize()
 !
 !  Ask the Hartree-Fock (HF) engine to find the HF solution
 !

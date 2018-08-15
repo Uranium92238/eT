@@ -48,25 +48,13 @@ void get_first_ao_in_shells(int *atom, int *faois){
 		auto the_first_ao = shell2bf[the_shell];
 
 		*(faois + j) = the_first_ao + 1;
-		cout << "The first AO index in shell " << the_shell << " is " << the_first_ao << "." << endl;
+		//cout << "The first AO index in shell " << the_shell << " is " << the_first_ao << "." << endl;
 
 	}
-
-	//finalize();
 
 }
 
 void get_n_basis_in_shells(int *atom, int *nbis){
-
-	//initialize();
-
-	// string xyzfilename = "Water.xyz"; // see XYZ format description at http://en.wikipedia.org/wiki/XYZ_file_format
-	// ifstream input_file(xyzfilename);
-	// vector<Atom> atoms = read_dotxyz(input_file);
-	//
-	// cout.setstate(ios_base::failbit);
-	// BasisSet obs("cc-pVDZ", atoms);
-	// cout.clear();
 
 	auto a2s_list = basis.atom2shell(atoms); // Vector of vectors
 
@@ -80,13 +68,9 @@ void get_n_basis_in_shells(int *atom, int *nbis){
 
 	}
 
-	//finalize();
-
 }
 
 void get_n_shells_on_atoms(int *nsoa){
-
-	//initialize();
 
 	auto a2s_list = basis.atom2shell(atoms); // Vector of vectors
 	int n_shells = 0;
