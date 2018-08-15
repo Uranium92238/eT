@@ -672,9 +672,6 @@ contains
 !
 !     Loop over atoms and let them set their own density diagonal
 !
-      write(output%unit,*)'hei'
-      flush(output%unit)
-!
       offset_diagonal = 0
 !
       do I = 1, molecule%n_atoms
@@ -700,8 +697,6 @@ contains
          electrons = electrons + density_diagonal(I, 1)
 !
       enddo
-!
-      write(output%unit, *)electrons
 !
       if (abs(electrons - molecule%get_n_electrons()) .gt. 1.0d-7) then
 !

@@ -1228,4 +1228,55 @@ contains
    end subroutine symmetric_sandwich_right
 !
 !
+   subroutine commute(A, B, AcB, n)
+!!
+!!    Commute 
+!!    Written by Eirik F. Kjønstad, 2018
+!!
+!!    Calculates the commutator of A and B, two square matrices 
+!!    of dimension n, and places the result in AB. 
+!!
+      implicit none 
+!
+      integer(i15), intent(in) :: n 
+!
+      real(dp), dimension(n,n), intent(in) :: A 
+      real(dp), dimension(n,n), intent(in) :: B
+!
+      real(dp), dimension(n,n) :: AcB ! [A, B] = AB - BA on exit 
+!
+      call dgemm('N', 'N', &
+                  n,       &
+                  n,       &
+                  n,       &
+                  one,     &   
+                  A,       &
+                  n,       &
+                  B,       &
+                  n,       &
+                  zero,    &
+                  AcB,     & ! AcB = AB 
+                  n)
+!
+      call dgemm('N', 'N', &
+                  n,       &
+                  n,       &
+                  n,       &
+                  -one,    &   
+                  B,       &
+                  n,       &
+                  A,       &
+                  n,       &
+                  one,     &
+                  AcB,     & ! AcB = AcB - BA = AB - BA 
+                  n)      
+!
+   end subroutine commute
+!
+!
 end module array_utilities
+
+
+
+
+
