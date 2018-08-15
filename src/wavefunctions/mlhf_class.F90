@@ -134,7 +134,7 @@ contains
 !
       n_s = wf%system%get_n_shells()
 !
-      write(output%unit,*)'Fock'
+      write(output%unit,*)'Fock', n_s
       flush(output%unit)
 !
       call mem%alloc(sp_eri_schwarz, n_s, n_s)
