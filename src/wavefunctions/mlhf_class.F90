@@ -116,6 +116,9 @@ contains
 !
 !     Set initial density to superposition of atomic densities (SOAD) guess
 !
+      write(output%unit,*)'SAD'
+      flush(output%unit)
+!
       call mem%alloc(density_diagonal, wf%n_ao, 1)
       call wf%system%SAD(wf%n_ao, density_diagonal)
 !
@@ -131,6 +134,9 @@ contains
 !
       n_s = wf%system%get_n_shells()
 !
+      write(output%unit,*)'Fock'
+      flush(output%unit)
+!
       call mem%alloc(sp_eri_schwarz, n_s, n_s)
       call wf%construct_sp_eri_schwarz(sp_eri_schwarz, n_s)
 !  
@@ -141,6 +147,7 @@ contains
 !
       call wf%initialize_ao_fock()
       call wf%construct_ao_fock(sp_eri_schwarz, eri_deg, n_s)
+!
       call mem%dealloc(eri_deg, n_s**2, n_s**2)
       call mem%dealloc(sp_eri_schwarz, n_s, n_s)
 !
@@ -151,6 +158,9 @@ contains
       call wf%initialize_ao_overlap()
       call wf%construct_ao_overlap()
 !
+      write(output%unit,*)'Fock diag'
+      flush(output%unit)
+!
 !     Solve Roothan Hall once - using the SOAD guess - to get a decent AO density
 !     on  which to start the preconditioned conjugate gradient (PCG) algorithm
 !
@@ -159,6 +169,9 @@ contains
       call wf%solve_roothan_hall() ! F^AO C = S C e to get new MOs C
 !
 !     Update the AO density
+!
+      write(output%unit,*)'Decompose densities'
+      flush(output%unit)
 !
       call wf%construct_ao_density() ! Construct AO density from C
 !
