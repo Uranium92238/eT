@@ -195,14 +195,14 @@ contains
 !
       call mem%alloc(sp_eri_schwarz, n_s, n_s)
       call wf%construct_sp_eri_schwarz(sp_eri_schwarz, n_s)
-!  
-      call mem%alloc(eri_deg, n_s**2, n_s**2)
-      call wf%determine_degeneracy(eri_deg, n_s)
 !
 !     Construct initial AO Fock from the SOAD density
 !
       call wf%initialize_ao_fock()
-      call wf%construct_ao_fock(sp_eri_schwarz, eri_deg, n_s) 
+
+    !  call wf%construct_ao_fock(sp_eri_schwarz, eri_deg, n_s) 
+
+      call wf%construct_ao_fock(sp_eri_schwarz, n_s) 
       prev_energy = wf%hf_energy
 !
 !     Construct AO overlap matrix, Cholesky decompose it,
@@ -223,7 +223,7 @@ contains
       call wf%construct_ao_density()
       call wf%destruct_mo_coefficients()
 !
-      call wf%construct_ao_fock(sp_eri_schwarz, eri_deg, n_s)   
+      call wf%construct_ao_fock(sp_eri_schwarz, n_s)   
 !
 !     :: Construct precondition matrices, used to transform H and G prior to solving the Newton equation 
 !
@@ -447,7 +447,7 @@ contains
 !           for next conjugate gradient iteration
 !
             prev_energy = wf%hf_energy
-            call wf%construct_ao_fock(sp_eri_schwarz, eri_deg, n_s)
+            call wf%construct_ao_fock(sp_eri_schwarz, n_s)
 !
             prev_g = cur_g
             prev_s = cur_s
@@ -476,7 +476,6 @@ contains
       call mem%dealloc(cur_s, packed_size(wf%n_ao-1), 1)
 !
       call mem%dealloc(sp_eri_schwarz, n_s, n_s)
-      call mem%dealloc(eri_deg, n_s**2, n_s**2)
 !
       call mem%dealloc(VT, wf%n_so, wf%n_so)
       call mem%dealloc(inv_VT, wf%n_so, wf%n_so)

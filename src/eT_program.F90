@@ -51,9 +51,9 @@ program eT_program
    call wf%initialize()
   ! call wf%eri_decomp_test_w_active_dens()
 !
-   ! call chol_solver%initialize(wf%system)
-   ! call chol_solver%solve(wf%system)
-   ! call chol_solver%finalize()
+  !  call chol_solver%initialize(wf%system)
+  !  call chol_solver%solve(wf%system)
+  !  call chol_solver%finalize()
 !
 !  Ask the Hartree-Fock (HF) engine to find the HF solution
 !
