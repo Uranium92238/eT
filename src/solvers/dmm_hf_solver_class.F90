@@ -18,7 +18,7 @@ module dmm_hf_solver_class
    type :: dmm_hf_solver
 !
       integer(i15) :: max_iterations       = 150
-      integer(i15) :: max_micro_iterations = 500
+      integer(i15) :: max_micro_iterations = 250
 !
       real(dp) :: purification_threshold   = 1.0D-10
       real(dp) :: energy_threshold         = 1.0D-6
@@ -152,7 +152,7 @@ contains
       real(dp) :: energy 
       real(dp) :: prev_energy 
 !
-      real(dp) :: max_grad
+      real(dp) :: max_grad, alpha, level_shift
 !
       real(dp) :: ddot, norm_cur_s
 !
@@ -267,6 +267,9 @@ contains
 !
       prev_energy = zero 
 !
+      call mem%alloc(G, wf%n_ao, wf%n_ao)
+      call mem%alloc(H, wf%n_ao, wf%n_ao)
+!
       do while (.not. converged .and. iteration .le. solver%max_iterations)
 !
 !        Construct the projection matrices Po and Pv
@@ -276,7 +279,6 @@ contains
 !
 !        Use the projections to construct the gradient G, then pack it in 
 !
-         call mem%alloc(G, wf%n_ao, wf%n_ao)
          call wf%construct_roothan_hall_gradient(G, Po, Pv)
 !
          call packin_anti(cur_g, G, wf%n_ao)
@@ -286,7 +288,6 @@ contains
 !
          call mem%alloc(Gr, wf%n_so, wf%n_so) 
          call symmetric_sandwich(Gr, G, solver%permutation_matrix, wf%n_ao, wf%n_so)
-         call mem%dealloc(G, wf%n_ao, wf%n_ao)
 
          max_grad = get_abs_max(Gr, wf%n_so*wf%n_so)
 !
@@ -316,12 +317,10 @@ contains
 !           :: Construct the Hessian H (one-electron terms), transform it to the linearly independent
 !           basis, then precondition both it and G; i.e., replace Y by V-1 Y V-T for Y = G and H
 !
-            call mem%alloc(H, wf%n_ao, wf%n_ao)
             call wf%construct_roothan_hall_hessian(H, Po, Pv)
 !
             call mem%alloc(Hr, wf%n_so, wf%n_so)
             call symmetric_sandwich(Hr, H, solver%permutation_matrix, wf%n_ao, wf%n_so)
-            call mem%dealloc(H, wf%n_ao, wf%n_ao)
 !
             call sandwich(Gr, inv_VT, inv_VT, wf%n_so)
             call sandwich(Hr, inv_VT, inv_VT, wf%n_so)
@@ -343,6 +342,7 @@ contains
 !           energy expansion can (presumably) be trusted to second order in X
 !
             norm_X = sqrt(ddot(packed_size(wf%n_so-1), X_pck, 1, X_pck, 1))
+            level_shift = zero 
 !
             if (norm_X .gt. solver%trust_radius .and. abs(norm_X-solver%trust_radius) .gt. & 
                         solver%relative_trust_radius_threshold*solver%trust_radius) then
@@ -351,14 +351,15 @@ contains
                                                    'solve the augmented Hessian equation.'
                flush(output%unit)
 !
-               call solver%solve_level_shifted_Newton_equation(wf, X_pck, Hr, Gr, S, max_grad, norm_X)
+               call solver%solve_level_shifted_Newton_equation(wf, X_pck, Hr, Gr, S, max_grad, norm_X, level_shift)
                call squareup_anti(X_pck, X, wf%n_so)
 ! 
             endif
+!          
+            call mem%dealloc(X_pck, packed_size(wf%n_so-1), 1) 
 !
             call mem%dealloc(Gr, wf%n_so, wf%n_so) 
-            call mem%dealloc(Hr, wf%n_so, wf%n_so)              
-            call mem%dealloc(X_pck, packed_size(wf%n_so-1), 1) 
+            call mem%dealloc(Hr, wf%n_so, wf%n_so)    
 !
 !           :: Convert the converged direction X from the basis of the preconditioned system (X' = V^T X V)
 !           back to the original system (X -> V-T X V-1), then transform the vector back to full (lin.dep.) 
@@ -388,7 +389,7 @@ contains
 !           The interpolation is toward p(alpha) = s^T g(alpha) = 0, i.e.
 !           the gradient is to be orthogonal to the search direction.
 !
-            call solver%do_line_search(wf, cur_s, norm_cur_s, cur_g, Po, Pv)
+            call solver%do_line_search(wf, alpha, cur_s, norm_cur_s, cur_g, Po, Pv)
 !
 !           :: Construct AO Fock (and energy) with the new rotated density,
 !           and set previous gradient and step direction to current, in preparation 
@@ -405,6 +406,9 @@ contains
          iteration = iteration + 1
 !
       enddo
+!
+      call mem%dealloc(G, wf%n_ao, wf%n_ao)
+      call mem%dealloc(H, wf%n_ao, wf%n_ao)
 !
       call wf%destruct_ao_density()
       call wf%destruct_ao_fock()
@@ -699,7 +703,7 @@ contains
    end subroutine solve_Newton_equation_dmm_hf_solver
 !
 !
-   subroutine solve_level_shifted_Newton_equation_dmm_hf_solver(solver, wf, X_pck, H, G, S, max_grad, norm_X)
+   subroutine solve_level_shifted_Newton_equation_dmm_hf_solver(solver, wf, X_pck, H, G, S, max_grad, norm_X, level_shift)
 !!
 !!    Solve level shifted Newton equation
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -865,9 +869,9 @@ contains
 !
          norm_X = sqrt(ddot(packed_size(wf%n_so-1), X_pck, 1, X_pck, 1))
 !
-      !   write(output%unit, '(/t6,a28,i3)')     'Number of micro-iterations: ', micro_iteration - 1
-         write(output%unit, '(/t6,a13,f15.12)') 'Alpha:       ', gamma ! Alpha is the name used in literature
-         write(output%unit, '(t6,a13,f15.12/)') 'Level shift: ', level_shift
+         write(output%unit, '(/t6,a28,i3)')     'Number of micro-iterations: ', micro_iteration - 1
+         write(output%unit, '(t6,a28,f15.12)')  'Alpha:                      ', gamma ! Alpha is the name used in literature
+         write(output%unit, '(t6,a28,f15.12/)') 'Level shift:                ', level_shift
          flush(output%unit)
       !   write(output%unit, '(t3,a28,f15.12/)') 'Rotation norm/trust_radius: ', abs(norm_X/solver%trust_radius)
 !
@@ -938,7 +942,7 @@ contains
    end subroutine determine_conjugacy_factor_dmm_hf_solver
 !
 !
-   subroutine do_line_search_dmm_hf_solver(solver, wf, cur_s, norm_cur_s, cur_g, Po, Pv)
+   subroutine do_line_search_dmm_hf_solver(solver, wf, alpha, cur_s, norm_cur_s, cur_g, Po, Pv)
 !!
 !!    Do line search 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
