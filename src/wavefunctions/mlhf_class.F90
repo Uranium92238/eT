@@ -134,7 +134,7 @@ contains
 !
       n_s = wf%system%get_n_shells()
 !
-      write(output%unit,*)'Fock', n_s
+      write(output%unit,*)' prepare for Fock', n_s
       flush(output%unit)
 !
       call mem%alloc(sp_eri_schwarz, n_s, n_s)
@@ -144,6 +144,10 @@ contains
       call wf%determine_degeneracy(eri_deg, n_s)
 !
 !     Construct initial AO Fock from the SOAD density
+!
+      write(output%unit,*)' construct Fock', n_s
+      flush(output%unit)
+!
 !
       call wf%initialize_ao_fock()
       call wf%construct_ao_fock(sp_eri_schwarz, eri_deg, n_s)
