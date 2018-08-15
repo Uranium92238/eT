@@ -1701,7 +1701,7 @@ contains
 !
       real(dp), dimension(wf%n_so, wf%n_so) :: RHC
 !
-      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: H
+      real(dp), dimension(wf%n_so, wf%n_so) :: H
       real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: X
       real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: G
       real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: S
@@ -1728,6 +1728,12 @@ contains
                   wf%n_so)
 !
 !     RHC = H X S = H tmp
+!
+      if (present(level_shift)) then 
+!
+         H = H - level_shift*S
+!
+      endif 
 !
       call dgemm('N', 'N',       &
                   wf%n_so,       &
@@ -1757,19 +1763,25 @@ contains
                   RHC,           &
                   wf%n_so)
 !
+      if (present(level_shift)) then 
+!
+         H = H + level_shift*S
+!
+      endif 
+!
       call mem%dealloc(tmp, wf%n_so, wf%n_so)
 !
 !     RHC = RHC + G = H X S + S X H + G
 !
       RHC = RHC + G
 !
-      if (present(level_shift)) then 
-!
-!        RHC = RHC - level_shift S = H X S + S X H + G - level_shift S
-!
-         RHC = RHC - level_shift*S
-!
-      endif
+!       if (present(level_shift)) then 
+! !
+! !        RHC = RHC - level_shift S = H X S + S X H + G - level_shift S
+! !
+!          RHC = RHC - level_shift*S
+! !
+!       endif
 !
    end subroutine construct_stationary_roothan_hall_condition_hf
 !
