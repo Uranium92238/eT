@@ -10,8 +10,6 @@ program eT_program
    use disk_manager_class
    use io_utilities
 !
-  !use ao_integral_manager_class
-!
    use hf_class
    use mlhf_class
 !
@@ -53,17 +51,17 @@ program eT_program
    call wf%initialize()
   ! call wf%eri_decomp_test_w_active_dens()
 !
-  ! call chol_engine%initialize(wf%system)
-  ! call chol_engine%solve(wf%system)
-  ! call chol_engine%finalize()
+    call chol_solver%initialize(wf%system)
+    call chol_solver%solve(wf%system)
+    call chol_solver%finalize()
 !
 !  Ask the Hartree-Fock (HF) engine to find the HF solution
 !
    !call engine%solve(wf)
     !call db_engine%solve(wf)
-
-  ! call roothan_hall_hf_solver%run(wf)
-   call density_minimization_hf_solver%solve(wf)
+!
+  ! call roothan_hall_solver%run(wf)
+  ! call density_minimization_hf_solver%solve(wf)
 !
 !  Finalize the wavefunction
 !
