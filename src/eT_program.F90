@@ -25,8 +25,8 @@ program eT_program
 !
    type(eri_cd_solver) :: chol_solver
 !
-   type(hf) :: wf
-  ! type(mlhf) :: wf
+   !type(hf) :: wf
+   type(mlhf) :: wf
 !
 !
 !  Initialize memory and disk here
@@ -55,12 +55,8 @@ program eT_program
   !  call chol_solver%solve(wf%system)
   !  call chol_solver%finalize()
 !
-!  Ask the Hartree-Fock (HF) engine to find the HF solution
+!  Ask the Hartree-Fock (HF) solver to find the HF solution
 !
-   !call engine%solve(wf)
-    !call db_engine%solve(wf)
-!
-  ! call roothan_hall_solver%run(wf)
    call density_minimization_hf_solver%run(wf)
 !
 !  Finalize the wavefunction

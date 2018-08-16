@@ -36,6 +36,7 @@ module hf_class
 !
       procedure :: construct_ao_density => construct_ao_density_hf
       procedure :: construct_ao_fock    => construct_ao_fock_hf
+      procedure :: construct_ao_fock_SAD=> construct_ao_fock_SAD_hf
       procedure :: construct_mo_fock    => construct_mo_fock_hf
       procedure :: construct_ao_overlap => construct_ao_overlap_hf
       procedure :: calculate_hf_energy  => calculate_hf_energy_hf
@@ -464,6 +465,174 @@ contains
 !$omp end parallel do
 !
    end subroutine determine_degeneracy_hf
+!
+!
+   subroutine construct_ao_fock_SAD_hf(wf, sp_eri_schwarz, n_s)
+!!
+!!    Construct AO Fock matrix
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Calculates
+!!
+!!       F_αβ = h_αβ + sum_γδ g_αβγδ D_γδ - 1/2 * sum_γδ g_αδγβ D_γδ,
+!!
+!!    where D is the AO density. This routine is integral direct, and
+!!    it calculates the Hartree-Fock energy by default.
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      integer(i15) :: n_s
+!
+      real(dp), dimension(n_s, n_s) :: sp_eri_schwarz
+!
+      real(dp), dimension(:,:), allocatable :: h_wx
+      integer(i15) :: x, y, z, xy, yz, xz, zz
+!
+      integer(i15) :: A, B, C
+!
+      type(interval) :: A_interval
+      type(interval) :: B_interval
+      type(interval) :: C_interval
+!
+      logical :: skip
+!
+      real(dp) ::  max_D_schwarz, max_eri_schwarz, max
+!
+      real(dp), dimension(:,:), allocatable :: g_C, g_K, D, sp_density_schwarz
+!
+     call mem%alloc(sp_density_schwarz, n_s, 1)
+!
+!$omp parallel do private(A, A_interval, D, max) schedule(dynamic)
+      do A = 1, n_s
+!
+            A_interval = wf%system%get_shell_limits(A)
+!
+            call mem%alloc(D, (A_interval%size), (A_interval%size))
+!
+            D = wf%ao_density(A_interval%first : A_interval%last, A_interval%first : A_interval%last)
+!
+            max = get_abs_max(D, (A_interval%size)*(A_interval%size))
+!
+            call mem%dealloc(D, (A_interval%size), (A_interval%size))
+!
+            sp_density_schwarz(A, 1) = max
+!
+      enddo
+!$omp end parallel do
+!
+!     Calculate maximum of all the shell pair maximums prescreening
+!
+      max_D_schwarz     = get_abs_max(sp_density_schwarz, n_s)
+      max_eri_schwarz   = get_abs_max(sp_eri_schwarz, n_s**2)
+!
+      wf%ao_fock = zero
+!
+!$omp parallel do &
+!$omp private(A, B, C, A_interval, B_interval, C_interval, x, y, z, xy, zz, xz, yz, &
+!$omp g_C, g_K, skip) schedule(dynamic)
+      do A = 1, n_s
+!
+         A_interval = wf%system%get_shell_limits(A)
+!
+         do B = 1, A
+!
+            B_interval = wf%system%get_shell_limits(B)
+!           
+            do C = 1, n_s
+!
+               skip = (sp_eri_schwarz(A, B)*sp_eri_schwarz(C, C)*sp_density_schwarz(C, 1) .lt. 1.0d-10) .and. &
+                      (sp_eri_schwarz(A, C)*sp_eri_schwarz(B, C)*sp_density_schwarz(C, 1) .lt. 1.0d-8)
+!
+               if (skip) continue
+!
+               C_interval = wf%system%get_shell_limits(C)
+!
+               call mem%alloc(g_C, (A_interval%size)*(B_interval%size), &
+                                 (C_interval%size)*(C_interval%size))
+!
+               call mem%alloc(g_K, (A_interval%size)*(C_interval%size), &
+                                 (B_interval%size)*(C_interval%size))
+!
+               call wf%system%ao_integrals%get_ao_g_wxyz(g_C, A, B, C, C)
+               call wf%system%ao_integrals%get_ao_g_wxyz(g_K, A, C, B, C)
+!
+!              Add Fock matrix contributions
+!
+               if (A .ne. B) then
+!
+                  do x = A_interval%first, A_interval%last
+                     do y = B_interval%first, B_interval%last
+!
+                        xy = A_interval%size*(y - B_interval%first) + x - A_interval%first + 1
+!
+                        do z = C_interval%first, C_interval%last
+!
+                           zz = C_interval%size*(z - C_interval%first) + z  - C_interval%first + 1
+                           xz = A_interval%size*(z - C_interval%first) + x  - A_interval%first + 1
+                           yz = B_interval%size*(z - C_interval%first) + y  - B_interval%first + 1
+!
+                           wf%ao_fock(x, y) = wf%ao_fock(x, y) + (g_C(xy, zz) - half*g_K(xz, yz))*wf%ao_density(z, z)
+!
+                        enddo
+                     enddo
+                  enddo
+!
+               else
+!
+                  do x = A_interval%first, A_interval%last
+                     do y = A_interval%first, x
+!
+                        xy = A_interval%size*(y - A_interval%first) + x - A_interval%first + 1
+!
+                        do z = C_interval%first, C_interval%last
+!
+                           zz = C_interval%size*(z - C_interval%first) + z  - C_interval%first + 1
+                           xz = A_interval%size*(z - C_interval%first) + x  - A_interval%first + 1
+                           yz = B_interval%size*(z - C_interval%first) + y  - B_interval%first + 1
+!
+                           wf%ao_fock(x, y) = wf%ao_fock(x, y) + (g_C(xy, zz) - half*g_K(xz, yz))*wf%ao_density(z, z)
+!
+                        enddo
+                     enddo
+                  enddo
+               endif
+!                  
+               call mem%dealloc(g_C, (A_interval%size)*(B_interval%size), &
+                                 (C_interval%size)*(C_interval%size))
+!
+               call mem%dealloc(g_K, (A_interval%size)*(C_interval%size), &
+                                 (B_interval%size)*(C_interval%size))
+!
+!
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+!$omp parallel do private(x) schedule(static)
+      do x = 1, wf%n_ao
+!
+         wf%ao_fock(x, x) = half*wf%ao_fock(x, x)
+!
+      enddo
+!$omp end parallel do
+!
+      call mem%dealloc(sp_density_schwarz, n_s, 1)
+!
+       call symmetric_sum(wf%ao_fock, wf%n_ao) ! Slightly faster than 'symmetrize', because no copy is made
+!
+      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
+      call get_ao_h_xy(h_wx)
+!
+      call wf%calculate_hf_energy(wf%ao_fock, h_wx)
+!
+      wf%ao_fock = wf%ao_fock + h_wx
+!
+      call mem%dealloc(h_wx, wf%n_ao*(wf%n_ao+1)/2, 1)
+!
+   end subroutine construct_ao_fock_SAD_hf
 !
 !
    subroutine construct_ao_fock_hf(wf, sp_eri_schwarz, n_s, coulomb, exchange)

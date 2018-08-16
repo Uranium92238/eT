@@ -52,8 +52,7 @@ contains
 !
       call wf%read_info
 !
-      write(output%unit, *)'Doing SAD/ml test'
-      write(output%unit, *)'Active atoms', wf%active_space%atoms
+      write(output%unit, '(a)')':: SAD-ML test'
       flush(output%unit)
 !
       call wf%system%initialize() ! Initialize molecular system -> Should include SOAD
@@ -102,7 +101,7 @@ contains
       integer(i15):: i, j, k, n_active_aos, ao_offset, active_ao_counter, n_vectors_occ, n_vectors_virt
       integer(i15):: a, x
 !
-      real(dp) :: max
+      real(dp) :: max, e_construct_fock, s_construct_fock
 !
       integer(i15), dimension(:,:), allocatable :: active_aos
 !
@@ -115,9 +114,6 @@ contains
       call wf%initialize_ao_density()
 !
 !     Set initial density to superposition of atomic densities (SOAD) guess
-!
-      write(output%unit,*)'SAD'
-      flush(output%unit)
 !
       call mem%alloc(density_diagonal, wf%n_ao, 1)
       call wf%system%SAD(wf%n_ao, density_diagonal)
@@ -134,20 +130,20 @@ contains
 !
       n_s = wf%system%get_n_shells()
 !
-      write(output%unit,*)' prepare for Fock', n_s
-      flush(output%unit)
-!
       call mem%alloc(sp_eri_schwarz, n_s, n_s)
       call wf%construct_sp_eri_schwarz(sp_eri_schwarz, n_s)
 !
 !     Construct initial AO Fock from the SOAD density
 !
-      write(output%unit,*)' construct Fock', n_s
-      flush(output%unit)
-!
-!
       call wf%initialize_ao_fock()
-      call wf%construct_ao_fock(sp_eri_schwarz, n_s)
+!
+     ! s_construct_fock = omp_get_wtime()
+!
+      call wf%construct_ao_fock_SAD(sp_eri_schwarz, n_s)
+!
+     ! e_construct_fock = omp_get_wtime()
+     ! write(output%unit, '(/a49, f11.2)')'Wall time to construct AO fock from SAD density: ', &
+     !                             e_construct_fock - s_construct_fock
 !
       call mem%dealloc(sp_eri_schwarz, n_s, n_s)
 !
@@ -158,9 +154,6 @@ contains
       call wf%initialize_ao_overlap()
       call wf%construct_ao_overlap()
 !
-      write(output%unit,*)'Fock diag'
-      flush(output%unit)
-!
 !     Solve Roothan Hall once - using the SOAD guess - to get a decent AO density
 !     on  which to start the preconditioned conjugate gradient (PCG) algorithm
 !
@@ -169,9 +162,6 @@ contains
       call wf%solve_roothan_hall() ! F^AO C = S C e to get new MOs C
 !
 !     Update the AO density
-!
-      write(output%unit,*)'Decompose densities'
-      flush(output%unit)
 !
       call wf%construct_ao_density() ! Construct AO density from C
 !
@@ -241,9 +231,6 @@ contains
       call cholesky_decomposition_limited_diagonal(ao_density_v, cholesky_vectors_virt, wf%n_ao, &
                                                      n_vectors_virt, 1.0d-9, n_active_aos, active_aos, n_active_vir)
 !
-      write(output%unit, *)n_vectors_occ, n_active_occ, n_vectors_virt, n_active_vir
-      flush(output%unit)
-!
       call mem%dealloc_int(active_aos, n_active_aos, 1)
 !
       call mem%alloc(V, wf%n_ao, 1)
@@ -267,7 +254,6 @@ contains
          V(x, 1) = max
 !
       enddo
-
 !
       call mem%dealloc(cholesky_vectors_virt, wf%n_ao, n_active_aos)
       call mem%dealloc(cholesky_vectors_occ, wf%n_ao, n_active_aos)
