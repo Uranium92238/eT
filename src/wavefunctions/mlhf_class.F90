@@ -147,7 +147,7 @@ contains
 !
 !
       call wf%initialize_ao_fock()
-      call wf%construct_ao_fock(sp_eri_schwarz, n_s)
+      call wf%construct_ao_fock_SAD(sp_eri_schwarz, n_s)
 !
       call mem%dealloc(sp_eri_schwarz, n_s, n_s)
 !

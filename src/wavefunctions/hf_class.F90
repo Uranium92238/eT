@@ -36,6 +36,7 @@ module hf_class
 !
       procedure :: construct_ao_density => construct_ao_density_hf
       procedure :: construct_ao_fock    => construct_ao_fock_hf
+      procedure :: construct_ao_fock_SAD=> construct_ao_fock_SAD_hf
       procedure :: construct_mo_fock    => construct_mo_fock_hf
       procedure :: construct_ao_overlap => construct_ao_overlap_hf
       procedure :: calculate_hf_energy  => calculate_hf_energy_hf
@@ -488,42 +489,27 @@ contains
 !
       real(dp), dimension(n_s, n_s) :: sp_eri_schwarz
 !
-   !  real(dp), dimension(:,:), allocatable :: ao_fock_packed
-   !  real(dp), dimension(:,:), allocatable :: X_wz, h_wx, h_wx_square
-   !  integer(i15) :: w, x, y, z, wx, yz, w_red, x_red, y_red, z_red
+      real(dp), dimension(:,:), allocatable :: h_wx
+      integer(i15) :: x, y, z, xy, yz, xz, zz
 !
-   !  real(dp), dimension(:,:), allocatable :: F1
-   !  real(dp), dimension(:,:), allocatable :: F2
-   !  real(dp), dimension(:,:), allocatable :: F3
-   !  real(dp), dimension(:,:), allocatable :: F4
-   !  real(dp), dimension(:,:), allocatable :: F5
-   !  real(dp), dimension(:,:), allocatable :: F6
+      integer(i15) :: A, B, C
 !
-   !  integer(i15) :: s1, s2, s3, s4, s4_max, s1s2, s3s4
+      type(interval) :: A_interval
+      type(interval) :: B_interval
+      type(interval) :: C_interval
 !
-   !  type(interval) :: A_interval
-   !  type(interval) :: B_interval
-   !  type(interval) :: C_interval
-   !  type(interval) :: D_interval
+      logical :: skip
 !
-   !  logical :: skip
+      real(dp) ::  max_D_schwarz, max_eri_schwarz, max
 !
-   !  real(dp) :: deg_12, deg_34, deg_12_34, deg, ddot, norm
-   !  real(dp) :: temp, temp1, temp2, temp3, temp4, temp5, temp6
-   !  real(dp) :: max, max_D_schwarz, max_eri_schwarz
-!
-   !  real(dp), dimension(:,:), allocatable :: g, D, sp_density_schwarz
-!
-   !  real(dp) :: start_timer, end_timer, omp_get_wtime
-!
-   !!  start_timer = omp_get_wtime()
+      real(dp), dimension(:,:), allocatable :: g_C, g_K, D, sp_density_schwarz
 !
      call mem%alloc(sp_density_schwarz, n_s, 1)
 !
-!$omp parallel do private(s1, s2, A_interval, B_interval, D, max) schedule(dynamic)
-      do s1 = 1, n_s
+!$omp parallel do private(A, A_interval, D, max) schedule(dynamic)
+      do A = 1, n_s
 !
-            A_interval = wf%system%get_shell_limits(s1)
+            A_interval = wf%system%get_shell_limits(A)
 !
             call mem%alloc(D, (A_interval%size), (A_interval%size))
 !
@@ -533,77 +519,111 @@ contains
 !
             call mem%dealloc(D, (A_interval%size), (A_interval%size))
 !
-            sp_density_schwarz(s1, 1) = max
+            sp_density_schwarz(A, 1) = max
 !
       enddo
 !$omp end parallel do
 !
 !     Calculate maximum of all the shell pair maximums prescreening
 !
-      max_D_schwarz     = get_abs_max(sp_density_schwarz, n_s*)
+      max_D_schwarz     = get_abs_max(sp_density_schwarz, n_s)
       max_eri_schwarz   = get_abs_max(sp_eri_schwarz, n_s**2)
 !
       wf%ao_fock = zero
 !
-!!$omp parallel do &
-!!$omp private(s1, s2, s3, s4, deg, s4_max, temp, s1s2, s3s4, &
-!!$omp A_interval, B_interval, C_interval, D_interval, w, x, y, z, wx, yz, temp1, temp2, temp3, &
-!!$omp temp4, temp5, temp6, F1, F2, F3, F4, F5, F6, w_red, x_red, y_red, z_red, g, skip) schedule(dynamic)
+!$omp parallel do &
+!$omp private(A, B, C, A_interval, B_interval, C_interval, x, y, z, xy, zz, xz, yz, &
+!$omp g_C, g_K) schedule(dynamic)
       do A = 1, n_s
 !
          A_interval = wf%system%get_shell_limits(A)
 !
          do B = 1, A
 !
-            if (sp_eri_schwarz(A, B)*(max_D_schwarz)*(max_eri_schwarz) .lt. 1.0d-10) continue
-!
             B_interval = wf%system%get_shell_limits(B)
 !           
             do C = 1, n_s
 !
-                  if (sp_eri_schwarz(A, B)*sp_eri_schwarz(C, C)sp_density_schwarz(C, 1) .lt. 1.0d-10) continue
+               skip = (sp_eri_schwarz(A, B)*sp_eri_schwarz(C, C)*sp_density_schwarz(C, 1) .lt. 1.0d-10) .and. &
+                      (sp_eri_schwarz(A, C)*sp_eri_schwarz(B, C)*sp_density_schwarz(C, 1) .lt. 1.0d-8)
 !
-                  C_interval = wf%system%get_shell_limits(C)
+               if (skip) continue
 !
-                  call mem%alloc(g_C, (A_interval%size)*(B_interval%size), &
-                                    (C_interval%size)*(C_interval%size))
+               C_interval = wf%system%get_shell_limits(C)
 !
-                  call mem%alloc(g_K, (A_interval%size)*(C_interval%size), &
-                                    (B_interval%size)*(C_interval%size))
+               call mem%alloc(g_C, (A_interval%size)*(B_interval%size), &
+                                 (C_interval%size)*(C_interval%size))
 !
-                  call wf%system%ao_integrals%get_ao_g_wxyz(g_C, A, B, C, C)
-                  call wf%system%ao_integrals%get_ao_g_wxyz(g_K, A, C, B, C)
+               call mem%alloc(g_K, (A_interval%size)*(C_interval%size), &
+                                 (B_interval%size)*(C_interval%size))
 !
-!                 Add Fock matrix contributions
+               call wf%system%ao_integrals%get_ao_g_wxyz(g_C, A, B, C, C)
+               call wf%system%ao_integrals%get_ao_g_wxyz(g_K, A, C, B, C)
 !
-                  do x = 1, wf%n_ao
-                     do y = 1, x
-                        do z = 1, wf%n_ao
+!              Add Fock matrix contributions
+!
+               if (A .ne. B) then
+!
+                  do x = A_interval%first, A_interval%last
+                     do y = B_interval%first, B_interval%last
+!
+                        xy = A_interval%size*(y - B_interval%first) + x - A_interval%first + 1
+!
+                        do z = C_interval%first, C_interval%last
+!
+                           zz = C_interval%size*(z - C_interval%first) + z  - C_interval%first + 1
+                           xz = A_interval%size*(z - C_interval%first) + x  - A_interval%first + 1
+                           yz = B_interval%size*(z - C_interval%first) + y  - B_interval%first + 1
+!
+                           wf%ao_fock(x, y) = wf%ao_fock(x, y) + (g_C(xy, zz) - half*g_K(xz, yz))*wf%ao_density(z, z)
+!
                         enddo
                      enddo
                   enddo
-!                     
-                  call mem%dealloc(g_C, (A_interval%size)*(B_interval%size), &
-                                    (C_interval%size)*(C_interval%size))
 !
-                  call mem%dealloc(g_K, (A_interval%size)*(C_interval%size), &
-                                    (B_interval%size)*(C_interval%size))
+               else
+!
+                  do x = A_interval%first, A_interval%last
+                     do y = A_interval%first, x
+!
+                        xy = A_interval%size*(y - A_interval%first) + x - A_interval%first + 1
+!
+                        do z = C_interval%first, C_interval%last
+!
+                           zz = C_interval%size*(z - C_interval%first) + z  - C_interval%first + 1
+                           xz = A_interval%size*(z - C_interval%first) + x  - A_interval%first + 1
+                           yz = B_interval%size*(z - C_interval%first) + y  - B_interval%first + 1
+!
+                           wf%ao_fock(x, y) = wf%ao_fock(x, y) + (g_C(xy, zz) - half*g_K(xz, yz))*wf%ao_density(z, z)
+!
+                        enddo
+                     enddo
+                  enddo
+!                  
+               call mem%dealloc(g_C, (A_interval%size)*(B_interval%size), &
+                                 (C_interval%size)*(C_interval%size))
+!
+               call mem%dealloc(g_K, (A_interval%size)*(C_interval%size), &
+                                 (B_interval%size)*(C_interval%size))
+!
+               endif
 !
             enddo
          enddo
       enddo
 !$omp end parallel do
 !
+!$omp parallel do private(x) schedule(static)
+      do x = 1, wf%n_ao
+!
+         wf%ao_fock(x, x) = half*wf%ao_fock(x, x)
+!
+      enddo
+!$omp end parallel do
+!
       call mem%dealloc(sp_density_schwarz, n_s, 1)
 !
-    !  call symmetric_sum(wf%ao_fock, wf%n_ao) ! Slightly faster than 'symmetrize', because no copy is made
-     ! wf%ao_fock = wf%ao_fock*half
-     !  call symmetrize(wf%ao_fock, wf%n_ao)
-!
-   !    end_timer = omp_get_wtime() 
-   !    write(output%unit, '(t3,a62,f9.1)')  'Wall time to compute two-electron part of Fock matrix (sec.): ', end_timer - start_timer  
-   !    write(output%unit, '(t3,a62,f9.1)')  'Wall time to compute integrals (sec.):                        ', integral_time           
-   !    write(output%unit, '(t3,a62,f9.1)')  'Wall time to construct and add Fock terms (sec.):             ', fock_construction_time
+       call symmetric_sum(wf%ao_fock, wf%n_ao) ! Slightly faster than 'symmetrize', because no copy is made
 !
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call get_ao_h_xy(h_wx)
