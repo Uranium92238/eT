@@ -104,6 +104,8 @@ contains
 !
       real(dp), dimension(solver%n_ao,1), optional :: screening_vector
 !
+      real(dp):: s_determine_basis, e_determine_basis, s_build_vectors, e_build_vectors, omp_get_wtime
+!
       write(output%unit, '(/a51/)') ':: Cholesky decomposition of two-electron ao_integrals'
       flush(output%unit)
 !
@@ -114,6 +116,8 @@ contains
       write(output%unit, '(/a21, e12.4)') 'Target threshold is: ', solver%threshold
       write(output%unit, '(a21, e12.4/)') 'Span factor:         ', solver%span
       flush(output%unit)
+!
+      s_determine_basis = omp_get_wtime()
 !
       if (present(screening_vector)) then
 !
@@ -139,19 +143,29 @@ contains
 !
          call solver%determine_auxilliary_cholesky_basis(system, solver%diagonal_info_one_center)
 !
-     else
+      else
 !
-        call solver%determine_auxilliary_cholesky_basis(system, solver%diagonal_info_target)
+         call solver%determine_auxilliary_cholesky_basis(system, solver%diagonal_info_target)
 !
-     endif
+      endif
 !
-     call solver%construct_overlap_cholesky_vecs(system)
-     call solver%invert_overlap_cholesky_vecs()
+      call solver%construct_overlap_cholesky_vecs(system)
+      call solver%invert_overlap_cholesky_vecs()
+!
+      e_determine_basis = omp_get_wtime()
+!
+      write(output%unit, '(/a58, f11.2/)') 'Wall time to determine basis, decompose (J|K) and invert: ', &
+                                                   e_determine_basis - s_determine_basis
 !
       if (solver%construct_vectors) then
 !
+         s_build_vectors = omp_get_wtime()
          call solver%construct_cholesky_vectors(system)
          call solver%cholesky_vecs_diagonal_test()
+         e_build_vectors = omp_get_wtime()
+!
+          write(output%unit, '(/a41, f11.2/)') 'Wall time to construct vectors and test: ', & 
+                                                   e_build_vectors - s_build_vectors
 !
       endif
 !
@@ -227,7 +241,7 @@ contains
 !$omp parallel do &
 !$omp private(I, A, B, A_interval, B_interval, x, y, xy, g_AB_AB, D_AB, D_AB_screen) &
 !$omp shared(sig_sp) &
-!$omp schedule(dynamic)
+!$omp schedule(guided)
       do I = 1, solver%n_sp
 !
          A = sp_index(I, 1)
@@ -355,7 +369,7 @@ contains
 !$omp parallel do &
 !$omp private(I, A, B, A_interval, B_interval, x, y, xy, xy_packed, g_AB_AB) &
 !$omp shared(D_xy, screening_vector_reduced, ao_offsets) &
-!$omp schedule(dynamic)
+!$omp schedule(guided)
       do I = 1, n_sig_sp
 !
          A = sig_sp_index(I, 1)
@@ -496,7 +510,7 @@ contains
 !$omp parallel do &
 !$omp private(I, A, B, A_interval, B_interval, x, y, xy, g_AB_AB, D_AB, D_AB_screen) &
 !$omp shared(sig_sp) &
-!$omp schedule(dynamic)
+!$omp schedule(guided)
       do I = 1, solver%n_sp
 !
          A = sp_index(I, 1)
@@ -629,7 +643,7 @@ contains
 !$omp parallel do &
 !$omp private(I, A, B, A_interval, B_interval, x, y, xy, xy_packed, g_AB_AB) &
 !$omp shared(D_xy, screening_vector_reduced, ao_offsets) &
-!$omp schedule(dynamic)
+!$omp schedule(guided)
       do I = 1, n_sig_sp
 !
          A = sig_sp_index(I, 1)
@@ -1095,7 +1109,7 @@ contains
 !$omp private(AB_sp, CD_sp, A, B, A_interval, B_interval, C, D, C_interval, D_interval, &
 !$omp  aop, w, x, y, z, wx, yz, wx_packed, g_AB_CD, n_qual_aop_in_sp) &
 !$omp shared(g_wxyz, n_qual_aop_in_prev_sps, qual_aop) &
-!$omp schedule(dynamic)
+!$omp schedule(guided)
          do CD_sp = 1, n_qual_sp
 !
             C                = qual_sp(CD_sp, 1)
@@ -1579,13 +1593,13 @@ contains
 !     Timings
 !
       call cpu_time(e_select_basis_time)
-      write(output%unit, '(/a22, f11.2, a9)')'Time to select basis: ',&
-                            e_select_basis_time - s_select_basis_time, ' seconds.'
-      write(output%unit, '(t6, a36, f11.2, a9)')'Time to reduce arrays:       ',&
-                            full_reduce_time, ' seconds.'
-      write(output%unit, '(t6, a36, f11.2, a9)')'Time to make vectors:        ',&
-                            full_construct_time, ' seconds.'
-      write(output%unit,'(/a42, i7)')'Number of signigicant negative diagonals: ', sig_neg
+    ! write(output%unit, '(/a22, f11.2, a9)')'Time to select basis: ',&
+    !                       e_select_basis_time - s_select_basis_time, ' seconds.'
+    ! write(output%unit, '(t6, a36, f11.2, a9)')'Time to reduce arrays:       ',&
+    !                       full_reduce_time, ' seconds.'
+    ! write(output%unit, '(t6, a36, f11.2, a9)')'Time to make vectors:        ',&
+    !                       full_construct_time, ' seconds.'
+    ! write(output%unit,'(/a42, i7)')'Number of signigicant negative diagonals: ', sig_neg
 !
 !     Prepare info on basis
 !
@@ -1731,7 +1745,7 @@ contains
 !$omp w, x, y, z, wx, yz, g_AB_CD, I, J, K, L, KL,&
 !$omp current_aop_in_sp, basis_aops_in_CD_sp, basis_aops_in_AB_sp) &
 !$omp shared(integrals_auxiliary_packed, cholesky_basis, basis_shell_info) &
-!$omp schedule(dynamic)
+!$omp schedule(guided)
       do CD_sp = 1, n_sp_in_basis
 !
          C = basis_shell_info(CD_sp, 1)
@@ -1951,10 +1965,10 @@ contains
       call mem%dealloc(cholesky_vecs, n_vectors, n_vectors)
 !
       call cpu_time(e_build_basis_time)
-      write(output%unit, '(/a21, f11.2, a9)')'Time to build basis: ',&
-                            e_build_basis_time - s_build_basis_time, ' seconds.'
-      write(output%unit, '(t6, a25, f11.2, a9)')'Time to decompose (J|K): ',&
-                            e_decomp_time - s_decomp_time, ' seconds.'
+   !   write(output%unit, '(/a21, f11.2, a9)')'Time to build basis: ',&
+   !                         e_build_basis_time - s_build_basis_time, ' seconds.'
+   !   write(output%unit, '(t6, a25, f11.2, a9)')'Time to decompose (J|K): ',&
+   !                         e_decomp_time - s_decomp_time, ' seconds.'
 !
    end subroutine construct_overlap_cholesky_vecs_eri_cd_solver
 !
@@ -2153,7 +2167,7 @@ contains
 !$omp basis_aops_in_CD_sp, current_aop_in_sp, g_CD_AB, &
 !$omp w, x, y, z, wx, yz, yz_packed, L, J) &
 !$omp shared(g_J_yz, AB_info, basis_shell_info, cholesky_basis) &
-!$omp schedule(dynamic)
+!$omp schedule(guided)
          do AB_sp = 1, n_AB_included
 !
             A = AB_info(AB_sp, 2)
@@ -2302,12 +2316,12 @@ contains
 !
 !     Timings
 !
-      call cpu_time(e_build_vectors_time)
-      write(output%unit, '(/a23, f11.2, a9)')'Time to build vectors: ',&
-                            e_build_vectors_time - s_build_vectors_time, ' seconds.'
-      write(output%unit, '(t6, a36, f11.2, a9)')'Time to make vectors:        ',&
-                            full_construct_time, ' seconds.'
-      flush(output%unit)
+   !  call cpu_time(e_build_vectors_time)
+   !  write(output%unit, '(/a23, f11.2, a9)')'Time to build vectors: ',&
+   !                        e_build_vectors_time - s_build_vectors_time, ' seconds.'
+   !  write(output%unit, '(t6, a36, f11.2, a9)')'Time to make vectors:        ',&
+   !                        full_construct_time, ' seconds.'
+   !  flush(output%unit)
 !
       call mem%dealloc(aux_chol_inverse, solver%n_cholesky, solver%n_cholesky)
       call mem%dealloc_int(cholesky_basis, solver%n_cholesky, 3)
@@ -2371,8 +2385,8 @@ contains
 !     Timings
 !
       call cpu_time(e_invert_time)
-      write(output%unit, '(/a16, f11.2, a9/)')'Time to invert: ',&
-                            e_invert_time - s_invert_time, ' seconds.'
+   !  write(output%unit, '(/a16, f11.2, a9/)')'Time to invert: ',&
+   !                        e_invert_time - s_invert_time, ' seconds.'
 !
 !
    end subroutine invert_overlap_cholesky_vecs_eri_cd_solver
