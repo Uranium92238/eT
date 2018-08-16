@@ -117,7 +117,7 @@ contains
       write(output%unit, '(a21, e12.4/)') 'Span factor:         ', solver%span
       flush(output%unit)
 !
-      s_determine_basis = omp_get_wtime()
+      !s_determine_basis = omp_get_wtime()
 !
       if (present(screening_vector)) then
 !
@@ -152,10 +152,10 @@ contains
       call solver%construct_overlap_cholesky_vecs(system)
       call solver%invert_overlap_cholesky_vecs()
 !
-      e_determine_basis = omp_get_wtime()
+   !   e_determine_basis = omp_get_wtime()
 !
-      write(output%unit, '(/a58, f11.2/)') 'Wall time to determine basis, decompose (J|K) and invert: ', &
-                                                   e_determine_basis - s_determine_basis
+    !  write(output%unit, '(/a58, f11.2/)') 'Wall time to determine basis, decompose (J|K) and invert: ', &
+     !                                              e_determine_basis - s_determine_basis
 !
       if (solver%construct_vectors) then
 !

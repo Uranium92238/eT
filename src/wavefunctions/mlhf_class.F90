@@ -101,8 +101,7 @@ contains
       integer(i15):: i, j, k, n_active_aos, ao_offset, active_ao_counter, n_vectors_occ, n_vectors_virt
       integer(i15):: a, x
 !
-      real(dp) :: max
-      real(sp) :: omp_get_wtime, e_construct_fock, s_construct_fock
+      real(dp) :: max, e_construct_fock, s_construct_fock
 !
       integer(i15), dimension(:,:), allocatable :: active_aos
 !
@@ -138,13 +137,13 @@ contains
 !
       call wf%initialize_ao_fock()
 !
-      s_construct_fock = omp_get_wtime()
+     ! s_construct_fock = omp_get_wtime()
 !
       call wf%construct_ao_fock_SAD(sp_eri_schwarz, n_s)
 !
-      e_construct_fock = omp_get_wtime()
-      write(output%unit, '(/a49, f11.2)')'Wall time to construct AO fock from SAD density: ', &
-                                  e_construct_fock - s_construct_fock
+     ! e_construct_fock = omp_get_wtime()
+     ! write(output%unit, '(/a49, f11.2)')'Wall time to construct AO fock from SAD density: ', &
+     !                             e_construct_fock - s_construct_fock
 !
       call mem%dealloc(sp_eri_schwarz, n_s, n_s)
 !
