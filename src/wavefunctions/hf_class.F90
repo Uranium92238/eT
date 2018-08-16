@@ -467,8 +467,6 @@ contains
    end subroutine determine_degeneracy_hf
 !
 !
-!
-!
    subroutine construct_ao_fock_SAD_hf(wf, sp_eri_schwarz, n_s)
 !!
 !!    Construct AO Fock matrix
