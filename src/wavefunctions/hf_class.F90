@@ -531,7 +531,7 @@ contains
 !
 !$omp parallel do &
 !$omp private(A, B, C, A_interval, B_interval, C_interval, x, y, z, xy, zz, xz, yz, &
-!$omp g_C, g_K) schedule(dynamic)
+!$omp g_C, g_K, skip) schedule(dynamic)
       do A = 1, n_s
 !
          A_interval = wf%system%get_shell_limits(A)
@@ -597,6 +597,7 @@ contains
                         enddo
                      enddo
                   enddo
+               endif
 !                  
                call mem%dealloc(g_C, (A_interval%size)*(B_interval%size), &
                                  (C_interval%size)*(C_interval%size))
@@ -604,7 +605,6 @@ contains
                call mem%dealloc(g_K, (A_interval%size)*(C_interval%size), &
                                  (B_interval%size)*(C_interval%size))
 !
-               endif
 !
             enddo
          enddo
