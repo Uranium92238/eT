@@ -182,7 +182,7 @@ contains
       integer(i15) ::sp, n_sig_aop, n_sig_sp, current_sig_sp
       integer(i15), dimension(:,:), allocatable :: sp_index, sig_sp_index, ao_offsets
 !
-      real(dp), dimension(:,:), allocatable :: g_AB_AB, D_AB, D_xy, screening_vector_local, screening_vector_reduced
+      real(dp), dimension(:,:), allocatable :: g_AB_AB, D_AB, D_AB_screen, D_xy, screening_vector_local, screening_vector_reduced
 !
       integer(i15) :: x, y, xy, xy_packed, first_sig_sp, first_sig_aop, A, B, I
 !
@@ -225,7 +225,7 @@ contains
       sig_sp = .false.
 !
 !$omp parallel do &
-!$omp private(I, A, B, A_interval, B_interval, x, y, xy, g_AB_AB, D_AB) &
+!$omp private(I, A, B, A_interval, B_interval, x, y, xy, g_AB_AB, D_AB, D_AB_screen) &
 !$omp shared(sig_sp) &
 !$omp schedule(dynamic)
       do I = 1, solver%n_sp
@@ -246,15 +246,17 @@ contains
          call system%ao_integrals%get_ao_g_wxyz(g_AB_AB, A, B, A, B)
 !
          call mem%alloc(D_AB, (A_interval%size)*(B_interval%size), 1)
+         call mem%alloc(D_AB_screen, (A_interval%size)*(B_interval%size), 1)
 !
          do x = 1, (A_interval%size)
             do y = 1, (B_interval%size)
 !
                xy = (A_interval%size)*(y-1)+x
 !
-               D_AB(xy, 1) = g_AB_AB(xy, xy)&
+               D_AB_screen(xy, 1) = g_AB_AB(xy, xy)&
                            *screening_vector_local(x + A_interval%first - 1,1)&
                            *screening_vector_local(y + B_interval%first - 1,1)
+               D_AB(xy, 1) = g_AB_AB(xy, xy)
 !
             enddo
          enddo
@@ -265,9 +267,11 @@ contains
 !
 !        Determine whether shell pair is significant
 !
-         sig_sp(I) = is_significant(D_AB, (A_interval%size)*(B_interval%size), solver%threshold)
+         sig_sp(I) = (is_significant(D_AB, (A_interval%size)*(B_interval%size), solver%threshold) .and. &
+                      is_significant(D_AB_screen, (A_interval%size)*(B_interval%size), solver%threshold))
 !
          call mem%dealloc(D_AB, (A_interval%size)*(B_interval%size), 1)
+         call mem%dealloc(D_AB_screen, (A_interval%size)*(B_interval%size), 1)
 !
       enddo
 !$omp end parallel do
@@ -447,7 +451,7 @@ contains
       integer(i15) ::sp, n_sig_aop, n_sig_sp, current_sig_sp
       integer(i15), dimension(:,:), allocatable :: sp_index, sig_sp_index, ao_offsets
 !
-      real(dp), dimension(:,:), allocatable :: g_AB_AB, D_AB, D_xy, screening_vector_local, screening_vector_reduced
+      real(dp), dimension(:,:), allocatable :: g_AB_AB, D_AB, D_AB_screen, D_xy, screening_vector_local, screening_vector_reduced
 !
       integer(i15) :: x, y, xy, xy_packed, first_sig_sp, first_sig_aop, A, B, I
 !
@@ -490,7 +494,7 @@ contains
       sig_sp = .false.
 !
 !$omp parallel do &
-!$omp private(I, A, B, A_interval, B_interval, x, y, xy, g_AB_AB, D_AB) &
+!$omp private(I, A, B, A_interval, B_interval, x, y, xy, g_AB_AB, D_AB, D_AB_screen) &
 !$omp shared(sig_sp) &
 !$omp schedule(dynamic)
       do I = 1, solver%n_sp
@@ -506,22 +510,25 @@ contains
 !           Construct diagonal D_AB for the given shell pair
 !
             call mem%alloc(g_AB_AB, &
-                  (A_interval%size)*(B_interval%size), &
-                  (A_interval%size)*(B_interval%size))
+                     (A_interval%size)*(B_interval%size), &
+                     (A_interval%size)*(B_interval%size))
 !
             g_AB_AB = zero
             call system%ao_integrals%get_ao_g_wxyz(g_AB_AB, A, B, A, B)
 !
             call mem%alloc(D_AB, (A_interval%size)*(B_interval%size), 1)
+            call mem%alloc(D_AB_screen, (A_interval%size)*(B_interval%size), 1)
 !
             do x = 1, (A_interval%size)
                do y = 1, (B_interval%size)
 !
                   xy = (A_interval%size)*(y-1)+x
 !
-                  D_AB(xy, 1) = g_AB_AB(xy, xy)&
-                           *screening_vector_local(x + A_interval%first - 1,1)&
-                           *screening_vector_local(y + B_interval%first - 1,1)
+                  D_AB_screen(xy, 1) = g_AB_AB(xy, xy)&
+                              *screening_vector_local(x + A_interval%first - 1,1)&
+                              *screening_vector_local(y + B_interval%first - 1,1)
+!  
+                  D_AB(xy, 1) = g_AB_AB(xy, xy)
 !
                enddo
             enddo
@@ -530,11 +537,13 @@ contains
                   (A_interval%size)*(B_interval%size), &
                   (A_interval%size)*(B_interval%size))
 !
-!        Determine whether shell pair is significant
+!           Determine whether shell pair is significant
 !
-            sig_sp(I) = is_significant(D_AB, (A_interval%size)*(B_interval%size), solver%threshold)
+            sig_sp(I) = (is_significant(D_AB, (A_interval%size)*(B_interval%size), solver%threshold) .and. &
+                         is_significant(D_AB_screen, (A_interval%size)*(B_interval%size), solver%threshold))
 !
             call mem%dealloc(D_AB, (A_interval%size)*(B_interval%size), 1)
+            call mem%dealloc(D_AB_screen, (A_interval%size)*(B_interval%size), 1)
 !
          endif
 !
@@ -1243,8 +1252,9 @@ contains
 !
             enddo
 !
-            if ((D_max*screening_vector(xy_max, 1) .gt. solver%threshold) &
-               .and. (D_max .ge. solver%span*D_max_full)) then
+            if ((D_max*screening_vector(xy_max, 1) .gt. solver%threshold) .and. &
+               (D_max .gt. solver%threshold)  .and. &
+               (D_max .ge. solver%span*D_max_full)) then
 !
                cholesky_basis(solver%n_cholesky + current_qual, 1) = qual_aop(qual_max(current_qual, 1), 1)
                cholesky_basis(solver%n_cholesky + current_qual, 2) = qual_aop(qual_max(current_qual, 1), 2)
@@ -1315,7 +1325,8 @@ contains
                      D_xy(xy, 1) = zero
                      approx_diagonal_accumulative(xy, 1) = zero
 !
-                  elseif ((D_xy(xy, 1) - approx_diagonal_accumulative(xy, 1))*screening_vector(xy,1) .lt. solver%threshold) then
+                  elseif ((D_xy(xy, 1) - approx_diagonal_accumulative(xy, 1))*screening_vector(xy,1) .lt. solver%threshold .or. &
+                     (D_xy(xy, 1) - approx_diagonal_accumulative(xy, 1)).lt. solver%threshold) then
 !
                      D_xy(xy, 1) = zero
                      approx_diagonal_accumulative(xy, 1) = zero
@@ -1368,9 +1379,11 @@ contains
                first = sig_sp_to_first_sig_aop(sig_sp_counter, 1)
                last  = sig_sp_to_first_sig_aop(sig_sp_counter + 1, 1) - 1
 !
-               new_sig_sp(sig_sp_counter) = is_significant(D_xy(first:last, 1), &
+               new_sig_sp(sig_sp_counter) = (is_significant(D_xy(first:last, 1), &
                                                 last - first + 1, solver%threshold, &
-                                                screening_vector(first:last, 1) )
+                                                screening_vector(first:last, 1) ) .and. &
+                                             is_significant(D_xy(first:last, 1), &
+                                                last - first + 1, solver%threshold ))
 !
                sig_sp(sp) = new_sig_sp(sig_sp_counter)
 !

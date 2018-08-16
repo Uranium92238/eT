@@ -147,7 +147,13 @@ contains
 !
 !
       call wf%initialize_ao_fock()
+!
+
+!
       call wf%construct_ao_fock_SAD(sp_eri_schwarz, n_s)
+     write(output%unit, *)wf%hf_energy
+     call wf%construct_ao_fock(sp_eri_schwarz, n_s)
+     write(output%unit, *)wf%hf_energy
 !
       call mem%dealloc(sp_eri_schwarz, n_s, n_s)
 !
@@ -267,7 +273,6 @@ contains
          V(x, 1) = max
 !
       enddo
-
 !
       call mem%dealloc(cholesky_vectors_virt, wf%n_ao, n_active_aos)
       call mem%dealloc(cholesky_vectors_occ, wf%n_ao, n_active_aos)
