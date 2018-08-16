@@ -704,7 +704,7 @@ contains
       wf%ao_fock = zero
 !
 !$omp parallel do &
-!$omp private(s1, s2, s3, s4, deg, s4_max, temp, s1s2, s3s4, &
+!$omp private(s1, s2, s3, s4, deg, s4_max, temp, s1s2, s3s4, deg_12, deg_34, deg_12_34, &
 !$omp A_interval, B_interval, C_interval, D_interval, w, x, y, z, wx, yz, temp1, temp2, temp3, &
 !$omp temp4, temp5, temp6, F1, F2, F3, F4, F5, F6, w_red, x_red, y_red, z_red, g, skip) schedule(dynamic)
       do s1 = 1, n_s

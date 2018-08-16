@@ -672,7 +672,6 @@ contains
 !
 !     Loop over atoms and let them set their own density diagonal
 !
-!
       offset_diagonal = 0
 !
       do I = 1, molecule%n_atoms
