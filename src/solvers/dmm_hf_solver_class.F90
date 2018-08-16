@@ -53,7 +53,7 @@ module dmm_hf_solver_class
    contains
 !
       procedure :: initialize  => initialize_dmm_hf_solver
-      procedure :: solve       => solve_dmm_hf_solver
+      procedure :: run         => run_dmm_hf_solver
       procedure :: finalize    => finalize_dmm_hf_solver
 !
       procedure, private :: print_banner                                => print_banner_dmm_hf_solver
@@ -96,9 +96,9 @@ contains
    end subroutine initialize_dmm_hf_solver
 !
 !
-   subroutine solve_dmm_hf_solver(solver, wf)
+   subroutine run_dmm_hf_solver(solver, wf)
 !!
-!!    Solve
+!!    Run
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
@@ -135,7 +135,7 @@ contains
 !
       logical :: transpose_left
 !
-      real(dp) :: beta
+      real(dp) :: beta, coulomb_thr, exchange_thr
 !
       integer(i15) :: iteration = 1
 !
@@ -153,6 +153,8 @@ contains
       real(dp) :: ddot
 !
       integer(i15) :: n_s, i 
+!
+      real(dp) :: trace_of_ao_density
 !
       real(dp), dimension(:,:), allocatable :: eri_deg
       real(dp), dimension(:,:), allocatable :: sp_eri_schwarz
@@ -182,7 +184,20 @@ contains
 !
       call wf%initialize_ao_fock()
 !
-      call wf%construct_ao_fock(sp_eri_schwarz, n_s) 
+      trace_of_ao_density = zero 
+      do i = 1, wf%n_ao 
+         trace_of_ao_density = trace_of_ao_density + wf%ao_density(i,i)
+      enddo
+      write(output%unit, *) 'Trace of ao density: ', trace_of_ao_density
+!
+      coulomb_thr  = 0.5D0
+      exchange_thr = 0.5D0
+!
+      start_timer = omp_get_wtime()
+      call wf%construct_ao_fock(sp_eri_schwarz, n_s, coulomb_thr, exchange_thr) 
+      end_timer = omp_get_wtime()
+      write(output%unit, *) 'Time to construct AO Fock from SAD: ', end_timer-start_timer
+      flush(output%unit)
       prev_energy = wf%hf_energy
 !
 !     Construct AO overlap matrix, Cholesky decompose it,
@@ -203,7 +218,16 @@ contains
       call wf%construct_ao_density()
       call wf%destruct_mo_coefficients()
 !
-      call wf%construct_ao_fock(sp_eri_schwarz, n_s)   
+      trace_of_ao_density = zero 
+      do i = 1, wf%n_ao 
+         trace_of_ao_density = trace_of_ao_density + wf%ao_density(i,i)
+      enddo
+      write(output%unit, *) 'Trace of ao density: ', trace_of_ao_density
+!
+      start_timer = omp_get_wtime()
+      call wf%construct_ao_fock(sp_eri_schwarz, n_s)  
+      end_timer = omp_get_wtime()
+      write(output%unit, *) 'Time to construct AO Fock: ', end_timer-start_timer 
 !
 !     :: Construct precondition matrices, used to transform H and G prior to solving the Newton equation 
 !
@@ -402,8 +426,20 @@ contains
 !           and set previous gradient and step direction to current, in preparation 
 !           for next conjugate gradient iteration
 !
+            trace_of_ao_density = zero 
+            do i = 1, wf%n_ao 
+               trace_of_ao_density = trace_of_ao_density + wf%ao_density(i,i)
+            enddo
+            write(output%unit, *) 'Trace of ao density: ', trace_of_ao_density
+!
+            coulomb_thr  = max(1.0D-10, max_grad)
+            exchange_thr = max(1.0D-8, max_grad)
+!
             prev_energy = wf%hf_energy
-            call wf%construct_ao_fock(sp_eri_schwarz, n_s)
+            start_timer = omp_get_wtime()
+            call wf%construct_ao_fock(sp_eri_schwarz, n_s, coulomb_thr, exchange_thr)
+            end_timer = omp_get_wtime()
+            write(output%unit, *) 'Time to construct AO Fock: ', end_timer-start_timer 
 !
          endif
 !
@@ -440,7 +476,7 @@ contains
 !
       endif 
 !
-   end subroutine solve_dmm_hf_solver
+   end subroutine run_dmm_hf_solver
 !
 !
    subroutine finalize_dmm_hf_solver(solver)

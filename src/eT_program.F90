@@ -61,7 +61,7 @@ program eT_program
     !call db_engine%solve(wf)
 !
   ! call roothan_hall_solver%run(wf)
-   call density_minimization_hf_solver%solve(wf)
+   call density_minimization_hf_solver%run(wf)
 !
 !  Finalize the wavefunction
 !

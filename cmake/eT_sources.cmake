@@ -3,6 +3,7 @@ set(eT_fortran_sources
    src/solvers/hf_solver_class.F90
    src/solvers/dmm_hf_solver_class.F90
    src/solvers/eri_cd_solver_class.F90
+   src/engines/hf_engine_class.F90
    src/io/disk_manager_class.F90
    src/io/file_class.F90
    src/io/io_utilities.F90
