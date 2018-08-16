@@ -52,7 +52,7 @@ module hf_class
 !
 !     Solve the Roothan Hall equation FC = SCe by diagonalization
 !
-      procedure :: solve_roothan_hall => solve_roothan_hall_hf
+      procedure :: solve_roothan_hall => solve_roothan_hall_hf ! remove soon, does not belong to wavefunction 
 !
 !     Get and set routines for wavefunction variables
 !
@@ -80,9 +80,9 @@ module hf_class
 !
       procedure :: construct_projection_matrices               => construct_projection_matrices_hf
       procedure :: project_redundant_rotations                 => project_redundant_rotations_hf
+!
       procedure :: construct_roothan_hall_hessian              => construct_roothan_hall_hessian_hf
       procedure :: construct_roothan_hall_gradient             => construct_roothan_hall_gradient_hf
-      procedure :: construct_stationary_roothan_hall_condition => construct_stationary_roothan_hall_condition_hf
 !
       procedure :: construct_sp_eri_schwarz => construct_sp_eri_schwarz_hf
       procedure :: determine_degeneracy     => determine_degeneracy_hf
@@ -490,12 +490,8 @@ contains
       real(dp), dimension(:,:), allocatable :: X_wz, h_wx, h_wx_square
       integer(i15) :: w, x, y, z, wx, yz, w_red, x_red, y_red, z_red
 !
-      real(dp), dimension(:,:), allocatable :: F1
-      real(dp), dimension(:,:), allocatable :: F2
-      real(dp), dimension(:,:), allocatable :: F3
-      real(dp), dimension(:,:), allocatable :: F4
-      real(dp), dimension(:,:), allocatable :: F5
-      real(dp), dimension(:,:), allocatable :: F6
+      integer(i15) :: n_threads, omp_get_max_threads, thread_offset, thread, omp_get_thread_num
+      real(dp), dimension(:,:), allocatable :: F 
 !
       integer(i15) :: s1, s2, s3, s4, s4_max, s1s2, s3s4
 !
@@ -511,10 +507,6 @@ contains
       real(dp) :: max, max_D_schwarz, max_eri_schwarz
 !
       real(dp), dimension(:,:), allocatable :: g, D, sp_density_schwarz
-!
-      real(dp) :: start_timer, end_timer, omp_get_wtime
-!
-    !  start_timer = omp_get_wtime()
 !
       call mem%alloc(sp_density_schwarz, n_s, n_s)
 !
@@ -545,21 +537,25 @@ contains
       max_D_schwarz     = get_abs_max(sp_density_schwarz, n_s**2)
       max_eri_schwarz   = get_abs_max(sp_eri_schwarz, n_s**2)
 !
-   !   end_timer = omp_get_wtime()
-   !   write(output%unit, '(/t3,a59,f9.1)') 'Wall time to get Schwarz density screening info (sec.): ', end_timer - start_timer
-!
-   !   start_timer = omp_get_wtime()
-!
-      wf%ao_fock = zero
+      n_threads = omp_get_max_threads()
+      call mem%alloc(F, wf%n_ao, wf%n_ao*n_threads) ! [F(thr1) F(thr2) ...]
+      F = zero 
 !
 !$omp parallel do &
-!$omp private(s1, s2, s3, s4, deg, s4_max, temp, s1s2, s3s4, deg_12, deg_34, deg_12_34, &
+!$omp private(s1, s2, s3, s4, deg, s4_max, temp, s1s2, s3s4, deg_12, deg_34, deg_12_34, thread_offset, &
 !$omp A_interval, B_interval, C_interval, D_interval, w, x, y, z, wx, yz, temp1, temp2, temp3, &
-!$omp temp4, temp5, temp6, F1, F2, F3, F4, F5, F6, w_red, x_red, y_red, z_red, g, skip) schedule(dynamic)
+!$omp temp4, temp5, temp6, w_red, x_red, y_red, z_red, g, skip) schedule(dynamic)
       do s1 = 1, n_s
+!
+         thread_offset = omp_get_thread_num()*wf%n_ao ! Start at column 
+!
+         A_interval = wf%system%get_shell_limits(s1)
+!
          do s2 = 1, s1
 !
             if (sp_eri_schwarz(s1, s2)*(max_D_schwarz)*(max_eri_schwarz) .lt. 1.0d-10) continue
+!
+            B_interval = wf%system%get_shell_limits(s2)
 !
             if (s1 .eq. s2) then
 !
@@ -573,6 +569,8 @@ contains
 !
             do s3 = 1, s1
 !
+               C_interval = wf%system%get_shell_limits(s3)
+!
                if (s3 .eq. s1) then
 !
                   s4_max = s2
@@ -585,18 +583,16 @@ contains
 !
                do s4 = 1, s4_max
 !
-                  if (sp_eri_schwarz(s1, s2)*(max_D_schwarz)*sp_eri_schwarz(s3, s4) .lt. 1.0d-10) continue
-!
                   temp = sp_eri_schwarz(s1, s2)*sp_eri_schwarz(s3, s4)
 !
-                  skip = temp*sp_density_schwarz(s3,s4) .lt. 1.0D-10 .and. & ! F1
-                         temp*sp_density_schwarz(s1,s2) .lt. 1.0D-10 .and. & ! F2
-                         temp*sp_density_schwarz(s3,s2) .lt. 1.0D-8  .and. & ! F3
-                         temp*sp_density_schwarz(s3,s1) .lt. 1.0D-8  .and. & ! F4
-                         temp*sp_density_schwarz(s4,s2) .lt. 1.0D-8  .and. & ! F5
-                         temp*sp_density_schwarz(s1,s4) .lt. 1.0D-8 ! F6
+                  if (temp*(max_D_schwarz) .lt. 1.0d-10) continue
 !
-                  if (skip) continue
+                  if (temp*sp_density_schwarz(s3,s4) .lt. 1.0D-10 .and. & ! F1
+                      temp*sp_density_schwarz(s1,s2) .lt. 1.0D-10 .and. & ! F2
+                      temp*sp_density_schwarz(s3,s2) .lt. 1.0D-8  .and. & ! F3
+                      temp*sp_density_schwarz(s3,s1) .lt. 1.0D-8  .and. & ! F4
+                      temp*sp_density_schwarz(s4,s2) .lt. 1.0D-8  .and. & ! F5
+                      temp*sp_density_schwarz(s1,s4) .lt. 1.0D-8) continue ! F6
 !
                   if (s3 .eq. s4) then
 !
@@ -628,29 +624,12 @@ contains
 
                   deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
 !
-                  A_interval = wf%system%get_shell_limits(s1)
-                  B_interval = wf%system%get_shell_limits(s2)
-                  C_interval = wf%system%get_shell_limits(s3)
                   D_interval = wf%system%get_shell_limits(s4)
 !
                   call mem%alloc(g, (A_interval%size)*(B_interval%size), &
                                     (C_interval%size)*(D_interval%size))
 !
                   call wf%system%ao_integrals%get_ao_g_wxyz(g, s1, s2, s3, s4)
-!
-                  call mem%alloc(F1, A_interval%size, B_interval%size) ! F_wx
-                  call mem%alloc(F2, C_interval%size, D_interval%size) ! F_yz
-                  call mem%alloc(F3, A_interval%size, D_interval%size) ! F_wz
-                  call mem%alloc(F4, B_interval%size, D_interval%size) ! F_xz
-                  call mem%alloc(F5, A_interval%size, C_interval%size) ! F_wy
-                  call mem%alloc(F6, C_interval%size, B_interval%size) ! F_yx
-!
-                  F1 = zero
-                  F2 = zero
-                  F3 = zero
-                  F4 = zero
-                  F5 = zero
-                  F6 = zero
 !
 !                 Add Fock matrix contributions
 !
@@ -679,12 +658,12 @@ contains
                               temp5 = (one/eight)*temp*wf%ao_density(z, x)
                               temp6 = (one/eight)*temp*wf%ao_density(w, z)
 !
-                              F1(w_red, x_red) = F1(w_red, x_red) + temp1
-                              F2(y_red, z_red) = F2(y_red, z_red) + temp2
-                              F3(w_red, z_red) = F3(w_red, z_red) - temp3
-                              F4(x_red, z_red) = F4(x_red, z_red) - temp4
-                              F5(w_red, y_red) = F5(w_red, y_red) - temp5
-                              F6(y_red, x_red) = F6(y_red, x_red) - temp6
+                              F(w, thread_offset + x) = F(w, thread_offset + x) + temp1
+                              F(y, thread_offset + z) = F(y, thread_offset + z) + temp2
+                              F(w, thread_offset + z) = F(w, thread_offset + z) - temp3
+                              F(x, thread_offset + z) = F(x, thread_offset + z) - temp4
+                              F(w, thread_offset + y) = F(w, thread_offset + y) - temp5
+                              F(y, thread_offset + x) = F(y, thread_offset + x) - temp6
 !
                            enddo
                         enddo
@@ -694,79 +673,6 @@ contains
                   call mem%dealloc(g, (A_interval%size)*(B_interval%size), &
                                     (C_interval%size)*(D_interval%size))
 !
-                  do x = B_interval%first, B_interval%last
-                     do w = A_interval%first, A_interval%last
-!
-                        w_red = w - A_interval%first + 1
-                        x_red = x - B_interval%first + 1
-!$omp atomic update
-                        wf%ao_fock(w, x) = wf%ao_fock(w, x) + F1(w_red, x_red)
-!
-                     enddo
-                  enddo
-!
-                  do x = B_interval%first, B_interval%last
-                     do y = C_interval%first, C_interval%last
-!
-                        x_red = x - B_interval%first + 1
-                        y_red = y - C_interval%first + 1
-!$omp atomic update
-                        wf%ao_fock(y, x) = wf%ao_fock(y, x) + F6(y_red, x_red)
-!
-                     enddo
-                  enddo
-!
-                  do z = D_interval%first, D_interval%last
-                     do y = C_interval%first, C_interval%last
-!
-                        y_red = y - C_interval%first + 1
-                        z_red = z - D_interval%first + 1
-!$omp atomic update
-                        wf%ao_fock(y, z) = wf%ao_fock(y, z) + F2(y_red, z_red)
-!
-                     enddo
-                  enddo
-!
-                  do z = D_interval%first, D_interval%last
-                     do w = A_interval%first, A_interval%last
-!
-                        w_red = w - A_interval%first + 1
-                        z_red = z - D_interval%first + 1
-!$omp atomic update
-                        wf%ao_fock(w, z) = wf%ao_fock(w, z) + F3(w_red, z_red)
-!
-                     enddo
-                  enddo
-!
-                  do z = D_interval%first, D_interval%last
-                     do x = B_interval%first, B_interval%last
-!
-                        x_red = x - B_interval%first + 1
-                        z_red = z - D_interval%first + 1
-!$omp atomic update
-                        wf%ao_fock(x, z) = wf%ao_fock(x, z) + F4(x_red, z_red)
-!
-                     enddo
-                  enddo
-!
-                  do y = C_interval%first, C_interval%last
-                     do w = A_interval%first, A_interval%last
-!
-                        w_red = w - A_interval%first + 1
-                        y_red = y - C_interval%first + 1
-!$omp atomic update
-                        wf%ao_fock(w, y) = wf%ao_fock(w, y) + F5(w_red, y_red)
-!
-                     enddo
-                  enddo
-!
-                  call mem%dealloc(F1, A_interval%size, B_interval%size) ! F_wx
-                  call mem%dealloc(F6, C_interval%size, B_interval%size) ! F_yx
-                  call mem%dealloc(F2, C_interval%size, D_interval%size) ! F_yz
-                  call mem%dealloc(F3, A_interval%size, D_interval%size) ! F_wz
-                  call mem%dealloc(F4, B_interval%size, D_interval%size) ! F_xz
-                  call mem%dealloc(F5, A_interval%size, C_interval%size) ! F_wy
-!
                enddo
             enddo
          enddo
@@ -775,14 +681,20 @@ contains
 !
       call mem%dealloc(sp_density_schwarz, n_s, n_s)
 !
-      call symmetric_sum(wf%ao_fock, wf%n_ao) ! Slightly faster than 'symmetrize', because no copy is made
-      wf%ao_fock = wf%ao_fock*half
-     !  call symmetrize(wf%ao_fock, wf%n_ao)
+!     Put the accumulated Fock matrices from each thread into the Fock matrix 
 !
-   !    end_timer = omp_get_wtime() 
-   !    write(output%unit, '(t3,a62,f9.1)')  'Wall time to compute two-electron part of Fock matrix (sec.): ', end_timer - start_timer  
-   !    write(output%unit, '(t3,a62,f9.1)')  'Wall time to compute integrals (sec.):                        ', integral_time           
-   !    write(output%unit, '(t3,a62,f9.1)')  'Wall time to construct and add Fock terms (sec.):             ', fock_construction_time
+      wf%ao_fock = zero
+!
+      do thread = 1, n_threads
+!
+         call daxpy(wf%n_ao**2, one, F(1, (thread-1)*wf%n_ao + 1), 1, wf%ao_fock, 1)
+!
+      enddo
+!
+      call mem%dealloc(F, wf%n_ao, wf%n_ao*n_threads) ! [F(thr1) F(thr2) ...]
+!
+      call symmetric_sum(wf%ao_fock, wf%n_ao)
+      wf%ao_fock = wf%ao_fock*half
 !
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call get_ao_h_xy(h_wx)
@@ -1229,9 +1141,6 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: M
       real(dp), dimension(:,:), allocatable :: C
-      real(dp), dimension(:,:), allocatable :: prev_D
-!
-   !   real(dp), dimension(:,:), allocatable :: D
 !
 !     Construct C = [D^AO, X]_S = D^AO S X - X S D^AO
 !
@@ -1250,7 +1159,6 @@ contains
                   M,             & ! M = S X
                   wf%n_ao)
 !
-   !   call mem%alloc(D, wf%n_ao, wf%n_ao)
       call mem%alloc(C, wf%n_ao, wf%n_ao)
 !
       call dgemm('N','N',        &
@@ -1292,65 +1200,9 @@ contains
                   C,             & ! C = C - X M = C - X S D^AO = D^AO S X - X S D^AO
                   wf%n_ao)
 !
-!     Calculate D = 1/2 [[D^AO, X]_S, X]_S = 1/2 [C, X]_S = 1/2 (C S X - X S C)
-!
-!       call dgemm('N','N',        &
-!                   wf%n_ao,       &
-!                   wf%n_ao,       &
-!                   wf%n_ao,       &
-!                   one,           &
-!                   wf%ao_overlap, &
-!                   wf%n_ao,       &
-!                   X,             &
-!                   wf%n_ao,       &
-!                   zero,          &
-!                   M,             & ! M = S X
-!                   wf%n_ao)
-! !
-!       call dgemm('N','N',        &
-!                   wf%n_ao,       &
-!                   wf%n_ao,       &
-!                   wf%n_ao,       &
-!                   half,          &
-!                   C,             &
-!                   wf%n_ao,       &
-!                   M,             &
-!                   wf%n_ao,       &
-!                   zero,          &
-!                   D,             & ! D = 1/2 * C S X
-!                   wf%n_ao)
-! !
-!       call dgemm('N','N',        &
-!                   wf%n_ao,       &
-!                   wf%n_ao,       &
-!                   wf%n_ao,       &
-!                   one,           &
-!                   X,             &
-!                   wf%n_ao,       &
-!                   wf%ao_overlap, &
-!                   wf%n_ao,       &
-!                   zero,          &
-!                   M,             & ! M = X S
-!                   wf%n_ao)
-! !
-!       call dgemm('N','N',        &
-!                   wf%n_ao,       &
-!                   wf%n_ao,       &
-!                   wf%n_ao,       &
-!                   -half,         &
-!                   M,             &
-!                   wf%n_ao,       &
-!                   C,             &
-!                   wf%n_ao,       &
-!                   one,           &
-!                   D,             & ! D = D - 1/2 * X S C
-!                   wf%n_ao)
-!
       wf%ao_density = wf%ao_density + C
-   !   wf%ao_density = wf%ao_density + C + D
 !
       call mem%dealloc(M, wf%n_ao, wf%n_ao)
-    !  call mem%dealloc(D, wf%n_ao, wf%n_ao)
       call mem%dealloc(C, wf%n_ao, wf%n_ao)
 !
    end subroutine rotate_ao_density_hf
@@ -1713,111 +1565,6 @@ contains
       call mem%dealloc(tmp, wf%n_ao, wf%n_ao)
 !
    end subroutine construct_roothan_hall_gradient_hf
-!
-!
-   subroutine construct_stationary_roothan_hall_condition_hf(wf, RHC, H, X, G, S, level_shift)
-!!
-!!    Construct stationary Roothan-Hall condition
-!!    Written by Eirik F. Kjønstad, 2018
-!!
-!!    Sets
-!!
-!!       RHC = H X S + S X H + G - level_shift S,
-!!
-!!    which equals zero on convergence of the Roothan-Hall Newton equations.
-!!    Note that if similarity transformed H, S, and G are used (Y <- V-1 Y V-T),
-!!    then the iterated solution X' = V^T X V, from which the actual X is easily
-!!    extractable.
-!!
-      implicit none
-!
-      class(hf), intent(in) :: wf
-!
-      real(dp), dimension(wf%n_so, wf%n_so) :: RHC
-!
-      real(dp), dimension(wf%n_so, wf%n_so) :: H
-      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: X
-      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: G
-      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: S
-!
-      real(dp), intent(in), optional :: level_shift
-!
-      real(dp), dimension(:,:), allocatable :: tmp
-!
-!     Construct tmp = X S => tmp^T = S^T X^T = S X^T = - S X
-!
-      call mem%alloc(tmp, wf%n_so, wf%n_so)
-!
-      call dgemm('N', 'N',       &
-                  wf%n_so,       &
-                  wf%n_so,       &
-                  wf%n_so,       &
-                  one,           &
-                  X,             &
-                  wf%n_so,       &
-                  S,             &
-                  wf%n_so,       &
-                  zero,          &
-                  tmp,           &
-                  wf%n_so)
-!
-!     RHC = H X S = H tmp
-!
-      if (present(level_shift)) then 
-!
-         H = H - level_shift*S
-!
-      endif 
-!
-      call dgemm('N', 'N',       &
-                  wf%n_so,       &
-                  wf%n_so,       &
-                  wf%n_so,       &
-                  one,           &
-                  H,             &
-                  wf%n_so,       &
-                  tmp,           &
-                  wf%n_so,       &
-                  zero,          &
-                  RHC,           &
-                  wf%n_so)
-!
-!     RHC = RHC - (- S X) H = RHC - tmp^T H = H X S + S X H
-!
-      call dgemm('T', 'N',       &
-                  wf%n_so,       &
-                  wf%n_so,       &
-                  wf%n_so,       &
-                  -one,          &
-                  tmp,           &
-                  wf%n_so,       &
-                  H,             &
-                  wf%n_so,       &
-                  one,           &
-                  RHC,           &
-                  wf%n_so)
-!
-      if (present(level_shift)) then 
-!
-         H = H + level_shift*S
-!
-      endif 
-!
-      call mem%dealloc(tmp, wf%n_so, wf%n_so)
-!
-!     RHC = RHC + G = H X S + S X H + G
-!
-      RHC = RHC + G
-!
-!       if (present(level_shift)) then 
-! !
-! !        RHC = RHC - level_shift S = H X S + S X H + G - level_shift S
-! !
-!          RHC = RHC - level_shift*S
-! !
-!       endif
-!
-   end subroutine construct_stationary_roothan_hall_condition_hf
 !
 !
 end module hf_class
