@@ -37,6 +37,8 @@ module file_class
 !
       procedure :: prepare_to_read_line => prepare_to_read_line_file
 !
+      procedure :: error_msg => error_msg_file
+!
    end type file
 !
       type(file) :: output
@@ -162,7 +164,22 @@ contains
 !
       endif
 !
-      end subroutine prepare_to_read_line_file
+   end subroutine prepare_to_read_line_file
+!
+!
+   subroutine error_msg_file(out_file, error_specs)
+!!
+!!
+      implicit none
+!
+      class(file) :: out_file
+!
+      character(len=*) :: error_specs
+!
+      write(out_file%unit, '(a)') 'Error: ' // error_specs
+      stop
+!
+   end subroutine error_msg_file
 !
 !
 end module file_class

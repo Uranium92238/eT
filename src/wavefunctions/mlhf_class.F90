@@ -101,7 +101,8 @@ contains
       integer(i15):: i, j, k, n_active_aos, ao_offset, active_ao_counter, n_vectors_occ, n_vectors_virt
       integer(i15):: a, x
 !
-      real(dp) :: max, omp_get_wtime, e_construct_fock, s_construct_fock
+      real(dp) :: max
+      real(sp) :: omp_get_wtime, e_construct_fock, s_construct_fock
 !
       integer(i15), dimension(:,:), allocatable :: active_aos
 !
