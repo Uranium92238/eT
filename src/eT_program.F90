@@ -13,20 +13,20 @@ program eT_program
    use hf_class
    use mlhf_class
 !
-   use hf_solver_class
-   use dmm_hf_solver_class
+   use scf_diis_solver_class
+   use arh_hf_solver_class
 !
    use eri_cd_solver_class
 !
    implicit none
 !
-   type(hf_solver)     :: roothan_hall_hf_solver
-   type(dmm_hf_solver) :: density_minimization_hf_solver
+   type(scf_diis_solver) :: roothan_hall_hf_solver
+   type(arh_hf_solver)   :: density_minimization_hf_solver
 !
    type(eri_cd_solver) :: chol_solver
 !
-   !type(hf) :: wf
-   type(mlhf) :: wf
+   type(hf) :: wf
+  ! type(mlhf) :: wf
 !
 !
 !  Initialize memory and disk here
@@ -57,7 +57,7 @@ program eT_program
 !
 !  Ask the Hartree-Fock (HF) solver to find the HF solution
 !
-   call density_minimization_hf_solver%run(wf)
+   call roothan_hall_hf_solver%run(wf)
 !
 !  Finalize the wavefunction
 !

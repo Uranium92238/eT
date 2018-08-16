@@ -5,8 +5,9 @@ module hf_engine_class
 !!
    use hf_class 
 !
-   use dmm_hf_solver_class
    use hf_solver_class
+   use arh_hf_solver_class
+   use scf_diis_solver_class
 !
    type hf_engine 
 !
@@ -43,17 +44,17 @@ contains
 !
       class(hf) :: wf 
 !
-      type(dmm_hf_solver), allocatable, target :: density_minimization_hf_solver
-      type(hf_solver), allocatable, target     :: roothan_hall_hf_solver
+      type(arh_hf_solver), allocatable, target   :: arh_solver 
+      type(scf_diis_solver), allocatable, target :: scf_solver
 !
-      class(dmm_hf_solver), pointer :: solver => null() ! Change class to common ancestor when this is done 
+      class(hf_solver), pointer :: solver => null()
 !
-      allocate(density_minimization_hf_solver)
-      solver => density_minimization_hf_solver
+      allocate(arh_solver)
+      solver => arh_solver
 !
       call solver%run(wf)
 !
-      deallocate(density_minimization_hf_solver)
+      deallocate(arh_solver)
 !
    end subroutine run_hf_engine
 !
