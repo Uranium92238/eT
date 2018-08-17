@@ -37,7 +37,7 @@ program eT_program
 !
 !   Wavefunction pointer
 !
-    class(wavefunction), pointer :: wf => null()
+    class(hf), pointer :: wf => null()
 !
 !   Solvers 
 !
@@ -111,7 +111,7 @@ program eT_program
         call wf%initialize()
 !
         !call roothan_hall_solver%run(wf)
-        !call density_minimization_hf_solver%run(wf)
+        call density_minimization_hf_solver%run(wf)
         
 !
         call wf%finalize()
