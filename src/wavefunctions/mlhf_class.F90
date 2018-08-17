@@ -73,6 +73,8 @@ contains
       call initialize_overlap() ! SHOULD THESE BE INITIALIZED IN THE ENGINE ?
       call initialize_overlap()
 !
+      call wf%eri_decomp_test_w_active_dens()
+!
    end subroutine initialize_mlhf
 !
 !

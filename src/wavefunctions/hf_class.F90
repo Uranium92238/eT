@@ -517,7 +517,7 @@ contains
 !!
 !!    Calculates
 !!
-!!       F_αβ = h_αβ + sum_γδ g_αβγδ D_γδ - 1/2 * sum_γδ g_αδγβ D_γδ,
+!!       F_αβ = h_αβ + sum_γ g_αβγγ D_γγ - 1/2 * sum_γ g_αγγβ D_γγ,
 !!
 !!    where D is the AO density. This routine is integral direct, and
 !!    it calculates the Hartree-Fock energy by default.

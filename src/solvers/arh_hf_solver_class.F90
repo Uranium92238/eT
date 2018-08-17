@@ -175,7 +175,7 @@ contains
       do i = 1, wf%n_ao 
          trace_of_ao_density = trace_of_ao_density + wf%ao_density(i,i)
       enddo
-      write(output%unit, *) 'Trace of ao density: ', trace_of_ao_density
+      !write(output%unit, *) 'Trace of ao density: ', trace_of_ao_density
 !
       coulomb_thr  = 1.0D-8
       exchange_thr = 1.0D-6
@@ -183,8 +183,8 @@ contains
       start_timer = omp_get_wtime()
       call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s, coulomb_thr, exchange_thr) 
       end_timer = omp_get_wtime()
-      write(output%unit, *) 'Time to construct AO Fock from SAD: ', end_timer-start_timer
-      flush(output%unit)
+     ! write(output%unit, *) 'Time to construct AO Fock from SAD: ', end_timer-start_timer
+     ! flush(output%unit)
       prev_energy = wf%hf_energy
 !
 !     Construct AO overlap matrix, Cholesky decompose it,
@@ -209,12 +209,12 @@ contains
       do i = 1, wf%n_ao 
          trace_of_ao_density = trace_of_ao_density + wf%ao_density(i,i)
       enddo
-      write(output%unit, *) 'Trace of ao density: ', trace_of_ao_density
+      !write(output%unit, *) 'Trace of ao density: ', trace_of_ao_density
 !
       start_timer = omp_get_wtime()
       call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s)  
       end_timer = omp_get_wtime()
-      write(output%unit, *) 'Time to construct AO Fock: ', end_timer-start_timer 
+     ! write(output%unit, *) 'Time to construct AO Fock: ', end_timer-start_timer 
 !
 !     :: Construct precondition matrices, used to transform H and G prior to solving the Newton equation 
 !
@@ -417,7 +417,7 @@ contains
             do i = 1, wf%n_ao 
                trace_of_ao_density = trace_of_ao_density + wf%ao_density(i,i)
             enddo
-            write(output%unit, *) 'Trace of ao density: ', trace_of_ao_density
+           ! write(output%unit, *) 'Trace of ao density: ', trace_of_ao_density
 !
             coulomb_thr  = max(1.0D-10, max_grad*1.0D-8)
             exchange_thr = max(1.0D-8, max_grad*1.0D-6)
@@ -426,7 +426,7 @@ contains
             start_timer = omp_get_wtime()
             call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
             end_timer = omp_get_wtime()
-            write(output%unit, *) 'Time to construct AO Fock: ', end_timer-start_timer 
+            !write(output%unit, *) 'Time to construct AO Fock: ', end_timer-start_timer 
 !
          endif
 !

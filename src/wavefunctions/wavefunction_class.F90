@@ -27,9 +27,24 @@ module wavefunction_class
 !
    contains
 !
+      procedure(essential_wf), deferred :: initialize 
+      procedure(essential_wf), deferred :: finalize
 !
    end type wavefunction
 !
+   abstract interface
+!
+      subroutine essential_wf(wf)
+!
+         import :: wavefunction
+!
+         implicit none 
+!
+         class(wavefunction) :: wf 
+!
+      end subroutine essential_wf
+!
+   end interface
 !
 contains
 !

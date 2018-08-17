@@ -89,7 +89,11 @@ contains
 !
       endif
 !
-
+        call initialize_coulomb()
+        call initialize_kinetic()
+        call initialize_nuclear()
+        call initialize_overlap()
+!
    end subroutine initialize_eri_cd_solver
 !
 !
@@ -106,7 +110,7 @@ contains
 !
       real(sp):: s_determine_basis, e_determine_basis, s_build_vectors, e_build_vectors, omp_get_wtime
 !
-      write(output%unit, '(/a51/)') ':: Cholesky decomposition of two-electron ao_integrals'
+      write(output%unit, '(/a/)') ':: Cholesky decomposition of two-electron ao integrals'
       flush(output%unit)
 !
       write(output%unit, '(a20, i10)')'Number of aos:      ', solver%n_ao
@@ -158,14 +162,14 @@ contains
      !                                              e_determine_basis - s_determine_basis
 !
       if (solver%construct_vectors) then
-!
-         s_build_vectors = omp_get_wtime()
+!!
+         !s_build_vectors = omp_get_wtime()
          call solver%construct_cholesky_vectors(system)
          call solver%cholesky_vecs_diagonal_test()
-         e_build_vectors = omp_get_wtime()
+         !e_build_vectors = omp_get_wtime()
 !
-          write(output%unit, '(/a41, f11.2/)') 'Wall time to construct vectors and test: ', & 
-                                                   e_build_vectors - s_build_vectors
+          !write(output%unit, '(/a41, f11.2/)') 'Wall time to construct vectors and test: ', & 
+          !                                         e_build_vectors - s_build_vectors
 !
       endif
 !
@@ -2541,14 +2545,12 @@ contains
 !
       integer(i15) :: i = 0, ioerror
 !
-      call input%init('eT.inp', 'sequential', 'formatted')
-      call disk%open_file(input, 'read')
       rewind(input%unit)
 !
       read(input%unit,'(a)') line
       line = remove_preceding_blanks(line)
 !
-      do while ((trim(line) .ne. 'end cholesky') .and. (line(1:2) .ne. 'do'))
+      do while ((trim(line) .ne. 'end cholesky') .and. (line(1:2) .ne. 'geometry'))
 !
          read(input%unit,'(a)') line
          line = remove_preceding_blanks(line)
@@ -2590,8 +2592,6 @@ contains
 !
       enddo
       backspace(input%unit)
-!
-      call disk%close_file(input)
 !
    end subroutine read_info_eri_cd_solver
 !

@@ -198,8 +198,6 @@ contains
 !
       integer(i15) :: i = 0
 !
-      call input%init('eT.inp', 'sequential', 'formatted')
-      call disk%open_file(input, 'read')
       rewind(input%unit)
 !
       molecule%n_atoms = 0
@@ -261,8 +259,6 @@ contains
 !
       endif
 !
-      call disk%close_file(input)
-!
    end subroutine read_info_molecular_system
 !
 !
@@ -295,7 +291,6 @@ contains
 !
       write(mol_file%unit, '(i4/)') molecule%n_atoms
 !
-      call disk%open_file(input, 'read')
       rewind(input%unit)
 !
       read(input%unit,'(a)') line
@@ -390,8 +385,7 @@ contains
          line = remove_preceding_blanks(line)
 !
       enddo
-
-      call disk%close_file(input)
+!
       call disk%close_file(mol_file)
 !
       call disk%open_file(mol_file, 'read')
