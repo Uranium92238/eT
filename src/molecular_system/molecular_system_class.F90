@@ -28,7 +28,7 @@ module molecular_system_class
 !
       type(ao_integral_manager) :: ao_integrals
 !
-      
+      type(interval), dimension(:), allocatable :: shell_limits 
 !
    contains
 !
@@ -67,6 +67,8 @@ contains
       character(len=100) :: temp_name
 !
       integer(kind=4) :: i = 0, j = 0, n_atoms_libint
+!
+      integer(i15) :: s, n_s 
 !
       integer(kind=4), dimension(:,:), allocatable :: n_shells_on_atoms
       integer(kind=4), dimension(:,:), allocatable :: n_basis_in_shells
@@ -179,7 +181,15 @@ contains
 !
       enddo
 !
-
+!     Allocate and set shell limits vector 
+!
+      n_s = molecule%get_n_shells()
+      allocate(molecule%shell_limits(n_s))
+      do s = 1, n_s 
+!  
+         molecule%shell_limits(s) = molecule%get_shell_limits(s)
+!
+      enddo
 !
    end subroutine initialize_molecular_system
 !

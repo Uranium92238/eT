@@ -823,12 +823,12 @@ contains
 !
 !     Allocate and set shell limits vector 
 !
-      allocate(shell_limits(n_s))
-      do s1 = 1, n_s 
+   !   allocate(shell_limits(n_s))
+   !   do s1 = 1, n_s 
 !  
-         shell_limits(s1) = wf%system%get_shell_limits(s1)
+   !      shell_limits(s1) = wf%system%get_shell_limits(s1)
 !
-      enddo
+    !  enddo
 !
       call mem%alloc(sp_density_schwarz, n_s, n_s)
 !
@@ -889,13 +889,14 @@ contains
 !$omp temp4, temp5, temp6, w_red, x_red, y_red, z_red, g, skip) schedule(dynamic)
       do s1s2 = 1, n_sig_sp
 !
+         write(output%unit, *) 'omp thread num', omp_get_thread_num()
          thread_offset = omp_get_thread_num()*wf%n_ao ! Start column of thread's Fock matrix 
 !
          s1 = sp_eri_schwarz_list(s1s2, 1)
          s2 = sp_eri_schwarz_list(s1s2, 2)
 !
-         A_interval = shell_limits(s1)
-         B_interval = shell_limits(s2)
+         A_interval = wf%system%shell_limits(s1)
+         B_interval = wf%system%shell_limits(s2)
 !
          if (sp_eri_schwarz(s1s2, 1)*(max_D_schwarz)*(max_eri_schwarz) .lt. coulomb_thr) continue
 !
@@ -911,7 +912,7 @@ contains
 !
          do s3 = 1, s1
 !
-            C_interval = shell_limits(s3)
+            C_interval = wf%system%shell_limits(s3)
 !
             if (s3 .eq. s1) then
 !
@@ -969,7 +970,7 @@ contains
 
                deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
 !
-               D_interval = shell_limits(s4)
+               D_interval = wf%system%shell_limits(s4)
 !
                call mem%alloc(g, (A_interval%size)*(B_interval%size), &
                                     (C_interval%size)*(D_interval%size))
@@ -1162,7 +1163,7 @@ contains
 ! !$omp end parallel do
 !
       call mem%dealloc(sp_density_schwarz, n_s, n_s)
-      deallocate(shell_limits)
+    !  deallocate(shell_limits)
 !
 !     Put the accumulated Fock matrices from each thread into the Fock matrix 
 !
