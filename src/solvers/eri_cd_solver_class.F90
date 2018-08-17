@@ -108,7 +108,7 @@ contains
 !
       real(dp), dimension(solver%n_ao,1), optional :: screening_vector
 !
-      real(sp):: s_determine_basis, e_determine_basis, s_build_vectors, e_build_vectors, omp_get_wtime
+      real(dp):: s_determine_basis, e_determine_basis, s_build_vectors, e_build_vectors, omp_get_wtime
 !
       write(output%unit, '(/a/)') ':: Cholesky decomposition of two-electron ao integrals'
       flush(output%unit)
