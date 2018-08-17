@@ -883,13 +883,15 @@ contains
       call mem%alloc(F, wf%n_ao, wf%n_ao*n_threads) ! [F(thr1) F(thr2) ...]
       F = zero 
 !
+      write(output%unit, *) 'Number of threads:', n_threads
+!
 !$omp parallel do &
 !$omp private(s1, s2, s3, s4, deg, s4_max, temp, s1s2, s3s4, s3s4_sorted, deg_12, deg_34, deg_12_34, thread_offset, &
 !$omp A_interval, B_interval, C_interval, D_interval, w, x, y, z, wx, yz, temp1, temp2, temp3, &
 !$omp temp4, temp5, temp6, w_red, x_red, y_red, z_red, g, skip) schedule(dynamic)
       do s1s2 = 1, n_sig_sp
 !
-         write(output%unit, *) 'omp thread num', omp_get_thread_num()
+       !  write(output%unit, *) 'omp thread num', omp_get_thread_num()
          thread_offset = omp_get_thread_num()*wf%n_ao ! Start column of thread's Fock matrix 
 !
          s1 = sp_eri_schwarz_list(s1s2, 1)
