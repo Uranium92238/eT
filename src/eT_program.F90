@@ -57,7 +57,7 @@ program eT_program
 !
 !  Ask the Hartree-Fock (HF) solver to find the HF solution
 !
-   call roothan_hall_hf_solver%run(wf)
+   call density_minimization_hf_solver%run(wf)
 !
 !  Finalize the wavefunction
 !

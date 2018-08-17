@@ -142,8 +142,8 @@ contains
 !
       real(dp) :: trace_of_ao_density
 !
-      real(dp), dimension(:,:), allocatable :: eri_deg
-      real(dp), dimension(:,:), allocatable :: sp_eri_schwarz
+      real(dp), dimension(:,:), allocatable     :: sp_eri_schwarz
+      integer(i15), dimension(:,:), allocatable :: sp_eri_schwarz_list
 !
 !     Print solver banner
 !
@@ -163,8 +163,9 @@ contains
 !
       n_s = wf%system%get_n_shells()
 !
-      call mem%alloc(sp_eri_schwarz, n_s, n_s)
-      call wf%construct_sp_eri_schwarz(sp_eri_schwarz, n_s)
+      call mem%alloc(sp_eri_schwarz, n_s*(n_s + 1)/2, 1)
+      call mem%alloc_int(sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
+      call wf%construct_sp_eri_schwarz(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
 !
 !     Construct initial AO Fock from the SOAD density
 !
@@ -176,11 +177,11 @@ contains
       enddo
       write(output%unit, *) 'Trace of ao density: ', trace_of_ao_density
 !
-      coulomb_thr  = 0.5D0
-      exchange_thr = 0.5D0
+      coulomb_thr  = 1.0D-8
+      exchange_thr = 1.0D-6
 !
       start_timer = omp_get_wtime()
-      call wf%construct_ao_fock(sp_eri_schwarz, n_s, coulomb_thr, exchange_thr) 
+      call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s, coulomb_thr, exchange_thr) 
       end_timer = omp_get_wtime()
       write(output%unit, *) 'Time to construct AO Fock from SAD: ', end_timer-start_timer
       flush(output%unit)
@@ -211,7 +212,7 @@ contains
       write(output%unit, *) 'Trace of ao density: ', trace_of_ao_density
 !
       start_timer = omp_get_wtime()
-      call wf%construct_ao_fock(sp_eri_schwarz, n_s)  
+      call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s)  
       end_timer = omp_get_wtime()
       write(output%unit, *) 'Time to construct AO Fock: ', end_timer-start_timer 
 !
@@ -418,12 +419,12 @@ contains
             enddo
             write(output%unit, *) 'Trace of ao density: ', trace_of_ao_density
 !
-            coulomb_thr  = max(1.0D-10, max_grad)
-            exchange_thr = max(1.0D-8, max_grad)
+            coulomb_thr  = max(1.0D-10, max_grad*1.0D-8)
+            exchange_thr = max(1.0D-8, max_grad*1.0D-6)
 !
             prev_energy = wf%hf_energy
             start_timer = omp_get_wtime()
-            call wf%construct_ao_fock(sp_eri_schwarz, n_s, coulomb_thr, exchange_thr)
+            call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
             end_timer = omp_get_wtime()
             write(output%unit, *) 'Time to construct AO Fock: ', end_timer-start_timer 
 !
