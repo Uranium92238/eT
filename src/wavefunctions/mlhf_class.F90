@@ -133,7 +133,7 @@ contains
       n_s = wf%system%get_n_shells()
 !
       call mem%alloc(sp_eri_schwarz, n_s, n_s)
-      call wf%construct_sp_eri_schwarz(sp_eri_schwarz, n_s)
+    !  call wf%construct_sp_eri_schwarz(sp_eri_schwarz, n_s)
 !
 !     Construct initial AO Fock from the SOAD density
 !

@@ -99,7 +99,8 @@ contains
 !
       integer(i15) :: n_s 
 !
-      real(dp), dimension(:,:), allocatable :: sp_eri_schwarz
+      real(dp), dimension(:,:), allocatable     :: sp_eri_schwarz
+      integer(i15), dimension(:,:), allocatable :: sp_eri_schwarz_list
 !
 !     Print solver banner
 !
@@ -124,8 +125,9 @@ contains
 !
       n_s = wf%system%get_n_shells()
 !
-      call mem%alloc(sp_eri_schwarz, n_s, n_s)
-      call wf%construct_sp_eri_schwarz(sp_eri_schwarz, n_s)
+      call mem%alloc(sp_eri_schwarz, n_s*(n_s + 1)/2, 1)
+      call mem%alloc_int(sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
+      call wf%construct_sp_eri_schwarz(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
 !
 !     :: Initialize the DIIS object,
 !     which is used to get new effective densities from previous densities and gradients
@@ -144,7 +146,7 @@ contains
 !     by solving the Roothan-Hall equations for the SAD density
 !
       call wf%initialize_ao_fock()
-      call wf%construct_ao_fock(sp_eri_schwarz, n_s)
+      call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
 !
       call wf%initialize_mo_coefficients()
 !
@@ -152,7 +154,7 @@ contains
 !
       call wf%construct_ao_density() ! Construct AO density from C
       call wf%get_ao_density(D)
-      call wf%construct_ao_fock(sp_eri_schwarz, n_s)
+      call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
 !
 !     Iterative solution loop
 !
@@ -209,7 +211,7 @@ contains
 !           Construct the AO fock matrix from it
 !
             call wf%set_ao_density(D)
-            call wf%construct_ao_fock(sp_eri_schwarz, n_s)
+            call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
 !
 !           Solve the Roothan-Hall equation and update the AO density 
 !           and Fock matrix from the solution
@@ -217,7 +219,7 @@ contains
             call solver%do_roothan_hall(wf) 
 !
             call wf%construct_ao_density()
-            call wf%construct_ao_fock(sp_eri_schwarz, n_s)
+            call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
 !
             call wf%get_ao_density(D)
 !

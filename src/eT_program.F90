@@ -149,14 +149,6 @@ end program eT_program
 !
 !  Ask the Hartree-Fock (HF) solver to find the HF solution
 !
-   !call engine%solve(wf)
-    !call db_engine%solve(wf)
-!
-  ! call roothan_hall_solver%run(wf)
-  ! call density_minimization_hf_solver%run(wf)
-
-  !call roothan_hall_hf_solver%run(wf)
-!
 !  Finalize the wavefunction
 !
  !  call wf%finalize()
