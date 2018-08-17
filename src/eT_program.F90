@@ -15,21 +15,34 @@ program eT_program
 !
   use io_eT_program
 !
-  !use scf_diis_solver_class
-  !use arh_hf_solver_class
+  use scf_diis_solver_class
+  use arh_hf_solver_class
 !
-  !use eri_cd_solver_class
+  use eri_cd_solver_class
 !
   implicit none
+!
+!   Allocatable system
+!
+    type(molecular_system), allocatable :: system
 !
 !   Method allocatable objects
 !
     type(hf), allocatable, target    :: hf_wf
     type(mlhf), allocatable, target  :: mlhf_wf 
 !
+!   Cholesky decomposition solver 
+!
+    type(eri_cd_solver), allocatable :: chol_solver
+!
 !   Wavefunction pointer
 !
     class(wavefunction), pointer :: wf => null()
+!
+!   Solvers 
+!
+    type(scf_diis_solver) :: roothan_hall_hf_solver
+    type(arh_hf_solver)   :: density_minimization_hf_solver
 !
     integer(i15) :: n_methods
 !
@@ -39,10 +52,11 @@ program eT_program
 !
 !    Prepare input and output file
 !
-    call input%init('eT.inp', 'sequential', 'formatted')
-!
     call output%init('eT.out', 'sequential', 'formatted')
     call disk%open_file(output, 'write', 'rewind')
+!
+    call input%init('eT.inp', 'sequential', 'formatted')
+    call disk%open_file(input, 'read')
 !
     write(output%unit,'(///t16,a)')    'eT - a coupled cluster program'
     write(output%unit,'(t12,a//)') 'S. D. Folkestad, E. F. Kjønstad, 2017-2018'
@@ -52,7 +66,26 @@ program eT_program
 !
     if (n_methods == 0) then
 !
-!     Do cholesky?
+     if (requested_task('cholesky')) then
+!
+        allocate(system)
+        call system%initialize()
+!
+        allocate(chol_solver)
+!
+        call initialize_libint()
+!
+        call chol_solver%initialize(system)
+        call chol_solver%solve(system)
+        call chol_solver%finalize()
+!
+        call finalize_libint()
+!
+     else
+!
+       call output%error_msg('no calculation requested.')
+!
+     endif
 !
     else
 !
@@ -61,21 +94,44 @@ program eT_program
         allocate(mlhf_wf)
         wf => mlhf_wf
 !
+        call initialize_libint()
+!
+        call wf%initialize()
+        call wf%finalize()
+!
+        call finalize_libint()
+!
       else
 !
         allocate(hf_wf)
         wf => hf_wf
 !
+        call initialize_libint()
+!
+        call wf%initialize()
+!
+        !call roothan_hall_solver%run(wf)
+        !call density_minimization_hf_solver%run(wf)
+        
+!
+        call wf%finalize()
+!
+        call finalize_libint()
+!
       endif
 !
     endif
 !
-    stop
+   call disk%close_file(output)
+   call disk%close_file(input)
 !
-   !type(scf_diis_solver) :: roothan_hall_hf_solver
-   !type(arh_hf_solver)   :: density_minimization_hf_solver
+end program eT_program
+
 !
-   !type(eri_cd_solver) :: chol_solver
+   !
+   !
+!
+   !
 !
 !  Initialize Libint integral library
 !
@@ -108,7 +164,3 @@ program eT_program
 !  Finalize the Libint integral library
 !
 !  call finalize_libint()
-!
-!   call disk%close_file(output)
-!
-end program eT_program
