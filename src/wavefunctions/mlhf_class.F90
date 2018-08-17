@@ -291,8 +291,6 @@ contains
 !
       integer(i15) :: i = 0,j = 0, ioerror, first, last
 !
-      call input%init('eT.inp', 'sequential', 'formatted')
-      call disk%open_file(input, 'read')
       rewind(input%unit)
 !
       read(input%unit,'(a)', iostat=ioerror) line
@@ -353,8 +351,6 @@ contains
 !
       enddo
       backspace(input%unit)
-!
-      call disk%close_file(input)
 !
    end subroutine read_info_mlhf
 !
@@ -451,12 +447,5 @@ contains
       call daxpy(wf%n_ao**2, -half, wf%ao_density, 1, D_v, 1)
 !
   end subroutine construct_virtual_density_mlhf
-!
-!  1. Hvordan skal jeg få rutiner fra HF (midlertidig arve derfra?)
-!  2. Skrive inputleser
-!  3. Teste dekomponering
-!  4. Lage V_xy
-!  5. ML
-!
 !
 end module mlhf_class

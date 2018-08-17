@@ -156,20 +156,9 @@ contains
       call solver%construct_overlap_cholesky_vecs(system)
       call solver%invert_overlap_cholesky_vecs()
 !
-   !   e_determine_basis = omp_get_wtime()
-!
-    !  write(output%unit, '(/a58, f11.2/)') 'Wall time to determine basis, decompose (J|K) and invert: ', &
-     !                                              e_determine_basis - s_determine_basis
-!
       if (solver%construct_vectors) then
-!!
-         !s_build_vectors = omp_get_wtime()
-         call solver%construct_cholesky_vectors(system)
-         call solver%cholesky_vecs_diagonal_test()
-         !e_build_vectors = omp_get_wtime()
 !
-          !write(output%unit, '(/a41, f11.2/)') 'Wall time to construct vectors and test: ', & 
-          !                                         e_build_vectors - s_build_vectors
+         call solver%construct_cholesky_vectors(system)
 !
       endif
 !

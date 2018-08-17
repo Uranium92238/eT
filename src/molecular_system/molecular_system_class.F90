@@ -28,6 +28,8 @@ module molecular_system_class
 !
       type(ao_integral_manager) :: ao_integrals
 !
+      
+!
    contains
 !
       procedure :: initialize => initialize_molecular_system
