@@ -645,7 +645,6 @@ contains
 !
 !     Exchange term
 !
-!$omp end parallel do
 !$omp parallel do &
 !$omp private(A, B, C, A_interval, B_interval, C_interval, x, y, z, xy, zz, xz, yz, &
 !$omp g_K) schedule(dynamic)
