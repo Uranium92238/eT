@@ -685,7 +685,7 @@ contains
 !
       call mem%dealloc(sp_density_schwarz, n_s, 1)
 !
-       call symmetric_sum(wf%ao_fock, wf%n_ao) ! Slightly faster than 'symmetrize', because no copy is made
+       call symmetric_sum(wf%ao_fock, wf%n_ao)
 !
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call get_ao_h_xy(h_wx)
