@@ -6,6 +6,7 @@ set(eT_fortran_sources
    src/io/disk_manager_class.F90
    src/io/file_class.F90
    src/io/io_utilities.F90
+   src/io/io_eT_program.F90
    src/ao_integrals/ao_integral_manager_class.F90
    src/solver_tools/cholesky_array_list_class.F90
    src/libint/h_xy.F90
