@@ -121,7 +121,7 @@ contains
       write(output%unit, '(a21, e12.4/)') 'Span factor:         ', solver%span
       flush(output%unit)
 !
-      !s_determine_basis = omp_get_wtime()
+      s_determine_basis = omp_get_wtime()
 !
       if (present(screening_vector)) then
 !
@@ -155,10 +155,18 @@ contains
 !
       call solver%construct_overlap_cholesky_vecs(system)
       call solver%invert_overlap_cholesky_vecs()
+      e_determine_basis = omp_get_wtime()
+      write(output%unit, '(/a49, f11.2)')'Wall time to determine basis: ', &
+                                  e_determine_basis - s_determine_basis
 !
       if (solver%construct_vectors) then
 !
+         s_build_vectors = omp_get_wtime()
          call solver%construct_cholesky_vectors(system)
+         call solver%cholesky_vecs_diagonal_test()
+         e_build_vectors = omp_get_wtime()
+         write(output%unit, '(/a49, f11.2)')'Wall time to build vectors and test: ', &
+                                  e_build_vectors - s_build_vectors
 !
       endif
 !
@@ -240,8 +248,8 @@ contains
          A = sp_index(I, 1)
          B = sp_index(I, 2)
 !
-         A_interval = system%get_shell_limits(A)
-         B_interval = system%get_shell_limits(B)
+         A_interval = system%shell_limits(A)
+         B_interval = system%shell_limits(B)
 !
 !        Construct diagonal D_AB for the given shell pair
 !
@@ -293,8 +301,8 @@ contains
             A = sp_index(I, 1)
             B = sp_index(I, 2)
 !
-            A_interval = system%get_shell_limits(A)
-            B_interval = system%get_shell_limits(B)
+            A_interval = system%shell_limits(A)
+            B_interval = system%shell_limits(B)
 !
             n_sig_aop = n_sig_aop + &
                            get_size_sp(A_interval, B_interval)
@@ -329,8 +337,8 @@ contains
             A = sp_index(I, 1)
             B = sp_index(I, 2)
 !
-            A_interval = system%get_shell_limits(A)
-            B_interval = system%get_shell_limits(B)
+            A_interval = system%shell_limits(A)
+            B_interval = system%shell_limits(B)
 !
             sig_sp_index(current_sig_sp, 1) = A
             sig_sp_index(current_sig_sp, 2) = B
@@ -368,8 +376,8 @@ contains
          A = sig_sp_index(I, 1)
          B = sig_sp_index(I, 2)
 !
-         A_interval = system%get_shell_limits(A)
-         B_interval = system%get_shell_limits(B)
+         A_interval = system%shell_limits(A)
+         B_interval = system%shell_limits(B)
 !
          call mem%alloc(g_AB_AB, &
                (A_interval%size)*(B_interval%size), &
@@ -511,8 +519,8 @@ contains
 !
          if (system%shell_to_atom(B) == system%shell_to_atom(A)) then
 !
-            A_interval = system%get_shell_limits(A)
-            B_interval = system%get_shell_limits(B)
+            A_interval = system%shell_limits(A)
+            B_interval = system%shell_limits(B)
 !
 !           Construct diagonal D_AB for the given shell pair
 !
@@ -567,8 +575,8 @@ contains
             A = sp_index(I, 1)
             B = sp_index(I, 2)
 !
-            A_interval = system%get_shell_limits(A)
-            B_interval = system%get_shell_limits(B)
+            A_interval = system%shell_limits(A)
+            B_interval = system%shell_limits(B)
 !
             n_sig_aop = n_sig_aop + &
                            get_size_sp(A_interval, B_interval)
@@ -603,8 +611,8 @@ contains
             A = sp_index(I, 1)
             B = sp_index(I, 2)
 !
-            A_interval = system%get_shell_limits(A)
-            B_interval = system%get_shell_limits(B)
+            A_interval = system%shell_limits(A)
+            B_interval = system%shell_limits(B)
 !
             sig_sp_index(current_sig_sp, 1) = A
             sig_sp_index(current_sig_sp, 2) = B
@@ -642,8 +650,8 @@ contains
          A = sig_sp_index(I, 1)
          B = sig_sp_index(I, 2)
 !
-         A_interval = system%get_shell_limits(A)
-         B_interval = system%get_shell_limits(B)
+         A_interval = system%shell_limits(A)
+         B_interval = system%shell_limits(B)
 !
          call mem%alloc(g_AB_AB, &
                (A_interval%size)*(B_interval%size), &
@@ -872,8 +880,8 @@ contains
 !
                sig_sp_to_first_sig_aop(current_sig_sp, 1) = first_sig_aop
 !
-               A_interval = system%get_shell_limits(A)
-               B_interval = system%get_shell_limits(B)
+               A_interval = system%shell_limits(A)
+               B_interval = system%shell_limits(B)
 !
                sig_sp_to_shells(current_sig_sp, 1) = A
                sig_sp_to_shells(current_sig_sp, 2) = B
@@ -1109,8 +1117,8 @@ contains
             D                = qual_sp(CD_sp, 2)
             n_qual_aop_in_sp = qual_sp(CD_sp, 3)
 !
-            C_interval = system%get_shell_limits(C)
-            D_interval = system%get_shell_limits(D)
+            C_interval = system%shell_limits(C)
+            D_interval = system%shell_limits(D)
 !
 !           Calculate the ({wx} | J) integrals,
 !           where {wx} is the screened list of integrals
@@ -1120,8 +1128,8 @@ contains
                A = sig_sp_to_shells(AB_sp, 1)
                B = sig_sp_to_shells(AB_sp, 2)
 !
-               A_interval = system%get_shell_limits(A)
-               B_interval = system%get_shell_limits(B)
+               A_interval = system%shell_limits(A)
+               B_interval = system%shell_limits(B)
 !
                call mem%alloc(g_AB_CD, &
                               (A_interval%size)*(B_interval%size), &
@@ -1429,8 +1437,8 @@ contains
                   A = sig_sp_to_shells(sp, 1)
                   B = sig_sp_to_shells(sp, 2)
 !
-                  A_interval = system%get_shell_limits(A)
-                  B_interval = system%get_shell_limits(B)
+                  A_interval = system%shell_limits(A)
+                  B_interval = system%shell_limits(B)
 !
                   new_sig_sp_to_first_sig_aop(current_new_sig_sp, 1) = first_sig_aop
 !
@@ -1744,8 +1752,8 @@ contains
          C = basis_shell_info(CD_sp, 1)
          D = basis_shell_info(CD_sp, 2)
 !
-         C_interval = system%get_shell_limits(C)
-         D_interval = system%get_shell_limits(D)
+         C_interval = system%shell_limits(C)
+         D_interval = system%shell_limits(D)
 !
          call mem%alloc_int(basis_aops_in_CD_sp, basis_shell_info(CD_sp, 4), 3)
 !
@@ -1770,8 +1778,8 @@ contains
             A = basis_shell_info(AB_sp, 1)
             B = basis_shell_info(AB_sp, 2)
 !
-            A_interval = system%get_shell_limits(A)
-            B_interval = system%get_shell_limits(B)
+            A_interval = system%shell_limits(A)
+            B_interval = system%shell_limits(B)
 !
             call mem%alloc_int(basis_aops_in_AB_sp, basis_shell_info(AB_sp, 4), 3)
 !
@@ -2074,8 +2082,8 @@ contains
 !
                sp_counter = sp_counter + 1
 !
-               A_interval = system%get_shell_limits(A)
-               B_interval = system%get_shell_limits(B)
+               A_interval = system%shell_limits(A)
+               B_interval = system%shell_limits(B)
 !
                if (sig_sp(sp_counter)) then
 !
@@ -2140,8 +2148,8 @@ contains
                   sp_counter = sp_counter + 1
                   sig_sp(AB_sp) = .false.
 !
-                  A_interval = system%get_shell_limits(A)
-                  B_interval = system%get_shell_limits(B)
+                  A_interval = system%shell_limits(A)
+                  B_interval = system%shell_limits(B)
 !
                   if (sp_counter .lt. n_AB_included) AB_info(sp_counter + 1, 1) = AB_info(sp_counter, 1) &
                                                 + get_size_sp(A_interval, B_interval)
@@ -2166,16 +2174,16 @@ contains
             A = AB_info(AB_sp, 2)
             B = AB_info(AB_sp, 3)
 !
-            A_interval = system%get_shell_limits(A)
-            B_interval = system%get_shell_limits(B)
+            A_interval = system%shell_limits(A)
+            B_interval = system%shell_limits(B)
 !
             do CD_sp = 1, n_sp_in_basis
 !
                C = basis_shell_info(CD_sp, 1)
                D = basis_shell_info(CD_sp, 2)
 !
-               C_interval = system%get_shell_limits(C)
-               D_interval = system%get_shell_limits(D)
+               C_interval = system%shell_limits(C)
+               D_interval = system%shell_limits(D)
 !
                call mem%alloc_int(basis_aops_in_CD_sp, basis_shell_info(CD_sp, 4), 3)
 !
@@ -2639,8 +2647,8 @@ end module eri_cd_solver_class
 !!
 !            if (system%shell_to_atom(B) == system%shell_to_atom(A)) then
 !!
-!               A_interval = system%get_shell_limits(A)
-!               B_interval = system%get_shell_limits(B)
+!               A_interval = system%shell_limits(A)
+!               B_interval = system%shell_limits(B)
 !!
 !!              Construct diagonal D_AB for the given shell pair
 !!
@@ -2715,8 +2723,8 @@ end module eri_cd_solver_class
 !!
 !            if (sig_sp(sp)) then
 !!
-!               A_interval = system%get_shell_limits(A)
-!               B_interval = system%get_shell_limits(B)
+!               A_interval = system%shell_limits(A)
+!               B_interval = system%shell_limits(B)
 !!
 !               call mem%alloc(g_AB_AB, &
 !                     (A_interval%size)*(B_interval%size), &
