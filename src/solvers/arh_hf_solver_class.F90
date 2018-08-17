@@ -1,7 +1,7 @@
-module dmm_hf_solver_class
+module arh_hf_solver_class
 !
 !!
-!!		Density matrix minimization (DMM) HF solver class module
+!!		Augmented Roothan-Hall HF solver class module
 !!		Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !
@@ -9,38 +9,27 @@ module dmm_hf_solver_class
    use diis_solver_class
    use file_class
    use hf_class
+   use hf_solver_class
    use array_utilities
    use disk_manager_class
    use libint_initialization
 !
    implicit none
 !
-   type :: dmm_hf_solver
+   type, extends(hf_solver) :: arh_hf_solver
 !
-      integer(i15) :: max_iterations       = 150
       integer(i15) :: max_micro_iterations = 250
 !
-      real(dp) :: purification_threshold   = 1.0D-8
-      real(dp) :: energy_threshold         = 1.0D-6
-      real(dp) :: residual_threshold       = 1.0D-6
-      real(dp) :: relative_micro_threshold = 1.0D-3         ! Newton equations treshold
+      real(dp) :: purification_threshold           = 1.0D-8
+      real(dp) :: relative_micro_threshold         = 1.0D-3 
+      real(dp) :: relative_shifted_micro_threshold = 1.0D-3 
 !
       real(dp) :: trust_radius                     = 0.50D0 
       real(dp) :: relative_trust_radius_threshold  = 0.10D0
-      real(dp) :: relative_shifted_micro_threshold = 1.0D-3 ! Level shifted Newton equations threshold
 !
-      real(dp) :: rotation_norm_threshold = 0.2D0 ! Maximum rotation norm
-!
-      real(dp) :: linear_dependence_threshold = 1.0D-6
+      real(dp) :: rotation_norm_threshold          = 0.2D0
 !
       integer(i15) :: diis_dimension = 10
-!
-      logical :: restart
-!
-      real(dp), dimension(:,:), allocatable :: cholesky_ao_overlap ! The non-zero leading rank-by-rank 
-                                                                   ! block L' in S = L L^T = (L', L'^T 0; 0, 0) 
-!
-      real(dp), dimension(:,:), allocatable :: permutation_matrix  ! Permutation matrix 
 !
       real(dp), dimension(:,:), allocatable :: trace_matrix        ! Trace matrix, T_ij = Tr (D_in D_jn), i, j < n
 !
@@ -52,58 +41,55 @@ module dmm_hf_solver_class
 !
    contains
 !
-      procedure :: initialize  => initialize_dmm_hf_solver
-      procedure :: solve       => solve_dmm_hf_solver
-      procedure :: finalize    => finalize_dmm_hf_solver
+      procedure :: initialize  => initialize_arh_hf_solver
+      procedure :: run         => run_arh_hf_solver
+      procedure :: finalize    => finalize_arh_hf_solver
 !
-      procedure, private :: print_banner                                => print_banner_dmm_hf_solver
+      procedure, private :: print_banner                                => print_banner_arh_hf_solver
 !
-      procedure, private :: solve_aug_Newton_equation                   => solve_aug_Newton_equation_dmm_hf_solver
-      procedure, private :: solve_level_shifted_aug_Newton_equation     => solve_level_shifted_aug_Newton_equation_dmm_hf_solver
+      procedure, private :: solve_aug_Newton_equation                   => solve_aug_Newton_equation_arh_hf_solver
+      procedure, private :: solve_level_shifted_aug_Newton_equation     => solve_level_shifted_aug_Newton_equation_arh_hf_solver
 !
-      procedure, private :: construct_stationary_roothan_hall_condition => construct_stationary_roothan_hall_condition_dmm_hf_solver
-      procedure, private :: add_augmented_Roothan_Hall_contribution     => add_augmented_Roothan_Hall_contribution_dmm_hf_solver
+      procedure, private :: construct_stationary_roothan_hall_condition => construct_stationary_roothan_hall_condition_arh_hf_solver
+      procedure, private :: add_augmented_Roothan_Hall_contribution     => add_augmented_Roothan_Hall_contribution_arh_hf_solver
 !
-      procedure, private :: construct_trace_matrix                      => construct_trace_matrix_dmm_hf_solver
+      procedure, private :: construct_trace_matrix                      => construct_trace_matrix_arh_hf_solver
 !
-      procedure, private :: decompose_ao_overlap                        => decompose_ao_overlap_dmm_hf_solver
-      procedure, private :: do_roothan_hall                             => do_roothan_hall_dmm_hf_solver
-!
-      procedure, private :: rotate_and_purify                           => rotate_and_purify_dmm_hf_solver
-      procedure, private :: construct_and_pack_gradient                 => construct_and_pack_gradient_dmm_hf_solver
+      procedure, private :: rotate_and_purify                           => rotate_and_purify_arh_hf_solver
+      procedure, private :: construct_and_pack_gradient                 => construct_and_pack_gradient_arh_hf_solver
 
 !
-   end type dmm_hf_solver
+   end type arh_hf_solver
 !
 !
 contains
 !
 !
-   subroutine initialize_dmm_hf_solver(solver, wf)
+   subroutine initialize_arh_hf_solver(solver, wf)
 !!
 !!    Initialize
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(dmm_hf_solver) :: solver
+      class(arh_hf_solver) :: solver
 !
       class(hf) :: wf
 !
       call wf%initialize_ao_density()
       call wf%set_ao_density_to_sad()
 !
-   end subroutine initialize_dmm_hf_solver
+   end subroutine initialize_arh_hf_solver
 !
 !
-   subroutine solve_dmm_hf_solver(solver, wf)
+   subroutine run_arh_hf_solver(solver, wf)
 !!
-!!    Solve
+!!    Run
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(dmm_hf_solver) :: solver
+      class(arh_hf_solver) :: solver
 !
       class(hf) :: wf
 !
@@ -135,7 +121,7 @@ contains
 !
       logical :: transpose_left
 !
-      real(dp) :: beta
+      real(dp) :: beta, coulomb_thr, exchange_thr
 !
       integer(i15) :: iteration = 1
 !
@@ -153,6 +139,8 @@ contains
       real(dp) :: ddot
 !
       integer(i15) :: n_s, i 
+!
+      real(dp) :: trace_of_ao_density
 !
       real(dp), dimension(:,:), allocatable :: eri_deg
       real(dp), dimension(:,:), allocatable :: sp_eri_schwarz
@@ -182,7 +170,20 @@ contains
 !
       call wf%initialize_ao_fock()
 !
-      call wf%construct_ao_fock(sp_eri_schwarz, n_s) 
+      trace_of_ao_density = zero 
+      do i = 1, wf%n_ao 
+         trace_of_ao_density = trace_of_ao_density + wf%ao_density(i,i)
+      enddo
+      write(output%unit, *) 'Trace of ao density: ', trace_of_ao_density
+!
+      coulomb_thr  = 0.5D0
+      exchange_thr = 0.5D0
+!
+      start_timer = omp_get_wtime()
+      call wf%construct_ao_fock(sp_eri_schwarz, n_s, coulomb_thr, exchange_thr) 
+      end_timer = omp_get_wtime()
+      write(output%unit, *) 'Time to construct AO Fock from SAD: ', end_timer-start_timer
+      flush(output%unit)
       prev_energy = wf%hf_energy
 !
 !     Construct AO overlap matrix, Cholesky decompose it,
@@ -203,7 +204,16 @@ contains
       call wf%construct_ao_density()
       call wf%destruct_mo_coefficients()
 !
-      call wf%construct_ao_fock(sp_eri_schwarz, n_s)   
+      trace_of_ao_density = zero 
+      do i = 1, wf%n_ao 
+         trace_of_ao_density = trace_of_ao_density + wf%ao_density(i,i)
+      enddo
+      write(output%unit, *) 'Trace of ao density: ', trace_of_ao_density
+!
+      start_timer = omp_get_wtime()
+      call wf%construct_ao_fock(sp_eri_schwarz, n_s)  
+      end_timer = omp_get_wtime()
+      write(output%unit, *) 'Time to construct AO Fock: ', end_timer-start_timer 
 !
 !     :: Construct precondition matrices, used to transform H and G prior to solving the Newton equation 
 !
@@ -402,8 +412,20 @@ contains
 !           and set previous gradient and step direction to current, in preparation 
 !           for next conjugate gradient iteration
 !
+            trace_of_ao_density = zero 
+            do i = 1, wf%n_ao 
+               trace_of_ao_density = trace_of_ao_density + wf%ao_density(i,i)
+            enddo
+            write(output%unit, *) 'Trace of ao density: ', trace_of_ao_density
+!
+            coulomb_thr  = max(1.0D-10, max_grad)
+            exchange_thr = max(1.0D-8, max_grad)
+!
             prev_energy = wf%hf_energy
-            call wf%construct_ao_fock(sp_eri_schwarz, n_s)
+            start_timer = omp_get_wtime()
+            call wf%construct_ao_fock(sp_eri_schwarz, n_s, coulomb_thr, exchange_thr)
+            end_timer = omp_get_wtime()
+            write(output%unit, *) 'Time to construct AO Fock: ', end_timer-start_timer 
 !
          endif
 !
@@ -430,7 +452,7 @@ contains
 !
 !     Initialize solver (make final deallocations, and other stuff)
 !
-      call solver%finalize()
+      call solver%finalize(wf)
 !
       if (.not. converged) then 
 !
@@ -440,31 +462,33 @@ contains
 !
       endif 
 !
-   end subroutine solve_dmm_hf_solver
+   end subroutine run_arh_hf_solver
 !
 !
-   subroutine finalize_dmm_hf_solver(solver)
+   subroutine finalize_arh_hf_solver(solver, wf)
 !!
 !! 	Finalize
 !! 	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(dmm_hf_solver) :: solver
+      class(arh_hf_solver) :: solver
 !
-   end subroutine finalize_dmm_hf_solver
+      class(hf) :: wf
+!
+   end subroutine finalize_arh_hf_solver
 !
 !
-   subroutine print_banner_dmm_hf_solver(solver)
+   subroutine print_banner_arh_hf_solver(solver)
 !!
 !!    Print banner
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(dmm_hf_solver) :: solver
+      class(arh_hf_solver) :: solver
 !
-      write(output%unit, '(/t3,a)') ':: Direct-integral density matrix minimization Hartree-Fock solver'
+      write(output%unit, '(/t3,a)') ':: Direct-integral augmented Roothan-Hall Hartree-Fock solver'
       write(output%unit, '(t3,a)')  ':: E. F. Kjønstad, S. D. Folkestad, 2018'
 !
       write(output%unit, '(/t3,a)') 'This solver uses a trust-region augmented Roothan-Hall method (TR-ARH)'
@@ -472,10 +496,10 @@ contains
       write(output%unit, '(t3,a/)') 'description of the algorithm [J. Chem. Phys. 129, 124106 (2008)].'
       flush(output%unit)
 !
-   end subroutine print_banner_dmm_hf_solver
+   end subroutine print_banner_arh_hf_solver
 !
 !
-   subroutine rotate_and_purify_dmm_hf_solver(solver, wf, X_pck, kappa, norm_X)
+   subroutine rotate_and_purify_arh_hf_solver(solver, wf, X_pck, kappa, norm_X)
 !!
 !!    Rotate and purify
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -491,7 +515,7 @@ contains
 !!
       implicit none 
 !
-      class(dmm_hf_solver), intent(in) :: solver
+      class(arh_hf_solver), intent(in) :: solver
 !
       class(hf) :: wf 
 !
@@ -535,10 +559,10 @@ contains
 !
       call mem%dealloc(X, wf%n_ao, wf%n_ao)
 !
-   end subroutine rotate_and_purify_dmm_hf_solver
+   end subroutine rotate_and_purify_arh_hf_solver
 !
 !
-   subroutine construct_and_pack_gradient_dmm_hf_solver(solver, wf, G_pck, Po, Pv)
+   subroutine construct_and_pack_gradient_arh_hf_solver(solver, wf, G_pck, Po, Pv)
 !!
 !!    Construct and pack Roothan-Hall gradient
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -547,7 +571,7 @@ contains
 !!
       implicit none 
 !
-      class(dmm_hf_solver), intent(in) :: solver 
+      class(arh_hf_solver), intent(in) :: solver 
 !
       class(hf), intent(in) :: wf
 !
@@ -565,10 +589,10 @@ contains
 !
       call mem%dealloc(G, wf%n_ao, wf%n_ao)
 !
-   end subroutine construct_and_pack_gradient_dmm_hf_solver
+   end subroutine construct_and_pack_gradient_arh_hf_solver
 !
 !
-   subroutine solve_aug_Newton_equation_dmm_hf_solver(solver, wf, X_pck, H, G, S, max_grad)
+   subroutine solve_aug_Newton_equation_arh_hf_solver(solver, wf, X_pck, H, G, S, max_grad)
 !!
 !!    Solve Newton equation
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -588,7 +612,7 @@ contains
 !!
       implicit none 
 !
-      class(dmm_hf_solver), intent(in) :: solver 
+      class(arh_hf_solver), intent(in) :: solver 
 !
       class(hf) :: wf
 !
@@ -698,26 +722,25 @@ contains
 !
       endif
 !
-   end subroutine solve_aug_Newton_equation_dmm_hf_solver
+   end subroutine solve_aug_Newton_equation_arh_hf_solver
 !
 !
-   subroutine construct_stationary_roothan_hall_condition_dmm_hf_solver(solver, wf, RHC, H, X, G, S, level_shift)
+   subroutine construct_stationary_roothan_hall_condition_arh_hf_solver(solver, wf, RHC, H, X, G, S, level_shift)
 !!
 !!    Construct stationary Roothan-Hall condition
 !!    Written by Eirik F. Kjønstad, 2018
 !!
 !!    Sets
 !!
-!!       RHC = H X S + S X H + G - level_shift S,
+!!       RHC = (H- mu S) X S + S X (H- mu S) + G, 
 !!
-!!    which equals zero on convergence of the Roothan-Hall Newton equations.
-!!    Note that if similarity transformed H, S, and G are used (Y <- V-1 Y V-T),
-!!    then the iterated solution X' = V^T X V, from which the actual X is easily
-!!    extractable.
+!!    where mu is the level shift. Note that if similarity transformed H, S, and G 
+!!    are used (Y <- V-1 Y V-T), then the iterated solution X' = V^T X V, from which 
+!!    the actual X is easilyextractable.
 !!
       implicit none
 !
-      class(dmm_hf_solver), intent(in) :: solver 
+      class(arh_hf_solver), intent(in) :: solver 
 !
       class(hf), intent(in) :: wf
 !
@@ -797,21 +820,23 @@ contains
 !
       RHC = RHC + G
 !
-   end subroutine construct_stationary_roothan_hall_condition_dmm_hf_solver
+   end subroutine construct_stationary_roothan_hall_condition_arh_hf_solver
 !
 !
-   subroutine add_augmented_Roothan_Hall_contribution_dmm_hf_solver(solver, wf, RHC, X, G)
+   subroutine add_augmented_Roothan_Hall_contribution_arh_hf_solver(solver, wf, RHC, X, G)
 !!
 !!    Add augmented Roothan-Hall contribution 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
 !!
-!!    RHC = RHC + sum_ij (G_i - G_n) T_ij^-1 E_j,
+!!    Performs
+!!
+!!       RHC = RHC + sum_ij (G_i - G_n) T_ij^-1 E_j,
 !!
 !!    where T_ij is the trace matrix (of dimension n-1 x n-1) and E_j = Tr D_jn [D_n, X]
 !!
       implicit none
 !
-      class(dmm_hf_solver) :: solver 
+      class(arh_hf_solver) :: solver 
 !
       class(hf) :: wf 
 !
@@ -891,10 +916,10 @@ contains
       call mem%dealloc(E, solver%current_index - 1, 1)
       call mem%dealloc(inv_trace_matrix, solver%current_index - 1, solver%current_index - 1)
 !
-   end subroutine add_augmented_Roothan_Hall_contribution_dmm_hf_solver
+   end subroutine add_augmented_Roothan_Hall_contribution_arh_hf_solver
 !
 !
-   subroutine solve_level_shifted_aug_Newton_equation_dmm_hf_solver(solver, wf, X_pck, H, G, S, max_grad, norm_X, level_shift)
+   subroutine solve_level_shifted_aug_Newton_equation_arh_hf_solver(solver, wf, X_pck, H, G, S, max_grad, norm_X, level_shift)
 !!
 !!    Solve level shifted Newton equation
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -920,7 +945,7 @@ contains
 !!
       implicit none 
 !
-      class(dmm_hf_solver), intent(in) :: solver 
+      class(arh_hf_solver), intent(in) :: solver 
 !
       class(hf) :: wf
 !
@@ -1091,185 +1116,10 @@ contains
 !
       endif
 !
-   end subroutine solve_level_shifted_aug_Newton_equation_dmm_hf_solver
+   end subroutine solve_level_shifted_aug_Newton_equation_arh_hf_solver
 !
 !
-   subroutine decompose_ao_overlap_dmm_hf_solver(solver, wf)
-!!
-!!    Decompose AO overlap
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(dmm_hf_solver) :: solver
-!
-      class(hf) :: wf
-!
-      integer(kind=4), dimension(:, :), allocatable :: used_diag
-!
-      real(dp), dimension(:, :), allocatable :: L
-!
-      integer(i15) :: i, j
-!
-      allocate(used_diag(wf%n_ao, 1))
-      used_diag = 0
-!
-      call mem%alloc(L, wf%n_ao, wf%n_ao) ! Full Cholesky vector
-      L = zero
-!
-      call full_cholesky_decomposition_system(wf%ao_overlap, L, wf%n_ao, wf%n_so, &
-                                          solver%linear_dependence_threshold, used_diag)
-!
-      call mem%alloc(solver%cholesky_ao_overlap, wf%n_so, wf%n_so) 
-      solver%cholesky_ao_overlap(:,:) = L(1:wf%n_so, 1:wf%n_so)
-!
-      call mem%dealloc(L, wf%n_ao, wf%n_ao)
-!
-!     Make permutation matrix P
-!
-      call mem%alloc(solver%permutation_matrix, wf%n_ao, wf%n_so)
-!
-      solver%permutation_matrix = zero
-!
-      do j = 1, wf%n_so
-!
-         solver%permutation_matrix(used_diag(j, 1), j) = one
-!
-      enddo
-!
-      deallocate(used_diag)
-!
-   end subroutine decompose_ao_overlap_dmm_hf_solver
-!
-!
-   subroutine do_roothan_hall_dmm_hf_solver(solver, wf)
-!!
-!!    Do Roothan Hall
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-!!    Solves P^T F P (P^T C) = P^T S P P^T C e = L L^T (P^T C) e
-!!
-      implicit none
-!
-      class(dmm_hf_solver) :: solver 
-!
-      class(hf) :: wf
-!
-      real(dp), dimension(:,:), allocatable :: work
-      real(dp), dimension(:,:), allocatable :: metric 
-      real(dp), dimension(:,:), allocatable :: ao_fock 
-      real(dp), dimension(:,:), allocatable :: orbital_energies 
-      real(dp), dimension(:,:), allocatable :: FP 
-!
-      real(dp) :: ddot, norm
-!
-      integer(i15) :: info = 0
-!
-      call mem%alloc(metric, wf%n_so, wf%n_so)
-!
-      call dgemm('N','T',                     &
-                  wf%n_so,                    &
-                  wf%n_so,                    &
-                  wf%n_so,                    &
-                  one,                        &
-                  solver%cholesky_ao_overlap, & 
-                  wf%n_so,                    &
-                  solver%cholesky_ao_overlap, &
-                  wf%n_so,                    &
-                  zero,                       &
-                  metric,                     & ! metric = L L^T
-                  wf%n_so)
-!
-!     Allocate reduced space matrices 
-!
-      call mem%alloc(ao_fock, wf%n_so, wf%n_so)
-      call mem%alloc(orbital_energies, wf%n_so, 1)
-!
-!     Construct reduced space Fock matrix, F' = P^T F P,
-!     which is to be diagonalized over the metric L L^T 
-!
-      call mem%alloc(FP, wf%n_ao, wf%n_so)
-!
-      call dgemm('N','N',                    &
-                  wf%n_ao,                   &
-                  wf%n_so,                   &
-                  wf%n_ao,                   &
-                  one,                       &
-                  wf%ao_fock,                &
-                  wf%n_ao,                   &
-                  solver%permutation_matrix, &
-                  wf%n_ao,                   &
-                  zero,                      &  
-                  FP,                        &
-                  wf%n_ao)
-!
-      call dgemm('T','N',                    &
-                  wf%n_so,                   &
-                  wf%n_so,                   &
-                  wf%n_ao,                   &
-                  one,                       &
-                  solver%permutation_matrix, &
-                  wf%n_ao,                   &
-                  FP,                        &
-                  wf%n_ao,                   &
-                  zero,                      &
-                  ao_fock,                   & ! F' = P^T F P
-                  wf%n_so)   
-!
-      call mem%dealloc(FP, wf%n_so, wf%n_ao)   
-!
-!     Solve F'C' = L L^T C' e
-!
-      info = 0
-!
-      call mem%alloc(work, 4*wf%n_so, 1)
-      work = zero
-!
-      call dsygv(1, 'V', 'L',       &
-                  wf%n_so,          &
-                  ao_fock,          & ! ao_fock on entry, orbital coefficients on exit
-                  wf%n_so,          &
-                  metric,           &
-                  wf%n_so,          &
-                  orbital_energies, &
-                  work,             &
-                  4*(wf%n_so),      &
-                  info)
-!
-      call mem%dealloc(metric, wf%n_so, wf%n_so)
-      call mem%dealloc(work, 4*wf%n_so, 1)
-      call mem%dealloc(orbital_energies, wf%n_so, 1)
-!
-      if (info .ne. 0) then 
-!
-         write(output%unit, '(/t3,a/)') 'Error: could not solve Roothan-Hall equations.'
-         stop
-!
-      endif
-!
-!     Transform back the solutions to original basis, C = P (P^T C) = P C'
-!
-      wf%orbital_coefficients = zero
-!
-      call dgemm('N','N',                    &
-                  wf%n_ao,                   &
-                  wf%n_so,                   &
-                  wf%n_so,                   &
-                  one,                       &
-                  solver%permutation_matrix, &
-                  wf%n_ao,                   &
-                  ao_fock,                   & ! orbital coefficients 
-                  wf%n_so,                   &
-                  zero,                      &
-                  wf%orbital_coefficients,   &
-                  wf%n_ao)
-!
-      call mem%dealloc(ao_fock, wf%n_so, wf%n_so)
-!
-   end subroutine do_roothan_hall_dmm_hf_solver
-!
-!
-   subroutine construct_trace_matrix_dmm_hf_solver(solver, wf, n)
+   subroutine construct_trace_matrix_arh_hf_solver(solver, wf, n)
 !!
 !!    Construct trace matrix 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -1282,7 +1132,7 @@ contains
 !!
       implicit none 
 !
-      class(dmm_hf_solver) :: solver 
+      class(arh_hf_solver) :: solver 
 !
       class(hf) :: wf 
 !
@@ -1353,7 +1203,7 @@ contains
       call mem%dealloc(D_nm1_n, wf%n_ao, wf%n_ao)
       call mem%dealloc(D_j_n, wf%n_ao, wf%n_ao)
 !
-   end subroutine construct_trace_matrix_dmm_hf_solver
+   end subroutine construct_trace_matrix_arh_hf_solver
 !
 !
-end module dmm_hf_solver_class
+end module arh_hf_solver_class

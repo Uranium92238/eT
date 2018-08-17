@@ -635,7 +635,7 @@ contains
    end subroutine construct_ao_fock_SAD_hf
 !
 !
-   subroutine construct_ao_fock_hf(wf, sp_eri_schwarz, n_s)
+   subroutine construct_ao_fock_hf(wf, sp_eri_schwarz, n_s, coulomb, exchange)
 !!
 !!    Construct AO Fock matrix
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -654,6 +654,10 @@ contains
       integer(i15) :: n_s
 !
       real(dp), dimension(n_s, n_s) :: sp_eri_schwarz
+!
+      real(dp), optional :: coulomb, exchange ! Non-standard thresholds
+!
+      real(dp) :: coulomb_thr, exchange_thr ! Actual thresholds 
 !
       real(dp), dimension(:,:), allocatable :: ao_fock_packed
       real(dp), dimension(:,:), allocatable :: X_wz, h_wx, h_wx_square
@@ -676,6 +680,26 @@ contains
       real(dp) :: max, max_D_schwarz, max_eri_schwarz
 !
       real(dp), dimension(:,:), allocatable :: g, D, sp_density_schwarz
+!
+      if (present(coulomb)) then 
+!
+         coulomb_thr = coulomb 
+!
+      else
+!
+         coulomb_thr = 1.0D-10 
+!
+      endif 
+!
+      if (present(exchange)) then 
+!
+         exchange_thr = exchange 
+!
+      else
+!
+         exchange_thr = 1.0D-8
+!
+      endif 
 !
       call mem%alloc(sp_density_schwarz, n_s, n_s)
 !
@@ -722,7 +746,7 @@ contains
 !
          do s2 = 1, s1
 !
-            if (sp_eri_schwarz(s1, s2)*(max_D_schwarz)*(max_eri_schwarz) .lt. 1.0d-10) continue
+            if (sp_eri_schwarz(s1, s2)*(max_D_schwarz)*(max_eri_schwarz) .lt. coulomb_thr) continue
 !
             B_interval = wf%system%get_shell_limits(s2)
 !
@@ -754,14 +778,14 @@ contains
 !
                   temp = sp_eri_schwarz(s1, s2)*sp_eri_schwarz(s3, s4)
 !
-                  if (temp*(max_D_schwarz) .lt. 1.0d-10) continue
+                  if (temp*(max_D_schwarz) .lt. coulomb_thr) continue
 !
-                  if (temp*sp_density_schwarz(s3,s4) .lt. 1.0D-10 .and. & ! F1
-                      temp*sp_density_schwarz(s1,s2) .lt. 1.0D-10 .and. & ! F2
-                      temp*sp_density_schwarz(s3,s2) .lt. 1.0D-8  .and. & ! F3
-                      temp*sp_density_schwarz(s3,s1) .lt. 1.0D-8  .and. & ! F4
-                      temp*sp_density_schwarz(s4,s2) .lt. 1.0D-8  .and. & ! F5
-                      temp*sp_density_schwarz(s1,s4) .lt. 1.0D-8) continue ! F6
+                  if (temp*sp_density_schwarz(s3,s4) .lt. coulomb_thr   .and. & ! F1
+                      temp*sp_density_schwarz(s1,s2) .lt. coulomb_thr   .and. & ! F2
+                      temp*sp_density_schwarz(s3,s2) .lt. exchange_thr  .and. & ! F3
+                      temp*sp_density_schwarz(s3,s1) .lt. exchange_thr  .and. & ! F4
+                      temp*sp_density_schwarz(s4,s2) .lt. exchange_thr  .and. & ! F5
+                      temp*sp_density_schwarz(s1,s4) .lt. exchange_thr) continue ! F6
 !
                   if (s3 .eq. s4) then
 !

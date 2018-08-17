@@ -13,15 +13,15 @@ program eT_program
    use hf_class
    use mlhf_class
 !
-   use hf_solver_class
-   use dmm_hf_solver_class
+   use scf_diis_solver_class
+   use arh_hf_solver_class
 !
    use eri_cd_solver_class
 !
    implicit none
 !
-   type(hf_solver)     :: roothan_hall_hf_solver
-   type(dmm_hf_solver) :: density_minimization_hf_solver
+   type(scf_diis_solver) :: roothan_hall_hf_solver
+   type(arh_hf_solver)   :: density_minimization_hf_solver
 !
    type(eri_cd_solver) :: chol_solver
 !
@@ -49,19 +49,22 @@ program eT_program
 !  Initialize wavefunction
 !
    call wf%initialize()
-   !call wf%eri_decomp_test_w_active_dens()
+
+  ! call wf%eri_decomp_test_w_active_dens()
 !
   !  call chol_solver%initialize(wf%system)
   !  call chol_solver%solve(wf%system)
   !  call chol_solver%finalize()
 !
-!  Ask the Hartree-Fock (HF) engine to find the HF solution
+!  Ask the Hartree-Fock (HF) solver to find the HF solution
 !
    !call engine%solve(wf)
     !call db_engine%solve(wf)
 !
   ! call roothan_hall_solver%run(wf)
    call density_minimization_hf_solver%solve(wf)
+
+  !call roothan_hall_hf_solver%run(wf)
 !
 !  Finalize the wavefunction
 !
