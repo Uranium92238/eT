@@ -183,8 +183,8 @@ contains
       start_timer = omp_get_wtime()
       call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s, coulomb_thr, exchange_thr) 
       end_timer = omp_get_wtime()
-     ! write(output%unit, *) 'Time to construct AO Fock from SAD: ', end_timer-start_timer
-     ! flush(output%unit)
+      write(output%unit, *) 'Time to construct AO Fock from SAD: ', end_timer-start_timer
+      flush(output%unit)
       prev_energy = wf%hf_energy
 !
 !     Construct AO overlap matrix, Cholesky decompose it,
@@ -214,7 +214,7 @@ contains
       start_timer = omp_get_wtime()
       call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s)  
       end_timer = omp_get_wtime()
-     ! write(output%unit, *) 'Time to construct AO Fock: ', end_timer-start_timer 
+      write(output%unit, *) 'Time to construct AO Fock: ', end_timer-start_timer 
 !
 !     :: Construct precondition matrices, used to transform H and G prior to solving the Newton equation 
 !
@@ -426,7 +426,7 @@ contains
             start_timer = omp_get_wtime()
             call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
             end_timer = omp_get_wtime()
-            !write(output%unit, *) 'Time to construct AO Fock: ', end_timer-start_timer 
+            write(output%unit, *) 'Time to construct AO Fock: ', end_timer-start_timer 
 !
          endif
 !
