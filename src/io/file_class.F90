@@ -176,7 +176,7 @@ contains
 !
       character(len=*) :: error_specs
 !
-      write(out_file%unit, '(a)') 'Error: ' // error_specs
+      write(out_file%unit, '(a)') 'Error: ' // trim(error_specs)
       stop
 !
    end subroutine error_msg_file
