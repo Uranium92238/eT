@@ -39,8 +39,8 @@ module arh_hf_solver_class
       integer(i15) :: history = 50
       integer(i15) :: current_index
 !
-      real(dp) :: relative_coulomb_thr  = 1.0D-7
-      real(dp) :: relative_exchange_thr = 1.0D-5
+      real(dp) :: relative_coulomb_thr  = 1.0D-8
+      real(dp) :: relative_exchange_thr = 1.0D-6
 !
    contains
 !
