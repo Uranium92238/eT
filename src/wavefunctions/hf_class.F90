@@ -37,6 +37,7 @@ module hf_class
 !
       procedure :: construct_ao_density => construct_ao_density_hf
       procedure :: construct_ao_fock    => construct_ao_fock_hf
+      procedure :: construct_ao_fock_densdiff    => construct_ao_fock_densdiff_hf
 !
       procedure :: construct_and_add => construct_and_add_hf
 !
@@ -778,17 +779,6 @@ contains
 !
       endif 
 !
-!     Allocate and set shell limits vector 
-!
-   !   allocate(shell_limits(n_s))
-   !   do s1 = 1, n_s 
-!  
-   !      shell_limits(s1) = wf%system%shell_limits(s1)
-!
-    !  enddo
-!
-      call mem%alloc(sp_density_schwarz, n_s, n_s)
-!
 !     Compute number of significant shell pairs (pre-screening)
 !
       n_sig_sp = 0
@@ -808,6 +798,8 @@ contains
 !
       write(output%unit, *) 'Number of shell pairs:', n_s*(n_s + 1)/2
       write(output%unit, *) 'Number of significant shell pairs:', n_sig_sp
+!
+      call mem%alloc(sp_density_schwarz, n_s, n_s)
 !
 !$omp parallel do private(s1, s2, A_interval, B_interval, D, maximum) schedule(dynamic)
       do s1 = 1, n_s
@@ -982,6 +974,184 @@ contains
       call mem%dealloc(h_wx, wf%n_ao*(wf%n_ao+1)/2, 1)
 !
    end subroutine construct_ao_fock_hf
+!
+!
+  subroutine construct_ao_fock_densdiff_hf(wf, sp_eri_schwarz, sp_eri_schwarz_list, &
+                                       n_s, prev_ao_density, coulomb, exchange)
+!!
+!!    Construct AO Fock matrix
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Calculates
+!!
+!!       F_αβ = h_αβ + sum_γδ g_αβγδ D_γδ - 1/2 * sum_γδ g_αδγβ D_γδ,
+!!
+!!    where D is the AO density. This routine is integral direct, and
+!!    it calculates the Hartree-Fock energy by default.
+!!
+!!    Try this today: sort the integral screening vector (s1s2|s1s2) 
+!!    according to size, together with an index list. Ask only to sort
+!!    the elements above the threshold and ignore the rest! Then loop 
+!!    over these s1 and s2. We should make the vector packed first, then 
+!!    calculate the appropriate packed index in the loop s1 >= s2 when 
+!!    actually constructing the Fock matrix.
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      integer(i15) :: n_s
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao) :: prev_ao_density
+!
+      real(dp), dimension(n_s*(n_s + 1)/2, 1)     :: sp_eri_schwarz
+      integer(i15), dimension(n_s*(n_s + 1)/2, 3) :: sp_eri_schwarz_list ! list(s1s2, 1) = s1, list(s1s2, 2) = s2, list(s1s2, 3) = s1s2_sorted
+!
+      real(dp), optional :: coulomb, exchange ! Non-standard thresholds
+!
+      real(dp) :: coulomb_thr, exchange_thr ! Actual thresholds 
+!
+      real(dp), dimension(:,:), allocatable :: ao_fock_packed
+      real(dp), dimension(:,:), allocatable :: X_wz, h_wx, h_wx_square
+      integer(i15) :: w, x, y, z, wx, yz, w_red, x_red, y_red, z_red
+!
+      integer(i15) :: n_threads, omp_get_max_threads, thread_offset, thread, omp_get_thread_num
+      real(dp), dimension(:,:), allocatable :: F 
+!
+      integer(i15) :: s1, s2, s3, s4, s4_max, s1s2, s3s4, s3s4_sorted
+!
+      type(interval) :: A_interval
+      type(interval) :: B_interval
+      type(interval) :: C_interval
+      type(interval) :: D_interval
+!
+      logical :: skip
+!
+      integer(i15) :: n_sig_sp
+!
+      real(dp) :: deg_12, deg_34, deg_12_34, deg, ddot, norm
+      real(dp) :: temp, temp1, temp2, temp3, temp4, temp5, temp6
+      real(dp) :: maximum, max_D_schwarz, max_eri_schwarz
+!
+      real(dp), dimension(:,:), allocatable :: g, D, sp_density_schwarz
+!
+      type(interval), dimension(:), allocatable :: shell_limits 
+!
+!     Set thresholds to ignore Coulomb and exchange terms 
+!
+      if (present(coulomb)) then 
+!
+         coulomb_thr = coulomb 
+!
+      else
+!
+         coulomb_thr = 1.0D-10 
+!
+      endif 
+!
+      if (present(exchange)) then 
+!
+         exchange_thr = exchange 
+!
+      else
+!
+         exchange_thr = 1.0D-8
+!
+      endif 
+!
+      wf%ao_density = wf%ao_density - prev_ao_density ! Temporary 
+!
+      call mem%alloc(sp_density_schwarz, n_s, n_s)
+!
+!$omp parallel do private(s1, s2, A_interval, B_interval, D, maximum) schedule(dynamic)
+      do s1 = 1, n_s
+         do s2 = 1, s1
+!
+            A_interval = wf%system%shell_limits(s1)
+            B_interval = wf%system%shell_limits(s2)
+!
+            call mem%alloc(D, (A_interval%size), (B_interval%size))
+!
+            D = wf%ao_density(A_interval%first : A_interval%last, B_interval%first : B_interval%last)
+!
+            maximum = get_abs_max(D, (A_interval%size)*(B_interval%size))
+!
+            call mem%dealloc(D, (A_interval%size), (B_interval%size))
+!
+            sp_density_schwarz(s1, s2) = maximum
+            sp_density_schwarz(s2, s1) = maximum
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+!     Calculate maximum of all the shell pair maximums prescreening
+!
+      max_D_schwarz     = get_abs_max(sp_density_schwarz, n_s**2)
+      max_eri_schwarz   = get_abs_max(sp_eri_schwarz, n_s*(n_s + 1)/2)
+!
+!     Compute number of significant shell pairs (pre-screening)
+!
+      n_sig_sp = 0
+      do s1s2 = 1, n_s*(n_s + 1)/2
+!
+         if (sp_eri_schwarz(s1s2, 1)**2*max_D_schwarz .lt. coulomb_thr) then
+!
+            exit
+!
+         else
+!
+            n_sig_sp = n_sig_sp + 1
+!
+         endif
+!
+      enddo
+!
+      write(output%unit, *) 'Max density difference:', max_D_schwarz
+      write(output%unit, *) 'Number of shell pairs:', n_s*(n_s + 1)/2
+      write(output%unit, *) 'Number of significant shell pairs:', n_sig_sp
+!
+      n_threads = omp_get_max_threads()
+      call mem%alloc(F, wf%n_ao, wf%n_ao*n_threads) ! [F(thr1) F(thr2) ...]
+      F = zero 
+!
+      call wf%construct_and_add(F, n_threads, max_D_schwarz, max_eri_schwarz, & 
+                                 sp_density_schwarz, sp_eri_schwarz, sp_eri_schwarz_list, &
+                                 n_s, n_sig_sp, coulomb_thr, exchange_thr, wf%system%shell_limits)
+!
+      write(output%unit, *) 'Number of threads:', n_threads
+!
+      wf%ao_density = wf%ao_density + prev_ao_density ! restore
+!
+      call mem%dealloc(sp_density_schwarz, n_s, n_s)
+!
+!     Put the accumulated Fock matrices from each thread into the Fock matrix 
+!
+   !   wf%ao_fock = zero
+!
+      do thread = 1, n_threads
+!
+         call daxpy(wf%n_ao**2, one, F(1, (thread-1)*wf%n_ao + 1), 1, wf%ao_fock, 1)
+!
+      enddo
+!
+      call mem%dealloc(F, wf%n_ao, wf%n_ao*n_threads) ! [F(thr1) F(thr2) ...]
+!
+      call symmetric_sum(wf%ao_fock, wf%n_ao)
+      wf%ao_fock = wf%ao_fock*half
+!
+      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
+      call get_ao_h_xy(h_wx)
+!
+      wf%ao_fock = wf%ao_fock - h_wx
+      call wf%calculate_hf_energy(wf%ao_fock, h_wx)
+!
+      wf%ao_fock = wf%ao_fock + h_wx
+!
+      call mem%dealloc(h_wx, wf%n_ao*(wf%n_ao+1)/2, 1)
+!
+!
+   end subroutine construct_ao_fock_densdiff_hf
 !
 !
    subroutine construct_and_add_hf(wf, F, n_threads, max_D_schwarz, max_eri_schwarz, & 

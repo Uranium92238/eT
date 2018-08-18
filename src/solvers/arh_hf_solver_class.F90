@@ -39,8 +39,8 @@ module arh_hf_solver_class
       integer(i15) :: history = 20
       integer(i15) :: current_index
 !
-      real(dp) :: relative_coulomb_thr  = 1.0D-9
-      real(dp) :: relative_exchange_thr = 1.0D-7
+      real(dp) :: relative_coulomb_thr  = 1.0D-10
+      real(dp) :: relative_exchange_thr = 1.0D-8
 !
    contains
 !
@@ -144,6 +144,7 @@ contains
       integer(i15) :: n_s, i 
 !
       real(dp) :: trace_of_ao_density
+      real(dp), dimension(:,:), allocatable :: prev_ao_density
 !
       real(dp), dimension(:,:), allocatable     :: sp_eri_schwarz
       integer(i15), dimension(:,:), allocatable :: sp_eri_schwarz_list
@@ -264,6 +265,8 @@ contains
 !
       call mem%alloc(G, wf%n_ao, wf%n_ao)
       call mem%alloc(H, wf%n_ao, wf%n_ao)
+!
+      call mem%alloc(prev_ao_density, wf%n_ao, wf%n_ao)
 !
       do while (.not. converged .and. iteration .le. solver%max_iterations)
 !
@@ -403,6 +406,8 @@ contains
 !
 !           :: Rotate the AO density and purify it           
 !
+            prev_ao_density = wf%ao_density
+!
             call solver%rotate_and_purify(wf, X_pck, one, norm_X)
             call mem%dealloc(X_pck, packed_size(wf%n_ao-1), 1)
 !
@@ -415,7 +420,9 @@ contains
 !
             prev_energy = wf%hf_energy
             start_timer = omp_get_wtime()
-            call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
+          !  call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
+            call wf%construct_ao_fock_densdiff(sp_eri_schwarz, sp_eri_schwarz_list, &
+                                       n_s, prev_ao_density, coulomb_thr, exchange_thr)
             end_timer = omp_get_wtime()
             write(output%unit, *) 'Time to construct AO Fock: ', end_timer-start_timer 
 !
