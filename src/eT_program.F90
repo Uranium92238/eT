@@ -66,7 +66,7 @@ program eT_program
 !
     if (n_methods == 0) then
 !
-     if (requested_task('cholesky')) then
+     if (requested_task('cholesky eri')) then
 !
         allocate(system)
         call system%initialize()

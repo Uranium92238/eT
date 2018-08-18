@@ -103,13 +103,13 @@ contains
       integer(i15):: i, j, k, n_active_aos, ao_offset, active_ao_counter, n_vectors_occ, n_vectors_virt
       integer(i15):: a, x
 !
-      real(dp) :: max, e_construct_fock, s_construct_fock
+      real(dp) :: max, e_construct_fock, s_construct_fock, omp_get_wtime
 !
       integer(i15), dimension(:,:), allocatable :: active_aos
 !
       integer(i15) :: ao, n_active_occ, n_active_vir, n_s
 !
-      real(dp), dimension(:,:), allocatable :: density_diagonal, eri_deg, sp_eri_schwarz
+      real(dp), dimension(:,:), allocatable :: density_diagonal, eri_deg
 !
       type(eri_cd_solver)  :: chol_solver
 !
@@ -132,22 +132,18 @@ contains
 !
       n_s = wf%system%get_n_shells()
 !
-      call mem%alloc(sp_eri_schwarz, n_s, n_s)
-    !  call wf%construct_sp_eri_schwarz(sp_eri_schwarz, n_s)
 !
 !     Construct initial AO Fock from the SOAD density
 !
       call wf%initialize_ao_fock()
 !
-     ! s_construct_fock = omp_get_wtime()
+      s_construct_fock = omp_get_wtime()
 !
-      call wf%construct_ao_fock_SAD(sp_eri_schwarz, n_s)
+      call wf%construct_ao_fock_SAD()
 !
-     ! e_construct_fock = omp_get_wtime()
-     ! write(output%unit, '(/a49, f11.2)')'Wall time to construct AO fock from SAD density: ', &
-     !                             e_construct_fock - s_construct_fock
-!
-      call mem%dealloc(sp_eri_schwarz, n_s, n_s)
+      e_construct_fock = omp_get_wtime()
+      write(output%unit, '(/a49, f11.2)')'Wall time to construct AO fock from SAD density: ', &
+                                  e_construct_fock - s_construct_fock
 !
 !     Construct AO overlap matrix, Cholesky decompose it,
 !     followed by preconditioning (making it the identity matrix
