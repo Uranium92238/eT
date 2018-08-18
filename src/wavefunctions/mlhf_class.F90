@@ -222,13 +222,13 @@ contains
       call dscal(wf%n_ao**2, half, wf%ao_density, 1)
 !
       call cholesky_decomposition_limited_diagonal(wf%ao_density, cholesky_vectors_occ, wf%n_ao, &
-                                                     n_vectors_occ, 1.0d-9, n_active_aos, active_aos, n_active_occ)
+                                                     n_vectors_occ, 1.0d-2, n_active_aos, active_aos, n_active_occ)
 !
       call mem%alloc(cholesky_vectors_virt, wf%n_ao, n_active_aos)
       cholesky_vectors_virt = zero
 !
       call cholesky_decomposition_limited_diagonal(ao_density_v, cholesky_vectors_virt, wf%n_ao, &
-                                                     n_vectors_virt, 1.0d-9, n_active_aos, active_aos, n_active_vir)
+                                                     n_vectors_virt, 1.0d-2, n_active_aos, active_aos, n_active_vir)
 !
       call mem%dealloc_int(active_aos, n_active_aos, 1)
 !
