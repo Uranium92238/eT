@@ -902,73 +902,95 @@ contains
 !
          if (sp_eri_schwarz(s1s2, 1)*(max_D_schwarz)*(max_eri_schwarz) .lt. coulomb_thr) continue
 !
-         if (s1 .eq. s2) then
+!        s1 => s2, so s2/s1 = 0 when unequal, 1 when equal 
 !
-            deg_12 = one
+!        deg_12 = real(2-s1/s2)
 !
-         else
+         deg_12 = real(2-s2/s1)
+       !  deg_12 = min(ceiling(real(s1)/real(s2)), 2)
 !
-            deg_12 = two
+      !   if (s1 .eq. s2) then
 !
-         endif
+        !    deg_12 = one
+!
+        ! else
+!
+        !    deg_12 = two
+!
+        ! endif
 !
          do s3 = 1, s1
 !
             C_interval = wf%system%shell_limits(s3)
 !
-            if (s3 .eq. s1) then
+!           s3 <= s1, so s3/s1 = 0 if unequal, 1 if not 
 !
-               s4_max = s2
+!           s4_max = (s3/s1)*s3 + (1-s3/s1)*s2 
 !
-            else
+            s4_max = (s3/s1)*s2 + (1-s3/s1)*s3
 !
-               s4_max = s3
+         !   if (s3 .eq. s1) then
 !
-            endif
+          !     s4_max = s2
+!
+          !  else
+!
+          !     s4_max = s3
+!
+          !  endif
 !
             do s4 = 1, s4_max
 !
-               s3s4 = (max(s3,s4)*(max(s3,s4)-3)/2) + s3 + s4 
-               s3s4_sorted = sp_eri_schwarz_list(s3s4, 3)
-               temp = sp_eri_schwarz(s1s2, 1)*sp_eri_schwarz(s3s4_sorted, 1)
+             !  s3s4 = (max(s3,s4)*(max(s3,s4)-3)/2) + s3 + s4 
+             !  s3s4_sorted = sp_eri_schwarz_list(s3s4, 3)
+             !  temp = sp_eri_schwarz(s1s2, 1)*sp_eri_schwarz(s3s4_sorted, 1)
               ! temp = sp_eri_schwarz(s1s2, 1)*max_eri_schwarz ! should be refined 
 !
-               if (temp*(max_D_schwarz) .lt. coulomb_thr) continue
+            !   if (temp*(max_D_schwarz) .lt. coulomb_thr) continue
 !
-               if (temp*sp_density_schwarz(s3,s4) .lt. coulomb_thr   .and. & ! F1
-                   temp*sp_density_schwarz(s1,s2) .lt. coulomb_thr   .and. & ! F2
-                   temp*sp_density_schwarz(s3,s2) .lt. exchange_thr  .and. & ! F3
-                   temp*sp_density_schwarz(s3,s1) .lt. exchange_thr  .and. & ! F4
-                   temp*sp_density_schwarz(s4,s2) .lt. exchange_thr  .and. & ! F5
-                   temp*sp_density_schwarz(s1,s4) .lt. exchange_thr) continue ! F6
+            !   if (temp*sp_density_schwarz(s3,s4) .lt. coulomb_thr   .and. & ! F1
+             !      temp*sp_density_schwarz(s1,s2) .lt. coulomb_thr   .and. & ! F2
+             !      temp*sp_density_schwarz(s3,s2) .lt. exchange_thr  .and. & ! F3
+             !      temp*sp_density_schwarz(s3,s1) .lt. exchange_thr  .and. & ! F4
+             !      temp*sp_density_schwarz(s4,s2) .lt. exchange_thr  .and. & ! F5
+             !      temp*sp_density_schwarz(s1,s4) .lt. exchange_thr) continue ! F6
 !
-               if (s3 .eq. s4) then
+                  deg_34 = real(2-s4/s3)
+! !
+!                if (s3 .eq. s4) then
+! !
+!                   deg_34 = one
+! !
+!                else
+! !
+!                   deg_34 = two
+! !
+!                endif
 !
-                  deg_34 = one
+            !   deg_12_34 = two ! s3 <= s1 restricted !
+            !   if (s3 .eq. s1) then ! s4 <= s2  
+
+                  ! s3/s1 ! 0 if unequal, 1 if equal 
+                  ! 1 - s3/s1 + ceiling(s2/s4) 
 !
-               else
+                  deg_12_34 = min(1-s3/s1+ceiling(real(s2)/real(s4)), 2)
+
 !
-                  deg_34 = two
+!                   if (s2 .eq. s4) then
+! !
+!                      deg_12_34 = one
+! !
+!                   else
+! !
+!                      deg_12_34 = two
+! !
+!                   endif
 !
-               endif
+             !  else ! s4 <= s3 
 !
-               if (s3 .eq. s1) then
+              !    deg_12_34 = two
 !
-                  if (s2 .eq. s4) then
-!
-                     deg_12_34 = one
-!
-                  else
-!
-                     deg_12_34 = two
-!
-                  endif
-!
-               else
-!
-                  deg_12_34 = two
-!
-               endif
+            !   endif
 
                deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
 !
@@ -981,16 +1003,17 @@ contains
 !
 !              Add Fock matrix contributions
 !
-               do y = C_interval%first, C_interval%last
-                  do z = D_interval%first, D_interval%last
+
+               do x = B_interval%first, B_interval%last
+                  do w = A_interval%first, A_interval%last
+                     do z = D_interval%first, D_interval%last
+                        do y = C_interval%first, C_interval%last
 !
-                     y_red = y - C_interval%first + 1
-                     z_red = z - D_interval%first + 1
 !
-                     yz = (C_interval%size)*(z_red - 1) + y_red
+                           y_red = y - C_interval%first + 1
+                           z_red = z - D_interval%first + 1
 !
-                     do w = A_interval%first, A_interval%last
-                        do x = B_interval%first, B_interval%last
+                           yz = (C_interval%size)*(z_red - 1) + y_red
 !
                            w_red = w - A_interval%first + 1
                            x_red = x - B_interval%first + 1
