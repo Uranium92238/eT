@@ -751,7 +751,6 @@ contains
       enddo
 !
    end function shell_to_atom_molecular_system
-
 !
 !
 end module molecular_system_class

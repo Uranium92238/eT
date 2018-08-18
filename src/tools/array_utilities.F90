@@ -651,6 +651,8 @@ contains
 !
       enddo
 !
+      cholesky_vectors = zero
+!
       call mem%alloc_int(used_diag, dim, 1)
       used_diag = 0
 !
@@ -690,6 +692,7 @@ contains
             n_vectors = n_vectors - 1
 !
             call mem%dealloc_int(used_diag, dim, 1)
+            call mem%dealloc(diagonal, dim, 1)
 !
 !           On exit, cholesky vectors subtracted from matrix
 !
@@ -759,13 +762,14 @@ contains
       enddo
 !
       call mem%dealloc_int(used_diag, dim, 1)
+      call mem%dealloc(diagonal, dim, 1)
 !
 !     On exit, cholesky vectors subtracted from matrix
 !
       call dgemm('N', 'T',          &
                   dim,              &
                   dim,              &
-                  dim,              &
+                  n_vectors,        &
                   -one,             &
                   cholesky_vectors, &
                   dim,              &

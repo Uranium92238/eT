@@ -690,7 +690,7 @@ contains
 !
       wf%ao_fock = wf%ao_fock + h_wx
 !
-      call mem%dealloc(h_wx, wf%n_ao*(wf%n_ao+1)/2, 1)
+      call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
 !
    end subroutine construct_ao_fock_SAD_hf
 !

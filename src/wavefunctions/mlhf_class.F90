@@ -144,6 +144,7 @@ contains
       e_construct_fock = omp_get_wtime()
       write(output%unit, '(/a49, f11.2)')'Wall time to construct AO fock from SAD density: ', &
                                   e_construct_fock - s_construct_fock
+      flush(output%unit)
 !
 !     Construct AO overlap matrix, Cholesky decompose it,
 !     followed by preconditioning (making it the identity matrix
@@ -255,6 +256,11 @@ contains
 !
       call mem%dealloc(cholesky_vectors_virt, wf%n_ao, n_active_aos)
       call mem%dealloc(cholesky_vectors_occ, wf%n_ao, n_active_aos)
+!
+      write(output%unit, '(a27, i4)')'Number of occupied active: ', n_vectors_occ
+      write(output%unit, '(a27, i4)')'Number of virtual active:  ', n_vectors_virt
+      flush(output%unit)
+!
 !
       call chol_solver%initialize(wf%system)
       call chol_solver%solve(wf%system, V)
