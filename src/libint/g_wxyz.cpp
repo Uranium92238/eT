@@ -73,8 +73,9 @@ void get_ao_g_wxyz(double *g, long *s1, long *s2, long *s3, long *s4){
             for(auto f3=0; f3!=n3; ++f3){
 
                for(auto f4=0; f4!=n4; ++f4, ++f1234){
-
-	  				  *(g - 1 + index_four(f1+1,f2+1,f3+1,f4+1,n1,n2,n3)) = 0.0e0;
+                int ind_offset = n1*(n2*(n3*f4+f3)+f2)+f1;
+              // *(g - 1 + index_four(f1+1,f2+1,f3+1,f4+1,n1,n2,n3)) = 0.0e0;
+	  				     *(g + ind_offset) = 0.0e0;
 
                }
             }
@@ -91,7 +92,9 @@ void get_ao_g_wxyz(double *g, long *s1, long *s2, long *s3, long *s4){
 
                for(auto f4=0; f4!=n4; ++f4, ++f1234){
 
-                 *(g - 1 + index_four(f1+1,f2+1,f3+1,f4+1,n1,n2,n3)) = ints_1234[f1234];
+                int ind_offset = n1*(n2*(n3*f4+f3)+f2)+f1;
+                 *(g + ind_offset) = ints_1234[f1234];
+                 // *(g - 1 + index_four(f1+1,f2+1,f3+1,f4+1,n1,n2,n3)) = ints_1234[f1234];
 
                }
             }

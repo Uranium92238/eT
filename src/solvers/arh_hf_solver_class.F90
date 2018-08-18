@@ -18,7 +18,7 @@ module arh_hf_solver_class
 !
    type, extends(hf_solver) :: arh_hf_solver
 !
-      integer(i15) :: max_micro_iterations = 250
+      integer(i15) :: max_micro_iterations = 750
 !
       real(dp) :: purification_threshold           = 1.0D-8
       real(dp) :: relative_micro_threshold         = 1.0D-3 
@@ -29,15 +29,18 @@ module arh_hf_solver_class
 !
       real(dp) :: rotation_norm_threshold          = 0.2D0
 !
-      integer(i15) :: diis_dimension = 10
+      integer(i15) :: diis_dimension = 25
 !
       real(dp), dimension(:,:), allocatable :: trace_matrix        ! Trace matrix, T_ij = Tr (D_in D_jn), i, j < n
 !
       type(file) :: RH_gradients_file 
       type(file) :: AO_densities_file 
 !
-      integer(i15) :: history = 50
+      integer(i15) :: history = 20
       integer(i15) :: current_index
+!
+      real(dp) :: relative_coulomb_thr  = 1.0D-9
+      real(dp) :: relative_exchange_thr = 1.0D-7
 !
    contains
 !
@@ -177,8 +180,8 @@ contains
       enddo
       !write(output%unit, *) 'Trace of ao density: ', trace_of_ao_density
 !
-      coulomb_thr  = 1.0D-8
-      exchange_thr = 1.0D-6
+      coulomb_thr  = solver%relative_coulomb_thr
+      exchange_thr = solver%relative_exchange_thr
 !
       start_timer = omp_get_wtime()
       call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s, coulomb_thr, exchange_thr) 
@@ -204,12 +207,6 @@ contains
 !
       call wf%construct_ao_density()
       call wf%destruct_mo_coefficients()
-!
-      trace_of_ao_density = zero 
-      do i = 1, wf%n_ao 
-         trace_of_ao_density = trace_of_ao_density + wf%ao_density(i,i)
-      enddo
-      !write(output%unit, *) 'Trace of ao density: ', trace_of_ao_density
 !
       start_timer = omp_get_wtime()
       call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s)  
@@ -413,14 +410,8 @@ contains
 !           and set previous gradient and step direction to current, in preparation 
 !           for next conjugate gradient iteration
 !
-            trace_of_ao_density = zero 
-            do i = 1, wf%n_ao 
-               trace_of_ao_density = trace_of_ao_density + wf%ao_density(i,i)
-            enddo
-           ! write(output%unit, *) 'Trace of ao density: ', trace_of_ao_density
-!
-            coulomb_thr  = max(1.0D-10, max_grad*1.0D-8)
-            exchange_thr = max(1.0D-8, max_grad*1.0D-6)
+            coulomb_thr  = max(1.0D-10, max_grad*solver%relative_coulomb_thr)
+            exchange_thr = max(1.0D-8, max_grad*solver%relative_exchange_thr)
 !
             prev_energy = wf%hf_energy
             start_timer = omp_get_wtime()

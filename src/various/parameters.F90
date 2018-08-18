@@ -12,18 +12,23 @@ module parameters
 !
    implicit none
 !
-!  Integers and half-integers
+!  Integers 
 !
-   real(dp), parameter :: zero  = 0.0D0
-   real(dp), parameter :: half  = 0.5D0
-   real(dp), parameter :: one   = 1.0D0
-   real(dp), parameter :: two   = 2.0D0
-   real(dp), parameter :: three = 3.0D0
-   real(dp), parameter :: four  = 4.0D0
-   real(dp), parameter :: five  = 5.0D0
-   real(dp), parameter :: six   = 6.0D0
-   real(dp), parameter :: seven = 7.0D0
-   real(dp), parameter :: eight = 8.0D0
+   real(dp), parameter :: zero    = 0.0D0
+   real(dp), parameter :: one     = 1.0D0
+   real(dp), parameter :: two     = 2.0D0
+   real(dp), parameter :: three   = 3.0D0
+   real(dp), parameter :: four    = 4.0D0
+   real(dp), parameter :: five    = 5.0D0
+   real(dp), parameter :: six     = 6.0D0
+   real(dp), parameter :: seven   = 7.0D0
+   real(dp), parameter :: eight   = 8.0D0
+!
+!  Fractions
+!
+   real(dp), parameter :: half           = 0.5D0
+   real(dp), parameter :: quarter        = 0.25D0
+   real(dp), parameter :: one_over_eight = one/eight
 !
 !  Conversion factors
 !
