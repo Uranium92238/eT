@@ -88,7 +88,7 @@ contains
 !!
       implicit none
 !
-      class(ao_integral_manager) :: int
+      class(ao_integral_manager), intent(in) :: int
 !
       real(kind=8), dimension(:,:), intent(inout) :: g
 !
