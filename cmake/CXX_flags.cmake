@@ -1,5 +1,5 @@
 if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
-    set(CMAKE_CXX_FLAGS         "-O3 -ffast-math -funroll-loops -ftree-vectorize -Wno-unused")
+    set(CMAKE_CXX_FLAGS         "-O3 -funroll-loops -ftree-vectorize -Wno-unused")
     if(NOT DEVELOPMENT_CODE)
         # suppress warnings in exported code
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
