@@ -18,7 +18,7 @@ module arh_hf_solver_class
 !
    type, extends(hf_solver) :: arh_hf_solver
 !
-      integer(i15) :: max_micro_iterations = 250
+      integer(i15) :: max_micro_iterations = 750
 !
       real(dp) :: purification_threshold           = 1.0D-8
       real(dp) :: relative_micro_threshold         = 1.0D-3 
@@ -29,14 +29,14 @@ module arh_hf_solver_class
 !
       real(dp) :: rotation_norm_threshold          = 0.2D0
 !
-      integer(i15) :: diis_dimension = 10
+      integer(i15) :: diis_dimension = 25
 !
       real(dp), dimension(:,:), allocatable :: trace_matrix        ! Trace matrix, T_ij = Tr (D_in D_jn), i, j < n
 !
       type(file) :: RH_gradients_file 
       type(file) :: AO_densities_file 
 !
-      integer(i15) :: history = 50
+      integer(i15) :: history = 20
       integer(i15) :: current_index
 !
       real(dp) :: relative_coulomb_thr  = 1.0D-9
