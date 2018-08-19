@@ -1059,7 +1059,11 @@ contains
 !
       endif 
 !
-      wf%ao_density = wf%ao_density - prev_ao_density ! Temporary 
+      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
+      call get_ao_h_xy(h_wx)
+!
+      wf%ao_density = wf%ao_density - prev_ao_density ! Temporary
+      wf%ao_fock = wf%ao_fock - h_wx                  ! Temporary
 !
       call mem%alloc(sp_density_schwarz, n_s, n_s)
 !
@@ -1095,7 +1099,7 @@ contains
       n_sig_sp = 0
       do s1s2 = 1, n_s*(n_s + 1)/2
 !
-         if (sp_eri_schwarz(s1s2, 1)**2*max_D_schwarz .lt. coulomb_thr) then
+         if (sp_eri_schwarz(s1s2, 1)*max_eri_schwarz*max_D_schwarz .lt. coulomb_thr) then
 !
             exit
 !
@@ -1127,8 +1131,6 @@ contains
 !
 !     Put the accumulated Fock matrices from each thread into the Fock matrix 
 !
-   !   wf%ao_fock = zero
-!
       do thread = 1, n_threads
 !
          call daxpy(wf%n_ao**2, one, F(1, (thread-1)*wf%n_ao + 1), 1, wf%ao_fock, 1)
@@ -1140,10 +1142,6 @@ contains
       call symmetric_sum(wf%ao_fock, wf%n_ao)
       wf%ao_fock = wf%ao_fock*half
 !
-      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
-      call get_ao_h_xy(h_wx)
-!
-      wf%ao_fock = wf%ao_fock - h_wx
       call wf%calculate_hf_energy(wf%ao_fock, h_wx)
 !
       wf%ao_fock = wf%ao_fock + h_wx
@@ -1219,42 +1217,25 @@ contains
          s1 = sp_eri_schwarz_list(s1s2, 1)
          s2 = sp_eri_schwarz_list(s1s2, 2)
 !
-      !   A_interval = wf%system%shell_limits(s1)
-      !   B_interval = wf%system%shell_limits(s2)
-!
          if (sp_eri_schwarz(s1s2, 1)*(max_D_schwarz)*(max_eri_schwarz) .lt. coulomb_thr) continue
 !
-!        s1 => s2, so s2/s1 = 0 when unequal, 1 when equal 
-!
-!        deg_12 = real(2-s1/s2)
-!
-       !  deg_12 = real(2-s2/s1, kind=dp)
          deg_12 = 2-s2/s1
 !
-               dim_s1 = shells(s1)%size
-               dim_s2 = shells(s2)%size
-
+         dim_s1 = shells(s1)%size
+         dim_s2 = shells(s2)%size
 !
-               s1_first = shells(s1)%first
-               s2_first = shells(s2)%first
+         s1_first = shells(s1)%first
+         s2_first = shells(s2)%first
 !
-               s1_last = shells(s1)%last
-               s2_last = shells(s2)%last
+         s1_last = shells(s1)%last
+         s2_last = shells(s2)%last
 !
          do s3 = 1, s1
 !
+            dim_s3 = shells(s3)%size
 
-               dim_s3 = shells(s3)%size
-
-               s3_first = shells(s3)%first
-
-               s3_last = shells(s3)%last
-!
-        !    C_interval = wf%system%shell_limits(s3)
-!
-!           s3 <= s1, so s3/s1 = 0 if unequal, 1 if not 
-!
-!           s4_max = (s3/s1)*s3 + (1-s3/s1)*s2 
+            s3_first = shells(s3)%first
+            s3_last  = shells(s3)%last
 !
             s4_max = (s3/s1)*s2 + (1-s3/s1)*s3
 !
@@ -1274,16 +1255,10 @@ contains
                    temp*sp_density_schwarz(s4,s2) .lt. exchange_thr  .and. & ! F5
                    temp*sp_density_schwarz(s1,s4) .lt. exchange_thr) continue ! F6
 !
-            !   deg_34    = real(2-s4/s3, kind=dp)
                deg_34    = 2-s4/s3
                deg_12_34 = min(1-s3/s1+2-min(s4/s2,s2/s4), 2)
 
                deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
-!
-           !    D_interval = wf%system%shell_limits(s4)
-!
-             !  call mem%alloc(g, (shells(s1)%size)*(shells(s2)%size), &
-             !                       (shells(s3)%size)*(shells(s4)%size))
 !
                dim_s4 = shells(s4)%size
 !
@@ -1293,7 +1268,6 @@ contains
 !
                call wf%system%ao_integrals%get_ao_g_wxyz(g, s1, s2, s3, s4)
                g(1:dim_s1*dim_s2*dim_s3*dim_s4,1) = deg*g(1:dim_s1*dim_s2*dim_s3*dim_s4,1)
-! w x y z 
 !
 !              Add Fock matrix contributions
 !
@@ -1311,25 +1285,19 @@ contains
 !
                         x_red = x - s2_first + 1
 !
-                        ! d3 = wf%ao_density(y, x)
-                        ! d5 = wf%ao_density(z, x)
-                         d3 = wf%ao_density(x, y)
-                         d5 = wf%ao_density(x, z)
+                        d3 = wf%ao_density(x, y)
+                        d5 = wf%ao_density(x, z)
 !
                         do w = s1_first, s1_last 
 !
                            d2 = wf%ao_density(w, x)
-                         !  d4 = wf%ao_density(y, w)
                            d4 = wf%ao_density(w, y)
                            d6 = wf%ao_density(w, z)
 !
                            w_red = w - s1_first + 1
 !
-                       !    wxyz = dim_wx*(yz-1)+wx
-                           !xyz = dim_s2*(dim_s3*(z_red-1)+y_red-1)+x_red
                            wxyz = dim_s1*(dim_s2*(dim_s3*(z_red-1)+y_red-1)+x_red-1)+w_red
 !
-                         !  temp = g(wx, yz)
                            temp = g(wxyz, 1)
 !
                            temp1 = half*temp*d1
@@ -1350,9 +1318,6 @@ contains
                      enddo
                   enddo
                enddo
-!
-          !     call mem%dealloc(g, (shells(s1)%size)*(shells(s2)%size), &
-          !                          (shells(s3)%size)*(shells(s4)%size))
 !
             enddo
          enddo
