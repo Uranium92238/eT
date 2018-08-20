@@ -18,7 +18,7 @@ module arh_hf_solver_class
 !
    type, extends(hf_solver) :: arh_hf_solver
 !
-      integer(i15) :: max_micro_iterations = 750
+      integer(i15) :: max_micro_iterations = 1500
 !
       real(dp) :: purification_threshold           = 1.0D-8
       real(dp) :: relative_micro_threshold         = 1.0D-3 
@@ -39,8 +39,10 @@ module arh_hf_solver_class
       integer(i15) :: history = 20
       integer(i15) :: current_index
 !
-      real(dp) :: relative_coulomb_thr  = 1.0D-10
-      real(dp) :: relative_exchange_thr = 1.0D-8
+      real(dp) :: coulomb_thr  = 1.0D-10
+      real(dp) :: exchange_thr = 1.0D-10
+!
+      real(dp) :: screening_thr = 1.0D-4
 !
    contains
 !
@@ -124,7 +126,7 @@ contains
 !
       logical :: transpose_left
 !
-      real(dp) :: beta, coulomb_thr, exchange_thr
+      real(dp) :: beta, coulomb_thr, exchange_thr, screening_thr
 !
       integer(i15) :: iteration = 1
 !
@@ -175,14 +177,11 @@ contains
 !
       call wf%initialize_ao_fock()
 !
-      trace_of_ao_density = zero 
-      do i = 1, wf%n_ao 
-         trace_of_ao_density = trace_of_ao_density + wf%ao_density(i,i)
-      enddo
+      ! trace_of_ao_density = zero 
+      ! do i = 1, wf%n_ao 
+      !    trace_of_ao_density = trace_of_ao_density + wf%ao_density(i,i)
+      ! enddo
       !write(output%unit, *) 'Trace of ao density: ', trace_of_ao_density
-!
-      coulomb_thr  = solver%relative_coulomb_thr
-      exchange_thr = solver%relative_exchange_thr
 !
       start_timer = omp_get_wtime()
       call wf%construct_ao_fock_SAD()
@@ -416,16 +415,16 @@ contains
 !           and set previous gradient and step direction to current, in preparation 
 !           for next conjugate gradient iteration
 !
-            coulomb_thr  = max(1.0D-10, max_grad*solver%relative_coulomb_thr)
-            exchange_thr = max(1.0D-8, max_grad*solver%relative_exchange_thr)
-           ! coulomb_thr  = 1.0D-10
-           ! exchange_thr = 1.0D-8
-!
+            screening_thr = max(coulomb_thr, max_grad*solver%screening_thr)
+            write(output%unit, *) 'Pre-screening threshold:', screening_thr
+            write(output%unit, *) 'Coulomb threshold:', solver%coulomb_thr
+            write(output%unit, *) 'Exchange threshold:', solver%exchange_thr
+!!
             prev_energy = wf%hf_energy
             start_timer = omp_get_wtime()
            ! call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s, coulomb_thr, exchange_thr)
             call wf%construct_ao_fock_densdiff(sp_eri_schwarz, sp_eri_schwarz_list, &
-                                       n_s, prev_ao_density, coulomb_thr, exchange_thr)
+                                       n_s, prev_ao_density, solver%coulomb_thr, solver%exchange_thr, screening_thr)
             end_timer = omp_get_wtime()
             write(output%unit, *) 'Time to construct AO Fock: ', end_timer-start_timer 
 !
