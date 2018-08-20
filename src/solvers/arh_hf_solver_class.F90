@@ -39,10 +39,10 @@ module arh_hf_solver_class
       integer(i15) :: history = 40
       integer(i15) :: current_index
 !
-      real(dp) :: coulomb_thr  = 1.0D-12
+      real(dp) :: coulomb_thr  = 1.0D-10
       real(dp) :: coulomb_precision = 1.0D-25
-      real(dp) :: non_building_rel_coulomb_precision = 1.0D-10
-      real(dp) :: exchange_thr = 1.0D-10
+      real(dp) :: non_building_rel_coulomb_precision = 1.0D-9
+      real(dp) :: exchange_thr = 1.0D-8
 !
       real(dp) :: screening_thr = 1.0D-12
 !
@@ -435,7 +435,7 @@ contains
 !                screening_thr = 1.0D-5
                solver%coulomb_precision = solver%non_building_rel_coulomb_precision*max_grad
 !
-               if (max_grad .gt. 1.0D-4 .and. .not. building_fock) then
+               if (max_grad .gt. 1.0D-3 .and. .not. building_fock) then
 !
                   call set_coulomb_precision(solver%coulomb_precision)
                   call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s, coulomb_thr, exchange_thr)
