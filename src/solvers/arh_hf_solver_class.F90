@@ -41,7 +41,7 @@ module arh_hf_solver_class
 !
       real(dp) :: coulomb_thr  = 1.0D-12
       real(dp) :: coulomb_precision = 1.0D-25
-      real(dp) :: non_building_rel_coulomb_precision = 1.0D-9
+      real(dp) :: non_building_rel_coulomb_precision = 1.0D-10
       real(dp) :: exchange_thr = 1.0D-10
 !
       real(dp) :: screening_thr = 1.0D-12
@@ -435,10 +435,11 @@ contains
 !                screening_thr = 1.0D-5
                solver%coulomb_precision = solver%non_building_rel_coulomb_precision*max_grad
 !
-               if (max_grad .gt. 1.0D-3 .and. .not. building_fock) then
+               if (max_grad .gt. 1.0D-2 .and. .not. building_fock) then
 !
-                  call set_coulomb_precision(solver%coulomb_precision)
-                  call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s, coulomb_thr, exchange_thr)
+                 ! call set_coulomb_precision(solver%coulomb_precision)
+                  call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s, &
+                                       coulomb_thr, exchange_thr, solver%coulomb_precision)
 !
                else
 !
@@ -450,13 +451,13 @@ contains
                      prev_ao_density = zero 
 !
                      building_fock = .true.
-                     call set_coulomb_precision(1.0D-25)
+                   !  call set_coulomb_precision(1.0D-14)
 !
                   endif
 ! 
-                  screening_thr = solver%coulomb_thr
+                  solver%coulomb_precision = 1.0D-14
                   call wf%construct_ao_fock_densdiff(sp_eri_schwarz, sp_eri_schwarz_list, &
-                                       n_s, prev_ao_density, solver%coulomb_thr, solver%exchange_thr, screening_thr)
+                                       n_s, prev_ao_density, solver%coulomb_thr, solver%exchange_thr, solver%coulomb_precision)
 !
                endif
 

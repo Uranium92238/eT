@@ -689,7 +689,7 @@ contains
    end subroutine construct_ao_fock_SAD_hf
 !
 !
-   subroutine construct_ao_fock_hf(wf, sp_eri_schwarz, sp_eri_schwarz_list, n_s, coulomb, exchange, screening)
+   subroutine construct_ao_fock_hf(wf, sp_eri_schwarz, sp_eri_schwarz_list, n_s, coulomb, exchange, precision)
 !!
 !!    Construct AO Fock matrix
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -717,9 +717,9 @@ contains
       real(dp), dimension(n_s*(n_s + 1)/2, 2)     :: sp_eri_schwarz
       integer(i15), dimension(n_s*(n_s + 1)/2, 3) :: sp_eri_schwarz_list ! list(s1s2, 1) = s1, list(s1s2, 2) = s2, list(s1s2, 3) = s1s2_sorted
 !
-      real(dp), optional :: coulomb, exchange, screening ! Non-standard thresholds
+      real(dp), optional :: coulomb, exchange, precision ! Non-standard thresholds
 !
-      real(dp) :: coulomb_thr, exchange_thr, screening_thr ! Actual thresholds 
+      real(dp) :: coulomb_thr, exchange_thr, precision_thr ! Actual thresholds 
 !
       real(dp), dimension(:,:), allocatable :: ao_fock_packed
       real(dp), dimension(:,:), allocatable :: X_wz, h_wx, h_wx_square
@@ -769,13 +769,13 @@ contains
 !
       endif 
 !
-      if (present(screening)) then 
+      if (present(precision)) then 
 !
-         screening_thr = screening 
+         precision_thr = precision 
 !
       else
 !
-         screening_thr = coulomb_thr
+         precision_thr = 1.0D-14
 !
       endif 
 !
@@ -834,7 +834,7 @@ contains
 !
       call wf%construct_and_add(F, n_threads, max_D_schwarz, max_eri_schwarz, & 
                                  sp_density_schwarz, sp_eri_schwarz, sp_eri_schwarz_list, &
-                                 n_s, n_sig_sp, coulomb_thr, exchange_thr, wf%system%shell_limits)
+                                 n_s, n_sig_sp, coulomb_thr, exchange_thr, precision_thr, wf%system%shell_limits)
 !
       write(output%unit, *) 'Number of threads:', n_threads
 !
@@ -868,7 +868,7 @@ contains
 !
 !
   subroutine construct_ao_fock_densdiff_hf(wf, sp_eri_schwarz, sp_eri_schwarz_list, &
-                                       n_s, prev_ao_density, coulomb, exchange, screening)
+                                       n_s, prev_ao_density, coulomb, exchange, precision)
 !!
 !!    Construct AO Fock matrix
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -898,9 +898,9 @@ contains
       real(dp), dimension(n_s*(n_s + 1)/2, 1)     :: sp_eri_schwarz
       integer(i15), dimension(n_s*(n_s + 1)/2, 3) :: sp_eri_schwarz_list ! list(s1s2, 1) = s1, list(s1s2, 2) = s2, list(s1s2, 3) = s1s2_sorted
 !
-      real(dp), optional :: coulomb, exchange, screening ! Non-standard thresholds
+      real(dp), optional :: coulomb, exchange, precision ! Non-standard thresholds
 !
-      real(dp) :: coulomb_thr, exchange_thr, screening_thr ! Actual thresholds 
+      real(dp) :: coulomb_thr, exchange_thr, precision_thr ! Actual thresholds 
 !
       real(dp), dimension(:,:), allocatable :: ao_fock_packed
       real(dp), dimension(:,:), allocatable :: X_wz, h_wx, h_wx_square
@@ -950,15 +950,15 @@ contains
 !
       endif 
 !
-      if (present(screening)) then 
+     if (present(precision)) then 
 !
-         screening_thr = screening 
+         precision_thr = precision 
 !
       else
 !
-         screening_thr = coulomb_thr
+         precision_thr = 1.0D-14
 !
-      endif 
+      endif
 !
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call get_ao_h_xy(h_wx)
@@ -1000,7 +1000,7 @@ contains
       n_sig_sp = 0
       do s1s2 = 1, n_s*(n_s + 1)/2
 !
-         if (sp_eri_schwarz(s1s2, 1) .lt. 1.0D-15) then
+         if (sp_eri_schwarz(s1s2, 1) .lt. 1.0D-14) then
 !
             exit
 !
@@ -1015,24 +1015,8 @@ contains
       write(output%unit, *) 'Max density difference:', max_D_schwarz
       write(output%unit, *) 'Number of significant shell pairs:', n_sig_sp
 !
-!       n_sigg_sp = 0
-!       do s1s2 = 1, n_sig_sp
-! !
-!          if (sp_eri_schwarz(s1s2, 1)*(max_D_schwarz)*(max_eri_schwarz) .lt. 1.0D-10) then
-! !
-!             exit
-! !
-!          else
-! !
-!             n_sigg_sp = n_sigg_sp + 1
-! !
-!          endif
-! !
-!       enddo
-!
       n_threads = omp_get_max_threads()
 !
-    !  write(output%unit, *) 'Number of significant shell pairs:', n_sigg_sp
       write(output%unit, *) 'Number of threads:', n_threads
 !
       call mem%alloc(F, wf%n_ao, wf%n_ao*n_threads) ! [F(thr1) F(thr2) ...]
@@ -1040,7 +1024,7 @@ contains
 !
       call wf%construct_and_add(F, n_threads, max_D_schwarz, max_eri_schwarz, & 
                                  sp_density_schwarz, sp_eri_schwarz, sp_eri_schwarz_list, &
-                                 n_s, n_sig_sp, coulomb_thr, exchange_thr, wf%system%shell_limits)
+                                 n_s, n_sig_sp, coulomb_thr, exchange_thr, precision_thr, wf%system%shell_limits)
 !
       wf%ao_density = wf%ao_density + prev_ao_density ! restore
 !
@@ -1071,7 +1055,7 @@ contains
 !
    subroutine construct_and_add_hf(wf, F, n_threads, max_D_schwarz, max_eri_schwarz, & 
                                  sp_density_schwarz, sp_eri_schwarz, sp_eri_schwarz_list, &
-                                 n_s, n_sig_sp, coulomb_thr, exchange_thr, shells)
+                                 n_s, n_sig_sp, coulomb_thr, exchange_thr, precision_thr, shells)
 !
       implicit none 
 !
@@ -1085,7 +1069,7 @@ contains
 !
       real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz
 !
-      real(dp), intent(in) :: coulomb_thr, exchange_thr
+      real(dp), intent(in) :: coulomb_thr, exchange_thr, precision_thr
 !
       real(dp), dimension(wf%n_ao, wf%n_ao*n_threads) :: F 
 !
@@ -1158,21 +1142,22 @@ contains
                temp = sp_eri_schwarz_s1s2*sp_eri_schwarz(s3s4, 2)
 !
                temp7 = max(sp_density_schwarz(s3,s4), &
-                           sp_density_schwarz_s1s2)*temp
+                           sp_density_schwarz_s1s2)
 !
                temp8 = max(sp_density_schwarz_s3s2, &
                            sp_density_schwarz_s3s1, &
                            sp_density_schwarz(s4,s2), &
-                           sp_density_schwarz(s1,s4))*temp
+                           sp_density_schwarz(s1,s4))
 !
-               if (temp8 .lt. exchange_thr .and. temp7 .lt. coulomb_thr) cycle
+               if (temp8*temp .lt. exchange_thr .and. temp7*temp .lt. coulomb_thr) cycle
 !
                deg_34    = real(2-s4/s3, kind=dp)
                deg_12_34 = min(1-s3/s1+2-min(s4/s2,s2/s4), 2)
 
                deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
 !
-               call wf%system%ao_integrals%get_ao_g_wxyz(g, s1, s2, s3, s4)
+              ! call wf%system%ao_integrals%get_ao_g_wxyz(g, s1, s2, s3, s4) 
+               call wf%system%ao_integrals%get_ao_g_wxyz_epsilon(g, s1, s2, s3, s4, precision_thr/max(temp7,temp8))
 !
                tot_dim = (shells(s1)%size)*(shells(s2)%size)*(shells(s3)%size)*(shells(s4)%size)
 !

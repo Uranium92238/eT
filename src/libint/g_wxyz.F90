@@ -19,4 +19,17 @@ contains
 !
    end subroutine get_ao_g_wxyz
 !
+   subroutine get_ao_g_wxyz_epsilon(g, s1, s2, s3, s4, epsilon)
+!
+      implicit none
+!
+      real(kind=8), dimension(1,1) :: g
+      real(kind=8) :: epsilon
+!
+      integer(kind=8) :: s1, s2, s3, s4
+!
+      call get_ao_g_wxyz_epsilon_c(g, s1, s2, s3, s4, epsilon)
+!
+   end subroutine get_ao_g_wxyz_epsilon
+!
 end module g_wxyz
