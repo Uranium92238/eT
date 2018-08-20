@@ -41,7 +41,7 @@ module arh_hf_solver_class
 !
       real(dp) :: coulomb_thr  = 1.0D-12
       real(dp) :: coulomb_precision = 1.0D-25
-      real(dp) :: non_building_rel_coulomb_precision = 1.0D-8
+      real(dp) :: non_building_rel_coulomb_precision = 1.0D-10
       real(dp) :: exchange_thr = 1.0D-10
 !
       real(dp) :: screening_thr = 1.0D-12
