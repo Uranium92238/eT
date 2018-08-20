@@ -39,10 +39,10 @@ module arh_hf_solver_class
       integer(i15) :: history = 20
       integer(i15) :: current_index
 !
-      real(dp) :: coulomb_thr  = 1.0D-10
-      real(dp) :: exchange_thr = 1.0D-10
+      real(dp) :: coulomb_thr  = 1.0D-11
+      real(dp) :: exchange_thr = 1.0D-11
 !
-      real(dp) :: screening_thr = 1.0D-4
+      real(dp) :: screening_thr = 1.0D-7
 !
    contains
 !
@@ -210,7 +210,8 @@ contains
       call wf%destruct_mo_coefficients()
 !
       start_timer = omp_get_wtime()
-      call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s)  
+      screening_thr = solver%coulomb_thr
+      call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s, solver%coulomb_thr, solver%exchange_thr, screening_thr)  
       end_timer = omp_get_wtime()
       write(output%unit, *) 'Time to construct AO Fock: ', end_timer-start_timer 
 !
@@ -419,12 +420,20 @@ contains
             write(output%unit, *) 'Pre-screening threshold:', screening_thr
             write(output%unit, *) 'Coulomb threshold:', solver%coulomb_thr
             write(output%unit, *) 'Exchange threshold:', solver%exchange_thr
-!!
+!
             prev_energy = wf%hf_energy
             start_timer = omp_get_wtime()
+!
+           ! screening_thr = max_grad*1.0D-3
+           ! if (max_grad .lt. 1.0D-3) then 
+               
            ! call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s, coulomb_thr, exchange_thr)
-            call wf%construct_ao_fock_densdiff(sp_eri_schwarz, sp_eri_schwarz_list, &
+               call wf%construct_ao_fock_densdiff(sp_eri_schwarz, sp_eri_schwarz_list, &
                                        n_s, prev_ao_density, solver%coulomb_thr, solver%exchange_thr, screening_thr)
+         !   else
+           !    call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s, coulomb_thr, exchange_thr, screening_thr)
+           ! endif
+
             end_timer = omp_get_wtime()
             write(output%unit, *) 'Time to construct AO Fock: ', end_timer-start_timer 
 !

@@ -689,7 +689,7 @@ contains
    end subroutine construct_ao_fock_SAD_hf
 !
 !
-   subroutine construct_ao_fock_hf(wf, sp_eri_schwarz, sp_eri_schwarz_list, n_s, coulomb, exchange)
+   subroutine construct_ao_fock_hf(wf, sp_eri_schwarz, sp_eri_schwarz_list, n_s, coulomb, exchange, screening)
 !!
 !!    Construct AO Fock matrix
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -717,9 +717,9 @@ contains
       real(dp), dimension(n_s*(n_s + 1)/2, 2)     :: sp_eri_schwarz
       integer(i15), dimension(n_s*(n_s + 1)/2, 3) :: sp_eri_schwarz_list ! list(s1s2, 1) = s1, list(s1s2, 2) = s2, list(s1s2, 3) = s1s2_sorted
 !
-      real(dp), optional :: coulomb, exchange ! Non-standard thresholds
+      real(dp), optional :: coulomb, exchange, screening ! Non-standard thresholds
 !
-      real(dp) :: coulomb_thr, exchange_thr ! Actual thresholds 
+      real(dp) :: coulomb_thr, exchange_thr, screening_thr ! Actual thresholds 
 !
       real(dp), dimension(:,:), allocatable :: ao_fock_packed
       real(dp), dimension(:,:), allocatable :: X_wz, h_wx, h_wx_square
@@ -769,6 +769,16 @@ contains
 !
       endif 
 !
+      if (present(screening)) then 
+!
+         screening_thr = screening 
+!
+      else
+!
+         screening_thr = coulomb_thr
+!
+      endif 
+!
       call mem%alloc(sp_density_schwarz, n_s, n_s)
 !
 !$omp parallel do private(s1, s2, A_interval, B_interval, D, maximum) schedule(dynamic)
@@ -803,7 +813,7 @@ contains
       max_eri_schwarz   = get_abs_max(sp_eri_schwarz, n_s*(n_s + 1)/2)
       do s1s2 = 1, n_s*(n_s + 1)/2
 !
-         if (sp_eri_schwarz(s1s2, 1) .lt. coulomb_thr) then
+         if (sp_eri_schwarz(s1s2, 1)*(max_D_schwarz)*(max_eri_schwarz) .lt. screening_thr) then
 !
             exit
 !
@@ -990,7 +1000,7 @@ contains
       n_sig_sp = 0
       do s1s2 = 1, n_s*(n_s + 1)/2
 !
-         if (sp_eri_schwarz(s1s2, 1)*(max_D_schwarz)*(max_eri_schwarz) .lt. coulomb_thr) then
+         if (sp_eri_schwarz(s1s2, 1)*(max_D_schwarz)*(max_eri_schwarz) .lt. screening_thr) then
 !
             exit
 !
@@ -1100,7 +1110,7 @@ contains
 !$omp private(s1, s2, s3, s4, deg, s4_max, temp, s1s2, s1s2_packed, s3s4, deg_12, deg_34, deg_12_34, thread_offset, &
 !$omp w, x, y, z, wx, yz, temp1, temp2, temp3, d1, d2, d3, d4, d5, d6, &
 !$omp temp4, temp5, temp6, temp7, temp8, w_red, x_red, tot_dim, y_red, z_red, wxyz, g, &
-!$omp sp_eri_schwarz_s1s2, sp_density_schwarz_s1s2, &
+!$omp sp_eri_schwarz_s1s2, sp_density_schwarz_s1s2, s3s4_sorted, &
 !$omp sp_density_schwarz_s3s2, sp_density_schwarz_s3s1) schedule(dynamic)
       do s1s2 = 1, n_sig_sp
 !
@@ -1127,6 +1137,7 @@ contains
             do s4 = 1, s4_max
 !
                s3s4 = (max(s3,s4)*(max(s3,s4)-3)/2) + s3 + s4 
+               if (sp_eri_schwarz(s3s4, 2)*(max_D_schwarz)*(max_eri_schwarz) .lt. coulomb_thr) cycle ! Screened out shell pair
 !
                temp = sp_eri_schwarz_s1s2*sp_eri_schwarz(s3s4, 2)
 !
