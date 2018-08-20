@@ -810,10 +810,10 @@ contains
 !     Compute number of significant shell pairs (pre-screening)
 !
       n_sig_sp = 0
-      max_eri_schwarz   = get_abs_max(sp_eri_schwarz, n_s*(n_s + 1)/2)
+      max_eri_schwarz = get_abs_max(sp_eri_schwarz, n_s*(n_s + 1)/2)
       do s1s2 = 1, n_s*(n_s + 1)/2
 !
-         if (sp_eri_schwarz(s1s2, 1)*(max_D_schwarz)*(max_eri_schwarz) .lt. screening_thr) then
+         if (sp_eri_schwarz(s1s2, 1) .lt. 1.0D-14) then
 !
             exit
 !
@@ -918,7 +918,7 @@ contains
 !
       logical :: skip
 !
-      integer(i15) :: n_sig_sp
+      integer(i15) :: n_sig_sp, n_sigg_sp
 !
       real(dp) :: deg_12, deg_34, deg_12_34, deg, ddot, norm
       real(dp) :: temp, temp1, temp2, temp3, temp4, temp5, temp6
@@ -1000,7 +1000,7 @@ contains
       n_sig_sp = 0
       do s1s2 = 1, n_s*(n_s + 1)/2
 !
-         if (sp_eri_schwarz(s1s2, 1)*(max_D_schwarz)*(max_eri_schwarz) .lt. screening_thr) then
+         if (sp_eri_schwarz(s1s2, 1) .lt. 1.0D-15) then
 !
             exit
 !
@@ -1013,11 +1013,26 @@ contains
       enddo
 !
       write(output%unit, *) 'Max density difference:', max_D_schwarz
-      write(output%unit, *) 'Number of shell pairs:', n_s*(n_s + 1)/2
       write(output%unit, *) 'Number of significant shell pairs:', n_sig_sp
+!
+!       n_sigg_sp = 0
+!       do s1s2 = 1, n_sig_sp
+! !
+!          if (sp_eri_schwarz(s1s2, 1)*(max_D_schwarz)*(max_eri_schwarz) .lt. 1.0D-10) then
+! !
+!             exit
+! !
+!          else
+! !
+!             n_sigg_sp = n_sigg_sp + 1
+! !
+!          endif
+! !
+!       enddo
 !
       n_threads = omp_get_max_threads()
 !
+    !  write(output%unit, *) 'Number of significant shell pairs:', n_sigg_sp
       write(output%unit, *) 'Number of threads:', n_threads
 !
       call mem%alloc(F, wf%n_ao, wf%n_ao*n_threads) ! [F(thr1) F(thr2) ...]
@@ -1124,6 +1139,7 @@ contains
          s2 = sp_eri_schwarz_list(s1s2_packed, 2)
 !
          sp_density_schwarz_s1s2 = sp_density_schwarz(s1, s2)
+         if (sp_eri_schwarz_s1s2*(max_D_schwarz)*(max_eri_schwarz) .lt. coulomb_thr) cycle
 !
          deg_12 = real(2-s2/s1, kind=dp)
 !
@@ -1137,7 +1153,7 @@ contains
             do s4 = 1, s4_max
 !
                s3s4 = (max(s3,s4)*(max(s3,s4)-3)/2) + s3 + s4 
-               if (sp_eri_schwarz(s3s4, 2)*(max_D_schwarz)*(max_eri_schwarz) .lt. coulomb_thr) cycle ! Screened out shell pair
+               if (sp_eri_schwarz(s3s4, 2)*(max_D_schwarz)*(sp_eri_schwarz_s1s2) .lt. coulomb_thr) cycle ! Screened out shell pair
 !
                temp = sp_eri_schwarz_s1s2*sp_eri_schwarz(s3s4, 2)
 !
