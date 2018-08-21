@@ -109,12 +109,10 @@ contains
 !
       do i = 1, molecule%n_basis_sets ! Loop over atoms 
          write(temp_name, '(a, a1, i4.4)')trim(molecule%name), '_', i
-         write(output%unit, *)trim(temp_name), molecule%basis_sets(i)
          call initialize_basis(molecule%basis_sets(i), temp_name) 
       enddo
 !
       call get_n_shells_on_atoms(n_shells_on_atoms)
-      write(output%unit,*)n_shells_on_atoms
 !
       do i = 1, molecule%n_atoms ! Loop over atoms
 !
@@ -728,8 +726,6 @@ contains
 !
       enddo
 !
-      write(output%unit, *)'active_atoms:', active_atoms
-!
 !     Reorder atoms
 !
       allocate(atoms_copy(molecule%n_atoms))
@@ -816,8 +812,6 @@ contains
 !
          enddo
       enddo
-!
-   !   write(output%unit, *) 'Nuclear respulsion: ', get_nuclear_repulsion_molecular_system
 !
   end function get_nuclear_repulsion_molecular_system
 !

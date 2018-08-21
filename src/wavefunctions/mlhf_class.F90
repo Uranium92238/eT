@@ -50,12 +50,12 @@ contains
 !
       wf%name = 'MLHF'
 !
-      call wf%read_info
+      !call wf%read_info
 !
       write(output%unit, '(a)')':: SAD-ML test'
       flush(output%unit)
 !
-      call wf%system%initialize() ! Initialize molecular system -> Should include SOAD
+      call wf%system%initialize() ! Initialize molecular system -> Should include SAD
 !
       wf%n_ao = 0
       call get_n_aos(wf%n_ao)
@@ -132,7 +132,6 @@ contains
 !
       n_s = wf%system%get_n_shells()
 !
-!
 !     Construct initial AO Fock from the SOAD density
 !
       call wf%initialize_ao_fock()
@@ -140,7 +139,7 @@ contains
       s_construct_fock = omp_get_wtime()
 !
       call wf%construct_ao_fock_SAD()
-      write(output%unit,*)wf%hf_energy
+     ! write(output%unit,*)wf%hf_energy
 
      ! call mem%alloc(sp_eri_schwarz, n_s*(n_s + 1)/2, 1)
      ! call mem%alloc_int(sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
@@ -155,6 +154,7 @@ contains
       write(output%unit, '(/a49, f11.2)')'Wall time to construct AO fock from SAD density: ', &
                                   e_construct_fock - s_construct_fock
       flush(output%unit)
+      stop
 !
 !     Construct AO overlap matrix, Cholesky decompose it,
 !     followed by preconditioning (making it the identity matrix

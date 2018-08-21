@@ -321,9 +321,7 @@ contains
 !!    Construct X
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Aug 2018
 !!
-!!
 !!       X_n = sum_i c_i (X_red_n)_i
-!!
 !!
       implicit none
 !
@@ -363,9 +361,7 @@ contains
 !!    Construct X
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Aug 2018
 !!
-!!
 !!       AX_n = sum_i rho_i (X_red_n)_i
-!!
 !!
       implicit none
 !
