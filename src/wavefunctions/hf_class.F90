@@ -1091,7 +1091,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: g 
 !
-      integer(i15) :: max_shell_size, thread
+      integer(i15) :: max_shell_size, thread, skip
 !
 !     Determine largest shell size 
 !
@@ -1110,7 +1110,7 @@ contains
 !$omp w, x, y, z, wx, yz, temp1, temp2, temp3, d1, d2, d3, d4, d5, d6, thread, &
 !$omp temp4, temp5, temp6, temp7, temp8, w_red, x_red, tot_dim, y_red, z_red, wxyz, g, &
 !$omp sp_eri_schwarz_s1s2, sp_density_schwarz_s1s2, s3s4_sorted, &
-!$omp sp_density_schwarz_s3s2, sp_density_schwarz_s3s1) schedule(dynamic)
+!$omp sp_density_schwarz_s3s2, sp_density_schwarz_s3s1, skip) schedule(dynamic)
       do s1s2 = 1, n_sig_sp
 !
          thread = omp_get_thread_num()
@@ -1158,7 +1158,10 @@ contains
                deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
 !
               ! call wf%system%ao_integrals%get_ao_g_wxyz(g, s1, s2, s3, s4) 
-               call wf%system%ao_integrals%get_ao_g_wxyz_epsilon(g, s1, s2, s3, s4, precision_thr/max(temp7,temp8), thread)
+              ! skip = 0
+               call wf%system%ao_integrals%get_ao_g_wxyz_epsilon(g, s1, s2, s3, s4, precision_thr/max(temp7,temp8), thread, skip)
+!
+               if (skip == 1) cycle
 !
                tot_dim = (shells(s1)%size)*(shells(s2)%size)*(shells(s3)%size)*(shells(s4)%size)
 !

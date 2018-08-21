@@ -31,19 +31,12 @@ void get_ao_g_wxyz(double *g, long *s1, long *s2, long *s3, long *s4){
 	const long shell3 = *s3 - 1;
 	const long shell4 = *s4 - 1;
 
-	int num_aos = 0;
-	num_aos = basis.nbf();
-
 	auto shell2bf = basis.shell2bf(); // maps shell index to basis function index
                                    // shell2bf[0] = index of the first basis function in shell 0
                                    // shell2bf[1] = index of the first basis function in shell 1
                                    // ...
 
 	const auto& buf_vec = electronic_repulsion_engines[thread].results(); // will point to computed shell sets
-
-	clock_t t;
-	double tacc;
-	tacc = 0;
 
 	auto bf1 = shell2bf[shell1];  // First basis function in shell 1
 	auto n1 = basis[shell1].size(); // Number of basis functions in shell 1
@@ -100,9 +93,7 @@ void get_ao_g_wxyz(double *g, long *s1, long *s2, long *s3, long *s4){
 	return;
 }
 
-void get_ao_g_wxyz_epsilon(double *g, long *s1, long *s2, long *s3, long *s4, double *epsilon, long *thread){
-
- // int thread = omp_get_thread_num();
+void get_ao_g_wxyz_epsilon(double *g, long *s1, long *s2, long *s3, long *s4, double *epsilon, long *thread, long *skip){
 
   const long shell1 = *s1 - 1;
   const long shell2 = *s2 - 1;
@@ -111,19 +102,12 @@ void get_ao_g_wxyz_epsilon(double *g, long *s1, long *s2, long *s3, long *s4, do
 
   electronic_repulsion_engines[*thread].set_precision(*epsilon);
 
-  // int num_aos = 0;
-//  const int num_aos = basis.nbf();
-
   auto shell2bf = basis.shell2bf(); // maps shell index to basis function index
                                    // shell2bf[0] = index of the first basis function in shell 0
                                    // shell2bf[1] = index of the first basis function in shell 1
                                    // ...
 
   const auto& buf_vec = electronic_repulsion_engines[*thread].results(); // will point to computed shell sets
-
-  // clock_t t;
-  // double tacc;
-  // tacc = 0;
 
   auto bf1 = shell2bf[shell1];  // First basis function in shell 1
   auto n1 = basis[shell1].size(); // Number of basis functions in shell 1
@@ -143,25 +127,12 @@ void get_ao_g_wxyz_epsilon(double *g, long *s1, long *s2, long *s3, long *s4, do
 
    if (ints_1234 == nullptr)
    {
-      for(auto f1=0, f1234=0; f1!=n1; ++f1){
 
-          for(auto f2=0; f2!=n2; ++f2){
-
-            for(auto f3=0; f3!=n3; ++f3){
-
-               for(auto f4=0; f4!=n4; ++f4, ++f1234){
-
-                  int ind_offset = n1*(n2*(n3*f4+f3)+f2)+f1;
-                  *(g + ind_offset) = 0.0e0;
-
-
-               }
-            }
-         }
-      }
+      *skip = 1;
    }
    else
    {
+      *skip = 0;
       for(auto f1=0, f1234=0; f1!=n1; ++f1){
 
          for(auto f2=0; f2!=n2; ++f2){
