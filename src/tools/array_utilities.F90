@@ -1282,6 +1282,28 @@ contains
    end subroutine commute
 !
 !
+   real(dp) function get_l2_norm(X, n)
+!!
+!!    Get L^2 norm 
+!!    Written by Eirik F. Kjønstad, Aug 2018 
+!!
+!!    Returns the L^2 norm of the n-dimensional X vector, 
+!!
+!!       sqrt( sum_i=1^n X_i^2 )
+!!
+      implicit none 
+!
+      real(dp), dimension(n), intent(in) :: X 
+!
+      integer(i15), intent(in) :: n
+!
+      real(dp) :: ddot 
+!
+      get_l2_norm = sqrt(ddot(n, X, 1, X, 1))
+!
+   end function get_l2_norm
+!
+!
 end module array_utilities
 
 

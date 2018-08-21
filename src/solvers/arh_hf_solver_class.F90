@@ -21,13 +21,13 @@ module arh_hf_solver_class
       integer(i15) :: max_micro_iterations = 1500
 !
       real(dp) :: purification_threshold           = 1.0D-8
-      real(dp) :: relative_micro_threshold         = 1.0D-2
+      real(dp) :: relative_micro_threshold         = 1.0D-3
       real(dp) :: relative_shifted_micro_threshold = 1.0D-3 
 !
-      real(dp) :: trust_radius                     = 0.20D0 
+      real(dp) :: trust_radius                     = 0.2D0 
       real(dp) :: relative_trust_radius_threshold  = 0.10D0
 !
-      real(dp) :: rotation_norm_threshold          = 0.1D0
+      real(dp) :: rotation_norm_threshold          = 0.2D0
 !
       integer(i15) :: diis_dimension = 25
 !
@@ -36,12 +36,12 @@ module arh_hf_solver_class
       type(file) :: RH_gradients_file 
       type(file) :: AO_densities_file 
 !
-      integer(i15) :: history = 25
+      integer(i15) :: history = 6
       integer(i15) :: current_index
 !
       real(dp) :: coulomb_thr       = 1.0D-11 ! screening 
       real(dp) :: coulomb_precision = 1.0D-14 ! integral accuracy
-      real(dp) :: exchange_thr      = 1.0D-11 ! screening 
+      real(dp) :: exchange_thr      = 1.0D-9  ! screening 
 !
    contains
 !
@@ -119,7 +119,9 @@ contains
       real(dp), dimension(:,:), allocatable :: G       ! Full (lin.dep.) Roothan-Hall gradient
 !
       real(dp), dimension(:,:), allocatable :: Hr      ! Roothan-Hall Hessian, preconditioned
-      real(dp), dimension(:,:), allocatable :: Gr      ! Roothan-Hall gradient, preconditioned 
+      real(dp), dimension(:,:), allocatable :: Gr      ! Roothan-Hall gradient, preconditioned
+!
+      real(dp), dimension(:,:), allocatable :: h_wx    ! One-electron integrals  
 !
       real(dp) :: norm_X 
 !
@@ -146,6 +148,7 @@ contains
 !
       real(dp) :: trace_of_ao_density
       real(dp), dimension(:,:), allocatable :: prev_ao_density
+      real(dp), dimension(:,:), allocatable :: diff_ao_density
 !
       real(dp), dimension(:,:), allocatable     :: sp_eri_schwarz
       integer(i15), dimension(:,:), allocatable :: sp_eri_schwarz_list
@@ -177,9 +180,9 @@ contains
       call wf%initialize_ao_fock()
 !
       start_timer = omp_get_wtime()
-      call set_coulomb_precision(1.0D-10) 
+      call set_coulomb_precision(solver%coulomb_precision) 
       call wf%construct_ao_fock_SAD()
-      call set_coulomb_precision(solver%coulomb_precision)
+    !  call set_coulomb_precision(solver%coulomb_precision)
       end_timer = omp_get_wtime()
       write(output%unit, *) 'Time to construct AO Fock from SAD: ', end_timer-start_timer
       flush(output%unit)
@@ -262,8 +265,11 @@ contains
       call mem%alloc(H, wf%n_ao, wf%n_ao)
 !
       call mem%alloc(prev_ao_density, wf%n_ao, wf%n_ao)
+      call mem%alloc(diff_ao_density, wf%n_ao, wf%n_ao)
 !
-      building_fock = .false.
+    !  building_fock = .false.
+      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
+      call get_ao_h_xy(h_wx)
 !
       do while (.not. converged .and. iteration .le. solver%max_iterations)
 !
@@ -419,7 +425,8 @@ contains
             start_timer = omp_get_wtime()
 !
             call wf%construct_ao_fock_densdiff(sp_eri_schwarz, sp_eri_schwarz_list, &
-                                       n_s, prev_ao_density, solver%coulomb_thr, solver%exchange_thr, solver%coulomb_precision)
+                                       n_s, prev_ao_density, h_wx, solver%coulomb_thr, solver%exchange_thr, &
+                                       solver%coulomb_precision)
 
             end_timer = omp_get_wtime()
             write(output%unit, *) 'Time to construct AO Fock: ', end_timer-start_timer 
@@ -429,6 +436,11 @@ contains
          iteration = iteration + 1
 !
       enddo
+!
+      call mem%dealloc(prev_ao_density, wf%n_ao, wf%n_ao)
+      call mem%dealloc(diff_ao_density, wf%n_ao, wf%n_ao)
+!
+      call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
 !
       call mem%dealloc(G, wf%n_ao, wf%n_ao)
       call mem%dealloc(H, wf%n_ao, wf%n_ao)

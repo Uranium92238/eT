@@ -38,6 +38,9 @@ extern Engine overlap;
 vector<Atom> atoms;
 extern vector<Atom> atoms;
 
+vector<long> shell2bf_g;
+extern vector<long> shell2bf_g;
+
 void initialize_atoms(char *name){
 
     string xyzfilename(strcat(name,".xyz"));
@@ -90,6 +93,8 @@ void initialize_coulomb(){
 	for (int i = 0; i != omp_get_max_threads(); i++){
 		electronic_repulsion_engines[i] = temporary; // One engine per thread
 	}
+
+	shell2bf_g = basis.shell2bf(); // testing something
 
 }
 

@@ -45,6 +45,7 @@ module hf_class
       procedure :: construct_mo_fock    => construct_mo_fock_hf
       procedure :: construct_ao_overlap => construct_ao_overlap_hf
       procedure :: calculate_hf_energy  => calculate_hf_energy_hf
+      procedure :: calculate_hf_energy_2  => calculate_hf_energy_2_hf
 !
 !     Rotate and purification routines for the AO density
 !
@@ -598,7 +599,7 @@ contains
 !
             B_interval = wf%system%shell_limits(B)
 !
-            if (sp_eri_schwarz(A, B)**2 .lt. 1.0d-10 ) cycle
+           ! if (sp_eri_schwarz(A, B)**2 .lt. 1.0d-10 ) cycle
 !           
             do C = 1, n_s
 !
@@ -671,7 +672,7 @@ contains
 !
             C_interval = wf%system%shell_limits(C)
 !
-            if (sp_eri_schwarz(A, C)**2 .lt. 1.0d-8 ) cycle
+        !    if (sp_eri_schwarz(A, C)**2 .lt. 1.0d-8 ) cycle
 !
             do B = 1, A
 !
@@ -937,7 +938,7 @@ contains
 !
 !
   subroutine construct_ao_fock_densdiff_hf(wf, sp_eri_schwarz, sp_eri_schwarz_list, &
-                                       n_s, prev_ao_density, coulomb, exchange, precision)
+                                       n_s, prev_ao_density, h_wx, coulomb, exchange, precision)
 !!
 !!    Construct AO Fock matrix
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -967,12 +968,14 @@ contains
       real(dp), dimension(n_s*(n_s + 1)/2, 1)     :: sp_eri_schwarz
       integer(i15), dimension(n_s*(n_s + 1)/2, 3) :: sp_eri_schwarz_list ! list(s1s2, 1) = s1, list(s1s2, 2) = s2, list(s1s2, 3) = s1s2_sorted
 !
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
+!
       real(dp), optional :: coulomb, exchange, precision ! Non-standard thresholds
 !
       real(dp) :: coulomb_thr, exchange_thr, precision_thr ! Actual thresholds 
 !
       real(dp), dimension(:,:), allocatable :: ao_fock_packed
-      real(dp), dimension(:,:), allocatable :: X_wz, h_wx, h_wx_square
+      real(dp), dimension(:,:), allocatable :: X_wz, h_wx_square
       integer(i15) :: w, x, y, z, wx, yz, w_red, x_red, y_red, z_red
 !
       integer(i15) :: n_threads, omp_get_max_threads, thread_offset, thread, omp_get_thread_num
@@ -1029,11 +1032,7 @@ contains
 !
       endif
 !
-      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
-      call get_ao_h_xy(h_wx)
-!
-      wf%ao_density = wf%ao_density - prev_ao_density ! Temporary
-      wf%ao_fock = wf%ao_fock - h_wx                  ! Temporary
+      wf%ao_density = wf%ao_density - prev_ao_density 
 !
       call mem%alloc(sp_density_schwarz, n_s, n_s)
 !
@@ -1112,12 +1111,7 @@ contains
       call symmetric_sum(wf%ao_fock, wf%n_ao)
       wf%ao_fock = wf%ao_fock*half
 !
-      call wf%calculate_hf_energy(wf%ao_fock, h_wx)
-!
-      wf%ao_fock = wf%ao_fock + h_wx
-!
-      call mem%dealloc(h_wx, wf%n_ao*(wf%n_ao+1)/2, 1)
-!
+      call wf%calculate_hf_energy_2(wf%ao_fock, h_wx)
 !
    end subroutine construct_ao_fock_densdiff_hf
 !
@@ -1228,7 +1222,9 @@ contains
 !
               ! call wf%system%ao_integrals%get_ao_g_wxyz(g, s1, s2, s3, s4) 
               ! skip = 0
-               call wf%system%ao_integrals%get_ao_g_wxyz_epsilon(g, s1, s2, s3, s4, precision_thr/max(temp7,temp8), thread, skip)
+               call wf%system%ao_integrals%get_ao_g_wxyz_epsilon(g, s1, s2, s3, s4, &
+                  precision_thr/max(temp7,temp8), thread, skip, shells(s1)%size, shells(s2)%size, &
+                  shells(s3)%size, shells(s4)%size)
 !
                if (skip == 1) cycle
 !
@@ -1331,6 +1327,40 @@ contains
       wf%hf_energy = wf%hf_energy + two*(one/four)*ddot((wf%n_ao)**2, wf%ao_density, 1, half_GD_wx, 1)
 
    end subroutine calculate_hf_energy_hf
+!
+!
+   subroutine calculate_hf_energy_2_hf(wf, F_wx, h_wx)
+!!
+!!    Calculate HF energy
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Calculates the Hartree-Fock energy,
+!!
+!!       E = Tr(h D) + 1/4 * Tr(D G(D)) = 1/2 * Tr (F D) + 1/2 * Tr(h D),
+!!
+!!    where D is the AO density and
+!!
+!!       G(D)_αβ = 2 sum_γδ g_αβγδ D_γδ - sum_γδ g_αδγβ D_γδ
+!!
+!!    The traces are calculated as dot products (since B is symmetric here):
+!!
+!!       Tr(AB) = sum_x (AB)_xx = sum_xy A_xy B_yx = sum_xy A_xy B_xy.
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      real(dp) :: ddot
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: F_wx
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
+!
+      wf%hf_energy = wf%system%get_nuclear_repulsion()
+!
+      wf%hf_energy = wf%hf_energy + one/two*ddot((wf%n_ao)**2, h_wx, 1, wf%ao_density, 1)
+      wf%hf_energy = wf%hf_energy + one/two*ddot((wf%n_ao)**2, wf%ao_density, 1, F_wx, 1)
+
+   end subroutine calculate_hf_energy_2_hf
 !
 !
    subroutine set_ao_density_hf(wf, D)
