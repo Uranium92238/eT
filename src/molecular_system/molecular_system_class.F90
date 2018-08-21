@@ -12,6 +12,7 @@ module molecular_system_class
    use atom_init
    use libint_initialization
    use ao_integral_manager_class
+   use active_atoms_info_class
 !
    implicit none
 !
@@ -29,6 +30,10 @@ module molecular_system_class
       type(ao_integral_manager) :: ao_integrals
 !
       type(interval), dimension(:), allocatable :: shell_limits 
+!
+      logical :: active_atoms = .false.
+!
+     ! type(active_atoms_info), allocatable :: active_atoms
 !
    contains
 !
@@ -49,6 +54,8 @@ module molecular_system_class
       procedure :: SAD => SAD_molecular_system
 !
       procedure :: shell_to_atom => shell_to_atom_molecular_system
+!
+      procedure :: reorder_atoms => reorder_atoms_molecular_system
 !
    end type molecular_system
 !
@@ -75,15 +82,22 @@ contains
       integer(kind=4), dimension(:,:), allocatable :: first_ao_in_shells
       integer(kind=4), dimension(:,:), allocatable :: shell_numbers
 !
-      call molecule%read_info
+      call molecule%read_info()
 !
       allocate(molecule%atoms(molecule%n_atoms))
-      allocate(molecule%basis_sets(molecule%n_basis_sets))
 !
       allocate(n_shells_on_atoms(molecule%n_atoms, 1))
       n_shells_on_atoms = 0
 !
-      call molecule%read_geometry
+      call molecule%read_geometry()
+!
+      if (requested_section('active atoms')) then
+!
+         call molecule%reorder_atoms()
+!
+      endif
+!
+      call molecule%write()
 !
       do i = 1, molecule%n_atoms
 !
@@ -95,10 +109,12 @@ contains
 !
       do i = 1, molecule%n_basis_sets ! Loop over atoms 
          write(temp_name, '(a, a1, i4.4)')trim(molecule%name), '_', i
-         call initialize_basis(molecule%basis_sets(i), temp_name) ! Currently basis is equal to basis on first
+         write(output%unit, *)trim(temp_name), molecule%basis_sets(i)
+         call initialize_basis(molecule%basis_sets(i), temp_name) 
       enddo
-
+!
       call get_n_shells_on_atoms(n_shells_on_atoms)
+      write(output%unit,*)n_shells_on_atoms
 !
       do i = 1, molecule%n_atoms ! Loop over atoms
 !
@@ -110,6 +126,7 @@ contains
 !
 !        Then determine the number of basis functions in each shell
 !        and save number of aos per atom
+
 !
          allocate(n_basis_in_shells(n_shells_on_atoms(i,1), 1))
          call get_n_basis_in_shells(i, n_basis_in_shells)
@@ -200,6 +217,7 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    Sets the number of atoms, charge and name of the molecule.
+!!    Determine if we have active space 
 !!
       implicit none
 !
@@ -244,19 +262,23 @@ contains
 
             backspace(input%unit)
 
-            elseif (line(1:5) == 'name:' .or.  &
-                    line(1:5) == 'Name:' .or.  &
-                    line(1:5) == 'NAME:' ) then
+         elseif (line(1:5) == 'name:' .or.  &
+                 line(1:5) == 'Name:' .or.  &
+                 line(1:5) == 'NAME:' ) then
 
-               molecule%name = trim(line(6:100))
-               molecule%name = remove_preceding_blanks(molecule%name)
+            molecule%name = trim(line(6:100))
+            molecule%name = remove_preceding_blanks(molecule%name)
 
-            elseif (line(1:7) == 'charge:' .or.  &
-                    line(1:7) == 'Charge:' .or.  &
-                    line(1:7) == 'CHARGE:' ) then
+         elseif (line(1:7) == 'charge:' .or.  &
+                 line(1:7) == 'Charge:' .or.  &
+                 line(1:7) == 'CHARGE:' ) then
 
-               read(line(8:100),*) molecule%charge
-
+            read(line(8:100),*) molecule%charge
+!
+         elseif (line(1:12) == 'active atoms') then
+!
+            molecule%active_atoms = .true.
+!
          endif
 
          read(input%unit,'(a)') line
@@ -296,12 +318,12 @@ contains
 !
       type(file) :: basis_file, mol_file
 !
-      call mem%alloc_int(atoms_with_current_basis, molecule%n_basis_sets, 1)
+    !  call mem%alloc_int(atoms_with_current_basis, molecule%n_basis_sets, 1)
 !
-      call mol_file%init(trim(molecule%name) // '.xyz', 'sequential', 'formatted')
-      call disk%open_file(mol_file, 'write', 'rewind')
+     ! call mol_file%init(trim(molecule%name) // '.xyz', 'sequential', 'formatted')
+     ! call disk%open_file(mol_file, 'write', 'rewind')
 !
-      write(mol_file%unit, '(i4/)') molecule%n_atoms
+     ! write(mol_file%unit, '(i4/)') molecule%n_atoms
 !
       rewind(input%unit)
 !
@@ -318,11 +340,11 @@ contains
              line(1:6) == 'BASIS:' ) then
 !     
             current_basis_nbr = current_basis_nbr + 1
-            atoms_with_current_basis(current_basis_nbr , 1) = 0
+           ! atoms_with_current_basis(current_basis_nbr , 1) = 0
 !
             current_basis = trim(line(7:100))
             current_basis = remove_preceding_blanks(current_basis)
-            molecule%basis_sets(current_basis_nbr) = current_basis    
+           ! molecule%basis_sets(current_basis_nbr) = current_basis    
 !
             read(input%unit,'(a)') line
             line = remove_preceding_blanks(line)
@@ -333,8 +355,8 @@ contains
                       line(1:6) .ne. 'Basis:'        .and.  &
                       line(1:6) .ne. 'BASIS:')
 !
-               write(mol_file%unit, '(a)') line 
-               atoms_with_current_basis(current_basis_nbr , 1) = atoms_with_current_basis(current_basis_nbr , 1) + 1
+              ! write(mol_file%unit, '(a)') line 
+              ! atoms_with_current_basis(current_basis_nbr , 1) = atoms_with_current_basis(current_basis_nbr , 1) + 1
 !
                current_atom = current_atom + 1
 !
@@ -398,33 +420,33 @@ contains
 !
       enddo
 !
-      call disk%close_file(mol_file)
+      !call disk%close_file(mol_file)
 !
-      call disk%open_file(mol_file, 'read')
-      rewind(mol_file%unit)
-      read(mol_file%unit, '(a)') line
-      read(mol_file%unit, '(a)') line
+      !call disk%open_file(mol_file, 'read')
+      !rewind(mol_file%unit)
+     ! read(mol_file%unit, '(a)') line
+     ! read(mol_file%unit, '(a)') line
 !
-      do current_basis_nbr = 1, molecule%n_basis_sets
+     ! do current_basis_nbr = 1, molecule%n_basis_sets
 !
-         write(temp_name, '(a, a1, i4.4, a4)')trim(molecule%name), '_', current_basis_nbr,  '.xyz'
+     !    write(temp_name, '(a, a1, i4.4, a4)')trim(molecule%name), '_', current_basis_nbr,  '.xyz'
 !
-         call basis_file%init(trim(temp_name), 'sequential', 'formatted')
-         call disk%open_file(basis_file, 'write', 'rewind')
+     !    call basis_file%init(trim(temp_name), 'sequential', 'formatted')
+    !     call disk%open_file(basis_file, 'write', 'rewind')
 !
-         write(basis_file%unit, '(i4/)') atoms_with_current_basis(current_basis_nbr, 1)
-         do i = 1, atoms_with_current_basis(current_basis_nbr, 1)
-            read(mol_file%unit, '(a)') line 
-            write(basis_file%unit, '(a)') line 
-         enddo
+     !    write(basis_file%unit, '(i4/)') atoms_with_current_basis(current_basis_nbr, 1)
+     !    do i = 1, atoms_with_current_basis(current_basis_nbr, 1)
+     !       read(mol_file%unit, '(a)') line 
+     !       write(basis_file%unit, '(a)') line 
+    !    enddo
 !
-         call disk%close_file(basis_file)
+    !     call disk%close_file(basis_file)
 !
-      enddo
+   !   enddo
 !
-      call mem%dealloc_int(atoms_with_current_basis, molecule%n_basis_sets, 1)
+   !   call mem%dealloc_int(atoms_with_current_basis, molecule%n_basis_sets, 1)
 !
-      call disk%close_file(mol_file)
+    !  call disk%close_file(mol_file)
 !
    end subroutine read_geometry_molecular_system
 !
@@ -444,27 +466,310 @@ contains
       integer(i15) :: atom = 0
 !
       character(len=100) temp_name
+      character(len=100) current_basis
 !
       type(file) :: mol_file, basis_file
+!
+      integer(i15) :: basis_set_counter, atom_offset, current_basis_nbr, i
+!
+      integer(i15), dimension(:,:), allocatable :: n_atoms_in_basis
+!
+!     Write atom file
 !
       call mol_file%init(trim(molecule%name) // '.xyz', 'sequential', 'formatted')
       call disk%open_file(mol_file, 'write', 'rewind')
 !
-      write(mol_file%unit, '(i3/)') molecule%n_atoms
+      write(mol_file%unit, '(i5/)') molecule%n_atoms
 !
       do atom = 1, molecule%n_atoms
 !
-         write(mol_file%unit, '(a3, 3x, f21.16, 3x, f21.16, 3x, f21.16)')  &
-                                 molecule%atoms(atom)%symbol,           &
-                                 molecule%atoms(atom)%x,                &
-                                 molecule%atoms(atom)%y,                &
-                                 molecule%atoms(atom)%z
+         write(mol_file%unit, '(a2, 3x, f21.16, 3x, f21.16, 3x, f21.16)')  &
+                                    molecule%atoms(atom)%symbol,           &
+                                    molecule%atoms(atom)%x,                &
+                                    molecule%atoms(atom)%y,                &
+                                    molecule%atoms(atom)%z
 !
       enddo
 !
       call disk%close_file(mol_file)
 !
+!     Count number of basis sets
+!
+      current_basis = molecule%atoms(1)%basis
+      molecule%n_basis_sets = 1
+!
+      do atom = 2, molecule%n_atoms
+!
+         if (molecule%atoms(1)%basis .ne. current_basis) then
+!
+            current_basis = molecule%atoms(atom)%basis
+            molecule%n_basis_sets = molecule%n_basis_sets + 1
+!
+         endif
+!
+      enddo
+!
+      allocate(molecule%basis_sets(molecule%n_basis_sets))
+      call mem%alloc_int(n_atoms_in_basis, molecule%n_basis_sets, 1)
+!
+      n_atoms_in_basis = 1
+      basis_set_counter = 1
+      molecule%basis_sets(basis_set_counter) = molecule%atoms(1)%basis
+!
+!     Count number of atoms in each basis
+!
+      do atom = 2, molecule%n_atoms
+!
+         if (molecule%atoms(1)%basis .ne. molecule%basis_sets(basis_set_counter)) then
+!
+            basis_set_counter = basis_set_counter + 1
+            molecule%basis_sets(basis_set_counter) = molecule%atoms(atom)%basis
+!
+         else
+!
+            n_atoms_in_basis(basis_set_counter, 1) = n_atoms_in_basis(basis_set_counter, 1) + 1
+!
+         endif
+!
+      enddo
+!
+      atom_offset = 0
+!
+      do current_basis_nbr = 1, molecule%n_basis_sets
+!
+         write(temp_name, '(a, a1, i4.4, a4)')trim(molecule%name), '_', current_basis_nbr,  '.xyz'
+!
+         call basis_file%init(trim(temp_name), 'sequential', 'formatted')
+         call disk%open_file(basis_file, 'write', 'rewind')
+!
+         write(basis_file%unit, '(i5/)') n_atoms_in_basis(current_basis_nbr, 1)
+!
+         do i = 1, n_atoms_in_basis(current_basis_nbr, 1)
+!
+            atom = i + atom_offset
+!
+            write(basis_file%unit, '(a2, 3x, f21.16, 3x, f21.16, 3x, f21.16)') &
+                                       molecule%atoms(atom)%symbol,           &
+                                       molecule%atoms(atom)%x,                &
+                                       molecule%atoms(atom)%y,                &
+                                       molecule%atoms(atom)%z
+!
+         enddo
+!
+         call disk%close_file(basis_file)
+!
+         atom_offset = atom_offset + n_atoms_in_basis(current_basis_nbr, 1)
+!
+      enddo
+!
+      call mem%dealloc_int(n_atoms_in_basis, molecule%n_basis_sets, 1)
+!
    end subroutine write_molecular_system
+!
+!
+   subroutine reorder_atoms_molecular_system(molecule)
+!!
+!!    Reorder atoms
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad
+!!
+!!    Reorder atoms in case of active atoms
+!!
+!!
+      implicit none
+!
+      class(molecular_system) :: molecule
+!
+      character(len=100) :: line
+!
+      integer(i15) :: i, j, active_atom_counter, ioerror = 0, first, last, n_active_atoms, atom_counter
+      integer(i15) :: central_atom
+!
+      integer(i15), dimension(:,:), allocatable :: active_atoms
+!
+      type(atomic), dimension(:), allocatable :: atoms_copy
+!
+      logical :: found
+!
+      real(dp) :: hf_radius, x, y, z
+!
+      rewind(input%unit)
+!
+      read(input%unit,'(a)', iostat=ioerror) line
+      line = remove_preceding_blanks(line)
+!
+      do while (trim(line) .ne. 'geometry')
+!
+         if (trim(line) == 'active atoms') then
+!
+            do while (trim(line) .ne. 'end active atoms')
+!
+               read(input%unit,'(a)', iostat=ioerror) line
+               line = remove_preceding_blanks(line)
+!
+               if (line(1:8) == 'hf list:') then
+!
+                  line = line(9:100)
+                  line = remove_preceding_blanks(line)
+                  n_active_atoms = 0
+!
+                  do i = 1, 92
+!
+                     if (line(i:i) .ne. ' ') n_active_atoms = n_active_atoms + 1
+!
+                  enddo
+!
+                  call mem%alloc_int(active_atoms, n_active_atoms, 1)
+                  read(line, *) active_atoms
+                  exit
+!
+               elseif (line(1:9) == 'hf range:') then 
+!
+                  line = line(10:100)
+                  line = remove_preceding_blanks(line)
+!
+                  if (line(1:1)=='[') then ! range given
+!
+                     do i = 2, 100
+!
+                        if (line(i:i) == ',') exit
+!
+                     enddo
+!
+                     read(line(2:i-1), *) first
+!
+                     do j = i, 100
+!
+                        if (line(j:j) == ']') exit
+!
+                     enddo
+!
+                     read(line(i+1:j-1), *) last
+!
+                     n_active_atoms = last - first + 1
+!
+                     call mem%alloc_int(active_atoms, n_active_atoms, 1)
+!
+                     do i = first, last
+!
+                        active_atoms(i - first + 1, 1) = i
+!
+                     enddo
+!
+                     exit
+!
+                  else 
+!
+                     call output%error_msg('active atom range not detected.')
+!
+                  endif
+!
+               elseif (line(1:13) == 'central atom:') then
+!
+                  read(line(14:100), *) central_atom
+!
+                  do while (trim(line) .ne. 'end active atoms')
+!
+                     read(input%unit,'(a)') line
+                     line = remove_preceding_blanks(line)
+!
+                     if (line(1:10) == 'hf radius:') then
+!
+                        line = line(11:100)
+                        line = remove_preceding_blanks(line)
+                        read(line, *) hf_radius ! In Ångstom
+!
+                     endif
+!
+                     n_active_atoms = 0
+!
+                     do i = 1, molecule%n_atoms 
+!
+                        x = (molecule%atoms(central_atom)%x - molecule%atoms(i)%x)
+                        y = (molecule%atoms(central_atom)%y - molecule%atoms(i)%y)
+                        z = (molecule%atoms(central_atom)%z - molecule%atoms(i)%z)
+!
+                        if (sqrt(x**2 + y**2 + z**2) .le. hf_radius) n_active_atoms = n_active_atoms + 1
+!
+                     enddo
+!
+                     call mem%alloc_int(active_atoms, n_active_atoms, 1)
+!
+                     active_atom_counter = 0
+!
+                     do i = 1, molecule%n_atoms 
+!
+                        x = (molecule%atoms(central_atom)%x - molecule%atoms(i)%x)
+                        y = (molecule%atoms(central_atom)%y - molecule%atoms(i)%y)
+                        z = (molecule%atoms(central_atom)%z - molecule%atoms(i)%z)
+!
+                        if (sqrt(x**2 + y**2 + z**2) .le. hf_radius) then 
+!
+                           active_atom_counter = active_atom_counter + 1
+!
+                           active_atoms(active_atom_counter, 1) = i
+!
+                        endif
+!
+                     enddo
+!
+                  enddo
+                  exit
+!
+               else
+!
+                  call output%error_msg('active atom input not recognized.')
+!
+               endif
+            enddo
+         endif
+!
+         read(input%unit,'(a)') line
+         line = remove_preceding_blanks(line)
+!
+      enddo
+!
+      write(output%unit, *)'active_atoms:', active_atoms
+!
+!     Reorder atoms
+!
+      allocate(atoms_copy(molecule%n_atoms))
+      atoms_copy = molecule%atoms
+!
+      do i = 1, n_active_atoms
+!
+         molecule%atoms(i) = atoms_copy(active_atoms(i, 1))
+!
+      enddo
+!
+      atom_counter = n_active_atoms + 1
+!
+      do i = 1, molecule%n_atoms
+!
+         found = .false.
+!
+         do j = 1, n_active_atoms
+!
+            if (i == active_atoms(j, 1)) then
+!
+               found = .true.
+               exit
+!
+            endif
+!
+         enddo
+!
+         if (.not. found) then
+!
+            molecule%atoms(atom_counter) = atoms_copy(i)
+            atom_counter = atom_counter + 1
+!
+         endif 
+!
+      enddo
+!
+      deallocate(atoms_copy)
+!
+   end subroutine reorder_atoms_molecular_system
 !
 !
    function get_nuclear_repulsion_molecular_system(molecule)

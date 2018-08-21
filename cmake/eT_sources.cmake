@@ -36,6 +36,6 @@ set(eT_fortran_sources
    src/molecular_system/shell_class.F90
    src/molecular_system/basis_set_info.F90
    src/libint/atom_init.F90
-   src/molecular_system/active_atoms_class.F90
+   src/molecular_system/active_atoms_info_class.F90
    src/solver_tools/diis.F90
 )

@@ -10,7 +10,7 @@ module mlhf_class
    use reordering
    use interval_class
    use index
-   use active_atoms_class
+   use active_atoms_info_class
 !
    use eri_cd_solver_class
 !
@@ -20,7 +20,7 @@ module mlhf_class
 !
    type, extends(hf):: mlhf
 !
-      type(active_atoms) :: active_space
+      type(active_atoms_info) :: active_space
 !
    contains
 !
@@ -105,11 +105,11 @@ contains
 !
       real(dp) :: max, e_construct_fock, s_construct_fock, omp_get_wtime
 !
-      integer(i15), dimension(:,:), allocatable :: active_aos
+      integer(i15), dimension(:,:), allocatable :: active_aos, sp_eri_schwarz_list
 !
       integer(i15) :: ao, n_active_occ, n_active_vir, n_s
 !
-      real(dp), dimension(:,:), allocatable :: density_diagonal, eri_deg
+      real(dp), dimension(:,:), allocatable :: density_diagonal, eri_deg, sp_eri_schwarz
 !
       type(eri_cd_solver)  :: chol_solver
 !
@@ -140,6 +140,16 @@ contains
       s_construct_fock = omp_get_wtime()
 !
       call wf%construct_ao_fock_SAD()
+      write(output%unit,*)wf%hf_energy
+
+     ! call mem%alloc(sp_eri_schwarz, n_s*(n_s + 1)/2, 1)
+     ! call mem%alloc_int(sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
+     ! call wf%construct_sp_eri_schwarz(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
+     ! call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
+     ! write(output%unit,*)wf%hf_energy
+     ! call mem%dealloc(sp_eri_schwarz, n_s*(n_s + 1)/2, 1)
+     ! call mem%dealloc_int(sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
+     ! stop
 !
       e_construct_fock = omp_get_wtime()
       write(output%unit, '(/a49, f11.2)')'Wall time to construct AO fock from SAD density: ', &

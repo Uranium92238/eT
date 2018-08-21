@@ -6,6 +6,7 @@ module io_utilities
 !!
 !
    use kinds
+   use file_class
 !
 contains
 !
@@ -42,6 +43,42 @@ contains
       enddo
 !
    end function remove_preceding_blanks
+!
+!
+   logical function requested_section(string)
+!!
+!!
+!!
+      implicit none
+!
+      character(len=*) :: string
+!
+      character(len=100) :: line
+!
+      rewind(input%unit)
+!
+      requested_section = .false.
+!
+      do 
+!
+         read(input%unit, '(a100)') line
+         line = remove_preceding_blanks(line)
+!
+         if (trim(line) .eq. 'end geometry') then
+            backspace(input%unit)
+            return
+         endif
+!
+         if (trim(line) == string) then
+!
+            requested_section = .true.
+            return
+! 
+         endif
+!
+      enddo
+!
+   end function requested_section
 !
 !
 end module
