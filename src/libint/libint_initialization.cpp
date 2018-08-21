@@ -85,10 +85,18 @@ void initialize_coulomb(){
 
 
 	Engine temporary(Operator::coulomb, basis.max_nprim(), basis.max_l());
-	temporary.set_precision(1.0e-16);
+	temporary.set_precision(1.0e-25);
 
 	for (int i = 0; i != omp_get_max_threads(); i++){
 		electronic_repulsion_engines[i] = temporary; // One engine per thread
+	}
+
+}
+
+void set_coulomb_precision(double *prec){
+
+	for (int i = 0; i != omp_get_max_threads(); i++){
+		electronic_repulsion_engines[i].set_precision(*prec); // One engine per thread
 	}
 
 }

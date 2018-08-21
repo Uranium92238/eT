@@ -7,6 +7,16 @@ module libint_initialization
 !
 contains
 !
+   subroutine set_coulomb_precision(prec)
+!
+      implicit none
+!
+      real(kind=8) :: prec
+!
+      call set_coulomb_precision_c(prec)
+!
+   end subroutine set_coulomb_precision
+!
    subroutine initialize_libint()
 !
       implicit none

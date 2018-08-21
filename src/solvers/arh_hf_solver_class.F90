@@ -18,16 +18,16 @@ module arh_hf_solver_class
 !
    type, extends(hf_solver) :: arh_hf_solver
 !
-      integer(i15) :: max_micro_iterations = 750
+      integer(i15) :: max_micro_iterations = 1500
 !
       real(dp) :: purification_threshold           = 1.0D-8
-      real(dp) :: relative_micro_threshold         = 1.0D-3 
+      real(dp) :: relative_micro_threshold         = 1.0D-2
       real(dp) :: relative_shifted_micro_threshold = 1.0D-3 
 !
-      real(dp) :: trust_radius                     = 0.50D0 
+      real(dp) :: trust_radius                     = 0.20D0 
       real(dp) :: relative_trust_radius_threshold  = 0.10D0
 !
-      real(dp) :: rotation_norm_threshold          = 0.2D0
+      real(dp) :: rotation_norm_threshold          = 0.1D0
 !
       integer(i15) :: diis_dimension = 25
 !
@@ -36,11 +36,12 @@ module arh_hf_solver_class
       type(file) :: RH_gradients_file 
       type(file) :: AO_densities_file 
 !
-      integer(i15) :: history = 20
+      integer(i15) :: history = 10
       integer(i15) :: current_index
 !
-      real(dp) :: relative_coulomb_thr  = 1.0D-9
-      real(dp) :: relative_exchange_thr = 1.0D-7
+      real(dp) :: coulomb_thr       = 1.0D-11 ! screening 
+      real(dp) :: coulomb_precision = 1.0D-14 ! integral accuracy
+      real(dp) :: exchange_thr      = 1.0D-11 ! screening 
 !
    contains
 !
@@ -122,7 +123,7 @@ contains
 !
       real(dp) :: norm_X 
 !
-      logical :: transpose_left
+      logical :: transpose_left, building_fock
 !
       real(dp) :: beta, coulomb_thr, exchange_thr
 !
@@ -144,6 +145,7 @@ contains
       integer(i15) :: n_s, i 
 !
       real(dp) :: trace_of_ao_density
+      real(dp), dimension(:,:), allocatable :: prev_ao_density
 !
       real(dp), dimension(:,:), allocatable     :: sp_eri_schwarz
       integer(i15), dimension(:,:), allocatable :: sp_eri_schwarz_list
@@ -166,7 +168,7 @@ contains
 !
       n_s = wf%system%get_n_shells()
 !
-      call mem%alloc(sp_eri_schwarz, n_s*(n_s + 1)/2, 1)
+      call mem%alloc(sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
       call mem%alloc_int(sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
       call wf%construct_sp_eri_schwarz(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
 !
@@ -174,17 +176,10 @@ contains
 !
       call wf%initialize_ao_fock()
 !
-      trace_of_ao_density = zero 
-      do i = 1, wf%n_ao 
-         trace_of_ao_density = trace_of_ao_density + wf%ao_density(i,i)
-      enddo
-      !write(output%unit, *) 'Trace of ao density: ', trace_of_ao_density
-!
-      coulomb_thr  = solver%relative_coulomb_thr
-      exchange_thr = solver%relative_exchange_thr
-!
       start_timer = omp_get_wtime()
-      call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s, coulomb_thr, exchange_thr) 
+      call set_coulomb_precision(1.0D-10) 
+      call wf%construct_ao_fock_SAD()
+      call set_coulomb_precision(solver%coulomb_precision)
       end_timer = omp_get_wtime()
       write(output%unit, *) 'Time to construct AO Fock from SAD: ', end_timer-start_timer
       flush(output%unit)
@@ -209,7 +204,8 @@ contains
       call wf%destruct_mo_coefficients()
 !
       start_timer = omp_get_wtime()
-      call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s)  
+      call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s, &
+                           solver%coulomb_thr, solver%exchange_thr, solver%coulomb_precision)  
       end_timer = omp_get_wtime()
       write(output%unit, *) 'Time to construct AO Fock: ', end_timer-start_timer 
 !
@@ -264,6 +260,10 @@ contains
 !
       call mem%alloc(G, wf%n_ao, wf%n_ao)
       call mem%alloc(H, wf%n_ao, wf%n_ao)
+!
+      call mem%alloc(prev_ao_density, wf%n_ao, wf%n_ao)
+!
+      building_fock = .false.
 !
       do while (.not. converged .and. iteration .le. solver%max_iterations)
 !
@@ -403,6 +403,8 @@ contains
 !
 !           :: Rotate the AO density and purify it           
 !
+            prev_ao_density = wf%ao_density
+!
             call solver%rotate_and_purify(wf, X_pck, one, norm_X)
             call mem%dealloc(X_pck, packed_size(wf%n_ao-1), 1)
 !
@@ -410,12 +412,15 @@ contains
 !           and set previous gradient and step direction to current, in preparation 
 !           for next conjugate gradient iteration
 !
-            coulomb_thr  = max(1.0D-10, max_grad*solver%relative_coulomb_thr)
-            exchange_thr = max(1.0D-8, max_grad*solver%relative_exchange_thr)
+            write(output%unit, *) 'Coulomb threshold:', solver%coulomb_thr
+            write(output%unit, *) 'Exchange threshold:', solver%exchange_thr
 !
             prev_energy = wf%hf_energy
             start_timer = omp_get_wtime()
-            call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
+!
+            call wf%construct_ao_fock_densdiff(sp_eri_schwarz, sp_eri_schwarz_list, &
+                                       n_s, prev_ao_density, solver%coulomb_thr, solver%exchange_thr, solver%coulomb_precision)
+
             end_timer = omp_get_wtime()
             write(output%unit, *) 'Time to construct AO Fock: ', end_timer-start_timer 
 !

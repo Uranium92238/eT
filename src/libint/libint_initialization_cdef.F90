@@ -1,5 +1,14 @@
 interface
 !
+   subroutine set_coulomb_precision_c(prec) bind(C, name='set_coulomb_precision')
+!
+      use iso_c_binding
+      implicit none
+!
+      real(c_double) :: prec
+!
+   end subroutine set_coulomb_precision_c
+!
    subroutine initialize_basis_c(basisset,filename) bind(C, name='initialize_basis')
 !
       use iso_c_binding, only: C_CHAR, C_LONG
