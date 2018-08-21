@@ -33,7 +33,7 @@ module molecular_system_class
 !
       logical :: active_atoms = .false.
 !
-     ! type(active_atoms_info), allocatable :: active_atoms
+      integer(i15) :: n_active_atoms = 0
 !
    contains
 !
@@ -581,7 +581,7 @@ contains
 !
       character(len=100) :: line
 !
-      integer(i15) :: i, j, active_atom_counter, ioerror = 0, first, last, n_active_atoms, atom_counter
+      integer(i15) :: i, j, active_atom_counter, ioerror = 0, first, last, atom_counter
       integer(i15) :: central_atom
 !
       integer(i15), dimension(:,:), allocatable :: active_atoms
@@ -610,15 +610,15 @@ contains
 !
                   line = line(9:100)
                   line = remove_preceding_blanks(line)
-                  n_active_atoms = 0
+                  molecule%n_active_atoms = 0
 !
                   do i = 1, 92
 !
-                     if (line(i:i) .ne. ' ') n_active_atoms = n_active_atoms + 1
+                     if (line(i:i) .ne. ' ') molecule%n_active_atoms = molecule%n_active_atoms + 1
 !
                   enddo
 !
-                  call mem%alloc_int(active_atoms, n_active_atoms, 1)
+                  call mem%alloc_int(active_atoms, molecule%n_active_atoms, 1)
                   read(line, *) active_atoms
                   exit
 !
@@ -645,9 +645,9 @@ contains
 !
                      read(line(i+1:j-1), *) last
 !
-                     n_active_atoms = last - first + 1
+                     molecule%n_active_atoms = last - first + 1
 !
-                     call mem%alloc_int(active_atoms, n_active_atoms, 1)
+                     call mem%alloc_int(active_atoms, molecule%n_active_atoms, 1)
 !
                      do i = first, last
 !
@@ -680,7 +680,7 @@ contains
 !
                      endif
 !
-                     n_active_atoms = 0
+                     molecule%n_active_atoms = 0
 !
                      do i = 1, molecule%n_atoms 
 !
@@ -688,11 +688,11 @@ contains
                         y = (molecule%atoms(central_atom)%y - molecule%atoms(i)%y)
                         z = (molecule%atoms(central_atom)%z - molecule%atoms(i)%z)
 !
-                        if (sqrt(x**2 + y**2 + z**2) .le. hf_radius) n_active_atoms = n_active_atoms + 1
+                        if (sqrt(x**2 + y**2 + z**2) .le. hf_radius) molecule%n_active_atoms = molecule%n_active_atoms + 1
 !
                      enddo
 !
-                     call mem%alloc_int(active_atoms, n_active_atoms, 1)
+                     call mem%alloc_int(active_atoms, molecule%n_active_atoms, 1)
 !
                      active_atom_counter = 0
 !
@@ -735,19 +735,19 @@ contains
       allocate(atoms_copy(molecule%n_atoms))
       atoms_copy = molecule%atoms
 !
-      do i = 1, n_active_atoms
+      do i = 1, molecule%n_active_atoms
 !
          molecule%atoms(i) = atoms_copy(active_atoms(i, 1))
 !
       enddo
 !
-      atom_counter = n_active_atoms + 1
+      atom_counter = molecule%n_active_atoms + 1
 !
       do i = 1, molecule%n_atoms
 !
          found = .false.
 !
-         do j = 1, n_active_atoms
+         do j = 1, molecule%n_active_atoms
 !
             if (i == active_atoms(j, 1)) then
 !
