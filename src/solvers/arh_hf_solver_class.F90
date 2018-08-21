@@ -36,7 +36,7 @@ module arh_hf_solver_class
       type(file) :: RH_gradients_file 
       type(file) :: AO_densities_file 
 !
-      integer(i15) :: history = 10
+      integer(i15) :: history = 25
       integer(i15) :: current_index
 !
       real(dp) :: coulomb_thr       = 1.0D-11 ! screening 
