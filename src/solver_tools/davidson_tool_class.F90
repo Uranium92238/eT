@@ -43,6 +43,8 @@ module davidson_tool_class
 !     Other procedures
 !
       procedure, non_overridable :: construct_reduced_matrix => construct_reduced_matrix_davidson_tool
+      procedure, non_overridable :: construct_X => construct_X_davidson_tool
+      procedure, non_overridable :: construct_AX => construct_AX_davidson_tool
 !
 !     Deferred routines
 !
@@ -312,5 +314,90 @@ contains
       call disk%close_file(davidson%transforms)
 !
    end subroutine construct_reduced_matrix_davidson_tool
+!
+!
+   subroutine construct_X_davidson_tool(davidson, X, n)
+!!
+!!    Construct X
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Aug 2018
+!!
+!!
+!!       X_n = sum_i c_i (X_red_n)_i
+!!
+!!
+      implicit none
+!
+      class(davidson_tool) :: davidson
+!
+      integer(i15) :: n
+!
+      real(dp), dimension(davidson%n_parameters, 1) :: X
+!
+      real(dp), dimension(:,:), allocatable :: c_i
+!
+      integer(i15) :: i, ioerror
+!
+      X = zero
+!
+      call mem%alloc(c_i, davidson%n_parameters, 1)
+!
+      call disk%open_file(davidson%trials, 'read')
+      rewind(davidson%trials%unit)
+!   
+      do i = 1, davidson%dim_red
+! 
+         read(davidson%trials%unit, iostat = ioerror) c_i
+         if (ioerror .ne. 0) call output%error_msg('reading trial vector file.')
+!
+         call daxpy(davidson%n_parameters, davidson%X_red(i, n), c_i, 1, X, 1)
+!
+      enddo    
+!
+      call mem%dealloc(c_i, davidson%n_parameters, 1)
+!
+   end subroutine construct_X_davidson_tool
+!
+!
+   subroutine construct_AX_davidson_tool(davidson, AX, n)
+!!
+!!    Construct X
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Aug 2018
+!!
+!!
+!!       AX_n = sum_i rho_i (X_red_n)_i
+!!
+!!
+      implicit none
+!
+      class(davidson_tool) :: davidson
+!
+      integer(i15) :: n
+!
+      real(dp), dimension(davidson%n_parameters, 1) :: AX
+!
+      real(dp), dimension(:,:), allocatable :: rho_i
+!
+      integer(i15) :: i, ioerror
+!
+      AX = zero
+!
+      call mem%alloc(rho_i, davidson%n_parameters, 1)
+!
+      call disk%open_file(davidson%transforms, 'read')
+      rewind(davidson%trials%unit)
+!   
+      do i = 1, davidson%dim_red
+! 
+         read(davidson%transforms%unit, iostat = ioerror) rho_i
+         if (ioerror .ne. 0) call output%error_msg('reading transformed vector file.')
+!
+         call daxpy(davidson%n_parameters, davidson%X_red(i, n), rho_i, 1, AX, 1)
+!
+      enddo    
+!
+      call mem%dealloc(rho_i, davidson%n_parameters, 1)
+!
+   end subroutine construct_AX_davidson_tool
+!
 !
 end module davidson_tool_class
