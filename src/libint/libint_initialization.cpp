@@ -52,8 +52,8 @@ void initialize_basis(char *basisset, char *filename){
 	
 	string xyzfilename(strcat(filename,".xyz"));
 
-	cout << xyzfilename << endl;
-	cout << basisset << endl;
+	//cout << xyzfilename << endl;
+	//cout << basisset << endl;
 
     ifstream input_file(xyzfilename);
 

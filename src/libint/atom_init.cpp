@@ -41,7 +41,7 @@ void get_first_ao_in_shells(int *atom, int *faois){
 
 	auto a2s_list = basis.atom2shell(atoms); // Vector of vectors
 	auto shell2bf = basis.shell2bf(); // shell2bf[0] -> first AO index of shell 0
-	cout << *atom << endl;
+	//cout << *atom << endl;
 	for (auto j = 0; j < a2s_list[*atom-1].size(); j++){ // loop over shells on atom
 
 		auto the_shell = a2s_list[*atom-1][j];

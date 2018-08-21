@@ -14,7 +14,7 @@ module scf_diis_solver_class
 !
    use kinds
    use hf_solver_class
-   use diis_solver_class
+   use diis_tool_class
    use file_class
    use hf_class
    use disk_manager_class
@@ -82,7 +82,7 @@ contains
 !
       class(hf) :: wf
 !
-      type(diis) :: diis_manager
+      type(diis_tool) :: diis_manager
 !
       logical :: converged
       logical :: converged_energy

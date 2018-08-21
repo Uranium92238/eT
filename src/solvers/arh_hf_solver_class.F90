@@ -6,7 +6,7 @@ module arh_hf_solver_class
 !!
 !
    use kinds
-   use diis_solver_class
+   use diis_tool_class
    use file_class
    use hf_class
    use hf_solver_class
@@ -97,7 +97,7 @@ contains
 !
       class(hf) :: wf
 !
-      type(diis) :: diis_solver
+      type(diis_tool) :: diis_solver
 !
       real(dp), dimension(:,:), allocatable :: Xr       ! Full rotation matrix, antisymmetric, preconditioned 
       real(dp), dimension(:,:), allocatable :: Xr_pck   ! Packed variant of X 
@@ -635,7 +635,7 @@ contains
 !
       integer(i15) :: i, j
 !
-      type(diis) :: diis_solver 
+      type(diis_tool) :: diis_solver 
 !
 !     Perform micro-iterations to get a direction X in which to rotate
 !     (solves the equation of RH gradient equal to zero to first order in X)
@@ -977,7 +977,7 @@ contains
 !
       integer(i15) :: i, j
 !
-      type(diis) :: diis_solver 
+      type(diis_tool) :: diis_solver 
 !
       call mem%alloc(dz, packed_size(wf%n_so - 1) + 1, 1)
       call mem%alloc(z_dz, packed_size(wf%n_so - 1) + 1, 1)

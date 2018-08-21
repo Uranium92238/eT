@@ -17,7 +17,7 @@ class eTBasis: public vector<BasisSet> {
       eTBasis(){}
       void add(BasisSet new_basis){
          this->push_back(new_basis);
-         cout << new_basis.nbf() << endl;
+        // cout << new_basis.nbf() << endl;
       }
 
       long nbf(){
