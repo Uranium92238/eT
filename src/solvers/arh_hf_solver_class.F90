@@ -39,10 +39,9 @@ module arh_hf_solver_class
       integer(i15) :: history = 40
       integer(i15) :: current_index
 !
-      real(dp) :: coulomb_thr  = 1.0D-12
-      real(dp) :: coulomb_precision = 1.0D-25
-      real(dp) :: non_building_rel_coulomb_precision = 1.0D-10
-      real(dp) :: exchange_thr = 1.0D-10
+      real(dp) :: coulomb_thr       = 1.0D-10 ! screening 
+      real(dp) :: coulomb_precision = 1.0D-14 ! integral accuracy
+      real(dp) :: exchange_thr      = 1.0D-8  ! screening 
 !
       real(dp) :: screening_thr = 1.0D-12
 !
@@ -186,9 +185,9 @@ contains
       !write(output%unit, *) 'Trace of ao density: ', trace_of_ao_density
 !
       start_timer = omp_get_wtime()
-      solver%coulomb_precision = solver%non_building_rel_coulomb_precision
-      call set_coulomb_precision(solver%coulomb_precision)
+      call set_coulomb_precision(1.0D-10) 
       call wf%construct_ao_fock_SAD()
+      call set_coulomb_precision(solver%coulomb_precision)
     !  call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s, coulomb_thr, exchange_thr) 
       end_timer = omp_get_wtime()
       write(output%unit, *) 'Time to construct AO Fock from SAD: ', end_timer-start_timer
@@ -214,8 +213,8 @@ contains
       call wf%destruct_mo_coefficients()
 !
       start_timer = omp_get_wtime()
-      screening_thr = solver%coulomb_thr
-      call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s, solver%coulomb_thr, solver%exchange_thr, screening_thr)  
+      call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s, &
+                           solver%coulomb_thr, solver%exchange_thr, solver%coulomb_precision)  
       end_timer = omp_get_wtime()
       write(output%unit, *) 'Time to construct AO Fock: ', end_timer-start_timer 
 !
@@ -433,33 +432,33 @@ contains
 !             if (max_grad .gt. 1.0D-2) then 
 ! !
 !                screening_thr = 1.0D-5
-               solver%coulomb_precision = solver%non_building_rel_coulomb_precision*max_grad
+             !  solver%coulomb_precision = solver%non_building_rel_coulomb_precision*max_grad
 !
-               if (max_grad .gt. 1.0D-2 .and. .not. building_fock) then
+              ! if (max_grad .gt. 1.0D-2 .and. .not. building_fock) then
 !
                  ! call set_coulomb_precision(solver%coulomb_precision)
-                  call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s, &
-                                       coulomb_thr, exchange_thr, solver%coulomb_precision)
+              !    call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s, &
+               !                        coulomb_thr, exchange_thr, solver%coulomb_precision)
 !
-               else
+               !else
 !
-                  if (.not. building_fock) then 
+               !   if (.not. building_fock) then 
 !
-                     write(output%unit, *) 'First time doing density difference. Initializigin'
+                !     write(output%unit, *) 'First time doing density difference. Initializigin'
 !
-                     call get_ao_h_xy(wf%ao_fock)
-                     prev_ao_density = zero 
+                 !    call get_ao_h_xy(wf%ao_fock)
+                 !    prev_ao_density = zero 
 !
-                     building_fock = .true.
+                  !   building_fock = .true.
                    !  call set_coulomb_precision(1.0D-14)
 !
-                  endif
+              !    endif
 ! 
-                  solver%coulomb_precision = 1.0D-14
+             !     solver%coulomb_precision = 1.0D-14
                   call wf%construct_ao_fock_densdiff(sp_eri_schwarz, sp_eri_schwarz_list, &
                                        n_s, prev_ao_density, solver%coulomb_thr, solver%exchange_thr, solver%coulomb_precision)
 !
-               endif
+             !  endif
 
             end_timer = omp_get_wtime()
             write(output%unit, *) 'Time to construct AO Fock: ', end_timer-start_timer 

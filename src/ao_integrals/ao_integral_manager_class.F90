@@ -100,7 +100,7 @@ contains
    end subroutine get_ao_g_wxyz_ao_integral_manager
 !
 !
-   subroutine get_ao_g_wxyz_epsilon_ao_integral_manager(int, g, s1, s2, s3, s4, epsilon)
+   subroutine get_ao_g_wxyz_epsilon_ao_integral_manager(int, g, s1, s2, s3, s4, epsilon, thread)
 !!
 !!    Get g_αβγδ integrals
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -118,9 +118,9 @@ contains
 !
       real(dp), intent(in) :: epsilon 
 !
-      integer(kind=8), intent(in) :: s1, s2, s3, s4
+      integer(kind=8), intent(in) :: s1, s2, s3, s4, thread 
 !
-      call get_ao_g_wxyz_epsilon(g, s1, s2, s3, s4, epsilon)
+      call get_ao_g_wxyz_epsilon(g, s1, s2, s3, s4, epsilon, thread)
 !
    end subroutine get_ao_g_wxyz_epsilon_ao_integral_manager
 !

@@ -1091,7 +1091,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: g 
 !
-      integer(i15) :: max_shell_size
+      integer(i15) :: max_shell_size, thread
 !
 !     Determine largest shell size 
 !
@@ -1107,13 +1107,14 @@ contains
 !
 !$omp parallel do &
 !$omp private(s1, s2, s3, s4, deg, s4_max, temp, s1s2, s1s2_packed, s3s4, deg_12, deg_34, deg_12_34, thread_offset, &
-!$omp w, x, y, z, wx, yz, temp1, temp2, temp3, d1, d2, d3, d4, d5, d6, &
+!$omp w, x, y, z, wx, yz, temp1, temp2, temp3, d1, d2, d3, d4, d5, d6, thread, &
 !$omp temp4, temp5, temp6, temp7, temp8, w_red, x_red, tot_dim, y_red, z_red, wxyz, g, &
 !$omp sp_eri_schwarz_s1s2, sp_density_schwarz_s1s2, s3s4_sorted, &
 !$omp sp_density_schwarz_s3s2, sp_density_schwarz_s3s1) schedule(dynamic)
       do s1s2 = 1, n_sig_sp
 !
-         thread_offset = omp_get_thread_num()*wf%n_ao ! Start column of thread's Fock matrix 
+         thread = omp_get_thread_num()
+         thread_offset = thread*wf%n_ao ! Start column of thread's Fock matrix 
 !
          sp_eri_schwarz_s1s2 = sp_eri_schwarz(s1s2, 1)
 !
@@ -1157,7 +1158,7 @@ contains
                deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
 !
               ! call wf%system%ao_integrals%get_ao_g_wxyz(g, s1, s2, s3, s4) 
-               call wf%system%ao_integrals%get_ao_g_wxyz_epsilon(g, s1, s2, s3, s4, precision_thr/max(temp7,temp8))
+               call wf%system%ao_integrals%get_ao_g_wxyz_epsilon(g, s1, s2, s3, s4, precision_thr/max(temp7,temp8), thread)
 !
                tot_dim = (shells(s1)%size)*(shells(s2)%size)*(shells(s3)%size)*(shells(s4)%size)
 !
