@@ -112,15 +112,10 @@ contains
 !
       do i = 1, molecule%n_basis_sets ! Loop over atoms 
          write(temp_name, '(a, a1, i4.4)')trim(molecule%name), '_', i
-          write(output%unit, *)trim(temp_name), molecule%basis_sets(i)
-         flush(output%unit)
          call initialize_basis(molecule%basis_sets(i), temp_name) 
       enddo
 !
       call get_n_shells_on_atoms(n_shells_on_atoms)
-!
-      write(output%unit, *)'n_shells_on_atoms', n_shells_on_atoms
-      flush(output%unit)
 !
       do i = 1, molecule%n_atoms ! Loop over atoms
 !
@@ -145,9 +140,6 @@ contains
             molecule%atoms(i)%n_ao = molecule%atoms(i)%n_ao + n_basis_in_shells(j,1)
 
          enddo
-!
-        write(output%unit, *)'aos: ', molecule%atoms(i)%n_ao
-        flush(output%unit)
 !
          deallocate(n_basis_in_shells)
 !

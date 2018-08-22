@@ -898,6 +898,9 @@ contains
 !
       wf%ao_fock = zero
 !
+      write(output%unit, *)'doing coulomb_'
+      flush(output%unit)
+!
 !$omp parallel do &
 !$omp private(A, B, C, A_interval, B_interval, C_interval, x, y, z, xy, zz, xz, yz, &
 !$omp g_C) schedule(dynamic)
@@ -970,6 +973,10 @@ contains
          enddo
       enddo
 !$omp end parallel do
+!
+!
+      write(output%unit, *)'doing exchange'
+      flush(output%unit)
 !
 !$omp parallel do &
 !$omp private(A, B, C, A_interval, B_interval, C_interval, x, y, z, xy, zz, xz, yz, &
@@ -1059,6 +1066,11 @@ contains
 !
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call get_ao_h_xy(h_wx)
+!
+!
+      write(output%unit, *)'done parallel'
+      flush(output%unit)
+!
 !
       call wf%calculate_hf_energy_from_G(wf%ao_fock, h_wx)
 !
