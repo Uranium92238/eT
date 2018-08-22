@@ -1110,7 +1110,7 @@ contains
 !
       endif
 !
-      wf%ao_density = wf%ao_density - prev_ao_density 
+      call daxpy(wf%n_ao**2, -one, prev_ao_density, 1, wf%ao_density, 1)
 !
       call mem%alloc(sp_density_schwarz, n_s, n_s)
 !
@@ -1166,13 +1166,14 @@ contains
       write(output%unit, *) 'Number of threads:', n_threads
 !
       call mem%alloc(F, wf%n_ao, wf%n_ao*n_threads) ! [F(thr1) F(thr2) ...]
-      F = zero 
+      call dscal(n_threads*(wf%n_ao)**2, zero, F, 1) 
 !
       call wf%construct_and_add(F, n_threads, max_D_schwarz, max_eri_schwarz, & 
                                  sp_density_schwarz, sp_eri_schwarz, sp_eri_schwarz_list, &
-                                 n_s, n_sig_sp, coulomb_thr, exchange_thr, precision_thr, wf%system%shell_limits)
+                                 n_s, n_sig_sp, coulomb_thr, exchange_thr, precision_thr, &
+                                 wf%system%shell_limits)
 !
-      wf%ao_density = wf%ao_density + prev_ao_density ! restore
+      call daxpy(wf%n_ao**2, one, prev_ao_density, 1, wf%ao_density, 1)
 !
       call mem%dealloc(sp_density_schwarz, n_s, n_s)
 !
@@ -1187,7 +1188,7 @@ contains
       call mem%dealloc(F, wf%n_ao, wf%n_ao*n_threads) ! [F(thr1) F(thr2) ...]
 !
       call symmetric_sum(wf%ao_fock, wf%n_ao)
-      wf%ao_fock = wf%ao_fock*half
+      call dscal((wf%n_ao)**2, half, wf%ao_fock, 1) 
 !
       call wf%calculate_hf_energy_2(wf%ao_fock, h_wx)
 !

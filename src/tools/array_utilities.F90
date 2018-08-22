@@ -48,6 +48,30 @@ contains
    end function get_max_index
 !
 !
+   subroutine zero_array(X, n)
+!!
+!!    Zero array 
+!!    Written by Eirik F. Kjønstad, 2018 
+!!
+      implicit none 
+!
+      integer(i15), intent(in) :: n 
+!
+      real(dp), dimension(n) :: X 
+!
+      integer(i15) :: I 
+!
+!$omp parallel do private(I) schedule(static)
+      do I = 1, n 
+!
+         X(I) = zero 
+!
+      enddo
+!$omp end parallel do
+!
+   end subroutine zero_array
+!
+!
    real(dp) function dot_product(x, y, n)
 !!
 !!    Calculate dot product
