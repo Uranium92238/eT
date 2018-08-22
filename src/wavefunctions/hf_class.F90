@@ -1074,13 +1074,13 @@ contains
       enddo
 !$omp end parallel do
 !
-         write(output%unit, *)'h and energy'
+      write(output%unit, *)'h and energy'
    flush(output%unit)
 !
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call get_ao_h_xy(h_wx)
 !
-      call wf%calculate_hf_energy_from_G(wf%ao_fock, h_wx)
+     ! call wf%calculate_hf_energy_from_G(wf%ao_fock, h_wx)
 !
 !$omp parallel do &
 !$omp private(x, y) schedule(static)
