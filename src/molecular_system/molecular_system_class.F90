@@ -93,6 +93,9 @@ contains
 !
       if (requested_section('active atoms')) then
 !
+          write(output%unit, *)'found active atom input'
+          flush(output%unit)
+!
          call molecule%reorder_atoms()
 !
       endif
@@ -725,6 +728,8 @@ contains
          line = remove_preceding_blanks(line)
 !
       enddo
+!
+      write(output%unit, *)'Active: ', active_atoms
 !
 !     Reorder atoms
 !
