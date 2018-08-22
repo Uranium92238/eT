@@ -648,9 +648,10 @@ contains
                call mem%alloc(g_C, (A_interval%size)*(B_interval%size), &
                                  (C_interval%size)*(C_interval%size))
 !
-               call wf%system%ao_integrals%get_ao_g_wxyz_epsilon(g_C, A, B, C, C, &
-                  precision_thr, thread, skip, A_interval%size, B_interval%size, &
-                  C_interval%size, C_interval%size)
+               call wf%system%ao_integrals%get_ao_g_wxyz(g_C, A, B, C, C)
+               ! call wf%system%ao_integrals%get_ao_g_wxyz_epsilon(g_C, A, B, C, C, &
+               !    precision_thr, thread, skip, A_interval%size, B_interval%size, &
+               !    C_interval%size, C_interval%size)
 !
                if (skip == 1) cycle
 !
@@ -727,11 +728,12 @@ contains
                call mem%alloc(g_K, (A_interval%size)*(C_interval%size), &
                                  (B_interval%size)*(C_interval%size))
 !
-               call wf%system%ao_integrals%get_ao_g_wxyz_epsilon(g_K, A, C, B, C, &
-                  precision_thr, thread, skip, A_interval%size, C_interval%size, &
-                  B_interval%size, C_interval%size)
+               call wf%system%ao_integrals%get_ao_g_wxyz(g_K, A, C, B, C)
+           !    call wf%system%ao_integrals%get_ao_g_wxyz_epsilon(g_K, A, C, B, C, &
+           !       precision_thr, thread, skip, A_interval%size, C_interval%size, &
+           !       B_interval%size, C_interval%size)
 !
-               if (skip == 1) cycle
+          !     if (skip == 1) cycle
 !
 !              Add Fock matrix contributions
 !
