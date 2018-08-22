@@ -911,8 +911,6 @@ contains
          do B = 1, A
 !
             B_interval = wf%system%shell_limits(B)
-!
-            if (sp_eri_schwarz(A, B)**2 .lt. 1.0d-10 ) cycle
 !           
             do C = 1, n_s
 !
@@ -989,8 +987,6 @@ contains
 !
             C_interval = wf%system%shell_limits(C)
 !
-            if (sp_eri_schwarz(A, C)**2 .lt. 1.0d-8 ) cycle
-!
             do B = 1, A
 !
                B_interval = wf%system%shell_limits(B)
@@ -1050,6 +1046,9 @@ contains
          enddo
       enddo
 !$omp end parallel do
+!
+   write(output%unit, *)'doing symmetrize'
+      flush(output%unit)
 !
 !$omp parallel do private(x) schedule(static)
       do x = 1, wf%n_ao
