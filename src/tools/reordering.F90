@@ -111,6 +111,7 @@ contains
 !
 !     Overwrite the lower triangular part of the matrix
 !
+!$omp parallel do private(p, q)
       do q = 1, dim
          do p = q, dim
 !
@@ -118,9 +119,11 @@ contains
 !
          enddo
       enddo
+!$omp end parallel do
 !
 !     Copy the lower triangular part to the upper triangular part
 !
+!$omp parallel do private(p, q)
       do p = 1, dim
          do q = p + 1, dim
 !
@@ -128,6 +131,7 @@ contains
 !
          enddo
       enddo
+!$omp end parallel do
 !
    end subroutine symmetric_sum
 !

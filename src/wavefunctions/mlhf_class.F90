@@ -20,14 +20,10 @@ module mlhf_class
 !
    type, extends(hf):: mlhf
 !
-      type(active_atoms_info) :: active_space
-!
    contains
 !
       procedure :: initialize => initialize_mlhf
       procedure :: finalize => finalize_mlhf
-!
-      procedure :: read_info => read_info_mlhf
 !
       procedure :: construct_virtual_density => construct_virtual_density_mlhf
 !
@@ -49,8 +45,6 @@ contains
       class(mlhf) :: wf
 !
       wf%name = 'MLHF'
-!
-      !call wf%read_info
 !
       write(output%unit, '(a)')':: SAD-ML test'
       flush(output%unit)
@@ -140,21 +134,11 @@ contains
 !
       call wf%construct_ao_fock_SAD()
      ! write(output%unit,*)wf%hf_energy
-
-     ! call mem%alloc(sp_eri_schwarz, n_s*(n_s + 1)/2, 1)
-     ! call mem%alloc_int(sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
-     ! call wf%construct_sp_eri_schwarz(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
-     ! call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
-     ! write(output%unit,*)wf%hf_energy
-     ! call mem%dealloc(sp_eri_schwarz, n_s*(n_s + 1)/2, 1)
-     ! call mem%dealloc_int(sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
-     ! stop
 !
       e_construct_fock = omp_get_wtime()
       write(output%unit, '(/a49, f11.2)')'Wall time to construct AO fock from SAD density: ', &
                                   e_construct_fock - s_construct_fock
       flush(output%unit)
-      stop
 !
 !     Construct AO overlap matrix, Cholesky decompose it,
 !     followed by preconditioning (making it the identity matrix
@@ -176,35 +160,17 @@ contains
 !
       n_active_aos = 0
 !
-      do i = 1, wf%active_space%n_active_atoms
+      do i = 1, wf%system%n_active_atoms
 !
-         n_active_aos = n_active_aos + wf%system%atoms(wf%active_space%atoms(i, 1))%n_ao
+         n_active_aos = n_active_aos + wf%system%atoms(i)%n_ao
 !
       enddo 
 !
       call mem%alloc_int(active_aos, n_active_aos, 1)
 !
-      ao_offset = 0
-      active_ao_counter = 0
+      do i = 1, n_active_aos
 !
-      do i = 1, wf%system%n_atoms
-         do j = 1, wf%active_space%n_active_atoms
-!
-            if (i == wf%active_space%atoms(j, 1)) then
-!
-               do k = 1, wf%system%atoms(i)%n_ao
-!
-                  active_ao_counter = active_ao_counter + 1
-!
-                  active_aos(active_ao_counter, 1) = k + ao_offset
-!   
-               enddo
-!
-            endif
-!
-         enddo
-!
-         ao_offset = ao_offset + wf%system%atoms(i)%n_ao
+           active_aos(i, 1) = i 
 !
       enddo
 !
@@ -212,9 +178,9 @@ contains
 !
       n_active_occ = 0
 !
-      do i = 1, wf%active_space%n_active_atoms
+      do i = 1, wf%system%n_active_atoms
 !
-        n_active_occ = n_active_occ + wf%system%atoms(wf%active_space%atoms(i, 1))%number
+        n_active_occ = n_active_occ + wf%system%atoms(i)%number
 !
       enddo
 !
@@ -283,92 +249,10 @@ contains
    end subroutine eri_decomp_test_w_active_dens_mlhf
 !
 !
-   subroutine read_info_mlhf(wf)
-!
-!!
-!!    Read information
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-!!     mlhf
-!!        n_active_atoms
-!!        active_atoms
-!!     end mlhf
-!!
-      implicit none
-!
-      class(mlhf) :: wf
-!
-      character(len=100) :: line
-      character(len=100) :: current_basis
-!
-      integer(i15) :: i = 0,j = 0, ioerror, first, last
-!
-      rewind(input%unit)
-!
-      read(input%unit,'(a)', iostat=ioerror) line
-      line = remove_preceding_blanks(line)
-!
-      do while ((trim(line) .ne. 'end mlhf') .and. (line(1:2) .ne. 'do'))
-!
-         if (trim(line) == 'mlhf') then ! found cholesky section in input
-!
-            read(input%unit, *) wf%active_space%n_active_atoms
-!
-            call mem%alloc_int(wf%active_space%atoms, wf%active_space%n_active_atoms, 1)
-!
-            read(input%unit,'(a)', iostat=ioerror) line
-            line = remove_preceding_blanks(line)
-!
-            if (line(1:1)=='[') then ! range given
-!
-               do i = 2, 100
-!
-                  if (line(i:i) == ',') exit
-!
-               enddo
-!
-               read(line(2:i-1), *) first
-!
-               do j = i, 100
-!
-                  if (line(j:j) == ']') exit
-!
-               enddo
-!
-               read(line(i+1:j-1), *) last
-!
-               if ((last - first + 1) .ne. wf%active_space%n_active_atoms) then
-!
-                  write(output%unit, *) 'Error: actual number of active atoms does not match number provided in input.'
-                  stop
-!
-               endif
-!
-               do i = first, last
-!
-                  wf%active_space%atoms(i - first + 1, 1) = i
-!
-               enddo
-!
-            else ! specific atoms are given
-!
-               read(line, *) wf%active_space%atoms
-!
-            endif
-!
-         endif
-!
-         read(input%unit,'(a)') line
-         line = remove_preceding_blanks(line)
-!
-      enddo
-      backspace(input%unit)
-!
-   end subroutine read_info_mlhf
-!
-!
   subroutine construct_virtual_density_mlhf(wf, D_v)
 !!
+!!    Construct virtual density
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    D^V = S^-1 - D
 !!        = P * L^-T * L^-1 * P^T - D

@@ -505,7 +505,7 @@ contains
    end subroutine determine_degeneracy_hf
 !
 !
-   subroutine construct_ao_fock_SAD_hf(wf)
+   subroutine construct_ao_fock_SAD_hf(wf, coulomb, exchange, precision)
 !!
 !!    Construct AO Fock matrix
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -523,12 +523,16 @@ contains
 !
       integer(i15) :: n_s
 !
+      real(dp), optional :: coulomb, exchange, precision ! Non-standard thresholds
+!
+      real(dp) :: coulomb_thr, exchange_thr, precision_thr
+!
       real(dp), dimension(:,:), allocatable :: sp_eri_schwarz, sp_density_schwarz
 !
       real(dp), dimension(:,:), allocatable :: h_wx
       integer(i15) :: x, y, z, xy, yz, xz, zz
 !
-      integer(i15) :: A, B, C
+      integer(i15) :: A, B, C, skip, thread, omp_get_thread_num
 !
       type(interval) :: A_interval
       type(interval) :: B_interval
@@ -537,6 +541,38 @@ contains
       real(dp) :: maximum
 !
       real(dp), dimension(:,:), allocatable :: g, g_C, g_K, D
+!
+!     Set thresholds to ignore Coulomb and exchange terms 
+!
+      if (present(coulomb)) then 
+!
+         coulomb_thr = coulomb 
+!
+      else
+!
+         coulomb_thr = 1.0D-10 
+!
+      endif 
+!
+      if (present(exchange)) then 
+!
+         exchange_thr = exchange 
+!
+      else
+!
+         exchange_thr = 1.0D-8
+!
+      endif 
+!
+      if (present(precision)) then 
+!
+         precision_thr = precision 
+!
+      else
+!
+         precision_thr = 1.0D-14
+!
+      endif 
 !
       n_s = wf%system%get_n_shells()
 !
@@ -574,7 +610,7 @@ contains
 !
             call wf%system%ao_integrals%get_ao_g_wxyz(g, A, B, A, B)
 !
-            maximum = get_abs_max(g, (A_interval%size)*(B_interval%size)**2)
+            maximum = get_abs_max(g, ((A_interval%size)*(B_interval%size))**2)
 !
             call mem%dealloc(g, (A_interval%size)*(B_interval%size), &
                                 (A_interval%size)*(B_interval%size))
@@ -590,27 +626,33 @@ contains
 !
 !$omp parallel do &
 !$omp private(A, B, C, A_interval, B_interval, C_interval, x, y, z, xy, zz, xz, yz, &
-!$omp g_C) schedule(dynamic)
+!$omp g_C, skip, thread) schedule(dynamic)
       do A = 1, n_s
+!
+         thread = omp_get_thread_num()
 !
          A_interval = wf%system%shell_limits(A)
 !
          do B = 1, A
 !
             B_interval = wf%system%shell_limits(B)
-!
-           ! if (sp_eri_schwarz(A, B)**2 .lt. 1.0d-10 ) cycle
 !           
             do C = 1, n_s
 !
-               if (sp_eri_schwarz(A, B)*sp_eri_schwarz(C, C)*sp_density_schwarz(C, 1) .lt. 1.0d-10 ) cycle
+               if (sp_eri_schwarz(A, B)*sp_eri_schwarz(C, C)*sp_density_schwarz(C, 1) .lt. coulomb_thr ) cycle
 !
                C_interval = wf%system%shell_limits(C)
 !
                call mem%alloc(g_C, (A_interval%size)*(B_interval%size), &
                                  (C_interval%size)*(C_interval%size))
 !
-               call wf%system%ao_integrals%get_ao_g_wxyz(g_C, A, B, C, C)
+               call wf%system%ao_integrals%get_ao_g_wxyz_epsilon(g_C, A, B, C, C, &
+                  precision_thr, thread, skip, A_interval%size, B_interval%size, &
+                  C_interval%size, C_interval%size)
+!
+               if (skip == 1) cycle
+!
+!               call wf%system%ao_integrals%get_ao_g_wxyz(g_C, A, B, C, C)
 !
 !              Add Fock matrix contributions
 !
@@ -663,8 +705,10 @@ contains
 !
 !$omp parallel do &
 !$omp private(A, B, C, A_interval, B_interval, C_interval, x, y, z, xy, zz, xz, yz, &
-!$omp g_K) schedule(dynamic)
+!$omp g_K, skip, thread) schedule(dynamic)
       do A = 1, n_s
+!
+         thread = omp_get_thread_num()
 !
          A_interval = wf%system%shell_limits(A)
 !           
@@ -672,18 +716,20 @@ contains
 !
             C_interval = wf%system%shell_limits(C)
 !
-        !    if (sp_eri_schwarz(A, C)**2 .lt. 1.0d-8 ) cycle
-!
             do B = 1, A
 !
                B_interval = wf%system%shell_limits(B)
 !
-               if (sp_eri_schwarz(A, C)*sp_eri_schwarz(B, C)*sp_density_schwarz(C, 1) .lt. 1.0d-8) cycle
+               if (sp_eri_schwarz(A, C)*sp_eri_schwarz(B, C)*sp_density_schwarz(C, 1) .lt. exchange_thr) cycle
 !
                call mem%alloc(g_K, (A_interval%size)*(C_interval%size), &
                                  (B_interval%size)*(C_interval%size))
 !
-               call wf%system%ao_integrals%get_ao_g_wxyz(g_K, A, C, B, C)
+               call wf%system%ao_integrals%get_ao_g_wxyz_epsilon(g_K, A, C, B, C, &
+                  precision_thr, thread, skip, A_interval%size, C_interval%size, &
+                  B_interval%size, C_interval%size)
+!
+               if (skip == 1) cycle
 !
 !              Add Fock matrix contributions
 !
@@ -733,26 +779,58 @@ contains
          enddo
       enddo
 !$omp end parallel do
-!
-!$omp parallel do private(x) schedule(static)
-      do x = 1, wf%n_ao
-!
-         wf%ao_fock(x, x) = half*wf%ao_fock(x, x)
-!
-      enddo
-!$omp end parallel do
-!
+
+
+!!$omp parallel do private(x) schedule(static)
+!      do x = 1, wf%n_ao
+!!
+!         wf%ao_fock(x, x) = half*wf%ao_fock(x, x)
+!!
+!      enddo
+!!$omp end parallel do
+
       call mem%dealloc(sp_density_schwarz, n_s, 1)
       call mem%dealloc(sp_eri_schwarz, n_s, n_s)
 !
-       call symmetric_sum(wf%ao_fock, wf%n_ao)
+!$omp parallel do private(x, y)
+      do x = 1, wf%n_ao
+         do y = x + 1, wf%n_ao
+!
+            wf%ao_fock(x,y) = wf%ao_fock(x,y) + wf%ao_fock(y,x)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+!     Copy the lower triangular part to the upper triangular part
+!
+!$omp parallel do private(x, y)
+      do y = 1, wf%n_ao
+         do x = y + 1, wf%n_ao
+!
+            wf%ao_fock(x,y) = wf%ao_fock(y,x)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+!       call symmetric_sum(wf%ao_fock, wf%n_ao)
 !
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call get_ao_h_xy(h_wx)
 !
       call wf%calculate_hf_energy(wf%ao_fock, h_wx)
 !
-      wf%ao_fock = wf%ao_fock + h_wx
+!$omp parallel do private(x, y)
+      do y = 1, wf%n_ao
+         do x = 1, wf%n_ao
+!
+            wf%ao_fock(x,y) = wf%ao_fock(x,y) + h_wx(x, y)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!      wf%ao_fock = wf%ao_fock + h_wx
 !
       call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
 !
