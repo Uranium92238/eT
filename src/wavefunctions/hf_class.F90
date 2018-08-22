@@ -779,18 +779,11 @@ contains
          enddo
       enddo
 !$omp end parallel do
-
-
-!!$omp parallel do private(x) schedule(static)
-!      do x = 1, wf%n_ao
-!!
-!         wf%ao_fock(x, x) = half*wf%ao_fock(x, x)
-!!
-!      enddo
-!!$omp end parallel do
-
+!
       call mem%dealloc(sp_density_schwarz, n_s, 1)
       call mem%dealloc(sp_eri_schwarz, n_s, n_s)
+!
+!     Symmetrize
 !
 !$omp parallel do private(x, y)
       do x = 1, wf%n_ao
@@ -802,8 +795,6 @@ contains
       enddo
 !$omp end parallel do
 !
-!     Copy the lower triangular part to the upper triangular part
-!
 !$omp parallel do private(x, y)
       do y = 1, wf%n_ao
          do x = y + 1, wf%n_ao
@@ -813,8 +804,6 @@ contains
          enddo
       enddo
 !$omp end parallel do
-!
-!       call symmetric_sum(wf%ao_fock, wf%n_ao)
 !
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call get_ao_h_xy(h_wx)
@@ -830,7 +819,6 @@ contains
          enddo
       enddo
 !$omp end parallel do
-!      wf%ao_fock = wf%ao_fock + h_wx
 !
       call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
 !

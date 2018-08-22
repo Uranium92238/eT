@@ -111,6 +111,9 @@ contains
 !
 !     Set initial density to superposition of atomic densities (SOAD) guess
 !
+      write(output%unit,*)'set up sad'
+      flush(output%unit)
+!
       call mem%alloc(density_diagonal, wf%n_ao, 1)
       call wf%system%SAD(wf%n_ao, density_diagonal)
 !
@@ -131,6 +134,9 @@ contains
       call wf%initialize_ao_fock()
 !
       s_construct_fock = omp_get_wtime()
+!
+      write(output%unit,*)'set up fock'
+      flush(output%unit)
 !
       call wf%construct_ao_fock_SAD()
      ! write(output%unit,*)wf%hf_energy
