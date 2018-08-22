@@ -117,6 +117,9 @@ contains
 !
       call get_n_shells_on_atoms(n_shells_on_atoms)
 !
+      write(output%unit, *)'n_shells_on_atoms', n_shells_on_atoms
+      flush(output%unit)
+!
       do i = 1, molecule%n_atoms ! Loop over atoms
 !
 !        Allocate and initialize the corresponding shells
@@ -127,7 +130,6 @@ contains
 !
 !        Then determine the number of basis functions in each shell
 !        and save number of aos per atom
-
 !
          allocate(n_basis_in_shells(n_shells_on_atoms(i,1), 1))
          call get_n_basis_in_shells(i, n_basis_in_shells)
@@ -141,6 +143,10 @@ contains
             molecule%atoms(i)%n_ao = molecule%atoms(i)%n_ao + n_basis_in_shells(j,1)
 
          enddo
+!
+        write(output%unit, *)'atoms: ', molecule%atoms(i)%n_ao
+        flush(output%unit)
+!
 
          deallocate(n_basis_in_shells)
 !
@@ -319,13 +325,6 @@ contains
 !
       type(file) :: basis_file, mol_file
 !
-    !  call mem%alloc_int(atoms_with_current_basis, molecule%n_basis_sets, 1)
-!
-     ! call mol_file%init(trim(molecule%name) // '.xyz', 'sequential', 'formatted')
-     ! call disk%open_file(mol_file, 'write', 'rewind')
-!
-     ! write(mol_file%unit, '(i4/)') molecule%n_atoms
-!
       rewind(input%unit)
 !
       read(input%unit,'(a)') line
@@ -341,11 +340,9 @@ contains
              line(1:6) == 'BASIS:' ) then
 !     
             current_basis_nbr = current_basis_nbr + 1
-           ! atoms_with_current_basis(current_basis_nbr , 1) = 0
 !
             current_basis = trim(line(7:100))
-            current_basis = remove_preceding_blanks(current_basis)
-           ! molecule%basis_sets(current_basis_nbr) = current_basis    
+            current_basis = remove_preceding_blanks(current_basis) 
 !
             read(input%unit,'(a)') line
             line = remove_preceding_blanks(line)
@@ -355,9 +352,6 @@ contains
                       line(1:6) .ne. 'basis:'        .and.  &
                       line(1:6) .ne. 'Basis:'        .and.  &
                       line(1:6) .ne. 'BASIS:')
-!
-              ! write(mol_file%unit, '(a)') line 
-              ! atoms_with_current_basis(current_basis_nbr , 1) = atoms_with_current_basis(current_basis_nbr , 1) + 1
 !
                current_atom = current_atom + 1
 !
@@ -420,34 +414,6 @@ contains
          line = remove_preceding_blanks(line)
 !
       enddo
-!
-      !call disk%close_file(mol_file)
-!
-      !call disk%open_file(mol_file, 'read')
-      !rewind(mol_file%unit)
-     ! read(mol_file%unit, '(a)') line
-     ! read(mol_file%unit, '(a)') line
-!
-     ! do current_basis_nbr = 1, molecule%n_basis_sets
-!
-     !    write(temp_name, '(a, a1, i4.4, a4)')trim(molecule%name), '_', current_basis_nbr,  '.xyz'
-!
-     !    call basis_file%init(trim(temp_name), 'sequential', 'formatted')
-    !     call disk%open_file(basis_file, 'write', 'rewind')
-!
-     !    write(basis_file%unit, '(i4/)') atoms_with_current_basis(current_basis_nbr, 1)
-     !    do i = 1, atoms_with_current_basis(current_basis_nbr, 1)
-     !       read(mol_file%unit, '(a)') line 
-     !       write(basis_file%unit, '(a)') line 
-    !    enddo
-!
-    !     call disk%close_file(basis_file)
-!
-   !   enddo
-!
-   !   call mem%dealloc_int(atoms_with_current_basis, molecule%n_basis_sets, 1)
-!
-    !  call disk%close_file(mol_file)
 !
    end subroutine read_geometry_molecular_system
 !
