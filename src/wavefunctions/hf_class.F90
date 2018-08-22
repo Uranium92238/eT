@@ -1048,34 +1048,56 @@ contains
 !$omp end parallel do
 !
    write(output%unit, *)'doing symmetrize'
-      flush(output%unit)
+   flush(output%unit)
 !
-!$omp parallel do private(x) schedule(static)
+!     Symmetrize
+!
+!$omp parallel do &
+!$omp private(x, y) schedule(static)
       do x = 1, wf%n_ao
+         do y = x + 1, wf%n_ao
 !
-         wf%ao_fock(x, x) = half*wf%ao_fock(x, x)
+            wf%ao_fock(x,y) = wf%ao_fock(x,y) + wf%ao_fock(y,x)
 !
+         enddo
       enddo
 !$omp end parallel do
 !
-      call mem%dealloc(sp_density_schwarz, n_s, 1)
-      call mem%dealloc(sp_eri_schwarz, n_s, n_s)
+!$omp parallel do &
+!$omp private(x, y) schedule(static)
+      do y = 1, wf%n_ao
+         do x = y + 1, wf%n_ao
 !
-       call symmetric_sum(wf%ao_fock, wf%n_ao)
+            wf%ao_fock(x,y) = wf%ao_fock(y,x)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+         write(output%unit, *)'h and energy'
+   flush(output%unit)
 !
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call get_ao_h_xy(h_wx)
 !
-!
-      write(output%unit, *)'done parallel'
-      flush(output%unit)
-!
-!
       call wf%calculate_hf_energy_from_G(wf%ao_fock, h_wx)
 !
-      wf%ao_fock = wf%ao_fock + h_wx
+!$omp parallel do &
+!$omp private(x, y) schedule(static)
+      do y = 1, wf%n_ao
+         do x = 1, wf%n_ao
+!
+            wf%ao_fock(x,y) = wf%ao_fock(x,y) + h_wx(x, y)
+!
+         enddo
+      enddo
+!$omp end parallel do
 !
       call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
+!
+      write(output%unit, *)'done'
+      flush(output%unit)
+!
 !
    end subroutine construct_ao_fock_SAD_hf
 
