@@ -630,10 +630,8 @@ contains
 !
 !$omp parallel do &
 !$omp private(A, B, C, A_interval, B_interval, C_interval, x, y, z, xy, zz, xz, yz, &
-!$omp g_C, skip, thread) schedule(dynamic)
+!$omp g_C) schedule(dynamic)
       do A = 1, n_s
-!
-         thread = omp_get_thread_num()
 !
          A_interval = wf%system%shell_limits(A)
 !
@@ -651,13 +649,6 @@ contains
                                  (C_interval%size)*(C_interval%size))
 !
                call wf%system%ao_integrals%get_ao_g_wxyz(g_C, A, B, C, C)
-               ! call wf%system%ao_integrals%get_ao_g_wxyz_epsilon(g_C, A, B, C, C, &
-               !    precision_thr, thread, skip, A_interval%size, B_interval%size, &
-               !    C_interval%size, C_interval%size)
-!
-               if (skip == 1) cycle
-!
-!               call wf%system%ao_integrals%get_ao_g_wxyz(g_C, A, B, C, C)
 !
 !              Add Fock matrix contributions
 !
@@ -710,7 +701,7 @@ contains
 !
 !$omp parallel do &
 !$omp private(A, B, C, A_interval, B_interval, C_interval, x, y, z, xy, zz, xz, yz, &
-!$omp g_K, skip, thread) schedule(dynamic)
+!$omp g_K) schedule(dynamic)
       do A = 1, n_s
 !
          thread = omp_get_thread_num()
@@ -731,11 +722,6 @@ contains
                                  (B_interval%size)*(C_interval%size))
 !
                call wf%system%ao_integrals%get_ao_g_wxyz(g_K, A, C, B, C)
-           !    call wf%system%ao_integrals%get_ao_g_wxyz_epsilon(g_K, A, C, B, C, &
-           !       precision_thr, thread, skip, A_interval%size, C_interval%size, &
-           !       B_interval%size, C_interval%size)
-!
-          !     if (skip == 1) cycle
 !
 !              Add Fock matrix contributions
 !
