@@ -112,6 +112,8 @@ contains
 !
       do i = 1, molecule%n_basis_sets ! Loop over atoms 
          write(temp_name, '(a, a1, i4.4)')trim(molecule%name), '_', i
+          write(output%unit, *)trim(temp_name), molecule%basis_sets(i)
+         flush(output%unit)
          call initialize_basis(molecule%basis_sets(i), temp_name) 
       enddo
 !
@@ -144,10 +146,9 @@ contains
 
          enddo
 !
-        write(output%unit, *)'atoms: ', molecule%atoms(i)%n_ao
+        write(output%unit, *)'aos: ', molecule%atoms(i)%n_ao
         flush(output%unit)
 !
-
          deallocate(n_basis_in_shells)
 !
 !        Get shell numbers
@@ -460,22 +461,6 @@ contains
 !
       call disk%close_file(mol_file)
 !
-!     Count number of basis sets
-!
-      current_basis = molecule%atoms(1)%basis
-      molecule%n_basis_sets = 1
-!
-      do atom = 2, molecule%n_atoms
-!
-         if (molecule%atoms(1)%basis .ne. current_basis) then
-!
-            current_basis = molecule%atoms(atom)%basis
-            molecule%n_basis_sets = molecule%n_basis_sets + 1
-!
-         endif
-!
-      enddo
-!
       allocate(molecule%basis_sets(molecule%n_basis_sets))
       call mem%alloc_int(n_atoms_in_basis, molecule%n_basis_sets, 1)
 !
@@ -487,7 +472,7 @@ contains
 !
       do atom = 2, molecule%n_atoms
 !
-         if (molecule%atoms(1)%basis .ne. molecule%basis_sets(basis_set_counter)) then
+         if (molecule%atoms(atom)%basis .ne. molecule%basis_sets(basis_set_counter)) then
 !
             basis_set_counter = basis_set_counter + 1
             molecule%basis_sets(basis_set_counter) = molecule%atoms(atom)%basis

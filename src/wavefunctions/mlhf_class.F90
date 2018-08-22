@@ -137,7 +137,6 @@ contains
 !
       write(output%unit,*)'set up fock'
       flush(output%unit)
-      stop
 !
       call wf%construct_ao_fock_SAD()
      ! write(output%unit,*)wf%hf_energy
