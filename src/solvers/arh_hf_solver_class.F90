@@ -31,7 +31,7 @@ module arh_hf_solver_class
 !
       integer(i15) :: diis_dimension = 25
 !
-      real(dp), dimension(:,:), allocatable :: trace_matrix        ! Trace matrix, T_ij = Tr (D_in D_jn), i, j < n
+      real(dp), dimension(:,:), allocatable :: trace_matrix  ! Trace matrix, T_ij = Tr (D_in D_jn), i, j < n
 !
       type(file) :: RH_gradients_file 
       type(file) :: AO_densities_file 

@@ -576,6 +576,8 @@ contains
 !
       endif 
 !
+      call set_coulomb_precision(precision_thr)
+!
       n_s = wf%system%get_n_shells()
 !
      call mem%alloc(sp_density_schwarz, n_s, 1)
