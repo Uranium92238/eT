@@ -1201,9 +1201,10 @@ contains
             do s4 = 1, s4_max
 !
                s3s4 = (max(s3,s4)*(max(s3,s4)-3)/2) + s3 + s4 
-               if (sp_eri_schwarz(s3s4, 2)*(max_D_schwarz)*(sp_eri_schwarz_s1s2) .lt. coulomb_thr) cycle ! Screened out shell pair
 !
                temp = sp_eri_schwarz_s1s2*sp_eri_schwarz(s3s4, 2)
+
+             !  if (temp*(max_D_schwarz) .lt. coulomb_thr) cycle ! Screened out shell pair
 !
                temp7 = max(sp_density_schwarz(s3,s4), &
                            sp_density_schwarz_s1s2)
