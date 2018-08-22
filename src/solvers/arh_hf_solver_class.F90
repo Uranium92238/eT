@@ -41,7 +41,7 @@ module arh_hf_solver_class
 !
       real(dp) :: coulomb_thr       = 1.0D-11 ! screening 
       real(dp) :: coulomb_precision = 1.0D-14 ! integral accuracy
-      real(dp) :: exchange_thr      = 1.0D-9  ! screening 
+      real(dp) :: exchange_thr      = 1.0D-11  ! screening 
 !
    contains
 !

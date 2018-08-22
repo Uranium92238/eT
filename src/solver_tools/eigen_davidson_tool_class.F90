@@ -27,12 +27,14 @@ module eigen_davidson_tool_class
 !
    contains 
 !
-      procedure :: solve_reduced_problem => solve_reduced_problem_eigen_davidson_tool
+      procedure :: construct_next_trial_vec => construct_next_trial_vec_eigen_davidson_tool
 !
-      procedure :: construct_residual    => construct_residual_eigen_davidson_tool
+      procedure :: solve_reduced_problem    => solve_reduced_problem_eigen_davidson_tool
 !
-      procedure :: construct_re_residual => construct_re_residual_eigen_davidson_tool
-      procedure :: construct_im_residual => construct_im_residual_eigen_davidson_tool
+      procedure :: construct_residual       => construct_residual_eigen_davidson_tool
+!
+      procedure :: construct_re_residual    => construct_re_residual_eigen_davidson_tool
+      procedure :: construct_im_residual    => construct_im_residual_eigen_davidson_tool
 !
    end type eigen_davidson_tool
 !
@@ -328,6 +330,32 @@ contains
       call mem%dealloc(X_im, davidson%n_parameters, 1) 
 !
    end subroutine construct_im_residual_eigen_davidson_tool
+!
+!
+   subroutine construct_next_trial_vec_eigen_davidson_tool(davidson, residual_norm, R, n)
+!!
+!!    Construct next trial vector  
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+!!    This routine decides whether to construct a new trial vector based on 
+!!    the current residual norm - as well as possible linear dependence - 
+!!    and constructs the new vector if it is deemed appropriate.
+!!
+!!    The test is on the L2 norm of the residual by default, but can be 
+!!    adjusted when initializing the Davidson tool to get other norm 
+!!    criterions. 
+!!
+!!    The residual norm is set on exit and should not to be calculated beforehand. 
+!!    
+      implicit none 
+!
+      class(eigen_davidson_tool) :: davidson 
+!
+      real(dp) :: residual_norm 
+!
+
+!
+   end subroutine construct_next_trial_vec_eigen_davidson_tool
 !
 !
 end module eigen_davidson_tool_class
