@@ -505,6 +505,7 @@ contains
 !$omp end parallel do
 !
    end subroutine determine_degeneracy_hf
+
 !
 !
    subroutine construct_ao_fock_SAD_hf(wf, coulomb, exchange, precision)
@@ -614,7 +615,7 @@ contains
 !
             call wf%system%ao_integrals%get_ao_g_wxyz(g, A, B, A, B)
 !
-            maximum = get_abs_max(g, ((A_interval%size)*(B_interval%size))**2)
+            maximum = get_abs_max(g, (A_interval%size)*(B_interval%size)**2)
 !
             call mem%dealloc(g, (A_interval%size)*(B_interval%size), &
                                 (A_interval%size)*(B_interval%size))
@@ -628,12 +629,13 @@ contains
 !
       wf%ao_fock = zero
 !
+      write(output%unit, *)'doing coulomb_'
+      flush(output%unit)
+!
 !$omp parallel do &
 !$omp private(A, B, C, A_interval, B_interval, C_interval, x, y, z, xy, zz, xz, yz, &
-!$omp g_C, skip, thread) schedule(dynamic)
+!$omp g_C) schedule(dynamic)
       do A = 1, n_s
-!
-         thread = omp_get_thread_num()
 !
          A_interval = wf%system%shell_limits(A)
 !
@@ -643,7 +645,7 @@ contains
 !           
             do C = 1, n_s
 !
-               if (sp_eri_schwarz(A, B)*sp_eri_schwarz(C, C)*sp_density_schwarz(C, 1) .lt. coulomb_thr ) cycle
+               if (sp_eri_schwarz(A, B)*sp_eri_schwarz(C, C)*sp_density_schwarz(C, 1) .lt. coulomb_thr) cycle
 !
                C_interval = wf%system%shell_limits(C)
 !
@@ -651,13 +653,6 @@ contains
                                  (C_interval%size)*(C_interval%size))
 !
                call wf%system%ao_integrals%get_ao_g_wxyz(g_C, A, B, C, C)
-               ! call wf%system%ao_integrals%get_ao_g_wxyz_epsilon(g_C, A, B, C, C, &
-               !    precision_thr, thread, skip, A_interval%size, B_interval%size, &
-               !    C_interval%size, C_interval%size)
-!
-               if (skip == 1) cycle
-!
-!               call wf%system%ao_integrals%get_ao_g_wxyz(g_C, A, B, C, C)
 !
 !              Add Fock matrix contributions
 !
@@ -708,12 +703,14 @@ contains
       enddo
 !$omp end parallel do
 !
+!
+      write(output%unit, *)'doing exchange'
+      flush(output%unit)
+!
 !$omp parallel do &
 !$omp private(A, B, C, A_interval, B_interval, C_interval, x, y, z, xy, zz, xz, yz, &
-!$omp g_K, skip, thread) schedule(dynamic)
+!$omp g_K) schedule(dynamic)
       do A = 1, n_s
-!
-         thread = omp_get_thread_num()
 !
          A_interval = wf%system%shell_limits(A)
 !           
@@ -731,11 +728,6 @@ contains
                                  (B_interval%size)*(C_interval%size))
 !
                call wf%system%ao_integrals%get_ao_g_wxyz(g_K, A, C, B, C)
-           !    call wf%system%ao_integrals%get_ao_g_wxyz_epsilon(g_K, A, C, B, C, &
-           !       precision_thr, thread, skip, A_interval%size, C_interval%size, &
-           !       B_interval%size, C_interval%size)
-!
-          !     if (skip == 1) cycle
 !
 !              Add Fock matrix contributions
 !
@@ -786,12 +778,13 @@ contains
       enddo
 !$omp end parallel do
 !
-      call mem%dealloc(sp_density_schwarz, n_s, 1)
-      call mem%dealloc(sp_eri_schwarz, n_s, n_s)
+   write(output%unit, *)'doing symmetrize'
+   flush(output%unit)
 !
 !     Symmetrize
 !
-!$omp parallel do private(x, y)
+!$omp parallel do &
+!$omp private(x, y) schedule(static)
       do x = 1, wf%n_ao
          do y = x + 1, wf%n_ao
 !
@@ -801,7 +794,8 @@ contains
       enddo
 !$omp end parallel do
 !
-!$omp parallel do private(x, y)
+!$omp parallel do &
+!$omp private(x, y) schedule(static)
       do y = 1, wf%n_ao
          do x = y + 1, wf%n_ao
 !
@@ -811,12 +805,16 @@ contains
       enddo
 !$omp end parallel do
 !
+      write(output%unit, *)'h and energy'
+   flush(output%unit)
+!
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call get_ao_h_xy(h_wx)
 !
       call wf%calculate_hf_energy_from_G(wf%ao_fock, h_wx)
 !
-!$omp parallel do private(x, y)
+!$omp parallel do &
+!$omp private(x, y) schedule(static)
       do y = 1, wf%n_ao
          do x = 1, wf%n_ao
 !
@@ -827,6 +825,9 @@ contains
 !$omp end parallel do
 !
       call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
+!
+      write(output%unit, *)'done'
+      flush(output%unit)
 !
    end subroutine construct_ao_fock_SAD_hf
 !
