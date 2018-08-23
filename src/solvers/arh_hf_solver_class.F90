@@ -20,14 +20,14 @@ module arh_hf_solver_class
 !
       integer(i15) :: max_micro_iterations = 1500
 !
-      real(dp) :: purification_threshold           = 1.0D-8
-      real(dp) :: relative_micro_threshold         = 1.0D-3
+      real(dp) :: purification_threshold           = 1.0D-5
+      real(dp) :: relative_micro_threshold         = 1.0D-2
       real(dp) :: relative_shifted_micro_threshold = 1.0D-3 
 !
-      real(dp) :: trust_radius                     = 0.2D0 
+      real(dp) :: trust_radius                     = 0.50D0 
       real(dp) :: relative_trust_radius_threshold  = 0.10D0
 !
-      real(dp) :: rotation_norm_threshold          = 0.2D0
+      real(dp) :: rotation_norm_threshold          = 0.5D0
 !
       integer(i15) :: diis_dimension = 25
 !
@@ -36,7 +36,7 @@ module arh_hf_solver_class
       type(file) :: RH_gradients_file 
       type(file) :: AO_densities_file 
 !
-      integer(i15) :: history = 6
+      integer(i15) :: history = 10
       integer(i15) :: current_index
 !
       real(dp) :: coulomb_thr       = 1.0D-11 ! screening 

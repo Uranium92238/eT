@@ -39,4 +39,5 @@ set(eT_fortran_sources
    src/molecular_system/active_atoms_info_class.F90
    src/solver_tools/diis_tool_class.F90
    src/solver_tools/davidson_tool_class.F90
+   src/solver_tools/eigen_davidson_tool_class.F90
 )
