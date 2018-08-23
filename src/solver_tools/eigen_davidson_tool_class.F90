@@ -25,6 +25,8 @@ module eigen_davidson_tool_class
 !
    type, extends(davidson_tool) :: eigen_davidson_tool 
 !
+      real(dp) :: eigenvalue_threshold
+!
       real(dp), dimension(:,:), allocatable :: omega_re 
       real(dp), dimension(:,:), allocatable :: omega_im
 !
@@ -47,7 +49,8 @@ module eigen_davidson_tool_class
 contains
 !
 !
-   subroutine initialize_eigen_davidson_tool(davidson)
+   subroutine initialize_eigen_davidson_tool(davidson, name, n_parameters, n_solutions, &
+                                             residual_threshold, eigenvalue_threshold)
 !!
 !!    Initialize 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -55,6 +58,36 @@ contains
       implicit none 
 !
       class(eigen_davidson_tool) :: davidson 
+!
+      character(len=*), intent(in) :: name
+!
+      integer(i15), intent(in) :: n_parameters, n_solutions  
+      real(dp), intent(in)     :: residual_threshold, eigenvalue_threshold  
+!
+      davidson%n_parameters = n_parameters
+      davidson%n_solutions  = n_solutions
+!
+      davidson%residual_threshold   = residual_threshold
+      davidson%eigenvalue_threshold = eigenvalue_threshold
+!
+      davidson%name = trim(name)
+!
+      call davidson%X%init(trim(davidson%name) // '_X', 'sequential', 'unformatted')
+      call davidson%trials%init(trim(davidson%name) // '_trials', 'sequential', 'unformatted')
+      call davidson%transforms%init(trim(davidson%name) // '_transforms', 'sequential', 'unformatted')
+      call davidson%preconditioner%init(trim(davidson%name) // '_preconditioner', 'sequential', 'unformatted')
+!
+      call disk%open_file(davidson%X, 'readwrite', 'rewind')
+      call disk%open_file(davidson%trials, 'readwrite', 'rewind')
+      call disk%open_file(davidson%transforms, 'readwrite', 'rewind')
+      call disk%open_file(davidson%preconditioner, 'readwrite', 'rewind')
+!
+      call disk%close_file(davidson%X)
+      call disk%close_file(davidson%trials)
+      call disk%close_file(davidson%transforms)
+      call disk%close_file(davidson%preconditioner)
+!
+      davidson%do_precondition = .false. ! Switches to true if 'set_preconditioner' is called
 !
    end subroutine initialize_eigen_davidson_tool
 !

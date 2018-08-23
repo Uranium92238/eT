@@ -15,6 +15,8 @@ module davidson_tool_class
 !
    type, abstract :: davidson_tool
 !
+      character(len=40) :: name 
+!
       real(dp), dimension(:,:), allocatable :: A_red
       real(dp), dimension(:,:), allocatable :: X_red
 !
@@ -51,10 +53,10 @@ module davidson_tool_class
       procedure :: precondition                     => precondition_davidson_tool
       procedure :: orthogonalize_against_trial_vecs => orthogonalize_against_trial_vecs_davidson_tool
 !
-!     Deferred routines
+      procedure :: set_A_red => set_A_red_davidson_tool
+      procedure :: get_A_red => get_A_red_davidson_tool
 !
-      procedure(initialize), deferred :: initialize
-      procedure(finalize), deferred   :: finalize   
+!     Deferred routines  
 !
       procedure(solve_reduced_problem), deferred :: solve_reduced_problem
       procedure(construct_residual), deferred    :: construct_residual
@@ -63,27 +65,6 @@ module davidson_tool_class
 !
 !
    abstract interface
-!
-      subroutine initialize(davidson)
-!
-         import :: davidson_tool
-!
-         implicit none 
-!
-         class(davidson_tool) :: davidson 
-!
-      end subroutine initialize
-!
-!
-      subroutine finalize(davidson)
-!
-         import :: davidson_tool
-!
-         implicit none 
-!
-         class(davidson_tool) :: davidson 
-!
-      end subroutine finalize
 !
 !
       subroutine solve_reduced_problem(davidson)
@@ -464,6 +445,8 @@ contains
       write(davidson%preconditioner%unit) preconditioner 
       call disk%close_file(davidson%preconditioner)
 !
+      davidson%do_precondition = .true.
+!
    end subroutine set_preconditioner_davidson_tool
 !
 !
@@ -547,5 +530,47 @@ contains
 !
    end subroutine orthogonalize_against_trial_vecs_davidson_tool
 !
+!
+   subroutine set_A_red_davidson_tool(davidson, A_red)
+!!
+!!    Set A reduced 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+!!    Sets the reduced coefficient matrix A_red equal to the
+!!    array sent to the routine. This is a non-standard routine 
+!!    that should only be used if the matrix e.g. depends on 
+!!    a parameter (scaling certain elements, for instance),
+!!    that must be handled outside the Davidson object. 
+!!
+!!    Usually, construction of A_red is done solely by 
+!!    the Davidson object, based on trial vectors and 
+!!    transformed vectors on file. 
+!!
+      implicit none 
+!
+      class(davidson_tool) :: davidson 
+!
+      real(dp), dimension(davidson%dim_red, davidson%dim_red), intent(in) :: A_red 
+!
+      davidson%A_red = A_red 
+!
+   end subroutine set_A_red_davidson_tool
+!
+!
+   subroutine get_A_red_davidson_tool(davidson, A_red)
+!!
+!!    Get A reduced 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+      implicit none 
+!
+      class(davidson_tool) :: davidson 
+!
+      real(dp), dimension(davidson%dim_red, davidson%dim_red), intent(inout) :: A_red 
+!
+      A_red = davidson%A_red 
+!
+   end subroutine get_A_red_davidson_tool
+!  
 !
 end module davidson_tool_class

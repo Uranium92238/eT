@@ -69,6 +69,7 @@ module hf_class
       procedure :: get_fock_ov    => get_fock_ov_hf
 !
       procedure :: set_ao_density        => set_ao_density_hf
+      procedure :: set_ao_fock           => set_ao_fock_hf
       procedure :: set_ao_density_to_sad => set_ao_density_to_sad_hf
 !
 !     Initialize and destruct routines for wavefunction variables
@@ -898,7 +899,7 @@ contains
 !
       else
 !
-         coulomb_thr = 1.0D-10 
+         coulomb_thr = 1.0D-11 
 !
       endif 
 !
@@ -908,7 +909,7 @@ contains
 !
       else
 !
-         exchange_thr = 1.0D-8
+         exchange_thr = 1.0D-11
 !
       endif 
 !
@@ -1125,7 +1126,7 @@ contains
       n_sig_sp = 0
       do s1s2 = 1, n_s*(n_s + 1)/2
 !
-         if (sp_eri_schwarz(s1s2, 1) .lt. 1.0D-14) then
+         if (sp_eri_schwarz(s1s2, 1)**2 .lt. 1.0D-16) then
 !
             exit
 !
@@ -1448,6 +1449,24 @@ contains
       call squareup(D, wf%ao_density, wf%n_ao)
 !
    end subroutine set_ao_density_hf
+!
+!
+   subroutine set_ao_fock_hf(wf, F)
+!!
+!!    Set AO Fock 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Sets the AO Fock from input
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      real(dp), dimension(:,:) :: F ! Packed
+!
+      call squareup(F, wf%ao_fock, wf%n_ao)
+!
+   end subroutine set_ao_fock_hf
 !
 !
    subroutine set_ao_density_to_sad_hf(wf)

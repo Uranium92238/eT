@@ -13,6 +13,7 @@ module arh_hf_solver_class
    use array_utilities
    use disk_manager_class
    use libint_initialization
+   use eigen_davidson_tool_class
 !
    implicit none
 !
@@ -39,10 +40,6 @@ module arh_hf_solver_class
       integer(i15) :: history = 10
       integer(i15) :: current_index
 !
-      real(dp) :: coulomb_thr       = 1.0D-11 ! screening 
-      real(dp) :: coulomb_precision = 1.0D-14 ! integral accuracy
-      real(dp) :: exchange_thr      = 1.0D-11  ! screening 
-!
    contains
 !
       procedure :: initialize  => initialize_arh_hf_solver
@@ -61,7 +58,8 @@ module arh_hf_solver_class
 !
       procedure, private :: rotate_and_purify                           => rotate_and_purify_arh_hf_solver
       procedure, private :: construct_and_pack_gradient                 => construct_and_pack_gradient_arh_hf_solver
-
+!
+      procedure, private :: solve_aug_Hessian_eigenequation => solve_aug_Hessian_eigenequation_arh_hf_solver
 !
    end type arh_hf_solver
 !
@@ -293,7 +291,7 @@ contains
 !        Print current iteration information
 !
          write(output%unit, '(t3,i3,10x,f17.12,4x,e10.4,4x,e10.4)') iteration, wf%hf_energy, &
-                           max_grad, abs(wf%hf_energy-prev_energy)
+                                          max_grad, abs(wf%hf_energy-prev_energy)
          flush(output%unit)
 !
 !        Test for convergence:
@@ -358,7 +356,8 @@ contains
             Xr     = zero
             Xr_pck = zero
 !
-            call solver%solve_aug_Newton_equation(wf, Xr_pck, Hr, Gr, S, max_grad)
+            call solver%solve_aug_Hessian_eigenequation(wf, Xr_pck, Hr, Gr, S, max_grad)
+          !  call solver%solve_aug_Newton_equation(wf, Xr_pck, Hr, Gr, S, max_grad)
             call squareup_anti(Xr_pck, Xr, wf%n_so)
 !
 !           :: Solve the augmented Hessian (i.e., level shifted Newton equation) if
@@ -1207,5 +1206,75 @@ contains
 !
    end subroutine construct_trace_matrix_arh_hf_solver
 !
+!
+   subroutine solve_aug_Hessian_eigenequation_arh_hf_solver(solver, wf, Xr_pck, Hr, Gr, S, max_grad)
+!!
+!!    Solve augmented Hessian eigenvalue equation 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+      implicit none 
+!
+      class(arh_hf_solver) :: solver 
+!
+      class(hf) :: wf 
+!
+      real(dp), dimension((wf%n_so-1)*(wf%n_so)/2, 1) :: Xr_pck
+!
+      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: Hr
+      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: Gr 
+      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: S
+!
+      real(dp), intent(in) :: max_grad 
+!
+      real(dp) :: norm_G
+!
+      type(eigen_davidson_tool) :: davidson 
+!
+      real(dp), dimension(:,:), allocatable :: preconditioner, B_i
+!
+      integer(i15) :: i, j, ij
+!
+!     Initialize the Davidson solver 
+!
+      call davidson%initialize('aug_Hessian_Davidson', (wf%n_so)**2 + 1, 1, &
+                                 solver%relative_micro_threshold*max_grad,  &
+                                 solver%relative_micro_threshold*max_grad)
+!
+!     Compute preconditioner and save it in Davidson tool 
+!
+      call mem%alloc(preconditioner, wf%n_so**2 + 1, 1)
+      preconditioner(1, 1) = one
+!
+      do i = 1, wf%n_so 
+         do j = 1, wf%n_so 
+!
+            ij = wf%n_so*(j - 1) + i
+!
+            preconditioner(1 + ij, 1) = Hr(i,i) + Hr(j,j)
+!
+         enddo 
+      enddo  
+!
+      call davidson%set_preconditioner(preconditioner)
+      call mem%dealloc(preconditioner, wf%n_so**2 + 1, 1)
+!
+!     Construct and write initial trial vectors to file 
+!
+      call mem%alloc(B_i, wf%n_so**2 + 1, 1)
+!
+      B_i = zero 
+      B_i(1,1) = one 
+!
+      call davidson%write_trial(B_i) ! (1 0)
+!
+      norm_G = get_l2_norm(Gr, wf%n_so**2)
+      B_i    = zero 
+      call daxpy(wf%n_so**2, one/norm_G, Gr, 1, B_i(2,1), 1) 
+!
+      call davidson%write_trial(B_i) ! (0 G/norm_G) 
+!
+      stop 
+!
+   end subroutine solve_aug_Hessian_eigenequation_arh_hf_solver
 !
 end module arh_hf_solver_class

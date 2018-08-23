@@ -49,12 +49,16 @@ contains
 !
       class(hf_solver), pointer :: solver => null()
 !
-      allocate(arh_solver)
-      solver => arh_solver
+      ! allocate(arh_solver)
+      ! solver => arh_solver
+!
+      allocate(scf_solver)
+      solver => scf_solver
 !
       call solver%run(wf)
 !
-      deallocate(arh_solver)
+     ! deallocate(arh_solver)
+      deallocate(scf_solver)
 !
    end subroutine run_hf_engine
 !

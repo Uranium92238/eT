@@ -110,8 +110,8 @@ program eT_program
 !
         call wf%initialize()
 !
-        !call roothan_hall_solver%run(wf)
-        call density_minimization_hf_solver%run(wf)
+        call roothan_hall_hf_solver%run(wf)
+        !call density_minimization_hf_solver%run(wf)
         
 !
         call wf%finalize()
