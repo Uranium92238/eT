@@ -138,8 +138,8 @@ contains
       write(output%unit,*)'set up fock'
       flush(output%unit)
 !
-      call wf%construct_ao_fock_SAD(1.0d-13, 1.0d-13, 1.0d-25)
-     ! write(output%unit,*)wf%hf_energy
+      call wf%construct_ao_fock_SAD(1.0d-14, 1.0d-14, 1.0d-25)
+      write(output%unit,*)wf%hf_energy
 !
       e_construct_fock = omp_get_wtime()
       write(output%unit, '(/a49, f11.2)')'Wall time to construct AO fock from SAD density: ', &

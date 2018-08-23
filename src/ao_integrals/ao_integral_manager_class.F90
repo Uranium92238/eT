@@ -29,6 +29,7 @@ module ao_integral_manager_class
    contains
 !
       procedure :: get_ao_h_xy   => get_ao_h_xy_ao_integral_manager   ! h_αβ
+      procedure :: get_ao_h_xy_sp => get_ao_h_xy_sp_ao_integral_manager   ! h_αβ
       procedure :: get_ao_s_xy   => get_ao_s_xy_ao_integral_manager   ! s_αβ
       procedure :: get_ao_g_wxyz => get_ao_g_wxyz_ao_integral_manager ! g_αβγδ
       procedure :: get_ao_g_wxyz_epsilon => get_ao_g_wxyz_epsilon_ao_integral_manager ! g_αβγδ
@@ -56,6 +57,27 @@ contains
       call get_ao_h_xy(h)
 !
    end subroutine get_ao_h_xy_ao_integral_manager
+!
+!
+!
+   subroutine get_ao_h_xy_sp_ao_integral_manager(int, h, s1, s2)
+!!
+!!    Get h_αβ integrals
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Fortran wrapper for the C++ routine that calculates and
+!!    saves the h_αβ integral_manager in the array h.
+!!
+      implicit none
+!
+      class(ao_integral_manager) :: int
+!
+      real(kind=8), dimension(:,:), intent(inout) :: h
+      integer(kind=8), intent(in) :: s1, s2
+!
+      call get_ao_h_xy_sp(h, s1, s2)
+!
+   end subroutine get_ao_h_xy_sp_ao_integral_manager
 !
 !
    subroutine get_ao_s_xy_ao_integral_manager(int, s)

@@ -26,11 +26,17 @@ extern eTBasis basis;
 vector<Engine> electronic_repulsion_engines(omp_get_max_threads());
 extern vector<Engine> electronic_repulsion_engines;
 
-Engine kinetic;
-extern Engine kinetic;
+vector<Engine> kinetic(omp_get_max_threads());
+extern vector<Engine> kinetic;
 
-Engine nuclear;
-extern Engine nuclear;
+vector<Engine> nuclear(omp_get_max_threads());
+extern vector<Engine> nuclear;
+
+// Engine kinetic;
+// extern Engine kinetic;
+
+// Engine nuclear;
+// extern Engine nuclear;
 
 Engine overlap;
 extern Engine overlap;
@@ -106,17 +112,37 @@ void set_coulomb_precision(double *prec){
 
 }
 
+// void initialize_kinetic(){
+// 
+	// Engine temporary(Operator::kinetic, basis.max_nprim(), basis.max_l());
+	// kinetic = temporary;
+// 
+// }
 void initialize_kinetic(){
 
+
 	Engine temporary(Operator::kinetic, basis.max_nprim(), basis.max_l());
-	kinetic = temporary;
+
+	for (int i = 0; i != omp_get_max_threads(); i++){
+		kinetic[i] = temporary; // One engine per thread
+	}
 
 }
 
+// void initialize_nuclear(){
+// 
+	// Engine temporary(Operator::nuclear, basis.max_nprim(), basis.max_l());
+	// nuclear = temporary;
+// 
+// }
 void initialize_nuclear(){
 
+
 	Engine temporary(Operator::nuclear, basis.max_nprim(), basis.max_l());
-	nuclear = temporary;
+
+	for (int i = 0; i != omp_get_max_threads(); i++){
+		nuclear[i] = temporary; // One engine per thread
+	}
 
 }
 

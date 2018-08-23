@@ -17,6 +17,17 @@ contains
 !
    end subroutine get_ao_h_xy
 !
+   subroutine get_ao_h_xy_sp(h, s1, s2)
+!
+      implicit none
+!
+      real(kind=8), dimension(1,1) :: h
+      integer(kind=8) :: s1, s2
+!
+      call get_ao_h_xy_sp_c(h, s1, s2)
+!
+   end subroutine get_ao_h_xy_sp
+!
    subroutine get_n_aos(n_ao)
 !
       use iso_c_binding

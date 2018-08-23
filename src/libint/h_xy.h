@@ -5,6 +5,7 @@ extern "C" {
 #endif
 
 void get_ao_h_xy(double *h);
+void get_ao_h_xy_sp(double *h, long *s1, long *s2);
 void get_n_aos(long *n_ao);
 
 #ifdef __cplusplus
