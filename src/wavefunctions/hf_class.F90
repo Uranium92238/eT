@@ -533,7 +533,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: sp_eri_schwarz, sp_density_schwarz
 !
-      real(dp), dimension(:,:), allocatable :: h_wx
+      real(dp), dimension(:,:), allocatable :: h_wx, h_AB
       integer(i15) :: x, y, z, xy, yz, xz, zz
 !
       integer(i15) :: A, B, C, skip, thread, omp_get_thread_num
@@ -577,8 +577,7 @@ contains
          precision_thr = 1.0D-14
 !
       endif 
-!
-      call set_coulomb_precision(precision_thr)
+      call set_coulomb_precision(1.0d-20)
 !
       n_s = wf%system%get_n_shells()
 !
@@ -627,6 +626,8 @@ contains
          enddo
       enddo
 !$omp end parallel do
+!
+      call set_coulomb_precision(precision_thr)
 !
       wf%ao_fock = zero
 !
@@ -807,10 +808,38 @@ contains
 !$omp end parallel do
 !
       write(output%unit, *)'h and energy'
-   flush(output%unit)
+      flush(output%unit)
 !
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
-      call get_ao_h_xy(h_wx)
+
+!      call get_ao_h_xy(h_wx)
+!
+!$omp parallel do &
+!$omp private(A, B, h_AB, A_interval, B_interval, x, y) schedule(static)
+      do A = 1, n_s
+!
+         A_interval = wf%system%shell_limits(A)
+!
+         do B = 1, n_s
+!
+            B_interval = wf%system%shell_limits(B)
+!
+            call mem%alloc(h_AB, A_interval%size, B_interval%size)
+            call wf%system%ao_integrals%get_ao_h_xy_sp(h_AB, A, B)
+!!
+             do x = 1, A_interval%size
+                do y = 1, B_interval%size
+!!
+                   h_wx(A_interval%first - 1 + x, B_interval%first - 1 + y) = h_AB(x, y)
+!!
+                enddo
+             enddo
+!
+            call mem%dealloc(h_AB, A_interval%size, B_interval%size)
+!
+         enddo
+      enddo
+!$omp end parallel do
 !
       call wf%calculate_hf_energy_from_G(wf%ao_fock, h_wx)
 !
