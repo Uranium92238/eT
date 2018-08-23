@@ -180,7 +180,7 @@ contains
       call wf%initialize_ao_fock()
 !
       start_timer = omp_get_wtime()
-      call wf%construct_ao_fock_SAD()!solver%coulomb_thr, solver%exchange_thr, solver%coulomb_precision)
+      call wf%construct_ao_fock_SAD(solver%coulomb_thr, solver%exchange_thr, solver%coulomb_precision)
       end_timer = omp_get_wtime()
       write(output%unit, *) 'Time to construct AO Fock from SAD: ', end_timer-start_timer
       flush(output%unit)

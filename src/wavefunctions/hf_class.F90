@@ -505,317 +505,10 @@ contains
 !$omp end parallel do
 !
    end subroutine determine_degeneracy_hf
+
 !
 !
-!   subroutine construct_ao_fock_SAD_hf(wf, coulomb, exchange, precision)
-!!!
-!!!    Construct AO Fock matrix
-!!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!!
-!!!    Calculates
-!!!
-!!!       F_αβ = h_αβ + sum_γ g_αβγγ D_γγ - 1/2 * sum_γ g_αγγβ D_γγ,
-!!!
-!!!    where D is the AO density. This routine is integral direct, and
-!!!    it calculates the Hartree-Fock energy by default.
-!!!
-!      implicit none
-!!
-!      class(hf) :: wf
-!!
-!      integer(i15) :: n_s
-!!
-!      real(dp), optional :: coulomb, exchange, precision ! Non-standard thresholds
-!!
-!      real(dp) :: coulomb_thr, exchange_thr, precision_thr
-!!
-!      real(dp), dimension(:,:), allocatable :: sp_eri_schwarz, sp_density_schwarz
-!!
-!      real(dp), dimension(:,:), allocatable :: h_wx
-!      integer(i15) :: x, y, z, xy, yz, xz, zz
-!!
-!      integer(i15) :: A, B, C, skip, thread, omp_get_thread_num
-!!
-!      type(interval) :: A_interval
-!      type(interval) :: B_interval
-!      type(interval) :: C_interval
-!!
-!      real(dp) :: maximum
-!!
-!      real(dp), dimension(:,:), allocatable :: g, g_C, g_K, D
-!!
-!!     Set thresholds to ignore Coulomb and exchange terms 
-!!
-!      if (present(coulomb)) then 
-!!
-!         coulomb_thr = coulomb 
-!!
-!      else
-!!
-!         coulomb_thr = 1.0D-10 
-!!
-!      endif 
-!!
-!      if (present(exchange)) then 
-!!
-!         exchange_thr = exchange 
-!!
-!      else
-!!
-!         exchange_thr = 1.0D-8
-!!
-!      endif 
-!!
-!      if (present(precision)) then 
-!!
-!         precision_thr = precision 
-!!
-!      else
-!!
-!         precision_thr = 1.0D-14
-!!
-!      endif 
-!!
-!      call set_coulomb_precision(precision_thr)
-!!
-!      n_s = wf%system%get_n_shells()
-!!
-!     call mem%alloc(sp_density_schwarz, n_s, 1)
-!!
-!!$omp parallel do private(A, A_interval, D, maximum) schedule(dynamic)
-!      do A = 1, n_s
-!!
-!            A_interval = wf%system%shell_limits(A)
-!!
-!            call mem%alloc(D, (A_interval%size), (A_interval%size))
-!!
-!            D = wf%ao_density(A_interval%first : A_interval%last, A_interval%first : A_interval%last)
-!!
-!            maximum = get_abs_max(D, (A_interval%size)*(A_interval%size))
-!!
-!            call mem%dealloc(D, (A_interval%size), (A_interval%size))
-!!
-!            sp_density_schwarz(A, 1) = maximum
-!!
-!      enddo
-!!$omp end parallel do
-!!
-!   call mem%alloc(sp_eri_schwarz, n_s, n_s)
-!!
-!!$omp parallel do private(A, B, A_interval, B_interval, g, maximum) schedule(dynamic)
-!      do A = 1, n_s
-!         do B = 1, A
-!!
-!            A_interval = wf%system%shell_limits(A)
-!            B_interval = wf%system%shell_limits(B)
-!!
-!            call mem%alloc(g, (A_interval%size)*(B_interval%size), &
-!                              (A_interval%size)*(B_interval%size))
-!!
-!            call wf%system%ao_integrals%get_ao_g_wxyz(g, A, B, A, B)
-!!
-!            maximum = get_abs_max(g, ((A_interval%size)*(B_interval%size))**2)
-!!
-!            call mem%dealloc(g, (A_interval%size)*(B_interval%size), &
-!                                (A_interval%size)*(B_interval%size))
-!!
-!            sp_eri_schwarz(A, B) = sqrt(maximum)
-!            sp_eri_schwarz(B, A) = sqrt(maximum)
-!!
-!         enddo
-!      enddo
-!!$omp end parallel do
-!!
-!      wf%ao_fock = zero
-!!
-!!$omp parallel do &
-!!$omp private(A, B, C, A_interval, B_interval, C_interval, x, y, z, xy, zz, xz, yz, &
-!!$omp g_C) schedule(dynamic)
-!      do A = 1, n_s
-!!
-!         A_interval = wf%system%shell_limits(A)
-!!
-!         do B = 1, A
-!!
-!            B_interval = wf%system%shell_limits(B)
-!!           
-!            do C = 1, n_s
-!!
-!               if (sp_eri_schwarz(A, B)*sp_eri_schwarz(C, C)*sp_density_schwarz(C, 1) .lt. coulomb_thr ) cycle
-!!
-!               C_interval = wf%system%shell_limits(C)
-!!
-!               call mem%alloc(g_C, (A_interval%size)*(B_interval%size), &
-!                                 (C_interval%size)*(C_interval%size))
-!!
-!               call wf%system%ao_integrals%get_ao_g_wxyz(g_C, A, B, C, C)
-!!
-!!              Add Fock matrix contributions
-!!
-!               if (A .ne. B) then
-!!
-!                  do x = A_interval%first, A_interval%last
-!                     do y = B_interval%first, B_interval%last
-!!
-!                        xy = A_interval%size*(y - B_interval%first) + x - A_interval%first + 1
-!!
-!                        do z = C_interval%first, C_interval%last
-!!
-!                           zz = C_interval%size*(z - C_interval%first) + z  - C_interval%first + 1
-!                           xz = A_interval%size*(z - C_interval%first) + x  - A_interval%first + 1
-!                           yz = B_interval%size*(z - C_interval%first) + y  - B_interval%first + 1
-!!
-!                           wf%ao_fock(x, y) = wf%ao_fock(x, y) + (g_C(xy, zz))*wf%ao_density(z, z)
-!!
-!                        enddo
-!                     enddo
-!                  enddo
-!!
-!               else
-!!
-!                  do x = A_interval%first, A_interval%last
-!                     do y = A_interval%first, x
-!!
-!                        xy = A_interval%size*(y - A_interval%first) + x - A_interval%first + 1
-!!
-!                        do z = C_interval%first, C_interval%last
-!!
-!                           zz = C_interval%size*(z - C_interval%first) + z  - C_interval%first + 1
-!                           xz = A_interval%size*(z - C_interval%first) + x  - A_interval%first + 1
-!                           yz = B_interval%size*(z - C_interval%first) + y  - B_interval%first + 1
-!!
-!                           wf%ao_fock(x, y) = wf%ao_fock(x, y) + (g_C(xy, zz))*wf%ao_density(z, z)
-!!
-!                        enddo
-!                     enddo
-!                  enddo
-!               endif
-!!                  
-!               call mem%dealloc(g_C, (A_interval%size)*(B_interval%size), &
-!                                 (C_interval%size)*(C_interval%size))
-!!
-!            enddo
-!         enddo
-!      enddo
-!!$omp end parallel do
-!!
-!!$omp parallel do &
-!!$omp private(A, B, C, A_interval, B_interval, C_interval, x, y, z, xy, zz, xz, yz, &
-!!$omp g_K) schedule(dynamic)
-!      do A = 1, n_s
-!!
-!         thread = omp_get_thread_num()
-!!
-!         A_interval = wf%system%shell_limits(A)
-!!           
-!         do C = 1, n_s
-!!
-!            C_interval = wf%system%shell_limits(C)
-!!
-!            do B = 1, A
-!!
-!               B_interval = wf%system%shell_limits(B)
-!!
-!               if (sp_eri_schwarz(A, C)*sp_eri_schwarz(B, C)*sp_density_schwarz(C, 1) .lt. exchange_thr) cycle
-!!
-!               call mem%alloc(g_K, (A_interval%size)*(C_interval%size), &
-!                                 (B_interval%size)*(C_interval%size))
-!!
-!               call wf%system%ao_integrals%get_ao_g_wxyz(g_K, A, C, B, C)
-!!
-!!              Add Fock matrix contributions
-!!
-!               if (A .ne. B) then
-!!
-!                  do x = A_interval%first, A_interval%last
-!                     do y = B_interval%first, B_interval%last
-!!
-!                        xy = A_interval%size*(y - B_interval%first) + x - A_interval%first + 1
-!!
-!                        do z = C_interval%first, C_interval%last
-!!
-!                           zz = C_interval%size*(z - C_interval%first) + z  - C_interval%first + 1
-!                           xz = A_interval%size*(z - C_interval%first) + x  - A_interval%first + 1
-!                           yz = B_interval%size*(z - C_interval%first) + y  - B_interval%first + 1
-!!
-!                           wf%ao_fock(x, y) = wf%ao_fock(x, y) + (- half*g_K(xz, yz))*wf%ao_density(z, z)
-!!
-!                        enddo
-!                     enddo
-!                  enddo
-!!
-!               else
-!!
-!                  do x = A_interval%first, A_interval%last
-!                     do y = A_interval%first, x
-!!
-!                        xy = A_interval%size*(y - A_interval%first) + x - A_interval%first + 1
-!!
-!                        do z = C_interval%first, C_interval%last
-!!
-!                           zz = C_interval%size*(z - C_interval%first) + z  - C_interval%first + 1
-!                           xz = A_interval%size*(z - C_interval%first) + x  - A_interval%first + 1
-!                           yz = B_interval%size*(z - C_interval%first) + y  - B_interval%first + 1
-!!
-!                           wf%ao_fock(x, y) = wf%ao_fock(x, y) + (- half*g_K(xz, yz))*wf%ao_density(z, z)
-!!
-!                        enddo
-!                     enddo
-!                  enddo
-!               endif
-!!                  
-!               call mem%dealloc(g_K, (A_interval%size)*(C_interval%size), &
-!                                 (B_interval%size)*(C_interval%size))
-!!
-!            enddo
-!         enddo
-!      enddo
-!!$omp end parallel do
-!!
-!      call mem%dealloc(sp_density_schwarz, n_s, 1)
-!      call mem%dealloc(sp_eri_schwarz, n_s, n_s)
-!!
-!!     Symmetrize
-!!
-!!$omp parallel do private(x, y)
-!      do x = 1, wf%n_ao
-!         do y = x + 1, wf%n_ao
-!!
-!            wf%ao_fock(x,y) = wf%ao_fock(x,y) + wf%ao_fock(y,x)
-!!
-!         enddo
-!      enddo
-!!$omp end parallel do
-!!
-!!$omp parallel do private(x, y)
-!      do y = 1, wf%n_ao
-!         do x = y + 1, wf%n_ao
-!!
-!            wf%ao_fock(x,y) = wf%ao_fock(y,x)
-!!
-!         enddo
-!      enddo
-!!$omp end parallel do
-!!
-!      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
-!      call get_ao_h_xy(h_wx)
-!!
-!      call wf%calculate_hf_energy_from_G(wf%ao_fock, h_wx)
-!!
-!!$omp parallel do private(x, y)
-!      do y = 1, wf%n_ao
-!         do x = 1, wf%n_ao
-!!
-!            wf%ao_fock(x,y) = wf%ao_fock(x,y) + h_wx(x, y)
-!!
-!         enddo
-!      enddo
-!!$omp end parallel do
-!!
-!      call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
-!!
-!   end subroutine construct_ao_fock_SAD_hf
-   subroutine construct_ao_fock_SAD_hf(wf)
+   subroutine construct_ao_fock_SAD_hf(wf, coulomb, exchange, precision)
 !!
 !!    Construct AO Fock matrix
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -833,12 +526,16 @@ contains
 !
       integer(i15) :: n_s
 !
+      real(dp), optional :: coulomb, exchange, precision ! Non-standard thresholds
+!
+      real(dp) :: coulomb_thr, exchange_thr, precision_thr
+!
       real(dp), dimension(:,:), allocatable :: sp_eri_schwarz, sp_density_schwarz
 !
       real(dp), dimension(:,:), allocatable :: h_wx
       integer(i15) :: x, y, z, xy, yz, xz, zz
 !
-      integer(i15) :: A, B, C
+      integer(i15) :: A, B, C, skip, thread, omp_get_thread_num
 !
       type(interval) :: A_interval
       type(interval) :: B_interval
@@ -847,6 +544,40 @@ contains
       real(dp) :: maximum
 !
       real(dp), dimension(:,:), allocatable :: g, g_C, g_K, D
+!
+!     Set thresholds to ignore Coulomb and exchange terms 
+!
+      if (present(coulomb)) then 
+!
+         coulomb_thr = coulomb 
+!
+      else
+!
+         coulomb_thr = 1.0D-10 
+!
+      endif 
+!
+      if (present(exchange)) then 
+!
+         exchange_thr = exchange 
+!
+      else
+!
+         exchange_thr = 1.0D-8
+!
+      endif 
+!
+      if (present(precision)) then 
+!
+         precision_thr = precision 
+!
+      else
+!
+         precision_thr = 1.0D-14
+!
+      endif 
+!
+      call set_coulomb_precision(precision_thr)
 !
       n_s = wf%system%get_n_shells()
 !
@@ -914,7 +645,7 @@ contains
 !           
             do C = 1, n_s
 !
-               if (sp_eri_schwarz(A, B)*sp_eri_schwarz(C, C)*sp_density_schwarz(C, 1) .lt. 1.0d-10 ) cycle
+               if (sp_eri_schwarz(A, B)*sp_eri_schwarz(C, C)*sp_density_schwarz(C, 1) .lt. coulomb_thr) cycle
 !
                C_interval = wf%system%shell_limits(C)
 !
@@ -991,7 +722,7 @@ contains
 !
                B_interval = wf%system%shell_limits(B)
 !
-               if (sp_eri_schwarz(A, C)*sp_eri_schwarz(B, C)*sp_density_schwarz(C, 1) .lt. 1.0d-8) cycle
+               if (sp_eri_schwarz(A, C)*sp_eri_schwarz(B, C)*sp_density_schwarz(C, 1) .lt. exchange_thr) cycle
 !
                call mem%alloc(g_K, (A_interval%size)*(C_interval%size), &
                                  (B_interval%size)*(C_interval%size))
@@ -1080,7 +811,7 @@ contains
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call get_ao_h_xy(h_wx)
 !
-     ! call wf%calculate_hf_energy_from_G(wf%ao_fock, h_wx)
+      call wf%calculate_hf_energy_from_G(wf%ao_fock, h_wx)
 !
 !$omp parallel do &
 !$omp private(x, y) schedule(static)
@@ -1098,9 +829,7 @@ contains
       write(output%unit, *)'done'
       flush(output%unit)
 !
-!
    end subroutine construct_ao_fock_SAD_hf
-
 !
 !
    subroutine construct_ao_fock_hf(wf, sp_eri_schwarz, sp_eri_schwarz_list, n_s, coulomb, exchange, precision)
