@@ -4,7 +4,6 @@ module davidson_tool_class
 !!    Abstract Davidson davidson class module
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2018
 !!
-!!
 !
    use kinds
    use parameters
@@ -19,7 +18,7 @@ module davidson_tool_class
       real(dp), dimension(:,:), allocatable :: A_red
       real(dp), dimension(:,:), allocatable :: X_red
 !
-      type(file) :: X, trials, transforms
+      type(file) :: X, trials, transforms, preconditioner
 !
       integer(i15) :: dim_red
       integer(i15) :: max_dim_red
@@ -29,6 +28,8 @@ module davidson_tool_class
       integer(i15) :: n_new_trials
 !
       real(dp) :: residual_threshold
+!
+      logical :: do_precondition
 !
    contains
 !
@@ -43,24 +44,27 @@ module davidson_tool_class
 !     Other procedures
 !
       procedure, non_overridable :: construct_reduced_matrix => construct_reduced_matrix_davidson_tool
-      procedure, non_overridable :: construct_X => construct_X_davidson_tool
-      procedure, non_overridable :: construct_AX => construct_AX_davidson_tool
+      procedure, non_overridable :: construct_X              => construct_X_davidson_tool
+      procedure, non_overridable :: construct_AX             => construct_AX_davidson_tool
+!
+      procedure :: set_preconditioner               => set_preconditioner_davidson_tool
+      procedure :: precondition                     => precondition_davidson_tool
+      procedure :: orthogonalize_against_trial_vecs => orthogonalize_against_trial_vecs_davidson_tool
 !
 !     Deferred routines
 !
-      procedure(essential_davidson), deferred :: initialize
-      procedure(essential_davidson), deferred :: finalize   
+      procedure(initialize), deferred :: initialize
+      procedure(finalize), deferred   :: finalize   
 !
-      procedure(essential_davidson), deferred :: solve_reduced_problem
-      procedure(essential_davidson), deferred :: construct_residual
-      procedure(essential_davidson), deferred :: construct_solution
+      procedure(solve_reduced_problem), deferred :: solve_reduced_problem
+      procedure(construct_residual), deferred    :: construct_residual
 !
    end type davidson_tool
 !
 !
    abstract interface
 !
-      subroutine essential_davidson(davidson)
+      subroutine initialize(davidson)
 !
          import :: davidson_tool
 !
@@ -68,7 +72,47 @@ module davidson_tool_class
 !
          class(davidson_tool) :: davidson 
 !
-      end subroutine essential_davidson
+      end subroutine initialize
+!
+!
+      subroutine finalize(davidson)
+!
+         import :: davidson_tool
+!
+         implicit none 
+!
+         class(davidson_tool) :: davidson 
+!
+      end subroutine finalize
+!
+!
+      subroutine solve_reduced_problem(davidson)
+!
+         import :: davidson_tool
+!
+         implicit none 
+!
+         class(davidson_tool) :: davidson 
+!
+      end subroutine solve_reduced_problem
+!
+!
+      subroutine construct_residual(davidson, R, X, norm_X, n)
+!
+         import :: davidson_tool, dp, i15
+!
+         implicit none 
+!
+         class(davidson_tool), intent(in) :: davidson 
+!
+         real(dp), dimension(davidson%n_parameters, 1)             :: R 
+         real(dp), dimension(davidson%n_parameters, 1), intent(in) :: X 
+!
+         real(dp), intent(in) :: norm_X 
+!
+         integer(i15), intent(in) :: n
+!
+      end subroutine construct_residual
 !
    end interface
 !
@@ -394,6 +438,114 @@ contains
       call mem%dealloc(rho_i, davidson%n_parameters, 1)
 !
    end subroutine construct_AX_davidson_tool
+!
+!
+   subroutine set_preconditioner_davidson_tool(davidson, preconditioner)
+!!
+!!    Set preconditioner 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+!!    This routine saves the diagonal preconditioner to file. The 
+!!    assumption being that 
+!!
+!!       preconditioner(i) ~ A(i,i),
+!!
+!!    where A is the coefficient matrix. The inverse of this diagonal 
+!!    matrix is a good approximation of A if A is diagonally dominant
+!!    to some extent.
+!!
+      implicit none 
+!
+      class(davidson_tool) :: davidson
+!
+      real(dp), dimension(davidson%n_parameters, 1), intent(in) :: preconditioner 
+!
+      call disk%open_file(davidson%preconditioner, 'write', 'rewind')
+      write(davidson%preconditioner%unit) preconditioner 
+      call disk%close_file(davidson%preconditioner)
+!
+   end subroutine set_preconditioner_davidson_tool
+!
+!
+   subroutine precondition_davidson_tool(davidson, R)
+!!
+!!    Precondition 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+!!    Preconditions the vector R, i.e. 
+!!
+!!       R(i) <- R(i)/preconditioner(i)
+!!
+!!    However, if the user has not set any preconditioner, 
+!!    this routine performs no action on R. 
+!!
+      implicit none 
+!
+      class(davidson_tool) :: davidson
+!
+      real(dp), dimension(davidson%n_parameters, 1), intent(inout) :: R
+!
+      real(dp), dimension(:,:), allocatable :: preconditioner
+!
+      integer(i15) :: i 
+!
+      if (davidson%do_precondition) then 
+!
+         call mem%alloc(preconditioner, davidson%n_parameters, 1)
+!
+         call disk%open_file(davidson%preconditioner, 'read', 'rewind')
+         read(davidson%preconditioner%unit) preconditioner
+         call disk%close_file(davidson%preconditioner)
+!
+         do i = 1, davidson%n_parameters
+!
+            R(i, 1) = R(i, 1)/preconditioner(i, 1)
+!
+         enddo 
+!
+         call mem%dealloc(preconditioner, davidson%n_parameters, 1)
+!
+      endif 
+!
+   end subroutine precondition_davidson_tool
+!
+!
+   subroutine orthogonalize_against_trial_vecs_davidson_tool(davidson, R)
+!!
+!!    Orthogonalize against trial vectors 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!    Orthogonalizes R against the existing trial vectors. Note 
+!!    that this is usually done residual after residual, where 
+!!    each new residual is orthogonalized against the previous 
+!!    (where the number of previous changes with 'n_new_trials').
+!!
+      implicit none 
+!
+      class(davidson_tool) :: davidson 
+!
+      real(dp), dimension(davidson%n_parameters, 1) :: R 
+!
+      real(dp) :: ddot, projection_of_R_on_c_i
+!
+      integer(i15) :: i 
+!
+      real(dp), dimension(:,:), allocatable :: c_i
+!
+      call mem%alloc(c_i, davidson%n_parameters, 1)
+!
+      do i = 1, davidson%dim_red + davidson%n_new_trials
+!
+         call davidson%read_trial(c_i, i)
+         projection_of_R_on_c_i = ddot(davidson%n_parameters, c_i, 1, R, 1)
+!
+         R = R - projection_of_R_on_c_i*c_i 
+!
+      enddo 
+!
+      call mem%dealloc(c_i, davidson%n_parameters, 1)
+!
+   end subroutine orthogonalize_against_trial_vecs_davidson_tool
 !
 !
 end module davidson_tool_class
