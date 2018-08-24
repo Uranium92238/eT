@@ -30,7 +30,7 @@ module ccs_class
 !
 contains
 !
-subroutine initialize_ccs(wf)
+   subroutine initialize_ccs(wf)
 !!
 !!    Initialize
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018

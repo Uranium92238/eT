@@ -584,7 +584,7 @@ contains
          precision_thr = 1.0D-14
 !
       endif 
-      call set_coulomb_precision(1.0d-20)
+      call set_coulomb_precision(1.0d-25)
 !
       n_s = wf%system%get_n_shells()
 !
