@@ -149,13 +149,16 @@ contains
 !
       call wf%initialize_ao_overlap()
       call wf%construct_ao_overlap()
+      call wf%decompose_ao_overlap_2() 
+!
+      write(output%unit, *)'Removed ', wf%n_ao - wf%n_so, 'AOs.'
 !
 !     Solve Roothan Hall once - using the SOAD guess - to get a decent AO density
 !     on  which to start the preconditioned conjugate gradient (PCG) algorithm
 !
       call wf%initialize_orbital_energies()
       call wf%initialize_mo_coefficients()
-      call wf%solve_roothan_hall() ! F^AO C = S C e to get new MOs C
+      call wf%do_roothan_hall() ! F^AO C = S C e to get new MOs C
 !
 !     Update the AO density
 !

@@ -22,9 +22,14 @@ module hf_class
       real(dp) :: hf_energy
 !
       real(dp), dimension(:,:), allocatable :: ao_density
-      real(dp), dimension(:,:), allocatable :: ao_overlap
       real(dp), dimension(:,:), allocatable :: ao_fock
       real(dp), dimension(:,:), allocatable :: orbital_energies
+!
+      real(dp), dimension(:,:), allocatable :: ao_overlap 
+      real(dp), dimension(:,:), allocatable :: cholesky_ao_overlap
+      real(dp), dimension(:,:), allocatable :: pivot_matrix_ao_overlap 
+!
+      real(dp) :: linear_dependence_threshold = 1.0D-6
 !
 	contains
 !
@@ -58,10 +63,12 @@ module hf_class
 !
       procedure :: decompose_ao_density => decompose_ao_density_hf
       procedure :: decompose_ao_overlap => decompose_ao_overlap_hf
+      procedure :: decompose_ao_overlap_2 => decompose_ao_overlap_2_hf
 !
 !     Solve the Roothan Hall equation FC = SCe by diagonalization
 !
       procedure :: solve_roothan_hall => solve_roothan_hall_hf ! remove soon, does not belong to wavefunction 
+      procedure :: do_roothan_hall    => do_roothan_hall_hf
 !
 !     Get and set routines for wavefunction variables
 !
@@ -1772,7 +1779,7 @@ contains
    end subroutine decompose_ao_density_hf
 !
 !
-   subroutine decompose_ao_overlap_hf(wf, L)
+   subroutine decompose_ao_overlap_hf(wf)
 !!
 !!    Decompose AO overlap
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -1856,6 +1863,61 @@ contains
 !
    end subroutine decompose_ao_overlap_hf
 !
+   subroutine decompose_ao_overlap_2_hf(wf)
+!!
+!!    Decompose AO overlap
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Performs a Cholesky decomposition of the AO overlap matrix S,
+!!    to within a given threshold: 
+!!
+!!       P^T S P = L L^T 
+!!
+!!    The routine allocates and sets P and L, the 'permutation matrix'
+!!    and the 'cholesky ao overlap'. Moreover, it sets the number of 
+!!    linearly independent AOs, wf%n_so, which is sometimes less than 
+!!    wf%n_ao. From P and L, we can transform equations to the linearly 
+!!    independent basis and back.
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      integer(kind=4), dimension(:, :), allocatable :: used_diag
+!
+      real(dp), dimension(:, :), allocatable :: L
+!
+      integer(i15) :: i, j
+!
+      allocate(used_diag(wf%n_ao, 1))
+      used_diag = 0
+!
+      call mem%alloc(L, wf%n_ao, wf%n_ao) ! Full Cholesky vector
+      L = zero
+!
+      call full_cholesky_decomposition_system(wf%ao_overlap, L, wf%n_ao, wf%n_so, &
+                                          wf%linear_dependence_threshold, used_diag)
+!
+      call mem%alloc(wf%cholesky_ao_overlap, wf%n_so, wf%n_so) 
+      wf%cholesky_ao_overlap(:,:) = L(1:wf%n_so, 1:wf%n_so)
+!
+      call mem%dealloc(L, wf%n_ao, wf%n_ao)
+!
+!     Make permutation matrix P
+!
+      call mem%alloc(wf%pivot_matrix_ao_overlap, wf%n_ao, wf%n_so)
+!
+      wf%pivot_matrix_ao_overlap = zero
+!
+      do j = 1, wf%n_so
+!
+         wf%pivot_matrix_ao_overlap(used_diag(j, 1), j) = one
+!
+      enddo
+!
+      deallocate(used_diag)
+!
+   end subroutine decompose_ao_overlap_2_hf
 !
    subroutine rotate_ao_density_hf(wf, X)
 !!
@@ -2303,6 +2365,147 @@ contains
       call mem%dealloc(tmp, wf%n_ao, wf%n_ao)
 !
    end subroutine construct_roothan_hall_gradient_hf
+!
+!
+   subroutine do_roothan_hall_hf(wf)
+!!
+!!    Do Roothan-Hall
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Solves the equation F C = S C e for the orbital coefficients C.
+!!    More precisely, it solves the equation in a linearly independent
+!!    subspace,
+!!
+!!       P^T F P (P^T C) = P^T S P P^T C e = L L^T (P^T C) e,
+!!
+!!    which differs from the AO basis if linear dependence is present 
+!!    to within some given threshold. The components of the equation is 
+!!    given by the Cholesky decomposition
+!!
+!!       P^T S P = L L^T,
+!!
+!!    where P is referred to as the 'permutation matrix' and L the 'cholesky
+!!    ao overlap' (note that these are member variables of the solver which 
+!!    must be set by a call to solver%decompose_ao_overlap(wf)). The number 
+!!    of linearly independent orbitals is wf%n_so, whereas the full number 
+!!    is wf%n_ao.   
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      real(dp), dimension(:,:), allocatable :: work
+      real(dp), dimension(:,:), allocatable :: metric 
+      real(dp), dimension(:,:), allocatable :: ao_fock 
+      real(dp), dimension(:,:), allocatable :: orbital_energies 
+      real(dp), dimension(:,:), allocatable :: FP 
+!
+      real(dp) :: ddot, norm
+!
+      integer(i15) :: info = 0
+!
+      call mem%alloc(metric, wf%n_so, wf%n_so)
+!
+      call dgemm('N','T',                 &
+                  wf%n_so,                &
+                  wf%n_so,                &
+                  wf%n_so,                &
+                  one,                    &
+                  wf%cholesky_ao_overlap, & 
+                  wf%n_so,                &
+                  wf%cholesky_ao_overlap, &
+                  wf%n_so,                &
+                  zero,                   &
+                  metric,                 & ! metric = L L^T
+                  wf%n_so)
+!
+!     Allocate reduced space matrices 
+!
+      call mem%alloc(ao_fock, wf%n_so, wf%n_so)
+      call mem%alloc(orbital_energies, wf%n_so, 1)
+!
+!     Construct reduced space Fock matrix, F' = P^T F P,
+!     which is to be diagonalized over the metric L L^T 
+!
+      call mem%alloc(FP, wf%n_ao, wf%n_so)
+!
+      call dgemm('N','N',                       &
+                  wf%n_ao,                      &
+                  wf%n_so,                      &
+                  wf%n_ao,                      &
+                  one,                          &
+                  wf%ao_fock,                   &
+                  wf%n_ao,                      &
+                  wf%pivot_matrix_ao_overlap,   &
+                  wf%n_ao,                      &
+                  zero,                         &  
+                  FP,                           &
+                  wf%n_ao)
+!
+      call dgemm('T','N',                       &
+                  wf%n_so,                      &
+                  wf%n_so,                      &
+                  wf%n_ao,                      &
+                  one,                          &
+                  wf%pivot_matrix_ao_overlap,   &
+                  wf%n_ao,                      &
+                  FP,                           &
+                  wf%n_ao,                      &
+                  zero,                         &
+                  ao_fock,                      & ! F' = P^T F P
+                  wf%n_so)   
+!
+      call mem%dealloc(FP, wf%n_so, wf%n_ao)   
+!
+!     Solve F'C' = L L^T C' e
+!
+      info = 0
+!
+      call mem%alloc(work, 4*wf%n_so, 1)
+      work = zero
+!
+      call dsygv(1, 'V', 'L',       &
+                  wf%n_so,          &
+                  ao_fock,          & ! ao_fock on entry, orbital coefficients on exit
+                  wf%n_so,          &
+                  metric,           &
+                  wf%n_so,          &
+                  orbital_energies, &
+                  work,             &
+                  4*(wf%n_so),      &
+                  info)
+!
+      call mem%dealloc(metric, wf%n_so, wf%n_so)
+      call mem%dealloc(work, 4*wf%n_so, 1)
+      call mem%dealloc(orbital_energies, wf%n_so, 1)
+!
+      if (info .ne. 0) then 
+!
+         write(output%unit, '(/t3,a/)') 'Error: could not solve Roothan-Hall equations.'
+         stop
+!
+      endif
+!
+!     Transform back the solutions to original basis, C = P (P^T C) = P C'
+!
+      wf%orbital_coefficients = zero
+!
+      call dgemm('N','N',                       &
+                  wf%n_ao,                      &
+                  wf%n_so,                      &
+                  wf%n_so,                      &
+                  one,                          &
+                  wf%pivot_matrix_ao_overlap,   &
+                  wf%n_ao,                      &
+                  ao_fock,                      & ! orbital coefficients 
+                  wf%n_so,                      &
+                  zero,                         &
+                  wf%orbital_coefficients,      &
+                  wf%n_ao)
+!
+      call mem%dealloc(ao_fock, wf%n_so, wf%n_so)
+!
+   end subroutine do_roothan_hall_hf
 !
 !
 end module hf_class
