@@ -1555,7 +1555,7 @@ contains
             call mem%dealloc_int(qual_aop, n_qual_aop, 3)
             call mem%dealloc_int(qual_sp, n_qual_sp, 3)
 !
-            write(output%unit, '(i4, 8x, i9, 2x, a1, i6, 9x, e12.5, 4x, i4, 8x, i7, 8x, i13)') &
+            write(output%unit, '(i4, 8x, i9, 1x, a1, i9, 6x, e12.5, 4x, i4, 8x, i7, 8x, i13)') &
             solver%iteration, n_sig_aop,'/', n_sig_sp, D_max_full , n_qual_aop, solver%n_cholesky, solver%n_cholesky*n_sig_aop
             flush(output%unit)
 !
@@ -1576,7 +1576,7 @@ contains
 !
             done = .true.
 !
-            write(output%unit, '(i4, 8x, i9, 2x, a1, i6, 9x, e12.5, 4x, i4, 8x, i7, 8x, i13)') &
+            write(output%unit, '(i4, 8x, i9, 1x, a1, i9, 6x, e12.5, 4x, i4, 8x, i7, 8x, i13)') &
             solver%iteration, 0,'/',0, D_max_full, n_qual_aop, solver%n_cholesky, 0
             flush(output%unit)
 !
@@ -1594,13 +1594,8 @@ contains
 !     Timings
 !
       call cpu_time(e_select_basis_time)
-    ! write(output%unit, '(/a22, f11.2, a9)')'Time to select basis: ',&
-    !                       e_select_basis_time - s_select_basis_time, ' seconds.'
-    ! write(output%unit, '(t6, a36, f11.2, a9)')'Time to reduce arrays:       ',&
-    !                       full_reduce_time, ' seconds.'
-    ! write(output%unit, '(t6, a36, f11.2, a9)')'Time to make vectors:        ',&
-    !                       full_construct_time, ' seconds.'
-    ! write(output%unit,'(/a42, i7)')'Number of signigicant negative diagonals: ', sig_neg
+!
+      write(output%unit,'(/a42, i7)')'Number of signigicant negative diagonals: ', sig_neg
 !
 !     Prepare info on basis
 !

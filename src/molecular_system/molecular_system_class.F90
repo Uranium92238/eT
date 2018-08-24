@@ -111,8 +111,10 @@ contains
       call initialize_atoms(molecule%name)
 !
       do i = 1, molecule%n_basis_sets ! Loop over atoms 
+         write(output%unit, *)molecule%basis_sets(i)
+          flush(output%unit) 
          write(temp_name, '(a, a1, i4.4)')trim(molecule%name), '_', i
-         call initialize_basis(molecule%basis_sets(i), temp_name) 
+         call initialize_basis(molecule%basis_sets(i), temp_name)
       enddo
 !
       call get_n_shells_on_atoms(n_shells_on_atoms)
@@ -453,6 +455,24 @@ contains
 !
       call disk%close_file(mol_file)
 !
+!     Count number of basis sets
+!
+      current_basis = molecule%atoms(1)%basis
+      molecule%n_basis_sets = 1
+!
+      do atom = 2, molecule%n_atoms
+!
+         if (molecule%atoms(atom)%basis .ne. current_basis) then
+!
+            molecule%n_basis_sets = molecule%n_basis_sets + 1
+            current_basis = molecule%atoms(atom)%basis
+!
+         endif
+!
+      enddo
+!
+      write(output%unit, *)'number of basis', molecule%n_basis_sets
+!
       allocate(molecule%basis_sets(molecule%n_basis_sets))
       call mem%alloc_int(n_atoms_in_basis, molecule%n_basis_sets, 1)
 !
@@ -524,6 +544,7 @@ contains
       class(molecular_system) :: molecule
 !
       character(len=100) :: line
+      character(len=100) :: active_basis
 !
       integer(i15) :: i, j, active_atom_counter, ioerror = 0, first, last, atom_counter
       integer(i15) :: central_atom
@@ -620,43 +641,51 @@ contains
 !
                         line = line(11:100)
                         line = remove_preceding_blanks(line)
-                        read(line, *) hf_radius ! In Ångstom
+                        read(line, '(f21.16)') hf_radius ! In Ångstom
+!
+                     elseif (line(1:13) == 'active basis:') then
+!
+                        line = line(14:100)
+                        line = remove_preceding_blanks(line)
+                        read(line, '(a100)') active_basis
 !
                      endif
 !
-                     molecule%n_active_atoms = 0
+                  enddo
 !
-                     do i = 1, molecule%n_atoms 
+                  molecule%n_active_atoms = 0
 !
-                        x = (molecule%atoms(central_atom)%x - molecule%atoms(i)%x)
-                        y = (molecule%atoms(central_atom)%y - molecule%atoms(i)%y)
-                        z = (molecule%atoms(central_atom)%z - molecule%atoms(i)%z)
+                  do i = 1, molecule%n_atoms 
 !
-                        if (sqrt(x**2 + y**2 + z**2) .le. hf_radius) molecule%n_active_atoms = molecule%n_active_atoms + 1
+                     x = (molecule%atoms(central_atom)%x - molecule%atoms(i)%x)
+                     y = (molecule%atoms(central_atom)%y - molecule%atoms(i)%y)
+                     z = (molecule%atoms(central_atom)%z - molecule%atoms(i)%z)
 !
-                     enddo
-!
-                     call mem%alloc_int(active_atoms, molecule%n_active_atoms, 1)
-!
-                     active_atom_counter = 0
-!
-                     do i = 1, molecule%n_atoms 
-!
-                        x = (molecule%atoms(central_atom)%x - molecule%atoms(i)%x)
-                        y = (molecule%atoms(central_atom)%y - molecule%atoms(i)%y)
-                        z = (molecule%atoms(central_atom)%z - molecule%atoms(i)%z)
-!
-                        if (sqrt(x**2 + y**2 + z**2) .le. hf_radius) then 
-!
-                           active_atom_counter = active_atom_counter + 1
-!
-                           active_atoms(active_atom_counter, 1) = i
-!
-                        endif
-!
-                     enddo
+                     if (sqrt(x**2 + y**2 + z**2) .le. hf_radius) molecule%n_active_atoms = molecule%n_active_atoms + 1
 !
                   enddo
+!
+                  call mem%alloc_int(active_atoms, molecule%n_active_atoms, 1)
+!
+                  active_atom_counter = 0
+!
+                  do i = 1, molecule%n_atoms 
+!
+                    x = (molecule%atoms(central_atom)%x - molecule%atoms(i)%x)
+                    y = (molecule%atoms(central_atom)%y - molecule%atoms(i)%y)
+                    z = (molecule%atoms(central_atom)%z - molecule%atoms(i)%z)
+!
+                    if (sqrt(x**2 + y**2 + z**2) .le. hf_radius) then 
+!
+                       active_atom_counter = active_atom_counter + 1
+!
+                       active_atoms(active_atom_counter, 1) = i
+                       molecule%atoms(i)%basis = trim(active_basis)
+!
+                    endif
+!
+                  enddo
+!
                   exit
 !
                else
@@ -673,6 +702,7 @@ contains
       enddo
 !
       write(output%unit, *)'Active: ', active_atoms
+      flush(output%unit)
 !
 !     Reorder atoms
 !
