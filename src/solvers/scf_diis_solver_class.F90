@@ -34,6 +34,9 @@ module scf_diis_solver_class
 !
       procedure :: print_banner => print_banner_scf_diis_solver
 !
+      procedure :: read_settings          => read_settings_scf_diis_solver 
+      procedure :: read_scf_diis_settings => read_scf_diis_settings_scf_diis_solver
+!
    end type scf_diis_solver
 !
 !
@@ -55,6 +58,8 @@ contains
       solver%coulomb_thr       = 1.0D-12 ! screening 
       solver%coulomb_precision = 1.0D-14 ! integral accuracy
       solver%exchange_thr      = 1.0D-12 ! screening 
+!
+      call solver%read_settings()
 !
 !     Set AO density to superposition of atomic densities (SAD)
 !
@@ -307,6 +312,63 @@ contains
       flush(output%unit)
 !
    end subroutine print_banner_scf_diis_solver
+!
+!
+   subroutine read_settings_scf_diis_solver(solver)
+!!
+!!    Read settings 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+      implicit none 
+!
+      class(scf_diis_solver) :: solver 
+!
+      call solver%read_hf_solver_settings()
+      call solver%read_scf_diis_settings()
+!
+   end subroutine read_settings_scf_diis_solver
+!
+!
+   subroutine read_scf_diis_settings_scf_diis_solver(solver)
+!!
+!!    Read SCF DIIS settings 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+!!    Reads settings specific to the class. 
+!!
+      implicit none 
+!
+      class(scf_diis_solver) :: solver 
+!
+      integer(i15) :: n_records, i 
+!
+      character(len=100) :: line, value 
+!
+      if (requested_section('hf')) then ! User has requested something 
+!
+         call move_to_section('hf', n_records)
+!
+         do i = 1, n_records
+!
+            read(input%unit, '(a100)') line
+            line = remove_preceding_blanks(line)
+!
+            write(output%unit, *) trim(line)
+!
+            if (line(1:15) == 'diis_dimension:') then
+!
+               value = line(16:100)
+               value = remove_preceding_blanks(value)
+               read(value, *) solver%diis_dimension
+               return
+!
+            endif
+!
+         enddo
+!
+      endif 
+!
+   end subroutine read_scf_diis_settings_scf_diis_solver
 !
 !
 end module scf_diis_solver_class
