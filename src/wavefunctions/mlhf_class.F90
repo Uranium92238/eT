@@ -96,9 +96,9 @@ contains
       real(dp), dimension(:,:), allocatable :: cholesky_vectors_occ, cholesky_vectors_virt, V, ao_density_v
 !
       integer(i15):: i, j, k, n_active_aos, ao_offset, active_ao_counter, n_vectors_occ, n_vectors_virt
-      integer(i15):: a, x
+      integer(i15):: a
 !
-      real(dp) :: max, e_construct_fock, s_construct_fock, omp_get_wtime
+      real(dp) :: max, e_construct_fock, s_construct_fock, omp_get_wtime, x, y, z
 !
       integer(i15), dimension(:,:), allocatable :: active_aos, sp_eri_schwarz_list
 !
@@ -194,6 +194,23 @@ contains
 !
       n_active_occ = n_active_occ/2
 !
+!     Add orbitals if bonds are capped. Assumes 2.5Å for covalent bonds.
+!
+      do i = wf%system%n_active_atoms + 1, wf%system%n_atoms
+!
+        do j = 1, wf%system%n_active_atoms
+!
+          x = (wf%system%atoms(j)%x - wf%system%atoms(i)%x)
+          y = (wf%system%atoms(j)%y - wf%system%atoms(i)%y)
+          z = (wf%system%atoms(j)%z - wf%system%atoms(i)%z)
+!
+          if (sqrt(x**2 + y**2 + z**2) .le. 2.5d0) n_active_occ = n_active_occ + 1 
+!
+        enddo
+!
+      enddo
+!
+!
 !     Determine number of active virtuals
 !
       n_active_vir = n_active_occ * (wf%n_v/wf%n_o)
@@ -218,23 +235,23 @@ contains
 !
       call mem%alloc(V, wf%n_ao, 1)
 !
-      do x = 1, wf%n_ao
+      do j = 1, wf%n_ao
 !
          max = 0.0d0
 !
          do i = 1, n_vectors_occ
 !
-            if (cholesky_vectors_occ(x, i)**2 .gt. max) max = cholesky_vectors_occ(x, i)**2     
+            if (cholesky_vectors_occ(j, i)**2 .gt. max) max = cholesky_vectors_occ(j, i)**2     
 !
          enddo
 !
          do a = 1, n_vectors_virt
 !
-            if (cholesky_vectors_virt(x, a)**2 .gt. max) max = cholesky_vectors_virt(x, a)**2 
+            if (cholesky_vectors_virt(j, a)**2 .gt. max) max = cholesky_vectors_virt(j, a)**2 
 !
          enddo
 !
-         V(x, 1) = max
+         V(j, 1) = max
 !
       enddo
 !

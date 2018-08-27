@@ -31,13 +31,13 @@ program eT_program
     type(hf), allocatable, target    :: hf_wf
     type(mlhf), allocatable, target  :: mlhf_wf 
 !
-!   Cholesky decomposition solver 
-!
-    type(eri_cd_solver), allocatable :: chol_solver
-!
 !   Wavefunction pointer
 !
     class(hf), pointer :: wf => null()
+!
+!   Cholesky decomposition solver 
+!
+    type(eri_cd_solver), allocatable :: chol_solver
 !
 !   Solvers 
 !
@@ -74,8 +74,6 @@ program eT_program
         call system%initialize()
 !
         allocate(chol_solver)
-!
-        
 !
         call chol_solver%initialize(system)
         call chol_solver%solve(system)

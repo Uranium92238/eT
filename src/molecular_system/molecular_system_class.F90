@@ -82,6 +82,8 @@ contains
       integer(kind=4), dimension(:,:), allocatable :: first_ao_in_shells
       integer(kind=4), dimension(:,:), allocatable :: shell_numbers
 !
+!     Read eT.inp and write files for Libint
+!
       call molecule%read_info()
 !
       allocate(molecule%atoms(molecule%n_atoms))
@@ -93,33 +95,31 @@ contains
 !
       if (requested_section('active atoms')) then
 !
-          write(output%unit, *)'found active atom input'
-          flush(output%unit)
-!
          call molecule%reorder_atoms()
 !
       endif
 !
       call molecule%write()
 !
-      do i = 1, molecule%n_atoms
-!
-         call molecule%atoms(i)%set_number()
-!
-      enddo
+!     Initialize libint with atoms and basis sets
 !
       call initialize_atoms(molecule%name)
 !
-      do i = 1, molecule%n_basis_sets ! Loop over atoms 
-         write(output%unit, *)molecule%basis_sets(i)
-          flush(output%unit) 
+      do i = 1, molecule%n_basis_sets ! Loop over atoms  
+!
          write(temp_name, '(a, a1, i4.4)')trim(molecule%name), '_', i
+!
          call initialize_basis(molecule%basis_sets(i), temp_name)
+!
       enddo
+!
+!     Initialize atoms and shells for eT
 !
       call get_n_shells_on_atoms(n_shells_on_atoms)
 !
       do i = 1, molecule%n_atoms ! Loop over atoms
+!
+         call molecule%atoms(i)%set_number()
 !
 !        Allocate and initialize the corresponding shells
 !
@@ -182,6 +182,20 @@ contains
 !
       enddo
 !
+!     Allocate and set shell limits vector 
+!
+      n_s = molecule%get_n_shells()
+!
+      allocate(molecule%shell_limits(n_s))
+!
+      do s = 1, n_s 
+!  
+         molecule%shell_limits(s) = molecule%get_shell_limits(s)
+!
+      enddo
+!
+!     Some sanity checks and stops
+!
       if (molecule%charge .ne. 0) then
 !
          write(output%unit) 'Error: SAD not yet implemented for charged species!'
@@ -197,16 +211,6 @@ contains
             stop
 !
          endif
-!
-      enddo
-!
-!     Allocate and set shell limits vector 
-!
-      n_s = molecule%get_n_shells()
-      allocate(molecule%shell_limits(n_s))
-      do s = 1, n_s 
-!  
-         molecule%shell_limits(s) = molecule%get_shell_limits(s)
 !
       enddo
 !
