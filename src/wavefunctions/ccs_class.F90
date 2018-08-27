@@ -6,6 +6,7 @@ module ccs_class
 !!
 !
    use wavefunction_class
+   use hf_class
 !
    use reordering
    use array_utilities
@@ -30,7 +31,7 @@ module ccs_class
 !
 contains
 !
-   subroutine initialize_ccs(wf)
+   subroutine initialize_ccs(wf, ref_wf)
 !!
 !!    Initialize
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -39,7 +40,18 @@ contains
 !
       class(ccs) :: wf
 !
+      class(hf) :: ref_wf
+!
       wf%name = 'ccs'
+      write(output%unit, *)'init'
+      flush(output%unit)
+!
+      wf%system = ref_wf%system
+!
+      wf%n_ao   = ref_wf%n_ao
+      wf%n_mo   = ref_wf%n_mo
+      wf%n_o    = ref_wf%n_o
+      wf%n_v    = ref_wf%n_v
 !
    end subroutine initialize_ccs
 !

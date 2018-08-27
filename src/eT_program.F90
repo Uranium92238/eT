@@ -10,8 +10,11 @@ program eT_program
   use disk_manager_class
 !
   use wavefunction_class
+!
   use hf_class
   use mlhf_class
+!
+  use ccs_class
 !
   use io_eT_program
 !
@@ -33,9 +36,12 @@ program eT_program
     type(hf), allocatable, target    :: hf_wf
     type(mlhf), allocatable, target  :: mlhf_wf 
 !
+    type(ccs), allocatable, target :: ccs_wf
+!
 !   Wavefunction pointer
 !
-    class(hf), pointer :: wf => null()
+    class(hf), pointer  :: ref_wf => null()
+    class(ccs), pointer :: cc_wf => null()
 !
 !   Cholesky decomposition solver 
 !
@@ -43,7 +49,7 @@ program eT_program
 !
 !   Engines
 !
-    type(hf_engine), allocatable :: engine_hf
+    type(hf_engine), allocatable :: gs_hf_engine
 !
     integer(i15) :: n_methods
 !
@@ -66,6 +72,8 @@ program eT_program
     call initialize_libint()
 !
     n_methods = get_n_methods()
+!
+!   ::  Hartree-Fock calculation (temporarily also cholesky decomposition) 
 !
     if (n_methods == 0) then
 !
@@ -91,32 +99,45 @@ program eT_program
       if (requested_method('mlhf')) then
 !
         allocate(mlhf_wf)
-        wf => mlhf_wf
+        ref_wf => mlhf_wf
 !
-        call wf%initialize()
-        call wf%finalize()
-!
-        wf => null()
-        deallocate(mlhf_wf) 
+        call ref_wf%initialize()
+        call ref_wf%finalize()
 !
       else
 !
         allocate(hf_wf)
-        wf => hf_wf
+        ref_wf => hf_wf
 !
-        call wf%initialize()
+        call ref_wf%initialize()
 !
-        allocate(engine_hf)
+        allocate(gs_hf_engine)
 !
-        call engine_hf%initialize()     
-        call engine_hf%run(wf)     
-        call engine_hf%finalize()     
+        call gs_hf_engine%initialize()     
+        call gs_hf_engine%run(ref_wf)     
+        call gs_hf_engine%finalize()     
 !
-        call wf%finalize()
-
-        deallocate(engine_hf)
-        wf => null()
-        deallocate(hf_wf)     
+        deallocate(gs_hf_engine)   
+!
+      endif
+!
+    endif
+!
+!   :: Coupled cluster calculation
+!
+    if (n_methods .gt. 0) then
+!
+      if (requested_method('ccs')) then
+!
+        allocate(ccs_wf)
+        cc_wf => ccs_wf
+!
+        write(output%unit, *)'CCS!'
+        flush(output%unit)
+!
+        call cc_wf%initialize(ref_wf)
+        call ref_wf%finalize()
+        deallocate(ref_wf)
 !
       endif
 !
