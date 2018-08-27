@@ -88,6 +88,8 @@ contains
       call disk%close_file(davidson%preconditioner)
 !
       davidson%do_precondition = .false. ! Switches to true if 'set_preconditioner' is called
+      davidson%dim_red = 0               ! Increases as we add trial vectors 
+      davidson%max_dim_red = 50           
 !
    end subroutine initialize_eigen_davidson_tool
 !
@@ -176,8 +178,8 @@ contains
 !     Find lowest n_solutions eigenvalues and sort them (the corresponding indices
 !     are placed in the integer array index_list)
 !
-      call mem%alloc(davidson%omega_re, davidson%n_solutions, 1)
-      call mem%alloc(davidson%omega_im, davidson%n_solutions, 1)
+      if (.not. allocated(davidson%omega_re)) call mem%alloc(davidson%omega_re, davidson%n_solutions, 1)
+      if (.not. allocated(davidson%omega_im)) call mem%alloc(davidson%omega_im, davidson%n_solutions, 1)
 !
       davidson%omega_re = zero
       davidson%omega_im = zero

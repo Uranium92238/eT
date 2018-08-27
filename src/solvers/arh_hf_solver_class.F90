@@ -25,7 +25,7 @@ module arh_hf_solver_class
       real(dp) :: relative_micro_threshold         = 1.0D-2
       real(dp) :: relative_shifted_micro_threshold = 1.0D-3 
 !
-      real(dp) :: trust_radius                     = 0.50D0 
+      real(dp) :: trust_radius                     = 0.10D0 
       real(dp) :: relative_trust_radius_threshold  = 0.10D0
 !
       real(dp) :: rotation_norm_threshold          = 0.5D0
@@ -52,6 +52,7 @@ module arh_hf_solver_class
       procedure, private :: solve_level_shifted_aug_Newton_equation     => solve_level_shifted_aug_Newton_equation_arh_hf_solver
 !
       procedure, private :: construct_stationary_roothan_hall_condition => construct_stationary_roothan_hall_condition_arh_hf_solver
+      procedure, private :: hessian_transformation                      => hessian_transformation_arh_hf_solver
       procedure, private :: add_augmented_Roothan_Hall_contribution     => add_augmented_Roothan_Hall_contribution_arh_hf_solver
 !
       procedure, private :: construct_trace_matrix                      => construct_trace_matrix_arh_hf_solver
@@ -824,6 +825,101 @@ contains
    end subroutine construct_stationary_roothan_hall_condition_arh_hf_solver
 !
 !
+   subroutine hessian_transformation_arh_hf_solver(solver, wf, RHC, H, X, G, S)
+!!
+!!    Hessian transformation 
+!!    Written by Eirik F. Kjønstad, 2018
+!!
+!!    Sets
+!!
+!!       RHC = H X S + S X H
+!!
+!!    Note that no assumption is made on X being antisymmetric,
+!!    making the routine appropriate for use with trial vectors 
+!!    in the array X. 
+!!
+      implicit none
+!
+      class(arh_hf_solver), intent(in) :: solver 
+!
+      class(hf), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_so, wf%n_so) :: RHC
+!
+      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: H
+      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: X
+      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: G
+      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: S
+!
+      real(dp), dimension(:,:), allocatable :: tmp
+!
+!     Construct tmp = X S
+!
+      call mem%alloc(tmp, wf%n_so, wf%n_so)
+!
+      call dgemm('N', 'N',       &
+                  wf%n_so,       &
+                  wf%n_so,       &
+                  wf%n_so,       &
+                  one,           &
+                  X,             &
+                  wf%n_so,       &
+                  S,             &
+                  wf%n_so,       &
+                  zero,          &
+                  tmp,           &
+                  wf%n_so)
+!
+!     RHC = H X S = H tmp
+!
+      call dgemm('N', 'N',       &
+                  wf%n_so,       &
+                  wf%n_so,       &
+                  wf%n_so,       &
+                  one,           &
+                  H,             &
+                  wf%n_so,       &
+                  tmp,           &
+                  wf%n_so,       &
+                  zero,          &
+                  RHC,           &
+                  wf%n_so)
+!
+!     tmp = S X 
+!
+      call dgemm('N', 'N',       &
+                  wf%n_so,       &
+                  wf%n_so,       &
+                  wf%n_so,       &
+                  one,           &
+                  S,             &
+                  wf%n_so,       &
+                  X,             &
+                  wf%n_so,       &
+                  zero,          &
+                  tmp,           &
+                  wf%n_so)
+! 
+!     RHC = RHC + S X H = RHC + tmp H = H X S + S X H
+!
+      call dgemm('N', 'N',       &
+                  wf%n_so,       &
+                  wf%n_so,       &
+                  wf%n_so,       &
+                  one,           &
+                  tmp,           &
+                  wf%n_so,       &
+                  H,             &
+                  wf%n_so,       &
+                  one,           &
+                  RHC,           &
+                  wf%n_so)
+!
+      call mem%dealloc(tmp, wf%n_so, wf%n_so)
+!
+   end subroutine hessian_transformation_arh_hf_solver
+!
+!
    subroutine add_augmented_Roothan_Hall_contribution_arh_hf_solver(solver, wf, RHC, X, G)
 !!
 !!    Add augmented Roothan-Hall contribution 
@@ -1226,13 +1322,18 @@ contains
 !
       real(dp), intent(in) :: max_grad 
 !
-      real(dp) :: norm_G
+      real(dp) :: norm_G, alpha, alpha0, ddot, norm_sol
 !
       type(eigen_davidson_tool) :: davidson 
 !
-      real(dp), dimension(:,:), allocatable :: preconditioner, B_i
+      real(dp), dimension(:,:), allocatable :: preconditioner, B_i, RHC, tmp, sol 
 !
-      integer(i15) :: i, j, ij
+      real(dp)     :: diagonal_minimum, first_el, func, func0, func1, prev_alpha, alpha1
+      integer(i15) :: index_diagonal_minimum, alpha_iteration
+!
+      logical :: rew ! rewind 
+!
+      integer(i15) :: i, j, ij 
 !
 !     Initialize the Davidson solver 
 !
@@ -1245,15 +1346,26 @@ contains
       call mem%alloc(preconditioner, wf%n_so**2 + 1, 1)
       preconditioner(1, 1) = one
 !
+      diagonal_minimum       = two*Hr(1,1)
+      index_diagonal_minimum = 1 
       do i = 1, wf%n_so 
          do j = 1, wf%n_so 
 !
             ij = wf%n_so*(j - 1) + i
-!
             preconditioner(1 + ij, 1) = Hr(i,i) + Hr(j,j)
+!
+            if (preconditioner(1 + ij, 1) .lt. diagonal_minimum) then 
+!
+               diagonal_minimum = preconditioner(1 + ij, 1)
+               index_diagonal_minimum = 1 + ij
+!
+            endif
 !
          enddo 
       enddo  
+!
+      write(output%unit, *) 'Estimate lowest eigenvalue of Hessian (element, value):', &
+                              diagonal_minimum, index_diagonal_minimum
 !
       call davidson%set_preconditioner(preconditioner)
       call mem%dealloc(preconditioner, wf%n_so**2 + 1, 1)
@@ -1264,17 +1376,138 @@ contains
 !
       B_i = zero 
       B_i(1,1) = one 
+      call davidson%add_initial_trial_vec(B_i) ! (1 0)
 !
-      call davidson%write_trial(B_i) ! (1 0)
-!
-      norm_G = get_l2_norm(Gr, wf%n_so**2)
       B_i    = zero 
+      norm_G = get_l2_norm(Gr, wf%n_so**2)
       call daxpy(wf%n_so**2, one/norm_G, Gr, 1, B_i(2,1), 1) 
+      call davidson%add_initial_trial_vec(B_i) ! (0 G/norm_G) 
 !
-      call davidson%write_trial(B_i) ! (0 G/norm_G) 
+      B_i = zero 
+      call mem%alloc(RHC, wf%n_so**2, 1)
+      RHC = zero 
+      call solver%hessian_transformation(wf, RHC, Hr, Gr, Gr, S) ! X = Gr 
+      B_i(2:(wf%n_so**2+1), 1) = -Gr(:,1) - RHC(:,1)/norm_G
+      call davidson%add_initial_trial_vec(B_i)                   ! (0 Residual)
+! 
+      B_i = zero 
+      B_i(index_diagonal_minimum, 1) = one
+      call davidson%add_initial_trial_vec(B_i) ! (0 0 0 ... 0 1 0 ... 0), where 1 is at lowest diagonal element 
+!
+!     Transform initial trial vectors,
+!     where we suppose that alpha = 1 (will be scaled later on) 
+!
+      alpha0 = 1.0D-5 
+      call mem%alloc(tmp, wf%n_so**2, 1)
+!
+      do i = 1, davidson%dim_red 
+!
+         call davidson%read_trial(B_i, i)
+!
+         if (i .eq. 1) then ! Special case, only term with a non-zero reference and zero vector part 
+!
+            rew = .true. 
+            B_i(1,1) = zero
+            call dcopy(wf%n_so**2, Gr, 1, B_i(2,1), 1)
+            call dscal(wf%n_so**2, alpha0, B_i(2,1), 1)
+!
+         else
+!
+            rew = .false.
+            B_i(1,1) = alpha0*ddot(wf%n_so**2, Gr, 1, B_i(2,1), 1) 
+            call dcopy(wf%n_so**2, B_i(2,1), 1, tmp, 1)
+            RHC = zero
+            call solver%hessian_transformation(wf, RHC, Hr, tmp, Gr, S)  
+            call dcopy(wf%n_so**2, RHC, 1, B_i(2,1), 1)
+!
+         endif 
+!
+         call davidson%write_transform(B_i, rew)
+!
+      enddo 
+!
+      call davidson%construct_reduced_matrix(.true.)
+!
+      do i = 1, davidson%dim_red
+         write(output%unit, *) 'i, row i', i, davidson%A_red(i,:)
+      enddo 
+!
+      call davidson%solve_reduced_problem()
+!
+      write(output%unit, *) 'Eigenvalue: ', davidson%omega_re(1,1)
+      write(output%unit, *) 'Eigenvector:', davidson%X_red 
+!
+      call mem%alloc(sol, wf%n_so**2 + 1, 1)
+      call davidson%construct_X(sol, 1)
+!
+      first_el = sol(1,1)
+      call dscal(wf%n_so**2 + 1, one/first_el, sol, 1) ! interm normal
+      write(output%unit, *) 'First element of solution: ', sol(1,1)
+      norm_sol = get_l2_norm(sol(2,1), wf%n_so**2)
+!
+      write(output%unit, *) 'Norm of X:', norm_sol
+      write(output%unit, *) 'Trust-radius:', solver%trust_radius
+!
+      func0 = (one/alpha0)*norm_sol - solver%trust_radius 
+      write(output%unit, *) 'f(alpha0) = ', func0
+!
+!     If func > 0, the norm of X is too large,
+!     so we have to adjust alpha 
+!
+      alpha1 = alpha0 
+      func1 = func0 
+      if (func0 .gt. zero) then 
+!
+         do while (func1*func0 .gt. zero)
+!
+            prev_alpha = alpha1 
+            alpha1 = alpha1 + 0.5D0
+!
+            davidson%A_red(1,:) = (alpha1/prev_alpha)*davidson%A_red(1,:)
+            davidson%A_red(:,1) = (alpha1/prev_alpha)*davidson%A_red(:,1)
+!
+            call davidson%solve_reduced_problem()
+            call davidson%construct_X(sol, 1)
+!
+            first_el = sol(1,1)
+            call dscal(wf%n_so**2 + 1, one/first_el, sol, 1) ! interm normal
+            write(output%unit, *) 'First element of solution: ', sol(1,1)
+            norm_sol = get_l2_norm(sol(2,1), wf%n_so**2)
+!
+            write(output%unit, *) 'Norm of X:', norm_sol
+            write(output%unit, *) 'Trust-radius:', solver%trust_radius
+!
+            func1 = (one/alpha1)*norm_sol - solver%trust_radius 
+            write(output%unit, *) 'f(alpha1) = ', func1
+!
+         enddo 
+!
+      endif 
+!
+!     Determine alpha 
+!
+      alpha_iteration = 0
+      do while (abs(norm_sol - solver%trust_radius) .gt. 1.0D-3 .and. alpha_iteration .lt. 100)
+!
+         alpha_iteration = alpha_iteration + 1
+!
+
+!
+      enddo 
+!
+!       do i = 1, wf%n_so 
+!          do j = 1, wf%n_so 
+! !
+!             write(output%unit, *) 'i j hij hji', i, j, Hr(i,j), Hr(j,i)
+! !
+!          enddo
+!       enddo
+!
+      write(output%unit, *) 'Reached end!'
 !
       stop 
 !
    end subroutine solve_aug_Hessian_eigenequation_arh_hf_solver
+!
 !
 end module arh_hf_solver_class

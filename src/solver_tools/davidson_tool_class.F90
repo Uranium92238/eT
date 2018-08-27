@@ -11,6 +11,7 @@ module davidson_tool_class
    use file_class
    use disk_manager_class
    use memory_manager_class
+   use array_utilities
 !
 !
    type, abstract :: davidson_tool
@@ -55,6 +56,8 @@ module davidson_tool_class
 !
       procedure :: set_A_red => set_A_red_davidson_tool
       procedure :: get_A_red => get_A_red_davidson_tool
+!
+      procedure :: add_initial_trial_vec => add_initial_trial_vec_davidson_tool
 !
 !     Deferred routines  
 !
@@ -162,6 +165,66 @@ contains
    end subroutine write_trial_davidson_tool
 !
 !
+   subroutine add_initial_trial_vec_davidson_tool(davidson, c)
+!!
+!!    Add initial trial vector 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!    Adds a trial vector to the search space, though it is not
+!!    assumed to be orthogonal to existing trial vectors on entry.
+!!    Components along existing vectors are removed before the 
+!!    vector is stored to file.
+!!
+      implicit none 
+!
+      class(davidson_tool) :: davidson 
+!
+      real(dp), dimension(davidson%n_parameters, 1) :: c 
+!
+      real(dp) :: ddot, projection_of_c_on_c_i, norm_c
+!
+      integer(i15) :: i 
+!
+      real(dp), dimension(:,:), allocatable :: c_i
+!
+      if (davidson%dim_red .eq. 0) then 
+!
+         norm_c = get_l2_norm(c, davidson%n_parameters)
+         c = c/norm_c
+!
+         call disk%open_file(davidson%trials, 'write', 'rewind')
+         write(davidson%trials%unit) c 
+         call disk%close_file(davidson%trials)
+!
+      else 
+!
+         call mem%alloc(c_i, davidson%n_parameters, 1)
+!
+         do i = 1, davidson%dim_red
+!
+            call davidson%read_trial(c_i, i)
+            projection_of_c_on_c_i = ddot(davidson%n_parameters, c_i, 1, c, 1)
+!
+            c = c - projection_of_c_on_c_i*c_i 
+!
+         enddo 
+!
+         norm_c = get_l2_norm(c, davidson%n_parameters)
+         c = c/norm_c
+!
+         call disk%open_file(davidson%trials, 'write', 'append')
+         write(davidson%trials%unit) c 
+         call disk%close_file(davidson%trials)
+!
+         call mem%dealloc(c_i, davidson%n_parameters, 1)
+!
+      endif
+!
+      davidson%dim_red = davidson%dim_red + 1
+!
+   end subroutine add_initial_trial_vec_davidson_tool
+!
+!
    subroutine read_transform_davidson_tool(davidson, rho_i, n)
 !!
 !!    Read transformed vector
@@ -181,17 +244,17 @@ contains
 !
       call disk%open_file(davidson%transforms, 'read')
 !
-      call davidson%trials%prepare_to_read_line(n)
+      call davidson%transforms%prepare_to_read_line(n)
 !
-      read(davidson%trials%unit, iostat = ioerror) rho_i
-      if (ioerror .ne. 0) call output%error_msg('reading transformed vectors file.')
+      read(davidson%transforms%unit, iostat = ioerror) rho_i
+      if (ioerror .ne. 0) call output%error_msg('reading transformed vectors file 2.')
 !
       call disk%close_file(davidson%transforms)
 !
    end subroutine read_transform_davidson_tool
 !
 !
-   subroutine write_transform_davidson_tool(davidson, rho_i)
+   subroutine write_transform_davidson_tool(davidson, rho_i, rew)
 !!
 !!    Write transform
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Aug 2018
@@ -204,9 +267,23 @@ contains
 !
       real(dp), dimension(davidson%n_parameters, 1) :: rho_i
 !
+      logical, optional, intent(in) :: rew ! rewind 
+!
       integer(i15) :: ioerror
 !
-      if (davidson%dim_red + 1 .le. davidson%max_dim_red) then
+      if (present(rew)) then 
+!
+         if (rew) then 
+!
+            call disk%open_file(davidson%transforms, 'write', 'rewind')
+!
+         else
+!
+            call disk%open_file(davidson%transforms, 'write', 'append')
+!
+         endif
+!
+      elseif (davidson%dim_red + 1 .le. davidson%max_dim_red) then
 !
          call disk%open_file(davidson%transforms, 'write', 'append')
 !
@@ -216,15 +293,15 @@ contains
 !
       endif     
 !
-      write(davidson%trials%unit, iostat = ioerror) rho_i
-      if (ioerror .ne. 0) call output%error_msg('writing trial vectors file.')
+      write(davidson%transforms%unit, iostat=ioerror) rho_i
+      if (ioerror .ne. 0) call output%error_msg('writing transformed vectors file.')
 !
       call disk%close_file(davidson%transforms)
 !
    end subroutine write_transform_davidson_tool
 !
 !
-   subroutine construct_reduced_matrix_davidson_tool(davidson)
+   subroutine construct_reduced_matrix_davidson_tool(davidson, entire)
 !!
 !!    Construct reduced matrix
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Aug 2018
@@ -240,6 +317,8 @@ contains
       implicit none
 !
       class(davidson_tool) :: davidson
+!
+      logical, optional, intent(in) :: entire ! Construct the entire matrix 
 !
       real(dp) :: ddot
 !
@@ -264,7 +343,7 @@ contains
 !
 !     Construct reduced matrix: A_red_ij = c_i^T * A * c_j = c_i^T * rho_i
 !
-      if (davidson%dim_red .eq. davidson%n_solutions) then ! First iteration
+      if (davidson%dim_red .eq. davidson%n_solutions .or. entire) then ! First iteration
 !
 !        Make the entire reduced matrix
 !
@@ -272,13 +351,14 @@ contains
 !
          do i = 1, davidson%dim_red
 !
-           read(davidson%trials%unit, iostat=ioerror) c_i
+            read(davidson%trials%unit, iostat=ioerror) c_i
             if (ioerror .ne. 0) call output%error_msg('reading trial vector file.')
 !
+            rewind(davidson%transforms%unit)
             do j = 1, davidson%dim_red
 !
                read(davidson%transforms%unit, iostat=ioerror) rho_j
-               if (ioerror .ne. 0) call output%error_msg('reading transformed vector file.')
+               if (ioerror .ne. 0) call output%error_msg('reading transformed vector file 1.')
 !
                davidson%A_red(i,j) = ddot(davidson%n_parameters, c_i, 1, rho_j, 1)
 !
@@ -308,7 +388,7 @@ contains
             do j = 1, davidson%dim_red
 !
                read(davidson%transforms%unit, iostat=ioerror) rho_j
-               if (ioerror .ne. 0) call output%error_msg('reading transformed vector file.')
+               if (ioerror .ne. 0) call output%error_msg('reading transformed vector file 3.')
 !
                if (j .le. davidson%dim_red - davidson%n_new_trials) then
 !
@@ -377,6 +457,7 @@ contains
       enddo    
 !
       call mem%dealloc(c_i, davidson%n_parameters, 1)
+      call disk%close_file(davidson%trials)
 !
    end subroutine construct_X_davidson_tool
 !
@@ -410,7 +491,7 @@ contains
       do i = 1, davidson%dim_red
 ! 
          read(davidson%transforms%unit, iostat = ioerror) rho_i
-         if (ioerror .ne. 0) call output%error_msg('reading transformed vector file.')
+         if (ioerror .ne. 0) call output%error_msg('reading transformed vector file 4.')
 !
          call daxpy(davidson%n_parameters, davidson%X_red(i, n), rho_i, 1, AX, 1)
 !
@@ -502,6 +583,8 @@ contains
 !!    that this is usually done residual after residual, where 
 !!    each new residual is orthogonalized against the previous 
 !!    (where the number of previous changes with 'n_new_trials').
+!!
+!!    Note that it does not normalize R.
 !!
       implicit none 
 !
