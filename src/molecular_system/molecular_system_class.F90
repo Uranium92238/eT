@@ -230,6 +230,14 @@ contains
 !
       class(molecular_system) :: molecule
 !
+      integer(i15) :: i
+!
+      do i = 1, molecule%n_atoms 
+!
+         call molecule%atoms(i)%cleanup()
+!
+      enddo
+!
       call molecule%destruct_atoms()
       call molecule%destruct_basis_sets()
       call molecule%destruct_shell_limits()
