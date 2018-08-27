@@ -62,9 +62,9 @@ module molecular_system_class
       procedure :: initialize_atoms          => initialize_atoms_molecular_system
       procedure :: initialize_shell_limits   => initialize_shell_limits_molecular_system
 !
-      procedure :: finalize_basis_sets    => finalize_basis_sets_molecular_system
-      procedure :: finalize_atoms         => finalize_atoms_molecular_system
-      procedure :: finalize_shell_limits  => finalize_shell_limits_molecular_system
+      procedure :: destruct_basis_sets    => destruct_basis_sets_molecular_system
+      procedure :: destruct_atoms         => destruct_atoms_molecular_system
+      procedure :: destruct_shell_limits  => destruct_shell_limits_molecular_system
 !
    end type molecular_system
 !
@@ -230,9 +230,9 @@ contains
 !
       class(molecular_system) :: molecule
 !
-      call molecule%finalize_atoms()
-      call molecule%finalize_basis_sets()
-      call molecule%finalize_shell_limits()
+      call molecule%destruct_atoms()
+      call molecule%destruct_basis_sets()
+      call molecule%destruct_shell_limits()
 !
    end subroutine cleanup_molecular_system
 !
@@ -1067,9 +1067,9 @@ contains
    end subroutine initialize_atoms_molecular_system
 !
 !
-   subroutine finalize_atoms_molecular_system(molecule)
+   subroutine destruct_atoms_molecular_system(molecule)
 !!
-!!    Finalize atoms
+!!    destruct atoms
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
       implicit none
@@ -1078,7 +1078,7 @@ contains
 !
       if (allocated(molecule%atoms)) deallocate(molecule%atoms)
 !
-   end subroutine finalize_atoms_molecular_system
+   end subroutine destruct_atoms_molecular_system
 !
 !
    subroutine initialize_basis_sets_molecular_system(molecule)
@@ -1095,9 +1095,9 @@ contains
    end subroutine initialize_basis_sets_molecular_system
 !
 !
-   subroutine finalize_basis_sets_molecular_system(molecule)
+   subroutine destruct_basis_sets_molecular_system(molecule)
 !!
-!!    Finalize basis sets
+!!    destruct basis sets
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
       implicit none
@@ -1106,7 +1106,7 @@ contains
 !
       if (allocated(molecule%basis_sets)) deallocate(molecule%basis_sets)
 !
-   end subroutine finalize_basis_sets_molecular_system
+   end subroutine destruct_basis_sets_molecular_system
 !
 !
    subroutine initialize_shell_limits_molecular_system(molecule)
@@ -1127,9 +1127,9 @@ contains
    end subroutine initialize_shell_limits_molecular_system
 !
 !
-   subroutine finalize_shell_limits_molecular_system(molecule)
+   subroutine destruct_shell_limits_molecular_system(molecule)
 !!
-!!    Finalize basis sets
+!!    destruct basis sets
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
       implicit none
@@ -1138,7 +1138,7 @@ contains
 !
       if (allocated(molecule%shell_limits)) deallocate(molecule%shell_limits)
 !
-   end subroutine finalize_shell_limits_molecular_system
+   end subroutine destruct_shell_limits_molecular_system
 !
 !
 end module molecular_system_class

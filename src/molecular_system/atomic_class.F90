@@ -42,7 +42,7 @@ module atomic_class
       procedure :: AD => AD_atom
 !
       procedure :: initialize_shells   => initialize_shells_atomic
-      procedure :: finalize_shells     => finalize_shells_atomic
+      procedure :: destruct_shells     => destruct_shells_atomic
 !
       procedure :: cleanup => cleanup_atomic
 !
@@ -296,9 +296,9 @@ contains
    end subroutine initialize_shells_atomic
 !
 !
-   subroutine finalize_shells_atomic(atom)
+   subroutine destruct_shells_atomic(atom)
 !!
-!!    Finalize shells
+!!    destruct shells
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
       implicit none
@@ -307,7 +307,7 @@ contains
 !
       if (allocated(atom%shells)) deallocate(atom%shells)
 !
-   end subroutine finalize_shells_atomic
+   end subroutine destruct_shells_atomic
 !
 !
    subroutine cleanup_atomic(atom)
@@ -319,7 +319,7 @@ contains
 !
       class(atomic) :: atom
 !
-      call atom%finalize_shells
+      call atom%destruct_shells
 !
    end subroutine cleanup_atomic
 !
