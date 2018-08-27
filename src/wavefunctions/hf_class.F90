@@ -416,7 +416,7 @@ contains
       sp_eri_schwarz_list(:,3) = sp_eri_schwarz_index_list(:,1)
       call mem%dealloc_int(sp_eri_schwarz_index_list, n_s*(n_s + 1)/2, 1)
 !
-      call mem%dealloc_int(sp_eri_schwarz_list_copy, n_s*(n_s + 1)/2, 3)
+    !  call mem%dealloc_int(sp_eri_schwarz_list_copy, n_s*(n_s + 1)/2, 3)
 !
    end subroutine construct_sp_eri_schwarz_hf
 !

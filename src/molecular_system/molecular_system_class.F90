@@ -192,6 +192,7 @@ contains
 !
       call molecule%initialize_shell_limits()
 !
+      n_s = molecule%get_n_shells()
       do s = 1, n_s 
 !  
          molecule%shell_limits(s) = molecule%get_shell_limits(s)

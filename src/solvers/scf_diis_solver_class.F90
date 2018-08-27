@@ -117,35 +117,19 @@ contains
 !     matrix, and L the AO Cholesky matrix, both of which are members of the
 !     solver object.
 !
-      write(output%unit, *) 'hello 1'
-      flush(output%unit)
-!
       call wf%initialize_ao_overlap()
       call wf%construct_ao_overlap()
       call solver%decompose_ao_overlap(wf) 
-!
-      write(output%unit, *) 'hello 2'
-      flush(output%unit)
 !
 !     :: Construct screening vectors, as well as a degeneracy vector, 
 !     used to construct AO Fock efficiently
 !
       n_s = wf%system%get_n_shells()
 !
-      write(output%unit, *) 'hello 2.5', n_s
-      flush(output%unit)
-!
       call mem%alloc(sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
       call mem%alloc_int(sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
 !
-      write(output%unit, *) 'hello 2.7'
-      flush(output%unit)
-!
       call wf%construct_sp_eri_schwarz(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
-!
-      write(output%unit, *) 'hello 3'
-      flush(output%unit)
-           stop
 !
 !     :: Initialize the DIIS object,
 !     which is used to get new effective densities from previous densities and gradients
@@ -157,10 +141,6 @@ contains
 !
       call wf%initialize_ao_fock()
       call wf%construct_ao_fock_SAD(solver%coulomb_thr, solver%exchange_thr, solver%coulomb_precision)
-!
-      write(output%unit, *) 'hello 4'
-      flush(output%unit)
-
 !
       call wf%initialize_mo_coefficients()
 !
