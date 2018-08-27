@@ -1322,16 +1322,17 @@ contains
 !
       real(dp), intent(in) :: max_grad 
 !
-      real(dp) :: norm_G, alpha, alpha0, ddot, norm_sol
+      real(dp) :: norm_G, alpha, alpha0, ddot, norm_sol, residual_norm
 !
       type(eigen_davidson_tool) :: davidson 
 !
       real(dp), dimension(:,:), allocatable :: preconditioner, B_i, RHC, tmp, sol 
 !
-      real(dp)     :: diagonal_minimum, first_el, func, func0, func1, prev_alpha, alpha1
+      real(dp)     :: diagonal_minimum, first_el, func, func0, func1, prev_alpha, alpha1, alpha_mid, func_mid
       integer(i15) :: index_diagonal_minimum, alpha_iteration
 !
       logical :: rew ! rewind 
+      logical :: micro_converged ! micro converged 
 !
       integer(i15) :: i, j, ij 
 !
@@ -1451,49 +1452,145 @@ contains
       func0 = (one/alpha0)*norm_sol - solver%trust_radius 
       write(output%unit, *) 'f(alpha0) = ', func0
 !
-!     If func > 0, the norm of X is too large,
-!     so we have to adjust alpha 
 !
-      alpha1 = alpha0 
-      func1 = func0 
-      if (func0 .gt. zero) then 
+      do while (.not. micro_converged)
 !
-         do while (func1*func0 .gt. zero)
+!        If func > 0, the norm of X is too large,
+!        so we have to adjust alpha 
 !
-            prev_alpha = alpha1 
-            alpha1 = alpha1 + 0.5D0
+         alpha1 = alpha0 
+         func1 = func0 
+         if (func0 .gt. zero) then 
 !
-            davidson%A_red(1,:) = (alpha1/prev_alpha)*davidson%A_red(1,:)
-            davidson%A_red(:,1) = (alpha1/prev_alpha)*davidson%A_red(:,1)
+            do while (func1*func0 .gt. zero)
 !
-            call davidson%solve_reduced_problem()
-            call davidson%construct_X(sol, 1)
+               prev_alpha = alpha1 
+               alpha1 = alpha1 + 0.5D0
 !
-            first_el = sol(1,1)
-            call dscal(wf%n_so**2 + 1, one/first_el, sol, 1) ! interm normal
-            write(output%unit, *) 'First element of solution: ', sol(1,1)
-            norm_sol = get_l2_norm(sol(2,1), wf%n_so**2)
+               davidson%A_red(1,:) = (alpha1/prev_alpha)*davidson%A_red(1,:)
+               davidson%A_red(:,1) = (alpha1/prev_alpha)*davidson%A_red(:,1)
 !
-            write(output%unit, *) 'Norm of X:', norm_sol
-            write(output%unit, *) 'Trust-radius:', solver%trust_radius
+               call davidson%solve_reduced_problem()
+               call davidson%construct_X(sol, 1)
 !
-            func1 = (one/alpha1)*norm_sol - solver%trust_radius 
-            write(output%unit, *) 'f(alpha1) = ', func1
+               first_el = sol(1,1)
+               call dscal(wf%n_so**2 + 1, one/first_el, sol, 1) ! interm normal
+               norm_sol = get_l2_norm(sol(2,1), wf%n_so**2)
+!
+               func1 = (one/alpha1)*norm_sol - solver%trust_radius 
+               write(output%unit, *) 'alpha1', alpha1
+               write(output%unit, *) 'f(alpha1) = ', func1
+!
+            enddo 
+!
+!           Now, f1 < 0 and f0 > 0, so the solution is between alpha0 and alpha1 
+!
+            prev_alpha = alpha1
+            do while (alpha_iteration .lt. 100)
+!
+               alpha_mid = (alpha0 + alpha1)/two 
+!
+               davidson%A_red(1,:) = (alpha_mid/prev_alpha)*davidson%A_red(1,:)
+               davidson%A_red(:,1) = (alpha_mid/prev_alpha)*davidson%A_red(:,1)
+!
+               call davidson%solve_reduced_problem()
+               call davidson%construct_X(sol, 1)            
+!
+               first_el = sol(1,1)
+               call dscal(wf%n_so**2 + 1, one/first_el, sol, 1) ! interm normal
+               norm_sol = get_l2_norm(sol(2,1), wf%n_so**2)
+!
+               func_mid = (one/alpha_mid)*norm_sol - solver%trust_radius 
+               write(output%unit, *) 'alpha0 alpha1 func0 func1', alpha0, alpha1, func0, func1 
+               write(output%unit, *) 'alpha_mid func_mid ', alpha_mid, func_mid 
+!
+               if (abs(func_mid) .lt. 1.0D-8) then ! Converged I guess 
+!
+                  alpha = alpha_mid 
+                  func  = func_mid 
+                  exit
+!
+               endif 
+!
+               if (func_mid*func0 .lt. zero) then ! Solution is between alpha0 and alpha_mid 
+!
+                  prev_alpha = alpha_mid 
+                  alpha1 = alpha_mid 
+                  func1  = func_mid 
+!
+               else ! Solution is between alpha_mid and alpha1
+!
+                  prev_alpha = alpha_mid 
+                  alpha0 = alpha_mid  
+                  func0  = func_mid                
+!
+               endif         
+!
+            enddo 
+!
+         endif 
+!
+!        Now that we have determined alpha & adjusted the reduced matrix appropriately,
+!        we should expand the search space 
+!
+         residual_norm = zero 
+         call davidson%construct_next_trial_vec(residual_norm)
+!
+         write(output%unit, *) ':::: Residual: ', residual_norm
+!
+         if (residual_norm .lt. solver%relative_micro_threshold*max_grad) then 
+!
+            write(output%unit, *) 'Converged!'
+            micro_converged = .true.
+            stop
+!
+         endif 
+!
+         do i = 1, davidson%dim_red 
+!
+            call davidson%read_trial(B_i, i)
+!
+            if (i .eq. 1) then ! Special case, only term with a non-zero reference and zero vector part 
+!
+               rew = .true. 
+               B_i(1,1) = zero
+               call dcopy(wf%n_so**2, Gr, 1, B_i(2,1), 1)
+               call dscal(wf%n_so**2, alpha, B_i(2,1), 1)
+!
+            else
+!
+               rew = .false.
+               B_i(1,1) = alpha*ddot(wf%n_so**2, Gr, 1, B_i(2,1), 1) 
+               call dcopy(wf%n_so**2, B_i(2,1), 1, tmp, 1)
+               RHC = zero
+               call solver%hessian_transformation(wf, RHC, Hr, tmp, Gr, S)  
+               call dcopy(wf%n_so**2, RHC, 1, B_i(2,1), 1)
+!
+            endif 
+!
+            call davidson%write_transform(B_i, rew)
 !
          enddo 
 !
-      endif 
+         call davidson%construct_reduced_matrix(.true.)
 !
-!     Determine alpha 
+         call davidson%solve_reduced_problem()
+         call davidson%construct_X(sol, 1)
 !
-      alpha_iteration = 0
-      do while (abs(norm_sol - solver%trust_radius) .gt. 1.0D-3 .and. alpha_iteration .lt. 100)
+         first_el = sol(1,1)
+         call dscal(wf%n_so**2 + 1, one/first_el, sol, 1) ! interm normal
+         norm_sol = get_l2_norm(sol(2,1), wf%n_so**2)
 !
-         alpha_iteration = alpha_iteration + 1
-!
-
+         alpha0 = alpha 
+         func0 = (one/alpha0)*norm_sol - solver%trust_radius 
+         write(output%unit, *) 'alpha0', alpha0
+         write(output%unit, *) 'f(alpha0) = ', func0
 !
       enddo 
+!
+!     
+!
+
 !
 !       do i = 1, wf%n_so 
 !          do j = 1, wf%n_so 
