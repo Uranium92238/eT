@@ -35,10 +35,10 @@ module hf_class
 !
 !     Construction routines for various wavefunction variables
 !
-      procedure :: construct_ao_density         => construct_ao_density_hf
+      procedure :: construct_ao_density               => construct_ao_density_hf
 !
-      procedure :: construct_ao_fock            => construct_ao_fock_hf             ! Entire Fock matrix 
-      procedure :: construct_ao_fock_cumulative => construct_ao_fock_cumulative_hf  ! Change in Fock matrix from previous density
+      procedure :: construct_ao_fock                  => construct_ao_fock_hf             ! Entire Fock matrix 
+      procedure :: construct_ao_fock_cumulative       => construct_ao_fock_cumulative_hf  ! Change in Fock matrix from previous density
 !
       procedure, private :: ao_fock_construction_loop => ao_fock_construction_loop_hf
 !
