@@ -125,8 +125,7 @@ contains
 !
       wf%name = 'HF'
 !
-!
-      call wf%system%prepare() ! Initialize molecular system -> Should include SOAD
+      call wf%system%prepare()
 !
       wf%n_ao = 0
       call get_n_aos(wf%n_ao)
@@ -141,8 +140,7 @@ contains
       call initialize_coulomb()
       call initialize_kinetic()
       call initialize_nuclear()
-      call initialize_overlap() ! SHOULD THESE BE INITIALIZED IN THE ENGINE ?
-      call initialize_overlap()
+      call initialize_overlap() 
 !
    end subroutine initialize_hf
 !
@@ -170,7 +168,7 @@ contains
 !
       class(hf) :: wf
 !
-      call mem%alloc(wf%ao_density, wf%n_ao, wf%n_ao)
+      if (.not. allocated(wf%ao_density)) call mem%alloc(wf%ao_density, wf%n_ao, wf%n_ao)
       wf%ao_density = zero
 !
    end subroutine initialize_ao_density_hf
@@ -185,8 +183,8 @@ contains
 !
       class(hf) :: wf
 !
-       call mem%alloc(wf%orbital_energies, wf%n_mo, 1)
-       wf%orbital_energies = zero
+      if (.not. allocated(wf%orbital_energies)) call mem%alloc(wf%orbital_energies, wf%n_mo, 1)
+      wf%orbital_energies = zero
 !
    end subroutine initialize_orbital_energies_hf
 !
@@ -200,7 +198,7 @@ contains
 !
       class(hf) :: wf
 !
-      call mem%alloc(wf%ao_fock, wf%n_ao, wf%n_ao)
+      if (.not. allocated(wf%ao_fock)) call mem%alloc(wf%ao_fock, wf%n_ao, wf%n_ao)
       wf%ao_fock = zero
 !
    end subroutine initialize_ao_fock_hf
@@ -215,7 +213,7 @@ contains
 !
       class(hf) :: wf
 !
-      call mem%alloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
+      if (.not. allocated(wf%orbital_coefficients)) call mem%alloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
       wf%orbital_coefficients = zero
 !
    end subroutine initialize_mo_coefficients_hf
@@ -230,7 +228,7 @@ contains
 !
       class(hf) :: wf
 !
-      call mem%alloc(wf%ao_overlap, wf%n_ao, wf%n_ao)
+      if (.not. allocated(wf%ao_overlap)) call mem%alloc(wf%ao_overlap, wf%n_ao, wf%n_ao)
       wf%ao_overlap = zero
 !
    end subroutine initialize_ao_overlap_hf
@@ -245,7 +243,7 @@ contains
 !
       class(hf) :: wf
 !
-      call mem%dealloc(wf%ao_overlap, wf%n_ao, wf%n_ao)
+      if (allocated(wf%ao_overlap)) call mem%dealloc(wf%ao_overlap, wf%n_ao, wf%n_ao)
 !
    end subroutine destruct_ao_overlap_hf
 !
@@ -259,7 +257,7 @@ contains
 !
       class(hf) :: wf
 !
-      call mem%dealloc(wf%orbital_energies, wf%n_mo, 1)
+      if (allocated(wf%orbital_energies)) call mem%dealloc(wf%orbital_energies, wf%n_mo, 1)
 !
    end subroutine destruct_orbital_energies_hf
 !
@@ -273,7 +271,7 @@ contains
 !
       class(hf) :: wf
 !
-      call mem%dealloc(wf%ao_density, wf%n_ao, wf%n_ao)
+      if (allocated(wf%ao_density)) call mem%dealloc(wf%ao_density, wf%n_ao, wf%n_ao)
 !
    end subroutine destruct_ao_density_hf
 !
@@ -287,7 +285,7 @@ contains
 !
       class(hf) :: wf
 !
-      call mem%dealloc(wf%ao_fock, wf%n_ao, wf%n_ao)
+      if (allocated(wf%ao_fock)) call mem%dealloc(wf%ao_fock, wf%n_ao, wf%n_ao)
 !
    end subroutine destruct_ao_fock_hf
 !
@@ -301,7 +299,7 @@ contains
 !
       class(hf) :: wf
 !
-      call mem%dealloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
+      if (allocated(wf%orbital_coefficients)) call mem%dealloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
 !
    end subroutine destruct_mo_coefficients_hf
 !
@@ -386,7 +384,7 @@ contains
 !
             call wf%system%ao_integrals%get_ao_g_wxyz(g, s1, s2, s1, s2)
 !
-            maximum = get_abs_max(g, (A_interval%size)*(B_interval%size)**2)
+            maximum = get_abs_max(g, ((A_interval%size)*(B_interval%size))**2)
 !
             call mem%dealloc(g, (A_interval%size)*(B_interval%size), &
                                 (A_interval%size)*(B_interval%size))
@@ -622,7 +620,7 @@ contains
 !
             call wf%system%ao_integrals%get_ao_g_wxyz(g, A, B, A, B)
 !
-            maximum = get_abs_max(g, (A_interval%size)*(B_interval%size)**2)
+            maximum = get_abs_max(g, ((A_interval%size)*(B_interval%size))**2)
 !
             call mem%dealloc(g, (A_interval%size)*(B_interval%size), &
                                 (A_interval%size)*(B_interval%size))

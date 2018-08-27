@@ -47,10 +47,10 @@ module molecular_system_class
       procedure :: get_nuclear_repulsion => get_nuclear_repulsion_molecular_system
       procedure :: get_n_electrons       => get_n_electrons_molecular_system
 !
-      procedure :: get_n_aos => get_n_aos_molecular_system
-      procedure :: get_n_shells => get_n_shells_molecular_system
+      procedure :: get_n_aos        => get_n_aos_molecular_system
+      procedure :: get_n_shells     => get_n_shells_molecular_system
       procedure :: get_shell_limits => get_shell_limits_molecular_system
-      procedure :: basis2shell => basis2shell_molecular_system
+      procedure :: basis2shell      => basis2shell_molecular_system
 !
       procedure :: SAD => SAD_molecular_system
 !
@@ -58,13 +58,13 @@ module molecular_system_class
 !
       procedure :: reorder_atoms => reorder_atoms_molecular_system
 !
-      procedure :: initialize_basis_sets     => initialize_basis_sets_molecular_system
-      procedure :: initialize_atoms          => initialize_atoms_molecular_system
-      procedure :: initialize_shell_limits   => initialize_shell_limits_molecular_system
+      procedure :: initialize_basis_sets   => initialize_basis_sets_molecular_system
+      procedure :: initialize_atoms        => initialize_atoms_molecular_system
+      procedure :: initialize_shell_limits => initialize_shell_limits_molecular_system
 !
-      procedure :: destruct_basis_sets    => destruct_basis_sets_molecular_system
-      procedure :: destruct_atoms         => destruct_atoms_molecular_system
-      procedure :: destruct_shell_limits  => destruct_shell_limits_molecular_system
+      procedure :: destruct_basis_sets     => destruct_basis_sets_molecular_system
+      procedure :: destruct_atoms          => destruct_atoms_molecular_system
+      procedure :: destruct_shell_limits   => destruct_shell_limits_molecular_system
 !
    end type molecular_system
 !
@@ -850,7 +850,7 @@ contains
 !
       get_n_electrons_molecular_system = get_n_electrons_molecular_system - molecule%charge
 !
-  end function get_n_electrons_molecular_system
+   end function get_n_electrons_molecular_system
 !
 !
    integer(i15) function get_n_shells_molecular_system(molecule)
@@ -990,17 +990,16 @@ contains
 !
       do I = 1, molecule%n_atoms
 !
-            call mem%alloc(atom_density_diagonal, molecule%atoms(I)%n_ao, 1)
+         call mem%alloc(atom_density_diagonal, molecule%atoms(I)%n_ao, 1)
 !
-            call molecule%atoms(I)%AD(atom_density_diagonal)
+         call molecule%atoms(I)%AD(atom_density_diagonal)
 !
-            density_diagonal(offset_diagonal + 1 : offset_diagonal + molecule%atoms(I)%n_ao, 1) = &
+         density_diagonal(offset_diagonal + 1 : offset_diagonal + molecule%atoms(I)%n_ao, 1) = &
                atom_density_diagonal(:,1)
 !
-            call mem%dealloc(atom_density_diagonal, molecule%atoms(I)%n_ao, 1)
+         call mem%dealloc(atom_density_diagonal, molecule%atoms(I)%n_ao, 1)
 !
-            offset_diagonal = offset_diagonal + molecule%atoms(I)%n_ao
-!
+         offset_diagonal = offset_diagonal + molecule%atoms(I)%n_ao
 !
       enddo
 !
@@ -1098,7 +1097,7 @@ contains
 !
       class(molecular_system) :: molecule
 !
-      if (.not. allocated(molecule%basis_sets)) allocate(molecule%atoms(molecule%n_basis_sets))
+      if (.not. allocated(molecule%basis_sets)) allocate(molecule%basis_sets(molecule%n_basis_sets))
 !
    end subroutine initialize_basis_sets_molecular_system
 !
@@ -1137,7 +1136,7 @@ contains
 !
    subroutine destruct_shell_limits_molecular_system(molecule)
 !!
-!!    destruct basis sets
+!!    Destruct basis sets
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
       implicit none
