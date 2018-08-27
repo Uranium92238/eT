@@ -31,13 +31,13 @@ program eT_program
     type(hf), allocatable, target    :: hf_wf
     type(mlhf), allocatable, target  :: mlhf_wf 
 !
-!   Cholesky decomposition solver 
-!
-    type(eri_cd_solver), allocatable :: chol_solver
-!
 !   Wavefunction pointer
 !
     class(hf), pointer :: wf => null()
+!
+!   Cholesky decomposition solver 
+!
+    type(eri_cd_solver), allocatable :: chol_solver
 !
 !   Solvers 
 !
@@ -62,6 +62,8 @@ program eT_program
     write(output%unit,'(t12,a//)') 'S. D. Folkestad, E. F. Kjønstad, 2017-2018'
     flush(output%unit)
 !
+    call initialize_libint()
+!
     n_methods = get_n_methods()
 !
     if (n_methods == 0) then
@@ -73,13 +75,9 @@ program eT_program
 !
         allocate(chol_solver)
 !
-        call initialize_libint()
-!
         call chol_solver%initialize(system)
         call chol_solver%solve(system)
         call chol_solver%finalize()
-!
-        call finalize_libint()
 !
      else
 !
@@ -94,19 +92,13 @@ program eT_program
         allocate(mlhf_wf)
         wf => mlhf_wf
 !
-        call initialize_libint()
-!
         call wf%initialize()
         call wf%finalize()
-!
-        call finalize_libint()
 !
       else
 !
         allocate(hf_wf)
         wf => hf_wf
-!
-        call initialize_libint()
 !
         call wf%initialize()
 !
@@ -116,43 +108,14 @@ program eT_program
 !
         call wf%finalize()
 !
-        call finalize_libint()
-!
       endif
 !
     endif
+!
+    call finalize_libint()
 !
    call disk%close_file(output)
    call disk%close_file(input)
 !
 end program eT_program
-
 !
-   !
-   !
-!
-   !
-!
-!  Initialize Libint integral library
-!
-   !call initialize_libint()
-!
-!  Initialize wavefunction
-!
-   !call wf%initialize()
-
-  ! call wf%eri_decomp_test_w_active_dens()
-!
-  !  call chol_solver%initialize(wf%system)
-  !  call chol_solver%solve(wf%system)
-  !  call chol_solver%finalize()
-!
-!  Ask the Hartree-Fock (HF) solver to find the HF solution
-!
-!  Finalize the wavefunction
-!
- !  call wf%finalize()
-!
-!  Finalize the Libint integral library
-!
-!  call finalize_libint()

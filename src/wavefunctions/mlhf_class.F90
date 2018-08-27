@@ -26,6 +26,7 @@ module mlhf_class
       procedure :: finalize => finalize_mlhf
 !
       procedure :: construct_virtual_density => construct_virtual_density_mlhf
+      procedure :: construct_virtual_density_from_MO => construct_virtual_density_from_MO_mlhf
 !
       procedure :: eri_decomp_test_w_active_dens => eri_decomp_test_w_active_dens_mlhf
 !
@@ -95,9 +96,9 @@ contains
       real(dp), dimension(:,:), allocatable :: cholesky_vectors_occ, cholesky_vectors_virt, V, ao_density_v
 !
       integer(i15):: i, j, k, n_active_aos, ao_offset, active_ao_counter, n_vectors_occ, n_vectors_virt
-      integer(i15):: a, x
+      integer(i15):: a
 !
-      real(dp) :: max, e_construct_fock, s_construct_fock, omp_get_wtime
+      real(dp) :: max, e_construct_fock, s_construct_fock, omp_get_wtime, x, y, z
 !
       integer(i15), dimension(:,:), allocatable :: active_aos, sp_eri_schwarz_list
 !
@@ -110,9 +111,6 @@ contains
       call wf%initialize_ao_density()
 !
 !     Set initial density to superposition of atomic densities (SOAD) guess
-!
-      write(output%unit,*)'set up sad'
-      flush(output%unit)
 !
       call mem%alloc(density_diagonal, wf%n_ao, 1)
       call wf%system%SAD(wf%n_ao, density_diagonal)
@@ -129,6 +127,17 @@ contains
 !
       n_s = wf%system%get_n_shells()
 !
+!
+!     Construct AO overlap matrix, Cholesky decompose it,
+!     followed by preconditioning (making it the identity matrix
+!     for this particular preconditioner - V)
+!
+      call wf%initialize_ao_overlap()
+      call wf%construct_ao_overlap()
+      call wf%decompose_ao_overlap_2() 
+!
+      write(output%unit, *)'Removed ', wf%n_ao - wf%n_so, 'AOs.'
+!
 !     Construct initial AO Fock from the SOAD density
 !
       call wf%initialize_ao_fock()
@@ -138,27 +147,20 @@ contains
       write(output%unit,*)'set up fock'
       flush(output%unit)
 !
-      call wf%construct_ao_fock_SAD(1.0d-14, 1.0d-14, 1.0d-25)
-      write(output%unit,*)wf%hf_energy
+      call wf%construct_ao_fock_SAD(1.0d-13, 1.0d-13, 1.0d-25)
+      !write(output%unit,*)wf%hf_energy
 !
       e_construct_fock = omp_get_wtime()
       write(output%unit, '(/a49, f11.2)')'Wall time to construct AO fock from SAD density: ', &
                                   e_construct_fock - s_construct_fock
       flush(output%unit)
 !
-!     Construct AO overlap matrix, Cholesky decompose it,
-!     followed by preconditioning (making it the identity matrix
-!     for this particular preconditioner - V)
-!
-      call wf%initialize_ao_overlap()
-      call wf%construct_ao_overlap()
-!
 !     Solve Roothan Hall once - using the SOAD guess - to get a decent AO density
 !     on  which to start the preconditioned conjugate gradient (PCG) algorithm
 !
       call wf%initialize_orbital_energies()
       call wf%initialize_mo_coefficients()
-      call wf%solve_roothan_hall() ! F^AO C = S C e to get new MOs C
+      call wf%do_roothan_hall() ! F^AO C = S C e to get new MOs C
 !
 !     Update the AO density
 !
@@ -192,12 +194,29 @@ contains
 !
       n_active_occ = n_active_occ/2
 !
+!     Add orbitals if bonds are capped. Assumes 2.5Å for covalent bonds.
+!
+      do i = wf%system%n_active_atoms + 1, wf%system%n_atoms
+!
+        do j = 1, wf%system%n_active_atoms
+!
+          x = (wf%system%atoms(j)%x - wf%system%atoms(i)%x)
+          y = (wf%system%atoms(j)%y - wf%system%atoms(i)%y)
+          z = (wf%system%atoms(j)%z - wf%system%atoms(i)%z)
+!
+          if (sqrt(x**2 + y**2 + z**2) .le. 2.5d0) n_active_occ = n_active_occ + 1 
+!
+        enddo
+!
+      enddo
+!
+!
 !     Determine number of active virtuals
 !
       n_active_vir = n_active_occ * (wf%n_v/wf%n_o)
 !
       call mem%alloc(ao_density_v, wf%n_ao, wf%n_ao)
-      call wf%construct_virtual_density(ao_density_v)
+      call wf%construct_virtual_density_from_MO(ao_density_v)
 !
       call mem%alloc(cholesky_vectors_occ, wf%n_ao, n_active_aos)
 !
@@ -216,23 +235,23 @@ contains
 !
       call mem%alloc(V, wf%n_ao, 1)
 !
-      do x = 1, wf%n_ao
+      do j = 1, wf%n_ao
 !
          max = 0.0d0
 !
          do i = 1, n_vectors_occ
 !
-            if (cholesky_vectors_occ(x, i)**2 .gt. max) max = cholesky_vectors_occ(x, i)**2     
+            if (cholesky_vectors_occ(j, i)**2 .gt. max) max = cholesky_vectors_occ(j, i)**2     
 !
          enddo
 !
          do a = 1, n_vectors_virt
 !
-            if (cholesky_vectors_virt(x, a)**2 .gt. max) max = cholesky_vectors_virt(x, a)**2 
+            if (cholesky_vectors_virt(j, a)**2 .gt. max) max = cholesky_vectors_virt(j, a)**2 
 !
          enddo
 !
-         V(x, 1) = max
+         V(j, 1) = max
 !
       enddo
 !
@@ -285,7 +304,7 @@ contains
      call mem%alloc(L, wf%n_ao, wf%n_ao)
 !
      call full_cholesky_decomposition_system(wf%ao_overlap, L, wf%n_ao, rank, &
-                                               1.0d-16, piv)
+                                               1.0d-6, piv)
 !
      call mem%alloc(L_inv, wf%n_ao, wf%n_ao)
 !
@@ -349,5 +368,36 @@ contains
       call daxpy(wf%n_ao**2, -half, wf%ao_density, 1, D_v, 1)
 !
   end subroutine construct_virtual_density_mlhf
+!
+!
+  subroutine construct_virtual_density_from_MO_mlhf(wf, D_v)
+!!
+!!    Construct virtual density
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    D^V = sum_a C_alpha,a * C_beta,a 
+!!
+      implicit none 
+!
+      class(mlhf) :: wf
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao) :: D_v
+
+!
+      call dgemm('N', 'T',                              &
+                wf%n_ao,                                &
+                wf%n_ao,                                &
+                wf%n_so - wf%n_o,                       &
+                one,                                    &
+                wf%orbital_coefficients(1, wf%n_o + 1), &
+                wf%n_ao,                                &
+                wf%orbital_coefficients(1, wf%n_o + 1), &
+                wf%n_ao,                                &
+                zero,                                   &  
+                D_v,                                    &
+                wf%n_ao)
+!
+  end subroutine construct_virtual_density_from_MO_mlhf
+!
 !
 end module mlhf_class
