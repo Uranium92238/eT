@@ -116,7 +116,7 @@ contains
          if (trim(line) .eq. 'geometry') then
 !
             backspace(input%unit)
-            call output%error_msg('could not move to requested section: '// string //'.')
+            call output%error_msg('could not move to requested section: '// string)
 !
          endif
 !
@@ -131,7 +131,7 @@ contains
 !  
                if (trim(line) == string) then
 !
-                  n_start =  n_start + 1 
+                  n_start =  n_start + 1
 !
                endif
 !
@@ -141,21 +141,26 @@ contains
 !
             do i = 1, count_rec_end - 1
 !
-               read(input%unit, '(a100)') line
-               line = remove_preceding_blanks(line)
-!
-               count_start = count_start + 1
-               count_rec_start = count_rec_start + 1
+              read(input%unit, '(a100)') line
+              line = remove_preceding_blanks(line)
 !  
-               if (trim(line) == string .and. count_start == n_start) then
+              count_rec_start = count_rec_start + 1
+!  
+               if (trim(line) == string) then
 !
-                  n_records = count_rec_end - count_rec_start - 1
+                  count_start = count_start + 1
 !
-                  return
+                  if (count_start == n_start) then
+!
+                     n_records = count_rec_end - count_rec_start - 1
+!
+                     return
+!
+                  endif
 !
                endif
 !
-            enddo     
+            enddo    
 ! 
          endif
 !

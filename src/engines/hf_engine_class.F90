@@ -32,6 +32,9 @@ contains
 !
       class(hf_engine) :: engine 
 !
+      write(output%unit, *)'init engine'
+      flush(output%unit)
+!
    end subroutine initialize_hf_engine
 !
 !
@@ -77,7 +80,7 @@ contains
 !
          else 
 !
-            call output%error_msg('did not recognize hf algorithm: '// algorithm //'.')
+            call output%error_msg('did not recognize hf algorithm: '// algorithm)
 !
          endif
 !
@@ -109,6 +112,9 @@ contains
 !
    subroutine read_algorithm_hf_engine(engine, algorithm)
 !!
+!!    Read algorithm
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
+!!
       implicit none
 !
       class(hf_engine), intent(in) :: engine 
@@ -123,8 +129,10 @@ contains
 !
       do i = 1, n_records
 !
-         read(input%unit, *) line
+         read(input%unit, '(a100)') line
          line = remove_preceding_blanks(line)
+!
+         write(output%unit, *) trim(line)
 !
          if (line(1:10) == 'algorithm:') then
 !

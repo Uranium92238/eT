@@ -15,8 +15,10 @@ program eT_program
 !
   use io_eT_program
 !
-  use scf_diis_solver_class
-  use arh_hf_solver_class
+  !use scf_diis_solver_class
+  !use arh_hf_solver_class
+!
+  use hf_engine_class
 !
   use eri_cd_solver_class
 !
@@ -39,10 +41,9 @@ program eT_program
 !
     type(eri_cd_solver), allocatable :: chol_solver
 !
-!   Solvers 
+!   Engines
 !
-    type(scf_diis_solver) :: roothan_hall_hf_solver
-    type(arh_hf_solver)   :: density_minimization_hf_solver
+    type(hf_engine), allocatable :: engine_hf
 !
     integer(i15) :: n_methods
 !
@@ -95,6 +96,9 @@ program eT_program
         call wf%initialize()
         call wf%finalize()
 !
+        wf => null()
+        deallocate(mlhf_wf) 
+!
       else
 !
         allocate(hf_wf)
@@ -102,11 +106,17 @@ program eT_program
 !
         call wf%initialize()
 !
-        call roothan_hall_hf_solver%run(wf)
-        !call density_minimization_hf_solver%run(wf)
-        
+        allocate(engine_hf)
+!
+        call engine_hf%initialize()     
+        call engine_hf%run(wf)     
+        call engine_hf%finalize()     
 !
         call wf%finalize()
+
+        deallocate(engine_hf)
+        wf => null()
+        deallocate(hf_wf)     
 !
       endif
 !
@@ -119,3 +129,8 @@ program eT_program
 !
 end program eT_program
 !
+
+!   Solvers 
+!
+  !  type(scf_diis_solver) :: roothan_hall_hf_solver
+  !  type(arh_hf_solver)   :: density_minimization_hf_solver
