@@ -50,7 +50,7 @@ contains
       write(output%unit, '(a)')':: SAD-ML test'
       flush(output%unit)
 !
-      call wf%system%initialize() ! Initialize molecular system -> Should include SAD
+      call wf%system%prepare() ! Initialize molecular system -> Should include SAD
 !
       wf%n_ao = 0
       call get_n_aos(wf%n_ao)

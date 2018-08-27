@@ -37,8 +37,9 @@ module molecular_system_class
 !
    contains
 !
-      procedure :: initialize => initialize_molecular_system
-      procedure :: write      => write_molecular_system
+      procedure :: prepare => prepare_molecular_system
+      procedure :: cleanup => cleanup_molecular_system
+      procedure :: write   => write_molecular_system
 !
       procedure, private :: read_info     => read_info_molecular_system
       procedure, private :: read_geometry => read_geometry_molecular_system
@@ -57,12 +58,20 @@ module molecular_system_class
 !
       procedure :: reorder_atoms => reorder_atoms_molecular_system
 !
+      procedure :: initialize_basis_sets     => initialize_basis_sets_molecular_system
+      procedure :: initialize_atoms          => initialize_atoms_molecular_system
+      procedure :: initialize_shell_limits   => initialize_shell_limits_molecular_system
+!
+      procedure :: finalize_basis_sets    => finalize_basis_sets_molecular_system
+      procedure :: finalize_atoms         => finalize_atoms_molecular_system
+      procedure :: finalize_shell_limits  => finalize_shell_limits_molecular_system
+!
    end type molecular_system
 !
 contains
 !
 !
-   subroutine initialize_molecular_system(molecule)
+   subroutine prepare_molecular_system(molecule)
 !!
 !!    Initialize
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -124,8 +133,7 @@ contains
 !        Allocate and initialize the corresponding shells
 !
          molecule%atoms(i)%n_shells = n_shells_on_atoms(i, 1)
-!
-         allocate(molecule%atoms(i)%shells(molecule%atoms(i)%n_shells))
+         call molecule%atoms(i)%initialize_shells()
 !
 !        Then determine the number of basis functions in each shell
 !        and save number of aos per atom
@@ -182,11 +190,7 @@ contains
 !
       enddo
 !
-!     Allocate and set shell limits vector 
-!
-      n_s = molecule%get_n_shells()
-!
-      allocate(molecule%shell_limits(n_s))
+      call molecule%initialize_shell_limits()
 !
       do s = 1, n_s 
 !  
@@ -214,7 +218,23 @@ contains
 !
       enddo
 !
-   end subroutine initialize_molecular_system
+   end subroutine prepare_molecular_system
+!
+!
+   subroutine cleanup_molecular_system(molecule)
+!!
+!!    Initialize
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(molecular_system) :: molecule
+!
+      call molecule%finalize_atoms()
+      call molecule%finalize_basis_sets()
+      call molecule%finalize_shell_limits()
+!
+   end subroutine cleanup_molecular_system
 !
 !
    subroutine read_info_molecular_system(molecule)
@@ -475,9 +495,8 @@ contains
 !
       enddo
 !
-      write(output%unit, *)'number of basis', molecule%n_basis_sets
+      call molecule%initialize_basis_sets()
 !
-      allocate(molecule%basis_sets(molecule%n_basis_sets))
       call mem%alloc_int(n_atoms_in_basis, molecule%n_basis_sets, 1)
 !
       n_atoms_in_basis = 1
@@ -1032,6 +1051,94 @@ contains
       enddo
 !
    end function shell_to_atom_molecular_system
+!
+!
+   subroutine initialize_atoms_molecular_system(molecule)
+!!
+!!    Initialize atoms
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
+!!
+      implicit none
+!
+      class(molecular_system) :: molecule
+!
+      if (.not. allocated(molecule%atoms)) allocate(molecule%atoms(molecule%n_atoms))
+!
+   end subroutine initialize_atoms_molecular_system
+!
+!
+   subroutine finalize_atoms_molecular_system(molecule)
+!!
+!!    Finalize atoms
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
+!!
+      implicit none
+!
+      class(molecular_system) :: molecule
+!
+      if (allocated(molecule%atoms)) deallocate(molecule%atoms)
+!
+   end subroutine finalize_atoms_molecular_system
+!
+!
+   subroutine initialize_basis_sets_molecular_system(molecule)
+!!
+!!    Initialize basis sets
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
+!!
+      implicit none
+!
+      class(molecular_system) :: molecule
+!
+      if (.not. allocated(molecule%basis_sets)) allocate(molecule%atoms(molecule%n_basis_sets))
+!
+   end subroutine initialize_basis_sets_molecular_system
+!
+!
+   subroutine finalize_basis_sets_molecular_system(molecule)
+!!
+!!    Finalize basis sets
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
+!!
+      implicit none
+!
+      class(molecular_system) :: molecule
+!
+      if (allocated(molecule%basis_sets)) deallocate(molecule%basis_sets)
+!
+   end subroutine finalize_basis_sets_molecular_system
+!
+!
+   subroutine initialize_shell_limits_molecular_system(molecule)
+!!
+!!    Initialize basis sets
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
+!!
+      implicit none
+!
+      class(molecular_system) :: molecule
+!
+      integer(i15) :: n_s 
+!
+      n_s = molecule%get_n_shells()
+!
+      if (.not. allocated(molecule%shell_limits)) allocate(molecule%shell_limits(n_s))
+!
+   end subroutine initialize_shell_limits_molecular_system
+!
+!
+   subroutine finalize_shell_limits_molecular_system(molecule)
+!!
+!!    Finalize basis sets
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
+!!
+      implicit none
+!
+      class(molecular_system) :: molecule
+!
+      if (allocated(molecule%shell_limits)) deallocate(molecule%shell_limits)
+!
+   end subroutine finalize_shell_limits_molecular_system
 !
 !
 end module molecular_system_class

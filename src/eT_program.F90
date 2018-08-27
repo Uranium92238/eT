@@ -80,7 +80,7 @@ program eT_program
      if (requested_task('cholesky eri')) then
 !
         allocate(system)
-        call system%initialize()
+        call system%prepare()
 !
         allocate(chol_solver)
 !

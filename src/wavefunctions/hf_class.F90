@@ -126,7 +126,7 @@ contains
       wf%name = 'HF'
 !
 !
-      call wf%system%initialize() ! Initialize molecular system -> Should include SOAD
+      call wf%system%prepare() ! Initialize molecular system -> Should include SOAD
 !
       wf%n_ao = 0
       call get_n_aos(wf%n_ao)

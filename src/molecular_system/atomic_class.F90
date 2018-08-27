@@ -21,10 +21,11 @@ module atomic_class
       integer(i15)     :: number
 !
       character(len=100) :: basis ! name of basis set
+!
       integer(i15) :: n_ao ! Number of aos sentered on this atom
 !
       integer(i15) :: n_shells
-      type(shell), dimension(:), allocatable :: shells ! dimension (:) ? we cannot allocate with mem manager anyhow!
+      type(shell), dimension(:), allocatable :: shells
 !
       real(dp) :: x
       real(dp) :: y
@@ -39,6 +40,11 @@ module atomic_class
       procedure, private :: get_Aufbau_info => get_Aufbau_info_atom
 !
       procedure :: AD => AD_atom
+!
+      procedure :: initialize_shells   => initialize_shells_atomic
+      procedure :: finalize_shells     => finalize_shells_atomic
+!
+      procedure :: cleanup => cleanup_atomic
 !
    end type atomic
 !
@@ -274,6 +280,48 @@ contains
       endif
 !
    end subroutine get_Aufbau_info_atom
+!
+!
+   subroutine initialize_shells_atomic(atom)
+!!
+!!    Initialize shells
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
+!!
+      implicit none
+!
+      class(atomic) :: atom
+!
+      if (.not. allocated(atom%shells)) allocate(atom%shells(atom%n_shells))
+!
+   end subroutine initialize_shells_atomic
+!
+!
+   subroutine finalize_shells_atomic(atom)
+!!
+!!    Finalize shells
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
+!!
+      implicit none
+!
+      class(atomic) :: atom
+!
+      if (allocated(atom%shells)) deallocate(atom%shells)
+!
+   end subroutine finalize_shells_atomic
+!
+!
+   subroutine cleanup_atomic(atom)
+!!
+!!    Cleanup
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
+!!
+      implicit none
+!
+      class(atomic) :: atom
+!
+      call atom%finalize_shells
+!
+   end subroutine cleanup_atomic
 !
 !
 end module atomic_class
