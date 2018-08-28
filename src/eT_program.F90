@@ -21,6 +21,8 @@ program eT_program
   use io_eT_program
 !
   use hf_engine_class
+  use gs_engine_class
+  use abstract_engine_class
 !
   use eri_cd_solver_class
 !
@@ -49,6 +51,10 @@ program eT_program
 !   Engines
 !
     type(hf_engine), allocatable :: gs_hf_engine
+!
+    type(gs_engine), allocatable, target :: gs_cc_engine
+!
+    class(abstract_engine), pointer :: engine => null()
 !
     integer(i15) :: n_methods, i
 !
@@ -157,15 +163,26 @@ program eT_program
 !
         if (cc_engine == 'ground state') then
 !
+          allocate(gs_cc_engine)
+          engine => gs_cc_engine  
+!
         elseif (cc_engine == 'excited state') then
 !
         endif
 !
 !       Solve cc problem
 !
-        call cc_wf%initialize(ref_wf)
+        call cc_wf%prepare(ref_wf)
         call ref_wf%cleanup()
         deallocate(ref_wf)
+!
+        call engine%prepare()
+        call engine%run(cc_wf)
+        call engine%cleanup()
+        deallocate(engine)
+!
+        call cc_wf%cleanup()
+        deallocate(cc_wf)
 !
       enddo
 !
