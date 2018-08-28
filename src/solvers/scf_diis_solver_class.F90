@@ -28,9 +28,9 @@ module scf_diis_solver_class
 !
    contains
 !
-      procedure :: initialize   => initialize_scf_diis_solver
-      procedure :: run          => run_scf_diis_solver
-      procedure :: finalize     => finalize_scf_diis_solver
+      procedure :: prepare   => prepare_scf_diis_solver
+      procedure :: run       => run_scf_diis_solver
+      procedure :: cleanup   => cleanup_scf_diis_solver
 !
       procedure :: print_banner => print_banner_scf_diis_solver
 !
@@ -43,9 +43,9 @@ module scf_diis_solver_class
 contains
 !
 !
-   subroutine initialize_scf_diis_solver(solver, wf)
+   subroutine prepare_scf_diis_solver(solver, wf)
 !!
-!!    Initialize
+!!    Prepare 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
@@ -63,7 +63,7 @@ contains
       call wf%initialize_ao_density()
       call wf%set_ao_density_to_sad()
 !
-   end subroutine initialize_scf_diis_solver
+   end subroutine prepare_scf_diis_solver
 !
 !
    subroutine run_scf_diis_solver(solver, wf)
@@ -278,9 +278,9 @@ contains
    end subroutine run_scf_diis_solver
 !
 !
-   subroutine finalize_scf_diis_solver(solver, wf)
+   subroutine cleanup_scf_diis_solver(solver, wf)
 !!
-!! 	Finalize
+!! 	Cleanup 
 !! 	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
@@ -289,7 +289,7 @@ contains
 !
       class(hf) :: wf
 !
-   end subroutine finalize_scf_diis_solver
+   end subroutine cleanup_scf_diis_solver
 !
 !
    subroutine print_banner_scf_diis_solver(solver)

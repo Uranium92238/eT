@@ -42,9 +42,9 @@ module arh_hf_solver_class
 !
    contains
 !
-      procedure :: initialize  => initialize_arh_hf_solver
+      procedure :: prepare     => prepare_arh_hf_solver
       procedure :: run         => run_arh_hf_solver
-      procedure :: finalize    => finalize_arh_hf_solver
+      procedure :: cleanup     => cleanup_arh_hf_solver
 !
       procedure, private :: print_banner                                => print_banner_arh_hf_solver
 !
@@ -68,9 +68,9 @@ module arh_hf_solver_class
 contains
 !
 !
-   subroutine initialize_arh_hf_solver(solver, wf)
+   subroutine prepare_arh_hf_solver(solver, wf)
 !!
-!!    Initialize
+!!    Prepare
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
@@ -82,7 +82,7 @@ contains
       call wf%initialize_ao_density()
       call wf%set_ao_density_to_sad()
 !
-   end subroutine initialize_arh_hf_solver
+   end subroutine prepare_arh_hf_solver
 !
 !
    subroutine run_arh_hf_solver(solver, wf)
@@ -155,10 +155,6 @@ contains
 !     Print solver banner
 !
       call solver%print_banner()
-!
-!     Initialize solver (thresholds, etc., and wf initialization)
-!
-      call solver%initialize(wf)
 !
 !     Initialize gradient and AO densities file 
 !
@@ -452,10 +448,6 @@ contains
       call mem%dealloc(VT, wf%n_so, wf%n_so)
       call mem%dealloc(inv_VT, wf%n_so, wf%n_so)
 !
-!     Initialize solver (make final deallocations, and other stuff)
-!
-      call solver%finalize(wf)
-!
       if (.not. converged) then 
 !
          write(output%unit, '(t3,a)')   '---------------------------------------------------'
@@ -467,9 +459,9 @@ contains
    end subroutine run_arh_hf_solver
 !
 !
-   subroutine finalize_arh_hf_solver(solver, wf)
+   subroutine cleanup_arh_hf_solver(solver, wf)
 !!
-!! 	Finalize
+!! 	Cleanup
 !! 	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
@@ -478,7 +470,7 @@ contains
 !
       class(hf) :: wf
 !
-   end subroutine finalize_arh_hf_solver
+   end subroutine cleanup_arh_hf_solver
 !
 !
    subroutine print_banner_arh_hf_solver(solver)

@@ -33,9 +33,9 @@ module hf_solver_class
 !
 !     Main routines (called in order initialize, run, finalize)
 !
-      procedure(essential), deferred :: initialize 
+      procedure(essential), deferred :: prepare 
       procedure(essential), deferred :: run 
-      procedure(essential), deferred :: finalize
+      procedure(essential), deferred :: cleanup
 !
       procedure :: do_roothan_hall      => do_roothan_hall_hf_solver 
       procedure :: decompose_ao_overlap => decompose_ao_overlap_hf_solver
