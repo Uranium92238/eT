@@ -58,6 +58,8 @@ contains
 !
       call solver%read_settings()
 !
+      write(output%unit, *) 'Residual threshold: ', solver%residual_threshold
+!
 !     Set AO density to superposition of atomic densities (SAD)
 !
       call wf%initialize_ao_density()
@@ -248,9 +250,6 @@ contains
 !
       call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
 !
-      call wf%destruct_mo_coefficients()
-      call wf%destruct_ao_density()
-      call wf%destruct_ao_fock()
       call wf%destruct_ao_overlap()
 !
 !     Initialize engine (make final deallocations, and other stuff)
@@ -262,6 +261,7 @@ contains
          write(output%unit, '(t3,a)')   '---------------------------------------------------'
          write(output%unit, '(/t3,a)')  'Was not able to converge the equations in the given'
          write(output%unit, '(t3,a/)')  'number of maximum iterations.'
+         stop
 !
       endif 
 !
@@ -278,6 +278,16 @@ contains
       class(scf_diis_solver) :: solver
 !
       class(hf) :: wf
+!
+      logical :: do_mo_transformation
+!
+      integer(i15) :: i
+!
+!     When finished, we do a final Roothan-Hall step,
+!     to express the Fock matrix in the canonical MO basis 
+!
+      do_mo_transformation = .true.
+      call wf%do_roothan_hall(do_mo_transformation)
 !
    end subroutine cleanup_scf_diis_solver
 !
