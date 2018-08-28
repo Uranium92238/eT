@@ -27,7 +27,7 @@ module mo_integral_tool_class
 !
    contains
 !
-  !    procedure :: prepare => prepare_mo_integral_tool
+      procedure :: prepare => prepare_mo_integral_tool
   !    procedure :: cleanup => cleanup_mo_integral_tool
 !
       procedure :: need_t1 => need_t1_mo_integral_tool
@@ -38,6 +38,22 @@ module mo_integral_tool_class
 !
 !
 contains
+!
+!
+   subroutine prepare_mo_integral_tool(integrals, n_cholesky)
+!!
+!!
+      implicit none
+!
+      class(mo_integral_tool) :: integrals 
+!
+      integer(i15) :: n_cholesky
+!
+      integrals%n_cholesky = n_cholesky
+!
+      call  integrals%cholesky_mo%init('cholesky_mo_vectors', 'direct', 'unformatted', dp*n_cholesky)
+!
+   end subroutine prepare_mo_integral_tool
 !
 !
    logical function need_t1_mo_integral_tool(integrals)

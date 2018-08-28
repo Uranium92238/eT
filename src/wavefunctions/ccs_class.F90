@@ -8,6 +8,8 @@ module ccs_class
    use wavefunction_class
    use hf_class
 !
+   use mo_integral_tool_class
+!
    use reordering
    use array_utilities
    use array_analysis
@@ -26,6 +28,8 @@ module ccs_class
       real(dp), dimension(:,:), allocatable :: fock_ab
 !
       real(dp), dimension(:,:) , allocatable :: fock_diagonal
+!
+      type(mo_integral_tool) :: integrals
 !
    contains
 !

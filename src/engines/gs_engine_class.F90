@@ -56,8 +56,9 @@ contains
       call eri_chol_solver%cholesky_vecs_diagonal_test()
       call eri_chol_solver%construct_mo_cholesky_vecs(wf%system, wf%n_mo, wf%orbital_coefficients)
 !
-      call eri_chol_solver%finalize()
+      call wf%integrals%prepare(eri_chol_solver%n_cholesky)
 !
+      call eri_chol_solver%finalize()
       deallocate(eri_chol_solver)
 !
    end subroutine run_gs_engine
