@@ -41,7 +41,7 @@ contains
 !
       class(mo_integral_tool) :: integrals 
 !
-      need_t1 = ((.not. eri_t1_file) .and. (.not. cholesky_t1_file))
+      need_t1_mo_integral_tool = ((.not. integrals%eri_t1_file) .and. (.not. integrals%cholesky_t1_file))
 !
    end function need_t1_mo_integral_tool
 !
