@@ -8,6 +8,7 @@ program eT_program
   use kinds
   use file_class
   use disk_manager_class
+  use memory_manager_class
   use libint_initialization
 !
   use wavefunction_class
@@ -49,7 +50,10 @@ program eT_program
 !
     type(hf_engine), allocatable :: gs_hf_engine
 !
-    integer(i15) :: n_methods
+    integer(i15) :: n_methods, i
+!
+    character(len=40), dimension(:), allocatable :: cc_methods
+    character(len=40):: cc_engine  
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::::
 !  -::-         Print program banner         -::-
@@ -122,18 +126,48 @@ program eT_program
 !
 !   :: Coupled cluster calculation
 !
+    if (requested_method('mlhf')) n_methods = n_methods - 1
+    if (requested_method('hf')) n_methods = n_methods - 1
+!
     if (n_methods .gt. 0) then
 !
-      if (requested_method('ccs')) then
+      allocate(cc_methods(n_methods))
+! 
+      call read_cc_methods(n_methods, cc_methods)
+      call select_engine(cc_engine)
 !
-        allocate(ccs_wf)
-        cc_wf => ccs_wf
+      do i = 1, n_methods
+!
+!       Determine type of CC method
+!
+        if (cc_methods(i) == 'ccs') then
+!
+          allocate(ccs_wf)
+          cc_wf => ccs_wf
+!
+        elseif (cc_methods(i) == 'mp2') then
+!
+        elseif (cc_methods(i) == 'cc2') then
+!
+        elseif (cc_methods(i) == 'ccsd') then
+!
+        endif
+!
+!       Determine engine
+!
+        if (cc_engine == 'ground state') then
+!
+        elseif (cc_engine == 'excited state') then
+!
+        endif
+!
+!       Solve cc problem
 !
         call cc_wf%initialize(ref_wf)
         call ref_wf%cleanup()
         deallocate(ref_wf)
 !
-      endif
+      enddo
 !
     endif
 !
