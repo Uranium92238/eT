@@ -20,9 +20,6 @@ using namespace std;
 eTBasis basis;
 extern eTBasis basis;
 
-// BasisSet basis;
-// extern BasisSet basis;
-
 vector<Engine> electronic_repulsion_engines(omp_get_max_threads());
 extern vector<Engine> electronic_repulsion_engines;
 
@@ -31,12 +28,6 @@ extern vector<Engine> kinetic;
 
 vector<Engine> nuclear(omp_get_max_threads());
 extern vector<Engine> nuclear;
-
-// Engine kinetic;
-// extern Engine kinetic;
-
-// Engine nuclear;
-// extern Engine nuclear;
 
 Engine overlap;
 extern Engine overlap;
@@ -60,9 +51,6 @@ void initialize_atoms(char *name){
 void initialize_basis(char *basisset, char *filename){
 	
 	string xyzfilename(strcat(filename,".xyz"));
-
-	//cout << xyzfilename << endl;
-	//cout << basisset << endl;
 
     ifstream input_file(xyzfilename);
 
@@ -97,51 +85,39 @@ void initialize_coulomb(){
 	temporary.set_precision(1.0e-25);
 
 	for (int i = 0; i != omp_get_max_threads(); i++){
-		electronic_repulsion_engines[i] = temporary; // One engine per thread
+		electronic_repulsion_engines[i] = temporary;
 	}
 
-	shell2bf_g = basis.shell2bf(); // testing something
+	shell2bf_g = basis.shell2bf();
 
 }
 
 void set_coulomb_precision(double *prec){
 
 	for (int i = 0; i != omp_get_max_threads(); i++){
-		electronic_repulsion_engines[i].set_precision(*prec); // One engine per thread
+		electronic_repulsion_engines[i].set_precision(*prec);
 	}
 
 }
 
-// void initialize_kinetic(){
-// 
-	// Engine temporary(Operator::kinetic, basis.max_nprim(), basis.max_l());
-	// kinetic = temporary;
-// 
-// }
 void initialize_kinetic(){
 
 
 	Engine temporary(Operator::kinetic, basis.max_nprim(), basis.max_l());
 
 	for (int i = 0; i != omp_get_max_threads(); i++){
-		kinetic[i] = temporary; // One engine per thread
+		kinetic[i] = temporary; 
 	}
 
 }
 
-// void initialize_nuclear(){
-// 
-	// Engine temporary(Operator::nuclear, basis.max_nprim(), basis.max_l());
-	// nuclear = temporary;
-// 
-// }
 void initialize_nuclear(){
 
 
 	Engine temporary(Operator::nuclear, basis.max_nprim(), basis.max_l());
 
 	for (int i = 0; i != omp_get_max_threads(); i++){
-		nuclear[i] = temporary; // One engine per thread
+		nuclear[i] = temporary; 
 	}
 
 }

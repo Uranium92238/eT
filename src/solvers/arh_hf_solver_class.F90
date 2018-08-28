@@ -25,7 +25,7 @@ module arh_hf_solver_class
       real(dp) :: relative_micro_threshold         = 1.0D-2
       real(dp) :: relative_shifted_micro_threshold = 1.0D-3 
 !
-      real(dp) :: trust_radius                     = 0.10D0 
+      real(dp) :: trust_radius                     = 0.50D0 
       real(dp) :: relative_trust_radius_threshold  = 0.10D0
 !
       real(dp) :: rotation_norm_threshold          = 0.5D0
@@ -179,20 +179,14 @@ contains
       end_timer = omp_get_wtime()
       write(output%unit, *) 'Time to construct AO Fock from SAD: ', end_timer-start_timer
       flush(output%unit)
+!
       prev_energy = wf%hf_energy
-!
-!     Construct AO overlap matrix, Cholesky decompose it,
-!     then precondition (making it the identity matrix for this preconditioner, V)
-!
-      call wf%initialize_ao_overlap()
-      call wf%construct_ao_overlap()
-      call solver%decompose_ao_overlap(wf) 
 !
 !     :: Solve Roothan Hall once - using the SOAD guess - to get a decent N-representable 
 !     AO density on which to start doing conjugate gradient
 !
       call wf%initialize_mo_coefficients()
-      call solver%do_roothan_hall(wf)
+      call wf%do_roothan_hall()
 !
 !     From the obtained MO coefficients, update the AO density and from it the AO Fock matrix
 !
@@ -210,12 +204,10 @@ contains
       call mem%alloc(VT, wf%n_mo, wf%n_mo)
       call mem%alloc(inv_VT, wf%n_mo, wf%n_mo)
 !
-      VT = transpose(solver%cholesky_ao_overlap)
+      VT = transpose(wf%cholesky_ao_overlap)
 !
-      call inv_lower_tri(inv_VT, solver%cholesky_ao_overlap, wf%n_mo)
-      inv_VT = transpose(inv_VT)
-!
-      call mem%dealloc(solver%cholesky_ao_overlap, wf%n_mo, wf%n_mo)    
+      call inv_lower_tri(inv_VT, wf%cholesky_ao_overlap, wf%n_mo)
+      inv_VT = transpose(inv_VT)   
 !
 !     :: Construct the preconditioned S matrix, which is the identity matrix for the 
 !     particular case of preconditioner chosen here 
@@ -277,7 +269,7 @@ contains
 !        and determine its maximum (absolute) element 
 !
          call mem%alloc(Gr, wf%n_mo, wf%n_mo) 
-         call symmetric_sandwich(Gr, G, solver%permutation_matrix, wf%n_ao, wf%n_mo)
+         call symmetric_sandwich(Gr, G, wf%pivot_matrix_ao_overlap, wf%n_ao, wf%n_mo)
 
          max_grad = get_abs_max(Gr, wf%n_mo*wf%n_mo)
 !
@@ -311,7 +303,7 @@ contains
             call wf%construct_roothan_hall_hessian(H, Po, Pv)
 !
             call mem%alloc(Hr, wf%n_mo, wf%n_mo)
-            call symmetric_sandwich(Hr, H, solver%permutation_matrix, wf%n_ao, wf%n_mo)
+            call symmetric_sandwich(Hr, H, wf%pivot_matrix_ao_overlap, wf%n_ao, wf%n_mo)
 !
             call sandwich(Gr, inv_VT, inv_VT, wf%n_mo)
             call sandwich(Hr, inv_VT, inv_VT, wf%n_mo)
@@ -353,8 +345,8 @@ contains
             Xr     = zero
             Xr_pck = zero
 !
-            call solver%solve_aug_Hessian_eigenequation(wf, Xr_pck, Hr, Gr, S, max_grad)
-          !  call solver%solve_aug_Newton_equation(wf, Xr_pck, Hr, Gr, S, max_grad)
+          !  call solver%solve_aug_Hessian_eigenequation(wf, Xr_pck, Hr, Gr, S, max_grad)
+            call solver%solve_aug_Newton_equation(wf, Xr_pck, Hr, Gr, S, max_grad)
             call squareup_anti(Xr_pck, Xr, wf%n_mo)
 !
 !           :: Solve the augmented Hessian (i.e., level shifted Newton equation) if
@@ -390,7 +382,7 @@ contains
             call sandwich(Xr, inv_VT, inv_VT, wf%n_mo, transpose_left) 
 ! 
             call mem%alloc(X, wf%n_ao, wf%n_ao)
-            call symmetric_sandwich_right(X, Xr, solver%permutation_matrix, wf%n_ao, wf%n_mo)         
+            call symmetric_sandwich_right(X, Xr, wf%pivot_matrix_ao_overlap, wf%n_ao, wf%n_mo)         
             call mem%dealloc(Xr, wf%n_mo, wf%n_mo) 
 !
             call mem%alloc(X_pck, packed_size(wf%n_ao-1), 1)
@@ -953,7 +945,7 @@ contains
 !     we have in full space 
 !
       call mem%alloc(Xf, wf%n_ao, wf%n_ao)
-      call symmetric_sandwich_right(Xf, X, solver%permutation_matrix, wf%n_ao, wf%n_mo)
+      call symmetric_sandwich_right(Xf, X, wf%pivot_matrix_ao_overlap, wf%n_ao, wf%n_mo)
 !
       call mem%alloc(E, solver%current_index - 1, 1)
       E = zero 

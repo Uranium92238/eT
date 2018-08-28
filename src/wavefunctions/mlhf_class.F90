@@ -63,6 +63,11 @@ contains
       wf%n_ao = 0
       call get_n_aos(wf%n_ao)
 !
+      call initialize_coulomb()
+      call initialize_kinetic()
+      call initialize_nuclear()
+      call initialize_overlap()
+!
       call wf%initialize_ao_overlap()
       call wf%construct_ao_overlap()
       call wf%decompose_ao_overlap() 

@@ -111,16 +111,6 @@ contains
 !
       call solver%print_banner()
 !
-!     :: Cholesky decompose the AO overlap matrix 
-!
-!     This determines P and L such that P^T S P = L L^T, where P is the permutation 
-!     matrix, and L the AO Cholesky matrix, both of which are members of the
-!     solver object.
-!
-      call wf%initialize_ao_overlap()
-      call wf%construct_ao_overlap()
-      call solver%decompose_ao_overlap(wf) 
-!
 !     :: Construct screening vectors, as well as a degeneracy vector, 
 !     used to construct AO Fock efficiently
 !
@@ -144,7 +134,6 @@ contains
 !
       call wf%initialize_mo_coefficients()
 !
-     ! call solver%do_roothan_hall(wf)
       call wf%do_roothan_hall()
 !
       call wf%construct_ao_density() 
@@ -213,7 +202,6 @@ contains
 !           Solve the Roothan-Hall equation, then update the AO density 
 !           and Fock matrix using the solution
 !
-          !  call solver%do_roothan_hall(wf) 
             call wf%do_roothan_hall()
 !
             prev_energy     = wf%hf_energy

@@ -27,7 +27,7 @@ module hf_class
       real(dp), dimension(:,:), allocatable :: cholesky_ao_overlap
       real(dp), dimension(:,:), allocatable :: pivot_matrix_ao_overlap 
 !
-      real(dp) :: linear_dependence_threshold = 1.0D-6
+      real(dp) :: linear_dep_threshold = 1.0D-6
 !
 	contains
 !
@@ -130,14 +130,14 @@ contains
 !
       call get_n_aos(wf%n_ao)
 !
-      call wf%initialize_ao_overlap()
-      call wf%construct_ao_overlap()
-      call wf%decompose_ao_overlap() 
-!
       call initialize_coulomb()
       call initialize_kinetic()
       call initialize_nuclear()
       call initialize_overlap()
+!
+      call wf%initialize_ao_overlap()
+      call wf%construct_ao_overlap()
+      call wf%decompose_ao_overlap() 
 !
       wf%n_o = (wf%system%get_n_electrons())/2
       wf%n_v = wf%n_mo - wf%n_o
@@ -1869,7 +1869,7 @@ contains
       L = zero
 !
       call full_cholesky_decomposition_system(wf%ao_overlap, L, wf%n_ao, wf%n_mo, &
-                                          wf%linear_dependence_threshold, used_diag)
+                                          wf%linear_dep_threshold, used_diag)
 !
       call wf%initialize_cholesky_ao_overlap()
 !
@@ -1895,6 +1895,7 @@ contains
 !
    end subroutine decompose_ao_overlap_hf
 !
+!
    subroutine rotate_ao_density_hf(wf, X)
 !!
 !!    Rotate AO density
@@ -1903,11 +1904,7 @@ contains
 !!    Performs an update of the AO density according to a first-order
 !!    truncation of the BCH expansion:
 !!
-!!       D^AO <- exp(-X S) D^AO exp(S X) ~ D^AO + [D^AO, X]_S + 1/2 [[D^AO, X]_S, X]_S
-!!                                       ~ D_AO + C + D.
-!!
-!!    This routine does not - currently - use the second order term, D, although the
-!!    code is present (commented out).
+!!       D^AO <- exp(-X S) D^AO exp(S X) ~ D^AO + [D^AO, X]_S ~ D_AO + C.
 !!
       implicit none
 !
