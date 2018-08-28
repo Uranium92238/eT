@@ -45,6 +45,17 @@ contains
 !
       class(ccs) :: wf
 !
+      type(eri_cd_solver) :: eri_chol_solver
+!
+      allocate(eri_chol_solver)
+!
+      call eri_chol_solver%initialize(wf%system)
+      call eri_chol_solver%solve(wf%system)
+!
+      call eri_chol_solver()
+!
+      call eri_chol_solver%finalize()
+!
    end subroutine run_gs_engine
 !
 !

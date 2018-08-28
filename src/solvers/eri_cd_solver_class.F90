@@ -155,6 +155,7 @@ contains
 !
       call solver%construct_overlap_cholesky_vecs(system)
       call solver%invert_overlap_cholesky_vecs()
+!
       e_determine_basis = omp_get_wtime()
       write(output%unit, '(/a30, f11.2)')'Wall time to determine basis: ', &
                                   e_determine_basis - s_determine_basis
@@ -162,8 +163,9 @@ contains
       if (solver%construct_vectors) then
 !
          s_build_vectors = omp_get_wtime()
+!
          call solver%construct_cholesky_vectors(system)
-         call solver%cholesky_vecs_diagonal_test()
+!
          e_build_vectors = omp_get_wtime()
          write(output%unit, '(/a37, f11.2)')'Wall time to build vectors and test: ', &
                                   e_build_vectors - s_build_vectors
