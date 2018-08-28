@@ -110,7 +110,7 @@ module hf_class
 contains
 !
 !
-   subroutine initialize_hf(wf)
+   subroutine prepare_hf(wf)
 !!
 !!    Initialize
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -138,16 +138,16 @@ contains
 !
 !     Initialize Libint engines to be used
 !
-      call initialize_coulomb()
-      call initialize_kinetic()
-      call initialize_nuclear()
-      call initialize_overlap() ! SHOULD THESE BE INITIALIZED IN THE ENGINE ?
-      call initialize_overlap()
+  !    call initialize_coulomb()
+  !    call initialize_kinetic()
+  !    call initialize_nuclear()
+  !    call initialize_overlap() ! SHOULD THESE BE INITIALIZED IN THE ENGINE ?
+  !    call initialize_overlap()
 !
-   end subroutine initialize_hf
+   end subroutine prepare_hf
 !
 !
-   subroutine finalize_hf(wf)
+   subroutine cleanup_hf(wf)
 !!
 !!    Finalize
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -158,7 +158,7 @@ contains
 !
 !     Nothing here yet
 !
-   end subroutine finalize_hf
+   end subroutine cleanup_hf
 !
 !
    subroutine initialize_ao_density_hf(wf)
