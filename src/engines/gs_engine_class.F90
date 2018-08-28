@@ -4,14 +4,15 @@ module gs_engine_class
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
 !!
    use abstract_engine_class
+   use ccs_class
 !
    type, extends(abstract_engine) :: gs_engine 
 !
    contains 
 !
-      procedure :: initialize => initialize_gs_engine
-      procedure :: run        => run_gs_engine
-      procedure :: finalize   => finalize_gs_engine
+      procedure :: prepare => prepare_gs_engine
+      procedure :: run     => run_gs_engine
+      procedure :: cleanup => cleanup_gs_engine
 !
       procedure :: print_banner    => print_banner_gs_engine
       procedure :: print_summary   => print_summary_gs_engine
@@ -21,19 +22,19 @@ module gs_engine_class
 !
 contains
 !
-   subroutine initialize_gs_engine(engine)
+   subroutine prepare_gs_engine(engine)
 !!
-!!    Initialize 
+!!    Prepare 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
 !!
       implicit none 
 !
       class(gs_engine) :: engine 
 !
-   end subroutine initialize_gs_engine
+   end subroutine prepare_gs_engine
 !
 !
-   subroutine run_gs_engine(engine)
+   subroutine run_gs_engine(engine, wf)
 !!
 !!    Run 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
@@ -42,19 +43,21 @@ contains
 !
       class(gs_engine) :: engine 
 !
+      class(ccs) :: wf
+!
    end subroutine run_gs_engine
 !
 !
-   subroutine finalize_gs_engine(engine)
+   subroutine cleanup_gs_engine(engine)
 !!
-!!    Finalize 
+!!    Cleanup 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
 !!
       implicit none 
 !
       class(gs_engine) :: engine 
 !
-   end subroutine finalize_gs_engine
+   end subroutine cleanup_gs_engine
 !
    subroutine print_banner_gs_engine(engine)
 !!

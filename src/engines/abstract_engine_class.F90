@@ -6,6 +6,7 @@ module abstract_engine_class
 !!
 !
    use kinds
+   use ccs_class
 !
    implicit none
 !
@@ -13,9 +14,9 @@ module abstract_engine_class
 !
    contains
 !
-      procedure(essential_engine), deferred :: initialize 
-      procedure(essential_engine), deferred :: finalize   
-      procedure(essential_engine), deferred :: run        
+      procedure(essential_engine), deferred :: prepare 
+      procedure(essential_engine), deferred :: cleanup   
+      procedure(essential_engine_w_wf), deferred :: run        
 !
       procedure(essential_engine), deferred :: print_banner  
       procedure(essential_engine), deferred :: print_summary 
@@ -34,6 +35,20 @@ module abstract_engine_class
          class(abstract_engine) :: engine
 !
       end subroutine essential_engine
+!
+!
+      subroutine essential_engine_w_wf(engine, wf)
+!
+         import :: abstract_engine, ccs
+!
+         implicit none 
+!
+         class(abstract_engine) :: engine
+!
+         class(ccs) :: wf
+!
+      end subroutine essential_engine_w_wf
+!
 !
    end interface
 !

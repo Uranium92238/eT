@@ -20,10 +20,10 @@ module ccs_class
 !
    contains
 !
-!     Initialize and finalize wavefunction
+!     Prepare and cleanup wavefunction
 !
-      procedure :: initialize => initialize_ccs
-      procedure :: finalize   => finalize_ccs
+      procedure :: prepare => prepare_ccs
+      procedure :: cleanup   => cleanup_ccs
 !
 !
    end type ccs
@@ -31,9 +31,9 @@ module ccs_class
 !
 contains
 !
-   subroutine initialize_ccs(wf, ref_wf)
+   subroutine prepare_ccs(wf, ref_wf)
 !!
-!!    Initialize
+!!    Prepare
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
@@ -53,12 +53,12 @@ contains
       wf%n_o    = ref_wf%n_o
       wf%n_v    = ref_wf%n_v
 !
-   end subroutine initialize_ccs
+   end subroutine prepare_ccs
 !
 !
-   subroutine finalize_ccs(wf)
+   subroutine cleanup_ccs(wf)
 !!
-!!    Finalize
+!!    Cleanup
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
@@ -67,6 +67,6 @@ contains
 !
 !     Nothing here yet
 !
-   end subroutine finalize_ccs
+   end subroutine cleanup_ccs
 !
 end module ccs_class
