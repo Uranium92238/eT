@@ -82,9 +82,16 @@ contains
 !
       character(len=100) :: line, value 
 !
+
+            write(output%unit, *) 'Hei!'
+!
       if (requested_section('hf')) then ! User has requested something 
 !
+         write(output%unit, *) 'Heiii!'
+!
          call move_to_section('hf', n_records)
+!
+         write(output%unit, *) 'Heiiii!', n_records
 !
          do i = 1, n_records
 !
@@ -98,42 +105,43 @@ contains
                value = line(18:100)
                value = remove_preceding_blanks(value)
                read(value, *) solver%energy_threshold
-               return
+               cycle
 !
             elseif (line(1:19) == 'residual_threshold:') then 
 !
                value = line(20:100)
                value = remove_preceding_blanks(value)
                read(value, *) solver%residual_threshold
-               return
+               write(output%unit, *) 'Residual thr:', solver%residual_threshold
+               cycle
 !
             elseif (line(1:15) == 'max_iterations:') then 
 !
                value = line(16:100)
                value = remove_preceding_blanks(value)
                read(value, *) solver%max_iterations
-               return
+               cycle
 !
             elseif (line(1:18) == 'coulomb_threshold:') then 
 !
                value = line(19:100)
                value = remove_preceding_blanks(value)
                read(value, *) solver%coulomb_thr
-               return
+               cycle
 !
             elseif (line(1:19) == 'exchange_threshold:') then 
 !
                value = line(20:100)
                value = remove_preceding_blanks(value)
                read(value, *) solver%exchange_thr
-               return
+               cycle
 !
             elseif (line(1:18) == 'coulomb_precision:') then 
 !
                value = line(19:100)
                value = remove_preceding_blanks(value)
                read(value, *) solver%coulomb_precision
-               return
+               cycle
 !
             endif
 !

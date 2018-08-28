@@ -21,6 +21,7 @@ module hf_class
 !
       real(dp), dimension(:,:), allocatable :: ao_density
       real(dp), dimension(:,:), allocatable :: ao_fock
+      real(dp), dimension(:,:), allocatable :: mo_fock
       real(dp), dimension(:,:), allocatable :: orbital_energies
 !
       real(dp), dimension(:,:), allocatable :: ao_overlap 
@@ -80,6 +81,7 @@ module hf_class
 !
       procedure :: initialize_ao_density              => initialize_ao_density_hf
       procedure :: initialize_ao_fock                 => initialize_ao_fock_hf
+      procedure :: initialize_mo_fock                 => initialize_mo_fock_hf
       procedure :: initialize_mo_coefficients         => initialize_mo_coefficients_hf
       procedure :: initialize_ao_overlap              => initialize_ao_overlap_hf
       procedure :: initialize_orbital_energies        => initialize_orbital_energies_hf
@@ -88,6 +90,7 @@ module hf_class
 !
       procedure :: destruct_ao_density                => destruct_ao_density_hf
       procedure :: destruct_ao_fock                   => destruct_ao_fock_hf
+      procedure :: destruct_mo_fock                   => destruct_mo_fock_hf
       procedure :: destruct_mo_coefficients           => destruct_mo_coefficients_hf
       procedure :: destruct_ao_overlap                => destruct_ao_overlap_hf
       procedure :: destruct_orbital_energies          => destruct_orbital_energies_hf
@@ -103,7 +106,6 @@ module hf_class
       procedure :: construct_roothan_hall_gradient => construct_roothan_hall_gradient_hf
 !
       procedure :: construct_sp_eri_schwarz        => construct_sp_eri_schwarz_hf
-      procedure :: determine_degeneracy            => determine_degeneracy_hf
 !
    end type hf
 !
@@ -205,6 +207,20 @@ contains
       if (.not. allocated(wf%ao_fock)) call mem%alloc(wf%ao_fock, wf%n_ao, wf%n_ao)
 !
    end subroutine initialize_ao_fock_hf
+!
+!
+   subroutine initialize_mo_fock_hf(wf)
+!!
+!!    Initialize MO Fock
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      if (.not. allocated(wf%mo_fock)) call mem%alloc(wf%mo_fock, wf%n_mo, wf%n_mo)
+!
+   end subroutine initialize_mo_fock_hf
 !
 !
    subroutine initialize_mo_coefficients_hf(wf)
@@ -317,6 +333,20 @@ contains
       if (allocated(wf%ao_fock)) call mem%dealloc(wf%ao_fock, wf%n_ao, wf%n_ao)
 !
    end subroutine destruct_ao_fock_hf
+!
+!
+   subroutine destruct_mo_fock_hf(wf)
+!!
+!!    Destruct MO Fock
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      if (allocated(wf%mo_fock)) call mem%dealloc(wf%mo_fock, wf%n_mo, wf%n_mo)
+!
+   end subroutine destruct_mo_fock_hf
 !
 !
    subroutine destruct_mo_coefficients_hf(wf)
@@ -476,99 +506,6 @@ contains
     !  call mem%dealloc_int(sp_eri_schwarz_list_copy, n_s*(n_s + 1)/2, 3)
 !
    end subroutine construct_sp_eri_schwarz_hf
-!
-!
-   subroutine determine_degeneracy_hf(wf, degeneracy, n_s)
-!!
-!!    Determine degeneracy vector
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-!!    In the AO Fock construction, each shell quadruple has a degeneracy
-!!    given by how many times the same integral appears in the actual
-!!    unrestricted sum. The value degeneracy(s1s2,s3s4) gives the 
-!!    degeneracy of g_wxyz, where w, x, y, z belong to shells s1, s2,
-!!    s3 and s4, respectively.
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      integer(i15) :: n_s
-!
-      real(dp), dimension(n_s**2, n_s**2) :: degeneracy
-!
-      integer(i15) :: s1, s2, s3, s4, s1s2, s3s4, deg_12, deg_34, deg_12_34, s4_max
-!
-!$omp parallel do private(s1, s2, s3, s4, s1s2, s3s4, deg_12, deg_34, deg_12_34) schedule(dynamic)
-      do s1 = 1, n_s
-         do s2 = 1, s1
-!
-            s1s2 = n_s*(s2 - 1) + s1
-!
-            if (s1 .eq. s2) then
-!
-               deg_12 = one
-!
-            else
-!
-               deg_12 = two
-!
-            endif
-!
-            do s3 = 1, s1
-!
-               if (s3 .eq. s1) then
-!
-                  s4_max = s2
-!
-               else
-!
-                  s4_max = s3
-!
-               endif
-!
-               do s4 = 1, s4_max
-!
-                  if (s3 .eq. s4) then
-!
-                     deg_34 = one
-!
-                  else
-!
-                     deg_34 = two
-!
-                  endif
-!
-                  if (s3 .eq. s1) then
-!
-                     if (s2 .eq. s4) then
-!
-                        deg_12_34 = one
-!
-                     else
-!
-                        deg_12_34 = two
-!
-                     endif
-!
-                  else
-!
-                     deg_12_34 = two
-!
-                  endif
-!
-                  s3s4 = n_s*(s4 - 1) + s3
-!
-                  degeneracy(s1s2, s3s4) = deg_12*deg_34*deg_12_34
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
-!
-   end subroutine determine_degeneracy_hf
-
 !
 !
    subroutine construct_ao_fock_SAD_hf(wf, coulomb, exchange, precision)
@@ -1659,19 +1596,22 @@ contains
 !!    Construct MO Fock
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+!!    Constructs the MO Fock matrix F_pq using the current AO 
+!!    Fock and the orbital coefficients. 
+!!
       implicit none
 !
       class(hf), intent(in) :: wf
 !
-      real(dp), dimension(:,:) :: F_pq
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: F_pq
 !
       real(dp), dimension(:,:), allocatable :: X
 !
-      call mem%alloc(X, wf%n_ao, wf%n_ao)
+      call mem%alloc(X, wf%n_ao, wf%n_mo)   
 !
       call dgemm('N', 'N',                   &
                   wf%n_ao,                   &
-                  wf%n_ao,                   &
+                  wf%n_mo,                   &
                   wf%n_ao,                   &
                   one,                       &
                   wf%ao_fock,                &
@@ -1683,8 +1623,8 @@ contains
                   wf%n_ao)
 !
       call dgemm('T', 'N',                   &
-                  wf%n_ao,                   &
-                  wf%n_ao,                   &
+                  wf%n_mo,                   &
+                  wf%n_mo,                   &
                   wf%n_ao,                   &
                   one,                       &
                   wf%orbital_coefficients,   &
@@ -1693,9 +1633,9 @@ contains
                   wf%n_ao,                   &
                   zero,                      &
                   F_pq,                      & ! F = C^T F^ao C
-                  wf%n_ao)
+                  wf%n_mo)
 !
-      call mem%dealloc(X, wf%n_ao, wf%n_ao)
+      call mem%dealloc(X, wf%n_ao, wf%n_mo)
 !
    end subroutine construct_mo_fock_hf
 !
@@ -2340,7 +2280,7 @@ contains
    end subroutine construct_roothan_hall_gradient_hf
 !
 !
-   subroutine do_roothan_hall_hf(wf)
+   subroutine do_roothan_hall_hf(wf, do_mo_transformation)
 !!
 !!    Do Roothan-Hall
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -2363,15 +2303,27 @@ contains
 !!    of linearly independent orbitals is wf%n_mo, whereas the full number 
 !!    is wf%n_ao.   
 !!
+!!    Default is to not transform the Fock matrix to the MO basis. If 
+!!    do_mo_transformation is passed and is set true, the MO Fock matrix 
+!!    is initialized and transformed to the MO basis: 
+!!
+!!       F_mo = C'^T P^T F P C' 
+!!
       implicit none
 !
       class(hf) :: wf
+!
+      logical, optional, intent(in) :: do_mo_transformation
 !
       real(dp), dimension(:,:), allocatable :: work
       real(dp), dimension(:,:), allocatable :: metric 
       real(dp), dimension(:,:), allocatable :: ao_fock 
       real(dp), dimension(:,:), allocatable :: orbital_energies 
       real(dp), dimension(:,:), allocatable :: FP 
+!
+      real(dp), dimension(:,:), allocatable :: ao_fock_copy 
+      real(dp), dimension(:,:), allocatable :: red_orbital_coefficients  
+      real(dp), dimension(:,:), allocatable :: tmp  
 !
       real(dp) :: ddot, norm
 !
@@ -2428,7 +2380,19 @@ contains
                   ao_fock,                      & ! F' = P^T F P
                   wf%n_mo)   
 !
-      call mem%dealloc(FP, wf%n_mo, wf%n_ao)   
+      call mem%dealloc(FP, wf%n_mo, wf%n_ao) 
+!
+      if (present(do_mo_transformation)) then 
+!
+         if (do_mo_transformation) then 
+!
+            call mem%alloc(ao_fock_copy, wf%n_mo, wf%n_mo)
+            ao_fock_copy = ao_fock 
+!
+         endif 
+!
+      endif 
+!  
 !
 !     Solve F'C' = L L^T C' e
 !
@@ -2456,6 +2420,53 @@ contains
 !
          write(output%unit, '(/t3,a/)') 'Error: could not solve Roothan-Hall equations.'
          stop
+!
+      endif
+!
+!     If requested MO transformation of Fock matrix, do it 
+!
+      if (present(do_mo_transformation)) then 
+!
+         if (do_mo_transformation) then 
+!
+            call mem%alloc(red_orbital_coefficients, wf%n_mo, wf%n_mo)
+            red_orbital_coefficients = ao_fock 
+!
+            call mem%alloc(tmp, wf%n_mo, wf%n_mo)
+!
+            call dgemm('N', 'N', &
+                        wf%n_mo, &
+                        wf%n_mo, &
+                        wf%n_mo, &
+                        one, &
+                        ao_fock_copy, &
+                        wf%n_mo, &
+                        red_orbital_coefficients, &
+                        wf%n_mo, &
+                        zero, &
+                        tmp, & ! tmp = F' C'  
+                        wf%n_mo)
+!
+            call wf%initialize_mo_fock() ! Allocate if necessary
+!
+            call dgemm('T', 'N',                  &
+                        wf%n_mo,                  &
+                        wf%n_mo,                  &
+                        wf%n_mo,                  &
+                        one,                      &
+                        red_orbital_coefficients, &
+                        wf%n_mo,                  &
+                        tmp,                      &
+                        wf%n_mo,                  &
+                        zero,                     &
+                        wf%mo_fock,               & ! F = C'^T F' C'  
+                        wf%n_mo)
+!
+            call mem%dealloc(ao_fock_copy, wf%n_mo, wf%n_mo)
+            call mem%dealloc(red_orbital_coefficients, wf%n_mo, wf%n_mo)
+            call mem%dealloc(tmp, wf%n_mo, wf%n_mo)
+!
+         endif
 !
       endif
 !
