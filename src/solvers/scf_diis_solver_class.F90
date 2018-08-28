@@ -356,12 +356,12 @@ contains
 !
             write(output%unit, *) trim(line)
 !
-            if (line(1:15) == 'diis_dimension:') then
+            if (line(1:15) == 'diis dimension:') then
 !
                value = line(16:100)
                value = remove_preceding_blanks(value)
                read(value, *) solver%diis_dimension
-               return
+               cycle
 !
             endif
 !

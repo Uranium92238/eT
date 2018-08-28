@@ -82,16 +82,9 @@ contains
 !
       character(len=100) :: line, value 
 !
-
-            write(output%unit, *) 'Hei!'
-!
       if (requested_section('hf')) then ! User has requested something 
 !
-         write(output%unit, *) 'Heiii!'
-!
          call move_to_section('hf', n_records)
-!
-         write(output%unit, *) 'Heiiii!', n_records
 !
          do i = 1, n_records
 !
@@ -100,43 +93,42 @@ contains
 !
             write(output%unit, *) trim(line)
 !
-            if (line(1:17) == 'energy_threshold:') then
+            if (line(1:17) == 'energy threshold:') then
 !
                value = line(18:100)
                value = remove_preceding_blanks(value)
                read(value, *) solver%energy_threshold
                cycle
 !
-            elseif (line(1:19) == 'residual_threshold:') then 
+            elseif (line(1:19) == 'residual threshold:') then 
 !
                value = line(20:100)
                value = remove_preceding_blanks(value)
                read(value, *) solver%residual_threshold
-               write(output%unit, *) 'Residual thr:', solver%residual_threshold
                cycle
 !
-            elseif (line(1:15) == 'max_iterations:') then 
+            elseif (line(1:15) == 'max iterations:') then 
 !
                value = line(16:100)
                value = remove_preceding_blanks(value)
                read(value, *) solver%max_iterations
                cycle
 !
-            elseif (line(1:18) == 'coulomb_threshold:') then 
+            elseif (line(1:18) == 'coulomb threshold:') then 
 !
                value = line(19:100)
                value = remove_preceding_blanks(value)
                read(value, *) solver%coulomb_thr
                cycle
 !
-            elseif (line(1:19) == 'exchange_threshold:') then 
+            elseif (line(1:19) == 'exchange threshold:') then 
 !
                value = line(20:100)
                value = remove_preceding_blanks(value)
                read(value, *) solver%exchange_thr
                cycle
 !
-            elseif (line(1:18) == 'coulomb_precision:') then 
+            elseif (line(1:18) == 'coulomb precision:') then 
 !
                value = line(19:100)
                value = remove_preceding_blanks(value)
