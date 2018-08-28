@@ -113,9 +113,9 @@ program eT_program
 !
         allocate(gs_hf_engine)
 !
-        call gs_hf_engine%initialize()     
+        call gs_hf_engine%prepare()     
         call gs_hf_engine%run(ref_wf)     
-        call gs_hf_engine%finalize()     
+        call gs_hf_engine%cleanup()     
 !
         deallocate(gs_hf_engine)   
 !
@@ -146,4 +146,3 @@ program eT_program
    call disk%close_file(input)
 !
 end program eT_program
-!

@@ -13,9 +13,9 @@ module hf_engine_class
 !
    contains 
 !
-      procedure :: initialize => initialize_hf_engine
+      procedure :: prepare    => prepare_hf_engine
       procedure :: run        => run_hf_engine
-      procedure :: finalize   => finalize_hf_engine
+      procedure :: cleanup    => cleanup_hf_engine
 !
       procedure :: read_algorithm => read_algorithm_hf_engine
 !
@@ -23,16 +23,17 @@ module hf_engine_class
 !
 contains
 !
-   subroutine initialize_hf_engine(engine)
+!
+   subroutine prepare_hf_engine(engine)
 !!
-!!    Initialize 
+!!    Prepare 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
 !!
       implicit none 
 !
       class(hf_engine) :: engine 
 !
-   end subroutine initialize_hf_engine
+   end subroutine prepare_hf_engine
 !
 !
    subroutine run_hf_engine(engine, wf)
@@ -62,9 +63,9 @@ contains
             allocate(arh_solver)
             solver => arh_solver
 !
-            call solver%initialize(wf)
+            call solver%prepare(wf)
             call solver%run(wf)
-            call solver%finalize(wf)
+            call solver%cleanup(wf)
 !
             deallocate(arh_solver)
 !
@@ -73,9 +74,9 @@ contains
             allocate(scf_solver)
             solver => scf_solver
 !
-            call solver%initialize(wf)
+            call solver%prepare(wf)
             call solver%run(wf)
-            call solver%finalize(wf)
+            call solver%cleanup(wf)
 !
             deallocate(scf_solver)
 !
@@ -90,9 +91,9 @@ contains
          allocate(scf_solver)
          solver => scf_solver
 !
-         call solver%initialize(wf)
+         call solver%prepare(wf)
          call solver%run(wf)
-         call solver%finalize(wf)
+         call solver%cleanup(wf)
 !
          deallocate(scf_solver)
 !
@@ -101,16 +102,16 @@ contains
    end subroutine run_hf_engine
 !
 !
-   subroutine finalize_hf_engine(engine)
+   subroutine cleanup_hf_engine(engine)
 !!
-!!    Finalize 
+!!    Cleanup 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
 !!
       implicit none 
 !
       class(hf_engine) :: engine 
 !
-   end subroutine finalize_hf_engine
+   end subroutine cleanup_hf_engine
 !
 !
    subroutine read_algorithm_hf_engine(engine, algorithm)
