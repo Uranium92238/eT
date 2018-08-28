@@ -15,6 +15,8 @@ module eri_cd_solver_class
    use file_class
    use disk_manager_class
 !
+   use io_utilities
+!
    use cholesky_array_list_class
 !
    use wavefunction_class
@@ -34,7 +36,7 @@ module eri_cd_solver_class
       logical :: construct_vectors  = .true.
 !
       type(file) :: diagonal_info_target, diagonal_info_one_center
-      type(file) :: cholesky_aux, cholesky_aux_inverse, cholesky_ao_vectors
+      type(file) :: cholesky_aux, cholesky_aux_inverse, cholesky_ao_vectors, cholesky_ao_vectors_info
       type(file) :: basis_shell_data
 !
       integer(i15) :: n_cholesky
@@ -70,7 +72,9 @@ contains
       class(eri_cd_solver) :: solver
       type(molecular_system) :: system
 !
-      call solver%read_info()
+      if (requested_section('cholesky')) then
+         call solver%read_info()
+      endif
 !
       solver%n_aop   = system%get_n_aos()*(system%get_n_aos()+1)/2 ! Number of ao pairs packed
       solver%n_ao    = system%get_n_aos()
@@ -1961,10 +1965,6 @@ contains
       call mem%dealloc(cholesky_vecs, n_vectors, n_vectors)
 !
       call cpu_time(e_build_basis_time)
-   !   write(output%unit, '(/a21, f11.2, a9)')'Time to build basis: ',&
-   !                         e_build_basis_time - s_build_basis_time, ' seconds.'
-   !   write(output%unit, '(t6, a25, f11.2, a9)')'Time to decompose (J|K): ',&
-   !                         e_decomp_time - s_decomp_time, ' seconds.'
 !
    end subroutine construct_overlap_cholesky_vecs_eri_cd_solver
 !
@@ -2051,7 +2051,11 @@ contains
 !
 !     Prepare file for AO Cholesky vectors
 !
-      call solver%cholesky_ao_vectors%init('cholesky_ao', 'direct', 'unformatted', dp*solver%n_cholesky)
+      call solver%cholesky_ao_vectors%init('cholesky_ao', 'sequential', 'unformatted')
+      call disk%open_file(solver%cholesky_ao_vectors, 'write', 'rewind')
+
+      call solver%cholesky_ao_vectors_info%init('cholesky_ao_batching_info', 'sequential', 'formatted')
+      call disk%open_file(solver%cholesky_ao_vectors_info, 'write', 'rewind')
 !
       rec_offset = 0
 !
@@ -2112,6 +2116,8 @@ contains
             n_AB_included    = n_AB_included_current
 !
          endif
+!
+         write(solver%cholesky_ao_vectors_info%unit, *) size_AB
 !
          call disk%open_file(solver%basis_shell_data, 'read')
 !
@@ -2284,17 +2290,14 @@ contains
 !
 !        Write vectors to file
 !
-         call disk%open_file(solver%cholesky_ao_vectors, 'write')
+         do J = 1, solver%n_cholesky
 !
-         do I = 1, size_AB
-!
-            write(solver%cholesky_ao_vectors%unit, rec=I + rec_offset) (L_K_yz(J, I), J = 1, solver%n_cholesky)
+            write(solver%cholesky_ao_vectors%unit) (L_K_yz(J, I), I = 1, size_AB)
 !
          enddo
 !
          rec_offset = rec_offset + size_AB
 !
-         call disk%close_file(solver%cholesky_ao_vectors)
          call mem%dealloc(L_K_yz, solver%n_cholesky, size_AB)
 !
          done = .true.
@@ -2310,14 +2313,11 @@ contains
 !
       enddo ! done
 !
-!     Timings
+      call disk%close_file(solver%cholesky_ao_vectors)
 !
-   !  call cpu_time(e_build_vectors_time)
-   !  write(output%unit, '(/a23, f11.2, a9)')'Time to build vectors: ',&
-   !                        e_build_vectors_time - s_build_vectors_time, ' seconds.'
-   !  write(output%unit, '(t6, a36, f11.2, a9)')'Time to make vectors:        ',&
-   !                        full_construct_time, ' seconds.'
-   !  flush(output%unit)
+      write(solver%cholesky_ao_vectors_info%unit, *) 'DONE'
+!
+      call disk%close_file(solver%cholesky_ao_vectors_info)
 !
       call mem%dealloc(aux_chol_inverse, solver%n_cholesky, solver%n_cholesky)
       call mem%dealloc_int(cholesky_basis, solver%n_cholesky, 3)
@@ -2381,8 +2381,6 @@ contains
 !     Timings
 !
       call cpu_time(e_invert_time)
-   !  write(output%unit, '(/a16, f11.2, a9/)')'Time to invert: ',&
-   !                        e_invert_time - s_invert_time, ' seconds.'
 !
 !
    end subroutine invert_overlap_cholesky_vecs_eri_cd_solver
@@ -2402,15 +2400,18 @@ contains
 !
       real(dp) :: ddot, max_diff, min_diff
 !
-      integer(i15) :: aop, n_sig_sp, n_sig_aop, J
+      integer(i15) :: aop, n_sig_sp, n_sig_aop, J, I, size_AB, AB_offset
 !
+      character(len=40) :: line
 !
-      write(output%unit, '(/a)') '- Test Cholesky vectors'
+      write(output%unit, '(/a)') '- Test Cholesky vectors NOT WORKING!!'
       flush(output%unit)
 !
 !     Read diagonal information
 !
       call disk%open_file(solver%diagonal_info_target, 'read')
+!
+      rewind(solver%diagonal_info_target)
 !
       read(solver%diagonal_info_target%unit) n_sig_sp, n_sig_aop
 !
@@ -2421,23 +2422,45 @@ contains
 !
       call disk%close_file(solver%diagonal_info_target)
 !
-      call mem%alloc(L_K_yz, solver%n_cholesky, 1)
-!
       call disk%open_file(solver%cholesky_ao_vectors, 'read')
+      call disk%open_file(solver%cholesky_ao_vectors_info, 'read')
 !
-!     Calculate difference between actual and approximate diagonal
+      rewind(solver%cholesky_ao_vectors%unit)
+      rewind(solver%cholesky_ao_vectors_info%unit)
 !
-      do aop = 1, n_sig_aop
+      read(solver%cholesky_ao_vectors_info%unit, *) line
 !
-         read(solver%cholesky_ao_vectors%unit, rec=aop) (L_K_yz(J, 1), J = 1, solver%n_cholesky)
+      AB_offset = 0
 !
-         D_diff(aop, 1) = D_diff(aop, 1) - ddot(solver%n_cholesky, L_K_yz, 1, L_K_yz, 1)
+      do while (trim(line) .ne. 'DONE')
+!
+!        Calculate difference between actual and approximate diagonal
+!
+         read(line, *) size_AB
+!
+         call mem%alloc(L_K_yz, solver%n_cholesky, size_AB)
+!
+         do J = 1, solver%n_cholesky
+!
+            read(solver%cholesky_ao_vectors%unit) (L_K_yz(J, I), I = 1, size_AB)
+!
+         enddo
+!
+         do I = 1, size_AB 
+!
+            D_diff(I + AB_offset, 1) = D_diff(I + AB_offset, 1) - ddot(solver%n_cholesky, L_K_yz(1, I), 1, L_K_yz(1, I), 1)
+!
+         enddo
+!
+         call mem%dealloc(L_K_yz, solver%n_cholesky, size_AB)
+!
+         AB_offset = AB_offset + size_AB
+         read(solver%cholesky_ao_vectors_info%unit, *) line
 !
       enddo
 !
       call disk%close_file(solver%cholesky_ao_vectors)
-!
-      call mem%dealloc(L_K_yz, solver%n_cholesky, 1)
+      call disk%close_file(solver%cholesky_ao_vectors_info)
 !
 !     Calculate maximal difference and minimal difference
 !
@@ -2586,6 +2609,241 @@ contains
       backspace(input%unit)
 !
    end subroutine read_info_eri_cd_solver
+!
+!
+   subroutine construct_mo_cholesky_vecs(solver, system, n_mo, orbital_coefficients)
+!!
+!!
+      implicit none
+!
+      class(eri_cd_solver) :: solver
+!
+      call disk%open_file(solver%cholesky_ao_vectors, 'read')
+      call disk%open_file(cholesky_mo_vectors_seq, 'write', 'rewind')
+      call disk%open_file(solver%cholesky_mo_vectors, 'write', 'rewind')
+      call disk%open_file(solver%cholesky_ao_vectors_info, 'read')
+!
+!     Read significant sp info 
+!
+!
+      call disk%open_file(solver%diagonal_info_target, 'read')
+!
+      rewind(solver%diagonal_info_target)
+!
+      read(solver%diagonal_info_target%unit) n_sig_sp, n_sig_aop
+!
+      allocate(sig_sp(solver%n_s))
+!
+      read(solver%diagonal_info_target%unit) sig_sp
+!
+      call disk%close_file(solver%diagonal_info_target)
+!
+     do J = 1, solver%n_cholesky
+!
+        rewind(solver%cholesky_ao_vectors%unit)
+        rewind(solver%cholesky_ao_vectors_info%unit)
+!
+        read(solver%cholesky_ao_vectors_info%unit, *) line
+!
+        AB_offset = 0
+!
+         call mem%alloc(L_J_xy, 1, n_sig_aop)
+         call mem%alloc(L_J_yx_full, solver%n_ao, solver%n_ao)
+!
+         L_J_xy = zero
+         L_J_yx_full = zero
+!
+         do while (trim(line) .ne. 'DONE')
+!
+!          Calculate difference between actual and approximate diagonal
+!
+           read(line, *) size_AB     
+!
+!          Empty reads 
+!
+           do I = 1, J - 1
+!
+              read(solver%cholesky_ao_vectors%unit)
+!
+           enddo
+!
+           read(solver%cholesky_ao_vectors%unit) (L_J_yz(1, AB_offset + I), I = 1, size_AB)
+!
+!          Empty reads 
+!
+            do I = J + 1, solver%n_cholesky 
+!
+              read(solver%cholesky_ao_vectors%unit)
+!
+           enddo
+!
+           AB_offset = AB_offset + size_AB
+!
+           read(solver%cholesky_ao_vectors_info%unit, *) line
+!
+        enddo
+!
+         sp = 0
+!
+         do B = 1, solver%n_s
+!
+            B_interval = system%shell_limits(A)
+!
+            do A = B, solver%n_s
+!
+               A_interval = system%shell_limits(B)
+!
+               sp = sp + 1
+!
+               if (sig_sp(sp)) then
+!
+                  if (A .ne. B) then 
+!
+                     do x = 1, A_interval%size
+                        do y = 1, B_interval%size
+!  
+                            xy = A_interval%size*(y-1) + x
+                            L_J_xy_full(1, xy + AB_offset) = L_J_xy(1, xy + AB_offset)
+!  
+                        enddo
+                     enddo
+!
+                  else
+!
+                     do x = 1, A_interval%size
+                        do y = 1, A_interval%size
+!  
+                            xy = A_interval%size*(y-1) + x
+                            xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
+                            L_J_xy_full(1, xy + AB_offset) = L_J_xy(1, xy + AB_offset)
+!  
+                        enddo
+                     enddo
+!
+               else
+!
+               AB_offset_full = AB_offset_full + (A_interval%size)*(B_interval%size)
+               AB_offset = AB_offset + get_size_sp(A_interval, B_interval)
+!
+            enddo
+!
+            call mem%dealloc(L_J_xy, 1, n_sig_aop)
+            call mem%dealloc(L_J_yx_full, solver%n_ao, solver%n_ao)
+!
+         enddo
+!
+!       Transform the AO vectors to form the Cholesky MO vectors
+!
+        call mem%alloc(X, n_ao, n_mo)
+!
+        call dgemm('N','N',               &
+                    solver%n_ao,          &
+                    n_mo,                 &
+                    solver%n_ao,          &
+                    one,                  &
+                    L_J_xy_full,          &
+                    n_ao,                 &
+                    orbital_coefficients, &
+                    solver%n_ao,          &
+                    zero,                 &
+                    X,                    &
+                    solver%n_ao)
+!
+         call mem%dealloc(L_J_pq, n_mo, n_mo)
+!
+        call dgemm('T','N',               &
+                    n_mo,                 &
+                    n_mo,                 &
+                    solver%n_ao,          &
+                    one,                  &
+                    orbital_coefficients, &
+                    solver%n_ao,          &
+                    X,                    &
+                    solver%n_ao,          &
+                    zero,                 &
+                    L_J_pq,               &
+                    n_mo)
+!
+         call mem%dealloc(X, solver%n_ao, n_mo)
+!
+        write(cholesky_mo_vectors_seq%unit) ((L_J_pq(p,q), q = 1, p), q = 1, n_mo)
+        call mem%dealloc(L_J_pq, n_mo, n_mo)
+!
+      enddo
+!
+!     Read L_pq_J in batches over q
+!
+      required = ((n_mo)**2)*(solver%n_cholesky)
+!
+!     Initialize batching variable
+!
+      call batch_q%init(n_mo)
+      call mem%num_batch(batch_q, required)
+!
+!     Loop over the q-batches
+!
+      do current_q_batch = 1, batch_q%num_batches
+!
+!        Determine limits of the q-batch
+!
+         call batch_q%determine_limits(current_q_batch)
+!
+         call mem%alloc(L_pq_J,                                            &
+            (((batch_q%length + 1)*(batch_q%length)/2) +                   &
+            (n_mo - batch_q%length - batch_q%first + 1)*(batch_q%length)), &
+            solver%n_cholesky)
+!
+         if (batch_q%first .ne. 1) then
+!
+!           Calculate index of last element to throw away
+!
+            throw_away_index = index_packed(n_mo, batch_q%first - 1)
+!
+!           Throw away all elements from 1 to throw_away_index, then read from batch start
+!
+            do j = 1, solver%n_cholesky
+!
+              read(cholesky_mo_vectors_seq%unit) (throw_away, i = 1, throw_away_index), &
+                  (L_pq_J(p,j), p = 1, (((batch_q%length + 1)*(batch_q%length)/2) + &
+                                       (n_mo - batch_q%length - batch_q%first + 1)*(batch_q%length)))
+!
+            enddo
+!
+         else
+!
+!           Read from the start of each entry
+!
+            do j = 1, solver%n_cholesky
+!
+              read(cholesky_mo_vectors_seq%unit) (L_pq_J(p,j), p = 1, (((batch_q%length + 1)*(batch_q%length)/2) + &
+                                    (n_mo - batch_q%length - batch_q%first + 1)*(batch_q%length)))
+!
+            enddo
+!
+         endif
+!
+         do p = 1, n_mo
+            do q = batch_q%first, batch_q%last
+!
+               pq = (max(p, q)*(max(p, q)-3)/2) + p + q
+               write(solver%cholesky_mo_vectors%unit, rec=pq) (L_pq_J(pq, J), J = 1, solver%n_cholesky)
+!
+            enddo
+         enddo
+!
+         call mem%dealloc(L_pq_J,                                          &
+            (((batch_q%length + 1)*(batch_q%length)/2) +                   &
+            (n_mo - batch_q%length - batch_q%first + 1)*(batch_q%length)), &
+            solver%n_cholesky)
+!
+      enddo
+!
+      call disk%close_file(solver%cholesky_ao_vectors)
+      call disk%close_file(solver%cholesky_mo_vectors)
+      call disk%close_file(cholesky_mo_vectors_seq, 'delete')
+      call disk%close_file(solver%cholesky_ao_vectors_info, 'delete')
+!
+   end subroutine  construct_mo_cholesky_vecs
 !
 !
 end module eri_cd_solver_class
