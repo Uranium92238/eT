@@ -129,9 +129,6 @@ program eT_program
         allocate(ccs_wf)
         cc_wf => ccs_wf
 !
-        write(output%unit, *)'CCS!'
-        flush(output%unit)
-!
         call cc_wf%initialize(ref_wf)
         call ref_wf%cleanup()
         deallocate(ref_wf)
