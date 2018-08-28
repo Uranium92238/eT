@@ -211,35 +211,35 @@ contains
 !
 !     :: Construct precondition matrices, used to transform H and G prior to solving the Newton equation 
 !
-      call mem%alloc(VT, wf%n_so, wf%n_so)
-      call mem%alloc(inv_VT, wf%n_so, wf%n_so)
+      call mem%alloc(VT, wf%n_mo, wf%n_mo)
+      call mem%alloc(inv_VT, wf%n_mo, wf%n_mo)
 !
       VT = transpose(solver%cholesky_ao_overlap)
 !
-      call inv_lower_tri(inv_VT, solver%cholesky_ao_overlap, wf%n_so)
+      call inv_lower_tri(inv_VT, solver%cholesky_ao_overlap, wf%n_mo)
       inv_VT = transpose(inv_VT)
 !
-      call mem%dealloc(solver%cholesky_ao_overlap, wf%n_so, wf%n_so)    
+      call mem%dealloc(solver%cholesky_ao_overlap, wf%n_mo, wf%n_mo)    
 !
 !     :: Construct the preconditioned S matrix, which is the identity matrix for the 
 !     particular case of preconditioner chosen here 
 !
-      call mem%alloc(S, wf%n_so, wf%n_so) ! P^T S P = V V^T 
+      call mem%alloc(S, wf%n_mo, wf%n_mo) ! P^T S P = V V^T 
 !
       call dgemm('T','N',  &
-                  wf%n_so, &
-                  wf%n_so, &
-                  wf%n_so, &
+                  wf%n_mo, &
+                  wf%n_mo, &
+                  wf%n_mo, &
                   one,     &
                   VT,      &
-                  wf%n_so, &
+                  wf%n_mo, &
                   VT,      &
-                  wf%n_so, &
+                  wf%n_mo, &
                   zero,    &
                   S,       &
-                  wf%n_so)
+                  wf%n_mo)
 !
-      call sandwich(S, inv_VT, inv_VT, wf%n_so) ! S <- (V-T)^T S V-T = I
+      call sandwich(S, inv_VT, inv_VT, wf%n_mo) ! S <- (V-T)^T S V-T = I
 !
 !     :: Allocate and zero projection matrices on occupied and virtual spaces
 !
@@ -280,10 +280,10 @@ contains
 !        Make the reduced space G (where linearly dependent directions have been removed),
 !        and determine its maximum (absolute) element 
 !
-         call mem%alloc(Gr, wf%n_so, wf%n_so) 
-         call symmetric_sandwich(Gr, G, solver%permutation_matrix, wf%n_ao, wf%n_so)
+         call mem%alloc(Gr, wf%n_mo, wf%n_mo) 
+         call symmetric_sandwich(Gr, G, solver%permutation_matrix, wf%n_ao, wf%n_mo)
 
-         max_grad = get_abs_max(Gr, wf%n_so*wf%n_so)
+         max_grad = get_abs_max(Gr, wf%n_mo*wf%n_mo)
 !
 !        Set current energy
 !
@@ -314,11 +314,11 @@ contains
 !
             call wf%construct_roothan_hall_hessian(H, Po, Pv)
 !
-            call mem%alloc(Hr, wf%n_so, wf%n_so)
-            call symmetric_sandwich(Hr, H, solver%permutation_matrix, wf%n_ao, wf%n_so)
+            call mem%alloc(Hr, wf%n_mo, wf%n_mo)
+            call symmetric_sandwich(Hr, H, solver%permutation_matrix, wf%n_ao, wf%n_mo)
 !
-            call sandwich(Gr, inv_VT, inv_VT, wf%n_so)
-            call sandwich(Hr, inv_VT, inv_VT, wf%n_so)
+            call sandwich(Gr, inv_VT, inv_VT, wf%n_mo)
+            call sandwich(Hr, inv_VT, inv_VT, wf%n_mo)
 !
 !           Write current RH gradient and AO density to file 
 !
@@ -351,21 +351,21 @@ contains
 !           :: Perform micro-iterations to get a direction X in which to rotate
 !           (solves the equation of RH gradient equal to zero to first order in X)
 !
-            call mem%alloc(Xr, wf%n_so, wf%n_so)              ! Full antisymmetric rotation matrix
-            call mem%alloc(Xr_pck, packed_size(wf%n_so-1), 1) ! Packed rotation matrix (strictly lower triangular part)
+            call mem%alloc(Xr, wf%n_mo, wf%n_mo)              ! Full antisymmetric rotation matrix
+            call mem%alloc(Xr_pck, packed_size(wf%n_mo-1), 1) ! Packed rotation matrix (strictly lower triangular part)
 !
             Xr     = zero
             Xr_pck = zero
 !
             call solver%solve_aug_Hessian_eigenequation(wf, Xr_pck, Hr, Gr, S, max_grad)
           !  call solver%solve_aug_Newton_equation(wf, Xr_pck, Hr, Gr, S, max_grad)
-            call squareup_anti(Xr_pck, Xr, wf%n_so)
+            call squareup_anti(Xr_pck, Xr, wf%n_mo)
 !
 !           :: Solve the augmented Hessian (i.e., level shifted Newton equation) if
 !           the converged step X is longer than the trust radius within which the Roothan-Hall
 !           energy expansion can (presumably) be trusted to second order in X
 !
-            norm_X = sqrt(ddot(packed_size(wf%n_so-1), Xr_pck, 1, Xr_pck, 1))
+            norm_X = sqrt(ddot(packed_size(wf%n_mo-1), Xr_pck, 1, Xr_pck, 1))
             level_shift = zero 
 !
             if (norm_X .gt. solver%trust_radius .and. abs(norm_X-solver%trust_radius) .gt. & 
@@ -377,25 +377,25 @@ contains
 !
                call solver%solve_level_shifted_aug_Newton_equation(wf, Xr_pck, Hr, Gr, &
                                                          S, max_grad, norm_X, level_shift)
-               call squareup_anti(Xr_pck, Xr, wf%n_so)
+               call squareup_anti(Xr_pck, Xr, wf%n_mo)
 ! 
             endif
 !          
-            call mem%dealloc(Xr_pck, packed_size(wf%n_so-1), 1) 
+            call mem%dealloc(Xr_pck, packed_size(wf%n_mo-1), 1) 
 !
-            call mem%dealloc(Gr, wf%n_so, wf%n_so) 
-            call mem%dealloc(Hr, wf%n_so, wf%n_so)    
+            call mem%dealloc(Gr, wf%n_mo, wf%n_mo) 
+            call mem%dealloc(Hr, wf%n_mo, wf%n_mo)    
 !
 !           :: Convert the converged direction X from the basis of the preconditioned system (X' = V^T X V)
 !           back to the original system (X -> V-T X V-1), then transform the vector back to full (lin.dep.) 
 !           space, packing it into the current direction vector s
 !
             transpose_left = .false.
-            call sandwich(Xr, inv_VT, inv_VT, wf%n_so, transpose_left) 
+            call sandwich(Xr, inv_VT, inv_VT, wf%n_mo, transpose_left) 
 ! 
             call mem%alloc(X, wf%n_ao, wf%n_ao)
-            call symmetric_sandwich_right(X, Xr, solver%permutation_matrix, wf%n_ao, wf%n_so)         
-            call mem%dealloc(Xr, wf%n_so, wf%n_so) 
+            call symmetric_sandwich_right(X, Xr, solver%permutation_matrix, wf%n_ao, wf%n_mo)         
+            call mem%dealloc(Xr, wf%n_mo, wf%n_mo) 
 !
             call mem%alloc(X_pck, packed_size(wf%n_ao-1), 1)
             call packin_anti(X_pck, X, wf%n_ao) 
@@ -445,12 +445,12 @@ contains
       call mem%dealloc(Po, wf%n_ao, wf%n_ao)
       call mem%dealloc(Pv, wf%n_ao, wf%n_ao)
 !
-      call mem%dealloc(S, wf%n_so, wf%n_so)
+      call mem%dealloc(S, wf%n_mo, wf%n_mo)
 !
       call mem%dealloc(sp_eri_schwarz, n_s, n_s)
 !
-      call mem%dealloc(VT, wf%n_so, wf%n_so)
-      call mem%dealloc(inv_VT, wf%n_so, wf%n_so)
+      call mem%dealloc(VT, wf%n_mo, wf%n_mo)
+      call mem%dealloc(inv_VT, wf%n_mo, wf%n_mo)
 !
 !     Initialize solver (make final deallocations, and other stuff)
 !
@@ -618,12 +618,12 @@ contains
 !
       class(hf) :: wf
 !
-      real(dp), dimension((wf%n_so-1)*(wf%n_so)/2, 1) :: X_pck
+      real(dp), dimension((wf%n_mo-1)*(wf%n_mo)/2, 1) :: X_pck
 !
 !
-      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: H
-      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: G
-      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: S
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: H
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: G
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: S
 !
       real(dp), intent(in) :: max_grad ! Maximum element of the gradient G
 !
@@ -645,20 +645,20 @@ contains
 !     Perform micro-iterations to get a direction X in which to rotate
 !     (solves the equation of RH gradient equal to zero to first order in X)
 !
-      call mem%alloc(X, wf%n_so, wf%n_so)
+      call mem%alloc(X, wf%n_mo, wf%n_mo)
 !
       X = -G
-      call packin_anti(X_pck, X, wf%n_so)
+      call packin_anti(X_pck, X, wf%n_mo)
 !
       micro_iteration = 1
       micro_iterate = .true.
       call diis_solver%init('hf_newton',                &
-                              packed_size(wf%n_so - 1), &
-                              packed_size(wf%n_so - 1), &
+                              packed_size(wf%n_mo - 1), &
+                              packed_size(wf%n_mo - 1), &
                               solver%diis_dimension)
 !
-      call mem%alloc(RHC, wf%n_so, wf%n_so)
-      call mem%alloc(RHC_pck, packed_size(wf%n_so-1), 1)
+      call mem%alloc(RHC, wf%n_mo, wf%n_mo)
+      call mem%alloc(RHC_pck, packed_size(wf%n_mo-1), 1)
 !
       do while (micro_iterate .and. micro_iteration .le. solver%max_micro_iterations)
 !
@@ -673,8 +673,8 @@ contains
 !
 !        Precondition the Roothan-Hall condition by the inverse of the linearized H matrix
 !
-         do i = 1, wf%n_so
-            do j = 1, wf%n_so
+         do i = 1, wf%n_mo
+            do j = 1, wf%n_mo
 !
                RHC(i,j) = RHC(i,j)/(H(i,i) + H(j,j))
 !
@@ -684,11 +684,11 @@ contains
 !        Packin the strictly lower triangular part of the preconditioned Roothan-Hall condition
 !
          RHC_pck = zero
-         call packin_anti(RHC_pck, RHC, wf%n_so)
+         call packin_anti(RHC_pck, RHC, wf%n_mo)
 !
 !        Compute the error (the L2 norm of the condition)
 !
-         micro_error = sqrt(ddot(packed_size(wf%n_so-1), RHC_pck, 1, RHC_pck, 1))
+         micro_error = sqrt(ddot(packed_size(wf%n_mo-1), RHC_pck, 1, RHC_pck, 1))
 !
 !        Ask DIIS for updated (packed) rotation parameters X
 !
@@ -698,7 +698,7 @@ contains
 !        Squareup anti-symmetric rotation matrix gotten from DIIS
 !
          X = zero
-         call squareup_anti(X_pck, X, wf%n_so)
+         call squareup_anti(X_pck, X, wf%n_mo)
 !
          micro_iteration = micro_iteration + 1
 !
@@ -712,10 +712,10 @@ contains
 !
       call diis_solver%finalize()
 !
-      call mem%dealloc(X, wf%n_so, wf%n_so)
+      call mem%dealloc(X, wf%n_mo, wf%n_mo)
 !
-      call mem%dealloc(RHC, wf%n_so, wf%n_so)
-      call mem%dealloc(RHC_pck, packed_size(wf%n_so-1), 1)
+      call mem%dealloc(RHC, wf%n_mo, wf%n_mo)
+      call mem%dealloc(RHC_pck, packed_size(wf%n_mo-1), 1)
 !
       if (micro_iterate) then 
 !
@@ -746,12 +746,12 @@ contains
 !
       class(hf), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_so, wf%n_so) :: RHC
+      real(dp), dimension(wf%n_mo, wf%n_mo) :: RHC
 !
-      real(dp), dimension(wf%n_so, wf%n_so) :: H
-      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: X
-      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: G
-      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: S
+      real(dp), dimension(wf%n_mo, wf%n_mo) :: H
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: G
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: S
 !
       real(dp), intent(in), optional :: level_shift
 !
@@ -759,20 +759,20 @@ contains
 !
 !     Construct tmp = X S => tmp^T = S^T X^T = S X^T = - S X
 !
-      call mem%alloc(tmp, wf%n_so, wf%n_so)
+      call mem%alloc(tmp, wf%n_mo, wf%n_mo)
 !
       call dgemm('N', 'N',       &
-                  wf%n_so,       &
-                  wf%n_so,       &
-                  wf%n_so,       &
+                  wf%n_mo,       &
+                  wf%n_mo,       &
+                  wf%n_mo,       &
                   one,           &
                   X,             &
-                  wf%n_so,       &
+                  wf%n_mo,       &
                   S,             &
-                  wf%n_so,       &
+                  wf%n_mo,       &
                   zero,          &
                   tmp,           &
-                  wf%n_so)
+                  wf%n_mo)
 !
 !     RHC = H X S = H tmp
 !
@@ -783,32 +783,32 @@ contains
       endif 
 !
       call dgemm('N', 'N',       &
-                  wf%n_so,       &
-                  wf%n_so,       &
-                  wf%n_so,       &
+                  wf%n_mo,       &
+                  wf%n_mo,       &
+                  wf%n_mo,       &
                   one,           &
                   H,             &
-                  wf%n_so,       &
+                  wf%n_mo,       &
                   tmp,           &
-                  wf%n_so,       &
+                  wf%n_mo,       &
                   zero,          &
                   RHC,           &
-                  wf%n_so)
+                  wf%n_mo)
 !
 !     RHC = RHC - (- S X) H = RHC - tmp^T H = H X S + S X H
 !
       call dgemm('T', 'N',       &
-                  wf%n_so,       &
-                  wf%n_so,       &
-                  wf%n_so,       &
+                  wf%n_mo,       &
+                  wf%n_mo,       &
+                  wf%n_mo,       &
                   -one,          &
                   tmp,           &
-                  wf%n_so,       &
+                  wf%n_mo,       &
                   H,             &
-                  wf%n_so,       &
+                  wf%n_mo,       &
                   one,           &
                   RHC,           &
-                  wf%n_so)
+                  wf%n_mo)
 !
       if (present(level_shift)) then 
 !
@@ -816,7 +816,7 @@ contains
 !
       endif 
 !
-      call mem%dealloc(tmp, wf%n_so, wf%n_so)
+      call mem%dealloc(tmp, wf%n_mo, wf%n_mo)
 !
 !     RHC = RHC + G = H X S + S X H + G
 !
@@ -844,78 +844,78 @@ contains
 !
       class(hf), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_so, wf%n_so) :: RHC
+      real(dp), dimension(wf%n_mo, wf%n_mo) :: RHC
 !
-      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: H
-      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: X
-      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: G
-      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: S
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: H
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: X
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: G
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: S
 !
       real(dp), dimension(:,:), allocatable :: tmp
 !
 !     Construct tmp = X S
 !
-      call mem%alloc(tmp, wf%n_so, wf%n_so)
+      call mem%alloc(tmp, wf%n_mo, wf%n_mo)
 !
       call dgemm('N', 'N',       &
-                  wf%n_so,       &
-                  wf%n_so,       &
-                  wf%n_so,       &
+                  wf%n_mo,       &
+                  wf%n_mo,       &
+                  wf%n_mo,       &
                   one,           &
                   X,             &
-                  wf%n_so,       &
+                  wf%n_mo,       &
                   S,             &
-                  wf%n_so,       &
+                  wf%n_mo,       &
                   zero,          &
                   tmp,           &
-                  wf%n_so)
+                  wf%n_mo)
 !
 !     RHC = H X S = H tmp
 !
       call dgemm('N', 'N',       &
-                  wf%n_so,       &
-                  wf%n_so,       &
-                  wf%n_so,       &
+                  wf%n_mo,       &
+                  wf%n_mo,       &
+                  wf%n_mo,       &
                   one,           &
                   H,             &
-                  wf%n_so,       &
+                  wf%n_mo,       &
                   tmp,           &
-                  wf%n_so,       &
+                  wf%n_mo,       &
                   zero,          &
                   RHC,           &
-                  wf%n_so)
+                  wf%n_mo)
 !
 !     tmp = S X 
 !
       call dgemm('N', 'N',       &
-                  wf%n_so,       &
-                  wf%n_so,       &
-                  wf%n_so,       &
+                  wf%n_mo,       &
+                  wf%n_mo,       &
+                  wf%n_mo,       &
                   one,           &
                   S,             &
-                  wf%n_so,       &
+                  wf%n_mo,       &
                   X,             &
-                  wf%n_so,       &
+                  wf%n_mo,       &
                   zero,          &
                   tmp,           &
-                  wf%n_so)
+                  wf%n_mo)
 ! 
 !     RHC = RHC + S X H = RHC + tmp H = H X S + S X H
 !
       call dgemm('N', 'N',       &
-                  wf%n_so,       &
-                  wf%n_so,       &
-                  wf%n_so,       &
+                  wf%n_mo,       &
+                  wf%n_mo,       &
+                  wf%n_mo,       &
                   one,           &
                   tmp,           &
-                  wf%n_so,       &
+                  wf%n_mo,       &
                   H,             &
-                  wf%n_so,       &
+                  wf%n_mo,       &
                   one,           &
                   RHC,           &
-                  wf%n_so)
+                  wf%n_mo)
 !
-      call mem%dealloc(tmp, wf%n_so, wf%n_so)
+      call mem%dealloc(tmp, wf%n_mo, wf%n_mo)
 !
    end subroutine hessian_transformation_arh_hf_solver
 !
@@ -937,9 +937,9 @@ contains
 !
       class(hf) :: wf 
 !
-      real(dp), dimension(wf%n_so, wf%n_so) :: RHC 
-      real(dp), dimension(wf%n_so, wf%n_so) :: X 
-      real(dp), dimension(wf%n_so, wf%n_so) :: G 
+      real(dp), dimension(wf%n_mo, wf%n_mo) :: RHC 
+      real(dp), dimension(wf%n_mo, wf%n_mo) :: X 
+      real(dp), dimension(wf%n_mo, wf%n_mo) :: G 
 !
 !
       real(dp), dimension(:, :), allocatable :: Xf
@@ -961,7 +961,7 @@ contains
 !     we have in full space 
 !
       call mem%alloc(Xf, wf%n_ao, wf%n_ao)
-      call symmetric_sandwich_right(Xf, X, solver%permutation_matrix, wf%n_ao, wf%n_so)
+      call symmetric_sandwich_right(Xf, X, solver%permutation_matrix, wf%n_ao, wf%n_mo)
 !
       call mem%alloc(E, solver%current_index - 1, 1)
       E = zero 
@@ -1046,11 +1046,11 @@ contains
 !
       class(hf) :: wf
 !
-      real(dp), dimension((wf%n_so-1)*(wf%n_so)/2, 1) :: X_pck
+      real(dp), dimension((wf%n_mo-1)*(wf%n_mo)/2, 1) :: X_pck
 !
-      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: H
-      real(dp), dimension(wf%n_so, wf%n_so)             :: G ! G is not changed, but it is scaled by gamma and then restored 
-      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: S
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: H
+      real(dp), dimension(wf%n_mo, wf%n_mo)             :: G ! G is not changed, but it is scaled by gamma and then restored 
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: S
 !
       real(dp), intent(in) :: max_grad                       ! Maximum element of the gradient G
       real(dp)             :: norm_X                         ! Norm of the X vector (on input, from guess X; on exit, the final X norm)
@@ -1079,17 +1079,17 @@ contains
 !
       type(diis_tool) :: diis_solver 
 !
-      call mem%alloc(dz, packed_size(wf%n_so - 1) + 1, 1)
-      call mem%alloc(z_dz, packed_size(wf%n_so - 1) + 1, 1)
+      call mem%alloc(dz, packed_size(wf%n_mo - 1) + 1, 1)
+      call mem%alloc(z_dz, packed_size(wf%n_mo - 1) + 1, 1)
 !
-      call mem%alloc(RHC, wf%n_so, wf%n_so)
-      call mem%alloc(RHC_pck, packed_size(wf%n_so-1), 1)
+      call mem%alloc(RHC, wf%n_mo, wf%n_mo)
+      call mem%alloc(RHC_pck, packed_size(wf%n_mo-1), 1)
 !
-      call mem%alloc(G_pck, packed_size(wf%n_so-1), 1)
-      call packin_anti(G_pck, G, wf%n_so)
+      call mem%alloc(G_pck, packed_size(wf%n_mo-1), 1)
+      call packin_anti(G_pck, G, wf%n_mo)
 !
-      call mem%alloc(X, wf%n_so, wf%n_so)
-      call squareup_anti(X_pck, X, wf%n_so) 
+      call mem%alloc(X, wf%n_mo, wf%n_mo)
+      call squareup_anti(X_pck, X, wf%n_mo) 
 !
       gamma = one
       do while (abs(norm_X-solver%trust_radius) .gt. solver%relative_trust_radius_threshold*solver%trust_radius)
@@ -1097,13 +1097,13 @@ contains
          level_shift = zero
          gamma = (solver%trust_radius/norm_X)*gamma ! Guess for gamma given current norm of X
 !
-         call packin_anti(X_pck, X, wf%n_so)   
+         call packin_anti(X_pck, X, wf%n_mo)   
 !
          micro_iteration = 1
          micro_iterate = .true.
          call diis_solver%init('level_shifted_hf_newton',      &
-                                 packed_size(wf%n_so - 1) + 1, & 
-                                 packed_size(wf%n_so - 1) + 1, &
+                                 packed_size(wf%n_mo - 1) + 1, & 
+                                 packed_size(wf%n_mo - 1) + 1, &
                                  solver%diis_dimension)
 !
          G = gamma*G
@@ -1121,8 +1121,8 @@ contains
 !
 !           Precondition the Roothan-Hall condition by the inverse of the linearized H matrix
 !
-            do i = 1, wf%n_so
-               do j = 1, wf%n_so
+            do i = 1, wf%n_mo
+               do j = 1, wf%n_mo
 !
                   RHC(i,j) = RHC(i,j)/(H(i,i) + H(j,j) - level_shift)
 !
@@ -1132,27 +1132,27 @@ contains
 !           Packin the strictly lower triangular part of the preconditioned Roothan-Hall condition
 !
             RHC_pck = zero
-            call packin_anti(RHC_pck, RHC, wf%n_so)
+            call packin_anti(RHC_pck, RHC, wf%n_mo)
 !
 !           Compute the projection equation, gamma * G^T X - level_shift
 !
-            projection_equation = ddot(packed_size(wf%n_so - 1), G_pck, 1, X_pck, 1) ! G^T X
+            projection_equation = ddot(packed_size(wf%n_mo - 1), G_pck, 1, X_pck, 1) ! G^T X
             projection_equation = projection_equation*gamma - level_shift
 !
 !           Compute the error (the L2 norm of the condition)
 !
-            micro_error = sqrt(ddot(packed_size(wf%n_so-1), RHC_pck, 1, RHC_pck, 1) & 
+            micro_error = sqrt(ddot(packed_size(wf%n_mo-1), RHC_pck, 1, RHC_pck, 1) & 
                                        + projection_equation**2)                
 !
 !           Ask DIIS for updated (packed) rotation parameters X
 !
             dz(1, 1) = projection_equation
-            dz(2:(packed_size(wf%n_so - 1) + 1), 1) = RHC_pck(:, 1)
+            dz(2:(packed_size(wf%n_mo - 1) + 1), 1) = RHC_pck(:, 1)
 !
 !           z_dz = z
 !
             z_dz(1, 1) = level_shift
-            z_dz(2:(packed_size(wf%n_so - 1) + 1), 1) = X_pck(:, 1)
+            z_dz(2:(packed_size(wf%n_mo - 1) + 1), 1) = X_pck(:, 1)
 !
 !           z_dz = z_dz + dz = z + dz
 !
@@ -1160,12 +1160,12 @@ contains
             call diis_solver%update(dz, z_dz) ! Updated z placed in z_dz on exit
 !
             level_shift = z_dz(1, 1)
-            X_pck(:, 1) = z_dz(2:(packed_size(wf%n_so - 1) + 1), 1)
+            X_pck(:, 1) = z_dz(2:(packed_size(wf%n_mo - 1) + 1), 1)
 !
 !           Squareup anti-symmetric rotation matrix gotten from DIIS
 !
             X = zero
-            call squareup_anti(X_pck, X, wf%n_so)
+            call squareup_anti(X_pck, X, wf%n_mo)
 !
             micro_iteration = micro_iteration + 1
 !
@@ -1182,9 +1182,9 @@ contains
          call diis_solver%finalize()
 !
          X = X/gamma
-         call squareup_anti(X_pck, X, wf%n_so)
+         call squareup_anti(X_pck, X, wf%n_mo)
 !
-         norm_X = sqrt(ddot(packed_size(wf%n_so-1), X_pck, 1, X_pck, 1))
+         norm_X = sqrt(ddot(packed_size(wf%n_mo-1), X_pck, 1, X_pck, 1))
 !
          write(output%unit, '(/t6,a28,i3)')     'Number of micro-iterations: ', micro_iteration - 1
          write(output%unit, '(t6,a28,f15.12)')  'Alpha:                      ', gamma ! Alpha is the name used in literature
@@ -1196,14 +1196,14 @@ contains
 !
       enddo ! End of gamma loop
 !
-      call mem%dealloc(dz, packed_size(wf%n_so - 1) + 1, 1)
-      call mem%dealloc(z_dz, packed_size(wf%n_so - 1) + 1, 1)
+      call mem%dealloc(dz, packed_size(wf%n_mo - 1) + 1, 1)
+      call mem%dealloc(z_dz, packed_size(wf%n_mo - 1) + 1, 1)
 !
-      call mem%dealloc(RHC, wf%n_so, wf%n_so)
-      call mem%dealloc(RHC_pck, packed_size(wf%n_so-1), 1)
+      call mem%dealloc(RHC, wf%n_mo, wf%n_mo)
+      call mem%dealloc(RHC_pck, packed_size(wf%n_mo-1), 1)
 !
-      call mem%dealloc(G_pck, packed_size(wf%n_so-1), 1)
-      call mem%dealloc(X, wf%n_so, wf%n_so)
+      call mem%dealloc(G_pck, packed_size(wf%n_mo-1), 1)
+      call mem%dealloc(X, wf%n_mo, wf%n_mo)
 !
       if (micro_iterate) then 
 !
@@ -1314,11 +1314,11 @@ contains
 !
       class(hf) :: wf 
 !
-      real(dp), dimension((wf%n_so-1)*(wf%n_so)/2, 1) :: Xr_pck
+      real(dp), dimension((wf%n_mo-1)*(wf%n_mo)/2, 1) :: Xr_pck
 !
-      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: Hr
-      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: Gr 
-      real(dp), dimension(wf%n_so, wf%n_so), intent(in) :: S
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: Hr
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: Gr 
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: S
 !
       real(dp), intent(in) :: max_grad 
 !
@@ -1338,21 +1338,21 @@ contains
 !
 !     Initialize the Davidson solver 
 !
-      call davidson%initialize('aug_Hessian_Davidson', (wf%n_so)**2 + 1, 1, &
+      call davidson%initialize('aug_Hessian_Davidson', (wf%n_mo)**2 + 1, 1, &
                                  solver%relative_micro_threshold*max_grad,  &
                                  solver%relative_micro_threshold*max_grad)
 !
 !     Compute preconditioner and save it in Davidson tool 
 !
-      call mem%alloc(preconditioner, wf%n_so**2 + 1, 1)
+      call mem%alloc(preconditioner, wf%n_mo**2 + 1, 1)
       preconditioner(1, 1) = one
 !
       diagonal_minimum       = two*Hr(1,1)
       index_diagonal_minimum = 1 
-      do i = 1, wf%n_so 
-         do j = 1, wf%n_so 
+      do i = 1, wf%n_mo 
+         do j = 1, wf%n_mo 
 !
-            ij = wf%n_so*(j - 1) + i
+            ij = wf%n_mo*(j - 1) + i
             preconditioner(1 + ij, 1) = Hr(i,i) + Hr(j,j)
 !
             if (preconditioner(1 + ij, 1) .lt. diagonal_minimum) then 
@@ -1369,26 +1369,26 @@ contains
                               diagonal_minimum, index_diagonal_minimum
 !
       call davidson%set_preconditioner(preconditioner)
-      call mem%dealloc(preconditioner, wf%n_so**2 + 1, 1)
+      call mem%dealloc(preconditioner, wf%n_mo**2 + 1, 1)
 !
 !     Construct and write initial trial vectors to file 
 !
-      call mem%alloc(B_i, wf%n_so**2 + 1, 1)
+      call mem%alloc(B_i, wf%n_mo**2 + 1, 1)
 !
       B_i = zero 
       B_i(1,1) = one 
       call davidson%add_initial_trial_vec(B_i) ! (1 0)
 !
       B_i    = zero 
-      norm_G = get_l2_norm(Gr, wf%n_so**2)
-      call daxpy(wf%n_so**2, one/norm_G, Gr, 1, B_i(2,1), 1) 
+      norm_G = get_l2_norm(Gr, wf%n_mo**2)
+      call daxpy(wf%n_mo**2, one/norm_G, Gr, 1, B_i(2,1), 1) 
       call davidson%add_initial_trial_vec(B_i) ! (0 G/norm_G) 
 !
       B_i = zero 
-      call mem%alloc(RHC, wf%n_so**2, 1)
+      call mem%alloc(RHC, wf%n_mo**2, 1)
       RHC = zero 
       call solver%hessian_transformation(wf, RHC, Hr, Gr, Gr, S) ! X = Gr 
-      B_i(2:(wf%n_so**2+1), 1) = -Gr(:,1) - RHC(:,1)/norm_G
+      B_i(2:(wf%n_mo**2+1), 1) = -Gr(:,1) - RHC(:,1)/norm_G
       call davidson%add_initial_trial_vec(B_i)                   ! (0 Residual)
 ! 
       B_i = zero 
@@ -1399,7 +1399,7 @@ contains
 !     where we suppose that alpha = 1 (will be scaled later on) 
 !
       alpha0 = 1.0D-5 
-      call mem%alloc(tmp, wf%n_so**2, 1)
+      call mem%alloc(tmp, wf%n_mo**2, 1)
 !
       do i = 1, davidson%dim_red 
 !
@@ -1409,17 +1409,17 @@ contains
 !
             rew = .true. 
             B_i(1,1) = zero
-            call dcopy(wf%n_so**2, Gr, 1, B_i(2,1), 1)
-            call dscal(wf%n_so**2, alpha0, B_i(2,1), 1)
+            call dcopy(wf%n_mo**2, Gr, 1, B_i(2,1), 1)
+            call dscal(wf%n_mo**2, alpha0, B_i(2,1), 1)
 !
          else
 !
             rew = .false.
-            B_i(1,1) = alpha0*ddot(wf%n_so**2, Gr, 1, B_i(2,1), 1) 
-            call dcopy(wf%n_so**2, B_i(2,1), 1, tmp, 1)
+            B_i(1,1) = alpha0*ddot(wf%n_mo**2, Gr, 1, B_i(2,1), 1) 
+            call dcopy(wf%n_mo**2, B_i(2,1), 1, tmp, 1)
             RHC = zero
             call solver%hessian_transformation(wf, RHC, Hr, tmp, Gr, S)  
-            call dcopy(wf%n_so**2, RHC, 1, B_i(2,1), 1)
+            call dcopy(wf%n_mo**2, RHC, 1, B_i(2,1), 1)
 !
          endif 
 !
@@ -1438,13 +1438,13 @@ contains
       write(output%unit, *) 'Eigenvalue: ', davidson%omega_re(1,1)
       write(output%unit, *) 'Eigenvector:', davidson%X_red 
 !
-      call mem%alloc(sol, wf%n_so**2 + 1, 1)
+      call mem%alloc(sol, wf%n_mo**2 + 1, 1)
       call davidson%construct_X(sol, 1)
 !
       first_el = sol(1,1)
-      call dscal(wf%n_so**2 + 1, one/first_el, sol, 1) ! interm normal
+      call dscal(wf%n_mo**2 + 1, one/first_el, sol, 1) ! interm normal
       write(output%unit, *) 'First element of solution: ', sol(1,1)
-      norm_sol = get_l2_norm(sol(2,1), wf%n_so**2)
+      norm_sol = get_l2_norm(sol(2,1), wf%n_mo**2)
 !
       write(output%unit, *) 'Norm of X:', norm_sol
       write(output%unit, *) 'Trust-radius:', solver%trust_radius
@@ -1474,8 +1474,8 @@ contains
                call davidson%construct_X(sol, 1)
 !
                first_el = sol(1,1)
-               call dscal(wf%n_so**2 + 1, one/first_el, sol, 1) ! interm normal
-               norm_sol = get_l2_norm(sol(2,1), wf%n_so**2)
+               call dscal(wf%n_mo**2 + 1, one/first_el, sol, 1) ! interm normal
+               norm_sol = get_l2_norm(sol(2,1), wf%n_mo**2)
 !
                func1 = (one/alpha1)*norm_sol - solver%trust_radius 
                write(output%unit, *) 'alpha1', alpha1
@@ -1497,8 +1497,8 @@ contains
                call davidson%construct_X(sol, 1)            
 !
                first_el = sol(1,1)
-               call dscal(wf%n_so**2 + 1, one/first_el, sol, 1) ! interm normal
-               norm_sol = get_l2_norm(sol(2,1), wf%n_so**2)
+               call dscal(wf%n_mo**2 + 1, one/first_el, sol, 1) ! interm normal
+               norm_sol = get_l2_norm(sol(2,1), wf%n_mo**2)
 !
                func_mid = (one/alpha_mid)*norm_sol - solver%trust_radius 
                write(output%unit, *) 'alpha0 alpha1 func0 func1', alpha0, alpha1, func0, func1 
@@ -1554,17 +1554,17 @@ contains
 !
                rew = .true. 
                B_i(1,1) = zero
-               call dcopy(wf%n_so**2, Gr, 1, B_i(2,1), 1)
-               call dscal(wf%n_so**2, alpha, B_i(2,1), 1)
+               call dcopy(wf%n_mo**2, Gr, 1, B_i(2,1), 1)
+               call dscal(wf%n_mo**2, alpha, B_i(2,1), 1)
 !
             else
 !
                rew = .false.
-               B_i(1,1) = alpha*ddot(wf%n_so**2, Gr, 1, B_i(2,1), 1) 
-               call dcopy(wf%n_so**2, B_i(2,1), 1, tmp, 1)
+               B_i(1,1) = alpha*ddot(wf%n_mo**2, Gr, 1, B_i(2,1), 1) 
+               call dcopy(wf%n_mo**2, B_i(2,1), 1, tmp, 1)
                RHC = zero
                call solver%hessian_transformation(wf, RHC, Hr, tmp, Gr, S)  
-               call dcopy(wf%n_so**2, RHC, 1, B_i(2,1), 1)
+               call dcopy(wf%n_mo**2, RHC, 1, B_i(2,1), 1)
 !
             endif 
 !
@@ -1578,8 +1578,8 @@ contains
          call davidson%construct_X(sol, 1)
 !
          first_el = sol(1,1)
-         call dscal(wf%n_so**2 + 1, one/first_el, sol, 1) ! interm normal
-         norm_sol = get_l2_norm(sol(2,1), wf%n_so**2)
+         call dscal(wf%n_mo**2 + 1, one/first_el, sol, 1) ! interm normal
+         norm_sol = get_l2_norm(sol(2,1), wf%n_mo**2)
 !
          alpha0 = alpha 
          func0 = (one/alpha0)*norm_sol - solver%trust_radius 
@@ -1592,8 +1592,8 @@ contains
 !
 
 !
-!       do i = 1, wf%n_so 
-!          do j = 1, wf%n_so 
+!       do i = 1, wf%n_mo 
+!          do j = 1, wf%n_mo 
 ! !
 !             write(output%unit, *) 'i j hij hji', i, j, Hr(i,j), Hr(j,i)
 ! !

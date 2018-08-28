@@ -71,6 +71,11 @@ program eT_program
 !
     call initialize_libint()
 !
+    call initialize_coulomb()
+    call initialize_kinetic()
+    call initialize_nuclear()
+    call initialize_overlap()
+!
     n_methods = get_n_methods()
 !
 !   ::  Hartree-Fock calculation (temporarily also cholesky decomposition) 
@@ -101,15 +106,13 @@ program eT_program
         allocate(mlhf_wf)
         ref_wf => mlhf_wf
 !
-        call ref_wf%initialize()
-        call ref_wf%finalize()
+        call ref_wf%prepare()
 !
       else
 !
         allocate(hf_wf)
         ref_wf => hf_wf
-!
-        call ref_wf%initialize()
+        call ref_wf%prepare()
 !
         allocate(gs_hf_engine)
 !
@@ -136,7 +139,7 @@ program eT_program
         flush(output%unit)
 !
         call cc_wf%initialize(ref_wf)
-        call ref_wf%finalize()
+        call ref_wf%cleanup()
         deallocate(ref_wf)
 !
       endif
@@ -150,8 +153,3 @@ program eT_program
 !
 end program eT_program
 !
-
-!   Solvers 
-!
-  !  type(scf_diis_solver) :: roothan_hall_hf_solver
-  !  type(arh_hf_solver)   :: density_minimization_hf_solver

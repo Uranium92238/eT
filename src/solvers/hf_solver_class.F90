@@ -83,7 +83,7 @@ contains
 !!    where P is referred to as the 'permutation matrix' and L the 'cholesky
 !!    ao overlap' (note that these are member variables of the solver which 
 !!    must be set by a call to solver%decompose_ao_overlap(wf)). The number 
-!!    of linearly independent orbitals is wf%n_so, whereas the full number 
+!!    of linearly independent orbitals is wf%n_mo, whereas the full number 
 !!    is wf%n_ao.   
 !!
       implicit none
@@ -102,34 +102,34 @@ contains
 !
       integer(i15) :: info = 0
 !
-      call mem%alloc(metric, wf%n_so, wf%n_so)
+      call mem%alloc(metric, wf%n_mo, wf%n_mo)
 !
       call dgemm('N','T',                     &
-                  wf%n_so,                    &
-                  wf%n_so,                    &
-                  wf%n_so,                    &
+                  wf%n_mo,                    &
+                  wf%n_mo,                    &
+                  wf%n_mo,                    &
                   one,                        &
                   solver%cholesky_ao_overlap, & 
-                  wf%n_so,                    &
+                  wf%n_mo,                    &
                   solver%cholesky_ao_overlap, &
-                  wf%n_so,                    &
+                  wf%n_mo,                    &
                   zero,                       &
                   metric,                     & ! metric = L L^T
-                  wf%n_so)
+                  wf%n_mo)
 !
 !     Allocate reduced space matrices 
 !
-      call mem%alloc(ao_fock, wf%n_so, wf%n_so)
-      call mem%alloc(orbital_energies, wf%n_so, 1)
+      call mem%alloc(ao_fock, wf%n_mo, wf%n_mo)
+      call mem%alloc(orbital_energies, wf%n_mo, 1)
 !
 !     Construct reduced space Fock matrix, F' = P^T F P,
 !     which is to be diagonalized over the metric L L^T 
 !
-      call mem%alloc(FP, wf%n_ao, wf%n_so)
+      call mem%alloc(FP, wf%n_ao, wf%n_mo)
 !
       call dgemm('N','N',                    &
                   wf%n_ao,                   &
-                  wf%n_so,                   &
+                  wf%n_mo,                   &
                   wf%n_ao,                   &
                   one,                       &
                   wf%ao_fock,                &
@@ -141,8 +141,8 @@ contains
                   wf%n_ao)
 !
       call dgemm('T','N',                    &
-                  wf%n_so,                   &
-                  wf%n_so,                   &
+                  wf%n_mo,                   &
+                  wf%n_mo,                   &
                   wf%n_ao,                   &
                   one,                       &
                   solver%permutation_matrix, &
@@ -151,31 +151,31 @@ contains
                   wf%n_ao,                   &
                   zero,                      &
                   ao_fock,                   & ! F' = P^T F P
-                  wf%n_so)   
+                  wf%n_mo)   
 !
-      call mem%dealloc(FP, wf%n_so, wf%n_ao)   
+      call mem%dealloc(FP, wf%n_mo, wf%n_ao)   
 !
 !     Solve F'C' = L L^T C' e
 !
       info = 0
 !
-      call mem%alloc(work, 4*wf%n_so, 1)
+      call mem%alloc(work, 4*wf%n_mo, 1)
       work = zero
 !
       call dsygv(1, 'V', 'L',       &
-                  wf%n_so,          &
+                  wf%n_mo,          &
                   ao_fock,          & ! ao_fock on entry, orbital coefficients on exit
-                  wf%n_so,          &
+                  wf%n_mo,          &
                   metric,           &
-                  wf%n_so,          &
+                  wf%n_mo,          &
                   orbital_energies, &
                   work,             &
-                  4*(wf%n_so),      &
+                  4*(wf%n_mo),      &
                   info)
 !
-      call mem%dealloc(metric, wf%n_so, wf%n_so)
-      call mem%dealloc(work, 4*wf%n_so, 1)
-      call mem%dealloc(orbital_energies, wf%n_so, 1)
+      call mem%dealloc(metric, wf%n_mo, wf%n_mo)
+      call mem%dealloc(work, 4*wf%n_mo, 1)
+      call mem%dealloc(orbital_energies, wf%n_mo, 1)
 !
       if (info .ne. 0) then 
 !
@@ -190,18 +190,18 @@ contains
 !
       call dgemm('N','N',                    &
                   wf%n_ao,                   &
-                  wf%n_so,                   &
-                  wf%n_so,                   &
+                  wf%n_mo,                   &
+                  wf%n_mo,                   &
                   one,                       &
                   solver%permutation_matrix, &
                   wf%n_ao,                   &
                   ao_fock,                   & ! orbital coefficients 
-                  wf%n_so,                   &
+                  wf%n_mo,                   &
                   zero,                      &
                   wf%orbital_coefficients,   &
                   wf%n_ao)
 !
-      call mem%dealloc(ao_fock, wf%n_so, wf%n_so)
+      call mem%dealloc(ao_fock, wf%n_mo, wf%n_mo)
 !
    end subroutine do_roothan_hall_hf_solver
 !
@@ -218,7 +218,7 @@ contains
 !!
 !!    The routine allocates and sets P and L, the 'permutation matrix'
 !!    and the 'cholesky ao overlap'. Moreover, it sets the number of 
-!!    linearly independent AOs, wf%n_so, which is sometimes less than 
+!!    linearly independent AOs, wf%n_mo, which is sometimes less than 
 !!    wf%n_ao. From P and L, we can transform equations to the linearly 
 !!    independent basis and back.
 !!
@@ -240,21 +240,21 @@ contains
       call mem%alloc(L, wf%n_ao, wf%n_ao) ! Full Cholesky vector
       L = zero
 !
-      call full_cholesky_decomposition_system(wf%ao_overlap, L, wf%n_ao, wf%n_so, &
+      call full_cholesky_decomposition_system(wf%ao_overlap, L, wf%n_ao, wf%n_mo, &
                                           solver%linear_dependence_threshold, used_diag)
 !
-      call mem%alloc(solver%cholesky_ao_overlap, wf%n_so, wf%n_so) 
-      solver%cholesky_ao_overlap(:,:) = L(1:wf%n_so, 1:wf%n_so)
+      call mem%alloc(solver%cholesky_ao_overlap, wf%n_mo, wf%n_mo) 
+      solver%cholesky_ao_overlap(:,:) = L(1:wf%n_mo, 1:wf%n_mo)
 !
       call mem%dealloc(L, wf%n_ao, wf%n_ao)
 !
 !     Make permutation matrix P
 !
-      call mem%alloc(solver%permutation_matrix, wf%n_ao, wf%n_so)
+      call mem%alloc(solver%permutation_matrix, wf%n_ao, wf%n_mo)
 !
       solver%permutation_matrix = zero
 !
-      do j = 1, wf%n_so
+      do j = 1, wf%n_mo
 !
          solver%permutation_matrix(used_diag(j, 1), j) = one
 !

@@ -136,7 +136,7 @@ contains
       call wf%construct_ao_overlap()
       call wf%decompose_ao_overlap_2() 
 !
-      write(output%unit, *)'Removed ', wf%n_ao - wf%n_so, 'AOs.'
+      write(output%unit, *)'Removed ', wf%n_ao - wf%n_mo, 'AOs.'
 !
 !     Construct initial AO Fock from the SOAD density
 !
@@ -387,7 +387,7 @@ contains
       call dgemm('N', 'T',                              &
                 wf%n_ao,                                &
                 wf%n_ao,                                &
-                wf%n_so - wf%n_o,                       &
+                wf%n_mo - wf%n_o,                       &
                 one,                                    &
                 wf%orbital_coefficients(1, wf%n_o + 1), &
                 wf%n_ao,                                &

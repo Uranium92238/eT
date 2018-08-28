@@ -17,8 +17,6 @@ module hf_class
 !
    type, extends(wavefunction):: hf
 !
-      integer(i15) :: n_so ! Number of linearly independent AOs
-!
       real(dp) :: hf_energy
 !
       real(dp), dimension(:,:), allocatable :: ao_density
@@ -35,8 +33,8 @@ module hf_class
 !
 !     Initialize and finalize wavefunction
 !
-      procedure :: initialize => initialize_hf
-      procedure :: finalize   => finalize_hf
+      procedure :: prepare => prepare_hf
+      procedure :: cleanup => cleanup_hf
 !
 !     Construction routines for various wavefunction variables
 !
@@ -62,7 +60,7 @@ module hf_class
 !     Cholesky decomposition of AO density and overlap
 !
       procedure :: decompose_ao_density => decompose_ao_density_hf
-      procedure :: decompose_ao_overlap => decompose_ao_overlap_hf
+     ! procedure :: decompose_ao_overlap => decompose_ao_overlap_hf
       procedure :: decompose_ao_overlap_2 => decompose_ao_overlap_2_hf
 !
 !     Solve the Roothan Hall equation FC = SCe by diagonalization
@@ -81,28 +79,32 @@ module hf_class
 !
 !     Initialize and destruct routines for wavefunction variables
 !
-      procedure :: initialize_ao_density       => initialize_ao_density_hf
-      procedure :: initialize_ao_fock          => initialize_ao_fock_hf
-      procedure :: initialize_mo_coefficients  => initialize_mo_coefficients_hf
-      procedure :: initialize_ao_overlap       => initialize_ao_overlap_hf
-      procedure :: initialize_orbital_energies => initialize_orbital_energies_hf
+      procedure :: initialize_ao_density              => initialize_ao_density_hf
+      procedure :: initialize_ao_fock                 => initialize_ao_fock_hf
+      procedure :: initialize_mo_coefficients         => initialize_mo_coefficients_hf
+      procedure :: initialize_ao_overlap              => initialize_ao_overlap_hf
+      procedure :: initialize_orbital_energies        => initialize_orbital_energies_hf
+      procedure :: initialize_pivot_matrix_ao_overlap => initialize_pivot_matrix_ao_overlap_hf
+      procedure :: initialize_cholesky_ao_overlap     => initialize_cholesky_ao_overlap_hf
 !
-      procedure :: destruct_ao_density         => destruct_ao_density_hf
-      procedure :: destruct_ao_fock            => destruct_ao_fock_hf
-      procedure :: destruct_mo_coefficients    => destruct_mo_coefficients_hf
-      procedure :: destruct_ao_overlap         => destruct_ao_overlap_hf
-      procedure :: destruct_orbital_energies   => destruct_orbital_energies_hf
+      procedure :: destruct_ao_density                => destruct_ao_density_hf
+      procedure :: destruct_ao_fock                   => destruct_ao_fock_hf
+      procedure :: destruct_mo_coefficients           => destruct_mo_coefficients_hf
+      procedure :: destruct_ao_overlap                => destruct_ao_overlap_hf
+      procedure :: destruct_orbital_energies          => destruct_orbital_energies_hf
+      procedure :: destruct_pivot_matrix_ao_overlap   => destruct_pivot_matrix_ao_overlap_hf
+      procedure :: destruct_cholesky_ao_overlap       => destruct_cholesky_ao_overlap_hf
 !
 !     Routines that construct different components of the Roothan-Hall 1st order Newton equations
 !
-      procedure :: construct_projection_matrices               => construct_projection_matrices_hf
-      procedure :: project_redundant_rotations                 => project_redundant_rotations_hf
+      procedure :: construct_projection_matrices   => construct_projection_matrices_hf
+      procedure :: project_redundant_rotations     => project_redundant_rotations_hf
 !
-      procedure :: construct_roothan_hall_hessian              => construct_roothan_hall_hessian_hf
-      procedure :: construct_roothan_hall_gradient             => construct_roothan_hall_gradient_hf
+      procedure :: construct_roothan_hall_hessian  => construct_roothan_hall_hessian_hf
+      procedure :: construct_roothan_hall_gradient => construct_roothan_hall_gradient_hf
 !
-      procedure :: construct_sp_eri_schwarz => construct_sp_eri_schwarz_hf
-      procedure :: determine_degeneracy     => determine_degeneracy_hf
+      procedure :: construct_sp_eri_schwarz        => construct_sp_eri_schwarz_hf
+      procedure :: determine_degeneracy            => determine_degeneracy_hf
 !
    end type hf
 !
@@ -112,7 +114,7 @@ contains
 !
    subroutine prepare_hf(wf)
 !!
-!!    Initialize
+!!    Prepare
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    Sets low-memory member variables that are needed throughout - in contrast
@@ -125,38 +127,36 @@ contains
 !
       wf%name = 'HF'
 !
+      call wf%system%prepare()
 !
-      call wf%system%prepare() ! Initialize molecular system -> Should include SOAD
-!
-      wf%n_ao = 0
       call get_n_aos(wf%n_ao)
 !
-      wf%n_mo = wf%n_ao
+      call wf%initialize_ao_overlap()
+      call wf%construct_ao_overlap()
+      call wf%decompose_ao_overlap_2() 
 !
       wf%n_o = (wf%system%get_n_electrons())/2
       wf%n_v = wf%n_mo - wf%n_o
-!
-!     Initialize Libint engines to be used
-!
-  !    call initialize_coulomb()
-  !    call initialize_kinetic()
-  !    call initialize_nuclear()
-  !    call initialize_overlap() ! SHOULD THESE BE INITIALIZED IN THE ENGINE ?
-  !    call initialize_overlap()
 !
    end subroutine prepare_hf
 !
 !
    subroutine cleanup_hf(wf)
 !!
-!!    Finalize
+!!    Cleanup
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
       class(hf) :: wf
 !
-!     Nothing here yet
+      call wf%destruct_orbital_energies()
+      call wf%destruct_ao_overlap()
+      call wf%destruct_mo_coefficients()
+      call wf%destruct_ao_fock()
+      call wf%destruct_ao_density()
+      call wf%destruct_pivot_matrix_ao_overlap()
+      call wf%destruct_cholesky_ao_overlap()
 !
    end subroutine cleanup_hf
 !
@@ -170,8 +170,7 @@ contains
 !
       class(hf) :: wf
 !
-      call mem%alloc(wf%ao_density, wf%n_ao, wf%n_ao)
-      wf%ao_density = zero
+      if (.not. allocated(wf%ao_density)) call mem%alloc(wf%ao_density, wf%n_ao, wf%n_ao)
 !
    end subroutine initialize_ao_density_hf
 !
@@ -185,8 +184,7 @@ contains
 !
       class(hf) :: wf
 !
-       call mem%alloc(wf%orbital_energies, wf%n_mo, 1)
-       wf%orbital_energies = zero
+      if (.not. allocated(wf%orbital_energies)) call mem%alloc(wf%orbital_energies, wf%n_mo, 1)
 !
    end subroutine initialize_orbital_energies_hf
 !
@@ -200,8 +198,7 @@ contains
 !
       class(hf) :: wf
 !
-      call mem%alloc(wf%ao_fock, wf%n_ao, wf%n_ao)
-      wf%ao_fock = zero
+      if (.not. allocated(wf%ao_fock)) call mem%alloc(wf%ao_fock, wf%n_ao, wf%n_ao)
 !
    end subroutine initialize_ao_fock_hf
 !
@@ -215,8 +212,7 @@ contains
 !
       class(hf) :: wf
 !
-      call mem%alloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
-      wf%orbital_coefficients = zero
+      if (.not. allocated(wf%orbital_coefficients)) call mem%alloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
 !
    end subroutine initialize_mo_coefficients_hf
 !
@@ -230,10 +226,37 @@ contains
 !
       class(hf) :: wf
 !
-      call mem%alloc(wf%ao_overlap, wf%n_ao, wf%n_ao)
-      wf%ao_overlap = zero
+      if (.not. allocated(wf%ao_overlap)) call mem%alloc(wf%ao_overlap, wf%n_ao, wf%n_ao)
 !
    end subroutine initialize_ao_overlap_hf
+!
+!
+   subroutine initialize_pivot_matrix_ao_overlap_hf(wf)
+!!
+!!    Initialize pivot matrix AO overlap
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      if (.not. allocated(wf%pivot_matrix_ao_overlap)) call mem%alloc(wf%pivot_matrix_ao_overlap, wf%n_ao, wf%n_mo)
+!
+   end subroutine initialize_pivot_matrix_ao_overlap_hf
+!
+!
+   subroutine initialize_cholesky_ao_overlap_hf(wf)
+!!
+!!    Initialize cholesky vectors AO overlap
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      if (.not. allocated(wf%cholesky_ao_overlap)) call mem%alloc(wf%cholesky_ao_overlap, wf%n_mo, wf%n_mo)
+!
+   end subroutine initialize_cholesky_ao_overlap_hf
 !
 !
    subroutine destruct_ao_overlap_hf(wf)
@@ -245,7 +268,7 @@ contains
 !
       class(hf) :: wf
 !
-      call mem%dealloc(wf%ao_overlap, wf%n_ao, wf%n_ao)
+      if (allocated(wf%ao_overlap)) call mem%dealloc(wf%ao_overlap, wf%n_ao, wf%n_ao)
 !
    end subroutine destruct_ao_overlap_hf
 !
@@ -259,7 +282,7 @@ contains
 !
       class(hf) :: wf
 !
-      call mem%dealloc(wf%orbital_energies, wf%n_mo, 1)
+      if (allocated(wf%orbital_energies)) call mem%dealloc(wf%orbital_energies, wf%n_mo, 1)
 !
    end subroutine destruct_orbital_energies_hf
 !
@@ -273,7 +296,7 @@ contains
 !
       class(hf) :: wf
 !
-      call mem%dealloc(wf%ao_density, wf%n_ao, wf%n_ao)
+      if (allocated(wf%ao_density)) call mem%dealloc(wf%ao_density, wf%n_ao, wf%n_ao)
 !
    end subroutine destruct_ao_density_hf
 !
@@ -287,7 +310,7 @@ contains
 !
       class(hf) :: wf
 !
-      call mem%dealloc(wf%ao_fock, wf%n_ao, wf%n_ao)
+      if (allocated(wf%ao_fock)) call mem%dealloc(wf%ao_fock, wf%n_ao, wf%n_ao)
 !
    end subroutine destruct_ao_fock_hf
 !
@@ -301,9 +324,37 @@ contains
 !
       class(hf) :: wf
 !
-      call mem%dealloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
+      if (allocated(wf%orbital_coefficients)) call mem%dealloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
 !
    end subroutine destruct_mo_coefficients_hf
+!
+!
+   subroutine destruct_pivot_matrix_ao_overlap_hf(wf)
+!!
+!!    Destruct pivot matrix AO overlap
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      if (allocated(wf%pivot_matrix_ao_overlap)) call mem%dealloc(wf%pivot_matrix_ao_overlap, wf%n_ao, wf%n_mo)
+!
+   end subroutine destruct_pivot_matrix_ao_overlap_hf
+!
+!
+   subroutine destruct_cholesky_ao_overlap_hf(wf)
+!!
+!!    Initialize cholesky vectors AO overlap
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      if (allocated(wf%cholesky_ao_overlap)) call mem%dealloc(wf%cholesky_ao_overlap, wf%n_mo, wf%n_mo)
+!
+   end subroutine destruct_cholesky_ao_overlap_hf
 !
 !
    subroutine construct_ao_density_hf(wf)
@@ -386,7 +437,7 @@ contains
 !
             call wf%system%ao_integrals%get_ao_g_wxyz(g, s1, s2, s1, s2)
 !
-            maximum = get_abs_max(g, (A_interval%size)*(B_interval%size)**2)
+            maximum = get_abs_max(g, ((A_interval%size)*(B_interval%size))**2)
 !
             call mem%dealloc(g, (A_interval%size)*(B_interval%size), &
                                 (A_interval%size)*(B_interval%size))
@@ -418,7 +469,7 @@ contains
       sp_eri_schwarz_list(:,3) = sp_eri_schwarz_index_list(:,1)
       call mem%dealloc_int(sp_eri_schwarz_index_list, n_s*(n_s + 1)/2, 1)
 !
-      call mem%dealloc_int(sp_eri_schwarz_list_copy, n_s*(n_s + 1)/2, 3)
+    !  call mem%dealloc_int(sp_eri_schwarz_list_copy, n_s*(n_s + 1)/2, 3)
 !
    end subroutine construct_sp_eri_schwarz_hf
 !
@@ -622,7 +673,7 @@ contains
 !
             call wf%system%ao_integrals%get_ao_g_wxyz(g, A, B, A, B)
 !
-            maximum = get_abs_max(g, (A_interval%size)*(B_interval%size)**2)
+            maximum = get_abs_max(g, ((A_interval%size)*(B_interval%size))**2)
 !
             call mem%dealloc(g, (A_interval%size)*(B_interval%size), &
                                 (A_interval%size)*(B_interval%size))
@@ -1528,6 +1579,8 @@ contains
       call mem%alloc(density_diagonal, wf%n_ao, 1)
       call wf%system%SAD(wf%n_ao, density_diagonal)
 !
+      wf%ao_density = zero
+!
       do ao = 1, wf%n_ao
 !
          wf%ao_density(ao, ao) = density_diagonal(ao, 1)
@@ -1779,89 +1832,89 @@ contains
    end subroutine decompose_ao_density_hf
 !
 !
-   subroutine decompose_ao_overlap_hf(wf)
+!   subroutine decompose_ao_overlap_hf(wf)
+!!!
+!!!    Decompose AO overlap
+!!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!!
+!!!    Does a Cholesky decomposition of the AO density matrix,
+!!!
+!!!       S^AO_wx = sum_J L_w,J L_J,x^T,
+!!!
+!!!    and sets the MO coefficients accordingly.
+!!!
+!!!    There is something seriously wrong with the way we handle 
+!!!    integers. For H2O/cc-pVDZ, used_diag becomes nonsense (large
+!!!    integers instead of pivots, thus giving a seg. fault)!
+!!!
+!!!    First case where eT version of BLAS routine does not work...
+!!!
+!      implicit none
 !!
-!!    Decompose AO overlap
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!      class(hf) :: wf
 !!
-!!    Does a Cholesky decomposition of the AO density matrix,
+!      integer(kind=4), dimension(:, :), allocatable :: used_diag
 !!
-!!       S^AO_wx = sum_J L_w,J L_J,x^T,
+!      real(dp), dimension(wf%n_ao, wf%n_ao) :: L
 !!
-!!    and sets the MO coefficients accordingly.
+!      real(dp), dimension(:,:), allocatable :: perm_matrix
 !!
-!!    There is something seriously wrong with the way we handle 
-!!    integers. For H2O/cc-pVDZ, used_diag becomes nonsense (large
-!!    integers instead of pivots, thus giving a seg. fault)!
+!      real(dp), dimension(:,:), allocatable :: csc
+!      real(dp), dimension(:,:), allocatable :: tmp
 !!
-!!    First case where eT version of BLAS routine does not work...
+!      integer(i15) :: rank
+!      integer(i15) :: i, j
 !!
-      implicit none
-!
-      class(hf) :: wf
-!
-      integer(kind=4), dimension(:, :), allocatable :: used_diag
-!
-      real(dp), dimension(wf%n_ao, wf%n_ao) :: L
-!
-      real(dp), dimension(:,:), allocatable :: perm_matrix
-!
-      real(dp), dimension(:,:), allocatable :: csc
-      real(dp), dimension(:,:), allocatable :: tmp
-!
-      integer(i15) :: rank
-      integer(i15) :: i, j
-!
-      allocate(used_diag(wf%n_ao, 1))
-      used_diag = 0
-!
-      L = zero
-!
-      call full_cholesky_decomposition_system(wf%ao_overlap, L, wf%n_ao, rank, &
-                                                      1.0D-32, used_diag)
-!
-      ! write(output%unit, *) 'n_ao:', wf%n_ao 
-      ! write(output%unit, *) 'rank:', rank
-      ! write(output%unit, *) 'used_diag:', used_diag
-      ! flush(output%unit)
-!
-!     Make permutation matrix P
-!
-      call mem%alloc(perm_matrix, wf%n_ao, wf%n_ao)
-!
-      perm_matrix = zero
-!
-      do j = 1, wf%n_ao
-!
-         perm_matrix(used_diag(j, 1), j) = one
-!
-      enddo
-!
-      deallocate(used_diag)
-!
-!     Make matrix L
-!
-      call mem%alloc(tmp, wf%n_ao, wf%n_ao)
-!
-      call dgemm('N','N',      &
-                  wf%n_ao,     &
-                  wf%n_ao,     &
-                  wf%n_ao,     &
-                  one,         &
-                  perm_matrix, &
-                  wf%n_ao,     &
-                  L,           &
-                  wf%n_ao,     &
-                  zero,        &
-                  tmp,         &
-                  wf%n_ao)
-!
-      L = tmp
-!
-      call mem%dealloc(tmp, wf%n_ao, wf%n_ao)
-      call mem%dealloc(perm_matrix, wf%n_ao, wf%n_ao)
-!
-   end subroutine decompose_ao_overlap_hf
+!      allocate(used_diag(wf%n_ao, 1))
+!      used_diag = 0
+!!
+!      L = zero
+!!
+!      call full_cholesky_decomposition_system(wf%ao_overlap, L, wf%n_ao, rank, &
+!                                                      1.0D-32, used_diag)
+!!
+!      ! write(output%unit, *) 'n_ao:', wf%n_ao 
+!      ! write(output%unit, *) 'rank:', rank
+!      ! write(output%unit, *) 'used_diag:', used_diag
+!      ! flush(output%unit)
+!!
+!!     Make permutation matrix P
+!!
+!      call mem%alloc(perm_matrix, wf%n_ao, wf%n_ao)
+!!
+!      perm_matrix = zero
+!!
+!      do j = 1, wf%n_ao
+!!
+!         perm_matrix(used_diag(j, 1), j) = one
+!!
+!      enddo
+!!
+!      deallocate(used_diag)
+!!
+!!     Make matrix L
+!!
+!      call mem%alloc(tmp, wf%n_ao, wf%n_ao)
+!!
+!      call dgemm('N','N',      &
+!                  wf%n_ao,     &
+!                  wf%n_ao,     &
+!                  wf%n_ao,     &
+!                  one,         &
+!                  perm_matrix, &
+!                  wf%n_ao,     &
+!                  L,           &
+!                  wf%n_ao,     &
+!                  zero,        &
+!                  tmp,         &
+!                  wf%n_ao)
+!!
+!      L = tmp
+!!
+!      call mem%dealloc(tmp, wf%n_ao, wf%n_ao)
+!      call mem%dealloc(perm_matrix, wf%n_ao, wf%n_ao)
+!!
+!   end subroutine decompose_ao_overlap_hf
 !
    subroutine decompose_ao_overlap_2_hf(wf)
 !!
@@ -1875,7 +1928,7 @@ contains
 !!
 !!    The routine allocates and sets P and L, the 'permutation matrix'
 !!    and the 'cholesky ao overlap'. Moreover, it sets the number of 
-!!    linearly independent AOs, wf%n_so, which is sometimes less than 
+!!    linearly independent AOs, wf%n_mo, which is sometimes less than 
 !!    wf%n_ao. From P and L, we can transform equations to the linearly 
 !!    independent basis and back.
 !!
@@ -1895,21 +1948,24 @@ contains
       call mem%alloc(L, wf%n_ao, wf%n_ao) ! Full Cholesky vector
       L = zero
 !
-      call full_cholesky_decomposition_system(wf%ao_overlap, L, wf%n_ao, wf%n_so, &
+      call full_cholesky_decomposition_system(wf%ao_overlap, L, wf%n_ao, wf%n_mo, &
                                           wf%linear_dependence_threshold, used_diag)
 !
-      call mem%alloc(wf%cholesky_ao_overlap, wf%n_so, wf%n_so) 
-      wf%cholesky_ao_overlap(:,:) = L(1:wf%n_so, 1:wf%n_so)
+      call wf%initialize_cholesky_ao_overlap()
+!
+     ! call mem%alloc(wf%cholesky_ao_overlap, wf%n_mo, wf%n_mo) 
+      wf%cholesky_ao_overlap(:,:) = L(1:wf%n_mo, 1:wf%n_mo)
 !
       call mem%dealloc(L, wf%n_ao, wf%n_ao)
 !
 !     Make permutation matrix P
 !
-      call mem%alloc(wf%pivot_matrix_ao_overlap, wf%n_ao, wf%n_so)
+      call wf%initialize_pivot_matrix_ao_overlap()
+      !call mem%alloc(wf%pivot_matrix_ao_overlap, wf%n_ao, wf%n_mo)
 !
       wf%pivot_matrix_ao_overlap = zero
 !
-      do j = 1, wf%n_so
+      do j = 1, wf%n_mo
 !
          wf%pivot_matrix_ao_overlap(used_diag(j, 1), j) = one
 !
@@ -2387,7 +2443,7 @@ contains
 !!    where P is referred to as the 'permutation matrix' and L the 'cholesky
 !!    ao overlap' (note that these are member variables of the solver which 
 !!    must be set by a call to solver%decompose_ao_overlap(wf)). The number 
-!!    of linearly independent orbitals is wf%n_so, whereas the full number 
+!!    of linearly independent orbitals is wf%n_mo, whereas the full number 
 !!    is wf%n_ao.   
 !!
       implicit none
@@ -2404,34 +2460,34 @@ contains
 !
       integer(i15) :: info = 0
 !
-      call mem%alloc(metric, wf%n_so, wf%n_so)
+      call mem%alloc(metric, wf%n_mo, wf%n_mo)
 !
       call dgemm('N','T',                 &
-                  wf%n_so,                &
-                  wf%n_so,                &
-                  wf%n_so,                &
+                  wf%n_mo,                &
+                  wf%n_mo,                &
+                  wf%n_mo,                &
                   one,                    &
                   wf%cholesky_ao_overlap, & 
-                  wf%n_so,                &
+                  wf%n_mo,                &
                   wf%cholesky_ao_overlap, &
-                  wf%n_so,                &
+                  wf%n_mo,                &
                   zero,                   &
                   metric,                 & ! metric = L L^T
-                  wf%n_so)
+                  wf%n_mo)
 !
 !     Allocate reduced space matrices 
 !
-      call mem%alloc(ao_fock, wf%n_so, wf%n_so)
-      call mem%alloc(orbital_energies, wf%n_so, 1)
+      call mem%alloc(ao_fock, wf%n_mo, wf%n_mo)
+      call mem%alloc(orbital_energies, wf%n_mo, 1)
 !
 !     Construct reduced space Fock matrix, F' = P^T F P,
 !     which is to be diagonalized over the metric L L^T 
 !
-      call mem%alloc(FP, wf%n_ao, wf%n_so)
+      call mem%alloc(FP, wf%n_ao, wf%n_mo)
 !
       call dgemm('N','N',                       &
                   wf%n_ao,                      &
-                  wf%n_so,                      &
+                  wf%n_mo,                      &
                   wf%n_ao,                      &
                   one,                          &
                   wf%ao_fock,                   &
@@ -2443,8 +2499,8 @@ contains
                   wf%n_ao)
 !
       call dgemm('T','N',                       &
-                  wf%n_so,                      &
-                  wf%n_so,                      &
+                  wf%n_mo,                      &
+                  wf%n_mo,                      &
                   wf%n_ao,                      &
                   one,                          &
                   wf%pivot_matrix_ao_overlap,   &
@@ -2453,31 +2509,31 @@ contains
                   wf%n_ao,                      &
                   zero,                         &
                   ao_fock,                      & ! F' = P^T F P
-                  wf%n_so)   
+                  wf%n_mo)   
 !
-      call mem%dealloc(FP, wf%n_so, wf%n_ao)   
+      call mem%dealloc(FP, wf%n_mo, wf%n_ao)   
 !
 !     Solve F'C' = L L^T C' e
 !
       info = 0
 !
-      call mem%alloc(work, 4*wf%n_so, 1)
+      call mem%alloc(work, 4*wf%n_mo, 1)
       work = zero
 !
       call dsygv(1, 'V', 'L',       &
-                  wf%n_so,          &
+                  wf%n_mo,          &
                   ao_fock,          & ! ao_fock on entry, orbital coefficients on exit
-                  wf%n_so,          &
+                  wf%n_mo,          &
                   metric,           &
-                  wf%n_so,          &
+                  wf%n_mo,          &
                   orbital_energies, &
                   work,             &
-                  4*(wf%n_so),      &
+                  4*(wf%n_mo),      &
                   info)
 !
-      call mem%dealloc(metric, wf%n_so, wf%n_so)
-      call mem%dealloc(work, 4*wf%n_so, 1)
-      call mem%dealloc(orbital_energies, wf%n_so, 1)
+      call mem%dealloc(metric, wf%n_mo, wf%n_mo)
+      call mem%dealloc(work, 4*wf%n_mo, 1)
+      call mem%dealloc(orbital_energies, wf%n_mo, 1)
 !
       if (info .ne. 0) then 
 !
@@ -2492,18 +2548,18 @@ contains
 !
       call dgemm('N','N',                       &
                   wf%n_ao,                      &
-                  wf%n_so,                      &
-                  wf%n_so,                      &
+                  wf%n_mo,                      &
+                  wf%n_mo,                      &
                   one,                          &
                   wf%pivot_matrix_ao_overlap,   &
                   wf%n_ao,                      &
                   ao_fock,                      & ! orbital coefficients 
-                  wf%n_so,                      &
+                  wf%n_mo,                      &
                   zero,                         &
                   wf%orbital_coefficients,      &
                   wf%n_ao)
 !
-      call mem%dealloc(ao_fock, wf%n_so, wf%n_so)
+      call mem%dealloc(ao_fock, wf%n_mo, wf%n_mo)
 !
    end subroutine do_roothan_hall_hf
 !

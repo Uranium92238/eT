@@ -54,10 +54,7 @@ contains
 !
       class(hf) :: wf
 !
-!
-      solver%coulomb_thr       = 1.0D-12 ! screening 
-      solver%coulomb_precision = 1.0D-14 ! integral accuracy
-      solver%exchange_thr      = 1.0D-12 ! screening 
+!     Read settings (thresholds, etc.)
 !
       call solver%read_settings()
 !
@@ -96,8 +93,8 @@ contains
 !
       integer(i15) :: iteration
 !
-      real(dp), dimension(:,:), allocatable :: D ! Parameters, D_αβ
-      real(dp), dimension(:,:), allocatable :: F ! Equations, F_ia
+      real(dp), dimension(:,:), allocatable :: D
+      real(dp), dimension(:,:), allocatable :: F 
       real(dp), dimension(:,:), allocatable :: Po 
       real(dp), dimension(:,:), allocatable :: Pv 
       real(dp), dimension(:,:), allocatable :: G 
@@ -113,10 +110,6 @@ contains
 !     Print solver banner
 !
       call solver%print_banner()
-!
-!     :: Initialize solver 
-!
-      call solver%initialize(wf)
 !
 !     :: Cholesky decompose the AO overlap matrix 
 !
@@ -135,6 +128,7 @@ contains
 !
       call mem%alloc(sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
       call mem%alloc_int(sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
+!
       call wf%construct_sp_eri_schwarz(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
 !
 !     :: Initialize the DIIS object,
@@ -146,32 +140,34 @@ contains
 !     by solving the Roothan-Hall equations for the SAD density
 !
       call wf%initialize_ao_fock()
-    !  call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
       call wf%construct_ao_fock_SAD(solver%coulomb_thr, solver%exchange_thr, solver%coulomb_precision)
-
 !
       call wf%initialize_mo_coefficients()
 !
       call solver%do_roothan_hall(wf)
 !
       call wf%construct_ao_density() 
-     ! call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
       call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s, &
                            solver%coulomb_thr, solver%exchange_thr, solver%coulomb_precision)  
 !
       call mem%alloc(Po, wf%n_ao, wf%n_ao)
       call mem%alloc(Pv, wf%n_ao, wf%n_ao)
-      call mem%alloc(ao_fock, wf%n_ao, wf%n_ao)
+!
+      call mem%alloc(ao_fock, wf%n_ao, wf%n_ao)          ! Holds Fock matrix, when wf%ao_fock 
+                                                         ! becomes the DIIS Fock matrix 
+!
       call mem%alloc(prev_ao_density, wf%n_ao, wf%n_ao)
-      call mem%alloc(G, wf%n_ao, wf%n_ao)           ! Gradient 
-      call mem%alloc(F, wf%n_ao*(wf%n_ao + 1)/2, 1) ! Fock matrix packed 
+!
+      call mem%alloc(G, wf%n_ao, wf%n_ao)                ! Gradient 
+      call mem%alloc(F, wf%n_ao*(wf%n_ao + 1)/2, 1)      ! Fock matrix packed 
 !
       call wf%construct_projection_matrices(Po, Pv)
       call wf%construct_roothan_hall_gradient(G, Po, Pv)
+!
       max_grad = get_abs_max(G, (wf%n_ao)**2)
 !
       call packin(F, wf%ao_fock, wf%n_ao)
-      call diis_manager%update(G, F)                ! Gives back F since no history
+      call diis_manager%update(G, F)
 !
       iteration = 1
       converged = .false.
@@ -184,8 +180,8 @@ contains
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call get_ao_h_xy(h_wx)
 !
-      write(output%unit, '(t3,a)') 'Iteration    Energy (a.u.)           Max(gradient) '
-      write(output%unit, '(t3,a)') '---------------------------------------------------'
+      write(output%unit, '(t3,a)') 'Iteration    Energy (a.u.)        Max(grad.)    ΔE (a.u.)'
+      write(output%unit, '(t3,a)') '----------------------------------------------------------'
 !
       do while (.not. converged .and. iteration .le. solver%max_iterations)         
 !
@@ -195,7 +191,8 @@ contains
 !
 !        Print current iteration information
 !
-         write(output%unit, '(t3,i3,10x,f17.12,4x,f17.12)') iteration, wf%hf_energy, max_grad
+         write(output%unit, '(t3,i3,10x,f17.12,4x,e10.4,4x,e10.4)') iteration, wf%hf_energy, &
+                                          max_grad, abs(wf%hf_energy-prev_energy)
          flush(output%unit)
 !
 !        Test for convergence:
@@ -212,33 +209,36 @@ contains
 !
          else
 !
-!           Solve the Roothan-Hall equation and update the AO density 
-!           and Fock matrix from the solution
+!           Solve the Roothan-Hall equation, then update the AO density 
+!           and Fock matrix using the solution
 !
             call solver%do_roothan_hall(wf) 
 !
-            prev_energy = wf%hf_energy
+            prev_energy     = wf%hf_energy
+            prev_ao_density = wf%ao_density
 !
             if (iteration .ne. 1) wf%ao_fock = ao_fock 
-            prev_ao_density = wf%ao_density
-            call wf%construct_ao_density()
 !
+            call wf%construct_ao_density()
             call wf%construct_ao_fock_cumulative(sp_eri_schwarz, sp_eri_schwarz_list,              &
                                                    n_s, prev_ao_density, h_wx, solver%coulomb_thr, &
                                                    solver%exchange_thr, solver%coulomb_precision)
-         !   call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
 !
-!           Calculate the occ-vir block, or gradient, from the current density
+!           Calculate the gradient from the current density
 !
             call wf%construct_projection_matrices(Po, Pv)
             call wf%construct_roothan_hall_gradient(G, Po, Pv)
+!
             max_grad = get_abs_max(G, (wf%n_ao)**2)
 !
-!           Update density by DIIS 
+!           Update AO Fock matrix by DIIS,
+!           but keep a copy of the actual Fock matrix for 
+!           cumulative construction 
 !
             call packin(F, wf%ao_fock, wf%n_ao)
             call diis_manager%update(G, F)
-            ao_fock = wf%ao_fock ! Keep a copy safe 
+!
+            ao_fock = wf%ao_fock  
             call wf%set_ao_fock(F)
 !
          endif
@@ -252,8 +252,10 @@ contains
 !
       call mem%dealloc(Po, wf%n_ao, wf%n_ao)
       call mem%dealloc(Pv, wf%n_ao, wf%n_ao)
-      call mem%dealloc(G, wf%n_ao, wf%n_ao)           ! Gradient 
-      call mem%dealloc(F, wf%n_ao*(wf%n_ao + 1)/2, 1) ! Fock matrix packed 
+!
+      call mem%dealloc(G, wf%n_ao, wf%n_ao)           
+      call mem%dealloc(F, wf%n_ao*(wf%n_ao + 1)/2, 1) 
+!
       call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
 !
       call wf%destruct_mo_coefficients()
@@ -263,7 +265,6 @@ contains
 !
 !     Initialize engine (make final deallocations, and other stuff)
 !
-      call solver%finalize(wf)
       call diis_manager%finalize()
 !
       if (.not. converged) then 

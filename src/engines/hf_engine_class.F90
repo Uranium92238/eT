@@ -32,9 +32,6 @@ contains
 !
       class(hf_engine) :: engine 
 !
-      write(output%unit, *)'init engine'
-      flush(output%unit)
-!
    end subroutine initialize_hf_engine
 !
 !
@@ -65,7 +62,9 @@ contains
             allocate(arh_solver)
             solver => arh_solver
 !
+            call solver%initialize(wf)
             call solver%run(wf)
+            call solver%finalize(wf)
 !
             deallocate(arh_solver)
 !
@@ -74,7 +73,9 @@ contains
             allocate(scf_solver)
             solver => scf_solver
 !
+            call solver%initialize(wf)
             call solver%run(wf)
+            call solver%finalize(wf)
 !
             deallocate(scf_solver)
 !
@@ -84,12 +85,14 @@ contains
 !
          endif
 !
-      else ! defaults!
+      else ! Default: use SCF DIIS algorithm 
 !
          allocate(scf_solver)
          solver => scf_solver
 !
+         call solver%initialize(wf)
          call solver%run(wf)
+         call solver%finalize(wf)
 !
          deallocate(scf_solver)
 !
