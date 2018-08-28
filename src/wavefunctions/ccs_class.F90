@@ -18,6 +18,7 @@ module ccs_class
 !
    type, extends(wavefunction):: ccs
 !
+!
    contains
 !
 !     Prepare and cleanup wavefunction

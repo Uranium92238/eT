@@ -163,6 +163,8 @@ program eT_program
 !
         if (cc_engine == 'ground state') then
 !
+          write(output%unit, *) 'hellaw'
+!
           allocate(gs_cc_engine)
           engine => gs_cc_engine  
 !
@@ -179,6 +181,7 @@ program eT_program
         call engine%prepare()
         call engine%run(cc_wf)
         call engine%cleanup()
+!
         deallocate(engine)
 !
         call cc_wf%cleanup()

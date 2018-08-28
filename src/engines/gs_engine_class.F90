@@ -5,6 +5,7 @@ module gs_engine_class
 !!
    use abstract_engine_class
    use ccs_class
+   use eri_cd_solver_class
 !
    type, extends(abstract_engine) :: gs_engine 
 !
@@ -45,16 +46,19 @@ contains
 !
       class(ccs) :: wf
 !
-      type(eri_cd_solver) :: eri_chol_solver
+      type(eri_cd_solver), allocatable :: eri_chol_solver
 !
       allocate(eri_chol_solver)
 !
       call eri_chol_solver%initialize(wf%system)
       call eri_chol_solver%solve(wf%system)
 !
-      call eri_chol_solver()
+      call eri_chol_solver%cholesky_vecs_diagonal_test()
+      call eri_chol_solver%construct_mo_cholesky_vecs(wf%system, wf%n_mo, wf%orbital_coefficients)
 !
       call eri_chol_solver%finalize()
+!
+      deallocate(eri_chol_solver)
 !
    end subroutine run_gs_engine
 !
