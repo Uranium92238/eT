@@ -33,9 +33,6 @@ contains
 !
       class(hf_engine) :: engine 
 !
-      write(output%unit, *)'init engine'
-      flush(output%unit)
-!
    end subroutine prepare_hf_engine
 !
 !
