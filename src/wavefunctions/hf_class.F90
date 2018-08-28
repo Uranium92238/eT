@@ -135,6 +135,11 @@ contains
       call wf%construct_ao_overlap()
       call wf%decompose_ao_overlap_2() 
 !
+      call initialize_coulomb()
+      call initialize_kinetic()
+      call initialize_nuclear()
+      call initialize_overlap()
+!
       wf%n_o = (wf%system%get_n_electrons())/2
       wf%n_v = wf%n_mo - wf%n_o
 !

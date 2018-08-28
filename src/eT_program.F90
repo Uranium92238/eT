@@ -8,6 +8,7 @@ program eT_program
   use kinds
   use file_class
   use disk_manager_class
+  use libint_initialization
 !
   use wavefunction_class
 !
@@ -68,11 +69,6 @@ program eT_program
 !
     call initialize_libint()
 !
-    call initialize_coulomb()
-    call initialize_kinetic()
-    call initialize_nuclear()
-    call initialize_overlap()
-!
     n_methods = get_n_methods()
 !
 !   ::  Hartree-Fock calculation (temporarily also cholesky decomposition) 
@@ -109,6 +105,7 @@ program eT_program
 !
         allocate(hf_wf)
         ref_wf => hf_wf
+!
         call ref_wf%prepare()
 !
         allocate(gs_hf_engine)

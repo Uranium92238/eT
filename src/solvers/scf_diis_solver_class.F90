@@ -144,7 +144,8 @@ contains
 !
       call wf%initialize_mo_coefficients()
 !
-      call solver%do_roothan_hall(wf)
+     ! call solver%do_roothan_hall(wf)
+      call wf%do_roothan_hall()
 !
       call wf%construct_ao_density() 
       call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s, &
@@ -212,7 +213,8 @@ contains
 !           Solve the Roothan-Hall equation, then update the AO density 
 !           and Fock matrix using the solution
 !
-            call solver%do_roothan_hall(wf) 
+          !  call solver%do_roothan_hall(wf) 
+            call wf%do_roothan_hall()
 !
             prev_energy     = wf%hf_energy
             prev_ao_density = wf%ao_density
