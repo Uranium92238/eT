@@ -11,7 +11,8 @@ set(eT_fortran_sources
    src/io/file_class.F90
    src/io/io_utilities.F90
    src/io/io_eT_program.F90
-   src/ao_integrals/ao_integral_manager_class.F90
+   src/integrals/ao_integral_tool_class.F90
+   src/integrals/mo_integral_tool_class.F90
    src/solver_tools/cholesky_array_list_class.F90
    src/libint/h_xy.F90
    src/libint/s_xy.F90
