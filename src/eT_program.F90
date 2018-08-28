@@ -18,9 +18,6 @@ program eT_program
 !
   use io_eT_program
 !
-  !use scf_diis_solver_class
-  !use arh_hf_solver_class
-!
   use hf_engine_class
 !
   use eri_cd_solver_class
@@ -134,9 +131,6 @@ program eT_program
 !
         allocate(ccs_wf)
         cc_wf => ccs_wf
-!
-        write(output%unit, *)'CCS!'
-        flush(output%unit)
 !
         call cc_wf%initialize(ref_wf)
         call ref_wf%cleanup()

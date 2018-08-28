@@ -45,28 +45,49 @@ contains
 !
       class(mlhf) :: wf
 !
+      integer(i15) :: ao
+!
+      real(dp), dimension(:,:), allocatable :: density_diagonal
+!
       wf%name = 'MLHF'
 !
       write(output%unit, '(a)')':: SAD-ML test'
       flush(output%unit)
 !
-      call wf%system%prepare() ! Initialize molecular system -> Should include SAD
+      call wf%system%prepare()
+!
+!     Construct AO overlap matrix, Cholesky decompose it,
+!     followed by preconditioning (making it the identity matrix
+!     for this particular preconditioner - V)
 !
       wf%n_ao = 0
       call get_n_aos(wf%n_ao)
 !
-      wf%n_mo = wf%n_ao
+      call wf%initialize_ao_overlap()
+      call wf%construct_ao_overlap()
+      call wf%decompose_ao_overlap() 
 !
       wf%n_o = (wf%system%get_n_electrons())/2
       wf%n_v = wf%n_mo - wf%n_o
 !
-!     Initialize Libint engines to be used
+      write(output%unit, '(a8, i4, a5)')'Removed ', wf%n_ao - wf%n_mo, ' AOs.'
 !
-      call initialize_coulomb()
-      call initialize_kinetic()
-      call initialize_nuclear()
-      call initialize_overlap() ! SHOULD THESE BE INITIALIZED IN THE ENGINE ?
-      call initialize_overlap()
+      call wf%initialize_ao_density()
+!
+!     Set initial density to superposition of atomic densities (SOAD) guess
+!
+      call mem%alloc(density_diagonal, wf%n_ao, 1)
+      call wf%system%SAD(wf%n_ao, density_diagonal)
+!
+      wf%ao_density = zero
+!
+      do ao = 1, wf%n_ao
+!
+         wf%ao_density(ao, ao) = density_diagonal(ao, 1)
+!
+      enddo
+!
+      call mem%dealloc(density_diagonal, wf%n_ao, 1)
 !
       call wf%eri_decomp_test_w_active_dens()
 !
@@ -102,43 +123,11 @@ contains
 !
       integer(i15), dimension(:,:), allocatable :: active_aos, sp_eri_schwarz_list
 !
-      integer(i15) :: ao, n_active_occ, n_active_vir, n_s
+      integer(i15) :: n_active_occ, n_active_vir
 !
-      real(dp), dimension(:,:), allocatable :: density_diagonal, eri_deg, sp_eri_schwarz
+      real(dp), dimension(:,:), allocatable :: eri_deg, sp_eri_schwarz
 !
       type(eri_cd_solver)  :: chol_solver
-!
-      call wf%initialize_ao_density()
-!
-!     Set initial density to superposition of atomic densities (SOAD) guess
-!
-      call mem%alloc(density_diagonal, wf%n_ao, 1)
-      call wf%system%SAD(wf%n_ao, density_diagonal)
-!
-      do ao = 1, wf%n_ao
-!
-         wf%ao_density(ao, ao) = density_diagonal(ao, 1)
-!
-      enddo
-!
-      call mem%dealloc(density_diagonal, wf%n_ao, 1)
-!
-!     Construct initial AO Fock from the SOAD density
-!
-      n_s = wf%system%get_n_shells()
-!
-!
-!     Construct AO overlap matrix, Cholesky decompose it,
-!     followed by preconditioning (making it the identity matrix
-!     for this particular preconditioner - V)
-!
-      call wf%initialize_ao_overlap()
-      call wf%construct_ao_overlap()
-      call wf%decompose_ao_overlap_2() 
-!
-      write(output%unit, *)'Removed ', wf%n_ao - wf%n_mo, 'AOs.'
-!
-!     Construct initial AO Fock from the SOAD density
 !
       call wf%initialize_ao_fock()
 !

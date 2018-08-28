@@ -60,8 +60,7 @@ module hf_class
 !     Cholesky decomposition of AO density and overlap
 !
       procedure :: decompose_ao_density => decompose_ao_density_hf
-     ! procedure :: decompose_ao_overlap => decompose_ao_overlap_hf
-      procedure :: decompose_ao_overlap_2 => decompose_ao_overlap_2_hf
+      procedure :: decompose_ao_overlap => decompose_ao_overlap_hf
 !
 !     Solve the Roothan Hall equation FC = SCe by diagonalization
 !
@@ -133,7 +132,7 @@ contains
 !
       call wf%initialize_ao_overlap()
       call wf%construct_ao_overlap()
-      call wf%decompose_ao_overlap_2() 
+      call wf%decompose_ao_overlap() 
 !
       wf%n_o = (wf%system%get_n_electrons())/2
       wf%n_v = wf%n_mo - wf%n_o
@@ -1832,91 +1831,7 @@ contains
    end subroutine decompose_ao_density_hf
 !
 !
-!   subroutine decompose_ao_overlap_hf(wf)
-!!!
-!!!    Decompose AO overlap
-!!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!!
-!!!    Does a Cholesky decomposition of the AO density matrix,
-!!!
-!!!       S^AO_wx = sum_J L_w,J L_J,x^T,
-!!!
-!!!    and sets the MO coefficients accordingly.
-!!!
-!!!    There is something seriously wrong with the way we handle 
-!!!    integers. For H2O/cc-pVDZ, used_diag becomes nonsense (large
-!!!    integers instead of pivots, thus giving a seg. fault)!
-!!!
-!!!    First case where eT version of BLAS routine does not work...
-!!!
-!      implicit none
-!!
-!      class(hf) :: wf
-!!
-!      integer(kind=4), dimension(:, :), allocatable :: used_diag
-!!
-!      real(dp), dimension(wf%n_ao, wf%n_ao) :: L
-!!
-!      real(dp), dimension(:,:), allocatable :: perm_matrix
-!!
-!      real(dp), dimension(:,:), allocatable :: csc
-!      real(dp), dimension(:,:), allocatable :: tmp
-!!
-!      integer(i15) :: rank
-!      integer(i15) :: i, j
-!!
-!      allocate(used_diag(wf%n_ao, 1))
-!      used_diag = 0
-!!
-!      L = zero
-!!
-!      call full_cholesky_decomposition_system(wf%ao_overlap, L, wf%n_ao, rank, &
-!                                                      1.0D-32, used_diag)
-!!
-!      ! write(output%unit, *) 'n_ao:', wf%n_ao 
-!      ! write(output%unit, *) 'rank:', rank
-!      ! write(output%unit, *) 'used_diag:', used_diag
-!      ! flush(output%unit)
-!!
-!!     Make permutation matrix P
-!!
-!      call mem%alloc(perm_matrix, wf%n_ao, wf%n_ao)
-!!
-!      perm_matrix = zero
-!!
-!      do j = 1, wf%n_ao
-!!
-!         perm_matrix(used_diag(j, 1), j) = one
-!!
-!      enddo
-!!
-!      deallocate(used_diag)
-!!
-!!     Make matrix L
-!!
-!      call mem%alloc(tmp, wf%n_ao, wf%n_ao)
-!!
-!      call dgemm('N','N',      &
-!                  wf%n_ao,     &
-!                  wf%n_ao,     &
-!                  wf%n_ao,     &
-!                  one,         &
-!                  perm_matrix, &
-!                  wf%n_ao,     &
-!                  L,           &
-!                  wf%n_ao,     &
-!                  zero,        &
-!                  tmp,         &
-!                  wf%n_ao)
-!!
-!      L = tmp
-!!
-!      call mem%dealloc(tmp, wf%n_ao, wf%n_ao)
-!      call mem%dealloc(perm_matrix, wf%n_ao, wf%n_ao)
-!!
-!   end subroutine decompose_ao_overlap_hf
-!
-   subroutine decompose_ao_overlap_2_hf(wf)
+   subroutine decompose_ao_overlap_hf(wf)
 !!
 !!    Decompose AO overlap
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -1973,7 +1888,7 @@ contains
 !
       deallocate(used_diag)
 !
-   end subroutine decompose_ao_overlap_2_hf
+   end subroutine decompose_ao_overlap_hf
 !
    subroutine rotate_ao_density_hf(wf, X)
 !!
