@@ -2304,8 +2304,10 @@ contains
 !!    is wf%n_ao.   
 !!
 !!    Default is to not transform the Fock matrix to the MO basis. If 
-!!    do_mo_transformation is passed and is set true, the Fock matrix 
-!!    is transformed to the MO basis.
+!!    do_mo_transformation is passed and is set true, the MO Fock matrix 
+!!    is initialized and transformed to the MO basis: 
+!!
+!!       F_mo = C'^T P^T F P C' 
 !!
       implicit none
 !
