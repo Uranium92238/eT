@@ -353,6 +353,12 @@ contains
 !
       type(batching_index) :: batch_a
 !
+      call integrals%set_full_index(full_first_i, 'f', 'o', first_i)
+      call integrals%set_full_index(full_first_a, 'f', 'v', first_a)
+!
+      call integrals%set_full_index(full_last_i, 'l', 'o', last_i)
+      call integrals%set_full_index(full_last_a, 'l', 'v', last_a)
+!
       length_i = full_last_i - full_first_i + 1
       length_a = full_last_a - full_first_a + 1
 
@@ -365,7 +371,7 @@ contains
 !
       call dgemm('T', 'N',                                  &
                   length_i,                                 &
-                  (integrals%n_o)*(integrals%n_J),   &
+                  (integrals%n_o)*(integrals%n_J),          &
                   integrals%n_v,                            &
                   one,                                      &
                   t1(1, full_first_i),                      &   ! t_b_i
@@ -386,7 +392,7 @@ contains
 !
       call dgemm('N', 'N',                                  &
                   length_a,                                 &
-                  (length_i)*(integrals%n_J),        &
+                  (length_i)*(integrals%n_J),               &
                   integrals%n_o,                            &
                   -one,                                     &
                   t1(full_first_a, 1),                      & ! t_a_j
@@ -404,7 +410,7 @@ contains
 !
       call dgemm('N', 'N',                                  &
                   length_a,                                 &
-                  (length_i)*(integrals%n_J),        &
+                  (length_i)*(integrals%n_J),               &
                   integrals%n_o,                            &
                   -one,                                     &
                   t1(full_first_a, 1),                      & ! t_a_j
@@ -437,9 +443,9 @@ contains
 !
          call dgemm('T', 'N',                               &
                   length_i,                                 &
-                  (batch_a%length)*(integrals%n_J),  &
+                  (batch_a%length)*(integrals%n_J),         &
                   integrals%n_v,                            &
-                  -one,                                     &
+                  one,                                      &
                   t1,                                       & ! t_b_i
                   integrals%n_v,                            &
                   L_ba_J,                                   & ! L_b_aJ
@@ -455,7 +461,7 @@ contains
                do J = 1, (integrals%n_J)
 !
                   ai = length_a*(i - 1) + a + batch_a%first - 1
-                  aJ = length_a*(J - 1) + a
+                  aJ = batch_a%length*(J - 1) + a
 !
                   L_ai_J(ai, J) = L_ai_J(ai, J) + X_i_aJ(i, aJ)
 !
