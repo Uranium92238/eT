@@ -82,7 +82,7 @@ module hf_class
       procedure :: initialize_ao_density              => initialize_ao_density_hf
       procedure :: initialize_ao_fock                 => initialize_ao_fock_hf
       procedure :: initialize_mo_fock                 => initialize_mo_fock_hf
-      procedure :: initialize_mo_coefficients         => initialize_mo_coefficients_hf
+      !procedure :: initialize_mo_coefficients         => initialize_mo_coefficients_hf
       procedure :: initialize_ao_overlap              => initialize_ao_overlap_hf
       procedure :: initialize_orbital_energies        => initialize_orbital_energies_hf
       procedure :: initialize_pivot_matrix_ao_overlap => initialize_pivot_matrix_ao_overlap_hf
@@ -91,7 +91,7 @@ module hf_class
       procedure :: destruct_ao_density                => destruct_ao_density_hf
       procedure :: destruct_ao_fock                   => destruct_ao_fock_hf
       procedure :: destruct_mo_fock                   => destruct_mo_fock_hf
-      procedure :: destruct_mo_coefficients           => destruct_mo_coefficients_hf
+     ! procedure :: destruct_mo_coefficients           => destruct_mo_coefficients_hf
       procedure :: destruct_ao_overlap                => destruct_ao_overlap_hf
       procedure :: destruct_orbital_energies          => destruct_orbital_energies_hf
       procedure :: destruct_pivot_matrix_ao_overlap   => destruct_pivot_matrix_ao_overlap_hf
@@ -223,18 +223,18 @@ contains
    end subroutine initialize_mo_fock_hf
 !
 !
-   subroutine initialize_mo_coefficients_hf(wf)
+!   subroutine initialize_mo_coefficients_hf(wf)
+!!!
+!!!    Initialize MO coefficients
+!!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!!
+!      implicit none
 !!
-!!    Initialize MO coefficients
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!      class(hf) :: wf
 !!
-      implicit none
-!
-      class(hf) :: wf
-!
-      if (.not. allocated(wf%orbital_coefficients)) call mem%alloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
-!
-   end subroutine initialize_mo_coefficients_hf
+!      if (.not. allocated(wf%orbital_coefficients)) call mem%alloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
+!!
+!   end subroutine initialize_mo_coefficients_hf
 !
 !
    subroutine initialize_ao_overlap_hf(wf)
@@ -349,18 +349,18 @@ contains
    end subroutine destruct_mo_fock_hf
 !
 !
-   subroutine destruct_mo_coefficients_hf(wf)
+!   subroutine destruct_mo_coefficients_hf(wf)
+!!!
+!!!    Destruct MO coefficients
+!!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!!
+!      implicit none
 !!
-!!    Destruct MO coefficients
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!      class(hf) :: wf
 !!
-      implicit none
-!
-      class(hf) :: wf
-!
-      if (allocated(wf%orbital_coefficients)) call mem%dealloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
-!
-   end subroutine destruct_mo_coefficients_hf
+!      if (allocated(wf%orbital_coefficients)) call mem%dealloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
+!!
+!   end subroutine destruct_mo_coefficients_hf
 !
 !
    subroutine destruct_pivot_matrix_ao_overlap_hf(wf)
