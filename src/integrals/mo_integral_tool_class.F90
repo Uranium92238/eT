@@ -160,6 +160,34 @@ contains
    end subroutine get_cholesky_ia_mo_integral_tool
 !
 !
+   subroutine get_cholesky_ai_mo_integral_tool(integrals, L_ai_J, first_a, last_a, first_i, last_i)
+!!
+!!    Get Cholesky ia 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+      implicit none 
+!
+      class(mo_integral_tool), intent(in) :: integrals 
+!  
+      integer(i15), optional, intent(in) :: first_i, last_i
+      integer(i15), optional, intent(in) :: first_a, last_a
+!
+      real(dp), dimension(:, :) :: L_ia_J
+!
+      integer(i15) :: full_first_a, full_last_a 
+      integer(i15) :: full_first_i, full_last_i
+!
+      call integrals%set_full_index(full_first_i, 'f', 'o', first_i)
+      call integrals%set_full_index(full_first_a, 'f', 'v', first_a)
+!
+      call integrals%set_full_index(full_last_i, 'l', 'o', last_i)
+      call integrals%set_full_index(full_last_a, 'l', 'v', last_a)
+!
+      call integrals%read_cholesky(L_ia_J, full_first_i, full_last_i, full_first_a, full_last_a)
+!
+   end subroutine get_cholesky_ia_mo_integral_tool
+!
+!
    subroutine set_full_index_mo_integral_tool(integrals, ind, pos, orb_space, red_ind)
 !!
 !!    Set full index 

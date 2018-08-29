@@ -240,7 +240,7 @@ contains
 !!
 !!    Read and T1-transform Cholesky AI vectors:
 !!    
-!!       L_ai_J_T1 = L_ia_J - sum_j  t_aj*L_ji_J 
+!!       L_ai_J_T1 = L_ai_J - sum_j  t_aj*L_ji_J 
 !!                          + sum_b  t_bi*L_ab_J
 !!                          - sum_bj t_aj*t_bi*L_jb_J
 !!
