@@ -58,10 +58,13 @@ module ccs_class
 !
       procedure :: destruct_t1 => destruct_t1_ccs
 !
+      procedure :: get_ovov => get_ovov_ccs
+!
    end type ccs
 !
 !
 contains
+!
 !
    subroutine prepare_ccs(wf, ref_wf)
 !!
@@ -286,6 +289,47 @@ contains
       if (allocated(wf%t1)) call mem%dealloc(wf%t1, wf%n_v, wf%n_o)
 !
    end subroutine destruct_t1_ccs
+!
+!
+   subroutine get_ovov_ccs(wf, g_iajb, first_i, last_i, first_a, last_a, &
+                                       first_j, last_j, first_b, last_b)
+!!
+!!    Get ovov 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!    The set of "get pqrs" routines will return the integral as t1-transformed,
+!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    are provided, the routines assume that the full integral should be returned.
+!!
+!!    Note that the MO integral tool controls how the integrals are constructed.
+!!    The choice depends on logicals within the tool that knows whether t1-transformed 
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file. If the 
+!!    full integral g_pqrs is not on file, the construction is done as 
+!!
+!!       g_pqrs = sum_J L_pq^J L_rs^J,
+!!
+!!    where L_pq^J is t1-transformed (either made on-the-fly from the MO L_pq^J or
+!!    read from disk, usually before and after the ground state amplitudes have 
+!!    converged). On-the-fly t1-transformation can also happen due to disk space 
+!!    limitations.
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(:,:) :: g_iajb 
+!
+      integer(i15), optional, intent(in) :: first_i, last_i 
+      integer(i15), optional, intent(in) :: first_a, last_a
+      integer(i15), optional, intent(in) :: first_j, last_j
+      integer(i15), optional, intent(in) :: first_b, last_b
+!
+!     Special case: the t1-transformed g_iajb integrals are equal to the MO integrals 
+!
+      call wf%integrals%read_ovov(g_iajb, first_i, last_i, first_a, last_a, &
+                                          first_j, last_j, first_b, last_b)
+!
+   end subroutine get_ovov_ccs
 !
 !
 end module ccs_class

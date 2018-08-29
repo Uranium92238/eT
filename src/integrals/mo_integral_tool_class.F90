@@ -635,7 +635,9 @@ contains
 !
       if (integrals%eri_file .and. .not. index_restrictions) then 
 !
-!        Read full g_iajb from file !
+!        Coming soon: read full g_iajb from file
+!
+         call output%error_msg('reading full eri integrals from file not yet supported!')
 !
       else
 !
@@ -689,6 +691,7 @@ contains
       endif 
 !
    end subroutine read_ovov_mo_integral_tool
+!
 !
 end module mo_integral_tool_class
 
