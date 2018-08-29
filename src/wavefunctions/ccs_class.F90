@@ -31,6 +31,8 @@ module ccs_class
 !
       type(mo_integral_tool) :: integrals
 !
+      real(dp), dimension(:,:), allocatable :: t1
+!
    contains
 !
 !     Prepare and cleanup wavefunction
@@ -45,12 +47,16 @@ module ccs_class
 !
       procedure :: initialize_fock_diagonal => initialize_fock_diagonal_ccs
 !
+      procedure :: initialize_t1 => initialize_t1_ccs
+!
       procedure :: destruct_fock_ij => destruct_fock_ij_ccs
       procedure :: destruct_fock_ia => destruct_fock_ia_ccs
       procedure :: destruct_fock_ai => destruct_fock_ai_ccs
       procedure :: destruct_fock_ab => destruct_fock_ab_ccs
 !
       procedure :: destruct_fock_diagonal => destruct_fock_diagonal_ccs
+!
+      procedure :: destruct_t1 => destruct_t1_ccs
 !
    end type ccs
 !
@@ -184,6 +190,20 @@ contains
    end subroutine initialize_fock_diagonal_ccs
 !
 !
+   subroutine initialize_t1_ccs(wf)
+!!
+!!    Initialize T1
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      if (.not. allocated(wf%t1)) call mem%alloc(wf%t1, wf%n_v, wf%n_o)
+!
+   end subroutine initialize_t1_ccs
+!
+!
    subroutine destruct_fock_ij_ccs(wf)
 !!
 !!    Destruct Fock ij block
@@ -252,6 +272,20 @@ contains
       if (allocated(wf%fock_diagonal)) call mem%dealloc(wf%fock_diagonal, wf%n_mo, 1)
 !
    end subroutine destruct_fock_diagonal_ccs
+!
+!
+   subroutine destruct_t1_ccs(wf)
+!!
+!!    Destruct T1
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      if (allocated(wf%t1)) call mem%dealloc(wf%t1, wf%n_v, wf%n_o)
+!
+   end subroutine destruct_t1_ccs
 !
 !
 end module ccs_class
