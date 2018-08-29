@@ -126,7 +126,8 @@ contains
       write(output%unit, '(a20, i10)')'Number of shells:   ', solver%n_s
 !
       write(output%unit, '(/a21, e12.4)') 'Target threshold is: ', solver%threshold
-      write(output%unit, '(a21, e12.4/)') 'Span factor:         ', solver%span
+      write(output%unit, '(a21, e12.4)')  'Span factor:         ', solver%span
+      write(output%unit, '(a21, i5/)')    'Max qual:            ', solver%max_qual
       flush(output%unit)
 !
       s_determine_basis = omp_get_wtime()
@@ -2590,7 +2591,7 @@ contains
 !
                elseif (line(1:10) == 'qualified:') then
 !
-                  read(line(11:100), '(d16.5)') solver%max_qual
+                  read(line(11:100), '(i5)') solver%max_qual
 !
                elseif (trim(line) == 'one center') then
 !
