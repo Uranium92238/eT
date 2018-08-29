@@ -255,7 +255,8 @@ contains
 !!
 !!       L_ab_J_T1 = L_ab_J - sum_i t_ai L_ib_J
 !! 
-!!    and saves the result in L_ab_J.
+!!    and saves the result in L_ab_J. Note that batching is handled 
+!!    outside this routine, not inside. 
 !!
       implicit none 
 !
@@ -271,13 +272,59 @@ contains
       integer(i15) :: full_first_a, full_last_a 
       integer(i15) :: full_first_b, full_last_b
 !
+      integer(i15) :: red_first_a 
+!
+      real(dp), dimension(:,:), allocatable :: L_ib_J
+      real(dp), dimension(:,:), allocatable :: L_Jb_i
+      real(dp), dimension(:,:), allocatable :: L_Jb_a
+!
+      integer(i15) :: b_length, a_length
+!
       call integrals%set_full_index(full_first_a, 'f', 'v', first_a)
       call integrals%set_full_index(full_first_b, 'f', 'v', first_b)
 !
       call integrals%set_full_index(full_last_a, 'l', 'v', last_a)
       call integrals%set_full_index(full_last_b, 'l', 'v', last_b)      
 !
-      
+      red_first_a = full_first_a - integrals%n_o
+!
+      a_length = full_last_a - full_first_a + 1
+      b_length = full_last_b - full_first_b + 1
+!
+!     Set L_ib_J = L_ib^J and L_ab_J^T1 = L_ab_J 
+!
+      call mem%alloc(L_ib_J, (integrals%n_o)*b_length, integrals%n_J)
+      call integrals%read_cholesky(L_ib_J, 1, integrals%n_o, full_first_b, full_last_b)
+!
+      call integrals%read_cholesky(L_ab_J, full_first_a, full_last_a, full_first_b, full_last_b)
+!
+!     Reorder L_ib^J as L_Jb_i 
+!
+      call mem%alloc(L_Jb_i, (integrals%n_J)*b_length, integrals%n_o)
+      call sort_123_to_321(L_ib_J, L_Jb_i, integrals%n_o, b_length, integrals%n_J)
+      call mem%dealloc(L_ib_J, (integrals%n_o)*b_length, integrals%n_J)
+!
+!     Calculate and add t1-transformed term, - sum_i t_ai L_ib_J
+!
+      call mem%alloc(L_Jb_a, (integrals%n_J)*b_length, a_length)
+!
+      call dgemm('N','T',                   &
+                  (integrals%n_J)*b_length, &
+                  a_length,                 &
+                  integrals%n_o,            &
+                  -one,                     &
+                  L_Jb_i,                   &
+                  (integrals%n_J)*b_length, &
+                  t1(red_first_a, 1),       &
+                  integrals%n_v,            &
+                  zero,                     &
+                  L_Jb_a,                   &
+                  b_length*(integrals%n_J))
+!
+      call add_321_to_123(one, L_Jb_a, L_ab_J, a_length, b_length, integrals%n_J)
+!
+      call mem%dealloc(L_Jb_a, (integrals%n_J)*b_length, a_length)
+      call mem%dealloc(L_Jb_i, (integrals%n_J)*b_length, integrals%n_o)      
 !
    end subroutine get_cholesky_ab_mo_integral_tool
 !
