@@ -39,13 +39,17 @@ module mo_integral_tool_class
       procedure :: need_t1 => need_t1_mo_integral_tool
 !
       procedure :: read_cholesky => read_cholesky_mo_integral_tool
+      procedure :: read_cholesky_t1 => read_cholesky_t1_mo_integral_tool
 !
-      procedure :: get_cholesky_ia => get_cholesky_ia_mo_integral_tool
-      procedure :: get_cholesky_ai => get_cholesky_ai_mo_integral_tool
-      procedure :: get_cholesky_ij => get_cholesky_ij_mo_integral_tool
-      procedure :: get_cholesky_ab => get_cholesky_ab_mo_integral_tool
+      procedure :: read_cholesky_ia => read_cholesky_ia_mo_integral_tool
+!
+      procedure :: construct_cholesky_ij => construct_cholesky_ij_mo_integral_tool
+      procedure :: construct_cholesky_ab => construct_cholesky_ab_mo_integral_tool
+      procedure :: construct_cholesky_ai => construct_cholesky_ai_mo_integral_tool
 !
       procedure :: set_full_index => set_full_index_mo_integral_tool
+!
+      procedure :: read_ovov => read_ovov_mo_integral_tool
 !
    end type mo_integral_tool
 !
@@ -184,9 +188,9 @@ contains
    end subroutine read_cholesky_t1_mo_integral_tool
 !
 !
-   subroutine get_cholesky_ia_mo_integral_tool(integrals, L_ia_J, first_i, last_i, first_a, last_a)
+   subroutine read_cholesky_ia_mo_integral_tool(integrals, L_ia_J, first_i, last_i, first_a, last_a)
 !!
-!!    Get Cholesky ia 
+!!    Read Cholesky ia 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
       implicit none 
@@ -209,11 +213,12 @@ contains
 !
       call integrals%read_cholesky(L_ia_J, full_first_i, full_last_i, full_first_a, full_last_a)
 !
-   end subroutine get_cholesky_ia_mo_integral_tool
+   end subroutine read_cholesky_ia_mo_integral_tool
 !
-   subroutine get_cholesky_ij_mo_integral_tool(integrals, L_ij_J, t1, first_i, last_i, first_j, last_j)
+!
+   subroutine construct_cholesky_ij_mo_integral_tool(integrals, L_ij_J, t1, first_i, last_i, first_j, last_j)
 !!
-!!    Get Cholesky ij
+!!    Construct Cholesky ij
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
 !!
 !!    Computes
@@ -284,12 +289,12 @@ contains
      call mem%dealloc(L_iJ_j_term, i_length*(integrals%n_J), j_length)
      call mem%dealloc(L_iJ_a, i_length*(integrals%n_J), integrals%n_v)
 !
-   end subroutine get_cholesky_ij_mo_integral_tool
+   end subroutine construct_cholesky_ij_mo_integral_tool
 !
 !
-   subroutine get_cholesky_ab_mo_integral_tool(integrals, L_ab_J, t1, first_a, last_a, first_b, last_b)
+   subroutine construct_cholesky_ab_mo_integral_tool(integrals, L_ab_J, t1, first_a, last_a, first_b, last_b)
 !!
-!!    Get Cholesky ab 
+!!    Construct Cholesky ab 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!    Computes 
@@ -367,12 +372,12 @@ contains
       call mem%dealloc(L_Jb_a, (integrals%n_J)*b_length, a_length)
       call mem%dealloc(L_Jb_i, (integrals%n_J)*b_length, integrals%n_o)      
 !
-   end subroutine get_cholesky_ab_mo_integral_tool
+   end subroutine construct_cholesky_ab_mo_integral_tool
 !
 !
-   subroutine get_cholesky_ai_mo_integral_tool(integrals, L_ai_J, t1, first_a, last_a, first_i, last_i)
+   subroutine construct_cholesky_ai_mo_integral_tool(integrals, L_ai_J, t1, first_a, last_a, first_i, last_i)
 !!
-!!    Get Cholesky ai
+!!    Construct Cholesky ai
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!    Computes the T1-transformed cholesky vector
@@ -523,7 +528,7 @@ contains
 !
        enddo
 !
-   end subroutine get_cholesky_ai_mo_integral_tool
+   end subroutine construct_cholesky_ai_mo_integral_tool
 !
 !
    subroutine read_cholesky_ai_mo_integral_tool(integrals, L_ai_J, first_a, last_a, first_i, last_i)
@@ -554,7 +559,7 @@ contains
 !
       call integrals%read_cholesky_t1(L_ai_J, full_first_a, full_last_a, full_first_i, full_last_i)
 !
-   end subroutine reas_cholesky_ai_mo_integral_tool
+   end subroutine read_cholesky_ai_mo_integral_tool
 !
 !
    subroutine set_full_index_mo_integral_tool(integrals, ind, pos, orb_space, red_ind)
@@ -637,6 +642,137 @@ contains
       endif 
 !
    end subroutine set_full_index_mo_integral_tool
+!
+!
+   subroutine read_ovov_mo_integral_tool(integrals, g_iajb, first_i, last_i, first_a, last_a, &
+                                                            first_j, last_j, first_b, last_b)
+!!
+!!    Read ovov
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+!!    Although this is named read, note that it is used also when t1 transformed 
+!!    integrals are needed, since there is in this case - iajb - no contribution from the
+!!    t1 amplitudes: the MO integrals are equal to the t1-transformed MO integrals.
+!!
+      implicit none 
+!
+      class(mo_integral_tool), intent(in) :: integrals 
+!
+      real(dp), dimension(:,:), intent(inout) :: g_iajb
+!
+      integer(i15), optional, intent(in) :: first_i, last_i
+      integer(i15), optional, intent(in) :: first_a, last_a
+      integer(i15), optional, intent(in) :: first_j, last_j
+      integer(i15), optional, intent(in) :: first_b, last_b
+!
+      integer(i15) :: local_first_i, local_last_i
+      integer(i15) :: local_first_a, local_last_a
+      integer(i15) :: local_first_j, local_last_j
+      integer(i15) :: local_first_b, local_last_b
+!
+      integer(i15) :: length_i, length_a, length_j, length_b
+!
+      logical :: index_restrictions
+!
+      real(dp), dimension(:,:), allocatable :: L_ia_J 
+      real(dp), dimension(:,:), allocatable :: L_jb_J 
+!
+      if (present(first_i) .and. present(last_i) .and. &
+          present(first_a) .and. present(last_a) .and. &
+          present(first_j) .and. present(last_j) .and. &
+          present(first_b) .and. present(last_b)) then 
+!
+         index_restrictions = .true.
+!
+         local_first_i = first_i
+         local_first_a = first_a 
+         local_first_j = first_j 
+         local_first_b = first_b
+!
+         local_last_i = last_i  
+         local_last_a = last_a   
+         local_last_j = last_j  
+         local_last_b = last_b   
+!
+      else
+!
+         index_restrictions = .false.
+!
+         local_first_i = 1
+         local_first_a = 1 
+         local_first_j = 1 
+         local_first_b = 1
+!
+         local_last_i = integrals%n_o   
+         local_last_a = integrals%n_v    
+         local_last_j = integrals%n_o   
+         local_last_b = integrals%n_v       
+!
+      endif 
+!
+      length_i = local_last_i - local_first_i + 1
+      length_a = local_last_a - local_first_a + 1
+      length_j = local_last_j - local_first_j + 1
+      length_b = local_last_b - local_first_b + 1
+!
+      if (integrals%eri_file .and. .not. index_restrictions) then 
+!
+!        Coming soon: read full g_iajb from file
+!
+         call output%error_msg('reading full eri integrals from file not yet supported!')
+!
+      else
+!
+!        Construct g_iajb from Cholesky vectors (occ-vir, so not necessary to consider t1)
+!
+         if (index_restrictions) then ! dim_ia ≠ dim_jb in general
+!
+            call mem%alloc(L_ia_J, length_i*length_a, integrals%n_J)
+            call mem%alloc(L_jb_J, length_j*length_b, integrals%n_J)
+!
+            call integrals%read_cholesky_ia(L_ia_J, local_first_i, local_last_i, local_first_a, local_last_a)
+            call integrals%read_cholesky_ia(L_jb_J, local_first_j, local_last_j, local_first_b, local_last_b)
+!
+            call dgemm('N', 'T',           &
+                        length_i*length_a, &
+                        length_j*length_b, &
+                        integrals%n_J,     &
+                        one,               &
+                        L_ia_J,            &
+                        length_i*length_a, &
+                        L_jb_J,            &
+                        length_j*length_b, &
+                        zero,              &
+                        g_iajb)
+!
+            call mem%dealloc(L_ia_J, length_i*length_a, integrals%n_J)
+            call mem%dealloc(L_jb_J, length_j*length_b, integrals%n_J)
+!
+         else ! dim_ia = dim_jb 
+!
+            call mem%alloc(L_ia_J, length_i*length_a, integrals%n_J)
+!
+            call integrals%read_cholesky_ia(L_ia_J, local_first_i, local_last_i, local_first_a, local_last_a)
+!
+            call dgemm('N', 'T',           &
+                        length_i*length_a, &
+                        length_i*length_a, &
+                        integrals%n_J,     &
+                        one,               &
+                        L_ia_J,            &
+                        length_i*length_a, &
+                        L_ia_J,            &
+                        length_i*length_a, & 
+                        zero,              &
+                        g_iajb)
+!
+            call mem%dealloc(L_ia_J, length_i*length_a, integrals%n_J)
+!
+         endif 
+!
+      endif 
+!
+   end subroutine read_ovov_mo_integral_tool
 !
 !
 end module mo_integral_tool_class

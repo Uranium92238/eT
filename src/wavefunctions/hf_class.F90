@@ -503,8 +503,6 @@ contains
       sp_eri_schwarz_list(:,3) = sp_eri_schwarz_index_list(:,1)
       call mem%dealloc_int(sp_eri_schwarz_index_list, n_s*(n_s + 1)/2, 1)
 !
-    !  call mem%dealloc_int(sp_eri_schwarz_list_copy, n_s*(n_s + 1)/2, 3)
-!
    end subroutine construct_sp_eri_schwarz_hf
 !
 !
@@ -810,8 +808,6 @@ contains
       flush(output%unit)
 !
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
-
-!      call get_ao_h_xy(h_wx)
 !
 !$omp parallel do &
 !$omp private(A, B, h_AB, A_interval, B_interval, x, y) schedule(static)
@@ -977,7 +973,7 @@ contains
 !
 !     Calculate maximum of all the shell pair maximums prescreening
 !
-      max_D_schwarz     = get_abs_max(sp_density_schwarz, n_s**2)
+      max_D_schwarz = get_abs_max(sp_density_schwarz, n_s**2)
 !
 !     Compute number of significant shell pairs (pre-screening)
 !
@@ -985,7 +981,7 @@ contains
       max_eri_schwarz = get_abs_max(sp_eri_schwarz, n_s*(n_s + 1)/2)
       do s1s2 = 1, n_s*(n_s + 1)/2
 !
-         if (sp_eri_schwarz(s1s2, 1) .lt. 1.0D-14) then
+         if (sp_eri_schwarz(s1s2, 1)**2 .lt. 1.0D-20) then
 !
             exit
 !
@@ -1154,7 +1150,7 @@ contains
       n_sig_sp = 0
       do s1s2 = 1, n_s*(n_s + 1)/2
 !
-         if (sp_eri_schwarz(s1s2, 1)**2 .lt. 1.0D-16) then
+         if (sp_eri_schwarz(s1s2, 1)**2 .lt. 1.0D-20) then
 !
             exit
 !

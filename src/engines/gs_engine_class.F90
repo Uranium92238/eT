@@ -51,7 +51,7 @@ contains
       allocate(eri_chol_solver)
 !
       call eri_chol_solver%initialize(wf%system)
-      call eri_chol_solver%solve(wf%system)
+      call eri_chol_solver%run(wf%system)
 !
       call eri_chol_solver%cholesky_vecs_diagonal_test()
 !
