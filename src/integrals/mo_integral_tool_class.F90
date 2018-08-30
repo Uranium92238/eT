@@ -47,6 +47,10 @@ module mo_integral_tool_class
       procedure :: construct_cholesky_ab => construct_cholesky_ab_mo_integral_tool
       procedure :: construct_cholesky_ai => construct_cholesky_ai_mo_integral_tool
 !
+      procedure :: read_cholesky_ai_t1 => read_cholesky_ai_t1_mo_integral_tool
+      procedure :: read_cholesky_ij_t1 => read_cholesky_ij_t1_mo_integral_tool
+      procedure :: read_cholesky_ab_t1 => read_cholesky_ab_t1_mo_integral_tool
+!
       procedure :: set_full_index => set_full_index_mo_integral_tool
 !
       procedure :: read_ovov => read_ovov_mo_integral_tool
