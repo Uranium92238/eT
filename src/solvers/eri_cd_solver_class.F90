@@ -47,7 +47,7 @@ module eri_cd_solver_class
    contains
 !
       procedure :: initialize => initialize_eri_cd_solver
-      procedure :: solve      => solve_eri_cd_solver
+      procedure :: run        => run_eri_cd_solver
       procedure :: finalize   => finalize_eri_cd_solver
 !
       procedure :: invert_overlap_cholesky_vecs                => invert_overlap_cholesky_vecs_eri_cd_solver
@@ -70,6 +70,8 @@ contains
 !
    subroutine initialize_eri_cd_solver(solver, system)
 !!
+!!    Initialize eri cholesky decomposition solver
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
@@ -105,8 +107,10 @@ contains
    end subroutine initialize_eri_cd_solver
 !
 !
-   subroutine solve_eri_cd_solver(solver, system, screening_vector)
+   subroutine run_eri_cd_solver(solver, system, screening_vector)
 !!
+!!     Run eri cholesky decomposition
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
@@ -181,7 +185,7 @@ contains
 !
       endif
 !
-   end subroutine solve_eri_cd_solver
+   end subroutine run_eri_cd_solver
 !
 !
    subroutine finalize_eri_cd_solver(solver)
@@ -196,7 +200,11 @@ contains
 !
    subroutine construct_significant_diagonal_eri_cd_solver(solver, system, screening_vector)
 !!
+!!    Construct significant diagonal
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+!!    Constructs the significant diagonal for the given decomposition threshold.
+!!    Screening diagonal is optional argument for additional screening
 !!
       implicit none
 !
@@ -465,7 +473,12 @@ contains
 !
    subroutine construct_significant_diagonal_atomic_eri_cd_solver(solver, system, screening_vector)
 !!
+!!    Construct significant diagonal atomic
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+!!    Constructs the significant diagonal for the given decomposition threshold within 
+!!    the one-center approximation.
+!!    Screening diagonal is optional argument for additional screening
 !!
       implicit none
 !
@@ -739,7 +752,11 @@ contains
 !
    subroutine determine_auxilliary_cholesky_basis_eri_cd_solver(solver, system, diagonal_info)
 !!
-!!    ....
+!!    Determine auxiliary cholesky basis
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Determines the elements of the auxiliary basis for an RI-type expansion
+!!    by Cholesky decomposition
 !!
 !!
       implicit none
@@ -1676,6 +1693,11 @@ contains
 !
    subroutine construct_overlap_cholesky_vecs_eri_cd_solver(solver, system)
 !!
+!!    Construct overlap cholesky vectors
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Constructs the overlap matrix (J|K) of the auxiliary basis 
+!!    and cholesky decomposes it.
 !!
 !!
       implicit none
@@ -1978,6 +2000,10 @@ contains
 !
    subroutine construct_cholesky_vectors_eri_cd_solver(solver, system)
 !!
+!!    Construct Cholesky vectors
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Constructs the Cholesky vectors L_xy_J = sum_K L_K_J^-1 (K | xy)
 !!
 !!
       implicit none
@@ -2067,7 +2093,6 @@ contains
       rec_offset = 0
 !
 !     Construct (K | yz) and do matrix multiplication
-!     sum_K (K | J)^-1 (J | yz) in batches of yz
 !
       done = .false.
 !
@@ -2395,6 +2420,12 @@ contains
 !
    subroutine cholesky_vecs_diagonal_test_eri_cd_solver(solver)
 !!
+!!    Cholesky vectors diagonal test
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Tests the decomposition by 
+!!       1. finding the largest element of (D_sig - D_approx)
+!!       2. finding the smallest (largest negative) element of (D_sig - D_approx)
 !!
 !!
       implicit none
@@ -2617,6 +2648,11 @@ contains
 !
    subroutine construct_mo_cholesky_vecs_cd_eri_solver(solver, system, n_mo, orbital_coefficients)
 !!
+!!    Construct MO Cholesky vectors
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Reads AO Cholesky vectors, transforms them to MO basis and writes them to file.
+!!    MO Cholesky vectors L_pq_J are stored packed (q .le. p) on direct access file with record length n_cholesky
 !!
       implicit none
 !

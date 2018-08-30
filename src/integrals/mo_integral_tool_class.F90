@@ -144,6 +144,46 @@ contains
    end subroutine read_cholesky_mo_integral_tool
 !
 !
+   subroutine read_cholesky_t1_mo_integral_tool(integrals, L_pq_J, first_p, last_p, first_q, last_q)
+!!
+!!    Read mo t1 cholesky vectors
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
+!!
+!!    Reads T1-transformed cholesky vectors L_pq_J for mo indices 
+!!    [first_p, last_p] and [first_q, last_q]
+!!
+      implicit none
+!
+      class(mo_integral_tool), intent(in) :: integrals
+!
+      integer(i15), intent(in) :: first_p, last_p
+      integer(i15), intent(in) :: first_q, last_q
+!
+      real(dp), dimension((last_p - first_p + 1)*(last_q - first_q + 1), integrals%n_J) :: L_pq_J
+!
+      integer(i15) :: p, q, pq, pq_rec, J, dim_p, dim_q
+!
+      dim_p = last_p - first_p + 1
+      dim_q = last_q - first_q + 1
+!
+      call disk%open_file(integrals%cholesky_mo_t1, 'read')
+!
+      do p = 1, dim_p
+         do q = 1, dim_q
+!
+            pq = dim_p*(q - 1) + p
+!
+            read(integrals%cholesky_mo_t1%unit, rec=pq) (L_pq_J(pq, J), J = 1, integrals%n_J)
+!
+         enddo
+      enddo
+
+!
+      call disk%close_file(integrals%cholesky_mo_t1)
+!
+   end subroutine read_cholesky_t1_mo_integral_tool
+!
+!
    subroutine get_cholesky_ia_mo_integral_tool(integrals, L_ia_J, first_i, last_i, first_a, last_a)
 !!
 !!    Get Cholesky ia 
@@ -335,7 +375,11 @@ contains
 !!    Get Cholesky ai
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-!!    Not done!!!
+!!    Computes the T1-transformed cholesky vector
+!!    
+!!       L_ai_J_T1 = L_ai_J - sum_j t_aj*L_ji_J 
+!!                          + sum_b t_bi*L_ab_J
+!!                          - sum_bj t_aj*t_bi*L_jb_J
 !!
       implicit none 
 !
@@ -458,6 +502,9 @@ contains
 !        
          call mem%dealloc(L_ba_J, batch_a%length*(integrals%n_v), (integrals%n_J))  
 !
+!$omp parallel do &
+!$omp private(i, a, J, ai, aJ) &
+!$omp shared(L_ai_J, X_i_aJ, batch_a)
          do i = 1, length_i
             do a = 1, batch_a%length
                do J = 1, (integrals%n_J)
@@ -470,12 +517,44 @@ contains
                enddo
             enddo
          enddo
+!$omp end parallel do
 !
          call mem%dealloc(X_i_aJ, length_i, (batch_a%length)*(integrals%n_J)) 
 !
        enddo
 !
    end subroutine get_cholesky_ai_mo_integral_tool
+!
+!
+   subroutine read_cholesky_ai_mo_integral_tool(integrals, L_ai_J, first_a, last_a, first_i, last_i)
+!!
+!!    Read Cholesky ai
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!    Read T1-transformed mo cholesky L_ai^J vectors from file 
+!!
+      implicit none 
+!
+      class(mo_integral_tool), intent(in) :: integrals 
+!  
+      integer(i15), optional, intent(in) :: first_i, last_i
+      integer(i15), optional, intent(in) :: first_a, last_a
+!
+      real(dp), dimension(:, :) :: L_ai_J
+!
+      integer(i15) :: full_first_a, full_last_a, length_a 
+      integer(i15) :: full_first_i, full_last_i, length_i
+!
+!
+      call integrals%set_full_index(full_first_i, 'f', 'o', first_i)
+      call integrals%set_full_index(full_first_a, 'f', 'v', first_a)
+!
+      call integrals%set_full_index(full_last_i, 'l', 'o', last_i)
+      call integrals%set_full_index(full_last_a, 'l', 'v', last_a)
+!
+      call integrals%read_cholesky_t1(L_ai_J, full_first_a, full_last_a, full_first_i, full_last_i)
+!
+   end subroutine reas_cholesky_ai_mo_integral_tool
 !
 !
    subroutine set_full_index_mo_integral_tool(integrals, ind, pos, orb_space, red_ind)
