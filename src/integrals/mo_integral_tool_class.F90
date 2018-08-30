@@ -1078,11 +1078,10 @@ contains
    end subroutine construct_ooov_mo_integral_tool
 !
 !
-!
    subroutine construct_oovo_mo_integral_tool(integrals, g_ijak, t1, first_i, last_i, first_j, last_j, &
                                                             first_a, last_a, first_k, last_k)
 !!
-!!    Construct ooov
+!!    Construct oovo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
 !!
       implicit none 
@@ -1131,6 +1130,7 @@ contains
 !
          index_restrictions = .false.
 !
+!
          local_first_i = 1
          local_first_j = 1 
          local_first_k = 1 
@@ -1150,19 +1150,19 @@ contains
 !
       if (integrals%eri_file .and. .not. index_restrictions) then 
 !
-!        Coming soon: read full g_ijka from file
+!        Coming soon: read full g_ijak from file
 !
          call output%error_msg('reading full eri integrals from file not yet supported!')
 !
       else
 !
-!        Construct g_ijka
+!        Construct g_ijak
 !
          call mem%alloc(L_ij_J, length_i*length_j, integrals%n_J)
          call mem%alloc(L_ak_J, length_k*length_a, integrals%n_J)
 !
          call integrals%construct_cholesky_ij(L_ij_J, t1, local_first_i, local_last_i, local_first_j, local_last_j)
-         call integrals%read_cholesky_ia(L_ak_J, local_first_a, local_last_a, local_first_k, local_last_k)
+         call integrals%construct_cholesky_ai(L_ak_J, t1, local_first_a, local_last_a, local_first_k, local_last_k)
 !
          call dgemm('N', 'T',           &
                      length_i*length_j, &
@@ -1182,6 +1182,111 @@ contains
       endif 
 !
    end subroutine construct_oovo_mo_integral_tool
+!
+!
+   subroutine construct_ovoo_mo_integral_tool(integrals, g_iajk, t1, first_i, last_i, first_a, last_a, &
+                                                            first_j, last_j, first_k, last_k)
+!!
+!!    Construct ovoo
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+      implicit none 
+!
+      class(mo_integral_tool), intent(in) :: integrals 
+!
+      real(dp), dimension(:,:), intent(inout) :: g_iajk
+!
+      real(dp), dimension(integrals%n_v, integrals%n_o) :: t1
+!
+      integer(i15), optional, intent(in) :: first_i, last_i
+      integer(i15), optional, intent(in) :: first_k, last_k
+      integer(i15), optional, intent(in) :: first_j, last_j
+      integer(i15), optional, intent(in) :: first_a, last_a
+!
+      integer(i15) :: local_first_i, local_last_i
+      integer(i15) :: local_first_k, local_last_k
+      integer(i15) :: local_first_j, local_last_j
+      integer(i15) :: local_first_a, local_last_a
+!
+      integer(i15) :: length_i, length_k, length_j, length_a
+!
+      logical :: index_restrictions
+!
+      real(dp), dimension(:,:), allocatable :: L_ia_J 
+      real(dp), dimension(:,:), allocatable :: L_jk_J 
+!
+      if (present(first_i) .and. present(last_i) .and. &
+          present(first_j) .and. present(last_j) .and. &
+          present(first_k) .and. present(last_k) .and. &
+          present(first_a) .and. present(last_a)) then 
+!
+         index_restrictions = .true.
+!
+         local_first_i = first_i
+         local_first_j = first_j
+         local_first_k = first_k 
+         local_first_a = first_a
+!
+         local_last_i = last_i  
+         local_last_j = last_j   
+         local_last_k = last_k  
+         local_last_a = last_a   
+!
+      else
+!
+         index_restrictions = .false.
+!
+         local_first_i = 1
+         local_first_j = 1 
+         local_first_k = 1 
+         local_first_a = 1
+!
+         local_last_i = integrals%n_o   
+         local_last_j = integrals%n_o    
+         local_last_k = integrals%n_o   
+         local_last_a = integrals%n_v     
+!
+      endif 
+!
+      length_i = local_last_i - local_first_i + 1
+      length_j = local_last_j - local_first_j + 1
+      length_k = local_last_k - local_first_k + 1
+      length_a = local_last_a - local_first_a + 1
+!
+      if (integrals%eri_file .and. .not. index_restrictions) then 
+!
+!        Coming soon: read full g_iajk from file
+!
+         call output%error_msg('reading full eri integrals from file not yet supported!')
+!
+      else
+!
+!        Construct g_iajk
+!
+         call mem%alloc(L_ia_J, length_i*length_a, integrals%n_J)
+         call mem%alloc(L_jk_J, length_k*length_j, integrals%n_J)
+!
+         call integrals%construct_cholesky_ij(L_jk_J, t1, local_first_j, local_last_j, local_first_k, local_last_k)
+         call integrals%read_cholesky_ia(L_ia_J, local_first_i, local_last_i, local_first_a, local_last_a)
+!
+         call dgemm('N', 'T',           &
+                     length_i*length_a, &
+                     length_k*length_j, &
+                     integrals%n_J,     &
+                     one,               &
+                     L_ia_J,            &
+                     length_i*length_j, &
+                     L_jk_J,            &
+                     length_k*length_a, &
+                     zero,              &
+                     g_iajk)
+!
+         call mem%dealloc(L_ia_J, length_i*length_a, integrals%n_J)
+         call mem%dealloc(L_jk_J, length_k*length_j, integrals%n_J)
+!
+      endif 
+!
+   end subroutine construct_ovoo_mo_integral_tool
 !
 end module mo_integral_tool_class
 
