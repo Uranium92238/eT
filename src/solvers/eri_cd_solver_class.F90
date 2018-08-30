@@ -2646,12 +2646,14 @@ contains
       real(dp) :: throw_away
 !
       call cholesky_mo_vectors_seq%init('cholesky_mo_temp', 'sequential', 'unformatted')
-      call solver%cholesky_mo_vectors%init('cholesky_mo', 'direct', 'unformatted', dp*solver%n_cholesky)
+      call solver%cholesky_mo_vectors%init('cholesky_mo_vectors', 'direct', 'unformatted', dp*solver%n_cholesky)
 !
       call disk%open_file(solver%cholesky_ao_vectors, 'read')
-      call disk%open_file(cholesky_mo_vectors_seq, 'write', 'rewind')
+      call disk%open_file(cholesky_mo_vectors_seq, 'readwrite')
       call disk%open_file(solver%cholesky_mo_vectors, 'write')
       call disk%open_file(solver%cholesky_ao_vectors_info, 'read')
+!
+      rewind(cholesky_mo_vectors_seq%unit)
 !
 !     Read significant sp info 
 !
@@ -2686,7 +2688,7 @@ contains
 !
 !          Calculate difference between actual and approximate diagonal
 !
-           read(line, *) size_AB     
+           read(line, *) size_AB
 !
 !          Empty reads 
 !
@@ -2704,13 +2706,13 @@ contains
 !
               read(solver%cholesky_ao_vectors%unit)
 !
-           enddo
+            enddo
 !
-           AB_offset = AB_offset + size_AB
+            AB_offset = AB_offset + size_AB
 !
-           read(solver%cholesky_ao_vectors_info%unit, *) line
+            read(solver%cholesky_ao_vectors_info%unit, *) line
 !
-        enddo
+         enddo
 !
          AB_offset = 0
          AB_offset_full = 0
@@ -2763,7 +2765,7 @@ contains
             enddo
          enddo
 !
-         call mem%dealloc(L_J_xy, 1, n_sig_aop)
+      call mem%dealloc(L_J_xy, 1, n_sig_aop)
 !
 !       Transform the AO vectors to form the Cholesky MO vectors
 !
@@ -2800,10 +2802,12 @@ contains
 !
          call mem%dealloc(temp, solver%n_ao, n_mo)
 !
-        write(cholesky_mo_vectors_seq%unit) ((L_J_pq(p,q), q = 1, p), q = 1, n_mo)
+        write(cholesky_mo_vectors_seq%unit) ((L_J_pq(p,q), q = 1, p), p = 1, n_mo)
+        
         call mem%dealloc(L_J_pq, n_mo, n_mo)
 !
       enddo
+!
 !
 !     Read L_pq_J in batches over q
 !
@@ -2813,6 +2817,8 @@ contains
 !
       call batch_q%init(n_mo)
       call mem%num_batch(batch_q, required)
+!
+      rewind(cholesky_mo_vectors_seq%unit)
 !
 !     Loop over the q-batches
 !
@@ -2872,10 +2878,13 @@ contains
 !
       enddo
 !
-      call disk%close_file(solver%cholesky_ao_vectors)
+      call disk%close_file(solver%cholesky_ao_vectors, 'delete')
       call disk%close_file(solver%cholesky_mo_vectors)
-      call disk%close_file(cholesky_mo_vectors_seq, 'delete')
+      call disk%close_file(cholesky_mo_vectors_seq)
       call disk%close_file(solver%cholesky_ao_vectors_info, 'delete')
+!
+      call disk%open_file(cholesky_mo_vectors_seq, 'read')
+      call disk%close_file(cholesky_mo_vectors_seq, 'delete')
 !
    end subroutine  construct_mo_cholesky_vecs_cd_eri_solver
 !

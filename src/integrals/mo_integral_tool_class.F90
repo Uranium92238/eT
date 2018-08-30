@@ -41,7 +41,9 @@ module mo_integral_tool_class
       procedure :: read_cholesky => read_cholesky_mo_integral_tool
 !
       procedure :: get_cholesky_ia => get_cholesky_ia_mo_integral_tool
+      procedure :: get_cholesky_ai => get_cholesky_ai_mo_integral_tool
       procedure :: get_cholesky_ij => get_cholesky_ij_mo_integral_tool
+      procedure :: get_cholesky_ab => get_cholesky_ab_mo_integral_tool
 !
       procedure :: set_full_index => set_full_index_mo_integral_tool
 !
