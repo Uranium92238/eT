@@ -22,32 +22,68 @@ module hf_solver_class
 !
    contains 
 !
-      procedure(essential), deferred :: prepare 
-      procedure(essential), deferred :: run 
-      procedure(essential), deferred :: cleanup
+      procedure :: prepare => prepare_hf_solver
+      procedure :: run     => run_hf_solver
+      procedure :: cleanup => cleanup_hf_solver
+!
+      procedure :: print_banner => print_banner_hf_solver
 !
       procedure :: read_settings           => read_settings_hf_solver
       procedure :: read_hf_solver_settings => read_hf_solver_settings_hf_solver
 !
    end type hf_solver
 !
-   abstract interface
-!
-      subroutine essential(solver, wf)
-!
-         import :: hf, hf_solver
-!
-         implicit none 
-!
-         class(hf_solver) :: solver 
-!
-         class(hf) :: wf 
-!
-      end subroutine essential
-!
-   end interface
-!
 contains 
+!
+!
+   subroutine prepare_hf_solver(solver, wf)
+!!
+!!    Prepare 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf_solver) :: solver
+!
+      class(hf) :: wf
+!
+!     Read settings (thresholds, etc.)
+!
+      call solver%read_settings()
+!
+   end subroutine prepare_hf_solver
+!
+!
+   subroutine run_hf_solver(solver, wf)
+!!
+!!    Run 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf_solver) :: solver
+!
+      class(hf) :: wf
+!
+!     Nothing here 
+!
+   end subroutine run_hf_solver
+!
+!
+   subroutine cleanup_hf_solver(solver, wf)
+!!
+!!    Cleanup 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf_solver) :: solver
+!
+      class(hf) :: wf
+!
+!     Nothing here 
+!
+   end subroutine cleanup_hf_solver
 !
 !
    subroutine read_settings_hf_solver(solver)
@@ -142,6 +178,18 @@ contains
       endif 
 !
    end subroutine read_hf_solver_settings_hf_solver
+!
+!
+   subroutine print_banner_hf_solver(solver)
+!!
+!!    Print banner
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none 
+!
+      class(hf_solver) :: solver 
+!
+   end subroutine print_banner_hf_solver
 !
 !
 end module hf_solver_class

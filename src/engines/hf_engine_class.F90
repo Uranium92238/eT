@@ -8,6 +8,7 @@ module hf_engine_class
    use hf_solver_class
    use arh_hf_solver_class
    use scf_diis_solver_class
+   use unrestricted_scf_solver_class
 !
    type hf_engine 
 !
@@ -49,10 +50,21 @@ contains
 !
       type(arh_hf_solver), allocatable, target   :: arh_solver 
       type(scf_diis_solver), allocatable, target :: scf_solver
+      type(unrestricted_scf_solver), allocatable, target :: uhf_solver
 !
       class(hf_solver), pointer :: solver => null()
 !
+      type(uhf) :: uhf_wf
+!
       character(len=100) :: algorithm
+!
+    ! temporary: comment in if you want to get the UHF energy
+    !  allocate(uhf_solver)
+    !  call uhf_wf%prepare()
+    !  call uhf_solver%prepare(uhf_wf)
+    !  call uhf_solver%run_2(uhf_wf)
+    !  call uhf_solver%cleanup(uhf_wf)      
+    !  stop
 !
       if (requested_section('hf')) then
 !

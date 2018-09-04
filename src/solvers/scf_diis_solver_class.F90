@@ -4,12 +4,15 @@ module scf_diis_solver_class
 !!		Self-consistent field DIIS solver class module
 !!		Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
-!!    This solver employs a direct inversion of the iterative
-!!    subspace (DIIS) algorithm to get an effective density, based
-!!    on previous AO densities and gradients, and from this density
-!!    it diagonalizes the Roothan-Hall equation, giving a new density
-!!    and gradient, Fock matrix and energy. The process is repeated
-!!    until convergence.
+!!    A DIIS-accelerated Roothan-Hall self-consistent field solver. 
+!!    In other words, it does a least-square fit to a zero gradient 
+!!    using the previously recorded Fock matrices and associated 
+!!    gradients. In each Roothan-Hall update,
+!! 
+!!       F C = S C e ----> C ------> D,
+!!
+!!    the fitted F matrix is used instead of the one produced from 
+!!    the previously obtained density matrix D. 
 !!
 !
    use kinds
@@ -28,7 +31,6 @@ module scf_diis_solver_class
 !
    contains
 !
-      procedure :: prepare   => prepare_scf_diis_solver
       procedure :: run       => run_scf_diis_solver
       procedure :: cleanup   => cleanup_scf_diis_solver
 !
@@ -43,32 +45,10 @@ module scf_diis_solver_class
 contains
 !
 !
-   subroutine prepare_scf_diis_solver(solver, wf)
-!!
-!!    Prepare 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(scf_diis_solver) :: solver
-!
-      class(hf) :: wf
-!
-!     Read settings (thresholds, etc.)
-!
-      call solver%read_settings()
-!
-   end subroutine prepare_scf_diis_solver
-!
-!
    subroutine run_scf_diis_solver(solver, wf)
 !!
 !!    Run 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-!!    This routine solves the Roothan-Hall equations in each macro-iteration,
-!!    using the resulting density and Fock matrix together with previous densities
-!!    and errors to make a new effective density matrix.
 !!
       implicit none
 !
@@ -128,7 +108,6 @@ contains
       call wf%initialize_ao_density()
       call wf%initialize_mo_coefficients()
 !
-    !  call wf%set_ao_density_to_sad()
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call get_ao_h_xy(h_wx)
       call wf%set_ao_density_to_core_guess(h_wx)
@@ -305,12 +284,16 @@ contains
       write(output%unit, '(/t3,a)') ':: Direct-integral self-consistent field DIIS Hartree-Fock solver'
       write(output%unit, '(t3,a/)') ':: E. F. Kjønstad, S. D. Folkestad, 2018'
 !
-      write(output%unit, '(t3,a)')  'This solver employs a direct inversion of the iterative'
-      write(output%unit, '(t3,a)')  'subspace (DIIS) algorithm to get an effective density, based'
-      write(output%unit, '(t3,a)')  'on previous AO densities and gradients, and from this density'
-      write(output%unit, '(t3,a)')  'it diagonalizes the Roothan-Hall equation, giving a new density'
-      write(output%unit, '(t3,a)')  'and gradient, Fock matrix and energy. The process is repeated'
-      write(output%unit, '(t3,a/)') 'until convergence.'
+      write(output%unit, '(t3,a)')  'A DIIS-accelerated Roothan-Hall self-consistent field solver.'
+      write(output%unit, '(t3,a)')  'In other words, it does a least-square fit to a zero gradient' 
+      write(output%unit, '(t3,a)')  'using the previously recorded Fock matrices and associated'
+      write(output%unit, '(t3,a/)') 'gradients. In each Roothan-Hall update,'
+
+      write(output%unit, '(t3,a)')  '   F C = S C e ----> C ------> D,'
+
+      write(output%unit, '(/t3,a)') 'the fitted F matrix is used instead of the one produced from '
+      write(output%unit, '(t3,a/)') 'the previously obtained density matrix D. '
+
       flush(output%unit)
 !
    end subroutine print_banner_scf_diis_solver

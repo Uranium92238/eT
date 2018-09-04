@@ -2048,7 +2048,6 @@ contains
 !
       call wf%initialize_cholesky_ao_overlap()
 !
-     ! call mem%alloc(wf%cholesky_ao_overlap, wf%n_mo, wf%n_mo) 
       wf%cholesky_ao_overlap(:,:) = L(1:wf%n_mo, 1:wf%n_mo)
 !
       call mem%dealloc(L, wf%n_ao, wf%n_ao)
@@ -2056,7 +2055,6 @@ contains
 !     Make permutation matrix P
 !
       call wf%initialize_pivot_matrix_ao_overlap()
-      !call mem%alloc(wf%pivot_matrix_ao_overlap, wf%n_ao, wf%n_mo)
 !
       wf%pivot_matrix_ao_overlap = zero
 !
@@ -2079,7 +2077,7 @@ contains
 !!    Performs an update of the AO density according to a first-order
 !!    truncation of the BCH expansion:
 !!
-!!       D^AO <- exp(-X S) D^AO exp(S X) ~ D^AO + [D^AO, X]_S ~ D_AO + C.
+!!       D^AO <- exp(-X S) D^AO exp(S X) ~ D^AO + [D^AO, X]_S = D_AO + C.
 !!
       implicit none
 !

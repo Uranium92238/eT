@@ -46,7 +46,7 @@ module arh_hf_solver_class
       procedure :: run         => run_arh_hf_solver
       procedure :: cleanup     => cleanup_arh_hf_solver
 !
-      procedure, private :: print_banner                                => print_banner_arh_hf_solver
+      procedure :: print_banner                                => print_banner_arh_hf_solver
 !
       procedure, private :: solve_aug_Newton_equation                   => solve_aug_Newton_equation_arh_hf_solver
       procedure, private :: solve_level_shifted_aug_Newton_equation     => solve_level_shifted_aug_Newton_equation_arh_hf_solver

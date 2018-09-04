@@ -45,6 +45,35 @@ module uhf_class
 !
       procedure :: form_ao_density => form_ao_density_uhf
 !
+      procedure :: calculate_uhf_energy => calculate_uhf_energy_uhf
+      procedure :: set_ao_density_to_core_guess => set_ao_density_to_core_guess_uhf
+!
+!     Initialize and destruct routines
+!
+      procedure :: initialize_ao_density_a           => initialize_ao_density_a_uhf
+      procedure :: initialize_ao_density_b           => initialize_ao_density_b_uhf
+!
+      procedure :: initialize_ao_fock_a              => initialize_ao_fock_a_uhf
+      procedure :: initialize_ao_fock_b              => initialize_ao_fock_b_uhf
+!
+      procedure :: initialize_orbital_coefficients_a => initialize_orbital_coefficients_a_uhf
+      procedure :: initialize_orbital_coefficients_b => initialize_orbital_coefficients_b_uhf
+!
+      procedure :: initialize_orbital_energies_a     => initialize_orbital_energies_a_uhf
+      procedure :: initialize_orbital_energies_b     => initialize_orbital_energies_b_uhf
+!
+      procedure :: destruct_ao_density_a             => destruct_ao_density_a_uhf
+      procedure :: destruct_ao_density_b             => destruct_ao_density_b_uhf
+!
+      procedure :: destruct_ao_fock_a                => destruct_ao_fock_a_uhf
+      procedure :: destruct_ao_fock_b                => destruct_ao_fock_b_uhf
+!
+      procedure :: destruct_orbital_coefficients_a   => destruct_orbital_coefficients_a_uhf
+      procedure :: destruct_orbital_coefficients_b   => destruct_orbital_coefficients_b_uhf
+!
+      procedure :: destruct_orbital_energies_a       => destruct_orbital_energies_a_uhf
+      procedure :: destruct_orbital_energies_b       => destruct_orbital_energies_b_uhf
+!
    end type uhf
 !
 !
@@ -80,7 +109,40 @@ contains
 !
       call wf%determine_n_alpha_and_beta_electrons()
 !
+      write(output%unit, *) ' n alpha:', wf%n_alpha
+      write(output%unit, *) ' n beta:', wf%n_beta
+      write(output%unit, *) 'multiplicity:', wf%system%multiplicity
+!
    end subroutine prepare_uhf
+!
+!
+   subroutine set_ao_density_to_core_guess_uhf(wf, h_wx)
+!!
+!!    Set AO density to core guess
+!!    Written by Eirik F. Kjønstad, Sep 2018
+!!
+!!    Solves the Roothan-Hall equation ignoring the two-
+!!    electron AO density dependent part of the Fock matrix.
+!!
+!!    Based on the orbital coefficients, the routine constructs 
+!!    the associated AO spin densities. 
+!!
+      implicit none 
+!
+      class(uhf) :: wf 
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx 
+!
+      wf%ao_fock = h_wx 
+      call wf%do_roothan_hall()
+!
+      wf%orbital_coefficients_a = wf%orbital_coefficients
+      wf%orbital_coefficients_b = wf%orbital_coefficients
+!
+      call wf%construct_ao_spin_density('alpha')
+      call wf%construct_ao_spin_density('beta')
+!
+   end subroutine set_ao_density_to_core_guess_uhf
 !
 !
    subroutine determine_n_alpha_and_beta_electrons_uhf(wf)
@@ -100,7 +162,7 @@ contains
 !
       integer(i15) :: n_alpha_m_n_beta, n_alpha_p_n_beta 
 !
-      n_alpha_m_n_beta = 2*(wf%system%multiplicity)
+      n_alpha_m_n_beta = wf%system%multiplicity - 1 ! 2 S + 1 - 1 = 2 S
       n_alpha_p_n_beta = wf%system%n_electrons 
 !
       wf%n_alpha = (n_alpha_p_n_beta + n_alpha_m_n_beta)/2
@@ -141,7 +203,7 @@ contains
          call dgemm('N', 'T',                   &
                      wf%n_ao,                   &
                      wf%n_ao,                   &
-                     wf%n_o,                    &
+                     wf%n_alpha,                &
                      one,                       &
                      wf%orbital_coefficients_a, &
                      wf%n_ao,                   &
@@ -156,7 +218,7 @@ contains
          call dgemm('N', 'T',                   &
                      wf%n_ao,                   &
                      wf%n_ao,                   &
-                     wf%n_o,                    &
+                     wf%n_beta,                 &
                      one,                       &
                      wf%orbital_coefficients_b, &
                      wf%n_ao,                   &
@@ -208,8 +270,8 @@ contains
 !!    The routine computes the alpha or beta Fock matrix, depending 
 !!    on the value of the spin 'sigma' (='alpha' or 'beta'):
 !!
-!!       F_αβ^alpha = h_αβ + sum_γδ g_αβγδ D_γδ + sum_γδ g_αδγβ D_γδ^alpha 
-!!       F_αβ^beta  = h_αβ + sum_γδ g_αβγδ D_γδ + sum_γδ g_αδγβ D_γδ^beta 
+!!       F_αβ^alpha = h_αβ + sum_γδ g_αβγδ D_γδ - sum_γδ g_αδγβ D_γδ^alpha 
+!!       F_αβ^beta  = h_αβ + sum_γδ g_αβγδ D_γδ - sum_γδ g_αδγβ D_γδ^beta 
 !!
 !!    Here the superscript refers to the spin function, while the subscripts
 !!    are AO indices. In contrast to the restricted routine, this one does 
@@ -243,7 +305,7 @@ contains
 !
       real(dp) :: max_D_schwarz, max_eri_schwarz
 !
-      real(dp), dimension(:,:), allocatable :: scaled_D_sigma ! = -2 * D_sigma
+      real(dp), dimension(:,:), allocatable :: scaled_D_sigma ! = 2 * D_sigma
 !
 !     Set thresholds to ignore Coulomb and exchange terms,
 !     as well as the desired Libint integral precision  
@@ -284,7 +346,7 @@ contains
 !     and parallellizing over available threads (each gets its own copy of the Fock matrix)
 !
       call mem%alloc(scaled_D_sigma, wf%n_ao, wf%n_ao)
-      scaled_D_sigma = -two*D_sigma 
+      scaled_D_sigma = two*D_sigma 
 !
       call wf%construct_sp_density_schwarz(sp_density_schwarz, scaled_D_sigma)
       max_D_schwarz = get_abs_max(sp_density_schwarz, n_s**2)      
@@ -312,6 +374,8 @@ contains
          call symmetric_sum(wf%ao_fock_a, wf%n_ao)
          wf%ao_fock_a = wf%ao_fock_a*half
 !
+         wf%ao_fock_a = wf%ao_fock_a + h_wx
+!
       elseif (trim(sigma) == 'beta') then 
 !
          wf%ao_fock_b = zero
@@ -324,6 +388,8 @@ contains
          call symmetric_sum(wf%ao_fock_b, wf%n_ao)
          wf%ao_fock_b = wf%ao_fock_b*half
 !
+         wf%ao_fock_b = wf%ao_fock_b + h_wx
+!
       else 
 !
          call output%error_msg('Did not recognize spin variable in construct_ao_fock:' // trim(sigma))
@@ -333,6 +399,259 @@ contains
       call mem%dealloc(F, wf%n_ao, wf%n_ao*n_threads) 
 !
    end subroutine construct_ao_spin_fock_uhf
+!
+!
+   subroutine calculate_uhf_energy_uhf(wf, h_wx)
+!!
+!!    Calculate UHF energy 
+!!    Written by Eirik F. Kjønstad, Sep 2018
+!!
+!!    Calculates the unrestricted Hartree-Fock energy,
+!!
+!!       E = E_alpha + E_beta = 1/2 Tr (D^alpha h) + 1/2 Tr (D^alpha F) 
+!!                            + 1/2 Tr (D^beta h)  + 1/2 Tr (D^beta F)
+!!
+      implicit none 
+!
+      class(uhf) :: wf 
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao) :: h_wx
+!
+      real(dp) :: ddot 
+!
+      wf%uhf_energy = wf%system%get_nuclear_repulsion()
+!
+      wf%uhf_energy = wf%uhf_energy + (one/two)*ddot((wf%n_ao)**2, wf%ao_density_a, 1, h_wx, 1)
+      wf%uhf_energy = wf%uhf_energy + (one/two)*ddot((wf%n_ao)**2, wf%ao_density_a, 1, wf%ao_fock_a, 1)    
+!
+      wf%uhf_energy = wf%uhf_energy + (one/two)*ddot((wf%n_ao)**2, wf%ao_density_b, 1, h_wx, 1)
+      wf%uhf_energy = wf%uhf_energy + (one/two)*ddot((wf%n_ao)**2, wf%ao_density_b, 1, wf%ao_fock_b, 1)   
+!
+   end subroutine calculate_uhf_energy_uhf
+!
+!
+   subroutine initialize_ao_density_a_uhf(wf)
+!!
+!!    Initialize AO density alpha 
+!!    Written by Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!
+      class(uhf) :: wf 
+!
+      if (.not. allocated(wf%ao_density_a)) call mem%alloc(wf%ao_density_a, wf%n_ao, wf%n_ao)
+!
+   end subroutine initialize_ao_density_a_uhf
+!
+!
+   subroutine destruct_ao_density_a_uhf(wf)
+!!
+!!    Destruct AO density alpha 
+!!    Written by Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!
+      class(uhf) :: wf 
+!
+      if (allocated(wf%ao_density_a)) call mem%dealloc(wf%ao_density_a, wf%n_ao, wf%n_ao)
+!
+   end subroutine destruct_ao_density_a_uhf
+!
+!
+   subroutine initialize_ao_density_b_uhf(wf)
+!!
+!!    Initialize AO density beta 
+!!    Written by Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!
+      class(uhf) :: wf 
+!
+      if (.not. allocated(wf%ao_density_b)) call mem%alloc(wf%ao_density_b, wf%n_ao, wf%n_ao)
+!
+   end subroutine initialize_ao_density_b_uhf
+!
+!
+   subroutine destruct_ao_density_b_uhf(wf)
+!!
+!!    Destruct AO density beta 
+!!    Written by Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!
+      class(uhf) :: wf 
+!
+      if (allocated(wf%ao_density_b)) call mem%dealloc(wf%ao_density_b, wf%n_ao, wf%n_ao)
+!
+   end subroutine destruct_ao_density_b_uhf
+!
+!
+   subroutine initialize_ao_fock_a_uhf(wf)
+!!
+!!    Initialize AO Fock alpha 
+!!    Written by Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!
+      class(uhf) :: wf 
+!
+      if (.not. allocated(wf%ao_fock_a)) call mem%alloc(wf%ao_fock_a, wf%n_ao, wf%n_ao)
+!
+   end subroutine initialize_ao_fock_a_uhf
+!
+!
+   subroutine destruct_ao_fock_a_uhf(wf)
+!!
+!!    Destruct AO Fock alpha 
+!!    Written by Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!
+      class(uhf) :: wf 
+!
+      if (allocated(wf%ao_fock_a)) call mem%dealloc(wf%ao_fock_a, wf%n_ao, wf%n_ao)
+!
+   end subroutine destruct_ao_fock_a_uhf
+!
+!
+   subroutine initialize_ao_fock_b_uhf(wf)
+!!
+!!    Initialize AO Fock beta 
+!!    Written by Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!
+      class(uhf) :: wf 
+!
+      if (.not. allocated(wf%ao_fock_b)) call mem%alloc(wf%ao_fock_b, wf%n_ao, wf%n_ao)
+!
+   end subroutine initialize_ao_fock_b_uhf
+!
+!
+   subroutine destruct_ao_fock_b_uhf(wf)
+!!
+!!    Destruct AO Fock beta 
+!!    Written by Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!
+      class(uhf) :: wf 
+!
+      if (allocated(wf%ao_fock_b)) call mem%dealloc(wf%ao_fock_b, wf%n_ao, wf%n_ao)
+!
+   end subroutine destruct_ao_fock_b_uhf
+!
+!
+   subroutine initialize_orbital_coefficients_a_uhf(wf)
+!!
+!!    Initialize orbital coefficients alpha 
+!!    Written by Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!
+      class(uhf) :: wf 
+!
+      if (.not. allocated(wf%orbital_coefficients_a)) call mem%alloc(wf%orbital_coefficients_a, wf%n_ao, wf%n_mo)
+!
+   end subroutine initialize_orbital_coefficients_a_uhf
+!
+!
+   subroutine destruct_orbital_coefficients_a_uhf(wf)
+!!
+!!    Destruct orbital coefficients alpha 
+!!    Written by Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!
+      class(uhf) :: wf 
+!
+      if (allocated(wf%orbital_coefficients_a)) call mem%dealloc(wf%orbital_coefficients_a, wf%n_ao, wf%n_mo)
+!
+   end subroutine destruct_orbital_coefficients_a_uhf
+!
+!
+   subroutine initialize_orbital_coefficients_b_uhf(wf)
+!!
+!!    Initialize orbital coefficients beta 
+!!    Written by Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!
+      class(uhf) :: wf 
+!
+      if (.not. allocated(wf%orbital_coefficients_b)) call mem%alloc(wf%orbital_coefficients_b, wf%n_ao, wf%n_mo)
+!
+   end subroutine initialize_orbital_coefficients_b_uhf
+!
+!
+   subroutine destruct_orbital_coefficients_b_uhf(wf)
+!!
+!!    Destruct orbital coefficients beta 
+!!    Written by Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!
+      class(uhf) :: wf 
+!
+      if (allocated(wf%orbital_coefficients_b)) call mem%dealloc(wf%orbital_coefficients_b, wf%n_ao, wf%n_mo)
+!
+   end subroutine destruct_orbital_coefficients_b_uhf
+!
+!
+   subroutine initialize_orbital_energies_a_uhf(wf)
+!!
+!!    Initialize orbital energies alpha 
+!!    Written by Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!
+      class(uhf) :: wf 
+!
+      if (.not. allocated(wf%orbital_energies_a)) call mem%alloc(wf%orbital_energies_a, wf%n_mo, 1)
+!
+   end subroutine initialize_orbital_energies_a_uhf
+!
+!
+   subroutine destruct_orbital_energies_a_uhf(wf)
+!!
+!!    Initialize orbital energies alpha 
+!!    Written by Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!
+      class(uhf) :: wf 
+!
+      if (allocated(wf%orbital_energies_a)) call mem%dealloc(wf%orbital_energies_a, wf%n_mo, 1)
+!
+   end subroutine destruct_orbital_energies_a_uhf
+!
+!
+   subroutine initialize_orbital_energies_b_uhf(wf)
+!!
+!!    Initialize orbital energies beta 
+!!    Written by Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!
+      class(uhf) :: wf 
+!
+      if (.not. allocated(wf%orbital_energies_b)) call mem%alloc(wf%orbital_energies_b, wf%n_mo, 1)
+!
+   end subroutine initialize_orbital_energies_b_uhf
+!
+!
+   subroutine destruct_orbital_energies_b_uhf(wf)
+!!
+!!    Destruct orbital energies beta 
+!!    Written by Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!
+      class(uhf) :: wf 
+!
+      if (allocated(wf%orbital_energies_b)) call mem%dealloc(wf%orbital_energies_b, wf%n_mo, 1)
+!
+   end subroutine destruct_orbital_energies_b_uhf
 !
 !
 end module uhf_class

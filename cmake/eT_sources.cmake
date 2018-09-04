@@ -2,6 +2,7 @@ set(eT_fortran_sources
    src/eT_program.F90
    src/solvers/hf_solver_class.F90
    src/solvers/scf_diis_solver_class.F90
+   src/solvers/unrestricted_scf_solver_class.F90
    src/solvers/arh_hf_solver_class.F90
    src/solvers/eri_cd_solver_class.F90
    src/engines/hf_engine_class.F90
