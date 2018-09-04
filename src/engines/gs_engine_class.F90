@@ -51,9 +51,10 @@ contains
       allocate(eri_chol_solver)
 !
       call eri_chol_solver%initialize(wf%system)
-      call eri_chol_solver%solve(wf%system)
+      call eri_chol_solver%run(wf%system)
 !
       call eri_chol_solver%cholesky_vecs_diagonal_test()
+!
       call eri_chol_solver%construct_mo_cholesky_vecs(wf%system, wf%n_mo, wf%orbital_coefficients)
 !
       call wf%integrals%prepare(eri_chol_solver%n_cholesky, wf%n_o, wf%n_v)

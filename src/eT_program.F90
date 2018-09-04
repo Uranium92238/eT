@@ -93,7 +93,7 @@ program eT_program
         allocate(chol_solver)
 !
         call chol_solver%initialize(system)
-        call chol_solver%solve(system)
+        call chol_solver%run(system)
         call chol_solver%finalize()
 !
      else

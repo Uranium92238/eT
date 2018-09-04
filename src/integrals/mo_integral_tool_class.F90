@@ -39,6 +39,7 @@ module mo_integral_tool_class
       procedure :: need_t1 => need_t1_mo_integral_tool
 !
       procedure :: read_cholesky => read_cholesky_mo_integral_tool
+      procedure :: read_cholesky_t1 => read_cholesky_t1_mo_integral_tool
 !
       procedure :: read_cholesky_ia => read_cholesky_ia_mo_integral_tool
 !
@@ -46,9 +47,15 @@ module mo_integral_tool_class
       procedure :: construct_cholesky_ab => construct_cholesky_ab_mo_integral_tool
       procedure :: construct_cholesky_ai => construct_cholesky_ai_mo_integral_tool
 !
+      procedure :: read_cholesky_ai_t1 => read_cholesky_ai_t1_mo_integral_tool
+      procedure :: read_cholesky_ij_t1 => read_cholesky_ij_t1_mo_integral_tool
+      procedure :: read_cholesky_ab_t1 => read_cholesky_ab_t1_mo_integral_tool
+!
       procedure :: set_full_index => set_full_index_mo_integral_tool
 !
       procedure :: read_ovov => read_ovov_mo_integral_tool
+!
+     ! procedure :: construct_oooo => 
 !
    end type mo_integral_tool
 !
@@ -145,6 +152,46 @@ contains
       call disk%close_file(integrals%cholesky_mo)
 !
    end subroutine read_cholesky_mo_integral_tool
+!
+!
+   subroutine read_cholesky_t1_mo_integral_tool(integrals, L_pq_J, first_p, last_p, first_q, last_q)
+!!
+!!    Read mo t1 cholesky vectors
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
+!!
+!!    Reads T1-transformed cholesky vectors L_pq_J for mo indices 
+!!    [first_p, last_p] and [first_q, last_q]
+!!
+      implicit none
+!
+      class(mo_integral_tool), intent(in) :: integrals
+!
+      integer(i15), intent(in) :: first_p, last_p
+      integer(i15), intent(in) :: first_q, last_q
+!
+      real(dp), dimension((last_p - first_p + 1)*(last_q - first_q + 1), integrals%n_J) :: L_pq_J
+!
+      integer(i15) :: p, q, pq, pq_rec, J, dim_p, dim_q
+!
+      dim_p = last_p - first_p + 1
+      dim_q = last_q - first_q + 1
+!
+      call disk%open_file(integrals%cholesky_mo_t1, 'read')
+!
+      do p = 1, dim_p
+         do q = 1, dim_q
+!
+            pq = dim_p*(q - 1) + p
+!
+            read(integrals%cholesky_mo_t1%unit, rec=pq) (L_pq_J(pq, J), J = 1, integrals%n_J)
+!
+         enddo
+      enddo
+
+!
+      call disk%close_file(integrals%cholesky_mo_t1)
+!
+   end subroutine read_cholesky_t1_mo_integral_tool
 !
 !
    subroutine read_cholesky_ia_mo_integral_tool(integrals, L_ia_J, first_i, last_i, first_a, last_a)
@@ -339,6 +386,12 @@ contains
 !!    Construct Cholesky ai
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
+!!    Computes the T1-transformed cholesky vector
+!!    
+!!       L_ai_J_T1 = L_ai_J - sum_j t_aj*L_ji_J 
+!!                          + sum_b t_bi*L_ab_J
+!!                          - sum_bj t_aj*t_bi*L_jb_J
+!!
       implicit none 
 !
       class(mo_integral_tool), intent(in) :: integrals 
@@ -460,6 +513,9 @@ contains
 !        
          call mem%dealloc(L_ba_J, batch_a%length*(integrals%n_v), (integrals%n_J))  
 !
+!$omp parallel do &
+!$omp private(i, a, J, ai, aJ) &
+!$omp shared(L_ai_J, X_i_aJ, batch_a)
          do i = 1, length_i
             do a = 1, batch_a%length
                do J = 1, (integrals%n_J)
@@ -472,12 +528,106 @@ contains
                enddo
             enddo
          enddo
+!$omp end parallel do
 !
          call mem%dealloc(X_i_aJ, length_i, (batch_a%length)*(integrals%n_J)) 
 !
        enddo
 !
    end subroutine construct_cholesky_ai_mo_integral_tool
+!
+!
+   subroutine read_cholesky_ai_t1_mo_integral_tool(integrals, L_ai_J, first_a, last_a, first_i, last_i)
+!!
+!!    Read Cholesky ai T1
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!    Read T1-transformed mo cholesky L_ai^J vectors from file 
+!!
+      implicit none 
+!
+      class(mo_integral_tool), intent(in) :: integrals 
+!  
+      integer(i15), optional, intent(in) :: first_i, last_i
+      integer(i15), optional, intent(in) :: first_a, last_a
+!
+      real(dp), dimension(:, :) :: L_ai_J
+!
+      integer(i15) :: full_first_a, full_last_a, length_a 
+      integer(i15) :: full_first_i, full_last_i, length_i
+!
+!
+      call integrals%set_full_index(full_first_i, 'f', 'o', first_i)
+      call integrals%set_full_index(full_first_a, 'f', 'v', first_a)
+!
+      call integrals%set_full_index(full_last_i, 'l', 'o', last_i)
+      call integrals%set_full_index(full_last_a, 'l', 'v', last_a)
+!
+      call integrals%read_cholesky_t1(L_ai_J, full_first_a, full_last_a, full_first_i, full_last_i)
+!
+   end subroutine read_cholesky_ai_t1_mo_integral_tool
+!
+!
+   subroutine read_cholesky_ij_t1_mo_integral_tool(integrals, L_ij_J, first_i, last_i, first_j, last_j)
+!!
+!!    Read Cholesky ij T1
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!    Read T1-transformed mo cholesky L_ij^J vectors from file 
+!!
+      implicit none 
+!
+      class(mo_integral_tool), intent(in) :: integrals 
+!  
+      integer(i15), optional, intent(in) :: first_i, last_i
+      integer(i15), optional, intent(in) :: first_j, last_j
+!
+      real(dp), dimension(:, :) :: L_ij_J
+!
+      integer(i15) :: full_first_j, full_last_j 
+      integer(i15) :: full_first_i, full_last_i
+!
+!
+      call integrals%set_full_index(full_first_i, 'f', 'o', first_i)
+      call integrals%set_full_index(full_first_j, 'f', 'v', first_j)
+!
+      call integrals%set_full_index(full_last_i, 'l', 'o', last_i)
+      call integrals%set_full_index(full_last_j, 'l', 'v', last_j)
+!
+      call integrals%read_cholesky_t1(L_ij_J, full_first_i, full_last_i, full_first_j, full_last_j)
+!
+   end subroutine read_cholesky_ij_t1_mo_integral_tool
+!
+!
+   subroutine read_cholesky_ab_t1_mo_integral_tool(integrals, L_ab_J, first_a, last_a, first_b, last_b)
+!!
+!!    Read Cholesky ab T1
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!    Read T1-transformed mo cholesky L_ab^J vectors from file 
+!!
+      implicit none 
+!
+      class(mo_integral_tool), intent(in) :: integrals 
+!  
+      integer(i15), optional, intent(in) :: first_a, last_a
+      integer(i15), optional, intent(in) :: first_b, last_b
+!
+      real(dp), dimension(:, :) :: L_ab_J
+!
+      integer(i15) :: full_first_b, full_last_b 
+      integer(i15) :: full_first_a, full_last_a
+!
+!
+      call integrals%set_full_index(full_first_a, 'f', 'o', first_a)
+      call integrals%set_full_index(full_first_b, 'f', 'v', first_b)
+!
+      call integrals%set_full_index(full_last_a, 'l', 'o', last_a)
+      call integrals%set_full_index(full_last_b, 'l', 'v', last_b)
+!
+      call integrals%read_cholesky_t1(L_ab_J, full_first_a, full_last_a, full_first_b, full_last_b)
+!
+   end subroutine read_cholesky_ab_t1_mo_integral_tool
 !
 !
    subroutine set_full_index_mo_integral_tool(integrals, ind, pos, orb_space, red_ind)
@@ -692,6 +842,556 @@ contains
 !
    end subroutine read_ovov_mo_integral_tool
 !
+!
+   subroutine construct_oooo_mo_integral_tool(integrals, g_ijkl, t1, first_i, last_i, first_j, last_j, &
+                                                            first_k, last_k, first_l, last_l)
+!!
+!!    Construct oooo
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+!!
+      implicit none 
+!
+      class(mo_integral_tool), intent(in) :: integrals 
+!
+      real(dp), dimension(:,:), intent(inout) :: g_ijkl
+!
+      real(dp), dimension(integrals%n_v, integrals%n_o) :: t1
+!
+      integer(i15), optional, intent(in) :: first_i, last_i
+      integer(i15), optional, intent(in) :: first_k, last_k
+      integer(i15), optional, intent(in) :: first_j, last_j
+      integer(i15), optional, intent(in) :: first_l, last_l
+!
+      integer(i15) :: local_first_i, local_last_i
+      integer(i15) :: local_first_k, local_last_k
+      integer(i15) :: local_first_j, local_last_j
+      integer(i15) :: local_first_l, local_last_l
+!
+      integer(i15) :: length_i, length_k, length_j, length_l
+!
+      logical :: index_restrictions
+!
+      real(dp), dimension(:,:), allocatable :: L_ij_J 
+      real(dp), dimension(:,:), allocatable :: L_kl_J 
+!
+      if (present(first_i) .and. present(last_i) .and. &
+          present(first_j) .and. present(last_j) .and. &
+          present(first_k) .and. present(last_k) .and. &
+          present(first_l) .and. present(last_l)) then 
+!
+         index_restrictions = .true.
+!
+         local_first_i = first_i
+         local_first_j = first_j
+         local_first_k = first_k 
+         local_first_l = first_l
+!
+         local_last_i = last_i  
+         local_last_j = last_j   
+         local_last_k = last_k  
+         local_last_l = last_l   
+!
+      else
+!
+         index_restrictions = .false.
+!
+         local_first_i = 1
+         local_first_j = 1 
+         local_first_k = 1 
+         local_first_l = 1
+!
+         local_last_i = integrals%n_o   
+         local_last_j = integrals%n_o    
+         local_last_k = integrals%n_o   
+         local_last_l = integrals%n_o       
+!
+      endif 
+!
+      length_i = local_last_i - local_first_i + 1
+      length_j = local_last_j - local_first_j + 1
+      length_k = local_last_k - local_first_k + 1
+      length_l = local_last_l - local_first_l + 1
+!
+      if (integrals%eri_file .and. .not. index_restrictions) then 
+!
+!        Coming soon: read full g_iajb from file
+!
+         call output%error_msg('reading full eri integrals from file not yet supported!')
+!
+      else
+!
+!        Construct g_ijkl from Cholesky vectors
+!
+         if (index_restrictions) then ! dim_ia ≠ dim_jb in general
+!
+            call mem%alloc(L_ij_J, length_i*length_j, integrals%n_J)
+            call mem%alloc(L_kl_J, length_k*length_l, integrals%n_J)
+!
+            call integrals%construct_cholesky_ij(L_ij_J, t1, local_first_i, local_last_i, local_first_j, local_last_j)
+            call integrals%construct_cholesky_ij(L_kl_J, t1, local_first_k, local_last_k, local_first_l, local_last_l)
+!
+            call dgemm('N', 'T',           &
+                        length_i*length_j, &
+                        length_k*length_l, &
+                        integrals%n_J,     &
+                        one,               &
+                        L_ij_J,            &
+                        length_i*length_j, &
+                        L_kl_J,            &
+                        length_k*length_l, &
+                        zero,              &
+                        g_ijkl)
+!
+            call mem%dealloc(L_ij_J, length_i*length_j, integrals%n_J)
+            call mem%dealloc(L_kl_J, length_k*length_l, integrals%n_J)
+!
+         else ! dim_ij = dim_kl
+!
+            call mem%alloc(L_ij_J, length_i*length_j, integrals%n_J)
+!
+            call integrals%construct_cholesky_ij(L_ij_J, t1, local_first_i, local_last_i, local_first_j, local_last_j)
+!
+            call dgemm('N', 'T',           &
+                        length_i*length_j, &
+                        length_i*length_j, &
+                        integrals%n_J,     &
+                        one,               &
+                        L_ij_J,            &
+                        length_i*length_j, &
+                        L_ij_J,            &
+                        length_i*length_j, & 
+                        zero,              &
+                        g_ijkl)
+!
+            call mem%dealloc(L_ij_J, length_i*length_j, integrals%n_J)
+!
+         endif 
+!
+      endif 
+!
+   end subroutine construct_oooo_mo_integral_tool
+!
+!
+   subroutine construct_ooov_mo_integral_tool(integrals, g_ijka, t1, first_i, last_i, first_j, last_j, &
+                                                            first_k, last_k, first_a, last_a)
+!!
+!!    Construct ooov
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+      implicit none 
+!
+      class(mo_integral_tool), intent(in) :: integrals 
+!
+      real(dp), dimension(:,:), intent(inout) :: g_ijka
+!
+      real(dp), dimension(integrals%n_v, integrals%n_o) :: t1
+!
+      integer(i15), optional, intent(in) :: first_i, last_i
+      integer(i15), optional, intent(in) :: first_k, last_k
+      integer(i15), optional, intent(in) :: first_j, last_j
+      integer(i15), optional, intent(in) :: first_a, last_a
+!
+      integer(i15) :: local_first_i, local_last_i
+      integer(i15) :: local_first_k, local_last_k
+      integer(i15) :: local_first_j, local_last_j
+      integer(i15) :: local_first_a, local_last_a
+!
+      integer(i15) :: length_i, length_k, length_j, length_a
+!
+      logical :: index_restrictions
+!
+      real(dp), dimension(:,:), allocatable :: L_ij_J 
+      real(dp), dimension(:,:), allocatable :: L_ka_J 
+!
+      if (present(first_i) .and. present(last_i) .and. &
+          present(first_j) .and. present(last_j) .and. &
+          present(first_k) .and. present(last_k) .and. &
+          present(first_a) .and. present(last_a)) then 
+!
+         index_restrictions = .true.
+!
+         local_first_i = first_i
+         local_first_j = first_j
+         local_first_k = first_k 
+         local_first_a = first_a
+!
+         local_last_i = last_i  
+         local_last_j = last_j   
+         local_last_k = last_k  
+         local_last_a = last_a   
+!
+      else
+!
+         index_restrictions = .false.
+!
+         local_first_i = 1
+         local_first_j = 1 
+         local_first_k = 1 
+         local_first_a = 1
+!
+         local_last_i = integrals%n_o   
+         local_last_j = integrals%n_o    
+         local_last_k = integrals%n_o   
+         local_last_a = integrals%n_v     
+!
+      endif 
+!
+      length_i = local_last_i - local_first_i + 1
+      length_j = local_last_j - local_first_j + 1
+      length_k = local_last_k - local_first_k + 1
+      length_a = local_last_a - local_first_a + 1
+!
+      if (integrals%eri_file .and. .not. index_restrictions) then 
+!
+!        Coming soon: read full g_ijka from file
+!
+         call output%error_msg('reading full eri integrals from file not yet supported!')
+!
+      else
+!
+!        Construct g_ijka
+!
+         call mem%alloc(L_ij_J, length_i*length_j, integrals%n_J)
+         call mem%alloc(L_ka_J, length_k*length_a, integrals%n_J)
+!
+         call integrals%construct_cholesky_ij(L_ij_J, t1, local_first_i, local_last_i, local_first_j, local_last_j)
+         call integrals%read_cholesky_ia(L_ka_J, local_first_k, local_last_k, local_first_a, local_last_a)
+!
+         call dgemm('N', 'T',           &
+                     length_i*length_j, &
+                     length_k*length_a, &
+                     integrals%n_J,     &
+                     one,               &
+                     L_ij_J,            &
+                     length_i*length_j, &
+                     L_ka_J,            &
+                     length_k*length_a, &
+                     zero,              &
+                     g_ijka)
+!
+         call mem%dealloc(L_ij_J, length_i*length_j, integrals%n_J)
+         call mem%dealloc(L_ka_J, length_k*length_a, integrals%n_J)
+!
+      endif 
+!
+   end subroutine construct_ooov_mo_integral_tool
+!
+!
+   subroutine construct_oovo_mo_integral_tool(integrals, g_ijak, t1, first_i, last_i, first_j, last_j, &
+                                                            first_a, last_a, first_k, last_k)
+!!
+!!    Construct oovo
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+      implicit none 
+!
+      class(mo_integral_tool), intent(in) :: integrals 
+!
+      real(dp), dimension(:,:), intent(inout) :: g_ijak
+!
+      real(dp), dimension(integrals%n_v, integrals%n_o) :: t1
+!
+      integer(i15), optional, intent(in) :: first_i, last_i
+      integer(i15), optional, intent(in) :: first_k, last_k
+      integer(i15), optional, intent(in) :: first_j, last_j
+      integer(i15), optional, intent(in) :: first_a, last_a
+!
+      integer(i15) :: local_first_i, local_last_i
+      integer(i15) :: local_first_k, local_last_k
+      integer(i15) :: local_first_j, local_last_j
+      integer(i15) :: local_first_a, local_last_a
+!
+      integer(i15) :: length_i, length_k, length_j, length_a
+!
+      logical :: index_restrictions
+!
+      real(dp), dimension(:,:), allocatable :: L_ij_J 
+      real(dp), dimension(:,:), allocatable :: L_ak_J 
+!
+      if (present(first_i) .and. present(last_i) .and. &
+          present(first_j) .and. present(last_j) .and. &
+          present(first_k) .and. present(last_k) .and. &
+          present(first_a) .and. present(last_a)) then 
+!
+         index_restrictions = .true.
+!
+         local_first_i = first_i
+         local_first_j = first_j
+         local_first_k = first_k 
+         local_first_a = first_a
+!
+         local_last_i = last_i  
+         local_last_j = last_j   
+         local_last_k = last_k  
+         local_last_a = last_a   
+!
+      else
+!
+         index_restrictions = .false.
+!
+!
+         local_first_i = 1
+         local_first_j = 1 
+         local_first_k = 1 
+         local_first_a = 1
+!
+         local_last_i = integrals%n_o   
+         local_last_j = integrals%n_o    
+         local_last_k = integrals%n_o   
+         local_last_a = integrals%n_v     
+!
+      endif 
+!
+      length_i = local_last_i - local_first_i + 1
+      length_j = local_last_j - local_first_j + 1
+      length_k = local_last_k - local_first_k + 1
+      length_a = local_last_a - local_first_a + 1
+!
+      if (integrals%eri_file .and. .not. index_restrictions) then 
+!
+!        Coming soon: read full g_ijak from file
+!
+         call output%error_msg('reading full eri integrals from file not yet supported!')
+!
+      else
+!
+!        Construct g_ijak
+!
+         call mem%alloc(L_ij_J, length_i*length_j, integrals%n_J)
+         call mem%alloc(L_ak_J, length_k*length_a, integrals%n_J)
+!
+         call integrals%construct_cholesky_ij(L_ij_J, t1, local_first_i, local_last_i, local_first_j, local_last_j)
+         call integrals%construct_cholesky_ai(L_ak_J, t1, local_first_a, local_last_a, local_first_k, local_last_k)
+!
+         call dgemm('N', 'T',           &
+                     length_i*length_j, &
+                     length_k*length_a, &
+                     integrals%n_J,     &
+                     one,               &
+                     L_ij_J,            &
+                     length_i*length_j, &
+                     L_ak_J,            &
+                     length_k*length_a, &
+                     zero,              &
+                     g_ijak)
+!
+         call mem%dealloc(L_ij_J, length_i*length_j, integrals%n_J)
+         call mem%dealloc(L_ak_J, length_k*length_a, integrals%n_J)
+!
+      endif 
+!
+   end subroutine construct_oovo_mo_integral_tool
+!
+!
+   subroutine construct_ovoo_mo_integral_tool(integrals, g_iajk, t1, first_i, last_i, first_a, last_a, &
+                                                            first_j, last_j, first_k, last_k)
+!!
+!!    Construct ovoo
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+      implicit none 
+!
+      class(mo_integral_tool), intent(in) :: integrals 
+!
+      real(dp), dimension(:,:), intent(inout) :: g_iajk
+!
+      real(dp), dimension(integrals%n_v, integrals%n_o) :: t1
+!
+      integer(i15), optional, intent(in) :: first_i, last_i
+      integer(i15), optional, intent(in) :: first_k, last_k
+      integer(i15), optional, intent(in) :: first_j, last_j
+      integer(i15), optional, intent(in) :: first_a, last_a
+!
+      integer(i15) :: local_first_i, local_last_i
+      integer(i15) :: local_first_k, local_last_k
+      integer(i15) :: local_first_j, local_last_j
+      integer(i15) :: local_first_a, local_last_a
+!
+      integer(i15) :: length_i, length_k, length_j, length_a
+!
+      logical :: index_restrictions
+!
+      real(dp), dimension(:,:), allocatable :: L_ia_J 
+      real(dp), dimension(:,:), allocatable :: L_jk_J 
+!
+      if (present(first_i) .and. present(last_i) .and. &
+          present(first_j) .and. present(last_j) .and. &
+          present(first_k) .and. present(last_k) .and. &
+          present(first_a) .and. present(last_a)) then 
+!
+         index_restrictions = .true.
+!
+         local_first_i = first_i
+         local_first_j = first_j
+         local_first_k = first_k 
+         local_first_a = first_a
+!
+         local_last_i = last_i  
+         local_last_j = last_j   
+         local_last_k = last_k  
+         local_last_a = last_a   
+!
+      else
+!
+         index_restrictions = .false.
+!
+         local_first_i = 1
+         local_first_j = 1 
+         local_first_k = 1 
+         local_first_a = 1
+!
+         local_last_i = integrals%n_o   
+         local_last_j = integrals%n_o    
+         local_last_k = integrals%n_o   
+         local_last_a = integrals%n_v     
+!
+      endif 
+!
+      length_i = local_last_i - local_first_i + 1
+      length_j = local_last_j - local_first_j + 1
+      length_k = local_last_k - local_first_k + 1
+      length_a = local_last_a - local_first_a + 1
+!
+      if (integrals%eri_file .and. .not. index_restrictions) then 
+!
+!        Coming soon: read full g_iajk from file
+!
+         call output%error_msg('reading full eri integrals from file not yet supported!')
+!
+      else
+!
+!        Construct g_iajk
+!
+         call mem%alloc(L_ia_J, length_i*length_a, integrals%n_J)
+         call mem%alloc(L_jk_J, length_k*length_j, integrals%n_J)
+!
+         call integrals%construct_cholesky_ij(L_jk_J, t1, local_first_j, local_last_j, local_first_k, local_last_k)
+         call integrals%read_cholesky_ia(L_ia_J, local_first_i, local_last_i, local_first_a, local_last_a)
+!
+         call dgemm('N', 'T',           &
+                     length_i*length_a, &
+                     length_k*length_j, &
+                     integrals%n_J,     &
+                     one,               &
+                     L_ia_J,            &
+                     length_i*length_j, &
+                     L_jk_J,            &
+                     length_k*length_a, &
+                     zero,              &
+                     g_iajk)
+!
+         call mem%dealloc(L_ia_J, length_i*length_a, integrals%n_J)
+         call mem%dealloc(L_jk_J, length_k*length_j, integrals%n_J)
+!
+      endif 
+!
+   end subroutine construct_ovoo_mo_integral_tool
+!
+!
+   subroutine construct_vooo_mo_integral_tool(integrals, g_aijk, t1, first_a, last_a, first_i, last_i, &
+                                                            first_j, last_j, first_k, last_k)
+!!
+!!    Construct ovoo
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+      implicit none 
+!
+      class(mo_integral_tool), intent(in) :: integrals 
+!
+      real(dp), dimension(:,:), intent(inout) :: g_aijk
+!
+      real(dp), dimension(integrals%n_v, integrals%n_o) :: t1
+!
+      integer(i15), optional, intent(in) :: first_i, last_i
+      integer(i15), optional, intent(in) :: first_k, last_k
+      integer(i15), optional, intent(in) :: first_j, last_j
+      integer(i15), optional, intent(in) :: first_a, last_a
+!
+      integer(i15) :: local_first_i, local_last_i
+      integer(i15) :: local_first_k, local_last_k
+      integer(i15) :: local_first_j, local_last_j
+      integer(i15) :: local_first_a, local_last_a
+!
+      integer(i15) :: length_i, length_k, length_j, length_a
+!
+      logical :: index_restrictions
+!
+      real(dp), dimension(:,:), allocatable :: L_ai_J 
+      real(dp), dimension(:,:), allocatable :: L_jk_J 
+!
+      if (present(first_i) .and. present(last_i) .and. &
+          present(first_j) .and. present(last_j) .and. &
+          present(first_k) .and. present(last_k) .and. &
+          present(first_a) .and. present(last_a)) then 
+!
+         index_restrictions = .true.
+!
+         local_first_i = first_i
+         local_first_j = first_j
+         local_first_k = first_k 
+         local_first_a = first_a
+!
+         local_last_i = last_i  
+         local_last_j = last_j   
+         local_last_k = last_k  
+         local_last_a = last_a   
+!
+      else
+!
+         index_restrictions = .false.
+!
+         local_first_i = 1
+         local_first_j = 1 
+         local_first_k = 1 
+         local_first_a = 1
+!
+         local_last_i = integrals%n_o   
+         local_last_j = integrals%n_o    
+         local_last_k = integrals%n_o   
+         local_last_a = integrals%n_v     
+!
+      endif 
+!
+      length_i = local_last_i - local_first_i + 1
+      length_j = local_last_j - local_first_j + 1
+      length_k = local_last_k - local_first_k + 1
+      length_a = local_last_a - local_first_a + 1
+!
+      if (integrals%eri_file .and. .not. index_restrictions) then 
+!
+!        Coming soon: read full g_aijk from file
+!
+         call output%error_msg('reading full eri integrals from file not yet supported!')
+!
+      else
+!
+!        Construct g_aijk
+!
+         call mem%alloc(L_ai_J, length_i*length_a, integrals%n_J)
+         call mem%alloc(L_jk_J, length_k*length_j, integrals%n_J)
+!
+         call integrals%construct_cholesky_ij(L_jk_J, t1, local_first_j, local_last_j, local_first_k, local_last_k)
+         call integrals%construct_cholesky_ai(L_ai_J, t1, local_first_a, local_last_a, local_first_i, local_last_i)
+!
+         call dgemm('N', 'T',           &
+                     length_i*length_a, &
+                     length_k*length_j, &
+                     integrals%n_J,     &
+                     one,               &
+                     L_ai_J,            &
+                     length_i*length_j, &
+                     L_jk_J,            &
+                     length_k*length_a, &
+                     zero,              &
+                     g_aijk)
+!
+         call mem%dealloc(L_ai_J, length_i*length_a, integrals%n_J)
+         call mem%dealloc(L_jk_J, length_k*length_j, integrals%n_J)
+!
+      endif 
+!
+   end subroutine construct_vooo_mo_integral_tool
 !
 end module mo_integral_tool_class
 

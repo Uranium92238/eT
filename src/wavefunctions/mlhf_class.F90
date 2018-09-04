@@ -258,7 +258,7 @@ contains
 !
 !
       call chol_solver%initialize(wf%system)
-      call chol_solver%solve(wf%system, V)
+      call chol_solver%run(wf%system, V)
       call chol_solver%finalize()
 !
 !     Cholesky decomposition
