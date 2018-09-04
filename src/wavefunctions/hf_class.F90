@@ -67,8 +67,7 @@ module hf_class
 !
 !     Solve the Roothan Hall equation FC = SCe by diagonalization
 !
-      procedure :: solve_roothan_hall => solve_roothan_hall_hf ! remove soon, does not belong to wavefunction 
-      procedure :: do_roothan_hall    => do_roothan_hall_hf
+      procedure :: do_roothan_hall => do_roothan_hall_hf
 !
 !     Get and set routines for wavefunction variables
 !
@@ -1811,50 +1810,6 @@ contains
       call mem%dealloc(density_diagonal, wf%n_ao, 1)
 !
    end subroutine set_ao_density_to_sad_hf
-!
-!
-   subroutine solve_roothan_hall_hf(wf)
-!!
-!!    Solve Roothan Hall
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      real(dp), dimension(:,:), allocatable :: work
-      real(dp), dimension(:,:), allocatable :: ao_overlap_copy
-!
-      real(dp) :: ddot, norm
-!
-      integer(i15) :: info = 0
-!
-      wf%orbital_energies = zero
-!
-      call mem%alloc(work, 4*wf%n_ao, 1)
-      work = zero
-!
-      call mem%alloc(ao_overlap_copy, wf%n_ao, wf%n_ao)
-!
-      wf%orbital_coefficients = wf%ao_fock
-!
-      ao_overlap_copy = wf%ao_overlap
-!
-      call dsygv(1, 'V', 'L',                &
-                  wf%n_ao,                   &
-                  wf%orbital_coefficients,   & ! ao_fock on entry orbital coefficients on exit
-                  wf%n_ao,                   &
-                  ao_overlap_copy,           &
-                  wf%n_ao,                   &
-                  wf%orbital_energies,       &
-                  work,                      &
-                  4*(wf%n_ao),               &
-                  info)
-!
-      call mem%dealloc(work, 4*wf%n_ao, 1)
-      call mem%dealloc(ao_overlap_copy, wf%n_ao, wf%n_ao)
-!
-   end subroutine solve_roothan_hall_hf
 !
 !
    subroutine construct_ao_overlap_hf(wf)
