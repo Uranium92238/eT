@@ -133,16 +133,18 @@ contains
       call get_ao_h_xy(h_wx)
       call wf%set_ao_density_to_core_guess(h_wx)
 !
-      call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s, &
-                           solver%coulomb_thr, solver%exchange_thr, solver%coulomb_precision)  
+      call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s,       &
+                                 h_wx, solver%coulomb_thr, solver%exchange_thr, &
+                                 solver%coulomb_precision)  
 !
       write(output%unit, *) 'Energy from guess (SAD or core)?', wf%hf_energy
 !
       call wf%do_roothan_hall()
 !
       call wf%construct_ao_density() 
-      call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s, &
-                           solver%coulomb_thr, solver%exchange_thr, solver%coulomb_precision)  
+      call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s,       &
+                                 h_wx, solver%coulomb_thr, solver%exchange_thr, &
+                                 solver%coulomb_precision)  
 !
       call mem%alloc(Po, wf%n_ao, wf%n_ao)
       call mem%alloc(Pv, wf%n_ao, wf%n_ao)

@@ -172,6 +172,9 @@ contains
 !
 !     Construct initial AO Fock from the SOAD density
 !
+      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
+      call get_ao_h_xy(h_wx)
+!
       call wf%initialize_ao_fock()
 !
       start_timer = omp_get_wtime()
@@ -195,7 +198,7 @@ contains
 !
       start_timer = omp_get_wtime()
       call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s, &
-                           solver%coulomb_thr, solver%exchange_thr, solver%coulomb_precision)  
+                                 h_wx, solver%coulomb_thr, solver%exchange_thr, solver%coulomb_precision)  
       end_timer = omp_get_wtime()
       write(output%unit, *) 'Time to construct AO Fock: ', end_timer-start_timer 
 !
@@ -250,9 +253,6 @@ contains
       call mem%alloc(H, wf%n_ao, wf%n_ao)
 !
       call mem%alloc(prev_ao_density, wf%n_ao, wf%n_ao)
-!
-      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
-      call get_ao_h_xy(h_wx)
 !
       do while (.not. converged .and. iteration .le. solver%max_iterations)
 !

@@ -26,6 +26,7 @@ module molecular_system_class
       integer(i15) :: charge
       integer(i15) :: multiplicity
       integer(i15) :: n_electrons 
+      integer(i15) :: n_s
 !
       type(atomic), dimension(:), allocatable :: atoms
 !
@@ -202,6 +203,7 @@ contains
       enddo
 !
       molecule%n_electrons = molecule%get_n_electrons()
+      molecule%n_s         = molecule%get_n_shells()
 !
 !     Some sanity checks and stops
 !

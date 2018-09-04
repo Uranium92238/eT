@@ -85,7 +85,6 @@ module hf_class
       procedure :: initialize_ao_density              => initialize_ao_density_hf
       procedure :: initialize_ao_fock                 => initialize_ao_fock_hf
       procedure :: initialize_mo_fock                 => initialize_mo_fock_hf
-      !procedure :: initialize_mo_coefficients         => initialize_mo_coefficients_hf
       procedure :: initialize_ao_overlap              => initialize_ao_overlap_hf
       procedure :: initialize_orbital_energies        => initialize_orbital_energies_hf
       procedure :: initialize_pivot_matrix_ao_overlap => initialize_pivot_matrix_ao_overlap_hf
@@ -94,7 +93,6 @@ module hf_class
       procedure :: destruct_ao_density                => destruct_ao_density_hf
       procedure :: destruct_ao_fock                   => destruct_ao_fock_hf
       procedure :: destruct_mo_fock                   => destruct_mo_fock_hf
-     ! procedure :: destruct_mo_coefficients           => destruct_mo_coefficients_hf
       procedure :: destruct_ao_overlap                => destruct_ao_overlap_hf
       procedure :: destruct_orbital_energies          => destruct_orbital_energies_hf
       procedure :: destruct_pivot_matrix_ao_overlap   => destruct_pivot_matrix_ao_overlap_hf
@@ -109,6 +107,8 @@ module hf_class
       procedure :: construct_roothan_hall_gradient => construct_roothan_hall_gradient_hf
 !
       procedure :: construct_sp_eri_schwarz        => construct_sp_eri_schwarz_hf
+      procedure :: construct_sp_density_schwarz    => construct_sp_density_schwarz_hf
+      procedure :: get_n_sig_eri_sp                => get_n_sig_eri_sp_hf
 !
    end type hf
 !
@@ -431,8 +431,7 @@ contains
 !!
 !!    Computes a vector that contains the largest value (in absolute terms)
 !!    of g_wxwx^1/2 for each shell pair (A,B), where w and x is in A and B, 
-!!    respectively. These values are used to construct the AO Fock matrix
-!!    without calculating integrals that are not needed.
+!!    respectively.
 !!
       implicit none
 !
@@ -507,6 +506,96 @@ contains
       call mem%dealloc_int(sp_eri_schwarz_index_list, n_s*(n_s + 1)/2, 1)
 !
    end subroutine construct_sp_eri_schwarz_hf
+!
+!
+   subroutine construct_sp_density_schwarz_hf(wf, sp_density_schwarz, D)
+!!
+!!    Construct shell-pair density schwarz vector 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Computes a vector that contains the largest value (in absolute terms)
+!!    of D_wx^1/2 for each shell pair (A,B), where w and x is in A and B, 
+!!    respectively.
+!!
+      implicit none 
+!
+      class(hf) :: wf 
+!
+      real(dp), dimension(wf%system%n_s, wf%system%n_s) :: sp_density_schwarz
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
+!
+      real(dp), dimension(:,:), allocatable :: D_red 
+!
+      type(interval) :: A_interval, B_interval
+!
+      integer(i15) :: s1, s2 
+!
+      real(dp) :: maximum
+!
+!$omp parallel do private(s1, s2, A_interval, B_interval, D_red, maximum) schedule(dynamic)
+      do s1 = 1, wf%system%n_s
+         do s2 = 1, s1
+!
+            A_interval = wf%system%shell_limits(s1)
+            B_interval = wf%system%shell_limits(s2)
+!
+            call mem%alloc(D_red, A_interval%size, B_interval%size)
+!
+            D_red = D(A_interval%first : A_interval%last, B_interval%first : B_interval%last)
+!
+            maximum = get_abs_max(D_red, (A_interval%size)*(B_interval%size))
+!
+            call mem%dealloc(D_red, A_interval%size, B_interval%size)
+!
+            sp_density_schwarz(s1, s2) = maximum
+            sp_density_schwarz(s2, s1) = maximum
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine construct_sp_density_schwarz_hf
+!
+!
+   subroutine get_n_sig_eri_sp_hf(wf, n_sig_sp, sp_eri_schwarz, threshold)
+!!
+!!    Get number of significant ERI shell-pairs 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!
+!!    Calculates the number of significant shell pairs. The threshold 
+!!    determines how small the largest element of g_wxwx in a shell 
+!!    pair AB (w in A, x in B) to be ignored completely in the Fock 
+!!    construction loop.
+!!
+      implicit none 
+!
+      class(hf), intent(in) :: wf 
+!
+      integer(i15), intent(inout) :: n_sig_sp 
+!
+      real(dp), intent(in) :: threshold
+!
+      real(dp), dimension(wf%system%n_s*(wf%system%n_s + 1)/2, 2), intent(in) :: sp_eri_schwarz
+!
+      integer(i15) :: s1s2
+!
+      n_sig_sp = 0
+      do s1s2 = 1, wf%system%n_s*(wf%system%n_s + 1)/2
+!
+         if (sp_eri_schwarz(s1s2, 1)**2 .lt. threshold) then
+!
+            exit
+!
+         else
+!
+            n_sig_sp = n_sig_sp + 1
+!
+         endif
+!
+      enddo
+!
+   end subroutine get_n_sig_eri_sp_hf
 !
 !
    subroutine construct_ao_fock_SAD_hf(wf, coulomb, exchange, precision)
@@ -860,7 +949,7 @@ contains
    end subroutine construct_ao_fock_SAD_hf
 !
 !
-   subroutine construct_ao_fock_hf(wf, sp_eri_schwarz, sp_eri_schwarz_list, n_s, coulomb, exchange, precision)
+   subroutine construct_ao_fock_hf(wf, sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx, coulomb, exchange, precision)
 !!
 !!    Construct AO Fock matrix
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -872,168 +961,88 @@ contains
 !!    where D is the AO density. This routine is integral direct, and
 !!    it calculates the Hartree-Fock energy by default.
 !!
-!!    Try this today: sort the integral screening vector (s1s2|s1s2) 
-!!    according to size, together with an index list. Ask only to sort
-!!    the elements above the threshold and ignore the rest! Then loop 
-!!    over these s1 and s2. We should make the vector packed first, then 
-!!    calculate the appropriate packed index in the loop s1 >= s2 when 
-!!    actually constructing the Fock matrix.
-!!
       implicit none
 !
       class(hf) :: wf
 !
-      integer(i15) :: n_s
+      integer(i15), intent(in) :: n_s
 !
-      real(dp), dimension(n_s*(n_s + 1)/2, 2)     :: sp_eri_schwarz
-      integer(i15), dimension(n_s*(n_s + 1)/2, 3) :: sp_eri_schwarz_list ! list(s1s2, 1) = s1, list(s1s2, 2) = s2, list(s1s2, 3) = s1s2_sorted
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
 !
-      real(dp), optional :: coulomb, exchange, precision ! Non-standard thresholds
+      real(dp), dimension(n_s*(n_s + 1)/2, 2), intent(in)     :: sp_eri_schwarz
+      integer(i15), dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
 !
+      real(dp), optional :: coulomb, exchange, precision   ! Non-standard thresholds, optionals
       real(dp) :: coulomb_thr, exchange_thr, precision_thr ! Actual thresholds 
 !
-      real(dp), dimension(:,:), allocatable :: ao_fock_packed
-      real(dp), dimension(:,:), allocatable :: X_wz, h_wx, h_wx_square
-      integer(i15) :: w, x, y, z, wx, yz, w_red, x_red, y_red, z_red
+      integer(i15) :: thread, n_threads, omp_get_max_threads
 !
-      integer(i15) :: n_threads, omp_get_max_threads, thread_offset, thread, omp_get_thread_num
-      real(dp), dimension(:,:), allocatable :: F 
+      real(dp), dimension(:,:), allocatable :: F, sp_density_schwarz
 !
-      integer(i15) :: s1, s2, s3, s4, s4_max, s1s2, s3s4, s3s4_sorted
-!
-      type(interval) :: A_interval
-      type(interval) :: B_interval
-      type(interval) :: C_interval
-      type(interval) :: D_interval
-!
-      logical :: skip
+      integer(i15) :: s1s2
 !
       integer(i15) :: n_sig_sp
 !
-      real(dp) :: deg_12, deg_34, deg_12_34, deg, ddot, norm
-      real(dp) :: temp, temp1, temp2, temp3, temp4, temp5, temp6
-      real(dp) :: maximum, max_D_schwarz, max_eri_schwarz
+      real(dp) :: max_D_schwarz, max_eri_schwarz
 !
-      real(dp), dimension(:,:), allocatable :: g, D, sp_density_schwarz
+!     Set thresholds to ignore Coulomb and exchange terms,
+!     as well as the desired Libint integral precision  
 !
-      type(interval), dimension(:), allocatable :: shell_limits 
+      coulomb_thr = 1.0D-11 
+      if (present(coulomb)) coulomb_thr = coulomb 
 !
-!     Set thresholds to ignore Coulomb and exchange terms 
+      exchange_thr = 1.0D-11
+      if (present(exchange)) exchange_thr = exchange 
 !
-      if (present(coulomb)) then 
+      precision_thr = 1.0D-14
+      if (present(precision)) precision_thr = precision 
 !
-         coulomb_thr = coulomb 
-!
-      else
-!
-         coulomb_thr = 1.0D-11 
-!
-      endif 
-!
-      if (present(exchange)) then 
-!
-         exchange_thr = exchange 
-!
-      else
-!
-         exchange_thr = 1.0D-11
-!
-      endif 
-!
-      if (present(precision)) then 
-!
-         precision_thr = precision 
-!
-      else
-!
-         precision_thr = 1.0D-14
-!
-      endif 
+!     Construct the density screening vector and the maximum element in the density
 !
       call mem%alloc(sp_density_schwarz, n_s, n_s)
-!
-!$omp parallel do private(s1, s2, A_interval, B_interval, D, maximum) schedule(dynamic)
-      do s1 = 1, n_s
-         do s2 = 1, s1
-!
-            A_interval = wf%system%shell_limits(s1)
-            B_interval = wf%system%shell_limits(s2)
-!
-            call mem%alloc(D, (A_interval%size), (B_interval%size))
-!
-            D = wf%ao_density(A_interval%first : A_interval%last, B_interval%first : B_interval%last)
-!
-            maximum = get_abs_max(D, (A_interval%size)*(B_interval%size))
-!
-            call mem%dealloc(D, (A_interval%size), (B_interval%size))
-!
-            sp_density_schwarz(s1, s2) = maximum
-            sp_density_schwarz(s2, s1) = maximum
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-!     Calculate maximum of all the shell pair maximums prescreening
-!
+      call wf%construct_sp_density_schwarz(sp_density_schwarz, wf%ao_density)
       max_D_schwarz = get_abs_max(sp_density_schwarz, n_s**2)
 !
-!     Compute number of significant shell pairs (pre-screening)
+!     Compute number of significant ERI shell pairs (the Fock construction 
+!     only loops over these shell pairs) and the maximum element 
 !
-      n_sig_sp = 0
+      call wf%get_n_sig_eri_sp(n_sig_sp, sp_eri_schwarz, 1.0d-20)
       max_eri_schwarz = get_abs_max(sp_eri_schwarz, n_s*(n_s + 1)/2)
-      do s1s2 = 1, n_s*(n_s + 1)/2
 !
-         if (sp_eri_schwarz(s1s2, 1)**2 .lt. 1.0D-20) then
-!
-            exit
-!
-         else
-!
-            n_sig_sp = n_sig_sp + 1
-!
-         endif
-!
-      enddo
-!
-      write(output%unit, *) 'Number of shell pairs:', n_s*(n_s + 1)/2
-      write(output%unit, *) 'Number of significant shell pairs:', n_sig_sp
+!     Construct the two electron part of the Fock matrix, using the screening vectors 
+!     and parallellizing over available threads (each gets its own copy of the Fock matrix)
 !
       n_threads = omp_get_max_threads()
-      call mem%alloc(F, wf%n_ao, wf%n_ao*n_threads) ! [F(thr1) F(thr2) ...]
+!
+      call mem%alloc(F, wf%n_ao, wf%n_ao*n_threads) ! [F(thread 1) F(thread 2) ...]
       F = zero 
 !
-      call wf%ao_fock_construction_loop(F, n_threads, max_D_schwarz, max_eri_schwarz, & 
+      call wf%ao_fock_construction_loop(F, n_threads, max_D_schwarz, max_eri_schwarz,             & 
                                          sp_density_schwarz, sp_eri_schwarz, sp_eri_schwarz_list, &
-                                         n_s, n_sig_sp, coulomb_thr, exchange_thr, precision_thr, wf%system%shell_limits)
-!
-      write(output%unit, *) 'Number of threads:', n_threads
+                                         n_s, n_sig_sp, coulomb_thr, exchange_thr, precision_thr, &
+                                         wf%system%shell_limits)
 !
       call mem%dealloc(sp_density_schwarz, n_s, n_s)
 !
-!     Put the accumulated Fock matrices from each thread into the Fock matrix 
+!     Put the accumulated Fock matrices from each thread into the Fock matrix,
+!     and symmetrize the result 
 !
       wf%ao_fock = zero
-!
       do thread = 1, n_threads
 !
          call daxpy(wf%n_ao**2, one, F(1, (thread-1)*wf%n_ao + 1), 1, wf%ao_fock, 1)
 !
       enddo
 !
-      call mem%dealloc(F, wf%n_ao, wf%n_ao*n_threads) ! [F(thr1) F(thr2) ...]
+      call mem%dealloc(F, wf%n_ao, wf%n_ao*n_threads) 
 !
       call symmetric_sum(wf%ao_fock, wf%n_ao)
       wf%ao_fock = wf%ao_fock*half
 !
-      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
-      call get_ao_h_xy(h_wx)
+!     Finally, calculate the energy and add the one-electron contribution 
 !
       call wf%calculate_hf_energy_from_G(wf%ao_fock, h_wx)
-!
       wf%ao_fock = wf%ao_fock + h_wx
-!
-      call mem%dealloc(h_wx, wf%n_ao*(wf%n_ao+1)/2, 1)
 !
    end subroutine construct_ao_fock_hf
 !
