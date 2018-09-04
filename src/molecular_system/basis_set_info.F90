@@ -67,7 +67,7 @@ contains
 !
       integer(i15), dimension(3, 2) :: info ! 1s, 2s, 2p
 !
-      info(1,1) = 1
+      info(1, 1) = 1
 !
       info(1, 2) = 1 ! fill 1s first
       info(2, 2) = 2 ! 2s second

@@ -77,6 +77,8 @@ module hf_class
       procedure :: set_ao_fock           => set_ao_fock_hf
       procedure :: set_ao_density_to_sad => set_ao_density_to_sad_hf
 !
+      procedure :: set_ao_density_to_sad_2 => set_ao_density_to_sad_2_hf
+!
 !     Initialize and destruct routines for wavefunction variables
 !
       procedure :: initialize_ao_density              => initialize_ao_density_hf
@@ -1414,10 +1416,40 @@ contains
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: half_GD_wx
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
+      integer(i15) :: i
+!
+      write(output%unit, *) 'printing H: '
+!
+      do i = 1, wf%n_ao
+!
+         write(output%unit, *) 'i h_ij', i, h_wx(i, 1:5)
+!
+      enddo 
+!
+      write(output%unit, *) 
+!
+      do i = 1, wf%n_ao
+!
+         write(output%unit, *) 'i D_ij', i, half*wf%ao_density(i, 1:5)
+!
+      enddo 
+!
+      write(output%unit, *) 
+!
+      do i = 1, wf%n_ao
+!
+         write(output%unit, *) 'i D_ij', i, half*wf%ao_density(i, 6:10)
+!
+      enddo 
 !
       wf%hf_energy = wf%system%get_nuclear_repulsion()
 !
+      write(output%unit, *) 'nuc rep', wf%hf_energy
+!
       wf%hf_energy = wf%hf_energy + ddot((wf%n_ao)**2, h_wx, 1, wf%ao_density, 1)
+!
+      write(output%unit, *) 'one electronc contribution:', wf%hf_energy
+!
       wf%hf_energy = wf%hf_energy + two*(one/four)*ddot((wf%n_ao)**2, wf%ao_density, 1, half_GD_wx, 1)
 
    end subroutine calculate_hf_energy_from_G_hf
@@ -2323,7 +2355,7 @@ contains
 !
       real(dp) :: ddot, norm
 !
-      integer(i15) :: info = 0
+      integer(i15) :: info, i
 !
       call mem%alloc(metric, wf%n_mo, wf%n_mo)
 !
@@ -2408,6 +2440,13 @@ contains
                   4*(wf%n_mo),      &
                   info)
 !
+!       write(output%unit,*) 'number of occupieds:', wf%n_o
+!       do i = 1, wf%n_mo
+! !
+!          write(output%unit, *) 'i orbital energy (i)', i, orbital_energies(i,1)
+! !
+!       enddo 
+!
       call mem%dealloc(metric, wf%n_mo, wf%n_mo)
       call mem%dealloc(work, 4*wf%n_mo, 1)
       call mem%dealloc(orbital_energies, wf%n_mo, 1)
@@ -2486,6 +2525,67 @@ contains
       call mem%dealloc(ao_fock, wf%n_mo, wf%n_mo)
 !
    end subroutine do_roothan_hall_hf
+!
+!
+   subroutine set_ao_density_to_sad_2_hf(wf)
+!!
+!!    Set AO density to SAD 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+      implicit none 
+!
+      class(hf) :: wf 
+!
+      integer(i15) :: I, n_ao_on_atom, offset
+!
+      real(dp) :: trace
+!
+      real(dp), dimension(:,:), allocatable :: atomic_density, temp
+!
+      wf%ao_density = zero 
+!
+      offset = 1
+      do I = 1, wf%system%n_atoms
+!
+         n_ao_on_atom = wf%system%atoms(I)%n_ao
+         call mem%alloc(atomic_density, n_ao_on_atom, n_ao_on_atom)
+!
+         call wf%system%atoms(I)%read_atomic_density(atomic_density)
+!
+         wf%ao_density(offset:(offset + n_ao_on_atom - 1), offset:(offset + n_ao_on_atom - 1)) &
+                                                       = atomic_density(1:n_ao_on_atom, 1:n_ao_on_atom)
+!
+         call mem%dealloc(atomic_density, n_ao_on_atom, n_ao_on_atom)
+!
+         offset = offset + n_ao_on_atom
+!
+      enddo 
+!
+!     Check the trace of the density 
+!
+      call mem%alloc(temp, wf%n_ao, wf%n_ao)
+      call dgemm('N','N', &
+                  wf%n_ao, &
+                  wf%n_ao, &
+                  wf%n_ao, &
+                  one, &
+                  wf%ao_density, &
+                  wf%n_ao, &
+                  wf%ao_overlap, &
+                  wf%n_ao, &
+                  zero, &
+                  temp, &
+                  wf%n_ao)
+!
+      trace = zero
+      do i = 1, wf%n_ao
+         trace = trace + temp(i,i)
+      enddo
+      call mem%dealloc(temp, wf%n_ao, wf%n_ao)
+!
+      write(output%unit, *) 'Trace of SAD density:', trace 
+!
+   end subroutine set_ao_density_to_sad_2_hf
 !
 !
 end module hf_class

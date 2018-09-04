@@ -41,6 +41,8 @@ module atomic_class
 !
       procedure :: AD => AD_atom
 !
+      procedure :: read_atomic_density => read_atomic_density_atomic
+!
       procedure :: initialize_shells   => initialize_shells_atomic
       procedure :: destruct_shells     => destruct_shells_atomic
 !
@@ -138,7 +140,7 @@ contains
 !
       n_Aufbau_shells = atom%get_n_Aufbau()
 !
-      call mem%alloc_int(Aufbau_shell_info, n_Aufbau_shells, 2) ![ instances of specific Aufbau shell, order for filling shell]
+      call mem%alloc_int(Aufbau_shell_info, n_Aufbau_shells, 2) ! [instances of specific Aufbau shell, Order for filling shell]
 !
       call atom%get_Aufbau_info(n_Aufbau_shells, Aufbau_shell_info)
 !
@@ -147,17 +149,23 @@ contains
       density_diagonal_for_atom = zero
       ao_offset = 0
       shell = 0
-      n_electrons = atom%number
+      n_electrons = atom%number 
 !
       do j = 1, n_Aufbau_shells
 !
          if (n_electrons == 0) return
 !
+!        Determine the jth Aufbau shell to fill
+!
          do i = 1, n_Aufbau_shells
 !
-            if (Aufbau_shell_info(i, 2) == j ) Aufbau_to_fill = i
+            if (Aufbau_shell_info(i, 2) == j) Aufbau_to_fill = i
 !
          enddo
+!
+!        Determine the shell number just before the first 
+!        shell in the Aufbau shell (later on we move do a ++
+!        to the first shell)
 !
          shell = 0
 !
@@ -167,6 +175,9 @@ contains
 !
          enddo 
 !
+!        Determine the AO offset to just before the first 
+!        shell to fill 
+!
          ao_offset = 0
 !
          do i = 1, shell
@@ -175,6 +186,25 @@ contains
 !
          enddo
 !
+!        Fill in electron in the correct place 
+!
+! Eirik stuff - like Sarai, I get junk & it's the same reproduced junk - so: no go
+!          shell = shell + 1
+
+! !
+!          if (n_electrons .gt. 2*atom%shells(shell)%size) then ! fill entire shell 
+! !
+!             density_diagonal_for_atom(ao_offset + 1 : ao_offset + atom%shells(shell)%size, 1) &
+!                      = two
+! !
+!          else ! smear out 
+! !
+!             density_diagonal_for_atom(ao_offset + 1 : ao_offset + atom%shells(shell)%size, 1) &
+!                      = real(n_electrons, kind=dp)/real(atom%shells(shell)%size, kind=dp) ! 4/3 4/3 4/3, or n_electrons/size 
+! !
+!          endif
+! End Eirik stuff
+
          do i = 1, Aufbau_shell_info(Aufbau_to_fill, 1)
 
             shell = shell + 1
@@ -191,6 +221,8 @@ contains
          n_electrons = n_electrons - min(n_electrons, 2*atom%shells(shell)%size)
 !
       enddo
+!
+      write(output%unit, *) 'density diagonal:', density_diagonal_for_atom
 !
       call mem%dealloc_int(Aufbau_shell_info, n_Aufbau_shells, 2)
 !
@@ -322,6 +354,98 @@ contains
       call atom%destruct_shells
 !
    end subroutine cleanup_atomic
+!
+!
+   subroutine read_atomic_density_atomic(atom, atomic_density)
+!!
+!!    Read atomic density
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+      implicit none 
+!  
+      class(atomic) :: atom 
+!
+      real(dp), dimension(atom%n_ao, atom%n_ao) :: atomic_density
+!
+      real(dp), dimension(:,:), allocatable :: temporary, eigenvalues, work, red_at_dens
+!
+      character(len=100) :: alpha_fname, beta_fname
+!
+      type(file) :: alpha_density
+      type(file) :: beta_density
+!
+      integer(i15) :: i, j, ioerror, offset, info
+      real(dp) :: diagonal_average, trace_of_D
+!
+      atomic_density = zero   
+!
+     alpha_fname = 'sad/' // trim(atom%basis) // '/' // trim(atom%symbol) // '_' // 'alpha' // '.inp'
+     beta_fname  = 'sad/' // trim(atom%basis) // '/' // trim(atom%symbol) // '_' // 'beta' // '.inp'
+!
+      call mem%alloc(temporary, 1, atom%n_ao)
+!
+      call alpha_density%init(trim(alpha_fname), 'sequential', 'formatted')
+      call beta_density%init(trim(beta_fname), 'sequential', 'formatted')
+!
+      call disk%open_file(alpha_density, 'read', 'rewind')
+      call disk%open_file(beta_density, 'read', 'rewind')
+!
+      do i = 1, atom%n_ao 
+!
+         read(alpha_density%unit, *, iostat=ioerror) (temporary(1,j), j = 1, atom%n_ao)
+!
+         do j = 1, atom%n_ao 
+!
+            atomic_density(i, j) = atomic_density(i, j) + temporary(1, j)
+!
+         enddo
+!
+      enddo 
+!
+      write(output%unit, *) 'Atom: ' // atom%symbol 
+!
+      do i = 1, atom%n_ao 
+!
+         read(beta_density%unit, *, iostat=ioerror) (temporary(1,j), j = 1, atom%n_ao)
+!
+         do j = 1, atom%n_ao 
+!
+            atomic_density(i, j) = atomic_density(i, j) + temporary(1, j)
+!
+         enddo
+!
+      enddo 
+!
+      call disk%close_file(alpha_density)
+      call disk%close_file(beta_density)
+!
+      call mem%dealloc(temporary, 1, atom%n_ao)
+!
+!     Print parts of the density matrix associated with different shells 
+!
+      write(output%unit, *) 'Atom: ' // atom%symbol 
+!
+      do i = 1, atom%n_ao 
+         do j = 1, atom%n_ao 
+!
+            write(output%unit, *) 'i j D(i,j)', i, j, atomic_density(i,j)
+!
+         enddo
+      enddo      
+!
+!       offset = 1
+!       do i = 1, atom%n_shells
+! !
+!          write(output%unit, *) 'shell i', i, 'with shell size', atom%shells(i)%size, 'angular mom', atom%shells(i)%l 
+! !
+!          write(output%unit, *) atomic_density(offset:(offset + atom%shells(i)%size - 1), &
+!                                                 offset:(offset + atom%shells(i)%size - 1))           
+! !
+!          offset = offset + atom%shells(i)%size
+! !
+!       enddo 
+!
+   end subroutine read_atomic_density_atomic
 !
 !
 end module atomic_class

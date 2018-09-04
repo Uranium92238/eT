@@ -63,7 +63,9 @@ contains
 !     Set AO density to superposition of atomic densities (SAD)
 !
       call wf%initialize_ao_density()
-      call wf%set_ao_density_to_sad()
+    !  call wf%set_ao_density_to_sad()
+      call wf%set_ao_density_to_sad_2()
+    !  call wf%purify_ao_density(1.0d-12) ! interesting result... -> quite accurate in first iteration
 !
    end subroutine prepare_scf_diis_solver
 !
@@ -104,7 +106,7 @@ contains
       real(dp), dimension(:,:), allocatable :: h_wx 
       real(dp), dimension(:,:), allocatable :: prev_ao_density 
 !
-      integer(i15) :: n_s 
+      integer(i15) :: n_s, i
 !
       real(dp), dimension(:,:), allocatable     :: sp_eri_schwarz
       integer(i15), dimension(:,:), allocatable :: sp_eri_schwarz_list
@@ -132,7 +134,11 @@ contains
 !     by solving the Roothan-Hall equations for the SAD density
 !
       call wf%initialize_ao_fock()
-      call wf%construct_ao_fock_SAD(solver%coulomb_thr, solver%exchange_thr, solver%coulomb_precision)
+  !    call wf%construct_ao_fock_SAD(solver%coulomb_thr, solver%exchange_thr, solver%coulomb_precision)
+        call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s, &
+                           solver%coulomb_thr, solver%exchange_thr, solver%coulomb_precision)  
+!
+      write(output%unit, *) 'Energy from SAD?', wf%hf_energy
 !
       call wf%initialize_mo_coefficients()
 !
@@ -283,7 +289,7 @@ contains
 !
       integer(i15) :: i
 !
-!     When finished, we do a final Roothan-Hall step,
+!     When finished, we do a final Roothan-Hall step
 !     to express the Fock matrix in the canonical MO basis 
 !
       do_mo_transformation = .true.

@@ -24,6 +24,8 @@ module molecular_system_class
       integer(i15) :: n_atoms
       integer(i15) :: n_basis_sets 
       integer(i15) :: charge
+      integer(i15) :: multiplicity
+      integer(i15) :: n_electrons 
 !
       type(atomic), dimension(:), allocatable :: atoms
 !
@@ -199,6 +201,8 @@ contains
 !
       enddo
 !
+      molecule%n_electrons = molecule%get_n_electrons()
+!
 !     Some sanity checks and stops
 !
       if (molecule%charge .ne. 0) then
@@ -265,6 +269,7 @@ contains
 !
       rewind(input%unit)
 !
+      molecule%multiplicity = 1 ! If not requested, assume singlet
       molecule%n_atoms = 0
 !
       read(input%unit,'(a)') line
@@ -309,6 +314,12 @@ contains
                  line(1:7) == 'CHARGE:' ) then
 
             read(line(8:100),*) molecule%charge
+!
+         elseif (line(1:13) == 'multiplicity:' .or.  &
+                 line(1:13) == 'Multiplicity:' .or.  &
+                 line(1:13) == 'MULTIPLICITY:' ) then
+
+            read(line(14:100),*) molecule%multiplicity
 !
          elseif (line(1:12) == 'active atoms') then
 !
@@ -1015,6 +1026,7 @@ contains
       if (abs(electrons - molecule%get_n_electrons()) .gt. 1.0d-7) then
 !
          write(output%unit, '(a)') 'Error: Mismatch in electron number SAD'
+         stop
 !
       endif
 !
