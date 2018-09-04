@@ -75,9 +75,10 @@ module hf_class
 !
       procedure :: set_ao_density        => set_ao_density_hf
       procedure :: set_ao_fock           => set_ao_fock_hf
-      procedure :: set_ao_density_to_sad => set_ao_density_to_sad_hf
 !
-      procedure :: set_ao_density_to_sad_2 => set_ao_density_to_sad_2_hf
+      procedure :: set_ao_density_to_sad        => set_ao_density_to_sad_hf   ! Functional, but not correct 
+      procedure :: set_ao_density_to_sad_2      => set_ao_density_to_sad_2_hf ! WIP to replace above 
+      procedure :: set_ao_density_to_core_guess => set_ao_density_to_core_guess_hf
 !
 !     Initialize and destruct routines for wavefunction variables
 !
@@ -2586,6 +2587,29 @@ contains
       write(output%unit, *) 'Trace of SAD density:', trace 
 !
    end subroutine set_ao_density_to_sad_2_hf
+!
+!
+   subroutine set_ao_density_to_core_guess_hf(wf, h_wx)
+!!
+!!    Set AO density to core guess
+!!    Written by Eirik F. Kjønstad, Sep 2018
+!!
+!!    Solves the Roothan-Hall equation ignoring the two-
+!!    electron AO density dependent part of the Fock matrix,
+!!    giving an initial density from the resulting orbital 
+!!    coefficients. 
+!!
+      implicit none 
+!
+      class(hf) :: wf 
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx 
+!
+      wf%ao_fock = h_wx 
+      call wf%do_roothan_hall()
+      call wf%construct_ao_density()
+!
+   end subroutine set_ao_density_to_core_guess_hf
 !
 !
 end module hf_class

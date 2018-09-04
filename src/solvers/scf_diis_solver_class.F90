@@ -58,15 +58,6 @@ contains
 !
       call solver%read_settings()
 !
-      write(output%unit, *) 'Residual threshold: ', solver%residual_threshold
-!
-!     Set AO density to superposition of atomic densities (SAD)
-!
-      call wf%initialize_ao_density()
-    !  call wf%set_ao_density_to_sad()
-      call wf%set_ao_density_to_sad_2()
-    !  call wf%purify_ao_density(1.0d-12) ! interesting result... -> quite accurate in first iteration
-!
    end subroutine prepare_scf_diis_solver
 !
 !
@@ -134,13 +125,18 @@ contains
 !     by solving the Roothan-Hall equations for the SAD density
 !
       call wf%initialize_ao_fock()
-  !    call wf%construct_ao_fock_SAD(solver%coulomb_thr, solver%exchange_thr, solver%coulomb_precision)
-        call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s, &
+      call wf%initialize_ao_density()
+      call wf%initialize_mo_coefficients()
+!
+    !  call wf%set_ao_density_to_sad()
+      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
+      call get_ao_h_xy(h_wx)
+      call wf%set_ao_density_to_core_guess(h_wx)
+!
+      call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s, &
                            solver%coulomb_thr, solver%exchange_thr, solver%coulomb_precision)  
 !
-      write(output%unit, *) 'Energy from SAD?', wf%hf_energy
-!
-      call wf%initialize_mo_coefficients()
+      write(output%unit, *) 'Energy from guess (SAD or core)?', wf%hf_energy
 !
       call wf%do_roothan_hall()
 !
@@ -174,9 +170,6 @@ contains
       converged_residual = .false.
 !
       prev_energy = zero
-!
-      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
-      call get_ao_h_xy(h_wx)
 !
       write(output%unit, '(t3,a)') 'Iteration    Energy (a.u.)        Max(grad.)    ΔE (a.u.)'
       write(output%unit, '(t3,a)') '----------------------------------------------------------'
