@@ -175,7 +175,7 @@ contains
    end subroutine construct_ao_spin_density_uhf
 !
 !
-   subroutine form_ao_density(wf)
+   subroutine form_ao_density_uhf(wf)
 !!
 !!    Form AO density 
 !!    Written by Eirik F. Kjønstad, Sep 2018
@@ -196,7 +196,7 @@ contains
 !
       wf%ao_density = wf%ao_density_a + wf%ao_density_b
 !
-   end subroutine form_ao_density
+   end subroutine form_ao_density_uhf
 !
 !
    subroutine construct_ao_spin_fock_uhf(wf, D, D_sigma, sigma)
