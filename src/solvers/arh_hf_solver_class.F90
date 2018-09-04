@@ -240,8 +240,8 @@ contains
       Po = zero
       Pv = zero
 !
-      write(output%unit, '(t3,a)') 'Iteration    Energy (a.u.)        Max(grad.)    ΔE (a.u.)'
-      write(output%unit, '(t3,a)') '----------------------------------------------------------'
+      write(output%unit, '(t3,a)') 'Iteration    Energy (a.u.)        Max(grad.)    Delta E (a.u.)'
+      write(output%unit, '(t3,a)') '--------------------------------------------------------------'
 !
       iteration = 1
 !
@@ -292,7 +292,7 @@ contains
 !
          if (converged) then ! Done, hooray
 !
-            write(output%unit, '(t3,a)') '----------------------------------------------------------'
+            write(output%unit, '(t3,a)') '--------------------------------------------------------------'
             write(output%unit, '(/t3,a13,i3,a12/)') 'Converged in ', iteration, ' iterations!'
 !
          else ! Rotate density matrix

@@ -1053,9 +1053,9 @@ contains
 !!    Construct AO Fock matrix cumulatively
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Calculates
+!!    Updates the AO Fock matrix incrementally,
 !!
-!!       F_αβ = h_αβ + sum_γδ g_αβγδ dD_γδ - 1/2 * sum_γδ g_αδγβ dD_γδ,
+!!       F_αβ = F_αβ + sum_γδ g_αβγδ dD_γδ - 1/2 * sum_γδ g_αδγβ dD_γδ,
 !!
 !!    where dD is the difference in the AO density. This routine is integral direct, and
 !!    it calculates the Hartree-Fock energy. It screens on the density difference and is 
@@ -1069,119 +1069,59 @@ contains
 !
       integer(i15) :: n_s
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao) :: prev_ao_density
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: prev_ao_density
 !
       real(dp), dimension(n_s*(n_s + 1)/2, 1), intent(in)     :: sp_eri_schwarz
       integer(i15), dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list 
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
 !
-      real(dp), optional :: coulomb, exchange, precision ! Non-standard thresholds
-!
+      real(dp), optional :: coulomb, exchange, precision   ! Non-standard thresholds, optionals
       real(dp) :: coulomb_thr, exchange_thr, precision_thr ! Actual thresholds 
 !
       integer(i15) :: n_threads, omp_get_max_threads, thread
+!
       real(dp), dimension(:,:), allocatable :: F 
-!
-      integer(i15) :: s1, s2, s1s2
-!
-      type(interval) :: A_interval
-      type(interval) :: B_interval
 !
       integer(i15) :: n_sig_sp
 !
-      real(dp) :: maximum, max_D_schwarz, max_eri_schwarz
+      real(dp) :: max_D_schwarz, max_eri_schwarz
 !
-      real(dp), dimension(:,:), allocatable :: D, sp_density_schwarz
+      real(dp), dimension(:,:), allocatable :: sp_density_schwarz
 !
-!     Set thresholds to ignore Coulomb and exchange terms 
+!     Set thresholds to ignore Coulomb and exchange terms,
+!     as well as the desired Libint integral precision  
 !
-      if (present(coulomb)) then 
+      coulomb_thr = 1.0D-11 
+      if (present(coulomb)) coulomb_thr = coulomb 
 !
-         coulomb_thr = coulomb 
+      exchange_thr = 1.0D-11
+      if (present(exchange)) exchange_thr = exchange 
 !
-      else
+      precision_thr = 1.0D-14
+      if (present(precision)) precision_thr = precision 
 !
-         coulomb_thr = 1.0D-10 
-!
-      endif 
-!
-      if (present(exchange)) then 
-!
-         exchange_thr = exchange 
-!
-      else
-!
-         exchange_thr = 1.0D-8
-!
-      endif 
-!
-     if (present(precision)) then 
-!
-         precision_thr = precision 
-!
-      else
-!
-         precision_thr = 1.0D-14
-!
-      endif
+!     Overwrite the AO density with the density difference,
+!     and compute the density screening vector 
 !
       call daxpy(wf%n_ao**2, -one, prev_ao_density, 1, wf%ao_density, 1)
 !
       call mem%alloc(sp_density_schwarz, n_s, n_s)
+      call wf%construct_sp_density_schwarz(sp_density_schwarz, wf%ao_density)     
+      max_D_schwarz = get_abs_max(sp_density_schwarz, n_s**2)
 !
-!$omp parallel do private(s1, s2, A_interval, B_interval, D, maximum) schedule(dynamic)
-      do s1 = 1, n_s
-         do s2 = 1, s1
+!     Compute number of significant ERI shell pairs (the Fock construction 
+!     only loops over these shell pairs) and the maximum element 
 !
-            A_interval = wf%system%shell_limits(s1)
-            B_interval = wf%system%shell_limits(s2)
-!
-            call mem%alloc(D, (A_interval%size), (B_interval%size))
-!
-            D = wf%ao_density(A_interval%first : A_interval%last, B_interval%first : B_interval%last)
-!
-            maximum = get_abs_max(D, (A_interval%size)*(B_interval%size))
-!
-            call mem%dealloc(D, (A_interval%size), (B_interval%size))
-!
-            sp_density_schwarz(s1, s2) = maximum
-            sp_density_schwarz(s2, s1) = maximum
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-!     Calculate maximum of all the shell pair maximums prescreening
-!
-      max_D_schwarz   = get_abs_max(sp_density_schwarz, n_s**2)
+      call wf%get_n_sig_eri_sp(n_sig_sp, sp_eri_schwarz, 1.0d-20)
       max_eri_schwarz = get_abs_max(sp_eri_schwarz, n_s*(n_s + 1)/2)
 !
-!     Compute number of significant shell pairs (pre-screening)
-!
-      n_sig_sp = 0
-      do s1s2 = 1, n_s*(n_s + 1)/2
-!
-         if (sp_eri_schwarz(s1s2, 1)**2 .lt. 1.0D-20) then
-!
-            exit
-!
-         else
-!
-            n_sig_sp = n_sig_sp + 1
-!
-         endif
-!
-      enddo
-!
-      write(output%unit, *) 'Max density difference:', max_D_schwarz
-      write(output%unit, *) 'Number of significant shell pairs:', n_sig_sp
+!     Construct the two electron part of the Fock matrix, using the screening vectors 
+!     and parallellizing over available threads (each gets its own copy of the Fock matrix)
 !
       n_threads = omp_get_max_threads()
 !
-      write(output%unit, *) 'Number of threads:', n_threads
-!
-      call mem%alloc(F, wf%n_ao, wf%n_ao*n_threads) ! [F(thr1) F(thr2) ...]
+      call mem%alloc(F, wf%n_ao, wf%n_ao*n_threads) ! [F(thread 1) F(thread 2) ...]
       call dscal(n_threads*(wf%n_ao)**2, zero, F, 1) 
 !
       call wf%ao_fock_construction_loop(F, n_threads, max_D_schwarz, max_eri_schwarz,              & 
@@ -1190,10 +1130,10 @@ contains
                                           wf%system%shell_limits)
 !
       call daxpy(wf%n_ao**2, one, prev_ao_density, 1, wf%ao_density, 1)
-!
       call mem%dealloc(sp_density_schwarz, n_s, n_s)
 !
-!     Put the accumulated Fock matrices from each thread into the Fock matrix 
+!     Put the accumulated Fock matrices from each thread into the Fock matrix,
+!     and symmetrize the result, then calculate the energy 
 !
       do thread = 1, n_threads
 !
@@ -1201,7 +1141,7 @@ contains
 !
       enddo
 !
-      call mem%dealloc(F, wf%n_ao, wf%n_ao*n_threads) ! [F(thr1) F(thr2) ...]
+      call mem%dealloc(F, wf%n_ao, wf%n_ao*n_threads) 
 !
       call symmetric_sum(wf%ao_fock, wf%n_ao)
       call dscal((wf%n_ao)**2, half, wf%ao_fock, 1) 
