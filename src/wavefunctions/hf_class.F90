@@ -1017,9 +1017,9 @@ contains
       call mem%alloc(F, wf%n_ao, wf%n_ao*n_threads) ! [F(thread 1) F(thread 2) ...]
       F = zero 
 !
-      call wf%ao_fock_construction_loop(F, n_threads, max_D_schwarz, max_eri_schwarz,             & 
-                                         sp_density_schwarz, sp_eri_schwarz, sp_eri_schwarz_list, &
-                                         n_s, n_sig_sp, coulomb_thr, exchange_thr, precision_thr, &
+      call wf%ao_fock_construction_loop(F, wf%ao_density, n_threads, max_D_schwarz, max_eri_schwarz,  & 
+                                         sp_density_schwarz, sp_eri_schwarz, sp_eri_schwarz_list,     &
+                                         n_s, n_sig_sp, coulomb_thr, exchange_thr, precision_thr,     &
                                          wf%system%shell_limits)
 !
       call mem%dealloc(sp_density_schwarz, n_s, n_s)
@@ -1124,9 +1124,9 @@ contains
       call mem%alloc(F, wf%n_ao, wf%n_ao*n_threads) ! [F(thread 1) F(thread 2) ...]
       call dscal(n_threads*(wf%n_ao)**2, zero, F, 1) 
 !
-      call wf%ao_fock_construction_loop(F, n_threads, max_D_schwarz, max_eri_schwarz,              & 
-                                          sp_density_schwarz, sp_eri_schwarz, sp_eri_schwarz_list, &
-                                          n_s, n_sig_sp, coulomb_thr, exchange_thr, precision_thr, &
+      call wf%ao_fock_construction_loop(F, wf%ao_density, n_threads, max_D_schwarz, max_eri_schwarz, & 
+                                          sp_density_schwarz, sp_eri_schwarz, sp_eri_schwarz_list,   &
+                                          n_s, n_sig_sp, coulomb_thr, exchange_thr, precision_thr,   &
                                           wf%system%shell_limits)
 !
       call daxpy(wf%n_ao**2, one, prev_ao_density, 1, wf%ao_density, 1)
@@ -1151,19 +1151,19 @@ contains
    end subroutine construct_ao_fock_cumulative_hf
 !
 !
-   subroutine ao_fock_construction_loop_hf(wf, F, n_threads, max_D_schwarz, max_eri_schwarz,       & 
-                                          sp_density_schwarz, sp_eri_schwarz, sp_eri_schwarz_list, &
+   subroutine ao_fock_construction_loop_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz, & 
+                                          sp_density_schwarz, sp_eri_schwarz, sp_eri_schwarz_list,       &
                                           n_s, n_sig_sp, coulomb_thr, exchange_thr, precision_thr, shells)
 !!
 !!    AO Fock construction loop 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
 !!
-!!    The main loop where the Fock matrix is constructed. Each thread is here given its own 
-!!    Fock matrix, which are placed successively as columns in the F array sent to the routine. 
+!!    This routine constructs the entire two-electron part of the Fock matrix, 
 !!
-!!    The routine is called from two Fock construction routines, where the difference is 
-!!    what is the current value of wf%ao_density. To use this routine with the density difference,
-!!    the wf%ao_density variable is overwritten by the difference in densities. 
+!!       F_αβ = sum_γδ g_αβγδ D_γδ - 1/2 * sum_γδ g_αδγβ D_γδ,
+!!
+!!    where contributions from different threads are gathered column blocks 
+!!    of the incoming F matrix. 
 !!
       implicit none 
 !
@@ -1174,6 +1174,8 @@ contains
       integer(i15), intent(in) :: n_sig_sp
 !
       type(interval), dimension(n_s), intent(in) :: shells
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
 !
       real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz
 !
@@ -1201,17 +1203,11 @@ contains
 !
       integer(i15) :: max_shell_size, thread, skip
 !
-!     Determine largest shell size 
+!     Preallocate the vector that holds the shell quadruple 
+!     ERI integrals, then enter the construction loop 
 !
-      max_shell_size = 0
-      do s1 = 1, n_s 
-!
-         if (max_shell_size .lt. shells(s1)%size) max_shell_size = shells(s1)%size
-!
-      enddo
-!
+      call wf%system%get_max_shell_size(max_shell_size)
       call mem%alloc(g, max_shell_size**4, 1)
-!
 !
 !$omp parallel do &
 !$omp private(s1, s2, s3, s4, deg, s4_max, temp, s1s2, s1s2_packed, s3s4, deg_12, deg_34, deg_12_34, thread_offset, &
@@ -1266,9 +1262,7 @@ contains
 
                deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
 !
-              ! call wf%system%ao_integrals%get_ao_g_wxyz(g, s1, s2, s3, s4) 
-              ! skip = 0
-               call wf%system%ao_integrals%get_ao_g_wxyz_epsilon(g, s1, s2, s3, s4, &
+               call wf%system%ao_integrals%get_ao_g_wxyz_epsilon(g, s1, s2, s3, s4,               &
                   precision_thr/max(temp7,temp8), thread, skip, shells(s1)%size, shells(s2)%size, &
                   shells(s3)%size, shells(s4)%size)
 !
@@ -1288,20 +1282,20 @@ contains
 !
                      y_red = y - shells(s3)%first + 1
 !
-                     d1 = wf%ao_density(y, z)
+                     d1 = D(y, z)
 !
                      do x = shells(s2)%first, shells(s2)%last 
 !
                         x_red = x - shells(s2)%first + 1
 !
-                        d3 = wf%ao_density(x, y)
-                        d5 = wf%ao_density(x, z)
+                        d3 = D(x, y)
+                        d5 = D(x, z)
 !
                         do w = shells(s1)%first, shells(s1)%last 
 !
-                           d2 = wf%ao_density(w, x)
-                           d4 = wf%ao_density(w, y)
-                           d6 = wf%ao_density(w, z)
+                           d2 = D(w, x)
+                           d4 = D(w, y)
+                           d6 = D(w, z)
 !
                            w_red = w - shells(s1)%first + 1
 !

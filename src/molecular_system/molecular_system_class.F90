@@ -50,10 +50,11 @@ module molecular_system_class
       procedure :: get_nuclear_repulsion => get_nuclear_repulsion_molecular_system
       procedure :: get_n_electrons       => get_n_electrons_molecular_system
 !
-      procedure :: get_n_aos        => get_n_aos_molecular_system
-      procedure :: get_n_shells     => get_n_shells_molecular_system
-      procedure :: get_shell_limits => get_shell_limits_molecular_system
-      procedure :: basis2shell      => basis2shell_molecular_system
+      procedure :: get_n_aos          => get_n_aos_molecular_system
+      procedure :: get_n_shells       => get_n_shells_molecular_system
+      procedure :: get_shell_limits   => get_shell_limits_molecular_system
+      procedure :: basis2shell        => basis2shell_molecular_system
+      procedure :: get_max_shell_size => get_max_shell_size_molecular_system
 !
       procedure :: SAD => SAD_molecular_system
 !
@@ -914,6 +915,34 @@ contains
       enddo
 !
    end function get_n_aos_molecular_system
+!
+!
+   subroutine get_max_shell_size_molecular_system(molecule, max_shell_size)
+!!
+!!    Get maximum shell size 
+!!    Written by Eirik F. Kjønstad, Sep 2018
+!!
+!!    Loops through the shells and determines the size of the largest shell. 
+!!    This can be useful to preallocate a matrix able to hold shell pair 
+!!    or shell quadruple vector without having to allocate inside the 
+!!    loop over such shell pairs or quadruples or what have you.
+!!
+      implicit none 
+!
+      class(molecular_system), intent(in) :: molecule 
+!
+      integer(i15), intent(inout) :: max_shell_size
+!
+      integer(i15) :: s1 
+!
+      max_shell_size = 0
+      do s1 = 1, molecule%n_s 
+!
+         if (max_shell_size .lt. molecule%shell_limits(s1)%size) max_shell_size = molecule%shell_limits(s1)%size
+!
+      enddo
+!
+   end subroutine get_max_shell_size_molecular_system
 !
 !
    type(interval) function get_shell_limits_molecular_system(molecule, A)
