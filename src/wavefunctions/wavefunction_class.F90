@@ -16,6 +16,8 @@ module wavefunction_class
 !
       character(len=40) :: name
 !
+      real(dp) :: energy
+!
       integer(i15) :: n_ao
       integer(i15) :: n_mo
       integer(i15) :: n_o
@@ -27,15 +29,15 @@ module wavefunction_class
 !
    contains
 !
-      procedure :: initialize_mo_coefficients => initialize_mo_coefficients_wavefunction
-      procedure :: destruct_mo_coefficients => destruct_mo_coefficients_wavefunction
+      procedure :: initialize_orbital_coefficients => initialize_orbital_coefficients_wavefunction
+      procedure :: destruct_orbital_coefficients   => destruct_orbital_coefficients_wavefunction
 !
    end type wavefunction
 !
 contains
 !
 !
-   subroutine initialize_mo_coefficients_wavefunction(wf)
+   subroutine initialize_orbital_coefficients_wavefunction(wf)
 !!
 !!    Initialize MO coefficients
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -46,10 +48,10 @@ contains
 !
       if (.not. allocated(wf%orbital_coefficients)) call mem%alloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
 !
-   end subroutine initialize_mo_coefficients_wavefunction
+   end subroutine initialize_orbital_coefficients_wavefunction
 !
 !
-   subroutine destruct_mo_coefficients_wavefunction(wf)
+   subroutine destruct_orbital_coefficients_wavefunction(wf)
 !!
 !!    Destruct MO coefficients
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -60,6 +62,7 @@ contains
 !
       if (allocated(wf%orbital_coefficients)) call mem%dealloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
 !
-   end subroutine destruct_mo_coefficients_wavefunction
+   end subroutine destruct_orbital_coefficients_wavefunction
+!
 !
 end module wavefunction_class

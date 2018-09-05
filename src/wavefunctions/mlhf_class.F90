@@ -153,7 +153,7 @@ contains
 !     on  which to start the preconditioned conjugate gradient (PCG) algorithm
 !
       call wf%initialize_orbital_energies()
-      call wf%initialize_mo_coefficients()
+      call wf%initialize_orbital_coefficients()
       call wf%do_roothan_hall() ! F^AO C = S C e to get new MOs C
 !
 !     Update the AO density

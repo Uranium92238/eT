@@ -20,8 +20,6 @@ module uhf_class
       integer(i15) :: n_alpha
       integer(i15) :: n_beta 
 !
-      real(dp) :: uhf_energy
-!
       real(dp), dimension(:,:), allocatable :: ao_density_a 
       real(dp), dimension(:,:), allocatable :: ao_density_b
 ! 
@@ -47,6 +45,17 @@ module uhf_class
 !
       procedure :: calculate_uhf_energy => calculate_uhf_energy_uhf
       procedure :: set_ao_density_to_core_guess => set_ao_density_to_core_guess_uhf
+!
+!     Routines that may change in descendants but are required by solvers 
+!
+      procedure :: initialize_orbitals          => initialize_orbitals_uhf
+      procedure :: initialize_density           => initialize_density_uhf
+      procedure :: initialize_fock              => initialize_fock_uhf
+      procedure :: destruct_fock                => destruct_fock_uhf 
+      procedure :: update_fock_and_energy       => update_fock_and_energy_uhf
+      procedure :: roothan_hall_update_orbitals => roothan_hall_update_orbitals_uhf
+      procedure :: update_ao_density            => update_ao_density_uhf
+!
 !
 !     Initialize and destruct routines
 !
@@ -114,6 +123,175 @@ contains
       write(output%unit, *) 'multiplicity:', wf%system%multiplicity
 !
    end subroutine prepare_uhf
+!
+!
+   subroutine initialize_orbitals_uhf(wf)
+!!
+!!    Initialize orbitals 
+!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Initializes the arrays associated with the orbital 
+!!    coefficients. In spin-unrestricted wavefunctions, this
+!!    will include alpha and beta coefficients, though these
+!!    are the same and therefore redundant in restricted 
+!!    wavefunctions. 
+!!
+      implicit none 
+!
+      class(uhf) :: wf 
+!
+      call wf%initialize_orbital_coefficients()
+!
+      call wf%initialize_orbital_coefficients_a()
+      call wf%initialize_orbital_coefficients_b()
+!
+   end subroutine initialize_orbitals_uhf
+!
+!
+   subroutine initialize_density_uhf(wf)
+!!
+!!    Initialize density 
+!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Initializes the AO density (or densities). 
+!!    In spin-unrestricted wavefunctions, this alpha and beta densities, 
+!!    though these are the same and therefore redundant in restricted 
+!!    wavefunctions. 
+!!
+      implicit none 
+!
+      class(uhf) :: wf 
+!
+      call wf%initialize_ao_density()
+!
+      call wf%initialize_ao_density_a()
+      call wf%initialize_ao_density_b()
+!
+   end subroutine initialize_density_uhf
+!
+!
+   subroutine initialize_fock_uhf(wf)
+!!
+!!    Initialize Fock 
+!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Initializes the AO Fock matrix (or matrices). 
+!!    In spin-unrestricted wavefunctions, this alpha and beta matrices, 
+!!    though these are the same and therefore redundant in restricted 
+!!    wavefunctions. 
+!!
+      implicit none 
+!
+      class(uhf) :: wf 
+!
+      call wf%initialize_ao_fock()
+!
+      call wf%initialize_ao_fock_a()
+      call wf%initialize_ao_fock_b()
+!
+   end subroutine initialize_fock_uhf
+!
+!
+   subroutine destruct_fock_uhf(wf)
+!!
+!!    Destruct Fock 
+!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Destructs the AO Fock matrix (or matrices). 
+!!    In spin-unrestricted wavefunctions, this alpha and beta matrices, 
+!!    though these are the same and therefore redundant in restricted 
+!!    wavefunctions. 
+!!
+      implicit none 
+!
+      class(uhf) :: wf 
+!
+      call wf%destruct_ao_fock()
+!
+      call wf%destruct_ao_fock_a()
+      call wf%destruct_ao_fock_b()
+!
+   end subroutine destruct_fock_uhf
+!
+!
+   subroutine update_fock_and_energy_uhf(wf, sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx, coulomb, exchange, precision)
+!!
+!!    Update Fock and energy 
+!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!
+!!    This routine guides the construction of the Fock matrix (or matrices for
+!!    unrestricted wavefunctions) from the current AO density (or densities).
+!!    It is called by the solver and is overwritten for unrestricted 
+!!    wavefunctions.
+!!
+      implicit none 
+!
+      class(uhf) :: wf 
+!
+      integer(i15), intent(in) :: n_s
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
+!
+      real(dp), dimension(n_s*(n_s + 1)/2, 2), intent(in)     :: sp_eri_schwarz
+      integer(i15), dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
+!
+      real(dp), optional :: coulomb, exchange, precision ! Non-standard thresholds, optionals
+!
+      call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_a, 'alpha',    &
+                                       sp_eri_schwarz, sp_eri_schwarz_list, n_s, &
+                                       h_wx, coulomb, exchange, precision)
+!
+      call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_b, 'beta',     &
+                                       sp_eri_schwarz, sp_eri_schwarz_list, n_s, &
+                                       h_wx, coulomb, exchange, precision)     
+!
+      call wf%calculate_uhf_energy(h_wx)
+!
+   end subroutine update_fock_and_energy_uhf
+!
+!
+   subroutine roothan_hall_update_orbitals_uhf(wf)
+!!
+!!    Roothan-Hall update of orbitals 
+!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!
+!!    This routine guides the construction of new orbital coefficients 
+!!    from the current AO Fock matrix (or matrices if the wavefunction 
+!!    is unrestricted).
+!!
+      implicit none 
+!
+      class(uhf) :: wf 
+!
+      wf%ao_fock = wf%ao_fock_a 
+      call wf%do_roothan_hall()
+      wf%orbital_coefficients_a = wf%orbital_coefficients 
+!
+      wf%ao_fock = wf%ao_fock_b 
+      call wf%do_roothan_hall()
+      wf%orbital_coefficients_b = wf%orbital_coefficients 
+!
+   end subroutine roothan_hall_update_orbitals_uhf
+!
+!
+   subroutine update_ao_density_uhf(wf)
+!!
+!!    Update AO density 
+!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Updates the AO density (or densities, if unrestricted) based 
+!!    on the current orbital coefficient matrix (or matrices).
+!! 
+      implicit none 
+!
+      class(uhf) :: wf 
+!
+      call wf%construct_ao_spin_density('alpha') ! Make D_alpha 
+      call wf%construct_ao_spin_density('beta')  ! Make D_beta 
+!
+      call wf%form_ao_density()                  ! Set D = D_alpha + D_beta 
+!
+   end subroutine update_ao_density_uhf
 !
 !
    subroutine set_ao_density_to_core_guess_uhf(wf, h_wx)
@@ -198,6 +376,8 @@ contains
 !
       character(len=*), intent(in) :: sigma
 !
+      integer(i15) :: x,y,i
+!
       if (trim(sigma) == 'alpha') then 
 !
          call dgemm('N', 'T',                   &
@@ -226,7 +406,7 @@ contains
                      wf%n_ao,                   &
                      zero,                      &
                      wf%ao_density_b,           &
-                     wf%n_ao)
+                     wf%n_ao)   
 !
       else
 !
@@ -419,13 +599,13 @@ contains
 !
       real(dp) :: ddot 
 !
-      wf%uhf_energy = wf%system%get_nuclear_repulsion()
+      wf%energy = wf%system%get_nuclear_repulsion()
 !
-      wf%uhf_energy = wf%uhf_energy + (one/two)*ddot((wf%n_ao)**2, wf%ao_density_a, 1, h_wx, 1)
-      wf%uhf_energy = wf%uhf_energy + (one/two)*ddot((wf%n_ao)**2, wf%ao_density_a, 1, wf%ao_fock_a, 1)    
+      wf%energy = wf%energy + (one/two)*ddot((wf%n_ao)**2, wf%ao_density_a, 1, h_wx, 1)
+      wf%energy = wf%energy + (one/two)*ddot((wf%n_ao)**2, wf%ao_density_a, 1, wf%ao_fock_a, 1)    
 !
-      wf%uhf_energy = wf%uhf_energy + (one/two)*ddot((wf%n_ao)**2, wf%ao_density_b, 1, h_wx, 1)
-      wf%uhf_energy = wf%uhf_energy + (one/two)*ddot((wf%n_ao)**2, wf%ao_density_b, 1, wf%ao_fock_b, 1)   
+      wf%energy = wf%energy + (one/two)*ddot((wf%n_ao)**2, wf%ao_density_b, 1, h_wx, 1)
+      wf%energy = wf%energy + (one/two)*ddot((wf%n_ao)**2, wf%ao_density_b, 1, wf%ao_fock_b, 1)   
 !
    end subroutine calculate_uhf_energy_uhf
 !

@@ -35,6 +35,7 @@ program eT_program
 !   Method allocatable objects
 !
     type(hf), allocatable, target    :: hf_wf
+    type(uhf), allocatable, target    :: uhf_wf
     type(mlhf), allocatable, target  :: mlhf_wf 
 !
     type(ccs), allocatable, target :: ccs_wf
@@ -42,7 +43,7 @@ program eT_program
 !   Wavefunction pointer
 !
     class(hf), pointer  :: ref_wf => null()
-    class(ccs), pointer :: cc_wf => null()
+    class(ccs), pointer :: cc_wf  => null()
 !
 !   Cholesky decomposition solver 
 !
@@ -113,8 +114,17 @@ program eT_program
 !
       else
 !
-        allocate(hf_wf)
-        ref_wf => hf_wf
+        if (requested_method('uhf')) then 
+!
+          allocate(uhf_wf)
+          ref_wf => uhf_wf
+!
+        else ! Assume standard RHF 
+!
+          allocate(hf_wf)
+          ref_wf => hf_wf
+!
+        endif
 !
         call ref_wf%prepare()
 !

@@ -106,7 +106,7 @@ contains
 !
       enddo
 !
-      call wf%initialize_mo_coefficients()
+      call wf%initialize_orbital_coefficients()
       wf%orbital_coefficients = ref_wf%orbital_coefficients
 !
    end subroutine prepare_ccs

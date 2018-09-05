@@ -222,10 +222,7 @@ contains
 !
       enddo
 !
-      write(output%unit, *) 'density diagonal:', density_diagonal_for_atom
-!
       call mem%dealloc_int(Aufbau_shell_info, n_Aufbau_shells, 2)
-!
 !
    end subroutine AD_atom
 !
@@ -379,8 +376,8 @@ contains
 !
       atomic_density = zero   
 !
-     alpha_fname = 'sad/' // trim(atom%basis) // '/' // trim(atom%symbol) // '_' // 'alpha' // '.inp'
-     beta_fname  = 'sad/' // trim(atom%basis) // '/' // trim(atom%symbol) // '_' // 'beta' // '.inp'
+      alpha_fname = 'sad/' // trim(atom%basis) // '/' // trim(atom%symbol) // '_' // 'alpha' // '.inp'
+      beta_fname  = 'sad/' // trim(atom%basis) // '/' // trim(atom%symbol) // '_' // 'beta' // '.inp'
 !
       call mem%alloc(temporary, 1, atom%n_ao)
 !
@@ -402,7 +399,7 @@ contains
 !
       enddo 
 !
-      write(output%unit, *) 'Atom: ' // atom%symbol 
+   !   write(output%unit, *) 'Atom: ' // atom%symbol 
 !
       do i = 1, atom%n_ao 
 !
@@ -423,15 +420,15 @@ contains
 !
 !     Print parts of the density matrix associated with different shells 
 !
-      write(output%unit, *) 'Atom: ' // atom%symbol 
-!
-      do i = 1, atom%n_ao 
-         do j = 1, atom%n_ao 
-!
-            write(output%unit, *) 'i j D(i,j)', i, j, atomic_density(i,j)
-!
-         enddo
-      enddo      
+!       write(output%unit, *) 'Atom: ' // atom%symbol 
+! !
+!       do i = 1, atom%n_ao 
+!          do j = 1, atom%n_ao 
+! !
+!             write(output%unit, *) 'i j D(i,j)', i, j, atomic_density(i,j)
+! !
+!          enddo
+!       enddo      
 !
 !       offset = 1
 !       do i = 1, atom%n_shells

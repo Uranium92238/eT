@@ -7,12 +7,11 @@ module scf_diis_solver_class
 !!    A DIIS-accelerated Roothan-Hall self-consistent field solver. 
 !!    In other words, it does a least-square fit to a zero gradient 
 !!    using the previously recorded Fock matrices and associated 
-!!    gradients. In each Roothan-Hall update,
-!! 
-!!       F C = S C e ----> C ------> D,
+!!    gradients. In each Roothan-Hall update, the fitted F matrix 
+!!    is used instead of the one produced from the previously 
+!!    obtained density matrix D. 
 !!
-!!    the fitted F matrix is used instead of the one produced from 
-!!    the previously obtained density matrix D. 
+!!    Supported wavefunctions: HF 
 !!
 !
    use kinds
@@ -31,10 +30,10 @@ module scf_diis_solver_class
 !
    contains
 !
-      procedure :: run       => run_scf_diis_solver
-      procedure :: cleanup   => cleanup_scf_diis_solver
+      procedure :: run                    => run_scf_diis_solver
+      procedure :: cleanup                => cleanup_scf_diis_solver
 !
-      procedure :: print_banner => print_banner_scf_diis_solver
+      procedure :: print_banner           => print_banner_scf_diis_solver
 !
       procedure :: read_settings          => read_settings_scf_diis_solver 
       procedure :: read_scf_diis_settings => read_scf_diis_settings_scf_diis_solver
@@ -106,17 +105,16 @@ contains
 !
       call wf%initialize_ao_fock()
       call wf%initialize_ao_density()
-      call wf%initialize_mo_coefficients()
+      call wf%initialize_orbital_coefficients()
 !
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call get_ao_h_xy(h_wx)
-      call wf%set_ao_density_to_core_guess(h_wx)
+!
+      call wf%set_ao_density_to_sad()
 !
       call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s,       &
                                  h_wx, solver%coulomb_thr, solver%exchange_thr, &
                                  solver%coulomb_precision)  
-!
-      write(output%unit, *) 'Energy from guess (SAD or core)?', wf%hf_energy
 !
       call wf%do_roothan_hall()
 !
@@ -159,12 +157,12 @@ contains
 !
 !        Set current energy
 !
-         energy = wf%hf_energy
+         energy = wf%energy
 !
 !        Print current iteration information
 !
-         write(output%unit, '(t3,i3,10x,f17.12,4x,e10.4,4x,e10.4)') iteration, wf%hf_energy, &
-                                          max_grad, abs(wf%hf_energy-prev_energy)
+         write(output%unit, '(t3,i3,10x,f17.12,4x,e10.4,4x,e10.4)') iteration, wf%energy, &
+                                          max_grad, abs(wf%energy-prev_energy)
          flush(output%unit)
 !
 !        Test for convergence:
@@ -186,7 +184,7 @@ contains
 !
             call wf%do_roothan_hall()
 !
-            prev_energy     = wf%hf_energy
+            prev_energy     = wf%energy
             prev_ao_density = wf%ao_density
 !
             if (iteration .ne. 1) wf%ao_fock = ao_fock 
@@ -287,12 +285,9 @@ contains
       write(output%unit, '(t3,a)')  'A DIIS-accelerated Roothan-Hall self-consistent field solver.'
       write(output%unit, '(t3,a)')  'In other words, it does a least-square fit to a zero gradient' 
       write(output%unit, '(t3,a)')  'using the previously recorded Fock matrices and associated'
-      write(output%unit, '(t3,a/)') 'gradients. In each Roothan-Hall update,'
-
-      write(output%unit, '(t3,a)')  '   F C = S C e ----> C ------> D,'
-
-      write(output%unit, '(/t3,a)') 'the fitted F matrix is used instead of the one produced from '
-      write(output%unit, '(t3,a/)') 'the previously obtained density matrix D. '
+      write(output%unit, '(t3,a)')  'gradients. In each Roothan-Hall update, the fitted F matrix'
+      write(output%unit, '(t3,a)')  'is used instead of the one produced from the previously'
+      write(output%unit, '(t3,a/)') 'obtained density matrix D. '
 
       flush(output%unit)
 !

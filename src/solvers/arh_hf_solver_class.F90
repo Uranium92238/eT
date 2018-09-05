@@ -183,18 +183,18 @@ contains
       write(output%unit, *) 'Time to construct AO Fock from SAD: ', end_timer-start_timer
       flush(output%unit)
 !
-      prev_energy = wf%hf_energy
+      prev_energy = wf%energy
 !
 !     :: Solve Roothan Hall once - using the SOAD guess - to get a decent N-representable 
 !     AO density on which to start doing conjugate gradient
 !
-      call wf%initialize_mo_coefficients()
+      call wf%initialize_orbital_coefficients()
       call wf%do_roothan_hall()
 !
 !     From the obtained MO coefficients, update the AO density and from it the AO Fock matrix
 !
       call wf%construct_ao_density()
-      call wf%destruct_mo_coefficients()
+      call wf%destruct_orbital_coefficients()
 !
       start_timer = omp_get_wtime()
       call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s, &
@@ -275,12 +275,12 @@ contains
 !
 !        Set current energy
 !
-         energy = wf%hf_energy
+         energy = wf%energy
 !
 !        Print current iteration information
 !
-         write(output%unit, '(t3,i3,10x,f17.12,4x,e10.4,4x,e10.4)') iteration, wf%hf_energy, &
-                                          max_grad, abs(wf%hf_energy-prev_energy)
+         write(output%unit, '(t3,i3,10x,f17.12,4x,e10.4,4x,e10.4)') iteration, wf%energy, &
+                                          max_grad, abs(wf%energy-prev_energy)
          flush(output%unit)
 !
 !        Test for convergence:
@@ -405,7 +405,7 @@ contains
             write(output%unit, *) 'Coulomb threshold:', solver%coulomb_thr
             write(output%unit, *) 'Exchange threshold:', solver%exchange_thr
 !
-            prev_energy = wf%hf_energy
+            prev_energy = wf%energy
 !
             start_timer = omp_get_wtime()
             call wf%construct_ao_fock_cumulative(sp_eri_schwarz, sp_eri_schwarz_list,              &

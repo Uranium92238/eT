@@ -8,7 +8,7 @@ module hf_engine_class
    use hf_solver_class
    use arh_hf_solver_class
    use scf_diis_solver_class
-   use unrestricted_scf_solver_class
+   use scf_solver_class
 !
    type hf_engine 
 !
@@ -48,23 +48,13 @@ contains
 !
       class(hf) :: wf 
 !
-      type(arh_hf_solver), allocatable, target   :: arh_solver 
-      type(scf_diis_solver), allocatable, target :: scf_solver
-      type(unrestricted_scf_solver), allocatable, target :: uhf_solver
+      type(arh_hf_solver), allocatable, target   :: arh
+      type(scf_diis_solver), allocatable, target :: scf_diis
+      type(scf_solver), allocatable, target      :: scf
 !
       class(hf_solver), pointer :: solver => null()
 !
-      type(uhf) :: uhf_wf
-!
       character(len=100) :: algorithm
-!
-    ! temporary: comment in if you want to get the UHF energy
-    !  allocate(uhf_solver)
-    !  call uhf_wf%prepare()
-    !  call uhf_solver%prepare(uhf_wf)
-    !  call uhf_solver%run_2(uhf_wf)
-    !  call uhf_solver%cleanup(uhf_wf)      
-    !  stop
 !
       if (requested_section('hf')) then
 !
@@ -72,27 +62,38 @@ contains
 !
          if (trim(algorithm) == 'aug-rh') then
 !
-            allocate(arh_solver)
-            solver => arh_solver
+            allocate(arh)
+            solver => arh
 !
             call solver%prepare(wf)
             call solver%run(wf)
             call solver%cleanup(wf)
 !
-            deallocate(arh_solver)
+            deallocate(arh)
 !
          elseif (trim(algorithm) == 'scf-diis') then
 !
-            allocate(scf_solver)
-            solver => scf_solver
+            allocate(scf_diis)
+            solver => scf_diis
 !
             call solver%prepare(wf)
             call solver%run(wf)
             call solver%cleanup(wf)
 !
-            deallocate(scf_solver)
+            deallocate(scf_diis)
 !
-         else 
+         elseif (trim(algorithm) == 'scf') then 
+!
+            allocate(scf)
+            solver => scf 
+!
+            call solver%prepare(wf)
+            call solver%run(wf)
+            call solver%cleanup(wf)
+!
+            deallocate(scf)
+!
+         else
 !
             call output%error_msg('did not recognize hf algorithm: '// algorithm)
 !
@@ -100,14 +101,14 @@ contains
 !
       else ! Default: use SCF DIIS algorithm 
 !
-         allocate(scf_solver)
-         solver => scf_solver
+         allocate(scf_diis)
+         solver => scf_diis
 !
          call solver%prepare(wf)
          call solver%run(wf)
          call solver%cleanup(wf)
 !
-         deallocate(scf_solver)
+         deallocate(scf_diis)
 !
       endif
 !
