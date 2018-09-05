@@ -111,13 +111,14 @@ module hf_class
 !
 !     Routines that may change in descendants but are required by solvers 
 !
-      procedure :: initialize_orbitals          => initialize_orbitals_hf
-      procedure :: initialize_density           => initialize_density_hf
-      procedure :: initialize_fock              => initialize_fock_hf
-      procedure :: destruct_fock                => destruct_fock_hf
-      procedure :: update_fock_and_energy       => update_fock_and_energy_hf
-      procedure :: roothan_hall_update_orbitals => roothan_hall_update_orbitals_hf
-      procedure :: update_ao_density            => update_ao_density_hf
+      procedure :: initialize_orbitals               => initialize_orbitals_hf
+      procedure :: initialize_density                => initialize_density_hf
+      procedure :: initialize_fock                   => initialize_fock_hf
+      procedure :: destruct_fock                     => destruct_fock_hf
+      procedure :: update_fock_and_energy            => update_fock_and_energy_hf
+      procedure :: update_fock_and_energy_cumulative => update_fock_and_energy_cumulative_hf
+      procedure :: roothan_hall_update_orbitals      => roothan_hall_update_orbitals_hf
+      procedure :: update_ao_density                 => update_ao_density_hf
 !
    end type hf
 !
@@ -263,6 +264,39 @@ contains
                                  h_wx, coulomb, exchange, precision)          ! Note: does energy update, too       
 !
    end subroutine update_fock_and_energy_hf
+!
+!
+   subroutine update_fock_and_energy_cumulative_hf(wf, sp_eri_schwarz, sp_eri_schwarz_list, n_s, &
+                                                   prev_ao_density, h_wx, coulomb, exchange, precision)
+!!
+!!    Update Fock and energy cumulatively
+!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!
+!!    This routine guides the construction of the Fock matrix (or matrices for
+!!    unrestricted wavefunctions) from the current AO density (or densities).
+!!    It is called by the solver and is overwritten for unrestricted 
+!!    wavefunctions.
+!!
+      implicit none 
+!
+      class(hf) :: wf 
+!
+      integer(i15), intent(in) :: n_s
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: prev_ao_density
+!
+      real(dp), dimension(n_s*(n_s + 1)/2, 2), intent(in)     :: sp_eri_schwarz
+      integer(i15), dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
+!
+      real(dp), optional :: coulomb, exchange, precision ! Non-standard thresholds, optionals
+!
+      call wf%construct_ao_fock_cumulative(sp_eri_schwarz, sp_eri_schwarz_list, &
+                                           n_s, prev_ao_density, h_wx, coulomb, &
+                                           exchange, precision) ! Note: does energy update, too
+!
+   end subroutine update_fock_and_energy_cumulative_hf
 !
 !
    subroutine roothan_hall_update_orbitals_hf(wf)

@@ -13,6 +13,18 @@ module scf_diis_solver_class
 !!
 !!    Supported wavefunctions: HF 
 !!
+!!    Note to developers: although steps have been taken to make 
+!!    the solver general enough to allow for unrestricted HF theory,
+!!    there are still explicit references to the AO Fock and density.
+!!    These need to be replaced by AO-densities and Fock-densities,
+!!    where it might be reasonable to adopt a "number of densities"
+!!    variable, such that we work with F = [F_a F_b], G = [G_a G_b] and 
+!!    D = [D_a D_b] in the DIIS solver. Generalized and overwritten
+!!    wavefunction routines can then control the handling of these
+!!    arrays and their expected size (when constructing Fock
+!!    cumulatively, for instance, where the previous density 
+!!    is required). - Eirik, Sep 2018
+!!    
 !
    use kinds
    use hf_solver_class
@@ -85,8 +97,7 @@ contains
 !
       call solver%print_banner()
 !
-!     :: Construct screening vectors, as well as a degeneracy vector, 
-!     used to construct AO Fock efficiently
+!     Construct screening vectors for efficient Fock construction 
 !
       n_s = wf%system%get_n_shells()
 !
@@ -95,36 +106,36 @@ contains
 !
       call wf%construct_sp_eri_schwarz(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
 !
-!     :: Initialize the DIIS object,
-!     which is used to get new effective densities from previous densities and gradients
+!     Initialize the DIIS manager object
 !
       call diis_manager%init('hf_diis', (wf%n_ao)*(wf%n_ao + 1)/2, wf%n_ao**2, solver%diis_dimension)
 !
-!     :: Get an initial AO density and initial MO coefficients
-!     by solving the Roothan-Hall equations for the SAD density
+!     Initialize the orbitals, density, and the Fock matrix (or matrices),
+!     and set the initial density guess and Fock matrix 
 !
-      call wf%initialize_ao_fock()
-      call wf%initialize_ao_density()
-      call wf%initialize_orbital_coefficients()
+      call wf%initialize_fock()
+      call wf%initialize_density()
+      call wf%initialize_orbitals()
 !
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call get_ao_h_xy(h_wx)
 !
       call wf%set_ao_density_to_sad()
 !
+      call wf%update_fock_and_energy(sp_eri_schwarz, sp_eri_schwarz_list, n_s,  &
+                                 h_wx, solver%coulomb_thr, solver%exchange_thr, &
+                                 solver%coulomb_precision)
+!
+!     Do a Roothan-Hall update to ensure idempotentency of densities,
+!     and use it to construct the first proper Fock matrix from which 
+!     to begin cumulative construction 
+!
+      call wf%roothan_hall_update_orbitals() ! F => C
+      call wf%update_ao_density()            ! C => D
+!
       call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s,       &
                                  h_wx, solver%coulomb_thr, solver%exchange_thr, &
                                  solver%coulomb_precision)  
-!
-      call wf%do_roothan_hall()
-!
-      call wf%construct_ao_density() 
-      call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s,       &
-                                 h_wx, solver%coulomb_thr, solver%exchange_thr, &
-                                 solver%coulomb_precision)  
-!
-      call mem%alloc(Po, wf%n_ao, wf%n_ao)
-      call mem%alloc(Pv, wf%n_ao, wf%n_ao)
 !
       call mem%alloc(ao_fock, wf%n_ao, wf%n_ao)          ! Holds Fock matrix, when wf%ao_fock 
                                                          ! becomes the DIIS Fock matrix 
@@ -133,6 +144,9 @@ contains
 !
       call mem%alloc(G, wf%n_ao, wf%n_ao)                ! Gradient 
       call mem%alloc(F, wf%n_ao*(wf%n_ao + 1)/2, 1)      ! Fock matrix packed 
+!
+      call mem%alloc(Po, wf%n_ao, wf%n_ao)
+      call mem%alloc(Pv, wf%n_ao, wf%n_ao)
 !
       call wf%construct_projection_matrices(Po, Pv)
       call wf%construct_roothan_hall_gradient(G, Po, Pv)
@@ -179,31 +193,22 @@ contains
 !
          else
 !
-!           Solve the Roothan-Hall equation, then update the AO density 
-!           and Fock matrix using the solution
-!
-            call wf%do_roothan_hall()
-!
             prev_energy     = wf%energy
             prev_ao_density = wf%ao_density
 !
-            if (iteration .ne. 1) wf%ao_fock = ao_fock 
+            call wf%roothan_hall_update_orbitals() ! DIIS F => C
+            call wf%update_ao_density()            ! C => D
 !
-            call wf%construct_ao_density()
-            call wf%construct_ao_fock_cumulative(sp_eri_schwarz, sp_eri_schwarz_list,              &
-                                                   n_s, prev_ao_density, h_wx, solver%coulomb_thr, &
-                                                   solver%exchange_thr, solver%coulomb_precision)
+            if (iteration .ne. 1) wf%ao_fock = ao_fock ! Restore non-DIIS F 
 !
-!           Calculate the gradient from the current density
+            call wf%update_fock_and_energy_cumulative(sp_eri_schwarz, sp_eri_schwarz_list,            &
+                                                      n_s, prev_ao_density, h_wx, solver%coulomb_thr, &
+                                                      solver%exchange_thr, solver%coulomb_precision)
 !
             call wf%construct_projection_matrices(Po, Pv)
             call wf%construct_roothan_hall_gradient(G, Po, Pv)
 !
             max_grad = get_abs_max(G, (wf%n_ao)**2)
-!
-!           Update AO Fock matrix by DIIS,
-!           but keep a copy of the actual Fock matrix for 
-!           cumulative construction 
 !
             call packin(F, wf%ao_fock, wf%n_ao)
             call diis_manager%update(G, F)
