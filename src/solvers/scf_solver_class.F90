@@ -182,7 +182,7 @@ contains
 !
       class(hf) :: wf
 !
-!     Nothing here yet, but: maybe write density if requested?
+      call wf%save_ao_density()
 !
    end subroutine cleanup_scf_solver
 !

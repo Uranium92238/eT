@@ -15,7 +15,7 @@ module uhf_class
 !
    implicit none
 !
-   type, extends(hf):: uhf
+   type, extends(hf) :: uhf
 !
       integer(i15) :: n_alpha
       integer(i15) :: n_beta 
@@ -34,27 +34,28 @@ module uhf_class
 !
 	contains
 !
-      procedure :: prepare => prepare_uhf
+      procedure :: prepare                           => prepare_uhf
 !
-      procedure :: determine_n_alpha_and_beta_electrons => determine_n_alpha_and_beta_electrons_uhf
+      procedure :: determine_n_alpha_and_n_beta      => determine_n_alpha_and_n_beta_uhf
 !
-      procedure :: construct_ao_spin_density => construct_ao_spin_density_uhf
-      procedure :: construct_ao_spin_fock    => construct_ao_spin_fock_uhf
+      procedure :: construct_ao_spin_density         => construct_ao_spin_density_uhf
+      procedure :: construct_ao_spin_fock            => construct_ao_spin_fock_uhf
 !
-      procedure :: form_ao_density => form_ao_density_uhf
+      procedure :: form_ao_density                   => form_ao_density_uhf
 !
-      procedure :: calculate_uhf_energy => calculate_uhf_energy_uhf
-      procedure :: set_ao_density_to_core_guess => set_ao_density_to_core_guess_uhf
+      procedure :: calculate_uhf_energy              => calculate_uhf_energy_uhf
+      procedure :: set_ao_density_to_core_guess      => set_ao_density_to_core_guess_uhf
 !
 !     Routines that may change in descendants but are required by solvers 
 !
-      procedure :: initialize_orbitals          => initialize_orbitals_uhf
-      procedure :: initialize_density           => initialize_density_uhf
-      procedure :: initialize_fock              => initialize_fock_uhf
-      procedure :: destruct_fock                => destruct_fock_uhf 
-      procedure :: update_fock_and_energy       => update_fock_and_energy_uhf
-      procedure :: roothan_hall_update_orbitals => roothan_hall_update_orbitals_uhf
-      procedure :: update_ao_density            => update_ao_density_uhf
+      procedure :: initialize_orbitals               => initialize_orbitals_uhf
+      procedure :: initialize_density                => initialize_density_uhf
+      procedure :: initialize_fock                   => initialize_fock_uhf
+      procedure :: destruct_fock                     => destruct_fock_uhf 
+      procedure :: update_fock_and_energy            => update_fock_and_energy_uhf
+      procedure :: roothan_hall_update_orbitals      => roothan_hall_update_orbitals_uhf
+      procedure :: update_ao_density                 => update_ao_density_uhf
+      procedure :: save_ao_density                   => save_ao_density_uhf
 !
 !
 !     Initialize and destruct routines
@@ -116,11 +117,7 @@ contains
       wf%n_o = (wf%system%get_n_electrons())/2
       wf%n_v = wf%n_mo - wf%n_o
 !
-      call wf%determine_n_alpha_and_beta_electrons()
-!
-      write(output%unit, *) ' n alpha:', wf%n_alpha
-      write(output%unit, *) ' n beta:', wf%n_beta
-      write(output%unit, *) 'multiplicity:', wf%system%multiplicity
+      call wf%determine_n_alpha_and_n_beta()
 !
    end subroutine prepare_uhf
 !
@@ -294,6 +291,42 @@ contains
    end subroutine update_ao_density_uhf
 !
 !
+   subroutine save_ao_density_uhf(wf)
+!!
+!!    Save AO density 
+!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Save the AO density (or densities, if unrestricted) based 
+!!    on the current orbital coefficient matrix (or matrices).
+!!
+      implicit none 
+!
+      class(uhf) :: wf 
+!
+      type(file) :: ao_density 
+!
+      type(file) :: ao_density_a
+      type(file) :: ao_density_b
+!
+      call ao_density%init('ao_density', 'sequential', 'formatted')
+      call ao_density_a%init('ao_density_a', 'sequential', 'formatted')
+      call ao_density_b%init('ao_density_b', 'sequential', 'formatted')
+!
+      call disk%open_file(ao_density, 'readwrite', 'rewind')
+      write(ao_density%unit, *) wf%ao_density
+      call disk%close_file(ao_density)
+!
+      call disk%open_file(ao_density_a, 'readwrite', 'rewind')
+      write(ao_density_a%unit, *) wf%ao_density_a
+      call disk%close_file(ao_density_a)
+!
+      call disk%open_file(ao_density_b, 'readwrite', 'rewind')
+      write(ao_density_b%unit, *) wf%ao_density_b
+      call disk%close_file(ao_density_b)
+!
+   end subroutine save_ao_density_uhf
+!
+!
    subroutine set_ao_density_to_core_guess_uhf(wf, h_wx)
 !!
 !!    Set AO density to core guess
@@ -323,7 +356,7 @@ contains
    end subroutine set_ao_density_to_core_guess_uhf
 !
 !
-   subroutine determine_n_alpha_and_beta_electrons_uhf(wf)
+   subroutine determine_n_alpha_and_n_beta_uhf(wf)
 !!
 !!    Determine the number of alpha and beta electrons 
 !!    Written by Eirik F. Kjønstad, Sep 2018 
@@ -352,7 +385,7 @@ contains
 !
       endif 
 !
-   end subroutine determine_n_alpha_and_beta_electrons_uhf
+   end subroutine determine_n_alpha_and_n_beta_uhf
 !
 !
    subroutine construct_ao_spin_density_uhf(wf, sigma)

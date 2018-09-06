@@ -143,7 +143,8 @@ program eT_program
 !   :: Coupled cluster calculation
 !
     if (requested_method('mlhf')) n_methods = n_methods - 1
-    if (requested_method('hf')) n_methods = n_methods - 1
+    if (requested_method('hf'))   n_methods = n_methods - 1
+    if (requested_method('uhf'))  n_methods = n_methods - 1
 !
     if (n_methods .gt. 0) then
 !

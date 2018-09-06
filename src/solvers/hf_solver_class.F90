@@ -22,11 +22,11 @@ module hf_solver_class
 !
    contains 
 !
-      procedure :: prepare => prepare_hf_solver
-      procedure :: run     => run_hf_solver
-      procedure :: cleanup => cleanup_hf_solver
+      procedure :: prepare                 => prepare_hf_solver
+      procedure :: run                     => run_hf_solver
+      procedure :: cleanup                 => cleanup_hf_solver
 !
-      procedure :: print_banner => print_banner_hf_solver
+      procedure :: print_banner            => print_banner_hf_solver
 !
       procedure :: read_settings           => read_settings_hf_solver
       procedure :: read_hf_solver_settings => read_hf_solver_settings_hf_solver

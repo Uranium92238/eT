@@ -379,7 +379,7 @@ contains
       alpha_fname = 'sad/' // trim(atom%basis) // '/' // trim(atom%symbol) // '_' // 'alpha' // '.inp'
       beta_fname  = 'sad/' // trim(atom%basis) // '/' // trim(atom%symbol) // '_' // 'beta' // '.inp'
 !
-      call mem%alloc(temporary, 1, atom%n_ao)
+  !    call mem%alloc(temporary, 1, atom%n_ao)
 !
       call alpha_density%init(trim(alpha_fname), 'sequential', 'formatted')
       call beta_density%init(trim(beta_fname), 'sequential', 'formatted')
@@ -387,36 +387,43 @@ contains
       call disk%open_file(alpha_density, 'read', 'rewind')
       call disk%open_file(beta_density, 'read', 'rewind')
 !
-      do i = 1, atom%n_ao 
-!
-         read(alpha_density%unit, *, iostat=ioerror) (temporary(1,j), j = 1, atom%n_ao)
-!
-         do j = 1, atom%n_ao 
-!
-            atomic_density(i, j) = atomic_density(i, j) + temporary(1, j)
-!
-         enddo
-!
-      enddo 
+      call mem%alloc(temporary, atom%n_ao, atom%n_ao)
+      read(alpha_density%unit, *, iostat=ioerror) ((temporary(i,j), j = 1, atom%n_ao), i = 1, atom%n_ao)
+      atomic_density = atomic_density + temporary
+!       do i = 1, atom%n_ao 
+! !
+!          read(alpha_density%unit, *, iostat=ioerror) (temporary(1,j), j = 1, atom%n_ao)
+! !
+!          do j = 1, atom%n_ao 
+! !
+!             atomic_density(i, j) = atomic_density(i, j) + temporary(1, j)
+! !
+!          enddo
+! !
+!       enddo 
 !
    !   write(output%unit, *) 'Atom: ' // atom%symbol 
 !
-      do i = 1, atom%n_ao 
+      read(beta_density%unit, *, iostat=ioerror) ((temporary(i,j), j = 1, atom%n_ao), i = 1, atom%n_ao)
+      atomic_density = atomic_density + temporary
 !
-         read(beta_density%unit, *, iostat=ioerror) (temporary(1,j), j = 1, atom%n_ao)
-!
-         do j = 1, atom%n_ao 
-!
-            atomic_density(i, j) = atomic_density(i, j) + temporary(1, j)
-!
-         enddo
-!
-      enddo 
+!       do i = 1, atom%n_ao 
+! !
+!          read(beta_density%unit, *, iostat=ioerror) (temporary(1,j), j = 1, atom%n_ao)
+! !
+!          do j = 1, atom%n_ao 
+! !
+!             atomic_density(i, j) = atomic_density(i, j) + temporary(1, j)
+! !
+!          enddo
+! !
+!       enddo 
 !
       call disk%close_file(alpha_density)
       call disk%close_file(beta_density)
 !
-      call mem%dealloc(temporary, 1, atom%n_ao)
+      call mem%dealloc(temporary, atom%n_ao, atom%n_ao)
+    !  call mem%dealloc(temporary, 1, atom%n_ao)
 !
 !     Print parts of the density matrix associated with different shells 
 !

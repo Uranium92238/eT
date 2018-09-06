@@ -119,6 +119,7 @@ module hf_class
       procedure :: update_fock_and_energy_cumulative => update_fock_and_energy_cumulative_hf
       procedure :: roothan_hall_update_orbitals      => roothan_hall_update_orbitals_hf
       procedure :: update_ao_density                 => update_ao_density_hf
+      procedure :: save_ao_density                   => save_ao_density_hf
 !
    end type hf
 !
@@ -332,6 +333,28 @@ contains
       call wf%construct_ao_density()
 !
    end subroutine update_ao_density_hf
+!
+!
+   subroutine save_ao_density_hf(wf)
+!!
+!!    Save AO density 
+!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Save the AO density (or densities, if unrestricted) based 
+!!    on the current orbital coefficient matrix (or matrices).
+!!
+      implicit none 
+!
+      class(hf) :: wf 
+!
+      type(file) :: ao_density 
+!
+      call ao_density%init('ao_density', 'sequential', 'formatted')
+      call disk%open_file(ao_density, 'readwrite', 'rewind')
+      write(ao_density%unit, *) wf%ao_density
+      call disk%close_file(ao_density)
+!
+   end subroutine save_ao_density_hf
 !
 !
    subroutine cleanup_hf(wf)
@@ -2939,7 +2962,7 @@ contains
       enddo
       call mem%dealloc(temp, wf%n_ao, wf%n_ao)
 !
-      write(output%unit, *) 'Trace of SAD density:', trace 
+  !    write(output%unit, *) 'Trace of SAD density:', trace 
 !
    end subroutine set_ao_density_to_sad_2_hf
 !

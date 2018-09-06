@@ -121,10 +121,13 @@ contains
       call get_ao_h_xy(h_wx)
 !
       call wf%set_ao_density_to_sad()
+     ! call wf%set_ao_density_to_sad_2()
 !
       call wf%update_fock_and_energy(sp_eri_schwarz, sp_eri_schwarz_list, n_s,  &
                                  h_wx, solver%coulomb_thr, solver%exchange_thr, &
                                  solver%coulomb_precision)
+!
+      write(output%unit, *) 'energy it 0:', wf%energy
 !
 !     Do a Roothan-Hall update to ensure idempotentency of densities,
 !     and use it to construct the first proper Fock matrix from which 
