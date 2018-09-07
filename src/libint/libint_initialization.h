@@ -12,6 +12,7 @@ void initialize_basis(char *basisset, char *filename);
 void initialize_kinetic();
 void initialize_nuclear();
 void initialize_overlap();
+void initialize_dipole();
 void set_coulomb_precision(double *prec);
 
 #ifdef __cplusplus

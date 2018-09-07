@@ -1,6 +1,6 @@
 interface
 !
-   subroutine get_ao_g_wxyz_c(g, s1, s2, s3, s4) bind(C, name='get_ao_g_wxyz')
+   subroutine construct_ao_g_wxyz_c(g, s1, s2, s3, s4) bind(C, name='construct_ao_g_wxyz')
 !
       use iso_c_binding
       implicit none
@@ -8,10 +8,10 @@ interface
       real(c_double), dimension(1,1) :: g
       integer(c_long) :: s1, s2, s3, s4
 !
-   end subroutine get_ao_g_wxyz_c
+   end subroutine construct_ao_g_wxyz_c
 !
-   subroutine get_ao_g_wxyz_epsilon_c(g, s1, s2, s3, s4, epsilon, &
-                     thread, skip, n1, n2, n3, n4) bind(C, name='get_ao_g_wxyz_epsilon')
+   subroutine construct_ao_g_wxyz_epsilon_c(g, s1, s2, s3, s4, epsilon, &
+               thread, skip, n1, n2, n3, n4) bind(C, name='construct_ao_g_wxyz_epsilon')
 !
       use iso_c_binding
       implicit none
@@ -21,6 +21,6 @@ interface
       integer(c_long) :: s1, s2, s3, s4, thread
       integer(c_long) :: skip, n1, n2, n3, n4
 !
-   end subroutine get_ao_g_wxyz_epsilon_c
+   end subroutine construct_ao_g_wxyz_epsilon_c
 !
 end interface

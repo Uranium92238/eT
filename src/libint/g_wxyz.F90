@@ -7,7 +7,7 @@ module g_wxyz
 !
 contains
 !
-   subroutine get_ao_g_wxyz(g, s1, s2, s3, s4)
+   subroutine construct_ao_g_wxyz(g, s1, s2, s3, s4)
 !
       implicit none
 !
@@ -15,11 +15,11 @@ contains
 !
       integer(kind=8) :: s1, s2, s3, s4
 !
-      call get_ao_g_wxyz_c(g, s1, s2, s3, s4)
+      call construct_ao_g_wxyz_c(g, s1, s2, s3, s4)
 !
-   end subroutine get_ao_g_wxyz
+   end subroutine construct_ao_g_wxyz
 !
-   subroutine get_ao_g_wxyz_epsilon(g, s1, s2, s3, s4, epsilon, thread, skip, n1, n2, n3, n4)
+   subroutine construct_ao_g_wxyz_epsilon(g, s1, s2, s3, s4, epsilon, thread, skip, n1, n2, n3, n4)
 !
       implicit none
 !
@@ -28,8 +28,8 @@ contains
 !
       integer(kind=8) :: s1, s2, s3, s4, thread, skip, n1, n2, n3, n4 
 !
-      call get_ao_g_wxyz_epsilon_c(g, s1, s2, s3, s4, epsilon, thread, skip, n1, n2, n3, n4)
+      call construct_ao_g_wxyz_epsilon_c(g, s1, s2, s3, s4, epsilon, thread, skip, n1, n2, n3, n4)
 !
-   end subroutine get_ao_g_wxyz_epsilon
+   end subroutine construct_ao_g_wxyz_epsilon
 !
 end module g_wxyz

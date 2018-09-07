@@ -7,8 +7,9 @@ module ao_integral_tool_class
 !
 !  Fortran interfaces to C++ routines
 !
-   use h_xy
-   use s_xy
+   use h_wx
+   use s_wx
+   use mu_wx
    use g_wxyz
 !
 !  Disk & memory class modules
@@ -26,15 +27,11 @@ module ao_integral_tool_class
 !
    contains
 !
-!     These are to be replaced with get routines in the WF - we shall not do 
-!     do loops on the C++ side, only ask for arrays to handle Fortran side 
-!
-      procedure :: get_ao_h_xy           => get_ao_h_xy_ao_integral_tool            ! h_αβ
-!
       procedure :: construct_ao_h_wx           => construct_ao_h_wx_ao_integral_tool            ! h_αβ
       procedure :: construct_ao_s_wx           => construct_ao_s_wx_ao_integral_tool            ! h_αβ
       procedure :: construct_ao_g_wxyz         => construct_ao_g_wxyz_ao_integral_tool          ! g_αβγδ
       procedure :: construct_ao_g_wxyz_epsilon => construct_ao_g_wxyz_epsilon_ao_integral_tool  ! g_αβγδ
+      procedure :: construct_ao_mu_wx          => construct_ao_mu_wx_ao_integral_tool           ! μ_αβ
 !
    end type ao_integral_tool
 !
@@ -42,56 +39,39 @@ module ao_integral_tool_class
 contains
 !
 !
-   subroutine get_ao_h_xy_ao_integral_tool(int, h)
-!!
-!!    Get h_αβ integrals
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-!!    Fortran wrapper for the C++ routine that calculates and
-!!    saves the h_αβ integral_tool in the array h.
-!!
-      implicit none
-!
-      class(ao_integral_tool) :: int
-!
-      real(dp), dimension(:,:), intent(inout) :: h
-!
-      call get_ao_h_xy(h)
-!
-   end subroutine get_ao_h_xy_ao_integral_tool
-!
-!
-   subroutine construct_ao_h_wx_ao_integral_tool(int, h, s1, s2)
+   subroutine construct_ao_h_wx_ao_integral_tool(integrals, h, s1, s2)
 !!
 !!    Construct h_αβ
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    Fortran wrapper for the C++ routine that calculates and
-!!    saves the h_αβ integral_tool in the array h.
+!!    saves parts of the h_αβ integral in the array h. s1-s2 are the shells
+!!    that alpha and beta belong to.
 !!
       implicit none
 !
-      class(ao_integral_tool) :: int
+      class(ao_integral_tool) :: integrals
 !
       real(dp), dimension(:,:), intent(inout) :: h
       integer(i15), intent(in) :: s1, s2
 !
-      call get_ao_h_xy_sp(h, s1, s2)
+      call construct_ao_h_wx(h, s1, s2)
 !
    end subroutine construct_ao_h_wx_ao_integral_tool
 !
 !
-   subroutine construct_ao_s_wx_ao_integral_tool(int, s, s1, s2)
+   subroutine construct_ao_s_wx_ao_integral_tool(integrals, s, s1, s2)
 !!
 !!    Construct s_αβ
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    Fortran wrapper for the C++ routine that calculates and
-!!    saves the h_αβ integral_tool in the array h.
+!!    saves parts of the s_αβ integral in the array h. s1-s2 are the shells
+!!    that alpha and beta belong to.
 !!
       implicit none
 !
-      class(ao_integral_tool) :: int
+      class(ao_integral_tool) :: integrals
 !
       real(dp), dimension(:,:), intent(inout) :: s
       integer(i15), intent(in) :: s1, s2
@@ -101,36 +81,36 @@ contains
    end subroutine construct_ao_s_wx_ao_integral_tool
 !
 !
-   subroutine construct_ao_g_wxyz_ao_integral_tool(int, g, s1, s2, s3, s4)
+   subroutine construct_ao_g_wxyz_ao_integral_tool(integrals, g, s1, s2, s3, s4)
 !!
 !!    Construct g_αβγδ
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    Fortran wrapper for the C++ routine that calculates and
-!!    saves the g_αβγδ integral_tool in the array g. s1-s4 are 
+!!    saves the g_αβγδ integral in the array g. s1-s4 are 
 !!    the shells that alpha, beta, gamma and delta belong to. 
 !!
       implicit none
 !
-      class(ao_integral_tool), intent(in) :: int
+      class(ao_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(:,:), intent(inout) :: g
 !
-      integer(dp), intent(in) :: s1, s2, s3, s4
+      integer(i15), intent(in) :: s1, s2, s3, s4
 !
-      call get_ao_g_wxyz(g, s1, s2, s3, s4)
+      call construct_ao_g_wxyz(g, s1, s2, s3, s4)
 !
    end subroutine construct_ao_g_wxyz_ao_integral_tool
 !
 !
-   subroutine construct_ao_g_wxyz_epsilon_ao_integral_tool(int, g, s1, s2, s3, s4, epsilon, thread, skip, &
+   subroutine construct_ao_g_wxyz_epsilon_ao_integral_tool(integrals, g, s1, s2, s3, s4, epsilon, thread, skip, &
                                                             n1, n2, n3, n4)
 !!
 !!    Construct g_αβγδ epsilon 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    Fortran wrapper for the C++ routine that calculates and
-!!    saves the g_αβγδ integral_tool in the array g. s1-s4 are 
+!!    saves the g_αβγδ integral in the array g. s1-s4 are 
 !!    the shells that alpha, beta, gamma and delta belong to. 
 !!
 !!    This is the most efficient routine to calculate these 
@@ -158,7 +138,7 @@ contains
 !!
       implicit none
 !
-      class(ao_integral_tool), intent(in) :: int
+      class(ao_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(:,:), intent(inout) :: g
 !
@@ -167,9 +147,37 @@ contains
       integer(i15), intent(in) :: s1, s2, s3, s4, thread, n1, n2, n3, n4 
       integer(i15) :: skip 
 !
-      call get_ao_g_wxyz_epsilon(g, s1, s2, s3, s4, epsilon, thread, skip, n1, n2, n3, n4)
+      call construct_ao_g_wxyz_epsilon(g, s1, s2, s3, s4, epsilon, thread, skip, n1, n2, n3, n4)
 !
    end subroutine construct_ao_g_wxyz_epsilon_ao_integral_tool
+!
+!
+   subroutine construct_ao_mu_wx_ao_integral_tool(integrals, mu_X, mu_Y, mu_Z, s1, s2)
+!!
+!!    Construct μ_αβ
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Fortran wrapper for the C++ routine that calculates and
+!!    saves parts of the μ_αβ integral in the array h. s1-s2 are the shells
+!!    that alpha and beta belong to.
+!!
+!!    Note that the routine calculates the X, Y, and Z components 
+!!    of the dipole simultaneously for the requested shells s1 and s2.
+!!    (Because this is how Libint computes them.)
+!!
+      implicit none 
+!
+      class(ao_integral_tool), intent(in) :: integrals
+!
+      real(dp), dimension(:,:), intent(inout) :: mu_X ! x component
+      real(dp), dimension(:,:), intent(inout) :: mu_Y ! y component 
+      real(dp), dimension(:,:), intent(inout) :: mu_Z ! z componen
+!
+      integer(i15), intent(in) :: s1, s2
+!
+      call construct_ao_mu_wx(mu_X, mu_Y, mu_Z, s1, s2)
+!
+   end subroutine construct_ao_mu_wx_ao_integral_tool
 !
 !
 end module ao_integral_tool_class

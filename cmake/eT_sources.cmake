@@ -15,8 +15,9 @@ set(eT_fortran_sources
    src/integrals/ao_integral_tool_class.F90
    src/integrals/mo_integral_tool_class.F90
    src/solver_tools/cholesky_array_list_class.F90
-   src/libint/h_xy.F90
-   src/libint/s_xy.F90
+   src/libint/h_wx.F90
+   src/libint/s_wx.F90
+   src/libint/mu_wx.F90
    src/libint/g_wxyz.F90
    src/libint/libint_initialization.F90
    src/memory/batching_index_class.F90

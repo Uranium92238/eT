@@ -103,7 +103,7 @@ contains
 !
       call wf%system%prepare()
 !
-      call get_n_aos(wf%n_ao)
+      wf%n_ao = wf%system%get_n_aos()
 !
       call initialize_coulomb()
       call initialize_kinetic()

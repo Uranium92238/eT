@@ -63,6 +63,13 @@ interface
 !
    end subroutine initialize_overlap_c
 !
+   subroutine initialize_dipole_c() bind(C, name='initialize_dipole')
+!
+      use iso_c_binding
+      implicit none
+!
+   end subroutine initialize_dipole_c
+!
    subroutine initialize_nuclear_c() bind(C, name='initialize_nuclear')
 !
       use iso_c_binding

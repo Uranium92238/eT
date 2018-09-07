@@ -1,6 +1,6 @@
 /*
 /
-/ 	Two-electron integral routines (for g_wxyz = g_αβγδ)
+/ 	Construct electronic repulsion integrals g
 / 	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 /
 */
@@ -22,27 +22,20 @@ using namespace std;
 
 using namespace libint2;
 
-void get_ao_g_wxyz(double *g, long *s1, long *s2, long *s3, long *s4){
+void construct_ao_g_wxyz(double *g, long *s1, long *s2, long *s3, long *s4){
 
 	int thread = omp_get_thread_num();
 
 	const auto& buf_vec = electronic_repulsion_engines[thread].results(); // will point to computed shell sets
 
-	//auto bf1 = shell2bf[shell1];  // First basis function in shell 1
 	auto n1 = basis[*s1 - 1].size(); // Number of basis functions in shell 1
-
-	//auto bf2 = shell2bf[shell2];  // First basis function in shell 2
 	auto n2 = basis[*s2 - 1].size(); // Number of basis functions in shell 2
-
-	//auto bf3 = shell2bf[shell3];  // First basis function in shell 3
 	auto n3 = basis[*s3 - 1].size(); // Number of basis functions in shell 3
-
-	//auto bf4 = shell2bf[shell4];  // First basis function in shell 4
 	auto n4 = basis[*s4 - 1].size(); // Number of basis functions in shell 4
 
 	electronic_repulsion_engines[thread].compute(basis[*s1 - 1], basis[*s2 - 1], basis[*s3 - 1], basis[*s4 - 1]);
 
-	auto ints_1234 = buf_vec[0]; // Location of computed integrals
+	auto ints_1234 = buf_vec[0];     // Location of computed integrals
 
    if (ints_1234 == nullptr)
    {
@@ -83,8 +76,8 @@ void get_ao_g_wxyz(double *g, long *s1, long *s2, long *s3, long *s4){
 	return;
 }
 
-void get_ao_g_wxyz_epsilon(double *g, long *s1, long *s2, long *s3, long *s4, double *epsilon, long *thread, long *skip,
-                            long *n1, long *n2, long *n3, long *n4){
+void construct_ao_g_wxyz_epsilon(double *g, long *s1, long *s2, long *s3, long *s4, double *epsilon, long *thread, long *skip,
+                                      long *n1, long *n2, long *n3, long *n4){
 
   electronic_repulsion_engines[*thread].set_precision(*epsilon);
 
@@ -96,7 +89,6 @@ void get_ao_g_wxyz_epsilon(double *g, long *s1, long *s2, long *s3, long *s4, do
 
    if (ints_1234 == nullptr)
    {
-
       *skip = 1;
    }
    else

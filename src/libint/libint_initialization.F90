@@ -41,6 +41,14 @@ contains
 !
    end subroutine initialize_overlap
 !
+   subroutine initialize_dipole()
+!
+      implicit none
+!
+      call initialize_dipole_c()
+!
+   end subroutine initialize_dipole
+!
    subroutine initialize_coulomb()
 !
       implicit none

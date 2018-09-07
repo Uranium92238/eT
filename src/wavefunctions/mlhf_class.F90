@@ -60,8 +60,7 @@ contains
 !     followed by preconditioning (making it the identity matrix
 !     for this particular preconditioner - V)
 !
-      wf%n_ao = 0
-      call get_n_aos(wf%n_ao)
+      wf%n_ao = wf%system%get_n_aos()
 !
       call initialize_coulomb()
       call initialize_kinetic()
