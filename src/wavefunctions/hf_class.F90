@@ -113,6 +113,7 @@ module hf_class
 ! 
       procedure :: get_ao_h_wx                        => get_ao_h_wx_hf
       procedure :: get_ao_s_wx                        => get_ao_s_wx_hf
+      procedure :: get_ao_mu_wx                       => get_ao_mu_wx_hf
 !
 !     Routines that may change in descendants but are required by solvers 
 !
@@ -3090,6 +3091,69 @@ contains
       enddo
 !
    end subroutine get_ao_s_wx_hf
+!
+!
+   subroutine get_ao_mu_wx_hf(wf, mu_X, mu_Y, mu_Z)
+!!
+!!    Get AO mu
+!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Uses the integral tool to construct the full dipole integrals
+!!    for the X, Y, and Z components.
+!!
+      implicit none 
+!
+      class(hf), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao) :: mu_X
+      real(dp), dimension(wf%n_ao, wf%n_ao) :: mu_Y
+      real(dp), dimension(wf%n_ao, wf%n_ao) :: mu_Z
+!
+      type(interval) :: A_interval, B_interval
+!
+      integer(i15) :: x, y, A, B
+!
+      real(dp), dimension(:,:), allocatable :: mu_AB_X 
+      real(dp), dimension(:,:), allocatable :: mu_AB_Y 
+      real(dp), dimension(:,:), allocatable :: mu_AB_Z 
+!
+      do A = 1, wf%system%n_s
+!
+         A_interval = wf%system%shell_limits(A)
+!
+         do B = 1, A
+!
+            B_interval = wf%system%shell_limits(B)
+!
+            call mem%alloc(mu_AB_X, A_interval%size, B_interval%size)
+            call mem%alloc(mu_AB_Y, A_interval%size, B_interval%size)
+            call mem%alloc(mu_AB_Z, A_interval%size, B_interval%size)
+!
+            call wf%system%ao_integrals%construct_ao_mu_wx(mu_AB_X, mu_AB_Y, mu_AB_Z, A, B)
+!
+             do x = 1, A_interval%size
+                do y = 1, B_interval%size
+!
+                   mu_X(A_interval%first - 1 + x, B_interval%first - 1 + y) = mu_AB_X(x, y)
+                   mu_X(B_interval%first - 1 + y, A_interval%first - 1 + x) = mu_AB_X(x, y)
+!
+                   mu_Y(A_interval%first - 1 + x, B_interval%first - 1 + y) = mu_AB_Y(x, y)
+                   mu_Y(B_interval%first - 1 + y, A_interval%first - 1 + x) = mu_AB_Y(x, y)
+!
+                   mu_Z(A_interval%first - 1 + x, B_interval%first - 1 + y) = mu_AB_Z(x, y)
+                   mu_Z(B_interval%first - 1 + y, A_interval%first - 1 + x) = mu_AB_Z(x, y)
+!
+                enddo
+             enddo
+!
+            call mem%dealloc(mu_AB_X, A_interval%size, B_interval%size)
+            call mem%dealloc(mu_AB_Y, A_interval%size, B_interval%size)
+            call mem%dealloc(mu_AB_Z, A_interval%size, B_interval%size)
+!
+         enddo
+      enddo
+!
+   end subroutine get_ao_mu_wx_hf
 !
 !
 end module hf_class

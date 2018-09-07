@@ -134,6 +134,4 @@ void initialize_dipole(){
     Engine temporary(Operator::emultipole1, basis.max_nprim(), basis.max_l()); // Note that expansion point = (0,0,0) by default
     dipole = temporary;
 
-    dipole.set_params(make_point_charges(atoms));                              // Tell the engine where the atomic charges are
-
 }
