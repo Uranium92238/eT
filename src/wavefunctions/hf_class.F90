@@ -2002,7 +2002,7 @@ contains
 !
       class(hf) :: wf
 !
-      call get_ao_s_xy(wf%ao_overlap)
+      call wf%get_ao_s_wx(wf%ao_overlap)
 !
    end subroutine construct_ao_overlap_hf
 !

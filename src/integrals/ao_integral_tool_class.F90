@@ -30,7 +30,6 @@ module ao_integral_tool_class
 !     do loops on the C++ side, only ask for arrays to handle Fortran side 
 !
       procedure :: get_ao_h_xy           => get_ao_h_xy_ao_integral_tool            ! h_αβ
-      procedure :: get_ao_s_xy           => get_ao_s_xy_ao_integral_tool            ! s_αβ
 !
       procedure :: construct_ao_h_wx           => construct_ao_h_wx_ao_integral_tool            ! h_αβ
       procedure :: construct_ao_s_wx           => construct_ao_s_wx_ao_integral_tool            ! h_αβ
@@ -60,25 +59,6 @@ contains
       call get_ao_h_xy(h)
 !
    end subroutine get_ao_h_xy_ao_integral_tool
-!
-!
-   subroutine get_ao_s_xy_ao_integral_tool(int, s)
-!!
-!!    Get s_αβ integrals
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-!!    Fortran wrapper for the C++ routine that calculates and
-!!    saves the s_αβ integral_tool in the array s.
-!!
-      implicit none
-!
-      class(ao_integral_tool) :: int
-!
-      real(dp), dimension(:,:), intent(inout) :: s
-!
-      call get_ao_s_xy(s)
-!
-   end subroutine get_ao_s_xy_ao_integral_tool
 !
 !
    subroutine construct_ao_h_wx_ao_integral_tool(int, h, s1, s2)
