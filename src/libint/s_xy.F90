@@ -11,7 +11,7 @@ contains
 !
       implicit none
 !
-      integer(kind=8) :: ns
+      integer(i15) :: ns
 !
       call get_n_shells_c(ns)
 !
@@ -21,10 +21,21 @@ contains
 !
       implicit none
 !
-      real(kind=8), dimension(1,1) :: s
+      real(dp), dimension(1,1) :: s
 !
       call get_ao_s_xy_c(s)
 !
    end subroutine get_ao_s_xy
+!
+   subroutine construct_ao_s_wx(s, s1, s2)
+!
+      implicit none
+!
+      real(dp), dimension(1,1) :: s
+      integer(i15) :: s1, s2
+!
+      call construct_ao_s_wx_c(s, s1, s2)
+!
+   end subroutine construct_ao_s_wx
 !
 end module s_xy

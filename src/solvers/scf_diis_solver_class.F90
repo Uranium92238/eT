@@ -118,7 +118,7 @@ contains
       call wf%initialize_orbitals()
 !
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
-      call get_ao_h_xy(h_wx)
+      call wf%get_ao_h_wx(h_wx)
 !
       call wf%set_ao_density_to_sad()
      ! call wf%set_ao_density_to_sad_2()

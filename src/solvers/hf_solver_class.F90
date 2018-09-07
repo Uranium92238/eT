@@ -6,6 +6,7 @@ module hf_solver_class
    use kinds 
    use parameters
    use hf_class
+   use uhf_class
 !
    implicit none 
 !

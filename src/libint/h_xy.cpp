@@ -24,12 +24,7 @@ using namespace libint2;
 
 void get_n_aos(long *n_ao){
 
-	//initialize();
-
 	*n_ao = basis.nbf();
-  //cout << *n_ao << endl;
-
-	//finalize();
 
 	return;
 
@@ -64,20 +59,20 @@ void get_ao_h_xy(double *h){
       		continue;  // nullptr returned if the entire shell-set was screened out
         }
 
-    		auto bf1 = shell2bf[s1];  // first basis function in first shell
-    		auto n1 = basis[s1].size(); // number of basis functions in first shell
-    		auto bf2 = shell2bf[s2];  // first basis function in second shell
-    		auto n2 = basis[s2].size(); // number of basis functions in second shell
+    		auto bf1 = shell2bf[s1];     // first basis function in first shell
+    		auto n1  = basis[s1].size(); // number of basis functions in first shell
+    		auto bf2 = shell2bf[s2];     // first basis function in second shell
+    		auto n2  = basis[s2].size(); // number of basis functions in second shell
 
     		// integrals are packed into ints_shellset in row-major (C) form
     		// this iterates over integrals in this order
     		for(auto f1=0; f1!=n1; ++f1){
-      		for(auto f2=0; f2!=n2; ++f2){
-					*(h - 1 + index_two(bf1+1+f1, bf2+1+f2, num_aos)) = ints_shellset[f1*n2+f2];
-				}
-			}
+      	   for(auto f2=0; f2!=n2; ++f2){
+					   *(h - 1 + index_two(bf1+1+f1, bf2+1+f2, num_aos)) = ints_shellset[f1*n2+f2];
+				    }
+			   }
   		}
-	}
+	 }
 //
 //	Compute the nuclear attraction energy part of one-electron integrals
 //

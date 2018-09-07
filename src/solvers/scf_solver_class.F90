@@ -28,6 +28,7 @@ module scf_solver_class
 !
    contains
 !
+      procedure :: prepare => prepare_scf_solver
       procedure :: run     => run_scf_solver
       procedure :: cleanup => cleanup_scf_solver
 !
@@ -37,6 +38,24 @@ module scf_solver_class
 !
 !
 contains
+!
+!
+   subroutine prepare_scf_solver(solver, wf)
+!!
+!!    Prepare 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(scf_solver) :: solver
+!
+      class(hf) :: wf
+!
+!     Read settings (thresholds, etc.)
+!
+      call solver%read_settings()
+!
+   end subroutine prepare_scf_solver
 !
 !
    subroutine run_scf_solver(solver, wf)
@@ -89,7 +108,7 @@ contains
 !     then construct the Fock matrix (or matrices) and the zeroth iteration energy 
 !
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
-      call wf%system%ao_integrals%get_ao_h_xy(h_wx)
+      call wf%get_ao_h_wx(h_wx)
 !
       call wf%set_ao_density_to_core_guess(h_wx)
 !

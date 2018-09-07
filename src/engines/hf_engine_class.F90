@@ -73,14 +73,23 @@ contains
 !
          elseif (trim(algorithm) == 'scf-diis') then
 !
-            allocate(scf_diis)
-            solver => scf_diis
+            select type (wf)
+            type is (hf) 
 !
-            call solver%prepare(wf)
-            call solver%run(wf)
-            call solver%cleanup(wf)
+               allocate(scf_diis)
+               solver => scf_diis
 !
-            deallocate(scf_diis)
+               call solver%prepare(wf)
+               call solver%run(wf)
+               call solver%cleanup(wf)
+!
+               deallocate(scf_diis)
+!
+            class default
+!
+               call output%error_msg('SCF DIIS does not support wavefunction ' // wf%name)
+!
+            end select
 !
          elseif (trim(algorithm) == 'scf') then 
 !

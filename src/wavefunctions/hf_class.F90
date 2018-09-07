@@ -46,38 +46,38 @@ module hf_class
       procedure :: ao_fock_coulomb_construction_loop  => ao_fock_coulomb_construction_loop_hf
       procedure :: ao_fock_exchange_construction_loop => ao_fock_exchange_construction_loop_hf
 !
-      procedure :: construct_ao_fock_SAD => construct_ao_fock_SAD_hf
-      procedure :: construct_mo_fock     => construct_mo_fock_hf
-      procedure :: construct_ao_overlap  => construct_ao_overlap_hf
+      procedure :: construct_ao_fock_SAD              => construct_ao_fock_SAD_hf
+      procedure :: construct_mo_fock                  => construct_mo_fock_hf
+      procedure :: construct_ao_overlap               => construct_ao_overlap_hf
 !
-      procedure :: calculate_hf_energy_from_G    => calculate_hf_energy_from_G_hf
-      procedure :: calculate_hf_energy_from_fock => calculate_hf_energy_from_fock_hf
+      procedure :: calculate_hf_energy_from_G         => calculate_hf_energy_from_G_hf
+      procedure :: calculate_hf_energy_from_fock      => calculate_hf_energy_from_fock_hf
 !
 !     Rotate and purification routines for the AO density
 !
-      procedure :: rotate_ao_density    => rotate_ao_density_hf
-      procedure :: purify_ao_density    => purify_ao_density_hf
+      procedure :: rotate_ao_density                  => rotate_ao_density_hf
+      procedure :: purify_ao_density                  => purify_ao_density_hf
 !
 !     Cholesky decomposition of AO density and overlap
 !
-      procedure :: decompose_ao_density => decompose_ao_density_hf
-      procedure :: decompose_ao_overlap => decompose_ao_overlap_hf
+      procedure :: decompose_ao_density               => decompose_ao_density_hf
+      procedure :: decompose_ao_overlap               => decompose_ao_overlap_hf
 !
 !     Solve the Roothan Hall equation FC = SCe by diagonalization
 !
-      procedure :: do_roothan_hall => do_roothan_hall_hf
+      procedure :: do_roothan_hall                    => do_roothan_hall_hf
 !
 !     Get and set routines for wavefunction variables
 !
-      procedure :: get_ao_density => get_ao_density_hf
-      procedure :: get_fock_ov    => get_fock_ov_hf
+      procedure :: get_ao_density                     => get_ao_density_hf
+      procedure :: get_fock_ov                        => get_fock_ov_hf
 !
-      procedure :: set_ao_density        => set_ao_density_hf
-      procedure :: set_ao_fock           => set_ao_fock_hf
+      procedure :: set_ao_density                     => set_ao_density_hf
+      procedure :: set_ao_fock                        => set_ao_fock_hf
 !
-      procedure :: set_ao_density_to_sad        => set_ao_density_to_sad_hf   ! Functional, but not correct 
-      procedure :: set_ao_density_to_sad_2      => set_ao_density_to_sad_2_hf ! WIP to replace above 
-      procedure :: set_ao_density_to_core_guess => set_ao_density_to_core_guess_hf
+      procedure :: set_ao_density_to_sad              => set_ao_density_to_sad_hf   ! Functional, but not correct 
+      procedure :: set_ao_density_to_sad_2            => set_ao_density_to_sad_2_hf ! WIP to replace above 
+      procedure :: set_ao_density_to_core_guess       => set_ao_density_to_core_guess_hf
 !
 !     Initialize and destruct routines for wavefunction variables
 !
@@ -99,27 +99,32 @@ module hf_class
 !
 !     Routines that construct different components of the Roothan-Hall 1st order Newton equations
 !
-      procedure :: construct_projection_matrices   => construct_projection_matrices_hf
-      procedure :: project_redundant_rotations     => project_redundant_rotations_hf
+      procedure :: construct_projection_matrices      => construct_projection_matrices_hf
+      procedure :: project_redundant_rotations        => project_redundant_rotations_hf
 !
-      procedure :: construct_roothan_hall_hessian  => construct_roothan_hall_hessian_hf
-      procedure :: construct_roothan_hall_gradient => construct_roothan_hall_gradient_hf
+      procedure :: construct_roothan_hall_hessian     => construct_roothan_hall_hessian_hf
+      procedure :: construct_roothan_hall_gradient    => construct_roothan_hall_gradient_hf
 !
-      procedure :: construct_sp_eri_schwarz        => construct_sp_eri_schwarz_hf
-      procedure :: construct_sp_density_schwarz    => construct_sp_density_schwarz_hf
-      procedure :: get_n_sig_eri_sp                => get_n_sig_eri_sp_hf
+      procedure :: construct_sp_eri_schwarz           => construct_sp_eri_schwarz_hf
+      procedure :: construct_sp_density_schwarz       => construct_sp_density_schwarz_hf
+      procedure :: get_n_sig_eri_sp                   => get_n_sig_eri_sp_hf
+!
+!     Routines to request a range of AO integral arrays 
+! 
+      procedure :: get_ao_h_wx                        => get_ao_h_wx_hf
+      procedure :: get_ao_s_wx                        => get_ao_s_wx_hf
 !
 !     Routines that may change in descendants but are required by solvers 
 !
-      procedure :: initialize_orbitals               => initialize_orbitals_hf
-      procedure :: initialize_density                => initialize_density_hf
-      procedure :: initialize_fock                   => initialize_fock_hf
-      procedure :: destruct_fock                     => destruct_fock_hf
-      procedure :: update_fock_and_energy            => update_fock_and_energy_hf
-      procedure :: update_fock_and_energy_cumulative => update_fock_and_energy_cumulative_hf
-      procedure :: roothan_hall_update_orbitals      => roothan_hall_update_orbitals_hf
-      procedure :: update_ao_density                 => update_ao_density_hf
-      procedure :: save_ao_density                   => save_ao_density_hf
+      procedure :: initialize_orbitals                => initialize_orbitals_hf
+      procedure :: initialize_density                 => initialize_density_hf
+      procedure :: initialize_fock                    => initialize_fock_hf
+      procedure :: destruct_fock                      => destruct_fock_hf
+      procedure :: update_fock_and_energy             => update_fock_and_energy_hf
+      procedure :: update_fock_and_energy_cumulative  => update_fock_and_energy_cumulative_hf
+      procedure :: roothan_hall_update_orbitals       => roothan_hall_update_orbitals_hf
+      procedure :: update_ao_density                  => update_ao_density_hf
+      procedure :: save_ao_density                    => save_ao_density_hf
 !
    end type hf
 !
@@ -678,7 +683,7 @@ contains
             call mem%alloc(g, (A_interval%size)*(B_interval%size), &
                               (A_interval%size)*(B_interval%size))
 !
-            call wf%system%ao_integrals%get_ao_g_wxyz(g, s1, s2, s1, s2)
+            call wf%system%ao_integrals%construct_ao_g_wxyz(g, s1, s2, s1, s2)
 !
             maximum = get_abs_max(g, ((A_interval%size)*(B_interval%size))**2)
 !
@@ -909,7 +914,7 @@ contains
             call mem%alloc(g, (A_interval%size)*(B_interval%size), &
                               (A_interval%size)*(B_interval%size))
 !
-            call wf%system%ao_integrals%get_ao_g_wxyz(g, A, B, A, B)
+            call wf%system%ao_integrals%construct_ao_g_wxyz(g, A, B, A, B)
 !
             maximum = get_abs_max(g, ((A_interval%size)*(B_interval%size))**2)
 !
@@ -950,7 +955,7 @@ contains
                call mem%alloc(g_C, (A_interval%size)*(B_interval%size), &
                                  (C_interval%size)*(C_interval%size))
 !
-               call wf%system%ao_integrals%get_ao_g_wxyz(g_C, A, B, C, C)
+               call wf%system%ao_integrals%construct_ao_g_wxyz(g_C, A, B, C, C)
 !
 !              Add Fock matrix contributions
 !
@@ -1025,7 +1030,7 @@ contains
                call mem%alloc(g_K, (A_interval%size)*(C_interval%size), &
                                  (B_interval%size)*(C_interval%size))
 !
-               call wf%system%ao_integrals%get_ao_g_wxyz(g_K, A, C, B, C)
+               call wf%system%ao_integrals%construct_ao_g_wxyz(g_K, A, C, B, C)
 !
 !              Add Fock matrix contributions
 !
@@ -1119,7 +1124,7 @@ contains
             B_interval = wf%system%shell_limits(B)
 !
             call mem%alloc(h_AB, A_interval%size, B_interval%size)
-            call wf%system%ao_integrals%get_ao_h_xy_sp(h_AB, A, B)
+            call wf%system%ao_integrals%construct_ao_h_wx(h_AB, A, B)
 !!
              do x = 1, A_interval%size
                 do y = 1, B_interval%size
@@ -1460,7 +1465,7 @@ contains
 
                deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
 !
-               call wf%system%ao_integrals%get_ao_g_wxyz_epsilon(g, s1, s2, s3, s4,               &
+               call wf%system%ao_integrals%construct_ao_g_wxyz_epsilon(g, s1, s2, s3, s4,         &
                   precision_thr/max(temp7,temp8), thread, skip, shells(s1)%size, shells(s2)%size, &
                   shells(s3)%size, shells(s4)%size)
 !
@@ -1629,8 +1634,8 @@ contains
 
                deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
 !
-               call wf%system%ao_integrals%get_ao_g_wxyz_epsilon(g, s1, s2, s3, s4,    &
-                  precision_thr/temp7, thread, skip, shells(s1)%size, shells(s2)%size, &
+               call wf%system%ao_integrals%construct_ao_g_wxyz_epsilon(g, s1, s2, s3, s4, &
+                  precision_thr/temp7, thread, skip, shells(s1)%size, shells(s2)%size,    &
                   shells(s3)%size, shells(s4)%size)
 !
                if (skip == 1) cycle
@@ -1785,8 +1790,8 @@ contains
 
                deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
 !
-               call wf%system%ao_integrals%get_ao_g_wxyz_epsilon(g, s1, s2, s3, s4,    &
-                  precision_thr/temp8, thread, skip, shells(s1)%size, shells(s2)%size, &
+               call wf%system%ao_integrals%construct_ao_g_wxyz_epsilon(g, s1, s2, s3, s4, &
+                  precision_thr/temp8, thread, skip, shells(s1)%size, shells(s2)%size,    &
                   shells(s3)%size, shells(s4)%size)
 !
                if (skip == 1) cycle
@@ -2988,6 +2993,103 @@ contains
       call wf%construct_ao_density()
 !
    end subroutine set_ao_density_to_core_guess_hf
+!
+!
+   subroutine get_ao_h_wx_hf(wf, h)
+!!
+!!    Get AO h 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Uses the integral tool to construct the full one-electron h matrix.
+!!
+      implicit none 
+!
+      class(hf), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao) :: h 
+!
+      type(interval) :: A_interval, B_interval
+!
+      integer(i15) :: x, y, A, B
+!
+      real(dp), dimension(:,:), allocatable :: h_AB 
+!
+!$omp parallel do &
+!$omp private(A, B, h_AB, A_interval, B_interval, x, y) schedule(static)
+      do A = 1, wf%system%n_s
+!
+         A_interval = wf%system%shell_limits(A)
+!
+         do B = 1, A
+!
+            B_interval = wf%system%shell_limits(B)
+!
+            call mem%alloc(h_AB, A_interval%size, B_interval%size)
+            call wf%system%ao_integrals%construct_ao_h_wx(h_AB, A, B)
+!
+             do x = 1, A_interval%size
+                do y = 1, B_interval%size
+!
+                   h(A_interval%first - 1 + x, B_interval%first - 1 + y) = h_AB(x, y)
+                   h(B_interval%first - 1 + y, A_interval%first - 1 + x) = h_AB(x, y)
+!
+                enddo
+             enddo
+!
+            call mem%dealloc(h_AB, A_interval%size, B_interval%size)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine get_ao_h_wx_hf
+!
+!
+   subroutine get_ao_s_wx_hf(wf, s)
+!!
+!!    Get AO s 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Uses the integral tool to construct the full one-electron h matrix.
+!!
+      implicit none 
+!
+      class(hf), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao) :: s 
+!
+      type(interval) :: A_interval, B_interval
+!
+      integer(i15) :: x, y, A, B
+!
+      real(dp), dimension(:,:), allocatable :: s_AB 
+!
+      do A = 1, wf%system%n_s
+!
+         A_interval = wf%system%shell_limits(A)
+!
+         do B = 1, A
+!
+            B_interval = wf%system%shell_limits(B)
+!
+            call mem%alloc(s_AB, A_interval%size, B_interval%size)
+            call wf%system%ao_integrals%construct_ao_s_wx(s_AB, A, B)
+!
+             do x = 1, A_interval%size
+                do y = 1, B_interval%size
+!
+                   s(A_interval%first - 1 + x, B_interval%first - 1 + y) = s_AB(x, y)
+                   s(B_interval%first - 1 + y, A_interval%first - 1 + x) = s_AB(x, y)
+!
+                enddo
+             enddo
+!
+            call mem%dealloc(s_AB, A_interval%size, B_interval%size)
+!
+         enddo
+      enddo
+!
+   end subroutine get_ao_s_wx_hf
 !
 !
 end module hf_class

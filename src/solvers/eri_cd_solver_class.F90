@@ -277,7 +277,7 @@ contains
                   (A_interval%size)*(B_interval%size))
 !
          g_AB_AB = zero
-         call system%ao_integrals%get_ao_g_wxyz(g_AB_AB, A, B, A, B)
+         call system%ao_integrals%construct_ao_g_wxyz(g_AB_AB, A, B, A, B)
 !
          call mem%alloc(D_AB, (A_interval%size)*(B_interval%size), 1)
          call mem%alloc(D_AB_screen, (A_interval%size)*(B_interval%size), 1)
@@ -403,7 +403,7 @@ contains
                (A_interval%size)*(B_interval%size))
 !
          g_AB_AB = zero
-         call system%ao_integrals%get_ao_g_wxyz(g_AB_AB, A, B, A, B)
+         call system%ao_integrals%construct_ao_g_wxyz(g_AB_AB, A, B, A, B)
 !
          if (A .eq. B) then
 !
@@ -553,7 +553,7 @@ contains
                      (A_interval%size)*(B_interval%size))
 !
             g_AB_AB = zero
-            call system%ao_integrals%get_ao_g_wxyz(g_AB_AB, A, B, A, B)
+            call system%ao_integrals%construct_ao_g_wxyz(g_AB_AB, A, B, A, B)
 !
             call mem%alloc(D_AB, (A_interval%size)*(B_interval%size), 1)
             call mem%alloc(D_AB_screen, (A_interval%size)*(B_interval%size), 1)
@@ -682,7 +682,7 @@ contains
                (A_interval%size)*(B_interval%size))
 !
          g_AB_AB = zero
-         call system%ao_integrals%get_ao_g_wxyz(g_AB_AB, A, B, A, B)
+         call system%ao_integrals%construct_ao_g_wxyz(g_AB_AB, A, B, A, B)
 !
          if (A .eq. B) then
 !
@@ -1163,7 +1163,7 @@ contains
                               (A_interval%size)*(B_interval%size), &
                               (C_interval%size)*(D_interval%size))
 !
-               call system%ao_integrals%get_ao_g_wxyz(g_AB_CD, A, B, C, D)
+               call system%ao_integrals%construct_ao_g_wxyz(g_AB_CD, A, B, C, D)
 !
                  do aop = 1, n_qual_aop_in_sp
 !
@@ -1833,7 +1833,7 @@ contains
                      (A_interval%size)*(B_interval%size), &
                      (C_interval%size)*(D_interval%size))
 !
-            call system%ao_integrals%get_ao_g_wxyz(g_AB_CD, A, B, C, D)
+            call system%ao_integrals%construct_ao_g_wxyz(g_AB_CD, A, B, C, D)
 !
 !           Only keep those that correspond to elements of the basis
 !
@@ -2240,7 +2240,7 @@ contains
 !
               g_CD_AB = zero
 !
-              call system%ao_integrals%get_ao_g_wxyz(g_CD_AB, C, D, A, B)
+              call system%ao_integrals%construct_ao_g_wxyz(g_CD_AB, C, D, A, B)
 !
                if (A == B) then
 !
