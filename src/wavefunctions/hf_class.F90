@@ -126,6 +126,7 @@ module hf_class
       procedure :: roothan_hall_update_orbitals       => roothan_hall_update_orbitals_hf
       procedure :: update_ao_density                  => update_ao_density_hf
       procedure :: save_ao_density                    => save_ao_density_hf
+      procedure :: set_initial_ao_density             => set_initial_ao_density_hf
 !
    end type hf
 !
@@ -165,6 +166,24 @@ contains
       wf%n_v = wf%n_mo - wf%n_o
 !
    end subroutine prepare_hf
+!
+!
+   subroutine set_initial_ao_density_hf(wf)
+!!
+!!    Set initial AO density 
+!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Sets initial AO density (or densities) to the 
+!!    appropriate initial guess requested by the 
+!!    solver.
+!!
+      implicit none 
+!
+      class(hf) :: wf 
+!
+      call wf%set_ao_density_to_sad_2()
+!
+   end subroutine set_initial_ao_density_hf
 !
 !
    subroutine initialize_orbitals_hf(wf)

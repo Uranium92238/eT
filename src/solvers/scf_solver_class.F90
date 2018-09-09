@@ -110,10 +110,13 @@ contains
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call wf%get_ao_h_wx(h_wx)
 !
-      call wf%set_ao_density_to_core_guess(h_wx)
+     ! call wf%set_ao_density_to_core_guess(h_wx)
+      call wf%set_initial_ao_density()
 !
       call wf%update_fock_and_energy(sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx, &
                                        solver%coulomb_thr, solver%exchange_thr, solver%coulomb_precision)
+!
+      write(output%unit, '(t6,a30,f17.12)') 'Energy of initial guess:      ', wf%energy
 !
 !     Update the orbitals and density to make sure the density is idempotent
 !     (not the case for the standard atomic superposition density)
@@ -133,8 +136,8 @@ contains
 !
       prev_energy = zero
 !
-      write(output%unit, '(t3,a)') 'Iteration    Energy (a.u.)        Delta E (a.u.)'
-      write(output%unit, '(t3,a)') '------------------------------------------------'
+      write(output%unit, '(/t3,a)') 'Iteration    Energy (a.u.)        Delta E (a.u.)'
+      write(output%unit, '(t3,a)')  '------------------------------------------------'
 !
       do while (.not. converged .and. iteration .le. solver%max_iterations)         
 !
@@ -223,7 +226,7 @@ contains
       write(output%unit, '(t3,a)')  'are solved to provide the next orbital coefficients. From the new'
       write(output%unit, '(t3,a)')  'orbitals, a new density provides the next Fock matrix. The cycle' 
       write(output%unit, '(t3,a)')  'repeats until the solution is self-consistent (as measured by' 
-      write(output%unit, '(t3,a/)') 'the energy change).'
+      write(output%unit, '(t3,a)')  'the energy change).'
 !
       flush(output%unit)
 !

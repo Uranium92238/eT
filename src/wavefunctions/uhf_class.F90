@@ -58,6 +58,7 @@ module uhf_class
       procedure :: roothan_hall_update_orbitals      => roothan_hall_update_orbitals_uhf
       procedure :: update_ao_density                 => update_ao_density_uhf
       procedure :: save_ao_density                   => save_ao_density_uhf
+      procedure :: set_initial_ao_density            => set_initial_ao_density_uhf
 !
 !
 !     Initialize and destruct routines
@@ -135,6 +136,27 @@ contains
       endif
 !
    end subroutine prepare_uhf
+!
+!
+   subroutine set_initial_ao_density_uhf(wf)
+!!
+!!    Set initial AO density 
+!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Sets initial AO density (or densities) to the 
+!!    appropriate initial guess requested by the 
+!!    solver.
+!!
+      implicit none 
+!
+      class(uhf) :: wf 
+!
+      call wf%set_ao_density_to_sad_2()
+!
+      wf%ao_density_a = (real(wf%n_alpha, kind=dp)/real(wf%n_alpha + wf%n_beta, kind=dp))*wf%ao_density
+      wf%ao_density_b = (real(wf%n_beta, kind=dp)/real(wf%n_alpha + wf%n_beta, kind=dp))*wf%ao_density
+!
+   end subroutine set_initial_ao_density_uhf
 !
 !
    subroutine read_settings_uhf(wf)

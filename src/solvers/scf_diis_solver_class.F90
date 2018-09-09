@@ -121,7 +121,8 @@ contains
       call wf%get_ao_h_wx(h_wx)
 !
      ! call wf%set_ao_density_to_sad()
-      call wf%set_ao_density_to_sad_2()
+      call wf%set_initial_ao_density()
+     ! call wf%set_ao_density_to_sad_2()
      ! stop
 !
       call wf%update_fock_and_energy(sp_eri_schwarz, sp_eri_schwarz_list, n_s,  &
