@@ -189,7 +189,7 @@ contains
 !     AO density on which to start doing conjugate gradient
 !
       call wf%initialize_orbital_coefficients()
-      call wf%do_roothan_hall()
+      call wf%do_roothan_hall(wf%ao_fock, wf%orbital_coefficients, wf%orbital_energies)
 !
 !     From the obtained MO coefficients, update the AO density and from it the AO Fock matrix
 !

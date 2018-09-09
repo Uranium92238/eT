@@ -1,0 +1,27 @@
+
+name:         sad_generation
+multiplicity: 2
+charge:       0
+
+method
+  uhf
+end method
+
+hf
+  algorithm:                  scf
+  coulomb precision:          1.0d-20
+  coulomb threshold:          1.0d-14
+  exchange threshold:         1.0d-14
+  energy threshold:           1.0d-12
+  fractional uniform valence: true
+end hf
+
+do
+   ground state
+end do
+
+geometry
+basis: aug-cc-pVQZ
+ Li          0.00000       0.00000        0.00000
+end geometry
+

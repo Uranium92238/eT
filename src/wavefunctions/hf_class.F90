@@ -39,8 +39,8 @@ module hf_class
 !
       procedure :: construct_ao_density               => construct_ao_density_hf
 !
-      procedure :: construct_ao_fock                  => construct_ao_fock_hf             ! Entire Fock matrix 
-      procedure :: construct_ao_fock_cumulative       => construct_ao_fock_cumulative_hf  ! Change in Fock matrix from previous density
+      procedure :: construct_ao_fock                  => construct_ao_fock_hf            
+      procedure :: construct_ao_fock_cumulative       => construct_ao_fock_cumulative_hf 
 !
       procedure :: ao_fock_construction_loop          => ao_fock_construction_loop_hf
       procedure :: ao_fock_coulomb_construction_loop  => ao_fock_coulomb_construction_loop_hf
@@ -183,6 +183,10 @@ contains
       class(hf) :: wf 
 !
       call wf%initialize_orbital_coefficients()
+      call wf%initialize_orbital_energies()
+!
+      wf%orbital_coefficients = zero 
+      wf%orbital_energies     = zero 
 !
    end subroutine initialize_orbitals_hf
 !
@@ -203,6 +207,8 @@ contains
 !
       call wf%initialize_ao_density()
 !
+      wf%ao_density = zero 
+!
    end subroutine initialize_density_hf
 !
 !
@@ -221,6 +227,8 @@ contains
       class(hf) :: wf 
 !
       call wf%initialize_ao_fock()
+!
+      wf%ao_fock = zero
 !
    end subroutine initialize_fock_hf
 !
@@ -319,7 +327,8 @@ contains
 !
       class(hf) :: wf 
 !
-      call wf%do_roothan_hall()
+      call wf%do_roothan_hall(wf%ao_fock, wf%orbital_coefficients, wf%orbital_energies)
+     ! call wf%do_roothan_hall()
 !
    end subroutine roothan_hall_update_orbitals_hf
 !
@@ -2695,7 +2704,7 @@ contains
    end subroutine construct_roothan_hall_gradient_hf
 !
 !
-   subroutine do_roothan_hall_hf(wf, do_mo_transformation)
+   subroutine do_roothan_hall_hf(wf, F, C, e, do_mo_transformation)
 !!
 !!    Do Roothan-Hall
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -2728,12 +2737,15 @@ contains
 !
       class(hf) :: wf
 !
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)    :: F 
+      real(dp), dimension(wf%n_ao, wf%n_mo), intent(inout) :: C 
+      real(dp), dimension(wf%n_mo, 1),       intent(inout) :: e  
+!
       logical, optional, intent(in) :: do_mo_transformation
 !
       real(dp), dimension(:,:), allocatable :: work
       real(dp), dimension(:,:), allocatable :: metric 
       real(dp), dimension(:,:), allocatable :: ao_fock 
-      real(dp), dimension(:,:), allocatable :: orbital_energies 
       real(dp), dimension(:,:), allocatable :: FP 
 !
       real(dp), dimension(:,:), allocatable :: ao_fock_copy 
@@ -2762,7 +2774,6 @@ contains
 !     Allocate reduced space matrices 
 !
       call mem%alloc(ao_fock, wf%n_mo, wf%n_mo)
-      call mem%alloc(orbital_energies, wf%n_mo, 1)
 !
 !     Construct reduced space Fock matrix, F' = P^T F P,
 !     which is to be diagonalized over the metric L L^T 
@@ -2774,7 +2785,7 @@ contains
                   wf%n_mo,                      &
                   wf%n_ao,                      &
                   one,                          &
-                  wf%ao_fock,                   &
+                  F,                            &
                   wf%n_ao,                      &
                   wf%pivot_matrix_ao_overlap,   &
                   wf%n_ao,                      &
@@ -2821,20 +2832,13 @@ contains
                   wf%n_mo,          &
                   metric,           &
                   wf%n_mo,          &
-                  orbital_energies, &
+                  e,                &
                   work,             &
                   4*(wf%n_mo),      &
                   info)
 !
-!       do i = 1, wf%n_mo
-! !
-!          write(output%unit, *) 'i orbital energy (i)', i, orbital_energies(i,1)
-! !
-!       enddo 
-!
       call mem%dealloc(metric, wf%n_mo, wf%n_mo)
       call mem%dealloc(work, 4*wf%n_mo, 1)
-      call mem%dealloc(orbital_energies, wf%n_mo, 1)
 !
       if (info .ne. 0) then 
 !
@@ -2892,8 +2896,6 @@ contains
 !
 !     Transform back the solutions to original basis, C = P (P^T C) = P C'
 !
-      wf%orbital_coefficients = zero
-!
       call dgemm('N','N',                       &
                   wf%n_ao,                      &
                   wf%n_mo,                      &
@@ -2904,7 +2906,7 @@ contains
                   ao_fock,                      & ! orbital coefficients 
                   wf%n_mo,                      &
                   zero,                         &
-                  wf%orbital_coefficients,      &
+                  C,                            &
                   wf%n_ao)
 !
       call mem%dealloc(ao_fock, wf%n_mo, wf%n_mo)
@@ -2915,13 +2917,35 @@ contains
    subroutine set_ao_density_to_sad_2_hf(wf)
 !!
 !!    Set AO density to SAD 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Written by Eirik F. Kjønstad, Aug-Sep 2018 
+!!
+!!    The routine uses the pre-computed library of atomic densities to 
+!!    assemble the superposition of atomic densities (SAD) start guess.  
+!!    The library is assumed to be in the location given by the environ-
+!!    ment variable "ET_SAD_DIR". Note that the library is located in the 
+!!    directory
+!!
+!!       eT/src/molecular_system/sad/ => set ET_SAD_DIR accordingly
+!!
+!!    The SAD guess is based on ground state UHF calculations, where 
+!!    the valence electrons are evenly spread out in the degenerate HOMO 
+!!    orbitals (to ensure a spherically symmetric AO density, which in 
+!!    turn ensures a rotationally invariant SAD guess for the molecule).
+!!
+!!    The algorithm is based on the procedure implemented in Psi4, although 
+!!    we perform spherical averaging of the densities in the UHF calculations 
+!!    in order to get a unique rotationally invariant SAD density. This is 
+!!    especially important for us, since we will use the initial idempotent
+!!    density that results from a single Roothan-Hall step in multilevel HF 
+!!    calculations. The atomic calculations are performed with the ground 
+!!    state multiplicities, as listed in Griffiths, David J.,
+!!    "Introduction to Quantum Mechanics." (1995).
 !!
       implicit none 
 !
       class(hf) :: wf 
 !
-      integer(i15) :: I, n_ao_on_atom, offset
+      integer(i15) :: I, n_ao_on_atom, first_ao_on_atom, last_ao_on_atom, n_s_on_atom
 !
       real(dp) :: trace
 !
@@ -2929,24 +2953,27 @@ contains
 !
       wf%ao_density = zero 
 !
-      offset = 1
       do I = 1, wf%system%n_atoms
 !
-         n_ao_on_atom = wf%system%atoms(I)%n_ao
+         n_ao_on_atom     = wf%system%atoms(I)%n_ao
+         n_s_on_atom      = wf%system%atoms(I)%n_shells
+!
+         first_ao_on_atom = wf%system%atoms(I)%shells(1)%first 
+         last_ao_on_atom  = wf%system%atoms(I)%shells(n_s_on_atom)%last 
+!
          call mem%alloc(atomic_density, n_ao_on_atom, n_ao_on_atom)
 !
          call wf%system%atoms(I)%read_atomic_density(atomic_density)
 !
-         wf%ao_density(offset:(offset + n_ao_on_atom - 1), offset:(offset + n_ao_on_atom - 1)) &
-                                                       = atomic_density(1:n_ao_on_atom, 1:n_ao_on_atom)
+         wf%ao_density(first_ao_on_atom:last_ao_on_atom, first_ao_on_atom:last_ao_on_atom) &
+                                             = atomic_density(1:n_ao_on_atom, 1:n_ao_on_atom)
 !
          call mem%dealloc(atomic_density, n_ao_on_atom, n_ao_on_atom)
 !
-         offset = offset + n_ao_on_atom
-!
       enddo 
 !
-!     Check the trace of the density 
+!     Check the trace of the density & print so that the user
+!     can be sure the density is reasonable
 !
       call mem%alloc(temp, wf%n_ao, wf%n_ao)
       call dgemm('N','N', &
@@ -2964,11 +2991,15 @@ contains
 !
       trace = zero
       do i = 1, wf%n_ao
+!
          trace = trace + temp(i,i)
+!
       enddo
       call mem%dealloc(temp, wf%n_ao, wf%n_ao)
 !
-  !    write(output%unit, *) 'Trace of SAD density:', trace 
+      write(output%unit, '(/t3,a)') 'Initial density is superposition of atomic densities (SAD).'
+!
+      write(output%unit, '(/t6,a30,f17.12)')  'Number of electrons in guess: ', trace 
 !
    end subroutine set_ao_density_to_sad_2_hf
 !
@@ -2990,7 +3021,7 @@ contains
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx 
 !
       wf%ao_fock = h_wx 
-      call wf%do_roothan_hall()
+      call wf%do_roothan_hall(wf%ao_fock, wf%orbital_coefficients, wf%orbital_energies)
       call wf%construct_ao_density()
 !
    end subroutine set_ao_density_to_core_guess_hf

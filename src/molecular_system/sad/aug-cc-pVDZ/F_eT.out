@@ -1,0 +1,54 @@
+
+
+
+               eT - a coupled cluster program
+           S. D. Folkestad, E. F. Kjønstad, 2017-2018
+
+
+
+  Initializing UHF wavefunction.
+
+  Requested fractional uniform valence. Valence electrons will be
+  distributed evenly in the highest molecular orbitals (if plural).
+
+  :: Direct-integral Hartree-Fock self-consistent field solver
+  :: E. F. Kjønstad, S. D. Folkestad, 2018
+
+  A Roothan-Hall self-consistent field solver. In each iteration,
+  the Roothan-Hall equation (or equations for unrestricted HF theory)
+  are solved to provide the next orbital coefficients. From the new
+  orbitals, a new density provides the next Fock matrix. The cycle
+  repeats until the solution is self-consistent (as measured by
+  the energy change).
+
+  Iteration    Energy (a.u.)        Delta E (a.u.)
+  ------------------------------------------------
+    1           -94.493418379827    0.9449E+02
+    2           -94.092857394387    0.4006E+00
+    3           -97.837292374554    0.3744E+01
+    4           -98.436510833124    0.5992E+00
+    5           -98.941792070397    0.5053E+00
+    6           -99.076676866379    0.1349E+00
+    7           -99.118116393306    0.4144E-01
+    8           -99.128318956986    0.1020E-01
+    9           -99.130959916883    0.2641E-02
+   10           -99.131614172694    0.6543E-03
+   11           -99.131779059536    0.1649E-03
+   12           -99.131820207702    0.4115E-04
+   13           -99.131830524133    0.1032E-04
+   14           -99.131833104433    0.2580E-05
+   15           -99.131833750568    0.6461E-06
+   16           -99.131833912272    0.1617E-06
+   17           -99.131833952753    0.4048E-07
+   18           -99.131833962885    0.1013E-07
+   19           -99.131833965422    0.2536E-08
+   20           -99.131833966056    0.6348E-09
+   21           -99.131833966215    0.1589E-09
+   22           -99.131833966255    0.3980E-10
+   23           -99.131833966265    0.1000E-10
+   24           -99.131833966268    0.2487E-11
+   25           -99.131833966268    0.6395E-12
+  ------------------------------------------------
+
+  Converged in  25 iterations!
+

@@ -153,7 +153,7 @@ contains
 !
       call wf%initialize_orbital_energies()
       call wf%initialize_orbital_coefficients()
-      call wf%do_roothan_hall() ! F^AO C = S C e to get new MOs C
+      call wf%do_roothan_hall(wf%ao_fock, wf%orbital_coefficients, wf%orbital_energies) ! F^AO C = S C e to get new MOs C
 !
 !     Update the AO density
 !

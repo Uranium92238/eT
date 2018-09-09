@@ -1,0 +1,52 @@
+
+
+
+               eT - a coupled cluster program
+           S. D. Folkestad, E. F. Kjønstad, 2017-2018
+
+
+
+  Initializing UHF wavefunction.
+
+  Requested fractional uniform valence. Valence electrons will be
+  distributed evenly in the highest molecular orbitals (if plural).
+
+  :: Direct-integral Hartree-Fock self-consistent field solver
+  :: E. F. Kjønstad, S. D. Folkestad, 2018
+
+  A Roothan-Hall self-consistent field solver. In each iteration,
+  the Roothan-Hall equation (or equations for unrestricted HF theory)
+  are solved to provide the next orbital coefficients. From the new
+  orbitals, a new density provides the next Fock matrix. The cycle
+  repeats until the solution is self-consistent (as measured by
+  the energy change).
+
+  Iteration    Energy (a.u.)        Delta E (a.u.)
+  ------------------------------------------------
+    1           -62.206339599631    0.6221E+02
+    2           -69.102644980460    0.6896E+01
+    3           -73.289592180770    0.4187E+01
+    4           -74.219919606906    0.9303E+00
+    5           -74.524048452578    0.3041E+00
+    6           -74.596104185748    0.7206E-01
+    7           -74.614040783893    0.1794E-01
+    8           -74.618110816710    0.4070E-02
+    9           -74.619051037811    0.9402E-03
+   10           -74.619264660133    0.2136E-03
+   11           -74.619313443048    0.4878E-04
+   12           -74.619324544557    0.1110E-04
+   13           -74.619327073998    0.2529E-05
+   14           -74.619327649891    0.5759E-06
+   15           -74.619327781047    0.1312E-06
+   16           -74.619327810913    0.2987E-07
+   17           -74.619327817715    0.6802E-08
+   18           -74.619327819264    0.1549E-08
+   19           -74.619327819617    0.3529E-09
+   20           -74.619327819697    0.8023E-10
+   21           -74.619327819716    0.1839E-10
+   22           -74.619327819720    0.4150E-11
+   23           -74.619327819721    0.9805E-12
+  ------------------------------------------------
+
+  Converged in  23 iterations!
+

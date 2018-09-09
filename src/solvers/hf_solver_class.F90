@@ -128,8 +128,6 @@ contains
             read(input%unit, '(a100)') line
             line = remove_preceding_blanks(line)
 !
-            write(output%unit, *) trim(line)
-!
             if (line(1:17) == 'energy threshold:') then
 !
                value = line(18:100)

@@ -1,0 +1,45 @@
+
+
+
+               eT - a coupled cluster program
+           S. D. Folkestad, E. F. Kjønstad, 2017-2018
+
+
+
+  Initializing UHF wavefunction.
+
+  Requested fractional uniform valence. Valence electrons will be
+  distributed evenly in the highest molecular orbitals (if plural).
+
+  :: Direct-integral Hartree-Fock self-consistent field solver
+  :: E. F. Kjønstad, S. D. Folkestad, 2018
+
+  A Roothan-Hall self-consistent field solver. In each iteration,
+  the Roothan-Hall equation (or equations for unrestricted HF theory)
+  are solved to provide the next orbital coefficients. From the new
+  orbitals, a new density provides the next Fock matrix. The cycle
+  repeats until the solution is self-consistent (as measured by
+  the energy change).
+
+  Iteration    Energy (a.u.)        Delta E (a.u.)
+  ------------------------------------------------
+    1           -71.601022152891    0.7160E+02
+    2           -74.316847872357    0.2716E+01
+    3           -74.547884232996    0.2310E+00
+    4           -74.576165748593    0.2828E-01
+    5           -74.579772095981    0.3606E-02
+    6           -74.580232827239    0.4607E-03
+    7           -74.580291787327    0.5896E-04
+    8           -74.580299332438    0.7545E-05
+    9           -74.580300298290    0.9659E-06
+   10           -74.580300421954    0.1237E-06
+   11           -74.580300437793    0.1584E-07
+   12           -74.580300439823    0.2030E-08
+   13           -74.580300440083    0.2603E-09
+   14           -74.580300440117    0.3342E-10
+   15           -74.580300440121    0.4221E-11
+   16           -74.580300440122    0.6253E-12
+  ------------------------------------------------
+
+  Converged in  16 iterations!
+

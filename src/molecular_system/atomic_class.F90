@@ -33,20 +33,20 @@ module atomic_class
 !
    contains
 !
-      procedure          :: set_number      => set_number_atom
+      procedure          :: set_number       => set_number_atom
       procedure, private :: symbol_to_number => symbol_to_number_atom
 !
-      procedure, private :: get_n_Aufbau => get_n_Aufbau_atom
-      procedure, private :: get_Aufbau_info => get_Aufbau_info_atom
+      procedure, private :: get_n_Aufbau     => get_n_Aufbau_atom
+      procedure, private :: get_Aufbau_info  => get_Aufbau_info_atom
 !
-      procedure :: AD => AD_atom
+      procedure :: AD                        => AD_atom
 !
-      procedure :: read_atomic_density => read_atomic_density_atomic
+      procedure :: read_atomic_density       => read_atomic_density_atomic
 !
-      procedure :: initialize_shells   => initialize_shells_atomic
-      procedure :: destruct_shells     => destruct_shells_atomic
+      procedure :: initialize_shells         => initialize_shells_atomic
+      procedure :: destruct_shells           => destruct_shells_atomic
 !
-      procedure :: cleanup => cleanup_atomic
+      procedure :: cleanup                   => cleanup_atomic
 !
    end type atomic
 !
@@ -358,28 +358,35 @@ contains
 !!    Read atomic density
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
+!!    Read the atomic density matrices from file and adds them 
+!!    together. By assumption, these densities are the result of 
+!!    atomic UHF calculations with the restriction that valence 
+!!    electrons are smeared out to ensure that the density is 
+!!    spherically symmetric (as required for a rotationally
+!!    invariant SAD guess). 
+!!
       implicit none 
 !  
       class(atomic) :: atom 
 !
       real(dp), dimension(atom%n_ao, atom%n_ao) :: atomic_density
 !
-      real(dp), dimension(:,:), allocatable :: temporary, eigenvalues, work, red_at_dens
+      real(dp), dimension(:,:), allocatable :: temporary
+      character(len=100)                    :: alpha_fname, beta_fname
 !
-      character(len=100) :: alpha_fname, beta_fname
+      character(len=255) :: sad_directory
 !
       type(file) :: alpha_density
       type(file) :: beta_density
 !
-      integer(i15) :: i, j, ioerror, offset, info
-      real(dp) :: diagonal_average, trace_of_D
+      integer(i15) :: i, j, ioerror
 !
       atomic_density = zero   
 !
-      alpha_fname = 'sad/' // trim(atom%basis) // '/' // trim(atom%symbol) // '_' // 'alpha' // '.inp'
-      beta_fname  = 'sad/' // trim(atom%basis) // '/' // trim(atom%symbol) // '_' // 'beta' // '.inp'
+      call get_environment_variable("SAD_ET_DIR", sad_directory)
 !
-  !    call mem%alloc(temporary, 1, atom%n_ao)
+      alpha_fname = trim(sad_directory) // '/' // trim(atom%basis) // '/' // trim(atom%symbol) // '_' // 'alpha' // '.inp'
+      beta_fname  = trim(sad_directory) // '/' //trim(atom%basis) // '/' // trim(atom%symbol) // '_' // 'beta' // '.inp'
 !
       call alpha_density%init(trim(alpha_fname), 'sequential', 'formatted')
       call beta_density%init(trim(beta_fname), 'sequential', 'formatted')
@@ -390,64 +397,14 @@ contains
       call mem%alloc(temporary, atom%n_ao, atom%n_ao)
       read(alpha_density%unit, *, iostat=ioerror) ((temporary(i,j), j = 1, atom%n_ao), i = 1, atom%n_ao)
       atomic_density = atomic_density + temporary
-!       do i = 1, atom%n_ao 
-! !
-!          read(alpha_density%unit, *, iostat=ioerror) (temporary(1,j), j = 1, atom%n_ao)
-! !
-!          do j = 1, atom%n_ao 
-! !
-!             atomic_density(i, j) = atomic_density(i, j) + temporary(1, j)
-! !
-!          enddo
-! !
-!       enddo 
-!
-   !   write(output%unit, *) 'Atom: ' // atom%symbol 
 !
       read(beta_density%unit, *, iostat=ioerror) ((temporary(i,j), j = 1, atom%n_ao), i = 1, atom%n_ao)
       atomic_density = atomic_density + temporary
 !
-!       do i = 1, atom%n_ao 
-! !
-!          read(beta_density%unit, *, iostat=ioerror) (temporary(1,j), j = 1, atom%n_ao)
-! !
-!          do j = 1, atom%n_ao 
-! !
-!             atomic_density(i, j) = atomic_density(i, j) + temporary(1, j)
-! !
-!          enddo
-! !
-!       enddo 
+      call mem%dealloc(temporary, atom%n_ao, atom%n_ao)
 !
       call disk%close_file(alpha_density)
       call disk%close_file(beta_density)
-!
-      call mem%dealloc(temporary, atom%n_ao, atom%n_ao)
-    !  call mem%dealloc(temporary, 1, atom%n_ao)
-!
-!     Print parts of the density matrix associated with different shells 
-!
-!       write(output%unit, *) 'Atom: ' // atom%symbol 
-! !
-!       do i = 1, atom%n_ao 
-!          do j = 1, atom%n_ao 
-! !
-!             write(output%unit, *) 'i j D(i,j)', i, j, atomic_density(i,j)
-! !
-!          enddo
-!       enddo      
-!
-!       offset = 1
-!       do i = 1, atom%n_shells
-! !
-!          write(output%unit, *) 'shell i', i, 'with shell size', atom%shells(i)%size, 'angular mom', atom%shells(i)%l 
-! !
-!          write(output%unit, *) atomic_density(offset:(offset + atom%shells(i)%size - 1), &
-!                                                 offset:(offset + atom%shells(i)%size - 1))           
-! !
-!          offset = offset + atom%shells(i)%size
-! !
-!       enddo 
 !
    end subroutine read_atomic_density_atomic
 !

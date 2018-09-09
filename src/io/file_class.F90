@@ -12,7 +12,7 @@ module file_class
 !
 !     Filename
 !
-      character(len=40) :: name = 'no_name'
+      character(len=255) :: name = 'no_name'
 !
 !     Unit identifier
 !

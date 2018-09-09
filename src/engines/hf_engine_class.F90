@@ -158,8 +158,6 @@ contains
          read(input%unit, '(a100)') line
          line = remove_preceding_blanks(line)
 !
-         write(output%unit, *) trim(line)
-!
          if (line(1:10) == 'algorithm:') then
 !
             algorithm = line(11:100)
@@ -170,7 +168,7 @@ contains
 !
       enddo
 !
-      algorithm = 'scf-diis'
+      algorithm = 'scf-diis' ! Standard
 !
    end subroutine read_algorithm_hf_engine
 !

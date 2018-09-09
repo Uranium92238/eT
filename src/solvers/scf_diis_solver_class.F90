@@ -120,14 +120,15 @@ contains
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call wf%get_ao_h_wx(h_wx)
 !
-      call wf%set_ao_density_to_sad()
-     ! call wf%set_ao_density_to_sad_2()
+     ! call wf%set_ao_density_to_sad()
+      call wf%set_ao_density_to_sad_2()
+     ! stop
 !
       call wf%update_fock_and_energy(sp_eri_schwarz, sp_eri_schwarz_list, n_s,  &
                                  h_wx, solver%coulomb_thr, solver%exchange_thr, &
                                  solver%coulomb_precision)
 !
-      write(output%unit, *) 'energy it 0:', wf%energy
+      write(output%unit, '(t6,a30,f17.12)') 'Energy of initial guess:      ', wf%energy
 !
 !     Do a Roothan-Hall update to ensure idempotentency of densities,
 !     and use it to construct the first proper Fock matrix from which 
@@ -167,8 +168,8 @@ contains
 !
       prev_energy = zero
 !
-      write(output%unit, '(t3,a)') 'Iteration    Energy (a.u.)        Max(grad.)    Delta E (a.u.)'
-      write(output%unit, '(t3,a)') '--------------------------------------------------------------'
+      write(output%unit, '(/t3,a)') 'Iteration    Energy (a.u.)        Max(grad.)    Delta E (a.u.)'
+      write(output%unit, '(t3,a)')  '--------------------------------------------------------------'
 !
       do while (.not. converged .and. iteration .le. solver%max_iterations)         
 !
@@ -272,8 +273,8 @@ contains
 !     When finished, we do a final Roothan-Hall step
 !     to express the Fock matrix in the canonical MO basis 
 !
-      do_mo_transformation = .true.
-      call wf%do_roothan_hall(do_mo_transformation)
+    !  do_mo_transformation = .true.
+    !  call wf%do_roothan_hall(do_mo_transformation)
 !
    end subroutine cleanup_scf_diis_solver
 !
@@ -295,7 +296,7 @@ contains
       write(output%unit, '(t3,a)')  'using the previously recorded Fock matrices and associated'
       write(output%unit, '(t3,a)')  'gradients. In each Roothan-Hall update, the fitted F matrix'
       write(output%unit, '(t3,a)')  'is used instead of the one produced from the previously'
-      write(output%unit, '(t3,a/)') 'obtained density matrix D. '
+      write(output%unit, '(t3,a)')  'obtained density matrix D. '
 
       flush(output%unit)
 !
@@ -340,8 +341,6 @@ contains
 !
             read(input%unit, '(a100)') line
             line = remove_preceding_blanks(line)
-!
-            write(output%unit, *) trim(line)
 !
             if (line(1:15) == 'diis dimension:') then
 !

@@ -20,6 +20,8 @@ module uhf_class
       integer(i15) :: n_alpha
       integer(i15) :: n_beta 
 !
+      logical :: fractional_uniform_valence = .false.  
+!
       real(dp), dimension(:,:), allocatable :: ao_density_a 
       real(dp), dimension(:,:), allocatable :: ao_density_b
 ! 
@@ -84,6 +86,9 @@ module uhf_class
       procedure :: destruct_orbital_energies_a       => destruct_orbital_energies_a_uhf
       procedure :: destruct_orbital_energies_b       => destruct_orbital_energies_b_uhf
 !
+      procedure :: get_homo_degeneracy               => get_homo_degeneracy_uhf
+      procedure :: read_settings                     => read_settings_uhf
+!
    end type uhf
 !
 !
@@ -100,6 +105,8 @@ contains
       class(uhf) :: wf
 !
       wf%name = 'UHF'
+!
+      write(output%unit, '(/t3,a)')  'Initializing ' // trim(wf%name) // ' wavefunction.'
 !
       call wf%system%prepare()
 !
@@ -118,8 +125,62 @@ contains
       wf%n_v = wf%n_mo - wf%n_o
 !
       call wf%determine_n_alpha_and_n_beta()
+      call wf%read_settings()
+!
+      if (wf%fractional_uniform_valence) then 
+!
+         write(output%unit, '(/t3,a)') 'Requested fractional uniform valence. Valence electrons will be'
+         write(output%unit, '(t3,a)')  'distributed evenly in the highest molecular orbitals (if plural).'
+!
+      endif
 !
    end subroutine prepare_uhf
+!
+!
+   subroutine read_settings_uhf(wf)
+!!
+!!    Read settings 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Reads settings specific to the wavefunction. 
+!!
+      implicit none 
+!
+      class(uhf) :: wf 
+!
+      integer(i15) :: n_records, i 
+!
+      character(len=100) :: line, value 
+!
+      if (requested_section('hf')) then ! User has requested something 
+!
+         call move_to_section('hf', n_records)
+!
+         do i = 1, n_records
+!
+            read(input%unit, '(a100)') line
+            line = remove_preceding_blanks(line)
+!
+            if (line(1:27) == 'fractional uniform valence:') then
+!
+               value = line(28:100)
+               value = remove_preceding_blanks(value)
+!
+               if (trim(value) == 'true') then 
+!
+                  wf%fractional_uniform_valence = .true.
+!
+               endif
+!
+               cycle
+!
+            endif
+!
+         enddo
+!
+      endif 
+!
+   end subroutine read_settings_uhf
 !
 !
    subroutine initialize_orbitals_uhf(wf)
@@ -141,6 +202,18 @@ contains
 !
       call wf%initialize_orbital_coefficients_a()
       call wf%initialize_orbital_coefficients_b()
+!
+      call wf%initialize_orbital_energies()
+      call wf%initialize_orbital_energies_a()
+      call wf%initialize_orbital_energies_b()   
+!
+      wf%orbital_coefficients   = zero 
+      wf%orbital_coefficients_a = zero   
+      wf%orbital_coefficients_b = zero   
+!
+      wf%orbital_energies   = zero 
+      wf%orbital_energies_a = zero 
+      wf%orbital_energies_b = zero 
 !
    end subroutine initialize_orbitals_uhf
 !
@@ -164,6 +237,10 @@ contains
       call wf%initialize_ao_density_a()
       call wf%initialize_ao_density_b()
 !
+      wf%ao_density   = zero 
+      wf%ao_density_a = zero 
+      wf%ao_density_b = zero 
+!
    end subroutine initialize_density_uhf
 !
 !
@@ -185,6 +262,10 @@ contains
 !
       call wf%initialize_ao_fock_a()
       call wf%initialize_ao_fock_b()
+!
+      wf%ao_fock   = zero 
+      wf%ao_fock_a = zero 
+      wf%ao_fock_b = zero 
 !
    end subroutine initialize_fock_uhf
 !
@@ -260,13 +341,14 @@ contains
 !
       class(uhf) :: wf 
 !
-      wf%ao_fock = wf%ao_fock_a 
-      call wf%do_roothan_hall()
-      wf%orbital_coefficients_a = wf%orbital_coefficients 
+      wf%orbital_coefficients_a = zero 
+      wf%orbital_energies_a     = zero 
 !
-      wf%ao_fock = wf%ao_fock_b 
-      call wf%do_roothan_hall()
-      wf%orbital_coefficients_b = wf%orbital_coefficients 
+      wf%orbital_coefficients_b = zero
+      wf%orbital_energies_b     = zero 
+!
+      call wf%do_roothan_hall(wf%ao_fock_a, wf%orbital_coefficients_a, wf%orbital_energies_a)
+      call wf%do_roothan_hall(wf%ao_fock_b, wf%orbital_coefficients_b, wf%orbital_energies_b)
 !
    end subroutine roothan_hall_update_orbitals_uhf
 !
@@ -345,10 +427,13 @@ contains
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx 
 !
       wf%ao_fock = h_wx 
-      call wf%do_roothan_hall()
+      call wf%do_roothan_hall(wf%ao_fock, wf%orbital_coefficients, wf%orbital_energies)
 !
       wf%orbital_coefficients_a = wf%orbital_coefficients
       wf%orbital_coefficients_b = wf%orbital_coefficients
+!
+      wf%orbital_energies_a = wf%orbital_energies
+      wf%orbital_energies_b = wf%orbital_energies
 !
       call wf%construct_ao_spin_density('alpha')
       call wf%construct_ao_spin_density('beta')
@@ -403,51 +488,203 @@ contains
 !!    equal to the restricted HF density if the alpha and beta 
 !!    densities are equal.
 !!
+!!    If fractional_uniform_valence is set to true, the routine 
+!!    will distribute the HOMO electrons (evenly, in fractions) among 
+!!    the degenerate HOMO orbitals. Note that this restricts the UHF 
+!!    densities to be spherically symmetric if the zeroth iteration 
+!!    density possesses this symmetry. 
+!!
       implicit none 
 !
       class(uhf) :: wf 
 !
       character(len=*), intent(in) :: sigma
 !
-      integer(i15) :: x,y,i
+      integer(i15) :: n_homo_electrons 
+      integer(i15) :: n_homo_orbitals  
+      integer(i15) :: homo_first, homo_last
+      real(dp)     :: electrons_to_fill 
+      integer(i15) :: alpha, beta, i
 !
       if (trim(sigma) == 'alpha') then 
 !
-         call dgemm('N', 'T',                   &
-                     wf%n_ao,                   &
-                     wf%n_ao,                   &
-                     wf%n_alpha,                &
-                     one,                       &
-                     wf%orbital_coefficients_a, &
-                     wf%n_ao,                   &
-                     wf%orbital_coefficients_a, &
-                     wf%n_ao,                   &
-                     zero,                      &
-                     wf%ao_density_a,           &
-                     wf%n_ao)
+         if (.not. wf%fractional_uniform_valence) then ! Standard 
+!
+            wf%ao_density_a = zero 
+            if (wf%n_alpha .eq. 0) return
+!
+            call dgemm('N', 'T',                   &
+                        wf%n_ao,                   &
+                        wf%n_ao,                   &
+                        wf%n_alpha,                &
+                        one,                       &
+                        wf%orbital_coefficients_a, &
+                        wf%n_ao,                   &
+                        wf%orbital_coefficients_a, &
+                        wf%n_ao,                   &
+                        zero,                      &
+                        wf%ao_density_a,           &
+                        wf%n_ao)
+!
+         else ! Smear out HOMO electrons, if degenerate
+!
+            call wf%get_homo_degeneracy(wf%orbital_energies_a, homo_first, homo_last, &
+                                          n_homo_orbitals, n_homo_electrons, wf%n_alpha)
+!
+            wf%ao_density_a = zero
+            if (wf%n_alpha .eq. 0) return
+!
+            electrons_to_fill = real(n_homo_electrons, kind=dp)/real(n_homo_orbitals, kind=dp)
+!
+            do alpha = 1, wf%n_ao 
+               do beta = 1, wf%n_ao 
+!
+                  do i = 1, homo_first - 1
+!  
+                     wf%ao_density_a(alpha,beta) = wf%ao_density_a(alpha,beta) & 
+                        + wf%orbital_coefficients_a(alpha,i)*wf%orbital_coefficients_a(beta,i)
+!
+                  enddo
+!
+                  do i = homo_first, homo_last
+!
+                     wf%ao_density_a(alpha,beta) = wf%ao_density_a(alpha,beta)  & 
+                        + electrons_to_fill*wf%orbital_coefficients_a(alpha,i)*wf%orbital_coefficients_a(beta,i)
+!
+                  enddo 
+!
+               enddo
+            enddo 
+!
+         endif    
 !
       elseif (trim(sigma) == 'beta') then 
 !
-         call dgemm('N', 'T',                   &
-                     wf%n_ao,                   &
-                     wf%n_ao,                   &
-                     wf%n_beta,                 &
-                     one,                       &
-                     wf%orbital_coefficients_b, &
-                     wf%n_ao,                   &
-                     wf%orbital_coefficients_b, &
-                     wf%n_ao,                   &
-                     zero,                      &
-                     wf%ao_density_b,           &
-                     wf%n_ao)   
+         if (.not. wf%fractional_uniform_valence) then ! Standard 
 !
-      else
+            wf%ao_density_b = zero 
+            if (wf%n_beta .eq. 0) return
+!
+            call dgemm('N', 'T',                   &
+                        wf%n_ao,                   &
+                        wf%n_ao,                   &
+                        wf%n_beta,                 &
+                        one,                       &
+                        wf%orbital_coefficients_b, &
+                        wf%n_ao,                   &
+                        wf%orbital_coefficients_b, &
+                        wf%n_ao,                   &
+                        zero,                      &
+                        wf%ao_density_b,           &
+                        wf%n_ao) 
+! 
+         else ! Smear out HOMO electrons, if degenerate
+!
+            call wf%get_homo_degeneracy(wf%orbital_energies_b, homo_first, homo_last, &
+                                          n_homo_orbitals, n_homo_electrons, wf%n_beta)
+!
+            wf%ao_density_b = zero
+            if (wf%n_beta .eq. 0) return
+!
+            electrons_to_fill = real(n_homo_electrons, kind=dp)/real(n_homo_orbitals, kind=dp)
+!
+            do alpha = 1, wf%n_ao 
+               do beta = 1, wf%n_ao 
+!
+                  do i = 1, homo_first - 1
+!
+                     wf%ao_density_b(alpha, beta) = wf%ao_density_b(alpha, beta) & 
+                        + wf%orbital_coefficients_b(alpha, i)*wf%orbital_coefficients_b(beta, i)
+!
+                  enddo
+!
+                  do i = homo_first, homo_last
+!
+                     wf%ao_density_b(alpha, beta) = wf%ao_density_b(alpha, beta) & 
+                        + electrons_to_fill*wf%orbital_coefficients_b(alpha, i)*wf%orbital_coefficients_b(beta, i)
+!
+                  enddo 
+!
+               enddo
+            enddo  
+!
+         endif      
+!
+      else ! Not good: sigma is neither alpha nor beta 
 !
          call output%error_msg('Did not recognize spin variable in construct_ao_spin_density:' // trim(sigma))
 !
       endif  
 !
    end subroutine construct_ao_spin_density_uhf
+!
+!
+   subroutine get_homo_degeneracy_uhf(wf, energies, homo_first, homo_last, n_homo_orbitals, n_homo_electrons, n_electrons)
+!!
+!!    Get HOMO degeneracy 
+!!    Written by Eirik F. Kjønstad, Sep 2018
+!!
+!!    When filling electrons in orbitals (one in each), this routine determines 
+!!    the degeneracy of the highest molecular orbital and the number of electrons 
+!!    that should be distributed to them.
+!!
+      implicit none 
+!
+      class(uhf) :: wf 
+!
+      real(dp), dimension(wf%n_mo, 1), intent(in) :: energies
+!
+      integer(i15), intent(inout) :: n_homo_orbitals, n_homo_electrons, homo_first, homo_last
+!
+      integer(i15), intent(in) :: n_electrons 
+!
+      integer(i15) :: homo, n_below, n_above, I
+!
+      real(dp), parameter :: threshold = 1.0D-6 
+!
+!     Set standard non-degenerate values 
+!
+      homo             = n_electrons
+      homo_first       = homo
+      homo_last        = homo
+      n_homo_orbitals  = 1
+      n_homo_electrons = 1
+!
+      if (n_electrons .eq. 0) return
+!
+      if (abs(energies(homo, 1) - energies(homo + 1, 1)) .le. threshold .or. &
+          abs(energies(homo, 1) - energies(homo - 1, 1)) .le. threshold) then ! HOMO is degenerate 
+!
+         n_below = 0
+         do I = 1, homo - 1
+!
+            if (abs(energies(homo, 1) - energies(I, 1)) .le. threshold) then 
+!
+               n_below = n_below + 1
+!
+            endif
+!
+         enddo
+!
+         n_above = 0
+         do I = homo + 1, wf%n_mo
+!
+            if (abs(energies(homo, 1) - energies(I, 1)) .le. threshold) then 
+!
+               n_above = n_above + 1
+!
+            endif
+!
+         enddo
+!
+         n_homo_orbitals  = n_below + n_above + 1
+         n_homo_electrons = n_below + 1 
+         homo_first = homo - n_below 
+         homo_last  = homo + n_above
+!
+      endif
+!
+   end subroutine get_homo_degeneracy_uhf
 !
 !
    subroutine form_ao_density_uhf(wf)
