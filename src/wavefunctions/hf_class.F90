@@ -150,6 +150,7 @@ contains
       class(hf) :: wf
 !
       wf%name = 'HF'
+      write(output%unit, '(/t3,a)')  'Initializing ' // trim(wf%name) // ' wavefunction.'
 !
       call wf%system%prepare()
 !
