@@ -16,7 +16,7 @@ module scf_diis_solver_class
 !!    Note to developers: although steps have been taken to make 
 !!    the solver general enough to allow for unrestricted HF theory,
 !!    there are still explicit references to the AO Fock and density.
-!!    These need to be replaced by AO-densities and Fock-densities,
+!!    These need to be replaced by AO-densities and Fock-matrices,
 !!    where it might be reasonable to adopt a "number of densities"
 !!    variable, such that we work with F = [F_a F_b], G = [G_a G_b] and 
 !!    D = [D_a D_b] in the DIIS solver. Generalized and overwritten
@@ -32,7 +32,6 @@ module scf_diis_solver_class
    use file_class
    use hf_class
    use disk_manager_class
-   use libint_initialization
 !
    implicit none
 !
@@ -46,6 +45,7 @@ module scf_diis_solver_class
       procedure :: cleanup                => cleanup_scf_diis_solver
 !
       procedure :: print_banner           => print_banner_scf_diis_solver
+      procedure :: print_summary          => print_summary_scf_diis_solver
 !
       procedure :: read_settings          => read_settings_scf_diis_solver 
       procedure :: read_scf_diis_settings => read_scf_diis_settings_scf_diis_solver
@@ -73,7 +73,7 @@ contains
       logical :: converged_energy
       logical :: converged_residual
 !
-      real(dp) :: max_grad, energy, prev_energy
+      real(dp) :: max_grad, energy, prev_energy, n_electrons
 !
       real(dp) :: ddot
 !
@@ -120,16 +120,18 @@ contains
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call wf%get_ao_h_wx(h_wx)
 !
-     ! call wf%set_ao_density_to_sad()
-      call wf%set_initial_ao_density()
-     ! call wf%set_ao_density_to_sad_2()
-     ! stop
+      write(output%unit, '(/t3,a,a,a)') 'Initial AO density is ', trim(solver%ao_density_guess), '.'
+!
+      call wf%set_initial_ao_density_guess(solver%ao_density_guess)
 !
       call wf%update_fock_and_energy(sp_eri_schwarz, sp_eri_schwarz_list, n_s,  &
                                  h_wx, solver%coulomb_thr, solver%exchange_thr, &
                                  solver%coulomb_precision)
 !
-      write(output%unit, '(t6,a30,f17.12)') 'Energy of initial guess:      ', wf%energy
+      call wf%get_n_electrons_in_density(n_electrons)
+!
+      write(output%unit, '(/t6,a30,f17.12)') 'Energy of initial guess:      ', wf%energy
+      write(output%unit, '(t6,a30,f17.12)')  'Number of electrons in guess: ', n_electrons
 !
 !     Do a Roothan-Hall update to ensure idempotentency of densities,
 !     and use it to construct the first proper Fock matrix from which 
@@ -194,7 +196,9 @@ contains
          if (converged) then
 !
             write(output%unit, '(t3,a)') '--------------------------------------------------------------'
-            write(output%unit, '(/t3,a13,i3,a12/)') 'Converged in ', iteration, ' iterations!'
+            write(output%unit, '(/t3,a29,i3,a12)') 'Convergence criterion met in ', iteration, ' iterations!'
+!
+            call solver%print_summary(wf)
 !
          else
 !
@@ -289,19 +293,40 @@ contains
 !
       class(scf_diis_solver) :: solver 
 !
-      write(output%unit, '(/t3,a)') ':: Direct-integral self-consistent field DIIS Hartree-Fock solver'
+      write(output%unit, '(/t3,a)') ':: Self-consistent field DIIS Hartree-Fock solver'
       write(output%unit, '(t3,a/)') ':: E. F. Kjønstad, S. D. Folkestad, 2018'
 !
       write(output%unit, '(t3,a)')  'A DIIS-accelerated Roothan-Hall self-consistent field solver.'
-      write(output%unit, '(t3,a)')  'In other words, it does a least-square fit to a zero gradient' 
-      write(output%unit, '(t3,a)')  'using the previously recorded Fock matrices and associated'
-      write(output%unit, '(t3,a)')  'gradients. In each Roothan-Hall update, the fitted F matrix'
-      write(output%unit, '(t3,a)')  'is used instead of the one produced from the previously'
-      write(output%unit, '(t3,a)')  'obtained density matrix D. '
+      write(output%unit, '(t3,a)')  'In other words, a least-square fit toward a zero gradient vector' 
+      write(output%unit, '(t3,a)')  'is performed using the previously recorded Fock matrices and the'
+      write(output%unit, '(t3,a)')  'associated gradients. After each Roothan-Hall update of the density,'
+      write(output%unit, '(t3,a)')  'a DIIS-fitted Fock matrix is used to get the next orbital coefficients,'
+      write(output%unit, '(t3,a)')  'instead of the one produced directly from the AO density matrix.'
 
       flush(output%unit)
 !
    end subroutine print_banner_scf_diis_solver
+!
+!
+   subroutine print_summary_scf_diis_solver(solver, wf)
+!!
+!!    Print summary 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none 
+!
+      class(scf_diis_solver) :: solver 
+!
+      class(hf) :: wf 
+!
+      write(output%unit, '(/t3,a,a,a)') 'Final ', trim(wf%name), ' energetics (a.u.):'
+!
+      write(output%unit, '(/t6,a26,f17.12)')  'Nuclear repulsion energy: ', wf%system%get_nuclear_repulsion()
+      write(output%unit, '(t6,a26,f17.12)')   'Total electronic energy:  ', wf%energy
+!
+      call wf%print_orbital_energies()
+!
+   end subroutine print_summary_scf_diis_solver
 !
 !
    subroutine read_settings_scf_diis_solver(solver)

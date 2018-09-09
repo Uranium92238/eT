@@ -58,7 +58,8 @@ module uhf_class
       procedure :: roothan_hall_update_orbitals      => roothan_hall_update_orbitals_uhf
       procedure :: update_ao_density                 => update_ao_density_uhf
       procedure :: save_ao_density                   => save_ao_density_uhf
-      procedure :: set_initial_ao_density            => set_initial_ao_density_uhf
+      procedure :: set_initial_ao_density_guess      => set_initial_ao_density_guess_uhf
+      procedure :: print_orbital_energies            => print_orbital_energies_uhf
 !
 !
 !     Initialize and destruct routines
@@ -138,7 +139,7 @@ contains
    end subroutine prepare_uhf
 !
 !
-   subroutine set_initial_ao_density_uhf(wf)
+   subroutine set_initial_ao_density_guess_uhf(wf, guess)
 !!
 !!    Set initial AO density 
 !!    Written by Eirik F. Kjønstad, Sep 2018 
@@ -151,12 +152,63 @@ contains
 !
       class(uhf) :: wf 
 !
-      call wf%set_ao_density_to_sad_2()
+      character(len=*) :: guess 
 !
-      wf%ao_density_a = (real(wf%n_alpha, kind=dp)/real(wf%n_alpha + wf%n_beta, kind=dp))*wf%ao_density
-      wf%ao_density_b = (real(wf%n_beta, kind=dp)/real(wf%n_alpha + wf%n_beta, kind=dp))*wf%ao_density
+      real(dp), dimension(:,:), allocatable :: h_wx
 !
-   end subroutine set_initial_ao_density_uhf
+      if (trim(guess) == 'sad' .or. trim(guess) == 'SAD') then 
+!
+         call wf%set_ao_density_to_sad()
+!
+         wf%ao_density_a = (real(wf%n_alpha, kind=dp)/real(wf%n_alpha + wf%n_beta, kind=dp))*wf%ao_density
+         wf%ao_density_b = (real(wf%n_beta, kind=dp)/real(wf%n_alpha + wf%n_beta, kind=dp))*wf%ao_density
+!
+      elseif (trim(guess) == 'core' .or. trim(guess) == 'CORE') then 
+!
+         call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
+         call wf%get_ao_h_wx(h_wx)
+!
+         call wf%set_ao_density_to_core_guess(h_wx)
+!
+         call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
+!
+      else 
+!
+         call output%error_msg('Guess AO density ' // trim(guess) // ' is currently not supported.')
+!
+      endif 
+!
+   end subroutine set_initial_ao_density_guess_uhf
+!
+!
+   subroutine print_orbital_energies_uhf(wf, indentation)
+!!
+!!    Print orbital energies  
+!!    Written by Eirik F. Kjønstad, Sep 2018
+!!
+!!    Prints the current orbital energies to output
+!!    in a hopefully readable way.
+!!
+      implicit none 
+!
+      class(uhf), intent(in) :: wf 
+!
+      character(len=*), optional :: indentation
+!
+      character(len=40) :: indent 
+!
+      indent = '6'
+      if (present(indentation)) indent = trim(indentation)
+!
+      write(output%unit, '(/t' // trim(indent) // ',a)') 'Alpha orbital energies:'
+!
+      call print_vector(wf%orbital_energies_a, wf%n_ao, indent)
+!
+      write(output%unit, '(/t' // trim(indent) // ',a)') 'Beta orbital energies:'
+!
+      call print_vector(wf%orbital_energies_b, wf%n_ao, indent)
+!
+   end subroutine print_orbital_energies_uhf
 !
 !
    subroutine read_settings_uhf(wf)
@@ -459,6 +511,8 @@ contains
 !
       call wf%construct_ao_spin_density('alpha')
       call wf%construct_ao_spin_density('beta')
+!
+      call wf%form_ao_density()
 !
    end subroutine set_ao_density_to_core_guess_uhf
 !

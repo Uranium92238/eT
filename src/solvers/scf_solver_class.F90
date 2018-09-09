@@ -32,7 +32,8 @@ module scf_solver_class
       procedure :: run     => run_scf_solver
       procedure :: cleanup => cleanup_scf_solver
 !
-      procedure :: print_banner => print_banner_scf_solver
+      procedure :: print_banner  => print_banner_scf_solver
+      procedure :: print_summary => print_summary_scf_solver
 !
    end type scf_solver
 !
@@ -72,7 +73,7 @@ contains
       logical :: converged
       logical :: converged_energy
 !
-      real(dp) :: energy, prev_energy
+      real(dp) :: energy, prev_energy, n_electrons
 !
       real(dp) :: ddot
 !
@@ -110,13 +111,17 @@ contains
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call wf%get_ao_h_wx(h_wx)
 !
-     ! call wf%set_ao_density_to_core_guess(h_wx)
-      call wf%set_initial_ao_density()
+      write(output%unit, '(/t3,a,a,a)') 'Initial AO density is ', trim(solver%ao_density_guess), '.'
+!
+      call wf%set_initial_ao_density_guess(solver%ao_density_guess)
 !
       call wf%update_fock_and_energy(sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx, &
                                        solver%coulomb_thr, solver%exchange_thr, solver%coulomb_precision)
 !
-      write(output%unit, '(t6,a30,f17.12)') 'Energy of initial guess:      ', wf%energy
+      call wf%get_n_electrons_in_density(n_electrons)
+!
+      write(output%unit, '(/t6,a30,f17.12)') 'Energy of initial guess:      ', wf%energy
+      write(output%unit, '(t6,a30,f17.12)')  'Number of electrons in guess: ', n_electrons
 !
 !     Update the orbitals and density to make sure the density is idempotent
 !     (not the case for the standard atomic superposition density)
@@ -156,7 +161,9 @@ contains
          if (converged) then
 !
             write(output%unit, '(t3,a)') '------------------------------------------------'
-            write(output%unit, '(/t3,a13,i3,a12/)') 'Converged in ', iteration, ' iterations!'
+            write(output%unit, '(/t3,a27,i3,a12)') 'Converged criterion met in ', iteration, ' iterations!'
+!
+            call solver%print_summary(wf)
 !
          else
 !
@@ -231,6 +238,27 @@ contains
       flush(output%unit)
 !
    end subroutine print_banner_scf_solver
+!
+!
+   subroutine print_summary_scf_solver(solver, wf)
+!!
+!!    Print summary 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none 
+!
+      class(scf_solver) :: solver 
+!
+      class(hf) :: wf 
+!
+      write(output%unit, '(/t3,a,a,a)') 'Final ', trim(wf%name), ' energetics (a.u.):'
+!
+      write(output%unit, '(/t6,a26,f17.12)')  'Nuclear repulsion energy: ', wf%system%get_nuclear_repulsion()
+      write(output%unit, '(t6,a26,f17.12)')   'Total electronic energy:  ', wf%energy
+!
+      call wf%print_orbital_energies()
+!
+   end subroutine print_summary_scf_solver
 !
 !
 end module scf_solver_class

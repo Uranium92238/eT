@@ -1328,6 +1328,57 @@ contains
    end function get_l2_norm
 !
 !
+   subroutine print_vector(A, n, indent)
+!!
+!!    Print vector 
+!!    Written by Eirik F. Kjønstad, Sep 2018
+!!
+!!    Suitable to print vector of size < 1000.
+!!
+      implicit none 
+!
+      integer(i15), intent(in) :: n
+!
+      real(dp), dimension(n, 1), intent(in) :: A 
+!
+      integer(i15) :: I 
+!
+      character(len=*)   :: indent ! indentation
+      character(len=255) :: adv    ! advance
+      character(len=255) :: fmt    ! format
+      character(len=255) :: sep    ! column separation
+!
+      write(output%unit, *)
+      sep = trim(indent)
+      adv = 'no'
+      do I = 1, n 
+!
+         fmt = '(t' // trim(sep) // ', i3, f18.12)'
+         write(output%unit, fmt, advance=trim(adv)) I, A(I,1) 
+!
+         if (mod(I, 3) .eq. 2) then 
+!
+            adv = 'yes'
+            sep = '3'
+!
+         elseif (mod(I, 3) .eq. 0) then
+!
+            adv = 'no'
+            sep = indent
+!
+         else
+!
+            adv = 'no'
+            sep = '3'
+!
+         endif
+!
+      enddo
+      write(output%unit, *)
+!
+   end subroutine print_vector
+!
+!
 end module array_utilities
 
 

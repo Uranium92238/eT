@@ -20,6 +20,8 @@ module hf_solver_class
       real(dp) :: coulomb_thr        = 1.0D-11 ! screening threshold 
       real(dp) :: exchange_thr       = 1.0D-11 ! screening threshold 
       real(dp) :: coulomb_precision  = 1.0D-14 ! integral engine accuracy
+!  
+      character(len=40) :: ao_density_guess = 'SAD'
 !
    contains 
 !
@@ -168,6 +170,13 @@ contains
                value = line(19:100)
                value = remove_preceding_blanks(value)
                read(value, *) solver%coulomb_precision
+               cycle
+!
+            elseif (line(1:17) == 'ao density guess:') then 
+!
+               value = line(18:100)
+               value = remove_preceding_blanks(value)
+               solver%ao_density_guess = trim(value)
                cycle
 !
             endif

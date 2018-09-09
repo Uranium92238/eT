@@ -204,6 +204,8 @@ program eT_program
 !
     call finalize_libint()
 !
+    write(output%unit, '(/t3,a)') 'eT terminated successfully!'
+!
    call disk%close_file(output)
    call disk%close_file(input)
 !

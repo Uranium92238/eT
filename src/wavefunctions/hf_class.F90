@@ -75,8 +75,8 @@ module hf_class
       procedure :: set_ao_density                     => set_ao_density_hf
       procedure :: set_ao_fock                        => set_ao_fock_hf
 !
-      procedure :: set_ao_density_to_sad              => set_ao_density_to_sad_hf   ! Functional, but not correct 
-      procedure :: set_ao_density_to_sad_2            => set_ao_density_to_sad_2_hf ! WIP to replace above 
+      procedure :: set_ao_density_to_sad_2            => set_ao_density_to_sad_2_hf   ! Old, to be deprecated 
+      procedure :: set_ao_density_to_sad              => set_ao_density_to_sad_hf     ! WIP to replace above 
       procedure :: set_ao_density_to_core_guess       => set_ao_density_to_core_guess_hf
 !
 !     Initialize and destruct routines for wavefunction variables
@@ -109,11 +109,12 @@ module hf_class
       procedure :: construct_sp_density_schwarz       => construct_sp_density_schwarz_hf
       procedure :: get_n_sig_eri_sp                   => get_n_sig_eri_sp_hf
 !
-!     Routines to request a range of AO integral arrays 
+!     Routines to request a range of AO integral arrays, etc.
 ! 
       procedure :: get_ao_h_wx                        => get_ao_h_wx_hf
       procedure :: get_ao_s_wx                        => get_ao_s_wx_hf
       procedure :: get_ao_mu_wx                       => get_ao_mu_wx_hf
+      procedure :: get_n_electrons_in_density         => get_n_electrons_in_density_hf
 !
 !     Routines that may change in descendants but are required by solvers 
 !
@@ -126,7 +127,8 @@ module hf_class
       procedure :: roothan_hall_update_orbitals       => roothan_hall_update_orbitals_hf
       procedure :: update_ao_density                  => update_ao_density_hf
       procedure :: save_ao_density                    => save_ao_density_hf
-      procedure :: set_initial_ao_density             => set_initial_ao_density_hf
+      procedure :: set_initial_ao_density_guess       => set_initial_ao_density_guess_hf
+      procedure :: print_orbital_energies             => print_orbital_energies_hf
 !
    end type hf
 !
@@ -168,7 +170,33 @@ contains
    end subroutine prepare_hf
 !
 !
-   subroutine set_initial_ao_density_hf(wf)
+   subroutine print_orbital_energies_hf(wf, indentation)
+!!
+!!    Print orbital energies  
+!!    Written by Eirik F. Kjønstad, Sep 2018
+!!
+!!    Prints the current orbital energies to output
+!!    in a hopefully readable way.
+!!
+      implicit none 
+!
+      class(hf), intent(in) :: wf 
+!
+      character(len=*), optional :: indentation
+!
+      character(len=40) :: indent 
+!
+      indent = '6'
+      if (present(indentation)) indent = trim(indentation)
+!
+      write(output%unit, '(/t' // trim(indent) // ',a)') 'Orbital energies:'
+!
+      call print_vector(wf%orbital_energies, wf%n_ao, indent)
+!
+   end subroutine print_orbital_energies_hf
+!
+!
+   subroutine set_initial_ao_density_guess_hf(wf, guess)
 !!
 !!    Set initial AO density 
 !!    Written by Eirik F. Kjønstad, Sep 2018 
@@ -181,9 +209,30 @@ contains
 !
       class(hf) :: wf 
 !
-      call wf%set_ao_density_to_sad_2()
+      character(len=*) :: guess
 !
-   end subroutine set_initial_ao_density_hf
+      real(dp), dimension(:,:), allocatable :: h_wx
+!
+      if (trim(guess) == 'sad' .or. trim(guess) == 'SAD') then 
+!
+         call wf%set_ao_density_to_sad()
+!
+      elseif (trim(guess) == 'core' .or. trim(guess) == 'CORE') then 
+!
+         call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
+         call wf%get_ao_h_wx(h_wx)
+!
+         call wf%set_ao_density_to_core_guess(h_wx)
+!
+         call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
+!
+      else 
+!
+         call output%error_msg('Guess AO density ' // trim(guess) // ' is currently not supported.')
+!
+      endif 
+!
+   end subroutine set_initial_ao_density_guess_hf
 !
 !
    subroutine initialize_orbitals_hf(wf)
@@ -1884,7 +1933,7 @@ contains
 !
    subroutine calculate_hf_energy_from_G_hf(wf, half_GD_wx, h_wx)
 !!
-!!    Calculate HF energy
+!!    Calculate HF energy from G(D)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    Calculates the Hartree-Fock energy,
@@ -1918,7 +1967,7 @@ contains
 !
    subroutine calculate_hf_energy_from_fock_hf(wf, F_wx, h_wx)
 !!
-!!    Calculate HF energy
+!!    Calculate HF energy from F 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    Calculates the Hartree-Fock energy,
@@ -1986,7 +2035,7 @@ contains
    end subroutine set_ao_fock_hf
 !
 !
-   subroutine set_ao_density_to_sad_hf(wf)
+   subroutine set_ao_density_to_sad_2_hf(wf)
 !!
 !!    Set AO density to superposition of atomic densities (SAD) guess
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -2019,7 +2068,7 @@ contains
 !
       call mem%dealloc(density_diagonal, wf%n_ao, 1)
 !
-   end subroutine set_ao_density_to_sad_hf
+   end subroutine set_ao_density_to_sad_2_hf
 !
 !
    subroutine construct_ao_overlap_hf(wf)
@@ -2933,7 +2982,7 @@ contains
    end subroutine do_roothan_hall_hf
 !
 !
-   subroutine set_ao_density_to_sad_2_hf(wf)
+   subroutine set_ao_density_to_sad_hf(wf)
 !!
 !!    Set AO density to SAD 
 !!    Written by Eirik F. Kjønstad, Aug-Sep 2018 
@@ -2991,36 +3040,54 @@ contains
 !
       enddo 
 !
-!     Check the trace of the density & print so that the user
-!     can be sure the density is reasonable
+   end subroutine set_ao_density_to_sad_hf
 !
-      call mem%alloc(temp, wf%n_ao, wf%n_ao)
-      call dgemm('N','N', &
-                  wf%n_ao, &
-                  wf%n_ao, &
-                  wf%n_ao, &
-                  one, &
+!
+   subroutine get_n_electrons_in_density_hf(wf, n_electrons)
+!!
+!!    Get number of electrons in density 
+!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Calculates the number of electrons in the current 
+!!    AO density, a useful check on the sensibility of the 
+!!    initial AO density guess. It is by default printed 
+!!    by some solvers.
+!!
+      implicit none 
+!
+      class(hf), intent(in)   :: wf 
+      real(dp), intent(inout) :: n_electrons 
+!
+      integer(i15) :: ao 
+!
+      real(dp), dimension(:,:), allocatable :: DS 
+!
+      call mem%alloc(DS, wf%n_ao, wf%n_ao)
+!
+      call dgemm('N','N',        &
+                  wf%n_ao,       &
+                  wf%n_ao,       &
+                  wf%n_ao,       &
+                  one,           &
                   wf%ao_density, &
-                  wf%n_ao, &
+                  wf%n_ao,       &
                   wf%ao_overlap, &
-                  wf%n_ao, &
-                  zero, &
-                  temp, &
+                  wf%n_ao,       &
+                  zero,          &
+                  DS,            &
                   wf%n_ao)
 !
-      trace = zero
-      do i = 1, wf%n_ao
+      n_electrons = zero
 !
-         trace = trace + temp(i,i)
+      do ao = 1, wf%n_ao
+!
+         n_electrons = n_electrons + DS(ao, ao)
 !
       enddo
-      call mem%dealloc(temp, wf%n_ao, wf%n_ao)
 !
-      write(output%unit, '(/t3,a)') 'Initial density is superposition of atomic densities (SAD).'
+      call mem%dealloc(DS, wf%n_ao, wf%n_ao)
 !
-      write(output%unit, '(/t6,a30,f17.12)')  'Number of electrons in guess: ', trace 
-!
-   end subroutine set_ao_density_to_sad_2_hf
+   end subroutine get_n_electrons_in_density_hf
 !
 !
    subroutine set_ao_density_to_core_guess_hf(wf, h_wx)
