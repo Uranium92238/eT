@@ -61,7 +61,6 @@ module uhf_class
       procedure :: set_initial_ao_density_guess      => set_initial_ao_density_guess_uhf
       procedure :: print_orbital_energies            => print_orbital_energies_uhf
 !
-!
 !     Initialize and destruct routines
 !
       procedure :: initialize_ao_density_a           => initialize_ao_density_a_uhf

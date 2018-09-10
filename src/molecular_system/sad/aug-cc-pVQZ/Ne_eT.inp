@@ -9,11 +9,12 @@ end method
 
 hf
   algorithm:                  scf
-  coulomb precision:          1.0d-20
-  coulomb threshold:          1.0d-14
-  exchange threshold:         1.0d-14
+  coulomb precision:          1.0d-25
+  coulomb threshold:          1.0d-16
+  exchange threshold:         1.0d-16
   energy threshold:           1.0d-12
   fractional uniform valence: true
+  ao density guess:           core
 end hf
 
 do
