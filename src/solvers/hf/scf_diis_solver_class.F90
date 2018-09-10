@@ -68,9 +68,19 @@ contains
 !
       class(hf) :: wf
 !
+!     Print solver banner
+!
+      call solver%print_banner()
+!
 !     Read settings (thresholds, etc.)
 !
       call solver%read_settings()
+!
+!     Initialize the orbitals, density, and the Fock matrix (or matrices)
+!
+      call wf%initialize_fock()
+      call wf%initialize_density()
+      call wf%initialize_orbitals()
 !
    end subroutine prepare_scf_diis_solver
 !
@@ -112,9 +122,7 @@ contains
       real(dp), dimension(:,:), allocatable     :: sp_eri_schwarz
       integer(i15), dimension(:,:), allocatable :: sp_eri_schwarz_list
 !
-!     Print solver banner
-!
-      call solver%print_banner()
+!     :: Part I. Preparations. 
 !
 !     Construct screening vectors for efficient Fock construction 
 !
@@ -129,12 +137,7 @@ contains
 !
       call diis_manager%init('hf_diis', (wf%n_ao)*(wf%n_ao + 1)/2, wf%n_ao**2, solver%diis_dimension)
 !
-!     Initialize the orbitals, density, and the Fock matrix (or matrices),
-!     and set the initial density guess and Fock matrix 
-!
-      call wf%initialize_fock()
-      call wf%initialize_density()
-      call wf%initialize_orbitals()
+!     Set the initial density guess and Fock matrix 
 !
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call wf%get_ao_h_wx(h_wx)
@@ -177,6 +180,8 @@ contains
 !
       call packin(F, wf%ao_fock, wf%n_ao)
       call diis_manager%update(G, F)
+!
+!     Part II. Iterative SCF loop.
 !
       iteration = 1
       converged = .false.
@@ -255,8 +260,6 @@ contains
 !
       call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
 !
-      call wf%destruct_ao_overlap()
-!
 !     Initialize engine (make final deallocations, and other stuff)
 !
       call diis_manager%finalize()
@@ -293,6 +296,8 @@ contains
 !
       do_mo_transformation = .true.
       call wf%do_roothan_hall(wf%ao_fock, wf%orbital_coefficients, wf%orbital_energies, do_mo_transformation)
+!
+      call wf%destruct_ao_overlap()
 !
    end subroutine cleanup_scf_diis_solver
 !

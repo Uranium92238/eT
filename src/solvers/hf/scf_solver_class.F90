@@ -52,9 +52,19 @@ contains
 !
       class(hf) :: wf
 !
+!     Print solver banner
+!
+      call solver%print_banner()
+!
 !     Read settings (thresholds, etc.)
 !
       call solver%read_settings()
+!
+!     Initialize orbital coefficients, densities, and Fock matrices (plural for unrestricted methods)
+!
+      call wf%initialize_orbitals()
+      call wf%initialize_density()
+      call wf%initialize_fock()
 !
    end subroutine prepare_scf_solver
 !
@@ -86,9 +96,7 @@ contains
       real(dp), dimension(:,:), allocatable     :: sp_eri_schwarz
       integer(i15), dimension(:,:), allocatable :: sp_eri_schwarz_list
 !
-!     Print solver banner
-!
-      call solver%print_banner()
+!     :: Part I. Preparations
 !
 !     Construct ERI screening vector for efficient Fock construction 
 !
@@ -99,21 +107,14 @@ contains
 !
       call wf%construct_sp_eri_schwarz(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
 !
-!     Initialize orbital coefficients, densities, and Fock matrices (plural for unrestricted methods)
-!
-      call wf%initialize_orbitals()
-      call wf%initialize_density()
-      call wf%initialize_fock()
-!
-!     Set initial AO density (or densities) from one-electron Hamiltonian,
-!     then construct the Fock matrix (or matrices) and the zeroth iteration energy 
-!
-      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
-      call wf%get_ao_h_wx(h_wx)
+!     Set initial AO density (or densities) guess
 !
       write(output%unit, '(/t3,a,a,a)') 'Initial AO density is ', trim(solver%ao_density_guess), '.'
 !
       call wf%set_initial_ao_density_guess(solver%ao_density_guess)
+!
+      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
+      call wf%get_ao_h_wx(h_wx)
 !
       call wf%update_fock_and_energy(sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx)
 !
@@ -130,7 +131,7 @@ contains
 !
       call wf%update_fock_and_energy(sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx)
 !
-!     Enter iterative loop 
+!     :: Part II. Iterative SCF loop.
 !
       iteration = 1
 !
@@ -182,9 +183,6 @@ contains
 !
       call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
 !
-      call wf%destruct_ao_overlap()
-      call wf%destruct_fock()
-!
       if (.not. converged) then 
 !
          write(output%unit, '(t3,a)')   '---------------------------------------------------'
@@ -208,7 +206,15 @@ contains
 !
       class(hf) :: wf
 !
+!     Save AO density (or densities) to disk 
+!
       call wf%save_ao_density()
+!
+!     Final deallocations of solver 
+!     (note that we keep certain arrays in the wavefunction for later)
+!
+      call wf%destruct_ao_overlap()
+      call wf%destruct_fock()
 !
    end subroutine cleanup_scf_solver
 !
