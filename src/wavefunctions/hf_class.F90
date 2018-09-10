@@ -28,6 +28,10 @@ module hf_class
 !
       real(dp) :: linear_dep_threshold = 1.0D-6
 !
+      real(dp) :: coulomb_threshold    = 1.0D-11 ! screening threshold 
+      real(dp) :: exchange_threshold   = 1.0D-11 ! screening threshold 
+      real(dp) :: integral_precision   = 1.0D-14 ! integral engine accuracy
+!
 	contains
 !
 !     Initialize and finalize wavefunction
@@ -130,6 +134,9 @@ module hf_class
       procedure :: set_initial_ao_density_guess       => set_initial_ao_density_guess_hf
       procedure :: print_orbital_energies             => print_orbital_energies_hf
 !
+      procedure :: read_settings                      => read_settings_hf
+      procedure :: read_hf_settings                   => read_hf_settings_hf
+!
    end type hf
 !
 !
@@ -168,7 +175,78 @@ contains
       wf%n_o = (wf%system%get_n_electrons())/2
       wf%n_v = wf%n_mo - wf%n_o
 !
+      call wf%read_settings()
+!
    end subroutine prepare_hf
+!
+!
+   subroutine read_settings_hf(wf)
+!!
+!!    Read settings 
+!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Designed to be overwritten by descendants with 
+!!    descendant specific settings (see e.g. UHF).
+!!
+      implicit none 
+!
+      class(hf) :: wf 
+!
+      call wf%read_hf_settings()
+!
+   end subroutine read_settings_hf
+!
+!
+   subroutine read_hf_settings_hf(wf)
+!!
+!!    Read HF settings
+!!    Written by Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none 
+!
+      class(hf) :: wf 
+!
+      integer(i15) :: n_records, i
+!
+      character(len=100) :: line, value 
+!
+      if (requested_section('hf')) then ! User has requested something 
+!
+         call move_to_section('hf', n_records)
+!
+         do i = 1, n_records
+!
+            read(input%unit, '(a100)') line
+            line = remove_preceding_blanks(line)
+!
+            if (line(1:18) == 'coulomb threshold:') then 
+!
+               value = line(19:100)
+               value = remove_preceding_blanks(value)
+               read(value, *) wf%coulomb_threshold
+               cycle
+!
+            elseif (line(1:19) == 'exchange threshold:') then 
+!
+               value = line(20:100)
+               value = remove_preceding_blanks(value)
+               read(value, *) wf%exchange_threshold
+               cycle
+!
+            elseif (line(1:19) == 'integral precision:') then 
+!
+               value = line(20:100)
+               value = remove_preceding_blanks(value)
+               read(value, *) wf%integral_precision
+               cycle
+!
+            endif
+!
+         enddo
+!
+      endif 
+!
+   end subroutine read_hf_settings_hf
 !
 !
    subroutine print_orbital_energies_hf(wf, indentation)
@@ -199,12 +277,11 @@ contains
 !
    subroutine set_initial_ao_density_guess_hf(wf, guess)
 !!
-!!    Set initial AO density 
-!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!    Set initial AO density
+!!    Written by Eirik F. Kjønstad, Sep 2018
 !!
 !!    Sets initial AO density (or densities) to the 
-!!    appropriate initial guess requested by the 
-!!    solver.
+!!    appropriate initial guess requested by the solver.
 !!
       implicit none 
 !
@@ -321,7 +398,7 @@ contains
    end subroutine destruct_fock_hf
 !
 !
-   subroutine update_fock_and_energy_hf(wf, sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx, coulomb, exchange, precision)
+   subroutine update_fock_and_energy_hf(wf, sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx)
 !!
 !!    Update Fock and energy
 !!    Written by Eirik F. Kjønstad, Sep 2018 
@@ -342,16 +419,12 @@ contains
       real(dp), dimension(n_s*(n_s + 1)/2, 2), intent(in)     :: sp_eri_schwarz
       integer(i15), dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
 !
-      real(dp), optional :: coulomb, exchange, precision ! Non-standard thresholds, optionals
-!
-      call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s, &
-                                 h_wx, coulomb, exchange, precision)          ! Note: does energy update, too       
+      call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx)      
 !
    end subroutine update_fock_and_energy_hf
 !
 !
-   subroutine update_fock_and_energy_cumulative_hf(wf, sp_eri_schwarz, sp_eri_schwarz_list, n_s, &
-                                                   prev_ao_density, h_wx, coulomb, exchange, precision)
+   subroutine update_fock_and_energy_cumulative_hf(wf, sp_eri_schwarz, sp_eri_schwarz_list, n_s, prev_ao_density, h_wx)
 !!
 !!    Update Fock and energy cumulatively
 !!    Written by Eirik F. Kjønstad, Sep 2018 
@@ -374,11 +447,8 @@ contains
       real(dp), dimension(n_s*(n_s + 1)/2, 2), intent(in)     :: sp_eri_schwarz
       integer(i15), dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
 !
-      real(dp), optional :: coulomb, exchange, precision ! Non-standard thresholds, optionals
-!
       call wf%construct_ao_fock_cumulative(sp_eri_schwarz, sp_eri_schwarz_list, &
-                                           n_s, prev_ao_density, h_wx, coulomb, &
-                                           exchange, precision) ! Note: does energy update, too
+                                           n_s, prev_ao_density, h_wx) 
 !
    end subroutine update_fock_and_energy_cumulative_hf
 !
@@ -1279,13 +1349,13 @@ contains
 !     Set thresholds to ignore Coulomb and exchange terms,
 !     as well as the desired Libint integral precision  
 !
-      coulomb_thr = 1.0D-11 
+      coulomb_thr = wf%coulomb_threshold
       if (present(coulomb)) coulomb_thr = coulomb 
 !
-      exchange_thr = 1.0D-11
+      exchange_thr = wf%exchange_threshold
       if (present(exchange)) exchange_thr = exchange 
 !
-      precision_thr = 1.0D-14
+      precision_thr = wf%integral_precision
       if (present(precision)) precision_thr = precision 
 !
 !     Construct the density screening vector and the maximum element in the density
@@ -1383,13 +1453,13 @@ contains
 !     Set thresholds to ignore Coulomb and exchange terms,
 !     as well as the desired Libint integral precision  
 !
-      coulomb_thr = 1.0D-11 
+      coulomb_thr = wf%coulomb_threshold
       if (present(coulomb)) coulomb_thr = coulomb 
 !
-      exchange_thr = 1.0D-11
+      exchange_thr = wf%exchange_threshold
       if (present(exchange)) exchange_thr = exchange 
 !
-      precision_thr = 1.0D-14
+      precision_thr = wf%integral_precision
       if (present(precision)) precision_thr = precision 
 !
 !     Overwrite the AO density with the density difference,
@@ -2304,7 +2374,7 @@ contains
       L = zero
 !
       call full_cholesky_decomposition_system(wf%ao_overlap, L, wf%n_ao, wf%n_mo, &
-                                          wf%linear_dep_threshold, used_diag)
+                                                wf%linear_dep_threshold, used_diag)
 !
       call wf%initialize_cholesky_ao_overlap()
 !

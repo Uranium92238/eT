@@ -14,6 +14,7 @@ program eT_program
   use wavefunction_class
 !
   use hf_class
+  use uhf_class
   use mlhf_class
 !
   use ccs_class
@@ -35,7 +36,7 @@ program eT_program
 !   Method allocatable objects
 !
     type(hf), allocatable, target    :: hf_wf
-    type(uhf), allocatable, target    :: uhf_wf
+    type(uhf), allocatable, target   :: uhf_wf
     type(mlhf), allocatable, target  :: mlhf_wf 
 !
     type(ccs), allocatable, target :: ccs_wf
