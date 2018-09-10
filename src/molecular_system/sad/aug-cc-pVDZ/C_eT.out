@@ -1,0 +1,78 @@
+
+
+
+               eT - a coupled cluster program
+           S. D. Folkestad, E. F. Kjønstad, 2017-2018
+
+
+
+  Initializing UHF wavefunction.
+
+  Requested fractional uniform valence. Valence electrons will be
+  distributed evenly in the highest molecular orbitals (if plural).
+
+  :: Direct-integral Hartree-Fock self-consistent field solver
+  :: E. F. Kjønstad, S. D. Folkestad, 2018
+
+  A Roothan-Hall self-consistent field solver. In each iteration,
+  the Roothan-Hall equation (or equations for unrestricted HF theory)
+  are solved to provide the next orbital coefficients. From the new
+  orbitals, a new density provides the next Fock matrix. The cycle
+  repeats until the solution is self-consistent (as measured by
+  the energy change).
+
+  Initial AO density is core.
+
+     Energy of initial guess:       -36.452321040847
+     Number of electrons in guess:    6.000000000000
+
+  Iteration    Energy (a.u.)        Delta E (a.u.)
+  ------------------------------------------------
+    1           -37.354438333700    0.3735E+02
+    2           -37.513307153491    0.1589E+00
+    3           -37.525660651476    0.1235E-01
+    4           -37.526172005874    0.5114E-03
+    5           -37.526209459206    0.3745E-04
+    6           -37.526213168993    0.3710E-05
+    7           -37.526213627523    0.4585E-06
+    8           -37.526213696342    0.6882E-07
+    9           -37.526213708457    0.1211E-07
+   10           -37.526213710818    0.2361E-08
+   11           -37.526213711304    0.4856E-09
+   12           -37.526213711406    0.1024E-09
+   13           -37.526213711428    0.2183E-10
+   14           -37.526213711433    0.4682E-11
+   15           -37.526213711434    0.1009E-11
+   16           -37.526213711434    0.2132E-12
+  ------------------------------------------------
+
+  Converged criterion met in  16 iterations!
+
+  Final UHF energetics (a.u.):
+
+     Nuclear repulsion energy:    0.000000000000
+     Total electronic energy:   -37.526213711434
+
+     Alpha orbital energies:
+
+       1  -11.416945009578    2   -0.851908265273    3   -0.289503053758
+       4   -0.289503053758    5   -0.289503053758    6    0.103547396189
+       7    0.116525219327    8    0.116525219327    9    0.116525219327
+      10    0.430774708930   11    0.430774708930   12    0.430774708930
+      13    0.430774708930   14    0.430774708930   15    0.749501825520
+      16    0.749501825520   17    0.749501825520   18    0.939675469687
+      19    1.609860431218   20    1.609860431218   21    1.609860431218
+      22    1.609860431218   23    1.609860431218
+
+     Beta orbital energies:
+
+       1  -11.377473233425    2   -0.623030439495    3    0.050968952601
+       4    0.050968952601    5    0.050968952601    6    0.120572183728
+       7    0.176569459332    8    0.176569459332    9    0.176569459332
+      10    0.468930013011   11    0.468930013011   12    0.468930013011
+      13    0.468930013011   14    0.468930013011   15    0.845899411991
+      16    0.845899411991   17    0.845899411991   18    1.000042504069
+      19    1.702669283831   20    1.702669283831   21    1.702669283831
+      22    1.702669283831   23    1.702669283831
+
+  eT terminated successfully!

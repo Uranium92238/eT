@@ -1,0 +1,63 @@
+
+
+
+               eT - a coupled cluster program
+           S. D. Folkestad, E. F. Kjønstad, 2017-2018
+
+
+
+  Initializing UHF wavefunction.
+
+  Requested fractional uniform valence. Valence electrons will be
+  distributed evenly in the highest molecular orbitals (if plural).
+
+  :: Direct-integral Hartree-Fock self-consistent field solver
+  :: E. F. Kjønstad, S. D. Folkestad, 2018
+
+  A Roothan-Hall self-consistent field solver. In each iteration,
+  the Roothan-Hall equation (or equations for unrestricted HF theory)
+  are solved to provide the next orbital coefficients. From the new
+  orbitals, a new density provides the next Fock matrix. The cycle
+  repeats until the solution is self-consistent (as measured by
+  the energy change).
+
+  Initial AO density is core.
+
+     Energy of initial guess:        -2.742552929262
+     Number of electrons in guess:    2.000000000000
+
+  Iteration    Energy (a.u.)        Delta E (a.u.)
+  ------------------------------------------------
+    1            -2.854634120266    0.2855E+01
+    2            -2.855683468158    0.1049E-02
+    3            -2.855703777913    0.2031E-04
+    4            -2.855704623431    0.8455E-06
+    5            -2.855704665462    0.4203E-07
+    6            -2.855704667596    0.2134E-08
+    7            -2.855704667705    0.1086E-09
+    8            -2.855704667710    0.5530E-11
+    9            -2.855704667710    0.2829E-12
+  ------------------------------------------------
+
+  Converged criterion met in   9 iterations!
+
+  Final UHF energetics (a.u.):
+
+     Nuclear repulsion energy:    0.000000000000
+     Total electronic energy:    -2.855704667710
+
+     Alpha orbital energies:
+
+       1   -0.917123907957    2    0.174366449259    3    0.530376124999
+       4    0.530376124999    5    0.530376124999    6    1.713452610739
+       7    3.024883440850    8    3.024883440850    9    3.024883440850
+
+
+     Beta orbital energies:
+
+       1   -0.917123907957    2    0.174366449259    3    0.530376124999
+       4    0.530376124999    5    0.530376124999    6    1.713452610739
+       7    3.024883440850    8    3.024883440850    9    3.024883440850
+
+
+  eT terminated successfully!
