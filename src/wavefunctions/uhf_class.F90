@@ -15,12 +15,12 @@ module uhf_class
 !
    implicit none
 !
+!  Unrestricted Hartree-Fock wavefunction 
+!
    type, extends(hf) :: uhf
 !
       integer(i15) :: n_alpha
       integer(i15) :: n_beta 
-!
-      logical :: fractional_uniform_valence = .false.  
 !
       real(dp), dimension(:,:), allocatable :: ao_density_a 
       real(dp), dimension(:,:), allocatable :: ao_density_b
@@ -34,34 +34,43 @@ module uhf_class
       real(dp), dimension(:,:), allocatable :: orbital_energies_a
       real(dp), dimension(:,:), allocatable :: orbital_energies_b
 !
+      logical :: fractional_uniform_valence = .false. 
+!
 	contains
 !
+!     Preparation routines 
+!
       procedure :: prepare                           => prepare_uhf
-!
       procedure :: determine_n_alpha_and_n_beta      => determine_n_alpha_and_n_beta_uhf
+      procedure :: read_settings                     => read_settings_uhf
+      procedure :: read_uhf_settings                 => read_uhf_settings_uhf
 !
-      procedure :: construct_ao_spin_density         => construct_ao_spin_density_uhf
-      procedure :: construct_ao_spin_fock            => construct_ao_spin_fock_uhf
+!     AO Fock and energy related routines 
 !
-      procedure :: form_ao_density                   => form_ao_density_uhf
-!
-      procedure :: calculate_uhf_energy              => calculate_uhf_energy_uhf
-      procedure :: set_ao_density_to_core_guess      => set_ao_density_to_core_guess_uhf
-!
-!     Routines that may change in descendants but are required by solvers 
-!
-      procedure :: initialize_orbitals               => initialize_orbitals_uhf
-      procedure :: initialize_density                => initialize_density_uhf
       procedure :: initialize_fock                   => initialize_fock_uhf
       procedure :: destruct_fock                     => destruct_fock_uhf 
+      procedure :: construct_ao_spin_fock            => construct_ao_spin_fock_uhf
+      procedure :: calculate_uhf_energy              => calculate_uhf_energy_uhf
       procedure :: update_fock_and_energy            => update_fock_and_energy_uhf
-      procedure :: roothan_hall_update_orbitals      => roothan_hall_update_orbitals_uhf
-      procedure :: update_ao_density                 => update_ao_density_uhf
-      procedure :: save_ao_density                   => save_ao_density_uhf
+!
+!     AO Density related routines 
+!
+      procedure :: initialize_density                => initialize_density_uhf
       procedure :: set_initial_ao_density_guess      => set_initial_ao_density_guess_uhf
+      procedure :: save_ao_density                   => save_ao_density_uhf
+      procedure :: update_ao_density                 => update_ao_density_uhf
+      procedure :: form_ao_density                   => form_ao_density_uhf
+      procedure :: construct_ao_spin_density         => construct_ao_spin_density_uhf
+      procedure :: set_ao_density_to_core_guess      => set_ao_density_to_core_guess_uhf
+      procedure :: get_homo_degeneracy               => get_homo_degeneracy_uhf
+!
+!     MO orbital related routines 
+!
+      procedure :: initialize_orbitals               => initialize_orbitals_uhf
+      procedure :: roothan_hall_update_orbitals      => roothan_hall_update_orbitals_uhf
       procedure :: print_orbital_energies            => print_orbital_energies_uhf
 !
-!     Initialize and destruct routines
+!     Class variabble initialize and destruct routines
 !
       procedure :: initialize_ao_density_a           => initialize_ao_density_a_uhf
       procedure :: initialize_ao_density_b           => initialize_ao_density_b_uhf
@@ -86,11 +95,6 @@ module uhf_class
 !
       procedure :: destruct_orbital_energies_a       => destruct_orbital_energies_a_uhf
       procedure :: destruct_orbital_energies_b       => destruct_orbital_energies_b_uhf
-!
-      procedure :: get_homo_degeneracy               => get_homo_degeneracy_uhf
-!
-      procedure :: read_settings                     => read_settings_uhf
-      procedure :: read_uhf_settings                 => read_uhf_settings_uhf
 !
    end type uhf
 !

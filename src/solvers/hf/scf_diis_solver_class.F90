@@ -48,8 +48,10 @@ module scf_diis_solver_class
       procedure :: print_banner           => print_banner_scf_diis_solver
       procedure :: print_summary          => print_summary_scf_diis_solver
 !
-      procedure :: read_settings          => read_settings_scf_diis_solver 
-      procedure :: read_scf_diis_settings => read_scf_diis_settings_scf_diis_solver
+      procedure :: read_settings           => read_settings_scf_diis_solver 
+      procedure :: read_scf_diis_settings  => read_scf_diis_settings_scf_diis_solver
+!
+      procedure :: print_scf_diis_settings => print_scf_diis_settings_scf_diis_solver
 !
    end type scf_diis_solver
 !
@@ -72,9 +74,16 @@ contains
 !
       call solver%print_banner()
 !
+      write(output%unit, '(/t3,a)') ':: Preparing SCF-DIIS object.'
+!
 !     Read settings (thresholds, etc.)
 !
+      write(output%unit, '(/t3,a/)') 'Reading solver settings.'
+!
       call solver%read_settings()
+!
+      call solver%print_scf_diis_settings()
+      call solver%print_hf_solver_settings()
 !
 !     Initialize the orbitals, density, and the Fock matrix (or matrices)
 !
@@ -83,6 +92,20 @@ contains
       call wf%initialize_orbitals()
 !
    end subroutine prepare_scf_diis_solver
+!
+!
+   subroutine print_scf_diis_settings_scf_diis_solver(solver)
+!!
+!!    Print SCF-DIIS settings    
+!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!
+      implicit none 
+!
+      class(scf_diis_solver) :: solver 
+!
+      write(output%unit, '(t6,a29,i2)') 'DIIS dimension:              ', solver%diis_dimension
+!
+   end subroutine print_scf_diis_settings_scf_diis_solver
 !
 !
    subroutine run_scf_diis_solver(solver, wf)
@@ -124,6 +147,9 @@ contains
 !
 !     :: Part I. Preparations. 
 !
+      write(output%unit, '(/t3,a)') ':: Running SCF-DIIS object'
+
+!
 !     Construct screening vectors for efficient Fock construction 
 !
       n_s = wf%system%get_n_shells()
@@ -142,7 +168,7 @@ contains
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call wf%get_ao_h_wx(h_wx)
 !
-      write(output%unit, '(/t3,a,a,a)') 'Initial AO density is ', trim(solver%ao_density_guess), '.'
+      write(output%unit, '(/t3,a,a,a)') 'Setting initial AO density is ', trim(solver%ao_density_guess), '.'
 !
       call wf%set_initial_ao_density_guess(solver%ao_density_guess)
 !
@@ -160,11 +186,9 @@ contains
       call wf%roothan_hall_update_orbitals() ! F => C
       call wf%update_ao_density()            ! C => D
 !
-      call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx)  
+      call wf%update_fock_and_energy(sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx)
 !
-      call mem%alloc(ao_fock, wf%n_ao, wf%n_ao)          ! Holds Fock matrix, when wf%ao_fock 
-                                                         ! becomes the DIIS Fock matrix 
-!
+      call mem%alloc(ao_fock, wf%n_ao, wf%n_ao)          ! Holds Fock matrix temporarily
       call mem%alloc(prev_ao_density, wf%n_ao, wf%n_ao)
 !
       call mem%alloc(G, wf%n_ao, wf%n_ao)                ! Gradient 
@@ -337,12 +361,7 @@ contains
 !
       class(hf) :: wf 
 !
-      write(output%unit, '(/t3,a,a,a)') 'Final ', trim(wf%name), ' energetics (a.u.):'
-!
-      write(output%unit, '(/t6,a26,f17.12)')  'Nuclear repulsion energy: ', wf%system%get_nuclear_repulsion()
-      write(output%unit, '(t6,a26,f17.12)')   'Total electronic energy:  ', wf%energy
-!
-      call wf%print_orbital_energies()
+      call wf%print_wavefunction_summary()
 !
    end subroutine print_summary_scf_diis_solver
 !

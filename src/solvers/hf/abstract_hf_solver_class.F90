@@ -22,12 +22,29 @@ module abstract_hf_solver_class
 !
    contains 
 !
-      procedure :: read_settings                    => read_settings_abstract_hf_solver
-      procedure :: read_hf_solver_settings => read_hf_solver_settings_abstract_hf_solver
+      procedure :: read_settings            => read_settings_abstract_hf_solver
+      procedure :: read_hf_solver_settings  => read_hf_solver_settings_abstract_hf_solver
+!
+      procedure :: print_hf_solver_settings => print_hf_solver_settings_hf_solver
 !
    end type abstract_hf_solver
 !
 contains 
+!
+!
+   subroutine print_hf_solver_settings_hf_solver(solver)
+!!
+!!    Print HF solver settings    
+!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!
+      implicit none 
+!
+      class(abstract_hf_solver) :: solver 
+!
+      write(output%unit, '(t6,a30,e10.4)') 'Energy threshold:             ', solver%energy_threshold
+      write(output%unit, '(t6,a30,e10.4)') 'Residual threshold:           ', solver%residual_threshold
+!
+   end subroutine print_hf_solver_settings_hf_solver
 !
 !
    subroutine read_settings_abstract_hf_solver(solver)

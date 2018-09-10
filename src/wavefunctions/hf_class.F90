@@ -15,6 +15,8 @@ module hf_class
 !
    implicit none
 !
+!  Hartree-Fock wavefunction 
+!
    type, extends(wavefunction):: hf
 !
       real(dp), dimension(:,:), allocatable :: ao_density
@@ -34,56 +36,60 @@ module hf_class
 !
 	contains
 !
-!     Initialize and finalize wavefunction
+!     Preparation and cleanup routines 
 !
-      procedure :: prepare => prepare_hf
-      procedure :: cleanup => cleanup_hf
+      procedure :: prepare                            => prepare_hf
+      procedure :: cleanup                            => cleanup_hf
+      procedure :: read_settings                      => read_settings_hf
+      procedure :: read_hf_settings                   => read_hf_settings_hf
+      procedure :: construct_ao_overlap               => construct_ao_overlap_hf
+      procedure :: decompose_ao_overlap               => decompose_ao_overlap_hf
+      procedure :: print_preparations_banner          => print_preparations_banner_hf
+      procedure :: print_wavefunction_summary         => print_wavefunction_summary_hf
 !
-!     Construction routines for various wavefunction variables
-!
-      procedure :: construct_ao_density               => construct_ao_density_hf
+!     AO Fock and energy related routines 
 !
       procedure :: construct_ao_fock                  => construct_ao_fock_hf            
       procedure :: construct_ao_fock_cumulative       => construct_ao_fock_cumulative_hf 
-!
       procedure :: ao_fock_construction_loop          => ao_fock_construction_loop_hf
       procedure :: ao_fock_coulomb_construction_loop  => ao_fock_coulomb_construction_loop_hf
       procedure :: ao_fock_exchange_construction_loop => ao_fock_exchange_construction_loop_hf
-!
       procedure :: construct_ao_fock_SAD              => construct_ao_fock_SAD_hf
       procedure :: construct_mo_fock                  => construct_mo_fock_hf
-      procedure :: construct_ao_overlap               => construct_ao_overlap_hf
-!
-      procedure :: calculate_hf_energy_from_G         => calculate_hf_energy_from_G_hf
+      procedure :: set_ao_fock                        => set_ao_fock_hf
+      procedure :: get_fock_ov                        => get_fock_ov_hf
       procedure :: calculate_hf_energy_from_fock      => calculate_hf_energy_from_fock_hf
+      procedure :: calculate_hf_energy_from_G         => calculate_hf_energy_from_G_hf
+      procedure :: initialize_fock                    => initialize_fock_hf
+      procedure :: destruct_fock                      => destruct_fock_hf
+      procedure :: update_fock_and_energy             => update_fock_and_energy_hf
+      procedure :: update_fock_and_energy_cumulative  => update_fock_and_energy_cumulative_hf
 !
-!     Rotate and purification routines for the AO density
+!     AO Density related routines 
 !
+      procedure :: construct_ao_density               => construct_ao_density_hf
       procedure :: rotate_ao_density                  => rotate_ao_density_hf
       procedure :: purify_ao_density                  => purify_ao_density_hf
-!
-!     Cholesky decomposition of AO density and overlap
-!
       procedure :: decompose_ao_density               => decompose_ao_density_hf
-      procedure :: decompose_ao_overlap               => decompose_ao_overlap_hf
+      procedure :: get_ao_density                     => get_ao_density_hf
+      procedure :: set_ao_density                     => set_ao_density_hf
+      procedure :: initialize_density                 => initialize_density_hf
+      procedure :: update_ao_density                  => update_ao_density_hf
+      procedure :: save_ao_density                    => save_ao_density_hf
+      procedure :: set_initial_ao_density_guess       => set_initial_ao_density_guess_hf
+      procedure :: set_ao_density_to_sad              => set_ao_density_to_sad_hf 
+      procedure :: set_ao_density_to_core_guess       => set_ao_density_to_core_guess_hf
+      procedure :: get_n_electrons_in_density         => get_n_electrons_in_density_hf
+      procedure :: construct_sp_density_schwarz       => construct_sp_density_schwarz_hf
 !
-!     Solve the Roothan Hall equation FC = SCe by diagonalization
+!     MO orbital related routines 
 !
       procedure :: do_roothan_hall                    => do_roothan_hall_hf
+      procedure :: initialize_orbitals                => initialize_orbitals_hf
+      procedure :: roothan_hall_update_orbitals       => roothan_hall_update_orbitals_hf
+      procedure :: print_orbital_energies             => print_orbital_energies_hf
 !
-!     Get and set routines for wavefunction variables
-!
-      procedure :: get_ao_density                     => get_ao_density_hf
-      procedure :: get_fock_ov                        => get_fock_ov_hf
-!
-      procedure :: set_ao_density                     => set_ao_density_hf
-      procedure :: set_ao_fock                        => set_ao_fock_hf
-!
-      procedure :: set_ao_density_to_sad_2            => set_ao_density_to_sad_2_hf   ! Old, to be deprecated 
-      procedure :: set_ao_density_to_sad              => set_ao_density_to_sad_hf     ! WIP to replace above 
-      procedure :: set_ao_density_to_core_guess       => set_ao_density_to_core_guess_hf
-!
-!     Initialize and destruct routines for wavefunction variables
+!     Class variable initialize and destruct routines
 !
       procedure :: initialize_ao_density              => initialize_ao_density_hf
       procedure :: initialize_ao_fock                 => initialize_ao_fock_hf
@@ -101,7 +107,7 @@ module hf_class
       procedure :: destruct_pivot_matrix_ao_overlap   => destruct_pivot_matrix_ao_overlap_hf
       procedure :: destruct_cholesky_ao_overlap       => destruct_cholesky_ao_overlap_hf
 !
-!     Routines that construct different components of the Roothan-Hall 1st order Newton equations
+!     Gradient and Hessian related routines
 !
       procedure :: construct_projection_matrices      => construct_projection_matrices_hf
       procedure :: project_redundant_rotations        => project_redundant_rotations_hf
@@ -109,33 +115,13 @@ module hf_class
       procedure :: construct_roothan_hall_hessian     => construct_roothan_hall_hessian_hf
       procedure :: construct_roothan_hall_gradient    => construct_roothan_hall_gradient_hf
 !
-      procedure :: construct_sp_eri_schwarz           => construct_sp_eri_schwarz_hf
-      procedure :: construct_sp_density_schwarz       => construct_sp_density_schwarz_hf
-      procedure :: get_n_sig_eri_sp                   => get_n_sig_eri_sp_hf
+!     Integral related routines 
 !
-!     Routines to request a range of AO integral arrays, etc.
-! 
+      procedure :: construct_sp_eri_schwarz           => construct_sp_eri_schwarz_hf
+      procedure :: get_n_sig_eri_sp                   => get_n_sig_eri_sp_hf
       procedure :: get_ao_h_wx                        => get_ao_h_wx_hf
       procedure :: get_ao_s_wx                        => get_ao_s_wx_hf
       procedure :: get_ao_mu_wx                       => get_ao_mu_wx_hf
-      procedure :: get_n_electrons_in_density         => get_n_electrons_in_density_hf
-!
-!     Routines that may change in descendants but are required by solvers 
-!
-      procedure :: initialize_orbitals                => initialize_orbitals_hf
-      procedure :: initialize_density                 => initialize_density_hf
-      procedure :: initialize_fock                    => initialize_fock_hf
-      procedure :: destruct_fock                      => destruct_fock_hf
-      procedure :: update_fock_and_energy             => update_fock_and_energy_hf
-      procedure :: update_fock_and_energy_cumulative  => update_fock_and_energy_cumulative_hf
-      procedure :: roothan_hall_update_orbitals       => roothan_hall_update_orbitals_hf
-      procedure :: update_ao_density                  => update_ao_density_hf
-      procedure :: save_ao_density                    => save_ao_density_hf
-      procedure :: set_initial_ao_density_guess       => set_initial_ao_density_guess_hf
-      procedure :: print_orbital_energies             => print_orbital_energies_hf
-!
-      procedure :: read_settings                      => read_settings_hf
-      procedure :: read_hf_settings                   => read_hf_settings_hf
 !
    end type hf
 !
@@ -148,18 +134,29 @@ contains
 !!    Prepare
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Sets low-memory member variables that are needed throughout - in contrast
-!!    to larger arrays, which are allocated when needed - and calls initialization
-!!    routines for the molecular system object and the Libint integral library.
-!!
       implicit none
 !
       class(hf) :: wf
 !
       wf%name = 'HF'
-      write(output%unit, '(/t3,a)')  'Initializing ' // trim(wf%name) // ' wavefunction.'
+      call wf%print_preparations_banner()
 !
+      write(output%unit, '(/t3,a)') 'Reading wavefunction settings.'
+!
+      call wf%read_settings()
+!
+      write(output%unit, '(/t6,a30,e10.4)')  'Coulomb screening threshold:  ', wf%coulomb_threshold
+      write(output%unit, '(t6,a30,e10.4)')   'Exchange screening threshold: ', wf%exchange_threshold
+      write(output%unit, '(t6,a30,e10.4)')   'ERI integral precision:       ', wf%integral_precision
+!
+      write(output%unit, '(/t3,a)') 'Reading molecular geometry initializing atoms.'
       call wf%system%prepare()
+!
+      write(output%unit, '(/t6,a35,f18.12)') 'Nuclear repulsion energy (a.u.):   ', wf%system%get_nuclear_repulsion()
+      write(output%unit, '(t6,a35,f18.12)')  'Bohr/angstrom value (CODATA 2010): ', bohr_to_angstrom
+!
+      call wf%system%print_geometry()
+!
 !
       wf%n_ao = wf%system%get_n_aos()
 !
@@ -168,6 +165,8 @@ contains
       call initialize_nuclear()
       call initialize_overlap()
 !
+      write(output%unit, '(/t3,a)') 'Cholesky decomposing AO overlap matrix to make sure used orbitals are'
+      write(output%unit, '(t3,a)')  'linearly independent.'
       call wf%initialize_ao_overlap()
       call wf%construct_ao_overlap()
       call wf%decompose_ao_overlap() 
@@ -175,9 +174,50 @@ contains
       wf%n_o = (wf%system%get_n_electrons())/2
       wf%n_v = wf%n_mo - wf%n_o
 !
-      call wf%read_settings()
+      write(output%unit, '(/t6,a30,i4)') 'Number of occupied orbitals:  ', wf%n_o 
+      write(output%unit, '(t6,a30,i4)')  'Number of virtual orbitals:   ', wf%n_v
+      write(output%unit, '(t6,a30,i4)')  'Number of molecular orbitals: ', wf%n_mo 
+      write(output%unit, '(t6,a30,i4)')  'Number of atomic orbitals:    ', wf%n_ao 
 !
    end subroutine prepare_hf
+!
+!
+   subroutine print_preparations_banner_hf(wf)
+!!
+!!    Print preparations banner 
+!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!
+      implicit none 
+!
+      class(hf) :: wf 
+!
+      write(output%unit, '(/t3,a)')  ':: Preparing ' // trim(wf%name) // ' wavefunction object'
+!
+   end subroutine print_preparations_banner_hf
+!
+!
+   subroutine print_wavefunction_summary_hf(wf)
+!!
+!!    Print wavefunction summary 
+!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Prints information related to the wavefunction,
+!!    most of which is meaningful only for a properly 
+!!    converged wavefunction. Should be overwritten in 
+!!    descendants if more or less or other information 
+!!    is present. 
+!!
+      implicit none 
+!
+      class(hf) :: wf 
+!
+      write(output%unit, '(/t3,a,a,a)') ':: Summary of ', trim(wf%name), ' wavefunction energetics (a.u.)'
+!
+      write(output%unit, '(/t6,a26,f17.12)')   'Total electronic energy:  ', wf%energy
+!
+      call wf%print_orbital_energies('6')
+!
+   end subroutine print_wavefunction_summary_hf
 !
 !
    subroutine read_settings_hf(wf)
@@ -268,7 +308,7 @@ contains
       indent = '6'
       if (present(indentation)) indent = trim(indentation)
 !
-      write(output%unit, '(/t' // trim(indent) // ',a)') 'Orbital energies:'
+      write(output%unit, '(/t'//trim(indent)//',a)') 'Molecular orbital energies:'
 !
       call print_vector(wf%orbital_energies, wf%n_ao, indent)
 !
@@ -421,6 +461,8 @@ contains
 !
       call wf%construct_ao_fock(sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx)      
 !
+      call wf%calculate_hf_energy_from_fock(wf%ao_fock, h_wx)
+!
    end subroutine update_fock_and_energy_hf
 !
 !
@@ -450,6 +492,8 @@ contains
       call wf%construct_ao_fock_cumulative(sp_eri_schwarz, sp_eri_schwarz_list, &
                                            n_s, prev_ao_density, h_wx) 
 !
+      call wf%calculate_hf_energy_from_fock(wf%ao_fock, h_wx)
+!
    end subroutine update_fock_and_energy_cumulative_hf
 !
 !
@@ -467,7 +511,6 @@ contains
       class(hf) :: wf 
 !
       call wf%do_roothan_hall(wf%ao_fock, wf%orbital_coefficients, wf%orbital_energies)
-     ! call wf%do_roothan_hall()
 !
    end subroutine roothan_hall_update_orbitals_hf
 !
@@ -585,20 +628,6 @@ contains
       if (.not. allocated(wf%mo_fock)) call mem%alloc(wf%mo_fock, wf%n_mo, wf%n_mo)
 !
    end subroutine initialize_mo_fock_hf
-!
-!
-!   subroutine initialize_mo_coefficients_hf(wf)
-!!!
-!!!    Initialize MO coefficients
-!!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!!
-!      implicit none
-!!
-!      class(hf) :: wf
-!!
-!      if (.not. allocated(wf%orbital_coefficients)) call mem%alloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
-!!
-!   end subroutine initialize_mo_coefficients_hf
 !
 !
    subroutine initialize_ao_overlap_hf(wf)
@@ -1400,9 +1429,6 @@ contains
       call symmetric_sum(wf%ao_fock, wf%n_ao)
       wf%ao_fock = wf%ao_fock*half
 !
-!     Finally, calculate the energy and add the one-electron contribution 
-!
-      call wf%calculate_hf_energy_from_G(wf%ao_fock, h_wx)
       wf%ao_fock = wf%ao_fock + h_wx
 !
    end subroutine construct_ao_fock_hf
@@ -1494,7 +1520,7 @@ contains
       call mem%dealloc(sp_density_schwarz, n_s, n_s)
 !
 !     Put the accumulated Fock matrices from each thread into the Fock matrix,
-!     and symmetrize the result, then calculate the energy 
+!     and symmetrize the result
 !
       do thread = 1, n_threads
 !
@@ -1506,8 +1532,6 @@ contains
 !
       call symmetric_sum(wf%ao_fock, wf%n_ao)
       call dscal((wf%n_ao)**2, half, wf%ao_fock, 1) 
-!
-      call wf%calculate_hf_energy_from_fock(wf%ao_fock, h_wx)
 !
    end subroutine construct_ao_fock_cumulative_hf
 !
@@ -2104,42 +2128,6 @@ contains
       call squareup(F, wf%ao_fock, wf%n_ao)
 !
    end subroutine set_ao_fock_hf
-!
-!
-   subroutine set_ao_density_to_sad_2_hf(wf)
-!!
-!!    Set AO density to superposition of atomic densities (SAD) guess
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-!!    Careful! The AO density is allocated and zeroed by the initialize
-!!    AO density routine and to avoid zeroing twice, this routine assumes
-!!    that the non-diagonal terms of the density are already zero.
-!!
-!!    If called at a time when the density differs from zero, remember
-!!    to zero it before calling this routine.
-!!
-      implicit none 
-!
-      class(hf) :: wf 
-!
-      real(dp), dimension(:,:), allocatable :: density_diagonal
-!
-      integer(i15) :: ao
-!
-      call mem%alloc(density_diagonal, wf%n_ao, 1)
-      call wf%system%SAD(wf%n_ao, density_diagonal)
-!
-      wf%ao_density = zero
-!
-      do ao = 1, wf%n_ao
-!
-         wf%ao_density(ao, ao) = density_diagonal(ao, 1)
-!
-      enddo
-!
-      call mem%dealloc(density_diagonal, wf%n_ao, 1)
-!
-   end subroutine set_ao_density_to_sad_2_hf
 !
 !
    subroutine construct_ao_overlap_hf(wf)
