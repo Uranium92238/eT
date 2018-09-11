@@ -1528,5 +1528,139 @@ contains
    end subroutine construct_vovo_mo_integral_tool
 !
 !
+   subroutine construct_vvvo_mo_integral_tool(integrals, g_abci, t1, first_a, last_a, first_b, last_b, &
+                                                            first_c, last_c, first_i, last_i, index_restrictions)
+!!
+!!    Construct vvvo
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+      implicit none 
+!
+      class(mo_integral_tool), intent(in) :: integrals 
+!
+      real(dp), dimension(:,:), intent(inout) :: g_abci
+!
+      real(dp), dimension(integrals%n_v, integrals%n_o) :: t1
+!
+      integer(i15), optional, intent(in) :: first_i, last_i
+      integer(i15), optional, intent(in) :: first_a, last_a
+      integer(i15), optional, intent(in) :: first_b, last_b
+      integer(i15), optional, intent(in) :: first_c, last_c
+!
+      integer(i15) :: length_i, length_a, length_b, length_c
+!
+      logical, intent(in) :: index_restrictions
+!
+      real(dp), dimension(:,:), allocatable :: L_ab_J 
+      real(dp), dimension(:,:), allocatable :: L_ci_J 
+!
+      length_i = last_i - first_i + 1
+      length_a = last_a - first_a + 1
+      length_b = last_b - first_b + 1
+      length_c = last_c - first_c + 1
+!
+      if (integrals%eri_file .and. .not. index_restrictions) then 
+!
+!        Coming soon: read full g_abci from file
+!
+         call output%error_msg('reading full eri integrals from file not yet supported!')
+!
+      else
+!
+!        Construct g_abci
+!
+         call mem%alloc(L_ab_J, length_a*length_b, integrals%n_J)
+         call mem%alloc(L_ci_J, length_c*length_i, integrals%n_J)
+!
+         call integrals%construct_cholesky_ab(L_ab_J, t1, first_a, last_a, first_b, last_b)
+         call integrals%construct_cholesky_ai(L_ci_J, t1, first_c, last_c, first_i, last_i)
+!
+         call dgemm('N', 'T',           &
+                     length_a*length_b, &
+                     length_c*length_i, &
+                     integrals%n_J,     &
+                     one,               &
+                     L_ab_J,            &
+                     length_a*length_b, &
+                     L_ci_J,            &
+                     length_c*length_i, &
+                     zero,              &
+                     g_abci)
+!
+         call mem%dealloc(L_ab_J, length_a*length_b, integrals%n_J)
+         call mem%dealloc(L_ci_J, length_c*length_i, integrals%n_J)
+!
+      endif 
+!
+   end subroutine construct_vvvo_mo_integral_tool
+!
+!
+   subroutine construct_vvov_mo_integral_tool(integrals, g_abic, t1, first_a, last_a, first_b, last_b, &
+                                                            first_i, last_i, first_c, last_c, index_restrictions)
+!!
+!!    Construct vvvo
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+      implicit none 
+!
+      class(mo_integral_tool), intent(in) :: integrals 
+!
+      real(dp), dimension(:,:), intent(inout) :: g_abic
+!
+      real(dp), dimension(integrals%n_v, integrals%n_o) :: t1
+!
+      integer(i15), optional, intent(in) :: first_i, last_i
+      integer(i15), optional, intent(in) :: first_a, last_a
+      integer(i15), optional, intent(in) :: first_b, last_b
+      integer(i15), optional, intent(in) :: first_c, last_c
+!
+      integer(i15) :: length_i, length_a, length_b, length_c
+!
+      logical, intent(in) :: index_restrictions
+!
+      real(dp), dimension(:,:), allocatable :: L_ab_J 
+      real(dp), dimension(:,:), allocatable :: L_ic_J 
+!
+      length_i = last_i - first_i + 1
+      length_a = last_a - first_a + 1
+      length_b = last_b - first_b + 1
+      length_c = last_c - first_c + 1
+!
+      if (integrals%eri_file .and. .not. index_restrictions) then 
+!
+!        Coming soon: read full g_abci from file
+!
+         call output%error_msg('reading full eri integrals from file not yet supported!')
+!
+      else
+!
+!        Construct g_abci
+!
+         call mem%alloc(L_ab_J, length_a*length_b, integrals%n_J)
+         call mem%alloc(L_ic_J, length_c*length_i, integrals%n_J)
+!
+         call integrals%construct_cholesky_ab(L_ab_J, t1, first_a, last_a, first_b, last_b)
+         call integrals%read_cholesky_ia(L_ic_J, first_i, last_i, first_c, last_c)
+!
+         call dgemm('N', 'T',           &
+                     length_a*length_b, &
+                     length_c*length_i, &
+                     integrals%n_J,     &
+                     one,               &
+                     L_ab_J,            &
+                     length_a*length_b, &
+                     L_ic_J,            &
+                     length_c*length_i, &
+                     zero,              &
+                     g_abic)
+!
+         call mem%dealloc(L_ab_J, length_a*length_b, integrals%n_J)
+         call mem%dealloc(L_ic_J, length_c*length_i, integrals%n_J)
+!
+      endif 
+!
+   end subroutine construct_vvov_mo_integral_tool
+!
+!
 end module mo_integral_tool_class
 
