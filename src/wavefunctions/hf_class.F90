@@ -1017,7 +1017,7 @@ contains
       type(interval) :: C_interval
       type(interval) :: D_interval
 !
-      real(dp) :: maximum
+      real(dp) :: maximum, max_eri, max_density
 !
       real(dp), dimension(:,:), allocatable :: g, g_C, g_K, D_yz
 !
