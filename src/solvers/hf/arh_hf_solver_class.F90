@@ -137,7 +137,7 @@ contains
       real(dp) :: start_timer, end_timer, omp_get_wtime
 !
       logical :: converged          = .false.
-      logical :: converged_residual = .false.
+      logical :: converged_gradient = .false.
       logical :: converged_energy   = .false.
 !
       real(dp) :: energy 
@@ -250,7 +250,7 @@ contains
 !
       converged          = .false.
       converged_energy   = .false.
-      converged_residual = .false.
+      converged_gradient = .false.
 !
       call mem%alloc(G, wf%n_ao, wf%n_ao)
       call mem%alloc(H, wf%n_ao, wf%n_ao)
@@ -289,9 +289,9 @@ contains
 !        Test for convergence:
 !
          converged_energy   = abs(energy-prev_energy) .lt. solver%energy_threshold
-         converged_residual = max_grad                .lt. solver%residual_threshold
+         converged_gradient = max_grad                .lt. solver%gradient_threshold
 !
-         converged = converged_energy .and. converged_residual 
+         converged = converged_energy .and. converged_gradient
 !
          if (converged) then ! Done, hooray
 !

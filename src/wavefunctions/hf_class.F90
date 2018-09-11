@@ -44,7 +44,6 @@ module hf_class
       procedure :: read_hf_settings                   => read_hf_settings_hf
       procedure :: construct_ao_overlap               => construct_ao_overlap_hf
       procedure :: decompose_ao_overlap               => decompose_ao_overlap_hf
-      procedure :: print_preparations_banner          => print_preparations_banner_hf
       procedure :: print_wavefunction_summary         => print_wavefunction_summary_hf
 !
 !     AO Fock and energy related routines 
@@ -139,7 +138,7 @@ contains
       class(hf) :: wf
 !
       wf%name = 'HF'
-      call wf%print_preparations_banner()
+      write(output%unit, '(/t3,a)')  ':: Preparing ' // trim(wf%name) // ' wavefunction object'
 !
       write(output%unit, '(/t3,a)') 'Reading wavefunction settings.'
 !
@@ -182,20 +181,6 @@ contains
       write(output%unit, '(t6,a30,i4)')  'Number of atomic orbitals:    ', wf%n_ao 
 !
    end subroutine prepare_hf
-!
-!
-   subroutine print_preparations_banner_hf(wf)
-!!
-!!    Print preparations banner 
-!!    Written by Eirik F. Kjønstad, Sep 2018 
-!!
-      implicit none 
-!
-      class(hf) :: wf 
-!
-      write(output%unit, '(/t3,a)')  ':: Preparing ' // trim(wf%name) // ' wavefunction object'
-!
-   end subroutine print_preparations_banner_hf
 !
 !
    subroutine print_wavefunction_summary_hf(wf)

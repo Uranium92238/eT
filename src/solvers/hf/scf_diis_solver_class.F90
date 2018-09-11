@@ -123,7 +123,7 @@ contains
 !
       logical :: converged
       logical :: converged_energy
-      logical :: converged_residual
+      logical :: converged_gradient
 !
       real(dp) :: max_grad, energy, prev_energy, n_electrons
 !
@@ -206,39 +206,37 @@ contains
 !
 !     Part II. Iterative SCF loop.
 !
-      iteration = 1
-      converged = .false.
-!
+      converged          = .false.
       converged_energy   = .false.
-      converged_residual = .false.
+      converged_gradient = .false.
 !
       prev_energy = zero
 !
       write(output%unit, '(/t3,a)') 'Iteration    Energy (a.u.)        Max(grad.)    Delta E (a.u.)'
       write(output%unit, '(t3,a)')  '--------------------------------------------------------------'
 !
+      iteration = 1
+!
       do while (.not. converged .and. iteration .le. solver%max_iterations)         
 !
-!        Set current energy
+!        Set energy and print information for current iteration
 !
          energy = wf%energy
-!
-!        Print current iteration information
 !
          write(output%unit, '(t3,i3,10x,f17.12,4x,e10.4,4x,e10.4)') iteration, wf%energy, &
                                           max_grad, abs(wf%energy-prev_energy)
          flush(output%unit)
 !
-!        Test for convergence:
+!        Test for convergence & prepare for next iteration if not yet converged
 !
          converged_energy   = abs(energy-prev_energy) .lt. solver%energy_threshold
-         converged_residual = max_grad                .lt. solver%residual_threshold
+         converged_gradient = max_grad                .lt. solver%gradient_threshold
 !
-         converged = converged_residual .and. converged_energy
+         converged = converged_gradient .and. converged_energy
 !
          if (converged) then
 !
-            write(output%unit, '(t3,a)') '--------------------------------------------------------------'
+            write(output%unit, '(t3,a)')           '--------------------------------------------------------------'
             write(output%unit, '(/t3,a29,i3,a12)') 'Convergence criterion met in ', iteration, ' iterations!'
 !
             call solver%print_summary(wf)
@@ -248,10 +246,10 @@ contains
             prev_energy     = wf%energy
             prev_ao_density = wf%ao_density
 !
-            call wf%roothan_hall_update_orbitals() ! DIIS F => C
-            call wf%update_ao_density()            ! C => D
+            call wf%roothan_hall_update_orbitals()     ! DIIS F => C
+            call wf%update_ao_density()                ! C => D
 !
-            if (iteration .ne. 1) wf%ao_fock = ao_fock ! Restore non-DIIS F 
+            if (iteration .ne. 1) wf%ao_fock = ao_fock ! Restore F 
 !
             call wf%update_fock_and_energy_cumulative(sp_eri_schwarz, sp_eri_schwarz_list, n_s, prev_ao_density, h_wx)
 !

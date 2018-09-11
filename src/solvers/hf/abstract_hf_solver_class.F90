@@ -14,7 +14,7 @@ module abstract_hf_solver_class
    type, abstract :: abstract_hf_solver 
 !
       real(dp) :: energy_threshold          = 1.0D-6
-      real(dp) :: residual_threshold        = 1.0D-6
+      real(dp) :: gradient_threshold        = 1.0D-6
 !
       integer(i15) :: max_iterations        = 100
 !  
@@ -42,7 +42,7 @@ contains
       class(abstract_hf_solver) :: solver 
 !
       write(output%unit, '(t6,a30,e10.4)') 'Energy threshold:             ', solver%energy_threshold
-      write(output%unit, '(t6,a30,e10.4)') 'Residual threshold:           ', solver%residual_threshold
+      write(output%unit, '(t6,a30,e10.4)') 'Gradient threshold:           ', solver%gradient_threshold
 !
    end subroutine print_hf_solver_settings_hf_solver
 !
@@ -95,11 +95,11 @@ contains
                read(value, *) solver%energy_threshold
                cycle
 !
-            elseif (line(1:19) == 'residual threshold:') then 
+            elseif (line(1:19) == 'gradient threshold:') then 
 !
                value = line(20:100)
                value = remove_preceding_blanks(value)
-               read(value, *) solver%residual_threshold
+               read(value, *) solver%gradient_threshold
                cycle
 !
             elseif (line(1:15) == 'max iterations:') then 
