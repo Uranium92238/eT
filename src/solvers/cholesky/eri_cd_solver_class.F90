@@ -128,13 +128,13 @@ contains
       write(output%unit, '(/a/)') ':: Cholesky decomposition of two-electron ao integrals'
       flush(output%unit)
 !
-      write(output%unit, '(a20, i10)')    'Number of aos:      ', solver%n_ao
-      write(output%unit, '(a20, i10)')    'Number of ao pairs: ', solver%n_aop
-      write(output%unit, '(a20, i10)')    'Number of shells:   ', solver%n_s
+      write(output%unit, '(t6, a20, i10)')    'Number of aos:      ', solver%n_ao
+      write(output%unit, '(t6, a20, i10)')    'Number of ao pairs: ', solver%n_aop
+      write(output%unit, '(t6, a20, i10)')    'Number of shells:   ', solver%n_s
 !
-      write(output%unit, '(/a21, e12.4)') 'Target threshold is: ', solver%threshold
-      write(output%unit, '(a21, e12.4)')  'Span factor:         ', solver%span
-      write(output%unit, '(a21, i5/)')    'Max qual:            ', solver%max_qual
+      write(output%unit, '(/t6, a21, e12.4)') 'Target threshold is: ', solver%threshold
+      write(output%unit, '( t6, a21, e12.4)') 'Span factor:         ', solver%span
+      write(output%unit, '( t6, a21, i5/)')   'Max qual:            ', solver%max_qual
       flush(output%unit)
 !
       s_determine_basis = omp_get_wtime()
@@ -170,7 +170,7 @@ contains
       endif
 !
       e_determine_basis = omp_get_wtime()
-      write(output%unit, '(/a30, f11.2)')'Wall time to determine basis: ', &
+      write(output%unit, '(/t6, a30, f11.2)')'Wall time to determine basis: ', &
                                   e_determine_basis - s_determine_basis
       flush(output%unit)
 !
@@ -180,7 +180,7 @@ contains
       call solver%invert_overlap_cholesky_vecs()
 !
       e_invert_time = omp_get_wtime()
-               write(output%unit, '(/a53, f11.2)')'Wall time to construct (J|K), decompose, and invert: ', &
+               write(output%unit, '(/t6, a53, f11.2)')'Wall time to construct (J|K), decompose, and invert: ', &
                                   e_invert_time - s_invert_time
       flush(output%unit)
 !
@@ -191,7 +191,7 @@ contains
          call solver%construct_cholesky_vectors(system)
 !
          e_build_vectors = omp_get_wtime()
-         write(output%unit, '(/a37, f11.2)')'Wall time to build vectors and test: ', &
+         write(output%unit, '(/t6, a37, f11.2)')'Wall time to build vectors and test: ', &
                                   e_build_vectors - s_build_vectors
 !
       endif
@@ -345,10 +345,10 @@ contains
 !
       enddo
 !
-      write(output%unit, '(/a)')'Reduction of shell pairs:'
-      write(output%unit, '(a33, 2x, i9)')'Total number of shell pairs:     ', solver%n_sp
-      write(output%unit, '(a33, 2x, i9)')'Significant shell pairs:         ', n_sig_sp
-      write(output%unit, '(a33, 2x, i9)')'Significant ao pairs:            ', n_sig_aop
+      write(output%unit, '(/t6, a)')'Reduction of shell pairs:'
+      write(output%unit, '(t6, a33, 2x, i9)')'Total number of shell pairs:     ', solver%n_sp
+      write(output%unit, '(t6, a33, 2x, i9)')'Significant shell pairs:         ', n_sig_sp
+      write(output%unit, '(t6, a33, 2x, i9)')'Significant ao pairs:            ', n_sig_aop
       flush(output%unit)
 !
 !     Prepare for construction of diagonal and screening vector
@@ -624,10 +624,10 @@ contains
 !
       enddo
 !
-      write(output%unit, '(/a)')          'Reduction of shell pairs:'
-      write(output%unit, '(a33, 2x, i9)') 'Total number of shell pairs:     ', solver%n_sp
-      write(output%unit, '(a33, 2x, i9)') 'Significant shell pairs:         ', n_sig_sp
-      write(output%unit, '(a33, 2x, i9)') 'Significant ao pairs:            ', n_sig_aop
+      write(output%unit, '(/t6, a)')          'Reduction of shell pairs:'
+      write(output%unit, '(t6, a33, 2x, i9)') 'Total number of shell pairs:     ', solver%n_sp
+      write(output%unit, '(t6, a33, 2x, i9)') 'Significant shell pairs:         ', n_sig_sp
+      write(output%unit, '(t6, a33, 2x, i9)') 'Significant ao pairs:            ', n_sig_aop
       flush(output%unit)
 !
 !     Prepare for construction of diagonal and screening vector
@@ -973,12 +973,12 @@ contains
 !
 !     Determining the basis
 !
-      write(output%unit, '(/a)') ' - Determinig the elements of the basis'
+      write(output%unit, '(/t3, a)') ' - Determinig the elements of the basis'
       flush(output%unit)
 !
-      write(output%unit, '(/a)')&
+      write(output%unit, '(/t6, a)')&
       'Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size'
-      write(output%unit, '(a)') &
+      write(output%unit, '(t6, a)') &
       '-------------------------------------------------------------------------------------------------------'
       flush(output%unit)
 !
@@ -1373,7 +1373,7 @@ contains
 !
                      if (abs(D_xy(xy, 1) - approx_diagonal_accumulative(xy, 1)) .gt. 1.0d-10) then
                         if (write_warning) then
-                           write(output%unit, '(a)') 'Warning: Found significant negative diagonal! '
+                           write(output%unit, '(t6, a)') 'Warning: Found significant negative diagonal! '
                            write_warning = .false.
                         endif
                         sig_neg = sig_neg + 1
@@ -1597,7 +1597,7 @@ contains
             call mem%dealloc_int(qual_aop, n_qual_aop, 3)
             call mem%dealloc_int(qual_sp, n_qual_sp, 3)
 !
-            write(output%unit, '(i4, 8x, i9, 1x, a1, i9, 6x, e12.5, 4x, i4, 8x, i7, 8x, i13)') &
+            write(output%unit, '(t6, i4, 8x, i9, 1x, a1, i9, 6x, e12.5, 4x, i4, 8x, i7, 8x, i13)') &
             solver%iteration, n_sig_aop,'/', n_sig_sp, D_max_full , n_qual_aop, solver%n_cholesky, solver%n_cholesky*n_sig_aop
             flush(output%unit)
 !
@@ -1618,7 +1618,7 @@ contains
 !
             done = .true.
 !
-            write(output%unit, '(i4, 8x, i9, 1x, a1, i9, 6x, e12.5, 4x, i4, 8x, i7, 8x, i13)') &
+            write(output%unit, '(t6, i4, 8x, i9, 1x, a1, i9, 6x, e12.5, 4x, i4, 8x, i7, 8x, i13)') &
             solver%iteration, 0,'/',0, D_max_full, n_qual_aop, solver%n_cholesky, 0
             flush(output%unit)
 !
@@ -1628,16 +1628,15 @@ contains
          full_reduce_time = full_reduce_time + e_reduce_time - s_reduce_time
 !
       enddo ! while not done
-!
-      write(output%unit, '(a)')&
-       '----------------------------------------------------------------------------------------------------'
+      write(output%unit, '(t6, a)') &
+      '-------------------------------------------------------------------------------------------------------'
       flush(output%unit)
 !
 !     Timings
 !
       call cpu_time(e_select_basis_time)
 !
-      write(output%unit,'(/a42, i7)')'Number of signigicant negative diagonals: ', sig_neg
+      write(output%unit,'(/t6, a42, i7)')'Number of signigicant negative diagonals: ', sig_neg
 !
 !     Prepare info on basis
 !
@@ -2070,7 +2069,7 @@ contains
 !
       type(interval) :: A_interval, B_interval, C_interval, D_interval
 !
-      write(output%unit, '(/a)') '- Construct Cholesky vectors'
+      write(output%unit, '(/t3, a)') '- Construct Cholesky vectors'
       flush(output%unit)
 !
       call cpu_time(s_build_vectors_time)
@@ -2388,7 +2387,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: cholesky, cholesky_inverse
 !
-      write(output%unit, '(/a)') '- Inverting auxiliary basis'
+      write(output%unit, '(/t3, a)') '- Inverting auxiliary basis'
       flush(output%unit)
       call cpu_time(s_invert_time)
 !
@@ -2527,8 +2526,8 @@ contains
 !
       call mem%dealloc(D_diff, n_sig_aop, 1)
 !
-      write(output%unit, '(/a71, e12.4)')'Maximal difference between approximate and actual diagonal:            ', max_diff
-      write(output%unit, '(/a71, e12.4)')'Minimal element of difference between approximate and actual diagonal: ', min_diff
+      write(output%unit, '(/t6, a71, e12.4)')'Maximal difference between approximate and actual diagonal:            ', max_diff
+      write(output%unit, '(t6, a71, e12.4/)')'Minimal element of difference between approximate and actual diagonal: ', min_diff
       flush(output%unit)
 !
    end subroutine cholesky_vecs_diagonal_test_eri_cd_solver

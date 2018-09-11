@@ -55,7 +55,11 @@ module mo_integral_tool_class
 !
       procedure :: read_ovov => read_ovov_mo_integral_tool
 !
-     ! procedure :: construct_oooo => 
+      procedure :: construct_oooo => construct_oooo_mo_integral_tool
+      procedure :: construct_ooov => construct_ooov_mo_integral_tool
+      procedure :: construct_oovo => construct_oovo_mo_integral_tool
+      procedure :: construct_ovoo => construct_ovoo_mo_integral_tool
+      procedure :: construct_vooo => construct_vooo_mo_integral_tool
 !
    end type mo_integral_tool
 !
@@ -1129,7 +1133,6 @@ contains
       else
 !
          index_restrictions = .false.
-!
 !
          local_first_i = 1
          local_first_j = 1 

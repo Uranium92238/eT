@@ -56,6 +56,8 @@ contains
 !
       call wf%system%prepare()
 !
+      call wf%system%print_geometry()
+!
 !     Construct AO overlap matrix, Cholesky decompose it,
 !     followed by preconditioning (making it the identity matrix
 !     for this particular preconditioner - V)
@@ -74,7 +76,7 @@ contains
       wf%n_o = (wf%system%get_n_electrons())/2
       wf%n_v = wf%n_mo - wf%n_o
 !
-      write(output%unit, '(t3, a8, i3, a5)')'Removed ', wf%n_ao - wf%n_mo, ' AOs.'
+      write(output%unit, '(/t6, a8, i3, a23)')'Removed ', wf%n_ao - wf%n_mo, ' AOs due to linear dep.'
 !
       call wf%initialize_ao_density()
 !
@@ -150,7 +152,7 @@ contains
     ! stop
 !
       e_construct_fock = omp_get_wtime()
-      write(output%unit, '(a49, f11.2)')'Wall time to construct AO fock from SAD density: ', &
+      write(output%unit, '(/t6, a49, f11.2)')'Wall time to construct AO fock from SAD density: ', &
                                   e_construct_fock - s_construct_fock
       flush(output%unit)
 !
@@ -256,8 +258,8 @@ contains
       call mem%dealloc(cholesky_vectors_virt, wf%n_ao, n_active_aos)
       call mem%dealloc(cholesky_vectors_occ, wf%n_ao, n_active_aos)
 !
-      write(output%unit, '(a27, i4)')'Number of occupied active: ', n_vectors_occ
-      write(output%unit, '(a27, i4)')'Number of virtual active:  ', n_vectors_virt
+      write(output%unit, '(/t6, a27, i4)')'Number of occupied active: ', n_vectors_occ
+      write(output%unit, '(t6, a27, i4/)')'Number of virtual active:  ', n_vectors_virt
       flush(output%unit)
 !
 !

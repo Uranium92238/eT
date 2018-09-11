@@ -110,7 +110,9 @@ contains
 !
       if (requested_section('active atoms')) then
 !
+         write(output%unit, '(t6, a)')'Active atoms:'
          call molecule%reorder_atoms()
+         write(output%unit, '(t6, a/)')'OBS: Atoms will be reordered, active atoms first.'
 !
       endif
 !
@@ -633,6 +635,7 @@ contains
 !
                   call mem%alloc_int(active_atoms, molecule%n_active_atoms, 1)
                   read(line, *) active_atoms
+!
                   exit
 !
                elseif (line(1:9) == 'hf range:') then 
@@ -749,7 +752,18 @@ contains
 !
       enddo
 !
-      write(output%unit, *)'Active: ', active_atoms
+!
+
+      write(output%unit, '(t6, a18)')'------------------'
+      write(output%unit, '(t6, a18)')' Atom      Symbol '
+      write(output%unit, '(t6, a18)')'------------------'
+      do i = 1, molecule%n_active_atoms
+!
+         write(output%unit, '(t6, i5, 11x, a2)') active_atoms(i, 1), molecule%atoms(active_atoms(i, 1))%symbol
+!
+      enddo
+      write(output%unit, '(t6, a18)')'------------------'
+      write(output%unit, '(t6, a30, i4)')'Total number of active atoms: ', molecule%n_active_atoms
       flush(output%unit)
 !
 !     Reorder atoms
@@ -1205,7 +1219,8 @@ contains
 !
       integer(i15) :: I 
 !
-      write(output%unit, *) 
+      write(output%unit, *)
+!
       do I = 1, molecule%n_atoms 
 !
          write(output%unit, '(t6, a2, f17.12, f17.12, f17.12, 3x, a11)')  molecule%atoms(I)%symbol, &
@@ -1215,6 +1230,8 @@ contains
                                                                           molecule%atoms(I)%basis 
 !
       enddo 
+!
+      write(output%unit, *)
 !
    end subroutine print_geometry_molecular_system
 !
