@@ -334,9 +334,9 @@ contains
 !
       logical :: index_restrictions
 !
-      if (present(first_i) .and. present(last_i) &
-          present(first_a) .and. present(last_a) &
-          present(first_j) .and. present(last_j) &
+      if (present(first_i) .and. present(last_i) .and. &
+          present(first_a) .and. present(last_a) .and. &
+          present(first_j) .and. present(last_j) .and. &
           present(first_b) .and. present(last_b)) then
 !
          index_restrictions = .true.
