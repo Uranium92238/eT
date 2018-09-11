@@ -1201,13 +1201,13 @@ contains
 !
       if (integrals%eri_file .and. .not. index_restrictions) then 
 !
-!        Coming soon: read full g_aijk from file
+!        Coming soon: read full g_abij from file
 !
          call output%error_msg('reading full eri integrals from file not yet supported!')
 !
       else
 !
-!        Construct g_aijk
+!        Construct g_abij
 !
          call mem%alloc(L_ab_J, length_a*length_b, integrals%n_J)
          call mem%alloc(L_ij_J, length_i*length_j, integrals%n_J)
@@ -1239,7 +1239,7 @@ contains
    subroutine construct_oovv_mo_integral_tool(integrals, g_ijab, t1, first_i, last_i, first_j, last_j, &
                                                             first_a, last_a, first_b, last_b, index_restrictions)
 !!
-!!    Construct vvoo
+!!    Construct oovv
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
 !!
       implicit none 
@@ -1269,13 +1269,13 @@ contains
 !
       if (integrals%eri_file .and. .not. index_restrictions) then 
 !
-!        Coming soon: read full g_aijk from file
+!        Coming soon: read full g_ijab from file
 !
          call output%error_msg('reading full eri integrals from file not yet supported!')
 !
       else
 !
-!        Construct g_aijk
+!        Construct g_ijab
 !
          call mem%alloc(L_ab_J, length_a*length_b, integrals%n_J)
          call mem%alloc(L_ij_J, length_i*length_j, integrals%n_J)
@@ -1284,8 +1284,8 @@ contains
          call integrals%construct_cholesky_ab(L_ab_J, t1, first_a, last_a, first_b, last_b)
 !
          call dgemm('N', 'T',           &
-                     length_a*length_b, &
                      length_i*length_j, &
+                     length_a*length_b, &
                      integrals%n_J,     &
                      one,               &
                      L_ij_J,            &
@@ -1300,7 +1300,73 @@ contains
 !
       endif 
 !
-   end subroutine construct_vvoo_mo_integral_tool
-
+   end subroutine construct_oovv_mo_integral_tool
+!
+!
+   subroutine construct_voov_mo_integral_tool(integrals, g_aijb, t1, first_a, last_a, first_i, last_i, &
+                                                            first_j, last_j, first_b, last_b, index_restrictions)
+!!
+!!    Construct voov
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+      implicit none 
+!
+      class(mo_integral_tool), intent(in) :: integrals 
+!
+      real(dp), dimension(:,:), intent(inout) :: g_aijb
+!
+      real(dp), dimension(integrals%n_v, integrals%n_o) :: t1
+!
+      integer(i15), intent(in) :: first_i, last_i
+      integer(i15), intent(in) :: first_b, last_b
+      integer(i15), intent(in) :: first_j, last_j
+      integer(i15), intent(in) :: first_a, last_a
+!
+      integer(i15) :: length_i, length_b, length_j, length_a
+!
+      logical, intent(in) :: index_restrictions
+!
+      real(dp), dimension(:,:), allocatable :: L_ai_J 
+      real(dp), dimension(:,:), allocatable :: L_jb_J 
+!
+      length_i = last_i - first_i + 1
+      length_j = last_j - first_j + 1
+      length_b = last_b - first_b + 1
+      length_a = last_a - first_a + 1
+!
+      if (integrals%eri_file .and. .not. index_restrictions) then 
+!
+!        Coming soon: read full g_aijb from file
+!
+         call output%error_msg('reading full eri integrals from file not yet supported!')
+!
+      else
+!
+!        Construct g_aijb
+!
+         call mem%alloc(L_ai_J, length_a*length_i, integrals%n_J)
+         call mem%alloc(L_jb_J, length_b*length_j, integrals%n_J)
+!
+         call integrals%construct_cholesky_ai(L_ai_J, t1, first_a, last_a, first_i, last_i)
+         call integrals%read_cholesky_ia(L_jb_J, first_j, last_j, first_b, last_b)
+!
+         call dgemm('N', 'T',           &
+                     length_a*length_i, &
+                     length_b*length_j, &
+                     integrals%n_J,     &
+                     one,               &
+                     L_ai_J,            &
+                     length_i*length_a, &
+                     L_jb_J,            &
+                     length_j*length_b, &
+                     zero,              &
+                     g_aijb)
+!
+         call mem%dealloc(L_ai_J, length_a*length_i, integrals%n_J)
+         call mem%dealloc(L_jb_J, length_b*length_j, integrals%n_J)
+!
+      endif 
+!
+   end subroutine construct_voov_mo_integral_tool
 end module mo_integral_tool_class
 
