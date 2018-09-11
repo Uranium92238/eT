@@ -50,7 +50,7 @@ contains
 !
       allocate(eri_chol_solver)
 !
-      call eri_chol_solver%initialize(wf%system)
+      call eri_chol_solver%prepare(wf%system)
       call eri_chol_solver%run(wf%system)
 !
       call eri_chol_solver%cholesky_vecs_diagonal_test()
@@ -59,7 +59,7 @@ contains
 !
       call wf%integrals%prepare(eri_chol_solver%n_cholesky, wf%n_o, wf%n_v)
 !
-      call eri_chol_solver%finalize()
+      call eri_chol_solver%cleanup()
       deallocate(eri_chol_solver)
 !
    end subroutine run_gs_engine

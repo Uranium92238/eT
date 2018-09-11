@@ -94,9 +94,9 @@ program eT_program
 !
         allocate(chol_solver)
 !
-        call chol_solver%initialize(system)
+        call chol_solver%prepare(system)
         call chol_solver%run(system)
-        call chol_solver%finalize()
+        call chol_solver%cleanup()
 !
      else
 !

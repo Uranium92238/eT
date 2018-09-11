@@ -1,7 +1,7 @@
 module eri_cd_solver_class
 !
 !!
-!!    Electronic repulsion ao_integrals solver class module
+!!    Cholesky decomposition (CD) of electronic repulsion integrals (ERI) solver class
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !
@@ -25,14 +25,16 @@ module eri_cd_solver_class
 !
    implicit none
 !
+!  Definition of the ERI-CD class 
+!
    type :: eri_cd_solver
 !
-      real(dp) :: threshold   = 1.0D-8
-      real(dp) :: span        = 1.0D-2
+      real(dp) :: threshold         = 1.0D-8
+      real(dp) :: span              = 1.0D-2
 !
-      integer(i15) :: max_qual = 1000
+      integer(i15) :: max_qual      = 1000
 !
-      integer(i15) :: iteration = 0
+      integer(i15) :: iteration     = 0
 !
       logical :: one_center         = .false.
       logical :: construct_vectors  = .true.
@@ -46,21 +48,21 @@ module eri_cd_solver_class
 !
    contains
 !
-      procedure :: initialize => initialize_eri_cd_solver
-      procedure :: run        => run_eri_cd_solver
-      procedure :: finalize   => finalize_eri_cd_solver
+      procedure :: prepare                                => prepare_eri_cd_solver
+      procedure :: run                                    => run_eri_cd_solver
+      procedure :: cleanup                                => cleanup_eri_cd_solver
 !
-      procedure :: invert_overlap_cholesky_vecs                => invert_overlap_cholesky_vecs_eri_cd_solver
-      procedure :: cholesky_vecs_diagonal_test                 => cholesky_vecs_diagonal_test_eri_cd_solver
-      procedure :: construct_significant_diagonal              => construct_significant_diagonal_eri_cd_solver
-      procedure :: construct_significant_diagonal_atomic       => construct_significant_diagonal_atomic_eri_cd_solver
-      procedure :: determine_auxilliary_cholesky_basis         => determine_auxilliary_cholesky_basis_eri_cd_solver
-      procedure :: construct_overlap_cholesky_vecs             => construct_overlap_cholesky_vecs_eri_cd_solver
-      procedure :: construct_cholesky_vectors                  => construct_cholesky_vectors_eri_cd_solver
+      procedure :: invert_overlap_cholesky_vecs           => invert_overlap_cholesky_vecs_eri_cd_solver
+      procedure :: cholesky_vecs_diagonal_test            => cholesky_vecs_diagonal_test_eri_cd_solver
+      procedure :: construct_significant_diagonal         => construct_significant_diagonal_eri_cd_solver
+      procedure :: construct_significant_diagonal_atomic  => construct_significant_diagonal_atomic_eri_cd_solver
+      procedure :: determine_auxilliary_cholesky_basis    => determine_auxilliary_cholesky_basis_eri_cd_solver
+      procedure :: construct_overlap_cholesky_vecs        => construct_overlap_cholesky_vecs_eri_cd_solver
+      procedure :: construct_cholesky_vectors             => construct_cholesky_vectors_eri_cd_solver
 !
-      procedure :: construct_mo_cholesky_vecs => construct_mo_cholesky_vecs_cd_eri_solver
+      procedure :: construct_mo_cholesky_vecs             => construct_mo_cholesky_vecs_cd_eri_solver
 !
-      procedure :: read_info  => read_info_eri_cd_solver
+      procedure :: read_info                              => read_info_eri_cd_solver
 !
    end type eri_cd_solver
 !
@@ -68,9 +70,9 @@ module eri_cd_solver_class
 contains
 !
 !
-   subroutine initialize_eri_cd_solver(solver, system)
+   subroutine prepare_eri_cd_solver(solver, system)
 !!
-!!    Initialize eri cholesky decomposition solver
+!!    Prepare ERI
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
@@ -99,17 +101,17 @@ contains
 !
       endif
 !
-        call initialize_coulomb()
-        call initialize_kinetic()
-        call initialize_nuclear()
-        call initialize_overlap()
+      call initialize_coulomb()
+      call initialize_kinetic()
+      call initialize_nuclear()
+      call initialize_overlap()
 !
-   end subroutine initialize_eri_cd_solver
+   end subroutine prepare_eri_cd_solver
 !
 !
    subroutine run_eri_cd_solver(solver, system, screening_vector)
 !!
-!!     Run eri cholesky decomposition
+!!    Run
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
@@ -125,9 +127,9 @@ contains
       write(output%unit, '(/a/)') ':: Cholesky decomposition of two-electron ao integrals'
       flush(output%unit)
 !
-      write(output%unit, '(a20, i10)')'Number of aos:      ', solver%n_ao
-      write(output%unit, '(a20, i10)')'Number of ao pairs: ', solver%n_aop
-      write(output%unit, '(a20, i10)')'Number of shells:   ', solver%n_s
+      write(output%unit, '(a20, i10)')    'Number of aos:      ', solver%n_ao
+      write(output%unit, '(a20, i10)')    'Number of ao pairs: ', solver%n_aop
+      write(output%unit, '(a20, i10)')    'Number of shells:   ', solver%n_s
 !
       write(output%unit, '(/a21, e12.4)') 'Target threshold is: ', solver%threshold
       write(output%unit, '(a21, e12.4)')  'Span factor:         ', solver%span
@@ -188,14 +190,16 @@ contains
    end subroutine run_eri_cd_solver
 !
 !
-   subroutine finalize_eri_cd_solver(solver)
+   subroutine cleanup_eri_cd_solver(solver)
 !!
+!!    Cleanup 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
       class(eri_cd_solver) :: solver
 !
-   end subroutine finalize_eri_cd_solver
+   end subroutine cleanup_eri_cd_solver
 !
 !
    subroutine construct_significant_diagonal_eri_cd_solver(solver, system, screening_vector)
@@ -477,8 +481,8 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
 !!    Constructs the significant diagonal for the given decomposition threshold within 
-!!    the one-center approximation.
-!!    Screening diagonal is optional argument for additional screening
+!!    the one-center approximation. Screening diagonal is optional argument for 
+!!    additional screening.
 !!
       implicit none
 !
@@ -611,10 +615,10 @@ contains
 !
       enddo
 !
-      write(output%unit, '(/a)')'Reduction of shell pairs:'
-      write(output%unit, '(a33, 2x, i9)')'Total number of shell pairs:     ', solver%n_sp
-      write(output%unit, '(a33, 2x, i9)')'Significant shell pairs:         ', n_sig_sp
-      write(output%unit, '(a33, 2x, i9)')'Significant ao pairs:            ', n_sig_aop
+      write(output%unit, '(/a)')          'Reduction of shell pairs:'
+      write(output%unit, '(a33, 2x, i9)') 'Total number of shell pairs:     ', solver%n_sp
+      write(output%unit, '(a33, 2x, i9)') 'Significant shell pairs:         ', n_sig_sp
+      write(output%unit, '(a33, 2x, i9)') 'Significant ao pairs:            ', n_sig_aop
       flush(output%unit)
 !
 !     Prepare for construction of diagonal and screening vector
@@ -770,6 +774,7 @@ contains
 !     Local variables
 !
 !     Integers
+!
       integer(i15) :: n_sig_sp, n_sig_aop
       integer(i15) :: n_new_sig_sp, n_new_sig_aop, current_new_sig_sp
       integer(i15) :: n_qual_sp, n_qual_aop, n_previous_qual_aop, n_qual_aop_in_sp
@@ -2926,5 +2931,3 @@ contains
 !
 !
 end module eri_cd_solver_class
-!
-!
