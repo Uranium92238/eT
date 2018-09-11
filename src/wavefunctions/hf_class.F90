@@ -149,14 +149,16 @@ contains
       write(output%unit, '(t6,a30,e10.4)')   'Exchange screening threshold: ', wf%exchange_threshold
       write(output%unit, '(t6,a30,e10.4)')   'ERI integral precision:       ', wf%integral_precision
 !
-      write(output%unit, '(/t3,a)') 'Reading molecular geometry initializing atoms.'
+      write(output%unit, '(/t3,a)') 'Preparing molecular system object.'
       call wf%system%prepare()
+!
+      write(output%unit, '(/t6,a14,i1)') 'Charge:       ', wf%system%charge 
+      write(output%unit, '(t6,a14,i1)')  'Multiplicity: ', wf%system%multiplicity 
 !
       write(output%unit, '(/t6,a35,f18.12)') 'Nuclear repulsion energy (a.u.):   ', wf%system%get_nuclear_repulsion()
       write(output%unit, '(t6,a35,f18.12)')  'Bohr/angstrom value (CODATA 2010): ', bohr_to_angstrom
 !
       call wf%system%print_geometry()
-!
 !
       wf%n_ao = wf%system%get_n_aos()
 !
@@ -209,13 +211,22 @@ contains
 !!
       implicit none 
 !
-      class(hf) :: wf 
+      class(hf), intent(in) :: wf 
+!
+      real(dp) :: homo_lumo_gap
+!
+      integer(i15) :: mo 
 !
       write(output%unit, '(/t3,a,a,a)') ':: Summary of ', trim(wf%name), ' wavefunction energetics (a.u.)'
 !
-      write(output%unit, '(/t6,a26,f17.12)')   'Total electronic energy:  ', wf%energy
+      homo_lumo_gap = wf%orbital_energies(wf%n_o + 1, 1) - wf%orbital_energies(wf%n_o, 1)
 !
-      call wf%print_orbital_energies('6')
+      write(output%unit, '(/t3,a26,f19.12)') 'HOMO-LUMO gap:            ', homo_lumo_gap
+      write(output%unit, '(t3,a26,f19.12)')  'Nuclear repulsion energy: ', wf%system%get_nuclear_repulsion()
+      write(output%unit, '(t3,a26,f19.12)')  'Electronic energy:        ', wf%energy - wf%system%get_nuclear_repulsion()
+      write(output%unit, '(t3,a26,f19.12)')  'Total energy:             ', wf%energy
+!
+      call wf%print_orbital_energies('3')
 !
    end subroutine print_wavefunction_summary_hf
 !

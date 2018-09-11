@@ -148,7 +148,6 @@ contains
 !     :: Part I. Preparations. 
 !
       write(output%unit, '(/t3,a)') ':: Running SCF-DIIS object'
-
 !
 !     Construct screening vectors for efficient Fock construction 
 !

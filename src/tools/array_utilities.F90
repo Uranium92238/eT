@@ -1359,7 +1359,7 @@ contains
          if (mod(I, 3) .eq. 2) then 
 !
             adv = 'yes'
-            sep = '3'
+            sep = '5'
 !
          elseif (mod(I, 3) .eq. 0) then
 !
@@ -1369,7 +1369,7 @@ contains
          else
 !
             adv = 'no'
-            sep = '3'
+            sep = '5'
 !
          endif
 !
