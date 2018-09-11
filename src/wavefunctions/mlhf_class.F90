@@ -256,9 +256,9 @@ contains
       flush(output%unit)
 !
 !
-      call chol_solver%initialize(wf%system)
+      call chol_solver%prepare(wf%system)
       call chol_solver%run(wf%system, V)
-      call chol_solver%finalize()
+      call chol_solver%cleanup()
 !
 !     Cholesky decomposition
 !

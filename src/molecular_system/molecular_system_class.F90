@@ -47,6 +47,8 @@ module molecular_system_class
       procedure, private :: read_info     => read_info_molecular_system
       procedure, private :: read_geometry => read_geometry_molecular_system
 !
+      procedure :: print_geometry => print_geometry_molecular_system
+!
       procedure :: get_nuclear_repulsion => get_nuclear_repulsion_molecular_system
       procedure :: get_n_electrons       => get_n_electrons_molecular_system
 !
@@ -1190,6 +1192,31 @@ contains
       if (allocated(molecule%shell_limits)) deallocate(molecule%shell_limits)
 !
    end subroutine destruct_shell_limits_molecular_system
+!
+!
+   subroutine print_geometry_molecular_system(molecule)
+!!
+!!    Print geometry 
+!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!
+      implicit none 
+!
+      class(molecular_system) :: molecule  
+!
+      integer(i15) :: I 
+!
+      write(output%unit, *) 
+      do I = 1, molecule%n_atoms 
+!
+         write(output%unit, '(t6, a2, f17.12, f17.12, f17.12, 3x, a11)')  molecule%atoms(I)%symbol, &
+                                                                          molecule%atoms(I)%x,      &
+                                                                          molecule%atoms(I)%y,      &
+                                                                          molecule%atoms(I)%z,      &
+                                                                          molecule%atoms(I)%basis 
+!
+      enddo 
+!
+   end subroutine print_geometry_molecular_system
 !
 !
 end module molecular_system_class

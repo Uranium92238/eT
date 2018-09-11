@@ -9,7 +9,7 @@ end method
 
 hf
   algorithm:                  scf
-  coulomb precision:          1.0d-25
+  integral precision:         1.0d-25
   coulomb threshold:          1.0d-16
   exchange threshold:         1.0d-16
   energy threshold:           1.0d-12
