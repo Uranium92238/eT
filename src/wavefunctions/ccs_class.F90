@@ -691,10 +691,48 @@ contains
       integer(i15), optional, intent(in) :: first_j, last_j
       integer(i15), optional, intent(in) :: first_b, last_b
 !
-!     Special case: the t1-transformed g_iajb integrals are equal to the MO integrals 
+      integer(i15) :: local_first_i, local_last_i 
+      integer(i15) :: local_first_a, local_last_a
+      integer(i15) :: local_first_j, local_last_j
+      integer(i15) :: local_first_b, local_last_b
 !
-      call wf%integrals%read_ovov(g_iajb, first_i, last_i, first_a, last_a, &
-                                          first_j, last_j, first_b, last_b)
+      logical :: index_restrictions
+!
+      if (present(first_i) .and. present(last_i) .and. &
+          present(first_a) .and. present(last_a) .and. &
+          present(first_j) .and. present(last_j) .and. &
+          present(first_b) .and. present(last_b)) then
+!
+         index_restrictions = .true.
+!
+         local_first_i = first_i 
+         local_first_a = first_a 
+         local_first_j = first_j 
+         local_first_b = first_b 
+!
+         local_last_i = last_i 
+         local_last_a = last_a
+         local_last_j = last_j
+         local_last_b = last_b
+!
+      else
+!
+         index_restrictions = .false.
+!
+         local_first_i = 1 
+         local_first_a = 1 
+         local_first_j = 1 
+         local_first_b = 1 
+!
+         local_last_i = wf%n_o 
+         local_last_a = wf%n_v
+         local_last_j = wf%n_o
+         local_last_b = wf%n_v
+!
+      endif
+!
+      call wf%integrals%read_ovov(g_iajb, local_first_i, local_last_i, local_first_a, local_last_a, &
+                                          local_first_j, local_last_j, local_first_b, local_last_b, index_restrictions)
 !
    end subroutine get_ovov_ccs
 !

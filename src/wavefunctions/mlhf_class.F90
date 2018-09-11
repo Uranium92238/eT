@@ -51,10 +51,12 @@ contains
 !
       wf%name = 'MLHF'
 !
-      write(output%unit, '(a)')':: SAD-ML test'
+      write(output%unit, '(a/)')':: SAD-ML test'
       flush(output%unit)
 !
       call wf%system%prepare()
+!
+      call wf%system%print_geometry()
 !
 !     Construct AO overlap matrix, Cholesky decompose it,
 !     followed by preconditioning (making it the identity matrix
@@ -74,7 +76,7 @@ contains
       wf%n_o = (wf%system%get_n_electrons())/2
       wf%n_v = wf%n_mo - wf%n_o
 !
-      write(output%unit, '(a8, i4, a5)')'Removed ', wf%n_ao - wf%n_mo, ' AOs.'
+      write(output%unit, '(/t6, a8, i3, a23)')'Removed ', wf%n_ao - wf%n_mo, ' AOs due to linear dep.'
 !
       call wf%initialize_ao_density()
 !
@@ -114,7 +116,7 @@ contains
       integer(i15):: i, j, k, n_active_aos, ao_offset, active_ao_counter, n_vectors_occ, n_vectors_virt
       integer(i15):: a
 !
-      real(dp) :: max, e_construct_fock, s_construct_fock, omp_get_wtime, x, y, z
+      real(dp) :: max_val, e_construct_fock, s_construct_fock, omp_get_wtime, x, y, z
 !
       integer(i15), dimension(:,:), allocatable :: active_aos, sp_eri_schwarz_list
 !
@@ -128,31 +130,29 @@ contains
 !
       s_construct_fock = omp_get_wtime()
 !
-      write(output%unit,*)'set up fock'
-      flush(output%unit)
-!
       n_s = wf%system%get_n_shells()
 !
       call wf%construct_ao_fock_SAD(1.0d-13, 1.0d-13, 1.0d-25)
-      write(output%unit,*)wf%energy
 !
-      call mem%alloc(sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
-      call mem%alloc_int(sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
+    ! write(output%unit,*)wf%energy
 !
-      call wf%construct_sp_eri_schwarz(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
+    ! call mem%alloc(sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
+    ! call mem%alloc_int(sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
 !
-!     Set the initial density guess and Fock matrix 
+    ! call wf%construct_sp_eri_schwarz(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
 !
-      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
-      call wf%get_ao_h_wx(h_wx)
+!   ! Set the initial density guess and Fock matrix 
 !
-      call wf%update_fock_and_energy(sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx)
-      write(output%unit,*)wf%energy
-      flush(output%unit)
-      stop
+    ! call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
+    ! call wf%get_ao_h_wx(h_wx)
+!
+    ! call wf%update_fock_and_energy(sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx)
+    ! write(output%unit,*)wf%energy
+    ! flush(output%unit)
+    ! stop
 !
       e_construct_fock = omp_get_wtime()
-      write(output%unit, '(/a49, f11.2)')'Wall time to construct AO fock from SAD density: ', &
+      write(output%unit, '(/t6, a49, f11.2)')'Wall time to construct AO fock from SAD density: ', &
                                   e_construct_fock - s_construct_fock
       flush(output%unit)
 !
@@ -205,12 +205,11 @@ contains
           y = (wf%system%atoms(j)%y - wf%system%atoms(i)%y)
           z = (wf%system%atoms(j)%z - wf%system%atoms(i)%z)
 !
-          if (sqrt(x**2 + y**2 + z**2) .le. 2.5d0) n_active_occ = n_active_occ + 1 
+          if (sqrt(x**2 + y**2 + z**2) .le. 1.5d0) n_active_occ = n_active_occ + 1 
 !
         enddo
 !
       enddo
-!
 !
 !     Determine number of active virtuals
 !
@@ -238,29 +237,29 @@ contains
 !
       do j = 1, wf%n_ao
 !
-         max = 0.0d0
+         max_val = 0.0d0
 !
          do i = 1, n_vectors_occ
 !
-            if (cholesky_vectors_occ(j, i)**2 .gt. max) max = cholesky_vectors_occ(j, i)**2     
+            if (cholesky_vectors_occ(j, i)**2 .gt. max_val) max_val = cholesky_vectors_occ(j, i)**2     
 !
          enddo
 !
          do a = 1, n_vectors_virt
 !
-            if (cholesky_vectors_virt(j, a)**2 .gt. max) max = cholesky_vectors_virt(j, a)**2 
+            if (cholesky_vectors_virt(j, a)**2 .gt. max_val) max_val = cholesky_vectors_virt(j, a)**2 
 !
          enddo
 !
-         V(j, 1) = max
+         V(j, 1) = max_val
 !
       enddo
 !
       call mem%dealloc(cholesky_vectors_virt, wf%n_ao, n_active_aos)
       call mem%dealloc(cholesky_vectors_occ, wf%n_ao, n_active_aos)
 !
-      write(output%unit, '(a27, i4)')'Number of occupied active: ', n_vectors_occ
-      write(output%unit, '(a27, i4)')'Number of virtual active:  ', n_vectors_virt
+      write(output%unit, '(/t6, a27, i4)')'Number of occupied active: ', n_vectors_occ
+      write(output%unit, '(t6, a27, i4/)')'Number of virtual active:  ', n_vectors_virt
       flush(output%unit)
 !
 !
