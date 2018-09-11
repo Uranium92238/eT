@@ -1796,5 +1796,97 @@ contains
    end subroutine construct_ovvv_mo_integral_tool
 !
 !
+   subroutine construct_vvvv_mo_integral_tool(integrals, g_abcd, t1, first_a, last_a, first_b, last_b, &
+                                                            first_c, last_c, first_d, last_d, index_restrictions)
+!!
+!!    Construct vvvv
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+!!
+      implicit none 
+!
+      class(mo_integral_tool), intent(in) :: integrals 
+!
+      real(dp), dimension(:,:), intent(inout) :: g_abcd
+!
+      real(dp), dimension(integrals%n_v, integrals%n_o) :: t1
+!
+      integer(i15), intent(in) :: first_a, last_a
+      integer(i15), intent(in) :: first_b, last_b
+      integer(i15), intent(in) :: first_c, last_c
+      integer(i15), intent(in) :: first_d, last_d
+!
+      integer(i15) :: length_a, length_b, length_c, length_d
+!
+      logical, intent(in) :: index_restrictions
+!
+      real(dp), dimension(:,:), allocatable :: L_ab_J 
+      real(dp), dimension(:,:), allocatable :: L_cd_J 
+!
+      length_a = last_a - first_a + 1
+      length_b = last_b - first_b + 1
+      length_c = last_c - first_c + 1
+      length_d = last_d - first_d + 1
+!
+      if (integrals%eri_file .and. .not. index_restrictions) then 
+!
+!        Coming soon: read full g_abcd from file
+!
+         call output%error_msg('reading full eri integrals from file not yet supported!')
+!
+      else
+!
+!        Construct g_abcd from Cholesky vectors
+!
+         if (index_restrictions) then ! dim_ab ≠ dim_cd in general
+!
+            call mem%alloc(L_ab_J, length_a*length_b, integrals%n_J)
+            call mem%alloc(L_cd_J, length_c*length_d, integrals%n_J)
+!
+            call integrals%construct_cholesky_ab(L_ab_J, t1, first_a, last_a, first_b, last_b)
+            call integrals%construct_cholesky_ab(L_cd_J, t1, first_c, last_c, first_d, last_d)
+!
+            call dgemm('N', 'T',           &
+                        length_a*length_b, &
+                        length_d*length_c, &
+                        integrals%n_J,     &
+                        one,               &
+                        L_ab_J,            &
+                        length_a*length_b, &
+                        L_cd_J,            &
+                        length_c*length_d, &
+                        zero,              &
+                        g_abcd)
+!
+            call mem%dealloc(L_ab_J, length_a*length_b, integrals%n_J)
+            call mem%dealloc(L_cd_J, length_c*length_d, integrals%n_J)
+!
+         else ! dim_ab = dim_cd
+!
+            call mem%alloc(L_ab_J, length_a*length_b, integrals%n_J)
+!
+            call integrals%construct_cholesky_ab(L_ab_J, t1, first_a, last_a, first_b, last_b)
+!
+            call dgemm('N', 'T',           &
+                        length_a*length_b, &
+                        length_a*length_b, &
+                        integrals%n_J,     &
+                        one,               &
+                        L_ab_J,            &
+                        length_a*length_b, &
+                        L_ab_J,            &
+                        length_a*length_b, & 
+                        zero,              &
+                        g_abcd)
+!
+            call mem%dealloc(L_ab_J, length_a*length_b, integrals%n_J)
+!
+         endif 
+!
+      endif 
+!
+   end subroutine construct_vvvv_mo_integral_tool
+!
+!
 end module mo_integral_tool_class
 
