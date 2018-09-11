@@ -22,7 +22,7 @@ module mlhf_class
 !
    contains
 !
-      procedure :: initialize => initialize_mlhf
+      procedure :: prepare => prepare_mlhf
       procedure :: finalize => finalize_mlhf
 !
       procedure :: construct_virtual_density => construct_virtual_density_mlhf
@@ -36,7 +36,7 @@ module mlhf_class
 contains
 !
 !
-   subroutine initialize_mlhf(wf)
+   subroutine prepare_mlhf(wf)
 !!
 !!    Initialize
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -80,22 +80,13 @@ contains
 !
 !     Set initial density to superposition of atomic densities (SOAD) guess
 !
-      call mem%alloc(density_diagonal, wf%n_ao, 1)
-      call wf%system%SAD(wf%n_ao, density_diagonal)
-!
       wf%ao_density = zero
 !
-      do ao = 1, wf%n_ao
-!
-         wf%ao_density(ao, ao) = density_diagonal(ao, 1)
-!
-      enddo
-!
-      call mem%dealloc(density_diagonal, wf%n_ao, 1)
+      call wf%set_ao_density_to_sad()
 !
       call wf%eri_decomp_test_w_active_dens()
 !
-   end subroutine initialize_mlhf
+   end subroutine prepare_mlhf
 !
 !
    subroutine finalize_mlhf(wf)
@@ -127,9 +118,9 @@ contains
 !
       integer(i15), dimension(:,:), allocatable :: active_aos, sp_eri_schwarz_list
 !
-      integer(i15) :: n_active_occ, n_active_vir
+      integer(i15) :: n_active_occ, n_active_vir, n_s
 !
-      real(dp), dimension(:,:), allocatable :: eri_deg, sp_eri_schwarz
+      real(dp), dimension(:,:), allocatable :: eri_deg, sp_eri_schwarz, h_wx
 !
       type(eri_cd_solver)  :: chol_solver
 !
@@ -140,8 +131,25 @@ contains
       write(output%unit,*)'set up fock'
       flush(output%unit)
 !
+      n_s = wf%system%get_n_shells()
+!
       call wf%construct_ao_fock_SAD(1.0d-13, 1.0d-13, 1.0d-25)
-      !write(output%unit,*)wf%hf_energy
+      write(output%unit,*)wf%energy
+!
+      call mem%alloc(sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
+      call mem%alloc_int(sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
+!
+      call wf%construct_sp_eri_schwarz(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
+!
+!     Set the initial density guess and Fock matrix 
+!
+      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
+      call wf%get_ao_h_wx(h_wx)
+!
+      call wf%update_fock_and_energy(sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx)
+      write(output%unit,*)wf%energy
+      flush(output%unit)
+      stop
 !
       e_construct_fock = omp_get_wtime()
       write(output%unit, '(/a49, f11.2)')'Wall time to construct AO fock from SAD density: ', &

@@ -384,9 +384,16 @@ contains
       atomic_density = zero   
 !
       call get_environment_variable("SAD_ET_DIR", sad_directory)
+      write(output%unit, *)sad_directory
 !
       alpha_fname = trim(sad_directory) // '/' // trim(atom%basis) // '/' // trim(atom%symbol) // '_' // 'alpha' // '.inp'
       beta_fname  = trim(sad_directory) // '/' //trim(atom%basis) // '/' // trim(atom%symbol) // '_' // 'beta' // '.inp'
+
+   !  alpha_fname = '/Users/sarai/new_eT/src/molecular_system/sad' &
+   !            // '/' // trim(atom%basis) // '/' // trim(atom%symbol) // '_' // 'alpha' // '.inp'
+   !  beta_fname  = '/Users/sarai/new_eT/src/molecular_system/sad' &
+   !            // '/' //trim(atom%basis) // '/' // trim(atom%symbol) // '_' // 'beta' // '.inp'
+
 !
       call alpha_density%init(trim(alpha_fname), 'sequential', 'formatted')
       call beta_density%init(trim(beta_fname), 'sequential', 'formatted')

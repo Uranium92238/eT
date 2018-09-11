@@ -1072,7 +1072,7 @@ contains
 !
       do atom = 2, wf%system%n_atoms
 !
-         shells_on_atoms(atom, 1) =  shells_on_atoms(atom - 1, 1) + 1
+         shells_on_atoms(atom, 1) =  shells_on_atoms(atom - 1, 2) + 1
          shells_on_atoms(atom, 2) =  shells_on_atoms(atom, 1) + wf%system%atoms(atom)%n_shells - 1
 !
       enddo
@@ -1111,6 +1111,7 @@ contains
 !
       max_density = get_abs_max(sp_density_schwarz, n_s**2)
       max_eri     = get_abs_max(sp_eri_schwarz, n_s**2)
+!
 !      write(output%unit, *)'doing coulomb_'
 !      flush(output%unit)
 !
