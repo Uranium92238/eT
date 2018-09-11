@@ -120,7 +120,8 @@ contains
 !
       real(dp), dimension(solver%n_ao,1), optional :: screening_vector
 !
-      real(dp):: s_determine_basis, e_determine_basis, s_build_vectors, e_build_vectors, omp_get_wtime
+      real(dp):: s_determine_basis, e_determine_basis, s_build_vectors, e_build_vectors
+      real(dp):: s_invert_time, e_invert_time, omp_get_wtime
 !
       write(output%unit, '(/a/)') ':: Cholesky decomposition of two-electron ao integrals'
       flush(output%unit)
@@ -166,12 +167,20 @@ contains
 !
       endif
 !
-      call solver%construct_overlap_cholesky_vecs(system)
-      call solver%invert_overlap_cholesky_vecs()
-!
       e_determine_basis = omp_get_wtime()
       write(output%unit, '(/a30, f11.2)')'Wall time to determine basis: ', &
                                   e_determine_basis - s_determine_basis
+      flush(output%unit)
+!
+      s_invert_time = omp_get_wtime()
+!
+      call solver%construct_overlap_cholesky_vecs(system)
+      call solver%invert_overlap_cholesky_vecs()
+!
+      e_invert_time = omp_get_wtime()
+               write(output%unit, '(/a53, f11.2)')'Wall time to construct (J|K), decompose, and invert: ', &
+                                  e_invert_time - s_invert_time
+      flush(output%unit)
 !
       if (solver%construct_vectors) then
 !
