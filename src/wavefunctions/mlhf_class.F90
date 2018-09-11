@@ -205,7 +205,7 @@ contains
           y = (wf%system%atoms(j)%y - wf%system%atoms(i)%y)
           z = (wf%system%atoms(j)%z - wf%system%atoms(i)%z)
 !
-          if (sqrt(x**2 + y**2 + z**2) .le. 2.5d0) n_active_occ = n_active_occ + 1 
+          if (sqrt(x**2 + y**2 + z**2) .le. 1.5d0) n_active_occ = n_active_occ + 1 
 !
         enddo
 !
