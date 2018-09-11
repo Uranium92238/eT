@@ -1039,32 +1039,6 @@ contains
 !
       n_s = wf%system%get_n_shells()
 !
-     call mem%alloc(sp_density_schwarz, n_s, n_s)
-!
-!$omp parallel do private(A, B, A_interval, B_interval, D_yz, maximum) schedule(dynamic)
-      do A = 1, n_s
-!
-         A_interval = wf%system%shell_limits(A)
-!
-         do B = 1, A
-!
-            B_interval = wf%system%shell_limits(A)
-!
-            call mem%alloc(D_yz, (A_interval%size), (B_interval%size))
-!
-            D_yz = wf%ao_density(A_interval%first : A_interval%last, B_interval%first : B_interval%last)
-!
-            maximum = get_abs_max(D_yz, (A_interval%size)*(B_interval%size))
-!
-            call mem%dealloc(D_yz, (A_interval%size), (B_interval%size))
-!
-            sp_density_schwarz(A, B) = maximum
-            sp_density_schwarz(B, A) = maximum
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
    call mem%alloc(sp_eri_schwarz, n_s, n_s)
 !
 !$omp parallel do private(A, B, A_interval, B_interval, g, maximum) schedule(dynamic)
@@ -1103,10 +1077,40 @@ contains
 !
       enddo
 !
+      call mem%alloc(sp_density_schwarz, n_s, n_s)
+      sp_density_schwarz = zero
+!
+!$omp parallel do private(A, B, A_interval, B_interval, D_yz, maximum) schedule(dynamic)
+      do atom = 1, wf%system%n_atoms
+         do A = shells_on_atoms(atom, 1), shells_on_atoms(atom, 2)
+!
+            A_interval = wf%system%shell_limits(A)
+!
+            do B = shells_on_atoms(atom, 1), shells_on_atoms(atom, 2)
+!
+               B_interval = wf%system%shell_limits(B)
+!
+               call mem%alloc(D_yz, (A_interval%size), (B_interval%size))
+!
+               D_yz = wf%ao_density(A_interval%first : A_interval%last, B_interval%first : B_interval%last)
+!
+               maximum = get_abs_max(D_yz, (A_interval%size)*(B_interval%size))
+!
+               call mem%dealloc(D_yz, (A_interval%size), (B_interval%size))
+!
+               sp_density_schwarz(A, B) = maximum
+!
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
       call set_coulomb_precision(precision_thr)
 !
       wf%ao_fock = zero
 !
+      max_density = get_abs_max(sp_density_schwarz, n_s**2)
+      max_eri     = get_abs_max(sp_eri_schwarz, n_s**2)
 !      write(output%unit, *)'doing coulomb_'
 !      flush(output%unit)
 !
@@ -1120,6 +1124,8 @@ contains
          do B = 1, A
 !
             B_interval = wf%system%shell_limits(B)
+!
+            if (sp_eri_schwarz(A, B)*max_eri*max_density .lt. coulomb_thr) cycle  
 !           
             do atom = 1, wf%system%n_atoms
 !
@@ -1152,7 +1158,7 @@ contains
 !
                                     yz = C_interval%size*(z - D_interval%first) + y  - C_interval%first + 1
 !
-                                    wf%ao_fock(w, x) = wf%ao_fock(w, x) + (g_C(wx, yz))*wf%ao_density(y, z)
+                                    wf%ao_fock(w, x) = wf%ao_fock(w, x) + g_C(wx, yz)*wf%ao_density(y, z)
 !
                                  enddo
                               enddo
@@ -1171,7 +1177,7 @@ contains
 !
                                     yz = C_interval%size*(z - D_interval%first) + y  - C_interval%first + 1
 !
-                                    wf%ao_fock(w, x) = wf%ao_fock(w, x) + (g_C(wx, yz))*wf%ao_density(y, z)
+                                    wf%ao_fock(w, x) = wf%ao_fock(w, x) + g_C(wx, yz)*wf%ao_density(y, z)
 !
                                  enddo
                               enddo
@@ -1266,8 +1272,8 @@ contains
 !$omp end parallel do
 !
 !
-   write(output%unit, *)'doing symmetrize'
-   flush(output%unit)
+!   write(output%unit, *)'doing symmetrize'
+!   flush(output%unit)
 !
 !     Symmetrize
 !
@@ -1293,8 +1299,8 @@ contains
       enddo
 !$omp end parallel do
 !
-      write(output%unit, *)'h and energy'
-      flush(output%unit)
+!      write(output%unit, *)'h and energy'
+!      flush(output%unit)
 !
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
 !
@@ -1340,8 +1346,8 @@ contains
 !
       call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
 !
-      write(output%unit, *)'done'
-      flush(output%unit)
+!      write(output%unit, *)'done'
+!      flush(output%unit)
 !
    end subroutine construct_ao_fock_SAD_hf
 !
