@@ -715,8 +715,8 @@ contains
    end subroutine set_full_index_mo_integral_tool
 !
 !
-   subroutine construct_oooo_mo_integral_tool(integrals, g_ijkl, t1, first_i, last_i, first_j, last_j, &
-                                                            first_k, last_k, first_l, last_l, index_restrictions)
+   subroutine construct_oooo_mo_integral_tool(integrals, g_ijkl, first_i, last_i, first_j, last_j, &
+                                                            first_k, last_k, first_l, last_l, index_restrictions, t1)
 !!
 !!    Construct oooo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -728,7 +728,7 @@ contains
 !
       real(dp), dimension(:,:), intent(inout) :: g_ijkl
 !
-      real(dp), dimension(integrals%n_v, integrals%n_o) :: t1
+      real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
       integer(i15), intent(in) :: first_i, last_i
       integer(i15), intent(in) :: first_k, last_k
@@ -762,8 +762,17 @@ contains
             call mem%alloc(L_ij_J, length_i*length_j, integrals%n_J)
             call mem%alloc(L_kl_J, length_k*length_l, integrals%n_J)
 !
-            call integrals%construct_cholesky_ij(L_ij_J, t1, first_i, last_i, first_j, last_j)
-            call integrals%construct_cholesky_ij(L_kl_J, t1, first_k, last_k, first_l, last_l)
+            if (present(t1)) then
+!
+               call integrals%construct_cholesky_ij(L_ij_J, t1, first_i, last_i, first_j, last_j)
+               call integrals%construct_cholesky_ij(L_kl_J, t1, first_k, last_k, first_l, last_l)
+!
+            else
+!
+               call integrals%read_cholesky_ij_t1(L_ij_J, first_i, last_i, first_j, last_j)
+               call integrals%read_cholesky_ij_t1(L_kl_J, first_k, last_k, first_l, last_l)
+!
+            endif
 !
             call dgemm('N', 'T',           &
                         length_i*length_j, &
@@ -784,7 +793,15 @@ contains
 !
             call mem%alloc(L_ij_J, length_i*length_j, integrals%n_J)
 !
-            call integrals%construct_cholesky_ij(L_ij_J, t1, first_i, last_i, first_j, last_j)
+            if (present(t1)) then
+!
+               call integrals%construct_cholesky_ij(L_ij_J, t1, first_i, last_i, first_j, last_j)
+!
+            else
+!
+               call integrals%read_cholesky_ij_t1(L_ij_J, first_i, last_i, first_j, last_j)
+!
+            endif
 !
             call dgemm('N', 'T',           &
                         length_i*length_j, &
@@ -807,8 +824,8 @@ contains
    end subroutine construct_oooo_mo_integral_tool
 !
 !
-   subroutine construct_ooov_mo_integral_tool(integrals, g_ijka, t1, first_i, last_i, first_j, last_j, &
-                                                            first_k, last_k, first_a, last_a, index_restrictions)
+   subroutine construct_ooov_mo_integral_tool(integrals, g_ijka, first_i, last_i, first_j, last_j, &
+                                                            first_k, last_k, first_a, last_a, index_restrictions, t1)
 !!
 !!    Construct ooov
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -819,7 +836,7 @@ contains
 !
       real(dp), dimension(:,:), intent(inout) :: g_ijka
 !
-      real(dp), dimension(integrals%n_v, integrals%n_o) :: t1
+      real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
       integer(i15), optional, intent(in) :: first_i, last_i
       integer(i15), optional, intent(in) :: first_k, last_k
@@ -851,7 +868,16 @@ contains
          call mem%alloc(L_ij_J, length_i*length_j, integrals%n_J)
          call mem%alloc(L_ka_J, length_k*length_a, integrals%n_J)
 !
-         call integrals%construct_cholesky_ij(L_ij_J, t1, first_i, last_i, first_j, last_j)
+         if (present(t1)) then
+!
+            call integrals%construct_cholesky_ij(L_ij_J, t1, first_i, last_i, first_j, last_j)
+!
+         else
+!
+            call integrals%read_cholesky_ij_t1(L_ij_J, first_i, last_i, first_j, last_j)
+!
+         endif
+!
          call integrals%read_cholesky_ia(L_ka_J, first_k, last_k, first_a, last_a)
 !
          call dgemm('N', 'T',           &
@@ -874,8 +900,8 @@ contains
    end subroutine construct_ooov_mo_integral_tool
 !
 !
-   subroutine construct_oovo_mo_integral_tool(integrals, g_ijak, t1, first_i, last_i, first_j, last_j, &
-                                                            first_a, last_a, first_k, last_k, index_restrictions)
+   subroutine construct_oovo_mo_integral_tool(integrals, g_ijak, first_i, last_i, first_j, last_j, &
+                                                            first_a, last_a, first_k, last_k, index_restrictions, t1)
 !!
 !!    Construct oovo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -886,7 +912,7 @@ contains
 !
       real(dp), dimension(:,:), intent(inout) :: g_ijak
 !
-      real(dp), dimension(integrals%n_v, integrals%n_o) :: t1
+      real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
       integer(i15), intent(in) :: first_i, last_i
       integer(i15), intent(in) :: first_k, last_k
@@ -918,8 +944,17 @@ contains
          call mem%alloc(L_ij_J, length_i*length_j, integrals%n_J)
          call mem%alloc(L_ak_J, length_k*length_a, integrals%n_J)
 !
-         call integrals%construct_cholesky_ij(L_ij_J, t1, first_i, last_i, first_j, last_j)
-         call integrals%construct_cholesky_ai(L_ak_J, t1, first_a, last_a, first_k, last_k)
+         if (present(t1)) then
+!
+            call integrals%construct_cholesky_ij(L_ij_J, t1, first_i, last_i, first_j, last_j)
+            call integrals%construct_cholesky_ai(L_ak_J, t1, first_a, last_a, first_k, last_k)
+!
+         else
+!
+            call integrals%read_cholesky_ij_t1(L_ij_J, first_i, last_i, first_j, last_j)
+            call integrals%read_cholesky_ai_t1(L_ak_J, first_a, last_a, first_k, last_k)
+!
+         endif
 !
          call dgemm('N', 'T',           &
                      length_i*length_j, &
@@ -941,8 +976,8 @@ contains
    end subroutine construct_oovo_mo_integral_tool
 !
 !
-   subroutine construct_ovoo_mo_integral_tool(integrals, g_iajk, t1, first_i, last_i, first_a, last_a, &
-                                                            first_j, last_j, first_k, last_k, index_restrictions)
+   subroutine construct_ovoo_mo_integral_tool(integrals, g_iajk, first_i, last_i, first_a, last_a, &
+                                                            first_j, last_j, first_k, last_k, index_restrictions, t1)
 !!
 !!    Construct ovoo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -953,7 +988,7 @@ contains
 !
       real(dp), dimension(:,:), intent(inout) :: g_iajk
 !
-      real(dp), dimension(integrals%n_v, integrals%n_o) :: t1
+      real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
       integer(i15), intent(in) :: first_i, last_i
       integer(i15), intent(in) :: first_k, last_k
@@ -985,7 +1020,16 @@ contains
          call mem%alloc(L_ia_J, length_i*length_a, integrals%n_J)
          call mem%alloc(L_jk_J, length_k*length_j, integrals%n_J)
 !
-         call integrals%construct_cholesky_ij(L_jk_J, t1, first_j, last_j, first_k, last_k)
+         if (present(t1)) then
+!
+            call integrals%construct_cholesky_ij(L_jk_J, t1, first_j, last_j, first_k, last_k)
+!
+         else
+!
+            call integrals%read_cholesky_ij_t1(L_jk_J, first_j, last_j, first_k, last_k)
+!
+         endif
+!
          call integrals%read_cholesky_ia(L_ia_J, first_i, last_i, first_a, last_a)
 !
          call dgemm('N', 'T',           &
@@ -1008,8 +1052,8 @@ contains
    end subroutine construct_ovoo_mo_integral_tool
 !
 !
-   subroutine construct_vooo_mo_integral_tool(integrals, g_aijk, t1, first_a, last_a, first_i, last_i, &
-                                                            first_j, last_j, first_k, last_k, index_restrictions)
+   subroutine construct_vooo_mo_integral_tool(integrals, g_aijk, first_a, last_a, first_i, last_i, &
+                                                            first_j, last_j, first_k, last_k, index_restrictions, t1)
 !!
 !!    Construct ovoo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -1020,7 +1064,7 @@ contains
 !
       real(dp), dimension(:,:), intent(inout) :: g_aijk
 !
-      real(dp), dimension(integrals%n_v, integrals%n_o) :: t1
+      real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
       integer(i15), intent(in) :: first_i, last_i
       integer(i15), intent(in) :: first_k, last_k
@@ -1052,8 +1096,17 @@ contains
          call mem%alloc(L_ai_J, length_i*length_a, integrals%n_J)
          call mem%alloc(L_jk_J, length_k*length_j, integrals%n_J)
 !
-         call integrals%construct_cholesky_ij(L_jk_J, t1, first_j, last_j, first_k, last_k)
-         call integrals%construct_cholesky_ai(L_ai_J, t1, first_a, last_a, first_i, last_i)
+         if (present(t1)) then
+!
+            call integrals%construct_cholesky_ij(L_jk_J, t1, first_j, last_j, first_k, last_k)
+            call integrals%construct_cholesky_ai(L_ai_J, t1, first_a, last_a, first_i, last_i)
+!
+         endif
+!
+            call integrals%read_cholesky_ij_t1(L_jk_J, first_j, last_j, first_k, last_k)
+            call integrals%read_cholesky_ai_t1(L_ai_J, first_a, last_a, first_i, last_i)
+!
+         endif
 !
          call dgemm('N', 'T',           &
                      length_i*length_a, &
@@ -1070,13 +1123,11 @@ contains
          call mem%dealloc(L_ai_J, length_i*length_a, integrals%n_J)
          call mem%dealloc(L_jk_J, length_k*length_j, integrals%n_J)
 !
-      endif 
-!
    end subroutine construct_vooo_mo_integral_tool
 !
 !
-   subroutine construct_vvoo_mo_integral_tool(integrals, g_abij, t1, first_a, last_a, first_b, last_b, &
-                                                            first_i, last_i, first_j, last_j, index_restrictions)
+   subroutine construct_vvoo_mo_integral_tool(integrals, g_abij, first_a, last_a, first_b, last_b, &
+                                                            first_i, last_i, first_j, last_j, index_restrictions, t1)
 !!
 !!    Construct vvoo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -1087,7 +1138,7 @@ contains
 !
       real(dp), dimension(:,:), intent(inout) :: g_abij
 !
-      real(dp), dimension(integrals%n_v, integrals%n_o) :: t1
+      real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
       integer(i15), intent(in) :: first_i, last_i
       integer(i15), intent(in) :: first_b, last_b
@@ -1119,8 +1170,17 @@ contains
          call mem%alloc(L_ab_J, length_a*length_b, integrals%n_J)
          call mem%alloc(L_ij_J, length_i*length_j, integrals%n_J)
 !
-         call integrals%construct_cholesky_ij(L_ij_J, t1, first_i, last_i, first_j, last_j)
-         call integrals%construct_cholesky_ab(L_ab_J, t1, first_a, last_a, first_b, last_b)
+         if (present(t1)) then
+!
+            call integrals%construct_cholesky_ij(L_ij_J, t1, first_i, last_i, first_j, last_j)
+            call integrals%construct_cholesky_ab(L_ab_J, t1, first_a, last_a, first_b, last_b)
+!
+         else
+!
+            call integrals%read_cholesky_ij_t1(L_ij_J, first_i, last_i, first_j, last_j)
+            call integrals%read_cholesky_ab_t1(L_ab_J, first_a, last_a, first_b, last_b)
+!
+         endif
 !
          call dgemm('N', 'T',           &
                      length_a*length_b, &
@@ -1143,8 +1203,8 @@ contains
 !
 !
 !
-   subroutine construct_oovv_mo_integral_tool(integrals, g_ijab, t1, first_i, last_i, first_j, last_j, &
-                                                            first_a, last_a, first_b, last_b, index_restrictions)
+   subroutine construct_oovv_mo_integral_tool(integrals, g_ijab, first_i, last_i, first_j, last_j, &
+                                                            first_a, last_a, first_b, last_b, index_restrictions, t1)
 !!
 !!    Construct oovv
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -1155,7 +1215,7 @@ contains
 !
       real(dp), dimension(:,:), intent(inout) :: g_ijab
 !
-      real(dp), dimension(integrals%n_v, integrals%n_o) :: t1
+      real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
       integer(i15), intent(in) :: first_i, last_i
       integer(i15), intent(in) :: first_b, last_b
@@ -1187,8 +1247,17 @@ contains
          call mem%alloc(L_ab_J, length_a*length_b, integrals%n_J)
          call mem%alloc(L_ij_J, length_i*length_j, integrals%n_J)
 !
-         call integrals%construct_cholesky_ij(L_ij_J, t1, first_i, last_i, first_j, last_j)
-         call integrals%construct_cholesky_ab(L_ab_J, t1, first_a, last_a, first_b, last_b)
+         if (present(t1)) then
+!
+            call integrals%construct_cholesky_ij(L_ij_J, t1, first_i, last_i, first_j, last_j)
+            call integrals%construct_cholesky_ab(L_ab_J, t1, first_a, last_a, first_b, last_b)
+!
+         else
+!
+            call integrals%read_cholesky_ij_t1(L_ij_J, first_i, last_i, first_j, last_j)
+            call integrals%read_cholesky_ab_t1(L_ab_J, first_a, last_a, first_b, last_b)
+!
+         endif
 !
          call dgemm('N', 'T',           &
                      length_i*length_j, &
@@ -1210,8 +1279,8 @@ contains
    end subroutine construct_oovv_mo_integral_tool
 !
 !
-   subroutine construct_voov_mo_integral_tool(integrals, g_aijb, t1, first_a, last_a, first_i, last_i, &
-                                                            first_j, last_j, first_b, last_b, index_restrictions)
+   subroutine construct_voov_mo_integral_tool(integrals, g_aijb, first_a, last_a, first_i, last_i, &
+                                                            first_j, last_j, first_b, last_b, index_restrictions, t1)
 !!
 !!    Construct voov
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -1222,7 +1291,7 @@ contains
 !
       real(dp), dimension(:,:), intent(inout) :: g_aijb
 !
-      real(dp), dimension(integrals%n_v, integrals%n_o) :: t1
+      real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
       integer(i15), intent(in) :: first_i, last_i
       integer(i15), intent(in) :: first_b, last_b
@@ -1254,7 +1323,16 @@ contains
          call mem%alloc(L_ai_J, length_a*length_i, integrals%n_J)
          call mem%alloc(L_jb_J, length_b*length_j, integrals%n_J)
 !
-         call integrals%construct_cholesky_ai(L_ai_J, t1, first_a, last_a, first_i, last_i)
+         if (present(t1)) then
+!
+            call integrals%construct_cholesky_ai(L_ai_J, t1, first_a, last_a, first_i, last_i)
+!
+         else
+!
+            call integrals%read_cholesky_ai_t1(L_ai_J, first_a, last_a, first_i, last_i)
+!
+         endif
+!
          call integrals%read_cholesky_ia(L_jb_J, first_j, last_j, first_b, last_b)
 !
          call dgemm('N', 'T',           &
@@ -1277,8 +1355,8 @@ contains
    end subroutine construct_voov_mo_integral_tool
 !
 !
-   subroutine construct_ovvo_mo_integral_tool(integrals, g_iabj, t1, first_i, last_i, first_a, last_a, &
-                                                            first_b, last_b, first_j, last_j, index_restrictions)
+   subroutine construct_ovvo_mo_integral_tool(integrals, g_iabj, first_i, last_i, first_a, last_a, &
+                                                            first_b, last_b, first_j, last_j, index_restrictions, t1)
 !!
 !!    Construct voov
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -1289,7 +1367,7 @@ contains
 !
       real(dp), dimension(:,:), intent(inout) :: g_iabj
 !
-      real(dp), dimension(integrals%n_v, integrals%n_o) :: t1
+      real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
       integer(i15), intent(in) :: first_i, last_i
       integer(i15), intent(in) :: first_b, last_b
@@ -1321,7 +1399,16 @@ contains
          call mem%alloc(L_ia_J, length_a*length_i, integrals%n_J)
          call mem%alloc(L_bj_J, length_b*length_j, integrals%n_J)
 !
-         call integrals%construct_cholesky_ai(L_bj_J, t1, first_b, last_b, first_j, last_j)
+         if (present(t1)) then
+!
+            call integrals%construct_cholesky_ai(L_bj_J, t1, first_b, last_b, first_j, last_j)
+!
+         else
+!
+            call integrals%read_cholesky_ai_t1(L_bj_J, first_b, last_b, first_j, last_j)
+!
+         endif
+!
          call integrals%read_cholesky_ia(L_ia_J, first_i, last_i, first_a, last_a)
 !
          call dgemm('N', 'T',           &
@@ -1437,8 +1524,8 @@ contains
    end subroutine read_ovov_mo_integral_tool
 !
 !
-   subroutine construct_vovo_mo_integral_tool(integrals, g_aibj, t1, first_a, last_a, first_i, last_i, &
-                                                            first_b, last_b, first_j, last_j, index_restrictions)
+   subroutine construct_vovo_mo_integral_tool(integrals, g_aibj, first_a, last_a, first_i, last_i, &
+                                                            first_b, last_b, first_j, last_j, index_restrictions, t1)
 !!
 !!    Construct vovo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -1449,7 +1536,7 @@ contains
 !
       real(dp), dimension(:,:), intent(inout) :: g_aibj
 !
-      real(dp), dimension(integrals%n_v, integrals%n_o) :: t1
+      real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
       integer(i15), intent(in) :: first_i, last_i
       integer(i15), intent(in) :: first_a, last_a
@@ -1483,8 +1570,17 @@ contains
             call mem%alloc(L_ai_J, length_a*length_i, integrals%n_J)
             call mem%alloc(L_bj_J, length_b*length_j, integrals%n_J)
 !
-            call integrals%construct_cholesky_ai(L_ai_J, t1, first_a, last_a, first_i, last_i)
-            call integrals%construct_cholesky_ai(L_bj_J, t1, first_b, last_b, first_j, last_j)
+            if (present(t1)) then
+!
+               call integrals%construct_cholesky_ai(L_ai_J, t1, first_a, last_a, first_i, last_i)
+               call integrals%construct_cholesky_ai(L_bj_J, t1, first_b, last_b, first_j, last_j)
+!
+            else
+!
+               call integrals%read_cholesky_ai_t1(L_ai_J, first_a, last_a, first_i, last_i)
+               call integrals%read_cholesky_ai_t1(L_bj_J, first_b, last_b, first_j, last_j)
+!
+            endif
 !
             call dgemm('N', 'T',           &
                         length_a*length_i, &
@@ -1505,7 +1601,15 @@ contains
 !
             call mem%alloc(L_ai_J, length_a*length_i, integrals%n_J)
 !
-            call integrals%construct_cholesky_ai(L_ai_J, t1, first_a, last_a, first_i, last_i)
+            if (present(t1)) then
+!      
+               call integrals%construct_cholesky_ai(L_ai_J, t1, first_a, last_a, first_i, last_i)
+!
+            else
+!
+               call integrals%read_cholesky_ai_t1(L_ai_J, first_a, last_a, first_i, last_i)
+!
+            endif
 !
             call dgemm('N', 'T',           &
                         length_i*length_a, &
@@ -1528,8 +1632,8 @@ contains
    end subroutine construct_vovo_mo_integral_tool
 !
 !
-   subroutine construct_vvvo_mo_integral_tool(integrals, g_abci, t1, first_a, last_a, first_b, last_b, &
-                                                            first_c, last_c, first_i, last_i, index_restrictions)
+   subroutine construct_vvvo_mo_integral_tool(integrals, g_abci, first_a, last_a, first_b, last_b, &
+                                                            first_c, last_c, first_i, last_i, index_restrictions, t1)
 !!
 !!    Construct vvvo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -1540,7 +1644,7 @@ contains
 !
       real(dp), dimension(:,:), intent(inout) :: g_abci
 !
-      real(dp), dimension(integrals%n_v, integrals%n_o) :: t1
+      real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
       integer(i15), optional, intent(in) :: first_i, last_i
       integer(i15), optional, intent(in) :: first_a, last_a
@@ -1572,8 +1676,17 @@ contains
          call mem%alloc(L_ab_J, length_a*length_b, integrals%n_J)
          call mem%alloc(L_ci_J, length_c*length_i, integrals%n_J)
 !
-         call integrals%construct_cholesky_ab(L_ab_J, t1, first_a, last_a, first_b, last_b)
-         call integrals%construct_cholesky_ai(L_ci_J, t1, first_c, last_c, first_i, last_i)
+         if (present(t1)) then
+!
+            call integrals%construct_cholesky_ab(L_ab_J, t1, first_a, last_a, first_b, last_b)
+            call integrals%construct_cholesky_ai(L_ci_J, t1, first_c, last_c, first_i, last_i)
+!
+         else
+!
+            call integrals%read_cholesky_ab_t1(L_ab_J, first_a, last_a, first_b, last_b)
+            call integrals%read_cholesky_ai_t1(L_ci_J, first_c, last_c, first_i, last_i)
+!
+         endif
 !
          call dgemm('N', 'T',           &
                      length_a*length_b, &
@@ -1595,8 +1708,8 @@ contains
    end subroutine construct_vvvo_mo_integral_tool
 !
 !
-   subroutine construct_vvov_mo_integral_tool(integrals, g_abic, t1, first_a, last_a, first_b, last_b, &
-                                                            first_i, last_i, first_c, last_c, index_restrictions)
+   subroutine construct_vvov_mo_integral_tool(integrals, g_abic, first_a, last_a, first_b, last_b, &
+                                                            first_i, last_i, first_c, last_c, index_restrictions, t1)
 !!
 !!    Construct vvov
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -1607,7 +1720,7 @@ contains
 !
       real(dp), dimension(:,:), intent(inout) :: g_abic
 !
-      real(dp), dimension(integrals%n_v, integrals%n_o) :: t1
+      real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
       integer(i15), optional, intent(in) :: first_i, last_i
       integer(i15), optional, intent(in) :: first_a, last_a
@@ -1639,7 +1752,16 @@ contains
          call mem%alloc(L_ab_J, length_a*length_b, integrals%n_J)
          call mem%alloc(L_ic_J, length_c*length_i, integrals%n_J)
 !
-         call integrals%construct_cholesky_ab(L_ab_J, t1, first_a, last_a, first_b, last_b)
+         if (present(t1)) then
+!
+            call integrals%construct_cholesky_ab(L_ab_J, t1, first_a, last_a, first_b, last_b)
+!
+         else
+!
+            call integrals%read_cholesky_ab_t1(L_ab_J, first_a, last_a, first_b, last_b)
+!
+         endif
+!
          call integrals%read_cholesky_ia(L_ic_J, first_i, last_i, first_c, last_c)
 !
          call dgemm('N', 'T',           &
@@ -1662,8 +1784,8 @@ contains
    end subroutine construct_vvov_mo_integral_tool
 !
 !
-   subroutine construct_vovv_mo_integral_tool(integrals, g_aibc, t1, first_a, last_a, first_i, last_i, &
-                                                            first_b, last_b, first_c, last_c, index_restrictions)
+   subroutine construct_vovv_mo_integral_tool(integrals, g_aibc, first_a, last_a, first_i, last_i, &
+                                                            first_b, last_b, first_c, last_c, index_restrictions, t1)
 !!
 !!    Construct vovv
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -1674,7 +1796,7 @@ contains
 !
       real(dp), dimension(:,:), intent(inout) :: g_aibc
 !
-      real(dp), dimension(integrals%n_v, integrals%n_o) :: t1
+      real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
       integer(i15), optional, intent(in) :: first_i, last_i
       integer(i15), optional, intent(in) :: first_a, last_a
@@ -1706,8 +1828,17 @@ contains
          call mem%alloc(L_ai_J, length_a*length_i, integrals%n_J)
          call mem%alloc(L_bc_J, length_c*length_b, integrals%n_J)
 !
-         call integrals%construct_cholesky_ai(L_ai_J, t1, first_a, last_a, first_i, last_i)
-         call integrals%construct_cholesky_ab(L_bc_J, t1, first_b, last_b, first_c, last_c)
+         if (present(t1)) then
+!
+            call integrals%construct_cholesky_ai(L_ai_J, t1, first_a, last_a, first_i, last_i)
+            call integrals%construct_cholesky_ab(L_bc_J, t1, first_b, last_b, first_c, last_c)
+!
+         else
+!
+            call integrals%read_cholesky_ai_t1(L_ai_J, first_a, last_a, first_i, last_i)
+            call integrals%read_cholesky_ab_t1(L_bc_J, first_b, last_b, first_c, last_c)
+!
+         endif
 !
          call dgemm('N', 'T',           &
                      length_a*length_i, &
@@ -1729,8 +1860,8 @@ contains
    end subroutine construct_vovv_mo_integral_tool
 !
 !
-   subroutine construct_ovvv_mo_integral_tool(integrals, g_iabc, t1, first_i, last_i, first_a, last_a, &
-                                                            first_b, last_b, first_c, last_c, index_restrictions)
+   subroutine construct_ovvv_mo_integral_tool(integrals, g_iabc, first_i, last_i, first_a, last_a, &
+                                                            first_b, last_b, first_c, last_c, index_restrictions, t1)
 !!
 !!    Construct ovvv
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -1741,7 +1872,7 @@ contains
 !
       real(dp), dimension(:,:), intent(inout) :: g_iabc
 !
-      real(dp), dimension(integrals%n_v, integrals%n_o) :: t1
+      real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
       integer(i15), optional, intent(in) :: first_i, last_i
       integer(i15), optional, intent(in) :: first_a, last_a
@@ -1774,7 +1905,16 @@ contains
          call mem%alloc(L_bc_J, length_c*length_b, integrals%n_J)
 !
          call integrals%read_cholesky_ia(L_ia_J, first_a, last_a, first_i, last_i)
-         call integrals%construct_cholesky_ab(L_bc_J, t1, first_b, last_b, first_c, last_c)
+!
+         if (present(t1)) then
+!
+            call integrals%construct_cholesky_ab(L_bc_J, t1, first_b, last_b, first_c, last_c)
+!
+         else
+!
+            call integrals%read_cholesky_ab_t1(L_bc_J, first_b, last_b, first_c, last_c)
+!
+         endif
 !
          call dgemm('N', 'T',           &
                      length_a*length_i, &
@@ -1796,8 +1936,8 @@ contains
    end subroutine construct_ovvv_mo_integral_tool
 !
 !
-   subroutine construct_vvvv_mo_integral_tool(integrals, g_abcd, t1, first_a, last_a, first_b, last_b, &
-                                                            first_c, last_c, first_d, last_d, index_restrictions)
+   subroutine construct_vvvv_mo_integral_tool(integrals, g_abcd, first_a, last_a, first_b, last_b, &
+                                                            first_c, last_c, first_d, last_d, index_restrictions, t1)
 !!
 !!    Construct vvvv
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -1807,9 +1947,9 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals 
 !
-      real(dp), dimension(:,:), intent(inout) :: g_vvvv
+      real(dp), dimension(:,:), intent(inout) :: g_abcd
 !
-      real(dp), dimension(integrals%n_v, integrals%n_o) :: t1
+      real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
       integer(i15), intent(in) :: first_a, last_a
       integer(i15), intent(in) :: first_b, last_b
@@ -1843,8 +1983,17 @@ contains
             call mem%alloc(L_ab_J, length_a*length_b, integrals%n_J)
             call mem%alloc(L_cd_J, length_c*length_d, integrals%n_J)
 !
-            call integrals%construct_cholesky_ab(L_ab_J, t1, first_a, last_a, first_b, last_b)
-            call integrals%construct_cholesky_ab(L_cd_J, t1, first_c, last_c, first_d, last_d)
+            if (present(t1)) then
+!
+               call integrals%construct_cholesky_ab(L_ab_J, t1, first_a, last_a, first_b, last_b)
+               call integrals%construct_cholesky_ab(L_cd_J, t1, first_c, last_c, first_d, last_d)
+!
+            else
+!
+               call integrals%read_cholesky_ab_t1(L_ab_J, first_a, last_a, first_b, last_b)
+               call integrals%read_cholesky_ab_t1(L_cd_J, first_c, last_c, first_d, last_d)
+!
+            endif
 !
             call dgemm('N', 'T',           &
                         length_a*length_b, &
@@ -1865,7 +2014,15 @@ contains
 !
             call mem%alloc(L_ab_J, length_a*length_b, integrals%n_J)
 !
-            call integrals%construct_cholesky_ab(L_ab_J, t1, first_a, last_a, first_b, last_b)
+            if (present(t1)) then
+!
+               call integrals%construct_cholesky_ab(L_ab_J, t1, first_a, last_a, first_b, last_b)
+!
+            else
+!
+               call integrals%read_cholesky_ab_t1(L_ab_J, first_a, last_a, first_b, last_b)
+!
+            endif
 !
             call dgemm('N', 'T',           &
                         length_a*length_b, &
