@@ -1008,17 +1008,20 @@ contains
       real(dp), dimension(:,:), allocatable :: sp_eri_schwarz, sp_density_schwarz
 !
       real(dp), dimension(:,:), allocatable :: h_wx, h_AB
-      integer(i15) :: x, y, z, xy, yz, xz, zz
+      integer(i15) :: w, x, y, z, wx, yz, wz, yx
 !
-      integer(i15) :: A, B, C, skip, thread, omp_get_thread_num
+      integer(i15) :: A, B, C, D, skip, thread, omp_get_thread_num, atom
 !
       type(interval) :: A_interval
       type(interval) :: B_interval
       type(interval) :: C_interval
+      type(interval) :: D_interval
 !
       real(dp) :: maximum
 !
-      real(dp), dimension(:,:), allocatable :: g, g_C, g_K, D
+      real(dp), dimension(:,:), allocatable :: g, g_C, g_K, D_yz
+!
+      integer(i15), dimension(:,:), allocatable :: shells_on_atoms
 !!
 !     Set thresholds to ignore Coulomb and exchange terms,
 !     as well as the desired Libint integral precision  
@@ -1038,7 +1041,7 @@ contains
 !
      call mem%alloc(sp_density_schwarz, n_s, n_s)
 !
-!$omp parallel do private(A, B, A_interval, B_interval, D, maximum) schedule(dynamic)
+!$omp parallel do private(A, B, A_interval, B_interval, D_yz, maximum) schedule(dynamic)
       do A = 1, n_s
 !
          A_interval = wf%system%shell_limits(A)
@@ -1047,13 +1050,13 @@ contains
 !
             B_interval = wf%system%shell_limits(A)
 !
-            call mem%alloc(D, (A_interval%size), (B_interval%size))
+            call mem%alloc(D_yz, (A_interval%size), (B_interval%size))
 !
-            D = wf%ao_density(A_interval%first : A_interval%last, B_interval%first : B_interval%last)
+            D_yz = wf%ao_density(A_interval%first : A_interval%last, B_interval%first : B_interval%last)
 !
-            maximum = get_abs_max(D, (A_interval%size)*(B_interval%size))
+            maximum = get_abs_max(D_yz, (A_interval%size)*(B_interval%size))
 !
-            call mem%dealloc(D, (A_interval%size), (B_interval%size))
+            call mem%dealloc(D_yz, (A_interval%size), (B_interval%size))
 !
             sp_density_schwarz(A, B) = maximum
             sp_density_schwarz(B, A) = maximum
@@ -1091,12 +1094,12 @@ contains
       call mem%alloc_int(shells_on_atoms, wf%system%n_atoms, 2) ! [first, last]
 !
       shells_on_atoms(1, 1) = 1
-      shells_on_atoms(1, 2) = wf%system%atom(1)%n_shells
+      shells_on_atoms(1, 2) = wf%system%atoms(1)%n_shells
 !
-      do i = 2, wf%system%n_atoms
+      do atom = 2, wf%system%n_atoms
 !
-         shells_on_atoms(i, 1) =  shells_on_atoms(i - 1, 1) + 1
-         shells_on_atoms(i, 2) =  shells_on_atoms(i, 1) + wf%system%atom(i)%n_shells - 1
+         shells_on_atoms(atom, 1) =  shells_on_atoms(atom - 1, 1) + 1
+         shells_on_atoms(atom, 2) =  shells_on_atoms(atom, 1) + wf%system%atoms(atom)%n_shells - 1
 !
       enddo
 !
@@ -1120,11 +1123,11 @@ contains
 !           
             do atom = 1, wf%system%n_atoms
 !
-               do C = shells_on_atoms(i, 1), shells_on_atoms(i, 2)
+               do C = shells_on_atoms(atom, 1), shells_on_atoms(atom, 2)
 !
                   C_interval = wf%system%shell_limits(C)
 !
-                  do D = shells_on_atoms(i, 1), shells_on_atoms(i, 2)
+                  do D = shells_on_atoms(atom, 1), shells_on_atoms(atom, 2)
 !
                      D_interval = wf%system%shell_limits(D)
 !
@@ -1152,7 +1155,6 @@ contains
                                     wf%ao_fock(w, x) = wf%ao_fock(w, x) + (g_C(wx, yz))*wf%ao_density(y, z)
 !
                                  enddo
-!
                               enddo
                            enddo
                         enddo
@@ -1171,6 +1173,7 @@ contains
 !
                                     wf%ao_fock(w, x) = wf%ao_fock(w, x) + (g_C(wx, yz))*wf%ao_density(y, z)
 !
+                                 enddo
                               enddo
                            enddo
                         enddo
@@ -1199,11 +1202,11 @@ contains
 !           
             do atom = 1, wf%system%n_atoms
 !
-               do C = shells_on_atoms(i, 1), shells_on_atoms(i, 2)
+               do C = shells_on_atoms(atom, 1), shells_on_atoms(atom, 2)
 !
                   C_interval = wf%system%shell_limits(C)
 !
-                  do D = shells_on_atoms(i, 1), shells_on_atoms(i, 2)
+                  do D = shells_on_atoms(atom, 1), shells_on_atoms(atom, 2)
 !
                      D_interval = wf%system%shell_limits(D)
 !
@@ -1246,6 +1249,7 @@ contains
 !
                                     wf%ao_fock(w, x) = wf%ao_fock(w, x) + (- half*g_K(wz, yx))*wf%ao_density(y, z)
 !
+                                 enddo
                               enddo
                            enddo
                         enddo
