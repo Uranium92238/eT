@@ -1807,7 +1807,7 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals 
 !
-      real(dp), dimension(:,:), intent(inout) :: g_abcd
+      real(dp), dimension(:,:), intent(inout) :: g_vvvv
 !
       real(dp), dimension(integrals%n_v, integrals%n_o) :: t1
 !
