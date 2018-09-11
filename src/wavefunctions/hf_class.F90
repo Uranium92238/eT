@@ -794,18 +794,18 @@ contains
 !
       class(hf) :: wf
 !
-      call dgemm('N', 'T',                   &
-                  wf%n_ao,                   &
-                  wf%n_ao,                   &
-                  wf%n_o,                    &
-                  two,                       &
-                  wf%orbital_coefficients,   &
-                  wf%n_ao,                   &
-                  wf%orbital_coefficients,   &
-                  wf%n_ao,                   &
-                  zero,                      &
-                  wf%ao_density,             &
-                  wf%n_ao)
+     call dgemm('N', 'T',                   &
+                 wf%n_ao,                   &
+                 wf%n_ao,                   &
+                 wf%n_o,                    &
+                 two,                       &
+                 wf%orbital_coefficients,   &
+                 wf%n_ao,                   &
+                 wf%orbital_coefficients,   &
+                 wf%n_ao,                   &
+                 zero,                      &
+                 wf%ao_density,             &
+                 wf%n_ao)
 !
    end subroutine construct_ao_density_hf
 !

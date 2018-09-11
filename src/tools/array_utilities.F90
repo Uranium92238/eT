@@ -1379,6 +1379,83 @@ contains
    end subroutine print_vector
 !
 !
+   subroutine simple_dgemm(first, second, m, n, k, alpha, A, B, gamma, C)
+!!
+!!    Simple dgemm 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!
+!!    A wrapper for dgemm in the special case where we do a full matrix multiplication,
+!!    rather than a restricted one (with offsets on beginning element or different 
+!!    leading dimensions, etc.):
+!!
+!!       C = gamma C + alpha AB
+!!
+!!    Here, C is m x n
+!!          A is m x k 
+!!          B is k x n 
+!!
+!!    The characters 'first' and 'second' can either be 'N' or 'T' which denotes whether 
+!!    to  respectively not transpose or to transpose the first and second matrices, A and B. 
+!!
+!!    Simple dgemm is slightly more compact and might be useful to avoid making leading 
+!!    dimension bugs - if you worry about that kind of thing - whenever such functionality 
+!!    is not needed.  
+!!
+      implicit none 
+!
+      character(len=1), intent(in) :: first, second 
+!
+      integer(i15), intent(in) :: m, n, k 
+!
+      real(dp), intent(in) :: alpha, gamma 
+!
+      real(dp), dimension(:, :), intent(in) :: A ! (m x k) if normal; (k x m) if transpose 
+      real(dp), dimension(:, :), intent(in) :: B ! (k x n) if normal; (n x k) if transpose 
+!
+      real(dp), dimension(m, n), intent(inout) :: C 
+!
+      integer(i15) :: lda, ldb
+!
+!     Determine leading dimensions 
+!
+      if (first == 'N') then 
+!
+         lda = m 
+!
+      else ! first == 'T'
+!
+         ldb = k
+!
+      endif
+!
+      if (second == 'N') then 
+!
+         ldb = k 
+!
+      else ! second == 'T'
+!
+         ldb = n 
+!
+      endif
+!
+!     Do matrix multiplication 
+!
+      call dgemm(first, second, &
+                 m,             &
+                 n,             &
+                 k,             &
+                 alpha,         &
+                 A,             &
+                 lda,           &
+                 B,             &
+                 ldb,           &
+                 gamma,         &
+                 C,             &
+                 m)
+!
+   end subroutine simple_dgemm
+!
+!
 end module array_utilities
 
 
