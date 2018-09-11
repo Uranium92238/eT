@@ -329,8 +329,8 @@ contains
 !
 !     Special case: the t1-transformed g_iajb integrals are equal to the MO integrals 
 !
-      call wf%integrals%read_ovov(g_iajb, first_i, last_i, first_a, last_a, &
-                                          first_j, last_j, first_b, last_b)
+   !   call wf%integrals%read_ovov(g_iajb, first_i, last_i, first_a, last_a, &
+   !                                       first_j, last_j, first_b, last_b)
 !
    end subroutine get_ovov_ccs
 !
