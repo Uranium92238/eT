@@ -70,7 +70,7 @@ module uhf_class
       procedure :: roothan_hall_update_orbitals      => roothan_hall_update_orbitals_uhf
       procedure :: print_orbital_energies            => print_orbital_energies_uhf
 !
-!     Class variabble initialize and destruct routines
+!     Class variable initialize and destruct routines
 !
       procedure :: initialize_ao_density_a           => initialize_ao_density_a_uhf
       procedure :: initialize_ao_density_b           => initialize_ao_density_b_uhf
@@ -150,8 +150,7 @@ contains
 !!    Written by Eirik F. Kjønstad, Sep 2018 
 !!
 !!    Sets initial AO density (or densities) to the 
-!!    appropriate initial guess requested by the 
-!!    solver.
+!!    appropriate initial guess requested by the solver.
 !!
       implicit none 
 !

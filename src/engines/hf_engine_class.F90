@@ -6,8 +6,8 @@ module hf_engine_class
    use hf_class 
 !
    use arh_hf_solver_class
-   use scf_diis_solver_class
-   use scf_solver_class
+   use scf_diis_hf_solver_class
+   use scf_hf_solver_class
 !
    type hf_engine 
 !
@@ -47,9 +47,9 @@ contains
 !
       class(hf) :: wf 
 !
-      type(arh_hf_solver), allocatable   :: arh
-      type(scf_diis_solver), allocatable :: scf_diis
-      type(scf_solver), allocatable      :: scf
+      type(arh_hf_solver), allocatable      :: arh
+      type(scf_diis_hf_solver), allocatable :: scf_diis
+      type(scf_hf_solver), allocatable      :: scf
 !
       character(len=100) :: algorithm
 !

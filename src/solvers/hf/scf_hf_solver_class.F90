@@ -1,7 +1,7 @@
-module scf_solver_class
+module scf_hf_solver_class
 !
 !!
-!!		Self-consistent field solver class module
+!!		Self-consistent field solver HF solver class module
 !!		Written by Eirik F. Kjønstad, Sep 2018
 !!
 !!    A Roothan-Hall self-consistent field solver. In each iteration, 
@@ -22,33 +22,33 @@ module scf_solver_class
 !
    implicit none
 !
-   type, extends(abstract_hf_solver) :: scf_solver
+   type, extends(abstract_hf_solver) :: scf_hf_solver
 !
 !     Nothing here yet, except variables in ancestor
 !
    contains
 !
-      procedure :: prepare       => prepare_scf_solver
-      procedure :: run           => run_scf_solver
-      procedure :: cleanup       => cleanup_scf_solver
+      procedure :: prepare       => prepare_scf_hf_solver
+      procedure :: run           => run_scf_hf_solver
+      procedure :: cleanup       => cleanup_scf_hf_solver
 !
-      procedure :: print_banner  => print_banner_scf_solver
-      procedure :: print_summary => print_summary_scf_solver
+      procedure :: print_banner  => print_banner_scf_hf_solver
+      procedure :: print_summary => print_summary_scf_hf_solver
 !
-   end type scf_solver
+   end type scf_hf_solver
 !
 !
 contains
 !
 !
-   subroutine prepare_scf_solver(solver, wf)
+   subroutine prepare_scf_hf_solver(solver, wf)
 !!
 !!    Prepare 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(scf_solver) :: solver
+      class(scf_hf_solver) :: solver
 !
       class(hf) :: wf
 !
@@ -66,17 +66,17 @@ contains
       call wf%initialize_density()
       call wf%initialize_fock()
 !
-   end subroutine prepare_scf_solver
+   end subroutine prepare_scf_hf_solver
 !
 !
-   subroutine run_scf_solver(solver, wf)
+   subroutine run_scf_hf_solver(solver, wf)
 !!
 !!    Run 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(scf_solver) :: solver
+      class(scf_hf_solver) :: solver
 !
       class(hf) :: wf
 !
@@ -192,17 +192,17 @@ contains
 !
       endif 
 !
-   end subroutine run_scf_solver
+   end subroutine run_scf_hf_solver
 !
 !
-   subroutine cleanup_scf_solver(solver, wf)
+   subroutine cleanup_scf_hf_solver(solver, wf)
 !!
 !!    Cleanup 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(scf_solver) :: solver
+      class(scf_hf_solver) :: solver
 !
       class(hf) :: wf
 !
@@ -216,17 +216,17 @@ contains
       call wf%destruct_ao_overlap()
       call wf%destruct_fock()
 !
-   end subroutine cleanup_scf_solver
+   end subroutine cleanup_scf_hf_solver
 !
 !
-   subroutine print_banner_scf_solver(solver)
+   subroutine print_banner_scf_hf_solver(solver)
 !!
 !!    Print banner
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none 
 !
-      class(scf_solver) :: solver 
+      class(scf_hf_solver) :: solver 
 !
       write(output%unit, '(/t3,a)') ':: Direct-integral Hartree-Fock self-consistent field solver'
       write(output%unit, '(t3,a/)') ':: E. F. Kjønstad, S. D. Folkestad, 2018'
@@ -240,17 +240,17 @@ contains
 !
       flush(output%unit)
 !
-   end subroutine print_banner_scf_solver
+   end subroutine print_banner_scf_hf_solver
 !
 !
-   subroutine print_summary_scf_solver(solver, wf)
+   subroutine print_summary_scf_hf_solver(solver, wf)
 !!
 !!    Print summary 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none 
 !
-      class(scf_solver) :: solver 
+      class(scf_hf_solver) :: solver 
 !
       class(hf) :: wf 
 !
@@ -261,7 +261,7 @@ contains
 !
       call wf%print_orbital_energies()
 !
-   end subroutine print_summary_scf_solver
+   end subroutine print_summary_scf_hf_solver
 !
 !
-end module scf_solver_class
+end module scf_hf_solver_class
