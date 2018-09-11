@@ -87,6 +87,8 @@ module hf_class
       procedure :: initialize_orbitals                => initialize_orbitals_hf
       procedure :: roothan_hall_update_orbitals       => roothan_hall_update_orbitals_hf
       procedure :: print_orbital_energies             => print_orbital_energies_hf
+      procedure :: mo_transform                       => mo_transform_hf
+      procedure :: mo_transform_and_save_h            => mo_transform_and_save_h_hf
 !
 !     Class variable initialize and destruct routines
 !
@@ -309,6 +311,87 @@ contains
       call print_vector(wf%orbital_energies, wf%n_ao, indent)
 !
    end subroutine print_orbital_energies_hf
+!
+!
+   subroutine mo_transform_and_save_h_hf(wf)
+!!
+!!    MO transform and save h 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none 
+!
+      class(hf) :: wf 
+!
+      real(dp), dimension(:,:), allocatable :: h_wx, h_pq 
+!
+      type(file) :: h_pq_file
+!
+      call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
+      call mem%alloc(h_pq, wf%n_mo, wf%n_mo)
+!
+      call wf%get_ao_h_wx(h_wx)
+      call wf%mo_transform(h_wx, h_pq)
+!
+      call h_pq_file%init('h_pq', 'sequential', 'unformatted')
+      call disk%open_file(h_pq_file, 'readwrite', 'rewind')
+!
+      write(h_pq_file%unit) h_pq 
+!
+      call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
+      call mem%dealloc(h_pq, wf%n_mo, wf%n_mo)     
+!
+   end subroutine mo_transform_and_save_h_hf
+!
+!
+   subroutine mo_transform_hf(wf, X_wx, Y_pq)
+!!
+!!    MO transform 
+!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Performs MO transformation of X and saves the result in Y:
+!!
+!!       Y_pq = sum_wx C_wp X_wx C_xq
+!!
+      implicit none 
+!
+      class(hf), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)    :: X_wx 
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: Y_pq  
+!
+      real(dp), dimension(:,:), allocatable :: Z_wq ! = sum_x X_wx C_xq
+!
+      call mem%alloc(Z_wq, wf%n_ao, wf%n_mo)
+!
+      call dgemm('N', 'N',                 &
+                  wf%n_ao,                 &
+                  wf%n_mo,                 &
+                  wf%n_ao,                 &
+                  one,                     &
+                  X_wx,                    &
+                  wf%n_ao,                 &
+                  wf%orbital_coefficients, & ! C_xq
+                  wf%n_ao,                 &
+                  zero,                    &
+                  Z_wq,                    &
+                  wf%n_ao)
+!
+      call dgemm('T', 'N',                 &
+                  wf%n_mo,                 &
+                  wf%n_mo,                 &
+                  wf%n_ao,                 &
+                  one,                     &
+                  wf%orbital_coefficients, & ! C_wp 
+                  wf%n_ao,                 &
+                  Z_wq,                    &
+                  wf%n_ao,                 &
+                  zero,                    &
+                  Y_pq,                    &
+                  wf%n_mo)
+!
+      call mem%dealloc(Z_wq, wf%n_ao, wf%n_mo)
+!
+   end subroutine mo_transform_hf
 !
 !
    subroutine set_initial_ao_density_guess_hf(wf, guess)

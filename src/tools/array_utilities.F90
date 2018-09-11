@@ -1391,8 +1391,8 @@ contains
 !!       C = gamma C + alpha AB
 !!
 !!    Here, C is m x n
-!!          A is m x k 
-!!          B is k x n 
+!!          A is either m x k or k x m
+!!          B is either k x n or n x k 
 !!
 !!    The characters 'first' and 'second' can either be 'N' or 'T' which denotes whether 
 !!    to  respectively not transpose or to transpose the first and second matrices, A and B. 

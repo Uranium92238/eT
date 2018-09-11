@@ -20,8 +20,6 @@ module ccs_class
 !
    type, extends(wavefunction):: ccs
 !
-!     The T1-transformed Fock matrix
-!
       real(dp), dimension(:,:), allocatable :: fock_ij
       real(dp), dimension(:,:), allocatable :: fock_ia
       real(dp), dimension(:,:), allocatable :: fock_ai
@@ -33,12 +31,16 @@ module ccs_class
 !
       real(dp), dimension(:,:), allocatable :: t1
 !
-   contains
+      integer(i15) :: n_amplitudes 
 !
-!     Prepare and cleanup wavefunction
+      real(dp) :: hf_energy 
+!
+   contains
 !
       procedure :: prepare => prepare_ccs
       procedure :: cleanup   => cleanup_ccs
+!
+      procedure :: initialize_amplitudes => initialize_amplitudes_ccs 
 !
       procedure :: initialize_fock_ij => initialize_fock_ij_ccs
       procedure :: initialize_fock_ia => initialize_fock_ia_ccs
@@ -47,7 +49,13 @@ module ccs_class
 !
       procedure :: initialize_fock_diagonal => initialize_fock_diagonal_ccs
 !
-      procedure :: initialize_t1 => initialize_t1_ccs
+      procedure :: initialize_t1                => initialize_t1_ccs
+      procedure :: set_initial_amplitudes_guess => set_initial_amplitudes_guess_ccs
+      procedure :: calculate_energy             => calculate_energy_ccs
+      procedure :: construct_fock               => construct_fock_ccs
+      procedure :: t1_transform                 => t1_transform_ccs
+      procedure :: set_amplitudes               => set_amplitudes_ccs 
+      procedure :: get_amplitudes               => get_amplitudes_ccs 
 !
       procedure :: destruct_fock_ij => destruct_fock_ij_ccs
       procedure :: destruct_fock_ia => destruct_fock_ia_ccs
@@ -59,6 +67,8 @@ module ccs_class
       procedure :: destruct_t1 => destruct_t1_ccs
 !
       procedure :: get_ovov => get_ovov_ccs
+!
+      procedure :: set_fock                => set_fock_ccs
 !
    end type ccs
 !
@@ -87,6 +97,10 @@ contains
       wf%n_mo   = ref_wf%n_mo
       wf%n_o    = ref_wf%n_o
       wf%n_v    = ref_wf%n_v
+!
+      wf%hf_energy = ref_wf%energy
+!
+      wf%n_amplitudes = (wf%n_o)*(wf%n_v)
 !
       call wf%initialize_fock_ij()
       call wf%initialize_fock_ia()
@@ -124,6 +138,356 @@ contains
 !     Nothing here yet
 !
    end subroutine cleanup_ccs
+!
+!
+   subroutine initialize_amplitudes_ccs(wf)
+!!
+!!    Initialize amplitudes 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Allocates the amplitudes. This routine must be overwritten in 
+!!    descendants which have more amplitudes. 
+!!
+      implicit none 
+!
+      class(ccs) :: wf 
+!
+      call wf%initialize_t1()
+!
+   end subroutine initialize_amplitudes_ccs
+!
+!
+   subroutine set_amplitudes_ccs(wf, amplitudes)
+!!
+!!    Set amplitudes 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!
+      implicit none 
+!
+      class(ccs) :: wf  
+!
+      real(dp), dimension(wf%n_amplitudes, 1), intent(in) :: amplitudes
+!
+      call dcopy(wf%n_amplitudes, amplitudes, 1, wf%t1, 1)
+!
+   end subroutine set_amplitudes_ccs
+!
+!
+   subroutine get_amplitudes_ccs(wf, amplitudes)
+!!
+!!    Get amplitudes 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf  
+!
+      real(dp), dimension(wf%n_amplitudes, 1) :: amplitudes
+!
+      call dcopy(wf%n_amplitudes, wf%t1, 1, amplitudes, 1)
+!
+   end subroutine get_amplitudes_ccs
+!
+!
+   subroutine set_initial_amplitudes_guess_ccs(wf)
+!!
+!!    Set initial amplitudes guess 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!
+      implicit none 
+!
+      class(ccs) :: wf 
+!
+      wf%t1 = zero 
+!
+   end subroutine set_initial_amplitudes_guess_ccs
+!
+!
+   subroutine calculate_energy_ccs(wf)
+!!
+!!    Calculate energy 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!
+      implicit none 
+!
+      class(ccs) :: wf 
+!
+      wf%energy = wf%hf_energy
+!
+   end subroutine calculate_energy_ccs
+!
+!
+   subroutine construct_fock_ccs(wf)
+!!
+!!    Construct Fock 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 
+!!
+!!    Constructs the Fock matrix in the t1-transformed MO 
+!!    basis using the MO integrals and the current single 
+!!    amplitudes:
+!!
+!!       F_pq = h_pq + sum_k (2*g_pqkk - g_pkkq)
+!!
+!!    Since the two-electron ERIs are available already 
+!!    t1-transformed, our task is to transform the one-
+!!    electron term, which we assume is on file in the 
+!!    MO basis.
+!!
+      implicit none 
+!
+      class(ccs) :: wf 
+!
+      type(file) :: h_pq_file
+!
+      real(dp), dimension(:,:), allocatable :: F_pq 
+!
+      integer(i15) :: i, j, k, a, b, kj, ii, ij, kk, ik, jj, ji, ai, ib, bi
+      integer(i15) :: aj, ja, ab, ia
+!
+      real(dp), dimension(:,:), allocatable :: g_ij_kl
+      real(dp), dimension(:,:), allocatable :: g_ab_ij
+      real(dp), dimension(:,:), allocatable :: g_ai_jb
+      real(dp), dimension(:,:), allocatable :: g_ia_jk
+      real(dp), dimension(:,:), allocatable :: g_ai_jk
+!
+!     Read MO-transformed h integrals into the  
+!
+      call h_pq_file%init('h_pq', 'sequential', 'unformatted')
+      call disk%open_file(h_pq_file, 'read', 'rewind')
+!
+      call mem%alloc(F_pq, wf%n_mo, wf%n_mo)
+      read(h_pq_file%unit) F_pq 
+!
+      call disk%close_file(h_pq_file)
+!
+!     Perform t1-transformation of F_pq = h_pq  
+!
+      call wf%t1_transform(F_pq)
+!
+!     Occupied-occupied contributions: F_ij = F_ij + sum_k (2*g_ijkk - g_ikkj)
+!
+      call mem%alloc(g_ij_kl, (wf%n_o)**2, (wf%n_o)**2)
+      call wf%get_oooo(g_ij_kl)
+!
+      do i = 1, wf%n_o
+         do j = 1, wf%n_o 
+!
+            ij = wf%n_o*(j - 1) + i
+!
+            do k = 1, wf%n_o
+!
+               ik = wf%n_o*(k - 1) + i
+               kj = wf%n_o*(j - 1) + k
+               kk = wf%n_o*(k - 1) + k
+!
+               F_pq(i, j) = F_pq(i, j) + two*g_ij_kl(ij, kk) - g_ij_kl(ik, kj)
+! 
+            enddo
+!
+         enddo
+      enddo
+!
+      call mem%dealloc(g_ij_kl, (wf%n_o)**2, (wf%n_o)**2)
+!
+!     Occupied-virtual contributions: F_ia = F_ia + sum_j (2*g_iajj - g_ijja)
+!
+      call mem%alloc(g_ia_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
+      call wf%get_ov_oo(g_ia_jk)
+!
+      call mem%alloc(g_ai_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
+      call wf%get_vo_oo(g_ai_jk)
+!
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
+!
+            ia = wf%n_o*(a - 1) + i
+            ai = wf%n_v*(i - 1) + a
+!
+            do j = 1, wf%n_o
+!
+               ja = wf%n_o*(a - 1) + j
+               aj = wf%n_v*(j - 1) + a
+               jj = wf%n_o*(j - 1) + j
+               ji = wf%n_o*(i - 1) + j
+               ij = wf%n_o*(j - 1) + i
+!
+               F_pq(i, a + wf%n_o) = F_pq(i, a + wf%n_o) + two*g_ia_jk(ia, jj) - g_ia_jk(ja, ij)
+               F_pq(a + wf%n_o, i) = F_pq(a + wf%n_o, i) + two*g_ai_jk(ai, jj) - g_ai_jk(aj, ji)
+!
+            enddo
+!
+         enddo
+      enddo
+!
+      call mem%dealloc(g_ia_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
+      call mem%dealloc(g_ai_jk, (wf%n_v)*(wf%n_o), (wf%n_o)**2)
+!
+!     Virtual-virtual contributions: F_ab = h_ab + sum_i (2*g_abii - g_aiib) ::
+!
+      call mem%alloc(g_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
+      call wf%get_vv_oo(g_ab_ij)
+!
+      call mem%alloc(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%get_vo_ov(g_ai_jb)
+!
+      do a = 1, wf%n_v
+         do b = 1, wf%n_v
+!
+            ab = wf%n_v*(b - 1) + a 
+!
+            do i = 1, wf%n_o
+!
+               ii = wf%n_o*(i - 1) + i
+               ai = wf%n_v*(i - 1) + a
+               bi = wf%n_v*(i - 1) + b 
+               ia = wf%n_o*(a - 1) + i
+               ib = wf%n_o*(b - 1) + i
+!
+               F_pq(wf%n_o + a, wf%n_o + b) = F_pq(wf%n_o + a, wf%n_o + b) + two*g_ab_ij(ab, ii) - g_ai_jb(ai,  ib)
+!
+            enddo
+!
+         enddo
+      enddo
+!
+      call mem%dealloc(g_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
+      call mem%dealloc(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+      call wf%set_fock(F_pq)
+      call mem%dealloc(F_pq, wf%n_mo, wf%n_mo)
+!
+   end subroutine construct_fock_ccs
+!
+!
+   subroutine set_fock_ccs(wf, F_pq)
+!!
+!!    Set Fock 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Sets the different blocks of the Fock matrix based on the full 
+!!    matrix sent to the routine.
+!!
+      implicit none 
+!
+      class(ccs) :: wf 
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: F_pq 
+!
+      integer(i15) :: i, j, a, b 
+!
+      do i = 1, wf%n_o
+         do j = 1, wf%n_o
+!
+            wf%fock_ij(i,j) = F_pq(i,j)
+!
+         enddo
+      enddo
+!
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
+!
+            wf%fock_ia(i,a) = F_pq(i, wf%n_o + a)
+            wf%fock_ai(a,i) = F_pq(wf%n_o + a, i)
+!
+         enddo
+      enddo
+!
+      do a = 1, wf%n_v
+         do b = 1, wf%n_v
+!
+            wf%fock_ab(a,b) = F_pq(wf%n_o + a, wf%n_o + b)
+!
+         enddo
+      enddo      
+!
+   end subroutine set_fock_ccs
+!
+!
+   subroutine t1_transform_ccs(wf, Z_pq)
+!!
+!!    T1 transform 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!
+!!    Assumes that Z is in the MO basis and performs the T1 transformation,
+!!
+!!       Z_pq <- sum_rs X_ps Z_sr Y_qr,    i.e.    Z <- X Z Y^T 
+!!
+!!    where
+!!
+!!       X = I - t1 
+!!       Y = I - t1^T 
+!! 
+!!    Here, t1 is a full MO matrix whose only non-zero block is the vir-occ 
+!!    part, where it is equal to t_i^a.
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_mo, wf%n_mo), intent(inout) :: Z_pq 
+!
+      real(dp), dimension(:,:), allocatable :: X, Y 
+!
+      real(dp), dimension(:,:), allocatable :: W ! W_sq = sum_r Z_sr Y_rq^T, intermediate 
+!
+      integer(i15) :: p, i, a
+!
+!     Construct the X and Y arrays 
+!
+      call mem%alloc(X, wf%n_mo, wf%n_mo)
+      call mem%alloc(Y, wf%n_mo, wf%n_mo)
+!
+      do p = 1, wf%n_mo 
+!
+         X(p, p) = one 
+         Y(p, p) = one 
+!
+      enddo 
+!
+      do i = 1, wf%n_o 
+         do a = 1, wf%n_v 
+!
+            X(wf%n_o + a, i) = -wf%t1(a, i)
+            Y(i, wf%n_o + a) = -wf%t1(a, i) 
+!
+         enddo
+      enddo
+!
+!     Construct intermediate W = Z Y^T and then use it to do transformation 
+!
+      call mem%alloc(W, wf%n_mo, wf%n_mo)
+!
+      call dgemm('N', 'T', &
+                  wf%n_mo, &
+                  wf%n_mo, &
+                  wf%n_mo, &
+                  one,     &
+                  Z_pq,    & ! Z_s_r 
+                  wf%n_mo, &
+                  Y,       & ! Y_q_r 
+                  wf%n_mo, &
+                  zero,    &
+                  W,       & ! W_sq = sum_r Z_sr Y_rq 
+                  wf%n_mo) 
+!
+      call dgemm('N', 'N', &
+                  wf%n_mo, &
+                  wf%n_mo, &
+                  wf%n_mo, &
+                  one,     &
+                  X,       &
+                  wf%n_mo, &
+                  W,       &
+                  wf%n_mo, &
+                  zero,    &
+                  Z_pq,    & ! Z_pq = (X W)_pq = sum_s X_ps W_sq = sum_sr X_ps Z_sr Y_rq
+                  wf%n_mo)
+!
+      call mem%dealloc(X, wf%n_mo, wf%n_mo)
+      call mem%dealloc(Y, wf%n_mo, wf%n_mo)
+      call mem%dealloc(W, wf%n_mo, wf%n_mo)
+!
+   end subroutine t1_transform_ccs
 !
 !
    subroutine initialize_fock_ij_ccs(wf)
