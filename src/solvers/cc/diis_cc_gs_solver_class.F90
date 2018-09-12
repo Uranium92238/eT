@@ -271,15 +271,8 @@ contains
 !
       class(diis_cc_gs_solver) :: solver 
 !
-      write(output%unit, '(/t3,a)') ':: Self-consistent field DIIS Hartree-Fock solver'
-      write(output%unit, '(t3,a/)') ':: E. F. Kjønstad, S. D. Folkestad, 2018'
-!
-      write(output%unit, '(t3,a)')  'A DIIS-accelerated Roothan-Hall self-consistent field solver.'
-      write(output%unit, '(t3,a)')  'In other words, a least-square fit toward a zero gradient vector' 
-      write(output%unit, '(t3,a)')  'is performed using the previously recorded Fock matrices and the'
-      write(output%unit, '(t3,a)')  'associated gradients. After each Roothan-Hall update of the density,'
-      write(output%unit, '(t3,a)')  'a DIIS-fitted Fock matrix is used to get the next orbital coefficients,'
-      write(output%unit, '(t3,a)')  'instead of the one produced directly from the AO density matrix.'
+      write(output%unit, '(/t3,a)') ':: DIIS coupled cluster ground state solver'
+      write(output%unit, '(t3,a)')  ':: E. F. Kjønstad, S. D. Folkestad, 2018'
 
       flush(output%unit)
 !

@@ -143,6 +143,8 @@ contains
 !
       enddo
 !
+      call ref_wf%mo_transform_and_save_h()
+!
       call wf%initialize_orbital_coefficients()
       wf%orbital_coefficients = ref_wf%orbital_coefficients
 !
