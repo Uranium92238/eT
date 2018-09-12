@@ -340,6 +340,8 @@ contains
       call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
       call mem%dealloc(h_pq, wf%n_mo, wf%n_mo)     
 !
+      call disk%close_file(h_pq_file)
+!
    end subroutine mo_transform_and_save_h_hf
 !
 !

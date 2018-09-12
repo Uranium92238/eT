@@ -112,13 +112,13 @@ contains
 !
 !     Integrals on file still not implemented
 !
-      eri_file           = .false.
-      eri_t1_file        = .false.
+      integrals%eri_file           = .false.
+      integrals%eri_t1_file        = .false.
 ! 
 !     Initially MO cholesky on file, and not T1-transformed cholesky
 !
-      cholesky_file      = .true.
-      cholesky_t1_file   = .false.
+      integrals%cholesky_file      = .true.
+      integrals%cholesky_t1_file   = .false.
 !
    end subroutine prepare_mo_integral_tool
 !
