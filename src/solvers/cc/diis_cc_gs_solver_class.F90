@@ -27,7 +27,7 @@ module diis_cc_gs_solver_class
    contains
 !     
       procedure :: prepare        => prepare_diis_cc_gs_solver
-      procedure :: run            => run_scf_diis_cc_gs_solver
+      procedure :: run            => run_diis_cc_gs_solver
       procedure :: cleanup        => cleanup_diis_cc_gs_solver
 !
       procedure :: print_banner   => print_banner_diis_cc_gs_solver
@@ -309,7 +309,7 @@ contains
 !!
       implicit none 
 !
-      class(scf_diis_hf_solver) :: solver 
+      class(diis_cc_gs_solver) :: solver 
 !
 ! read stuff 
 !

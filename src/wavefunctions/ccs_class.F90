@@ -57,6 +57,8 @@ module ccs_class
       procedure :: set_amplitudes               => set_amplitudes_ccs 
       procedure :: get_amplitudes               => get_amplitudes_ccs 
 !
+      procedure :: get_orbital_differences => get_orbital_differences_ccs
+!
       procedure :: destruct_fock_ij => destruct_fock_ij_ccs
       procedure :: destruct_fock_ia => destruct_fock_ia_ccs
       procedure :: destruct_fock_ai => destruct_fock_ai_ccs
@@ -547,6 +549,31 @@ contains
       call mem%dealloc(W, wf%n_mo, wf%n_mo)
 !
    end subroutine t1_transform_ccs
+!
+!
+   subroutine get_orbital_differences_ccs(wf, orbital_differences)
+!!
+!!
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(wf%n_amplitudes, 1) :: orbital_differences
+!
+      integer(i15) :: a, i, ai
+!
+      do i = 1, wf%n_o 
+         do a = 1, wf%n_v
+!
+            ai = wf%n_v*(i - 1) + a
+!
+            orbital_differences(ai, 1) = wf%fock_diagonal(a + wf%n_o, 1) - wf%fock_diagonal(i, 1)
+!
+         enddo
+      enddo
+!
+   end subroutine get_orbital_differences_ccs
 !
 !
    subroutine initialize_fock_ij_ccs(wf)
