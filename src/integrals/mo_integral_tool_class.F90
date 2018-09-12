@@ -808,16 +808,19 @@ contains
                         L_kl_J,            &
                         length_k*length_l, &
                         zero,              &
-                        g_ijkl)
+                        g_ijkl,            &
+                        length_i*length_j)
 !
             call mem%dealloc(L_ij_J, length_i*length_j, integrals%n_J)
             call mem%dealloc(L_kl_J, length_k*length_l, integrals%n_J)
 !
          else ! dim_ij = dim_kl
 !
+!
             call mem%alloc(L_ij_J, length_i*length_j, integrals%n_J)
 !
             if (present(t1)) then
+!
 !
                call integrals%construct_cholesky_ij(L_ij_J, t1, first_i, last_i, first_j, last_j)
 !
@@ -837,7 +840,8 @@ contains
                         L_ij_J,            &
                         length_i*length_j, & 
                         zero,              &
-                        g_ijkl)
+                        g_ijkl,            &
+                        length_i*length_j)
 !
             call mem%dealloc(L_ij_J, length_i*length_j, integrals%n_J)
 !
@@ -914,7 +918,8 @@ contains
                      L_ka_J,            &
                      length_k*length_a, &
                      zero,              &
-                     g_ijka)
+                     g_ijka,            &
+                     length_i*length_j)
 !
          call mem%dealloc(L_ij_J, length_i*length_j, integrals%n_J)
          call mem%dealloc(L_ka_J, length_k*length_a, integrals%n_J)
@@ -990,7 +995,8 @@ contains
                      L_ak_J,            &
                      length_k*length_a, &
                      zero,              &
-                     g_ijak)
+                     g_ijak,            &
+                     length_i*length_j)
 !
          call mem%dealloc(L_ij_J, length_i*length_j, integrals%n_J)
          call mem%dealloc(L_ak_J, length_k*length_a, integrals%n_J)
@@ -1066,7 +1072,8 @@ contains
                      L_jk_J,            &
                      length_k*length_j, &
                      zero,              &
-                     g_iajk)
+                     g_iajk,            &
+                     length_i*length_a)
 !
          call mem%dealloc(L_ia_J, length_i*length_a, integrals%n_J)
          call mem%dealloc(L_jk_J, length_k*length_j, integrals%n_J)
@@ -1142,7 +1149,8 @@ contains
                      L_jk_J,            &
                      length_j*length_k, &
                      zero,              &
-                     g_aijk)
+                     g_aijk,            &
+                     length_i*length_a)
 !
          call mem%dealloc(L_ai_J, length_i*length_a, integrals%n_J)
          call mem%dealloc(L_jk_J, length_k*length_j, integrals%n_J)
@@ -1216,7 +1224,8 @@ contains
                      L_ij_J,            &
                      length_i*length_j, &
                      zero,              &
-                     g_abij)
+                     g_abij,            &
+                     length_a*length_b)
 !
          call mem%dealloc(L_ab_J, length_a*length_b, integrals%n_J)
          call mem%dealloc(L_ij_J, length_i*length_j, integrals%n_J)
@@ -1293,7 +1302,8 @@ contains
                      L_ab_J,            &
                      length_a*length_b, &
                      zero,              &
-                     g_ijab)
+                     g_ijab,            &
+                     length_i*length_j)
 !
          call mem%dealloc(L_ab_J, length_a*length_b, integrals%n_J)
          call mem%dealloc(L_ij_J, length_i*length_j, integrals%n_J)
@@ -1369,7 +1379,8 @@ contains
                      L_jb_J,            &
                      length_j*length_b, &
                      zero,              &
-                     g_aijb)
+                     g_aijb,            &
+                     length_a*length_i)
 !
          call mem%dealloc(L_ai_J, length_a*length_i, integrals%n_J)
          call mem%dealloc(L_jb_J, length_b*length_j, integrals%n_J)
@@ -1445,7 +1456,8 @@ contains
                      L_bj_J,            &
                      length_j*length_b, &
                      zero,              &
-                     g_iabj)
+                     g_iabj,            &
+                     length_a*length_i)
 !
          call mem%dealloc(L_ia_J, length_a*length_i, integrals%n_J)
          call mem%dealloc(L_bj_J, length_b*length_j, integrals%n_J)
@@ -1516,7 +1528,8 @@ contains
                         L_jb_J,            &
                         length_j*length_b, &
                         zero,              &
-                        g_iajb)
+                        g_iajb,            &
+                        length_i*length_a)
 !
             call mem%dealloc(L_ia_J, length_i*length_a, integrals%n_J)
             call mem%dealloc(L_jb_J, length_j*length_b, integrals%n_J)
@@ -1537,7 +1550,8 @@ contains
                         L_ia_J,            &
                         length_i*length_a, & 
                         zero,              &
-                        g_iajb)
+                        g_iajb,            &
+                        length_i*length_a)
 !
             call mem%dealloc(L_ia_J, length_i*length_a, integrals%n_J)
 !
@@ -1616,7 +1630,8 @@ contains
                         L_bj_J,            &
                         length_b*length_j, &
                         zero,              &
-                        g_aibj)
+                        g_aibj,            &
+                        length_a*length_i)
 !
             call mem%dealloc(L_ai_J, length_a*length_i, integrals%n_J)
             call mem%dealloc(L_bj_J, length_b*length_j, integrals%n_J)
@@ -1645,7 +1660,8 @@ contains
                         L_ai_J,            &
                         length_i*length_a, & 
                         zero,              &
-                        g_aibj)
+                        g_aibj,            &
+                        length_i*length_a)
 !
             call mem%dealloc(L_ai_J, length_i*length_a, integrals%n_J)
 !
@@ -1722,7 +1738,8 @@ contains
                      L_ci_J,            &
                      length_c*length_i, &
                      zero,              &
-                     g_abci)
+                     g_abci,            &
+                     length_a*length_b)
 !
          call mem%dealloc(L_ab_J, length_a*length_b, integrals%n_J)
          call mem%dealloc(L_ci_J, length_c*length_i, integrals%n_J)
@@ -1798,7 +1815,8 @@ contains
                      L_ic_J,            &
                      length_c*length_i, &
                      zero,              &
-                     g_abic)
+                     g_abic,            &
+                     length_a*length_b)
 !
          call mem%dealloc(L_ab_J, length_a*length_b, integrals%n_J)
          call mem%dealloc(L_ic_J, length_c*length_i, integrals%n_J)
@@ -1874,7 +1892,8 @@ contains
                      L_bc_J,            &
                      length_c*length_b, &
                      zero,              &
-                     g_aibc)
+                     g_aibc,            &
+                     length_a*length_i)
 !
          call mem%dealloc(L_ai_J, length_a*length_i, integrals%n_J)
          call mem%dealloc(L_bc_J, length_c*length_b, integrals%n_J)
@@ -1950,7 +1969,8 @@ contains
                      L_bc_J,            &
                      length_c*length_b, &
                      zero,              &
-                     g_iabc)
+                     g_iabc,            &
+                     length_a*length_i)
 !
          call mem%dealloc(L_ia_J, length_a*length_i, integrals%n_J)
          call mem%dealloc(L_bc_J, length_c*length_b, integrals%n_J)
@@ -2029,7 +2049,8 @@ contains
                         L_cd_J,            &
                         length_c*length_d, &
                         zero,              &
-                        g_abcd)
+                        g_abcd,            &
+                        length_a*length_b)
 !
             call mem%dealloc(L_ab_J, length_a*length_b, integrals%n_J)
             call mem%dealloc(L_cd_J, length_c*length_d, integrals%n_J)
@@ -2058,7 +2079,8 @@ contains
                         L_ab_J,            &
                         length_a*length_b, & 
                         zero,              &
-                        g_abcd)
+                        g_abcd,            &
+                        length_a*length_b)
 !
             call mem%dealloc(L_ab_J, length_a*length_b, integrals%n_J)
 !
