@@ -114,6 +114,9 @@ contains
 !
       wf%name = 'ccs'
 !
+      write(output%unit, *) 'Se 1'
+      flush(output%unit)
+!
       wf%system = ref_wf%system
 !
       wf%n_ao   = ref_wf%n_ao
@@ -130,12 +133,21 @@ contains
       call wf%initialize_fock_ai()
       call wf%initialize_fock_ab()
 !
+      write(output%unit, *) 'Se 2'
+      flush(output%unit)
+!
       call wf%initialize_fock_diagonal()
+!
+      write(output%unit, *) 'Se 3'
+      flush(output%unit)
 !
       wf%fock_ij(:,:) = ref_wf%mo_fock(1 : wf%n_o , 1 : wf%n_o)
       wf%fock_ia(:,:) = ref_wf%mo_fock(1 : wf%n_o , wf%n_o + 1 : wf%n_v)
       wf%fock_ai(:,:) = ref_wf%mo_fock(1 : wf%n_o , wf%n_o + 1 : wf%n_v)
       wf%fock_ab(:,:) = ref_wf%mo_fock( wf%n_o + 1 : wf%n_v , wf%n_o + 1 : wf%n_v)
+!
+      write(output%unit, *) 'Se 4'
+      flush(output%unit)
 !
       do p = 1, wf%n_mo
 !
@@ -147,6 +159,9 @@ contains
 !
       call wf%initialize_orbital_coefficients()
       wf%orbital_coefficients = ref_wf%orbital_coefficients
+!
+      write(output%unit, *) 'Se 5'
+      flush(output%unit)
 !
    end subroutine prepare_ccs
 !
@@ -325,12 +340,22 @@ contains
 !
 !     Perform t1-transformation of F_pq = h_pq  
 !
+      write(output%unit, *) 'Ju 1'
+      flush(output%unit)
+!
+!
       call wf%t1_transform(F_pq)
 !
 !     Occupied-occupied contributions: F_ij = F_ij + sum_k (2*g_ijkk - g_ikkj)
 !
+      write(output%unit, *) 'Ju 2'
+      flush(output%unit)
+!
       call mem%alloc(g_ij_kl, (wf%n_o)**2, (wf%n_o)**2)
       call wf%get_oooo(g_ij_kl)
+!
+      write(output%unit, *) 'Ju 3'
+      flush(output%unit)
 !
       do i = 1, wf%n_o
          do j = 1, wf%n_o 
@@ -350,6 +375,9 @@ contains
          enddo
       enddo
 !
+      write(output%unit, *) 'Ju 4'
+      flush(output%unit)
+!
       call mem%dealloc(g_ij_kl, (wf%n_o)**2, (wf%n_o)**2)
 !
 !     Occupied-virtual contributions: F_ia = F_ia + sum_j (2*g_iajj - g_ijja)
@@ -357,9 +385,15 @@ contains
       call mem%alloc(g_ia_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
       call wf%get_ovoo(g_ia_jk)
 !
+      write(output%unit, *) 'Ju 5'
+      flush(output%unit)
+!
       call mem%alloc(g_ai_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
       flush(output%unit)
       call wf%get_vooo(g_ai_jk)
+!
+      write(output%unit, *) 'Ju 6'
+      flush(output%unit)
 !
       do i = 1, wf%n_o
          do a = 1, wf%n_v
@@ -383,6 +417,9 @@ contains
          enddo
       enddo
 !
+      write(output%unit, *) 'Ju 7'
+      flush(output%unit)
+!
       call mem%dealloc(g_ia_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
       call mem%dealloc(g_ai_jk, (wf%n_v)*(wf%n_o), (wf%n_o)**2)
 !
@@ -391,8 +428,14 @@ contains
       call mem%alloc(g_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
       call wf%get_vvoo(g_ab_ij)
 !
+      write(output%unit, *) 'Ju 8'
+      flush(output%unit)
+!
       call mem%alloc(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call wf%get_voov(g_ai_jb)
+!
+      write(output%unit, *) 'Ju 9'
+      flush(output%unit)
 !
       do a = 1, wf%n_v
          do b = 1, wf%n_v
@@ -413,6 +456,9 @@ contains
 !
          enddo
       enddo
+!
+      write(output%unit, *) 'Ju 10'
+      flush(output%unit)
 !
       call mem%dealloc(g_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
       call mem%dealloc(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))

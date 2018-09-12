@@ -320,6 +320,8 @@ contains
 !
       call wf%destruct_ao_overlap()
 !
+      flush(output%unit)
+!
    end subroutine cleanup_scf_diis_hf_solver
 !
 !
