@@ -114,6 +114,9 @@ contains
 !
       wf%name = 'ccs'
 !
+      write(output%unit, *) 'Se 1'
+      flush(output%unit)
+!
       wf%system = ref_wf%system
 !
       wf%n_ao   = ref_wf%n_ao
@@ -130,12 +133,21 @@ contains
       call wf%initialize_fock_ai()
       call wf%initialize_fock_ab()
 !
+      write(output%unit, *) 'Se 2'
+      flush(output%unit)
+!
       call wf%initialize_fock_diagonal()
+!
+      write(output%unit, *) 'Se 3'
+      flush(output%unit)
 !
       wf%fock_ij(:,:) = ref_wf%mo_fock(1 : wf%n_o , 1 : wf%n_o)
       wf%fock_ia(:,:) = ref_wf%mo_fock(1 : wf%n_o , wf%n_o + 1 : wf%n_v)
       wf%fock_ai(:,:) = ref_wf%mo_fock(1 : wf%n_o , wf%n_o + 1 : wf%n_v)
       wf%fock_ab(:,:) = ref_wf%mo_fock( wf%n_o + 1 : wf%n_v , wf%n_o + 1 : wf%n_v)
+!
+      write(output%unit, *) 'Se 4'
+      flush(output%unit)
 !
       do p = 1, wf%n_mo
 !
@@ -147,6 +159,9 @@ contains
 !
       call wf%initialize_orbital_coefficients()
       wf%orbital_coefficients = ref_wf%orbital_coefficients
+!
+      write(output%unit, *) 'Se 5'
+      flush(output%unit)
 !
    end subroutine prepare_ccs
 !
@@ -331,7 +346,6 @@ contains
 !
       call wf%t1_transform(F_pq)
 !
-      stop
 !     Occupied-occupied contributions: F_ij = F_ij + sum_k (2*g_ijkk - g_ikkj)
 !
       write(output%unit, *) 'Ju 2'

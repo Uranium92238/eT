@@ -265,8 +265,8 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals 
 !
-      integer(i15), optional, intent(in) :: first_i, last_i
-      integer(i15), optional, intent(in) :: first_j, last_j
+      integer(i15), intent(in) :: first_i, last_i
+      integer(i15), intent(in) :: first_j, last_j
 !
       real(dp), dimension(:,:) :: L_ij_J 
 !
