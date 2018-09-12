@@ -54,6 +54,7 @@ module eri_cd_solver_class
 !
       procedure :: invert_overlap_cholesky_vecs           => invert_overlap_cholesky_vecs_eri_cd_solver
       procedure :: cholesky_vecs_diagonal_test            => cholesky_vecs_diagonal_test_eri_cd_solver
+      procedure :: full_test_cholesky_vecs                => full_test_cholesky_vecs_cd_eri_solver
       procedure :: construct_significant_diagonal         => construct_significant_diagonal_eri_cd_solver
       procedure :: construct_significant_diagonal_atomic  => construct_significant_diagonal_atomic_eri_cd_solver
       procedure :: determine_auxilliary_cholesky_basis    => determine_auxilliary_cholesky_basis_eri_cd_solver
@@ -101,10 +102,12 @@ contains
 !
       endif
 !
-      call initialize_coulomb()
-      call initialize_kinetic()
-      call initialize_nuclear()
-      call initialize_overlap()
+      call set_coulomb_precision(1.0d-25)
+!
+      !call initialize_coulomb()
+      !call initialize_kinetic()
+      !call initialize_nuclear()
+      !call initialize_overlap()
 !
    end subroutine prepare_eri_cd_solver
 !
@@ -2533,6 +2536,206 @@ contains
    end subroutine cholesky_vecs_diagonal_test_eri_cd_solver
 !
 !
+ subroutine full_test_cholesky_vecs_cd_eri_solver(solver, system)
+!!
+!!
+      implicit none
+!
+      class(eri_cd_solver) :: solver
+!
+      type(molecular_system), intent(in) :: system
+!
+      logical, dimension(:), allocatable :: sig_sp
+!
+      integer(i15) ::  A, B, C, D, w, x, y, z, wx, yz, wx_full, yz_full, size_AB, AB_offset, J, n_sig_sp, n_sig_aop, I, xy
+      integer(i15) ::  xy_full, yx_full, sp, xy_packed
+!
+      type(interval) :: A_interval, B_interval, C_interval, D_interval
+!
+      real(dp), dimension(:,:), allocatable :: L_xy, L_xy_full, L_J_pq, temp, L_pq_J, g_wxyz, g_ABCD
+!
+      type(file) :: cholesky_mo_vectors_seq
+!
+      character(len=40) :: line
+!
+      type(batching_index) :: batch_q
+!
+      real(dp) :: throw_away
+!
+!     Read significant sp info 
+!
+      call disk%open_file(solver%diagonal_info_target, 'read')
+!
+      rewind(solver%diagonal_info_target%unit)
+!
+      read(solver%diagonal_info_target%unit) n_sig_sp, n_sig_aop
+!
+      allocate(sig_sp(solver%n_s))
+!
+      read(solver%diagonal_info_target%unit) sig_sp
+!
+      call disk%close_file(solver%diagonal_info_target)
+!
+      call disk%open_file(solver%cholesky_ao_vectors, 'read')
+      call disk%open_file(solver%cholesky_ao_vectors_info, 'read')
+!
+      rewind(solver%cholesky_ao_vectors%unit)
+      rewind(solver%cholesky_ao_vectors_info%unit)
+!
+      call mem%alloc(L_xy, n_sig_aop, solver%n_cholesky)
+      call mem%alloc(L_xy_full, solver%n_ao*solver%n_ao, solver%n_cholesky)
+!
+      L_xy = zero
+      L_xy_full = zero
+!
+      read(solver%cholesky_ao_vectors_info%unit, '(a40)') line
+!
+      AB_offset = 0
+!
+      do while (trim(line) .ne. 'DONE')
+!
+!       Calculate difference between actual and approximate diagonal
+!
+         read(line, *) size_AB
+!
+!        Empty reads 
+!
+         do J = 1, solver%n_cholesky
+!
+            read(solver%cholesky_ao_vectors%unit) (L_xy(AB_offset + I, J), I = 1, size_AB)
+!
+         enddo
+!  
+         AB_offset = AB_offset + size_AB
+!
+         read(solver%cholesky_ao_vectors_info%unit, *) line
+!
+      enddo
+!
+      do J = 1, solver%n_cholesky
+!
+         AB_offset = 0
+!
+         do B = 1, solver%n_s
+!
+            B_interval = system%shell_limits(B)
+!
+            do A = B, solver%n_s
+!
+               A_interval = system%shell_limits(A)
+!
+               sp = get_sp_from_shells(A, B, solver%n_s)
+!
+               if (sig_sp(sp)) then
+!
+                  if (A .ne. B) then 
+!
+                     do x = 1, A_interval%size
+                        do y = 1, B_interval%size
+!  
+                            xy = A_interval%size*(y-1) + x
+!
+                            xy_full = index_two(x + A_interval%first - 1, y + B_interval%first - 1, solver%n_ao)
+                            yx_full = index_two(y + B_interval%first - 1, x + A_interval%first - 1, solver%n_ao)
+!
+                            L_xy_full(xy_full, J) = L_xy(xy + AB_offset, J)
+                            L_xy_full(yx_full, J) = L_xy(xy + AB_offset, J)
+!  
+                        enddo
+                     enddo
+!
+                  else
+!
+                     do x = 1, A_interval%size
+                        do y = 1, A_interval%size
+!  
+                            xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
+!
+                            xy_full = index_two(x + A_interval%first - 1, y + B_interval%first - 1, solver%n_ao)
+                            yx_full = index_two(y + B_interval%first - 1, x + A_interval%first - 1, solver%n_ao)
+!
+                            L_xy_full(xy_full, J) = L_xy(xy_packed + AB_offset, J)
+                            L_xy_full(yx_full, J) = L_xy(xy_packed + AB_offset, J)
+!  
+                        enddo
+                     enddo
+!
+                  endif
+!
+                  AB_offset = AB_offset + get_size_sp(A_interval, B_interval)
+!
+               endif
+!
+            enddo
+         enddo
+      enddo
+!
+     call mem%dealloc(L_xy, n_sig_aop, solver%n_cholesky)
+!
+     call mem%alloc(g_wxyz, solver%n_ao**2, solver%n_ao**2)
+!
+     g_wxyz = zero
+!
+     do A = 1, solver%n_s
+        do B = 1, solver%n_s
+           do C = 1, solver%n_s
+              do D = 1, solver%n_s
+!
+                 A_interval = system%shell_limits(A)
+                 B_interval = system%shell_limits(B)
+                 C_interval = system%shell_limits(C)
+                 D_interval = system%shell_limits(D)
+!
+                 call mem%alloc(g_ABCD, A_interval%size*B_interval%size, C_interval%size*D_interval%size) 
+!
+                 call system%ao_integrals%construct_ao_g_wxyz(g_ABCD, A, B, C, D)
+!
+                 do w = 1, A_interval%size
+                    do x = 1, B_interval%size
+                       do y = 1, C_interval%size
+                          do z = 1, D_interval%size 
+!
+                             wx = A_interval%size*(x-1) + w
+                             wx_full = A_interval%size*(x + B_interval%first) + w + A_interval%first - 1
+!
+                             yz = C_interval%size*(z-1) + y
+                             yz_full = C_interval%size*(z + D_interval%first) + y + C_interval%first - 1
+!
+                             g_wxyz(wx_full, yz_full) = g_ABCD(wx, yz)
+!
+                          enddo
+                       enddo
+                    enddo
+                 enddo
+!
+                 call mem%dealloc(g_ABCD, A_interval%size*B_interval%size, C_interval%size*D_interval%size)
+!
+              enddo
+           enddo
+        enddo
+     enddo
+!
+     call dgemm('N','T',              &
+                solver%n_ao**2,       &
+                solver%n_ao**2,       &
+                solver%n_cholesky,    &
+                -one,                 &
+                L_xy_full,            &
+                solver%n_ao**2,       &
+                L_xy_full,            &
+                solver%n_ao**2,       &
+                one,                  &           
+                g_wxyz,               &
+                solver%n_ao**2)
+!
+      write(output%unit, *) get_abs_max(g_wxyz, solver%n_ao**4)
+!
+      call mem%dealloc(g_wxyz, solver%n_ao**2, solver%n_ao**2)
+      call mem%dealloc(L_xy_full, solver%n_ao**2, solver%n_cholesky)
+!
+   end subroutine  full_test_cholesky_vecs_cd_eri_solver
+!
+!
    integer(i15) function get_size_sp(A_interval, B_interval)
 !!
 !!    Get size shell pair
@@ -2682,11 +2885,11 @@ contains
       logical, dimension(:), allocatable :: sig_sp
 !
       integer(i15) :: n_sig_sp, n_sig_aop, size_AB, A, B, I, J, AB_offset, AB_offset_full, x, y, p, q, xy, xy_packed, sp, pq
-      integer(i15) :: current_q_batch, required, throw_away_index
+      integer(i15) :: current_q_batch, required, throw_away_index, k, l
 !
       type(interval) :: A_interval, B_interval
 !
-      real(dp), dimension(:,:), allocatable :: L_J_xy, L_J_xy_full, L_J_pq, temp, L_pq_J
+      real(dp), dimension(:,:), allocatable :: L_xy, L_xy_full, L_J_pq, temp, L_pq_J, g_ijkl
 !
       type(file) :: cholesky_mo_vectors_seq
 !
@@ -2720,36 +2923,41 @@ contains
 !
       call disk%close_file(solver%diagonal_info_target)
 !
+      write(output%unit, *)solver%n_cholesky
+!
+      call mem%alloc(g_ijkl, 25, 25)
+      g_ijkl = zero
+!
       do J = 1, solver%n_cholesky
 !
-        rewind(solver%cholesky_ao_vectors%unit)
-        rewind(solver%cholesky_ao_vectors_info%unit)
+         rewind(solver%cholesky_ao_vectors%unit)
+         rewind(solver%cholesky_ao_vectors_info%unit)
 !
-        read(solver%cholesky_ao_vectors_info%unit, '(a40)') line
+         read(solver%cholesky_ao_vectors_info%unit, '(a40)') line
 !
-        AB_offset = 0
+         AB_offset = 0
 !
-         call mem%alloc(L_J_xy, 1, n_sig_aop)
-         call mem%alloc(L_J_xy_full, solver%n_ao*(solver%n_ao + 1)/2, 1)
+         call mem%alloc(L_xy, n_sig_aop, 1)
+         call mem%alloc(L_xy_full, solver%n_ao, solver%n_ao)
 !
-         L_J_xy = zero
-         L_J_xy_full = zero
+         L_xy = zero
+         L_xy_full = zero 
 !
          do while (trim(line) .ne. 'DONE')
 !
 !          Calculate difference between actual and approximate diagonal
 !
-           read(line, *) size_AB
+            read(line, *) size_AB
 !
-!          Empty reads 
+!           Empty reads 
 !
-           do I = 1, J - 1
+            do I = 1, J - 1
 !
-              read(solver%cholesky_ao_vectors%unit)
+               read(solver%cholesky_ao_vectors%unit)
 !
-           enddo
+            enddo
 !
-           read(solver%cholesky_ao_vectors%unit) (L_J_xy(1, AB_offset + I), I = 1, size_AB)
+            read(solver%cholesky_ao_vectors%unit) (L_xy(AB_offset + I, 1), I = 1, size_AB)
 !
 !          Empty reads 
 !
@@ -2758,17 +2966,15 @@ contains
               read(solver%cholesky_ao_vectors%unit)
 !
             enddo
-!
+!  
             AB_offset = AB_offset + size_AB
 !
             read(solver%cholesky_ao_vectors_info%unit, *) line
 !
          enddo
-!
+
          AB_offset = 0
          AB_offset_full = 0
-!
-         sp = 0
 !
          do B = 1, solver%n_s
 !
@@ -2788,7 +2994,8 @@ contains
                         do y = 1, B_interval%size
 !  
                             xy = A_interval%size*(y-1) + x
-                            L_J_xy_full(xy + AB_offset_full, 1) = L_J_xy(1, xy + AB_offset)
+                            L_xy_full(x + A_interval%first - 1, y + B_interval%first - 1) = L_xy(xy + AB_offset, 1)
+                            L_xy_full(y + B_interval%first - 1, x + A_interval%first - 1) = L_xy(xy + AB_offset, 1)
 !  
                         enddo
                      enddo
@@ -2799,7 +3006,8 @@ contains
                         do y = 1, A_interval%size
 !  
                             xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
-                            L_J_xy_full(xy_packed + AB_offset_full, 1) = L_J_xy(1, xy_packed + AB_offset)
+                            L_xy_full(x + A_interval%first - 1, y + B_interval%first - 1) = L_xy(xy_packed + AB_offset, 1)
+                            L_xy_full(y + B_interval%first - 1, x + A_interval%first - 1) = L_xy(xy_packed + AB_offset, 1)
 !  
                         enddo
                      enddo
@@ -2810,18 +3018,10 @@ contains
 !
                endif
 !
-               AB_offset_full = AB_offset_full + get_size_sp(A_interval, B_interval)
-!
             enddo
          enddo
 !
-         call mem%dealloc(L_J_xy, 1, n_sig_aop)
-         call mem%alloc(L_J_xy, solver%n_ao, solver%n_ao)
-         L_J_xy = zero
-!
-         call squareup(L_J_xy_full, L_J_xy, solver%n_ao)
-!
-         call mem%dealloc(L_J_xy_full, solver%n_ao*(solver%n_ao+1)/2, 1)
+         call mem%dealloc(L_xy, 1, n_sig_aop)
 !
 !       Transform the AO vectors to form the Cholesky MO vectors
 !
@@ -2832,7 +3032,7 @@ contains
                     n_mo,                 &
                     solver%n_ao,          &
                     one,                  &
-                    L_J_xy,               &
+                    L_xy_full,            &
                     solver%n_ao,          &
                     orbital_coefficients, &
                     solver%n_ao,          &
@@ -2841,7 +3041,7 @@ contains
                     solver%n_ao)
 !
          call mem%alloc(L_J_pq, n_mo, n_mo)
-         call mem%dealloc(L_J_xy, 1, solver%n_ao**2)
+         call mem%dealloc(L_xy_full, solver%n_ao, solver%n_ao)
 !
         call dgemm('T','N',               &
                     n_mo,                 &
@@ -2859,9 +3059,25 @@ contains
          call mem%dealloc(temp, solver%n_ao, n_mo)
 !
         write(cholesky_mo_vectors_seq%unit) ((L_J_pq(p,q), q = 1, p), p = 1, n_mo)
+!
+       call dgemm('N','T',               &
+                    25,                   &
+                    25,                   &
+                    1,                    &
+                    one,                  &
+                    L_J_pq,               &
+                    n_mo,                 &
+                    L_J_pq,               &
+                    n_mo,                 &
+                    one,                  &
+                    g_ijkl, &
+                    25)
+!
         call mem%dealloc(L_J_pq, n_mo, n_mo)
 !
       enddo
+      !write(output%unit,*)g_ijkl(1:5, 1)
+      stop
 !
 !     Read L_pq_J in batches over q
 !
@@ -2931,7 +3147,7 @@ contains
             solver%n_cholesky)
 !
       enddo
-!
+
       call disk%close_file(solver%cholesky_ao_vectors, 'delete')
       call disk%close_file(solver%cholesky_mo_vectors)
       call disk%close_file(cholesky_mo_vectors_seq)

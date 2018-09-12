@@ -58,6 +58,9 @@ contains
       call eri_chol_solver%run(wf%system)
 !
       call eri_chol_solver%cholesky_vecs_diagonal_test()
+      call eri_chol_solver%full_test_cholesky_vecs(wf%system)
+!
+      stop
 !
       call eri_chol_solver%construct_mo_cholesky_vecs(wf%system, wf%n_mo, wf%orbital_coefficients)
 !
