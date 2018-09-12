@@ -2536,7 +2536,7 @@ contains
    end subroutine cholesky_vecs_diagonal_test_eri_cd_solver
 !
 !
- subroutine full_test_cholesky_vecs_cd_eri_solver(solver, system)
+   subroutine full_test_cholesky_vecs_cd_eri_solver(solver, system)
 !!
 !!
       implicit none
@@ -2597,8 +2597,6 @@ contains
 !       Calculate difference between actual and approximate diagonal
 !
          read(line, *) size_AB
-!
-!        Empty reads 
 !
          do J = 1, solver%n_cholesky
 !
@@ -2696,10 +2694,10 @@ contains
                           do z = 1, D_interval%size 
 !
                              wx = A_interval%size*(x-1) + w
-                             wx_full = A_interval%size*(x + B_interval%first) + w + A_interval%first - 1
+                             wx_full = solver%n_ao*(x + B_interval%first - 2) + w + A_interval%first - 1
 !
                              yz = C_interval%size*(z-1) + y
-                             yz_full = C_interval%size*(z + D_interval%first) + y + C_interval%first - 1
+                             yz_full = solver%n_ao*(z + D_interval%first - 2) + y + C_interval%first - 1
 !
                              g_wxyz(wx_full, yz_full) = g_ABCD(wx, yz)
 !
