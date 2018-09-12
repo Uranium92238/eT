@@ -74,6 +74,7 @@ module ccs_class
       procedure :: get_oovv => get_oovv_ccs
 !
       procedure :: get_oooo => get_oooo_ccs
+      procedure :: get_vvvv => get_vvvv_ccs
 !
       procedure :: get_ooov => get_ooov_ccs
       procedure :: get_oovo => get_oovo_ccs
@@ -1815,6 +1816,79 @@ contains
       endif
 !
    end subroutine get_ovvv_ccs
+!
+!
+   subroutine get_vvvv_ccs(wf, g_abcd, first_a, last_a, first_b, last_b, &
+                                       first_c, last_c, first_d, last_d)
+!!
+!!    Get vvvv
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(:,:) :: g_abcd
+!
+      integer(i15), optional, intent(in) :: first_d, last_d 
+      integer(i15), optional, intent(in) :: first_c, last_c
+      integer(i15), optional, intent(in) :: first_a, last_a
+      integer(i15), optional, intent(in) :: first_b, last_b
+!
+      integer(i15) :: local_first_d, local_last_d 
+      integer(i15) :: local_first_c, local_last_c
+      integer(i15) :: local_first_b, local_last_b
+      integer(i15) :: local_first_a, local_last_a
+!
+      logical :: index_restrictions
+!
+      if (present(first_d) .and. present(last_d) .and. &
+          present(first_c) .and. present(last_c) .and. &
+          present(first_b) .and. present(last_b) .and. &
+          present(first_a) .and. present(last_a)) then
+!
+         index_restrictions = .true.
+!
+         local_first_d = first_d 
+         local_first_c = first_c 
+         local_first_b = first_b 
+         local_first_a = first_a 
+!
+         local_last_d = last_d 
+         local_last_c = last_c
+         local_last_b = last_b
+         local_last_a = last_a
+!
+      else
+!
+         index_restrictions = .false.
+!
+         local_first_d = 1 
+         local_first_c = 1 
+         local_first_b = 1 
+         local_first_a = 1 
+!
+         local_last_d = wf%n_v 
+         local_last_c = wf%n_v
+         local_last_b = wf%n_v
+         local_last_a = wf%n_v
+!
+      endif
+!
+      if (wf%integrals%need_t1()) then
+!
+         call wf%integrals%construct_vvvv(g_abcd, local_first_a, local_last_a, local_first_b, local_last_b, &
+                                        local_first_c, local_last_c, local_first_d, local_last_d, index_restrictions, wf%t1)
+!
+      else
+!
+         call wf%integrals%construct_vvvv(g_abcd, local_first_a, local_last_a, local_first_b, local_last_b, &
+                                        local_first_c, local_last_c, local_first_d, local_last_d, index_restrictions)
+!
+      endif
+!
+   end subroutine get_vvvv_ccs
 !
 !
 end module ccs_class
