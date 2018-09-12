@@ -501,7 +501,7 @@ contains
 !!    where
 !!
 !!       X = I - t1 
-!!       Y = I - t1^T 
+!!       Y = I + t1^T 
 !! 
 !!    Here, t1 is a full MO matrix whose only non-zero block is the vir-occ 
 !!    part, where it is equal to t_i^a.
@@ -537,7 +537,7 @@ contains
          do a = 1, wf%n_v 
 !
             X(wf%n_o + a, i) = -wf%t1(a, i)
-            Y(i, wf%n_o + a) = -wf%t1(a, i) 
+            Y(i, wf%n_o + a) = wf%t1(a, i) 
 !
          enddo
       enddo
