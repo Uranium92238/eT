@@ -358,6 +358,7 @@ contains
       call wf%get_ovoo(g_ia_jk)
 !
       call mem%alloc(g_ai_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
+      flush(output%unit)
       call wf%get_vooo(g_ai_jk)
 !
       do i = 1, wf%n_o

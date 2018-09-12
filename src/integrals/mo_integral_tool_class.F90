@@ -446,11 +446,11 @@ contains
 !
       length_i = full_last_i - full_first_i + 1
       length_a = full_last_a - full_first_a + 1
-
+!
       call integrals%read_cholesky(L_ai_J, full_first_a, full_last_a, full_first_i, full_last_i)
 !
-      call mem%alloc(L_bj_J, (integrals%n_v)*(integrals%n_o), 1)
-      call integrals%read_cholesky(L_bj_J, 1, (integrals%n_v), 1, (integrals%n_o))
+      call mem%alloc(L_bj_J, (integrals%n_v)*(integrals%n_o), (integrals%n_J))
+      call integrals%read_cholesky(L_bj_J, (integrals%n_o) + 1, (integrals%n_mo), 1, (integrals%n_o))
 !
       call mem%alloc(X_i_jJ, length_i, (integrals%n_o)*(integrals%n_J))
 !
@@ -467,7 +467,7 @@ contains
                   X_i_jJ,                                   &
                   length_i)
 !
-      call mem%dealloc(L_bj_J, (integrals%n_v)*(integrals%n_o), 1)
+      call mem%dealloc(L_bj_J, (integrals%n_v)*(integrals%n_o), (integrals%n_J))
 !
       call mem%alloc(X_j_iJ,(integrals%n_o), length_i*(integrals%n_J))
 !
@@ -521,7 +521,7 @@ contains
 !
          call mem%alloc(L_ba_J, batch_a%length*(integrals%n_v), (integrals%n_J)) 
 !
-         call integrals%read_cholesky(L_ba_J, 1, (integrals%n_v), &
+         call integrals%read_cholesky(L_ba_J, (integrals%n_o) + 1, (integrals%n_mo), &
                         batch_a%first + (integrals%n_o), batch_a%last + (integrals%n_o))
 !
          call mem%alloc(X_i_aJ, length_i, (batch_a%length)*(integrals%n_J)) 
@@ -1132,12 +1132,12 @@ contains
             call integrals%construct_cholesky_ij(L_jk_J, t1, first_j, last_j, first_k, last_k)
             call integrals%construct_cholesky_ai(L_ai_J, t1, first_a, last_a, first_i, last_i)
 !
-         endif
-!
+         else
             call integrals%read_cholesky_ij_t1(L_jk_J, first_j, last_j, first_k, last_k)
             call integrals%read_cholesky_ai_t1(L_ai_J, first_a, last_a, first_i, last_i)
 !
          endif
+
 !
          call dgemm('N', 'T',           &
                      length_i*length_a, &
@@ -1154,6 +1154,8 @@ contains
 !
          call mem%dealloc(L_ai_J, length_i*length_a, integrals%n_J)
          call mem%dealloc(L_jk_J, length_k*length_j, integrals%n_J)
+!
+      endif
 !
    end subroutine construct_vooo_mo_integral_tool
 !
