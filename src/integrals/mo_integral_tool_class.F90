@@ -56,10 +56,24 @@ module mo_integral_tool_class
       procedure :: read_ovov => read_ovov_mo_integral_tool
 !
       procedure :: construct_oooo => construct_oooo_mo_integral_tool
+!
       procedure :: construct_ooov => construct_ooov_mo_integral_tool
       procedure :: construct_oovo => construct_oovo_mo_integral_tool
       procedure :: construct_ovoo => construct_ovoo_mo_integral_tool
       procedure :: construct_vooo => construct_vooo_mo_integral_tool
+!
+      procedure :: construct_vvvo => construct_vvvo_mo_integral_tool
+      procedure :: construct_vvov => construct_vvov_mo_integral_tool
+      procedure :: construct_vovv => construct_vovv_mo_integral_tool
+      procedure :: construct_ovvv => construct_ovvv_mo_integral_tool
+!
+      procedure :: construct_vvoo => construct_vvoo_mo_integral_tool
+      procedure :: construct_oovv => construct_oovv_mo_integral_tool
+      procedure :: construct_vovo => construct_vovo_mo_integral_tool
+      procedure :: construct_ovvo => construct_ovvo_mo_integral_tool
+      procedure :: construct_voov => construct_voov_mo_integral_tool
+!
+      procedure :: construct_vvvv => construct_vvvv_mo_integral_tool
 !
    end type mo_integral_tool
 !
