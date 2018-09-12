@@ -344,16 +344,17 @@ contains
 !
 !     Perform t1-transformation of F_pq = h_pq  
 !
-      write(output%unit, *) 'h_pq MO', F_pq(1:4, 1:4)
+     ! write(output%unit, *) 'h_pq MO', F_pq(1:4, 1:4)
 !
       call wf%t1_transform(F_pq)
 !
-      write(output%unit, *) 'h_pq t1', F_pq(1:4, 1:4)
+      !write(output%unit, *) 'h_pq t1', F_pq(1:4, 1:4)
 !
 !     Occupied-occupied contributions: F_ij = F_ij + sum_k (2*g_ijkk - g_ikkj)
 !
       call mem%alloc(g_ij_kl, (wf%n_o)**2, (wf%n_o)**2)
       call wf%get_oooo(g_ij_kl)
+     ! write(output%unit, *) 'g_ij_kl', g_ij_kl(1:5, 1)
 !
       do i = 1, wf%n_o
          do j = 1, wf%n_o 
@@ -376,6 +377,7 @@ contains
       call mem%dealloc(g_ij_kl, (wf%n_o)**2, (wf%n_o)**2)
 !
 !     Occupied-virtual contributions: F_ia = F_ia + sum_j (2*g_iajj - g_ijja)
+!                                     F_ai = F_ai + sum_j (2*g_aijj - g_ajji)
 !
       call mem%alloc(g_ia_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
       call wf%get_ovoo(g_ia_jk)
@@ -404,6 +406,8 @@ contains
 !
          enddo
       enddo
+!
+     ! write(output%unit, *)F_pq(1, 1 + wf%n_o), F_pq(1 + wf%n_o, 1)
 !
       call mem%dealloc(g_ia_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
       call mem%dealloc(g_ai_jk, (wf%n_v)*(wf%n_o), (wf%n_o)**2)

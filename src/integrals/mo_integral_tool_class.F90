@@ -448,9 +448,9 @@ contains
       length_a = full_last_a - full_first_a + 1
 !
       call integrals%read_cholesky(L_ai_J, full_first_a, full_last_a, full_first_i, full_last_i)
-!
-      call mem%alloc(L_bj_J, (integrals%n_v)*(integrals%n_o), (integrals%n_J))
-      call integrals%read_cholesky(L_bj_J, (integrals%n_o) + 1, (integrals%n_mo), 1, (integrals%n_o))
+
+       call mem%alloc(L_bj_J, (integrals%n_v)*(integrals%n_o), (integrals%n_J))
+       call integrals%read_cholesky(L_bj_J, (integrals%n_o) + 1, (integrals%n_mo), 1, (integrals%n_o))
 !
       call mem%alloc(X_i_jJ, length_i, (integrals%n_o)*(integrals%n_J))
 !
@@ -459,7 +459,7 @@ contains
                   (integrals%n_o)*(integrals%n_J),          &
                   integrals%n_v,                            &
                   one,                                      &
-                  t1(1, full_first_i),                      &   ! t_b_i
+                  t1(1, first_i),                           &   ! t_b_i
                   integrals%n_v,                            &
                   L_bj_J,                                   &   ! L_b_jJ
                   integrals%n_v,                            &
@@ -480,7 +480,7 @@ contains
                   (length_i)*(integrals%n_J),               &
                   integrals%n_o,                            &
                   -one,                                     &
-                  t1(full_first_a, 1),                      & ! t_a_j
+                  t1(first_a, 1),                           & ! t_a_j
                   integrals%n_v,                            &
                   X_j_iJ,                                   &
                   integrals%n_o,                            &
@@ -493,18 +493,18 @@ contains
       call mem%alloc(L_ji_J, (integrals%n_o)*length_i, (integrals%n_J))
       call integrals%read_cholesky(L_ji_J, 1, (integrals%n_o), full_first_i, full_last_i)
 !
-      call dgemm('N', 'N',                                  &
-                  length_a,                                 &
-                  (length_i)*(integrals%n_J),               &
-                  integrals%n_o,                            &
-                  -one,                                     &
-                  t1(full_first_a, 1),                      & ! t_a_j
-                  integrals%n_v,                            &
-                  L_ji_J,                                   & ! L_j_iJ
-                  integrals%n_o,                            &
-                  one,                                      &
-                  L_ai_J,                                   & ! L_a_iJ
-                  length_a)     
+       call dgemm('N', 'N',                                  &
+                   length_a,                                 &
+                   (length_i)*(integrals%n_J),               &
+                   integrals%n_o,                            &
+                   -one,                                     &
+                   t1(first_a, 1),                           & ! t_a_j
+                   integrals%n_v,                            &
+                   L_ji_J,                                   & ! L_j_iJ
+                   integrals%n_o,                            &
+                   one,                                      &
+                   L_ai_J,                                   & ! L_a_iJ
+                   length_a)     
 !
       call mem%dealloc(L_ji_J, (integrals%n_o)*length_i, (integrals%n_J))
 !
@@ -535,9 +535,10 @@ contains
                   integrals%n_v,                            &
                   L_ba_J,                                   & ! L_b_aJ
                   integrals%n_v,                            &
-                  one,                                      &
+                  zero,                                     &
                   X_i_aJ,                                   & 
-                  length_i)  
+                  length_i) 
+ 
 !        
          call mem%dealloc(L_ba_J, batch_a%length*(integrals%n_v), (integrals%n_J))  
 !
@@ -546,7 +547,7 @@ contains
 !$omp shared(L_ai_J, X_i_aJ, batch_a)
          do i = 1, length_i
             do a = 1, batch_a%length
-               do J = 1, (integrals%n_J)
+               do J = 1, integrals%n_J
 !
                   ai = length_a*(i - 1) + a + batch_a%first - 1
                   aJ = batch_a%length*(J - 1) + a
@@ -559,7 +560,7 @@ contains
 !$omp end parallel do
 !
          call mem%dealloc(X_i_aJ, length_i, (batch_a%length)*(integrals%n_J)) 
-!
+!!
        enddo
 !
    end subroutine construct_cholesky_ai_mo_integral_tool
