@@ -2563,6 +2563,8 @@ contains
 !!    Get shell pair from shells,
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
+!!    OBS THIS WILL ONLY WORK IF s1 >= s2
+!!
       implicit none
 !
       integer(i15), intent(in) :: s1, s2, n_s
@@ -2728,7 +2730,7 @@ contains
         AB_offset = 0
 !
          call mem%alloc(L_J_xy, 1, n_sig_aop)
-         call mem%alloc(L_J_xy_full, 1, solver%n_ao**2)
+         call mem%alloc(L_J_xy_full, solver%n_ao*(solver%n_ao + 1)/2, 1)
 !
          L_J_xy = zero
          L_J_xy_full = zero
@@ -2776,7 +2778,7 @@ contains
 !
                A_interval = system%shell_limits(A)
 !
-               sp = sp + 1
+               sp = get_sp_from_shells(A, B, solver%n_s)
 !
                if (sig_sp(sp)) then
 !
@@ -2786,7 +2788,7 @@ contains
                         do y = 1, B_interval%size
 !  
                             xy = A_interval%size*(y-1) + x
-                            L_J_xy_full(1, xy + AB_offset_full) = L_J_xy(1, xy + AB_offset)
+                            L_J_xy_full(xy + AB_offset_full, 1) = L_J_xy(1, xy + AB_offset)
 !  
                         enddo
                      enddo
@@ -2796,9 +2798,8 @@ contains
                      do x = 1, A_interval%size
                         do y = 1, A_interval%size
 !  
-                            xy = A_interval%size*(y-1) + x
                             xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
-                            L_J_xy_full(1, xy + AB_offset_full) = L_J_xy(1, xy + AB_offset)
+                            L_J_xy_full(xy_packed + AB_offset_full, 1) = L_J_xy(1, xy_packed + AB_offset)
 !  
                         enddo
                      enddo
@@ -2809,12 +2810,18 @@ contains
 !
                endif
 !
-               AB_offset_full = AB_offset_full + (A_interval%size)*(B_interval%size)
+               AB_offset_full = AB_offset_full + get_size_sp(A_interval, B_interval)
 !
             enddo
          enddo
 !
-      call mem%dealloc(L_J_xy, 1, n_sig_aop)
+         call mem%dealloc(L_J_xy, 1, n_sig_aop)
+         call mem%alloc(L_J_xy, solver%n_ao, solver%n_ao)
+         L_J_xy = zero
+!
+         call squareup(L_J_xy_full, L_J_xy, solver%n_ao)
+!
+         call mem%dealloc(L_J_xy_full, solver%n_ao*(solver%n_ao+1)/2, 1)
 !
 !       Transform the AO vectors to form the Cholesky MO vectors
 !
@@ -2825,7 +2832,7 @@ contains
                     n_mo,                 &
                     solver%n_ao,          &
                     one,                  &
-                    L_J_xy_full,          &
+                    L_J_xy,               &
                     solver%n_ao,          &
                     orbital_coefficients, &
                     solver%n_ao,          &
@@ -2834,7 +2841,7 @@ contains
                     solver%n_ao)
 !
          call mem%alloc(L_J_pq, n_mo, n_mo)
-         call mem%dealloc(L_J_xy_full, 1, solver%n_ao**2)
+         call mem%dealloc(L_J_xy, 1, solver%n_ao**2)
 !
         call dgemm('T','N',               &
                     n_mo,                 &
@@ -2852,11 +2859,9 @@ contains
          call mem%dealloc(temp, solver%n_ao, n_mo)
 !
         write(cholesky_mo_vectors_seq%unit) ((L_J_pq(p,q), q = 1, p), p = 1, n_mo)
-        
         call mem%dealloc(L_J_pq, n_mo, n_mo)
 !
       enddo
-!
 !
 !     Read L_pq_J in batches over q
 !
@@ -2878,7 +2883,7 @@ contains
          call batch_q%determine_limits(current_q_batch)
 !
          call mem%alloc(L_pq_J,                                            &
-            (((batch_q%length + 1)*(batch_q%length)/2) +                   &
+            (((batch_q%length )*(batch_q%length + 1)/2) +                  &
             (n_mo - batch_q%length - batch_q%first + 1)*(batch_q%length)), &
             solver%n_cholesky)
 !
