@@ -6,6 +6,7 @@ module gs_engine_class
    use abstract_engine_class
    use ccs_class
    use eri_cd_solver_class
+   use diis_cc_gs_solver_class
 !
    type, extends(abstract_engine) :: gs_engine 
 !
@@ -46,7 +47,10 @@ contains
 !
       class(ccs) :: wf
 !
-      type(eri_cd_solver), allocatable :: eri_chol_solver
+      type(eri_cd_solver), allocatable     :: eri_chol_solver
+      type(diis_cc_gs_solver), allocatable :: cc_gs_solver 
+!
+!     Cholesky decoposition 
 !
       allocate(eri_chol_solver)
 !
@@ -61,6 +65,16 @@ contains
 !
       call eri_chol_solver%cleanup()
       deallocate(eri_chol_solver)
+!
+!     Ground state solution 
+!
+      allocate(cc_gs_solver)
+!
+      call cc_gs_solver%prepare(wf)
+      call cc_gs_solver%run(wf)
+      call cc_gs_solver%cleanup(wf)
+!
+      deallocate(cc_gs_solver)
 !
    end subroutine run_gs_engine
 !
