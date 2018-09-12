@@ -67,6 +67,11 @@ module ccs_class
       procedure :: destruct_t1 => destruct_t1_ccs
 !
       procedure :: get_ovov => get_ovov_ccs
+      procedure :: get_vovo => get_vovo_ccs
+      procedure :: get_vvoo => get_vvoo_ccs
+      procedure :: get_voov => get_voov_ccs
+      procedure :: get_ovvo => get_ovvo_ccs
+      procedure :: get_oovv => get_oovv_ccs
 
       procedure :: get_oooo => get_oooo_ccs
 
@@ -1223,7 +1228,7 @@ contains
    end subroutine get_vvoo_ccs
 !
 !
-   subroutine get_vovo_ccs(wf, g_abij, first_a, last_a, first_i, last_i, &
+   subroutine get_vovo_ccs(wf, g_aibj, first_a, last_a, first_i, last_i, &
                                         first_b, last_b, first_j, last_j)
 !!
 !!    Get vovo
@@ -1294,6 +1299,227 @@ contains
       endif
 !
    end subroutine get_vovo_ccs
+!
+!
+   subroutine get_voov_ccs(wf, g_aijb, first_a, last_a, first_i, last_i, &
+                                        first_j, last_j, first_b, last_b)
+!!
+!!    Get voov
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(:,:) :: g_aijb 
+!
+      integer(i15), optional, intent(in) :: first_i, last_i 
+      integer(i15), optional, intent(in) :: first_j, last_j
+      integer(i15), optional, intent(in) :: first_a, last_a
+      integer(i15), optional, intent(in) :: first_b, last_b
+!
+      integer(i15) :: local_first_i, local_last_i 
+      integer(i15) :: local_first_j, local_last_j
+      integer(i15) :: local_first_b, local_last_b
+      integer(i15) :: local_first_a, local_last_a
+!
+      logical :: index_restrictions
+!
+      if (present(first_i) .and. present(last_i) .and. &
+          present(first_j) .and. present(last_j) .and. &
+          present(first_b) .and. present(last_b) .and. &
+          present(first_a) .and. present(last_a)) then
+!
+         index_restrictions = .true.
+!
+         local_first_i = first_i 
+         local_first_j = first_j 
+         local_first_b = first_b 
+         local_first_a = first_a 
+!
+         local_last_i = last_i 
+         local_last_j = last_j
+         local_last_b = last_b
+         local_last_a = last_a
+!
+      else
+!
+         index_restrictions = .false.
+!
+         local_first_i = 1 
+         local_first_j = 1 
+         local_first_b = 1 
+         local_first_a = 1 
+!
+         local_last_i = wf%n_o 
+         local_last_j = wf%n_o
+         local_last_b = wf%n_v
+         local_last_a = wf%n_v
+!
+      endif
+!
+      if (wf%integrals%need_t1()) then
+!
+         call wf%integrals%construct_voov(g_aijb, local_first_a, local_last_a, local_first_i, local_last_i, &
+                                         local_first_j, local_last_j, local_first_b, local_last_b, index_restrictions, wf%t1)
+!
+      else
+!
+         call wf%integrals%construct_voov(g_aijb, local_first_a, local_last_a, local_first_i, local_last_i, &
+                                         local_first_j, local_last_j, local_first_b, local_last_b, index_restrictions)
+!
+      endif
+!
+   end subroutine get_voov_ccs
+!
+!
+   subroutine get_ovvo_ccs(wf, g_iabj, first_i, last_i, first_a, last_a, &
+                                        first_b, last_b, first_j, last_j)
+!!
+!!    Get ovvo
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(:,:) :: g_iabj
+!
+      integer(i15), optional, intent(in) :: first_i, last_i 
+      integer(i15), optional, intent(in) :: first_j, last_j
+      integer(i15), optional, intent(in) :: first_a, last_a
+      integer(i15), optional, intent(in) :: first_b, last_b
+!
+      integer(i15) :: local_first_i, local_last_i 
+      integer(i15) :: local_first_j, local_last_j
+      integer(i15) :: local_first_b, local_last_b
+      integer(i15) :: local_first_a, local_last_a
+!
+      logical :: index_restrictions
+!
+      if (present(first_i) .and. present(last_i) .and. &
+          present(first_j) .and. present(last_j) .and. &
+          present(first_b) .and. present(last_b) .and. &
+          present(first_a) .and. present(last_a)) then
+!
+         index_restrictions = .true.
+!
+         local_first_i = first_i 
+         local_first_j = first_j 
+         local_first_b = first_b 
+         local_first_a = first_a 
+!
+         local_last_i = last_i 
+         local_last_j = last_j
+         local_last_b = last_b
+         local_last_a = last_a
+!
+      else
+!
+         index_restrictions = .false.
+!
+         local_first_i = 1 
+         local_first_j = 1 
+         local_first_b = 1 
+         local_first_a = 1 
+!
+         local_last_i = wf%n_o 
+         local_last_j = wf%n_o
+         local_last_b = wf%n_v
+         local_last_a = wf%n_v
+!
+      endif
+!
+      if (wf%integrals%need_t1()) then
+!
+         call wf%integrals%construct_ovvo(g_iabj, local_first_i, local_last_i, local_first_a, local_last_a, &
+                                         local_first_b, local_last_b, local_first_j, local_last_j, index_restrictions, wf%t1)
+!
+      else
+!
+         call wf%integrals%construct_ovvo(g_iabj, local_first_i, local_last_i, local_first_a, local_last_a, &
+                                         local_first_b, local_last_b, local_first_j, local_last_j, index_restrictions)
+!
+      endif
+!
+   end subroutine get_ovvo_ccs
+!
+!
+!
+!
+   subroutine get_oovv_ccs(wf, g_ijab, first_i, last_i, first_j, last_j, &
+                                        first_a, last_a, first_b, last_b)
+!!
+!!    Get oovv
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(:,:) :: g_ijab
+!
+      integer(i15), optional, intent(in) :: first_i, last_i 
+      integer(i15), optional, intent(in) :: first_j, last_j
+      integer(i15), optional, intent(in) :: first_a, last_a
+      integer(i15), optional, intent(in) :: first_b, last_b
+!
+      integer(i15) :: local_first_i, local_last_i 
+      integer(i15) :: local_first_j, local_last_j
+      integer(i15) :: local_first_b, local_last_b
+      integer(i15) :: local_first_a, local_last_a
+!
+      logical :: index_restrictions
+!
+      if (present(first_i) .and. present(last_i) .and. &
+          present(first_j) .and. present(last_j) .and. &
+          present(first_b) .and. present(last_b) .and. &
+          present(first_a) .and. present(last_a)) then
+!
+         index_restrictions = .true.
+!
+         local_first_i = first_i 
+         local_first_j = first_j 
+         local_first_b = first_b 
+         local_first_a = first_a 
+!
+         local_last_i = last_i 
+         local_last_j = last_j
+         local_last_b = last_b
+         local_last_a = last_a
+!
+      else
+!
+         index_restrictions = .false.
+!
+         local_first_i = 1 
+         local_first_j = 1 
+         local_first_b = 1 
+         local_first_a = 1 
+!
+         local_last_i = wf%n_o 
+         local_last_j = wf%n_o
+         local_last_b = wf%n_v
+         local_last_a = wf%n_v
+!
+      endif
+!
+      if (wf%integrals%need_t1()) then
+!
+         call wf%integrals%construct_oovv(g_ijab, local_first_i, local_last_i, local_first_j, local_last_j, &
+                                         local_first_a, local_last_a, local_first_b, local_last_b, index_restrictions, wf%t1)
+!
+      else
+!
+         call wf%integrals%construct_oovv(g_ijab, local_first_i, local_last_i, local_first_j, local_last_j, &
+                                         local_first_a, local_last_a, local_first_b, local_last_b, index_restrictions)
+!
+      endif
+!
+   end subroutine get_oovv_ccs
 !
 !
 end module ccs_class
