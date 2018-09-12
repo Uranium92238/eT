@@ -1636,7 +1636,7 @@ contains
 !
       call cpu_time(e_select_basis_time)
 !
-      write(output%unit,'(/t6, a42, i7)')'Number of signigicant negative diagonals: ', sig_neg
+      write(output%unit,'(/t6, a42, i7)')'Number of significant negative diagonals: ', sig_neg
 !
 !     Prepare info on basis
 !

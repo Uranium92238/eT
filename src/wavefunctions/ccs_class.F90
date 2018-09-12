@@ -68,7 +68,10 @@ module ccs_class
 !
       procedure :: get_ovov => get_ovov_ccs
 !
-      procedure :: set_fock                => set_fock_ccs
+      procedure :: set_fock => set_fock_ccs
+!
+      procedure :: construct_omega => construct_omega_ccs
+      procedure :: omega_ccs_a1    => omega_ccs_a1_ccs
 !
    end type ccs
 !
@@ -217,6 +220,44 @@ contains
    end subroutine calculate_energy_ccs
 !
 !
+   subroutine omega_ccs_a1_ccs(wf, omega)
+!!
+!!    Omega A1
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, March 2017
+!!
+!!       Omega_ai^A1 = F_ai_T1
+!!
+!!    Term D1 in Molecular Electronic Structrue Theory
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o) :: omega
+!
+!     Add F_a_i to omega
+!
+      call daxpy((wf%n_o)*(wf%n_v), one, wf%fock_ai, 1, omega, 1)
+!
+   end subroutine omega_ccs_a1_ccs
+!
+!
+   subroutine construct_omega_ccs(wf, omega)
+!!
+!!    Construct Omega (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(wf%n_amplitudes, 1) :: omega
+!
+      omega = zero ! Brillouin
+!
+   end subroutine construct_omega_ccs
+!
+!
    subroutine construct_fock_ccs(wf)
 !!
 !!    Construct Fock 
@@ -292,10 +333,10 @@ contains
 !     Occupied-virtual contributions: F_ia = F_ia + sum_j (2*g_iajj - g_ijja)
 !
       call mem%alloc(g_ia_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
-      call wf%get_ov_oo(g_ia_jk)
+      call wf%get_ovoo(g_ia_jk)
 !
       call mem%alloc(g_ai_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
-      call wf%get_vo_oo(g_ai_jk)
+      call wf%get_vooo(g_ai_jk)
 !
       do i = 1, wf%n_o
          do a = 1, wf%n_v
@@ -325,10 +366,10 @@ contains
 !     Virtual-virtual contributions: F_ab = h_ab + sum_i (2*g_abii - g_aiib) ::
 !
       call mem%alloc(g_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
-      call wf%get_vv_oo(g_ab_ij)
+      call wf%get_vvoo(g_ab_ij)
 !
       call mem%alloc(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call wf%get_vo_ov(g_ai_jb)
+      call wf%get_voov(g_ai_jb)
 !
       do a = 1, wf%n_v
          do b = 1, wf%n_v
@@ -735,6 +776,152 @@ contains
                                           local_first_j, local_last_j, local_first_b, local_last_b, index_restrictions)
 !
    end subroutine get_ovov_ccs
+!
+!
+   subroutine get_oooo_ccs(wf, g_ijkl, first_i, last_i, first_j, last_j, &
+                                       first_k, last_k, first_l, last_l)
+!!
+!!    Get oooo 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(:,:) :: g_ijkl 
+!
+      integer(i15), optional, intent(in) :: first_i, last_i 
+      integer(i15), optional, intent(in) :: first_j, last_j
+      integer(i15), optional, intent(in) :: first_k, last_k
+      integer(i15), optional, intent(in) :: first_l, last_l
+!
+      integer(i15) :: local_first_i, local_last_i 
+      integer(i15) :: local_first_j, local_last_j
+      integer(i15) :: local_first_k, local_last_k
+      integer(i15) :: local_first_l, local_last_l
+!
+      logical :: index_restrictions
+!
+      if (present(first_i) .and. present(last_i) .and. &
+          present(first_j) .and. present(last_j) .and. &
+          present(first_k) .and. present(last_k) .and. &
+          present(first_l) .and. present(last_l)) then
+!
+         index_restrictions = .true.
+!
+         local_first_i = first_i 
+         local_first_j = first_j 
+         local_first_k = first_k 
+         local_first_l = first_l 
+!
+         local_last_i = last_i 
+         local_last_j = last_j
+         local_last_k = last_k
+         local_last_l = last_l
+!
+      else
+!
+         index_restrictions = .false.
+!
+         local_first_i = 1 
+         local_first_j = 1 
+         local_first_k = 1 
+         local_first_l = 1 
+!
+         local_last_i = wf%n_o 
+         local_last_j = wf%n_o
+         local_last_k = wf%n_o
+         local_last_l = wf%n_o
+!
+      endif
+!
+      if (wf%integrals%need_t1()) then
+!
+         call wf%integrals%construct_oooo(g_ijkl, local_first_i, local_last_i, local_first_j, local_last_j, &
+                                       local_first_k, local_last_k, local_first_l, local_last_l, index_restrictions, wf%t1)
+!
+      else
+!
+         call wf%integrals%construct_oooo(g_ijkl, local_first_i, local_last_i, local_first_j, local_last_j, &
+                                       local_first_k, local_last_k, local_first_l, local_last_l, index_restrictions)
+!
+      endif
+!
+   end subroutine get_oooo_ccs
+!
+!
+   subroutine get_ooov_ccs(wf, g_ijka, first_i, last_i, first_j, last_j, &
+                                       first_k, last_k, first_a, last_a)
+!!
+!!    Get ooov 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(:,:) :: g_ijka 
+!
+      integer(i15), optional, intent(in) :: first_i, last_i 
+      integer(i15), optional, intent(in) :: first_j, last_j
+      integer(i15), optional, intent(in) :: first_k, last_k
+      integer(i15), optional, intent(in) :: first_a, last_a
+!
+      integer(i15) :: local_first_i, local_last_i 
+      integer(i15) :: local_first_j, local_last_j
+      integer(i15) :: local_first_k, local_last_k
+      integer(i15) :: local_first_a, local_last_a
+!
+      logical :: index_restrictions
+!
+      if (present(first_i) .and. present(last_i) .and. &
+          present(first_j) .and. present(last_j) .and. &
+          present(first_k) .and. present(last_k) .and. &
+          present(first_a) .and. present(last_a)) then
+!
+         index_restrictions = .true.
+!
+         local_first_i = first_i 
+         local_first_j = first_j 
+         local_first_k = first_k 
+         local_first_a = first_a 
+!
+         local_last_i = last_i 
+         local_last_j = last_j
+         local_last_k = last_k
+         local_last_a = last_a
+!
+      else
+!
+         index_restrictions = .false.
+!
+         local_first_i = 1 
+         local_first_j = 1 
+         local_first_k = 1 
+         local_first_a = 1 
+!
+         local_last_i = wf%n_o 
+         local_last_j = wf%n_o
+         local_last_k = wf%n_o
+         local_last_a = wf%n_v
+!
+      endif
+!
+      if (wf%integrals%need_t1()) then
+!
+         call wf%integrals%construct_ooov(g_ijka, local_first_i, local_last_i, local_first_j, local_last_j, &
+                                       local_first_k, local_last_k, local_first_a, local_last_a, index_restrictions, wf%t1)
+!
+      else
+!
+         call wf%integrals%construct_ooov(g_ijka, local_first_i, local_last_i, local_first_j, local_last_j, &
+                                       local_first_k, local_last_k, local_first_a, local_last_a, index_restrictions)
+!
+      endif
+!
+   end subroutine get_ooov_ccs
 !
 !
 end module ccs_class

@@ -2819,10 +2819,10 @@ contains
 !
    subroutine omega_ccs_a1_ccs(wf)
 !!
-!!    Omega D1
+!!    Omega A1
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, March 2017
 !!
-!!    Omega_ai^D1 = F_ai_T1
+!!    Omega_ai^A1 = F_ai_T1
 !!
       implicit none
 !

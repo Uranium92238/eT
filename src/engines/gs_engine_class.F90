@@ -76,6 +76,7 @@ contains
 !
    end subroutine cleanup_gs_engine
 !
+!
    subroutine print_banner_gs_engine(engine)
 !!
 !!    Print banner 
@@ -87,6 +88,7 @@ contains
 !
    end subroutine print_banner_gs_engine
 !
+!
    subroutine print_summary_gs_engine(engine)
 !!
 !!    Print summary
@@ -97,5 +99,6 @@ contains
       class(gs_engine) :: engine 
 !
    end subroutine print_summary_gs_engine
+!
 !
 end module gs_engine_class
