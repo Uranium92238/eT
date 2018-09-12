@@ -17,7 +17,7 @@ module diis_cc_gs_solver_class
 !
       integer(i15) :: diis_dimension = 8
 !
-      integer(i15) :: max_iterations = 100
+      integer(i15) :: max_iterations = 3
 !
       real(dp) :: energy_threshold = 1.0d-6
       real(dp) :: omega_threshold  = 1.0d-6
