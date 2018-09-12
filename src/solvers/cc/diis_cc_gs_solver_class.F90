@@ -181,12 +181,24 @@ contains
 !
 !        Calculate the energy and error vector omega 
 !
+         write(output%unit, *) 'Hei 1'
+         flush(output%unit)
          call wf%calculate_energy()
          energy = wf%energy
 !
+         write(output%unit, *) 'Hei 2'
+         flush(output%unit)
+!
          call wf%construct_fock()
+!
+         write(output%unit, *) 'Hei 3'
+         flush(output%unit)
+!
          call wf%construct_omega(omega)
          omega_norm = get_l2_norm(omega, wf%n_amplitudes)
+!
+         write(output%unit, *) 'Hei 4'
+         flush(output%unit)
 !
          write(output%unit, '(t3,i3,10x,f17.12,4x,e10.4,4x,e10.4)') iteration, wf%energy, &
                                           omega_norm, abs(wf%energy-prev_energy)

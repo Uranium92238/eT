@@ -325,12 +325,23 @@ contains
 !
 !     Perform t1-transformation of F_pq = h_pq  
 !
+      write(output%unit, *) 'Ju 1'
+      flush(output%unit)
+!
+!
       call wf%t1_transform(F_pq)
 !
+      stop
 !     Occupied-occupied contributions: F_ij = F_ij + sum_k (2*g_ijkk - g_ikkj)
+!
+      write(output%unit, *) 'Ju 2'
+      flush(output%unit)
 !
       call mem%alloc(g_ij_kl, (wf%n_o)**2, (wf%n_o)**2)
       call wf%get_oooo(g_ij_kl)
+!
+      write(output%unit, *) 'Ju 3'
+      flush(output%unit)
 !
       do i = 1, wf%n_o
          do j = 1, wf%n_o 
@@ -350,6 +361,9 @@ contains
          enddo
       enddo
 !
+      write(output%unit, *) 'Ju 4'
+      flush(output%unit)
+!
       call mem%dealloc(g_ij_kl, (wf%n_o)**2, (wf%n_o)**2)
 !
 !     Occupied-virtual contributions: F_ia = F_ia + sum_j (2*g_iajj - g_ijja)
@@ -357,8 +371,14 @@ contains
       call mem%alloc(g_ia_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
       call wf%get_ovoo(g_ia_jk)
 !
+      write(output%unit, *) 'Ju 5'
+      flush(output%unit)
+!
       call mem%alloc(g_ai_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
       call wf%get_vooo(g_ai_jk)
+!
+      write(output%unit, *) 'Ju 6'
+      flush(output%unit)
 !
       do i = 1, wf%n_o
          do a = 1, wf%n_v
@@ -382,6 +402,9 @@ contains
          enddo
       enddo
 !
+      write(output%unit, *) 'Ju 7'
+      flush(output%unit)
+!
       call mem%dealloc(g_ia_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
       call mem%dealloc(g_ai_jk, (wf%n_v)*(wf%n_o), (wf%n_o)**2)
 !
@@ -390,8 +413,14 @@ contains
       call mem%alloc(g_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
       call wf%get_vvoo(g_ab_ij)
 !
+      write(output%unit, *) 'Ju 8'
+      flush(output%unit)
+!
       call mem%alloc(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call wf%get_voov(g_ai_jb)
+!
+      write(output%unit, *) 'Ju 9'
+      flush(output%unit)
 !
       do a = 1, wf%n_v
          do b = 1, wf%n_v
@@ -412,6 +441,9 @@ contains
 !
          enddo
       enddo
+!
+      write(output%unit, *) 'Ju 10'
+      flush(output%unit)
 !
       call mem%dealloc(g_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
       call mem%dealloc(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
