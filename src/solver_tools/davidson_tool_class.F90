@@ -309,6 +309,8 @@ contains
 !
       else
 !
+         call output%error_msg('does not support exceeding max_dim_red')
+!
          call disk%open_file(davidson%transforms, 'write', 'rewind')
 !
       endif     
@@ -342,9 +344,17 @@ contains
 !
       real(dp) :: ddot
 !
+      logical :: entire_local
+!
       real(dp), dimension(:,:), allocatable :: A_red_copy, c_i, rho_j
 !
       integer(i15) :: i, j, ioerror
+!
+      if (present(entire)) then
+         entire_local = entire
+      else
+         entire_local = .false.
+      endif
 !
 !     Ask disk manager to open the files
 !
@@ -363,7 +373,7 @@ contains
 !
 !     Construct reduced matrix: A_red_ij = c_i^T * A * c_j = c_i^T * rho_i
 !
-      if (davidson%dim_red .eq. davidson%n_solutions .or. entire) then ! First iteration
+      if (davidson%dim_red .eq. davidson%n_solutions .or. entire_local) then ! First iteration
 !
 !        Make the entire reduced matrix
 !
@@ -378,7 +388,7 @@ contains
             do j = 1, davidson%dim_red
 !
                read(davidson%transforms%unit, iostat=ioerror) rho_j
-               if (ioerror .ne. 0) call output%error_msg('reading transformed vector file 1.')
+               if (ioerror .ne. 0) call output%error_msg('reading transformed vector file.')
 !
                davidson%A_red(i,j) = ddot(davidson%n_parameters, c_i, 1, rho_j, 1)
 !
@@ -392,13 +402,21 @@ contains
          call mem%alloc(A_red_copy, davidson%dim_red - davidson%n_new_trials, davidson%dim_red - davidson%n_new_trials)
          A_red_copy = davidson%A_red
 !
+         write(output%unit, *)'hei 0'
+         flush(output%unit)
+!
          call mem%dealloc(davidson%A_red, davidson%dim_red - davidson%n_new_trials, davidson%dim_red - davidson%n_new_trials)
 !
          call mem%alloc(davidson%A_red, davidson%dim_red, davidson%dim_red)
+         write(output%unit, *)'hei 1'
+         flush(output%unit)
 !
          davidson%A_red(1:davidson%dim_red - davidson%n_new_trials, 1:davidson%dim_red - davidson%n_new_trials) = A_red_copy
 !
          call mem%dealloc(A_red_copy, davidson%dim_red - davidson%n_new_trials, davidson%dim_red - davidson%n_new_trials)
+!
+         write(output%unit, *)'hei 2'
+         flush(output%unit)
 !
          do i = 1, davidson%dim_red
 !
@@ -518,6 +536,8 @@ contains
       enddo    
 !
       call mem%dealloc(rho_i, davidson%n_parameters, 1)
+!
+      call disk%close_file(davidson%transforms)
 !
    end subroutine construct_AX_davidson_tool
 !

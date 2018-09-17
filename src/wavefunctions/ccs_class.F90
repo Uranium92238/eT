@@ -363,7 +363,7 @@ contains
       call wf%get_oooo(g_ij_kl)
      ! write(output%unit, *) 'g_ij_kl', g_ij_kl(1:5, 1)
 !
-      write(output%unit, *) 'g_ijkl', g_ij_kl(1:10,1:10)
+    !  write(output%unit, *) 'g_ijkl', g_ij_kl(1:10,1:10)
 !
       do i = 1, wf%n_o
          do j = 1, wf%n_o 
@@ -391,12 +391,12 @@ contains
       call mem%alloc(g_ia_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
       call wf%get_ovoo(g_ia_jk)
 !
-      write(output%unit, *) 'g_iajk', g_ia_jk(1:10,1:10)
+    !  write(output%unit, *) 'g_iajk', g_ia_jk(1:10,1:10)
 !
       call mem%alloc(g_ai_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
       call wf%get_vooo(g_ai_jk)
 !
-      write(output%unit, *) 'g_aijk', g_ia_jk(1:10,1:10)
+    !  write(output%unit, *) 'g_aijk', g_ia_jk(1:10,1:10)
 
 !
       do i = 1, wf%n_o
@@ -2009,8 +2009,6 @@ contains
       call wf%jacobian_ccs_b1(rho_a_i, c_a_i)
 !
 !     Place rho_a_i in c_a_i
-!
-      c_a_i = zero
 !
       call dcopy((wf%n_o)*(wf%n_v), rho_a_i, 1, c_a_i, 1)
 !

@@ -110,6 +110,12 @@ contains
 !
       class(eigen_davidson_tool) :: davidson 
 !
+      call disk%open_file(davidson%trials, 'write', 'rewind')
+      call disk%open_file(davidson%transforms, 'write', 'rewind')
+!
+      call disk%close_file(davidson%trials, 'delete')
+      call disk%close_file(davidson%transforms, 'delete')
+!
    end subroutine cleanup_eigen_davidson_tool
 !  
 !
@@ -211,7 +217,7 @@ contains
 !
       call dgeev('N','V',             &
                   davidson%dim_red,   &
-                  davidson%A_red,     &
+                  A_red,              &
                   davidson%dim_red,   &
                   omega_re,           &
                   omega_im,           &
@@ -219,11 +225,10 @@ contains
                   1,                  &
                   X_red,              &
                   davidson%dim_red,   &
-                  work,               &
+                  work,               &   
                   4*davidson%dim_red, &
                   info)
 !
-      davidson%A_red = A_red 
       call mem%dealloc(A_red, davidson%dim_red, davidson%dim_red)
 !
       if (info .ne. 0) call output%error_msg('could not solve reduced equation in Davidson davidson.')
@@ -233,8 +238,8 @@ contains
 !     Find lowest n_solutions eigenvalues and sort them (the corresponding indices
 !     are placed in the integer array index_list)
 !
-      if (.not. allocated(davidson%omega_re)) call mem%alloc(davidson%omega_re, davidson%n_solutions, 1)
-      if (.not. allocated(davidson%omega_im)) call mem%alloc(davidson%omega_im, davidson%n_solutions, 1)
+      call davidson%initialize_omega_im
+      call davidson%initialize_omega_re
 !
       davidson%omega_re = zero
       davidson%omega_im = zero
