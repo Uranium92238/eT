@@ -94,6 +94,7 @@ module ccs_class
       procedure :: construct_omega => construct_omega_ccs
       procedure :: omega_ccs_a1    => omega_ccs_a1_ccs
 !
+      procedure :: transform_trial_vector      => transform_trial_vector_ccs
       procedure :: jacobian_ccs_transformation => jacobian_ccs_transformation_ccs
       procedure :: jacobian_ccs_a1             => jacobian_ccs_a1_ccs 
       procedure :: jacobian_ccs_b1             => jacobian_ccs_b1_ccs 
@@ -1962,6 +1963,16 @@ contains
 !
    end subroutine get_vvvv_ccs
 !
+!
+   subroutine transform_trial_vector_ccs(wf, c_i)
+!
+      class(ccs) :: wf 
+!
+      real(dp), dimension(wf%n_amplitudes, 1)   :: c_i 
+!
+      call wf%jacobian_ccs_transformation(c_i)
+!
+   end subroutine transform_trial_vector_ccs
 !
    subroutine jacobian_ccs_transformation_ccs(wf, c_a_i)
 !!

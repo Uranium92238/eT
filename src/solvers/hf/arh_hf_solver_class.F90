@@ -1321,7 +1321,7 @@ contains
 !
 !     Initialize the Davidson solver 
 !
-      call davidson%initialize('aug_Hessian_Davidson', (wf%n_mo)**2 + 1, 1, &
+      call davidson%prepare('aug_Hessian_Davidson', (wf%n_mo)**2 + 1, 1, &
                                  solver%relative_micro_threshold*max_grad,  &
                                  solver%relative_micro_threshold*max_grad)
 !

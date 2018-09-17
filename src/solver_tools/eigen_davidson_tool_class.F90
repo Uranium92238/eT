@@ -55,7 +55,7 @@ module eigen_davidson_tool_class
 contains
 !
 !
-   subroutine initialize_eigen_davidson_tool(davidson, name, n_parameters, n_solutions, &
+   subroutine prepare_eigen_davidson_tool(davidson, name, n_parameters, n_solutions, &
                                              residual_threshold, eigenvalue_threshold)
 !!
 !!    Initialize 
@@ -98,10 +98,10 @@ contains
       davidson%n_new_trials = n_solutions 
       davidson%max_dim_red = 50           
 !
-   end subroutine initialize_eigen_davidson_tool
+   end subroutine prepare_eigen_davidson_tool
 !
 !
-   subroutine finalize_eigen_davidson_tool(davidson)
+   subroutine cleanup_eigen_davidson_tool(davidson)
 !!
 !!    Finalize 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -110,8 +110,56 @@ contains
 !
       class(eigen_davidson_tool) :: davidson 
 !
-   end subroutine finalize_eigen_davidson_tool
+   end subroutine cleanup_eigen_davidson_tool
 !  
+!
+   subroutine initialize_omega_im_eigen_davidson_tool(davidson)
+!!
+!!
+      implicit none 
+!
+      class(eigen_davidson_tool) :: davidson 
+!
+      if (.not. allocated(davidson%omega_im)) call mem%alloc(davidson%omega_im, davidson%n_solutions, 1)
+!
+   end subroutine initialize_omega_im_eigen_davidson_tool
+!  
+!
+   subroutine initialize_omega_re_eigen_davidson_tool(davidson)
+!!
+!!
+      implicit none 
+!
+      class(eigen_davidson_tool) :: davidson 
+!
+      if (.not. allocated(davidson%omega_re)) call mem%alloc(davidson%omega_re, davidson%n_solutions, 1)
+!
+   end subroutine initialize_omega_re_eigen_davidson_tool
+!  
+!
+   subroutine destruct_omega_im_eigen_davidson_tool(davidson)
+!!
+!!
+      implicit none 
+!
+      class(eigen_davidson_tool) :: davidson 
+!
+      if ( allocated(davidson%omega_im)) call mem%dealloc(davidson%omega_im, davidson%n_solutions, 1)
+!
+   end subroutine destruct_omega_im_eigen_davidson_tool
+!  
+!
+   subroutine destruct_omega_re_eigen_davidson_tool(davidson)
+!!
+!!
+      implicit none 
+!
+      class(eigen_davidson_tool) :: davidson 
+!
+      if ( allocated(davidson%omega_re)) call mem%dealloc(davidson%omega_re, davidson%n_solutions, 1)
+!
+   end subroutine destruct_omega_re_eigen_davidson_tool
+!
 !
    subroutine solve_reduced_problem_eigen_davidson_tool(davidson)
 !!

@@ -145,7 +145,7 @@ contains
 !
       real(dp), dimension(davidson%n_parameters, 1) :: c_i
 !
-      character(len=40), optional :: position
+      character(len=*), optional :: position
 !
       integer(i15) :: ioerror
 !
@@ -163,7 +163,7 @@ contains
 !
 !        Sanity check on position variable
 !
-         if ((trim(position) .ne. 'rewind') .and. (trim(position) .ne. 'append'))
+         if ((trim(position) .ne. 'rewind') .and. (trim(position) .ne. 'append')) then
 !
             call output%error_msg('Position specifier not recognized!')
 !
