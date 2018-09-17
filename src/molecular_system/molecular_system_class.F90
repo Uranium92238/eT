@@ -603,7 +603,7 @@ contains
 !
       type(atomic), dimension(:), allocatable :: atoms_copy
 !
-      logical :: found
+      logical :: found, set_active_basis
 !
       real(dp) :: hf_radius, x, y, z
 !
@@ -611,6 +611,8 @@ contains
 !
       read(input%unit,'(a)', iostat=ioerror) line
       line = remove_preceding_blanks(line)
+!
+      set_active_basis = .false.
 !
       do while (trim(line) .ne. 'geometry')
 !
@@ -694,12 +696,6 @@ contains
                         line = remove_preceding_blanks(line)
                         read(line, '(f21.16)') hf_radius ! In Ångstom
 !
-                     elseif (line(1:13) == 'active basis:') then
-!
-                        line = line(14:100)
-                        line = remove_preceding_blanks(line)
-                        read(line, '(a100)') active_basis
-!
                      endif
 !
                   enddo
@@ -731,7 +727,6 @@ contains
                        active_atom_counter = active_atom_counter + 1
 !
                        active_atoms(active_atom_counter, 1) = i
-                       molecule%atoms(i)%basis = trim(active_basis)
 !
                     endif
 !
@@ -752,6 +747,49 @@ contains
 !
       enddo
 !
+!     Find active basis
+!
+      rewind(input%unit)
+!
+      read(input%unit,'(a)') line
+      line = remove_preceding_blanks(line)
+!
+      do while (trim(line) .ne. 'geometry')
+!
+         if (trim(line) == 'active atoms') then
+!
+            do while (trim(line) .ne. 'end active atoms')
+!
+               read(input%unit,'(a)', iostat=ioerror) line
+               line = remove_preceding_blanks(line)
+!
+               if (line(1:13) == 'active basis:') then
+!
+                  line = line(14:100)
+                  line = remove_preceding_blanks(line)
+                  read(line, '(a100)') active_basis
+                  set_active_basis = .true.
+!
+               endif
+            enddo
+         endif
+!
+         read(input%unit,'(a)') line
+         line = remove_preceding_blanks(line)
+!
+      enddo
+!
+!     If active basis is given, set it for the active atoms
+!
+      if (set_active_basis) then
+!
+         do i = 1, molecule%n_active_atoms
+!
+            molecule%atoms(active_atoms(i, 1))%basis = trim(active_basis)
+!
+         enddo
+!
+      endif
 !
 
       write(output%unit, '(t6, a18)')'------------------'

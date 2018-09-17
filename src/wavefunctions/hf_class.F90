@@ -343,7 +343,7 @@ contains
       flush(output%unit)
 !
       call h_pq_file%init('h_pq', 'sequential', 'unformatted')
-      call disk%open_file(h_pq_file, 'readwrite', 'rewind')
+      call disk%open_file(h_pq_file, 'write', 'rewind')
 !
       write(h_pq_file%unit) h_pq 
 !
