@@ -15,6 +15,7 @@ module ccs_class
    use array_analysis
    use interval_class
    use index
+   use batching_index_class
 !
    implicit none
 !
@@ -93,6 +94,10 @@ module ccs_class
       procedure :: construct_omega => construct_omega_ccs
       procedure :: omega_ccs_a1    => omega_ccs_a1_ccs
 !
+      procedure :: jacobian_ccs_transformation => jacobian_ccs_transformation_ccs
+      procedure :: jacobian_ccs_a1             => jacobian_ccs_a1_ccs 
+      procedure :: jacobian_ccs_b1             => jacobian_ccs_b1_ccs 
+!
    end type ccs
 !
 !
@@ -155,7 +160,8 @@ contains
 !
       enddo
 !
-      write(output%unit, *) 'Se 4.5'
+      write(output%unit, *) 'Se 4.5', wf%fock_ia(1:5, 1:5)
+      write(output%unit, *) 'Se 4.6', wf%fock_diagonal
       flush(output%unit)
 !
       call ref_wf%mo_transform_and_save_h()
@@ -356,6 +362,8 @@ contains
       call wf%get_oooo(g_ij_kl)
      ! write(output%unit, *) 'g_ij_kl', g_ij_kl(1:5, 1)
 !
+      write(output%unit, *) 'g_ijkl', g_ij_kl(1:10,1:10)
+!
       do i = 1, wf%n_o
          do j = 1, wf%n_o 
 !
@@ -382,8 +390,13 @@ contains
       call mem%alloc(g_ia_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
       call wf%get_ovoo(g_ia_jk)
 !
+      write(output%unit, *) 'g_iajk', g_ia_jk(1:10,1:10)
+!
       call mem%alloc(g_ai_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
       call wf%get_vooo(g_ai_jk)
+!
+      write(output%unit, *) 'g_aijk', g_ia_jk(1:10,1:10)
+
 !
       do i = 1, wf%n_o
          do a = 1, wf%n_v
@@ -1948,6 +1961,228 @@ contains
       endif
 !
    end subroutine get_vvvv_ccs
+!
+!
+   subroutine jacobian_ccs_transformation_ccs(wf, c_a_i)
+!!
+!!    Jacobian CCS transformation
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!    Directs the transformation by the CCSD Jacobi matrix,
+!!
+!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | nu >. 
+!!
+!!    In particular,
+!!
+!!       rho_mu = (A c)_mu = sum_ck A_mu,ck c_ck.
+!! 
+!!    On exit, c is overwritten by rho. 
+!!
+      implicit none
+!
+      class(ccs) :: wf 
+!
+      real(dp), dimension(wf%n_v, wf%n_o)   :: c_a_i       
+!
+      real(dp), dimension(:,:), allocatable :: rho_a_i
+!
+      call mem%alloc(rho_a_i, wf%n_v, wf%n_o)
+      rho_a_i = zero
+!
+!     A1-term
+!
+      call wf%jacobian_ccs_a1(rho_a_i, c_a_i)
+!
+!     B1-term
+!
+      call wf%jacobian_ccs_b1(rho_a_i, c_a_i)
+!
+!     Place rho_a_i in c_a_i
+!
+      c_a_i = zero
+!
+      call dcopy((wf%n_o)*(wf%n_v), rho_a_i, 1, c_a_i, 1)
+!
+      call mem%dealloc(rho_a_i, wf%n_v, wf%n_o)
+!
+   end subroutine jacobian_ccs_transformation_ccs
+!
+!
+   subroutine jacobian_ccs_a1_ccs(wf, rho1, c1)
+!!
+!!    Jacobian CCS A1
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!    Calculates the A1 term,
+!!
+!!       sum_b F_ab*c_bi - sum_j F_ji*c_aj
+!!
+!!    and adds it to the rho vector.
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c1
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho1
+!
+!     sum_b F_a_b * c_b_i
+!
+      call dgemm('N', 'N',     &
+                  wf%n_v,      &
+                  wf%n_o,      &
+                  wf%n_v,      &
+                  one,         &
+                  wf%fock_ab,  &
+                  wf%n_v,      &
+                  c1,          &
+                  wf%n_v,      &
+                  one,         &
+                  rho1,        &
+                  wf%n_v)
+!
+!     - sum_j c_a_j * F_j_i
+!
+      call dgemm('N','N',      &
+                  wf%n_v,      &
+                  wf%n_o,      &
+                  wf%n_o,      &
+                  -one,        &
+                  c1,          &
+                  wf%n_v,      &
+                  wf%fock_ij,  &
+                  wf%n_o,      &
+                  one,         &
+                  rho1,        &
+                  wf%n_v)
+!
+   end subroutine jacobian_ccs_a1_ccs
+!
+!
+   module subroutine jacobian_ccs_b1_ccs(wf, rho1, c1)
+!!
+!!    Jacobian CCS B1 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!    Calculates the B1 term,
+!!
+!!       sum_bj L_aijb*c_bj = sum_bj (2*g_aijb-g_abji) c_bj,
+!!
+!!    and adds it to the rho1 vector.
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!   
+      real(dp), dimension(wf%n_v,wf%n_o), intent(in)    :: c1
+      real(dp), dimension(wf%n_v,wf%n_o), intent(inout) :: rho1      
+!
+      real(dp), dimension(:,:), allocatable :: g_ai_jb
+      real(dp), dimension(:,:), allocatable :: g_ab_ji
+      real(dp), dimension(:,:), allocatable :: L_ai_jb
+!
+      real(dp), dimension(:,:), allocatable :: c_jb
+!
+      integer(i15) :: a, b, i, j, ab, ai, ji, jb, jb_full
+!
+      logical :: reorder
+!
+      integer(i15) :: required, current_b_batch
+!
+      type(batching_index) :: batch_b 
+!
+!     Get g_ai_jb integral, then prepare for batch over b 
+!
+      call mem%alloc(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%get_voov(g_ai_jb)
+!
+      required = 4*max(((wf%n_o)**2)*((wf%n_v)**2)                                                   &  !
+                        + 2*(wf%integrals%n_J)*(wf%n_v)**2 + 2*(wf%integrals%n_J)*(wf%n_v)*(wf%n_o), &  ! Needed to get L_ab_J
+                        2*((wf%n_o)**2)*((wf%n_v)**2)                                                &  !
+                        + (wf%integrals%n_J)*(wf%n_v)**2 + (wf%integrals%n_J)*(wf%n_o)**2,           &  ! Needed to get g_ab_ij
+                        3*((wf%n_o)**2)*((wf%n_v)**2))                                                  ! Needed to get L_ai_jb
+!
+      call batch_b%init(wf%n_v)
+      call mem%num_batch(batch_b, required)           
+!
+      do current_b_batch = 1, batch_b%num_batches
+!
+         call batch_b%determine_limits(current_b_batch)
+!
+!        Construct L_ai_jb = 2*g_ai_jb - g_ab_ij
+!
+         call mem%alloc(g_ab_ji, (wf%n_v)*(batch_b%length), (wf%n_o)**2)
+!
+         call wf%get_vvoo(g_ab_ji,        &
+                           1,             &
+                           wf%n_v,        &
+                           batch_b%first, &
+                           batch_b%last,  &
+                           1,             &
+                           wf%n_o,        &
+                           1,             &
+                           wf%n_o)        
+!
+         call mem%alloc(L_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(batch_b%length))
+         L_ai_jb = zero
+!
+         do i = 1, wf%n_o
+            do b = 1, batch_b%length
+               do j = 1, wf%n_o
+!
+                  ji      = index_two(j, i, wf%n_o)
+                  jb      = index_two(j, b, wf%n_o)
+                  jb_full = index_two(j, b + batch_b%first - 1, wf%n_o)
+!
+                  do a = 1, wf%n_v
+!
+                     ai = index_two(a, i, wf%n_v)
+                     ab = index_two(a, b, wf%n_v)
+!
+                     L_ai_jb(ai, jb) = two*g_ai_jb(ai, jb_full) - g_ab_ji(ab, ji)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+         call mem%dealloc(g_ab_ji, (wf%n_v)*(batch_b%length), (wf%n_o)**2)
+!
+!        Reorder c1 to do multiply with L_ai_jb
+!
+         call mem%alloc(c_jb, (wf%n_o)*(batch_b%length), 1)
+!
+         c_jb = zero
+         do j = 1, wf%n_o
+            do b = 1, batch_b%length
+!
+               jb = index_two(j, b, wf%n_o)
+               c_jb(jb, 1) = c1(b + batch_b%first - 1, j)
+!
+            enddo
+         enddo
+!
+         call dgemm('N','N',                    &
+                     (wf%n_v)*(wf%n_o),         &
+                     1,                         &
+                     (batch_b%length)*(wf%n_o), &
+                     one,                       &
+                     L_ai_jb,                   &
+                     (wf%n_v)*(wf%n_o),         &
+                     c_jb,                      &
+                     (batch_b%length)*(wf%n_o), &
+                     one,                       &
+                     rho1,                      &
+                     (wf%n_v)*(wf%n_o))      
+!
+         call mem%dealloc(L_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(batch_b%length))
+         call mem%dealloc(c_jb, (wf%n_o)*(batch_b%length), 1)
+!
+      enddo ! Looping over batches
+!
+      call mem%dealloc(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+   end subroutine jacobian_ccs_b1_ccs
 !
 !
 end module ccs_class
