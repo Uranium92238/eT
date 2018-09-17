@@ -104,11 +104,6 @@ contains
 !
       call set_coulomb_precision(1.0d-25)
 !
-      !call initialize_coulomb()
-      !call initialize_kinetic()
-      !call initialize_nuclear()
-      !call initialize_overlap()
-!
    end subroutine prepare_eri_cd_solver
 !
 !

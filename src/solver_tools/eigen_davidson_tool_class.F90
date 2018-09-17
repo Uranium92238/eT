@@ -32,8 +32,8 @@ module eigen_davidson_tool_class
 !
    contains 
 !
-      procedure :: initialize => initialize_eigen_davidson_tool 
-      procedure :: finalize   => finalize_eigen_davidson_tool
+      procedure :: prepare => prepare_eigen_davidson_tool 
+      procedure :: cleanup   => cleanup_eigen_davidson_tool
 !
       procedure :: construct_next_trial_vec => construct_next_trial_vec_eigen_davidson_tool
 !
@@ -43,6 +43,12 @@ module eigen_davidson_tool_class
 !
       procedure :: construct_re_residual    => construct_re_residual_eigen_davidson_tool
       procedure :: construct_im_residual    => construct_im_residual_eigen_davidson_tool
+!
+      procedure :: initialize_omega_re   => initialize_omega_re_eigen_davidson_tool
+      procedure :: initialize_omega_im   => initialize_omega_im_eigen_davidson_tool
+!
+      procedure :: destruct_omega_re   => destruct_omega_re_eigen_davidson_tool
+      procedure :: destruct_omega_im   => destruct_omega_im_eigen_davidson_tool
 !
    end type eigen_davidson_tool
 !
@@ -77,10 +83,10 @@ contains
       call davidson%transforms%init(trim(davidson%name) // '_transforms', 'sequential', 'unformatted')
       call davidson%preconditioner%init(trim(davidson%name) // '_preconditioner', 'sequential', 'unformatted')
 !
-      call disk%open_file(davidson%X, 'readwrite', 'rewind')
-      call disk%open_file(davidson%trials, 'readwrite', 'rewind')
-      call disk%open_file(davidson%transforms, 'readwrite', 'rewind')
-      call disk%open_file(davidson%preconditioner, 'readwrite', 'rewind')
+      call disk%open_file(davidson%X, 'write', 'rewind')
+      call disk%open_file(davidson%trials, 'write', 'rewind')
+      call disk%open_file(davidson%transforms, 'write', 'rewind')
+      call disk%open_file(davidson%preconditioner, 'write', 'rewind')
 !
       call disk%close_file(davidson%X)
       call disk%close_file(davidson%trials)
@@ -88,7 +94,8 @@ contains
       call disk%close_file(davidson%preconditioner)
 !
       davidson%do_precondition = .false. ! Switches to true if 'set_preconditioner' is called
-      davidson%dim_red = 0               ! Increases as we add trial vectors 
+      davidson%dim_red = n_solutions     ! Initial dimension equal to number of solutions
+      davidson%n_new_trials = n_solutions 
       davidson%max_dim_red = 50           
 !
    end subroutine initialize_eigen_davidson_tool
@@ -440,10 +447,10 @@ contains
       call mem%alloc(X, davidson%n_parameters, 1)
       call mem%alloc(R, davidson%n_parameters, 1)
 !
-      call davidson%construct_X(X, n) 
+      call davidson%construct_X(X, k) 
       norm_X = get_l2_norm(X, davidson%n_parameters)
 
-      call davidson%construct_residual(R, X, norm_X, n)
+      call davidson%construct_residual(R, X, norm_X, k)
 !
 !     Write the normalized solution X to file,
 !     then deallocate 

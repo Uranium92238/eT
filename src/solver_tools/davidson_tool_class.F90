@@ -132,7 +132,7 @@ contains
    end subroutine read_trial_davidson_tool
 !
 !
-   subroutine write_trial_davidson_tool(davidson, c_i)
+   subroutine write_trial_davidson_tool(davidson, c_i, position)
 !!
 !!    Write trial
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Aug 2018
@@ -145,17 +145,37 @@ contains
 !
       real(dp), dimension(davidson%n_parameters, 1) :: c_i
 !
+      character(len=40), optional :: position
+!
       integer(i15) :: ioerror
 !
-      if (davidson%dim_red + 1 .le. davidson%max_dim_red) then
+!     Will we exceed max_dim_red ?
 !
-         call disk%open_file(davidson%trials, 'write', 'append')
+      if (davidson%dim_red + 1 .gt. davidson%max_dim_red) then
+!
+         call output%error_msg('still cannot handle going past max_dim_red!')
+!
+      endif    
+!
+!     Was position passed ?
+!
+      if (present(position)) then
+!
+!        Sanity check on position variable
+!
+         if ((trim(position) .ne. 'rewind') .and. (trim(position) .ne. 'append'))
+!
+            call output%error_msg('Position specifier not recognized!')
+!
+         endif
+!
+         call disk%open_file(davidson%trials, 'write', position)
 !
       else
 !
-         call disk%open_file(davidson%trials, 'write', 'rewind')
+         call disk%open_file(davidson%trials, 'write', 'append')
 !
-      endif     
+      endif 
 !
       write(davidson%trials%unit, iostat = ioerror) c_i
       if (ioerror .ne. 0) call output%error_msg('writing trial vectors file.')
