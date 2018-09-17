@@ -318,8 +318,6 @@ contains
       do_mo_transformation = .true.
       call wf%do_roothan_hall(wf%ao_fock, wf%orbital_coefficients, wf%orbital_energies, do_mo_transformation)
 !
-      call wf%destruct_ao_overlap()
-!
       flush(output%unit)
 !
    end subroutine cleanup_scf_diis_hf_solver
