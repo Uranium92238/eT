@@ -38,6 +38,7 @@ set(eT_fortran_sources
    src/wavefunctions/uhf_class.F90
    src/wavefunctions/mlhf_class.F90
    src/wavefunctions/ccs_class.F90
+   src/wavefunctions/ccpt2_class.F90
    src/molecular_system/atomic_class.F90
    src/molecular_system/molecular_system_class.F90
    src/molecular_system/periodic_table.F90

@@ -22,7 +22,6 @@ module hf_class
       real(dp), dimension(:,:), allocatable :: ao_density
       real(dp), dimension(:,:), allocatable :: ao_fock
       real(dp), dimension(:,:), allocatable :: mo_fock
-      real(dp), dimension(:,:), allocatable :: orbital_energies
 !
       real(dp), dimension(:,:), allocatable :: ao_overlap 
       real(dp), dimension(:,:), allocatable :: cholesky_ao_overlap
@@ -96,7 +95,6 @@ module hf_class
       procedure :: initialize_ao_fock                 => initialize_ao_fock_hf
       procedure :: initialize_mo_fock                 => initialize_mo_fock_hf
       procedure :: initialize_ao_overlap              => initialize_ao_overlap_hf
-      procedure :: initialize_orbital_energies        => initialize_orbital_energies_hf
       procedure :: initialize_pivot_matrix_ao_overlap => initialize_pivot_matrix_ao_overlap_hf
       procedure :: initialize_cholesky_ao_overlap     => initialize_cholesky_ao_overlap_hf
 !
@@ -104,7 +102,6 @@ module hf_class
       procedure :: destruct_ao_fock                   => destruct_ao_fock_hf
       procedure :: destruct_mo_fock                   => destruct_mo_fock_hf
       procedure :: destruct_ao_overlap                => destruct_ao_overlap_hf
-      procedure :: destruct_orbital_energies          => destruct_orbital_energies_hf
       procedure :: destruct_pivot_matrix_ao_overlap   => destruct_pivot_matrix_ao_overlap_hf
       procedure :: destruct_cholesky_ao_overlap       => destruct_cholesky_ao_overlap_hf
 !
@@ -682,20 +679,6 @@ contains
    end subroutine initialize_ao_density_hf
 !
 !
-   subroutine initialize_orbital_energies_hf(wf)
-!!
-!!    Initialize orbital energies
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      if (.not. allocated(wf%orbital_energies)) call mem%alloc(wf%orbital_energies, wf%n_mo, 1)
-!
-   end subroutine initialize_orbital_energies_hf
-!
-!
    subroutine initialize_ao_fock_hf(wf)
 !!
 !!    Initialize AO Fock
@@ -778,20 +761,6 @@ contains
       if (allocated(wf%ao_overlap)) call mem%dealloc(wf%ao_overlap, wf%n_ao, wf%n_ao)
 !
    end subroutine destruct_ao_overlap_hf
-!
-!
-   subroutine destruct_orbital_energies_hf(wf)
-!!
-!!    Destruct AO overlap
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(hf) :: wf
-!
-      if (allocated(wf%orbital_energies)) call mem%dealloc(wf%orbital_energies, wf%n_mo, 1)
-!
-   end subroutine destruct_orbital_energies_hf
 !
 !
    subroutine destruct_ao_density_hf(wf)
