@@ -9,15 +9,23 @@ module ccpt2_class
    use hf_class
    use ccs_class
 !
+!   use reordering
+!   use array_utilities
+!   use array_analysis
+!   use interval_class
+   use index
+!
    implicit none
 !
    type, extends(ccs):: ccpt2
 !
+   real(dp) :: ccpt2_energy
+!
    contains
 !
-   procedure :: prepare => prepare_ccpt2
+      procedure :: prepare => prepare_ccpt2
 !
-   procedure :: calculate_energy => calculate_energy_ccpt2
+      procedure :: calculate_energy => calculate_energy_ccpt2
 !
    end type ccpt2
 !
@@ -95,15 +103,55 @@ subroutine prepare_ccpt2(wf, ref_wf)
 !
 !
 !
-   subroutine calculate_energy_ccpt2
+   subroutine calculate_energy_ccpt2(wf)
 !
       implicit none
 !
       real(dp), dimension(:,:), allocatable :: g_ai_bj
-      real(dp), dimension(:,:), allocatable :: g_aj_bi
+      real(dp), dimension(:,:), allocatable :: L_ai_bj
+      real(dp), dimension(:,:), allocatable :: eps
+      real(dp) :: e2
+      integer(i15) :: p, q, r, s, pq, rs, qp, sr
+      integer(i15) :: dim_p, dim_q, dim_r, dim_s
 !
-      call mem%alloc(g_ai_bj, wf%n_o*wf%n_v, wf%n_o*wf%n_v)
-      call mem%alloc(g_aj_bi, wf%n_o*wf%n_v, wf%n_o*wf%n_v)
-
+      call mem%alloc(g_ai_bj, wf%n_amplitudes, wf%n_amplitudes)
+      call mem%alloc(L_ai_bj, wf%n_amplitudes, wf%n_amplitudes)
+      call mem%alloc(eps, wf%n_o + wf_nv, 1)
+!
+      eps = wf%orbital_energies
+!
       call wf%get_vovo(g_ai_bj)
+!
+      L_ai_bj = 2.0*g_ai_bj
+!
+      add_1432_to_1234(-0.5, g_ai_bj, L_ai_bj, wf%n_v, wf%n_o, wf_nv, wf_no)
+!
+      dim_p = wf%n_v
+      dim_q = wf%n_o
+      dim_r = wf%n_v
+      dim_s = wf%n_o
+!
+!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq) reduce(+:e2)
+      do s = 1, dim_s
+         do r = 1, dim_r
+!
+            rs = dim_r*(s-1) + r
+            sr = dim_s*(r-1) + s
+!
+            do q = 1, dim_q
+!
+               do p = 1, dim_p
+!
+                  pq = dim_p*(q-1) + p
+                  qp = dim_q*(p-1) + q
+!
+                  e2 = e2 - g_ai_bj(pq, rs)*L_ai_bj(qp, sr)/(eps(p)+eps(r)-eps(q)-eps(s))
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!!$omp end parallel do
+!
+      wf%ccpt2_energy = wf%hf_energy + e2    
    end subroutine calculate_energy_ccpt2
