@@ -1517,7 +1517,7 @@ contains
 !        we should expand the search space 
 !
          residual_norm = zero 
-         call davidson%construct_next_trial_vec(residual_norm)
+    !     call davidson%construct_next_trial_vec(residual_norm)
 !
          write(output%unit, *) ':::: Residual: ', residual_norm
 !

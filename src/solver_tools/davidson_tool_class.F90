@@ -402,26 +402,23 @@ contains
          call mem%alloc(A_red_copy, davidson%dim_red - davidson%n_new_trials, davidson%dim_red - davidson%n_new_trials)
          A_red_copy = davidson%A_red
 !
-         write(output%unit, *)'hei 0'
-         flush(output%unit)
-!
          call mem%dealloc(davidson%A_red, davidson%dim_red - davidson%n_new_trials, davidson%dim_red - davidson%n_new_trials)
 !
          call mem%alloc(davidson%A_red, davidson%dim_red, davidson%dim_red)
-         write(output%unit, *)'hei 1'
-         flush(output%unit)
 !
          davidson%A_red(1:davidson%dim_red - davidson%n_new_trials, 1:davidson%dim_red - davidson%n_new_trials) = A_red_copy
 !
          call mem%dealloc(A_red_copy, davidson%dim_red - davidson%n_new_trials, davidson%dim_red - davidson%n_new_trials)
 !
-         write(output%unit, *)'hei 2'
-         flush(output%unit)
+         rewind(davidson%trials%unit)
 !
          do i = 1, davidson%dim_red
 !
             read(davidson%trials%unit, iostat=ioerror) c_i
             if (ioerror .ne. 0) call output%error_msg('reading trial vector file.')
+!
+            
+            rewind(davidson%transforms%unit)
 !
             do j = 1, davidson%dim_red
 !
@@ -450,6 +447,7 @@ contains
 !
       call mem%dealloc(c_i, davidson%n_parameters, 1)
       call mem%dealloc(rho_j, davidson%n_parameters, 1)
+     ! write(output%unit, *)davidson%A_red
 !
 !     Close files for trial vectors and transformed vectors
 !
@@ -593,6 +591,7 @@ contains
 !
       integer(i15) :: i 
 !
+!
       if (davidson%do_precondition) then 
 !
          call mem%alloc(preconditioner, davidson%n_parameters, 1)
@@ -645,7 +644,7 @@ contains
          call davidson%read_trial(c_i, i)
          projection_of_R_on_c_i = ddot(davidson%n_parameters, c_i, 1, R, 1)
 !
-         R = R - projection_of_R_on_c_i*c_i 
+         call daxpy(davidson%n_parameters, - projection_of_R_on_c_i, c_i, 1, R, 1)
 !
       enddo 
 !

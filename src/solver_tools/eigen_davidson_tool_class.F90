@@ -264,7 +264,7 @@ contains
 !
          davidson%omega_im(j, 1) = omega_im(index_list(j,1), 1)
 !
-      enddo 
+      enddo
 !
       call mem%dealloc(X_red, davidson%dim_red, davidson%dim_red)
       call mem%dealloc(omega_re, davidson%dim_red, 1)
@@ -303,10 +303,15 @@ contains
 !
          call davidson%construct_AX(R, n) ! set R = AX 
 !
-         R = R - davidson%omega_re(n, 1)*X         ! R = AX - omega*X 
-         R = R/norm_X
+        ! R = R - davidson%omega_re(n, 1)*X         ! R = AX - omega*X 
+        call daxpy(davidson%n_parameters, - davidson%omega_re(n, 1), X, 1,  R, 1)
+        ! R = R/norm_X
+        call dscal(davidson%n_parameters, one/norm_X, R, 1)
 !
       else
+         write(output%unit, *)'STOP imaginary'
+         flush(output%unit)
+         stop
 !
 !        If it's the first root of the complex pair, construct the real residual; if it's the second, 
 !        construct instead the imaginary residual
@@ -389,11 +394,14 @@ contains
       call davidson%construct_X(X_im, n + 1) ! set X_im
       call davidson%construct_AX(R, n)       ! set R = A X_re 
 !
-      R = R - davidson%omega_re(n, 1)*X_re + davidson%omega_im(n, 1)*X_im 
+      !R = R - davidson%omega_re(n, 1)*X_re + davidson%omega_im(n, 1)*X_im
+      call daxpy(davidson%n_parameters, - davidson%omega_re(n, 1), X_re, 1, R, 1) 
+      call daxpy(davidson%n_parameters, davidson%omega_im(n, 1), X_im, 1, R, 1) 
 !
       norm_X_im = get_l2_norm(X_im, davidson%n_parameters)
 !
-      R = R/(sqrt(norm_X_re**2 + norm_X_im**2))
+     ! R = R/(sqrt(norm_X_re**2 + norm_X_im**2))
+     call dscal(davidson%n_parameters, one/(sqrt(norm_X_re**2 + norm_X_im**2)), R, 1)
 !
       call mem%dealloc(X_im, davidson%n_parameters, 1) 
 !
@@ -444,18 +452,22 @@ contains
       call davidson%construct_X(X_re, n - 1) ! set X_re 
       call davidson%construct_AX(R, n)       ! set R = A X_im 
 !
-      R = R - davidson%omega_re(n, 1)*X_im - davidson%omega_im(n - 1, 1)*X_re
+     ! R = R - davidson%omega_re(n, 1)*X_im - davidson%omega_im(n - 1, 1)*X_re
+
+      call daxpy(davidson%n_parameters, - davidson%omega_re(n, 1), X_im, 1, R, 1) 
+      call daxpy(davidson%n_parameters, - davidson%omega_im(n - 1, 1), X_re, 1, R, 1) 
 !
       norm_X_re = get_l2_norm(X_re, davidson%n_parameters)
 !
-      R = R/(sqrt(norm_X_re**2 + norm_X_im**2))
+      !R = R/(sqrt(norm_X_re**2 + norm_X_im**2))
+      call dscal(davidson%n_parameters, one/(sqrt(norm_X_re**2 + norm_X_im**2)), R, 1)
 !
       call mem%dealloc(X_re, davidson%n_parameters, 1)  
 !
    end subroutine construct_im_residual_eigen_davidson_tool
 !
 !
-   subroutine construct_next_trial_vec_eigen_davidson_tool(davidson, residual_norm, n)
+   subroutine construct_next_trial_vec_eigen_davidson_tool(davidson, residual_norm, iteration, n)
 !!
 !!    Construct next trial vector  
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -474,7 +486,9 @@ contains
 !
       class(eigen_davidson_tool) :: davidson 
 !
-      real(dp), intent(inout) :: residual_norm 
+      real(dp), intent(out) :: residual_norm 
+!
+      integer(i15) :: iteration
 !
       integer(i15), optional, intent(in) :: n 
 !
@@ -501,8 +515,8 @@ contains
       call mem%alloc(R, davidson%n_parameters, 1)
 !
       call davidson%construct_X(X, k) 
-      norm_X = get_l2_norm(X, davidson%n_parameters)
-
+      norm_X = get_l2_norm(X, davidson%n_parameters) 
+!
       call davidson%construct_residual(R, X, norm_X, k)
 !
 !     Write the normalized solution X to file,
@@ -510,15 +524,18 @@ contains
 !
       if (k .eq. 1) then 
 !
-         call disk%open_file(davidson%X, 'readwrite', 'rewind')
+         call disk%open_file(davidson%X, 'write', 'rewind')
 !
       else
 !
-         call disk%open_file(davidson%X, 'readwrite', 'append')
+         call disk%open_file(davidson%X, 'write', 'append')
 !
       endif 
 !
-      write(davidson%X%unit) X/norm_X
+      call dscal(davidson%n_parameters, one/norm_X, X, 1)
+!
+      write(davidson%X%unit) X
+!
       call disk%close_file(davidson%X)
 !
       call mem%dealloc(X, davidson%n_parameters, 1)
@@ -528,11 +545,13 @@ contains
 !     in the search space by orthogonalizing it against existing trial vectors.
 !
       norm_residual = get_l2_norm(R, davidson%n_parameters)
+      residual_norm = norm_residual
 !
       if (norm_residual .gt. davidson%residual_threshold) then 
 !
          call davidson%precondition(R)
          norm_precond_residual = get_l2_norm(R, davidson%n_parameters)
+         call dscal(davidson%n_parameters, one/norm_precond_residual, R, 1)
 !
          call davidson%orthogonalize_against_trial_vecs(R)
          norm_new_trial = get_l2_norm(R, davidson%n_parameters)
@@ -540,7 +559,7 @@ contains
          if (norm_new_trial .gt. davidson%residual_threshold) then
 !
             davidson%n_new_trials = davidson%n_new_trials + 1
-            R = R/norm_new_trial
+            call dscal(davidson%n_parameters, one/norm_new_trial, R, 1)
 !
             call disk%open_file(davidson%trials, 'write', 'append')
             write(davidson%trials%unit) R

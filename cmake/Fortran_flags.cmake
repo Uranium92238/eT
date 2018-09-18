@@ -4,7 +4,7 @@
 ## GNU ##
 if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
     add_definitions(-DVAR_GFORTRAN)
-    set(CMAKE_Fortran_FLAGS "-DVAR_GFORTRAN -fdefault-integer-8 -O3 -funroll-loops -ftree-vectorize -fopenmp")
+    set(CMAKE_Fortran_FLAGS "-DVAR_GFORTRAN -fdefault-integer-8 -O3 -funroll-loops -fopenmp")
 
 #
 #   Testing processor 32-bit or 64-bit
