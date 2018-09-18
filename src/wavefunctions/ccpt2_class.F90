@@ -100,6 +100,7 @@ subroutine prepare_ccpt2(wf, ref_wf)
 !
       call add_1432_to_1234(-one, g_ai_bj, L_ai_bj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
+      e2_neg = zero
 !!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq) reduction(+:e2_neg)
       do j = 1, wf%n_o 
          do b = 1, wf%n_v
