@@ -61,6 +61,9 @@ subroutine prepare_ccpt2(wf, ref_wf)
       call wf%initialize_amplitudes()
       wf%t1 = zero
 !
+      write(output%unit, *) 'Exiting prepare ccpt2'
+      flush(output%unit)
+!
    end subroutine prepare_ccpt2
 !
 !
@@ -79,13 +82,15 @@ subroutine prepare_ccpt2(wf, ref_wf)
       real(dp), dimension(:,:), allocatable :: g_ai_bj
       real(dp), dimension(:,:), allocatable :: L_ai_bj
       real(dp), dimension(:,:), allocatable :: eps
-      real(dp) :: e2_neg
+      real(dp) :: e2_neg, test1, test2
       integer(i15) :: a, i, b, j, ai, bj 
 !
+      write(output%unit, *) 'Entering energy calculation'
+      flush(output%unit)
       call mem%alloc(g_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call mem%alloc(L_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      call mem%alloc(eps, wf%n_o + wf%n_v, 1)
+      call mem%alloc(eps, wf%n_mo, 1)
       eps = wf%orbital_energies
 !
       write(output%unit, *) 'Getting g_aibj'
@@ -93,7 +98,7 @@ subroutine prepare_ccpt2(wf, ref_wf)
 !
       call wf%get_vovo(g_ai_bj)
 !
-      write(output%unit, *) 'done getting g_aibj'
+      write(output%unit, *) 'Done getting g_aibj'
       flush(output%unit)
 !
       L_ai_bj = two*g_ai_bj
@@ -102,17 +107,17 @@ subroutine prepare_ccpt2(wf, ref_wf)
 !
       e2_neg = zero
 !!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq) reduction(+:e2_neg)
-      do j = 1, wf%n_o 
+      do j = 1, wf%n_o
          do b = 1, wf%n_v
 !
-            bj = wf%n_v*(j-1) + b
+            bj = (wf%n_v)*(j-1) + b
 !
             do i = 1, wf%n_o 
                do a = 1, wf%n_v
 !
-                  ai = wf%n_v*(i-1) + a
+                  ai = (wf%n_v)*(i-1) + a
 !
-                  e2_neg = e2_neg + g_ai_bj(ai, bj)*L_ai_bj(ai, bj)/(eps(a, 1)+eps(b, 1)-eps(i, 1)-eps(j, 1))
+                  e2_neg = e2_neg + g_ai_bj(ai, bj)*L_ai_bj(ai, bj)/(eps(wf%n_o + a, 1)+eps(wf%n_o + b, 1)-eps(i, 1)-eps(j, 1))
 !
                enddo
             enddo
@@ -123,6 +128,7 @@ subroutine prepare_ccpt2(wf, ref_wf)
       wf%energy = wf%hf_energy - e2_neg
 !     
       write(output%unit, *) 'mp2 energy:', wf%energy
+      flush(output%unit)
 !
    end subroutine calculate_energy_ccpt2
 !
