@@ -105,12 +105,17 @@ subroutine prepare_ccpt2(wf, ref_wf)
 !
    subroutine calculate_energy_ccpt2(wf)
 !
+!!
+!!  Calculates CCPT2 energy from vovo integrals and orbital energies
+!!  Written by Andreas Skeidsvoll, 2018
+!!
+!
       implicit none
 !
       real(dp), dimension(:,:), allocatable :: g_ai_bj
       real(dp), dimension(:,:), allocatable :: L_ai_bj
       real(dp), dimension(:,:), allocatable :: eps
-      real(dp) :: e2
+      real(dp) :: e2_neg
       integer(i15) :: p, q, r, s, pq, rs, qp, sr
       integer(i15) :: dim_p, dim_q, dim_r, dim_s
 !
@@ -124,14 +129,14 @@ subroutine prepare_ccpt2(wf, ref_wf)
 !
       L_ai_bj = 2.0*g_ai_bj
 !
-      add_1432_to_1234(-0.5, g_ai_bj, L_ai_bj, wf%n_v, wf%n_o, wf_nv, wf_no)
+      add_1432_to_1234(-0.5, g_ai_bj, L_ai_bj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       dim_p = wf%n_v
       dim_q = wf%n_o
       dim_r = wf%n_v
       dim_s = wf%n_o
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq) reduce(+:e2)
+!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq) reduction(+:e2_neg)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -145,7 +150,7 @@ subroutine prepare_ccpt2(wf, ref_wf)
                   pq = dim_p*(q-1) + p
                   qp = dim_q*(p-1) + q
 !
-                  e2 = e2 - g_ai_bj(pq, rs)*L_ai_bj(qp, sr)/(eps(p)+eps(r)-eps(q)-eps(s))
+                  e2_neg = e2_neg + g_ai_bj(pq, rs)*L_ai_bj(qp, sr)/(eps(p)+eps(r)-eps(q)-eps(s))
 !
                enddo
             enddo
@@ -153,5 +158,6 @@ subroutine prepare_ccpt2(wf, ref_wf)
       enddo
 !!$omp end parallel do
 !
-      wf%ccpt2_energy = wf%hf_energy + e2    
+      wf%ccpt2_energy = wf%hf_energy - e2_neg
+!
    end subroutine calculate_energy_ccpt2
