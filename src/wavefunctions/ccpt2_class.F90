@@ -38,6 +38,9 @@ subroutine prepare_ccpt2(wf, ref_wf)
 !
       integer(i15) :: p
 !
+      write(output%unit, *) 'Entered prepare ccpt2'
+      flush(output%unit)
+!
       wf%name = 'ccpt2'
 !
       wf%system = ref_wf%system
@@ -54,6 +57,9 @@ subroutine prepare_ccpt2(wf, ref_wf)
 !
       call wf%initialize_orbital_energies()
       wf%orbital_energies = ref_wf%orbital_energies
+!
+      call wf%initialize_amplitudes()
+      wf%t1 = zero
 !
    end subroutine prepare_ccpt2
 !
@@ -82,7 +88,13 @@ subroutine prepare_ccpt2(wf, ref_wf)
       call mem%alloc(eps, wf%n_o + wf%n_v, 1)
       eps = wf%orbital_energies
 !
+      write(output%unit, *) 'Getting g_aibj'
+      flush(output%unit)
+!
       call wf%get_vovo(g_ai_bj)
+!
+      write(output%unit, *) 'done getting g_aibj'
+      flush(output%unit)
 !
       L_ai_bj = two*g_ai_bj
 !
@@ -108,6 +120,8 @@ subroutine prepare_ccpt2(wf, ref_wf)
 !!$omp end parallel do
 !
       wf%energy = wf%hf_energy - e2_neg
+!     
+      write(output%unit, *) 'mp2 energy:', wf%energy
 !
    end subroutine calculate_energy_ccpt2
 !
