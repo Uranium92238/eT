@@ -32,8 +32,8 @@ module eigen_davidson_tool_class
 !
    contains 
 !
-      procedure :: initialize => initialize_eigen_davidson_tool 
-      procedure :: finalize   => finalize_eigen_davidson_tool
+      procedure :: prepare => prepare_eigen_davidson_tool 
+      procedure :: cleanup   => cleanup_eigen_davidson_tool
 !
       procedure :: construct_next_trial_vec => construct_next_trial_vec_eigen_davidson_tool
 !
@@ -44,12 +44,18 @@ module eigen_davidson_tool_class
       procedure :: construct_re_residual    => construct_re_residual_eigen_davidson_tool
       procedure :: construct_im_residual    => construct_im_residual_eigen_davidson_tool
 !
+      procedure :: initialize_omega_re   => initialize_omega_re_eigen_davidson_tool
+      procedure :: initialize_omega_im   => initialize_omega_im_eigen_davidson_tool
+!
+      procedure :: destruct_omega_re   => destruct_omega_re_eigen_davidson_tool
+      procedure :: destruct_omega_im   => destruct_omega_im_eigen_davidson_tool
+!
    end type eigen_davidson_tool
 !
 contains
 !
 !
-   subroutine initialize_eigen_davidson_tool(davidson, name, n_parameters, n_solutions, &
+   subroutine prepare_eigen_davidson_tool(davidson, name, n_parameters, n_solutions, &
                                              residual_threshold, eigenvalue_threshold)
 !!
 !!    Initialize 
@@ -77,10 +83,10 @@ contains
       call davidson%transforms%init(trim(davidson%name) // '_transforms', 'sequential', 'unformatted')
       call davidson%preconditioner%init(trim(davidson%name) // '_preconditioner', 'sequential', 'unformatted')
 !
-      call disk%open_file(davidson%X, 'readwrite', 'rewind')
-      call disk%open_file(davidson%trials, 'readwrite', 'rewind')
-      call disk%open_file(davidson%transforms, 'readwrite', 'rewind')
-      call disk%open_file(davidson%preconditioner, 'readwrite', 'rewind')
+      call disk%open_file(davidson%X, 'write', 'rewind')
+      call disk%open_file(davidson%trials, 'write', 'rewind')
+      call disk%open_file(davidson%transforms, 'write', 'rewind')
+      call disk%open_file(davidson%preconditioner, 'write', 'rewind')
 !
       call disk%close_file(davidson%X)
       call disk%close_file(davidson%trials)
@@ -88,13 +94,14 @@ contains
       call disk%close_file(davidson%preconditioner)
 !
       davidson%do_precondition = .false. ! Switches to true if 'set_preconditioner' is called
-      davidson%dim_red = 0               ! Increases as we add trial vectors 
+      davidson%dim_red = n_solutions     ! Initial dimension equal to number of solutions
+      davidson%n_new_trials = n_solutions 
       davidson%max_dim_red = 50           
 !
-   end subroutine initialize_eigen_davidson_tool
+   end subroutine prepare_eigen_davidson_tool
 !
 !
-   subroutine finalize_eigen_davidson_tool(davidson)
+   subroutine cleanup_eigen_davidson_tool(davidson)
 !!
 !!    Finalize 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -103,8 +110,62 @@ contains
 !
       class(eigen_davidson_tool) :: davidson 
 !
-   end subroutine finalize_eigen_davidson_tool
+      call disk%open_file(davidson%trials, 'write', 'rewind')
+      call disk%open_file(davidson%transforms, 'write', 'rewind')
+!
+      call disk%close_file(davidson%trials, 'delete')
+      call disk%close_file(davidson%transforms, 'delete')
+!
+   end subroutine cleanup_eigen_davidson_tool
 !  
+!
+   subroutine initialize_omega_im_eigen_davidson_tool(davidson)
+!!
+!!
+      implicit none 
+!
+      class(eigen_davidson_tool) :: davidson 
+!
+      if (.not. allocated(davidson%omega_im)) call mem%alloc(davidson%omega_im, davidson%n_solutions, 1)
+!
+   end subroutine initialize_omega_im_eigen_davidson_tool
+!  
+!
+   subroutine initialize_omega_re_eigen_davidson_tool(davidson)
+!!
+!!
+      implicit none 
+!
+      class(eigen_davidson_tool) :: davidson 
+!
+      if (.not. allocated(davidson%omega_re)) call mem%alloc(davidson%omega_re, davidson%n_solutions, 1)
+!
+   end subroutine initialize_omega_re_eigen_davidson_tool
+!  
+!
+   subroutine destruct_omega_im_eigen_davidson_tool(davidson)
+!!
+!!
+      implicit none 
+!
+      class(eigen_davidson_tool) :: davidson 
+!
+      if ( allocated(davidson%omega_im)) call mem%dealloc(davidson%omega_im, davidson%n_solutions, 1)
+!
+   end subroutine destruct_omega_im_eigen_davidson_tool
+!  
+!
+   subroutine destruct_omega_re_eigen_davidson_tool(davidson)
+!!
+!!
+      implicit none 
+!
+      class(eigen_davidson_tool) :: davidson 
+!
+      if ( allocated(davidson%omega_re)) call mem%dealloc(davidson%omega_re, davidson%n_solutions, 1)
+!
+   end subroutine destruct_omega_re_eigen_davidson_tool
+!
 !
    subroutine solve_reduced_problem_eigen_davidson_tool(davidson)
 !!
@@ -156,7 +217,7 @@ contains
 !
       call dgeev('N','V',             &
                   davidson%dim_red,   &
-                  davidson%A_red,     &
+                  A_red,              &
                   davidson%dim_red,   &
                   omega_re,           &
                   omega_im,           &
@@ -164,11 +225,10 @@ contains
                   1,                  &
                   X_red,              &
                   davidson%dim_red,   &
-                  work,               &
+                  work,               &   
                   4*davidson%dim_red, &
                   info)
 !
-      davidson%A_red = A_red 
       call mem%dealloc(A_red, davidson%dim_red, davidson%dim_red)
 !
       if (info .ne. 0) call output%error_msg('could not solve reduced equation in Davidson davidson.')
@@ -178,8 +238,8 @@ contains
 !     Find lowest n_solutions eigenvalues and sort them (the corresponding indices
 !     are placed in the integer array index_list)
 !
-      if (.not. allocated(davidson%omega_re)) call mem%alloc(davidson%omega_re, davidson%n_solutions, 1)
-      if (.not. allocated(davidson%omega_im)) call mem%alloc(davidson%omega_im, davidson%n_solutions, 1)
+      call davidson%initialize_omega_im
+      call davidson%initialize_omega_re
 !
       davidson%omega_re = zero
       davidson%omega_im = zero
@@ -204,7 +264,7 @@ contains
 !
          davidson%omega_im(j, 1) = omega_im(index_list(j,1), 1)
 !
-      enddo 
+      enddo
 !
       call mem%dealloc(X_red, davidson%dim_red, davidson%dim_red)
       call mem%dealloc(omega_re, davidson%dim_red, 1)
@@ -243,10 +303,15 @@ contains
 !
          call davidson%construct_AX(R, n) ! set R = AX 
 !
-         R = R - davidson%omega_re(n, 1)*X         ! R = AX - omega*X 
-         R = R/norm_X
+        ! R = R - davidson%omega_re(n, 1)*X         ! R = AX - omega*X 
+        call daxpy(davidson%n_parameters, - davidson%omega_re(n, 1), X, 1,  R, 1)
+        ! R = R/norm_X
+        call dscal(davidson%n_parameters, one/norm_X, R, 1)
 !
       else
+         write(output%unit, *)'STOP imaginary'
+         flush(output%unit)
+         stop
 !
 !        If it's the first root of the complex pair, construct the real residual; if it's the second, 
 !        construct instead the imaginary residual
@@ -329,11 +394,14 @@ contains
       call davidson%construct_X(X_im, n + 1) ! set X_im
       call davidson%construct_AX(R, n)       ! set R = A X_re 
 !
-      R = R - davidson%omega_re(n, 1)*X_re + davidson%omega_im(n, 1)*X_im 
+      !R = R - davidson%omega_re(n, 1)*X_re + davidson%omega_im(n, 1)*X_im
+      call daxpy(davidson%n_parameters, - davidson%omega_re(n, 1), X_re, 1, R, 1) 
+      call daxpy(davidson%n_parameters, davidson%omega_im(n, 1), X_im, 1, R, 1) 
 !
       norm_X_im = get_l2_norm(X_im, davidson%n_parameters)
 !
-      R = R/(sqrt(norm_X_re**2 + norm_X_im**2))
+     ! R = R/(sqrt(norm_X_re**2 + norm_X_im**2))
+     call dscal(davidson%n_parameters, one/(sqrt(norm_X_re**2 + norm_X_im**2)), R, 1)
 !
       call mem%dealloc(X_im, davidson%n_parameters, 1) 
 !
@@ -384,18 +452,22 @@ contains
       call davidson%construct_X(X_re, n - 1) ! set X_re 
       call davidson%construct_AX(R, n)       ! set R = A X_im 
 !
-      R = R - davidson%omega_re(n, 1)*X_im - davidson%omega_im(n - 1, 1)*X_re
+     ! R = R - davidson%omega_re(n, 1)*X_im - davidson%omega_im(n - 1, 1)*X_re
+
+      call daxpy(davidson%n_parameters, - davidson%omega_re(n, 1), X_im, 1, R, 1) 
+      call daxpy(davidson%n_parameters, - davidson%omega_im(n - 1, 1), X_re, 1, R, 1) 
 !
       norm_X_re = get_l2_norm(X_re, davidson%n_parameters)
 !
-      R = R/(sqrt(norm_X_re**2 + norm_X_im**2))
+      !R = R/(sqrt(norm_X_re**2 + norm_X_im**2))
+      call dscal(davidson%n_parameters, one/(sqrt(norm_X_re**2 + norm_X_im**2)), R, 1)
 !
       call mem%dealloc(X_re, davidson%n_parameters, 1)  
 !
    end subroutine construct_im_residual_eigen_davidson_tool
 !
 !
-   subroutine construct_next_trial_vec_eigen_davidson_tool(davidson, residual_norm, n)
+   subroutine construct_next_trial_vec_eigen_davidson_tool(davidson, residual_norm, iteration, n)
 !!
 !!    Construct next trial vector  
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -414,7 +486,9 @@ contains
 !
       class(eigen_davidson_tool) :: davidson 
 !
-      real(dp), intent(inout) :: residual_norm 
+      real(dp), intent(out) :: residual_norm 
+!
+      integer(i15) :: iteration
 !
       integer(i15), optional, intent(in) :: n 
 !
@@ -440,25 +514,28 @@ contains
       call mem%alloc(X, davidson%n_parameters, 1)
       call mem%alloc(R, davidson%n_parameters, 1)
 !
-      call davidson%construct_X(X, n) 
-      norm_X = get_l2_norm(X, davidson%n_parameters)
-
-      call davidson%construct_residual(R, X, norm_X, n)
+      call davidson%construct_X(X, k) 
+      norm_X = get_l2_norm(X, davidson%n_parameters) 
+!
+      call davidson%construct_residual(R, X, norm_X, k)
 !
 !     Write the normalized solution X to file,
 !     then deallocate 
 !
       if (k .eq. 1) then 
 !
-         call disk%open_file(davidson%X, 'readwrite', 'rewind')
+         call disk%open_file(davidson%X, 'write', 'rewind')
 !
       else
 !
-         call disk%open_file(davidson%X, 'readwrite', 'append')
+         call disk%open_file(davidson%X, 'write', 'append')
 !
       endif 
 !
-      write(davidson%X%unit) X/norm_X
+      call dscal(davidson%n_parameters, one/norm_X, X, 1)
+!
+      write(davidson%X%unit) X
+!
       call disk%close_file(davidson%X)
 !
       call mem%dealloc(X, davidson%n_parameters, 1)
@@ -468,11 +545,13 @@ contains
 !     in the search space by orthogonalizing it against existing trial vectors.
 !
       norm_residual = get_l2_norm(R, davidson%n_parameters)
+      residual_norm = norm_residual
 !
       if (norm_residual .gt. davidson%residual_threshold) then 
 !
          call davidson%precondition(R)
          norm_precond_residual = get_l2_norm(R, davidson%n_parameters)
+         call dscal(davidson%n_parameters, one/norm_precond_residual, R, 1)
 !
          call davidson%orthogonalize_against_trial_vecs(R)
          norm_new_trial = get_l2_norm(R, davidson%n_parameters)
@@ -480,7 +559,7 @@ contains
          if (norm_new_trial .gt. davidson%residual_threshold) then
 !
             davidson%n_new_trials = davidson%n_new_trials + 1
-            R = R/norm_new_trial
+            call dscal(davidson%n_parameters, one/norm_new_trial, R, 1)
 !
             call disk%open_file(davidson%trials, 'write', 'append')
             write(davidson%trials%unit) R

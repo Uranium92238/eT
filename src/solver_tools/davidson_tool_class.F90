@@ -132,7 +132,7 @@ contains
    end subroutine read_trial_davidson_tool
 !
 !
-   subroutine write_trial_davidson_tool(davidson, c_i)
+   subroutine write_trial_davidson_tool(davidson, c_i, position)
 !!
 !!    Write trial
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Aug 2018
@@ -145,17 +145,37 @@ contains
 !
       real(dp), dimension(davidson%n_parameters, 1) :: c_i
 !
+      character(len=*), optional :: position
+!
       integer(i15) :: ioerror
 !
-      if (davidson%dim_red + 1 .le. davidson%max_dim_red) then
+!     Will we exceed max_dim_red ?
 !
-         call disk%open_file(davidson%trials, 'write', 'append')
+      if (davidson%dim_red + 1 .gt. davidson%max_dim_red) then
+!
+         call output%error_msg('still cannot handle going past max_dim_red!')
+!
+      endif    
+!
+!     Was position passed ?
+!
+      if (present(position)) then
+!
+!        Sanity check on position variable
+!
+         if ((trim(position) .ne. 'rewind') .and. (trim(position) .ne. 'append')) then
+!
+            call output%error_msg('Position specifier not recognized!')
+!
+         endif
+!
+         call disk%open_file(davidson%trials, 'write', position)
 !
       else
 !
-         call disk%open_file(davidson%trials, 'write', 'rewind')
+         call disk%open_file(davidson%trials, 'write', 'append')
 !
-      endif     
+      endif 
 !
       write(davidson%trials%unit, iostat = ioerror) c_i
       if (ioerror .ne. 0) call output%error_msg('writing trial vectors file.')
@@ -289,6 +309,8 @@ contains
 !
       else
 !
+         call output%error_msg('does not support exceeding max_dim_red')
+!
          call disk%open_file(davidson%transforms, 'write', 'rewind')
 !
       endif     
@@ -322,9 +344,17 @@ contains
 !
       real(dp) :: ddot
 !
+      logical :: entire_local
+!
       real(dp), dimension(:,:), allocatable :: A_red_copy, c_i, rho_j
 !
       integer(i15) :: i, j, ioerror
+!
+      if (present(entire)) then
+         entire_local = entire
+      else
+         entire_local = .false.
+      endif
 !
 !     Ask disk manager to open the files
 !
@@ -343,7 +373,7 @@ contains
 !
 !     Construct reduced matrix: A_red_ij = c_i^T * A * c_j = c_i^T * rho_i
 !
-      if (davidson%dim_red .eq. davidson%n_solutions .or. entire) then ! First iteration
+      if (davidson%dim_red .eq. davidson%n_solutions .or. entire_local) then ! First iteration
 !
 !        Make the entire reduced matrix
 !
@@ -358,7 +388,7 @@ contains
             do j = 1, davidson%dim_red
 !
                read(davidson%transforms%unit, iostat=ioerror) rho_j
-               if (ioerror .ne. 0) call output%error_msg('reading transformed vector file 1.')
+               if (ioerror .ne. 0) call output%error_msg('reading transformed vector file.')
 !
                davidson%A_red(i,j) = ddot(davidson%n_parameters, c_i, 1, rho_j, 1)
 !
@@ -380,10 +410,15 @@ contains
 !
          call mem%dealloc(A_red_copy, davidson%dim_red - davidson%n_new_trials, davidson%dim_red - davidson%n_new_trials)
 !
+         rewind(davidson%trials%unit)
+!
          do i = 1, davidson%dim_red
 !
             read(davidson%trials%unit, iostat=ioerror) c_i
             if (ioerror .ne. 0) call output%error_msg('reading trial vector file.')
+!
+            
+            rewind(davidson%transforms%unit)
 !
             do j = 1, davidson%dim_red
 !
@@ -412,6 +447,7 @@ contains
 !
       call mem%dealloc(c_i, davidson%n_parameters, 1)
       call mem%dealloc(rho_j, davidson%n_parameters, 1)
+     ! write(output%unit, *)davidson%A_red
 !
 !     Close files for trial vectors and transformed vectors
 !
@@ -499,6 +535,8 @@ contains
 !
       call mem%dealloc(rho_i, davidson%n_parameters, 1)
 !
+      call disk%close_file(davidson%transforms)
+!
    end subroutine construct_AX_davidson_tool
 !
 !
@@ -553,6 +591,7 @@ contains
 !
       integer(i15) :: i 
 !
+!
       if (davidson%do_precondition) then 
 !
          call mem%alloc(preconditioner, davidson%n_parameters, 1)
@@ -605,7 +644,7 @@ contains
          call davidson%read_trial(c_i, i)
          projection_of_R_on_c_i = ddot(davidson%n_parameters, c_i, 1, R, 1)
 !
-         R = R - projection_of_R_on_c_i*c_i 
+         call daxpy(davidson%n_parameters, - projection_of_R_on_c_i, c_i, 1, R, 1)
 !
       enddo 
 !

@@ -1321,7 +1321,7 @@ contains
 !
 !     Initialize the Davidson solver 
 !
-      call davidson%initialize('aug_Hessian_Davidson', (wf%n_mo)**2 + 1, 1, &
+      call davidson%prepare('aug_Hessian_Davidson', (wf%n_mo)**2 + 1, 1, &
                                  solver%relative_micro_threshold*max_grad,  &
                                  solver%relative_micro_threshold*max_grad)
 !
@@ -1517,7 +1517,7 @@ contains
 !        we should expand the search space 
 !
          residual_norm = zero 
-         call davidson%construct_next_trial_vec(residual_norm)
+    !     call davidson%construct_next_trial_vec(residual_norm)
 !
          write(output%unit, *) ':::: Residual: ', residual_norm
 !

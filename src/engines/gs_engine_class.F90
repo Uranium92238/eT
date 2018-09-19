@@ -1,6 +1,6 @@
 module gs_engine_class
 !!
-!!    Hartree-Fock engine class module 
+!!    Coupled cluster ground state engine class module 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
 !!
    use abstract_engine_class

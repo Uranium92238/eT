@@ -23,6 +23,7 @@ program eT_program
 !
   use hf_engine_class
   use gs_engine_class
+  use es_engine_class
   use abstract_engine_class
 !
   use eri_cd_solver_class
@@ -55,6 +56,7 @@ program eT_program
     type(hf_engine), allocatable :: gs_hf_engine
 !
     type(gs_engine), allocatable, target :: gs_cc_engine
+    type(es_engine), allocatable, target :: es_cc_engine
 !
     class(abstract_engine), pointer :: engine => null()
 !
@@ -181,6 +183,11 @@ program eT_program
           engine => gs_cc_engine  
 !
         elseif (cc_engine == 'excited state') then
+!
+          write(output%unit, *) 'shmellaw'
+!
+          allocate(es_cc_engine)
+          engine => es_cc_engine  
 !
         endif
 !

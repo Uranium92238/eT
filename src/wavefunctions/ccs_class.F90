@@ -94,6 +94,7 @@ module ccs_class
       procedure :: construct_omega => construct_omega_ccs
       procedure :: omega_ccs_a1    => omega_ccs_a1_ccs
 !
+      procedure :: transform_trial_vector      => transform_trial_vector_ccs
       procedure :: jacobian_ccs_transformation => jacobian_ccs_transformation_ccs
       procedure :: jacobian_ccs_a1             => jacobian_ccs_a1_ccs 
       procedure :: jacobian_ccs_b1             => jacobian_ccs_b1_ccs 
@@ -146,10 +147,10 @@ contains
       write(output%unit, *) 'Se 3'
       flush(output%unit)
 !
-      wf%fock_ij(:,:) = ref_wf%mo_fock(1 : wf%n_o , 1 : wf%n_o)
-      wf%fock_ia(:,:) = ref_wf%mo_fock(1 : wf%n_o , wf%n_o + 1 : wf%n_v)
-      wf%fock_ai(:,:) = ref_wf%mo_fock(1 : wf%n_o , wf%n_o + 1 : wf%n_v)
-      wf%fock_ab(:,:) = ref_wf%mo_fock( wf%n_o + 1 : wf%n_v , wf%n_o + 1 : wf%n_v)
+      wf%fock_ij(:,:) = ref_wf%mo_fock(1 : wf%n_o, 1 : wf%n_o)
+      wf%fock_ia(:,:) = ref_wf%mo_fock(1 : wf%n_o, wf%n_o + 1 : wf%n_mo)
+      wf%fock_ai(:,:) = ref_wf%mo_fock(wf%n_o + 1 : wf%n_mo, 1 : wf%n_o)
+      wf%fock_ab(:,:) = ref_wf%mo_fock(wf%n_o + 1 : wf%n_mo, wf%n_o + 1 : wf%n_mo)
 !
       write(output%unit, *) 'Se 4'
       flush(output%unit)
@@ -362,7 +363,7 @@ contains
       call wf%get_oooo(g_ij_kl)
      ! write(output%unit, *) 'g_ij_kl', g_ij_kl(1:5, 1)
 !
-      write(output%unit, *) 'g_ijkl', g_ij_kl(1:10,1:10)
+    !  write(output%unit, *) 'g_ijkl', g_ij_kl(1:10,1:10)
 !
       do i = 1, wf%n_o
          do j = 1, wf%n_o 
@@ -390,12 +391,12 @@ contains
       call mem%alloc(g_ia_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
       call wf%get_ovoo(g_ia_jk)
 !
-      write(output%unit, *) 'g_iajk', g_ia_jk(1:10,1:10)
+    !  write(output%unit, *) 'g_iajk', g_ia_jk(1:10,1:10)
 !
       call mem%alloc(g_ai_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
       call wf%get_vooo(g_ai_jk)
 !
-      write(output%unit, *) 'g_aijk', g_ia_jk(1:10,1:10)
+    !  write(output%unit, *) 'g_aijk', g_ia_jk(1:10,1:10)
 
 !
       do i = 1, wf%n_o
@@ -1963,6 +1964,16 @@ contains
    end subroutine get_vvvv_ccs
 !
 !
+   subroutine transform_trial_vector_ccs(wf, c_i)
+!
+      class(ccs) :: wf 
+!
+      real(dp), dimension(wf%n_amplitudes, 1) :: c_i
+!
+      call wf%jacobian_ccs_transformation(c_i)
+!
+   end subroutine transform_trial_vector_ccs
+!
    subroutine jacobian_ccs_transformation_ccs(wf, c_a_i)
 !!
 !!    Jacobian CCS transformation
@@ -1999,8 +2010,6 @@ contains
 !
 !     Place rho_a_i in c_a_i
 !
-      c_a_i = zero
-!
       call dcopy((wf%n_o)*(wf%n_v), rho_a_i, 1, c_a_i, 1)
 !
       call mem%dealloc(rho_a_i, wf%n_v, wf%n_o)
@@ -2027,6 +2036,7 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho1
 !
 !     sum_b F_a_b * c_b_i
+!
 !
       call dgemm('N', 'N',     &
                   wf%n_v,      &
@@ -2074,7 +2084,7 @@ contains
 !
       class(ccs) :: wf
 !   
-      real(dp), dimension(wf%n_v,wf%n_o), intent(in)    :: c1
+      real(dp), dimension(wf%n_v*wf%n_o, 1), intent(in)    :: c1
       real(dp), dimension(wf%n_v,wf%n_o), intent(inout) :: rho1      
 !
       real(dp), dimension(:,:), allocatable :: g_ai_jb
@@ -2093,92 +2103,61 @@ contains
 !
 !     Get g_ai_jb integral, then prepare for batch over b 
 !
+!
       call mem%alloc(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call wf%get_voov(g_ai_jb)
+      call wf%get_voov(g_ai_jb)          
 !
-      required = 4*max(((wf%n_o)**2)*((wf%n_v)**2)                                                   &  !
-                        + 2*(wf%integrals%n_J)*(wf%n_v)**2 + 2*(wf%integrals%n_J)*(wf%n_v)*(wf%n_o), &  ! Needed to get L_ab_J
-                        2*((wf%n_o)**2)*((wf%n_v)**2)                                                &  !
-                        + (wf%integrals%n_J)*(wf%n_v)**2 + (wf%integrals%n_J)*(wf%n_o)**2,           &  ! Needed to get g_ab_ij
-                        3*((wf%n_o)**2)*((wf%n_v)**2))                                                  ! Needed to get L_ai_jb
 !
-      call batch_b%init(wf%n_v)
-      call mem%num_batch(batch_b, required)           
+!     Construct L_ai_jb = 2*g_ai_jb - g_ab_ij
 !
-      do current_b_batch = 1, batch_b%num_batches
+      call mem%alloc(g_ab_ji, (wf%n_v)**2, (wf%n_o)**2)
 !
-         call batch_b%determine_limits(current_b_batch)
+      call wf%get_vvoo(g_ab_ji)  
 !
-!        Construct L_ai_jb = 2*g_ai_jb - g_ab_ij
+      call mem%alloc(L_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-         call mem%alloc(g_ab_ji, (wf%n_v)*(batch_b%length), (wf%n_o)**2)
+      do i = 1, wf%n_o
+         do b = 1, wf%n_v
+            do j = 1, wf%n_o
 !
-         call wf%get_vvoo(g_ab_ji,        &
-                           1,             &
-                           wf%n_v,        &
-                           batch_b%first, &
-                           batch_b%last,  &
-                           1,             &
-                           wf%n_o,        &
-                           1,             &
-                           wf%n_o)        
+               ji      = index_two(j, i, wf%n_o)
+               jb      = index_two(j, b, wf%n_o)
 !
-         call mem%alloc(L_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(batch_b%length))
-         L_ai_jb = zero
+               do a = 1, wf%n_v
 !
-         do i = 1, wf%n_o
-            do b = 1, batch_b%length
-               do j = 1, wf%n_o
+                  ai = index_two(a, i, wf%n_v)
+                  ab = index_two(a, b, wf%n_v)
 !
-                  ji      = index_two(j, i, wf%n_o)
-                  jb      = index_two(j, b, wf%n_o)
-                  jb_full = index_two(j, b + batch_b%first - 1, wf%n_o)
+                  L_ai_jb(ai, jb) = two*g_ai_jb(ai, jb) - g_ab_ji(ab, ji)
 !
-                  do a = 1, wf%n_v
-!
-                     ai = index_two(a, i, wf%n_v)
-                     ab = index_two(a, b, wf%n_v)
-!
-                     L_ai_jb(ai, jb) = two*g_ai_jb(ai, jb_full) - g_ab_ji(ab, ji)
-!
-                  enddo
                enddo
             enddo
          enddo
+      enddo
 !
-         call mem%dealloc(g_ab_ji, (wf%n_v)*(batch_b%length), (wf%n_o)**2)
+      call mem%dealloc(g_ab_ji, (wf%n_v)**2, (wf%n_o)**2)
 !
-!        Reorder c1 to do multiply with L_ai_jb
+!     Reorder c1 to do multiply with L_ai_jb
 !
-         call mem%alloc(c_jb, (wf%n_o)*(batch_b%length), 1)
+      call mem%alloc(c_jb, (wf%n_o), (wf%n_v))
 !
-         c_jb = zero
-         do j = 1, wf%n_o
-            do b = 1, batch_b%length
+      call sort_12_to_21(c1, c_jb, (wf%n_v), (wf%n_o))
 !
-               jb = index_two(j, b, wf%n_o)
-               c_jb(jb, 1) = c1(b + batch_b%first - 1, j)
+      call dgemm('N', 'N',                   &
+                  (wf%n_v)*(wf%n_o),         &
+                  1,                         &
+                  (wf%n_o)*(wf%n_v),         &
+                  one,                       &
+                  L_ai_jb,                   &
+                  (wf%n_v)*(wf%n_o),         &
+                  c_jb,                      &
+                  (wf%n_o)*(wf%n_v),         &
+                  one,                       &
+                  rho1,                      &
+                  (wf%n_v)*(wf%n_o))      
 !
-            enddo
-         enddo
-!
-         call dgemm('N','N',                    &
-                     (wf%n_v)*(wf%n_o),         &
-                     1,                         &
-                     (batch_b%length)*(wf%n_o), &
-                     one,                       &
-                     L_ai_jb,                   &
-                     (wf%n_v)*(wf%n_o),         &
-                     c_jb,                      &
-                     (batch_b%length)*(wf%n_o), &
-                     one,                       &
-                     rho1,                      &
-                     (wf%n_v)*(wf%n_o))      
-!
-         call mem%dealloc(L_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(batch_b%length))
-         call mem%dealloc(c_jb, (wf%n_o)*(batch_b%length), 1)
-!
-      enddo ! Looping over batches
+      call mem%dealloc(L_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(c_jb, (wf%n_o), (wf%n_v))
 !
       call mem%dealloc(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
