@@ -104,7 +104,7 @@ contains
 !
       call add_1432_to_1234(-one, g_ai_bj, L_ai_bj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq) reduction(+:e2_neg)
+!$omp parallel do schedule(static) private(a, i, b, j, ai, bj) reduction(+:e2_neg)
       do j = 1, wf%n_o
          do b = 1, wf%n_v
 !
@@ -121,7 +121,7 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
       wf%energy = wf%hf_energy - e2_neg
 !
