@@ -1,7 +1,7 @@
-module ccpt2_class
+module mp2_class
 !
 !!
-!!    Coupled cluster pertubation theory 2 (CCPT2) class module
+!!    Second order Møller-Plesset pertubation theory (MP2)/CCPT2 class module
 !!    Written by Andreas Skeidsvoll and Eirik F. Kjønstad, 2018
 !!
 !
@@ -13,35 +13,31 @@ module ccpt2_class
 !
    implicit none
 !
-   type, extends(ccs):: ccpt2
+   type, extends(ccs):: mp2
 !
       contains
 !
-      procedure :: prepare                    => prepare_ccpt2
-      procedure :: calculate_energy           => calculate_energy_ccpt2
-      procedure :: print_wavefunction_summary => print_wavefunction_summary_ccpt2
+      procedure :: prepare                    => prepare_mp2
+      procedure :: calculate_energy           => calculate_energy_mp2
+      procedure :: print_wavefunction_summary => print_wavefunction_summary_mp2
 !
-   end type ccpt2
+   end type mp2
 !
 contains
 !
 !
-   subroutine prepare_ccpt2(wf, ref_wf)
+   subroutine prepare_mp2(wf, ref_wf)
 !!
 !!    Prepare
 !!    Written by Andreas Skeidsvoll and Eirik F. Kjønstad, 2018, based on prepare_ccs
 !!
       implicit none
 !
-!Tulleendring
-      class(ccpt2) :: wf
+      class(mp2) :: wf
 !
       class(hf) :: ref_wf
 !
       integer(i15) :: p
-!
-      write(output%unit, *) 'Entered prepare ccpt2'
-      flush(output%unit)
 !
       wf%name = 'MP2'
 !
@@ -63,13 +59,10 @@ contains
       call wf%initialize_amplitudes()
       wf%t1 = zero
 !
-      write(output%unit, *) 'Exiting prepare ccpt2'
-      flush(output%unit)
-!
-   end subroutine prepare_ccpt2
+   end subroutine prepare_mp2
 !
 !
-   subroutine calculate_energy_ccpt2(wf)
+   subroutine calculate_energy_mp2(wf)
 !!
 !!    Calculate energy
 !!    Written by Andreas Skeidsvoll and Eirik Kjønstad, 2018
@@ -85,7 +78,7 @@ contains
 !!
       implicit none
 !
-      class(ccpt2) :: wf 
+      class(mp2) :: wf 
 !
       real(dp), dimension(:,:), allocatable :: g_ai_bj
       real(dp), dimension(:,:), allocatable :: L_ai_bj
@@ -126,10 +119,10 @@ contains
 !
       wf%energy = wf%hf_energy - e2_neg
 !
-   end subroutine calculate_energy_ccpt2
+   end subroutine calculate_energy_mp2
 !
 !
-   subroutine print_wavefunction_summary_ccpt2(wf)
+   subroutine print_wavefunction_summary_mp2(wf)
 !!
 !!    Print wavefunction summary 
 !!    Written by Andreas Skeidsvoll, 2018, based on print_wavefunction_summary_hf
@@ -142,7 +135,7 @@ contains
 !!
       implicit none 
 !
-      class(ccpt2), intent(in) :: wf
+      class(mp2), intent(in) :: wf
 !
       write(output%unit, '(/t3,a,a,a)') ':: Summary of ', trim(wf%name), ' wavefunction energetics (a.u.)'
 !
@@ -150,6 +143,6 @@ contains
       write(output%unit, '(t3,a26,f19.12)')  'MP2 correction:           ', (wf%energy)-(wf%hf_energy)
       write(output%unit, '(t3,a26,f19.12)')  'MP2 energy:               ', wf%energy
 !
-      end subroutine print_wavefunction_summary_ccpt2
+      end subroutine print_wavefunction_summary_mp2
 !
-end module ccpt2_class
+end module mp2_class

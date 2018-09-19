@@ -58,7 +58,8 @@ contains
       call eri_chol_solver%run(wf%system)
 !
       call eri_chol_solver%cholesky_vecs_diagonal_test()
-      write(output%unit, *) 'Not doing full test (takes a long time)'
+!
+      write(output%unit, *) 'Not doing full test of Cholesky vectors (takes a long time)'
       flush(output%unit)
 !      call eri_chol_solver%full_test_cholesky_vecs(wf%system)
 !
