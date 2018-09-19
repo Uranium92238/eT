@@ -1424,7 +1424,7 @@ contains
 !
       else ! first == 'T'
 !
-         ldb = k
+         lda = k
 !
       endif
 !
