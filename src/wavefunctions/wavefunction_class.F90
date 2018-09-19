@@ -33,7 +33,8 @@ module wavefunction_class
       procedure :: initialize_orbital_coefficients => initialize_orbital_coefficients_wavefunction
       procedure :: initialize_orbital_energies     => initialize_orbital_energies_wavefunction
 !
-
+      procedure :: print_wavefunction_summary      => print_wavefunction_summary_wavefunction
+!
       procedure :: destruct_orbital_coefficients   => destruct_orbital_coefficients_wavefunction
       procedure :: destruct_orbital_energies       => destruct_orbital_energies_wavefunction
 !
@@ -54,6 +55,26 @@ contains
       if (.not. allocated(wf%orbital_coefficients)) call mem%alloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
 !
    end subroutine initialize_orbital_coefficients_wavefunction
+!
+!
+   subroutine print_wavefunction_summary_wavefunction(wf)
+!!
+!!    Print wavefunction summary 
+!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Prints information related to the wavefunction,
+!!    most of which is meaningful only for a properly 
+!!    converged wavefunction. Should be overwritten in 
+!!    descendants if more or less or other information 
+!!    is present. 
+!!
+      implicit none 
+!
+      class(wavefunction), intent(in) :: wf 
+!
+!     Nothing here (overwrite in descendants)
+!
+   end subroutine print_wavefunction_summary_wavefunction
 !
 !
    subroutine destruct_orbital_coefficients_wavefunction(wf)
