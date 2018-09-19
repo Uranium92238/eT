@@ -17,8 +17,8 @@ module davidson_cc_es_solver_class
 !
       integer(i15) :: max_iterations = 50
 !
-      real(dp) :: eigenvalue_threshold = 1.0d-6
-      real(dp) :: residual_threshold  = 1.0d-6
+      real(dp) :: eigenvalue_threshold = 1.0d-12
+      real(dp) :: residual_threshold  = 1.0d-12
 !
       logical :: restart = .false.
 !
@@ -157,7 +157,7 @@ contains
 !
       iteration = 1
 !
-     call davidson%prepare('cc_es_davidson', wf%n_amplitudes, solver%n_singlet_states, &
+     call davidson%prepare(wf%name // '_es_davidson', wf%n_amplitudes, solver%n_singlet_states, &
                                solver%residual_threshold, solver%eigenvalue_threshold)
 !
 !     Construct first trial vectors
@@ -182,6 +182,12 @@ contains
 !     Enter iterative loop
 !
       do while (.not. converged .and. (iteration .le. solver%max_iterations))
+!
+         if (davidson%dim_red .eq. davidson%max_dim_red) then
+!
+            call davidson%set_trials_to_solutions()
+!
+         endif
 !
          write(output%unit,'(/t6,a,i3)') 'Iteration: ', iteration
          write(output%unit,'(t6,a,i4/)') 'Reduced space dimension: ', davidson%dim_red

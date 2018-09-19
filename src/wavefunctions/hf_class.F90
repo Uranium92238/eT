@@ -330,26 +330,14 @@ contains
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call mem%alloc(h_pq, wf%n_mo, wf%n_mo)
 !
-      write(output%unit, *) 'Suppe 1'
-      flush(output%unit)
-!
       call wf%get_ao_h_wx(h_wx)
 !
-      write(output%unit, *) 'Suppe 2'
-      flush(output%unit)
-!
       call wf%mo_transform(h_wx, h_pq)
-!
-      write(output%unit, *) 'Suppe 3'
-      flush(output%unit)
 !
       call h_pq_file%init('h_pq', 'sequential', 'unformatted')
       call disk%open_file(h_pq_file, 'write', 'rewind')
 !
       write(h_pq_file%unit) h_pq 
-!
-      write(output%unit, *) 'Suppe 4'
-      flush(output%unit)
 !
       call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
       call mem%dealloc(h_pq, wf%n_mo, wf%n_mo)     

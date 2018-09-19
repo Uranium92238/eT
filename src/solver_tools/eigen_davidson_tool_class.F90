@@ -96,7 +96,7 @@ contains
       davidson%do_precondition = .false. ! Switches to true if 'set_preconditioner' is called
       davidson%dim_red = n_solutions     ! Initial dimension equal to number of solutions
       davidson%n_new_trials = n_solutions 
-      davidson%max_dim_red = 150          
+      davidson%max_dim_red = min(n_solutions*15, 150)        
 !
    end subroutine prepare_eigen_davidson_tool
 !
@@ -305,15 +305,10 @@ contains
 !
          call davidson%construct_AX(R, n) ! set R = AX 
 !
-        ! R = R - davidson%omega_re(n, 1)*X         ! R = AX - omega*X 
         call daxpy(davidson%n_parameters, - davidson%omega_re(n, 1), X, 1,  R, 1)
-        ! R = R/norm_X
         call dscal(davidson%n_parameters, one/norm_X, R, 1)
 !
       else
-         write(output%unit, *)'STOP imaginary'
-         flush(output%unit)
-         stop
 !
 !        If it's the first root of the complex pair, construct the real residual; if it's the second, 
 !        construct instead the imaginary residual
@@ -396,13 +391,11 @@ contains
       call davidson%construct_X(X_im, n + 1) ! set X_im
       call davidson%construct_AX(R, n)       ! set R = A X_re 
 !
-      !R = R - davidson%omega_re(n, 1)*X_re + davidson%omega_im(n, 1)*X_im
       call daxpy(davidson%n_parameters, - davidson%omega_re(n, 1), X_re, 1, R, 1) 
       call daxpy(davidson%n_parameters, davidson%omega_im(n, 1), X_im, 1, R, 1) 
 !
       norm_X_im = get_l2_norm(X_im, davidson%n_parameters)
 !
-     ! R = R/(sqrt(norm_X_re**2 + norm_X_im**2))
      call dscal(davidson%n_parameters, one/(sqrt(norm_X_re**2 + norm_X_im**2)), R, 1)
 !
       call mem%dealloc(X_im, davidson%n_parameters, 1) 
@@ -454,14 +447,11 @@ contains
       call davidson%construct_X(X_re, n - 1) ! set X_re 
       call davidson%construct_AX(R, n)       ! set R = A X_im 
 !
-     ! R = R - davidson%omega_re(n, 1)*X_im - davidson%omega_im(n - 1, 1)*X_re
-
       call daxpy(davidson%n_parameters, - davidson%omega_re(n, 1), X_im, 1, R, 1) 
       call daxpy(davidson%n_parameters, - davidson%omega_im(n - 1, 1), X_re, 1, R, 1) 
 !
       norm_X_re = get_l2_norm(X_re, davidson%n_parameters)
 !
-      !R = R/(sqrt(norm_X_re**2 + norm_X_im**2))
       call dscal(davidson%n_parameters, one/(sqrt(norm_X_re**2 + norm_X_im**2)), R, 1)
 !
       call mem%dealloc(X_re, davidson%n_parameters, 1)  

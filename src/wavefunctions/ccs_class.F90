@@ -116,7 +116,7 @@ contains
 !
       class(hf) :: ref_wf
 !
-      integer(i15) :: p
+      integer(i15) :: p, i, a
 !
       wf%name = 'ccs'
 !
@@ -349,21 +349,12 @@ contains
 !
       call disk%close_file(h_pq_file)
 !
-!     Perform t1-transformation of F_pq = h_pq  
-!
-     ! write(output%unit, *) 'h_pq MO', F_pq(1:4, 1:4)
+!     Perform t1-transformation of F_pq = h_pq 
 !
       call wf%t1_transform(F_pq)
 !
-      !write(output%unit, *) 'h_pq t1', F_pq(1:4, 1:4)
-!
-!     Occupied-occupied contributions: F_ij = F_ij + sum_k (2*g_ijkk - g_ikkj)
-!
       call mem%alloc(g_ij_kl, (wf%n_o)**2, (wf%n_o)**2)
       call wf%get_oooo(g_ij_kl)
-     ! write(output%unit, *) 'g_ij_kl', g_ij_kl(1:5, 1)
-!
-    !  write(output%unit, *) 'g_ijkl', g_ij_kl(1:10,1:10)
 !
       do i = 1, wf%n_o
          do j = 1, wf%n_o 
@@ -391,13 +382,8 @@ contains
       call mem%alloc(g_ia_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
       call wf%get_ovoo(g_ia_jk)
 !
-    !  write(output%unit, *) 'g_iajk', g_ia_jk(1:10,1:10)
-!
       call mem%alloc(g_ai_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
       call wf%get_vooo(g_ai_jk)
-!
-    !  write(output%unit, *) 'g_aijk', g_ia_jk(1:10,1:10)
-
 !
       do i = 1, wf%n_o
          do a = 1, wf%n_v
@@ -420,8 +406,6 @@ contains
 !
          enddo
       enddo
-!
-     ! write(output%unit, *)F_pq(1, 1 + wf%n_o), F_pq(1 + wf%n_o, 1)
 !
       call mem%dealloc(g_ia_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
       call mem%dealloc(g_ai_jk, (wf%n_v)*(wf%n_o), (wf%n_o)**2)
