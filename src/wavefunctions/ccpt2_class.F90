@@ -1,8 +1,8 @@
 module ccpt2_class
 !
 !!
-!!  Coupled cluster pertubation theory 2 class module
-!!  Written by ?, 2018
+!!    Coupled cluster pertubation theory 2 (CCPT2) class module
+!!    Written by Andreas Skeidsvoll and Eirik F. Kjønstad, 2018
 !!
 !
    use wavefunction_class
@@ -15,7 +15,7 @@ module ccpt2_class
 !
    type, extends(ccs):: ccpt2
 !
-   contains
+      contains
 !
       procedure :: prepare          => prepare_ccpt2
       procedure :: calculate_energy => calculate_energy_ccpt2
@@ -25,10 +25,10 @@ module ccpt2_class
 contains
 !
 !
-subroutine prepare_ccpt2(wf, ref_wf)
+   subroutine prepare_ccpt2(wf, ref_wf)
 !!
 !!    Prepare
-!!    Written by ?, 2018
+!!    Written by Andreas Skeidsvoll and Eirik F. Kjønstad, 2018, based on prepare_ccs
 !!
       implicit none
 !
@@ -67,14 +67,11 @@ subroutine prepare_ccpt2(wf, ref_wf)
    end subroutine prepare_ccpt2
 !
 !
-!
    subroutine calculate_energy_ccpt2(wf)
-!
 !!
-!!  Calculates CCPT2 energy from vovo integrals and orbital energies
-!!  Written by Andreas Skeidsvoll, 2018
+!!    Calculates CCPT2 energy from vovo integrals and orbital energies
+!!    Written by Andreas Skeidsvoll and Eirik Kjønstad, 2018
 !!
-!
       implicit none
 !
       class(ccpt2) :: wf 
@@ -82,30 +79,21 @@ subroutine prepare_ccpt2(wf, ref_wf)
       real(dp), dimension(:,:), allocatable :: g_ai_bj
       real(dp), dimension(:,:), allocatable :: L_ai_bj
       real(dp), dimension(:,:), allocatable :: eps
-      real(dp) :: e2_neg, test1, test2
+      real(dp) :: e2_neg = zero
       integer(i15) :: a, i, b, j, ai, bj 
 !
-      write(output%unit, *) 'Entering energy calculation'
-      flush(output%unit)
+      call mem%alloc(eps, wf%n_mo, 1)
       call mem%alloc(g_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call mem%alloc(L_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      call mem%alloc(eps, wf%n_mo, 1)
       eps = wf%orbital_energies
 !
-      write(output%unit, *) 'Getting g_aibj'
-      flush(output%unit)
-!
       call wf%get_vovo(g_ai_bj)
-!
-      write(output%unit, *) 'Done getting g_aibj'
-      flush(output%unit)
 !
       L_ai_bj = two*g_ai_bj
 !
       call add_1432_to_1234(-one, g_ai_bj, L_ai_bj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      e2_neg = zero
 !!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq) reduction(+:e2_neg)
       do j = 1, wf%n_o
          do b = 1, wf%n_v
@@ -117,7 +105,7 @@ subroutine prepare_ccpt2(wf, ref_wf)
 !
                   ai = (wf%n_v)*(i-1) + a
 !
-                  e2_neg = e2_neg + g_ai_bj(ai, bj)*L_ai_bj(ai, bj)/(eps(wf%n_o + a, 1)+eps(wf%n_o + b, 1)-eps(i, 1)-eps(j, 1))
+                  e2_neg = e2_neg + g_ai_bj(ai, bj)*L_ai_bj(ai, bj)/(eps(wf%n_o+a,1)+eps(wf%n_o+b,1)-eps(i,1)-eps(j,1))
 !
                enddo
             enddo
@@ -126,9 +114,6 @@ subroutine prepare_ccpt2(wf, ref_wf)
 !!$omp end parallel do
 !
       wf%energy = wf%hf_energy - e2_neg
-!     
-      write(output%unit, *) 'mp2 energy:', wf%energy
-      flush(output%unit)
 !
    end subroutine calculate_energy_ccpt2
 !
