@@ -58,7 +58,9 @@ contains
       call eri_chol_solver%run(wf%system)
 !
       call eri_chol_solver%cholesky_vecs_diagonal_test()
-      call eri_chol_solver%full_test_cholesky_vecs(wf%system)
+      write(output%unit, *) 'Not doing full test (takes a long time)'
+      flush(output%unit)
+!      call eri_chol_solver%full_test_cholesky_vecs(wf%system)
 !
       call eri_chol_solver%construct_mo_cholesky_vecs(wf%system, wf%n_mo, wf%orbital_coefficients)
 !
@@ -69,9 +71,10 @@ contains
 !
 !     Ground state solution (avoid starting solver if there are no equations to solve)
 !
-      if (trim(wf%name) == 'ccpt2') then 
+      if (trim(wf%name) == 'MP2') then 
 !
          call wf%calculate_energy()
+         call wf%print_wavefunction_summary()
 !
       else 
 !

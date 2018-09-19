@@ -17,8 +17,9 @@ module ccpt2_class
 !
       contains
 !
-      procedure :: prepare          => prepare_ccpt2
-      procedure :: calculate_energy => calculate_energy_ccpt2
+      procedure :: prepare                    => prepare_ccpt2
+      procedure :: calculate_energy           => calculate_energy_ccpt2
+      procedure :: print_wavefunction_summary => print_wavefunction_summary_ccpt2
 !
    end type ccpt2
 !
@@ -41,7 +42,7 @@ contains
       write(output%unit, *) 'Entered prepare ccpt2'
       flush(output%unit)
 !
-      wf%name = 'ccpt2'
+      wf%name = 'MP2'
 !
       wf%system = ref_wf%system
 !
@@ -116,5 +117,29 @@ contains
       wf%energy = wf%hf_energy - e2_neg
 !
    end subroutine calculate_energy_ccpt2
+!
+!
+   subroutine print_wavefunction_summary_ccpt2(wf)
+!!
+!!    Print wavefunction summary 
+!!    Written by Andreas Skeidsvoll, 2018, based on print_wavefunction_summary_hf
+!!
+!!    Prints information related to the wavefunction,
+!!    most of which is meaningful only for a properly 
+!!    converged wavefunction. Should be overwritten in 
+!!    descendants if more or less or other information 
+!!    is present. 
+!!
+      implicit none 
+!
+      class(ccpt2), intent(in) :: wf
+!
+      write(output%unit, '(/t3,a,a,a)') ':: Summary of ', trim(wf%name), ' wavefunction energetics (a.u.)'
+!
+      write(output%unit, '(/t3,a26,f19.12)') 'HF energy:                ', wf%hf_energy
+      write(output%unit, '(t3,a26,f19.12)')  'MP2 correction:           ', (wf%energy)-(wf%hf_energy)
+      write(output%unit, '(t3,a26,f19.12)')  'MP2 energy:               ', wf%energy
+!
+      end subroutine print_wavefunction_summary_ccpt2
 !
 end module ccpt2_class
