@@ -522,7 +522,7 @@ contains
       call mem%alloc(rho_i, davidson%n_parameters, 1)
 !
       call disk%open_file(davidson%transforms, 'read')
-      rewind(davidson%trials%unit)
+      rewind(davidson%transforms%unit)
 !   
       do i = 1, davidson%dim_red
 ! 
@@ -596,7 +596,8 @@ contains
 !
          call mem%alloc(preconditioner, davidson%n_parameters, 1)
 !
-         call disk%open_file(davidson%preconditioner, 'read', 'rewind')
+         call disk%open_file(davidson%preconditioner, 'read')
+         rewind(davidson%preconditioner%unit)
          read(davidson%preconditioner%unit) preconditioner
          call disk%close_file(davidson%preconditioner)
 !

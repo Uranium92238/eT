@@ -96,7 +96,7 @@ contains
       davidson%do_precondition = .false. ! Switches to true if 'set_preconditioner' is called
       davidson%dim_red = n_solutions     ! Initial dimension equal to number of solutions
       davidson%n_new_trials = n_solutions 
-      davidson%max_dim_red = 50           
+      davidson%max_dim_red = 150          
 !
    end subroutine prepare_eigen_davidson_tool
 !
@@ -251,6 +251,8 @@ contains
 !
 !     Pick out solution vectors and imaginary parts of eigenvalues according to index_list
 !
+      if (allocated(davidson%X_red)) &
+         call mem%dealloc(davidson%X_red, davidson%dim_red - davidson%n_new_trials, davidson%n_solutions)
       call mem%alloc(davidson%X_red, davidson%dim_red, davidson%n_solutions)
       davidson%X_red = zero
 !
