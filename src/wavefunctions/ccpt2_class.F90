@@ -70,8 +70,17 @@ contains
 !
    subroutine calculate_energy_ccpt2(wf)
 !!
-!!    Calculates CCPT2 energy from vovo integrals and orbital energies
+!!    Calculate energy
 !!    Written by Andreas Skeidsvoll and Eirik Kjønstad, 2018
+!!
+!!    Calculates MP2 energy from HF energy, E_HF, vovo integrals, g_aibj, and orbital energies, eps.
+!!    Total MP2 energy is calculated using
+!!
+!!       E = E_HF - sum_aibj g_aibj*L_aibj/(eps(a)+eps(b)-eps(i)-eps(j))
+!!
+!!    where
+!!
+!!       L_aibj = 2*g_aibj - g_ajbi.
 !!
       implicit none
 !
