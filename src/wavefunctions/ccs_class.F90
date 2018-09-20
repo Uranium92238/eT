@@ -120,9 +120,6 @@ contains
 !
       wf%name = 'ccs'
 !
-      write(output%unit, *) 'Se 1'
-      flush(output%unit)
-!
       wf%system = ref_wf%system
 !
       wf%n_ao   = ref_wf%n_ao
@@ -139,21 +136,12 @@ contains
       call wf%initialize_fock_ai()
       call wf%initialize_fock_ab()
 !
-      write(output%unit, *) 'Se 2'
-      flush(output%unit)
-!
       call wf%initialize_fock_diagonal()
-!
-      write(output%unit, *) 'Se 3'
-      flush(output%unit)
 !
       wf%fock_ij(:,:) = ref_wf%mo_fock(1 : wf%n_o, 1 : wf%n_o)
       wf%fock_ia(:,:) = ref_wf%mo_fock(1 : wf%n_o, wf%n_o + 1 : wf%n_mo)
       wf%fock_ai(:,:) = ref_wf%mo_fock(wf%n_o + 1 : wf%n_mo, 1 : wf%n_o)
       wf%fock_ab(:,:) = ref_wf%mo_fock(wf%n_o + 1 : wf%n_mo, wf%n_o + 1 : wf%n_mo)
-!
-      write(output%unit, *) 'Se 4'
-      flush(output%unit)
 !
       do p = 1, wf%n_mo
 !
@@ -161,17 +149,10 @@ contains
 !
       enddo
 !
-      write(output%unit, *) 'Se 4.5', wf%fock_ia(1:5, 1:5)
-      write(output%unit, *) 'Se 4.6', wf%fock_diagonal
-      flush(output%unit)
-!
       call ref_wf%mo_transform_and_save_h()
 !
       call wf%initialize_orbital_coefficients()
       wf%orbital_coefficients = ref_wf%orbital_coefficients
-!
-      write(output%unit, *) 'Se 5'
-      flush(output%unit)
 !
    end subroutine prepare_ccs
 !

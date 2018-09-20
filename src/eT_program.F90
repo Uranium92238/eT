@@ -192,8 +192,6 @@ program eT_program
 !
         elseif (cc_engine == 'excited state') then
 !
-          write(output%unit, *) 'shmellaw'
-!
           allocate(es_cc_engine)
           engine => es_cc_engine  
 !

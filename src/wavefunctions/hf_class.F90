@@ -122,6 +122,9 @@ module hf_class
       procedure :: get_ao_s_wx                        => get_ao_s_wx_hf
       procedure :: get_ao_mu_wx                       => get_ao_mu_wx_hf
 !
+      procedure :: print_screening_settings => print_screening_settings_hf
+      procedure :: set_n_mo       => set_n_mo_hf
+!
    end type hf
 !
 !
@@ -138,26 +141,15 @@ contains
       class(hf) :: wf
 !
       wf%name = 'HF'
-      write(output%unit, '(/t3,a)')  ':: Preparing ' // trim(wf%name) // ' wavefunction object'
+    !  write(output%unit, '(/t3,a)')  '- Preparing ' // trim(wf%name) // ' wavefunction object'
 !
-      write(output%unit, '(/t3,a)') 'Reading wavefunction settings.'
+     ! write(output%unit, '(/t3,a)') 'Reading wavefunction settings.'
 !
       call wf%read_settings()
 !
-      write(output%unit, '(/t6,a30,e10.4)')  'Coulomb screening threshold:  ', wf%coulomb_threshold
-      write(output%unit, '(t6,a30,e10.4)')   'Exchange screening threshold: ', wf%exchange_threshold
-      write(output%unit, '(t6,a30,e10.4)')   'ERI integral precision:       ', wf%integral_precision
+     ! write(output%unit, '(/t3,a)') 'Preparing molecular system object.'
 !
-      write(output%unit, '(/t3,a)') 'Preparing molecular system object.'
       call wf%system%prepare()
-!
-      write(output%unit, '(/t6,a14,i1)') 'Charge:       ', wf%system%charge 
-      write(output%unit, '(t6,a14,i1)')  'Multiplicity: ', wf%system%multiplicity 
-!
-      write(output%unit, '(/t6,a35,f18.12)') 'Nuclear repulsion energy (a.u.):   ', wf%system%get_nuclear_repulsion()
-      write(output%unit, '(t6,a35,f18.12)')  'Bohr/angstrom value (CODATA 2010): ', bohr_to_angstrom
-!
-      call wf%system%print_geometry()
 !
       wf%n_ao = wf%system%get_n_aos()
 !
@@ -166,19 +158,21 @@ contains
       call initialize_nuclear()
       call initialize_overlap()
 !
-      write(output%unit, '(/t3,a)') 'Cholesky decomposing AO overlap matrix to make sure used orbitals are'
-      write(output%unit, '(t3,a)')  'linearly independent.'
-      call wf%initialize_ao_overlap()
-      call wf%construct_ao_overlap()
-      call wf%decompose_ao_overlap() 
+      call wf%set_n_mo()
 !
-      wf%n_o = (wf%system%get_n_electrons())/2
-      wf%n_v = wf%n_mo - wf%n_o
+     !write(output%unit, '(/t6,a)') 'Cholesky decomposing AO overlap matrix to make sure used orbitals are'
+     !write(output%unit, '(t6,a)')  'linearly independent.'
+     !call wf%initialize_ao_overlap()
+     !call wf%construct_ao_overlap()
+     !call wf%decompose_ao_overlap() 
 !
-      write(output%unit, '(/t6,a30,i4)') 'Number of occupied orbitals:  ', wf%n_o 
-      write(output%unit, '(t6,a30,i4)')  'Number of virtual orbitals:   ', wf%n_v
-      write(output%unit, '(t6,a30,i4)')  'Number of molecular orbitals: ', wf%n_mo 
-      write(output%unit, '(t6,a30,i4)')  'Number of atomic orbitals:    ', wf%n_ao 
+     !wf%n_o = (wf%system%get_n_electrons())/2
+     !wf%n_v = wf%n_mo - wf%n_o
+!
+     !write(output%unit, '(/t6,a30,i4)') 'Number of occupied orbitals:  ', wf%n_o 
+     !write(output%unit, '(t6,a30,i4)')  'Number of virtual orbitals:   ', wf%n_v
+     !write(output%unit, '(t6,a30,i4)')  'Number of molecular orbitals: ', wf%n_mo 
+     !write(output%unit, '(t6,a30,i4)')  'Number of atomic orbitals:    ', wf%n_ao 
 !
    end subroutine prepare_hf
 !
@@ -202,14 +196,14 @@ contains
 !
       integer(i15) :: mo 
 !
-      write(output%unit, '(/t3,a,a,a)') ':: Summary of ', trim(wf%name), ' wavefunction energetics (a.u.)'
+      write(output%unit, '(/t3,a,a,a)') '- Summary of ', trim(wf%name), ' wavefunction energetics (a.u.)'
 !
       homo_lumo_gap = wf%orbital_energies(wf%n_o + 1, 1) - wf%orbital_energies(wf%n_o, 1)
 !
-      write(output%unit, '(/t3,a26,f19.12)') 'HOMO-LUMO gap:            ', homo_lumo_gap
-      write(output%unit, '(t3,a26,f19.12)')  'Nuclear repulsion energy: ', wf%system%get_nuclear_repulsion()
-      write(output%unit, '(t3,a26,f19.12)')  'Electronic energy:        ', wf%energy - wf%system%get_nuclear_repulsion()
-      write(output%unit, '(t3,a26,f19.12)')  'Total energy:             ', wf%energy
+      write(output%unit, '(/t6,a26,f19.12)') 'HOMO-LUMO gap:            ', homo_lumo_gap
+      write(output%unit, '(t6,a26,f19.12)')  'Nuclear repulsion energy: ', wf%system%get_nuclear_repulsion()
+      write(output%unit, '(t6,a26,f19.12)')  'Electronic energy:        ', wf%energy - wf%system%get_nuclear_repulsion()
+      write(output%unit, '(t6,a26,f19.12)')  'Total energy:             ', wf%energy
 !
       call wf%print_orbital_energies('3')
 !
@@ -304,7 +298,7 @@ contains
       indent = '6'
       if (present(indentation)) indent = trim(indentation)
 !
-      write(output%unit, '(/t'//trim(indent)//',a)') 'Molecular orbital energies:'
+      write(output%unit, '(/t'//trim(indent)//',a)') '- Molecular orbital energies:'
 !
       call print_vector(wf%orbital_energies, wf%n_ao, indent)
 !
@@ -3580,6 +3574,52 @@ contains
       enddo
 !
    end subroutine get_ao_mu_wx_hf
+!
+!
+   subroutine print_screening_settings_hf(wf)
+!!
+!!    Print screening settings
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      write(output%unit, '(t6,a30,e10.4)')  'Coulomb screening threshold:  ', wf%coulomb_threshold
+      write(output%unit, '(t6,a30,e10.4)')   'Exchange screening threshold: ', wf%exchange_threshold
+      write(output%unit, '(t6,a30,e10.4)')   'ERI integral precision:       ', wf%integral_precision
+!
+   end subroutine print_screening_settings_hf
+!
+!
+   subroutine set_n_mo_hf(wf)
+!!
+!!    Set number of molecular orbitals
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(hf) :: wf
+!
+      write(output%unit, '(/t6,a)') 'Cholesky decomposing AO overlap matrix to make sure used orbitals are'
+      write(output%unit, '(t6,a)')  'linearly independent.'
+!
+      call wf%initialize_ao_overlap()
+      call wf%construct_ao_overlap()
+      call wf%decompose_ao_overlap() 
+!
+      wf%n_o = (wf%system%get_n_electrons())/2
+      wf%n_v = wf%n_mo - wf%n_o
+!
+      write(output%unit, '(/t6,a30,i4)') 'Number of occupied orbitals:  ', wf%n_o 
+      write(output%unit, '(t6,a30,i4)')  'Number of virtual orbitals:   ', wf%n_v
+      write(output%unit, '(t6,a30,i4)')  'Number of molecular orbitals: ', wf%n_mo 
+      write(output%unit, '(t6,a30,i4)')  'Number of atomic orbitals:    ', wf%n_ao 
+!
+     if (wf%n_mo .lt. wf%n_ao) &
+            write(output%unit, '(/t6, a, i3, a)')'Removed ', wf%n_ao - wf%n_mo, ' AOs due to linear dep.'
+!
+   end subroutine set_n_mo_hf
 !
 !
 end module hf_class

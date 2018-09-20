@@ -119,7 +119,7 @@ contains
 !
       class(davidson_cc_es_solver) :: solver 
 !
-      write(output%unit,'(t6,a20,e9.2)') 'Energy threshold:   ', solver%eigenvalue_threshold
+      write(output%unit,'(/t6,a20,e9.2)') 'Energy threshold:   ', solver%eigenvalue_threshold
       write(output%unit,'(t6,a20,e9.2)') 'Residual threshold: ', solver%residual_threshold
       write(output%unit,'(/t6,a,i3,a/)') 'Requested',solver%n_singlet_states, ' singlet states.'
       flush(output%unit)
@@ -404,7 +404,7 @@ contains
 !
       class(davidson_cc_es_solver) :: solver 
 !
-      write(output%unit, '(/t3,a)') ':: Davidson coupled cluster excited state solver'
+      write(output%unit, '(//t3,a)') ':: Davidson coupled cluster excited state solver'
       write(output%unit, '(t3,a/)')  ':: E. F. Kjønstad, S. D. Folkestad, 2018'
 
       flush(output%unit)

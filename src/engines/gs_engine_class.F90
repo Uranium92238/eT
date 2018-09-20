@@ -59,10 +59,6 @@ contains
 !
       call eri_chol_solver%cholesky_vecs_diagonal_test()
 !
-      write(output%unit, *) 'Not doing full test of Cholesky vectors (takes a long time)'
-      flush(output%unit)
-!      call eri_chol_solver%full_test_cholesky_vecs(wf%system)
-!
       call eri_chol_solver%construct_mo_cholesky_vecs(wf%system, wf%n_mo, wf%orbital_coefficients)
 !
       call wf%integrals%prepare(eri_chol_solver%n_cholesky, wf%n_o, wf%n_v)

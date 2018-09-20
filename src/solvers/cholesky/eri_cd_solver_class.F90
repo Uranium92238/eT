@@ -64,6 +64,8 @@ module eri_cd_solver_class
       procedure :: construct_mo_cholesky_vecs             => construct_mo_cholesky_vecs_cd_eri_solver
 !
       procedure :: read_info                              => read_info_eri_cd_solver
+      procedure :: print_banner                           => print_banner_eri_cd_solver
+      procedure :: print_settings                         => print_settings_eri_cd_solver
 !
    end type eri_cd_solver
 !
@@ -123,17 +125,9 @@ contains
       real(dp):: s_determine_basis, e_determine_basis, s_build_vectors, e_build_vectors
       real(dp):: s_invert_time, e_invert_time, omp_get_wtime
 !
-      write(output%unit, '(/a/)') ':: Cholesky decomposition of two-electron ao integrals'
-      flush(output%unit)
+      call solver%print_banner()
 !
-      write(output%unit, '(t6, a20, i10)')    'Number of aos:      ', solver%n_ao
-      write(output%unit, '(t6, a20, i10)')    'Number of ao pairs: ', solver%n_aop
-      write(output%unit, '(t6, a20, i10)')    'Number of shells:   ', solver%n_s
-!
-      write(output%unit, '(/t6, a21, e12.4)') 'Target threshold is: ', solver%threshold
-      write(output%unit, '( t6, a21, e12.4)') 'Span factor:         ', solver%span
-      write(output%unit, '( t6, a21, i5/)')   'Max qual:            ', solver%max_qual
-      flush(output%unit)
+      call solver%print_settings()
 !
       s_determine_basis = omp_get_wtime()
 !
@@ -343,10 +337,11 @@ contains
 !
       enddo
 !
-      write(output%unit, '(/t6, a)')'Reduction of shell pairs:'
-      write(output%unit, '(t6, a33, 2x, i9)')'Total number of shell pairs:     ', solver%n_sp
-      write(output%unit, '(t6, a33, 2x, i9)')'Significant shell pairs:         ', n_sig_sp
-      write(output%unit, '(t6, a33, 2x, i9)')'Significant ao pairs:            ', n_sig_aop
+      write(output%unit, '(/t3, a/)')'- Reduction of ao and shell pairs:'
+      write(output%unit, '(t6, a33, 2x, i11)')'Total number of shell pairs:     ', solver%n_sp
+      write(output%unit, '(t6, a33, 2x, i11)')'Significant shell pairs:         ', n_sig_sp
+      write(output%unit, '(t6, a33, 2x, i11)')'Total number of ao pairs:        ', solver%n_aop
+      write(output%unit, '(t6, a33, 2x, i11)')'Significant ao pairs:            ', n_sig_aop
       flush(output%unit)
 !
 !     Prepare for construction of diagonal and screening vector
@@ -971,12 +966,12 @@ contains
 !
 !     Determining the basis
 !
-      write(output%unit, '(/t3, a)') ' - Determinig the elements of the basis'
-      flush(output%unit)
+     ! write(output%unit, '(/t3, a)') ' - Determinig the elements of the basis'
+     ! flush(output%unit)
 !
-      write(output%unit, '(/t6, a)')&
+      write(output%unit, '(//t3, a)')&
       'Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size'
-      write(output%unit, '(t6, a)') &
+      write(output%unit, '(t3, a)') &
       '-------------------------------------------------------------------------------------------------------'
       flush(output%unit)
 !
@@ -1595,7 +1590,7 @@ contains
             call mem%dealloc_int(qual_aop, n_qual_aop, 3)
             call mem%dealloc_int(qual_sp, n_qual_sp, 3)
 !
-            write(output%unit, '(t6, i4, 8x, i9, 1x, a1, i9, 6x, e12.5, 4x, i4, 8x, i7, 8x, i13)') &
+            write(output%unit, '(t3, i4, 8x, i9, 1x, a1, i9, 6x, e12.5, 4x, i4, 8x, i7, 8x, i13)') &
             solver%iteration, n_sig_aop,'/', n_sig_sp, D_max_full , n_qual_aop, solver%n_cholesky, solver%n_cholesky*n_sig_aop
             flush(output%unit)
 !
@@ -1616,7 +1611,7 @@ contains
 !
             done = .true.
 !
-            write(output%unit, '(t6, i4, 8x, i9, 1x, a1, i9, 6x, e12.5, 4x, i4, 8x, i7, 8x, i13)') &
+            write(output%unit, '(t3, i4, 8x, i9, 1x, a1, i9, 6x, e12.5, 4x, i4, 8x, i7, 8x, i13)') &
             solver%iteration, 0,'/',0, D_max_full, n_qual_aop, solver%n_cholesky, 0
             flush(output%unit)
 !
@@ -1626,7 +1621,7 @@ contains
          full_reduce_time = full_reduce_time + e_reduce_time - s_reduce_time
 !
       enddo ! while not done
-      write(output%unit, '(t6, a)') &
+      write(output%unit, '(t3, a)') &
       '-------------------------------------------------------------------------------------------------------'
       flush(output%unit)
 !
@@ -3057,24 +3052,9 @@ contains
 !
         write(cholesky_mo_vectors_seq%unit) ((L_J_pq(p,q), q = 1, p), p = 1, n_mo)
 !
-      ! call dgemm('T','N',               &
-      !             25,                   &
-      !             25,                   &
-      !             1,                    &
-      !             one,                  &
-      !             L_J_pq,               &
-      !             n_mo,                 &
-      !             L_J_pq,               &
-      !             n_mo,                 &
-      !             one,                 &
-      !             g_ijkl, 25)
-!
-!
         call mem%dealloc(L_J_pq, n_mo, n_mo)
 !
       enddo
-!
-      !write(output%unit, *)g_ijkl(1:5, 1)
 !
 !     Read L_pq_J in batches over q
 !
@@ -3154,6 +3134,40 @@ contains
       call disk%close_file(cholesky_mo_vectors_seq, 'delete')
 !
    end subroutine  construct_mo_cholesky_vecs_cd_eri_solver
+!
+!
+   subroutine print_banner_eri_cd_solver(solver)
+!!
+!!    Print banner
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(eri_cd_solver) :: solver
+!
+      write(output%unit, '(//t3,a)') ':: Cholesky decomposition of electronic repulsion integrals solver'
+      write(output%unit, '(t3,a/)') ':: E. F. Kjønstad, S. D. Folkestad, 2018'
+!
+   end subroutine print_banner_eri_cd_solver
+!
+!
+   subroutine print_settings_eri_cd_solver(solver)
+!!
+!!    Print banner
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(eri_cd_solver) :: solver
+!
+      write(output%unit, '(/t3, a/)') '- Cholesky decomposition settings:'
+!
+      write(output%unit, '(/t6, a21, e12.4)') 'Target threshold is: ', solver%threshold
+      write(output%unit, '( t6, a21, e12.4)') 'Span factor:         ', solver%span
+      write(output%unit, '( t6, a21, i5/)')   'Max qual:            ', solver%max_qual
+      flush(output%unit)
+!
+   end subroutine print_settings_eri_cd_solver
 !
 !
 end module eri_cd_solver_class

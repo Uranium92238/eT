@@ -74,13 +74,15 @@ contains
 !
       call solver%print_banner()
 !
-      write(output%unit, '(/t3,a)') ':: Preparing SCF-DIIS object.'
+     ! write(output%unit, '(/t3,a)') ':: Preparing SCF-DIIS object.'
 !
 !     Read settings (thresholds, etc.)
 !
-      write(output%unit, '(/t3,a/)') 'Reading solver settings.'
+     ! write(output%unit, '(/t3,a/)') 'Reading solver settings.'
 !
       call solver%read_settings()
+!
+      write(output%unit, '(/t3,a/)') '- Hartree-Fock solver settings:'
 !
       call solver%print_scf_diis_settings()
       call solver%print_hf_solver_settings()
@@ -103,7 +105,7 @@ contains
 !
       class(scf_diis_hf_solver) :: solver 
 !
-      write(output%unit, '(t6,a29,i2)') 'DIIS dimension:              ', solver%diis_dimension
+      write(output%unit, '(t6,a29,i2/)') 'DIIS dimension:              ', solver%diis_dimension
 !
    end subroutine print_scf_diis_settings_scf_diis_hf_solver
 !
@@ -147,7 +149,7 @@ contains
 !
 !     :: Part I. Preparations. 
 !
-      write(output%unit, '(/t3,a)') ':: Running SCF-DIIS object'
+     ! write(output%unit, '(/t3,a)') ':: Running SCF-DIIS object'
 !
 !     Construct screening vectors for efficient Fock construction 
 !
@@ -167,7 +169,7 @@ contains
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call wf%get_ao_h_wx(h_wx)
 !
-      write(output%unit, '(/t3,a,a,a)') 'Setting initial AO density is ', trim(solver%ao_density_guess), '.'
+      write(output%unit, '(/t3,a,a,a)') '- Setting initial AO density to ', trim(solver%ao_density_guess), ':'
 !
       call wf%set_initial_ao_density_guess(solver%ao_density_guess)
 !
@@ -176,7 +178,7 @@ contains
       call wf%get_n_electrons_in_density(n_electrons)
 !
       write(output%unit, '(/t6,a30,f17.12)') 'Energy of initial guess:      ', wf%energy
-      write(output%unit, '(t6,a30,f17.12)')  'Number of electrons in guess: ', n_electrons
+      write(output%unit, '(t6,a30,f17.12/)')  'Number of electrons in guess: ', n_electrons
 !
 !     Do a Roothan-Hall update to ensure idempotentency of densities,
 !     and use it to construct the first proper Fock matrix from which 
@@ -332,7 +334,7 @@ contains
 !
       class(scf_diis_hf_solver) :: solver 
 !
-      write(output%unit, '(/t3,a)') ':: Self-consistent field DIIS Hartree-Fock solver'
+      write(output%unit, '(//t3,a)') ':: Self-consistent field DIIS Hartree-Fock solver'
       write(output%unit, '(t3,a/)') ':: E. F. Kjønstad, S. D. Folkestad, 2018'
 !
       write(output%unit, '(t3,a)')  'A DIIS-accelerated Roothan-Hall self-consistent field solver.'
@@ -340,7 +342,7 @@ contains
       write(output%unit, '(t3,a)')  'is performed using the previously recorded Fock matrices and the'
       write(output%unit, '(t3,a)')  'associated gradients. After each Roothan-Hall update of the density,'
       write(output%unit, '(t3,a)')  'a DIIS-fitted Fock matrix is used to get the next orbital coefficients,'
-      write(output%unit, '(t3,a)')  'instead of the one produced directly from the AO density matrix.'
+      write(output%unit, '(t3,a/)') 'instead of the one produced directly from the AO density matrix.'
 
       flush(output%unit)
 !
