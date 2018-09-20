@@ -312,7 +312,7 @@ contains
                   one,                      &
                   L_iJ_a,                   &
                   i_length*(integrals%n_J), &
-                  t1(1, full_first_j),      &
+                  t1(1, first_j),           &
                   integrals%n_v,            &
                   zero,                     &
                   L_iJ_j_term,              &
@@ -395,7 +395,7 @@ contains
                   -one,                     &
                   L_Jb_i,                   &
                   (integrals%n_J)*b_length, &
-                  t1(red_first_a, 1),       &
+                  t1(first_a, 1),           &
                   integrals%n_v,            &
                   zero,                     &
                   L_Jb_a,                   &
@@ -1138,7 +1138,6 @@ contains
             call integrals%read_cholesky_ai_t1(L_ai_J, first_a, last_a, first_i, last_i)
 !
          endif
-
 !
          call dgemm('N', 'T',           &
                      length_i*length_a, &
@@ -1162,7 +1161,7 @@ contains
 !
 !
    subroutine construct_vvoo_mo_integral_tool(integrals, g_abij, first_a, last_a, first_b, last_b, &
-                                                            first_i, last_i, first_j, last_j, index_restrictions, t1)
+                                                         first_i, last_i, first_j, last_j, index_restrictions, t1)
 !!
 !!    Construct vvoo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -1236,7 +1235,6 @@ contains
       endif 
 !
    end subroutine construct_vvoo_mo_integral_tool
-!
 !
 !
    subroutine construct_oovv_mo_integral_tool(integrals, g_ijab, first_i, last_i, first_j, last_j, &
