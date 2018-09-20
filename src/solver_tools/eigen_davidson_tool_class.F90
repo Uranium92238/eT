@@ -96,7 +96,7 @@ contains
       davidson%do_precondition = .false. ! Switches to true if 'set_preconditioner' is called
       davidson%dim_red = n_solutions     ! Initial dimension equal to number of solutions
       davidson%n_new_trials = n_solutions 
-      davidson%max_dim_red = min(n_solutions*15, 150)        
+      davidson%max_dim_red = min(n_solutions*20, 150)        
 !
    end subroutine prepare_eigen_davidson_tool
 !

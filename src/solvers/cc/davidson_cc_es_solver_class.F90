@@ -379,7 +379,6 @@ contains
    end subroutine set_start_vectors_davidson_cc_es_solver
 !
 !
-!
    subroutine cleanup_davidson_cc_es_solver(solver, wf)
 !!
 !!    Cleanup 
