@@ -15,10 +15,10 @@ module davidson_cc_es_solver_class
 !
    type :: davidson_cc_es_solver
 !
-      integer(i15) :: max_iterations = 50
+      integer(i15) :: max_iterations = 100
 !
-      real(dp) :: eigenvalue_threshold = 1.0d-6
-      real(dp) :: residual_threshold  = 1.0d-6
+      real(dp) :: eigenvalue_threshold = 1.0d-12
+      real(dp) :: residual_threshold  = 1.0d-12
 !
       logical :: restart = .false.
 !

@@ -116,7 +116,7 @@ contains
 !
       class(hf) :: ref_wf
 !
-      integer(i15) :: p
+      integer(i15) :: p, i, a
 !
       wf%name = 'ccs'
 !
@@ -151,6 +151,14 @@ contains
       wf%fock_ia(:,:) = ref_wf%mo_fock(1 : wf%n_o, wf%n_o + 1 : wf%n_mo)
       wf%fock_ai(:,:) = ref_wf%mo_fock(wf%n_o + 1 : wf%n_mo, 1 : wf%n_o)
       wf%fock_ab(:,:) = ref_wf%mo_fock(wf%n_o + 1 : wf%n_mo, wf%n_o + 1 : wf%n_mo)
+!
+      do a = 1, wf%n_v 
+         do i = 1, wf%n_o 
+!
+            write(output%unit, *) 'fock_ai fock_ia', wf%fock_ai(a,i), wf%fock_ia(i,a)
+!
+         enddo
+      enddo
 !
       write(output%unit, *) 'Se 4'
       flush(output%unit)
@@ -351,19 +359,12 @@ contains
 !
 !     Perform t1-transformation of F_pq = h_pq  
 !
-     ! write(output%unit, *) 'h_pq MO', F_pq(1:4, 1:4)
-!
       call wf%t1_transform(F_pq)
-!
-      !write(output%unit, *) 'h_pq t1', F_pq(1:4, 1:4)
 !
 !     Occupied-occupied contributions: F_ij = F_ij + sum_k (2*g_ijkk - g_ikkj)
 !
       call mem%alloc(g_ij_kl, (wf%n_o)**2, (wf%n_o)**2)
       call wf%get_oooo(g_ij_kl)
-     ! write(output%unit, *) 'g_ij_kl', g_ij_kl(1:5, 1)
-!
-    !  write(output%unit, *) 'g_ijkl', g_ij_kl(1:10,1:10)
 !
       do i = 1, wf%n_o
          do j = 1, wf%n_o 
@@ -391,13 +392,8 @@ contains
       call mem%alloc(g_ia_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
       call wf%get_ovoo(g_ia_jk)
 !
-    !  write(output%unit, *) 'g_iajk', g_ia_jk(1:10,1:10)
-!
       call mem%alloc(g_ai_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
       call wf%get_vooo(g_ai_jk)
-!
-    !  write(output%unit, *) 'g_aijk', g_ia_jk(1:10,1:10)
-
 !
       do i = 1, wf%n_o
          do a = 1, wf%n_v
@@ -420,8 +416,6 @@ contains
 !
          enddo
       enddo
-!
-     ! write(output%unit, *)F_pq(1, 1 + wf%n_o), F_pq(1 + wf%n_o, 1)
 !
       call mem%dealloc(g_ia_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
       call mem%dealloc(g_ai_jk, (wf%n_v)*(wf%n_o), (wf%n_o)**2)
@@ -492,6 +486,8 @@ contains
 !
             wf%fock_ia(i,a) = F_pq(i, wf%n_o + a)
             wf%fock_ai(a,i) = F_pq(wf%n_o + a, i)
+!
+            write(output%unit, *) 'fock_ia fock_ai', wf%fock_ia(i,a), wf%fock_ai(a,i)
 !
          enddo
       enddo

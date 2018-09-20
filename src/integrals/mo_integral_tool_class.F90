@@ -312,7 +312,7 @@ contains
                   one,                      &
                   L_iJ_a,                   &
                   i_length*(integrals%n_J), &
-                  t1(1, full_first_j),      &
+                  t1(1, first_j),           &
                   integrals%n_v,            &
                   zero,                     &
                   L_iJ_j_term,              &
@@ -1134,6 +1134,7 @@ contains
             call integrals%construct_cholesky_ai(L_ai_J, t1, first_a, last_a, first_i, last_i)
 !
          else
+!
             call integrals%read_cholesky_ij_t1(L_jk_J, first_j, last_j, first_k, last_k)
             call integrals%read_cholesky_ai_t1(L_ai_J, first_a, last_a, first_i, last_i)
 !
