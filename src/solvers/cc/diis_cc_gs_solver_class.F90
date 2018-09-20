@@ -60,11 +60,7 @@ contains
 !
       call solver%print_banner()
 !
-     ! write(output%unit, '(/t3,a)') ':: Preparing DIIS ground state CC object.'
-!
 !     Read settings (thresholds, etc.)
-!
-     ! write(output%unit, '(/t3,a/)') 'Reading solver settings.'
 !
       if (requested_section('ground state')) then
 !
@@ -257,7 +253,7 @@ contains
 !
       if (.not. converged) then 
 !   
-         write(output%unit, '(t3,a)')      '---------------------------------------------------------------'
+         write(output%unit, '(t3,a)')   '---------------------------------------------------------------'
          write(output%unit, '(/t3,a)')  'Was not able to converge the equations in the given number'
          write(output%unit, '(t3,a/)')  'of maximum iterations.'
          stop

@@ -41,10 +41,12 @@ module davidson_cc_es_solver_class
 !
       procedure :: print_settings => print_settings_davidson_cc_es_solver
 !
-       procedure :: set_start_vectors => set_start_vectors_davidson_cc_es_solver
+      procedure :: set_start_vectors         => set_start_vectors_davidson_cc_es_solver
+      procedure :: set_precondition_vector   => set_precondition_vector_davidson_cc_es_solver
+      procedure :: set_projection_vector     => set_projection_vector_davidson_cc_es_solver
 !       
-       procedure :: initialize_energies => initialize_energies_davidson_cc_es_solver
-       procedure :: destruct_energies => destruct_energies_davidson_cc_es_solver
+      procedure :: initialize_energies => initialize_energies_davidson_cc_es_solver
+      procedure :: destruct_energies => destruct_energies_davidson_cc_es_solver
 !
    end type davidson_cc_es_solver
 !
@@ -167,7 +169,6 @@ contains
 !
       real(dp) :: residual_norm
 !
-      real(dp), dimension(:,:), allocatable :: preconditioner
       real(dp), dimension(:,:), allocatable :: c_i
 !
       converged            = .false. 
@@ -191,12 +192,9 @@ contains
 !
       endif
 !
-!     Prepare preconditioner
+      call solver%set_precondition_vector(wf, davidson)
+      call solver%set_projection_vector(wf, davidson)
 !
-      call mem%alloc(preconditioner, wf%n_amplitudes, 1)
-      call wf%get_orbital_differences(preconditioner)
-      call davidson%set_preconditioner(preconditioner)
-      call mem%dealloc(preconditioner, wf%n_amplitudes, 1)
 !
 !     Enter iterative loop
 !
@@ -287,7 +285,7 @@ contains
             elseif (iteration .eq. 1 .and. wf%name .eq. 'CCS') then
 !
                   converged = .true.
-                  write(output%unit,'(//t3,a,/t3,a)')'Note: residual converged in first iteration.', &
+                  write(output%unit,'(/t3,a,/t3,a)')'Note: residual converged in first iteration.', &
                                             'Energy convergence therefore not tested in this calculation.'
 !
             endif
@@ -401,6 +399,51 @@ contains
    end subroutine set_start_vectors_davidson_cc_es_solver
 !
 !
+   subroutine set_precondition_vector_davidson_cc_es_solver(solver, wf, davidson)
+!!
+!!    Set precondition vector
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
+!!
+!!    Sets precondition vector to orbital differences 
+!!
+      implicit none
+!
+      class(davidson_cc_es_solver) :: solver
+!
+      class(ccs) :: wf
+!
+      type(eigen_davidson_tool) :: davidson
+!
+      real(dp), dimension(:,:), allocatable :: preconditioner
+!
+      call mem%alloc(preconditioner, wf%n_amplitudes, 1)
+      call wf%get_orbital_differences(preconditioner)
+      call davidson%set_preconditioner(preconditioner)
+      call mem%dealloc(preconditioner, wf%n_amplitudes, 1)
+!
+   end subroutine set_precondition_vector_davidson_cc_es_solver
+!
+!
+   subroutine set_projection_vector_davidson_cc_es_solver(solver, wf, davidson)
+!!
+!!    Set precondition vector
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
+!!
+!!    Sets precondition vector to orbital differences 
+!!
+      implicit none
+!
+      class(davidson_cc_es_solver) :: solver
+!
+      class(ccs) :: wf
+!
+      type(eigen_davidson_tool) :: davidson
+!
+!     Do nothing for regular excited states
+!
+   end subroutine set_projection_vector_davidson_cc_es_solver
+!
+!
    subroutine cleanup_davidson_cc_es_solver(solver, wf)
 !!
 !!    Cleanup 
@@ -433,7 +476,7 @@ contains
       write(output%unit, '(t3,a)')   'right eigenvectors of the Jacobian matrix, A. The eigenvalue problem'
       write(output%unit, '(t3,a)')   'is solved in a reduced space, the dimension of which is expanded'
       write(output%unit, '(t3,a)')   'until the convergence criteria are met.'
-      write(output%unit, '(/t3,a)')   'A full description of the algorithm can be found in'
+      write(output%unit, '(/t3,a)')  'A complete description of the algorithm can be found in'
       write(output%unit, '(t3,a)')   'E. R. Davidson, J. Comput. Phys. 1975, 17, 87.'
 !
       flush(output%unit)

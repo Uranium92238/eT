@@ -19,7 +19,7 @@ module ccs_class
 !
    implicit none
 !
-   type, extends(wavefunction):: ccs
+   type, extends(wavefunction) :: ccs
 !
       real(dp), dimension(:,:), allocatable :: fock_ij
       real(dp), dimension(:,:), allocatable :: fock_ia
