@@ -66,6 +66,8 @@ module davidson_tool_class
       procedure(solve_reduced_problem), deferred :: solve_reduced_problem
       procedure(construct_residual), deferred    :: construct_residual
 !
+      procedure :: read_max_dim_red => read_max_dim_red_davidson_tool
+!
    end type davidson_tool
 !
 !
@@ -721,6 +723,8 @@ contains
 !
       call mem%dealloc(X, davidson%n_parameters, 1)
 !
+      rewind(davidson%trials%unit)
+!
       call disk%close_file(davidson%trials)
       call disk%close_file(davidson%X)
 !
@@ -739,5 +743,39 @@ contains
 !
    end subroutine set_trials_to_solutions_davidson_tool
 !
+!
+   subroutine read_max_dim_red_davidson_tool(davidson)
+!!
+!!    Read max reduced dimension
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+      implicit none
+!
+      class(davidson_tool) :: davidson 
+!
+      character(len=100) :: line
+!
+      rewind(input%unit)
+!
+      do 
+!
+         read(input%unit, '(a100)') line
+         line = remove_preceding_blanks(line)
+!
+         if (trim(line) .eq. 'end geometry') then
+            backspace(input%unit)
+            return
+         endif
+!
+         if (line(1:22) == 'max reduced dimension:') then
+! 
+            read(line(23:100), *) davidson%max_dim_red
+            return
+! 
+         endif
+!
+      enddo
+!
+   end subroutine read_max_dim_red_davidson_tool
 !
 end module davidson_tool_class

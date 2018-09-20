@@ -93,10 +93,12 @@ contains
       call disk%close_file(davidson%transforms)
       call disk%close_file(davidson%preconditioner)
 !
-      davidson%do_precondition = .false. ! Switches to true if 'set_preconditioner' is called
-      davidson%dim_red = n_solutions     ! Initial dimension equal to number of solutions
-      davidson%n_new_trials = n_solutions 
-      davidson%max_dim_red = min(n_solutions*20, 150)        
+      davidson%do_precondition   = .false.         ! Switches to true if 'set_preconditioner' is called
+      davidson%dim_red           = n_solutions     ! Initial dimension equal to number of solutions
+      davidson%n_new_trials      = n_solutions 
+!
+      davidson%max_dim_red = min(n_solutions*20, 150)   
+      call davidson%read_max_dim_red()     
 !
    end subroutine prepare_eigen_davidson_tool
 !

@@ -17,8 +17,8 @@ module davidson_cc_es_solver_class
 !
       integer(i15) :: max_iterations = 50
 !
-      real(dp) :: eigenvalue_threshold = 1.0d-12
-      real(dp) :: residual_threshold  = 1.0d-12
+      real(dp) :: eigenvalue_threshold = 1.0d-6
+      real(dp) :: residual_threshold  = 1.0d-6
 !
       logical :: restart = .false.
 !
@@ -67,7 +67,25 @@ contains
 !
       call solver%print_banner()
 !
-      call solver%read_settings()
+!     Set defaults
+!
+      solver%max_iterations = 50
+!
+      solver%eigenvalue_threshold = 1.0d-6
+      solver%residual_threshold  = 1.0d-6
+!
+      solver%restart = .false.
+!
+      if (requested_section('excited state')) then
+!
+         call solver%read_settings()
+!
+      else
+!
+         call output%error_msg('number of excitations must be specified.')
+!
+      endif
+!
       call solver%print_settings()
 !
       call solver%initialize_energies()
@@ -121,7 +139,8 @@ contains
 !
       write(output%unit,'(/t6,a20,e9.2)') 'Energy threshold:   ', solver%eigenvalue_threshold
       write(output%unit,'(t6,a20,e9.2)') 'Residual threshold: ', solver%residual_threshold
-      write(output%unit,'(/t6,a,i3,a/)') 'Requested',solver%n_singlet_states, ' singlet states.'
+      write(output%unit,'(/t6,a,i3,a)')  'Number of singlet states: ', solver%n_singlet_states
+      write(output%unit, '(t6,a26,i3)') 'Max number of iterations: ', solver%max_iterations
       flush(output%unit)
 !
    end subroutine print_settings_davidson_cc_es_solver
@@ -183,18 +202,12 @@ contains
 !
       do while (.not. converged .and. (iteration .le. solver%max_iterations))
 !
-         if (davidson%dim_red .eq. davidson%max_dim_red) then
-!
-            call davidson%set_trials_to_solutions()
-!
-         endif
-!
-         write(output%unit,'(/t6,a,i3)') 'Iteration: ', iteration
-         write(output%unit,'(t6,a,i4/)') 'Reduced space dimension: ', davidson%dim_red
+         write(output%unit,'(/t3,a,i3)') 'Iteration: ', iteration
+         write(output%unit,'(t3,a,i4/)') 'Reduced space dimension: ', davidson%dim_red
          flush(output%unit)
 !
-         write(output%unit,'(t6,a)') 'Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm'
-         write(output%unit,'(t6,a)') '-------------------------------------------------------------------'
+         write(output%unit,'(t3,a)') 'Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm'
+         write(output%unit,'(t3,a)') '-------------------------------------------------------------------'
 !
 !        Transform new trial vectors and write to file
 !
@@ -226,7 +239,7 @@ contains
          do solution = 1, solver%n_singlet_states
 !
             call davidson%construct_next_trial_vec(residual_norm, iteration, solution)
-            write(output%unit,'(t6,i2,5x,f16.12,7x,f16.12,11x,e10.4)') &
+            write(output%unit,'(t3,i2,5x,f16.12,7x,f16.12,11x,e10.4)') &
             solution, davidson%omega_re(solution, 1), davidson%omega_im(solution, 1), residual_norm
             flush(output%unit)
 !
@@ -234,7 +247,7 @@ contains
 !
          enddo
 !
-         write(output%unit,'(t6,a)') '-------------------------------------------------------------------'
+         write(output%unit,'(t3,a)') '-------------------------------------------------------------------'
 !
 !        Check if convergence criterion on energy is satisfied
 !
@@ -247,10 +260,19 @@ contains
 !
          enddo
 !
+         if (davidson%dim_red .ge. davidson%max_dim_red) then
+!
+            call davidson%set_trials_to_solutions()
+!
+         else
+!
+            davidson%dim_red = davidson%dim_red + davidson%n_new_trials
+!
+         endif
+!
 !        Update energies
 !
          solver%energies = davidson%omega_re
-         davidson%dim_red = davidson%dim_red + davidson%n_new_trials
 !
 !        Test for total convergence
 !
@@ -280,11 +302,11 @@ contains
 !
       if (converged) then
 !
-         write(output%unit,'(/t6,a, i3, a)') 'Convergence criterion met in ', iteration, ' iterations!'
+         write(output%unit,'(/t3,a, i3, a)') 'Convergence criterion met in ', iteration, ' iterations!'
 !
       elseif (.not. converged .and. iteration == solver%max_iterations) then
 !
-         write(output%unit,'(/t6,a)') 'Maximal number of iterations performed without reaching convergence!'
+         write(output%unit,'(/t3,a)') 'Maximal number of iterations performed without reaching convergence!'
 !
       endif
 !
@@ -438,7 +460,40 @@ contains
 !
       class(davidson_cc_es_solver) :: solver 
 !
-!      read stuff 
+      integer(i15) :: n_specs, i
+!
+      character(len=100) :: line
+!
+      call move_to_section('excited state', n_specs)
+!
+      do i = 1, n_specs
+!
+         read(input%unit, '(a100)') line
+         line = remove_preceding_blanks(line)
+!
+         if (line(1:19) == 'residual threshold:' ) then
+!
+            read(line(20:100), *) solver%residual_threshold
+!
+         elseif (line(1:17) == 'energy threshold:' ) then
+!
+            read(line(18:100), *) solver%eigenvalue_threshold
+!
+         elseif (line(1:25) == 'number of singlet states:' ) then
+!
+            read(line(26:100), *) solver%n_singlet_states
+!
+         elseif (line(1:15) == 'max iterations:' ) then
+!
+            read(line(16:100), *) solver%max_iterations
+!
+         elseif (trim(line) == 'restart') then
+!
+            solver%restart = .true.
+!
+         endif
+!
+      enddo
 !
    end subroutine read_settings_davidson_cc_es_solver
 !

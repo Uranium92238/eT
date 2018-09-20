@@ -352,6 +352,10 @@ contains
 !
             read(line(16:100), *) solver%max_iterations
 !
+         elseif (trim(line) == 'restart') then
+!
+            solver%restart = .true.
+!
          endif
 !
       enddo
