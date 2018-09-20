@@ -7,6 +7,7 @@ module disk_manager_class
 !
    use kinds
    use file_class
+   use io_utilities
 !
    type :: disk_manager
 !
@@ -23,7 +24,7 @@ module disk_manager_class
 !
 !     Initialization routine (used if user specifies a disk space different from standard)
 !
-      procedure :: init => init_disk_manager
+      procedure :: prepare => prepare_disk_manager
 !
 !     Account for disk space already used (the size of the calculation folder)
 !
@@ -40,6 +41,9 @@ module disk_manager_class
 !     Routine to determine file size
 !
       procedure, private :: determine_file_size => determine_file_size_disk_manager
+!
+      procedure :: read_settings  => read_settings_disk_manager
+      procedure :: print_settings => print_settings_disk_manager
 !
    end type disk_manager
 !
@@ -112,14 +116,14 @@ contains
    end subroutine subtract_folder_size_disk_manager
 !
 !
-   subroutine init_disk_manager(disk, total)
+   subroutine prepare_disk_manager(disk)
 !!
 !!    Init (disk manager)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Apr 2018
 !!
-!!    Initializes the memory manager object by setting the
-!!    total and initial available memory. This is only called
-!!    if the user specifies a total memory different from the standard.
+!!    Initializes the disk manager object by setting the
+!!    total and initial available disk. This is only called
+!!    if the user specifies a total disk different from the standard.
 !!
       implicit none
 !
@@ -127,9 +131,23 @@ contains
 !
       integer(i15) :: total ! in GB
 !
-      disk%total = total*1.0D9
+      if (requested_section('disk')) then
 !
-   end subroutine init_disk_manager
+         call disk%read_settings()
+!
+      else
+!
+!        Set default
+!
+         disk%total = 30*1000000000
+!
+      endif
+!
+      disk%available = disk%total
+!
+      call disk%print_settings()
+!
+   end subroutine prepare_disk_manager
 !
 !
  subroutine open_file_disk_manager(disk, the_file, permissions, pos)
@@ -506,6 +524,57 @@ contains
       endif
 !
    end subroutine determine_file_size_disk_manager
+!
+!
+   subroutine read_settings_disk_manager(disk)
+!!
+!!    Read settings
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!  
+      class(disk_manager) :: disk
+!
+      integer(i15) :: n_specs, i
+!
+      character(len=100) :: line
+!
+      disk%total = 8.0d0
+!
+      call move_to_section('disk', n_specs)
+!
+      do i = 1, n_specs
+!
+         read(input%unit, '(a100)') line
+         line = remove_preceding_blanks(line)
+!
+         if (line(1:10) == 'available:' ) then
+!
+            read(line(11:100), *) disk%total
+!
+         endif
+!
+      enddo
+!
+      disk%total = disk%total*1000000000
+!
+   end subroutine read_settings_disk_manager
+!
+!
+   subroutine print_settings_disk_manager(disk)
+!!
+!!    Print settings
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!  
+      class(disk_manager) :: disk
+!
+      write(output%unit, '(t6, a38, i3, a/)') 'Disk space available for calculation: ',&
+                                                 disk%total/1000000000, ' GB'
+!
+   end subroutine print_settings_disk_manager
+!
 !
 !
 end module disk_manager_class

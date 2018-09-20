@@ -83,6 +83,11 @@ program eT_program
     write(output%unit,'(t12,a//)') 'S. D. Folkestad, E. F. Kjønstad, 2017-2018'
     flush(output%unit)
 !
+!   Prepare memory manager and disk manager
+!
+    call mem%prepare()
+    call disk%prepare()
+!
     call initialize_libint()
 !
     n_methods = get_n_methods()

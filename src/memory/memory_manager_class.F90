@@ -34,6 +34,7 @@ module memory_manager_class
    use parameters
    use file_class
    use batching_index_class
+   use io_utilities
 !
 !  ::::::::::::::::::::::::::::::::::::::::::::::::
 !  -::- Definition of the memory_manager class -::-
@@ -41,14 +42,14 @@ module memory_manager_class
 !
    type :: memory_manager
 !
-!     The total amount of memory specified by user (standard: 256 GB)
+!     The total amount of memory specified by user (standard: 8 GB)
 !
-      integer(i15) :: total = 256000000000
+      integer(i15) :: total = 8000000000
 !
 !     The amount of memory currently available, based on the arrays currently allocated
 !     (memory used by objects and local variables are not included in this estimate)
 !
-      integer(i15) :: available = 256000000000
+      integer(i15) :: available = 8000000000
 !
 !     Buffer for handling batches (standard: 10%). This means in practice that 'required
 !     memory' estimates are increased by 10% in case they miss they slightly underestimate
@@ -60,7 +61,7 @@ module memory_manager_class
 !
 !     Initialization routine (used if user specifies a memory different from standard)
 !
-      procedure :: init => init_memory_manager
+      procedure :: prepare => prepare_memory_manager
 !
 !     Allocation and deallocation routines for double precision arrays
 !
@@ -77,6 +78,9 @@ module memory_manager_class
       procedure :: num_batch     => num_batch_memory_manager     ! For one-index batch
       procedure :: num_two_batch => num_two_batch_memory_manager ! For two-index batches
 !
+      procedure :: read_settings  => read_settings_memory_manager
+      procedure :: print_settings => print_settings_memory_manager
+!
    end type memory_manager
 !
 !  Main memory object
@@ -86,30 +90,35 @@ module memory_manager_class
 contains
 !
 !
-   subroutine init_memory_manager(mem, total)
+   subroutine prepare_memory_manager(mem)
 !!
-!!    Init (memory manager)
+!!    Prepare (memory manager)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
 !!
-!!    Initializes the memory manager object by setting the
-!!    total and initial available memory. This is only called
-!!    if the user specifies a total memory different from the standard.
+!!    Prepares the memory manager object by setting the
+!!    total and initial available memory. 
 !!
       implicit none
 !
       class(memory_manager) :: mem
 !
-      integer(i15) :: total ! In GBs
+      if (requested_section('memory')) then
 !
-!     Set the specified total memory in bytes
+         call mem%read_settings()
 !
-      mem%total = total*1.0D9
+      else
 !
-!     Update the initially available memory
+!        Set default
+!
+         mem%total = 8*1000000000
+!
+      endif
 !
       mem%available = mem%total
 !
-   end subroutine init_memory_manager
+      call mem%print_settings()
+!
+   end subroutine prepare_memory_manager
 !
 !
    subroutine alloc_memory_manager(mem, array, M, N)
@@ -435,6 +444,55 @@ contains
       enddo
 !
    end subroutine num_two_batch_memory_manager
+!
+!
+   subroutine read_settings_memory_manager(mem)
+!!
+!!    Read settings
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!  
+      class(memory_manager) :: mem
+!
+      integer(i15) :: n_specs, i
+!
+      character(len=100) :: line
+!
+      mem%total = 8.0d0
+!
+      call move_to_section('memory', n_specs)
+!
+      do i = 1, n_specs
+!
+         read(input%unit, '(a100)') line
+         line = remove_preceding_blanks(line)
+!
+         if (line(1:10) == 'available:' ) then
+!
+            read(line(11:100), *) mem%total
+!
+         endif
+!
+      enddo
+!
+      mem%total = mem%total*1000000000
+!
+   end subroutine read_settings_memory_manager
+!
+!
+   subroutine print_settings_memory_manager(mem)
+!!
+!!    Print settings
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none
+!  
+      class(memory_manager) :: mem
+!
+      write(output%unit, '(t6, a38, i3, a)') 'Memory available for calculation:     ', mem%total/1000000000, ' GB'
+!
+   end subroutine print_settings_memory_manager
 !
 !
 end module memory_manager_class
