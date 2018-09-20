@@ -427,8 +427,15 @@ contains
       class(davidson_cc_es_solver) :: solver 
 !
       write(output%unit, '(//t3,a)') ':: Davidson coupled cluster excited state solver'
-      write(output%unit, '(t3,a/)')  ':: E. F. Kjønstad, S. D. Folkestad, 2018'
-
+      write(output%unit, '(t3,a)')   ':: E. F. Kjønstad, S. D. Folkestad, 2018'
+!
+      write(output%unit, '(/t3,a)')  'A Davidson solver that calculates the lowest eigenvalues and the'
+      write(output%unit, '(t3,a)')   'right eigenvectors of the Jacobian matrix, A. The eigenvalue problem'
+      write(output%unit, '(t3,a)')   'is solved in a reduced space, the dimension of which is expanded'
+      write(output%unit, '(t3,a)')   'until the convergence criteria are met.'
+      write(output%unit, '(/t3,a)')   'A full description of the algorithm can be found in'
+      write(output%unit, '(t3,a)')   'E. R. Davidson, J. Comput. Phys. 1975, 17, 87.'
+!
       flush(output%unit)
 !
    end subroutine print_banner_davidson_cc_es_solver
