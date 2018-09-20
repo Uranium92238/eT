@@ -141,13 +141,8 @@ contains
       class(hf) :: wf
 !
       wf%name = 'HF'
-    !  write(output%unit, '(/t3,a)')  '- Preparing ' // trim(wf%name) // ' wavefunction object'
-!
-     ! write(output%unit, '(/t3,a)') 'Reading wavefunction settings.'
 !
       call wf%read_settings()
-!
-     ! write(output%unit, '(/t3,a)') 'Preparing molecular system object.'
 !
       call wf%system%prepare()
 !
@@ -159,20 +154,6 @@ contains
       call initialize_overlap()
 !
       call wf%set_n_mo()
-!
-     !write(output%unit, '(/t6,a)') 'Cholesky decomposing AO overlap matrix to make sure used orbitals are'
-     !write(output%unit, '(t6,a)')  'linearly independent.'
-     !call wf%initialize_ao_overlap()
-     !call wf%construct_ao_overlap()
-     !call wf%decompose_ao_overlap() 
-!
-     !wf%n_o = (wf%system%get_n_electrons())/2
-     !wf%n_v = wf%n_mo - wf%n_o
-!
-     !write(output%unit, '(/t6,a30,i4)') 'Number of occupied orbitals:  ', wf%n_o 
-     !write(output%unit, '(t6,a30,i4)')  'Number of virtual orbitals:   ', wf%n_v
-     !write(output%unit, '(t6,a30,i4)')  'Number of molecular orbitals: ', wf%n_mo 
-     !write(output%unit, '(t6,a30,i4)')  'Number of atomic orbitals:    ', wf%n_ao 
 !
    end subroutine prepare_hf
 !
@@ -196,7 +177,7 @@ contains
 !
       integer(i15) :: mo 
 !
-      write(output%unit, '(/t3,a,a,a)') '- Summary of ', trim(wf%name), ' wavefunction energetics (a.u.)'
+      write(output%unit, '(/t3,a,a,a)') '- Summary of ', trim(wf%name), ' wavefunction energetics (a.u.):'
 !
       homo_lumo_gap = wf%orbital_energies(wf%n_o + 1, 1) - wf%orbital_energies(wf%n_o, 1)
 !
@@ -3584,9 +3565,9 @@ contains
 !
       class(hf) :: wf
 !
-      write(output%unit, '(t6,a30,e10.4)')  'Coulomb screening threshold:  ', wf%coulomb_threshold
-      write(output%unit, '(t6,a30,e10.4)')   'Exchange screening threshold: ', wf%exchange_threshold
-      write(output%unit, '(t6,a30,e10.4)')   'ERI integral precision:       ', wf%integral_precision
+      write(output%unit, '(t6,a30,e10.4)') 'Coulomb screening threshold:  ', wf%coulomb_threshold
+      write(output%unit, '(t6,a30,e10.4)') 'Exchange screening threshold: ', wf%exchange_threshold
+      write(output%unit, '(t6,a30,e10.4)') 'ERI integral precision:       ', wf%integral_precision
 !
    end subroutine print_screening_settings_hf
 !
@@ -3600,8 +3581,7 @@ contains
 !
       class(hf) :: wf
 !
-      write(output%unit, '(/t6,a)') 'Cholesky decomposing AO overlap matrix to make sure used orbitals are'
-      write(output%unit, '(t6,a)')  'linearly independent.'
+      write(output%unit, '(/t3,a)') '- Cholesky decomposition of AO overlap to get linearly independent orbitals:'
 !
       call wf%initialize_ao_overlap()
       call wf%construct_ao_overlap()

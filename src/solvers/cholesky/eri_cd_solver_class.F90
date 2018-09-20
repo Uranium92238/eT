@@ -337,11 +337,12 @@ contains
 !
       enddo
 !
-      write(output%unit, '(/t3, a/)')'- Reduction of ao and shell pairs:'
-      write(output%unit, '(t6, a33, 2x, i11)')'Total number of shell pairs:     ', solver%n_sp
-      write(output%unit, '(t6, a33, 2x, i11)')'Significant shell pairs:         ', n_sig_sp
-      write(output%unit, '(t6, a33, 2x, i11)')'Total number of ao pairs:        ', solver%n_aop
-      write(output%unit, '(t6, a33, 2x, i11)')'Significant ao pairs:            ', n_sig_aop
+      write(output%unit, '(/t3, a)')         '- Reduction of AO and shell pairs:'
+!
+      write(output%unit, '(/t6, a33, 2x, i11)') 'Total number of shell pairs:     ', solver%n_sp
+      write(output%unit, '(t6, a33, 2x, i11)')  'Significant shell pairs:         ', n_sig_sp
+      write(output%unit, '(t6, a33, 2x, i11)')  'Total number of AO pairs:        ', solver%n_aop
+      write(output%unit, '(t6, a33, 2x, i11)')  'Significant AO pairs:            ', n_sig_aop
       flush(output%unit)
 !
 !     Prepare for construction of diagonal and screening vector
@@ -969,7 +970,7 @@ contains
      ! write(output%unit, '(/t3, a)') ' - Determinig the elements of the basis'
      ! flush(output%unit)
 !
-      write(output%unit, '(//t3, a)')&
+      write(output%unit, '(/t3, a)')&
       'Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size'
       write(output%unit, '(t3, a)') &
       '-------------------------------------------------------------------------------------------------------'
@@ -3146,7 +3147,16 @@ contains
       class(eri_cd_solver) :: solver
 !
       write(output%unit, '(//t3,a)') ':: Cholesky decomposition of electronic repulsion integrals solver'
-      write(output%unit, '(t3,a/)') ':: E. F. Kjønstad, S. D. Folkestad, 2018'
+      write(output%unit, '(t3,a)')   ':: E. F. Kjønstad, S. D. Folkestad, 2018'
+!
+      write(output%unit, '(/t3,a)')  'Performs a Cholesky decomposition of the two-electron electronic repulsion'
+      write(output%unit, '(t3,a)')   'integrals in the atomic orbital basis,'
+!
+      write(output%unit, '(/t6,a)')    '(ab|cd) = sum_J L_ab^J L_cd^J.'
+!
+      write(output%unit, '(/t3,a)')  'Once the Cholesky basis has been determined, the vectors L^J are constructed'
+      write(output%unit, '(t3,a)')   'and stored to disk. These may either be used directly, or be transformed to'
+      write(output%unit, '(t3,a)')   'the MO basis for use in post-HF calculations.'
 !
    end subroutine print_banner_eri_cd_solver
 !
@@ -3160,11 +3170,11 @@ contains
 !
       class(eri_cd_solver) :: solver
 !
-      write(output%unit, '(/t3, a/)') '- Cholesky decomposition settings:'
+      write(output%unit, '(/t3, a)')      '- Cholesky decomposition settings:'
 !
       write(output%unit, '(/t6, a21, e12.4)') 'Target threshold is: ', solver%threshold
       write(output%unit, '( t6, a21, e12.4)') 'Span factor:         ', solver%span
-      write(output%unit, '( t6, a21, i5/)')   'Max qual:            ', solver%max_qual
+      write(output%unit, '( t6, a21, i6)')    'Max qual:            ', solver%max_qual
       flush(output%unit)
 !
    end subroutine print_settings_eri_cd_solver
