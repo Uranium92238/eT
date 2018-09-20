@@ -1394,6 +1394,7 @@ contains
             B_i(1,1) = zero
             call dcopy(wf%n_mo**2, Gr, 1, B_i(2,1), 1)
             call dscal(wf%n_mo**2, alpha0, B_i(2,1), 1)
+            call davidson%write_transform(B_i, 'rewind')
 !
          else
 !
@@ -1403,10 +1404,11 @@ contains
             RHC = zero
             call solver%hessian_transformation(wf, RHC, Hr, tmp, Gr, S)  
             call dcopy(wf%n_mo**2, RHC, 1, B_i(2,1), 1)
+            call davidson%write_transform(B_i, 'append')
 !
          endif 
 !
-         call davidson%write_transform(B_i, rew)
+         
 !
       enddo 
 !
@@ -1539,6 +1541,7 @@ contains
                B_i(1,1) = zero
                call dcopy(wf%n_mo**2, Gr, 1, B_i(2,1), 1)
                call dscal(wf%n_mo**2, alpha, B_i(2,1), 1)
+               call davidson%write_transform(B_i, 'rewind')
 !
             else
 !
@@ -1548,10 +1551,9 @@ contains
                RHC = zero
                call solver%hessian_transformation(wf, RHC, Hr, tmp, Gr, S)  
                call dcopy(wf%n_mo**2, RHC, 1, B_i(2,1), 1)
+               call davidson%write_transform(B_i, 'append')
 !
             endif 
-!
-            call davidson%write_transform(B_i, rew)
 !
          enddo 
 !

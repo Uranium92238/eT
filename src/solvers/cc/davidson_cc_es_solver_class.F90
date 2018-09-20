@@ -119,7 +119,7 @@ contains
 !
       class(davidson_cc_es_solver) :: solver 
 !
-      write(output%unit,'(t6,a20,e9.2)') 'Energy threshold:   ', solver%eigenvalue_threshold
+      write(output%unit,'(/t6,a20,e9.2)') 'Energy threshold:   ', solver%eigenvalue_threshold
       write(output%unit,'(t6,a20,e9.2)') 'Residual threshold: ', solver%residual_threshold
       write(output%unit,'(/t6,a,i3,a/)') 'Requested',solver%n_singlet_states, ' singlet states.'
       flush(output%unit)
@@ -157,7 +157,7 @@ contains
 !
       iteration = 1
 !
-     call davidson%prepare('cc_es_davidson', wf%n_amplitudes, solver%n_singlet_states, &
+     call davidson%prepare(wf%name // '_es_davidson', wf%n_amplitudes, solver%n_singlet_states, &
                                solver%residual_threshold, solver%eigenvalue_threshold)
 !
 !     Construct first trial vectors
@@ -182,6 +182,12 @@ contains
 !     Enter iterative loop
 !
       do while (.not. converged .and. (iteration .le. solver%max_iterations))
+!
+         if (davidson%dim_red .eq. davidson%max_dim_red) then
+!
+            call davidson%set_trials_to_solutions()
+!
+         endif
 !
          write(output%unit,'(/t6,a,i3)') 'Iteration: ', iteration
          write(output%unit,'(t6,a,i4/)') 'Reduced space dimension: ', davidson%dim_red
@@ -373,7 +379,6 @@ contains
    end subroutine set_start_vectors_davidson_cc_es_solver
 !
 !
-!
    subroutine cleanup_davidson_cc_es_solver(solver, wf)
 !!
 !!    Cleanup 
@@ -399,7 +404,7 @@ contains
 !
       class(davidson_cc_es_solver) :: solver 
 !
-      write(output%unit, '(/t3,a)') ':: Davidson coupled cluster excited state solver'
+      write(output%unit, '(//t3,a)') ':: Davidson coupled cluster excited state solver'
       write(output%unit, '(t3,a/)')  ':: E. F. Kjønstad, S. D. Folkestad, 2018'
 
       flush(output%unit)

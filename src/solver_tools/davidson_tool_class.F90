@@ -59,6 +59,8 @@ module davidson_tool_class
 !
       procedure :: add_initial_trial_vec => add_initial_trial_vec_davidson_tool
 !
+      procedure :: set_trials_to_solutions => set_trials_to_solutions_davidson_tool
+!
 !     Deferred routines  
 !
       procedure(solve_reduced_problem), deferred :: solve_reduced_problem
@@ -139,6 +141,8 @@ contains
 !!
 !!    Write trial to file
 !!
+!!    Optional argument position must be either 'rewind' or 'append'
+!!
       implicit none
 !
       class(davidson_tool) :: davidson
@@ -147,15 +151,7 @@ contains
 !
       character(len=*), optional :: position
 !
-      integer(i15) :: ioerror
-!
-!     Will we exceed max_dim_red ?
-!
-      if (davidson%dim_red + 1 .gt. davidson%max_dim_red) then
-!
-         call output%error_msg('still cannot handle going past max_dim_red!')
-!
-      endif    
+      integer(i15) :: ioerror 
 !
 !     Was position passed ?
 !
@@ -274,12 +270,14 @@ contains
    end subroutine read_transform_davidson_tool
 !
 !
-   subroutine write_transform_davidson_tool(davidson, rho_i, rew)
+   subroutine write_transform_davidson_tool(davidson, rho_i, position)
 !!
 !!    Write transform
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Aug 2018
 !!
 !!    Write transformed vector to file
+!!
+!!    Optional argument position must be either 'rewind' or 'append'
 !!
       implicit none
 !
@@ -287,36 +285,32 @@ contains
 !
       real(dp), dimension(davidson%n_parameters, 1) :: rho_i
 !
-      logical, optional, intent(in) :: rew ! rewind 
+      character(len=*), optional, intent(in) :: position 
 !
-      integer(i15) :: ioerror
+      integer(i15) :: ioerror   
 !
-      if (present(rew)) then 
+!     Was position passed ?
 !
-         if (rew) then 
+      if (present(position)) then
 !
-            call disk%open_file(davidson%transforms, 'write', 'rewind')
+!        Sanity check on position variable
 !
-         else
+         if ((trim(position) .ne. 'rewind') .and. (trim(position) .ne. 'append')) then
 !
-            call disk%open_file(davidson%transforms, 'write', 'append')
+            call output%error_msg('Position specifier not recognized!')
 !
          endif
 !
-      elseif (davidson%dim_red + 1 .le. davidson%max_dim_red) then
-!
-         call disk%open_file(davidson%transforms, 'write', 'append')
+         call disk%open_file(davidson%transforms, 'write', position)
 !
       else
 !
-         call output%error_msg('does not support exceeding max_dim_red')
+         call disk%open_file(davidson%transforms, 'write', 'append')
 !
-         call disk%open_file(davidson%transforms, 'write', 'rewind')
+      endif 
 !
-      endif     
-!
-      write(davidson%transforms%unit, iostat=ioerror) rho_i
-      if (ioerror .ne. 0) call output%error_msg('writing transformed vectors file.')
+      write(davidson%transforms%unit, iostat = ioerror) rho_i
+      if (ioerror .ne. 0) call output%error_msg('writing transformed vector to file.')
 !
       call disk%close_file(davidson%transforms)
 !
@@ -447,7 +441,6 @@ contains
 !
       call mem%dealloc(c_i, davidson%n_parameters, 1)
       call mem%dealloc(rho_j, davidson%n_parameters, 1)
-     ! write(output%unit, *)davidson%A_red
 !
 !     Close files for trial vectors and transformed vectors
 !
@@ -527,7 +520,7 @@ contains
       do i = 1, davidson%dim_red
 ! 
          read(davidson%transforms%unit, iostat = ioerror) rho_i
-         if (ioerror .ne. 0) call output%error_msg('reading transformed vector file 4.')
+         if (ioerror .ne. 0) call output%error_msg('reading transformed vector file.')
 !
          call daxpy(davidson%n_parameters, davidson%X_red(i, n), rho_i, 1, AX, 1)
 !
@@ -695,5 +688,56 @@ contains
 !
    end subroutine get_A_red_davidson_tool
 !  
+!
+   subroutine set_trials_to_solutions_davidson_tool(davidson)
+!!
+!!    Set trials to solutions
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+!!    Set trials equal to solution on file.
+!!    This should be used when max_dim_red is reached and 
+!!    if we restart from old solutions
+!!
+      implicit none
+!
+      class(davidson_tool) :: davidson 
+!
+      real(dp), dimension(:,:), allocatable :: X
+!
+      integer(i15) :: solution
+!
+      call disk%open_file(davidson%trials, 'write', 'rewind')
+      call disk%open_file(davidson%X, 'read')
+      rewind(davidson%X%unit)
+!
+      call mem%alloc(X, davidson%n_parameters, 1)
+!
+      do solution = 1, davidson%n_solutions
+!
+         read(davidson%X%unit) X 
+         write(davidson%trials%unit) X
+!
+      enddo
+!
+      call mem%dealloc(X, davidson%n_parameters, 1)
+!
+      call disk%close_file(davidson%trials)
+      call disk%close_file(davidson%X)
+!
+!     Delete transformed vectors file, if it is there
+!
+      call disk%open_file(davidson%transforms, 'write', 'rewind')
+      call disk%close_file(davidson%transforms, 'delete')
+!
+!     Delete A_red if it is there
+!
+      if (allocated(davidson%A_red)) call mem%dealloc(davidson%A_red, &
+         davidson%dim_red - davidson%n_new_trials, davidson%dim_red - davidson%n_new_trials)
+!
+      davidson%dim_red = davidson%n_solutions
+      davidson%n_new_trials = davidson%n_solutions
+!
+   end subroutine set_trials_to_solutions_davidson_tool
+!
 !
 end module davidson_tool_class

@@ -18,6 +18,7 @@ program eT_program
   use mlhf_class
 !
   use ccs_class
+  use mp2_class
 !
   use io_eT_program
 !
@@ -40,7 +41,8 @@ program eT_program
     type(uhf), allocatable, target   :: uhf_wf
     type(mlhf), allocatable, target  :: mlhf_wf 
 !
-    type(ccs), allocatable, target :: ccs_wf
+    type(ccs), allocatable, target   :: ccs_wf
+    type(mp2), allocatable, target :: mp2_wf
 !
 !   Wavefunction pointer
 !
@@ -80,6 +82,11 @@ program eT_program
     write(output%unit,'(///t16,a)')    'eT - a coupled cluster program'
     write(output%unit,'(t12,a//)') 'S. D. Folkestad, E. F. Kjønstad, 2017-2018'
     flush(output%unit)
+!
+!   Prepare memory manager and disk manager
+!
+    call mem%prepare()
+    call disk%prepare()
 !
     call initialize_libint()
 !
@@ -167,6 +174,9 @@ program eT_program
 !
         elseif (cc_methods(i) == 'mp2') then
 !
+          allocate(mp2_wf)
+          cc_wf => mp2_wf
+!
         elseif (cc_methods(i) == 'cc2') then
 !
         elseif (cc_methods(i) == 'ccsd') then
@@ -177,14 +187,10 @@ program eT_program
 !
         if (cc_engine == 'ground state') then
 !
-          write(output%unit, *) 'hellaw'
-!
           allocate(gs_cc_engine)
           engine => gs_cc_engine  
 !
         elseif (cc_engine == 'excited state') then
-!
-          write(output%unit, *) 'shmellaw'
 !
           allocate(es_cc_engine)
           engine => es_cc_engine  

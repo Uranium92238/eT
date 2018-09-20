@@ -47,6 +47,7 @@ module molecular_system_class
       procedure, private :: read_info     => read_info_molecular_system
       procedure, private :: read_geometry => read_geometry_molecular_system
 !
+      procedure :: print_system   => print_system_molecular_system
       procedure :: print_geometry => print_geometry_molecular_system
 !
       procedure :: get_nuclear_repulsion => get_nuclear_repulsion_molecular_system
@@ -229,6 +230,8 @@ contains
          endif
 !
       enddo
+!
+      call molecule%print_system()
 !
    end subroutine prepare_molecular_system
 !
@@ -1272,6 +1275,27 @@ contains
       write(output%unit, *)
 !
    end subroutine print_geometry_molecular_system
+!
+!
+   subroutine print_system_molecular_system(molecule)
+!!
+!!    Print geometry 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!
+      implicit none 
+!
+      class(molecular_system) :: molecule  
+!
+      write(output%unit, '(/t3,a)') '- Molecular system specifications:'
+!
+      write(output%unit, '(/t6,a14,i1)') 'Charge:       ', molecule%charge 
+      write(output%unit, '(t6,a14,i1)')  'Multiplicity: ', molecule%multiplicity 
+      write(output%unit, '(/t6,a35,f18.12)') 'Nuclear repulsion energy (a.u.):   ', molecule%get_nuclear_repulsion()
+      write(output%unit, '(t6,a35,f18.12)')  'Bohr/angstrom value (CODATA 2010): ', bohr_to_angstrom
+!
+      call molecule%print_geometry()
+!
+   end subroutine print_system_molecular_system
 !
 !
 end module molecular_system_class

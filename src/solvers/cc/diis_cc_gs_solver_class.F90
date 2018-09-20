@@ -17,7 +17,7 @@ module diis_cc_gs_solver_class
 !
       integer(i15) :: diis_dimension = 8
 !
-      integer(i15) :: max_iterations = 3
+      integer(i15) :: max_iterations = 50
 !
       real(dp) :: energy_threshold = 1.0d-6
       real(dp) :: omega_threshold  = 1.0d-6
@@ -60,13 +60,30 @@ contains
 !
       call solver%print_banner()
 !
-      write(output%unit, '(/t3,a)') ':: Preparing DIIS ground state CC object.'
+     ! write(output%unit, '(/t3,a)') ':: Preparing DIIS ground state CC object.'
 !
 !     Read settings (thresholds, etc.)
 !
-      write(output%unit, '(/t3,a/)') 'Reading solver settings.'
+     ! write(output%unit, '(/t3,a/)') 'Reading solver settings.'
 !
-      call solver%read_settings()
+      if (requested_section('ground state')) then
+!
+         call solver%read_settings()
+!
+      else
+!
+!        Set defaults
+!
+         solver%diis_dimension = 8
+         solver%max_iterations = 50
+!
+         solver%energy_threshold = 1.0d-6
+         solver%omega_threshold  = 1.0d-6
+!
+         solver%restart = .false.
+!
+      endif
+!
       call solver%print_settings()
 !
 !     Set the amplitudes to the initial guess or read if restart
@@ -95,7 +112,10 @@ contains
 !
       class(diis_cc_gs_solver) :: solver 
 !
-      write(output%unit, '(t6,a16,i2)') 'DIIS dimension: ', solver%diis_dimension
+      write(output%unit, '(/t6,a18,e9.2)') 'Omega threshold:  ', solver%omega_threshold
+      write(output%unit, '(t6,a18,e9.2)') 'Energy dimension: ', solver%energy_threshold
+      write(output%unit, '(/t6,a26,i3)') 'DIIS dimension:           ', solver%diis_dimension
+      write(output%unit, '(t6,a26,i3/)') 'Max number of iterations: ', solver%max_iterations
 !
    end subroutine print_settings_diis_cc_gs_solver
 !
@@ -159,7 +179,7 @@ contains
 !
       integer(i15) :: iteration
 !
-      write(output%unit, '(/t3,a)') ':: Running DIIS ground state CC object'
+     ! write(output%unit, '(/t3,a)') ':: Running DIIS ground state CC object'
 !
       call diis_manager%init('cc_gs_diis', wf%n_amplitudes, wf%n_amplitudes, solver%diis_dimension)
 !
@@ -171,8 +191,8 @@ contains
       converged_energy   = .false.
       converged_omega    = .false.
 !
-      write(output%unit, '(/t3,a)') 'Iteration    Energy (a.u.)        || Omega ||    Delta E (a.u.)'
-      write(output%unit, '(t3,a)')  '---------------------------------------------------------------'
+      write(output%unit, '(/t6,a)') 'Iteration    Energy (a.u.)        || Omega ||    Delta E (a.u.)'
+      write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
 !
       prev_energy = zero
       iteration   = 1
@@ -189,7 +209,7 @@ contains
          call wf%construct_omega(omega)
          omega_norm = get_l2_norm(omega, wf%n_amplitudes)
 !
-         write(output%unit, '(t3,i3,10x,f17.12,4x,e10.4,4x,e10.4)') iteration, wf%energy, &
+         write(output%unit, '(t6,i3,10x,f17.12,4x,e10.4,4x,e10.4)') iteration, wf%energy, &
                                           omega_norm, abs(wf%energy-prev_energy)
          flush(output%unit)
 !
@@ -202,8 +222,8 @@ contains
 !
          if (converged) then
 !
-            write(output%unit, '(t3,a)')           '--------------------------------------------------------------'
-            write(output%unit, '(/t3,a29,i3,a12)') 'Convergence criterion met in ', iteration, ' iterations!'
+            write(output%unit, '(t6,a)')           '--------------------------------------------------------------'
+            write(output%unit, '(/t6,a29,i3,a12)') 'Convergence criterion met in ', iteration, ' iterations!'
 !
             call solver%print_summary(wf)
 !
@@ -236,10 +256,10 @@ contains
       call diis_manager%finalize()
 !
       if (.not. converged) then 
-!
-         write(output%unit, '(t3,a)')   '---------------------------------------------------'
-         write(output%unit, '(/t3,a)')  'Was not able to converge the equations in the given'
-         write(output%unit, '(t3,a/)')  'number of maximum iterations.'
+!   
+         write(output%unit, '(t6,a)')      '---------------------------------------------------------------'
+         write(output%unit, '(/t6,a)')  'Was not able to converge the equations in the given number'
+         write(output%unit, '(t6,a/)')  'of maximum iterations.'
          stop
 !
       endif 
@@ -272,8 +292,8 @@ contains
 !
       class(diis_cc_gs_solver) :: solver 
 !
-      write(output%unit, '(/t3,a)') ':: DIIS coupled cluster ground state solver'
-      write(output%unit, '(t3,a)')  ':: E. F. Kjønstad, S. D. Folkestad, 2018'
+      write(output%unit, '(//t3,a)') ':: DIIS coupled cluster ground state solver'
+      write(output%unit, '(t3,a/)')  ':: E. F. Kjønstad, S. D. Folkestad, 2018'
 
       flush(output%unit)
 !
@@ -305,7 +325,36 @@ contains
 !
       class(diis_cc_gs_solver) :: solver 
 !
-! read stuff 
+      integer(i15) :: n_specs, i
+!
+      character(len=100) :: line
+!
+      call move_to_section('ground state', n_specs)
+!
+      do i = 1, n_specs
+!
+         read(input%unit, '(a100)') line
+         line = remove_preceding_blanks(line)
+!
+         if (line(1:16) == 'omega threshold:' ) then
+!
+            read(line(17:100), *) solver%omega_threshold
+!
+         elseif (line(1:17) == 'energy threshold:' ) then
+!
+            read(line(18:100), *) solver%energy_threshold
+!
+         elseif (line(1:15) == 'diis dimension:' ) then
+!
+            read(line(16:100), *) solver%diis_dimension
+!
+         elseif (line(1:15) == 'max iterations:' ) then
+!
+            read(line(16:100), *) solver%max_iterations
+!
+         endif
+!
+      enddo
 !
    end subroutine read_settings_diis_cc_gs_solver
 !

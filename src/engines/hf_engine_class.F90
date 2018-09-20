@@ -64,6 +64,9 @@ contains
             allocate(arh)
 !
             call arh%prepare(wf)
+!
+            call wf%print_screening_settings()
+!
             call arh%run(wf)
             call arh%cleanup(wf)
 !
@@ -74,6 +77,9 @@ contains
             allocate(scf_diis)
 !
             call scf_diis%prepare(wf)
+!
+            call wf%print_screening_settings()
+!
             call scf_diis%run(wf)
             call scf_diis%cleanup(wf)
 !
@@ -84,6 +90,9 @@ contains
             allocate(scf)
 !
             call scf%prepare(wf)
+!
+            call wf%print_screening_settings()
+!
             call scf%run(wf)
             call scf%cleanup(wf)
 !
@@ -100,6 +109,9 @@ contains
          allocate(scf_diis)
 !
          call scf_diis%prepare(wf)
+!
+         call wf%print_screening_settings()
+!
          call scf_diis%run(wf)
          call scf_diis%cleanup(wf)
 !
