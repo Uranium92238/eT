@@ -191,8 +191,8 @@ contains
       converged_energy   = .false.
       converged_omega    = .false.
 !
-      write(output%unit, '(/t6,a)') 'Iteration    Energy (a.u.)        || Omega ||    Delta E (a.u.)'
-      write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
+      write(output%unit, '(/t3,a)') 'Iteration    Energy (a.u.)        || Omega ||    Delta E (a.u.)'
+      write(output%unit, '(t3,a)')  '---------------------------------------------------------------'
 !
       prev_energy = zero
       iteration   = 1
@@ -209,7 +209,7 @@ contains
          call wf%construct_omega(omega)
          omega_norm = get_l2_norm(omega, wf%n_amplitudes)
 !
-         write(output%unit, '(t6,i3,10x,f17.12,4x,e10.4,4x,e10.4)') iteration, wf%energy, &
+         write(output%unit, '(t3,i3,10x,f17.12,4x,e10.4,4x,e10.4)') iteration, wf%energy, &
                                           omega_norm, abs(wf%energy-prev_energy)
          flush(output%unit)
 !
@@ -222,8 +222,8 @@ contains
 !
          if (converged) then
 !
-            write(output%unit, '(t6,a)')           '--------------------------------------------------------------'
-            write(output%unit, '(/t6,a29,i3,a12)') 'Convergence criterion met in ', iteration, ' iterations!'
+            write(output%unit, '(t3,a)')           '--------------------------------------------------------------'
+            write(output%unit, '(/t3,a29,i3,a12)') 'Convergence criterion met in ', iteration, ' iterations!'
 !
             call solver%print_summary(wf)
 !
@@ -257,9 +257,9 @@ contains
 !
       if (.not. converged) then 
 !   
-         write(output%unit, '(t6,a)')      '---------------------------------------------------------------'
-         write(output%unit, '(/t6,a)')  'Was not able to converge the equations in the given number'
-         write(output%unit, '(t6,a/)')  'of maximum iterations.'
+         write(output%unit, '(t3,a)')      '---------------------------------------------------------------'
+         write(output%unit, '(/t3,a)')  'Was not able to converge the equations in the given number'
+         write(output%unit, '(t3,a/)')  'of maximum iterations.'
          stop
 !
       endif 
