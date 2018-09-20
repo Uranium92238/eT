@@ -162,8 +162,7 @@ contains
       endif
 !
       e_determine_basis = omp_get_wtime()
-      write(output%unit, '(/t6, a30, f11.2)')'Wall time to determine basis: ', &
-                                  e_determine_basis - s_determine_basis
+      
       flush(output%unit)
 !
       s_invert_time = omp_get_wtime()
@@ -172,8 +171,7 @@ contains
       call solver%invert_overlap_cholesky_vecs()
 !
       e_invert_time = omp_get_wtime()
-               write(output%unit, '(/t6, a53, f11.2)')'Wall time to construct (J|K), decompose, and invert: ', &
-                                  e_invert_time - s_invert_time
+               
       flush(output%unit)
 !
       if (solver%construct_vectors) then
@@ -183,10 +181,21 @@ contains
          call solver%construct_cholesky_vectors(system)
 !
          e_build_vectors = omp_get_wtime()
-         write(output%unit, '(/t6, a37, f11.2)')'Wall time to build vectors and test: ', &
-                                  e_build_vectors - s_build_vectors
 !
       endif
+!
+      write(output%unit, '(/t3, a)') '- Timings for Cholesky decomposition of electronic repulsion integrals:'
+!
+      write(output%unit, '(/t6, a53, f11.2)')'Wall time to determine auxiliary basis:              ', &
+                                  e_determine_basis - s_determine_basis
+      write(output%unit, '(t6, a53, f11.2)') 'Wall time to construct (J|K), decompose, and invert: ', &
+                                  e_invert_time - s_invert_time
+!
+      if (solver%construct_vectors) &
+         write(output%unit, '(t6, a53, f11.2)')'Wall time to buildL_ab^J and test:                   ', &
+                                  e_build_vectors - s_build_vectors                 
+!
+      flush(output%unit)
 !
    end subroutine run_eri_cd_solver
 !
@@ -1630,7 +1639,7 @@ contains
 !
       call cpu_time(e_select_basis_time)
 !
-      write(output%unit,'(/t6, a42, i7)')'Number of significant negative diagonals: ', sig_neg
+      if (sig_neg .gt. 0) write(output%unit,'(/t6, a42, i7)')'Number of significant negative diagonals: ', sig_neg
 !
 !     Prepare info on basis
 !
@@ -1924,7 +1933,8 @@ contains
 !
       solver%n_cholesky = n_vectors
 !
-      write(output%unit, '(t6, a34, i7)')'Final number of cholesky vectors: ', solver%n_cholesky
+      write(output%unit, '(/t3, a, i10)')'- Summary of Cholesky decomposition of electronic repulsion integrals: '
+      write(output%unit, '(/t6, a, i10)')'Final number of Cholesky vectors: ', solver%n_cholesky
       flush(output%unit)
 !
 !     Update the basis_shell_info array which contains information of which shell pairs (and shells)
@@ -2020,8 +2030,6 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: cholesky, cholesky_inverse
 !
-      write(output%unit, '(/t3, a)') '- Inverting auxiliary basis'
-      flush(output%unit)
       call cpu_time(s_invert_time)
 !
 !     Read Cholesky vectors of auxiliary basis overlap
@@ -2119,9 +2127,6 @@ contains
 !     Intervals
 !
       type(interval) :: A_interval, B_interval, C_interval, D_interval
-!
-      write(output%unit, '(/t3, a)') '- Construct Cholesky vectors'
-      flush(output%unit)
 !
       call cpu_time(s_build_vectors_time)
 !
@@ -2518,8 +2523,10 @@ contains
 !
       call mem%dealloc(D_diff, n_sig_aop, 1)
 !
+      write(output%unit, '(/t2, a)')'- Testing the Cholesky decomposition decomposition electronic repulsion integrals:'
+!
       write(output%unit, '(/t6, a71, e12.4)')'Maximal difference between approximate and actual diagonal:            ', max_diff
-      write(output%unit, '(t6, a71, e12.4/)')'Minimal element of difference between approximate and actual diagonal: ', min_diff
+      write(output%unit, '(t6, a71, e12.4)')'Minimal element of difference between approximate and actual diagonal: ', min_diff
       flush(output%unit)
 !
    end subroutine cholesky_vecs_diagonal_test_eri_cd_solver
@@ -2715,7 +2722,7 @@ contains
                 g_wxyz,               &
                 solver%n_ao**2)
 !
-      write(output%unit, '(/t6, a62, e12.4)')'Maximal difference between approximate and actual eri-matrix: ', &
+      write(output%unit, '(t6, a71, e12.4)')'Maximal difference between approximate and actual eri-matrix:          ', &
                                get_abs_max(g_wxyz, solver%n_ao**4)
 !
       call mem%dealloc(g_wxyz, solver%n_ao**2, solver%n_ao**2)
@@ -3174,7 +3181,7 @@ contains
 !
       write(output%unit, '(/t6, a21, e10.2)') 'Target threshold is: ', solver%threshold
       write(output%unit, '( t6, a21, e10.2)') 'Span factor:         ', solver%span
-      write(output%unit, '( t6, a21, 4x, i6)')    'Max qual:            ', solver%max_qual
+      write(output%unit, '( t6, a21, 4x, i6)')'Max qual:            ', solver%max_qual
       flush(output%unit)
 !
    end subroutine print_settings_eri_cd_solver
