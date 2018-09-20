@@ -192,7 +192,7 @@ contains
                                   e_invert_time - s_invert_time
 !
       if (solver%construct_vectors) &
-         write(output%unit, '(t6, a53, f11.2)')'Wall time to buildL_ab^J and test:                   ', &
+         write(output%unit, '(t6, a53, f11.2)')'Wall time to build L_ab^J and test:                  ', &
                                   e_build_vectors - s_build_vectors                 
 !
       flush(output%unit)
@@ -975,9 +975,6 @@ contains
       enddo
 !
 !     Determining the basis
-!
-     ! write(output%unit, '(/t3, a)') ' - Determinig the elements of the basis'
-     ! flush(output%unit)
 !
       write(output%unit, '(/t3, a)')&
       'Iter.  #Sign. ao pairs / shell pairs   Max diagonal    #Qualified    #Cholesky    Cholesky array size'
@@ -2722,7 +2719,7 @@ contains
                 g_wxyz,               &
                 solver%n_ao**2)
 !
-      write(output%unit, '(t6, a71, e12.4)')'Maximal difference between approximate and actual eri-matrix:          ', &
+      write(output%unit, '(t6, a71, e12.4)')'Maximal difference between approximate and actual ERI-matrix:          ', &
                                get_abs_max(g_wxyz, solver%n_ao**4)
 !
       call mem%dealloc(g_wxyz, solver%n_ao**2, solver%n_ao**2)
