@@ -3172,9 +3172,9 @@ contains
 !
       write(output%unit, '(/t3, a)')      '- Cholesky decomposition settings:'
 !
-      write(output%unit, '(/t6, a21, e12.4)') 'Target threshold is: ', solver%threshold
-      write(output%unit, '( t6, a21, e12.4)') 'Span factor:         ', solver%span
-      write(output%unit, '( t6, a21, i6)')    'Max qual:            ', solver%max_qual
+      write(output%unit, '(/t6, a21, e10.2)') 'Target threshold is: ', solver%threshold
+      write(output%unit, '( t6, a21, e10.2)') 'Span factor:         ', solver%span
+      write(output%unit, '( t6, a21, 4x, i6)')    'Max qual:            ', solver%max_qual
       flush(output%unit)
 !
    end subroutine print_settings_eri_cd_solver
