@@ -570,7 +570,7 @@ contains
 !  
       class(disk_manager) :: disk
 !
-      write(output%unit, '(t6, a38, i3, a/)') 'Disk space available for calculation: ',&
+      write(output%unit, '(t3, a38, i3, a)') 'Disk space available for calculation: ',&
                                                  disk%total/1000000000, ' GB'
 !
    end subroutine print_settings_disk_manager

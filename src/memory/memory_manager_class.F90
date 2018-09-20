@@ -490,7 +490,7 @@ contains
 !  
       class(memory_manager) :: mem
 !
-      write(output%unit, '(t6, a38, i3, a)') 'Memory available for calculation:     ', mem%total/1000000000, ' GB'
+      write(output%unit, '(t3, a38, i3, a)') 'Memory available for calculation:     ', mem%total/1000000000, ' GB'
 !
    end subroutine print_settings_memory_manager
 !

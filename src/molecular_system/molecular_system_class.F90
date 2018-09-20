@@ -1272,8 +1272,6 @@ contains
 !
       enddo 
 !
-      write(output%unit, *)
-!
    end subroutine print_geometry_molecular_system
 !
 !
@@ -1286,10 +1284,11 @@ contains
 !
       class(molecular_system) :: molecule  
 !
-      write(output%unit, '(/t3,a)') '- Molecular system specifications:'
+      write(output%unit, '(/t3,a)')       '- Molecular system specifications:'
 !
-      write(output%unit, '(/t6,a14,i1)') 'Charge:       ', molecule%charge 
-      write(output%unit, '(t6,a14,i1)')  'Multiplicity: ', molecule%multiplicity 
+      write(output%unit, '(/t6,a14,i1)')     'Charge:       ', molecule%charge 
+      write(output%unit, '(t6,a14,i1)')      'Multiplicity: ', molecule%multiplicity 
+!
       write(output%unit, '(/t6,a35,f18.12)') 'Nuclear repulsion energy (a.u.):   ', molecule%get_nuclear_repulsion()
       write(output%unit, '(t6,a35,f18.12)')  'Bohr/angstrom value (CODATA 2010): ', bohr_to_angstrom
 !
