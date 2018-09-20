@@ -322,7 +322,6 @@ contains
       call mem%alloc(h_pq, wf%n_mo, wf%n_mo)
 !
       call wf%get_ao_h_wx(h_wx)
-!
       call wf%mo_transform(h_wx, h_pq)
 !
       call h_pq_file%init('h_pq', 'sequential', 'unformatted')
@@ -1756,14 +1755,14 @@ contains
                            temp5 = one_over_eight*temp*d5
                            temp6 = one_over_eight*temp*d6
 !
-                           F(w, x) = F(w, thread_offset + x) + temp1
-                           F(y, x) = F(y, thread_offset + x) - temp6
+                           F(w, x) = F(w, x) + temp1
+                           F(y, x) = F(y, x) - temp6
 !
-                           F(y, z) = F(y, thread_offset + z) + temp2
-                           F(w, z) = F(w, thread_offset + z) - temp3
-                           F(x, z) = F(x, thread_offset + z) - temp4
+                           F(y, z) = F(y, z) + temp2
+                           F(w, z) = F(w, z) - temp3
+                           F(x, z) = F(x, z) - temp4
 !
-                           F(w, y) = F(w, thread_offset + y) - temp5
+                           F(w, y) = F(w, y) - temp5
 !
                         enddo
                      enddo

@@ -330,9 +330,11 @@ contains
 !
       call disk%close_file(h_pq_file)
 !
-!     Perform t1-transformation of F_pq = h_pq 
+!     Perform t1-transformation of F_pq = h_pq  
 !
       call wf%t1_transform(F_pq)
+!
+!     Occupied-occupied contributions: F_ij = F_ij + sum_k (2*g_ijkk - g_ikkj)
 !
       call mem%alloc(g_ij_kl, (wf%n_o)**2, (wf%n_o)**2)
       call wf%get_oooo(g_ij_kl)
@@ -457,6 +459,8 @@ contains
 !
             wf%fock_ia(i,a) = F_pq(i, wf%n_o + a)
             wf%fock_ai(a,i) = F_pq(wf%n_o + a, i)
+!
+            write(output%unit, *) 'fock_ia fock_ai', wf%fock_ia(i,a), wf%fock_ai(a,i)
 !
          enddo
       enddo
