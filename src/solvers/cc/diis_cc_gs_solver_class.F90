@@ -114,7 +114,8 @@ contains
 !
       write(output%unit, '(/t6,a18,e9.2)') 'Omega threshold:  ', solver%omega_threshold
       write(output%unit, '(t6,a18,e9.2)') 'Energy dimension: ', solver%energy_threshold
-      write(output%unit, '(/t6,a18,i2/)') 'DIIS dimension:   ', solver%diis_dimension
+      write(output%unit, '(/t6,a26,i3)') 'DIIS dimension:           ', solver%diis_dimension
+      write(output%unit, '(t6,a26,i3/)') 'Max number of iterations: ', solver%max_iterations
 !
    end subroutine print_settings_diis_cc_gs_solver
 !
@@ -255,10 +256,10 @@ contains
       call diis_manager%finalize()
 !
       if (.not. converged) then 
-!
-         write(output%unit, '(t6,a)')   '---------------------------------------------------'
-         write(output%unit, '(/t6,a)')  'Was not able to converge the equations in the given'
-         write(output%unit, '(t6,a/)')  'number of maximum iterations.'
+!   
+         write(output%unit, '(t6,a)')      '---------------------------------------------------------------'
+         write(output%unit, '(/t6,a)')  'Was not able to converge the equations in the given number'
+         write(output%unit, '(t6,a/)')  'of maximum iterations.'
          stop
 !
       endif 
