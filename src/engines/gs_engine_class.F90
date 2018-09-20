@@ -58,7 +58,10 @@ contains
       call eri_chol_solver%run(wf%system)
 !
       call eri_chol_solver%cholesky_vecs_diagonal_test()
-      call eri_chol_solver%full_test_cholesky_vecs(wf%system)
+!
+      write(output%unit, *) 'Not doing full test of Cholesky vectors (takes a long time)'
+      flush(output%unit)
+!      call eri_chol_solver%full_test_cholesky_vecs(wf%system)
 !
       call eri_chol_solver%construct_mo_cholesky_vecs(wf%system, wf%n_mo, wf%orbital_coefficients)
 !
@@ -67,15 +70,24 @@ contains
       call eri_chol_solver%cleanup()
       deallocate(eri_chol_solver)
 !
-!     Ground state solution 
+!     Ground state solution (avoid starting solver if there are no equations to solve)
 !
-      allocate(cc_gs_solver)
+      if (trim(wf%name) == 'MP2') then 
 !
-      call cc_gs_solver%prepare(wf)
-      call cc_gs_solver%run(wf)
-      call cc_gs_solver%cleanup(wf)
+         call wf%calculate_energy()
+         call wf%print_wavefunction_summary()
 !
-      deallocate(cc_gs_solver)
+      else 
+!
+         allocate(cc_gs_solver)
+!
+         call cc_gs_solver%prepare(wf)
+         call cc_gs_solver%run(wf)
+         call cc_gs_solver%cleanup(wf)
+!
+         deallocate(cc_gs_solver)
+!
+      endif
 !
    end subroutine run_gs_engine
 !

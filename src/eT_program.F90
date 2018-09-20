@@ -18,6 +18,7 @@ program eT_program
   use mlhf_class
 !
   use ccs_class
+  use mp2_class
 !
   use io_eT_program
 !
@@ -40,7 +41,8 @@ program eT_program
     type(uhf), allocatable, target   :: uhf_wf
     type(mlhf), allocatable, target  :: mlhf_wf 
 !
-    type(ccs), allocatable, target :: ccs_wf
+    type(ccs), allocatable, target   :: ccs_wf
+    type(mp2), allocatable, target :: mp2_wf
 !
 !   Wavefunction pointer
 !
@@ -167,6 +169,9 @@ program eT_program
 !
         elseif (cc_methods(i) == 'mp2') then
 !
+          allocate(mp2_wf)
+          cc_wf => mp2_wf
+!
         elseif (cc_methods(i) == 'cc2') then
 !
         elseif (cc_methods(i) == 'ccsd') then
@@ -176,8 +181,6 @@ program eT_program
 !       Determine engine
 !
         if (cc_engine == 'ground state') then
-!
-          write(output%unit, *) 'hellaw'
 !
           allocate(gs_cc_engine)
           engine => gs_cc_engine  
