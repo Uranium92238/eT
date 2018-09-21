@@ -82,18 +82,22 @@ contains
       call davidson%trials%init(trim(davidson%name) // '_trials', 'sequential', 'unformatted')
       call davidson%transforms%init(trim(davidson%name) // '_transforms', 'sequential', 'unformatted')
       call davidson%preconditioner%init(trim(davidson%name) // '_preconditioner', 'sequential', 'unformatted')
+      call davidson%preconditioner%init(trim(davidson%name) // '_projector', 'sequential', 'unformatted')
 !
       call disk%open_file(davidson%X, 'write', 'rewind')
       call disk%open_file(davidson%trials, 'write', 'rewind')
       call disk%open_file(davidson%transforms, 'write', 'rewind')
       call disk%open_file(davidson%preconditioner, 'write', 'rewind')
+      call disk%open_file(davidson%projector, 'write', 'rewind')
 !
       call disk%close_file(davidson%X)
       call disk%close_file(davidson%trials)
       call disk%close_file(davidson%transforms)
       call disk%close_file(davidson%preconditioner)
+      call disk%close_file(davidson%projector)
 !
       davidson%do_precondition   = .false.         ! Switches to true if 'set_preconditioner' is called
+      davidson%do_projection     = .false.         ! Switches to true if 'set_preconditioner' is called
       davidson%dim_red           = n_solutions     ! Initial dimension equal to number of solutions
       davidson%n_new_trials      = n_solutions 
 !

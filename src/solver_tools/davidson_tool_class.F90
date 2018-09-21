@@ -21,7 +21,7 @@ module davidson_tool_class
       real(dp), dimension(:,:), allocatable :: A_red
       real(dp), dimension(:,:), allocatable :: X_red
 !
-      type(file) :: X, trials, transforms, preconditioner
+      type(file) :: X, trials, transforms, preconditioner, projector
 !
       integer(i15) :: dim_red
       integer(i15) :: max_dim_red
@@ -33,6 +33,7 @@ module davidson_tool_class
       real(dp) :: residual_threshold
 !
       logical :: do_precondition
+      logical :: do_projection
 !
    contains
 !
@@ -51,7 +52,9 @@ module davidson_tool_class
       procedure, non_overridable :: construct_AX             => construct_AX_davidson_tool
 !
       procedure :: set_preconditioner               => set_preconditioner_davidson_tool
+      procedure :: set_projector                    => set_projector_davidson_tool
       procedure :: precondition                     => precondition_davidson_tool
+      procedure :: projection                       => projection_davidson_tool
       procedure :: orthogonalize_against_trial_vecs => orthogonalize_against_trial_vecs_davidson_tool
 !
       procedure :: set_A_red => set_A_red_davidson_tool
@@ -564,6 +567,28 @@ contains
    end subroutine set_preconditioner_davidson_tool
 !
 !
+   subroutine set_projector_davidson_tool(davidson, projector)
+!!
+!!    Set projector 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+!!    This routine saves the projector to file. 
+!!
+      implicit none 
+!
+      class(davidson_tool) :: davidson
+!
+      real(dp), dimension(davidson%n_parameters, 1), intent(in) :: projector 
+!
+      call disk%open_file(davidson%projector, 'write', 'rewind')
+      write(davidson%preconditioner%unit) projector 
+      call disk%close_file(davidson%projector)
+!
+      davidson%do_projection = .true.
+!
+   end subroutine set_projector_davidson_tool
+!
+!
    subroutine precondition_davidson_tool(davidson, R)
 !!
 !!    Precondition 
@@ -607,6 +632,51 @@ contains
       endif 
 !
    end subroutine precondition_davidson_tool
+!
+!
+   subroutine projection_davidson_tool(davidson, R)
+!!
+!!    Projection
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+!!    Project the vector R, i.e. 
+!!
+!!       R(i) <- R(i)*projector(i)
+!!
+!!    However, if the user has not set any preconditioner, 
+!!    this routine performs no action on R. 
+!!
+      implicit none 
+!
+      class(davidson_tool) :: davidson
+!
+      real(dp), dimension(davidson%n_parameters, 1), intent(inout) :: R
+!
+      real(dp), dimension(:,:), allocatable :: projector
+!
+      integer(i15) :: i 
+!
+!
+      if (davidson%do_projection) then 
+!
+         call mem%alloc(projector, davidson%n_parameters, 1)
+!
+         call disk%open_file(davidson%projector, 'read')
+         rewind(davidson%projector%unit)
+         read(davidson%projector%unit) projector
+         call disk%close_file(davidson%projector)
+!
+         do i = 1, davidson%n_parameters
+!
+            R(i, 1) = R(i, 1)*projector(i, 1)
+!
+         enddo 
+!
+         call mem%dealloc(projector, davidson%n_parameters, 1)
+!
+      endif 
+!
+   end subroutine projection_davidson_tool
 !
 !
    subroutine orthogonalize_against_trial_vecs_davidson_tool(davidson, R)
