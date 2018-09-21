@@ -139,10 +139,12 @@ contains
 !
       class(davidson_cc_es_solver) :: solver 
 !
+      write(output%unit, '(/t3,a)') '- Davidson CC excited state solver settings:'
+!
       write(output%unit,'(/t6,a20,e9.2)') 'Energy threshold:   ', solver%eigenvalue_threshold
-      write(output%unit,'(t6,a20,e9.2)') 'Residual threshold: ', solver%residual_threshold
-      write(output%unit,'(/t6,a,i3,a)')  'Number of singlet states: ', solver%n_singlet_states
-      write(output%unit, '(t6,a26,i3)') 'Max number of iterations: ', solver%max_iterations
+      write(output%unit,'(t6,a20,e9.2)')  'Residual threshold: ', solver%residual_threshold
+      write(output%unit,'(/t6,a,i3,a)')   'Number of singlet states: ', solver%n_singlet_states
+      write(output%unit, '(t6,a26,i3)')   'Max number of iterations: ', solver%max_iterations
       flush(output%unit)
 !
    end subroutine print_settings_davidson_cc_es_solver
@@ -200,8 +202,8 @@ contains
 !
       do while (.not. converged .and. (iteration .le. solver%max_iterations))
 !
-         write(output%unit,'(/t3,a,i3)') 'Iteration: ', iteration
-         write(output%unit,'(t3,a,i4/)') 'Reduced space dimension: ', davidson%dim_red
+         write(output%unit,'(/t3,a25,i4)') 'Iteration:               ', iteration
+         write(output%unit,'(t3,a25,i4/)') 'Reduced space dimension: ', davidson%dim_red
          flush(output%unit)
 !
          write(output%unit,'(t3,a)') 'Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm'
@@ -476,6 +478,7 @@ contains
       write(output%unit, '(t3,a)')   'right eigenvectors of the Jacobian matrix, A. The eigenvalue problem'
       write(output%unit, '(t3,a)')   'is solved in a reduced space, the dimension of which is expanded'
       write(output%unit, '(t3,a)')   'until the convergence criteria are met.'
+!
       write(output%unit, '(/t3,a)')  'A complete description of the algorithm can be found in'
       write(output%unit, '(t3,a)')   'E. R. Davidson, J. Comput. Phys. 1975, 17, 87.'
 !

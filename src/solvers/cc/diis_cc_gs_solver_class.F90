@@ -3,8 +3,7 @@ module diis_cc_gs_solver_class
 !!
 !!		DIIS coupled cluster ground state solver class module
 !!		Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
-!!
-!!    
+!!  
 !
    use kinds
    use file_class
@@ -26,16 +25,16 @@ module diis_cc_gs_solver_class
 !
    contains
 !     
-      procedure :: prepare        => prepare_diis_cc_gs_solver
-      procedure :: run            => run_diis_cc_gs_solver
-      procedure :: cleanup        => cleanup_diis_cc_gs_solver
+      procedure :: prepare                  => prepare_diis_cc_gs_solver
+      procedure :: run                      => run_diis_cc_gs_solver
+      procedure :: cleanup                  => cleanup_diis_cc_gs_solver
 !
-      procedure :: print_banner   => print_banner_diis_cc_gs_solver
-      procedure :: print_summary  => print_summary_diis_cc_gs_solver
+      procedure :: print_banner             => print_banner_diis_cc_gs_solver
+      procedure :: print_summary            => print_summary_diis_cc_gs_solver
 !
-      procedure :: read_settings  => read_settings_diis_cc_gs_solver
+      procedure :: read_settings            => read_settings_diis_cc_gs_solver
 !
-      procedure :: print_settings => print_settings_diis_cc_gs_solver
+      procedure :: print_settings           => print_settings_diis_cc_gs_solver
 !
       procedure :: do_diagonal_precondition => do_diagonal_precondition_diis_cc_gs_solver
 !
@@ -108,10 +107,13 @@ contains
 !
       class(diis_cc_gs_solver) :: solver 
 !
-      write(output%unit, '(/t6,a18,e9.2)') 'Omega threshold:  ', solver%omega_threshold
-      write(output%unit, '(t6,a18,e9.2)') 'Energy dimension: ', solver%energy_threshold
-      write(output%unit, '(/t6,a26,i3)') 'DIIS dimension:           ', solver%diis_dimension
-      write(output%unit, '(t6,a26,i3/)') 'Max number of iterations: ', solver%max_iterations
+      write(output%unit, '(/t3,a)')      '- DIIS CC ground state solver settings:'
+!
+      write(output%unit, '(/t6,a26,e9.2)') 'Omega threshold:          ', solver%omega_threshold
+      write(output%unit, '(t6,a26,e9.2)')  'Energy threshold:         ', solver%energy_threshold
+
+      write(output%unit, '(/t6,a26,i9)')   'DIIS dimension:           ', solver%diis_dimension
+      write(output%unit, '(t6,a26,i9)')    'Max number of iterations: ', solver%max_iterations
 !
    end subroutine print_settings_diis_cc_gs_solver
 !
@@ -216,10 +218,19 @@ contains
 !
          converged = converged_omega .and. converged_energy
 !
+         if (iteration .eq. 1 .and. converged_omega) converged = .true. ! Exception to the rule
+!
          if (converged) then
 !
             write(output%unit, '(t3,a)')           '--------------------------------------------------------------'
             write(output%unit, '(/t3,a29,i3,a12)') 'Convergence criterion met in ', iteration, ' iterations!'
+!
+            if (.not. converged_energy) then 
+!
+               write(output%unit, '(/t3,a,/t9,a)') 'Note: the omega vector converged in the first iteration,', &
+                                                         'so the energy convergence has not been tested!'
+!
+            endif
 !
             call solver%print_summary(wf)
 !
@@ -289,8 +300,16 @@ contains
       class(diis_cc_gs_solver) :: solver 
 !
       write(output%unit, '(//t3,a)') ':: DIIS coupled cluster ground state solver'
-      write(output%unit, '(t3,a/)')  ':: E. F. Kjønstad, S. D. Folkestad, 2018'
-
+      write(output%unit, '(t3,a)')   ':: E. F. Kjønstad, S. D. Folkestad, 2018'
+!
+      write(output%unit, '(/t3,a)')  'A DIIS CC ground state amplitude equations solver. It combines'
+      write(output%unit, '(t3,a)')   'a quasi-Newton perturbation theory estimate of the next amplitudes,'
+      write(output%unit, '(t3,a)')   'using least square fitting to find an an optimal combination of previous'
+      write(output%unit, '(t3,a)')   'estimates such that the update is minimized.'
+!
+      write(output%unit, '(/t3,a)')  'See Helgaker et al., Molecular Electronic Structure Theory,'
+      write(output%unit, '(t3,a)')   'Chapter 13, for the more details on this algorithm.'
+!
       flush(output%unit)
 !
    end subroutine print_banner_diis_cc_gs_solver
