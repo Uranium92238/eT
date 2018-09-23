@@ -39,7 +39,7 @@ module eri_cd_solver_class
       logical :: one_center         = .false.
       logical :: construct_vectors  = .true.
 !
-      type(file) :: diagonal_info_target, diagonal_info_one_center
+      type(file) :: diagonal_info_target, diagonal_info_one_center, diagonal_info_construct
       type(file) :: cholesky_aux, cholesky_aux_inverse, cholesky_ao_vectors, cholesky_ao_vectors_info, cholesky_mo_vectors
       type(file) :: basis_shell_data
 !
@@ -95,6 +95,7 @@ contains
 !
 !
       call solver%diagonal_info_target%init('target_diagonal', 'sequential', 'unformatted')
+      call solver%diagonal_info_construct%init('construct_diagonal', 'sequential', 'unformatted')
       call solver%cholesky_aux%init('cholesky_aux', 'sequential', 'unformatted')
       call solver%cholesky_aux_inverse%init('cholesky_aux_inverse', 'sequential', 'unformatted')
       call solver%basis_shell_data%init('basis_shell_info', 'sequential', 'unformatted')
@@ -139,8 +140,6 @@ contains
       else 
 !
          call solver%construct_significant_diagonal(system)
-         call solver%diagonal_test(system)
-!
 !
       endif
 !
@@ -220,8 +219,14 @@ contains
 !!    Construct significant diagonal
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!    Constructs the significant diagonal for the given decomposition threshold.
-!!    Screening diagonal is optional argument for additional screening
+!!    Constructs two screened diagonals
+!!
+!!       1. Screened diagonal for decomposition D_αβ <= T   or   D_αβ * V_α * V_β <= T 
+!!          The latter if optional screening vector is present
+!!
+!!       2. Screened diagonal for construction of cholesky vectros  sqrt( D_αβ * D_max ) <= T  
+!!
+!!    Writes all information to files target_diagonal and construct_diagonal
 !!
       implicit none
 !
@@ -335,7 +340,7 @@ contains
       enddo
 !$omp end parallel do
 !
-!    Prescreening for construction
+!    Prescreening for construction diagonal
 !
       max_diagonal = get_abs_max(max_in_sp_diagonal, solver%n_sp)
       call mem%dealloc(max_in_sp_diagonal, solver%n_sp, 1)
@@ -389,6 +394,8 @@ contains
       enddo
 !$omp end parallel do
 !
+!     Count number of screened AO pairs and shell pairs for both cases.
+!
       n_sig_aop = 0 ! Number of significant AO pairs
       n_sig_sp  = 0 ! Number of significant shell pairs
 !
@@ -411,8 +418,8 @@ contains
 !
       enddo
 !
-      n_construct_aop = 0 ! Number of significant AO pairs
-      n_construct_sp  = 0 ! Number of significant shell pairs
+      n_construct_aop = 0 ! Number of AO pairs to construct
+      n_construct_sp  = 0 ! Number of shell pairs to construct
 !
       do I = 1, solver%n_sp
 !
@@ -553,11 +560,12 @@ contains
       call mem%dealloc(screening_vector_local, solver%n_aop, 1)
       call mem%dealloc_int(sig_sp_index, n_sig_sp, 2)
 !
-!     Write screening_info_file containing
+!     Write info file for target diagonal containing
 !
 !        1. number of significant shell pairs, number of significant ao pairs
 !        2. sig_sp - vector of logicals to describe which shell pairs are significant
 !        3. D_xy = ( xy | xy ), the significant diagonal.
+!        4. Screening vector
 !
       call disk%open_file(solver%diagonal_info_target, 'write')
       rewind(solver%diagonal_info_target%unit)
@@ -566,10 +574,22 @@ contains
       write(solver%diagonal_info_target%unit) sig_sp
       write(solver%diagonal_info_target%unit) D_xy
       write(solver%diagonal_info_target%unit) screening_vector_reduced
-      write(solver%diagonal_info_target%unit) n_construct_sp, n_construct_aop
-      write(solver%diagonal_info_target%unit) construct_sp
+!
+!     Write info file for target diagonal containing
+!
+!        1. number of significant shell pairs, number of significant ao pairs
+!        2. sig_sp - vector of logicals to describe which shell pairs are significant
+!        3. D_xy = ( xy | xy ), the significant diagonal.
+!        4. Screening vector
+!
+      call disk%open_file(solver%diagonal_info_construct, 'write')
+      rewind(solver%diagonal_info_target%unit)
+!
+      write(solver%diagonal_info_construct%unit) n_construct_sp, n_construct_aop
+      write(solver%diagonal_info_construct%unit) construct_sp
 !
       call disk%close_file(solver%diagonal_info_target)
+      call disk%close_file(solver%diagonal_info_construct)
 !
       deallocate(sig_sp)
       call mem%dealloc(D_xy, n_sig_aop, 1)
@@ -2222,20 +2242,15 @@ contains
 !
 !     Read diagonal info
 !
-      call disk%open_file(solver%diagonal_info_target, 'read')
-      rewind(solver%diagonal_info_target%unit)
-!
-      read(solver%diagonal_info_target%unit)
-      read(solver%diagonal_info_target%unit)
-      read(solver%diagonal_info_target%unit)
-      read(solver%diagonal_info_target%unit)
+      call disk%open_file(solver%diagonal_info_construct, 'read')
+      rewind(solver%diagonal_info_construct%unit)
 !
       allocate(construct_sp(solver%n_sp))
 !
-      read(solver%diagonal_info_target%unit) n_construct_sp, n_construct_aop
-      read(solver%diagonal_info_target%unit) construct_sp
+      read(solver%diagonal_info_construct%unit) n_construct_sp, n_construct_aop
+      read(solver%diagonal_info_construct%unit) construct_sp
 !
-      call disk%close_file(solver%diagonal_info_target)
+      call disk%close_file(solver%diagonal_info_construct)
 !
 !     Read inverse of cholesky vectors of auxiliary overlap
 !
@@ -2647,7 +2662,7 @@ contains
    end subroutine diagonal_test_eri_cd_solver
 !
 !
-   subroutine cholesky_vecs_diagonal_test_eri_cd_solver(solver)
+   subroutine cholesky_vecs_diagonal_test_eri_cd_solver(solver, system)
 !!
 !!    Cholesky vectors diagonal test
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -2661,69 +2676,188 @@ contains
 !
       class(eri_cd_solver) :: solver
 !
+      type(molecular_system), intent(in) :: system
+!
       type(file) :: cholesky_ao_vectors
 !
-      real(dp), dimension(:,:), allocatable :: D_diff, L_K_yz
+      real(dp), dimension(:,:), allocatable :: D_xy, L_K_yz, g_AB_AB
 !
       real(dp) :: ddot, max_diff, min_diff
 !
-      integer(i15) :: aop, n_sig_sp, n_sig_aop, J, I, size_AB, AB_offset
+      integer(i15) :: aop, n_construct_sp, n_construct_aop, J, I, size_AB, AB_offset, A, B, current_construct_sp
+      integer(i15) :: x, y, xy, xy_packed, sp
+!
+      integer(i15), dimension(:,:), allocatable :: construct_sp_index, ao_offsets
 !
       character(len=40) :: line
 !
+      logical, dimension(:), allocatable :: construct_sp
+!
+      type(interval) :: A_interval, B_interval
+!
 !     Read diagonal information
 !
-      call disk%open_file(solver%diagonal_info_target, 'read')
+      call disk%open_file(solver%diagonal_info_construct, 'read')
 !
-      rewind(solver%diagonal_info_target%unit)
+      rewind(solver%diagonal_info_construct%unit)
 !
-      read(solver%diagonal_info_target%unit) n_sig_sp, n_sig_aop
+      read(solver%diagonal_info_construct%unit) n_construct_sp, n_construct_aop
 !
-      call mem%alloc(D_diff, n_sig_aop, 1)
+      allocate(construct_sp(solver%n_sp))
 !
-      read(solver%diagonal_info_target%unit)
-      read(solver%diagonal_info_target%unit) D_diff
+      read(solver%diagonal_info_construct%unit) construct_sp
 !
-      call disk%close_file(solver%diagonal_info_target)
+      call disk%close_file(solver%diagonal_info_construct)
+!
+!     Prepare for construction of diagonal
+!
+      sp = 0        ! Shell pair number
+!    
+      call mem%alloc_int(ao_offsets, n_construct_sp, 1)
+      ao_offsets = 0
+!
+      current_construct_sp = 0
+!
+      call mem%alloc_int(construct_sp_index, n_construct_sp, 2)
+!
+      do B = 1, solver%n_s
+         do A = B, solver%n_s
+!
+            sp = sp + 1
+!
+            if (construct_sp(sp)) then
+!
+               current_construct_sp = current_construct_sp + 1
+!
+               A_interval = system%shell_limits(A)
+               B_interval = system%shell_limits(B)
+!     
+               construct_sp_index(current_construct_sp, 1) = A
+               construct_sp_index(current_construct_sp, 2) = B
+!
+               if (current_construct_sp .lt. n_construct_sp) then
+!
+                  ao_offsets(current_construct_sp + 1, 1) = ao_offsets(current_construct_sp, 1) + &
+                           get_size_sp(A_interval, B_interval)
+!
+               endif
+!
+            endif
+!
+         enddo
+      enddo
+!
+!     Construct significant diagonal and screening vector
+!
+      call mem%alloc(D_xy, n_construct_aop, 1)
+      D_xy = zero
+!
+!$omp parallel do &
+!$omp private(I, A, B, A_interval, B_interval, x, y, xy, xy_packed, g_AB_AB) &
+!$omp shared(D_xy, ao_offsets) &
+!$omp schedule(guided)
+      do I = 1, n_construct_sp
+!
+         A = construct_sp_index(I, 1)
+         B = construct_sp_index(I, 2)
+!
+         A_interval = system%shell_limits(A)
+         B_interval = system%shell_limits(B)
+!
+         call mem%alloc(g_AB_AB, &
+               (A_interval%size)*(B_interval%size), &
+               (A_interval%size)*(B_interval%size))
+!
+         g_AB_AB = zero
+         call system%ao_integrals%construct_ao_g_wxyz(g_AB_AB, A, B, A, B)
+!
+         if (A .eq. B) then
+!
+            do x = 1, A_interval%size
+               do y = x, B_interval%size
+!
+                  xy = A_interval%size*(y - 1) + x
+                  xy_packed = (max(x,y)*(max(x,y)-3)/2) + x + y
+!
+                  D_xy(xy_packed + ao_offsets(I, 1), 1) = g_AB_AB(xy, xy)
+!
+               enddo
+            enddo
+!
+         else ! A ≠ B
+!
+            do x = 1, (A_interval%size)
+               do y = 1, (B_interval%size)
+!
+                  xy = A_interval%size*(y - 1) + x
+                  D_xy(xy + ao_offsets(I, 1), 1) = g_AB_AB(xy,xy)
+!
+               enddo
+            enddo
+!
+         endif
+!
+         call mem%dealloc(g_AB_AB, &
+               (A_interval%size)*(B_interval%size), &
+               (A_interval%size)*(B_interval%size))
+!
+      enddo
+!$omp end parallel do   
+!
+      call mem%dealloc_int(construct_sp_index, n_construct_sp, 2)
+      call mem%dealloc_int(ao_offsets, n_construct_sp, 1)
 !
       call disk%open_file(solver%cholesky_ao_vectors, 'read')
+      call disk%open_file(solver%cholesky_ao_vectors_info, 'read')
 !
       rewind(solver%cholesky_ao_vectors%unit)
-
+      rewind(solver%cholesky_ao_vectors_info%unit)
 !
-      call mem%alloc(L_K_yz, solver%n_cholesky, n_sig_aop)
+      read(solver%cholesky_ao_vectors_info%unit, *) line
 !
-      do J = 1, solver%n_cholesky
+      AB_offset = 0
 !
-         read(solver%cholesky_ao_vectors%unit) (L_K_yz(J, I), I = 1, n_sig_aop)
+      do while (trim(line) .ne. 'DONE')
+!
+!        Calculate difference between actual and approximate diagonal
+!
+         read(line, *) size_AB
+!
+         call mem%alloc(L_K_yz, solver%n_cholesky, size_AB)
+!
+         do J = 1, solver%n_cholesky
+!
+            read(solver%cholesky_ao_vectors%unit) (L_K_yz(J, I), I = 1, size_AB)
+!
+         enddo
+!
+         do I = 1, size_AB 
+!
+            D_xy(I + AB_offset, 1) = D_xy(I + AB_offset, 1) - ddot(solver%n_cholesky, L_K_yz(1, I), 1, L_K_yz(1, I), 1)
+!
+         enddo
+!
+         call mem%dealloc(L_K_yz, solver%n_cholesky, size_AB)
+!
+         AB_offset = AB_offset + size_AB
+         read(solver%cholesky_ao_vectors_info%unit, *) line
 !
       enddo
-!
-      do I = 1, n_sig_aop
-!
-         D_diff(I, 1) = D_diff(I, 1) - ddot(solver%n_cholesky, L_K_yz(1, I), 1, L_K_yz(1, I), 1)
-!
-      enddo
-!
-      call mem%dealloc(L_K_yz, solver%n_cholesky, n_sig_aop)
 !
       call disk%close_file(solver%cholesky_ao_vectors)
+      call disk%close_file(solver%cholesky_ao_vectors_info)
 !
 !     Calculate maximal difference and minimal difference
 !
-      max_diff = zero
-!
-      do aop = 1, n_sig_aop
-         if (abs(D_diff(aop, 1)) .gt. max_diff) max_diff = abs(D_diff(aop, 1))
-      enddo
+      max_diff = get_abs_max(D_xy, n_construct_aop)
 !
       min_diff =1.0d5
 !
-      do aop = 1, n_sig_aop
-         if (D_diff(aop, 1) .lt. min_diff) min_diff = D_diff(aop, 1)
+      do aop = 1, n_construct_aop
+         if (D_xy(aop, 1) .lt. min_diff) min_diff = D_xy(aop, 1)
       enddo
 !
-      call mem%dealloc(D_diff, n_sig_aop, 1)
+      call mem%dealloc(D_xy, n_construct_aop, 1)
 !
       write(output%unit, '(/t2, a)')'- Testing the Cholesky decomposition decomposition electronic repulsion integrals:'
 !
@@ -2734,7 +2868,7 @@ contains
    end subroutine cholesky_vecs_diagonal_test_eri_cd_solver
 !
 !
- subroutine full_test_cholesky_vecs_cd_eri_solver(solver, system)
+   subroutine full_test_cholesky_vecs_cd_eri_solver(solver, system)
 !!
 !!
       implicit none
@@ -2763,22 +2897,17 @@ contains
 !
 !     Read significant sp info 
 !
-      call disk%open_file(solver%diagonal_info_target, 'read')
+      call disk%open_file(solver%diagonal_info_construct, 'read')
 !
-      rewind(solver%diagonal_info_target%unit)
+      rewind(solver%diagonal_info_construct%unit)
 !
-      read(solver%diagonal_info_target%unit)
-      read(solver%diagonal_info_target%unit)
-      read(solver%diagonal_info_target%unit)
-      read(solver%diagonal_info_target%unit)
-!
-      read(solver%diagonal_info_target%unit) n_construct_sp, n_construct_aop
+      read(solver%diagonal_info_construct%unit) n_construct_sp, n_construct_aop
 !
       allocate(construct_sp(solver%n_sp))
 !
-      read(solver%diagonal_info_target%unit) construct_sp
+      read(solver%diagonal_info_construct%unit) construct_sp
 !
-      call disk%close_file(solver%diagonal_info_target)
+      call disk%close_file(solver%diagonal_info_construct)
 !
       call disk%open_file(solver%cholesky_ao_vectors, 'read')
       call disk%open_file(solver%cholesky_ao_vectors_info, 'read')
@@ -3128,22 +3257,17 @@ contains
 !
 !     Read significant sp info 
 !
-      call disk%open_file(solver%diagonal_info_target, 'read')
+      call disk%open_file(solver%diagonal_info_construct, 'read')
 !
-      rewind(solver%diagonal_info_target%unit)
+      rewind(solver%diagonal_info_construct%unit)
 !
-      read(solver%diagonal_info_target%unit) 
-      read(solver%diagonal_info_target%unit) 
-      read(solver%diagonal_info_target%unit) 
-      read(solver%diagonal_info_target%unit) 
-!
-      read(solver%diagonal_info_target%unit) n_construct_sp, n_construct_aop
+      read(solver%diagonal_info_construct%unit) n_construct_sp, n_construct_aop
 !
       allocate(construct_sp(solver%n_sp))
 !
-      read(solver%diagonal_info_target%unit) construct_sp
+      read(solver%diagonal_info_construct%unit) construct_sp
 !
-      call disk%close_file(solver%diagonal_info_target)
+      call disk%close_file(solver%diagonal_info_construct)
 !
       do J = 1, solver%n_cholesky
 !
