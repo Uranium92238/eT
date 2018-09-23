@@ -101,6 +101,11 @@ program eT_program
         allocate(system)
         call system%prepare()
 !
+        call initialize_coulomb()
+        call initialize_kinetic()
+        call initialize_nuclear()
+        call initialize_overlap()
+!
         allocate(chol_solver)
 !
         call chol_solver%prepare(system)
