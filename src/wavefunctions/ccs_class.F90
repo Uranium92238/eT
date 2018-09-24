@@ -243,7 +243,34 @@ contains
 !
       class(ccs) :: wf 
 !
-      wf%energy = wf%hf_energy
+      integer(i15) :: i = 0
+!
+      type(file) :: h_pq_file
+!
+      real(dp), dimension(:,:), allocatable :: h_pq
+!
+!     Read MO-transformed h integrals into the  
+!
+      call h_pq_file%init('h_pq', 'sequential', 'unformatted')
+      call disk%open_file(h_pq_file, 'read')
+      rewind(h_pq_file%unit)
+!
+      call mem%alloc(h_pq, wf%n_mo, wf%n_mo)
+      read(h_pq_file%unit) h_pq 
+!
+      call disk%close_file(h_pq_file)
+!
+      wf%energy = zero
+!
+      wf%energy = wf%system%get_nuclear_repulsion()
+!
+      do i = 1, wf%n_o
+!
+         wf%energy = wf%energy + h_pq(i,i) + wf%fock_ij(i,i)
+!
+      enddo
+!
+      call mem%dealloc(h_pq, wf%n_mo, wf%n_mo)
 !
    end subroutine calculate_energy_ccs
 !
@@ -261,9 +288,22 @@ contains
 !
       class(ccs) :: wf
 !
+      integer(i15)::i, a
+!
       real(dp), dimension(wf%n_v, wf%n_o) :: omega
 !
 !     Add F_a_i to omega
+!
+!
+      write(output%unit, *)
+
+      do a = 1, wf%n_v
+         do i = 1, wf%n_o
+!
+            write(output%unit, *)wf%fock_ia(i, a)
+         enddo
+!
+      enddo
 !
       call daxpy((wf%n_o)*(wf%n_v), one, wf%fock_ai, 1, omega, 1)
 !

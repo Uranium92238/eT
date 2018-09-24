@@ -106,7 +106,7 @@ contains
 !
       endif
 !
-      call set_coulomb_precision(1.0d-25)
+      call set_coulomb_precision(1.0d-40)
 !
    end subroutine prepare_eri_cd_solver
 !
@@ -194,7 +194,7 @@ contains
                                   e_invert_time - s_invert_time
 !
       if (solver%construct_vectors) &
-         write(output%unit, '(t6, a53, f11.2)')'Wall time to build L_ab^J and test:                  ', &
+         write(output%unit, '(t6, a53, f11.2)')'Wall time to build L_ab^J and test:                 ', &
                                   e_build_vectors - s_build_vectors                 
 !
       flush(output%unit)
@@ -343,6 +343,7 @@ contains
 !    Prescreening for construction diagonal
 !
       max_diagonal = get_abs_max(max_in_sp_diagonal, solver%n_sp)
+!
       call mem%dealloc(max_in_sp_diagonal, solver%n_sp, 1)
 !
       allocate(construct_sp(solver%n_sp))
@@ -558,7 +559,7 @@ contains
 !$omp end parallel do   
 !
       call mem%dealloc(screening_vector_local, solver%n_aop, 1)
-      call mem%dealloc_int(sig_sp_index, n_sig_sp, 2)
+      call mem%dealloc_int(sig_sp_index, n_sig_sp, 2) 
 !
 !     Write info file for target diagonal containing
 !
@@ -567,7 +568,7 @@ contains
 !        3. D_xy = ( xy | xy ), the significant diagonal.
 !        4. Screening vector
 !
-      call disk%open_file(solver%diagonal_info_target, 'write')
+      call disk%open_file(solver%diagonal_info_target, 'write', 'rewind')
       rewind(solver%diagonal_info_target%unit)
 !
       write(solver%diagonal_info_target%unit) n_sig_sp, n_sig_aop
@@ -582,7 +583,7 @@ contains
 !        3. D_xy = ( xy | xy ), the significant diagonal.
 !        4. Screening vector
 !
-      call disk%open_file(solver%diagonal_info_construct, 'write')
+      call disk%open_file(solver%diagonal_info_construct, 'write', 'rewind')
       rewind(solver%diagonal_info_target%unit)
 !
       write(solver%diagonal_info_construct%unit) n_construct_sp, n_construct_aop

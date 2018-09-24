@@ -30,9 +30,9 @@ module davidson_cc_es_solver_class
 !
    contains
 !     
-      procedure :: prepare        => prepare_davidson_cc_es_solver
-      procedure :: run            => run_davidson_cc_es_solver
-      procedure :: cleanup        => cleanup_davidson_cc_es_solver
+      procedure, non_overridable  :: prepare  => prepare_davidson_cc_es_solver
+      procedure, non_overridable  :: run      => run_davidson_cc_es_solver
+      procedure, non_overridable  :: cleanup  => cleanup_davidson_cc_es_solver
 !
       procedure :: print_banner   => print_banner_davidson_cc_es_solver
       procedure :: print_summary  => print_summary_davidson_cc_es_solver
@@ -71,7 +71,7 @@ contains
 !
 !     Set defaults
 !
-      solver%max_iterations = 50
+      solver%max_iterations = 100
 !
       solver%eigenvalue_threshold = 1.0d-6
       solver%residual_threshold  = 1.0d-6
@@ -260,15 +260,15 @@ contains
 !
          enddo
 !
-         if (davidson%dim_red .ge. davidson%max_dim_red) then
+       !if (davidson%dim_red .ge. davidson%max_dim_red) then
 !
-            call davidson%set_trials_to_solutions()
+       !   call davidson%set_trials_to_solutions()
 !
-         else
+       !else
 !
             davidson%dim_red = davidson%dim_red + davidson%n_new_trials
 !
-         endif
+        ! endif
 !
 !        Update energies
 !
@@ -480,7 +480,7 @@ contains
       write(output%unit, '(t3,a)')   'until the convergence criteria are met.'
 !
       write(output%unit, '(/t3,a)')  'A complete description of the algorithm can be found in'
-      write(output%unit, '(t3,a)')   'E. R. Davidson, J. Comput. Phys. 1975, 17, 87.'
+      write(output%unit, '(t3,a)')   'E. R. Davidson, J. Comput. Phys. 17, 87 (1975).'
 !
       flush(output%unit)
 !
