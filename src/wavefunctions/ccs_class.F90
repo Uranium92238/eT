@@ -370,6 +370,8 @@ contains
 !
       call disk%close_file(h_pq_file)
 !
+      write(output%unit, *) 'hpq', F_pq(:,:)
+!
 !     Perform t1-transformation of F_pq = h_pq  
 !
       call wf%t1_transform(F_pq)

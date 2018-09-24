@@ -27,7 +27,7 @@ module hf_class
       real(dp), dimension(:,:), allocatable :: cholesky_ao_overlap
       real(dp), dimension(:,:), allocatable :: pivot_matrix_ao_overlap 
 !
-      real(dp) :: linear_dep_threshold = 1.0D-6
+      real(dp) :: linear_dep_threshold = 1.0D-10
 !
       real(dp) :: coulomb_threshold    = 1.0D-11 ! screening threshold 
       real(dp) :: exchange_threshold   = 1.0D-11 ! screening threshold 
@@ -1440,7 +1440,7 @@ contains
 !     Compute number of significant ERI shell pairs (the Fock construction 
 !     only loops over these shell pairs) and the maximum element 
 !
-      call wf%get_n_sig_eri_sp(n_sig_sp, sp_eri_schwarz, 1.0d-20)
+      call wf%get_n_sig_eri_sp(n_sig_sp, sp_eri_schwarz, 1.0d-40)
       max_eri_schwarz = get_abs_max(sp_eri_schwarz, n_s*(n_s + 1)/2)
 !
 !     Construct the two electron part of the Fock matrix, using the screening vectors 
@@ -1544,7 +1544,7 @@ contains
 !     Compute number of significant ERI shell pairs (the Fock construction 
 !     only loops over these shell pairs) and the maximum element 
 !
-      call wf%get_n_sig_eri_sp(n_sig_sp, sp_eri_schwarz, 1.0d-20)
+      call wf%get_n_sig_eri_sp(n_sig_sp, sp_eri_schwarz, 1.0d-40)
       max_eri_schwarz = get_abs_max(sp_eri_schwarz, n_s*(n_s + 1)/2)
 !
 !     Construct the two electron part of the Fock matrix, using the screening vectors 
@@ -1687,8 +1687,11 @@ contains
 
                deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
 !
+               ! call wf%system%ao_integrals%construct_ao_g_wxyz_epsilon(g, s1, s2, s3, s4,         &
+               !    precision_thr/max(temp7,temp8), thread, skip, shells(s1)%size, shells(s2)%size, &
+               !    shells(s3)%size, shells(s4)%size)
                call wf%system%ao_integrals%construct_ao_g_wxyz_epsilon(g, s1, s2, s3, s4,         &
-                  precision_thr/max(temp7,temp8), thread, skip, shells(s1)%size, shells(s2)%size, &
+                  precision_thr, thread, skip, shells(s1)%size, shells(s2)%size, &
                   shells(s3)%size, shells(s4)%size)
 !
                if (skip == 1) cycle
