@@ -347,53 +347,54 @@ contains
       call mem%dealloc(max_in_sp_diagonal, solver%n_sp, 1)
 !
       allocate(construct_sp(solver%n_sp))
-      construct_sp = .true.
+      construct_sp = .false.
 !
-!!$omp parallel do &
-!!$omp private(I, A, B, A_interval, B_interval, x, y, xy, g_AB_AB, construct_test) &
-!!$omp shared(construct_sp) &
-!!$omp schedule(guided)
-!      do I = 1, solver%n_sp
-!!
-!         A = sp_index(I, 1)
-!         B = sp_index(I, 2)
-!!
-!         A_interval = system%shell_limits(A)
-!         B_interval = system%shell_limits(B)
-!!
-!!        Construct diagonal D_AB for the given shell pair
-!!
-!         call mem%alloc(g_AB_AB, &
-!                  (A_interval%size)*(B_interval%size), &
-!                  (A_interval%size)*(B_interval%size))
-!!
-!         g_AB_AB = zero
-!         call system%ao_integrals%construct_ao_g_wxyz(g_AB_AB, A, B, A, B)
-!!
-!         call mem%alloc(construct_test, (A_interval%size)*(B_interval%size), 1)
-!!
-!         do x = 1, (A_interval%size)
-!            do y = 1, (B_interval%size)
-!!
-!               xy = (A_interval%size)*(y-1)+x
-!!
-!               construct_test(xy, 1) = sqrt(g_AB_AB(xy, xy)*max_diagonal)
-!!
-!            enddo
-!         enddo
-!!
-!         call mem%dealloc(g_AB_AB, &
-!                  (A_interval%size)*(B_interval%size), &
-!                  (A_interval%size)*(B_interval%size))
-!!
-!!           Determine whether shell pair should be constructed
-!!
-!            construct_sp(I) = is_significant(construct_test, (A_interval%size)*(B_interval%size), solver%threshold)
-!!
-!         call mem%dealloc(construct_test, (A_interval%size)*(B_interval%size), 1)
-!!
-!      enddo
-!!$omp end parallel do
+!$omp parallel do &
+!$omp private(I, A, B, A_interval, B_interval, x, y, xy, g_AB_AB, construct_test) &
+!$omp shared(construct_sp) &
+!$omp schedule(guided)
+      do I = 1, solver%n_sp
+!
+         A = sp_index(I, 1)
+         B = sp_index(I, 2)
+!
+         A_interval = system%shell_limits(A)
+         B_interval = system%shell_limits(B)
+!
+!        Construct diagonal D_AB for the given shell pair
+!
+         call mem%alloc(g_AB_AB, &
+                  (A_interval%size)*(B_interval%size), &
+                  (A_interval%size)*(B_interval%size))
+!
+         g_AB_AB = zero
+         call system%ao_integrals%construct_ao_g_wxyz(g_AB_AB, A, B, A, B)
+!
+         call mem%alloc(construct_test, (A_interval%size)*(B_interval%size), 1)
+!
+         do x = 1, (A_interval%size)
+            do y = 1, (B_interval%size)
+!
+               xy = (A_interval%size)*(y-1)+x
+!
+               construct_test(xy, 1) = sqrt(g_AB_AB(xy, xy)*max_diagonal)
+!
+            enddo
+         enddo
+!
+         call mem%dealloc(g_AB_AB, &
+                  (A_interval%size)*(B_interval%size), &
+                  (A_interval%size)*(B_interval%size))
+!
+!           Determine whether shell pair should be constructed
+!
+            construct_sp(I) = is_significant(construct_test, (A_interval%size)*(B_interval%size), solver%threshold)
+!
+         call mem%dealloc(construct_test, (A_interval%size)*(B_interval%size), 1)
+!
+      enddo
+!$omp end parallel do
+!
 !     Count number of screened AO pairs and shell pairs for both cases.
 !
       n_sig_aop = 0 ! Number of significant AO pairs
@@ -2324,11 +2325,14 @@ contains
 !
          if (.not. found_size) then ! No batching
 !
-            size_AB          = n_construct_aop
-            last_sp_included = solver%n_sp
-            n_AB_included    = n_construct_sp
+            size_AB          = size_AB_current
+            last_sp_included = sp_counter
+            n_AB_included    = n_AB_included_current
 !
          endif
+!
+         write(output%unit, *)'Size_AB', size_AB, last_sp_included, n_AB_included
+         flush(output%unit) 
 !
          write(solver%cholesky_ao_vectors_info%unit, *) size_AB
 !
