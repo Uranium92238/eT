@@ -260,15 +260,17 @@ contains
 !
          enddo
 !
-       !if (davidson%dim_red .ge. davidson%max_dim_red) then
+        if (davidson%dim_red .ge. davidson%max_dim_red) then
 !
-       !   call davidson%set_trials_to_solutions()
+            write(output%unit, *) 'Reached max_dim_red'
 !
-       !else
+           call davidson%set_trials_to_solutions()
+!
+        else
 !
             davidson%dim_red = davidson%dim_red + davidson%n_new_trials
 !
-        ! endif
+        endif
 !
 !        Update energies
 !
@@ -428,10 +430,10 @@ contains
 !
    subroutine set_projection_vector_davidson_cc_es_solver(solver, wf, davidson)
 !!
-!!    Set precondition vector
+!!    Set projection vector
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
 !!
-!!    Sets precondition vector to orbital differences 
+!!    Sets projection vector to orbital differences 
 !!
       implicit none
 !

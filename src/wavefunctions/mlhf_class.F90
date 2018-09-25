@@ -56,8 +56,6 @@ contains
 !
       call wf%system%prepare()
 !
-      call wf%system%print_geometry()
-!
 !     Construct AO overlap matrix, Cholesky decompose it,
 !     followed by preconditioning (making it the identity matrix
 !     for this particular preconditioner - V)

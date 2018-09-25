@@ -294,17 +294,6 @@ contains
 !
 !     Add F_a_i to omega
 !
-!
-      write(output%unit, *)
-
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
-!
-            write(output%unit, *)wf%fock_ia(i, a)
-         enddo
-!
-      enddo
-!
       call daxpy((wf%n_o)*(wf%n_v), one, wf%fock_ai, 1, omega, 1)
 !
    end subroutine omega_ccs_a1_ccs
@@ -369,8 +358,6 @@ contains
       read(h_pq_file%unit) F_pq 
 !
       call disk%close_file(h_pq_file)
-!
-      write(output%unit, *) 'hpq', F_pq(:,:)
 !
 !     Perform t1-transformation of F_pq = h_pq  
 !

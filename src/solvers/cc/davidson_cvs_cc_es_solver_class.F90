@@ -15,19 +15,25 @@ module davidson_cvs_cc_es_solver_class
       integer(i15) :: n_cores
 !
       integer(i15), dimension(:,:), allocatable :: cores
+      integer(i15), dimension(:,:), allocatable :: core_MOs
 !
    contains
 !
       procedure :: print_banner => print_banner_davidson_cvs_cc_es_solver
-      !procedure :: print_summary  => print_summary_davidson_cc_es_solver
+      !procedure :: print_summary  => print_summary_davidson_cvs_cc_es_solver
 !
       procedure :: read_settings  => read_settings_davidson_cvs_cc_es_solver
 !
-      !procedure :: print_settings => print_settings_davidson_cc_es_solver
+      !procedure :: print_settings => print_settings_davidson_cvs_cc_es_solver
 !
       procedure :: set_start_vectors         => set_start_vectors_davidson_cvs_cc_es_solver
-      !procedure :: set_precondition_vector   => set_precondition_vector_davidson_cc_es_solver
-      !procedure :: set_projection_vector     => set_projection_vector_davidson_cc_es_solver
+      procedure :: set_projection_vector     => set_projection_vector_davidson_cvs_cc_es_solver
+!
+      procedure :: initialize_core_MOs => initialize_core_MOs_davidson_cvs_cc_es_solver
+      procedure :: initialize_cores    => initialize_cores_davidson_cvs_cc_es_solver
+!
+      procedure :: destruct_core_MOs => destruct_core_MOs_davidson_cvs_cc_es_solver
+      procedure :: destruct_cores    => destruct_cores_davidson_cvs_cc_es_solver
 !
    end type davidson_cvs_cc_es_solver
 !
@@ -107,7 +113,7 @@ contains
 !
             enddo
 !
-            call mem%alloc_int(solver%cores, solver%n_cores, 1)
+            call solver%initialize_cores()
 !
             read(line, *) solver%cores
 !
@@ -126,8 +132,6 @@ contains
    end subroutine read_settings_davidson_cvs_cc_es_solver
 !
 !
-!
-!
    subroutine set_start_vectors_davidson_cvs_cc_es_solver(solver, wf, davidson)
 !!
 !!    Set start vectors 
@@ -144,103 +148,234 @@ contains
       type(eigen_davidson_tool) :: davidson
 !
       real(dp), dimension(:,:), allocatable :: c_i
-      real(dp), dimension(:,:), allocatable :: orbital_differences
-      real(dp), dimension(:,:), allocatable :: lowest_orbital_differences
 !
-      integer(i15), dimension(:,:), allocatable :: lowest_orbital_differences_index
+      integer(i15), dimension(:,:), allocatable :: ai_indices
 !
-      integer(i15) :: trial, i, j, k, first_ao_on_atom, last_ao_on_atom
+      integer(i15) :: trial, core, i, j, k, a, first_ao_on_atom, last_ao_on_atom
+      integer(i15) :: n_MOs_found, current_root
 !
       real(dp) :: mix_factor
 !
-   !  if (solver%n_cores .gt. solver%n_singlet_states) &
-   !     call output%error_msg('number of roots requested should be equal or greater than the number of cores.')
+      logical :: all_selected
 !
-   !  if (allocated(solver%start_vectors)) then
+      if (solver%n_cores .gt. solver%n_singlet_states) &
+         call output%error_msg('number of roots requested should be equal or greater than the number of cores.')
 !
-!  !     Initial trial vectors given on input
+      if (allocated(solver%start_vectors)) then
 !
-   !     call mem%alloc(c_i, wf%n_amplitudes, 1)
+!        Initial trial vectors given on input
 !
-   !     c_i = zero
-   !     c_i(solver%start_vectors(1, 1), 1) = one
+         call mem%alloc(c_i, wf%n_amplitudes, 1)
 !
-   !     call davidson%write_trial(c_i, 'rewind')
+         c_i = zero
+         c_i(solver%start_vectors(1, 1), 1) = one
 !
-   !     do trial = 2, solver%n_singlet_states
+         call davidson%write_trial(c_i, 'rewind')
 !
-   !        c_i = zero
-   !        c_i(solver%start_vectors(trial, 1), 1) = one
+         do trial = 2, solver%n_singlet_states
 !
-   !        call davidson%write_trial(c_i)
+            c_i = zero
+            c_i(solver%start_vectors(trial, 1), 1) = one
 !
-   !     enddo
+            call davidson%write_trial(c_i)
 !
-   !     call mem%dealloc(c_i, wf%n_amplitudes, 1)
+         enddo
 !
-   !  else
+         call mem%dealloc(c_i, wf%n_amplitudes, 1)
 !
-!  !     Initial trial vectors given by Koopman
+      else
 !
-!  !     Calculate the mixing factor of equal mix 
+!        Initial trial vectors given by Koopman
 !
-   !     mix_factor = 1.0d0/(sqrt(real(solver%n_cores, kind=dp)))
+!        Calculate the mixing factor of equal mix 
 !
-!  !     Loop through the occupied MOs and determine if they are core mos
+         mix_factor = 1.0d0/(sqrt(real(solver%n_cores, kind=dp)))
 !
-   !     n_MOs_found = 0
+!        Loop through the occupied MOs and determine if they are core mos
 !
-   !     call mem%alloc_int(core_MOs, solver%n_cores, 1)
+         n_MOs_found = 0
 !
-   !     do i = 1, wf%n_o
+         call solver%initialize_core_MOs()
 !
-   !        do j = 1, solver%n_cores
+         do i = 1, wf%n_o
 !
-   !           first_ao_on_atom = wf%system%atoms(solver%cores(i))%shells(1)%first
-   !           last_ao_on_atom = wf%system%atoms(solver%cores(i))%shells(wf%system%atoms(solver%cores(i))%n_shells)%last
+            do j = 1, solver%n_cores
 !
-   !           do k = first_ao_on_atom, last_ao_on_atom
+               first_ao_on_atom = wf%system%atoms(solver%cores(i, 1))%shells(1)%first
+               last_ao_on_atom = wf%system%atoms(solver%cores(i, 1))%shells(wf%system%atoms(solver%cores(i, 1))%n_shells)%last
 !
-   !              if (wf%orbital_coefficients(k, i) .ge. mix_factor) then
+               do k = first_ao_on_atom, last_ao_on_atom
 !
-   !                 n_MOs_found = n_MOs_found + 1
+                  if (wf%orbital_coefficients(k, i) .ge. mix_factor) then
 !
-   !                 if (n_MOs_found .gt. solver%n_cores) &
-   !                          call output%error_msg('something went wrong in the selection of core MOs.')
+                     n_MOs_found = n_MOs_found + 1
 !
-   !                 core_MOs(n_MOs_found, 1) = i
+                     if (n_MOs_found .gt. solver%n_cores) &
+                              call output%error_msg('something went wrong in the selection of core MOs.')
 !
-   !              endif
+                     solver%core_MOs(n_MOs_found, 1) = i
 !
-   !           enddo
+                  endif
 !
-   !        enddo
+               enddo
 !
-   !     enddo
+            enddo
 !
-!  !     Calculate ai indices 
+         enddo
 !
-   !     call mem%alloc_int(ai_indices, solver%n_singlet_states, 1)
+!        Calculate ai indices 
 !
-!  !     Set c(ai) = 1
+         call mem%alloc_int(ai_indices, solver%n_singlet_states, 1)
 !
-   !     call mem%alloc(c_i, wf%n_amplitudes, 1)
+         all_selected = .false.
+         a =  0 
+         current_root = 0
 !
-   !     c_i = zero
+         do while (.not. all_selected)
 !
-   !     call davidson%write_trial(c_i, 'rewind')
+            a = a + 1
 !
-   !     do trial = 1, solver%n_singlet_states
+            do core = 1, solver%n_cores
 !
+               i = solver%core_MOs(core, 1)
 !
-   !     enddo
+               current_root = current_root + 1
+               ai_indices(current_root, 1) = wf%n_v*( i - 1) + a
 !
-   !     call mem%dealloc(c_i, wf%n_amplitudes, 1)
-   !     call mem%dealloc_int(core_MOs, solver%n_cores, 1)
+               if (current_root .eq. solver%n_singlet_states) then
 !
-   !  endif
+                  all_selected = .true.
+                  exit
+!
+               endif
+!
+            enddo
+!
+         enddo
+!
+!        Set c(ai) = 1
+!
+         call mem%alloc(c_i, wf%n_amplitudes, 1)
+!
+         c_i = zero
+!
+         c_i(ai_indices(1, 1), 1) = 1
+!
+         call davidson%write_trial(c_i, 'rewind')
+!
+         do trial = 1, solver%n_singlet_states
+!
+            c_i = zero
+!
+            c_i(ai_indices(trial, 1), 1) = 1
+!
+            call davidson%write_trial(c_i)
+!
+         enddo
+!
+         call mem%dealloc(c_i, wf%n_amplitudes, 1)
+!
+      endif
 !
    end subroutine set_start_vectors_davidson_cvs_cc_es_solver
+!
+!
+   subroutine set_projection_vector_davidson_cvs_cc_es_solver(solver, wf, davidson)
+!!
+!!    Set projection vector
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
+!!
+!!    Sets projection vector to orbital differences 
+!!
+      implicit none
+!
+      class(davidson_cvs_cc_es_solver) :: solver
+!
+      class(ccs) :: wf
+!
+      type(eigen_davidson_tool) :: davidson
+!
+      real(dp), dimension(:,:), allocatable :: projector
+!
+      integer(i15) :: core, i, a, ai
+!
+      call mem%alloc(projector, wf%n_amplitudes, 1)
+!
+      projector = zero
+!
+      do core = 1, solver%n_cores
+!
+         i = solver%core_MOs(core, 1)
+!
+         do a = 1, wf%n_v
+!
+            ai = wf%n_v*(i - 1) + a
+            projector(ai, 1) = one
+!
+         enddo
+      enddo
+!
+      call davidson%set_projector(projector)
+      call mem%dealloc(projector, wf%n_amplitudes, 1)
+
+!
+   end subroutine set_projection_vector_davidson_cvs_cc_es_solver
+!
+!
+   subroutine initialize_core_MOs_davidson_cvs_cc_es_solver(solver)
+!!
+!!    Initialize core MOs
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
+!!
+      implicit none
+!
+      class(davidson_cvs_cc_es_solver) :: solver
+!
+      if (.not. allocated(solver%core_MOs)) call mem%alloc_int(solver%core_MOs, solver%n_cores, 1)
+!
+   end subroutine initialize_core_MOs_davidson_cvs_cc_es_solver
+!
+!
+   subroutine destruct_core_MOs_davidson_cvs_cc_es_solver(solver)
+!!
+!!    Destruct core MOs
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
+!!
+      implicit none
+!
+      class(davidson_cvs_cc_es_solver) :: solver
+!
+      if (allocated(solver%core_MOs)) call mem%dealloc_int(solver%core_MOs, solver%n_cores, 1)
+!
+   end subroutine destruct_core_MOs_davidson_cvs_cc_es_solver
+!
+!
+   subroutine initialize_cores_davidson_cvs_cc_es_solver(solver)
+!!
+!!    Initialize cores
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
+!!
+      implicit none
+!
+      class(davidson_cvs_cc_es_solver) :: solver
+!
+      if (.not. allocated(solver%cores)) call mem%alloc_int(solver%cores, solver%n_cores, 1)
+!
+   end subroutine initialize_cores_davidson_cvs_cc_es_solver
+!
+!
+   subroutine destruct_cores_davidson_cvs_cc_es_solver(solver)
+!!
+!!    Destruct cores
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
+!!
+      implicit none
+!
+      class(davidson_cvs_cc_es_solver) :: solver
+!
+      if (allocated(solver%cores)) call mem%dealloc_int(solver%cores, solver%n_cores, 1)
+!
+   end subroutine destruct_cores_davidson_cvs_cc_es_solver
 !
 !
 end module davidson_cvs_cc_es_solver_class

@@ -543,6 +543,7 @@ contains
       real(dp), dimension(n_s*(n_s + 1)/2, 2), intent(in)     :: sp_eri_schwarz
       integer(i15), dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
 !
+!
       call wf%construct_ao_fock_cumulative(sp_eri_schwarz, sp_eri_schwarz_list, &
                                            n_s, prev_ao_density, h_wx) 
 !
@@ -1535,6 +1536,7 @@ contains
 !     Overwrite the AO density with the density difference,
 !     and compute the density screening vector 
 !
+!
       call daxpy(wf%n_ao**2, -one, prev_ao_density, 1, wf%ao_density, 1)
 !
       call mem%alloc(sp_density_schwarz, n_s, n_s)
@@ -1544,26 +1546,28 @@ contains
 !     Compute number of significant ERI shell pairs (the Fock construction 
 !     only loops over these shell pairs) and the maximum element 
 !
-      call wf%get_n_sig_eri_sp(n_sig_sp, sp_eri_schwarz, 1.0d-40)
+      call wf%get_n_sig_eri_sp(n_sig_sp, sp_eri_schwarz, 1.0d-25)
       max_eri_schwarz = get_abs_max(sp_eri_schwarz, n_s*(n_s + 1)/2)
 !
 !     Construct the two electron part of the Fock matrix, using the screening vectors 
 !     and parallellizing over available threads (each gets its own copy of the Fock matrix)
 !
-!       n_threads = omp_get_max_threads()
-! !
-      call wf%ao_fock_construction_loop_new(wf%ao_fock, wf%ao_density, n_threads, max_D_schwarz, max_eri_schwarz, & 
-                                         sp_density_schwarz, sp_eri_schwarz, sp_eri_schwarz_list,    &
-                                         n_s, n_sig_sp, coulomb_thr, exchange_thr, precision_thr,    &
-                                         wf%system%shell_limits)
+       n_threads = omp_get_max_threads()
 !
-!       call mem%alloc(F, wf%n_ao, wf%n_ao*n_threads) ! [F(thread 1) F(thread 2) ...]
-!       call dscal(n_threads*(wf%n_ao)**2, zero, F, 1) 
+!
+      !call wf%ao_fock_construction_loop_new(wf%ao_fock, wf%ao_density, n_threads, max_D_schwarz, max_eri_schwarz, & 
+      !                                   sp_density_schwarz, sp_eri_schwarz, sp_eri_schwarz_list,    &
+      !                                   n_s, n_sig_sp, coulomb_thr, exchange_thr, precision_thr,    &
+      !                                   wf%system%shell_limits)
+!
+       call mem%alloc(F, wf%n_ao, wf%n_ao*n_threads) ! [F(thread 1) F(thread 2) ...]
+       call dscal(n_threads*(wf%n_ao)**2, zero, F, 1) 
 ! !
-!       call wf%ao_fock_construction_loop(F, wf%ao_density, n_threads, max_D_schwarz, max_eri_schwarz, & 
-!                                          sp_density_schwarz, sp_eri_schwarz, sp_eri_schwarz_list,    &
-!                                          n_s, n_sig_sp, coulomb_thr, exchange_thr, precision_thr,    &
-!                                          wf%system%shell_limits)
+       call wf%ao_fock_construction_loop(F, wf%ao_density, n_threads, max_D_schwarz, max_eri_schwarz, & 
+                                          sp_density_schwarz, sp_eri_schwarz, sp_eri_schwarz_list,    &
+                                          n_s, n_sig_sp, coulomb_thr, exchange_thr, precision_thr,    &
+                                          wf%system%shell_limits)
+!
 !
       call daxpy(wf%n_ao**2, one, prev_ao_density, 1, wf%ao_density, 1)
       call mem%dealloc(sp_density_schwarz, n_s, n_s)
@@ -1571,13 +1575,13 @@ contains
 !     Put the accumulated Fock matrices from each thread into the Fock matrix,
 !     and symmetrize the result
 !
-!       do thread = 1, n_threads
-! !
-!          call daxpy(wf%n_ao**2, one, F(1, (thread-1)*wf%n_ao + 1), 1, wf%ao_fock, 1)
-! !
-!       enddo
-! !
-!       call mem%dealloc(F, wf%n_ao, wf%n_ao*n_threads) 
+      do thread = 1, n_threads
+!
+         call daxpy(wf%n_ao**2, one, F(1, (thread-1)*wf%n_ao + 1), 1, wf%ao_fock, 1)
+!
+      enddo
+!
+       call mem%dealloc(F, wf%n_ao, wf%n_ao*n_threads) 
 !
       call symmetric_sum(wf%ao_fock, wf%n_ao)
       call dscal((wf%n_ao)**2, half, wf%ao_fock, 1) 

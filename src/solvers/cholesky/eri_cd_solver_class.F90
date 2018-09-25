@@ -2331,9 +2331,6 @@ contains
 !
          endif
 !
-         write(output%unit, *)'Size_AB', size_AB, last_sp_included, n_AB_included
-         flush(output%unit) 
-!
          write(solver%cholesky_ao_vectors_info%unit, *) size_AB
 !
          call disk%open_file(solver%basis_shell_data, 'read')
