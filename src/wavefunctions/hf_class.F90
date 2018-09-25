@@ -1599,6 +1599,10 @@ contains
 !!    where contributions from different threads are gathered column blocks 
 !!    of the incoming F matrix. 
 !!
+!!    Warning! Do not use this routine until the following issue has been resolved. The
+!!    "reduction" usage in the OMP loop is not safe for large Fock matrices & will cause 
+!!    segmentation faults. Use the old construction loop routine instead. - Eirik, Sep 2018
+!!
       implicit none 
 !
       class(hf), intent(in) :: wf 
@@ -1619,8 +1623,8 @@ contains
       real(dp) :: d1, d2, d3, d4, d5, d6, sp_eri_schwarz_s1s2
       real(dp) :: temp, temp1, temp2, temp3, temp4, temp5, temp6, temp7, temp8, deg, deg_12, deg_34, deg_12_34
 !
-      integer(i15) :: w, x, y, omp_get_thread_num, z, wx, yz, s1s2, s1, s2, s3, s4, s4_max, tot_dim 
-      integer(i15) :: s3s4, s3s4_sorted, w_red, x_red, y_red, z_red, thread_offset, wxyz, s1s2_packed
+      integer(i15) :: w, x, y, omp_get_thread_num, z, wx, yz, s1s2, s1, s2, s3, s4, s4_max, tot_dim, omp_get_max_threads
+      integer(i15) :: s3s4, s3s4_sorted, w_red, x_red, y_red, z_red, thread_offset, wxyz, s1s2_packed, n_fock
 !
       real(dp) :: sp_density_schwarz_s1s2, sp_density_schwarz_s3s2, sp_density_schwarz_s3s1
 !
@@ -1634,12 +1638,14 @@ contains
       call wf%system%get_max_shell_size(max_shell_size)
       call mem%alloc(g, max_shell_size**4, 1)
 !
+      n_fock = min(omp_get_max_threads(), mem%room_for_n_arrays_of_size(wf%n_ao**2))
+!
 !$omp parallel do                                                                             &
 !$omp private(s1, s2, s3, s4, deg, s4_max, temp, s1s2, s1s2_packed, s3s4, deg_12, deg_34,     &
 !$omp w, x, y, z, wx, yz, temp1, temp2, temp3, d1, d2, d3, d4, d5, d6, thread, thread_offset, &
 !$omp temp4, temp5, temp6, temp7, temp8, w_red, x_red, tot_dim, y_red, z_red, wxyz, g,        &
 !$omp sp_eri_schwarz_s1s2, sp_density_schwarz_s1s2, s3s4_sorted, deg_12_34,                   &
-!$omp sp_density_schwarz_s3s2, sp_density_schwarz_s3s1, skip) reduction(+:F) schedule(dynamic) 
+!$omp sp_density_schwarz_s3s2, sp_density_schwarz_s3s1, skip) num_threads(n_fock) reduction(+:F) schedule(dynamic) 
       do s1s2 = 1, n_sig_sp
 !
         thread = omp_get_thread_num()

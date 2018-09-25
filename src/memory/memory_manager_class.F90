@@ -81,6 +81,10 @@ module memory_manager_class
       procedure :: read_settings  => read_settings_memory_manager
       procedure :: print_settings => print_settings_memory_manager
 !
+!     Routines that ask for information
+!
+      procedure :: room_for_n_arrays_of_size => room_for_n_arrays_of_size_memory_manager
+!
    end type memory_manager
 !
 !  Main memory object
@@ -493,6 +497,25 @@ contains
       write(output%unit, '(t3, a38, i3, a)') 'Memory available for calculation:     ', mem%total/1000000000, ' GB'
 !
    end subroutine print_settings_memory_manager
+!
+!
+   integer(i15) function room_for_n_arrays_of_size_memory_manager(mem, M)
+!!
+!!    Room for number of arrays of size
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Returns the number of double precision arrays of size M that can currently be held 
+!!    in memory, based on what is - according to the manager - available.
+!!
+      implicit none 
+!
+      class(memory_manager), intent(in) :: mem 
+!
+      integer(i15), intent(in) :: M
+!
+      room_for_n_arrays_of_size_memory_manager = (mem%available)/(dp*M)
+!
+   end function room_for_n_arrays_of_size_memory_manager
 !
 !
 end module memory_manager_class
