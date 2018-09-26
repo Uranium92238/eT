@@ -17,7 +17,7 @@ module hf_class
 !
 !  Hartree-Fock wavefunction 
 !
-   type, extends(wavefunction):: hf
+   type, extends(wavefunction) :: hf
 !
       real(dp), dimension(:,:), allocatable :: ao_density
       real(dp), dimension(:,:), allocatable :: ao_fock
@@ -27,7 +27,7 @@ module hf_class
       real(dp), dimension(:,:), allocatable :: cholesky_ao_overlap
       real(dp), dimension(:,:), allocatable :: pivot_matrix_ao_overlap 
 !
-      real(dp) :: linear_dep_threshold = 1.0D-10
+      real(dp) :: linear_dep_threshold = 1.0D-6
 !
       real(dp) :: coulomb_threshold    = 1.0D-11 ! screening threshold 
       real(dp) :: exchange_threshold   = 1.0D-11 ! screening threshold 
@@ -44,13 +44,13 @@ module hf_class
       procedure :: construct_ao_overlap               => construct_ao_overlap_hf
       procedure :: decompose_ao_overlap               => decompose_ao_overlap_hf
       procedure :: print_wavefunction_summary         => print_wavefunction_summary_hf
+      procedure :: set_n_mo                           => set_n_mo_hf
 !
 !     AO Fock and energy related routines 
 !
       procedure :: construct_ao_fock                  => construct_ao_fock_hf            
       procedure :: construct_ao_fock_cumulative       => construct_ao_fock_cumulative_hf 
       procedure :: ao_fock_construction_loop          => ao_fock_construction_loop_hf
-      procedure :: ao_fock_construction_loop_new      => ao_fock_construction_loop_new_hf
       procedure :: ao_fock_coulomb_construction_loop  => ao_fock_coulomb_construction_loop_hf
       procedure :: ao_fock_exchange_construction_loop => ao_fock_exchange_construction_loop_hf
       procedure :: construct_ao_fock_SAD              => construct_ao_fock_SAD_hf
@@ -63,6 +63,7 @@ module hf_class
       procedure :: destruct_fock                      => destruct_fock_hf
       procedure :: update_fock_and_energy             => update_fock_and_energy_hf
       procedure :: update_fock_and_energy_cumulative  => update_fock_and_energy_cumulative_hf
+      procedure :: print_screening_settings           => print_screening_settings_hf
 !
 !     AO Density related routines 
 !
@@ -121,9 +122,6 @@ module hf_class
       procedure :: get_ao_h_wx                        => get_ao_h_wx_hf
       procedure :: get_ao_s_wx                        => get_ao_s_wx_hf
       procedure :: get_ao_mu_wx                       => get_ao_mu_wx_hf
-!
-      procedure :: print_screening_settings => print_screening_settings_hf
-      procedure :: set_n_mo       => set_n_mo_hf
 !
    end type hf
 !
@@ -1536,7 +1534,6 @@ contains
 !     Overwrite the AO density with the density difference,
 !     and compute the density screening vector 
 !
-!
       call daxpy(wf%n_ao**2, -one, prev_ao_density, 1, wf%ao_density, 1)
 !
       call mem%alloc(sp_density_schwarz, n_s, n_s)
@@ -1554,15 +1551,9 @@ contains
 !
        n_threads = omp_get_max_threads()
 !
-!
-      !call wf%ao_fock_construction_loop_new(wf%ao_fock, wf%ao_density, n_threads, max_D_schwarz, max_eri_schwarz, & 
-      !                                   sp_density_schwarz, sp_eri_schwarz, sp_eri_schwarz_list,    &
-      !                                   n_s, n_sig_sp, coulomb_thr, exchange_thr, precision_thr,    &
-      !                                   wf%system%shell_limits)
-!
        call mem%alloc(F, wf%n_ao, wf%n_ao*n_threads) ! [F(thread 1) F(thread 2) ...]
        call dscal(n_threads*(wf%n_ao)**2, zero, F, 1) 
-! !
+!
        call wf%ao_fock_construction_loop(F, wf%ao_density, n_threads, max_D_schwarz, max_eri_schwarz, & 
                                           sp_density_schwarz, sp_eri_schwarz, sp_eri_schwarz_list,    &
                                           n_s, n_sig_sp, coulomb_thr, exchange_thr, precision_thr,    &
@@ -1587,190 +1578,6 @@ contains
       call dscal((wf%n_ao)**2, half, wf%ao_fock, 1) 
 !
    end subroutine construct_ao_fock_cumulative_hf
-!
-!
-   subroutine ao_fock_construction_loop_new_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz,    & 
-                                          sp_density_schwarz, sp_eri_schwarz, sp_eri_schwarz_list, &
-                                          n_s, n_sig_sp, coulomb_thr, exchange_thr, precision_thr, shells)
-!!
-!!    AO Fock construction loop new 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
-!!
-!!    This routine constructs the entire two-electron part of the Fock matrix, 
-!!
-!!       F_αβ = sum_γδ g_αβγδ D_γδ - 1/2 * sum_γδ g_αδγβ D_γδ,
-!!
-!!    where contributions from different threads are gathered column blocks 
-!!    of the incoming F matrix. 
-!!
-!!    Warning! Do not use this routine until the following issue has been resolved. The
-!!    "reduction" usage in the OMP loop is not safe for large Fock matrices & will cause 
-!!    segmentation faults. Use the old construction loop routine instead. - Eirik, Sep 2018
-!!
-      implicit none 
-!
-      class(hf), intent(in) :: wf 
-!
-      integer(i15), intent(in) :: n_threads, n_s, n_sig_sp
-!
-      type(interval), dimension(n_s), intent(in) :: shells
-!
-      real(dp), dimension(wf%n_ao, wf%n_ao) :: F 
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
-!
-      real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz, coulomb_thr, exchange_thr, precision_thr
-!
-      real(dp), dimension(n_s*(n_s + 1)/2, 2), intent(in)     :: sp_eri_schwarz
-      integer(i15), dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
-      real(dp), dimension(n_s, n_s), intent(in)               :: sp_density_schwarz
-!
-      real(dp) :: d1, d2, d3, d4, d5, d6, sp_eri_schwarz_s1s2
-      real(dp) :: temp, temp1, temp2, temp3, temp4, temp5, temp6, temp7, temp8, deg, deg_12, deg_34, deg_12_34
-!
-      integer(i15) :: w, x, y, omp_get_thread_num, z, wx, yz, s1s2, s1, s2, s3, s4, s4_max, tot_dim, omp_get_max_threads
-      integer(i15) :: s3s4, s3s4_sorted, w_red, x_red, y_red, z_red, thread_offset, wxyz, s1s2_packed, n_fock
-!
-      real(dp) :: sp_density_schwarz_s1s2, sp_density_schwarz_s3s2, sp_density_schwarz_s3s1
-!
-      real(dp), dimension(:,:), allocatable :: g 
-!
-      integer(i15) :: max_shell_size, thread, skip
-!
-!     Preallocate the vector that holds the shell quadruple 
-!     ERI integrals, then enter the construction loop 
-!
-      call wf%system%get_max_shell_size(max_shell_size)
-      call mem%alloc(g, max_shell_size**4, 1)
-!
-      n_fock = min(omp_get_max_threads(), mem%room_for_n_arrays_of_size(wf%n_ao**2))
-!
-!$omp parallel do                                                                             &
-!$omp private(s1, s2, s3, s4, deg, s4_max, temp, s1s2, s1s2_packed, s3s4, deg_12, deg_34,     &
-!$omp w, x, y, z, wx, yz, temp1, temp2, temp3, d1, d2, d3, d4, d5, d6, thread, thread_offset, &
-!$omp temp4, temp5, temp6, temp7, temp8, w_red, x_red, tot_dim, y_red, z_red, wxyz, g,        &
-!$omp sp_eri_schwarz_s1s2, sp_density_schwarz_s1s2, s3s4_sorted, deg_12_34,                   &
-!$omp sp_density_schwarz_s3s2, sp_density_schwarz_s3s1, skip) num_threads(n_fock) reduction(+:F) schedule(dynamic) 
-      do s1s2 = 1, n_sig_sp
-!
-        thread = omp_get_thread_num()
-      !  thread_offset = thread*wf%n_ao ! Start column of thread's Fock matrix 
-!
-         sp_eri_schwarz_s1s2 = sp_eri_schwarz(s1s2, 1)
-!
-         s1s2_packed = sp_eri_schwarz_list(s1s2, 3) ! The s1s2-th largest packed index
-!
-         s1 = sp_eri_schwarz_list(s1s2_packed, 1)
-         s2 = sp_eri_schwarz_list(s1s2_packed, 2)
-!
-         sp_density_schwarz_s1s2 = sp_density_schwarz(s1, s2)
-         if (sp_eri_schwarz_s1s2*(max_D_schwarz)*(max_eri_schwarz) .lt. coulomb_thr) cycle
-!
-         deg_12 = real(2-s2/s1, kind=dp)
-!
-         do s3 = 1, s1
-!
-            sp_density_schwarz_s3s2 = sp_density_schwarz(s3, s2)
-            sp_density_schwarz_s3s1 = sp_density_schwarz(s3, s1)
-!
-            s4_max = (s3/s1)*s2 + (1-s3/s1)*s3
-!
-            do s4 = 1, s4_max
-!
-               s3s4 = (max(s3,s4)*(max(s3,s4)-3)/2) + s3 + s4 
-!
-               temp = sp_eri_schwarz_s1s2*sp_eri_schwarz(s3s4, 2)
-
-               if (temp*(max_D_schwarz) .lt. coulomb_thr) cycle ! Screened out shell pair
-!
-               temp7 = max(sp_density_schwarz(s3,s4), &
-                           sp_density_schwarz_s1s2)
-!
-               temp8 = max(sp_density_schwarz_s3s2, &
-                           sp_density_schwarz_s3s1, &
-                           sp_density_schwarz(s4,s2), &
-                           sp_density_schwarz(s1,s4))
-!
-               if (temp8*temp .lt. exchange_thr .and. temp7*temp .lt. coulomb_thr) cycle
-!
-               deg_34    = real(2-s4/s3, kind=dp)
-               deg_12_34 = min(1-s3/s1+2-min(s4/s2,s2/s4), 2)
-
-               deg = deg_12*deg_34*deg_12_34 ! Shell degeneracy
-!
-               ! call wf%system%ao_integrals%construct_ao_g_wxyz_epsilon(g, s1, s2, s3, s4,         &
-               !    precision_thr/max(temp7,temp8), thread, skip, shells(s1)%size, shells(s2)%size, &
-               !    shells(s3)%size, shells(s4)%size)
-               call wf%system%ao_integrals%construct_ao_g_wxyz_epsilon(g, s1, s2, s3, s4,         &
-                  precision_thr, thread, skip, shells(s1)%size, shells(s2)%size, &
-                  shells(s3)%size, shells(s4)%size)
-!
-               if (skip == 1) cycle
-!
-               tot_dim = (shells(s1)%size)*(shells(s2)%size)*(shells(s3)%size)*(shells(s4)%size)
-!
-               g(1:tot_dim,1) = deg*g(1:tot_dim,1)
-!
-!              Add Fock matrix contributions
-!
-               do z = shells(s4)%first, shells(s4)%last
-!
-                  z_red = z - shells(s4)%first + 1
-!
-                  do y = shells(s3)%first, shells(s3)%last 
-!
-                     y_red = y - shells(s3)%first + 1
-!
-                     d1 = D(y, z)
-!
-                     do x = shells(s2)%first, shells(s2)%last 
-!
-                        x_red = x - shells(s2)%first + 1
-!
-                        d3 = D(x, y)
-                        d5 = D(x, z)
-!
-                        do w = shells(s1)%first, shells(s1)%last 
-!
-                           d2 = D(w, x)
-                           d4 = D(w, y)
-                           d6 = D(w, z)
-!
-                           w_red = w - shells(s1)%first + 1
-!
-                           wxyz = shells(s1)%size*(shells(s2)%size*(shells(s3)%size*(z_red-1)+y_red-1)+x_red-1)+w_red
-!
-                           temp = g(wxyz, 1)
-!
-                           temp1 = half*temp*d1
-                           temp2 = half*temp*d2
-!
-                           temp3 = one_over_eight*temp*d3
-                           temp4 = one_over_eight*temp*d4
-                           temp5 = one_over_eight*temp*d5
-                           temp6 = one_over_eight*temp*d6
-!
-                           F(w, x) = F(w, x) + temp1
-                           F(y, x) = F(y, x) - temp6
-!
-                           F(y, z) = F(y, z) + temp2
-                           F(w, z) = F(w, z) - temp3
-                           F(x, z) = F(x, z) - temp4
-!
-                           F(w, y) = F(w, y) - temp5
-!
-                        enddo
-                     enddo
-                  enddo
-               enddo
-!
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
-!
-      call mem%dealloc(g, max_shell_size**4, 1)
-!
-   end subroutine ao_fock_construction_loop_new_hf
 !
 !
    subroutine ao_fock_construction_loop_hf(wf, F, D, n_threads, max_D_schwarz, max_eri_schwarz,    & 
