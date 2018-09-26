@@ -21,83 +21,90 @@ module ccs_class
 !
    type, extends(wavefunction) :: ccs
 !
-      real(dp), dimension(:,:), allocatable :: fock_ij
-      real(dp), dimension(:,:), allocatable :: fock_ia
-      real(dp), dimension(:,:), allocatable :: fock_ai
-      real(dp), dimension(:,:), allocatable :: fock_ab
+      real(dp) :: hf_energy 
 !
-      real(dp), dimension(:,:) , allocatable :: fock_diagonal
+      integer(i15)                           :: n_amplitudes 
+      real(dp), dimension(:,:), allocatable  :: t1
+!
+      real(dp), dimension(:,:), allocatable  :: fock_ij
+      real(dp), dimension(:,:), allocatable  :: fock_ia
+      real(dp), dimension(:,:), allocatable  :: fock_ai
+      real(dp), dimension(:,:), allocatable  :: fock_ab
+      real(dp), dimension(:,:), allocatable  :: fock_diagonal
 !
       type(mo_integral_tool) :: integrals
 !
-      real(dp), dimension(:,:), allocatable :: t1
-!
-      integer(i15) :: n_amplitudes 
-!
-      real(dp) :: hf_energy 
-!
    contains
 !
-      procedure :: prepare => prepare_ccs
-      procedure :: cleanup   => cleanup_ccs
+!     Preparation and cleanup routines 
 !
-      procedure :: initialize_amplitudes => initialize_amplitudes_ccs 
+      procedure :: prepare                      => prepare_ccs
+      procedure :: cleanup                      => cleanup_ccs
 !
-      procedure :: initialize_fock_ij => initialize_fock_ij_ccs
-      procedure :: initialize_fock_ia => initialize_fock_ia_ccs
-      procedure :: initialize_fock_ai => initialize_fock_ai_ccs
-      procedure :: initialize_fock_ab => initialize_fock_ab_ccs
+!     Routines related to the amplitudes 
 !
-      procedure :: initialize_fock_diagonal => initialize_fock_diagonal_ccs
-!
+      procedure :: initialize_amplitudes        => initialize_amplitudes_ccs 
       procedure :: initialize_t1                => initialize_t1_ccs
       procedure :: set_initial_amplitudes_guess => set_initial_amplitudes_guess_ccs
-      procedure :: calculate_energy             => calculate_energy_ccs
-      procedure :: construct_fock               => construct_fock_ccs
       procedure :: t1_transform                 => t1_transform_ccs
       procedure :: set_amplitudes               => set_amplitudes_ccs 
       procedure :: get_amplitudes               => get_amplitudes_ccs 
 !
-      procedure :: get_orbital_differences => get_orbital_differences_ccs
+!     Routines related to the Fock matrix
+! 
+      procedure :: set_fock                     => set_fock_ccs
+      procedure :: construct_fock               => construct_fock_ccs
+      procedure :: get_orbital_differences      => get_orbital_differences_ccs
+      procedure :: calculate_energy             => calculate_energy_ccs
 !
-      procedure :: destruct_fock_ij => destruct_fock_ij_ccs
-      procedure :: destruct_fock_ia => destruct_fock_ia_ccs
-      procedure :: destruct_fock_ai => destruct_fock_ai_ccs
-      procedure :: destruct_fock_ab => destruct_fock_ab_ccs
-!
-      procedure :: destruct_fock_diagonal => destruct_fock_diagonal_ccs
-!
-      procedure :: destruct_t1 => destruct_t1_ccs
-!
-      procedure :: get_ovov => get_ovov_ccs
-      procedure :: get_vovo => get_vovo_ccs
-      procedure :: get_vvoo => get_vvoo_ccs
-      procedure :: get_voov => get_voov_ccs
-      procedure :: get_ovvo => get_ovvo_ccs
-      procedure :: get_oovv => get_oovv_ccs
-!
-      procedure :: get_oooo => get_oooo_ccs
-      procedure :: get_vvvv => get_vvvv_ccs
-!
-      procedure :: get_ooov => get_ooov_ccs
-      procedure :: get_oovo => get_oovo_ccs
-      procedure :: get_ovoo => get_ovoo_ccs
-      procedure :: get_vooo => get_vooo_ccs
-!
-      procedure :: get_vvvo => get_vvvo_ccs
-      procedure :: get_vvov => get_vvov_ccs
-      procedure :: get_vovv => get_vovv_ccs
-      procedure :: get_ovvv => get_ovvv_ccs
-!
-      procedure :: set_fock => set_fock_ccs
+!     Routines related to the omega vector 
 !
       procedure :: construct_omega => construct_omega_ccs
       procedure :: omega_ccs_a1    => omega_ccs_a1_ccs
 !
-      procedure :: transform_trial_vector      => transform_trial_vector_ccs
-      procedure :: jacobian_ccs_transformation => jacobian_ccs_transformation_ccs
-      procedure :: jacobian_ccs_a1             => jacobian_ccs_a1_ccs 
-      procedure :: jacobian_ccs_b1             => jacobian_ccs_b1_ccs 
+!     Routines related to the Jacobian transformation 
+!
+      procedure :: transform_trial_vector       => transform_trial_vector_ccs
+      procedure :: jacobian_ccs_transformation  => jacobian_ccs_transformation_ccs
+      procedure :: jacobian_ccs_a1              => jacobian_ccs_a1_ccs 
+      procedure :: jacobian_ccs_b1              => jacobian_ccs_b1_ccs 
+!
+!     Routines to get electron repulsion integrals (ERIs)
+!
+      procedure :: get_ovov                     => get_ovov_ccs
+      procedure :: get_vovo                     => get_vovo_ccs
+      procedure :: get_vvoo                     => get_vvoo_ccs
+      procedure :: get_voov                     => get_voov_ccs
+      procedure :: get_ovvo                     => get_ovvo_ccs
+      procedure :: get_oovv                     => get_oovv_ccs
+!
+      procedure :: get_oooo                     => get_oooo_ccs
+      procedure :: get_vvvv                     => get_vvvv_ccs
+!
+      procedure :: get_ooov                     => get_ooov_ccs
+      procedure :: get_oovo                     => get_oovo_ccs
+      procedure :: get_ovoo                     => get_ovoo_ccs
+      procedure :: get_vooo                     => get_vooo_ccs
+!
+      procedure :: get_vvvo                     => get_vvvo_ccs
+      procedure :: get_vvov                     => get_vvov_ccs
+      procedure :: get_vovv                     => get_vovv_ccs
+      procedure :: get_ovvv                     => get_ovvv_ccs
+!
+!     Routines to initialize and destruct arrays 
+!
+      procedure :: initialize_fock_ij           => initialize_fock_ij_ccs
+      procedure :: initialize_fock_ia           => initialize_fock_ia_ccs
+      procedure :: initialize_fock_ai           => initialize_fock_ai_ccs
+      procedure :: initialize_fock_ab           => initialize_fock_ab_ccs
+      procedure :: initialize_fock_diagonal     => initialize_fock_diagonal_ccs
+!
+      procedure :: destruct_fock_ij             => destruct_fock_ij_ccs
+      procedure :: destruct_fock_ia             => destruct_fock_ia_ccs
+      procedure :: destruct_fock_ai             => destruct_fock_ai_ccs
+      procedure :: destruct_fock_ab             => destruct_fock_ab_ccs
+      procedure :: destruct_fock_diagonal       => destruct_fock_diagonal_ccs
+      procedure :: destruct_t1                  => destruct_t1_ccs
 !
    end type ccs
 !
@@ -241,15 +248,15 @@ contains
 !!
       implicit none 
 !
-      class(ccs) :: wf 
+      class(ccs), intent(inout) :: wf 
 !
       integer(i15) :: i = 0
 !
-      type(file) :: h_pq_file
+      type(file)   :: h_pq_file
 !
       real(dp), dimension(:,:), allocatable :: h_pq
 !
-!     Read MO-transformed h integrals into the  
+!     Read MO-transformed h array
 !
       call h_pq_file%init('h_pq', 'sequential', 'unformatted')
       call disk%open_file(h_pq_file, 'read')
@@ -260,7 +267,7 @@ contains
 !
       call disk%close_file(h_pq_file)
 !
-      wf%energy = zero
+!     Compute energy
 !
       wf%energy = wf%system%get_nuclear_repulsion()
 !
@@ -280,19 +287,15 @@ contains
 !!    Omega A1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, March 2017
 !!
-!!       Omega_ai^A1 = F_ai_T1
+!!    Adds the A1 contribution to omega,
 !!
-!!    Term D1 in Molecular Electronic Structrue Theory
+!!       Omega_ai^A1 =+ F_ai_T1.
 !!
       implicit none
 !
-      class(ccs) :: wf
-!
-      integer(i15)::i, a
+      class(ccs), intent(in) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o) :: omega
-!
-!     Add F_a_i to omega
 !
       call daxpy((wf%n_o)*(wf%n_v), one, wf%fock_ai, 1, omega, 1)
 !
@@ -306,9 +309,9 @@ contains
 !!
       implicit none
 !
-      class(ccs) :: wf
+      class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_amplitudes, 1) :: omega
+      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: omega
 !
       omega = zero
       call wf%omega_ccs_a1(omega)
@@ -595,13 +598,14 @@ contains
 !
    subroutine get_orbital_differences_ccs(wf, orbital_differences)
 !!
-!!
+!!    Get orbital differences 
+!!    Written by Sarai D. Folkestad, Sep 2018
 !!
       implicit none
 !
-      class(ccs) :: wf
+      class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_amplitudes, 1) :: orbital_differences
+      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: orbital_differences
 !
       integer(i15) :: a, i, ai
 !
@@ -798,15 +802,7 @@ contains
 !!
 !!    Note that the MO integral tool controls how the integrals are constructed.
 !!    The choice depends on logicals within the tool that knows whether t1-transformed 
-!!    Cholesky vectors or the t1-transformed integrals themselves are on file. If the 
-!!    full integral g_pqrs is not on file, the construction is done as 
-!!
-!!       g_pqrs = sum_J L_pq^J L_rs^J,
-!!
-!!    where L_pq^J is t1-transformed (either made on-the-fly from the MO L_pq^J or
-!!    read from disk, usually before and after the ground state amplitudes have 
-!!    converged). On-the-fly t1-transformation can also happen due to disk space 
-!!    limitations.
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
 !!
       implicit none 
 !
@@ -871,6 +867,13 @@ contains
 !!    Get oooo 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
+!!    The set of "get pqrs" routines will return the integral as t1-transformed,
+!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    are provided, the routines assume that the full integral should be returned.
+!!
+!!    Note that the MO integral tool controls how the integrals are constructed.
+!!    The choice depends on logicals within the tool that knows whether t1-transformed 
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
 !!
       implicit none 
 !
@@ -944,6 +947,13 @@ contains
 !!    Get ooov 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
+!!    The set of "get pqrs" routines will return the integral as t1-transformed,
+!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    are provided, the routines assume that the full integral should be returned.
+!!
+!!    Note that the MO integral tool controls how the integrals are constructed.
+!!    The choice depends on logicals within the tool that knows whether t1-transformed 
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
 !!
       implicit none 
 !
@@ -1017,6 +1027,13 @@ contains
 !!    Get oovo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
+!!    The set of "get pqrs" routines will return the integral as t1-transformed,
+!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    are provided, the routines assume that the full integral should be returned.
+!!
+!!    Note that the MO integral tool controls how the integrals are constructed.
+!!    The choice depends on logicals within the tool that knows whether t1-transformed 
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
 !!
       implicit none 
 !
@@ -1090,6 +1107,13 @@ contains
 !!    Get ovoo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
+!!    The set of "get pqrs" routines will return the integral as t1-transformed,
+!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    are provided, the routines assume that the full integral should be returned.
+!!
+!!    Note that the MO integral tool controls how the integrals are constructed.
+!!    The choice depends on logicals within the tool that knows whether t1-transformed 
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
 !!
       implicit none 
 !
@@ -1163,6 +1187,13 @@ contains
 !!    Get vooo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
+!!    The set of "get pqrs" routines will return the integral as t1-transformed,
+!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    are provided, the routines assume that the full integral should be returned.
+!!
+!!    Note that the MO integral tool controls how the integrals are constructed.
+!!    The choice depends on logicals within the tool that knows whether t1-transformed 
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
 !!
       implicit none 
 !
@@ -1236,6 +1267,13 @@ contains
 !!    Get vvoo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
+!!    The set of "get pqrs" routines will return the integral as t1-transformed,
+!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    are provided, the routines assume that the full integral should be returned.
+!!
+!!    Note that the MO integral tool controls how the integrals are constructed.
+!!    The choice depends on logicals within the tool that knows whether t1-transformed 
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
 !!
       implicit none 
 !
@@ -1309,6 +1347,13 @@ contains
 !!    Get vovo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
+!!    The set of "get pqrs" routines will return the integral as t1-transformed,
+!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    are provided, the routines assume that the full integral should be returned.
+!!
+!!    Note that the MO integral tool controls how the integrals are constructed.
+!!    The choice depends on logicals within the tool that knows whether t1-transformed 
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
 !!
       implicit none 
 !
@@ -1382,6 +1427,13 @@ contains
 !!    Get voov
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
+!!    The set of "get pqrs" routines will return the integral as t1-transformed,
+!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    are provided, the routines assume that the full integral should be returned.
+!!
+!!    Note that the MO integral tool controls how the integrals are constructed.
+!!    The choice depends on logicals within the tool that knows whether t1-transformed 
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
 !!
       implicit none 
 !
@@ -1455,6 +1507,13 @@ contains
 !!    Get ovvo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
+!!    The set of "get pqrs" routines will return the integral as t1-transformed,
+!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    are provided, the routines assume that the full integral should be returned.
+!!
+!!    Note that the MO integral tool controls how the integrals are constructed.
+!!    The choice depends on logicals within the tool that knows whether t1-transformed 
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
 !!
       implicit none 
 !
@@ -1528,6 +1587,13 @@ contains
 !!    Get oovv
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
+!!    The set of "get pqrs" routines will return the integral as t1-transformed,
+!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    are provided, the routines assume that the full integral should be returned.
+!!
+!!    Note that the MO integral tool controls how the integrals are constructed.
+!!    The choice depends on logicals within the tool that knows whether t1-transformed 
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
 !!
       implicit none 
 !
@@ -1601,6 +1667,13 @@ contains
 !!    Get vvvo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
+!!    The set of "get pqrs" routines will return the integral as t1-transformed,
+!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    are provided, the routines assume that the full integral should be returned.
+!!
+!!    Note that the MO integral tool controls how the integrals are constructed.
+!!    The choice depends on logicals within the tool that knows whether t1-transformed 
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
 !!
       implicit none 
 !
@@ -1674,6 +1747,13 @@ contains
 !!    Get vvov
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
+!!    The set of "get pqrs" routines will return the integral as t1-transformed,
+!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    are provided, the routines assume that the full integral should be returned.
+!!
+!!    Note that the MO integral tool controls how the integrals are constructed.
+!!    The choice depends on logicals within the tool that knows whether t1-transformed 
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
 !!
       implicit none 
 !
@@ -1747,6 +1827,13 @@ contains
 !!    Get vovv
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
+!!    The set of "get pqrs" routines will return the integral as t1-transformed,
+!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    are provided, the routines assume that the full integral should be returned.
+!!
+!!    Note that the MO integral tool controls how the integrals are constructed.
+!!    The choice depends on logicals within the tool that knows whether t1-transformed 
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
 !!
       implicit none 
 !
@@ -1820,6 +1907,13 @@ contains
 !!    Get ovvv
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
+!!    The set of "get pqrs" routines will return the integral as t1-transformed,
+!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    are provided, the routines assume that the full integral should be returned.
+!!
+!!    Note that the MO integral tool controls how the integrals are constructed.
+!!    The choice depends on logicals within the tool that knows whether t1-transformed 
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
 !!
       implicit none 
 !
@@ -1893,6 +1987,13 @@ contains
 !!    Get vvvv
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
+!!    The set of "get pqrs" routines will return the integral as t1-transformed,
+!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    are provided, the routines assume that the full integral should be returned.
+!!
+!!    Note that the MO integral tool controls how the integrals are constructed.
+!!    The choice depends on logicals within the tool that knows whether t1-transformed 
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
 !!
       implicit none 
 !
@@ -1961,14 +2062,18 @@ contains
 !
 !
    subroutine transform_trial_vector_ccs(wf, c_i)
-!
-      class(ccs) :: wf 
+!!
+!!    Transform trial vector 
+!!    Written by Sarai D. Folkestad, Sep 2018
+!!
+      class(ccs), intent(in) :: wf 
 !
       real(dp), dimension(wf%n_amplitudes, 1) :: c_i
 !
       call wf%jacobian_ccs_transformation(c_i)
 !
    end subroutine transform_trial_vector_ccs
+!
 !
    subroutine jacobian_ccs_transformation_ccs(wf, c_a_i)
 !!
@@ -1987,27 +2092,23 @@ contains
 !!
       implicit none
 !
-      class(ccs) :: wf 
+      class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_v, wf%n_o)   :: c_a_i       
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: c_a_i       
 !
       real(dp), dimension(:,:), allocatable :: rho_a_i
+!
+!     Allocate the transformed vector & add the terms to it 
 !
       call mem%alloc(rho_a_i, wf%n_v, wf%n_o)
       rho_a_i = zero
 !
-!     A1-term
-!
       call wf%jacobian_ccs_a1(rho_a_i, c_a_i)
-!
-!     B1-term
-!
       call wf%jacobian_ccs_b1(rho_a_i, c_a_i)
 !
-!     Place rho_a_i in c_a_i
+!     Then overwrite the incoming vector with the transformed vector 
 !
       call dcopy((wf%n_o)*(wf%n_v), rho_a_i, 1, c_a_i, 1)
-!
       call mem%dealloc(rho_a_i, wf%n_v, wf%n_o)
 !
    end subroutine jacobian_ccs_transformation_ccs
@@ -2020,7 +2121,7 @@ contains
 !!
 !!    Calculates the A1 term,
 !!
-!!       sum_b F_ab*c_bi - sum_j F_ji*c_aj
+!!       sum_b F_ab c_bi - sum_j F_ji c_aj,
 !!
 !!    and adds it to the rho vector.
 !!
@@ -2031,8 +2132,7 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c1
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho1
 !
-!     sum_b F_a_b * c_b_i
-!
+!     sum_b F_a_b c_b_i
 !
       call dgemm('N', 'N',     &
                   wf%n_v,      &
@@ -2047,7 +2147,7 @@ contains
                   rho1,        &
                   wf%n_v)
 !
-!     - sum_j c_a_j * F_j_i
+!     - sum_j c_a_j F_j_i
 !
       call dgemm('N','N',      &
                   wf%n_v,      &
@@ -2072,7 +2172,7 @@ contains
 !!
 !!    Calculates the B1 term,
 !!
-!!       sum_bj L_aijb*c_bj = sum_bj (2*g_aijb-g_abji) c_bj,
+!!       sum_bj L_aijb c_bj = sum_bj (2 g_aijb - g_abji) c_bj,
 !!
 !!    and adds it to the rho1 vector.
 !!
@@ -2089,22 +2189,12 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: c_jb
 !
-      integer(i15) :: a, b, i, j, ab, ai, ji, jb, jb_full
-!
-      logical :: reorder
-!
-      integer(i15) :: required, current_b_batch
-!
-      type(batching_index) :: batch_b 
-!
 !     Get g_ai_jb integral, then prepare for batch over b 
-!
 !
       call mem%alloc(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call wf%get_voov(g_ai_jb)          
 !
-!
-!     Construct L_ai_jb = 2*g_ai_jb - g_ab_ij
+!     Construct L_ai_jb = 2 g_ai_jb - g_ab_ji
 !
       call mem%alloc(g_ab_ji, (wf%n_v)**2, (wf%n_o)**2)
 !
@@ -2112,31 +2202,16 @@ contains
 !
       call mem%alloc(L_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      do i = 1, wf%n_o
-         do b = 1, wf%n_v
-            do j = 1, wf%n_o
+      L_ai_jb = two*g_ai_jb
+      call mem%dealloc(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-               ji      = index_two(j, i, wf%n_o)
-               jb      = index_two(j, b, wf%n_o)
-!
-               do a = 1, wf%n_v
-!
-                  ai = index_two(a, i, wf%n_v)
-                  ab = index_two(a, b, wf%n_v)
-!
-                  L_ai_jb(ai, jb) = two*g_ai_jb(ai, jb) - g_ab_ji(ab, ji)
-!
-               enddo
-            enddo
-         enddo
-      enddo
+      call add_1432_to_1234(-one, g_ab_ji, L_ai_jb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
       call mem%dealloc(g_ab_ji, (wf%n_v)**2, (wf%n_o)**2)
 !
 !     Reorder c1 to do multiply with L_ai_jb
 !
       call mem%alloc(c_jb, (wf%n_o), (wf%n_v))
-!
       call sort_12_to_21(c1, c_jb, (wf%n_v), (wf%n_o))
 !
       call dgemm('N', 'N',                   &
@@ -2154,8 +2229,6 @@ contains
 !
       call mem%dealloc(L_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call mem%dealloc(c_jb, (wf%n_o), (wf%n_v))
-!
-      call mem%dealloc(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine jacobian_ccs_b1_ccs
 !
