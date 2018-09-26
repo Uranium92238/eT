@@ -604,4 +604,22 @@ contains
    end subroutine delete_disk_manager
 !
 !
+   function file_exists_disk_manager(disk, the_file)
+!!
+!!    File exists
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!    
+!
+      implicit none
+!  
+      class(disk_manager), intent(in) :: disk
+!
+      type(file), intent(in) :: the_file
+!
+      logical :: file_exists_disk_manager
+!
+      inquire(file=the_file%name, exist=file_exists_disk_manager)
+!
+   end function file_exists_disk_manager
+!
 end module disk_manager_class

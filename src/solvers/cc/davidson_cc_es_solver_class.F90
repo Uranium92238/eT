@@ -184,10 +184,9 @@ contains
 !
 !     Construct first trial vectors
 !
-!
       if (solver%restart) then
 !
-!        Restart
+       !  call davidson%restart_from_solutions()
 !
       else
 !
@@ -263,8 +262,6 @@ contains
          enddo
 !
         if (davidson%dim_red .ge. davidson%max_dim_red) then
-!
-            write(output%unit, *) 'Reached max_dim_red'
 !
            call davidson%set_trials_to_solutions()
 !
@@ -548,9 +545,34 @@ contains
 !
             solver%restart = .true.
 !
+         elseif (line(1:14) == 'start vectors:')
+!
+            line = line(15:100)
+            line = remove_preceding_blanks(line)
+            n_start_vecs = 0
+!
+            do j = 1, 86
+!
+               if (line(j:j) .ne. ' ') n_start_vecs = n_start_vecs + 1
+!
+            enddo
+!
+            call mem%alloc_int(solver%start_vectors, n_start_vecs, 1)
+            read(line, *) solver%start_vectors
+!
          endif
 !
       enddo
+!
+      if (allocated(solver%start_vectors)) then
+!
+         if (n_start_vecs .ne. n_singlet_states) then
+!
+            call output%error_msg('mismatch in number of start vectors and number of specified roots.')
+!
+         endif
+!
+      endif
 !
    end subroutine read_settings_davidson_cc_es_solver
 !

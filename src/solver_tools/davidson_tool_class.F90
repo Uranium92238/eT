@@ -63,6 +63,7 @@ module davidson_tool_class
       procedure :: add_initial_trial_vec => add_initial_trial_vec_davidson_tool
 !
       procedure :: set_trials_to_solutions => set_trials_to_solutions_davidson_tool
+      procedure :: restart_from_solutions  => restart_from_solutions_davidson_tool
 !
 !     Deferred routines  
 !
@@ -767,8 +768,7 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
 !!
 !!    Set trials equal to solution on file.
-!!    This should be used when max_dim_red is reached and 
-!!    if we restart from old solutions
+!!    This should be used when max_dim_red.
 !!
       implicit none
 !
@@ -847,5 +847,62 @@ contains
       enddo
 !
    end subroutine read_max_dim_red_davidson_tool
+!  
+!
+   subroutine restart_from_solutions_davidson_tool(davidson)
+!!
+!!    Restart from solutions
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+!!    Set first trials equal to solution on file.
+!!    This should be used for restarts.
+!!
+      implicit none
+!
+      class(davidson_tool) :: davidson 
+!
+      real(dp), dimension(:,:), allocatable :: X
+!
+      integer(i15) :: solution, n_solutions, ioerror
+!
+!     Is file on disk?
+!
+      if (disk%file_exists(davidson%X)) then
+!
+!        Find number of solutions on file
+!  
+         call disk%open_file(davidson%X, 'read')
+         rewind(davidson%X%unit)
+!
+         call disk%open_file(davidson%trials, 'write', 'rewind')
+!
+         call mem%alloc(X, davidson%n_parameters, 1)
+!
+         ioerror     = 0
+         n_solutions = 0
+!
+         do while (ioerror == 0 .and. n_solutions .lt. davidson%n_solutions) then
+!
+            read(davidson%X%unit, iostat = ioerror) X
+            write(davidson%trials%unit) X
+            n_solutions = n_solutions + 1
+!
+         enddo
+!
+         call mem%dealloc(X, davidson%n_parameters, 1)
+!
+         rewind(davidson%trials%unit)
+!
+         call disk%close_file(davidson%trials)
+         call disk%close_file(davidson%X, 'delete')
+!
+      else ! File is not on disk 
+!  
+         call output%error_msg('requested restart but solution file not on disk.')
+!
+      endif
+!
+   end subroutine srestart_from_solutions_davidson_tool
+!
 !
 end module davidson_tool_class
