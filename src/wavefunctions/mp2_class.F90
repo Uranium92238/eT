@@ -1,7 +1,7 @@
 module mp2_class
 !
 !!
-!!    Second order Møller-Plesset pertubation theory (MP2)/CCPT2 class module
+!!    Second order Møller-Plesset pertubation theory MP2/CCPT2 class module
 !!    Written by Andreas Skeidsvoll and Eirik F. Kjønstad, 2018
 !!
 !
@@ -13,9 +13,11 @@ module mp2_class
 !
    implicit none
 !
-   type, extends(ccs):: mp2
+   type, extends(ccs) :: mp2
 !
-      contains
+!     No unique variables yet
+!
+   contains
 !
       procedure :: prepare                    => prepare_mp2
       procedure :: calculate_energy           => calculate_energy_mp2
@@ -34,10 +36,7 @@ contains
       implicit none
 !
       class(mp2) :: wf
-!
-      class(hf) :: ref_wf
-!
-      integer(i15) :: p
+      class(hf)  :: ref_wf
 !
       wf%name = 'MP2'
 !
@@ -49,9 +48,6 @@ contains
       wf%n_v    = ref_wf%n_v
 !
       wf%hf_energy = ref_wf%energy
-!
-      call wf%initialize_orbital_coefficients()
-      wf%orbital_coefficients = ref_wf%orbital_coefficients
 !
       call wf%initialize_orbital_energies()
       wf%orbital_energies = ref_wf%orbital_energies
@@ -67,8 +63,8 @@ contains
 !!    Calculate energy
 !!    Written by Andreas Skeidsvoll and Eirik Kjønstad, 2018
 !!
-!!    Calculates MP2 energy from HF energy, E_HF, vovo integrals, g_aibj, and orbital energies, eps.
-!!    Total MP2 energy is calculated using
+!!    Calculates the MP2 energy from HF energy, E_HF, vovo integrals, g_aibj, 
+!!    and the orbital energies, eps. The total MP2 energy is calculated as
 !!
 !!       E = E_HF - sum_aibj g_aibj*L_aibj/(eps(a)+eps(b)-eps(i)-eps(j))
 !!
@@ -76,27 +72,32 @@ contains
 !!
 !!       L_aibj = 2*g_aibj - g_ajbi.
 !!
+!!    On entry, it is assumed that the energy is equal to the HF energy 
+!!    (i.e. the routine only adds the correction to the energy variable).
+!!
       implicit none
 !
-      class(mp2) :: wf 
+      class(mp2), intent(inout) :: wf 
 !
       real(dp), dimension(:,:), allocatable :: g_ai_bj
       real(dp), dimension(:,:), allocatable :: L_ai_bj
       real(dp), dimension(:,:), allocatable :: eps
-      real(dp) :: e2_neg = zero
+!
+      real(dp)     :: e2_neg
       integer(i15) :: a, i, b, j, ai, bj 
 !
       call mem%alloc(eps, wf%n_mo, 1)
-      call mem%alloc(g_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call mem%alloc(L_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
       eps = wf%orbital_energies
 !
+      call mem%alloc(g_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call wf%get_vovo(g_ai_bj)
 !
-      L_ai_bj = two*g_ai_bj
+      call mem%alloc(L_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
+      L_ai_bj = two*g_ai_bj
       call add_1432_to_1234(-one, g_ai_bj, L_ai_bj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      e2_neg = zero 
 !
 !$omp parallel do schedule(static) private(a, i, b, j, ai, bj) reduction(+:e2_neg)
       do j = 1, wf%n_o
@@ -144,5 +145,6 @@ contains
       write(output%unit, '(t3,a26,f19.12)')  'MP2 energy:               ', wf%energy
 !
       end subroutine print_wavefunction_summary_mp2
+!
 !
 end module mp2_class
