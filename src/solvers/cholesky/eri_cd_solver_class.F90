@@ -106,7 +106,7 @@ contains
 !
       endif
 !
-      call set_coulomb_precision(1.0d-40)
+      call set_coulomb_precision(1.0d-50)
 !
    end subroutine prepare_eri_cd_solver
 !

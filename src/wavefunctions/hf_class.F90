@@ -876,6 +876,8 @@ contains
 !
 !     Set the maximum element in each shell pair 
 !
+      call set_coulomb_precision(1.0d-50)
+!
 !$omp parallel do private(s1, s2, s1s2, A_interval, B_interval, g, maximum) schedule(dynamic)
       do s1 = 1, n_s
          do s2 = 1, s1
@@ -995,12 +997,13 @@ contains
 !
       real(dp), dimension(wf%system%n_s*(wf%system%n_s + 1)/2, 2), intent(in) :: sp_eri_schwarz
 !
-      integer(i15) :: s1s2
+      integer(i15) :: s1s2, i
 !
       n_sig_sp = 0
+!
       do s1s2 = 1, wf%system%n_s*(wf%system%n_s + 1)/2
 !
-         if (sp_eri_schwarz(s1s2, 1)**2 .lt. threshold) then
+         if (sp_eri_schwarz(s1s2, 1)*sp_eri_schwarz(1, 1) .lt. 1.0d-16) then
 !
             exit
 !
@@ -1010,6 +1013,11 @@ contains
 !
          endif
 !
+      enddo
+!
+      write(output%unit, *)'significant in fock', n_sig_sp
+      do i = 1, wf%system%n_s*(wf%system%n_s + 1)/2
+         write(output%unit, *) sp_eri_schwarz(i, 1)
       enddo
 !
    end subroutine get_n_sig_eri_sp_hf
