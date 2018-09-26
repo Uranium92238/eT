@@ -854,12 +854,12 @@ contains
 !
       coulomb_thr   = wf%coulomb_threshold
       exchange_thr  = wf%exchange_threshold
-      precision_thr = wf%integral_precision
+      precision_thr = wf%libint_epsilon
 !
 !     Compute number of significant ERI shell pairs (the Fock construction 
 !     only loops over these shell pairs) and the maximum element 
 !
-      call wf%get_n_sig_eri_sp(n_sig_sp, sp_eri_schwarz, 1.0d-20)
+      call wf%get_n_sig_eri_sp(n_sig_sp, sp_eri_schwarz)
       max_eri_schwarz = get_abs_max(sp_eri_schwarz, n_s*(n_s + 1)/2)
 !
 !     Construct the Coulomb two electron part of the Fock matrix, using the screening vectors 

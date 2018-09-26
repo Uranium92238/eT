@@ -74,6 +74,8 @@ contains
 !
       call solver%read_settings()
 !
+      call wf%set_screening_and_precision_thresholds(solver%gradient_threshold)
+!
       write(output%unit, '(/t3,a/)') '- Hartree-Fock solver settings:'
 !
       call solver%print_scf_diis_settings()

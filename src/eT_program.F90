@@ -79,8 +79,16 @@ program eT_program
     call input%init('eT.inp', 'sequential', 'formatted')
     call disk%open_file(input, 'read')
 !
-    write(output%unit,'(///t16,a)')    'eT - a coupled cluster program'
-    write(output%unit,'(t12,a//)') 'S. D. Folkestad, E. F. Kjønstad, 2017-2018'
+    write(output%unit,'(///t26,a)')'eT - a coupled cluster program '
+    write(output%unit,'(/t12,a)')  'S. D. Folkestad, E. F. Kjønstad, H. Koch and A. Skeidsvoll'
+    flush(output%unit)
+
+    write(output%unit,'(//t3a)')'--------------------------------------------------------------------------------------------'
+    write(output%unit,'(/t3,a, a/)')'Contributor:       ','Contributions:'
+    write(output%unit,'(t3,a, a)')   'E. F. Kjønstad     ','(HF, UHF, CCS, MP2, Cholesky decomposition, DIIS-tool, Davidson-tool)'
+    write(output%unit,'(t3,a, a)')   'S. D. Folkestad    ','(HF, CCS, Cholesky decomposition, Davidson-tool, CVS)'
+    write(output%unit,'(t3,a, a)')   'A. Skeidsvoll      ','(MP2)'
+    write(output%unit,'(/t3a//)')'-------------------------------------------------------------------------------------------'
     flush(output%unit)
 !
 !   Prepare memory manager and disk manager

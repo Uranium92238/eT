@@ -182,7 +182,7 @@ contains
       call wf%initialize_ao_fock()
 !
       start_timer = omp_get_wtime()
-      call wf%construct_ao_fock_SAD(wf%coulomb_threshold, wf%exchange_threshold, wf%integral_precision)
+      call wf%construct_ao_fock_SAD(wf%coulomb_threshold, wf%exchange_threshold)
       end_timer = omp_get_wtime()
       write(output%unit, *) 'Time to construct AO Fock from SAD: ', end_timer-start_timer
       flush(output%unit)

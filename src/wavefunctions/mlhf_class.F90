@@ -130,24 +130,7 @@ contains
 !
       n_s = wf%system%get_n_shells()
 !
-      call wf%construct_ao_fock_SAD(1.0d-13, 1.0d-13, 1.0d-25)
-!
-    ! write(output%unit,*)wf%energy
-!
-    ! call mem%alloc(sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
-    ! call mem%alloc_int(sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
-!
-    ! call wf%construct_sp_eri_schwarz(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
-!
-!   ! Set the initial density guess and Fock matrix 
-!
-    ! call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
-    ! call wf%get_ao_h_wx(h_wx)
-!
-    ! call wf%update_fock_and_energy(sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx)
-    ! write(output%unit,*)wf%energy
-    ! flush(output%unit)
-    ! stop
+      call wf%construct_ao_fock_SAD(wf%coulomb_threshold, wf%exchange_threshold)
 !
       e_construct_fock = omp_get_wtime()
       write(output%unit, '(/t6, a49, f11.2)')'Wall time to construct AO fock from SAD density: ', &

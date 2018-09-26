@@ -45,6 +45,8 @@ module disk_manager_class
       procedure :: read_settings  => read_settings_disk_manager
       procedure :: print_settings => print_settings_disk_manager
 !
+      procedure :: delete => delete_disk_manager
+!
    end type disk_manager
 !
    type(disk_manager) :: disk
@@ -575,6 +577,31 @@ contains
 !
    end subroutine print_settings_disk_manager
 !
+!
+   subroutine delete_disk_manager(disk, the_file)
+!!
+!!    Delete file
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!    
+!
+      implicit none
+!  
+      class(disk_manager) :: disk
+!
+      type(file) :: the_file
+!
+      logical :: file_exists
+!
+      inquire(file=the_file%name, exist=file_exists)
+!
+      if (file_exists) then
+!
+         call disk%open_file(the_file, 'write')
+         call disk%close_file(the_file, 'delete')
+!
+      endif
+!
+   end subroutine delete_disk_manager
 !
 !
 end module disk_manager_class

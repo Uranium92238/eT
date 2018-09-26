@@ -151,12 +151,12 @@ contains
 !
       integer(i15), dimension(:,:), allocatable :: ai_indices
 !
-      integer(i15) :: trial, core, i, j, k, a, first_ao_on_atom, last_ao_on_atom
+      integer(i15) :: trial, core, i, j, k, l, a, first_ao_on_atom, last_ao_on_atom
       integer(i15) :: n_MOs_found, current_root
 !
       real(dp) :: mix_factor
 !
-      logical :: all_selected
+      logical :: all_selected, used
 !
       if (solver%n_cores .gt. solver%n_singlet_states) &
          call output%error_msg('number of roots requested should be equal or greater than the number of cores.')
@@ -208,15 +208,32 @@ contains
                do i = 1, wf%n_o
 !
                   if (abs(wf%orbital_coefficients(k, i)) .ge. mix_factor) then
-      
 !
-                     if (n_MOs_found .gt. solver%n_cores) &
+                     used =  .false.
+!
+                     do l = 1, n_MOs_found
+!
+                        if (solver%core_MOs(l, 1) == i) used = .true.
+!
+                     enddo
+!
+                     if (.not. used) then
+!
+                        n_MOs_found = n_MOs_found + 1
+!
+                        if (n_MOs_found .gt. solver%n_cores) &
                               call output%error_msg('something went wrong in the selection of core MOs.')
 !
 
 !
-                     solver%core_MOs(n_MOs_found, 1) = i
-                     exit
+                        solver%core_MOs(n_MOs_found, 1) = i
+                        exit
+!
+                     else
+!
+                        cycle
+!
+                     endif
 !
                   endif
 !

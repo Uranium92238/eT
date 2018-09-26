@@ -6,7 +6,7 @@ module file_class
 !!
 !!
 !
-   use kinds
+   use kinds      
 !
    type :: file
 !
@@ -169,6 +169,8 @@ contains
 !
    subroutine error_msg_file(out_file, error_specs)
 !!
+!!    Error message
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !

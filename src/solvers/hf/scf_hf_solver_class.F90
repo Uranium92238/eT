@@ -60,6 +60,8 @@ contains
 !
       call solver%read_settings()
 !
+      call wf%set_screening_and_precision_thresholds(solver%gradient_threshold)
+!
 !     Initialize orbital coefficients, densities, and Fock matrices (plural for unrestricted methods)
 !
       call wf%initialize_orbitals()
