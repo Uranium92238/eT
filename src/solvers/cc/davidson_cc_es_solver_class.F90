@@ -78,7 +78,7 @@ contains
 !
       solver%restart = .false.
 !
-      if (requested_section('excited state')) then
+      if (requested_section('cc excited state')) then
 !
          call solver%read_settings()
 !
@@ -184,6 +184,7 @@ contains
 !
 !     Construct first trial vectors
 !
+!
       if (solver%restart) then
 !
 !        Restart
@@ -196,7 +197,6 @@ contains
 !
       call solver%set_precondition_vector(wf, davidson)
       call solver%set_projection_vector(wf, davidson)
-!
 !
 !     Enter iterative loop
 !
@@ -218,6 +218,8 @@ contains
             call davidson%read_trial(c_i, trial)
 !
             call wf%transform_trial_vector(c_i)
+!
+            call davidson%projection(c_i)
 !
             call davidson%write_transform(c_i)
 !
@@ -519,7 +521,7 @@ contains
 !
       character(len=100) :: line
 !
-      call move_to_section('excited state', n_specs)
+      call move_to_section('cc excited state', n_specs)
 !
       do i = 1, n_specs
 !

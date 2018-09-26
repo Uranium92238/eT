@@ -581,7 +581,7 @@ contains
       real(dp), dimension(davidson%n_parameters, 1), intent(in) :: projector 
 !
       call disk%open_file(davidson%projector, 'write', 'rewind')
-      write(davidson%preconditioner%unit) projector 
+      write(davidson%projector%unit) projector 
       call disk%close_file(davidson%projector)
 !
       davidson%do_projection = .true.

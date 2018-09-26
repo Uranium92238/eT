@@ -50,7 +50,7 @@ contains
 !
       class(davidson_cvs_cc_es_solver) :: solver 
 !
-      write(output%unit, '(//t3,a)') ':: Davidson core-valence separation coupled cluster excited state solver'
+      write(output%unit, '(//t3,a)') ':: Davidson CVS coupled cluster core-excited state solver'
       write(output%unit, '(t3,a)')   ':: E. F. Kjønstad, S. D. Folkestad, 2018'
 !
       write(output%unit, '(/t3,a)')  'A Davidson CVS solver that calculates core excitation energies and the'
@@ -82,7 +82,7 @@ contains
 !
       character(len=100) :: line
 !
-      call move_to_section('excited state', n_specs)
+      call move_to_section('cc excited state', n_specs)
 !
       do i = 1, n_specs
 !
@@ -189,31 +189,34 @@ contains
 !
 !        Calculate the mixing factor of equal mix 
 !
-         mix_factor = 1.0d0/(sqrt(real(solver%n_cores, kind=dp)))
+         mix_factor = 1.0d0/(sqrt(real(solver%n_cores, kind=dp)))*0.9
 !
 !        Loop through the occupied MOs and determine if they are core mos
 !
          n_MOs_found = 0
 !
          call solver%initialize_core_MOs()
+         solver%core_MOs = 0
 !
-         do i = 1, wf%n_o
+         do j = 1, solver%n_cores
 !
-            do j = 1, solver%n_cores
+            first_ao_on_atom = wf%system%atoms(solver%cores(j, 1))%shells(1)%first
+            last_ao_on_atom = wf%system%atoms(solver%cores(j, 1))%shells(wf%system%atoms(solver%cores(j, 1))%n_shells)%last
 !
-               first_ao_on_atom = wf%system%atoms(solver%cores(i, 1))%shells(1)%first
-               last_ao_on_atom = wf%system%atoms(solver%cores(i, 1))%shells(wf%system%atoms(solver%cores(i, 1))%n_shells)%last
+            do k = first_ao_on_atom, last_ao_on_atom
+
+               do i = 1, wf%n_o
 !
-               do k = first_ao_on_atom, last_ao_on_atom
-!
-                  if (wf%orbital_coefficients(k, i) .ge. mix_factor) then
-!
-                     n_MOs_found = n_MOs_found + 1
+                  if (abs(wf%orbital_coefficients(k, i)) .ge. mix_factor) then
+      
 !
                      if (n_MOs_found .gt. solver%n_cores) &
                               call output%error_msg('something went wrong in the selection of core MOs.')
 !
+
+!
                      solver%core_MOs(n_MOs_found, 1) = i
+                     exit
 !
                   endif
 !
@@ -222,6 +225,8 @@ contains
             enddo
 !
          enddo
+         write(output%unit, *)'ragazzo', solver%core_MOs
+         flush(output%unit)
 !
 !        Calculate ai indices 
 !
@@ -253,21 +258,25 @@ contains
 !
          enddo
 !
+         
+               write(output%unit, *)'gatto', ai_indices
+               flush(output%unit)
+!
 !        Set c(ai) = 1
 !
          call mem%alloc(c_i, wf%n_amplitudes, 1)
 !
          c_i = zero
 !
-         c_i(ai_indices(1, 1), 1) = 1
+         c_i(ai_indices(1, 1), 1) = one
 !
          call davidson%write_trial(c_i, 'rewind')
 !
-         do trial = 1, solver%n_singlet_states
+         do trial = 2, solver%n_singlet_states
 !
             c_i = zero
 !
-            c_i(ai_indices(trial, 1), 1) = 1
+            c_i(ai_indices(trial, 1), 1) = one
 !
             call davidson%write_trial(c_i)
 !
@@ -317,7 +326,6 @@ contains
 !
       call davidson%set_projector(projector)
       call mem%dealloc(projector, wf%n_amplitudes, 1)
-
 !
    end subroutine set_projection_vector_davidson_cvs_cc_es_solver
 !

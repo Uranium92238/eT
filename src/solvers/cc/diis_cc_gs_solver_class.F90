@@ -61,7 +61,7 @@ contains
 !
 !     Read settings (thresholds, etc.)
 !
-      if (requested_section('ground state')) then
+      if (requested_section('cc ground state')) then
 !
          call solver%read_settings()
 !
@@ -344,7 +344,7 @@ contains
 !
       character(len=100) :: line
 !
-      call move_to_section('ground state', n_specs)
+      call move_to_section('cc ground state', n_specs)
 !
       do i = 1, n_specs
 !

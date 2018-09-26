@@ -547,7 +547,9 @@ contains
 !
       if (norm_residual .gt. davidson%residual_threshold) then 
 !
+         call davidson%projection(R)
          call davidson%precondition(R)
+!
          norm_precond_residual = get_l2_norm(R, davidson%n_parameters)
          call dscal(davidson%n_parameters, one/norm_precond_residual, R, 1)
 !
@@ -565,7 +567,7 @@ contains
 ! 
          else
 !
-            call output%error_msg('new trial vector made in Davidson had no new significant components.')
+           ! call output%error_msg('new trial vector made in Davidson had no new significant components.')
 !
          endif 
 !
