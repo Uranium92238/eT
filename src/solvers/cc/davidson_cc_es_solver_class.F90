@@ -514,7 +514,7 @@ contains
 !
       class(davidson_cc_es_solver) :: solver 
 !
-      integer(i15) :: n_specs, i
+      integer(i15) :: n_specs, i, j, n_start_vecs
 !
       character(len=100) :: line
 !
@@ -545,7 +545,7 @@ contains
 !
             solver%restart = .true.
 !
-         elseif (line(1:14) == 'start vectors:')
+         elseif (line(1:14) == 'start vectors:') then
 !
             line = line(15:100)
             line = remove_preceding_blanks(line)
@@ -566,7 +566,7 @@ contains
 !
       if (allocated(solver%start_vectors)) then
 !
-         if (n_start_vecs .ne. n_singlet_states) then
+         if (n_start_vecs .ne. solver%n_singlet_states) then
 !
             call output%error_msg('mismatch in number of start vectors and number of specified roots.')
 !

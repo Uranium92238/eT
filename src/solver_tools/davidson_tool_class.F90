@@ -881,7 +881,7 @@ contains
          ioerror     = 0
          n_solutions = 0
 !
-         do while (ioerror == 0 .and. n_solutions .lt. davidson%n_solutions) then
+         do while (ioerror == 0 .and. n_solutions .lt. davidson%n_solutions)
 !
             read(davidson%X%unit, iostat = ioerror) X
             write(davidson%trials%unit) X
@@ -902,7 +902,7 @@ contains
 !
       endif
 !
-   end subroutine srestart_from_solutions_davidson_tool
+   end subroutine restart_from_solutions_davidson_tool
 !
 !
 end module davidson_tool_class

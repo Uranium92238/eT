@@ -46,6 +46,7 @@ module disk_manager_class
       procedure :: print_settings => print_settings_disk_manager
 !
       procedure :: delete => delete_disk_manager
+      procedure :: file_exists => file_exists_disk_manager
 !
    end type disk_manager
 !
