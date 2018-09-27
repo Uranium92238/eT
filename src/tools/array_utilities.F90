@@ -823,7 +823,7 @@ contains
       real(dp), dimension(dim, dim), intent(in)  :: matrix
       real(dp), dimension(dim, dim), intent(out) :: cholesky_vectors
 !
-      integer(kind=4), dimension(dim) :: used_diag
+      integer(i6), dimension(dim) :: used_diag
 !
       integer(kind=4) :: n_vectors_4
 !
