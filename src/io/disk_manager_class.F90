@@ -46,6 +46,7 @@ module disk_manager_class
       procedure :: print_settings => print_settings_disk_manager
 !
       procedure :: delete => delete_disk_manager
+      procedure :: file_exists => file_exists_disk_manager
 !
    end type disk_manager
 !
@@ -603,5 +604,23 @@ contains
 !
    end subroutine delete_disk_manager
 !
+!
+   function file_exists_disk_manager(disk, the_file)
+!!
+!!    File exists
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!    
+!
+      implicit none
+!  
+      class(disk_manager), intent(in) :: disk
+!
+      type(file), intent(in) :: the_file
+!
+      logical :: file_exists_disk_manager
+!
+      inquire(file=the_file%name, exist=file_exists_disk_manager)
+!
+   end function file_exists_disk_manager
 !
 end module disk_manager_class
