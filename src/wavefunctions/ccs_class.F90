@@ -2189,46 +2189,77 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: c_jb
 !
-!     Get g_ai_jb integral, then prepare for batch over b 
+      type(batching_index) :: batch_b
 !
-      call mem%alloc(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call wf%get_voov(g_ai_jb)          
+      call batch_b%init(wf%n_v) 
 !
-!     Construct L_ai_jb = 2 g_ai_jb - g_ab_ji
+      required = max((wf%n_o)*(wf%n_v)*(wf%n_o)*(batch_b%size)*dp + wf%integrals%get_required_voov, &
+                     (wf%n_o)*(wf%n_v)*(wf%n_o)*(batch_b%size)*2*dp, + wf%integrals%get_required_vvoo)
 !
-      call mem%alloc(g_ab_ji, (wf%n_v)**2, (wf%n_o)**2)
+      call wf%mem%num_batch(batch_b, required)
 !
-      call wf%get_vvoo(g_ab_ji)  
+      do current_b_batch = 1, batch_b%num_batches
 !
-      call mem%alloc(L_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+         call batch_b%determine_limits(current_b_batch)
 !
-      L_ai_jb = two*g_ai_jb
-      call mem%dealloc(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!        Get g_ai_jb integral, then prepare for batch over a 
 !
-      call add_1432_to_1234(-one, g_ab_ji, L_ai_jb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+         call mem%alloc(L_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(batch_b%size))
 !
-      call mem%dealloc(g_ab_ji, (wf%n_v)**2, (wf%n_o)**2)
+         call wf%get_voov(L_ai_jb,                       &
+                           1, wf%n_v,                    &
+                           1, wf%n_o,                    &
+                           1, wf%n_o,                    &
+                           batch_b%first, batch_b%last)   
 !
-!     Reorder c1 to do multiply with L_ai_jb
+         call dscal(((wf%n_o)**2)*(batch_b%size)*(wf%n_v), two, L_ai_jb, 1)
 !
-      call mem%alloc(c_jb, (wf%n_o), (wf%n_v))
-      call sort_12_to_21(c1, c_jb, (wf%n_v), (wf%n_o))
+!        Construct L_ai_jb = 2 g_ai_jb - g_ab_ji
 !
-      call dgemm('N', 'N',                   &
-                  (wf%n_v)*(wf%n_o),         &
-                  1,                         &
-                  (wf%n_o)*(wf%n_v),         &
-                  one,                       &
-                  L_ai_jb,                   &
-                  (wf%n_v)*(wf%n_o),         &
-                  c_jb,                      &
-                  (wf%n_o)*(wf%n_v),         &
-                  one,                       &
-                  rho1,                      &
-                  (wf%n_v)*(wf%n_o))      
+         call mem%alloc(g_ab_ji, (wf%n_v)*(batch_b%size), (wf%n_o)**2)
 !
-      call mem%dealloc(L_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call mem%dealloc(c_jb, (wf%n_o), (wf%n_v))
+         call wf%get_vvoo(g_ab_ji,                       &
+                           1, wf%n_v,                    &
+                           batch_b%first, batch_b%last,  &
+                           1, wf%n_o,                    &
+                           1, wf%n_o)  
+!
+         call add_1432_to_1234(-one, g_ab_ji, L_ai_jb, wf%n_v, wf%n_o, wf%n_o, batch_b%size)
+!
+         call mem%dealloc(g_ab_ji, (wf%n_v)*(batch_b%size), (wf%n_o)**2)
+!
+!        Reorder c1 to do multiply with L_ai_jb
+!
+         call mem%alloc(c_jb, (wf%n_o), (batch_b%size))
+!
+         do j = 1, wf%n_o 
+            do b = batch_b%first, batch_b%last 
+!
+               b_red = b - batch_b%first + 1
+!
+               c_jb(j, b_red) = c1(b, j) 
+!
+            enddo
+         enddo
+!
+!
+         call dgemm('N', 'N',                   &
+                     (wf%n_v)*(wf%n_o),         &
+                     1,                         &
+                     (wf%n_o)*(batch_b%size),   &
+                     one,                       &
+                     L_ai_jb,                   &
+                     (wf%n_v)*(wf%n_o),         &
+                     c_jb,                      &
+                     (wf%n_o)*(batch_b%size),   &
+                     one,                       &
+                     rho1,                      &
+                     (wf%n_v)*(wf%n_o))      
+!
+         call mem%dealloc(L_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(batch_b%size))
+         call mem%dealloc(c_jb, (wf%n_o), (batch_b%size))
+!
+      enddo
 !
    end subroutine jacobian_ccs_b1_ccs
 !

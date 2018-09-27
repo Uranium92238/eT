@@ -1395,7 +1395,7 @@ contains
    subroutine construct_ovvo_mo_integral_tool(integrals, g_iabj, first_i, last_i, first_a, last_a, &
                                                             first_b, last_b, first_j, last_j, index_restrictions, t1)
 !!
-!!    Construct voov
+!!    Construct ovvo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
 !!
       implicit none 
@@ -2092,6 +2092,64 @@ contains
 !
    end subroutine construct_vvvv_mo_integral_tool
 !
+!
+   module function get_required_voov_mo_integral_tool(wf, dim_1, dim_2, dim_3, dim_4)
+!!
+!!    Get voov required memory
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
+!!
+!!    Calculates and returns required memory to make voov electronic repulsion integral.
+!!
+!!    dim_1, dim_2, dim_3, and dim_4 are the full dimension of index dim_1-dim_4.
+!!    They will typically be  n_v/n_o and are therefore optionals, however will not be n_v/n_o for ML 
+!!
+      implicit none 
+!
+      class(mo_integral_tool), intent(in) :: integrals
+!  
+      integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
+      integer(i15), intent(in), optional  :: dim_1_local, dim_2_local, dim_3_local, dim_4_local
+!
+      integer(i15) :: get_required_voov_mo_integral_tool
+!
+      dim_1_local = integrals%n_v
+!
+      if (present(dim_1)) dim_1_local = dim_1
+!
+      dim_2_local = integrals%n_o
+!
+      if (present(dim_2)) dim_2_local = dim_2
+!
+      dim_3_local = integrals%n_o
+!
+      if (present(dim_3)) dim_3_local = dim_3
+!
+      dim_4_local = integrals%n_v
+!
+      if (present(dim_4)) dim_4_local = dim_4
+!
+      if (integrals%eri_t1_file) then
+!
+         call output%error_msg('still no support for eri on file')        
+!
+      elseif (integrals%cholesky_t1_file) then
+!
+         get_required_voov_mo_integral_tool = (dim_1_local)*(dim_2_local)*(integrals%n_J) + (dim_3_local)*(dim_4_local)*(integrals%n_J)
+!
+      elseif (integrals%eri_file) then
+!
+         call output%error_msg('still no support for eri on file')  
+!
+      else
+!
+         get_required_voov_mo_integral_tool = (dim_1_local)*(dim_2_local)*(integrals%n_J) + (dim_3_local)*(dim_4_local)*(integrals%n_J)
+         get_required_voov_mo_integral_tool = get_required_voov_mo_integral_tool + &
+                     max((dim_2_local)*(integrals%n_v)*(integrals%n_J) + (dim_2_local)*(integrals%n_o)*(integrals%n_J), &
+                         (dim_1_local)*(integrals%n_v)*(integrals%n_J) + (dim_1_local)*(integrals%n_o)*(integrals%n_J))
+!
+      endif
+!
+   end function
 !
 end module mo_integral_tool_class
 
