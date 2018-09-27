@@ -829,7 +829,7 @@ contains
 !
       real(dp), dimension(:), allocatable :: work  ! work array for LAPACK
 !
-      integer(kind=4) :: info
+      integer(i6) :: info
       integer(i15) :: I, J
 !
       cholesky_vectors = matrix
