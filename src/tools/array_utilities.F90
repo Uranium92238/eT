@@ -823,13 +823,13 @@ contains
       real(dp), dimension(dim, dim), intent(in)  :: matrix
       real(dp), dimension(dim, dim), intent(out) :: cholesky_vectors
 !
-      integer(i6), dimension(dim) :: used_diag
+      integer(kind=4), dimension(dim) :: used_diag
 !
       integer(kind=4) :: n_vectors_4
 !
       real(dp), dimension(:), allocatable :: work  ! work array for LAPACK
 !
-      integer(i6) :: info
+      integer(kind=4) :: info
       integer(i15) :: I, J
 !
       cholesky_vectors = matrix

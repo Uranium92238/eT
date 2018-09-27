@@ -2553,7 +2553,7 @@ contains
 !
       class(hf) :: wf
 !
-      integer(i6), dimension(:, :), allocatable :: used_diag
+      integer(kind=4), dimension(:, :), allocatable :: used_diag
 !
       real(dp), dimension(:, :), allocatable :: L
 !
@@ -2567,8 +2567,6 @@ contains
 !
       call full_cholesky_decomposition_system(wf%ao_overlap, L, wf%n_ao, wf%n_mo, &
                                                 wf%linear_dep_threshold, used_diag)
-!
-      write(output%unit, *) used_diag
 !
       call wf%initialize_cholesky_ao_overlap()
 !
