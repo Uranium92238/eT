@@ -35,43 +35,42 @@ program eT_program
 !
     type(molecular_system), allocatable :: system
 !
-!   Method allocatable objects
+!   Wavefunction allocatables and pointers  
 !
     type(hf), allocatable, target    :: hf_wf
     type(uhf), allocatable, target   :: uhf_wf
     type(mlhf), allocatable, target  :: mlhf_wf 
 !
     type(ccs), allocatable, target   :: ccs_wf
-    type(mp2), allocatable, target :: mp2_wf
+    type(mp2), allocatable, target   :: mp2_wf
 !
-!   Wavefunction pointer
+!   Wavefunction pointers
 !
-    class(hf), pointer  :: ref_wf => null()
-    class(ccs), pointer :: cc_wf  => null()
+    class(hf), pointer  :: ref_wf    => null()
+    class(ccs), pointer :: cc_wf     => null()
 !
 !   Cholesky decomposition solver 
 !
-    type(eri_cd_solver), allocatable :: chol_solver
+    type(eri_cd_solver), allocatable     :: chol_solver
 !
 !   Engines
 !
-    type(hf_engine), allocatable :: gs_hf_engine
-!
+    type(hf_engine), allocatable         :: gs_hf_engine
     type(gs_engine), allocatable, target :: gs_cc_engine
     type(es_engine), allocatable, target :: es_cc_engine
 !
-    class(abstract_engine), pointer :: engine => null()
+!   Engine pointer
+!
+    class(abstract_engine), pointer      :: engine => null()
+!
+!   Other variables
 !
     integer(i15) :: n_methods, i
 !
+    character(len=40) :: cc_engine  
     character(len=40), dimension(:), allocatable :: cc_methods
-    character(len=40):: cc_engine  
 !
-!  ::::::::::::::::::::::::::::::::::::::::::::::
-!  -::-         Print program banner         -::-
-!  ::::::::::::::::::::::::::::::::::::::::::::::
-!
-!    Prepare input and output file
+!   Prepare input and output file
 !
     call output%init('eT.out', 'sequential', 'formatted')
     call disk%open_file(output, 'write', 'rewind')
@@ -79,16 +78,18 @@ program eT_program
     call input%init('eT.inp', 'sequential', 'formatted')
     call disk%open_file(input, 'read')
 !
-    write(output%unit,'(///t26,a)')'eT - a coupled cluster program '
-    write(output%unit,'(/t12,a)')  'S. D. Folkestad, E. F. Kjønstad, H. Koch and A. Skeidsvoll'
+!   Print program banner
+!
+    write(output%unit,'(///t26,a)') 'eT - a coupled cluster program '
+    write(output%unit,'(/t12,a)')   'S. D. Folkestad, E. F. Kjønstad, H. Koch and A. Skeidsvoll'
     flush(output%unit)
 
-    write(output%unit,'(//t3a)')'--------------------------------------------------------------------------------------------'
+    write(output%unit,'(//t3a)')    '--------------------------------------------------------------------------------------------'
     write(output%unit,'(/t3,a, a/)')'Contributor:       ','Contributions:'
-    write(output%unit,'(t3,a, a)')   'E. F. Kjønstad     ','(HF, UHF, CCS, MP2, Cholesky decomposition, DIIS-tool, Davidson-tool)'
-    write(output%unit,'(t3,a, a)')   'S. D. Folkestad    ','(HF, CCS, Cholesky decomposition, Davidson-tool, CVS)'
-    write(output%unit,'(t3,a, a)')   'A. Skeidsvoll      ','(MP2)'
-    write(output%unit,'(/t3a//)')'-------------------------------------------------------------------------------------------'
+    write(output%unit,'(t3,a, a)')  'E. F. Kjønstad     ','(HF, UHF, CCS, MP2, Cholesky decomposition, DIIS-tool, Davidson-tool)'
+    write(output%unit,'(t3,a, a)')  'S. D. Folkestad    ','(HF, CCS, Cholesky decomposition, Davidson-tool, CVS)'
+    write(output%unit,'(t3,a, a)')  'A. Skeidsvoll      ','(MP2)'
+    write(output%unit,'(/t3a//)')   '--------------------------------------------------------------------------------------------'
     flush(output%unit)
 !
 !   Prepare memory manager and disk manager
@@ -100,7 +101,7 @@ program eT_program
 !
     n_methods = get_n_methods()
 !
-!   ::  Hartree-Fock calculation (temporarily also cholesky decomposition) 
+!   ::  Hartree-Fock calculation (or: only Cholesky decomposition of ERIs)
 !
     if (n_methods == 0) then
 !
