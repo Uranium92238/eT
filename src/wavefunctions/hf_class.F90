@@ -32,7 +32,7 @@ module hf_class
       real(dp) :: coulomb_threshold    = 1.0D-8    ! screening threshold 
       real(dp) :: exchange_threshold   = 1.0D-8    ! screening threshold 
       real(dp) :: libint_epsilon       = 1.0D-16   ! ε for libint, integral precision given
-                                                   ! by sqrt(ε)
+                                                   ! approximately by sqrt(ε)
 !
 	contains
 !
@@ -770,20 +770,6 @@ contains
       if (allocated(wf%mo_fock)) call mem%dealloc(wf%mo_fock, wf%n_mo, wf%n_mo)
 !
    end subroutine destruct_mo_fock_hf
-!
-!
-!   subroutine destruct_mo_coefficients_hf(wf)
-!!!
-!!!    Destruct MO coefficients
-!!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!!
-!      implicit none
-!!
-!      class(hf) :: wf
-!!
-!      if (allocated(wf%orbital_coefficients)) call mem%dealloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
-!!
-!   end subroutine destruct_mo_coefficients_hf
 !
 !
    subroutine destruct_pivot_matrix_ao_overlap_hf(wf)

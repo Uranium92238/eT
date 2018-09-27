@@ -265,9 +265,8 @@ contains
       if (.not. converged) then 
 !   
          write(output%unit, '(t3,a)')   '---------------------------------------------------------------'
-         write(output%unit, '(/t3,a)')  'Was not able to converge the equations in the given number'
-         write(output%unit, '(t3,a/)')  'of maximum iterations.'
-         stop
+         write(output%unit, '(/t3,a)')  'Warning: was not able to converge the equations in the given'
+         write(output%unit, '(t3,a/)')  'number of maximum iterations.'
 !
       endif 
 !

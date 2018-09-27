@@ -76,6 +76,7 @@ module mo_integral_tool_class
       procedure :: construct_vvvv         => construct_vvvv_mo_integral_tool
 !
       procedure :: get_required_voov      => get_required_voov_mo_integral_tool
+      procedure :: get_required_vvoo      => get_required_vvoo_mo_integral_tool
 !
    end type mo_integral_tool
 !
@@ -2095,6 +2096,69 @@ contains
    end subroutine construct_vvvv_mo_integral_tool
 !
 !
+   function get_required_vvoo_mo_integral_tool(integrals, dim_1, dim_2, dim_3, dim_4)
+!!
+!!    Get vvvo required memory
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Dec 2017
+!!
+!!    Calculates and returns required memory to make vvvv electronic repulsion integral.
+!!
+!!    Here, dim_1, dim_2, dim_3, and dim_4 are the full dimension of indices 1-4.
+!!    They will typically be wf%n_v for dim_1 and dim_2 and wf%n_o for dim_3 and dim_4 and 
+!!    are therefore optionals. They will not necessarily have the standard values in multi-
+!!    level CC models.
+!!
+      implicit none
+!
+      class(mo_integral_tool), intent(in) :: integrals 
+!  
+      integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
+!
+      integer(i15) :: get_required_vvoo_mo_integral_tool
+!
+      if (present(dim_1) .and. present(dim_2) .and. present(dim_3) .and. present(dim_4)) then
+!
+         get_required_vvoo_mo_integral_tool = (dim_1*dim_2*dim_3*dim_4)
+!
+         get_required_vvoo_mo_integral_tool = get_required_vvoo_mo_integral_tool + &
+                                       (dim_1)*(dim_2)*(integrals%n_J) +                   &
+                                       (dim_3)*(dim_4)*(integrals%n_J)
+!
+         get_required_vvoo_mo_integral_tool = get_required_vvoo_mo_integral_tool + &
+                                       max(2*(dim_2)*(integrals%n_o)*(integrals%n_J),      &
+                                          (dim_2)*(integrals%n_o)*(integrals%n_J)+         & 
+                                          (dim_1)*(dim_2)*(integrals%n_J),                 &
+                                          2*(integrals%n_v)*(dim_3)*(integrals%n_J),       &
+                                          dim_3*(integrals%n_v)*(integrals%n_J) +          &
+                                          (dim_4)*(dim_3)*(integrals%n_J))
+           
+!
+      elseif (.not. (present(dim_1) .and. present(dim_2) .and. present(dim_3) .and. present(dim_4))) then
+!
+         get_required_vvoo_mo_integral_tool = (integrals%n_v**2)*(integrals%n_o**2)
+!
+         get_required_vvoo_mo_integral_tool = get_required_vvoo_mo_integral_tool + &
+                                                      (integrals%n_v**2)*(integrals%n_J) + & 
+                                                      (integrals%n_o**2)*(integrals%n_J)
+!
+         get_required_vvoo_mo_integral_tool = get_required_vvoo_mo_integral_tool +                &
+                  max(2*(integrals%n_v)*(integrals%n_o)*(integrals%n_J),                                  &
+                     (integrals%n_v)*(integrals%n_o)*(integrals%n_J)+ (integrals%n_v**2)*(integrals%n_J), &
+                     2*(integrals%n_v)*(integrals%n_o)*(integrals%n_J),                                   &
+                     (integrals%n_o)*(integrals%n_v)*(integrals%n_J) + (integrals%n_o**2)*(integrals%n_J))
+!
+      else
+!
+         call output%error_msg('call to get_vvoo_required_mem is missing some arguments.')
+         stop
+!
+      endif
+!
+      get_required_vvoo_mo_integral_tool = get_required_vvoo_mo_integral_tool
+!
+   end function get_required_vvoo_mo_integral_tool
+!
+!
    function get_required_voov_mo_integral_tool(integrals, dim_1, dim_2, dim_3, dim_4)
 !!
 !!    Get voov required memory
@@ -2152,6 +2216,7 @@ contains
       endif
 !
    end function get_required_voov_mo_integral_tool
+!
 !
 end module mo_integral_tool_class
 
