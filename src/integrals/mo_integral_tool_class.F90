@@ -2116,19 +2116,15 @@ contains
       integer(i15) :: get_required_voov_mo_integral_tool
 !
       dim_1_local = integrals%n_v
-!
       if (present(dim_1)) dim_1_local = dim_1
 !
       dim_2_local = integrals%n_o
-!
       if (present(dim_2)) dim_2_local = dim_2
 !
       dim_3_local = integrals%n_o
-!
       if (present(dim_3)) dim_3_local = dim_3
 !
       dim_4_local = integrals%n_v
-!
       if (present(dim_4)) dim_4_local = dim_4
 !
       if (integrals%eri_t1_file) then
@@ -2138,7 +2134,7 @@ contains
       elseif (integrals%cholesky_t1_file) then
 !
          get_required_voov_mo_integral_tool = (dim_1_local)*(dim_2_local)*(integrals%n_J) + &
-                                                (dim_3_local)*(dim_4_local)*(integrals%n_J)
+                                              (dim_3_local)*(dim_4_local)*(integrals%n_J)
 !
       elseif (integrals%eri_file) then
 !
@@ -2147,7 +2143,7 @@ contains
       else
 !
          get_required_voov_mo_integral_tool = (dim_1_local)*(dim_2_local)*(integrals%n_J) + &
-                                                (dim_3_local)*(dim_4_local)*(integrals%n_J)
+                                              (dim_3_local)*(dim_4_local)*(integrals%n_J)
 !
          get_required_voov_mo_integral_tool = get_required_voov_mo_integral_tool + &
                      max((dim_2_local)*(integrals%n_v)*(integrals%n_J) + (dim_2_local)*(integrals%n_o)*(integrals%n_J), &
@@ -2155,7 +2151,7 @@ contains
 !
       endif
 !
-   end function
+   end function get_required_voov_mo_integral_tool
 !
 end module mo_integral_tool_class
 

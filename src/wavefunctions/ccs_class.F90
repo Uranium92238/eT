@@ -2248,12 +2248,12 @@ contains
          call dgemm('N', 'N',                   &
                      (wf%n_v)*(wf%n_o),         &
                      1,                         &
-                     (wf%n_o)*(batch_b%length),   &
+                     (wf%n_o)*(batch_b%length), &
                      one,                       &
                      L_ai_jb,                   &
                      (wf%n_v)*(wf%n_o),         &
                      c_jb,                      &
-                     (wf%n_o)*(batch_b%length),   &
+                     (wf%n_o)*(batch_b%length), &
                      one,                       &
                      rho1,                      &
                      (wf%n_v)*(wf%n_o))      

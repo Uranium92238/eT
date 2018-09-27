@@ -1002,7 +1002,7 @@ contains
    end subroutine get_max_shell_size_molecular_system
 !
 !
-   type(interval) function get_shell_limits_molecular_system(molecule, A)
+   function get_shell_limits_molecular_system(molecule, A)
 !!
 !!    Get shell limits
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -1014,6 +1014,12 @@ contains
       integer(kind=8), intent(in) :: A
 !
       integer(kind=8) :: I, J
+!
+      type(interval) :: get_shell_limits_molecular_system
+!
+      get_shell_limits_molecular_system%first = 0
+      get_shell_limits_molecular_system%last  = 0
+      get_shell_limits_molecular_system%size  = 0
 !
       do I = 1, molecule%n_atoms
 !
@@ -1031,10 +1037,12 @@ contains
 !
       enddo
 !
+       if (get_shell_limits_molecular_system%size == 0) call output%error_msg('in get_shell_limits.')
+!
    end function get_shell_limits_molecular_system
 !
 !
-   integer(i15) function basis2shell_molecular_system(molecule, basis_function)
+   function basis2shell_molecular_system(molecule, basis_function)
 !!
 !!    Basis2shell
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -1045,7 +1053,11 @@ contains
 !
       integer(i15), intent(in) :: basis_function
 !
+      integer(i15) :: basis2shell_molecular_system
+!
       integer(i15) :: I, J
+!
+      basis2shell_molecular_system = 0
 !
       do I = 1, molecule%n_atoms
          do J = 1, molecule%atoms(I)%n_shells
@@ -1059,6 +1071,8 @@ contains
 !
          enddo
       enddo
+!
+      if (basis2shell_molecular_system == 0) call output%error_msg('in basis2shell.')
 !
    end function basis2shell_molecular_system
 !
@@ -1121,7 +1135,7 @@ contains
    end subroutine SAD_molecular_system
 !
 !
-   integer function shell_to_atom_molecular_system(molecule, shell)
+   function shell_to_atom_molecular_system(molecule, shell)
 !!
 !!
 !!
@@ -1131,6 +1145,10 @@ contains
       integer(i15), intent(in) :: shell
 !
       integer(i15) :: I, accumulated_shells
+!
+      integer(i15) :: shell_to_atom_molecular_system
+!
+      shell_to_atom_molecular_system = 0
 !
       if (shell .le. 0) then
 !
@@ -1157,6 +1175,8 @@ contains
          endif    
 !
       enddo
+!     
+      if (shell_to_atom_molecular_system == 0) call output%error_msg(' in shell_to_atom')
 !
    end function shell_to_atom_molecular_system
 !

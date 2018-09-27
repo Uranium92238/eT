@@ -38,95 +38,95 @@ module hf_class
 !
 !     Preparation and cleanup routines 
 !
-      procedure :: prepare                            => prepare_hf
-      procedure :: cleanup                            => cleanup_hf
-      procedure :: read_settings                      => read_settings_hf
-      procedure :: read_hf_settings                   => read_hf_settings_hf
-      procedure :: construct_ao_overlap               => construct_ao_overlap_hf
-      procedure :: decompose_ao_overlap               => decompose_ao_overlap_hf
-      procedure :: print_wavefunction_summary         => print_wavefunction_summary_hf
+      procedure :: prepare                                  => prepare_hf
+      procedure :: cleanup                                  => cleanup_hf
+      procedure :: read_settings                            => read_settings_hf
+      procedure :: read_hf_settings                         => read_hf_settings_hf
+      procedure :: construct_ao_overlap                     => construct_ao_overlap_hf
+      procedure :: decompose_ao_overlap                     => decompose_ao_overlap_hf
+      procedure :: print_wavefunction_summary               => print_wavefunction_summary_hf
 !
 !     AO Fock and energy related routines 
 !
-      procedure :: construct_ao_fock                  => construct_ao_fock_hf            
-      procedure :: construct_ao_fock_cumulative       => construct_ao_fock_cumulative_hf 
-      procedure :: ao_fock_construction_loop          => ao_fock_construction_loop_hf
-      procedure :: ao_fock_construction_loop_new      => ao_fock_construction_loop_new_hf
-      procedure :: ao_fock_coulomb_construction_loop  => ao_fock_coulomb_construction_loop_hf
-      procedure :: ao_fock_exchange_construction_loop => ao_fock_exchange_construction_loop_hf
-      procedure :: construct_ao_fock_SAD              => construct_ao_fock_SAD_hf
-      procedure :: construct_mo_fock                  => construct_mo_fock_hf
-      procedure :: set_ao_fock                        => set_ao_fock_hf
-      procedure :: get_fock_ov                        => get_fock_ov_hf
-      procedure :: calculate_hf_energy_from_fock      => calculate_hf_energy_from_fock_hf
-      procedure :: calculate_hf_energy_from_G         => calculate_hf_energy_from_G_hf
-      procedure :: initialize_fock                    => initialize_fock_hf
-      procedure :: destruct_fock                      => destruct_fock_hf
-      procedure :: update_fock_and_energy             => update_fock_and_energy_hf
-      procedure :: update_fock_and_energy_cumulative  => update_fock_and_energy_cumulative_hf
+      procedure :: construct_ao_fock                        => construct_ao_fock_hf            
+      procedure :: construct_ao_fock_cumulative             => construct_ao_fock_cumulative_hf 
+      procedure :: ao_fock_construction_loop                => ao_fock_construction_loop_hf
+      procedure :: ao_fock_construction_loop_new            => ao_fock_construction_loop_new_hf
+      procedure :: ao_fock_coulomb_construction_loop        => ao_fock_coulomb_construction_loop_hf
+      procedure :: ao_fock_exchange_construction_loop       => ao_fock_exchange_construction_loop_hf
+      procedure :: construct_ao_fock_SAD                    => construct_ao_fock_SAD_hf
+      procedure :: construct_mo_fock                        => construct_mo_fock_hf
+      procedure :: set_ao_fock                              => set_ao_fock_hf
+      procedure :: get_fock_ov                              => get_fock_ov_hf
+      procedure :: calculate_hf_energy_from_fock            => calculate_hf_energy_from_fock_hf
+      procedure :: calculate_hf_energy_from_G               => calculate_hf_energy_from_G_hf
+      procedure :: initialize_fock                          => initialize_fock_hf
+      procedure :: destruct_fock                            => destruct_fock_hf
+      procedure :: update_fock_and_energy                   => update_fock_and_energy_hf
+      procedure :: update_fock_and_energy_cumulative        => update_fock_and_energy_cumulative_hf
 !
 !     AO Density related routines 
 !
-      procedure :: construct_ao_density               => construct_ao_density_hf
-      procedure :: rotate_ao_density                  => rotate_ao_density_hf
-      procedure :: purify_ao_density                  => purify_ao_density_hf
-      procedure :: decompose_ao_density               => decompose_ao_density_hf
-      procedure :: get_ao_density                     => get_ao_density_hf
-      procedure :: set_ao_density                     => set_ao_density_hf
-      procedure :: initialize_density                 => initialize_density_hf
-      procedure :: update_ao_density                  => update_ao_density_hf
-      procedure :: save_ao_density                    => save_ao_density_hf
-      procedure :: set_initial_ao_density_guess       => set_initial_ao_density_guess_hf
-      procedure :: set_ao_density_to_sad              => set_ao_density_to_sad_hf 
-      procedure :: set_ao_density_to_core_guess       => set_ao_density_to_core_guess_hf
-      procedure :: get_n_electrons_in_density         => get_n_electrons_in_density_hf
-      procedure :: construct_sp_density_schwarz       => construct_sp_density_schwarz_hf
+      procedure :: construct_ao_density                     => construct_ao_density_hf
+      procedure :: rotate_ao_density                        => rotate_ao_density_hf
+      procedure :: purify_ao_density                        => purify_ao_density_hf
+      procedure :: decompose_ao_density                     => decompose_ao_density_hf
+      procedure :: get_ao_density                           => get_ao_density_hf
+      procedure :: set_ao_density                           => set_ao_density_hf
+      procedure :: initialize_density                       => initialize_density_hf
+      procedure :: update_ao_density                        => update_ao_density_hf
+      procedure :: save_ao_density                          => save_ao_density_hf
+      procedure :: set_initial_ao_density_guess             => set_initial_ao_density_guess_hf
+      procedure :: set_ao_density_to_sad                    => set_ao_density_to_sad_hf 
+      procedure :: set_ao_density_to_core_guess             => set_ao_density_to_core_guess_hf
+      procedure :: get_n_electrons_in_density               => get_n_electrons_in_density_hf
+      procedure :: construct_sp_density_schwarz             => construct_sp_density_schwarz_hf
 !
 !     MO orbital related routines 
 !
-      procedure :: do_roothan_hall                    => do_roothan_hall_hf
-      procedure :: initialize_orbitals                => initialize_orbitals_hf
-      procedure :: roothan_hall_update_orbitals       => roothan_hall_update_orbitals_hf
-      procedure :: print_orbital_energies             => print_orbital_energies_hf
-      procedure :: mo_transform                       => mo_transform_hf
-      procedure :: mo_transform_and_save_h            => mo_transform_and_save_h_hf
+      procedure :: do_roothan_hall                          => do_roothan_hall_hf
+      procedure :: initialize_orbitals                      => initialize_orbitals_hf
+      procedure :: roothan_hall_update_orbitals             => roothan_hall_update_orbitals_hf
+      procedure :: print_orbital_energies                   => print_orbital_energies_hf
+      procedure :: mo_transform                             => mo_transform_hf
+      procedure :: mo_transform_and_save_h                  => mo_transform_and_save_h_hf
 !
 !     Class variable initialize and destruct routines
 !
-      procedure :: initialize_ao_density              => initialize_ao_density_hf
-      procedure :: initialize_ao_fock                 => initialize_ao_fock_hf
-      procedure :: initialize_mo_fock                 => initialize_mo_fock_hf
-      procedure :: initialize_ao_overlap              => initialize_ao_overlap_hf
-      procedure :: initialize_pivot_matrix_ao_overlap => initialize_pivot_matrix_ao_overlap_hf
-      procedure :: initialize_cholesky_ao_overlap     => initialize_cholesky_ao_overlap_hf
+      procedure :: initialize_ao_density                    => initialize_ao_density_hf
+      procedure :: initialize_ao_fock                       => initialize_ao_fock_hf
+      procedure :: initialize_mo_fock                       => initialize_mo_fock_hf
+      procedure :: initialize_ao_overlap                    => initialize_ao_overlap_hf
+      procedure :: initialize_pivot_matrix_ao_overlap       => initialize_pivot_matrix_ao_overlap_hf
+      procedure :: initialize_cholesky_ao_overlap           => initialize_cholesky_ao_overlap_hf
 !
-      procedure :: destruct_ao_density                => destruct_ao_density_hf
-      procedure :: destruct_ao_fock                   => destruct_ao_fock_hf
-      procedure :: destruct_mo_fock                   => destruct_mo_fock_hf
-      procedure :: destruct_ao_overlap                => destruct_ao_overlap_hf
-      procedure :: destruct_pivot_matrix_ao_overlap   => destruct_pivot_matrix_ao_overlap_hf
-      procedure :: destruct_cholesky_ao_overlap       => destruct_cholesky_ao_overlap_hf
+      procedure :: destruct_ao_density                      => destruct_ao_density_hf
+      procedure :: destruct_ao_fock                         => destruct_ao_fock_hf
+      procedure :: destruct_mo_fock                         => destruct_mo_fock_hf
+      procedure :: destruct_ao_overlap                      => destruct_ao_overlap_hf
+      procedure :: destruct_pivot_matrix_ao_overlap         => destruct_pivot_matrix_ao_overlap_hf
+      procedure :: destruct_cholesky_ao_overlap             => destruct_cholesky_ao_overlap_hf
 !
 !     Gradient and Hessian related routines
 !
-      procedure :: construct_projection_matrices      => construct_projection_matrices_hf
-      procedure :: project_redundant_rotations        => project_redundant_rotations_hf
+      procedure :: construct_projection_matrices            => construct_projection_matrices_hf
+      procedure :: project_redundant_rotations              => project_redundant_rotations_hf
 !
-      procedure :: construct_roothan_hall_hessian     => construct_roothan_hall_hessian_hf
-      procedure :: construct_roothan_hall_gradient    => construct_roothan_hall_gradient_hf
+      procedure :: construct_roothan_hall_hessian           => construct_roothan_hall_hessian_hf
+      procedure :: construct_roothan_hall_gradient          => construct_roothan_hall_gradient_hf
 !
 !     Integral related routines 
 !
-      procedure :: construct_sp_eri_schwarz           => construct_sp_eri_schwarz_hf
-      procedure :: get_n_sig_eri_sp                   => get_n_sig_eri_sp_hf
-      procedure :: get_ao_h_wx                        => get_ao_h_wx_hf
-      procedure :: get_ao_s_wx                        => get_ao_s_wx_hf
-      procedure :: get_ao_mu_wx                       => get_ao_mu_wx_hf
+      procedure :: construct_sp_eri_schwarz                 => construct_sp_eri_schwarz_hf
+      procedure :: get_n_sig_eri_sp                         => get_n_sig_eri_sp_hf
+      procedure :: get_ao_h_wx                              => get_ao_h_wx_hf
+      procedure :: get_ao_s_wx                              => get_ao_s_wx_hf
+      procedure :: get_ao_mu_wx                             => get_ao_mu_wx_hf
 !
-      procedure :: print_screening_settings => print_screening_settings_hf
-      procedure :: set_n_mo       => set_n_mo_hf
+      procedure :: print_screening_settings                 => print_screening_settings_hf
+      procedure :: set_n_mo                                 => set_n_mo_hf
 !
-      procedure :: set_screening_and_precision_thresholds => set_screening_and_precision_thresholds_hf
+      procedure :: set_screening_and_precision_thresholds   => set_screening_and_precision_thresholds_hf
 !
    end type hf
 !
