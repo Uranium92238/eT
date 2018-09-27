@@ -19,21 +19,21 @@ module davidson_cvs_cc_es_solver_class
 !
    contains
 !
-      procedure :: print_banner => print_banner_davidson_cvs_cc_es_solver
+      procedure :: print_banner           => print_banner_davidson_cvs_cc_es_solver
       !procedure :: print_summary  => print_summary_davidson_cvs_cc_es_solver
 !
-      procedure :: read_settings  => read_settings_davidson_cvs_cc_es_solver
+      procedure :: read_settings          => read_settings_davidson_cvs_cc_es_solver
 !
       !procedure :: print_settings => print_settings_davidson_cvs_cc_es_solver
 !
-      procedure :: set_start_vectors         => set_start_vectors_davidson_cvs_cc_es_solver
-      procedure :: set_projection_vector     => set_projection_vector_davidson_cvs_cc_es_solver
+      procedure :: set_start_vectors      => set_start_vectors_davidson_cvs_cc_es_solver
+      procedure :: set_projection_vector  => set_projection_vector_davidson_cvs_cc_es_solver
 !
-      procedure :: initialize_core_MOs => initialize_core_MOs_davidson_cvs_cc_es_solver
-      procedure :: initialize_cores    => initialize_cores_davidson_cvs_cc_es_solver
+      procedure :: initialize_core_MOs    => initialize_core_MOs_davidson_cvs_cc_es_solver
+      procedure :: initialize_cores       => initialize_cores_davidson_cvs_cc_es_solver
 !
-      procedure :: destruct_core_MOs => destruct_core_MOs_davidson_cvs_cc_es_solver
-      procedure :: destruct_cores    => destruct_cores_davidson_cvs_cc_es_solver
+      procedure :: destruct_core_MOs      => destruct_core_MOs_davidson_cvs_cc_es_solver
+      procedure :: destruct_cores         => destruct_cores_davidson_cvs_cc_es_solver
 !
    end type davidson_cvs_cc_es_solver
 !
