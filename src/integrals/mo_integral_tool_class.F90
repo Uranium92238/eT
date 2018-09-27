@@ -33,47 +33,49 @@ module mo_integral_tool_class
 !
    contains
 !
-      procedure :: prepare => prepare_mo_integral_tool
+      procedure :: prepare                => prepare_mo_integral_tool
   !    procedure :: cleanup => cleanup_mo_integral_tool
 !
-      procedure :: need_t1 => need_t1_mo_integral_tool
+      procedure :: need_t1                => need_t1_mo_integral_tool
 !
-      procedure :: read_cholesky => read_cholesky_mo_integral_tool
-      procedure :: read_cholesky_t1 => read_cholesky_t1_mo_integral_tool
+      procedure :: read_cholesky          => read_cholesky_mo_integral_tool
+      procedure :: read_cholesky_t1       => read_cholesky_t1_mo_integral_tool
 !
-      procedure :: read_cholesky_ia => read_cholesky_ia_mo_integral_tool
+      procedure :: read_cholesky_ia       => read_cholesky_ia_mo_integral_tool
 !
-      procedure :: construct_cholesky_ij => construct_cholesky_ij_mo_integral_tool
-      procedure :: construct_cholesky_ab => construct_cholesky_ab_mo_integral_tool
-      procedure :: construct_cholesky_ai => construct_cholesky_ai_mo_integral_tool
+      procedure :: construct_cholesky_ij  => construct_cholesky_ij_mo_integral_tool
+      procedure :: construct_cholesky_ab  => construct_cholesky_ab_mo_integral_tool
+      procedure :: construct_cholesky_ai  => construct_cholesky_ai_mo_integral_tool
 !
-      procedure :: read_cholesky_ai_t1 => read_cholesky_ai_t1_mo_integral_tool
-      procedure :: read_cholesky_ij_t1 => read_cholesky_ij_t1_mo_integral_tool
-      procedure :: read_cholesky_ab_t1 => read_cholesky_ab_t1_mo_integral_tool
+      procedure :: read_cholesky_ai_t1    => read_cholesky_ai_t1_mo_integral_tool
+      procedure :: read_cholesky_ij_t1    => read_cholesky_ij_t1_mo_integral_tool
+      procedure :: read_cholesky_ab_t1    => read_cholesky_ab_t1_mo_integral_tool
 !
-      procedure :: set_full_index => set_full_index_mo_integral_tool
+      procedure :: set_full_index         => set_full_index_mo_integral_tool
 !
-      procedure :: read_ovov => read_ovov_mo_integral_tool
+      procedure :: read_ovov              => read_ovov_mo_integral_tool
 !
-      procedure :: construct_oooo => construct_oooo_mo_integral_tool
+      procedure :: construct_oooo         => construct_oooo_mo_integral_tool
 !
-      procedure :: construct_ooov => construct_ooov_mo_integral_tool
-      procedure :: construct_oovo => construct_oovo_mo_integral_tool
-      procedure :: construct_ovoo => construct_ovoo_mo_integral_tool
-      procedure :: construct_vooo => construct_vooo_mo_integral_tool
+      procedure :: construct_ooov         => construct_ooov_mo_integral_tool
+      procedure :: construct_oovo         => construct_oovo_mo_integral_tool
+      procedure :: construct_ovoo         => construct_ovoo_mo_integral_tool
+      procedure :: construct_vooo         => construct_vooo_mo_integral_tool
 !
-      procedure :: construct_vvvo => construct_vvvo_mo_integral_tool
-      procedure :: construct_vvov => construct_vvov_mo_integral_tool
-      procedure :: construct_vovv => construct_vovv_mo_integral_tool
-      procedure :: construct_ovvv => construct_ovvv_mo_integral_tool
+      procedure :: construct_vvvo         => construct_vvvo_mo_integral_tool
+      procedure :: construct_vvov         => construct_vvov_mo_integral_tool
+      procedure :: construct_vovv         => construct_vovv_mo_integral_tool
+      procedure :: construct_ovvv         => construct_ovvv_mo_integral_tool
 !
-      procedure :: construct_vvoo => construct_vvoo_mo_integral_tool
-      procedure :: construct_oovv => construct_oovv_mo_integral_tool
-      procedure :: construct_vovo => construct_vovo_mo_integral_tool
-      procedure :: construct_ovvo => construct_ovvo_mo_integral_tool
-      procedure :: construct_voov => construct_voov_mo_integral_tool
+      procedure :: construct_vvoo         => construct_vvoo_mo_integral_tool
+      procedure :: construct_oovv         => construct_oovv_mo_integral_tool
+      procedure :: construct_vovo         => construct_vovo_mo_integral_tool
+      procedure :: construct_ovvo         => construct_ovvo_mo_integral_tool
+      procedure :: construct_voov         => construct_voov_mo_integral_tool
 !
-      procedure :: construct_vvvv => construct_vvvv_mo_integral_tool
+      procedure :: construct_vvvv         => construct_vvvv_mo_integral_tool
+!
+      procedure :: get_required_voov      => get_required_voov_mo_integral_tool
 !
    end type mo_integral_tool
 !
@@ -2093,7 +2095,7 @@ contains
    end subroutine construct_vvvv_mo_integral_tool
 !
 !
-   module function get_required_voov_mo_integral_tool(wf, dim_1, dim_2, dim_3, dim_4)
+   function get_required_voov_mo_integral_tool(integrals, dim_1, dim_2, dim_3, dim_4)
 !!
 !!    Get voov required memory
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
@@ -2108,7 +2110,8 @@ contains
       class(mo_integral_tool), intent(in) :: integrals
 !  
       integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
-      integer(i15), intent(in), optional  :: dim_1_local, dim_2_local, dim_3_local, dim_4_local
+!
+      integer(i15) :: dim_1_local, dim_2_local, dim_3_local, dim_4_local
 !
       integer(i15) :: get_required_voov_mo_integral_tool
 !
@@ -2134,7 +2137,8 @@ contains
 !
       elseif (integrals%cholesky_t1_file) then
 !
-         get_required_voov_mo_integral_tool = (dim_1_local)*(dim_2_local)*(integrals%n_J) + (dim_3_local)*(dim_4_local)*(integrals%n_J)
+         get_required_voov_mo_integral_tool = (dim_1_local)*(dim_2_local)*(integrals%n_J) + &
+                                                (dim_3_local)*(dim_4_local)*(integrals%n_J)
 !
       elseif (integrals%eri_file) then
 !
@@ -2142,7 +2146,9 @@ contains
 !
       else
 !
-         get_required_voov_mo_integral_tool = (dim_1_local)*(dim_2_local)*(integrals%n_J) + (dim_3_local)*(dim_4_local)*(integrals%n_J)
+         get_required_voov_mo_integral_tool = (dim_1_local)*(dim_2_local)*(integrals%n_J) + &
+                                                (dim_3_local)*(dim_4_local)*(integrals%n_J)
+!
          get_required_voov_mo_integral_tool = get_required_voov_mo_integral_tool + &
                      max((dim_2_local)*(integrals%n_v)*(integrals%n_J) + (dim_2_local)*(integrals%n_o)*(integrals%n_J), &
                          (dim_1_local)*(integrals%n_v)*(integrals%n_J) + (dim_1_local)*(integrals%n_o)*(integrals%n_J))

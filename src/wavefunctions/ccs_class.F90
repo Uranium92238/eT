@@ -2191,12 +2191,14 @@ contains
 !
       type(batching_index) :: batch_b
 !
+      integer(i15) :: required, j, b, b_red, current_b_batch
+!
       call batch_b%init(wf%n_v) 
 !
-      required = max((wf%n_o)*(wf%n_v)*(wf%n_o)*(batch_b%size)*dp + wf%integrals%get_required_voov, &
-                     (wf%n_o)*(wf%n_v)*(wf%n_o)*(batch_b%size)*2*dp, + wf%integrals%get_required_vvoo)
+      required = max((wf%n_o)*(wf%n_v)*(wf%n_o)*(batch_b%length) + wf%integrals%get_required_voov(), &
+                     (wf%n_o)*(wf%n_v)*(wf%n_o)*(batch_b%length)*2, + wf%integrals%get_required_vvoo())
 !
-      call wf%mem%num_batch(batch_b, required)
+      call mem%num_batch(batch_b, required)
 !
       do current_b_batch = 1, batch_b%num_batches
 !
@@ -2204,7 +2206,7 @@ contains
 !
 !        Get g_ai_jb integral, then prepare for batch over a 
 !
-         call mem%alloc(L_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(batch_b%size))
+         call mem%alloc(L_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(batch_b%length))
 !
          call wf%get_voov(L_ai_jb,                       &
                            1, wf%n_v,                    &
@@ -2212,11 +2214,11 @@ contains
                            1, wf%n_o,                    &
                            batch_b%first, batch_b%last)   
 !
-         call dscal(((wf%n_o)**2)*(batch_b%size)*(wf%n_v), two, L_ai_jb, 1)
+         call dscal(((wf%n_o)**2)*(batch_b%length)*(wf%n_v), two, L_ai_jb, 1)
 !
 !        Construct L_ai_jb = 2 g_ai_jb - g_ab_ji
 !
-         call mem%alloc(g_ab_ji, (wf%n_v)*(batch_b%size), (wf%n_o)**2)
+         call mem%alloc(g_ab_ji, (wf%n_v)*(batch_b%length), (wf%n_o)**2)
 !
          call wf%get_vvoo(g_ab_ji,                       &
                            1, wf%n_v,                    &
@@ -2224,13 +2226,13 @@ contains
                            1, wf%n_o,                    &
                            1, wf%n_o)  
 !
-         call add_1432_to_1234(-one, g_ab_ji, L_ai_jb, wf%n_v, wf%n_o, wf%n_o, batch_b%size)
+         call add_1432_to_1234(-one, g_ab_ji, L_ai_jb, wf%n_v, wf%n_o, wf%n_o, batch_b%length)
 !
-         call mem%dealloc(g_ab_ji, (wf%n_v)*(batch_b%size), (wf%n_o)**2)
+         call mem%dealloc(g_ab_ji, (wf%n_v)*(batch_b%length), (wf%n_o)**2)
 !
 !        Reorder c1 to do multiply with L_ai_jb
 !
-         call mem%alloc(c_jb, (wf%n_o), (batch_b%size))
+         call mem%alloc(c_jb, (wf%n_o), (batch_b%length))
 !
          do j = 1, wf%n_o 
             do b = batch_b%first, batch_b%last 
@@ -2246,18 +2248,18 @@ contains
          call dgemm('N', 'N',                   &
                      (wf%n_v)*(wf%n_o),         &
                      1,                         &
-                     (wf%n_o)*(batch_b%size),   &
+                     (wf%n_o)*(batch_b%length),   &
                      one,                       &
                      L_ai_jb,                   &
                      (wf%n_v)*(wf%n_o),         &
                      c_jb,                      &
-                     (wf%n_o)*(batch_b%size),   &
+                     (wf%n_o)*(batch_b%length),   &
                      one,                       &
                      rho1,                      &
                      (wf%n_v)*(wf%n_o))      
 !
-         call mem%dealloc(L_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(batch_b%size))
-         call mem%dealloc(c_jb, (wf%n_o), (batch_b%size))
+         call mem%dealloc(L_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(batch_b%length))
+         call mem%dealloc(c_jb, (wf%n_o), (batch_b%length))
 !
       enddo
 !
