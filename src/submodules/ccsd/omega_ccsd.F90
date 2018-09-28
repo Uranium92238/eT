@@ -61,7 +61,7 @@ contains
 !
 !     Estimated memory required to construct g_adkc
 !
-    !  required = wf%integrals%get_required_vvov()
+      required = wf%integrals%get_required_vvov()
 !
 !     Initialization of the batching variable
 !
