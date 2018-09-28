@@ -823,13 +823,13 @@ contains
       real(dp), dimension(dim, dim), intent(in)  :: matrix
       real(dp), dimension(dim, dim), intent(out) :: cholesky_vectors
 !
-      integer(i6), dimension(dim) :: used_diag
+      integer(kind=4), dimension(dim) :: used_diag
 !
       integer(kind=4) :: n_vectors_4
 !
       real(dp), dimension(:), allocatable :: work  ! work array for LAPACK
 !
-      integer(i6) :: info
+      integer(kind=4) :: info
       integer(i15) :: I, J
 !
       cholesky_vectors = matrix
@@ -1454,6 +1454,31 @@ contains
                  m)
 !
    end subroutine simple_dgemm
+!
+!
+   subroutine trans(A, A_trans, dim)
+!!
+!!    Transpose 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!
+      implicit none
+!
+      real(dp), dimension(dim, dim), intent(in) :: A
+      real(dp), dimension(dim, dim), intent(out) :: A_trans
+!
+      integer(i15) :: dim, n, m
+!
+!$omp parallel do private(m, n) shared(A, A_trans)
+      do m = 1, dim 
+         do n = 1, dim 
+!
+            A_trans(n, m) = A(m, n)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine trans
 !
 !
 end module array_utilities
