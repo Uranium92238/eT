@@ -2391,13 +2391,13 @@ contains
          write(output%unit, *)'Un capuccio per favor'
          flush(output%unit)
 !
-!!$omp parallel do &
-!!$omp private(AB_sp, CD_sp, I, A, B, A_interval, &
-!!$omp B_interval, C, D, C_interval, D_interval, &
-!!$omp basis_aops_in_CD_sp, current_aop_in_sp, g_AB_CD, &
-!!$omp w, x, y, z, wx, yz, wx_packed, L, J) &
-!!$omp shared(g_wx_L, AB_info, basis_shell_info, cholesky_basis) &
-!!$omp schedule(guided)
+!$omp parallel do &
+!$omp private(AB_sp, CD_sp, I, A, B, A_interval, &
+!$omp B_interval, C, D, C_interval, D_interval, &
+!$omp basis_aops_in_CD_sp, current_aop_in_sp, g_AB_CD, &
+!$omp w, x, y, z, wx, yz, wx_packed, L, J) &
+!$omp shared(g_wx_L, AB_info, basis_shell_info, cholesky_basis) &
+!$omp schedule(guided)
          do AB_sp = 1, n_AB_included
 !
             A = AB_info(AB_sp, 2)
@@ -2488,7 +2488,7 @@ contains
             enddo ! CD
 !
          enddo ! AB
-!!$omp end parallel do
+!$omp end parallel do
 !
          call mem%dealloc_int(AB_info, n_AB_included, 3)
 !
