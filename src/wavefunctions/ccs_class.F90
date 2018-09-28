@@ -23,7 +23,7 @@ module ccs_class
 !
       real(dp) :: hf_energy 
 !
-      integer(i15)                           :: n_amplitudes 
+      integer(i15)                           :: n_amplitudes
       real(dp), dimension(:,:), allocatable  :: t1
 !
       real(dp), dimension(:,:), allocatable  :: fock_ij
