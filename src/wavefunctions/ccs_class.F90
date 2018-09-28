@@ -2274,7 +2274,7 @@ contains
                            1, wf%n_o,  &
                            batch_b%first, batch_b%last)   
 !
-         call dscal(((wf%n_o)**2)*(wf%n_v*)*(batch_b%length), two, L_ai_jb, 1)
+         call dscal(((wf%n_o)**2)*(wf%n_v)*(batch_b%length), two, L_ai_jb, 1)
 !
 !        Construct L_ai_jb = 2 g_ai_jb - g_ab_ji
 !
