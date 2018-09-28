@@ -145,11 +145,11 @@ contains
 !
 !     Form u_al_ck = u_kl^ac = 2 * t_kl^ac - t_lk^ac
 !
-!     Squareup amplitudes and reorder: t_ak_cl to t_al_ck?
+!     Squareup amplitudes and reorder: t_ak_cl to t_al_ck
 !     u_al_ck = 2 * t_kl^ac - t_lk^ac = 2 * t_al_ck(al,ck) - t_al_ck(ak,cl)
 !
       call mem%alloc(t_al_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*wf%n_o)
-!      call squareup_and_sort_1234_to_1432(wf%t2am, t_al_ck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call squareup_and_sort_1234_to_1432(wf%t2, t_al_ck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%alloc(u_al_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
       u_al_ck = zero
