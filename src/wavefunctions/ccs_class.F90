@@ -2165,7 +2165,7 @@ contains
    end subroutine jacobian_ccs_a1_ccs
 !
 !
-   module subroutine jacobian_ccs_b1_ccs(wf, rho1, c1)
+   subroutine jacobian_ccs_b1_ccs(wf, rho1, c1)
 !!
 !!    Jacobian CCS B1 
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
