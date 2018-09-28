@@ -1107,4 +1107,175 @@ contains
       call mem%dealloc(Y_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine omega_ccsd_c2_ccsd
+!
+!
+   module subroutine omega_ccsd_d2_ccsd(wf, omega2)
+!!
+!!    Omega D2
+!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad,
+!!    Andreas Skeidsvoll and Alice Balba, 2018
+!!
+!!    Calculates the D2 term,
+!!
+!!      D2: sum_ck u_jk^bc g_aikc
+!!        + 1/4 * sum_ck u_jk^bc sum_dl L_ldkc u_il^ad,
+!!
+!!    where
+!!
+!!        u_jk^bc = 2 * t_jk^bc - t_kj^bc,
+!!        L_ldkc  = 2 * g_ldkc  - g_lckd.
+!!
+!!    The first and second terms are referred to as D2.1 and D2.2.
+!!    All terms are added to the omega vector of the wavefunction object wf.
+!!
+!!    The routine adds the terms in the following order: D2.2, D2.1
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2, 1), intent(inout):: omega2
+!
+      real(dp), dimension(:,:), allocatable :: omega2_ai_bj ! For storing D2.3, D2.2 & D2.1
+!
+!     Vectors for D2.2 term
+!
+      real(dp), dimension(:,:), allocatable :: g_ld_kc ! g_ldkc
+      real(dp), dimension(:,:), allocatable :: L_ld_kc ! L_ldkc = 2 * g_ldkc - g_lckd
+      real(dp), dimension(:,:), allocatable :: t_ai_dl ! t_il^ad
+      real(dp), dimension(:,:), allocatable :: u_ai_dl ! u_il^ad = 2 * t_il^ad - t_li^ad
+      real(dp), dimension(:,:), allocatable :: u_ai_ld ! u_il^ad = 2 * t_il^ad - t_li^ad
+      real(dp), dimension(:,:), allocatable :: Z_ai_kc ! An intermediate, see below
+!
+      real(dp), dimension(:,:), allocatable :: g_ai_kc ! g_aikc
+      real(dp), dimension(:,:), allocatable :: u_kc_bj ! u_jk^bc
+!
+!     Vectors for D2.1 term
+!
+      real(dp), dimension(:,:), allocatable :: g_ai_ck ! g_acki
+      real(dp), dimension(:,:), allocatable :: g_ac_ki ! g_acki; a is batched over
+      real(dp), dimension(:,:), allocatable :: u_ck_bj ! u_jk^bc
+!
+!     :: Calculate the D2.2 term of omega ::
+!
+!     Get g_ld_kc = g_ldkc
+!
+      call mem%alloc(g_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+      call wf%get_ovov(g_ld_kc)
+!
+!     Form L_ld_kc = L_ldkc = 2*g_ld_kc(ld,kc) - g_ld_kc(lc,kd)
+!
+      call mem%alloc(L_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      L_ld_kc = zero
+!
+      call add_1432_to_1234(-one, g_ld_kc, L_ld_kc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call daxpy((wf%n_o)**2*(wf%n_v)**2, two, g_ld_kc, 1, L_ld_kc, 1)
+!
+!     Deallocate g_ld_kc and L_kc_J
+!
+      call mem%dealloc(g_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!     Form u_ai_ld = u_il^ad = 2 * t_il^ad - t_li^ad
+!
+      call mem%alloc(t_ai_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call squareup(wf%t2, t_ai_dl, (wf%n_o)*(wf%n_v))
+!
+      call mem%alloc(u_ai_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      u_ai_dl = zero
+!
+      call add_1432_to_1234(-one, t_ai_dl, u_ai_dl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call daxpy((wf%n_o)**2*(wf%n_v)**2, two, t_ai_dl, 1, u_ai_dl, 1)
+!
+      call mem%dealloc(t_ai_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+      call mem%alloc(u_ai_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call sort_1234_to_1243(u_ai_dl, u_ai_ld, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%dealloc(u_ai_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!     Allocate the intermediate Z_ai_kc = sum_dl u_ai_ld L_ld_kc and set it to zero
+!
+      call mem%alloc(Z_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!     Form the intermediate Z_ai_kc = sum_dl u_ai_ld L_ld_kc
+!
+      call dgemm('N','N',            &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  u_ai_ld,           &
+                  (wf%n_o)*(wf%n_v), &
+                  L_ld_kc,           &
+                  (wf%n_o)*(wf%n_v), &
+                  zero,              &
+                  Z_ai_kc,           &
+                  (wf%n_o)*(wf%n_v))
+!
+!     Deallocate L_ld_kc
+!
+      call mem%dealloc(L_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!     Form the D2.2 term, 1/4 sum_kc Z_ai_kc u_kc_bj = 1/4 sum_kc Z_ai_kc(ai,kc) u_ai_ld(bj,kc)
+!
+      call mem%alloc(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+      call dgemm('N','T',            &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  one/four,          &
+                  Z_ai_kc,           &
+                  (wf%n_o)*(wf%n_v), &
+                  u_ai_ld,           &
+                  (wf%n_o)*(wf%n_v), &
+                  zero,              &
+                  omega2_ai_bj,      &
+                  (wf%n_o)*(wf%n_v))
+!
+!     Some mathematical justification for the above matrix multiplication. We have
+!
+!           1/4 * sum_ck (sum_dl u_il^ad L_ldkc) u_jk^bc = 1/4 * sum_ck Z_ai,kc u_kc,bj,
+!
+!     where Z_ai,kc = sum_dl u_ai,ld L_ld,kc. Note that u_ai_ld(ai,ld) = u_il^ad,
+!     which means that u_ai_ld(bj,kc)^T = u_ai_ld(kc,bj) = u_kj^cb = u_jk^bc.
+!
+!     Deallocate the Z_ai_kc intermediate
+!
+      call mem%dealloc(Z_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!     :: Calculate the D2.1 term of omega ::
+!
+!     Form g_ai_kc = g_aikc
+!
+      call mem%alloc(g_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+      call wf%get_voov(g_ai_kc)
+!
+!     Calculate the D2.1 term, sum_ck u_jk^bc g_aikc = sum_ck g_ai_kc(ai,kc) u_ai_ld(bj,kc)
+!
+      call dgemm('N','T',            &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  g_ai_kc,           &
+                  (wf%n_o)*(wf%n_v), &
+                  u_ai_ld,           &
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  omega2_ai_bj,      &
+                  (wf%n_o)*(wf%n_v))
+!
+      call mem%dealloc(u_ai_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(g_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!     Add the D2.1 term to the omega vector
+!
+      call symmetrize_and_add_to_packed(omega2, omega2_ai_bj, (wf%n_o)*(wf%n_v))
+!
+      call mem%dealloc(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+   end subroutine omega_ccsd_d2_ccsd
 end submodule
