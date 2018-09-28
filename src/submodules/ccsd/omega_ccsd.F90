@@ -1278,4 +1278,208 @@ contains
       call mem%dealloc(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine omega_ccsd_d2_ccsd
+!
+!
+   module subroutine omega_ccsd_e2_ccsd(wf, omega2)
+!
+!     Omega E2
+!     Written by Sarai D. Folkestad, Eirik F. Kjønstad,
+!     Andreas Skeidsvoll and Alice Balba
+!
+!     Calculates the E2 term,
+!
+!      E2: sum_c t_ij^ac (F_bc - sum_dkl g_ldkc u_kl^bd)
+!        - sum_k t_ik^ab (F_kj + sum_cdl g_ldkc u_lj^dc),
+!
+!     where
+!
+!        u_kl^bc = 2 * t_kl^bc - t_lk^bc.
+!
+!     The first term is referred to as the E2.1 term, and comes out ordered as (b,jai).
+!     The second term is referred to as the E2.2 term, and comes out ordered as (aib,j).
+!
+!     Both are permuted added to the projection vector element omega2(ai,bj) of
+!     the wavefunction object wf.
+!
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2, 1), intent(inout):: omega2
+!
+!     Vectors for E2.1 term
+!
+      real(dp), dimension(:,:), allocatable :: omega2_bj_ai ! For storing the E2.1 term temporarily
+      real(dp), dimension(:,:), allocatable :: g_ld_kc      ! g_ldkc
+      real(dp), dimension(:,:), allocatable :: u_bl_dk      ! u_kl^bd
+      real(dp), dimension(:,:), allocatable :: t_bk_dl      ! t_kl^bd
+      real(dp), dimension(:,:), allocatable :: u_bk_dl      ! u_kl^bd
+      real(dp), dimension(:,:), allocatable :: X_b_c        ! An intermediate, see below for definition
+      real(dp), dimension(:,:), allocatable :: t_cj_ai      ! t_ij^ac
+!
+!     Vectors for E2.2 term
+!
+      real(dp), dimension(:,:), allocatable :: omega2_ai_bj ! For storing the E2.2 term temporarily
+      real(dp), dimension(:,:), allocatable :: Y_k_j        ! An intermediate, see below for definition
+!
+!     :: Calculate the E2.1 term of omega ::
+!
+!     Form u_bl_dk = u_kl^bd = u_bk_dl
+!
+!     = 2 * t_kl^bd - t_lk^bd = 2 * t_bk_dl(bk,dl) - t_bk_dl(bl, dk)
+!
+      call mem%alloc(t_bk_dl, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      call squareup(wf%t2, t_bk_dl, (wf%n_v)*(wf%n_o))
+!
+      call mem%alloc(u_bk_dl, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      u_bk_dl = zero
+!
+      call add_1432_to_1234(-one, t_bk_dl, u_bk_dl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call daxpy((wf%n_v)**2*(wf%n_o)**2, two, t_bk_dl, 1, u_bk_dl, 1)
+!
+      call mem%dealloc(t_bk_dl, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+!
+      call mem%alloc(u_bl_dk, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call sort_1234_to_1432(u_bk_dl, u_bl_dk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%dealloc(u_bk_dl, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+!
+!     Form g_ld_kc = g_ldkc
+!
+      call mem%alloc(g_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+      call wf%get_ovov(g_ld_kc)
+!
+!     Allocate the intermediate X_b_c = F_bc - sum_dkl g_ldkc u_kl^bd and set to zero
+!
+      call mem%alloc(X_b_c, wf%n_v, wf%n_v)
+!
+!     Copy the virtual-virtual Fock matrix into the intermediate
+!
+      call dcopy((wf%n_v)**2, wf%fock_ab, 1, X_b_c, 1) ! X_b_c = F_bc
+!
+!     Add the second contribution,
+!     - sum_dkl g_ldkc u_kl^bd = - sum_dkl u_b_kdl * g_kdl_c, to X_b_c
+!
+      call dgemm('N','N',               &
+                  wf%n_v,               &
+                  wf%n_v,               &
+                  (wf%n_v)*(wf%n_o)**2, &
+                  -one,                 &
+                  u_bl_dk,              & ! u_b_ldk
+                  wf%n_v,               &
+                  g_ld_kc,              & ! g_ldk_c
+                  (wf%n_v)*(wf%n_o)**2, &
+                  one,                  &
+                  X_b_c,                &
+                  wf%n_v)
+!
+!     Form t_cj_ai = t_ij^ac = t_ji^ca
+!
+      call mem%alloc(t_cj_ai, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      call squareup(wf%t2, t_cj_ai, (wf%n_v)*(wf%n_o))
+!
+!     Form the E2.1 term
+!
+      call mem%alloc(omega2_bj_ai, (wf%n_o)*(wf%n_v), (wf%n_v)*(wf%n_o))
+!
+      call dgemm('N','N',               &
+                  wf%n_v,               &
+                  (wf%n_v)*(wf%n_o)**2, &
+                  wf%n_v,               &
+                  one,                  &
+                  X_b_c,                &
+                  wf%n_v,               &
+                  t_cj_ai,              & ! t_c_jai
+                  wf%n_v,               &
+                  zero,                 &
+                  omega2_bj_ai,         & ! omega2_b_jai
+                  wf%n_v)
+!
+!     Add the E2.1 term to the omega vector
+!
+      call symmetrize_and_add_to_packed(omega2, omega2_bj_ai, (wf%n_o)*(wf%n_v))
+!
+!     Deallocate the E2.1 term, the X intermediate, keep the amplitudes
+!
+      call mem%dealloc(omega2_bj_ai, (wf%n_o)*(wf%n_v), (wf%n_v)*(wf%n_o))
+      call mem%dealloc(X_b_c, wf%n_v, wf%n_v)
+!
+!     :: Calculate E2.2 term of omega ::
+!
+!     Allocate the intermediate Y_k_j = F_kj  + sum_cdl u_lj^dc g_ldkc
+!                                     = F_kj  + sum_cdl u_lj^dc g_kcld
+!                                     = F_k_j + sum_cdl g_k_cld * u_cld_j
+!
+      call mem%alloc(Y_k_j, wf%n_o, wf%n_o)
+!
+!     Copy the occupied-occupied Fock matrix, such that Y_k_j = F_kj
+!
+      call dcopy((wf%n_o)**2, wf%fock_ij, 1, Y_k_j, 1)
+!
+!     Add sum_cdl g_k_dlc u_dlc_j to Y_k_j, such that
+!     Y_k_j = F_k_j + sum_cdl g_k_cld u_cld_j
+!
+!     Note:
+!
+!     g_ld_kc(kc,ld) = g_kcld              -> pretend that this is g_k_cld
+!     u_b_ldk(c,ldj) = u_jl^cd (= u_lj^dc) -> pretend that this is u_cld_j
+!
+      call dgemm('N','N',              &
+                 wf%n_o,               &
+                 wf%n_o,               &
+                 (wf%n_o)*(wf%n_v)**2, &
+                 one,                  &
+                 g_ld_kc,              & ! g_k_cld
+                 wf%n_o,               &
+                 u_bl_dk,              & ! u_cld_j
+                 (wf%n_o)*(wf%n_v)**2, &
+                 one,                  &
+                 Y_k_j,                &
+                 wf%n_o)
+!
+!     Deallocate u_b_ldk and g_ld_kc
+!
+      call mem%dealloc(u_bl_dk, (wf%n_o)*(wf%n_v), (wf%n_v)*(wf%n_o))
+      call mem%dealloc(g_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!    Allocate the E2.2 term and set to zero
+!
+     call mem%alloc(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!    Calculate the E2.2 term,
+!    - sum_k t_aib_k Y_k_j = - sum_k t_ik^ab (F_kj + sum_cdl g_ldkc u_lj^dc)
+!
+!    Note: t_cj_ai = t_ji^ca => t_cj_ai(ai,bk) = t_ik^ab;
+!    thus, we can treat t_cj_ai as t_aib_k = t_ik^ab.
+!
+      call dgemm('N','N',              &
+                 (wf%n_o)*(wf%n_v)**2, &
+                 wf%n_o,               &
+                 wf%n_o,               &
+                 -one,                 &
+                 t_cj_ai,              & ! t_aib_k
+                 (wf%n_o)*(wf%n_v)**2, &
+                 Y_k_j,                &
+                 wf%n_o,               &
+                 zero,                 &
+                 omega2_ai_bj,         & ! omega2_aib_j
+                 (wf%n_o)*(wf%n_v)**2)
+!
+!     Deallocate Y_k_j and the amplitudes
+!
+      call mem%dealloc(Y_k_j, wf%n_o, wf%n_o)
+      call mem%dealloc(t_cj_ai, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+!
+!     Add the E2.2 term to the omega vector
+!
+      call symmetrize_and_add_to_packed(omega2, omega2_ai_bj, (wf%n_o)*(wf%n_v))
+!
+!     Deallocate the E2.2 term
+!
+      call mem%dealloc(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+   end subroutine omega_ccsd_e2_ccsd
+!
+!
 end submodule
