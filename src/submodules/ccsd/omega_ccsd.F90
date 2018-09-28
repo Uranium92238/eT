@@ -181,6 +181,70 @@ contains
    end subroutine omega_ccsd_b1_ccsd
 !
 !
+   module subroutine omega_ccsd_c1_ccsd(wf, omega1)
+!!
+!!    Omega C1
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
+!!    Andreas Skeidsvoll and Alice Balbi, 2018
+!!
+!!    Calculates the C1 term of omega,
+!!
+!!       C1: sum_ck F_kc*u_ai_ck,
+!!
+!!    and adds it to the projection vector (omega1) of
+!!    the wavefunction object wf
+!!
+!!    u_ai_kc = 2*t_ck_ai - t_ci_ak
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout):: omega1
+!
+      real(dp), dimension(:,:), allocatable :: F_c_k ! F_kc
+!
+      real(dp), dimension(:,:), allocatable :: u_ai_ck
+      real(dp), dimension(:,:), allocatable :: t_ai_ck
+!
+      integer(i15) :: k, c
+!
+!     Form u_ai_ck = u_ik^ac = 2*t_ik^ac - t_ki^ac
+!
+      call mem%alloc(t_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call squareup(wf%t2, t_ai_ck, (wf%n_o)*(wf%n_v))
+!
+      call mem%alloc(u_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      u_ai_ck = zero
+!
+      call add_1432_to_1234(-one, t_ai_ck, u_ai_ck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call daxpy((wf%n_o)**2*(wf%n_v)**2, two, t_ai_ck, 1, u_ai_ck, 1)
+!
+      call mem%dealloc(t_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!     Reorder the Fock matrix F_ck = F_kc
+!
+      call mem%alloc(F_c_k, wf%n_v, wf%n_o)
+!
+      call sort_12_to_21(wf%fock_ia, F_c_k, wf%n_o, wf%n_v)
+!
+      call dgemm('N','N',            &
+                  (wf%n_o)*(wf%n_v), &
+                  1,                 &
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  u_ai_ck,           &
+                  (wf%n_o)*(wf%n_v), &
+                  F_c_k,             & ! Equal to F_kc
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  omega1,         &
+                  (wf%n_o)*(wf%n_v))
+!
+      call mem%dealloc(u_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(F_c_k, wf%n_v, wf%n_o)
+!
+   end subroutine omega_ccsd_c1_ccsd
 !
    module subroutine omega_ccsd_a2_ccsd(wf, omega2)
 !!
