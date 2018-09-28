@@ -143,8 +143,6 @@ contains
 !     Square up amplitudes and reorder: t_ak_cl to t_al_ck
 !
       call mem%alloc(t_al_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*wf%n_o)
-
-!     Get g_ki_lc = g_kilc
 !
       call mem%alloc(g_lc_ki, (wf%n_v)*(wf%n_o), (wf%n_o)**2)
 !
@@ -155,9 +153,6 @@ contains
                         1, wf%n_o)
 !
 !     Form u_al_ck = u_kl^ac = 2 * t_kl^ac - t_lk^ac
-!
-!     Squareup amplitudes and reorder: t_ak_cl to t_al_ck?
-!     u_al_ck = 2 * t_kl^ac - t_lk^ac = 2 * t_al_ck(al,ck) - t_al_ck(ak,cl)
 !
       call mem%alloc(t_al_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*wf%n_o)
 !      call squareup_and_sort_1234_to_1432(wf%t2am, t_al_ck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
