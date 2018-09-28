@@ -12,7 +12,7 @@ submodule (ccsd_class) omega_ccsd
 contains
 !
 !
-   module subroutine construct_omega_ccsd(wf, omega1, omega2)
+   module subroutine construct_omega_ccsd(wf, omega)
 !!
 !!    Construct omega (CCSD)
 !!    Written by Sarai D. Folkestad, Eirik F. Kjønstad, 
@@ -25,8 +25,12 @@ contains
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o) :: omega1
-      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2, 1) :: omega2
+      real(dp), dimension(wf%n_amplitudes) :: omega
+!
+      real(dp), dimension(:,:), allocatable :: omega1, omega2
+!
+      call mem%alloc(omega1, wf%n_v, wf%n_o)
+      call mem%alloc(omega2, (wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o) +1)/2, 1)
 !
 !     Set the omega vector to zero
 !
@@ -48,6 +52,9 @@ contains
       call wf%omega_ccsd_c2(omega2)
       call wf%omega_ccsd_d2(omega2)
       call wf%omega_ccsd_e2(omega2)
+!
+      call mem%dealloc(omega1, wf%n_v, wf%n_o)
+      call mem%dealloc(omega2, (wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o) +1)/2, 1)
 !
    end subroutine construct_omega_ccsd
 !
