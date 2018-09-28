@@ -12,7 +12,46 @@ submodule (ccsd_class) omega_ccsd
 contains
 !
 !
-
+   module subroutine construct_omega_ccsd(wf, omega1, omega2)
+!!
+!!    Construct omega (CCSD)
+!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad, 
+!!    Andreas Skeidsvoll and Alice Balbi, 2018
+!!
+!!    Directs the construction of the projection vector < mu | exp(-T) H exp(T) | R >
+!!    for the current amplitudes of the object wfn
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o) :: omega1
+      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2, 1) :: omega2
+!
+!     Set the omega vector to zero
+!
+      omega1 = zero
+      omega2 = zero
+!
+!     Construct singles contributions
+!
+      call wf%omega_ccsd_a1(omega1)
+      call wf%omega_ccsd_b1(omega1)
+      call wf%omega_ccsd_c1(omega1)
+!
+      call wf%omega_ccs_a1(omega1)
+!
+!     Construct doubles contributions
+!
+      call wf%omega_ccsd_a2(omega2)
+      call wf%omega_ccsd_b2(omega2)
+      call wf%omega_ccsd_c2(omega2)
+      call wf%omega_ccsd_d2(omega2)
+      call wf%omega_ccsd_e2(omega2)
+!
+   end subroutine construct_omega_ccsd
+!
+!
    module subroutine omega_ccsd_a1_ccsd(wf, omega1)
 !!
 !!    Omega A1 term
@@ -934,9 +973,7 @@ contains
 !
 !     Constructing g_ki_ac
 !
-      !required = wf%get_vvoo_required_mem()
-!
-!     Initialize batching variable
+      required = wf%integrals%get_required_vvoo()
 !
       call batch_a%init(wf%n_v)
       call mem%num_batch(batch_a, required)
@@ -988,9 +1025,7 @@ contains
 !
 !        Calculate the contribution to the term
 !
-!           omega_ai_bj = - 1/2 * sum_ck u_jk^bc g_acki
-!
-!        Reorder g_ki_ac to g_ai_ck (1234 to 3241)
+!        omega_ai_bj = - 1/2 * sum_ck u_jk^bc g_acki
 !
          call mem%alloc(g_ai_ck, (batch_a%length)*(wf%n_o), (wf%n_o)*(wf%n_v))
 !
