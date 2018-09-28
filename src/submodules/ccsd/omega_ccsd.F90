@@ -331,7 +331,7 @@ contains
 !
 !    ::  Calculate the A2.2 term  of omega ::
 !
-      required = wf%get_required_vvvv() + 4*(wf%n_o**2)*(wf%n_v**2) + 2*(wf%n_v**4)
+      required = wf%integrals%get_required_vvvv() + 4*(wf%n_o**2)*(wf%n_v**2) + 2*(wf%n_v**4)
 !
 !     Initialize batching variables
 !

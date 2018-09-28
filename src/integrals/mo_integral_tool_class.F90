@@ -2337,7 +2337,7 @@ contains
 !
       endif
 !
-   end function get_required_vvov_mo_integral_tool
+   end function get_required_vvvv_mo_integral_tool
 !
 !
 end module mo_integral_tool_class
