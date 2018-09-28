@@ -694,4 +694,127 @@ contains
       enddo ! End batching over a
 !
    end subroutine omega_ccsd_a2_ccsd
+!
+!
+   module subroutine omega_ccsd_b2_ccsd(wf, omega2)
+!!
+!!    Omega B2
+!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad,
+!!    Andreas Skeidsvoll and Alice Balba
+!!
+!!    Omega B2 = sum_(kl) t_ak_bl*(g_kilj + sum_(cd) t_ci_dj * g_kc_ld)
+!!
+!!    Structure: g_kilj is constructed first and reordered as g_kl_ij.
+!!    Then the contraction over cd is performed, and the results added to g_kl_ij.
+!!    t_ak_bl is then reordered as t_ab_kl and the contraction over kl is performed.
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2, 1), intent(inout):: omega2
+!
+!     Integrals
+!
+      real(dp), dimension(:,:), allocatable :: g_kc_ld
+      real(dp), dimension(:,:), allocatable :: g_kl_cd
+      real(dp), dimension(:,:), allocatable :: g_kl_ij
+      real(dp), dimension(:,:), allocatable :: g_ki_lj
+!
+!     Reordered T2 apmlitudes
+!
+      real(dp), dimension(:,:), allocatable :: t_cd_ij
+      real(dp), dimension(:,:), allocatable :: t_ab_kl
+      real(dp), dimension(:,:), allocatable :: t_ci_dj
+!
+!     Intermediate for matrix multiplication
+!
+      real(dp), dimension(:,:), allocatable :: X_kl_ij
+!
+!     Reordered omega
+!
+      real(dp), dimension(:,:), allocatable :: omega_ab_ij
+      real(dp), dimension(:,:), allocatable :: omega_ai_bj
+!
+!     Allocate and construct g_ki_lj
+!
+      call mem%alloc(g_ki_lj, (wf%n_o)*(wf%n_o), (wf%n_o)*(wf%n_o))
+!
+      call wf%get_oooo(g_ki_lj)
+!
+      call mem%alloc(g_kl_ij, (wf%n_o)*(wf%n_o),(wf%n_o)*(wf%n_o))
+!
+      call sort_1234_to_1324(g_ki_lj, g_kl_ij, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
+!
+      call mem%dealloc(g_ki_lj, (wf%n_o)*(wf%n_o), (wf%n_o)*(wf%n_o))
+!
+!     Allocate and construct g_kc_ld
+!
+      call mem%alloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+      call wf%get_ovov(g_kc_ld)
+!
+!     Reorder g_kc_ld as g_kl_cd
+!
+      call mem%alloc(g_kl_cd, (wf%n_o)*(wf%n_o), (wf%n_v)*(wf%n_v))
+!
+      call sort_1234_to_1324(g_kc_ld, g_kl_cd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+!
+      call mem%dealloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!     Reorder t_ci_dj as t_cd_ij
+!
+      call mem%alloc(t_cd_ij, (wf%n_v)**2, (wf%n_o)**2)
+      call squareup_and_sort_1234_to_1324(wf%t2, t_cd_ij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('N','N',      &
+                  (wf%n_o)**2, &
+                  (wf%n_o)**2, &
+                  (wf%n_v)**2, &
+                  one,         &
+                  g_kl_cd,     &
+                  (wf%n_o)**2, &
+                  t_cd_ij,     &
+                  (wf%n_v)**2, &
+                  one,         &
+                  g_kl_ij,     &
+                  (wf%n_o)**2)
+!
+!     Deallocate t_cd_ij and g_kl_cd
+!
+      call mem%dealloc(g_kl_cd, (wf%n_o)*(wf%n_o), (wf%n_v)*(wf%n_v))
+!
+!     omega_ab_ij = sum_(kl) t_ab_kl*X_kl_ij
+!
+      call mem%alloc(omega_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
+!
+      call dgemm('N','N',      &
+                  (wf%n_v)**2, &
+                  (wf%n_o)**2, &
+                  (wf%n_o)**2, &
+                  one,         &
+                  t_cd_ij,     & ! t_ab_kl
+                  (wf%n_v)**2, &
+                  g_kl_ij,     &
+                  (wf%n_o)**2, &
+                  zero,        &
+                  omega_ab_ij, &
+                  (wf%n_v)**2)
+!
+      call mem%dealloc(t_cd_ij, (wf%n_v)**2, (wf%n_o)**2)
+      call mem%dealloc(g_kl_ij, (wf%n_o)**2, (wf%n_o)**2)
+!
+!     Reorder into omega2
+!
+      call mem%alloc(omega_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call sort_1234_to_1324(omega_ab_ij, omega_ai_bj, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+      call mem%dealloc(omega_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
+!
+      call add_to_packed(omega2, omega_ai_bj, (wf%n_o)*(wf%n_v))
+      call mem%dealloc(omega_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+   end subroutine omega_ccsd_b2_ccsd
+!
+!
 end submodule
