@@ -110,6 +110,7 @@ contains
 !
    end subroutine omega_ccsd_a1_ccsd
 !
+!
    module subroutine omega_ccsd_b1_ccsd(wf, omega1)
 !!
 !!    Omega B1
@@ -137,11 +138,7 @@ contains
 !
       call mem%alloc(g_lc_ki, (wf%n_v)*(wf%n_o), (wf%n_o)**2)
 !
-      call wf%get_ovoo(g_lc_ki,    &
-                        1, wf%n_o, &
-                        1, wf%n_v, &
-                        1, wf%n_o, &
-                        1, wf%n_o)
+      call wf%get_ovoo(g_lc_ki)
 !
 !     Form u_al_ck = u_kl^ac = 2 * t_kl^ac - t_lk^ac
 !
@@ -246,6 +243,7 @@ contains
 !
    end subroutine omega_ccsd_c1_ccsd
 !
+!
    module subroutine omega_ccsd_a2_ccsd(wf, omega2)
 !!
 !!    Omega A2 term
@@ -267,7 +265,7 @@ contains
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)), intent(inout):: omega2
+      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2, 1), intent(inout):: omega2
 !
 !     Integrals
 !
@@ -327,11 +325,7 @@ contains
 !
       call mem%alloc(g_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      call wf%get_vovo(g_ai_bj,    &
-                        1, wf%n_v, &
-                        1, wf%n_o, &
-                        1, wf%n_v, &
-                        1, wf%n_o)
+      call wf%get_vovo(g_ai_bj)
 !
 !     Add A2.1 to Omega 2
 !
