@@ -50,7 +50,7 @@ module ccs_class
       procedure :: set_amplitudes               => set_amplitudes_ccs 
       procedure :: get_amplitudes               => get_amplitudes_ccs 
 !
-!     Routines related to the Fock matrix
+!     Routines related to the Fock matrix 
 ! 
       procedure :: set_fock                     => set_fock_ccs
       procedure :: construct_fock               => construct_fock_ccs
@@ -64,12 +64,14 @@ module ccs_class
 !
 !     Routines related to the Jacobian transformation 
 !
-      procedure :: transform_trial_vector       => transform_trial_vector_ccs
+      procedure :: jacobi_transform_trial_vector           => jacobi_transform_trial_vector_ccs
+      procedure :: jacobi_transpose_transform_trial_vector => jacobi_transpose_transform_trial_vector_ccs
 !
-      procedure :: jacobian_ccs_transformation  => jacobian_ccs_transformation_ccs
-      procedure :: jacobian_ccs_a1              => jacobian_ccs_a1_ccs 
-      procedure :: jacobian_ccs_b1              => jacobian_ccs_b1_ccs 
+      procedure :: jacobian_ccs_transformation   => jacobian_ccs_transformation_ccs
+      procedure :: jacobian_ccs_a1               => jacobian_ccs_a1_ccs 
+      procedure :: jacobian_ccs_b1               => jacobian_ccs_b1_ccs 
 !
+      procedure :: jacobian_transpose_ccs_transformation => jacobian_transpose_ccs_transformation_ccs
       procedure :: jacobian_transpose_ccs_a1    => jacobian_transpose_ccs_a1_ccs
       procedure :: jacobian_transpose_ccs_b1    => jacobian_transpose_ccs_b1_ccs
 !
@@ -2065,9 +2067,9 @@ contains
    end subroutine get_vvvv_ccs
 !
 !
-   subroutine transform_trial_vector_ccs(wf, c_i)
+   subroutine jacobi_transform_trial_vector_ccs(wf, c_i)
 !!
-!!    Transform trial vector 
+!!    Jacobi transform trial vector 
 !!    Written by Sarai D. Folkestad, Sep 2018
 !!
       class(ccs), intent(in) :: wf 
@@ -2076,7 +2078,21 @@ contains
 !
       call wf%jacobian_ccs_transformation(c_i)
 !
-   end subroutine transform_trial_vector_ccs
+   end subroutine jacobi_transform_trial_vector_ccs
+!
+!
+   subroutine jacobi_transpose_transform_trial_vector_ccs(wf, c_i)
+!!
+!!    Jacobi transpose transform trial vector 
+!!    Written by Sarai D. Folkestad, Sep 2018
+!!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_amplitudes, 1) :: c_i
+!
+      call wf%jacobian_transpose_ccs_transformation(c_i)
+!
+   end subroutine jacobi_transpose_transform_trial_vector_ccs
 !
 !
    subroutine jacobian_ccs_transformation_ccs(wf, c_a_i)
@@ -2110,12 +2126,52 @@ contains
       call wf%jacobian_ccs_a1(rho_a_i, c_a_i)
       call wf%jacobian_ccs_b1(rho_a_i, c_a_i)
 !
-!     Then overwrite the incoming vector with the transformed vector 
+!     Then overwrite the c vector with the transformed vector 
 !
       call dcopy((wf%n_o)*(wf%n_v), rho_a_i, 1, c_a_i, 1)
       call mem%dealloc(rho_a_i, wf%n_v, wf%n_o)
 !
    end subroutine jacobian_ccs_transformation_ccs
+!
+!
+   module subroutine jacobian_transpose_ccs_transformation_ccs(wf, b_a_i)
+!!
+!!    Jacobian transpose transformation (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!    Calculates the transpose Jacobian transformation, i.e., the transformation 
+!!    by the transpose of the Jacobian matrix
+!!
+!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | R >.
+!!
+!!    In particular,
+!!
+!!       sigma_mu = (b^T A)_mu = sum_ck b_ck A_ck,mu.
+!! 
+!!    On exit, b is overwritten by sigma. 
+!!
+      implicit none 
+!
+      class(ccs) :: wf 
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: b_a_i 
+!
+      real(dp), dimension(:,:), allocatable :: sigma_a_i
+!
+!     Allocate the transformed vector & add the terms to it
+!
+      call mem%alloc(sigma_a_i, wf%n_v, wf%n_o)
+      sigma_a_i = zero 
+!
+      call wf%jacobian_transpose_ccs_a1(sigma_a_i, b_a_i)
+      call wf%jacobian_transpose_ccs_b1(sigma_a_i, b_a_i)
+!
+!     Then overwrite the b vector with the transformed vector 
+!
+      call dcopy((wf%n_o)*(wf%n_v), sigma_a_i, 1, b_a_i, 1)
+      call mem%dealloc(sigma_a_i, wf%n_v, wf%n_o)
+!
+   end subroutine jacobian_transpose_ccs_transformation_ccs
 !
 !
    subroutine jacobian_ccs_a1_ccs(wf, rho1, c1)
