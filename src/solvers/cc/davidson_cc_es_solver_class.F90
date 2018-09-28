@@ -24,6 +24,8 @@ module davidson_cc_es_solver_class
 !
       integer(i15) :: n_singlet_states = 0
 !
+      character(len=40) :: transformation 
+!
       real(dp), dimension(:,:), allocatable :: energies
 !
       integer(i15), dimension(:,:), allocatable :: start_vectors
@@ -44,6 +46,8 @@ module davidson_cc_es_solver_class
       procedure :: set_start_vectors         => set_start_vectors_davidson_cc_es_solver
       procedure :: set_precondition_vector   => set_precondition_vector_davidson_cc_es_solver
       procedure :: set_projection_vector     => set_projection_vector_davidson_cc_es_solver
+!
+      procedure :: transform_trial_vector    => transform_trial_vector_davidson_cc_es_solver
 !       
       procedure :: initialize_energies => initialize_energies_davidson_cc_es_solver
       procedure :: destruct_energies => destruct_energies_davidson_cc_es_solver
@@ -74,7 +78,9 @@ contains
       solver%max_iterations = 100
 !
       solver%eigenvalue_threshold = 1.0d-6
-      solver%residual_threshold  = 1.0d-6
+      solver%residual_threshold   = 1.0d-6
+!
+      solver%transformation = 'right'
 !
       solver%restart = .false.
 !
@@ -216,7 +222,8 @@ contains
 !
             call davidson%read_trial(c_i, trial)
 !
-            call wf%transform_trial_vector(c_i)
+            call solver%transform_trial_vector(wf, c_i)
+         !   call wf%transform_trial_vector(c_i)
 !
             call davidson%projection(c_i)
 !
@@ -317,10 +324,36 @@ contains
    end subroutine run_davidson_cc_es_solver
 !
 !
+   subroutine transform_trial_vector_davidson_cc_es_solver(solver, wf, c_i)
+!!
+!!    Transform trial vector 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Transforms the trial vector according to specified transformation routine 
+!!
+      class(davidson_cc_es_solver), intent(in) :: solver 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: c_i
+!
+      if (solver%transformation == 'right') then 
+!
+         call wf%jacobi_transform_trial_vector(c_i)
+!
+      elseif (solver%transformation == 'left') then 
+!
+         call wf%jacobi_transpose_transform_trial_vector(c_i)
+!
+      endif 
+!
+   end subroutine transform_trial_vector_davidson_cc_es_solver
+!
+!
    subroutine set_start_vectors_davidson_cc_es_solver(solver, wf, davidson)
 !!
 !!    Set start vectors 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
 !!
 !!    Sets initial trial vectors either from Koopman guess or from vectors given on input.
 !!
@@ -540,6 +573,14 @@ contains
          elseif (line(1:15) == 'max iterations:' ) then
 !
             read(line(16:100), *) solver%max_iterations
+!
+         elseif (line(1:18) == 'right eigenvectors') then 
+!
+            solver%transformation = 'right'
+!
+         elseif (line(1:18) == 'left eigenvectors') then 
+!
+            solver%transformation = 'left'
 !
          elseif (trim(line) == 'restart') then
 !

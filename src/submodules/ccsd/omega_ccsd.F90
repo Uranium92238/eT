@@ -62,7 +62,8 @@ contains
 !
 !     Estimated memory required to construct g_adkc
 !
-    !  required = wf%integrals%get_required_vvov()
+   
+      required = wf%integrals%get_required_vvov()
 !
 !     Initialization of the batching variable
 !
@@ -110,6 +111,7 @@ contains
 !
    end subroutine omega_ccsd_a1_ccsd
 !
+!
    module subroutine omega_ccsd_b1_ccsd(wf, omega1)
 !!
 !!    Omega B1
@@ -132,6 +134,15 @@ contains
       real(dp), dimension(:,:), allocatable :: g_lc_ki ! g_kilc
       real(dp), dimension(:,:), allocatable :: t_al_ck ! t_kl^ac
       real(dp), dimension(:,:), allocatable :: u_al_ck ! u_kl^ac = 2 t_kl^ac - t_lk^ac
+!
+      call mem%alloc(g_lc_ki, (wf%n_v)*(wf%n_o), (wf%n_o)**2)
+!
+      call wf%get_ovoo(g_lc_ki)
+!
+!     Form u_al_ck = u_kl^ac = 2 * t_kl^ac - t_lk^ac
+!     Square up amplitudes and reorder: t_ak_cl to t_al_ck
+!
+      call mem%alloc(t_al_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*wf%n_o)
 
 !     Get g_ki_lc = g_kilc
 !
@@ -179,4 +190,6 @@ contains
       call mem%dealloc(g_lc_ki, (wf%n_v)*(wf%n_o), (wf%n_o)**2)
 !
    end subroutine omega_ccsd_b1_ccsd
+!
+!
 end submodule
