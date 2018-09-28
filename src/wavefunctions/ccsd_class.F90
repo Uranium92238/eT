@@ -162,7 +162,8 @@ contains
 !
       real(dp), dimension(wf%n_amplitudes, 1), intent(in) :: amplitudes
 !
-   !   call dcopy(wf%n_amplitudes, amplitudes, 1, wf%t1, 1)
+      call dcopy((wf%n_o)*(wf%n_v), amplitudes, 1, wf%t1, 1)
+      call dcopy((wf%n_o)*(wf%n_v)*((wf%n_o)*(wf%n_v)+1)/2, amplitudes((wf%n_o)*(wf%n_v)+1, 1), 1, wf%t2, 1)
 !
    end subroutine set_amplitudes_ccsd
 !
@@ -178,7 +179,8 @@ contains
 !
       real(dp), dimension(wf%n_amplitudes, 1) :: amplitudes
 !
-      !call dcopy(wf%n_amplitudes, wf%t1, 1, amplitudes, 1)
+      call dcopy((wf%n_o)*(wf%n_v), wf%t1, 1, amplitudes, 1)
+      call dcopy((wf%n_o)*(wf%n_v)*((wf%n_o)*(wf%n_v)+1)/2, wf%t2, 1,  amplitudes((wf%n_o)*(wf%n_v)+1, 1), 1)
 !
    end subroutine get_amplitudes_ccsd
 !
