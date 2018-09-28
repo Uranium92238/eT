@@ -50,7 +50,7 @@ module ccs_class
       procedure :: set_amplitudes               => set_amplitudes_ccs 
       procedure :: get_amplitudes               => get_amplitudes_ccs 
 !
-!     Routines related to the Fock matrix
+!     Routines related to the Fock matrix 
 ! 
       procedure :: set_fock                     => set_fock_ccs
       procedure :: construct_fock               => construct_fock_ccs
@@ -59,15 +59,21 @@ module ccs_class
 !
 !     Routines related to the omega vector 
 !
-      procedure :: construct_omega => construct_omega_ccs
-      procedure :: omega_ccs_a1    => omega_ccs_a1_ccs
+      procedure :: construct_omega              => construct_omega_ccs
+      procedure :: omega_ccs_a1                 => omega_ccs_a1_ccs
 !
 !     Routines related to the Jacobian transformation 
 !
-      procedure :: transform_trial_vector       => transform_trial_vector_ccs
-      procedure :: jacobian_ccs_transformation  => jacobian_ccs_transformation_ccs
-      procedure :: jacobian_ccs_a1              => jacobian_ccs_a1_ccs 
-      procedure :: jacobian_ccs_b1              => jacobian_ccs_b1_ccs 
+      procedure :: jacobi_transform_trial_vector           => jacobi_transform_trial_vector_ccs
+      procedure :: jacobi_transpose_transform_trial_vector => jacobi_transpose_transform_trial_vector_ccs
+!
+      procedure :: jacobian_ccs_transformation   => jacobian_ccs_transformation_ccs
+      procedure :: jacobian_ccs_a1               => jacobian_ccs_a1_ccs 
+      procedure :: jacobian_ccs_b1               => jacobian_ccs_b1_ccs 
+!
+      procedure :: jacobian_transpose_ccs_transformation => jacobian_transpose_ccs_transformation_ccs
+      procedure :: jacobian_transpose_ccs_a1    => jacobian_transpose_ccs_a1_ccs
+      procedure :: jacobian_transpose_ccs_b1    => jacobian_transpose_ccs_b1_ccs
 !
 !     Routines to get electron repulsion integrals (ERIs)
 !
@@ -2061,9 +2067,9 @@ contains
    end subroutine get_vvvv_ccs
 !
 !
-   subroutine transform_trial_vector_ccs(wf, c_i)
+   subroutine jacobi_transform_trial_vector_ccs(wf, c_i)
 !!
-!!    Transform trial vector 
+!!    Jacobi transform trial vector 
 !!    Written by Sarai D. Folkestad, Sep 2018
 !!
       class(ccs), intent(in) :: wf 
@@ -2072,7 +2078,21 @@ contains
 !
       call wf%jacobian_ccs_transformation(c_i)
 !
-   end subroutine transform_trial_vector_ccs
+   end subroutine jacobi_transform_trial_vector_ccs
+!
+!
+   subroutine jacobi_transpose_transform_trial_vector_ccs(wf, c_i)
+!!
+!!    Jacobi transpose transform trial vector 
+!!    Written by Sarai D. Folkestad, Sep 2018
+!!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_amplitudes, 1) :: c_i
+!
+      call wf%jacobian_transpose_ccs_transformation(c_i)
+!
+   end subroutine jacobi_transpose_transform_trial_vector_ccs
 !
 !
    subroutine jacobian_ccs_transformation_ccs(wf, c_a_i)
@@ -2106,12 +2126,52 @@ contains
       call wf%jacobian_ccs_a1(rho_a_i, c_a_i)
       call wf%jacobian_ccs_b1(rho_a_i, c_a_i)
 !
-!     Then overwrite the incoming vector with the transformed vector 
+!     Then overwrite the c vector with the transformed vector 
 !
       call dcopy((wf%n_o)*(wf%n_v), rho_a_i, 1, c_a_i, 1)
       call mem%dealloc(rho_a_i, wf%n_v, wf%n_o)
 !
    end subroutine jacobian_ccs_transformation_ccs
+!
+!
+   module subroutine jacobian_transpose_ccs_transformation_ccs(wf, b_a_i)
+!!
+!!    Jacobian transpose transformation (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!    Calculates the transpose Jacobian transformation, i.e., the transformation 
+!!    by the transpose of the Jacobian matrix
+!!
+!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | R >.
+!!
+!!    In particular,
+!!
+!!       sigma_mu = (b^T A)_mu = sum_ck b_ck A_ck,mu.
+!! 
+!!    On exit, b is overwritten by sigma. 
+!!
+      implicit none 
+!
+      class(ccs) :: wf 
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: b_a_i 
+!
+      real(dp), dimension(:,:), allocatable :: sigma_a_i
+!
+!     Allocate the transformed vector & add the terms to it
+!
+      call mem%alloc(sigma_a_i, wf%n_v, wf%n_o)
+      sigma_a_i = zero 
+!
+      call wf%jacobian_transpose_ccs_a1(sigma_a_i, b_a_i)
+      call wf%jacobian_transpose_ccs_b1(sigma_a_i, b_a_i)
+!
+!     Then overwrite the b vector with the transformed vector 
+!
+      call dcopy((wf%n_o)*(wf%n_v), sigma_a_i, 1, b_a_i, 1)
+      call mem%dealloc(sigma_a_i, wf%n_v, wf%n_o)
+!
+   end subroutine jacobian_transpose_ccs_transformation_ccs
 !
 !
    subroutine jacobian_ccs_a1_ccs(wf, rho1, c1)
@@ -2189,48 +2249,238 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: c_jb
 !
-!     Get g_ai_jb integral, then prepare for batch over b 
+      type(batching_index) :: batch_b
 !
-      call mem%alloc(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call wf%get_voov(g_ai_jb)          
+      integer(i15) :: required, j, b, b_red, current_b_batch
 !
-!     Construct L_ai_jb = 2 g_ai_jb - g_ab_ji
+      call batch_b%init(wf%n_v) 
 !
-      call mem%alloc(g_ab_ji, (wf%n_v)**2, (wf%n_o)**2)
+      required = max((wf%n_o)*(wf%n_v)*(wf%n_o)*(batch_b%length) + wf%integrals%get_required_voov(), &
+                     (wf%n_o)*(wf%n_v)*(wf%n_o)*(batch_b%length)*2, + wf%integrals%get_required_vvoo())
 !
-      call wf%get_vvoo(g_ab_ji)  
+      call mem%num_batch(batch_b, required)
 !
-      call mem%alloc(L_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      do current_b_batch = 1, batch_b%num_batches
 !
-      L_ai_jb = two*g_ai_jb
-      call mem%dealloc(g_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+         call batch_b%determine_limits(current_b_batch)
 !
-      call add_1432_to_1234(-one, g_ab_ji, L_ai_jb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+!        Construct L_ai_jb = 2 g_ai_jb - g_ab_ji
 !
-      call mem%dealloc(g_ab_ji, (wf%n_v)**2, (wf%n_o)**2)
+         call mem%alloc(L_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(batch_b%length))
 !
-!     Reorder c1 to do multiply with L_ai_jb
+         call wf%get_voov(L_ai_jb,                       &
+                           1, wf%n_v,                    &
+                           1, wf%n_o,                    &
+                           1, wf%n_o,                    &
+                           batch_b%first, batch_b%last)   
 !
-      call mem%alloc(c_jb, (wf%n_o), (wf%n_v))
-      call sort_12_to_21(c1, c_jb, (wf%n_v), (wf%n_o))
+         call dscal(((wf%n_o)**2)*(batch_b%length)*(wf%n_v), two, L_ai_jb, 1)
 !
-      call dgemm('N', 'N',                   &
-                  (wf%n_v)*(wf%n_o),         &
-                  1,                         &
-                  (wf%n_o)*(wf%n_v),         &
-                  one,                       &
-                  L_ai_jb,                   &
-                  (wf%n_v)*(wf%n_o),         &
-                  c_jb,                      &
-                  (wf%n_o)*(wf%n_v),         &
-                  one,                       &
-                  rho1,                      &
-                  (wf%n_v)*(wf%n_o))      
+         call mem%alloc(g_ab_ji, (wf%n_v)*(batch_b%length), (wf%n_o)**2)
 !
-      call mem%dealloc(L_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call mem%dealloc(c_jb, (wf%n_o), (wf%n_v))
+         call wf%get_vvoo(g_ab_ji,                       &
+                           1, wf%n_v,                    &
+                           batch_b%first, batch_b%last,  &
+                           1, wf%n_o,                    &
+                           1, wf%n_o)  
+!
+         call add_1432_to_1234(-one, g_ab_ji, L_ai_jb, wf%n_v, wf%n_o, wf%n_o, batch_b%length)
+!
+         call mem%dealloc(g_ab_ji, (wf%n_v)*(batch_b%length), (wf%n_o)**2)
+!
+!        Reorder c1 to do multiply with L_ai_jb
+!
+         call mem%alloc(c_jb, (wf%n_o), (batch_b%length))
+!
+         do j = 1, wf%n_o 
+            do b = batch_b%first, batch_b%last 
+!
+               b_red = b - batch_b%first + 1
+!
+               c_jb(j, b_red) = c1(b, j) 
+!
+            enddo
+         enddo
+!
+!
+         call dgemm('N', 'N',                   &
+                     (wf%n_v)*(wf%n_o),         &
+                     1,                         &
+                     (wf%n_o)*(batch_b%length), &
+                     one,                       &
+                     L_ai_jb,                   &
+                     (wf%n_v)*(wf%n_o),         &
+                     c_jb,                      &
+                     (wf%n_o)*(batch_b%length), &
+                     one,                       &
+                     rho1,                      &
+                     (wf%n_v)*(wf%n_o))      
+!
+         call mem%dealloc(L_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(batch_b%length))
+         call mem%dealloc(c_jb, (wf%n_o), (batch_b%length))
+!
+      enddo
 !
    end subroutine jacobian_ccs_b1_ccs
+!
+!
+   subroutine jacobian_transpose_ccs_a1_ccs(wf, sigma_a_i, b_a_i)
+!!
+!!    Jacobian transpose A1 (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!    Calculates the A1 term,
+!!
+!!       sum_c b_ci F_ca - sum_k b_ak F_ik,
+!!
+!!    and adds it to the sigma-vector (b^T -> sigma^T = b^T A).
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_a_i 
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: b_a_i 
+!
+!     Add sum_c F_ca b_ci = sum_c F_ac^T b_ci     
+!
+      call dgemm('T','N',     &
+                  wf%n_v,     &
+                  wf%n_o,     &
+                  wf%n_v,     &
+                  one,        &
+                  wf%fock_ab, &
+                  wf%n_v,     &
+                  b_a_i,      &
+                  wf%n_v,     &
+                  one,        &
+                  sigma_a_i,  &
+                  wf%n_v)
+!
+!     Add - sum_k b_ak F_ik = - sum_k b_ak F_ki^T 
+!
+      call dgemm('N','T',     &
+                  wf%n_v,     &
+                  wf%n_o,     &
+                  wf%n_o,     &
+                  -one,       &
+                  b_a_i,      &
+                  wf%n_v,     &
+                  wf%fock_ij, &
+                  wf%n_o,     &
+                  one,        &
+                  sigma_a_i,  &
+                  wf%n_v)
+!
+   end subroutine jacobian_transpose_ccs_a1_ccs
+! 
+! 
+   subroutine jacobian_transpose_ccs_b1_ccs(wf, sigma_a_i, b_a_i)
+!!
+!!    Jacobian transpose B1 (CCS)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!    Calculates the B1 term,
+!!
+!!       sum_ck L_ckia b_ck
+!!
+!!    and adds it to the sigma-vector (b^T -> sigma^T = b^T A).
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_a_i 
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: b_a_i 
+!
+      real(dp), dimension(:,:), allocatable :: g_ck_ia ! g_ckia 
+      real(dp), dimension(:,:), allocatable :: g_ca_ik ! g_caik 
+!
+      real(dp), dimension(:,:), allocatable :: L_ai_ck ! L_ckia = 2 * g_ckia - g_caik
+!
+      integer(i15) :: k, c, ck, i, a, Ai, iA, ca, ik
+!
+      integer(i15)         :: required, current_a_batch 
+      type(batching_index) :: batch_a 
+!
+!     :: Construct L_ai_ck = L_ckia
+!
+      call mem%alloc(g_ck_ia, (wf%n_v)*(wf%n_o), (wf%n_o)*(wf%n_v))
+      call wf%get_voov(g_ck_ia)
+!
+      call mem%alloc(L_ai_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      L_ai_ck = zero
+!
+      call batch_a%init(wf%n_v)
+
+      required = wf%integrals%get_required_vvoo()
+!
+      call mem%num_batch(batch_a, required)
+!
+      do current_a_batch = 1, batch_a%num_batches 
+!
+!        Set part of L_ai_ck = L_ckia = 2 * g_ckia - g_caik for current a batch 
+!
+         call batch_a%determine_limits(current_a_batch)
+!
+         call mem%alloc(g_ca_ik, (wf%n_v)*(batch_a%length), (wf%n_o)**2)
+!
+         call wf%get_vvoo(g_ca_ik,       &
+                           1,             &
+                           wf%n_v,        &
+                           batch_a%first, &
+                           batch_a%last,  &
+                           1,             &
+                           wf%n_o,        &
+                           1,             &
+                           wf%n_o)
+!
+         do k = 1, wf%n_o
+            do c = 1, wf%n_v
+!
+               ck = index_two(c, k, wf%n_v)
+!
+               do i = 1, wf%n_o
+!
+                  ik = index_two(i, k, wf%n_o)
+!
+                  do a = 1, batch_a%length
+!
+                     Ai = index_two(a + batch_a%first - 1, i, wf%n_v) ! Full space a 
+                     iA = index_two(i, a + batch_a%first - 1, wf%n_o) ! Full space a 
+                     ca = index_two(c, a, wf%n_v)
+!
+                     L_ai_ck(Ai, ck) = two*g_ck_ia(ck, iA) - g_ca_ik(ca, ik)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+         call mem%dealloc(g_ca_ik, (wf%n_v)*(batch_a%length), (wf%n_o)**2)
+!
+      enddo ! End of batches over a 
+!
+      call mem%dealloc(g_ck_ia, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!     :: Add sum_ck L_ckia b_ck = sum_ck L_ai_ck b_ck to sigma 
+!
+      call dgemm('N','N',            &
+                  (wf%n_v)*(wf%n_o), &
+                  1,                 &
+                  (wf%n_v)*(wf%n_o), &
+                  one,               &
+                  L_ai_ck,           &
+                  (wf%n_v)*(wf%n_o), &
+                  b_a_i,             & ! "b_ai"
+                  (wf%n_v)*(wf%n_o), &
+                  one,               &
+                  sigma_a_i,         & ! "sigma_ai"
+                  (wf%n_v)*(wf%n_o))
+!
+      call mem%dealloc(L_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+   end subroutine jacobian_transpose_ccs_b1_ccs
 !
 !
 end module ccs_class

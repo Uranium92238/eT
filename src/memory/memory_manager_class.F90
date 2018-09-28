@@ -256,7 +256,7 @@ contains
 !
 !     Update the available memory
 !
-!     The 'integer 15', or i15, type (see types.F90) is typically 4 bytes,
+!     The 'integer 15', or i15, type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
       mem%available = mem%available - i15*size_array
