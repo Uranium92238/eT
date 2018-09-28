@@ -123,17 +123,58 @@ contains
 !!    and adds it to the singles projection vector (omega1) of
 !!    the wavefunction object wf
 !!
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout):: omega1
+!
       real(dp), dimension(:,:), allocatable :: g_lc_ki ! g_kilc
       real(dp), dimension(:,:), allocatable :: t_al_ck ! t_kl^ac
+      real(dp), dimension(:,:), allocatable :: u_al_ck ! u_kl^ac = 2 t_kl^ac - t_lk^ac
+
+!     Get g_ki_lc = g_kilc
 !     Get g_ki_lc = g_kilc
 !
-      call mem%alloc(g_lc_ki, (wf%n_v)*wf%n_o), (wf%n_o)**2)
+      call mem%alloc(g_lc_ki, (wf%n_v)*(wf%n_o), (wf%n_o)**2)
 !
-      integral_type = 'electronic_repulsion'
-      call wf%get_ov_oo(integral_type, g_lc_ki)
+      call wf%get_ovoo(g_lc_ki,    &
+                        1, wf%n_o, &
+                        1, wf%n_v, &
+                        1, wf%n_o, &
+                        1, wf%n_o)
 !
 !     Form u_al_ck = u_kl^ac = 2 * t_kl^ac - t_lk^ac
 !     Square up amplitudes and reorder: t_ak_cl to t_al_ck
       call mem%alloc(t_al_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*wf%n_o)
+!      call squareup_and_sort_1234_to_1432(wf%t2am, t_al_ck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(u_al_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      u_al_ck = zero
+!
+      call add_1432_to_1234(-one, t_al_ck, u_al_ck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call daxpy((wf%n_v)**2*(wf%n_o)**2, two, t_al_ck, 1, u_al_ck, 1)
+!
+      call mem%dealloc(t_al_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+!
+!
+      call dgemm('N','N',                 &
+                  wf%n_v,                 &
+                  wf%n_o,                 &
+                  (wf%n_v)*((wf%n_o)**2), &
+                  -one,                   &
+                  u_al_ck,                & ! u_a_lck
+                  wf%n_v,                 &
+                  g_lc_ki,                & ! g_lck_i
+                  (wf%n_v)*((wf%n_o)**2), &
+                  one,                    &
+                  omega1,                 &
+                  wf%n_v)
+!
+!     Deallocate remaining vectors
+!
+      call mem%dealloc(u_al_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      call mem%dealloc(g_lc_ki, (wf%n_v)*(wf%n_o), (wf%n_o)**2)
+!
    end subroutine omega_ccsd_b1_ccsd
 end submodule
