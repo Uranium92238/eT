@@ -31,7 +31,30 @@ module ccsd_class
       procedure :: set_amplitudes               => set_amplitudes_ccsd 
       procedure :: get_amplitudes               => get_amplitudes_ccsd 
 !
+      procedure :: omega_ccsd_a1                => omega_ccsd_a1_ccsd
+!
    end type ccsd
+!
+!
+   interface
+!
+!
+      module subroutine omega_ccsd_a1_ccsd(wf, omega1)
+!!
+!!       Omega A1 term
+!!       Written by Sarai D. Folkestad, Eirik F. Kjønstad, 
+!!       Andreas Skeidsvoll and Alice Balbi, 2018
+!!
+         implicit none
+!
+         class(ccsd) :: wf
+!
+         real(dp), dimension(wf%n_v, wf%n_o), intent(inout):: omega1
+!
+      end subroutine omega_ccsd_a1_ccsd
+!
+!
+   end interface 
 !
 !
 contains
