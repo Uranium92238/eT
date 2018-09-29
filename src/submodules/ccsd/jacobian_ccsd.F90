@@ -89,9 +89,29 @@ contains
 !     Allocate the incoming unpacked doubles vector
 !
       call wf%mem%alloc(c_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      c_ai_bj = zero
 !
-      call squareup(c_aibj, c_ai_bj, (wf%n_o)*(wf%n_v)) ! Pack out vector
+      do a = 1, wf%n_v
+         do i = 1, wf%n_o
+!
+            ai = wf%n_v*(i - 1) + a
+!  
+            do j = 1, wf%n_o
+               do b = 1, wf%n_v
+!
+                  bj = wf%n_v*(j - 1) + b
+!
+                  if (ai .ge. bj) then
+!
+                     aibj = ai*(ai-3)/2 + ai + bj
+!
+                     c_ai_bj = c(wf%n_o*wf%n_v + aibj, 1)
+!
+                  endif
+!
+               enddo
+            enddo
+         enddo
+      enddo
 !
 !     Scale the doubles vector by 1 + delta_ai,bj, i.e.
 !     redefine to c_ckdl = c_ckdl (1 + delta_ck,dl)
