@@ -45,6 +45,8 @@ module ccsd_class
       procedure :: omega_ccsd_d2                => omega_ccsd_d2_ccsd
       procedure :: omega_ccsd_e2                => omega_ccsd_e2_ccsd
 !
+      procedure :: get_orbital_differences      => get_orbital_differences_ccsd
+!
    end type ccsd
 !
 !
@@ -256,10 +258,10 @@ contains
 !
                      aibj = (ai*(ai-3)/2) + ai + bj
 !
-                     wf%t2(aibj, 1) = g_ai_bj(ai, bj)/(wf%orbital_energies(i, 1) + &
-                                                       wf%orbital_energies(j, 1) - &
-                                                       wf%orbital_energies(a + wf%n_o, 1) - &
-                                                       wf%orbital_energies(b + wf%n_o, 1))
+                     wf%t2(aibj, 1) = g_ai_bj(ai, bj)/(wf%fock_diagonal(i, 1) + &
+                                                       wf%fock_diagonal(j, 1) - &
+                                                       wf%fock_diagonal(a + wf%n_o, 1) - &
+                                                       wf%fock_diagonal(b + wf%n_o, 1))
 !
                   endif
 !
@@ -278,7 +280,7 @@ contains
 !!
 !!     Calculate energy (CCSD)
 !!     Written by Sarai D. Folkestad, Eirik F. Kjønstad, 
-!!     Andreas Skeidsvoll and Alice Balbi, 2018
+!!     Andreas Skeidsvoll, 2018
 !!
 !!     Calculates the CCSD energy. This is only equal to the actual
 !!     energy when the ground state equations are solved, of course.
@@ -339,5 +341,52 @@ contains
       call mem%dealloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine calc_energy_ccsd
+!
+!
+   subroutine get_orbital_differences_ccsd(wf, orbital_differences)
+!!
+!!    Get orbital differences 
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
+!!    and Andreas Skeidsvoll, 2018
+!!
+      implicit none
+!
+      class(ccsd), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: orbital_differences
+!
+      integer(i15) :: a, i, ai, b, j, bj, aibj
+!
+!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) 
+      do a = 1, wf%n_v
+         do i = 1, wf%n_o
+!
+            ai = wf%n_v*(i - 1) + a
+!
+            orbital_differences(ai, 1) = wf%fock_diagonal(a + wf%n_o, 1) - wf%fock_diagonal(i, 1)
+!
+            do j = 1, wf%n_o 
+               do b = 1, wf%n_v
+!
+                  bj = wf%n_v*(j-1) + b 
+!
+                  if (ai .ge. bj) then
+!
+                     aibj = (ai*(ai-3)/2) + ai + bj
+!
+                     orbital_differences(aibj + (wf%n_o)*(wf%n_v), 1) = wf%fock_diagonal(a + wf%n_o, 1) - wf%fock_diagonal(i, 1) &
+                                                                      +  wf%fock_diagonal(b + wf%n_o, 1) - wf%fock_diagonal(j, 1)
+!
+                  endif
+!
+               enddo
+            enddo  
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine get_orbital_differences_ccsd
+!
 !
 end module ccsd_class

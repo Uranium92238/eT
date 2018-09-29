@@ -30,6 +30,7 @@ module ccs_class
       real(dp), dimension(:,:), allocatable  :: fock_ia
       real(dp), dimension(:,:), allocatable  :: fock_ai
       real(dp), dimension(:,:), allocatable  :: fock_ab
+!
       real(dp), dimension(:,:), allocatable  :: fock_diagonal
 !
       type(mo_integral_tool) :: integrals

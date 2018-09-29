@@ -95,6 +95,9 @@ contains
 !
       endif
 !
+      write(output%unit, *)'ciao'
+      flush(output%unit)
+!
    end subroutine prepare_diis_cc_gs_solver
 !
 !
@@ -114,6 +117,8 @@ contains
 
       write(output%unit, '(/t6,a26,i9)')   'DIIS dimension:           ', solver%diis_dimension
       write(output%unit, '(t6,a26,i9)')    'Max number of iterations: ', solver%max_iterations
+!
+      flush(output%unit)
 !
    end subroutine print_settings_diis_cc_gs_solver
 !

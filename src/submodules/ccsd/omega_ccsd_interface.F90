@@ -3,7 +3,7 @@
 !!
 !!       Omega A1 term
 !!       Written by Sarai D. Folkestad, Eirik F. Kjønstad, 
-!!       Andreas Skeidsvoll and Alice Balbi, 2018
+!!       and Andreas Skeidsvoll, 2018
 !!
          implicit none
 !
@@ -18,7 +18,7 @@
 !!
 !!       Omega B1 term
 !!       Written by Sarai D. Folkestad, Eirik F. Kjønstad, 
-!!       Andreas Skeidsvoll and Alice Balbi, 2018
+!!       and Andreas Skeidsvoll, 2018
 !!
          implicit none
 !
@@ -33,7 +33,7 @@
 !!
 !!       Omega C1 term
 !!       Written by Sarai D. Folkestad, Eirik F. Kjønstad, 
-!!       Andreas Skeidsvoll and Alice Balbi, 2018
+!!       and Andreas Skeidsvoll, 2018
 !!
          implicit none
 !
@@ -48,7 +48,7 @@
 !!
 !!       Omega A2 term
 !!       Written by Sarai D. Folkestad, Eirik F. Kjønstad, 
-!!       Andreas Skeidsvoll and Alice Balbi, 2018
+!!       and Andreas Skeidsvoll, 2018
 !!
          implicit none
 !
@@ -63,7 +63,7 @@
 !!
 !!       Omega B2 term
 !!       Written by Sarai D. Folkestad, Eirik F. Kjønstad, 
-!!       Andreas Skeidsvoll and Alice Balbi, 2018
+!!       and Andreas Skeidsvoll, 2018
 !!
          implicit none
 !
@@ -78,7 +78,7 @@
 !!
 !!       Omega C2 term
 !!       Written by Sarai D. Folkestad, Eirik F. Kjønstad, 
-!!       Andreas Skeidsvoll and Alice Balbi, 2018
+!!       and Andreas Skeidsvoll, 2018
 !!
          implicit none
 !
@@ -93,7 +93,7 @@
 !!
 !!       Omega D2 term
 !!       Written by Sarai D. Folkestad, Eirik F. Kjønstad, 
-!!       Andreas Skeidsvoll and Alice Balbi, 2018
+!!       and Andreas Skeidsvoll, 2018
 !!
          implicit none
 !
@@ -108,7 +108,7 @@
 !!
 !!       Omega E2 term
 !!       Written by Sarai D. Folkestad, Eirik F. Kjønstad, 
-!!       Andreas Skeidsvoll and Alice Balbi, 2018
+!!       and Andreas Skeidsvoll, 2018
 !!
          implicit none
 !
@@ -123,7 +123,7 @@
 !!
 !!       Construct omega (CCSD)
 !!       Written by Sarai D. Folkestad, Eirik F. Kjønstad, 
-!!       Andreas Skeidsvoll and Alice Balbi, 2018
+!!       and Andreas Skeidsvoll, 2018
 !!
          implicit none
 !

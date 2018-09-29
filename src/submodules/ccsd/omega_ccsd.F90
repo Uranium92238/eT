@@ -3,7 +3,7 @@ submodule (ccsd_class) omega_ccsd
 !!
 !!    Omega submodule (ccsd)
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
-!!    Andreas Skeidsvoll and Alice Balbi, 2018
+!!    and Andreas Skeidsvoll, 2018
 !!
 !
    implicit none
@@ -16,7 +16,7 @@ contains
 !!
 !!    Construct omega (CCSD)
 !!    Written by Sarai D. Folkestad, Eirik F. Kjønstad, 
-!!    Andreas Skeidsvoll and Alice Balbi, 2018
+!!    and Andreas Skeidsvoll, 2018
 !!
 !!    Directs the construction of the projection vector < mu | exp(-T) H exp(T) | R >
 !!    for the current amplitudes of the object wfn
@@ -63,7 +63,7 @@ contains
 !!
 !!    Omega A1 term
 !!    Written by Sarai D. Folkestad, Eirik F. Kjønstad, 
-!!    Andreas Skeidsvoll and Alice Balbi, 2018
+!!    and Andreas Skeidsvoll, 2018
 !!
 !!    Calculates the A1 term,
 !!
@@ -160,7 +160,7 @@ contains
 !!
 !!    Omega B1
 !!    Written by Sarai D. Fokestad, Eirik F. Kjønstad,
-!!    Andreas Skeidsvoll and Alice Balbi, 2018
+!!    and Andreas Skeidsvoll, 2018
 !!
 !!    Calculates the B1 term,
 !!
@@ -224,7 +224,7 @@ contains
 !!
 !!    Omega C1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
-!!    Andreas Skeidsvoll and Alice Balbi, 2018
+!!    and Andreas Skeidsvoll, 2018
 !!
 !!    Calculates the C1 term of omega,
 !!
@@ -290,7 +290,7 @@ contains
 !!
 !!    Omega A2 term
 !!    Written by Sarai D. Folkestad, Eirik F. Kjønstad,
-!!    Andreas Skeidsvoll and Alice Balbi, 2018
+!!    and Andreas Skeidsvoll, 2018
 !!      
 !!    A2 = g_ai_bj + sum_(cd)g_ac_bd * t_ci_dj = A2.1 + A.2.2
 !!
@@ -742,7 +742,7 @@ contains
 !!
 !!    Omega B2
 !!    Written by Sarai D. Folkestad, Eirik F. Kjønstad,
-!!    Andreas Skeidsvoll and Alice Balba
+!!    and Andreas Skeidsvoll, 2018
 !!
 !!    Omega B2 = sum_(kl) t_ak_bl*(g_kilj + sum_(cd) t_ci_dj * g_kc_ld)
 !!
@@ -863,7 +863,7 @@ contains
 !!
 !!    Omega C2
 !!    Written by Sarai D. Folkestad, Eirik F. Kjønstad,
-!!    Andreas Skeidsvoll and Alice Balba
+!!    and Andreas Skeidsvoll, 2018
 !!
 !!    Omega C2 = -1/2 * sum_(ck) t_bk_cj*(g_ki_ac -1/2 sum_(dl)t_al_di * g_kd_lc)
 !!                    - sum_(ck) t_bk_ci*(g_kj_ac - sum_(dl)t_al_dj * g_kd_lc)
@@ -1151,7 +1151,7 @@ contains
 !!
 !!    Omega D2
 !!    Written by Sarai D. Folkestad, Eirik F. Kjønstad,
-!!    Andreas Skeidsvoll and Alice Balba, 2018
+!!    and Andreas Skeidsvoll, 2018
 !!
 !!    Calculates the D2 term,
 !!
@@ -1322,7 +1322,7 @@ contains
 !
 !     Omega E2
 !     Written by Sarai D. Folkestad, Eirik F. Kjønstad,
-!     Andreas Skeidsvoll and Alice Balba
+!     and Andreas Skeidsvoll, 2018
 !
 !     Calculates the E2 term,
 !
