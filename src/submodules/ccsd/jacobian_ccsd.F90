@@ -164,7 +164,7 @@ contains
 !
 !     Reorder to g_ai_jk = g_aikj = g_ai_kj
 !
-      call wf%mem%alloc(g_ai_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
+      call mem%alloc(g_ai_jk, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
 !
       call sort_1234_to_1243(g_ai_kj, g_ai_jk, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
