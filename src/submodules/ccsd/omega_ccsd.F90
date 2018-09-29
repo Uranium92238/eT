@@ -53,6 +53,9 @@ contains
       call wf%omega_ccsd_d2(omega2)
       call wf%omega_ccsd_e2(omega2)
 !
+      call dcopy((wf%n_o)*(wf%n_v), omega1, 1, omega, 1)
+      call dcopy((wf%n_o)*(wf%n_v)*((wf%n_o)*(wf%n_v)+1)/2, omega2, 1, omega((wf%n_o)*(wf%n_v)+1, 1), 1)
+!
       call mem%dealloc(omega1, wf%n_v, wf%n_o)
       call mem%dealloc(omega2, (wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o) +1)/2, 1)
 !
@@ -97,7 +100,7 @@ contains
       call mem%alloc(u_dk_ci, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       u_dk_ci = zero
-      call daxpy(((wf%n_v)*(wf%n_o))**2, -one, t_dk_ci, 1, u_dk_ci)
+      call daxpy(((wf%n_v)*(wf%n_o))**2, -one, t_dk_ci, 1, u_dk_ci, 1)
 !
       call add_1432_to_1234(two, t_dk_ci, u_dk_ci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -182,6 +185,7 @@ contains
 !     Form u_al_ck = u_kl^ac = 2 * t_kl^ac - t_lk^ac
 !     Square up amplitudes and reorder: t_ak_cl to t_al_ck
 !
+!
       call mem%alloc(g_lc_ki, (wf%n_v)*(wf%n_o), (wf%n_o)**2)
 !
       call wf%get_ovoo(g_lc_ki)
@@ -193,7 +197,7 @@ contains
 !
       call mem%alloc(u_al_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
       u_al_ck = zero
-      call daxpy(((wf%n_v)*(wf%n_o))**2, -one, t_al_ck, 1, u_al_ck)
+      call daxpy(((wf%n_v)*(wf%n_o))**2, -one, t_al_ck, 1, u_al_ck, 1)
 !
       call add_1432_to_1234(two, t_al_ck, u_al_ck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -213,6 +217,7 @@ contains
                   wf%n_v)
 !
 !     Deallocate remaining vectors
+!
 !
       call mem%dealloc(u_al_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
       call mem%dealloc(g_lc_ki, (wf%n_v)*(wf%n_o), (wf%n_o)**2)
@@ -601,13 +606,13 @@ contains
 !
                      do a = 1, batch_a%length
 !
-                        ac = index_two(a, c, batch_a%length)
-                        ad = index_two(a, d, batch_a%length)
+                        ac =  batch_a%length*(c - 1) + a
+                        ad =  batch_a%length*(d - 1) + a
 !
                         do  b = 1, batch_b%length
 !
-                             bd = index_two(b, d, batch_b%length)
-                             bc = index_two(b, c, batch_b%length)
+                             bd = batch_b%length*(d - 1) + b
+                             bc = batch_b%length*(c - 1) + b
 !
                              ab = index_two(a, b, batch_a%length)
 !
@@ -695,18 +700,18 @@ contains
 !
                      do a = 1, batch_a%length
 !
-                        ai = index_two(a + batch_a%first - 1, i, wf%n_v) ! A is full-space a index
-                        aj = index_two(a + batch_a%first - 1, j, wf%n_v) ! A is full-space a index
+                        ai = wf%n_v*(i - 1) + a + batch_a%first - 1 ! A is full-space a index
+                        aj = wf%n_v*(j - 1) + a + batch_a%first - 1 ! A is full-space a index
 !
                         do b = 1, batch_b%length
 !
-                              bj = index_two(b + batch_b%first - 1, j, wf%n_v) ! B is full-space b index
-                              bi = index_two(b + batch_b%first - 1, i, wf%n_v) ! B is full-space b index
+                              bj = wf%n_v*(j - 1) + b + batch_b%first - 1 ! B is full-space b index
+                              bi = wf%n_v*(i - 1) + b + batch_b%first - 1 ! B is full-space b index
 !
-                              ab = index_two(a, b, batch_a%length)
+                              ab = batch_a%length*(b - 1) + a
 !
-                              aibj = index_packed(ai, bj)
-                              biaj = index_packed(bi, aj)
+                              aibj = max(ai, bj)*(max(ai, bj)-3)/2 + ai + bj
+                              biaj = max(bi, aj)*(max(bi, aj)-3)/2 + bi + aj
 !
 !                             Reorder into omega2_aibj
 !
@@ -1009,26 +1014,7 @@ contains
 !
 !        X_ai_ck = X_ai_ck + g_ki_ac
 !
-         do i = 1, wf%n_o
-            do k = 1, wf%n_o
-!
-               ki = index_two(k, i, wf%n_o)
-!
-               do c = 1, wf%n_v
-!
-                  ck = index_two(c, k, wf%n_v)
-!
-                  do a = 1, batch_a%length
-!
-                     ai = index_two(a + batch_a%first -1, i, wf%n_v)
-                     ac = index_two(a, c, batch_a%length)
-!
-                     X_ai_ck(ai, ck) = X_ai_ck(ai, ck) + g_ki_ac(ki, ac)
-!
-                  enddo
-               enddo
-            enddo
-         enddo
+         call add_4213_to_1234(one, g_ki_ac, X_ai_ck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !        Calculate the contribution to the term
 !
@@ -1116,19 +1102,19 @@ contains
          do i = 1, wf%n_o
             do a = 1, wf%n_v
 !
-               ai = index_two(a, i, wf%n_v)
+               ai = wf%n_v*(i - 1) + a
 !
                do j = 1, wf%n_o
                   do b = 1, wf%n_v
 !
-                  bj = index_two(b, j, wf%n_v)
+                  bj = wf%n_v*(j - 1) + b
 !
                   if (ai .ge. bj) then
 !
-                     aj = index_two(a, j, wf%n_v)
-                     bi = index_two(b, i, wf%n_v)
+                     aj = wf%n_v*(j - 1) + a
+                     bi = wf%n_v*(i - 1) + b
 !
-                     aibj = index_packed(ai, bj)
+                     aibj = max(ai, bj)*(max(ai, bj)-3)/2 + ai + bj
 !
                      omega2(aibj, 1) = omega2(aibj, 1) + half*Y_ai_bj(ai, bj) + Y_ai_bj(aj, bi) &
                                                         + half*Y_ai_bj(bj, ai) + Y_ai_bj(bi, aj)

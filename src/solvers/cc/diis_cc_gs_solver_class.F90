@@ -95,9 +95,6 @@ contains
 !
       endif
 !
-      write(output%unit, *)'ciao'
-      flush(output%unit)
-!
    end subroutine prepare_diis_cc_gs_solver
 !
 !
@@ -196,6 +193,7 @@ contains
 !
       write(output%unit, '(/t3,a)') 'Iteration    Energy (a.u.)        || Omega ||    Delta E (a.u.)'
       write(output%unit, '(t3,a)')  '---------------------------------------------------------------'
+      flush(output%unit)
 !
       prev_energy = zero
       iteration   = 1
@@ -210,6 +208,7 @@ contains
          call wf%construct_fock()
 !
          call wf%construct_omega(omega)
+!
          omega_norm = get_l2_norm(omega, wf%n_amplitudes)
 !
          write(output%unit, '(t3,i3,10x,f17.12,4x,e10.4,4x,e10.4)') iteration, wf%energy, &

@@ -47,6 +47,8 @@ module ccsd_class
 !
       procedure :: get_orbital_differences      => get_orbital_differences_ccsd
 !
+      procedure :: calculate_energy             => calculate_energy_ccsd
+!
    end type ccsd
 !
 !
@@ -277,7 +279,7 @@ contains
    end subroutine set_t2_to_mp2_guess_ccsd
 !
 !
-   subroutine calc_energy_ccsd(wf)
+   subroutine calculate_energy_ccsd(wf)
 !!
 !!     Calculate energy (CCSD)
 !!     Written by Sarai D. Folkestad, Eirik F. Kjønstad, 
@@ -288,7 +290,7 @@ contains
 !!
       implicit none
 !
-      class(ccsd) :: wf
+      class(ccsd), intent(inout) :: wf
 !
       real(dp), dimension(:,:), allocatable :: L_ia_J  ! L_ia^J
       real(dp), dimension(:,:), allocatable :: g_ia_jb ! g_iajb
@@ -341,7 +343,7 @@ contains
 !
       call mem%dealloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-   end subroutine calc_energy_ccsd
+   end subroutine calculate_energy_ccsd
 !
 !
    subroutine get_orbital_differences_ccsd(wf, orbital_differences)
