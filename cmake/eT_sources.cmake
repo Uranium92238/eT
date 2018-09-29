@@ -54,4 +54,5 @@ set(eT_fortran_sources
    src/solver_tools/davidson_tool_class.F90
    src/solver_tools/eigen_davidson_tool_class.F90
    src/submodules/ccsd/omega_ccsd.F90
+   src/submodules/ccsd/jacobian_ccsd.F90
 )

@@ -53,6 +53,7 @@ module ccsd_class
    interface
 !
       include "../submodules/ccsd/omega_ccsd_interface.F90"
+      include "../submodules/ccsd/jacobian_ccsd_interface.F90"
 !
    end interface 
 !
