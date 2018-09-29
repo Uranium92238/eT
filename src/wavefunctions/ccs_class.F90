@@ -2135,7 +2135,7 @@ contains
    end subroutine jacobian_ccs_transformation_ccs
 !
 !
-   module subroutine jacobian_transpose_ccs_transformation_ccs(wf, b_a_i)
+   subroutine jacobian_transpose_ccs_transformation_ccs(wf, b_a_i)
 !!
 !!    Jacobian transpose transformation (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
