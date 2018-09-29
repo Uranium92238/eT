@@ -1,5 +1,32 @@
 !
 !
+   module subroutine jacobi_transform_trial_vector_ccsd(wf, c_i)
+!!
+!!    Jacobi transform trial vector 
+!!    Written by Sarai D. Folkestad, Sep 2018
+!!
+      class(ccsd), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_amplitudes, 1) :: c_i
+!
+   end subroutine jacobi_transform_trial_vector_ccsd
+!
+!
+   module subroutine jacobian_ccsd_transformation_ccsd(wf, c)
+!!
+!!    Jacobian transformation (CCSD)
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      real(dp), dimension(wf%n_amplitudes, 1) :: c
+!
+   end subroutine jacobian_ccsd_transformation_ccsd
+!
+!
   module subroutine jacobian_ccsd_a1_ccsd(wf, rho_a_i, c_a_i)
 !!
 !!    Jacobian CCSD A1

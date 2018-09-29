@@ -18,56 +18,56 @@ module ccsd_class
 !
 !     Preparation and cleanup routines 
 !
-      procedure :: prepare                      => prepare_ccsd
-      procedure :: cleanup                      => cleanup_ccsd
+      procedure :: prepare                         => prepare_ccsd
+      procedure :: cleanup                         => cleanup_ccsd
 !
 !     Routines related to the amplitudes 
 !
-      procedure :: initialize_amplitudes        => initialize_amplitudes_ccsd 
-      procedure :: initialize_t2                => initialize_t2_ccsd
-      procedure :: destruct_t2                  => destruct_t2_ccsd
-      procedure :: set_initial_amplitudes_guess => set_initial_amplitudes_guess_ccsd
-      procedure :: set_t2_to_mp2_guess          => set_t2_to_mp2_guess_ccsd
-      procedure :: set_amplitudes               => set_amplitudes_ccsd 
-      procedure :: get_amplitudes               => get_amplitudes_ccsd 
+      procedure :: initialize_amplitudes           => initialize_amplitudes_ccsd 
+      procedure :: initialize_t2                   => initialize_t2_ccsd
+      procedure :: destruct_t2                     => destruct_t2_ccsd
+      procedure :: set_initial_amplitudes_guess    => set_initial_amplitudes_guess_ccsd
+      procedure :: set_t2_to_mp2_guess             => set_t2_to_mp2_guess_ccsd
+      procedure :: set_amplitudes                  => set_amplitudes_ccsd 
+      procedure :: get_amplitudes                  => get_amplitudes_ccsd 
 !
 !     Routines related to omega
 !
-      procedure :: construct_omega              => construct_omega_ccsd
+      procedure :: construct_omega                 => construct_omega_ccsd
 !
-      procedure :: omega_ccsd_a1                => omega_ccsd_a1_ccsd
-      procedure :: omega_ccsd_b1                => omega_ccsd_b1_ccsd
-      procedure :: omega_ccsd_c1                => omega_ccsd_c1_ccsd
+      procedure :: omega_ccsd_a1                   => omega_ccsd_a1_ccsd
+      procedure :: omega_ccsd_b1                   => omega_ccsd_b1_ccsd
+      procedure :: omega_ccsd_c1                   => omega_ccsd_c1_ccsd
 !
-      procedure :: omega_ccsd_a2                => omega_ccsd_a2_ccsd
-      procedure :: omega_ccsd_b2                => omega_ccsd_b2_ccsd
-      procedure :: omega_ccsd_c2                => omega_ccsd_c2_ccsd
-      procedure :: omega_ccsd_d2                => omega_ccsd_d2_ccsd
-      procedure :: omega_ccsd_e2                => omega_ccsd_e2_ccsd
+      procedure :: omega_ccsd_a2                   => omega_ccsd_a2_ccsd
+      procedure :: omega_ccsd_b2                   => omega_ccsd_b2_ccsd
+      procedure :: omega_ccsd_c2                   => omega_ccsd_c2_ccsd
+      procedure :: omega_ccsd_d2                   => omega_ccsd_d2_ccsd
+      procedure :: omega_ccsd_e2                   => omega_ccsd_e2_ccsd
 !
-      procedure :: jacobi_transform_trial_vector => jacobian_ccsd_transformation_ccsd
-      procedure :: jacobian_ccsd_transformation  => jacobian_ccsd_transformation_ccsd
+      procedure :: jacobi_transform_trial_vector   => jacobi_transform_trial_vector_ccsd
+      procedure :: jacobian_ccsd_transformation    => jacobian_ccsd_transformation_ccsd
 !
-      procedure :: jacobian_ccsd_a1 => jacobian_ccsd_a1_ccsd
-      procedure :: jacobian_ccsd_b1 => jacobian_ccsd_b1_ccsd
-      procedure :: jacobian_ccsd_c1 => jacobian_ccsd_c1_ccsd
-      procedure :: jacobian_ccsd_d1 => jacobian_ccsd_d1_ccsd
+      procedure :: jacobian_ccsd_a1                => jacobian_ccsd_a1_ccsd
+      procedure :: jacobian_ccsd_b1                => jacobian_ccsd_b1_ccsd
+      procedure :: jacobian_ccsd_c1                => jacobian_ccsd_c1_ccsd
+      procedure :: jacobian_ccsd_d1                => jacobian_ccsd_d1_ccsd
 !
-      procedure :: jacobian_ccsd_a2 => jacobian_ccsd_a2_ccsd
-      procedure :: jacobian_ccsd_b2 => jacobian_ccsd_b2_ccsd
-      procedure :: jacobian_ccsd_c2 => jacobian_ccsd_c2_ccsd
-      procedure :: jacobian_ccsd_d2 => jacobian_ccsd_d2_ccsd
-      procedure :: jacobian_ccsd_e2 => jacobian_ccsd_e2_ccsd
-      procedure :: jacobian_ccsd_f2 => jacobian_ccsd_f2_ccsd
-      procedure :: jacobian_ccsd_g2 => jacobian_ccsd_g2_ccsd
-      procedure :: jacobian_ccsd_h2 => jacobian_ccsd_h2_ccsd
-      procedure :: jacobian_ccsd_i2 => jacobian_ccsd_i2_ccsd
-      procedure :: jacobian_ccsd_j2 => jacobian_ccsd_j2_ccsd
-      procedure :: jacobian_ccsd_k2 => jacobian_ccsd_k2_ccsd
+      procedure :: jacobian_ccsd_a2                => jacobian_ccsd_a2_ccsd
+      procedure :: jacobian_ccsd_b2                => jacobian_ccsd_b2_ccsd
+      procedure :: jacobian_ccsd_c2                => jacobian_ccsd_c2_ccsd
+      procedure :: jacobian_ccsd_d2                => jacobian_ccsd_d2_ccsd
+      procedure :: jacobian_ccsd_e2                => jacobian_ccsd_e2_ccsd
+      procedure :: jacobian_ccsd_f2                => jacobian_ccsd_f2_ccsd
+      procedure :: jacobian_ccsd_g2                => jacobian_ccsd_g2_ccsd
+      procedure :: jacobian_ccsd_h2                => jacobian_ccsd_h2_ccsd
+      procedure :: jacobian_ccsd_i2                => jacobian_ccsd_i2_ccsd
+      procedure :: jacobian_ccsd_j2                => jacobian_ccsd_j2_ccsd
+      procedure :: jacobian_ccsd_k2                => jacobian_ccsd_k2_ccsd
 !
-      procedure :: get_orbital_differences      => get_orbital_differences_ccsd
+      procedure :: get_orbital_differences         => get_orbital_differences_ccsd
 !
-      procedure :: calculate_energy             => calculate_energy_ccsd
+      procedure :: calculate_energy                => calculate_energy_ccsd
 !
    end type ccsd
 !

@@ -12,12 +12,12 @@ submodule (ccsd_class) jacobian_ccsd
 contains
 !
 !
-   subroutine jacobi_transform_trial_vector_ccsd(wf, c_i)
+   module subroutine jacobi_transform_trial_vector_ccsd(wf, c_i)
 !!
 !!    Jacobi transform trial vector 
 !!    Written by Sarai D. Folkestad, Sep 2018
 !!
-      class(ccs), intent(in) :: wf 
+      class(ccsd), intent(in) :: wf 
 !
       real(dp), dimension(wf%n_amplitudes, 1) :: c_i
 !
@@ -56,14 +56,14 @@ contains
       real(dp), dimension(:,:), allocatable :: rho_a_i   
       real(dp), dimension(:,:), allocatable :: rho_ai_bj, rho_ab_ij 
 !
-      integer(i15) :: I = 0 ! Index
+      integer(i15) :: i, j, a, b, ai, bj, aibj ! Index
 !
 !     Allocate and zero the transformed vector (singles part)
 !
-      call wf%mem%alloc(rho_a_i, wf%n_v, wf%n_o)
+      call mem%alloc(rho_a_i, wf%n_v, wf%n_o)
       rho_a_i = zero
 !
-      call wf%mem%alloc(c_a_i, wf%n_v, wf%n_o)
+      call mem%alloc(c_a_i, wf%n_v, wf%n_o)
 !
       call dcopy(wf%n_o*wf%n_v, c, 1, c_a_i, 1)
 !
@@ -78,9 +78,9 @@ contains
 !
 !     Allocate the incoming unpacked doubles vector
 !
-      call wf%mem%alloc(c_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%alloc(c_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) 
+!!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) 
       do a = 1, wf%n_v
          do i = 1, wf%n_o
 !
@@ -96,6 +96,7 @@ contains
                      aibj = ai*(ai-3)/2 + ai + bj
 !
                      c_ai_bj(ai, bj) = c(wf%n_o*wf%n_v + aibj, 1)
+                     c_ai_bj(bj, ai) = c(wf%n_o*wf%n_v + aibj, 1)
 !
                   endif
 !
@@ -103,18 +104,18 @@ contains
             enddo
          enddo
       enddo
-!$omp end parallel do
+!!$omp end parallel do
 !
 !     Scale the doubles vector by 1 + delta_ai,bj, i.e.
 !     redefine to c_ckdl = c_ckdl (1 + delta_ck,dl)
 !
-!$omp parallel do schedule(static) private(ai) 
+!!$omp parallel do schedule(static) private(ai) 
       do ai = 1, (wf%n_o)*(wf%n_v)
 !
          c_ai_bj(ai,ai) = two*c_ai_bj(ai,ai)
 !
       enddo
-!$omp end parallel do
+!!$omp end parallel do
 !
       call wf%jacobian_ccsd_b1(rho_a_i, c_ai_bj)
       call wf%jacobian_ccsd_c1(rho_a_i, c_ai_bj)
@@ -125,13 +126,13 @@ contains
 !
       call dcopy((wf%n_o)*(wf%n_v), rho_a_i, 1, c, 1)
 
-      call wf%mem%dealloc(rho_a_i, wf%n_v, wf%n_o)
+      call mem%dealloc(rho_a_i, wf%n_v, wf%n_o)
 !
 !     :: CCSD contributions to the transformed doubles vector ::
 !
 !     Allocate unpacked transformed vector
 !
-      call wf%mem%alloc(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%alloc(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       rho_ai_bj = zero
 !
 !     Contributions from singles vector c
@@ -141,7 +142,7 @@ contains
       call wf%jacobian_ccsd_c2(rho_ai_bj, c_a_i)
       call wf%jacobian_ccsd_d2(rho_ai_bj, c_a_i)
 !
-      call wf%mem%dealloc(c_a_i, wf%n_v, wf%n_o)
+      call mem%dealloc(c_a_i, wf%n_v, wf%n_o)
 !
 !     Contributions from doubles vector c
 !
@@ -159,43 +160,43 @@ contains
 !     In preparation for last two terms, reorder
 !     rho_ai_bj to rho_ab_ij, and c_ai_bj to c_ab_ij
 !
-      call wf%mem%alloc(rho_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
-      call wf%mem%alloc(c_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
+      call mem%alloc(rho_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
+      call mem%alloc(c_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
 !
       call sort_1234_to_1324(c_ai_bj, c_ab_ij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call sort_1234_to_1324(rho_ai_bj, rho_ab_ij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call wf%mem%dealloc(c_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call wf%mem%dealloc(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(c_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       call wf%jacobian_ccsd_j2(rho_ab_ij, c_ab_ij)
       call wf%jacobian_ccsd_k2(rho_ab_ij, c_ab_ij)
 !
 !     Done with reordered doubles c; deallocate
 !
-      call wf%mem%dealloc(c_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
+      call mem%dealloc(c_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
 !
 !     Order rho_ab_ij back into rho_ai_bj & divide by
 !     the biorthonormal factor 1 + delta_ai,bj
 !
-      call wf%mem%alloc(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%alloc(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       call sort_1234_to_1324(rho_ab_ij, rho_ai_bj, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-!$omp parallel do schedule(static) private(ai) 
+!!$omp parallel do schedule(static) private(ai) 
       do ai = 1, (wf%n_o)*(wf%n_v)
 !
          rho_ai_bj(ai,ai) = half*rho_ai_bj(ai,ai)
 !
       enddo
-!$omp end parallel do
+!!$omp end parallel do
 !
-      call wf%mem%dealloc(rho_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
+      call mem%dealloc(rho_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
 !
 !     Overwrite the incoming doubles c vector & pack in
 !
 !
-!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) 
+!!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) 
       do a = 1, wf%n_v
          do i = 1, wf%n_o
 !
@@ -218,11 +219,11 @@ contains
             enddo
          enddo
       enddo
-!$omp end parallel do
+!!$omp end parallel do
 !
 !     Remaining deallocations
 !
-      call wf%mem%dealloc(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine jacobian_ccsd_transformation_ccsd
 !
@@ -2909,7 +2910,7 @@ contains
          call mem%alloc(g_bc_kj, (wf%n_v)*(batch_c%length), (wf%n_o)**2)
          g_bc_kj = zero
 !
-         call get_vvoo(g_bc_kj,           &
+         call wf%get_vvoo(g_bc_kj,           &
                            1,             &
                            wf%n_v,        &
                            batch_c%first, &
@@ -3034,7 +3035,7 @@ contains
 !
       call mem%alloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      call get_ovov(g_kc_ld)
+      call wf%get_ovov(g_kc_ld)
 !
       call mem%alloc(g_kl_cd, (wf%n_o)**2, (wf%n_v)**2)
       g_kl_cd = zero
@@ -3228,7 +3229,7 @@ contains
 !
 !           g_ca_db = sum_J L_ca_J*L_db_J
 !
-            call get_vvvv(g_ac_bd,        &
+            call wf%get_vvvv(g_ac_bd,        &
                            batch_a%first, &
                            batch_a%last,  &
                            1,             &
