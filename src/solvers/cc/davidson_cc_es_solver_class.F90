@@ -223,7 +223,6 @@ contains
             call davidson%read_trial(c_i, trial)
 !
             call solver%transform_trial_vector(wf, c_i)
-         !   call wf%transform_trial_vector(c_i)
 !
             call davidson%projection(c_i)
 !
