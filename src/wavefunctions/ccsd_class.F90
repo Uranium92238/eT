@@ -31,6 +31,8 @@ module ccsd_class
       procedure :: set_amplitudes               => set_amplitudes_ccsd 
       procedure :: get_amplitudes               => get_amplitudes_ccsd 
 !
+!     Routines related to omega
+!
       procedure :: construct_omega              => construct_omega_ccsd
 !
       procedure :: omega_ccsd_a1                => omega_ccsd_a1_ccsd
