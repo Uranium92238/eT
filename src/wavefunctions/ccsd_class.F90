@@ -274,4 +274,70 @@ contains
    end subroutine set_t2_to_mp2_guess_ccsd
 !
 !
+   subroutine calc_energy_ccsd(wf)
+!!
+!!     Calculate energy (CCSD)
+!!     Written by Sarai D. Folkestad, Eirik F. Kjønstad, 
+!!     Andreas Skeidsvoll and Alice Balbi, 2018
+!!
+!!     Calculates the CCSD energy. This is only equal to the actual
+!!     energy when the ground state equations are solved, of course.
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      real(dp), dimension(:,:), allocatable :: L_ia_J  ! L_ia^J
+      real(dp), dimension(:,:), allocatable :: g_ia_jb ! g_iajb
+!
+      integer(i15) :: a = 0, i = 0, b = 0, j = 0, ai = 0
+      integer(i15) :: bj = 0, aibj = 0, ia = 0, jb = 0, ib = 0, ja = 0
+!
+!     Get g_ia_jb = g_iajb
+!
+      call mem%alloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+      call wf%get_ovov(g_ia_jb)
+!
+!     Set the initial value of the energy
+!
+      wf%energy = wf%hf_energy
+!
+!     Add the correlation energy E = E + sum_aibj (t_ij^ab + t_i^a t_j^b) L_iajb
+!
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
+!
+            ai = index_two(a, i, wf%n_v)
+            ia = index_two(i, a, wf%n_o)
+!
+            do j = 1, wf%n_o
+!
+               ja = wf%n_o*(a-1) + j
+!
+               do b = 1, wf%n_v
+!
+                  bj = wf%n_v*(j - 1) + b
+                  jb = wf%n_o*(b - 1) + j
+                  ib = wf%n_o*(b - 1) + i
+!
+                  aibj = (max(ai,bj)*(max(ai,bj)-3)/2) + ai + bj
+!
+!                 Add the correlation energy
+!
+                  wf%energy = wf%energy +                                     &
+                                 (wf%t2(aibj,1) + (wf%t1(a,i))*(wf%t1(b,j)))* &
+                                 (two*g_ia_jb(ia,jb) - g_ia_jb(ib,ja))
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+!     Deallocate g_ia_jb
+!
+      call mem%dealloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+   end subroutine calc_energy_ccsd
+!
 end module ccsd_class
