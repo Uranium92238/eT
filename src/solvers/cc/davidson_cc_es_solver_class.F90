@@ -409,8 +409,6 @@ contains
          call get_n_lowest(solver%n_singlet_states, wf%n_amplitudes, orbital_differences, &
                            lowest_orbital_differences, lowest_orbital_differences_index)
 !
-      write(output%unit, *)lowest_orbital_differences, solver%n_singlet_states, lowest_orbital_differences_index
-!
          call mem%dealloc(lowest_orbital_differences, solver%n_singlet_states, 1)
          call mem%dealloc(orbital_differences, wf%n_amplitudes, 1)
 !

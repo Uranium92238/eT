@@ -2241,7 +2241,7 @@ contains
 !
       class(ccs) :: wf
 !   
-      real(dp), dimension(wf%n_v*wf%n_o, 1), intent(in)    :: c1
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c1
       real(dp), dimension(wf%n_v,wf%n_o), intent(inout) :: rho1      
 !
       real(dp), dimension(:,:), allocatable :: g_ai_jb
@@ -2252,7 +2252,7 @@ contains
 !
       type(batching_index) :: batch_b
 !
-      integer(i15) :: required, j, b, b_red, current_b_batch
+      integer(i15) :: required, j, b, b_red, current_b_batch, jb
 !
       call batch_b%init(wf%n_v) 
 !
@@ -2293,16 +2293,16 @@ contains
 !
          call mem%alloc(c_jb, (wf%n_o), (batch_b%length))
 !
-         do j = 1, wf%n_o 
-            do b = batch_b%first, batch_b%last 
-!
-               b_red = b - batch_b%first + 1
-!
-               c_jb(j, b_red) = c1(b, j) 
-!
-            enddo
-         enddo
-!
+        do j = 1, wf%n_o 
+           do b = batch_b%first, batch_b%last 
+!!
+              b_red = b - batch_b%first + 1
+!!
+              c_jb(j, b_red) = c1(b, j) 
+!!
+           enddo
+        enddo
+    
 !
          call dgemm('N', 'N',                   &
                      (wf%n_v)*(wf%n_o),         &
@@ -2318,7 +2318,7 @@ contains
                      (wf%n_v)*(wf%n_o))      
 !
          call mem%dealloc(L_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(batch_b%length))
-         call mem%dealloc(c_jb, (wf%n_o), (batch_b%length))
+         call mem%dealloc(c_jb, (wf%n_o)*(batch_b%length), 1)
 !
       enddo
 !
@@ -2426,7 +2426,7 @@ contains
 !
          call mem%alloc(g_ca_ik, (wf%n_v)*(batch_a%length), (wf%n_o)**2)
 !
-         call wf%get_vvoo(g_ca_ik,       &
+         call wf%get_vvoo(g_ca_ik,        &
                            1,             &
                            wf%n_v,        &
                            batch_a%first, &

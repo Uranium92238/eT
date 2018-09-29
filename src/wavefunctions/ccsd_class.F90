@@ -380,7 +380,7 @@ contains
 !
       integer(i15) :: a, i, ai, b, j, bj, aibj
 !
-!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) 
+!!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) 
       do a = 1, wf%n_v
          do i = 1, wf%n_o
 !
@@ -407,7 +407,7 @@ contains
 !
          enddo
       enddo
-!$omp end parallel do
+!!$omp end parallel do
 !
    end subroutine get_orbital_differences_ccsd
 !

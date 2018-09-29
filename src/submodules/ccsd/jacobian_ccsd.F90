@@ -65,7 +65,17 @@ contains
 !
       call mem%alloc(c_a_i, wf%n_v, wf%n_o)
 !
-      call dcopy(wf%n_o*wf%n_v, c, 1, c_a_i, 1)
+!$omp parallel do schedule(static) private(a, i, ai) 
+      do a = 1, wf%n_v
+         do i = 1, wf%n_o
+!
+            ai = wf%n_v*(i - 1) + a
+!
+            c_a_i(a, i) = c(ai, 1)
+!
+         enddo
+      enddo
+!$omp end parallel do
 !
 !     :: CCS contributions to the singles c vector ::
 !
@@ -74,57 +84,68 @@ contains
 !
 !     :: CCSD contributions to the transformed singles vector ::
 !
-      call wf%jacobian_ccsd_a1(rho_a_i, c_a_i)
+     ! call wf%jacobian_ccsd_a1(rho_a_i, c_a_i)
 !
 !     Allocate the incoming unpacked doubles vector
 !
-      call mem%alloc(c_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
+!      call mem%alloc(c_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!!
 !!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) 
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
-!
-            ai = wf%n_v*(i - 1) + a
-!  
-            do j = 1, wf%n_o
-               do b = 1, wf%n_v
-!
-                  bj = wf%n_v*(j - 1) + b
-!
-                  if (ai .ge. bj) then
-!
-                     aibj = ai*(ai-3)/2 + ai + bj
-!
-                     c_ai_bj(ai, bj) = c(wf%n_o*wf%n_v + aibj, 1)
-                     c_ai_bj(bj, ai) = c(wf%n_o*wf%n_v + aibj, 1)
-!
-                  endif
-!
-               enddo
-            enddo
-         enddo
-      enddo
+!      do a = 1, wf%n_v
+!         do i = 1, wf%n_o
+!!
+!            ai = wf%n_v*(i - 1) + a
+!!  
+!            do j = 1, wf%n_o
+!               do b = 1, wf%n_v
+!!
+!                  bj = wf%n_v*(j - 1) + b
+!!
+!                  if (ai .ge. bj) then
+!!
+!                     aibj = ai*(ai-3)/2 + ai + bj
+!!
+!                     c_ai_bj(ai, bj) = c(wf%n_o*wf%n_v + aibj, 1)
+!                     c_ai_bj(bj, ai) = c(wf%n_o*wf%n_v + aibj, 1)
+!!
+!                  endif
+!!
+!               enddo
+!            enddo
+!         enddo
+!      enddo
 !!$omp end parallel do
-!
-!     Scale the doubles vector by 1 + delta_ai,bj, i.e.
-!     redefine to c_ckdl = c_ckdl (1 + delta_ck,dl)
-!
+!!
+!!     Scale the doubles vector by 1 + delta_ai,bj, i.e.
+!!     redefine to c_ckdl = c_ckdl (1 + delta_ck,dl)
+!!
 !!$omp parallel do schedule(static) private(ai) 
-      do ai = 1, (wf%n_o)*(wf%n_v)
-!
-         c_ai_bj(ai,ai) = two*c_ai_bj(ai,ai)
-!
-      enddo
+!      do ai = 1, (wf%n_o)*(wf%n_v)
+!!
+!         c_ai_bj(ai,ai) = two*c_ai_bj(ai,ai)
+!!
+!      enddo
 !!$omp end parallel do
 !
-      call wf%jacobian_ccsd_b1(rho_a_i, c_ai_bj)
-      call wf%jacobian_ccsd_c1(rho_a_i, c_ai_bj)
-      call wf%jacobian_ccsd_d1(rho_a_i, c_ai_bj)
+!
+    !  call wf%jacobian_ccsd_b1(rho_a_i, c_ai_bj)
+    !  call wf%jacobian_ccsd_c1(rho_a_i, c_ai_bj)
+    !  call wf%jacobian_ccsd_d1(rho_a_i, c_ai_bj)
 !
 !     Done with singles vector c; overwrite it with
 !     transformed vector for exit
 !
-      call dcopy((wf%n_o)*(wf%n_v), rho_a_i, 1, c, 1)
+!$omp parallel do schedule(static) private(a, i, ai) 
+      do a = 1, wf%n_v
+         do i = 1, wf%n_o
+!
+            ai = wf%n_v*(i - 1) + a
+!
+            c(ai, 1) = rho_a_i(a, i)
+!
+         enddo
+      enddo
+!$omp end parallel do
 
       call mem%dealloc(rho_a_i, wf%n_v, wf%n_o)
 !
@@ -132,98 +153,98 @@ contains
 !
 !     Allocate unpacked transformed vector
 !
-      call mem%alloc(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      rho_ai_bj = zero
+!      call mem%alloc(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!      rho_ai_bj = zero
 !
 !     Contributions from singles vector c
 !
-      call wf%jacobian_ccsd_a2(rho_ai_bj, c_a_i)
-      call wf%jacobian_ccsd_b2(rho_ai_bj, c_a_i)
-      call wf%jacobian_ccsd_c2(rho_ai_bj, c_a_i)
-      call wf%jacobian_ccsd_d2(rho_ai_bj, c_a_i)
+   !  call wf%jacobian_ccsd_a2(rho_ai_bj, c_a_i)
+   !  call wf%jacobian_ccsd_b2(rho_ai_bj, c_a_i)
+   !  call wf%jacobian_ccsd_c2(rho_ai_bj, c_a_i)
+   !  call wf%jacobian_ccsd_d2(rho_ai_bj, c_a_i)
 !
-      call mem%dealloc(c_a_i, wf%n_v, wf%n_o)
+!      call mem%dealloc(c_a_i, wf%n_v, wf%n_o)
 !
 !     Contributions from doubles vector c
 !
-      call wf%jacobian_ccsd_e2(rho_ai_bj, c_ai_bj)
-      call wf%jacobian_ccsd_f2(rho_ai_bj, c_ai_bj)
-      call wf%jacobian_ccsd_g2(rho_ai_bj, c_ai_bj)
-      call wf%jacobian_ccsd_h2(rho_ai_bj, c_ai_bj)
-      call wf%jacobian_ccsd_i2(rho_ai_bj, c_ai_bj)
+    !  call wf%jacobian_ccsd_e2(rho_ai_bj, c_ai_bj)
+    !  call wf%jacobian_ccsd_f2(rho_ai_bj, c_ai_bj)
+    !  call wf%jacobian_ccsd_g2(rho_ai_bj, c_ai_bj)
+    !  call wf%jacobian_ccsd_h2(rho_ai_bj, c_ai_bj)
+    !  call wf%jacobian_ccsd_i2(rho_ai_bj, c_ai_bj)
 !
 !     Last two terms are already symmetric (J2 and K2). Perform the symmetrization
 !     rho_ai_bj = P_ij^ab rho_ai_bj now, for convenience
 !
-      call symmetric_sum(rho_ai_bj, (wf%n_v)*(wf%n_o))
+!      call symmetric_sum(rho_ai_bj, (wf%n_v)*(wf%n_o))
 !
 !     In preparation for last two terms, reorder
 !     rho_ai_bj to rho_ab_ij, and c_ai_bj to c_ab_ij
 !
-      call mem%alloc(rho_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
-      call mem%alloc(c_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
+!      call mem%alloc(rho_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
+!      call mem%alloc(c_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
 !
-      call sort_1234_to_1324(c_ai_bj, c_ab_ij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call sort_1234_to_1324(rho_ai_bj, rho_ab_ij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!      call sort_1234_to_1324(c_ai_bj, c_ab_ij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!      call sort_1234_to_1324(rho_ai_bj, rho_ab_ij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call mem%dealloc(c_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call mem%dealloc(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!      call mem%dealloc(c_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!      call mem%dealloc(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      call wf%jacobian_ccsd_j2(rho_ab_ij, c_ab_ij)
-      call wf%jacobian_ccsd_k2(rho_ab_ij, c_ab_ij)
+   !   call wf%jacobian_ccsd_j2(rho_ab_ij, c_ab_ij)
+   !   call wf%jacobian_ccsd_k2(rho_ab_ij, c_ab_ij)
 !
 !     Done with reordered doubles c; deallocate
 !
-      call mem%dealloc(c_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
+!      call mem%dealloc(c_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
 !
 !     Order rho_ab_ij back into rho_ai_bj & divide by
 !     the biorthonormal factor 1 + delta_ai,bj
 !
-      call mem%alloc(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!      call mem%alloc(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      call sort_1234_to_1324(rho_ab_ij, rho_ai_bj, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
-!
+!      call sort_1234_to_1324(rho_ab_ij, rho_ai_bj, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!!
 !!$omp parallel do schedule(static) private(ai) 
-      do ai = 1, (wf%n_o)*(wf%n_v)
-!
-         rho_ai_bj(ai,ai) = half*rho_ai_bj(ai,ai)
-!
-      enddo
+!      do ai = 1, (wf%n_o)*(wf%n_v)
+!!
+!         rho_ai_bj(ai,ai) = half*rho_ai_bj(ai,ai)
+!!
+!      enddo
 !!$omp end parallel do
-!
-      call mem%dealloc(rho_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
-!
-!     Overwrite the incoming doubles c vector & pack in
-!
-!
+!!
+!      call mem%dealloc(rho_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
+!!
+!!     Overwrite the incoming doubles c vector & pack in
+!!
+!!
 !!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) 
-      do a = 1, wf%n_v
-         do i = 1, wf%n_o
-!
-            ai = wf%n_v*(i - 1) + a
-!  
-            do j = 1, wf%n_o
-               do b = 1, wf%n_v
-!
-                  bj = wf%n_v*(j - 1) + b
-!
-                  if (ai .ge. bj) then
-!
-                     aibj = ai*(ai-3)/2 + ai + bj
-!
-                     c(wf%n_o*wf%n_v + aibj, 1) = rho_ai_bj(ai, bj)
-!
-                  endif
-!
-               enddo
-            enddo
-         enddo
-      enddo
+!      do a = 1, wf%n_v
+!         do i = 1, wf%n_o
+!!
+!            ai = wf%n_v*(i - 1) + a
+!!  
+!            do j = 1, wf%n_o
+!               do b = 1, wf%n_v
+!!
+!                  bj = wf%n_v*(j - 1) + b
+!!
+!                  if (ai .ge. bj) then
+!!
+!                     aibj = ai*(ai-3)/2 + ai + bj
+!!
+!                     c((wf%n_o)*(wf%n_v) + aibj, 1) = rho_ai_bj(ai, bj)
+!!
+!                  endif
+!!
+!               enddo
+!            enddo
+!         enddo
+!      enddo
 !!$omp end parallel do
-!
-!     Remaining deallocations
-!
-      call mem%dealloc(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!!
+!!     Remaining deallocations
+!!
+!      call mem%dealloc(rho_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine jacobian_ccsd_transformation_ccsd
 !
