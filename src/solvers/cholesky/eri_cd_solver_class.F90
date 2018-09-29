@@ -2286,9 +2286,6 @@ contains
 !
       full_construct_time = zero
 !
-      write(output%unit, *)'Un caffé per favor'
-      flush(output%unit)
-!
       do while (.not. done)
 !
 !        Determine size of batch
@@ -2388,8 +2385,6 @@ contains
 !        Construct g_J_yz = (J | yz)
 !
          call mem%alloc(g_wx_L, size_AB, solver%n_cholesky)
-         write(output%unit, *)'Un capuccio per favor'
-         flush(output%unit)
 !
 !$omp parallel do &
 !$omp private(AB_sp, CD_sp, I, A, B, A_interval, &
