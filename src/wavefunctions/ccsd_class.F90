@@ -45,6 +45,26 @@ module ccsd_class
       procedure :: omega_ccsd_d2                => omega_ccsd_d2_ccsd
       procedure :: omega_ccsd_e2                => omega_ccsd_e2_ccsd
 !
+      procedure :: jacobi_transform_trial_vector => jacobian_ccsd_transformation_ccsd
+      procedure :: jacobian_ccsd_transformation  => jacobian_ccsd_transformation_ccsd
+!
+      procedure :: jacobian_ccsd_a1 => jacobian_ccsd_a1_ccsd
+      procedure :: jacobian_ccsd_b1 => jacobian_ccsd_b1_ccsd
+      procedure :: jacobian_ccsd_c1 => jacobian_ccsd_c1_ccsd
+      procedure :: jacobian_ccsd_d1 => jacobian_ccsd_d1_ccsd
+!
+      procedure :: jacobian_ccsd_a2 => jacobian_ccsd_a2_ccsd
+      procedure :: jacobian_ccsd_b2 => jacobian_ccsd_b2_ccsd
+      procedure :: jacobian_ccsd_c2 => jacobian_ccsd_c2_ccsd
+      procedure :: jacobian_ccsd_d2 => jacobian_ccsd_d2_ccsd
+      procedure :: jacobian_ccsd_e2 => jacobian_ccsd_e2_ccsd
+      procedure :: jacobian_ccsd_f2 => jacobian_ccsd_f2_ccsd
+      procedure :: jacobian_ccsd_g2 => jacobian_ccsd_g2_ccsd
+      procedure :: jacobian_ccsd_h2 => jacobian_ccsd_h2_ccsd
+      procedure :: jacobian_ccsd_i2 => jacobian_ccsd_i2_ccsd
+      procedure :: jacobian_ccsd_j2 => jacobian_ccsd_j2_ccsd
+      procedure :: jacobian_ccsd_k2 => jacobian_ccsd_k2_ccsd
+!
       procedure :: get_orbital_differences      => get_orbital_differences_ccsd
 !
       procedure :: calculate_energy             => calculate_energy_ccsd
