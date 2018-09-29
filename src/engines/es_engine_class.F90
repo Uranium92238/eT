@@ -89,9 +89,6 @@ contains
 !
 !     Prepare for excited state
 !
-      call wf%initialize_t1()
-      wf%t1 = zero
-!
       call engine%determine_es_type(es_type)
 !
       if (es_type == 'core') then

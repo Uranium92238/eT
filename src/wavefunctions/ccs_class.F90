@@ -2242,7 +2242,7 @@ contains
       class(ccs) :: wf
 !   
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c1
-      real(dp), dimension(wf%n_v,wf%n_o), intent(inout) :: rho1      
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho1      
 !
       real(dp), dimension(:,:), allocatable :: g_ai_jb
       real(dp), dimension(:,:), allocatable :: g_ab_ji
@@ -2293,15 +2293,15 @@ contains
 !
          call mem%alloc(c_jb, (wf%n_o), (batch_b%length))
 !
-        do j = 1, wf%n_o 
-           do b = batch_b%first, batch_b%last 
-!!
-              b_red = b - batch_b%first + 1
-!!
-              c_jb(j, b_red) = c1(b, j) 
-!!
-           enddo
-        enddo
+         do j = 1, wf%n_o 
+            do b = batch_b%first, batch_b%last 
+!
+               b_red = b - batch_b%first + 1
+!  
+               c_jb(j, b_red) = c1(b, j) 
+!
+            enddo
+         enddo
     
 !
          call dgemm('N', 'N',                   &
@@ -2318,7 +2318,7 @@ contains
                      (wf%n_v)*(wf%n_o))      
 !
          call mem%dealloc(L_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(batch_b%length))
-         call mem%dealloc(c_jb, (wf%n_o)*(batch_b%length), 1)
+         call mem%dealloc(c_jb, (wf%n_o), (batch_b%length))
 !
       enddo
 !
