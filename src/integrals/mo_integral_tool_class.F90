@@ -48,6 +48,7 @@ module mo_integral_tool_class
       procedure :: construct_cholesky_ai  => construct_cholesky_ai_mo_integral_tool
 !
       procedure :: read_cholesky_ai_t1    => read_cholesky_ai_t1_mo_integral_tool
+      procedure :: read_cholesky_ia_t1    => read_cholesky_ia_t1_mo_integral_tool
       procedure :: read_cholesky_ij_t1    => read_cholesky_ij_t1_mo_integral_tool
       procedure :: read_cholesky_ab_t1    => read_cholesky_ab_t1_mo_integral_tool
 !
@@ -604,6 +605,37 @@ contains
       call integrals%read_cholesky_t1(L_ai_J, full_first_a, full_last_a, full_first_i, full_last_i)
 !
    end subroutine read_cholesky_ai_t1_mo_integral_tool
+!
+!
+   subroutine read_cholesky_ia_t1_mo_integral_tool(integrals, L_ia_J, first_i, last_i, first_a, last_a)
+!!
+!!    Read Cholesky ia T1
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!    Read T1-transformed mo cholesky L_ai^J vectors from file 
+!!
+      implicit none 
+!
+      class(mo_integral_tool), intent(in) :: integrals 
+!  
+      integer(i15), intent(in) :: first_i, last_i
+      integer(i15), intent(in) :: first_a, last_a
+!
+      real(dp), dimension(:, :) :: L_ia_J
+!
+      integer(i15) :: full_first_a, full_last_a, length_a 
+      integer(i15) :: full_first_i, full_last_i, length_i
+!
+!
+      call integrals%set_full_index(full_first_i, 'f', 'o', first_i)
+      call integrals%set_full_index(full_first_a, 'f', 'v', first_a)
+!
+      call integrals%set_full_index(full_last_i, 'l', 'o', last_i)
+      call integrals%set_full_index(full_last_a, 'l', 'v', last_a)
+!
+      call integrals%read_cholesky_t1(L_ia_J, full_first_i, full_last_i, full_first_a, full_last_a)
+!
+   end subroutine read_cholesky_ia_t1_mo_integral_tool
 !
 !
    subroutine read_cholesky_ij_t1_mo_integral_tool(integrals, L_ij_J, first_i, last_i, first_j, last_j)
