@@ -1449,27 +1449,7 @@ contains
 !        Reorder to X_k_ijb = X_ij_kb
 !
          call mem%alloc(X_k_ijb, (wf%n_o), (batch_b%length)*(wf%n_o)**2)
-         X_k_ijb = zero
-!
-         do b = 1, batch_b%length
-            do j = 1, wf%n_o
-               do i = 1, wf%n_o
-!
-                  ij = index_two(i, j, wf%n_o)
-!
-                  ijb = index_three(i, j, b, wf%n_o, wf%n_o)
-!
-                  do k = 1, wf%n_o
-!
-                     kb = index_two(k, b, wf%n_o)
-!
-                     X_k_ijb(k, ijb) = X_ij_kb(ij, kb)
-!
-                  enddo
-               enddo
-            enddo
-         enddo
-!
+         call sort_1234_to_3124(X_ij_kb, X_k_ijb, wf%n_o, wf%n_o, wf%n_o, (batch_b%length))
          call mem%dealloc(X_ij_kb, (wf%n_o)**2, (wf%n_o)*(batch_b%length))
 !
 !        Form rho_a_ijb = - sum_k c_ak X_k_ijb = - sum_k c_a_i(a,k) X_k_ijb(k, ijb)
@@ -1493,18 +1473,19 @@ contains
 !
 !        Add rho_a_ijb (batch over b) to rho_ai_bj (full space)
 !
+!$omp parallel do schedule(static) private(b, j, Bj, i, a, ijb, ai)
          do b = 1, batch_b%length ! Loop over restricted space
             do j = 1, wf%n_o
 !
-               Bj = index_two(b + batch_b%first - 1, j, wf%n_v) ! b in full space
+               Bj = wf%n_v*(j - 1) + b + batch_b%first - 1 ! b in full space
 !
                do i = 1, wf%n_o
 !
-                  ijb = index_three(i, j, b, wf%n_o, wf%n_o)
+                  ijb = wf%n_o*(wf%n_o*(b - 1) + j - 1) + i
 !
                   do a = 1, wf%n_v
 !
-                     ai = index_two(a, i, wf%n_v)
+                     ai = wf%n_v*(i - 1) + a
 !
                      rho_ai_bj(ai,Bj) = rho_ai_bj(ai,Bj) + rho_a_ijb(a, ijb)
 !
@@ -1512,6 +1493,7 @@ contains
                enddo
             enddo
          enddo
+!$omp end parallel do
 !
 !        Deallocations for term 1 (keep g_cd_kb = g_kcbd)
 !
@@ -1583,19 +1565,20 @@ contains
 !
 !        Add rho_ib_aj (batch over b) ro rho_ai_bj (full space)
 !
-         do j = 1, wf%n_o
-            do a = 1, wf%n_v
+!$omp parallel do schedule(static) private(b, j, i, a, aj, Bj, ai, ib)
+         do a = 1, wf%n_v
+            do j = 1, wf%n_o
 !
-               aj = index_two(a, j, wf%n_v)
+               aj = wf%n_v*(j - 1) + a
 !
                do b = 1, batch_b%length
 !
-                  Bj = index_two(b + batch_b%first - 1, j, wf%n_v) ! b is full space index
+                  Bj = wf%n_v*(j - 1) + b + batch_b%first - 1 ! b is full space index
 !
                   do i = 1, wf%n_o
 !
-                     ai = index_two(a, i, wf%n_v)
-                     ib = index_two(i, b, wf%n_o)
+                     ai = wf%n_v*(i - 1) + a
+                     ib = wf%n_o*(b - 1) + i
 !
                      rho_ai_bj(ai, Bj) = rho_ai_bj(ai, Bj) + rho_ib_aj(ib, aj)
 !
@@ -1603,6 +1586,7 @@ contains
                enddo
             enddo
          enddo
+!$omp end parallel do
 !
 !        Deallocations for term 2 (keep g_cd_kb = g_kcbd)
 !
@@ -1670,17 +1654,18 @@ contains
 !
 !        Add rho_aib_j to rho_ai_bj
 !
+!$omp parallel do schedule(static) private(b, j, i, a, aib, Bj, ai)
          do j = 1, wf%n_o
             do b = 1, batch_b%length
 !
-               Bj = index_two(b + batch_b%first - 1, j, wf%n_v)
+               Bj = wf%n_v*(j - 1) + b + batch_b%first - 1
 !
                do i = 1, wf%n_o
                   do a = 1, wf%n_v
 !
-                     ai = index_two(a, i, wf%n_v)
+                     ai = wf%n_v*(i - 1) +  a
 !
-                     aib = index_three(a, i, b, wf%n_v, wf%n_o)
+                     aib = wf%n_v*(wf%n_o*(b - 1) + i - 1) + a
 !
                      rho_ai_bj(ai, Bj) = rho_ai_bj(ai, Bj) + rho_aib_j(aib, j)
 !
@@ -1688,6 +1673,7 @@ contains
                enddo
             enddo
          enddo
+!$omp end parallel do
 !
 !        Deallocations for term 3 (keep g_ckb_d = g_kcbd)
 !
@@ -1758,6 +1744,7 @@ contains
 !
 !        Add rho_aib_j to rho_ai_bj
 !
+!$omp parallel do schedule(static) private(b, j, i, a, aib, Bj, ai)
          do j = 1, wf%n_o
             do b = 1, batch_b%length
 !
@@ -1766,9 +1753,9 @@ contains
                do i = 1, wf%n_o
                   do a = 1, wf%n_v
 !
-                     aib = index_three(a, i, b, wf%n_v, wf%n_o)
+                     aib = wf%n_v*(wf%n_o*(b - 1) + i - 1) + a
 !
-                     ai = index_two(a, i, wf%n_v)
+                     ai = wf%n_v*(i - 1) + a
 !
                      rho_ai_bj(ai, Bj) = rho_ai_bj(ai, Bj) + rho_aib_j(aib, j)
 !
@@ -1776,6 +1763,7 @@ contains
                enddo
             enddo
          enddo
+!$omp end parallel do
 !
 !        Deallocations for term 4 (keep L_ckb_d = L_kcbd)
 !
@@ -1834,17 +1822,18 @@ contains
 !
 !        Add rho_b_aij to rho_ai_bj
 !
+!$omp parallel do schedule(static) private(b, j, i, a, aib, Bj, ai)
          do j = 1, wf%n_o
             do i = 1, wf%n_o
                do a = 1, wf%n_v
 !
-                  ai = index_two(a, i, wf%n_v)
+                  ai = wf%n_v*(i - 1) + a
 !
-                  aij = index_three(a, i, j, wf%n_v, wf%n_o)
+                  aij = wf%n_v*(wf%n_o*(j - 1) + i - 1) + a
 !
                   do b = 1, batch_b%length
 !
-                     Bj = index_two(b + batch_b%first - 1, j, wf%n_v)
+                     Bj = wf%n_v*(j - 1) +  b + batch_b%first - 1
 !
                      rho_ai_bj(ai, Bj) = rho_ai_bj(ai, Bj) + rho_b_aij(b, aij)
 !
@@ -1852,6 +1841,7 @@ contains
                enddo
             enddo
          enddo
+!$omp end parallel do
 !
 !        Final deallocations in batching loop
 !
@@ -2308,28 +2298,8 @@ contains
       !call wf%read_double_amplitudes
 !
       call mem%alloc(t_dl_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      t_dl_bj = zero
 !
-      do l = 1, wf%n_o
-         do j = 1, wf%n_o
-            do d = 1, wf%n_v
-!
-               dj = index_two(d, j, wf%n_v)
-               dl = index_two(d, l, wf%n_v)
-!
-               do b = 1, wf%n_v
-!
-                  bj = index_two(b, j, wf%n_v)
-                  bl = index_two(b, l, wf%n_v)
-!
-                  bldj = index_packed(bl, dj)
-!
-                  t_dl_bj(dl, bj) = wf%t2(bldj, 1)
-!
-               enddo
-            enddo
-         enddo
-      enddo
+      call squareup_and_sort_1234_to_3214(wf%t2, t_dl_bj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       !call wf%destruct_double_amplitudes
 !
@@ -2351,7 +2321,6 @@ contains
                   (wf%n_o)*(wf%n_v))
 !
       call mem%dealloc(t_dl_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call mem%dealloc(L_ck_dl,(wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     rho_ai_bj =+ - sum_ck c_ai,ck X_ck_bj
 !
@@ -2372,65 +2341,20 @@ contains
 !
 !     :: Term 2: - sum_ckdl t_ck_bl * L_kc,ld * c_ai,dj
 !
-      call mem%alloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
-      call wf%get_ovov(g_kc_ld)
-!
 !     Reorder L_ck_dl to L_d_clk
 !
       call mem%alloc(L_d_clk, wf%n_v, (wf%n_v)*((wf%n_o)**2))
-      L_d_clk = zero
 !
-      do k = 1, wf%n_o
-         do l = 1, wf%n_o
-            do c = 1, wf%n_v
+      call sort_1234_to_3142(L_ck_dl, L_d_clk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-               clk = index_three(c, l, k, wf%n_v, wf%n_o)
-!
-               kc = index_two(k, c, wf%n_o)
-               lc = index_two(l, c, wf%n_o)
-!
-               do d = 1, wf%n_v
-!
-                  ld = index_two(l, d, wf%n_o)
-                  kd = index_two(k, d, wf%n_o)
-!
-                  L_d_clk(d, clk) = two*g_kc_ld(kc, ld) - g_kc_ld(kd, lc)
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!
-      call mem%dealloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(L_ck_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     Reorder t_ck,bl as t_clk_b
 !
       !call wf%read_double_amplitudes
 !
       call mem%alloc(t_clk_b, (wf%n_v)*((wf%n_o)**2), wf%n_v)
-      t_clk_b = zero
-!
-      do k = 1, wf%n_o
-         do l = 1, wf%n_o
-            do c = 1, wf%n_v
-!
-               ck = index_two(c, k, wf%n_v)
-!
-               clk = index_three(c, l, k, wf%n_v, wf%n_o)
-!
-               do b = 1, wf%n_v
-!
-                  bl = index_two(b, l, wf%n_v)
-!
-                  ckbl = index_packed(ck, bl)
-!
-                  t_clk_b(clk, b) = wf%t2(ckbl, 1)
-!
-               enddo
-            enddo
-         enddo
-      enddo
+      call squareup_and_sort_1234_to_1423(wf%t2, t_clk_b, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       !call wf%destruct_double_amplitudes
 !
@@ -2460,8 +2384,6 @@ contains
 !     Reorder c_ai_dj to c_aij_d
 !
       call sort_1234_to_1243(c_ai_bj, c_ai_jd, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      !call wf%destruct_double_amplitudes
 !
       call mem%alloc(rho_ai_jb, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
@@ -2515,7 +2437,6 @@ contains
       !call wf%read_double_amplitudes
 !
       call mem%alloc(t_ckd_j, ((wf%n_v))*(wf%n_o), wf%n_o*(wf%n_v))
-      t_ckd_j = zero
       call squareup(wf%t2, t_ckd_j, wf%n_o*(wf%n_v))
 !
       !call wf%destruct_double_amplitudes
@@ -2611,7 +2532,6 @@ contains
          !call wf%read_double_amplitudes
 !
          call mem%alloc(t_ai_kc, (wf%n_o)*(wf%n_v),(wf%n_o)*(wf%n_v))
-         t_ai_kc = zero
 !
          call squareup_and_sort_1234_to_1423(wf%t2, t_ai_kc, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -2673,7 +2593,6 @@ contains
 !        Reorder g_kc_ld to g_lc_kd
 !
          call mem%alloc(g_lc_kd, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-         g_lc_kd = zero
 !
          call sort_1234_to_3214(g_kc_ld, g_lc_kd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
@@ -2684,7 +2603,6 @@ contains
          !call wf%read_double_amplitudes
 !
          call mem%alloc(t_aj_lc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-         t_aj_lc = zero
 !
          call squareup_and_sort_1234_to_1423(wf%t2, t_aj_lc, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -2713,7 +2631,6 @@ contains
 !        Reorder c_bk,di as c_kd_bi
 !
          call mem%alloc(c_kd_bi, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-         c_kd_bi = zero
 !
          call sort_1234_to_2314(c_ai_bj, c_kd_bi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -2801,7 +2718,6 @@ contains
 !     Reorder c_ai,cj to c_ai_jc
 !
       call mem%alloc(c_ai_jc, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
-      c_ai_jc = zero
 !
       call sort_1234_to_1243(c_ai_bj, c_ai_jc, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -2860,7 +2776,6 @@ contains
 !     Reordering g_bj_kc to g_ck_bj
 !
       call mem%alloc(g_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      g_ck_bj = zero
 !
       call sort_1234_to_4312(g_bj_kc, g_ck_bj, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
@@ -2884,7 +2799,6 @@ contains
 !     Reorder c_ak,ci to c_ai_ck
 !
       call mem%alloc(c_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      c_ai_ck = zero
 !
       call sort_1234_to_1432(c_ai_bj, c_ai_ck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -2929,9 +2843,8 @@ contains
 !        Construct g_bc_kj
 !
          call mem%alloc(g_bc_kj, (wf%n_v)*(batch_c%length), (wf%n_o)**2)
-         g_bc_kj = zero
 !
-         call wf%get_vvoo(g_bc_kj,           &
+         call wf%get_vvoo(g_bc_kj,        &
                            1,             &
                            wf%n_v,        &
                            batch_c%first, &
@@ -2944,19 +2857,20 @@ contains
 !
 !        Reorder g_bc_kj
 !
+!$omp parallel do schedule(static) private(c,b,bc,j,bj,k,kj,ck)
          do c = 1, batch_c%length
             do b = 1, wf%n_v
  !
-               bc = index_two(b, c, wf%n_v)
+               bc = wf%n_v*(c - 1) + b
  !
                do j = 1, wf%n_o
  !
-                  bj = index_two(b, j, wf%n_v)
+                  bj = wf%n_v*(j - 1) + b
  !
                   do k = 1, wf%n_o
  !
-                     kj = index_two(k, j, wf%n_o)
-                     ck = index_two(c + batch_c%first - 1, k, wf%n_v)
+                     kj = wf%n_o*(j - 1) + k 
+                     ck = wf%n_v*(k - 1) + c + batch_c%first - 1
  !
                      g_ck_bj(ck, bj) = g_bc_kj(bc, kj)
  !
@@ -2964,6 +2878,7 @@ contains
                enddo
             enddo
          enddo
+!$omp end parallel do
 !
          call mem%dealloc(g_bc_kj, (wf%n_v)*(batch_c%length), (wf%n_o)**2)
 !
@@ -2987,7 +2902,6 @@ contains
 !     Reorder  c_ak,cj to c_aj_ck
 !
       call mem%alloc(c_aj_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      c_aj_ck = zero
 !
       call sort_1234_to_1432(c_ai_bj, c_aj_ck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -3059,7 +2973,6 @@ contains
       call wf%get_ovov(g_kc_ld)
 !
       call mem%alloc(g_kl_cd, (wf%n_o)**2, (wf%n_v)**2)
-      g_kl_cd = zero
 !
 !     Reorder g_kc_ld to g_kl_cd
 !
@@ -3072,8 +2985,6 @@ contains
       !call wf%read_double_amplitudes
 !
       call mem%alloc(t_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
-      t_ab_ij = zero
-!
       call squareup_and_sort_1234_to_1324(wf%t2, t_ab_ij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       !call wf%destruct_double_amplitudes
@@ -3192,7 +3103,6 @@ contains
 !     Reorder g_ki_lj to g_kl_ij
 !
       call mem%alloc(g_kl_ij, (wf%n_o)**2, (wf%n_o)**2)
-      g_kl_ij = zero
 !
       call sort_1234_to_1324(g_ki_lj, g_kl_ij, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
 !
@@ -3291,6 +3201,7 @@ contains
 !
 !           Reorder into rho_ab_ij
 !
+!$omp parallel do schedule(static) private(b, a, ab, full_ab, ij)
             do b = 1, batch_b%length
                do a = 1, batch_a%length
 !
@@ -3309,6 +3220,7 @@ contains
                   enddo
                enddo
             enddo
+!$omp end parallel do
 !
             call mem%dealloc(rho_batch_ab_ij,  (batch_a%length)*(batch_b%length), (wf%n_o)**2)
 !

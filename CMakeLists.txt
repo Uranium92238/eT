@@ -11,7 +11,11 @@ set(CMAKE_MODULE_PATH
     /usr/local/share/cmake/Modules
     )
 
+<<<<<<< HEAD
 option(ENABLE_64BIT_INTEGERS "Enable 64-bit integers"       			OFF)
+=======
+option(ENABLE_64BIT_INTEGERS "Enable 64-bit integers"       					OFF)
+>>>>>>> 90f28eef17a19a6135b7460bb0f2ddbe9cebba44
 option(ENABLE_AUTO_BLAS      "Enable CMake to autodetect BLAS"                  ON)
 option(ENABLE_AUTO_LAPACK    "Enable CMake to autodetect LAPACK"                ON)
 option(ENABLE_OMP            "Enable OpenMP parallelization"                    ON)
