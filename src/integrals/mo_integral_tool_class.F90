@@ -81,6 +81,8 @@ module mo_integral_tool_class
       procedure :: get_required_vvvo      => get_required_vvvo_mo_integral_tool
       procedure :: get_required_vvvv      => get_required_vvvv_mo_integral_tool
 !
+      procedure :: write_t1_cholesky      => write_t1_cholesky_mo_integral_tool
+!
    end type mo_integral_tool
 !
 !
@@ -212,12 +214,13 @@ contains
 !
       call disk%open_file(integrals%cholesky_mo_t1, 'read')
 !
-      do p = 1, dim_p
-         do q = 1, dim_q
+      do p = first_p, last_p
+         do q = first_q, last_q
 !
-            pq = dim_p*(q - 1) + p
+            pq_rec = integrals%n_mo*(q - 1) + p
+            pq = dim_p*(q - first_q) + p - first_p + 1
 !
-            read(integrals%cholesky_mo_t1%unit, rec=pq) (L_pq_J(pq, J), J = 1, integrals%n_J)
+            read(integrals%cholesky_mo_t1%unit, rec=pq_rec) (L_pq_J(pq, J), J = 1, integrals%n_J)
 !
          enddo
       enddo
@@ -624,10 +627,10 @@ contains
 !
 !
       call integrals%set_full_index(full_first_i, 'f', 'o', first_i)
-      call integrals%set_full_index(full_first_j, 'f', 'v', first_j)
+      call integrals%set_full_index(full_first_j, 'f', 'o', first_j)
 !
       call integrals%set_full_index(full_last_i, 'l', 'o', last_i)
-      call integrals%set_full_index(full_last_j, 'l', 'v', last_j)
+      call integrals%set_full_index(full_last_j, 'l', 'o', last_j)
 !
       call integrals%read_cholesky_t1(L_ij_J, full_first_i, full_last_i, full_first_j, full_last_j)
 !
@@ -653,10 +656,10 @@ contains
       integer(i15) :: full_first_b, full_last_b 
       integer(i15) :: full_first_a, full_last_a
 !
-      call integrals%set_full_index(full_first_a, 'f', 'o', first_a)
+      call integrals%set_full_index(full_first_a, 'f', 'v', first_a)
       call integrals%set_full_index(full_first_b, 'f', 'v', first_b)
 !
-      call integrals%set_full_index(full_last_a, 'l', 'o', last_a)
+      call integrals%set_full_index(full_last_a, 'l', 'v', last_a)
       call integrals%set_full_index(full_last_b, 'l', 'v', last_b)
 !
       call integrals%read_cholesky_t1(L_ab_J, full_first_a, full_last_a, full_first_b, full_last_b)
@@ -2401,6 +2404,126 @@ contains
       endif
 !
    end function get_required_vvvv_mo_integral_tool
+!
+!
+   subroutine write_t1_cholesky_mo_integral_tool(integrals, t1)
+!!
+!!    Write T1-transformed Cholesky vectors to file
+!!    Written by Sarai D. Folkestad, 2018
+!!
+      implicit none 
+!
+      class(mo_integral_tool), intent(inout) :: integrals
+!
+      real(dp), dimension(integrals%n_v, integrals%n_o), intent(in) ::t1
+!
+      real(dp), dimension(:,:), allocatable :: L_ij_J, L_ia_J, L_ai_J, L_ab_J
+!
+      integer(i15) :: ij, ij_rec, i, j, k, ai, ai_rec, ia, ia_rec, ab, ab_rec, a, b
+!
+      type(batching_index) :: batch_b
+!
+      integer(i15) :: required, current_b_batch
+!
+      call integrals%cholesky_mo_t1%init('cholesky_mo_t1_vectors', 'direct', 'unformatted', dp*(integrals%n_J))
+      call disk%open_file(integrals%cholesky_mo_t1, 'write') 
+!
+!     occupied-occupied block
+!
+      call mem%alloc(L_ij_J, integrals%n_o**2, integrals%n_J)
+!
+      call integrals%construct_cholesky_ij(L_ij_J, t1, 1, integrals%n_o, 1, integrals%n_o)
+!
+      do i = 1, integrals%n_o
+         do j = 1, integrals%n_o
+!
+            ij = integrals%n_o*(j - 1) + i
+            ij_rec = integrals%n_mo*(j - 1) + i
+!
+            write(integrals%cholesky_mo_t1%unit, rec=ij_rec) (L_ij_J(ij, k), k = 1, integrals%n_J)
+!
+         enddo
+      enddo
+!
+      call mem%dealloc(L_ij_J, integrals%n_o**2, integrals%n_J)
+!
+!     occupied-virtual block
+!
+      call mem%alloc(L_ia_J, (integrals%n_o)*(integrals%n_v), integrals%n_J)
+!
+      call integrals%read_cholesky_ia(L_ia_J, 1, integrals%n_o, 1, integrals%n_v)
+!
+      do a = 1, integrals%n_v
+         do i = 1, integrals%n_o
+!
+            ia = integrals%n_o*(a - 1) + i
+            ia_rec = integrals%n_mo*(a + integrals%n_o - 1) + i
+!
+            write(integrals%cholesky_mo_t1%unit, rec=ia_rec) (L_ia_J(ia, j), j = 1, integrals%n_J)
+!
+         enddo
+      enddo
+!
+      call mem%dealloc(L_ia_J, (integrals%n_o)*(integrals%n_v), integrals%n_J)
+!
+!     virtual-occupied block
+!
+      call mem%alloc(L_ai_J, (integrals%n_o)*(integrals%n_v), integrals%n_J)
+!
+      call integrals%construct_cholesky_ai(L_ai_J, t1, 1, integrals%n_v, 1, integrals%n_o)
+!
+      do i = 1, integrals%n_o
+         do a = 1, integrals%n_v
+!
+            ai = integrals%n_v*(i - 1) + a
+            ai_rec = integrals%n_mo*(i - 1) + a + integrals%n_o
+!
+            write(integrals%cholesky_mo_t1%unit, rec=ai_rec) (L_ai_J(ai, j), j = 1, integrals%n_J)
+!
+         enddo
+      enddo
+!
+      call mem%dealloc(L_ai_J, (integrals%n_o)*(integrals%n_v), integrals%n_J)
+!
+!     virtual-virtual block
+!
+      call batch_b%init(integrals%n_v)
+!
+      required = max(2*(integrals%n_o)*(integrals%n_v)*(integrals%n_J),  &
+                      (integrals%n_o)*(integrals%n_v)*(integrals%n_J) +  &
+                      (integrals%n_v)*(integrals%n_v)*(integrals%n_J)) + &
+                      (integrals%n_v)*(integrals%n_v)*(integrals%n_J)
+!
+      call mem%num_batch(batch_b, required)
+!
+      do current_b_batch = 1, batch_b%num_batches
+!
+         call batch_b%determine_limits(current_b_batch)
+!
+         call mem%alloc(L_ab_J, (batch_b%length)*(integrals%n_v), integrals%n_J)
+!
+         call integrals%construct_cholesky_ab(L_ab_J, t1, 1, integrals%n_v, batch_b%first, batch_b%last)
+!
+         do a = 1, (integrals%n_v)
+            do b = 1, (batch_b%length)
+!
+               ab_rec = integrals%n_mo*((integrals%n_o) + b + batch_b%first - 2) + a + (integrals%n_o)
+               ab = integrals%n_v*(b - 1) + a
+!
+               write(integrals%cholesky_mo_t1%unit, rec=ab_rec) (L_ab_J(ab, j), j = 1, integrals%n_J)
+!
+            enddo
+         enddo  
+!
+         call mem%dealloc(L_ab_J, (batch_b%length)*(integrals%n_v), integrals%n_J)  
+!
+      enddo
+!
+      integrals%cholesky_t1_file   = .true.
+!
+      call disk%close_file(integrals%cholesky_mo_t1)    
+!
+   end subroutine write_t1_cholesky_mo_integral_tool
 !
 !
 end module mo_integral_tool_class

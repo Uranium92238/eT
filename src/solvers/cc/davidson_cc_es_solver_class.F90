@@ -101,6 +101,8 @@ contains
 !
       if (solver%n_singlet_states == 0) call output%error_msg('number of excitations must be specified.')
 !
+      call wf%integrals%write_t1_cholesky(wf%t1)
+!
    end subroutine prepare_davidson_cc_es_solver
 !
 !
