@@ -3201,6 +3201,7 @@ contains
 !
 !           Reorder into rho_ab_ij
 !
+!$omp parallel do schedule(static) private(b, a, ab, full_ab, ij)
             do b = 1, batch_b%length
                do a = 1, batch_a%length
 !
@@ -3219,6 +3220,7 @@ contains
                   enddo
                enddo
             enddo
+!$omp end parallel do
 !
             call mem%dealloc(rho_batch_ab_ij,  (batch_a%length)*(batch_b%length), (wf%n_o)**2)
 !
