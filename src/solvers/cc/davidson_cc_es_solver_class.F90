@@ -223,7 +223,7 @@ contains
             call davidson%read_trial(c_i, trial)
 !
             call solver%transform_trial_vector(wf, c_i)
-         !   call wf%transform_trial_vector(c_i)
+          !  call wf%jacobi_transform_trial_vector(c_i)
 !
             call davidson%projection(c_i)
 !
@@ -329,7 +329,7 @@ contains
 !!    Transform trial vector 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
 !!
-!!    Transforms the trial vector according to specified transformation routine 
+!!    Transforms the trial vector according to specified transformation routine.
 !!
       class(davidson_cc_es_solver), intent(in) :: solver 
 !
@@ -337,11 +337,12 @@ contains
 !
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: c_i
 !
-      if (solver%transformation == 'right') then 
+      if (trim(solver%transformation) == 'right') then 
 !
+         write(output%unit, *) 'transforming with right transformation'
          call wf%jacobi_transform_trial_vector(c_i)
 !
-      elseif (solver%transformation == 'left') then 
+      elseif (trim(solver%transformation) == 'left') then 
 !
          call wf%jacobi_transpose_transform_trial_vector(c_i)
 !

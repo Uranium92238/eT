@@ -24,7 +24,10 @@ module ccs_class
       real(dp) :: hf_energy 
 !
       integer(i15)                           :: n_amplitudes 
+      integer(i15)                           :: n_t1
+!
       real(dp), dimension(:,:), allocatable  :: t1
+      real(dp), dimension(:,:), allocatable  :: t1bar
 !
       real(dp), dimension(:,:), allocatable  :: fock_ij
       real(dp), dimension(:,:), allocatable  :: fock_ia
@@ -41,14 +44,17 @@ module ccs_class
       procedure :: prepare                      => prepare_ccs
       procedure :: cleanup                      => cleanup_ccs
 !
-!     Routines related to the amplitudes 
+!     Routines related to the amplitudes & multipliers
 !
       procedure :: initialize_amplitudes        => initialize_amplitudes_ccs 
-      procedure :: initialize_t1                => initialize_t1_ccs
       procedure :: set_initial_amplitudes_guess => set_initial_amplitudes_guess_ccs
       procedure :: t1_transform                 => t1_transform_ccs
       procedure :: set_amplitudes               => set_amplitudes_ccs 
       procedure :: get_amplitudes               => get_amplitudes_ccs 
+!
+      procedure :: initialize_multipliers       => initialize_multipliers_ccs
+      procedure :: set_multipliers              => set_multipliers_ccs
+      procedure :: get_multipliers              => get_multipliers_ccs
 !
 !     Routines related to the Fock matrix 
 ! 
@@ -65,15 +71,19 @@ module ccs_class
 !     Routines related to the Jacobian transformation 
 !
       procedure :: jacobi_transform_trial_vector           => jacobi_transform_trial_vector_ccs
+!
+      procedure :: jacobian_ccs_transformation             => jacobian_ccs_transformation_ccs
+      procedure :: jacobian_ccs_a1                         => jacobian_ccs_a1_ccs 
+      procedure :: jacobian_ccs_b1                         => jacobian_ccs_b1_ccs 
+!
       procedure :: jacobi_transpose_transform_trial_vector => jacobi_transpose_transform_trial_vector_ccs
 !
-      procedure :: jacobian_ccs_transformation   => jacobian_ccs_transformation_ccs
-      procedure :: jacobian_ccs_a1               => jacobian_ccs_a1_ccs 
-      procedure :: jacobian_ccs_b1               => jacobian_ccs_b1_ccs 
+      procedure :: jacobian_transpose_ccs_transformation   => jacobian_transpose_ccs_transformation_ccs
+      procedure :: jacobian_transpose_ccs_a1               => jacobian_transpose_ccs_a1_ccs
+      procedure :: jacobian_transpose_ccs_b1               => jacobian_transpose_ccs_b1_ccs
 !
-      procedure :: jacobian_transpose_ccs_transformation => jacobian_transpose_ccs_transformation_ccs
-      procedure :: jacobian_transpose_ccs_a1    => jacobian_transpose_ccs_a1_ccs
-      procedure :: jacobian_transpose_ccs_b1    => jacobian_transpose_ccs_b1_ccs
+      procedure :: construct_multiplier_equation           => construct_multiplier_equation_ccs
+      procedure :: construct_eta                           => construct_eta_ccs
 !
 !     Routines to get electron repulsion integrals (ERIs)
 !
@@ -104,6 +114,8 @@ module ccs_class
       procedure :: initialize_fock_ai           => initialize_fock_ai_ccs
       procedure :: initialize_fock_ab           => initialize_fock_ab_ccs
       procedure :: initialize_fock_diagonal     => initialize_fock_diagonal_ccs
+      procedure :: initialize_t1                => initialize_t1_ccs
+      procedure :: initialize_t1bar             => initialize_t1bar_ccs
 !
       procedure :: destruct_fock_ij             => destruct_fock_ij_ccs
       procedure :: destruct_fock_ia             => destruct_fock_ia_ccs
@@ -111,6 +123,7 @@ module ccs_class
       procedure :: destruct_fock_ab             => destruct_fock_ab_ccs
       procedure :: destruct_fock_diagonal       => destruct_fock_diagonal_ccs
       procedure :: destruct_t1                  => destruct_t1_ccs
+      procedure :: destruct_t1bar               => destruct_t1bar_ccs
 !
    end type ccs
 !
@@ -245,6 +258,55 @@ contains
       wf%t1 = zero 
 !
    end subroutine set_initial_amplitudes_guess_ccs
+!
+!
+   subroutine initialize_multipliers_ccs(wf)
+!!
+!!    Initialize multipliers 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Allocates the multipliers. This routine must be overwritten in 
+!!    descendants which have more multipliers. 
+!!
+      implicit none 
+!
+      class(ccs) :: wf 
+!
+      call wf%initialize_t1bar()
+!
+   end subroutine initialize_multipliers_ccs
+!
+!
+   subroutine set_multipliers_ccs(wf, multipliers)
+!!
+!!    Set multipliers 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!
+      implicit none 
+!
+      class(ccs) :: wf  
+!
+      real(dp), dimension(wf%n_amplitudes, 1), intent(in) :: multipliers
+!
+      call dcopy(wf%n_amplitudes, multipliers, 1, wf%t1bar, 1)
+!
+   end subroutine set_multipliers_ccs
+!
+!
+   subroutine get_multipliers_ccs(wf, multipliers)
+!!
+!!    Get multipliers 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf  
+!
+      real(dp), dimension(wf%n_amplitudes, 1) :: multipliers
+!
+      call dcopy(wf%n_amplitudes, wf%t1bar, 1, multipliers, 1)
+!
+   end subroutine get_multipliers_ccs
 !
 !
    subroutine calculate_energy_ccs(wf)
@@ -712,6 +774,20 @@ contains
    end subroutine initialize_t1_ccs
 !
 !
+   subroutine initialize_t1bar_ccs(wf)
+!!
+!!    Initialize T1-bar
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      if (.not. allocated(wf%t1bar)) call mem%alloc(wf%t1bar, wf%n_v, wf%n_o)
+!
+   end subroutine initialize_t1bar_ccs
+!
+!
    subroutine destruct_fock_ij_ccs(wf)
 !!
 !!    Destruct Fock ij block
@@ -794,6 +870,20 @@ contains
       if (allocated(wf%t1)) call mem%dealloc(wf%t1, wf%n_v, wf%n_o)
 !
    end subroutine destruct_t1_ccs
+!
+!
+   subroutine destruct_t1bar_ccs(wf)
+!!
+!!    Destruct T1-bar
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      if (allocated(wf%t1bar)) call mem%dealloc(wf%t1bar, wf%n_v, wf%n_o)
+!
+   end subroutine destruct_t1bar_ccs
 !
 !
    subroutine get_ovov_ccs(wf, g_iajb, first_i, last_i, first_a, last_a, &
@@ -2481,6 +2571,70 @@ contains
       call mem%dealloc(L_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine jacobian_transpose_ccs_b1_ccs
+!
+!
+   subroutine construct_eta_ccs(wf, eta)
+!!
+!!    Construct eta 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: eta 
+!
+      integer(i15) :: i, a, ai
+!
+      do i = 1, wf%n_o 
+         do a = 1, wf%n_v 
+!
+            ai = (wf%n_v)*(i - 1) + a
+            eta(ai, 1) = two*(wf%fock_ia(i, a))
+!
+         enddo
+      enddo
+!
+   end subroutine construct_eta_ccs
+!
+!
+   subroutine construct_multiplier_equation_ccs(wf, equation)
+!!
+!!    Construct multiplier equation 
+!!    Written by Eirik F. Kjønstad, Oct 2018 
+!!
+!!    Constructs 
+!!
+!!       t-bar^T A + eta,
+!!
+!!    and places the result in 'equation'.
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: equation 
+!
+      real(dp), dimension(:,:), allocatable :: eta 
+!
+!     Copy the multipliers, eq. = t-bar 
+!
+      call dcopy(wf%n_t1, wf%t1bar, 1, equation, 1)
+!
+!     Transform the multipliers by A^T, eq. = t-bar^T A 
+!
+      call wf%jacobian_transpose_ccs_transformation(equation)
+!
+!     Add eta, eq. = t-bar^T A + eta 
+!
+      call mem%alloc(eta, wf%n_t1, 1)
+      call wf%construct_eta(eta)
+!
+      call daxpy(wf%n_t1, one, eta, 1, equation, 1)
+!
+      call mem%dealloc(eta, wf%n_t1, 1)
+!
+   end subroutine construct_multiplier_equation_ccs
 !
 !
 end module ccs_class
