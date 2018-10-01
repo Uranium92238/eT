@@ -651,4 +651,445 @@ contains
       call mem%dealloc(X_l_i, wf%n_o, wf%n_o)
 !
    end subroutine jacobian_transpose_ccsd_d1_ccsd
+!
+!
+   module subroutine jacobian_transpose_ccsd_e1_ccsd(wf, sigma_a_i, b_ai_bj)
+!!
+!!    Jacobian transpose CCSD E1 
+!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad
+!!    and Andreas Skeidsvoll, 2018
+!!
+!!    Calculates the E1 term,
+!!
+!!       sum_ckdle (b_ckdi L_dale t_kl^ce + b_ckdl L_deia t_kl^ce)
+!!      -sum_ckdlm (b_ckal L_ilmd t_km^cd + b_ckdl L_mlia t_km^cd)
+!! 
+!!    and adds it to the transformed vector sigma_a_i.
+!!
+!!    The routine adds the third and forth terms first.
+!!
+      implicit none 
+!
+      class(ccsd) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o)                       :: sigma_a_i 
+      real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
+!
+      real(dp), dimension(:,:), allocatable :: t_dm_ck ! t_km^cd 
+      real(dp), dimension(:,:), allocatable :: t_m_ckd ! t_km^cd
+      real(dp), dimension(:,:), allocatable :: t_el_ck ! t_lk^ec
+      real(dp), dimension(:,:), allocatable :: t_ckl_e ! t_lk^ec 
+!
+      real(dp), dimension(:,:), allocatable :: g_il_md ! g_ilmd
+      real(dp), dimension(:,:), allocatable :: g_ml_ia ! g_mlia
+!
+      real(dp), dimension(:,:), allocatable :: L_il_dm ! L_ilmd 
+      real(dp), dimension(:,:), allocatable :: L_ai_ml ! L_mlia
+!
+      real(dp), dimension(:,:), allocatable :: X_il_ck ! An intermediate, term 3
+      real(dp), dimension(:,:), allocatable :: X_lck_i ! Reordered intermediate, term 3
+!
+      real(dp), dimension(:,:), allocatable :: X_m_l ! An intermediate, term 4
+!
+      real(dp), dimension(:,:), allocatable :: b_a_lck ! b_ckal
+      real(dp), dimension(:,:), allocatable :: b_d_ckl ! b_ckdl
+!
+      real(dp), dimension(:,:), allocatable :: g_da_le ! g_dale
+      real(dp), dimension(:,:), allocatable :: L_a_eld ! L_dale
+!
+      real(dp), dimension(:,:), allocatable :: g_de_ia ! g_deia 
+      real(dp), dimension(:,:), allocatable :: L_ai_ed ! L_deia 
+!
+      real(dp), dimension(:,:), allocatable :: X_el_di ! An intermediate, term 1
+!
+      real(dp), dimension(:,:), allocatable :: X_d_e ! An intermediate, term 2
+      real(dp), dimension(:,:), allocatable :: X_e_d ! Reordered intermediate, term 2
+!
+      integer(i15) :: ml = 0, md = 0, ma = 0, m = 0, lck = 0, l = 0, il = 0, ck = 0, i = 0
+      integer(i15) :: dm = 0, ckd = 0, k = 0, id = 0, ia = 0, c = 0, d = 0, al = 0, ai = 0
+      integer(i15) :: a = 0, le = 0, la = 0, eld = 0, e = 0, de = 0, da = 0, ie = 0, el = 0
+      integer(i15) :: dl = 0, ckl = 0, ed = 0
+!
+!     Batching variables 
+!
+      integer(i15) :: required = 0
+!
+      integer(i15) :: current_d_batch
+      integer(i15) :: current_a_batch 
+!  
+      type(batching_index) :: batch_d 
+      type(batching_index) :: batch_a
+!
+!     :: Term 3. - sum_ckdlm b_ckal L_ilmd t_km^cd ::
+!
+!     Read the amplitudes from disk 
+!
+      !call wf%read_double_amplitudes
+!
+      call mem%alloc(t_dm_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      t_dm_ck = zero
+!
+      call squareup(wf%t2, t_dm_ck, (wf%n_o)*(wf%n_v)) ! t_dm_ck(dm,ck) = t_mk^dc = t_km^cd 
+!
+      !call wf%destruct_double_amplitudes
+!
+!     Form g_il_md = g_ilmd 
+!
+      call mem%alloc(g_il_md, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
+!
+      call wf%get_ooov(g_il_md)
+!
+!     Form L_il_dm = L_ilmd = 2 * g_ilmd - g_idml 
+!                           = 2 * g_ilmd - g_mlid
+!                           = 2 * g_il_md(il,md) - g_il_md(ml,id)
+!
+      call mem%alloc(L_il_dm, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
+      L_il_dm = zero
+!
+      call daxpy((wf%n_o)**3*(wf%n_v), two, g_il_md, 1, L_il_dm,1)
+      call add_3214_to_1234(-one, g_il_md, L_il_dm, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%dealloc(g_il_md, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
+!
+!     Form the intermediate X_il_ck = sum_md L_ilmd t_km^cd 
+!                                   = sum_md L_ilmd t_mk^dc 
+!                                   = sum_md L_il_dm t_dm_ck
+!
+      call mem%alloc(X_il_ck, (wf%n_o)**2, (wf%n_v)*(wf%n_o))
+!
+      call dgemm('N','N',            &
+                  (wf%n_o)**2,       &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  L_il_dm,           &
+                  (wf%n_o)**2,       &
+                  t_dm_ck,           &
+                  (wf%n_o)*(wf%n_v), &
+                  zero,              &
+                  X_il_ck,           &
+                  (wf%n_o)**2)
+!
+      call mem%dealloc(L_il_dm, (wf%n_o)**2, (wf%n_v)*(wf%n_o))
+!
+!     Add - sum_ckdlm b_ckal L_ilmd t_km^cd
+!         = - sum_ckl b_a_lck X_i_lck^T
+!
+      call dgemm('N','T',               &
+                  wf%n_v,               &
+                  wf%n_o,               &
+                  (wf%n_v)*(wf%n_o)**2, &
+                  -one,                 &
+                  b_ai_bj,              & ! "b_a_lck" (= b_al_ck = b_ai_bj)
+                  wf%n_v,               &
+                  X_il_ck,              & ! "X_i_lck"
+                  wf%n_o,               &
+                  one,                  &
+                  sigma_a_i,            &
+                  wf%n_v)
+!
+      call mem%dealloc(X_il_ck, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
+!
+!     :: Term 4. - sum_ckdlm b_ckdl L_mlia t_km^cd ::
+!
+!     Form the intermediate X_m_l = sum_ckd t_km^cd b_ckdl
+!                                 = sum_ckd t_ckd_m^T b_ckd_l
+!
+!     Note: we interpret b_ai_bj as b_aib_j, such that b_aib_j(ckd,l) = b_ckdl
+!           we interpret t_dm_ck as t_ckd_m
+!
+      call mem%alloc(X_m_l, wf%n_o, wf%n_o)
+!
+      call dgemm('T','N',               &
+                  wf%n_o,               &
+                  wf%n_o,               &
+                  (wf%n_o)*(wf%n_v)**2, &
+                  one,                  &
+                  t_dm_ck,              & ! t_ckd_m
+                  (wf%n_o)*(wf%n_v)**2, &
+                  b_ai_bj,              & ! "b_aib_j"
+                  (wf%n_o)*(wf%n_v)**2, &
+                  zero,                 &
+                  X_m_l,                &
+                  wf%n_o)
+!
+      call mem%dealloc(t_dm_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!     Form g_ml_ia = g_mlia 
+!
+      call mem%alloc(g_ml_ia, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
+!
+      call wf%get_ooov(g_ml_ia)
+!
+!     Form L_ai_ml = L_mlia = 2 * g_mlia - g_mail
+!                           = 2 * g_mlia - g_ilma 
+!
+      call mem%alloc(L_ai_ml, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
+      L_ai_ml = zero
+!
+      call daxpy((wf%n_o)**3*(wf%n_v), two, g_ml_ia, 1, L_ai_ml,1)
+      call add_3214_to_1234(-one, g_ml_ia, L_ai_ml, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+!
+      call mem%dealloc(g_ml_ia, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
+!
+!     Add - sum_ckdlm b_ckdl L_mlia t_km^cd = - sum_lm L_ai_ml X_m_l 
+!
+      call dgemm('N','N',            &
+                  (wf%n_v)*(wf%n_o), &
+                  1,                 &
+                  (wf%n_o)**2,       &
+                  -one,              &
+                  L_ai_ml,           &
+                  (wf%n_o)*(wf%n_v), &
+                  X_m_l,             & ! "X_ml"
+                  (wf%n_o)**2,       &
+                  one,               &
+                  sigma_a_i,         & ! "sigma_ai"
+                  (wf%n_o)*(wf%n_v))
+!
+      call mem%dealloc(L_ai_ml, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
+      call mem%dealloc(X_m_l, wf%n_o, wf%n_o)
+!
+!     :: Term 1. sum_ckdle b_ckdi L_dale t_kl^ce :: 
+!
+!     Read amplitudes from disk 
+!
+      !call wf%read_double_amplitudes
+!
+      call mem%alloc(t_el_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      t_el_ck = zero 
+!
+      call squareup(wf%t2, t_el_ck, (wf%n_o)*(wf%n_v))
+!
+      !call wf%destruct_double_amplitudes
+!
+!     Form the intermediate X_el_di = sum_ck t_kl^ce b_ckdi = sum_ck t_lk^ec b_ckdi
+!                                   = sum_ck t_el_ck b_ck_di  
+!
+      call mem%alloc(X_el_di, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+      call dgemm('N','N',            &
+                  (wf%n_o)*(wf%n_v), & 
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  t_el_ck,           &
+                  (wf%n_o)*(wf%n_v), &
+                  b_ai_bj,           & ! "b_ck_di"
+                  (wf%n_o)*(wf%n_v), &
+                  zero,              &
+                  X_el_di,           &
+                  (wf%n_o)*(wf%n_v))
+!
+!     sum_dle L_dale X_el_di 
+! ... reorder L_dale to L_a_eld & interpret X_el_di as X_eld_i 
+!
+!     Prepare batching over index a 
+!
+      required =  wf%integrals%get_required_vvov() + (wf%n_v**3)*(wf%n_o)
+!     
+!     Initialize batching variable 
+!
+      call batch_a%init(wf%n_v)
+      call mem%num_batch(batch_a, required)
+!
+!     Loop over the a-batches 
+!
+      do current_a_batch = 1, batch_a%num_batches
+!
+!        For each batch, get the limits for the a index 
+!
+         call batch_a%determine_limits(current_a_batch)
+!
+!        Form g_da_le 
+!
+         call mem%alloc(g_da_le, (wf%n_v)*(batch_a%length), (wf%n_o)*(wf%n_v))
+!
+         call wf%get_vvov(g_da_le,        &
+                           1,             &
+                           wf%n_v,        &
+                           batch_a%first, &
+                           batch_a%last,  &
+                           1,             &
+                           wf%n_o,        &
+                           1,             &
+                           wf%n_v)
+!
+!        Form  L_a_eld = L_dale = 2 * g_dale - g_dela 
+!                               = 2 * g_da_le(da, le) - g_da_le(de, la)      
+!
+         call mem%alloc(L_a_eld, batch_a%length, (wf%n_o)*(wf%n_v)**2)
+         L_a_eld = zero
+! 
+!$omp parallel do schedule(static) private(d,l,e,de,le,eld,a,la,da)
+         do d = 1, wf%n_v
+            do l = 1, wf%n_o
+               do e = 1, wf%n_v
+!     
+                  de = index_two(d, e, wf%n_v)
+                  le = index_two(l, e, wf%n_o)
+!
+                  eld = index_three(e, l, d, wf%n_v, wf%n_o)
+!
+                  do a = 1, batch_a%length
+!
+                     la = index_two(l, a, wf%n_o)
+                     da = index_two(d, a, wf%n_v)
+!
+                     L_a_eld(a, eld) = two*g_da_le(da, le) - g_da_le(de, la) ! L_dale
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!$omp end parallel do
+!
+         call mem%dealloc(g_da_le, (wf%n_v)*(batch_a%length), (wf%n_o)*(wf%n_v))
+!
+!        Add sum_ckdle b_ckdi L_dale t_kl^ce
+!            = sum_eld L_a_eld X_el_di
+!
+!        Note: we interpret X_el_di as X_eld_i 
+!
+         call dgemm('N','N',                     &
+                     batch_a%length,             &
+                     wf%n_o,                     &
+                     (wf%n_o)*(wf%n_v)**2,       &
+                     one,                        &
+                     L_a_eld,                    &
+                     batch_a%length,             &
+                     X_el_di,                    & ! "X_eld_i"
+                     (wf%n_o)*(wf%n_v)**2,       &
+                     one,                        &
+                     sigma_a_i(batch_a%first,1), &
+                     wf%n_v)
+!
+         call mem%dealloc(L_a_eld, batch_a%length, (wf%n_o)*(wf%n_v)**2)
+!
+      enddo ! End of batches over a 
+!
+!     :: Term 2. sum_ckdle b_ckdl L_deia t_kl^ce ::
+!
+!     Form the intermediate X_d_e = sum_ckl b_ckdl t_kl^ce = sum_ckl b_d_lck t_e_lck^T
+!
+      call mem%alloc(X_d_e, wf%n_v, wf%n_v)
+!
+      call dgemm('N','T',               &
+                  wf%n_v,               &
+                  wf%n_v,               &
+                  (wf%n_v)*(wf%n_o)**2, &
+                  one,                  &
+                  b_ai_bj,              & ! "b_d_lck" = b_dlck = b_ckdl
+                  wf%n_v,               &
+                  t_el_ck,              & ! "t_e_lck"
+                  wf%n_v,               &
+                  zero,                 &
+                  X_d_e,                &
+                  wf%n_v)
+!
+      call mem%dealloc(t_el_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+!
+!     Reorder to X_e_d 
+!
+      call mem%alloc(X_e_d, wf%n_v, wf%n_v)
+      X_e_d = zero 
+!
+      do e = 1, wf%n_v 
+         do d = 1, wf%n_v
+!
+            X_e_d(e,d) = X_d_e(d,e)
+!
+         enddo
+      enddo
+!
+      call mem%dealloc(X_d_e, wf%n_v, wf%n_v)
+!
+!     sum_ckdle b_ckdl L_deia t_kl^ce = sum_de L_deia X_e_d
+!
+!     Prepare batching over index d 
+!
+      required = wf%integrals%get_required_vvov() + (wf%n_v**3)*(wf%n_o)
+!
+      call batch_d%init(wf%n_v)
+      call mem%num_batch(batch_d, required)
+!
+      do current_d_batch = 1, batch_d%num_batches
+!
+!        For each batch, get the limits for the d index 
+!
+         call batch_d%determine_limits(current_d_batch)
+!
+!        Form g_de_ia = g_deia 
+!
+         call mem%alloc(g_de_ia, (wf%n_v)*(batch_d%length), (wf%n_v)*(wf%n_o))
+!
+         call wf%get_vvov(g_de_ia,        &
+                           batch_d%first, &
+                           batch_d%last,  &
+                           1,             &
+                           wf%n_v,        &
+                           1,             &
+                           wf%n_o,        &
+                           1,             &
+                           wf%n_v)
+!
+!        Form L_ai_ed = L_deia = 2 * g_deia - g_daie
+!                              = 2 * g_de_ia(de,ia) - g_de_ia(da,ie)
+!
+         call mem%alloc(L_ai_ed, (wf%n_o)*(wf%n_v), (wf%n_v)*(batch_d%length))
+         L_ai_ed = zero
+!
+!$omp parallel do schedule(static) private(e,d,de,ed,i,ie,a,da,ia,ai)
+         do e = 1, wf%n_v
+            do d = 1, batch_d%length 
+!
+               de = index_two(d, e, batch_d%length)
+               ed = index_two(e, d, wf%n_v)
+!
+               do i = 1, wf%n_o
+!
+                  ie = index_two(i, e, wf%n_o)
+!
+                  do a = 1, wf%n_v
+!
+                     da = index_two(d, a, batch_d%length)
+                     ia = index_two(i, a, wf%n_o)
+                     ai = index_two(a, i, wf%n_v)
+!
+                     L_ai_ed(ai, ed) = two*g_de_ia(de, ia) - g_de_ia(da, ie) ! L_deia
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!$omp end parallel do
+!
+         call mem%dealloc(g_de_ia, (wf%n_v)*(batch_d%length), (wf%n_o)*(wf%n_v))
+!
+!        Calculate the contribution to the sum, 
+!
+!           sum_de L_ai_ed X_e_d 
+!
+!        for the given batch of d
+!
+         call dgemm('N','N',                    &
+                     (wf%n_v)*(wf%n_o),         &
+                     1,                         &
+                     (wf%n_v)*(batch_d%length), &
+                     one,                       &
+                     L_ai_ed,                   &
+                     (wf%n_v)*(wf%n_o),         &
+                     X_e_d(1,batch_d%first),    & ! Trick dgemm into thinking this is an X_ed array,
+                     (wf%n_v)*(batch_d%length), & ! with e restricted. 
+                     one,                       &
+                     sigma_a_i,                 &
+                     (wf%n_v)*(wf%n_o))
+!
+         call mem%dealloc(L_ai_ed, (wf%n_o)*(wf%n_v), (wf%n_v)*(batch_d%length))
+!
+      enddo ! End of batches over d
+!
+      call mem%dealloc(X_e_d, wf%n_v, wf%n_v)
+!
+   end subroutine jacobian_transpose_ccsd_e1_ccsd
 end submodule jacobian_transpose_ccsd
