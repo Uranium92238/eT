@@ -51,10 +51,19 @@ module ccs_class
       procedure :: t1_transform                 => t1_transform_ccs
       procedure :: set_amplitudes               => set_amplitudes_ccs 
       procedure :: get_amplitudes               => get_amplitudes_ccs 
+      procedure :: save_amplitudes              => save_amplitudes_ccs
+      procedure :: read_amplitudes              => read_amplitudes_ccs
+      procedure :: save_t1                      => save_t1_ccs 
+      procedure :: read_t1                      => read_t1_ccs 
 !
       procedure :: initialize_multipliers       => initialize_multipliers_ccs
       procedure :: set_multipliers              => set_multipliers_ccs
       procedure :: get_multipliers              => get_multipliers_ccs
+      procedure :: save_multipliers             => save_multipliers_ccs
+      procedure :: read_multipliers             => read_multipliers_ccs
+      procedure :: save_t1bar                   => save_t1bar_ccs
+      procedure :: read_t1bar                   => read_t1bar_ccs
+
 !
 !     Routines related to the Fock matrix 
 ! 
@@ -245,6 +254,150 @@ contains
       call dcopy(wf%n_amplitudes, wf%t1, 1, amplitudes, 1)
 !
    end subroutine get_amplitudes_ccs
+!
+!
+   subroutine save_amplitudes_ccs(wf)
+!!
+!!    Save amplitudes 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      call wf%save_t1()
+!
+   end subroutine save_amplitudes_ccs
+!
+!
+   subroutine read_amplitudes_ccs(wf)
+!!
+!!    Read amplitudes 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+      implicit none 
+!
+      class(ccs), intent(inout) :: wf
+!
+      call wf%read_t1()    
+!
+   end subroutine read_amplitudes_ccs
+!
+!
+   subroutine read_t1_ccs(wf)
+!!
+!!    Read t1 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+      implicit none 
+!
+      class(ccs), intent(inout) :: wf
+!
+      type(file) :: t1_file 
+!
+      call t1_file%init('t1', 'sequential', 'unformatted')
+!
+      call disk%open_file(t1_file, 'read', 'rewind')
+!
+      read(t1_file%unit) wf%t1
+!
+      call disk%close_file(t1_file)      
+!
+   end subroutine read_t1_ccs
+!
+!
+   subroutine save_t1_ccs(wf)
+!!
+!!    Save t1 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf 
+!
+      type(file) :: t1_file 
+!
+      call t1_file%init('t1', 'sequential', 'unformatted')
+!
+      call disk%open_file(t1_file, 'write', 'rewind')
+!
+      write(t1_file%unit) wf%t1
+!
+      call disk%close_file(t1_file)
+!
+   end subroutine save_t1_ccs
+!
+!
+   subroutine save_multipliers_ccs(wf)
+!!
+!!    Save multipliers 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      call wf%save_t1bar()
+!
+   end subroutine save_multipliers_ccs
+!
+!
+   subroutine read_multipliers_ccs(wf)
+!!
+!!    Read multipliers 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+      implicit none 
+!
+      class(ccs), intent(inout) :: wf 
+!
+      call wf%read_t1bar()
+!
+   end subroutine read_multipliers_ccs
+!
+!
+   subroutine save_t1bar_ccs(wf)
+!!
+!!    Save t1bar 
+!!    Written by Eirik F. Kjønstad, Oct 2018 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      type(file) :: t1bar_file 
+!
+      call t1bar_file%init('t1bar', 'sequential', 'unformatted')
+!
+      call disk%open_file(t1bar_file, 'write', 'rewind')
+!
+      write(t1bar_file%unit) wf%t1bar
+!
+      call disk%close_file(t1bar_file)      
+!
+   end subroutine save_t1bar_ccs
+!
+!
+   subroutine read_t1bar_ccs(wf)
+!!
+!!    Save t1bar 
+!!    Written by Eirik F. Kjønstad, Oct 2018 
+!!
+      implicit none 
+!
+      class(ccs), intent(inout) :: wf 
+!
+      type(file) :: t1bar_file 
+!
+      call t1bar_file%init('t1bar', 'sequential', 'unformatted')
+!
+      call disk%open_file(t1bar_file, 'read', 'rewind')
+!
+      read(t1bar_file%unit) wf%t1bar
+!
+      call disk%close_file(t1bar_file)      
+!
+   end subroutine read_t1bar_ccs
 !
 !
    subroutine set_initial_amplitudes_guess_ccs(wf)
