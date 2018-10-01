@@ -510,4 +510,145 @@ contains
       call mem%dealloc(g_ik_dl, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
 !
    end subroutine jacobian_transpose_ccsd_c1_ccsd
+!
+!
+   module subroutine jacobian_transpose_ccsd_d1_ccsd(wf, sigma_a_i, b_ai_bj)
+!!
+!!    Jacobian transpose CCSD D1 
+!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad
+!!    and Andreas Skeidsvoll, 2018
+!!
+!!    Calculates the D1 term,
+!!
+!!       - sum_ckdl (b_ckal F_id t_kl^cd + b_ckdi F_la t_kl^cd),
+!! 
+!!    and adds it to the transformed vector sigma_a_i.
+!!
+      implicit none 
+!
+      class(ccsd) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o)                       :: sigma_a_i 
+      real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
+!
+      real(dp), dimension(:,:), allocatable :: t_lck_d ! t_kl^cd 
+!
+      real(dp), dimension(:,:), allocatable :: X_a_d ! An intermediate, term 1
+      real(dp), dimension(:,:), allocatable :: X_l_i ! An intermediate, term 2 
+!
+      integer(i15) :: l = 0, k = 0, c = 0, ck = 0, a = 0, al = 0
+      integer(i15) :: d = 0, dl = 0, ckdl = 0, ckd = 0, lck = 0
+!
+!     :: Term 1. - sum_ckdl b_ckal F_id t_kl^cd ::
+!
+!     Read amplitudes and order as t_lck_d = t_kl^cd 
+!
+      !call wf%read_double_amplitudes
+!
+      call mem%alloc(t_lck_d, (wf%n_v)*(wf%n_o)**2, wf%n_v)
+      t_lck_d = zero 
+!
+!$omp parallel do schedule(static) private(d,l,dl,k,c,ck,ckdl,lck)
+      do d = 1, wf%n_v
+         do l = 1, wf%n_o
+!
+            dl = index_two(d, l, wf%n_v)
+!
+            do k = 1, wf%n_o
+               do c = 1, wf%n_v
+!
+                  ck = index_two(c, k, wf%n_v)
+!
+                  ckdl = index_packed(ck, dl)
+!
+                  lck = index_three(l, c, k, wf%n_o, wf%n_v)
+!
+                  t_lck_d(lck, d) = wf%t2(ckdl, 1) ! t_kl^cd
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+      !call wf%destruct_double_amplitudes
+!
+!     Form the intermediate X_a_d = sum_ckl b_a_lck t_lck_d = sum_ckl b_ckal t_kl^cd
+!  
+      call mem%alloc(X_a_d, wf%n_v, wf%n_v)
+!
+      call dgemm('N','N',               &
+                  wf%n_v,               &
+                  wf%n_v,               &
+                  (wf%n_v)*(wf%n_o)**2, &
+                  one,                  &
+                  b_ai_bj,              &  ! b_a_lck = b_alck = b_ckal
+                  wf%n_v,               &
+                  t_lck_d,              &
+                  (wf%n_v)*(wf%n_o)**2, &
+                  zero,                 &
+                  X_a_d,                &
+                  wf%n_v)
+!
+!     Add - sum_ckdl b_ckal F_id t_kl^cd
+!           = - sum_d X_a_d F_id 
+!           = - sum_d X_a_d F_i_a^T(d,i)
+!
+      call dgemm('N','T',     &
+                  wf%n_v,     &
+                  wf%n_o,     &
+                  wf%n_v,     &
+                  -one,       &
+                  X_a_d,      &
+                  wf%n_v,     &
+                  wf%fock_ia, & ! F_i_a
+                  wf%n_o,     &
+                  one,        &
+                  sigma_a_i,  &
+                  wf%n_v)
+!
+      call mem%dealloc(X_a_d, wf%n_v, wf%n_v)
+!
+!     :: Term 2. - sum_ckdl b_ckdi F_la t_kl^cd
+!
+!     Form the intermediate X_l_i = sum_ckd t_l_ckd b_ckd_i  = sum_ckd b_ckdi t_kl^cd 
+!
+!     Note: we interpret b_ai_bj as b_aib_j, such that b_aib_j(ckd, i) = b_ckdi
+!           we interpret t_lck_d as t_l_ckd, such that t_l_ckd(l,ckd) = t_kl^cd 
+!
+      call mem%alloc(X_l_i, wf%n_o, wf%n_o)
+!
+      call dgemm('N','N',               &
+                  wf%n_o,               &
+                  wf%n_o,               &
+                  (wf%n_o)*(wf%n_v)**2, &
+                  one,                  &
+                  t_lck_d,              & ! "t_l_ckd"
+                  wf%n_o,               &
+                  b_ai_bj,              & ! "b_ckd_i"
+                  (wf%n_o)*(wf%n_v)**2, &
+                  zero,                 &
+                  X_l_i,                &
+                  wf%n_o)
+!
+      call mem%dealloc(t_lck_d, (wf%n_v)*(wf%n_o)**2, wf%n_v)
+!
+!     Add - sum_ckdl b_ckdi F_la t_kl^cd = - sum_l F_la X_l_i = - sum_l F_i_a^T(a,l) X_l_i(l,i)
+!
+      call dgemm('T','N',     &
+                  wf%n_v,     &
+                  wf%n_o,     &
+                  wf%n_o,     &
+                  -one,       &
+                  wf%fock_ia, &
+                  wf%n_o,     &
+                  X_l_i,      &
+                  wf%n_o,     &
+                  one,        &
+                  sigma_a_i,  &
+                  wf%n_v)
+!
+      call mem%dealloc(X_l_i, wf%n_o, wf%n_o)
+!
+   end subroutine jacobian_transpose_ccsd_d1_ccsd
 end submodule jacobian_transpose_ccsd
