@@ -583,7 +583,8 @@ contains
    subroutine sort_1234_to_3142(x_pq_rs, x_rp_qs, dim_p, dim_q, dim_r, dim_s)
 !!
 !!    Sort 1234 to 3142
-!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!    Written by Eirik F. Kjønstad, Rolf H. Myhre and
+!!    Sarai D. Folkestad, 2018
 !!
 !!    Reorders the array x_pq_rs to x_rp_qs (i.e., 1234 to 3142).
 !!
