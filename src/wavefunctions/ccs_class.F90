@@ -47,6 +47,7 @@ module ccs_class
 !     Routines related to the amplitudes & multipliers
 !
       procedure :: initialize_amplitudes        => initialize_amplitudes_ccs 
+      procedure :: destruct_amplitudes          => destruct_amplitudes_ccs 
       procedure :: set_initial_amplitudes_guess => set_initial_amplitudes_guess_ccs
       procedure :: t1_transform                 => t1_transform_ccs
       procedure :: set_amplitudes               => set_amplitudes_ccs 
@@ -57,13 +58,13 @@ module ccs_class
       procedure :: read_t1                      => read_t1_ccs 
 !
       procedure :: initialize_multipliers       => initialize_multipliers_ccs
+      procedure :: destruct_multipliers         => destruct_multipliers_ccs
       procedure :: set_multipliers              => set_multipliers_ccs
       procedure :: get_multipliers              => get_multipliers_ccs
       procedure :: save_multipliers             => save_multipliers_ccs
       procedure :: read_multipliers             => read_multipliers_ccs
       procedure :: save_t1bar                   => save_t1bar_ccs
       procedure :: read_t1bar                   => read_t1bar_ccs
-
 !
 !     Routines related to the Fock matrix 
 ! 
@@ -224,6 +225,23 @@ contains
    end subroutine initialize_amplitudes_ccs
 !
 !
+   subroutine destruct_amplitudes_ccs(wf)
+!!
+!!    Destruct amplitudes 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Deallocates the amplitudes. This routine must be overwritten in 
+!!    descendants which have more amplitudes. 
+!!
+      implicit none 
+!
+      class(ccs) :: wf 
+!
+      call wf%destruct_t1()
+!
+   end subroutine destruct_amplitudes_ccs
+!
+!
    subroutine set_amplitudes_ccs(wf, amplitudes)
 !!
 !!    Set amplitudes 
@@ -354,6 +372,23 @@ contains
       call wf%read_t1bar()
 !
    end subroutine read_multipliers_ccs
+!
+!
+   subroutine destruct_multipliers_ccs(wf)
+!!
+!!    Destruct multipliers 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Deallocates the multipliers. This routine must be overwritten in 
+!!    descendants which have more multipliers. 
+!!
+      implicit none 
+!
+      class(ccs) :: wf 
+!
+      call wf%destruct_t1bar()
+!
+   end subroutine destruct_multipliers_ccs
 !
 !
    subroutine save_t1bar_ccs(wf)

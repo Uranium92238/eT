@@ -34,6 +34,8 @@ module hf_class
       real(dp) :: libint_epsilon       = 1.0D-16   ! ε for libint, integral precision given
                                                    ! approximately by sqrt(ε)
 !
+      type(file) :: orbital_coefficients_file
+!
 	contains
 !
 !     Preparation and cleanup routines 
@@ -90,6 +92,8 @@ module hf_class
       procedure :: print_orbital_energies                   => print_orbital_energies_hf
       procedure :: mo_transform                             => mo_transform_hf
       procedure :: mo_transform_and_save_h                  => mo_transform_and_save_h_hf
+      procedure :: save_orbital_coefficients                => save_orbital_coefficients_hf
+      procedure :: read_orbital_coefficients                => read_orbital_coefficients_hf
 !
 !     Class variable initialize and destruct routines
 !
@@ -157,6 +161,8 @@ contains
       call initialize_overlap()
 !
       call wf%set_n_mo()
+!
+      call wf%orbital_coefficients_file%init('orbital_coefficients', 'sequential', 'unformatted')
 !
    end subroutine prepare_hf
 !
@@ -606,10 +612,52 @@ contains
 !
       call ao_density%init('ao_density', 'sequential', 'formatted')
       call disk%open_file(ao_density, 'readwrite', 'rewind')
+!
       write(ao_density%unit, *) wf%ao_density
+!
       call disk%close_file(ao_density)
 !
    end subroutine save_ao_density_hf
+!
+!
+   subroutine save_orbital_coefficients_hf(wf)
+!!
+!!    Save orbital coefficients 
+!!    Written by Eirik F. Kjønstad, Oct 2018 
+!!
+      implicit none 
+!
+      class(hf), intent(inout) :: wf 
+!
+      call disk%open_file(wf%orbital_coefficients_file, 'write', 'rewind')
+!
+      write(wf%orbital_coefficients_file%unit) wf%orbital_coefficients
+!
+      call disk%close_file(wf%orbital_coefficients_file)
+!
+   end subroutine save_orbital_coefficients_hf
+!
+!
+   subroutine read_orbital_coefficients_hf(wf)
+!!
+!!    Save orbital coefficients 
+!!    Written by Eirik F. Kjønstad, Oct 2018 
+!!
+      implicit none 
+!
+      class(hf), intent(inout) :: wf 
+!
+      type(file) :: orbital_coefficients_file 
+!
+      call orbital_coefficients_file%init('orbital_coefficients', 'sequential', 'unformatted')
+!
+      call disk%open_file(orbital_coefficients_file, 'read', 'rewind')
+!
+      read(orbital_coefficients_file%unit) wf%orbital_coefficients
+!
+      call disk%close_file(orbital_coefficients_file)
+!
+   end subroutine read_orbital_coefficients_hf
 !
 !
    subroutine cleanup_hf(wf)
