@@ -130,6 +130,9 @@ contains
          call initialize_basis(molecule%basis_sets(i), temp_name)
 !
       enddo
+!  
+      write(output%unit, *)'1'
+      flush(output%unit)
 !
 !     Initialize atoms and shells for eT
 !
@@ -143,6 +146,8 @@ contains
 !
          molecule%atoms(i)%n_shells = n_shells_on_atoms(i, 1)
          call molecule%atoms(i)%initialize_shells()
+         write(output%unit, *)'2'
+         flush(output%unit)
 !
 !        Then determine the number of basis functions in each shell
 !        and save number of aos per atom
@@ -159,6 +164,8 @@ contains
             molecule%atoms(i)%n_ao = molecule%atoms(i)%n_ao + n_basis_in_shells(j,1)
 
          enddo
+         write(output%unit, *)'3'
+         flush(output%unit)
 !
          deallocate(n_basis_in_shells)
 !
@@ -185,6 +192,8 @@ contains
             molecule%atoms(i)%shells(j)%first = first_ao_in_shells(j,1)
 !
          enddo
+         write(output%unit, *)'4'
+         flush(output%unit)
 !
          deallocate(first_ao_in_shells)
 !
@@ -198,6 +207,8 @@ contains
          enddo
 !
       enddo
+      write(output%unit, *)'5'
+      flush(output%unit)
 !
       call molecule%initialize_shell_limits()
 !
@@ -219,6 +230,9 @@ contains
          stop
 !
       endif
+!
+      write(output%unit, *)'6'
+      flush(output%unit)
 !
       do i = 1, molecule%n_atoms
 !
@@ -1289,6 +1303,8 @@ contains
                                                                           molecule%atoms(I)%y,      &
                                                                           molecule%atoms(I)%z,      &
                                                                           molecule%atoms(I)%basis 
+!  
+         flush(output%unit)
 !
       enddo 
 !
@@ -1311,6 +1327,8 @@ contains
 !
       write(output%unit, '(/t6,a35,f25.12)') 'Nuclear repulsion energy (a.u.):   ', molecule%get_nuclear_repulsion()
       write(output%unit, '(t6,a35,f18.12)')  'Bohr/angstrom value (CODATA 2010): ', bohr_to_angstrom
+!
+      flush(output%unit)
 !
       call molecule%print_geometry()
 !
