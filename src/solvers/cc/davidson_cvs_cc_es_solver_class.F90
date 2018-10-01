@@ -242,8 +242,6 @@ contains
             enddo
 !
          enddo
-         write(output%unit, *)'ragazzo', solver%core_MOs
-         flush(output%unit)
 !
 !        Calculate ai indices 
 !
@@ -274,10 +272,6 @@ contains
             enddo
 !
          enddo
-!
-         
-               write(output%unit, *)'gatto', ai_indices
-               flush(output%unit)
 !
 !        Set c(ai) = 1
 !

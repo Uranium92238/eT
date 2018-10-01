@@ -2279,7 +2279,7 @@ contains
 !
       class(ccs) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c1
+      real(dp), dimension(wf%n_v*wf%n_o, 1), intent(in)    :: c1
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho1
 !
 !     sum_b F_a_b c_b_i
@@ -2315,7 +2315,7 @@ contains
    end subroutine jacobian_ccs_a1_ccs
 !
 !
-   module subroutine jacobian_ccs_b1_ccs(wf, rho1, c1)
+   subroutine jacobian_ccs_b1_ccs(wf, rho1, c1)
 !!
 !!    Jacobian CCS B1 
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
@@ -2341,7 +2341,7 @@ contains
 !
       type(batching_index) :: batch_b
 !
-      integer(i15) :: required, j, b, b_red, current_b_batch
+      integer(i15) :: required, j, b, b_full, bj, current_b_batch
 !
       call batch_b%init(wf%n_v) 
 !
@@ -2358,13 +2358,15 @@ contains
 !
          call mem%alloc(L_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(batch_b%length))
 !
-         call wf%get_voov(L_ai_jb,                       &
-                           1, wf%n_v,                    &
-                           1, wf%n_o,                    &
-                           1, wf%n_o,                    &
+         call wf%get_voov(L_ai_jb,     &
+                           1, wf%n_v,  &
+                           1, wf%n_o,  &
+                           1, wf%n_o,  &
                            batch_b%first, batch_b%last)   
 !
-         call dscal(((wf%n_o)**2)*(batch_b%length)*(wf%n_v), two, L_ai_jb, 1)
+         call dscal(((wf%n_o)**2)*(wf%n_v)*(batch_b%length), two, L_ai_jb, 1)
+!
+!        Construct L_ai_jb = 2 g_ai_jb - g_ab_ji
 !
          call mem%alloc(g_ab_ji, (wf%n_v)*(batch_b%length), (wf%n_o)**2)
 !
@@ -2372,7 +2374,7 @@ contains
                            1, wf%n_v,                    &
                            batch_b%first, batch_b%last,  &
                            1, wf%n_o,                    &
-                           1, wf%n_o)  
+                           1, wf%n_o)   
 !
          call add_1432_to_1234(-one, g_ab_ji, L_ai_jb, wf%n_v, wf%n_o, wf%n_o, batch_b%length)
 !
@@ -2380,14 +2382,16 @@ contains
 !
 !        Reorder c1 to do multiply with L_ai_jb
 !
-         call mem%alloc(c_jb, (wf%n_o), (batch_b%length))
+         call mem%alloc(c_jb, (wf%n_o), batch_b%length)
+         c_jb = zero
 !
-         do j = 1, wf%n_o 
-            do b = batch_b%first, batch_b%last 
 !
-               b_red = b - batch_b%first + 1
+         do b = batch_b%first, batch_b%last
+            do j = 1, wf%n_o
 !
-               c_jb(j, b_red) = c1(b, j) 
+               bj = wf%n_v*(j-1) + b
+!
+               c_jb(j, b - batch_b%first + 1) = c1(bj, 1)
 !
             enddo
          enddo
@@ -2401,7 +2405,7 @@ contains
                      L_ai_jb,                   &
                      (wf%n_v)*(wf%n_o),         &
                      c_jb,                      &
-                     (wf%n_o)*(batch_b%length), &
+                     (wf%n_o)*batch_b%length,   &
                      one,                       &
                      rho1,                      &
                      (wf%n_v)*(wf%n_o))      

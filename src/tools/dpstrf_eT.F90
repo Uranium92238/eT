@@ -1,7 +1,4 @@
 module dpstrf_eT
-!
-      use kinds
-!
   contains
 
 
@@ -11,13 +8,13 @@ module dpstrf_eT
 !
 !   .. Scalar Arguments ..
       DOUBLE PRECISION   TOL
-      INTEGER(i6)    INFO, RANK
+      INTEGER(KIND=4)    INFO, RANK
       INTEGER            LDA, N
       CHARACTER          UPLO
 !   ..
 !   .. Array Arguments ..
       DOUBLE PRECISION   A( lda, * ), WORK( 2*n )
-      INTEGER(i6)    PIV( n )
+      INTEGER(KIND=4)    PIV( n )
 !   ..
 !
 !=====================================================================

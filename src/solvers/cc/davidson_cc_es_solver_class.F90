@@ -292,7 +292,7 @@ contains
 !
               converged = .true.
 !
-            elseif (iteration .eq. 1 .and. wf%name .eq. 'CCS') then
+            elseif (iteration .eq. 1 .and. wf%name .eq. 'ccs') then
 !
                   converged = .true.
                   write(output%unit,'(/t3,a,/t3,a)')'Note: residual converged in first iteration.', &

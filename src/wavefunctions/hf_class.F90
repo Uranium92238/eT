@@ -2553,7 +2553,7 @@ contains
 !
       class(hf) :: wf
 !
-      integer(i6), dimension(:, :), allocatable :: used_diag
+      integer(kind=4), dimension(:, :), allocatable :: used_diag
 !
       real(dp), dimension(:, :), allocatable :: L
 !
@@ -2567,8 +2567,6 @@ contains
 !
       call full_cholesky_decomposition_system(wf%ao_overlap, L, wf%n_ao, wf%n_mo, &
                                                 wf%linear_dep_threshold, used_diag)
-!
-      write(output%unit, *) used_diag
 !
       call wf%initialize_cholesky_ao_overlap()
 !
@@ -3572,13 +3570,13 @@ contains
       wf%n_o = (wf%system%get_n_electrons())/2
       wf%n_v = wf%n_mo - wf%n_o
 !
-      write(output%unit, '(/t6,a30,i4)') 'Number of occupied orbitals:  ', wf%n_o 
-      write(output%unit, '(t6,a30,i4)')  'Number of virtual orbitals:   ', wf%n_v
-      write(output%unit, '(t6,a30,i4)')  'Number of molecular orbitals: ', wf%n_mo 
-      write(output%unit, '(t6,a30,i4)')  'Number of atomic orbitals:    ', wf%n_ao 
+      write(output%unit, '(/t6,a30,i8)') 'Number of occupied orbitals:  ', wf%n_o 
+      write(output%unit, '(t6,a30,i8)')  'Number of virtual orbitals:   ', wf%n_v
+      write(output%unit, '(t6,a30,i8)')  'Number of molecular orbitals: ', wf%n_mo 
+      write(output%unit, '(t6,a30,i8)')  'Number of atomic orbitals:    ', wf%n_ao 
 !
      if (wf%n_mo .lt. wf%n_ao) &
-            write(output%unit, '(/t6, a, i3, a)')'Removed ', wf%n_ao - wf%n_mo, ' AOs due to linear dep.'
+            write(output%unit, '(/t6, a, i4, a)')'Removed ', wf%n_ao - wf%n_mo, ' AOs due to linear dep.'
 !
    end subroutine set_n_mo_hf
 !

@@ -67,12 +67,7 @@ contains
       call initialize_nuclear()
       call initialize_overlap()
 !
-      call wf%initialize_ao_overlap()
-      call wf%construct_ao_overlap()
-      call wf%decompose_ao_overlap() 
-!
-      wf%n_o = (wf%system%get_n_electrons())/2
-      wf%n_v = wf%n_mo - wf%n_o
+      call wf%set_n_mo()
 !
       write(output%unit, '(/t6, a8, i3, a23)')'Removed ', wf%n_ao - wf%n_mo, ' AOs due to linear dep.'
 !
