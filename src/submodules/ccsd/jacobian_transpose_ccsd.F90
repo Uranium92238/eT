@@ -1086,7 +1086,7 @@ contains
       call mem%alloc(X_mkl_i, (wf%n_o)**3, wf%n_o)
       X_mkl_i = zero 
 !
-      call sort_1234_to_3142(X_ki_ml, X_mkl,i, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
+      call sort_1234_to_3142(X_ki_ml, X_mkl_i, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
 !
       call mem%dealloc(X_ki_ml, (wf%n_o)**2, (wf%n_o)**2)
 !
@@ -1096,22 +1096,7 @@ contains
       call mem%alloc(g_a_mkl, wf%n_v, (wf%n_o)**3)
       g_a_mkl = zero 
 !
-      do l = 1, wf%n_o
-         do k = 1, wf%n_o
-            do m = 1, wf%n_o
-!
-               mkl = index_three(m, k, l, wf%n_o, wf%n_o)
-!
-               do a = 1, wf%n_v
-!
-                  kam = index_three(k, a, m, wf%n_o, wf%n_v)
-!
-                  g_a_mkl(a, mkl) = g_kdm_i(kam, l) ! g_mkla
-!
-               enddo
-            enddo
-         enddo
-      enddo
+      call sort_1234_to_2314(g_kdm_i, g_a_mkl, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
       call mem%dealloc(g_kdm_i, (wf%n_v)*(wf%n_o)**2, wf%n_o)
 !
