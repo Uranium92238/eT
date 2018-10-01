@@ -370,7 +370,6 @@ contains
 !
 !     :: Term 2. - sum_kdl b_akdl g_dlik = - sum_kdl b_akdl g_ikdl ::
 !
-!
       call mem%alloc(g_ik_dl, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
 !
       call wf%get_oovo(g_ik_dl)
@@ -838,7 +837,7 @@ contains
          L_ai_ed = zero
 !
          call add_4321_to_1234(two, g_de_ia, L_ai_ed, (wf%n_v), (wf%n_o), (wf%n_v), (batch_d%length))
-         call add_4123_to_1234(two, g_de_ia, L_ai_ed, (wf%n_v), (wf%n_o), (wf%n_v), (batch_d%length))
+         call add_4123_to_1234(-one, g_de_ia, L_ai_ed, (wf%n_v), (wf%n_o), (wf%n_v), (batch_d%length))
 !
          call mem%dealloc(g_de_ia, (wf%n_v)*(batch_d%length), (wf%n_o)*(wf%n_v))
 !
@@ -900,11 +899,6 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: X_ki_ml ! An intermediate, term 3 
       real(dp), dimension(:,:), allocatable :: X_mkl_i ! Reordered intermediate, term 3
-!
-      integer(i15) :: m = 0, c = 0, mc = 0, k = 0, l = 0, kdl = 0, d = 0, i = 0, ik = 0
-      integer(i15) :: dl = 0, dm = 0, cldm = 0, cl = 0, mkl = 0, ml = 0, mk = 0, lc = 0
-      integer(i15) :: ki = 0, kdm = 0, kam = 0, id = 0, di = 0, ck = 0, cd = 0, al = 0
-      integer(i15) :: ak = 0, a = 0
 !
 !     :: Term 1. sum_ckdlm b_akdl t_lm^cd g_ikmc :: 
 !
