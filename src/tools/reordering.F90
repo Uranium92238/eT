@@ -715,7 +715,6 @@ contains
    end subroutine squareup_and_sort_1234_to_2413
 !
 !
-!
    subroutine squareup_and_sort_1234_to_2341(x_pqrs, x_qs_pr, dim_p, dim_q, dim_r, dim_s)
 !!
 !!    Squareup and sort 1234 to 2341
