@@ -1389,8 +1389,6 @@ contains
 !     Prepare for batching over d 
 !
       required = wf%integrals%get_required_vvov() + (wf%n_v**3)*(wf%n_o)
-!     
-!     Initialize batching variable 
 !
       call batch_d%init(wf%n_v)
       call mem%num_batch(batch_d, required)         
@@ -1399,11 +1397,7 @@ contains
 !
       do current_d_batch = 1, batch_d%num_batches
 !
-!        For each batch, get the limits for the d index 
-!
          call batch_d%determine_limits(current_d_batch)   
-!
-!        Form g_ic_de = g_icde 
 !
          call mem%alloc(g_ic_de, (wf%n_o)*(wf%n_v), (wf%n_v)*(batch_d%length))
 !
@@ -1446,8 +1440,6 @@ contains
       call mem%dealloc(t_ce_kl, (wf%n_v)**2, (wf%n_o)**2)
 !
 !     - sum_ckdle b_akdl t_kl^ce g_icde = sum_kdl b_akdl X_id_kl
-!
-!     Reorder to X_kdl_i = X_id_kl 
 !
       call mem%alloc(X_kdl_i, (wf%n_v)*(wf%n_o)**2, wf%n_o)
       call sort_1234_to_3241(X_id_kl, X_kdl_i, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
