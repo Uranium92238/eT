@@ -2607,36 +2607,9 @@ contains
 !
 !     - sum_ckdl b_ckdj t_kl^cd L_ialb = - sum_l L_ialb X_l_j
 !
-!     We have L_dl_bi = L_ldib 
-!
-!     Form L_aib_l = L_ialb = L_dl_bi(ai,bl)
-!
-!      call mem%alloc(L_aib_l, (wf%n_o)*(wf%n_v)**2, wf%n_o)
-!      L_aib_l = zero
-!
-      !call sort_1234_to_1234 !COMMENT:what? nonsense...
-!      do l = 1, wf%n_o
-!         do b = 1, wf%n_v
-!
-!            bl = index_two(b, l, wf%n_v)
-!
-!            do i = 1, wf%n_o
-!               do a = 1, wf%n_v
-!
-!                  ai = index_two(a, i, wf%n_v)
-!
-!                  aib = index_three(a, i, b, wf%n_v, wf%n_o)
-!
-!                  L_aib_l(aib, l) = L_dl_bi(ai, bl) ! L_ialb
-!
-!               enddo
-!            enddo
-!         enddo
-!      enddo
-!
-!      call mem%dealloc(L_dl_bi, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
+!     We have L_dl_bi = (L_ldib) = L_aib_l
 !     Add - sum_ckdl b_ckdj t_kl^cd L_ialb = - sum_l L_aib_l X_l_j
+!
 !
       call dgemm('N','N',               &
                   (wf%n_o)*(wf%n_v)**2, &
@@ -2648,25 +2621,10 @@ contains
                   X_l_j,                &
                   wf%n_o,               &
                   one,                  &
-                  sigma_ai_bj,          & ! "sigma_aib_j"
+                  sigma_ai_bj,          & ! sigma_aib_j
                   (wf%n_o)*(wf%n_v)**2)
 !
       call mem%dealloc(L_dl_bi, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
-!      call dgemm('N','N',               &
-!                  (wf%n_o)*(wf%n_v)**2, &
-!                  wf%n_o,               &
-!                  wf%n_o,               &
-!                  -one,                 &
-!                  L_aib_l,              &
-!                  (wf%n_o)*(wf%n_v)**2, &
-!                  X_l_j,                &
-!                  wf%n_o,               &
-!                  one,                  &
-!                  sigma_ai_bj,          & ! "sigma_aib_j"
-!                  (wf%n_o)*(wf%n_v)**2)
-!
-!      call mem%dealloc(L_aib_l, (wf%n_o)*(wf%n_v)**2, wf%n_o)
       call mem%dealloc(X_l_j, wf%n_o, wf%n_o)
 !
    end subroutine jacobian_transpose_ccsd_f2_ccsd
