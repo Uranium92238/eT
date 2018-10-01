@@ -155,7 +155,8 @@ contains
 !
       wf%hf_energy = ref_wf%energy
 !
-      wf%n_amplitudes = (wf%n_o)*(wf%n_v)
+      wf%n_t1         = (wf%n_o)*(wf%n_v)
+      wf%n_amplitudes = wf%n_t1
 !
       call wf%initialize_fock_ij()
       call wf%initialize_fock_ia()

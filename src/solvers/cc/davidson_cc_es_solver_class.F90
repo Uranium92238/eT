@@ -18,7 +18,7 @@ module davidson_cc_es_solver_class
       integer(i15) :: max_iterations = 100
 !
       real(dp) :: eigenvalue_threshold = 1.0d-6
-      real(dp) :: residual_threshold  = 1.0d-6
+      real(dp) :: residual_threshold   = 1.0d-6
 !
       logical :: restart = .false.
 !
@@ -32,16 +32,16 @@ module davidson_cc_es_solver_class
 !
    contains
 !     
-      procedure, non_overridable  :: prepare  => prepare_davidson_cc_es_solver
-      procedure, non_overridable  :: run      => run_davidson_cc_es_solver
-      procedure, non_overridable  :: cleanup  => cleanup_davidson_cc_es_solver
+      procedure, non_overridable :: prepare  => prepare_davidson_cc_es_solver
+      procedure, non_overridable :: run      => run_davidson_cc_es_solver
+      procedure, non_overridable :: cleanup  => cleanup_davidson_cc_es_solver
 !
-      procedure :: print_banner   => print_banner_davidson_cc_es_solver
-      procedure :: print_summary  => print_summary_davidson_cc_es_solver
+      procedure :: print_banner              => print_banner_davidson_cc_es_solver
+      procedure :: print_summary             => print_summary_davidson_cc_es_solver
 !
-      procedure :: read_settings  => read_settings_davidson_cc_es_solver
+      procedure :: read_settings             => read_settings_davidson_cc_es_solver
 !
-      procedure :: print_settings => print_settings_davidson_cc_es_solver
+      procedure :: print_settings            => print_settings_davidson_cc_es_solver
 !
       procedure :: set_start_vectors         => set_start_vectors_davidson_cc_es_solver
       procedure :: set_precondition_vector   => set_precondition_vector_davidson_cc_es_solver
@@ -49,8 +49,8 @@ module davidson_cc_es_solver_class
 !
       procedure :: transform_trial_vector    => transform_trial_vector_davidson_cc_es_solver
 !       
-      procedure :: initialize_energies => initialize_energies_davidson_cc_es_solver
-      procedure :: destruct_energies => destruct_energies_davidson_cc_es_solver
+      procedure :: initialize_energies       => initialize_energies_davidson_cc_es_solver
+      procedure :: destruct_energies         => destruct_energies_davidson_cc_es_solver
 !
    end type davidson_cc_es_solver
 !
@@ -223,7 +223,6 @@ contains
             call davidson%read_trial(c_i, trial)
 !
             call solver%transform_trial_vector(wf, c_i)
-          !  call wf%jacobi_transform_trial_vector(c_i)
 !
             call davidson%projection(c_i)
 !
@@ -295,7 +294,7 @@ contains
             elseif (iteration .eq. 1 .and. wf%name .eq. 'ccs') then
 !
                   converged = .true.
-                  write(output%unit,'(/t3,a,/t3,a)')'Note: residual converged in first iteration.', &
+                  write(output%unit,'(/t3,a,/t3,a)') 'Note: residual converged in first iteration.', &
                                             'Energy convergence therefore not tested in this calculation.'
 !
             endif
@@ -310,7 +309,7 @@ contains
 !
       if (converged) then
 !
-         write(output%unit,'(/t3,a, i3, a)') 'Convergence criterion met in ', iteration, ' iterations!'
+         write(output%unit,'(/t3,a, i3, a)') 'Convergence criterion met in ', iteration - 1, ' iterations!'
 !
       elseif (.not. converged .and. iteration == solver%max_iterations) then
 !
@@ -339,7 +338,6 @@ contains
 !
       if (trim(solver%transformation) == 'right') then 
 !
-         write(output%unit, *) 'transforming with right transformation'
          call wf%jacobi_transform_trial_vector(c_i)
 !
       elseif (trim(solver%transformation) == 'left') then 

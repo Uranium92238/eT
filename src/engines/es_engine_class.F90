@@ -94,16 +94,15 @@ contains
       call wf%initialize_t1()
       wf%t1 = zero
 !
-!
 !     Multiplier equation (temporary for testing, - Eirik, Oct 2018)
 !
-      allocate(cc_multipliers_solver)
-!
-      call cc_multipliers_solver%prepare(wf)
-      call cc_multipliers_solver%run(wf)
-      call cc_multipliers_solver%cleanup(wf)
-!
-      deallocate(cc_multipliers_solver)
+!       allocate(cc_multipliers_solver)
+! !
+!       call cc_multipliers_solver%prepare(wf)
+!       call cc_multipliers_solver%run(wf)
+!       call cc_multipliers_solver%cleanup(wf)
+! !
+!       deallocate(cc_multipliers_solver)
 !
       call engine%determine_es_type(es_type)
 !

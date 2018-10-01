@@ -181,8 +181,6 @@ contains
       call wf%roothan_hall_update_orbitals() ! F => C
       call wf%update_ao_density()            ! C => D
 !
-      write(output%unit, *)wf%pivot_matrix_ao_overlap
-!
       call wf%update_fock_and_energy(sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx)
 !
       call mem%alloc(ao_fock, wf%n_ao, wf%n_ao)          ! Holds Fock matrix temporarily

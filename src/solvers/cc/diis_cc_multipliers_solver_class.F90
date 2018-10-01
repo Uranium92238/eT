@@ -67,6 +67,8 @@ contains
 !
       call solver%print_settings()
 !
+      call wf%construct_fock()
+!
       call wf%initialize_multipliers()
 !
    end subroutine prepare_diis_cc_multipliers_solver
@@ -160,11 +162,12 @@ contains
       if (solver%restart) then 
 !
       !   call wf%read_multipliers()
-      !   call wf%get_multipliers(multipliers)
+      !   call wf%get_multipliers(multipliers) ! write routines for this
 !
       else
 !
          multipliers = zero
+         call wf%set_multipliers(multipliers)
 !
       endif
 !
@@ -182,7 +185,7 @@ contains
          call wf%construct_multiplier_equation(residual)
          residual_norm = get_l2_norm(residual, wf%n_amplitudes)
 !
-         write(output%unit, '(t3,i3,4x,e10.4)') iteration, residual_norm
+         write(output%unit, '(t3,i3,10x,e10.4)') iteration, residual_norm
          flush(output%unit)
 !
 !        Test for convergence & prepare for next iteration if not yet converged
@@ -201,27 +204,14 @@ contains
 !           Precondition residual, shift multipliers by preconditioned residual, 
 !           then ask for the DIIS update of the multipliers 
 !
-            write(output%unit, *) 'hei1'
-            flush(output%unit)
             call wf%get_orbital_differences(epsilon)
-                        write(output%unit, *) 'hei2'
-            flush(output%unit)
             call solver%do_diagonal_precondition(-one, epsilon, residual, wf%n_amplitudes)
-                        write(output%unit, *) 'hei3'
-            flush(output%unit)
 !
             call wf%get_multipliers(multipliers)
-                        write(output%unit, *) 'hei4'
-            flush(output%unit)
             multipliers = multipliers + residual 
 !
             call diis_manager%update(residual, multipliers)
-                        write(output%unit, *) 'hei5'
-            flush(output%unit)
             call wf%set_multipliers(multipliers)
-                        write(output%unit, *) 'hei6'
-            flush(output%unit)
-            stop
 !
          endif
 !
