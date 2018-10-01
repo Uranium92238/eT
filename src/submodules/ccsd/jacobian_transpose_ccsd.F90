@@ -1146,7 +1146,7 @@ contains
 !
       call mem%alloc(b_ki_cd, (wf%n_o)**2, (wf%n_v)**2)
 !
-      sort_1234_to_2413(b_ai_bj, b_ki_cd, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call sort_1234_to_2413(b_ai_bj, b_ki_cd, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Form intermediate X_ki_ml = sum_cd b_ckdi t_ml^cd = sum_cd b_ki_cd t_cd_ml
 !
