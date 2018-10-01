@@ -161,10 +161,6 @@ contains
       real(dp), dimension(:,:), allocatable :: X_l_i ! An intermediate, term 1
       real(dp), dimension(:,:), allocatable :: X_a_c ! An intermediate, term 2
 !
-!     Indices 
-!
-      integer(i15) :: i = 0, d = 0, c = 0, k = 0, id = 0, ic = 0, kd = 0, kc = 0, kcd = 0
-      integer(i15) :: ck = 0, dl = 0, ckdl = 0, l = 0, ldk = 0, lda = 0, a = 0
 !
 !     :: Term 1. - sum_ckdl b_al L_kcid t_kl^cd ::
 !
@@ -326,29 +322,6 @@ contains
 !
 !     :: Term 1. sum_cdl b_cidl g_dlca :: 
 !
-!     Reorder b_ci_dl = b_cidl to b_dlc_i
-!
-!      call mem%alloc(b_dlc_i, (wf%n_o)*(wf%n_v)**2,  wf%n_o)
-!!
-!      do c = 1, wf%n_v
-!         do l = 1, wf%n_o
-!            do d = 1, wf%n_v
-!!
-!               dl = index_two(d, l, wf%n_v)
-!!
-!               dlc = index_three(d, l, c, wf%n_v, wf%n_o)
-!!
-!               do i = 1, wf%n_o
-!!
-!                  ci = index_two(c, i, wf%n_v)
-!!
-!                  b_dlc_i(dlc, i) = b_ai_bj(ci, dl) ! b_cidl 
-!!
-!               enddo
-!            enddo
-!         enddo
-!      enddo
-!
 !     Prepare batching over index a 
 !
       required = wf%integrals%get_required_vvvo()
@@ -461,7 +434,7 @@ contains
       !call wf%read_double_amplitudes
 !
       call mem%alloc(t_lck_d, (wf%n_v)*(wf%n_o)**2, wf%n_v)
-      call squareup_and_sort_2341_to(wf%t2, t_lck_d, (wf%n_v), (wf%n_o), (wf%n_v), (wf%n_o))
+      call squareup_and_sort_1234_to_2341(wf%t2, t_lck_d, (wf%n_v), (wf%n_o), (wf%n_v), (wf%n_o))
 !
       !call wf%destruct_double_amplitudes
 !
