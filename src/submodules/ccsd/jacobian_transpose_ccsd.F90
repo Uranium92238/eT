@@ -1516,28 +1516,8 @@ contains
       call mem%alloc(L_k_ibj, wf%n_o, (wf%n_v)*(wf%n_o)**2)
       L_k_ibj = zero 
 !
-      do j = 1, wf%n_o
-         do b = 1, wf%n_v
-!
-            jb = index_two(j, b, wf%n_o)
-!
-            do i = 1, wf%n_o
-!
-               ib = index_two(i, b, wf%n_o)
-!
-               ibj = index_three(i, b, j, wf%n_o, wf%n_v)
-!
-               do k = 1, wf%n_o
-!
-                  jk = index_two(j, k, wf%n_o)
-                  ik = index_two(i, k, wf%n_o)
-!
-                  L_k_ibj(k, ibj) = two*g_ik_jb(ik, jb) - g_ik_jb(jk, ib) ! L_ikjb
-!
-               enddo
-            enddo
-         enddo
-      enddo
+      call add_2143_to_1234(two, g_ik_jb, L_k_ibj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+      call add_4123_to_1234(-one, g_ik_jb, L_k_ibj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%dealloc(g_ik_jb, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
 !
@@ -1612,6 +1592,7 @@ contains
 !
          call mem%dealloc(g_ca_jb, (wf%n_v)*(batch_a%length), (wf%n_o)*(wf%n_v))
 !
+!!$omp parallel do schedule(static) private(i,a,Ai,j,b,bj,ajb) reduction(+:sigma_ai_bj)
          do i = 1, wf%n_o
             do a = 1, batch_a%length
 !
@@ -1630,6 +1611,7 @@ contains
                enddo
             enddo
          enddo
+!!$omp end parallel do
 !
          call mem%dealloc(sigma_i_ajb, wf%n_o, (wf%n_o)*(wf%n_v)*(batch_a%length))
 !
@@ -1689,6 +1671,7 @@ contains
 !
 !        Add it to sigma_ai_bj 
 !
+!!$omp parallel do schedule(static) private(i,a,Ai,j,b,bj,ajb) reduction(+:sigma_ai_bj)
          do j = 1, wf%n_o
             do b = 1, batch_b%length
 !
@@ -1708,6 +1691,7 @@ contains
                enddo
             enddo
          enddo
+!!$omp end parallel do
 !
          call mem%dealloc(sigma_i_bja, wf%n_o, (batch_b%length)*(wf%n_o)*(wf%n_v))
 !
