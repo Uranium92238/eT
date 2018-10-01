@@ -178,31 +178,8 @@ contains
       call mem%alloc(L_kcd_i, (wf%n_o)*(wf%n_v)**2, wf%n_o)
       L_kcd_i = zero
 !
-!     COMMENT: Maybe we should do the shifting of underscore in dgemm?
-!$omp parallel do schedule(static) private(i,d,id,c,ic,k,kd,kc,kcd)
-      do i = 1, wf%n_o
-         do d = 1, wf%n_v
-!
-            id = index_two(i, d, wf%n_o)
-!
-            do c = 1, wf%n_v
-!
-               ic = index_two(i, c, wf%n_o)
-!
-               do k = 1, wf%n_o
-!
-                  kd = index_two(k, d, wf%n_o)
-                  kc = index_two(k, c, wf%n_o)
-!
-                  kcd = index_three(k, c, d, wf%n_o, wf%n_v)
-!
-                  L_kcd_i(kcd, i) = two*g_kc_id(kc, id) - g_kc_id(kd, ic)
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
+      call add_1243_to_1234(two, g_kc_id, L_kcd_i, wf%n_o, wf%n_v, wf%n_v, wf% n_o)
+      call add_1342_to_1234(-one, g_kc_id, L_kcd_i, wf%n_o, wf%n_v, wf%n_v, wf% n_o)
 !
       call mem%dealloc(g_kc_id, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
@@ -213,29 +190,7 @@ contains
       call mem%alloc(t_l_kcd, wf%n_o, (wf%n_o)*(wf%n_v)**2)
       t_l_kcd = zero
 !
-!     COMMENT: Do an unpacking with sort, and shift underscore?
-!$omp parallel do schedule(static) private(d,c,k,ck,kcd,l,dl,ckdl)
-      do d = 1, wf%n_v
-         do c = 1, wf%n_v
-            do k = 1, wf%n_o
-!
-               ck = index_two(c, k, wf%n_v)
-!
-               kcd = index_three(k, c, d, wf%n_o, wf%n_v)
-!
-               do l = 1, wf%n_o
-!
-                  dl = index_two(d, l, wf%n_v)
-!
-                  ckdl = index_packed(ck, dl)
-!
-                  t_l_kcd(l, kcd) = wf%t2(ckdl, 1) ! t_kl^cd 
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
+      call squareup_and_sort_1234_to_4213(wf%t2, t_l_kcd, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       !call wf%destruct_double_amplitudes
 !
@@ -278,26 +233,8 @@ contains
 !     Form L_a_ldk = L_ldka = L_kcd_i(lda,k)
 !
       call mem%alloc(L_a_ldk, wf%n_v, (wf%n_v)*(wf%n_o)**2)
-      L_a_ldk = zero
 !
-!$omp parallel do schedule(static) private(k,d,l,ldk,a,lda)
-      do k = 1, wf%n_o
-         do d = 1, wf%n_v
-            do l = 1, wf%n_o
-!
-               ldk = index_three(l, d, k, wf%n_o, wf%n_v)
-!
-               do a = 1, wf%n_v
-!
-                  lda = index_three(l, d, a, wf%n_o, wf%n_v)
-!
-                  L_a_ldk(a, ldk) = L_kcd_i(lda, k) ! L_ldka
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
+      call sort_1234_to_3124(L_kcd_i, L_a_ldk, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
 !
       call mem%dealloc(L_kcd_i, (wf%n_o)*(wf%n_v)**2, wf%n_o)
 !
@@ -306,24 +243,7 @@ contains
       call mem%alloc(t_ldk_c, (wf%n_v)*(wf%n_o)**2, wf%n_v)
       t_ldk_c = zero
 !
-!$omp parallel do schedule(static) private(c,k,d,kcd,l,ldk)
-      do c = 1, wf%n_v
-         do k = 1, wf%n_o
-            do d = 1, wf%n_v
-!
-               kcd = index_three(k, c, d, wf%n_o, wf%n_v)
-!
-               do l = 1, wf%n_o
-!
-                  ldk = index_three(l, d, k, wf%n_o, wf%n_v)
-!
-                  t_ldk_c(ldk, c) = t_l_kcd(l, kcd) ! t_kl^cd 
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
+      call sort_1234_to_1423(t_l_kcd, t_ldk_c, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
 !
       call mem%dealloc(t_l_kcd, wf%n_o, (wf%n_o)*(wf%n_v)**2)
 !
