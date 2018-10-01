@@ -367,4 +367,147 @@ contains
    end subroutine jacobian_transpose_ccsd_b1_ccsd
 !
 !
+   module subroutine jacobian_transpose_ccsd_c1_ccsd(wf, sigma_a_i, b_ai_bj)
+!!
+!!    Jacobian transpose CCSD C1 
+!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad
+!!    and Andreas Skeidsvoll, 2018
+!!
+!!    Calculates the C1 term,
+!!
+!!       sum_cdl b_cidl g_dlca - sum_kdl b_akdl g_dlik,
+!! 
+!!    and adds it to the transformed vector sigma_a_i.
+!!
+      implicit none 
+!
+      class(ccsd) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o)                       :: sigma_a_i 
+      real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
+!
+      real(dp), dimension(:,:), allocatable :: g_dl_ca ! g_dlca 
+      real(dp), dimension(:,:), allocatable :: g_a_dlc ! g_dlca 
+!
+      real(dp), dimension(:,:), allocatable :: b_dlc_i ! b_cidl 
+!
+      real(dp), dimension(:,:), allocatable :: g_ik_dl ! g_dlik = g_ikdl 
+      real(dp), dimension(:,:), allocatable :: g_kdl_i ! g_dlik
+!
+      integer(i15) :: c = 0, l = 0, d = 0, i = 0, dl = 0, dlc = 0, ci = 0
+      integer(i15) :: a = 0, ca = 0, k = 0, kdl = 0, ik = 0
+!
+!     Batching variables 
+!
+      integer(i15) :: required 
+      integer(i15) :: current_a_batch 
+!
+      type(batching_index) :: batch_a 
+!
+!     :: Term 1. sum_cdl b_cidl g_dlca :: 
+!
+!     Reorder b_ci_dl = b_cidl to b_dlc_i
+!
+      call mem%alloc(b_dlc_i, (wf%n_o)*(wf%n_v)**2,  wf%n_o)
+      b_dlc_i = zero
+!
+!$omp parallel do schedule(static) private(c,l,d,dl,dlc,i,ci)
+      do c = 1, wf%n_v
+         do l = 1, wf%n_o
+            do d = 1, wf%n_v
+!
+               dl = index_two(d, l, wf%n_v)
+!
+               dlc = index_three(d, l, c, wf%n_v, wf%n_o)
+!
+               do i = 1, wf%n_o
+!
+                  ci = index_two(c, i, wf%n_v)
+!
+                  b_dlc_i(dlc, i) = b_ai_bj(ci, dl) ! b_cidl 
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+!     Prepare batching over index a 
+!
+      required = wf%integrals%get_required_vvvo()
+!     
+      call batch_a%init(wf%n_v)
+      call mem%num_batch(batch_a, required)        
+!
+!     Loop over the a-batches 
+!
+      do current_a_batch = 1, batch_a%num_batches
+!
+!        For each batch, get the limits for the a index 
+!
+         call batch_a%determine_limits(current_a_batch)
+!
+!        Form g_dl_ca
+!
+         call mem%alloc(g_dl_ca, (wf%n_v)*(wf%n_o), (wf%n_v)*batch_a%length)
+!
+         call wf%get_vovv(g_dl_ca,        &
+                           1,             &
+                           wf%n_v,        &
+                           1,             &
+                           wf%n_o,        &
+                           1,             &
+                           wf%n_v,        &
+                           batch_a%first, &
+                           batch_a%last)
+!
+!        Add sum_dlc g_dlc_a^T b_dlc_i
+!
+         call dgemm('T','N',                     &
+                     batch_a%length,             &
+                     wf%n_o,                     &
+                     (wf%n_o)*(wf%n_v)**2,       &
+                     one,                        &
+                     g_dl_ca,                    & ! "g_dlc_a"
+                     (wf%n_o)*(wf%n_v)**2,       &
+                     b_dlc_i,                    &
+                     (wf%n_o)*(wf%n_v)**2,       &
+                     one,                        &
+                     sigma_a_i(batch_a%first,1), &
+                     wf%n_v)
+!
+         call mem%dealloc(g_dl_ca, (wf%n_v)*(wf%n_o), (wf%n_v)*(batch_a%length))
+!
+      enddo ! End of batches over a 
+!
+      call mem%dealloc(b_dlc_i, (wf%n_o)*(wf%n_v)**2, wf%n_o)
+!
+!     :: Term 2. - sum_kdl b_akdl g_dlik = - sum_kdl b_akdl g_ikdl ::
+!
+!     Form g_ik_dl
+!
+      call mem%alloc(g_ik_dl, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
+!
+      call wf%get_oovo(g_ik_dl)
+!
+!     Add - sum_kdl b_akdl g_dlik = - sum_kdl b_akdl g_kdl_i
+!
+!     Note: we interpret b_ai_bj as b_a_ibj, such that b_ai_bj(a,kdl) = b_akdl 
+!
+      call dgemm('N','T',               &
+                  wf%n_v,               &
+                  wf%n_o,               &
+                  (wf%n_v)*(wf%n_o)**2, &
+                  -one,                 &
+                  b_ai_bj,              & ! "b_a_kdl"
+                  wf%n_v,               &
+                  g_ik_dl,              & ! "g_i_kdl"
+                  (wf%n_o),             &
+                  one,                  &
+                  sigma_a_i,            &
+                  wf%n_v)
+!
+      call mem%dealloc(g_ik_dl, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
+!
+   end subroutine jacobian_transpose_ccsd_c1_ccsd
 end submodule jacobian_transpose_ccsd
