@@ -1022,7 +1022,7 @@ contains
 !
    subroutine squareup_and_sort_1234_to_4312(x_pqrs, x_sr_pq, dim_p, dim_q, dim_r, dim_s)
 !!
-!!    Sort 1234 to 4312
+!!    Square up and sort 1234 to 4312
 !!    Written by Eirik F. Kjønstad, Rolf H. Myhre
 !!    and Andreas Skeidsvoll, 2018
 !!
