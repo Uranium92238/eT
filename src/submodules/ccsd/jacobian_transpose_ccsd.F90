@@ -184,7 +184,6 @@ contains
       !call wf%read_double_amplitudes
 !
       call mem%alloc(t_l_kcd, wf%n_o, (wf%n_o)*(wf%n_v)**2)
-      t_l_kcd = zero
 !
       call squareup_and_sort_1234_to_4213(wf%t2, t_l_kcd, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -237,7 +236,6 @@ contains
 !     Form t_ldk_c = t_kl^cd = t_l_kcd(l, kcd)
 !
       call mem%alloc(t_ldk_c, (wf%n_v)*(wf%n_o)**2, wf%n_v)
-      t_ldk_c = zero
 !
       call sort_1234_to_1423(t_l_kcd, t_ldk_c, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
 !
@@ -372,24 +370,20 @@ contains
 !
 !     :: Term 2. - sum_kdl b_akdl g_dlik = - sum_kdl b_akdl g_ikdl ::
 !
-!     Form g_ik_dl
 !
       call mem%alloc(g_ik_dl, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
 !
       call wf%get_oovo(g_ik_dl)
 !
-!     Add - sum_kdl b_akdl g_dlik = - sum_kdl b_akdl g_kdl_i
-!
-!     Note: we interpret b_ai_bj as b_a_ibj, such that b_ai_bj(a,kdl) = b_akdl 
 !
       call dgemm('N','T',               &
                   wf%n_v,               &
                   wf%n_o,               &
                   (wf%n_v)*(wf%n_o)**2, &
                   -one,                 &
-                  b_ai_bj,              & ! "b_a_kdl"
+                  b_ai_bj,              & ! b_a_kdl
                   wf%n_v,               &
-                  g_ik_dl,              & ! "g_i_kdl"
+                  g_ik_dl,              & ! g_i_kdl
                   (wf%n_o),             &
                   one,                  &
                   sigma_a_i,            &
@@ -1084,9 +1078,8 @@ contains
 !     Reorder to X_mkl_i
 !
       call mem%alloc(X_mkl_i, (wf%n_o)**3, wf%n_o)
-      X_mkl_i = zero 
 !
-      call sort_1234_to_3142(X_ki_ml, X_mkl,i, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
+      call sort_1234_to_3142(X_ki_ml, X_mkl_i, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
 !
       call mem%dealloc(X_ki_ml, (wf%n_o)**2, (wf%n_o)**2)
 !
@@ -1094,24 +1087,8 @@ contains
 !     Reorder to g_a_mkl(a,mkl) = g_mkla = g_kdm_i(kam,l)
 !
       call mem%alloc(g_a_mkl, wf%n_v, (wf%n_o)**3)
-      g_a_mkl = zero 
 !
-      do l = 1, wf%n_o
-         do k = 1, wf%n_o
-            do m = 1, wf%n_o
-!
-               mkl = index_three(m, k, l, wf%n_o, wf%n_o)
-!
-               do a = 1, wf%n_v
-!
-                  kam = index_three(k, a, m, wf%n_o, wf%n_v)
-!
-                  g_a_mkl(a, mkl) = g_kdm_i(kam, l) ! g_mkla
-!
-               enddo
-            enddo
-         enddo
-      enddo
+      call sort_1234_to_2314(g_kdm_i, g_a_mkl, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
       call mem%dealloc(g_kdm_i, (wf%n_v)*(wf%n_o)**2, wf%n_o)
 !
@@ -1413,8 +1390,9 @@ contains
 !
 !        Reorder to g_id_ce = g_ic_de
 !
-         call mem%alloc(g_id_ce, (wf%n_o)*(batch_d%length), (wf%n_v)**2)
-         call soret_1234_to_1324(g_ic_de, g_id_ce, wf%n_o, wf%n_v, batch_d%length, wf%n_v)
+         call mem%alloc(g_id_ce, (wf%n_o)*(batch_d%length), (wf%n_v)**2) 
+!
+         call sort_1234_to_1324(g_ic_de, g_id_ce, wf%n_o, wf%n_v, wf%n_v, wf%n_v)
 !
          call mem%dealloc(g_ic_de, (wf%n_o)*(wf%n_v), (wf%n_v)*(batch_d%length))
 !
