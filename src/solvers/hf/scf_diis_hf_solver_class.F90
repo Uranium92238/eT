@@ -377,12 +377,9 @@ contains
 !
       call disk%open_file(solver%restart_file, 'write', 'rewind')
 !
-      write(solver%restart_file%unit, *) 'n_ao n_mo energy_threshold gradient_threshold converged'
+      write(solver%restart_file%unit, *) 'n_ao n_mo'
       write(solver%restart_file%unit, *) wf%n_ao
       write(solver%restart_file%unit, *) wf%n_mo
-      write(solver%restart_file%unit, *) solver%energy_threshold
-      write(solver%restart_file%unit, *) solver%gradient_threshold
-      write(solver%restart_file%unit, *) solver%converged
 !
       call disk%close_file(solver%restart_file) 
 !
@@ -401,6 +398,8 @@ contains
       class(hf), intent(inout) :: wf 
 !
       integer(i15) :: n_ao, n_mo 
+!
+      write(output%unit, '(/t6,a/)') 'Requested restart. Reading orbitals from file.'
 !
 !     Sanity checks 
 !
