@@ -534,6 +534,51 @@ contains
 !
    end subroutine sort_1234_to_4132
 !
+   subroutine squareup_and_sort_1234_to_4132(x_pqrs, x_sp_rq, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Square up and sort 1234 to 4132
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre
+!!    and Andreas Skeidsvoll, 2018
+!!
+!!    Reorders the array x_pq_rs to x_sp_rq (i.e., 1234 to 4132).
+!!
+!!    The unordered array x_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s.
+!!    The ordered array x_sp_rq is assumed allocated as dim_s*dim_p x dim_r*dim_q.
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+!
+      real(dp), dimension(:,:), intent(in) :: x_pqrs
+      real(dp), dimension(dim_s*dim_p, dim_r*dim_q), intent(inout) :: x_sp_rq
+!
+      integer(i15) :: p, q, r, s, rs, pq, sp, rq, pqrs
+!
+!$omp parallel do schedule(static) private(s,r,rs,q,rq,p,pq,sp,pqrs)
+      do s = 1, dim_s
+         do r = 1, dim_r
+!
+            rs = dim_r*(s-1) + r
+!
+            do q = 1, dim_q
+!
+               rq = dim_r*(q-1) + r
+!
+               do p = 1, dim_p
+!
+                  pq = dim_p*(q-1) + p
+                  sp = dim_s*(p-1) + s
+                  pqrs = (max(pq,rs)*(max(pq,rs)-3)/2) + pq + rs
+!
+                  x_sp_rq(sp, rq) = x_pqrs(pqrs, 1)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine squareup_and_sort_1234_to_4132
 !
    subroutine sort_1234_to_3124(x_pq_rs, x_rp_qs, dim_p, dim_q, dim_r, dim_s)
 !!
@@ -1080,7 +1125,7 @@ contains
 !
       integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
-      real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in)    :: x_pqrs
+      real(dp), dimension(:,:), intent(in) :: x_pqrs
       real(dp), dimension(dim_s*dim_r, dim_p*dim_q), intent(inout) :: x_sr_pq
 !
       integer(i15) :: p, q, r, s, pq, rs, sr, pqrs
@@ -2095,7 +2140,7 @@ contains
 !
       integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
-      real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pqrs
+      real(dp), dimension(:,:), intent(in) :: x_pqrs
       real(dp), dimension(dim_s*dim_q, dim_r*dim_p) :: x_sq_pr
 !
       integer(i15) :: p, q, r, s, pq, rs, sq, pr, pqrs
