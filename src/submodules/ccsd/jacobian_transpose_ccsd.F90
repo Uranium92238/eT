@@ -408,29 +408,26 @@ contains
 !
 !     Reorder b_ci_dl = b_cidl to b_dlc_i
 !
-      call mem%alloc(b_dlc_i, (wf%n_o)*(wf%n_v)**2,  wf%n_o)
-      b_dlc_i = zero
-!
-!$omp parallel do schedule(static) private(c,l,d,dl,dlc,i,ci)
-      do c = 1, wf%n_v
-         do l = 1, wf%n_o
-            do d = 1, wf%n_v
-!
-               dl = index_two(d, l, wf%n_v)
-!
-               dlc = index_three(d, l, c, wf%n_v, wf%n_o)
-!
-               do i = 1, wf%n_o
-!
-                  ci = index_two(c, i, wf%n_v)
-!
-                  b_dlc_i(dlc, i) = b_ai_bj(ci, dl) ! b_cidl 
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
+!      call mem%alloc(b_dlc_i, (wf%n_o)*(wf%n_v)**2,  wf%n_o)
+!!
+!      do c = 1, wf%n_v
+!         do l = 1, wf%n_o
+!            do d = 1, wf%n_v
+!!
+!               dl = index_two(d, l, wf%n_v)
+!!
+!               dlc = index_three(d, l, c, wf%n_v, wf%n_o)
+!!
+!               do i = 1, wf%n_o
+!!
+!                  ci = index_two(c, i, wf%n_v)
+!!
+!                  b_dlc_i(dlc, i) = b_ai_bj(ci, dl) ! b_cidl 
+!!
+!               enddo
+!            enddo
+!         enddo
+!      enddo
 !
 !     Prepare batching over index a 
 !
@@ -468,9 +465,9 @@ contains
                      wf%n_o,                     &
                      (wf%n_o)*(wf%n_v)**2,       &
                      one,                        &
-                     g_dl_ca,                    & ! "g_dlc_a"
+                     g_dl_ca,                    & ! g_dlc_a
                      (wf%n_o)*(wf%n_v)**2,       &
-                     b_dlc_i,                    &
+                     b_ai_bj,                    & ! b_dlc_i
                      (wf%n_o)*(wf%n_v)**2,       &
                      one,                        &
                      sigma_a_i(batch_a%first,1), &
@@ -479,8 +476,6 @@ contains
          call mem%dealloc(g_dl_ca, (wf%n_v)*(wf%n_o), (wf%n_v)*(batch_a%length))
 !
       enddo ! End of batches over a 
-!
-      call mem%dealloc(b_dlc_i, (wf%n_o)*(wf%n_v)**2, wf%n_o)
 !
 !     :: Term 2. - sum_kdl b_akdl g_dlik = - sum_kdl b_akdl g_ikdl ::
 !
@@ -546,30 +541,7 @@ contains
       !call wf%read_double_amplitudes
 !
       call mem%alloc(t_lck_d, (wf%n_v)*(wf%n_o)**2, wf%n_v)
-      t_lck_d = zero 
-!
-!$omp parallel do schedule(static) private(d,l,dl,k,c,ck,ckdl,lck)
-      do d = 1, wf%n_v
-         do l = 1, wf%n_o
-!
-            dl = index_two(d, l, wf%n_v)
-!
-            do k = 1, wf%n_o
-               do c = 1, wf%n_v
-!
-                  ck = index_two(c, k, wf%n_v)
-!
-                  ckdl = index_packed(ck, dl)
-!
-                  lck = index_three(l, c, k, wf%n_o, wf%n_v)
-!
-                  t_lck_d(lck, d) = wf%t2(ckdl, 1) ! t_kl^cd
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!$omp end parallel do
+      call squareup_and_sort_2341_to(wf%t2, t_lck_d, (wf%n_v), (wf%n_o), (wf%n_v), (wf%n_o))
 !
       !call wf%destruct_double_amplitudes
 !
@@ -585,7 +557,7 @@ contains
                   b_ai_bj,              &  ! b_a_lck = b_alck = b_ckal
                   wf%n_v,               &
                   t_lck_d,              &
-                  (wf%n_v)*(wf%n_o)**2, &
+                  (wf%n_v),             &
                   zero,                 &
                   X_a_d,                &
                   wf%n_v)
@@ -623,9 +595,9 @@ contains
                   wf%n_o,               &
                   (wf%n_o)*(wf%n_v)**2, &
                   one,                  &
-                  t_lck_d,              & ! "t_l_ckd"
-                  wf%n_o,               &
-                  b_ai_bj,              & ! "b_ckd_i"
+                  t_lck_d,              & ! t_l_ckd
+                  (wf%n_o),             &
+                  b_ai_bj,              & ! b_ckd_i
                   (wf%n_o)*(wf%n_v)**2, &
                   zero,                 &
                   X_l_i,                &
