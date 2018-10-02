@@ -32,6 +32,9 @@ contains
 !
       real(dp), dimension(wf%n_amplitudes, 1) :: c_i
 !
+      write(output%unit, *)'hei'
+      flush(output%unit)
+!
       call wf%jacobian_transpose_ccsd_transformation(c_i)
 !
    end subroutine jacobi_transpose_transform_trial_vector_ccsd
