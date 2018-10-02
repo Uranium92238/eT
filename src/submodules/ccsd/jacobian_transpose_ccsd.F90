@@ -23,9 +23,9 @@ submodule (ccsd_class) jacobian_transpose_ccsd
 contains
 !
 !
-   subroutine jacobi_transpose_transform_trial_vector_ccsd(wf, c_i)
+   module subroutine jacobian_transpose_transform_trial_vector_ccsd(wf, c_i)
 !!
-!!    Jacobi transpose transform trial vector 
+!!    Jacobian transpose transform trial vector 
 !!    Written by Sarai D. Folkestad, Sep 2018
 !!
       class(ccsd), intent(in) :: wf 
@@ -34,7 +34,7 @@ contains
 !
       call wf%jacobian_transpose_ccsd_transformation(c_i)
 !
-   end subroutine jacobi_transpose_transform_trial_vector_ccsd
+   end subroutine jacobian_transpose_transform_trial_vector_ccsd
 !
 !
    module subroutine jacobian_transpose_ccsd_transformation_ccsd(wf, b)
