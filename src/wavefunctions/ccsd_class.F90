@@ -45,7 +45,7 @@ module ccsd_class
       procedure :: omega_ccsd_d2                   => omega_ccsd_d2_ccsd
       procedure :: omega_ccsd_e2                   => omega_ccsd_e2_ccsd
 !
-      procedure :: jacobi_transform_trial_vector   => jacobi_transform_trial_vector_ccsd
+      procedure :: jacobian_transform_trial_vector => jacobian_transform_trial_vector_ccsd
       procedure :: jacobian_ccsd_transformation    => jacobian_ccsd_transformation_ccsd
 !
       procedure :: jacobian_ccsd_a1                => jacobian_ccsd_a1_ccsd
@@ -65,6 +65,26 @@ module ccsd_class
       procedure :: jacobian_ccsd_j2                => jacobian_ccsd_j2_ccsd
       procedure :: jacobian_ccsd_k2                => jacobian_ccsd_k2_ccsd
 !
+      procedure :: jacobian_transpose_transform_trial_vector => jacobian_transpose_transform_trial_vector_ccsd
+      procedure :: jacobian_transpose_ccsd_transformation    => jacobian_transpose_ccsd_transformation_ccsd
+!
+      procedure :: jacobian_transpose_ccsd_a1 => jacobian_transpose_ccsd_a1_ccsd
+      procedure :: jacobian_transpose_ccsd_b1 => jacobian_transpose_ccsd_b1_ccsd
+      procedure :: jacobian_transpose_ccsd_c1 => jacobian_transpose_ccsd_c1_ccsd
+      procedure :: jacobian_transpose_ccsd_d1 => jacobian_transpose_ccsd_d1_ccsd
+      procedure :: jacobian_transpose_ccsd_e1 => jacobian_transpose_ccsd_e1_ccsd
+      procedure :: jacobian_transpose_ccsd_f1 => jacobian_transpose_ccsd_f1_ccsd
+      procedure :: jacobian_transpose_ccsd_g1 => jacobian_transpose_ccsd_g1_ccsd
+!
+      procedure :: jacobian_transpose_ccsd_a2 => jacobian_transpose_ccsd_a2_ccsd
+      procedure :: jacobian_transpose_ccsd_b2 => jacobian_transpose_ccsd_b2_ccsd
+      procedure :: jacobian_transpose_ccsd_c2 => jacobian_transpose_ccsd_c2_ccsd
+      procedure :: jacobian_transpose_ccsd_d2 => jacobian_transpose_ccsd_d2_ccsd
+      procedure :: jacobian_transpose_ccsd_e2 => jacobian_transpose_ccsd_e2_ccsd
+      procedure :: jacobian_transpose_ccsd_f2 => jacobian_transpose_ccsd_f2_ccsd
+      procedure :: jacobian_transpose_ccsd_g2 => jacobian_transpose_ccsd_g2_ccsd
+      procedure :: jacobian_transpose_ccsd_h2 => jacobian_transpose_ccsd_h2_ccsd
+      procedure :: jacobian_transpose_ccsd_i2 => jacobian_transpose_ccsd_i2_ccsd
       procedure :: get_orbital_differences         => get_orbital_differences_ccsd
 !
       procedure :: calculate_energy                => calculate_energy_ccsd
@@ -76,6 +96,7 @@ module ccsd_class
 !
       include "../submodules/ccsd/omega_ccsd_interface.F90"
       include "../submodules/ccsd/jacobian_ccsd_interface.F90"
+      include "../submodules/ccsd/jacobian_transpose_ccsd_interface.F90"
 !
    end interface 
 !
