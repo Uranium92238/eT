@@ -21,7 +21,6 @@ module davidson_cc_es_solver_class
       real(dp) :: residual_threshold   = 1.0d-6
 !
       logical      :: do_restart = .false.
-      integer(i15) :: n_solutions_on_file = -1 
 !
       integer(i15) :: n_singlet_states = 0
 !
@@ -125,30 +124,36 @@ contains
 !
       class(davidson_cc_es_solver) :: solver 
 !
-      class(eigen_davidson_tool) :: davidson 
+      class(eigen_davidson_tool) :: davidson
+!
+      integer(i15) :: n_solutions_on_file 
 !
 !     Read in the number of solutions to restart from - according the restart file 
 !
       call disk%open_file(solver%restart_file, 'read', 'rewind')
 !
+      n_solutions_on_file = 0
       read(solver%restart_file%unit, *) ! Empty read to skip banner
-      read(solver%restart_file%unit, *) solver%n_solutions_on_file
+      read(solver%restart_file%unit, *) n_solutions_on_file
 !
       call disk%close_file(solver%restart_file) 
 !
 !     Avoid reading too many solutions if fewer are requested than previously converged 
 !
-      if (solver%n_solutions_on_file .gt. solver%n_singlet_states) then 
+      if (n_solutions_on_file .gt. solver%n_singlet_states) then 
 !
-         solver%n_solutions_on_file = solver%n_singlet_states
+         n_solutions_on_file = solver%n_singlet_states
 !
       endif 
 !
 !     Ask Davidson to restart - use the previous solutions as trial vectors 
 !
-      write(output%unit, *) 'reading ', solver%n_solutions_on_file, 'solutions'
     !  call davidson%restart_from_solutions(solver%n_solutions_on_file)
       call davidson%restart_from_solutions()
+!
+!     For the remaining states, use orbital differences 
+!
+!     Todo... 
 !
    end subroutine restart_davidson_cc_es_solver
 !
@@ -243,12 +248,13 @@ contains
 !
       if (solver%do_restart) then 
 !
-         write(output%unit, *) 'doing restart...'
          call solver%restart(davidson)
 !
-      endif
+      else
 !
-      call solver%set_start_vectors(wf, davidson)
+         call solver%set_start_vectors(wf, davidson)
+!
+      endif 
 !
       call solver%set_precondition_vector(wf, davidson)
       call solver%set_projection_vector(wf, davidson)
@@ -465,32 +471,16 @@ contains
          c_i = zero
          c_i(lowest_orbital_differences_index(1, 1), 1) = one
 !
-         if (solver%do_restart) then ! Use orbital differences for the non-read states 
+         call davidson%write_trial(c_i, 'rewind')
 !
-            write(output%unit, *) 'writing trial', solver%n_solutions_on_file + 1, 'to', solver%n_singlet_states
-            do trial = solver%n_solutions_on_file + 1, solver%n_singlet_states
+         do trial = 2, solver%n_singlet_states
 !
-               c_i = zero
-               c_i(lowest_orbital_differences_index(trial, 1), 1) = one
+            c_i = zero
+            c_i(lowest_orbital_differences_index(trial, 1), 1) = one
 !
-               call davidson%write_trial(c_i)
+            call davidson%write_trial(c_i)
 !
-            enddo 
-!
-         else ! Use orbital differences for all trial vectors 
-!
-            call davidson%write_trial(c_i, 'rewind')
-!
-            do trial = 2, solver%n_singlet_states
-!
-               c_i = zero
-               c_i(lowest_orbital_differences_index(trial, 1), 1) = one
-!
-               call davidson%write_trial(c_i)
-!
-            enddo
-!
-         endif 
+         enddo 
 !
          call mem%dealloc(c_i, wf%n_amplitudes, 1)
          call mem%dealloc_int(lowest_orbital_differences_index, solver%n_singlet_states, 1)
