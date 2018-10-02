@@ -1820,6 +1820,7 @@ contains
 !
 !     :: Term 1 & 2. 2 F_jb b_ai - F_ib b_aj :: 
 !
+!!$omp parallel do schedule(static) private(i,a,ai,j,b,bj) reduction(+:sigma_ai_bj)
       do i = 1, wf%n_o
          do a = 1, wf%n_v
 !
@@ -1838,6 +1839,7 @@ contains
             enddo
          enddo
       enddo
+!!$omp end parallel do
 !
 !     :: Term 3. - sum_k L_ikjb b_ak ::
 !
