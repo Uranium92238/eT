@@ -2610,7 +2610,6 @@ contains
 !     We have L_dl_bi = (L_ldib) = L_aib_l
 !     Add - sum_ckdl b_ckdj t_kl^cd L_ialb = - sum_l L_aib_l X_l_j
 !
-!
       call dgemm('N','N',               &
                   (wf%n_o)*(wf%n_v)**2, &
                   wf%n_o,               &
