@@ -130,9 +130,6 @@ contains
          call initialize_basis(molecule%basis_sets(i), temp_name)
 !
       enddo
-!  
-      write(output%unit, *)'1'
-      flush(output%unit)
 !
 !     Initialize atoms and shells for eT
 !
@@ -146,8 +143,6 @@ contains
 !
          molecule%atoms(i)%n_shells = n_shells_on_atoms(i, 1)
          call molecule%atoms(i)%initialize_shells()
-         write(output%unit, *)'2'
-         flush(output%unit)
 !
 !        Then determine the number of basis functions in each shell
 !        and save number of aos per atom
@@ -164,8 +159,6 @@ contains
             molecule%atoms(i)%n_ao = molecule%atoms(i)%n_ao + n_basis_in_shells(j,1)
 
          enddo
-         write(output%unit, *)'3'
-         flush(output%unit)
 !
          deallocate(n_basis_in_shells)
 !
@@ -192,8 +185,6 @@ contains
             molecule%atoms(i)%shells(j)%first = first_ao_in_shells(j,1)
 !
          enddo
-         write(output%unit, *)'4'
-         flush(output%unit)
 !
          deallocate(first_ao_in_shells)
 !
@@ -207,8 +198,6 @@ contains
          enddo
 !
       enddo
-      write(output%unit, *)'5'
-      flush(output%unit)
 !
       call molecule%initialize_shell_limits()
 !
@@ -226,13 +215,10 @@ contains
 !
       if (molecule%charge .ne. 0) then
 !
-         write(output%unit) 'Error: SAD not yet implemented for charged species!'
+         write(output%unit,*) 'Error: SAD not yet implemented for charged species!'
          stop
 !
       endif
-!
-      write(output%unit, *)'6'
-      flush(output%unit)
 !
       do i = 1, molecule%n_atoms
 !
