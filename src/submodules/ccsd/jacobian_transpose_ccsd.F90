@@ -174,7 +174,7 @@ contains
       write(output%unit, *)'g1'
       flush(output%unit)
 !
-    !  call wf%jacobian_transpose_ccsd_g1(sigma_a_i, b_ai_bj)
+      call wf%jacobian_transpose_ccsd_g1(sigma_a_i, b_ai_bj)
 !
 !     Done with singles vector b; overwrite it with 
 !     transformed vector for exit
@@ -214,32 +214,32 @@ contains
       write(output%unit, *)'b2'
       flush(output%unit)
 !
-    !  call wf%jacobian_transpose_ccsd_b2(sigma_ai_bj, b_ai_bj)
+      call wf%jacobian_transpose_ccsd_b2(sigma_ai_bj, b_ai_bj)
 !
       write(output%unit, *)'c2'
       flush(output%unit)
 !
-    !  call wf%jacobian_transpose_ccsd_c2(sigma_ai_bj, b_ai_bj) 
+      call wf%jacobian_transpose_ccsd_c2(sigma_ai_bj, b_ai_bj) 
 !
       write(output%unit, *)'d2'
       flush(output%unit)
 !
-    !  call wf%jacobian_transpose_ccsd_d2(sigma_ai_bj, b_ai_bj)
+      call wf%jacobian_transpose_ccsd_d2(sigma_ai_bj, b_ai_bj)
 !
       write(output%unit, *)'e2'
       flush(output%unit)
 !
-    !  call wf%jacobian_transpose_ccsd_e2(sigma_ai_bj, b_ai_bj)
+      call wf%jacobian_transpose_ccsd_e2(sigma_ai_bj, b_ai_bj)
 !
       write(output%unit, *)'f2'
       flush(output%unit)
 !
-    !  call wf%jacobian_transpose_ccsd_f2(sigma_ai_bj, b_ai_bj)
+      call wf%jacobian_transpose_ccsd_f2(sigma_ai_bj, b_ai_bj)
 !
       write(output%unit, *)'g2'
       flush(output%unit)
 !
-     ! call wf%jacobian_transpose_ccsd_g2(sigma_ai_bj, b_ai_bj)
+      call wf%jacobian_transpose_ccsd_g2(sigma_ai_bj, b_ai_bj)
 !
 !     Last two terms are already symmetric (h2 and i2). Perform the symmetrization 
 !     sigma_ai_bj = P_ij^ab sigma_ai_bj now, for convenience 
@@ -285,12 +285,12 @@ contains
       write(output%unit, *)'h2'
       flush(output%unit)
 !
-   !   call wf%jacobian_transpose_ccsd_h2(sigma_ab_ij, b_ab_ij)
+      call wf%jacobian_transpose_ccsd_h2(sigma_ab_ij, b_ab_ij)
 !
       write(output%unit, *)'i2'
       flush(output%unit)
 !
-    !  call wf%jacobian_transpose_ccsd_i2(sigma_ab_ij, b_ab_ij)
+      call wf%jacobian_transpose_ccsd_i2(sigma_ab_ij, b_ab_ij)
 !
 !     Done with reordered doubles b; deallocate 
 !
