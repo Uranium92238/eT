@@ -342,11 +342,14 @@ contains
 !
       if (solver%transformation == 'right') then 
 !
-         call wf%jacobi_transform_trial_vector(c_i)
+         call wf%jacobian_transform_trial_vector(c_i)
 !
       elseif (solver%transformation == 'left') then 
 !
-         call wf%jacobi_transpose_transform_trial_vector(c_i)
+            write(output%unit, *)'found left'
+            flush(output%unit)
+!
+         call wf%jacobian_transpose_transform_trial_vector(c_i)
 !
       endif 
 !

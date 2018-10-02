@@ -717,13 +717,13 @@ contains
    end subroutine sort_1234_to_3124
 !
 !
-   subroutine sort_1234_to_3142(x_pq_rs, x_rp_qs, dim_p, dim_q, dim_r, dim_s)
+   subroutine sort_1234_to_3142(x_pq_rs, x_rp_sq, dim_p, dim_q, dim_r, dim_s)
 !!
 !!    Sort 1234 to 3142
 !!    Written by Eirik F. Kjønstad, Rolf H. Myhre and
 !!    Sarai D. Folkestad, 2018
 !!
-!!    Reorders the array x_pq_rs to x_rp_qs (i.e., 1234 to 3142).
+!!    Reorders the array x_pq_rs to x_rp_sq (i.e., 1234 to 3142).
 !!
 !!    The unordered array x_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s.
 !!    The ordered array x_rp_qs is assumed allocated as dim_r*dim_p x dim_q*dim_s.
@@ -733,7 +733,7 @@ contains
       integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs
-      real(dp), dimension(dim_r*dim_p, dim_q*dim_s) :: x_rp_qs
+      real(dp), dimension(dim_r*dim_p, dim_q*dim_s) :: x_rp_sq
 !
       integer(i15) :: p, q, r, s, rs, pq, rp, sq
 !
@@ -752,7 +752,7 @@ contains
                   rp = dim_r*(p-1) + r
                   pq = dim_p*(q-1) + p
 !
-                  x_rp_qs(rp, sq) = x_pq_rs(pq, rs)
+                  x_rp_sq(rp, sq) = x_pq_rs(pq, rs)
 !
                enddo
             enddo
@@ -852,7 +852,7 @@ contains
    end subroutine squareup_and_sort_1234_to_2413
 !
 !
-   subroutine squareup_and_sort_1234_to_2341(x_pqrs, x_qs_pr, dim_p, dim_q, dim_r, dim_s)
+   subroutine squareup_and_sort_1234_to_2341(x_pqrs, x_qr_sp, dim_p, dim_q, dim_r, dim_s)
 !!
 !!    Squareup and sort 1234 to 2341
 !!    Written by Sarai D. Folkestad, 
@@ -865,7 +865,7 @@ contains
       integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(:,:), intent(in) :: x_pqrs
-      real(dp), dimension(dim_q*dim_s, dim_p*dim_r) :: x_qs_pr
+      real(dp), dimension(dim_q*dim_r, dim_p*dim_s) :: x_qr_sp
 !
       integer(i15) :: p, q, r, s, rs, pq, pqrs, qr, sp
 !
@@ -885,7 +885,7 @@ contains
                   sp = dim_s*(p-1) + s
                   pqrs = (max(pq,rs)*(max(pq,rs)-3)/2) + pq + rs
 !
-                  x_qs_pr(qr, sp) = x_pqrs(pqrs, 1)
+                  x_qr_sp(qr, sp) = x_pqrs(pqrs, 1)
 !
                enddo
             enddo
@@ -941,7 +941,7 @@ contains
    end subroutine sort_1234_to_2314
 !
 !
-   subroutine sort_1234_to_2134(x_pq_rs, x_qr_ps, dim_p, dim_q, dim_r, dim_s)
+   subroutine sort_1234_to_2134(x_pq_rs, x_qp_rs, dim_p, dim_q, dim_r, dim_s)
 !!
 !!    Sort 1234 to 2134
 !!    Written by Sarai D. Folkestad, 
@@ -957,7 +957,7 @@ contains
       integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs
-      real(dp), dimension(dim_q*dim_r, dim_p*dim_s) :: x_qr_ps
+      real(dp), dimension(dim_q*dim_p, dim_r*dim_s) :: x_qp_rs
 !
       integer(i15) :: p, q, r, s, rs, pq, qp
 !
@@ -973,7 +973,7 @@ contains
                   pq = dim_p*(q-1) + p
                   qp = dim_q*(p-1) + q
 !
-                  x_qr_ps(qp, rs) = x_pq_rs(pq, rs)
+                  x_qp_rs(qp, rs) = x_pq_rs(pq, rs)
 !
                enddo
             enddo
@@ -984,7 +984,7 @@ contains
    end subroutine sort_1234_to_2134
 !
 !
-   subroutine sort_1234_to_2413(x_pq_rs, x_qr_ps, dim_p, dim_q, dim_r, dim_s)
+   subroutine sort_1234_to_2413(x_pq_rs, x_qs_pr, dim_p, dim_q, dim_r, dim_s)
 !!
 !!    Sort 1234 to 2413
 !!    Written by Sarai D. Folkestad, 
@@ -1000,7 +1000,7 @@ contains
       integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs
-      real(dp), dimension(dim_q*dim_r, dim_p*dim_s) :: x_qr_ps
+      real(dp), dimension(dim_q*dim_s, dim_p*dim_r) :: x_qs_pr
 !
       integer(i15) :: p, q, r, s, rs, pq, qs, pr
 !
@@ -1019,7 +1019,7 @@ contains
                   pq = dim_p*(q-1) + p
                   pr = dim_p*(r-1) + p
 !
-                  x_qr_ps(qs, pr) = x_pq_rs(pq, rs)
+                  x_qs_pr(qs, pr) = x_pq_rs(pq, rs)
 !
                enddo
             enddo

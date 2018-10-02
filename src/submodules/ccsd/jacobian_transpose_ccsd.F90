@@ -101,13 +101,26 @@ contains
 !     Calculate and add the CCS contributions to the 
 !     singles transformed vector 
 !
+!
+      write(output%unit, *)'ccs terms'
+      flush(output%unit)
       call wf%jacobian_transpose_ccs_a1(sigma_a_i, b_a_i) 
       call wf%jacobian_transpose_ccs_b1(sigma_a_i, b_a_i) 
 !
 !     Calculate and add the CCSD contributions to the
 !     singles transformed vector 
 !
+      write(output%unit, *)'ccsd terms'
+      flush(output%unit)
+!
+      write(output%unit, *)'a1'
+      flush(output%unit)
+!
       call wf%jacobian_transpose_ccsd_a1(sigma_a_i, b_a_i) 
+!
+      write(output%unit, *)'b1'
+      flush(output%unit)
+!
       call wf%jacobian_transpose_ccsd_b1(sigma_a_i, b_a_i) 
 !
       call mem%alloc(b_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
@@ -138,11 +151,30 @@ contains
       enddo
 !$omp end parallel do
 !
-      call wf%jacobian_transpose_ccsd_c1(sigma_a_i, b_ai_bj) 
+      write(output%unit, *)'c1'
+      flush(output%unit)
+!
+      call wf%jacobian_transpose_ccsd_c1(sigma_a_i, b_ai_bj)
+!
+      write(output%unit, *)'d1'
+      flush(output%unit)
+! 
       call wf%jacobian_transpose_ccsd_d1(sigma_a_i, b_ai_bj) 
+!
+      write(output%unit, *)'e1'
+      flush(output%unit)
+!
       call wf%jacobian_transpose_ccsd_e1(sigma_a_i, b_ai_bj) 
+!
+      write(output%unit, *)'f1'
+      flush(output%unit)
+!
       call wf%jacobian_transpose_ccsd_f1(sigma_a_i, b_ai_bj)
-      call wf%jacobian_transpose_ccsd_g1(sigma_a_i, b_ai_bj)
+!!
+      write(output%unit, *)'g1'
+      flush(output%unit)
+!
+    !  call wf%jacobian_transpose_ccsd_g1(sigma_a_i, b_ai_bj)
 !
 !     Done with singles vector b; overwrite it with 
 !     transformed vector for exit
@@ -167,19 +199,47 @@ contains
       call mem%alloc(sigma_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       sigma_ai_bj = zero 
 !
-      call wf%jacobian_transpose_ccsd_a2(sigma_ai_bj, b_a_i)
+      write(output%unit, *)'a2'
+      flush(output%unit)
+!
+!
+    !  call wf%jacobian_transpose_ccsd_a2(sigma_ai_bj, b_a_i)
 !
       call mem%dealloc(b_a_i, wf%n_v, wf%n_o)
 !
 !     Unpack incoming doubles vector, and add the CCSD terms arising
 !     from this vector 
 !
-      call wf%jacobian_transpose_ccsd_b2(sigma_ai_bj, b_ai_bj)
-      call wf%jacobian_transpose_ccsd_c2(sigma_ai_bj, b_ai_bj) 
-      call wf%jacobian_transpose_ccsd_d2(sigma_ai_bj, b_ai_bj)
-      call wf%jacobian_transpose_ccsd_e2(sigma_ai_bj, b_ai_bj)
-      call wf%jacobian_transpose_ccsd_f2(sigma_ai_bj, b_ai_bj)
-      call wf%jacobian_transpose_ccsd_g2(sigma_ai_bj, b_ai_bj)
+!
+      write(output%unit, *)'b2'
+      flush(output%unit)
+!
+    !  call wf%jacobian_transpose_ccsd_b2(sigma_ai_bj, b_ai_bj)
+!
+      write(output%unit, *)'c2'
+      flush(output%unit)
+!
+    !  call wf%jacobian_transpose_ccsd_c2(sigma_ai_bj, b_ai_bj) 
+!
+      write(output%unit, *)'d2'
+      flush(output%unit)
+!
+    !  call wf%jacobian_transpose_ccsd_d2(sigma_ai_bj, b_ai_bj)
+!
+      write(output%unit, *)'e2'
+      flush(output%unit)
+!
+    !  call wf%jacobian_transpose_ccsd_e2(sigma_ai_bj, b_ai_bj)
+!
+      write(output%unit, *)'f2'
+      flush(output%unit)
+!
+    !  call wf%jacobian_transpose_ccsd_f2(sigma_ai_bj, b_ai_bj)
+!
+      write(output%unit, *)'g2'
+      flush(output%unit)
+!
+     ! call wf%jacobian_transpose_ccsd_g2(sigma_ai_bj, b_ai_bj)
 !
 !     Last two terms are already symmetric (h2 and i2). Perform the symmetrization 
 !     sigma_ai_bj = P_ij^ab sigma_ai_bj now, for convenience 
@@ -222,8 +282,15 @@ contains
       call mem%dealloc(b_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call mem%dealloc(sigma_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      call wf%jacobian_transpose_ccsd_h2(sigma_ab_ij, b_ab_ij)
-      call wf%jacobian_transpose_ccsd_i2(sigma_ab_ij, b_ab_ij)
+      write(output%unit, *)'h2'
+      flush(output%unit)
+!
+   !   call wf%jacobian_transpose_ccsd_h2(sigma_ab_ij, b_ab_ij)
+!
+      write(output%unit, *)'i2'
+      flush(output%unit)
+!
+    !  call wf%jacobian_transpose_ccsd_i2(sigma_ab_ij, b_ab_ij)
 !
 !     Done with reordered doubles b; deallocate 
 !
@@ -677,7 +744,7 @@ contains
                   b_ai_bj,              &  ! b_a_lck = b_alck = b_ckal
                   wf%n_v,               &
                   t_lck_d,              &
-                  (wf%n_v),             &
+                  (wf%n_v)*(wf%n_o)**2, &
                   zero,                 &
                   X_a_d,                &
                   wf%n_v)
@@ -1119,23 +1186,23 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o)                       :: sigma_a_i 
       real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
 !
-      real(dp), dimension(:,:), allocatable :: t_mc_dl ! t_lm^cd 
-      real(dp), dimension(:,:), allocatable :: t_cl_dm ! t_ml^cd 
-      real(dp), dimension(:,:), allocatable :: t_cd_ml ! t_ml^cd
+      real(dp), dimension(:,:), allocatable :: t_mc_dl 
+      real(dp), dimension(:,:), allocatable :: t_cl_dm 
+      real(dp), dimension(:,:), allocatable :: t_cd_ml 
 !
-      real(dp), dimension(:,:), allocatable :: b_ak_cl ! b_ckal 
-      real(dp), dimension(:,:), allocatable :: b_ki_cd ! b_ckdi
+      real(dp), dimension(:,:), allocatable :: b_ak_cl 
+      real(dp), dimension(:,:), allocatable :: b_ki_cd 
 !
-      real(dp), dimension(:,:), allocatable :: g_ik_mc ! g_ikmc 
-      real(dp), dimension(:,:), allocatable :: g_kdm_i ! g_mkid
-      real(dp), dimension(:,:), allocatable :: g_a_mkl ! g_mkla
+      real(dp), dimension(:,:), allocatable :: g_ik_mc 
+      real(dp), dimension(:,:), allocatable :: g_kdm_i 
+      real(dp), dimension(:,:), allocatable :: g_a_mkl 
 !
-      real(dp), dimension(:,:), allocatable :: X_ik_dl ! An intermediate, term 1 
+      real(dp), dimension(:,:), allocatable :: X_ik_dl, X_kdl_i 
 !
-      real(dp), dimension(:,:), allocatable :: X_ak_dm ! An intermediate, term 2
+      real(dp), dimension(:,:), allocatable :: X_ak_dm 
 !
-      real(dp), dimension(:,:), allocatable :: X_ki_ml ! An intermediate, term 3 
-      real(dp), dimension(:,:), allocatable :: X_mkl_i ! Reordered intermediate, term 3
+      real(dp), dimension(:,:), allocatable :: X_ki_ml 
+      real(dp), dimension(:,:), allocatable :: X_mkl_i 
 !
 !     :: Term 1. sum_ckdlm b_akdl t_lm^cd g_ikmc :: 
 !
@@ -1173,27 +1240,32 @@ contains
                   zero,              &
                   X_ik_dl,           &
                   (wf%n_o)**2)
+!  stop
 !
 !     Add sum_ckdlm b_akdl t_lm^cd g_ikmc
 !         = sum_kdl b_a_kdl X_i_kdl^T 
 !
-!     Note: we interpret b_ai_bj as b_a_ibj
-!           we interpret X_ik_dl as X_i_kdl
+      call mem%alloc(X_kdl_i, (wf%n_o**2)*wf%n_v, wf%n_o)
 !
-      call dgemm('N','T',               &
+      call sort_1234_to_2341(X_ik_dl, X_kdl_i, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(X_ik_dl, (wf%n_o)**2, (wf%n_v)*(wf%n_o))
+!
+      call dgemm('N','N',               &
                   wf%n_v,               &
                   wf%n_o,               &
                   (wf%n_v)*(wf%n_o)**2, &
                   one,                  &
-                  b_ai_bj,              & ! b_a_ibj
+                  b_ai_bj,              & ! b_a_kdl
                   wf%n_v,               &
-                  X_ik_dl,              & ! X_i_kdl
-                  wf%n_o,               &
+                  X_kdl_i,              & 
+                  (wf%n_v)*(wf%n_o)**2, &
                   one,                  &
                   sigma_a_i,            &
                   wf%n_v)
 !
-       call mem%dealloc(X_ik_dl, (wf%n_o)**2, (wf%n_v)*(wf%n_o))
+      call mem%dealloc(X_kdl_i, (wf%n_o**2)*wf%n_v, wf%n_o)
+!
+     ! stop
 !
 !     :: Term 2. sum_ckdlm b_ckal t_ml^cd g_mkid ::
 !
@@ -1304,6 +1376,8 @@ contains
       call mem%dealloc(t_cd_ml, (wf%n_v)**2, (wf%n_o)**2)
       call mem%dealloc(b_ki_cd, (wf%n_o)**2, (wf%n_v)**2)
 !
+      ! stop
+!
 !     sum_ckdlm b_ckdi t_ml^cd g_mkla = sum_klm g_mkla X_ki_ml 
 !
 !     Reorder to X_mkl_i
@@ -1316,6 +1390,7 @@ contains
 !
 !     We have g_kdm_i(kdm,i) = g_mkid
 !     Reorder to g_a_mkl(a,mkl) = g_mkla = g_kdm_i(kam,l)
+      !stop
 !
       call mem%alloc(g_a_mkl, wf%n_v, (wf%n_o)**3)
 !
@@ -1323,6 +1398,7 @@ contains
 !
       call mem%dealloc(g_kdm_i, (wf%n_v)*(wf%n_o)**2, wf%n_o)
 !
+      !stop
 !     Add sum_ckdlm b_ckdi t_ml^cd g_mkla = sum_klm g_a_mkl X_mkl_i
 !
       call dgemm('N','N',      &
@@ -1341,6 +1417,7 @@ contains
       call mem%dealloc(g_a_mkl, wf%n_v, (wf%n_o)**3)
       call mem%dealloc(X_mkl_i, (wf%n_o)**3, wf%n_o)
 !
+      !stop
    end subroutine jacobian_transpose_ccsd_f1_ccsd
 !
 !
@@ -1398,11 +1475,14 @@ contains
       type(batching_index) :: batch_d
       type(batching_index) :: batch_e 
 !
+      integer(i15) :: a, d, e, k, de, ka, kde
+!
 !     :: Term 2. - sum_ckdle b_cidl t_kl^ce g_kade ::
 !
 !     X_di_ek = sum_cl b_cidl t_kl^ce = sum_cl b_di_cl t_cl_ek
 !
 !     Reorder to b_di_cl = b_cidl
+!
 !
       call mem%alloc(b_di_cl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call sort_1234_to_3214(b_ai_bj, b_di_cl, wf%n_v, wf%n_o, wf%n_v, wf%n_o) ! b_ai_bj = b_ci_dl
@@ -1450,7 +1530,7 @@ contains
 !     Initialize batching variable 
 !
       call batch_e%init(wf%n_v)
-      call mem%num_batch(batch_e, required)          
+      call mem%num_batch(batch_e, required)      
 !
 !     Loop over the e-batches
 !
@@ -1464,7 +1544,7 @@ contains
 !
          call mem%alloc(g_ka_de, (wf%n_o)*(wf%n_v), (wf%n_v)*(batch_e%length))
 !
-         call wf%get_ovvv(g_ka_de,       &
+         call wf%get_ovvv(g_ka_de,        &
                            1,             &
                            wf%n_o,        &
                            1,             &
@@ -1477,7 +1557,28 @@ contains
 !        Reorder to g_a_kde = g_ka_de = g_kade 
 !
          call mem%alloc(g_a_kde, wf%n_v, (wf%n_o)*(wf%n_v)*(batch_e%length))
-         call sort_1234_to_2134(g_ka_de, g_a_kde, wf%n_o, wf%n_v, wf%n_v, batch_e%length)
+!
+!$omp parallel do private(e, d, de, k, kde, a, ka)
+         do e = 1, batch_e%length
+            do d = 1, wf%n_v
+!
+               de = index_two(d, e, wf%n_v)
+!  
+               do k = 1, wf%n_o
+!
+                  kde = index_three(k, d, e, wf%n_o, wf%n_v)
+!
+                  do a = 1, wf%n_v
+!
+                     ka = index_two(k, a, wf%n_o)
+!
+                     g_a_kde(a, kde) = g_ka_de(ka, de)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!$omp end parallel do
 !
          call mem%dealloc(g_ka_de, (wf%n_v)*(wf%n_o), (wf%n_v)*(batch_e%length))
 !

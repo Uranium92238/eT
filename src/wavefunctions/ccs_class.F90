@@ -65,8 +65,8 @@ module ccs_class
 !
 !     Routines related to the Jacobian transformation 
 !
-      procedure :: jacobi_transform_trial_vector           => jacobi_transform_trial_vector_ccs
-      procedure :: jacobi_transpose_transform_trial_vector => jacobi_transpose_transform_trial_vector_ccs
+      procedure :: jacobian_transform_trial_vector           => jacobian_transform_trial_vector_ccs
+      procedure :: jacobian_transpose_transform_trial_vector => jacobian_transpose_transform_trial_vector_ccs
 !
       procedure :: jacobian_ccs_transformation   => jacobian_ccs_transformation_ccs
       procedure :: jacobian_ccs_a1               => jacobian_ccs_a1_ccs 
@@ -2068,7 +2068,7 @@ contains
    end subroutine get_vvvv_ccs
 !
 !
-   subroutine jacobi_transform_trial_vector_ccs(wf, c_i)
+   subroutine jacobian_transform_trial_vector_ccs(wf, c_i)
 !!
 !!    Jacobi transform trial vector 
 !!    Written by Sarai D. Folkestad, Sep 2018
@@ -2079,10 +2079,10 @@ contains
 !
       call wf%jacobian_ccs_transformation(c_i)
 !
-   end subroutine jacobi_transform_trial_vector_ccs
+   end subroutine jacobian_transform_trial_vector_ccs
 !
 !
-   subroutine jacobi_transpose_transform_trial_vector_ccs(wf, c_i)
+   subroutine jacobian_transpose_transform_trial_vector_ccs(wf, c_i)
 !!
 !!    Jacobi transpose transform trial vector 
 !!    Written by Sarai D. Folkestad, Sep 2018
@@ -2093,7 +2093,7 @@ contains
 !
       call wf%jacobian_transpose_ccs_transformation(c_i)
 !
-   end subroutine jacobi_transpose_transform_trial_vector_ccs
+   end subroutine jacobian_transpose_transform_trial_vector_ccs
 !
 !
    subroutine jacobian_ccs_transformation_ccs(wf, c_a_i)
