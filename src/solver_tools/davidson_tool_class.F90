@@ -774,24 +774,46 @@ contains
 !
       class(davidson_tool) :: davidson 
 !
-      real(dp), dimension(:,:), allocatable :: X
+      real(dp), dimension(:,:), allocatable :: X, c_i
 !
-      integer(i15) :: solution
+      integer(i15) :: solution, i
 !
-      call disk%open_file(davidson%trials, 'write', 'rewind')
+      real(dp) :: projection_of_X_on_c_i, ddot, norm
+!
+      call disk%open_file(davidson%trials, 'readwrite')
       call disk%open_file(davidson%X, 'read')
+!
       rewind(davidson%X%unit)
+      rewind(davidson%trials%unit)
 !
       call mem%alloc(X, davidson%n_parameters, 1)
+      call mem%alloc(c_i, davidson%n_parameters, 1)
 !
       do solution = 1, davidson%n_solutions
 !
          read(davidson%X%unit) X 
+!
+         rewind(davidson%trials%unit)
+!
+         do i = 1, solution - 1
+!
+            read(davidson%trials%unit) c_i
+!
+            projection_of_X_on_c_i = ddot(davidson%n_parameters, c_i, 1, X, 1)
+!
+            call daxpy(davidson%n_parameters, - projection_of_X_on_c_i, c_i, 1, X, 1)
+!
+            norm = ddot(davidson%n_parameters, X, 1, X, 1)
+            call dscal(davidson%n_parameters, one/norm, X, 1)
+!
+         enddo
+!
          write(davidson%trials%unit) X
 !
       enddo
 !
       call mem%dealloc(X, davidson%n_parameters, 1)
+      call mem%dealloc(c_i, davidson%n_parameters, 1)
 !
       rewind(davidson%trials%unit)
 !
@@ -800,8 +822,7 @@ contains
 !
 !     Delete transformed vectors file, if it is there
 !
-      call disk%open_file(davidson%transforms, 'write', 'rewind')
-      call disk%close_file(davidson%transforms, 'delete')
+      call disk%delete(davidson%transforms)
 !
 !     Delete A_red if it is there
 !
@@ -847,62 +868,6 @@ contains
       enddo
 !
    end subroutine read_max_dim_red_davidson_tool
-!  
-!
-   subroutine restart_from_solutions_davidson_tool(davidson)
-!!
-!!    Restart from solutions
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
-!!
-!!    Set first trials equal to solution on file.
-!!    This should be used for restarts.
-!!
-      implicit none
-!
-      class(davidson_tool) :: davidson 
-!
-      real(dp), dimension(:,:), allocatable :: X
-!
-      integer(i15) :: solution, n_solutions, ioerror
-!
-!     Is file on disk?
-!
-      if (disk%file_exists(davidson%X)) then
-!
-!        Find number of solutions on file
-!  
-         call disk%open_file(davidson%X, 'read')
-         rewind(davidson%X%unit)
-!
-         call disk%open_file(davidson%trials, 'write', 'rewind')
-!
-         call mem%alloc(X, davidson%n_parameters, 1)
-!
-         ioerror     = 0
-         n_solutions = 0
-!
-         do while (ioerror == 0 .and. n_solutions .lt. davidson%n_solutions)
-!
-            read(davidson%X%unit, iostat = ioerror) X
-            write(davidson%trials%unit) X
-            n_solutions = n_solutions + 1
-!
-         enddo
-!
-         call mem%dealloc(X, davidson%n_parameters, 1)
-!
-         rewind(davidson%trials%unit)
-!
-         call disk%close_file(davidson%trials)
-         call disk%close_file(davidson%X, 'delete')
-!
-      else ! File is not on disk 
-!  
-         call output%error_msg('requested restart but solution file not on disk.')
-!
-      endif
-!
-   end subroutine restart_from_solutions_davidson_tool
 !
 !
 end module davidson_tool_class
