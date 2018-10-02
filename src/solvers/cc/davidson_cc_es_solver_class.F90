@@ -148,8 +148,7 @@ contains
 !
 !     Ask Davidson to restart - use the previous solutions as trial vectors 
 !
-    !  call davidson%restart_from_solutions(solver%n_solutions_on_file)
-      call davidson%restart_from_solutions()
+      call davidson%restart_from_solutions(n_solutions_on_file)
 !
 !     For the remaining states, use orbital differences 
 !
@@ -273,6 +272,8 @@ contains
 !        Transform new trial vectors and write to file
 !
          call mem%alloc(c_i, wf%n_amplitudes, 1)
+!
+         write(output%unit, *) 'n new trials:', davidson%n_new_trials
 !
          do trial = davidson%dim_red - davidson%n_new_trials + 1, davidson%dim_red
 !
