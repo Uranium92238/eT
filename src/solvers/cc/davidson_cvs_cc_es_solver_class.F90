@@ -123,7 +123,7 @@ contains
 !
          elseif (trim(line) == 'restart') then
 !
-            solver%restart = .true.
+            solver%do_restart = .true.
 !
          endif
 !

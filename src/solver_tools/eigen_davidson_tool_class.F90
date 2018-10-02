@@ -86,7 +86,7 @@ contains
 !
 !     For safety, delete old files if they are on disk
 !
-      call disk%delete(davidson%X)
+   !   call disk%delete(davidson%X)
       call disk%delete(davidson%trials)
       call disk%delete(davidson%transforms)
       call disk%delete(davidson%preconditioner)
