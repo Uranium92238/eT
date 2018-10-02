@@ -203,7 +203,8 @@ contains
       flush(output%unit)
 !
 !
-    !  call wf%jacobian_transpose_ccsd_a2(sigma_ai_bj, b_a_i)
+   !  SOMETHING WRONG WITH A2 TERM - DOESN'T CONVERGE!
+   !  call wf%jacobian_transpose_ccsd_a2(sigma_ai_bj, b_a_i)
 !
       call mem%dealloc(b_a_i, wf%n_v, wf%n_o)
 !
