@@ -35,6 +35,8 @@ module davidson_tool_class
       logical :: do_precondition
       logical :: do_projection
 !
+      integer(i15) :: current_n_trials
+!
    contains
 !
 !     Read and write routines
@@ -65,6 +67,8 @@ module davidson_tool_class
       procedure :: set_trials_to_solutions => set_trials_to_solutions_davidson_tool
       procedure :: restart_from_solutions  => restart_from_solutions_davidson_tool
       procedure :: rewind_trials           => rewind_trials_davidson_tool
+!
+      procedure :: write_trial_with_GS => write_trial_with_GS_davidson_tool
 !
 !     Deferred routines  
 !
@@ -125,13 +129,13 @@ contains
 !
       real(dp), dimension(davidson%n_parameters, 1) :: c_i
 !
-      integer(i15) :: n
+      integer(i15), optional :: n
 !
       integer(i15) :: ioerror
 !
       call disk%open_file(davidson%trials, 'read')
 !
-      call davidson%trials%prepare_to_read_line(n)
+      if (present(n)) call davidson%trials%prepare_to_read_line(n)
 !
       read(davidson%trials%unit, iostat = ioerror) c_i
       if (ioerror .ne. 0) call output%error_msg('reading trial vectors file.')
@@ -186,6 +190,59 @@ contains
       call disk%close_file(davidson%trials)
 !
    end subroutine write_trial_davidson_tool
+!
+!
+   subroutine write_trial_with_GS_davidson_tool(davidson, c)
+!!
+!!    Write trial with Gram-Schmidt orthogonalization 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2018 
+!!
+      implicit none 
+!
+      class(davidson_tool) :: davidson 
+!
+      real(dp), dimension(davidson%n_parameters, 1) :: c 
+!
+      real(dp), dimension(:,:), allocatable :: c_i 
+!
+      real(dp) :: ddot, norm_c, projection_of_c_on_c_i
+!
+      integer(i15) :: i
+!
+!     Orthogonalize against current trial vectors 
+!
+      call mem%alloc(c_i, davidson%n_parameters, 1)
+!
+      call davidson%rewind_trials()
+      do i = 1, davidson%current_n_trials
+!
+         call davidson%read_trial(c_i)  
+!
+         projection_of_c_on_c_i = ddot(davidson%n_parameters, c_i, 1, c, 1)
+         call daxpy(davidson%n_parameters, -projection_of_c_on_c_i, c_i, 1, c, 1)
+!
+      enddo 
+!
+!     Normalize the vector that results 
+!
+      norm_c = sqrt(ddot(davidson%n_parameters, c, 1, c, 1))
+      call dscal(davidson%n_parameters, one/norm_c, c, 1)
+!
+!     Write trial vector to file 
+!
+      if (davidson%current_n_trials .eq. 0) then 
+!
+         call davidson%write_trial(c, 'rewind')
+!
+      else
+!
+         call davidson%write_trial(c, 'append')
+!
+      endif
+!
+      davidson%current_n_trials = davidson%current_n_trials + 1
+!
+   end subroutine write_trial_with_GS_davidson_tool
 !
 !
    subroutine add_initial_trial_vec_davidson_tool(davidson, c)
@@ -869,6 +926,58 @@ contains
       enddo
 !
    end subroutine read_max_dim_red_davidson_tool
+<<<<<<< HEAD
+=======
+!  
+!
+   subroutine restart_from_solutions_davidson_tool(davidson, n_solutions)
+!!
+!!    Restart from solutions
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+!!    Set first trials equal to solution on file.
+!!    This should be used for restarts.
+!!
+      implicit none
+!
+      class(davidson_tool) :: davidson 
+!
+      integer(i15), intent(in) :: n_solutions
+!
+      real(dp), dimension(:,:), allocatable :: X
+!
+      integer(i15) :: solution, ioerror
+!
+!     Is file on disk?
+!
+      if (disk%file_exists(davidson%X)) then
+!
+         call disk%open_file(davidson%X, 'read', 'rewind')
+!
+         call davidson%rewind_trials()
+!
+         call mem%alloc(X, davidson%n_parameters, 1)
+!
+         do solution = 1, n_solutions
+!
+            X = zero
+            read(davidson%X%unit) X
+            call davidson%write_trial_with_GS(X)
+!
+         enddo
+!
+         call mem%dealloc(X, davidson%n_parameters, 1)
+!
+         call disk%close_file(davidson%X)
+!
+      else ! File is not on disk 
+!  
+         call output%error_msg('requested restart but solution file not on disk.')
+!
+      endif
+!
+   end subroutine restart_from_solutions_davidson_tool
+>>>>>>> 5ba4c2f705744b17d17252c50f12d32e2137a24b
 !
 !
    subroutine rewind_trials_davidson_tool(davidson)
