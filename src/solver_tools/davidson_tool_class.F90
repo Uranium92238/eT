@@ -64,6 +64,7 @@ module davidson_tool_class
 !
       procedure :: set_trials_to_solutions => set_trials_to_solutions_davidson_tool
       procedure :: restart_from_solutions  => restart_from_solutions_davidson_tool
+      procedure :: rewind_trials           => rewind_trials_davidson_tool
 !
 !     Deferred routines  
 !
@@ -903,6 +904,20 @@ contains
       endif
 !
    end subroutine restart_from_solutions_davidson_tool
+!
+!
+   subroutine rewind_trials_davidson_tool(davidson)
+!!
+!!    Rewind trials  
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2018
+!!
+      implicit none 
+!
+      class(davidson_tool) :: davidson 
+!
+      call disk%rewind_file(davidson%trials)
+!
+   end subroutine rewind_trials_davidson_tool
 !
 !
 end module davidson_tool_class

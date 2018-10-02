@@ -434,12 +434,9 @@ contains
 !
          call mem%alloc(c_i, wf%n_amplitudes, 1)
 !
-         c_i = zero
-         c_i(solver%start_vectors(1, 1), 1) = one
+         call davidson%rewind_trials()
 !
-         call davidson%write_trial(c_i, 'rewind')
-!
-         do trial = 2, solver%n_singlet_states
+         do trial = 1, solver%n_singlet_states
 !
             c_i = zero
             c_i(solver%start_vectors(trial, 1), 1) = one
@@ -468,12 +465,9 @@ contains
 !
          call mem%alloc(c_i, wf%n_amplitudes, 1)
 !
-         c_i = zero
-         c_i(lowest_orbital_differences_index(1, 1), 1) = one
+         call davidson%rewind_trials()
 !
-         call davidson%write_trial(c_i, 'rewind')
-!
-         do trial = 2, solver%n_singlet_states
+         do trial = 1, solver%n_singlet_states
 !
             c_i = zero
             c_i(lowest_orbital_differences_index(trial, 1), 1) = one
