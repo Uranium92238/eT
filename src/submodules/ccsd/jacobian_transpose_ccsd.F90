@@ -23,6 +23,240 @@ submodule (ccsd_class) jacobian_transpose_ccsd
 contains
 !
 !
+   subroutine jacobi_transpose_transform_trial_vector_ccsd(wf, c_i)
+!!
+!!    Jacobi transpose transform trial vector 
+!!    Written by Sarai D. Folkestad, Sep 2018
+!!
+      class(ccsd), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_amplitudes, 1) :: c_i
+!
+      call wf%jacobian_transpose_ccsd_transformation(c_i)
+!
+   end subroutine jacobi_transpose_transform_trial_vector_ccsd
+!
+!
+   module subroutine jacobian_transpose_ccsd_transformation_ccsd(wf, b)
+!!
+!!    Jacobian transpose transformation (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!    Calculates the transpose Jacobian transformation, i.e., the transformation 
+!!    by the transpose of the Jacobian matrix
+!!
+!!       A_mu,nu = < mu | exp(-T) [H, tau_nu] exp(T) | R >.
+!!
+!!    The transformation is performed as sigma^T = b^T A, where b is the vector
+!!    sent to the routine. On exit, the vector b is equal to sigma (the transformed
+!!    vector).
+!!
+      implicit none 
+!
+      class(ccsd) :: wf 
+      real(dp), dimension(wf%n_amplitudes, 1) :: b
+!
+!     Incoming vector b 
+!
+      real(dp), dimension(:,:), allocatable :: b_a_i 
+!
+!     Local unpacked and reordered vectors 
+!
+      real(dp), dimension(:,:), allocatable :: b_ai_bj ! Unpacked b_aibj
+      real(dp), dimension(:,:), allocatable :: b_ab_ij ! b_ai_bj, reordered
+!
+      real(dp), dimension(:,:), allocatable :: sigma_ai_bj_sym ! Symmetrized sigma_ai_bj, temporary
+      real(dp), dimension(:,:), allocatable :: sigma_ab_ij     ! sigma_ai_bj, reordered
+!
+      real(dp), dimension(:,:), allocatable :: sigma_a_i
+      real(dp), dimension(:,:), allocatable :: sigma_ai_bj
+!
+!     Indices 
+!
+      integer(i15) :: a = 0, ab = 0, ai = 0, b = 0 
+      integer(i15) :: bj = 0, i = 0, ij = 0, j = 0, aibj = 0
+!
+!     Allocate the transformed singles vector 
+!
+      call wf%mem%alloc(sigma_a_i, wf%n_v, wf%n_o)
+      call wf%mem%alloc(b_a_i, wf%n_v, wf%n_o)
+!
+!$omp parallel do schedule(static) private(a, i, ai) 
+      do a = 1, wf%n_v
+         do i = 1, wf%n_o
+!
+            ai = wf%n_v*(i - 1) + a
+!
+            b_a_i(a, i) = b(ai, 1)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+      sigma_a_i = zero 
+!
+!     Calculate and add the CCS contributions to the 
+!     singles transformed vector 
+!
+      call wf%jacobian_transpose_ccs_a1(sigma_a_i, b_a_i) 
+      call wf%jacobian_transpose_ccs_b1(sigma_a_i, b_a_i) 
+!
+!     Calculate and add the CCSD contributions to the
+!     singles transformed vector 
+!
+      call wf%jacobian_transpose_ccsd_a1(sigma_a_i, b_a_i) 
+      call wf%jacobian_transpose_ccsd_b1(sigma_a_i, b_a_i) 
+!
+      call wf%mem%alloc(b_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+!
+!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) 
+      do a = 1, wf%n_v
+         do i = 1, wf%n_o
+!
+            ai = wf%n_v*(i - 1) + a
+!  
+            do j = 1, wf%n_o
+               do b = 1, wf%n_v
+!
+                  bj = wf%n_v*(j - 1) + b
+!
+                  if (ai .ge. bj) then
+!
+                     aibj = ai*(ai-3)/2 + ai + bj
+!
+                     b_ai_bj(ai, bj) = b(wf%n_o*wf%n_v + aibj, 1)
+                     b_ai_bj(bj, ai) = b(wf%n_o*wf%n_v + aibj, 1)
+!
+                  endif
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+      call wf%jacobian_transpose_ccsd_c1(sigma_a_i, b_ai_bj) 
+      call wf%jacobian_transpose_ccsd_d1(sigma_a_i, b_ai_bj) 
+      call wf%jacobian_transpose_ccsd_e1(sigma_a_i, b_ai_bj) 
+      call wf%jacobian_transpose_ccsd_f1(sigma_a_i, b_ai_bj)
+      call wf%jacobian_transpose_ccsd_g1(sigma_a_i, b_ai_bj)
+!
+!     Done with singles vector b; overwrite it with 
+!     transformed vector for exit
+!
+!$omp parallel do schedule(static) private(a, i, ai) 
+      do a = 1, wf%n_v
+         do i = 1, wf%n_o
+!
+            ai = wf%n_v*(i - 1) + a
+!
+            b(ai, 1) = sigma_a_i(a, i)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+      call wf%mem%dealloc(sigma_a_i, wf%n_v, wf%n_o)
+!
+!     Add the CCSD contributions to the doubles vector arising from 
+!     the incoming singles vector  
+!
+      call wf%mem%alloc(sigma_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      sigma_ai_bj = zero 
+!
+      call wf%jacobian_transpose_ccsd_a2(sigma_ai_bj, b_a_i)
+!
+      call wf%mem%dealloc(b_a_i, wf%n_v, wf%n_o)
+!
+!     Unpack incoming doubles vector, and add the CCSD terms arising
+!     from this vector 
+!
+      call wf%jacobian_transpose_ccsd_b2(sigma_ai_bj, b_ai_bj)
+      call wf%jacobian_transpose_ccsd_c2(sigma_ai_bj, b_ai_bj) 
+      call wf%jacobian_transpose_ccsd_d2(sigma_ai_bj, b_ai_bj)
+      call wf%jacobian_transpose_ccsd_e2(sigma_ai_bj, b_ai_bj)
+      call wf%jacobian_transpose_ccsd_f2(sigma_ai_bj, b_ai_bj)
+      call wf%jacobian_transpose_ccsd_g2(sigma_ai_bj, b_ai_bj)
+!
+!     Last two terms are already symmetric (h2 and i2). Perform the symmetrization 
+!     sigma_ai_bj = P_ij^ab sigma_ai_bj now, for convenience 
+!
+!     Allocate temporary symmetric transformed vector 
+!
+      call symmetric_sum(sigma_ai_bj, wf%n_o*wf%n_v)
+!
+!     In preparation for last two terms, reorder 
+!     sigma_ai_bj to rho_ab_ij, and b_ai_bj to b_ab_ij
+!
+      call wf%mem%alloc(sigma_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
+      call wf%mem%alloc(b_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
+!
+      sigma_ab_ij = zero
+      b_ab_ij   = zero
+!
+      do j = 1, wf%n_o
+         do i = 1, wf%n_o
+!
+            ij = index_two(i, j, wf%n_o)
+!
+            do b = 1, wf%n_v
+!
+               bj = index_two(b, j, wf%n_v)
+!
+               do a = 1, wf%n_v
+!
+                  ai = index_two(a, i, wf%n_v)
+                  ab = index_two(a, b, wf%n_v)
+!
+                  b_ab_ij(ab, ij)     = b_ai_bj(ai, bj)
+                  sigma_ab_ij(ab, ij) = sigma_ai_bj(ai, bj)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      call wf%mem%dealloc(b_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call wf%mem%dealloc(sigma_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+      call wf%jacobian_transpose_ccsd_h2(sigma_ab_ij, b_ab_ij)
+      call wf%jacobian_transpose_ccsd_i2(sigma_ab_ij, b_ab_ij)
+!
+!     Done with reordered doubles b; deallocate 
+!
+      call wf%mem%dealloc(b_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
+!
+!     Order sigma_ab_ij back into sigma_ai_bj
+!
+      do j = 1, wf%n_o
+         do b = 1, wf%n_v
+!
+            bj = index_two(b, j, wf%n_v)
+!
+            do i = 1, wf%n_o
+!
+               ij = index_two(i, j, wf%n_o)
+!
+               do a = 1, wf%n_v
+!
+                  ab = index_two(a, b, wf%n_v)
+                  ai = index_two(a, i, wf%n_v)
+                  aibj = (max(ai, bj)*(max(ai, bj)-3)/2) + ai + bj
+
+                  b(aibj + (wf%n_o)*(wf%n_v), 1) = sigma_ab_ij(ab, ij)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+!     Done with reordered transformed vector; deallocate 
+!
+      call wf%mem%dealloc(sigma_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
+!
+   end subroutine jacobian_transpose_ccsd_transformation_ccsd
+!
+!
    module subroutine jacobian_transpose_ccsd_a1_ccsd(wf, sigma_a_i, b_a_i)
 !!
 !!    Jacobian transpose CCSD A1 
