@@ -34,8 +34,8 @@
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i 
-      real(dp), dimension(wf%n_v, wf%n_o) :: sigma_a_i 
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: b_a_i 
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_a_i 
 !
    end subroutine jacobian_transpose_ccsd_a1_ccsd
 !
@@ -50,8 +50,8 @@
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o) :: b_a_i 
-      real(dp), dimension(wf%n_v, wf%n_o) :: sigma_a_i 
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: b_a_i 
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: sigma_a_i 
 !
    end subroutine jacobian_transpose_ccsd_b1_ccsd
 !

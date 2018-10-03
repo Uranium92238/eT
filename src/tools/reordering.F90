@@ -1740,6 +1740,54 @@ contains
    end subroutine add_2143_to_1234
 !
 !
+   subroutine add_2134_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Add 2143 to 1234
+!!    Written by Sarai D. Folkestad, 
+!!    Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Performs:
+!!
+!!       y_pq_rs(pq,rs) = y_pq_rs(pq,rs) + gamma * x(qp, rs)
+!!
+!!    The unordered array y_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s,
+!!    and x accordingly.
+!!
+      implicit none
+!
+      real(dp), intent(in) :: gamma
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+!
+      real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs
+      real(dp), dimension(dim_q*dim_p, dim_r*dim_s), intent(in) :: x
+!
+      integer(i15) :: p, q, r, s, pq, rs, qp
+!
+!$omp parallel do schedule(static) private(s,r,q,p,qp,rs,pq)
+      do s = 1, dim_s
+         do r = 1, dim_r
+!
+            rs = dim_r*(s-1) + r
+!
+            do q = 1, dim_q
+!
+               do p = 1, dim_p
+!
+                  pq = dim_p*(q-1) + p
+                  qp = dim_q*(p-1) + q
+!
+                  y_pq_rs(pq, rs) = y_pq_rs(pq, rs) + gamma*x(qp, rs)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine add_2134_to_1234
+!
+!
    subroutine add_3214_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
 !!
 !!    Add 3214 to 1234
@@ -1836,6 +1884,56 @@ contains
 !$omp end parallel do
 !
    end subroutine add_4231_to_1234
+!
+!
+   subroutine add_2431_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Add 2431 to 1234
+!!    Written by Sarai D. Folkestad,
+!!    Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Performs:
+!!
+!!       y_pq_rs(pq,rs) = y_pq_rs(pq,rs) + gamma * x(qs, rp)
+!!
+!!    The unordered array y_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s,
+!!    and x accordingly.
+!!
+      implicit none
+!
+      real(dp), intent(in) :: gamma
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+!
+      real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs
+      real(dp), dimension(dim_q*dim_s, dim_r*dim_p), intent(in) :: x
+!
+      integer(i15) :: p, q, r, s, pq, rs, qs, rp
+!
+!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,rp,qs)
+      do s = 1, dim_s
+         do r = 1, dim_r
+!
+            rs = dim_r*(s-1) + r
+!
+            do q = 1, dim_q
+!
+               qs = dim_q*(s-1) + q
+!
+               do p = 1, dim_p
+!
+                  pq = dim_p*(q-1) + p
+                  rp = dim_r*(p-1) + r
+!
+                  y_pq_rs(pq, rs) = y_pq_rs(pq, rs) + gamma*x(qs, rp)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine add_2431_to_1234
 !
 !
    subroutine add_4213_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)

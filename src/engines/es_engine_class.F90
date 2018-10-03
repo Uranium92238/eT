@@ -87,6 +87,8 @@ contains
 !
       deallocate(cc_gs_solver)
 !
+      if (wf%name .ne. 'CCS') call wf%integrals%write_t1_cholesky(wf%t1)
+!
 !     Prepare for excited state
 !
       call engine%determine_es_type(es_type)
@@ -105,10 +107,8 @@ contains
 !
       elseif(es_type == 'valence ionized') then
 !
-!
       elseif(es_type == 'core ionized') then
-!
-!
+!  
       else ! es_type = valence
 !
          allocate(cc_valence_es)
@@ -122,7 +122,6 @@ contains
          deallocate(cc_valence_es)
 !
       endif
-!
 !
    end subroutine run_es_engine
 !

@@ -1990,7 +1990,7 @@ contains
          call mem%alloc(L_ia_J, length_a*length_i, integrals%n_J)
          call mem%alloc(L_bc_J, length_c*length_b, integrals%n_J)
 !
-         call integrals%read_cholesky_ia(L_ia_J, first_a, last_a, first_i, last_i)
+         call integrals%read_cholesky_ia(L_ia_J, first_i, last_i, first_a, last_a)
 !
          if (present(t1)) then
 !

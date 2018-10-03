@@ -15,10 +15,10 @@ module davidson_cc_es_solver_class
 !
    type :: davidson_cc_es_solver
 !
-      integer(i15) :: max_iterations = 100
+      integer(i15) :: max_iterations
 !
-      real(dp) :: eigenvalue_threshold = 1.0d-6
-      real(dp) :: residual_threshold  = 1.0d-6
+      real(dp) :: eigenvalue_threshold  
+      real(dp) :: residual_threshold  
 !
       logical :: restart = .false.
 !
@@ -75,7 +75,7 @@ contains
 !
 !     Set defaults
 !
-      solver%max_iterations = 100
+      solver%max_iterations = 150
 !
       solver%eigenvalue_threshold = 1.0d-6
       solver%residual_threshold   = 1.0d-6
@@ -100,8 +100,6 @@ contains
       solver%energies = zero
 !
       if (solver%n_singlet_states == 0) call output%error_msg('number of excitations must be specified.')
-!
-      if (wf%name .ne. 'CCS') call wf%integrals%write_t1_cholesky(wf%t1)
 !
    end subroutine prepare_davidson_cc_es_solver
 !
@@ -313,9 +311,9 @@ contains
 !
       if (converged) then
 !
-         write(output%unit,'(/t3,a, i3, a)') 'Convergence criterion met in ', iteration, ' iterations!'
+         write(output%unit,'(/t3,a, i3, a)') 'Convergence criterion met in ', iteration - 1, ' iterations!'
 !
-      elseif (.not. converged .and. iteration == solver%max_iterations) then
+      elseif (.not. converged ) then
 !
          write(output%unit,'(/t3,a)') 'Maximal number of iterations performed without reaching convergence!'
 !

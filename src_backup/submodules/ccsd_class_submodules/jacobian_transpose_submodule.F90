@@ -166,9 +166,6 @@ contains
 !     Unpack incoming doubles vector, and add the CCSD terms arising
 !     from this vector 
 !
-      call wf%mem%alloc(b_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      b_ai_bj = zero 
-!
       call squareup(b_aibj, b_ai_bj, (wf%n_o)*(wf%n_v))
 !
       call cpu_time(begin_timer)
