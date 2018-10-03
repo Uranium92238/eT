@@ -1394,7 +1394,6 @@ contains
       call mem%dealloc(g_a_mkl, wf%n_v, (wf%n_o)**3)
       call mem%dealloc(X_mkl_i, (wf%n_o)**3, wf%n_o)
 !
-      !stop
    end subroutine jacobian_transpose_ccsd_f1_ccsd
 !
 !

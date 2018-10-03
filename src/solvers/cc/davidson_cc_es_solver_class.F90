@@ -344,9 +344,6 @@ contains
 !
       elseif (solver%transformation == 'left') then 
 !
-            write(output%unit, *)'found left'
-            flush(output%unit)
-!
          call wf%jacobian_transpose_transform_trial_vector(c_i)
 !
       endif 
