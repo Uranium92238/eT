@@ -5,7 +5,16 @@ submodule (ccsd_class) jacobian_ccsd
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
 !!    and Andreas Skeidsvoll, 2018
 !!
-!
+!!    Routines for the linear transform of trial
+!!    vectors by the Jacobian matrix 
+!!
+!!    ρ_i = A * c_i,
+!!
+!!    where
+!!   
+!!    A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | ν >.
+!!  
+! 
    implicit none
 !
 !
@@ -15,7 +24,7 @@ contains
    module subroutine jacobian_transform_trial_vector_ccsd(wf, c_i)
 !!
 !!    Jacobian transform trial vector 
-!!    Written by Sarai D. Folkestad, Sep 2018
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2018
 !!
       class(ccsd), intent(in) :: wf 
 !
@@ -29,7 +38,8 @@ contains
    module subroutine jacobian_ccsd_transformation_ccsd(wf, c)
 !!
 !!    Jacobian transformation (CCSD)
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, May 2017
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
+!!    and Andreas Skeidsvoll, 2018
 !!
 !!    Directs the transformation by the CCSD Jacobi matrix,
 !!

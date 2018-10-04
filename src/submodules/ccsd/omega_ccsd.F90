@@ -5,6 +5,10 @@ submodule (ccsd_class) omega_ccsd
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
 !!    and Andreas Skeidsvoll, 2018
 !!
+!!    Routines to construct 
+!!
+!!    Ω =  < mu | exp(-T) H exp(T) | R >
+!!
 !
    implicit none
 !

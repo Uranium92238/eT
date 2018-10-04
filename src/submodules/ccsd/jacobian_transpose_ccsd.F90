@@ -5,16 +5,15 @@ submodule (ccsd_class) jacobian_transpose_ccsd
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
 !!    and Andreas Skeidsvoll, 2018
 !!
-!!    Contains the following family of procedures of the CCSD class:
+!!    Routines for the linear transform of trial
+!!    vectors by the transpose of the Jacobian matrix 
 !!
-!!    jacobian_transpose_ccsd_transformation: performs the transformation by the CCSD
-!!                                            Jacobian transpose matrix A^T, placing the result in the
-!!                                            incoming vector. 
+!!    σ_i = A^T * b_i,
 !!
-!!    jacobian_transpose_ccsd_x1:             adds the X1 term to the transformed singles vector; 
-!!                                            x = a, b, c, ..., g 
-!!    jacobian_transpose_ccsd_x2:             adds the X2 term to the transformed doubles vector; 
-!!                                            x = a, b, ..., i
+!!    where
+!!   
+!!    A_μ,ν = < μ | exp(-T) [H, τ_ν] exp(T) | ν >.
+!! 
 !! 
 !
    implicit none 
@@ -25,8 +24,8 @@ contains
 !
    module subroutine jacobian_transpose_transform_trial_vector_ccsd(wf, c_i)
 !!
-!!    Jacobian transpose transform trial vector 
-!!    Written by Sarai D. Folkestad, Sep 2018
+!!    Jacobian transform trial vector 
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Sep 2018
 !!
       class(ccsd), intent(in) :: wf 
 !
@@ -40,7 +39,8 @@ contains
    module subroutine jacobian_transpose_ccsd_transformation_ccsd(wf, b)
 !!
 !!    Jacobian transpose transformation (CCSD)
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!    Written by Sarai D. Folkestad, Eirik F. Kjønstad
+!!    and Andreas Skeidsvoll 2018
 !!
 !!    Calculates the transpose Jacobian transformation, i.e., the transformation 
 !!    by the transpose of the Jacobian matrix
@@ -74,8 +74,8 @@ contains
 !
 !     Indices 
 !
-      integer(i15) :: a = 0, ac = 0, ai = 0, c = 0, bj = 0, aibj = 0 
-      integer(i15) :: cj = 0, i = 0, ij = 0, j = 0, aicj = 0
+      integer(i15) :: a = 0, ab = 0, ai = 0, c = 0, bj = 0, aibj = 0 
+      integer(i15) :: i = 0, ij = 0, j = 0
 !
       call mem%alloc(sigma_a_i, wf%n_v, wf%n_o)
       sigma_a_i = zero 
@@ -96,19 +96,17 @@ contains
 !     singles transformed vector 
 
       call wf%jacobian_transpose_ccs_a1(sigma_a_i, b_a_i)
-!
       call wf%jacobian_transpose_ccs_b1(sigma_a_i, b_a_i)
 !
 !     Calculate and add the CCSD contributions to the
 !     singles transformed vector 
 !
       call wf%jacobian_transpose_ccsd_a1(sigma_a_i, b_a_i)
-!
       call wf%jacobian_transpose_ccsd_b1(sigma_a_i, b_a_i)
 !
       call mem%alloc(b_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
-      b_ai_bj = zero 
 !
+!$omp parallel do schedule(static) private(i, a, ai, j, c, bj, aibj)
        do i = 1, wf%n_o
          do a = 1, wf%n_v
 !
@@ -130,22 +128,16 @@ contains
                enddo
             enddo
          enddo
-      enddo          
+      enddo  
+!$omp end parallel do        
 !
       call wf%jacobian_transpose_ccsd_c1(sigma_a_i, b_ai_bj)
-!
       call wf%jacobian_transpose_ccsd_d1(sigma_a_i, b_ai_bj)
-!
       call wf%jacobian_transpose_ccsd_e1(sigma_a_i, b_ai_bj)
-!
       call wf%jacobian_transpose_ccsd_f1(sigma_a_i, b_ai_bj)
-!
       call wf%jacobian_transpose_ccsd_g1(sigma_a_i, b_ai_bj)
 !
-!     Done with singles vector b; overwrite it with 
-!     transformed vector for exit
-!
-!!$omp parallel do schedule(static) private(a, i, ai) 
+!$omp parallel do schedule(static) private(a, i, ai) 
       do a = 1, wf%n_v
          do i = 1, wf%n_o
 !
@@ -155,7 +147,9 @@ contains
 !
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
+!
+      call mem%dealloc(sigma_a_i, wf%n_v, wf%n_o)
 !
 !     Add the CCSD contributions to the doubles vector arising from 
 !     the incoming singles vector  
@@ -165,136 +159,59 @@ contains
 !
       call wf%jacobian_transpose_ccsd_a2(sigma_ai_bj, b_a_i)
 !
+      call mem%dealloc(b_a_i, wf%n_v, wf%n_o)
+!
       call wf%jacobian_transpose_ccsd_b2(sigma_ai_bj, b_ai_bj)
-!
       call wf%jacobian_transpose_ccsd_c2(sigma_ai_bj, b_ai_bj)
-!
       call wf%jacobian_transpose_ccsd_d2(sigma_ai_bj, b_ai_bj)
-!
       call wf%jacobian_transpose_ccsd_e2(sigma_ai_bj, b_ai_bj)
-!
       call wf%jacobian_transpose_ccsd_f2(sigma_ai_bj, b_ai_bj)
-!
       call wf%jacobian_transpose_ccsd_g2(sigma_ai_bj, b_ai_bj)
 !
 !     Last two terms are already symmetric (h2 and i2). Perform the symmetrization 
 !     sigma_ai_bj = P_ij^ab sigma_ai_bj now, for convenience 
 !
-!     Allocate temporary symmetric transformed vector 
-!
-      call mem%alloc(sigma_ai_bj_sym, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
-      sigma_ai_bj_sym = zero
-!
-      do j = 1, wf%n_o
-         do c = 1, wf%n_v
-!
-            cj = index_two(c, j, wf%n_v)
-!
-            do i = 1, wf%n_o
-               do a = 1, wf%n_v
-!
-                  ai = index_two(a, i, wf%n_v)
-!
-                  sigma_ai_bj_sym(ai, cj) = sigma_ai_bj(ai, cj) + sigma_ai_bj(cj, ai)
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!
-      sigma_ai_bj = sigma_ai_bj_sym
-!
-!     Done with temporary vector; deallocate
-! 
-      call mem%dealloc(sigma_ai_bj_sym, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      call symmetric_sum(sigma_ai_bj, (wf%n_v)*(wf%n_o)) 
 !
 !     In preparation for last two terms, reorder 
 !     sigma_ai_bj to rho_ab_ij, and b_ai_bj to b_ab_ij
 !
       call mem%alloc(sigma_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
       call mem%alloc(b_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
-!
-      do j = 1, wf%n_o
-         do i = 1, wf%n_o
-!
-            ij = index_two(i, j, wf%n_o)
-!
-            do c = 1, wf%n_v
-!
-               cj = index_two(c, j, wf%n_v)
-!
-               do a = 1, wf%n_v
-!
-                  ai = index_two(a, i, wf%n_v)
-                  ac = index_two(a, c, wf%n_v)
-!
-                  b_ab_ij(ac, ij)     = b_ai_bj(ai, cj)
-                  sigma_ab_ij(ac, ij) = sigma_ai_bj(ai, cj)
-!
-               enddo
-            enddo
-         enddo
-      enddo
+!  
+      call sort_1234_to_1324(sigma_ai_bj, sigma_ab_ij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call sort_1234_to_1324(b_ai_bj, b_ab_ij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call mem%dealloc(b_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call mem%dealloc(sigma_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       call wf%jacobian_transpose_ccsd_h2(sigma_ab_ij, b_ab_ij)
-!
       call wf%jacobian_transpose_ccsd_i2(sigma_ab_ij, b_ab_ij)
-!
-!     Done with reordered doubles b; deallocate 
 !
       call mem%dealloc(b_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
 !
-!     Order sigma_ab_ij back into sigma_ai_bj
+!     Overwrite the incoming doubles b vector
 !
-      call mem%alloc(sigma_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
-      do j = 1, wf%n_o
-         do c = 1, wf%n_v
-!
-            cj = index_two(c, j, wf%n_v)
-!
-            do i = 1, wf%n_o
-!
-               ij = index_two(i, j, wf%n_o)
-!
-               do a = 1, wf%n_v
-!
-                  ac = index_two(a, c, wf%n_v)
-                  ai = index_two(a, i, wf%n_v)
-
-                  sigma_ai_bj(ai, cj) = sigma_ab_ij(ac, ij)
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!
-!     Done with reordered transformed vector; deallocate 
-!
-      call mem%dealloc(sigma_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
-!
-!     Overwrite the incoming doubles b vector & pack in
-!
-!
-!!$omp parallel do schedule(static) private(a, i, c, j, ai, cj, aicj) 
+!$omp parallel do schedule(static) private(a, i, c, j, ai, bj, aibj, ab, ij) 
       do a = 1, wf%n_v
          do i = 1, wf%n_o
 !
             ai = wf%n_v*(i - 1) + a
 !  
             do j = 1, wf%n_o
+!
+               ij = wf%n_o*(j - 1) + i
+!
                do c = 1, wf%n_v
 !
-                  cj = wf%n_v*(j - 1) + c
+                  bj = wf%n_v*(j - 1) + c
+                  ab = wf%n_v*(c - 1) + a
 !
-                  if (ai .ge. cj) then
+                  if (ai .ge. bj) then
 !
-                     aicj = ai*(ai-3)/2 + ai + cj
+                     aibj = ai*(ai-3)/2 + ai + bj
 !
-                     b((wf%n_o)*(wf%n_v) + aicj, 1) = sigma_ai_bj(ai, cj)
+                     b((wf%n_o)*(wf%n_v) + aibj, 1) = sigma_ab_ij(ab, ij)
 !
                   endif
 !
@@ -302,16 +219,9 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
-!     Final deallocations 
-! 
-      call mem%dealloc(sigma_a_i, wf%n_v, wf%n_o)
-      call mem%dealloc(b_a_i, wf%n_v, wf%n_o)
-      call mem%dealloc(sigma_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
-      call mem%dealloc(b_ai_bj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
-
+      call mem%dealloc(sigma_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
 !
    end subroutine jacobian_transpose_ccsd_transformation_ccsd
 !
@@ -1534,15 +1444,15 @@ contains
          do e = 1, batch_e%length
             do d = 1, wf%n_v
 !
-               de = index_two(d, e, wf%n_v)
+               de = wf%n_v*(e - 1) + d
 !  
                do k = 1, wf%n_o
 !
-                  kde = index_three(k, d, e, wf%n_o, wf%n_v)
+                  kde = wf%n_o*(wf%n_v*(e - 1) + d - 1) + k
 !
                   do a = 1, wf%n_v
 !
-                     ka = index_two(k, a, wf%n_o)
+                     ka = wf%n_o*(a - 1) + k
 !
                      g_a_kde(a, kde) = g_ka_de(ka, de)
 !
@@ -1791,20 +1701,17 @@ contains
 !
       real(dp) :: ddot
 !
-      write(output%unit, *)ddot(wf%n_v*wf%n_o, b_a_i, 1, b_a_i, 1)
-!
 !     :: Term 1 & 2. 2 F_jb b_ai - F_ib b_aj :: 
 !
-!!$omp parallel do schedule(static) private(i,a,ai,j,b,bj) reduction(+:sigma_ai_bj)
       do i = 1, wf%n_o
          do a = 1, wf%n_v
 !
-            ai = index_two(a, i, wf%n_v)
+            ai = wf%n_v*(i - 1) + a
 !  
             do j = 1, wf%n_o
                do b = 1, wf%n_v
 !
-                  bj = index_two(b, j, wf%n_v)
+                  bj = wf%n_v*(j - 1) + b
 !
                   sigma_ai_bj(ai, bj) = sigma_ai_bj(ai, bj) - (wf%fock_ia(i, b))*b_a_i(a, j)&
                                     + two*(wf%fock_ia(j, b))*b_a_i(a, i) 
@@ -1813,7 +1720,6 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
 
 !     :: Term 3. - sum_k L_ikjb b_ak ::
 !
@@ -1902,18 +1808,17 @@ contains
 !
          call mem%dealloc(g_ca_jb, (wf%n_v)*(batch_a%length), (wf%n_o)*(wf%n_v))
 !
-!!$omp parallel do schedule(static) private(i,a,Ai,j,b,bj,ajb) reduction(+:sigma_ai_bj)
          do i = 1, wf%n_o
             do a = 1, batch_a%length
 !
-               Ai = index_two(a + batch_a%first - 1, i, wf%n_v)
+               Ai = wf%n_v*(i - 1) + a + batch_a%first - 1
 !
                do j = 1, wf%n_o
                   do b = 1, wf%n_v
 !
-                     bj = index_two(b, j, wf%n_v)
+                     bj = wf%n_v*(j - 1) + b
 !
-                     ajb = index_three(a, j, b, batch_a%length, wf%n_o)
+                     ajb = batch_a%length*(wf%n_o*(b - 1) + j - 1) + a
 !
                      sigma_ai_bj(Ai, bj) = sigma_ai_bj(Ai, bj) + sigma_i_ajb(i, ajb)
 !
@@ -1921,7 +1826,6 @@ contains
                enddo
             enddo
          enddo
-!!$omp end parallel do
 !
          call mem%dealloc(sigma_i_ajb, wf%n_o, (wf%n_o)*(wf%n_v)*(batch_a%length))
 !
@@ -1977,18 +1881,17 @@ contains
 !
 !        Add it to sigma_ai_bj 
 !
-!!$omp parallel do schedule(static) private(i,a,Ai,j,b,bj,ajb) reduction(+:sigma_ai_bj)
          do j = 1, wf%n_o
             do b = 1, batch_b%length
 !
-               Bj = index_two(b + batch_b%first - 1, j, wf%n_v)
+               Bj = wf%n_v*(j - 1) + b + batch_b%first - 1
 !
                do i = 1, wf%n_o
                   do a = 1, wf%n_v
 !
-                     ai = index_two(a, i, wf%n_v)
+                     ai = wf%n_v*(i - 1) +  a
 !
-                     bja = index_three(b, j, a, batch_b%length, wf%n_o)
+                     bja = batch_b%length*(wf%n_o*(a - 1) + j - 1) + b
 !
                      sigma_ai_bj(ai, Bj) = sigma_ai_bj(ai, Bj) &
                                          + sigma_i_bja(i, bja)
@@ -1997,7 +1900,6 @@ contains
                enddo
             enddo
          enddo
-!!$omp end parallel do
 !
          call mem%dealloc(sigma_i_bja, wf%n_o, (batch_b%length)*(wf%n_o)*(wf%n_v))
 !
@@ -2173,12 +2075,12 @@ contains
                do b = batch_b%first, batch_b%last
                   do c = 1, wf%n_v
 !
-                     ck = index_two(c, k, wf%n_v)
-                     jk = index_two(j, k, wf%n_o)
+                     ck = wf%n_v*(k - 1) + c
+                     jk = wf%n_o*(k - 1) + j
 !
-                     cb_restricted = index_two(c, b - batch_b%first + 1, wf%n_v)
+                     cb_restricted = wf%n_v*(b - batch_b%first) + c
 !
-                     bj_full = index_two(b, j, wf%n_v)
+                     bj_full = wf%n_v*(j - 1) + b
 !
                      g_ck_bj(ck, bj_full) = g_cb_jk_restricted(cb_restricted, jk)
 !
@@ -2327,10 +2229,12 @@ contains
                do b = batch_b%first, batch_b%last
                   do c = 1, wf%n_v
 !
-                     ck = index_two(c, k, wf%n_v)
-                     bi = index_two(b, i, wf%n_v) ! Full space 
-                     cb = index_two(c, b - batch_b%first + 1, wf%n_v) ! Restricted 
-                     ik = index_two(i, k, wf%n_o)
+                     ck = wf%n_v*(k - 1) + c
+                     bi = wf%n_v*(i - 1) + b
+                     ik = wf%n_o*(k - 1) + i
+!
+                     cb = wf%n_v*(b - batch_b%first) + c
+                     
 !
                      g_ck_bi(ck, bi) = g_cb_ik(cb, ik) ! g_cbik
 !
@@ -3248,18 +3152,18 @@ contains
             do d = 1, wf%n_v
                do c = 1, wf%n_v
 !
-                  cd = index_two(c, d, wf%n_v)
+                  cd = wf%n_v*(d - 1) + c
 !
                   do b = 1, batch_b%length
 !
-                     db = index_two(d, b, wf%n_v)
+                     db = wf%n_v*(b - 1) + d
 !
                      do a = 1, batch_a%length
 !
-                        ca = index_two(c, a, wf%n_v)
-                        ab = index_two(a, b, batch_a%length)
+                        ca = wf%n_v*(a - 1) + c
+                        ab = batch_a%length*(b - 1) + a
 !
-                        g_ab_cd(ab, cd) = g_ca_db(ca, db) ! g_cadb
+                        g_ab_cd(ab, cd) = g_ca_db(ca, db)
 !
                      enddo
                   enddo
@@ -3289,7 +3193,6 @@ contains
 !
             call mem%dealloc(g_ab_cd, (batch_a%length)*(batch_b%length), (wf%n_v)**2)
 !
-!!$omp parallel do schedule(static) private(j,i,ij,b,a,ab,ab_full) reduction(+:sigma_ab_ij)
             do j = 1, wf%n_o
                do i = 1, wf%n_o
 !
@@ -3309,7 +3212,6 @@ contains
                   enddo
                enddo
             enddo
-!!$omp end parallel do
 !
             call mem%dealloc(sigma_ab_ij_batch, (batch_a%length)*(batch_b%length), (wf%n_o)**2)
 !

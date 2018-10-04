@@ -2,7 +2,8 @@
    module subroutine jacobian_transpose_transform_trial_vector_ccsd(wf, c_i)
 !!
 !!    Jacobian transpose transform trial vector 
-!!    Written by Sarai D. Folkestad, Sep 2018
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
+!!    and Andreas Skeidsvoll, 2018
 !!
       class(ccsd), intent(in) :: wf 
 !
@@ -14,7 +15,8 @@
    module subroutine jacobian_transpose_ccsd_transformation_ccsd(wf, b)
 !!
 !!    Jacobian transpose transformation (CCSD)
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
+!!    and Andreas Skeidsvoll, 2018
 !!
       implicit none 
 !
