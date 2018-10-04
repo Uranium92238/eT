@@ -9,6 +9,7 @@ module es_engine_class
    use davidson_cc_es_solver_class
    use davidson_cvs_cc_es_solver_class
    use diis_cc_gs_solver_class
+   use diis_cc_multipliers_solver_class
 !
    type, extends(abstract_engine) :: es_engine 
 !
@@ -52,15 +53,16 @@ contains
 !
       character(len=40) :: es_type
 !
-      type(eri_cd_solver), allocatable          :: eri_chol_solver
-      type(diis_cc_gs_solver), allocatable      :: cc_gs_solver
+      type(eri_cd_solver), allocatable              :: eri_chol_solver
+      type(diis_cc_gs_solver), allocatable          :: cc_gs_solver
+      type(diis_cc_multipliers_solver), allocatable :: cc_multipliers_solver
 ! 
       type(davidson_cc_es_solver), allocatable, target      ::  cc_valence_es
       type(davidson_cvs_cc_es_solver), allocatable, target  ::  cc_core_es
 !
       class(davidson_cc_es_solver), pointer :: cc_es_solver
 !
-!     Cholesky decoposition 
+!     Cholesky decomposition 
 !
       allocate(eri_chol_solver)
 !
@@ -90,6 +92,16 @@ contains
       if (wf%name .ne. 'CCS') call wf%integrals%write_t1_cholesky(wf%t1)
 !
 !     Prepare for excited state
+!
+!     Multiplier equation (temporary for testing, - Eirik, Oct 2018)
+!
+!       allocate(cc_multipliers_solver)
+! !
+!       call cc_multipliers_solver%prepare(wf)
+!       call cc_multipliers_solver%run(wf)
+!       call cc_multipliers_solver%cleanup(wf)
+! !
+!       deallocate(cc_multipliers_solver)
 !
       call engine%determine_es_type(es_type)
 !

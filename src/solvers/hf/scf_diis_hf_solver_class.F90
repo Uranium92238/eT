@@ -37,7 +37,12 @@ module scf_diis_hf_solver_class
 !
    type, extends(abstract_hf_solver) :: scf_diis_hf_solver
 !
-      integer(i15) :: diis_dimension = 8
+      integer(i15) :: diis_dimension
+!
+      logical :: converged 
+!
+      type(file) :: restart_file
+      logical    :: do_restart 
 !
    contains
 !     
@@ -52,6 +57,9 @@ module scf_diis_hf_solver_class
       procedure :: read_scf_diis_settings  => read_scf_diis_settings_scf_diis_hf_solver
 !
       procedure :: print_scf_diis_settings => print_scf_diis_settings_scf_diis_hf_solver
+      procedure :: write_restart_file      => write_restart_file_scf_diis_hf_solver
+!
+      procedure :: restart                 => restart_scf_diis_hf_solver 
 !
    end type scf_diis_hf_solver
 !
@@ -72,6 +80,17 @@ contains
 !
       call solver%print_banner()
 !
+!     Set standard settings 
+!
+      solver%do_restart         = .false.
+      solver%diis_dimension     = 8
+      solver%max_iterations     = 100
+      solver%ao_density_guess   = 'SAD'
+      solver%energy_threshold   = 1.0D-6
+      solver%gradient_threshold = 1.0D-6
+!
+!     Read user's specified settings
+!
       call solver%read_settings()
 !
       call wf%set_screening_and_precision_thresholds(solver%gradient_threshold)
@@ -86,6 +105,21 @@ contains
       call wf%initialize_fock()
       call wf%initialize_density()
       call wf%initialize_orbitals()
+!
+!     Prepare restart information file 
+!
+      call solver%restart_file%init('scf_diis_restart_info', 'sequential', 'formatted')
+!
+      if (solver%do_restart) then 
+!
+         call solver%restart(wf)
+!
+      else 
+!
+         write(output%unit, '(/t3,a,a,a)') '- Setting initial AO density to ', trim(solver%ao_density_guess), ':'
+         call wf%set_initial_ao_density_guess(solver%ao_density_guess)
+!
+      endif
 !
    end subroutine prepare_scf_diis_hf_solver
 !
@@ -117,7 +151,6 @@ contains
 !
       type(diis_tool) :: diis_manager
 !
-      logical :: converged
       logical :: converged_energy
       logical :: converged_gradient
 !
@@ -143,8 +176,6 @@ contains
 !
 !     :: Part I. Preparations. 
 !
-     ! write(output%unit, '(/t3,a)') ':: Running SCF-DIIS object'
-!
 !     Construct screening vectors for efficient Fock construction 
 !
       n_s = wf%system%get_n_shells()
@@ -163,10 +194,6 @@ contains
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call wf%get_ao_h_wx(h_wx)
 !
-      write(output%unit, '(/t3,a,a,a)') '- Setting initial AO density to ', trim(solver%ao_density_guess), ':'
-!
-      call wf%set_initial_ao_density_guess(solver%ao_density_guess)
-!
       call wf%update_fock_and_energy(sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx)
 !
       call wf%get_n_electrons_in_density(n_electrons)
@@ -180,8 +207,6 @@ contains
 !
       call wf%roothan_hall_update_orbitals() ! F => C
       call wf%update_ao_density()            ! C => D
-!
-      write(output%unit, *)wf%pivot_matrix_ao_overlap
 !
       call wf%update_fock_and_energy(sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx)
 !
@@ -204,7 +229,7 @@ contains
 !
 !     Part II. Iterative SCF loop.
 !
-      converged          = .false.
+      solver%converged   = .false.
       converged_energy   = .false.
       converged_gradient = .false.
 !
@@ -215,7 +240,7 @@ contains
 !
       iteration = 1
 !
-      do while (.not. converged .and. iteration .le. solver%max_iterations)         
+      do while (.not. solver%converged .and. iteration .le. solver%max_iterations)         
 !
 !        Set energy and print information for current iteration
 !
@@ -230,12 +255,21 @@ contains
          converged_energy   = abs(energy-prev_energy) .lt. solver%energy_threshold
          converged_gradient = max_grad                .lt. solver%gradient_threshold
 !
-         converged = converged_gradient .and. converged_energy
+         solver%converged = converged_gradient .and. converged_energy
 !
-         if (converged) then
+         if (converged_gradient .and. iteration .eq. 1) solver%converged = .true.
+!
+         if (solver%converged) then
 !
             write(output%unit, '(t3,a)')          '--------------------------------------------------------------'
             write(output%unit, '(/t3,a29,i3,a12)') 'Convergence criterion met in ', iteration, ' iterations!'
+!
+            if (.not. converged_energy) then 
+!
+               write(output%unit, '(/t3,a,/t9,a)') 'Note: the gradient converged in the first iteration,', &
+                                                          'so the energy convergence has not been tested!'
+!
+            endif
 !
             call solver%print_summary(wf)
 !
@@ -283,7 +317,7 @@ contains
 !
       call diis_manager%finalize()
 !
-      if (.not. converged) then 
+      if (.not. solver%converged) then 
 !
          write(output%unit, '(t3,a)')   '---------------------------------------------------'
          write(output%unit, '(/t3,a)')  'Was not able to converge the equations in the given'
@@ -310,15 +344,80 @@ contains
 !
       integer(i15) :: i
 !
-!     When finished, we do a final Roothan-Hall step
-!     to express the Fock matrix in the canonical MO basis 
+!     Do a final Roothan-Hall step to transform the Fock matrix in the canonical MO basis 
 !
       do_mo_transformation = .true.
       call wf%do_roothan_hall(wf%ao_fock, wf%orbital_coefficients, wf%orbital_energies, do_mo_transformation)
 !
-      flush(output%unit)
+!     Save the orbitals to file & store restart information 
+!
+      call wf%save_orbital_coefficients()
+!
+      call solver%write_restart_file(wf)
 !
    end subroutine cleanup_scf_diis_hf_solver
+!
+!
+   subroutine write_restart_file_scf_diis_hf_solver(solver, wf)
+!!
+!!    Write restart file 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2018     
+!!
+!!    Stores information about the current calculation which may be 
+!!    used, e.g., to spot inconsistencies on restarting from files 
+!!    present in the folder.
+!!
+      implicit none 
+!
+      class(scf_diis_hf_solver), intent(inout) :: solver 
+!
+      class(hf), intent(in) :: wf 
+!
+      call disk%open_file(solver%restart_file, 'write', 'rewind')
+!
+      write(solver%restart_file%unit, *) 'n_ao n_mo'
+      write(solver%restart_file%unit, *) wf%n_ao
+      write(solver%restart_file%unit, *) wf%n_mo
+!
+      call disk%close_file(solver%restart_file) 
+!
+   end subroutine write_restart_file_scf_diis_hf_solver
+!
+!
+   subroutine restart_scf_diis_hf_solver(solver, wf)
+!!
+!!    Restart 
+!!    Written by Eirik F. Kjønstad, Oct 2018 
+!!
+      implicit none 
+!
+      class(scf_diis_hf_solver), intent(in) :: solver 
+!
+      class(hf), intent(inout) :: wf 
+!
+      integer(i15) :: n_ao, n_mo 
+!
+      write(output%unit, '(/t6,a/)') 'Requested restart. Reading orbitals from file.'
+!
+!     Sanity checks 
+!
+      call disk%open_file(solver%restart_file, 'read', 'rewind')  
+!
+      read(solver%restart_file%unit, *) ! Empty read to skip banner 
+!
+      read(solver%restart_file%unit, *) n_ao 
+      read(solver%restart_file%unit, *) n_mo
+!
+      call disk%close_file(solver%restart_file)
+!
+      if (n_ao .ne. wf%n_ao .or. n_mo .ne. wf%n_mo) call output%error_msg('Inconsistent dimensions on restart in SCF-DIIS.') 
+!
+!     Do restart 
+!
+      call wf%read_orbital_coefficients()
+      call wf%update_ao_density()
+!
+   end subroutine restart_scf_diis_hf_solver
 !
 !
    subroutine print_banner_scf_diis_hf_solver(solver)
@@ -407,7 +506,12 @@ contains
                read(value, *) solver%diis_dimension
                cycle
 !
-            endif
+            elseif (line(1:7) == 'restart') then
+!
+               solver%do_restart = .true.
+               cycle
+!
+            endif 
 !
          enddo
 !

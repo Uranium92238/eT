@@ -215,7 +215,7 @@ contains
 !
       if (molecule%charge .ne. 0) then
 !
-         write(output%unit) 'Error: SAD not yet implemented for charged species!'
+         write(output%unit,*) 'Error: SAD not yet implemented for charged species!'
          stop
 !
       endif
@@ -1289,6 +1289,8 @@ contains
                                                                           molecule%atoms(I)%y,      &
                                                                           molecule%atoms(I)%z,      &
                                                                           molecule%atoms(I)%basis 
+!  
+         flush(output%unit)
 !
       enddo 
 !
@@ -1311,6 +1313,8 @@ contains
 !
       write(output%unit, '(/t6,a35,f25.12)') 'Nuclear repulsion energy (a.u.):   ', molecule%get_nuclear_repulsion()
       write(output%unit, '(t6,a35,f18.12)')  'Bohr/angstrom value (CODATA 2010): ', bohr_to_angstrom
+!
+      flush(output%unit)
 !
       call molecule%print_geometry()
 !

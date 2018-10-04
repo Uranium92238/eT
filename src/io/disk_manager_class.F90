@@ -22,31 +22,25 @@ module disk_manager_class
 !
    contains
 !
-!     Initialization routine (used if user specifies a disk space different from standard)
+      procedure :: prepare                      => prepare_disk_manager
 !
-      procedure :: prepare => prepare_disk_manager
+      procedure :: subtract_folder_size         => subtract_folder_size_disk_manager
 !
-!     Account for disk space already used (the size of the calculation folder)
+      procedure :: open_file_sequential         => open_file_sequential_disk_manager
+      procedure :: open_file_direct             => open_file_direct_disk_manager
+      procedure :: open_file                    => open_file_disk_manager
 !
-      procedure :: subtract_folder_size => subtract_folder_size_disk_manager
-!
-!     Routine to open and close files
-!
-      procedure :: open_file_sequential   => open_file_sequential_disk_manager
-      procedure :: open_file_direct       => open_file_direct_disk_manager
-      procedure :: open_file              => open_file_disk_manager
-!
-      procedure :: close_file => close_file_disk_manager
-!
-!     Routine to determine file size
+      procedure :: close_file                   => close_file_disk_manager
 !
       procedure, private :: determine_file_size => determine_file_size_disk_manager
 !
-      procedure :: read_settings  => read_settings_disk_manager
-      procedure :: print_settings => print_settings_disk_manager
+      procedure :: read_settings                => read_settings_disk_manager
+      procedure :: print_settings               => print_settings_disk_manager
 !
-      procedure :: delete => delete_disk_manager
-      procedure :: file_exists => file_exists_disk_manager
+      procedure :: delete                       => delete_disk_manager
+      procedure :: file_exists                  => file_exists_disk_manager
+!
+      procedure :: rewind_file                  => rewind_file_disk_manager
 !
    end type disk_manager
 !
@@ -573,7 +567,7 @@ contains
 !  
       class(disk_manager) :: disk
 !
-      write(output%unit, '(t3, a38, i3, a)') 'Disk space available for calculation: ',&
+      write(output%unit, '(t3, a38, i5, a)') 'Disk space available for calculation: ',&
                                                  disk%total/1000000000, ' GB'
 !
    end subroutine print_settings_disk_manager
@@ -622,5 +616,24 @@ contains
       inquire(file=the_file%name, exist=file_exists_disk_manager)
 !
    end function file_exists_disk_manager
+!
+!  
+   subroutine rewind_file_disk_manager(disk, the_file)
+!!
+!!    Rewind file 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none 
+!
+      class(disk_manager), intent(in) :: disk 
+!
+      type(file) :: the_file
+!
+      call disk%open_file(the_file, 'readwrite', 'rewind')
+!
+      call disk%close_file(the_file)
+!
+   end subroutine rewind_file_disk_manager
+!
 !
 end module disk_manager_class

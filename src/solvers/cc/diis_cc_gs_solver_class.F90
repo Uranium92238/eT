@@ -14,14 +14,15 @@ module diis_cc_gs_solver_class
 !
    type :: diis_cc_gs_solver
 !
-      integer(i15) :: diis_dimension = 8
+      integer(i15) :: diis_dimension
 !
-      integer(i15) :: max_iterations = 50
+      integer(i15) :: max_iterations 
 !
-      real(dp) :: energy_threshold = 1.0d-6
-      real(dp) :: omega_threshold  = 1.0d-6
+      real(dp) :: energy_threshold
+      real(dp) :: omega_threshold 
 !
-      logical :: restart = .false.
+      type(file) :: restart_file
+      logical    :: do_restart
 !
    contains
 !     
@@ -37,6 +38,9 @@ module diis_cc_gs_solver_class
       procedure :: print_settings           => print_settings_diis_cc_gs_solver
 !
       procedure :: do_diagonal_precondition => do_diagonal_precondition_diis_cc_gs_solver
+!
+      procedure :: restart                  => restart_diis_cc_gs_solver
+      procedure :: write_restart_file       => write_restart_file_diis_cc_gs_solver
 !
    end type diis_cc_gs_solver
 !
@@ -59,25 +63,17 @@ contains
 !
       call solver%print_banner()
 !
-!     Read settings (thresholds, etc.)
+!     Set standard settings 
 !
-      if (requested_section('cc ground state')) then
+      solver%diis_dimension   = 8 
+      solver%max_iterations   = 100
+      solver%energy_threshold = 1.0d-6
+      solver%omega_threshold  = 1.0d-6
+      solver%do_restart       = .false.
 !
-         call solver%read_settings()
+!     Read & print settings (thresholds, etc.)
 !
-      else
-!
-!        Set defaults
-!
-         solver%diis_dimension = 8
-         solver%max_iterations = 50
-!
-         solver%energy_threshold = 1.0d-6
-         solver%omega_threshold  = 1.0d-6
-!
-         solver%restart = .false.
-!
-      endif
+      call solver%read_settings()
 !
       call solver%print_settings()
 !
@@ -85,9 +81,13 @@ contains
 !
       call wf%initialize_amplitudes()
 !
-      if (solver%restart) then
+!     Prepare restart information file 
 !
-       !  call wf%read_amplitudes()
+      call solver%restart_file%init('diis_cc_gs_restart_info', 'sequential', 'formatted')
+!
+      if (solver%do_restart) then
+!
+         call solver%restart(wf)
 ! 
       else
 !
@@ -96,6 +96,59 @@ contains
       endif
 !
    end subroutine prepare_diis_cc_gs_solver
+!
+!
+   subroutine write_restart_file_diis_cc_gs_solver(solver, wf)
+!!
+!!    Write restart file 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2018
+!!
+      implicit none 
+!
+      class(diis_cc_gs_solver), intent(inout) :: solver
+!
+      class(ccs), intent(in) :: wf 
+!
+      call disk%open_file(solver%restart_file, 'write', 'rewind')
+!
+      write(solver%restart_file%unit, *) 'n_amplitudes'
+      write(solver%restart_file%unit, *) wf%n_amplitudes
+!
+      call disk%close_file(solver%restart_file)       
+!
+   end subroutine write_restart_file_diis_cc_gs_solver
+!
+!
+   subroutine restart_diis_cc_gs_solver(solver, wf)
+!!
+!!    Restart 
+!!    Written by Eirik F. Kjønstad, Oct 2018 
+!!
+      implicit none 
+!
+      class(diis_cc_gs_solver), intent(inout) :: solver 
+!
+      class(ccs), intent(inout) :: wf 
+!
+      integer(i15) :: n_amplitudes
+!
+      write(output%unit, '(/t6,a)') 'Requested restart. Reading amplitudes from file.'
+!
+!     Sanity checks 
+!
+      call disk%open_file(solver%restart_file, 'read', 'rewind')
+!
+      read(solver%restart_file%unit, *) ! Empty read to skip banner 
+!
+      read(solver%restart_file%unit, *) n_amplitudes 
+!
+      call disk%close_file(solver%restart_file)
+!
+      if (n_amplitudes .ne. wf%n_amplitudes) call output%error_msg('Inconsistent dimensions on restart in DIIS-CC-GS.')
+!
+      call wf%read_amplitudes()
+!
+   end subroutine restart_diis_cc_gs_solver
 !
 !
    subroutine print_settings_diis_cc_gs_solver(solver)
@@ -179,8 +232,6 @@ contains
 !
       integer(i15) :: iteration
 !
-     ! write(output%unit, '(/t3,a)') ':: Running DIIS ground state CC object'
-!
       call diis_manager%init('cc_gs_diis', wf%n_amplitudes, wf%n_amplitudes, solver%diis_dimension)
 !
       call mem%alloc(omega, wf%n_amplitudes, 1)
@@ -202,10 +253,10 @@ contains
 !
 !        Calculate the energy and error vector omega 
 !
+         call wf%construct_fock()
+!
          call wf%calculate_energy()
          energy = wf%energy
-!
-         call wf%construct_fock()
 !
          call wf%construct_omega(omega)
 !
@@ -288,7 +339,11 @@ contains
 !
       class(ccs) :: wf
 !
-!     Nothing here yet 
+!     Write restart file & save amplitudes 
+!
+      call solver%write_restart_file(wf)
+!
+      call wf%save_amplitudes()
 !
    end subroutine cleanup_diis_cc_gs_solver
 !
@@ -372,7 +427,7 @@ contains
 !
          elseif (trim(line) == 'restart') then
 !
-            solver%restart = .true.
+            solver%do_restart = .true.
 !
          endif
 !

@@ -34,6 +34,8 @@ module hf_class
       real(dp) :: libint_epsilon       = 1.0D-16   ! ε for libint, integral precision given
                                                    ! approximately by sqrt(ε)
 !
+      type(file) :: orbital_coefficients_file
+!
 	contains
 !
 !     Preparation and cleanup routines 
@@ -90,6 +92,8 @@ module hf_class
       procedure :: print_orbital_energies                   => print_orbital_energies_hf
       procedure :: mo_transform                             => mo_transform_hf
       procedure :: mo_transform_and_save_h                  => mo_transform_and_save_h_hf
+      procedure :: save_orbital_coefficients                => save_orbital_coefficients_hf
+      procedure :: read_orbital_coefficients                => read_orbital_coefficients_hf
 !
 !     Class variable initialize and destruct routines
 !
@@ -157,6 +161,8 @@ contains
       call initialize_overlap()
 !
       call wf%set_n_mo()
+!
+      call wf%orbital_coefficients_file%init('orbital_coefficients', 'sequential', 'unformatted')
 !
    end subroutine prepare_hf
 !
@@ -606,10 +612,52 @@ contains
 !
       call ao_density%init('ao_density', 'sequential', 'formatted')
       call disk%open_file(ao_density, 'readwrite', 'rewind')
+!
       write(ao_density%unit, *) wf%ao_density
+!
       call disk%close_file(ao_density)
 !
    end subroutine save_ao_density_hf
+!
+!
+   subroutine save_orbital_coefficients_hf(wf)
+!!
+!!    Save orbital coefficients 
+!!    Written by Eirik F. Kjønstad, Oct 2018 
+!!
+      implicit none 
+!
+      class(hf), intent(inout) :: wf 
+!
+      call disk%open_file(wf%orbital_coefficients_file, 'write', 'rewind')
+!
+      write(wf%orbital_coefficients_file%unit) wf%orbital_coefficients
+!
+      call disk%close_file(wf%orbital_coefficients_file)
+!
+   end subroutine save_orbital_coefficients_hf
+!
+!
+   subroutine read_orbital_coefficients_hf(wf)
+!!
+!!    Save orbital coefficients 
+!!    Written by Eirik F. Kjønstad, Oct 2018 
+!!
+      implicit none 
+!
+      class(hf), intent(inout) :: wf 
+!
+      type(file) :: orbital_coefficients_file 
+!
+      call orbital_coefficients_file%init('orbital_coefficients', 'sequential', 'unformatted')
+!
+      call disk%open_file(orbital_coefficients_file, 'read', 'rewind')
+!
+      read(orbital_coefficients_file%unit) wf%orbital_coefficients
+!
+      call disk%close_file(orbital_coefficients_file)
+!
+   end subroutine read_orbital_coefficients_hf
 !
 !
    subroutine cleanup_hf(wf)
@@ -2553,7 +2601,7 @@ contains
 !
       class(hf) :: wf
 !
-      integer(i6), dimension(:, :), allocatable :: used_diag
+      integer(kind=4), dimension(:, :), allocatable :: used_diag
 !
       real(dp), dimension(:, :), allocatable :: L
 !
@@ -2567,8 +2615,6 @@ contains
 !
       call full_cholesky_decomposition_system(wf%ao_overlap, L, wf%n_ao, wf%n_mo, &
                                                 wf%linear_dep_threshold, used_diag)
-!
-      write(output%unit, *) used_diag
 !
       call wf%initialize_cholesky_ao_overlap()
 !
@@ -3572,13 +3618,13 @@ contains
       wf%n_o = (wf%system%get_n_electrons())/2
       wf%n_v = wf%n_mo - wf%n_o
 !
-      write(output%unit, '(/t6,a30,i4)') 'Number of occupied orbitals:  ', wf%n_o 
-      write(output%unit, '(t6,a30,i4)')  'Number of virtual orbitals:   ', wf%n_v
-      write(output%unit, '(t6,a30,i4)')  'Number of molecular orbitals: ', wf%n_mo 
-      write(output%unit, '(t6,a30,i4)')  'Number of atomic orbitals:    ', wf%n_ao 
+      write(output%unit, '(/t6,a30,i8)') 'Number of occupied orbitals:  ', wf%n_o 
+      write(output%unit, '(t6,a30,i8)')  'Number of virtual orbitals:   ', wf%n_v
+      write(output%unit, '(t6,a30,i8)')  'Number of molecular orbitals: ', wf%n_mo 
+      write(output%unit, '(t6,a30,i8)')  'Number of atomic orbitals:    ', wf%n_ao 
 !
      if (wf%n_mo .lt. wf%n_ao) &
-            write(output%unit, '(/t6, a, i3, a)')'Removed ', wf%n_ao - wf%n_mo, ' AOs due to linear dep.'
+            write(output%unit, '(/t6, a, i4, a)')'Removed ', wf%n_ao - wf%n_mo, ' AOs due to linear dep.'
 !
    end subroutine set_n_mo_hf
 !
