@@ -23,7 +23,7 @@ module ccs_class
 !
       real(dp) :: hf_energy 
 !
-      integer(i15)                           :: n_amplitudes 
+      integer(i15)                           :: n_amplitudes
       integer(i15)                           :: n_t1
 !
       real(dp), dimension(:,:), allocatable  :: t1
@@ -33,6 +33,7 @@ module ccs_class
       real(dp), dimension(:,:), allocatable  :: fock_ia
       real(dp), dimension(:,:), allocatable  :: fock_ai
       real(dp), dimension(:,:), allocatable  :: fock_ab
+!
       real(dp), dimension(:,:), allocatable  :: fock_diagonal
 !
       type(mo_integral_tool) :: integrals
@@ -41,99 +42,98 @@ module ccs_class
 !
 !     Preparation and cleanup routines 
 !
-      procedure :: prepare                      => prepare_ccs
-      procedure :: cleanup                      => cleanup_ccs
+      procedure :: prepare                                     => prepare_ccs
+      procedure :: cleanup                                     => cleanup_ccs
 !
 !     Routines related to the amplitudes & multipliers
 !
-      procedure :: initialize_amplitudes        => initialize_amplitudes_ccs 
-      procedure :: destruct_amplitudes          => destruct_amplitudes_ccs 
-      procedure :: set_initial_amplitudes_guess => set_initial_amplitudes_guess_ccs
-      procedure :: t1_transform                 => t1_transform_ccs
-      procedure :: set_amplitudes               => set_amplitudes_ccs 
-      procedure :: get_amplitudes               => get_amplitudes_ccs 
-      procedure :: save_amplitudes              => save_amplitudes_ccs
-      procedure :: read_amplitudes              => read_amplitudes_ccs
-      procedure :: save_t1                      => save_t1_ccs 
-      procedure :: read_t1                      => read_t1_ccs 
+      procedure :: initialize_amplitudes                       => initialize_amplitudes_ccs 
+      procedure :: destruct_amplitudes                         => destruct_amplitudes_ccs 
+      procedure :: set_initial_amplitudes_guess                => set_initial_amplitudes_guess_ccs
+      procedure :: t1_transform                                => t1_transform_ccs
+      procedure :: set_amplitudes                              => set_amplitudes_ccs 
+      procedure :: get_amplitudes                              => get_amplitudes_ccs 
+      procedure :: save_amplitudes                             => save_amplitudes_ccs
+      procedure :: read_amplitudes                             => read_amplitudes_ccs
+      procedure :: save_t1                                     => save_t1_ccs 
+      procedure :: read_t1                                     => read_t1_ccs 
 !
-      procedure :: initialize_multipliers       => initialize_multipliers_ccs
-      procedure :: destruct_multipliers         => destruct_multipliers_ccs
-      procedure :: set_multipliers              => set_multipliers_ccs
-      procedure :: get_multipliers              => get_multipliers_ccs
-      procedure :: save_multipliers             => save_multipliers_ccs
-      procedure :: read_multipliers             => read_multipliers_ccs
-      procedure :: save_t1bar                   => save_t1bar_ccs
-      procedure :: read_t1bar                   => read_t1bar_ccs
+      procedure :: initialize_multipliers                      => initialize_multipliers_ccs
+      procedure :: destruct_multipliers                        => destruct_multipliers_ccs
+      procedure :: set_multipliers                             => set_multipliers_ccs
+      procedure :: get_multipliers                             => get_multipliers_ccs
+      procedure :: save_multipliers                            => save_multipliers_ccs
+      procedure :: read_multipliers                            => read_multipliers_ccs
+      procedure :: save_t1bar                                  => save_t1bar_ccs
+      procedure :: read_t1bar                                  => read_t1bar_ccs
 !
 !     Routines related to the Fock matrix 
 ! 
-      procedure :: set_fock                     => set_fock_ccs
-      procedure :: construct_fock               => construct_fock_ccs
-      procedure :: get_orbital_differences      => get_orbital_differences_ccs
-      procedure :: calculate_energy             => calculate_energy_ccs
+      procedure :: set_fock                                    => set_fock_ccs
+      procedure :: construct_fock                              => construct_fock_ccs
+      procedure :: get_orbital_differences                     => get_orbital_differences_ccs
+      procedure :: calculate_energy                            => calculate_energy_ccs
 !
 !     Routines related to the omega vector 
 !
-      procedure :: construct_omega              => construct_omega_ccs
-      procedure :: omega_ccs_a1                 => omega_ccs_a1_ccs
+      procedure :: construct_omega                             => construct_omega_ccs
+      procedure :: omega_ccs_a1                                => omega_ccs_a1_ccs
 !
 !     Routines related to the Jacobian transformation 
 !
-      procedure :: jacobi_transform_trial_vector           => jacobi_transform_trial_vector_ccs
+      procedure :: jacobian_transform_trial_vector             => jacobian_transform_trial_vector_ccs
+      procedure :: jacobian_transpose_transform_trial_vector   => jacobian_transpose_transform_trial_vector_ccs
 !
-      procedure :: jacobian_ccs_transformation             => jacobian_ccs_transformation_ccs
-      procedure :: jacobian_ccs_a1                         => jacobian_ccs_a1_ccs 
-      procedure :: jacobian_ccs_b1                         => jacobian_ccs_b1_ccs 
+      procedure :: jacobian_ccs_transformation                 => jacobian_ccs_transformation_ccs
+      procedure :: jacobian_ccs_a1                             => jacobian_ccs_a1_ccs 
+      procedure :: jacobian_ccs_b1                             => jacobian_ccs_b1_ccs 
 !
-      procedure :: jacobi_transpose_transform_trial_vector => jacobi_transpose_transform_trial_vector_ccs
+      procedure :: jacobian_transpose_ccs_transformation       => jacobian_transpose_ccs_transformation_ccs
+      procedure :: jacobian_transpose_ccs_a1                   => jacobian_transpose_ccs_a1_ccs
+      procedure :: jacobian_transpose_ccs_b1                   => jacobian_transpose_ccs_b1_ccs
 !
-      procedure :: jacobian_transpose_ccs_transformation   => jacobian_transpose_ccs_transformation_ccs
-      procedure :: jacobian_transpose_ccs_a1               => jacobian_transpose_ccs_a1_ccs
-      procedure :: jacobian_transpose_ccs_b1               => jacobian_transpose_ccs_b1_ccs
-!
-      procedure :: construct_multiplier_equation           => construct_multiplier_equation_ccs
-      procedure :: construct_eta                           => construct_eta_ccs
+      procedure :: construct_multiplier_equation               => construct_multiplier_equation_ccs
+      procedure :: construct_eta                               => construct_eta_ccs
 !
 !     Routines to get electron repulsion integrals (ERIs)
 !
-      procedure :: get_ovov                     => get_ovov_ccs
-      procedure :: get_vovo                     => get_vovo_ccs
-      procedure :: get_vvoo                     => get_vvoo_ccs
-      procedure :: get_voov                     => get_voov_ccs
-      procedure :: get_ovvo                     => get_ovvo_ccs
-      procedure :: get_oovv                     => get_oovv_ccs
+      procedure :: get_ovov                                     => get_ovov_ccs
+      procedure :: get_vovo                                     => get_vovo_ccs
+      procedure :: get_vvoo                                     => get_vvoo_ccs
+      procedure :: get_voov                                     => get_voov_ccs
+      procedure :: get_ovvo                                     => get_ovvo_ccs
+      procedure :: get_oovv                                     => get_oovv_ccs
 !
-      procedure :: get_oooo                     => get_oooo_ccs
-      procedure :: get_vvvv                     => get_vvvv_ccs
+      procedure :: get_oooo                                     => get_oooo_ccs
+      procedure :: get_vvvv                                     => get_vvvv_ccs
 !
-      procedure :: get_ooov                     => get_ooov_ccs
-      procedure :: get_oovo                     => get_oovo_ccs
-      procedure :: get_ovoo                     => get_ovoo_ccs
-      procedure :: get_vooo                     => get_vooo_ccs
+      procedure :: get_ooov                                     => get_ooov_ccs
+      procedure :: get_oovo                                     => get_oovo_ccs
+      procedure :: get_ovoo                                     => get_ovoo_ccs
+      procedure :: get_vooo                                     => get_vooo_ccs
 !
-      procedure :: get_vvvo                     => get_vvvo_ccs
-      procedure :: get_vvov                     => get_vvov_ccs
-      procedure :: get_vovv                     => get_vovv_ccs
-      procedure :: get_ovvv                     => get_ovvv_ccs
+      procedure :: get_vvvo                                     => get_vvvo_ccs
+      procedure :: get_vvov                                     => get_vvov_ccs
+      procedure :: get_vovv                                     => get_vovv_ccs
+      procedure :: get_ovvv                                     => get_ovvv_ccs
 !
 !     Routines to initialize and destruct arrays 
 !
-      procedure :: initialize_fock_ij           => initialize_fock_ij_ccs
-      procedure :: initialize_fock_ia           => initialize_fock_ia_ccs
-      procedure :: initialize_fock_ai           => initialize_fock_ai_ccs
-      procedure :: initialize_fock_ab           => initialize_fock_ab_ccs
-      procedure :: initialize_fock_diagonal     => initialize_fock_diagonal_ccs
-      procedure :: initialize_t1                => initialize_t1_ccs
-      procedure :: initialize_t1bar             => initialize_t1bar_ccs
+      procedure :: initialize_fock_ij                           => initialize_fock_ij_ccs
+      procedure :: initialize_fock_ia                           => initialize_fock_ia_ccs
+      procedure :: initialize_fock_ai                           => initialize_fock_ai_ccs
+      procedure :: initialize_fock_ab                           => initialize_fock_ab_ccs
+      procedure :: initialize_fock_diagonal                     => initialize_fock_diagonal_ccs
+      procedure :: initialize_t1                                => initialize_t1_ccs
+      procedure :: initialize_t1bar                             => initialize_t1bar_ccs
 !
-      procedure :: destruct_fock_ij             => destruct_fock_ij_ccs
-      procedure :: destruct_fock_ia             => destruct_fock_ia_ccs
-      procedure :: destruct_fock_ai             => destruct_fock_ai_ccs
-      procedure :: destruct_fock_ab             => destruct_fock_ab_ccs
-      procedure :: destruct_fock_diagonal       => destruct_fock_diagonal_ccs
-      procedure :: destruct_t1                  => destruct_t1_ccs
-      procedure :: destruct_t1bar               => destruct_t1bar_ccs
+      procedure :: destruct_fock_ij                             => destruct_fock_ij_ccs
+      procedure :: destruct_fock_ia                             => destruct_fock_ia_ccs
+      procedure :: destruct_fock_ai                             => destruct_fock_ai_ccs
+      procedure :: destruct_fock_ab                             => destruct_fock_ab_ccs
+      procedure :: destruct_fock_diagonal                       => destruct_fock_diagonal_ccs
+      procedure :: destruct_t1                                  => destruct_t1_ccs
+      procedure :: destruct_t1bar                               => destruct_t1bar_ccs
 !
    end type ccs
 !
@@ -2346,7 +2346,7 @@ contains
    end subroutine get_vvvv_ccs
 !
 !
-   subroutine jacobi_transform_trial_vector_ccs(wf, c_i)
+   subroutine jacobian_transform_trial_vector_ccs(wf, c_i)
 !!
 !!    Jacobi transform trial vector 
 !!    Written by Sarai D. Folkestad, Sep 2018
@@ -2357,10 +2357,10 @@ contains
 !
       call wf%jacobian_ccs_transformation(c_i)
 !
-   end subroutine jacobi_transform_trial_vector_ccs
+   end subroutine jacobian_transform_trial_vector_ccs
 !
 !
-   subroutine jacobi_transpose_transform_trial_vector_ccs(wf, c_i)
+   subroutine jacobian_transpose_transform_trial_vector_ccs(wf, c_i)
 !!
 !!    Jacobi transpose transform trial vector 
 !!    Written by Sarai D. Folkestad, Sep 2018
@@ -2371,7 +2371,7 @@ contains
 !
       call wf%jacobian_transpose_ccs_transformation(c_i)
 !
-   end subroutine jacobi_transpose_transform_trial_vector_ccs
+   end subroutine jacobian_transpose_transform_trial_vector_ccs
 !
 !
    subroutine jacobian_ccs_transformation_ccs(wf, c_a_i)
@@ -2413,7 +2413,7 @@ contains
    end subroutine jacobian_ccs_transformation_ccs
 !
 !
-   module subroutine jacobian_transpose_ccs_transformation_ccs(wf, b_a_i)
+   subroutine jacobian_transpose_ccs_transformation_ccs(wf, b_a_i)
 !!
 !!    Jacobian transpose transformation (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
@@ -2519,8 +2519,8 @@ contains
 !
       class(ccs) :: wf
 !   
-      real(dp), dimension(wf%n_v*wf%n_o, 1), intent(in)    :: c1
-      real(dp), dimension(wf%n_v,wf%n_o), intent(inout) :: rho1      
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c1
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho1      
 !
       real(dp), dimension(:,:), allocatable :: g_ai_jb
       real(dp), dimension(:,:), allocatable :: g_ab_ji
@@ -2530,7 +2530,7 @@ contains
 !
       type(batching_index) :: batch_b
 !
-      integer(i15) :: required, j, b, b_full, bj, current_b_batch
+      integer(i15) :: required, j, b, b_red, current_b_batch, jb
 !
       call batch_b%init(wf%n_v) 
 !
@@ -2572,19 +2572,17 @@ contains
 !        Reorder c1 to do multiply with L_ai_jb
 !
          call mem%alloc(c_jb, (wf%n_o), batch_b%length)
-         c_jb = zero
-!
 !
          do b = batch_b%first, batch_b%last
             do j = 1, wf%n_o
 !
-               bj = wf%n_v*(j-1) + b
-!
-               c_jb(j, b - batch_b%first + 1) = c1(bj, 1)
+               b_red = b - batch_b%first + 1
+!  
+               c_jb(j, b_red) = c1(b, j)
 !
             enddo
          enddo
-!
+    
 !
          call dgemm('N', 'N',                   &
                      (wf%n_v)*(wf%n_o),         &
@@ -2708,7 +2706,7 @@ contains
 !
          call mem%alloc(g_ca_ik, (wf%n_v)*(batch_a%length), (wf%n_o)**2)
 !
-         call wf%get_vvoo(g_ca_ik,       &
+         call wf%get_vvoo(g_ca_ik,        &
                            1,             &
                            wf%n_v,        &
                            batch_a%first, &

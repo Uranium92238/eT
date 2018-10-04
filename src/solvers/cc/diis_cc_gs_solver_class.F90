@@ -168,6 +168,8 @@ contains
       write(output%unit, '(/t6,a26,i9)')   'DIIS dimension:           ', solver%diis_dimension
       write(output%unit, '(t6,a26,i9)')    'Max number of iterations: ', solver%max_iterations
 !
+      flush(output%unit)
+!
    end subroutine print_settings_diis_cc_gs_solver
 !
 !
@@ -242,6 +244,7 @@ contains
 !
       write(output%unit, '(/t3,a)') 'Iteration    Energy (a.u.)        || Omega ||    Delta E (a.u.)'
       write(output%unit, '(t3,a)')  '---------------------------------------------------------------'
+      flush(output%unit)
 !
       prev_energy = zero
       iteration   = 1
@@ -256,6 +259,7 @@ contains
          energy = wf%energy
 !
          call wf%construct_omega(omega)
+!
          omega_norm = get_l2_norm(omega, wf%n_amplitudes)
 !
          write(output%unit, '(t3,i3,10x,f17.12,4x,e10.4,4x,e10.4)') iteration, wf%energy, &
