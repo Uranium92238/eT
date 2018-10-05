@@ -214,6 +214,7 @@ contains
       call mem%alloc(c_i, davidson%n_parameters, 1)
 !
       call davidson%rewind_trials()
+!
       do i = 1, davidson%current_n_trials
 !
          call davidson%read_trial(c_i)  
@@ -474,8 +475,7 @@ contains
 !
             read(davidson%trials%unit, iostat=ioerror) c_i
             if (ioerror .ne. 0) call output%error_msg('reading trial vector file.')
-!
-            
+!           
             rewind(davidson%transforms%unit)
 !
             do j = 1, davidson%dim_red
@@ -849,7 +849,7 @@ contains
 !
       do solution = 1, davidson%n_solutions
 !
-         read(davidson%X%unit) X 
+         read(davidson%X%unit) X
 !
          rewind(davidson%trials%unit)
 !
@@ -861,10 +861,10 @@ contains
 !
             call daxpy(davidson%n_parameters, - projection_of_X_on_c_i, c_i, 1, X, 1)
 !
-            norm = ddot(davidson%n_parameters, X, 1, X, 1)
-            call dscal(davidson%n_parameters, one/norm, X, 1)
-!
          enddo
+!
+         norm = sqrt(ddot(davidson%n_parameters, X, 1, X, 1))
+         call dscal(davidson%n_parameters, one/norm, X, 1)
 !
          write(davidson%trials%unit) X
 !
@@ -926,9 +926,7 @@ contains
       enddo
 !
    end subroutine read_max_dim_red_davidson_tool
-<<<<<<< HEAD
-=======
-!  
+!
 !
    subroutine restart_from_solutions_davidson_tool(davidson, n_solutions)
 !!
@@ -952,9 +950,8 @@ contains
 !
       if (disk%file_exists(davidson%X)) then
 !
-         call disk%open_file(davidson%X, 'read', 'rewind')
-!
-         call davidson%rewind_trials()
+         call disk%open_file(davidson%X, 'read')
+         rewind(davidson%X%unit)
 !
          call mem%alloc(X, davidson%n_parameters, 1)
 !
@@ -962,6 +959,9 @@ contains
 !
             X = zero
             read(davidson%X%unit) X
+!
+            write(output%unit, *)(davidson%current_n_trials)
+!
             call davidson%write_trial_with_GS(X)
 !
          enddo
@@ -977,7 +977,6 @@ contains
       endif
 !
    end subroutine restart_from_solutions_davidson_tool
->>>>>>> 5ba4c2f705744b17d17252c50f12d32e2137a24b
 !
 !
    subroutine rewind_trials_davidson_tool(davidson)

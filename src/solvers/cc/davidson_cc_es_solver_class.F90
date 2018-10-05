@@ -127,10 +127,12 @@ contains
       class(eigen_davidson_tool) :: davidson
 !
       integer(i15) :: n_solutions_on_file 
+
 !
 !     Read in the number of solutions to restart from - according the restart file 
 !
-      call disk%open_file(solver%restart_file, 'read', 'rewind')
+      call disk%open_file(solver%restart_file, 'read')
+      rewind(solver%restart_file%unit)
 !
       n_solutions_on_file = 0
       read(solver%restart_file%unit, *) ! Empty read to skip banner
@@ -149,6 +151,7 @@ contains
 !     Ask Davidson to restart - use the previous solutions as trial vectors 
 !
       call davidson%restart_from_solutions(n_solutions_on_file)
+      !call davidson%set_trials_to_solutions()
 !
 !     For the remaining states, use orbital differences 
 !
@@ -541,7 +544,7 @@ contains
 !
       class(ccs) :: wf
 !
-      call solver%write_restart_file() 
+      call solver%write_restart_file()
 !
    end subroutine cleanup_davidson_cc_es_solver
 !

@@ -131,16 +131,6 @@ contains
 !
       s_determine_basis = omp_get_wtime()
 !
-      if (present(screening_vector)) then
-!
-         call solver%construct_significant_diagonal(system, screening_vector)
-!
-      else 
-!
-         call solver%construct_significant_diagonal(system)
-!
-      endif
-!
       if (solver%one_center) then
 !
          if (present(screening_vector)) then
@@ -153,13 +143,21 @@ contains
 !
          endif
 !
-         call solver%determine_auxilliary_cholesky_basis(system, solver%diagonal_info_one_center)
+      else 
 !
-      else
+         if (present(screening_vector)) then
 !
-         call solver%determine_auxilliary_cholesky_basis(system, solver%diagonal_info_target)
+            call solver%construct_significant_diagonal(system, screening_vector)
+!
+         else 
+!
+            call solver%construct_significant_diagonal(system)
+!
+         endif
 !
       endif
+!
+      call solver%determine_auxilliary_cholesky_basis(system, solver%diagonal_info_target)
 !
       e_determine_basis = omp_get_wtime()
       
@@ -574,12 +572,10 @@ contains
       write(solver%diagonal_info_target%unit) D_xy
       write(solver%diagonal_info_target%unit) screening_vector_reduced
 !
-!     Write info file for target diagonal containing
+!     Write info file for construct diagonal containing
 !
-!        1. number of significant shell pairs, number of significant ao pairs
-!        2. sig_sp - vector of logicals to describe which shell pairs are significant
-!        3. D_xy = ( xy | xy ), the significant diagonal.
-!        4. Screening vector
+!        1. number of shell pairs to construct, number of ao pairs to construct
+!        2. construct_sp - vector of logicals to describe which shell pairs are to be constructed
 !
       call disk%open_file(solver%diagonal_info_construct, 'write', 'rewind')
       rewind(solver%diagonal_info_target%unit)
@@ -613,16 +609,19 @@ contains
 !
       real(dp), dimension(solver%n_ao,1), optional :: screening_vector
 !
-      integer(i15) ::sp, n_sig_aop, n_sig_sp, current_sig_sp
+      integer(i15) ::sp, n_sig_aop, n_sig_sp, current_sig_sp, n_construct_sp, n_construct_aop
       integer(i15), dimension(:,:), allocatable :: sp_index, sig_sp_index, ao_offsets
 !
-      real(dp), dimension(:,:), allocatable :: g_AB_AB, D_AB, D_AB_screen, D_xy, screening_vector_local, screening_vector_reduced
+      real(dp), dimension(:,:), allocatable :: g_AB_AB, D_AB, D_AB_screen, D_xy, screening_vector_local
+      real(dp), dimension(:,:), allocatable :: screening_vector_reduced, max_in_sp_diagonal, construct_test
 !
       integer(i15) :: x, y, xy, xy_packed, first_sig_sp, first_sig_aop, A, B, I
 !
       type(interval) :: A_interval, B_interval
 !
-      logical, dimension(:), allocatable :: sig_sp
+      logical, dimension(:), allocatable :: sig_sp, construct_sp
+!
+      real(dp) :: max_diagonal
 !
       call mem%alloc(screening_vector_local, solver%n_aop, 1)
 !
@@ -652,6 +651,8 @@ contains
 !
          enddo
       enddo
+!
+      call mem%alloc(max_in_sp_diagonal, solver%n_sp, 1)
 !
 !     Pre-screening of full diagonal
 !
@@ -707,10 +708,67 @@ contains
             sig_sp(I) = (is_significant(D_AB, (A_interval%size)*(B_interval%size), solver%threshold) .and. &
                          is_significant(D_AB_screen, (A_interval%size)*(B_interval%size), solver%threshold))
 !
+            max_in_sp_diagonal(I, 1) = get_abs_max(D_AB, (A_interval%size)*(B_interval%size))
+!
             call mem%dealloc(D_AB, (A_interval%size)*(B_interval%size), 1)
             call mem%dealloc(D_AB_screen, (A_interval%size)*(B_interval%size), 1)
 !
          endif
+!
+      enddo
+!$omp end parallel do
+!
+!    Prescreening for construction diagonal
+!
+      max_diagonal = get_abs_max(max_in_sp_diagonal, solver%n_sp)
+!
+      call mem%dealloc(max_in_sp_diagonal, solver%n_sp, 1)
+!
+      allocate(construct_sp(solver%n_sp))
+      construct_sp = .false.
+!
+!$omp parallel do &
+!$omp private(I, A, B, A_interval, B_interval, x, y, xy, g_AB_AB, construct_test) &
+!$omp shared(construct_sp) &
+!$omp schedule(guided)
+      do I = 1, solver%n_sp
+!
+         A = sp_index(I, 1)
+         B = sp_index(I, 2)
+!
+         A_interval = system%shell_limits(A)
+         B_interval = system%shell_limits(B)
+!
+!        Construct diagonal D_AB for the given shell pair
+!
+         call mem%alloc(g_AB_AB, &
+                  (A_interval%size)*(B_interval%size), &
+                  (A_interval%size)*(B_interval%size))
+!
+         g_AB_AB = zero
+         call system%ao_integrals%construct_ao_g_wxyz(g_AB_AB, A, B, A, B)
+!
+         call mem%alloc(construct_test, (A_interval%size)*(B_interval%size), 1)
+!
+         do x = 1, (A_interval%size)
+            do y = 1, (B_interval%size)
+!
+               xy = (A_interval%size)*(y-1)+x
+!
+               construct_test(xy, 1) = sqrt(g_AB_AB(xy, xy)*max_diagonal)
+!
+            enddo
+         enddo
+!
+         call mem%dealloc(g_AB_AB, &
+                  (A_interval%size)*(B_interval%size), &
+                  (A_interval%size)*(B_interval%size))
+!
+!           Determine whether shell pair should be constructed
+!
+            construct_sp(I) = is_significant(construct_test, (A_interval%size)*(B_interval%size), solver%threshold)
+!
+         call mem%dealloc(construct_test, (A_interval%size)*(B_interval%size), 1)
 !
       enddo
 !$omp end parallel do
@@ -737,10 +795,37 @@ contains
 !
       enddo
 !
-      write(output%unit, '(/t6, a)')          'Reduction of shell pairs:'
-      write(output%unit, '(t6, a33, 2x, i9)') 'Total number of shell pairs:     ', solver%n_sp
-      write(output%unit, '(t6, a33, 2x, i9)') 'Significant shell pairs:         ', n_sig_sp
-      write(output%unit, '(t6, a33, 2x, i9)') 'Significant ao pairs:            ', n_sig_aop
+      n_construct_aop = 0 ! Number of AO pairs to construct
+      n_construct_sp  = 0 ! Number of shell pairs to construct
+!
+      do I = 1, solver%n_sp
+!
+         if (construct_sp(I)) then
+!
+            A = sp_index(I, 1)
+            B = sp_index(I, 2)
+!
+            A_interval = system%shell_limits(A)
+            B_interval = system%shell_limits(B)
+!
+            n_construct_aop = n_construct_aop + &
+                           get_size_sp(A_interval, B_interval)
+!
+            n_construct_sp = n_construct_sp + 1
+!
+         endif
+!
+      enddo
+!
+      write(output%unit, '(/t3, a)')         '- Reduction of AO and shell pairs:'
+!
+      write(output%unit, '(/t6, a33, 2x, i11)') 'Total number of shell pairs:     ', solver%n_sp
+      write(output%unit, '(t6, a33, 2x, i11)')  'Significant shell pairs:         ', n_sig_sp
+      write(output%unit, '(t6, a33, 2x, i11)')  'Total number of AO pairs:        ', solver%n_aop
+      write(output%unit, '(t6, a33, 2x, i11)')  'Significant AO pairs:            ', n_sig_aop
+!
+      write(output%unit, '(/t6, a33, 2x, i11)') 'Construct shell pairs:           ', n_construct_sp
+      write(output%unit, '(t6, a33, 2x, i11)')  'Construct AO pairs:              ', n_construct_aop
       flush(output%unit)
 !
 !     Prepare for construction of diagonal and screening vector
@@ -852,14 +937,14 @@ contains
       call mem%dealloc(screening_vector_local, solver%n_aop, 1)
       call mem%dealloc_int(sig_sp_index, n_sig_sp, 2)
 !
-!
-!     Write screening_info_file containing
+!     Write info file for target diagonal containing
 !
 !        1. number of significant shell pairs, number of significant ao pairs
 !        2. sig_sp - vector of logicals to describe which shell pairs are significant
 !        3. D_xy = ( xy | xy ), the significant diagonal.
+!        4. Screening vector
 !
-      call disk%open_file(solver%diagonal_info_target, 'write')
+      call disk%open_file(solver%diagonal_info_target, 'write', 'rewind')
       rewind(solver%diagonal_info_target%unit)
 !
       write(solver%diagonal_info_target%unit) n_sig_sp, n_sig_aop
@@ -867,7 +952,19 @@ contains
       write(solver%diagonal_info_target%unit) D_xy
       write(solver%diagonal_info_target%unit) screening_vector_reduced
 !
+!     Write info file for target diagonal containing
+!
+!        1. number of shell pairs to construct, number of ao pairs to construct
+!        2. construct_sp - vector of logicals to describe which shell pairs are to be constructed
+!
+      call disk%open_file(solver%diagonal_info_construct, 'write', 'rewind')
+      rewind(solver%diagonal_info_target%unit)
+!
+      write(solver%diagonal_info_construct%unit) n_construct_sp, n_construct_aop
+      write(solver%diagonal_info_construct%unit) construct_sp
+!
       call disk%close_file(solver%diagonal_info_target)
+      call disk%close_file(solver%diagonal_info_construct)
 !
       deallocate(sig_sp)
       call mem%dealloc(D_xy, n_sig_aop, 1)
