@@ -97,9 +97,9 @@ contains
 !
             read(line(18:100), *) solver%eigenvalue_threshold
 !
-         elseif (line(1:25) == 'number of singlet states:' ) then
+         elseif (line(1:15) == 'singlet states:' ) then
 !
-            read(line(26:100), *) solver%n_singlet_states
+            read(line(16:100), *) solver%n_singlet_states
 !
          elseif (line(1:16) == 'core excitation:' ) then
 !
