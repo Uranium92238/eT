@@ -317,23 +317,9 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: projector
 !
-      integer(i15) :: core, i, a, ai
-!
       call mem%alloc(projector, wf%n_amplitudes, 1)
 !
-      projector = zero
-!
-      do core = 1, solver%n_cores
-!
-         i = solver%core_MOs(core, 1)
-!
-         do a = 1, wf%n_v
-!
-            ai = wf%n_v*(i - 1) + a
-            projector(ai, 1) = one
-!
-         enddo
-      enddo
+      call wf%get_cvs_projector(projector, solver%n_cores, solver%core_MOs)
 !
       call davidson%set_projector(projector)
       call mem%dealloc(projector, wf%n_amplitudes, 1)

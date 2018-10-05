@@ -7,6 +7,7 @@ module es_engine_class
    use ccs_class
    use eri_cd_solver_class
    use davidson_cc_es_solver_class
+   use davidson_cc_ip_solver_class
    use davidson_cvs_cc_es_solver_class
    use diis_cc_gs_solver_class
    use diis_cc_multipliers_solver_class
@@ -59,6 +60,7 @@ contains
 ! 
       type(davidson_cc_es_solver), allocatable, target      ::  cc_valence_es
       type(davidson_cvs_cc_es_solver), allocatable, target  ::  cc_core_es
+      type(davidson_cc_ip_solver), allocatable, target      ::  cc_valence_ip
 !
       class(davidson_cc_es_solver), pointer :: cc_es_solver
 !
@@ -118,6 +120,16 @@ contains
          deallocate(cc_core_es)
 !
       elseif(es_type == 'valence ionized') then
+!
+         allocate(cc_valence_ip)
+         cc_es_solver => cc_valence_ip
+!
+         call cc_es_solver%prepare(wf)
+         call cc_es_solver%run(wf)
+         call cc_es_solver%cleanup(wf)
+!
+         cc_es_solver => null()
+         deallocate(cc_valence_ip)
 !
       elseif(es_type == 'core ionized') then
 !  

@@ -97,6 +97,9 @@ module ccs_class
       procedure :: construct_multiplier_equation               => construct_multiplier_equation_ccs
       procedure :: construct_eta                               => construct_eta_ccs
 !
+      procedure :: get_cvs_projector                           => get_cvs_projector_ccs
+      procedure :: get_ip_projector                            => get_ip_projector_ccs
+!
 !     Routines to get electron repulsion integrals (ERIs)
 !
       procedure :: get_ovov                                     => get_ovov_ccs
@@ -2919,6 +2922,67 @@ contains
       call disk%close_file(wf%integrals%cholesky_mo)
 !
    end subroutine add_bath_orbitals_ccs
+!
+!
+   subroutine get_cvs_projector_ccs(wf, projector, n_cores, core_MOs)
+!!
+!!    Get CVS projector
+!!    Written by Sarai D. Folekstad, Oct 2018
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_amplitudes, 1), intent(out) :: projector
+!
+      integer(i15), intent(in) :: n_cores
+!
+      integer(i15), dimension(n_cores, 1), intent(in) :: core_MOs
+!
+      integer(i15) :: core, i, a, ai
+!
+      projector = zero
+!
+      do core = 1, n_cores
+!
+        i = core_MOs(core, 1)
+!
+        do a = 1, wf%n_v
+!
+           ai = wf%n_v*(i - 1) + a
+           projector(ai, 1) = one
+!
+        enddo
+     enddo
+!
+   end subroutine get_cvs_projector_ccs
+!
+!
+   subroutine get_ip_projector_ccs(wf, projector)
+!!
+!!    Get ip projector
+!!    Written by Sarai D. Folekstad, Oct 2018
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_amplitudes, 1), intent(out) :: projector
+!
+      integer(i15) :: i, a, ai
+!
+      projector = zero
+!
+      a = wf%n_v ! Last virtual is bath orbital
+!
+      do i = 1, wf%n_o
+!
+         ai = wf%n_v*(i - 1) + a
+         projector(ai, 1) = one
+!
+     enddo
+!
+   end subroutine get_ip_projector_ccs
 !
 !
 end module ccs_class
