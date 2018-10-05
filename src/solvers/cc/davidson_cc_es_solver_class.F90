@@ -15,10 +15,10 @@ module davidson_cc_es_solver_class
 !
    type :: davidson_cc_es_solver
 !
-      integer(i15) :: max_iterations = 100
+      integer(i15) :: max_iterations
 !
-      real(dp) :: eigenvalue_threshold = 1.0d-6
-      real(dp) :: residual_threshold   = 1.0d-6
+      real(dp) :: eigenvalue_threshold  
+      real(dp) :: residual_threshold  
 !
       logical      :: do_restart = .false.
 !
@@ -78,6 +78,7 @@ contains
 !
 !     Set defaults
 !
+      solver%n_singlet_states     = 0
       solver%max_iterations       = 100
       solver%eigenvalue_threshold = 1.0d-6
       solver%residual_threshold   = 1.0d-6
@@ -92,6 +93,8 @@ contains
       solver%energies = zero
 !
       call solver%restart_file%init('davidson_cc_es_restart_info', 'sequential', 'formatted')
+!
+      if (solver%n_singlet_states == 0) call output%error_msg('number of excitations must be specified.')
 !
    end subroutine prepare_davidson_cc_es_solver
 !
@@ -371,7 +374,7 @@ contains
 !
          write(output%unit,'(/t3,a, i3, a)') 'Convergence criterion met in ', iteration - 1, ' iterations!'
 !
-      elseif (.not. converged .and. iteration == solver%max_iterations) then
+      elseif (.not. converged ) then
 !
          write(output%unit,'(/t3,a)') 'Maximal number of iterations performed without reaching convergence!'
 !
@@ -398,11 +401,11 @@ contains
 !
       if (trim(solver%transformation) == 'right') then 
 !
-         call wf%jacobi_transform_trial_vector(c_i)
+         call wf%jacobian_transform_trial_vector(c_i)
 !
       elseif (trim(solver%transformation) == 'left') then 
 !
-         call wf%jacobi_transpose_transform_trial_vector(c_i)
+         call wf%jacobian_transpose_transform_trial_vector(c_i)
 !
       endif 
 !

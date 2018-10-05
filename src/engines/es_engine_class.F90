@@ -89,10 +89,9 @@ contains
 !
       deallocate(cc_gs_solver)
 !
-!     Prepare for excited state
+      if (wf%name .ne. 'CCS') call wf%integrals%write_t1_cholesky(wf%t1)
 !
-      call wf%initialize_t1()
-      wf%t1 = zero
+!     Prepare for excited state
 !
 !     Multiplier equation (temporary for testing, - Eirik, Oct 2018)
 !
@@ -120,10 +119,8 @@ contains
 !
       elseif(es_type == 'valence ionized') then
 !
-!
       elseif(es_type == 'core ionized') then
-!
-!
+!  
       else ! es_type = valence
 !
          allocate(cc_valence_es)
@@ -137,7 +134,6 @@ contains
          deallocate(cc_valence_es)
 !
       endif
-!
 !
    end subroutine run_es_engine
 !

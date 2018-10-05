@@ -157,7 +157,7 @@ contains
 !
       integer(i15) :: pqr, rpq, r, q, p
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+!$omp parallel do schedule(static) private(r,q,p,pqr, rpq)
       do r = 1, dim_r
          do q = 1, dim_q
             do p = 1, dim_p
@@ -170,7 +170,7 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine sort_123_to_312
 !
@@ -193,7 +193,7 @@ contains
 !
      integer(i15) :: pqr, rqp, r, q, p
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+!$omp parallel do schedule(static) private(r,q,p,pqr, rqp)
      do r = 1, dim_r
         do q = 1, dim_q
            do p = 1, dim_p
@@ -206,7 +206,7 @@ contains
            enddo
         enddo
      enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
   end subroutine sort_123_to_321
 !
@@ -229,7 +229,7 @@ contains
 !
       integer(i15) :: pqr, prq, r, q, p
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+!$omp parallel do schedule(static) private(r,q,p,pqr,prq)
       do r = 1, dim_r
          do q = 1, dim_q
             do p = 1, dim_p
@@ -242,7 +242,7 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine sort_123_to_132
 !
@@ -265,7 +265,7 @@ contains
 !
       integer(i15) :: pqr, qpr, r, q, p
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+!$omp parallel do schedule(static) private(r,q,p,pqr,qpr)
       do r = 1, dim_r
          do q = 1, dim_q
             do p = 1, dim_p
@@ -278,7 +278,7 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine sort_123_to_213
 !
@@ -304,7 +304,7 @@ contains
 !
       integer(i15) :: pqr, rqp, r, q, p
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+!$omp parallel do schedule(static) private(r,q,p,pqr,rqp)
       do r = 1, dim_r
          do q = 1, dim_q
             do p = 1, dim_p
@@ -317,7 +317,7 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine add_321_to_123
 !
@@ -342,7 +342,7 @@ contains
 !
       integer(i15) :: p, q, r, pqr, prq
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+!$omp parallel do schedule(static) private(r,q,p,pqr,prq)
       do r = 1, dim_r
          do q = 1, dim_q
             do p = 1, dim_p
@@ -355,7 +355,7 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine add_132_to_123
 !
@@ -380,7 +380,7 @@ contains
 !
       integer(i15) :: p, q, r, pqr, rpq
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+!$omp parallel do schedule(static) private(r,q,p,pqr,rpq)
       do r = 1, dim_r
          do q = 1, dim_q
             do p = 1, dim_p
@@ -393,7 +393,7 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine add_312_to_123
 !
@@ -423,7 +423,7 @@ contains
 !
       integer(i15) :: p, q, r, s, pq, rs, rp, qs
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+!$omp parallel do schedule(static) private(s,r,q,p,rs,qs,rp,pq)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -444,7 +444,7 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine add_3124_to_1234
 !
@@ -468,7 +468,7 @@ contains
 !
       integer(i15) :: p, q, r, s, rs, pq
 !
-!!$omp parallel do schedule(static) private(s,r,rs,q,rq,p,pq,sp)
+!$omp parallel do schedule(static) private(s,r,rs,q,p,pq)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -485,7 +485,7 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine sort_1234_to_3412
 !
@@ -509,7 +509,7 @@ contains
 !
       integer(i15) :: p, q, r, s, rs, pq, sp, rq
 !
-!!$omp parallel do schedule(static) private(s,r,rs,q,rq,p,pq,sp)
+!$omp parallel do schedule(static) private(s,r,rs,q,rq,p,pq,sp)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -530,9 +530,146 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine sort_1234_to_4132
+!
+   subroutine squareup_and_sort_1234_to_4132(x_pqrs, x_sp_rq, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Square up and sort 1234 to 4132
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre
+!!    and Andreas Skeidsvoll, 2018
+!!
+!!    Reorders the array x_pq_rs to x_sp_rq (i.e., 1234 to 4132).
+!!
+!!    The unordered array x_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s.
+!!    The ordered array x_sp_rq is assumed allocated as dim_s*dim_p x dim_r*dim_q.
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+!
+      real(dp), dimension(:,:), intent(in) :: x_pqrs
+      real(dp), dimension(dim_s*dim_p, dim_r*dim_q), intent(inout) :: x_sp_rq
+!
+      integer(i15) :: p, q, r, s, rs, pq, sp, rq, pqrs
+!
+!$omp parallel do schedule(static) private(s,r,rs,q,rq,p,pq,sp,pqrs)
+      do s = 1, dim_s
+         do r = 1, dim_r
+!
+            rs = dim_r*(s-1) + r
+!
+            do q = 1, dim_q
+!
+               rq = dim_r*(q-1) + r
+!
+               do p = 1, dim_p
+!
+                  pq = dim_p*(q-1) + p
+                  sp = dim_s*(p-1) + s
+                  pqrs = (max(pq,rs)*(max(pq,rs)-3)/2) + pq + rs
+!
+                  x_sp_rq(sp, rq) = x_pqrs(pqrs, 1)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine squareup_and_sort_1234_to_4132
+!
+!
+   subroutine sort_1234_to_4123(x_pq_rs, x_sp_qr, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Sort 1234 to 4132
+!!    Written by Eirik F. Kjønstad, Rolf H. Myhre and Andreas Skeidsvoll, 2018
+!!
+!!    Reorders the array x_pq_rs to x_sp_qr (i.e., 1234 to 4123).
+!!
+!!    The unordered array x_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s.
+!!    The ordered array x_sp_qr is assumed allocated as dim_s*dim_p x dim_r*dim_q.
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+!
+      real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs
+      real(dp), dimension(dim_s*dim_p, dim_r*dim_q), intent(inout) :: x_sp_qr
+!
+      integer(i15) :: p, q, r, s, rs, pq, sp, qr
+!
+!$omp parallel do schedule(static) private(s,r,rs,q,qr,p,pq,sp)
+      do s = 1, dim_s
+         do r = 1, dim_r
+!
+            rs = dim_r*(s-1) + r
+!
+            do q = 1, dim_q
+!
+               qr = dim_q*(r-1) + q
+!
+               do p = 1, dim_p
+!
+                  pq = dim_p*(q-1) + p
+                  sp = dim_s*(p-1) + s
+!
+                  x_sp_qr(sp, qr) = x_pq_rs(pq, rs)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine sort_1234_to_4123
+!
+!
+   subroutine squareup_and_sort_1234_to_4123(x_pqrs, x_sp_qr, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Square up and srt 1234 to 4132
+!!    Written by Eirik F. Kjønstad, Rolf H. Myhre and Andreas Skeidsvoll, 2018
+!!
+!!    Reorders the array x_pqrs to x_sp_qr (i.e., 1234 to 4123).
+!!
+!!    The unordered array x_pqrs is assumed allocated as dim_p*dim_q*dim_r*dim_s x 1.
+!!    The ordered array x_sp_qr is assumed allocated as dim_s*dim_p x dim_r*dim_q.
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+!
+      real(dp), dimension(:,:), intent(in) :: x_pqrs
+      real(dp), dimension(dim_s*dim_p, dim_r*dim_q), intent(inout) :: x_sp_qr
+!
+      integer(i15) :: p, q, r, s, rs, pq, sp, qr, pqrs
+!
+!$omp parallel do schedule(static) private(s,r,rs,q,qr,p,pq,sp,pqrs)
+      do s = 1, dim_s
+         do r = 1, dim_r
+!
+            rs = dim_r*(s-1) + r
+!
+            do q = 1, dim_q
+!
+               qr = dim_q*(r-1) + q
+!
+               do p = 1, dim_p
+!
+                  pq = dim_p*(q-1) + p
+                  sp = dim_s*(p-1) + s
+                  pqrs = (max(pq,rs)*(max(pq,rs)-3)/2) + pq + rs
+!
+                  x_sp_qr(sp, qr) = x_pqrs(pqrs, 1)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine squareup_and_sort_1234_to_4123
 !
 !
    subroutine sort_1234_to_3124(x_pq_rs, x_rp_qs, dim_p, dim_q, dim_r, dim_s)
@@ -554,7 +691,7 @@ contains
 !
       integer(i15) :: p, q, r, s, rs, pq, rp, qs
 !
-!!$omp parallel do schedule(static) private(s,r,rs,q,rq,p,pq,sp)
+!$omp parallel do schedule(static) private(s,r,rs,q,rp,p,pq,qs)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -575,9 +712,55 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine sort_1234_to_3124
+!
+!
+   subroutine sort_1234_to_3142(x_pq_rs, x_rp_sq, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Sort 1234 to 3142
+!!    Written by Eirik F. Kjønstad, Rolf H. Myhre and
+!!    Sarai D. Folkestad, 2018
+!!
+!!    Reorders the array x_pq_rs to x_rp_sq (i.e., 1234 to 3142).
+!!
+!!    The unordered array x_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s.
+!!    The ordered array x_rp_qs is assumed allocated as dim_r*dim_p x dim_q*dim_s.
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+!
+      real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs
+      real(dp), dimension(dim_r*dim_p, dim_q*dim_s) :: x_rp_sq
+!
+      integer(i15) :: p, q, r, s, rs, pq, rp, sq
+!
+!$omp parallel do schedule(static) private(s,r,rs,q,rp,p,pq,sq)
+      do s = 1, dim_s
+         do r = 1, dim_r
+!
+            rs = dim_r*(s-1) + r
+!
+            do q = 1, dim_q
+!
+               sq = dim_s*(q-1) + s
+!
+               do p = 1, dim_p
+!
+                  rp = dim_r*(p-1) + r
+                  pq = dim_p*(q-1) + p
+!
+                  x_rp_sq(rp, sq) = x_pq_rs(pq, rs)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine sort_1234_to_3142
 !
 !
    subroutine squareup_and_sort_1234_to_3124(x_pqrs, x_rp_qs, dim_p, dim_q, dim_r, dim_s)
@@ -599,7 +782,7 @@ contains
 !
       integer(i15) :: p, q, r, s, rs, pq, pqrs, rp, qs
 !
-!!$omp parallel do schedule(static) private(s,r,rs,q,rq,p,pq,sp)
+!$omp parallel do schedule(static) private(s,r,rs,q,rp,p,pq,qs)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -621,7 +804,7 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine squareup_and_sort_1234_to_3124
 !
@@ -642,7 +825,7 @@ contains
 !
       integer(i15) :: p, q, r, s, rs, pq, pqrs, qs, pr
 !
-!!$omp parallel do schedule(static) private(s,r,rs,q,rq,p,pq,sp)
+!$omp parallel do schedule(static) private(s,r,rs,q,pr,p,pq,qs)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -664,9 +847,53 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine squareup_and_sort_1234_to_2413
+!
+!
+   subroutine squareup_and_sort_1234_to_2341(x_pqrs, x_qr_sp, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Squareup and sort 1234 to 2341
+!!    Written by Sarai D. Folkestad, 
+!!    Eirik F. Kjønstad and Rolf H. Myhre, 2018
+!!
+!!    Reorders the array x_pq_rs to x_qr_sp (i.e., 1234 to 2413).
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+!
+      real(dp), dimension(:,:), intent(in) :: x_pqrs
+      real(dp), dimension(dim_q*dim_r, dim_p*dim_s) :: x_qr_sp
+!
+      integer(i15) :: p, q, r, s, rs, pq, pqrs, qr, sp
+!
+!$omp parallel do schedule(static) private(s,r,rs,q,qr,p,pq,sp)
+      do s = 1, dim_s
+         do r = 1, dim_r
+!
+            rs = dim_r*(s-1) + r
+!
+            do q = 1, dim_q
+!
+               qr = dim_q*(r-1) + q
+!
+               do p = 1, dim_p
+!
+                  pq = dim_p*(q-1) + p
+                  sp = dim_s*(p-1) + s
+                  pqrs = (max(pq,rs)*(max(pq,rs)-3)/2) + pq + rs
+!
+                  x_qr_sp(qr, sp) = x_pqrs(pqrs, 1)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine squareup_and_sort_1234_to_2341
 !
 !
    subroutine sort_1234_to_2314(x_pq_rs, x_qr_ps, dim_p, dim_q, dim_r, dim_s)
@@ -688,7 +915,7 @@ contains
 !
       integer(i15) :: p, q, r, s, rs, pq, qr, ps
 !
-!!$omp parallel do schedule(static) private(s,r,rs,q,rq,p,pq,sp)
+!$omp parallel do schedule(static) private(s,r,rs,q,qr,p,pq,ps)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -709,9 +936,98 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine sort_1234_to_2314
+!
+!
+   subroutine sort_1234_to_2134(x_pq_rs, x_qp_rs, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Sort 1234 to 2134
+!!    Written by Sarai D. Folkestad, 
+!!    Eirik F. Kjønstad and Rolf H. Myhre, 2018
+!!
+!!    Reorders the array x_pq_rs to x_qp_rs (i.e., 1234 to 2314).
+!!
+!!    The unordered array x_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s.
+!!    The ordered array x_qr_ps is assumed allocated as dim_q*dim_r x dim_p*dim_s.
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+!
+      real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs
+      real(dp), dimension(dim_q*dim_p, dim_r*dim_s) :: x_qp_rs
+!
+      integer(i15) :: p, q, r, s, rs, pq, qp
+!
+!$omp parallel do schedule(static) private(s,r,rs,q,qp,p,pq)
+      do s = 1, dim_s
+         do r = 1, dim_r
+!
+            rs = dim_r*(s-1) + r
+!
+            do q = 1, dim_q
+               do p = 1, dim_p
+!
+                  pq = dim_p*(q-1) + p
+                  qp = dim_q*(p-1) + q
+!
+                  x_qp_rs(qp, rs) = x_pq_rs(pq, rs)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine sort_1234_to_2134
+!
+!
+   subroutine sort_1234_to_2413(x_pq_rs, x_qs_pr, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Sort 1234 to 2413
+!!    Written by Sarai D. Folkestad, 
+!!    Eirik F. Kjønstad and Rolf H. Myhre, 2018
+!!
+!!    Reorders the array x_pq_rs to x_qs_pr (i.e., 1234 to 2314).
+!!
+!!    The unordered array x_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s.
+!!    The ordered array x_qr_ps is assumed allocated as dim_q*dim_r x dim_p*dim_s.
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+!
+      real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs
+      real(dp), dimension(dim_q*dim_s, dim_p*dim_r) :: x_qs_pr
+!
+      integer(i15) :: p, q, r, s, rs, pq, qs, pr
+!
+!$omp parallel do schedule(static) private(s,r,rs,q,qs,p,pq,pr)
+      do s = 1, dim_s
+         do r = 1, dim_r
+!
+            rs = dim_r*(s-1) + r
+!
+            do q = 1, dim_q
+!
+               qs = dim_q*(s-1) + q
+!
+               do p = 1, dim_p
+!
+                  pq = dim_p*(q-1) + p
+                  pr = dim_p*(r-1) + p
+!
+                  x_qs_pr(qs, pr) = x_pq_rs(pq, rs)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine sort_1234_to_2413
 !
 !
    subroutine sort_1234_to_1324(x_pq_rs, x_pr_qs, dim_p, dim_q, dim_r, dim_s)
@@ -733,7 +1049,7 @@ contains
 !
       integer(i15) :: p, q, r, s, rs, qs, pq, pr
 !
-!!$omp parallel do schedule(static) private(s,r,rs,q,qs,p,pq,pr)
+!$omp parallel do schedule(static) private(s,r,rs,q,qs,p,pq,pr)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -754,7 +1070,7 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine sort_1234_to_1324
 !
@@ -778,7 +1094,7 @@ contains
 !
       integer(i15) :: p, q, r, s, rs, qs, pq, pr, pqrs
 !
-!!$omp parallel do schedule(static) private(s,r,rs,q,qs,p,pq,pr,pqrs)
+!$omp parallel do schedule(static) private(s,r,rs,q,qs,p,pq,pr,pqrs)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -800,7 +1116,7 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine squareup_and_sort_1234_to_1324
 !
@@ -824,7 +1140,7 @@ contains
 !
       integer(i15) :: p, q, r, s, pq, rs, qr, sp
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,qr,sp)
+!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,qr,sp)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -845,7 +1161,7 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine sort_1234_to_2341
 !
@@ -869,7 +1185,7 @@ contains
 !
       integer(i15) :: p, q, r, s, pq, rs, pr, sq
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,qr,sp)
+!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,pr,sq)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -890,7 +1206,7 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine sort_1234_to_1342
 !
@@ -914,7 +1230,7 @@ contains
 !
       integer(i15) :: p, q, r, s, pq, rs, ps, rq
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -935,9 +1251,53 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine sort_1234_to_1432
+!
+!
+   subroutine squareup_and_sort_1234_to_4312(x_pqrs, x_sr_pq, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Square up and sort 1234 to 4312
+!!    Written by Eirik F. Kjønstad, Rolf H. Myhre
+!!    and Andreas Skeidsvoll, 2018
+!!
+!!    Squares up and reorders the array x_pqrs to x_sr_pq (i.e., 1234 to 4312).
+!!
+!!    The unordered array x_pqrs is assumed allocated as dim_p*dim_q*dim_r*dim_s x 1.
+!!    The ordered array x_sr_pq is assumed allocated as dim_s*dim_r x dim_p*dim_q.
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+!
+      real(dp), dimension(:,:), intent(in) :: x_pqrs
+      real(dp), dimension(dim_s*dim_r, dim_p*dim_q), intent(inout) :: x_sr_pq
+!
+      integer(i15) :: p, q, r, s, pq, rs, sr, pqrs
+!
+!$omp parallel do schedule(static) private(s,r,rs,sr,q,p,pq,pqrs)
+      do s = 1, dim_s
+            do r = 1, dim_r
+   !
+               rs = dim_r*(s-1) + r
+               sr = dim_s*(r-1) + s
+   !
+               do q = 1, dim_q
+                  do p = 1, dim_p
+   !
+                     pq = dim_p*(q-1) + p
+                     pqrs = (max(pq,rs)*(max(pq,rs)-3)/2) + pq + rs
+   !
+                     x_sr_pq(sr, pq) = x_pqrs(pqrs, 1)
+   !
+                  enddo
+               enddo
+            enddo
+         enddo
+!$omp end parallel do
+!
+   end subroutine squareup_and_sort_1234_to_4312
 !
 !
    subroutine sort_1234_to_4312(x_pq_rs, x_sr_pq, dim_p, dim_q, dim_r, dim_s)
@@ -959,7 +1319,7 @@ contains
 !
       integer(i15) :: p, q, r, s, pq, rs, sr
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+!$omp parallel do schedule(static) private(s,r,rs,sr)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -970,7 +1330,7 @@ contains
 !
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine sort_1234_to_4312
 !
@@ -994,7 +1354,7 @@ contains
 !
       integer(i15) :: p, q, r, s, pq, rs, ps, qr
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,qr)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -1015,9 +1375,58 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine sort_1234_to_1423
+!
+!
+   subroutine add_1423_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Add 1423 to 1234
+!!    Written by Eirik F. Kjønstad, Rolf H. Myhre and Andreas Skeidsvoll, 2018
+!!
+!!    Performs:
+!!
+!!       y_pq_rs(pq,rs) = y_pq_rs(pq,rs) + gamma * x(ps, qr)
+!!
+!!    The unordered array y_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s,
+!!    and x accordingly.
+!!
+      implicit none
+!
+      real(dp), intent(in) :: gamma
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+!
+      real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs
+      real(dp), dimension(dim_p*dim_s, dim_q*dim_r), intent(in) :: x
+!
+      integer(i15) :: p, q, r, s, pq, rs, ps, qr
+!
+!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,qr)
+      do s = 1, dim_s
+         do r = 1, dim_r
+!
+            rs = dim_r*(s-1) + r
+!
+            do q = 1, dim_q
+!
+               qr = dim_q*(r-1) + q
+!
+               do p = 1, dim_p
+!
+                  pq = dim_p*(q-1) + p
+                  ps = dim_p*(s-1) + p
+!
+                  y_pq_rs(pq, rs) = y_pq_rs(pq, rs) + gamma*x(ps, qr)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine add_1423_to_1234
 !
 !
    subroutine add_1432_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
@@ -1043,7 +1452,7 @@ contains
 !
       integer(i15) :: p, q, r, s, pq, rs, ps, rq
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -1064,7 +1473,7 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine add_1432_to_1234
 !
@@ -1092,7 +1501,7 @@ contains
 !
       integer(i15) :: p, q, r, s, pq, rs, pr, sq
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,pr,sq)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -1113,7 +1522,7 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine add_1342_to_1234
 !
@@ -1141,7 +1550,7 @@ contains
 !
       integer(i15) :: p, q, r, s, pq, rs, sr
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,sr)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -1160,7 +1569,7 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine add_1243_to_1234
 !
@@ -1216,6 +1625,7 @@ contains
 !
       integer(i15) :: p, q, I, pq, qp
 !
+!$omp parallel do schedule(static) private(I,q,p,pq,qp)
       do I = 1, dim_r*dim_s
          do q = 1, dim_q
             do p = 1, dim_p
@@ -1228,6 +1638,7 @@ contains
             enddo
          enddo
       enddo
+!$omp end parallel do
 !
    end subroutine add_3421_to_1234
 !
@@ -1255,7 +1666,7 @@ contains
 !
       integer(i15) :: p, q, r, s, pq, rs, qr, sp
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,sp,qr)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -1276,7 +1687,7 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine add_2341_to_1234
 !
@@ -1304,7 +1715,7 @@ contains
 !
       integer(i15) :: p, q, r, s, pq, rs, qp, sr
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+!$omp parallel do schedule(static) private(s,r,q,p,qp,rs,sr,pq)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -1324,9 +1735,57 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine add_2143_to_1234
+!
+!
+   subroutine add_2134_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Add 2143 to 1234
+!!    Written by Sarai D. Folkestad, 
+!!    Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Performs:
+!!
+!!       y_pq_rs(pq,rs) = y_pq_rs(pq,rs) + gamma * x(qp, rs)
+!!
+!!    The unordered array y_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s,
+!!    and x accordingly.
+!!
+      implicit none
+!
+      real(dp), intent(in) :: gamma
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+!
+      real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs
+      real(dp), dimension(dim_q*dim_p, dim_r*dim_s), intent(in) :: x
+!
+      integer(i15) :: p, q, r, s, pq, rs, qp
+!
+!$omp parallel do schedule(static) private(s,r,q,p,qp,rs,pq)
+      do s = 1, dim_s
+         do r = 1, dim_r
+!
+            rs = dim_r*(s-1) + r
+!
+            do q = 1, dim_q
+!
+               do p = 1, dim_p
+!
+                  pq = dim_p*(q-1) + p
+                  qp = dim_q*(p-1) + q
+!
+                  y_pq_rs(pq, rs) = y_pq_rs(pq, rs) + gamma*x(qp, rs)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine add_2134_to_1234
 !
 !
    subroutine add_3214_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
@@ -1352,7 +1811,7 @@ contains
 !
       integer(i15) :: p, q, r, s, pq, rs, rq, ps
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -1373,7 +1832,7 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine add_3214_to_1234
 !
@@ -1401,7 +1860,7 @@ contains
 !
       integer(i15) :: p, q, r, s, pq, rs, sq, rp
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,rp,sq)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -1422,9 +1881,59 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine add_4231_to_1234
+!
+!
+   subroutine add_2431_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Add 2431 to 1234
+!!    Written by Sarai D. Folkestad,
+!!    Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Performs:
+!!
+!!       y_pq_rs(pq,rs) = y_pq_rs(pq,rs) + gamma * x(qs, rp)
+!!
+!!    The unordered array y_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s,
+!!    and x accordingly.
+!!
+      implicit none
+!
+      real(dp), intent(in) :: gamma
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+!
+      real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs
+      real(dp), dimension(dim_q*dim_s, dim_r*dim_p), intent(in) :: x
+!
+      integer(i15) :: p, q, r, s, pq, rs, qs, rp
+!
+!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,rp,qs)
+      do s = 1, dim_s
+         do r = 1, dim_r
+!
+            rs = dim_r*(s-1) + r
+!
+            do q = 1, dim_q
+!
+               qs = dim_q*(s-1) + q
+!
+               do p = 1, dim_p
+!
+                  pq = dim_p*(q-1) + p
+                  rp = dim_r*(p-1) + r
+!
+                  y_pq_rs(pq, rs) = y_pq_rs(pq, rs) + gamma*x(qs, rp)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine add_2431_to_1234
 !
 !
    subroutine add_4213_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
@@ -1450,7 +1959,7 @@ contains
 !
       integer(i15) :: p, q, r, s, pq, rs, sq, pr
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,pr,sq)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -1471,7 +1980,7 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine add_4213_to_1234
 !
@@ -1499,7 +2008,7 @@ contains
 !
       integer(i15) :: p, q, r, s, pq, rs, sr, qp
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+!$omp parallel do schedule(static) private(s,r,q,p,qp,rs,sr,pq)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -1518,9 +2027,52 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine add_4321_to_1234
+!
+!
+   subroutine sort_1234_to_4321(x_pq_rs, x_sr_qp, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Sort 1234 to 4321
+!!    Written by Eirik F. Kjønstad, Rolf H. Myhre and Andreas Skeidsvoll, 2018
+!!
+!!    Reorders the array x_pq_rs to x_sr_qp (i.e., 1234 to 4321).
+!!
+!!    The unordered array x_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s.
+!!    The ordered array x_sr_qp is assumed allocated as dim_s*dim_r x dim_q*dim_p.
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+!
+      real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in)    :: x_pq_rs
+      real(dp), dimension(dim_s*dim_r, dim_q*dim_p), intent(inout) :: x_sr_qp
+!
+      integer(i15) :: p, q, r, s, qp, rs, sr, pq
+!
+!$omp parallel do schedule(static) private(s,r,q,p,qp,rs,sr,pq)
+      do s = 1, dim_s
+            do r = 1, dim_r
+   !
+               rs = dim_r*(s-1) + r
+               sr = dim_s*(r-1) + s
+   !
+               do q = 1, dim_q
+                  do p = 1, dim_p
+   !
+                     pq = dim_p*(q-1) + p
+                     qp = dim_q*(p-1) + q
+   !
+                     x_sr_qp(sr, qp) = x_pq_rs(pq, rs)
+   !
+                  enddo
+               enddo
+            enddo
+         enddo
+   !$omp end parallel do
+!
+   end subroutine sort_1234_to_4321
 !
 !
    subroutine add_4312_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
@@ -1546,7 +2098,7 @@ contains
 !
       integer(i15) :: p, q, r, s, pq, rs, sr
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+!$omp parallel do schedule(static) private(s,r,q,p,sr,rs,pq)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -1564,7 +2116,7 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine add_4312_to_1234
 !
@@ -1592,7 +2144,7 @@ contains
 !
       integer(i15) :: p, q, r, s, pq, rs, sp, qr
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,qr,sp)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -1613,10 +2165,59 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine add_4123_to_1234
 !
+!
+   subroutine add_4132_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Add 4132 to 1234
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Performs:
+!!
+!!       y_pq_rs(pq,rs) = y_pq_rs(pq,rs) + gamma * x(sp, rq)
+!!
+!!    The unordered array y_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s,
+!!    and x accordingly.
+!!
+      implicit none
+!
+      real(dp), intent(in) :: gamma
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+!
+      real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs
+      real(dp), dimension(dim_s*dim_p, dim_q*dim_r), intent(in) :: x
+!
+      integer(i15) :: p, q, r, s, pq, rs, sp, rq
+!
+!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,rq,sp)
+      do s = 1, dim_s
+         do r = 1, dim_r
+!
+            rs = dim_r*(s-1) + r
+!
+            do q = 1, dim_q
+!
+               rq = dim_r*(q-1) + r
+!
+               do p = 1, dim_p
+!
+                  pq = dim_p*(q-1) + p
+                  sp = dim_s*(p-1) + s
+!
+                  y_pq_rs(pq, rs) = y_pq_rs(pq, rs) + gamma*x(sp, rq)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine add_4132_to_1234
+!   
 !
    subroutine squareup_and_sort_1234_to_1432(x_pqrs, x_ps_rq, dim_p, dim_q, dim_r, dim_s)
 !!
@@ -1639,7 +2240,7 @@ contains
 !
       integer(i15) :: p, q, r, s, pq, rs, pqrs, ps, rq
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq,pqrs)
+!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq,pqrs)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -1661,7 +2262,7 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine squareup_and_sort_1234_to_1432
 !
@@ -1687,7 +2288,7 @@ contains
 !
       integer(i15) :: p, q, r, s, pq, rs, pqrs, sr
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq,pqrs)
+!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,sr,pqrs)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -1707,7 +2308,7 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine squareup_and_sort_1234_to_1243
 !
@@ -1733,7 +2334,7 @@ contains
 !
       integer(i15) :: p, q, r, s, pq, rs, pqrs, ps, qr
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq,pqrs)
+!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,qr,pqrs)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -1755,7 +2356,7 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine squareup_and_sort_1234_to_1423
 !
@@ -1779,7 +2380,7 @@ contains
 !
       integer(i15) :: p, q, r, s, pq, rs, rq, ps
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -1800,7 +2401,7 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine sort_1234_to_3214
 !
@@ -1824,7 +2425,7 @@ contains
 !
       integer(i15) :: p, q, r, s, pq, rs, sq, rp
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,sq,rp)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -1845,7 +2446,7 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine sort_1234_to_4231
 !
@@ -1869,7 +2470,7 @@ contains
 !
       integer(i15) :: p, q, r, s, pq, rs, sq, pr
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
+!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,sq,pr)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -1890,9 +2491,56 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine sort_1234_to_4213
+!
+!
+   subroutine squareup_and_sort_1234_to_4213(x_pqrs, x_sq_pr, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Square up and sort 1234 to 4213
+!!    Written by Eirik F. Kjønstad, Rolf H. Myhre
+!!    and Andreas Skeidsvoll, 2018
+!!
+!!    Reorders the array x_pq_rs to x_sq_pr (i.e., 1234 to 4213).
+!!
+!!    The unordered array x_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s.
+!!    The ordered array x_sq_pr is assumed allocated as dim_s*dim_q x dim_p*dim_r.
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+!
+      real(dp), dimension(:,:), intent(in) :: x_pqrs
+      real(dp), dimension(dim_s*dim_q, dim_r*dim_p) :: x_sq_pr
+!
+      integer(i15) :: p, q, r, s, pq, rs, sq, pr, pqrs
+!
+!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,sq,pr,pqrs)
+      do s = 1, dim_s
+         do r = 1, dim_r
+!
+            rs = dim_r*(s-1) + r
+!
+            do q = 1, dim_q
+!
+               sq = dim_s*(q-1) + s
+!
+               do p = 1, dim_p
+!
+                  pq = dim_p*(q-1) + p
+                  pr = dim_p*(r-1) + p
+                  pqrs = (max(pq,rs)*(max(pq,rs)-3)/2) + pq + rs
+!
+                  x_sq_pr(sq, pr) = x_pqrs(pqrs,1)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine squareup_and_sort_1234_to_4213
 !
 !
    subroutine squareup_and_sort_1234_to_3214(x_pqrs, x_rq_ps, dim_p, dim_q, dim_r, dim_s)
@@ -1916,7 +2564,7 @@ contains
 !
       integer(i15) :: p, q, r, s, pq, rs, pqrs, rq, ps
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq,pqrs)
+!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq,pqrs)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -1938,7 +2586,7 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine squareup_and_sort_1234_to_3214
 !
@@ -1962,7 +2610,7 @@ contains
 !
       integer(i15) :: p, q, r, s, pq, rs, rq, sp
 !
-!!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,rq,sp)
+!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,rq,sp)
       do s = 1, dim_s
          do r = 1, dim_r
 !
@@ -1983,7 +2631,7 @@ contains
             enddo
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine sort_1234_to_3241
 !
@@ -2007,7 +2655,7 @@ contains
 !
       integer(i15) :: I, r, s, sr, rs
 !
-!!$omp parallel do schedule(static) private(I,r,s,sr,rs)
+!$omp parallel do schedule(static) private(I,r,s,sr,rs)
       do I = 1, dim_p*dim_q
 !
          do s = 1, dim_s
@@ -2022,7 +2670,7 @@ contains
          enddo
 !
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine sort_1234_to_1243
 !
@@ -2047,14 +2695,14 @@ contains
 !
       integer(i15) :: i, j, ij
 !
-!!$omp parallel do schedule(static) private(i,j)
+!$omp parallel do schedule(static) private(i,j, ij)
       do i = 1, N
          do j = i, N
             ij = (max(i,j)*(max(i,j)-3)/2) + i + j
             packed(ij, 1) = packed(ij, 1) + unpacked(i,j)
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine add_to_packed
 !
@@ -2076,14 +2724,14 @@ contains
 !
       integer(i15) :: i, j, ij
 !
-!!$omp parallel do schedule(static) private(i,j)
+!$omp parallel do schedule(static) private(i,j, ij)
       do i = 1, N
          do j = i, N
             ij = (max(i,j)*(max(i,j)-3)/2) + i + j
             packed(ij, 1) = packed(ij, 1) + unpacked(i,j) + unpacked(j,i)
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine symmetrize_and_add_to_packed
 !
@@ -2144,13 +2792,13 @@ contains
 !
       integer(i15) :: i = 0, j = 0
 !
-!!$omp parallel do schedule(static) private(i,j)
+!$omp parallel do schedule(static) private(i,j)
       do i = 1, N
          do j = 1, N
             unpacked(i, j) = packed(index_packed(i,j), 1)
          enddo
       enddo
-!!$omp end parallel do
+!$omp end parallel do
 !
    end subroutine squareup
 !
@@ -2168,13 +2816,16 @@ contains
       real(dp), dimension(N*(N+1)/2,M), intent(in) :: packed
       real(dp), dimension(N*N,M)                   :: unpacked
 !
-      integer(i15) :: i = 0, j = 0
+      integer(i15) :: i = 0, j = 0, ij = 0
 !
+!$omp parallel do schedule(static) private(i,j, ij)
       do i = 1, N
          do j = 1, N
-            unpacked(index_two(i,j,N), 1:M) = packed(index_packed(i,j), 1:M)
+            ij = N*(j - 1) + i
+            unpacked(ij, :) = packed(index_packed(i,j), :)
          enddo
       enddo
+!$omp end parallel do
 !
    end subroutine
 !
@@ -2195,13 +2846,15 @@ contains
 !
       integer(i15) :: i = 0, j = 0
 !
+!$omp parallel do schedule(static) private(i,j)
       do i = 1, N
-         do j = 1, N
+         do j = 1, i
 !
             packed(index_packed(i, j), 1) = unpacked(i, j)
 !
          enddo
       enddo
+!$omp end parallel do
 !
    end subroutine packin
 !

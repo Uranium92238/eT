@@ -18,6 +18,7 @@ program eT_program
   use mlhf_class
 !
   use ccs_class
+  use ccsd_class
   use mp2_class
 !
   use io_eT_program
@@ -42,6 +43,7 @@ program eT_program
     type(mlhf), allocatable, target  :: mlhf_wf 
 !
     type(ccs), allocatable, target   :: ccs_wf
+    type(ccsd), allocatable, target   :: ccsd_wf
     type(mp2), allocatable, target   :: mp2_wf
 !
 !   Wavefunction pointers
@@ -195,6 +197,9 @@ program eT_program
         elseif (cc_methods(i) == 'cc2') then
 !
         elseif (cc_methods(i) == 'ccsd') then
+!
+          allocate(ccsd_wf)
+          cc_wf => ccsd_wf
 !
         endif
 !
