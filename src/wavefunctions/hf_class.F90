@@ -29,9 +29,9 @@ module hf_class
 !
       real(dp) :: linear_dep_threshold = 1.0D-6
 !
-      real(dp) :: coulomb_threshold    = 1.0D-8    ! screening threshold 
-      real(dp) :: exchange_threshold   = 1.0D-8    ! screening threshold 
-      real(dp) :: libint_epsilon       = 1.0D-16   ! ε for libint, integral precision given
+      real(dp) :: coulomb_threshold    = 1.0D-10    ! screening threshold 
+      real(dp) :: exchange_threshold   = 1.0D-10   ! screening threshold 
+      real(dp) :: libint_epsilon       = 1.0D-20   ! ε for libint, integral precision given
                                                    ! approximately by sqrt(ε)
 !
       type(file) :: orbital_coefficients_file

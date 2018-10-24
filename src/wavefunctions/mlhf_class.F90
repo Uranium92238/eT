@@ -70,6 +70,7 @@ contains
       call wf%set_n_mo()
 !
       write(output%unit, '(/t6, a8, i3, a23)')'Removed ', wf%n_ao - wf%n_mo, ' AOs due to linear dep.'
+      flush(output%unit)
 !
       call wf%initialize_ao_density()
 !
@@ -119,6 +120,8 @@ contains
 !
       type(eri_cd_solver)  :: chol_solver
 !
+      type(file) :: CMO_file
+!
       call wf%initialize_ao_fock()
 !
       s_construct_fock = omp_get_wtime()
@@ -138,6 +141,12 @@ contains
       call wf%initialize_orbital_energies()
       call wf%initialize_orbital_coefficients()
       call wf%do_roothan_hall(wf%ao_fock, wf%orbital_coefficients, wf%orbital_energies) ! F^AO C = S C e to get new MOs C
+!
+      call CMO_file%init('orbital_coefficients', 'sequential', 'unformatted')
+      call disk%open_file(CMO_file, 'write', 'rewind')
+      rewind(CMO_file%unit)
+      write(CMO_file%unit) wf%orbital_coefficients
+      call disk%close_file(CMO_file)
 !
 !     Update the AO density
 !
@@ -171,7 +180,7 @@ contains
 !
       n_active_occ = n_active_occ/2
 !
-!     Add orbitals if bonds are capped. Assumes 2.5Å for covalent bonds.
+!     Add orbitals if bonds are capped. Assumes 1.5Å for covalent bonds.
 !
       do i = wf%system%n_active_atoms + 1, wf%system%n_atoms
 !

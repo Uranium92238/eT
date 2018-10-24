@@ -271,7 +271,7 @@ contains
       if (davidson%dim_red .eq. 0) then 
 !
          norm_c = get_l2_norm(c, davidson%n_parameters)
-         c = c/norm_c
+         call dscal(davidson%n_parameters, one/norm_c, c, 1)
 !
          call disk%open_file(davidson%trials, 'write', 'rewind')
          write(davidson%trials%unit) c 
@@ -286,12 +286,12 @@ contains
             call davidson%read_trial(c_i, i)
             projection_of_c_on_c_i = ddot(davidson%n_parameters, c_i, 1, c, 1)
 !
-            c = c - projection_of_c_on_c_i*c_i 
+            call daxpy(davidson%n_parameters, -projection_of_c_on_c_i, c_i, 1, c, 1)
 !
          enddo 
 !
          norm_c = get_l2_norm(c, davidson%n_parameters)
-         c = c/norm_c
+         call dscal(davidson%n_parameters, one/norm_c, c, 1)
 !
          call disk%open_file(davidson%trials, 'write', 'append')
          write(davidson%trials%unit) c 

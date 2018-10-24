@@ -86,11 +86,8 @@ contains
 !
 !     For safety, delete old files if they are on disk
 !
-   !   call disk%delete(davidson%X)
-   !   call disk%delete(davidson%trials)
-   !   call disk%delete(davidson%transforms)
-   !   call disk%delete(davidson%preconditioner)
-   !   call disk%delete(davidson%projector)
+       call disk%delete(davidson%trials)
+       call disk%delete(davidson%transforms)
 !
       davidson%do_precondition   = .false.         ! Switches to true if 'set_preconditioner' is called
       davidson%do_projection     = .false.         ! Switches to true if 'set_projection' is called
