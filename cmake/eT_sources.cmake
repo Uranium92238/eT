@@ -6,6 +6,7 @@ set(eT_fortran_sources
    src/solvers/hf/arh_hf_solver_class.F90
    src/solvers/cc/diis_cc_gs_solver_class.F90
    src/solvers/cc/diis_cc_multipliers_solver_class.F90
+   src/solvers/cc/davidson_cc_multipliers_solver_class.F90
    src/solvers/cc/davidson_cc_es_solver_class.F90
    src/solvers/cc/davidson_cc_ip_solver_class.F90
    src/solvers/cc/davidson_cvs_cc_es_solver_class.F90
@@ -14,6 +15,7 @@ set(eT_fortran_sources
    src/engines/abstract_engine_class.F90
    src/engines/gs_engine_class.F90
    src/engines/es_engine_class.F90
+   src/engines/multipliers_engine_class.F90
    src/io/disk_manager_class.F90
    src/io/file_class.F90
    src/io/io_utilities.F90
@@ -55,6 +57,7 @@ set(eT_fortran_sources
    src/solver_tools/diis_tool_class.F90
    src/solver_tools/davidson_tool_class.F90
    src/solver_tools/eigen_davidson_tool_class.F90
+   src/solver_tools/linear_davidson_tool_class.F90
    src/submodules/ccsd/omega_ccsd.F90
    src/submodules/ccsd/jacobian_ccsd.F90
    src/submodules/ccsd/jacobian_transpose_ccsd.F90

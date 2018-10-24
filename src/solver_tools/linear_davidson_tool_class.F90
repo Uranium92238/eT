@@ -25,24 +25,77 @@ module linear_davidson_tool_class
 !
    type, extends(davidson_tool) :: linear_davidson_tool 
 !
+      real(dp), dimension(:,:), allocatable :: F_red
+      real(dp), dimension(:,:), allocatable :: F
 !
    contains 
 !
-   !  procedure :: prepare                  => prepare_linear_davidson_tool 
+      procedure :: prepare                      => prepare_linear_davidson_tool 
    !  procedure :: cleanup                  => cleanup_linear_davidson_tool
 !
-      procedure :: construct_next_trial_vec => construct_next_trial_vec_linear_davidson_tool
+      procedure :: construct_next_trial_vec     => construct_next_trial_vec_linear_davidson_tool
 !
-      procedure :: solve_reduced_problem    => solve_reduced_problem_linear_davidson_tool
+      procedure :: solve_reduced_problem        => solve_reduced_problem_linear_davidson_tool
 !
-      procedure :: construct_residual       => construct_residual_linear_davidson_tool
+      procedure :: construct_residual           => construct_residual_linear_davidson_tool
+!
+      procedure :: construct_reduced_gradient   => construct_reduced_gradient_linear_davidson_tool
 !
    end type linear_davidson_tool
 !
 contains
 !
 !
-   subroutine construct_reduced_gradient(davidson)
+   subroutine prepare_linear_davidson_tool(davidson, name, n_parameters, residual_threshold, F)
+!!
+!!    Initialize 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!
+      implicit none 
+!
+      class(linear_davidson_tool) :: davidson 
+!
+      character(len=*), intent(in) :: name
+!
+      real(dp), dimension(n_parameters, 1) :: F 
+!
+      integer(i15), intent(in) :: n_parameters 
+      real(dp), intent(in)     :: residual_threshold
+!
+      call mem%alloc(davidson%F, n_parameters, 1)
+      davidson%F = F
+!
+      davidson%n_parameters = n_parameters
+      davidson%n_solutions  = 1
+!
+      davidson%residual_threshold   = residual_threshold
+!
+      davidson%name = trim(name)
+!
+      call davidson%X%init(trim(davidson%name) // '_X', 'sequential', 'unformatted')
+      call davidson%trials%init(trim(davidson%name) // '_trials', 'sequential', 'unformatted')
+      call davidson%transforms%init(trim(davidson%name) // '_transforms', 'sequential', 'unformatted')
+      call davidson%preconditioner%init(trim(davidson%name) // '_preconditioner', 'sequential', 'unformatted')
+!
+!     For safety, delete old files if they are on disk
+!
+       call disk%delete(davidson%trials)
+       call disk%delete(davidson%transforms)
+       call disk%delete(davidson%X)
+!
+      davidson%do_precondition   = .false.         ! Switches to true if 'set_preconditioner' is called
+!
+      davidson%dim_red           = davidson%n_solutions     ! Initial dimension equal to number of solutions
+      davidson%n_new_trials      = davidson%n_solutions 
+!
+      davidson%max_dim_red = 150
+!
+      davidson%current_n_trials = 0  
+!
+   end subroutine prepare_linear_davidson_tool
+!
+!
+   subroutine construct_reduced_gradient_linear_davidson_tool(davidson)
 !!
 !!    Construct reduced gradient
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
@@ -55,49 +108,35 @@ contains
 !
       class(linear_davidson_tool) :: davidson
 !
-!     Open file
+      real(dp), dimension(:,:), allocatable :: F_red_copy, c_i
 !
-      call disk%open_file(davidson%trials, 'read')
+      integer(i15) :: i
 !
-!     Rewind file
-!
-      rewind(davidson%trials%unit)
+      real(dp) :: ddot
 !
 !     Construct reduced vector
 !
-      if (allocated(davidson%F_red)) then 
+      if (allocated(davidson%F_red)) call mem%dealloc(davidson%F_red, davidson%dim_red - 1, 1) 
 !
-         call mem%alloc(F_red_copy, davidson%dim_red - davidson%n_new_trials, 1)
-         F_red_copy = davidson%F_red
-!
-         call mem%dealloc(davidson%F_red, davidson%dim_red - davidson%new_trials, 1)
-         call mem%alloc(davidson%F_red, davidson%dim_red, 1)
-!
-         davidson%F_red(1:davidson%dim_red - davidson%new_trials, 1) = F_red_copy
-!
-      else
-!
-         call mem%alloc(davidson%F_red, davidson%dim_red, 1)
-!
-      endif
-!
+      call mem%alloc(davidson%F_red, davidson%dim_red, 1)
       call mem%alloc(c_i, davidson%n_parameters, 1)
 !
-      do i = davidson%dim_red - davidson%new_trials + 1, davidson%dim_red 
+      call disk%open_file(davidson%trials, 'read')
+      rewind(davidson%trials%unit)
 !
-         call davidson%read_trial(c_i, i)
+      do i = 1, davidson%dim_red 
+!
+         read(davidson%trials%unit)c_i
+!
          davidson%F_red(i, 1) = ddot(davidson%n_parameters, c_i, 1, davidson%F, 1)
 !
       enddo
 !
-      call mem%dealloc(c_i, davidson%n_parameters, 1)
-!
-!     Close File
-!
       call disk%close_file(davidson%trials)
 !
-   end subroutine construct_reduced_gradient
+      call mem%dealloc(c_i, davidson%n_parameters, 1)
 !
+   end subroutine construct_reduced_gradient_linear_davidson_tool
 !
 !
    subroutine solve_reduced_problem_linear_davidson_tool(davidson)
@@ -117,36 +156,48 @@ contains
 !
       integer(i15), dimension(:,:), allocatable :: ipiv ! Pivot integers (see dgesv routine)
 !
+      real(dp), dimension(:,:), allocatable :: A_red_copy
+!
       integer :: info = -1 ! Error integer for dgesv routine (LU factorization)
+      integer(i15) :: i, j
 !
 !     Solve the linear problem
 !
-      call wf%mem%alloc_int(ipiv, reduced_dim, 1)
+      call mem%alloc_int(ipiv, davidson%dim_red, 1)
       ipiv = 0
       info = 0
 !
-      solver%X_red = solver%F_red
+      if (allocated(davidson%X_red)) call mem%dealloc(davidson%X_red, davidson%dim_red - 1, 1 )
+!
+      call mem%alloc(davidson%X_red, davidson%dim_red, 1 )
+!
+      davidson%X_red = davidson%F_red
+!
+      call mem%alloc(A_red_copy, davidson%dim_red, 1 )
+      A_red_copy = davidson%A_red
 !
       call dgesv(davidson%dim_red,  &
                   1,                & ! Number of RHS 
-                  davidson%A_red,   &
+                  A_red_copy,       &
                   davidson%dim_red, &
                   ipiv,             &
-                  solver%X_red,     &
+                  davidson%X_red,   &
                   davidson%dim_red, &
                   info)
 !
+      call mem%dealloc(A_red_copy, davidson%dim_red, 1 )
+      call mem%dealloc_int(ipiv, davidson%dim_red, 1)
+!
       if (info .ne. 0) then 
 !
-         write(unit_output,*) 'Error: could not solve reduced response equation.', info
-         stop
+         call output%error_msg('could not solve reduced response equation.')
 !
       endif 
 !
    end subroutine solve_reduced_problem_linear_davidson_tool
 !
 !
-   subroutine construct_residual_linear_davidson_tool(davidson, R, X, norm_X)
+   subroutine construct_residual_linear_davidson_tool(davidson, R, X, norm_X, n)
 !!
 !!    Construct residual 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
@@ -159,19 +210,26 @@ contains
 !
       class(linear_davidson_tool), intent(in) :: davidson 
 !
-      real(dp), dimension(davidson%n_parameters, 1), intent(out)  :: R 
+      real(dp), dimension(davidson%n_parameters, 1)               :: R 
       real(dp), dimension(davidson%n_parameters, 1), intent(in)   :: X 
+!
+      integer(i15),intent(in) :: n
 !
       real(dp), intent(in)     :: norm_X 
 !
+      if (n .ne. 1) then
+!
+         call output%error_msg('for linear equations with davidson n = 1')
+!
+      endif
+!
       call davidson%construct_AX(R, 1)                               ! R = AX 
       call daxpy(davidson%n_parameters, -one, davidson%F, 1, R, 1)   ! R = AX - F
-      call dscal(davidson%n_parameters, one/norm_X, R, 1)            ! R = (AX - F)/|X|
 !
    end subroutine construct_residual_linear_davidson_tool
 !
 !
-   subroutine construct_next_trial_vec_eigen_davidson_tool(davidson, residual_norm, iteration)
+   subroutine construct_next_trial_vec_linear_davidson_tool(davidson, residual_norm)
 !!
 !!    Construct next trial vector  
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -188,11 +246,9 @@ contains
 !!    
       implicit none 
 !
-      class(eigen_davidson_tool) :: davidson 
+      class(linear_davidson_tool) :: davidson 
 !
       real(dp), intent(out) :: residual_norm 
-!
-      integer(i15) :: iteration
 !
       real(dp) :: norm_X, norm_new_trial, norm_residual, norm_precond_residual
 !
@@ -207,7 +263,7 @@ contains
       call davidson%construct_X(X, 1) 
       norm_X = get_l2_norm(X, davidson%n_parameters) 
 !
-      call davidson%construct_residual(R, X, norm_X)
+      call davidson%construct_residual(R, X, norm_X, 1)
 !
       call disk%open_file(davidson%X, 'write', 'rewind')
 !
@@ -228,13 +284,13 @@ contains
 !
       if (norm_residual .gt. davidson%residual_threshold) then 
 !
-         call davidson%projection(R)
-         !call davidson%precondition(R)
+         call davidson%precondition(R)
 !
          norm_precond_residual = get_l2_norm(R, davidson%n_parameters)
          call dscal(davidson%n_parameters, one/norm_precond_residual, R, 1)
 !
          call davidson%orthogonalize_against_trial_vecs(R)
+!
          norm_new_trial = get_l2_norm(R, davidson%n_parameters)
 !
          if (norm_new_trial .gt. davidson%residual_threshold) then
@@ -246,13 +302,18 @@ contains
             write(davidson%trials%unit) R
             call disk%close_file(davidson%trials)
 !
+         else
+!
+            write(output%unit, '(/a/)')  'Did not find any new trials'
+            stop
+!
          endif 
 !
       endif 
 !
       call mem%dealloc(R, davidson%n_parameters, 1)
 !
-   end subroutine construct_next_trial_vec_eigen_davidson_tool
+   end subroutine construct_next_trial_vec_linear_davidson_tool
 !
 !
 end module linear_davidson_tool_class
