@@ -377,7 +377,7 @@ contains
 !
       integer(i15) :: n_ao, n_mo 
 !
-      write(output%unit, '(/t6,a/)') 'Requested restart. Reading orbitals from file.'
+      write(output%unit, '(/t3,a)') '- Requested restart. Reading orbitals from file:'
 !
 !     Sanity checks 
 !

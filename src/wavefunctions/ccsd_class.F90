@@ -33,6 +33,7 @@ module ccsd_class
       procedure :: set_amplitudes                              => set_amplitudes_ccsd 
       procedure :: get_amplitudes                              => get_amplitudes_ccsd 
       procedure :: read_amplitudes                             => read_amplitudes_ccsd
+      procedure :: save_amplitudes                             => save_amplitudes_ccsd
       procedure :: save_t2                                     => save_t2_ccsd
       procedure :: read_t2                                     => read_t2_ccsd
 !
@@ -458,6 +459,21 @@ contains
       call wf%read_t2()  
 !
    end subroutine read_amplitudes_ccsd
+!
+!
+   subroutine save_amplitudes_ccsd(wf)
+!!
+!!    Read amplitudes 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+      implicit none 
+!
+      class(ccsd), intent(in) :: wf
+!
+      call wf%save_t1()  
+      call wf%save_t2()  
+!
+   end subroutine save_amplitudes_ccsd
 !
 !
    subroutine read_t2_ccsd(wf)

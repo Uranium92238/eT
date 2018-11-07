@@ -1,8 +1,8 @@
 program eT_program
 !
 !!
-!!                        eT - a coupled cluster program
-!!         Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
+!!  eT - a coupled cluster program
+!!  Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !
   use kinds

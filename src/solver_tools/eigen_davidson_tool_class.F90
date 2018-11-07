@@ -113,27 +113,6 @@ contains
 !
       class(eigen_davidson_tool) :: davidson 
 !
-      integer(i15) :: i 
-!
-      real(dp), dimension(:,:), allocatable :: X
-!
-      call disk%open_file(davidson%X, 'read')
-!
-      rewind(davidson%X%unit) 
-!
-      call mem%alloc(X, davidson%n_parameters, 1)
-!
-      do i = 1, davidson%n_solutions
-!
-         read(davidson%X%unit) X
-         write(output%unit, *)X(1:5, 1)
-!
-      enddo
-!
-      call mem%dealloc(X, davidson%n_parameters, 1)
-!
-      call disk%close_file(davidson%X)
-!
       call disk%open_file(davidson%trials, 'write', 'rewind')
       call disk%open_file(davidson%transforms, 'write', 'rewind')
 !
