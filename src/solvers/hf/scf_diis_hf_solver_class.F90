@@ -5,25 +5,10 @@ module scf_diis_hf_solver_class
 !!		Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
 !!    A DIIS-accelerated Roothan-Hall self-consistent field solver. 
-!!    In other words, it does a least-square fit to a zero gradient 
-!!    using the previously recorded Fock matrices and associated 
-!!    gradients. In each Roothan-Hall update, the fitted F matrix 
-!!    is used instead of the one produced from the previously 
-!!    obtained density matrix D. 
+!!    In each Roothan-Hall update, a fitted F matrix is used instead 
+!!    of the one produced from the previously obtained density. 
 !!
-!!    Supported wavefunctions: HF 
-!!
-!!    Note to developers: although steps have been taken to make 
-!!    the solver general enough to allow for unrestricted HF theory,
-!!    there are still explicit references to the AO Fock and density.
-!!    These need to be replaced by AO-densities and Fock-matrices,
-!!    where it might be reasonable to adopt a "number of densities"
-!!    variable, such that we work with F = [F_a F_b], G = [G_a G_b] and 
-!!    D = [D_a D_b] in the DIIS solver. Generalized and overwritten
-!!    wavefunction routines can then control the handling of these
-!!    arrays and their expected size (when constructing Fock
-!!    cumulatively, for instance, where the previous density 
-!!    is required). - Eirik, Sep 2018
+!!    Supported wavefunctions: HF, UHF
 !!    
 !
    use kinds
@@ -89,16 +74,18 @@ contains
       solver%energy_threshold   = 1.0D-6
       solver%gradient_threshold = 1.0D-6
 !
-!     Read user's specified settings
+!     Read user's specified settings & set wavefunction screening based on them
+!     (note that the screenings must be tighter for tighter gradient thresholds)
+!     & print settings to output
 !
       call solver%read_settings()
-!
       call wf%set_screening_and_precision_thresholds(solver%gradient_threshold)
 !
       write(output%unit, '(/t3,a/)') '- Hartree-Fock solver settings:'
 !
       call solver%print_scf_diis_settings()
       call solver%print_hf_solver_settings()
+      call wf%print_screening_settings()
 !
 !     Initialize the orbitals, density, and the Fock matrix (or matrices)
 !
@@ -156,20 +143,16 @@ contains
 !
       real(dp) :: max_grad, energy, prev_energy, n_electrons
 !
-      real(dp) :: ddot
-!
       integer(i15) :: iteration
 !
       real(dp), dimension(:,:), allocatable :: D
       real(dp), dimension(:,:), allocatable :: F 
-      real(dp), dimension(:,:), allocatable :: Po 
-      real(dp), dimension(:,:), allocatable :: Pv 
       real(dp), dimension(:,:), allocatable :: G 
       real(dp), dimension(:,:), allocatable :: ao_fock 
       real(dp), dimension(:,:), allocatable :: h_wx 
       real(dp), dimension(:,:), allocatable :: prev_ao_density 
 !
-      integer(i15) :: n_s, i
+      integer(i15) :: n_s
 !
       real(dp), dimension(:,:), allocatable     :: sp_eri_schwarz
       integer(i15), dimension(:,:), allocatable :: sp_eri_schwarz_list
@@ -342,8 +325,6 @@ contains
 !
       logical :: do_mo_transformation
 !
-      integer(i15) :: i
-!
 !     Do a final Roothan-Hall step to transform the Fock matrix in the canonical MO basis 
 !
       do_mo_transformation = .true.
@@ -352,7 +333,6 @@ contains
 !     Save the orbitals to file & store restart information 
 !
       call wf%save_orbital_coefficients()
-!
       call solver%write_restart_file(wf)
 !
    end subroutine cleanup_scf_diis_hf_solver
@@ -436,8 +416,8 @@ contains
       write(output%unit, '(t3,a)')  'In other words, a least-square fit toward a zero gradient vector' 
       write(output%unit, '(t3,a)')  'is performed using the previously recorded Fock matrices and the'
       write(output%unit, '(t3,a)')  'associated gradients. After each Roothan-Hall update of the density,'
-      write(output%unit, '(t3,a)')  'a DIIS-fitted Fock matrix is used to get the next orbital coefficients,'
-      write(output%unit, '(t3,a)')  'instead of the one produced directly from the AO density matrix.'
+      write(output%unit, '(t3,a)')  'a fitted Fock matrix is used to get the next orbital coefficients,'
+      write(output%unit, '(t3,a)')  'instead of the one produced directly from the AO density.'
 
       flush(output%unit)
 !

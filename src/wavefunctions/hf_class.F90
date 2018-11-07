@@ -17,7 +17,7 @@ module hf_class
 !
 !  Hartree-Fock wavefunction 
 !
-   type, extends(wavefunction):: hf
+   type, extends(wavefunction) :: hf
 !
       real(dp), dimension(:,:), allocatable :: ao_density
       real(dp), dimension(:,:), allocatable :: ao_fock
@@ -29,7 +29,7 @@ module hf_class
 !
       real(dp) :: linear_dep_threshold = 1.0D-6
 !
-      real(dp) :: coulomb_threshold    = 1.0D-10    ! screening threshold 
+      real(dp) :: coulomb_threshold    = 1.0D-12   ! screening threshold 
       real(dp) :: exchange_threshold   = 1.0D-10   ! screening threshold 
       real(dp) :: libint_epsilon       = 1.0D-20   ! ε for libint, integral precision given
                                                    ! approximately by sqrt(ε)
@@ -132,10 +132,10 @@ module hf_class
       procedure :: get_ao_s_wx                              => get_ao_s_wx_hf
       procedure :: get_ao_mu_wx                             => get_ao_mu_wx_hf
 !
-      procedure :: print_screening_settings                 => print_screening_settings_hf
       procedure :: set_n_mo                                 => set_n_mo_hf
 !
       procedure :: set_screening_and_precision_thresholds   => set_screening_and_precision_thresholds_hf
+      procedure :: print_screening_settings                 => print_screening_settings_hf
 !
    end type hf
 !
@@ -189,8 +189,6 @@ contains
       class(hf), intent(in) :: wf 
 !
       real(dp) :: homo_lumo_gap
-!
-      integer(i15) :: mo 
 !
       write(output%unit, '(/t3,a,a,a)') '- Summary of ', trim(wf%name), ' wavefunction energetics (a.u.):'
 !
@@ -672,15 +670,11 @@ contains
 !
       class(hf), intent(inout) :: wf 
 !
-      type(file) :: orbital_coefficients_file 
+      call disk%open_file(wf%orbital_coefficients_file, 'read', 'rewind')
 !
-      call orbital_coefficients_file%init('orbital_coefficients', 'sequential', 'unformatted')
+      read(wf%orbital_coefficients_file%unit) wf%orbital_coefficients
 !
-      call disk%open_file(orbital_coefficients_file, 'read', 'rewind')
-!
-      read(orbital_coefficients_file%unit) wf%orbital_coefficients
-!
-      call disk%close_file(orbital_coefficients_file)
+      call disk%close_file(wf%orbital_coefficients_file)
 !
    end subroutine read_orbital_coefficients_hf
 !
@@ -3681,9 +3675,10 @@ contains
 !
       class(hf) :: wf
 !
-      write(output%unit, '(t6,a30,e10.4)') 'Coulomb screening threshold:  ', wf%coulomb_threshold
+      write(output%unit, '(/t6,a30,e10.4)') 'Coulomb screening threshold:  ', wf%coulomb_threshold
       write(output%unit, '(t6,a30,e10.4)') 'Exchange screening threshold: ', wf%exchange_threshold
       write(output%unit, '(t6,a30,e10.4)') 'ERI integral precision:       ', wf%libint_epsilon
+      flush(output%unit)
 !
    end subroutine print_screening_settings_hf
 !
@@ -3730,7 +3725,7 @@ contains
 !!
 !!       libint_epsilon = (gradient_threshold * 1.0d-3)**2
 !!
-!!    unless stricter thresholds are already set on input or by default
+!!    unless stricter thresholds are already set on input or by default.
 !!
       implicit none
 !
@@ -3738,87 +3733,15 @@ contains
 !
       real(dp), intent(in) :: gradient_threshold
 !
-      if (wf%coulomb_threshold .gt. gradient_threshold*1.0d-2) wf%coulomb_threshold = gradient_threshold*1.0d-2 
+      if (wf%coulomb_threshold .gt. gradient_threshold*1.0d-3)  wf%coulomb_threshold  = gradient_threshold*1.0d-3
+      if (wf%exchange_threshold .gt. gradient_threshold*1.0d-3) wf%exchange_threshold = gradient_threshold*1.0d-3
 !
-      if (wf%exchange_threshold .gt. gradient_threshold*1.0d-2) wf%exchange_threshold = gradient_threshold*1.0d-2 
-      
+      wf%coulomb_threshold  = min(wf%coulomb_threshold,  1.0d-12)
+      wf%exchange_threshold = min(wf%exchange_threshold, 1.0d-10)
+!
       if (wf%libint_epsilon .gt. (gradient_threshold*1.0d-3)**2) wf%libint_epsilon = (gradient_threshold*1.0d-3)**2
 !
    end subroutine set_screening_and_precision_thresholds_hf
 !
 !
 end module hf_class
-!!
-!      write(output%unit, *)'doing exchange'
-!      flush(output%unit)
-!!
-!!$omp parallel do &
-!!$omp private(A, B, C, A_interval, B_interval, C_interval, x, y, z, xy, zz, xz, yz, &
-!!$omp g_K) schedule(dynamic)
-!      do A = 1, n_s
-!!
-!         A_interval = wf%system%shell_limits(A)
-!!           
-!         do C = 1, n_s
-!!
-!            C_interval = wf%system%shell_limits(C)
-!!
-!            do B = 1, A
-!!
-!               B_interval = wf%system%shell_limits(B)
-!!
-!               if (sp_eri_schwarz(A, C)*sp_eri_schwarz(B, C)*sp_density_schwarz(C, 1) .lt. exchange_thr) cycle
-!!
-!               call mem%alloc(g_K, (A_interval%size)*(C_interval%size), &
-!                                 (B_interval%size)*(C_interval%size))
-!!
-!               call wf%system%ao_integrals%construct_ao_g_wxyz(g_K, A, C, B, C)
-!!
-!!              Add Fock matrix contributions
-!!
-!               if (A .ne. B) then
-!!
-!                  do x = A_interval%first, A_interval%last
-!                     do y = B_interval%first, B_interval%last
-!!
-!                        xy = A_interval%size*(y - B_interval%first) + x - A_interval%first + 1
-!!
-!                        do z = C_interval%first, C_interval%last
-!!
-!                           zz = C_interval%size*(z - C_interval%first) + z  - C_interval%first + 1
-!                           xz = A_interval%size*(z - C_interval%first) + x  - A_interval%first + 1
-!                           yz = B_interval%size*(z - C_interval%first) + y  - B_interval%first + 1
-!!
-!                           wf%ao_fock(x, y) = wf%ao_fock(x, y) + (- half*g_K(xz, yz))*wf%ao_density(z, z)
-!!
-!                        enddo
-!                     enddo
-!                  enddo
-!!
-!               else
-!!
-!                  do x = A_interval%first, A_interval%last
-!                     do y = A_interval%first, x
-!!
-!                        xy = A_interval%size*(y - A_interval%first) + x - A_interval%first + 1
-!!
-!                        do z = C_interval%first, C_interval%last
-!!
-!                           zz = C_interval%size*(z - C_interval%first) + z  - C_interval%first + 1
-!                           xz = A_interval%size*(z - C_interval%first) + x  - A_interval%first + 1
-!                           yz = B_interval%size*(z - C_interval%first) + y  - B_interval%first + 1
-!!
-!                           wf%ao_fock(x, y) = wf%ao_fock(x, y) + (- half*g_K(xz, yz))*wf%ao_density(z, z)
-!!
-!                        enddo
-!                     enddo
-!                  enddo
-!               endif
-!!                  
-!               call mem%dealloc(g_K, (A_interval%size)*(C_interval%size), &
-!                                 (B_interval%size)*(C_interval%size))
-!!
-!            enddo
-!         enddo
-!      enddo
-!!$omp end parallel do

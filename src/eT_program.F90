@@ -89,7 +89,7 @@ program eT_program
     write(output%unit,'(//t3a)')    '--------------------------------------------------------------------------------------------'
     write(output%unit,'(/t3,a, a/)')'Contributor:       ','Contributions:'
     write(output%unit,'(t3,a, a)')   'E. F. Kjønstad     ','HF, UHF, CCS, CCSD, MP2, Cholesky decomposition, DIIS-tool,'
-    write(output%unit,'(t3,a, a)')   'E. F. Kjønstad     ','Davidson-tool'
+    write(output%unit,'(t3,a, a)')   '                   ','Davidson-tool'
     write(output%unit,'(t3,a, a)')   'S. D. Folkestad    ','HF, CCS, CCSD, Cholesky decomposition, Davidson-tool, CVS'
     write(output%unit,'(t3,a, a)')   'A. Skeidsvoll      ','MP2, CCSD'
     write(output%unit,'(/t3a//)')'-------------------------------------------------------------------------------------------'

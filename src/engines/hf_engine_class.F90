@@ -60,9 +60,6 @@ contains
             allocate(scf_diis)
 !
             call scf_diis%prepare(wf)
-!
-            call wf%print_screening_settings()
-!
             call scf_diis%run(wf)
             call scf_diis%cleanup(wf)
 !
@@ -73,9 +70,6 @@ contains
             allocate(scf)
 !
             call scf%prepare(wf)
-!
-            call wf%print_screening_settings()
-!
             call scf%run(wf)
             call scf%cleanup(wf)
 !

@@ -44,6 +44,7 @@ module uhf_class
       procedure :: determine_n_alpha_and_n_beta      => determine_n_alpha_and_n_beta_uhf
       procedure :: read_settings                     => read_settings_uhf
       procedure :: read_uhf_settings                 => read_uhf_settings_uhf
+      procedure :: print_wavefunction_summary        => print_wavefunction_summary_uhf
 !
 !     AO Fock and energy related routines 
 !
@@ -73,6 +74,8 @@ module uhf_class
       procedure :: initialize_orbitals               => initialize_orbitals_uhf
       procedure :: roothan_hall_update_orbitals      => roothan_hall_update_orbitals_uhf
       procedure :: print_orbital_energies            => print_orbital_energies_uhf
+      procedure :: save_orbital_coefficients         => save_orbital_coefficients_uhf
+      procedure :: read_orbital_coefficients         => read_orbital_coefficients_uhf
 !
 !     Gradients and Hessians (todo)
 !
@@ -121,8 +124,6 @@ contains
 !
       wf%name = 'UHF'
 !
-      write(output%unit, '(/t3,a)')  'Initializing ' // trim(wf%name) // ' wavefunction.'
-!
       call wf%system%prepare()
 !
       wf%n_ao = wf%system%get_n_aos()
@@ -149,6 +150,8 @@ contains
          write(output%unit, '(t3,a)')  'distributed evenly in the highest molecular orbitals (if plural).'
 !
       endif
+!
+      call wf%orbital_coefficients_file%init('orbital_coefficients', 'sequential', 'unformatted')
 !
    end subroutine prepare_uhf
 !
@@ -222,6 +225,44 @@ contains
       call print_vector(wf%orbital_energies_b, wf%n_ao, indent)
 !
    end subroutine print_orbital_energies_uhf
+!
+!
+   subroutine save_orbital_coefficients_uhf(wf)
+!!
+!!    Save orbital coefficients 
+!!    Written by Eirik F. Kjønstad, Oct 2018 
+!!
+      implicit none 
+!
+      class(uhf), intent(inout) :: wf 
+!
+      call disk%open_file(wf%orbital_coefficients_file, 'write', 'rewind')
+!
+      write(wf%orbital_coefficients_file%unit) wf%orbital_coefficients_a 
+      write(wf%orbital_coefficients_file%unit) wf%orbital_coefficients_b
+!
+      call disk%close_file(wf%orbital_coefficients_file)
+!
+   end subroutine save_orbital_coefficients_uhf
+!
+!
+   subroutine read_orbital_coefficients_uhf(wf)
+!!
+!!    Save orbital coefficients 
+!!    Written by Eirik F. Kjønstad, Oct 2018 
+!!
+      implicit none 
+!
+      class(uhf), intent(inout) :: wf 
+!
+      call disk%open_file(wf%orbital_coefficients_file, 'read', 'rewind')
+!
+      read(wf%orbital_coefficients_file%unit) wf%orbital_coefficients_a 
+      read(wf%orbital_coefficients_file%unit) wf%orbital_coefficients_b
+!
+      call disk%close_file(wf%orbital_coefficients_file)
+!
+   end subroutine read_orbital_coefficients_uhf
 !
 !
    subroutine get_packed_roothan_hall_gradient_uhf(wf, G)
@@ -561,6 +602,40 @@ contains
       call wf%do_roothan_hall(wf%ao_fock_b, wf%orbital_coefficients_b, wf%orbital_energies_b)
 !
    end subroutine roothan_hall_update_orbitals_uhf
+!
+!
+   subroutine print_wavefunction_summary_uhf(wf)
+!!
+!!    Print wavefunction summary 
+!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Prints information related to the wavefunction,
+!!    most of which is meaningful only for a properly 
+!!    converged wavefunction. Should be overwritten in 
+!!    descendants if more or less or other information 
+!!    is present. 
+!!
+      implicit none 
+!
+      class(uhf), intent(in) :: wf 
+!
+      real(dp) :: homo_lumo_gap_a
+      real(dp) :: homo_lumo_gap_b
+!
+      write(output%unit, '(/t3,a,a,a)') '- Summary of ', trim(wf%name), ' wavefunction energetics (a.u.):'
+!
+      homo_lumo_gap_a = wf%orbital_energies_a(wf%n_alpha + 1, 1) - wf%orbital_energies_a(wf%n_alpha, 1)
+      homo_lumo_gap_b = wf%orbital_energies_b(wf%n_beta + 1, 1) - wf%orbital_energies_b(wf%n_beta, 1)
+!
+      write(output%unit, '(/t6,a26,f19.12)') 'HOMO-LUMO gap (alpha):    ', homo_lumo_gap_a
+      write(output%unit, '(t6,a26,f19.12)')  'HOMO-LUMO gap (beta):     ', homo_lumo_gap_b
+      write(output%unit, '(t6,a26,f19.12)')  'Nuclear repulsion energy: ', wf%system%get_nuclear_repulsion()
+      write(output%unit, '(t6,a26,f19.12)')  'Electronic energy:        ', wf%energy - wf%system%get_nuclear_repulsion()
+      write(output%unit, '(t6,a26,f19.12)')  'Total energy:             ', wf%energy
+!
+      call wf%print_orbital_energies('3')
+!
+   end subroutine print_wavefunction_summary_uhf
 !
 !
    subroutine update_ao_density_uhf(wf)
