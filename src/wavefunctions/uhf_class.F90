@@ -52,6 +52,9 @@ module uhf_class
       procedure :: construct_ao_spin_fock            => construct_ao_spin_fock_uhf
       procedure :: calculate_uhf_energy              => calculate_uhf_energy_uhf
       procedure :: update_fock_and_energy            => update_fock_and_energy_uhf
+      procedure :: update_fock_and_energy_cumulative => update_fock_and_energy_cumulative_uhf
+      procedure :: set_ao_fock                       => set_ao_fock_uhf
+      procedure :: get_ao_fock                       => get_ao_fock_uhf
 !
 !     AO Density related routines 
 !
@@ -63,12 +66,17 @@ module uhf_class
       procedure :: construct_ao_spin_density         => construct_ao_spin_density_uhf
       procedure :: set_ao_density_to_core_guess      => set_ao_density_to_core_guess_uhf
       procedure :: get_homo_degeneracy               => get_homo_degeneracy_uhf
+      procedure :: get_ao_density_sq                 => get_ao_density_sq_uhf
 !
 !     MO orbital related routines 
 !
       procedure :: initialize_orbitals               => initialize_orbitals_uhf
       procedure :: roothan_hall_update_orbitals      => roothan_hall_update_orbitals_uhf
       procedure :: print_orbital_energies            => print_orbital_energies_uhf
+!
+!     Gradients and Hessians (todo)
+!
+      procedure :: get_packed_roothan_hall_gradient  => get_packed_roothan_hall_gradient_uhf
 !
 !     Class variable initialize and destruct routines
 !
@@ -128,8 +136,9 @@ contains
       call wf%construct_ao_overlap()
       call wf%decompose_ao_overlap() 
 !
-      wf%n_o = (wf%system%get_n_electrons())/2
-      wf%n_v = wf%n_mo - wf%n_o
+      wf%n_o         = (wf%system%get_n_electrons())/2
+      wf%n_v         = wf%n_mo - wf%n_o
+      wf%n_densities = 2
 !
       call wf%determine_n_alpha_and_n_beta()
       call wf%read_settings()
@@ -213,6 +222,52 @@ contains
       call print_vector(wf%orbital_energies_b, wf%n_ao, indent)
 !
    end subroutine print_orbital_energies_uhf
+!
+!
+   subroutine get_packed_roothan_hall_gradient_uhf(wf, G)
+!!
+!!    Get packed Roothan-Hall gradient 
+!!    Written by Eirik F. Kjønstad, Nov 2018 
+!!
+!!    Constructs and returns the gradient as an 
+!!    anti-symmetrized packed vector. For UHF,
+!!    both the alpha and beta gradients are 
+!!    returned as follows: [G_a G_b]
+!!
+      implicit none 
+!
+      class(uhf), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_ao*(wf%n_ao - 1)/2, wf%n_densities), intent(inout) :: G 
+!
+      real(dp), dimension(:,:), allocatable :: G_sq, G_pck 
+      real(dp), dimension(:,:), allocatable :: Po, Pv 
+!
+      call mem%alloc(Po, wf%n_ao, wf%n_ao)
+      call mem%alloc(Pv, wf%n_ao, wf%n_ao)
+      call mem%alloc(G_pck, wf%n_ao*(wf%n_ao - 1)/2, 1)
+      call mem%alloc(G_sq, wf%n_ao, wf%n_ao) 
+!
+!     Alpha gradient 
+!
+      call wf%construct_projection_matrices(Po, Pv, wf%ao_density_a)
+      call wf%construct_roothan_hall_gradient(G_sq, Po, Pv, wf%ao_fock_a)
+      call packin_anti(G_pck, G_sq, wf%n_ao)
+      call dcopy(wf%n_ao*(wf%n_ao - 1)/2, G_pck, 1, G, 1)
+!
+!     Beta gradient 
+!
+      call wf%construct_projection_matrices(Po, Pv, wf%ao_density_b)
+      call wf%construct_roothan_hall_gradient(G_sq, Po, Pv, wf%ao_fock_b)
+      call packin_anti(G_pck, G_sq, wf%n_ao)
+      call dcopy(wf%n_ao*(wf%n_ao - 1)/2, G_pck, 1, G(1, 2), 1)
+!
+      call mem%dealloc(Po, wf%n_ao, wf%n_ao)
+      call mem%dealloc(Pv, wf%n_ao, wf%n_ao)
+      call mem%dealloc(G_pck, wf%n_ao*(wf%n_ao - 1)/2, 1)
+      call mem%dealloc(G_sq, wf%n_ao, wf%n_ao) 
+!
+   end subroutine get_packed_roothan_hall_gradient_uhf
 !
 !
    subroutine read_settings_uhf(wf)
@@ -419,6 +474,70 @@ contains
    end subroutine update_fock_and_energy_uhf
 !
 !
+   subroutine set_ao_fock_uhf(wf, F)
+!!
+!!    Set AO Fock 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Sets the AO Fock.
+!!
+      implicit none
+!
+      class(uhf) :: wf
+!
+      real(dp), dimension(wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities), intent(in) :: F ! Packed
+!
+      real(dp), dimension(:,:), allocatable :: F_sigma
+!
+      call mem%alloc(F_sigma, wf%n_ao*(wf%n_ao + 1)/2, 1)
+!
+!     Alpha Fock 
+!
+      call dcopy(wf%n_ao*(wf%n_ao + 1)/2, F, 1, F_sigma, 1)
+      call squareup(F_sigma, wf%ao_fock_a, wf%n_ao)
+!
+!     Beta Fock 
+!
+      call dcopy(wf%n_ao*(wf%n_ao + 1)/2, F(1, 2), 1, F_sigma, 1)
+      call squareup(F_sigma, wf%ao_fock_b, wf%n_ao)      
+!
+      call mem%dealloc(F_sigma, wf%n_ao*(wf%n_ao + 1)/2, 1)
+!
+   end subroutine set_ao_fock_uhf
+!
+!
+   subroutine get_ao_fock_uhf(wf, F)
+!!
+!!    Set AO Fock 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Returns the AO Fock
+!!
+      implicit none
+!
+      class(uhf), intent(in) :: wf
+!
+      real(dp), dimension(:,:), intent(inout) :: F ! Packed
+!
+      real(dp), dimension(:,:), allocatable :: F_sigma
+!
+      call mem%alloc(F_sigma, wf%n_ao*(wf%n_ao + 1)/2, 1)
+!
+!     Alpha Fock 
+!
+      call packin(F_sigma, wf%ao_fock_a, wf%n_ao)
+      call dcopy(wf%n_ao*(wf%n_ao + 1)/2, F_sigma, 1, F, 1)
+!
+!     Beta Fock 
+!
+      call packin(F_sigma, wf%ao_fock_b, wf%n_ao)
+      call dcopy(wf%n_ao*(wf%n_ao + 1)/2, F_sigma, 1, F(wf%n_ao*(wf%n_ao + 1)/2 + 1, 1), 1)   
+!
+      call mem%dealloc(F_sigma, wf%n_ao*(wf%n_ao + 1)/2, 1)
+!
+   end subroutine get_ao_fock_uhf
+!
+!
    subroutine roothan_hall_update_orbitals_uhf(wf)
 !!
 !!    Roothan-Hall update of orbitals 
@@ -564,6 +683,26 @@ contains
       endif 
 !
    end subroutine determine_n_alpha_and_n_beta_uhf
+!
+!
+   subroutine get_ao_density_sq_uhf(wf, D)
+!!
+!!    Get AO density squared
+!!    Written by Eirik F. Kjønstad, Nov 2018 
+!!
+!!    Returns the unpacked AO density matrix D 
+!!    (or density matrices in descendants, see overwriting routines)
+!! 
+      implicit none 
+!
+      class(uhf), intent(in) :: wf 
+!
+      real(dp), dimension(:,:), intent(inout) :: D
+!
+      call dcopy(wf%n_ao**2, wf%ao_density_a, 1, D, 1)
+      call dcopy(wf%n_ao**2, wf%ao_density_b, 1, D(wf%n_ao**2 + 1, 1), 1)
+!
+   end subroutine get_ao_density_sq_uhf
 !
 !
    subroutine construct_ao_spin_density_uhf(wf, sigma)
@@ -804,8 +943,60 @@ contains
    end subroutine form_ao_density_uhf
 !
 !
+   subroutine update_fock_and_energy_cumulative_uhf(wf, sp_eri_schwarz, sp_eri_schwarz_list, n_s, prev_ao_density, h_wx)
+!!
+!!    Update Fock and energy cumulatively
+!!    Written by Eirik F. Kjønstad, Sep 2018 
+!!
+!!    This routine guides the construction of the Fock matrix (or matrices for
+!!    unrestricted wavefunctions) from the current AO density (or densities).
+!!    It is called by the solver and is overwritten for unrestricted 
+!!    wavefunctions.
+!!
+      implicit none 
+!
+      class(uhf) :: wf 
+!
+      integer(i15), intent(in) :: n_s
+!
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
+!
+      real(dp), dimension(wf%n_ao**2, wf%n_densities), intent(in) :: prev_ao_density
+!
+      real(dp), dimension(n_s*(n_s + 1)/2, 2), intent(in)     :: sp_eri_schwarz
+      integer(i15), dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
+!
+      logical :: cumulative
+!
+!     Here, the previous AO density is sent as [D_a D_b],
+!     where each is full square
+!
+      call daxpy(wf%n_ao**2, -one, prev_ao_density, 1, wf%ao_density_a, 1)
+      call daxpy(wf%n_ao**2, -one, prev_ao_density(1, 2), 1, wf%ao_density_b, 1)
+!
+      call daxpy(wf%n_ao**2, -one, prev_ao_density, 1, wf%ao_density, 1)
+      call daxpy(wf%n_ao**2, -one, prev_ao_density(1, 2), 1, wf%ao_density, 1)
+!
+      cumulative = .true.
+      call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_a, 'alpha', &
+                     sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx, cumulative) 
+!
+      call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_b, 'beta', &
+                     sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx, cumulative) 
+!
+      call daxpy(wf%n_ao**2, one, prev_ao_density, 1, wf%ao_density_a, 1)
+      call daxpy(wf%n_ao**2, one, prev_ao_density(1, 2), 1, wf%ao_density_b, 1)
+!
+      call daxpy(wf%n_ao**2, one, prev_ao_density, 1, wf%ao_density, 1)
+      call daxpy(wf%n_ao**2, one, prev_ao_density(1, 2), 1, wf%ao_density, 1)
+!
+      call wf%calculate_uhf_energy(h_wx)
+!
+   end subroutine update_fock_and_energy_cumulative_uhf
+!
+!
    subroutine construct_ao_spin_fock_uhf(wf, D, D_sigma, sigma, &
-                     sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx)
+                     sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx, cumulative)
 !!
 !!    Construct AO spin Fock 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
@@ -832,12 +1023,15 @@ contains
 !
       integer(i15), intent(in) :: n_s
 !
+      logical, intent(in), optional :: cumulative 
+!
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
 !
       real(dp), dimension(n_s*(n_s + 1)/2, 2), intent(in)     :: sp_eri_schwarz
       integer(i15), dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
 !
       integer(i15) :: thread, n_threads, omp_get_max_threads
+      logical :: local_cumulative 
 !
       real(dp), dimension(:,:), allocatable :: F, sp_density_schwarz
 !
@@ -850,11 +1044,28 @@ contains
       real(dp), dimension(:,:), allocatable :: scaled_D_sigma ! = 2 * D_sigma
 !
 !     Set thresholds to ignore Coulomb and exchange terms,
-!     as well as the desired Libint integral precision  
+!     as well as the desired Libint integral precision,
+!     and determine whether the construction should be
+!     cumulative or not 
 !
       coulomb_thr   = wf%coulomb_threshold
       exchange_thr  = wf%exchange_threshold
       precision_thr = wf%libint_epsilon
+!
+      local_cumulative = .false.
+      if (present(cumulative)) then 
+!
+         if (cumulative) then 
+!
+            local_cumulative = .true.
+!
+         else
+!
+            local_cumulative = .false.
+!
+         endif
+!
+      endif
 !
 !     Compute number of significant ERI shell pairs (the Fock construction 
 !     only loops over these shell pairs) and the maximum element 
@@ -901,7 +1112,7 @@ contains
 !
       if (trim(sigma) == 'alpha') then 
 !
-         wf%ao_fock_a = zero
+         if (.not. local_cumulative) wf%ao_fock_a = zero
          do thread = 1, n_threads
 !
             call daxpy(wf%n_ao**2, one, F(1, (thread-1)*wf%n_ao + 1), 1, wf%ao_fock_a, 1)
@@ -911,11 +1122,11 @@ contains
          call symmetric_sum(wf%ao_fock_a, wf%n_ao)
          wf%ao_fock_a = wf%ao_fock_a*half
 !
-         wf%ao_fock_a = wf%ao_fock_a + h_wx
+         if (.not. local_cumulative) wf%ao_fock_a = wf%ao_fock_a + h_wx
 !
       elseif (trim(sigma) == 'beta') then 
 !
-         wf%ao_fock_b = zero
+         if (.not. local_cumulative) wf%ao_fock_b = zero
          do thread = 1, n_threads
 !
             call daxpy(wf%n_ao**2, one, F(1, (thread-1)*wf%n_ao + 1), 1, wf%ao_fock_b, 1)
@@ -925,7 +1136,7 @@ contains
          call symmetric_sum(wf%ao_fock_b, wf%n_ao)
          wf%ao_fock_b = wf%ao_fock_b*half
 !
-         wf%ao_fock_b = wf%ao_fock_b + h_wx
+         if (.not. local_cumulative) wf%ao_fock_b = wf%ao_fock_b + h_wx
 !
       else 
 !

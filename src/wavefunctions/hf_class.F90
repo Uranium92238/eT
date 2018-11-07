@@ -36,6 +36,8 @@ module hf_class
 !
       type(file) :: orbital_coefficients_file
 !
+      integer(i15) :: n_densities 
+!
 	contains
 !
 !     Preparation and cleanup routines 
@@ -59,6 +61,7 @@ module hf_class
       procedure :: construct_ao_fock_SAD                    => construct_ao_fock_SAD_hf
       procedure :: construct_mo_fock                        => construct_mo_fock_hf
       procedure :: set_ao_fock                              => set_ao_fock_hf
+      procedure :: get_ao_fock                              => get_ao_fock_hf
       procedure :: get_fock_ov                              => get_fock_ov_hf
       procedure :: calculate_hf_energy_from_fock            => calculate_hf_energy_from_fock_hf
       procedure :: calculate_hf_energy_from_G               => calculate_hf_energy_from_G_hf
@@ -78,6 +81,7 @@ module hf_class
       procedure :: initialize_density                       => initialize_density_hf
       procedure :: update_ao_density                        => update_ao_density_hf
       procedure :: save_ao_density                          => save_ao_density_hf
+      procedure :: get_ao_density_sq                        => get_ao_density_sq_hf
       procedure :: set_initial_ao_density_guess             => set_initial_ao_density_guess_hf
       procedure :: set_ao_density_to_sad                    => set_ao_density_to_sad_hf 
       procedure :: set_ao_density_to_core_guess             => set_ao_density_to_core_guess_hf
@@ -118,6 +122,7 @@ module hf_class
 !
       procedure :: construct_roothan_hall_hessian           => construct_roothan_hall_hessian_hf
       procedure :: construct_roothan_hall_gradient          => construct_roothan_hall_gradient_hf
+      procedure :: get_packed_roothan_hall_gradient         => get_packed_roothan_hall_gradient_hf
 !
 !     Integral related routines 
 !
@@ -153,7 +158,8 @@ contains
 !
       call wf%system%prepare()
 !
-      wf%n_ao = wf%system%get_n_aos()
+      wf%n_ao        = wf%system%get_n_aos()
+      wf%n_densities = 1
 !
       call initialize_coulomb()
       call initialize_kinetic()
@@ -547,7 +553,7 @@ contains
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
 !
-      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: prev_ao_density
+      real(dp), dimension(wf%n_ao**2, wf%n_densities), intent(in) :: prev_ao_density
 !
       real(dp), dimension(n_s*(n_s + 1)/2, 2), intent(in)     :: sp_eri_schwarz
       integer(i15), dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
@@ -618,6 +624,25 @@ contains
       call disk%close_file(ao_density)
 !
    end subroutine save_ao_density_hf
+!
+!
+   subroutine get_ao_density_sq_hf(wf, D)
+!!
+!!    Get AO density squared
+!!    Written by Eirik F. Kjønstad, Nov 2018 
+!!
+!!    Returns the unpacked AO density matrix D 
+!!    (or density matrices in descendants, see overwriting routines)
+!! 
+      implicit none 
+!
+      class(hf), intent(in) :: wf 
+!
+      real(dp), dimension(:,:), intent(inout) :: D
+!
+      call dcopy(wf%n_ao**2, wf%ao_density, 1, D, 1)
+!
+   end subroutine get_ao_density_sq_hf
 !
 !
    subroutine save_orbital_coefficients_hf(wf)
@@ -2375,11 +2400,29 @@ contains
 !
       class(hf) :: wf
 !
-      real(dp), dimension(:,:) :: F ! Packed
+      real(dp), dimension(wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities), intent(in) :: F ! Packed
 !
       call squareup(F, wf%ao_fock, wf%n_ao)
 !
    end subroutine set_ao_fock_hf
+!
+!
+   subroutine get_ao_fock_hf(wf, F)
+!!
+!!    Set AO Fock 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Sets the AO Fock from input
+!!
+      implicit none
+!
+      class(hf), intent(in) :: wf
+!
+      real(dp), dimension(:,:), intent(inout) :: F ! Packed
+!
+      call packin(F, wf%ao_fock, wf%n_ao)
+!
+   end subroutine get_ao_fock_hf
 !
 !
    subroutine construct_ao_overlap_hf(wf)
@@ -2852,7 +2895,7 @@ contains
    end subroutine purify_ao_density_hf
 !
 !
-   subroutine construct_projection_matrices_hf(wf, Po, Pv)
+   subroutine construct_projection_matrices_hf(wf, Po, Pv, D)
 !!
 !!    Construct projection matrices
 !!    Written by Eirik F. Kjønstad, 2018
@@ -2870,6 +2913,8 @@ contains
       real(dp), dimension(wf%n_ao, wf%n_ao) :: Po
       real(dp), dimension(wf%n_ao, wf%n_ao) :: Pv
 !
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
+!
       real(dp), dimension(:,:), allocatable :: tmp
 !
       integer(i15) :: w, x
@@ -2881,7 +2926,7 @@ contains
                   wf%n_ao,       &
                   wf%n_ao,       &
                   half,          &
-                  wf%ao_density, &
+                  D,             &
                   wf%n_ao,       &
                   wf%ao_overlap, &
                   wf%n_ao,       &
@@ -3039,7 +3084,49 @@ contains
    end subroutine construct_roothan_hall_hessian_hf
 !
 !
-   subroutine construct_roothan_hall_gradient_hf(wf, G, Po, Pv)
+   subroutine get_packed_roothan_hall_gradient_hf(wf, G)
+!!
+!!    Get packed Roothan-Hall gradient 
+!!    Written by Eirik F. Kjønstad, Nov 2018 
+!!
+!!    Constructs and returns the gradient as an 
+!!    anti-symmetrized packed vector.
+!!
+      implicit none 
+!
+      class(hf), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_ao*(wf%n_ao - 1)/2, wf%n_densities), intent(inout) :: G 
+!
+      real(dp), dimension(:,:), allocatable :: G_sq, Po, Pv 
+!
+      integer(i15) :: i 
+!
+      call mem%alloc(Po, wf%n_ao, wf%n_ao)
+      call mem%alloc(Pv, wf%n_ao, wf%n_ao)
+!
+      Po = zero
+      Pv = zero
+!
+      call wf%construct_projection_matrices(Po, Pv, wf%ao_density)
+!
+      call mem%alloc(G_sq, wf%n_ao, wf%n_ao)
+      G_sq = zero
+!
+      call wf%construct_roothan_hall_gradient(G_sq, Po, Pv, wf%ao_fock)
+!
+      call mem%dealloc(Po, wf%n_ao, wf%n_ao)
+      call mem%dealloc(Pv, wf%n_ao, wf%n_ao)      
+!
+      G = zero
+      call packin_anti(G, G_sq, wf%n_ao)
+!
+      call mem%dealloc(G_sq, wf%n_ao**2, 1)
+!
+   end subroutine get_packed_roothan_hall_gradient_hf
+!
+!
+   subroutine construct_roothan_hall_gradient_hf(wf, G, Po, Pv, F)
 !!
 !!    Construct Roothan-Hall gradient
 !!    Written by Eirik F. Kjønstad, 2018
@@ -3057,6 +3144,7 @@ contains
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: Po
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: Pv
+      real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: F
 !
       real(dp), dimension(wf%n_ao, wf%n_ao) :: G
 !
@@ -3066,14 +3154,14 @@ contains
 !
       call mem%alloc(tmp, wf%n_ao, wf%n_ao)
 !
-      tmp = wf%ao_fock
+      tmp = F
       call sandwich(tmp, Po, Pv, wf%n_ao)
 !
       G = tmp
 !
 !     Construct tmp = Fvo = Pv^T F Po and set H = H - tmp = Fov - Fvo
 !
-      tmp = wf%ao_fock
+      tmp = F
       call sandwich(tmp, Pv, Po, wf%n_ao)
 !
       G = G - tmp

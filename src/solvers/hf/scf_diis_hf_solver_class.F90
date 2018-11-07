@@ -174,6 +174,8 @@ contains
       real(dp), dimension(:,:), allocatable     :: sp_eri_schwarz
       integer(i15), dimension(:,:), allocatable :: sp_eri_schwarz_list
 !
+      integer(i15) :: dim_gradient, dim_fock
+!
 !     :: Part I. Preparations. 
 !
 !     Construct screening vectors for efficient Fock construction 
@@ -187,7 +189,10 @@ contains
 !
 !     Initialize the DIIS manager object
 !
-      call diis_manager%init('hf_diis', (wf%n_ao)*(wf%n_ao + 1)/2, wf%n_ao**2, solver%diis_dimension)
+      dim_fock     = ((wf%n_ao)*(wf%n_ao + 1)/2)*(wf%n_densities)
+      dim_gradient = (wf%n_ao*(wf%n_ao - 1)/2)*(wf%n_densities)
+!
+      call diis_manager%init('hf_diis', dim_fock, dim_gradient, solver%diis_dimension)
 !
 !     Set the initial density guess and Fock matrix 
 !
@@ -210,21 +215,17 @@ contains
 !
       call wf%update_fock_and_energy(sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx)
 !
-      call mem%alloc(ao_fock, wf%n_ao, wf%n_ao)          ! Holds Fock matrix temporarily
-      call mem%alloc(prev_ao_density, wf%n_ao, wf%n_ao)
+      call mem%alloc(ao_fock, wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities)
+      call mem%alloc(prev_ao_density, wf%n_ao**2, wf%n_densities)
 !
-      call mem%alloc(G, wf%n_ao, wf%n_ao)                ! Gradient 
-      call mem%alloc(F, wf%n_ao*(wf%n_ao + 1)/2, 1)      ! Fock matrix packed 
+      call mem%alloc(G, wf%n_ao*(wf%n_ao - 1)/2, wf%n_densities)          
+      call mem%alloc(F, wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities) 
 !
-      call mem%alloc(Po, wf%n_ao, wf%n_ao)
-      call mem%alloc(Pv, wf%n_ao, wf%n_ao)
+      call wf%get_packed_roothan_hall_gradient(G)
 !
-      call wf%construct_projection_matrices(Po, Pv)
-      call wf%construct_roothan_hall_gradient(G, Po, Pv)
+      max_grad = get_abs_max(G, dim_gradient)
 !
-      max_grad = get_abs_max(G, (wf%n_ao)**2)
-!
-      call packin(F, wf%ao_fock, wf%n_ao)
+      call wf%get_ao_fock(F)
       call diis_manager%update(G, F)
 !
 !     Part II. Iterative SCF loop.
@@ -275,25 +276,24 @@ contains
 !
          else
 !
-            prev_energy     = wf%energy
-            prev_ao_density = wf%ao_density
+            prev_energy = wf%energy
+            call wf%get_ao_density_sq(prev_ao_density)
 !
             call wf%roothan_hall_update_orbitals()     ! DIIS F => C
             call wf%update_ao_density()                ! C => D
 !
-            if (iteration .ne. 1) wf%ao_fock = ao_fock ! Restore F 
+            if (iteration .ne. 1) call wf%set_ao_fock(ao_fock) ! Restore F 
 !
             call wf%update_fock_and_energy_cumulative(sp_eri_schwarz, sp_eri_schwarz_list, n_s, prev_ao_density, h_wx)
 !
-            call wf%construct_projection_matrices(Po, Pv)
-            call wf%construct_roothan_hall_gradient(G, Po, Pv)
+            call wf%get_packed_roothan_hall_gradient(G)
 !
-            max_grad = get_abs_max(G, (wf%n_ao)**2)
+            max_grad = get_abs_max(G, dim_gradient)
 !
-            call packin(F, wf%ao_fock, wf%n_ao)
+            call wf%get_ao_fock(F)
+            call dcopy(dim_fock, F, 1, ao_fock, 1)
+!
             call diis_manager%update(G, F)
-!
-            ao_fock = wf%ao_fock  
             call wf%set_ao_fock(F)
 !
          endif
@@ -303,15 +303,15 @@ contains
       enddo
 !
       call mem%dealloc(sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
-      call mem%alloc_int(sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
+      call mem%dealloc_int(sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
 !
-      call mem%dealloc(Po, wf%n_ao, wf%n_ao)
-      call mem%dealloc(Pv, wf%n_ao, wf%n_ao)
-!
-      call mem%dealloc(G, wf%n_ao, wf%n_ao)           
-      call mem%dealloc(F, wf%n_ao*(wf%n_ao + 1)/2, 1) 
+      call mem%dealloc(G, wf%n_ao*(wf%n_ao - 1)/2, wf%n_densities)          
+      call mem%dealloc(F, wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities) 
 !
       call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
+!
+      call mem%dealloc(ao_fock, wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities)
+      call mem%dealloc(prev_ao_density, wf%n_ao**2, wf%n_densities)
 !
 !     Initialize engine (make final deallocations, and other stuff)
 !
