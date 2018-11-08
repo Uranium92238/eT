@@ -5,7 +5,6 @@ module hf_engine_class
 !!
    use hf_class 
 !
-   use arh_hf_solver_class
    use scf_diis_hf_solver_class
    use scf_hf_solver_class
 !
@@ -47,7 +46,6 @@ contains
 !
       class(hf) :: wf 
 !
-      type(arh_hf_solver), allocatable      :: arh
       type(scf_diis_hf_solver), allocatable :: scf_diis
       type(scf_hf_solver), allocatable      :: scf
 !
@@ -57,29 +55,11 @@ contains
 !
          call engine%read_algorithm(algorithm)
 !
-         if (trim(algorithm) == 'aug-rh') then
-!
-            call output%error_msg("aug-rh is not yet working (to-do)") 
-!
-            allocate(arh)
-!
-            call arh%prepare(wf)
-!
-            call wf%print_screening_settings()
-!
-            call arh%run(wf)
-            call arh%cleanup(wf)
-!
-            deallocate(arh)
-!
-         elseif (trim(algorithm) == 'scf-diis') then
+         if (trim(algorithm) == 'scf-diis') then
 !
             allocate(scf_diis)
 !
             call scf_diis%prepare(wf)
-!
-            call wf%print_screening_settings()
-!
             call scf_diis%run(wf)
             call scf_diis%cleanup(wf)
 !
@@ -90,9 +70,6 @@ contains
             allocate(scf)
 !
             call scf%prepare(wf)
-!
-            call wf%print_screening_settings()
-!
             call scf%run(wf)
             call scf%cleanup(wf)
 !

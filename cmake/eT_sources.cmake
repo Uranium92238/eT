@@ -3,7 +3,6 @@ set(eT_fortran_sources
    src/solvers/hf/abstract_hf_solver_class.F90
    src/solvers/hf/scf_diis_hf_solver_class.F90
    src/solvers/hf/scf_hf_solver_class.F90
-   src/solvers/hf/arh_hf_solver_class.F90
    src/solvers/cc/diis_cc_gs_solver_class.F90
    src/solvers/cc/diis_cc_multipliers_solver_class.F90
    src/solvers/cc/davidson_cc_multipliers_solver_class.F90
