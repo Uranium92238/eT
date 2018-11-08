@@ -1374,7 +1374,7 @@ contains
          endif
 !
       enddo
-    !  write(output%unit, *)
+      write(output%unit, *)
 !
    end subroutine print_vector
 !

@@ -61,12 +61,18 @@ contains
       call solver%read_settings()
 !
       call wf%set_screening_and_precision_thresholds(solver%gradient_threshold)
+      call wf%print_screening_settings()
 !
 !     Initialize orbital coefficients, densities, and Fock matrices (plural for unrestricted methods)
 !
       call wf%initialize_orbitals()
       call wf%initialize_density()
       call wf%initialize_fock()
+!
+!     Set initial AO density guess
+!
+      write(output%unit, '(/t3,a,a,a)') '- Setting initial AO density to ', trim(solver%ao_density_guess), ':'
+      call wf%set_initial_ao_density_guess(solver%ao_density_guess)
 !
    end subroutine prepare_scf_hf_solver
 !
@@ -108,12 +114,6 @@ contains
       call mem%alloc_int(sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
 !
       call wf%construct_sp_eri_schwarz(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
-!
-!     Set initial AO density (or densities) guess
-!
-      write(output%unit, '(/t3,a,a,a)') 'Initial AO density is ', trim(solver%ao_density_guess), '.'
-!
-      call wf%set_initial_ao_density_guess(solver%ao_density_guess)
 !
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call wf%get_ao_h_wx(h_wx)
@@ -230,15 +230,19 @@ contains
 !
       class(scf_hf_solver) :: solver 
 !
-      write(output%unit, '(/t3,a)') ':: Direct-integral Hartree-Fock self-consistent field solver'
+      write(output%unit, '(/t3,a)') ':: Self-consistent field solver'
       write(output%unit, '(t3,a/)') ':: E. F. Kjønstad, S. D. Folkestad, 2018'
 !
-      write(output%unit, '(t3,a)')  'A Roothan-Hall self-consistent field solver. In each iteration,' 
+      write(output%unit, '(t3,a)')  'Warning: We recommend to use the SCF-DIIS algorithm instead, which'
+      write(output%unit, '(t3,a)')  'supports a gradient threshold and typically converges much faster.' 
+      write(output%unit, '(t3,a)')  'Use only when absolutely necessary!'
+!
+      write(output%unit, '(/t3,a)')  'A Roothan-Hall self-consistent field solver. In each iteration,' 
       write(output%unit, '(t3,a)')  'the Roothan-Hall equation (or equations for unrestricted HF theory)'
       write(output%unit, '(t3,a)')  'are solved to provide the next orbital coefficients. From the new'
       write(output%unit, '(t3,a)')  'orbitals, a new density provides the next Fock matrix. The cycle' 
       write(output%unit, '(t3,a)')  'repeats until the solution is self-consistent (as measured by' 
-      write(output%unit, '(t3,a)')  'the energy change).'
+      write(output%unit, '(t3,a)')  'the energy change).' 
 !
       flush(output%unit)
 !
@@ -256,12 +260,7 @@ contains
 !
       class(hf) :: wf 
 !
-      write(output%unit, '(/t3,a,a,a)') 'Final ', trim(wf%name), ' energetics (a.u.):'
-!
-      write(output%unit, '(/t6,a26,f17.12)')  'Nuclear repulsion energy: ', wf%system%get_nuclear_repulsion()
-      write(output%unit, '(t6,a26,f17.12)')   'Total electronic energy:  ', wf%energy
-!
-      call wf%print_orbital_energies()
+      call wf%print_wavefunction_summary()
 !
    end subroutine print_summary_scf_hf_solver
 !
