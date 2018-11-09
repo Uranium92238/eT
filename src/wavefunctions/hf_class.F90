@@ -38,7 +38,7 @@ module hf_class
 !
       integer(i15) :: n_densities 
 !
-	contains
+   contains
 !
 !     Preparation and cleanup routines 
 !
