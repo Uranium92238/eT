@@ -32,6 +32,10 @@ module ccsd_class
       procedure :: set_t2_to_mp2_guess                         => set_t2_to_mp2_guess_ccsd
       procedure :: set_amplitudes                              => set_amplitudes_ccsd 
       procedure :: get_amplitudes                              => get_amplitudes_ccsd 
+      procedure :: read_amplitudes                             => read_amplitudes_ccsd
+      procedure :: save_amplitudes                             => save_amplitudes_ccsd
+      procedure :: save_t2                                     => save_t2_ccsd
+      procedure :: read_t2                                     => read_t2_ccsd
 !
 !     Routines related to omega
 !
@@ -440,6 +444,81 @@ contains
 !$omp end parallel do
 !
    end subroutine get_orbital_differences_ccsd
+!
+!
+   subroutine read_amplitudes_ccsd(wf)
+!!
+!!    Read amplitudes 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+      implicit none 
+!
+      class(ccsd), intent(inout) :: wf
+!
+      call wf%read_t1()  
+      call wf%read_t2()  
+!
+   end subroutine read_amplitudes_ccsd
+!
+!
+   subroutine save_amplitudes_ccsd(wf)
+!!
+!!    Read amplitudes 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+      implicit none 
+!
+      class(ccsd), intent(in) :: wf
+!
+      call wf%save_t1()  
+      call wf%save_t2()  
+!
+   end subroutine save_amplitudes_ccsd
+!
+!
+   subroutine read_t2_ccsd(wf)
+!!
+!!    Read t2
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+      implicit none 
+!
+      class(ccsd), intent(inout) :: wf
+!
+      type(file) :: t2_file 
+!
+      call t2_file%init('t2', 'sequential', 'unformatted')
+!
+      call disk%open_file(t2_file, 'read', 'rewind')
+!
+      read(t2_file%unit) wf%t2
+!
+      call disk%close_file(t2_file)      
+!
+   end subroutine read_t2_ccsd
+!
+!
+   subroutine save_t2_ccsd(wf)
+!!
+!!    Save t2
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+      implicit none
+!
+      class(ccsd), intent(in) :: wf 
+!
+      type(file) :: t2_file 
+!
+      call t2_file%init('t2', 'sequential', 'unformatted')
+!
+      call disk%open_file(t2_file, 'write', 'rewind')
+!
+      write(t2_file%unit) wf%t2
+!
+      call disk%close_file(t2_file)
+!
+   end subroutine save_t2_ccsd
+!
 !
 !
 end module ccsd_class

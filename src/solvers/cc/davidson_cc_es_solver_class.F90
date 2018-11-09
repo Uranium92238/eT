@@ -279,8 +279,6 @@ contains
 !
          call mem%alloc(c_i, wf%n_amplitudes, 1)
 !
-         write(output%unit, *) 'n new trials:', davidson%n_new_trials
-!
          do trial = davidson%dim_red - davidson%n_new_trials + 1, davidson%dim_red
 !
             call davidson%read_trial(c_i, trial)

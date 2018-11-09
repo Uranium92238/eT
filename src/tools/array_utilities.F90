@@ -1320,9 +1320,9 @@ contains
 !!
       implicit none 
 !
-      real(dp), dimension(n), intent(in) :: X 
-!
       integer(i15), intent(in) :: n
+!
+      real(dp), dimension(n), intent(in) :: X 
 !
       real(dp) :: ddot 
 !
@@ -1377,7 +1377,7 @@ contains
          endif
 !
       enddo
-    !  write(output%unit, *)
+      write(output%unit, *)
 !
    end subroutine print_vector
 !
@@ -1466,10 +1466,10 @@ contains
 !!
       implicit none
 !
+      integer(i15) :: dim, n, m
+!
       real(dp), dimension(dim, dim), intent(in) :: A
       real(dp), dimension(dim, dim), intent(out) :: A_trans
-!
-      integer(i15) :: dim, n, m
 !
 !$omp parallel do private(m, n) shared(A, A_trans)
       do m = 1, dim 
