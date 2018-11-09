@@ -36,7 +36,7 @@ module uhf_class
 !
       logical :: fractional_uniform_valence = .false. 
 !
-	contains
+   contains
 !
 !     Preparation routines 
 !
