@@ -86,13 +86,13 @@ program eT_program
     write(output%unit,'(/t12,a)')   'S. D. Folkestad, E. F. Kjønstad, H. Koch and A. Skeidsvoll'
     flush(output%unit)
 
-    write(output%unit,'(//t3a)')    '--------------------------------------------------------------------------------------------'
+    write(output%unit,'(//t3,a)')    '--------------------------------------------------------------------------------------------'
     write(output%unit,'(/t3,a, a/)')'Contributor:       ','Contributions:'
     write(output%unit,'(t3,a, a)')   'E. F. Kjønstad     ','HF, UHF, CCS, CCSD, MP2, Cholesky decomposition, DIIS-tool,'
     write(output%unit,'(t3,a, a)')   '                   ','Davidson-tool'
     write(output%unit,'(t3,a, a)')   'S. D. Folkestad    ','HF, CCS, CCSD, Cholesky decomposition, Davidson-tool, CVS'
     write(output%unit,'(t3,a, a)')   'A. Skeidsvoll      ','MP2, CCSD'
-    write(output%unit,'(/t3a//)')'-------------------------------------------------------------------------------------------'
+    write(output%unit,'(/t3,a//)')'-------------------------------------------------------------------------------------------'
     flush(output%unit)
 !
 !   Prepare memory manager and disk manager

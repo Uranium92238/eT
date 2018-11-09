@@ -57,9 +57,10 @@ contains
 !
       character(len=*), intent(in) :: name
 !
+      integer(i15), intent(in) :: n_parameters 
+!
       real(dp), dimension(n_parameters, 1) :: F 
 !
-      integer(i15), intent(in) :: n_parameters 
       real(dp), intent(in)     :: residual_threshold
 !
       call mem%alloc(davidson%F, n_parameters, 1)

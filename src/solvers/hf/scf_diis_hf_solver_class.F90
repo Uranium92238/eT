@@ -193,10 +193,14 @@ contains
 !     and use it to construct the first proper Fock matrix from which 
 !     to begin cumulative construction 
 !
-      call wf%roothan_hall_update_orbitals() ! F => C
-      call wf%update_ao_density()            ! C => D
+      if (.not. solver%do_restart) then 
+!         
+         call wf%roothan_hall_update_orbitals() ! F => C
+         call wf%update_ao_density()            ! C => D
 !
-      call wf%update_fock_and_energy(sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx)
+         call wf%update_fock_and_energy(sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx)
+!
+      endif
 !
       call mem%alloc(ao_fock, wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities)
       call mem%alloc(prev_ao_density, wf%n_ao**2, wf%n_densities)
