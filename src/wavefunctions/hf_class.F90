@@ -3465,7 +3465,7 @@ contains
       wf%coulomb_threshold  = min(wf%coulomb_threshold,  1.0d-12)
       wf%exchange_threshold = min(wf%exchange_threshold, 1.0d-10)
 !
-      if (wf%libint_epsilon .gt. (gradient_threshold*1.0d-3)**2) wf%libint_epsilon = (gradient_threshold*1.0d-3)**2
+      if (wf%libint_epsilon .gt. (wf%coulomb_threshold)**2) wf%libint_epsilon = (wf%coulomb_threshold)**2
 !
    end subroutine set_screening_and_precision_thresholds_hf
 !

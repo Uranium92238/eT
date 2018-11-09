@@ -38,10 +38,11 @@ contains
 !
       class(cholesky_array_list) :: cholesky_array
 !
+      integer(i15) :: n_blocks
+!
       integer(i15), dimension(n_blocks + 1, 1) :: block_firsts
       logical, dimension(n_blocks, 1)          :: block_significant
 !
-      integer(i15) :: n_blocks
       integer(i15) :: dim_reduced
 !
       integer(i15) :: list_element
