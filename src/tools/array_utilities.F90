@@ -72,7 +72,7 @@ contains
    end subroutine zero_array
 !
 !
-   real(dp) function dot_product(x, y, n)
+   real(dp) function dot_product_et(x, y, n)
 !!
 !!    Calculate dot product
 !!    Written by Eirik F. Kjønstad, June 2018
@@ -88,9 +88,9 @@ contains
 !
       real(dp) :: ddot
 !
-      dot_product = ddot(n, x, 1, y, 1)
+      dot_product_et = ddot(n, x, 1, y, 1)
 !
-   end function dot_product
+   end function dot_product_et
 !
 !
    logical function is_significant(vec, dim, threshold, screening)
@@ -494,7 +494,7 @@ contains
 !
       integer(i15), dimension(dim, 1), intent(out) :: used_diag
 !
-      integer(i15) :: i, j, k, index_max
+      integer(i15) :: i, j, index_max
       real(dp) :: max_diagonal, min_diagonal
 !
       real(dp), dimension(:,:), allocatable :: diagonal, temp_cholesky_vector
@@ -660,8 +660,8 @@ contains
 !
       integer(i15), dimension(:, :), allocatable :: used_diag
 !
-      integer(i15) :: i, j, k, index_max
-      real(dp) :: max_diagonal, min_diagonal
+      integer(i15) :: i, j, index_max
+      real(dp) :: max_diagonal
 !
       real(dp), dimension(:,:), allocatable :: diagonal, temp_cholesky_vector
 !
@@ -830,6 +830,7 @@ contains
       real(dp), dimension(:), allocatable :: work  ! work array for LAPACK
 !
       integer(kind=4) :: info
+      integer(kind=4) :: dim4
       integer(i15) :: I, J
 !
       cholesky_vectors = matrix
@@ -839,10 +840,12 @@ contains
 !     DPSTRF computes the Cholesky factorization with complete pivoting
 !     of a real symmetric positive semidefinite matrix.
 !
+      dim4 = int(dim,4)
+!
       call dpstrf_e('L',      &
-            dim,              &
+            dim4,             &
             cholesky_vectors, &
-            dim,              &
+            dim4,             &
             used_diag,        &
             n_vectors_4,      &
             threshold,        &

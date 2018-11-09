@@ -23,7 +23,7 @@ contains
 !
       character(len=100) :: remove_preceding_blanks
 !
-      integer(i15) :: i = 0, j = 0, length = 0
+      integer(i15) :: i = 0, length = 0
 !
       remove_preceding_blanks = ' '
 !
