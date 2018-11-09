@@ -126,8 +126,6 @@ contains
 !
       class(disk_manager) :: disk
 !
-      integer(i15) :: total ! in GB
-!
       if (requested_section('disk')) then
 !
          call disk%read_settings()
@@ -170,8 +168,6 @@ contains
 !
       character(len=*) :: permissions
       character(len=*), optional :: pos
-!
-      integer(i15) :: io_error = -1
 !
 !     Sanity checks
 !

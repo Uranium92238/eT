@@ -50,7 +50,7 @@ module dpstrf_et
          info = -1
       else if( n.lt.0 ) then
          info = -2
-      else if( lda.lt.max( 1, n ) ) then
+      else if( lda.lt.max( int(1,4), n ) ) then
          info = -4
       end if
       if( info.ne.0 ) then
