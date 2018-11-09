@@ -1,9 +1,8 @@
-submodule (ccsd_class) omega_ccsd
+submodule (cc3_class) omega_cc3
 !
 !!
-!!    Omega submodule (ccsd)
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
-!!    and Andreas Skeidsvoll, 2018
+!!    Omega submodule (cc3)
+!!    Alex C. Paul and Rolf H. Myhre 2018
 !!
 !!    Routines to construct 
 !!
@@ -26,7 +25,7 @@ contains
 !!
       implicit none
 !
-      class(ccsd), intent(in) :: wf
+      class(cc3), intent(in) :: wf
 !
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: omega
 !
@@ -63,6 +62,32 @@ contains
       call mem%dealloc(omega2, (wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o) +1)/2, 1)
 !
    end subroutine construct_omega_cc3
+!
+!
+   module subroutine omega_cc3_a_cc3(wf, omega)
+!!
+!!    CC3 Omega terms
+!!    Alex C. Paul and Rolf H. Myhre 2018
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: omega
+!
+!     Batching variables
+!
+      integer(i15) :: required        = 0
+      integer(i15) :: current_a_batch = 0
+!
+      type(batching_index) :: batch_a
+!
+      real(dp), dimension(:,:), allocatable :: u_dk_ci, t_dk_ci, g_ad_kc
+!
+      integer(i15) :: ad_dim
+!
+!
+   end subroutine omega_cc3_a_cc3
 !
 !
 end submodule
