@@ -823,14 +823,11 @@ contains
       real(dp), dimension(dim, dim), intent(in)  :: matrix
       real(dp), dimension(dim, dim), intent(out) :: cholesky_vectors
 !
-      integer(kind=4), dimension(dim) :: used_diag
-!
-      integer(kind=4) :: n_vectors_4
+      integer, dimension(dim) :: used_diag
 !
       real(dp), dimension(:), allocatable :: work  ! work array for LAPACK
 !
-      integer(kind=4) :: info
-      integer(kind=4) :: dim4
+      integer :: info
       integer(i15) :: I, J
 !
       cholesky_vectors = matrix
@@ -840,21 +837,17 @@ contains
 !     DPSTRF computes the Cholesky factorization with complete pivoting
 !     of a real symmetric positive semidefinite matrix.
 !
-      dim4 = int(dim,4)
-!
       call dpstrf_e('L',      &
-            dim4,             &
+            dim,              &
             cholesky_vectors, &
-            dim4,             &
+            dim,              &
             used_diag,        &
-            n_vectors_4,      &
+            n_vectors,        &
             threshold,        &
             work,             &
             info)
 !
       deallocate(work)
-!
-      n_vectors = int(n_vectors_4, kind=i15)
 !
       do I = 1, dim ! Zero upper unreferenced triangle
          do J = 1, I - 1

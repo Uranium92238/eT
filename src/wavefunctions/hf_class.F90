@@ -2289,7 +2289,7 @@ contains
 !
       class(hf) :: wf
 !
-      integer(kind=4), dimension(:, :), allocatable :: used_diag
+      integer, dimension(:, :), allocatable :: used_diag
 !
       real(dp), dimension(:,:), allocatable :: perm_matrix
 !
@@ -2364,7 +2364,7 @@ contains
 !
       class(hf) :: wf
 !
-      integer(kind=4), dimension(:, :), allocatable :: used_diag
+      integer, dimension(:, :), allocatable :: used_diag
 !
       real(dp), dimension(:, :), allocatable :: L
 !

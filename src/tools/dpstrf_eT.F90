@@ -8,14 +8,21 @@ module dpstrf_et
 !
 !   .. scalar arguments ..
       double precision   tol
-      integer(kind=4)    info, rank
-      integer(kind=4)    lda, n
+      integer            info, rank
+      integer            lda, n
       character          uplo
 !   ..
 !   .. array arguments ..
       double precision   a( lda, * ), work( 2*n )
-      integer(kind=4)    piv( n )
+      integer            piv( n )
 !   ..
+!
+!=====================================================================
+!   .. integers kind=4 ..
+!
+      integer(kind=4)    info4, rank4
+      integer(kind=4)    lda4, n4
+      integer(kind=4)    piv4( n )
 !
 !=====================================================================
 !
@@ -50,7 +57,7 @@ module dpstrf_et
          info = -1
       else if( n.lt.0 ) then
          info = -2
-      else if( lda.lt.max( int(1,4), n ) ) then
+      else if( lda.lt.max( 1, n ) ) then
          info = -4
       end if
       if( info.ne.0 ) then
@@ -69,8 +76,27 @@ module dpstrf_et
 !
 !      use unblocked code
 !
-         call dpstf2( uplo, n, a( 1, 1 ), lda, piv, rank, tol, work, &
-                     info )
+         n4 = int(n,4)
+         lda4 = int(lda,4)
+         rank4 = int(rank,4)
+         info4 = int(info,4)
+!
+         do i = 1,n
+            piv4(i) = int(piv(i),4)
+         enddo
+!
+         call dpstf2( uplo, n4, a( 1, 1 ), lda4, piv4, rank4, tol, work, &
+                     info4 )
+!
+         n = int(n4,8)
+         lda = int(lda4,8)
+         rank = int(rank4,8)
+         info = int(info4,8)
+!
+         do i = 1,n
+            piv(i) = int(piv4(i),8)
+         enddo
+!
          go to 200
 !
       else
@@ -78,7 +104,7 @@ module dpstrf_et
 !   initialize piv
 !
          do 100 i = 1, n
-            piv( i ) = int(i,4)
+            piv( i ) = i
   100    continue
 !
 !   compute stopping value
@@ -301,5 +327,5 @@ module dpstrf_et
 !
 !   end of dpstrf
 !
-      end subroutine
-      end module dpstrf_et
+   end subroutine
+end module dpstrf_et

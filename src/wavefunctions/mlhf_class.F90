@@ -45,10 +45,6 @@ contains
 !
       class(mlhf) :: wf
 !
-      integer(i15) :: ao
-!
-      real(dp), dimension(:,:), allocatable :: density_diagonal
-!
       wf%name = 'MLHF'
 !
       write(output%unit, '(a/)')':: SAD-ML test'
@@ -107,16 +103,14 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: cholesky_vectors_occ, cholesky_vectors_virt, V, ao_density_v
 !
-      integer(i15):: i, j, k, n_active_aos, ao_offset, active_ao_counter, n_vectors_occ, n_vectors_virt
+      integer(i15):: i, j, n_active_aos, n_vectors_occ, n_vectors_virt
       integer(i15):: a
 !
       real(dp) :: max_val, e_construct_fock, s_construct_fock, omp_get_wtime, x, y, z
 !
-      integer(i15), dimension(:,:), allocatable :: active_aos, sp_eri_schwarz_list
+      integer(i15), dimension(:,:), allocatable :: active_aos
 !
       integer(i15) :: n_active_occ, n_active_vir, n_s
-!
-      real(dp), dimension(:,:), allocatable :: eri_deg, sp_eri_schwarz, h_wx
 !
       type(eri_cd_solver)  :: chol_solver
 !
@@ -277,9 +271,9 @@ contains
 !
       real(dp), dimension(wf%n_ao, wf%n_ao) :: D_v
 !
-      integer(i15) :: rank, i, x, y
+      integer(i15) :: rank, i
 !
-      integer(kind=4), dimension(:), allocatable :: piv
+      integer, dimension(:), allocatable :: piv
 !
       real(dp), dimension(:,:), allocatable :: L, L_inv, P,  L_inv_P_trans
 !
