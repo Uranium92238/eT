@@ -23,7 +23,6 @@ module mlhf_class
    contains
 !
       procedure :: prepare => prepare_mlhf
-      procedure :: finalize => finalize_mlhf
 !
       procedure :: construct_virtual_density => construct_virtual_density_mlhf
       procedure :: construct_virtual_density_from_MO => construct_virtual_density_from_MO_mlhf
@@ -79,20 +78,6 @@ contains
       call wf%eri_decomp_test_w_active_dens()
 !
    end subroutine prepare_mlhf
-!
-!
-   subroutine finalize_mlhf(wf)
-!!
-!!    Finalize
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(mlhf) :: wf
-!
-!     Nothing here yet
-!
-   end subroutine finalize_mlhf
 !
 !
    subroutine eri_decomp_test_w_active_dens_mlhf(wf)

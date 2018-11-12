@@ -689,13 +689,12 @@ contains
 !
       class(hf) :: wf
 !
-     ! call wf%destruct_orbital_energies()
-     ! call wf%destruct_ao_overlap()
-     ! call wf%destruct_orbital_coefficients()
-     ! call wf%destruct_ao_fock()
-     ! call wf%destruct_ao_density()
-     ! call wf%destruct_pivot_matrix_ao_overlap()
-     ! call wf%destruct_cholesky_ao_overlap()
+      call wf%destruct_orbital_energies()
+      call wf%destruct_ao_overlap()
+      call wf%destruct_ao_fock()
+      call wf%destruct_ao_density()
+      call wf%destruct_pivot_matrix_ao_overlap()
+      call wf%destruct_cholesky_ao_overlap()
 !
    end subroutine cleanup_hf
 !
@@ -916,14 +915,13 @@ contains
       real(dp), dimension(n_s*(n_s + 1)/2, 2) :: sp_eri_schwarz
 !
       integer(i15), dimension(n_s*(n_s + 1)/2, 3) :: sp_eri_schwarz_list
-      integer(i15), dimension(:, :), allocatable  :: sp_eri_schwarz_list_copy
 !
       integer(i15), dimension(:,:), allocatable :: sp_eri_schwarz_index_list
       real(dp), dimension(:,:),     allocatable :: sorted_sp_eri_schwarz
 !
 !     Local variables
 !
-      integer(i15) :: s1, s2, s1s2, counter
+      integer(i15) :: s1, s2, s1s2
 !
       real(dp) :: maximum
 !
@@ -1052,7 +1050,7 @@ contains
 !
       real(dp), dimension(wf%system%n_s*(wf%system%n_s + 1)/2, 2), intent(in) :: sp_eri_schwarz
 !
-      integer(i15) :: s1s2, i
+      integer(i15) :: s1s2
 !
       n_sig_sp = 0
 !
@@ -1099,7 +1097,7 @@ contains
       real(dp), dimension(:,:), allocatable :: h_wx, h_AB
       integer(i15) :: w, x, y, z, wx, yz, wz, yx
 !
-      integer(i15) :: A, B, C, D, skip, thread, omp_get_thread_num, atom
+      integer(i15) :: A, B, C, D, atom
 !
       type(interval) :: A_interval
       type(interval) :: B_interval
@@ -1739,7 +1737,7 @@ contains
       integer(i15), dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
       real(dp), dimension(n_s, n_s), intent(in)               :: sp_density_schwarz
 !
-      real(dp) :: d1, d2, d3, d4, d5, d6, sp_eri_schwarz_s1s2
+      real(dp) :: d1, d2, sp_eri_schwarz_s1s2
       real(dp) :: temp, temp1, temp2, temp7, deg, deg_12, deg_34, deg_12_34
 !
       integer(i15) :: w, x, y, omp_get_thread_num, z, wx, yz, s1s2, s1, s2, s3, s4, s4_max, tot_dim 
@@ -1893,7 +1891,7 @@ contains
       real(dp), dimension(n_s, n_s), intent(in)               :: sp_density_schwarz
 !
       real(dp) :: d1, d2, d3, d4, d5, d6, sp_eri_schwarz_s1s2
-      real(dp) :: temp, temp1, temp2, temp3, temp4, temp5, temp6, temp7, temp8, deg, deg_12, deg_34, deg_12_34
+      real(dp) :: temp, temp3, temp4, temp5, temp6, temp8, deg, deg_12, deg_34, deg_12_34
 !
       integer(i15) :: w, x, y, omp_get_thread_num, z, wx, yz, s1s2, s1, s2, s3, s4, s4_max, tot_dim 
       integer(i15) :: s3s4, s3s4_sorted, w_red, x_red, y_red, z_red, thread_offset, wxyz, s1s2_packed
@@ -2293,11 +2291,10 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: perm_matrix
 !
-      real(dp), dimension(:,:), allocatable :: csc
       real(dp), dimension(:,:), allocatable :: tmp
 !
       integer(i15) :: rank
-      integer(i15) :: i, j
+      integer(i15) :: j
 !
       allocate(used_diag(wf%n_ao, 1))
 !
@@ -2368,7 +2365,7 @@ contains
 !
       real(dp), dimension(:, :), allocatable :: L
 !
-      integer(i15) :: i, j
+      integer(i15) :: j
 !
       allocate(used_diag(wf%n_ao, 1))
       used_diag = 0
@@ -2515,7 +2512,7 @@ contains
 !
       logical :: pure = .false.
 !
-      integer(i15) :: iteration, p, q
+      integer(i15) :: iteration
       integer(i15), parameter :: max_iterations = 50
 !
       iteration = 1
@@ -2635,8 +2632,6 @@ contains
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
 !
-      real(dp), dimension(:,:), allocatable :: tmp
-!
       integer(i15) :: w, x
 !
 !     Po = 1/2 D S
@@ -2703,8 +2698,6 @@ contains
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: Pv
 !
       real(dp), dimension(:, :), allocatable :: tmp
-!
-      integer(i15) :: p, q
 !
 !     Construct
 !
@@ -2819,8 +2812,6 @@ contains
       real(dp), dimension(wf%n_ao*(wf%n_ao - 1)/2, wf%n_densities), intent(inout) :: G 
 !
       real(dp), dimension(:,:), allocatable :: G_sq, Po, Pv 
-!
-      integer(i15) :: i 
 !
       call mem%alloc(Po, wf%n_ao, wf%n_ao)
       call mem%alloc(Pv, wf%n_ao, wf%n_ao)
@@ -2939,9 +2930,7 @@ contains
       real(dp), dimension(:,:), allocatable :: red_orbital_coefficients  
       real(dp), dimension(:,:), allocatable :: tmp  
 !
-      real(dp) :: ddot, norm
-!
-      integer(i15) :: info, i, j
+      integer(i15) :: info
 !
       call mem%alloc(metric, wf%n_mo, wf%n_mo)
 !
@@ -3134,9 +3123,7 @@ contains
 !
       integer(i15) :: I, n_ao_on_atom, first_ao_on_atom, last_ao_on_atom, n_s_on_atom
 !
-      real(dp) :: trace
-!
-      real(dp), dimension(:,:), allocatable :: atomic_density, temp
+      real(dp), dimension(:,:), allocatable :: atomic_density
 !
       wf%ao_density = zero 
 !

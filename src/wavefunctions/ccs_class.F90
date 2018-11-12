@@ -157,7 +157,7 @@ contains
 !
       class(hf) :: ref_wf
 !
-      integer(i15) :: p, i, a
+      integer(i15) :: p
 !
       wf%name = 'ccs'
 !
@@ -208,7 +208,7 @@ contains
 !
       class(ccs) :: wf
 !
-!     Nothing here yet
+      write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(wf%name), ' wavefunction'
 !
    end subroutine cleanup_ccs
 !
@@ -2527,7 +2527,6 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c1
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho1      
 !
-      real(dp), dimension(:,:), allocatable :: g_ai_jb
       real(dp), dimension(:,:), allocatable :: g_ab_ji
       real(dp), dimension(:,:), allocatable :: L_ai_jb
 !
@@ -2535,7 +2534,7 @@ contains
 !
       type(batching_index) :: batch_b
 !
-      integer(i15) :: required, j, b, b_red, current_b_batch, jb
+      integer(i15) :: required, j, b, b_red, current_b_batch
 !
       call batch_b%init(wf%n_v) 
 !
