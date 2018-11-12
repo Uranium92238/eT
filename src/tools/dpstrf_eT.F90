@@ -1,5 +1,8 @@
 module dpstrf_et
-  contains
+
+   use kinds
+
+   contains
 
 
 ! ==================================================================
@@ -8,13 +11,13 @@ module dpstrf_et
 !
 !   .. scalar arguments ..
       double precision   tol
-      integer            info, rank
-      integer            lda, n
+      integer(i15)       info, rank
+      integer(i15)       lda, n
       character          uplo
 !   ..
 !   .. array arguments ..
       double precision   a( lda, * ), work( 2*n )
-      integer            piv( n )
+      integer(i15)            piv( n )
 !   ..
 !
 !=====================================================================
@@ -88,10 +91,10 @@ module dpstrf_et
          call dpstf2( uplo, n4, a( 1, 1 ), lda4, piv4, rank4, tol, work, &
                      info4 )
 !
-         n = int(n4,8)
-         lda = int(lda4,8)
-         rank = int(rank4,8)
-         info = int(info4,8)
+         n = int(n4,i15)
+         lda = int(lda4,i15)
+         rank = int(rank4,i15)
+         info = int(info4,i15)
 !
          do i = 1,n
             piv(i) = int(piv4(i),8)
