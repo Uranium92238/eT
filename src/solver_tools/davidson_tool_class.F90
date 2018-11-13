@@ -944,11 +944,11 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: X
 !
-      integer(i15) :: solution, ioerror
+      integer(i15) :: solution
 !
 !     Is file on disk?
 !
-      if (disk%file_exists(davidson%X)) then
+      if (davidson%X%file_exists()) then
 !
          call disk%open_file(davidson%X, 'read')
          rewind(davidson%X%unit)

@@ -20,7 +20,7 @@ module file_class
 !
 !     File size (in bytes)
 !
-      integer(i15) :: size = -1
+      integer(i15), private :: file_size = -1
 !
 !     Logical for whether the file is currently opened or not
 !
@@ -33,11 +33,16 @@ module file_class
 !
    contains
 !
-      procedure :: init => init_file
+      procedure :: init                   => init_file
 !
-      procedure :: prepare_to_read_line => prepare_to_read_line_file
+      procedure :: prepare_to_read_line   => prepare_to_read_line_file
 !
-      procedure :: error_msg => error_msg_file
+      procedure :: error_msg              => error_msg_file
+!
+      procedure :: determine_file_size    => determine_file_size_file
+!
+      procedure :: get_file_size          => get_file_size_file
+      procedure :: file_exists            => file_exists_file
 !
    end type file
 !
@@ -184,4 +189,68 @@ contains
    end subroutine error_msg_file
 !
 !
+   subroutine determine_file_size_file(the_file)
+!!
+!!    Determine file size
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2018
+!!    Moved to file by Rolf H. Myhre Nov. 2018
+!!
+!!    The disk manager handles files. This routine is called by it
+!!    and should never be called by the user (because it can lead to
+!!    errors in the disk space estimates).
+!!
+      implicit none
+!
+      class(file) :: the_file
+!
+!     Inquire about the file size
+!
+      inquire(file=the_file%name, size=the_file%file_size)
+!
+!     Check whether the file size could be calculated
+!
+      if (the_file%file_size .eq. -1) then
+!
+         write(output%unit,*) 'Error: Could not calculate file size of the file ', trim(the_file%name)
+         stop
+!
+      endif
+!
+   end subroutine determine_file_size_file
+!
+!
+   function get_file_size_file(the_file)
+!!
+!!    Return private variable file_size
+!!    Written by Rolf H. Myhre, 2018
+!!    
+!
+      implicit none
+!  
+      class(file), intent(in) :: the_file
+!
+      integer(i15) :: get_file_size_file
+      get_file_size_file = the_file%file_size
+!
+   end function get_file_size_file
+!
+!  
+   function file_exists_file(the_file)
+!!
+!!    File exists
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!    Moved to file by Rolf H. Myhre Nov. 2018
+!!    
+!
+      implicit none
+!  
+      class(file), intent(in) :: the_file
+!
+      logical :: file_exists_file
+!
+      inquire(file=the_file%name, exist=file_exists_file)
+!
+   end function file_exists_file
+!
+!  
 end module file_class
