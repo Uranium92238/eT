@@ -26,6 +26,7 @@ program eT_program
   use hf_engine_class
   use gs_engine_class
   use es_engine_class
+  use multipliers_engine_class
   use abstract_engine_class
 !
   use eri_cd_solver_class
@@ -43,7 +44,7 @@ program eT_program
     type(mlhf), allocatable, target  :: mlhf_wf 
 !
     type(ccs), allocatable, target   :: ccs_wf
-    type(ccsd), allocatable, target   :: ccsd_wf
+    type(ccsd), allocatable, target  :: ccsd_wf
     type(mp2), allocatable, target   :: mp2_wf
 !
 !   Wavefunction pointers
@@ -60,6 +61,7 @@ program eT_program
     type(hf_engine), allocatable         :: gs_hf_engine
     type(gs_engine), allocatable, target :: gs_cc_engine
     type(es_engine), allocatable, target :: es_cc_engine
+    type(multipliers_engine), allocatable, target :: multipliers_cc_engine
 !
 !   Engine pointer
 !
@@ -213,7 +215,13 @@ program eT_program
         elseif (cc_engine == 'excited state') then
 !
           allocate(es_cc_engine)
-          engine => es_cc_engine  
+          engine => es_cc_engine
+!
+        elseif (cc_engine == 'multipliers') then
+!
+          allocate(multipliers_cc_engine)
+          engine => multipliers_cc_engine 
+!
 !
         endif
 !
