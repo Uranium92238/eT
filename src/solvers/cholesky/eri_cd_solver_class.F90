@@ -46,6 +46,8 @@ module eri_cd_solver_class
       integer(i15) :: n_cholesky
       integer(i15) :: n_s, n_sp, n_ao, n_aop
 !
+      integer(i15) :: n_batches
+!
    contains
 !
       procedure :: prepare                                => prepare_eri_cd_solver
@@ -127,6 +129,8 @@ contains
       real(dp):: s_determine_basis, e_determine_basis, s_build_vectors, e_build_vectors
       real(dp):: s_invert_time, e_invert_time, omp_get_wtime
 !
+      integer(i15) :: batch
+!
       call solver%print_banner()
 !
       call solver%print_settings()
@@ -159,7 +163,7 @@ contains
 !
       endif
 !
-      if (n_batches == 1) then
+      if (solver%n_batches == 1) then
 !
          call solver%determine_auxilliary_cholesky_basis(system, solver%diagonal_info_target)
 !
@@ -167,7 +171,7 @@ contains
 !
 !        call routine that creates diag info for the bathes 
 !
-         do batch = 1, n_batches 
+         do batch = 1, solver%n_batches 
 !
             !call diagonal_info_target_00batch%init()
 !
@@ -992,6 +996,144 @@ contains
       call mem%dealloc(screening_vector_reduced, n_sig_aop, 1)
 !
    end subroutine construct_significant_diagonal_atomic_eri_cd_solver
+!
+!
+   subroutine construct_diagonal_batches_eri_cd_solver(solver, system)
+!!
+!!
+!!
+!!
+      implicit none
+!  
+      class(eri_cd_solver) :: solver
+!
+      type(molecular_system) :: system
+!
+      integer(i15) :: n_sig_aop, n_sig_sp, n_sig_sp_batch, sp
+!
+      real(dp), dimension(:,:), allocatable :: D_xy, screening_vector
+      real(dp), dimension(:,:), allocatable :: D_batch, screening_vector_batch
+!
+      logical, dimension(:), allocatable :: sig_sp, sig_sp_batch
+!
+      type(interval) :: A_interval, B_interval
+!
+      type(file) :: batch_file
+!
+      integer(i15) :: A, B, batch, batch_first, batch_last, batch_size, remainder
+      integer(i15) :: xy_offset
+!
+      character(len=100) :: temp_name
+!
+!     Read diagonal info file containing (name given as argument)
+!
+!        1. number of significant shell pairs, number of significant ao pairs
+!        2. sig_sp - vector of logicals to describe which shell pairs are significant
+!        3. D_xy = ( xy | xy ), the significant diagonal.
+!
+      call disk%open_file(solver%diagonal_info_target, 'read')
+!
+      rewind(solver%diagonal_info_target%unit)
+!
+      read(solver%diagonal_info_target%unit) n_sig_sp, n_sig_aop
+!
+      call mem%alloc(D_xy, n_sig_aop, 1)
+      call mem%alloc(screening_vector, n_sig_aop, 1)
+      allocate(sig_sp(solver%n_sp))
+!
+      read(solver%diagonal_info_target%unit) sig_sp
+      read(solver%diagonal_info_target%unit) D_xy
+      read(solver%diagonal_info_target%unit) screening_vector
+!
+      call disk%close_file(solver%diagonal_info_target)
+!
+!     Calculate size of batches and the remainder
+!
+      batch_size = n_sig_aop/solver%n_batches
+!
+      remainder = n_sig_aop - batch_size*solver%n_batches
+!
+      allocate(sig_sp_batch(solver%n_sp))
+!
+      do batch = 1, solver%n_batches
+!
+         if (batch == solver%n_batches) batch_size = batch_size + remainder
+!
+!        Set diagonal for batch
+!
+         call mem%alloc(D_batch, batch_size, 1)
+         call mem%alloc(screening_vector_batch, batch_size, 1)
+!
+         batch_first = batch_size*(batch - 1) + 1
+         batch_last = batch_first + batch_size - 1
+!
+         D_batch(:,1) = D_xy(batch_first : batch_last, 1)
+         screening_vector_batch(:,1) = screening_vector_batch(batch_first : batch_last, 1)
+!
+!        Determine sig_sp_batch
+!
+         sig_sp_batch = .false.
+!
+         sp = 0        ! Shell pair number
+         xy_offset = 0
+         n_sig_sp_batch = 0
+!
+         do B = 1, solver%n_s
+            do A = B, solver%n_s
+!
+               sp = sp + 1
+!
+               if (sig_sp(sp)) then 
+!
+                  A_interval = system%shell_limits(A)
+                  B_interval = system%shell_limits(B)
+!
+                  if ((xy_offset + 1 .ge. batch_first) .and. (xy_offset + 1 .le. batch_last)) then
+!
+                     sig_sp_batch(sp) = .true.
+                     n_sig_sp_batch = n_sig_sp_batch + 1
+!
+                  elseif (xy_offset .ge. batch_last) then 
+!
+                     exit
+!
+                  endif
+!   
+                  xy_offset = xy_offset + get_size_sp(A_interval, B_interval)
+!
+               endif
+!
+            enddo
+         enddo
+!
+!        Write info file for batch diagonal containing
+!
+!        1. number of significant shell pairs, number of significant ao pairs
+!        2. sig_sp - vector of logicals to describe which shell pairs are significant
+!        3. D_xy = ( xy | xy ), the significant diagonal.
+!        4. Screening vector
+!
+         write(temp_name, '(a14, i4.4)')'diagonal_info_', batch
+         call batch_file%init(trim(temp_name), 'sequential', 'unformatted')
+!
+         call disk%open_file(batch_file, 'write', 'rewind')
+         rewind(batch_file%unit)
+!
+         write(batch_file%unit) n_sig_sp_batch, batch_size
+         write(batch_file%unit) sig_sp_batch
+         write(batch_file%unit) D_batch
+         write(batch_file%unit) screening_vector_batch
+!
+         call disk%close_file(batch_file)
+!
+         call mem%dealloc(D_batch, batch_size, 1)
+         call mem%dealloc(screening_vector_batch, batch_size, 1)
+!
+      enddo
+!
+      deallocate(sig_sp_batch)
+!
+   end subroutine construct_diagonal_batches_eri_cd_solver
 !
 !
    subroutine determine_auxilliary_cholesky_basis_eri_cd_solver(solver, system, diagonal_info)
