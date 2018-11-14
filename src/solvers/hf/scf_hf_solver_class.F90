@@ -24,7 +24,7 @@ module scf_hf_solver_class
 !
    type, extends(abstract_hf_solver) :: scf_hf_solver
 !
-!     Nothing here yet, except variables in ancestor
+      character(len=400) :: solver_warning
 !
    contains
 !
@@ -33,7 +33,6 @@ module scf_hf_solver_class
       procedure :: cleanup       => cleanup_scf_hf_solver
 !
       procedure :: print_banner  => print_banner_scf_hf_solver
-      procedure :: print_summary => print_summary_scf_hf_solver
 !
    end type scf_hf_solver
 !
@@ -53,6 +52,20 @@ contains
       class(hf) :: wf
 !
 !     Print solver banner
+!
+      solver%solver_name = 'Self-consistent field solver'
+      solver%solver_author = 'E. F. Kjønstad and S, D. Folkestad, 2018'
+!
+      solver%solver_description = 'A Roothan-Hall self-consistent field solver. In each iteration, &
+                                  &the Roothan-Hall equation (or equations for unrestricted HF theory) &
+                                  &are solved to provide the next orbital coefficients. From the new &
+                                  &orbitals, a new density provides the next Fock matrix. The cycle &
+                                  &repeats until the solution is self-consistent (as measured by &
+                                  &the energy change).' 
+!
+      solver%solver_warning = 'Warning: We recommend to use the SCF-DIIS algorithm instead, which &
+                              &supports a gradient threshold and typically converges much faster. &
+                              &Use only when absolutely necessary!'
 !
       call solver%print_banner()
 !
@@ -93,13 +106,11 @@ contains
 !
       real(dp) :: energy, prev_energy, n_electrons
 !
-      real(dp) :: ddot
-!
       integer(i15) :: iteration
 !
       real(dp), dimension(:,:), allocatable :: h_wx 
 !
-      integer(i15) :: n_s, i
+      integer(i15) :: n_s
 !
       real(dp), dimension(:,:), allocatable     :: sp_eri_schwarz
       integer(i15), dimension(:,:), allocatable :: sp_eri_schwarz_list
@@ -164,7 +175,7 @@ contains
             write(output%unit, '(t3,a)') '------------------------------------------------'
             write(output%unit, '(/t3,a27,i3,a12)') 'Converged criterion met in ', iteration, ' iterations!'
 !
-            call solver%print_summary(wf)
+            call wf%print_wavefunction_summary()
 !
          else
 !
@@ -208,6 +219,8 @@ contains
 !
       class(hf) :: wf
 !
+      write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(solver%solver_name)
+!
 !     Save AO density (or densities) to disk 
 !
       call wf%save_ao_density()
@@ -230,39 +243,12 @@ contains
 !
       class(scf_hf_solver) :: solver 
 !
-      write(output%unit, '(/t3,a)') ':: Self-consistent field solver'
-      write(output%unit, '(t3,a/)') ':: E. F. Kjønstad, S. D. Folkestad, 2018'
-!
-      write(output%unit, '(t3,a)')  'Warning: We recommend to use the SCF-DIIS algorithm instead, which'
-      write(output%unit, '(t3,a)')  'supports a gradient threshold and typically converges much faster.' 
-      write(output%unit, '(t3,a)')  'Use only when absolutely necessary!'
-!
-      write(output%unit, '(/t3,a)')  'A Roothan-Hall self-consistent field solver. In each iteration,' 
-      write(output%unit, '(t3,a)')  'the Roothan-Hall equation (or equations for unrestricted HF theory)'
-      write(output%unit, '(t3,a)')  'are solved to provide the next orbital coefficients. From the new'
-      write(output%unit, '(t3,a)')  'orbitals, a new density provides the next Fock matrix. The cycle' 
-      write(output%unit, '(t3,a)')  'repeats until the solution is self-consistent (as measured by' 
-      write(output%unit, '(t3,a)')  'the energy change).' 
-!
-      flush(output%unit)
+      call long_string_print(solver%solver_name,'(//t3,a)',.true.)
+      call long_string_print(solver%solver_author,'(t3,a/)',.true.)
+      call long_string_print(solver%solver_warning,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
+      call long_string_print(solver%solver_description)
 !
    end subroutine print_banner_scf_hf_solver
-!
-!
-   subroutine print_summary_scf_hf_solver(solver, wf)
-!!
-!!    Print summary 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none 
-!
-      class(scf_hf_solver) :: solver 
-!
-      class(hf) :: wf 
-!
-      call wf%print_wavefunction_summary()
-!
-   end subroutine print_summary_scf_hf_solver
 !
 !
 end module scf_hf_solver_class

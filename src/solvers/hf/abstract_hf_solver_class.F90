@@ -140,9 +140,6 @@ contains
 !
       class(abstract_hf_solver) :: solver 
 !
-      write(output%unit, '(//t3,a,a)') '::', solver%solver_name
-      write(output%unit, '(t3,a,a/)')  '::', solver%solver_author
-!
       call long_string_print(solver%solver_name,'(//t3,a)',.true.)
       call long_string_print(solver%solver_author,'(t3,a/)',.true.)
       call long_string_print(solver%solver_description)
