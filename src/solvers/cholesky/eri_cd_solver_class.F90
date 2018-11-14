@@ -85,7 +85,9 @@ contains
       type(molecular_system) :: system
 !
       if (requested_section('cholesky')) then
+!
          call solver%read_info()
+!
       endif
 !
       solver%n_aop   = system%get_n_aos()*(system%get_n_aos()+1)/2 ! Number of ao pairs packed
@@ -157,7 +159,26 @@ contains
 !
       endif
 !
-      call solver%determine_auxilliary_cholesky_basis(system, solver%diagonal_info_target)
+      if (n_batches == 1) then
+!
+         call solver%determine_auxilliary_cholesky_basis(system, solver%diagonal_info_target)
+!
+      else
+!
+!        call routine that creates diag info for the bathes 
+!
+         do batch = 1, n_batches 
+!
+            !call diagonal_info_target_00batch%init()
+!
+            !call solver%determine_auxilliary_cholesky_basis(system, diagonal_info_target_00batch)
+!
+         enddo
+!
+!        call routine that constructs last significant diagonal and 
+         !call solver%determine_auxilliary_cholesky_basis(system, solver%diagonal_info_target)
+!
+      endif
 !
       e_determine_basis = omp_get_wtime()
       
