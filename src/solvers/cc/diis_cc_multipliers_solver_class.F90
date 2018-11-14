@@ -175,6 +175,7 @@ contains
 !
       write(output%unit, '(/t3,a)') 'Iteration    Norm residual  '
       write(output%unit, '(t3,a)')  '----------------------------'
+      flush(output%unit)
 !
       iteration   = 1
 !
@@ -232,6 +233,8 @@ contains
          write(output%unit, '(t3,a/)')  'number of maximum iterations.'
 !
       endif 
+!
+      flush(output%unit)
 !
    end subroutine run_diis_cc_multipliers_solver
 !
