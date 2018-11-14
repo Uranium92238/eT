@@ -592,8 +592,8 @@ contains
 !
       real(dp), dimension(:, :) :: L_ai_J
 !
-      integer(i15) :: full_first_a, full_last_a, length_a 
-      integer(i15) :: full_first_i, full_last_i, length_i
+      integer(i15) :: full_first_a, full_last_a 
+      integer(i15) :: full_first_i, full_last_i
 !
 !
       call integrals%set_full_index(full_first_i, 'f', 'o', first_i)
@@ -623,8 +623,8 @@ contains
 !
       real(dp), dimension(:, :) :: L_ia_J
 !
-      integer(i15) :: full_first_a, full_last_a, length_a 
-      integer(i15) :: full_first_i, full_last_i, length_i
+      integer(i15) :: full_first_a, full_last_a
+      integer(i15) :: full_first_i, full_last_i
 !
 !
       call integrals%set_full_index(full_first_i, 'f', 'o', first_i)
@@ -2232,6 +2232,7 @@ contains
       if (integrals%eri_t1_file) then
 !
          call output%error_msg('still no support for eri on file')        
+         stop
 !
       elseif (integrals%cholesky_t1_file) then
 !
@@ -2241,6 +2242,7 @@ contains
       elseif (integrals%eri_file) then
 !
          call output%error_msg('still no support for eri on file')  
+         stop
 !
       else
 !
@@ -2291,6 +2293,7 @@ contains
       if (integrals%eri_t1_file) then
 !
          call output%error_msg('still no support for eri on file')        
+         stop
 !
       elseif (integrals%cholesky_t1_file) then
 !
@@ -2300,6 +2303,7 @@ contains
       elseif (integrals%eri_file) then
 !
          call output%error_msg('still no support for eri on file')  
+         stop
 !
       else
 !
@@ -2351,6 +2355,7 @@ contains
       if (integrals%eri_t1_file) then
 !
          call output%error_msg('still no support for eri on file')        
+         stop
 !
       elseif (integrals%cholesky_t1_file) then
 !
@@ -2360,6 +2365,7 @@ contains
       elseif (integrals%eri_file) then
 !
          call output%error_msg('still no support for eri on file')  
+         stop
 !
       else
 !
@@ -2413,6 +2419,7 @@ contains
       if (integrals%eri_t1_file) then
 !
          call output%error_msg('still no support for eri on file')        
+         stop
 !
       elseif (integrals%cholesky_t1_file) then
 !
@@ -2422,6 +2429,7 @@ contains
       elseif (integrals%eri_file) then
 !
          call output%error_msg('still no support for eri on file')  
+         stop
 !
       else
 !
