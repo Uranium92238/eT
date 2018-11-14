@@ -72,7 +72,7 @@ contains
 !     For calculations with restart, it is necessary to account for the files
 !     already present in the folder. We calculate this and subtract from the available.
 !
-      call system('du -m . >> scratch_size') ! Ask for number of megabytes
+      call EXECUTE_COMMAND_LINE('du -m . >> scratch_size') ! Ask for number of megabytes
 !
 !     Open file to read the size
 !
