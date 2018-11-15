@@ -71,6 +71,9 @@ module eri_cd_solver_class
       procedure :: print_banner                           => print_banner_eri_cd_solver
       procedure :: print_settings                         => print_settings_eri_cd_solver
 !
+      procedure :: construct_diagonal_batches             => construct_diagonal_batches_eri_cd_solver
+      procedure :: construct_diagonal_from_batch_bases    => construct_diagonal_from_batch_bases_eri_cd_solver
+!
    end type eri_cd_solver
 !
 !
@@ -136,6 +139,10 @@ contains
 !
       integer(i15), dimension(:,:), allocatable :: n_cholesky_batches, n_sp_in_basis_batches
 !
+      type(file) :: batch_file_diag, batch_file_basis
+!
+      character(len=100) :: temp_name
+!
       call solver%print_banner()
 !
       call solver%print_settings()
@@ -180,21 +187,25 @@ contains
          n_cholesky_batches = 0
          n_sp_in_basis_batches = 0
 !
-!        call routine that creates diag info for the bathes 
+         call solver%construct_diagonal_batches(system)
 !
          do batch = 1, solver%n_batches 
 !
-            !call diagonal_info_target_00batch%init()
+            write(temp_name, '(a14, i4.4)')'diagonal_info_', batch
+            call batch_file_diag%init(trim(temp_name), 'sequential', 'unformatted')
+
+            write(temp_name, '(a14, i4.4)')'basis_info_', batch
+            call batch_file_basis%init(trim(temp_name), 'sequential', 'unformatted')
 !
-            !call solver%determine_auxilliary_cholesky_basis(system, diagonal_info_target_00batch)
+            call solver%determine_auxilliary_cholesky_basis(system, batch_file_diag, batch_file_basis)
 !
             n_cholesky_batches(batch, 1)     = solver%n_cholesky
             n_sp_in_basis_batches(batch, 1)  = solver%n_sp_in_basis
 !
          enddo
 !
-!        call routine that constructs last significant diagonal and 
-         !call solver%determine_auxilliary_cholesky_basis(system, solver%diagonal_info_target)
+         call solver%construct_diagonal_from_batch_bases(system, n_cholesky_batches, n_sp_in_basis_batches)
+         call solver%determine_auxilliary_cholesky_basis(system, solver%diagonal_info_target, solver%basis_shell_data)
 !
       endif
 !
