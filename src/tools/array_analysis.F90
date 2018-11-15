@@ -798,11 +798,11 @@ contains
       integer(i15), dimension(dim,1), intent(inout) :: vec
       integer(i15), dimension(dim,1), intent(inout) :: index_list
 !
-      call dscal(dim, -one, vec, 1)
+      vec = -1*vec
 !
       call quicksort_with_index_descending_int(vec, index_list, dim)
 !
-      call dscal(dim, -one, vec, 1)
+      vec = -1*vec
 !
    end subroutine quicksort_with_index_ascending_int
 !
