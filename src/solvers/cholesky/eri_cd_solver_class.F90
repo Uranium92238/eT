@@ -147,6 +147,11 @@ contains
 !
       call solver%print_settings()
 !
+      write(output%unit, '(/t6, a29, i13)') 'Total number of shell pairs: ', solver%n_sp
+      write(output%unit, '(t6, a29, i13)')  'Total number of AO pairs:    ', solver%n_aop
+!
+      write(output%unit, '(/t3, a38)') '- Preparing diagonal for decomposition'
+!
       s_determine_basis = omp_get_wtime()
 !
       if (solver%one_center) then
@@ -189,7 +194,11 @@ contains
 !
          call solver%construct_diagonal_batches(system)
 !
+         write(output%unit, '(/t3, a31)') '- Decomposing batched diagonal:'
+!
          do batch = 1, solver%n_batches 
+!
+            write(output%unit, '(/t3, a6, i3, a1)') 'Batch ', batch, ':'
 !
             write(temp_name, '(a14, i4.4)')'diagonal_info_', batch
             call batch_file_diag%init(trim(temp_name), 'sequential', 'unformatted')
@@ -203,6 +212,8 @@ contains
             n_sp_in_basis_batches(batch, 1)  = solver%n_sp_in_basis
 !
          enddo
+!
+         write(output%unit, '(/t3, a27)') '- Final decomposition step:'
 !
          call solver%construct_diagonal_from_batch_bases(system, n_cholesky_batches, n_sp_in_basis_batches)
          call solver%determine_auxilliary_cholesky_basis(system, solver%diagonal_info_target, solver%basis_shell_data)
@@ -488,11 +499,9 @@ contains
       enddo
 
 !
-      write(output%unit, '(/t3, a)')         '- Reduction of AO and shell pairs:'
+      !write(output%unit, '(t6, a)')         '- Reduction of AO and shell pairs:'
 !
-      write(output%unit, '(/t6, a33, 2x, i11)') 'Total number of shell pairs:     ', solver%n_sp
-      write(output%unit, '(t6, a33, 2x, i11)')  'Significant shell pairs:         ', n_sig_sp
-      write(output%unit, '(t6, a33, 2x, i11)')  'Total number of AO pairs:        ', solver%n_aop
+      write(output%unit, '(/t6, a33, 2x, i11)')  'Significant shell pairs:         ', n_sig_sp
       write(output%unit, '(t6, a33, 2x, i11)')  'Significant AO pairs:            ', n_sig_aop
 !
       write(output%unit, '(/t6, a33, 2x, i11)') 'Construct shell pairs:           ', n_construct_sp
@@ -867,11 +876,9 @@ contains
 !
       enddo
 !
-      write(output%unit, '(/t3, a)')         '- Reduction of AO and shell pairs:'
+    !  write(output%unit, '(/t3, a)')         '- Reduction of AO and shell pairs:'
 !
-      write(output%unit, '(/t6, a33, 2x, i11)') 'Total number of shell pairs:     ', solver%n_sp
-      write(output%unit, '(t6, a33, 2x, i11)')  'Significant shell pairs:         ', n_sig_sp
-      write(output%unit, '(t6, a33, 2x, i11)')  'Total number of AO pairs:        ', solver%n_aop
+      write(output%unit, '(/t6, a33, 2x, i11)')  'Significant shell pairs:         ', n_sig_sp
       write(output%unit, '(t6, a33, 2x, i11)')  'Significant AO pairs:            ', n_sig_aop
 !
       write(output%unit, '(/t6, a33, 2x, i11)') 'Construct shell pairs:           ', n_construct_sp
@@ -1145,6 +1152,15 @@ contains
 !
          call disk%open_file(batch_file, 'write', 'rewind')
          rewind(batch_file%unit)
+!
+!
+         write(output%unit, '(/t6, a40, i3, a1)')         'Significant AO and shell pairs in batch ', batch, ':'
+!
+         write(output%unit, '(/t9, a33, 2x, i11)')  'Significant shell pairs:         ', n_sig_sp_batch
+         write(output%unit, '(t9, a33, 2x, i11)')  'Significant AO pairs:            ', current_batch_size
+!
+         flush(output%unit)
+!
 !
          write(batch_file%unit) n_sig_sp_batch, current_batch_size
          write(batch_file%unit) sig_sp_batch
@@ -1490,6 +1506,13 @@ contains
 !        2. sig_sp - vector of logicals to describe which shell pairs are significant
 !        3. D_xy = ( xy | xy ), the significant diagonal.
 !        4. Screening vector
+!
+      write(output%unit, '(/t6, a)')  'Significant AO and shell pairs in final decomposition:'
+!
+      write(output%unit, '(/t6, a33, 2x, i11)')  'Significant shell pairs:         ', n_sig_sp
+      write(output%unit, '(t6, a33, 2x, i11)')  'Significant AO pairs:            ', n_sig_aop
+!
+      flush(output%unit)
 !
       call disk%open_file(solver%diagonal_info_target, 'write', 'rewind')
       rewind(solver%diagonal_info_target%unit)
