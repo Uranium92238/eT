@@ -73,6 +73,7 @@ module eri_cd_solver_class
 !
       procedure :: construct_diagonal_batches             => construct_diagonal_batches_eri_cd_solver
       procedure :: construct_diagonal_from_batch_bases    => construct_diagonal_from_batch_bases_eri_cd_solver
+      procedure :: append_bases                           => append_bases_eri_cd_solver
 !
    end type eri_cd_solver
 !
@@ -216,8 +217,11 @@ contains
 !
          write(output%unit, '(/t3, a27)') '- Final decomposition step:'
 !
+         solver%threshold = solver%threshold*1.0d-1
+!
          call solver%construct_diagonal_from_batch_bases(system, n_cholesky_batches, n_sp_in_basis_batches)
          call solver%determine_auxilliary_cholesky_basis(system, solver%diagonal_info_target, solver%basis_shell_data)
+         !call solver%append_bases(system, n_cholesky_batches, n_sp_in_basis_batches)
 !
       endif
 !
@@ -1033,8 +1037,11 @@ contains
 !
    subroutine construct_diagonal_batches_eri_cd_solver(solver, system)
 !!
+!!    Construct diagonal batches
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!
+!!    Divides the significant diagonal into batches and prepares for 
+!!    decomposition
 !!
       implicit none
 !  
@@ -1183,14 +1190,20 @@ contains
       enddo
 !
       deallocate(sig_sp_batch)
+      deallocate(sig_sp)
+      call mem%dealloc(D_xy, n_sig_aop, 1)
+      call mem%dealloc(screening_vector, n_sig_aop, 1)
 !
    end subroutine construct_diagonal_batches_eri_cd_solver
 !
 !
    subroutine construct_diagonal_from_batch_bases_eri_cd_solver(solver, system, n_cholesky_batches, n_sp_in_basis_batches)
 !!
+!!    Construct diagonal from batch bases
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
-!!
+!!    Construct final diagonal from the bases obtained from diagonal batches
+!!    Preparation for final decomposition step
 !!
       implicit none
 !
@@ -1532,6 +1545,119 @@ contains
 !
    end subroutine construct_diagonal_from_batch_bases_eri_cd_solver
 !
+!
+   subroutine append_bases_eri_cd_solver(solver, system, n_cholesky_batches, n_sp_in_basis_batches)
+!!
+!!    Append bases
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+!!    Appends bases from different diagonal batches, to be used
+!!    if system routine is used to decompose directly the bases from the batches
+!!
+      implicit none
+!
+      class(eri_cd_solver) :: solver
+!
+      type(molecular_system) :: system
+!
+      integer(i15), dimension(solver%n_batches, 1), intent(in) :: n_cholesky_batches
+      integer(i15), dimension(solver%n_batches, 1), intent(in) :: n_sp_in_basis_batches
+!
+      integer(i15) :: n_cholesky_total, n_sp_in_basis_total, J, I, K, n_sig_aop, n_sig_sp
+      integer(i15) :: A_shell, B_shell, AB_sp, sp, alpha_in_A, beta_in_B, alpha_beta_in_AB, aop, batch
+      integer(i15) :: n_basis_aop_in_AB_total, n_basis_aop_in_AB_offset, current_offset, current_offset_old
+      integer(i15) :: count_sig, n_cholesky_offset, n_sig_aop_old, n_sig_sp_old, n_sp_in_basis_offset
+!
+      type(file) :: batch_file
+!
+      integer(i15), dimension(:,:), allocatable :: alpha, beta, alpha_beta, A, B, AB, n_basis_aop_in_AB
+      integer(i15), dimension(:,:), allocatable :: sorted_alpha, sorted_beta, sorted_alpha_beta, sorted_A
+      integer(i15), dimension(:,:), allocatable :: sorted_B, sorted_AB, sorted_n_basis_aop_in_AB
+      integer(i15), dimension(:,:), allocatable :: basis_shell_info, cholesky_basis, index_AB, index_alpha_beta
+      integer(i15), dimension(:,:), allocatable :: alpha_beta_offset, alpha_beta_offset_old, cholesky_full, basis_shell_info_full
+!
+      logical, dimension(:), allocatable :: sig_sp, sig_sp_old
+!
+      type(interval) :: A_interval, B_interval
+!
+      real(dp), dimension(:,:), allocatable :: D, D_old, screening_vector, screening_vector_old
+!
+      character(len=100) :: temp_name
+!
+      n_cholesky_total = 0
+      n_sp_in_basis_total = 0
+!
+      do batch = 1, solver%n_batches
+!
+         n_cholesky_total = n_cholesky_total + n_cholesky_batches(batch, 1) 
+         n_sp_in_basis_total = n_sp_in_basis_total + n_sp_in_basis_batches(batch, 1) 
+!
+      enddo
+!
+      call mem%alloc_int(cholesky_full, n_cholesky_total, 3)
+      call mem%alloc_int(basis_shell_info_full, n_sp_in_basis_total, 4)
+!
+      n_sp_in_basis_offset = 0
+      n_cholesky_offset = 0
+!
+      do batch = 1, solver%n_batches
+!
+!        Read basis_shell_data file containing
+!  
+!           1. number shell pairs in basis
+!           2. basis_shell_info
+!           3. cholesky_basis
+         
+         write(temp_name, '(a11, i4.4)')'basis_info_', batch
+         call batch_file%init(trim(temp_name), 'sequential', 'unformatted')
+!  
+         call disk%open_file(batch_file, 'read')
+         rewind(batch_file%unit)
+!
+         call mem%alloc_int(basis_shell_info, n_sp_in_basis_batches(batch, 1), 4)
+         call mem%alloc_int(cholesky_basis, n_cholesky_batches(batch, 1), 3)
+!  
+         read(batch_file%unit) 
+         read(batch_file%unit) basis_shell_info
+         read(batch_file%unit) cholesky_basis
+!  
+         call disk%close_file(batch_file)
+!
+         do J = 1, n_cholesky_batches(batch, 1)
+!
+            cholesky_full(n_cholesky_offset + J, :) = cholesky_basis(J, :)
+!
+         enddo
+!
+         do sp = 1, n_sp_in_basis_batches(batch, 1)
+!
+            basis_shell_info_full(n_sp_in_basis_offset + sp, :) = basis_shell_info(sp, :)
+!
+         enddo
+!
+         n_sp_in_basis_offset = n_sp_in_basis_offset + n_sp_in_basis_batches(batch, 1)
+         n_cholesky_offset = n_cholesky_offset + n_cholesky_batches(batch, 1)
+!
+         call mem%dealloc_int(basis_shell_info, n_sp_in_basis_batches(batch, 1), 4)
+         call mem%dealloc_int(cholesky_basis, n_cholesky_batches(batch, 1), 3)
+!
+      enddo
+!
+      call disk%open_file(solver%basis_shell_data, 'write', 'rewind')
+!
+      write(solver%basis_shell_data%unit) n_sp_in_basis_total
+!
+      write(solver%basis_shell_data%unit) basis_shell_info_full
+      write(solver%basis_shell_data%unit) cholesky_full
+!
+      solver%n_cholesky = n_cholesky_total
+!
+      call disk%close_file(solver%basis_shell_data)
+!
+      call mem%dealloc_int(cholesky_full, n_cholesky_total, 3)
+      call mem%dealloc_int(basis_shell_info_full, n_sp_in_basis_total, 4)
+!
+   end subroutine append_bases_eri_cd_solver
 !
    subroutine determine_auxilliary_cholesky_basis_eri_cd_solver(solver, system, diagonal_info, basis_info)
 !!
