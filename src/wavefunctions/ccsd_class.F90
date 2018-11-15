@@ -549,8 +549,6 @@ subroutine construct_eta_ccsd(wf, eta)
       real(dp), dimension(:,:), allocatable :: g_ia_jb
       real(dp), dimension(:,:), allocatable :: eta_ai_bj
 !
-      character(len=40) :: integral_type
-!
       integer(i15) :: i = 0, a = 0, j = 0, b = 0, aibj = 0
       integer(i15) :: bj = 0, ai = 0
 !

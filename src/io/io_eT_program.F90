@@ -251,10 +251,6 @@ contains
 !
       character(len=40) :: engine
 !
-      character(len=100) :: line
-!
-      integer(i15) :: n_tasks
-!
 !     Read for multipliers
 !
       if (requested_task('multipliers') .or. requested_task('Multipliers')) then

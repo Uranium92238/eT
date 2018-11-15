@@ -14,7 +14,7 @@ module diis_cc_gs_solver_class
 !
    type :: diis_cc_gs_solver
 !
-      character(len=100) :: tag = 'Davidson coupled cluster excited state solver'
+      character(len=100) :: tag = 'DIIS CC ground solver'
       character(len=100) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
 !
       character(len=500) :: description1 = 'A DIIS CC ground state amplitude equations solver. It combines &

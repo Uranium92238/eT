@@ -242,13 +242,6 @@ contains
 !
       class(davidson_cc_multipliers_solver) :: solver 
 !
-      write(output%unit, '(//t3,a)') ':: Davidson coupled cluster multipliers solver'
-      write(output%unit, '(t3,a)')   ':: E. F. Kjønstad, S. D. Folkestad, 2018'
-!
-      write(output%unit, '(/t3,a)')  'A Davidson CC multiplier equations solver.'
-!
-      flush(output%unit)
-!
       call long_string_print(solver%tag,'(//t3,a)',.true.)
       call long_string_print(solver%author,'(t3,a/)',.true.)
       call long_string_print(solver%description,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
