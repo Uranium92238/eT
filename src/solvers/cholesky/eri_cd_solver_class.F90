@@ -1394,6 +1394,8 @@ contains
 !      precalculate alpha beta offsets both old and new
 !
       count_sig = 0
+      current_offset = 0
+      current_offset_old = 0
 !
       do B_shell = 1, solver%n_s
          do A_shell = B_shell, solver%n_s
@@ -1405,17 +1407,18 @@ contains
                A_interval = system%shell_limits(A_shell)
                B_interval = system%shell_limits(B_shell)
 !
-               current_offset_old = current_offset_old + get_size_sp(A_interval, B_interval)
-!
                if (sig_sp(sp)) then 
 !
-                  current_offset = current_offset + get_size_sp(A_interval, B_interval)
                   count_sig = count_sig + 1
 !
                   alpha_beta_offset_old(count_sig, 1) = current_offset_old
                   alpha_beta_offset(count_sig, 1)     = current_offset
 !
+                  current_offset = current_offset + get_size_sp(A_interval, B_interval)
+!
                endif
+!
+               current_offset_old = current_offset_old + get_size_sp(A_interval, B_interval)
 !
             endif
 !
