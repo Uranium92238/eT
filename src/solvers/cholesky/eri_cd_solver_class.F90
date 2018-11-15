@@ -47,7 +47,7 @@ module eri_cd_solver_class
       integer(i15) :: n_sp_in_basis
       integer(i15) :: n_s, n_sp, n_ao, n_aop
 !
-      integer(i15) :: n_batches = 1
+      integer(i15) :: n_batches
 !
    contains
 !
@@ -147,7 +147,8 @@ contains
 !
       call solver%print_settings()
 !
-      write(output%unit, '(/t6, a29, i13)') 'Total number of shell pairs: ', solver%n_sp
+      write(output%unit, '(/t6, a29, i13)') 'Total number of AOs:         ', system%get_n_aos()
+      write(output%unit, '(t6, a29, i13)')  'Total number of shell pairs: ', solver%n_sp
       write(output%unit, '(t6, a29, i13)')  'Total number of AO pairs:    ', solver%n_aop
 !
       write(output%unit, '(/t3, a38)') '- Preparing diagonal for decomposition'
