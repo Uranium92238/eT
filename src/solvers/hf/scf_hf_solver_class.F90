@@ -24,7 +24,7 @@ module scf_hf_solver_class
 !
    type, extends(abstract_hf_solver) :: scf_hf_solver
 !
-      character(len=400) :: solver_warning
+      character(len=400) :: warning
 !
    contains
 !
@@ -53,17 +53,17 @@ contains
 !
 !     Print solver banner
 !
-      solver%solver_name = 'Self-consistent field solver'
-      solver%solver_author = 'E. F. Kjønstad and S, D. Folkestad, 2018'
+      solver%tag = 'Self-consistent field solver'
+      solver%author = 'E. F. Kjønstad and S, D. Folkestad, 2018'
 !
-      solver%solver_description = 'A Roothan-Hall self-consistent field solver. In each iteration, &
+      solver%description = 'A Roothan-Hall self-consistent field solver. In each iteration, &
                                   &the Roothan-Hall equation (or equations for unrestricted HF theory) &
                                   &are solved to provide the next orbital coefficients. From the new &
                                   &orbitals, a new density provides the next Fock matrix. The cycle &
                                   &repeats until the solution is self-consistent (as measured by &
                                   &the energy change).' 
 !
-      solver%solver_warning = 'Warning: We recommend to use the SCF-DIIS algorithm instead, which &
+      solver%warning = 'Warning: We recommend to use the SCF-DIIS algorithm instead, which &
                               &supports a gradient threshold and typically converges much faster. &
                               &Use only when absolutely necessary!'
 !
@@ -219,7 +219,7 @@ contains
 !
       class(hf) :: wf
 !
-      write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(solver%solver_name)
+      write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(solver%tag)
 !
 !     Save AO density (or densities) to disk 
 !
@@ -243,10 +243,10 @@ contains
 !
       class(scf_hf_solver) :: solver 
 !
-      call long_string_print(solver%solver_name,'(//t3,a)',.true.)
-      call long_string_print(solver%solver_author,'(t3,a/)',.true.)
-      call long_string_print(solver%solver_warning,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
-      call long_string_print(solver%solver_description)
+      call long_string_print(solver%tag,'(//t3,a)',.true.)
+      call long_string_print(solver%author,'(t3,a/)',.true.)
+      call long_string_print(solver%warning,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
+      call long_string_print(solver%description)
 !
    end subroutine print_banner_scf_hf_solver
 !

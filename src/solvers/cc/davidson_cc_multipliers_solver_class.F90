@@ -14,6 +14,10 @@ module davidson_cc_multipliers_solver_class
 !
    type :: davidson_cc_multipliers_solver
 !
+      character(len=100) :: tag = 'Davidson coupled cluster multipliers solver'
+      character(len=100) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
+      character(len=500) :: description = 'A Davidson CC multiplier equations solver.'
+!
       integer(i15) :: max_iterations
 !
       real(dp) :: residual_threshold
@@ -23,15 +27,16 @@ module davidson_cc_multipliers_solver_class
    contains
 !
       procedure :: prepare => prepare_davidson_cc_multipliers_solver
-      procedure :: cleanup => cleanup_davidson_cc_multipliers_solver
+      procedure, nopass :: cleanup => cleanup_davidson_cc_multipliers_solver
 !
       procedure :: print_banner => print_banner_davidson_cc_multipliers_solver
       procedure :: print_settings => print_settings_davidson_cc_multipliers_solver
 !
       procedure :: run => run_davidson_cc_multipliers_solver
 !
-      procedure :: set_precondition_vector => set_precondition_vector_davidson_cc_multipliers_solver     
-      procedure :: transform_trial_vector => transform_trial_vector_davidson_cc_multipliers_solver 
+      procedure, nopass :: set_precondition_vector => set_precondition_vector_davidson_cc_multipliers_solver     
+!
+      procedure, nopass :: transform_trial_vector => transform_trial_vector_davidson_cc_multipliers_solver 
 !
    end type davidson_cc_multipliers_solver
 !
@@ -106,7 +111,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: eta, c_i
 !
-      integer(i15) :: iteration, i
+      integer(i15) :: iteration
 !
       real(dp) :: residual_norm, ddot, norm_trial
 !
@@ -141,6 +146,8 @@ contains
       write(output%unit,'(/t3,a)') 'Iteration     Residual norm'
       write(output%unit,'(t3,a)') '---------------------------'
       flush(output%unit)
+!
+      converged_residual = .false.
 !
       do while (.not. converged_residual .and. (iteration .le. solver%max_iterations))
 !
@@ -206,14 +213,12 @@ contains
    end subroutine run_davidson_cc_multipliers_solver
 !
 !
-   subroutine cleanup_davidson_cc_multipliers_solver(solver, wf)
+   subroutine cleanup_davidson_cc_multipliers_solver(wf)
 !!
 !!    Cleanup 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
-!
-      class(davidson_cc_multipliers_solver) :: solver
 !
       class(ccs) :: wf
 !
@@ -239,34 +244,20 @@ contains
 !
       flush(output%unit)
 !
+      call long_string_print(solver%tag,'(//t3,a)',.true.)
+      call long_string_print(solver%author,'(t3,a/)',.true.)
+      call long_string_print(solver%description,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
+!
    end subroutine print_banner_davidson_cc_multipliers_solver
 !
 !
-   subroutine print_summary_davidson_cc_multipliers_solver(solver, wf)
-!!
-!!    Print summary 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none 
-!
-      class(davidson_cc_multipliers_solver) :: solver 
-!
-      class(ccs) :: wf 
-!
-    !  call wf%print_wavefunction_summary()
-!
-   end subroutine print_summary_davidson_cc_multipliers_solver
-!
-!
-   subroutine transform_trial_vector_davidson_cc_multipliers_solver(solver, wf, c_i)
+   subroutine transform_trial_vector_davidson_cc_multipliers_solver(wf, c_i)
 !!
 !!    Transform trial vector 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
 !!
 !!    Transforms the trial vector according to specified transformation routine.
 !!
-      class(davidson_cc_multipliers_solver), intent(in) :: solver 
-!
       class(ccs), intent(in) :: wf 
 !
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: c_i
@@ -276,7 +267,7 @@ contains
    end subroutine transform_trial_vector_davidson_cc_multipliers_solver
 !
 !
-   subroutine set_precondition_vector_davidson_cc_multipliers_solver(solver, wf, davidson)
+   subroutine set_precondition_vector_davidson_cc_multipliers_solver(wf, davidson)
 !!
 !!    Set precondition vector
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
@@ -284,8 +275,6 @@ contains
 !!    Sets precondition vector to orbital differences 
 !!
       implicit none
-!
-      class(davidson_cc_multipliers_solver) :: solver
 !
       class(ccs) :: wf
 !

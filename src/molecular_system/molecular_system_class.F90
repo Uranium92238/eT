@@ -19,7 +19,7 @@ module molecular_system_class
    type :: molecular_system
 !
       character(len=100) :: name
-      character(len=40), dimension(:), allocatable :: basis_sets
+      character(len=100), dimension(:), allocatable :: basis_sets
 !
       integer(i15) :: n_atoms
       integer(i15) :: n_basis_sets 
@@ -89,9 +89,9 @@ contains
 !
       character(len=100) :: temp_name
 !
-      integer(kind=4) :: i = 0, j = 0, n_atoms_libint
+      integer(kind=4) :: i4, j
 !
-      integer(i15) :: s, n_s 
+      integer(i15) :: s, n_s, i
 !
       integer(kind=4), dimension(:,:), allocatable :: n_shells_on_atoms
       integer(kind=4), dimension(:,:), allocatable :: n_basis_in_shells
@@ -125,7 +125,8 @@ contains
 !
       do i = 1, molecule%n_basis_sets ! Loop over atoms  
 !
-         write(temp_name, '(a, a1, i4.4)')trim(molecule%name), '_', i
+         i4 = int(i,4)
+         write(temp_name, '(a, a1, i4.4)')trim(molecule%name), '_', i4
 !
          call initialize_basis(molecule%basis_sets(i), temp_name)
 !
@@ -136,6 +137,8 @@ contains
       call get_n_shells_on_atoms(n_shells_on_atoms)
 !
       do i = 1, molecule%n_atoms ! Loop over atoms
+!
+         i4 = int(i,4)
 !
          call molecule%atoms(i)%set_number()
 !
@@ -148,7 +151,7 @@ contains
 !        and save number of aos per atom
 !
          allocate(n_basis_in_shells(n_shells_on_atoms(i,1), 1))
-         call get_n_basis_in_shells(i, n_basis_in_shells)
+         call get_n_basis_in_shells(i4, n_basis_in_shells)
 !
          molecule%atoms(i)%n_ao = 0
 !
@@ -165,7 +168,7 @@ contains
 !        Get shell numbers
 !
          allocate(shell_numbers(n_shells_on_atoms(i,1), 1))
-         call get_shell_numbers(i, shell_numbers)
+         call get_shell_numbers(i4, shell_numbers)
 !
          do j = 1, n_shells_on_atoms(i,1)
 !
@@ -178,7 +181,7 @@ contains
 !        And the first AO index in each shell
 !
          allocate(first_ao_in_shells(n_shells_on_atoms(i,1), 1))
-         call get_first_ao_in_shells(i, first_ao_in_shells)
+         call get_first_ao_in_shells(i4, first_ao_in_shells)
 !
          do j = 1, n_shells_on_atoms(i,1)
 
@@ -273,9 +276,6 @@ contains
       class(molecular_system) :: molecule
 !
       character(len=100) :: line
-      character(len=100) :: current_basis
-!
-      integer(i15) :: i = 0
 !
       rewind(input%unit)
 !
@@ -364,15 +364,12 @@ contains
       class(molecular_system) :: molecule
 !
       character(len=100) :: line
-      character(len=100) :: current_basis, temp_name
+      character(len=100) :: current_basis
 !
-      integer(i15) :: i = 0, current_atom = 0, current_basis_nbr = 0
-      integer(i15), dimension(:,:), allocatable :: atoms_with_current_basis
+      integer(i15) :: current_atom, current_basis_nbr
 !
       integer(i15) :: cursor
       character(len=100) :: coordinate
-!
-      type(file) :: basis_file, mol_file
 !
       rewind(input%unit)
 !

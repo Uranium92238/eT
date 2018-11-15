@@ -13,9 +13,9 @@ module abstract_hf_solver_class
 !
    type, abstract :: abstract_hf_solver 
 !
-      character(len=100) :: solver_name
-      character(len=100) :: solver_author
-      character(len=400) :: solver_description
+      character(len=100) :: tag
+      character(len=100) :: author
+      character(len=400) :: description
 !
       real(dp) :: energy_threshold          = 1.0D-6
       real(dp) :: gradient_threshold        = 1.0D-6
@@ -140,9 +140,9 @@ contains
 !
       class(abstract_hf_solver) :: solver 
 !
-      call long_string_print(solver%solver_name,'(//t3,a)',.true.)
-      call long_string_print(solver%solver_author,'(t3,a/)',.true.)
-      call long_string_print(solver%solver_description)
+      call long_string_print(solver%tag,'(//t3,a)',.true.)
+      call long_string_print(solver%author,'(t3,a/)',.true.)
+      call long_string_print(solver%description)
 !
    end subroutine print_banner_abstract_hf_solver
 !

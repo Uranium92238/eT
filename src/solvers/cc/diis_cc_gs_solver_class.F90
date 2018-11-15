@@ -14,6 +14,17 @@ module diis_cc_gs_solver_class
 !
    type :: diis_cc_gs_solver
 !
+      character(len=100) :: tag = 'Davidson coupled cluster excited state solver'
+      character(len=100) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
+!
+      character(len=500) :: description1 = 'A DIIS CC ground state amplitude equations solver. It combines &
+                                           &a quasi-Newton perturbation theory estimate of the next &
+                                           &amplitudes, using least square fitting to find an an optimal &
+                                           &combination of previous estimates such that the update is minimized.'
+!
+      character(len=500) :: description2 = 'See Helgaker et al., Molecular Electronic Structure Theory, &
+                                           &Chapter 13, for the more details on this algorithm.'
+!
       integer(i15) :: diis_dimension
 !
       integer(i15) :: max_iterations 
@@ -26,18 +37,16 @@ module diis_cc_gs_solver_class
 !
    contains
 !     
+      procedure, nopass :: do_diagonal_precondition => do_diagonal_precondition_diis_cc_gs_solver
+!
       procedure :: prepare                  => prepare_diis_cc_gs_solver
       procedure :: run                      => run_diis_cc_gs_solver
       procedure :: cleanup                  => cleanup_diis_cc_gs_solver
 !
       procedure :: print_banner             => print_banner_diis_cc_gs_solver
-      procedure :: print_summary            => print_summary_diis_cc_gs_solver
-!
       procedure :: read_settings            => read_settings_diis_cc_gs_solver
 !
       procedure :: print_settings           => print_settings_diis_cc_gs_solver
-!
-      procedure :: do_diagonal_precondition => do_diagonal_precondition_diis_cc_gs_solver
 !
       procedure :: restart                  => restart_diis_cc_gs_solver
       procedure :: write_restart_file       => write_restart_file_diis_cc_gs_solver
@@ -173,7 +182,7 @@ contains
    end subroutine print_settings_diis_cc_gs_solver
 !
 !
-   subroutine do_diagonal_precondition_diis_cc_gs_solver(solver, alpha, preconditioner, vector, n)
+   subroutine do_diagonal_precondition_diis_cc_gs_solver(alpha, preconditioner, vector, n)
 !!
 !!    Do diagonal precondition 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
@@ -184,8 +193,6 @@ contains
 !!
       implicit none 
 !     
-      class(diis_cc_gs_solver), intent(in) :: solver 
-!
       integer(i15), intent(in) :: n
 !
       real(dp), intent(in) :: alpha 
@@ -287,8 +294,6 @@ contains
 !
             endif
 !
-            call solver%print_summary(wf)
-!
          else
 !
 !           Precondition omega, shift amplitudes by preconditioned omega, 
@@ -351,42 +356,18 @@ contains
    subroutine print_banner_diis_cc_gs_solver(solver)
 !!
 !!    Print banner
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!    Written by Rolf H. Myhre, 2018
 !!
       implicit none 
 !
       class(diis_cc_gs_solver) :: solver 
 !
-      write(output%unit, '(//t3,a)') ':: DIIS coupled cluster ground state solver'
-      write(output%unit, '(t3,a)')   ':: E. F. Kjønstad, S. D. Folkestad, 2018'
-!
-      write(output%unit, '(/t3,a)')  'A DIIS CC ground state amplitude equations solver. It combines'
-      write(output%unit, '(t3,a)')   'a quasi-Newton perturbation theory estimate of the next amplitudes,'
-      write(output%unit, '(t3,a)')   'using least square fitting to find an an optimal combination of previous'
-      write(output%unit, '(t3,a)')   'estimates such that the update is minimized.'
-!
-      write(output%unit, '(/t3,a)')  'See Helgaker et al., Molecular Electronic Structure Theory,'
-      write(output%unit, '(t3,a)')   'Chapter 13, for the more details on this algorithm.'
-!
-      flush(output%unit)
+      call long_string_print(solver%tag,'(//t3,a)',.true.)
+      call long_string_print(solver%author,'(t3,a/)',.true.)
+      call long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
+      call long_string_print(solver%description2)
 !
    end subroutine print_banner_diis_cc_gs_solver
-!
-!
-   subroutine print_summary_diis_cc_gs_solver(solver, wf)
-!!
-!!    Print summary 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none 
-!
-      class(diis_cc_gs_solver) :: solver 
-!
-      class(ccs) :: wf 
-!
-    !  call wf%print_wavefunction_summary()
-!
-   end subroutine print_summary_diis_cc_gs_solver
 !
 !
    subroutine read_settings_diis_cc_gs_solver(solver)

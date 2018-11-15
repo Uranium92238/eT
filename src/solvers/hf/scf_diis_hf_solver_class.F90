@@ -60,9 +60,9 @@ contains
 !
       class(hf) :: wf
 !
-      solver%solver_name = 'Self-consistent field DIIS Hartree-Fock solver'
-      solver%solver_author = 'E. F. Kjønstad and S, D. Folkestad, 2018'
-      solver%solver_description = 'A DIIS-accelerated Roothan-Hall self-consistent field solver. &
+      solver%tag = 'Self-consistent field DIIS Hartree-Fock solver'
+      solver%author = 'E. F. Kjønstad and S, D. Folkestad, 2018'
+      solver%description = 'A DIIS-accelerated Roothan-Hall self-consistent field solver. &
                                   &In other words, a least-square fit toward a zero gradient vector &
                                   &is performed using the previously recorded Fock matrices and the &
                                   &associated gradients. After each Roothan-Hall update of the density &
@@ -335,7 +335,7 @@ contains
 !
       logical :: do_mo_transformation
 !
-      write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(solver%solver_name)
+      write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(solver%tag)
 !
 !     Do a final Roothan-Hall step to transform the Fock matrix in the canonical MO basis 
 !

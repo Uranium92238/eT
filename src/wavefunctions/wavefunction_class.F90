@@ -72,7 +72,7 @@ contains
 !
       class(wavefunction), intent(in) :: wf 
 !
-      write(output%unit, '(/t3,a,a,a)') '- Summary of abstract', trim(wf%name), ':'
+      write(output%unit, '(/t3,a,a,a)') '- Summary of ', trim(wf%name), ' wavefunction:'
 !
 !
    end subroutine print_wavefunction_summary_wavefunction

@@ -112,9 +112,9 @@ contains
          allocate(cc_core_es)
          cc_es_solver => cc_core_es
 !
-         call cc_es_solver%prepare(wf)
+         call cc_es_solver%prepare()
          call cc_es_solver%run(wf)
-         call cc_es_solver%cleanup(wf)
+         call cc_es_solver%cleanup()
 !
          cc_es_solver => null()
          deallocate(cc_core_es)
@@ -124,9 +124,9 @@ contains
          allocate(cc_valence_ip)
          cc_es_solver => cc_valence_ip
 !
-         call cc_es_solver%prepare(wf)
+         call cc_es_solver%prepare()
          call cc_es_solver%run(wf)
-         call cc_es_solver%cleanup(wf)
+         call cc_es_solver%cleanup()
 !
          cc_es_solver => null()
          deallocate(cc_valence_ip)
@@ -138,9 +138,9 @@ contains
          allocate(cc_valence_es)
          cc_es_solver => cc_valence_es
 !
-         call cc_es_solver%prepare(wf)
+         call cc_es_solver%prepare()
          call cc_es_solver%run(wf)
-         call cc_es_solver%cleanup(wf)
+         call cc_es_solver%cleanup()
 !
          cc_es_solver => null()
          deallocate(cc_valence_es)
