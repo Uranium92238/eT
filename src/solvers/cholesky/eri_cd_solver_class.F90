@@ -90,7 +90,7 @@ contains
       class(eri_cd_solver) :: solver
       type(molecular_system) :: system
 !
-      solver%n_batches = 1
+      solver%n_batches = 2
 !
       if (requested_section('cholesky')) then
 !
@@ -1099,10 +1099,10 @@ contains
 !
                if (sig_sp(sp)) then 
 !
-                  xy_last = xy_last + get_size_sp(A_interval, B_interval)
-!
                   A_interval = system%shell_limits(A)
                   B_interval = system%shell_limits(B)
+!
+                  xy_last = xy_last + get_size_sp(A_interval, B_interval)
 !
                   if ((xy_last .ge. batch_first) .and. (xy_first .le. batch_last)) then
 !
@@ -1123,7 +1123,6 @@ contains
 !
             enddo
          enddo     
-
 !
          current_batch_size = batch_last - batch_first + 1
 !
@@ -1146,10 +1145,14 @@ contains
          call disk%open_file(batch_file, 'write', 'rewind')
          rewind(batch_file%unit)
 !
+         write(output%unit, *) n_sig_sp_batch, current_batch_size
+!
          write(batch_file%unit) n_sig_sp_batch, current_batch_size
          write(batch_file%unit) sig_sp_batch
          write(batch_file%unit) D_batch
          write(batch_file%unit) screening_vector_batch
+!
+         call disk%close_file(batch_file)
 !
          call mem%dealloc(D_batch, current_batch_size, 1)
          call mem%dealloc(screening_vector_batch, current_batch_size, 1)
