@@ -1099,10 +1099,10 @@ contains
 !
                if (sig_sp(sp)) then 
 !
-                  xy_last = xy_last + get_size_sp(A_interval, B_interval)
-!
                   A_interval = system%shell_limits(A)
                   B_interval = system%shell_limits(B)
+!
+                  xy_last = xy_last + get_size_sp(A_interval, B_interval)
 !
                   if ((xy_last .ge. batch_first) .and. (xy_first .le. batch_last)) then
 !
@@ -1150,6 +1150,8 @@ contains
          write(batch_file%unit) sig_sp_batch
          write(batch_file%unit) D_batch
          write(batch_file%unit) screening_vector_batch
+!
+         call disk%close_file(batch_file)
 !
          call mem%dealloc(D_batch, current_batch_size, 1)
          call mem%dealloc(screening_vector_batch, current_batch_size, 1)
@@ -1237,11 +1239,10 @@ contains
          call batch_file%init(trim(temp_name), 'sequential', 'unformatted')
 !  
          call disk%open_file(batch_file, 'read')
+         rewind(batch_file%unit)
 !
          call mem%alloc_int(basis_shell_info, n_sp_in_basis_batches(batch, 1), 4)
          call mem%alloc_int(cholesky_basis, n_cholesky_batches(batch, 1), 3)
-!
-         rewind(batch_file%unit)
 !  
          read(batch_file%unit)
          read(batch_file%unit) basis_shell_info
@@ -2449,6 +2450,7 @@ contains
       call disk%open_file(basis_info, 'write', 'rewind')
 !
       write(basis_info%unit) n_sp_in_basis
+!
       write(basis_info%unit) basis_shell_info
       write(basis_info%unit) cholesky_basis_new
 !
