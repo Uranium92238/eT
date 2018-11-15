@@ -1045,7 +1045,7 @@ contains
 !
       type(file) :: batch_file
 !
-      integer(i15) :: A, B, batch, batch_first, batch_last, batch_size, remainder
+      integer(i15) :: A, B, batch, batch_first, batch_last, batch_size, current_batch_size
       integer(i15) :: xy_first, xy_last
 !
       character(len=100) :: temp_name
@@ -1076,24 +1076,12 @@ contains
 !
       batch_size = n_sig_aop/solver%n_batches
 !
-      remainder = n_sig_aop - batch_size*solver%n_batches
-!
       allocate(sig_sp_batch(solver%n_sp))
 !
+      batch_first = 1
+      batch_last = batch_size
+!
       do batch = 1, solver%n_batches
-!
-         if (batch == solver%n_batches) batch_size = batch_size + remainder
-!
-!        Set diagonal for batch
-!
-         call mem%alloc(D_batch, batch_size, 1)
-         call mem%alloc(screening_vector_batch, batch_size, 1)
-!
-         batch_first = batch_size*(batch - 1) + 1
-         batch_last = batch_first + batch_size - 1
-!
-         D_batch(:,1) = D_xy(batch_first : batch_last, 1)
-         screening_vector_batch(:,1) = screening_vector_batch(batch_first : batch_last, 1)
 !
 !        Determine sig_sp_batch
 !
@@ -1121,9 +1109,11 @@ contains
                      sig_sp_batch(sp) = .true.
                      n_sig_sp_batch = n_sig_sp_batch + 1
 !
-                  elseif (xy_first .gt. batch_last) then 
+                     if (xy_last .gt. batch_last) then 
 !
-                     exit
+                        batch_last = xy_last
+!
+                     endif
 !
                   endif
 !
@@ -1132,7 +1122,16 @@ contains
                endif
 !
             enddo
-         enddo
+         enddo     
+
+!
+         current_batch_size = batch_last - batch_first + 1
+!
+         call mem%alloc(D_batch, current_batch_size, 1)
+         call mem%alloc(screening_vector_batch, current_batch_size, 1)
+!
+         D_batch(:,1) = D_xy(batch_first : batch_last, 1)
+         screening_vector_batch(:,1) = screening_vector_batch(batch_first : batch_last, 1)
 !
 !        Write info file for batch diagonal containing
 !
@@ -1147,15 +1146,20 @@ contains
          call disk%open_file(batch_file, 'write', 'rewind')
          rewind(batch_file%unit)
 !
-         write(batch_file%unit) n_sig_sp_batch, batch_size
+         write(batch_file%unit) n_sig_sp_batch, current_batch_size
          write(batch_file%unit) sig_sp_batch
          write(batch_file%unit) D_batch
          write(batch_file%unit) screening_vector_batch
 !
-         call disk%close_file(batch_file)
+         call mem%dealloc(D_batch, current_batch_size, 1)
+         call mem%dealloc(screening_vector_batch, current_batch_size, 1)
 !
-         call mem%dealloc(D_batch, batch_size, 1)
-         call mem%dealloc(screening_vector_batch, batch_size, 1)
+         batch_first = batch_last + 1  
+         batch_last  = batch_size*(batch + 1)
+!
+         if ((batch + 1) == solver%n_batches) batch_last = n_sig_aop
+!
+         if (batch_last .lt. batch_first) call output%error_msg('batch size is too small.')
 !
       enddo
 !
