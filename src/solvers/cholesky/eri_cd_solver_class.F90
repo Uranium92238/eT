@@ -90,7 +90,7 @@ contains
       class(eri_cd_solver) :: solver
       type(molecular_system) :: system
 !
-      solver%n_batches = 2
+      solver%n_batches = 1
 !
       if (requested_section('cholesky')) then
 !
@@ -3825,6 +3825,10 @@ contains
                elseif (line(1:5) == 'span:') then
 !
                   read(line(6:100), '(d16.5)') solver%span
+!
+               elseif (line(1:8) == 'batches:') then
+!
+                  read(line(9:100), '(i5)') solver%n_batches
 !
                elseif (line(1:10) == 'qualified:') then
 !
