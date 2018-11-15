@@ -109,7 +109,7 @@ contains
 !
       logical :: converged_residual
 !
-      real(dp), dimension(:,:), allocatable :: eta, c_i
+      real(dp), dimension(:,:), allocatable :: eta, c_i, multipliers
 !
       integer(i15) :: iteration
 !
@@ -119,6 +119,7 @@ contains
 !
       call mem%alloc(eta, wf%n_amplitudes, 1)
       call wf%construct_eta(eta)
+      call dscal(wf%n_amplitudes, -one, eta, 1)
 !
 !     Initialize solver tool
 !
@@ -189,15 +190,15 @@ contains
 !
          if (residual_norm .gt. solver%residual_threshold) converged_residual = .false.
 !
-        ! if (davidson%dim_red .ge. davidson%max_dim_red) then
+         if (davidson%dim_red .ge. davidson%max_dim_red) then
 !
-        !   call davidson%set_trials_to_solutions()
+           call davidson%set_trials_to_solutions()
 !
-        ! else
+         else
 !
             davidson%dim_red = davidson%dim_red + davidson%n_new_trials
 !
-        ! endif
+         endif
 !
          iteration = iteration + 1       
 !
@@ -206,9 +207,13 @@ contains
       write(output%unit,'(t3,a)') '---------------------------'
       flush(output%unit)
 !
-      call disk%open_file(davidson%X, 'read')
-      rewind(davidson%X%unit)
-      read(davidson%X%unit) wf%t1bar
+      call mem%alloc(multipliers, wf%n_amplitudes, 1)
+!
+      call davidson%construct_X(multipliers, 1)
+!
+      call wf%set_multipliers(multipliers)
+!
+      call mem%dealloc(multipliers, wf%n_amplitudes, 1)
 !
    end subroutine run_davidson_cc_multipliers_solver
 !

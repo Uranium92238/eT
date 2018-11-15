@@ -96,6 +96,16 @@ contains
 !
       deallocate(cc_multipliers_solver_davidson)
 !
+!     Multiplier equation
+!
+!      allocate(cc_multipliers_solver_diis)
+!!
+!     call cc_multipliers_solver_diis%prepare(wf)
+!     call cc_multipliers_solver_diis%run(wf)
+!     call cc_multipliers_solver_diis%cleanup(wf)
+!!
+!      deallocate(cc_multipliers_solver_diis)
+!
    end subroutine run_multipliers_engine
 !
 !

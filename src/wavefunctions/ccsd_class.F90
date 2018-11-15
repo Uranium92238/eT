@@ -13,6 +13,7 @@ module ccsd_class
    type, extends(ccs) :: ccsd
 !
       real(dp), dimension(:,:), allocatable :: t2   
+      real(dp), dimension(:,:), allocatable :: t2bar   
 !
       integer(i15) :: n_t2  
 !
@@ -98,6 +99,20 @@ module ccsd_class
 !
       procedure :: get_orbital_differences                     => get_orbital_differences_ccsd
       procedure :: calculate_energy                            => calculate_energy_ccsd
+!
+      procedure :: construct_eta                               => construct_eta_ccsd
+!
+      procedure :: initialize_t2bar                            => initialize_t2bar_ccsd
+      procedure :: get_multipliers                             => get_multipliers_ccsd
+      procedure :: set_multipliers                             => set_multipliers_ccsd
+      procedure :: initialize_multipliers                      => initialize_multipliers_ccsd
+      procedure :: construct_multiplier_equation               => construct_multiplier_equation_ccsd
+      procedure :: save_multipliers                            => save_multipliers_ccsd
+      procedure :: read_multipliers                            => read_multipliers_ccsd
+      procedure :: destruct_multipliers                        => destruct_multipliers_ccsd
+      procedure :: destruct_t2bar                              => destruct_t2bar_ccsd
+      procedure :: read_t2bar                                  => read_t2bar_ccsd
+      procedure :: save_t2bar                                  => save_t2bar_ccsd
 !
    end type ccsd
 !
@@ -517,6 +532,288 @@ contains
 !
    end subroutine save_t2_ccsd
 !
+subroutine construct_eta_ccsd(wf, eta)
+!!
+!!    Construct eta (CCSD)
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+!!    Note: the routine assumes that eta is initialized and that the Fock matrix
+!!    has been constructed.
+!!
+      implicit none
 !
+      class(ccsd), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: eta 
+!
+      real(dp), dimension(:,:), allocatable :: g_ia_jb
+      real(dp), dimension(:,:), allocatable :: eta_ai_bj
+!
+      character(len=40) :: integral_type
+!
+      integer(i15) :: i = 0, a = 0, j = 0, b = 0, aibj = 0
+      integer(i15) :: bj = 0, ai = 0
+!
+      eta = zero
+!
+      do i = 1, wf%n_o
+         do a = 1, wf%n_v
+!
+            ai = wf%n_v*(i - 1) + a
+            eta(ai, 1) = two*(wf%fock_ia(i, a)) ! eta_ai = 2 F_ia
+!
+         enddo
+      enddo
+!
+!     eta_ai_bj = 2* L_iajb = 4 * g_ia_jb(ia,jb) - 2 * g_ia_jb(ib,ja)
+!
+      call mem%alloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+      call wf%get_ovov(g_ia_jb)
+!
+      call mem%alloc(eta_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      eta_ai_bj = zero
+!
+      call add_2143_to_1234(four, g_ia_jb, eta_ai_bj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call add_2341_to_1234(-two, g_ia_jb, eta_ai_bj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%dealloc(g_ia_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!     Pack vector into doubles eta
+!
+      do j = 1, wf%n_o
+         do b = 1, wf%n_v
+!
+            bj = wf%n_v*(j - 1) + b
+!
+            do i = 1, wf%n_o
+               do a = 1, wf%n_v
+!
+                  ai = wf%n_v*(i - 1) + a
+!
+                  aibj = max(ai, bj)*(max(ai,bj)-3)/2 + ai + bj
+!
+                  eta(wf%n_t1 + aibj, 1) = eta_ai_bj(ai, bj)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      call mem%dealloc(eta_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+   end subroutine construct_eta_ccsd
+!
+!
+   subroutine initialize_multipliers_ccsd(wf)
+!!
+!!    Initialize multipliers 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Allocates the multipliers. This routine must be overwritten in 
+!!    descendants which have more multipliers. 
+!!
+      implicit none 
+!
+      class(ccsd) :: wf 
+!
+      call wf%initialize_t1bar()
+      call wf%initialize_t2bar()
+!
+   end subroutine initialize_multipliers_ccsd
+!
+!
+   subroutine set_multipliers_ccsd(wf, multipliers)
+!!
+!!    Set multipliers 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2018 
+!!
+      implicit none 
+!
+      class(ccsd) :: wf  
+!
+      real(dp), dimension(wf%n_amplitudes, 1), intent(in) :: multipliers
+!
+      call dcopy(wf%n_t1, multipliers, 1, wf%t1bar, 1)
+      call dcopy(wf%n_t2, multipliers(wf%n_t1 + 1, 1), 1, wf%t2bar, 1)
+!
+   end subroutine set_multipliers_ccsd
+!
+!
+   subroutine get_multipliers_ccsd(wf, multipliers)
+!!
+!!    Get multipliers 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2018
+!!
+      implicit none 
+!
+      class(ccsd), intent(in) :: wf  
+!
+      real(dp), dimension(wf%n_amplitudes, 1) :: multipliers
+!
+      call dcopy(wf%n_t1, wf%t1bar, 1, multipliers, 1)
+      call dcopy(wf%n_t2, wf%t2bar, 1, multipliers(wf%n_t1 + 1, 1), 1)
+!
+   end subroutine get_multipliers_ccsd
+!
+!
+   subroutine initialize_t2bar_ccsd(wf)
+!!
+!!    Initialize T2-bar
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      if (.not. allocated(wf%t2bar)) call mem%alloc(wf%t2bar, wf%n_t2, 1)
+!
+   end subroutine initialize_t2bar_ccsd
+!
+!
+   subroutine construct_multiplier_equation_ccsd(wf, equation)
+!!
+!!    Construct multiplier equation 
+!!    Written by Eirik F. Kjønstad, Nov 2018 
+!!
+!!    Constructs 
+!!
+!!       t-bar^T A + eta,
+!!
+!!    and places the result in 'equation'.
+!!
+      implicit none 
+!
+      class(ccsd), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: equation 
+!
+      real(dp), dimension(:,:), allocatable :: eta 
+!
+!     Copy the multipliers, eq. = t-bar 
+!
+      call dcopy(wf%n_t1, wf%t1bar, 1, equation, 1)
+      call dcopy(wf%n_t2, wf%t2bar, 1, equation(wf%n_t1 + 1, 1), 1)
+!
+!     Transform the multipliers by A^T, eq. = t-bar^T A 
+!
+      call wf%jacobian_transpose_ccsd_transformation(equation)
+!
+!     Add eta, eq. = t-bar^T A + eta 
+!
+      call mem%alloc(eta, wf%n_amplitudes, 1)
+      call wf%construct_eta(eta)
+!
+      call daxpy(wf%n_amplitudes, one, eta, 1, equation, 1)
+!
+      call mem%dealloc(eta, wf%n_amplitudes, 1)
+!
+   end subroutine construct_multiplier_equation_ccsd
+!
+!
+   subroutine save_multipliers_ccsd(wf)
+!!
+!!    Save multipliers 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2018
+!!
+      implicit none 
+!
+      class(ccsd), intent(in) :: wf 
+!
+      call wf%save_t1bar()
+      call wf%save_t2bar()
+!
+   end subroutine save_multipliers_ccsd
+!
+!
+   subroutine read_multipliers_ccsd(wf)
+!!
+!!    Read multipliers 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2018
+!!
+      implicit none 
+!
+      class(ccsd), intent(inout) :: wf 
+!
+      call wf%read_t1bar()
+      call wf%read_t2bar()
+!
+   end subroutine read_multipliers_ccsd
+!
+!
+   subroutine destruct_multipliers_ccsd(wf)
+!!
+!!    Destruct multipliers 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2018 
+!!
+!!    Deallocates the multipliers. This routine must be overwritten in 
+!!    descendants which have more multipliers. 
+!!
+      implicit none 
+!
+      class(ccsd) :: wf 
+!
+      call wf%destruct_t1bar()
+      call wf%destruct_t2bar()
+!
+   end subroutine destruct_multipliers_ccsd
+!
+!
+   subroutine save_t2bar_ccsd(wf)
+!!
+!!    Save t2bar 
+!!    Written by Eirik F. Kjønstad, Nov 2018 
+!!
+      implicit none 
+!
+      class(ccsd), intent(in) :: wf 
+!
+      type(file) :: t2bar_file 
+!
+      call t2bar_file%init('t2bar', 'sequential', 'unformatted')
+!
+      call disk%open_file(t2bar_file, 'write', 'rewind')
+!
+      write(t2bar_file%unit) wf%t2bar
+!
+      call disk%close_file(t2bar_file)      
+!
+   end subroutine save_t2bar_ccsd
+!
+!
+   subroutine read_t2bar_ccsd(wf)
+!!
+!!    Save t2bar 
+!!    Written by Eirik F. Kjønstad, Nov 2018 
+!!
+      implicit none 
+!
+      class(ccsd), intent(inout) :: wf 
+!
+      type(file) :: t2bar_file 
+!
+      call t2bar_file%init('t2bar', 'sequential', 'unformatted')
+!
+      call disk%open_file(t2bar_file, 'read', 'rewind')
+!
+      read(t2bar_file%unit) wf%t2bar
+!
+      call disk%close_file(t2bar_file)      
+!
+   end subroutine read_t2bar_ccsd
+!
+!
+   subroutine destruct_t2bar_ccsd(wf)
+!!
+!!    Destruct T2-bar
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Nov 2018
+!!
+      implicit none
+!
+      class(ccsd) :: wf
+!
+      if (allocated(wf%t2bar)) call mem%dealloc(wf%t2bar, wf%n_amplitudes, 1)
+!
+   end subroutine destruct_t2bar_ccsd
 !
 end module ccsd_class
