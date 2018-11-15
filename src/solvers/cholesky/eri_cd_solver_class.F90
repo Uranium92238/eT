@@ -256,7 +256,7 @@ contains
                                   e_invert_time - s_invert_time
 !
       if (solver%construct_vectors) &
-         write(output%unit, '(t6, a53, f11.2)')'Wall time to build L_ab^J and test:                 ', &
+         write(output%unit, '(t6, a53, f11.2)')'Wall time to build L_ab^J and test:                  ', &
                                   e_build_vectors - s_build_vectors                 
 !
       flush(output%unit)
