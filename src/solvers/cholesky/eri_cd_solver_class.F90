@@ -194,7 +194,7 @@ contains
             write(temp_name, '(a14, i4.4)')'diagonal_info_', batch
             call batch_file_diag%init(trim(temp_name), 'sequential', 'unformatted')
 
-            write(temp_name, '(a14, i4.4)')'basis_info_', batch
+            write(temp_name, '(a11, i4.4)')'basis_info_', batch
             call batch_file_basis%init(trim(temp_name), 'sequential', 'unformatted')
 !
             call solver%determine_auxilliary_cholesky_basis(system, batch_file_diag, batch_file_basis)
@@ -1130,7 +1130,8 @@ contains
          call mem%alloc(screening_vector_batch, current_batch_size, 1)
 !
          D_batch(:,1) = D_xy(batch_first : batch_last, 1)
-         screening_vector_batch(:,1) = screening_vector_batch(batch_first : batch_last, 1)
+         !screening_vector_batch(:,1) = screening_vector_batch(batch_first : batch_last, 1)
+         screening_vector_batch(:,1) = one
 !
 !        Write info file for batch diagonal containing
 !
@@ -1144,8 +1145,6 @@ contains
 !
          call disk%open_file(batch_file, 'write', 'rewind')
          rewind(batch_file%unit)
-!
-         write(output%unit, *) n_sig_sp_batch, current_batch_size
 !
          write(batch_file%unit) n_sig_sp_batch, current_batch_size
          write(batch_file%unit) sig_sp_batch
@@ -1236,7 +1235,7 @@ contains
 !           2. basis_shell_info
 !           3. cholesky_basis
          
-         write(temp_name, '(a14, i4.4)')'basis_info_', batch
+         write(temp_name, '(a11, i4.4)')'basis_info_', batch
          call batch_file%init(trim(temp_name), 'sequential', 'unformatted')
 !  
          call disk%open_file(batch_file, 'read')
@@ -1246,7 +1245,7 @@ contains
 !
          rewind(batch_file%unit)
 !  
-         read(batch_file%unit)
+         read(batch_file%unit) 
          read(batch_file%unit) basis_shell_info
          read(batch_file%unit) cholesky_basis
 !  
@@ -1271,6 +1270,9 @@ contains
 !
          n_sp_in_basis_offset = n_sp_in_basis_offset + n_sp_in_basis_batches(batch, 1)
          n_cholesky_offset = n_cholesky_offset + n_cholesky_batches(batch, 1)
+!
+         call mem%dealloc_int(basis_shell_info, n_sp_in_basis_batches(batch, 1), 4)
+         call mem%dealloc_int(cholesky_basis, n_cholesky_batches(batch, 1), 3)
 !
       enddo
 !
@@ -1331,16 +1333,15 @@ contains
       n_sig_sp = 0
       n_sig_aop = 0
 !
-      I = 0
+      I = 1
+      sp = 0
 !    
       do B_shell = 1, solver%n_s
          do A_shell = B_shell, solver%n_s
 !
             sp = sp + 1
 !
-            if (sp == AB(I, 1)) then 
-!
-               I = I + 1
+            if (sp == sorted_AB(I, 1)) then 
 !
                A_interval = system%shell_limits(A_shell)
                B_interval = system%shell_limits(B_shell)
@@ -1349,17 +1350,7 @@ contains
                n_sig_sp = n_sig_sp + 1
                n_sig_aop = n_sig_aop + get_size_sp(A_interval, B_interval)
 !
-               J = 0
-!
-               do K = I + 1, n_sp_in_basis_total
-!
-                  if (AB(K, 1) .ne. AB(I, 1)) exit
-!
-                  J = J + 1
-!
-               enddo
-!
-               I = J + I
+               I = I + 1
 !
             endif
 !
@@ -1396,9 +1387,14 @@ contains
 !
 !      precalculate alpha beta offsets both old and new
 !
+      call mem%alloc_int(alpha_beta_offset, n_sig_sp, 1)
+      call mem%alloc_int(alpha_beta_offset_old, n_sig_sp, 1)
+!
       count_sig = 0
       current_offset = 0
       current_offset_old = 0
+!
+      sp = 0
 !
       do B_shell = 1, solver%n_s
          do A_shell = B_shell, solver%n_s
@@ -1438,32 +1434,19 @@ contains
          I = I + 1
          count_sig = count_sig + 1
 !
-         n_basis_aop_in_AB_total = n_basis_aop_in_AB(I, 1)
+         n_basis_aop_in_AB_total = sorted_n_basis_aop_in_AB(I, 1)
 !
-         A_interval = system%shell_limits(A(I, 1))
-         B_interval = system%shell_limits(B(I, 1))
-!
-         J = 0
-!
-         do K = I + 1, n_sp_in_basis_total
-!
-            if (AB(K, 1) .ne. AB(I, 1)) exit
-!
-            J = J + 1
-            n_basis_aop_in_AB_total = n_basis_aop_in_AB_total + n_basis_aop_in_AB(I + J, 1)
-!
-         enddo
-!
-         I = J + I
+         A_interval = system%shell_limits(sorted_A(I, 1))
+         B_interval = system%shell_limits(sorted_B(I, 1))
 !
 !        Calculate alpha_beta_offset_old
 !
          do aop = 1, n_basis_aop_in_AB_total 
 !
-            alpha_in_A = alpha(aop + n_basis_aop_in_AB_offset, 1) - A_interval%first + 1
-            beta_in_B  = beta(aop + n_basis_aop_in_AB_offset, 1) - B_interval%first + 1
+            alpha_in_A = sorted_alpha(aop + n_basis_aop_in_AB_offset, 1) - A_interval%first + 1
+            beta_in_B  = sorted_beta(aop + n_basis_aop_in_AB_offset, 1) - B_interval%first + 1
 !
-            if (A(I, 1) == B(I, 1)) then
+            if (sorted_A(I, 1) == sorted_B(I, 1)) then
 !
                alpha_beta_in_AB = max(alpha_in_A, beta_in_B)*(max(alpha_in_A, beta_in_B) - 3)/2 + alpha_in_A + beta_in_B
 !
@@ -1475,7 +1458,7 @@ contains
 !
             D(alpha_beta_in_AB + alpha_beta_offset(count_sig,1), 1) = &
                                     D_old(alpha_beta_in_AB + alpha_beta_offset_old(count_sig,1), 1)
-!
+!        
             screening_vector(alpha_beta_in_AB + alpha_beta_offset(count_sig,1), 1) = &
                                     screening_vector_old(alpha_beta_in_AB + alpha_beta_offset_old(count_sig, 1), 1)
 !
@@ -1484,7 +1467,9 @@ contains
          n_basis_aop_in_AB_offset = n_basis_aop_in_AB_offset + n_basis_aop_in_AB_total 
 !
       enddo
-
+!
+      call mem%dealloc_int(alpha_beta_offset, n_sig_sp, 1)
+      call mem%dealloc_int(alpha_beta_offset_old, n_sig_sp, 1)
 !
       call mem%dealloc(D_old, n_sig_aop_old, 1)
       call mem%dealloc(screening_vector_old, n_sig_aop_old, 1)
