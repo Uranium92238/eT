@@ -12,25 +12,23 @@ module hf_engine_class
 !
    contains 
 !
-      procedure :: prepare    => prepare_hf_engine
+      procedure, nopass :: prepare    => prepare_hf_engine
       procedure :: run        => run_hf_engine
-      procedure :: cleanup    => cleanup_hf_engine
+      procedure, nopass :: cleanup    => cleanup_hf_engine
 !
-      procedure :: read_algorithm => read_algorithm_hf_engine
+      procedure, nopass :: read_algorithm => read_algorithm_hf_engine
 !
    end type hf_engine 
 !
 contains
 !
 !
-   subroutine prepare_hf_engine(engine)
+   subroutine prepare_hf_engine()
 !!
 !!    Prepare 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
 !!
       implicit none 
-!
-      class(hf_engine) :: engine 
 !
    end subroutine prepare_hf_engine
 !
@@ -99,26 +97,22 @@ contains
    end subroutine run_hf_engine
 !
 !
-   subroutine cleanup_hf_engine(engine)
+   subroutine cleanup_hf_engine()
 !!
 !!    Cleanup 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
 !!
       implicit none 
 !
-      class(hf_engine) :: engine 
-!
    end subroutine cleanup_hf_engine
 !
 !
-   subroutine read_algorithm_hf_engine(engine, algorithm)
+   subroutine read_algorithm_hf_engine(algorithm)
 !!
 !!    Read algorithm
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
 !!
       implicit none
-!
-      class(hf_engine), intent(in) :: engine 
 !
       character(len=100), intent(out) :: algorithm
 !
