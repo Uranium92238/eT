@@ -44,9 +44,10 @@ module eri_cd_solver_class
       type(file) :: basis_shell_data
 !
       integer(i15) :: n_cholesky
+      integer(i15) :: n_sp_in_basis
       integer(i15) :: n_s, n_sp, n_ao, n_aop
 !
-      integer(i15) :: n_batches
+      integer(i15) :: n_batches = 1
 !
    contains
 !
@@ -85,6 +86,8 @@ contains
 !
       class(eri_cd_solver) :: solver
       type(molecular_system) :: system
+!
+      solver%n_batches = 1
 !
       if (requested_section('cholesky')) then
 !
@@ -131,6 +134,8 @@ contains
 !
       integer(i15) :: batch
 !
+      integer(i15), dimension(:,:), allocatable :: n_cholesky_batches, n_sp_in_basis_batches
+!
       call solver%print_banner()
 !
       call solver%print_settings()
@@ -165,9 +170,15 @@ contains
 !
       if (solver%n_batches == 1) then
 !
-         call solver%determine_auxilliary_cholesky_basis(system, solver%diagonal_info_target)
+         call solver%determine_auxilliary_cholesky_basis(system, solver%diagonal_info_target, solver%basis_shell_data)
 !
       else
+!
+         call mem%alloc_int(n_cholesky_batches, solver%n_batches, 1)
+         call mem%alloc_int(n_sp_in_basis_batches, solver%n_batches, 1)
+!
+         n_cholesky_batches = 0
+         n_sp_in_basis_batches = 0
 !
 !        call routine that creates diag info for the bathes 
 !
@@ -176,6 +187,9 @@ contains
             !call diagonal_info_target_00batch%init()
 !
             !call solver%determine_auxilliary_cholesky_basis(system, diagonal_info_target_00batch)
+!
+            n_cholesky_batches(batch, 1)     = solver%n_cholesky
+            n_sp_in_basis_batches(batch, 1)  = solver%n_sp_in_basis
 !
          enddo
 !
@@ -1009,7 +1023,7 @@ contains
 !
       type(molecular_system) :: system
 !
-      integer(i15) :: n_sig_aop, n_sig_sp, n_sig_sp_batch, sp
+      integer(i15) :: n_sig_aop, n_sig_sp, n_sig_sp_batch, sp, count_sig, current_offset, current_offset_old
 !
       real(dp), dimension(:,:), allocatable :: D_xy, screening_vector
       real(dp), dimension(:,:), allocatable :: D_batch, screening_vector_batch
@@ -1021,7 +1035,7 @@ contains
       type(file) :: batch_file
 !
       integer(i15) :: A, B, batch, batch_first, batch_last, batch_size, remainder
-      integer(i15) :: xy_offset
+      integer(i15) :: xy_first, xy_last
 !
       character(len=100) :: temp_name
 !
@@ -1075,7 +1089,8 @@ contains
          sig_sp_batch = .false.
 !
          sp = 0        ! Shell pair number
-         xy_offset = 0
+         xy_first = 1
+         xy_last = 0
          n_sig_sp_batch = 0
 !
          do B = 1, solver%n_s
@@ -1085,21 +1100,23 @@ contains
 !
                if (sig_sp(sp)) then 
 !
+                  xy_last = xy_last + get_size_sp(A_interval, B_interval)
+!
                   A_interval = system%shell_limits(A)
                   B_interval = system%shell_limits(B)
 !
-                  if ((xy_offset + 1 .ge. batch_first) .and. (xy_offset + 1 .le. batch_last)) then
+                  if ((xy_last .ge. batch_first) .and. (xy_first .le. batch_last)) then
 !
                      sig_sp_batch(sp) = .true.
                      n_sig_sp_batch = n_sig_sp_batch + 1
 !
-                  elseif (xy_offset .ge. batch_last) then 
+                  elseif (xy_first .gt. batch_last) then 
 !
                      exit
 !
                   endif
-!   
-                  xy_offset = xy_offset + get_size_sp(A_interval, B_interval)
+!
+                  xy_first = xy_first + get_size_sp(A_interval, B_interval)
 !
                endif
 !
@@ -1136,7 +1153,358 @@ contains
    end subroutine construct_diagonal_batches_eri_cd_solver
 !
 !
-   subroutine determine_auxilliary_cholesky_basis_eri_cd_solver(solver, system, diagonal_info)
+   subroutine construct_diagonal_from_batch_bases_eri_cd_solver(solver, system, n_cholesky_batches, n_sp_in_basis_batches)
+!!
+!!
+!!
+!!
+      implicit none
+!
+      class(eri_cd_solver) :: solver
+!
+      type(molecular_system) :: system
+!
+      integer(i15), dimension(solver%n_batches, 1), intent(in) :: n_cholesky_batches
+      integer(i15), dimension(solver%n_batches, 1), intent(in) :: n_sp_in_basis_batches
+!
+      integer(i15) :: n_cholesky_total, n_sp_in_basis_total, J, I, K, n_sig_aop, n_sig_sp
+      integer(i15) :: A_shell, B_shell, AB_sp, sp, alpha_in_A, beta_in_B, alpha_beta_in_AB, aop, batch
+      integer(i15) :: n_basis_aop_in_AB_total, n_basis_aop_in_AB_offset, current_offset, current_offset_old
+      integer(i15) :: count_sig, n_cholesky_offset, n_sig_aop_old, n_sig_sp_old, n_sp_in_basis_offset
+!
+      type(file) :: batch_file
+!
+      integer(i15), dimension(:,:), allocatable :: alpha, beta, alpha_beta, A, B, AB, n_basis_aop_in_AB
+      integer(i15), dimension(:,:), allocatable :: sorted_alpha, sorted_beta, sorted_alpha_beta, sorted_A
+      integer(i15), dimension(:,:), allocatable :: sorted_B, sorted_AB, sorted_n_basis_aop_in_AB
+      integer(i15), dimension(:,:), allocatable :: basis_shell_info, cholesky_basis, index_AB, index_alpha_beta
+      integer(i15), dimension(:,:), allocatable :: alpha_beta_offset, alpha_beta_offset_old
+!
+      logical, dimension(:), allocatable :: sig_sp, sig_sp_old
+!
+      type(interval) :: A_interval, B_interval
+!
+      real(dp), dimension(:,:), allocatable :: D, D_old, screening_vector, screening_vector_old
+!
+      character(len=100) :: temp_name
+!
+      n_cholesky_total = 0
+      n_sp_in_basis_total = 0
+!
+      do batch = 1, solver%n_batches
+!
+         n_cholesky_total = n_cholesky_total + n_cholesky_batches(batch, 1) 
+         n_sp_in_basis_total = n_sp_in_basis_total + n_sp_in_basis_batches(batch, 1) 
+!
+      enddo
+!
+      call mem%alloc_int(alpha, n_cholesky_total, 1)
+      call mem%alloc_int(beta, n_cholesky_total, 1)
+      call mem%alloc_int(alpha_beta, n_cholesky_total, 1)
+!
+      call mem%alloc_int(A, n_sp_in_basis_total, 1)
+      call mem%alloc_int(B, n_sp_in_basis_total, 1)
+      call mem%alloc_int(AB, n_sp_in_basis_total, 1)
+      call mem%alloc_int(n_basis_aop_in_AB, n_sp_in_basis_total, 1)
+!
+      n_sp_in_basis_offset = 0
+      n_cholesky_offset = 0
+!
+      do batch = 1, solver%n_batches
+!
+!        Read basis_shell_data file containing
+!  
+!           1. number shell pairs in basis
+!           2. basis_shell_info
+!           3. cholesky_basis
+         
+         write(temp_name, '(a14, i4.4)')'basis_info_', batch
+         call batch_file%init(trim(temp_name), 'sequential', 'unformatted')
+!  
+         call disk%open_file(batch_file, 'read')
+!
+         call mem%alloc_int(basis_shell_info, n_sp_in_basis_batches(batch, 1), 4)
+         call mem%alloc_int(cholesky_basis, n_cholesky_batches(batch, 1), 3)
+!
+         rewind(batch_file%unit)
+!  
+         read(batch_file%unit)
+         read(batch_file%unit) basis_shell_info
+         read(batch_file%unit) cholesky_basis
+!  
+         call disk%close_file(batch_file)
+!
+         do J = 1, n_cholesky_batches(batch, 1)
+!
+            alpha(n_cholesky_offset + J, 1) = cholesky_basis(J, 1)
+            beta(n_cholesky_offset + J, 1) = cholesky_basis(J, 2)
+            alpha_beta(n_cholesky_offset + J, 1) = cholesky_basis(J, 3)
+!
+         enddo
+!
+         do sp = 1, n_sp_in_basis_batches(batch, 1)
+!
+            A(n_sp_in_basis_offset + sp, 1) = basis_shell_info(sp, 1)
+            B(n_sp_in_basis_offset + sp, 1) = basis_shell_info(sp, 2)
+            AB(n_sp_in_basis_offset + sp, 1) = basis_shell_info(sp, 3)
+            n_basis_aop_in_AB(n_sp_in_basis_offset + sp, 1) = basis_shell_info(sp, 4)
+!
+         enddo
+!
+         n_sp_in_basis_offset = n_sp_in_basis_offset + n_sp_in_basis_batches(batch, 1)
+         n_cholesky_offset = n_cholesky_offset + n_cholesky_batches(batch, 1)
+!
+      enddo
+!
+      call mem%alloc_int(index_AB, n_sp_in_basis_total, 1)
+!
+      call quicksort_with_index_ascending_int(AB, index_AB, n_sp_in_basis_total)
+!
+      call mem%alloc_int(index_alpha_beta, n_cholesky_total, 1)
+!
+      call quicksort_with_index_ascending_int(alpha_beta, index_alpha_beta, n_cholesky_total)
+!
+      call mem%alloc_int(sorted_alpha, n_cholesky_total, 1)
+      call mem%alloc_int(sorted_beta, n_cholesky_total, 1)
+      call mem%alloc_int(sorted_alpha_beta, n_cholesky_total, 1)
+!
+      sorted_alpha_beta = alpha_beta
+!
+      call mem%dealloc_int(alpha_beta, n_cholesky_total, 1)
+!
+      do J = 1, n_cholesky_total
+!
+         sorted_alpha(J, 1) = alpha(index_alpha_beta(J, 1), 1)
+         sorted_beta(J, 1)  = beta(index_alpha_beta(J, 1), 1)
+!
+      enddo
+!
+      call mem%dealloc_int(alpha, n_cholesky_total, 1)
+      call mem%dealloc_int(beta, n_cholesky_total, 1)
+!
+!
+      call mem%alloc_int(sorted_A, n_sp_in_basis_total, 1)
+      call mem%alloc_int(sorted_B, n_sp_in_basis_total, 1)
+      call mem%alloc_int(sorted_AB, n_sp_in_basis_total, 1)
+      call mem%alloc_int(sorted_n_basis_aop_in_AB, n_sp_in_basis_total, 1)
+!
+      sorted_AB = AB
+!
+      call mem%dealloc_int(AB, n_sp_in_basis_total, 1)
+!
+      do J = 1, n_sp_in_basis_total
+!
+         sorted_A(J, 1) = A(index_AB(J, 1), 1)
+         sorted_B(J, 1) = B(index_AB(J, 1), 1)
+         sorted_n_basis_aop_in_AB(J, 1) = n_basis_aop_in_AB(index_AB(J, 1), 1)
+!
+      enddo
+!
+      call mem%dealloc_int(A, n_sp_in_basis_total, 1)
+      call mem%dealloc_int(B, n_sp_in_basis_total, 1)
+      call mem%dealloc_int(n_basis_aop_in_AB, n_sp_in_basis_total, 1)
+!
+      call mem%dealloc_int(index_alpha_beta, n_cholesky_total, 1)
+      call mem%dealloc_int(index_AB, n_sp_in_basis_total, 1)
+!
+      allocate(sig_sp(solver%n_sp))
+!
+      sig_sp = .false.
+      n_sig_sp = 0
+      n_sig_aop = 0
+!
+      I = 0
+!    
+      do B_shell = 1, solver%n_s
+         do A_shell = B_shell, solver%n_s
+!
+            sp = sp + 1
+!
+            if (sp == AB(I, 1)) then 
+!
+               I = I + 1
+!
+               A_interval = system%shell_limits(A_shell)
+               B_interval = system%shell_limits(B_shell)
+!
+               sig_sp(sp) = .true.
+               n_sig_sp = n_sig_sp + 1
+               n_sig_aop = n_sig_aop + get_size_sp(A_interval, B_interval)
+!
+               J = 0
+!
+               do K = I + 1, n_sp_in_basis_total
+!
+                  if (AB(K, 1) .ne. AB(I, 1)) exit
+!
+                  J = J + 1
+!
+               enddo
+!
+               I = J + I
+!
+            endif
+!
+         enddo
+      enddo
+!
+!     3. Allocate D. Set D to zero.
+!
+      call mem%alloc(D, n_sig_aop, 1)
+      call mem%alloc(screening_vector, n_sig_aop, 1)
+!
+      D = zero
+      screening_vector = one
+!
+!     Read old D and old sig_sp and so on
+!
+      call disk%open_file(solver%diagonal_info_target, 'read')
+!
+      rewind(solver%diagonal_info_target%unit)
+!
+      read(solver%diagonal_info_target%unit) n_sig_sp_old, n_sig_aop_old
+!
+      call mem%alloc(D_old, n_sig_aop_old, 1)
+      call mem%alloc(screening_vector_old, n_sig_aop_old, 1)
+      allocate(sig_sp_old(solver%n_sp))
+!
+      read(solver%diagonal_info_target%unit) sig_sp_old
+      read(solver%diagonal_info_target%unit) D_old
+      read(solver%diagonal_info_target%unit) screening_vector_old
+!
+      call disk%close_file(solver%diagonal_info_target)
+!
+!     4. copy the correct elements of the initial D into the new D using cholesky basis array
+!
+!      precalculate alpha beta offsets both old and new
+!
+      count_sig = 0
+!
+      do B_shell = 1, solver%n_s
+         do A_shell = B_shell, solver%n_s
+!
+            sp = sp + 1
+!
+            if (sig_sp_old(sp)) then
+!
+               A_interval = system%shell_limits(A_shell)
+               B_interval = system%shell_limits(B_shell)
+!
+               current_offset_old = current_offset_old + get_size_sp(A_interval, B_interval)
+!
+               if (sig_sp(sp)) then 
+!
+                  current_offset = current_offset + get_size_sp(A_interval, B_interval)
+                  count_sig = count_sig + 1
+!
+                  alpha_beta_offset_old(count_sig, 1) = current_offset_old
+                  alpha_beta_offset(count_sig, 1)     = current_offset
+!
+               endif
+!
+            endif
+!
+         enddo
+!
+      enddo
+!
+      I = 0
+      count_sig = 0
+      n_basis_aop_in_AB_offset = 0
+!
+      do while (I .lt. n_sp_in_basis_total)
+!
+         I = I + 1
+         count_sig = count_sig + 1
+!
+         n_basis_aop_in_AB_total = n_basis_aop_in_AB(I, 1)
+!
+         A_interval = system%shell_limits(A(I, 1))
+         B_interval = system%shell_limits(B(I, 1))
+!
+         J = 0
+!
+         do K = I + 1, n_sp_in_basis_total
+!
+            if (AB(K, 1) .ne. AB(I, 1)) exit
+!
+            J = J + 1
+            n_basis_aop_in_AB_total = n_basis_aop_in_AB_total + n_basis_aop_in_AB(I + J, 1)
+!
+         enddo
+!
+         I = J + I
+!
+!        Calculate alpha_beta_offset_old
+!
+         do aop = 1, n_basis_aop_in_AB_total 
+!
+            alpha_in_A = alpha(aop + n_basis_aop_in_AB_offset, 1) - A_interval%first + 1
+            beta_in_B  = beta(aop + n_basis_aop_in_AB_offset, 1) - B_interval%first + 1
+!
+            if (A(I, 1) == B(I, 1)) then
+!
+               alpha_beta_in_AB = max(alpha_in_A, beta_in_B)*(max(alpha_in_A, beta_in_B) - 3)/2 + alpha_in_A + beta_in_B
+!
+            else
+!
+               alpha_beta_in_AB = A_interval%size*(beta_in_B - 1) + alpha_in_A
+!
+            endif
+!
+            D(alpha_beta_in_AB + alpha_beta_offset(count_sig,1), 1) = &
+                                    D_old(alpha_beta_in_AB + alpha_beta_offset_old(count_sig,1), 1)
+!
+            screening_vector(alpha_beta_in_AB + alpha_beta_offset(count_sig,1), 1) = &
+                                    screening_vector_old(alpha_beta_in_AB + alpha_beta_offset_old(count_sig, 1), 1)
+!
+         enddo
+!
+         n_basis_aop_in_AB_offset = n_basis_aop_in_AB_offset + n_basis_aop_in_AB_total 
+!
+      enddo
+
+!
+      call mem%dealloc(D_old, n_sig_aop_old, 1)
+      call mem%dealloc(screening_vector_old, n_sig_aop_old, 1)
+!
+      call mem%dealloc_int(sorted_alpha, n_cholesky_total, 1)
+      call mem%dealloc_int(sorted_beta, n_cholesky_total, 1)
+      call mem%dealloc_int(sorted_alpha_beta, n_cholesky_total, 1)
+!
+      call mem%dealloc_int(sorted_A, n_sp_in_basis_total, 1)
+      call mem%dealloc_int(sorted_B, n_sp_in_basis_total, 1)
+      call mem%dealloc_int(sorted_AB, n_sp_in_basis_total, 1)
+      call mem%dealloc_int(sorted_n_basis_aop_in_AB, n_sp_in_basis_total, 1)
+!
+      deallocate(sig_sp_old)
+!
+!     Write info file for target diagonal containing
+!
+!        1. number of significant shell pairs, number of significant ao pairs
+!        2. sig_sp - vector of logicals to describe which shell pairs are significant
+!        3. D_xy = ( xy | xy ), the significant diagonal.
+!        4. Screening vector
+!
+      call disk%open_file(solver%diagonal_info_target, 'write', 'rewind')
+      rewind(solver%diagonal_info_target%unit)
+!
+      write(solver%diagonal_info_target%unit) n_sig_sp, n_sig_aop
+      write(solver%diagonal_info_target%unit) sig_sp
+      write(solver%diagonal_info_target%unit) D
+      write(solver%diagonal_info_target%unit) screening_vector
+!
+      call disk%close_file(solver%diagonal_info_target)
+!
+      deallocate(sig_sp)
+!
+      call mem%dealloc(D, n_sig_aop, 1)
+      call mem%dealloc(screening_vector, n_sig_aop, 1)
+!
+   end subroutine construct_diagonal_from_batch_bases_eri_cd_solver
+!
+!
+   subroutine determine_auxilliary_cholesky_basis_eri_cd_solver(solver, system, diagonal_info, basis_info)
 !!
 !!    Determine auxiliary cholesky basis
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -1151,7 +1519,7 @@ contains
 !
       class(molecular_system), intent(in) :: system
 !
-      type(file), intent(in) :: diagonal_info
+      type(file), intent(in) :: diagonal_info, basis_info
 !
 !     Local variables
 !
@@ -1402,7 +1770,7 @@ contains
          call mem%alloc_int(sorted_max_sig_sp, n_sig_sp,1)
          sorted_max_sig_sp = 0
 !
-         call quicksort_with_index(max_in_sig_sp, sorted_max_sig_sp, n_sig_sp)
+         call quicksort_with_index_descending(max_in_sig_sp, sorted_max_sig_sp, n_sig_sp)
 !
          D_max_full  = max_in_sig_sp(1, 1)
          n_qual_aop  = 0
@@ -2060,13 +2428,15 @@ contains
 !        2. basis_shell_info
 !        3. cholesky_basis
 !
-      call disk%open_file(solver%basis_shell_data, 'write', 'rewind')
+      call disk%open_file(basis_info, 'write', 'rewind')
 !
-      write(solver%basis_shell_data%unit) n_sp_in_basis
-      write(solver%basis_shell_data%unit) basis_shell_info
-      write(solver%basis_shell_data%unit) cholesky_basis_new
+      write(basis_info%unit) n_sp_in_basis
+      write(basis_info%unit) basis_shell_info
+      write(basis_info%unit) cholesky_basis_new
 !
-      call disk%close_file(solver%basis_shell_data)
+      solver%n_sp_in_basis = n_sp_in_basis
+!
+      call disk%close_file(basis_info)
 !
       call mem%dealloc_int(basis_shell_info, n_sp_in_basis, 4)
       call mem%dealloc_int(cholesky_basis_new, solver%n_cholesky, 3)
