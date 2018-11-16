@@ -1659,6 +1659,7 @@ contains
 !
    end subroutine append_bases_eri_cd_solver
 !
+!
    subroutine determine_auxilliary_cholesky_basis_eri_cd_solver(solver, system, diagonal_info, basis_info)
 !!
 !!    Determine auxiliary cholesky basis
