@@ -157,6 +157,7 @@ contains
 !
 !        Determine the jth Aufbau shell to fill
 !
+         Aufbau_to_fill = 0
          do i = 1, n_Aufbau_shells
 !
             if (Aufbau_shell_info(i, 2) == j) Aufbau_to_fill = i
