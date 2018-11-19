@@ -217,8 +217,6 @@ contains
 !
          write(output%unit, '(/t3, a27)') '- Final decomposition step:'
 !
-         solver%threshold = solver%threshold*1.0d-1
-!
          call solver%construct_diagonal_from_batch_bases(system, n_cholesky_batches, n_sp_in_basis_batches)
          call solver%determine_auxilliary_cholesky_basis(system, solver%diagonal_info_target, solver%basis_shell_data)
          !call solver%append_bases(system, n_cholesky_batches, n_sp_in_basis_batches)
