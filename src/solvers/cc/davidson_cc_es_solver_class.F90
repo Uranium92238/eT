@@ -50,6 +50,7 @@ module davidson_cc_es_solver_class
       procedure, non_overridable :: cleanup  => cleanup_davidson_cc_es_solver
 !
       procedure, nopass :: set_precondition_vector   => set_precondition_vector_davidson_cc_es_solver
+      procedure, nopass :: set_projection_vector     => set_projection_vector_davidson_cc_es_solver
 !
       procedure :: print_banner              => print_banner_davidson_cc_es_solver
 !
@@ -161,7 +162,6 @@ contains
 !     Ask Davidson to restart - use the previous solutions as trial vectors 
 !
       call davidson%restart_from_solutions(n_solutions_on_file)
-      !call davidson%set_trials_to_solutions()
 !
 !     For the remaining states, use orbital differences 
 !
@@ -269,6 +269,7 @@ contains
       endif 
 !
       call solver%set_precondition_vector(wf, davidson)
+      call solver%set_projection_vector(wf, davidson)
 !
 !     Enter iterative loop
 !
@@ -635,6 +636,25 @@ contains
       endif
 !
    end subroutine read_settings_davidson_cc_es_solver
+!
+!
+   subroutine set_projection_vector_davidson_cc_es_solver(wf, davidson)
+!!
+!!    Set projection vector
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
+!!
+!!    Sets projection vector to orbital differences 
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      type(eigen_davidson_tool) :: davidson
+!
+!     Do nothing for regular excited states, but will be used in descendants
+!     CVS and IP
+!
+   end subroutine set_projection_vector_davidson_cc_es_solver
 !
 !
 end module davidson_cc_es_solver_class
