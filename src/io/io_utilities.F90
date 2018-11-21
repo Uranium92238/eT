@@ -23,7 +23,7 @@ contains
 !
       character(len=100) :: remove_preceding_blanks
 !
-      integer(i15) :: i = 0, j = 0, length = 0
+      integer(i15) :: i = 0, length = 0
 !
       remove_preceding_blanks = ' '
 !
@@ -167,6 +167,121 @@ contains
       enddo
 !
    end subroutine move_to_section
+!
+!
+   subroutine long_string_print(string,format_string,colons,fformat_string,lformat_string,line_length)
+!!
+!!    Long string print
+!!    Written by Rolf H. Myhre, Nov 2018
+!!
+!!    Prints a reasonbly formatted long string over several lines
+!!    format_string: optional format string
+!!    fformat_string: optional format string for first printed line, will be used for single line if present
+!!    lformat_string: optional format string for last printed line
+!!    line_length: optional argument for length printed lines, routine adds extra length to not split up words
+!!
+!!
+      implicit none
+!
+      character(len=*), intent(in) :: string
+      character(len=*), intent(in), optional :: format_string,fformat_string,lformat_string
+      integer(i15), intent(in), optional :: line_length
+      logical, intent(in), optional :: colons
+!
+      character(90)  :: temp
+      integer(i15)   :: l, l_left, lines, l_length
+      integer(i15)   :: i,j, padd, printed 
+      character(20)  :: fs,fstring,ffstring,lfstring
+      logical        :: col 
+!
+!     Default line length
+      l_length = 70
+      if(present(line_length)) then
+         l_length = line_length
+      endif
+!
+!     Figure out the formatting
+      fstring = '(t3,a)'
+      if(present(format_string)) then
+         fstring = format_string
+      endif
+!
+      ffstring = fstring
+      if(present(fformat_string)) then
+         ffstring = fformat_string
+      endif
+!
+      lfstring = fstring
+      if(present(lformat_string)) then
+         lfstring = lformat_string
+      endif
+!
+!     First line format
+      fs = ffstring
+!
+!     Fancy colons for banner headings
+      col = .false.
+      if(present(colons)) then
+         col = colons
+      endif
+      if(col) then
+         l_length = l_length - 3
+      endif
+!
+      l = len_trim(string)      
+      l_left = l
+      lines = l/l_length + 1
+      printed = 1
+!
+      do i = 1,lines
+!
+         if(i .ne. lines) then
+!
+            if(i .ne. 1) then
+               fs = fstring
+            endif
+!
+!           Add some extra padding to not split words
+            do j = 1,18
+               padd = j
+               if(string(printed+l_length+j:printed+l_length+j) == ' ') then
+                  exit
+               endif
+            enddo
+!
+!           Copy string to be printed. Add hyphen if word must be split
+            if(padd == 18) then
+               temp(1:l_length+padd+1) = string(printed:printed+l_length+padd)
+               temp(l_length+padd+1:l_length+padd+1) = '-'
+               printed = printed + l_length + padd
+            else
+               temp(1:l_length+padd+1) = string(printed:printed+l_length+padd+1)
+               printed = printed + l_length + padd + 1
+            endif
+!
+!           Print
+            if(col) then
+               write(output%unit, fs)  ':: '//temp(1:l_length+padd+1)
+            else
+               write(output%unit, fs)  temp(1:l_length+padd+1)
+            endif
+!
+         else
+!           Print the remaining string
+            fs = lfstring
+            if(col) then
+               write(output%unit, fs)  ':: '//string(printed:l)
+            else
+               write(output%unit, fs)  string(printed:l)
+            endif
+            printed = l
+         endif
+!
+      enddo
+!
+      flush(output%unit)
+!
+   end subroutine long_string_print
 !
 !
 end module

@@ -23,7 +23,6 @@ module mlhf_class
    contains
 !
       procedure :: prepare => prepare_mlhf
-      procedure :: finalize => finalize_mlhf
 !
       procedure :: construct_virtual_density => construct_virtual_density_mlhf
       procedure :: construct_virtual_density_from_MO => construct_virtual_density_from_MO_mlhf
@@ -44,10 +43,6 @@ contains
       implicit none
 !
       class(mlhf) :: wf
-!
-      integer(i15) :: ao
-!
-      real(dp), dimension(:,:), allocatable :: density_diagonal
 !
       wf%name = 'MLHF'
 !
@@ -85,20 +80,6 @@ contains
    end subroutine prepare_mlhf
 !
 !
-   subroutine finalize_mlhf(wf)
-!!
-!!    Finalize
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(mlhf) :: wf
-!
-!     Nothing here yet
-!
-   end subroutine finalize_mlhf
-!
-!
    subroutine eri_decomp_test_w_active_dens_mlhf(wf)
 !
       implicit none
@@ -107,16 +88,14 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: cholesky_vectors_occ, cholesky_vectors_virt, V, ao_density_v
 !
-      integer(i15):: i, j, k, n_active_aos, ao_offset, active_ao_counter, n_vectors_occ, n_vectors_virt
+      integer(i15):: i, j, n_active_aos, n_vectors_occ, n_vectors_virt
       integer(i15):: a
 !
       real(dp) :: max_val, e_construct_fock, s_construct_fock, omp_get_wtime, x, y, z
 !
-      integer(i15), dimension(:,:), allocatable :: active_aos, sp_eri_schwarz_list
+      integer(i15), dimension(:,:), allocatable :: active_aos
 !
       integer(i15) :: n_active_occ, n_active_vir, n_s
-!
-      real(dp), dimension(:,:), allocatable :: eri_deg, sp_eri_schwarz, h_wx
 !
       type(eri_cd_solver)  :: chol_solver
 !
@@ -277,9 +256,9 @@ contains
 !
       real(dp), dimension(wf%n_ao, wf%n_ao) :: D_v
 !
-      integer(i15) :: rank, i, x, y
+      integer(i15) :: rank, i
 !
-      integer(kind=4), dimension(:), allocatable :: piv
+      integer(i15), dimension(:), allocatable :: piv
 !
       real(dp), dimension(:,:), allocatable :: L, L_inv, P,  L_inv_P_trans
 !

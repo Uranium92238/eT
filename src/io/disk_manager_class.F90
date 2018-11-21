@@ -32,13 +32,10 @@ module disk_manager_class
 !
       procedure :: close_file                   => close_file_disk_manager
 !
-      procedure, private :: determine_file_size => determine_file_size_disk_manager
-!
       procedure :: read_settings                => read_settings_disk_manager
       procedure :: print_settings               => print_settings_disk_manager
 !
       procedure :: delete                       => delete_disk_manager
-      procedure :: file_exists                  => file_exists_disk_manager
 !
       procedure :: rewind_file                  => rewind_file_disk_manager
 !
@@ -126,8 +123,6 @@ contains
 !
       class(disk_manager) :: disk
 !
-      integer(i15) :: total ! in GB
-!
       if (requested_section('disk')) then
 !
          call disk%read_settings()
@@ -170,8 +165,6 @@ contains
 !
       character(len=*) :: permissions
       character(len=*), optional :: pos
-!
-      integer(i15) :: io_error = -1
 !
 !     Sanity checks
 !
@@ -279,7 +272,7 @@ contains
 !
       the_file%opened = .true.
 !
-      call disk%determine_file_size(the_file)
+      call the_file%determine_file_size()
 !
 !     If the intent is 'write' or 'readwrite' and the disk is entirely filled
 !     (according to the specified available disk space), the calculation will stop:
@@ -363,7 +356,7 @@ contains
 !
       the_file%opened = .true.
 !
-      call disk%determine_file_size(the_file)
+      call the_file%determine_file_size()
 !
 !     If the intent is 'write' or 'readwrite' and the disk is entirely filled
 !     (according to the specified available disk space), the calculation will stop:
@@ -409,11 +402,11 @@ contains
 !
 !     Get the file size (both when opened & closed)
 !
-      file_size_when_opened = the_file%size
+      file_size_when_opened = the_file%get_file_size()
 !
-      call disk%determine_file_size(the_file)
+      call the_file%determine_file_size()
 !
-      file_size_when_closed = the_file%size
+      file_size_when_closed = the_file%get_file_size()
 !
 !     Close file
 !
@@ -492,37 +485,6 @@ contains
    end subroutine close_file_disk_manager
 !
 !
-   subroutine determine_file_size_disk_manager(disk, the_file)
-!!
-!!    Determine file size
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2018
-!!
-!!    The disk manager handles files. This routine is called by it
-!!    and should never be called by the user (because it can lead to
-!!    errors in the disk space estimates).
-!!
-      implicit none
-!
-      class(disk_manager) :: disk
-!
-      class(file) :: the_file
-!
-!     Inquire about the file size
-!
-      inquire(file=the_file%name, size=the_file%size)
-!
-!     Check whether the file size could be calculated
-!
-      if (the_file%size .eq. -1) then
-!
-         write(output%unit,*) 'Error: Could not calculate file size of the file ', trim(the_file%name)
-         stop
-!
-      endif
-!
-   end subroutine determine_file_size_disk_manager
-!
-!
    subroutine read_settings_disk_manager(disk)
 !!
 !!    Read settings
@@ -587,7 +549,7 @@ contains
 !
       logical :: file_exists
 !
-      inquire(file=the_file%name, exist=file_exists)
+      file_exists = the_file%file_exists()
 !
       if (file_exists) then
 !
@@ -599,25 +561,6 @@ contains
    end subroutine delete_disk_manager
 !
 !
-   function file_exists_disk_manager(disk, the_file)
-!!
-!!    File exists
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!    
-!
-      implicit none
-!  
-      class(disk_manager), intent(in) :: disk
-!
-      type(file), intent(in) :: the_file
-!
-      logical :: file_exists_disk_manager
-!
-      inquire(file=the_file%name, exist=file_exists_disk_manager)
-!
-   end function file_exists_disk_manager
-!
-!  
    subroutine rewind_file_disk_manager(disk, the_file)
 !!
 !!    Rewind file 

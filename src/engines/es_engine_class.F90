@@ -20,10 +20,7 @@ module es_engine_class
       procedure :: run     => run_es_engine
       procedure :: cleanup => cleanup_es_engine
 !
-      procedure :: print_banner    => print_banner_es_engine
-      procedure :: print_summary   => print_summary_es_engine
-!
-      procedure :: determine_es_type => determine_es_type_es_engine
+      procedure, nopass :: determine_es_type => determine_es_type_es_engine
 !
    end type es_engine 
 !
@@ -37,6 +34,8 @@ contains
       implicit none 
 !
       class(es_engine) :: engine 
+!
+      engine%tag = 'Excited state engine'
 !
    end subroutine prepare_es_engine
 !
@@ -56,13 +55,14 @@ contains
 !
       type(eri_cd_solver), allocatable              :: eri_chol_solver
       type(diis_cc_gs_solver), allocatable          :: cc_gs_solver
-      type(diis_cc_multipliers_solver), allocatable :: cc_multipliers_solver
 ! 
       type(davidson_cc_es_solver), allocatable, target      ::  cc_valence_es
       type(davidson_cvs_cc_es_solver), allocatable, target  ::  cc_core_es
       type(davidson_cc_ip_solver), allocatable, target      ::  cc_valence_ip
 !
       class(davidson_cc_es_solver), pointer :: cc_es_solver
+!
+      write(output%unit, '(/t3,a,a)') '- Running ', trim(engine%tag)
 !
 !     Cholesky decomposition 
 !
@@ -95,16 +95,6 @@ contains
 !
 !     Prepare for excited state
 !
-!     Multiplier equation (temporary for testing, - Eirik, Oct 2018)
-!
-!       allocate(cc_multipliers_solver)
-! !
-!       call cc_multipliers_solver%prepare(wf)
-!       call cc_multipliers_solver%run(wf)
-!       call cc_multipliers_solver%cleanup(wf)
-! !
-!       deallocate(cc_multipliers_solver)
-!
       call engine%determine_es_type(es_type)
 !
       if (es_type == 'core') then
@@ -112,9 +102,9 @@ contains
          allocate(cc_core_es)
          cc_es_solver => cc_core_es
 !
-         call cc_es_solver%prepare(wf)
+         call cc_es_solver%prepare()
          call cc_es_solver%run(wf)
-         call cc_es_solver%cleanup(wf)
+         call cc_es_solver%cleanup()
 !
          cc_es_solver => null()
          deallocate(cc_core_es)
@@ -124,9 +114,9 @@ contains
          allocate(cc_valence_ip)
          cc_es_solver => cc_valence_ip
 !
-         call cc_es_solver%prepare(wf)
+         call cc_es_solver%prepare()
          call cc_es_solver%run(wf)
-         call cc_es_solver%cleanup(wf)
+         call cc_es_solver%cleanup()
 !
          cc_es_solver => null()
          deallocate(cc_valence_ip)
@@ -138,9 +128,9 @@ contains
          allocate(cc_valence_es)
          cc_es_solver => cc_valence_es
 !
-         call cc_es_solver%prepare(wf)
+         call cc_es_solver%prepare()
          call cc_es_solver%run(wf)
-         call cc_es_solver%cleanup(wf)
+         call cc_es_solver%cleanup()
 !
          cc_es_solver => null()
          deallocate(cc_valence_es)
@@ -159,41 +149,17 @@ contains
 !
       class(es_engine) :: engine 
 !
+      write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(engine%tag)
+!
    end subroutine cleanup_es_engine
 !
 !
-   subroutine print_banner_es_engine(engine)
-!!
-!!    Print banner 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
-!!
-      implicit none 
-!
-      class(es_engine) :: engine 
-!
-   end subroutine print_banner_es_engine
-!
-!
-   subroutine print_summary_es_engine(engine)
-!!
-!!    Print summary
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
-!!
-      implicit none 
-!
-      class(es_engine) :: engine 
-!
-   end subroutine print_summary_es_engine
-!
-!
-   subroutine determine_es_type_es_engine(engine, es_type)
+   subroutine determine_es_type_es_engine(es_type)
 !!
 !!    Determine excited state type 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
 !!
       implicit none 
-!
-      class(es_engine) :: engine
 !
       character(len=*) :: es_type 
 !

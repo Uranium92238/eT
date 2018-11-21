@@ -16,9 +16,6 @@ module gs_engine_class
       procedure :: run     => run_gs_engine
       procedure :: cleanup => cleanup_gs_engine
 !
-      procedure :: print_banner    => print_banner_gs_engine
-      procedure :: print_summary   => print_summary_gs_engine
-!
 !
    end type gs_engine 
 !
@@ -32,6 +29,8 @@ contains
       implicit none 
 !
       class(gs_engine) :: engine 
+!
+      engine%tag = 'Ground state engine'
 !
    end subroutine prepare_gs_engine
 !
@@ -49,6 +48,8 @@ contains
 !
       type(eri_cd_solver), allocatable     :: eri_chol_solver
       type(diis_cc_gs_solver), allocatable :: cc_gs_solver 
+!
+      write(output%unit, '(/t3,a,a)') '- Running ', trim(engine%tag)
 !
 !     Cholesky decoposition 
 !
@@ -98,31 +99,9 @@ contains
 !
       class(gs_engine) :: engine 
 !
+      write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(engine%tag)
+!
    end subroutine cleanup_gs_engine
-!
-!
-   subroutine print_banner_gs_engine(engine)
-!!
-!!    Print banner 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
-!!
-      implicit none 
-!
-      class(gs_engine) :: engine 
-!
-   end subroutine print_banner_gs_engine
-!
-!
-   subroutine print_summary_gs_engine(engine)
-!!
-!!    Print summary
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
-!!
-      implicit none 
-!
-      class(gs_engine) :: engine 
-!
-   end subroutine print_summary_gs_engine
 !
 !
 end module gs_engine_class

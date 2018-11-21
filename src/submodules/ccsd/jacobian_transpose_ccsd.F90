@@ -66,7 +66,6 @@ contains
       real(dp), dimension(:,:), allocatable :: b_ai_bj ! Unpacked b_aibj
       real(dp), dimension(:,:), allocatable :: b_ab_ij ! b_ai_bj, reordered
 !
-      real(dp), dimension(:,:), allocatable :: sigma_ai_bj_sym ! Symmetrized sigma_ai_bj, temporary
       real(dp), dimension(:,:), allocatable :: sigma_ab_ij     ! sigma_ai_bj, reordered
 !
       real(dp), dimension(:,:), allocatable :: sigma_a_i
@@ -494,15 +493,8 @@ contains
       real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
 !
       real(dp), dimension(:,:), allocatable :: g_dl_ca ! g_dlca 
-      real(dp), dimension(:,:), allocatable :: g_a_dlc ! g_dlca 
-!
-      real(dp), dimension(:,:), allocatable :: b_dlc_i ! b_cidl 
 !
       real(dp), dimension(:,:), allocatable :: g_ik_dl ! g_dlik = g_ikdl 
-      real(dp), dimension(:,:), allocatable :: g_kdl_i ! g_dlik
-!
-      integer(i15) :: c = 0, l = 0, d = 0, i = 0, dl = 0, dlc = 0, ci = 0
-      integer(i15) :: a = 0, ca = 0, k = 0, kdl = 0, ik = 0
 !
 !     Batching variables 
 !
@@ -724,9 +716,7 @@ contains
       real(dp), dimension((wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o)) :: b_ai_bj 
 !
       real(dp), dimension(:,:), allocatable :: t_dm_ck ! t_km^cd 
-      real(dp), dimension(:,:), allocatable :: t_m_ckd ! t_km^cd
       real(dp), dimension(:,:), allocatable :: t_el_ck ! t_lk^ec
-      real(dp), dimension(:,:), allocatable :: t_ckl_e ! t_lk^ec 
 !
       real(dp), dimension(:,:), allocatable :: g_il_md ! g_ilmd
       real(dp), dimension(:,:), allocatable :: g_ml_ia ! g_mlia
@@ -735,12 +725,8 @@ contains
       real(dp), dimension(:,:), allocatable :: L_ai_ml ! L_mlia
 !
       real(dp), dimension(:,:), allocatable :: X_il_ck ! An intermediate, term 3
-      real(dp), dimension(:,:), allocatable :: X_lck_i ! Reordered intermediate, term 3
 !
       real(dp), dimension(:,:), allocatable :: X_m_l ! An intermediate, term 4
-!
-      real(dp), dimension(:,:), allocatable :: b_a_lck ! b_ckal
-      real(dp), dimension(:,:), allocatable :: b_d_ckl ! b_ckdl
 !
       real(dp), dimension(:,:), allocatable :: g_da_le ! g_dale
       real(dp), dimension(:,:), allocatable :: L_a_eld ! L_dale
@@ -1686,8 +1672,7 @@ contains
       real(dp), dimension(:,:), allocatable :: sigma_i_ajb ! sigma_ai_bj contribution 
       real(dp), dimension(:,:), allocatable :: sigma_i_bja ! sigma_ai_bj contribution 
 !
-      integer(i15) :: i = 0, a = 0, j = 0, b = 0, ai = 0, bj = 0, k = 0, jk = 0, jb = 0
-      integer(i15) :: ik = 0, ibj = 0, ib = 0, bja = 0, ajb = 0
+      integer(i15) :: i, a, j, b, ai, bj, ajb, bja
 !
 !     Batching variables 
 !
@@ -1698,8 +1683,6 @@ contains
 !
       type(batching_index) :: batch_a 
       type(batching_index) :: batch_b 
-!
-      real(dp) :: ddot
 !
 !     :: Term 1 & 2. 2 F_jb b_ai - F_ib b_aj :: 
 !
@@ -1934,11 +1917,10 @@ contains
       real(dp), dimension(:,:), allocatable :: g_ck_jb ! g_ckjb
       real(dp), dimension(:,:), allocatable :: g_ck_bj ! g_ckjb & g_cbjk
 !
-      real(dp), dimension(:,:), allocatable :: g_cb_jk ! g_cbjk 
       real(dp), dimension(:,:), allocatable :: g_cb_jk_restricted ! g_cbjk, batch over b 
 !
-      integer(i15) :: c = 0, j = 0, i = 0, a = 0, cj = 0, ai = 0, bj = 0, aij = 0, b = 0
-      integer(i15) :: jb = 0, jk = 0, k = 0, ck = 0, cb = 0, cb_restricted = 0, bj_full = 0
+      integer(i15) :: c = 0, j = 0, b = 0
+      integer(i15) :: jk = 0, k = 0, ck = 0, cb_restricted = 0, bj_full = 0
 !
 !     Batching variables 
 !
@@ -1946,8 +1928,6 @@ contains
       integer(i15) :: current_b_batch = 0
 !
       type(batching_index) :: batch_b
-!
-      integer(i15) :: cb_offset = 0
 !
 !     :: Term 1. sum_c b_aicj F_cb ::
 !
@@ -2142,8 +2122,8 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: b_aj_ck ! b_akcj
 !
-      integer(i15) :: k = 0, j = 0, ik = 0, ib = 0, i = 0, ck = 0, cj = 0, cb = 0, c = 0
-      integer(i15) :: bj = 0, bi = 0, b = 0, ak = 0, aj = 0, ai = 0, a = 0
+      integer(i15) :: k, ik, i, ck, cb, c
+      integer(i15) :: bi, b
 !
 !     Batching variables 
 !
@@ -2151,8 +2131,6 @@ contains
       integer(i15) :: current_b_batch = 0
 !
       type(batching_index) :: batch_b 
-!
-      integer(i15) :: cb_offset = 0
 !
 !     :: Term 1. - sum_ck b_ajck g_ibck ::
 !
@@ -2307,9 +2285,6 @@ contains
       real(dp), dimension(:,:), allocatable :: g_jb_ld ! g_jbld
       real(dp), dimension(:,:), allocatable :: L_dl_bj ! L_jbld
 !
-      integer(i15) :: i = 0, j = 0, a = 0, b = 0, l = 0, lb = 0, jd = 0
-      integer(i15) :: dl = 0, d = 0, ld = 0, bj = 0, jb = 0
-!
 !     Form g_jb_ld = g_jbld 
 !
       call mem%alloc(g_jb_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
@@ -2410,11 +2385,6 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: sigma_aij_b ! sigma_ai_bj contribution 
       real(dp), dimension(:,:), allocatable :: b_aij_c     ! b_aicj 
-!
-      integer(i15) :: kd = 0, kc = 0, k = 0, jd = 0, jc = 0, j = 0, d = 0
-      integer(i15) :: ckd = 0, c = 0, l = 0, dk = 0, cl = 0, bjd = 0, bj = 0
-      integer(i15) :: b = 0, ldk = 0, i = 0, dl = 0, cj = 0, bk = 0, aij = 0
-      integer(i15) :: a = 0, ai = 0, ck = 0
 !
 !     :: Term 1. - sum_ckdl b_aibl t_kl^cd L_kcjd ::
 !
@@ -2636,8 +2606,6 @@ contains
       real(dp), dimension(:,:), allocatable :: t_l_ckd ! t_kl^cd
       real(dp), dimension(:,:), allocatable :: t_ck_dl ! t_kl^cd
 !
-      real(dp), dimension(:,:), allocatable :: L_jb_J
-!
       real(dp), dimension(:,:), allocatable :: g_jb_id ! g_jbid 
       real(dp), dimension(:,:), allocatable :: L_d_ibj ! L_jbid
       !real(dp), dimension(:,:), allocatable :: L_aib_l ! L_ialb
@@ -2648,11 +2616,6 @@ contains
       real(dp), dimension(:,:), allocatable :: X_l_j   ! An intermediate, term 3
 !
       real(dp), dimension(:,:), allocatable :: sigma_aj_bi ! sigma_ai_bj contriution
-!
-      integer(i15) :: k = 0, l = 0, lck = 0, d = 0, c = 0, jd = 0, jb = 0
-      integer(i15) :: id = 0, j = 0, i = 0, ibj = 0, ib = 0, dl = 0, ckdl = 0
-      integer(i15) :: b = 0, ck = 0, idl = 0, ckd = 0, bl = 0, bj = 0, bi = 0
-      integer(i15) :: aj = 0, ai = 0, aib = 0, a = 0
 !
 !     :: Term 1. - sum_ckdl b_alck t_kl^cd L_jbid :: 
 !
@@ -2872,10 +2835,6 @@ contains
       real(dp), dimension(:,:), allocatable :: X_cl_bi ! An intermediate, term 1
       real(dp), dimension(:,:), allocatable :: X_aj_kd ! An intermediate, term 2
 !
-      integer(i15) :: k = 0, d = 0, l = 0, c = 0, dk = 0, dl = 0, ck = 0, cl = 0
-      integer(i15) :: ckdl = 0, i = 0, b = 0, bi = 0, kb = 0, id = 0, aj = 0
-      integer(i15) :: j = 0, cj = 0, bj = 0, al = 0, ai = 0, a = 0, kd = 0, ib = 0
-!
 !     :: Term 1. sum_ckdl b_alcj t_kl^cd g_kbid ::
 !
 !     Form t_cl_dk = t_kl^cd 
@@ -3050,8 +3009,8 @@ contains
       real(dp), dimension(:,:), allocatable :: g_ik_jl ! g_ikjl
       real(dp), dimension(:,:), allocatable :: g_kl_ij ! g_ikjl
 !
-      integer(i15) :: l = 0, kl = 0, k = 0, jl = 0, j = 0, ik = 0, ij = 0
-      integer(i15) :: i = 0, db = 0, d = 0, cd = 0, ca = 0, c = 0, b = 0, a = 0
+      integer(i15) :: j, ij
+      integer(i15) :: i, db, d, cd, ca, c, b, a
 !
 !     Batching variables 
 !
@@ -3251,9 +3210,6 @@ contains
       real(dp), dimension(:,:), allocatable :: g_ab_kl ! g_kalb
 !
       real(dp), dimension(:,:), allocatable :: X_kl_ij ! An intermediate, terms 1 & 2
-!
-      integer(i15) :: d = 0, c = 0, cd = 0, l = 0, dl = 0, k = 0, ck = 0, kl = 0
-      integer(i15) :: ckdl = 0, lb = 0, ka = 0, b = 0, ab = 0, a = 0
 !
 !     :: Term 1. sum_ckdl b_cidj t_kl^cd g_kalb :: 
 !

@@ -13,6 +13,10 @@ module abstract_hf_solver_class
 !
    type, abstract :: abstract_hf_solver 
 !
+      character(len=100) :: tag
+      character(len=100) :: author
+      character(len=400) :: description
+!
       real(dp) :: energy_threshold          = 1.0D-6
       real(dp) :: gradient_threshold        = 1.0D-6
 !
@@ -21,6 +25,8 @@ module abstract_hf_solver_class
       character(len=40) :: ao_density_guess = 'SAD'
 !
    contains 
+!
+      procedure :: print_banner             => print_banner_abstract_hf_solver
 !
       procedure :: read_settings            => read_settings_abstract_hf_solver
       procedure :: read_hf_solver_settings  => read_hf_solver_settings_abstract_hf_solver
@@ -123,6 +129,22 @@ contains
       endif 
 !
    end subroutine read_hf_solver_settings_abstract_hf_solver
+!
+!
+   subroutine print_banner_abstract_hf_solver(solver)
+!!
+!!    Print banner
+!!    Written by Rolf H. Myhre, 2018
+!!
+      implicit none 
+!
+      class(abstract_hf_solver) :: solver 
+!
+      call long_string_print(solver%tag,'(//t3,a)',.true.)
+      call long_string_print(solver%author,'(t3,a/)',.true.)
+      call long_string_print(solver%description)
+!
+   end subroutine print_banner_abstract_hf_solver
 !
 !
 end module abstract_hf_solver_class
