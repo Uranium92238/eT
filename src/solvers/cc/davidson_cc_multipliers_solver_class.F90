@@ -26,17 +26,17 @@ module davidson_cc_multipliers_solver_class
 !
    contains
 !
-      procedure :: prepare => prepare_davidson_cc_multipliers_solver
-      procedure, nopass :: cleanup => cleanup_davidson_cc_multipliers_solver
+      procedure :: prepare                         => prepare_davidson_cc_multipliers_solver
+      procedure, nopass :: cleanup                 => cleanup_davidson_cc_multipliers_solver
 !
-      procedure :: print_banner => print_banner_davidson_cc_multipliers_solver
-      procedure :: print_settings => print_settings_davidson_cc_multipliers_solver
+      procedure :: print_banner                    => print_banner_davidson_cc_multipliers_solver
+      procedure :: print_settings                  => print_settings_davidson_cc_multipliers_solver
 !
-      procedure :: run => run_davidson_cc_multipliers_solver
+      procedure :: run                             => run_davidson_cc_multipliers_solver
 !
       procedure, nopass :: set_precondition_vector => set_precondition_vector_davidson_cc_multipliers_solver     
 !
-      procedure, nopass :: transform_trial_vector => transform_trial_vector_davidson_cc_multipliers_solver 
+      procedure, nopass :: transform_trial_vector  => transform_trial_vector_davidson_cc_multipliers_solver 
 !
    end type davidson_cc_multipliers_solver
 !
@@ -134,7 +134,6 @@ contains
 !
       norm_trial = sqrt(ddot(wf%n_amplitudes, eta, 1, eta, 1))
       call dscal(wf%n_amplitudes, one/norm_trial, eta, 1)
-      write(output%unit, *) ddot(davidson%n_parameters, eta, 1, eta, 1)
 !
       call davidson%write_trial(eta, 'rewind')
 !

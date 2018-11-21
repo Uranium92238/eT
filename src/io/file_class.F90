@@ -81,21 +81,20 @@ contains
       the_file%name = name
 !
       if (.not. present(record_length)) then
+!
         if (access == 'direct') then
 !
-            write(output%unit,'(/t3,a)') 'Error: for direct access files a record length must be specified.'
-            stop
+            call output%error_msg('Error: for direct access files a record length must be specified.')
+!
          endif
 !
       elseif (access .ne. 'direct' .and. access .ne. 'sequential') then
 !
-         write(output%unit,'(/t3,a)') 'Error: illegal access type specified for file: ', name, access
-         stop
+         call output%error_msg('Error: illegal access type specified for file: ' // name // access)
 !
       elseif (format .ne. 'unformatted' .and. format .ne. 'formatted') then
 !
-         write(output%unit,'(/t3,a)') 'Error: illegal format specified for file: ', name
-         stop
+         call output%error_msg('Error: illegal format specified for file: ' // name)
 !
       endif
 !
@@ -139,8 +138,7 @@ contains
 !
       if (.not. the_file%opened) then
 !
-         write(output%unit,'(/t3,a)') 'Error: attempted to read unopened file.'
-         stop
+         call output%error_msg('Error: attempted to read unopened file:' // trim(the_file%name))
 !
       elseif (the_file%access == 'direct') then
 !
@@ -211,8 +209,7 @@ contains
 !
       if (the_file%file_size .eq. -1) then
 !
-         write(output%unit,*) 'Error: Could not calculate file size of the file ', trim(the_file%name)
-         stop
+         call output%error_msg('Error: Could not calculate file size of the file ' // trim(the_file%name))
 !
       endif
 !

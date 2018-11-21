@@ -40,30 +40,28 @@ module molecular_system_class
 !
    contains
 !
-      procedure :: prepare => prepare_molecular_system
-      procedure :: cleanup => cleanup_molecular_system
-      procedure :: write   => write_molecular_system
+      procedure :: prepare                 => prepare_molecular_system
+      procedure :: cleanup                 => cleanup_molecular_system
+      procedure :: write                   => write_molecular_system
 !
-      procedure, private :: read_info     => read_info_molecular_system
-      procedure, private :: read_geometry => read_geometry_molecular_system
+      procedure, private :: read_info      => read_info_molecular_system
+      procedure, private :: read_geometry  => read_geometry_molecular_system
 !
-      procedure :: print_system   => print_system_molecular_system
-      procedure :: print_geometry => print_geometry_molecular_system
+      procedure :: print_system            => print_system_molecular_system
+      procedure :: print_geometry          => print_geometry_molecular_system
 !
-      procedure :: get_nuclear_repulsion => get_nuclear_repulsion_molecular_system
-      procedure :: get_n_electrons       => get_n_electrons_molecular_system
+      procedure :: get_nuclear_repulsion   => get_nuclear_repulsion_molecular_system
+      procedure :: get_n_electrons         => get_n_electrons_molecular_system
 !
-      procedure :: get_n_aos          => get_n_aos_molecular_system
-      procedure :: get_n_shells       => get_n_shells_molecular_system
-      procedure :: get_shell_limits   => get_shell_limits_molecular_system
-      procedure :: basis2shell        => basis2shell_molecular_system
-      procedure :: get_max_shell_size => get_max_shell_size_molecular_system
+      procedure :: get_n_aos               => get_n_aos_molecular_system
+      procedure :: get_n_shells            => get_n_shells_molecular_system
+      procedure :: get_shell_limits        => get_shell_limits_molecular_system
+      procedure :: basis2shell             => basis2shell_molecular_system
+      procedure :: get_max_shell_size      => get_max_shell_size_molecular_system
 !
-      procedure :: SAD => SAD_molecular_system
+      procedure :: shell_to_atom           => shell_to_atom_molecular_system
 !
-      procedure :: shell_to_atom => shell_to_atom_molecular_system
-!
-      procedure :: reorder_atoms => reorder_atoms_molecular_system
+      procedure :: reorder_atoms           => reorder_atoms_molecular_system
 !
       procedure :: initialize_basis_sets   => initialize_basis_sets_molecular_system
       procedure :: initialize_atoms        => initialize_atoms_molecular_system
@@ -1072,64 +1070,6 @@ contains
       if (basis2shell_molecular_system == 0) call output%error_msg('in basis2shell.')
 !
    end function basis2shell_molecular_system
-!
-!
-   subroutine SAD_molecular_system(molecule, n_ao, density_diagonal)
-!!
-!!    Superposition of atomic desities
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-!!    Initial guess for HF-calculation
-!!
-      implicit none
-!
-      class(molecular_system) :: molecule
-!
-      integer(i15) :: n_ao
-!
-      real(dp), dimension(n_ao, 1) :: density_diagonal
-!
-      integer(i15) :: I, offset_diagonal
-!
-      real(dp) :: electrons
-!
-      real(dp), dimension(:,:), allocatable :: atom_density_diagonal
-!
-!     Loop over atoms and let them set their own density diagonal
-!
-      offset_diagonal = 0
-!
-      do I = 1, molecule%n_atoms
-!
-         call mem%alloc(atom_density_diagonal, molecule%atoms(I)%n_ao, 1)
-!
-         call molecule%atoms(I)%AD(atom_density_diagonal)
-!
-         density_diagonal(offset_diagonal + 1 : offset_diagonal + molecule%atoms(I)%n_ao, 1) = &
-               atom_density_diagonal(:,1)
-!
-         call mem%dealloc(atom_density_diagonal, molecule%atoms(I)%n_ao, 1)
-!
-         offset_diagonal = offset_diagonal + molecule%atoms(I)%n_ao
-!
-      enddo
-!
-      electrons = 0
-!
-      do I = 1, n_ao
-!
-         electrons = electrons + density_diagonal(I, 1)
-!
-      enddo
-!
-      if (abs(electrons - molecule%get_n_electrons()) .gt. 1.0d-7) then
-!
-         write(output%unit, '(a)') 'Error: Mismatch in electron number SAD'
-         stop
-!
-      endif
-!
-   end subroutine SAD_molecular_system
 !
 !
    function shell_to_atom_molecular_system(molecule, shell)

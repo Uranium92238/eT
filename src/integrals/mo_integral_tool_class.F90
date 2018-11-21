@@ -2154,6 +2154,8 @@ contains
 !
       integer(i15) :: get_required_vvoo_mo_integral_tool
 !
+      get_required_vvoo_mo_integral_tool = 0
+!
       if (present(dim_1) .and. present(dim_2) .and. present(dim_3) .and. present(dim_4)) then
 !
          get_required_vvoo_mo_integral_tool = (dim_1*dim_2*dim_3*dim_4)
@@ -2188,7 +2190,6 @@ contains
       else
 !
          call output%error_msg('call to get_vvoo_required_mem is missing some arguments.')
-         stop
 !
       endif
 !
@@ -2229,10 +2230,11 @@ contains
       dim_4_local = integrals%n_v
       if (present(dim_4)) dim_4_local = dim_4
 !
+      get_required_voov_mo_integral_tool = 0
+!
       if (integrals%eri_t1_file) then
 !
          call output%error_msg('still no support for eri on file')        
-         stop
 !
       elseif (integrals%cholesky_t1_file) then
 !
@@ -2242,7 +2244,6 @@ contains
       elseif (integrals%eri_file) then
 !
          call output%error_msg('still no support for eri on file')  
-         stop
 !
       else
 !
@@ -2290,10 +2291,11 @@ contains
       dim_4_local = integrals%n_v
       if (present(dim_4)) dim_4_local = dim_4
 !
+      get_required_vvov_mo_integral_tool = 0
+!
       if (integrals%eri_t1_file) then
 !
          call output%error_msg('still no support for eri on file')        
-         stop
 !
       elseif (integrals%cholesky_t1_file) then
 !
@@ -2303,7 +2305,6 @@ contains
       elseif (integrals%eri_file) then
 !
          call output%error_msg('still no support for eri on file')  
-         stop
 !
       else
 !
@@ -2352,6 +2353,8 @@ contains
       dim_4_local = integrals%n_v
       if (present(dim_4)) dim_4_local = dim_4
 !
+      get_required_vvvo_mo_integral_tool = 0
+!
       if (integrals%eri_t1_file) then
 !
          call output%error_msg('still no support for eri on file')        
@@ -2365,7 +2368,6 @@ contains
       elseif (integrals%eri_file) then
 !
          call output%error_msg('still no support for eri on file')  
-         stop
 !
       else
 !
@@ -2416,10 +2418,11 @@ contains
       dim_4_local = integrals%n_v
       if (present(dim_4)) dim_4_local = dim_4
 !
+      get_required_vvvv_mo_integral_tool = 0
+!
       if (integrals%eri_t1_file) then
 !
          call output%error_msg('still no support for eri on file')        
-         stop
 !
       elseif (integrals%cholesky_t1_file) then
 !
@@ -2429,7 +2432,6 @@ contains
       elseif (integrals%eri_file) then
 !
          call output%error_msg('still no support for eri on file')  
-         stop
 !
       else
 !

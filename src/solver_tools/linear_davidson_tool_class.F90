@@ -203,15 +203,15 @@ contains
 !!
 !!    Constructs the residual
 !!
-!!       R = (A*X - F)/|X|
+!!       R = A*X - F
 !!
       implicit none 
 !
       class(linear_davidson_tool), intent(in) :: davidson 
 !
-      real(dp), dimension(davidson%n_parameters, 1)               :: R 
+      real(dp), dimension(davidson%n_parameters, 1) :: R 
 !
-      integer(i15),intent(in) :: n
+      integer(i15), intent(in) :: n
 !
       if (n .ne. 1) then
 !

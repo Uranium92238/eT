@@ -377,6 +377,7 @@ contains
       if (converged) then
 !
          write(output%unit,'(/t3,a, i3, a)') 'Convergence criterion met in ', iteration - 1, ' iterations!'
+         ! Note to devs: please write solver%print_summary() and call it here
 !
       elseif (.not. converged ) then
 !
@@ -385,7 +386,6 @@ contains
       endif
 !
       call davidson%cleanup()
-      call wf%print_wavefunction_summary()
 !
    end subroutine run_davidson_cc_es_solver
 !
