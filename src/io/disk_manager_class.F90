@@ -171,14 +171,12 @@ contains
       if ( present(pos)) then
          if (the_file%access  == 'direct') then
 !
-            write(output%unit,'(/t3,a)') 'Warning: position specifier is disregarded for direct access file.'
-            stop
+            call output%warning_msg('position specifier is disregarded for direct access file.')
 !
          endif
       elseif (the_file%access .ne. 'direct' .and. the_file%access .ne. 'sequential' ) then
 !
-         write(output%unit,'(/t3,a)') 'Error: illegal access type for file: ', the_file%name, the_file%access
-         stop
+         call output%error_msg('illegal access type for file: ' // trim(the_file%name) //',' // trim(the_file%access))
 !
       endif
 !
@@ -225,19 +223,16 @@ contains
 !
       if (the_file%name == 'no_name') then
 !
-         write(output%unit,'(/t3,a)') 'Error: to open a file, you must set the name of the file.'
-         stop
+         call output%error_msg('to open a file, you must set the name of the file.')
 !
       elseif (the_file%format == 'unknown') then
 !
-         write(output%unit,'(/t3,a)') 'Error: to open a file, you must set the format of the file.'
-         stop
+         call output%error_msg('to open a file, you must set the format of the file.')
 !
       elseif (the_file%access == 'direct') then
 
 !
-         write(output%unit,'(/t3,a)') 'Error: tried to open sequential access file as a direct access file.'
-         stop
+         call output%error_msg('tried to open sequential access file as a direct access file.')
 !
       endif
 !
@@ -263,8 +258,7 @@ contains
 !
       if (io_error .ne. 0) then
 !
-         write(output%unit,'(/t3,a)') 'Error: could not open file: ', the_file%name
-         stop
+         call output%error_msg('could not open file: ' //  trim(the_file%name))
 !
       endif
 !
@@ -279,9 +273,8 @@ contains
 !
       if (disk%available .lt. 0 .and. (permissions == 'write' .or. permissions == 'readwrite')) then
 !
-         write(output%unit,'(t3,a/,t3,a)') 'Error: the specified disk space is used up and', &
-                                           'a file was opened with permission to write.'
-         stop
+         call output%error_msg('the specified disk space is used up and' // &
+                                           'a file was opened with permission to write.')
 !
       endif
 !
@@ -315,23 +308,19 @@ contains
 !
       if (the_file%name == 'no_name') then
 !
-         write(output%unit,'(/t3,a)') 'Error: to open a file, you must set the name of the file.'
-         stop
+         call output%error_msg('to open a file, you must set the name of the file.')
 !
       elseif (the_file%format == 'unknown') then
 !
-         write(output%unit,'(/t3,a)') 'Error: to open a file, you must set the format of the file.'
-         stop
+         call output%error_msg('to open a file, you must set the format of the file.')
 !
       elseif (the_file%access == 'sequential') then
 !
-         write(output%unit,'(/t3,a)') 'Error: tried to open direct access file as a sequential access file.'
-         stop
+         call output%error_msg('tried to open direct access file as a sequential access file.')
 !
       elseif (the_file%record_length == 0) then
 !
-         write(output%unit,'(/t3,a)') 'Error: tried to open direct access file without a set record length.'
-         stop
+         call output%error_msg('tried to open direct access file without a set record length.')
 !
       endif
 !
@@ -347,8 +336,7 @@ contains
 !
       if (io_error .ne. 0) then
 !
-         write(output%unit,'(/t3,a)') 'Error: could not open file: ', the_file%name
-         stop
+         call output%error_msg('could not open file: ' // trim(the_file%name))
 !
       endif
 !
@@ -363,9 +351,8 @@ contains
 !
       if (disk%available .lt. 0 .and. (permissions == 'write' .or. permissions == 'readwrite')) then
 !
-         write(output%unit,'(t3,a/,t3,a)') 'Error: the specified disk space is used up and', &
-                                           'a file was opened with permission to write.'
-         stop
+         call output%error_msg('Error: the specified disk space is used up and ' // &
+                                           'a file was opened with permission to write.')
 !
       endif
 !
@@ -390,13 +377,13 @@ contains
 !
       integer(i15) :: bytes_written_to_disk ! Negative if storage is freed up, via 'delete'
 !
+      bytes_written_to_disk = 0
 !
 !     Sanity check
 !
       if (.not. the_file%opened) then
 !
-         write(output%unit,'(t3,a)') 'Error: tried to close a file that has not been opened.'
-         stop
+         call output%error_msg('tried to close a file that has not been opened.')
 !
       endif
 !
@@ -414,9 +401,7 @@ contains
 !
          if (.not. (destiny == 'keep' .or. destiny == 'delete')) then
 !
-            write(output%unit,'(t3,a)') 'Error: could not recognize status when closing file.'
-            write(output%unit,'(t3,a)') 'Must equal keep or delete.'
-            stop
+            call output%error_msg('could not recognize status when closing file.')
 !
          else
 !
@@ -473,8 +458,8 @@ contains
 !
       if (disk%available .lt. 0) then
 !
-         write(output%unit,'(t3,a/,t3,a)') 'Warning: the specified disk space is now used up. If any', &
-                                           'more has to be stored, the calculation will stop.'
+         call output%warning_msg('the specified disk space is now used up. If any ' //&
+                                           'more has to be stored, the calculation will stop.')
 !
       endif
 !

@@ -216,8 +216,7 @@ contains
 !
       if (molecule%charge .ne. 0) then
 !
-         write(output%unit,*) 'Error: SAD not yet implemented for charged species!'
-         stop
+         call output%error_msg('SAD not yet implemented for charged species!')
 !
       endif
 !
@@ -225,8 +224,7 @@ contains
 !
          if (molecule%atoms(i)%n_ao == 0) then
 !   
-            write(output%unit,*)'Error: Is basis defined for all atoms in input?'
-            stop
+            call output%error_msg('Is basis defined for all atoms in input?')
 !
          endif
 !
@@ -342,8 +340,7 @@ contains
 !
       if ((molecule%n_basis_sets .le. 0 ).or.( molecule%n_basis_sets .gt. molecule%n_atoms)) then
 !
-         write(output%unit, '(a)')'Error: Number of basis sets specified exceeds number of atoms or is zero.'
-         stop
+         call output%error_msg('number of basis sets specified exceeds number of atoms or is zero.')
 !
       endif
 !
@@ -878,8 +875,7 @@ contains
 !
             if (abs(r_ij) .lt. 1.0D-7) then
 !
-               write(output%unit,'(/t3,a)') 'Error: Two atoms are placed on top of each other'
-               stop
+               call output%error_msg('two atoms are placed on top of each other.')
 !
             endif
 !
@@ -1089,13 +1085,11 @@ contains
 !
       if (shell .le. 0) then
 !
-         write(output%unit, '(a)') 'Error: shell number has illegal value 0.'
-         stop
+         call output%error_msg('shell number has illegal value 0.')
 !
       elseif (shell .gt. molecule%get_n_shells()) then
 !
-         write(output%unit, '(a)') 'Error: shell number exceeds total number of shells.'
-         stop
+         call output%error_msg('shell number exceeds total number of shells.')
 !
       endif
 !
@@ -1113,7 +1107,7 @@ contains
 !
       enddo
 !     
-      if (shell_to_atom_molecular_system == 0) call output%error_msg(' in shell_to_atom')
+      if (shell_to_atom_molecular_system == 0) call output%error_msg('in shell_to_atom.')
 !
    end function shell_to_atom_molecular_system
 !

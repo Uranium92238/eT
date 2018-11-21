@@ -85,17 +85,17 @@ contains
 !
         if (access == 'direct') then
 !
-            call output%error_msg('Error: for direct access files a record length must be specified.')
+            call output%error_msg('for direct access files a record length must be specified.')
 !
          endif
 !
       elseif (access .ne. 'direct' .and. access .ne. 'sequential') then
 !
-         call output%error_msg('Error: illegal access type specified for file: ' // name // access)
+         call output%error_msg('illegal access type specified for file: ' // name // access)
 !
       elseif (format .ne. 'unformatted' .and. format .ne. 'formatted') then
 !
-         call output%error_msg('Error: illegal format specified for file: ' // name)
+         call output%error_msg('illegal format specified for file: ' // name)
 !
       endif
 !
@@ -139,11 +139,11 @@ contains
 !
       if (.not. the_file%opened) then
 !
-         call output%error_msg('Error: attempted to read unopened file:' // trim(the_file%name))
+         call output%error_msg('attempted to read unopened file:' // trim(the_file%name))
 !
       elseif (the_file%access == 'direct') then
 !
-         write(output%unit,'(/t3,a)') 'Warning: no need to prepare to read line for a direct access file.'
+         call output%warning_msg('no need to prepare to read line for a direct access file.')
          return
 !
       endif
@@ -171,7 +171,7 @@ contains
    end subroutine prepare_to_read_line_file
 !
 !
-   subroutine error_msg_file(out_file, error_specs)
+   subroutine error_msg_file(out_file, error_specs, error_int)
 !!
 !!    Error message
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -182,7 +182,22 @@ contains
 !
       character(len=*) :: error_specs
 !
-      write(out_file%unit, '(a)') 'Error: ' // trim(error_specs)
+      integer(i15), optional :: error_int 
+!
+      character(len=40) :: error_int_char = ' '
+!
+      if (present(error_int)) then
+!
+         write(error_int_char, '(i12)') error_int   
+!
+         write(out_file%unit, '(a)') 'Error: ' // trim(error_specs) // ' ' // error_int_char
+!
+      else
+!
+         write(out_file%unit, '(a)') 'Error: ' // trim(error_specs)
+!
+      endif
+!
       stop
 !
    end subroutine error_msg_file
@@ -226,7 +241,7 @@ contains
 !
       if (the_file%file_size .eq. -1) then
 !
-         call output%error_msg('Error: Could not calculate file size of the file ' // trim(the_file%name))
+         call output%error_msg('could not calculate file size of the file ' // trim(the_file%name))
 !
       endif
 !

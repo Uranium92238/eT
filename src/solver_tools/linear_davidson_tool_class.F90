@@ -300,8 +300,7 @@ contains
 !
          else
 !
-            write(output%unit, '(/a/)')  'Did not find any new trials'
-            stop
+            call output%error_msg('did not find any new trials.')
 !
          endif 
 !

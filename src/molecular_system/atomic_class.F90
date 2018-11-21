@@ -95,8 +95,7 @@ contains
 !
       if (atom%number == 0) then
 !
-         write(output%unit,'(/t3,a)') 'Error: illegal atomic symbol, check the eT.inp file '
-         stop
+         call output%error_msg('illegal atomic symbol, check the eT.inp file ')
 !
       endif
 !
