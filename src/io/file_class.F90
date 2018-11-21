@@ -33,11 +33,12 @@ module file_class
 !
    contains
 !
-      procedure :: init => init_file
+      procedure :: init                   => init_file
 !
-      procedure :: prepare_to_read_line => prepare_to_read_line_file
+      procedure :: prepare_to_read_line   => prepare_to_read_line_file
 !
-      procedure :: error_msg => error_msg_file
+      procedure :: error_msg              => error_msg_file
+      procedure :: warning_msg            => warning_msg_file
 !
    end type file
 !
@@ -182,6 +183,22 @@ contains
       stop
 !
    end subroutine error_msg_file
+!
+!
+   subroutine warning_msg_file(out_file, warning_specs)
+!!
+!!    Warning message
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(file) :: out_file
+!
+      character(len=*) :: warning_specs
+!
+      write(out_file%unit, '(a)') 'Warning: ' // trim(warning_specs)
+!
+   end subroutine warning_msg_file
 !
 !
 end module file_class

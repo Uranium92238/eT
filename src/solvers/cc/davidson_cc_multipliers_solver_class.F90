@@ -129,7 +129,6 @@ contains
 !
       norm_trial = sqrt(ddot(wf%n_amplitudes, eta, 1, eta, 1))
       call dscal(wf%n_amplitudes, one/norm_trial, eta, 1)
-      write(output%unit, *) ddot(davidson%n_parameters, eta, 1, eta, 1)
 !
       call davidson%write_trial(eta, 'rewind')
 !
