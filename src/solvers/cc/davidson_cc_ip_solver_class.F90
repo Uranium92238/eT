@@ -19,7 +19,7 @@ module davidson_cc_ip_solver_class
       procedure :: read_settings          => read_settings_davidson_cc_ip_solver
 !
       procedure :: set_start_vectors      => set_start_vectors_davidson_cc_ip_solver
-      procedure, nopass :: set_projection_vector  => set_projection_vector_davidson_cc_ip_solver
+      procedure :: set_projection_vector  => set_projection_vector_davidson_cc_ip_solver
 !
    end type davidson_cc_ip_solver
 !
@@ -162,7 +162,7 @@ contains
    end subroutine set_start_vectors_davidson_cc_ip_solver
 !
 !
-   subroutine set_projection_vector_davidson_cc_ip_solver(wf, davidson)
+   subroutine set_projection_vector_davidson_cc_ip_solver(solver, wf, davidson)
 !!
 !!    Set projection vector
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
@@ -170,6 +170,8 @@ contains
 !!    Sets projection vector to orbital differences 
 !!
       implicit none
+!
+      class(davidson_cc_ip_solver) :: solver
 !
       class(ccs) :: wf
 !

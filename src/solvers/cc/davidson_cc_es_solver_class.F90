@@ -50,7 +50,7 @@ module davidson_cc_es_solver_class
       procedure, non_overridable :: cleanup  => cleanup_davidson_cc_es_solver
 !
       procedure, nopass :: set_precondition_vector   => set_precondition_vector_davidson_cc_es_solver
-      procedure, nopass :: set_projection_vector     => set_projection_vector_davidson_cc_es_solver
+      procedure :: set_projection_vector     => set_projection_vector_davidson_cc_es_solver
 !
       procedure :: print_banner              => print_banner_davidson_cc_es_solver
 !
@@ -638,7 +638,7 @@ contains
    end subroutine read_settings_davidson_cc_es_solver
 !
 !
-   subroutine set_projection_vector_davidson_cc_es_solver(wf, davidson)
+   subroutine set_projection_vector_davidson_cc_es_solver(solver, wf, davidson)
 !!
 !!    Set projection vector
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
@@ -647,12 +647,16 @@ contains
 !!
       implicit none
 !
+      class(davidson_cc_es_solver) :: solver
+!
       class(ccs) :: wf
 !
       type(eigen_davidson_tool) :: davidson
 !
 !     Do nothing for regular excited states, but will be used in descendants
 !     CVS and IP
+!
+      davidson%do_projection = .false.
 !
    end subroutine set_projection_vector_davidson_cc_es_solver
 !
