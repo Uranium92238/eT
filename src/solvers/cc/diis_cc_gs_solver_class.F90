@@ -82,7 +82,7 @@ contains
 !
 !     Read & print settings (thresholds, etc.)
 !
-      call solver%read_settings()
+      if (requested_section('cc ground state')) call solver%read_settings()
 !
       call solver%print_settings()
 !
