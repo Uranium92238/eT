@@ -562,7 +562,6 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: g_ji_kb
       real(dp), dimension(:,:), allocatable :: L_jb_ki
-      real(dp), dimension(:,:), allocatable :: c_a_jbk
 !
 !     Construct the integral g_ji_kb = sum_J L_ji_J * L_kb_J
 !
@@ -624,8 +623,8 @@ contains
 !
 !     Variables for batching
 !
-      integer(i15) :: required = 0
-      integer(i15) :: current_a_batch = 0
+      integer(i15) :: required
+      integer(i15) :: current_a_batch
 !
       type(batching_index) :: batch_a
 !
@@ -725,9 +724,9 @@ contains
 !
 !     Batching variables
 !
-      integer(i15) :: required = 0
-      integer(i15) :: current_b_batch = 0
-      integer(i15) :: aib_offset = 0
+      integer(i15) :: required
+      integer(i15) :: current_b_batch
+      integer(i15) :: aib_offset
 !
       type(batching_index) :: batch_b
 !
@@ -985,10 +984,8 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: t_ak_ci ! t_ki^ac
       real(dp), dimension(:,:), allocatable :: t_kc_ai ! t_ki^ac
-      real(dp), dimension(:,:), allocatable :: t_lc_bi ! t_li^bc
       real(dp), dimension(:,:), allocatable :: t_ba_kl ! t_lk^ba
       real(dp), dimension(:,:), allocatable :: t_ai_bl ! t_il^ab
-      real(dp), dimension(:,:), allocatable :: t_ck_ai ! t_ik^ac
 !
       real(dp), dimension(:,:), allocatable :: rho_bj_ai ! rho_ai_bj, term 1 & 5
       real(dp), dimension(:,:), allocatable :: rho_aj_bi ! rho_ai_bj, term 2
@@ -1361,21 +1358,16 @@ contains
       real(dp), dimension(:,:), allocatable :: rho_aib_j ! rho_ai_bj, batching over b
       real(dp), dimension(:,:), allocatable :: rho_b_aij ! rho_ai_bj, batching over b
 !
-      logical :: reorder
-!
 !     Batching variables
 !
-      integer(i15) :: required = 0
-      integer(i15) :: current_b_batch = 0
+      integer(i15) :: required 
+      integer(i15) :: current_b_batch 
 !
       type(batching_index) :: batch_b
 !
 !     Indices
 !
-      integer(i15) :: b = 0, c = 0, cd = 0, ci = 0, dj = 0, cidj = 0, d = 0, db = 0, bd = 0
-      integer(i15) :: k = 0, j = 0, kb = 0, kc = 0, i = 0, ij = 0, ijb = 0
-      integer(i15) :: a = 0, ai = 0, bj = 0, ib = 0, dkb = 0, dk = 0, akdj = 0, ak = 0
-      integer(i15) :: aj = 0, ck = 0, ckb = 0, ciak = 0, aib = 0, aidj = 0, aij = 0
+      integer(i15) :: b, i, ijb, j, a, ai, bj, ib, aj, aib, aij
 !
 !     Read amplitudes from disk
 !
@@ -1976,7 +1968,6 @@ contains
       real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
       real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)), intent(in) :: c_ai_bj
 !
-      real(dp), dimension(:,:), allocatable :: L_ia_J
       real(dp), dimension(:,:), allocatable :: g_kc_ld
 !
       real(dp), dimension(:,:), allocatable :: L_ck_dl
@@ -1984,8 +1975,6 @@ contains
       real(dp), dimension(:,:), allocatable :: L_lc_kd
 !
       real(dp), dimension(:,:), allocatable :: c_dl_bj
-      real(dp), dimension(:,:), allocatable :: c_clk_b
-      real(dp), dimension(:,:), allocatable :: c_ckd_j
 !
       real(dp), dimension(:,:), allocatable :: t_ai_ck
       real(dp), dimension(:,:), allocatable :: t_ai_jd
@@ -1996,20 +1985,9 @@ contains
       real(dp), dimension(:,:), allocatable :: X_ck_bj
 !
       real(dp), dimension(:,:), allocatable :: rho_ai_jb
-      real(dp), dimension(:,:), allocatable :: rho_aib_j
-!
-      integer(i15) :: a = 0, b = 0, c = 0, d = 0
-      integer(i15) :: i = 0, j = 0, k = 0, l = 0
-!
-      integer(i15) :: ai = 0, bj = 0, bk = 0, bl= 0, ck = 0, cl = 0, dj = 0, dl = 0
-      integer(i15) :: kc = 0, kd = 0, ld = 0, lc = 0
-!
-      integer(i15) :: aij = 0, aib = 0, lck = 0, ckd = 0
-!
-      integer(i15) :: bldj = 0, aidj = 0, bkcl = 0, aibl = 0
 !
 !     :: Construct L_kc,ld ::
-
+!
       call mem%alloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       call wf%get_ovov(g_kc_ld)
@@ -2021,6 +1999,7 @@ contains
 !
 !     L_ck_dl(ck, dl) = L_kcld = 2 * g_kc_ld(kc, ld) - g_kc_ld(kd, lc)
 !                                            2143              2341
+!
 !
       call add_2341_to_1234(-one, g_kc_ld, L_ck_dl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call add_2143_to_1234(two, g_kc_ld, L_ck_dl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -2257,8 +2236,6 @@ contains
       real(dp), dimension(:,:), allocatable :: L_d_clk
       real(dp), dimension(:,:), allocatable :: L_lc_kd
 !
-      real(dp), dimension(:,:), allocatable :: c_ai_ck
-      real(dp), dimension(:,:), allocatable :: c_aib_l
       real(dp), dimension(:,:), allocatable :: c_ai_jd
 !
       real(dp), dimension(:,:), allocatable :: t_dl_bj
@@ -2270,17 +2247,6 @@ contains
       real(dp), dimension(:,:), allocatable :: Z_l_j
 !
       real(dp), dimension(:,:), allocatable :: rho_ai_jb
-      real(dp), dimension(:,:), allocatable :: rho_aib_j
-!
-      integer(i15) :: a = 0, b = 0, c = 0, d = 0
-      integer(i15) :: i = 0, j = 0, k = 0, l = 0
-!
-      integer(i15) :: ai = 0, bj = 0, bk = 0, bl = 0, ck = 0, cl = 0, dj = 0, dl = 0
-      integer(i15) :: kc = 0, lc = 0, kd = 0, ld = 0
-!
-      integer(i15) :: aib = 0, aij = 0, ckd = 0, clk = 0
-!
-      integer(i15) :: ckbl = 0, ckdj = 0, bldj = 0
 !
 !     :: Term 1: - sum_ckdl t_bl,dj * L_kc,ld * c_ai,ck  ::
 !
@@ -2507,7 +2473,6 @@ contains
          real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
          real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)), intent(in) :: c_ai_bj
 !
-         real(dp), dimension(:,:), allocatable :: L_ia_J
          real(dp), dimension(:,:), allocatable :: g_kc_ld
          real(dp), dimension(:,:), allocatable :: g_lc_kd
 !
@@ -2521,13 +2486,6 @@ contains
          real(dp), dimension(:,:), allocatable :: Y_aj_kd
 !
          real(dp), dimension(:,:), allocatable :: rho_aj_bi
-!
-         integer(i15) :: a = 0, b = 0, c = 0, d = 0
-         integer(i15) :: i = 0, j = 0, k = 0, l = 0
-!
-         integer(i15) :: ak = 0, ai = 0, aj = 0, al = 0, bi = 0, bj = 0, bk = 0, bl = 0, ci = 0, cj = 0, di = 0, dj = 0
-         integer(i15) :: kc = 0, kd = 0, ld = 0, lc = 0
-         integer(i15) :: akci = 0, alcj = 0
 !
 !        :: Term 1: sum_ckld t_ci,ak * g_kc,ld * c_bl,dj ::
 !
@@ -2685,6 +2643,7 @@ contains
 !!
 !!    Batch over c to construct  g_ki_bc
 !!
+!!
       implicit none
 !
       class(ccsd) :: wf
@@ -2693,33 +2652,22 @@ contains
       real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)), intent(in) :: c_ai_bj
 !
       real(dp), dimension(:,:), allocatable :: c_ai_jc
-      real(dp), dimension(:,:), allocatable :: c_aib_k
       real(dp), dimension(:,:), allocatable :: c_ai_ck
       real(dp), dimension(:,:), allocatable :: c_aj_ck
 !
       real(dp), dimension(:,:), allocatable :: rho_ai_jb
-      real(dp), dimension(:,:), allocatable :: rho_aib_j
       real(dp), dimension(:,:), allocatable :: rho_aj_bi
 !
       real(dp), dimension(:,:), allocatable :: g_bj_kc
       real(dp), dimension(:,:), allocatable :: g_bc_kj
       real(dp), dimension(:,:), allocatable :: g_ck_bj ! reordering of g_bj_kc and g_bc_kj
 !
-      integer(i15) :: a = 0, b = 0, c = 0
-      integer(i15) :: i = 0, j = 0, k = 0
-!
-      integer(i15) :: ai = 0, aj = 0, ak = 0, bi = 0, bj = 0, bk = 0, ci = 0, cj = 0, ck = 0
-      integer(i15) :: bc = 0
-      integer(i15) :: kc = 0
-      integer(i15) :: kj = 0
-!
-      integer(i15) :: aij = 0, aib = 0
+      integer(i15) :: b, bc, bj, c, ck, j, k, kj
 !
 !     Batching variables
 !
-      integer(i15) :: required = 0
-      integer(i15) :: current_c_batch = 0
-      integer(i15) :: offset = 0
+      integer(i15) :: required
+      integer(i15) :: current_c_batch 
 !
       type(batching_index) :: batch_c
 !
@@ -2958,23 +2906,12 @@ contains
       real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: rho_ab_ij
       real(dp), dimension((wf%n_v)**2, (wf%n_o)**2), intent(in) :: c_ab_ij
 !
-      real(dp), dimension(:,:), allocatable :: L_ia_J
       real(dp), dimension(:,:), allocatable :: g_kc_ld
       real(dp), dimension(:,:), allocatable :: g_kl_cd
 !
       real(dp), dimension(:,:), allocatable :: t_ab_ij
 !
       real(dp), dimension(:,:), allocatable :: X_kl_ij
-!
-      integer(i15) :: a = 0, b = 0, c = 0, d = 0
-      integer(i15) :: i = 0, j = 0, k = 0, l = 0
-!
-      integer(i15) :: ab = 0, cd = 0
-      integer(i15) :: ai = 0, bj = 0
-      integer(i15) :: kl = 0, ij = 0
-      integer(i15) :: kc = 0, ld = 0
-!
-      integer(i15) :: aibj = 0
 !
 !     Constructing g_kc_ld
 !

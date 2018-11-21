@@ -31,7 +31,6 @@ module linear_davidson_tool_class
    contains 
 !
       procedure :: prepare                      => prepare_linear_davidson_tool 
-   !  procedure :: cleanup                  => cleanup_linear_davidson_tool
 !
       procedure :: construct_next_trial_vec     => construct_next_trial_vec_linear_davidson_tool
 !
@@ -109,7 +108,7 @@ contains
 !
       class(linear_davidson_tool) :: davidson
 !
-      real(dp), dimension(:,:), allocatable :: F_red_copy, c_i
+      real(dp), dimension(:,:), allocatable :: c_i
 !
       integer(i15) :: i
 !
@@ -160,7 +159,6 @@ contains
       real(dp), dimension(:,:), allocatable :: A_red_copy
 !
       integer :: info = -1 ! Error integer for dgesv routine (LU factorization)
-      integer(i15) :: i, j
 !
 !     Solve the linear problem
 !
@@ -198,25 +196,22 @@ contains
    end subroutine solve_reduced_problem_linear_davidson_tool
 !
 !
-   subroutine construct_residual_linear_davidson_tool(davidson, R, X, norm_X, n)
+   subroutine construct_residual_linear_davidson_tool(davidson, R, n)
 !!
 !!    Construct residual 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!    Constructs the residual
 !!
-!!       R = (A*X - F)/|X|
+!!       R = A*X - F
 !!
       implicit none 
 !
       class(linear_davidson_tool), intent(in) :: davidson 
 !
-      real(dp), dimension(davidson%n_parameters, 1)               :: R 
-      real(dp), dimension(davidson%n_parameters, 1), intent(in)   :: X 
+      real(dp), dimension(davidson%n_parameters, 1) :: R 
 !
-      integer(i15),intent(in) :: n
-!
-      real(dp), intent(in)     :: norm_X 
+      integer(i15), intent(in) :: n
 !
       if (n .ne. 1) then
 !
@@ -264,7 +259,7 @@ contains
       call davidson%construct_X(X, 1) 
       norm_X = get_l2_norm(X, davidson%n_parameters) 
 !
-      call davidson%construct_residual(R, X, norm_X, 1)
+      call davidson%construct_residual(R, 1)
 !
       call disk%open_file(davidson%X, 'write', 'rewind')
 !

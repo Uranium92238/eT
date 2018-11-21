@@ -15,6 +15,17 @@ module davidson_cc_es_solver_class
 !
    type :: davidson_cc_es_solver
 !
+      character(len=100) :: tag = 'Davidson coupled cluster excited state solver'
+      character(len=100) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
+!
+      character(len=500) :: description1 = 'A Davidson solver that calculates the lowest eigenvalues and &
+                                           &the right eigenvectors of the Jacobian matrix, A. The eigenvalue &
+                                           &problem is solved in a reduced space, the dimension of which is &
+                                           &expanded until the convergence criteria are met.'
+!
+      character(len=500) :: description2 = 'A complete description of the algorithm can be found in &
+                                           &E. R. Davidson, J. Comput. Phys. 17, 87 (1975).'
+!
       integer(i15) :: max_iterations
 !
       real(dp) :: eigenvalue_threshold  
@@ -38,17 +49,16 @@ module davidson_cc_es_solver_class
       procedure, non_overridable :: run      => run_davidson_cc_es_solver
       procedure, non_overridable :: cleanup  => cleanup_davidson_cc_es_solver
 !
+      procedure, nopass :: set_precondition_vector   => set_precondition_vector_davidson_cc_es_solver
+      procedure :: set_projection_vector     => set_projection_vector_davidson_cc_es_solver
+!
       procedure :: print_banner              => print_banner_davidson_cc_es_solver
-      procedure :: print_summary             => print_summary_davidson_cc_es_solver
 !
       procedure :: read_settings             => read_settings_davidson_cc_es_solver
 !
       procedure :: print_settings            => print_settings_davidson_cc_es_solver
 !
       procedure :: set_start_vectors         => set_start_vectors_davidson_cc_es_solver
-      procedure :: set_precondition_vector   => set_precondition_vector_davidson_cc_es_solver
-      procedure :: set_projection_vector     => set_projection_vector_davidson_cc_es_solver
-!
       procedure :: transform_trial_vector    => transform_trial_vector_davidson_cc_es_solver
 !       
       procedure :: initialize_energies       => initialize_energies_davidson_cc_es_solver
@@ -63,7 +73,7 @@ module davidson_cc_es_solver_class
 contains
 !
 !
-   subroutine prepare_davidson_cc_es_solver(solver, wf)
+   subroutine prepare_davidson_cc_es_solver(solver)
 !!
 !!    Prepare 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -71,8 +81,6 @@ contains
       implicit none
 !
       class(davidson_cc_es_solver) :: solver
-!
-      class(ccs) :: wf
 !
       call solver%print_banner()
 !
@@ -154,7 +162,6 @@ contains
 !     Ask Davidson to restart - use the previous solutions as trial vectors 
 !
       call davidson%restart_from_solutions(n_solutions_on_file)
-      !call davidson%set_trials_to_solutions()
 !
 !     For the remaining states, use orbital differences 
 !
@@ -234,7 +241,7 @@ contains
 !
       type(eigen_davidson_tool) :: davidson
 !
-      integer(i15) :: iteration, trial, solution, i
+      integer(i15) :: iteration, trial, solution
 !
       real(dp) :: residual_norm
 !
@@ -306,7 +313,7 @@ contains
 !
          do solution = 1, solver%n_singlet_states
 !
-            call davidson%construct_next_trial_vec(residual_norm, iteration, solution)
+            call davidson%construct_next_trial_vec(residual_norm, solution)
             write(output%unit,'(t3,i2,5x,f16.12,7x,f16.12,11x,e10.4)') &
             solution, davidson%omega_re(solution, 1), davidson%omega_im(solution, 1), residual_norm
             flush(output%unit)
@@ -371,6 +378,7 @@ contains
       if (converged) then
 !
          write(output%unit,'(/t3,a, i3, a)') 'Convergence criterion met in ', iteration - 1, ' iterations!'
+         ! Note to devs: please write solver%print_summary() and call it here
 !
       elseif (.not. converged ) then
 !
@@ -379,7 +387,6 @@ contains
       endif
 !
       call davidson%cleanup()
-      call solver%print_summary(wf)
 !
    end subroutine run_davidson_cc_es_solver
 !
@@ -489,7 +496,7 @@ contains
    end subroutine set_start_vectors_davidson_cc_es_solver
 !
 !
-   subroutine set_precondition_vector_davidson_cc_es_solver(solver, wf, davidson)
+   subroutine set_precondition_vector_davidson_cc_es_solver(wf, davidson)
 !!
 !!    Set precondition vector
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
@@ -498,7 +505,7 @@ contains
 !!
       implicit none
 !
-      class(davidson_cc_es_solver) :: solver
+!      class(davidson_cc_es_solver) :: solver
 !
       class(ccs) :: wf
 !
@@ -514,27 +521,7 @@ contains
    end subroutine set_precondition_vector_davidson_cc_es_solver
 !
 !
-   subroutine set_projection_vector_davidson_cc_es_solver(solver, wf, davidson)
-!!
-!!    Set projection vector
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
-!!
-!!    Sets projection vector to orbital differences 
-!!
-      implicit none
-!
-      class(davidson_cc_es_solver) :: solver
-!
-      class(ccs) :: wf
-!
-      type(eigen_davidson_tool) :: davidson
-!
-!     Do nothing for regular excited states
-!
-   end subroutine set_projection_vector_davidson_cc_es_solver
-!
-!
-   subroutine cleanup_davidson_cc_es_solver(solver, wf)
+   subroutine cleanup_davidson_cc_es_solver(solver)
 !!
 !!    Cleanup 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -542,8 +529,6 @@ contains
       implicit none
 !
       class(davidson_cc_es_solver) :: solver
-!
-      class(ccs) :: wf
 !
       call solver%write_restart_file()
 !
@@ -559,37 +544,12 @@ contains
 !
       class(davidson_cc_es_solver) :: solver 
 !
-      write(output%unit, '(//t3,a)') ':: Davidson coupled cluster excited state solver'
-      write(output%unit, '(t3,a)')   ':: E. F. Kjønstad, S. D. Folkestad, 2018'
-!
-      write(output%unit, '(/t3,a)')  'A Davidson solver that calculates the lowest eigenvalues and the'
-      write(output%unit, '(t3,a)')   'right eigenvectors of the Jacobian matrix, A. The eigenvalue problem'
-      write(output%unit, '(t3,a)')   'is solved in a reduced space, the dimension of which is expanded'
-      write(output%unit, '(t3,a)')   'until the convergence criteria are met.'
-!
-      write(output%unit, '(/t3,a)')  'A complete description of the algorithm can be found in'
-      write(output%unit, '(t3,a)')   'E. R. Davidson, J. Comput. Phys. 17, 87 (1975).'
-!
-      flush(output%unit)
+      call long_string_print(solver%tag,'(//t3,a)',.true.)
+      call long_string_print(solver%author,'(t3,a/)',.true.)
+      call long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
+      call long_string_print(solver%description2)
 !
    end subroutine print_banner_davidson_cc_es_solver
-!
-!
-   subroutine print_summary_davidson_cc_es_solver(solver, wf)
-!!
-!!    Print summary 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none 
-!
-      class(davidson_cc_es_solver) :: solver 
-!
-      class(ccs) :: wf 
-!
-    !  call wf%print_wavefunction_summary()
-    !  call solver%print_solver_summary()
-!
-   end subroutine print_summary_davidson_cc_es_solver
 !
 !
    subroutine read_settings_davidson_cc_es_solver(solver)
@@ -676,6 +636,29 @@ contains
       endif
 !
    end subroutine read_settings_davidson_cc_es_solver
+!
+!
+   subroutine set_projection_vector_davidson_cc_es_solver(solver, wf, davidson)
+!!
+!!    Set projection vector
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
+!!
+!!    Sets projection vector to orbital differences 
+!!
+      implicit none
+!
+      class(davidson_cc_es_solver) :: solver
+!
+      class(ccs) :: wf
+!
+      type(eigen_davidson_tool) :: davidson
+!
+!     Do nothing for regular excited states, but will be used in descendants
+!     CVS and IP
+!
+      davidson%do_projection = .false.
+!
+   end subroutine set_projection_vector_davidson_cc_es_solver
 !
 !
 end module davidson_cc_es_solver_class

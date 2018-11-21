@@ -1,305 +1,334 @@
-module dpstrf_eT
-  contains
+module dpstrf_et
+
+   use kinds
+
+   contains
 
 
 ! ==================================================================
-      SUBROUTINE dpstrf_e( UPLO, N, A, LDA, PIV, RANK, TOL, WORK, INFO )
+      subroutine dpstrf_e( uplo, n, a, lda, piv, rank, tol, work, info )
 !
 !
-!   .. Scalar Arguments ..
-      DOUBLE PRECISION   TOL
-      INTEGER(KIND=4)    INFO, RANK
-      INTEGER            LDA, N
-      CHARACTER          UPLO
+!   .. scalar arguments ..
+      double precision   tol
+      integer(i15)       info, rank
+      integer(i15)       lda, n
+      character          uplo
 !   ..
-!   .. Array Arguments ..
-      DOUBLE PRECISION   A( lda, * ), WORK( 2*n )
-      INTEGER(KIND=4)    PIV( n )
+!   .. array arguments ..
+      double precision   a( lda, * ), work( 2*n )
+      integer(i15)            piv( n )
 !   ..
 !
 !=====================================================================
+!   .. integers kind=4 ..
 !
-!   .. Parameters ..
-      DOUBLE PRECISION   ONE, ZERO
+      integer(kind=4)    info4, rank4
+      integer(kind=4)    lda4, n4
+      integer(kind=4)    piv4( n )
+!
+!=====================================================================
+!
+!   .. parameters ..
+      double precision   one, zero
       parameter( one = 1.0d+0, zero = 0.0d+0 )
 !   ..
-!   .. Local Scalars ..
-      DOUBLE PRECISION   AJJ, DSTOP, DTEMP
-      INTEGER            I, ITEMP, J, JB, K, NB, PVT
-      LOGICAL            UPPER
+!   .. local scalars ..
+      double precision   ajj, dstop, dtemp
+      integer            i, itemp, j, jb, k, nb, pvt
+      logical            upper
 !   ..
-!   .. External Functions ..
-      DOUBLE PRECISION   DLAMCH
-      INTEGER            ILAENV
-      LOGICAL            LSAME, DISNAN
-      EXTERNAL           dlamch, ilaenv, lsame, disnan
+!   .. external functions ..
+      double precision   dlamch
+      integer            ilaenv
+      logical            lsame, disnan
+      external           dlamch, ilaenv, lsame, disnan
 !   ..
-!   .. External Subroutines ..
-    !  EXTERNAL           dgemv, dpstf2, dscal, dswap, dsyrk, xerbla
+!   .. external subroutines ..
+    !  external           dgemv, dpstf2, dscal, dswap, dsyrk, xerbla
 !   ..
-!   .. Intrinsic Functions ..
-    !  INTRINSIC          max, min, sqrt, maxloc
+!   .. intrinsic functions ..
+    !  intrinsic          max, min, sqrt, maxloc
 !   ..
-!   .. Executable Statements ..
+!   .. executable statements ..
 !
-!   Test the input parameters.
+!   test the input parameters.
 !
       info = 0
-      upper = lsame( uplo, 'U' )
-      IF( .NOT.upper .AND. .NOT.lsame( uplo, 'L' ) ) THEN
+      upper = lsame( uplo, 'u' )
+      if( .not.upper .and. .not.lsame( uplo, 'l' ) ) then
          info = -1
-      ELSE IF( n.LT.0 ) THEN
+      else if( n.lt.0 ) then
          info = -2
-      ELSE IF( lda.LT.max( 1, n ) ) THEN
+      else if( lda.lt.max( 1, n ) ) then
          info = -4
-      END IF
-      IF( info.NE.0 ) THEN
-         CALL xerbla( 'DPSTRF', -info )
-         RETURN
-      END IF
+      end if
+      if( info.ne.0 ) then
+         call xerbla( 'dpstrf', -info )
+         return
+      end if
 !
-!   Quick return if possible
+!   quick return if possible
 !
-      IF( n.EQ.0 )   RETURN
+      if( n.eq.0 )   return
 !
-!   Get block size
+!   get block size
 !
-      nb = ilaenv( 1, 'DPOTRF', uplo, n, -1, -1, -1 )
-      IF( nb.LE.1 .OR. nb.GE.n ) THEN
+      nb = ilaenv( 1, 'dpotrf', uplo, n, -1, -1, -1 )
+      if( nb.le.1 .or. nb.ge.n ) then
 !
-!      Use unblocked code
+!      use unblocked code
 !
-         CALL dpstf2( uplo, n, a( 1, 1 ), lda, piv, rank, tol, work, &
-                     info )
-         GO TO 200
+         n4 = int(n,4)
+         lda4 = int(lda,4)
+         rank4 = int(rank,4)
+         info4 = int(info,4)
 !
-      ELSE
+         do i = 1,n
+            piv4(i) = int(piv(i),4)
+         enddo
 !
-!   Initialize PIV
+         call dpstf2( uplo, n4, a( 1, 1 ), lda4, piv4, rank4, tol, work, &
+                     info4 )
 !
-         DO 100 i = 1, n
+         n = int(n4,i15)
+         lda = int(lda4,i15)
+         rank = int(rank4,i15)
+         info = int(info4,i15)
+!
+         do i = 1,n
+            piv(i) = int(piv4(i),8)
+         enddo
+!
+         go to 200
+!
+      else
+!
+!   initialize piv
+!
+         do 100 i = 1, n
             piv( i ) = i
-  100    CONTINUE
+  100    continue
 !
-!   Compute stopping value
+!   compute stopping value
 !
          pvt = 1
          ajj = a( pvt, pvt )
-         DO i = 2, n
-            IF( a( i, i ).GT.ajj ) THEN
+         do i = 2, n
+            if( a( i, i ).gt.ajj ) then
                pvt = i
                ajj = a( pvt, pvt )
-            END IF
-         END DO
-         IF( ajj.LE.zero.OR.disnan( ajj ) ) THEN
+            end if
+         end do
+         if( ajj.le.zero.or.disnan( ajj ) ) then
             rank = 0
             info = 1
-            GO TO 200
-         END IF
+            go to 200
+         end if
 !
-!   Compute stopping value if not supplied
+!   compute stopping value if not supplied
 !
-         IF( tol.LT.zero ) THEN
-            dstop = n * dlamch( 'Epsilon' ) * ajj
-         ELSE
+         if( tol.lt.zero ) then
+            dstop = n * dlamch( 'epsilon' ) * ajj
+         else
             dstop = tol
-         END IF
+         end if
 !
 !
-         IF( upper ) THEN
+         if( upper ) then
 !
-!         Compute the Cholesky factorization P**T * A * P = U**T * U
+!         compute the cholesky factorization p**t * a * p = u**t * u
 !
-            DO 140 k = 1, n, nb
+            do 140 k = 1, n, nb
 !
-!            Account for last block not being NB wide
+!            account for last block not being nb wide
 !
                jb = min( nb, n-k+1 )
 !
-!            Set relevant part of first half of WORK to zero,
+!            set relevant part of first half of work to zero,
 !            holds dot products
 !
-               DO 110 i = k, n
+               do 110 i = k, n
                   work( i ) = 0
-  110          CONTINUE
+  110          continue
 !
-               DO 130 j = k, k + jb - 1
+               do 130 j = k, k + jb - 1
 !
-!            Find pivot, test for exit, else swap rows and columns
-!            Update dot products, compute possible pivots which are
-!            stored in the second half of WORK
+!            find pivot, test for exit, else swap rows and columns
+!            update dot products, compute possible pivots which are
+!            stored in the second half of work
 !
-                  DO 120 i = j, n
+                  do 120 i = j, n
 !
-                     IF( j.GT.k ) THEN
+                     if( j.gt.k ) then
                         work( i ) = work( i ) + a( j-1, i )**2
-                     END IF
+                     end if
                      work( n+i ) = a( i, i ) - work( i )
 !
-  120             CONTINUE
+  120             continue
 !
-                  IF( j.GT.1 ) THEN
+                  if( j.gt.1 ) then
                      itemp = maxloc( work( (n+j):(2*n) ), 1 )
                      pvt = itemp + j - 1
                      ajj = work( n+pvt )
-                     IF( ajj.LE.dstop.OR.disnan( ajj ) ) THEN
+                     if( ajj.le.dstop.or.disnan( ajj ) ) then
                         a( j, j ) = ajj
-                        GO TO 190
-                     END IF
-                  END IF
+                        go to 190
+                     end if
+                  end if
 !
-                  IF( j.NE.pvt ) THEN
+                  if( j.ne.pvt ) then
 !
-!                  Pivot OK, so can now swap pivot rows and columns
+!                  pivot ok, so can now swap pivot rows and columns
 !
                      a( pvt, pvt ) = a( j, j )
-                     CALL dswap( j-1, a( 1, j ), 1, a( 1, pvt ), 1 )
-                     IF( pvt.LT.n ) &
-                        CALL dswap( n-pvt, a( j, pvt+1 ), lda, &
+                     call dswap( j-1, a( 1, j ), 1, a( 1, pvt ), 1 )
+                     if( pvt.lt.n ) &
+                        call dswap( n-pvt, a( j, pvt+1 ), lda, &
                                     a( pvt, pvt+1 ), lda )
-                     CALL dswap( pvt-j-1, a( j, j+1 ), lda, &
+                     call dswap( pvt-j-1, a( j, j+1 ), lda, &
                                  a( j+1, pvt ), 1 )
 !
-!                  Swap dot products and PIV
+!                  swap dot products and piv
 !
                      dtemp = work( j )
                      work( j ) = work( pvt )
                      work( pvt ) = dtemp
                      itemp = piv( pvt )
                      piv( pvt ) = piv( j )
-                     piv( j ) = itemp
-                  END IF
+                     piv( j ) = int(itemp,4)
+                  end if
 !
                   ajj = sqrt( ajj )
                   a( j, j ) = ajj
 !
-!               Compute elements J+1:N of row J.
+!               compute elements j+1:n of row j.
 !
-                  IF( j.LT.n ) THEN
-                     CALL dgemv( 'Trans', j-k, n-j, -one, a( k, j+1 ), &
+                  if( j.lt.n ) then
+                     call dgemv( 'trans', j-k, n-j, -one, a( k, j+1 ), &
                                  lda, a( k, j ), 1, one, a( j, j+1 ), &
                                  lda )
-                     CALL dscal( n-j, one / ajj, a( j, j+1 ), lda )
-                  END IF
+                     call dscal( n-j, one / ajj, a( j, j+1 ), lda )
+                  end if
 !
-  130          CONTINUE
+  130          continue
 !
-!            Update trailing matrix, J already incremented
+!            update trailing matrix, j already incremented
 !
-               IF( k+jb.LE.n ) THEN
-                  CALL dsyrk( 'Upper', 'Trans', n-j+1, jb, -one, &
+               if( k+jb.le.n ) then
+                  call dsyrk( 'upper', 'trans', n-j+1, jb, -one, &
                               a( k, j ), lda, one, a( j, j ), lda )
-               END IF
+               end if
 !
-  140       CONTINUE
+  140       continue
 !
-         ELSE
+         else
 !
-!      Compute the Cholesky factorization P**T * A * P = L * L**T
+!      compute the cholesky factorization p**t * a * p = l * l**t
 !
-            DO 180 k = 1, n, nb
+            do 180 k = 1, n, nb
 !
-!            Account for last block not being NB wide
+!            account for last block not being nb wide
 !
                jb = min( nb, n-k+1 )
 !
-!            Set relevant part of first half of WORK to zero,
+!            set relevant part of first half of work to zero,
 !            holds dot products
 !
-               DO 150 i = k, n
+               do 150 i = k, n
                   work( i ) = 0
-  150          CONTINUE
+  150          continue
 !
-               DO 170 j = k, k + jb - 1
+               do 170 j = k, k + jb - 1
 !
-!            Find pivot, test for exit, else swap rows and columns
-!            Update dot products, compute possible pivots which are
-!            stored in the second half of WORK
+!            find pivot, test for exit, else swap rows and columns
+!            update dot products, compute possible pivots which are
+!            stored in the second half of work
 !
-                  DO 160 i = j, n
+                  do 160 i = j, n
 !
-                     IF( j.GT.k ) THEN
+                     if( j.gt.k ) then
                         work( i ) = work( i ) + a( i, j-1 )**2
-                     END IF
+                     end if
                      work( n+i ) = a( i, i ) - work( i )
 !
-  160             CONTINUE
+  160             continue
 !
-                  IF( j.GT.1 ) THEN
+                  if( j.gt.1 ) then
                      itemp = maxloc( work( (n+j):(2*n) ), 1 )
                      pvt = itemp + j - 1
                      ajj = work( n+pvt )
-                     IF( ajj.LE.dstop.OR.disnan( ajj ) ) THEN
+                     if( ajj.le.dstop.or.disnan( ajj ) ) then
                         a( j, j ) = ajj
-                        GO TO 190
-                     END IF
-                  END IF
+                        go to 190
+                     end if
+                  end if
 !
-                  IF( j.NE.pvt ) THEN
+                  if( j.ne.pvt ) then
 !
-!                  Pivot OK, so can now swap pivot rows and columns
+!                  pivot ok, so can now swap pivot rows and columns
 !
                      a( pvt, pvt ) = a( j, j )
-                     CALL dswap( j-1, a( j, 1 ), lda, a( pvt, 1 ), lda )
-                     IF( pvt.LT.n ) &
-                        CALL dswap( n-pvt, a( pvt+1, j ), 1, &
+                     call dswap( j-1, a( j, 1 ), lda, a( pvt, 1 ), lda )
+                     if( pvt.lt.n ) &
+                        call dswap( n-pvt, a( pvt+1, j ), 1, &
                                     a( pvt+1, pvt ), 1 )
-                     CALL dswap( pvt-j-1, a( j+1, j ), 1, a( pvt, j+1 ), &
+                     call dswap( pvt-j-1, a( j+1, j ), 1, a( pvt, j+1 ), &
                                  lda )
 !
-!                  Swap dot products and PIV
+!                  swap dot products and piv
 !
                      dtemp = work( j )
                      work( j ) = work( pvt )
                      work( pvt ) = dtemp
                      itemp = piv( pvt )
                      piv( pvt ) = piv( j )
-                     piv( j ) = itemp
-                  END IF
+                     piv( j ) = int(itemp,4)
+                  end if
 !
                   ajj = sqrt( ajj )
                   a( j, j ) = ajj
 !
-!               Compute elements J+1:N of column J.
+!               compute elements j+1:n of column j.
 !
-                  IF( j.LT.n ) THEN
-                     CALL dgemv( 'No Trans', n-j, j-k, -one, &
+                  if( j.lt.n ) then
+                     call dgemv( 'no trans', n-j, j-k, -one, &
                                 a( j+1, k ), lda, a( j, k ), lda, one, &
                                 a( j+1, j ), 1 )
-                     CALL dscal( n-j, one / ajj, a( j+1, j ), 1 )
-                  END IF
+                     call dscal( n-j, one / ajj, a( j+1, j ), 1 )
+                  end if
 !
-  170          CONTINUE
+  170          continue
 !
-!            Update trailing matrix, J already incremented
+!            update trailing matrix, j already incremented
 !
-               IF( k+jb.LE.n ) THEN
-                  CALL dsyrk( 'Lower', 'No Trans', n-j+1, jb, -one, &
+               if( k+jb.le.n ) then
+                  call dsyrk( 'lower', 'no trans', n-j+1, jb, -one, &
                            a( j, k ), lda, one, a( j, j ), lda )
-               END IF
+               end if
 !
-  180       CONTINUE
+  180       continue
 !
-         END IF
-      END IF
+         end if
+      end if
 !
-!   Ran to completion, A has full rank
+!   ran to completion, a has full rank
 !
       rank = n
 !
-      GO TO 200
-  190 CONTINUE
+      go to 200
+  190 continue
 !
-!   Rank is the number of steps completed.  Set INFO = 1 to signal
+!   rank is the number of steps completed.  set info = 1 to signal
 !   that the factorization cannot be used to solve a system.
 !
-      rank = j - 1
+      rank = int(j - 1,4)
       info = 1
 !
-  200 CONTINUE
-      RETURN
+  200 continue
+      return
 !
-!   End of DPSTRF
+!   end of dpstrf
 !
-      END SUBROUTINE
-      end module dpstrf_eT
+   end subroutine
+end module dpstrf_et

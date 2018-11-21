@@ -19,12 +19,7 @@ module davidson_cvs_cc_es_solver_class
 !
    contains
 !
-      procedure :: print_banner           => print_banner_davidson_cvs_cc_es_solver
-      !procedure :: print_summary  => print_summary_davidson_cvs_cc_es_solver
-!
       procedure :: read_settings          => read_settings_davidson_cvs_cc_es_solver
-!
-      !procedure :: print_settings => print_settings_davidson_cvs_cc_es_solver
 !
       procedure :: set_start_vectors      => set_start_vectors_davidson_cvs_cc_es_solver
       procedure :: set_projection_vector  => set_projection_vector_davidson_cvs_cc_es_solver
@@ -41,34 +36,6 @@ module davidson_cvs_cc_es_solver_class
 contains
 !
 !
-   subroutine print_banner_davidson_cvs_cc_es_solver(solver)
-!!
-!!    Print banner
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none 
-!
-      class(davidson_cvs_cc_es_solver) :: solver 
-!
-      write(output%unit, '(//t3,a)') ':: Davidson CVS coupled cluster core-excited state solver'
-      write(output%unit, '(t3,a)')   ':: E. F. Kjønstad, S. D. Folkestad, 2018'
-!
-      write(output%unit, '(/t3,a)')  'A Davidson CVS solver that calculates core excitation energies and the'
-      write(output%unit, '(t3,a)')   'corresponding right eigenvectors of the Jacobian matrix, A. The eigenvalue problem'
-      write(output%unit, '(t3,a)')   'is solved in a reduced space, the dimension of which is expanded'
-      write(output%unit, '(t3,a)')   'until the convergence criteria are met. In addition the CVS aproximation is used'
-      write(output%unit, '(t3,a)')   'to obtain the core excitations'
-!
-      write(output%unit, '(/t3,a)')  'A complete description of the Davidson algorithm can be found in'
-      write(output%unit, '(t3,a)')   'E. R. Davidson, J. Comput. Phys. 17, 87 (1975).'
-      write(output%unit, '(/t3,a)')  'A description of the CVS approximation can be found in'
-      write(output%unit, '(t3,a)')   ' S. Coriani & H. Koch, J. Chem. Phys. 143, 181103 (2015).'
-!
-      flush(output%unit)
-!
-   end subroutine print_banner_davidson_cvs_cc_es_solver
-!
-!
    subroutine read_settings_davidson_cvs_cc_es_solver(solver)
 !!
 !!    Read settings 
@@ -81,6 +48,17 @@ contains
       integer(i15) :: n_specs, i, j
 !
       character(len=100) :: line
+!
+      solver%tag = 'Davidson coupled cluster ionized state solver'
+      solver%description1 = 'A Davidson CVS solver that calculates core excitation energies and the &
+                            &corresponding right eigenvectors of the Jacobian matrix, A. The eigenvalue &
+                            &problem is solved in a reduced space, the dimension of which is expanded &
+                            &until the convergence criteria are met. In addition the CVS aproximation is &
+                            &used to obtain the core excitations'
+      solver%description2 = 'A complete description of the Davidson algorithm can be found in &
+                            &E. R. Davidson, J. Comput. Phys. 17, 87 (1975). &
+                            &A description of the CVS approximation can be found in &
+                            &S. Coriani & H. Koch, J. Chem. Phys. 143, 181103 (2015).'
 !
       call move_to_section('cc excited state', n_specs)
 !

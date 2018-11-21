@@ -21,9 +21,6 @@ module multipliers_engine_class
       procedure :: run     => run_multipliers_engine
       procedure :: cleanup => cleanup_multipliers_engine
 !
-      procedure :: print_banner    => print_banner_multipliers_engine
-      procedure :: print_summary   => print_summary_multipliers_engine
-!
    end type multipliers_engine 
 !
 contains
@@ -36,6 +33,8 @@ contains
       implicit none 
 !
       class(multipliers_engine) :: engine 
+!
+      engine%tag = 'Multipliers engine'
 !
    end subroutine prepare_multipliers_engine
 !
@@ -54,8 +53,9 @@ contains
       type(eri_cd_solver), allocatable                   :: eri_chol_solver
       type(diis_cc_gs_solver), allocatable               :: cc_gs_solver
 !
-      type(diis_cc_multipliers_solver), allocatable      :: cc_multipliers_solver_diis
       type(davidson_cc_multipliers_solver), allocatable  :: cc_multipliers_solver_davidson
+!
+      write(output%unit, '(/t3,a,a)') '- Running ', trim(engine%tag)
 !
 !     Cholesky decomposition 
 !
@@ -118,31 +118,9 @@ contains
 !
       class(multipliers_engine) :: engine 
 !
+      write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(engine%tag)
+!
    end subroutine cleanup_multipliers_engine
-!
-!
-   subroutine print_banner_multipliers_engine(engine)
-!!
-!!    Print banner 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
-!!
-      implicit none 
-!
-      class(multipliers_engine) :: engine 
-!
-   end subroutine print_banner_multipliers_engine
-!
-!
-   subroutine print_summary_multipliers_engine(engine)
-!!
-!!    Print summary
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
-!!
-      implicit none 
-!
-      class(multipliers_engine) :: engine 
-!
-   end subroutine print_summary_multipliers_engine
 !
 !
 end module multipliers_engine_class

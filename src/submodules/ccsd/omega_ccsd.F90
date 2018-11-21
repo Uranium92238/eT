@@ -255,8 +255,6 @@ contains
       real(dp), dimension(:,:), allocatable :: u_ai_ck
       real(dp), dimension(:,:), allocatable :: t_ai_ck
 !
-      integer(i15) :: k, c
-!
 !     Form u_ai_ck = u_ik^ac = 2*t_ik^ac - t_ki^ac
 !
       call mem%alloc(t_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
@@ -321,7 +319,6 @@ contains
 !     Integrals
 !
       real(dp), dimension(:,:), allocatable :: g_ai_bj
-      real(dp), dimension(:,:), allocatable :: g_aibj
       real(dp), dimension(:,:), allocatable :: g_ac_bd
       real(dp), dimension(:,:), allocatable :: g_p_ab_cd
       real(dp), dimension(:,:), allocatable :: g_m_ab_cd
@@ -338,12 +335,12 @@ contains
 !
 !     Indices
 !
-      integer(i15) :: a = 0, b = 0, c = 0, d = 0
-      integer(i15) :: i = 0, j = 0
+      integer(i15) :: a, b, c, d
+      integer(i15) :: i, j
 !
-      integer(i15) :: ab = 0, ca = 0, bc = 0, cd = 0, ad = 0, db = 0, ac = 0, bd = 0
-      integer(i15) :: ai = 0, aj = 0, bj = 0, bi = 0, ci = 0, cj = 0, dj = 0, di = 0
-      integer(i15) :: ij = 0
+      integer(i15) :: ab, bc, cd, ad, ac, bd
+      integer(i15) :: ai, aj, bj, bi, ci, cj, dj, di
+      integer(i15) :: ij
 !
       integer(i15) :: aibj = 0, biaj = 0, cidj = 0, dicj = 0
 !
@@ -356,9 +353,6 @@ contains
 !
       type(batching_index) :: batch_a
       type(batching_index) :: batch_b
-!
-      integer(i15) :: threads = 0
-      integer(i15) :: omp_get_num_threads
 !
 !     Timing variables
 !
@@ -744,6 +738,8 @@ contains
          enddo ! End batching over b
       enddo ! End batching over a
 !
+      call cpu_time(a2_end_time)
+!
    end subroutine omega_ccsd_a2_ccsd
 !
 !
@@ -775,12 +771,6 @@ contains
 !     Reordered T2 apmlitudes
 !
       real(dp), dimension(:,:), allocatable :: t_cd_ij
-      real(dp), dimension(:,:), allocatable :: t_ab_kl
-      real(dp), dimension(:,:), allocatable :: t_ci_dj
-!
-!     Intermediate for matrix multiplication
-!
-      real(dp), dimension(:,:), allocatable :: X_kl_ij
 !
 !     Reordered omega
 !
@@ -893,7 +883,6 @@ contains
 !
 !     Reordered T2 amplitudes
 !
-      real(dp), dimension(:,:), allocatable :: t_al_di
       real(dp), dimension(:,:), allocatable :: t_ai_dl
       real(dp), dimension(:,:), allocatable :: t_ck_bj
       real(dp), dimension(:,:), allocatable :: t_bk_cj
@@ -910,14 +899,13 @@ contains
 !
 !     Indices
 !
-      integer(i15) :: a = 0, b = 0, c = 0, d = 0
-      integer(i15) :: i = 0, j = 0, k = 0, l = 0
+      integer(i15) :: a, b
+      integer(i15) :: i, j
 !
-      integer(i15) :: ai = 0, aj = 0, al = 0, bi = 0, bj = 0, bk = 0, cj = 0, ck = 0, cl = 0, di = 0, dk = 0, dl = 0
-      integer(i15) :: kd = 0, lc = 0, ca = 0, ac = 0
-      integer(i15) :: ki = 0, ai_offset = 0
+      integer(i15) :: ai, aj, bi, bj
+      integer(i15) :: ai_offset
 !
-      integer(i15) :: aldi = 0, aibj = 0, cldk = 0, bkcj = 0, bjck = 0
+      integer(i15) :: aibj
 !
 !     Batching and memory handling
 !
@@ -1176,13 +1164,7 @@ contains
       real(dp), dimension(:,:), allocatable :: Z_ai_kc ! An intermediate, see below
 !
       real(dp), dimension(:,:), allocatable :: g_ai_kc ! g_aikc
-      real(dp), dimension(:,:), allocatable :: u_kc_bj ! u_jk^bc
 !
-!     Vectors for D2.1 term
-!
-      real(dp), dimension(:,:), allocatable :: g_ai_ck ! g_acki
-      real(dp), dimension(:,:), allocatable :: g_ac_ki ! g_acki; a is batched over
-      real(dp), dimension(:,:), allocatable :: u_ck_bj ! u_jk^bc
 !
 !     :: Calculate the D2.2 term of omega ::
 !

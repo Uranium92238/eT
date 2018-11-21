@@ -140,7 +140,7 @@ contains
 !
       class(hf) :: ref_wf
 !
-      integer(i15) :: p, i, a
+      integer(i15) :: p
 !
       wf%name = 'ccsd'
 !
@@ -193,7 +193,7 @@ contains
 !
       class(ccsd) :: wf
 !
-!     Nothing here yet
+      write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(wf%name), ' wavefunction'
 !
    end subroutine cleanup_ccsd
 !
@@ -308,7 +308,6 @@ contains
       class(ccsd) :: wf 
 !
       real(dp), dimension(:,:), allocatable :: g_ai_bj
-      real(dp), dimension(:,:), allocatable :: L_ai_bj
 !
       integer(i15) :: a, b, i, j, ai, bj, aibj
 !
@@ -361,7 +360,6 @@ contains
 !
       class(ccsd), intent(inout) :: wf
 !
-      real(dp), dimension(:,:), allocatable :: L_ia_J  ! L_ia^J
       real(dp), dimension(:,:), allocatable :: g_ia_jb ! g_iajb
 !
       integer(i15) :: a = 0, i = 0, b = 0, j = 0, ai = 0
@@ -550,8 +548,6 @@ subroutine construct_eta_ccsd(wf, eta)
 !
       real(dp), dimension(:,:), allocatable :: g_ia_jb
       real(dp), dimension(:,:), allocatable :: eta_ai_bj
-!
-      character(len=40) :: integral_type
 !
       integer(i15) :: i = 0, a = 0, j = 0, b = 0, aibj = 0
       integer(i15) :: bj = 0, ai = 0

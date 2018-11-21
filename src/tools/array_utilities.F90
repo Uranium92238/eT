@@ -72,7 +72,7 @@ contains
    end subroutine zero_array
 !
 !
-   real(dp) function dot_product(x, y, n)
+   real(dp) function dot_product_et(x, y, n)
 !!
 !!    Calculate dot product
 !!    Written by Eirik F. Kjønstad, June 2018
@@ -88,9 +88,9 @@ contains
 !
       real(dp) :: ddot
 !
-      dot_product = ddot(n, x, 1, y, 1)
+      dot_product_et = ddot(n, x, 1, y, 1)
 !
-   end function dot_product
+   end function dot_product_et
 !
 !
    logical function is_significant(vec, dim, threshold, screening)
@@ -494,7 +494,7 @@ contains
 !
       integer(i15), dimension(dim, 1), intent(out) :: used_diag
 !
-      integer(i15) :: i, j, k, index_max
+      integer(i15) :: i, j, index_max
       real(dp) :: max_diagonal, min_diagonal
 !
       real(dp), dimension(:,:), allocatable :: diagonal, temp_cholesky_vector
@@ -660,8 +660,8 @@ contains
 !
       integer(i15), dimension(:, :), allocatable :: used_diag
 !
-      integer(i15) :: i, j, k, index_max
-      real(dp) :: max_diagonal, min_diagonal
+      integer(i15) :: i, j, index_max
+      real(dp) :: max_diagonal
 !
       real(dp), dimension(:,:), allocatable :: diagonal, temp_cholesky_vector
 !
@@ -823,13 +823,11 @@ contains
       real(dp), dimension(dim, dim), intent(in)  :: matrix
       real(dp), dimension(dim, dim), intent(out) :: cholesky_vectors
 !
-      integer(kind=4), dimension(dim) :: used_diag
-!
-      integer(kind=4) :: n_vectors_4
+      integer(i15), dimension(dim) :: used_diag
 !
       real(dp), dimension(:), allocatable :: work  ! work array for LAPACK
 !
-      integer(kind=4) :: info
+      integer :: info
       integer(i15) :: I, J
 !
       cholesky_vectors = matrix
@@ -844,14 +842,12 @@ contains
             cholesky_vectors, &
             dim,              &
             used_diag,        &
-            n_vectors_4,      &
+            n_vectors,        &
             threshold,        &
             work,             &
             info)
 !
       deallocate(work)
-!
-      n_vectors = int(n_vectors_4, kind=i15)
 !
       do I = 1, dim ! Zero upper unreferenced triangle
          do J = 1, I - 1

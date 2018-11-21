@@ -1,0 +1,4 @@
+#Making a gitignore
+build/
+*.swp
+.DS_Store
