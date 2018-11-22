@@ -73,7 +73,6 @@ module davidson_tool_class
 !     Deferred routines  
 !
       procedure(solve_reduced_problem), deferred :: solve_reduced_problem
-      procedure(construct_residual), deferred    :: construct_residual
 !
       procedure :: read_max_dim_red => read_max_dim_red_davidson_tool
 !
@@ -93,23 +92,6 @@ module davidson_tool_class
 !
       end subroutine solve_reduced_problem
 !
-!
-      subroutine construct_residual(davidson, R, X, norm_X, n)
-!
-         import :: davidson_tool, dp, i15
-!
-         implicit none 
-!
-         class(davidson_tool), intent(in) :: davidson 
-!
-         real(dp), dimension(davidson%n_parameters, 1)             :: R 
-         real(dp), dimension(davidson%n_parameters, 1), intent(in) :: X 
-!
-         real(dp), intent(in) :: norm_X 
-!
-         integer(i15), intent(in) :: n
-!
-      end subroutine construct_residual
 !
    end interface
 !
@@ -944,11 +926,11 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: X
 !
-      integer(i15) :: solution, ioerror
+      integer(i15) :: solution
 !
 !     Is file on disk?
 !
-      if (disk%file_exists(davidson%X)) then
+      if (davidson%X%file_exists()) then
 !
          call disk%open_file(davidson%X, 'read')
          rewind(davidson%X%unit)

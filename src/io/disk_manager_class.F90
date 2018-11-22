@@ -32,13 +32,10 @@ module disk_manager_class
 !
       procedure :: close_file                   => close_file_disk_manager
 !
-      procedure, private :: determine_file_size => determine_file_size_disk_manager
-!
       procedure :: read_settings                => read_settings_disk_manager
       procedure :: print_settings               => print_settings_disk_manager
 !
       procedure :: delete                       => delete_disk_manager
-      procedure :: file_exists                  => file_exists_disk_manager
 !
       procedure :: rewind_file                  => rewind_file_disk_manager
 !
@@ -126,8 +123,6 @@ contains
 !
       class(disk_manager) :: disk
 !
-      integer(i15) :: total ! in GB
-!
       if (requested_section('disk')) then
 !
          call disk%read_settings()
@@ -171,21 +166,17 @@ contains
       character(len=*) :: permissions
       character(len=*), optional :: pos
 !
-      integer(i15) :: io_error = -1
-!
 !     Sanity checks
 !
       if ( present(pos)) then
          if (the_file%access  == 'direct') then
 !
-            write(output%unit,'(/t3,a)') 'Warning: position specifier is disregarded for direct access file.'
-            stop
+            call output%warning_msg('position specifier is disregarded for direct access file.')
 !
          endif
       elseif (the_file%access .ne. 'direct' .and. the_file%access .ne. 'sequential' ) then
 !
-         write(output%unit,'(/t3,a)') 'Error: illegal access type for file: ', the_file%name, the_file%access
-         stop
+         call output%error_msg('illegal access type for file: ' // trim(the_file%name) //',' // trim(the_file%access))
 !
       endif
 !
@@ -232,19 +223,16 @@ contains
 !
       if (the_file%name == 'no_name') then
 !
-         write(output%unit,'(/t3,a)') 'Error: to open a file, you must set the name of the file.'
-         stop
+         call output%error_msg('to open a file, you must set the name of the file.')
 !
       elseif (the_file%format == 'unknown') then
 !
-         write(output%unit,'(/t3,a)') 'Error: to open a file, you must set the format of the file.'
-         stop
+         call output%error_msg('to open a file, you must set the format of the file.')
 !
       elseif (the_file%access == 'direct') then
 
 !
-         write(output%unit,'(/t3,a)') 'Error: tried to open sequential access file as a direct access file.'
-         stop
+         call output%error_msg('tried to open sequential access file as a direct access file.')
 !
       endif
 !
@@ -270,8 +258,7 @@ contains
 !
       if (io_error .ne. 0) then
 !
-         write(output%unit,'(/t3,a)') 'Error: could not open file: ', the_file%name
-         stop
+         call output%error_msg('could not open file: ' //  trim(the_file%name))
 !
       endif
 !
@@ -279,16 +266,15 @@ contains
 !
       the_file%opened = .true.
 !
-      call disk%determine_file_size(the_file)
+      call the_file%determine_file_size()
 !
 !     If the intent is 'write' or 'readwrite' and the disk is entirely filled
 !     (according to the specified available disk space), the calculation will stop:
 !
       if (disk%available .lt. 0 .and. (permissions == 'write' .or. permissions == 'readwrite')) then
 !
-         write(output%unit,'(t3,a/,t3,a)') 'Error: the specified disk space is used up and', &
-                                           'a file was opened with permission to write.'
-         stop
+         call output%error_msg('the specified disk space is used up and' // &
+                                           'a file was opened with permission to write.')
 !
       endif
 !
@@ -322,23 +308,19 @@ contains
 !
       if (the_file%name == 'no_name') then
 !
-         write(output%unit,'(/t3,a)') 'Error: to open a file, you must set the name of the file.'
-         stop
+         call output%error_msg('to open a file, you must set the name of the file.')
 !
       elseif (the_file%format == 'unknown') then
 !
-         write(output%unit,'(/t3,a)') 'Error: to open a file, you must set the format of the file.'
-         stop
+         call output%error_msg('to open a file, you must set the format of the file.')
 !
       elseif (the_file%access == 'sequential') then
 !
-         write(output%unit,'(/t3,a)') 'Error: tried to open direct access file as a sequential access file.'
-         stop
+         call output%error_msg('tried to open direct access file as a sequential access file.')
 !
       elseif (the_file%record_length == 0) then
 !
-         write(output%unit,'(/t3,a)') 'Error: tried to open direct access file without a set record length.'
-         stop
+         call output%error_msg('tried to open direct access file without a set record length.')
 !
       endif
 !
@@ -354,8 +336,7 @@ contains
 !
       if (io_error .ne. 0) then
 !
-         write(output%unit,'(/t3,a)') 'Error: could not open file: ', the_file%name
-         stop
+         call output%error_msg('could not open file: ' // trim(the_file%name))
 !
       endif
 !
@@ -363,16 +344,15 @@ contains
 !
       the_file%opened = .true.
 !
-      call disk%determine_file_size(the_file)
+      call the_file%determine_file_size()
 !
 !     If the intent is 'write' or 'readwrite' and the disk is entirely filled
 !     (according to the specified available disk space), the calculation will stop:
 !
       if (disk%available .lt. 0 .and. (permissions == 'write' .or. permissions == 'readwrite')) then
 !
-         write(output%unit,'(t3,a/,t3,a)') 'Error: the specified disk space is used up and', &
-                                           'a file was opened with permission to write.'
-         stop
+         call output%error_msg('Error: the specified disk space is used up and ' // &
+                                           'a file was opened with permission to write.')
 !
       endif
 !
@@ -397,23 +377,23 @@ contains
 !
       integer(i15) :: bytes_written_to_disk ! Negative if storage is freed up, via 'delete'
 !
+      bytes_written_to_disk = 0
 !
 !     Sanity check
 !
       if (.not. the_file%opened) then
 !
-         write(output%unit,'(t3,a)') 'Error: tried to close a file that has not been opened.'
-         stop
+         call output%error_msg('tried to close a file that has not been opened.')
 !
       endif
 !
 !     Get the file size (both when opened & closed)
 !
-      file_size_when_opened = the_file%size
+      file_size_when_opened = the_file%get_file_size()
 !
-      call disk%determine_file_size(the_file)
+      call the_file%determine_file_size()
 !
-      file_size_when_closed = the_file%size
+      file_size_when_closed = the_file%get_file_size()
 !
 !     Close file
 !
@@ -421,9 +401,7 @@ contains
 !
          if (.not. (destiny == 'keep' .or. destiny == 'delete')) then
 !
-            write(output%unit,'(t3,a)') 'Error: could not recognize status when closing file.'
-            write(output%unit,'(t3,a)') 'Must equal keep or delete.'
-            stop
+            call output%error_msg('could not recognize status when closing file.')
 !
          else
 !
@@ -480,8 +458,8 @@ contains
 !
       if (disk%available .lt. 0) then
 !
-         write(output%unit,'(t3,a/,t3,a)') 'Warning: the specified disk space is now used up. If any', &
-                                           'more has to be stored, the calculation will stop.'
+         call output%warning_msg('the specified disk space is now used up. If any ' //&
+                                           'more has to be stored, the calculation will stop.')
 !
       endif
 !
@@ -490,37 +468,6 @@ contains
       the_file%opened = .false.
 !
    end subroutine close_file_disk_manager
-!
-!
-   subroutine determine_file_size_disk_manager(disk, the_file)
-!!
-!!    Determine file size
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2018
-!!
-!!    The disk manager handles files. This routine is called by it
-!!    and should never be called by the user (because it can lead to
-!!    errors in the disk space estimates).
-!!
-      implicit none
-!
-      class(disk_manager) :: disk
-!
-      class(file) :: the_file
-!
-!     Inquire about the file size
-!
-      inquire(file=the_file%name, size=the_file%size)
-!
-!     Check whether the file size could be calculated
-!
-      if (the_file%size .eq. -1) then
-!
-         write(output%unit,*) 'Error: Could not calculate file size of the file ', trim(the_file%name)
-         stop
-!
-      endif
-!
-   end subroutine determine_file_size_disk_manager
 !
 !
    subroutine read_settings_disk_manager(disk)
@@ -587,7 +534,7 @@ contains
 !
       logical :: file_exists
 !
-      inquire(file=the_file%name, exist=file_exists)
+      file_exists = the_file%file_exists()
 !
       if (file_exists) then
 !
@@ -599,25 +546,6 @@ contains
    end subroutine delete_disk_manager
 !
 !
-   function file_exists_disk_manager(disk, the_file)
-!!
-!!    File exists
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!    
-!
-      implicit none
-!  
-      class(disk_manager), intent(in) :: disk
-!
-      type(file), intent(in) :: the_file
-!
-      logical :: file_exists_disk_manager
-!
-      inquire(file=the_file%name, exist=file_exists_disk_manager)
-!
-   end function file_exists_disk_manager
-!
-!  
    subroutine rewind_file_disk_manager(disk, the_file)
 !!
 !!    Rewind file 

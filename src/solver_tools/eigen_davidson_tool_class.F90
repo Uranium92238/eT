@@ -462,7 +462,7 @@ contains
    end subroutine construct_im_residual_eigen_davidson_tool
 !
 !
-   subroutine construct_next_trial_vec_eigen_davidson_tool(davidson, residual_norm, iteration, n)
+   subroutine construct_next_trial_vec_eigen_davidson_tool(davidson, residual_norm, n)
 !!
 !!    Construct next trial vector  
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -482,8 +482,6 @@ contains
       class(eigen_davidson_tool) :: davidson 
 !
       real(dp), intent(out) :: residual_norm 
-!
-      integer(i15) :: iteration
 !
       integer(i15), optional, intent(in) :: n 
 !

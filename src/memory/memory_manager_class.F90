@@ -153,8 +153,7 @@ contains
 !
       if (stat .ne. 0) then
 !
-         write(output%unit,'(t3,a,i15)') 'Error: could not allocate array with #elements =', size_array
-         stop
+         call output%error_msg('could not allocate array with #elements =', size_array)
 !
       endif
 !
@@ -170,8 +169,7 @@ contains
 !
       if (mem%available .lt. 0) then
 !
-         write(output%unit,'(t3,a)') "Error: user-specified memory insufficient."
-         stop
+         call output%error_msg('user-specified memory insufficient.')
 !
       endif
 !
@@ -206,8 +204,7 @@ contains
 !
       if (stat .ne. 0) then
 !
-         write(output%unit,'(t3,a,i15)') 'Error: could not deallocate array with #elements =', size_array
-         stop
+         call output%error_msg('could not deallocate array with #elements =', size_array)
 !
       endif
 !
@@ -249,8 +246,7 @@ contains
 !
       if (stat .ne. 0) then
 !
-         write(output%unit,'(t3,a,i15)') 'Error: could not allocate array with #elements =', size_array
-         stop
+         call output%error_msg('Error: could not allocate array with #elements =', size_array)
 !
       endif
 !
@@ -266,8 +262,7 @@ contains
 !
       if (mem%available .lt. 0) then
 !
-         write(output%unit,'(t3,a)') "Error: user-specified memory insufficient."
-         stop
+         call output%error_msg('user-specified memory insufficient.')
 !
       endif
 !
@@ -302,8 +297,7 @@ contains
 !
       if (stat .ne. 0) then
 !
-         write(output%unit,'(t3,a,i15)') 'Error: could not deallocate array with #elements =', size_array
-         stop
+         call output%error_msg('could not deallocate array with #elements =', size_array)
 !
       endif
 !
@@ -415,8 +409,7 @@ contains
 !
       if (batch_p%index_dimension .ne. batch_q%index_dimension) then
 !
-         write(output%unit,'(t3,a)') 'Error: batching over indices of different lengths is not yet implemented'
-         stop
+         call output%error_msg('batching over indices of different lengths is not yet implemented')
 !
       endif
 !

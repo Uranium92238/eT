@@ -35,9 +35,6 @@ module scf_diis_hf_solver_class
       procedure :: run                    => run_scf_diis_hf_solver
       procedure :: cleanup                => cleanup_scf_diis_hf_solver
 !
-      procedure :: print_banner           => print_banner_scf_diis_hf_solver
-      procedure :: print_summary          => print_summary_scf_diis_hf_solver
-!
       procedure :: read_settings           => read_settings_scf_diis_hf_solver 
       procedure :: read_scf_diis_settings  => read_scf_diis_settings_scf_diis_hf_solver
 !
@@ -62,6 +59,15 @@ contains
       class(scf_diis_hf_solver) :: solver
 !
       class(hf) :: wf
+!
+      solver%tag = 'Self-consistent field DIIS Hartree-Fock solver'
+      solver%author = 'E. F. Kjønstad and S, D. Folkestad, 2018'
+      solver%description = 'A DIIS-accelerated Roothan-Hall self-consistent field solver. &
+                                  &In other words, a least-square fit toward a zero gradient vector &
+                                  &is performed using the previously recorded Fock matrices and the &
+                                  &associated gradients. After each Roothan-Hall update of the density &
+                                  &a fitted Fock matrix is used to get the next orbital coefficients, &
+                                  &instead of the one produced directly from the AO density.' 
 !
       call solver%print_banner()
 !
@@ -145,7 +151,6 @@ contains
 !
       integer(i15) :: iteration
 !
-      real(dp), dimension(:,:), allocatable :: D
       real(dp), dimension(:,:), allocatable :: F 
       real(dp), dimension(:,:), allocatable :: G 
       real(dp), dimension(:,:), allocatable :: ao_fock 
@@ -259,7 +264,8 @@ contains
 !
             endif
 !
-            call solver%print_summary(wf)
+            call wf%print_wavefunction_summary()
+
 !
          else
 !
@@ -328,6 +334,8 @@ contains
       class(hf) :: wf
 !
       logical :: do_mo_transformation
+!
+      write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(solver%tag)
 !
 !     Do a final Roothan-Hall step to transform the Fock matrix in the canonical MO basis 
 !
@@ -402,46 +410,6 @@ contains
       call wf%update_ao_density()
 !
    end subroutine restart_scf_diis_hf_solver
-!
-!
-   subroutine print_banner_scf_diis_hf_solver(solver)
-!!
-!!    Print banner
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none 
-!
-      class(scf_diis_hf_solver) :: solver 
-!
-      write(output%unit, '(//t3,a)') ':: Self-consistent field DIIS Hartree-Fock solver'
-      write(output%unit, '(t3,a/)')  ':: E. F. Kjønstad, S. D. Folkestad, 2018'
-!
-      write(output%unit, '(t3,a)')  'A DIIS-accelerated Roothan-Hall self-consistent field solver.'
-      write(output%unit, '(t3,a)')  'In other words, a least-square fit toward a zero gradient vector' 
-      write(output%unit, '(t3,a)')  'is performed using the previously recorded Fock matrices and the'
-      write(output%unit, '(t3,a)')  'associated gradients. After each Roothan-Hall update of the density,'
-      write(output%unit, '(t3,a)')  'a fitted Fock matrix is used to get the next orbital coefficients,'
-      write(output%unit, '(t3,a)')  'instead of the one produced directly from the AO density.'
-
-      flush(output%unit)
-!
-   end subroutine print_banner_scf_diis_hf_solver
-!
-!
-   subroutine print_summary_scf_diis_hf_solver(solver, wf)
-!!
-!!    Print summary 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none 
-!
-      class(scf_diis_hf_solver) :: solver 
-!
-      class(hf) :: wf 
-!
-      call wf%print_wavefunction_summary()
-!
-   end subroutine print_summary_scf_diis_hf_solver
 !
 !
    subroutine read_settings_scf_diis_hf_solver(solver)

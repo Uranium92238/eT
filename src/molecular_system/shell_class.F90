@@ -60,8 +60,7 @@ contains
 !
       if (sh%l .eq. -1) then
 !
-         write(output%unit, '(/t3,a)') 'Error: could not determine angular momentum of shell.'
-         stop
+         call output%error_msg('could not determine angular momentum of shell.')
 !
       endif
 !

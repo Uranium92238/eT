@@ -251,9 +251,14 @@ contains
 !
       character(len=40) :: engine
 !
-      character(len=100) :: line
+!     Read for multipliers
 !
-      integer(i15) :: n_tasks
+      if (requested_task('multipliers') .or. requested_task('Multipliers')) then
+!
+         engine = 'multipliers'
+         return
+!
+      endif
 !
 !     Read for excited state
 !

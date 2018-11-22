@@ -128,8 +128,7 @@ contains
 !
       if (.not. batch_p%initialized) then
 !
-         write(output%unit,'(t3,a)') 'Error: a non-initialized batching variable was used.'
-         stop
+         call output%error_msg('a non-initialized batching variable was used.')
 !
       endif
 !

@@ -14,6 +14,17 @@ module diis_cc_multipliers_solver_class
 !
    type :: diis_cc_multipliers_solver
 !
+      character(len=100) :: tag = 'Davidson multipliers solver'
+      character(len=100) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
+!
+      character(len=500) :: description1 = 'A DIIS CC multiplier equations solver. It combines a quasi-Newton &
+                                           &perturbation theory estimate of the next multipliers, using &
+                                           &least square fitting to find an an optimal combination of &  
+                                           &previous estimates such that the update is minimized.'
+!
+      character(len=500) :: description2 = 'See Helgaker et al., Molecular Electronic Structure Theory, &
+                                           &Chapter 13, for the more details on this algorithm.'
+!
       integer(i15) :: diis_dimension = 8
 !
       integer(i15) :: max_iterations = 50
@@ -24,16 +35,15 @@ module diis_cc_multipliers_solver_class
 !
    contains
 !     
+      procedure, nopass :: cleanup          => cleanup_diis_cc_multipliers_solver
+      procedure, nopass :: do_diagonal_precondition => do_diagonal_precondition_diis_cc_multipliers_solver
+!
       procedure :: prepare                  => prepare_diis_cc_multipliers_solver
       procedure :: run                      => run_diis_cc_multipliers_solver
-      procedure :: cleanup                  => cleanup_diis_cc_multipliers_solver
 !
       procedure :: print_banner             => print_banner_diis_cc_multipliers_solver
-      procedure :: print_summary            => print_summary_diis_cc_multipliers_solver
 !
       procedure :: print_settings           => print_settings_diis_cc_multipliers_solver
-!
-      procedure :: do_diagonal_precondition => do_diagonal_precondition_diis_cc_multipliers_solver
 !
    end type diis_cc_multipliers_solver
 !
@@ -93,7 +103,7 @@ contains
    end subroutine print_settings_diis_cc_multipliers_solver
 !
 !
-   subroutine do_diagonal_precondition_diis_cc_multipliers_solver(solver, alpha, preconditioner, vector, n)
+   subroutine do_diagonal_precondition_diis_cc_multipliers_solver(alpha, preconditioner, vector, n)
 !!
 !!    Do diagonal precondition 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
@@ -108,8 +118,6 @@ contains
 !!
       implicit none 
 !     
-      class(diis_cc_multipliers_solver), intent(in) :: solver 
-!
       integer(i15), intent(in) :: n
 !
       real(dp), intent(in) :: alpha 
@@ -175,6 +183,7 @@ contains
 !
       write(output%unit, '(/t3,a)') 'Iteration    Norm residual  '
       write(output%unit, '(t3,a)')  '----------------------------'
+      flush(output%unit)
 !
       iteration   = 1
 !
@@ -196,8 +205,6 @@ contains
 !
             write(output%unit, '(t3,a)')           '----------------------------'
             write(output%unit, '(/t3,a29,i3,a12)') 'Convergence criterion met in ', iteration, ' iterations!'
-!
-            call solver%print_summary(wf)
 !
          else
 !
@@ -233,17 +240,17 @@ contains
 !
       endif 
 !
+      flush(output%unit)
+!
    end subroutine run_diis_cc_multipliers_solver
 !
 !
-   subroutine cleanup_diis_cc_multipliers_solver(solver, wf)
+   subroutine cleanup_diis_cc_multipliers_solver(wf)
 !!
 !! 	Cleanup 
 !! 	Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
-!
-      class(diis_cc_multipliers_solver) :: solver
 !
       class(ccs) :: wf
 !
@@ -262,36 +269,12 @@ contains
 !
       class(diis_cc_multipliers_solver) :: solver 
 !
-      write(output%unit, '(//t3,a)') ':: DIIS coupled cluster multipliers solver'
-      write(output%unit, '(t3,a)')   ':: E. F. Kjønstad, S. D. Folkestad, 2018'
-!
-      write(output%unit, '(/t3,a)')  'A DIIS CC multiplier equations solver. It combines a quasi-Newton '
-      write(output%unit, '(t3,a)')   'perturbation theory estimate of the next multipliers, using least square'
-      write(output%unit, '(t3,a)')   'fitting to find an an optimal combination of previous estimates such that'
-      write(output%unit, '(t3,a)')   'the update is minimized.'
-!
-      write(output%unit, '(/t3,a)')  'See Helgaker et al., Molecular Electronic Structure Theory,'
-      write(output%unit, '(t3,a)')   'Chapter 13, for the more details on this algorithm.'
-!
-      flush(output%unit)
+      call long_string_print(solver%tag,'(//t3,a)',.true.)
+      call long_string_print(solver%author,'(t3,a/)',.true.)
+      call long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
+      call long_string_print(solver%description2)
 !
    end subroutine print_banner_diis_cc_multipliers_solver
-!
-!
-   subroutine print_summary_diis_cc_multipliers_solver(solver, wf)
-!!
-!!    Print summary 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none 
-!
-      class(diis_cc_multipliers_solver) :: solver 
-!
-      class(ccs) :: wf 
-!
-    !  call wf%print_wavefunction_summary()
-!
-   end subroutine print_summary_diis_cc_multipliers_solver
 !
 !
 end module diis_cc_multipliers_solver_class

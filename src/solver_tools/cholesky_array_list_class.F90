@@ -51,7 +51,6 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: temp_reduced_array
 !
-      integer(i15) :: n_rows, n_columns
 !
       do list_element = 1, cholesky_array%n_nodes
 !

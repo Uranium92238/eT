@@ -1317,7 +1317,7 @@ contains
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in)    :: x_pq_rs
       real(dp), dimension(dim_s*dim_r, dim_p*dim_q), intent(inout) :: x_sr_pq
 !
-      integer(i15) :: p, q, r, s, pq, rs, sr
+      integer(i15) :: r, s, rs, sr
 !
 !$omp parallel do schedule(static) private(s,r,rs,sr)
       do s = 1, dim_s
@@ -1594,8 +1594,6 @@ contains
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs
       real(dp), dimension(dim_r*dim_s, dim_p*dim_q), intent(in) :: x
-!
-      integer(i15) :: p, q, r, s, pq, rs
 !
       call add_21_to_12(gamma, x, y_pq_rs, dim_p*dim_q, dim_r*dim_s)
 !

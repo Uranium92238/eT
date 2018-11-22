@@ -19,7 +19,7 @@ module molecular_system_class
    type :: molecular_system
 !
       character(len=100) :: name
-      character(len=40), dimension(:), allocatable :: basis_sets
+      character(len=100), dimension(:), allocatable :: basis_sets
 !
       integer(i15) :: n_atoms
       integer(i15) :: n_basis_sets 
@@ -40,30 +40,28 @@ module molecular_system_class
 !
    contains
 !
-      procedure :: prepare => prepare_molecular_system
-      procedure :: cleanup => cleanup_molecular_system
-      procedure :: write   => write_molecular_system
+      procedure :: prepare                 => prepare_molecular_system
+      procedure :: cleanup                 => cleanup_molecular_system
+      procedure :: write                   => write_molecular_system
 !
-      procedure, private :: read_info     => read_info_molecular_system
-      procedure, private :: read_geometry => read_geometry_molecular_system
+      procedure, private :: read_info      => read_info_molecular_system
+      procedure, private :: read_geometry  => read_geometry_molecular_system
 !
-      procedure :: print_system   => print_system_molecular_system
-      procedure :: print_geometry => print_geometry_molecular_system
+      procedure :: print_system            => print_system_molecular_system
+      procedure :: print_geometry          => print_geometry_molecular_system
 !
-      procedure :: get_nuclear_repulsion => get_nuclear_repulsion_molecular_system
-      procedure :: get_n_electrons       => get_n_electrons_molecular_system
+      procedure :: get_nuclear_repulsion   => get_nuclear_repulsion_molecular_system
+      procedure :: get_n_electrons         => get_n_electrons_molecular_system
 !
-      procedure :: get_n_aos          => get_n_aos_molecular_system
-      procedure :: get_n_shells       => get_n_shells_molecular_system
-      procedure :: get_shell_limits   => get_shell_limits_molecular_system
-      procedure :: basis2shell        => basis2shell_molecular_system
-      procedure :: get_max_shell_size => get_max_shell_size_molecular_system
+      procedure :: get_n_aos               => get_n_aos_molecular_system
+      procedure :: get_n_shells            => get_n_shells_molecular_system
+      procedure :: get_shell_limits        => get_shell_limits_molecular_system
+      procedure :: basis2shell             => basis2shell_molecular_system
+      procedure :: get_max_shell_size      => get_max_shell_size_molecular_system
 !
-      procedure :: SAD => SAD_molecular_system
+      procedure :: shell_to_atom           => shell_to_atom_molecular_system
 !
-      procedure :: shell_to_atom => shell_to_atom_molecular_system
-!
-      procedure :: reorder_atoms => reorder_atoms_molecular_system
+      procedure :: reorder_atoms           => reorder_atoms_molecular_system
 !
       procedure :: initialize_basis_sets   => initialize_basis_sets_molecular_system
       procedure :: initialize_atoms        => initialize_atoms_molecular_system
@@ -89,9 +87,9 @@ contains
 !
       character(len=100) :: temp_name
 !
-      integer(kind=4) :: i = 0, j = 0, n_atoms_libint
+      integer(kind=4) :: i4, j
 !
-      integer(i15) :: s, n_s 
+      integer(i15) :: s, n_s, i
 !
       integer(kind=4), dimension(:,:), allocatable :: n_shells_on_atoms
       integer(kind=4), dimension(:,:), allocatable :: n_basis_in_shells
@@ -125,7 +123,8 @@ contains
 !
       do i = 1, molecule%n_basis_sets ! Loop over atoms  
 !
-         write(temp_name, '(a, a1, i4.4)')trim(molecule%name), '_', i
+         i4 = int(i,4)
+         write(temp_name, '(a, a1, i4.4)')trim(molecule%name), '_', i4
 !
          call initialize_basis(molecule%basis_sets(i), temp_name)
 !
@@ -136,6 +135,8 @@ contains
       call get_n_shells_on_atoms(n_shells_on_atoms)
 !
       do i = 1, molecule%n_atoms ! Loop over atoms
+!
+         i4 = int(i,4)
 !
          call molecule%atoms(i)%set_number()
 !
@@ -148,7 +149,7 @@ contains
 !        and save number of aos per atom
 !
          allocate(n_basis_in_shells(n_shells_on_atoms(i,1), 1))
-         call get_n_basis_in_shells(i, n_basis_in_shells)
+         call get_n_basis_in_shells(i4, n_basis_in_shells)
 !
          molecule%atoms(i)%n_ao = 0
 !
@@ -165,7 +166,7 @@ contains
 !        Get shell numbers
 !
          allocate(shell_numbers(n_shells_on_atoms(i,1), 1))
-         call get_shell_numbers(i, shell_numbers)
+         call get_shell_numbers(i4, shell_numbers)
 !
          do j = 1, n_shells_on_atoms(i,1)
 !
@@ -178,7 +179,7 @@ contains
 !        And the first AO index in each shell
 !
          allocate(first_ao_in_shells(n_shells_on_atoms(i,1), 1))
-         call get_first_ao_in_shells(i, first_ao_in_shells)
+         call get_first_ao_in_shells(i4, first_ao_in_shells)
 !
          do j = 1, n_shells_on_atoms(i,1)
 
@@ -215,8 +216,7 @@ contains
 !
       if (molecule%charge .ne. 0) then
 !
-         write(output%unit,*) 'Error: SAD not yet implemented for charged species!'
-         stop
+         call output%error_msg('SAD not yet implemented for charged species!')
 !
       endif
 !
@@ -224,8 +224,7 @@ contains
 !
          if (molecule%atoms(i)%n_ao == 0) then
 !   
-            write(output%unit,*)'Error: Is basis defined for all atoms in input?'
-            stop
+            call output%error_msg('Is basis defined for all atoms in input?')
 !
          endif
 !
@@ -273,9 +272,6 @@ contains
       class(molecular_system) :: molecule
 !
       character(len=100) :: line
-      character(len=100) :: current_basis
-!
-      integer(i15) :: i = 0
 !
       rewind(input%unit)
 !
@@ -344,8 +340,7 @@ contains
 !
       if ((molecule%n_basis_sets .le. 0 ).or.( molecule%n_basis_sets .gt. molecule%n_atoms)) then
 !
-         write(output%unit, '(a)')'Error: Number of basis sets specified exceeds number of atoms or is zero.'
-         stop
+         call output%error_msg('number of basis sets specified exceeds number of atoms or is zero.')
 !
       endif
 !
@@ -364,15 +359,12 @@ contains
       class(molecular_system) :: molecule
 !
       character(len=100) :: line
-      character(len=100) :: current_basis, temp_name
+      character(len=100) :: current_basis
 !
-      integer(i15) :: i = 0, current_atom = 0, current_basis_nbr = 0
-      integer(i15), dimension(:,:), allocatable :: atoms_with_current_basis
+      integer(i15) :: current_atom, current_basis_nbr
 !
       integer(i15) :: cursor
       character(len=100) :: coordinate
-!
-      type(file) :: basis_file, mol_file
 !
       rewind(input%unit)
 !
@@ -883,8 +875,7 @@ contains
 !
             if (abs(r_ij) .lt. 1.0D-7) then
 !
-               write(output%unit,'(/t3,a)') 'Error: Two atoms are placed on top of each other'
-               stop
+               call output%error_msg('two atoms are placed on top of each other.')
 !
             endif
 !
@@ -1077,64 +1068,6 @@ contains
    end function basis2shell_molecular_system
 !
 !
-   subroutine SAD_molecular_system(molecule, n_ao, density_diagonal)
-!!
-!!    Superposition of atomic desities
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-!!    Initial guess for HF-calculation
-!!
-      implicit none
-!
-      class(molecular_system) :: molecule
-!
-      integer(i15) :: n_ao
-!
-      real(dp), dimension(n_ao, 1) :: density_diagonal
-!
-      integer(i15) :: I, offset_diagonal
-!
-      real(dp) :: electrons
-!
-      real(dp), dimension(:,:), allocatable :: atom_density_diagonal
-!
-!     Loop over atoms and let them set their own density diagonal
-!
-      offset_diagonal = 0
-!
-      do I = 1, molecule%n_atoms
-!
-         call mem%alloc(atom_density_diagonal, molecule%atoms(I)%n_ao, 1)
-!
-         call molecule%atoms(I)%AD(atom_density_diagonal)
-!
-         density_diagonal(offset_diagonal + 1 : offset_diagonal + molecule%atoms(I)%n_ao, 1) = &
-               atom_density_diagonal(:,1)
-!
-         call mem%dealloc(atom_density_diagonal, molecule%atoms(I)%n_ao, 1)
-!
-         offset_diagonal = offset_diagonal + molecule%atoms(I)%n_ao
-!
-      enddo
-!
-      electrons = 0
-!
-      do I = 1, n_ao
-!
-         electrons = electrons + density_diagonal(I, 1)
-!
-      enddo
-!
-      if (abs(electrons - molecule%get_n_electrons()) .gt. 1.0d-7) then
-!
-         write(output%unit, '(a)') 'Error: Mismatch in electron number SAD'
-         stop
-!
-      endif
-!
-   end subroutine SAD_molecular_system
-!
-!
    function shell_to_atom_molecular_system(molecule, shell)
 !!
 !!
@@ -1152,13 +1085,11 @@ contains
 !
       if (shell .le. 0) then
 !
-         write(output%unit, '(a)') 'Error: shell number has illegal value 0.'
-         stop
+         call output%error_msg('shell number has illegal value 0.')
 !
       elseif (shell .gt. molecule%get_n_shells()) then
 !
-         write(output%unit, '(a)') 'Error: shell number exceeds total number of shells.'
-         stop
+         call output%error_msg('shell number exceeds total number of shells.')
 !
       endif
 !
@@ -1176,7 +1107,7 @@ contains
 !
       enddo
 !     
-      if (shell_to_atom_molecular_system == 0) call output%error_msg(' in shell_to_atom')
+      if (shell_to_atom_molecular_system == 0) call output%error_msg('in shell_to_atom.')
 !
    end function shell_to_atom_molecular_system
 !
