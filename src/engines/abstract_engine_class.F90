@@ -12,14 +12,13 @@ module abstract_engine_class
 !
    type, abstract :: abstract_engine
 !
+      character(len=100) :: tag
+!
    contains
 !
       procedure(essential_engine), deferred :: prepare 
       procedure(essential_engine), deferred :: cleanup   
       procedure(essential_engine_w_wf), deferred :: run        
-!
-      procedure(essential_engine), deferred :: print_banner  
-      procedure(essential_engine), deferred :: print_summary 
 !
    end type abstract_engine
 !

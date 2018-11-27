@@ -23,7 +23,6 @@ module mlhf_class
    contains
 !
       procedure :: prepare => prepare_mlhf
-      procedure :: finalize => finalize_mlhf
 !
       procedure :: construct_virtual_density => construct_virtual_density_mlhf
       procedure :: construct_virtual_density_from_MO => construct_virtual_density_from_MO_mlhf
@@ -44,10 +43,6 @@ contains
       implicit none
 !
       class(mlhf) :: wf
-!
-      integer(i15) :: ao
-!
-      real(dp), dimension(:,:), allocatable :: density_diagonal
 !
       wf%name = 'MLHF'
 !
@@ -70,6 +65,7 @@ contains
       call wf%set_n_mo()
 !
       write(output%unit, '(/t6, a8, i3, a23)')'Removed ', wf%n_ao - wf%n_mo, ' AOs due to linear dep.'
+      flush(output%unit)
 !
       call wf%initialize_ao_density()
 !
@@ -84,20 +80,6 @@ contains
    end subroutine prepare_mlhf
 !
 !
-   subroutine finalize_mlhf(wf)
-!!
-!!    Finalize
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(mlhf) :: wf
-!
-!     Nothing here yet
-!
-   end subroutine finalize_mlhf
-!
-!
    subroutine eri_decomp_test_w_active_dens_mlhf(wf)
 !
       implicit none
@@ -106,18 +88,18 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: cholesky_vectors_occ, cholesky_vectors_virt, V, ao_density_v
 !
-      integer(i15):: i, j, k, n_active_aos, ao_offset, active_ao_counter, n_vectors_occ, n_vectors_virt
+      integer(i15):: i, j, n_active_aos, n_vectors_occ, n_vectors_virt
       integer(i15):: a
 !
       real(dp) :: max_val, e_construct_fock, s_construct_fock, omp_get_wtime, x, y, z
 !
-      integer(i15), dimension(:,:), allocatable :: active_aos, sp_eri_schwarz_list
+      integer(i15), dimension(:,:), allocatable :: active_aos
 !
       integer(i15) :: n_active_occ, n_active_vir, n_s
 !
-      real(dp), dimension(:,:), allocatable :: eri_deg, sp_eri_schwarz, h_wx
-!
       type(eri_cd_solver)  :: chol_solver
+!
+      type(file) :: CMO_file
 !
       call wf%initialize_ao_fock()
 !
@@ -138,6 +120,12 @@ contains
       call wf%initialize_orbital_energies()
       call wf%initialize_orbital_coefficients()
       call wf%do_roothan_hall(wf%ao_fock, wf%orbital_coefficients, wf%orbital_energies) ! F^AO C = S C e to get new MOs C
+!
+      call CMO_file%init('orbital_coefficients', 'sequential', 'unformatted')
+      call disk%open_file(CMO_file, 'write', 'rewind')
+      rewind(CMO_file%unit)
+      write(CMO_file%unit) wf%orbital_coefficients
+      call disk%close_file(CMO_file)
 !
 !     Update the AO density
 !
@@ -171,7 +159,7 @@ contains
 !
       n_active_occ = n_active_occ/2
 !
-!     Add orbitals if bonds are capped. Assumes 2.5Å for covalent bonds.
+!     Add orbitals if bonds are capped. Assumes 1.5Å for covalent bonds.
 !
       do i = wf%system%n_active_atoms + 1, wf%system%n_atoms
 !
@@ -268,9 +256,9 @@ contains
 !
       real(dp), dimension(wf%n_ao, wf%n_ao) :: D_v
 !
-      integer(i15) :: rank, i, x, y
+      integer(i15) :: rank, i
 !
-      integer(kind=4), dimension(:), allocatable :: piv
+      integer(i15), dimension(:), allocatable :: piv
 !
       real(dp), dimension(:,:), allocatable :: L, L_inv, P,  L_inv_P_trans
 !

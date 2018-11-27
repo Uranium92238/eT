@@ -75,14 +75,14 @@ contains
 !
    subroutine initialize_atoms(mol_name)
 !
-      use iso_c_binding, only: C_CHAR, C_NULL_CHAR
+      use iso_c_binding, only: c_char, c_null_char
       implicit none
 !
       character(len=*) :: mol_name
       character(len=40) :: mol_name_temp
       character(kind=c_char),dimension(40) :: cpp_temp_mol_name
 !
-      integer(kind=4) :: j
+      integer(i15) :: j
 !
       mol_name_temp = trim(mol_name)//c_null_char
 !
@@ -98,7 +98,7 @@ contains
 !
    subroutine initialize_basis(basis_set, file_name)
 !
-      use iso_c_binding, only: C_CHAR, C_NULL_CHAR, C_INT
+      use iso_c_binding, only: c_char, c_null_char
       implicit none
 !
       character(len=*) :: basis_set
@@ -110,7 +110,7 @@ contains
       character(kind=c_char),dimension(40) :: cpp_temp_basis
       character(kind=c_char),dimension(40) :: cpp_temp_file
 !
-      integer(kind=4) :: j, atom
+      integer(i15) :: j
 !
       basis_set_temp = trim(basis_set)//c_null_char
 !

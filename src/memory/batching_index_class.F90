@@ -16,7 +16,7 @@ module batching_index_class
 !!       call batch_a%init(wf%n_v) -> initializes batching object for an index of dimension
 !!                                    equal to the number of virtual orbitals
 !!
-!!       call wf%mem%num_batch(batch_a, required) -> determines the number of batches and
+!!       call mem%num_batch(batch_a, required) -> determines the number of batches and
 !!                                                   and the largest batching length, saving
 !!                                                   that information in the batch_a object
 !!
@@ -128,8 +128,7 @@ contains
 !
       if (.not. batch_p%initialized) then
 !
-         write(output%unit,'(t3,a)') 'Error: a non-initialized batching variable was used.'
-         stop
+         call output%error_msg('a non-initialized batching variable was used.')
 !
       endif
 !

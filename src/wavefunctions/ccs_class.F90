@@ -23,94 +23,122 @@ module ccs_class
 !
       real(dp) :: hf_energy 
 !
-      integer(i15)                           :: n_amplitudes 
+      integer(i15)                           :: n_amplitudes
+      integer(i15)                           :: n_t1
+!
       real(dp), dimension(:,:), allocatable  :: t1
+      real(dp), dimension(:,:), allocatable  :: t1bar
 !
       real(dp), dimension(:,:), allocatable  :: fock_ij
       real(dp), dimension(:,:), allocatable  :: fock_ia
       real(dp), dimension(:,:), allocatable  :: fock_ai
       real(dp), dimension(:,:), allocatable  :: fock_ab
+!
       real(dp), dimension(:,:), allocatable  :: fock_diagonal
 !
       type(mo_integral_tool) :: integrals
+!
+      integer(i15) :: n_bath ! Number of bath orbitals (always the last ao/mo indices)
 !
    contains
 !
 !     Preparation and cleanup routines 
 !
-      procedure :: prepare                      => prepare_ccs
-      procedure :: cleanup                      => cleanup_ccs
+      procedure :: prepare                                     => prepare_ccs
+      procedure :: cleanup                                     => cleanup_ccs
 !
-!     Routines related to the amplitudes 
+!     Routines related to the amplitudes & multipliers
 !
-      procedure :: initialize_amplitudes        => initialize_amplitudes_ccs 
-      procedure :: initialize_t1                => initialize_t1_ccs
-      procedure :: set_initial_amplitudes_guess => set_initial_amplitudes_guess_ccs
-      procedure :: t1_transform                 => t1_transform_ccs
-      procedure :: set_amplitudes               => set_amplitudes_ccs 
-      procedure :: get_amplitudes               => get_amplitudes_ccs 
+      procedure :: initialize_amplitudes                       => initialize_amplitudes_ccs 
+      procedure :: destruct_amplitudes                         => destruct_amplitudes_ccs 
+      procedure :: set_initial_amplitudes_guess                => set_initial_amplitudes_guess_ccs
+      procedure :: t1_transform                                => t1_transform_ccs
+      procedure :: set_amplitudes                              => set_amplitudes_ccs 
+      procedure :: get_amplitudes                              => get_amplitudes_ccs 
+      procedure :: save_amplitudes                             => save_amplitudes_ccs
+      procedure :: read_amplitudes                             => read_amplitudes_ccs
+      procedure :: save_t1                                     => save_t1_ccs 
+      procedure :: read_t1                                     => read_t1_ccs 
+!
+      procedure :: initialize_multipliers                      => initialize_multipliers_ccs
+      procedure :: destruct_multipliers                        => destruct_multipliers_ccs
+      procedure :: set_multipliers                             => set_multipliers_ccs
+      procedure :: get_multipliers                             => get_multipliers_ccs
+      procedure :: save_multipliers                            => save_multipliers_ccs
+      procedure :: read_multipliers                            => read_multipliers_ccs
+      procedure :: save_t1bar                                  => save_t1bar_ccs
+      procedure :: read_t1bar                                  => read_t1bar_ccs
 !
 !     Routines related to the Fock matrix 
 ! 
-      procedure :: set_fock                     => set_fock_ccs
-      procedure :: construct_fock               => construct_fock_ccs
-      procedure :: get_orbital_differences      => get_orbital_differences_ccs
-      procedure :: calculate_energy             => calculate_energy_ccs
+      procedure :: set_fock                                    => set_fock_ccs
+      procedure :: construct_fock                              => construct_fock_ccs
+      procedure :: get_orbital_differences                     => get_orbital_differences_ccs
+      procedure :: calculate_energy                            => calculate_energy_ccs
 !
 !     Routines related to the omega vector 
 !
-      procedure :: construct_omega              => construct_omega_ccs
-      procedure :: omega_ccs_a1                 => omega_ccs_a1_ccs
+      procedure :: construct_omega                             => construct_omega_ccs
+      procedure :: omega_ccs_a1                                => omega_ccs_a1_ccs
 !
 !     Routines related to the Jacobian transformation 
 !
-      procedure :: jacobi_transform_trial_vector           => jacobi_transform_trial_vector_ccs
-      procedure :: jacobi_transpose_transform_trial_vector => jacobi_transpose_transform_trial_vector_ccs
+      procedure :: jacobian_transform_trial_vector             => jacobian_transform_trial_vector_ccs
+      procedure :: jacobian_transpose_transform_trial_vector   => jacobian_transpose_transform_trial_vector_ccs
 !
-      procedure :: jacobian_ccs_transformation   => jacobian_ccs_transformation_ccs
-      procedure :: jacobian_ccs_a1               => jacobian_ccs_a1_ccs 
-      procedure :: jacobian_ccs_b1               => jacobian_ccs_b1_ccs 
+      procedure :: jacobian_ccs_transformation                 => jacobian_ccs_transformation_ccs
+      procedure :: jacobian_ccs_a1                             => jacobian_ccs_a1_ccs 
+      procedure :: jacobian_ccs_b1                             => jacobian_ccs_b1_ccs 
 !
-      procedure :: jacobian_transpose_ccs_transformation => jacobian_transpose_ccs_transformation_ccs
-      procedure :: jacobian_transpose_ccs_a1    => jacobian_transpose_ccs_a1_ccs
-      procedure :: jacobian_transpose_ccs_b1    => jacobian_transpose_ccs_b1_ccs
+      procedure :: jacobian_transpose_ccs_transformation       => jacobian_transpose_ccs_transformation_ccs
+      procedure :: jacobian_transpose_ccs_a1                   => jacobian_transpose_ccs_a1_ccs
+      procedure :: jacobian_transpose_ccs_b1                   => jacobian_transpose_ccs_b1_ccs
+!
+      procedure :: construct_multiplier_equation               => construct_multiplier_equation_ccs
+      procedure :: construct_eta                               => construct_eta_ccs
+!
+      procedure :: get_cvs_projector                           => get_cvs_projector_ccs
+      procedure :: get_ip_projector                            => get_ip_projector_ccs
 !
 !     Routines to get electron repulsion integrals (ERIs)
 !
-      procedure :: get_ovov                     => get_ovov_ccs
-      procedure :: get_vovo                     => get_vovo_ccs
-      procedure :: get_vvoo                     => get_vvoo_ccs
-      procedure :: get_voov                     => get_voov_ccs
-      procedure :: get_ovvo                     => get_ovvo_ccs
-      procedure :: get_oovv                     => get_oovv_ccs
+      procedure :: get_ovov                                     => get_ovov_ccs
+      procedure :: get_vovo                                     => get_vovo_ccs
+      procedure :: get_vvoo                                     => get_vvoo_ccs
+      procedure :: get_voov                                     => get_voov_ccs
+      procedure :: get_ovvo                                     => get_ovvo_ccs
+      procedure :: get_oovv                                     => get_oovv_ccs
 !
-      procedure :: get_oooo                     => get_oooo_ccs
-      procedure :: get_vvvv                     => get_vvvv_ccs
+      procedure :: get_oooo                                     => get_oooo_ccs
+      procedure :: get_vvvv                                     => get_vvvv_ccs
 !
-      procedure :: get_ooov                     => get_ooov_ccs
-      procedure :: get_oovo                     => get_oovo_ccs
-      procedure :: get_ovoo                     => get_ovoo_ccs
-      procedure :: get_vooo                     => get_vooo_ccs
+      procedure :: get_ooov                                     => get_ooov_ccs
+      procedure :: get_oovo                                     => get_oovo_ccs
+      procedure :: get_ovoo                                     => get_ovoo_ccs
+      procedure :: get_vooo                                     => get_vooo_ccs
 !
-      procedure :: get_vvvo                     => get_vvvo_ccs
-      procedure :: get_vvov                     => get_vvov_ccs
-      procedure :: get_vovv                     => get_vovv_ccs
-      procedure :: get_ovvv                     => get_ovvv_ccs
+      procedure :: get_vvvo                                     => get_vvvo_ccs
+      procedure :: get_vvov                                     => get_vvov_ccs
+      procedure :: get_vovv                                     => get_vovv_ccs
+      procedure :: get_ovvv                                     => get_ovvv_ccs
 !
 !     Routines to initialize and destruct arrays 
 !
-      procedure :: initialize_fock_ij           => initialize_fock_ij_ccs
-      procedure :: initialize_fock_ia           => initialize_fock_ia_ccs
-      procedure :: initialize_fock_ai           => initialize_fock_ai_ccs
-      procedure :: initialize_fock_ab           => initialize_fock_ab_ccs
-      procedure :: initialize_fock_diagonal     => initialize_fock_diagonal_ccs
+      procedure :: initialize_fock_ij                           => initialize_fock_ij_ccs
+      procedure :: initialize_fock_ia                           => initialize_fock_ia_ccs
+      procedure :: initialize_fock_ai                           => initialize_fock_ai_ccs
+      procedure :: initialize_fock_ab                           => initialize_fock_ab_ccs
+      procedure :: initialize_fock_diagonal                     => initialize_fock_diagonal_ccs
+      procedure :: initialize_t1                                => initialize_t1_ccs
+      procedure :: initialize_t1bar                             => initialize_t1bar_ccs
 !
-      procedure :: destruct_fock_ij             => destruct_fock_ij_ccs
-      procedure :: destruct_fock_ia             => destruct_fock_ia_ccs
-      procedure :: destruct_fock_ai             => destruct_fock_ai_ccs
-      procedure :: destruct_fock_ab             => destruct_fock_ab_ccs
-      procedure :: destruct_fock_diagonal       => destruct_fock_diagonal_ccs
-      procedure :: destruct_t1                  => destruct_t1_ccs
+      procedure :: destruct_fock_ij                             => destruct_fock_ij_ccs
+      procedure :: destruct_fock_ia                             => destruct_fock_ia_ccs
+      procedure :: destruct_fock_ai                             => destruct_fock_ai_ccs
+      procedure :: destruct_fock_ab                             => destruct_fock_ab_ccs
+      procedure :: destruct_fock_diagonal                       => destruct_fock_diagonal_ccs
+      procedure :: destruct_t1                                  => destruct_t1_ccs
+      procedure :: destruct_t1bar                               => destruct_t1bar_ccs
 !
    end type ccs
 !
@@ -129,7 +157,7 @@ contains
 !
       class(hf) :: ref_wf
 !
-      integer(i15) :: p, i, a
+      integer(i15) :: p
 !
       wf%name = 'ccs'
 !
@@ -142,7 +170,8 @@ contains
 !
       wf%hf_energy = ref_wf%energy
 !
-      wf%n_amplitudes = (wf%n_o)*(wf%n_v)
+      wf%n_t1         = (wf%n_o)*(wf%n_v)
+      wf%n_amplitudes = wf%n_t1
 !
       call wf%initialize_fock_ij()
       call wf%initialize_fock_ia()
@@ -179,7 +208,7 @@ contains
 !
       class(ccs) :: wf
 !
-!     Nothing here yet
+      write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(wf%name), ' wavefunction'
 !
    end subroutine cleanup_ccs
 !
@@ -199,6 +228,23 @@ contains
       call wf%initialize_t1()
 !
    end subroutine initialize_amplitudes_ccs
+!
+!
+   subroutine destruct_amplitudes_ccs(wf)
+!!
+!!    Destruct amplitudes 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Deallocates the amplitudes. This routine must be overwritten in 
+!!    descendants which have more amplitudes. 
+!!
+      implicit none 
+!
+      class(ccs) :: wf 
+!
+      call wf%destruct_t1()
+!
+   end subroutine destruct_amplitudes_ccs
 !
 !
    subroutine set_amplitudes_ccs(wf, amplitudes)
@@ -233,6 +279,167 @@ contains
    end subroutine get_amplitudes_ccs
 !
 !
+   subroutine save_amplitudes_ccs(wf)
+!!
+!!    Save amplitudes 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      call wf%save_t1()
+!
+   end subroutine save_amplitudes_ccs
+!
+!
+   subroutine read_amplitudes_ccs(wf)
+!!
+!!    Read amplitudes 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+      implicit none 
+!
+      class(ccs), intent(inout) :: wf
+!
+      call wf%read_t1()    
+!
+   end subroutine read_amplitudes_ccs
+!
+!
+   subroutine read_t1_ccs(wf)
+!!
+!!    Read t1 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+      implicit none 
+!
+      class(ccs), intent(inout) :: wf
+!
+      type(file) :: t1_file 
+!
+      call t1_file%init('t1', 'sequential', 'unformatted')
+!
+      call disk%open_file(t1_file, 'read', 'rewind')
+!
+      read(t1_file%unit) wf%t1
+!
+      call disk%close_file(t1_file)      
+!
+   end subroutine read_t1_ccs
+!
+!
+   subroutine save_t1_ccs(wf)
+!!
+!!    Save t1 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf 
+!
+      type(file) :: t1_file 
+!
+      call t1_file%init('t1', 'sequential', 'unformatted')
+!
+      call disk%open_file(t1_file, 'write', 'rewind')
+!
+      write(t1_file%unit) wf%t1
+!
+      call disk%close_file(t1_file)
+!
+   end subroutine save_t1_ccs
+!
+!
+   subroutine save_multipliers_ccs(wf)
+!!
+!!    Save multipliers 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      call wf%save_t1bar()
+!
+   end subroutine save_multipliers_ccs
+!
+!
+   subroutine read_multipliers_ccs(wf)
+!!
+!!    Read multipliers 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, May 2017
+!!
+      implicit none 
+!
+      class(ccs), intent(inout) :: wf 
+!
+      call wf%read_t1bar()
+!
+   end subroutine read_multipliers_ccs
+!
+!
+   subroutine destruct_multipliers_ccs(wf)
+!!
+!!    Destruct multipliers 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Deallocates the multipliers. This routine must be overwritten in 
+!!    descendants which have more multipliers. 
+!!
+      implicit none 
+!
+      class(ccs) :: wf 
+!
+      call wf%destruct_t1bar()
+!
+   end subroutine destruct_multipliers_ccs
+!
+!
+   subroutine save_t1bar_ccs(wf)
+!!
+!!    Save t1bar 
+!!    Written by Eirik F. Kjønstad, Oct 2018 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      type(file) :: t1bar_file 
+!
+      call t1bar_file%init('t1bar', 'sequential', 'unformatted')
+!
+      call disk%open_file(t1bar_file, 'write', 'rewind')
+!
+      write(t1bar_file%unit) wf%t1bar
+!
+      call disk%close_file(t1bar_file)      
+!
+   end subroutine save_t1bar_ccs
+!
+!
+   subroutine read_t1bar_ccs(wf)
+!!
+!!    Save t1bar 
+!!    Written by Eirik F. Kjønstad, Oct 2018 
+!!
+      implicit none 
+!
+      class(ccs), intent(inout) :: wf 
+!
+      type(file) :: t1bar_file 
+!
+      call t1bar_file%init('t1bar', 'sequential', 'unformatted')
+!
+      call disk%open_file(t1bar_file, 'read', 'rewind')
+!
+      read(t1bar_file%unit) wf%t1bar
+!
+      call disk%close_file(t1bar_file)      
+!
+   end subroutine read_t1bar_ccs
+!
+!
    subroutine set_initial_amplitudes_guess_ccs(wf)
 !!
 !!    Set initial amplitudes guess 
@@ -245,6 +452,55 @@ contains
       wf%t1 = zero 
 !
    end subroutine set_initial_amplitudes_guess_ccs
+!
+!
+   subroutine initialize_multipliers_ccs(wf)
+!!
+!!    Initialize multipliers 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!
+!!    Allocates the multipliers. This routine must be overwritten in 
+!!    descendants which have more multipliers. 
+!!
+      implicit none 
+!
+      class(ccs) :: wf 
+!
+      call wf%initialize_t1bar()
+!
+   end subroutine initialize_multipliers_ccs
+!
+!
+   subroutine set_multipliers_ccs(wf, multipliers)
+!!
+!!    Set multipliers 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
+!!
+      implicit none 
+!
+      class(ccs) :: wf  
+!
+      real(dp), dimension(wf%n_amplitudes, 1), intent(in) :: multipliers
+!
+      call dcopy(wf%n_amplitudes, multipliers, 1, wf%t1bar, 1)
+!
+   end subroutine set_multipliers_ccs
+!
+!
+   subroutine get_multipliers_ccs(wf, multipliers)
+!!
+!!    Get multipliers 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf  
+!
+      real(dp), dimension(wf%n_amplitudes, 1) :: multipliers
+!
+      call dcopy(wf%n_amplitudes, wf%t1bar, 1, multipliers, 1)
+!
+   end subroutine get_multipliers_ccs
 !
 !
    subroutine calculate_energy_ccs(wf)
@@ -712,6 +968,20 @@ contains
    end subroutine initialize_t1_ccs
 !
 !
+   subroutine initialize_t1bar_ccs(wf)
+!!
+!!    Initialize T1-bar
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      if (.not. allocated(wf%t1bar)) call mem%alloc(wf%t1bar, wf%n_v, wf%n_o)
+!
+   end subroutine initialize_t1bar_ccs
+!
+!
    subroutine destruct_fock_ij_ccs(wf)
 !!
 !!    Destruct Fock ij block
@@ -794,6 +1064,20 @@ contains
       if (allocated(wf%t1)) call mem%dealloc(wf%t1, wf%n_v, wf%n_o)
 !
    end subroutine destruct_t1_ccs
+!
+!
+   subroutine destruct_t1bar_ccs(wf)
+!!
+!!    Destruct T1-bar
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      if (allocated(wf%t1bar)) call mem%dealloc(wf%t1bar, wf%n_v, wf%n_o)
+!
+   end subroutine destruct_t1bar_ccs
 !
 !
    subroutine get_ovov_ccs(wf, g_iajb, first_i, last_i, first_a, last_a, &
@@ -2067,7 +2351,7 @@ contains
    end subroutine get_vvvv_ccs
 !
 !
-   subroutine jacobi_transform_trial_vector_ccs(wf, c_i)
+   subroutine jacobian_transform_trial_vector_ccs(wf, c_i)
 !!
 !!    Jacobi transform trial vector 
 !!    Written by Sarai D. Folkestad, Sep 2018
@@ -2078,10 +2362,10 @@ contains
 !
       call wf%jacobian_ccs_transformation(c_i)
 !
-   end subroutine jacobi_transform_trial_vector_ccs
+   end subroutine jacobian_transform_trial_vector_ccs
 !
 !
-   subroutine jacobi_transpose_transform_trial_vector_ccs(wf, c_i)
+   subroutine jacobian_transpose_transform_trial_vector_ccs(wf, c_i)
 !!
 !!    Jacobi transpose transform trial vector 
 !!    Written by Sarai D. Folkestad, Sep 2018
@@ -2092,7 +2376,7 @@ contains
 !
       call wf%jacobian_transpose_ccs_transformation(c_i)
 !
-   end subroutine jacobi_transpose_transform_trial_vector_ccs
+   end subroutine jacobian_transpose_transform_trial_vector_ccs
 !
 !
    subroutine jacobian_ccs_transformation_ccs(wf, c_a_i)
@@ -2134,7 +2418,7 @@ contains
    end subroutine jacobian_ccs_transformation_ccs
 !
 !
-   module subroutine jacobian_transpose_ccs_transformation_ccs(wf, b_a_i)
+   subroutine jacobian_transpose_ccs_transformation_ccs(wf, b_a_i)
 !!
 !!    Jacobian transpose transformation (CCS)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
@@ -2240,10 +2524,9 @@ contains
 !
       class(ccs) :: wf
 !   
-      real(dp), dimension(wf%n_v*wf%n_o, 1), intent(in)    :: c1
-      real(dp), dimension(wf%n_v,wf%n_o), intent(inout) :: rho1      
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c1
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho1      
 !
-      real(dp), dimension(:,:), allocatable :: g_ai_jb
       real(dp), dimension(:,:), allocatable :: g_ab_ji
       real(dp), dimension(:,:), allocatable :: L_ai_jb
 !
@@ -2251,7 +2534,7 @@ contains
 !
       type(batching_index) :: batch_b
 !
-      integer(i15) :: required, j, b, b_full, bj, current_b_batch
+      integer(i15) :: required, j, b, b_red, current_b_batch
 !
       call batch_b%init(wf%n_v) 
 !
@@ -2293,19 +2576,17 @@ contains
 !        Reorder c1 to do multiply with L_ai_jb
 !
          call mem%alloc(c_jb, (wf%n_o), batch_b%length)
-         c_jb = zero
-!
 !
          do b = batch_b%first, batch_b%last
             do j = 1, wf%n_o
 !
-               bj = wf%n_v*(j-1) + b
-!
-               c_jb(j, b - batch_b%first + 1) = c1(bj, 1)
+               b_red = b - batch_b%first + 1
+!  
+               c_jb(j, b_red) = c1(b, j)
 !
             enddo
          enddo
-!
+    
 !
          call dgemm('N', 'N',                   &
                      (wf%n_v)*(wf%n_o),         &
@@ -2429,7 +2710,7 @@ contains
 !
          call mem%alloc(g_ca_ik, (wf%n_v)*(batch_a%length), (wf%n_o)**2)
 !
-         call wf%get_vvoo(g_ca_ik,       &
+         call wf%get_vvoo(g_ca_ik,        &
                            1,             &
                            wf%n_v,        &
                            batch_a%first, &
@@ -2485,6 +2766,222 @@ contains
       call mem%dealloc(L_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
    end subroutine jacobian_transpose_ccs_b1_ccs
+!
+!
+   subroutine construct_eta_ccs(wf, eta)
+!!
+!!    Construct eta 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: eta 
+!
+      integer(i15) :: i, a, ai
+!
+      do i = 1, wf%n_o 
+         do a = 1, wf%n_v 
+!
+            ai = (wf%n_v)*(i - 1) + a
+            eta(ai, 1) = two*(wf%fock_ia(i, a))
+!
+         enddo
+      enddo
+!
+   end subroutine construct_eta_ccs
+!
+!
+   subroutine construct_multiplier_equation_ccs(wf, equation)
+!!
+!!    Construct multiplier equation 
+!!    Written by Eirik F. Kjønstad, Oct 2018 
+!!
+!!    Constructs 
+!!
+!!       t-bar^T A + eta,
+!!
+!!    and places the result in 'equation'.
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: equation 
+!
+      real(dp), dimension(:,:), allocatable :: eta 
+!
+!     Copy the multipliers, eq. = t-bar 
+!
+      call dcopy(wf%n_t1, wf%t1bar, 1, equation, 1)
+!
+!     Transform the multipliers by A^T, eq. = t-bar^T A 
+!
+      call wf%jacobian_transpose_ccs_transformation(equation)
+!
+!     Add eta, eq. = t-bar^T A + eta 
+!
+      call mem%alloc(eta, wf%n_t1, 1)
+      call wf%construct_eta(eta)
+!
+      call daxpy(wf%n_t1, one, eta, 1, equation, 1)
+!
+      call mem%dealloc(eta, wf%n_t1, 1)
+!
+   end subroutine construct_multiplier_equation_ccs
+!
+!
+   subroutine add_bath_orbitals_ccs(wf)
+!!
+!!    Add bath orbitals,
+!!    Written by Sarai D. Folkestad, Oct. 2018 
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      integer(i15) :: p, q, pq, ao, removed_orbitals
+!
+      type(file) :: h_pq_file
+!
+      real(dp), dimension(:,:), allocatable :: orbital_coeff_copy, L_J, h_pq
+!
+!     Read number and type of bath orbitals (for now only 1 and for ionization)
+!
+      wf%n_bath = 1
+!
+!     Add atom X to system (if necessary), with s-type orbitals 
+!
+      call mem%alloc(orbital_coeff_copy, wf%n_ao, wf%n_mo)
+!
+      orbital_coeff_copy = wf%orbital_coefficients
+!
+      call mem%dealloc(wf%orbital_coefficients, wf%n_ao, wf%n_mo)
+!
+!     Update coefficient matrix
+!
+      call mem%alloc(wf%orbital_coefficients, wf%n_ao + wf%n_bath, wf%n_mo + wf%n_bath)
+      wf%orbital_coefficients = zero
+!
+      wf%orbital_coefficients(1:wf%n_ao, 1:wf%n_mo) = orbital_coeff_copy(:,:)
+!
+      call mem%dealloc(orbital_coeff_copy, wf%n_ao, wf%n_mo)
+!
+      removed_orbitals = wf%n_ao - wf%n_mo ! Due to linear dependancy
+!
+!     Bath orbitals do not mix with other orbitals
+!
+      do ao = wf%n_ao + 1, wf%n_ao + wf%n_bath
+!
+         wf%orbital_coefficients(ao, ao - removed_orbitals) = one
+!
+      enddo
+!
+!     Update n_ao, n_mo, n_v
+!
+      wf%n_ao = wf%n_ao + wf%n_bath
+      wf%n_mo = wf%n_mo + wf%n_bath
+      wf%n_v  = wf%n_v + wf%n_bath
+!
+!     Update h_pq matrix
+!
+      call h_pq_file%init('h_pq', 'sequential', 'unformatted')
+      call disk%open_file(h_pq_file, 'readwrite')
+      rewind(h_pq_file%unit)
+!
+      call mem%alloc(h_pq, wf%n_mo, wf%n_mo)
+      h_pq = zero
+!
+      read(h_pq_file%unit) h_pq(1:wf%n_mo - wf%n_bath, 1:wf%n_mo - wf%n_bath)
+      rewind(h_pq_file%unit)
+      write(h_pq_file%unit) h_pq
+!
+      call disk%close_file(h_pq_file)
+!
+!     Update cholesky vectors
+!
+      call disk%open_file(wf%integrals%cholesky_mo, 'write')
+!
+      call mem%alloc(L_J, 1, wf%integrals%n_J)
+      L_J = zero
+!
+      do p = wf%n_mo - wf%n_bath, wf%n_mo
+         do q = 1, p 
+!
+            pq = p*(p-3)/2 + p + q
+!
+            write(wf%integrals%cholesky_mo%unit, rec=pq) L_J
+!
+         enddo
+      enddo
+!
+      call mem%dealloc(L_J, 1, wf%integrals%n_J)
+!
+      call disk%close_file(wf%integrals%cholesky_mo)
+!
+   end subroutine add_bath_orbitals_ccs
+!
+!
+   subroutine get_cvs_projector_ccs(wf, projector, n_cores, core_MOs)
+!!
+!!    Get CVS projector
+!!    Written by Sarai D. Folekstad, Oct 2018
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_amplitudes, 1), intent(out) :: projector
+!
+      integer(i15), intent(in) :: n_cores
+!
+      integer(i15), dimension(n_cores, 1), intent(in) :: core_MOs
+!
+      integer(i15) :: core, i, a, ai
+!
+      projector = zero
+!
+      do core = 1, n_cores
+!
+        i = core_MOs(core, 1)
+!
+        do a = 1, wf%n_v
+!
+           ai = wf%n_v*(i - 1) + a
+           projector(ai, 1) = one
+!
+        enddo
+     enddo
+!
+   end subroutine get_cvs_projector_ccs
+!
+!
+   subroutine get_ip_projector_ccs(wf, projector)
+!!
+!!    Get ip projector
+!!    Written by Sarai D. Folekstad, Oct 2018
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_amplitudes, 1), intent(out) :: projector
+!
+      integer(i15) :: i, a, ai
+!
+      projector = zero
+!
+      a = wf%n_v ! Last virtual is bath orbital
+!
+      do i = 1, wf%n_o
+!
+         ai = wf%n_v*(i - 1) + a
+         projector(ai, 1) = one
+!
+     enddo
+!
+   end subroutine get_ip_projector_ccs
 !
 !
 end module ccs_class

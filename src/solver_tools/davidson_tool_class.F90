@@ -35,6 +35,8 @@ module davidson_tool_class
       logical :: do_precondition
       logical :: do_projection
 !
+      integer(i15) :: current_n_trials
+!
    contains
 !
 !     Read and write routines
@@ -64,11 +66,13 @@ module davidson_tool_class
 !
       procedure :: set_trials_to_solutions => set_trials_to_solutions_davidson_tool
       procedure :: restart_from_solutions  => restart_from_solutions_davidson_tool
+      procedure :: rewind_trials           => rewind_trials_davidson_tool
+!
+      procedure :: write_trial_with_GS => write_trial_with_GS_davidson_tool
 !
 !     Deferred routines  
 !
       procedure(solve_reduced_problem), deferred :: solve_reduced_problem
-      procedure(construct_residual), deferred    :: construct_residual
 !
       procedure :: read_max_dim_red => read_max_dim_red_davidson_tool
 !
@@ -89,23 +93,6 @@ module davidson_tool_class
       end subroutine solve_reduced_problem
 !
 !
-      subroutine construct_residual(davidson, R, X, norm_X, n)
-!
-         import :: davidson_tool, dp, i15
-!
-         implicit none 
-!
-         class(davidson_tool), intent(in) :: davidson 
-!
-         real(dp), dimension(davidson%n_parameters, 1)             :: R 
-         real(dp), dimension(davidson%n_parameters, 1), intent(in) :: X 
-!
-         real(dp), intent(in) :: norm_X 
-!
-         integer(i15), intent(in) :: n
-!
-      end subroutine construct_residual
-!
    end interface
 !
 contains
@@ -124,13 +111,13 @@ contains
 !
       real(dp), dimension(davidson%n_parameters, 1) :: c_i
 !
-      integer(i15) :: n
+      integer(i15), optional :: n
 !
       integer(i15) :: ioerror
 !
       call disk%open_file(davidson%trials, 'read')
 !
-      call davidson%trials%prepare_to_read_line(n)
+      if (present(n)) call davidson%trials%prepare_to_read_line(n)
 !
       read(davidson%trials%unit, iostat = ioerror) c_i
       if (ioerror .ne. 0) call output%error_msg('reading trial vectors file.')
@@ -187,6 +174,60 @@ contains
    end subroutine write_trial_davidson_tool
 !
 !
+   subroutine write_trial_with_GS_davidson_tool(davidson, c)
+!!
+!!    Write trial with Gram-Schmidt orthogonalization 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2018 
+!!
+      implicit none 
+!
+      class(davidson_tool) :: davidson 
+!
+      real(dp), dimension(davidson%n_parameters, 1) :: c 
+!
+      real(dp), dimension(:,:), allocatable :: c_i 
+!
+      real(dp) :: ddot, norm_c, projection_of_c_on_c_i
+!
+      integer(i15) :: i
+!
+!     Orthogonalize against current trial vectors 
+!
+      call mem%alloc(c_i, davidson%n_parameters, 1)
+!
+      call davidson%rewind_trials()
+!
+      do i = 1, davidson%current_n_trials
+!
+         call davidson%read_trial(c_i)  
+!
+         projection_of_c_on_c_i = ddot(davidson%n_parameters, c_i, 1, c, 1)
+         call daxpy(davidson%n_parameters, -projection_of_c_on_c_i, c_i, 1, c, 1)
+!
+      enddo 
+!
+!     Normalize the vector that results 
+!
+      norm_c = sqrt(ddot(davidson%n_parameters, c, 1, c, 1))
+      call dscal(davidson%n_parameters, one/norm_c, c, 1)
+!
+!     Write trial vector to file 
+!
+      if (davidson%current_n_trials .eq. 0) then 
+!
+         call davidson%write_trial(c, 'rewind')
+!
+      else
+!
+         call davidson%write_trial(c, 'append')
+!
+      endif
+!
+      davidson%current_n_trials = davidson%current_n_trials + 1
+!
+   end subroutine write_trial_with_GS_davidson_tool
+!
+!
    subroutine add_initial_trial_vec_davidson_tool(davidson, c)
 !!
 !!    Add initial trial vector 
@@ -212,7 +253,7 @@ contains
       if (davidson%dim_red .eq. 0) then 
 !
          norm_c = get_l2_norm(c, davidson%n_parameters)
-         c = c/norm_c
+         call dscal(davidson%n_parameters, one/norm_c, c, 1)
 !
          call disk%open_file(davidson%trials, 'write', 'rewind')
          write(davidson%trials%unit) c 
@@ -227,12 +268,12 @@ contains
             call davidson%read_trial(c_i, i)
             projection_of_c_on_c_i = ddot(davidson%n_parameters, c_i, 1, c, 1)
 !
-            c = c - projection_of_c_on_c_i*c_i 
+            call daxpy(davidson%n_parameters, -projection_of_c_on_c_i, c_i, 1, c, 1)
 !
          enddo 
 !
          norm_c = get_l2_norm(c, davidson%n_parameters)
-         c = c/norm_c
+         call dscal(davidson%n_parameters, one/norm_c, c, 1)
 !
          call disk%open_file(davidson%trials, 'write', 'append')
          write(davidson%trials%unit) c 
@@ -416,8 +457,7 @@ contains
 !
             read(davidson%trials%unit, iostat=ioerror) c_i
             if (ioerror .ne. 0) call output%error_msg('reading trial vector file.')
-!
-            
+!           
             rewind(davidson%transforms%unit)
 !
             do j = 1, davidson%dim_red
@@ -774,24 +814,46 @@ contains
 !
       class(davidson_tool) :: davidson 
 !
-      real(dp), dimension(:,:), allocatable :: X
+      real(dp), dimension(:,:), allocatable :: X, c_i
 !
-      integer(i15) :: solution
+      integer(i15) :: solution, i
 !
-      call disk%open_file(davidson%trials, 'write', 'rewind')
+      real(dp) :: projection_of_X_on_c_i, ddot, norm
+!
+      call disk%open_file(davidson%trials, 'readwrite')
       call disk%open_file(davidson%X, 'read')
+!
       rewind(davidson%X%unit)
+      rewind(davidson%trials%unit)
 !
       call mem%alloc(X, davidson%n_parameters, 1)
+      call mem%alloc(c_i, davidson%n_parameters, 1)
 !
       do solution = 1, davidson%n_solutions
 !
-         read(davidson%X%unit) X 
+         read(davidson%X%unit) X
+!
+         rewind(davidson%trials%unit)
+!
+         do i = 1, solution - 1
+!
+            read(davidson%trials%unit) c_i
+!
+            projection_of_X_on_c_i = ddot(davidson%n_parameters, c_i, 1, X, 1)
+!
+            call daxpy(davidson%n_parameters, - projection_of_X_on_c_i, c_i, 1, X, 1)
+!
+         enddo
+!
+         norm = sqrt(ddot(davidson%n_parameters, X, 1, X, 1))
+         call dscal(davidson%n_parameters, one/norm, X, 1)
+!
          write(davidson%trials%unit) X
 !
       enddo
 !
       call mem%dealloc(X, davidson%n_parameters, 1)
+      call mem%dealloc(c_i, davidson%n_parameters, 1)
 !
       rewind(davidson%trials%unit)
 !
@@ -800,8 +862,7 @@ contains
 !
 !     Delete transformed vectors file, if it is there
 !
-      call disk%open_file(davidson%transforms, 'write', 'rewind')
-      call disk%close_file(davidson%transforms, 'delete')
+      call disk%delete(davidson%transforms)
 !
 !     Delete A_red if it is there
 !
@@ -847,9 +908,9 @@ contains
       enddo
 !
    end subroutine read_max_dim_red_davidson_tool
-!  
 !
-   subroutine restart_from_solutions_davidson_tool(davidson)
+!
+   subroutine restart_from_solutions_davidson_tool(davidson, n_solutions)
 !!
 !!    Restart from solutions
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -861,40 +922,35 @@ contains
 !
       class(davidson_tool) :: davidson 
 !
+      integer(i15), intent(in) :: n_solutions
+!
       real(dp), dimension(:,:), allocatable :: X
 !
-      integer(i15) :: solution, n_solutions, ioerror
+      integer(i15) :: solution
 !
 !     Is file on disk?
 !
-      if (disk%file_exists(davidson%X)) then
+      if (davidson%X%file_exists()) then
 !
-!        Find number of solutions on file
-!  
          call disk%open_file(davidson%X, 'read')
          rewind(davidson%X%unit)
 !
-         call disk%open_file(davidson%trials, 'write', 'rewind')
-!
          call mem%alloc(X, davidson%n_parameters, 1)
 !
-         ioerror     = 0
-         n_solutions = 0
+         do solution = 1, n_solutions
 !
-         do while (ioerror == 0 .and. n_solutions .lt. davidson%n_solutions)
+            X = zero
+            read(davidson%X%unit) X
 !
-            read(davidson%X%unit, iostat = ioerror) X
-            write(davidson%trials%unit) X
-            n_solutions = n_solutions + 1
+            write(output%unit, *)(davidson%current_n_trials)
+!
+            call davidson%write_trial_with_GS(X)
 !
          enddo
 !
          call mem%dealloc(X, davidson%n_parameters, 1)
 !
-         rewind(davidson%trials%unit)
-!
-         call disk%close_file(davidson%trials)
-         call disk%close_file(davidson%X, 'delete')
+         call disk%close_file(davidson%X)
 !
       else ! File is not on disk 
 !  
@@ -903,6 +959,20 @@ contains
       endif
 !
    end subroutine restart_from_solutions_davidson_tool
+!
+!
+   subroutine rewind_trials_davidson_tool(davidson)
+!!
+!!    Rewind trials  
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2018
+!!
+      implicit none 
+!
+      class(davidson_tool) :: davidson 
+!
+      call disk%rewind_file(davidson%trials)
+!
+   end subroutine rewind_trials_davidson_tool
 !
 !
 end module davidson_tool_class

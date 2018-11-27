@@ -72,7 +72,8 @@ contains
 !
       class(wavefunction), intent(in) :: wf 
 !
-!     Nothing here (overwrite in descendants)
+      write(output%unit, '(/t3,a,a,a)') '- Summary of ', trim(wf%name), ' wavefunction:'
+!
 !
    end subroutine print_wavefunction_summary_wavefunction
 !

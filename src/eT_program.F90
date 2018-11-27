@@ -1,8 +1,8 @@
 program eT_program
 !
 !!
-!!                        eT - a coupled cluster program
-!!         Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
+!!  eT - a coupled cluster program
+!!  Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2017-2018
 !!
 !
   use kinds
@@ -18,6 +18,7 @@ program eT_program
   use mlhf_class
 !
   use ccs_class
+  use ccsd_class
   use mp2_class
 !
   use io_eT_program
@@ -25,6 +26,7 @@ program eT_program
   use hf_engine_class
   use gs_engine_class
   use es_engine_class
+  use multipliers_engine_class
   use abstract_engine_class
 !
   use eri_cd_solver_class
@@ -42,6 +44,7 @@ program eT_program
     type(mlhf), allocatable, target  :: mlhf_wf 
 !
     type(ccs), allocatable, target   :: ccs_wf
+    type(ccsd), allocatable, target  :: ccsd_wf
     type(mp2), allocatable, target   :: mp2_wf
 !
 !   Wavefunction pointers
@@ -58,6 +61,7 @@ program eT_program
     type(hf_engine), allocatable         :: gs_hf_engine
     type(gs_engine), allocatable, target :: gs_cc_engine
     type(es_engine), allocatable, target :: es_cc_engine
+    type(multipliers_engine), allocatable, target :: multipliers_cc_engine
 !
 !   Engine pointer
 !
@@ -84,12 +88,13 @@ program eT_program
     write(output%unit,'(/t12,a)')   'S. D. Folkestad, E. F. Kjønstad, H. Koch and A. Skeidsvoll'
     flush(output%unit)
 
-    write(output%unit,'(//t3a)')    '--------------------------------------------------------------------------------------------'
+    write(output%unit,'(//t3,a)')    '--------------------------------------------------------------------------------------------'
     write(output%unit,'(/t3,a, a/)')'Contributor:       ','Contributions:'
-    write(output%unit,'(t3,a, a)')   'E. F. Kjønstad     ','HF, UHF, CCS, MP2, Cholesky decomposition, DIIS-tool, Davidson-tool'
-    write(output%unit,'(t3,a, a)')   'S. D. Folkestad    ','HF, CCS, Cholesky decomposition, Davidson-tool, CVS'
-    write(output%unit,'(t3,a, a)')   'A. Skeidsvoll      ','MP2'
-    write(output%unit,'(/t3a//)')'-------------------------------------------------------------------------------------------'
+    write(output%unit,'(t3,a, a)')   'E. F. Kjønstad     ','HF, UHF, CCS, CCSD, MP2, Cholesky decomposition, DIIS-tool,'
+    write(output%unit,'(t3,a, a)')   '                   ','Davidson-tool'
+    write(output%unit,'(t3,a, a)')   'S. D. Folkestad    ','HF, CCS, CCSD, Cholesky decomposition, Davidson-tool, CVS'
+    write(output%unit,'(t3,a, a)')   'A. Skeidsvoll      ','MP2, CCSD'
+    write(output%unit,'(/t3,a//)')'-------------------------------------------------------------------------------------------'
     flush(output%unit)
 !
 !   Prepare memory manager and disk manager
@@ -195,6 +200,9 @@ program eT_program
 !
         elseif (cc_methods(i) == 'ccsd') then
 !
+          allocate(ccsd_wf)
+          cc_wf => ccsd_wf
+!
         endif
 !
 !       Determine engine
@@ -207,7 +215,13 @@ program eT_program
         elseif (cc_engine == 'excited state') then
 !
           allocate(es_cc_engine)
-          engine => es_cc_engine  
+          engine => es_cc_engine
+!
+        elseif (cc_engine == 'multipliers') then
+!
+          allocate(multipliers_cc_engine)
+          engine => multipliers_cc_engine 
+!
 !
         endif
 !

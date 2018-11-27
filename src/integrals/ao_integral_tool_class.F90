@@ -27,11 +27,11 @@ module ao_integral_tool_class
 !
    contains
 !
-      procedure :: construct_ao_h_wx           => construct_ao_h_wx_ao_integral_tool            ! h_αβ
-      procedure :: construct_ao_s_wx           => construct_ao_s_wx_ao_integral_tool            ! h_αβ
-      procedure :: construct_ao_g_wxyz         => construct_ao_g_wxyz_ao_integral_tool          ! g_αβγδ
-      procedure :: construct_ao_g_wxyz_epsilon => construct_ao_g_wxyz_epsilon_ao_integral_tool  ! g_αβγδ
-      procedure :: construct_ao_mu_wx          => construct_ao_mu_wx_ao_integral_tool           ! μ_αβ
+      procedure, nopass :: construct_ao_h_wx           => construct_ao_h_wx_ao_integral_tool            ! h_αβ
+      procedure, nopass :: construct_ao_s_wx           => construct_ao_s_wx_ao_integral_tool            ! h_αβ
+      procedure, nopass :: construct_ao_g_wxyz         => construct_ao_g_wxyz_ao_integral_tool          ! g_αβγδ
+      procedure, nopass :: construct_ao_g_wxyz_epsilon => construct_ao_g_wxyz_epsilon_ao_integral_tool  ! g_αβγδ
+      procedure, nopass :: construct_ao_mu_wx          => construct_ao_mu_wx_ao_integral_tool           ! μ_αβ
 !
    end type ao_integral_tool
 !
@@ -39,7 +39,7 @@ module ao_integral_tool_class
 contains
 !
 !
-   subroutine construct_ao_h_wx_ao_integral_tool(integrals, h, s1, s2)
+   subroutine construct_ao_h_wx_ao_integral_tool(h, s1, s2)
 !!
 !!    Construct h_αβ
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -50,8 +50,6 @@ contains
 !!
       implicit none
 !
-      class(ao_integral_tool) :: integrals
-!
       real(dp), dimension(:,:), intent(inout) :: h
       integer(i15), intent(in) :: s1, s2
 !
@@ -60,7 +58,7 @@ contains
    end subroutine construct_ao_h_wx_ao_integral_tool
 !
 !
-   subroutine construct_ao_s_wx_ao_integral_tool(integrals, s, s1, s2)
+   subroutine construct_ao_s_wx_ao_integral_tool(s, s1, s2)
 !!
 !!    Construct s_αβ
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -71,8 +69,6 @@ contains
 !!
       implicit none
 !
-      class(ao_integral_tool) :: integrals
-!
       real(dp), dimension(:,:), intent(inout) :: s
       integer(i15), intent(in) :: s1, s2
 !
@@ -81,7 +77,7 @@ contains
    end subroutine construct_ao_s_wx_ao_integral_tool
 !
 !
-   subroutine construct_ao_g_wxyz_ao_integral_tool(integrals, g, s1, s2, s3, s4)
+   subroutine construct_ao_g_wxyz_ao_integral_tool(g, s1, s2, s3, s4)
 !!
 !!    Construct g_αβγδ
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -92,8 +88,6 @@ contains
 !!
       implicit none
 !
-      class(ao_integral_tool), intent(in) :: integrals
-!
       real(dp), dimension(:,:), intent(inout) :: g
 !
       integer(i15), intent(in) :: s1, s2, s3, s4
@@ -103,7 +97,7 @@ contains
    end subroutine construct_ao_g_wxyz_ao_integral_tool
 !
 !
-   subroutine construct_ao_g_wxyz_epsilon_ao_integral_tool(integrals, g, s1, s2, s3, s4, epsilon, thread, skip, &
+   subroutine construct_ao_g_wxyz_epsilon_ao_integral_tool(g, s1, s2, s3, s4, eps, thread, skip, &
                                                             n1, n2, n3, n4)
 !!
 !!    Construct g_αβγδ epsilon 
@@ -138,21 +132,19 @@ contains
 !!
       implicit none
 !
-      class(ao_integral_tool), intent(in) :: integrals
-!
       real(dp), dimension(:,:), intent(inout) :: g
 !
-      real(dp), intent(in) :: epsilon 
+      real(dp), intent(in) :: eps 
 !
       integer(i15), intent(in) :: s1, s2, s3, s4, thread, n1, n2, n3, n4 
       integer(i15) :: skip 
 !
-      call construct_ao_g_wxyz_epsilon(g, s1, s2, s3, s4, epsilon, thread, skip, n1, n2, n3, n4)
+      call construct_ao_g_wxyz_epsilon(g, s1, s2, s3, s4, eps, thread, skip, n1, n2, n3, n4)
 !
    end subroutine construct_ao_g_wxyz_epsilon_ao_integral_tool
 !
 !
-   subroutine construct_ao_mu_wx_ao_integral_tool(integrals, mu_X, mu_Y, mu_Z, s1, s2)
+   subroutine construct_ao_mu_wx_ao_integral_tool(mu_X, mu_Y, mu_Z, s1, s2)
 !!
 !!    Construct μ_αβ
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
@@ -166,8 +158,6 @@ contains
 !!    (Because this is how Libint computes them.)
 !!
       implicit none 
-!
-      class(ao_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(:,:), intent(inout) :: mu_X ! x component
       real(dp), dimension(:,:), intent(inout) :: mu_Y ! y component 

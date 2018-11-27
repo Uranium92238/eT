@@ -5,7 +5,6 @@ module hf_engine_class
 !!
    use hf_class 
 !
-   use arh_hf_solver_class
    use scf_diis_hf_solver_class
    use scf_hf_solver_class
 !
@@ -13,25 +12,23 @@ module hf_engine_class
 !
    contains 
 !
-      procedure :: prepare    => prepare_hf_engine
+      procedure, nopass :: prepare    => prepare_hf_engine
       procedure :: run        => run_hf_engine
-      procedure :: cleanup    => cleanup_hf_engine
+      procedure, nopass :: cleanup    => cleanup_hf_engine
 !
-      procedure :: read_algorithm => read_algorithm_hf_engine
+      procedure, nopass :: read_algorithm => read_algorithm_hf_engine
 !
    end type hf_engine 
 !
 contains
 !
 !
-   subroutine prepare_hf_engine(engine)
+   subroutine prepare_hf_engine()
 !!
 !!    Prepare 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
 !!
       implicit none 
-!
-      class(hf_engine) :: engine 
 !
    end subroutine prepare_hf_engine
 !
@@ -47,7 +44,6 @@ contains
 !
       class(hf) :: wf 
 !
-      type(arh_hf_solver), allocatable      :: arh
       type(scf_diis_hf_solver), allocatable :: scf_diis
       type(scf_hf_solver), allocatable      :: scf
 !
@@ -57,29 +53,11 @@ contains
 !
          call engine%read_algorithm(algorithm)
 !
-         if (trim(algorithm) == 'aug-rh') then
-!
-            call output%error_msg("aug-rh is not yet working (to-do)") 
-!
-            allocate(arh)
-!
-            call arh%prepare(wf)
-!
-            call wf%print_screening_settings()
-!
-            call arh%run(wf)
-            call arh%cleanup(wf)
-!
-            deallocate(arh)
-!
-         elseif (trim(algorithm) == 'scf-diis') then
+         if (trim(algorithm) == 'scf-diis') then
 !
             allocate(scf_diis)
 !
             call scf_diis%prepare(wf)
-!
-            call wf%print_screening_settings()
-!
             call scf_diis%run(wf)
             call scf_diis%cleanup(wf)
 !
@@ -90,9 +68,6 @@ contains
             allocate(scf)
 !
             call scf%prepare(wf)
-!
-            call wf%print_screening_settings()
-!
             call scf%run(wf)
             call scf%cleanup(wf)
 !
@@ -122,26 +97,22 @@ contains
    end subroutine run_hf_engine
 !
 !
-   subroutine cleanup_hf_engine(engine)
+   subroutine cleanup_hf_engine()
 !!
 !!    Cleanup 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
 !!
       implicit none 
 !
-      class(hf_engine) :: engine 
-!
    end subroutine cleanup_hf_engine
 !
 !
-   subroutine read_algorithm_hf_engine(engine, algorithm)
+   subroutine read_algorithm_hf_engine(algorithm)
 !!
 !!    Read algorithm
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018 
 !!
       implicit none
-!
-      class(hf_engine), intent(in) :: engine 
 !
       character(len=100), intent(out) :: algorithm
 !

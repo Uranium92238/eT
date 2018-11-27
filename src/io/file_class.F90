@@ -20,7 +20,7 @@ module file_class
 !
 !     File size (in bytes)
 !
-      integer(i15) :: size = -1
+      integer(i15), private :: file_size = -1
 !
 !     Logical for whether the file is currently opened or not
 !
@@ -33,11 +33,17 @@ module file_class
 !
    contains
 !
-      procedure :: init => init_file
+      procedure :: init                   => init_file
 !
-      procedure :: prepare_to_read_line => prepare_to_read_line_file
+      procedure :: prepare_to_read_line   => prepare_to_read_line_file
 !
-      procedure :: error_msg => error_msg_file
+      procedure :: error_msg              => error_msg_file
+      procedure :: warning_msg            => warning_msg_file
+!
+      procedure :: determine_file_size    => determine_file_size_file
+!
+      procedure :: get_file_size          => get_file_size_file
+      procedure :: file_exists            => file_exists_file
 !
    end type file
 !
@@ -76,21 +82,20 @@ contains
       the_file%name = name
 !
       if (.not. present(record_length)) then
+!
         if (access == 'direct') then
 !
-            write(output%unit,'(/t3,a)') 'Error: for direct access files a record length must be specified.'
-            stop
+            call output%error_msg('for direct access files a record length must be specified.')
+!
          endif
 !
       elseif (access .ne. 'direct' .and. access .ne. 'sequential') then
 !
-         write(output%unit,'(/t3,a)') 'Error: illegal access type specified for file: ', name, access
-         stop
+         call output%error_msg('illegal access type specified for file: ' // name // access)
 !
       elseif (format .ne. 'unformatted' .and. format .ne. 'formatted') then
 !
-         write(output%unit,'(/t3,a)') 'Error: illegal format specified for file: ', name
-         stop
+         call output%error_msg('illegal format specified for file: ' // name)
 !
       endif
 !
@@ -134,12 +139,11 @@ contains
 !
       if (.not. the_file%opened) then
 !
-         write(output%unit,'(/t3,a)') 'Error: attempted to read unopened file.'
-         stop
+         call output%error_msg('attempted to read unopened file:' // trim(the_file%name))
 !
       elseif (the_file%access == 'direct') then
 !
-         write(output%unit,'(/t3,a)') 'Warning: no need to prepare to read line for a direct access file.'
+         call output%warning_msg('no need to prepare to read line for a direct access file.')
          return
 !
       endif
@@ -167,7 +171,7 @@ contains
    end subroutine prepare_to_read_line_file
 !
 !
-   subroutine error_msg_file(out_file, error_specs)
+   subroutine error_msg_file(out_file, error_specs, error_int)
 !!
 !!    Error message
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -178,10 +182,104 @@ contains
 !
       character(len=*) :: error_specs
 !
-      write(out_file%unit, '(a)') 'Error: ' // trim(error_specs)
+      integer(i15), optional :: error_int 
+!
+      character(len=40) :: error_int_char = ' '
+!
+      if (present(error_int)) then
+!
+         write(error_int_char, '(i12)') error_int   
+!
+         write(out_file%unit, '(a)') 'Error: ' // trim(error_specs) // ' ' // error_int_char
+!
+      else
+!
+         write(out_file%unit, '(a)') 'Error: ' // trim(error_specs)
+!
+      endif
+!
       stop
 !
    end subroutine error_msg_file
 !
 !
+   subroutine warning_msg_file(out_file, warning_specs)
+!!
+!!    Warning message
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(file) :: out_file
+!
+      character(len=*) :: warning_specs
+!
+      write(out_file%unit, '(a)') 'Warning: ' // trim(warning_specs)
+!
+   end subroutine warning_msg_file
+!
+!
+   subroutine determine_file_size_file(the_file)
+!!
+!!    Determine file size
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Mar 2018
+!!    Moved to file by Rolf H. Myhre Nov. 2018
+!!
+!!    The disk manager handles files. This routine is called by it
+!!    and should never be called by the user (because it can lead to
+!!    errors in the disk space estimates).
+!!
+      implicit none
+!
+      class(file) :: the_file
+!
+!     Inquire about the file size
+!
+      inquire(file=the_file%name, size=the_file%file_size)
+!
+!     Check whether the file size could be calculated
+!
+      if (the_file%file_size .eq. -1) then
+!
+         call output%error_msg('could not calculate file size of the file ' // trim(the_file%name))
+!
+      endif
+!
+   end subroutine determine_file_size_file
+!
+!
+   function get_file_size_file(the_file)
+!!
+!!    Return private variable file_size
+!!    Written by Rolf H. Myhre, 2018
+!!    
+!
+      implicit none
+!  
+      class(file), intent(in) :: the_file
+!
+      integer(i15) :: get_file_size_file
+      get_file_size_file = the_file%file_size
+!
+   end function get_file_size_file
+!
+!  
+   function file_exists_file(the_file)
+!!
+!!    File exists
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!    Moved to file by Rolf H. Myhre Nov. 2018
+!!    
+!
+      implicit none
+!  
+      class(file), intent(in) :: the_file
+!
+      logical :: file_exists_file
+!
+      inquire(file=the_file%name, exist=file_exists_file)
+!
+   end function file_exists_file
+!
+!  
 end module file_class

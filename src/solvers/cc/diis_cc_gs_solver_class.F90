@@ -14,29 +14,42 @@ module diis_cc_gs_solver_class
 !
    type :: diis_cc_gs_solver
 !
-      integer(i15) :: diis_dimension = 8
+      character(len=100) :: tag = 'DIIS CC ground solver'
+      character(len=100) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
 !
-      integer(i15) :: max_iterations = 50
+      character(len=500) :: description1 = 'A DIIS CC ground state amplitude equations solver. It combines &
+                                           &a quasi-Newton perturbation theory estimate of the next &
+                                           &amplitudes, using least square fitting to find an an optimal &
+                                           &combination of previous estimates such that the update is minimized.'
 !
-      real(dp) :: energy_threshold = 1.0d-6
-      real(dp) :: omega_threshold  = 1.0d-6
+      character(len=500) :: description2 = 'See Helgaker et al., Molecular Electronic Structure Theory, &
+                                           &Chapter 13, for the more details on this algorithm.'
 !
-      logical :: restart = .false.
+      integer(i15) :: diis_dimension
+!
+      integer(i15) :: max_iterations 
+!
+      real(dp) :: energy_threshold
+      real(dp) :: omega_threshold 
+!
+      type(file) :: restart_file
+      logical    :: do_restart
 !
    contains
 !     
+      procedure, nopass :: do_diagonal_precondition => do_diagonal_precondition_diis_cc_gs_solver
+!
       procedure :: prepare                  => prepare_diis_cc_gs_solver
       procedure :: run                      => run_diis_cc_gs_solver
       procedure :: cleanup                  => cleanup_diis_cc_gs_solver
 !
       procedure :: print_banner             => print_banner_diis_cc_gs_solver
-      procedure :: print_summary            => print_summary_diis_cc_gs_solver
-!
       procedure :: read_settings            => read_settings_diis_cc_gs_solver
 !
       procedure :: print_settings           => print_settings_diis_cc_gs_solver
 !
-      procedure :: do_diagonal_precondition => do_diagonal_precondition_diis_cc_gs_solver
+      procedure :: restart                  => restart_diis_cc_gs_solver
+      procedure :: write_restart_file       => write_restart_file_diis_cc_gs_solver
 !
    end type diis_cc_gs_solver
 !
@@ -59,25 +72,17 @@ contains
 !
       call solver%print_banner()
 !
-!     Read settings (thresholds, etc.)
+!     Set standard settings 
 !
-      if (requested_section('cc ground state')) then
+      solver%diis_dimension   = 8 
+      solver%max_iterations   = 100
+      solver%energy_threshold = 1.0d-6
+      solver%omega_threshold  = 1.0d-6
+      solver%do_restart       = .false.
 !
-         call solver%read_settings()
+!     Read & print settings (thresholds, etc.)
 !
-      else
-!
-!        Set defaults
-!
-         solver%diis_dimension = 8
-         solver%max_iterations = 50
-!
-         solver%energy_threshold = 1.0d-6
-         solver%omega_threshold  = 1.0d-6
-!
-         solver%restart = .false.
-!
-      endif
+      if (requested_section('cc ground state')) call solver%read_settings()
 !
       call solver%print_settings()
 !
@@ -85,9 +90,13 @@ contains
 !
       call wf%initialize_amplitudes()
 !
-      if (solver%restart) then
+!     Prepare restart information file 
 !
-       !  call wf%read_amplitudes()
+      call solver%restart_file%init('diis_cc_gs_restart_info', 'sequential', 'formatted')
+!
+      if (solver%do_restart) then
+!
+         call solver%restart(wf)
 ! 
       else
 !
@@ -96,6 +105,59 @@ contains
       endif
 !
    end subroutine prepare_diis_cc_gs_solver
+!
+!
+   subroutine write_restart_file_diis_cc_gs_solver(solver, wf)
+!!
+!!    Write restart file 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Oct 2018
+!!
+      implicit none 
+!
+      class(diis_cc_gs_solver), intent(inout) :: solver
+!
+      class(ccs), intent(in) :: wf 
+!
+      call disk%open_file(solver%restart_file, 'write', 'rewind')
+!
+      write(solver%restart_file%unit, *) 'n_amplitudes'
+      write(solver%restart_file%unit, *) wf%n_amplitudes
+!
+      call disk%close_file(solver%restart_file)       
+!
+   end subroutine write_restart_file_diis_cc_gs_solver
+!
+!
+   subroutine restart_diis_cc_gs_solver(solver, wf)
+!!
+!!    Restart 
+!!    Written by Eirik F. Kjønstad, Oct 2018 
+!!
+      implicit none 
+!
+      class(diis_cc_gs_solver), intent(inout) :: solver 
+!
+      class(ccs), intent(inout) :: wf 
+!
+      integer(i15) :: n_amplitudes
+!
+      write(output%unit, '(/t6,a)') 'Requested restart. Reading amplitudes from file.'
+!
+!     Sanity checks 
+!
+      call disk%open_file(solver%restart_file, 'read', 'rewind')
+!
+      read(solver%restart_file%unit, *) ! Empty read to skip banner 
+!
+      read(solver%restart_file%unit, *) n_amplitudes 
+!
+      call disk%close_file(solver%restart_file)
+!
+      if (n_amplitudes .ne. wf%n_amplitudes) call output%error_msg('Inconsistent dimensions on restart in DIIS-CC-GS.')
+!
+      call wf%read_amplitudes()
+!
+   end subroutine restart_diis_cc_gs_solver
 !
 !
    subroutine print_settings_diis_cc_gs_solver(solver)
@@ -115,10 +177,12 @@ contains
       write(output%unit, '(/t6,a26,i9)')   'DIIS dimension:           ', solver%diis_dimension
       write(output%unit, '(t6,a26,i9)')    'Max number of iterations: ', solver%max_iterations
 !
+      flush(output%unit)
+!
    end subroutine print_settings_diis_cc_gs_solver
 !
 !
-   subroutine do_diagonal_precondition_diis_cc_gs_solver(solver, alpha, preconditioner, vector, n)
+   subroutine do_diagonal_precondition_diis_cc_gs_solver(alpha, preconditioner, vector, n)
 !!
 !!    Do diagonal precondition 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
@@ -129,8 +193,6 @@ contains
 !!
       implicit none 
 !     
-      class(diis_cc_gs_solver), intent(in) :: solver 
-!
       integer(i15), intent(in) :: n
 !
       real(dp), intent(in) :: alpha 
@@ -177,8 +239,6 @@ contains
 !
       integer(i15) :: iteration
 !
-     ! write(output%unit, '(/t3,a)') ':: Running DIIS ground state CC object'
-!
       call diis_manager%init('cc_gs_diis', wf%n_amplitudes, wf%n_amplitudes, solver%diis_dimension)
 !
       call mem%alloc(omega, wf%n_amplitudes, 1)
@@ -191,6 +251,7 @@ contains
 !
       write(output%unit, '(/t3,a)') 'Iteration    Energy (a.u.)        || Omega ||    Delta E (a.u.)'
       write(output%unit, '(t3,a)')  '---------------------------------------------------------------'
+      flush(output%unit)
 !
       prev_energy = zero
       iteration   = 1
@@ -199,12 +260,13 @@ contains
 !
 !        Calculate the energy and error vector omega 
 !
+         call wf%construct_fock()
+!
          call wf%calculate_energy()
          energy = wf%energy
 !
-         call wf%construct_fock()
-!
          call wf%construct_omega(omega)
+!
          omega_norm = get_l2_norm(omega, wf%n_amplitudes)
 !
          write(output%unit, '(t3,i3,10x,f17.12,4x,e10.4,4x,e10.4)') iteration, wf%energy, &
@@ -231,8 +293,6 @@ contains
                                                          'so the energy convergence has not been tested!'
 !
             endif
-!
-            call solver%print_summary(wf)
 !
          else
 !
@@ -284,7 +344,11 @@ contains
 !
       class(ccs) :: wf
 !
-!     Nothing here yet 
+!     Write restart file & save amplitudes 
+!
+      call solver%write_restart_file(wf)
+!
+      call wf%save_amplitudes()
 !
    end subroutine cleanup_diis_cc_gs_solver
 !
@@ -292,42 +356,18 @@ contains
    subroutine print_banner_diis_cc_gs_solver(solver)
 !!
 !!    Print banner
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!    Written by Rolf H. Myhre, 2018
 !!
       implicit none 
 !
       class(diis_cc_gs_solver) :: solver 
 !
-      write(output%unit, '(//t3,a)') ':: DIIS coupled cluster ground state solver'
-      write(output%unit, '(t3,a)')   ':: E. F. Kjønstad, S. D. Folkestad, 2018'
-!
-      write(output%unit, '(/t3,a)')  'A DIIS CC ground state amplitude equations solver. It combines'
-      write(output%unit, '(t3,a)')   'a quasi-Newton perturbation theory estimate of the next amplitudes,'
-      write(output%unit, '(t3,a)')   'using least square fitting to find an an optimal combination of previous'
-      write(output%unit, '(t3,a)')   'estimates such that the update is minimized.'
-!
-      write(output%unit, '(/t3,a)')  'See Helgaker et al., Molecular Electronic Structure Theory,'
-      write(output%unit, '(t3,a)')   'Chapter 13, for the more details on this algorithm.'
-!
-      flush(output%unit)
+      call long_string_print(solver%tag,'(//t3,a)',.true.)
+      call long_string_print(solver%author,'(t3,a/)',.true.)
+      call long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
+      call long_string_print(solver%description2)
 !
    end subroutine print_banner_diis_cc_gs_solver
-!
-!
-   subroutine print_summary_diis_cc_gs_solver(solver, wf)
-!!
-!!    Print summary 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none 
-!
-      class(diis_cc_gs_solver) :: solver 
-!
-      class(ccs) :: wf 
-!
-    !  call wf%print_wavefunction_summary()
-!
-   end subroutine print_summary_diis_cc_gs_solver
 !
 !
    subroutine read_settings_diis_cc_gs_solver(solver)
@@ -368,7 +408,7 @@ contains
 !
          elseif (trim(line) == 'restart') then
 !
-            solver%restart = .true.
+            solver%do_restart = .true.
 !
          endif
 !

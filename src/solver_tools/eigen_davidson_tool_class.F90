@@ -32,8 +32,8 @@ module eigen_davidson_tool_class
 !
    contains 
 !
-      procedure :: prepare => prepare_eigen_davidson_tool 
-      procedure :: cleanup   => cleanup_eigen_davidson_tool
+      procedure :: prepare                  => prepare_eigen_davidson_tool 
+      procedure :: cleanup                  => cleanup_eigen_davidson_tool
 !
       procedure :: construct_next_trial_vec => construct_next_trial_vec_eigen_davidson_tool
 !
@@ -44,11 +44,11 @@ module eigen_davidson_tool_class
       procedure :: construct_re_residual    => construct_re_residual_eigen_davidson_tool
       procedure :: construct_im_residual    => construct_im_residual_eigen_davidson_tool
 !
-      procedure :: initialize_omega_re   => initialize_omega_re_eigen_davidson_tool
-      procedure :: initialize_omega_im   => initialize_omega_im_eigen_davidson_tool
+      procedure :: initialize_omega_re      => initialize_omega_re_eigen_davidson_tool
+      procedure :: initialize_omega_im      => initialize_omega_im_eigen_davidson_tool
 !
-      procedure :: destruct_omega_re   => destruct_omega_re_eigen_davidson_tool
-      procedure :: destruct_omega_im   => destruct_omega_im_eigen_davidson_tool
+      procedure :: destruct_omega_re        => destruct_omega_re_eigen_davidson_tool
+      procedure :: destruct_omega_im        => destruct_omega_im_eigen_davidson_tool
 !
    end type eigen_davidson_tool
 !
@@ -86,11 +86,8 @@ contains
 !
 !     For safety, delete old files if they are on disk
 !
-      call disk%delete(davidson%X)
-      call disk%delete(davidson%trials)
-      call disk%delete(davidson%transforms)
-      call disk%delete(davidson%preconditioner)
-      call disk%delete(davidson%projector)
+       call disk%delete(davidson%trials)
+       call disk%delete(davidson%transforms)
 !
       davidson%do_precondition   = .false.         ! Switches to true if 'set_preconditioner' is called
       davidson%do_projection     = .false.         ! Switches to true if 'set_projection' is called
@@ -99,6 +96,9 @@ contains
       davidson%n_new_trials      = n_solutions 
 !
       davidson%max_dim_red = min(n_solutions*20, 150)   
+!
+      davidson%current_n_trials = 0
+!
       call davidson%read_max_dim_red()     
 !
    end subroutine prepare_eigen_davidson_tool
@@ -241,8 +241,8 @@ contains
 !     Find lowest n_solutions eigenvalues and sort them (the corresponding indices
 !     are placed in the integer array index_list)
 !
-      call davidson%initialize_omega_im
-      call davidson%initialize_omega_re
+      call davidson%initialize_omega_im()
+      call davidson%initialize_omega_re()
 !
       davidson%omega_re = zero
       davidson%omega_im = zero
@@ -462,7 +462,7 @@ contains
    end subroutine construct_im_residual_eigen_davidson_tool
 !
 !
-   subroutine construct_next_trial_vec_eigen_davidson_tool(davidson, residual_norm, iteration, n)
+   subroutine construct_next_trial_vec_eigen_davidson_tool(davidson, residual_norm, n)
 !!
 !!    Construct next trial vector  
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
@@ -482,8 +482,6 @@ contains
       class(eigen_davidson_tool) :: davidson 
 !
       real(dp), intent(out) :: residual_norm 
-!
-      integer(i15) :: iteration
 !
       integer(i15), optional, intent(in) :: n 
 !

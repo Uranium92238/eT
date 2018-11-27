@@ -24,7 +24,7 @@ module scf_hf_solver_class
 !
    type, extends(abstract_hf_solver) :: scf_hf_solver
 !
-!     Nothing here yet, except variables in ancestor
+      character(len=400) :: warning
 !
    contains
 !
@@ -33,7 +33,6 @@ module scf_hf_solver_class
       procedure :: cleanup       => cleanup_scf_hf_solver
 !
       procedure :: print_banner  => print_banner_scf_hf_solver
-      procedure :: print_summary => print_summary_scf_hf_solver
 !
    end type scf_hf_solver
 !
@@ -54,6 +53,20 @@ contains
 !
 !     Print solver banner
 !
+      solver%tag = 'Self-consistent field solver'
+      solver%author = 'E. F. Kjønstad and S, D. Folkestad, 2018'
+!
+      solver%description = 'A Roothan-Hall self-consistent field solver. In each iteration, &
+                                  &the Roothan-Hall equation (or equations for unrestricted HF theory) &
+                                  &are solved to provide the next orbital coefficients. From the new &
+                                  &orbitals, a new density provides the next Fock matrix. The cycle &
+                                  &repeats until the solution is self-consistent (as measured by &
+                                  &the energy change).' 
+!
+      solver%warning = 'Warning: We recommend to use the SCF-DIIS algorithm instead, which &
+                              &supports a gradient threshold and typically converges much faster. &
+                              &Use only when absolutely necessary!'
+!
       call solver%print_banner()
 !
 !     Read settings (thresholds, etc.)
@@ -61,12 +74,18 @@ contains
       call solver%read_settings()
 !
       call wf%set_screening_and_precision_thresholds(solver%gradient_threshold)
+      call wf%print_screening_settings()
 !
 !     Initialize orbital coefficients, densities, and Fock matrices (plural for unrestricted methods)
 !
       call wf%initialize_orbitals()
       call wf%initialize_density()
       call wf%initialize_fock()
+!
+!     Set initial AO density guess
+!
+      write(output%unit, '(/t3,a,a,a)') '- Setting initial AO density to ', trim(solver%ao_density_guess), ':'
+      call wf%set_initial_ao_density_guess(solver%ao_density_guess)
 !
    end subroutine prepare_scf_hf_solver
 !
@@ -87,13 +106,11 @@ contains
 !
       real(dp) :: energy, prev_energy, n_electrons
 !
-      real(dp) :: ddot
-!
       integer(i15) :: iteration
 !
       real(dp), dimension(:,:), allocatable :: h_wx 
 !
-      integer(i15) :: n_s, i
+      integer(i15) :: n_s
 !
       real(dp), dimension(:,:), allocatable     :: sp_eri_schwarz
       integer(i15), dimension(:,:), allocatable :: sp_eri_schwarz_list
@@ -108,12 +125,6 @@ contains
       call mem%alloc_int(sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
 !
       call wf%construct_sp_eri_schwarz(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
-!
-!     Set initial AO density (or densities) guess
-!
-      write(output%unit, '(/t3,a,a,a)') 'Initial AO density is ', trim(solver%ao_density_guess), '.'
-!
-      call wf%set_initial_ao_density_guess(solver%ao_density_guess)
 !
       call mem%alloc(h_wx, wf%n_ao, wf%n_ao)
       call wf%get_ao_h_wx(h_wx)
@@ -164,7 +175,7 @@ contains
             write(output%unit, '(t3,a)') '------------------------------------------------'
             write(output%unit, '(/t3,a27,i3,a12)') 'Converged criterion met in ', iteration, ' iterations!'
 !
-            call solver%print_summary(wf)
+            call wf%print_wavefunction_summary()
 !
          else
 !
@@ -208,6 +219,8 @@ contains
 !
       class(hf) :: wf
 !
+      write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(solver%tag)
+!
 !     Save AO density (or densities) to disk 
 !
       call wf%save_ao_density()
@@ -230,40 +243,12 @@ contains
 !
       class(scf_hf_solver) :: solver 
 !
-      write(output%unit, '(/t3,a)') ':: Direct-integral Hartree-Fock self-consistent field solver'
-      write(output%unit, '(t3,a/)') ':: E. F. Kjønstad, S. D. Folkestad, 2018'
-!
-      write(output%unit, '(t3,a)')  'A Roothan-Hall self-consistent field solver. In each iteration,' 
-      write(output%unit, '(t3,a)')  'the Roothan-Hall equation (or equations for unrestricted HF theory)'
-      write(output%unit, '(t3,a)')  'are solved to provide the next orbital coefficients. From the new'
-      write(output%unit, '(t3,a)')  'orbitals, a new density provides the next Fock matrix. The cycle' 
-      write(output%unit, '(t3,a)')  'repeats until the solution is self-consistent (as measured by' 
-      write(output%unit, '(t3,a)')  'the energy change).'
-!
-      flush(output%unit)
+      call long_string_print(solver%tag,'(//t3,a)',.true.)
+      call long_string_print(solver%author,'(t3,a/)',.true.)
+      call long_string_print(solver%warning,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
+      call long_string_print(solver%description)
 !
    end subroutine print_banner_scf_hf_solver
-!
-!
-   subroutine print_summary_scf_hf_solver(solver, wf)
-!!
-!!    Print summary 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none 
-!
-      class(scf_hf_solver) :: solver 
-!
-      class(hf) :: wf 
-!
-      write(output%unit, '(/t3,a,a,a)') 'Final ', trim(wf%name), ' energetics (a.u.):'
-!
-      write(output%unit, '(/t6,a26,f17.12)')  'Nuclear repulsion energy: ', wf%system%get_nuclear_repulsion()
-      write(output%unit, '(t6,a26,f17.12)')   'Total electronic energy:  ', wf%energy
-!
-      call wf%print_orbital_energies()
-!
-   end subroutine print_summary_scf_hf_solver
 !
 !
 end module scf_hf_solver_class
