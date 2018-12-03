@@ -101,7 +101,7 @@ contains
 !
       class(cc3) :: wf
 !
-!     Nothing here yet
+      write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(wf%name), ' wavefunction'
 !
    end subroutine cleanup_cc3
 !
