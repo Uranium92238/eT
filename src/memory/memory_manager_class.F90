@@ -85,6 +85,10 @@ module memory_manager_class
 !
       procedure :: room_for_n_arrays_of_size => room_for_n_arrays_of_size_memory_manager
 !
+      procedure :: batch_setup_1_memory_manager
+      procedure :: batch_setup_2_memory_manager
+      generic   :: batch_setup => batch_setup_1_memory_manager, batch_setup_2_memory_manager
+!
    end type memory_manager
 !
 !  Main memory object
@@ -509,6 +513,94 @@ contains
       room_for_n_arrays_of_size_memory_manager = (mem%available)/(dp*M)
 !
    end function room_for_n_arrays_of_size_memory_manager
+!
+!
+   subroutine batch_setup_1_memory_manager(mem, batch_p, required, element_size)
+!!
+!!    Setup batching 
+!!    This is setup for a single batch index
+!!    Written by Rolf H. Myhre December 2018
+!!
+!!    batch_p: Batching object who's parameters are set.
+!!    required: Memory required per combination of batched indices. I.e. size(dp)*n_v**3 for (vv|vo) when 
+!!              batching over the occupied index.
+!!
+      implicit none
+!
+      class(memory_manager) :: mem
+!
+      class(batching_index) :: batch_p ! The index being batched over
+!
+      integer(i15), intent(in) :: required
+      integer(i15), intent(in), optional :: element_size
+!
+      integer(i15) :: r_buff
+      integer(i15) :: r_tot
+      integer(i15) :: e_size
+!
+      e_size = dp
+      if(present(element_size)) then
+         e_size = element_size
+      endif
+!
+      r_buff = (required + required/(mem%buffer))*e_size
+      r_tot = r_buff*batch_p%index_dimension
+!
+      if (r_tot .lt. mem%available) then
+!
+!        No need to batch
+!
+         batch_p%num_batches = 1
+         batch_p%max_length = batch_p%index_dimension
+!
+      else if (mem%available .lt. r_buff) then
+!
+!        Not enough memory for a batch
+!
+         write(output%unit,'(t3,a,i14,a,i14)') 'Need ', r_buff, 'but only have ', mem%available
+         call output%error_msg('Not enough memory for a batch')
+!
+      else
+!
+!        We need to batch
+!
+!        Determine maximum batch length
+!
+         batch_p%max_length = (mem%available)/(r_buff)
+!
+!        Number of full batches
+!
+         batch_p%num_batches = (batch_p%index_dimension-1)/(batch_p%max_length)+1
+!
+      endif
+!
+      write(output%unit,*) "In batch_setup_1 trololo"
+!
+   end subroutine batch_setup_1_memory_manager
+!
+!
+   subroutine batch_setup_2_memory_manager(mem, batch_p, batch_q, required)
+!!
+!!    Setup batching 
+!!    This is setup for two batch indices
+!!    Written by Rolf H. Myhre December 2018
+!!
+!!    batch_p: Batching object who's parameters are set.
+!!    required: Memory required per combination of batched indices. I.e. size(dp)*n_v**3 for (vv|vo) when 
+!!              batching over the occupied index.
+!!
+      implicit none
+!
+      class(memory_manager) :: mem
+!
+      class(batching_index) :: batch_p ! The index being batched over
+      class(batching_index) :: batch_q ! The index being batched over
+!
+      integer(i15), intent(in) :: required
+!
+      write(output%unit,*) "In batch_setup_2 trololo"
+!
+   end subroutine batch_setup_2_memory_manager
 !
 !
 end module memory_manager_class
