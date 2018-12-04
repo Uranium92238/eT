@@ -574,20 +574,25 @@ contains
 !
       endif
 !
-      write(output%unit,*) "In batch_setup_1 trololo"
-!
    end subroutine batch_setup_1_memory_manager
 !
 !
-   subroutine batch_setup_2_memory_manager(mem, batch_p, batch_q, required)
+   subroutine batch_setup_2_memory_manager(mem, batch_p, batch_q, req1, req2, element_size)
 !!
 !!    Setup batching 
 !!    This is setup for two batch indices
 !!    Written by Rolf H. Myhre December 2018
 !!
 !!    batch_p: Batching object who's parameters are set.
-!!    required: Memory required per combination of batched indices. I.e. size(dp)*n_v**3 for (vv|vo) when 
-!!              batching over the occupied index.
+!!    batch_q: Batching object who's parameters are set.
+!!    req1 : required memory that scales linearly with batch size
+!!    req2 : required memory that scales quadratically with batch size
+!!    element_size: memory per element, default is double precision
+!!
+!!    if you are batching over i and j and need to keep g_abij and g_abci in memory, 
+!!    req1 = n_v**3 and req2 = n_v**2
+!!    memory per batch is then 2*batch_size*req1 + batch_size**2*req2
+!!    Be careful with symmetries and permutations
 !!
       implicit none
 !
@@ -596,9 +601,68 @@ contains
       class(batching_index) :: batch_p ! The index being batched over
       class(batching_index) :: batch_q ! The index being batched over
 !
-      integer(i15), intent(in) :: required
+      integer(i15), intent(in) :: req1
+      integer(i15), intent(in) :: req2
+      integer(i15), intent(in), optional :: element_size
 !
-      write(output%unit,*) "In batch_setup_2 trololo"
+      integer(i15) :: r_buff1
+      integer(i15) :: r_buff2
+      integer(i15) :: r_tot
+      integer(i15) :: e_size
+      integer(i15) :: n
+!
+      e_size = dp
+      if(present(element_size)) then
+         e_size = element_size
+      endif
+!
+      if (batch_p%index_dimension .ne. batch_q%index_dimension) then
+!
+         call output%error_msg('Batching setup not coded for different indices yet')
+!
+      endif
+!
+      r_buff1 = 2*(req1 + req1/(mem%buffer))*e_size
+      r_buff2 = (req2 + req2/(mem%buffer))*e_size
+      r_tot = r_buff2*batch_p%index_dimension**2 + r_buff1*batch_p%index_dimension
+!
+      if (r_tot .lt. mem%available) then
+!
+!        No need to batch
+!
+         batch_p%num_batches = 1
+         batch_p%max_length = batch_p%index_dimension
+!
+         batch_q%num_batches = 1
+         batch_q%max_length = batch_p%index_dimension
+!
+      else if (mem%available .lt. (r_buff1 + r_buff2)) then
+!
+!        Not enough memory for a batch
+!
+         write(output%unit,'(t3,a,i14,a,i14)') 'Need ', (r_buff1+r_buff2), 'but only have ', mem%available
+         call output%error_msg('Not enough memory for a batch')
+!
+      else
+!
+!        We need to batch
+!
+!        Figure out how many we have room for
+!
+         n=1
+         do while (((n+1)**2*r_buff2 + (n+1)*r_buff1) .lt. mem%available)
+            n = n + 1
+         enddo
+!
+         batch_p%max_length = n         
+         batch_q%max_length = n         
+!
+!        Figure out how many batches
+!
+         batch_p%num_batches = (batch_p%index_dimension-1)/(batch_p%max_length)+1
+         batch_q%num_batches = (batch_q%index_dimension-1)/(batch_q%max_length)+1
+!
+      endif
 !
    end subroutine batch_setup_2_memory_manager
 !
