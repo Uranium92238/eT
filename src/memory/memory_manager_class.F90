@@ -589,10 +589,10 @@ contains
 !!    req2 : required memory that scales quadratically with batch size
 !!    element_size: memory per element, default is double precision
 !!
-!!    if you are batching over i and j and need to keep g_abij and g_abci in memory, 
-!!    req1 = n_v**3 and req2 = n_v**2
-!!    memory per batch is then 2*batch_size*req1 + batch_size**2*req2
-!!    Be careful with symmetries and permutations
+!!    if you are batching over i and j and need to keep g_abij, g_abci and g_abcj in memory, 
+!!    req1 = 2*n_v**3 and req2 = n_v**2
+!!    memory per batch is then batch_size*req1 + batch_size**2*req2
+!!    Be careful with symmetries and permutations!
 !!
       implicit none
 !
@@ -622,7 +622,7 @@ contains
 !
       endif
 !
-      r_buff1 = 2*(req1 + req1/(mem%buffer))*e_size
+      r_buff1 = (req1 + req1/(mem%buffer))*e_size
       r_buff2 = (req2 + req2/(mem%buffer))*e_size
       r_tot = r_buff2*batch_p%index_dimension**2 + r_buff1*batch_p%index_dimension
 !
