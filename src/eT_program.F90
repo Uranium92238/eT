@@ -124,6 +124,7 @@ program eT_program
 !
         call chol_solver%prepare(system)
         call chol_solver%run(system)
+        call chol_solver%cholesky_vecs_diagonal_test(system)
         call chol_solver%cleanup()
 !
      else
