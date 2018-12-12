@@ -169,13 +169,9 @@ contains
          endif
 !
       endif
-      write(output%unit, *)'1'
-      flush(output%unit)
 !
 !
       call solver%determine_auxilliary_cholesky_basis(system, solver%diagonal_info_target)
-      write(output%unit, *)'2'
-      flush(output%unit)
 !
       e_determine_basis = omp_get_wtime()
       
@@ -185,8 +181,6 @@ contains
 !
       call solver%construct_overlap_cholesky_vecs(system)
       call solver%invert_overlap_cholesky_vecs()
-      write(output%unit, *)'3'
-      flush(output%unit)
 !
       e_invert_time = omp_get_wtime()
                
@@ -1982,8 +1976,6 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: g_AB_CD
       real(dp), dimension(:,:), allocatable :: integrals_auxiliary
-      real(dp), dimension(:,:), allocatable :: cholesky_vecs
-      real(dp), dimension(:,:), allocatable :: temp_cholesky
 !
       real(dp), dimension(:), allocatable :: work  ! work array for LAPACK
 !
@@ -1992,9 +1984,6 @@ contains
 !     Logicals
 !
       logical :: found
-!
-            write(output%unit, *)'Hei!!'
-      flush(output%unit)
 !
       call cpu_time(s_build_basis_time)
 !
@@ -2117,8 +2106,6 @@ contains
 !
       enddo ! CD
 !$omp end parallel do
-      write(output%unit, *)'Hei!!'
-      flush(output%unit)
 !
       call mem%dealloc_int(basis_shell_info, n_sp_in_basis, 4)
 !
@@ -2143,9 +2130,6 @@ contains
             info)
 !
       deallocate(work)
-!
-      write(output%unit, *)'Hei!!'
-      flush(output%unit)
 !
       call cpu_time(e_decomp_time)
 !
