@@ -639,10 +639,19 @@ contains
                                                      n_vectors, threshold, n_included_diagonals, &
                                                      included_diagonals, n_vectors_requested)
 !!
-!!    Cholesky decomposition reduced diagonal,
+!!    Cholesky decomposition limited diagonal,
 !!    Written by Sarai Dery Folkestad, June 2017.
 !!
+!!    Cholesky decomposition with pivots selected from a subset of the diagonals.
+!!
+!!    Routine is used for decomposition of density to construct active
+!!    orbitals.
+!!
+!!    The number of pivots may specified through the optional
+!!    argument n_vectors_requested  
+!!
 !!    On exit matrix_xy = matrix_xy - sum_J L_xJ*LyJ
+!!
 !!
       implicit none
 !
@@ -651,7 +660,7 @@ contains
 !
       real(dp), intent(in) :: threshold
 !
-      integer(i15), intent(in) :: n_vectors_requested
+      integer(i15), intent(in), optional :: n_vectors_requested
 !
       real(dp), dimension(dim, dim), intent(inout) :: matrix
       real(dp), dimension(dim, n_included_diagonals), intent(out) :: cholesky_vectors
@@ -660,12 +669,16 @@ contains
 !
       integer(i15), dimension(:, :), allocatable :: used_diag
 !
-      integer(i15) :: i, j, index_max
+      integer(i15) :: i, j, index_max, n_max_pivots
       real(dp) :: max_diagonal
 !
       real(dp), dimension(:,:), allocatable :: diagonal, temp_cholesky_vector
 !
       real(dp), parameter :: tolerance = 1.0d-10
+!
+      n_max_pivots = n_included_diagonals
+!
+      if (present(n_vectors_requested)) n_max_pivots = n_vectors_requested
 !
       call mem%alloc(diagonal, dim, 1)
 !
@@ -680,7 +693,7 @@ contains
       call mem%alloc_int(used_diag, dim, 1)
       used_diag = 0
 !
-      do i = 1, n_vectors_requested
+      do i = 1, n_max_pivots
 !
          n_vectors = i
 !

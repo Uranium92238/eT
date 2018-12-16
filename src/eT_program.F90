@@ -106,7 +106,7 @@ program eT_program
 !
     n_methods = get_n_methods()
 !
-!   ::  Hartree-Fock calculation (or: only Cholesky decomposition of ERIs)
+!   ::  Hartree-Fock calculation (or only Cholesky decomposition of ERIs)
 !
     if (n_methods == 0) then
 !
