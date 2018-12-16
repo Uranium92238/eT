@@ -17,13 +17,12 @@ module diis_cc_gs_solver_class
       character(len=100) :: tag = 'DIIS CC ground solver'
       character(len=100) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
 !
-      character(len=500) :: description1 = 'A DIIS CC ground state amplitude equations solver. It combines &
-                                           &a quasi-Newton perturbation theory estimate of the next &
-                                           &amplitudes, using least square fitting to find an an optimal &
-                                           &combination of previous estimates such that the update is minimized.'
+      character(len=500) :: description1 = 'A DIIS CC ground state amplitude equations solver. It uses &
+                                           &an extrapolation of previous quasi-Newton perturbation theory &
+                                           &estimates of the next amplitudes.'
 !
       character(len=500) :: description2 = 'See Helgaker et al., Molecular Electronic Structure Theory, &
-                                           &Chapter 13, for the more details on this algorithm.'
+                                           &Chapter 13.'
 !
       integer(i15) :: diis_dimension
 !
@@ -47,6 +46,7 @@ module diis_cc_gs_solver_class
       procedure :: read_settings            => read_settings_diis_cc_gs_solver
 !
       procedure :: print_settings           => print_settings_diis_cc_gs_solver
+      procedure :: print_summary            => print_summary_diis_cc_gs_solver
 !
       procedure :: restart                  => restart_diis_cc_gs_solver
       procedure :: write_restart_file       => write_restart_file_diis_cc_gs_solver
@@ -328,6 +328,10 @@ contains
          write(output%unit, '(/t3,a)')  'Warning: was not able to converge the equations in the given'
          write(output%unit, '(t3,a/)')  'number of maximum iterations.'
 !
+      else
+!
+         call solver%print_summary(wf)
+!
       endif 
 !
    end subroutine run_diis_cc_gs_solver
@@ -415,6 +419,23 @@ contains
       enddo
 !
    end subroutine read_settings_diis_cc_gs_solver
+!
+!
+   subroutine print_summary_diis_cc_gs_solver(solver, wf)
+!!
+!!    Print summary 
+!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!
+      implicit none 
+!
+      class(diis_cc_gs_solver), intent(in) :: solver 
+!
+      class(ccs), intent(in) :: wf 
+!
+      call wf%print_t1_diagnostic()     
+      call wf%print_dominant_amplitudes()
+!
+   end subroutine print_summary_diis_cc_gs_solver
 !
 !
 end module diis_cc_gs_solver_class

@@ -37,6 +37,8 @@ module ccsd_class
       procedure :: save_amplitudes                             => save_amplitudes_ccsd
       procedure :: save_t2                                     => save_t2_ccsd
       procedure :: read_t2                                     => read_t2_ccsd
+      procedure :: print_dominant_t2                           => print_dominant_t2_ccsd
+      procedure :: print_dominant_amplitudes                   => print_dominant_amplitudes_ccsd
 !
 !     Routines related to omega
 !
@@ -813,5 +815,81 @@ subroutine construct_eta_ccsd(wf, eta)
       if (allocated(wf%t2bar)) call mem%dealloc(wf%t2bar, wf%n_amplitudes, 1)
 !
    end subroutine destruct_t2bar_ccsd
+!
+!
+   subroutine print_dominant_amplitudes_ccsd(wf)
+!!
+!!    Print dominant amplitudes 
+!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!
+      implicit none 
+!
+      class(ccsd), intent(in) :: wf 
+!
+      call wf%print_dominant_t1()
+      call wf%print_dominant_t2()
+!
+   end subroutine print_dominant_amplitudes_ccsd
+!
+!
+   subroutine print_dominant_t2_ccsd(wf)
+!!
+!!    Print dominant t2   
+!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!
+!!    Prints the 20 most dominant double amplitudes,
+!!    or sorts them if there are fewer than twenty of them.
+!!
+      implicit none 
+!
+      class(ccsd), intent(in) :: wf
+!
+      real(dp), dimension(:,:), allocatable :: abs_t2
+!
+      integer(i15), dimension(:,:), allocatable :: dominant_indices
+      real(dp), dimension(:,:), allocatable     :: dominant_values
+!
+      integer(i15) :: n_elements, elm, i, a, j, b, ai, bj
+!
+!     Sort according to largest contributions
+!
+      call mem%alloc(abs_t2, wf%n_t2, 1)
+      abs_t2 = abs(wf%t2)
+!
+      n_elements = 20
+      if (n_elements .gt. wf%n_t2) n_elements = wf%n_t2
+!
+      call mem%alloc_int(dominant_indices, n_elements, 1)
+      call mem%alloc(dominant_values, n_elements, 1)
+!
+      dominant_indices = 0
+      dominant_values  = zero 
+      call get_n_highest(n_elements, wf%n_t2, abs_t2, dominant_values, dominant_indices)
+!
+!     Print largest contributions
+!
+      write(output%unit, '(/t3,a)') 'The dominant double amplitudes:'
+      write(output%unit, '(t3,a)')  '---------------------------------------------------------------'
+      write(output%unit, '(t3,a)')  '  a         i         b         j         t(ai,bj)             '
+      write(output%unit, '(t3,a)')  '---------------------------------------------------------------'
+!
+      do elm = 1, n_elements
+!
+         call invert_packed_index(dominant_indices(elm,1), ai, bj, (wf%n_o)*(wf%n_v))
+         call invert_compound_index(ai, a, i, wf%n_v, wf%n_o)
+         call invert_compound_index(bj, b, j, wf%n_v, wf%n_o)
+!
+         write(output%unit, '(t3,i3,7x,i3,7x,i3,7x,i3,5x,f19.12)') a, i, b, j, wf%t2(dominant_indices(elm,1), 1)
+!
+      enddo
+!
+      write(output%unit, '(t3,a)')  '---------------------------------------------------------------'
+!
+      call mem%dealloc_int(dominant_indices, n_elements, 1)
+      call mem%dealloc(dominant_values, n_elements, 1)
+      call mem%dealloc(abs_t2, wf%n_t2, 1)
+!
+   end subroutine print_dominant_t2_ccsd
+!
 !
 end module ccsd_class
