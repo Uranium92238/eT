@@ -241,18 +241,42 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: r
 !
-      write(output%unit, '(/t3,a)') '- Dominant amplitudes in excitation vectors:'
+      write(output%unit, '(/t3,a)') '- Excitation vector amplitudes:'
 !
       call mem%alloc(r, wf%n_amplitudes, 1)
 !
       do state = 1, solver%n_singlet_states
 !
-         write(output%unit, '(/t6,a29,i2,a1)') 'Dominant amplitudes in state ', state, ':'
+         write(output%unit, '(/t6,a21,i2)')    'Electronic state nr. ', state
 !
-         call davidson%read_solution(r, state) 
-         call wf%print_dominant_x_amplitudes(r,'r')
+         call davidson%read_solution(r, state)         
+!
+         write(output%unit, '(/t6,a30,f15.12)')  'Energy (Hartree):             ', davidson%get_eigenvalue(state)
+         write(output%unit, '(t6,a30,f15.12)') 'Fraction singles (|r1|/|r|):  ', &
+                        get_l2_norm(r(1:wf%n_t1,1),wf%n_t1)/get_l2_norm(r,wf%n_amplitudes)   
+!
+         call wf%print_dominant_x_amplitudes(r, 'r')
 !
       enddo 
+!
+      call mem%dealloc(r, wf%n_amplitudes, 1)
+!
+      write(output%unit, '(/t3,a)') '- Electronic excitation energies:'
+!
+      write(output%unit, '(/t6,a)') '                                 Excitation energy            '
+      write(output%unit, '(t6,a)')  '                     ------------------------------------------'
+      write(output%unit, '(t6,a)')  'State                (Hartree)             (eV)                '
+      write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
+!
+      do state = 1, solver%n_singlet_states
+!
+         write(output%unit, '(t6,i2,14x,f19.12,4x,f19.12)') state, davidson%get_eigenvalue(state), &
+                                                           davidson%get_eigenvalue(state)*Hartree_to_eV
+!
+      enddo 
+!
+      write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
+      write(output%unit, '(t6,a26,f11.8)') 'eV/Hartree (CODATA 2014): ', Hartree_to_eV
 !
    end subroutine print_summary_davidson_cc_es_solver
 !

@@ -62,7 +62,7 @@ module ccs_class
       procedure :: print_dominant_x_amplitudes                 => print_dominant_x_amplitudes_ccs
       procedure :: print_dominant_amplitudes                   => print_dominant_amplitudes_ccs
       procedure :: print_dominant_x1                           => print_dominant_x1_ccs
-      procedure :: compute_t1_diagnostic                       => compute_t1_diagnostic_ccs
+      procedure :: get_t1_diagnostic                           => get_t1_diagnostic_ccs
 !
       procedure :: initialize_multipliers                      => initialize_multipliers_ccs
       procedure :: destruct_multipliers                        => destruct_multipliers_ccs
@@ -3081,21 +3081,19 @@ contains
    end subroutine print_dominant_x1_ccs
 !
 !
-   real(dp) function compute_t1_diagnostic_ccs(wf)
+   real(dp) function get_t1_diagnostic_ccs(wf)
 !!
-!!    Print t1 diagnostic 
+!!    Get t1 diagnostic 
 !!    Written by Eirik F. Kjønstad 
 !!
       implicit none 
 !
       class(ccs), intent(in) :: wf 
 !
-      real(dp) :: t1_diagnostic 
+      get_t1_diagnostic_ccs = get_l2_norm(wf%t1, wf%n_t1)
+      get_t1_diagnostic_ccs = get_t1_diagnostic_ccs/sqrt(real(wf%system%n_electrons,kind=dp))
 !
-      t1_diagnostic = get_l2_norm(wf%t1, wf%n_t1)
-      t1_diagnostic = t1_diagnostic/sqrt(real(wf%system%n_electrons,kind=dp))
-!
-   end function compute_t1_diagnostic_ccs
+   end function get_t1_diagnostic_ccs
 !
 !
 end module ccs_class

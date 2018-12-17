@@ -247,7 +247,7 @@ contains
       converged_energy   = .false.
       converged_omega    = .false.
 !
-      write(output%unit, '(/t3,a)') 'Iteration    Energy (a.u.)        || Omega ||    Delta E (a.u.)'
+      write(output%unit, '(/t3,a)') 'Iteration    Energy (a.u.)        |omega|       Delta E (a.u.) '
       write(output%unit, '(t3,a)')  '---------------------------------------------------------------'
       flush(output%unit)
 !
@@ -436,8 +436,8 @@ contains
       write(output%unit, '(/t6,a33,f18.12)') 'Final ground state energy (a.u.):', wf%energy 
       call wf%print_dominant_amplitudes()
 !
-      t1_diagnostic = wf%compute_t1_diagnostic() 
-      write(output%unit, '(/t6,a,f18.12)') 'T1 diagnostic (= norm(T1) / sqrt(N_e) ):', t1_diagnostic
+      t1_diagnostic = wf%get_t1_diagnostic() 
+      write(output%unit, '(/t6,a32,f14.12)') 'T1 diagnostic (|T1|/sqrt(N_e)): ', t1_diagnostic
 !
    end subroutine print_summary_diis_cc_gs_solver
 !
