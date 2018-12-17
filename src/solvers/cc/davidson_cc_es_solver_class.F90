@@ -45,27 +45,28 @@ module davidson_cc_es_solver_class
 !
    contains
 !     
-      procedure, non_overridable :: prepare  => prepare_davidson_cc_es_solver
-      procedure, non_overridable :: run      => run_davidson_cc_es_solver
-      procedure, non_overridable :: cleanup  => cleanup_davidson_cc_es_solver
+      procedure, non_overridable :: prepare          => prepare_davidson_cc_es_solver
+      procedure, non_overridable :: run              => run_davidson_cc_es_solver
+      procedure, non_overridable :: cleanup          => cleanup_davidson_cc_es_solver
 !
       procedure, nopass :: set_precondition_vector   => set_precondition_vector_davidson_cc_es_solver
-      procedure :: set_projection_vector     => set_projection_vector_davidson_cc_es_solver
+      procedure :: set_projection_vector             => set_projection_vector_davidson_cc_es_solver
 !
-      procedure :: print_banner              => print_banner_davidson_cc_es_solver
+      procedure :: print_banner                      => print_banner_davidson_cc_es_solver
 !
-      procedure :: read_settings             => read_settings_davidson_cc_es_solver
+      procedure :: read_settings                     => read_settings_davidson_cc_es_solver
 !
-      procedure :: print_settings            => print_settings_davidson_cc_es_solver
+      procedure :: print_settings                    => print_settings_davidson_cc_es_solver
+      procedure :: print_summary                     => print_summary_davidson_cc_es_solver
 !
-      procedure :: set_start_vectors         => set_start_vectors_davidson_cc_es_solver
-      procedure :: transform_trial_vector    => transform_trial_vector_davidson_cc_es_solver
+      procedure :: set_start_vectors                 => set_start_vectors_davidson_cc_es_solver
+      procedure :: transform_trial_vector            => transform_trial_vector_davidson_cc_es_solver
 !       
-      procedure :: initialize_energies       => initialize_energies_davidson_cc_es_solver
-      procedure :: destruct_energies         => destruct_energies_davidson_cc_es_solver   
+      procedure :: initialize_energies               => initialize_energies_davidson_cc_es_solver
+      procedure :: destruct_energies                 => destruct_energies_davidson_cc_es_solver   
 !
-      procedure :: restart                   => restart_davidson_cc_es_solver 
-      procedure :: write_restart_file        => write_restart_file_cc_es_solver
+      procedure :: restart                           => restart_davidson_cc_es_solver 
+      procedure :: write_restart_file                => write_restart_file_cc_es_solver
 !
    end type davidson_cc_es_solver
 !
@@ -224,6 +225,38 @@ contains
    end subroutine print_settings_davidson_cc_es_solver
 !
 !
+   subroutine print_summary_davidson_cc_es_solver(solver, davidson, wf)
+!!
+!!    Print summary 
+!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!
+      implicit none 
+!
+      class(davidson_cc_es_solver), intent(in) :: solver 
+      class(eigen_davidson_tool) :: davidson
+!
+      class(ccs), intent(in) :: wf 
+!
+      integer(i15) :: state 
+!
+      real(dp), dimension(:,:), allocatable :: r
+!
+      write(output%unit, '(/t3,a)') '- Dominant amplitudes in excitation vectors:'
+!
+      call mem%alloc(r, wf%n_amplitudes, 1)
+!
+      do state = 1, solver%n_singlet_states
+!
+         write(output%unit, '(/t6,a29,i2,a1)') 'Dominant amplitudes in state ', state, ':'
+!
+         call davidson%read_solution(r, state) 
+         call wf%print_dominant_x_amplitudes(r,'r')
+!
+      enddo 
+!
+   end subroutine print_summary_davidson_cc_es_solver
+!
+!
    subroutine run_davidson_cc_es_solver(solver, wf)
 !!
 !!    Run 
@@ -378,7 +411,7 @@ contains
       if (converged) then
 !
          write(output%unit,'(/t3,a, i3, a)') 'Convergence criterion met in ', iteration - 1, ' iterations!'
-         ! Note to devs: please write solver%print_summary() and call it here
+         call solver%print_summary(davidson, wf)
 !
       elseif (.not. converged ) then
 !

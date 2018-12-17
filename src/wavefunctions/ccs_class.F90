@@ -59,9 +59,10 @@ module ccs_class
       procedure :: read_amplitudes                             => read_amplitudes_ccs
       procedure :: save_t1                                     => save_t1_ccs 
       procedure :: read_t1                                     => read_t1_ccs 
+      procedure :: print_dominant_x_amplitudes                 => print_dominant_x_amplitudes_ccs
       procedure :: print_dominant_amplitudes                   => print_dominant_amplitudes_ccs
-      procedure :: print_dominant_t1                           => print_dominant_t1_ccs
-      procedure :: print_t1_diagnostic                         => print_t1_diagnostic_ccs
+      procedure :: print_dominant_x1                           => print_dominant_x1_ccs
+      procedure :: compute_t1_diagnostic                       => compute_t1_diagnostic_ccs
 !
       procedure :: initialize_multipliers                      => initialize_multipliers_ccs
       procedure :: destruct_multipliers                        => destruct_multipliers_ccs
@@ -2996,14 +2997,32 @@ contains
 !
       class(ccs), intent(in) :: wf 
 !
-      call wf%print_dominant_t1()
+      call wf%print_dominant_x1(wf%t1,'t')
 !
    end subroutine print_dominant_amplitudes_ccs
 !
 !
-   subroutine print_dominant_t1_ccs(wf)
+   subroutine print_dominant_x_amplitudes_ccs(wf, x, tag)
 !!
-!!    Print t1    
+!!    Print dominant amplitudes  (TODO)
+!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_amplitudes, 1) :: x 
+!
+      character(len=1) :: tag 
+!
+      call wf%print_dominant_x1(x(1:wf%n_t1,1),tag)
+!
+   end subroutine print_dominant_x_amplitudes_ccs
+!
+!
+   subroutine print_dominant_x1_ccs(wf, x1, tag)
+!!
+!!    Print dominant x1    
 !!    Written by Eirik F. Kjønstad, Dec 2018 
 !!
 !!    Prints the 20 most dominant single amplitudes,
@@ -3013,7 +3032,10 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:), allocatable :: abs_t1
+      real(dp), dimension(wf%n_t1, 1), intent(in) :: x1 
+      character(len=1), intent(in)                :: tag 
+!
+      real(dp), dimension(:,:), allocatable :: abs_x1
 !
       integer(i15), dimension(:,:), allocatable :: dominant_indices
       real(dp), dimension(:,:), allocatable     :: dominant_values
@@ -3022,8 +3044,8 @@ contains
 !
 !     Sort according to largest contributions
 !
-      call mem%alloc(abs_t1, wf%n_o, wf%n_v)
-      abs_t1 = abs(wf%t1)
+      call mem%alloc(abs_x1, wf%n_t1, 1)
+      abs_x1 = abs(x1)
 !
       n_elements = 20
       if (n_elements .gt. wf%n_t1) n_elements = wf%n_t1 
@@ -3033,33 +3055,33 @@ contains
 !
       dominant_indices = 0
       dominant_values  = zero 
-      call get_n_highest(n_elements, wf%n_t1, abs_t1, dominant_values, dominant_indices)
+      call get_n_highest(n_elements, wf%n_t1, abs_x1, dominant_values, dominant_indices)
 !
 !     Print largest contributions
 !
-      write(output%unit, '(/t3,a)') 'The dominant single amplitudes:'
-      write(output%unit, '(t3,a)')  '-----------------------------------------'
-      write(output%unit, '(t3,a)')  '  a         i         t(a,i)             '
-      write(output%unit, '(t3,a)')  '-----------------------------------------'
+      write(output%unit, '(/t6,a)') 'Largest single amplitudes:'
+      write(output%unit, '(t6,a)')  '-----------------------------------------'
+      write(output%unit, '(t6,a)')  '  a         i         ' // tag // '(a,i)             '
+      write(output%unit, '(t6,a)')  '-----------------------------------------'
 !
       do elm = 1, n_elements
 !
          call invert_compound_index(dominant_indices(elm,1), a, i, wf%n_v, wf%n_o)
 !
-         write(output%unit, '(t3,i3,7x,i3,5x,f19.12)') a, i, wf%t1(a, i)
+         write(output%unit, '(t6,i3,7x,i3,5x,f19.12)') a, i, x1(dominant_indices(elm,1), 1)
 !
       enddo
 !
-      write(output%unit, '(t3,a)')  '-----------------------------------------'
+      write(output%unit, '(t6,a)')  '-----------------------------------------'
 !
       call mem%dealloc_int(dominant_indices, n_elements, 1)
       call mem%dealloc(dominant_values, n_elements, 1)
-      call mem%dealloc(abs_t1, wf%n_o, wf%n_v)
+      call mem%dealloc(abs_x1, wf%n_t1, 1)
 !
-   end subroutine print_dominant_t1_ccs
+   end subroutine print_dominant_x1_ccs
 !
 !
-   subroutine print_t1_diagnostic_ccs(wf)
+   real(dp) function compute_t1_diagnostic_ccs(wf)
 !!
 !!    Print t1 diagnostic 
 !!    Written by Eirik F. Kjønstad 
@@ -3073,9 +3095,7 @@ contains
       t1_diagnostic = get_l2_norm(wf%t1, wf%n_t1)
       t1_diagnostic = t1_diagnostic/sqrt(real(wf%system%n_electrons,kind=dp))
 !
-      write(output%unit, '(/t3,a,f18.12)') 'T1 diagnostic ( || T1 || / sqrt(N_e) ):', t1_diagnostic
-!
-   end subroutine print_t1_diagnostic_ccs
+   end function compute_t1_diagnostic_ccs
 !
 !
 end module ccs_class

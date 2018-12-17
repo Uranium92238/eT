@@ -19,10 +19,8 @@ module diis_cc_gs_solver_class
 !
       character(len=500) :: description1 = 'A DIIS CC ground state amplitude equations solver. It uses &
                                            &an extrapolation of previous quasi-Newton perturbation theory &
-                                           &estimates of the next amplitudes.'
-!
-      character(len=500) :: description2 = 'See Helgaker et al., Molecular Electronic Structure Theory, &
-                                           &Chapter 13.'
+                                           &estimates of the next amplitudes. See Helgaker et al., Molecular & 
+                                           &Electronic Structure Theory, Chapter 13.'
 !
       integer(i15) :: diis_dimension
 !
@@ -368,8 +366,7 @@ contains
 !
       call long_string_print(solver%tag,'(//t3,a)',.true.)
       call long_string_print(solver%author,'(t3,a/)',.true.)
-      call long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
-      call long_string_print(solver%description2)
+      call long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a)')
 !
    end subroutine print_banner_diis_cc_gs_solver
 !
@@ -432,8 +429,15 @@ contains
 !
       class(ccs), intent(in) :: wf 
 !
-      call wf%print_t1_diagnostic()     
+      real(dp) :: t1_diagnostic 
+!
+      write(output%unit, '(/t3,a)') '- DIIS CC ground state solver summary:'
+!
+      write(output%unit, '(/t6,a33,f18.12)') 'Final ground state energy (a.u.):', wf%energy 
       call wf%print_dominant_amplitudes()
+!
+      t1_diagnostic = wf%compute_t1_diagnostic() 
+      write(output%unit, '(/t6,a,f18.12)') 'T1 diagnostic (= norm(T1) / sqrt(N_e) ):', t1_diagnostic
 !
    end subroutine print_summary_diis_cc_gs_solver
 !
