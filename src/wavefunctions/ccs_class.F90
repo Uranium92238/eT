@@ -3004,7 +3004,7 @@ contains
 !
    subroutine print_dominant_x_amplitudes_ccs(wf, x, tag)
 !!
-!!    Print dominant amplitudes  (TODO)
+!!    Print dominant amplitudes
 !!    Written by Eirik F. Kjønstad, Dec 2018 
 !!
       implicit none 

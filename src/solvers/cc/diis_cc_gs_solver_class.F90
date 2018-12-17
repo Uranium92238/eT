@@ -44,7 +44,7 @@ module diis_cc_gs_solver_class
       procedure :: read_settings            => read_settings_diis_cc_gs_solver
 !
       procedure :: print_settings           => print_settings_diis_cc_gs_solver
-      procedure :: print_summary            => print_summary_diis_cc_gs_solver
+      procedure, nopass :: print_summary    => print_summary_diis_cc_gs_solver
 !
       procedure :: restart                  => restart_diis_cc_gs_solver
       procedure :: write_restart_file       => write_restart_file_diis_cc_gs_solver
@@ -418,14 +418,12 @@ contains
    end subroutine read_settings_diis_cc_gs_solver
 !
 !
-   subroutine print_summary_diis_cc_gs_solver(solver, wf)
+   subroutine print_summary_diis_cc_gs_solver(wf)
 !!
 !!    Print summary 
 !!    Written by Eirik F. Kjønstad, Dec 2018 
 !!
       implicit none 
-!
-      class(diis_cc_gs_solver), intent(in) :: solver 
 !
       class(ccs), intent(in) :: wf 
 !
