@@ -16,6 +16,7 @@ module ccs_class
    use interval_class
    use index
    use batching_index_class
+   use timings_class
 !
    implicit none
 !
