@@ -365,7 +365,6 @@ contains
       integer(i15) :: red_first_a 
 !
       real(dp), dimension(:,:), allocatable :: L_ib_J
-      real(dp), dimension(:,:), allocatable :: L_Jb_i
       real(dp), dimension(:,:), allocatable :: L_Jb_a
 !
       integer(i15) :: b_length, a_length
@@ -388,33 +387,24 @@ contains
 !
       call integrals%read_cholesky(L_ab_J, full_first_a, full_last_a, full_first_b, full_last_b)
 !
-!     Reorder L_ib^J as L_Jb_i 
-!
-      call mem%alloc(L_Jb_i, (integrals%n_J)*b_length, integrals%n_o)
-      call sort_123_to_321(L_ib_J, L_Jb_i, integrals%n_o, b_length, integrals%n_J)
-      call mem%dealloc(L_ib_J, (integrals%n_o)*b_length, integrals%n_J)
-!
 !     Calculate and add t1-transformed term, - sum_i t_ai L_ib_J
 !
       call mem%alloc(L_Jb_a, (integrals%n_J)*b_length, a_length)
 !
-      call dgemm('N','T',                   &
-                  (integrals%n_J)*b_length, &
+      call dgemm('N','N',                   &
                   a_length,                 &
+                  b_length*(integrals%n_J), &
                   integrals%n_o,            &
                   -one,                     &
-                  L_Jb_i,                   &
-                  (integrals%n_J)*b_length, &
-                  t1(first_a, 1),           &
+                  t1(first_a, 1),           & ! t_a_i
                   integrals%n_v,            &
-                  zero,                     &
-                  L_Jb_a,                   &
-                  b_length*(integrals%n_J))
+                  L_ib_J,                   & ! L_i_bJ
+                  integrals%n_o,            &
+                  one,                      &
+                  L_ab_J,                   & ! L_a_bj
+                  a_length)
 !
-      call add_321_to_123(one, L_Jb_a, L_ab_J, a_length, b_length, integrals%n_J)
-!
-      call mem%dealloc(L_Jb_a, (integrals%n_J)*b_length, a_length)
-      call mem%dealloc(L_Jb_i, (integrals%n_J)*b_length, integrals%n_o)      
+      call mem%dealloc(L_ib_J, (integrals%n_o)*b_length, integrals%n_J)  
 !
    end subroutine construct_cholesky_ab_mo_integral_tool
 !
