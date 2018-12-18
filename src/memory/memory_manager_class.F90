@@ -517,15 +517,21 @@ contains
    end function room_for_n_arrays_of_size_memory_manager
 !
 !
-   subroutine batch_setup_1_memory_manager(mem, batch_p, required, element_size)
+   subroutine batch_setup_1_memory_manager(mem, batch_p, req0, req1, element_size)
 !!
 !!    Setup batching 
 !!    This is setup for a single batch index
 !!    Written by Rolf H. Myhre December 2018
 !!
-!!    batch_p: Batching object who's parameters are set.
-!!    required: Memory required per combination of batched indices. I.e. size(dp)*n_v**3 for (vv|vo) when 
-!!              batching over the occupied index.
+!!    batch_p:  Initialized batching object.
+!!
+!!    req0:     Memory required that does not change with the index dimension.
+!!              E.g., n_o**2*n_v**2 for (vo|vo) if none of the indices 
+!!              in the integral is batched over.
+!!
+!!    req1:     Memory required per batching index (linear with batch size). 
+!!              E.g., n_v**3 for (vv|vo) when batching over the 
+!!              occupied index.
 !!
       implicit none
 !
@@ -533,33 +539,44 @@ contains
 !
       class(batching_index) :: batch_p ! The index being batched over
 !
-      integer(i15), intent(in) :: required
+      integer(i15), intent(in) :: req0
+      integer(i15), intent(in) :: req1
+!
       integer(i15), intent(in), optional :: element_size
 !
-      integer(i15) :: r_buff
-      integer(i15) :: r_tot
+      integer(i15) :: req0_tot
+      integer(i15) :: req1_min
+      integer(i15) :: req_min
+!
+      integer(i15) :: req_tot
+!
       integer(i15) :: e_size
+!
+      write(output%unit, *) 'Hello world.'
 !
       e_size = dp
       if(present(element_size)) then
          e_size = element_size
       endif
 !
-      r_buff = (required + required/(mem%buffer))*e_size
-      r_tot = r_buff*batch_p%index_dimension
+      req1_min = (req1 + req1/(mem%buffer))*e_size 
+      req0_tot = (req0 + req0/(mem%buffer))*e_size
 !
-      if (r_tot .lt. mem%available) then
+      req_min = req0_tot + req1_min 
+      req_tot = req0_tot + req1_min*batch_p%index_dimension
+!
+      if (req_tot .lt. mem%available) then
 !
 !        No need to batch
 !
          batch_p%num_batches = 1
-         batch_p%max_length = batch_p%index_dimension
+         batch_p%max_length  = batch_p%index_dimension
 !
-      else if (mem%available .lt. r_buff) then
+      else if (req_min .gt. mem%available) then
 !
 !        Not enough memory for a batch
 !
-         write(output%unit,'(t3,a,i14,a,i14)') 'Need ', r_buff, 'but only have ', mem%available
+         write(output%unit,'(t3,a,i14,a,i14)') 'Need at least', req_min, 'but only have ', mem%available
          call output%error_msg('Not enough memory for a batch')
 !
       else
@@ -568,7 +585,7 @@ contains
 !
 !        Determine maximum batch length
 !
-         batch_p%max_length = (mem%available)/(r_buff)
+         batch_p%max_length = (mem%available - req0_tot)/(req1_min)
 !
 !        Number of full batches
 !
