@@ -3,7 +3,7 @@ submodule (cc2_class) omega_cc2
 !!
 !!    Omega submodule (cc2)
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
-!!    and Linda Goletto, 2018
+!!    Linda Goletto and Alexander Paul, 2018
 !!
 !!    Routines to construct 
 !!
@@ -19,7 +19,7 @@ contains
 !!
 !!    Construct omega 
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
-!!    and Linda Goletto, 2018
+!!    Linda Goletto, and Alexander Paul, Dec 2018
 !!
 !!    Directs the construction of the projection vector < mu | exp(-T) H exp(T) | R >
 !!    for the current amplitudes of the object wfn
@@ -45,7 +45,7 @@ contains
 !!
 !!    Omega CC2 A1 term
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
-!!    and Linda Goletto, 2018
+!!    Linda Goletto, and Alexander Paul, Dec 2018
 !!
       implicit none
 !
@@ -54,14 +54,14 @@ contains
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: omega
 !
       real(dp), dimension(:,:), allocatable :: g_bi_cj
-      real(dp), dimension(:,:), allocatable :: l_bj_ci
+      real(dp), dimension(:,:), allocatable :: L_bj_ci
       real(dp), dimension(:,:), allocatable :: g_ab_jc
 !
       integer(i15) :: b, j, c, i
       integer(i15) :: bj, ci, bi, cj
 !
       call mem%alloc(g_bi_cj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
-      call mem%alloc(l_bj_ci, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      call mem%alloc(L_bj_ci, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
       call wf%get_vovo(g_bi_cj)
 !
@@ -69,14 +69,16 @@ contains
          do  j = 1, wf%n_o
              do c = 1, wf%n_v
                 do i = 1, wf%n_o
+!
                    bj = wf%n_v*(j-1) + b
                    ci = wf%n_v*(i-1) + c
                    bi = wf%n_v*(i-1) + b
                    cj = wf%n_v*(j-1) + c
 !                  
-                   l_bj_ci(bj,ci) = - (two*g_bi_cj(bi,cj)/(wf%fock_ab(b,b) + wf%fock_ab(c,c) - &
-                           wf%fock_ij(i,i) - wf%fock_ij(j,j))) + g_bi_cj(bj,ci)/(wf%fock_ab(b,b) &
-                           + wf%fock_ab(c,c) - wf%fock_ij(i,i) - wf%fock_ij(j,j))
+                   L_bj_ci(bj,ci) = - (two*g_bi_cj(bi,cj)/(wf%fock_diagonal(b + wf%n_o, 1) + wf%fock_diagonal(c + wf%n_o, 1) &
+                                                          - wf%fock_diagonal(i, 1) - wf%fock_diagonal(j, 1))) &
+                                    + g_bi_cj(bj,ci)/(wf%fock_diagonal(b + wf%n_o, 1) + wf%fock_diagonal(c + wf%n_o, 1)  &
+                                                      - wf%fock_diagonal(i, 1) - wf%fock_diagonal(j, 1))
                 enddo
              enddo
          enddo
@@ -88,18 +90,18 @@ contains
 !
       call wf%get_vvov(g_ab_jc)
 !
-              call dgemm('N','N',                            &
-                          wf%n_v,                            &
-                          wf%n_o,                            &
-                          wf%n_v**2*wf%n_o,                  &
-                          one,                               &
-                          g_ab_jc,                           &
-                          wf%n_v,                            &
-                          l_bj_ci,                           &
-                          wf%n_v**2*wf%n_o,                  &
-                          one,                               &
-                          omega,                             &
-                          wf%n_v)
+      call dgemm('N','N',            &
+                  wf%n_v,            &
+                  wf%n_o,            &
+                  wf%n_v**2*wf%n_o,  &
+                  one,               &
+                  g_ab_jc,           &
+                  wf%n_v,            &
+                  L_bj_ci,           &
+                  wf%n_v**2*wf%n_o,  &
+                  one,               &
+                  omega,             &
+                  wf%n_v)
 !
       call mem%dealloc(g_ab_jc, (wf%n_v)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call mem%dealloc(l_bj_ci, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
@@ -111,7 +113,7 @@ contains
 !!
 !!    Omega CC2 B1 term
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
-!!    and Linda Goletto, 2018
+!!    Linda Goletto, and Alexander Paul, Dec 2018
 !!
       implicit none
 !
@@ -134,10 +136,13 @@ contains
          do j = 1, wf%n_o
             do b = 1, wf%n_v
                do k = 1, wf%n_o
+!
                   aj = wf%n_v*(j-1) + a
                   bk = wf%n_v*(k-1) + b
-                  g_aj_bk(aj,bk) = g_aj_bk(aj,bk)/(- wf%fock_ab(a,a) &
-                     - wf%fock_ab(b,b)  + wf%fock_ij(j,j) + wf%fock_ij(k,k))
+!
+                  g_aj_bk(aj,bk) = - g_aj_bk(aj,bk)/(wf%fock_diagonal(a + wf%n_o, 1) + wf%fock_diagonal(b + wf%n_o, 1)&
+                                                   - wf%fock_diagonal(j, 1) - wf%fock_diagonal(k, 1))
+!
                enddo
             enddo
          enddo
@@ -147,18 +152,18 @@ contains
 !
       call wf%get_ovoo(g_jb_ki)
 !
-              call dgemm('N','N',                            &
-                          wf%n_v,                            &
-                          wf%n_o,                            &
-                          wf%n_o**2*wf%n_v,                  &
-                          -one,                              &
-                          g_aj_bk,                           &
-                          wf%n_v,                            &
-                          g_jb_ki,                           &
-                          wf%n_o**2*wf%n_v,                  &
-                          one,                               &
-                          omega,                             &
-                          wf%n_v)
+      call dgemm('N','N',           &
+                  wf%n_v,           &
+                  wf%n_o,           &
+                  wf%n_o**2*wf%n_v, &
+                  one,              &
+                  g_aj_bk,          &
+                  wf%n_v,           &
+                  g_jb_ki,          &
+                  wf%n_o**2*wf%n_v, &
+                  one,              &
+                  omega,            &
+                  wf%n_v)
 !
       call mem%dealloc(g_jb_ki, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_o))
 !
@@ -168,22 +173,22 @@ contains
 !
       call mem%alloc(g_jb_ki, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_o))
 !
-      call sort_1234_to_3214(g_kb_ji,g_jb_ki,wf%n_o,wf%n_v,wf%n_o,wf%n_o)
+      call sort_1234_to_3214(g_kb_ji, g_jb_ki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
       call mem%dealloc(g_kb_ji, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_o))
 !
-              call dgemm('N','N',                            &
-                          wf%n_v,                            &
-                          wf%n_o,                            &
-                          wf%n_o**2*wf%n_v,                  &
-                          two,                               &
-                          g_aj_bk,                           &
-                          wf%n_v,                            &
-                          g_jb_ki,                           &
-                          wf%n_o**2*wf%n_v,                  &
-                          one,                               &
-                          omega,                             &
-                          wf%n_v)
+      call dgemm('N','N',            &
+                  wf%n_v,            &
+                  wf%n_o,            &
+                  (wf%n_o**2)*wf%n_v,&
+                  -two,              &
+                  g_aj_bk,           &
+                  wf%n_v,            &
+                  g_jb_ki,           &
+                  (wf%n_o**2)*wf%n_v,&
+                  one,               &
+                  omega,             &
+                  wf%n_v)
 !
       call mem%dealloc(g_jb_ki, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_o))
       call mem%dealloc(g_aj_bk, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
@@ -195,7 +200,7 @@ contains
 !!
 !!    Omega CC2 C1 term
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
-!!    and Linda Goletto, 2018
+!!    Linda Goletto, and Alexander Paul, Dec 2018
 !!
       implicit none
 !
@@ -229,10 +234,10 @@ contains
                   bj = wf%n_v*(j-1) + b
                   jb = wf%n_o*(b-1) + j
 !
-                  L_aijb(ai, jb) = -two*(g_aibj(ai, bj)/(wf%fock_ab(a,a) + wf%fock_ab(b,b) &
-                                                      - wf%fock_ij(i,i) - wf%fock_ij(j,j))) &
-                                    + (g_aibj(aj, bi)/(wf%fock_ab(a,a) + wf%fock_ab(b,b) &
-                                                      - wf%fock_ij(i,i) - wf%fock_ij(j,j))) 
+                  L_aijb(ai, jb) = -two*(g_aibj(ai, bj)/(wf%fock_diagonal(a + wf%n_o, 1) + wf%fock_diagonal(b + wf%n_o, 1) &
+                                                      - wf%fock_diagonal(i, 1) - wf%fock_diagonal(j, 1))) &
+                                    + (g_aibj(aj, bi)/(wf%fock_diagonal(a + wf%n_o, 1) + wf%fock_diagonal(b + wf%n_o, 1) &
+                                                      - wf%fock_diagonal(i, 1) - wf%fock_diagonal(j, 1))) 
 !
                enddo
             enddo
@@ -244,12 +249,12 @@ contains
 !
       call dgemm('N', 'N', &
                   wf%n_v*wf%n_o, &
-                  wf%n_v*wf%n_o, &
+                  1,             &
                   wf%n_v*wf%n_o, &
                   one,           &
                   L_aijb,        &
                   wf%n_v*wf%n_o, &
-                  wf%fock_ia,    &
+                  wf%fock_ia,    & ! F_jb_1
                   wf%n_v*wf%n_o, &
                   one,           &
                   omega,         &
