@@ -34,7 +34,7 @@ contains
       real(dp), dimension(:,:), allocatable :: omega1, omega2
 !
       type(timings) :: ccsd_a1_timer
-      type(timings) :: ccsd_b1_timer
+      type(timings) :: ccsd_a2_timer
 !
       call mem%alloc(omega1, wf%n_v, wf%n_o)
       call mem%alloc(omega2, (wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o) +1)/2, 1)
@@ -58,7 +58,11 @@ contains
 !
 !     Construct doubles contributions
 !
+      call ccsd_a2_timer%init('omega ccsd a2')
+      call ccsd_a2_timer%start()
       call wf%omega_ccsd_a2(omega2)
+      call ccsd_a2_timer%finish()
+!
       call wf%omega_ccsd_b2(omega2)
       call wf%omega_ccsd_c2(omega2)
       call wf%omega_ccsd_d2(omega2)
