@@ -69,12 +69,12 @@ contains
          do  j = 1, wf%n_o
              do c = 1, wf%n_v
                 do i = 1, wf%n_o
-                   bj = index_two(b,j,wf%n_v)
-                   ci = index_two(c,i,wf%n_v)
-                   bi = index_two(b,i,wf%n_v)
-                   cj = index_two(c,j,wf%n_v)
+                   bj = wf%n_v*(j-1) + b
+                   ci = wf%n_v*(i-1) + c
+                   bi = wf%n_v*(i-1) + b
+                   cj = wf%n_v*(j-1) + c
 !                  
-                   l_bj_ci= - (two*g_bi_cj(bi,cj)/(wf%fock_ab(b,b) + wf%fock_ab(c,c) - &
+                   l_bj_ci(bj,ci) = - (two*g_bi_cj(bi,cj)/(wf%fock_ab(b,b) + wf%fock_ab(c,c) - &
                            wf%fock_ij(i,i) - wf%fock_ij(j,j))) + g_bi_cj(bj,ci)/(wf%fock_ab(b,b) &
                            + wf%fock_ab(c,c) - wf%fock_ij(i,i) - wf%fock_ij(j,j))
                 enddo
@@ -134,8 +134,8 @@ contains
          do j = 1, wf%n_o
             do b = 1, wf%n_v
                do k = 1, wf%n_o
-                  aj = index_two(a,j,wf%n_v)
-                  bk = index_two(b,k,wf%n_v)
+                  aj = wf%n_v*(j-1) + a
+                  bk = wf%n_v*(k-1) + b
                   g_aj_bk(aj,bk) = g_aj_bk(aj,bk)/(- wf%fock_ab(a,a) &
                      - wf%fock_ab(b,b)  + wf%fock_ij(j,j) + wf%fock_ij(k,k))
                enddo
