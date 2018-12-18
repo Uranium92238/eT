@@ -12,18 +12,18 @@ module cc2_class
 !
    type, extends(ccs) :: cc2
 !
-      real(dp), dimension(:,:), allocatable :: t2    
-!
-      integer(i15) :: n_t2  
-!
    contains
 !
+      procedure :: construct_omega  => construct_omega_cc2
+      procedure :: omega_cc2_a1     => omega_cc2_a1_cc2
+      procedure :: omega_cc2_b1     => omega_cc2_b1_cc2
+      procedure :: omega_cc2_c1     => omega_cc2_c1_cc2
 !
    end type cc2
 !
-!
    interface
 !
+      include "../submodules/cc2/omega_cc2_interface.F90"
 !
    end interface 
 !
