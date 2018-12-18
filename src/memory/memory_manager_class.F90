@@ -521,7 +521,7 @@ contains
 !!
 !!    Setup batching 
 !!    This is setup for a single batch index
-!!    Written by Rolf H. Myhre December 2018
+!!    Written by Rolf H. Myhre and Eirik F. Kjønstad, December 2018
 !!
 !!    batch_p:  Initialized batching object.
 !!
@@ -551,8 +551,6 @@ contains
       integer(i15) :: req_tot
 !
       integer(i15) :: e_size
-!
-      write(output%unit, *) 'Hello world.'
 !
       e_size = dp
       if(present(element_size)) then
