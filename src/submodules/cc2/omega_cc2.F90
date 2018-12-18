@@ -95,6 +95,7 @@ contains
 !
       call mem%alloc(L_aijb, wf%n_o*wf%n_v, wf%n_o*wf%n_v)
 !
+!$omp parallel do schedule(static) private(i, j, a, b, ai, aj, bi, bj, jb)
       do i = 1, wf%n_o 
          do j = 1, wf%n_o
             do a = 1, wf%n_v
@@ -103,7 +104,6 @@ contains
                aj = wf%n_v*(j-1) + a
 !
                do b = 1, wf%n_v
-
 !
                   bi = wf%n_v*(i-1) + b
                   bj = wf%n_v*(j-1) + b
@@ -118,6 +118,7 @@ contains
             enddo
          enddo
       enddo
+!$omp end parallel do
 !
       call mem%dealloc(g_aibj, wf%n_o*wf%n_v, wf%n_o*wf%n_v)
 !
