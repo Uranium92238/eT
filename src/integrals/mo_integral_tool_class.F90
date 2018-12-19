@@ -434,9 +434,7 @@ contains
       integer(i15) :: full_first_a, full_last_a, length_a 
       integer(i15) :: full_first_i, full_last_i, length_i
 !
-      integer(i15) :: i, J, a, ai, aJ, current_a_batch, required
-!
-      type(batching_index) :: batch_a
+      integer(i15) :: i, J, a, ai, aJ
 !
       call integrals%set_full_index(full_first_i, 'f', 'o', first_i)
       call integrals%set_full_index(full_first_a, 'f', 'v', first_a)
@@ -508,27 +506,16 @@ contains
 !
       call mem%dealloc(L_ji_J, (integrals%n_o)*length_i, (integrals%n_J))
 !
-      call batch_a%init(length_a)
+      call mem%alloc(L_ba_J, length_a*(integrals%n_v), (integrals%n_J)) 
 !
-      required = length_a*(integrals%n_v)*(integrals%n_J) &
-               + length_i*(length_a)*(integrals%n_J)
+      call integrals%read_cholesky(L_ba_J, (integrals%n_o) + 1, (integrals%n_mo), &
+                        first_a + (integrals%n_o), last_a + (integrals%n_o))
 !
-      call mem%num_batch(batch_a, required)
+      call mem%alloc(X_i_aJ, length_i, (length_a)*(integrals%n_J)) 
 !
-      do current_a_batch = 1, batch_a%num_batches
-!
-         call batch_a%determine_limits(current_a_batch) 
-!
-         call mem%alloc(L_ba_J, batch_a%length*(integrals%n_v), (integrals%n_J)) 
-!
-         call integrals%read_cholesky(L_ba_J, (integrals%n_o) + 1, (integrals%n_mo), &
-                        batch_a%first + (integrals%n_o), batch_a%last + (integrals%n_o))
-!
-         call mem%alloc(X_i_aJ, length_i, (batch_a%length)*(integrals%n_J)) 
-!
-         call dgemm('T', 'N',                               &
+      call dgemm('T', 'N',                                  &
                   length_i,                                 &
-                  (batch_a%length)*(integrals%n_J),         &
+                  (length_a)*(integrals%n_J),               &
                   integrals%n_v,                            &
                   one,                                      &
                   t1,                                       & ! t_b_i
@@ -540,17 +527,17 @@ contains
                   length_i) 
  
 !        
-         call mem%dealloc(L_ba_J, batch_a%length*(integrals%n_v), (integrals%n_J))  
+      call mem%dealloc(L_ba_J, (length_a)*(integrals%n_v), (integrals%n_J))  
 !
 !$omp parallel do &
 !$omp private(i, a, J, ai, aJ) &
-!$omp shared(L_ai_J, X_i_aJ, batch_a)
+!$omp shared(L_ai_J, X_i_aJ)
          do i = 1, length_i
-            do a = 1, batch_a%length
+            do a = 1, length_a 
                do J = 1, integrals%n_J
 !
-                  ai = length_a*(i - 1) + a + batch_a%first - 1
-                  aJ = batch_a%length*(J - 1) + a
+                  ai = length_a*(i - 1) + a
+                  aJ = length_a*(J - 1) + a
 !
                   L_ai_J(ai, J) = L_ai_J(ai, J) + X_i_aJ(i, aJ)
 !
@@ -559,9 +546,7 @@ contains
          enddo
 !$omp end parallel do
 !
-         call mem%dealloc(X_i_aJ, length_i, (batch_a%length)*(integrals%n_J)) 
-!!
-       enddo
+         call mem%dealloc(X_i_aJ, length_i, (length_a)*(integrals%n_J)) 
 !
    end subroutine construct_cholesky_ai_mo_integral_tool
 !
