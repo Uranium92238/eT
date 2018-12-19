@@ -21,14 +21,14 @@ module cc2_class
 !
       procedure :: calculate_energy => calculate_energy_cc2
 !
-      procedure :: effective_jacobian_transformation => effective_jacobian_transformation_cc2
+    !  procedure :: effective_jacobian_transformation => effective_jacobian_transformation_cc2
 !
    end type cc2
 !
    interface
 !
       include "../submodules/cc2/omega_cc2_interface.F90"
-      include "../submodules/cc2/jacobian_cc2_interface.F90"
+  !    include "../submodules/cc2/jacobian_cc2_interface.F90"
 !
    end interface 
 !

@@ -322,6 +322,45 @@ contains
    end subroutine add_321_to_123
 !
 !
+   subroutine add_213_to_123(gamma, x, y_pqr, dim_p, dim_q, dim_r)
+!!
+!!    Add 213 to 123
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Performs:
+!!
+!!       y_pqr(pqr,1) = y_pqr(pqr,1) + gamma*x(qpr,1)
+!!
+!!
+      implicit none
+!
+      real(dp), intent(in) :: gamma
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r
+!
+      real(dp), dimension(:, :) :: y_pqr
+      real(dp), dimension(:, :), intent(in) :: x
+!
+      integer(i15) :: pqr, qpr, r, q, p
+!
+!$omp parallel do schedule(static) private(r,q,p,pqr,qpr)
+      do r = 1, dim_r
+         do q = 1, dim_q
+            do p = 1, dim_p
+!
+               pqr = dim_p*(dim_q*(r-1)+q-1)+p
+               qpr = dim_q*(dim_p*(r-1)+p-1)+q
+!
+               y_pqr(pqr, 1) = y_pqr(pqr, 1) + gamma*x(qpr, 1)
+!
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine add_213_to_123
+!
+!
    subroutine add_132_to_123(gamma, x, y_pqr, dim_p, dim_q, dim_r)
 !!
 !!    Add 132 to 123
