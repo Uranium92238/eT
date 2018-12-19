@@ -434,8 +434,6 @@ contains
       integer(i15) :: full_first_a, full_last_a, length_a 
       integer(i15) :: full_first_i, full_last_i, length_i
 !
-      integer(i15) :: i, J, a, ai, aJ
-!
       type(batching_index) :: batch_j
 !
       integer(i15) :: req0, req1, current_j_batch
@@ -547,24 +545,9 @@ contains
 !        
       call mem%dealloc(L_ba_J, (length_a)*(integrals%n_v), (integrals%n_J))  
 !
-!$omp parallel do &
-!$omp private(i, a, J, ai, aJ) &
-!$omp shared(L_ai_J, X_i_aJ)
-         do i = 1, length_i
-            do a = 1, length_a 
-               do J = 1, integrals%n_J
+      call add_213_to_123(one, X_i_aJ, L_ai_J, length_a, length_i, integrals%n_J)
 !
-                  ai = length_a*(i - 1) + a
-                  aJ = length_a*(J - 1) + a
-!
-                  L_ai_J(ai, J) = L_ai_J(ai, J) + X_i_aJ(i, aJ)
-!
-               enddo
-            enddo
-         enddo
-!$omp end parallel do
-!
-         call mem%dealloc(X_i_aJ, length_i, (length_a)*(integrals%n_J)) 
+      call mem%dealloc(X_i_aJ, length_i, (length_a)*(integrals%n_J)) 
 !
    end subroutine construct_cholesky_ai_mo_integral_tool
 !
