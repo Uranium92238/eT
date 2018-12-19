@@ -60,51 +60,90 @@ contains
       integer(i15) :: b, j, c, i
       integer(i15) :: bj, ci, bi, cj
 !
-      call mem%alloc(g_bi_cj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
-      call mem%alloc(L_bj_ci, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      integer(i15) :: rec0, rec1_b, rec1_c, rec2
 !
-      call wf%get_vovo(g_bi_cj)
+      integer(i15) :: current_b_batch, current_c_batch
 !
-      do b = 1, wf%n_v
-         do  j = 1, wf%n_o
-             do c = 1, wf%n_v
-                do i = 1, wf%n_o
+      type(batching_index) :: batch_b, batch_c
 !
-                   bj = wf%n_v*(j-1) + b
-                   ci = wf%n_v*(i-1) + c
-                   bi = wf%n_v*(i-1) + b
-                   cj = wf%n_v*(j-1) + c
-!                  
-                   L_bj_ci(bj,ci) = - (two*g_bi_cj(bi,cj)/(wf%fock_diagonal(b + wf%n_o, 1) + wf%fock_diagonal(c + wf%n_o, 1) &
-                                                          - wf%fock_diagonal(i, 1) - wf%fock_diagonal(j, 1))) &
-                                    + g_bi_cj(bj,ci)/(wf%fock_diagonal(b + wf%n_o, 1) + wf%fock_diagonal(c + wf%n_o, 1)  &
-                                                      - wf%fock_diagonal(i, 1) - wf%fock_diagonal(j, 1))
-                enddo
-             enddo
+      rec0 = 0
+!
+      rec1_b = (wf%integrals%n_J)*(wf%n_v**2)
+      rec1_c = (wf%integrals%n_J)*(wf%n_o)*(wf%n_v)
+!
+      rec2 =  (wf%n_o**2)*(wf%n_v**2) + (wf%n_o)*(wf%n_v**3)
+!
+      call batch_b%init(wf%n_v)
+      call batch_c%init(wf%n_v)
+!
+      call mem%batch_setup(batch_b, batch_c, rec0, rec1_b, rec1_c, rec2)
+!
+      do current_b_batch = 1, batch_b%num_batches
+!
+         call batch_b%determine_limits(current_b_batch)
+!
+         do current_c_batch = 1, batch_c%num_batches
+!
+            call batch_c%determine_limits(current_c_batch)
+!
+            call mem%alloc(g_bi_cj, (batch_b%length)*(wf%n_o), (batch_c%length)*(wf%n_o))
+            call mem%alloc(L_bj_ci, (batch_b%length)*(wf%n_o), (batch_c%length)*(wf%n_o))
+!
+            call wf%get_vovo(g_bi_cj,                      &
+                              batch_b%first, batch_b%last, &
+                              1, wf%n_o,                   &
+                              batch_c%first, batch_c%last, &
+                              1, wf%n_o)
+!
+            do b = 1, (batch_b%length)
+               do  j = 1, wf%n_o
+                   do c = 1, (batch_c%length)
+                      do i = 1, wf%n_o
+!
+                         bj = batch_b%length*(j-1) + b
+                         ci = batch_c%length*(i-1) + c
+                         bi = batch_b%length*(i-1) + b
+                         cj = batch_c%length*(j-1) + c
+!                        
+                         L_bj_ci(bj,ci) = - (two*g_bi_cj(bi,cj)/( wf%fock_diagonal(b + batch_b%first - 1 + wf%n_o, 1) &
+                                                                + wf%fock_diagonal(c + batch_c%first - 1 + wf%n_o, 1) &
+                                                                - wf%fock_diagonal(i, 1) - wf%fock_diagonal(j, 1))) &
+                                               + g_bi_cj(bj,ci)/( wf%fock_diagonal(b + batch_b%first - 1 + wf%n_o, 1) &
+                                                                + wf%fock_diagonal(c + batch_c%first - 1 + wf%n_o, 1)  &
+                                                                - wf%fock_diagonal(i, 1) - wf%fock_diagonal(j, 1))
+                      enddo
+                   enddo
+               enddo
+            enddo
+!
+            call mem%dealloc(g_bi_cj, (batch_b%length)*(wf%n_o), (batch_c%length)*(wf%n_o))
+!
+            call mem%alloc(g_ab_jc, (batch_b%length)*(wf%n_v), (batch_c%length)*(wf%n_o))
+!
+            call wf%get_vvov(g_ab_jc,                       &
+                              1, wf%n_v,                    &
+                              batch_b%first, batch_b%last,  &
+                              1, wf%n_o,                    &
+                              batch_c%first, batch_c%last)
+!
+            call dgemm('N','N',                                   &
+                        wf%n_v,                                   &
+                        wf%n_o,                                   &
+                        (batch_b%length)*(batch_c%length)*wf%n_o, &
+                        one,                                      &
+                        g_ab_jc,                                  &
+                        wf%n_v,                                   &
+                        L_bj_ci,                                  &
+                        (batch_b%length)*(batch_c%length)*wf%n_o, &
+                        one,                                      &
+                        omega,                                    &
+                        wf%n_v)
+!
+            call mem%dealloc(g_ab_jc, (batch_b%length)*(wf%n_v), (batch_c%length)*(wf%n_o))
+            call mem%dealloc(L_bj_ci, (batch_b%length)*(wf%n_o), (batch_c%length)*(wf%n_o))
+!
          enddo
       enddo
-!
-      call mem%dealloc(g_bi_cj, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
-!
-      call mem%alloc(g_ab_jc, (wf%n_v)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
-      call wf%get_vvov(g_ab_jc)
-!
-      call dgemm('N','N',            &
-                  wf%n_v,            &
-                  wf%n_o,            &
-                  wf%n_v**2*wf%n_o,  &
-                  one,               &
-                  g_ab_jc,           &
-                  wf%n_v,            &
-                  L_bj_ci,           &
-                  wf%n_v**2*wf%n_o,  &
-                  one,               &
-                  omega,             &
-                  wf%n_v)
-!
-      call mem%dealloc(g_ab_jc, (wf%n_v)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call mem%dealloc(l_bj_ci, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
    end subroutine omega_cc2_a1_cc2
 !
