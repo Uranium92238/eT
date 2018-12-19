@@ -47,6 +47,21 @@ contains
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
 !!    Linda Goletto, and Alexander Paul, Dec 2018
 !!
+!!    Calculates the A1 term,
+!!
+!!       A1: sum_ckd u_bj_ci * g_abjc,
+!!
+!!    with 
+!!       
+!!       u_bj_ci = 2*t_bj_ci - t_bi_cj
+!!
+!!    and
+!!
+!!       t_bj_ci = - g_bjci/ε^{bc}_{ji}
+!!
+!!    and adds it to the projection vector (omega) of
+!!    the wavefunction object wf.
+!!
       implicit none
 !
       class(cc2), intent(in) :: wf
@@ -153,6 +168,17 @@ contains
 !!    Omega CC2 B1 term
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
 !!    Linda Goletto, and Alexander Paul, Dec 2018
+!!
+!!    Calculates the B1 term,
+!!
+!!       B1: - sum_ckl (2g_kb_ji - g_jb_ki) * t_aj_bk,
+!!
+!!    with
+!!
+!!       t_aj_bk = - g_ajbk/ε^{ab}_{jk}
+!!
+!!    and adds it to the projection vector (omega) of
+!!    the wavefunction object wf.
 !!
       implicit none
 !

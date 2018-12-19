@@ -53,8 +53,6 @@ contains
       real(dp), dimension(:,:), allocatable :: g_aibj
       real(dp), dimension(:,:), allocatable :: g_iajb
 !
-      real(dp) :: ddot
-!
       integer(i15) :: i, j, a, b, ai, bj, ia, jb, ib, ja
 !
       call mem%alloc(g_aibj, wf%n_v*wf%n_o, wf%n_v*wf%n_o)
