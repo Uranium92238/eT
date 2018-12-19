@@ -33,9 +33,6 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: omega1, omega2
 !
-      type(timings) :: ccsd_a1_timer
-      type(timings) :: ccsd_a2_timer
-!
       call mem%alloc(omega1, wf%n_v, wf%n_o)
       call mem%alloc(omega2, (wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o) +1)/2, 1)
 !
@@ -46,11 +43,7 @@ contains
 !
 !     Construct singles contributions
 !
-      call ccsd_a1_timer%init('omega ccsd a1')
-      call ccsd_a1_timer%start()
       call wf%omega_ccsd_a1(omega1)
-      call ccsd_a1_timer%finish()
-!
       call wf%omega_ccsd_b1(omega1)
       call wf%omega_ccsd_c1(omega1)
 !
@@ -58,11 +51,7 @@ contains
 !
 !     Construct doubles contributions
 !
-      call ccsd_a2_timer%init('omega ccsd a2')
-      call ccsd_a2_timer%start()
       call wf%omega_ccsd_a2(omega2)
-      call ccsd_a2_timer%finish()
-!
       call wf%omega_ccsd_b2(omega2)
       call wf%omega_ccsd_c2(omega2)
       call wf%omega_ccsd_d2(omega2)
@@ -96,8 +85,6 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout):: omega1
 !
-!     Batching variables
-!
       integer(i15) :: required        = 0
       integer(i15) :: current_a_batch = 0
 !
@@ -106,6 +93,11 @@ contains
       real(dp), dimension(:,:), allocatable :: u_dk_ci, t_dk_ci, g_ad_kc
 !
       integer(i15) :: ad_dim
+!
+      type(timings) :: ccsd_a1_timer
+!
+      call ccsd_a1_timer%init('omega ccsd a1')
+      call ccsd_a1_timer%start()
 !
 !     u_ki^cd = 2*t_ki^cd - t_ik^cd (ordered as u_dk_ci)
 !
@@ -171,6 +163,8 @@ contains
 !
       call mem%dealloc(u_dk_ci, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
+      call ccsd_a1_timer%finish()
+!
    end subroutine omega_ccsd_a1_ccsd
 !
 !
@@ -197,9 +191,13 @@ contains
       real(dp), dimension(:,:), allocatable :: t_al_ck ! t_kl^ac
       real(dp), dimension(:,:), allocatable :: u_al_ck ! u_kl^ac = 2 t_kl^ac - t_lk^ac
 !
+      type(timings) :: ccsd_b1_timer 
+!  
+      call ccsd_b1_timer%init('omega ccsd b1')
+      call ccsd_b1_timer%start()
+!
 !     Form u_al_ck = u_kl^ac = 2 * t_kl^ac - t_lk^ac
 !     Square up amplitudes and reorder: t_ak_cl to t_al_ck
-!
 !
       call mem%alloc(g_lc_ki, (wf%n_v)*(wf%n_o), (wf%n_o)**2)
 !
@@ -233,9 +231,10 @@ contains
 !
 !     Deallocate remaining vectors
 !
-!
       call mem%dealloc(u_al_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
       call mem%dealloc(g_lc_ki, (wf%n_v)*(wf%n_o), (wf%n_o)**2)
+!
+      call ccsd_b1_timer%finish()
 !
    end subroutine omega_ccsd_b1_ccsd
 !
@@ -265,6 +264,11 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: u_ai_ck
       real(dp), dimension(:,:), allocatable :: t_ai_ck
+!
+      type(timings) :: ccsd_c1_timer 
+!
+      call ccsd_c1_timer%init('omega ccsd c1')
+      call ccsd_c1_timer%start()
 !
 !     Form u_ai_ck = u_ik^ac = 2*t_ik^ac - t_ki^ac
 !
@@ -300,6 +304,8 @@ contains
 !
       call mem%dealloc(u_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call mem%dealloc(F_c_k, wf%n_v, wf%n_o)
+!
+      call ccsd_c1_timer%finish()
 !
    end subroutine omega_ccsd_c1_ccsd
 !
@@ -365,15 +371,12 @@ contains
       type(batching_index) :: batch_a
       type(batching_index) :: batch_b
 !
-!     Timing variables
+      type(timings) :: ccsd_a2_timer, ccsd_a2_integral_timer
 !
-      real(dp) :: time_non_integral_part
-      real(dp) :: a2_begin_time, a2_end_time
-      real(dp) :: a2_begin_time_1, a2_end_time_1
-!
-      time_non_integral_part = zero
-!
-      call cpu_time(a2_begin_time)
+      call ccsd_a2_timer%init('omega ccsd a2')
+      call ccsd_a2_integral_timer%init('omega ccsd a2 (integral time)')
+!      
+      call ccsd_a2_timer%start()
 !
 !     :: Calculate the A2.1 term of omega ::
 !
@@ -422,7 +425,7 @@ contains
 !
 !           Get g_ac_bd
 !
-            call cpu_time(a2_begin_time_1)
+            call ccsd_a2_integral_timer%start()
 !
             call wf%get_vvvv(g_ac_bd,        &
                               batch_a%first, &
@@ -434,9 +437,7 @@ contains
                               1,             &
                               wf%n_v)
 !
-            call cpu_time(a2_end_time_1)
-            time_non_integral_part = time_non_integral_part &
-                                   - a2_end_time_1 + a2_begin_time_1
+            call ccsd_a2_integral_timer%freeze()
 !
             if (current_b_batch .eq. current_a_batch) then
 !
@@ -749,7 +750,8 @@ contains
          enddo ! End batching over b
       enddo ! End batching over a
 !
-      call cpu_time(a2_end_time)
+      call ccsd_a2_timer%finish()
+      call ccsd_a2_integral_timer%print_times()
 !
    end subroutine omega_ccsd_a2_ccsd
 !

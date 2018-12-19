@@ -36,7 +36,27 @@ module timings_class
 !!       call A1_timer%finish()
 !!
 !!    The freeze routine does not print anything; it just temporarily
-!!    stops the clock.
+!!    stops the clock. 
+!!
+!!    NB! If you start and freeze inside a loop (i.e., the clock is 
+!!    freezed when you exit the loop), then you need to add a print_times()
+!!    call when the loop is finished.
+!!
+!!    Do not use finish() in this case! Example of correct usage:
+!!
+!!    do (...)
+!!
+!!       call A1_timer%start()
+!!
+!!       ... stuff that we want to time 
+!!
+!!       call A1_timer%freeze()
+!!
+!!       ... stuff that we don't want to time 
+!!
+!!    enddo
+!!
+!!    call A1_timer%print_times()
 !!
 !
    use file_class
