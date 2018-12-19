@@ -2453,9 +2453,9 @@ contains
 !
       integer(i15) :: ij, ij_rec, i, j, k, ai, ai_rec, ia, ia_rec, ab, ab_rec, a, b
 !
-      integer(i15) :: req0, req1, current_i_batch, current_a_batch
+      integer(i15) :: req0, req1, current_i_batch, current_a_batch, current_b_batch
 !
-      type(batching_index) :: batch_i, batch_a
+      type(batching_index) :: batch_i, batch_a, batch_b
 !
       call integrals%cholesky_mo_t1%init('cholesky_mo_t1_vectors', 'direct', 'unformatted', dp*(integrals%n_J))
       call disk%open_file(integrals%cholesky_mo_t1, 'write') 
@@ -2549,22 +2549,37 @@ contains
 !
 !     virtual-virtual block
 !
-      call mem%alloc(L_ab_J, (integrals%n_v**2), integrals%n_J)
+      call batch_b%init(integrals%n_v)
 !
-      call integrals%construct_cholesky_ab(L_ab_J, t1, 1, integrals%n_v, 1, integrals%n_v)
+      req0 = 0
 !
-      do a = 1, integrals%n_v
-         do b = 1, integrals%n_v
+      req1 = (integrals%n_v)*(integrals%n_J) & ! L_ab^J 
+            + (integrals%n_o)*(integrals%n_J)  ! L_ib^J 
 !
-            ab_rec = integrals%n_mo*((integrals%n_o) + b - 1) + a + (integrals%n_o)
-            ab = integrals%n_v*(b - 1) + a
+      call mem%batch_setup(batch_b, req0, req1)
 !
-            write(integrals%cholesky_mo_t1%unit, rec=ab_rec) (L_ab_J(ab, j), j = 1, integrals%n_J)
+      do current_b_batch = 1, batch_b%num_batches 
 !
-         enddo
-      enddo  
+         call batch_b%determine_limits(current_b_batch)
 !
-      call mem%dealloc(L_ab_J, (integrals%n_v**2), integrals%n_J)  
+         call mem%alloc(L_ab_J, (integrals%n_v)*(batch_b%length), integrals%n_J)
+!
+         call integrals%construct_cholesky_ab(L_ab_J, t1, 1, integrals%n_v, batch_b%first, batch_b%last)
+!
+         do a = 1, integrals%n_v
+            do b = batch_b%first, batch_b%last 
+!
+               ab_rec = integrals%n_mo*((integrals%n_o + b) - 1) + (a + integrals%n_o)
+               ab = integrals%n_v*(b - batch_b%first) + a
+!
+               write(integrals%cholesky_mo_t1%unit, rec=ab_rec) (L_ab_J(ab, j), j = 1, integrals%n_J)
+!
+            enddo
+         enddo  
+!
+         call mem%dealloc(L_ab_J, (integrals%n_v)*(batch_b%length), integrals%n_J)  
+!
+      enddo
 !
       integrals%cholesky_t1_file   = .true.
 !
