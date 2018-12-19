@@ -94,6 +94,7 @@ module ccs_class
       procedure :: jacobian_transpose_ccs_a1                   => jacobian_transpose_ccs_a1_ccs
       procedure :: jacobian_transpose_ccs_b1                   => jacobian_transpose_ccs_b1_ccs
 !
+      procedure :: construct_excited_state_equation            => construct_excited_state_equation_ccs
       procedure :: construct_multiplier_equation               => construct_multiplier_equation_ccs
       procedure :: construct_eta                               => construct_eta_ccs
 !
@@ -2377,6 +2378,40 @@ contains
       call wf%jacobian_transpose_ccs_transformation(c_i)
 !
    end subroutine jacobian_transpose_transform_trial_vector_ccs
+!
+!
+   subroutine construct_excited_state_equation_ccs(wf, X, R, w)
+!!
+!!    Construct excited state equation 
+!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!
+!!    Construct R = AX - wX, where w = X^T A X / X^T X 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_amplitudes, 1), intent(in)    :: X 
+      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: R
+!
+      real(dp), intent(inout) :: w 
+!
+      real(dp), dimension(:,:), allocatable :: X_copy
+!
+      real(dp) :: norm_X, ddot  
+!
+      norm_X = get_l2_norm(X, wf%n_amplitudes)
+!
+      call mem%alloc(X_copy, wf%n_amplitudes, 1)
+      X_copy = X
+!
+      call wf%jacobian_ccs_transformation(X_copy) ! X_copy <- AX 
+!
+      w = ddot(wf%n_amplitudes, X, 1, X_copy, 1)/(norm_X**2)
+!
+      R = X_copy - w*X
+!
+   end subroutine construct_excited_state_equation_ccs
 !
 !
    subroutine jacobian_ccs_transformation_ccs(wf, c_a_i)
