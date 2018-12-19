@@ -449,8 +449,8 @@ contains
 !
       call integrals%read_cholesky(L_ai_J, full_first_a, full_last_a, full_first_i, full_last_i)
 
-       call mem%alloc(L_bj_J, (integrals%n_v)*(integrals%n_o), (integrals%n_J))
-       call integrals%read_cholesky(L_bj_J, (integrals%n_o) + 1, (integrals%n_mo), 1, (integrals%n_o))
+      call mem%alloc(L_bj_J, (integrals%n_v)*(integrals%n_o), (integrals%n_J))
+      call integrals%read_cholesky(L_bj_J, (integrals%n_o) + 1, (integrals%n_mo), 1, (integrals%n_o))
 !
       call mem%alloc(X_i_jJ, length_i, (integrals%n_o)*(integrals%n_J))
 !
