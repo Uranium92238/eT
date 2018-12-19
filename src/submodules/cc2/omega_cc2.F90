@@ -279,53 +279,90 @@ contains
       integer(i15) :: i, j, a, b
       integer(i15) :: ai, aj, bi, bj, jb
 !
-      call mem%alloc(g_aibj, wf%n_o*wf%n_v, wf%n_o*wf%n_v)
+      integer(i15) :: rec0, rec1_b, rec1_i, rec2
 !
-      call wf%get_vovo(g_aibj)
+      integer(i15) :: current_b_batch, current_i_batch
 !
-      call mem%alloc(L_aijb, wf%n_o*wf%n_v, wf%n_o*wf%n_v)
+      type(batching_index) :: batch_b, batch_i
+!
+      rec0 = 0
+!
+      rec1_b = (wf%n_o)*(wf%n_v)*(wf%integrals%n_J)
+      rec1_i = (wf%n_o)*(wf%n_v)*(wf%integrals%n_J)
+!
+      rec2 =  2*(wf%n_o**2)*(wf%n_v**2)
+!
+      call batch_b%init(wf%n_v)
+      call batch_i%init(wf%n_o)
+!
+      call mem%batch_setup(batch_b, batch_i, rec0, rec1_b, rec1_i, rec2)
+!
+      do current_b_batch = 1, batch_b%num_batches
+!
+         call batch_b%determine_limits(current_b_batch)
+!
+         do current_i_batch = 1, batch_i%num_batches
+!
+            call batch_i%determine_limits(current_i_batch)
+!
+            call mem%alloc(g_aibj, (batch_i%length)*wf%n_v, wf%n_o*(batch_b%length))
+!
+            call wf%get_vovo(g_aibj,                        &
+                              1, wf%n_v,                    &
+                              batch_i%first, batch_i%last,  &
+                              batch_b%first, batch_b%last,  &
+                              1, wf%n_o)
+!
+            call mem%alloc(L_aijb, (batch_i%length)*wf%n_v, wf%n_o*(batch_b%length))
 !
 !$omp parallel do schedule(static) private(i, j, a, b, ai, aj, bi, bj, jb)
-      do i = 1, wf%n_o 
-         do j = 1, wf%n_o
-            do a = 1, wf%n_v
+            do i = 1, batch_i%length 
+               do j = 1, wf%n_o
+                  do a = 1, wf%n_v
 !
-               ai = wf%n_v*(i-1) + a
-               aj = wf%n_v*(j-1) + a
+                     ai = wf%n_v*(i-1) + a
+                     aj = wf%n_v*(j-1) + a
 !
-               do b = 1, wf%n_v
+                     do b = 1, batch_b%length
 !
-                  bi = wf%n_v*(i-1) + b
-                  bj = wf%n_v*(j-1) + b
-                  jb = wf%n_o*(b-1) + j
+                        bi = batch_b%length*(i-1) + b
+                        bj = batch_b%length*(j-1) + b
+                        jb = wf%n_o*(b-1) + j
 !
-                  L_aijb(ai, jb) = -two*(g_aibj(ai, bj)/(wf%fock_diagonal(a + wf%n_o, 1) + wf%fock_diagonal(b + wf%n_o, 1) &
-                                                      - wf%fock_diagonal(i, 1) - wf%fock_diagonal(j, 1))) &
-                                    + (g_aibj(aj, bi)/(wf%fock_diagonal(a + wf%n_o, 1) + wf%fock_diagonal(b + wf%n_o, 1) &
-                                                      - wf%fock_diagonal(i, 1) - wf%fock_diagonal(j, 1))) 
+                        L_aijb(ai, jb) = -two*(g_aibj(ai, bj)/(wf%fock_diagonal(a + wf%n_o, 1) &
+                                                             + wf%fock_diagonal(b + batch_b%first - 1 + wf%n_o, 1) &
+                                                             - wf%fock_diagonal(i + batch_i%first - 1 , 1) &
+                                                             - wf%fock_diagonal(j, 1))) &
+                                           + (g_aibj(aj, bi)/(wf%fock_diagonal(a + wf%n_o, 1) &
+                                                             + wf%fock_diagonal(b + batch_b%first - 1  + wf%n_o, 1) &
+                                                             - wf%fock_diagonal(i + batch_i%first - 1 , 1) &
+                                                             - wf%fock_diagonal(j, 1))) 
 !
+                     enddo
+                  enddo
                enddo
             enddo
-         enddo
-      enddo
 !$omp end parallel do
 !
-      call mem%dealloc(g_aibj, wf%n_o*wf%n_v, wf%n_o*wf%n_v)
+            call mem%dealloc(g_aibj, (batch_i%length)*wf%n_v, wf%n_o*(batch_b%length))
+!        
+            call dgemm('N', 'N',                      &
+                        (batch_i%length)*wf%n_v,      &
+                        1,                            &
+                        (batch_b%length)*wf%n_o,      &
+                        one,                          &
+                        L_aijb,                       &
+                        wf%n_v*wf%n_o,                &
+                        wf%fock_ia(1, batch_b%first), & ! F_jb_1
+                        wf%n_v*wf%n_o,                &
+                        one,                          &
+                        omega(1, batch_i%first),      &
+                        wf%n_v*wf%n_o)
+!        
+            call mem%dealloc(L_aijb, (batch_i%length)*wf%n_v, wf%n_o*(batch_b%length))
 !
-      call dgemm('N', 'N', &
-                  wf%n_v*wf%n_o, &
-                  1,             &
-                  wf%n_v*wf%n_o, &
-                  one,           &
-                  L_aijb,        &
-                  wf%n_v*wf%n_o, &
-                  wf%fock_ia,    & ! F_jb_1
-                  wf%n_v*wf%n_o, &
-                  one,           &
-                  omega,         &
-                  wf%n_v*wf%n_o)
-!
-      call mem%dealloc(L_aijb, wf%n_o*wf%n_v, wf%n_o*wf%n_v)
+         enddo
+      enddo
 !
    end subroutine omega_cc2_c1_cc2
 !
