@@ -267,6 +267,21 @@ contains
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
 !!    Linda Goletto, and Alexander Paul, Dec 2018
 !!
+!!    Calculates the C1 term,
+!!
+!!       C1: - sum_bj u_ai_bj * F_{jb},
+!!
+!!    with 
+!!       
+!!       u_ai_bj = 2*t_ai_bj - t_aj_bi
+!!
+!!    and
+!!
+!!       t_ai_bj = - g_aibj/ε^{ab}_{ij}
+!!
+!!    and adds it to the projection vector (omega) of
+!!    the wavefunction object wf.
+!!
       implicit none
 !
       class(cc2), intent(in) :: wf
@@ -274,7 +289,7 @@ contains
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: omega
 !
       real(dp), dimension(:,:), allocatable :: g_aibj
-      real(dp), dimension(:,:), allocatable :: L_aijb
+      real(dp), dimension(:,:), allocatable :: u_aijb
 !
       integer(i15) :: i, j, a, b
       integer(i15) :: ai, aj, bi, bj, jb
@@ -313,7 +328,9 @@ contains
                               batch_b%first, batch_b%last,  &
                               1, wf%n_o)
 !
-            call mem%alloc(L_aijb, (batch_i%length)*wf%n_v, wf%n_o*(batch_b%length))
+            call mem%alloc(u_aijb, (batch_i%length)*wf%n_v, wf%n_o*(batch_b%length))
+!
+!           Construct u_aibj ordered as u_aijb
 !
 !$omp parallel do schedule(static) private(i, j, a, b, ai, aj, bi, bj, jb)
             do i = 1, batch_i%length 
@@ -329,7 +346,7 @@ contains
                         bj = batch_b%length*(j-1) + b
                         jb = wf%n_o*(b-1) + j
 !
-                        L_aijb(ai, jb) = -two*(g_aibj(ai, bj)/(wf%fock_diagonal(a + wf%n_o, 1) &
+                        u_aijb(ai, jb) = -two*(g_aibj(ai, bj)/(wf%fock_diagonal(a + wf%n_o, 1) &
                                                              + wf%fock_diagonal(b + batch_b%first - 1 + wf%n_o, 1) &
                                                              - wf%fock_diagonal(i + batch_i%first - 1 , 1) &
                                                              - wf%fock_diagonal(j, 1))) &
@@ -351,7 +368,7 @@ contains
                         1,                            &
                         (batch_b%length)*wf%n_o,      &
                         one,                          &
-                        L_aijb,                       &
+                        u_aijb,                       &
                         wf%n_v*wf%n_o,                &
                         wf%fock_ia(1, batch_b%first), & ! F_jb_1
                         wf%n_v*wf%n_o,                &
@@ -359,7 +376,7 @@ contains
                         omega(1, batch_i%first),      &
                         wf%n_v*wf%n_o)
 !        
-            call mem%dealloc(L_aijb, (batch_i%length)*wf%n_v, wf%n_o*(batch_b%length))
+            call mem%dealloc(u_aijb, (batch_i%length)*wf%n_v, wf%n_o*(batch_b%length))
 !
          enddo
       enddo
