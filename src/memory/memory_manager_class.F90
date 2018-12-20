@@ -773,7 +773,8 @@ contains
    end subroutine batch_setup_2_memory_manager
 !
 !
-   subroutine batch_setup_3_memory_manager(mem, batch_p, batch_q, batch_r, req1_p, req1_q, req1_r, req2_pq, req2_pr, req2_qr, req3, element_size)
+   subroutine batch_setup_3_memory_manager(mem, batch_p, batch_q, batch_r, req0, req1_p, req1_q, &
+                                       req1_r, req2_pq, req2_pr, req2_qr, req3, element_size)
 !!
 !!    Setup batching 
 !!    This is setup for two batch indices
@@ -809,6 +810,8 @@ contains
       class(batching_index) :: batch_q ! An index being batched over
       class(batching_index) :: batch_r ! An index being batched over
 !
+      integer(i15), intent(in) :: req0
+! 
       integer(i15), intent(in) :: req1_p 
       integer(i15), intent(in) :: req1_q 
       integer(i15), intent(in) :: req1_r 
@@ -820,8 +823,6 @@ contains
       integer(i15), intent(in) :: req3
 !
       integer(i15), intent(in), optional :: element_size
-!
-      logical :: figgered_out
 !
       integer(i15) :: req0_tot
 !
@@ -838,7 +839,11 @@ contains
       integer(i15) :: req_min
       integer(i15) :: req_tot 
 !
-      integer(i15) :: p_elements, q_elements
+      integer(i15) :: p_elements, q_elements, r_elements
+!
+      logical :: found_batch_size, p_incremented, q_incremented, r_incremented
+!
+      integer(i15) :: e_size
 !
       e_size = dp
       if(present(element_size)) then
@@ -885,7 +890,7 @@ contains
 !
 !        Not enough memory for a batch
 !
-         write(output%unit,'(t3,a,i14,a,i14)') 'Need ', (r_buff1+r_buff2+r_buff3), 'but only have ', &
+         write(output%unit,'(t3,a,i14,a,i14)') 'Need ', (req_min), 'but only have ', &
                                                mem%available
          call output%error_msg('Not enough memory for a batch')
 !
@@ -926,9 +931,13 @@ contains
                r_incremented = .false.
             endif
 !
-            if ((p_elements)*(q_elements)*req2_min &
+            if ( (p_elements)*(q_elements)*(r_elements)*req3_min &
+                  + (p_elements)*(q_elements)*req2_pq &
+                  + (p_elements)*(r_elements)*req2_pr &
+                  + (q_elements)*(r_elements)*req2_qr &
                   + (p_elements)*req1_p_min          &
                   + (q_elements)*req1_q_min          &
+                  + (r_elements)*req1_r_min          &
                   + req0 .ge. mem%available) then 
 !
                   found_batch_size = .true.       ! cannot hold +1 batch size 
