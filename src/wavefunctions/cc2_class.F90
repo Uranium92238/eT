@@ -53,6 +53,8 @@ contains
       real(dp), dimension(:,:), allocatable :: g_aibj
       real(dp), dimension(:,:), allocatable :: g_iajb
 !
+      real(dp) :: correlation_energy
+!
       integer(i15) :: i, j, a, b, ai, bj, ia, jb, ib, ja
 !
       integer(i15) :: rec0, rec1_i, rec1_j, rec2
@@ -96,12 +98,13 @@ contains
                               batch_j%first, batch_j%last, &
                               1, wf%n_v)
 !
-            wf%energy = wf%hf_energy
+            correlation_energy = zero
 !
-            do i = 1, batch_i%length
-               do j = 1, batch_j%length
-                  do a = 1, wf%n_v
-                     do b = 1, wf%n_v
+!$omp parallel do private(b,i,j,a,ai,ia,bj,jb,ib,ja) reduction(+:correlation_energy)
+            do b = 1, wf%n_v
+               do i = 1, batch_i%length
+                  do j = 1, batch_j%length
+                     do a = 1, wf%n_v
 !
                         ai = index_two(a, i, wf%n_v)
                         ia = index_two(i, a, batch_i%length)
@@ -110,7 +113,7 @@ contains
                         ib = index_two(i, b, batch_i%length)
                         ja = index_two(j, a, batch_j%length)
 !
-                        wf%energy = wf%energy + (wf%t1(a,i)*wf%t1(b,j) &
+                        correlation_energy = correlation_energy + (wf%t1(a,i)*wf%t1(b,j) &
                                              - (g_aibj(ai, bj))/(wf%fock_diagonal(wf%n_o + a, 1) &
                                                                + wf%fock_diagonal(wf%n_o + b, 1) &
                                                                - wf%fock_diagonal(i + batch_i%first - 1,1) &
@@ -121,6 +124,9 @@ contains
                   enddo
                enddo
             enddo
+!$omp end parallel do 
+!
+            wf%energy = wf%hf_energy + correlation_energy
 !
             call mem%dealloc(g_aibj, wf%n_v*(batch_i%length), wf%n_v*(batch_j%length))
             call mem%dealloc(g_iajb, wf%n_v*(batch_i%length), wf%n_v*(batch_j%length))
