@@ -13,36 +13,10 @@ module timings_class
 !!
 !!       ... do stuff ...
 !!
-!!       call A1_timer%finish()
-!!
-!!    The object will automatically print the time elapsed to
-!!    the timing file in eT when finish is called, but you can 
-!!    also request the elapsed time by calling 
-!! 
-!!       wall_time = A1_timer%get_elapsed_time('wall')
-!!       cpu_time  = A1_timer%get_elapsed_time('cpu')
-!!
-!!    If you wish to start and freeze clock repeatedly, e.g. 
-!!    to time a certain part of a loop, then the freeze function
-!!    may be used:
-!!
-!!       call A1_timer%init('name')
-!!       call A1_timer%start()
-!!       ...
 !!       call A1_timer%freeze()
-!!       ...
-!!       call A1_timer%start()
-!!       ...
-!!       call A1_timer%finish()
+!!       call A1_timer%switch_off()
 !!
-!!    The freeze routine does not print anything; it just temporarily
-!!    stops the clock. 
-!!
-!!    NB! If you start and freeze inside a loop (i.e., the clock is 
-!!    freezed when you exit the loop), then you need to add a print_times()
-!!    call when the loop is finished.
-!!
-!!    Do not use finish() in this case! Example of correct usage:
+!!    You can freeze and start the clock repeatedly, e.g. in a loop:
 !!
 !!    do (...)
 !!
@@ -56,7 +30,27 @@ module timings_class
 !!
 !!    enddo
 !!
-!!    call A1_timer%print_times()
+!!    call A1_timer%switch_off()
+!!
+!!    The object will automatically print the time elapsed to
+!!    the timing file in eT when swtich_off is called, but you can 
+!!    also request the elapsed time by calling 
+!! 
+!!       wall_time = A1_timer%get_elapsed_time('wall')
+!!       cpu_time  = A1_timer%get_elapsed_time('cpu')
+!!
+!!    Note that a switched off clock is reset! This means that 
+!!    you must collect the timings before you switch it off.
+!!    Otherwise they will just equal zero.
+!!
+!!    A timer that has been switched off may be reused,
+!!    though the tag will be the same (indistinguishable
+!!    in output). 
+!!
+!!    If you wish to print times repeatedly without switching 
+!!    off the clock, you can do so by calling print_times().
+!!    This call should only be used when the clock is freezed. 
+!!    It will give you the currently accumulated time. 
 !!
 !
    use file_class
@@ -83,10 +77,10 @@ module timings_class
 !
       procedure :: start            => start_timings
       procedure :: freeze           => freeze_timings
-      procedure :: finish           => finish_timings
+      procedure :: switch_off       => switch_off_timings
 !
-      procedure :: get_elapsed_time => get_elapsed_time_timings
       procedure :: print_times      => print_times_timings
+      procedure :: get_elapsed_time => get_elapsed_time_timings
 !
    end type timings 
 !
@@ -136,32 +130,6 @@ contains
    end subroutine start_timings
 !
 !
-   subroutine finish_timings(timer)
-!!
-!!    Finish 
-!!    Written by Eirik F. Kjønstad, Dec 2018 
-!!
-!!    Stops the wall and CPU clocks, updates 
-!!    the accumulated elapsed times, then prints 
-!!    the timings to file. 
-!!
-      implicit none 
-!
-      class(timings) :: timer 
-!
-      real(dp) :: omp_get_wtime
-!
-      call cpu_time(timer%cpu_time_end)
-      timer%wall_time_end = omp_get_wtime()
-!
-      timer%elapsed_cpu_time  = timer%elapsed_cpu_time + (timer%cpu_time_end - timer%cpu_time_start)
-      timer%elapsed_wall_time = timer%elapsed_wall_time + (timer%wall_time_end - timer%wall_time_start)
-!
-      call timer%print_times()
-!
-   end subroutine finish_timings
-!
-!
    subroutine freeze_timings(timer)
 !!
 !!    Freeze 
@@ -183,6 +151,26 @@ contains
       timer%elapsed_wall_time = timer%elapsed_wall_time + (timer%wall_time_end - timer%wall_time_start)
 !
    end subroutine freeze_timings
+!
+!
+   subroutine switch_off_timings(timer)
+!!
+!!    Switch off 
+!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!
+!!    Prints the wall and CPU times to the timing file,
+!!    then resets the timer.
+!!
+      implicit none 
+!
+      class(timings), intent(inout) :: timer 
+!
+!     Print & reset 
+!
+      call timer%print_times()
+      call timer%init(timer%tag)
+!
+   end subroutine switch_off_timings
 !
 !
    subroutine print_times_timings(timer)

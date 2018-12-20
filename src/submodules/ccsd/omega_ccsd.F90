@@ -163,7 +163,8 @@ contains
 !
       call mem%dealloc(u_dk_ci, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      call ccsd_a1_timer%finish()
+      call ccsd_a1_timer%freeze()
+      call ccsd_a1_timer%switch_off()
 !
    end subroutine omega_ccsd_a1_ccsd
 !
@@ -234,7 +235,8 @@ contains
       call mem%dealloc(u_al_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
       call mem%dealloc(g_lc_ki, (wf%n_v)*(wf%n_o), (wf%n_o)**2)
 !
-      call ccsd_b1_timer%finish()
+      call ccsd_b1_timer%freeze()
+      call ccsd_b1_timer%switch_off()
 !
    end subroutine omega_ccsd_b1_ccsd
 !
@@ -305,7 +307,8 @@ contains
       call mem%dealloc(u_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call mem%dealloc(F_c_k, wf%n_v, wf%n_o)
 !
-      call ccsd_c1_timer%finish()
+      call ccsd_c1_timer%freeze()
+      call ccsd_c1_timer%switch_off()
 !
    end subroutine omega_ccsd_c1_ccsd
 !
@@ -750,8 +753,10 @@ contains
          enddo ! End batching over b
       enddo ! End batching over a
 !
-      call ccsd_a2_timer%finish()
-      call ccsd_a2_integral_timer%print_times()
+      call ccsd_a2_timer%freeze()
+!
+      call ccsd_a2_timer%switch_off()
+      call ccsd_a2_integral_timer%switch_off()
 !
    end subroutine omega_ccsd_a2_ccsd
 !
@@ -789,6 +794,11 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: omega_ab_ij
       real(dp), dimension(:,:), allocatable :: omega_ai_bj
+!
+      type(timings) :: ccsd_b2_timer
+!
+      call ccsd_b2_timer%init('omega ccsd b2')
+      call ccsd_b2_timer%start()
 !
 !     Allocate and construct g_ki_lj
 !
@@ -868,6 +878,9 @@ contains
       call add_to_packed(omega2, omega_ai_bj, (wf%n_o)*(wf%n_v))
       call mem%dealloc(omega_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
+      call ccsd_b2_timer%freeze()
+      call ccsd_b2_timer%switch_off()
+!
    end subroutine omega_ccsd_b2_ccsd
 !
 !
@@ -926,6 +939,11 @@ contains
       integer(i15) :: current_a_batch = 0
 !
       type(batching_index) :: batch_a
+!
+      type(timings) :: ccsd_c2_timer
+!
+      call ccsd_c2_timer%init('omega ccsd c2')
+      call ccsd_c2_timer%start()
 !
 !     Sort t_al_di = t_li^ad as t_ai_dl (1234 to 1432)
 !
@@ -1075,11 +1093,9 @@ contains
 !
       call mem%dealloc(t_bk_cj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-!     Allocate intermediate Y_ai_bj
+!     Form intermediate Y_ai_bj = - sum_(ck) X_ai_ck*t_ck_bj
 !
       call mem%alloc(Y_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
-!     Y_ai_bj = - sum_(ck) X_ai_ck*t_ck_bj
 !
       call dgemm('N','N',            &
                   (wf%n_o)*(wf%n_v), &
@@ -1094,12 +1110,7 @@ contains
                   Y_ai_bj,           &
                   (wf%n_o)*(wf%n_v))
 !
-!     Deallocate the X intermediate
-!
       call mem%dealloc(X_ai_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
-!     Deallocate t_ck_bj
-!
       call mem%dealloc(t_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     Omega_aibj,1 = P_ai_bj ( 1/2*Y_ai_bj + Y_aj_bi )
@@ -1131,9 +1142,10 @@ contains
          enddo
       enddo
 !
-!     Deallocate intermediate Y_ai_bj
-!
       call mem%dealloc(Y_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+      call ccsd_c2_timer%freeze()
+      call ccsd_c2_timer%switch_off()
 !
    end subroutine omega_ccsd_c2_ccsd
 !
