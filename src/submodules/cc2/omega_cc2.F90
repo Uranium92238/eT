@@ -111,6 +111,7 @@ contains
                               batch_c%first, batch_c%last, &
                               1, wf%n_o)
 !
+!$omp parallel do schedule(static) private(i, j, c, b, bj, ci, bi, cj)
             do b = 1, (batch_b%length)
                do  j = 1, wf%n_o
                    do c = 1, (batch_c%length)
@@ -121,16 +122,15 @@ contains
                          bi = batch_b%length*(i-1) + b
                          cj = batch_c%length*(j-1) + c
 !                        
-                         L_bj_ci(bj,ci) = - (two*g_bi_cj(bi,cj)/( eps_v(b + batch_b%first - 1) &
-                                                                + eps_v(c + batch_c%first - 1) &
-                                                                - eps_o(i) - eps_o(j)))   &
-                                               + g_bi_cj(bj,ci)/( eps_v(b + batch_b%first - 1)&
+                         L_bj_ci(bj,ci) = -(two*g_bi_cj(bi,cj) - g_bi_cj(bj,ci))&
+                                                                /(eps_v(b + batch_b%first - 1)&
                                                                 + eps_v(c + batch_c%first - 1) &
                                                                 - eps_o(i) - eps_o(j))
                       enddo
                    enddo
                enddo
             enddo
+!$omp end parallel do
 !
             call mem%dealloc(g_bi_cj, (batch_b%length)*(wf%n_o), (batch_c%length)*(wf%n_o))
 !
@@ -242,6 +242,7 @@ contains
                                batch_b%first, batch_b%last, &
                                batch_k%first, batch_k%last)
 !
+!$omp parallel do schedule(static) private(k, j, a, b, aj, bk)
                do a = 1, wf%n_v
                   do j = 1, (batch_j%length)
                      do b = 1, (batch_b%length)
@@ -259,6 +260,7 @@ contains
                      enddo
                   enddo
                enddo
+!$omp end parallel do
 !
                call mem%alloc(g_jb_ki, (batch_b%length)*(batch_j%length), &
                               (wf%n_o)*(batch_k%length))
@@ -363,7 +365,7 @@ contains
       real(dp), dimension(:,:), allocatable :: F_bj
 !
       integer(i15) :: i, j, a, b
-      integer(i15) :: ai, aj, bi, bj, jb
+      integer(i15) :: ai, aj, bi, bj
 !
       integer(i15) :: req0, req1_j, req1_i, req2, omega_offset
 !
