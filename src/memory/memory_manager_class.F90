@@ -854,37 +854,58 @@ contains
 !
       else
 !
-!
 !        First, try to increment both indices simultaneously
 !
          p_elements = 1
          q_elements = 1
+         r_elements = 1
+
 !
-         figgered_out = .false.
-         do while (.not. figgered_out                              &
-                     .and. p_elements .lt. batch_p%index_dimension &
-                     .and. q_elements .lt. batch_q%index_dimension)
+         found_batch_size = .false.
+         p_incremented = .true.
+         q_incremented = .true.
+         r_incremented = .true.
 !
-            if ((p_elements+1)*(q_elements+1)*req2_min &
-                  + (p_elements+1)*req1_p_min          &
-                  + (q_elements+1)*req1_q_min          &
-                  + req0 .lt. mem%available) then 
+         do while (.not. found_batch_size .and. (p_incremented .or. q_incremented .or. r_incremented))
 !
-               p_elements = p_elements + 1 ! can hold +1 batch size 
-               q_elements = q_elements + 1
-!
+            if ((p_elements) .lt. batch_p%index_dimension) then
+               p_elements = p_elements + 1
+               p_incremented = .true.
             else
+               p_incremented = .false.
+            endif
 !
-               figgered_out = .true.       ! cannot hold +1 batch size 
+            if ((q_elements) .lt. batch_q%index_dimension) then
+               q_elements = q_elements + 1
+               q_incremented = .true.
+            else
+               q_incremented = .false.
+            endif
+!
+            if ((r_elements) .lt. batch_r%index_dimension) then
+               r_elements = r_elements + 1
+               r_incremented = .true.
+            else
+               r_incremented = .false.
+            endif
+!
+            if ((p_elements)*(q_elements)*req2_min &
+                  + (p_elements)*req1_p_min          &
+                  + (q_elements)*req1_q_min          &
+                  + req0 .ge. mem%available) then 
+!
+                  found_batch_size = .true.       ! cannot hold +1 batch size 
+                  if (p_incremented) p_elements = p_elements - 1
+                  if (q_incremented) q_elements = q_elements - 1
+                  if (r_incremented) r_elements = r_elements - 1
 !
             endif
 !
          enddo
 !
-!
-         batch_p%max_length = n         
-         batch_q%max_length = n         
-         batch_r%max_length = n         
+         batch_p%max_length = p_elements         
+         batch_q%max_length = q_elements        
+         batch_r%max_length = r_elements         
 !
 !        Figure out how many batches
 !
