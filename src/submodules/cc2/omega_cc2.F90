@@ -21,7 +21,7 @@ contains
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
 !!    Linda Goletto, and Alexander Paul, Dec 2018
 !!
-!!    Directs the construction of the projection vector < mu | exp(-T) H exp(T) | R >
+!!    Direqts the construction of the projection vector < mu | exp(-T) H exp(T) | R >
 !!    for the current wavefunction amplitudes.
 !!
       implicit none
@@ -76,23 +76,23 @@ contains
       integer(i15) :: b, j, c, i
       integer(i15) :: bj, ci, bi, cj
 !
-      integer(i15) :: rec0, rec1_b, rec1_c, rec2
+      integer(i15) :: req0, req1_b, req1_c, req2
 !
       integer(i15) :: current_b_batch, current_c_batch
 !
       type(batching_index) :: batch_b, batch_c
 !
-      rec0 = 0
+      req0 = 0
 !
-      rec1_b = (wf%integrals%n_J)*(wf%n_v**2)
-      rec1_c = (wf%integrals%n_J)*(wf%n_o)*(wf%n_v)
+      req1_b = (wf%integrals%n_J)*(wf%n_v)
+      req1_c = (wf%integrals%n_J)*(wf%n_o)
 !
-      rec2 =  (wf%n_o**2)*(wf%n_v**2) + (wf%n_o)*(wf%n_v**3)
+      req2 =  (wf%n_o**2) + (wf%n_o)*(wf%n_v)
 !
       call batch_b%init(wf%n_v)
       call batch_c%init(wf%n_v)
 !
-      call mem%batch_setup(batch_b, batch_c, rec0, rec1_b, rec1_c, rec2)
+      call mem%batch_setup(batch_b, batch_c, req0, req1_b, req1_c, req2)
 !
       do current_b_batch = 1, batch_b%num_batches
 !
@@ -196,70 +196,135 @@ contains
       integer(i15) :: a, b, j, k
       integer(i15) :: aj, bk
 !
-      call mem%alloc(g_aj_bk, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      integer(i15) :: req0, req1_b, req1_j, req1_k, req2_bj, req2_bk, req2_jk, req3
 !
-      call wf%get_vovo(g_aj_bk)
+      integer(i15) :: current_b_batch, current_j_batch, current_k_batch
 !
-      do a = 1, wf%n_v
-         do j = 1, wf%n_o
-            do b = 1, wf%n_v
-               do k = 1, wf%n_o
+      type(batching_index) :: batch_b, batch_j, batch_k
 !
-                  aj = wf%n_v*(j-1) + a
-                  bk = wf%n_v*(k-1) + b
+      req0 = 0
 !
-                  g_aj_bk(aj,bk) = - g_aj_bk(aj,bk)/(eps_v(a) + eps_v(b)&
-                                                   - eps_o(j) - eps_o(k))
+      req1_b = 0
+      req1_j = wf%integrals%n_J*(wf%n_v)
+      req1_k = wf%integrals%n_J*(wf%n_o)
 !
+      req2_bj = wf%integrals%n_J
+      req2_bk = wf%integrals%n_J
+      req2_jk = 0
+!
+      req3 = (wf%n_v) + 2*(wf%n_o) 
+!
+      call batch_b%init(wf%n_v)
+      call batch_j%init(wf%n_o)
+      call batch_k%init(wf%n_o)
+!
+      call mem%batch_setup(batch_b, batch_j, batch_k, req0, req1_b, &
+                    req1_j, req1_k, req2_bj, req2_bk, req2_jk, req3)
+!
+      do current_b_batch = 1, batch_b%num_batches
+!
+         call batch_b%determine_limits(current_b_batch)
+!
+         do current_j_batch = 1, batch_j%num_batches
+!
+            call batch_j%determine_limits(current_j_batch)
+!
+            do current_k_batch = 1, batch_k%num_batches
+!
+               call batch_k%determine_limits(current_k_batch)
+!
+               call mem%alloc(g_aj_bk, (wf%n_v)*(batch_j%length),&
+                             (batch_b%length)*(batch_k%length))
+!
+               call wf%get_vovo(g_aj_bk,                    &
+                               1, wf%n_v,                   &
+                               batch_j%first, batch_j%last, &
+                               batch_b%first, batch_b%last, &
+                               batch_k%first, batch_k%last)
+!
+               do a = 1, wf%n_v
+                  do j = 1, (batch_j%length)
+                     do b = 1, (batch_b%length)
+                        do k = 1, (batch_k%length)
+!
+                           aj = wf%n_v*(j-1) + a
+                           bk = (batch_b%length)*(k-1) + b
+!
+                           g_aj_bk(aj,bk) = - g_aj_bk(aj,bk)/(eps_v(a) &
+                                                   + eps_v(b + batch_b%first - 1)&
+                                                   - eps_o(j + batch_j%first - 1) &
+                                                   - eps_o(k + batch_k%first - 1))
+!
+                        enddo
+                     enddo
+                  enddo
                enddo
+!
+               call mem%alloc(g_jb_ki, (batch_b%length)*(batch_j%length), &
+                              (wf%n_o)*(batch_k%length))
+!
+               call wf%get_ovoo(g_jb_ki,                      &
+                                 batch_j%first, batch_j%last, &
+                                 batch_b%first, batch_b%last, &
+                                 batch_k%first, batch_k%last, & 
+                                 1, wf%n_o)
+!
+               call dgemm('N','N',                                             &
+                           wf%n_v,                                             &
+                           wf%n_o,                                             &
+                           (batch_j%length)*(batch_k%length)*(batch_b%length), &
+                           one,                                                &
+                           g_aj_bk,                                            &
+                           wf%n_v,                                             &
+                           g_jb_ki,                                            &
+                           (batch_j%length)*(batch_k%length)*(batch_b%length), &
+                           one,                                                &
+                           omega,                                              &
+                           wf%n_v)
+!
+               call mem%dealloc(g_jb_ki, (batch_b%length)*(batch_j%length), &
+                              (wf%n_o)*(batch_k%length))
+!
+!
+               call mem%alloc(g_kb_ji, (batch_b%length)*(batch_k%length), &
+                              (wf%n_o)*(batch_j%length))
+!
+               call wf%get_ovoo(g_kb_ji,                     &
+                                batch_k%first, batch_k%last, &
+                                batch_b%first, batch_b%last, &
+                                batch_j%first, batch_j%last, & 
+                                1, wf%n_o)
+!
+               call mem%alloc(g_jb_ki, (batch_b%length)*(batch_j%length), &
+                              (wf%n_o)*(batch_k%length))
+!
+               call sort_1234_to_3214(g_kb_ji, g_jb_ki, (batch_j%length), &
+                     (batch_b%length), (batch_k%length), wf%n_o)
+!
+               call mem%dealloc(g_kb_ji, (batch_b%length)*(batch_k%length), &
+                              (wf%n_o)*(batch_j%length))
+!
+               call dgemm('N','N',                                             &
+                           wf%n_v,                                             &
+                           wf%n_o,                                             &
+                           (batch_j%length)*(batch_k%length)*(batch_b%length), &
+                           -two,                                               &
+                           g_aj_bk,                                            &
+                           wf%n_v,                                             &
+                           g_jb_ki,                                            &
+                           (batch_j%length)*(batch_k%length)*(batch_b%length), &
+                           one,                                                &
+                           omega,                                              &
+                           wf%n_v)
+!
+               call mem%dealloc(g_jb_ki, (batch_b%length)*(batch_j%length), &
+                                       (wf%n_o)*(batch_k%length))
+               call mem%dealloc(g_aj_bk, (wf%n_v)*(batch_j%length),&
+                                      (batch_b%length)*(batch_k%length))
+!
             enddo
          enddo
       enddo
-!
-      call mem%alloc(g_jb_ki, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_o))
-!
-      call wf%get_ovoo(g_jb_ki)
-!
-      call dgemm('N','N',           &
-                  wf%n_v,           &
-                  wf%n_o,           &
-                  wf%n_o**2*wf%n_v, &
-                  one,              &
-                  g_aj_bk,          &
-                  wf%n_v,           &
-                  g_jb_ki,          &
-                  wf%n_o**2*wf%n_v, &
-                  one,              &
-                  omega,            &
-                  wf%n_v)
-!
-      call mem%dealloc(g_jb_ki, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_o))
-!
-      call mem%alloc(g_kb_ji, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_o))
-!
-      call wf%get_ovoo(g_kb_ji)
-!
-      call mem%alloc(g_jb_ki, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_o))
-!
-      call sort_1234_to_3214(g_kb_ji, g_jb_ki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-!
-      call mem%dealloc(g_kb_ji, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_o))
-!
-      call dgemm('N','N',            &
-                  wf%n_v,            &
-                  wf%n_o,            &
-                  (wf%n_o**2)*wf%n_v,&
-                  -two,              &
-                  g_aj_bk,           &
-                  wf%n_v,            &
-                  g_jb_ki,           &
-                  (wf%n_o**2)*wf%n_v,&
-                  one,               &
-                  omega,             &
-                  wf%n_v)
-!
-      call mem%dealloc(g_jb_ki, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_o))
-      call mem%dealloc(g_aj_bk, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
    end subroutine omega_cc2_b1_cc2
 !
@@ -299,23 +364,23 @@ contains
       integer(i15) :: i, j, a, b
       integer(i15) :: ai, aj, bi, bj, jb
 !
-      integer(i15) :: rec0, rec1_b, rec1_i, rec2
+      integer(i15) :: req0, req1_b, req1_i, req2
 !
       integer(i15) :: current_b_batch, current_i_batch
 !
       type(batching_index) :: batch_b, batch_i
 !
-      rec0 = 0
+      req0 = 0
 !
-      rec1_b = (wf%n_o)*(wf%n_v)*(wf%integrals%n_J)
-      rec1_i = (wf%n_o)*(wf%n_v)*(wf%integrals%n_J)
+      req1_b = (wf%n_o)*(wf%integrals%n_J)
+      req1_i = (wf%n_v)*(wf%integrals%n_J)
 !
-      rec2 =  2*(wf%n_o**2)*(wf%n_v**2)
+      req2 =  2*(wf%n_o)*(wf%n_v)
 !
       call batch_b%init(wf%n_v)
       call batch_i%init(wf%n_o)
 !
-      call mem%batch_setup(batch_b, batch_i, rec0, rec1_b, rec1_i, rec2)
+      call mem%batch_setup(batch_b, batch_i, req0, req1_b, req1_i, req2)
 !
       do current_b_batch = 1, batch_b%num_batches
 !
