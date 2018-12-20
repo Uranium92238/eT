@@ -34,14 +34,14 @@ contains
 !
       call wf%omega_ccs_a1(omega)
 !
-      call wf%omega_cc2_a1(omega)
-      call wf%omega_cc2_b1(omega)
-      call wf%omega_cc2_c1(omega)
+      call wf%omega_cc2_a1(omega, wf%fock_diagonal(1:wf%n_o,1), wf%fock_diagonal(wf%n_o + 1 : wf%n_mo, 1))
+      call wf%omega_cc2_b1(omega, wf%fock_diagonal(1:wf%n_o,1), wf%fock_diagonal(wf%n_o + 1 : wf%n_mo, 1))
+      call wf%omega_cc2_c1(omega, wf%fock_diagonal(1:wf%n_o,1), wf%fock_diagonal(wf%n_o + 1 : wf%n_mo, 1))
 !
    end subroutine construct_omega_cc2
 !
 !
-   module subroutine omega_cc2_a1_cc2(wf, omega)
+   module subroutine omega_cc2_a1_cc2(wf, omega, eps_o, eps_v)
 !!
 !!    Omega CC2 A1 term
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
@@ -66,6 +66,8 @@ contains
       class(cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: omega
+      real(dp), dimension(wf%n_o), intent(in) :: eps_o
+      real(dp), dimension(wf%n_v), intent(in) :: eps_v
 !
       real(dp), dimension(:,:), allocatable :: g_bi_cj
       real(dp), dimension(:,:), allocatable :: L_bj_ci
@@ -119,12 +121,12 @@ contains
                          bi = batch_b%length*(i-1) + b
                          cj = batch_c%length*(j-1) + c
 !                        
-                         L_bj_ci(bj,ci) = - (two*g_bi_cj(bi,cj)/( wf%fock_diagonal(b + batch_b%first - 1 + wf%n_o, 1) &
-                                                                + wf%fock_diagonal(c + batch_c%first - 1 + wf%n_o, 1) &
-                                                                - wf%fock_diagonal(i, 1) - wf%fock_diagonal(j, 1))) &
-                                               + g_bi_cj(bj,ci)/( wf%fock_diagonal(b + batch_b%first - 1 + wf%n_o, 1) &
-                                                                + wf%fock_diagonal(c + batch_c%first - 1 + wf%n_o, 1)  &
-                                                                - wf%fock_diagonal(i, 1) - wf%fock_diagonal(j, 1))
+                         L_bj_ci(bj,ci) = - (two*g_bi_cj(bi,cj)/( eps_v(b + batch_b%first - 1) &
+                                                                + eps_v(c + batch_c%first - 1) &
+                                                                - eps_o(i) - eps_o(j)))   &
+                                               + g_bi_cj(bj,ci)/( eps_v(b + batch_b%first - 1)&
+                                                                + eps_v(c + batch_c%first - 1) &
+                                                                - eps_o(i) - eps_o(j))
                       enddo
                    enddo
                enddo
@@ -162,7 +164,7 @@ contains
    end subroutine omega_cc2_a1_cc2
 !
 !
-   module subroutine omega_cc2_b1_cc2(wf, omega)
+   module subroutine omega_cc2_b1_cc2(wf, omega, eps_o, eps_v)
 !!
 !!    Omega CC2 B1 term
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
@@ -184,6 +186,8 @@ contains
       class(cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: omega
+      real(dp), dimension(wf%n_o), intent(in) :: eps_o
+      real(dp), dimension(wf%n_v), intent(in) :: eps_v
 !
       real(dp), dimension(:,:), allocatable :: g_aj_bk
       real(dp), dimension(:,:), allocatable :: g_jb_ki
@@ -204,8 +208,8 @@ contains
                   aj = wf%n_v*(j-1) + a
                   bk = wf%n_v*(k-1) + b
 !
-                  g_aj_bk(aj,bk) = - g_aj_bk(aj,bk)/(wf%fock_diagonal(a + wf%n_o, 1) + wf%fock_diagonal(b + wf%n_o, 1)&
-                                                   - wf%fock_diagonal(j, 1) - wf%fock_diagonal(k, 1))
+                  g_aj_bk(aj,bk) = - g_aj_bk(aj,bk)/(eps_v(a) + eps_v(b)&
+                                                   - eps_o(j) - eps_o(k))
 !
                enddo
             enddo
@@ -260,7 +264,7 @@ contains
    end subroutine omega_cc2_b1_cc2
 !
 !
-   module subroutine omega_cc2_c1_cc2(wf, omega)
+   module subroutine omega_cc2_c1_cc2(wf, omega, eps_o, eps_v)
 !!
 !!    Omega CC2 C1 term
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
@@ -286,6 +290,8 @@ contains
       class(cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: omega
+      real(dp), dimension(wf%n_o), intent(in) :: eps_o
+      real(dp), dimension(wf%n_v), intent(in) :: eps_v
 !
       real(dp), dimension(:,:), allocatable :: g_aibj
       real(dp), dimension(:,:), allocatable :: u_aijb
@@ -345,14 +351,14 @@ contains
                         bj = batch_b%length*(j-1) + b
                         jb = wf%n_o*(b-1) + j
 !
-                        u_aijb(ai, jb) = -two*(g_aibj(ai, bj)/(wf%fock_diagonal(a + wf%n_o, 1) &
-                                                             + wf%fock_diagonal(b + batch_b%first - 1 + wf%n_o, 1) &
-                                                             - wf%fock_diagonal(i + batch_i%first - 1 , 1) &
-                                                             - wf%fock_diagonal(j, 1))) &
-                                           + (g_aibj(aj, bi)/(wf%fock_diagonal(a + wf%n_o, 1) &
-                                                             + wf%fock_diagonal(b + batch_b%first - 1  + wf%n_o, 1) &
-                                                             - wf%fock_diagonal(i + batch_i%first - 1 , 1) &
-                                                             - wf%fock_diagonal(j, 1))) 
+                        u_aijb(ai, jb) = -two*(g_aibj(ai, bj)/(eps_v(a) &
+                                                             + eps_v(b + batch_b%first - 1) &
+                                                             - eps_o(i + batch_i%first - 1) &
+                                                             - eps_o(j))) &
+                                           + (g_aibj(aj, bi)/( eps_v(a) &
+                                                             + eps_v(b + batch_b%first - 1) &
+                                                             - eps_o(i + batch_i%first - 1) &
+                                                             - eps_o(j))) 
 !
                      enddo
                   enddo
