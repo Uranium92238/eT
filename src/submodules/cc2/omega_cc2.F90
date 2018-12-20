@@ -22,7 +22,7 @@ contains
 !!    Linda Goletto, and Alexander Paul, Dec 2018
 !!
 !!    Directs the construction of the projection vector < mu | exp(-T) H exp(T) | R >
-!!    for the current amplitudes of the object wfn
+!!    for the current wavefunction amplitudes.
 !!
       implicit none
 !
@@ -59,8 +59,7 @@ contains
 !!
 !!       t_bj_ci = - g_bjci/ε^{bc}_{ji}
 !!
-!!    and adds it to the projection vector (omega) of
-!!    the wavefunction object wf.
+!!    and adds it to the projection vector omega
 !!
       implicit none
 !
