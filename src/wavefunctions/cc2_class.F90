@@ -57,23 +57,25 @@ contains
 !
       integer(i15) :: i, j, a, b, ai, bj, ia, jb, ib, ja
 !
-      integer(i15) :: rec0, rec1_i, rec1_j, rec2
+      integer(i15) :: req0, req1_i, req1_j, req2
 !
       integer(i15) :: current_i_batch, current_j_batch
 !
       type(batching_index) :: batch_i, batch_j
 !
-      rec0 = 0
+      req0 = 0
 !
-      rec1_i = (wf%n_o)*(wf%n_v)*(wf%integrals%n_J)
-      rec1_j = (wf%n_o)*(wf%n_v)*(wf%integrals%n_J)
+      req1_i = (wf%n_v)*(wf%integrals%n_J)
+      req1_j = (wf%n_v)*(wf%integrals%n_J)
 !
-      rec2 =  2*(wf%n_o**2)*(wf%n_v**2)
+      req2 =  2*(wf%n_v**2)
 !
       call batch_i%init(wf%n_o)
       call batch_j%init(wf%n_o)
 !
-      call mem%batch_setup(batch_i, batch_j, rec0, rec1_i, rec1_j, rec2)
+      call mem%batch_setup(batch_i, batch_j, req0, req1_i, req1_j, req2)
+!
+      correlation_energy = zero
 !
       do current_i_batch = 1, batch_i%num_batches
 !
@@ -98,8 +100,6 @@ contains
                               batch_j%first, batch_j%last, &
                               1, wf%n_v)
 !
-            correlation_energy = zero
-!
 !$omp parallel do private(b,i,j,a,ai,ia,bj,jb,ib,ja) reduction(+:correlation_energy)
             do b = 1, wf%n_v
                do i = 1, batch_i%length
@@ -113,7 +113,8 @@ contains
                         ib = index_two(i, b, batch_i%length)
                         ja = index_two(j, a, batch_j%length)
 !
-                        correlation_energy = correlation_energy + (wf%t1(a,i)*wf%t1(b,j) &
+                        correlation_energy = correlation_energy + &
+                                             (wf%t1(a, i + batch_i%first - 1)*wf%t1(b, j + batch_j%first - 1) &
                                              - (g_aibj(ai, bj))/(wf%fock_diagonal(wf%n_o + a, 1) &
                                                                + wf%fock_diagonal(wf%n_o + b, 1) &
                                                                - wf%fock_diagonal(i + batch_i%first - 1,1) &
@@ -126,13 +127,14 @@ contains
             enddo
 !$omp end parallel do 
 !
-            wf%energy = wf%hf_energy + correlation_energy
 !
             call mem%dealloc(g_aibj, wf%n_v*(batch_i%length), wf%n_v*(batch_j%length))
             call mem%dealloc(g_iajb, wf%n_v*(batch_i%length), wf%n_v*(batch_j%length))
 !
          enddo
       enddo
+!
+      wf%energy = wf%hf_energy + correlation_energy
 !
    end subroutine calculate_energy_cc2
 !
