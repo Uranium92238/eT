@@ -147,19 +147,23 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: I_kc
       real(dp), dimension(:,:), allocatable :: I_ji
+      real(dp), dimension(:,:), allocatable :: I_ab
 !
 !     Integrals
 !
       real(dp), dimension(:,:), allocatable :: g_kc_jb
       real(dp), dimension(:,:), allocatable :: g_ck_bi
+      real(dp), dimension(:,:), allocatable :: g_ck_aj
       real(dp), dimension(:,:), allocatable :: g_ai_ck
       real(dp), dimension(:,:), allocatable :: L_kc_bj
+      real(dp), dimension(:,:), allocatable :: L_kc_jb
       real(dp), dimension(:,:), allocatable :: L_jb_kc
       real(dp), dimension(:,:), allocatable :: u_ai_kc
 !
 !     Indices
 !
-      integer(i15) :: b, c, j, k, jb, kc, jc, kb, bj, a, i, ai, ck, ak, ci, bi
+      integer(i15) :: a, i, b, c, j, k
+      integer(i15) :: jb, kc, jc, kb, bj, ai, ck, ak, ci, bi, aj, cj
 !
 !     :: Term 1: 2 L_kcjb * c_bj * sum_bj (2 t^ac_ik - t^ac_ki)  ::
 !
@@ -264,6 +268,8 @@ contains
       call mem%alloc(g_ck_bi, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
       call wf%get_vovo(g_ck_bi)
 !
+!     t_ck_bi = t^cb_ki = - g_ck_bi/ε^{cb}_{ik}
+!
       do c = 1, wf%n_v
          do k = 1, wf%n_o
             do b = 1, wf%n_v
@@ -301,7 +307,7 @@ contains
       call mem%dealloc(L_jb_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call mem%dealloc(g_ck_bi, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
-!     rho_a_i = rho_a_i + c_a_j I_ji = rho_a_i + c_b_j I_ji
+!     rho_a_i = rho_a_i - c_a_j I_ji = rho_a_i - c_b_j I_ji
 !
       call dgemm('N', 'N',  &
                   (wf%n_v), &
@@ -317,6 +323,84 @@ contains
                   (wf%n_v))
 !
       call mem%dealloc(I_ji, wf%n_o, wf%n_o)
+!
+!
+!     :: Term 3: L_kcjb t^ca_kj c_bi ::
+!
+!
+!     L_kc_jb = L_kcjb = 2 g_kc_jb - g_kb_jc
+!
+      call mem%alloc(g_kc_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%alloc(L_kc_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+      call wf%get_ovov(g_kc_jb)
+!
+      L_kc_jb = two * g_kc_jb
+!
+      call add_1432_to_1234(-one, g_kc_jb, L_kc_jb, (wf%n_o), (wf%n_v), (wf%n_o), (wf%n_v))
+!
+      call mem%dealloc(g_kc_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+!     t_ak_cj = t^ca_kj = - g_ck_aj/ε^{ca}_{jk}
+!
+      call mem%alloc(g_ck_aj,(wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      call wf%get_vovo(g_ck_aj)
+!
+      do c = 1, wf%n_v
+         do k = 1, wf%n_o
+            do a = 1, wf%n_v
+               do j = 1, wf%n_o
+!
+                  ck = (wf%n_v)*(k-1) + c
+                  aj = (wf%n_v)*(j-1) + a
+                  ak = (wf%n_v)*(k-1) + a
+                  cj = (wf%n_v)*(j-1) + c
+!
+                  g_ck_aj(ak,cj) = - g_ck_aj(ck,aj) &
+                                    /(wf%fock_diagonal(a + wf%n_o, 1) &
+                                    + wf%fock_diagonal(c + wf%n_o, 1) &
+                                    - wf%fock_diagonal(j, 1) - wf%fock_diagonal(k, 1))
+               enddo
+            enddo
+         enddo
+      enddo
+!
+!     Intermediat I_ab = L_kcjb t^ac_cj = t_ak_cj L_kc_jb
+!
+      call mem%alloc(I_ab, (wf%n_v), (wf%n_o))
+!
+      call dgemm('N', 'N',                    &
+                  (wf%n_v),                   &
+                  (wf%n_v),                   &
+                  (wf%n_o)*(wf%n_v)*(wf%n_o), &
+                  one,                        &
+                  g_ck_aj,                    &
+                  (wf%n_v),                   &
+                  L_kc_jb,                    &
+                  (wf%n_o)*(wf%n_v)*(wf%n_o), &
+                  zero,                       &
+                  I_ab,                       &
+                  (wf%n_v))
+!
+      call mem%dealloc(L_kc_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(g_ck_aj,(wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+!
+!     rho_a_i = rho_a_i - I_ab c_b_i = rho_a_i - I_ab c_b_j
+!
+      call dgemm('N', 'N',  &
+                  (wf%n_v), &
+                  (wf%n_o), &
+                  (wf%n_v), &
+                  one,      &
+                  I_ab,     &
+                  (wf%n_v), &
+                  c_b_j,    &
+                  (wf%n_v), &
+                  -one,     &
+                  rho_a_i,  &
+                  (wf%n_v))
+!
+      call mem%dealloc(I_ab, (wf%n_v), (wf%n_o))
 !
 !
    end subroutine
