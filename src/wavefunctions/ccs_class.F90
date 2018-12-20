@@ -2385,7 +2385,22 @@ contains
 !!    Construct excited state equation 
 !!    Written by Eirik F. Kjønstad, Dec 2018 
 !!
-!!    Construct R = AX - wX, where w = X^T A X / X^T X 
+!!    Constructs R = AX - wX, where w = X^T A X and norm(X) = sqrt(X^T X) = 1
+!!
+!!    Note I: we assume that X is normalized. If it is not,
+!!    please normalize before calling the routine. 
+!!
+!!    Note II: this routine constructs the excited state equation
+!!    for standard CC models and the effective (!) excited state 
+!!    equation in perturbative models. In the CC2 routine, for 
+!!    instance, X and R will be n_o*n_v vectors and A(w) will 
+!!    depend on the excitation energy w. See, e.g., Weigend and 
+!!    Hättig's RI-CC2 paper for more on this topic. This means 
+!!    that w should be the previous w-value when entering the 
+!!    routine (so that A(w)X may be constructed approximately)
+!!    in perturbative models.
+!!
+!!    Note III: the routine is used by the DIIS excited state solver. 
 !!
       implicit none 
 !
@@ -2398,18 +2413,19 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: X_copy
 !
-      real(dp) :: norm_X, ddot  
-!
-      norm_X = get_l2_norm(X, wf%n_amplitudes)
+      real(dp) :: ddot  
 !
       call mem%alloc(X_copy, wf%n_amplitudes, 1)
       X_copy = X
 !
-      call wf%jacobian_ccs_transformation(X_copy) ! X_copy <- AX 
+    !  call wf%jacobian_ccs_transformation(X_copy) ! X_copy <- AX 
+      call wf%jacobian_transform_trial_vector(X_copy) ! X_copy <- AX 
 !
-      w = ddot(wf%n_amplitudes, X, 1, X_copy, 1)/(norm_X**2)
+      w = ddot(wf%n_amplitudes, X, 1, X_copy, 1)
 !
       R = X_copy - w*X
+!
+      call mem%dealloc(X_copy, wf%n_amplitudes, 1)
 !
    end subroutine construct_excited_state_equation_ccs
 !

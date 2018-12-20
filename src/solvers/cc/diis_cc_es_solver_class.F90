@@ -27,7 +27,7 @@ module diis_cc_es_solver_class
       real(dp) :: eigenvalue_threshold  
       real(dp) :: residual_threshold  
 !
-      integer(i15) :: n_singlet_states
+      integer(i15) :: n_singlet_states, diis_dimension
 !
       real(dp), dimension(:,:), allocatable :: energies
       real(dp), dimension(:,:), allocatable :: residual_norms 
@@ -48,12 +48,6 @@ module diis_cc_es_solver_class
 !
       procedure :: read_settings                   => read_settings_diis_cc_es_solver
       procedure :: print_settings                  => print_settings_diis_cc_es_solver
-!
-      procedure :: initialize_energies             => initialize_energies_diis_cc_es_solver
-      procedure :: destruct_energies               => destruct_energies_diis_cc_es_solver   
-!
-      procedure :: initialize_residual_norms       => initialize_residual_norms_diis_cc_es_solver
-      procedure :: destruct_residual_norms         => destruct_residual_norms_diis_cc_es_solver  
 !
    end type diis_cc_es_solver
 !
@@ -79,79 +73,14 @@ contains
       solver%eigenvalue_threshold = 1.0d-6
       solver%residual_threshold   = 1.0d-6
       solver%transformation       = 'right'
+      solver%diis_dimension       = 8
 !
       call solver%read_settings()
       call solver%print_settings()
 !
-      call solver%initialize_energies()
-      solver%energies = zero
-!
-      call solver%initialize_residual_norms()
-      solver%residual_norms = one 
-!
       if (solver%n_singlet_states == 0) call output%error_msg('number of excitations must be specified.')
 !
    end subroutine prepare_diis_cc_es_solver
-!
-!
-   subroutine initialize_energies_diis_cc_es_solver(solver)
-!!
-!!    Initialize energies
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(diis_cc_es_solver) :: solver
-!
-      if (.not. allocated(solver%energies)) &
-            call mem%alloc(solver%energies, solver%n_singlet_states, 1)
-!
-   end subroutine initialize_energies_diis_cc_es_solver
-!
-!
-   subroutine destruct_energies_diis_cc_es_solver(solver)
-!!
-!!    Destruct energies
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(diis_cc_es_solver) :: solver
-!
-      if (allocated(solver%energies)) &
-            call mem%dealloc(solver%energies, solver%n_singlet_states, 1)
-!
-   end subroutine destruct_energies_diis_cc_es_solver
-!
-!
-   subroutine initialize_residual_norms_diis_cc_es_solver(solver)
-!!
-!!    Initialize residual_norms
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(diis_cc_es_solver) :: solver
-!
-      if (.not. allocated(solver%residual_norms)) &
-            call mem%alloc(solver%residual_norms, solver%n_singlet_states, 1)
-!
-   end subroutine initialize_residual_norms_diis_cc_es_solver
-!
-!
-   subroutine destruct_residual_norms_diis_cc_es_solver(solver)
-!!
-!!    Destruct residual_norms
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
-!!
-      implicit none
-!
-      class(diis_cc_es_solver) :: solver
-!
-      if (allocated(solver%residual_norms)) &
-            call mem%dealloc(solver%residual_norms, solver%n_singlet_states, 1)
-!
-   end subroutine destruct_residual_norms_diis_cc_es_solver
 !
 !
    subroutine print_settings_diis_cc_es_solver(solver)
@@ -216,6 +145,10 @@ contains
 !
             read(line(16:100), *) solver%max_iterations
 !
+         elseif (line(1:15) == 'diis dimension:' ) then
+!
+            read(line(16:100), *) solver%diis_dimension
+!
          elseif (line(1:18) == 'right eigenvectors') then 
 !
             solver%transformation = 'right'
@@ -272,28 +205,52 @@ contains
 !
       class(ccs) :: wf
 !
-      logical :: converged
-      logical :: converged_eigenvalue
-      logical :: converged_residual
+      logical, dimension(:), allocatable :: converged
+!
+      logical, dimension(:), allocatable :: converged_eigenvalue
+      logical, dimension(:), allocatable :: converged_residual
+!
+      real(dp), dimension(:), allocatable :: energies 
+      real(dp), dimension(:), allocatable :: prev_energies 
+!
+      real(dp), dimension(:), allocatable :: residual_norms
 !
       type(diis_tool), dimension(:), allocatable :: diis 
 !
-      integer(i15) :: iteration, trial, solution, state, I
+      integer(i15) :: iteration, trial, solution, state, amplitude
 !
       character(len=3) :: string_state
 !
-      real(dp) :: ddot
+      real(dp) :: norm_X
 !
       real(dp), dimension(:,:), allocatable :: X, R, eps
 !
-!     Create DIIS tools vector & initialize them 
+!     Initialize energies, residual norms, and convergence arrays 
+!
+      allocate(energies(solver%n_singlet_states))
+      allocate(prev_energies(solver%n_singlet_states))
+      allocate(residual_norms(solver%n_singlet_states))
+!
+      energies       = zero 
+      prev_energies  = zero 
+      residual_norms = zero 
+!
+      allocate(converged(solver%n_singlet_states))
+      allocate(converged_residual(solver%n_singlet_states))
+      allocate(converged_eigenvalue(solver%n_singlet_states))
+!
+      converged            = .false.
+      converged_residual   = .false.
+      converged_eigenvalue = .false.
+!
+!     Make DIIS tools array & initialize the individual DIIS tools 
 !
       allocate(diis(solver%n_singlet_states))
 !
       do state = 1, solver%n_singlet_states
 !  
          write(string_state, '(i3.3)') state
-         call diis(state)%init('diis_cc_es_solver_' // string_state, wf%n_amplitudes, wf%n_amplitudes, 8)
+         call diis(state)%init('diis_cc_es_solver_' // string_state, wf%n_amplitudes, wf%n_amplitudes, solver%diis_dimension)
 !
       enddo 
 !
@@ -309,41 +266,79 @@ contains
 !
       call mem%alloc(R, wf%n_amplitudes, solver%n_singlet_states)
 !
-      converged = .false.
-      iteration = 1
-      do while (.not. converged .and. (iteration .le. solver%max_iterations))
+      iteration = 0
+!
+      do while (.not. all(converged) .and. (iteration .le. solver%max_iterations))
+!
+         iteration = iteration + 1   
 !
          write(output%unit,'(/t3,a25,i4)') 'Iteration:               ', iteration
+!
+         write(output%unit,'(/t3,a)') 'Root     Eigenvalue (Re)     Residual norm    '
+         write(output%unit,'(t3,a)')  '----------------------------------------------'
          flush(output%unit)
-!
-         write(output%unit,'(t3,a)') 'Root     Eigenvalue (Re)        Residual norm'
-         write(output%unit,'(t3,a)') '----------------------------------------------'
-!
-!        Construct residual vector R = AX - (X^T AX / X^X) X = [R1 R2 R3 ...],
-!        then precondition, print information and do DIIS update 
 !
          do state = 1, solver%n_singlet_states
 !
-            call wf%construct_excited_state_equation(X(:,state), R(:,state), solver%energies(state, 1))
+            if (.not. converged(state)) then 
 !
-            do I = 1, wf%n_amplitudes
+!              Construct residual and energy and precondition the former 
 !
-               R(I, state) = R(I, state)/(eps(I,1)-solver%energies(state, 1))
+               call wf%construct_excited_state_equation(X(:,state), R(:,state), energies(state))
 !
-            enddo
+!$omp parallel do private(amplitude)
+               do amplitude = 1, wf%n_amplitudes
 !
-            solver%residual_norms(state, 1) = sqrt(ddot(wf%n_amplitudes, R(1,state), 1, R(1,state), 1))
+                  R(amplitude, state) = -R(amplitude, state)/(eps(amplitude, 1) - energies(state))
 !
-            write(output%unit, *) state, solver%energies(state, 1), solver%residual_norms(state, 1)
+               enddo
+!$omp end parallel do 
 !
-            X(:,state) = X(:,state) + R(:,state)
-            call diis(state)%update(R(:,state), X(:,state))
+!              Update convergence logicals 
+!
+               residual_norms(state) = get_l2_norm(R(:, state), wf%n_amplitudes)
+!
+               converged_eigenvalue(state) = abs(energies(state)-prev_energies(state)) .lt. solver%eigenvalue_threshold
+               converged_residual(state)   = residual_norms(state)                     .lt. solver%residual_threshold
+!
+               converged(state) = converged_eigenvalue(state) .and. converged_residual(state)
+!
+!              Perform DIIS extrapolation to the optimal next guess for X,
+!              then normalize it to avoid accumulating norm in X
+!
+               X(:,state) = X(:,state) + R(:,state)
+               call diis(state)%update(R(:,state), X(:,state))
+!
+               norm_X = get_l2_norm(X(:,state), wf%n_amplitudes)
+               X(:,state) = X(:,state)/norm_X
+!
+            endif 
+!
+            write(output%unit, '(i3,3x,f19.12,6x,e10.4)') state, energies(state), residual_norms(state)
+            flush(output%unit)
 !
          enddo
 !
-         iteration = iteration + 1        
+         prev_energies = energies 
+!
+         write(output%unit,'(t3,a)')  '----------------------------------------------'     
 !
       enddo 
+!
+      if (all(converged)) then 
+!
+         write(output%unit, '(/t3,a29,i3,a12)') 'Convergence criterion met in ', iteration, ' iterations!'
+         ! call solver%print_summary() ... make this when printing routines from new-eT have been merged 
+!
+      endif 
+!
+      deallocate(energies)
+      deallocate(prev_energies)
+      deallocate(residual_norms)
+!
+      deallocate(converged)
+      deallocate(converged_residual)
+      deallocate(converged_eigenvalue)
 !
    end subroutine run_diis_cc_es_solver
 !
