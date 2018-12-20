@@ -854,14 +854,33 @@ contains
 !
       else
 !
-!        We need to batch
 !
-!        Figure out how many we have room for
+!        First, try to increment both indices simultaneously
 !
-         n=1
-         do while ((r_buff3*(n+1)**3 + r_buff2*(n+1)**2 + r_buff1*(n+1)) .lt. mem%available)
-            n = n + 1
+         p_elements = 1
+         q_elements = 1
+!
+         figgered_out = .false.
+         do while (.not. figgered_out                              &
+                     .and. p_elements .lt. batch_p%index_dimension &
+                     .and. q_elements .lt. batch_q%index_dimension)
+!
+            if ((p_elements+1)*(q_elements+1)*req2_min &
+                  + (p_elements+1)*req1_p_min          &
+                  + (q_elements+1)*req1_q_min          &
+                  + req0 .lt. mem%available) then 
+!
+               p_elements = p_elements + 1 ! can hold +1 batch size 
+               q_elements = q_elements + 1
+!
+            else
+!
+               figgered_out = .true.       ! cannot hold +1 batch size 
+!
+            endif
+!
          enddo
+!
 !
          batch_p%max_length = n         
          batch_q%max_length = n         
