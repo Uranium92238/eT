@@ -656,16 +656,18 @@ contains
          e_size = element_size
       endif
 !
-      req0_tot   = (req0 + req0/(mem%buffer))*e_size 
-      req1_p_min = (req1_p + req1_p/(mem%buffer))*e_size
-      req1_q_min = (req1_q + req1_q/(mem%buffer))*e_size
-      req2_min = (req2 + req2/(mem%buffer))*e_size
+      req0_tot   = req0*e_size 
+      req1_p_min = req1_p*e_size
+      req1_q_min = req1_q*e_size
+      req2_min = req2*e_size
 !
       req_min = req0_tot + req1_p_min + req1_q_min + req2_min 
 !
       req_tot = req0_tot + req1_p_min*(batch_p%index_dimension) &
                          + req1_q_min*(batch_q%index_dimension) &
                          + req2_min*(batch_p%index_dimension)*(batch_q%index_dimension)
+!
+      req_tot = req_tot + req_tot/(mem%buffer)
 !
       if (req_tot .lt. mem%available) then
 !
@@ -700,10 +702,10 @@ contains
                      .and. p_elements .lt. batch_p%index_dimension &
                      .and. q_elements .lt. batch_q%index_dimension)
 !
-            if ((p_elements+1)*(q_elements+1)*req2_min &
+            if (((p_elements+1)*(q_elements+1)*req2_min &
                   + (p_elements+1)*req1_p_min          &
                   + (q_elements+1)*req1_q_min          &
-                  + req0 .lt. mem%available) then 
+                  + req0) .lt. mem%available) then 
 !
                p_elements = p_elements + 1 ! can hold +1 batch size 
                q_elements = q_elements + 1
@@ -761,7 +763,7 @@ contains
          endif
 !
          batch_p%max_length = p_elements         
-         batch_q%max_length = q_elements         
+         batch_q%max_length = q_elements
 !
 !        Figure out how many batches
 !
