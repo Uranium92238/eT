@@ -100,8 +100,7 @@ contains
       call mem%alloc(g_ab_ji, (wf%n_v)*(wf%n_v), (wf%n_o)*(wf%n_o))
       call wf%get_vvoo(g_ab_ji)
 !
-      call sort_1234_to_1432(g_ab_ji, g_ai_jb, (wf%n_v)*(wf%n_v), (wf%n_o)*(wf%n_o), &
-                                              (wf%n_v)*(wf%n_o), (wf%n_o)*(wf%n_v))
+      call sort_1234_to_1432(g_ab_ji, g_ai_jb, (wf%n_v), (wf%n_v), (wf%n_o), (wf%n_o))
 !
       call mem%dealloc(g_ab_ji, (wf%n_v)*(wf%n_v), (wf%n_o)*(wf%n_o))
 !
@@ -136,61 +135,60 @@ contains
 !!
 !!    Separate calculation of both terms due to batching
 !!
-   implicit none
+      implicit none
 !
-   class(cc2) :: wf
+      class(cc2) :: wf
 !
 !     Vectors sent to the routine
 !
-   real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_b_j
-   real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_b_j
+      real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i
 !
 !     Intermediates
 !
-   real(dp), dimension(:,:), allocatable :: I_kc
+      real(dp), dimension(:,:), allocatable :: I_kc
 !
 !     Integrals
 !
-   real(dp), dimension(:,:), allocatable :: g_kc_jb
-   real(dp), dimension(:,:), allocatable :: g_ai_ck
-   real(dp), dimension(:,:), allocatable :: g_ak_ci
-   real(dp), dimension(:,:), allocatable :: L_kc_bj
+      real(dp), dimension(:,:), allocatable :: g_kc_jb
+      real(dp), dimension(:,:), allocatable :: g_ai_ck
+      real(dp), dimension(:,:), allocatable :: L_kc_bj
+      real(dp), dimension(:,:), allocatable :: u_ai_kc
 !
 !     Indices
 !
-   integer(i15) :: b, c, j, k, jb, kc, jc, kb, bj, a, i, ai, ck, ak, ci
-!
+      integer(i15) :: b, c, j, k, jb, kc, jc, kb, bj, a, i, ai, ck, ak, ci
 !
 !     Construct L_kc_jb
 !
-   call mem%alloc(g_kc_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-   call mem%alloc(L_kc_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%alloc(g_kc_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%alloc(L_kc_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-   call wf%get_ovov(g_kc_jb)
+      call wf%get_ovov(g_kc_jb)
 !
-   do k = 1, wf%n_o
-      do c = 1, wf%n_v
-         do j = 1, wf%n_o
-            do b = 1, wf%n_v
+      do k = 1, wf%n_o
+         do c = 1, wf%n_v
+            do j = 1, wf%n_o
+               do b = 1, wf%n_v
 !
-               kc = wf%n_o*(c-1) + k
-               jb = wf%n_o*(b-1) + j
-               jc = wf%n_o*(c-1) + j
-               kb = wf%n_o*(b-1) + k
-               bj = wf%n_v*(j-1) + b
+                  kc = wf%n_o*(c-1) + k
+                  jb = wf%n_o*(b-1) + j
+                  jc = wf%n_o*(c-1) + j
+                  kb = wf%n_o*(b-1) + k
+                  bj = wf%n_v*(j-1) + b
 !
-               L_kc_bj(kc, bj) = two * g_kc_jb(kc, jb) - g_kc_jb(kb, jc)
+                  L_kc_bj(kc, bj) = two * g_kc_jb(kc, jb) - g_kc_jb(kb, jc)
 !
+               enddo
             enddo
          enddo
       enddo
-   enddo
 !
-   call mem%dealloc(g_kc_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(g_kc_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     I_kc = sum_jb L_kcjb * c_bj
 !
-   call mem%alloc(I_kc, wf%n_o, wf%n_v)
+      call mem%alloc(I_kc, wf%n_o, wf%n_v)
 !
       call dgemm('N', 'N',           &
                   (wf%n_o)*(wf%n_v), &
@@ -205,83 +203,55 @@ contains
                   I_kc,              &
                   (wf%n_o)*(wf%n_v))
 !
-   call mem%dealloc(L_kc_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(L_kc_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-!  t_ai_ck = - g_aick/ε^{ac}_{ik}
+!     t_ai_ck = - g_aick/ε^{ac}_{ik}
 !
-   call mem%alloc(g_ai_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
-   call wf%get_vovo(g_ai_ck)
+      call mem%alloc(g_ai_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
+      call wf%get_vovo(g_ai_ck)
 !
-   do a = 1, wf%n_v
-      do i = 1, wf%n_o
-         do c = 1, wf%n_v
-            do k = 1, wf%n_o
+      call mem%alloc(u_ai_kc, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
-               kc = wf%n_o*(c-1) + k
-               ai = wf%n_v*(i-1) + a
-               ck = wf%n_v*(k-1) + c
+      do a = 1, wf%n_v
+         do i = 1, wf%n_o
+            do c = 1, wf%n_v
+               do k = 1, wf%n_o
 !
-               g_ai_ck(ai,kc) = - g_ai_ck(ai,ck)/(wf%fock_diagonal(a + wf%n_o, 1) + wf%fock_diagonal(c + wf%n_o, 1)&
-                                             - wf%fock_diagonal(i, 1) - wf%fock_diagonal(k, 1))
+                  kc = wf%n_o*(c-1) + k
+                  ai = wf%n_v*(i-1) + a
+                  ak = wf%n_v*(k-1) + a
+                  ck = wf%n_v*(k-1) + c
+                  ci = wf%n_v*(i-1) + c
 !
+                  u_ai_kc(ai,kc) = - (two*g_ai_ck(ai,ck)- g_ai_ck(ak,ci))&
+                                          /(wf%fock_diagonal(a + wf%n_o, 1) &
+                                          + wf%fock_diagonal(c + wf%n_o, 1)&
+                                          - wf%fock_diagonal(i, 1) - wf%fock_diagonal(k, 1))
+!
+               enddo
             enddo
          enddo
       enddo
-   enddo
+!
+      call mem%dealloc(g_ai_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
 !     rho_a_i = rho_a_i + sum_ck 2 t_aick I_kc
 !
-   call dgemm('N', 'N',           &
-               (wf%n_v)*(wf%n_o), &
-               1,                 &
-               (wf%n_o)*(wf%n_v), &
-               two,               &
-               g_ai_ck,           &
-               (wf%n_v)*(wf%n_o), &
-               I_kc,              &
-               (wf%n_o)*(wf%n_v), &
-               one,               &
-               rho_a_i,           &
-               (wf%n_v)*(wf%n_o))
+      call dgemm('N', 'N',           &
+                  (wf%n_v)*(wf%n_o), &
+                  1,                 &
+                  (wf%n_o)*(wf%n_v), &
+                  two,               &
+                  u_ai_kc,           &
+                  (wf%n_v)*(wf%n_o), &
+                  I_kc,              &
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  rho_a_i,           &
+                  (wf%n_v)*(wf%n_o))
 !
-!  t_ak_ci = - g_akci/ε^{ac}_{ik}
-!
-   do a = 1, wf%n_v
-      do i = 1, wf%n_o
-         do c = 1, wf%n_v
-            do k = 1, wf%n_o
-!
-               kc = wf%n_o*(c-1) + k
-               ak = wf%n_v*(k-1) + a
-               ci = wf%n_v*(i-1) + c
-               ai = wf%n_v*(i-1) + a
-!
-               g_ai_ck(ai,kc) = - g_ai_ck(ak,ci)/(wf%fock_diagonal(a + wf%n_o, 1) + wf%fock_diagonal(c + wf%n_o, 1)&
-                                             - wf%fock_diagonal(i, 1) - wf%fock_diagonal(k, 1))
-!
-            enddo
-         enddo
-      enddo
-   enddo
-!
-!     rho_a_i = rho_a_i + sum_ck t_akci I_kc
-!
-   call dgemm('N', 'N',           &
-               (wf%n_v)*(wf%n_o), &
-               1,                 &
-               (wf%n_o)*(wf%n_v), &
-               -one,              &
-               g_ai_ck,           &
-               (wf%n_v)*(wf%n_o), &
-               I_kc,              &
-               (wf%n_o)*(wf%n_v), &
-               one,               &
-               rho_a_i,           &
-               (wf%n_v)*(wf%n_o))
-!
-   call mem%dealloc(g_ai_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
-!
-   call mem%dealloc(I_kc, wf%n_o, wf%n_v)
+      call mem%dealloc(I_kc, wf%n_o, wf%n_v)
+      call mem%alloc(u_ai_kc, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
 !
    end subroutine
