@@ -377,7 +377,7 @@ contains
       type(timings) :: ccsd_a2_timer, ccsd_a2_integral_timer
 !
       call ccsd_a2_timer%init('omega ccsd a2')
-      call ccsd_a2_integral_timer%init('omega ccsd a2 (integral time)')
+      call ccsd_a2_integral_timer%init('omega ccsd a2 g_abcd')
 !      
       call ccsd_a2_timer%start()
 !
@@ -460,23 +460,22 @@ contains
 !
 !$omp parallel do schedule(static) private(d,b,a,ac,cd,bd,bc,ab,ad,i,j,ij,ci,dj,cj,di,cidj,dicj)
                do c = 1, wf%n_v
-!
                   do d = 1, c
 !
-                     cd = index_packed(c, d)
+                     cd = (max(c,d)*(max(c,d)-3)/2) + c + d
 !
                      do a = 1, batch_a%length
 !
-                        ac = index_two(a, c, batch_a%length)
-                        ad = index_two(a, d, batch_a%length)
+                        ac = batch_a%length*(c - 1) + a
+                        ad = batch_a%length*(d - 1) + a 
 !
                         do  b = 1, batch_b%length
                            if ((a+batch_a%first-1) .ge. (b+batch_b%first-1)) then
 !
-                              bd = index_two(b, d, batch_b%length)
-                              bc = index_two(b, c, batch_b%length)
+                              bd = batch_b%length*(d - 1) + b 
+                              bc = batch_b%length*(c - 1) + b
 !
-                              ab = index_packed(a, b)
+                              ab = (max(a,b)*(max(a,b)-3)/2) + a + b
 !
                               g_p_ab_cd(ab, cd) = g_ac_bd(ac, bd) + g_ac_bd(ad, bc)
                               g_m_ab_cd(ab, cd) = g_ac_bd(ac, bd) - g_ac_bd(ad, bc)
@@ -1078,7 +1077,7 @@ contains
 !
 !     Omega2(aibj, 1) =+ omega2_ai_bj(ai,bj) + omega2_bj_ai(bj,ai)
 !
-      call symmetric_sum(omega2_ai_bj, (wf%n_o)*(wf%n_v))            ! symmetrize
+      call symmetric_sum(omega2_ai_bj, (wf%n_o)*(wf%n_v))         ! symmetrize
       call add_to_packed(omega2, omega2_ai_bj, (wf%n_o)*(wf%n_v)) ! add to packed
 !
       call mem%dealloc(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
@@ -1177,9 +1176,7 @@ contains
 !
       real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o)+1)/2, 1), intent(inout):: omega2
 !
-      real(dp), dimension(:,:), allocatable :: omega2_ai_bj ! For storing D2.3, D2.2 & D2.1
-!
-!     Vectors for D2.2 term
+      real(dp), dimension(:,:), allocatable :: omega2_ai_bj ! For storing D2.2 & D2.1
 !
       real(dp), dimension(:,:), allocatable :: g_ld_kc ! g_ldkc
       real(dp), dimension(:,:), allocatable :: L_ld_kc ! L_ldkc = 2 * g_ldkc - g_lckd
@@ -1187,27 +1184,25 @@ contains
       real(dp), dimension(:,:), allocatable :: u_ai_dl ! u_il^ad = 2 * t_il^ad - t_li^ad
       real(dp), dimension(:,:), allocatable :: u_ai_ld ! u_il^ad = 2 * t_il^ad - t_li^ad
       real(dp), dimension(:,:), allocatable :: Z_ai_kc ! An intermediate, see below
-!
       real(dp), dimension(:,:), allocatable :: g_ai_kc ! g_aikc
 !
+      type(timings) :: ccsd_d2_timer
+!
+      call ccsd_d2_timer%init('omega ccsd d2')
+      call ccsd_d2_timer%start()
 !
 !     :: Calculate the D2.2 term of omega ::
 !
-!     Get g_ld_kc = g_ldkc
+!     Form L_ld_kc = L_ldkc = 2*g_ld_kc(ld,kc) - g_ld_kc(lc,kd)
 !
       call mem%alloc(g_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
       call wf%get_ovov(g_ld_kc)
-!
-!     Form L_ld_kc = L_ldkc = 2*g_ld_kc(ld,kc) - g_ld_kc(lc,kd)
 !
       call mem%alloc(L_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       L_ld_kc = zero
 !
       call add_1432_to_1234(-one, g_ld_kc, L_ld_kc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
       call daxpy((wf%n_o)**2*(wf%n_v)**2, two, g_ld_kc, 1, L_ld_kc, 1)
-!
-!     Deallocate g_ld_kc and L_kc_J
 !
       call mem%dealloc(g_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
@@ -1229,11 +1224,9 @@ contains
 !
       call mem%dealloc(u_ai_dl, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-!     Allocate the intermediate Z_ai_kc = sum_dl u_ai_ld L_ld_kc and set it to zero
+!     Form the intermediate Z_ai_kc = sum_dl u_ai_ld L_ld_kc and set it to zero
 !
       call mem%alloc(Z_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
-!     Form the intermediate Z_ai_kc = sum_dl u_ai_ld L_ld_kc
 !
       call dgemm('N','N',            &
                   (wf%n_o)*(wf%n_v), &
@@ -1247,8 +1240,6 @@ contains
                   zero,              &
                   Z_ai_kc,           &
                   (wf%n_o)*(wf%n_v))
-!
-!     Deallocate L_ld_kc
 !
       call mem%dealloc(L_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
@@ -1269,14 +1260,12 @@ contains
                   omega2_ai_bj,      &
                   (wf%n_o)*(wf%n_v))
 !
-!     Some mathematical justification for the above matrix multiplication. We have
+!     Some justification for the above matrix multiplication. We have
 !
 !           1/4 * sum_ck (sum_dl u_il^ad L_ldkc) u_jk^bc = 1/4 * sum_ck Z_ai,kc u_kc,bj,
 !
 !     where Z_ai,kc = sum_dl u_ai,ld L_ld,kc. Note that u_ai_ld(ai,ld) = u_il^ad,
 !     which means that u_ai_ld(bj,kc)^T = u_ai_ld(kc,bj) = u_kj^cb = u_jk^bc.
-!
-!     Deallocate the Z_ai_kc intermediate
 !
       call mem%dealloc(Z_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
@@ -1311,6 +1300,9 @@ contains
       call symmetrize_and_add_to_packed(omega2, omega2_ai_bj, (wf%n_o)*(wf%n_v))
 !
       call mem%dealloc(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+      call ccsd_d2_timer%freeze()
+      call ccsd_d2_timer%switch_off()
 !
    end subroutine omega_ccsd_d2_ccsd
 !
@@ -1357,11 +1349,15 @@ contains
       real(dp), dimension(:,:), allocatable :: omega2_ai_bj ! For storing the E2.2 term temporarily
       real(dp), dimension(:,:), allocatable :: Y_k_j        ! An intermediate, see below for definition
 !
+      type(timings) :: ccsd_e2_timer 
+!
+      call ccsd_e2_timer%init('omega ccsd e2')
+      call ccsd_e2_timer%start()
+!
 !     :: Calculate the E2.1 term of omega ::
 !
 !     Form u_bl_dk = u_kl^bd = u_bk_dl
-!
-!     = 2 * t_kl^bd - t_lk^bd = 2 * t_bk_dl(bk,dl) - t_bk_dl(bl, dk)
+!                  = 2 * t_kl^bd - t_lk^bd = 2 * t_bk_dl(bk,dl) - t_bk_dl(bl, dk)
 !
       call mem%alloc(t_bk_dl, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
       call squareup(wf%t2, t_bk_dl, (wf%n_v)*(wf%n_o))
@@ -1382,18 +1378,17 @@ contains
 !     Form g_ld_kc = g_ldkc
 !
       call mem%alloc(g_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
       call wf%get_ovov(g_ld_kc)
 !
-!     Allocate the intermediate X_b_c = F_bc - sum_dkl g_ldkc u_kl^bd and set to zero
+!     Make the intermediate X_b_c = F_bc - sum_dkl g_ldkc u_kl^bd and set to zero
 !
       call mem%alloc(X_b_c, wf%n_v, wf%n_v)
 !
-!     Copy the virtual-virtual Fock matrix into the intermediate
+!     First, copy the virtual-virtual Fock matrix into the intermediate
 !
       call dcopy((wf%n_v)**2, wf%fock_ab, 1, X_b_c, 1) ! X_b_c = F_bc
 !
-!     Add the second contribution,
+!     Then, add the second contribution,
 !     - sum_dkl g_ldkc u_kl^bd = - sum_dkl u_b_kdl * g_kdl_c, to X_b_c
 !
       call dgemm('N','N',               &
@@ -1431,20 +1426,18 @@ contains
                   omega2_bj_ai,         & ! omega2_b_jai
                   wf%n_v)
 !
-!     Add the E2.1 term to the omega vector
+!     Add the E2.1 term to the omega vector and deallocations
 !
       call symmetrize_and_add_to_packed(omega2, omega2_bj_ai, (wf%n_o)*(wf%n_v))
-!
-!     Deallocate the E2.1 term, the X intermediate, keep the amplitudes
 !
       call mem%dealloc(omega2_bj_ai, (wf%n_o)*(wf%n_v), (wf%n_v)*(wf%n_o))
       call mem%dealloc(X_b_c, wf%n_v, wf%n_v)
 !
 !     :: Calculate E2.2 term of omega ::
 !
-!     Allocate the intermediate Y_k_j = F_kj  + sum_cdl u_lj^dc g_ldkc
-!                                     = F_kj  + sum_cdl u_lj^dc g_kcld
-!                                     = F_k_j + sum_cdl g_k_cld * u_cld_j
+!     Make the intermediate Y_k_j = F_kj  + sum_cdl u_lj^dc g_ldkc
+!                                 = F_kj  + sum_cdl u_lj^dc g_kcld
+!                                 = F_k_j + sum_cdl g_k_cld * u_cld_j
 !
       call mem%alloc(Y_k_j, wf%n_o, wf%n_o)
 !
@@ -1473,20 +1466,16 @@ contains
                  Y_k_j,                &
                  wf%n_o)
 !
-!     Deallocate u_b_ldk and g_ld_kc
-!
       call mem%dealloc(u_bl_dk, (wf%n_o)*(wf%n_v), (wf%n_v)*(wf%n_o))
       call mem%dealloc(g_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-!    Allocate the E2.2 term and set to zero
+!     Calculate the E2.2 term,
+!     - sum_k t_aib_k Y_k_j = - sum_k t_ik^ab (F_kj + sum_cdl g_ldkc u_lj^dc)
 !
-     call mem%alloc(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!     Note: t_cj_ai = t_ji^ca => t_cj_ai(ai,bk) = t_ik^ab;
+!     thus, we can treat t_cj_ai as t_aib_k = t_ik^ab.
 !
-!    Calculate the E2.2 term,
-!    - sum_k t_aib_k Y_k_j = - sum_k t_ik^ab (F_kj + sum_cdl g_ldkc u_lj^dc)
-!
-!    Note: t_cj_ai = t_ji^ca => t_cj_ai(ai,bk) = t_ik^ab;
-!    thus, we can treat t_cj_ai as t_aib_k = t_ik^ab.
+      call mem%alloc(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       call dgemm('N','N',              &
                  (wf%n_o)*(wf%n_v)**2, &
@@ -1514,7 +1503,10 @@ contains
 !
       call mem%dealloc(omega2_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
+      call ccsd_e2_timer%freeze()
+      call ccsd_e2_timer%switch_off()
+!
    end subroutine omega_ccsd_e2_ccsd
 !
 !
-end submodule
+end submodule omega_ccsd 

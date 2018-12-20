@@ -221,11 +221,11 @@ contains
             pq_rec = integrals%n_mo*(q - 1) + p
             pq = dim_p*(q - first_q) + p - first_p + 1
 !
-            read(integrals%cholesky_mo_t1%unit, rec=pq_rec) (L_pq_J(pq, J), J = 1, integrals%n_J)
+           ! read(integrals%cholesky_mo_t1%unit, rec=pq_rec) (L_pq_J(pq, J), J = 1, integrals%n_J)
+            read(integrals%cholesky_mo_t1%unit, rec=pq_rec) L_pq_J(pq, :)
 !
          enddo
       enddo
-
 !
       call disk%close_file(integrals%cholesky_mo_t1)
 !
