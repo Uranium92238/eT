@@ -45,12 +45,7 @@ module timings_class
 !!
 !!    A timer that has been switched off may be reused,
 !!    though the tag will be the same (indistinguishable
-!!    in output). 
-!!
-!!    If you wish to print times repeatedly without switching 
-!!    off the clock, you can do so by calling print_times().
-!!    This call should only be used when the clock is freezed. 
-!!    It will give you the currently accumulated time. 
+!!    in output).  
 !!
 !
    use file_class
@@ -77,6 +72,8 @@ module timings_class
 !
       procedure :: start            => start_timings
       procedure :: freeze           => freeze_timings
+      procedure :: reset            => reset_timings
+!
       procedure :: switch_off       => switch_off_timings
 !
       procedure :: print_times      => print_times_timings
@@ -93,20 +90,17 @@ contains
 !!    Written by Eirik F. Kjønstad, Dec 2018 
 !!
 !!    Initializes timer. Tag is the name of the timer,
-!!    as shown in the timing output file.
+!!    as shown in the timing output file when switch_off()
+!!    is called.
 !!
       class(timings) :: timer 
 !
       character(len=*) :: tag 
 !
-      timer%tag = tag
+!     Set name & then set all times to zero 
 !
-      timer%elapsed_wall_time = zero 
-      timer%elapsed_cpu_time  = zero 
-      timer%wall_time_start   = zero 
-      timer%wall_time_end     = zero 
-      timer%cpu_time_start    = zero 
-      timer%cpu_time_end      = zero 
+      timer%tag = tag
+      call timer%reset()
 !
    end subroutine init_timings
 !
@@ -153,6 +147,27 @@ contains
    end subroutine freeze_timings
 !
 !
+   subroutine reset_timings(timer)
+!!
+!!    Reset 
+!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!
+!!    Sets all times to zero.
+!!
+      implicit none 
+!
+      class(timings), intent(inout) :: timer 
+!
+      timer%elapsed_wall_time = zero 
+      timer%elapsed_cpu_time  = zero 
+      timer%wall_time_start   = zero 
+      timer%wall_time_end     = zero 
+      timer%cpu_time_start    = zero 
+      timer%cpu_time_end      = zero 
+!
+   end subroutine reset_timings
+!
+!
    subroutine switch_off_timings(timer)
 !!
 !!    Switch off 
@@ -168,7 +183,7 @@ contains
 !     Print & reset 
 !
       call timer%print_times()
-      call timer%init(timer%tag)
+      call timer%reset()
 !
    end subroutine switch_off_timings
 !
@@ -187,6 +202,7 @@ contains
       write(timing%unit, '(/t3,a)') timer%tag
       write(timing%unit, '(t3,a17,f12.5)')  'wall time (sec): ', timer%elapsed_wall_time
       write(timing%unit, '(t3,a17,f12.5)')  'cpu time (sec):  ', timer%elapsed_cpu_time
+      flush(timing%unit)
 !
    end subroutine print_times_timings
 !
