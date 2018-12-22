@@ -446,7 +446,8 @@ contains
 !$omp end parallel do
 !
             omega_offset = wf%n_v*(batch_i%first - 1) + 1
-            call dgemm('N', 'N',                      &
+!
+            call dgemm('N', 'N',                     &
                        (batch_i%length)*wf%n_v,      &
                        1,                            &
                        (batch_j%length)*wf%n_v,      &

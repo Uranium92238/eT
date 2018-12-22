@@ -54,8 +54,9 @@ contains
 !     Vectors sent to the routine
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_b_j
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_a_i
+!
       real(dp), dimension(:,:), allocatable :: c_j_b
-      real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i
 !
 !     Integrals
 !
@@ -125,7 +126,7 @@ contains
    end subroutine construct_jacobian_cc2_A1_cc2
 !
 !
-   module subroutine construct_jacobian_cc2_B1_cc2(wf, rho_a_i, c_b_j)
+   module subroutine construct_jacobian_cc2_B1_cc2(wf, rho_a_i, c_b_j, eps_o, eps_v)
 !!
 !!    Jacobian CC2 B1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
@@ -137,12 +138,15 @@ contains
 !!
       implicit none
 !
-      class(cc2) :: wf
+      class(cc2), intent(in) :: wf
 !
 !     Vectors sent to the routine
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_b_j
-      real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_a_i
+!
+      real(dp), dimension(wf%n_o), intent(in) :: eps_o
+      real(dp), dimension(wf%n_v), intent(in) :: eps_v
 !
 !     Intermediates
 !
@@ -224,9 +228,8 @@ contains
                   ci = wf%n_v*(i-1) + c
 !
                   u_ai_kc(ai,kc) = - (two*g_ai_ck(ai,ck)- g_ai_ck(ak,ci))&
-                                          /(wf%fock_diagonal(a + wf%n_o, 1) &
-                                          + wf%fock_diagonal(c + wf%n_o, 1)&
-                                          - wf%fock_diagonal(i, 1) - wf%fock_diagonal(k, 1))
+                                          /(eps_v(a) + eps(c) &
+                                          - eps_o(i, 1) - eps_o(k, 1))
 !
                enddo
             enddo
