@@ -48,7 +48,7 @@ contains
 !
       class(hf) :: ref_wf
 !
-      integer(i15) :: p, i, a
+      integer(i15) :: p
 !
       wf%name = 'cc3'
 !
