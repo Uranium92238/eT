@@ -55,7 +55,7 @@ contains
       call wf%omega_ccsd_d2(omega2)
       call wf%omega_ccsd_e2(omega2)
 !
-      call wf%omega_cc3_a_cc3(omega1,omega2)
+      call wf%omega_cc3_a(omega1,omega2)
 !
       call dcopy((wf%n_o)*(wf%n_v), omega1, 1, omega, 1)
       call dcopy((wf%n_o)*(wf%n_v)*((wf%n_o)*(wf%n_v)+1)/2, omega2, 1, omega((wf%n_o)*(wf%n_v)+1, 1), 1)
@@ -66,7 +66,7 @@ contains
    end subroutine construct_omega_cc3
 !
 !
-   module subroutine omega_cc3_a_cc3(wf, omega1,omega2)
+   module subroutine omega_cc3_a_cc3(wf, omega1, omega2)
 !!
 !!    CC3 Omega terms
 !!    Alex C. Paul and Rolf H. Myhre 2018

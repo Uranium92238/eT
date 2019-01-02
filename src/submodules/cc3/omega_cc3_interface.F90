@@ -1,5 +1,5 @@
 
-   module subroutine omega_cc3_a_cc3(wf, omega)
+   module subroutine omega_cc3_a_cc3(wf, omega1, omega2)
 !!
 !!    CC3 Omega terms
 !!    Alex C. Paul and Rolf H. Myhre 2018
@@ -8,7 +8,8 @@
 !
       class(cc3) :: wf
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: omega
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: omega1
+      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o) +1)/2, 1), intent(inout) :: omega2
 !
    end subroutine omega_cc3_a_cc3
 !
