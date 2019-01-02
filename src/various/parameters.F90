@@ -34,5 +34,7 @@ module parameters
 !
    real(dp), parameter :: bohr_to_angstrom = 0.52917721092D0      ! 2010 CODATA
    real(dp), parameter :: angstrom_to_bohr = one/bohr_to_angstrom
+   real(dp), parameter :: Hartree_to_eV    = 27.21138602D0        ! 2014 CODATA
+                                                                  ! (https://physics.nist.gov/cgi-bin/cuu/Value?threv)
 !
 end module parameters

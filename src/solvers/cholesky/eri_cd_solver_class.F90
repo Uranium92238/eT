@@ -170,6 +170,7 @@ contains
 !
       endif
 !
+!
       call solver%determine_auxilliary_cholesky_basis(system, solver%diagonal_info_target)
 !
       e_determine_basis = omp_get_wtime()
@@ -1974,9 +1975,11 @@ contains
 !     Real allocatable arrays
 !
       real(dp), dimension(:,:), allocatable :: g_AB_CD
-      real(dp), dimension(:,:), allocatable :: integrals_auxiliary, integrals_auxiliary_packed
-      real(dp), dimension(:,:), allocatable :: cholesky_vecs
-      real(dp), dimension(:,:), allocatable :: temp_cholesky
+      real(dp), dimension(:,:), allocatable :: integrals_auxiliary
+!
+      real(dp), dimension(:), allocatable :: work  ! work array for LAPACK
+!
+      integer :: info
 !
 !     Logicals
 !
@@ -1999,16 +2002,15 @@ contains
 !
       call disk%close_file(solver%basis_shell_data, 'delete')
 !
-!
 !     Construct integrals (J | J')
 !
-      call mem%alloc(integrals_auxiliary_packed, solver%n_cholesky*(solver%n_cholesky+1)/2, 1)
+      call mem%alloc(integrals_auxiliary, solver%n_cholesky, solver%n_cholesky)
 !
 !$omp parallel do &
 !$omp private(AB_sp, CD_sp, A, B, A_interval, B_interval, C, D, C_interval, D_interval, &
 !$omp w, x, y, z, wx, yz, g_AB_CD, I, J, K, L, KL,&
 !$omp current_aop_in_sp, basis_aops_in_CD_sp, basis_aops_in_AB_sp) &
-!$omp shared(integrals_auxiliary_packed, cholesky_basis, basis_shell_info) &
+!$omp shared(integrals_auxiliary, cholesky_basis, basis_shell_info) &
 !$omp schedule(guided)
       do CD_sp = 1, n_sp_in_basis
 !
@@ -2085,9 +2087,9 @@ contains
 !
                   K = basis_aops_in_AB_sp(I, 3)
                   L = basis_aops_in_CD_sp(J, 3)
-                  KL = (max(K,L)*(max(K,L)-3)/2) + K + L
 !
-                  integrals_auxiliary_packed(KL, 1) = g_AB_CD(wx, yz)
+                  integrals_auxiliary(K, L) = g_AB_CD(wx, yz)
+                  integrals_auxiliary(L, K) = g_AB_CD(wx, yz)
 !
                enddo
             enddo
@@ -2107,37 +2109,37 @@ contains
 !
       call mem%dealloc_int(basis_shell_info, n_sp_in_basis, 4)
 !
-!     Square up integrals
-!
-      call mem%alloc(integrals_auxiliary, solver%n_cholesky, solver%n_cholesky)
-      call squareup(integrals_auxiliary_packed, integrals_auxiliary, solver%n_cholesky)
-      call mem%dealloc(integrals_auxiliary_packed, solver%n_cholesky*(solver%n_cholesky + 1)/2, 1)
-!
       n_vectors = 0
       allocate(keep_vectors(solver%n_cholesky))
 !
       call cpu_time(s_decomp_time)
 !
-      call mem%alloc(temp_cholesky, solver%n_cholesky, solver%n_cholesky)
+      allocate(work(2*solver%n_cholesky))
 !
-      call full_cholesky_decomposition_system(integrals_auxiliary, temp_cholesky, solver%n_cholesky, n_vectors, &
-                                                solver%threshold*1.0d-1, keep_vectors)
+!     DPSTRF computes the Cholesky factorization with complete pivoting
+!     of a real symmetric positive semidefinite matrix.
+!
+      call dpstrf_e('L',               &
+            solver%n_cholesky,         &
+            integrals_auxiliary,       &
+            solver%n_cholesky,         &
+            keep_vectors,              &
+            n_vectors,                 &
+            solver%threshold*1.0d-1,   &
+            work,                      &
+            info)
+!
+      deallocate(work)
 !
       call cpu_time(e_decomp_time)
 !
-      call mem%dealloc(integrals_auxiliary, solver%n_cholesky, solver%n_cholesky)
+      do I = 1, solver%n_cholesky ! Zero upper unreferenced triangle
+         do J = 1, I - 1
 !
-      call mem%alloc(cholesky_vecs, n_vectors, n_vectors)
-!
-      do  J = 1, n_vectors
-         do I = 1, n_vectors
-!
-            cholesky_vecs(I, J) = temp_cholesky(I, J)
+            integrals_auxiliary(J, I) = zero
 !
          enddo
       enddo
-!
-      call mem%dealloc(temp_cholesky, solver%n_cholesky, solver%n_cholesky)
 !
       call mem%alloc_int(cholesky_basis_updated, n_vectors, 3)
 !
@@ -2149,6 +2151,18 @@ contains
 !
       call mem%dealloc_int(cholesky_basis, solver%n_cholesky, 3)
       deallocate(keep_vectors)
+!
+!     Write cholesky_aux file containing
+!
+!        1. Cholesky vectors L_JK
+!
+      call disk%open_file(solver%cholesky_aux, 'write', 'rewind')
+!
+      write(solver%cholesky_aux%unit) integrals_auxiliary(1:n_vectors, 1:n_vectors)
+!
+      call disk%close_file(solver%cholesky_aux)
+!
+      call mem%dealloc(integrals_auxiliary, solver%n_cholesky, solver%n_cholesky)
 !
       solver%n_cholesky = n_vectors
 !
@@ -2216,18 +2230,6 @@ contains
 !
       call mem%dealloc_int(basis_shell_info, n_sp_in_basis, 4)
       call mem%dealloc_int(cholesky_basis_updated, n_vectors, 3)
-!
-!     Write cholesky_aux file containing
-!
-!        1. Cholesky vectors L_JK
-!
-      call disk%open_file(solver%cholesky_aux, 'write', 'rewind')
-!
-      write(solver%cholesky_aux%unit) cholesky_vecs
-!
-      call disk%close_file(solver%cholesky_aux)
-!
-      call mem%dealloc(cholesky_vecs, n_vectors, n_vectors)
 !
       call cpu_time(e_build_basis_time)
 !
