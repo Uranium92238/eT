@@ -235,6 +235,25 @@ contains
 !
       enddo
 !
+!     Read for cc3
+!
+      call move_to_section('method', n_methods_total)
+!
+      do i = 1, n_methods_total
+!
+         read(input%unit, '(a100)') line
+         line = remove_preceding_blanks(line)   
+!
+         if (trim(line) == 'cc3' .or. trim(line) == 'CC3' .or. trim(line) == 'Cc3')  then 
+!
+            count_cc_methods = count_cc_methods + 1
+            cc_methods(count_cc_methods) = 'cc3'
+            exit
+!
+         endif
+!
+      enddo
+!
       if (count_cc_methods .ne. n_methods) call output%error_msg('reading cc methods.')
 !
    end subroutine read_cc_methods

@@ -1,4 +1,18 @@
-
+!
+   module subroutine construct_omega_cc3(wf, omega)
+!!
+!!   Construct omega (CC3)
+!!   Alex C. Paul and Rolf H. Myhre 2018
+!!
+     implicit none
+!
+     class(cc3), intent(in) :: wf
+!
+     real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: omega
+!
+   end subroutine construct_omega_cc3
+!
+!
    module subroutine omega_cc3_a_cc3(wf, omega1, omega2)
 !!
 !!    CC3 Omega terms
@@ -14,16 +28,14 @@
    end subroutine omega_cc3_a_cc3
 !
 !
-   module subroutine construct_omega_cc3(wf, omega)
+   module subroutine omega_cc3_integrals_cc3(wf)
 !!
-!!   Construct omega (CC3)
-!!   Alex C. Paul and Rolf H. Myhre 2018
+!!    Construct integrals need in CC3 Omega and store on disk
+!!    Rolf H. Myhre, January 2019
 !!
-     implicit none
+      implicit none
 !
-     class(cc3), intent(in) :: wf
+      class(cc3) :: wf
 !
-     real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: omega
+   end subroutine omega_cc3_integrals_cc3
 !
-   end subroutine construct_omega_cc3
-
