@@ -82,14 +82,12 @@ contains
 !
 !     Batching variables
 !
-      integer(i15) :: required        = 0
-      integer(i15) :: current_a_batch = 0
+      integer(i15) :: req0, req_i, req_j, req_k, req_ij, req_ik, req_jk
+      integer(i15) :: current_i_batch, current_j_batch, current_k_batch
 !
-      type(batching_index) :: batch_a
+      type(batching_index) :: batch_i, batch_j, batch_k
 !
-      real(dp), dimension(:,:), allocatable :: u_dk_ci, t_dk_ci, g_ad_kc
-!
-      integer(i15) :: ad_dim
+      real(dp), dimension(:,:), allocatable :: t_abc, u_abc
 !
 !
    end subroutine omega_cc3_a_cc3
