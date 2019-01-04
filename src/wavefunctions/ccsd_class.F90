@@ -37,6 +37,9 @@ module ccsd_class
       procedure :: save_amplitudes                             => save_amplitudes_ccsd
       procedure :: save_t2                                     => save_t2_ccsd
       procedure :: read_t2                                     => read_t2_ccsd
+      procedure :: print_dominant_x2                           => print_dominant_x2_ccsd
+      procedure :: print_dominant_amplitudes                   => print_dominant_amplitudes_ccsd
+      procedure :: print_dominant_x_amplitudes                 => print_dominant_x_amplitudes_ccsd
 !
 !     Routines related to omega
 !
@@ -813,5 +816,103 @@ subroutine construct_eta_ccsd(wf, eta)
       if (allocated(wf%t2bar)) call mem%dealloc(wf%t2bar, wf%n_amplitudes, 1)
 !
    end subroutine destruct_t2bar_ccsd
+!
+!
+   subroutine print_dominant_amplitudes_ccsd(wf)
+!!
+!!    Print dominant amplitudes 
+!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!
+      implicit none 
+!
+      class(ccsd), intent(in) :: wf 
+!
+      call wf%print_dominant_x1(wf%t1,'t')
+      call wf%print_dominant_x2(wf%t2,'t')
+!
+   end subroutine print_dominant_amplitudes_ccsd
+!
+!
+   subroutine print_dominant_x_amplitudes_ccsd(wf, x, tag)
+!!
+!!    Print dominant amplitudes  (TODO)
+!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!
+      implicit none 
+!
+      class(ccsd), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_amplitudes, 1) :: x 
+!
+      character(len=1) :: tag
+!
+      call wf%print_dominant_x1(x(1:wf%n_t1,1),tag)
+      call wf%print_dominant_x2(x(wf%n_t1 + 1:wf%n_amplitudes,1),tag)
+!
+   end subroutine print_dominant_x_amplitudes_ccsd
+!
+!
+   subroutine print_dominant_x2_ccsd(wf, x2, tag)
+!!
+!!    Print dominant x2   
+!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!
+!!    Prints the 20 most dominant double amplitudes,
+!!    or sorts them if there are fewer than twenty of them.
+!!
+      implicit none 
+!
+      class(ccsd), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_t2, 1) :: x2 
+      character(len=1), intent(in)    :: tag 
+!
+      real(dp), dimension(:,:), allocatable :: abs_x2
+!
+      integer(i15), dimension(:,:), allocatable :: dominant_indices
+      real(dp), dimension(:,:), allocatable     :: dominant_values
+!
+      integer(i15) :: n_elements, elm, i, a, j, b, ai, bj
+!
+!     Sort according to largest contributions
+!
+      call mem%alloc(abs_x2, wf%n_t2, 1)
+      abs_x2 = abs(x2)
+!
+      n_elements = 20
+      if (n_elements .gt. wf%n_t2) n_elements = wf%n_t2
+!
+      call mem%alloc_int(dominant_indices, n_elements, 1)
+      call mem%alloc(dominant_values, n_elements, 1)
+!
+      dominant_indices = 0
+      dominant_values  = zero 
+      call get_n_highest(n_elements, wf%n_t2, abs_x2, dominant_values, dominant_indices)
+!
+!     Print largest contributions
+!
+      write(output%unit, '(/t6,a)') 'Largest double amplitudes:'
+      write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
+      write(output%unit, '(t6,a)')  '  a         i         b         j         ' // tag // '(ai,bj)             '
+      write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
+!
+      do elm = 1, n_elements
+!
+         call invert_packed_index(dominant_indices(elm,1), ai, bj, (wf%n_o)*(wf%n_v))
+         call invert_compound_index(ai, a, i, wf%n_v, wf%n_o)
+         call invert_compound_index(bj, b, j, wf%n_v, wf%n_o)
+!
+         write(output%unit, '(t6,i3,7x,i3,7x,i3,7x,i3,5x,f19.12)') a, i, b, j, x2(dominant_indices(elm,1), 1)
+!
+      enddo
+!
+      write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
+!
+      call mem%dealloc_int(dominant_indices, n_elements, 1)
+      call mem%dealloc(dominant_values, n_elements, 1)
+      call mem%dealloc(abs_x2, wf%n_t2, 1)
+!
+   end subroutine print_dominant_x2_ccsd
+!
 !
 end module ccsd_class

@@ -63,11 +63,9 @@ contains
       solver%tag = 'Self-consistent field DIIS Hartree-Fock solver'
       solver%author = 'E. F. Kjønstad and S, D. Folkestad, 2018'
       solver%description = 'A DIIS-accelerated Roothan-Hall self-consistent field solver. &
-                                  &In other words, a least-square fit toward a zero gradient vector &
-                                  &is performed using the previously recorded Fock matrices and the &
-                                  &associated gradients. After each Roothan-Hall update of the density &
-                                  &a fitted Fock matrix is used to get the next orbital coefficients, &
-                                  &instead of the one produced directly from the AO density.' 
+                                  &A least-square DIIS fit is performed on the previous Fock matrices and &
+                                  &associated gradients. Following the Roothan-Hall update of the density, &
+                                  &the DIIS-fitted Fock matrix is used to get the next orbital coefficients.' 
 !
       call solver%print_banner()
 !

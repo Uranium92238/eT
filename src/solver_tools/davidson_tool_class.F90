@@ -47,6 +47,8 @@ module davidson_tool_class
       procedure, non_overridable :: read_transform  => read_transform_davidson_tool
       procedure, non_overridable :: write_transform => write_transform_davidson_tool  
 !
+      procedure :: read_solution => read_solution_davidson_tool
+!
 !     Other procedures
 !
       procedure, non_overridable :: construct_reduced_matrix => construct_reduced_matrix_davidson_tool
@@ -286,6 +288,33 @@ contains
       davidson%dim_red = davidson%dim_red + 1
 !
    end subroutine add_initial_trial_vec_davidson_tool
+!
+!
+   subroutine read_solution_davidson_tool(davidson, solution, n)
+!!
+!!    Read solution 
+!!    Written by Eirik F. Kjønstad, Dec 2018
+!!
+      implicit none 
+!
+      class(davidson_tool) :: davidson 
+!
+      real(dp), dimension(davidson%n_parameters, 1) :: solution 
+!
+      integer(i15) :: n
+!
+      integer(i15) :: ioerror
+!
+      call disk%open_file(davidson%X, 'read')
+      call davidson%X%prepare_to_read_line(n)
+!
+      ioerror = 0
+      read(davidson%X%unit, iostat=ioerror) solution 
+      if (ioerror .ne. 0) call output%error_msg('could not read davidson solution.')
+!
+      call disk%close_file(davidson%X)
+!
+   end subroutine read_solution_davidson_tool
 !
 !
    subroutine read_transform_davidson_tool(davidson, rho_i, n)
