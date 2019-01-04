@@ -1063,7 +1063,7 @@ contains
 !
       type(molecular_system) :: system
 !
-      integer(i15) :: n_sig_aop, n_sig_sp, n_sig_sp_batch, sp, count_sig, current_offset, current_offset_old
+      integer(i15) :: n_sig_aop, n_sig_sp, n_sig_sp_batch, sp
 !
       real(dp), dimension(:,:), allocatable :: D_xy, screening_vector
       real(dp), dimension(:,:), allocatable :: D_batch, screening_vector_batch
@@ -1228,8 +1228,8 @@ contains
       integer(i15), dimension(solver%n_batches, 1), intent(in) :: n_cholesky_batches
       integer(i15), dimension(solver%n_batches, 1), intent(in) :: n_sp_in_basis_batches
 !
-      integer(i15) :: n_cholesky_total, n_sp_in_basis_total, J, I, K, n_sig_aop, n_sig_sp
-      integer(i15) :: A_shell, B_shell, AB_sp, sp, alpha_in_A, beta_in_B, alpha_beta_in_AB, aop, batch
+      integer(i15) :: n_cholesky_total, n_sp_in_basis_total, J, I, n_sig_aop, n_sig_sp
+      integer(i15) :: A_shell, B_shell, sp, alpha_in_A, beta_in_B, alpha_beta_in_AB, aop, batch
       integer(i15) :: n_basis_aop_in_AB_total, n_basis_aop_in_AB_offset, current_offset, current_offset_old
       integer(i15) :: count_sig, n_cholesky_offset, n_sig_aop_old, n_sig_sp_old, n_sp_in_basis_offset
 !
@@ -1562,7 +1562,7 @@ contains
    end subroutine construct_diagonal_from_batch_bases_eri_cd_solver
 !
 !
-   subroutine append_bases_eri_cd_solver(solver, system, n_cholesky_batches, n_sp_in_basis_batches)
+   subroutine append_bases_eri_cd_solver(solver, n_cholesky_batches, n_sp_in_basis_batches)
 !!
 !!    Append bases
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -1574,29 +1574,17 @@ contains
 !
       class(eri_cd_solver) :: solver
 !
-      type(molecular_system) :: system
-!
       integer(i15), dimension(solver%n_batches, 1), intent(in) :: n_cholesky_batches
       integer(i15), dimension(solver%n_batches, 1), intent(in) :: n_sp_in_basis_batches
 !
-      integer(i15) :: n_cholesky_total, n_sp_in_basis_total, J, I, K, n_sig_aop, n_sig_sp
-      integer(i15) :: A_shell, B_shell, AB_sp, sp, alpha_in_A, beta_in_B, alpha_beta_in_AB, aop, batch
-      integer(i15) :: n_basis_aop_in_AB_total, n_basis_aop_in_AB_offset, current_offset, current_offset_old
-      integer(i15) :: count_sig, n_cholesky_offset, n_sig_aop_old, n_sig_sp_old, n_sp_in_basis_offset
+      integer(i15) :: n_cholesky_total, n_sp_in_basis_total, J
+      integer(i15) :: sp, batch
+      integer(i15) :: n_cholesky_offset, n_sp_in_basis_offset
 !
       type(file) :: batch_file
 !
-      integer(i15), dimension(:,:), allocatable :: alpha, beta, alpha_beta, A, B, AB, n_basis_aop_in_AB
-      integer(i15), dimension(:,:), allocatable :: sorted_alpha, sorted_beta, sorted_alpha_beta, sorted_A
-      integer(i15), dimension(:,:), allocatable :: sorted_B, sorted_AB, sorted_n_basis_aop_in_AB
-      integer(i15), dimension(:,:), allocatable :: basis_shell_info, cholesky_basis, index_AB, index_alpha_beta
-      integer(i15), dimension(:,:), allocatable :: alpha_beta_offset, alpha_beta_offset_old, cholesky_full, basis_shell_info_full
-!
-      logical, dimension(:), allocatable :: sig_sp, sig_sp_old
-!
-      type(interval) :: A_interval, B_interval
-!
-      real(dp), dimension(:,:), allocatable :: D, D_old, screening_vector, screening_vector_old
+      integer(i15), dimension(:,:), allocatable :: basis_shell_info, cholesky_basis
+      integer(i15), dimension(:,:), allocatable :: cholesky_full, basis_shell_info_full
 !
       character(len=100) :: temp_name
 !
