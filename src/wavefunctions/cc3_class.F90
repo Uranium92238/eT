@@ -11,8 +11,15 @@ module cc3_class
 !
    type, extends(ccsd) :: cc3
 !
+!  Integral files
+   type(file)  :: g_bdck_t
+   type(file)  :: g_ljck_t
+   type(file)  :: g_dbkc_t
+   type(file)  :: g_jlkc_t
+   type(file)  :: g_jbkc_t
+!
    contains
-   !
+!
 !     Preparation and cleanup routines 
 !
       procedure :: prepare             => prepare_cc3
