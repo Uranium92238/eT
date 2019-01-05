@@ -65,7 +65,9 @@ module memory_manager_class
 !
 !     Allocation and deallocation routines for double precision arrays
 !
-      procedure :: alloc       => alloc_memory_manager
+      procedure :: alloc_2_memory_manager
+      generic   :: alloc       => alloc_2_memory_manager
+!
       procedure :: dealloc     => dealloc_memory_manager
 !
 !     Allocation and deallocation routines for integer arrays
@@ -125,7 +127,7 @@ contains
    end subroutine prepare_memory_manager
 !
 !
-   subroutine alloc_memory_manager(mem, array, M, N)
+   subroutine alloc_2_memory_manager(mem, array, M, N)
 !!
 !!    Alloc (memory manager)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2017
@@ -173,7 +175,7 @@ contains
 !
       endif
 !
-   end subroutine alloc_memory_manager
+   end subroutine alloc_2_memory_manager
 !
 !
    subroutine dealloc_memory_manager(mem, array, M, N)
