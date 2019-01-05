@@ -139,7 +139,7 @@ contains
 !
       enddo 
 !
-      call mem%alloc_int(active_aos, n_active_aos, 1)
+      call mem%alloc(active_aos, n_active_aos, 1)
 !
       do i = 1, n_active_aos
 !
@@ -195,7 +195,7 @@ contains
       call cholesky_decomposition_limited_diagonal(ao_density_v, cholesky_vectors_virt, wf%n_ao, &
                                                      n_vectors_virt, 1.0d-2, n_active_aos, active_aos, n_active_vir)
 !
-      call mem%dealloc_int(active_aos, n_active_aos, 1)
+      call mem%dealloc(active_aos, n_active_aos, 1)
 !
       call mem%alloc(V, wf%n_ao, 1)
 !
