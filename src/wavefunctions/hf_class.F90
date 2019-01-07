@@ -8,6 +8,7 @@ module hf_class
    use wavefunction_class
 !
    use reordering
+   use timings_class
    use array_utilities
    use array_analysis
    use interval_class
@@ -1460,6 +1461,11 @@ contains
 !
       real(dp) :: max_D_schwarz, max_eri_schwarz
 !
+      type(timings) :: ao_fock_timer 
+!
+      call ao_fock_timer%init('AO Fock construction')
+      call ao_fock_timer%start()
+!
 !     Set thresholds to ignore Coulomb and exchange terms,
 !     as well as the desired Libint integral precision  
 !
@@ -1525,6 +1531,9 @@ contains
       ao_fock = ao_fock*half
 !
       if (.not. local_cumulative) ao_fock = ao_fock + h_wx
+!
+      call ao_fock_timer%freeze()
+      call ao_fock_timer%switch_off()
 !
    end subroutine construct_ao_fock_hf
 !

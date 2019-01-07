@@ -16,6 +16,7 @@ module ccs_class
    use interval_class
    use index
    use batching_index_class
+   use timings_class
 !
    implicit none
 !
@@ -563,7 +564,15 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_o) :: omega
 !
+      type(timings) :: omega_ccs_a1_timer
+!
+      call omega_ccs_a1_timer%init('omega ccs a1')
+      call omega_ccs_a1_timer%start()
+!
       call daxpy((wf%n_o)*(wf%n_v), one, wf%fock_ai, 1, omega, 1)
+!
+      call omega_ccs_a1_timer%freeze()
+      call omega_ccs_a1_timer%switch_off()
 !
    end subroutine omega_ccs_a1_ccs
 !
