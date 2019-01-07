@@ -223,7 +223,7 @@ contains
 !
 !        Calculate ai indices 
 !
-         call mem%alloc_int(ai_indices, solver%n_singlet_states, 1)
+         call mem%alloc(ai_indices, solver%n_singlet_states, 1)
 !
          all_selected = .false.
          a =  0 
@@ -314,7 +314,7 @@ contains
 !
       class(davidson_cvs_cc_es_solver) :: solver
 !
-      if (.not. allocated(solver%core_MOs)) call mem%alloc_int(solver%core_MOs, solver%n_cores, 1)
+      if (.not. allocated(solver%core_MOs)) call mem%alloc(solver%core_MOs, solver%n_cores, 1)
 !
    end subroutine initialize_core_MOs_davidson_cvs_cc_es_solver
 !
@@ -328,7 +328,7 @@ contains
 !
       class(davidson_cvs_cc_es_solver) :: solver
 !
-      if (allocated(solver%core_MOs)) call mem%dealloc_int(solver%core_MOs, solver%n_cores, 1)
+      if (allocated(solver%core_MOs)) call mem%dealloc(solver%core_MOs, solver%n_cores, 1)
 !
    end subroutine destruct_core_MOs_davidson_cvs_cc_es_solver
 !
@@ -342,7 +342,7 @@ contains
 !
       class(davidson_cvs_cc_es_solver) :: solver
 !
-      if (.not. allocated(solver%cores)) call mem%alloc_int(solver%cores, solver%n_cores, 1)
+      if (.not. allocated(solver%cores)) call mem%alloc(solver%cores, solver%n_cores, 1)
 !
    end subroutine initialize_cores_davidson_cvs_cc_es_solver
 !
@@ -356,7 +356,7 @@ contains
 !
       class(davidson_cvs_cc_es_solver) :: solver
 !
-      if (allocated(solver%cores)) call mem%dealloc_int(solver%cores, solver%n_cores, 1)
+      if (allocated(solver%cores)) call mem%dealloc(solver%cores, solver%n_cores, 1)
 !
    end subroutine destruct_cores_davidson_cvs_cc_es_solver
 !

@@ -122,7 +122,7 @@ contains
       n_s = wf%system%n_s
 !
       call mem%alloc(sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
-      call mem%alloc_int(sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
+      call mem%alloc(sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
 !
       call wf%construct_sp_eri_schwarz(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
 !
@@ -192,7 +192,7 @@ contains
       enddo
 !
       call mem%dealloc(sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
-      call mem%alloc_int(sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
+      call mem%alloc(sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
 !
       call mem%dealloc(h_wx, wf%n_ao, wf%n_ao)
 !
