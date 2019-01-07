@@ -64,8 +64,6 @@ contains
 !
       class(ccs) :: wf
 !
-      character(len=40) :: es_type
-!
       type(eri_cd_solver), allocatable              :: eri_chol_solver
       type(diis_cc_gs_solver), allocatable          :: cc_gs_solver
       type(diis_cc_es_solver), allocatable          :: cc_es_solver_diis 
@@ -86,7 +84,6 @@ contains
       call eri_chol_solver%run(wf%system)
 !
       call eri_chol_solver%cholesky_vecs_diagonal_test(wf%system)
-   !   call eri_chol_solver%full_test_cholesky_vecs(wf%system)
 !
       call eri_chol_solver%construct_mo_cholesky_vecs(wf%system, wf%n_mo, wf%orbital_coefficients)
 !

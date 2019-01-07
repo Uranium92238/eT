@@ -217,7 +217,7 @@ contains
 !
       type(diis_tool), dimension(:), allocatable :: diis 
 !
-      integer(i15) :: iteration, trial, solution, state, amplitude
+      integer(i15) :: iteration, state, amplitude
 !
       character(len=3) :: string_state
 !
@@ -328,7 +328,7 @@ contains
       if (all(converged)) then 
 !
          write(output%unit, '(/t3,a29,i3,a12)') 'Convergence criterion met in ', iteration, ' iterations!'
-         ! call solver%print_summary() ... make this when printing routines from new-eT have been merged 
+      !   call solver%print_summary() 
 !
       endif 
 !
