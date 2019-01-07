@@ -364,7 +364,7 @@ contains
       integer(i15) :: state
 !
       call mem%alloc(lowest_orbital_differences, solver%n_singlet_states, 1)
-      call mem%alloc_int(lowest_orbital_differences_index, solver%n_singlet_states, 1)
+      call mem%alloc(lowest_orbital_differences_index, solver%n_singlet_states, 1)
 !
       call get_n_lowest(solver%n_singlet_states, wf%n_amplitudes, orbital_differences, &
                            lowest_orbital_differences, lowest_orbital_differences_index)
@@ -378,7 +378,7 @@ contains
 !
       enddo 
 !
-      call mem%dealloc_int(lowest_orbital_differences_index, solver%n_singlet_states, 1)      
+      call mem%dealloc(lowest_orbital_differences_index, solver%n_singlet_states, 1)      
 !
    end subroutine set_start_vectors_diis_cc_es_solver
 !

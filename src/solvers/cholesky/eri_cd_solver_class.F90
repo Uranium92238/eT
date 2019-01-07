@@ -202,8 +202,8 @@ contains
 !
       else
 !
-         call mem%alloc_int(n_cholesky_batches, solver%n_batches, 1)
-         call mem%alloc_int(n_sp_in_basis_batches, solver%n_batches, 1)
+         call mem%alloc(n_cholesky_batches, solver%n_batches, 1)
+         call mem%alloc(n_sp_in_basis_batches, solver%n_batches, 1)
 !
          n_cholesky_batches = 0
          n_sp_in_basis_batches = 0
@@ -1262,14 +1262,14 @@ contains
 !     Read and paste together basis information 
 !     from the different batches 
 !
-      call mem%alloc_int(alpha, n_cholesky_total, 1)
-      call mem%alloc_int(beta, n_cholesky_total, 1)
-      call mem%alloc_int(alpha_beta, n_cholesky_total, 1)
+      call mem%alloc(alpha, n_cholesky_total, 1)
+      call mem%alloc(beta, n_cholesky_total, 1)
+      call mem%alloc(alpha_beta, n_cholesky_total, 1)
 !
-      call mem%alloc_int(A, n_sp_in_basis_total, 1)
-      call mem%alloc_int(B, n_sp_in_basis_total, 1)
-      call mem%alloc_int(AB, n_sp_in_basis_total, 1)
-      call mem%alloc_int(n_basis_aop_in_AB, n_sp_in_basis_total, 1)
+      call mem%alloc(A, n_sp_in_basis_total, 1)
+      call mem%alloc(B, n_sp_in_basis_total, 1)
+      call mem%alloc(AB, n_sp_in_basis_total, 1)
+      call mem%alloc(n_basis_aop_in_AB, n_sp_in_basis_total, 1)
 !
       n_sp_in_basis_offset = 0
       n_cholesky_offset = 0
@@ -1288,8 +1288,8 @@ contains
          call disk%open_file(batch_file, 'read')
          rewind(batch_file%unit)
 !
-         call mem%alloc_int(basis_shell_info, n_sp_in_basis_batches(batch, 1), 4)
-         call mem%alloc_int(cholesky_basis, n_cholesky_batches(batch, 1), 3)
+         call mem%alloc(basis_shell_info, n_sp_in_basis_batches(batch, 1), 4)
+         call mem%alloc(cholesky_basis, n_cholesky_batches(batch, 1), 3)
 !  
          read(batch_file%unit) 
          read(batch_file%unit) basis_shell_info
@@ -1317,26 +1317,26 @@ contains
          n_sp_in_basis_offset = n_sp_in_basis_offset + n_sp_in_basis_batches(batch, 1)
          n_cholesky_offset    = n_cholesky_offset + n_cholesky_batches(batch, 1)
 !
-         call mem%dealloc_int(basis_shell_info, n_sp_in_basis_batches(batch, 1), 4)
-         call mem%dealloc_int(cholesky_basis, n_cholesky_batches(batch, 1), 3)
+         call mem%dealloc(basis_shell_info, n_sp_in_basis_batches(batch, 1), 4)
+         call mem%dealloc(cholesky_basis, n_cholesky_batches(batch, 1), 3)
 !
       enddo
 !
 !     Sort the arrays according to an alphabeta and an AB ordering 
 !     from smallest to largest
 !
-      call mem%alloc_int(index_AB, n_sp_in_basis_total, 1)
+      call mem%alloc(index_AB, n_sp_in_basis_total, 1)
       call quicksort_with_index_ascending_int(AB, index_AB, n_sp_in_basis_total)
 !
-      call mem%alloc_int(index_alpha_beta, n_cholesky_total, 1)
+      call mem%alloc(index_alpha_beta, n_cholesky_total, 1)
       call quicksort_with_index_ascending_int(alpha_beta, index_alpha_beta, n_cholesky_total)
 !
-      call mem%alloc_int(sorted_alpha, n_cholesky_total, 1)
-      call mem%alloc_int(sorted_beta, n_cholesky_total, 1)
-      call mem%alloc_int(sorted_alpha_beta, n_cholesky_total, 1)
+      call mem%alloc(sorted_alpha, n_cholesky_total, 1)
+      call mem%alloc(sorted_beta, n_cholesky_total, 1)
+      call mem%alloc(sorted_alpha_beta, n_cholesky_total, 1)
 !
       sorted_alpha_beta = alpha_beta
-      call mem%dealloc_int(alpha_beta, n_cholesky_total, 1)
+      call mem%dealloc(alpha_beta, n_cholesky_total, 1)
 !
       do J = 1, n_cholesky_total
 !
@@ -1345,17 +1345,17 @@ contains
 !
       enddo
 !
-      call mem%dealloc_int(alpha, n_cholesky_total, 1)
-      call mem%dealloc_int(beta, n_cholesky_total, 1)
+      call mem%dealloc(alpha, n_cholesky_total, 1)
+      call mem%dealloc(beta, n_cholesky_total, 1)
 !
-      call mem%alloc_int(sorted_A, n_sp_in_basis_total, 1)
-      call mem%alloc_int(sorted_B, n_sp_in_basis_total, 1)
-      call mem%alloc_int(sorted_AB, n_sp_in_basis_total, 1)
-      call mem%alloc_int(sorted_n_basis_aop_in_AB, n_sp_in_basis_total, 1)
+      call mem%alloc(sorted_A, n_sp_in_basis_total, 1)
+      call mem%alloc(sorted_B, n_sp_in_basis_total, 1)
+      call mem%alloc(sorted_AB, n_sp_in_basis_total, 1)
+      call mem%alloc(sorted_n_basis_aop_in_AB, n_sp_in_basis_total, 1)
 !
       sorted_AB = AB
 !
-      call mem%dealloc_int(AB, n_sp_in_basis_total, 1)
+      call mem%dealloc(AB, n_sp_in_basis_total, 1)
 !
       do J = 1, n_sp_in_basis_total
 !
@@ -1365,12 +1365,12 @@ contains
 !
       enddo
 !
-      call mem%dealloc_int(A, n_sp_in_basis_total, 1)
-      call mem%dealloc_int(B, n_sp_in_basis_total, 1)
-      call mem%dealloc_int(n_basis_aop_in_AB, n_sp_in_basis_total, 1)
+      call mem%dealloc(A, n_sp_in_basis_total, 1)
+      call mem%dealloc(B, n_sp_in_basis_total, 1)
+      call mem%dealloc(n_basis_aop_in_AB, n_sp_in_basis_total, 1)
 !
-      call mem%dealloc_int(index_alpha_beta, n_cholesky_total, 1)
-      call mem%dealloc_int(index_AB, n_sp_in_basis_total, 1)
+      call mem%dealloc(index_alpha_beta, n_cholesky_total, 1)
+      call mem%dealloc(index_AB, n_sp_in_basis_total, 1)
 !
 !     Construct significant shell pair logical array,
 !     and count the number of significant AO and shell pairs 
@@ -1434,8 +1434,8 @@ contains
 !     Copy the correct elements of the initial D into the new D using cholesky basis array.
 !     We precalculate alpha beta offsets both old and new, then copy afterwards.
 !
-      call mem%alloc_int(alpha_beta_offset, n_sig_sp, 1)
-      call mem%alloc_int(alpha_beta_offset_old, n_sig_sp, 1)
+      call mem%alloc(alpha_beta_offset, n_sig_sp, 1)
+      call mem%alloc(alpha_beta_offset_old, n_sig_sp, 1)
 !
       count_sig = 0
       current_offset = 0
@@ -1513,20 +1513,20 @@ contains
 !
       enddo
 !
-      call mem%dealloc_int(alpha_beta_offset, n_sig_sp, 1)
-      call mem%dealloc_int(alpha_beta_offset_old, n_sig_sp, 1)
+      call mem%dealloc(alpha_beta_offset, n_sig_sp, 1)
+      call mem%dealloc(alpha_beta_offset_old, n_sig_sp, 1)
 !
       call mem%dealloc(D_old, n_sig_aop_old, 1)
       call mem%dealloc(screening_vector_old, n_sig_aop_old, 1)
 !
-      call mem%dealloc_int(sorted_alpha, n_cholesky_total, 1)
-      call mem%dealloc_int(sorted_beta, n_cholesky_total, 1)
-      call mem%dealloc_int(sorted_alpha_beta, n_cholesky_total, 1)
+      call mem%dealloc(sorted_alpha, n_cholesky_total, 1)
+      call mem%dealloc(sorted_beta, n_cholesky_total, 1)
+      call mem%dealloc(sorted_alpha_beta, n_cholesky_total, 1)
 !
-      call mem%dealloc_int(sorted_A, n_sp_in_basis_total, 1)
-      call mem%dealloc_int(sorted_B, n_sp_in_basis_total, 1)
-      call mem%dealloc_int(sorted_AB, n_sp_in_basis_total, 1)
-      call mem%dealloc_int(sorted_n_basis_aop_in_AB, n_sp_in_basis_total, 1)
+      call mem%dealloc(sorted_A, n_sp_in_basis_total, 1)
+      call mem%dealloc(sorted_B, n_sp_in_basis_total, 1)
+      call mem%dealloc(sorted_AB, n_sp_in_basis_total, 1)
+      call mem%dealloc(sorted_n_basis_aop_in_AB, n_sp_in_basis_total, 1)
 !
       deallocate(sig_sp_old)
 !
@@ -1598,8 +1598,8 @@ contains
 !
       enddo
 !
-      call mem%alloc_int(cholesky_full, n_cholesky_total, 3)
-      call mem%alloc_int(basis_shell_info_full, n_sp_in_basis_total, 4)
+      call mem%alloc(cholesky_full, n_cholesky_total, 3)
+      call mem%alloc(basis_shell_info_full, n_sp_in_basis_total, 4)
 !
       n_sp_in_basis_offset = 0
       n_cholesky_offset = 0
@@ -1618,8 +1618,8 @@ contains
          call disk%open_file(batch_file, 'read')
          rewind(batch_file%unit)
 !
-         call mem%alloc_int(basis_shell_info, n_sp_in_basis_batches(batch, 1), 4)
-         call mem%alloc_int(cholesky_basis, n_cholesky_batches(batch, 1), 3)
+         call mem%alloc(basis_shell_info, n_sp_in_basis_batches(batch, 1), 4)
+         call mem%alloc(cholesky_basis, n_cholesky_batches(batch, 1), 3)
 !  
          read(batch_file%unit) 
          read(batch_file%unit) basis_shell_info
@@ -1642,8 +1642,8 @@ contains
          n_sp_in_basis_offset = n_sp_in_basis_offset + n_sp_in_basis_batches(batch, 1)
          n_cholesky_offset = n_cholesky_offset + n_cholesky_batches(batch, 1)
 !
-         call mem%dealloc_int(basis_shell_info, n_sp_in_basis_batches(batch, 1), 4)
-         call mem%dealloc_int(cholesky_basis, n_cholesky_batches(batch, 1), 3)
+         call mem%dealloc(basis_shell_info, n_sp_in_basis_batches(batch, 1), 4)
+         call mem%dealloc(cholesky_basis, n_cholesky_batches(batch, 1), 3)
 !
       enddo
 !
@@ -1658,8 +1658,8 @@ contains
 !
       call disk%close_file(solver%basis_shell_data)
 !
-      call mem%dealloc_int(cholesky_full, n_cholesky_total, 3)
-      call mem%dealloc_int(basis_shell_info_full, n_sp_in_basis_total, 4)
+      call mem%dealloc(cholesky_full, n_cholesky_total, 3)
+      call mem%dealloc(basis_shell_info_full, n_sp_in_basis_total, 4)
 !
    end subroutine append_bases_eri_cd_solver
 !
