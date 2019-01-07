@@ -1,9 +1,9 @@
 module cc2_class
 !
 !!
-!!    Coupled cluster singles and perturbative doubles (cc2) 
-!!    class module
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
+!!    Coupled cluster singles and perturbative doubles (CC2) class module
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
+!!    Linda Goletto and Alexander Paul, 2018
 !!
 !
    use ccs_class
@@ -15,26 +15,23 @@ module cc2_class
    contains
 !
       procedure :: construct_omega  => construct_omega_cc2
+!
       procedure :: omega_cc2_a1     => omega_cc2_a1_cc2
       procedure :: omega_cc2_b1     => omega_cc2_b1_cc2
       procedure :: omega_cc2_c1     => omega_cc2_c1_cc2
 !
       procedure :: calculate_energy => calculate_energy_cc2
 !
-    !  procedure :: effective_jacobian_transformation => effective_jacobian_transformation_cc2
-!
    end type cc2
 !
    interface
 !
       include "../submodules/cc2/omega_cc2_interface.F90"
-  !    include "../submodules/cc2/jacobian_cc2_interface.F90"
 !
    end interface 
 !
 !
 contains
-!
 !
 !
    subroutine calculate_energy_cc2(wf)
@@ -44,7 +41,7 @@ contains
 !!     Andreas Skeidsvoll, 2018
 !!
 !!     Calculates the CC2 energy. This is only equal to the actual
-!!     energy when the ground state equations are solved, of course.
+!!     CC2 energy when the ground state amplitudes are converged.
 !!
       implicit none
 !
@@ -137,5 +134,6 @@ contains
       wf%energy = wf%hf_energy + correlation_energy
 !
    end subroutine calculate_energy_cc2
+!
 !
 end module cc2_class

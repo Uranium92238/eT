@@ -1,7 +1,7 @@
 submodule (cc2_class) omega_cc2
 !
 !!
-!!    Omega submodule (cc2)
+!!    Omega submodule (CC2)
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
 !!    Linda Goletto and Alexander Paul, 2018
 !!
@@ -468,4 +468,5 @@ contains
 !
    end subroutine omega_cc2_c1_cc2
 !
-end submodule
+!
+end submodule omega_cc2
