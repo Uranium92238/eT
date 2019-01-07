@@ -47,13 +47,16 @@ module file_class
 !
    end type file
 !
-      type(file) :: output
-      type(file) :: input
+!  The 'global' eT files 
+!
+   type(file) :: output
+   type(file) :: input
+   type(file) :: timing 
 !
 contains
 !
 !
-      subroutine init_file(the_file, name, access, format, record_length)
+   subroutine init_file(the_file, name, access, format, record_length)
 !!
 !!    Initialize file
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2018
@@ -114,10 +117,10 @@ contains
 !
       endif
 !
-      end subroutine init_file
+   end subroutine init_file
 !
 !
-      subroutine prepare_to_read_line_file(the_file, line)
+   subroutine prepare_to_read_line_file(the_file, line)
 !!
 !!    Prepare to read line
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2018
