@@ -144,7 +144,7 @@ contains
       real(dp), dimension(:,:), allocatable :: diis_vector
       real(dp), dimension(:,:), allocatable :: diis_matrix
 !
-      integer(i15), dimension(:,:), allocatable :: ipiv ! Pivot integers (see dgesv routine)
+      integer(i15), dimension(:), allocatable :: ipiv ! Pivot integers (see dgesv routine)
 !
 !     :: Open DIIS files
 !
@@ -250,7 +250,7 @@ contains
 !
 !     Solve the DIIS equation
 !
-      call mem%alloc_int(ipiv, solver%diis_dimension, 1)
+      call mem%alloc(ipiv, solver%diis_dimension)
       ipiv = 0
 !
 !     Note: on exit, the solution is in the diis_vector,
@@ -264,6 +264,8 @@ contains
                   diis_vector,     &
                   current_index+1, &
                   info)
+!
+      call mem%dealloc(ipiv, solver%diis_dimension)
 !
 !     :: Update the parameters (place in x_dx on exit)
 !

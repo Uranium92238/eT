@@ -35,6 +35,7 @@ set(eT_fortran_sources
    src/tools/interval_class.F90
    src/tools/index.F90
    src/tools/reordering.F90
+   src/tools/timings_class.F90
    src/tools/array_utilities.F90
    src/tools/array_analysis.F90
    src/tools/linked_list/array_list_class.F90

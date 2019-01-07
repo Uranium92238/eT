@@ -45,27 +45,28 @@ module davidson_cc_es_solver_class
 !
    contains
 !     
-      procedure, non_overridable :: prepare  => prepare_davidson_cc_es_solver
-      procedure, non_overridable :: run      => run_davidson_cc_es_solver
-      procedure, non_overridable :: cleanup  => cleanup_davidson_cc_es_solver
+      procedure, non_overridable :: prepare          => prepare_davidson_cc_es_solver
+      procedure, non_overridable :: run              => run_davidson_cc_es_solver
+      procedure, non_overridable :: cleanup          => cleanup_davidson_cc_es_solver
 !
       procedure, nopass :: set_precondition_vector   => set_precondition_vector_davidson_cc_es_solver
-      procedure :: set_projection_vector     => set_projection_vector_davidson_cc_es_solver
+      procedure :: set_projection_vector             => set_projection_vector_davidson_cc_es_solver
 !
-      procedure :: print_banner              => print_banner_davidson_cc_es_solver
+      procedure :: print_banner                      => print_banner_davidson_cc_es_solver
 !
-      procedure :: read_settings             => read_settings_davidson_cc_es_solver
+      procedure :: read_settings                     => read_settings_davidson_cc_es_solver
 !
-      procedure :: print_settings            => print_settings_davidson_cc_es_solver
+      procedure :: print_settings                    => print_settings_davidson_cc_es_solver
+      procedure :: print_summary                     => print_summary_davidson_cc_es_solver
 !
-      procedure :: set_start_vectors         => set_start_vectors_davidson_cc_es_solver
-      procedure :: transform_trial_vector    => transform_trial_vector_davidson_cc_es_solver
+      procedure :: set_start_vectors                 => set_start_vectors_davidson_cc_es_solver
+      procedure :: transform_trial_vector            => transform_trial_vector_davidson_cc_es_solver
 !       
-      procedure :: initialize_energies       => initialize_energies_davidson_cc_es_solver
-      procedure :: destruct_energies         => destruct_energies_davidson_cc_es_solver   
+      procedure :: initialize_energies               => initialize_energies_davidson_cc_es_solver
+      procedure :: destruct_energies                 => destruct_energies_davidson_cc_es_solver   
 !
-      procedure :: restart                   => restart_davidson_cc_es_solver 
-      procedure :: write_restart_file        => write_restart_file_cc_es_solver
+      procedure :: restart                           => restart_davidson_cc_es_solver 
+      procedure :: write_restart_file                => write_restart_file_cc_es_solver
 !
    end type davidson_cc_es_solver
 !
@@ -224,6 +225,62 @@ contains
    end subroutine print_settings_davidson_cc_es_solver
 !
 !
+   subroutine print_summary_davidson_cc_es_solver(solver, davidson, wf)
+!!
+!!    Print summary 
+!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!
+      implicit none 
+!
+      class(davidson_cc_es_solver), intent(in) :: solver 
+      class(eigen_davidson_tool) :: davidson
+!
+      class(ccs), intent(in) :: wf 
+!
+      integer(i15) :: state 
+!
+      real(dp), dimension(:,:), allocatable :: r
+!
+      write(output%unit, '(/t3,a)') '- Excitation vector amplitudes:'
+!
+      call mem%alloc(r, wf%n_amplitudes, 1)
+!
+      do state = 1, solver%n_singlet_states
+!
+         write(output%unit, '(/t6,a21,i2)')    'Electronic state nr. ', state
+!
+         call davidson%read_solution(r, state)         
+!
+         write(output%unit, '(/t6,a30,f15.12)')  'Energy (Hartree):             ', davidson%get_eigenvalue(state)
+         write(output%unit, '(t6,a30,f15.12)') 'Fraction singles (|r1|/|r|):  ', &
+                        get_l2_norm(r(1:wf%n_t1,1),wf%n_t1)/get_l2_norm(r,wf%n_amplitudes)   
+!
+         call wf%print_dominant_x_amplitudes(r, 'r')
+!
+      enddo 
+!
+      call mem%dealloc(r, wf%n_amplitudes, 1)
+!
+      write(output%unit, '(/t3,a)') '- Electronic excitation energies:'
+!
+      write(output%unit, '(/t6,a)') '                                 Excitation energy            '
+      write(output%unit, '(t6,a)')  '                     ------------------------------------------'
+      write(output%unit, '(t6,a)')  'State                (Hartree)             (eV)                '
+      write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
+!
+      do state = 1, solver%n_singlet_states
+!
+         write(output%unit, '(t6,i2,14x,f19.12,4x,f19.12)') state, davidson%get_eigenvalue(state), &
+                                                           davidson%get_eigenvalue(state)*Hartree_to_eV
+!
+      enddo 
+!
+      write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
+      write(output%unit, '(t6,a26,f11.8)') 'eV/Hartree (CODATA 2014): ', Hartree_to_eV
+!
+   end subroutine print_summary_davidson_cc_es_solver
+!
+!
    subroutine run_davidson_cc_es_solver(solver, wf)
 !!
 !!    Run 
@@ -378,7 +435,7 @@ contains
       if (converged) then
 !
          write(output%unit,'(/t3,a, i3, a)') 'Convergence criterion met in ', iteration - 1, ' iterations!'
-         ! Note to devs: please write solver%print_summary() and call it here
+         call solver%print_summary(davidson, wf)
 !
       elseif (.not. converged ) then
 !
@@ -467,7 +524,7 @@ contains
          call wf%get_orbital_differences(orbital_differences)
 !
          call mem%alloc(lowest_orbital_differences, solver%n_singlet_states, 1)
-         call mem%alloc_int(lowest_orbital_differences_index, solver%n_singlet_states, 1)
+         call mem%alloc(lowest_orbital_differences_index, solver%n_singlet_states, 1)
 !
          call get_n_lowest(solver%n_singlet_states, wf%n_amplitudes, orbital_differences, &
                            lowest_orbital_differences, lowest_orbital_differences_index)
@@ -489,7 +546,7 @@ contains
          enddo 
 !
          call mem%dealloc(c_i, wf%n_amplitudes, 1)
-         call mem%dealloc_int(lowest_orbital_differences_index, solver%n_singlet_states, 1)
+         call mem%dealloc(lowest_orbital_differences_index, solver%n_singlet_states, 1)
 !
       endif
 !
@@ -618,7 +675,7 @@ contains
 !
             enddo
 !
-            call mem%alloc_int(solver%start_vectors, n_start_vecs, 1)
+            call mem%alloc(solver%start_vectors, n_start_vecs, 1)
             read(line, *) solver%start_vectors
 !
          endif

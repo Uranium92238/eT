@@ -298,6 +298,11 @@ contains
       real(dp), dimension(:,:), allocatable :: t_cl_ai 
       real(dp), dimension(:,:), allocatable :: u_ai_lc 
 !
+      type(timings) :: jacobian_ccsd_a1_timer
+!
+      call jacobian_ccsd_a1_timer%init('jacobian ccsd a1')
+      call jacobian_ccsd_a1_timer%start()
+!
 !     :: Term 1: sum_ckdl L_lckd u_li^ca c_dk ::
 !
 !     g_lc_kd = g_lckd
@@ -487,6 +492,9 @@ contains
 !
       call mem%dealloc(X_a_c, wf%n_v, wf%n_v)
 !
+      call jacobian_ccsd_a1_timer%freeze()
+      call jacobian_ccsd_a1_timer%switch_off()
+!
    end subroutine jacobian_ccsd_a1_ccsd
 !
 !
@@ -511,10 +519,17 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: v_ai_jb
 !
-!     Construct v_aibj = 2*c_aibj - c_ajbi
+      type(timings) :: jacobian_ccsd_b1_timer
+!
+      call jacobian_ccsd_b1_timer%init('jacobian ccsd b1')
+      call jacobian_ccsd_b1_timer%start()
+!
+!     Construct v_aibj = 2*c_aibj - c_ajbi ordered as
 !
 !               v_ai_jb(ai,jb) = 2*c_ai_bj(ai,bj) - c_ai_bj(aj,bi)
 !                        1234              1243             1342
+!     
+!     and do the matrix multiplication with F_jb
 !
       call mem%alloc(v_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       v_ai_jb = zero
@@ -536,7 +551,9 @@ contains
                   (wf%n_o)*(wf%n_v))
 !
       call mem%dealloc(v_ai_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-
+!
+      call jacobian_ccsd_b1_timer%freeze()
+      call jacobian_ccsd_b1_timer%switch_off()
 !
    end subroutine jacobian_ccsd_b1_ccsd
 !
@@ -562,6 +579,11 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: g_ji_kb
       real(dp), dimension(:,:), allocatable :: L_jb_ki
+!
+      type(timings) :: jacobian_ccsd_c1_timer 
+!
+      call jacobian_ccsd_c1_timer%init('jacobian ccsd c1')
+      call jacobian_ccsd_c1_timer%start()
 !
 !     Construct the integral g_ji_kb = sum_J L_ji_J * L_kb_J
 !
@@ -598,6 +620,9 @@ contains
 !
       call mem%dealloc(L_jb_ki, (wf%n_v)*(wf%n_o), (wf%n_o)**2)
 !
+      call jacobian_ccsd_c1_timer%freeze()
+      call jacobian_ccsd_c1_timer%switch_off()
+!
    end subroutine jacobian_ccsd_c1_ccsd
 !
 !
@@ -621,17 +646,18 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: c_bj_ci
 !
-!     Variables for batching
-!
       integer(i15) :: required
       integer(i15) :: current_a_batch
 !
       type(batching_index) :: batch_a
 !
-!     Integrals
-!
       real(dp), dimension(:,:), allocatable :: g_ab_jc ! g_abjc
       real(dp), dimension(:,:), allocatable :: L_ab_jc ! L_abjc
+!
+      type(timings) :: jacobian_ccsd_d1_timer
+!
+      call jacobian_ccsd_d1_timer%init('jacobian ccsd d1')
+      call jacobian_ccsd_d1_timer%start()
 !
 !     Prepare for batching over index a
 !
@@ -697,6 +723,9 @@ contains
 !
       enddo ! End batching over a
 !
+      call jacobian_ccsd_d1_timer%freeze()
+      call jacobian_ccsd_d1_timer%switch_off()
+!
    end subroutine jacobian_ccsd_d1_ccsd
 !
 !
@@ -722,13 +751,16 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: rho_ba_ij 
 !
-!     Batching variables
-!
       integer(i15) :: required
       integer(i15) :: current_b_batch
       integer(i15) :: aib_offset
 !
       type(batching_index) :: batch_b
+!
+      type(timings) :: jacobian_ccsd_a2_timer
+!
+      call jacobian_ccsd_a2_timer%init('jacobian ccsd a2')
+      call jacobian_ccsd_a2_timer%start()
 !
 !     :: Term 1. - sum_k g_aikj c_bk ::
 !
@@ -818,6 +850,9 @@ contains
 !
       enddo ! End of batches over b
 !
+      call jacobian_ccsd_a2_timer%freeze()
+      call jacobian_ccsd_a2_timer%switch_off()
+!
    end subroutine jacobian_ccsd_a2_ccsd
 !
 !
@@ -847,11 +882,12 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: rho_ba_ij ! rho_ai_bj, reordered, term 1
 !
+      type(timings) :: jacobian_ccsd_b2_timer
+!
+      call jacobian_ccsd_b2_timer%init('jacobian ccsd b2')
+      call jacobian_ccsd_b2_timer%start()
+!
 !     :: Term 1. - sum_kc F_kc t_ij^ac c_bk ::
-!
-!     Allocate & read the amplitudes from disk
-!
-      !call wf%read_double_amplitudes
 !
 !     Order the amplitudes as t_ca_ij = t_ij^ac
 !
@@ -859,8 +895,6 @@ contains
       t_ai_cj = zero
 !
       call squareup(wf%t2, t_ai_cj, (wf%n_o)*(wf%n_v))
-!
-      !call wf%destruct_double_amplitudes
 !
 !     t_ai_cj to t_ca_ij
 !
@@ -952,6 +986,9 @@ contains
       call mem%dealloc(X_k_j, wf%n_o, wf%n_o)
       call mem%dealloc(t_ai_cj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
+      call jacobian_ccsd_b2_timer%freeze()
+      call jacobian_ccsd_b2_timer%switch_off()
+!
    end subroutine jacobian_ccsd_b2_ccsd
 !
 !
@@ -990,6 +1027,11 @@ contains
       real(dp), dimension(:,:), allocatable :: rho_bj_ai ! rho_ai_bj, term 1 & 5
       real(dp), dimension(:,:), allocatable :: rho_aj_bi ! rho_ai_bj, term 2
       real(dp), dimension(:,:), allocatable :: rho_ba_ij ! rho_ai_bj, term 3
+!
+      type(timings) :: jacobian_ccsd_c2_timer
+!
+      call jacobian_ccsd_c2_timer%init('jacobian ccsd c2')
+      call jacobian_ccsd_c2_timer%start()
 !
 !     :: Term 1. sum_kcl g_ljkc t_ki^ac c_bl ::
 !
@@ -1308,6 +1350,9 @@ contains
       call mem%dealloc(L_lj_ck, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
       call mem%dealloc(rho_bj_ai, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
+      call jacobian_ccsd_c2_timer%freeze()
+      call jacobian_ccsd_c2_timer%switch_off()
+!
    end subroutine jacobian_ccsd_c2_ccsd
 !
 !
@@ -1358,20 +1403,17 @@ contains
       real(dp), dimension(:,:), allocatable :: rho_aib_j ! rho_ai_bj, batching over b
       real(dp), dimension(:,:), allocatable :: rho_b_aij ! rho_ai_bj, batching over b
 !
-!     Batching variables
-!
       integer(i15) :: required 
       integer(i15) :: current_b_batch 
 !
       type(batching_index) :: batch_b
-!
-!     Indices
-!
+
       integer(i15) :: b, i, ijb, j, a, ai, bj, ib, aj, aib, aij
 !
-!     Read amplitudes from disk
+      type(timings) :: jacobian_ccsd_d2_timer
 !
-      !call wf%read_double_amplitudes
+      call jacobian_ccsd_d2_timer%init('jacobian ccsd d2')
+      call jacobian_ccsd_d2_timer%start()
 !
 !     Determine batch size, etc.
 !     (Redo estimate once loop is done)
@@ -1593,7 +1635,6 @@ contains
 !        Deallocations for term 2 (keep g_cd_kb = g_kcbd)
 !
          call mem%dealloc(rho_ib_aj, (wf%n_o)*(batch_b%length), (wf%n_v)*(wf%n_o))
-!
 !
 !        :: Term 3. - sum_kcd g_kcbd t_ik^ca c_dj ::
 !
@@ -1850,11 +1891,10 @@ contains
          call mem%dealloc(rho_b_aij, batch_b%length, (wf%n_v)*(wf%n_o)**2)
          call mem%dealloc(L_ck_bd, (wf%n_v)*(wf%n_o), (wf%n_v)*(batch_b%length))
 !
-     enddo ! End of batches over b
+      enddo ! End of batches over b
 !
-!    Destroy amplitudes from memory
-!
-     !call wf%destruct_double_amplitudes
+      call jacobian_ccsd_d2_timer%freeze()
+      call jacobian_ccsd_d2_timer%switch_off()
 !
    end subroutine jacobian_ccsd_d2_ccsd
 !
@@ -1879,9 +1919,10 @@ contains
       real(dp), dimension(:,:), allocatable :: L_ck_dl
       real(dp), dimension(:,:), allocatable :: X_ck_bj
 !
-!     Read T2 amplitudes from disk
+      type(timings) :: jacobian_ccsd_e2_timer
 !
-      !call wf%read_double_amplitudes
+      call jacobian_ccsd_e2_timer%init('jacobian ccsd e2')
+      call jacobian_ccsd_e2_timer%start()
 !
       call mem%alloc(t_dl_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       t_dl_bj = zero
@@ -1946,20 +1987,23 @@ contains
 !
       call mem%dealloc(X_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
+      call jacobian_ccsd_e2_timer%freeze()
+      call jacobian_ccsd_e2_timer%switch_off()
+!
    end subroutine jacobian_ccsd_e2_ccsd
 !
 !
    module subroutine jacobian_ccsd_f2_ccsd(wf, rho_ai_bj, c_ai_bj)
 !!
-!!       Jacobian CCSD F2
-!!       Written by Eirik F. Kjønstad, Sarai D. Folkestad
-!!       and Andreas Skeidsvoll, 2018
+!!    Jacobian CCSD F2
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
+!!    and Andreas Skeidsvoll, 2018
 !!
 !!       rho_ai_bj^F2 =   - sum_ckld t_ai,ck * L_kc,ld * c_bl,dj
 !!                        - sum_ckdl t_ai,dj * L_kc,ld * c_bl,ck
 !!                        - sum_ckdl t_ai_bl * L_kc,ld * c_ck,dj
 !!
-!!       L_kc,ld = 2*g_kc,ld - g_kd,lc = 2*g_kc_ld(kc,ld) - 2*g_kc_ld(kd,lc)
+!!    L_kc,ld = 2*g_kc,ld - g_kd,lc = 2*g_kc_ld(kc,ld) - 2*g_kc_ld(kd,lc)
 !!
       implicit none
 !
@@ -1986,6 +2030,11 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: rho_ai_jb
 !
+      type(timings) :: jacobian_ccsd_f2_timer
+!
+      call jacobian_ccsd_f2_timer%init('jacobian ccsd f2')
+      call jacobian_ccsd_f2_timer%start()
+!
 !     :: Construct L_kc,ld ::
 !
       call mem%alloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
@@ -1999,7 +2048,6 @@ contains
 !
 !     L_ck_dl(ck, dl) = L_kcld = 2 * g_kc_ld(kc, ld) - g_kc_ld(kd, lc)
 !                                            2143              2341
-!
 !
       call add_2341_to_1234(-one, g_kc_ld, L_ck_dl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call add_2143_to_1234(two, g_kc_ld, L_ck_dl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -2208,6 +2256,9 @@ contains
       call mem%dealloc(t_aib_l, (wf%n_o)*((wf%n_v)), wf%n_o*(wf%n_v))
       call mem%dealloc(Z_l_j, wf%n_o, wf%n_o)
 !
+      call jacobian_ccsd_f2_timer%freeze()
+      call jacobian_ccsd_f2_timer%switch_off()
+!
    end subroutine jacobian_ccsd_f2_ccsd
 !
 !
@@ -2248,6 +2299,11 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: rho_ai_jb
 !
+      type(timings) :: jacobian_ccsd_g2_timer
+!
+      call jacobian_ccsd_g2_timer%init('jacobian ccsd g2')
+      call jacobian_ccsd_g2_timer%start()
+!
 !     :: Term 1: - sum_ckdl t_bl,dj * L_kc,ld * c_ai,ck  ::
 !
       call mem%alloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
@@ -2271,13 +2327,9 @@ contains
 !
 !     Reorder t_bl_dj as t_dl_bj
 !
-      !call wf%read_double_amplitudes
-!
       call mem%alloc(t_dl_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
       call squareup_and_sort_1234_to_3214(wf%t2, t_dl_bj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      !call wf%destruct_double_amplitudes
 !
       call mem%alloc(X_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
@@ -2327,12 +2379,8 @@ contains
 !
 !     Reorder t_ck,bl as t_clk_b
 !
-      !call wf%read_double_amplitudes
-!
       call mem%alloc(t_clk_b, (wf%n_v)*((wf%n_o)**2), wf%n_v)
       call squareup_and_sort_1234_to_1423(wf%t2, t_clk_b, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      !call wf%destruct_double_amplitudes
 !
 !     Y_d_b = sum_clk L_d_clk * c_clk_b
 !
@@ -2410,12 +2458,8 @@ contains
 !
 !     Reorder t_ck,dj to t_ckd_j
 !
-      !call wf%read_double_amplitudes
-!
       call mem%alloc(t_ckd_j, ((wf%n_v))*(wf%n_o), wf%n_o*(wf%n_v))
       call squareup(wf%t2, t_ckd_j, wf%n_o*(wf%n_v))
-!
-      !call wf%destruct_double_amplitudes
 !
       call mem%alloc(Z_l_j, wf%n_o, wf%n_o)
 !
@@ -2454,181 +2498,184 @@ contains
 !
       call mem%dealloc(Z_l_j, wf%n_o, wf%n_o)
 !
+      call jacobian_ccsd_g2_timer%freeze()
+      call jacobian_ccsd_g2_timer%switch_off()
+!
    end subroutine jacobian_ccsd_g2_ccsd
 !
 !
    module subroutine jacobian_ccsd_h2_ccsd(wf, rho_ai_bj, c_ai_bj)
 !!
-!!       Jacobian CCSD H2
-!!       Written by Eirik F. Kjønstad, Sarai D. Folkestad
-!!       and Andreas Skeidsvoll
+!!    Jacobian CCSD H2
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
+!!    and Andreas Skeidsvoll
 !!
 !!       rho_ai_bj^H2 =  sum_ckdl t_ci,ak * g_kc,ld * c_bl,dj
 !!                     + sum_ckdl t_cj,al * g_kc,ld * c_bk,di
 !!
-         implicit none
+      implicit none
 !
-         class(ccsd) :: wf
+      class(ccsd) :: wf
 !
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
-         real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)), intent(in) :: c_ai_bj
+      real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
+      real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)), intent(in) :: c_ai_bj
 !
-         real(dp), dimension(:,:), allocatable :: g_kc_ld
-         real(dp), dimension(:,:), allocatable :: g_lc_kd
+      real(dp), dimension(:,:), allocatable :: g_kc_ld
+      real(dp), dimension(:,:), allocatable :: g_lc_kd
 !
-         real(dp), dimension(:,:), allocatable :: t_ai_kc
-         real(dp), dimension(:,:), allocatable :: t_aj_lc
+      real(dp), dimension(:,:), allocatable :: t_ai_kc
+      real(dp), dimension(:,:), allocatable :: t_aj_lc
 !
-         real(dp), dimension(:,:), allocatable :: c_ld_bj
-         real(dp), dimension(:,:), allocatable :: c_kd_bi
+      real(dp), dimension(:,:), allocatable :: c_ld_bj
+      real(dp), dimension(:,:), allocatable :: c_kd_bi
 !
-         real(dp), dimension(:,:), allocatable :: X_ai_ld
-         real(dp), dimension(:,:), allocatable :: Y_aj_kd
+      real(dp), dimension(:,:), allocatable :: X_ai_ld
+      real(dp), dimension(:,:), allocatable :: Y_aj_kd
 !
-         real(dp), dimension(:,:), allocatable :: rho_aj_bi
+      real(dp), dimension(:,:), allocatable :: rho_aj_bi
 !
-!        :: Term 1: sum_ckld t_ci,ak * g_kc,ld * c_bl,dj ::
+      type(timings) :: jacobian_ccsd_h2_timer
 !
-!        Construct g_kc_ld
+      call jacobian_ccsd_h2_timer%init('jacobian ccsd h2')
+      call jacobian_ccsd_h2_timer%start()
 !
-         call mem%alloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!     :: Term 1: sum_ckld t_ci,ak * g_kc,ld * c_bl,dj ::
 !
-         call wf%get_ovov(g_kc_ld)
+!     Construct g_kc_ld
 !
-!        t_ak,ci ordered as t_ai_kc
+      call mem%alloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-         !call wf%read_double_amplitudes
+      call wf%get_ovov(g_kc_ld)
 !
-         call mem%alloc(t_ai_kc, (wf%n_o)*(wf%n_v),(wf%n_o)*(wf%n_v))
+!     t_ak,ci ordered as t_ai_kc
 !
-         call squareup_and_sort_1234_to_1423(wf%t2, t_ai_kc, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%alloc(t_ai_kc, (wf%n_o)*(wf%n_v),(wf%n_o)*(wf%n_v))
 !
-         !call wf%destruct_double_amplitudes
+      call squareup_and_sort_1234_to_1423(wf%t2, t_ai_kc, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-         call mem%alloc(X_ai_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%alloc(X_ai_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-!        X_ai_ld = sum_ck t_ai_kc*g_kc_ld
+!     X_ai_ld = sum_ck t_ai_kc*g_kc_ld
 !
-         call dgemm('N', 'N',           &
-                     (wf%n_o)*(wf%n_v), &
-                     (wf%n_o)*(wf%n_v), &
-                     (wf%n_o)*(wf%n_v), &
-                     one,               &
-                     t_ai_kc,           &
-                     (wf%n_o)*(wf%n_v), &
-                     g_kc_ld,           &
-                     (wf%n_o)*(wf%n_v), &
-                     zero,              &
-                     X_ai_ld,           &
-                     (wf%n_o)*(wf%n_v))
+      call dgemm('N', 'N',           &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  t_ai_kc,           &
+                  (wf%n_o)*(wf%n_v), &
+                  g_kc_ld,           &
+                  (wf%n_o)*(wf%n_v), &
+                  zero,              &
+                  X_ai_ld,           &
+                  (wf%n_o)*(wf%n_v))
 !
-         call mem%dealloc(t_ai_kc, (wf%n_o)*(wf%n_v),(wf%n_o)*(wf%n_v))
-         call mem%dealloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(t_ai_kc, (wf%n_o)*(wf%n_v),(wf%n_o)*(wf%n_v))
+      call mem%dealloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-         call mem%alloc(c_ld_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-         c_ld_bj = zero
+      call mem%alloc(c_ld_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      c_ld_bj = zero
 !
-!        Reorder c_bl,dj as c_ld_bj
+!     Reorder c_bl,dj as c_ld_bj
 !
-         call sort_1234_to_2314(c_ai_bj, c_ld_bj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call sort_1234_to_2314(c_ai_bj, c_ld_bj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-!        rho_ai_bj += sum_ld X_ai_ld*c_ld_bj
+!     rho_ai_bj += sum_ld X_ai_ld*c_ld_bj
 !
-         call dgemm('N', 'N',           &
-                     (wf%n_o)*(wf%n_v), &
-                     (wf%n_o)*(wf%n_v), &
-                     (wf%n_o)*(wf%n_v), &
-                     one,               &
-                     X_ai_ld,           &
-                     (wf%n_o)*(wf%n_v), &
-                     c_ld_bj,           &
-                     (wf%n_o)*(wf%n_v), &
-                     one,               &
-                     rho_ai_bj,         &
-                     (wf%n_o)*(wf%n_v))
+      call dgemm('N', 'N',           &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  X_ai_ld,           &
+                  (wf%n_o)*(wf%n_v), &
+                  c_ld_bj,           &
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  rho_ai_bj,         &
+                  (wf%n_o)*(wf%n_v))
 !
-         call mem%dealloc(c_ld_bj, (wf%n_o)*(wf%n_v),(wf%n_o)*(wf%n_v))
-         call mem%dealloc(X_ai_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(c_ld_bj, (wf%n_o)*(wf%n_v),(wf%n_o)*(wf%n_v))
+      call mem%dealloc(X_ai_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-!        :: Term 2: sum_ckdl t_cj,al * g_kc,ld * c_bk,di
+!     :: Term 2: sum_ckdl t_cj,al * g_kc,ld * c_bk,di
 !
-!        Construct g_kc_ld
+!     Construct g_kc_ld
 !
-         call mem%alloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%alloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-         call wf%get_ovov(g_kc_ld)
+      call wf%get_ovov(g_kc_ld)
 !
 !        Reorder g_kc_ld to g_lc_kd
 !
-         call mem%alloc(g_lc_kd, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%alloc(g_lc_kd, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-         call sort_1234_to_3214(g_kc_ld, g_lc_kd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call sort_1234_to_3214(g_kc_ld, g_lc_kd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-         call mem%dealloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-!        t_al,cj ordered as t_aj_lc
+!     t_al,cj ordered as t_aj_lc
 !
-         !call wf%read_double_amplitudes
+      call mem%alloc(t_aj_lc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-         call mem%alloc(t_aj_lc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call squareup_and_sort_1234_to_1423(wf%t2, t_aj_lc, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-         call squareup_and_sort_1234_to_1423(wf%t2, t_aj_lc, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%alloc(Y_aj_kd, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-         !call wf%destruct_double_amplitudes
+!     Y_aj_kd = sum_lc t_aj_lc * g_lc_kd
 !
-         call mem%alloc(Y_aj_kd, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call dgemm('N', 'N',           &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  t_aj_lc,           &
+                  (wf%n_o)*(wf%n_v), &
+                  g_lc_kd,           &
+                  (wf%n_o)*(wf%n_v), &
+                  zero,              &
+                  Y_aj_kd,           &
+                  (wf%n_o)*(wf%n_v))
 !
-!        Y_aj_kd = sum_lc t_aj_lc * g_lc_kd
+      call mem%dealloc(g_lc_kd, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(t_aj_lc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-         call dgemm('N', 'N',           &
-                     (wf%n_o)*(wf%n_v), &
-                     (wf%n_o)*(wf%n_v), &
-                     (wf%n_o)*(wf%n_v), &
-                     one,               &
-                     t_aj_lc,           &
-                     (wf%n_o)*(wf%n_v), &
-                     g_lc_kd,           &
-                     (wf%n_o)*(wf%n_v), &
-                     zero,              &
-                     Y_aj_kd,           &
-                     (wf%n_o)*(wf%n_v))
+!     Reorder c_bk,di as c_kd_bi
 !
-         call mem%dealloc(g_lc_kd, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-         call mem%dealloc(t_aj_lc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%alloc(c_kd_bi, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-!        Reorder c_bk,di as c_kd_bi
+      call sort_1234_to_2314(c_ai_bj, c_kd_bi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-         call mem%alloc(c_kd_bi, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%alloc(rho_aj_bi, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-         call sort_1234_to_2314(c_ai_bj, c_kd_bi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!     rho_aj_bi = sum_kd  Y_aj_kd * c_kd_bi
 !
-         call mem%alloc(rho_aj_bi, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call dgemm('N', 'N',           &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  Y_aj_kd,           &
+                  (wf%n_o)*(wf%n_v), &
+                  c_kd_bi,           &
+                  (wf%n_o)*(wf%n_v), &
+                  zero,              &
+                  rho_aj_bi,         &
+                  (wf%n_o)*(wf%n_v))
 !
-!        rho_aj_bi = sum_kd  Y_aj_kd * c_kd_bi
+      call mem%dealloc(c_kd_bi, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(Y_aj_kd, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-         call dgemm('N', 'N',           &
-                     (wf%n_o)*(wf%n_v), &
-                     (wf%n_o)*(wf%n_v), &
-                     (wf%n_o)*(wf%n_v), &
-                     one,               &
-                     Y_aj_kd,           &
-                     (wf%n_o)*(wf%n_v), &
-                     c_kd_bi,           &
-                     (wf%n_o)*(wf%n_v), &
-                     zero,              &
-                     rho_aj_bi,         &
-                     (wf%n_o)*(wf%n_v))
+!     Reorder into rho_ai_bj
 !
-         call mem%dealloc(c_kd_bi, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-         call mem%dealloc(Y_aj_kd, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call add_1432_to_1234(one, rho_aj_bi, rho_ai_bj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-!        Reorder into rho_ai_bj
+      call mem%dealloc(rho_aj_bi, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-         call add_1432_to_1234(one, rho_aj_bi, rho_ai_bj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call jacobian_ccsd_h2_timer%freeze()
+      call jacobian_ccsd_h2_timer%switch_off()
 !
-         call mem%dealloc(rho_aj_bi, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-!
-      end subroutine jacobian_ccsd_h2_ccsd
+   end subroutine jacobian_ccsd_h2_ccsd
 !
 !
    module subroutine jacobian_ccsd_i2_ccsd(wf, rho_ai_bj, c_ai_bj)
@@ -2664,12 +2711,15 @@ contains
 !
       integer(i15) :: b, bc, bj, c, ck, j, k, kj
 !
-!     Batching variables
-!
       integer(i15) :: required
       integer(i15) :: current_c_batch 
 !
       type(batching_index) :: batch_c
+!
+      type(timings) :: jacobian_ccsd_i2_timer
+!
+      call jacobian_ccsd_i2_timer%init('jacobian ccsd i2')
+      call jacobian_ccsd_i2_timer%start()
 !
 !     :: sum_c F_bc * c_ai,cj ::
 !
@@ -2887,6 +2937,9 @@ contains
 !
       call mem%dealloc(rho_aj_bi, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
+      call jacobian_ccsd_i2_timer%freeze()
+      call jacobian_ccsd_i2_timer%switch_off()
+!
    end subroutine jacobian_ccsd_i2_ccsd
 !
 !
@@ -2912,6 +2965,11 @@ contains
       real(dp), dimension(:,:), allocatable :: t_ab_ij
 !
       real(dp), dimension(:,:), allocatable :: X_kl_ij
+!
+      type(timings) :: jacobian_ccsd_j2_timer
+!
+      call jacobian_ccsd_j2_timer%init('jacobian ccsd j2')
+      call jacobian_ccsd_j2_timer%start()
 !
 !     Constructing g_kc_ld
 !
@@ -3002,6 +3060,9 @@ contains
       call mem%dealloc(g_kl_cd, (wf%n_o)**2, (wf%n_v)**2)
       call mem%dealloc(t_ab_ij, (wf%n_v)**2, (wf%n_o)**2)
 !
+      call jacobian_ccsd_j2_timer%freeze()
+      call jacobian_ccsd_j2_timer%switch_off()
+!
    end subroutine jacobian_ccsd_j2_ccsd
 !
 !
@@ -3042,6 +3103,11 @@ contains
 !
       type(batching_index) :: batch_a
       type(batching_index) :: batch_b
+!
+      type(timings) :: jacobian_ccsd_k2_timer
+!
+      call jacobian_ccsd_k2_timer%init('jacobian ccsd k2')
+      call jacobian_ccsd_k2_timer%start()
 !
       call mem%alloc(g_ki_lj, (wf%n_o)**2, (wf%n_o)**2)
 !
@@ -3174,7 +3240,10 @@ contains
          enddo ! End batches of b
       enddo ! End batches of a
 !
+      call jacobian_ccsd_k2_timer%freeze()
+      call jacobian_ccsd_k2_timer%switch_off()
+!
    end subroutine jacobian_ccsd_k2_ccsd
 !
 !
-   end submodule jacobian_ccsd
+end submodule jacobian_ccsd

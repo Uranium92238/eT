@@ -398,7 +398,7 @@ contains
       real(dp), dimension(dim, dim), intent(inout) :: matrix
       real(dp), dimension(dim, dim), intent(out) :: cholesky_vectors
 !
-      integer(i15), dimension(dim, 1), optional, intent(out) :: used_diag
+      integer(i15), dimension(dim), optional, intent(out) :: used_diag
 !
       integer(i15) :: i, j, k, index_max
       real(dp) :: max_diagonal
@@ -444,7 +444,7 @@ contains
             n_vectors = n_vectors - 1
             return
          else
-            if (present(used_diag)) used_diag(n_vectors, 1) = index_max
+            if (present(used_diag)) used_diag(n_vectors) = index_max
          endif
 !
 !        Cholesky vectors
@@ -492,12 +492,13 @@ contains
       real(dp), dimension(dim, dim), intent(inout) :: matrix
       real(dp), dimension(dim, dim), intent(out) :: cholesky_vectors
 !
-      integer(i15), dimension(dim, 1), intent(out) :: used_diag
+      integer(i15), dimension(dim), intent(out) :: used_diag
 !
       integer(i15) :: i, j, index_max
       real(dp) :: max_diagonal, min_diagonal
 !
-      real(dp), dimension(:,:), allocatable :: diagonal, temp_cholesky_vector
+      real(dp), dimension(:), allocatable :: diagonal
+      real(dp), dimension(:,:), allocatable :: temp_cholesky_vector
 !
       real(dp), parameter :: tolerance = 1.0d-10
 !
@@ -505,11 +506,11 @@ contains
 !
 !     Looping over the number of cholesky vectors
 !
-      call mem%alloc(diagonal, dim, 1)
+      call mem%alloc(diagonal, dim)
 !
       do i = 1, dim
 !
-         diagonal(i, 1) = matrix(i, i)
+         diagonal(i) = matrix(i, i)
 !
       enddo
 !
@@ -524,9 +525,9 @@ contains
 !
          do j = 1, dim
 !
-            if (abs(diagonal(j, 1)) .gt. abs(max_diagonal)) then
+            if (abs(diagonal(j)) .gt. abs(max_diagonal)) then
 !
-               max_diagonal = diagonal(j, 1)
+               max_diagonal = diagonal(j)
                index_max    = j
 !
             endif
@@ -552,19 +553,19 @@ contains
 !
             do j = 1, dim
 !
-               if (diagonal(j, 1) .lt. min_diagonal) min_diagonal = diagonal(j, 1)
+               if (diagonal(j) .lt. min_diagonal) min_diagonal = diagonal(j)
 
 !
             enddo
 !
             write(output%unit, '(t3, a46, e12.4)') 'The smallest diagonal after decomposition is: ', min_diagonal
-            call mem%dealloc(diagonal, dim, 1)
+            call mem%dealloc(diagonal, dim)
 !
             return
 !
          else
 !
-            used_diag(n_vectors, 1) = index_max
+            used_diag(n_vectors) = index_max
 !
          endif
 !
@@ -596,7 +597,7 @@ contains
 !
          do j = 1, n_vectors - 1
 !
-            cholesky_vectors(used_diag(j,1), n_vectors) = zero
+            cholesky_vectors(used_diag(j), n_vectors) = zero
 !
          enddo
 !
@@ -604,11 +605,11 @@ contains
 !
          do j = 1, dim
 !
-            diagonal(j, 1) = diagonal(j, 1) - cholesky_vectors(j, n_vectors)**2
+            diagonal(j) = diagonal(j) - cholesky_vectors(j, n_vectors)**2
 !
          enddo
 !
-         diagonal(index_max, 1) = zero
+         diagonal(index_max) = zero
 !
          do j = 1, dim
 !
@@ -623,14 +624,14 @@ contains
 !
       do j = 1, dim
 !
-            if (diagonal(j, 1) .lt. min_diagonal) min_diagonal = diagonal(j, 1)
+            if (diagonal(j) .lt. min_diagonal) min_diagonal = diagonal(j)
 
 !
       enddo
 !
       write(output%unit, '(t3, a46, e12.4)') 'The smallest diagonal after decomposition is: ', min_diagonal
 !
-      call mem%dealloc(diagonal, dim, 1)
+      call mem%dealloc(diagonal, dim)
 !
    end subroutine full_cholesky_decomposition_effective
 !
@@ -639,10 +640,19 @@ contains
                                                      n_vectors, threshold, n_included_diagonals, &
                                                      included_diagonals, n_vectors_requested)
 !!
-!!    Cholesky decomposition reduced diagonal,
+!!    Cholesky decomposition limited diagonal,
 !!    Written by Sarai Dery Folkestad, June 2017.
 !!
+!!    Cholesky decomposition with pivots selected from a subset of the diagonals.
+!!
+!!    Routine is used for decomposition of density to construct active
+!!    orbitals.
+!!
+!!    The number of pivots may specified through the optional
+!!    argument n_vectors_requested  
+!!
 !!    On exit matrix_xy = matrix_xy - sum_J L_xJ*LyJ
+!!
 !!
       implicit none
 !
@@ -651,36 +661,41 @@ contains
 !
       real(dp), intent(in) :: threshold
 !
-      integer(i15), intent(in) :: n_vectors_requested
+      integer(i15), intent(in), optional :: n_vectors_requested
 !
       real(dp), dimension(dim, dim), intent(inout) :: matrix
       real(dp), dimension(dim, n_included_diagonals), intent(out) :: cholesky_vectors
 !
       integer(i15), dimension(n_included_diagonals, 1), intent(in) :: included_diagonals
 !
-      integer(i15), dimension(:, :), allocatable :: used_diag
+      integer(i15), dimension(:), allocatable :: used_diag
 !
-      integer(i15) :: i, j, index_max
+      integer(i15) :: i, j, index_max, n_max_pivots
       real(dp) :: max_diagonal
 !
-      real(dp), dimension(:,:), allocatable :: diagonal, temp_cholesky_vector
+      real(dp), dimension(:), allocatable :: diagonal
+      real(dp), dimension(:,:), allocatable :: temp_cholesky_vector
 !
       real(dp), parameter :: tolerance = 1.0d-10
 !
-      call mem%alloc(diagonal, dim, 1)
+      n_max_pivots = n_included_diagonals
+!
+      if (present(n_vectors_requested)) n_max_pivots = n_vectors_requested
+!
+      call mem%alloc(diagonal, dim)
 !
       do i = 1, dim
 !
-         diagonal(i, 1) = matrix(i, i)
+         diagonal(i) = matrix(i, i)
 !
       enddo
 !
       cholesky_vectors = zero
 !
-      call mem%alloc_int(used_diag, dim, 1)
+      call mem%alloc(used_diag, dim)
       used_diag = 0
 !
-      do i = 1, n_vectors_requested
+      do i = 1, n_max_pivots
 !
          n_vectors = i
 !
@@ -691,9 +706,9 @@ contains
 !
          do j = 1, n_included_diagonals
 !
-            if (abs(diagonal(included_diagonals(j, 1), 1)) .gt. abs(max_diagonal)) then
+            if (abs(diagonal(included_diagonals(j, 1))) .gt. abs(max_diagonal)) then
 !
-               max_diagonal = diagonal(included_diagonals(j, 1), 1)
+               max_diagonal = diagonal(included_diagonals(j, 1))
                index_max    = included_diagonals(j, 1)
 !
             endif
@@ -715,8 +730,8 @@ contains
 !
             n_vectors = n_vectors - 1
 !
-            call mem%dealloc_int(used_diag, dim, 1)
-            call mem%dealloc(diagonal, dim, 1)
+            call mem%dealloc(used_diag, dim)
+            call mem%dealloc(diagonal, dim)
 !
 !           On exit, cholesky vectors subtracted from matrix
 !
@@ -737,7 +752,7 @@ contains
 !
          else
 !
-            used_diag(n_vectors, 1) = index_max
+            used_diag(n_vectors) = index_max
 !
          endif
 !
@@ -769,7 +784,7 @@ contains
 !
          do j = 1, n_vectors - 1
 !
-            cholesky_vectors(used_diag(j,1), n_vectors) = zero
+            cholesky_vectors(used_diag(j), n_vectors) = zero
 !
          enddo
 !
@@ -777,16 +792,16 @@ contains
 !
          do j = 1, dim
 !
-            diagonal(j, 1) = diagonal(j, 1) - cholesky_vectors(j, n_vectors)**2
+            diagonal(j) = diagonal(j) - cholesky_vectors(j, n_vectors)**2
 !
          enddo
 !
-         diagonal(index_max, 1) = zero
+         diagonal(index_max) = zero
 !
       enddo
 !
-      call mem%dealloc_int(used_diag, dim, 1)
-      call mem%dealloc(diagonal, dim, 1)
+      call mem%dealloc(used_diag, dim)
+      call mem%dealloc(diagonal, dim)
 !
 !     On exit, cholesky vectors subtracted from matrix
 !
