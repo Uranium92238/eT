@@ -161,7 +161,7 @@ contains
       real(dp), dimension(:,:), allocatable :: g_ai_ck
       real(dp), dimension(:,:), allocatable :: L_kc_bj
       real(dp), dimension(:,:), allocatable :: L_kc_jb
-      real(dp), dimension(:,:), allocatable :: L_jb_kc
+      real(dp), dimension(:,:), allocatable :: L_jc_kb
       real(dp), dimension(:,:), allocatable :: u_ai_kc
 !
 !     Indices
@@ -255,16 +255,16 @@ contains
 !     :: Term 2: L_kcjb t^cb_ki c_aj ::
 !
 !
-!     L_jb_kc = L_kcjb = 2 g_kc_jb - g_kb_jc
+!     L_jc_kb = L_kcjb = 2 g_kc_jb - g_kb_jc
 !
       call mem%alloc(g_kc_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call mem%alloc(L_jb_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      L_jb_kc = zero
+      call mem%alloc(L_jc_kb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      L_jc_kb = zero
 !
       call wf%get_ovov(g_kc_jb)
 !
-      call add_3412_to_1234(two, g_kc_jb, L_jb_kc, (wf%n_o), (wf%n_v), (wf%n_o), (wf%n_v))
-      call add_1432_to_1234(-one, g_kc_jb, L_jb_kc, (wf%n_o), (wf%n_v), (wf%n_o), (wf%n_v))
+      call add_3214_to_1234(two, g_kc_jb, L_jc_kb, (wf%n_o), (wf%n_v), (wf%n_o), (wf%n_v))
+      call add_1432_to_1234(-one, g_kc_jb, L_jc_kb, (wf%n_o), (wf%n_v), (wf%n_o), (wf%n_v))
 !
       call mem%dealloc(g_kc_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
@@ -290,7 +290,7 @@ contains
          enddo
       enddo
 !
-!     Intermediat I_ji = L_kcjb t^cb_ki = L_jb_kc g_ck_bi
+!     Intermediat I_ji = L_kcjb t^cb_ki = L_j_ckb g_ckb_i
 !
       call mem%alloc(I_ji, wf%n_o, wf%n_o)
 !
@@ -299,7 +299,7 @@ contains
                   (wf%n_o),                   &
                   (wf%n_v)*(wf%n_o)*(wf%n_v), &
                   one,                        &
-                  L_jb_kc,                    &
+                  L_jc_kb,                    &
                   (wf%n_o),                   &
                   g_ck_bi,                    &
                   (wf%n_v)*(wf%n_o)*(wf%n_v), &
@@ -307,7 +307,7 @@ contains
                   I_ji,                       &
                   (wf%n_o))
 !
-      call mem%dealloc(L_jb_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(L_jc_kb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call mem%dealloc(g_ck_bi, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
 !     rho_a_i = rho_a_i - c_a_j I_ji = rho_a_i - c_b_j I_ji
