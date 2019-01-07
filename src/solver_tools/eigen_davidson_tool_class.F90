@@ -35,6 +35,8 @@ module eigen_davidson_tool_class
       procedure :: prepare                  => prepare_eigen_davidson_tool 
       procedure :: cleanup                  => cleanup_eigen_davidson_tool
 !
+      procedure :: get_eigenvalue           => get_eigenvalue_eigen_davidson_tool
+!
       procedure :: construct_next_trial_vec => construct_next_trial_vec_eigen_davidson_tool
 !
       procedure :: solve_reduced_problem    => solve_reduced_problem_eigen_davidson_tool
@@ -170,6 +172,24 @@ contains
    end subroutine destruct_omega_re_eigen_davidson_tool
 !
 !
+   real(dp) function get_eigenvalue_eigen_davidson_tool(davidson,n)
+!!
+!!    Get eigenvalue
+!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!
+!!    Returns the nth eigenvalue.
+!!
+      implicit none 
+!
+      class(eigen_davidson_tool), intent(in) :: davidson 
+!
+      integer(i15), intent(in) :: n 
+!
+      get_eigenvalue_eigen_davidson_tool = davidson%omega_re(n, 1)
+!
+   end function get_eigenvalue_eigen_davidson_tool
+!
+!
    subroutine solve_reduced_problem_eigen_davidson_tool(davidson)
 !!
 !!    Solve reduced problem 
@@ -199,7 +219,7 @@ contains
 !
       integer(i15) :: dummy = 0, info = 0, j = 0, i = 0
 !
-!     -::- Solve reduced eigenvalue problem -::-
+!     Solve reduced eigenvalue problem
 !
       call mem%alloc(work, 4*(davidson%dim_red), 1)
 !      
