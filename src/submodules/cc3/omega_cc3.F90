@@ -29,10 +29,11 @@ contains
 !
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: omega
 !
-      real(dp), dimension(:,:), allocatable :: omega1, omega2
+      real(dp), dimension(:,:), allocatable :: omega1
+      real(dp), dimension(:), allocatable   :: omega2
 !
       call mem%alloc(omega1, wf%n_v, wf%n_o)
-      call mem%alloc(omega2, wf%n_t2, 1)
+      call mem%alloc(omega2, wf%n_t2)
 !
 !     Set the omega vector to zero
 !
@@ -61,7 +62,7 @@ contains
       call dcopy(wf%n_t2, omega2, 1, omega(wf%n_t1+1, 1), 1)
 !
       call mem%dealloc(omega1, wf%n_v, wf%n_o)
-      call mem%dealloc(omega2, wf%n_t2, 1)
+      call mem%dealloc(omega2, wf%n_t2)
 !
    end subroutine construct_omega_cc3
 !
@@ -76,18 +77,67 @@ contains
       class(cc3) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: omega1
-      real(dp), dimension(wf%n_t2, 1), intent(inout) :: omega2
+      real(dp), dimension(wf%n_t2), intent(inout) :: omega2
+!
+!     Arrays for triples amplitudes
+      real(dp), dimension(:,:,:), allocatable :: t_abc 
+      real(dp), dimension(:,:,:), allocatable :: u_abc 
+      real(dp), dimension(:,:,:), allocatable :: v_abc 
 !
       integer(i15) :: i, j, k
       type(batching_index) :: batch_i, batch_j, batch_k
       integer(i15) :: i_batch, j_batch, k_batch
+      integer(i15) :: req_0, req_i, req_j, req_k, req_ij, req_ik, req_jk, req_ijk
 !
 !     Set up required integrals on disk
       call wf%omega_cc3_integrals() 
 !
+      call mem%alloc(t_abc,wf%n_v,wf%n_v,wf%n_v)
+      call mem%alloc(u_abc,wf%n_v,wf%n_v,wf%n_v)
+      call mem%alloc(v_abc,wf%n_v,wf%n_v,wf%n_v)
+!
+      req_0 = 0
+      req_i = 2*wf%n_v**3
+      req_j = 2*wf%n_v**3
+      req_k = 2*wf%n_v**3
+      req_ij = 2*wf%n_o*wf%n_v+wf%n_v**2
+      req_ik = 2*wf%n_o*wf%n_v+wf%n_v**2
+      req_jk = 2*wf%n_o*wf%n_v+wf%n_v**2
+      req_ijk = 0
+!
       call batch_i%init(wf%n_o)
       call batch_j%init(wf%n_o)
       call batch_k%init(wf%n_o)
+!
+      call mem%batch_setup(batch_i, batch_j, batch_k, &
+                           req_0, req_i, req_j, req_k, &
+                           req_ij, req_ik, req_jk, req_ijk)
+!
+      do i_batch = 1,batch_i%num_batches
+!
+         call batch_i%determine_limits(i_batch)
+!
+         do j_batch = 1,batch_j%num_batches
+!
+            call batch_j%determine_limits(j_batch)
+!
+            do k_batch = 1,batch_k%num_batches
+!
+               call batch_k%determine_limits(k_batch)
+!
+               do i = 1,batch_i%length
+                  do j = 1,batch_j%length
+                     do k = 1,batch_k%length
+!
+                     enddo
+                  enddo
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      call mem%dealloc(t_abc,wf%n_v,wf%n_v,wf%n_v)
+      call mem%dealloc(u_abc,wf%n_v,wf%n_v,wf%n_v)
 !
    end subroutine omega_cc3_a_cc3
 !
@@ -110,7 +160,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_pqrs !Array for constructed integrals
       real(dp), dimension(:,:,:,:), allocatable :: h_pqrs !Array for sorted integrals
 !
-      integer(i15) :: k, j, jk, record, w_start, w_stop
+      integer(i15) :: k, j, record 
       type(batching_index) :: batch_k
 !
       integer(i15) :: req_0, req_k

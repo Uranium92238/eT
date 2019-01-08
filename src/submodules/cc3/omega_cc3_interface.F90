@@ -23,7 +23,7 @@
       class(cc3) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: omega1
-      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o) +1)/2, 1), intent(inout) :: omega2
+      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o) +1)/2), intent(inout) :: omega2
 !
    end subroutine omega_cc3_a_cc3
 !
