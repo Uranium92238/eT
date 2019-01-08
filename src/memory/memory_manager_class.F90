@@ -934,9 +934,9 @@ contains
             endif
 !
             if ( (p_elements)*(q_elements)*(r_elements)*req3_min &
-                  + (p_elements)*(q_elements)*req2_pq &
-                  + (p_elements)*(r_elements)*req2_pr &
-                  + (q_elements)*(r_elements)*req2_qr &
+                  + (p_elements)*(q_elements)*req2_pq_min &
+                  + (p_elements)*(r_elements)*req2_pr_min &
+                  + (q_elements)*(r_elements)*req2_qr_min &
                   + (p_elements)*req1_p_min          &
                   + (q_elements)*req1_q_min          &
                   + (r_elements)*req1_r_min          &
