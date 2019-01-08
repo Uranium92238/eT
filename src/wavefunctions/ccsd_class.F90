@@ -882,7 +882,7 @@ subroutine construct_eta_ccsd(wf, eta)
       n_elements = 20
       if (n_elements .gt. wf%n_t2) n_elements = wf%n_t2
 !
-      call mem%alloc_int(dominant_indices, n_elements, 1)
+      call mem%alloc(dominant_indices, n_elements, 1)
       call mem%alloc(dominant_values, n_elements, 1)
 !
       dominant_indices = 0
@@ -908,7 +908,7 @@ subroutine construct_eta_ccsd(wf, eta)
 !
       write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
 !
-      call mem%dealloc_int(dominant_indices, n_elements, 1)
+      call mem%dealloc(dominant_indices, n_elements, 1)
       call mem%dealloc(dominant_values, n_elements, 1)
       call mem%dealloc(abs_x2, wf%n_t2, 1)
 !

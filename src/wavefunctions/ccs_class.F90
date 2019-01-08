@@ -108,25 +108,56 @@ module ccs_class
 !
 !     Routines to get electron repulsion integrals (ERIs)
 !
-      procedure :: get_ovov                                     => get_ovov_ccs
-      procedure :: get_vovo                                     => get_vovo_ccs
-      procedure :: get_vvoo                                     => get_vvoo_ccs
-      procedure :: get_voov                                     => get_voov_ccs
-      procedure :: get_ovvo                                     => get_ovvo_ccs
-      procedure :: get_oovv                                     => get_oovv_ccs
+      procedure :: get_ovov_2_ccs
+      procedure :: get_ovov_4_ccs
+      generic   :: get_ovov                                     => get_ovov_2_ccs, get_ovov_4_ccs
+      procedure :: get_vovo_2_ccs
+      procedure :: get_vovo_4_ccs
+      generic   :: get_vovo                                     => get_vovo_2_ccs, get_vovo_4_ccs
 !
-      procedure :: get_oooo                                     => get_oooo_ccs
-      procedure :: get_vvvv                                     => get_vvvv_ccs
+      procedure :: get_vvoo_2_ccs
+      procedure :: get_vvoo_4_ccs
+      generic   :: get_vvoo                                     => get_vvoo_2_ccs, get_vvoo_4_ccs
+      procedure :: get_voov_2_ccs
+      procedure :: get_voov_4_ccs
+      generic   :: get_voov                                     => get_voov_2_ccs, get_voov_4_ccs
+      procedure :: get_ovvo_2_ccs
+      procedure :: get_ovvo_4_ccs
+      generic   :: get_ovvo                                     => get_ovvo_2_ccs, get_ovvo_4_ccs
+      procedure :: get_oovv_2_ccs
+      procedure :: get_oovv_4_ccs
+      generic   :: get_oovv                                     => get_oovv_2_ccs, get_oovv_4_ccs
 !
-      procedure :: get_ooov                                     => get_ooov_ccs
-      procedure :: get_oovo                                     => get_oovo_ccs
-      procedure :: get_ovoo                                     => get_ovoo_ccs
-      procedure :: get_vooo                                     => get_vooo_ccs
+      procedure :: get_oooo_2_ccs
+      procedure :: get_oooo_4_ccs
+      generic   :: get_oooo                                     => get_oooo_2_ccs, get_oooo_4_ccs
+      procedure :: get_vvvv_2_ccs
+      procedure :: get_vvvv_4_ccs
+      generic   :: get_vvvv                                     => get_vvvv_2_ccs, get_vvvv_4_ccs
+!
+      procedure :: get_ooov_2_ccs
+      procedure :: get_ooov_4_ccs
+      generic   :: get_ooov                                     => get_ooov_2_ccs, get_ooov_4_ccs
+      procedure :: get_oovo_2_ccs
+      procedure :: get_oovo_4_ccs
+      generic   :: get_oovo                                     => get_oovo_2_ccs, get_oovo_4_ccs
+      procedure :: get_ovoo_2_ccs
+      procedure :: get_ovoo_4_ccs
+      generic   :: get_ovoo                                     => get_ovoo_2_ccs, get_ovoo_4_ccs
+      procedure :: get_vooo_2_ccs
+      procedure :: get_vooo_4_ccs
+      generic   :: get_vooo                                     => get_vooo_2_ccs, get_vooo_4_ccs
 !
       procedure :: get_vvvo                                     => get_vvvo_ccs
-      procedure :: get_vvov                                     => get_vvov_ccs
-      procedure :: get_vovv                                     => get_vovv_ccs
-      procedure :: get_ovvv                                     => get_ovvv_ccs
+      procedure :: get_vvov_2_ccs
+      procedure :: get_vvov_4_ccs
+      generic   :: get_vvov                                     => get_vvov_2_ccs, get_vvov_4_ccs
+      procedure :: get_vovv_2_ccs
+      procedure :: get_vovv_4_ccs
+      generic   :: get_vovv                                     => get_vovv_2_ccs, get_vovv_4_ccs
+      procedure :: get_ovvv_2_ccs
+      procedure :: get_ovvv_4_ccs
+      generic   :: get_ovvv                                     => get_ovvv_2_ccs, get_ovvv_4_ccs
 !
 !     Routines to initialize and destruct arrays 
 !
@@ -1094,8 +1125,8 @@ contains
    end subroutine destruct_t1bar_ccs
 !
 !
-   subroutine get_ovov_ccs(wf, g_iajb, first_i, last_i, first_a, last_a, &
-                                       first_j, last_j, first_b, last_b)
+   subroutine get_ovov_2_ccs(wf, g_iajb, first_i, last_i, first_a, last_a, &
+                                         first_j, last_j, first_b, last_b)
 !!
 !!    Get ovov 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
@@ -1159,14 +1190,87 @@ contains
 !
       endif
 !
-      call wf%integrals%read_ovov(g_iajb, local_first_i, local_last_i, local_first_a, local_last_a, &
-                                          local_first_j, local_last_j, local_first_b, local_last_b, index_restrictions)
+      call wf%integrals%construct_ovov(g_iajb, local_first_i, local_last_i, local_first_a, local_last_a, &
+                                       local_first_j, local_last_j, local_first_b, local_last_b, &
+                                       index_restrictions)
 !
-   end subroutine get_ovov_ccs
+   end subroutine get_ovov_2_ccs
 !
 !
-   subroutine get_oooo_ccs(wf, g_ijkl, first_i, last_i, first_j, last_j, &
-                                       first_k, last_k, first_l, last_l)
+   subroutine get_ovov_4_ccs(wf, g_iajb, first_i, last_i, first_a, last_a, &
+                                         first_j, last_j, first_b, last_b)
+!!
+!!    Get ovov 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!    The set of "get pqrs" routines will return the integral as t1-transformed,
+!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    are provided, the routines assume that the full integral should be returned.
+!!
+!!    Note that the MO integral tool controls how the integrals are constructed.
+!!    The choice depends on logicals within the tool that knows whether t1-transformed 
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(:,:,:,:) :: g_iajb 
+!
+      integer(i15), optional, intent(in) :: first_i, last_i 
+      integer(i15), optional, intent(in) :: first_a, last_a
+      integer(i15), optional, intent(in) :: first_j, last_j
+      integer(i15), optional, intent(in) :: first_b, last_b
+!
+      integer(i15) :: local_first_i, local_last_i 
+      integer(i15) :: local_first_a, local_last_a
+      integer(i15) :: local_first_j, local_last_j
+      integer(i15) :: local_first_b, local_last_b
+!
+      logical :: index_restrictions
+!
+      if (present(first_i) .and. present(last_i) .and. &
+          present(first_a) .and. present(last_a) .and. &
+          present(first_j) .and. present(last_j) .and. &
+          present(first_b) .and. present(last_b)) then
+!
+         index_restrictions = .true.
+!
+         local_first_i = first_i 
+         local_first_a = first_a 
+         local_first_j = first_j 
+         local_first_b = first_b 
+!
+         local_last_i = last_i 
+         local_last_a = last_a
+         local_last_j = last_j
+         local_last_b = last_b
+!
+      else
+!
+         index_restrictions = .false.
+!
+         local_first_i = 1 
+         local_first_a = 1 
+         local_first_j = 1 
+         local_first_b = 1 
+!
+         local_last_i = wf%n_o 
+         local_last_a = wf%n_v
+         local_last_j = wf%n_o
+         local_last_b = wf%n_v
+!
+      endif
+!
+      call wf%integrals%construct_ovov(g_iajb, local_first_i, local_last_i, local_first_a, local_last_a, &
+                                       local_first_j, local_last_j, local_first_b, local_last_b, &
+                                       index_restrictions)
+!
+   end subroutine get_ovov_4_ccs
+!
+!
+   subroutine get_oooo_2_ccs(wf, g_ijkl, first_i, last_i, first_j, last_j, &
+                                         first_k, last_k, first_l, last_l)
 !!
 !!    Get oooo 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
@@ -1242,11 +1346,91 @@ contains
 !
       endif
 !
-   end subroutine get_oooo_ccs
+   end subroutine get_oooo_2_ccs
 !
 !
-   subroutine get_ooov_ccs(wf, g_ijka, first_i, last_i, first_j, last_j, &
-                                       first_k, last_k, first_a, last_a)
+   subroutine get_oooo_4_ccs(wf, g_ijkl, first_i, last_i, first_j, last_j, &
+                                         first_k, last_k, first_l, last_l)
+!!
+!!    Get oooo 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!    The set of "get pqrs" routines will return the integral as t1-transformed,
+!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    are provided, the routines assume that the full integral should be returned.
+!!
+!!    Note that the MO integral tool controls how the integrals are constructed.
+!!    The choice depends on logicals within the tool that knows whether t1-transformed 
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(:,:,:,:) :: g_ijkl 
+!
+      integer(i15), optional, intent(in) :: first_i, last_i 
+      integer(i15), optional, intent(in) :: first_j, last_j
+      integer(i15), optional, intent(in) :: first_k, last_k
+      integer(i15), optional, intent(in) :: first_l, last_l
+!
+      integer(i15) :: local_first_i, local_last_i 
+      integer(i15) :: local_first_j, local_last_j
+      integer(i15) :: local_first_k, local_last_k
+      integer(i15) :: local_first_l, local_last_l
+!
+      logical :: index_restrictions
+!
+      if (present(first_i) .and. present(last_i) .and. &
+          present(first_j) .and. present(last_j) .and. &
+          present(first_k) .and. present(last_k) .and. &
+          present(first_l) .and. present(last_l)) then
+!
+         index_restrictions = .true.
+!
+         local_first_i = first_i 
+         local_first_j = first_j 
+         local_first_k = first_k 
+         local_first_l = first_l 
+!
+         local_last_i = last_i 
+         local_last_j = last_j
+         local_last_k = last_k
+         local_last_l = last_l
+!
+      else
+!
+         index_restrictions = .false.
+!
+         local_first_i = 1 
+         local_first_j = 1 
+         local_first_k = 1 
+         local_first_l = 1 
+!
+         local_last_i = wf%n_o 
+         local_last_j = wf%n_o
+         local_last_k = wf%n_o
+         local_last_l = wf%n_o
+!
+      endif
+!
+      if (wf%integrals%need_t1()) then
+!
+         call wf%integrals%construct_oooo(g_ijkl, local_first_i, local_last_i, local_first_j, local_last_j, &
+                                       local_first_k, local_last_k, local_first_l, local_last_l, index_restrictions, wf%t1)
+!
+      else
+!
+         call wf%integrals%construct_oooo(g_ijkl, local_first_i, local_last_i, local_first_j, local_last_j, &
+                                       local_first_k, local_last_k, local_first_l, local_last_l, index_restrictions)
+!
+      endif
+!
+   end subroutine get_oooo_4_ccs
+!
+!
+   subroutine get_ooov_2_ccs(wf, g_ijka, first_i, last_i, first_j, last_j, &
+                                         first_k, last_k, first_a, last_a)
 !!
 !!    Get ooov 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
@@ -1313,20 +1497,104 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_ooov(g_ijka, local_first_i, local_last_i, local_first_j, local_last_j, &
-                                       local_first_k, local_last_k, local_first_a, local_last_a, index_restrictions, wf%t1)
+                                          local_first_k, local_last_k, local_first_a, local_last_a, &
+                                          index_restrictions, wf%t1)
 !
       else
 !
          call wf%integrals%construct_ooov(g_ijka, local_first_i, local_last_i, local_first_j, local_last_j, &
-                                       local_first_k, local_last_k, local_first_a, local_last_a, index_restrictions)
+                                          local_first_k, local_last_k, local_first_a, local_last_a, &
+                                          index_restrictions)
 !
       endif
 !
-   end subroutine get_ooov_ccs
+   end subroutine get_ooov_2_ccs
 !
 !
-   subroutine get_oovo_ccs(wf, g_ijak, first_i, last_i, first_j, last_j, &
-                                       first_a, last_a, first_k, last_k)
+   subroutine get_ooov_4_ccs(wf, g_ijka, first_i, last_i, first_j, last_j, &
+                                         first_k, last_k, first_a, last_a)
+!!
+!!    Get ooov 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!    The set of "get pqrs" routines will return the integral as t1-transformed,
+!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    are provided, the routines assume that the full integral should be returned.
+!!
+!!    Note that the MO integral tool controls how the integrals are constructed.
+!!    The choice depends on logicals within the tool that knows whether t1-transformed 
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(:,:,:,:) :: g_ijka 
+!
+      integer(i15), optional, intent(in) :: first_i, last_i 
+      integer(i15), optional, intent(in) :: first_j, last_j
+      integer(i15), optional, intent(in) :: first_k, last_k
+      integer(i15), optional, intent(in) :: first_a, last_a
+!
+      integer(i15) :: local_first_i, local_last_i 
+      integer(i15) :: local_first_j, local_last_j
+      integer(i15) :: local_first_k, local_last_k
+      integer(i15) :: local_first_a, local_last_a
+!
+      logical :: index_restrictions
+!
+      if (present(first_i) .and. present(last_i) .and. &
+          present(first_j) .and. present(last_j) .and. &
+          present(first_k) .and. present(last_k) .and. &
+          present(first_a) .and. present(last_a)) then
+!
+         index_restrictions = .true.
+!
+         local_first_i = first_i 
+         local_first_j = first_j 
+         local_first_k = first_k 
+         local_first_a = first_a 
+!
+         local_last_i = last_i 
+         local_last_j = last_j
+         local_last_k = last_k
+         local_last_a = last_a
+!
+      else
+!
+         index_restrictions = .false.
+!
+         local_first_i = 1 
+         local_first_j = 1 
+         local_first_k = 1 
+         local_first_a = 1 
+!
+         local_last_i = wf%n_o 
+         local_last_j = wf%n_o
+         local_last_k = wf%n_o
+         local_last_a = wf%n_v
+!
+      endif
+!
+      if (wf%integrals%need_t1()) then
+!
+         call wf%integrals%construct_ooov(g_ijka, local_first_i, local_last_i, local_first_j, local_last_j, &
+                                          local_first_k, local_last_k, local_first_a, local_last_a, &
+                                          index_restrictions, wf%t1)
+!
+      else
+!
+         call wf%integrals%construct_ooov(g_ijka, local_first_i, local_last_i, local_first_j, local_last_j, &
+                                          local_first_k, local_last_k, local_first_a, local_last_a, &
+                                          index_restrictions)
+!
+      endif
+!
+   end subroutine get_ooov_4_ccs
+!
+!
+   subroutine get_oovo_2_ccs(wf, g_ijak, first_i, last_i, first_j, last_j, &
+                                         first_a, last_a, first_k, last_k)
 !!
 !!    Get oovo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
@@ -1393,20 +1661,104 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_oovo(g_ijak, local_first_i, local_last_i, local_first_j, local_last_j, &
-                                       local_first_a, local_last_a, local_first_k, local_last_k, index_restrictions, wf%t1)
+                                          local_first_a, local_last_a, local_first_k, local_last_k, &
+                                          index_restrictions, wf%t1)
 !
       else
 !
          call wf%integrals%construct_oovo(g_ijak, local_first_i, local_last_i, local_first_j, local_last_j, &
-                                       local_first_a, local_last_a, local_first_k, local_last_k, index_restrictions)
+                                          local_first_a, local_last_a, local_first_k, local_last_k, &
+                                          index_restrictions)
 !
       endif
 !
-   end subroutine get_oovo_ccs
+   end subroutine get_oovo_2_ccs
 !
 !
-   subroutine get_ovoo_ccs(wf, g_iajk, first_i, last_i, first_a, last_a, &
-                                       first_j, last_j, first_k, last_k)
+   subroutine get_oovo_4_ccs(wf, g_ijak, first_i, last_i, first_j, last_j, &
+                                         first_a, last_a, first_k, last_k)
+!!
+!!    Get oovo
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!    The set of "get pqrs" routines will return the integral as t1-transformed,
+!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    are provided, the routines assume that the full integral should be returned.
+!!
+!!    Note that the MO integral tool controls how the integrals are constructed.
+!!    The choice depends on logicals within the tool that knows whether t1-transformed 
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(:,:,:,:) :: g_ijak 
+!
+      integer(i15), optional, intent(in) :: first_i, last_i 
+      integer(i15), optional, intent(in) :: first_j, last_j
+      integer(i15), optional, intent(in) :: first_k, last_k
+      integer(i15), optional, intent(in) :: first_a, last_a
+!
+      integer(i15) :: local_first_i, local_last_i 
+      integer(i15) :: local_first_j, local_last_j
+      integer(i15) :: local_first_k, local_last_k
+      integer(i15) :: local_first_a, local_last_a
+!
+      logical :: index_restrictions
+!
+      if (present(first_i) .and. present(last_i) .and. &
+          present(first_j) .and. present(last_j) .and. &
+          present(first_k) .and. present(last_k) .and. &
+          present(first_a) .and. present(last_a)) then
+!
+         index_restrictions = .true.
+!
+         local_first_i = first_i 
+         local_first_j = first_j 
+         local_first_k = first_k 
+         local_first_a = first_a 
+!
+         local_last_i = last_i 
+         local_last_j = last_j
+         local_last_k = last_k
+         local_last_a = last_a
+!
+      else
+!
+         index_restrictions = .false.
+!
+         local_first_i = 1 
+         local_first_j = 1 
+         local_first_k = 1 
+         local_first_a = 1 
+!
+         local_last_i = wf%n_o 
+         local_last_j = wf%n_o
+         local_last_k = wf%n_o
+         local_last_a = wf%n_v
+!
+      endif
+!
+      if (wf%integrals%need_t1()) then
+!
+         call wf%integrals%construct_oovo(g_ijak, local_first_i, local_last_i, local_first_j, local_last_j, &
+                                          local_first_a, local_last_a, local_first_k, local_last_k, &
+                                          index_restrictions, wf%t1)
+!
+      else
+!
+         call wf%integrals%construct_oovo(g_ijak, local_first_i, local_last_i, local_first_j, local_last_j, &
+                                          local_first_a, local_last_a, local_first_k, local_last_k, &
+                                          index_restrictions)
+!
+      endif
+!
+   end subroutine get_oovo_4_ccs
+!
+!
+   subroutine get_ovoo_2_ccs(wf, g_iajk, first_i, last_i, first_a, last_a, &
+                                         first_j, last_j, first_k, last_k)
 !!
 !!    Get ovoo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
@@ -1473,20 +1825,104 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_ovoo(g_iajk, local_first_i, local_last_i, local_first_a, local_last_a, &
-                                       local_first_j, local_last_j, local_first_k, local_last_k, index_restrictions, wf%t1)
+                                          local_first_j, local_last_j, local_first_k, local_last_k, &
+                                          index_restrictions, wf%t1)
 !
       else
 !
          call wf%integrals%construct_ovoo(g_iajk, local_first_i, local_last_i, local_first_a, local_last_a, &
-                                        local_first_j, local_last_j, local_first_k, local_last_k, index_restrictions)
+                                          local_first_j, local_last_j, local_first_k, local_last_k, &
+                                          index_restrictions)
 !
       endif
 !
-   end subroutine get_ovoo_ccs
+   end subroutine get_ovoo_2_ccs
 !
 !
-   subroutine get_vooo_ccs(wf, g_aijk, first_a, last_a, first_i, last_i, &
-                                       first_j, last_j, first_k, last_k)
+   subroutine get_ovoo_4_ccs(wf, g_iajk, first_i, last_i, first_a, last_a, &
+                                         first_j, last_j, first_k, last_k)
+!!
+!!    Get ovoo
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!    The set of "get pqrs" routines will return the integral as t1-transformed,
+!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    are provided, the routines assume that the full integral should be returned.
+!!
+!!    Note that the MO integral tool controls how the integrals are constructed.
+!!    The choice depends on logicals within the tool that knows whether t1-transformed 
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(:,:,:,:) :: g_iajk 
+!
+      integer(i15), optional, intent(in) :: first_i, last_i 
+      integer(i15), optional, intent(in) :: first_j, last_j
+      integer(i15), optional, intent(in) :: first_k, last_k
+      integer(i15), optional, intent(in) :: first_a, last_a
+!
+      integer(i15) :: local_first_i, local_last_i 
+      integer(i15) :: local_first_j, local_last_j
+      integer(i15) :: local_first_k, local_last_k
+      integer(i15) :: local_first_a, local_last_a
+!
+      logical :: index_restrictions
+!
+      if (present(first_i) .and. present(last_i) .and. &
+          present(first_j) .and. present(last_j) .and. &
+          present(first_k) .and. present(last_k) .and. &
+          present(first_a) .and. present(last_a)) then
+!
+         index_restrictions = .true.
+!
+         local_first_i = first_i 
+         local_first_j = first_j 
+         local_first_k = first_k 
+         local_first_a = first_a 
+!
+         local_last_i = last_i 
+         local_last_j = last_j
+         local_last_k = last_k
+         local_last_a = last_a
+!
+      else
+!
+         index_restrictions = .false.
+!
+         local_first_i = 1 
+         local_first_j = 1 
+         local_first_k = 1 
+         local_first_a = 1 
+!
+         local_last_i = wf%n_o 
+         local_last_j = wf%n_o
+         local_last_k = wf%n_o
+         local_last_a = wf%n_v
+!
+      endif
+!
+      if (wf%integrals%need_t1()) then
+!
+         call wf%integrals%construct_ovoo(g_iajk, local_first_i, local_last_i, local_first_a, local_last_a, &
+                                          local_first_j, local_last_j, local_first_k, local_last_k, &
+                                          index_restrictions, wf%t1)
+!
+      else
+!
+         call wf%integrals%construct_ovoo(g_iajk, local_first_i, local_last_i, local_first_a, local_last_a, &
+                                          local_first_j, local_last_j, local_first_k, local_last_k, &
+                                          index_restrictions)
+!
+      endif
+!
+   end subroutine get_ovoo_4_ccs
+!
+!
+   subroutine get_vooo_2_ccs(wf, g_aijk, first_a, last_a, first_i, last_i, &
+                                         first_j, last_j, first_k, last_k)
 !!
 !!    Get vooo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
@@ -1553,20 +1989,104 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_vooo(g_aijk, local_first_a, local_last_a, local_first_i, local_last_i, &
-                                       local_first_j, local_last_j, local_first_k, local_last_k, index_restrictions, wf%t1)
+                                          local_first_j, local_last_j, local_first_k, local_last_k, &
+                                          index_restrictions, wf%t1)
 !
       else
 !
          call wf%integrals%construct_vooo(g_aijk, local_first_a, local_last_a, local_first_i, local_last_i, &
-                                        local_first_j, local_last_j, local_first_k, local_last_k, index_restrictions)
+                                          local_first_j, local_last_j, local_first_k, local_last_k, &
+                                          index_restrictions)
 !
       endif
 !
-   end subroutine get_vooo_ccs
+   end subroutine get_vooo_2_ccs
 !
 !
-   subroutine get_vvoo_ccs(wf, g_abij, first_a, last_a, first_b, last_b, &
-                                       first_i, last_i, first_j, last_j)
+   subroutine get_vooo_4_ccs(wf, g_aijk, first_a, last_a, first_i, last_i, &
+                                         first_j, last_j, first_k, last_k)
+!!
+!!    Get vooo
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!    The set of "get pqrs" routines will return the integral as t1-transformed,
+!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    are provided, the routines assume that the full integral should be returned.
+!!
+!!    Note that the MO integral tool controls how the integrals are constructed.
+!!    The choice depends on logicals within the tool that knows whether t1-transformed 
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(:,:,:,:) :: g_aijk 
+!
+      integer(i15), optional, intent(in) :: first_i, last_i 
+      integer(i15), optional, intent(in) :: first_j, last_j
+      integer(i15), optional, intent(in) :: first_k, last_k
+      integer(i15), optional, intent(in) :: first_a, last_a
+!
+      integer(i15) :: local_first_i, local_last_i 
+      integer(i15) :: local_first_j, local_last_j
+      integer(i15) :: local_first_k, local_last_k
+      integer(i15) :: local_first_a, local_last_a
+!
+      logical :: index_restrictions
+!
+      if (present(first_i) .and. present(last_i) .and. &
+          present(first_j) .and. present(last_j) .and. &
+          present(first_k) .and. present(last_k) .and. &
+          present(first_a) .and. present(last_a)) then
+!
+         index_restrictions = .true.
+!
+         local_first_i = first_i 
+         local_first_j = first_j 
+         local_first_k = first_k 
+         local_first_a = first_a 
+!
+         local_last_i = last_i 
+         local_last_j = last_j
+         local_last_k = last_k
+         local_last_a = last_a
+!
+      else
+!
+         index_restrictions = .false.
+!
+         local_first_i = 1 
+         local_first_j = 1 
+         local_first_k = 1 
+         local_first_a = 1 
+!
+         local_last_i = wf%n_o 
+         local_last_j = wf%n_o
+         local_last_k = wf%n_o
+         local_last_a = wf%n_v
+!
+      endif
+!
+      if (wf%integrals%need_t1()) then
+!
+         call wf%integrals%construct_vooo(g_aijk, local_first_a, local_last_a, local_first_i, local_last_i, &
+                                          local_first_j, local_last_j, local_first_k, local_last_k, &
+                                          index_restrictions, wf%t1)
+!
+      else
+!
+         call wf%integrals%construct_vooo(g_aijk, local_first_a, local_last_a, local_first_i, local_last_i, &
+                                          local_first_j, local_last_j, local_first_k, local_last_k, &
+                                          index_restrictions)
+!
+      endif
+!
+   end subroutine get_vooo_4_ccs
+!
+!
+   subroutine get_vvoo_2_ccs(wf, g_abij, first_a, last_a, first_b, last_b, &
+                                         first_i, last_i, first_j, last_j)
 !!
 !!    Get vvoo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
@@ -1633,20 +2153,104 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_vvoo(g_abij, local_first_a, local_last_a, local_first_b, local_last_b, &
-                                        local_first_i, local_last_i, local_first_j, local_last_j, index_restrictions, wf%t1)
+                                          local_first_i, local_last_i, local_first_j, local_last_j, &
+                                          index_restrictions, wf%t1)
 !
       else
 !
          call wf%integrals%construct_vvoo(g_abij, local_first_a, local_last_a, local_first_b, local_last_b, &
-                                        local_first_i, local_last_i, local_first_j, local_last_j, index_restrictions)
+                                          local_first_i, local_last_i, local_first_j, local_last_j, &
+                                          index_restrictions)
 !
       endif
 !
-   end subroutine get_vvoo_ccs
+   end subroutine get_vvoo_2_ccs
 !
 !
-   subroutine get_vovo_ccs(wf, g_aibj, first_a, last_a, first_i, last_i, &
-                                        first_b, last_b, first_j, last_j)
+   subroutine get_vvoo_4_ccs(wf, g_abij, first_a, last_a, first_b, last_b, &
+                                         first_i, last_i, first_j, last_j)
+!!
+!!    Get vvoo
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!    The set of "get pqrs" routines will return the integral as t1-transformed,
+!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    are provided, the routines assume that the full integral should be returned.
+!!
+!!    Note that the MO integral tool controls how the integrals are constructed.
+!!    The choice depends on logicals within the tool that knows whether t1-transformed 
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(:,:,:,:) :: g_abij 
+!
+      integer(i15), optional, intent(in) :: first_i, last_i 
+      integer(i15), optional, intent(in) :: first_j, last_j
+      integer(i15), optional, intent(in) :: first_a, last_a
+      integer(i15), optional, intent(in) :: first_b, last_b
+!
+      integer(i15) :: local_first_i, local_last_i 
+      integer(i15) :: local_first_j, local_last_j
+      integer(i15) :: local_first_b, local_last_b
+      integer(i15) :: local_first_a, local_last_a
+!
+      logical :: index_restrictions
+!
+      if (present(first_i) .and. present(last_i) .and. &
+          present(first_j) .and. present(last_j) .and. &
+          present(first_b) .and. present(last_b) .and. &
+          present(first_a) .and. present(last_a)) then
+!
+         index_restrictions = .true.
+!
+         local_first_i = first_i 
+         local_first_j = first_j 
+         local_first_b = first_b 
+         local_first_a = first_a 
+!
+         local_last_i = last_i 
+         local_last_j = last_j
+         local_last_b = last_b
+         local_last_a = last_a
+!
+      else
+!
+         index_restrictions = .false.
+!
+         local_first_i = 1 
+         local_first_j = 1 
+         local_first_b = 1 
+         local_first_a = 1 
+!
+         local_last_i = wf%n_o 
+         local_last_j = wf%n_o
+         local_last_b = wf%n_v
+         local_last_a = wf%n_v
+!
+      endif
+!
+      if (wf%integrals%need_t1()) then
+!
+         call wf%integrals%construct_vvoo(g_abij, local_first_a, local_last_a, local_first_b, local_last_b, &
+                                          local_first_i, local_last_i, local_first_j, local_last_j, &
+                                          index_restrictions, wf%t1)
+!
+      else
+!
+         call wf%integrals%construct_vvoo(g_abij, local_first_a, local_last_a, local_first_b, local_last_b, &
+                                          local_first_i, local_last_i, local_first_j, local_last_j, &
+                                          index_restrictions)
+!
+      endif
+!
+   end subroutine get_vvoo_4_ccs
+!
+!
+   subroutine get_vovo_2_ccs(wf, g_aibj, first_a, last_a, first_i, last_i, &
+                                         first_b, last_b, first_j, last_j)
 !!
 !!    Get vovo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
@@ -1722,11 +2326,93 @@ contains
 !
       endif
 !
-   end subroutine get_vovo_ccs
+   end subroutine get_vovo_2_ccs
 !
 !
-   subroutine get_voov_ccs(wf, g_aijb, first_a, last_a, first_i, last_i, &
-                                        first_j, last_j, first_b, last_b)
+   subroutine get_vovo_4_ccs(wf, g_aibj, first_a, last_a, first_i, last_i, &
+                                         first_b, last_b, first_j, last_j)
+!!
+!!    Get vovo
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!    The set of "get pqrs" routines will return the integral as t1-transformed,
+!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    are provided, the routines assume that the full integral should be returned.
+!!
+!!    Note that the MO integral tool controls how the integrals are constructed.
+!!    The choice depends on logicals within the tool that knows whether t1-transformed 
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(:,:,:,:) :: g_aibj 
+!
+      integer(i15), optional, intent(in) :: first_i, last_i 
+      integer(i15), optional, intent(in) :: first_j, last_j
+      integer(i15), optional, intent(in) :: first_a, last_a
+      integer(i15), optional, intent(in) :: first_b, last_b
+!
+      integer(i15) :: local_first_i, local_last_i 
+      integer(i15) :: local_first_j, local_last_j
+      integer(i15) :: local_first_b, local_last_b
+      integer(i15) :: local_first_a, local_last_a
+!
+      logical :: index_restrictions
+!
+      if (present(first_i) .and. present(last_i) .and. &
+          present(first_j) .and. present(last_j) .and. &
+          present(first_b) .and. present(last_b) .and. &
+          present(first_a) .and. present(last_a)) then
+!
+         index_restrictions = .true.
+!
+         local_first_i = first_i 
+         local_first_j = first_j 
+         local_first_b = first_b 
+         local_first_a = first_a 
+!
+         local_last_i = last_i 
+         local_last_j = last_j
+         local_last_b = last_b
+         local_last_a = last_a
+!
+      else
+!
+         index_restrictions = .false.
+!
+         local_first_i = 1 
+         local_first_j = 1 
+         local_first_b = 1 
+         local_first_a = 1 
+!
+         local_last_i = wf%n_o 
+         local_last_j = wf%n_o
+         local_last_b = wf%n_v
+         local_last_a = wf%n_v
+!
+      endif
+!
+      if (wf%integrals%need_t1()) then
+!
+         call wf%integrals%construct_vovo(g_aibj, local_first_a, local_last_a, local_first_i, local_last_i, &
+                                          local_first_b, local_last_b, local_first_j, local_last_j, &
+                                          index_restrictions, wf%t1)
+!
+      else
+!
+         call wf%integrals%construct_vovo(g_aibj, local_first_a, local_last_a, local_first_i, local_last_i, &
+                                          local_first_b, local_last_b, local_first_j, local_last_j, &
+                                          index_restrictions)
+!
+      endif
+!
+   end subroutine get_vovo_4_ccs
+!
+!
+   subroutine get_voov_2_ccs(wf, g_aijb, first_a, last_a, first_i, last_i, &
+                                         first_j, last_j, first_b, last_b)
 !!
 !!    Get voov
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
@@ -1793,20 +2479,104 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_voov(g_aijb, local_first_a, local_last_a, local_first_i, local_last_i, &
-                                         local_first_j, local_last_j, local_first_b, local_last_b, index_restrictions, wf%t1)
+                                          local_first_j, local_last_j, local_first_b, local_last_b, &
+                                          index_restrictions, wf%t1)
 !
       else
 !
          call wf%integrals%construct_voov(g_aijb, local_first_a, local_last_a, local_first_i, local_last_i, &
-                                         local_first_j, local_last_j, local_first_b, local_last_b, index_restrictions)
+                                          local_first_j, local_last_j, local_first_b, local_last_b, &
+                                          index_restrictions)
 !
       endif
 !
-   end subroutine get_voov_ccs
+   end subroutine get_voov_2_ccs
 !
 !
-   subroutine get_ovvo_ccs(wf, g_iabj, first_i, last_i, first_a, last_a, &
-                                        first_b, last_b, first_j, last_j)
+   subroutine get_voov_4_ccs(wf, g_aijb, first_a, last_a, first_i, last_i, &
+                                         first_j, last_j, first_b, last_b)
+!!
+!!    Get voov
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!    The set of "get pqrs" routines will return the integral as t1-transformed,
+!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    are provided, the routines assume that the full integral should be returned.
+!!
+!!    Note that the MO integral tool controls how the integrals are constructed.
+!!    The choice depends on logicals within the tool that knows whether t1-transformed 
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(:,:,:,:) :: g_aijb 
+!
+      integer(i15), optional, intent(in) :: first_i, last_i 
+      integer(i15), optional, intent(in) :: first_j, last_j
+      integer(i15), optional, intent(in) :: first_a, last_a
+      integer(i15), optional, intent(in) :: first_b, last_b
+!
+      integer(i15) :: local_first_i, local_last_i 
+      integer(i15) :: local_first_j, local_last_j
+      integer(i15) :: local_first_b, local_last_b
+      integer(i15) :: local_first_a, local_last_a
+!
+      logical :: index_restrictions
+!
+      if (present(first_i) .and. present(last_i) .and. &
+          present(first_j) .and. present(last_j) .and. &
+          present(first_b) .and. present(last_b) .and. &
+          present(first_a) .and. present(last_a)) then
+!
+         index_restrictions = .true.
+!
+         local_first_i = first_i 
+         local_first_j = first_j 
+         local_first_b = first_b 
+         local_first_a = first_a 
+!
+         local_last_i = last_i 
+         local_last_j = last_j
+         local_last_b = last_b
+         local_last_a = last_a
+!
+      else
+!
+         index_restrictions = .false.
+!
+         local_first_i = 1 
+         local_first_j = 1 
+         local_first_b = 1 
+         local_first_a = 1 
+!
+         local_last_i = wf%n_o 
+         local_last_j = wf%n_o
+         local_last_b = wf%n_v
+         local_last_a = wf%n_v
+!
+      endif
+!
+      if (wf%integrals%need_t1()) then
+!
+         call wf%integrals%construct_voov(g_aijb, local_first_a, local_last_a, local_first_i, local_last_i, &
+                                          local_first_j, local_last_j, local_first_b, local_last_b, &
+                                          index_restrictions, wf%t1)
+!
+      else
+!
+         call wf%integrals%construct_voov(g_aijb, local_first_a, local_last_a, local_first_i, local_last_i, &
+                                          local_first_j, local_last_j, local_first_b, local_last_b, &
+                                          index_restrictions)
+!
+      endif
+!
+   end subroutine get_voov_4_ccs
+!
+!
+   subroutine get_ovvo_2_ccs(wf, g_iabj, first_i, last_i, first_a, last_a, &
+                                         first_b, last_b, first_j, last_j)
 !!
 !!    Get ovvo
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
@@ -1873,20 +2643,186 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_ovvo(g_iabj, local_first_i, local_last_i, local_first_a, local_last_a, &
-                                         local_first_b, local_last_b, local_first_j, local_last_j, index_restrictions, wf%t1)
+                                          local_first_b, local_last_b, local_first_j, local_last_j, &
+                                          index_restrictions, wf%t1)
 !
       else
 !
          call wf%integrals%construct_ovvo(g_iabj, local_first_i, local_last_i, local_first_a, local_last_a, &
-                                         local_first_b, local_last_b, local_first_j, local_last_j, index_restrictions)
+                                          local_first_b, local_last_b, local_first_j, local_last_j, &
+                                          index_restrictions)
 !
       endif
 !
-   end subroutine get_ovvo_ccs
+   end subroutine get_ovvo_2_ccs
 !
 !
-   subroutine get_oovv_ccs(wf, g_ijab, first_i, last_i, first_j, last_j, &
-                                        first_a, last_a, first_b, last_b)
+   subroutine get_ovvo_4_ccs(wf, g_iabj, first_i, last_i, first_a, last_a, &
+                                         first_b, last_b, first_j, last_j)
+!!
+!!    Get ovvo
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!    The set of "get pqrs" routines will return the integral as t1-transformed,
+!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    are provided, the routines assume that the full integral should be returned.
+!!
+!!    Note that the MO integral tool controls how the integrals are constructed.
+!!    The choice depends on logicals within the tool that knows whether t1-transformed 
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(:,:,:,:) :: g_iabj
+!
+      integer(i15), optional, intent(in) :: first_i, last_i 
+      integer(i15), optional, intent(in) :: first_j, last_j
+      integer(i15), optional, intent(in) :: first_a, last_a
+      integer(i15), optional, intent(in) :: first_b, last_b
+!
+      integer(i15) :: local_first_i, local_last_i 
+      integer(i15) :: local_first_j, local_last_j
+      integer(i15) :: local_first_b, local_last_b
+      integer(i15) :: local_first_a, local_last_a
+!
+      logical :: index_restrictions
+!
+      if (present(first_i) .and. present(last_i) .and. &
+          present(first_j) .and. present(last_j) .and. &
+          present(first_b) .and. present(last_b) .and. &
+          present(first_a) .and. present(last_a)) then
+!
+         index_restrictions = .true.
+!
+         local_first_i = first_i 
+         local_first_j = first_j 
+         local_first_b = first_b 
+         local_first_a = first_a 
+!
+         local_last_i = last_i 
+         local_last_j = last_j
+         local_last_b = last_b
+         local_last_a = last_a
+!
+      else
+!
+         index_restrictions = .false.
+!
+         local_first_i = 1 
+         local_first_j = 1 
+         local_first_b = 1 
+         local_first_a = 1 
+!
+         local_last_i = wf%n_o 
+         local_last_j = wf%n_o
+         local_last_b = wf%n_v
+         local_last_a = wf%n_v
+!
+      endif
+!
+      if (wf%integrals%need_t1()) then
+!
+         call wf%integrals%construct_ovvo(g_iabj, local_first_i, local_last_i, local_first_a, local_last_a, &
+                                          local_first_b, local_last_b, local_first_j, local_last_j, &
+                                          index_restrictions, wf%t1)
+!
+      else
+!
+         call wf%integrals%construct_ovvo(g_iabj, local_first_i, local_last_i, local_first_a, local_last_a, &
+                                          local_first_b, local_last_b, local_first_j, local_last_j, &
+                                          index_restrictions)
+!
+      endif
+!
+   end subroutine get_ovvo_4_ccs
+!
+!
+   subroutine get_oovv_4_ccs(wf, g_ijab, first_i, last_i, first_j, last_j, &
+                                         first_a, last_a, first_b, last_b)
+!!
+!!    Get oovv
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!    The set of "get pqrs" routines will return the integral as t1-transformed,
+!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    are provided, the routines assume that the full integral should be returned.
+!!
+!!    Note that the MO integral tool controls how the integrals are constructed.
+!!    The choice depends on logicals within the tool that knows whether t1-transformed 
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(:,:,:,:) :: g_ijab
+!
+      integer(i15), optional, intent(in) :: first_i, last_i 
+      integer(i15), optional, intent(in) :: first_j, last_j
+      integer(i15), optional, intent(in) :: first_a, last_a
+      integer(i15), optional, intent(in) :: first_b, last_b
+!
+      integer(i15) :: local_first_i, local_last_i 
+      integer(i15) :: local_first_j, local_last_j
+      integer(i15) :: local_first_b, local_last_b
+      integer(i15) :: local_first_a, local_last_a
+!
+      logical :: index_restrictions
+!
+      if (present(first_i) .and. present(last_i) .and. &
+          present(first_j) .and. present(last_j) .and. &
+          present(first_b) .and. present(last_b) .and. &
+          present(first_a) .and. present(last_a)) then
+!
+         index_restrictions = .true.
+!
+         local_first_i = first_i 
+         local_first_j = first_j 
+         local_first_b = first_b 
+         local_first_a = first_a 
+!
+         local_last_i = last_i 
+         local_last_j = last_j
+         local_last_b = last_b
+         local_last_a = last_a
+!
+      else
+!
+         index_restrictions = .false.
+!
+         local_first_i = 1 
+         local_first_j = 1 
+         local_first_b = 1 
+         local_first_a = 1 
+!
+         local_last_i = wf%n_o 
+         local_last_j = wf%n_o
+         local_last_b = wf%n_v
+         local_last_a = wf%n_v
+!
+      endif
+!
+      if (wf%integrals%need_t1()) then
+!
+         call wf%integrals%construct_oovv(g_ijab, local_first_i, local_last_i, local_first_j, local_last_j, &
+                                          local_first_a, local_last_a, local_first_b, local_last_b, &
+                                          index_restrictions, wf%t1)
+!
+      else
+!
+         call wf%integrals%construct_oovv(g_ijab, local_first_i, local_last_i, local_first_j, local_last_j, &
+                                          local_first_a, local_last_a, local_first_b, local_last_b, &
+                                          index_restrictions)
+!
+      endif
+!
+   end subroutine get_oovv_4_ccs
+!
+!
+   subroutine get_oovv_2_ccs(wf, g_ijab, first_i, last_i, first_j, last_j, &
+                                         first_a, last_a, first_b, last_b)
 !!
 !!    Get oovv
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
@@ -1953,16 +2889,18 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_oovv(g_ijab, local_first_i, local_last_i, local_first_j, local_last_j, &
-                                         local_first_a, local_last_a, local_first_b, local_last_b, index_restrictions, wf%t1)
+                                          local_first_a, local_last_a, local_first_b, local_last_b, &
+                                          index_restrictions, wf%t1)
 !
       else
 !
          call wf%integrals%construct_oovv(g_ijab, local_first_i, local_last_i, local_first_j, local_last_j, &
-                                         local_first_a, local_last_a, local_first_b, local_last_b, index_restrictions)
+                                          local_first_a, local_last_a, local_first_b, local_last_b, &
+                                          index_restrictions)
 !
       endif
 !
-   end subroutine get_oovv_ccs
+   end subroutine get_oovv_2_ccs
 !
 !
    subroutine get_vvvo_ccs(wf, g_abci, first_a, last_a, first_b, last_b, &
@@ -1983,7 +2921,7 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(:,:) :: g_abci 
+      real(dp), dimension(:,:,:,:) :: g_abci 
 !
       integer(i15), optional, intent(in) :: first_i, last_i 
       integer(i15), optional, intent(in) :: first_c, last_c
@@ -2033,20 +2971,22 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_vvvo(g_abci, local_first_a, local_last_a, local_first_b, local_last_b, &
-                                        local_first_c, local_last_c, local_first_i, local_last_i, index_restrictions, wf%t1)
+                                          local_first_c, local_last_c, local_first_i, local_last_i, &
+                                          index_restrictions, wf%t1)
 !
       else
 !
          call wf%integrals%construct_vvvo(g_abci, local_first_a, local_last_a, local_first_b, local_last_b, &
-                                        local_first_c, local_last_c, local_first_i, local_last_i, index_restrictions)
+                                          local_first_c, local_last_c, local_first_i, local_last_i, &
+                                          index_restrictions)
 !
       endif
 !
    end subroutine get_vvvo_ccs
 !
 !
-   subroutine get_vvov_ccs(wf, g_abic, first_a, last_a, first_b, last_b, &
-                                       first_i, last_i, first_c, last_c)
+   subroutine get_vvov_2_ccs(wf, g_abic, first_a, last_a, first_b, last_b, &
+                                         first_i, last_i, first_c, last_c)
 !!
 !!    Get vvov
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
@@ -2113,20 +3053,104 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_vvov(g_abic, local_first_a, local_last_a, local_first_b, local_last_b, &
-                                        local_first_i, local_last_i, local_first_c, local_last_c, index_restrictions, wf%t1)
+                                          local_first_i, local_last_i, local_first_c, local_last_c, &
+                                          index_restrictions, wf%t1)
 !
       else
 !
          call wf%integrals%construct_vvov(g_abic, local_first_a, local_last_a, local_first_b, local_last_b, &
-                                        local_first_i, local_last_i, local_first_c, local_last_c, index_restrictions)
+                                          local_first_i, local_last_i, local_first_c, local_last_c, &
+                                          index_restrictions)
 !
       endif
 !
-   end subroutine get_vvov_ccs
+   end subroutine get_vvov_2_ccs
 !
 !
-   subroutine get_vovv_ccs(wf, g_aibc, first_a, last_a, first_i, last_i, &
-                                       first_b, last_b, first_c, last_c)
+   subroutine get_vvov_4_ccs(wf, g_abic, first_a, last_a, first_b, last_b, &
+                                         first_i, last_i, first_c, last_c)
+!!
+!!    Get vvov
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!    The set of "get pqrs" routines will return the integral as t1-transformed,
+!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    are provided, the routines assume that the full integral should be returned.
+!!
+!!    Note that the MO integral tool controls how the integrals are constructed.
+!!    The choice depends on logicals within the tool that knows whether t1-transformed 
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(:,:,:,:) :: g_abic 
+!
+      integer(i15), optional, intent(in) :: first_i, last_i 
+      integer(i15), optional, intent(in) :: first_c, last_c
+      integer(i15), optional, intent(in) :: first_a, last_a
+      integer(i15), optional, intent(in) :: first_b, last_b
+!
+      integer(i15) :: local_first_i, local_last_i 
+      integer(i15) :: local_first_c, local_last_c
+      integer(i15) :: local_first_b, local_last_b
+      integer(i15) :: local_first_a, local_last_a
+!
+      logical :: index_restrictions
+!
+      if (present(first_i) .and. present(last_i) .and. &
+          present(first_c) .and. present(last_c) .and. &
+          present(first_b) .and. present(last_b) .and. &
+          present(first_a) .and. present(last_a)) then
+!
+         index_restrictions = .true.
+!
+         local_first_i = first_i 
+         local_first_c = first_c 
+         local_first_b = first_b 
+         local_first_a = first_a 
+!
+         local_last_i = last_i 
+         local_last_c = last_c
+         local_last_b = last_b
+         local_last_a = last_a
+!
+      else
+!
+         index_restrictions = .false.
+!
+         local_first_i = 1 
+         local_first_c = 1 
+         local_first_b = 1 
+         local_first_a = 1 
+!
+         local_last_i = wf%n_o 
+         local_last_c = wf%n_v
+         local_last_b = wf%n_v
+         local_last_a = wf%n_v
+!
+      endif
+!
+      if (wf%integrals%need_t1()) then
+!
+         call wf%integrals%construct_vvov(g_abic, local_first_a, local_last_a, local_first_b, local_last_b, &
+                                          local_first_i, local_last_i, local_first_c, local_last_c, &
+                                          index_restrictions, wf%t1)
+!
+      else
+!
+         call wf%integrals%construct_vvov(g_abic, local_first_a, local_last_a, local_first_b, local_last_b, &
+                                          local_first_i, local_last_i, local_first_c, local_last_c, &
+                                          index_restrictions)
+!
+      endif
+!
+   end subroutine get_vvov_4_ccs
+!
+!
+   subroutine get_vovv_2_ccs(wf, g_aibc, first_a, last_a, first_i, last_i, &
+                                         first_b, last_b, first_c, last_c)
 !!
 !!    Get vovv
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
@@ -2193,20 +3217,104 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_vovv(g_aibc, local_first_a, local_last_a, local_first_i, local_last_i, &
-                                        local_first_b, local_last_b, local_first_c, local_last_c, index_restrictions, wf%t1)
+                                          local_first_b, local_last_b, local_first_c, local_last_c, &
+                                          index_restrictions, wf%t1)
 !
       else
 !
          call wf%integrals%construct_vovv(g_aibc, local_first_a, local_last_a, local_first_i, local_last_i, &
-                                        local_first_b, local_last_b, local_first_c, local_last_c, index_restrictions)
+                                          local_first_b, local_last_b, local_first_c, local_last_c, &
+                                          index_restrictions)
 !
       endif
 !
-   end subroutine get_vovv_ccs
+   end subroutine get_vovv_2_ccs
 !
 !
-   subroutine get_ovvv_ccs(wf, g_iabc, first_i, last_i, first_a, last_a, &
-                                       first_b, last_b, first_c, last_c)
+   subroutine get_vovv_4_ccs(wf, g_aibc, first_a, last_a, first_i, last_i, &
+                                         first_b, last_b, first_c, last_c)
+!!
+!!    Get vovv
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!    The set of "get pqrs" routines will return the integral as t1-transformed,
+!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    are provided, the routines assume that the full integral should be returned.
+!!
+!!    Note that the MO integral tool controls how the integrals are constructed.
+!!    The choice depends on logicals within the tool that knows whether t1-transformed 
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(:,:,:,:) :: g_aibc 
+!
+      integer(i15), optional, intent(in) :: first_i, last_i 
+      integer(i15), optional, intent(in) :: first_c, last_c
+      integer(i15), optional, intent(in) :: first_a, last_a
+      integer(i15), optional, intent(in) :: first_b, last_b
+!
+      integer(i15) :: local_first_i, local_last_i 
+      integer(i15) :: local_first_c, local_last_c
+      integer(i15) :: local_first_b, local_last_b
+      integer(i15) :: local_first_a, local_last_a
+!
+      logical :: index_restrictions
+!
+      if (present(first_i) .and. present(last_i) .and. &
+          present(first_c) .and. present(last_c) .and. &
+          present(first_b) .and. present(last_b) .and. &
+          present(first_a) .and. present(last_a)) then
+!
+         index_restrictions = .true.
+!
+         local_first_i = first_i 
+         local_first_c = first_c 
+         local_first_b = first_b 
+         local_first_a = first_a 
+!
+         local_last_i = last_i 
+         local_last_c = last_c
+         local_last_b = last_b
+         local_last_a = last_a
+!
+      else
+!
+         index_restrictions = .false.
+!
+         local_first_i = 1 
+         local_first_c = 1 
+         local_first_b = 1 
+         local_first_a = 1 
+!
+         local_last_i = wf%n_o 
+         local_last_c = wf%n_v
+         local_last_b = wf%n_v
+         local_last_a = wf%n_v
+!
+      endif
+!
+      if (wf%integrals%need_t1()) then
+!
+         call wf%integrals%construct_vovv(g_aibc, local_first_a, local_last_a, local_first_i, local_last_i, &
+                                          local_first_b, local_last_b, local_first_c, local_last_c, &
+                                          index_restrictions, wf%t1)
+!
+      else
+!
+         call wf%integrals%construct_vovv(g_aibc, local_first_a, local_last_a, local_first_i, local_last_i, &
+                                          local_first_b, local_last_b, local_first_c, local_last_c, &
+                                          index_restrictions)
+!
+      endif
+!
+   end subroutine get_vovv_4_ccs
+!
+!
+   subroutine get_ovvv_2_ccs(wf, g_iabc, first_i, last_i, first_a, last_a, &
+                                         first_b, last_b, first_c, last_c)
 !!
 !!    Get ovvv
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
@@ -2273,20 +3381,104 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_ovvv(g_iabc, local_first_i, local_last_i, local_first_a, local_last_a, &
-                                        local_first_b, local_last_b, local_first_c, local_last_c, index_restrictions, wf%t1)
+                                          local_first_b, local_last_b, local_first_c, local_last_c, &
+                                          index_restrictions, wf%t1)
 !
       else
 !
          call wf%integrals%construct_ovvv(g_iabc, local_first_i, local_last_i, local_first_a, local_last_a, &
-                                        local_first_b, local_last_b, local_first_c, local_last_c, index_restrictions)
+                                          local_first_b, local_last_b, local_first_c, local_last_c, &
+                                          index_restrictions)
 !
       endif
 !
-   end subroutine get_ovvv_ccs
+   end subroutine get_ovvv_2_ccs
 !
 !
-   subroutine get_vvvv_ccs(wf, g_abcd, first_a, last_a, first_b, last_b, &
-                                       first_c, last_c, first_d, last_d)
+   subroutine get_ovvv_4_ccs(wf, g_iabc, first_i, last_i, first_a, last_a, &
+                                         first_b, last_b, first_c, last_c)
+!!
+!!    Get ovvv
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!    The set of "get pqrs" routines will return the integral as t1-transformed,
+!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    are provided, the routines assume that the full integral should be returned.
+!!
+!!    Note that the MO integral tool controls how the integrals are constructed.
+!!    The choice depends on logicals within the tool that knows whether t1-transformed 
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(:,:,:,:) :: g_iabc 
+!
+      integer(i15), optional, intent(in) :: first_i, last_i 
+      integer(i15), optional, intent(in) :: first_c, last_c
+      integer(i15), optional, intent(in) :: first_a, last_a
+      integer(i15), optional, intent(in) :: first_b, last_b
+!
+      integer(i15) :: local_first_i, local_last_i 
+      integer(i15) :: local_first_c, local_last_c
+      integer(i15) :: local_first_b, local_last_b
+      integer(i15) :: local_first_a, local_last_a
+!
+      logical :: index_restrictions
+!
+      if (present(first_i) .and. present(last_i) .and. &
+          present(first_c) .and. present(last_c) .and. &
+          present(first_b) .and. present(last_b) .and. &
+          present(first_a) .and. present(last_a)) then
+!
+         index_restrictions = .true.
+!
+         local_first_i = first_i 
+         local_first_c = first_c 
+         local_first_b = first_b 
+         local_first_a = first_a 
+!
+         local_last_i = last_i 
+         local_last_c = last_c
+         local_last_b = last_b
+         local_last_a = last_a
+!
+      else
+!
+         index_restrictions = .false.
+!
+         local_first_i = 1 
+         local_first_c = 1 
+         local_first_b = 1 
+         local_first_a = 1 
+!
+         local_last_i = wf%n_o 
+         local_last_c = wf%n_v
+         local_last_b = wf%n_v
+         local_last_a = wf%n_v
+!
+      endif
+!
+      if (wf%integrals%need_t1()) then
+!
+         call wf%integrals%construct_ovvv(g_iabc, local_first_i, local_last_i, local_first_a, local_last_a, &
+                                          local_first_b, local_last_b, local_first_c, local_last_c, &
+                                          index_restrictions, wf%t1)
+!
+      else
+!
+         call wf%integrals%construct_ovvv(g_iabc, local_first_i, local_last_i, local_first_a, local_last_a, &
+                                          local_first_b, local_last_b, local_first_c, local_last_c, &
+                                          index_restrictions)
+!
+      endif
+!
+   end subroutine get_ovvv_4_ccs
+!
+!
+   subroutine get_vvvv_2_ccs(wf, g_abcd, first_a, last_a, first_b, last_b, &
+                                         first_c, last_c, first_d, last_d)
 !!
 !!    Get vvvv
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
@@ -2353,16 +3545,100 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_vvvv(g_abcd, local_first_a, local_last_a, local_first_b, local_last_b, &
-                                        local_first_c, local_last_c, local_first_d, local_last_d, index_restrictions, wf%t1)
+                                          local_first_c, local_last_c, local_first_d, local_last_d, &
+                                          index_restrictions, wf%t1)
 !
       else
 !
          call wf%integrals%construct_vvvv(g_abcd, local_first_a, local_last_a, local_first_b, local_last_b, &
-                                        local_first_c, local_last_c, local_first_d, local_last_d, index_restrictions)
+                                          local_first_c, local_last_c, local_first_d, local_last_d, &
+                                          index_restrictions)
 !
       endif
 !
-   end subroutine get_vvvv_ccs
+   end subroutine get_vvvv_2_ccs
+!
+!
+   subroutine get_vvvv_4_ccs(wf, g_abcd, first_a, last_a, first_b, last_b, &
+                                         first_c, last_c, first_d, last_d)
+!!
+!!    Get vvvv
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
+!!
+!!    The set of "get pqrs" routines will return the integral as t1-transformed,
+!!    with the appropriate index restrictions if passed. If no index restrictions 
+!!    are provided, the routines assume that the full integral should be returned.
+!!
+!!    Note that the MO integral tool controls how the integrals are constructed.
+!!    The choice depends on logicals within the tool that knows whether t1-transformed 
+!!    Cholesky vectors or the t1-transformed integrals themselves are on file. 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(:,:,:,:) :: g_abcd
+!
+      integer(i15), optional, intent(in) :: first_d, last_d 
+      integer(i15), optional, intent(in) :: first_c, last_c
+      integer(i15), optional, intent(in) :: first_a, last_a
+      integer(i15), optional, intent(in) :: first_b, last_b
+!
+      integer(i15) :: local_first_d, local_last_d 
+      integer(i15) :: local_first_c, local_last_c
+      integer(i15) :: local_first_b, local_last_b
+      integer(i15) :: local_first_a, local_last_a
+!
+      logical :: index_restrictions
+!
+      if (present(first_d) .and. present(last_d) .and. &
+          present(first_c) .and. present(last_c) .and. &
+          present(first_b) .and. present(last_b) .and. &
+          present(first_a) .and. present(last_a)) then
+!
+         index_restrictions = .true.
+!
+         local_first_d = first_d 
+         local_first_c = first_c 
+         local_first_b = first_b 
+         local_first_a = first_a 
+!
+         local_last_d = last_d 
+         local_last_c = last_c
+         local_last_b = last_b
+         local_last_a = last_a
+!
+      else
+!
+         index_restrictions = .false.
+!
+         local_first_d = 1 
+         local_first_c = 1 
+         local_first_b = 1 
+         local_first_a = 1 
+!
+         local_last_d = wf%n_v 
+         local_last_c = wf%n_v
+         local_last_b = wf%n_v
+         local_last_a = wf%n_v
+!
+      endif
+!
+      if (wf%integrals%need_t1()) then
+!
+         call wf%integrals%construct_vvvv(g_abcd, local_first_a, local_last_a, local_first_b, local_last_b, &
+                                          local_first_c, local_last_c, local_first_d, local_last_d, &
+                                          index_restrictions, wf%t1)
+!
+      else
+!
+         call wf%integrals%construct_vvvv(g_abcd, local_first_a, local_last_a, local_first_b, local_last_b, &
+                                        local_first_c, local_last_c, local_first_d, local_last_d, &
+                                        index_restrictions)
+!
+      endif
+!
+   end subroutine get_vvvv_4_ccs
 !
 !
    subroutine jacobian_transform_trial_vector_ccs(wf, c_i)
@@ -3110,7 +4386,7 @@ contains
       n_elements = 20
       if (n_elements .gt. wf%n_t1) n_elements = wf%n_t1 
 !
-      call mem%alloc_int(dominant_indices, n_elements, 1)
+      call mem%alloc(dominant_indices, n_elements, 1)
       call mem%alloc(dominant_values, n_elements, 1)
 !
       dominant_indices = 0
@@ -3134,7 +4410,7 @@ contains
 !
       write(output%unit, '(t6,a)')  '-----------------------------------------'
 !
-      call mem%dealloc_int(dominant_indices, n_elements, 1)
+      call mem%dealloc(dominant_indices, n_elements, 1)
       call mem%dealloc(dominant_values, n_elements, 1)
       call mem%dealloc(abs_x1, wf%n_t1, 1)
 !
