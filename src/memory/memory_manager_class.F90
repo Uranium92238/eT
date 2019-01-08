@@ -493,7 +493,7 @@ contains
 !
       class(memory_manager) :: mem
 !
-      real(dp), dimension(:,:,:), allocatable :: array
+      real(dp), dimension(:,:,:,:), allocatable :: array
 !
       integer(i15), intent(in) :: M, N, O, P ! First, second, third and fourth dimension of array
 !
