@@ -408,26 +408,6 @@ contains
    end subroutine jacobian_cc2_B1_cc2
 !
 !
-   module subroutine effective_jacobian_cc2_b1_cc2(wf, omega, rho_a_i, c_a_i, eps_o, eps_v)
-!!
-!!    Effective jacobian B1
-!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2019
-!!    
-      implicit none
-!
-      class(cc2), intent(in)  :: wf
-!
-      real(dp), intent(in)    :: omega
-!
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_a_i
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_a_i
-!
-      real(dp), dimension(wf%n_o), intent(in) :: eps_o
-      real(dp), dimension(wf%n_v), intent(in) :: eps_v
-!
-   end subroutine effective_jacobian_cc2_b1_cc2
-!
-!
    module subroutine effective_jacobian_cc2_a1_cc2(wf, omega, rho_a_i, c_a_i, eps_o, eps_v)
 !!
 !!    Effective Jacobian CC2 A1
@@ -447,7 +427,27 @@ contains
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
 !
    end subroutine effective_jacobian_cc2_a1_cc2
-
+!
+!
+   module subroutine effective_jacobian_cc2_b1_cc2(wf, omega, rho_a_i, c_a_i, eps_o, eps_v)
+!!
+!!    Effective jacobian B1
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
+!!    Linda Goletto, and Alexander Paul, Jan 2019
+!!
+      implicit none
+!
+      class(cc2), intent(in)  :: wf
+!
+      real(dp), intent(in)    :: omega
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_a_i
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_a_i
+!
+      real(dp), dimension(wf%n_o), intent(in) :: eps_o
+      real(dp), dimension(wf%n_v), intent(in) :: eps_v
+!
+   end subroutine effective_jacobian_cc2_b1_cc2
 !
 !
 end submodule jacobian
