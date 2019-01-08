@@ -228,7 +228,7 @@ contains
 !
 !     Solve the DIIS equation
 !
-      call mem%alloc_int(ipiv, solver%diis_dimension, 1)
+      call mem%alloc(ipiv, solver%diis_dimension, 1)
       ipiv = 0
 !
 !     Note: on exit, the solution is in the diis_vector,

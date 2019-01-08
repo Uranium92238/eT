@@ -93,4 +93,7 @@
       real(dp), dimension(wf%n_v), intent(in)  :: eps_v
 !
 !
+      
+!
+!
    end subroutine effective_jacobian_cc2_b1_cc2
