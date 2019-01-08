@@ -223,8 +223,8 @@ contains
                   ci = wf%n_v*(i-1) + c
 !
                   u_ai_kc(ai,kc) = - (two*g_ai_ck(ai,ck)- g_ai_ck(ak,ci))&
-                                          /(eps_v(a) + eps(c) &
-                                          - eps_o(i, 1) - eps_o(k, 1))
+                                          /(eps_v(a) + eps_v(c) &
+                                          - eps_o(i) - eps_o(k))
 !
                enddo
             enddo
@@ -256,6 +256,7 @@ contains
 !
 !
 !     L_jc_kb = L_kcjb = 2 g_kc_jb - g_kb_jc
+!         1234                3214     3412
 !
       call mem%alloc(g_kc_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call mem%alloc(L_jc_kb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
@@ -264,7 +265,7 @@ contains
       call wf%get_ovov(g_kc_jb)
 !
       call add_3214_to_1234(two, g_kc_jb, L_jc_kb, (wf%n_o), (wf%n_v), (wf%n_o), (wf%n_v))
-      call add_1432_to_1234(-one, g_kc_jb, L_jc_kb, (wf%n_o), (wf%n_v), (wf%n_o), (wf%n_v))
+      call add_3412_to_1234(-one, g_kc_jb, L_jc_kb, (wf%n_o), (wf%n_v), (wf%n_o), (wf%n_v))
 !
       call mem%dealloc(g_kc_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
@@ -332,6 +333,7 @@ contains
 !
 !
 !     L_kc_jb = L_kcjb = 2 g_kc_jb - g_kb_jc
+!        1234                 1234     1432
 !
       call mem%alloc(g_kc_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call mem%alloc(L_kc_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
