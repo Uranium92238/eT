@@ -408,11 +408,17 @@ contains
    end subroutine jacobian_cc2_B1_cc2
 !
 !
-   module subroutine effective_jacobian_cc2_a1_cc2(wf, omega, rho_a_i, c_a_i, eps_o, eps_v)
+   module subroutine effective_jacobian_cc2_a1_cc2(wf, omega, rho_ai, c_ai, eps_o, eps_v)
 !!
 !!    Effective Jacobian CC2 A1
 !!    Written by Eirik F. Kjønstad and Sarai Dery Folkestad
 !!    Linda Goletto, and Alexander Paul, Jan 2019
+!!
+!!    rho_ai =+ 2 F_kc * (-eps_ai,ck + w)^-1 * (1 + delta_ai,ck)^-1 * (sum_d g_aicd c_dk + sum_d g_ckad c_di) 
+!!           =+ 2 F_kc * (-eps_ai,ck + w)^-1 * (1 + delta_ai,ck)^-1 * (X_aick + X_ckai)
+!!           =+ 2 F_kc * (Y_aick + Y_ckai)
+!!
+!!    The term is calculated in batches over the a and c indices.
 !!
       implicit none 
 !
@@ -420,11 +426,114 @@ contains
 !
       real(dp), intent(in) :: omega 
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_a_i 
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_a_i 
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai 
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_ai 
 !
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
+!
+      real(dp), dimension(:,:,:,:), allocatable :: X_aick
+      real(dp), dimension(:,:,:,:), allocatable :: Y_aick
+!
+      real(dp), dimension(:,:,:,:), allocatable :: g_aicd 
+!
+      real(dp), dimension(:,:), allocatable :: F_ck 
+!
+      integer(i15) :: a, i, c, k
+!
+!     Construct X_aick = sum_d g_aicd c_dk 
+! 
+      call mem%alloc(g_aicd, wf%n_v, wf%n_o, wf%n_v, wf%n_v)
+!
+      call wf%get_vovv(g_aicd,     &
+                        1, wf%n_v, &
+                        1, wf%n_o, &
+                        1, wf%n_v, &
+                        1, wf%n_v)
+!
+      call mem%alloc(X_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('N', 'N',          &
+                  wf%n_o*wf%n_v**2, &
+                  wf%n_o,           &
+                  wf%n_v,           &
+                  one,              &
+                  g_aicd,           &
+                  wf%n_o*wf%n_v**2, &
+                  c_ai,             & ! c_dk
+                  wf%n_v,           &
+                  zero,             &
+                  X_aick,           &
+                  wf%n_o*wf%n_v**2)
+!
+      call mem%dealloc(g_aicd, wf%n_v, wf%n_o, wf%n_v, wf%n_v)
+!
+!     Scale X: Y_aick = (-eps_ai,ck + w)^-1 * (1 + delta_ai,ck)^-1 * X_aick 
+!
+      call mem%alloc(Y_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      do k = 1, wf%n_o
+         do c = 1, wf%n_v
+            do i = 1, wf%n_o 
+               do a = 1, wf%n_v
+!
+                  Y_aick(a, i, c, k) = X_aick(a, i, c, k)/(- eps_v(a) - eps_v(c) + eps_o(i) + eps_o(k) + omega)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      do i = 1, wf%n_o 
+         do a = 1, wf%n_v 
+!
+            Y_aick(a, i, a, i) = Y_aick(a, i, a, i)/two
+!
+         enddo
+      enddo
+!
+      call mem%dealloc(X_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+!     Reorder occ-vir Fock matrix, then compute & add the term,
+!     2 F_ck * (Y_aick + Y_ckai) to the transformed vector rho_ai
+!
+      call mem%alloc(F_ck, wf%n_v, wf%n_o)
+!
+      do k = 1, wf%n_o
+         do c = 1, wf%n_v 
+!
+            F_ck(c, k) = wf%fock_ia(k, c)
+!
+         enddo
+      enddo
+!
+      call dgemm('N', 'N',       &
+                  wf%n_o*wf%n_v, &
+                  1,             &
+                  wf%n_o*wf%n_v, &
+                  two,           &
+                  Y_aick,        &
+                  wf%n_o*wf%n_v, &
+                  F_ck,          &
+                  wf%n_o*wf%n_v, &
+                  one,           &
+                  rho_ai,        & 
+                  wf%n_o*wf%n_v)
+!
+      call dgemm('T', 'N',       &
+                  wf%n_o*wf%n_v, &
+                  1,             &
+                  wf%n_o*wf%n_v, &
+                  two,           &
+                  Y_aick,        &
+                  wf%n_o*wf%n_v, &
+                  F_ck,          &
+                  wf%n_o*wf%n_v, &
+                  one,           &
+                  rho_ai,        & 
+                  wf%n_o*wf%n_v)
+!
+      call mem%dealloc(Y_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
    end subroutine effective_jacobian_cc2_a1_cc2
 !
