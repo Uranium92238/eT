@@ -14,7 +14,7 @@
    end subroutine effective_jacobian_transformation_cc2
 !
 !
-   module subroutine construct_jacobian_cc2_A1_cc2(wf, rho_a_i, c_b_j)
+   module subroutine jacobian_cc2_A1_cc2(wf, rho_a_i, c_b_j)
 !!
 !!    Jacobian CC2 A1
 !!    Written by Eirik F. Kjønstad and Sarai Dery Folkestad
@@ -22,17 +22,17 @@
 !!
       implicit none
 !
-      class(cc2) :: wf
+      class(cc2), intent(in) :: wf
 !
 !     Vectors sent to the routine
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_b_j
-      real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)     :: c_b_j
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)  :: rho_a_i
 !
-    end subroutine construct_jacobian_cc2_A1_cc2
+    end subroutine jacobian_cc2_A1_cc2
 !
 !
-    module subroutine construct_jacobian_cc2_B1_cc2(wf, rho_a_i, c_b_j, eps_o, eps_v)
+    module subroutine jacobian_cc2_B1_cc2(wf, rho_a_i, c_b_j, eps_o, eps_v)
 !!
 !!    Jacobian CC2 B1
 !!    Written by Eirik F. Kjønstad and Sarai Dery Folkestad
@@ -40,7 +40,7 @@
 !!
       implicit none
 !
-      class(cc2) :: wf
+      class(cc2), intent(in) :: wf
 !
 !     Vectors sent to the routine
 !
@@ -50,7 +50,7 @@
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
 !
-   end subroutine construct_jacobian_cc2_B1_cc2
+   end subroutine jacobian_cc2_B1_cc2
 !
 !
    module subroutine effective_jacobian_cc2_b1_cc2(wf, omega, rho_a_i, c_a_i, eps_o, eps_v)
@@ -72,3 +72,26 @@
 !
 !
    end subroutine effective_jacobian_cc2_b1_cc2
+!
+!
+   module subroutine effective_jacobian_cc2_a1_cc2(wf, omega, rho_a_i, c_a_i, eps_o, eps_v)
+!!
+!!    Effective Jacobian CC2 A1
+!!    Written by Eirik F. Kjønstad and Sarai Dery Folkestad
+!!    Linda Goletto, and Alexander Paul, Jan 2019
+!!
+      implicit none 
+!
+      class(cc2), intent(in) :: wf 
+!
+      real(dp), intent(in) :: omega 
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_a_i 
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_a_i 
+!
+      real(dp), dimension(wf%n_o), intent(in) :: eps_o
+      real(dp), dimension(wf%n_v), intent(in) :: eps_v
+!
+   end subroutine effective_jacobian_cc2_a1_cc2
+!
+!
