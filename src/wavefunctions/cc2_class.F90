@@ -22,8 +22,6 @@ module cc2_class
       procedure :: calculate_energy => calculate_energy_cc2
 !
     !  procedure :: effective_jacobian_transformation => effective_jacobian_transformation_cc2
-    !  procedure :: effective_jacobian_cc2_a1         => effective_jacobian_cc2_a1_cc2
-    !  procedure :: effective_jacobian_cc2_b1         => effective_jacobian_cc2_b1_cc2
 !
       procedure :: effective_jacobian_cc2_a1 => effective_jacobian_cc2_a1_cc2
 !

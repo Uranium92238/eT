@@ -66,9 +66,6 @@ contains
 !
 !     :: CC2 contributions to the transformed singles vector ::
 !
-      call wf%effective_jacobian_cc2_a1(rho_a_i, c_a_i)
-      call wf%effective_jacobian_cc2_b1(rho_a_i, c_a_i, eps_o, eps_v)
-!
       call mem%dealloc(c_a_i, wf%n_v, wf%n_o)
       call mem%dealloc(rho_a_i, wf%n_v, wf%n_o)
 !
@@ -453,7 +450,7 @@ contains
    end subroutine jacobian_cc2_B1_cc2
 !
 !
-   module subroutine effective_jacobian_cc2_a1_cc2(wf, rho_a_i, c_c_j, omega, eps_o, eps_v)
+   module subroutine effective_jacobian_cc2_a1_cc2(wf, omega, rho_a_i, c_c_j, eps_o, eps_v)
 !!
 !!    Jacobian CC2 E1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
@@ -478,7 +475,6 @@ contains
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
 !
-<<<<<<< HEAD
       real(dp) :: omega
 !
 !     Integrals
