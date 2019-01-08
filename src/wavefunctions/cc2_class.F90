@@ -1,7 +1,7 @@
 module cc2_class
 !
 !!
-!!    Coupled cluster singles and perturbative doubles (cc2) 
+!!    Coupled cluster singles and perturbative doubles (cc2)
 !!    class module
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
 !!
@@ -32,7 +32,7 @@ module cc2_class
       include "../submodules/cc2/omega_cc2_interface.F90"
       include "../submodules/cc2/jacobian_cc2_interface.F90"
 !
-   end interface 
+   end interface
 !
 !
 contains
@@ -42,7 +42,7 @@ contains
    subroutine calculate_energy_cc2(wf)
 !!
 !!     Calculate energy (CC2)
-!!     Written by Sarai D. Folkestad, Eirik F. Kjønstad, 
+!!     Written by Sarai D. Folkestad, Eirik F. Kjønstad,
 !!     Andreas Skeidsvoll, 2018
 !!
 !!     Calculates the CC2 energy. This is only equal to the actual
@@ -127,7 +127,7 @@ contains
                   enddo
                enddo
             enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
 !
             call mem%dealloc(g_aibj, wf%n_v*(batch_i%length), wf%n_v*(batch_j%length))
