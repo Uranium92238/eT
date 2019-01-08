@@ -1,6 +1,5 @@
 submodule (cc2_class) jacobian
 !
-
 !
 !!
 !!    Jacobian submodule (CC2)
@@ -66,7 +65,6 @@ contains
 !     Indices
 !
       integer(i15) :: b, j
-!
 !
 !     Explicit reordering of c_b_j
 !
@@ -223,8 +221,8 @@ contains
                   ci = wf%n_v*(i-1) + c
 !
                   u_ai_kc(ai,kc) = - (two*g_ai_ck(ai,ck)- g_ai_ck(ak,ci))&
-                                          /(eps_v(a) + eps(c) &
-                                          - eps_o(i, 1) - eps_o(k, 1))
+                                          /(eps_v(a) + eps_v(c) &
+                                          - eps_o(i) - eps_o(k))
 !
                enddo
             enddo
