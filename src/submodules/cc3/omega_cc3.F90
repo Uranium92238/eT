@@ -107,8 +107,8 @@ contains
 !
       class(cc3) :: wf
 !
-      real(dp), dimension(:,:), allocatable :: g_pqrs !Array for constructed integrals
-      real(dp), dimension(:,:), allocatable :: h_pqrs !Array for sorted integrals
+      real(dp), dimension(:,:,:,:), allocatable :: g_pqrs !Array for constructed integrals
+      real(dp), dimension(:,:,:,:), allocatable :: h_pqrs !Array for sorted integrals
 !
       integer(i15) :: k, j, jk, record, w_start, w_stop
       type(batching_index) :: batch_k
@@ -134,8 +134,8 @@ contains
 !
          call batch_k%determine_limits(current_k_batch)
 !
-         call mem%alloc(g_pqrs,wf%n_v**2, wf%n_v*batch_k%length)
-         call mem%alloc(h_pqrs,wf%n_v**2, wf%n_v*batch_k%length)
+         call mem%alloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
+         call mem%alloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
 !
          call wf%get_vvvo(g_pqrs, &
                            1,wf%n_v, &
@@ -148,10 +148,7 @@ contains
          do k = 1,batch_k%length
 !
             record = batch_k%first + k -1
-            w_start = wf%n_v*(k-1)+1
-            w_stop  = wf%n_v*k
-!
-            write(wf%g_bdck_t%unit,rec=record,iostat=ioerror) h_pqrs(1:wf%n_v**2,w_start:w_stop)
+            write(wf%g_bdck_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,:,k)
 !
          enddo
 !
@@ -159,8 +156,8 @@ contains
             call output%error_msg('Failed to write bdck_t file')
          endif
 !
-         call mem%dealloc(g_pqrs,wf%n_v**2, wf%n_v*batch_k%length)
-         call mem%dealloc(h_pqrs,wf%n_v**2, wf%n_v*batch_k%length)
+         call mem%dealloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
+         call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
 !
       enddo
 !
@@ -177,8 +174,8 @@ contains
 !
          call batch_k%determine_limits(current_k_batch)
 !
-         call mem%alloc(g_pqrs,wf%n_v**2, batch_k%length*wf%n_v)
-         call mem%alloc(h_pqrs,wf%n_v**2, wf%n_v*batch_k%length)
+         call mem%alloc(g_pqrs, wf%n_v, wf%n_v, batch_k%length, wf%n_v)
+         call mem%alloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
 !
          call wf%get_vvov(g_pqrs, &
                            1,wf%n_v, &
@@ -191,10 +188,7 @@ contains
          do k = 1,batch_k%length
 !
             record = batch_k%first + k -1
-            w_start = wf%n_v*(k-1)+1
-            w_stop  = wf%n_v*k
-!
-            write(wf%g_dbkc_t%unit,rec=record,iostat=ioerror) h_pqrs(1:wf%n_v**2,w_start:w_stop)
+            write(wf%g_dbkc_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,:,k)
 !
          enddo
 !
@@ -202,8 +196,8 @@ contains
             call output%error_msg('Failed to write dbkc_t file')
          endif
 !
-         call mem%dealloc(g_pqrs,wf%n_v**2, batch_k%length*wf%n_v)
-         call mem%dealloc(h_pqrs,wf%n_v**2, wf%n_v*batch_k%length)
+         call mem%dealloc(g_pqrs, wf%n_v, wf%n_v, batch_k%length, wf%n_v)
+         call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
 !
       enddo
 !
@@ -224,8 +218,8 @@ contains
 !
          call batch_k%determine_limits(current_k_batch)
 !
-         call mem%alloc(g_pqrs,wf%n_o**2, wf%n_v*batch_k%length)
-         call mem%alloc(h_pqrs,wf%n_o*wf%n_v, wf%n_o*batch_k%length)
+         call mem%alloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
+         call mem%alloc(h_pqrs, wf%n_o, wf%n_v, wf%n_o ,batch_k%length)
 !
          call wf%get_oovo(g_pqrs, &
                            1,wf%n_o, &
@@ -239,9 +233,7 @@ contains
             do j = 1,wf%n_o
 !
                record  = (batch_k%first + k - 1)*wf%n_o + j
-               jk = wf%n_o*(k-1) + j
-!
-               write(wf%g_ljck_t%unit,rec=record,iostat=ioerror) h_pqrs(1:wf%n_o*wf%n_v,jk)
+               write(wf%g_ljck_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,j,k)
 !
             enddo
          enddo
@@ -250,8 +242,8 @@ contains
             call output%error_msg('Failed to write ljck_t file')
          endif
 
-         call mem%dealloc(g_pqrs,wf%n_o**2, wf%n_v*batch_k%length)
-         call mem%dealloc(h_pqrs,wf%n_o*wf%n_v, wf%n_o*batch_k%length)
+         call mem%dealloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
+         call mem%dealloc(h_pqrs, wf%n_o, wf%n_v, wf%n_o, batch_k%length)
 !
       enddo
 !
@@ -268,8 +260,8 @@ contains
 !
          call batch_k%determine_limits(current_k_batch)
 !
-         call mem%alloc(g_pqrs,wf%n_o**2, wf%n_v*batch_k%length)
-         call mem%alloc(h_pqrs,wf%n_v*wf%n_o, wf%n_o*batch_k%length)
+         call mem%alloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
+         call mem%alloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_k%length)
 !
          call wf%get_ooov(g_pqrs, &
                            1,wf%n_o, &
@@ -283,9 +275,7 @@ contains
             do j = 1,wf%n_o
 !
                record  = (batch_k%first + k - 1)*wf%n_o + j
-               jk = wf%n_o*(k-1) + j
-!
-               write(wf%g_jlkc_t%unit,rec=record,iostat=ioerror) h_pqrs(1:wf%n_v*wf%n_o,jk)
+               write(wf%g_jlkc_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,j,k)
 !
             enddo
          enddo
@@ -294,8 +284,8 @@ contains
             call output%error_msg('Failed to write jlkc_t file')
          endif
 
-         call mem%dealloc(g_pqrs,wf%n_o**2, batch_k%length*wf%n_v)
-         call mem%dealloc(h_pqrs,wf%n_v*wf%n_o, wf%n_o*batch_k%length)
+         call mem%dealloc(g_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_v)
+         call mem%dealloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_k%length)
 !
       enddo
 !
@@ -316,8 +306,8 @@ contains
 !
          call batch_k%determine_limits(current_k_batch)
 !
-         call mem%alloc(g_pqrs,wf%n_o*wf%n_v, batch_k%length*wf%n_v)
-         call mem%alloc(h_pqrs,wf%n_v**2, wf%n_o*batch_k%length)
+         call mem%alloc(g_pqrs, wf%n_o, wf%n_v, batch_k%length, wf%n_v)
+         call mem%alloc(h_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%length)
 !
          call wf%get_ovov(g_pqrs, &
                            1,wf%n_o, &
@@ -331,9 +321,7 @@ contains
             do j = 1,wf%n_o
 !
                record  = (batch_k%first + k - 1)*wf%n_o + j
-               jk = wf%n_o*(k-1) + j
-!
-               write(wf%g_jbkc_t%unit,rec=record,iostat=ioerror) h_pqrs(1:wf%n_v*wf%n_v,jk)
+               write(wf%g_jbkc_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,j,k)
 !
             enddo
          enddo
@@ -342,8 +330,8 @@ contains
             call output%error_msg('Failed to write jbkc_t file')
          endif
 
-         call mem%dealloc(g_pqrs,wf%n_o*wf%n_v, batch_k%length*wf%n_v)
-         call mem%dealloc(h_pqrs,wf%n_v**2, wf%n_o*batch_k%length)
+         call mem%dealloc(g_pqrs, wf%n_o, wf%n_v, batch_k%length, wf%n_v)
+         call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%length)
 !
       enddo
 !

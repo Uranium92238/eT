@@ -820,7 +820,7 @@ contains
 !
       integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
-      real(dp), dimension(:,:), intent(in) :: x_pqrs
+      real(dp), dimension(((dim_p*dim_q+1)*dim_r*dim_s)/2), intent(in) :: x_pqrs
       real(dp), dimension(dim_q*dim_s, dim_p*dim_r) :: x_qs_pr
 !
       integer(i15) :: p, q, r, s, rs, pq, pqrs, qs, pr
@@ -841,7 +841,7 @@ contains
                   pr = dim_p*(r-1) + p
                   pqrs = (max(pq,rs)*(max(pq,rs)-3)/2) + pq + rs
 !
-                  x_qs_pr(qs, pr) = x_pqrs(pqrs, 1)
+                  x_qs_pr(qs, pr) = x_pqrs(pqrs)
 !
                enddo
             enddo
@@ -956,24 +956,18 @@ contains
 !
       integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
-      real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs
-      real(dp), dimension(dim_q*dim_p, dim_r*dim_s) :: x_qp_rs
+      real(dp), dimension(dim_p, dim_q, dim_r, dim_s), intent(in) :: x_pq_rs
+      real(dp), dimension(dim_q, dim_p, dim_r, dim_s) :: x_qp_rs
 !
-      integer(i15) :: p, q, r, s, rs, pq, qp
+      integer(i15) :: p, q, r, s
 !
-!$omp parallel do schedule(static) private(s,r,rs,q,qp,p,pq)
+!$omp parallel do schedule(static) private(s,r,q,p)
       do s = 1, dim_s
          do r = 1, dim_r
+            do p = 1, dim_p
+               do q = 1, dim_q
 !
-            rs = dim_r*(s-1) + r
-!
-            do q = 1, dim_q
-               do p = 1, dim_p
-!
-                  pq = dim_p*(q-1) + p
-                  qp = dim_q*(p-1) + q
-!
-                  x_qp_rs(qp, rs) = x_pq_rs(pq, rs)
+                  x_qp_rs(q, p, r, s) = x_pq_rs(p, q, r, s)
 !
                enddo
             enddo
@@ -999,27 +993,18 @@ contains
 !
       integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
-      real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs
-      real(dp), dimension(dim_q*dim_s, dim_p*dim_r) :: x_qs_pr
+      real(dp), dimension(dim_p, dim_q, dim_r, dim_s), intent(in) :: x_pq_rs
+      real(dp), dimension(dim_q, dim_s, dim_p, dim_r) :: x_qs_pr
 !
-      integer(i15) :: p, q, r, s, rs, pq, qs, pr
+      integer(i15) :: p, q, r, s
 !
-!$omp parallel do schedule(static) private(s,r,rs,q,qs,p,pq,pr)
-      do s = 1, dim_s
-         do r = 1, dim_r
+!$omp parallel do schedule(static) private(s,r,q,p)
+      do r = 1, dim_r
+         do p = 1, dim_p
+            do s = 1, dim_s
+               do q = 1, dim_q
 !
-            rs = dim_r*(s-1) + r
-!
-            do q = 1, dim_q
-!
-               qs = dim_q*(s-1) + q
-!
-               do p = 1, dim_p
-!
-                  pq = dim_p*(q-1) + p
-                  pr = dim_p*(r-1) + p
-!
-                  x_qs_pr(qs, pr) = x_pq_rs(pq, rs)
+                  x_qs_pr(q, s, p, r) = x_pq_rs(p, q, r, s)
 !
                enddo
             enddo
@@ -1044,27 +1029,18 @@ contains
 !
       integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
-      real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs
-      real(dp), dimension(dim_p*dim_r, dim_q*dim_s) :: x_pr_qs
+      real(dp), dimension(dim_p, dim_q, dim_r, dim_s), intent(in) :: x_pq_rs
+      real(dp), dimension(dim_p, dim_r, dim_q, dim_s) :: x_pr_qs
 !
-      integer(i15) :: p, q, r, s, rs, qs, pq, pr
+      integer(i15) :: p, q, r, s
 !
-!$omp parallel do schedule(static) private(s,r,rs,q,qs,p,pq,pr)
+!$omp parallel do schedule(static) private(s,r,q,p)
       do s = 1, dim_s
-         do r = 1, dim_r
-!
-            rs = dim_r*(s-1) + r
-!
-            do q = 1, dim_q
-!
-               qs = dim_q*(s-1) + q
-!
+         do q = 1, dim_q
+            do r = 1, dim_r
                do p = 1, dim_p
 !
-                  pq = dim_p*(q-1) + p
-                  pr = dim_p*(r-1) + p
-!
-                  x_pr_qs(pr, qs) = x_pq_rs(pq, rs)
+                  x_pr_qs(p, r, q, s) = x_pq_rs(p, q, r, s)
 !
                enddo
             enddo
@@ -2463,27 +2439,18 @@ contains
 !
       integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
-      real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs
-      real(dp), dimension(dim_s*dim_q, dim_r*dim_p) :: x_sq_pr
+      real(dp), dimension(dim_p, dim_q, dim_r, dim_s), intent(in) :: x_pq_rs
+      real(dp), dimension(dim_s, dim_q, dim_r, dim_p) :: x_sq_pr
 !
-      integer(i15) :: p, q, r, s, pq, rs, sq, pr
+      integer(i15) :: p, q, r, s
 !
-!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,sq,pr)
-      do s = 1, dim_s
-         do r = 1, dim_r
-!
-            rs = dim_r*(s-1) + r
-!
+!$omp parallel do schedule(static) private(s,r,q,p)
+      do r = 1, dim_r
+         do p = 1, dim_p
             do q = 1, dim_q
+               do s = 1, dim_s
 !
-               sq = dim_s*(q-1) + s
-!
-               do p = 1, dim_p
-!
-                  pq = dim_p*(q-1) + p
-                  pr = dim_p*(r-1) + p
-!
-                  x_sq_pr(sq, pr) = x_pq_rs(pq, rs)
+                  x_sq_pr(s, q, p, r) = x_pq_rs(p, q, r, s)
 !
                enddo
             enddo
@@ -2509,7 +2476,7 @@ contains
 !
       integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
-      real(dp), dimension(:,:), intent(in) :: x_pqrs
+      real(dp), dimension(((dim_p*dim_q+1)*dim_r*dim_s)/2), intent(in) :: x_pqrs
       real(dp), dimension(dim_s*dim_q, dim_r*dim_p) :: x_sq_pr
 !
       integer(i15) :: p, q, r, s, pq, rs, sq, pr, pqrs
@@ -2530,7 +2497,7 @@ contains
                   pr = dim_p*(r-1) + p
                   pqrs = (max(pq,rs)*(max(pq,rs)-3)/2) + pq + rs
 !
-                  x_sq_pr(sq, pr) = x_pqrs(pqrs,1)
+                  x_sq_pr(sq, pr) = x_pqrs(pqrs)
 !
                enddo
             enddo
