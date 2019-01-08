@@ -1,6 +1,4 @@
-submodule (cc2_class) jacobian
-!
-
+submodule (cc2_class) jacobian_cc2
 !
 !!
 !!    Jacobian submodule (CC2)
@@ -35,9 +33,48 @@ contains
 !
       real(dp), dimension(wf%n_amplitudes, 1) :: c
 !
+      real(dp), dimension(:,:), allocatable :: c_a_i
+!
+      real(dp), dimension(:,:), allocatable :: rho_a_i
+!
+      integer(i15) :: i, j, a, b, ai ! Index
+!
+!     Allocate and zero the transformed vector (singles part)
+!
+      call mem%alloc(rho_a_i, wf%n_v, wf%n_o)
+      rho_a_i = zero
+!
+      call mem%alloc(c_a_i, wf%n_v, wf%n_o)
+!
+!$omp parallel do schedule(static) private(a, i, ai)
+      do a = 1, wf%n_v
+         do i = 1, wf%n_o
+!
+            ai = wf%n_v*(i - 1) + a
+!
+            c_a_i(a, i) = c(ai, 1)
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+!     :: CCS contributions to the singles c vector ::
+!
+      call wf%jacobian_ccs_a1(rho_a_i, c_a_i)
+      call wf%jacobian_ccs_b1(rho_a_i, c_a_i)
+!
+!     :: CC2 contributions to the transformed singles vector ::
+!
+      call wf%effective_jacobian_cc2_a1(rho_a_i, c_a_i)
+      call wf%effective_jacobian_cc2_b1(rho_a_i, c_a_i, eps_o, eps_v)
+!
+      call mem%dealloc(c_a_i, wf%n_v, wf%n_o)
+      call mem%dealloc(rho_a_i, wf%n_v, wf%n_o)
+!
+!
    end subroutine effective_jacobian_transformation_cc2
 !
-   module subroutine construct_jacobian_cc2_A1_cc2(wf, rho_a_i, c_b_j)
+   module subroutine effective_jacobian_cc2_a1_cc2(wf, rho_a_i, c_b_j)
 !!
 !!    Jacobian CC2 A1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
@@ -68,7 +105,7 @@ contains
       integer(i15) :: b, j
 !
 !
-!     Explicit reordering of c_b_j
+!     Explicit reordering of c_b_j as c_j_b
 !
       call mem%alloc(c_j_b, wf%n_o, wf%n_v)
 !
@@ -123,10 +160,10 @@ contains
       call mem%dealloc(g_ai_jb, (wf%n_v)*(wf%n_o), (wf%n_o)*(wf%n_v))
       call mem%dealloc(c_j_b, wf%n_o, wf%n_v)
 !
-   end subroutine construct_jacobian_cc2_A1_cc2
+   end subroutine effective_jacobian_cc2_a1_cc2
 !
 !
-   module subroutine construct_jacobian_cc2_B1_cc2(wf, rho_a_i, c_b_j, eps_o, eps_v)
+   module subroutine effective_jacobian_cc2_b1_cc2(wf, rho_a_i, c_b_j, eps_o, eps_v)
 !!
 !!    Jacobian CC2 B1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
@@ -169,10 +206,12 @@ contains
       integer(i15) :: a, i, b, c, j, k
       integer(i15) :: jb, kc, jc, kb, bj, ai, ck, ak, ci, bi, aj, cj
 !
-!     :: Term 1: 2 L_kcjb * c_bj * sum_bj (2 t^ac_ik - t^ac_ki)  ::
+!     :: Term 1: 2 L_kcjb * c_bj * (2 t^ac_ik - t^ac_ki)  ::
 !
+!     Construct L_kcjb = 2 g_kc_jb - g_kb_jc ordered as
 !
-!     L_kc_bj = L_kcjb = 2 g_kc_jb - g_kb_jc
+!               L_kc_bj = 2 g_kc_jb - g_kb_jc
+!                 1234        1243      1342
 !
       call mem%alloc(g_kc_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call mem%alloc(L_kc_bj, (wf%n_o)*(wf%n_v), (wf%n_v)*(wf%n_o))
@@ -254,9 +293,10 @@ contains
 !
 !     :: Term 2: L_kcjb t^cb_ki c_aj ::
 !
+!     Construct L_kcjb = 2 g_kc_jb - g_kb_jc ordered as
 !
-!     L_jc_kb = L_kcjb = 2 g_kc_jb - g_kb_jc
-!         1234                3214     3412
+!               L_jc_kb = 2 g_kc_jb - g_kb_jc
+!                 1234        3214      3412
 !
       call mem%alloc(g_kc_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call mem%alloc(L_jc_kb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
@@ -331,9 +371,10 @@ contains
 !
 !     :: Term 3: L_kcjb t^ca_kj c_bi ::
 !
+!     Construct L_kcjb = 2 g_kc_jb - g_kb_jc ordered as
 !
-!     L_kc_jb = L_kcjb = 2 g_kc_jb - g_kb_jc
-!        1234                 1234     1432
+!     L_kc_jb = 2 g_kc_jb - g_kb_jc
+!       1234        1234      1432
 !
       call mem%alloc(g_kc_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call mem%alloc(L_kc_jb, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
@@ -408,7 +449,7 @@ contains
       call mem%dealloc(I_ab, (wf%n_v), (wf%n_o))
 !
 !
-   end subroutine
+   end subroutine effective_jacobian_cc2_b1_cc2
 !
 !
-end submodule jacobian
+end submodule jacobian_cc2
