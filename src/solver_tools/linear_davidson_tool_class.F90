@@ -162,7 +162,7 @@ contains
 !
 !     Solve the linear problem
 !
-      call mem%alloc_int(ipiv, davidson%dim_red, 1)
+      call mem%alloc(ipiv, davidson%dim_red, 1)
       ipiv = 0
       info = 0
 !
@@ -185,7 +185,7 @@ contains
                   info)
 !
       call mem%dealloc(A_red_copy, davidson%dim_red, 1 )
-      call mem%dealloc_int(ipiv, davidson%dim_red, 1)
+      call mem%dealloc(ipiv, davidson%dim_red, 1)
 !
       if (info .ne. 0) then 
 !

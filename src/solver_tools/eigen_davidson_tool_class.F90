@@ -212,7 +212,7 @@ contains
       real(dp), dimension(:,:), allocatable :: omega_re
       real(dp), dimension(:,:), allocatable :: omega_im
 !
-      integer(i15), dimension(:,:), allocatable :: index_list
+      integer(i15), dimension(:), allocatable :: index_list
 !
       real(dp), dimension(:,:), allocatable :: X_red
       real(dp), dimension(:,:), allocatable :: A_red ! Safe copy to avoid BLAS overwrite
@@ -267,7 +267,7 @@ contains
       davidson%omega_re = zero
       davidson%omega_im = zero
 !
-      call mem%alloc_int(index_list, davidson%n_solutions, 1)
+      call mem%alloc(index_list, davidson%n_solutions)
 !
       call get_n_lowest(davidson%n_solutions, davidson%dim_red, &
                         omega_re, davidson%omega_re, index_list)
@@ -283,18 +283,18 @@ contains
 !
          do i = 1, davidson%dim_red
 !
-            davidson%X_red(i, j) = X_red(i, index_list(j,1))
+            davidson%X_red(i, j) = X_red(i, index_list(j))
 !
          enddo
 !
-         davidson%omega_im(j, 1) = omega_im(index_list(j,1), 1)
+         davidson%omega_im(j, 1) = omega_im(index_list(j), 1)
 !
       enddo
 !
       call mem%dealloc(X_red, davidson%dim_red, davidson%dim_red)
       call mem%dealloc(omega_re, davidson%dim_red, 1)
       call mem%dealloc(omega_im, davidson%dim_red, 1)
-      call mem%dealloc_int(index_list, davidson%n_solutions, 1)
+      call mem%dealloc(index_list, davidson%n_solutions)
 !
    end subroutine solve_reduced_problem_eigen_davidson_tool
 !

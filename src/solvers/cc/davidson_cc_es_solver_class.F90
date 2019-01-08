@@ -524,7 +524,7 @@ contains
          call wf%get_orbital_differences(orbital_differences)
 !
          call mem%alloc(lowest_orbital_differences, solver%n_singlet_states, 1)
-         call mem%alloc_int(lowest_orbital_differences_index, solver%n_singlet_states, 1)
+         call mem%alloc(lowest_orbital_differences_index, solver%n_singlet_states, 1)
 !
          call get_n_lowest(solver%n_singlet_states, wf%n_amplitudes, orbital_differences, &
                            lowest_orbital_differences, lowest_orbital_differences_index)
@@ -546,7 +546,7 @@ contains
          enddo 
 !
          call mem%dealloc(c_i, wf%n_amplitudes, 1)
-         call mem%dealloc_int(lowest_orbital_differences_index, solver%n_singlet_states, 1)
+         call mem%dealloc(lowest_orbital_differences_index, solver%n_singlet_states, 1)
 !
       endif
 !
@@ -675,7 +675,7 @@ contains
 !
             enddo
 !
-            call mem%alloc_int(solver%start_vectors, n_start_vecs, 1)
+            call mem%alloc(solver%start_vectors, n_start_vecs, 1)
             read(line, *) solver%start_vectors
 !
          endif

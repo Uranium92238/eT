@@ -519,7 +519,7 @@ contains
 !
       call molecule%initialize_basis_sets()
 !
-      call mem%alloc_int(n_atoms_in_basis, molecule%n_basis_sets, 1)
+      call mem%alloc(n_atoms_in_basis, molecule%n_basis_sets, 1)
 !
       n_atoms_in_basis = 1
       basis_set_counter = 1
@@ -571,7 +571,7 @@ contains
 !
       enddo
 !
-      call mem%dealloc_int(n_atoms_in_basis, molecule%n_basis_sets, 1)
+      call mem%dealloc(n_atoms_in_basis, molecule%n_basis_sets, 1)
 !
    end subroutine write_molecular_system
 !
@@ -630,7 +630,7 @@ contains
 !
                   enddo
 !
-                  call mem%alloc_int(active_atoms, molecule%n_active_atoms, 1)
+                  call mem%alloc(active_atoms, molecule%n_active_atoms, 1)
                   read(line, *) active_atoms
 !
                   exit
@@ -660,7 +660,7 @@ contains
 !
                      molecule%n_active_atoms = last - first + 1
 !
-                     call mem%alloc_int(active_atoms, molecule%n_active_atoms, 1)
+                     call mem%alloc(active_atoms, molecule%n_active_atoms, 1)
 !
                      do i = first, last
 !
@@ -707,7 +707,7 @@ contains
 !
                   enddo
 !
-                  call mem%alloc_int(active_atoms, molecule%n_active_atoms, 1)
+                  call mem%alloc(active_atoms, molecule%n_active_atoms, 1)
 !
                   active_atom_counter = 0
 !
