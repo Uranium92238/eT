@@ -76,13 +76,16 @@ program eT_program
     character(len=40) :: cc_engine  
     character(len=40), dimension(:), allocatable :: cc_methods
 !
-!   Prepare input and output file
+!   Prepare input, output and timing file
 !
     call output%init('eT.out', 'sequential', 'formatted')
     call disk%open_file(output, 'write', 'rewind')
 !
     call input%init('eT.inp', 'sequential', 'formatted')
     call disk%open_file(input, 'read')
+!
+    call timing%init('timing.out', 'sequential', 'formatted')
+    call disk%open_file(timing, 'write', 'rewind')
 !
 !   Print program banner
 !
@@ -258,5 +261,6 @@ program eT_program
 !
    call disk%close_file(output)
    call disk%close_file(input)
+   call disk%close_file(timing)
 !
 end program eT_program

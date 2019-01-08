@@ -8,6 +8,7 @@ module hf_class
    use wavefunction_class
 !
    use reordering
+   use timings_class
    use array_utilities
    use array_analysis
    use interval_class
@@ -964,7 +965,7 @@ contains
 !     Sort the sp_eri_schwarz vector and use the resulting index list 
 !     to resort the sp_eri_schwarz_list matrix 
 !
-      call mem%alloc_int(sp_eri_schwarz_index_list, n_s*(n_s + 1)/2, 1)
+      call mem%alloc(sp_eri_schwarz_index_list, n_s*(n_s + 1)/2, 1)
       sp_eri_schwarz_index_list = 0
 !
       call mem%alloc(sorted_sp_eri_schwarz, n_s*(n_s + 1)/2, 1)
@@ -977,7 +978,7 @@ contains
       call mem%dealloc(sorted_sp_eri_schwarz, n_s*(n_s + 1)/2, 1)
 !
       sp_eri_schwarz_list(:,3) = sp_eri_schwarz_index_list(:,1)
-      call mem%dealloc_int(sp_eri_schwarz_index_list, n_s*(n_s + 1)/2, 1)
+      call mem%dealloc(sp_eri_schwarz_index_list, n_s*(n_s + 1)/2, 1)
 !
    end subroutine construct_sp_eri_schwarz_hf
 !
@@ -1147,7 +1148,7 @@ contains
       enddo
 !$omp end parallel do
 !
-      call mem%alloc_int(shells_on_atoms, wf%system%n_atoms, 2) ! [first, last]
+      call mem%alloc(shells_on_atoms, wf%system%n_atoms, 2) ! [first, last]
 !
       shells_on_atoms(1, 1) = 1
       shells_on_atoms(1, 2) = wf%system%atoms(1)%n_shells
@@ -1460,6 +1461,11 @@ contains
 !
       real(dp) :: max_D_schwarz, max_eri_schwarz
 !
+      type(timings) :: ao_fock_timer 
+!
+      call ao_fock_timer%init('AO Fock construction')
+      call ao_fock_timer%start()
+!
 !     Set thresholds to ignore Coulomb and exchange terms,
 !     as well as the desired Libint integral precision  
 !
@@ -1525,6 +1531,9 @@ contains
       ao_fock = ao_fock*half
 !
       if (.not. local_cumulative) ao_fock = ao_fock + h_wx
+!
+      call ao_fock_timer%freeze()
+      call ao_fock_timer%switch_off()
 !
    end subroutine construct_ao_fock_hf
 !

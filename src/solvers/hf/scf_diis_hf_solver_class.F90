@@ -13,6 +13,7 @@ module scf_diis_hf_solver_class
 !
    use kinds
    use diis_tool_class
+   use timings_class
    use file_class
    use hf_class
    use disk_manager_class
@@ -162,14 +163,21 @@ contains
 !
       integer(i15) :: dim_gradient, dim_fock
 !
+      type(timings) :: iteration_timer, solver_timer 
+!
 !     :: Part I. Preparations. 
+!
+      call iteration_timer%init('SCF DIIS iteration time')
+      call solver_timer%init('SCF DIIS solver time')
+!
+      call solver_timer%start()
 !
 !     Construct screening vectors for efficient Fock construction 
 !
       n_s = wf%system%get_n_shells()
 !
       call mem%alloc(sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
-      call mem%alloc_int(sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
+      call mem%alloc(sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
 !
       call wf%construct_sp_eri_schwarz(sp_eri_schwarz, sp_eri_schwarz_list, n_s)
 !
@@ -231,7 +239,9 @@ contains
 !
       iteration = 1
 !
-      do while (.not. solver%converged .and. iteration .le. solver%max_iterations)         
+      do while (.not. solver%converged .and. iteration .le. solver%max_iterations)  
+!
+         call iteration_timer%start()       
 !
 !        Set energy and print information for current iteration
 !
@@ -289,12 +299,15 @@ contains
 !
          endif
 !
+         call iteration_timer%freeze()
+         call iteration_timer%switch_off()       
+!
          iteration = iteration + 1
 !
       enddo
 !
       call mem%dealloc(sp_eri_schwarz, n_s*(n_s + 1)/2, 2)
-      call mem%dealloc_int(sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
+      call mem%dealloc(sp_eri_schwarz_list, n_s*(n_s + 1)/2, 3)
 !
       call mem%dealloc(G, wf%n_ao*(wf%n_ao - 1)/2, wf%n_densities)          
       call mem%dealloc(F, wf%n_ao*(wf%n_ao + 1)/2, wf%n_densities) 
@@ -316,6 +329,9 @@ contains
          stop
 !
       endif 
+!
+      call solver_timer%freeze()
+      call solver_timer%switch_off()
 !
    end subroutine run_scf_diis_hf_solver
 !

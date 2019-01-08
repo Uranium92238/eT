@@ -16,6 +16,7 @@ module ccs_class
    use interval_class
    use index
    use batching_index_class
+   use timings_class
 !
    implicit none
 !
@@ -563,7 +564,15 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_o) :: omega
 !
+      type(timings) :: omega_ccs_a1_timer
+!
+      call omega_ccs_a1_timer%init('omega ccs a1')
+      call omega_ccs_a1_timer%start()
+!
       call daxpy((wf%n_o)*(wf%n_v), one, wf%fock_ai, 1, omega, 1)
+!
+      call omega_ccs_a1_timer%freeze()
+      call omega_ccs_a1_timer%switch_off()
 !
    end subroutine omega_ccs_a1_ccs
 !
@@ -3050,7 +3059,7 @@ contains
       n_elements = 20
       if (n_elements .gt. wf%n_t1) n_elements = wf%n_t1 
 !
-      call mem%alloc_int(dominant_indices, n_elements, 1)
+      call mem%alloc(dominant_indices, n_elements, 1)
       call mem%alloc(dominant_values, n_elements, 1)
 !
       dominant_indices = 0
@@ -3074,7 +3083,7 @@ contains
 !
       write(output%unit, '(t6,a)')  '-----------------------------------------'
 !
-      call mem%dealloc_int(dominant_indices, n_elements, 1)
+      call mem%dealloc(dominant_indices, n_elements, 1)
       call mem%dealloc(dominant_values, n_elements, 1)
       call mem%dealloc(abs_x1, wf%n_t1, 1)
 !

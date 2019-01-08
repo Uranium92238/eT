@@ -208,7 +208,7 @@ contains
 !
       real(dp), dimension((last_p - first_p + 1)*(last_q - first_q + 1), integrals%n_J) :: L_pq_J
 !
-      integer(i15) :: p, q, pq, pq_rec, J, dim_p, dim_q
+      integer(i15) :: p, q, pq, pq_rec, dim_p, dim_q
 !
       dim_p = last_p - first_p + 1
       dim_q = last_q - first_q + 1
@@ -221,11 +221,10 @@ contains
             pq_rec = integrals%n_mo*(q - 1) + p
             pq = dim_p*(q - first_q) + p - first_p + 1
 !
-            read(integrals%cholesky_mo_t1%unit, rec=pq_rec) (L_pq_J(pq, J), J = 1, integrals%n_J)
+            read(integrals%cholesky_mo_t1%unit, rec=pq_rec) L_pq_J(pq, :)
 !
          enddo
       enddo
-
 !
       call disk%close_file(integrals%cholesky_mo_t1)
 !
