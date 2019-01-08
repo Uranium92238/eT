@@ -1189,8 +1189,9 @@ contains
 !
       endif
 !
-      call wf%integrals%read_ovov(g_iajb, local_first_i, local_last_i, local_first_a, local_last_a, &
-                                  local_first_j, local_last_j, local_first_b, local_last_b, index_restrictions)
+      call wf%integrals%construct_ovov(g_iajb, local_first_i, local_last_i, local_first_a, local_last_a, &
+                                       local_first_j, local_last_j, local_first_b, local_last_b, &
+                                       index_restrictions)
 !
    end subroutine get_ovov_2_ccs
 !
@@ -1260,8 +1261,9 @@ contains
 !
       endif
 !
-      call wf%integrals%read_ovov(g_iajb, local_first_i, local_last_i, local_first_a, local_last_a, &
-                                          local_first_j, local_last_j, local_first_b, local_last_b, index_restrictions)
+      call wf%integrals%construct_ovov(g_iajb, local_first_i, local_last_i, local_first_a, local_last_a, &
+                                       local_first_j, local_last_j, local_first_b, local_last_b, &
+                                       index_restrictions)
 !
    end subroutine get_ovov_4_ccs
 !

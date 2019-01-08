@@ -54,10 +54,10 @@ module mo_integral_tool_class
 !
       procedure :: set_full_index         => set_full_index_mo_integral_tool
 !
-      procedure :: read_ovov_2_mo_integral_tool
-      procedure :: read_ovov_4_mo_integral_tool
-      generic   :: read_ovov              => read_ovov_2_mo_integral_tool, &
-                                             read_ovov_4_mo_integral_tool   
+      procedure :: construct_ovov_2_mo_integral_tool
+      procedure :: construct_ovov_4_mo_integral_tool
+      generic   :: construct_ovov         => construct_ovov_2_mo_integral_tool, &
+                                             construct_ovov_4_mo_integral_tool   
       procedure :: construct_vovo_2_mo_integral_tool
       procedure :: construct_vovo_4_mo_integral_tool
       generic   :: construct_vovo         => construct_vovo_2_mo_integral_tool, &
@@ -1066,10 +1066,10 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), optional, intent(in) :: first_i, last_i
-      integer(i15), optional, intent(in) :: first_k, last_k
-      integer(i15), optional, intent(in) :: first_j, last_j
-      integer(i15), optional, intent(in) :: first_a, last_a
+      integer(i15), intent(in) :: first_i, last_i
+      integer(i15), intent(in) :: first_k, last_k
+      integer(i15), intent(in) :: first_j, last_j
+      integer(i15), intent(in) :: first_a, last_a
 !
       integer(i15) :: length_i, length_k, length_j, length_a
 !
@@ -1143,10 +1143,10 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), optional, intent(in) :: first_i, last_i
-      integer(i15), optional, intent(in) :: first_k, last_k
-      integer(i15), optional, intent(in) :: first_j, last_j
-      integer(i15), optional, intent(in) :: first_a, last_a
+      integer(i15), intent(in) :: first_i, last_i
+      integer(i15), intent(in) :: first_k, last_k
+      integer(i15), intent(in) :: first_j, last_j
+      integer(i15), intent(in) :: first_a, last_a
 !
       integer(i15) :: length_i, length_k, length_j, length_a
 !
@@ -2284,15 +2284,11 @@ contains
    end subroutine construct_ovvo_4_mo_integral_tool
 !
 !
-   subroutine read_ovov_2_mo_integral_tool(integrals, g_iajb, first_i, last_i, first_a, last_a, &
-                                           first_j, last_j, first_b, last_b, index_restrictions)
+   subroutine construct_ovov_2_mo_integral_tool(integrals, g_iajb, first_i, last_i, first_a, last_a, &
+                                                first_j, last_j, first_b, last_b, index_restrictions)
 !!
 !!    Read ovov
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
-!!
-!!    Although this is named read, note that it is used also when t1 transformed 
-!!    integrals are needed, since there is in this case - iajb - no contribution from the
-!!    t1 amplitudes: the MO integrals are equal to the t1-transformed MO integrals.
 !!
       implicit none 
 !
@@ -2376,18 +2372,14 @@ contains
 !
       endif 
 !
-   end subroutine read_ovov_2_mo_integral_tool
+   end subroutine construct_ovov_2_mo_integral_tool
 !
 !
-   subroutine read_ovov_4_mo_integral_tool(integrals, g_iajb, first_i, last_i, first_a, last_a, &
-                                           first_j, last_j, first_b, last_b, index_restrictions)
+   subroutine construct_ovov_4_mo_integral_tool(integrals, g_iajb, first_i, last_i, first_a, last_a, &
+                                                first_j, last_j, first_b, last_b, index_restrictions)
 !!
 !!    Read ovov
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
-!!
-!!    Although this is named read, note that it is used also when t1 transformed 
-!!    integrals are needed, since there is in this case - iajb - no contribution from the
-!!    t1 amplitudes: the MO integrals are equal to the t1-transformed MO integrals.
 !!
       implicit none 
 !
@@ -2471,7 +2463,7 @@ contains
 !
       endif 
 !
-   end subroutine read_ovov_4_mo_integral_tool
+   end subroutine construct_ovov_4_mo_integral_tool
 !
 !
    subroutine construct_vovo_2_mo_integral_tool(integrals, g_aibj, first_a, last_a, first_i, last_i, &
@@ -2708,10 +2700,10 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), optional, intent(in) :: first_i, last_i
-      integer(i15), optional, intent(in) :: first_a, last_a
-      integer(i15), optional, intent(in) :: first_b, last_b
-      integer(i15), optional, intent(in) :: first_c, last_c
+      integer(i15), intent(in) :: first_i, last_i
+      integer(i15), intent(in) :: first_a, last_a
+      integer(i15), intent(in) :: first_b, last_b
+      integer(i15), intent(in) :: first_c, last_c
 !
       integer(i15) :: length_i, length_a, length_b, length_c
 !
@@ -2785,10 +2777,10 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), optional, intent(in) :: first_i, last_i
-      integer(i15), optional, intent(in) :: first_a, last_a
-      integer(i15), optional, intent(in) :: first_b, last_b
-      integer(i15), optional, intent(in) :: first_c, last_c
+      integer(i15), intent(in) :: first_i, last_i
+      integer(i15), intent(in) :: first_a, last_a
+      integer(i15), intent(in) :: first_b, last_b
+      integer(i15), intent(in) :: first_c, last_c
 !
       integer(i15) :: length_i, length_a, length_b, length_c
 !
@@ -2862,10 +2854,10 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), optional, intent(in) :: first_i, last_i
-      integer(i15), optional, intent(in) :: first_a, last_a
-      integer(i15), optional, intent(in) :: first_b, last_b
-      integer(i15), optional, intent(in) :: first_c, last_c
+      integer(i15), intent(in) :: first_i, last_i
+      integer(i15), intent(in) :: first_a, last_a
+      integer(i15), intent(in) :: first_b, last_b
+      integer(i15), intent(in) :: first_c, last_c
 !
       integer(i15) :: length_i, length_a, length_b, length_c
 !
@@ -2939,10 +2931,10 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), optional, intent(in) :: first_i, last_i
-      integer(i15), optional, intent(in) :: first_a, last_a
-      integer(i15), optional, intent(in) :: first_b, last_b
-      integer(i15), optional, intent(in) :: first_c, last_c
+      integer(i15), intent(in) :: first_i, last_i
+      integer(i15), intent(in) :: first_a, last_a
+      integer(i15), intent(in) :: first_b, last_b
+      integer(i15), intent(in) :: first_c, last_c
 !
       integer(i15) :: length_i, length_a, length_b, length_c
 !
@@ -3016,10 +3008,10 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), optional, intent(in) :: first_i, last_i
-      integer(i15), optional, intent(in) :: first_a, last_a
-      integer(i15), optional, intent(in) :: first_b, last_b
-      integer(i15), optional, intent(in) :: first_c, last_c
+      integer(i15), intent(in) :: first_i, last_i
+      integer(i15), intent(in) :: first_a, last_a
+      integer(i15), intent(in) :: first_b, last_b
+      integer(i15), intent(in) :: first_c, last_c
 !
       integer(i15) :: length_i, length_a, length_b, length_c
 !
@@ -3093,10 +3085,10 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), optional, intent(in) :: first_i, last_i
-      integer(i15), optional, intent(in) :: first_a, last_a
-      integer(i15), optional, intent(in) :: first_b, last_b
-      integer(i15), optional, intent(in) :: first_c, last_c
+      integer(i15), intent(in) :: first_i, last_i
+      integer(i15), intent(in) :: first_a, last_a
+      integer(i15), intent(in) :: first_b, last_b
+      integer(i15), intent(in) :: first_c, last_c
 !
       integer(i15) :: length_i, length_a, length_b, length_c
 !
@@ -3170,10 +3162,10 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), optional, intent(in) :: first_i, last_i
-      integer(i15), optional, intent(in) :: first_a, last_a
-      integer(i15), optional, intent(in) :: first_b, last_b
-      integer(i15), optional, intent(in) :: first_c, last_c
+      integer(i15), intent(in) :: first_i, last_i
+      integer(i15), intent(in) :: first_a, last_a
+      integer(i15), intent(in) :: first_b, last_b
+      integer(i15), intent(in) :: first_c, last_c
 !
       integer(i15) :: length_i, length_a, length_b, length_c
 !
