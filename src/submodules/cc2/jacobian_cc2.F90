@@ -32,7 +32,7 @@ contains
 !
       class(cc2) :: wf
 !
-      real(dp), intent(in) :: omega 
+      real(dp), intent(in) :: omega
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: c
 !
       real(dp), dimension(:,:), allocatable :: c_a_i
@@ -75,6 +75,9 @@ contains
 !
       eps_o = wf%fock_diagonal(1:wf%n_o,1)
       eps_v = wf%fock_diagonal(wf%n_o + 1 : wf%n_mo, 1)
+!
+      call wf%jacobian_cc2_a1(rho_a_i, c_a_i)
+      call wf%jacobian_cc2_b1(rho_a_i, c_a_i, eps_o, eps_v)
 !
       call wf%effective_jacobian_cc2_a1(omega, rho_a_i, c_a_i, eps_o, eps_v)
       call wf%effective_jacobian_cc2_b1(omega, rho_a_i, c_a_i, eps_o, eps_v)
@@ -156,8 +159,6 @@ contains
                   rho_ai,            &
                   (wf%n_v)*(wf%n_o))
 !
-      call mem%dealloc(g_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-!
       call mem%alloc(g_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
       call wf%get_vvoo(g_abji,      &
@@ -167,8 +168,6 @@ contains
                         1, wf%n_o)
 !
 !     Sort g_abji(a,b,j,i) as g_abji(a,i,j,b)
-!
-      call mem%alloc(g_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
       do a = 1, wf%n_v
          do i = 1, wf%n_o
@@ -184,7 +183,7 @@ contains
 !
       call mem%dealloc(g_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
-!     rho_a_i = rho_a_i - sum_bj g_abji * c_jb
+!     rho_a_i = rho_a_i - sum_bj g_aijb * c_jb
 !
       call dgemm('N', 'N',           &
                   (wf%n_v)*(wf%n_o), &
@@ -248,13 +247,14 @@ contains
 !                 1234        1243      1342
 !
       call mem%alloc(g_kcjb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-      call mem%alloc(L_kcbj, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
 !
       call wf%get_ovov(g_kcjb,      &
                         1, wf%n_o,  &
                         1, wf%n_v,  &
                         1, wf%n_o,  &
                         1, wf%n_v)
+!
+      call mem%alloc(L_kcbj, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
 !
       do k = 1, wf%n_o
          do c = 1, wf%n_v
@@ -299,7 +299,7 @@ contains
                         1, wf%n_v,  &
                         1, wf%n_o)
 !
-      call mem%alloc(u_aikc, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%alloc(u_aikc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
       do a = 1, wf%n_v
          do i = 1, wf%n_o
@@ -332,7 +332,7 @@ contains
                   (wf%n_v)*(wf%n_o))
 !
       call mem%dealloc(X_kc, wf%n_o, wf%n_v)
-      call mem%dealloc(u_aikc, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(u_aikc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
 !
 !     :: Term 2: L_kcjb t^cb_ki c_aj ::
@@ -365,7 +365,7 @@ contains
             do k = 1, wf%n_o
                do b = 1, wf%n_v
 !
-                  L_jckb(j,c,k,b) = two * g_kcjb(k,c,j,b) - g_kcjb(j,c,k,b) 
+                  L_jckb(j,c,k,b) = two * g_kcjb(k,c,j,b) - g_kcjb(j,c,k,b)
 !
                enddo
             enddo
@@ -374,7 +374,6 @@ contains
 !
       call mem%dealloc(g_kcjb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
    ! call mem%dealloc(g_kbjc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
-
 !
 !     Construct t_ckbi = - g_ckbi/ε^{cb}_{ik}
 !
@@ -398,19 +397,19 @@ contains
          enddo
       enddo
 !
-!     Intermediat X_ji = L_kcjb t^cb_ki = L_jckb g_ckbi
+!     Intermediat X_ji = sum_ckb L_kcjb t^cb_ki = sum_ckb L_jckb g_ckbi
 !
       call mem%alloc(X_ji, wf%n_o, wf%n_o)
 !
       call dgemm('N', 'N',                    &
                   (wf%n_o),                   &
                   (wf%n_o),                   &
-                  (wf%n_v)*(wf%n_o)*(wf%n_v), &
+                  (wf%n_v)**2*(wf%n_o),       &
                   one,                        &
                   L_jckb,                     &
                   (wf%n_o),                   &
                   g_ckbi,                     &
-                  (wf%n_v)*(wf%n_o)*(wf%n_v), &
+                  (wf%n_v)**2*(wf%n_o),       &
                   zero,                       &
                   X_ji,                       &
                   (wf%n_o))
@@ -458,7 +457,7 @@ contains
             do b = 1, wf%n_v
                do j = 1, wf%n_o
 !
-                  L_kcbj(k,c,b,j) = two * g_kcjb(k,c,j,b) - g_kcjb(k,b,j,c)
+                  L_kcjb(k,c,j,b) = two * g_kcjb(k,c,j,b) - g_kcjb(k,b,j,c)
 !
                enddo
             enddo
@@ -643,7 +642,7 @@ contains
                   F_ck,          &
                   wf%n_o*wf%n_v, &
                   one,           &
-                  rho_ai,        & 
+                  rho_ai,        &
                   wf%n_o*wf%n_v)
 !
       call dgemm('T', 'N',       &
@@ -870,6 +869,11 @@ contains
 !
             X_akbj(a,k,a,k) = half*X_akbj(a,k,a,k)
 !
+         enddo
+      enddo
+!
+      do a = 1, wf%n_v
+         do k = 1, wf%n_o
             do b = 1, wf%n_v
                do j = 1, wf%n_o
 !
@@ -902,7 +906,7 @@ contains
                         1, wf%n_o, &
                         1, wf%n_v)
 !
-      
+
       call mem%alloc(L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
       do j = 1, wf%n_o
@@ -935,7 +939,7 @@ contains
                   rho_ai,               &
                   (wf%n_v))
 !
-      
+
       call mem%dealloc(X_ajbk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
@@ -980,7 +984,7 @@ contains
             do b = 1, wf%n_v
                do j = 1, wf%n_o
 !
-                  X_ajbk(a,j,b,k) = - X_bjak(b,j,a,k)&
+                  X_ajbk(a,j,b,k) = X_bjak(b,j,a,k)&
                                     /(- eps_v(a) - eps_v(b) + eps_o(j) + eps_o(k) + omega)
 !
                enddo
@@ -1404,7 +1408,7 @@ contains
                         1, wf%n_o, &
                         1, wf%n_v)
 !
-      
+
       call mem%alloc(g_kbac, wf%n_o, wf%n_v, wf%n_v, wf%n_v)
 !
       call wf%get_ovvv(g_kbac,     &
@@ -1413,7 +1417,7 @@ contains
                         1, wf%n_v, &
                         1, wf%n_v)
 !
-      
+
       call mem%alloc(L_abkc, wf%n_v, wf%n_v, wf%n_o, wf%n_v)
 !
       do a = 1, wf%n_v

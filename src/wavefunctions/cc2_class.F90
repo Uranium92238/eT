@@ -25,6 +25,9 @@ module cc2_class
 !
       procedure :: effective_jacobian_transformation => effective_jacobian_transformation_cc2
 !
+      procedure :: jacobian_cc2_a1 => jacobian_cc2_a1_cc2
+      procedure :: jacobian_cc2_b1 => jacobian_cc2_b1_cc2
+!
       procedure :: effective_jacobian_cc2_a1 => effective_jacobian_cc2_a1_cc2
       procedure :: effective_jacobian_cc2_b1 => effective_jacobian_cc2_b1_cc2
       procedure :: effective_jacobian_cc2_c1 => effective_jacobian_cc2_c1_cc2
@@ -150,40 +153,40 @@ contains
 !
    subroutine construct_excited_state_equation_cc2(wf, X, R, w)
 !!
-!!    Construct excited state equation 
-!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!    Construct excited state equation
+!!    Written by Eirik F. Kjønstad, Dec 2018
 !!
 !!    Constructs R = AX - wX, where w = X^T A X and norm(X) = sqrt(X^T X) = 1
 !!
 !!    Note I: we assume that X is normalized. If it is not,
-!!    please normalize before calling the routine. 
+!!    please normalize before calling the routine.
 !!
 !!    Note II: this routine constructs the excited state equation
-!!    for standard CC models and the effective (!) excited state 
-!!    equation in perturbative models. In the CC2 routine, for 
-!!    instance, X and R will be n_o*n_v vectors and A(w) will 
-!!    depend on the excitation energy w. See, e.g., Weigend and 
-!!    Hättig's RI-CC2 paper for more on this topic. This means 
-!!    that w should be the previous w-value when entering the 
+!!    for standard CC models and the effective (!) excited state
+!!    equation in perturbative models. In the CC2 routine, for
+!!    instance, X and R will be n_o*n_v vectors and A(w) will
+!!    depend on the excitation energy w. See, e.g., Weigend and
+!!    Hättig's RI-CC2 paper for more on this topic. This means
+!!    that w should be the previous w-value when entering the
 !!    routine (so that A(w)X may be constructed approximately)
 !!    in perturbative models.
 !!
-!!    Note III: the routine is used by the DIIS excited state solver. 
+!!    Note III: the routine is used by the DIIS excited state solver.
 !!
-      implicit none 
+      implicit none
 !
-      class(cc2), intent(in) :: wf 
+      class(cc2), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(in)    :: X 
+      real(dp), dimension(wf%n_amplitudes, 1), intent(in)    :: X
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: R
 !
-      real(dp), intent(inout) :: w 
+      real(dp), intent(inout) :: w
 !
       real(dp), dimension(:,:), allocatable :: X_copy
 !
-      real(dp) :: ddot  
+      real(dp) :: ddot
 !
-!     Construct residual based on previous excitation energy w 
+!     Construct residual based on previous excitation energy w
 !
       call mem%alloc(X_copy, wf%n_amplitudes, 1)
       X_copy = X
