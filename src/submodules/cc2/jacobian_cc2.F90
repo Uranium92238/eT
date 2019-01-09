@@ -1256,12 +1256,207 @@ contains
    end subroutine effective_jacobian_cc2_d1_cc2
 !
 !
-   module subroutine effective_jacobian_cc2_e1_cc2(wf, omega, rho_ai, c_bl, eps_o, eps_v)
+   module subroutine effective_jacobian_cc2_e1_cc2(wf, omega, rho_ai, c_dk, eps_o, eps_v)
 !!
 !!    Jacobian CC2 F1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
 !!    Linda Goletto, and Alexander Paul, Dec 2018
 !!
+!!    Implicit calculation of the doubles vector
+!!    rho_ai^E1 =+ L_abkc  (g_bicd * c_dk + g_ckbd * c_di) (omega - ε_bick)^-1 * (1 + delta_bi,ck)^-1
+!!              =+ L_abkc  (X_bick + X_ckbi)
+!!
+!!    Every term will be done separately due to different batching (k,b and )
+!!
+      implicit none
+!
+      class(cc2), intent(in) :: wf
+!
+!     Sent to the routine
+!
+      real(dp), intent(in) :: omega
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_dk
+!
+      real(dp), dimension(wf%n_o), intent(in) :: eps_o
+      real(dp), dimension(wf%n_v), intent(in) :: eps_v
+!
+!     Integrals
+!
+      real(dp), dimension(:,:,:,:), allocatable :: g_bicd, g_ckbd, g_abkc, g_kbac
+      real(dp), dimension(:,:,:,:), allocatable :: L_abkc
+!
+!     Intermediates
+!
+      real(dp), dimension(:,:,:,:), allocatable :: X_bick, X_ckbi
+!
+!     Indices
+!
+      integer(i15) :: a, b, c, i, k
+!
+!     :: Term 1:  L_abkc * g_bicd * c_dk (omega - ε_bick)^-1 * (1 + delta_bi,ck)^-1  ::
+!
+!     Construct X_bick = sum_d g_bicd * c_dk
+!
+      call mem%alloc(g_bicd, wf%n_v, wf%n_o, wf%n_v, wf%n_v)
+!
+      call wf%get_vovv(g_akbc,    &
+                        1, wf%n_v, &
+                        1, wf%n_o, &
+                        1, wf%n_v, &
+                        1, wf%n_v)
+!
+      call mem%alloc(X_bick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('N', 'N',              &
+                  (wf%n_o)*(wf%n_v)**2, &
+                  (wf%n_o),             &
+                  (wf%n_v),             &
+                  one,                  &
+                  g_bicd,               &
+                  (wf%n_v)**2*(wf%n_o), &
+                  c_dk,                 &
+                  (wf%n_v),             &
+                  zero,                 &
+                  X_bick,               &
+                  (wf%n_o)*(wf%n_v))
+!
+      call mem%dealloc(g_bicd, wf%n_v, wf%n_o, wf%n_v, wf%n_v)
+!
+!     Reordering of X_bick as bkci and scaling by (omega - ε_bick)^-1 * (1 + delta_bi,ck)^-1
+!
+      do b = 1, wf%n_v
+         do i = 1, wf%n_o
+!
+            X_bick(b,i,b,i) = half*X_bick(b,i,b,i)
+!
+               do c = 1, wf%n_v
+                  do k = 1, wf%n_o
+!
+                     X_bick(b,k,c,i) = X_bick(b,i,c,k) &
+                                       /(- eps_v(b) - eps_v(c) + eps_o(i) + eps_o(k) + omega)
+!
+                  enddo
+               enddo
+         enddo
+      enddo
+!
+!     Construct L_abkc = 2 g_abkc - g_kbac
+!
+      call mem%alloc(g_abkc, wf%n_v, wf%n_v, wf%n_o, wf%n_v)
+      call mem%alloc(g_kbac, wf%n_o, wf%n_v, wf%n_v, wf%n_v)
+      call mem%alloc(L_abkc, wf%n_v, wf%n_v, wf%n_o, wf%n_v)
+!
+      call wf%get_vvov(g_abkc,     &
+                        1, wf%n_v, &
+                        1, wf%n_v, &
+                        1, wf%n_o, &
+                        1, wf%n_v)
+                        !
+      call wf%get_ovvv(g_kbac,     &
+                        1, wf%n_o, &
+                        1, wf%n_v, &
+                        1, wf%n_v, &
+                        1, wf%n_v)
+!
+      do a = 1, wf%n_v
+         do b = 1, wf%n_v
+            do k = 1, wf%n_o
+               do c = 1, wf%n_v
+!
+                  L_abkc(a,b,k,c) = two * g_abkc(a,b,k,c) - g_kbac(k,b,a,c)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      call mem%dealloc(g_abkc, wf%n_v, wf%n_v, wf%n_o, wf%n_v)
+      call mem%dealloc(g_kbac, wf%n_o, wf%n_v, wf%n_v, wf%n_v)
+!
+!     rho_ai = rho_ai + sum_bkc L_abkc * X_bkci
+!
+      call dgemm('N', 'N',              &
+                  (wf%n_v),             &
+                  (wf%n_o),             &
+                  (wf%n_o)*(wf%n_v)**2, &
+                  one,                  &
+                  L_abkc,               &
+                  (wf%n_v),             &
+                  X_bick,               & ! X_bkci
+                  (wf%n_o)*(wf%n_v)**2, &
+                  one,                  &
+                  rho_ai,               &
+                  (wf%n_v))
+!
+      call mem%dealloc(X_bick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+!     :: Term 2: L_abkc * g_ckbd * c_di (omega - ε_bick)^-1 * (1 + delta_bi,ck)^-1  ::
+!
+!     Construct X_ckbi = sum_d g_ckbd * c_di
+!
+      call mem%alloc(g_ckbd, wf%n_v, wf%n_o, wf%n_v, wf%n_v)
+!
+      call wf%get_vovv(g_ckbd,      &
+                        1, wf%n_v,  &
+                        1, wf%n_o,  &
+                        1, wf%n_v,  &
+                        1, wf%n_v)
+!
+      call mem%alloc(X_ckbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('N', 'N',              &
+                  (wf%n_v)**2*(wf%n_o), &
+                  (wf%n_o),             &
+                  (wf%n_v),             &
+                  one,                  &
+                  g_ckbd,               &
+                  (wf%n_v)**2*(wf%n_o), &
+                  c_dk,                 & ! c_di
+                  (wf%n_v),             &
+                  zero,                 &
+                  X_ckbi,               &
+                  (wf%n_o)*(wf%n_v))
+!
+      call mem%dealloc(g_ckbd, wf%n_v, wf%n_o, wf%n_v, wf%n_v)
+!
+!     Reordering of X_ckbi as bkci and scaling by (omega - ε_bick)^-1 * (1 + delta_bi,ck)^-1
+!
+      do c = 1, wf%n_v
+         do k = 1, wf%n_o
+!
+            X_ckbi(c,k,c,k) = half*X_ckbi(c,k,c,k)
+!
+               do b = 1, wf%n_v
+                  do i = 1, wf%n_o
+!
+                     X_ckbi(b,k,c,i) = X_ckbi(c,k,b,i)&
+                                       /(- eps_v(b) - eps_v(c) + eps_o(i) + eps_o(k) + omega)
+!
+                  enddo
+               enddo
+         enddo
+      enddo
+!
+!     rho_ai = rho_ai - sum_bkc L_abkc * X_bkci
+!
+      call dgemm('N', 'N',              &
+                  (wf%n_v),             &
+                  (wf%n_o),             &
+                  (wf%n_o)*(wf%n_v)**2, &
+                  one,                  &
+                  L_abkc,               &
+                  (wf%n_v),             &
+                  X_ckbi,               & ! X_bkci
+                  (wf%n_o)*(wf%n_v)**2, &
+                  one,                  &
+                  rho_ai,               &
+                  (wf%n_v))
+!
+      call mem%dealloc(X_bjak, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(L_abkc, wf%n_v, wf%n_v, wf%n_o, wf%n_v)
+!
    end subroutine effective_jacobian_cc2_e1_cc2
 !
 !
