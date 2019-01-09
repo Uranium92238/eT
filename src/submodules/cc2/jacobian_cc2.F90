@@ -587,12 +587,16 @@ contains
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
 !!    Linda Goletto, and Alexander Paul, Jan 2019
 !!
+!!    Effective B1 = - 2 sum_{kcl} F_kc (1/Δ_{ai,ck})*(1/(ε_{aick} + ω) * (g_ailk c_cl + g_ckli c_al)
+!!                 = sum_{kcl} F_kc (1/Δ_{ak,ci})*(1/(ε_{akci} + ω) * (g_akli c_cl + g_cilk c_al)
+!!
+!!
       implicit none
 !
       class(cc2), intent(in) :: wf
 !
       real(dp), intent(in) :: omega
-!
+! 
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_ai
 !
@@ -682,13 +686,13 @@ contains
                   do k = 1, batch_k%length
                      do c = 1, wf%n_v
 !
-                        rho_ai(a, i + batch_i%first - 1) = rho_ai(a, i + batch_i%first - 1)                              &
-                                                            - two*X_ckai(c, k, a, i)*wf%fock_ia(k + batch_k%first - 1, c)  &
-                                                            + X_ckai(a, k, c, i)*wf%fock_ia(k + batch_k%first - 1, c)
+                        rho_ai(a, i + batch_i%first - 1) = rho_ai(a, i + batch_i%first - 1)                                &
+                                                            - two*X_ckai(c, k, a, i)*(wf%fock_ia(k + batch_k%first - 1, c))&
+                                                            + X_ckai(a, k, c, i)*(wf%fock_ia(k + batch_k%first - 1, c))
 !
-                        rho_ai(a, k + batch_k%first - 1) = rho_ai(a, k + batch_k%first - 1)                              &
-                                                            - two*X_ckai(a, k, c, i)*wf%fock_ia(i + batch_i%first - 1, c)  &
-                                                            + X_ckai(c, k, a, i)*wf%fock_ia(i + batch_i%first - 1, c)
+                        rho_ai(a, k + batch_k%first - 1) = rho_ai(a, k + batch_k%first - 1)                                & !(k <-> i)
+                                                            - two*X_ckai(a, k, c, i)*(wf%fock_ia(i + batch_i%first - 1, c))&
+                                                            + X_ckai(c, k, a, i)*(wf%fock_ia(i + batch_i%first - 1, c))
 !
                      enddo
                   enddo
