@@ -135,3 +135,12 @@ end subroutine effective_jacobian_cc2_c1_cc2
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
 !
 end subroutine effective_jacobian_cc2_d1_cc2
+!
+!
+module subroutine effective_jacobian_cc2_e1_cc2(wf, omega, rho_ai, c_bl, eps_o, eps_v)
+!!
+!!    Jacobian CC2 F1
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
+!!    Linda Goletto, and Alexander Paul, Dec 2018
+!
+end subroutine effective_jacobian_cc2_e1_cc2

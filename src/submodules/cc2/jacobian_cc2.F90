@@ -656,7 +656,7 @@ contains
       class(cc2), intent(in) :: wf
 !
       real(dp), intent(in) :: omega
-! 
+!
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_ai
 !
@@ -1254,5 +1254,13 @@ contains
 !
 end subroutine effective_jacobian_cc2_d1_cc2
 !
+!
+module subroutine effective_jacobian_cc2_e1_cc2(wf, omega, rho_ai, c_bl, eps_o, eps_v)
+!!
+!!    Jacobian CC2 F1
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
+!!    Linda Goletto, and Alexander Paul, Dec 2018
+!
+end subroutine effective_jacobian_cc2_e1_cc2
 !
 end submodule jacobian
