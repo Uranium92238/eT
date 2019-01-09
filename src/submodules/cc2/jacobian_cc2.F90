@@ -1260,7 +1260,7 @@ contains
 !!
 !!    Jacobian CC2 F1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
-!!    Linda Goletto, and Alexander Paul, Dec 2018
+!!    Linda Goletto, and Alexander Paul, Jan 2019
 !!
       implicit none
 !
@@ -1281,7 +1281,7 @@ contains
 !!
 !!    Jacobian CC2 effective F1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
-!!    Linda Goletto, and Alexander Paul, Dec 2018
+!!    Linda Goletto, and Alexander Paul, Jan 2019
 !!
 !!    Effective F1 = - L_abkc ((1/Δ_{bi,ck})*(1/(ε_{bick} + ω)) * (g_lkbi c_cl + g_lick c_bl))
 !!
@@ -1380,9 +1380,9 @@ contains
                   wf%n_v*(wf%n_o**2),  &
                   one,                 &
                   L_abkc,              &
-                  wf%n_v,              & 
+                  wf%n_v,              &
                   X_bkci,              &
-                  wf%n_v*(wf%n_o**2),  & 
+                  wf%n_v*(wf%n_o**2),  &
                   rho_ai,              &
                   wf%n_v)
 !
@@ -1467,9 +1467,9 @@ contains
                   wf%n_v*(wf%n_o**2),  &
                   one,                 &
                   L_abkc,              &
-                  wf%n_v,              & 
+                  wf%n_v,              &
                   X_bkci,              &
-                  wf%n_v*(wf%n_o**2),  & 
+                  wf%n_v*(wf%n_o**2),  &
                   rho_ai,              &
                   wf%n_v)
 !
