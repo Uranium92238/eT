@@ -135,10 +135,10 @@ end subroutine effective_jacobian_cc2_c1_cc2
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
 !
-end subroutine effective_jacobian_cc2_d1_cc2
+   end subroutine effective_jacobian_cc2_d1_cc2
 !
 !
-   module subroutine effective_jacobian_cc2_e1_cc2(wf, omega, rho_ai, c_bl, eps_o, eps_v)
+   module subroutine effective_jacobian_cc2_e1_cc2(wf, omega, rho_ai, c_dk, eps_o, eps_v)
 !!
 !!    Jacobian CC2 F1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
@@ -152,6 +152,20 @@ end subroutine effective_jacobian_cc2_d1_cc2
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_bl
+!
+      real(dp), dimension(wf%n_o), intent(in) :: eps_o
+      real(dp), dimension(wf%n_v), intent(in) :: eps_v
+!
+      implicit none
+!
+      class(cc2), intent(in) :: wf
+!
+!     Sent to the routine
+!
+      real(dp), intent(in) :: omega
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_dk
 !
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
