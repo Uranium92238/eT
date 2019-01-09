@@ -641,6 +641,128 @@ contains
    end subroutine effective_jacobian_cc2_a1_cc2
 !
 !
+   module subroutine effective_jacobian_cc2_b1_cc2(wf, omega, rho_ai, c_ai, eps_o, eps_v)
+!!
+!!    Effective jacobian B1
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
+!!    Linda Goletto, and Alexander Paul, Jan 2019
+!!
+      implicit none
+!
+      class(cc2), intent(in) :: wf
+!
+      real(dp), intent(in) :: omega
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_ai
+!
+      real(dp), dimension(wf%n_o), intent(in)  :: eps_o
+      real(dp), dimension(wf%n_v), intent(in)  :: eps_v
+!
+      real(dp), dimension(:,:,:,:), allocatable :: g_lkai, X_ckai
+!
+      integer(i15) :: a, c, i, k
+!
+      integer(i15) :: req0, req1_i, req1_k, req2
+!
+      integer(i15) :: current_i_batch, current_k_batch
+!
+      type(batching_index) :: batch_i, batch_k
+!
+      req0 = 0
+!
+      req1_i = (wf%integrals%n_J)*(wf%n_v)
+      req1_k = (wf%integrals%n_J)*(wf%n_o)
+!
+      req2 = 2*(wf%n_o)*(wf%n_v)
+!
+      call batch_i%init(wf%n_o)
+      call batch_k%init(wf%n_o)
+!
+      call mem%batch_setup(batch_i, batch_k, req0, req1_i, req1_k, req2)
+!
+      do current_i_batch = 1, batch_i%num_batches
+!
+         call batch_i%determine_limits(current_i_batch)
+!
+         do current_k_batch = 1, batch_k%num_batches
+!
+            call batch_k%determine_limits(current_k_batch)
+!
+!           Construct X_c_kai = sum_l c_c_l g_l_kai
+!
+            call mem%alloc(g_lkai, wf%n_o, batch_k%length, wf%n_v, batch_i%length)
+!
+            call wf%get_oovo(g_lkai,                        &
+                              1, wf%n_o,                    &
+                              batch_k%first, batch_k%last,  &
+                              1, wf%n_v,                    &
+                              batch_i%first, batch_i%last)
+!
+            call mem%alloc(X_ckai, wf%n_v, batch_k%length, wf%n_v, batch_i%length)
+!
+            call dgemm('N', 'N',                                  &
+                        wf%n_v,                                   &
+                        (batch_i%length)*(batch_k%length)*wf%n_v, &
+                        wf%n_o,                                   &
+                        one,                                      &
+                        c_ai,                                     & ! c_c_l
+                        wf%n_v,                                   &
+                        g_lkai,                                   & ! g_l_kai
+                        wf%n_o,                                   &
+                        zero,                                     &
+                        X_ckai,                                   &  ! X_c_kai
+                        wf%n_v)
+!
+            call mem%dealloc(g_lkai, wf%n_o, batch_k%length, wf%n_v, batch_i%length)
+!
+!           Divide X_ckai by 1/(1 + delta_ai,ck)*1/(-epsilon_aick + omega)
+!
+            do i = 1, batch_i%length
+               do a = 1, wf%n_v
+!
+                  X_ckai(a, i, a, i) = X_ckai(a, i, a, i)/two
+!
+                  do k = 1, batch_k%length
+                     do c = 1, wf%n_v
+!
+                        X_ckai(c, k, a, i) = X_ckai(c, k, a, i)/(eps_o(k + batch_k%first - 1) &
+                                                               + eps_o(i + batch_i%first - 1) &
+                                                               - eps_v(a) - eps_v(c) + omega)
+!
+                     enddo
+                  enddo
+               enddo
+            enddo
+!
+!           Add all four terms while considering batched indices i and k
+!
+            do i = 1, batch_i%length
+               do a = 1, wf%n_v
+                  do k = 1, batch_k%length
+                     do c = 1, wf%n_v
+!
+                        rho_ai(a, i + batch_i%first - 1) = rho_ai(a, i + batch_i%first - 1)                              &
+                                                            - two*X_ckai(c, k, a, i)*wf%fock_ia(k + batch_k%first - 1, c)  &
+                                                            + X_ckai(a, k, c, i)*wf%fock_ia(k + batch_k%first - 1, c)
+!
+                        rho_ai(a, k + batch_k%first - 1) = rho_ai(a, k + batch_k%first - 1)                              &
+                                                            - two*X_ckai(a, k, c, i)*wf%fock_ia(i + batch_i%first - 1, c)  &
+                                                            + X_ckai(c, k, a, i)*wf%fock_ia(i + batch_i%first - 1, c)
+!
+                     enddo
+                  enddo
+               enddo
+            enddo
+!
+            call mem%dealloc(X_ckai, wf%n_v, batch_k%length, wf%n_v, batch_i%length)
+!
+         enddo
+      enddo
+!
+   end subroutine effective_jacobian_cc2_b1_cc2
+!
+!
    module subroutine effective_jacobian_cc2_e1_cc2(wf, omega, rho_a_i, c_c_j, eps_o, eps_v)
 !!
 !!    Jacobian CC2 E1
@@ -888,92 +1010,6 @@ contains
       call mem%dealloc(L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
    end subroutine effective_jacobian_cc2_e1_cc2
-!
-!
-   module subroutine effective_jacobian_cc2_b1_cc2(wf, omega, rho_a_i, c_a_i, eps_o, eps_v)
-!!
-!!    Effective jacobian B1
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
-!!    Linda Goletto, and Alexander Paul, Jan 2019
-!!
-      implicit none
-!
-      class(cc2), intent(in) :: wf
-!
-      real(dp), intent(in) :: omega
-!
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_a_i
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_a_i
-!
-      real(dp), dimension(wf%n_o), intent(in)  :: eps_o
-      real(dp), dimension(wf%n_v), intent(in)  :: eps_v
-!
-      real(dp), dimension(:,:,:,:), allocatable :: g_lkai, X_ckai
-!
-      integer(i15) :: a, c, i, k
-!
-!     Construct X_c_kai = sum_l c_c_l g_l_kai
-!
-      call mem%alloc(g_lkai, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
-!
-      call wf%get_oovo(g_lkai)
-!
-      call mem%alloc(X_ckai, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-      call dgemm('N', 'N',             &
-                  wf%n_v,              &
-                  (wf%n_o**2)*wf%n_v,  &
-                  wf%n_v,              &
-                  one,                 &
-                  c_a_i,               & ! c_c_l
-                  wf%n_v,              &
-                  g_lkai,              & ! g_l_kai
-                  wf%n_o,              &
-                  zero,                &
-                  X_ckai,              &  ! X_c_kai
-                  wf%n_v)
-!
-      call mem%dealloc(g_lkai, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
-!
-!     Divide X_ckai by 1/(1 + delta_ai,ck)*1/(-epsilon_aick + omega)
-!
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
-!
-            X_ckai(a, i, a, i) = X_ckai(a, i, a, i)/two
-!
-            do k = 1, wf%n_o
-               do c = 1, wf%n_v
-!
-                  X_ckai(c, k, a, i) = X_ckai(c, k, a, i)/(eps_o(k) + eps_o(i) &
-                                                         - eps_v(a) - eps_v(c) + omega)
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!
-!     Add all four terms while considering batched indices i and k
-!
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
-            do k = 1, wf%n_o
-               do c = 1, wf%n_v
-!
-                  rho_a_i(a, i) = rho_a_i(a, i) - two*X_ckai(c, k, a, i)*wf%fock_ia(k, c) &
-                                                + X_ckai(a, k, c, i)*wf%fock_ia(k, c)
-!
-                  rho_a_i(a, k) = rho_a_i(a, k)  - two*X_ckai(a, k, c, i)*wf%fock_ia(i, c) &
-                                                 + X_ckai(c, k, a, i)*wf%fock_ia(i, c)
-!
-               enddo
-            enddo
-         enddo
-      enddo
-!
-      call mem%dealloc(X_ckai, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-   end subroutine effective_jacobian_cc2_b1_cc2
 !
 !
 end submodule jacobian
