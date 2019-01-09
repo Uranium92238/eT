@@ -1,5 +1,5 @@
 
-   module subroutine effective_jacobian_transformation_cc2(wf, c)
+   module subroutine effective_jacobian_transformation_cc2(wf, omega, c)
 !!
 !!    Effective jacobian transformation
 !!    Written by Eirik F. Kjønstad and Sarai Dery Folkestad
@@ -9,7 +9,8 @@
 !
       class(cc2) :: wf
 !
-      real(dp), dimension(wf%n_amplitudes, 1) :: c
+      real(dp), intent(in) :: omega 
+      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: c
 !
    end subroutine effective_jacobian_transformation_cc2
 !

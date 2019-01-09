@@ -3707,9 +3707,7 @@ contains
       call mem%alloc(X_copy, wf%n_amplitudes, 1)
       X_copy = X
 !
-    !  call wf%jacobian_ccs_transformation(X_copy) ! X_copy <- AX 
       call wf%jacobian_transform_trial_vector(X_copy) ! X_copy <- AX 
-!
       w = ddot(wf%n_amplitudes, X, 1, X_copy, 1)
 !
       R = X_copy - w*X

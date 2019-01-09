@@ -260,7 +260,7 @@ contains
       call wf%get_orbital_differences(eps)
 !
       call mem%alloc(X, wf%n_amplitudes, solver%n_singlet_states)
-      call solver%set_start_vectors(wf, X, eps)
+      call solver%set_start_vectors(wf, X, energies, eps)
 !
 !     Enter iterative loop
 !
@@ -343,7 +343,7 @@ contains
    end subroutine run_diis_cc_es_solver
 !
 !
-   subroutine set_start_vectors_diis_cc_es_solver(solver, wf, R, orbital_differences)
+   subroutine set_start_vectors_diis_cc_es_solver(solver, wf, R, energies, orbital_differences)
 !!
 !!    Set start vectors 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Dec 2018 
@@ -355,6 +355,7 @@ contains
       class(ccs), intent(in) :: wf 
 !
       real(dp), dimension(wf%n_amplitudes, solver%n_singlet_states), intent(inout) :: R 
+      real(dp), dimension(solver%n_singlet_states), intent(inout)                  :: energies 
       real(dp), dimension(wf%n_amplitudes, 1), intent(in)                          :: orbital_differences 
 !
       real(dp), dimension(:,:), allocatable :: lowest_orbital_differences
@@ -369,15 +370,15 @@ contains
       call get_n_lowest(solver%n_singlet_states, wf%n_amplitudes, orbital_differences, &
                            lowest_orbital_differences, lowest_orbital_differences_index)
 !
-      call mem%dealloc(lowest_orbital_differences, solver%n_singlet_states, 1)
-!
       do state = 1, solver%n_singlet_states
 !
          R(:,state) = zero
          R(lowest_orbital_differences_index(state, 1), state) = one
+         energies(state) = lowest_orbital_differences(state, 1)
 !
       enddo 
 !
+      call mem%dealloc(lowest_orbital_differences, solver%n_singlet_states, 1)
       call mem%dealloc(lowest_orbital_differences_index, solver%n_singlet_states, 1)      
 !
    end subroutine set_start_vectors_diis_cc_es_solver

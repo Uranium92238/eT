@@ -22,7 +22,7 @@ submodule (cc2_class) jacobian
 contains
 !
 !
-   subroutine effective_jacobian_transformation_cc2(wf, c)
+   subroutine effective_jacobian_transformation_cc2(wf, omega, c)
 !!
 !!    Effective jacobian transformation
 !!    Written by Eirik F. Kjønstad and Sarai Dery Folkestad
@@ -32,7 +32,8 @@ contains
 !
       class(cc2) :: wf
 !
-      real(dp), dimension(wf%n_amplitudes, 1) :: c
+      real(dp), intent(in) :: omega 
+      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: c
 !
       real(dp), dimension(:,:), allocatable :: c_a_i
 !
