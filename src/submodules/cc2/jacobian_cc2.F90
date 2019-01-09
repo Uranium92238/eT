@@ -648,7 +648,8 @@ contains
 !!    Linda Goletto, and Alexander Paul, Jan 2019
 !!
 !!    Effective B1 = - 2 sum_{kcl} F_kc (1/Δ_{ai,ck})*(1/(ε_{aick} + ω) * (g_ailk c_cl + g_ckli c_al)
-!!                 = sum_{kcl} F_kc (1/Δ_{ak,ci})*(1/(ε_{akci} + ω) * (g_akli c_cl + g_cilk c_al)
+!!                     + sum_{kcl} F_kc (1/Δ_{ak,ci})*(1/(ε_{akci} + ω) * (g_akli c_cl + g_cilk c_al)
+!!                 =   2 sum_{kcl} F_kc (- 2*X_ckai - 2*X_aick + X_ciak + X_akci)
 !!
 !!
       implicit none
@@ -1015,7 +1016,7 @@ contains
 !
    module subroutine effective_jacobian_cc2_d1_cc2(wf, omega, rho_ai, c_bl, eps_o, eps_v)
 !!
-!!    Jacobian CC2 F1
+!!    Jacobian CC2 D1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
 !!    Linda Goletto, and Alexander Paul, Dec 2018
 !!
@@ -1252,7 +1253,32 @@ contains
       call mem%dealloc(X_akbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-end subroutine effective_jacobian_cc2_d1_cc2
+   end subroutine effective_jacobian_cc2_d1_cc2
 !
+!
+!
+!
+   module subroutine effective_jacobian_cc2_f1_cc2(wf, omega, rho_ai, c_ai, eps_o, eps_v)
+!!
+!!    Jacobian CC2 e1
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
+!!    Linda Goletto, and Alexander Paul, Dec 2018
+!!
+!!
+      implicit none
+!
+      class(cc2), intent(in) :: wf
+!
+!     Sent to the routine
+!
+      real(dp), intent(in) :: omega
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_cj
+!
+      real(dp), dimension(wf%n_o), intent(in) :: eps_o
+      real(dp), dimension(wf%n_v), intent(in) :: eps_v
+!
+   end subroutine effective_jacobian_cc2_f1_cc2
 !
 end submodule jacobian
