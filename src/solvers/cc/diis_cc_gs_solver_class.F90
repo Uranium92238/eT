@@ -17,13 +17,10 @@ module diis_cc_gs_solver_class
       character(len=100) :: tag = 'DIIS CC ground solver'
       character(len=100) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
 !
-      character(len=500) :: description1 = 'A DIIS CC ground state amplitude equations solver. It combines &
-                                           &a quasi-Newton perturbation theory estimate of the next &
-                                           &amplitudes, using least square fitting to find an an optimal &
-                                           &combination of previous estimates such that the update is minimized.'
-!
-      character(len=500) :: description2 = 'See Helgaker et al., Molecular Electronic Structure Theory, &
-                                           &Chapter 13, for the more details on this algorithm.'
+      character(len=500) :: description1 = 'A DIIS CC ground state amplitude equations solver. It uses &
+                                           &an extrapolation of previous quasi-Newton perturbation theory &
+                                           &estimates of the next amplitudes. See Helgaker et al., Molecular & 
+                                           &Electronic Structure Theory, Chapter 13.'
 !
       integer(i15) :: diis_dimension
 !
@@ -47,6 +44,7 @@ module diis_cc_gs_solver_class
       procedure :: read_settings            => read_settings_diis_cc_gs_solver
 !
       procedure :: print_settings           => print_settings_diis_cc_gs_solver
+      procedure, nopass :: print_summary    => print_summary_diis_cc_gs_solver
 !
       procedure :: restart                  => restart_diis_cc_gs_solver
       procedure :: write_restart_file       => write_restart_file_diis_cc_gs_solver
@@ -249,7 +247,7 @@ contains
       converged_energy   = .false.
       converged_omega    = .false.
 !
-      write(output%unit, '(/t3,a)') 'Iteration    Energy (a.u.)        || Omega ||    Delta E (a.u.)'
+      write(output%unit, '(/t3,a)') 'Iteration    Energy (a.u.)        |omega|       Delta E (a.u.) '
       write(output%unit, '(t3,a)')  '---------------------------------------------------------------'
       flush(output%unit)
 !
@@ -260,7 +258,6 @@ contains
 !
 !        Calculate the energy and error vector omega 
 !
-         call wf%integrals%write_t1_cholesky(wf%t1)
          call wf%construct_fock()
 !
          call wf%calculate_energy()
@@ -329,6 +326,10 @@ contains
          write(output%unit, '(/t3,a)')  'Warning: was not able to converge the equations in the given'
          write(output%unit, '(t3,a/)')  'number of maximum iterations.'
 !
+      else
+!
+         call solver%print_summary(wf)
+!
       endif 
 !
    end subroutine run_diis_cc_gs_solver
@@ -365,8 +366,7 @@ contains
 !
       call long_string_print(solver%tag,'(//t3,a)',.true.)
       call long_string_print(solver%author,'(t3,a/)',.true.)
-      call long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
-      call long_string_print(solver%description2)
+      call long_string_print(solver%description1,'(t3,a)',.false.,'(t3,a)','(t3,a)')
 !
    end subroutine print_banner_diis_cc_gs_solver
 !
@@ -416,6 +416,28 @@ contains
       enddo
 !
    end subroutine read_settings_diis_cc_gs_solver
+!
+!
+   subroutine print_summary_diis_cc_gs_solver(wf)
+!!
+!!    Print summary 
+!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp) :: t1_diagnostic 
+!
+      write(output%unit, '(/t3,a)') '- DIIS CC ground state solver summary:'
+!
+      write(output%unit, '(/t6,a33,f18.12)') 'Final ground state energy (a.u.):', wf%energy 
+      call wf%print_dominant_amplitudes()
+!
+      t1_diagnostic = wf%get_t1_diagnostic() 
+      write(output%unit, '(/t6,a32,f14.12)') 'T1 diagnostic (|T1|/sqrt(N_e)): ', t1_diagnostic
+!
+   end subroutine print_summary_diis_cc_gs_solver
 !
 !
 end module diis_cc_gs_solver_class
