@@ -516,9 +516,9 @@ contains
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
 !!    Linda Goletto, and Alexander Paul, Dec 2018
 !!
-!!    rho_ai =+ 2 F_kc * (-eps_ai,ck + w)^-1 * (1 + delta_ai,ck)^-1 * (sum_d g_aicd c_dk + sum_d g_ckad c_di)
-!!           =+ 2 F_kc * (-eps_ai,ck + w)^-1 * (1 + delta_ai,ck)^-1 * (X_aick + X_ckai)
-!!           =+ 2 F_kc * (Y_aick + Y_ckai)
+!!    rho_ai =+ F_kc * (-eps_ai,ck + w)^-1 * (1 + delta_ai,ck)^-1 * (2 g_aicd c_dk + 2 g_ckad c_di - g_akcd c_di - g_ciad c_dk)
+!!           =+ F_kc * (-eps_ai,ck + w)^-1 * (1 + delta_ai,ck)^-1 * (2 X_aick - X_akci + 2 X_ckai - X_ciak)
+!!           =+ F_kc * (Y_aick + Y_ckai)
 !!
 !!    The term is calculated in batches over the a and c indices.
 !!
@@ -579,7 +579,8 @@ contains
             do i = 1, wf%n_o
                do a = 1, wf%n_v
 !
-                  Y_aick(a, i, c, k) = X_aick(a, i, c, k)/(- eps_v(a) - eps_v(c) + eps_o(i) + eps_o(k) + omega)
+                  Y_aick(a, i, c, k) = (two*X_aick(a, i, c, k) - X_aick(a, k, c, i))/&
+                        (- eps_v(a) - eps_v(c) + eps_o(i) + eps_o(k) + omega)
 !
                enddo
             enddo
@@ -613,7 +614,7 @@ contains
                   wf%n_o*wf%n_v, &
                   1,             &
                   wf%n_o*wf%n_v, &
-                  two,           &
+                  one,           &
                   Y_aick,        &
                   wf%n_o*wf%n_v, &
                   F_ck,          &
@@ -626,7 +627,7 @@ contains
                   wf%n_o*wf%n_v, &
                   1,             &
                   wf%n_o*wf%n_v, &
-                  two,           &
+                  one,           &
                   Y_aick,        &
                   wf%n_o*wf%n_v, &
                   F_ck,          &
