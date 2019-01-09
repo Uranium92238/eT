@@ -14,7 +14,7 @@
    end subroutine effective_jacobian_transformation_cc2
 !
 !
-   module subroutine jacobian_cc2_A1_cc2(wf, rho_a_i, c_b_j)
+   module subroutine jacobian_cc2_A1_cc2(wf, rho_ai, c_bj)
 !!
 !!    Jacobian CC2 A1
 !!    Written by Eirik F. Kjønstad and Sarai Dery Folkestad
@@ -26,13 +26,13 @@
 !
 !     Vectors sent to the routine
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)     :: c_b_j
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)  :: rho_a_i
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)     :: c_bj
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)  :: rho_ai
 !
     end subroutine jacobian_cc2_A1_cc2
 !
 !
-    module subroutine jacobian_cc2_B1_cc2(wf, rho_a_i, c_b_j, eps_o, eps_v)
+    module subroutine jacobian_cc2_B1_cc2(wf, rho_ai, c_bj, eps_o, eps_v)
 !!
 !!    Jacobian CC2 B1
 !!    Written by Eirik F. Kjønstad and Sarai Dery Folkestad
@@ -44,8 +44,8 @@
 !
 !     Vectors sent to the routine
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_b_j
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_a_i
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_bj
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
 !
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
@@ -65,8 +65,8 @@
 !
       real(dp), intent(in) :: omega
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai 
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_ai 
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_ai
 !
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
