@@ -95,7 +95,7 @@
    end subroutine effective_jacobian_cc2_b1_cc2
 !
 !
-   module subroutine effective_jacobian_cc2_e1_cc2(wf, omega, rho_ai, c_cj, eps_o, eps_v)
+   module subroutine effective_jacobian_cc2_c1_cc2(wf, omega, rho_ai, c_cj, eps_o, eps_v)
 !!
 !!    Jacobian CC2 E1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
@@ -113,10 +113,10 @@
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
 !
-   end subroutine effective_jacobian_cc2_e1_cc2
+end subroutine effective_jacobian_cc2_c1_cc2
 !
 !
-   module subroutine effective_jacobian_cc2_f1_cc2(wf, omega, rho_ai, c_bl, eps_o, eps_v)
+   module subroutine effective_jacobian_cc2_d1_cc2(wf, omega, rho_ai, c_bl, eps_o, eps_v)
 !!
 !!    Jacobian CC2 E1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
@@ -134,4 +134,4 @@
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
 !
-end subroutine effective_jacobian_cc2_f1_cc2
+end subroutine effective_jacobian_cc2_d1_cc2
