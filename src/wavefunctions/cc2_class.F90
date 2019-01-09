@@ -26,6 +26,11 @@ module cc2_class
       procedure :: effective_jacobian_transformation => effective_jacobian_transformation_cc2
 !
       procedure :: effective_jacobian_cc2_a1 => effective_jacobian_cc2_a1_cc2
+      procedure :: effective_jacobian_cc2_b1 => effective_jacobian_cc2_b1_cc2
+      procedure :: effective_jacobian_cc2_c1 => effective_jacobian_cc2_c1_cc2
+      procedure :: effective_jacobian_cc2_d1 => effective_jacobian_cc2_d1_cc2
+      procedure :: effective_jacobian_cc2_e1 => effective_jacobian_cc2_e1_cc2
+      procedure :: effective_jacobian_cc2_f1 => effective_jacobian_cc2_f1_cc2
 !
    end type cc2
 !
