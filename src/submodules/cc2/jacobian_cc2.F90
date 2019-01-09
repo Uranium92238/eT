@@ -38,7 +38,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: rho_a_i
 !
-      integer(i15) :: i, j, a, b, ai ! Index
+      integer(i15) :: i, a, ai ! Index
 !
 !     Allocate and zero the transformed vector (singles part)
 !
@@ -202,7 +202,7 @@ contains
 !     Indices
 !
       integer(i15) :: a, i, b, c, j, k
-      integer(i15) :: jb, kc, jc, kb, bj, ai, ck, ak, ci, bi, aj, cj
+      integer(i15) :: kc, ai, ck, ak, ci, bi, aj, cj
 !
 !     :: Term 1: 2 L_kcjb * c_bj * (2 t^ac_ik - t^ac_ki)  ::
 !
@@ -581,7 +581,7 @@ contains
    end subroutine effective_jacobian_cc2_a1_cc2
 !
 !
-   module subroutine effective_jacobian_cc2_b1_cc2(wf, omega, rho_a_i, c_a_i, eps_o, eps_v)
+   module subroutine effective_jacobian_cc2_b1_cc2(wf, omega, rho_ai, c_ai, eps_o, eps_v)
 !!
 !!    Effective jacobian B1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
@@ -593,8 +593,8 @@ contains
 !
       real(dp), intent(in) :: omega
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_a_i
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_a_i
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_ai
 !
       real(dp), dimension(wf%n_o), intent(in)  :: eps_o
       real(dp), dimension(wf%n_v), intent(in)  :: eps_v
@@ -646,7 +646,7 @@ contains
                         (batch_i%length)*(batch_k%length)*wf%n_v, &
                         wf%n_o,                                   &
                         one,                                      &
-                        c_a_i,                                    & ! c_c_l
+                        c_ai,                                     & ! c_c_l
                         wf%n_v,                                   &
                         g_lkai,                                   & ! g_l_kai
                         wf%n_o,                                   &
@@ -682,11 +682,11 @@ contains
                   do k = 1, batch_k%length
                      do c = 1, wf%n_v
 !
-                        rho_a_i(a, i + batch_i%first - 1) = rho_a_i(a, i + batch_i%first - 1)                              &
+                        rho_ai(a, i + batch_i%first - 1) = rho_ai(a, i + batch_i%first - 1)                              &
                                                             - two*X_ckai(c, k, a, i)*wf%fock_ia(k + batch_k%first - 1, c)  &
                                                             + X_ckai(a, k, c, i)*wf%fock_ia(k + batch_k%first - 1, c)
 !
-                        rho_a_i(a, k + batch_k%first - 1) = rho_a_i(a, k + batch_k%first - 1)                              &
+                        rho_ai(a, k + batch_k%first - 1) = rho_ai(a, k + batch_k%first - 1)                              &
                                                             - two*X_ckai(a, k, c, i)*wf%fock_ia(i + batch_i%first - 1, c)  &
                                                             + X_ckai(c, k, a, i)*wf%fock_ia(i + batch_i%first - 1, c)
 !
@@ -745,7 +745,7 @@ contains
 !
 !     Indices
 !
-      integer(i15) :: i, j, k, a, b, c
+      integer(i15) :: i, j, k, a, b
       integer(i15) :: ak, bj, aj, bk, ji, kb, jb, ki
 !
 !     :: Term 1: - L_kijb * g_akbc * c_cj /(omega - ε_akbj) * 1/(1 + delta_ak,bj)  ::
