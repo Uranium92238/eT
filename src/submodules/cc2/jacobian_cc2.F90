@@ -767,14 +767,14 @@ contains
    end subroutine effective_jacobian_cc2_b1_cc2
 !
 !
-   module subroutine effective_jacobian_cc2_e1_cc2(wf, omega, rho_ai, c_cj, eps_o, eps_v)
+   module subroutine effective_jacobian_cc2_c1_cc2(wf, omega, rho_ai, c_cj, eps_o, eps_v)
 !!
-!!    Jacobian CC2 E1
+!!    Jacobian CC2 C1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
 !!    Linda Goletto, and Alexander Paul, Dec 2018
 !!
 !!    Implicit calculation of the doubles vector
-!!    rho_ai^E1 =+ - L_kijb  (g_akbc * c_cj + g_bjac * c_ck) (omega - ε_akbj)^-1 * (1 + delta_ak,bj)^-1
+!!    rho_ai^C1 =+ - L_kijb  (g_akbc * c_cj + g_bjac * c_ck) (omega - ε_akbj)^-1 * (1 + delta_ak,bj)^-1
 !!              =+ - L_kijb  (X_akbj + X_bjak)
 !!
 !!    Every term will be done separately due to different batching (k,b and )
@@ -1010,10 +1010,10 @@ contains
 !
       call mem%dealloc(L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-   end subroutine effective_jacobian_cc2_e1_cc2
+   end subroutine effective_jacobian_cc2_c1_cc2
 !
 !
-   module subroutine effective_jacobian_cc2_f1_cc2(wf, omega, rho_ai, c_bl, eps_o, eps_v)
+   module subroutine effective_jacobian_cc2_d1_cc2(wf, omega, rho_ai, c_bl, eps_o, eps_v)
 !!
 !!    Jacobian CC2 F1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
@@ -1252,7 +1252,7 @@ contains
       call mem%dealloc(X_akbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-end subroutine effective_jacobian_cc2_f1_cc2
+end subroutine effective_jacobian_cc2_d1_cc2
 !
 !
 end submodule jacobian
