@@ -74,7 +74,7 @@ contains
    end subroutine effective_jacobian_transformation_cc2
 !
 !
-   module subroutine jacobian_cc2_A1_cc2(wf, rho_ai, c_bj)
+   module subroutine jacobian_cc2_a1_cc2(wf, rho_ai, c_bj)
 !!
 !!    Jacobian CC2 A1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
@@ -183,10 +183,10 @@ contains
       call mem%dealloc(g_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
       call mem%dealloc(c_jb, wf%n_o, wf%n_v)
 !
-   end subroutine jacobian_cc2_A1_cc2
+   end subroutine jacobian_cc2_a1_cc2
 !
 !
-   module subroutine jacobian_cc2_B1_cc2(wf, rho_ai, c_bj, eps_o, eps_v)
+   module subroutine jacobian_cc2_b1_cc2(wf, rho_ai, c_bj, eps_o, eps_v)
 !!
 !!    Jacobian CC2 B1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
@@ -508,7 +508,7 @@ contains
       call mem%dealloc(X_ab, (wf%n_v), (wf%n_o))
 !
 !
-   end subroutine jacobian_cc2_B1_cc2
+   end subroutine jacobian_cc2_b1_cc2
 !
 !
    module subroutine effective_jacobian_cc2_a1_cc2(wf, omega, rho_ai, c_ai, eps_o, eps_v)
