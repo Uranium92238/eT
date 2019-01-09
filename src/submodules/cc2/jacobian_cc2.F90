@@ -83,6 +83,8 @@ contains
       call wf%effective_jacobian_cc2_e1(omega, rho_a_i, c_a_i, eps_o, eps_v)
       call wf%effective_jacobian_cc2_f1(omega, rho_a_i, c_a_i, eps_o, eps_v)
 !
+      call dcopy(wf%n_amplitudes, rho_a_i, 1, c, 1)
+!
       call mem%dealloc(c_a_i, wf%n_v, wf%n_o)
       call mem%dealloc(rho_a_i, wf%n_v, wf%n_o)
 !
@@ -230,9 +232,9 @@ contains
 !
 !     Integrals
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_kcjb, g_kbjc, g_ckbi, g_ckaj, g_aick
+      real(dp), dimension(:,:,:,:), allocatable :: g_kcjb, g_ckbi, g_ckaj, g_aick
       real(dp), dimension(:,:,:,:), allocatable :: L_kcbj, L_kcjb, L_jckb
-      real(dp), dimension(:,:,:,:), allocatable :: u_aikc
+      real(dp), dimension(:,:,:,:), allocatable :: u_aikc, t_akcj
 !
 !     Indices
 !
@@ -824,7 +826,7 @@ contains
 !     Intermediates
 !
       real(dp), dimension(:,:,:,:), allocatable :: X_akbj
-      real(dp), dimension(:,:,:,:), allocatable :: X_bjak
+      real(dp), dimension(:,:,:,:), allocatable :: X_bjak, X_ajbk
 !
 !     Indices
 !
@@ -855,7 +857,7 @@ contains
                   (wf%n_v),             &
                   zero,                 &
                   X_akbj,               &
-                  (wf%n_o)*(wf%n_v))
+                  (wf%n_o)*(wf%n_v)**2)
 !
       call mem%dealloc(g_akbc, wf%n_v, wf%n_o, wf%n_v, wf%n_v)
 !
@@ -962,7 +964,7 @@ contains
                   (wf%n_v),             &
                   zero,                 &
                   X_bjak,               &
-                  (wf%n_o)*(wf%n_v))
+                  (wf%n_o)*(wf%n_v)**2)
 !
       call mem%dealloc(g_bjac, wf%n_v, wf%n_o, wf%n_v, wf%n_v)
 !
@@ -1081,7 +1083,7 @@ contains
 !
 !     Intermediates
 !
-      real(dp), dimension(:,:,:,:), allocatable :: X_akbj, X_bjak
+      real(dp), dimension(:,:,:,:), allocatable :: X_akbj, X_bjak, X_ajbk
 !
 !     Indices
 !
@@ -1112,7 +1114,7 @@ contains
                   (wf%n_o),             &
                   zero,                 &
                   X_bjak,               &
-                  (wf%n_v)*(wf%n_o))
+                  (wf%n_v))
 !
       call mem%dealloc(g_ljak, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -1218,7 +1220,7 @@ contains
                   (wf%n_o),             &
                   zero,                 &
                   X_akbj,               &
-                  (wf%n_v)*(wf%n_o))
+                  (wf%n_v))
 !
       call mem%dealloc(g_lkbj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -1335,7 +1337,7 @@ contains
 !
 !     Intermediates
 !
-      real(dp), dimension(:,:,:,:), allocatable :: X_bick, X_ckbi
+      real(dp), dimension(:,:,:,:), allocatable :: X_bick, X_ckbi, X_bkci
 !
 !     Indices
 !
@@ -1366,7 +1368,7 @@ contains
                   (wf%n_v),             &
                   zero,                 &
                   X_bick,               &
-                  (wf%n_o)*(wf%n_v))
+                  (wf%n_o)*(wf%n_v)**2)
 !
       call mem%dealloc(g_bicd, wf%n_v, wf%n_o, wf%n_v, wf%n_v)
 !
@@ -1471,7 +1473,7 @@ contains
                   (wf%n_v),             &
                   zero,                 &
                   X_ckbi,               &
-                  (wf%n_o)*(wf%n_v))
+                  (wf%n_o)*(wf%n_v)**2)
 !
       call mem%dealloc(g_ckbd, wf%n_v, wf%n_o, wf%n_v, wf%n_v)
 !
@@ -1623,12 +1625,13 @@ contains
       call dgemm('N', 'N',             &
                   wf%n_v,              &
                   wf%n_o,              &
-                  wf%n_v*(wf%n_o**2),  &
+                  wf%n_o*(wf%n_v**2),  &
                   one,                 &
                   L_abkc,              &
                   wf%n_v,              &
                   X_bkci,              &
-                  wf%n_v*(wf%n_o**2),  &
+                  wf%n_o*(wf%n_v**2),  &
+                  one,                 &
                   rho_ai,              &
                   wf%n_v)
 !
@@ -1715,12 +1718,13 @@ contains
       call dgemm('N', 'N',             &
                   wf%n_v,              &
                   wf%n_o,              &
-                  wf%n_v*(wf%n_o**2),  &
+                  wf%n_o*(wf%n_v**2),  &
                   one,                 &
                   L_abkc,              &
                   wf%n_v,              &
                   X_bkci,              &
-                  wf%n_v*(wf%n_o**2),  &
+                  wf%n_o*(wf%n_v**2),  &
+                  one,                 &
                   rho_ai,              &
                   wf%n_v)
 !
