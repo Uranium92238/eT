@@ -1260,7 +1260,7 @@ contains
 !
    module subroutine effective_jacobian_cc2_f1_cc2(wf, omega, rho_ai, c_ai, eps_o, eps_v)
 !!
-!!    Jacobian CC2 e1
+!!    Jacobian CC2 f1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
 !!    Linda Goletto, and Alexander Paul, Dec 2018
 !!
