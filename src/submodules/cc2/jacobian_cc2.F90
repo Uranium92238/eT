@@ -516,9 +516,9 @@ contains
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
 !!    Linda Goletto, and Alexander Paul, Dec 2018
 !!
-!!    rho_ai =+ 2 F_kc * (-eps_ai,ck + w)^-1 * (1 + delta_ai,ck)^-1 * (sum_d g_aicd c_dk + sum_d g_ckad c_di)
-!!           =+ 2 F_kc * (-eps_ai,ck + w)^-1 * (1 + delta_ai,ck)^-1 * (X_aick + X_ckai)
-!!           =+ 2 F_kc * (Y_aick + Y_ckai)
+!!    rho_ai =+ F_kc * (-eps_ai,ck + w)^-1 * (1 + delta_ai,ck)^-1 * (2 g_aicd c_dk + 2 g_ckad c_di - g_akcd c_di - g_ciad c_dk)
+!!           =+ F_kc * (-eps_ai,ck + w)^-1 * (1 + delta_ai,ck)^-1 * (2 X_aick - X_akci + 2 X_ckai - X_ciak)
+!!           =+ F_kc * (Y_aick + Y_ckai)
 !!
 !!    The term is calculated in batches over the a and c indices.
 !!
@@ -579,7 +579,8 @@ contains
             do i = 1, wf%n_o
                do a = 1, wf%n_v
 !
-                  Y_aick(a, i, c, k) = X_aick(a, i, c, k)/(- eps_v(a) - eps_v(c) + eps_o(i) + eps_o(k) + omega)
+                  Y_aick(a, i, c, k) = (two*X_aick(a, i, c, k) - X_aick(a, k, c, i))/&
+                        (- eps_v(a) - eps_v(c) + eps_o(i) + eps_o(k) + omega)
 !
                enddo
             enddo
@@ -613,7 +614,7 @@ contains
                   wf%n_o*wf%n_v, &
                   1,             &
                   wf%n_o*wf%n_v, &
-                  two,           &
+                  one,           &
                   Y_aick,        &
                   wf%n_o*wf%n_v, &
                   F_ck,          &
@@ -626,7 +627,7 @@ contains
                   wf%n_o*wf%n_v, &
                   1,             &
                   wf%n_o*wf%n_v, &
-                  two,           &
+                  one,           &
                   Y_aick,        &
                   wf%n_o*wf%n_v, &
                   F_ck,          &
@@ -647,8 +648,8 @@ contains
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
 !!    Linda Goletto, and Alexander Paul, Jan 2019
 !!
-!!    Effective B1 = - 2 sum_{kcl} F_kc (1/Δ_{ai,ck})*(1/(ε_{aick} + ω) * (g_ailk c_cl + g_ckli c_al)
-!!                     + sum_{kcl} F_kc (1/Δ_{ak,ci})*(1/(ε_{akci} + ω) * (g_akli c_cl + g_cilk c_al)
+!!    Effective B1 = - 2 sum_{kcl} F_kc (1/Δ_{ai,ck})*(1/(ε_{aick} + ω)) * (g_ailk c_cl + g_ckli c_al)
+!!                     + sum_{kcl} F_kc (1/Δ_{ak,ci})*(1/(ε_{akci} + ω)) * (g_akli c_cl + g_cilk c_al)
 !!                 =   2 sum_{kcl} F_kc (- 2*X_ckai - 2*X_aick + X_ciak + X_akci)
 !!
 !!
@@ -778,7 +779,7 @@ contains
 !!    rho_ai^C1 =+ - L_kijb  (g_akbc * c_cj + g_bjac * c_ck) (omega - ε_akbj)^-1 * (1 + delta_ak,bj)^-1
 !!              =+ - L_kijb  (X_akbj + X_bjak)
 !!
-!!    Every term will be done separately due to different batching (k,b and )
+!!    Every term will be done separately due to different batching (k,b and abi or jbi)
 !!
       implicit none
 !
@@ -814,7 +815,7 @@ contains
 !
       call mem%alloc(g_akbc, wf%n_v, wf%n_o, wf%n_v, wf%n_v)
 !
-      call wf%get_vovv(g_akbc,    &
+      call wf%get_vovv(g_akbc,     &
                         1, wf%n_v, &
                         1, wf%n_o, &
                         1, wf%n_v, &
@@ -847,7 +848,7 @@ contains
                do b = 1, wf%n_v
                   do j = 1, wf%n_o
 !
-                     X_akbj(a,j,b,k) = - X_akbj(a,k,b,j) &
+                     X_akbj(a,j,b,k) = X_akbj(a,k,b,j) &
                                        /(- eps_v(a) - eps_v(b) + eps_o(j) + eps_o(k) + omega)
 !
                   enddo
@@ -863,13 +864,13 @@ contains
       call mem%alloc(g_jikb, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
       call mem%alloc(L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-      call wf%get_ovoo(g_jbki,    &
+      call wf%get_ovoo(g_jbki,     &
                         1, wf%n_o, &
                         1, wf%n_v, &
                         1, wf%n_o, &
                         1, wf%n_o)
 !
-      call wf%get_ooov(g_jikb,    &
+      call wf%get_ooov(g_jikb,     &
                         1, wf%n_o, &
                         1, wf%n_o, &
                         1, wf%n_o, &
@@ -929,7 +930,7 @@ contains
                   one,                  &
                   g_bjac,               &
                   (wf%n_v)**2*(wf%n_o), &
-                  c_cj,                &
+                  c_cj,                 &
                   (wf%n_v),             &
                   zero,                 &
                   X_bjak,               &
@@ -1024,7 +1025,7 @@ contains
 !!    rho_ai =+ - L_kijb  (- g_aklj * c_bl - g_bjlk * c_al) (omega - ε_akbj)^-1 * (1 + delta_ak,bj)^-1
 !!           =+ - L_kijb  (X_bjak + X_akbj)
 !!
-!!    Every term will be done separately due to different batching
+!!    Every term will be done separately due to different batching kj, bk
 !!
       implicit none
 !
@@ -1092,7 +1093,7 @@ contains
                do b = 1, wf%n_v
                   do j = 1, wf%n_o
 !
-                     X_bjak(a,j,b,k) = - X_bjak(b,j,a,k) &
+                     X_bjak(a,j,b,k) = X_bjak(b,j,a,k) &
                                        /(- eps_v(a) - eps_v(b) + eps_o(j) + eps_o(k) + omega)
 !
                   enddo
@@ -1141,7 +1142,7 @@ contains
                   (wf%n_v),             &
                   (wf%n_o),             &
                   (wf%n_v)*(wf%n_o)**2, &
-                  one,                 &
+                  one,                  &
                   X_bjak,               &
                   (wf%n_v),             &
                   L_jbki,               &
@@ -1260,7 +1261,7 @@ contains
 !!
 !!    Jacobian CC2 F1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
-!!    Linda Goletto, and Alexander Paul, Dec 2018
+!!    Linda Goletto, and Alexander Paul, Jan 2019
 !!
 !!    Implicit calculation of the doubles vector
 !!    rho_ai^E1 =+ L_abkc  (g_bicd * c_dk + g_ckbd * c_di) (omega - ε_bick)^-1 * (1 + delta_bi,ck)^-1
@@ -1462,24 +1463,202 @@ contains
 !
    module subroutine effective_jacobian_cc2_f1_cc2(wf, omega, rho_ai, c_ai, eps_o, eps_v)
 !!
-!!    Jacobian CC2 f1
+!!    Jacobian CC2 effective F1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
-!!    Linda Goletto, and Alexander Paul, Dec 2018
+!!    Linda Goletto, and Alexander Paul, Jan 2019
 !!
+!!    Effective F1 = - L_abkc ((1/Δ_{bi,ck})*(1/(ε_{bick} + ω)) * (g_lkbi c_cl + g_lick c_bl))
 !!
       implicit none
 !
       class(cc2), intent(in) :: wf
 !
-!     Sent to the routine
-!
       real(dp), intent(in) :: omega
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_cj
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_ai
 !
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
+!
+      real(dp), dimension(:,:,:,:), allocatable :: X_ckbi, X_bkci, X_bick
+      real(dp), dimension(:,:,:,:), allocatable :: L_abkc, g_ackb, g_lkbi, g_lick
+!
+      integer(i15) :: b, c, i, k
+!
+!     Term 1: - L_abkc (1/Δ_{bi,ck})*(1/(ε_{bick} + ω)) * (g_lkbi c_cl)
+!
+      call mem%alloc(g_lkbi, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call wf%get_oovo(g_lkbi,      &
+                        1, wf%n_o,  &
+                        1, wf%n_o,  &
+                        1, wf%n_v,  &
+                        1, wf%n_o)
+!
+       call mem%alloc(X_ckbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('N', 'N',             &
+                  wf%n_v,              &
+                  (wf%n_o**2)*wf%n_v,  &
+                  wf%n_o,              &
+                  one,                 &
+                  c_ai,                & ! c_c_l
+                  wf%n_v,              &
+                  g_lkbi,              & ! g_l_kbi
+                  wf%n_o,              &
+                  zero,                &
+                  X_ckbi,              & ! X_c_kbi
+                  wf%n_v)
+!
+      call mem%dealloc(g_lkbi, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+!     Reorder and scale
+!
+      call mem%alloc(X_bkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      do i = 1, wf%n_o
+         do b = 1, wf%n_v
+!
+            X_ckbi(b, i, b, i) = X_ckbi(b, i, b, i)*half
+!
+            do k = 1, wf%n_o
+               do c = 1, wf%n_v
+!
+                  X_bkci(b, k, c, i) = X_ckbi(c, k, b, i)/( eps_o(i) + eps_o(k)  &
+                                                          - eps_v(b) - eps_v(c)  &
+                                                          + omega)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      call mem%dealloc(X_ckbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(L_abkc, wf%n_v, wf%n_v, wf%n_o, wf%n_v)
+!
+      call wf%get_vvov(L_abkc,      &
+                        1, wf%n_v,  &
+                        1, wf%n_v,  &
+                        1, wf%n_o,  &
+                        1, wf%n_v)
+!
+      call dscal((wf%n_v**3)*(wf%n_o), -two, L_abkc, 1)
+!
+      call mem%alloc(g_ackb, wf%n_v, wf%n_v, wf%n_o, wf%n_v)
+!
+      call wf%get_vvov(g_ackb,      &
+                        1, wf%n_v,  &
+                        1, wf%n_v,  &
+                        1, wf%n_o,  &
+                        1, wf%n_v)
+!
+      call add_1432_to_1234(one, g_ackb, L_abkc, wf%n_v, wf%n_v, wf%n_o, wf%n_v)
+!
+      call mem%dealloc(g_ackb, wf%n_v, wf%n_v, wf%n_o, wf%n_v)
+!
+      call dgemm('N', 'N',             &
+                  wf%n_v,              &
+                  wf%n_o,              &
+                  wf%n_v*(wf%n_o**2),  &
+                  one,                 &
+                  L_abkc,              &
+                  wf%n_v,              &
+                  X_bkci,              &
+                  wf%n_v*(wf%n_o**2),  &
+                  rho_ai,              &
+                  wf%n_v)
+!
+      call mem%dealloc(L_abkc, wf%n_v, wf%n_v, wf%n_o, wf%n_v)
+      call mem%dealloc(X_bkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+!     Term 2: - L_abkc ((1/Δ_{bi,ck})*(1/(ε_{bick} + ω)) * (g_lick c_bl))
+!
+      call mem%alloc(g_lick, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call wf%get_oovo(g_lick,      &
+                        1, wf%n_o,  &
+                        1, wf%n_o,  &
+                        1, wf%n_v,  &
+                        1, wf%n_o)
+!
+       call mem%alloc(X_bick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('N', 'N',             &
+                  wf%n_v,              &
+                  (wf%n_o**2)*wf%n_v,  &
+                  wf%n_o,              &
+                  one,                 &
+                  c_ai,                & ! c_b_l
+                  wf%n_v,              &
+                  g_lick,              & ! g_l_ick
+                  wf%n_o,              &
+                  zero,                &
+                  X_bick,              & ! X_b_ick
+                  wf%n_v)
+!
+      call mem%dealloc(g_lick, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+!     Reorder and scale
+!
+      call mem%alloc(X_bkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      do k = 1, wf%n_o
+         do c = 1, wf%n_v
+!
+            X_bick(c, k, c, k) = X_bick(c, k, c, k)*half
+!
+            do i = 1, wf%n_o
+               do b = 1, wf%n_v
+!
+                  X_bkci(b, k, c, i) = X_bick(b, i, c, k)/( eps_o(i) + eps_o(k)  &
+                                                          - eps_v(b) - eps_v(c)  &
+                                                          + omega)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+      call mem%dealloc(X_bick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(L_abkc, wf%n_v, wf%n_v, wf%n_o, wf%n_v)
+!
+      call wf%get_vvov(L_abkc,      &
+                        1, wf%n_v,  &
+                        1, wf%n_v,  &
+                        1, wf%n_o,  &
+                        1, wf%n_v)
+!
+      call dscal((wf%n_v**3)*(wf%n_o), -two, L_abkc, 1)
+!
+      call mem%alloc(g_ackb, wf%n_v, wf%n_v, wf%n_o, wf%n_v)
+!
+      call wf%get_vvov(g_ackb,      &
+                        1, wf%n_v,  &
+                        1, wf%n_v,  &
+                        1, wf%n_o,  &
+                        1, wf%n_v)
+!
+      call add_1432_to_1234(one, g_ackb, L_abkc, wf%n_v, wf%n_v, wf%n_o, wf%n_v)
+!
+      call mem%dealloc(g_ackb, wf%n_v, wf%n_v, wf%n_o, wf%n_v)
+!
+      call dgemm('N', 'N',             &
+                  wf%n_v,              &
+                  wf%n_o,              &
+                  wf%n_v*(wf%n_o**2),  &
+                  one,                 &
+                  L_abkc,              &
+                  wf%n_v,              &
+                  X_bkci,              &
+                  wf%n_v*(wf%n_o**2),  &
+                  rho_ai,              &
+                  wf%n_v)
+!
+      call mem%dealloc(L_abkc, wf%n_v, wf%n_v, wf%n_o, wf%n_v)
+      call mem%dealloc(X_bkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
    end subroutine effective_jacobian_cc2_f1_cc2
 !
