@@ -39,6 +39,9 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: rho_a_i
 !
+      real(dp), dimension(:), allocatable :: eps_o
+      real(dp), dimension(:), allocatable :: eps_v
+!
       integer(i15) :: i, a, ai ! Index
 !
 !     Allocate and zero the transformed vector (singles part)
@@ -67,9 +70,21 @@ contains
 !
 !     :: CC2 contributions to the transformed singles vector ::
 !
+      call mem%alloc(eps_o, wf%n_o)
+      call mem%alloc(eps_v, wf%n_v)
+!
+      eps_o = wf%fock_diagonal(1:wf%n_o,1)
+      eps_v = wf%fock_diagonal(wf%n_o + 1 : wf%n_mo, 1)
+!
+      call wf%effective_jacobian_cc2_a1(omega, rho_a_i, c_a_i, eps_o, eps_v)
+      call wf%effective_jacobian_cc2_b1(omega, rho_a_i, c_a_i, eps_o, eps_v)
+      call wf%effective_jacobian_cc2_c1(omega, rho_a_i, c_a_i, eps_o, eps_v)
+      call wf%effective_jacobian_cc2_d1(omega, rho_a_i, c_a_i, eps_o, eps_v)
+      call wf%effective_jacobian_cc2_e1(omega, rho_a_i, c_a_i, eps_o, eps_v)
+      call wf%effective_jacobian_cc2_f1(omega, rho_a_i, c_a_i, eps_o, eps_v)
+!
       call mem%dealloc(c_a_i, wf%n_v, wf%n_o)
       call mem%dealloc(rho_a_i, wf%n_v, wf%n_o)
-!
 !
    end subroutine effective_jacobian_transformation_cc2
 !
@@ -1303,7 +1318,7 @@ contains
 !
       call mem%alloc(g_bicd, wf%n_v, wf%n_o, wf%n_v, wf%n_v)
 !
-      call wf%get_vovv(g_akbc,    &
+      call wf%get_vovv(g_bicd,     &
                         1, wf%n_v, &
                         1, wf%n_o, &
                         1, wf%n_v, &
@@ -1456,7 +1471,7 @@ contains
                   rho_ai,               &
                   (wf%n_v))
 !
-      call mem%dealloc(X_bjak, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(X_ckbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%dealloc(L_abkc, wf%n_v, wf%n_v, wf%n_o, wf%n_v)
 !
    end subroutine effective_jacobian_cc2_e1_cc2
