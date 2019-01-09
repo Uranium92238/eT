@@ -779,7 +779,7 @@ contains
 !!    rho_ai^C1 =+ - L_kijb  (g_akbc * c_cj + g_bjac * c_ck) (omega - ε_akbj)^-1 * (1 + delta_ak,bj)^-1
 !!              =+ - L_kijb  (X_akbj + X_bjak)
 !!
-!!    Every term will be done separately due to different batching (k,b and )
+!!    Every term will be done separately due to different batching (k,b and abi or jbi)
 !!
       implicit none
 !
@@ -815,7 +815,7 @@ contains
 !
       call mem%alloc(g_akbc, wf%n_v, wf%n_o, wf%n_v, wf%n_v)
 !
-      call wf%get_vovv(g_akbc,    &
+      call wf%get_vovv(g_akbc,     &
                         1, wf%n_v, &
                         1, wf%n_o, &
                         1, wf%n_v, &
@@ -848,7 +848,7 @@ contains
                do b = 1, wf%n_v
                   do j = 1, wf%n_o
 !
-                     X_akbj(a,j,b,k) = - X_akbj(a,k,b,j) &
+                     X_akbj(a,j,b,k) = X_akbj(a,k,b,j) &
                                        /(- eps_v(a) - eps_v(b) + eps_o(j) + eps_o(k) + omega)
 !
                   enddo
@@ -864,13 +864,13 @@ contains
       call mem%alloc(g_jikb, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
       call mem%alloc(L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-      call wf%get_ovoo(g_jbki,    &
+      call wf%get_ovoo(g_jbki,     &
                         1, wf%n_o, &
                         1, wf%n_v, &
                         1, wf%n_o, &
                         1, wf%n_o)
 !
-      call wf%get_ooov(g_jikb,    &
+      call wf%get_ooov(g_jikb,     &
                         1, wf%n_o, &
                         1, wf%n_o, &
                         1, wf%n_o, &
@@ -930,7 +930,7 @@ contains
                   one,                  &
                   g_bjac,               &
                   (wf%n_v)**2*(wf%n_o), &
-                  c_cj,                &
+                  c_cj,                 &
                   (wf%n_v),             &
                   zero,                 &
                   X_bjak,               &
@@ -1025,7 +1025,7 @@ contains
 !!    rho_ai =+ - L_kijb  (- g_aklj * c_bl - g_bjlk * c_al) (omega - ε_akbj)^-1 * (1 + delta_ak,bj)^-1
 !!           =+ - L_kijb  (X_bjak + X_akbj)
 !!
-!!    Every term will be done separately due to different batching
+!!    Every term will be done separately due to different batching kj, bk
 !!
       implicit none
 !
@@ -1093,7 +1093,7 @@ contains
                do b = 1, wf%n_v
                   do j = 1, wf%n_o
 !
-                     X_bjak(a,j,b,k) = - X_bjak(b,j,a,k) &
+                     X_bjak(a,j,b,k) = X_bjak(b,j,a,k) &
                                        /(- eps_v(a) - eps_v(b) + eps_o(j) + eps_o(k) + omega)
 !
                   enddo
@@ -1142,7 +1142,7 @@ contains
                   (wf%n_v),             &
                   (wf%n_o),             &
                   (wf%n_v)*(wf%n_o)**2, &
-                  one,                 &
+                  one,                  &
                   X_bjak,               &
                   (wf%n_v),             &
                   L_jbki,               &
@@ -1261,7 +1261,7 @@ contains
 !!
 !!    Jacobian CC2 F1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
-!!    Linda Goletto, and Alexander Paul, Dec 2018
+!!    Linda Goletto, and Alexander Paul, Jan 2019
 !!
       implicit none
 !
@@ -1282,7 +1282,7 @@ contains
 !!
 !!    Jacobian CC2 effective F1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
-!!    Linda Goletto, and Alexander Paul, Dec 2018
+!!    Linda Goletto, and Alexander Paul, Jan 2019
 !!
 !!    Effective F1 = - L_abkc ((1/Δ_{bi,ck})*(1/(ε_{bick} + ω)) * (g_lkbi c_cl + g_lick c_bl))
 !!
@@ -1381,9 +1381,9 @@ contains
                   wf%n_v*(wf%n_o**2),  &
                   one,                 &
                   L_abkc,              &
-                  wf%n_v,              & 
+                  wf%n_v,              &
                   X_bkci,              &
-                  wf%n_v*(wf%n_o**2),  & 
+                  wf%n_v*(wf%n_o**2),  &
                   rho_ai,              &
                   wf%n_v)
 !
@@ -1468,9 +1468,9 @@ contains
                   wf%n_v*(wf%n_o**2),  &
                   one,                 &
                   L_abkc,              &
-                  wf%n_v,              & 
+                  wf%n_v,              &
                   X_bkci,              &
-                  wf%n_v*(wf%n_o**2),  & 
+                  wf%n_v*(wf%n_o**2),  &
                   rho_ai,              &
                   wf%n_v)
 !
