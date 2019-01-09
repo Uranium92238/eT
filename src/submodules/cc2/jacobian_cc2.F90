@@ -967,16 +967,16 @@ contains
       call mem%alloc(g_jikb, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
       call mem%alloc(L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-      call wf%get_ovoo(g_jbki,    &
-                        1, wf%n_o, &
-                        1, wf%n_v, &
-                        1, wf%n_o, &
+      call wf%get_ovoo(g_jbki,      &
+                        1, wf%n_o,  &
+                        1, wf%n_v,  &
+                        1, wf%n_o,  &
                         1, wf%n_o)
 !
-      call wf%get_ooov(g_jikb,    &
-                        1, wf%n_o, &
-                        1, wf%n_o, &
-                        1, wf%n_o, &
+      call wf%get_ooov(g_jikb,      &
+                        1, wf%n_o,  &
+                        1, wf%n_o,  &
+                        1, wf%n_o,  &
                         1, wf%n_v)
 !
       do j = 1, wf%n_o
