@@ -119,10 +119,6 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_aijb
       real(dp), dimension(:,:,:,:), allocatable :: g_abji
 !
-!     Indices
-!
-      integer(i15) :: a, b, i, j
-!
 !     Explicit reordering of c_bj
 !
       call mem%alloc(c_jb, wf%n_o, wf%n_v)
@@ -831,7 +827,7 @@ contains
 !
 !     Indices
 !
-      integer(i15) :: i, j, k, a, b
+      integer(i15) :: j, k, a, b
 !
 !     :: Term 1: sum_ckbj - L_kijb * g_akbc * c_cj (omega - ε_akbj)^-1 * (1 + delta_ak,bj)^-1  ::
 !
@@ -864,18 +860,21 @@ contains
 !
 !     Reordering of X_akbj as ajbk and scaling by (omega - ε_akbj)^-1 * (1 + delta_ak,bj)^-1
 !
-      do k = 1, wf%n_o
-         do a = 1, wf%n_v
+!$omp parallel do private(a,k)
+      do a = 1, wf%n_v
+         do k = 1, wf%n_o
 !
             X_akbj(a,k,a,k) = half*X_akbj(a,k,a,k)
 !
          enddo
       enddo
+!$omp end parallel do 
 !
       call mem%alloc(X_ajbk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      do k = 1, wf%n_o
-         do b = 1, wf%n_v
+!$omp parallel do private(k,b,j,a)
+      do b = 1, wf%n_v
+         do k = 1, wf%n_o
             do j = 1, wf%n_o
                do a = 1, wf%n_v
 !
@@ -886,6 +885,7 @@ contains
             enddo
          enddo
       enddo
+!$omp end parallel do 
 !
       call mem%dealloc(X_akbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -912,17 +912,8 @@ contains
 
       call mem%alloc(L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-      do i = 1, wf%n_o
-         do k = 1, wf%n_o
-            do b = 1, wf%n_v
-               do j = 1, wf%n_o
-!
-                  L_jbki(j,b,k,i) = two * g_jbki(j,b,k,i) - g_jikb(j,i,k,b)
-!
-               enddo
-            enddo
-         enddo
-      enddo
+      L_jbki = two*g_jbki
+      call add_1432_to_1234(-one, g_jikb, L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
       call mem%dealloc(g_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
       call mem%dealloc(g_jikb, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
@@ -977,6 +968,7 @@ contains
 !
 !     Reordering of X_bjak as aj,bk and scaling by (omega - ε_akbj)^-1 * (1 + delta_ak,bj)^-1
 !
+!$omp parallel do private(k,a)
       do k = 1, wf%n_o
          do a = 1, wf%n_v
 !
@@ -984,11 +976,13 @@ contains
 !
          enddo
       enddo
+!$omp end parallel do 
 !
       call mem%alloc(X_ajbk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      do k = 1, wf%n_o
-         do b = 1, wf%n_v
+!$omp parallel do private(k,b,j,a)
+      do b = 1, wf%n_v
+         do k = 1, wf%n_o
             do j = 1, wf%n_o
                do a = 1, wf%n_v
 !
@@ -999,14 +993,11 @@ contains
             enddo
          enddo
       enddo
+!$omp end parallel do 
 !
       call mem%dealloc(X_bjak, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Due to different batching L has to be reconstructed
-!
-!     Construct L_kijb = 2 g_ki_jb - g_kb_ji ordered as
-!
-!               L_jbki = L_kijb = 2 g_jbki - g_jikb
 !
       call mem%alloc(g_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
@@ -1026,17 +1017,8 @@ contains
 !
       call mem%alloc(L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-      do i = 1, wf%n_o
-         do k = 1, wf%n_o
-            do b = 1, wf%n_v
-               do j = 1, wf%n_o
-!
-                  L_jbki(j,b,k,i) = two * g_jbki(j,b,k,i) - g_jikb(j,i,k,b)
-!
-               enddo
-            enddo
-         enddo
-      enddo
+      L_jbki = two*g_jbki 
+      call add_1432_to_1234(-one, g_jikb, L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
       call mem%dealloc(g_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
       call mem%dealloc(g_jikb, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
@@ -1100,7 +1082,7 @@ contains
 !
 !     Indices
 !
-      integer(i15) :: i, j, k, a, b
+      integer(i15) :: j, k, a, b
 !
 !     :: Term 1: L_kijb * g_aklj * c_bl (omega - ε_akbj)^-1 * (1 + delta_ak,bj)^-1  ::
 !
@@ -1133,6 +1115,7 @@ contains
 !
 !     Reordering of X_bjak as ajbk and scaling by (omega - ε_akbj)^-1 * (1 + delta_ak,bj)^-1
 !
+!$omp parallel do private(k,a)
       do k = 1, wf%n_o
          do a = 1, wf%n_v
 !
@@ -1140,9 +1123,11 @@ contains
 !
          enddo
       enddo
+!$omp end parallel do
 !
       call mem%alloc(X_ajbk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
+!$omp parallel do private(k,b,j,a)
       do k = 1, wf%n_o
          do b = 1, wf%n_v
             do j = 1, wf%n_o
@@ -1155,12 +1140,11 @@ contains
             enddo
          enddo
       enddo
+!$omp end parallel do 
 !
       call mem%dealloc(X_bjak, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-!     Construct L_kijb = 2 g_kijb - g_kbji ordered as
-!
-!               L_jbki = L_kijb = 2 g_jbki - g_jikb
+!     Construct L_jbki = 2 g_kijb - g_kbji
 !
       call mem%alloc(g_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
@@ -1180,17 +1164,8 @@ contains
 !
       call mem%alloc(L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-      do i = 1, wf%n_o
-         do k = 1, wf%n_o
-            do b = 1, wf%n_v
-               do j = 1, wf%n_o
-!
-                  L_jbki(j,b,k,i) = two * g_jbki(j,b,k,i) - g_jikb(j,i,k,b)
-!
-               enddo
-            enddo
-         enddo
-      enddo
+      L_jbki = two*g_jbki 
+      call add_1432_to_1234(-one, g_jikb, L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
       call mem%dealloc(g_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
       call mem%dealloc(g_jikb, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
@@ -1244,6 +1219,7 @@ contains
 !
 !     Reordering of X_akbj as ajbk and scaling by (omega - ε_akbj)^-1 * (1 + delta_ak,bj)^-1
 !
+!$omp parallel do private(k,a)
       do k = 1, wf%n_o
          do a = 1, wf%n_v
 !
@@ -1251,9 +1227,11 @@ contains
 !
          enddo
       enddo
+!$omp end parallel do 
 !
       call mem%alloc(X_ajbk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
+!$omp parallel do private(k,b,j,a)
       do k = 1, wf%n_o
          do b = 1, wf%n_v
             do j = 1, wf%n_o
@@ -1266,12 +1244,11 @@ contains
             enddo
          enddo
       enddo
+!$omp end parallel do 
 !
       call mem%dealloc(X_akbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-!     Construct L_kijb = 2 g_kijb - g_kbji ordered as
-!
-!               L_jbki = L_ki_jb = 2 g_jbki - g_jikb
+!     Construct L_kijb = 2 g_kijb - g_kbji 
 !
       call mem%alloc(g_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
@@ -1291,17 +1268,8 @@ contains
 !
       call mem%alloc(L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-      do i = 1, wf%n_o
-         do k = 1, wf%n_o
-            do b = 1, wf%n_v
-               do j = 1, wf%n_o
-!
-                  L_jbki(j,b,k,i) = two * g_jbki(j,b,k,i) - g_jikb(j,i,k,b)
-!
-               enddo
-            enddo
-         enddo
-      enddo
+      L_jbki = two*g_jbki
+      call add_1432_to_1234(-one, g_jikb, L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
       call mem%dealloc(g_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
       call mem%dealloc(g_jikb, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
@@ -1363,7 +1331,7 @@ contains
 !
 !     Indices
 !
-      integer(i15) :: a, b, c, i, k
+      integer(i15) :: b, c, i, k
 !
 !     :: Term 1: sum_bkcd L_abkc * g_bicd * c_dk (omega - ε_bick)^-1 * (1 + delta_bi,ck)^-1  ::
 !
@@ -1396,18 +1364,21 @@ contains
 !
 !     Reordering of X_bick as bkci and scaling by (omega - ε_bick)^-1 * (1 + delta_bi,ck)^-1
 !
-      do i = 1, wf%n_o
-         do b = 1, wf%n_v
+!$omp parallel do private(b,i)
+      do b = 1, wf%n_v
+         do i = 1, wf%n_o
 !
             X_bick(b,i,b,i) = half*X_bick(b,i,b,i)
 !
          enddo
       enddo
+!$omp end parallel do 
 !
       call mem%alloc(X_bkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      do i = 1, wf%n_o
-         do c = 1, wf%n_v
+!$omp parallel do private(i,c,k,b)
+      do c = 1, wf%n_v
+         do i = 1, wf%n_o
             do k = 1, wf%n_o
                do b = 1, wf%n_v
 !
@@ -1418,6 +1389,7 @@ contains
             enddo
          enddo
       enddo
+!$omp end parallel do 
 !
       call mem%dealloc(X_bick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -1443,17 +1415,8 @@ contains
 
       call mem%alloc(L_abkc, wf%n_v, wf%n_v, wf%n_o, wf%n_v)
 !
-      do c = 1, wf%n_v
-         do k = 1, wf%n_o
-            do b = 1, wf%n_v
-               do a = 1, wf%n_v
-!
-                  L_abkc(a,b,k,c) = two * g_abkc(a,b,k,c) - g_kbac(k,b,a,c)
-!
-               enddo
-            enddo
-         enddo
-      enddo
+      L_abkc = two*g_abkc 
+      call add_3214_to_1234(-one, g_kbac, L_abkc, wf%n_v, wf%n_v, wf%n_o, wf%n_v)
 !
       call mem%dealloc(g_abkc, wf%n_v, wf%n_v, wf%n_o, wf%n_v)
       call mem%dealloc(g_kbac, wf%n_o, wf%n_v, wf%n_v, wf%n_v)
@@ -1506,6 +1469,7 @@ contains
 !
 !     Reordering of X_ckbi as bkci and scaling by (omega - ε_bick)^-1 * (1 + delta_bi,ck)^-1
 !
+!$omp parallel do private(c,k)
       do c = 1, wf%n_v
          do k = 1, wf%n_o
 !
@@ -1513,11 +1477,13 @@ contains
 !
          enddo
       enddo
+!$omp end parallel do 
 !
       call mem%alloc(X_bkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      do i = 1, wf%n_o
-         do c = 1, wf%n_v
+!$omp parallel do private(i,c,k,b)
+      do c = 1, wf%n_v
+         do i = 1, wf%n_o
             do k = 1, wf%n_o
                do b = 1, wf%n_v
 !
@@ -1528,6 +1494,7 @@ contains
             enddo
          enddo
       enddo
+!$omp end parallel do 
 !
       call mem%dealloc(X_ckbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -1608,6 +1575,7 @@ contains
 !
       call mem%alloc(X_bkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
+!$omp parallel do private(i,c,k,b)
       do i = 1, wf%n_o
          do c = 1, wf%n_v
             do k = 1, wf%n_o
@@ -1621,7 +1589,9 @@ contains
             enddo
          enddo
       enddo
+!$omp end parallel do 
 !
+!$omp parallel do private(k,b)
       do k = 1, wf%n_o
          do b = 1, wf%n_v
 !
@@ -1629,6 +1599,7 @@ contains
 !
          enddo
       enddo
+!$omp end parallel do 
 !
       call mem%dealloc(X_ckbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -1701,6 +1672,7 @@ contains
 !
       call mem%alloc(X_bkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
+!$omp parallel do private(i,c,k,b)
       do i = 1, wf%n_o
          do c = 1, wf%n_v
             do k = 1, wf%n_o
@@ -1714,7 +1686,9 @@ contains
             enddo
          enddo
       enddo
+!$omp end parallel do 
 !
+!$omp parallel do private(k,b)
       do k = 1, wf%n_o
          do b = 1, wf%n_v
 !
@@ -1722,6 +1696,7 @@ contains
 !
          enddo
       enddo
+!$omp end parallel do 
 !
       call mem%dealloc(X_bick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
