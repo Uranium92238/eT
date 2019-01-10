@@ -66,7 +66,6 @@ contains
 !     :: CCS contributions to the singles c vector ::
 !
       call wf%jacobian_ccs_a1(rho_a_i, c_a_i)
-      call wf%jacobian_ccs_b1(rho_a_i, c_a_i)
 !
 !     :: CC2 contributions to the transformed singles vector ::
 !
