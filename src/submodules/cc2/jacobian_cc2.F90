@@ -590,110 +590,156 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_aicd
 !
       real(dp), dimension(:,:), allocatable :: F_ck
+      real(dp), dimension(:,:), allocatable :: reduced_rho_ai
 !
       integer(i15) :: a, i, c, k
 !
-!     Construct X_aick = sum_d g_aicd c_dk
+      type(batching_index) :: batch_a, batch_c
 !
-      call mem%alloc(g_aicd, wf%n_v, wf%n_o, wf%n_v, wf%n_v)
+      integer(i15) :: current_a_batch, current_c_batch
+      integer(i15) :: req0, req1_a, req1_c, req2
 !
-      call wf%get_vovv(g_aicd,     &
-                        1, wf%n_v, &
-                        1, wf%n_o, &
-                        1, wf%n_v, &
-                        1, wf%n_v)
+      req0   = 0
+      req1_a = 0
+      req1_c = 0
+      req2   = 0
 !
-      call mem%alloc(X_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call batch_a%init(wf%n_v)
+      call batch_c%init(wf%n_v)
 !
-      call dgemm('N', 'N',          &
-                  wf%n_o*wf%n_v**2, &
-                  wf%n_o,           &
-                  wf%n_v,           &
-                  one,              &
-                  g_aicd,           &
-                  wf%n_o*wf%n_v**2, &
-                  c_ai,             & ! c_dk
-                  wf%n_v,           &
-                  zero,             &
-                  X_aick,           &
-                  wf%n_o*wf%n_v**2)
+      call mem%batch_setup(batch_a, batch_c, req0, req1_a, req1_c, req2)
 !
-      call mem%dealloc(g_aicd, wf%n_v, wf%n_o, wf%n_v, wf%n_v)
+      do current_c_batch = 1, batch_c%num_batches
 !
-!     Scale X: Y_aick = (-eps_ai,ck + w)^-1 * (1 + delta_ai,ck)^-1 * (2 X_aick - X_akci)
+         call batch_c%determine_limits(current_c_batch)
 !
-      call mem%alloc(Y_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+         do current_a_batch = 1, batch_a%num_batches
+!
+            call batch_a%determine_limits(current_a_batch)
+!
+!           Construct X_aick = sum_d g_aicd c_dk
+!
+            call mem%alloc(g_aicd, batch_a%length, wf%n_o, batch_c%length, wf%n_v)
+!
+            call wf%get_vovv(g_aicd,                       &
+                              batch_a%first, batch_a%last, &
+                              1, wf%n_o,                   &
+                              batch_c%first, batch_c%last, &
+                              1, wf%n_v)
+!
+            call mem%alloc(X_aick, batch_a%length, wf%n_o, batch_c%length, wf%n_o)
+!
+            call dgemm('N', 'N',                                  &
+                        wf%n_o*(batch_a%length)*(batch_c%length), &
+                        wf%n_o,                                   &
+                        wf%n_v,                                   &
+                        one,                                      &
+                        g_aicd,                                   & ! g_aic,d
+                        wf%n_o*(batch_a%length)*(batch_c%length), &
+                        c_ai,                                     & ! c_d,k
+                        wf%n_v,                                   &
+                        zero,                                     &
+                        X_aick,                                   & ! X_aic,k
+                        wf%n_o*(batch_a%length)*(batch_c%length))
+!
+            call mem%dealloc(g_aicd, batch_a%length, wf%n_o, batch_c%length, wf%n_v)
+!
+!           Scale X: Y_aick = (-eps_ai,ck + w)^-1 * (1 + delta_ai,ck)^-1 * (2 X_aick - X_akci)
+!
+            call mem%alloc(Y_aick, batch_a%length, wf%n_o, batch_c%length, wf%n_o)
 !
 !$omp parallel do private(k,c,i,a)
-      do k = 1, wf%n_o
-         do c = 1, wf%n_v
-            do i = 1, wf%n_o
-               do a = 1, wf%n_v
+            do k = 1, wf%n_o
+               do c = 1, batch_c%length
+                  do i = 1, wf%n_o
+                     do a = 1, batch_a%length
 !
-                  Y_aick(a, i, c, k) = (two*X_aick(a, i, c, k) - X_aick(a, k, c, i))/&
-                        (- eps_v(a) - eps_v(c) + eps_o(i) + eps_o(k) + omega)
+                        Y_aick(a, i, c, k) = (two*X_aick(a, i, c, k) - X_aick(a, k, c, i))/&
+                              (- eps_v(a + batch_a%first - 1) - eps_v(c + batch_c%first - 1) &
+                                 + eps_o(i) + eps_o(k) + omega)
+!
+                     enddo
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
+!
+            if (batch_a%first .eq. batch_c%first) then
+!
+!$omp parallel do private(i,a)
+               do i = 1, wf%n_o
+                  do a = 1, wf%n_v
+!
+                     Y_aick(a, i, a, i) = Y_aick(a, i, a, i)/two
+!
+                  enddo
+               enddo
+!$omp end parallel do
+!
+            endif
+!
+            call mem%dealloc(X_aick, batch_a%length, wf%n_o, batch_c%length, wf%n_o)
+!
+!           Reorder occ-vir Fock matrix, then compute & add the term,
+!           2 F_ck * (Y_aick + Y_ckai) to the transformed vector rho_ai
+!
+            call mem%alloc(F_ck, batch_c%length, wf%n_o)
+!
+!$omp parallel do private(c,k)
+            do k = 1, wf%n_o
+               do c = 1, batch_c%length
+!
+                  F_ck(c, k) = wf%fock_ia(k, c + batch_c%first - 1)
 !
                enddo
             enddo
-         enddo
-      enddo
 !$omp end parallel do
+!
+            call mem%alloc(reduced_rho_ai, batch_a%length, wf%n_o)
+!
+            call dgemm('N', 'N',                    &
+                        wf%n_o*(batch_a%length),    &
+                        1,                          &
+                        wf%n_o*(batch_c%length),    &
+                        one,                        &
+                        Y_aick,                     & ! Y_ai,ck
+                        wf%n_o*(batch_a%length),    &
+                        F_ck,                       &
+                        wf%n_o*(batch_c%length),    &
+                        zero,                       &
+                        reduced_rho_ai,             &
+                        wf%n_o*(batch_a%length))
+!
+            call dgemm('T', 'N',                   &
+                        wf%n_o*(batch_a%length),   &
+                        1,                         &
+                        wf%n_o*(batch_c%length),   &
+                        one,                       &
+                        Y_aick,                    & ! Y_ai,ck^T = Y_ck,ai
+                        wf%n_o*(batch_a%length),   &
+                        F_ck,                      & ! F_ck
+                        wf%n_o*(batch_c%length),   &
+                        one,                       &
+                        reduced_rho_ai,            &
+                        wf%n_o*(batch_a%length))
+!
+            call mem%dealloc(F_ck, batch_c%length, wf%n_o)
+            call mem%dealloc(Y_aick, batch_a%length, wf%n_o, batch_c%length, wf%n_o)
 !
 !$omp parallel do private(i,a)
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
+            do i = 1, wf%n_o
+               do a = 1, batch_a%length
 !
-            Y_aick(a, i, a, i) = Y_aick(a, i, a, i)/two
+                  rho_ai(a + batch_a%first - 1, i) = rho_ai(a + batch_a%first - 1, i) + reduced_rho_ai(a, i)
+!
+               enddo
+            enddo
+!$omp end parallel do
+!
+            call mem%dealloc(reduced_rho_ai, batch_a%length, wf%n_o)
 !
          enddo
       enddo
-!$omp end parallel do
-!
-      call mem%dealloc(X_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!     Reorder occ-vir Fock matrix, then compute & add the term,
-!     2 F_ck * (Y_aick + Y_ckai) to the transformed vector rho_ai
-!
-      call mem%alloc(F_ck, wf%n_v, wf%n_o)
-!
-!$omp parallel do private(c,k)
-      do k = 1, wf%n_o
-         do c = 1, wf%n_v
-!
-            F_ck(c, k) = wf%fock_ia(k, c)
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-      call dgemm('N', 'N',       &
-                  wf%n_o*wf%n_v, &
-                  1,             &
-                  wf%n_o*wf%n_v, &
-                  one,           &
-                  Y_aick,        &
-                  wf%n_o*wf%n_v, &
-                  F_ck,          &
-                  wf%n_o*wf%n_v, &
-                  one,           &
-                  rho_ai,        &
-                  wf%n_o*wf%n_v)
-!
-      call dgemm('T', 'N',       &
-                  wf%n_o*wf%n_v, &
-                  1,             &
-                  wf%n_o*wf%n_v, &
-                  one,           &
-                  Y_aick,        &
-                  wf%n_o*wf%n_v, &
-                  F_ck,          &
-                  wf%n_o*wf%n_v, &
-                  one,           &
-                  rho_ai,        &
-                  wf%n_o*wf%n_v)
-!
-      call mem%dealloc(F_ck, wf%n_v, wf%n_o)
-      call mem%dealloc(Y_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
    end subroutine effective_jacobian_cc2_a1_cc2
 !
