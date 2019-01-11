@@ -114,74 +114,132 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: c_jb
 !
-!     Integrals
+      real(dp), dimension(:,:,:,:), allocatable :: g_aijb, g_abji
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_aijb
-      real(dp), dimension(:,:,:,:), allocatable :: g_abji
+      integer(i15) :: req0, req1_i, req1_j, req1_b, req2
 !
-!     Explicit reordering of c_bj
+      integer(i15) :: current_i_batch, current_j_batch, current_b_batch
 !
-      call mem%alloc(c_jb, wf%n_o, wf%n_v)
+      integer(i15) :: rho_offset
 !
-      call sort_12_to_21(c_bj, c_jb, wf%n_v, wf%n_o)
+      type(batching_index) :: batch_i, batch_j, batch_b
 !
-      call mem%alloc(g_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+      req0 = 0
 !
-      call wf%get_voov(g_aijb,      &
-                        1, wf%n_v,  &
-                        1, wf%n_o,  &
-                        1, wf%n_o,  &
-                        1, wf%n_v)
+      req1_i = (wf%integrals%n_J)*(wf%n_v)
+      req1_j = (wf%integrals%n_J)*(wf%n_v)
 !
-!     rho_a_i = rho_a_i + sum_bj 2 g_aijb * c_bj
+      req2 = (wf%n_v)**2
 !
-      call dgemm('N', 'N',           &
-                  (wf%n_v)*(wf%n_o), &
-                  1,                 &
-                  (wf%n_o)*(wf%n_v), &
-                  two,               &
-                  g_aijb,            &
-                  (wf%n_v)*(wf%n_o), &
-                  c_jb,              &
-                  (wf%n_o)*(wf%n_v), &
-                  one,               &
-                  rho_ai,            &
-                  (wf%n_v)*(wf%n_o))
+      call batch_i%init(wf%n_o)
+      call batch_j%init(wf%n_o)
 !
-      call mem%dealloc(g_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+      call mem%batch_setup(batch_i, batch_j, req0, req1_i, req1_j, req2)
 !
-      call mem%alloc(g_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      do current_i_batch = 1, batch_i%num_batches
 !
-      call wf%get_vvoo(g_abji,      &
-                        1, wf%n_v,  &
-                        1, wf%n_v,  &
-                        1, wf%n_o,  &
-                        1, wf%n_o)
+         call batch_i%determine_limits(current_i_batch)
 !
-!     Sort g_abji(a,b,j,i) as g_abji(a,i,j,b)
+         do current_j_batch = 1, batch_j%num_batches
 !
-      call mem%alloc(g_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-      call sort_1234_to_1432(g_abji, g_aijb, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+            call batch_j%determine_limits(current_j_batch)
 !
-      call mem%dealloc(g_abji, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+            call mem%alloc(g_aijb, wf%n_v, (batch_i%length), (batch_j%length), wf%n_v)
 !
-!     rho_a_i = rho_a_i - sum_bj g_aijb * c_jb
+            call wf%get_voov(g_aijb,                        &
+                              1, wf%n_v,                    &
+                              batch_i%first, batch_i%last,  &
+                              batch_j%first, batch_j%last,  &
+                              1, wf%n_v)
 !
-      call dgemm('N', 'N',           &
-                  (wf%n_v)*(wf%n_o), &
-                  1,                 &
-                  (wf%n_o)*(wf%n_v), &
-                  -one,              &
-                  g_aijb,            &
-                  (wf%n_v)*(wf%n_o), &
-                  c_jb,              &
-                  (wf%n_o)*(wf%n_v), &
-                  one,               &
-                  rho_ai,            &
-                  (wf%n_v)*(wf%n_o))
+            call mem%alloc(c_jb, (batch_j%length), wf%n_v)
 !
-      call mem%dealloc(g_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
-      call mem%dealloc(c_jb, wf%n_o, wf%n_v)
+            call sort_12_to_21(c_bj, c_jb, wf%n_v, (batch_j%length))
+!
+!           rho_a_i = rho_a_i + sum_bj 2 g_aijb * c_bj
+!
+            rho_offset = wf%n_v*(batch_i%first - 1) + 1
+!
+            call dgemm('N', 'N',                   &
+                        (wf%n_v)*(batch_i%length), &
+                        1,                         &
+                        (batch_j%length)*(wf%n_v), &
+                        two,                       &
+                        g_aijb,                    & ! g_ai_jb
+                        (wf%n_v)*(batch_i%length), &
+                        c_jb,                      &
+                        (batch_j%length)*(wf%n_v), &
+                        one,                       &
+                        rho_ai(rho_offset, 1),     &
+                        (wf%n_v)*(wf%n_o))
+!
+            call mem%dealloc(c_jb, (batch_j%length), wf%n_v)
+            call mem%dealloc(g_aijb, wf%n_v,(batch_i%length), (batch_j%length), wf%n_v)
+!
+         enddo ! batch_j
+      enddo !batch_i
+!
+!     :: Term 2 ::
+!
+      req1_i = max((wf%integrals%n_J)*(wf%n_v), (wf%integrals%n_J)*(wf%n_o))
+      req1_b = max((wf%integrals%n_J)*(wf%n_v), (wf%integrals%n_J)*(wf%n_o))
+!
+      req2 = 2*(wf%n_o)*(wf%n_v)
+!
+      call batch_i%init(wf%n_o)
+      call batch_b%init(wf%n_v)
+!
+      call mem%batch_setup(batch_i, batch_b, req0, req1_i, req1_b, req2)
+!
+      do current_i_batch = 1, batch_i%num_batches
+!
+         call batch_i%determine_limits(current_i_batch)
+!
+         do current_b_batch = 1, batch_b%num_batches
+!
+            call batch_b%determine_limits(current_b_batch)
+!
+            call mem%alloc(g_abji, wf%n_v, (batch_b%length), wf%n_o, (batch_i%length))
+!
+            call wf%get_vvoo(g_abji,                        &
+                              1, wf%n_v,                    &
+                              batch_b%first, batch_b%last,  &
+                              1, wf%n_o,                    &
+                              batch_i%first, batch_i%last)
+!
+!           Sort g_abji(a,b,j,i) as g_abji(a,i,j,b)
+!
+            call mem%alloc(g_aijb, wf%n_v, (batch_i%length), wf%n_o, (batch_b%length))
+            call sort_1234_to_1432(g_abji, g_aijb, wf%n_v, (batch_b%length), wf%n_o, (batch_i%length))
+!
+            call mem%dealloc(g_abji, wf%n_v, (batch_b%length), wf%n_o, (batch_i%length))
+!
+            call mem%alloc(c_jb, wf%n_o, (batch_b%length))
+!
+            call sort_12_to_21(c_bj, c_jb, (batch_b%length), wf%n_o)
+!
+!           rho_a_i = rho_a_i - sum_bj g_aijb * c_jb
+!
+            rho_offset = wf%n_v*(batch_i%first - 1) + 1
+!
+            call dgemm('N', 'N',                   &
+                        (wf%n_v)*(batch_i%length), &
+                        1,                         &
+                        (wf%n_o)*(batch_b%length), &
+                        -one,                      &
+                        g_aijb,                    & ! g_ai_jb
+                        (wf%n_v)*(batch_i%length), &
+                        c_jb,                      &
+                        (wf%n_o)*(batch_b%length), &
+                        one,                       &
+                        rho_ai(rho_offset, 1),     &
+                        (wf%n_v)*(wf%n_o))
+!
+            call mem%dealloc(g_aijb, wf%n_v, (batch_i%length), wf%n_o,(batch_b%length))
+            call mem%dealloc(c_jb, wf%n_o, (batch_b%length))
+!
+         enddo ! batch_b
+      enddo ! batch_i
 !
    end subroutine jacobian_cc2_a1_cc2
 !
@@ -233,7 +291,7 @@ contains
 !
       call mem%alloc(L_kcbj, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
 !
-      L_kcbj = zero 
+      L_kcbj = zero
       call add_1243_to_1234(two, g_kcjb, L_kcbj, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
       call add_1342_to_1234(-one, g_kcjb, L_kcbj, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
 !
@@ -296,7 +354,7 @@ contains
             enddo
          enddo
       enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
       call mem%dealloc(g_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -428,7 +486,7 @@ contains
 !
       call mem%alloc(L_kcjb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      L_kcjb = two*g_kcjb 
+      L_kcjb = two*g_kcjb
       call add_1432_to_1234(-one, g_kcjb, L_kcjb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
       call mem%dealloc(g_kcjb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
@@ -458,7 +516,7 @@ contains
             enddo
          enddo
       enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
       call mem%dealloc(g_ckaj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -589,7 +647,7 @@ contains
 !
          enddo
       enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
       call mem%dealloc(X_aick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -606,7 +664,7 @@ contains
 !
          enddo
       enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
       call dgemm('N', 'N',       &
                   wf%n_o*wf%n_v, &
@@ -730,7 +788,7 @@ contains
 !
                enddo
             enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
 !$omp parallel do private(a,i,k,c)
             do a = 1, wf%n_v
@@ -746,7 +804,7 @@ contains
                   enddo
                enddo
             enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
 !           Add all four terms while considering batched indices i and k
 !
@@ -868,7 +926,7 @@ contains
 !
          enddo
       enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
       call mem%alloc(X_ajbk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -885,7 +943,7 @@ contains
             enddo
          enddo
       enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
       call mem%dealloc(X_akbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -976,7 +1034,7 @@ contains
 !
          enddo
       enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
       call mem%alloc(X_ajbk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -993,7 +1051,7 @@ contains
             enddo
          enddo
       enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
       call mem%dealloc(X_bjak, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -1017,7 +1075,7 @@ contains
 !
       call mem%alloc(L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-      L_jbki = two*g_jbki 
+      L_jbki = two*g_jbki
       call add_1432_to_1234(-one, g_jikb, L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
       call mem%dealloc(g_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
@@ -1140,7 +1198,7 @@ contains
             enddo
          enddo
       enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
       call mem%dealloc(X_bjak, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -1164,7 +1222,7 @@ contains
 !
       call mem%alloc(L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-      L_jbki = two*g_jbki 
+      L_jbki = two*g_jbki
       call add_1432_to_1234(-one, g_jikb, L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
       call mem%dealloc(g_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
@@ -1227,7 +1285,7 @@ contains
 !
          enddo
       enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
       call mem%alloc(X_ajbk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -1244,11 +1302,11 @@ contains
             enddo
          enddo
       enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
       call mem%dealloc(X_akbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-!     Construct L_kijb = 2 g_kijb - g_kbji 
+!     Construct L_kijb = 2 g_kijb - g_kbji
 !
       call mem%alloc(g_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
@@ -1372,7 +1430,7 @@ contains
 !
          enddo
       enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
       call mem%alloc(X_bkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -1389,7 +1447,7 @@ contains
             enddo
          enddo
       enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
       call mem%dealloc(X_bick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -1415,7 +1473,7 @@ contains
 
       call mem%alloc(L_abkc, wf%n_v, wf%n_v, wf%n_o, wf%n_v)
 !
-      L_abkc = two*g_abkc 
+      L_abkc = two*g_abkc
       call add_3214_to_1234(-one, g_kbac, L_abkc, wf%n_v, wf%n_v, wf%n_o, wf%n_v)
 !
       call mem%dealloc(g_abkc, wf%n_v, wf%n_v, wf%n_o, wf%n_v)
@@ -1477,7 +1535,7 @@ contains
 !
          enddo
       enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
       call mem%alloc(X_bkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -1494,7 +1552,7 @@ contains
             enddo
          enddo
       enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
       call mem%dealloc(X_ckbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -1589,7 +1647,7 @@ contains
             enddo
          enddo
       enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
 !$omp parallel do private(k,b)
       do k = 1, wf%n_o
@@ -1599,7 +1657,7 @@ contains
 !
          enddo
       enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
       call mem%dealloc(X_ckbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
@@ -1686,7 +1744,7 @@ contains
             enddo
          enddo
       enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
 !$omp parallel do private(k,b)
       do k = 1, wf%n_o
@@ -1696,7 +1754,7 @@ contains
 !
          enddo
       enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
       call mem%dealloc(X_bick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
