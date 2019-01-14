@@ -84,10 +84,64 @@ contains
       real(dp), dimension(:,:,:), allocatable :: u_abc 
       real(dp), dimension(:,:,:), allocatable :: v_abc 
 !
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_bdci
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_bdcj
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_bdck
+      real(dp), dimension(:,:,:,:), pointer              :: g_bdci_p => null()
+      real(dp), dimension(:,:,:,:), pointer              :: g_bdcj_p => null()
+      real(dp), dimension(:,:,:,:), pointer              :: g_bdck_p => null()
+!
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_dbic
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_dbjc
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_dbkc
+      real(dp), dimension(:,:,:,:), pointer              :: g_dbic_p => null()
+      real(dp), dimension(:,:,:,:), pointer              :: g_dbjc_p => null()
+      real(dp), dimension(:,:,:,:), pointer              :: g_dbkc_p => null()
+!
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_ljci
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_lkci
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_lkcj
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_licj
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_lick
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_ljck
+      real(dp), dimension(:,:,:,:), pointer              :: g_ljci_p => null()
+      real(dp), dimension(:,:,:,:), pointer              :: g_lkci_p => null()
+      real(dp), dimension(:,:,:,:), pointer              :: g_lkcj_p => null()
+      real(dp), dimension(:,:,:,:), pointer              :: g_licj_p => null()
+      real(dp), dimension(:,:,:,:), pointer              :: g_lick_p => null()
+      real(dp), dimension(:,:,:,:), pointer              :: g_ljck_p => null()
+!
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_jlic
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_klic
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_kljc
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_iljc
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_ilkc
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_jlkc
+      real(dp), dimension(:,:,:,:), pointer              :: g_jlic_p => null()
+      real(dp), dimension(:,:,:,:), pointer              :: g_klic_p => null()
+      real(dp), dimension(:,:,:,:), pointer              :: g_kljc_p => null()
+      real(dp), dimension(:,:,:,:), pointer              :: g_iljc_p => null()
+      real(dp), dimension(:,:,:,:), pointer              :: g_ilkc_p => null()
+      real(dp), dimension(:,:,:,:), pointer              :: g_jlkc_p => null()
+!
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_jbic
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_kbic
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_kbjc
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_ibjc
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_ibkc
+      real(dp), dimension(:,:,:,:), allocatable, target  :: g_jbkc
+      real(dp), dimension(:,:,:,:), pointer              :: g_jbic_p => null()
+      real(dp), dimension(:,:,:,:), pointer              :: g_kbic_p => null()
+      real(dp), dimension(:,:,:,:), pointer              :: g_kbjc_p => null()
+      real(dp), dimension(:,:,:,:), pointer              :: g_ibjc_p => null()
+      real(dp), dimension(:,:,:,:), pointer              :: g_ibkc_p => null()
+      real(dp), dimension(:,:,:,:), pointer              :: g_jbkc_p => null()
+!
       integer(i15) :: i, j, k
       type(batching_index) :: batch_i, batch_j, batch_k
       integer(i15) :: i_batch, j_batch, k_batch
-      integer(i15) :: req_0, req_i, req_j, req_k, req_ij, req_ik, req_jk, req_ijk
+      integer(i15) :: req_0, req_1, req_2, req_3
+      real(dp)     :: batch_buff = 0.0
 !
 !     Set up required integrals on disk
       call wf%omega_cc3_integrals() 
@@ -97,21 +151,117 @@ contains
       call mem%alloc(v_abc,wf%n_v,wf%n_v,wf%n_v)
 !
       req_0 = 0
-      req_i = 2*wf%n_v**3
-      req_j = 2*wf%n_v**3
-      req_k = 2*wf%n_v**3
-      req_ij = 2*wf%n_o*wf%n_v+wf%n_v**2
-      req_ik = 2*wf%n_o*wf%n_v+wf%n_v**2
-      req_jk = 2*wf%n_o*wf%n_v+wf%n_v**2
-      req_ijk = 0
+      req_1 = 2*wf%n_v**3
+      req_2 = 2*wf%n_o*wf%n_v+wf%n_v**2
+      req_3 = 0
 !
       call batch_i%init(wf%n_o)
       call batch_j%init(wf%n_o)
       call batch_k%init(wf%n_o)
 !
-      call mem%batch_setup(batch_i, batch_j, batch_k, &
-                           req_0, req_i, req_j, req_k, &
-                           req_ij, req_ik, req_jk, req_ijk)
+      call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
+                           req_0, req_1, req_2, req_3, batch_buff)
+!
+!
+!     Allocate integral arrays and assign pointers.
+!     Without pointers we'll have to use three times as much 
+!     memory for the non-batching case
+!
+      if (batch_i%num_batches .eq. 1) then
+         call mem%alloc(g_bdci,wf%n_v,wf%n_v,wf%n_v,wf%n_o) 
+         g_bdci_p => g_bdci
+         g_bdcj_p => g_bdci
+         g_bdck_p => g_bdci
+!
+         call mem%alloc(g_dbic,wf%n_v,wf%n_v,wf%n_v,wf%n_o) 
+         g_dbic_p => g_dbic
+         g_dbjc_p => g_dbjc
+         g_dbkc_p => g_dbkc
+!
+         call mem%alloc(g_ljci,wf%n_o,wf%n_v,wf%n_o,wf%n_o) 
+         g_ljci_p => g_ljci
+         g_lkci_p => g_ljci
+         g_lkcj_p => g_ljci
+         g_licj_p => g_ljci
+         g_lick_p => g_ljci
+         g_ljck_p => g_ljci
+!
+         call mem%alloc(g_jlic,wf%n_v,wf%n_o,wf%n_o,wf%n_o) 
+         g_jlic_p => g_jlic
+         g_klic_p => g_jlic
+         g_kljc_p => g_jlic
+         g_iljc_p => g_jlic
+         g_ilkc_p => g_jlic
+         g_jlkc_p => g_jlic
+!
+         call mem%alloc(g_jbic,wf%n_v,wf%n_v,wf%n_o,wf%n_o) 
+         g_jbic_p => g_jbic
+         g_kbic_p => g_jbic
+         g_kbjc_p => g_jbic
+         g_ibjc_p => g_jbic
+         g_ibkc_p => g_jbic
+         g_jbkc_p => g_jbic
+!
+      else
+         call batch_i%determine_limits(1)
+         call mem%alloc(g_bdci,wf%n_v,wf%n_v,wf%n_v,batch_i%length) 
+         call mem%alloc(g_bdcj,wf%n_v,wf%n_v,wf%n_v,batch_i%length) 
+         call mem%alloc(g_bdck,wf%n_v,wf%n_v,wf%n_v,batch_i%length) 
+         g_bdci_p => g_bdci
+         g_bdcj_p => g_bdcj
+         g_bdck_p => g_bdck
+!
+         call mem%alloc(g_dbic,wf%n_v,wf%n_v,wf%n_v,batch_i%length) 
+         call mem%alloc(g_dbjc,wf%n_v,wf%n_v,wf%n_v,batch_i%length) 
+         call mem%alloc(g_dbkc,wf%n_v,wf%n_v,wf%n_v,batch_i%length) 
+         g_dbic_p => g_bdci
+         g_dbjc_p => g_bdcj
+         g_dbkc_p => g_bdck
+!
+         call mem%alloc(g_ljci,wf%n_o,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%alloc(g_lkci,wf%n_o,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%alloc(g_lkcj,wf%n_o,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%alloc(g_licj,wf%n_o,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%alloc(g_lick,wf%n_o,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%alloc(g_ljck,wf%n_o,wf%n_v,batch_i%length,batch_i%length) 
+         g_ljci_p => g_ljci
+         g_lkci_p => g_lkci
+         g_lkcj_p => g_lkcj
+         g_licj_p => g_licj
+         g_lick_p => g_lick
+         g_ljck_p => g_ljck
+!
+         call mem%alloc(g_jlic,wf%n_v,wf%n_o,batch_i%length,batch_i%length) 
+         call mem%alloc(g_klic,wf%n_v,wf%n_o,batch_i%length,batch_i%length) 
+         call mem%alloc(g_kljc,wf%n_v,wf%n_o,batch_i%length,batch_i%length) 
+         call mem%alloc(g_iljc,wf%n_v,wf%n_o,batch_i%length,batch_i%length) 
+         call mem%alloc(g_ilkc,wf%n_v,wf%n_o,batch_i%length,batch_i%length) 
+         call mem%alloc(g_jlkc,wf%n_v,wf%n_o,batch_i%length,batch_i%length) 
+         g_jlic_p => g_jlic
+         g_klic_p => g_klic
+         g_kljc_p => g_kljc
+         g_iljc_p => g_iljc
+         g_ilkc_p => g_ilkc
+         g_jlkc_p => g_jlkc
+!
+         call mem%alloc(g_jbic,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%alloc(g_kbic,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%alloc(g_kbjc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%alloc(g_ibjc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%alloc(g_ibkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%alloc(g_jbkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
+         g_jbic_p => g_jbic
+         g_kbic_p => g_kbic
+         g_kbjc_p => g_kbjc
+         g_ibjc_p => g_ibjc
+         g_ibkc_p => g_ibkc
+         g_jbkc_p => g_jbkc
+!
+      endif 
+!
+      g_bdci(1,1,1,1) = 9.3
+      write(output%unit,*) "g_bdci_p =", g_bdci_p(1,1,1,1)
+      write(output%unit,*) "g_bdcj_p =", g_bdcj_p(1,1,1,1)
 !
       do i_batch = 1,batch_i%num_batches
 !
