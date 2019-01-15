@@ -39,3 +39,41 @@
 !
    end subroutine omega_cc3_integrals_cc3
 !
+!
+   module subroutine omega_cc3_vvv_reader_cc3(wf,batch_x,g_bdcx,g_dbxc)
+!!
+!!    Read in the intgrals needed in the current batches
+!!
+!!    Rolf H. Myhre, January 2019
+!!
+      implicit none
+!
+      real(dp), dimension(:,:,:,:), intent(inout) :: g_bdcx
+      real(dp), dimension(:,:,:,:), intent(inout) :: g_dbxc
+!
+      type(batching_index), intent(in) :: batch_x
+!
+      class(cc3) :: wf
+!
+   end subroutine omega_cc3_vvv_reader_cc3
+!
+!
+   module subroutine omega_cc3_ov_vv_reader_cc3(wf,batch_y,batch_x,g_lycx,g_ylxc,g_ybxc)
+!!
+!!    Read the ljck, jlkc and jbkc integrals needed in the current batches
+!!
+!!    Rolf H. Myhre, January 2019
+!!
+      implicit none
+!
+      real(dp), dimension(:,:,:,:), intent(inout) :: g_lycx
+      real(dp), dimension(:,:,:,:), intent(inout) :: g_ylxc
+      real(dp), dimension(:,:,:,:), intent(inout) :: g_ybxc
+!
+      type(batching_index), intent(in) :: batch_x, batch_y
+!
+      class(cc3) :: wf
+!
+   end subroutine omega_cc3_ov_vv_reader_cc3
+!
+!

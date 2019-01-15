@@ -1676,9 +1676,9 @@ contains
                incremented = .false.
             endif
 !
-            if (  elements**3*req3_min &
-                + elements**2*req2_min &
-                + elements*req1_min    &
+            if (  elements**3*req3_min   &
+                + 6*elements**2*req2_min &
+                + 3*elements*req1_min    &
                 + req0 .ge. mem%available) then 
 !
                found_batch_size = .true.       ! cannot hold +1 batch size 

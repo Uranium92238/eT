@@ -22,15 +22,17 @@ module cc3_class
 !
 !     Preparation and cleanup routines 
 !
-      procedure :: prepare             => prepare_cc3
-      procedure :: cleanup             => cleanup_cc3
+      procedure :: prepare                => prepare_cc3
+      procedure :: cleanup                => cleanup_cc3
 !
 !     Routines related to omega
 !
-      procedure :: construct_omega     => construct_omega_cc3
+      procedure :: construct_omega        => construct_omega_cc3
 !
-      procedure :: omega_cc3_a         => omega_cc3_a_cc3
-      procedure :: omega_cc3_integrals => omega_cc3_integrals_cc3
+      procedure :: omega_cc3_a            => omega_cc3_a_cc3
+      procedure :: omega_cc3_integrals    => omega_cc3_integrals_cc3
+      procedure :: omega_cc3_vvv_reader   => omega_cc3_vvv_reader_cc3
+      procedure :: omega_cc3_ov_vv_reader => omega_cc3_ov_vv_reader_cc3
 !
    end type cc3
 !

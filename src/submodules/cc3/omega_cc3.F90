@@ -2,7 +2,7 @@ submodule (cc3_class) omega_cc3
 !
 !!
 !!    Omega submodule (cc3)
-!!    Alex C. Paul and Rolf H. Myhre 2018
+!!    Alex C. Paul and Rolf H. Myhre January 2019
 !!
 !!    Routines to construct 
 !!
@@ -124,6 +124,10 @@ contains
       real(dp), dimension(:,:,:,:), pointer              :: g_ilkc_p => null()
       real(dp), dimension(:,:,:,:), pointer              :: g_jlkc_p => null()
 !
+!     g_kbjc and g_jbkc are the same each other's transpose,
+!     but utilising this makes the code more complicated and 
+!     error prone without any huge advantages
+!
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_jbic
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_kbic
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_kbjc
@@ -137,7 +141,7 @@ contains
       real(dp), dimension(:,:,:,:), pointer              :: g_ibkc_p => null()
       real(dp), dimension(:,:,:,:), pointer              :: g_jbkc_p => null()
 !
-      integer(i15) :: i, j, k
+      integer(i15) :: i, j, k, i_abs, j_abs, k_abs
       type(batching_index) :: batch_i, batch_j, batch_k
       integer(i15) :: i_batch, j_batch, k_batch
       integer(i15) :: req_0, req_1, req_2, req_3
@@ -167,56 +171,29 @@ contains
 !     Without pointers we'll have to use three times as much 
 !     memory for the non-batching case
 !
-      if (batch_i%num_batches .eq. 1) then
+      if (batch_i%num_batches .eq. 1) then !no batching
+!
          call mem%alloc(g_bdci,wf%n_v,wf%n_v,wf%n_v,wf%n_o) 
-         g_bdci_p => g_bdci
-         g_bdcj_p => g_bdci
-         g_bdck_p => g_bdci
 !
          call mem%alloc(g_dbic,wf%n_v,wf%n_v,wf%n_v,wf%n_o) 
-         g_dbic_p => g_dbic
-         g_dbjc_p => g_dbjc
-         g_dbkc_p => g_dbkc
 !
          call mem%alloc(g_ljci,wf%n_o,wf%n_v,wf%n_o,wf%n_o) 
-         g_ljci_p => g_ljci
-         g_lkci_p => g_ljci
-         g_lkcj_p => g_ljci
-         g_licj_p => g_ljci
-         g_lick_p => g_ljci
-         g_ljck_p => g_ljci
 !
          call mem%alloc(g_jlic,wf%n_v,wf%n_o,wf%n_o,wf%n_o) 
-         g_jlic_p => g_jlic
-         g_klic_p => g_jlic
-         g_kljc_p => g_jlic
-         g_iljc_p => g_jlic
-         g_ilkc_p => g_jlic
-         g_jlkc_p => g_jlic
 !
          call mem%alloc(g_jbic,wf%n_v,wf%n_v,wf%n_o,wf%n_o) 
-         g_jbic_p => g_jbic
-         g_kbic_p => g_jbic
-         g_kbjc_p => g_jbic
-         g_ibjc_p => g_jbic
-         g_ibkc_p => g_jbic
-         g_jbkc_p => g_jbic
 !
-      else
+      else !batching
+!
          call batch_i%determine_limits(1)
+!
          call mem%alloc(g_bdci,wf%n_v,wf%n_v,wf%n_v,batch_i%length) 
          call mem%alloc(g_bdcj,wf%n_v,wf%n_v,wf%n_v,batch_i%length) 
          call mem%alloc(g_bdck,wf%n_v,wf%n_v,wf%n_v,batch_i%length) 
-         g_bdci_p => g_bdci
-         g_bdcj_p => g_bdcj
-         g_bdck_p => g_bdck
 !
          call mem%alloc(g_dbic,wf%n_v,wf%n_v,wf%n_v,batch_i%length) 
          call mem%alloc(g_dbjc,wf%n_v,wf%n_v,wf%n_v,batch_i%length) 
          call mem%alloc(g_dbkc,wf%n_v,wf%n_v,wf%n_v,batch_i%length) 
-         g_dbic_p => g_bdci
-         g_dbjc_p => g_bdcj
-         g_dbkc_p => g_bdck
 !
          call mem%alloc(g_ljci,wf%n_o,wf%n_v,batch_i%length,batch_i%length) 
          call mem%alloc(g_lkci,wf%n_o,wf%n_v,batch_i%length,batch_i%length) 
@@ -224,12 +201,6 @@ contains
          call mem%alloc(g_licj,wf%n_o,wf%n_v,batch_i%length,batch_i%length) 
          call mem%alloc(g_lick,wf%n_o,wf%n_v,batch_i%length,batch_i%length) 
          call mem%alloc(g_ljck,wf%n_o,wf%n_v,batch_i%length,batch_i%length) 
-         g_ljci_p => g_ljci
-         g_lkci_p => g_lkci
-         g_lkcj_p => g_lkcj
-         g_licj_p => g_licj
-         g_lick_p => g_lick
-         g_ljck_p => g_ljck
 !
          call mem%alloc(g_jlic,wf%n_v,wf%n_o,batch_i%length,batch_i%length) 
          call mem%alloc(g_klic,wf%n_v,wf%n_o,batch_i%length,batch_i%length) 
@@ -237,12 +208,6 @@ contains
          call mem%alloc(g_iljc,wf%n_v,wf%n_o,batch_i%length,batch_i%length) 
          call mem%alloc(g_ilkc,wf%n_v,wf%n_o,batch_i%length,batch_i%length) 
          call mem%alloc(g_jlkc,wf%n_v,wf%n_o,batch_i%length,batch_i%length) 
-         g_jlic_p => g_jlic
-         g_klic_p => g_klic
-         g_kljc_p => g_kljc
-         g_iljc_p => g_iljc
-         g_ilkc_p => g_ilkc
-         g_jlkc_p => g_jlkc
 !
          call mem%alloc(g_jbic,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
          call mem%alloc(g_kbic,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
@@ -250,34 +215,163 @@ contains
          call mem%alloc(g_ibjc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
          call mem%alloc(g_ibkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
          call mem%alloc(g_jbkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
-         g_jbic_p => g_jbic
-         g_kbic_p => g_kbic
-         g_kbjc_p => g_kbjc
-         g_ibjc_p => g_ibjc
-         g_ibkc_p => g_ibkc
-         g_jbkc_p => g_jbkc
 !
       endif 
 !
-      g_bdci(1,1,1,1) = 9.3
-      write(output%unit,*) "g_bdci_p =", g_bdci_p(1,1,1,1)
-      write(output%unit,*) "g_bdcj_p =", g_bdcj_p(1,1,1,1)
+      call disk%open_file(wf%g_bdck_t,'read')
+      call disk%open_file(wf%g_ljck_t,'read')
+      call disk%open_file(wf%g_dbkc_t,'read')
+      call disk%open_file(wf%g_jlkc_t,'read')
+      call disk%open_file(wf%g_jbkc_t,'read')
 !
       do i_batch = 1,batch_i%num_batches
 !
          call batch_i%determine_limits(i_batch)
 !
+         call wf%omega_cc3_vvv_reader(batch_i,g_bdci,g_dbic)
+         g_bdci_p => g_bdci
+         g_dbic_p => g_dbic
+!
          do j_batch = 1,batch_j%num_batches
 !
             call batch_j%determine_limits(j_batch)
+!
+            call wf%omega_cc3_ov_vv_reader(batch_j,batch_i,g_ljci,g_jlic,g_jbic)
+            g_ljci_p => g_ljci
+            g_jlic_p => g_jlic
+            g_jbic_p => g_jbic
+!
+            if (j_batch .ne. i_batch) then
+!
+               call wf%omega_cc3_vvv_reader(batch_j,g_bdcj,g_dbjc)
+               g_bdcj_p => g_bdcj
+               g_dbjc_p => g_dbjc
+!
+               call wf%omega_cc3_ov_vv_reader(batch_i,batch_j,g_licj,g_iljc,g_ibjc)
+               g_licj_p => g_licj
+               g_iljc_p => g_iljc
+               g_ibjc_p => g_ibjc
+!
+            else
+!
+               g_bdcj_p => g_bdci
+               g_dbjc_p => g_dbic
+!
+               g_ljci_p => g_licj
+               g_jlic_p => g_iljc
+               g_jbic_p => g_ibjc
+!
+            endif
 !
             do k_batch = 1,batch_k%num_batches
 !
                call batch_k%determine_limits(k_batch)
 !
+               if (k_batch .ne. i_batch .and. k_batch .ne. j_batch) then
+!
+                  call wf%omega_cc3_vvv_reader(batch_k,g_bdck,g_dbkc)
+                  g_bdck_p => g_bdck
+                  g_dbkc_p => g_dbkc
+!
+                  call wf%omega_cc3_ov_vv_reader(batch_k,batch_i,g_lkci,g_klic,g_kbic)
+                  g_lkci_p => g_lkci
+                  g_klic_p => g_klic
+                  g_kbic_p => g_kbic
+!
+                  call wf%omega_cc3_ov_vv_reader(batch_i,batch_k,g_lick,g_ilkc,g_ibkc)
+                  g_lick_p => g_lick
+                  g_ilkc_p => g_ilkc
+                  g_ibkc_p => g_ibkc
+!
+                  call wf%omega_cc3_ov_vv_reader(batch_k,batch_j,g_lkcj,g_kljc,g_kbjc)
+                  g_lkcj_p => g_lkcj
+                  g_kljc_p => g_kljc
+                  g_kbjc_p => g_kbjc
+!
+                  call wf%omega_cc3_ov_vv_reader(batch_j,batch_k,g_ljck,g_jlkc,g_jbkc)
+                  g_ljck_p => g_ljck
+                  g_jlkc_p => g_jlkc
+                  g_jbkc_p => g_jbkc
+!
+               else if (k_batch .eq. i_batch) then
+!
+                  g_bdck_p => g_bdci
+                  g_dbkc_p => g_dbic
+!
+                  if (j_batch .eq. i_batch) then
+!
+                     g_lkci_p => g_ljci
+                     g_klic_p => g_jlic
+                     g_kbic_p => g_jbic
+!
+                     g_lick_p => g_ljci
+                     g_ilkc_p => g_jlic
+                     g_ibkc_p => g_jbic
+!
+                     g_lkcj_p => g_ljci
+                     g_kljc_p => g_jlic
+                     g_kbjc_p => g_jbic
+!
+                     g_ljck_p => g_ljci
+                     g_jlkc_p => g_jlic
+                     g_jbkc_p => g_jbic
+!
+                  else
+!
+                     call wf%omega_cc3_ov_vv_reader(batch_k,batch_i,g_lkci,g_klic,g_kbic)
+                     g_lkci_p => g_lkci
+                     g_klic_p => g_klic
+                     g_kbic_p => g_kbic
+!
+                     g_lick_p => g_lkci
+                     g_ilkc_p => g_klic
+                     g_ibkc_p => g_kbic
+!
+                     g_lkcj_p => g_licj
+                     g_kljc_p => g_iljc
+                     g_kbjc_p => g_ibjc
+!
+                     g_ljck_p => g_ljci
+                     g_jlkc_p => g_jlic
+                     g_jbkc_p => g_jbic
+!
+                  endif
+!
+               else if (k_batch .eq. j_batch) then
+!
+                  g_bdck_p => g_bdcj
+                  g_dbkc_p => g_dbjc
+!
+                  g_lkci_p => g_ljci
+                  g_klic_p => g_jlic
+                  g_kbic_p => g_jbic
+!
+                  g_lick_p => g_licj
+                  g_ilkc_p => g_iljc
+                  g_ibkc_p => g_ibjc
+!
+                  call wf%omega_cc3_ov_vv_reader(batch_k,batch_j,g_lkcj,g_kljc,g_kbjc)
+                  g_lkcj_p => g_lkcj
+                  g_kljc_p => g_kljc
+                  g_kbjc_p => g_kbjc
+!
+                  g_ljck_p => g_lkcj
+                  g_jlkc_p => g_kljc
+                  g_jbkc_p => g_kbjc
+!
+               endif
+!
                do i = 1,batch_i%length
+!
+                  i_abs = batch_i%first + i - 1
+!
                   do j = 1,batch_j%length
+!
+                     j_abs = batch_j%first + j - 1
+!
                      do k = 1,batch_k%length
+!
+                        k_abs = batch_k%first + k - 1
 !
                      enddo
                   enddo
@@ -286,8 +380,63 @@ contains
          enddo
       enddo
 !
+!     Close files
+!
+      call disk%close_file(wf%g_bdck_t)
+      call disk%close_file(wf%g_ljck_t)
+      call disk%close_file(wf%g_dbkc_t)
+      call disk%close_file(wf%g_jlkc_t)
+      call disk%close_file(wf%g_jbkc_t)
+!
+!     Deallocate the integral arrays
+!
+      if (batch_i%num_batches .eq. 1) then
+!
+         call mem%dealloc(g_bdci,wf%n_v,wf%n_v,wf%n_v,wf%n_o) 
+         call mem%dealloc(g_dbic,wf%n_v,wf%n_v,wf%n_v,wf%n_o) 
+         call mem%dealloc(g_ljci,wf%n_o,wf%n_v,wf%n_o,wf%n_o) 
+         call mem%dealloc(g_jlic,wf%n_v,wf%n_o,wf%n_o,wf%n_o) 
+         call mem%dealloc(g_jbic,wf%n_v,wf%n_v,wf%n_o,wf%n_o) 
+!
+      else
+         call batch_i%determine_limits(1)
+!
+         call mem%dealloc(g_bdci,wf%n_v,wf%n_v,wf%n_v,batch_i%length) 
+         call mem%dealloc(g_bdcj,wf%n_v,wf%n_v,wf%n_v,batch_i%length) 
+         call mem%dealloc(g_bdck,wf%n_v,wf%n_v,wf%n_v,batch_i%length) 
+!
+         call mem%dealloc(g_dbic,wf%n_v,wf%n_v,wf%n_v,batch_i%length) 
+         call mem%dealloc(g_dbjc,wf%n_v,wf%n_v,wf%n_v,batch_i%length) 
+         call mem%dealloc(g_dbkc,wf%n_v,wf%n_v,wf%n_v,batch_i%length) 
+!
+         call mem%dealloc(g_ljci,wf%n_o,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%dealloc(g_lkci,wf%n_o,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%dealloc(g_lkcj,wf%n_o,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%dealloc(g_licj,wf%n_o,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%dealloc(g_lick,wf%n_o,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%dealloc(g_ljck,wf%n_o,wf%n_v,batch_i%length,batch_i%length) 
+!
+         call mem%dealloc(g_jlic,wf%n_v,wf%n_o,batch_i%length,batch_i%length) 
+         call mem%dealloc(g_klic,wf%n_v,wf%n_o,batch_i%length,batch_i%length) 
+         call mem%dealloc(g_kljc,wf%n_v,wf%n_o,batch_i%length,batch_i%length) 
+         call mem%dealloc(g_iljc,wf%n_v,wf%n_o,batch_i%length,batch_i%length) 
+         call mem%dealloc(g_ilkc,wf%n_v,wf%n_o,batch_i%length,batch_i%length) 
+         call mem%dealloc(g_jlkc,wf%n_v,wf%n_o,batch_i%length,batch_i%length) 
+!
+         call mem%dealloc(g_jbic,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%dealloc(g_kbic,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%dealloc(g_kbjc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%dealloc(g_ibjc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%dealloc(g_ibkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%dealloc(g_jbkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
+!
+      endif 
+!
+!     Deallocate amplitude arrays
+!
       call mem%dealloc(t_abc,wf%n_v,wf%n_v,wf%n_v)
       call mem%dealloc(u_abc,wf%n_v,wf%n_v,wf%n_v)
+      call mem%dealloc(v_abc,wf%n_v,wf%n_v,wf%n_v)
 !
    end subroutine omega_cc3_a_cc3
 !
@@ -539,6 +688,148 @@ contains
 !
 !
    end subroutine omega_cc3_integrals_cc3
+!
+!
+   module subroutine omega_cc3_vvv_reader_cc3(wf,batch_x,g_bdcx,g_dbxc)
+!!
+!!    Read the bdck and dbkc integrals needed in the current batch
+!!
+!!    Rolf H. Myhre, January 2019
+!!
+      implicit none
+!
+      real(dp), dimension(:,:,:,:), intent(inout) :: g_bdcx
+      real(dp), dimension(:,:,:,:), intent(inout) :: g_dbxc
+!
+      type(batching_index), intent(in) :: batch_x
+!
+      class(cc3) :: wf
+!
+      integer(i15) :: ioerror
+      integer(i15) :: x, x_abs
+!
+      do x = 1,batch_x%length
+!
+         x_abs = batch_x%first + x - 1
+!
+         read(wf%g_bdck_t%unit,rec=x_abs, iostat=ioerror) g_bdcx(:,:,:,x)
+!
+         if(ioerror .ne. 0) then
+            write(output%unit,'(t3,a)') 'Failed to read bdck file'
+            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+            call output%error_msg('Failed to read file')
+         endif
+!
+      enddo
+!
+!
+      do x = 1,batch_x%length
+!
+         x_abs = batch_x%first + x - 1
+!
+         read(wf%g_dbkc_t%unit,rec=x_abs, iostat=ioerror) g_dbxc(:,:,:,x)
+!
+         if(ioerror .ne. 0) then
+            write(output%unit,'(t3,a)') 'Failed to read dbkc file'
+            write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+            call output%error_msg('Failed to read file')
+         endif
+!
+      enddo
+!
+!
+   end subroutine omega_cc3_vvv_reader_cc3
+!
+!
+   module subroutine omega_cc3_ov_vv_reader_cc3(wf,batch_y,batch_x,g_lycx,g_ylxc,g_ybxc)
+!!
+!!    Read the ljck, jlkc and jbkc integrals needed in the current batches
+!!
+!!    Rolf H. Myhre, January 2019
+!!
+      implicit none
+!
+      real(dp), dimension(:,:,:,:), intent(inout) :: g_lycx
+      real(dp), dimension(:,:,:,:), intent(inout) :: g_ylxc
+      real(dp), dimension(:,:,:,:), intent(inout) :: g_ybxc
+!
+      type(batching_index), intent(in) :: batch_x, batch_y
+!
+      class(cc3) :: wf
+!
+      integer(i15) :: ioerror, record
+      integer(i15) :: x, y, x_abs, y_abs
+!
+      do x = 1,batch_x%length
+!
+         x_abs = batch_x%first + x - 1
+!
+         do y = 1,batch_y%length
+!
+            y_abs = batch_y%first + y - 1
+!
+            record = wf%n_o*(x_abs - 1) + y_abs
+!
+            read(wf%g_ljck_t%unit,rec=record, iostat=ioerror) g_lycx(:,:,y,x)
+!
+            if(ioerror .ne. 0) then
+               write(output%unit,'(t3,a)') 'Failed to read ljck file'
+               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+               call output%error_msg('Failed to read file')
+            endif
+!
+         enddo
+!
+      enddo
+!
+!
+      do x = 1,batch_x%length
+!
+         x_abs = batch_x%first + x - 1
+!
+         do y = 1,batch_y%length
+!
+            y_abs = batch_y%first + y - 1
+!
+            record = wf%n_o*(x_abs - 1) + y_abs
+!
+            read(wf%g_jlkc_t%unit,rec=record, iostat=ioerror) g_ylxc(:,:,y,x)
+!
+            if(ioerror .ne. 0) then
+               write(output%unit,'(t3,a)') 'Failed to read jlkc file'
+               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+               call output%error_msg('Failed to read file')
+            endif
+!
+         enddo
+!
+      enddo
+!
+!
+      do x = 1,batch_x%length
+!
+         x_abs = batch_x%first + x - 1
+!
+         do y = 1,batch_y%length
+!
+            y_abs = batch_y%first + y - 1
+!
+            record = wf%n_o*(x_abs - 1) + y_abs
+!
+            read(wf%g_jbkc_t%unit,rec=record, iostat=ioerror) g_ybxc(:,:,y,x)
+!
+            if(ioerror .ne. 0) then
+               write(output%unit,'(t3,a)') 'Failed to read jbkc file'
+               write(output%unit,'(t3,a,i14)') 'Error code: ', ioerror
+               call output%error_msg('Failed to read file')
+            endif
+!
+         enddo
+!
+      enddo
+!
+!
+   end subroutine omega_cc3_ov_vv_reader_cc3
 !
 !
 end submodule
