@@ -124,24 +124,24 @@ contains
       real(dp), dimension(:,:,:,:), pointer              :: g_ilkc_p => null()
       real(dp), dimension(:,:,:,:), pointer              :: g_jlkc_p => null()
 !
-!     g_kbjc and g_jbkc are the same each other's transpose,
+!     L_kbjc and L_jbkc each other's transpose,
 !     but utilising this makes the code more complicated and 
 !     error prone without any huge advantages
 !
-      real(dp), dimension(:,:,:,:), allocatable, target  :: g_jbic
-      real(dp), dimension(:,:,:,:), allocatable, target  :: g_kbic
-      real(dp), dimension(:,:,:,:), allocatable, target  :: g_kbjc
-      real(dp), dimension(:,:,:,:), allocatable, target  :: g_ibjc
-      real(dp), dimension(:,:,:,:), allocatable, target  :: g_ibkc
-      real(dp), dimension(:,:,:,:), allocatable, target  :: g_jbkc
-      real(dp), dimension(:,:,:,:), pointer              :: g_jbic_p => null()
-      real(dp), dimension(:,:,:,:), pointer              :: g_kbic_p => null()
-      real(dp), dimension(:,:,:,:), pointer              :: g_kbjc_p => null()
-      real(dp), dimension(:,:,:,:), pointer              :: g_ibjc_p => null()
-      real(dp), dimension(:,:,:,:), pointer              :: g_ibkc_p => null()
-      real(dp), dimension(:,:,:,:), pointer              :: g_jbkc_p => null()
+      real(dp), dimension(:,:,:,:), allocatable, target  :: L_jbic
+      real(dp), dimension(:,:,:,:), allocatable, target  :: L_kbic
+      real(dp), dimension(:,:,:,:), allocatable, target  :: L_kbjc
+      real(dp), dimension(:,:,:,:), allocatable, target  :: L_ibjc
+      real(dp), dimension(:,:,:,:), allocatable, target  :: L_ibkc
+      real(dp), dimension(:,:,:,:), allocatable, target  :: L_jbkc
+      real(dp), dimension(:,:,:,:), pointer              :: L_jbic_p => null()
+      real(dp), dimension(:,:,:,:), pointer              :: L_kbic_p => null()
+      real(dp), dimension(:,:,:,:), pointer              :: L_kbjc_p => null()
+      real(dp), dimension(:,:,:,:), pointer              :: L_ibjc_p => null()
+      real(dp), dimension(:,:,:,:), pointer              :: L_ibkc_p => null()
+      real(dp), dimension(:,:,:,:), pointer              :: L_jbkc_p => null()
 !
-      integer(i15) :: i, j, k, i_abs, j_abs, k_abs
+      integer(i15) :: i, j, k, i_rel, j_rel, k_rel
       type(batching_index) :: batch_i, batch_j, batch_k
       integer(i15) :: i_batch, j_batch, k_batch
       integer(i15) :: req_0, req_1, req_2, req_3
@@ -181,7 +181,7 @@ contains
 !
          call mem%alloc(g_jlic,wf%n_v,wf%n_o,wf%n_o,wf%n_o) 
 !
-         call mem%alloc(g_jbic,wf%n_v,wf%n_v,wf%n_o,wf%n_o) 
+         call mem%alloc(L_jbic,wf%n_v,wf%n_v,wf%n_o,wf%n_o) 
 !
       else !batching
 !
@@ -209,12 +209,12 @@ contains
          call mem%alloc(g_ilkc,wf%n_v,wf%n_o,batch_i%length,batch_i%length) 
          call mem%alloc(g_jlkc,wf%n_v,wf%n_o,batch_i%length,batch_i%length) 
 !
-         call mem%alloc(g_jbic,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
-         call mem%alloc(g_kbic,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
-         call mem%alloc(g_kbjc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
-         call mem%alloc(g_ibjc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
-         call mem%alloc(g_ibkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
-         call mem%alloc(g_jbkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%alloc(L_jbic,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%alloc(L_kbic,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%alloc(L_kbjc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%alloc(L_ibjc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%alloc(L_ibkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%alloc(L_jbkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
 !
       endif 
 !
@@ -222,7 +222,7 @@ contains
       call disk%open_file(wf%g_ljck_t,'read')
       call disk%open_file(wf%g_dbkc_t,'read')
       call disk%open_file(wf%g_jlkc_t,'read')
-      call disk%open_file(wf%g_jbkc_t,'read')
+      call disk%open_file(wf%L_jbkc_t,'read')
 !
       do i_batch = 1,batch_i%num_batches
 !
@@ -232,14 +232,14 @@ contains
          g_bdci_p => g_bdci
          g_dbic_p => g_dbic
 !
-         do j_batch = 1,batch_j%num_batches
+         do j_batch = 1,i_batch
 !
             call batch_j%determine_limits(j_batch)
 !
-            call wf%omega_cc3_ov_vv_reader(batch_j,batch_i,g_ljci,g_jlic,g_jbic)
+            call wf%omega_cc3_ov_vv_reader(batch_j,batch_i,g_ljci,g_jlic,L_jbic)
             g_ljci_p => g_ljci
             g_jlic_p => g_jlic
-            g_jbic_p => g_jbic
+            L_jbic_p => L_jbic
 !
             if (j_batch .ne. i_batch) then
 !
@@ -247,10 +247,10 @@ contains
                g_bdcj_p => g_bdcj
                g_dbjc_p => g_dbjc
 !
-               call wf%omega_cc3_ov_vv_reader(batch_i,batch_j,g_licj,g_iljc,g_ibjc)
+               call wf%omega_cc3_ov_vv_reader(batch_i,batch_j,g_licj,g_iljc,L_ibjc)
                g_licj_p => g_licj
                g_iljc_p => g_iljc
-               g_ibjc_p => g_ibjc
+               L_ibjc_p => L_ibjc
 !
             else
 !
@@ -259,11 +259,11 @@ contains
 !
                g_ljci_p => g_licj
                g_jlic_p => g_iljc
-               g_jbic_p => g_ibjc
+               L_jbic_p => L_ibjc
 !
             endif
 !
-            do k_batch = 1,batch_k%num_batches
+            do k_batch = 1,j_batch
 !
                call batch_k%determine_limits(k_batch)
 !
@@ -273,25 +273,25 @@ contains
                   g_bdck_p => g_bdck
                   g_dbkc_p => g_dbkc
 !
-                  call wf%omega_cc3_ov_vv_reader(batch_k,batch_i,g_lkci,g_klic,g_kbic)
+                  call wf%omega_cc3_ov_vv_reader(batch_k,batch_i,g_lkci,g_klic,L_kbic)
                   g_lkci_p => g_lkci
                   g_klic_p => g_klic
-                  g_kbic_p => g_kbic
+                  L_kbic_p => L_kbic
 !
-                  call wf%omega_cc3_ov_vv_reader(batch_i,batch_k,g_lick,g_ilkc,g_ibkc)
+                  call wf%omega_cc3_ov_vv_reader(batch_i,batch_k,g_lick,g_ilkc,L_ibkc)
                   g_lick_p => g_lick
                   g_ilkc_p => g_ilkc
-                  g_ibkc_p => g_ibkc
+                  L_ibkc_p => L_ibkc
 !
-                  call wf%omega_cc3_ov_vv_reader(batch_k,batch_j,g_lkcj,g_kljc,g_kbjc)
+                  call wf%omega_cc3_ov_vv_reader(batch_k,batch_j,g_lkcj,g_kljc,L_kbjc)
                   g_lkcj_p => g_lkcj
                   g_kljc_p => g_kljc
-                  g_kbjc_p => g_kbjc
+                  L_kbjc_p => L_kbjc
 !
-                  call wf%omega_cc3_ov_vv_reader(batch_j,batch_k,g_ljck,g_jlkc,g_jbkc)
+                  call wf%omega_cc3_ov_vv_reader(batch_j,batch_k,g_ljck,g_jlkc,L_jbkc)
                   g_ljck_p => g_ljck
                   g_jlkc_p => g_jlkc
-                  g_jbkc_p => g_jbkc
+                  L_jbkc_p => L_jbkc
 !
                else if (k_batch .eq. i_batch) then
 !
@@ -302,38 +302,38 @@ contains
 !
                      g_lkci_p => g_ljci
                      g_klic_p => g_jlic
-                     g_kbic_p => g_jbic
+                     L_kbic_p => L_jbic
 !
                      g_lick_p => g_ljci
                      g_ilkc_p => g_jlic
-                     g_ibkc_p => g_jbic
+                     L_ibkc_p => L_jbic
 !
                      g_lkcj_p => g_ljci
                      g_kljc_p => g_jlic
-                     g_kbjc_p => g_jbic
+                     L_kbjc_p => L_jbic
 !
                      g_ljck_p => g_ljci
                      g_jlkc_p => g_jlic
-                     g_jbkc_p => g_jbic
+                     L_jbkc_p => L_jbic
 !
                   else
 !
-                     call wf%omega_cc3_ov_vv_reader(batch_k,batch_i,g_lkci,g_klic,g_kbic)
+                     call wf%omega_cc3_ov_vv_reader(batch_k,batch_i,g_lkci,g_klic,L_kbic)
                      g_lkci_p => g_lkci
                      g_klic_p => g_klic
-                     g_kbic_p => g_kbic
+                     L_kbic_p => L_kbic
 !
                      g_lick_p => g_lkci
                      g_ilkc_p => g_klic
-                     g_ibkc_p => g_kbic
+                     L_ibkc_p => L_kbic
 !
                      g_lkcj_p => g_licj
                      g_kljc_p => g_iljc
-                     g_kbjc_p => g_ibjc
+                     L_kbjc_p => L_ibjc
 !
                      g_ljck_p => g_ljci
                      g_jlkc_p => g_jlic
-                     g_jbkc_p => g_jbic
+                     L_jbkc_p => L_jbic
 !
                   endif
 !
@@ -344,34 +344,35 @@ contains
 !
                   g_lkci_p => g_ljci
                   g_klic_p => g_jlic
-                  g_kbic_p => g_jbic
+                  L_kbic_p => L_jbic
 !
                   g_lick_p => g_licj
                   g_ilkc_p => g_iljc
-                  g_ibkc_p => g_ibjc
+                  L_ibkc_p => L_ibjc
 !
-                  call wf%omega_cc3_ov_vv_reader(batch_k,batch_j,g_lkcj,g_kljc,g_kbjc)
+                  call wf%omega_cc3_ov_vv_reader(batch_k,batch_j,g_lkcj,g_kljc,L_kbjc)
                   g_lkcj_p => g_lkcj
                   g_kljc_p => g_kljc
-                  g_kbjc_p => g_kbjc
+                  L_kbjc_p => L_kbjc
 !
                   g_ljck_p => g_lkcj
                   g_jlkc_p => g_kljc
-                  g_jbkc_p => g_kbjc
+                  L_jbkc_p => L_kbjc
 !
                endif
 !
-               do i = 1,batch_i%length
+               do i = batch_i%first,batch_i%last
 !
-                  i_abs = batch_i%first + i - 1
+                  i_rel = i - batch_i%first + 1
 !
-                  do j = 1,batch_j%length
+                  do j = batch_j%first,min(batch_j%last,i)
 !
-                     j_abs = batch_j%first + j - 1
+                     j_rel = j - batch_j%first + 1
 !
-                     do k = 1,batch_k%length
+                     do k = batch_k%first,min(batch_k%last,j)
 !
-                        k_abs = batch_k%first + k - 1
+                        k_rel = k - batch_k%first + 1
+!
 !
                      enddo
                   enddo
@@ -386,7 +387,7 @@ contains
       call disk%close_file(wf%g_ljck_t)
       call disk%close_file(wf%g_dbkc_t)
       call disk%close_file(wf%g_jlkc_t)
-      call disk%close_file(wf%g_jbkc_t)
+      call disk%close_file(wf%L_jbkc_t)
 !
 !     Deallocate the integral arrays
 !
@@ -396,7 +397,7 @@ contains
          call mem%dealloc(g_dbic,wf%n_v,wf%n_v,wf%n_v,wf%n_o) 
          call mem%dealloc(g_ljci,wf%n_o,wf%n_v,wf%n_o,wf%n_o) 
          call mem%dealloc(g_jlic,wf%n_v,wf%n_o,wf%n_o,wf%n_o) 
-         call mem%dealloc(g_jbic,wf%n_v,wf%n_v,wf%n_o,wf%n_o) 
+         call mem%dealloc(L_jbic,wf%n_v,wf%n_v,wf%n_o,wf%n_o) 
 !
       else
          call batch_i%determine_limits(1)
@@ -423,12 +424,12 @@ contains
          call mem%dealloc(g_ilkc,wf%n_v,wf%n_o,batch_i%length,batch_i%length) 
          call mem%dealloc(g_jlkc,wf%n_v,wf%n_o,batch_i%length,batch_i%length) 
 !
-         call mem%dealloc(g_jbic,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
-         call mem%dealloc(g_kbic,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
-         call mem%dealloc(g_kbjc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
-         call mem%dealloc(g_ibjc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
-         call mem%dealloc(g_ibkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
-         call mem%dealloc(g_jbkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%dealloc(L_jbic,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%dealloc(L_kbic,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%dealloc(L_kbjc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%dealloc(L_ibjc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%dealloc(L_ibkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
+         call mem%dealloc(L_jbkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
 !
       endif 
 !
@@ -448,7 +449,7 @@ contains
 !!    (db|kc) ordered as bcd,k
 !!    (lj|ck) ordered as lc,jk
 !!    (jl|kc) ordered as cl,jk
-!!    (jb|kc) ordered as bc,jk
+!!    (jb|kc) stored as L_jbkc = 2g_jbkc - g_jckb ordered as bc,jk
 !!
 !!    Rolf H. Myhre, January 2019
 !!
@@ -458,6 +459,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_pqrs !Array for constructed integrals
       real(dp), dimension(:,:,:,:), allocatable :: h_pqrs !Array for sorted integrals
+      real(dp), dimension(:,:), allocatable     :: v2_help !Help array for constructing L_jbkc
 !
       integer(i15) :: k, j, record 
       type(batching_index) :: batch_k
@@ -466,6 +468,8 @@ contains
       integer(i15) :: current_k_batch
 !
       integer(i15) :: ioerror=-1
+!
+      call mem%alloc(v2_help,wf%n_v,wf%n_v)
 !
       call batch_k%init(wf%n_o)
 !
@@ -648,8 +652,8 @@ contains
 !
       call mem%batch_setup(batch_k,req_0,req_k)
 !
-      call wf%g_jbkc_t%init('g_jbkc_t','direct','unformatted',dp*wf%n_v**2)
-      call disk%open_file(wf%g_jbkc_t,'write')
+      call wf%L_jbkc_t%init('L_jbkc_t','direct','unformatted',dp*wf%n_v**2)
+      call disk%open_file(wf%L_jbkc_t,'write')
 !
       do current_k_batch = 1,batch_k%num_batches
 !
@@ -669,8 +673,14 @@ contains
          do k = 1,batch_k%length
             do j = 1,wf%n_o
 !
+               call sort_12_to_21(h_pqrs(:,:,j,k), v2_help, wf%n_v, wf%n_v)
+!
+               call dscal(wf%n_v**2, two, h_pqrs(:,:,j,k),1)
+!
+               call daxpy(wf%n_v**2, -one, v2_help, 1, h_pqrs(:,:,j,k), 1)
+!
                record  = (batch_k%first + k - 1)*wf%n_o + j
-               write(wf%g_jbkc_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,j,k)
+               write(wf%L_jbkc_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,j,k)
 !
             enddo
          enddo
@@ -684,7 +694,7 @@ contains
 !
       enddo
 !
-      call disk%close_file(wf%g_jbkc_t,'keep')
+      call disk%close_file(wf%L_jbkc_t,'keep')
 !
 !
    end subroutine omega_cc3_integrals_cc3
@@ -741,7 +751,7 @@ contains
    end subroutine omega_cc3_vvv_reader_cc3
 !
 !
-   module subroutine omega_cc3_ov_vv_reader_cc3(wf,batch_y,batch_x,g_lycx,g_ylxc,g_ybxc)
+   module subroutine omega_cc3_ov_vv_reader_cc3(wf,batch_y,batch_x,g_lycx,g_ylxc,L_ybxc)
 !!
 !!    Read the ljck, jlkc and jbkc integrals needed in the current batches
 !!
@@ -751,7 +761,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), intent(inout) :: g_lycx
       real(dp), dimension(:,:,:,:), intent(inout) :: g_ylxc
-      real(dp), dimension(:,:,:,:), intent(inout) :: g_ybxc
+      real(dp), dimension(:,:,:,:), intent(inout) :: L_ybxc
 !
       type(batching_index), intent(in) :: batch_x, batch_y
 !
@@ -816,7 +826,7 @@ contains
 !
             record = wf%n_o*(x_abs - 1) + y_abs
 !
-            read(wf%g_jbkc_t%unit,rec=record, iostat=ioerror) g_ybxc(:,:,y,x)
+            read(wf%L_jbkc_t%unit,rec=record, iostat=ioerror) L_ybxc(:,:,y,x)
 !
             if(ioerror .ne. 0) then
                write(output%unit,'(t3,a)') 'Failed to read jbkc file'

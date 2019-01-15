@@ -42,13 +42,15 @@ contains
 !
       integer(i15) :: p, q
 !
-      do q = 1, dim_q
-         do p = 1, dim_p
+!$omp parallel do schedule(static) private(p,q)
+      do p = 1, dim_p
+         do q = 1, dim_q
 !
             x_q_p(q, p) = x_p_q(p, q)
 !
          enddo
       enddo
+!$omp end parallel do
 !
    end subroutine sort_12_to_21
 !

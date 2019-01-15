@@ -58,7 +58,7 @@
    end subroutine omega_cc3_vvv_reader_cc3
 !
 !
-   module subroutine omega_cc3_ov_vv_reader_cc3(wf,batch_y,batch_x,g_lycx,g_ylxc,g_ybxc)
+   module subroutine omega_cc3_ov_vv_reader_cc3(wf,batch_y,batch_x,g_lycx,g_ylxc,L_ybxc)
 !!
 !!    Read the ljck, jlkc and jbkc integrals needed in the current batches
 !!
@@ -68,7 +68,7 @@
 !
       real(dp), dimension(:,:,:,:), intent(inout) :: g_lycx
       real(dp), dimension(:,:,:,:), intent(inout) :: g_ylxc
-      real(dp), dimension(:,:,:,:), intent(inout) :: g_ybxc
+      real(dp), dimension(:,:,:,:), intent(inout) :: L_ybxc
 !
       type(batching_index), intent(in) :: batch_x, batch_y
 !
