@@ -85,14 +85,13 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout):: omega1
 !
-      integer(i15) :: required        = 0
       integer(i15) :: current_a_batch = 0
 !
       type(batching_index) :: batch_a
 !
       real(dp), dimension(:,:), allocatable :: u_dk_ci, t_dk_ci, g_ad_kc
 !
-      integer(i15) :: ad_dim, rec0, rec1
+      integer(i15) :: ad_dim, rec0, rec1, prev_available
 !
       type(timings) :: ccsd_a1_timer
 !
@@ -119,11 +118,12 @@ contains
 !
       rec1 = wf%n_v*wf%integrals%n_J + wf%n_v**2*(wf%n_o)
 !
+      prev_available = mem%available
+      mem%available =  (rec1*20 + rec0)*dp
+!
       call batch_a%init(wf%n_v)
 !
       call mem%batch_setup(batch_a, rec0, rec1)
-!
-      required = wf%integrals%get_required_vvov() + (wf%n_o)*(wf%n_v**3)
 !
 !     Loop over the number of a batches
 !
@@ -159,6 +159,7 @@ contains
          call mem%dealloc(g_ad_kc, ad_dim, (wf%n_o)*(wf%n_v))
 !
       enddo ! End of batches of the index a
+      mem%available = prev_available
 !
       call mem%dealloc(u_dk_ci, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !

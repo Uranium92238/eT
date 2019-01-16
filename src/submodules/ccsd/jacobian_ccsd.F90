@@ -1405,7 +1405,7 @@ contains
       real(dp), dimension(:,:), allocatable :: rho_aib_j ! rho_ai_bj, batching over b
       real(dp), dimension(:,:), allocatable :: rho_b_aij ! rho_ai_bj, batching over b
 !
-      integer(i15) :: required 
+      integer(i15) :: rec1, rec0
       integer(i15) :: current_b_batch 
 !
       type(batching_index) :: batch_b
@@ -1417,19 +1417,15 @@ contains
       call jacobian_ccsd_d2_timer%init('jacobian ccsd d2')
       call jacobian_ccsd_d2_timer%start()
 !
-!     Determine batch size, etc.
-!     (Redo estimate once loop is done)
-!
-      required = wf%integrals%get_required_vvov() + &
-                  (max((wf%n_o)*(wf%n_v**3), &
-                  (wf%n_o**2)*(wf%n_v**2) + (wf%n_o**3)*(wf%n_v), &
-                  2*(wf%n_o**3)*(wf%n_v), &
-                  3*(wf%n_o**2)*(wf%n_v**2)))
-!
 !     Initialize batching variable
 !
+      rec0 = (wf%n_o**2)*(wf%n_v**2) 
+      rec1 = wf%n_v**2*wf%n_o + wf%n_v*wf%integrals%n_J& 
+            + max((wf%n_o)*(wf%n_v**2), 2*(wf%n_o**3), (wf%n_o**3) + (wf%n_o**2)*(wf%n_v),&
+               2*(wf%n_o)*(wf%n_v**2), 2*(wf%n_o**2)*(wf%n_v) )
+!
       call batch_b%init(wf%n_v)
-      call mem%num_batch(batch_b, required)
+      call mem%batch_setup(batch_b, rec0, rec1)
 !
 !     Start looping over b-batches
 !
