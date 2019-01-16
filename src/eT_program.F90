@@ -18,6 +18,7 @@ program eT_program
   use mlhf_class
 !
   use ccs_class
+  use cc2_class
   use ccsd_class
   use mp2_class
 !
@@ -44,6 +45,7 @@ program eT_program
     type(mlhf), allocatable, target  :: mlhf_wf 
 !
     type(ccs), allocatable, target   :: ccs_wf
+    type(cc2), allocatable, target   :: cc2_wf
     type(ccsd), allocatable, target  :: ccsd_wf
     type(mp2), allocatable, target   :: mp2_wf
 !
@@ -201,6 +203,9 @@ program eT_program
           cc_wf => mp2_wf
 !
         elseif (cc_methods(i) == 'cc2') then
+!
+          allocate(cc2_wf)
+          cc_wf => cc2_wf
 !
         elseif (cc_methods(i) == 'ccsd') then
 !
