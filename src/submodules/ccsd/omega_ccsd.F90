@@ -92,7 +92,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: u_dk_ci, t_dk_ci, g_ad_kc
 !
-      integer(i15) :: ad_dim
+      integer(i15) :: ad_dim, rec0, rec1
 !
       type(timings) :: ccsd_a1_timer
 !
@@ -115,20 +115,19 @@ contains
 !
 !     Prepare for batching
 !
-!     Estimated memory required to construct g_adkc
+      rec0 = wf%n_o*wf%integrals%n_J*wf%n_v
+!
+      rec1 = wf%n_v*wf%integrals%n_J + wf%n_v**2*(wf%n_o)
+!
+      call batch_a%init(wf%n_v)
+!
+      call mem%batch_setup(batch_a, rec0, rec1)
 !
       required = wf%integrals%get_required_vvov() + (wf%n_o)*(wf%n_v**3)
-!
-!     Initialization of the batching variable
-!
-      call batch_a%init(wf%n_v)                ! Initialize batching index a
-      call mem%num_batch(batch_a, required) ! Determine batching information
 !
 !     Loop over the number of a batches
 !
       do current_a_batch = 1, batch_a%num_batches
-!
-!        For each batch, get the limits for the a index
 !
          call batch_a%determine_limits(current_a_batch)
 !
@@ -366,7 +365,7 @@ contains
 !
 !     Batching and memory handling variables
 !
-      integer(i15) :: required = 0
+      integer(i15) :: rec0, rec1_a, rec1_b, rec2
 !
       integer(i15) :: current_a_batch = 0
       integer(i15) :: current_b_batch = 0
@@ -397,36 +396,31 @@ contains
 !
 !    ::  Calculate the A2.2 term  of omega ::
 !
-      required = wf%integrals%get_required_vvvv() + 4*(wf%n_o**2)*(wf%n_v**2) + 2*(wf%n_v**4)
+      rec0 = 2*(wf%n_o**2)*(wf%n_v**2)
+!
+      rec1_a = wf%integrals%n_J*wf%n_v 
+      rec1_b = wf%integrals%n_J*wf%n_v 
+!
+      rec2 = 2*wf%n_v**2 + 2*(wf%n_o**2)
 !
 !     Initialize batching variables
 !
       call batch_a%init(wf%n_v)
       call batch_b%init(wf%n_v)
 !
-      call mem%num_two_batch(batch_a, batch_b, required)
+      call mem%batch_setup(batch_a, batch_b, rec0, rec1_a, rec1_b, rec2)
 !
 !     Start looping over a-batches
 !
       do current_a_batch = 1, batch_a%num_batches
 !
-!        Determine the limits for the a-batch
-!
          call batch_a%determine_limits(current_a_batch)
-!
-!        Start looping over b-batches
 !
          do current_b_batch = 1, batch_b%num_batches
 !
-!           Determine the limits for the b-batch
-!
             call batch_b%determine_limits(current_b_batch)
 !
-!           Allocate g_ca_db
-!
             call mem%alloc(g_ac_bd, (wf%n_v)*(batch_a%length), (wf%n_v)*(batch_b%length))
-!
-!           Get g_ac_bd
 !
             call ccsd_a2_integral_timer%start()
 !
@@ -934,7 +928,7 @@ contains
 !
 !     Batching and memory handling
 !
-      integer(i15) :: required = 0
+      integer(i15) :: rec0, rec1
       integer(i15) :: current_a_batch = 0
 !
       type(batching_index) :: batch_a
@@ -1007,16 +1001,19 @@ contains
 !
 !     Constructing g_ki_ac
 !
-      required = wf%integrals%get_required_vvoo()
+!     Prepare for batching
+!
+      rec0 = wf%n_o**2*wf%integrals%n_J
+!
+      rec1 = wf%n_v*wf%integrals%n_J + (wf%n_o)*(wf%n_v**2)
 !
       call batch_a%init(wf%n_v)
-      call mem%num_batch(batch_a, required)
 !
-!     Start looping over a-batches
+      call mem%batch_setup(batch_a, rec0, rec1)
+!
+!     Loop over the number of a batches
 !
       do current_a_batch = 1, batch_a%num_batches
-!
-!        Determine batch limits for the a-batch
 !
          call batch_a%determine_limits(current_a_batch)
 !
