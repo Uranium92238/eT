@@ -646,7 +646,6 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: c_bj_ci
 !
-      integer(i15) :: required
       integer(i15) :: current_a_batch
 !
       type(batching_index) :: batch_a
@@ -656,19 +655,20 @@ contains
 !
       type(timings) :: jacobian_ccsd_d1_timer
 !
+      integer(i15) :: rec0, rec1
+!
       call jacobian_ccsd_d1_timer%init('jacobian ccsd d1')
       call jacobian_ccsd_d1_timer%start()
 !
 !     Prepare for batching over index a
 !
-      required = wf%integrals%get_required_vvov() + (wf%n_v**3)*(wf%n_o)
+      rec0 = wf%n_o*wf%integrals%n_J*wf%n_v
 !
-!     Initialize batching variable
+      rec1 = wf%n_v*wf%integrals%n_J + (wf%n_v**2)*(wf%n_o)
 !
       call batch_a%init(wf%n_v)
-      call mem%num_batch(batch_a, required)
 !
-!     Loop over the number of a batches
+      call mem%batch_setup(batch_a, rec0, rec1)
 !
       do current_a_batch = 1, batch_a%num_batches
 !
@@ -751,13 +751,14 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: rho_ba_ij 
 !
-      integer(i15) :: required
       integer(i15) :: current_b_batch
       integer(i15) :: aib_offset
 !
       type(batching_index) :: batch_b
 !
       type(timings) :: jacobian_ccsd_a2_timer
+!
+      integer(i15) :: rec0, rec1
 !
       call jacobian_ccsd_a2_timer%init('jacobian ccsd a2')
       call jacobian_ccsd_a2_timer%start()
@@ -804,12 +805,13 @@ contains
 !     We do the matrix multiplication as g_aib_c c_cj,
 !     batching over the b index.
 !
-      required = wf%integrals%get_required_vvvo() + (wf%n_v)*(wf%n_o)*(wf%n_v)*(batch_b%length)
+      rec0 = wf%n_o*wf%integrals%n_J*wf%n_v
 !
-!     Initialize batching variable
+      rec1 = wf%n_v*wf%integrals%n_J + (wf%n_v**2)*(wf%n_o)
 !
       call batch_b%init(wf%n_v)
-      call mem%num_batch(batch_b, required)
+!
+      call mem%batch_setup(batch_b, rec0, rec1)
 !
       do current_b_batch = 1, batch_b%num_batches
 !
@@ -2718,6 +2720,8 @@ contains
 !
       type(timings) :: jacobian_ccsd_i2_timer
 !
+      integer(i15) :: rec0, rec1
+!
       call jacobian_ccsd_i2_timer%init('jacobian ccsd i2')
       call jacobian_ccsd_i2_timer%start()
 !
@@ -2835,10 +2839,14 @@ contains
 !
       required = wf%integrals%get_required_vvoo()
 !
+      rec0 = wf%n_o**2*wf%integrals%n_J
+!
+      rec1 = wf%integrals%n_J*wf%n_v
+!
 !     Initialize batching variable
 !
       call batch_c%init(wf%n_v)
-      call mem%num_batch(batch_c, required)
+      call mem%batch_setup(batch_c, rec0, rec1)
 !
 !     Loop over the number of c batches
 !
@@ -2861,7 +2869,6 @@ contains
                            wf%n_o,        &
                            1,             &
                            wf%n_o)
-!
 !
 !        Reorder g_bc_kj
 !
@@ -3096,13 +3103,13 @@ contains
 !
 !     Batching and memory handling variables
 !
-      integer(i15) :: required = 0
-!
       integer(i15) :: current_a_batch = 0
       integer(i15) :: current_b_batch = 0
 !
       type(batching_index) :: batch_a
       type(batching_index) :: batch_b
+!
+      integer(i15) :: rec0, rec1_a, rec1_b, rec2
 !
       type(timings) :: jacobian_ccsd_k2_timer
 !
@@ -3142,32 +3149,29 @@ contains
 !
 !     ::  sum_cd g_ac,bd * c_ci,dj ::
 !
-      required = wf%integrals%get_required_vvvv() + (wf%n_v**4)
+      rec0 = 0
+!
+      rec1_a = wf%integrals%n_J*wf%n_v 
+      rec1_b = wf%integrals%n_J*wf%n_v 
+!
+      rec2 = wf%n_v**2
 !
 !     Initialize batching variables
 !
       call batch_a%init(wf%n_v)
       call batch_b%init(wf%n_v)
 !
-      call mem%num_two_batch(batch_a, batch_b, required)
+      call mem%batch_setup(batch_a, batch_b, rec0, rec1_a, rec1_b, rec2)
 !
 !     Start looping over a-batches
 !
       do current_a_batch = 1, batch_a%num_batches
 !
-!        Determine limits for current a-batch
-!
          call batch_a%determine_limits(current_a_batch)
-!
-!        Start looping over b-batches
 !
          do current_b_batch = 1, batch_b%num_batches
 !
-!           Determine limits for current b-batch
-!
             call batch_b%determine_limits(current_b_batch)
-!
-!           Allocate g_ca_db = g_acbd
 !
             call mem%alloc(g_ac_bd, (wf%n_v)*(batch_a%length), (wf%n_v)*(batch_b%length))
 !
