@@ -646,7 +646,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: c_bj_ci
 !
-      integer(i15) :: current_a_batch
+      integer(i15) :: current_a_batch, prev_available
 !
       type(batching_index) :: batch_a
 !
@@ -665,6 +665,8 @@ contains
       rec0 = wf%n_o*wf%integrals%n_J*wf%n_v
 !
       rec1 = wf%n_v*wf%integrals%n_J + (wf%n_v**2)*(wf%n_o)
+      prev_available = mem%available
+      mem%available =  (rec1*2 + rec0)*dp
 !
       call batch_a%init(wf%n_v)
 !
@@ -722,6 +724,7 @@ contains
          call mem%dealloc(c_bj_ci, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
 !
       enddo ! End batching over a
+      mem%available = prev_available
 !
       call jacobian_ccsd_d1_timer%freeze()
       call jacobian_ccsd_d1_timer%switch_off()
@@ -1423,6 +1426,7 @@ contains
       rec1 = wf%n_v**2*wf%n_o + wf%n_v*wf%integrals%n_J& 
             + max((wf%n_o)*(wf%n_v**2), 2*(wf%n_o**3), (wf%n_o**3) + (wf%n_o**2)*(wf%n_v),&
                2*(wf%n_o)*(wf%n_v**2), 2*(wf%n_o**2)*(wf%n_v) )
+
 !
       call batch_b%init(wf%n_v)
       call mem%batch_setup(batch_b, rec0, rec1)
