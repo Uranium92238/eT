@@ -191,12 +191,6 @@ contains
                            req_0, req_1, req_2, req_3, batch_buff)
 !
 !
-      write(output%unit,*)
-      write(output%unit,*) "batch_i", batch_i%num_batches
-      write(output%unit,*) "batch_j", batch_j%num_batches
-      write(output%unit,*) "batch_k", batch_k%num_batches
-      write(output%unit,*)
-!
 !     Allocate integral arrays and assign pointers.
 !     Without pointers we'll have to use three times as much 
 !     memory for the non-batching case
@@ -288,9 +282,9 @@ contains
                g_bdcj_p => g_bdci
                g_dbjc_p => g_dbic
 !
-               g_ljci_p => g_licj
-               g_jlic_p => g_iljc
-               L_jbic_p => L_ibjc
+               g_licj_p => g_ljci
+               g_iljc_p => g_jlic
+               L_ibjc_p => L_jbic
 !
             endif
 !
@@ -404,7 +398,8 @@ contains
 !
                         k_rel = k - batch_k%first + 1
 !
-                        call wf%omega_cc3_W_calc(g_bdci_p(:,:,:,i_rel), &
+                        call wf%omega_cc3_W_calc(i, j, k, t_abc, u_abc, t_abji, &
+                                                 g_bdci_p(:,:,:,i_rel), &
                                                  g_bdcj_p(:,:,:,j_rel), &
                                                  g_bdck_p(:,:,:,k_rel), &
                                                  g_ljci_p(:,:,j_rel,i_rel), &
@@ -627,7 +622,7 @@ contains
          do k = 1,batch_k%length
             do j = 1,wf%n_o
 !
-               record  = (batch_k%first + k - 1)*wf%n_o + j
+               record  = (batch_k%first + k - 2)*wf%n_o + j
                write(wf%g_ljck_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,j,k)
 !
             enddo
@@ -669,7 +664,7 @@ contains
          do k = 1,batch_k%length
             do j = 1,wf%n_o
 !
-               record  = (batch_k%first + k - 1)*wf%n_o + j
+               record  = (batch_k%first + k - 2)*wf%n_o + j
                write(wf%g_jlkc_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,j,k)
 !
             enddo
@@ -721,7 +716,7 @@ contains
 !
                call daxpy(wf%n_v**2, -one, v2_help, 1, h_pqrs(:,:,j,k), 1)
 !
-               record  = (batch_k%first + k - 1)*wf%n_o + j
+               record  = (batch_k%first + k - 2)*wf%n_o + j
                write(wf%L_jbkc_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,j,k)
 !
             enddo
@@ -884,7 +879,7 @@ contains
    end subroutine omega_cc3_ov_vv_reader_cc3
 !
 !
-   module subroutine omega_cc3_W_calc_cc3(wf, &
+   module subroutine omega_cc3_W_calc_cc3(wf, i, j, k, t_abc, u_abc, t_abji, &
                                           g_bdci, g_bdcj, g_bdck, &
                                           g_ljci, g_lkci, g_lkcj, g_licj, g_lick, g_ljck)
 !!
@@ -897,17 +892,244 @@ contains
 !
       class(cc3) :: wf
 !
-      real(dp), dimension(:,:,:), intent(in) :: g_bdci 
-      real(dp), dimension(:,:,:), intent(in) :: g_bdcj 
-      real(dp), dimension(:,:,:), intent(in) :: g_bdck 
+      integer(i15), intent(in) :: i, j, k
 !
-      real(dp), dimension(:,:), intent(in) :: g_ljci 
-      real(dp), dimension(:,:), intent(in) :: g_lkci 
-      real(dp), dimension(:,:), intent(in) :: g_lkcj 
-      real(dp), dimension(:,:), intent(in) :: g_licj 
-      real(dp), dimension(:,:), intent(in) :: g_lick 
-      real(dp), dimension(:,:), intent(in) :: g_ljck 
+      real(dp), dimension(:,:,:), intent(inout) :: t_abc
+      real(dp), dimension(:,:,:), intent(inout) :: u_abc
 !
+      real(dp), dimension(:,:,:,:), intent(in)  :: t_abji
+!
+      real(dp), dimension(:,:,:), intent(in)    :: g_bdci 
+      real(dp), dimension(:,:,:), intent(in)    :: g_bdcj 
+      real(dp), dimension(:,:,:), intent(in)    :: g_bdck 
+!
+      real(dp), dimension(:,:), intent(in)      :: g_ljci 
+      real(dp), dimension(:,:), intent(in)      :: g_lkci 
+      real(dp), dimension(:,:), intent(in)      :: g_lkcj 
+      real(dp), dimension(:,:), intent(in)      :: g_licj 
+      real(dp), dimension(:,:), intent(in)      :: g_lick 
+      real(dp), dimension(:,:), intent(in)      :: g_ljck 
+!
+!
+!     Contributions to W
+!     W^abc_ijk = P^abc_ijk(\sum_d t^ad_ij(bd|ck) - \sum_l t^ab_il(lj|ck))
+!
+!
+!     t^ad_ij*(bd|ck)
+!     ---------------
+!
+      call dgemm('N', 'N', &
+                 wf%n_v, &
+                 wf%n_v**2, &
+                 wf%n_v, &
+                 one, &
+                 t_abji(:,:,j,i), &
+                 wf%n_v, &
+                 g_bdck, &
+                 wf%n_v, &
+                 zero, &
+                 t_abc, &
+                 wf%n_v)
+!
+!     t^ab_il*(lj|ck)
+!     ---------------
+!
+      call dgemm('N', 'N', &
+                 wf%n_v**2, &
+                 wf%n_v, &
+                 wf%n_o, &
+                 -one, &
+                 t_abji(:,:,:,i), &
+                 wf%n_v**2, &
+                 g_ljck, &
+                 wf%n_o, &
+                 one, &
+                 t_abc, &
+                 wf%n_v**2)
+!
+!     t^bd_ji*(ad|ck)
+!     ---------------
+!
+      call dgemm('N', 'N', &
+                 wf%n_v, &
+                 wf%n_v**2, &
+                 wf%n_v, &
+                 one, &
+                 t_abji(:,:,i,j), &
+                 wf%n_v, &
+                 g_bdck, &
+                 wf%n_v, &
+                 zero, &
+                 u_abc, &
+                 wf%n_v)
+!
+!     t^ba_jl*(li|ck)
+!     ---------------
+!
+      call dgemm('N', 'N', &
+                 wf%n_v**2, &
+                 wf%n_v, &
+                 wf%n_o, &
+                 -one, &
+                 t_abji(:,:,:,j), &
+                 wf%n_v**2, &
+                 g_lick, &
+                 wf%n_o, &
+                 one, &
+                 u_abc, &
+                 wf%n_v**2)
+!
+      call sort_123_to_213_and_add(u_abc,t_abc,wf%n_v,wf%n_v,wf%n_v)
+!
+!     t^ad_ik*(cd|bj)
+!     ---------------
+!
+      call dgemm('N', 'N', &
+                 wf%n_v, &
+                 wf%n_v**2, &
+                 wf%n_v, &
+                 one, &
+                 t_abji(:,:,k,i), &
+                 wf%n_v, &
+                 g_bdcj, &
+                 wf%n_v, &
+                 zero, &
+                 u_abc, &
+                 wf%n_v)
+!
+!     t^ac_il*(lk|bj)
+!     ---------------
+!
+      call dgemm('N', 'N', &
+                 wf%n_v**2, &
+                 wf%n_v, &
+                 wf%n_o, &
+                 -one, &
+                 t_abji(:,:,:,i), &
+                 wf%n_v**2, &
+                 g_lkcj, &
+                 wf%n_o, &
+                 one, &
+                 u_abc, &
+                 wf%n_v**2)
+!
+      call sort_123_to_132_and_add(u_abc,t_abc,wf%n_v,wf%n_v,wf%n_v)
+!
+!
+!     t^cd_ki*(ad|bj)
+!     ---------------
+!
+      call dgemm('N', 'N', &
+                 wf%n_v, &
+                 wf%n_v**2, &
+                 wf%n_v, &
+                 one, &
+                 t_abji(:,:,i,k), &
+                 wf%n_v, &
+                 g_bdcj, &
+                 wf%n_v, &
+                 zero, &
+                 u_abc, &
+                 wf%n_v)
+!
+!     t^ca_kl*(li|bj)
+!     ---------------
+!
+      call dgemm('N', 'N', &
+                 wf%n_v**2, &
+                 wf%n_v, &
+                 wf%n_o, &
+                 -one, &
+                 t_abji(:,:,:,k), &
+                 wf%n_v**2, &
+                 g_licj, &
+                 wf%n_o, &
+                 one, &
+                 u_abc, &
+                 wf%n_v**2)
+!
+      call sort_123_to_231_and_add(u_abc,t_abc,wf%n_v,wf%n_v,wf%n_v)
+!
+!
+!     t^bd_jk*(cd|ai)
+!     ---------------
+!
+      call dgemm('N', 'N', &
+                 wf%n_v, &
+                 wf%n_v**2, &
+                 wf%n_v, &
+                 one, &
+                 t_abji(:,:,k,j), &
+                 wf%n_v, &
+                 g_bdci, &
+                 wf%n_v, &
+                 zero, &
+                 u_abc, &
+                 wf%n_v)
+!
+!     t^bc_jl*(lk|ai)
+!     ---------------
+!
+      call dgemm('N', 'N', &
+                 wf%n_v**2, &
+                 wf%n_v, &
+                 wf%n_o, &
+                 -one, &
+                 t_abji(:,:,:,j), &
+                 wf%n_v**2, &
+                 g_lkci, &
+                 wf%n_o, &
+                 one, &
+                 u_abc, &
+                 wf%n_v**2)
+!
+      call sort_123_to_312_and_add(u_abc,t_abc,wf%n_v,wf%n_v,wf%n_v)
+!
+!
+!     t^cd_kj*(bd|ai)
+!     ---------------
+!
+      call dgemm('N', 'N', &
+                 wf%n_v, &
+                 wf%n_v**2, &
+                 wf%n_v, &
+                 one, &
+                 t_abji(:,:,j,k), &
+                 wf%n_v, &
+                 g_bdci, &
+                 wf%n_v, &
+                 zero, &
+                 u_abc, &
+                 wf%n_v)
+!
+!     t^cb_kl*(lj|ai)
+!     ---------------
+!
+      call dgemm('N', 'N', &
+                 wf%n_v**2, &
+                 wf%n_v, &
+                 wf%n_o, &
+                 -one, &
+                 t_abji(:,:,:,k), &
+                 wf%n_v**2, &
+                 g_ljci, &
+                 wf%n_o, &
+                 one, &
+                 u_abc, &
+                 wf%n_v**2)
+!
+      call sort_123_to_321_and_add(u_abc,t_abc,wf%n_v,wf%n_v,wf%n_v)
+!
+      write(output%unit,*)
+      write(output%unit,*) "W(1,1,1)"
+      write(output%unit,*) t_abc(1,1,1)
+      write(output%unit,*) "T(1,1,1,1)"
+      write(output%unit,*) t_abji(1,1,1,1)
+      write(output%unit,*) "bdci"
+      write(output%unit,*) g_bdci(1,1,1)
+      write(output%unit,*) "ljci"
+      write(output%unit,*) g_ljci(1,1)
+      write(output%unit,*)
 !
    end subroutine omega_cc3_W_calc_cc3
 !
