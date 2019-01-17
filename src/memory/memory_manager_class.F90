@@ -1354,6 +1354,7 @@ contains
 !
          batch_p%num_batches = (batch_p%index_dimension-1)/(batch_p%max_length)+1
          batch_q%num_batches = (batch_q%index_dimension-1)/(batch_q%max_length)+1
+         write(output%unit, *)'hello', batch_p%num_batches, batch_p%max_length, batch_q%num_batches, batch_q%max_length
 !
       endif
 !

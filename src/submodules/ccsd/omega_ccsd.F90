@@ -91,7 +91,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: u_dk_ci, t_dk_ci, g_ad_kc
 !
-      integer(i15) :: ad_dim, rec0, rec1, prev_available
+      integer(i15) :: ad_dim, rec0, rec1
 !
       type(timings) :: ccsd_a1_timer
 !
@@ -117,9 +117,6 @@ contains
       rec0 = wf%n_o*wf%integrals%n_J*wf%n_v
 !
       rec1 = wf%n_v*wf%integrals%n_J + wf%n_v**2*(wf%n_o)
-!
-      prev_available = mem%available
-      mem%available =  (rec1*20 + rec0)*dp
 !
       call batch_a%init(wf%n_v)
 !
@@ -159,7 +156,6 @@ contains
          call mem%dealloc(g_ad_kc, ad_dim, (wf%n_o)*(wf%n_v))
 !
       enddo ! End of batches of the index a
-      mem%available = prev_available
 !
       call mem%dealloc(u_dk_ci, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
@@ -369,7 +365,7 @@ contains
       integer(i15) :: rec0, rec1_a, rec1_b, rec2
 !
       integer(i15) :: current_a_batch = 0
-      integer(i15) :: current_b_batch = 0
+      integer(i15) :: current_b_batch = 0, prev_available      
 !
       type(batching_index) :: batch_a
       type(batching_index) :: batch_b
@@ -403,6 +399,9 @@ contains
       rec1_b = wf%integrals%n_J*wf%n_v 
 !
       rec2 = 2*wf%n_v**2 + 2*(wf%n_o**2)
+!
+      prev_available = mem%available
+      mem%available =  (rec1_a*10 + rec1_b*10 + rec2*100 + rec0)*dp
 !
 !     Initialize batching variables
 !
@@ -563,6 +562,7 @@ contains
                        do b = 1, batch_b%length
 !
                           if ((a+batch_a%first-1) .ge. (b+batch_b%first-1)) then
+!
                              bj = index_two(b + batch_b%first - 1, j, wf%n_v) ! B is full-CCSD-space b index
                              bi = index_two(b + batch_b%first - 1, i, wf%n_v) ! B is full-CCSD-space b index
 !
@@ -577,8 +577,10 @@ contains
                                                    + omega2_p_ab_ij(ab, ij) + omega2_m_ab_ij(ab, ij)
 !
                              if (aibj .ne. biaj) then
+!
                                 omega2(biaj,1) = omega2(biaj, 1) &
                                                    + omega2_p_ab_ij(ab, ij) - omega2_m_ab_ij(ab, ij)
+!
                              endif
                           endif
 !
@@ -591,6 +593,7 @@ contains
 !
                call mem%dealloc(omega2_p_ab_ij, packed_size(batch_a%length), packed_size(wf%n_o))
                call mem%dealloc(omega2_m_ab_ij, packed_size(batch_a%length), packed_size(wf%n_o))
+!
             else
 !
 !              Allocate for +-g, +-t
@@ -627,8 +630,10 @@ contains
                              g_m_ab_cd(ab, cd) = g_ac_bd(ac, bd) - g_ac_bd(ad, bc)
 !
                             if(c .ne. d) then
+!
                               g_p_ab_cd(ab, cd) = two*g_p_ab_cd(ab, cd)
                               g_m_ab_cd(ab, cd) = two*g_m_ab_cd(ab, cd)
+!
                             endif
 !
                        enddo
@@ -712,6 +717,8 @@ contains
 !
                         do b = 1, batch_b%length
 !
+                           if (a + batch_a%first - 1 .ge. b + batch_b%first - 1) then
+!
                               bj = wf%n_v*(j - 1) + b + batch_b%first - 1 ! B is full-space b index
                               bi = wf%n_v*(i - 1) + b + batch_b%first - 1 ! B is full-space b index
 !
@@ -732,6 +739,8 @@ contains
 !
                               endif
 !
+                           endif
+!
                         enddo
                      enddo
                   enddo
@@ -748,6 +757,7 @@ contains
       enddo ! End batching over a
 !
       call ccsd_a2_timer%freeze()
+      mem%available = prev_available
 !
       call ccsd_a2_timer%switch_off()
       call ccsd_a2_integral_timer%switch_off()
