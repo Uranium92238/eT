@@ -365,7 +365,7 @@ contains
       integer(i15) :: rec0, rec1_a, rec1_b, rec2
 !
       integer(i15) :: current_a_batch = 0
-      integer(i15) :: current_b_batch = 0, prev_available      
+      integer(i15) :: current_b_batch = 0    
 !
       type(batching_index) :: batch_a
       type(batching_index) :: batch_b
@@ -393,15 +393,12 @@ contains
 !
 !    ::  Calculate the A2.2 term  of omega ::
 !
-      rec0 = 2*(wf%n_o**2)*(wf%n_v**2)
+      rec0 = 2*(packed_size(wf%n_o))*(packed_size(wf%n_v))
 !
       rec1_a = wf%integrals%n_J*wf%n_v 
       rec1_b = wf%integrals%n_J*wf%n_v 
 !
-      rec2 = 2*wf%n_v**2 + 2*(wf%n_o**2)
-!
-      prev_available = mem%available
-      mem%available =  (rec1_a*10 + rec1_b*10 + rec2*100 + rec0)*dp
+      rec2 = 2*wf%n_v**2 + 2*(packed_size(wf%n_o))
 !
 !     Initialize batching variables
 !
@@ -757,7 +754,6 @@ contains
       enddo ! End batching over a
 !
       call ccsd_a2_timer%freeze()
-      mem%available = prev_available
 !
       call ccsd_a2_timer%switch_off()
       call ccsd_a2_integral_timer%switch_off()
@@ -926,14 +922,15 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: u_ck_bj
       real(dp), dimension(:,:), allocatable :: omega2_ai_bj ! Holds term temporarily
+      real(dp), dimension(:,:), allocatable :: omega_a_batch
 !
 !     Indices
 !
-      integer(i15) :: a, b
-      integer(i15) :: i, j
+      integer(i15) :: a, b, c
+      integer(i15) :: i, j, k
 !
-      integer(i15) :: ai, aj, bi, bj
-      integer(i15) :: ai_offset
+      integer(i15) :: ai, aj, bi, bj, ac, ki, ck
+      integer(i15) :: ai_batch
 !
       integer(i15) :: aibj
 !
@@ -1032,19 +1029,34 @@ contains
 !
          call mem%alloc(g_ki_ac, (wf%n_o)**2, (batch_a%length)*(wf%n_v))
 !
-         call wf%get_oovv(g_ki_ac,        &
-                           1,             &
-                           wf%n_o,        &
-                           1,             &
-                           wf%n_o,        &
-                           batch_a%first, &
-                           batch_a%last,  &
-                           1,             &
-                           wf%n_v)
+         call wf%get_oovv(g_ki_ac,                       &
+                           1, wf%n_o,                    &
+                           1, wf%n_o,                    &
+                           batch_a%first, batch_a%last,  &
+                           1, wf%n_v)
 !
 !        X_ai_ck = X_ai_ck + g_ki_ac
 !
-         call add_4213_to_1234(one, g_ki_ac, X_ai_ck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+         do k = 1, wf%n_o
+            do c = 1, wf%n_v
+!
+               ck = wf%n_v*(k-1) + c
+!
+               do i = 1, wf%n_o
+!
+                  ki = wf%n_o*(i - 1) + k
+!
+                  do a = 1, batch_a%length
+!
+                     ac = batch_a%length*(c-1) + a
+                     ai = wf%n_v*(i-1) + a + batch_a%first - 1 
+!
+                     X_ai_ck(ai, ck) = X_ai_ck(ai, ck) + g_ki_ac(ki, ac)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
 !
 !        Calculate the contribution to the term
 !
@@ -1058,7 +1070,7 @@ contains
 !
 !        - 1/2 * sum_ck u_jk^bc g_acki = -1/2 * sum_ck g_ai_ck u_ck_bj
 !
-         ai_offset = index_two(batch_a%first, 1, wf%n_v)
+         call mem%alloc(omega_a_batch, batch_a%length*wf%n_o, wf%n_v*wf%n_o)
 !
          call dgemm('N','N',                 &
                   (wf%n_o)*(batch_a%length), &
@@ -1070,10 +1082,30 @@ contains
                   u_ck_bj,                   &
                   (wf%n_o)*(wf%n_v),         &
                   zero,                      &
-                  omega2_ai_bj(ai_offset,1), &
-                  (wf%n_o)*(wf%n_v))
+                  omega_a_batch, &
+                  (wf%n_o)*batch_a%length)
 !
          call mem%dealloc(g_ai_ck, (batch_a%length)*(wf%n_o), (wf%n_o)*(wf%n_v))
+!
+         do j = 1, wf%n_o
+            do b = 1, wf%n_v
+!
+               bj = wf%n_v*(j-1) + b
+!
+               do i = 1, wf%n_o
+                  do a = 1, batch_a%length
+!
+                     ai_batch = batch_a%length*(i-1) + a
+                     ai = wf%n_v*(i-1) + a + batch_a%first - 1
+!
+                     omega2_ai_bj(ai, bj) = omega_a_batch(ai_batch, bj)               
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!
+         call mem%dealloc(omega_a_batch, batch_a%length*wf%n_o, wf%n_v*wf%n_o)
 !
       enddo ! End of batching
 !
