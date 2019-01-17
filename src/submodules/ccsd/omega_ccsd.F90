@@ -546,6 +546,7 @@ contains
               call mem%dealloc(t_p_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
               call mem%dealloc(t_m_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
 !
+!$omp parallel do private(i, j, a, b, ij, ai, aj, bj, bi, ab, aibj, biaj)
               do i = 1, wf%n_o
                  do j = 1, i
 !
@@ -585,6 +586,7 @@ contains
                     enddo
                  enddo
               enddo
+!$omp end parallel do
 !
 !              Deallocate omega +-
 !
@@ -702,6 +704,7 @@ contains
                call mem%dealloc(t_p_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
                call mem%dealloc(t_m_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
 !
+!$omp parallel do private(i, j, a, b, ij, ai, aj, bj, bi, ab, aibj, biaj)
                do i = 1, wf%n_o
                   do j = 1, i
 !
@@ -742,6 +745,7 @@ contains
                      enddo
                   enddo
                enddo
+!$omp end parallel do
 !
 !              Deallocate omega +-
 !
@@ -1037,6 +1041,7 @@ contains
 !
 !        X_ai_ck = X_ai_ck + g_ki_ac
 !
+!$omp parallel do private(a, i, k, c, ck, ki, ac, ai)
          do k = 1, wf%n_o
             do c = 1, wf%n_v
 !
@@ -1057,6 +1062,7 @@ contains
                enddo
             enddo
          enddo
+!$omp end parallel do
 !
 !        Calculate the contribution to the term
 !
@@ -1087,6 +1093,7 @@ contains
 !
          call mem%dealloc(g_ai_ck, (batch_a%length)*(wf%n_o), (wf%n_o)*(wf%n_v))
 !
+!$omp parallel do private(a, i, b, j, bj, ai, ai_batch)
          do j = 1, wf%n_o
             do b = 1, wf%n_v
 !
@@ -1104,6 +1111,7 @@ contains
                enddo
             enddo
          enddo
+!$omp end parallel do
 !
          call mem%dealloc(omega_a_batch, batch_a%length*wf%n_o, wf%n_v*wf%n_o)
 !
@@ -1154,6 +1162,7 @@ contains
 !
 !     Omega_aibj,1 = P_ai_bj ( 1/2*Y_ai_bj + Y_aj_bi )
 !
+!$omp parallel do private(i, a, j, b, ai, bj, aj, bi, aibj)
          do i = 1, wf%n_o
             do a = 1, wf%n_v
 !
@@ -1180,6 +1189,7 @@ contains
             enddo
          enddo
       enddo
+!$omp end parallel do
 !
       call mem%dealloc(Y_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !

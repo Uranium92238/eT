@@ -2716,7 +2716,7 @@ contains
 !
       type(timings) :: jacobian_ccsd_i2_timer
 !
-      integer(i15) :: rec0, rec1, prev_available
+      integer(i15) :: rec0, rec1
 !
       call jacobian_ccsd_i2_timer%init('jacobian ccsd i2')
       call jacobian_ccsd_i2_timer%start()
@@ -2838,9 +2838,6 @@ contains
       rec0 = wf%n_o**2*wf%integrals%n_J
 !
       rec1 = wf%integrals%n_J*wf%n_v
-      !
-      prev_available = mem%available
-      mem%available =  (rec1*2 + rec0)*dp
 !
 !     Initialize batching variable
 !
@@ -2897,7 +2894,6 @@ contains
          call mem%dealloc(g_bc_kj, (wf%n_v)*(batch_c%length), (wf%n_o)**2)
 !
       enddo ! End of c-batches
-      mem%available = prev_available
 !
 !     rho_ai_bj += - sum_ck c_ai_ck * g_ck_bj
 !
