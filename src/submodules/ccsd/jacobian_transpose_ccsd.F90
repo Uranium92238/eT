@@ -498,8 +498,8 @@ contains
 !
 !     Batching variables 
 !
-      integer(i15) :: required 
-      integer(i15) :: current_a_batch 
+      integer(i15) :: rec0, rec1
+      integer(i15) :: current_a_batch, prev_available
 !
       type(batching_index) :: batch_a 
 !
@@ -507,10 +507,14 @@ contains
 !
 !     Prepare batching over index a 
 !
-      required = wf%integrals%get_required_vvvo()
+      rec0 = wf%n_o*wf%n_v*wf%integrals%n_J
+      rec1 = wf%n_v*wf%integrals%n_J + wf%n_v**2*wf%n_o
+!
+      prev_available = mem%available
+      mem%available =  (rec1*2 + rec0)*dp
 !     
       call batch_a%init(wf%n_v)
-      call mem%num_batch(batch_a, required)        
+      call mem%batch_setup(batch_a, rec0, rec1)        
 !
 !     Loop over the a-batches 
 !
@@ -553,12 +557,13 @@ contains
 !
       enddo ! End of batches over a 
 !
+      mem%available = prev_available
+!
 !     :: Term 2. - sum_kdl b_akdl g_dlik = - sum_kdl b_akdl g_ikdl ::
 !
       call mem%alloc(g_ik_dl, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
 !
       call wf%get_oovo(g_ik_dl)
-!
 !
       call dgemm('N','T',               &
                   wf%n_v,               &
