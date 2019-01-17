@@ -32,6 +32,12 @@ contains
       real(dp), dimension(:,:), allocatable :: omega1
       real(dp), dimension(:), allocatable   :: omega2
 !
+      type(timings) :: cc3_timer
+      type(timings) :: ccsd_timer
+!
+      call cc3_timer%init('CC3 contribution)')
+      call ccsd_timer%init('CCSD contribution)')
+!
       call mem%alloc(omega1, wf%n_v, wf%n_o)
       call mem%alloc(omega2, wf%n_t2)
 !
@@ -41,6 +47,8 @@ contains
       omega2 = zero
 !
 !     Construct CCSD singles contributions
+!
+      call ccsd_timer%start()
 !
       call wf%omega_ccsd_a1(omega1)
       call wf%omega_ccsd_b1(omega1)
@@ -56,7 +64,13 @@ contains
       call wf%omega_ccsd_d2(omega2)
       call wf%omega_ccsd_e2(omega2)
 !
+      call ccsd_timer%freeze()
+      call ccsd_timer%switch_off()
+!
+      call cc3_timer%start()
       call wf%omega_cc3_a(omega1,omega2)
+      call cc3_timer%freeze()
+      call cc3_timer%switch_off()
 !
       call dcopy(wf%n_t1, omega1, 1, omega, 1)
       call dcopy(wf%n_t2, omega2, 1, omega(wf%n_t1+1, 1), 1)
@@ -83,6 +97,9 @@ contains
       real(dp), dimension(:,:,:), allocatable :: t_abc 
       real(dp), dimension(:,:,:), allocatable :: u_abc 
       real(dp), dimension(:,:,:), allocatable :: v_abc 
+!
+!     Unpacked doubles amplitudes
+      real(dp), dimension(:,:,:,:), allocatable :: t_abji
 !
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_bdci
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_bdcj
@@ -154,6 +171,13 @@ contains
       call mem%alloc(u_abc,wf%n_v,wf%n_v,wf%n_v)
       call mem%alloc(v_abc,wf%n_v,wf%n_v,wf%n_v)
 !
+      call mem%alloc(t_abji,wf%n_v,wf%n_v,wf%n_o,wf%n_o)
+      call squareup_and_sort_1234_to_1342(wf%t2,t_abji,wf%n_v,wf%n_o,wf%n_v,wf%n_o)
+!
+      t_abc = zero
+      u_abc = zero
+      v_abc = zero
+!
       req_0 = 0
       req_1 = 2*wf%n_v**3
       req_2 = 2*wf%n_o*wf%n_v+wf%n_v**2
@@ -166,6 +190,12 @@ contains
       call mem%batch_setup_ident(batch_i, batch_j, batch_k, &
                            req_0, req_1, req_2, req_3, batch_buff)
 !
+!
+      write(output%unit,*)
+      write(output%unit,*) "batch_i", batch_i%num_batches
+      write(output%unit,*) "batch_j", batch_j%num_batches
+      write(output%unit,*) "batch_k", batch_k%num_batches
+      write(output%unit,*)
 !
 !     Allocate integral arrays and assign pointers.
 !     Without pointers we'll have to use three times as much 
@@ -217,6 +247,7 @@ contains
          call mem%alloc(L_jbkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
 !
       endif 
+!
 !
       call disk%open_file(wf%g_bdck_t,'read')
       call disk%open_file(wf%g_ljck_t,'read')
@@ -373,6 +404,15 @@ contains
 !
                         k_rel = k - batch_k%first + 1
 !
+                        call wf%omega_cc3_W_calc(g_bdci_p(:,:,:,i_rel), &
+                                                 g_bdcj_p(:,:,:,j_rel), &
+                                                 g_bdck_p(:,:,:,k_rel), &
+                                                 g_ljci_p(:,:,j_rel,i_rel), &
+                                                 g_lkci_p(:,:,k_rel,i_rel), &
+                                                 g_lkcj_p(:,:,k_rel,j_rel), &
+                                                 g_licj_p(:,:,i_rel,j_rel), &
+                                                 g_lick_p(:,:,i_rel,k_rel), &
+                                                 g_ljck_p(:,:,j_rel,k_rel))
 !
                      enddo
                   enddo
@@ -438,6 +478,8 @@ contains
       call mem%dealloc(t_abc,wf%n_v,wf%n_v,wf%n_v)
       call mem%dealloc(u_abc,wf%n_v,wf%n_v,wf%n_v)
       call mem%dealloc(v_abc,wf%n_v,wf%n_v,wf%n_v)
+!
+      call mem%dealloc(t_abji,wf%n_v,wf%n_v,wf%n_o,wf%n_o)
 !
    end subroutine omega_cc3_a_cc3
 !
@@ -840,6 +882,34 @@ contains
 !
 !
    end subroutine omega_cc3_ov_vv_reader_cc3
+!
+!
+   module subroutine omega_cc3_W_calc_cc3(wf, &
+                                          g_bdci, g_bdcj, g_bdck, &
+                                          g_ljci, g_lkci, g_lkcj, g_licj, g_lick, g_ljck)
+!!
+!!    Calculate the the contributions to the t_3 amplitudes 
+!!    for occupied indices i,j,k
+!!
+!!    Rolf H. Myhre, January 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      real(dp), dimension(:,:,:), intent(in) :: g_bdci 
+      real(dp), dimension(:,:,:), intent(in) :: g_bdcj 
+      real(dp), dimension(:,:,:), intent(in) :: g_bdck 
+!
+      real(dp), dimension(:,:), intent(in) :: g_ljci 
+      real(dp), dimension(:,:), intent(in) :: g_lkci 
+      real(dp), dimension(:,:), intent(in) :: g_lkcj 
+      real(dp), dimension(:,:), intent(in) :: g_licj 
+      real(dp), dimension(:,:), intent(in) :: g_lick 
+      real(dp), dimension(:,:), intent(in) :: g_ljck 
+!
+!
+   end subroutine omega_cc3_W_calc_cc3
 !
 !
 end submodule

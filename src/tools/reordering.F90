@@ -1189,6 +1189,46 @@ contains
    end subroutine sort_1234_to_1342
 !
 !
+   subroutine squareup_and_sort_1234_to_1342(x_pqrs, x_p_r_s_q, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Squareup and sort 1234 to 1342
+!!    Written by Eirik F. Kjønstad and Rolf H. Myhre, Dec 2017
+!!
+!!    Reorders the array x_pqrs to x_p_r_s_q (i.e., 1234 to 1342).
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+!
+      real(dp), dimension(((dim_p*dim_q+1)*dim_r*dim_s)/2), intent(in) :: x_pqrs
+      real(dp), dimension(dim_q,dim_r, dim_s,dim_q) :: x_p_r_s_q
+!
+      integer(i15) :: p, q, r, s, rs, pq, pqrs
+!
+!$omp parallel do schedule(static) private(s,r,rs,q,p,pq,pqrs)
+      do q = 1, dim_q
+         do s = 1, dim_s
+            do r = 1, dim_r
+!
+               rs = dim_r*(s-1) + r
+!
+               do p = 1, dim_p
+!
+                  pq = dim_p*(q-1) + p
+!
+                  pqrs = (max(pq,rs)*(max(pq,rs)-3)/2) + pq + rs
+!
+                  x_p_r_s_q(p,r,s,q) = x_pqrs(pqrs)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine squareup_and_sort_1234_to_1342
+!
+!
    subroutine sort_1234_to_1432(x_pq_rs, x_ps_rq, dim_p, dim_q, dim_r, dim_s)
 !!
 !!    Sort 1234 to 1432

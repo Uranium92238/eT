@@ -77,3 +77,30 @@
    end subroutine omega_cc3_ov_vv_reader_cc3
 !
 !
+   module subroutine omega_cc3_W_calc_cc3(wf, &
+                                          g_bdci, g_bdcj, g_bdck, &
+                                          g_ljci, g_lkci, g_lkcj, g_licj, g_lick, g_ljck)
+!!
+!!    Read the ljck, jlkc and jbkc integrals needed in the current batches
+!!
+!!    Rolf H. Myhre, January 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      real(dp), dimension(:,:,:), intent(in) :: g_bdci 
+      real(dp), dimension(:,:,:), intent(in) :: g_bdcj 
+      real(dp), dimension(:,:,:), intent(in) :: g_bdck 
+!
+      real(dp), dimension(:,:), intent(in) :: g_ljci 
+      real(dp), dimension(:,:), intent(in) :: g_lkci 
+      real(dp), dimension(:,:), intent(in) :: g_lkcj 
+      real(dp), dimension(:,:), intent(in) :: g_licj 
+      real(dp), dimension(:,:), intent(in) :: g_lick 
+      real(dp), dimension(:,:), intent(in) :: g_ljck 
+!
+!
+   end subroutine omega_cc3_W_calc_cc3
+!
+!
