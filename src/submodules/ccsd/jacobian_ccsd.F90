@@ -758,7 +758,7 @@ contains
 !
       type(timings) :: jacobian_ccsd_a2_timer
 !
-      integer(i15) :: rec0, rec1, prev_available
+      integer(i15) :: rec0, rec1
 !
       call jacobian_ccsd_a2_timer%init('jacobian ccsd a2')
       call jacobian_ccsd_a2_timer%start()
@@ -808,8 +808,6 @@ contains
       rec0 = wf%n_o*wf%integrals%n_J*wf%n_v
 !
       rec1 = wf%n_v*wf%integrals%n_J + (wf%n_v**2)*(wf%n_o)
-      prev_available = mem%available
-      mem%available =  (rec1*2 + rec0)*dp
 !
       call batch_b%init(wf%n_v)
 !
@@ -853,7 +851,6 @@ contains
           call mem%dealloc(g_ai_bc, (wf%n_v)*(wf%n_o), wf%n_v*(batch_b%length))
 !
       enddo ! End of batches over b
-      mem%available = prev_available
 !
       call jacobian_ccsd_a2_timer%freeze()
       call jacobian_ccsd_a2_timer%switch_off()
@@ -1409,7 +1406,7 @@ contains
       real(dp), dimension(:,:), allocatable :: rho_b_aij ! rho_ai_bj, batching over b
 !
       integer(i15) :: rec1, rec0
-      integer(i15) :: current_b_batch 
+      integer(i15) :: current_b_batch, prev_available
 !
       type(batching_index) :: batch_b
 
@@ -1422,11 +1419,14 @@ contains
 !
 !     Initialize batching variable
 !
-      rec0 = (wf%n_o**2)*(wf%n_v**2) 
+      rec0 = (wf%n_o**2)*(wf%n_v**2) + wf%n_v*wf%n_o*wf%integrals%n_J
       rec1 = wf%n_v**2*wf%n_o + wf%n_v*wf%integrals%n_J& 
             + max((wf%n_o)*(wf%n_v**2), 2*(wf%n_o**3), (wf%n_o**3) + (wf%n_o**2)*(wf%n_v),&
                2*(wf%n_o)*(wf%n_v**2), 2*(wf%n_o**2)*(wf%n_v) )
 
+!
+      prev_available = mem%available
+      mem%available =  (rec1*2 + rec0)*dp
 !
       call batch_b%init(wf%n_v)
       call mem%batch_setup(batch_b, rec0, rec1)
@@ -1544,7 +1544,6 @@ contains
 !        Deallocations for term 1 (keep g_cd_kb = g_kcbd)
 !
          call mem%dealloc(rho_a_ijb, wf%n_v, (batch_b%length)*(wf%n_o)**2)
-!
 !
 !        :: Term 2. - sum_kcd g_kcbd t_kj^ad c_ci ::
 !
@@ -1894,6 +1893,8 @@ contains
          call mem%dealloc(L_ck_bd, (wf%n_v)*(wf%n_o), (wf%n_v)*(batch_b%length))
 !
       enddo ! End of batches over b
+
+      mem%available = prev_available
 !
       call jacobian_ccsd_d2_timer%freeze()
       call jacobian_ccsd_d2_timer%switch_off()
