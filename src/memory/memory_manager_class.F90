@@ -111,6 +111,12 @@ module memory_manager_class
 !
       procedure :: room_for_n_arrays_of_size => room_for_n_arrays_of_size_memory_manager
 !
+      procedure :: batch_setup_1_memory_manager
+      procedure :: batch_setup_2_memory_manager
+      procedure :: batch_setup_3_memory_manager
+      generic   :: batch_setup => batch_setup_1_memory_manager, batch_setup_2_memory_manager, &
+                                  batch_setup_3_memory_manager
+!
    end type memory_manager
 !
 !  Main memory object
@@ -1093,6 +1099,455 @@ contains
       room_for_n_arrays_of_size_memory_manager = (mem%available)/(dp*M)
 !
    end function room_for_n_arrays_of_size_memory_manager
+!
+!
+   subroutine batch_setup_1_memory_manager(mem, batch_p, req0, req1, element_size)
+!!
+!!    Setup batching 
+!!    Written by Rolf H. Myhre and Eirik F. Kjønstad, December 2018
+!!
+!!    Batching setup for a single index.
+!!
+!!    batch_p:  Initialized batching object.
+!!
+!!    req0:     Memory required that does not change with the index dimension.
+!!              E.g., n_o**2*n_v**2 for (vo|vo) if none of the indices 
+!!              in the integral is batched over.
+!!
+!!    req1:     Memory required per batching index (linear with batch size). 
+!!              E.g., n_v**3 for (vv|vo) when batching over the 
+!!              occupied index.
+!!
+      implicit none
+!
+      class(memory_manager) :: mem
+!
+      class(batching_index) :: batch_p ! The index being batched over
+!
+      integer(i15), intent(in) :: req0
+      integer(i15), intent(in) :: req1
+!
+      integer(i15), intent(in), optional :: element_size
+!
+      integer(i15) :: req0_tot
+      integer(i15) :: req1_min
+      integer(i15) :: req_min
+!
+      integer(i15) :: req_tot
+!
+      integer(i15) :: e_size
+!
+      e_size = dp
+      if(present(element_size)) then
+         e_size = element_size
+      endif
+!
+      req0_tot = (req0 + req0/(mem%buffer))*e_size
+      req1_min = (req1 + req1/(mem%buffer))*e_size 
+!
+      req_min = req0_tot + req1_min 
+      req_tot = req0_tot + req1_min*batch_p%index_dimension
+!
+      if (req_tot .lt. mem%available) then
+!
+!        No need to batch
+!
+         batch_p%num_batches = 1
+         batch_p%max_length  = batch_p%index_dimension
+!
+      else if (req_min .gt. mem%available) then
+!
+!        Not enough memory for a batch
+!
+         write(output%unit,'(t3,a,i14,a,i14)') 'Need at least', req_min, 'but only have ', mem%available
+         call output%error_msg('Not enough memory for a batch.')
+!
+      else
+!
+!        We need to batch
+!
+!        Determine maximum batch length
+!
+         batch_p%max_length = (mem%available - req0_tot)/(req1_min)
+!
+!        Number of full batches
+!
+         batch_p%num_batches = (batch_p%index_dimension-1)/(batch_p%max_length)+1
+!
+      endif
+!
+   end subroutine batch_setup_1_memory_manager
+!
+!
+   subroutine batch_setup_2_memory_manager(mem, batch_p, batch_q, req0, req1_p, req1_q, req2, element_size)
+!!
+!!    Setup batching 
+!!    Written by Rolf H. Myhre and Eirik F. Kjønstad, Dec 2018
+!!
+!!    Batching setup for two batching indices.
+!!
+!!    batch_p: Initialized batching object
+!!    batch_q: Initialized batching object
+!!
+!!    req0: required memory that does not scale with batch size 
+!! 
+!!    req1: required memory that scales linearly with p batch size
+!!    req1: required memory that scales linearly with q batch size
+!!
+!!    req2: required memory that scales quadratically with batch size
+!!
+!!    element_size: memory per element, default is double precision
+!!
+!!    If you are batching over i and j and need to keep g_abij, g_abci and g_abcj in memory, 
+!!    req1 = 2*n_v**3 (both for i and j) and req2 = n_v**2. Memory per batch is then 
+!!    batch_size*req1 + batch_size**2*req2
+!!
+!!    If you are batching over a and j and need to keep g_abij, g_abci and g_abcj in memory,
+!!    req1_a = n_o*n_v**2, req1_j = 0, and req2 = n_o*n_v + n_v**2. Note that one integral (g_abci)
+!!    scales linearly with the a-index but that there are no such integrals for the j-index.
+!!
+!!    Be careful with symmetries and permutations!
+!!
+      implicit none
+!
+      class(memory_manager) :: mem
+!
+      class(batching_index) :: batch_p ! An index being batched over
+      class(batching_index) :: batch_q ! An index being batched over
+!
+      integer(i15), intent(in) :: req0
+      integer(i15), intent(in) :: req1_p
+      integer(i15), intent(in) :: req1_q
+      integer(i15), intent(in) :: req2
+!
+      integer(i15), intent(in), optional :: element_size
+!
+      logical :: figgered_out
+!
+      integer(i15) :: req0_tot
+      integer(i15) :: req1_p_min
+      integer(i15) :: req1_q_min 
+      integer(i15) :: req2_min
+      integer(i15) :: req_min
+      integer(i15) :: req_tot 
+!
+      integer(i15) :: p_elements, q_elements
+!
+      integer(i15) :: e_size
+!
+      e_size = dp
+      if(present(element_size)) then
+         e_size = element_size
+      endif
+!
+      req0_tot   = req0*e_size 
+      req1_p_min = req1_p*e_size
+      req1_q_min = req1_q*e_size
+      req2_min = req2*e_size
+!
+      req_min = req0_tot + req1_p_min + req1_q_min + req2_min 
+!
+      req_tot = req0_tot + req1_p_min*(batch_p%index_dimension) &
+                         + req1_q_min*(batch_q%index_dimension) &
+                         + req2_min*(batch_p%index_dimension)*(batch_q%index_dimension)
+!
+      req_tot = req_tot + req_tot/(mem%buffer)
+!
+      if (req_tot .lt. mem%available) then
+!
+!        No need to batch
+!
+         batch_p%num_batches = 1
+         batch_p%max_length  = batch_p%index_dimension
+!
+         batch_q%num_batches = 1
+         batch_q%max_length  = batch_q%index_dimension
+!
+      else if (req_min .gt. mem%available) then
+!
+!        Not enough memory for a batch
+!
+         write(output%unit,'(t3,a,i14,a,i14)') 'Need ', req_min, 'but only have ', mem%available
+         call output%error_msg('Not enough memory for a batch.')
+!
+      else
+!
+!        We need to batch
+!
+!        Figure out how many we have room for
+!
+!        I. First, try to increment both indices simultaneously
+!
+         p_elements = 1
+         q_elements = 1
+!
+         figgered_out = .false.
+         do while (.not. figgered_out                              &
+                     .and. p_elements .lt. batch_p%index_dimension &
+                     .and. q_elements .lt. batch_q%index_dimension)
+!
+            if (((p_elements+1)*(q_elements+1)*req2_min &
+                  + (p_elements+1)*req1_p_min          &
+                  + (q_elements+1)*req1_q_min          &
+                  + req0) .lt. mem%available) then 
+!
+               p_elements = p_elements + 1 ! can hold +1 batch size 
+               q_elements = q_elements + 1
+!
+            else
+!
+               figgered_out = .true.       ! cannot hold +1 batch size 
+!
+            endif
+!
+         enddo
+!
+!        II. If simultaneous incrementation was not sufficient,
+!            then try to increment the largest index further. This is 
+!            guaranteed to work, so let's just go ahead and increment
+!            with no safeguards in place.
+! 
+         if (.not. figgered_out) then 
+!
+            if (batch_p%index_dimension .gt. batch_q%index_dimension) then 
+!
+!              Increment p 
+!
+               do while (((p_elements+1)*q_elements*req2_min &
+                           + (p_elements+1)*req1_p_min       &
+                           + q_elements*req1_q_min           &
+                           + req0) .lt. mem%available)
+!
+                  p_elements = p_elements + 1
+!
+               enddo
+!
+            elseif (batch_p%index_dimension .lt. batch_q%index_dimension) then 
+!
+!              Increment q 
+!
+               do while ((p_elements*(q_elements+1)*req2_min &
+                           + p_elements*req1_p_min           &
+                           + (q_elements+1)*req1_q_min       &
+                           + req0) .lt. mem%available)
+!
+                  q_elements = q_elements + 1
+!
+               enddo               
+!
+            else
+!
+               call output%error_msg('Something went very wrong! Expected different-sized' // &
+                                      'indices, but got same-sized indices (in batching setup).')
+!
+            endif
+!
+            figgered_out = .true. 
+!
+         endif
+!
+         batch_p%max_length = p_elements         
+         batch_q%max_length = q_elements
+!
+!        Figure out how many batches
+!
+         batch_p%num_batches = (batch_p%index_dimension-1)/(batch_p%max_length)+1
+         batch_q%num_batches = (batch_q%index_dimension-1)/(batch_q%max_length)+1
+!
+      endif
+!
+   end subroutine batch_setup_2_memory_manager
+!
+!
+   subroutine batch_setup_3_memory_manager(mem, batch_p, batch_q, batch_r, req0, req1_p, req1_q, &
+                                       req1_r, req2_pq, req2_pr, req2_qr, req3, element_size)
+!!
+!!    Setup batching 
+!!    This is setup for two batch indices
+!!    Written by Rolf H. Myhre December 2018
+!!
+!!    Batching setup for three batching indices.
+!!
+!!    batch_p: Initialized batching object
+!!    batch_q: Initialized batching object
+!!    batch_r: Initialized batching object
+!!
+!!    req0: required memory that does not scale with batch size 
+!! 
+!!    req1_p: required memory that scales linearly with p batch size
+!!    req1_q: required memory that scales linearly with q batch size
+!!    req1_r: required memory that scales linearly with r batch size
+!!
+!!    req2_pq: required memory that scales quadratically with pq batch size
+!!    req2_pr: required memory that scales quadratically with pr batch size
+!!    req2_qr: required memory that scales quadratically with qr batch size
+!!
+!!    req3: required memory that scales cubically with batch indices pqr
+!!
+!!    element_size: memory per element, default is double precision
+!!
+!!    Be careful with symmetries and permutations!
+!!
+      implicit none
+!
+      class(memory_manager) :: mem
+!
+      class(batching_index) :: batch_p ! An index being batched over
+      class(batching_index) :: batch_q ! An index being batched over
+      class(batching_index) :: batch_r ! An index being batched over
+!
+      integer(i15), intent(in) :: req0
+! 
+      integer(i15), intent(in) :: req1_p 
+      integer(i15), intent(in) :: req1_q 
+      integer(i15), intent(in) :: req1_r 
+!
+      integer(i15), intent(in) :: req2_pq
+      integer(i15), intent(in) :: req2_pr
+      integer(i15), intent(in) :: req2_qr 
+!
+      integer(i15), intent(in) :: req3
+!
+      integer(i15), intent(in), optional :: element_size
+!
+      integer(i15) :: req0_tot
+!
+      integer(i15) :: req1_p_min
+      integer(i15) :: req1_q_min 
+      integer(i15) :: req1_r_min
+! 
+      integer(i15) :: req2_pq_min
+      integer(i15) :: req2_pr_min
+      integer(i15) :: req2_qr_min
+!
+      integer(i15) :: req3_min
+!
+      integer(i15) :: req_min
+      integer(i15) :: req_tot 
+!
+      integer(i15) :: p_elements, q_elements, r_elements
+!
+      logical :: found_batch_size, p_incremented, q_incremented, r_incremented
+!
+      integer(i15) :: e_size
+!
+      e_size = dp
+      if(present(element_size)) then
+         e_size = element_size
+      endif
+!
+      req0_tot   = (req0 + req0/(mem%buffer))*e_size
+! 
+      req1_p_min = (req1_p + req1_p/(mem%buffer))*e_size
+      req1_q_min = (req1_q + req1_q/(mem%buffer))*e_size
+      req1_r_min = (req1_r + req1_r/(mem%buffer))*e_size
+!
+      req2_pq_min = (req2_pq + req2_pq/(mem%buffer))*e_size
+      req2_pr_min = (req2_pr + req2_pr/(mem%buffer))*e_size
+      req2_qr_min = (req2_qr + req2_qr/(mem%buffer))*e_size
+!
+      req3_min = (req3 + req3/(mem%buffer))*e_size
+!
+      req_min = req0_tot + req1_p_min + req1_q_min + req1_r_min &
+                           + req2_pq_min + req2_pr_min + req2_qr_min + req3_min  
+!
+      req_tot = req0_tot + req1_p_min*(batch_p%index_dimension) &
+                         + req1_q_min*(batch_q%index_dimension) &
+                         + req1_r_min*(batch_r%index_dimension) &
+                         + req2_pq_min*(batch_p%index_dimension)*(batch_q%index_dimension) &
+                         + req2_pr_min*(batch_p%index_dimension)*(batch_r%index_dimension) &
+                         + req2_qr_min*(batch_q%index_dimension)*(batch_r%index_dimension) &
+                         + req3_min*(batch_p%index_dimension)*(batch_q%index_dimension)*(batch_r%index_dimension)
+!
+      if (req_tot .lt. mem%available) then
+!
+!        No need to batch
+!
+         batch_p%num_batches = 1
+         batch_p%max_length  = batch_p%index_dimension
+!
+         batch_q%num_batches = 1
+         batch_q%max_length  = batch_q%index_dimension
+!
+         batch_r%num_batches = 1
+         batch_r%max_length  = batch_r%index_dimension
+!
+      else if (req_min .gt. mem%available) then
+!
+!        Not enough memory for a batch
+!
+         write(output%unit,'(t3,a,i14,a,i14)') 'Need ', (req_min), 'but only have ', &
+                                               mem%available
+         call output%error_msg('Not enough memory for a batch')
+!
+      else
+!
+!        First, try to increment both indices simultaneously
+!
+         p_elements = 1
+         q_elements = 1
+         r_elements = 1
+
+!
+         found_batch_size = .false.
+         p_incremented = .true.
+         q_incremented = .true.
+         r_incremented = .true.
+!
+         do while (.not. found_batch_size .and. (p_incremented .or. q_incremented .or. r_incremented))
+!
+            if ((p_elements) .lt. batch_p%index_dimension) then
+               p_elements = p_elements + 1
+               p_incremented = .true.
+            else
+               p_incremented = .false.
+            endif
+!
+            if ((q_elements) .lt. batch_q%index_dimension) then
+               q_elements = q_elements + 1
+               q_incremented = .true.
+            else
+               q_incremented = .false.
+            endif
+!
+            if ((r_elements) .lt. batch_r%index_dimension) then
+               r_elements = r_elements + 1
+               r_incremented = .true.
+            else
+               r_incremented = .false.
+            endif
+!
+            if ( (p_elements)*(q_elements)*(r_elements)*req3_min &
+                  + (p_elements)*(q_elements)*req2_pq &
+                  + (p_elements)*(r_elements)*req2_pr &
+                  + (q_elements)*(r_elements)*req2_qr &
+                  + (p_elements)*req1_p_min          &
+                  + (q_elements)*req1_q_min          &
+                  + (r_elements)*req1_r_min          &
+                  + req0 .ge. mem%available) then 
+!
+                  found_batch_size = .true.       ! cannot hold +1 batch size 
+                  if (p_incremented) p_elements = p_elements - 1
+                  if (q_incremented) q_elements = q_elements - 1
+                  if (r_incremented) r_elements = r_elements - 1
+!
+            endif
+!
+         enddo
+!
+         batch_p%max_length = p_elements         
+         batch_q%max_length = q_elements        
+         batch_r%max_length = r_elements         
+!
+!        Figure out how many batches
+!
+         batch_p%num_batches = (batch_p%index_dimension-1)/(batch_p%max_length)+1
+         batch_q%num_batches = (batch_q%index_dimension-1)/(batch_q%max_length)+1
+         batch_r%num_batches = (batch_r%index_dimension-1)/(batch_r%max_length)+1
+!
+      endif
+!
+   end subroutine batch_setup_3_memory_manager
 !
 !
 end module memory_manager_class

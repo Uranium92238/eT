@@ -31,7 +31,7 @@ module diis_tool_class
 !
    type :: diis_tool
 !
-      character(len=40), private :: name ! Solver name; determines the prefix of all DIIS files
+      character(len=40) :: name ! Solver name; determines the prefix of all DIIS files
 !
       type(file), private :: dx   ! File containing the O vector from previous iterations
       type(file), private :: x_dx ! File containing the X vector from previous iterations

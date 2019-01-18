@@ -44,10 +44,6 @@ module batching_index_class
    use parameters
    use file_class
 !
-!  ::::::::::::::::::::::::::::::::::::::::::::::::
-!  -::- Definition of the batching_index class -::-
-!  ::::::::::::::::::::::::::::::::::::::::::::::::
-!
    type :: batching_index
 !
 !     Values relating the limits and length of the current batch

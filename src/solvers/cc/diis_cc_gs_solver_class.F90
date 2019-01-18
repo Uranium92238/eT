@@ -258,6 +258,7 @@ contains
 !
 !        Calculate the energy and error vector omega 
 !
+         call wf%integrals%write_t1_cholesky(wf%t1)
          call wf%construct_fock()
 !
          call wf%calculate_energy()

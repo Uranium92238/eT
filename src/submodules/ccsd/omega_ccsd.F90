@@ -85,14 +85,13 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout):: omega1
 !
-      integer(i15) :: required        = 0
       integer(i15) :: current_a_batch = 0
 !
       type(batching_index) :: batch_a
 !
       real(dp), dimension(:,:), allocatable :: u_dk_ci, t_dk_ci, g_ad_kc
 !
-      integer(i15) :: ad_dim
+      integer(i15) :: ad_dim, rec0, rec1
 !
       type(timings) :: ccsd_a1_timer
 !
@@ -115,20 +114,17 @@ contains
 !
 !     Prepare for batching
 !
-!     Estimated memory required to construct g_adkc
+      rec0 = wf%n_o*wf%integrals%n_J*wf%n_v
 !
-      required = wf%integrals%get_required_vvov() + (wf%n_o)*(wf%n_v**3)
+      rec1 = wf%n_v*wf%integrals%n_J + wf%n_v**2*(wf%n_o)
 !
-!     Initialization of the batching variable
+      call batch_a%init(wf%n_v)
 !
-      call batch_a%init(wf%n_v)                ! Initialize batching index a
-      call mem%num_batch(batch_a, required) ! Determine batching information
+      call mem%batch_setup(batch_a, rec0, rec1)
 !
 !     Loop over the number of a batches
 !
       do current_a_batch = 1, batch_a%num_batches
-!
-!        For each batch, get the limits for the a index
 !
          call batch_a%determine_limits(current_a_batch)
 !
@@ -366,10 +362,10 @@ contains
 !
 !     Batching and memory handling variables
 !
-      integer(i15) :: required = 0
+      integer(i15) :: rec0, rec1_a, rec1_b, rec2
 !
       integer(i15) :: current_a_batch = 0
-      integer(i15) :: current_b_batch = 0
+      integer(i15) :: current_b_batch = 0    
 !
       type(batching_index) :: batch_a
       type(batching_index) :: batch_b
@@ -397,36 +393,31 @@ contains
 !
 !    ::  Calculate the A2.2 term  of omega ::
 !
-      required = wf%integrals%get_required_vvvv() + 4*(wf%n_o**2)*(wf%n_v**2) + 2*(wf%n_v**4)
+      rec0 = 2*(packed_size(wf%n_o))*(packed_size(wf%n_v))
+!
+      rec1_a = wf%integrals%n_J*wf%n_v 
+      rec1_b = wf%integrals%n_J*wf%n_v 
+!
+      rec2 = 2*wf%n_v**2 + 2*(packed_size(wf%n_o))
 !
 !     Initialize batching variables
 !
       call batch_a%init(wf%n_v)
       call batch_b%init(wf%n_v)
 !
-      call mem%num_two_batch(batch_a, batch_b, required)
+      call mem%batch_setup(batch_a, batch_b, rec0, rec1_a, rec1_b, rec2)
 !
 !     Start looping over a-batches
 !
       do current_a_batch = 1, batch_a%num_batches
 !
-!        Determine the limits for the a-batch
-!
          call batch_a%determine_limits(current_a_batch)
-!
-!        Start looping over b-batches
 !
          do current_b_batch = 1, batch_b%num_batches
 !
-!           Determine the limits for the b-batch
-!
             call batch_b%determine_limits(current_b_batch)
 !
-!           Allocate g_ca_db
-!
             call mem%alloc(g_ac_bd, (wf%n_v)*(batch_a%length), (wf%n_v)*(batch_b%length))
-!
-!           Get g_ac_bd
 !
             call ccsd_a2_integral_timer%start()
 !
@@ -555,6 +546,7 @@ contains
               call mem%dealloc(t_p_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
               call mem%dealloc(t_m_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
 !
+!$omp parallel do private(i, j, a, b, ij, ai, aj, bj, bi, ab, aibj, biaj)
               do i = 1, wf%n_o
                  do j = 1, i
 !
@@ -568,6 +560,7 @@ contains
                        do b = 1, batch_b%length
 !
                           if ((a+batch_a%first-1) .ge. (b+batch_b%first-1)) then
+!
                              bj = index_two(b + batch_b%first - 1, j, wf%n_v) ! B is full-CCSD-space b index
                              bi = index_two(b + batch_b%first - 1, i, wf%n_v) ! B is full-CCSD-space b index
 !
@@ -582,8 +575,10 @@ contains
                                                    + omega2_p_ab_ij(ab, ij) + omega2_m_ab_ij(ab, ij)
 !
                              if (aibj .ne. biaj) then
+!
                                 omega2(biaj,1) = omega2(biaj, 1) &
                                                    + omega2_p_ab_ij(ab, ij) - omega2_m_ab_ij(ab, ij)
+!
                              endif
                           endif
 !
@@ -591,11 +586,13 @@ contains
                     enddo
                  enddo
               enddo
+!$omp end parallel do
 !
 !              Deallocate omega +-
 !
                call mem%dealloc(omega2_p_ab_ij, packed_size(batch_a%length), packed_size(wf%n_o))
                call mem%dealloc(omega2_m_ab_ij, packed_size(batch_a%length), packed_size(wf%n_o))
+!
             else
 !
 !              Allocate for +-g, +-t
@@ -632,8 +629,10 @@ contains
                              g_m_ab_cd(ab, cd) = g_ac_bd(ac, bd) - g_ac_bd(ad, bc)
 !
                             if(c .ne. d) then
+!
                               g_p_ab_cd(ab, cd) = two*g_p_ab_cd(ab, cd)
                               g_m_ab_cd(ab, cd) = two*g_m_ab_cd(ab, cd)
+!
                             endif
 !
                        enddo
@@ -705,6 +704,7 @@ contains
                call mem%dealloc(t_p_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
                call mem%dealloc(t_m_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
 !
+!$omp parallel do private(i, j, a, b, ij, ai, aj, bj, bi, ab, aibj, biaj)
                do i = 1, wf%n_o
                   do j = 1, i
 !
@@ -716,6 +716,8 @@ contains
                         aj = wf%n_v*(j - 1) + a + batch_a%first - 1 ! A is full-space a index
 !
                         do b = 1, batch_b%length
+!
+                           if (a + batch_a%first - 1 .ge. b + batch_b%first - 1) then
 !
                               bj = wf%n_v*(j - 1) + b + batch_b%first - 1 ! B is full-space b index
                               bi = wf%n_v*(i - 1) + b + batch_b%first - 1 ! B is full-space b index
@@ -737,10 +739,13 @@ contains
 !
                               endif
 !
+                           endif
+!
                         enddo
                      enddo
                   enddo
                enddo
+!$omp end parallel do
 !
 !              Deallocate omega +-
 !
@@ -921,20 +926,21 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: u_ck_bj
       real(dp), dimension(:,:), allocatable :: omega2_ai_bj ! Holds term temporarily
+      real(dp), dimension(:,:), allocatable :: omega_a_batch
 !
 !     Indices
 !
-      integer(i15) :: a, b
-      integer(i15) :: i, j
+      integer(i15) :: a, b, c
+      integer(i15) :: i, j, k
 !
-      integer(i15) :: ai, aj, bi, bj
-      integer(i15) :: ai_offset
+      integer(i15) :: ai, aj, bi, bj, ac, ki, ck
+      integer(i15) :: ai_batch
 !
       integer(i15) :: aibj
 !
 !     Batching and memory handling
 !
-      integer(i15) :: required = 0
+      integer(i15) :: rec0, rec1
       integer(i15) :: current_a_batch = 0
 !
       type(batching_index) :: batch_a
@@ -1007,16 +1013,19 @@ contains
 !
 !     Constructing g_ki_ac
 !
-      required = wf%integrals%get_required_vvoo()
+!     Prepare for batching
+!
+      rec0 = wf%n_o**2*wf%integrals%n_J
+!
+      rec1 = wf%n_v*wf%integrals%n_J + (wf%n_o)*(wf%n_v**2)
 !
       call batch_a%init(wf%n_v)
-      call mem%num_batch(batch_a, required)
 !
-!     Start looping over a-batches
+      call mem%batch_setup(batch_a, rec0, rec1)
+!
+!     Loop over the number of a batches
 !
       do current_a_batch = 1, batch_a%num_batches
-!
-!        Determine batch limits for the a-batch
 !
          call batch_a%determine_limits(current_a_batch)
 !
@@ -1024,19 +1033,36 @@ contains
 !
          call mem%alloc(g_ki_ac, (wf%n_o)**2, (batch_a%length)*(wf%n_v))
 !
-         call wf%get_oovv(g_ki_ac,        &
-                           1,             &
-                           wf%n_o,        &
-                           1,             &
-                           wf%n_o,        &
-                           batch_a%first, &
-                           batch_a%last,  &
-                           1,             &
-                           wf%n_v)
+         call wf%get_oovv(g_ki_ac,                       &
+                           1, wf%n_o,                    &
+                           1, wf%n_o,                    &
+                           batch_a%first, batch_a%last,  &
+                           1, wf%n_v)
 !
 !        X_ai_ck = X_ai_ck + g_ki_ac
 !
-         call add_4213_to_1234(one, g_ki_ac, X_ai_ck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!$omp parallel do private(a, i, k, c, ck, ki, ac, ai)
+         do k = 1, wf%n_o
+            do c = 1, wf%n_v
+!
+               ck = wf%n_v*(k-1) + c
+!
+               do i = 1, wf%n_o
+!
+                  ki = wf%n_o*(i - 1) + k
+!
+                  do a = 1, batch_a%length
+!
+                     ac = batch_a%length*(c-1) + a
+                     ai = wf%n_v*(i-1) + a + batch_a%first - 1 
+!
+                     X_ai_ck(ai, ck) = X_ai_ck(ai, ck) + g_ki_ac(ki, ac)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!$omp end parallel do
 !
 !        Calculate the contribution to the term
 !
@@ -1050,7 +1076,7 @@ contains
 !
 !        - 1/2 * sum_ck u_jk^bc g_acki = -1/2 * sum_ck g_ai_ck u_ck_bj
 !
-         ai_offset = index_two(batch_a%first, 1, wf%n_v)
+         call mem%alloc(omega_a_batch, batch_a%length*wf%n_o, wf%n_v*wf%n_o)
 !
          call dgemm('N','N',                 &
                   (wf%n_o)*(batch_a%length), &
@@ -1062,10 +1088,32 @@ contains
                   u_ck_bj,                   &
                   (wf%n_o)*(wf%n_v),         &
                   zero,                      &
-                  omega2_ai_bj(ai_offset,1), &
-                  (wf%n_o)*(wf%n_v))
+                  omega_a_batch, &
+                  (wf%n_o)*batch_a%length)
 !
          call mem%dealloc(g_ai_ck, (batch_a%length)*(wf%n_o), (wf%n_o)*(wf%n_v))
+!
+!$omp parallel do private(a, i, b, j, bj, ai, ai_batch)
+         do j = 1, wf%n_o
+            do b = 1, wf%n_v
+!
+               bj = wf%n_v*(j-1) + b
+!
+               do i = 1, wf%n_o
+                  do a = 1, batch_a%length
+!
+                     ai_batch = batch_a%length*(i-1) + a
+                     ai = wf%n_v*(i-1) + a + batch_a%first - 1
+!
+                     omega2_ai_bj(ai, bj) = omega_a_batch(ai_batch, bj)               
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!$omp end parallel do
+!
+         call mem%dealloc(omega_a_batch, batch_a%length*wf%n_o, wf%n_v*wf%n_o)
 !
       enddo ! End of batching
 !
@@ -1114,6 +1162,7 @@ contains
 !
 !     Omega_aibj,1 = P_ai_bj ( 1/2*Y_ai_bj + Y_aj_bi )
 !
+!$omp parallel do private(i, a, j, b, ai, bj, aj, bi, aibj)
          do i = 1, wf%n_o
             do a = 1, wf%n_v
 !
@@ -1140,6 +1189,7 @@ contains
             enddo
          enddo
       enddo
+!$omp end parallel do
 !
       call mem%dealloc(Y_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
