@@ -1682,7 +1682,7 @@ contains
 !
 !     Batching variables 
 !
-      integer(i15) :: required = 0 
+      integer(i15) :: rec0, rec1, prev_available
 !
       integer(i15) :: current_a_batch = 0
       integer(i15) :: current_b_batch = 0
@@ -1692,15 +1692,16 @@ contains
 !
 !     :: Term 1 & 2. 2 F_jb b_ai - F_ib b_aj :: 
 !
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
+!$omp parallel do private(i, a, j, b, ai, bj)
+      do j = 1, wf%n_o
+         do b = 1, wf%n_v
 !
-            ai = wf%n_v*(i - 1) + a
+            bj = wf%n_v*(j - 1) + b
 !  
-            do j = 1, wf%n_o
-               do b = 1, wf%n_v
+            do i = 1, wf%n_o
+               do a = 1, wf%n_v
 !
-                  bj = wf%n_v*(j - 1) + b
+                  ai = wf%n_v*(i - 1) + a
 !
                   sigma_ai_bj(ai, bj) = sigma_ai_bj(ai, bj) - (wf%fock_ia(i, b))*b_a_i(a, j)&
                                     + two*(wf%fock_ia(j, b))*b_a_i(a, i) 
@@ -1709,6 +1710,7 @@ contains
             enddo
          enddo
       enddo
+!$omp end parallel do
 
 !     :: Term 3. - sum_k L_ikjb b_ak ::
 !
@@ -1753,12 +1755,13 @@ contains
 !
 !     Prepare for batching over a 
 !
-      required = wf%integrals%get_required_vvov() + (wf%n_o)*(wf%n_v**3)
+      rec0 = wf%n_v*wf%n_o*wf%integrals%n_J
+      rec1 = (wf%n_v**2)*(wf%n_o) + (wf%n_v)*(wf%n_o**2) + wf%n_v*wf%integrals%n_J  
 !     
 !     Initialize batching variable 
 !
       call batch_a%init(wf%n_v)
-      call mem%num_batch(batch_a, required)         
+      call mem%batch_setup(batch_a, rec0, rec1)          
 !
 !     Loop over the a-batches 
 !
@@ -1797,16 +1800,16 @@ contains
 !
          call mem%dealloc(g_ca_jb, (wf%n_v)*(batch_a%length), (wf%n_o)*(wf%n_v))
 !
-         do i = 1, wf%n_o
-            do a = 1, batch_a%length
+!$omp parallel do private(i, a, j, b, ai, bj, ajb)
+         do b = 1, wf%n_v
+            do j = 1, wf%n_o
 !
-               Ai = wf%n_v*(i - 1) + a + batch_a%first - 1
+               bj = wf%n_v*(j - 1) + b
 !
-               do j = 1, wf%n_o
-                  do b = 1, wf%n_v
+               do i = 1, wf%n_o
+                  do a = 1, batch_a%length
 !
-                     bj = wf%n_v*(j - 1) + b
-!
+                     Ai = wf%n_v*(i - 1) + a + batch_a%first - 1
                      ajb = batch_a%length*(wf%n_o*(b - 1) + j - 1) + a
 !
                      sigma_ai_bj(Ai, bj) = sigma_ai_bj(Ai, bj) + sigma_i_ajb(i, ajb)
@@ -1815,6 +1818,7 @@ contains
                enddo
             enddo
          enddo
+!$omp end parallel do
 !
          call mem%dealloc(sigma_i_ajb, wf%n_o, (wf%n_o)*(wf%n_v)*(batch_a%length))
 !
@@ -1824,12 +1828,15 @@ contains
 !
 !     Prepare for batching over b 
 !
-      required = wf%integrals%get_required_vvov() + (wf%n_v**3)*(wf%n_o)
+      rec0 = wf%n_v*wf%n_o*wf%integrals%n_J
+      rec1 = 2*(wf%n_v**2)*(wf%n_o) + wf%n_v*wf%integrals%n_J  
+      prev_available = mem%available
+      mem%available =  (rec1*2 + rec0)*dp
 !     
 !     Initialize batching variable          
 !
       call batch_b%init(wf%n_v)
-      call mem%num_batch(batch_b, required)
+      call mem%batch_setup(batch_b, rec0, rec1)
 !
 !     Loop over the number of b batches 
 !
@@ -1870,6 +1877,7 @@ contains
 !
 !        Add it to sigma_ai_bj 
 !
+!$omp parallel do private(j, b, i, a, bj, ai, bja)
          do j = 1, wf%n_o
             do b = 1, batch_b%length
 !
@@ -1889,10 +1897,12 @@ contains
                enddo
             enddo
          enddo
+!$omp end parallel do
 !
          call mem%dealloc(sigma_i_bja, wf%n_o, (batch_b%length)*(wf%n_o)*(wf%n_v))
 !
       enddo ! End of batches over b
+            mem%available = prev_available
 
    end subroutine jacobian_transpose_ccsd_a2_ccsd
 !
