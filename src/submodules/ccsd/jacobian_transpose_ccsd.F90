@@ -744,7 +744,6 @@ contains
       integer(i15) :: rec0, rec1, offset_eld
 !
       integer(i15) :: current_d_batch
-      integer(i15) :: prev_available
 !  
       type(batching_index) :: batch_d 
 !
@@ -899,9 +898,6 @@ contains
       rec0 = wf%n_v*wf%n_o*wf%integrals%n_J
 !
       rec1 = wf%n_v*wf%integrals%n_J + wf%n_v**2*wf%n_o
-!
-      prev_available = mem%available
-      mem%available =  (rec1*2 + rec0)*dp
 !     
       call batch_d%init(wf%n_v)
       call mem%batch_setup(batch_d, rec0, rec1)
@@ -958,8 +954,6 @@ contains
 !
       call mem%dealloc(X_el_di, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
-      mem%available = prev_available
-!
 !     :: Term 2. sum_ckdle b_ckdl L_deia t_kl^ce ::
 !
 !     Form the intermediate X_d_e = sum_ckl b_ckdl t_kl^ce = sum_ckl b_d_lck t_e_lck^T
@@ -993,9 +987,6 @@ contains
 !
       rec0 = wf%n_v*wf%n_o*wf%integrals%n_J
       rec1 = (wf%n_v**2)*(wf%n_o) + wf%n_v*wf%integrals%n_J
-!
-      prev_available = mem%available
-      mem%available =  (rec1*2 + rec0)*dp
 !
       call batch_d%init(wf%n_v)
       call mem%batch_setup(batch_d, rec0, rec1)
@@ -1047,8 +1038,6 @@ contains
          call mem%dealloc(L_ai_ed, (wf%n_o)*(wf%n_v), (wf%n_v)*(batch_d%length))
 !
       enddo ! End of batches over d
-!
-      mem%available = prev_available
 !
       call mem%dealloc(X_e_d, wf%n_v, wf%n_v)
 !
@@ -1349,8 +1338,6 @@ contains
 !
 !     Batching variables 
 !
-      integer(i15) :: required = 0 
-!
       integer(i15) :: current_a_batch = 0
       integer(i15) :: current_d_batch = 0
       integer(i15) :: current_e_batch = 0
@@ -1363,6 +1350,7 @@ contains
       type(batching_index) :: batch_e 
 !
       integer(i15) :: a, d, e, k, de, ka, kde
+      integer(i15) :: rec1, rec0
 !
 !     :: Term 2. - sum_ckdle b_cidl t_kl^ce g_kade ::
 !
@@ -1408,12 +1396,13 @@ contains
 !
 !     Prepare batching over index e
 !
-      required = wf%integrals%get_required_vvov() + (wf%n_v**3)*(wf%n_o)
-!     
+      rec0 = wf%n_v*wf%n_o*wf%integrals%n_J
+      rec1 = 2*(wf%n_v**2)*(wf%n_o) + wf%n_v*wf%integrals%n_J
+!
 !     Initialize batching variable 
 !
       call batch_e%init(wf%n_v)
-      call mem%num_batch(batch_e, required)      
+      call mem%batch_setup(batch_e, rec0, rec1)     
 !
 !     Loop over the e-batches
 !
@@ -1518,12 +1507,13 @@ contains
 !
 !     Prepare batching over a 
 !
-      required = wf%integrals%get_required_vvov()
+      rec0 = wf%n_v*wf%n_o*wf%integrals%n_J
+      rec1 = (wf%n_v**2)*(wf%n_o) + wf%n_v*wf%integrals%n_J
 !     
 !     Initialize batching variable 
 !
       call batch_a%init(wf%n_v)
-      call mem%num_batch(batch_a, required)
+      call mem%batch_setup(batch_a, rec0, rec1)
 !
 !     Loop over the a-batches 
 !
@@ -1580,10 +1570,11 @@ contains
 !
 !     Prepare for batching over d 
 !
-      required = wf%integrals%get_required_vvov() + (wf%n_v**3)*(wf%n_o)
+      rec0 = wf%n_v*wf%n_o*wf%integrals%n_J
+      rec1 = 2*(wf%n_v**2)*(wf%n_o) + wf%n_v*wf%integrals%n_J
 !
       call batch_d%init(wf%n_v)
-      call mem%num_batch(batch_d, required)         
+      call mem%batch_setup(batch_d, rec0, rec1)         
 !
 !     Loop over the d-batches
 !
@@ -1607,7 +1598,7 @@ contains
 !
          call mem%alloc(g_id_ce, (wf%n_o)*(batch_d%length), (wf%n_v)**2) 
 !
-         call sort_1234_to_1324(g_ic_de, g_id_ce, wf%n_o, wf%n_v, wf%n_v, wf%n_v)
+         call sort_1234_to_1324(g_ic_de, g_id_ce, wf%n_o, wf%n_v, (batch_d%length), wf%n_v)
 !
          call mem%dealloc(g_ic_de, (wf%n_o)*(wf%n_v), (wf%n_v)*(batch_d%length))
 !
