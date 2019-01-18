@@ -288,7 +288,7 @@ contains
 !     :: Term 1: L_kcjb * c_bj * (2 t^ac_ik - t^ac_ki)  ::
 !
 !     Construct X_kc = sum_jb L_kcbj * c_bj
-!     In batches of k and j   
+!     In batches of k and j
 !
       call mem%alloc(X_kc, wf%n_o, wf%n_v)
 !
@@ -322,7 +322,7 @@ contains
 !
             call mem%alloc(L_kcbj, batch_k%length, wf%n_v, wf%n_v, batch_j%length)
 !
-            L_kcbj = zero 
+            L_kcbj = zero
             call add_1243_to_1234(two, g_kcjb, L_kcbj, batch_k%length, wf%n_v, wf%n_v, batch_j%length)
             call add_1342_to_1234(-one, g_kcjb, L_kcbj, batch_k%length, wf%n_v, wf%n_v, batch_j%length)
 !
@@ -390,7 +390,7 @@ contains
                do c = 1, batch_c%length
                   do k = 1, wf%n_o
                      do i = 1, batch_i%length
-                     
+
 !
                         u_aikc(a,i,k,c) = - (two*g_aick(a,i,c,k)- g_aick(a,k,c,i))&
                                              /(eps_v(a) + eps_v(c + batch_c%first - 1) &
@@ -400,7 +400,7 @@ contains
                   enddo
                enddo
             enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
             call mem%dealloc(g_aick, wf%n_v, batch_i%length, batch_c%length, wf%n_o)
 !
@@ -456,7 +456,7 @@ contains
 !
             call batch_b%determine_limits(current_b_batch)
 !
-            call mem%alloc(L_jckb, wf%n_o, wf%n_v, batch_k%length, batch_b%length) 
+            call mem%alloc(L_jckb, wf%n_o, wf%n_v, batch_k%length, batch_b%length)
 
             call wf%get_ovov(L_jckb,                     &
                            1, wf%n_o,                    &
@@ -516,7 +516,7 @@ contains
                         X_ji,                                        &
                         (wf%n_o))
 !
-            call mem%dealloc(L_jckb, wf%n_o, wf%n_v, batch_k%length, batch_b%length) 
+            call mem%dealloc(L_jckb, wf%n_o, wf%n_v, batch_k%length, batch_b%length)
             call mem%dealloc(g_ckbi, wf%n_v, batch_k%length, batch_b%length, wf%n_o)
 !
          enddo
@@ -575,7 +575,7 @@ contains
 !
             call mem%alloc(L_kcjb, batch_k%length, wf%n_v, batch_j%length, wf%n_v)
 !
-            L_kcjb = two*g_kcjb 
+            L_kcjb = two*g_kcjb
             call add_1432_to_1234(-one, g_kcjb, L_kcjb, batch_k%length, wf%n_v, batch_j%length, wf%n_v)
 !
             call mem%dealloc(g_kcjb, batch_k%length, wf%n_v, batch_j%length, wf%n_v)
@@ -599,7 +599,7 @@ contains
                      do a = 1, wf%n_v
 !
                         t_akcj(a,k,c,j) = - g_ckaj(c,k,a,j) &
-                                  /(eps_v(a) + eps_v(c) & 
+                                  /(eps_v(a) + eps_v(c) &
                                     - eps_o(j + batch_j%first - 1) &
                                     - eps_o(k + batch_k%first - 1))
 !
@@ -607,7 +607,7 @@ contains
                   enddo
                enddo
             enddo
-!$omp end parallel do 
+!$omp end parallel do
 !
             call mem%dealloc(g_ckaj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
 !
@@ -1249,8 +1249,6 @@ contains
 !!    rho_ai^D1 =+ sum_ckbj - L_kijb  (- g_aklj * c_bl - g_bjlk * c_al) (omega - ε_akbj)^-1 * (1 + delta_ak,bj)^-1
 !!           =+ sum_kjb L_kijb  (X_bjak + X_akbj)
 !!
-!!    Every term will be done separately due to different batching kj, bk
-!!
       implicit none
 !
       class(cc2), intent(in) :: wf
@@ -1330,8 +1328,8 @@ contains
             if (batch_k%first .eq. batch_j%first) then
 !
 !$omp parallel do private(k,a)
-            do k = 1, batch_k%length
-                  do a = 1, wf%n_v
+            do a = 1, wf%n_v
+               do k = 1, batch_k%length
 !
                   X_bjak(a,k,a,k) = half*X_bjak(a,k,a,k)
 !
@@ -1344,8 +1342,8 @@ contains
             call mem%alloc(X_ajbk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !$omp parallel do private(k,b,j,a)
-            do k = 1, batch_k%length
-               do b = 1, wf%n_v
+            do b = 1, wf%n_v
+               do k = 1, batch_k%length
                   do j = 1, batch_j%length
                      do a = 1, wf%n_v
 !
@@ -1441,8 +1439,8 @@ contains
             if (batch_k%first .eq. batch_j%first) then
 !
 !$omp parallel do private(k,a)
-            do k = 1, batch_k%length
-                  do a = 1, wf%n_v
+            do a = 1, wf%n_v
+               do k = 1, batch_k%length
 !
                      X_akbj(a,k,a,k) = half*X_akbj(a,k,a,k)
 !
@@ -1455,8 +1453,8 @@ contains
             call mem%alloc(X_ajbk, wf%n_v, batch_j%length, wf%n_v, batch_k%length)
 !
 !$omp parallel do private(k,b,j,a)
-            do k = 1, batch_k%length
-               do b = 1, wf%n_v
+            do b = 1, wf%n_v
+               do k = 1, batch_k%length
                   do j = 1, batch_j%length
                      do a = 1, wf%n_v
 !
@@ -1561,188 +1559,217 @@ contains
 !
       integer(i15) :: b, c, i, k
 !
-!     :: Term 1: sum_bkcd L_abkc * g_bicd * c_dk (omega - ε_bick)^-1 * (1 + delta_bi,ck)^-1  ::
+      integer(i15) :: req0, req1_b, req1_c, req2
 !
-!     Construct X_bick = sum_d g_bicd * c_dk
+      integer(i15) :: current_b_batch, current_c_batch
 !
-      call mem%alloc(g_bicd, wf%n_v, wf%n_o, wf%n_v, wf%n_v)
+      type(batching_index) :: batch_b, batch_c
 !
-      call wf%get_vovv(g_bicd,     &
-                        1, wf%n_v, &
-                        1, wf%n_o, &
-                        1, wf%n_v, &
-                        1, wf%n_v)
 !
-      call mem%alloc(X_bick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      req0 = 0
+      req1_b = max((wf%integrals%n_J)*(wf%n_v),(wf%integrals%n_J)*(wf%n_o))
+      req1_c = max((wf%integrals%n_J)*(wf%n_v),(wf%integrals%n_J)*(wf%n_o))
+      req2 = max((wf%n_o)**2 + 2*(wf%n_v)*(wf%n_o), 2*(wf%n_o)**2 + (wf%n_v)*(wf%n_o)) 
 !
-      call dgemm('N', 'N',              &
-                  (wf%n_o)*(wf%n_v)**2, &
-                  (wf%n_o),             &
-                  (wf%n_v),             &
-                  one,                  &
-                  g_bicd,               &
-                  (wf%n_v)**2*(wf%n_o), &
-                  c_dk,                 &
-                  (wf%n_v),             &
-                  zero,                 &
-                  X_bick,               &
-                  (wf%n_o)*(wf%n_v)**2)
+      call batch_b%init(wf%n_v)
+      call batch_c%init(wf%n_v)
 !
-      call mem%dealloc(g_bicd, wf%n_v, wf%n_o, wf%n_v, wf%n_v)
+      call mem%batch_setup(batch_b, batch_c, req0, req1_b, req1_c, req2)
 !
-!     Reordering of X_bick as bkci and scaling by (omega - ε_bick)^-1 * (1 + delta_bi,ck)^-1
+      do current_b_batch = 1, batch_b%num_batches
+!
+         call batch_b%determine_limits(current_b_batch)
+!
+         do current_c_batch = 1, batch_c%num_batches
+!
+            call batch_c%determine_limits(current_c_batch)
+
+!           :: Term 1: sum_bkcd L_abkc * g_bicd * c_dk (omega - ε_bick)^-1 * (1 + delta_bi,ck)^-1  ::
+!
+!           Construct X_bick = sum_d g_bicd * c_dk
+!
+            call mem%alloc(g_bicd, batch_b%length, wf%n_o, batch_c%length, wf%n_v)
+!
+            call wf%get_vovv(g_bicd,                        &
+                              batch_b%first, batch_b%last,  &
+                              1, wf%n_o,                    &
+                              batch_c%first, batch_c%last,  &
+                              1, wf%n_v)
+!
+            call mem%alloc(X_bick, batch_b%length, wf%n_o, batch_c%length, wf%n_o)
+!
+            call dgemm('N', 'N',                                     &
+                        (batch_b%length)*(wf%n_o)*(batch_c%length),  &
+                        (wf%n_o),                                    &
+                        (wf%n_v),                                    &
+                        one,                                         &
+                        g_bicd,                                      & ! g_bic_d
+                        (batch_b%length)*(wf%n_o)*(batch_c%length),  &
+                        c_dk,                                        & ! c_d_k
+                        (wf%n_v),                                    &
+                        zero,                                        &
+                        X_bick,                                      &
+                        (batch_b%length)*(wf%n_o)*(batch_c%length))
+!
+            call mem%dealloc(g_bicd, batch_b%length, wf%n_o, batch_c%length, wf%n_v)
+!
+!           Reordering of X_bick as bkci and scaling by (omega - ε_bick)^-1 * (1 + delta_bi,ck)^-1
 !
 !$omp parallel do private(b,i)
-      do b = 1, wf%n_v
-         do i = 1, wf%n_o
+            do i = 1, wf%n_o
+               do b = 1, batch_b%length
 !
-            X_bick(b,i,b,i) = half*X_bick(b,i,b,i)
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-      call mem%alloc(X_bkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!$omp parallel do private(i,c,k,b)
-      do c = 1, wf%n_v
-         do i = 1, wf%n_o
-            do k = 1, wf%n_o
-               do b = 1, wf%n_v
-!
-                  X_bkci(b,k,c,i) = X_bick(b,i,c,k) &
-                                 /(- eps_v(b) - eps_v(c) + eps_o(i) + eps_o(k) + omega)
+                  X_bick(b,i,b,i) = half*X_bick(b,i,b,i)
 !
                enddo
             enddo
-         enddo
-      enddo
 !$omp end parallel do
 !
-      call mem%dealloc(X_bick, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+            call mem%alloc(X_bkci, batch_b%length, wf%n_o, batch_c%length, wf%n_o)
 !
-!     Construct L_abkc = 2 g_abkc - g_kbac
+!$omp parallel do private(i,c,k,b)
+            do i = 1, wf%n_o
+               do c = 1, batch_c%length
+                  do k = 1, wf%n_o
+                     do b = 1, batch_b%length
 !
-      call mem%alloc(g_abkc, wf%n_v, wf%n_v, wf%n_o, wf%n_v)
+                        X_bkci(b,k,c,i) = X_bick(b,i,c,k) &
+                                       /(- eps_v(b) - eps_v(c) + eps_o(i) + eps_o(k) + omega)
 !
-      call wf%get_vvov(g_abkc,     &
-                        1, wf%n_v, &
-                        1, wf%n_v, &
-                        1, wf%n_o, &
-                        1, wf%n_v)
+                     enddo
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
 !
-
-      call mem%alloc(g_kbac, wf%n_o, wf%n_v, wf%n_v, wf%n_v)
+            call mem%dealloc(X_bick, batch_b%length, wf%n_o, batch_c%length, wf%n_o)
 !
-      call wf%get_ovvv(g_kbac,     &
-                        1, wf%n_o, &
-                        1, wf%n_v, &
-                        1, wf%n_v, &
-                        1, wf%n_v)
+!           Construct L_abkc = 2 g_abkc - g_kbac
 !
-
-      call mem%alloc(L_abkc, wf%n_v, wf%n_v, wf%n_o, wf%n_v)
+            call mem%alloc(g_abkc, wf%n_v, batch_b%length, wf%n_o, batch_c%length)
 !
-      L_abkc = two*g_abkc
-      call add_3214_to_1234(-one, g_kbac, L_abkc, wf%n_v, wf%n_v, wf%n_o, wf%n_v)
+            call wf%get_vvov(g_abkc,                        &
+                              1, wf%n_v,                    &
+                              batch_b%first, batch_b%last,  &
+                              1, wf%n_o,                    &
+                              batch_c%first, batch_c%last)
 !
-      call mem%dealloc(g_abkc, wf%n_v, wf%n_v, wf%n_o, wf%n_v)
-      call mem%dealloc(g_kbac, wf%n_o, wf%n_v, wf%n_v, wf%n_v)
+            call mem%alloc(L_abkc, wf%n_v, batch_b%length, wf%n_o, batch_c%length)
 !
-!     rho_ai = rho_ai + sum_bkc L_abkc * X_bkci
+            L_abkc = two*g_abkc
 !
-      call dgemm('N', 'N',              &
-                  (wf%n_v),             &
-                  (wf%n_o),             &
-                  (wf%n_o)*(wf%n_v)**2, &
-                  one,                  &
-                  L_abkc,               &
-                  (wf%n_v),             &
-                  X_bkci,               &
-                  (wf%n_o)*(wf%n_v)**2, &
-                  one,                  &
-                  rho_ai,               &
-                  (wf%n_v))
+            call mem%dealloc(g_abkc, wf%n_v, batch_b%length, wf%n_o, batch_c%length)
 !
-      call mem%dealloc(X_bkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+            call mem%alloc(g_kbac, wf%n_o, batch_b%length, wf%n_v, batch_c%length)
 !
-!     :: Term 2: sum_bkcd L_abkc * g_ckbd * c_di (omega - ε_bick)^-1 * (1 + delta_bi,ck)^-1  ::
+            call wf%get_ovvv(g_kbac,                        &
+                              1, wf%n_o,                    &
+                              batch_b%first, batch_b%last,  &
+                              1, wf%n_v,                    &
+                              batch_c%first, batch_c%last)
 !
-!     Construct X_ckbi = sum_d g_ckbd * c_di
+            call add_3214_to_1234(-one, g_kbac, L_abkc, &
+                                 wf%n_v, batch_b%length, wf%n_o, batch_c%length)
 !
-      call mem%alloc(g_ckbd, wf%n_v, wf%n_o, wf%n_v, wf%n_v)
+            call mem%dealloc(g_kbac, wf%n_o, batch_b%length, wf%n_v, batch_c%length)
 !
-      call wf%get_vovv(g_ckbd,      &
-                        1, wf%n_v,  &
-                        1, wf%n_o,  &
-                        1, wf%n_v,  &
-                        1, wf%n_v)
+!           rho_ai = rho_ai + sum_bkc L_abkc * X_bkci
 !
-      call mem%alloc(X_ckbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+            call dgemm('N', 'N',                                     &
+                        (wf%n_v),                                    &
+                        (wf%n_o),                                    &
+                        (wf%n_o)*(batch_b%length)*(batch_c%length),  &
+                        one,                                         &
+                        L_abkc,                                      & ! L_a_bkc
+                        (wf%n_v),                                    &
+                        X_bkci,                                      & ! X_bkc_i
+                        (wf%n_o)*(batch_b%length)*(batch_c%length),  &
+                        one,                                         &
+                        rho_ai,                                      &
+                        (wf%n_v))
 !
-      call dgemm('N', 'N',              &
-                  (wf%n_v)**2*(wf%n_o), &
-                  (wf%n_o),             &
-                  (wf%n_v),             &
-                  one,                  &
-                  g_ckbd,               &
-                  (wf%n_v)**2*(wf%n_o), &
-                  c_dk,                 & ! c_di
-                  (wf%n_v),             &
-                  zero,                 &
-                  X_ckbi,               &
-                  (wf%n_o)*(wf%n_v)**2)
+            call mem%dealloc(X_bkci, batch_b%length, wf%n_o, batch_c%length, wf%n_o)
 !
-      call mem%dealloc(g_ckbd, wf%n_v, wf%n_o, wf%n_v, wf%n_v)
+!           :: Term 2: sum_bkcd L_abkc * g_ckbd * c_di (omega - ε_bick)^-1 * (1 + delta_bi,ck)^-1  ::
 !
-!     Reordering of X_ckbi as bkci and scaling by (omega - ε_bick)^-1 * (1 + delta_bi,ck)^-1
+!           Construct X_ckbi = sum_d g_ckbd * c_di
+!
+            call mem%alloc(g_ckbd, batch_c%length, wf%n_o, batch_b%length, wf%n_v)
+!
+            call wf%get_vovv(g_ckbd,                        &
+                              batch_c%first, batch_c%last,  &
+                              1, wf%n_o,                    &
+                              batch_b%first, batch_b%last,  &
+                              1, wf%n_v)
+!
+            call mem%alloc(X_ckbi, batch_c%length, wf%n_o, batch_b%length, wf%n_o)
+!
+            call dgemm('N', 'N',                                     &
+                        (batch_c%length)*(wf%n_o)*(batch_b%length),  &
+                        (wf%n_o),                                    &
+                        (wf%n_v),                                    &
+                        one,                                         &
+                        g_ckbd,                                      & ! g_ckb_d
+                        (batch_c%length)*(wf%n_o)*(batch_b%length),  &
+                        c_dk,                                        & ! c_d_i
+                        (wf%n_v),                                    &
+                        zero,                                        &
+                        X_ckbi,                                      &
+                        (batch_c%length)*(wf%n_o)*(batch_b%length))
+!
+            call mem%dealloc(g_ckbd, batch_c%length, wf%n_o, batch_b%length, wf%n_v)
+!
+!           Reordering of X_ckbi as bkci and scaling by (omega - ε_bick)^-1 * (1 + delta_bi,ck)^-1
 !
 !$omp parallel do private(c,k)
-      do c = 1, wf%n_v
-         do k = 1, wf%n_o
-!
-            X_ckbi(c,k,c,k) = half*X_ckbi(c,k,c,k)
-!
-         enddo
-      enddo
-!$omp end parallel do
-!
-      call mem%alloc(X_bkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-!
-!$omp parallel do private(i,c,k,b)
-      do c = 1, wf%n_v
-         do i = 1, wf%n_o
             do k = 1, wf%n_o
-               do b = 1, wf%n_v
+               do c = 1, batch_c%length
 !
-                  X_bkci(b,k,c,i) = X_ckbi(c,k,b,i)&
-                                 /(- eps_v(b) - eps_v(c) + eps_o(i) + eps_o(k) + omega)
+                  X_ckbi(c,k,c,k) = half*X_ckbi(c,k,c,k)
 !
                enddo
             enddo
-         enddo
-      enddo
 !$omp end parallel do
 !
-      call mem%dealloc(X_ckbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+            call mem%alloc(X_bkci, batch_b%length, wf%n_o, batch_c%length, wf%n_o)
 !
-!     rho_ai = rho_ai - sum_bkc L_abkc * X_bkci
+!$omp parallel do private(i,c,k,b)
+            do i = 1, wf%n_o
+               do c = 1, batch_c%length
+                  do k = 1, wf%n_o
+                     do b = 1, batch_b%length
 !
-      call dgemm('N', 'N',              &
-                  (wf%n_v),             &
-                  (wf%n_o),             &
-                  (wf%n_o)*(wf%n_v)**2, &
-                  one,                  &
-                  L_abkc,               &
-                  (wf%n_v),             &
-                  X_bkci,               & ! X_bkci
-                  (wf%n_o)*(wf%n_v)**2, &
-                  one,                  &
-                  rho_ai,               &
-                  (wf%n_v))
+                        X_bkci(b,k,c,i) = X_ckbi(c,k,b,i)&
+                                       /(- eps_v(b) - eps_v(c) + eps_o(i) + eps_o(k) + omega)
 !
-      call mem%dealloc(X_bkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call mem%dealloc(L_abkc, wf%n_v, wf%n_v, wf%n_o, wf%n_v)
+                     enddo
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
+!
+            call mem%dealloc(X_ckbi, batch_c%length, wf%n_o, batch_b%length, wf%n_o)
+!
+!           rho_ai = rho_ai - sum_bkc L_abkc * X_bkci
+!
+            call dgemm('N', 'N',                                     &
+                        (wf%n_v),                                    &
+                        (wf%n_o),                                    &
+                        (wf%n_o)*(batch_b%length)*(batch_c%length),  &
+                        one,                                         &
+                        L_abkc,                                      & ! L_a_bkc
+                        (wf%n_v),                                    &
+                        X_bkci,                                      & ! X_bkc_i
+                        (wf%n_o)*(batch_b%length)*(batch_c%length),  &
+                        one,                                         &
+                        rho_ai,                                      &
+                        (wf%n_v))
+!
+            call mem%dealloc(X_bkci, batch_b%length, wf%n_o, batch_c%length, wf%n_o)
+            call mem%dealloc(L_abkc, wf%n_v, batch_b%length, wf%n_o, batch_c%length)
+!
+         enddo ! batch_c
+      enddo ! batch_b
 !
    end subroutine effective_jacobian_cc2_e1_cc2
 !
