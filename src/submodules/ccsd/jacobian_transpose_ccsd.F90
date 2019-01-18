@@ -1937,7 +1937,7 @@ contains
 !
 !     Batching variables 
 !
-      integer(i15) :: rec1, rec0, prev_available
+      integer(i15) :: rec1, rec0
       integer(i15) :: current_b_batch = 0
 !
       type(batching_index) :: batch_b
@@ -2141,7 +2141,7 @@ contains
 !
 !     Batching variables 
 !
-      integer(i15) :: rec1, rec0, prev_available
+      integer(i15) :: rec1, rec0
       integer(i15) :: current_b_batch = 0
 !
       type(batching_index) :: batch_b 
@@ -2186,8 +2186,6 @@ contains
 !
       rec0 = wf%n_o**2*wf%integrals%n_J
       rec1 = wf%n_v*wf%integrals%n_J  + (wf%n_o**2)*(wf%n_v)
-      prev_available = mem%available 
-      mem%available =  (rec1*2 + rec0)*dp
 !     
 !     Initialize batching variable 
 !
@@ -2242,7 +2240,6 @@ contains
          call mem%dealloc(g_cb_ik, (wf%n_v)*(batch_b%length), (wf%n_o)**2)
 !
       enddo ! End of batches over b 
-      mem%available = prev_available
 !
 !     Reorder to b_aj_ck = b_akcj 
 !
@@ -2626,7 +2623,6 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: g_jb_id ! g_jbid 
       real(dp), dimension(:,:), allocatable :: L_d_ibj ! L_jbid
-      !real(dp), dimension(:,:), allocatable :: L_aib_l ! L_ialb
       real(dp), dimension(:,:), allocatable :: L_dl_bi ! L_ldib
 !
       real(dp), dimension(:,:), allocatable :: X_a_d   ! An intermediate, term 1
@@ -3032,7 +3028,7 @@ contains
 !
 !     Batching variables 
 !
-      integer(i15) :: required = 0 
+      integer(i15) :: rec2, rec0, rec1_a, rec1_b
 !
       integer(i15) :: current_a_batch = 0
       integer(i15) :: current_b_batch = 0 
@@ -3082,14 +3078,17 @@ contains
 !
 !     Prepare batching over a and b 
 !
-      required = wf%integrals%get_required_vvvv() + (wf%n_v**4) + (wf%n_o**2)*(wf%n_v**2)
+      rec0 = 0
+      rec1_a = wf%n_v*wf%integrals%n_J
+      rec1_b = wf%n_v*wf%integrals%n_J
+      rec2 = 2*wf%n_v**2 + wf%n_o**2
 !     
 !     Initialize batching indices 
 !
       call batch_a%init(wf%n_v)
       call batch_b%init(wf%n_v) 
 !
-      call mem%num_two_batch(batch_a, batch_b, required)
+      call mem%batch_setup(batch_a, batch_b, rec0, rec1_a, rec1_b, rec2)
 !
 !     Loop over a-batches 
 !
