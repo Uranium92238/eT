@@ -298,11 +298,11 @@ contains
      integer(i15) :: r, q, p
 !
 !$omp parallel do schedule(static) private(r, q, p)
-     do r = 1, dim_p
-        do q = 1, dim_q
-           do p = 1, dim_r
+      do p = 1, dim_p
+         do q = 1, dim_q
+            do r = 1, dim_r
 !
-              x_rqp(r,q,p) = x_pqr(p,q,r)
+              x_rqp(r,q,p) = x_rqp(r,q,p) + x_pqr(p,q,r)
 !
            enddo
         enddo
@@ -1366,7 +1366,7 @@ contains
       integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(((dim_p*dim_q+1)*dim_r*dim_s)/2), intent(in) :: x_pqrs
-      real(dp), dimension(dim_q,dim_r, dim_s,dim_q) :: x_p_r_s_q
+      real(dp), dimension(dim_p, dim_r, dim_s, dim_q) :: x_p_r_s_q
 !
       integer(i15) :: p, q, r, s, rs, pq, pqrs
 !

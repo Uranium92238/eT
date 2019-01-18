@@ -396,6 +396,10 @@ contains
 !
                      do k = batch_k%first,min(batch_k%last,j)
 !
+                        if (i .eq. j .and. i .eq. k) then
+                           cycle
+                        end if 
+!
                         k_rel = k - batch_k%first + 1
 !
                         call wf%omega_cc3_W_calc(i, j, k, t_abc, u_abc, t_abji, &
@@ -931,6 +935,7 @@ contains
                  t_abc, &
                  wf%n_v)
 !
+!
 !     t^ab_il*(lj|ck)
 !     ---------------
 !
@@ -946,6 +951,7 @@ contains
                  one, &
                  t_abc, &
                  wf%n_v**2)
+!
 !
 !     t^bd_ji*(ad|ck)
 !     ---------------
@@ -980,6 +986,7 @@ contains
                  wf%n_v**2)
 !
       call sort_123_to_213_and_add(u_abc,t_abc,wf%n_v,wf%n_v,wf%n_v)
+!
 !
 !     t^ad_ik*(cd|bj)
 !     ---------------
@@ -1120,16 +1127,6 @@ contains
 !
       call sort_123_to_321_and_add(u_abc,t_abc,wf%n_v,wf%n_v,wf%n_v)
 !
-      write(output%unit,*)
-      write(output%unit,*) "W(1,1,1)"
-      write(output%unit,*) t_abc(1,1,1)
-      write(output%unit,*) "T(1,1,1,1)"
-      write(output%unit,*) t_abji(1,1,1,1)
-      write(output%unit,*) "bdci"
-      write(output%unit,*) g_bdci(1,1,1)
-      write(output%unit,*) "ljci"
-      write(output%unit,*) g_ljci(1,1)
-      write(output%unit,*)
 !
    end subroutine omega_cc3_W_calc_cc3
 !
