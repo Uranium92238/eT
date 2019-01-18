@@ -1682,7 +1682,7 @@ contains
 !
 !     Batching variables 
 !
-      integer(i15) :: rec0, rec1, prev_available
+      integer(i15) :: rec0, rec1
 !
       integer(i15) :: current_a_batch = 0
       integer(i15) :: current_b_batch = 0
@@ -1829,9 +1829,7 @@ contains
 !     Prepare for batching over b 
 !
       rec0 = wf%n_v*wf%n_o*wf%integrals%n_J
-      rec1 = 2*(wf%n_v**2)*(wf%n_o) + wf%n_v*wf%integrals%n_J  
-      prev_available = mem%available
-      mem%available =  (rec1*2 + rec0)*dp
+      rec1 = (wf%n_v**2)*(wf%n_o) + (wf%n_v)*(wf%n_o**2) + wf%n_v*wf%integrals%n_J
 !     
 !     Initialize batching variable          
 !
@@ -1902,8 +1900,7 @@ contains
          call mem%dealloc(sigma_i_bja, wf%n_o, (batch_b%length)*(wf%n_o)*(wf%n_v))
 !
       enddo ! End of batches over b
-            mem%available = prev_available
-
+!
    end subroutine jacobian_transpose_ccsd_a2_ccsd
 !
 !
@@ -1940,7 +1937,7 @@ contains
 !
 !     Batching variables 
 !
-      integer(i15) :: required = 0
+      integer(i15) :: rec1, rec0, prev_available
       integer(i15) :: current_b_batch = 0
 !
       type(batching_index) :: batch_b
@@ -2034,12 +2031,15 @@ contains
       call mem%alloc(g_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) ! g_cbjk reordered
       g_ck_bj = zero
 !
-      required = wf%integrals%get_required_vvoo()
+      rec0 = wf%n_o**2*wf%integrals%n_J
+      rec1 = wf%n_v*wf%integrals%n_J  
+      prev_available = mem%available
+      mem%available =  (rec1*2 + rec0)*dp
 !     
 !     Initialize batching variable 
 !
       call batch_b%init(wf%n_v)
-      call mem%num_batch(batch_b, required)         
+      call mem%batch_setup(batch_b, rec0, rec1)         
 !
 !     Loop over the number of b batches 
 !
@@ -2089,6 +2089,7 @@ contains
          call mem%dealloc(g_cb_jk_restricted, (wf%n_v)*(batch_b%length), (wf%n_o)**2)
 !
       enddo ! End of batches over b 
+      mem%available = prev_available
 !
 !     Add  - sum_ck b_aick g_cbjk = - sum_ck b_ai_ck g_ck_bj 
 !
