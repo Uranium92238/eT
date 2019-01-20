@@ -474,7 +474,8 @@ contains
                            1, wf%n_o,                    &
                            batch_b%first, batch_b%last)
 !
-            call add_3214_to_1234(two, g_kcjb, L_jckb, wf%n_o, wf%n_v, batch_k%length, batch_b%length)
+            call add_3214_to_1234(two, g_kcjb, L_jckb, &
+                                 wf%n_o, wf%n_v, batch_k%length, batch_b%length)
 !
             call mem%dealloc(g_kcjb, batch_k%length, wf%n_v, wf%n_o, batch_b%length)
 !
@@ -576,7 +577,8 @@ contains
             call mem%alloc(L_kcjb, batch_k%length, wf%n_v, batch_j%length, wf%n_v)
 !
             L_kcjb = two*g_kcjb
-            call add_1432_to_1234(-one, g_kcjb, L_kcjb, batch_k%length, wf%n_v, batch_j%length, wf%n_v)
+            call add_1432_to_1234(-one, g_kcjb, L_kcjb, &
+                                 batch_k%length, wf%n_v, batch_j%length, wf%n_v)
 !
             call mem%dealloc(g_kcjb, batch_k%length, wf%n_v, batch_j%length, wf%n_v)
 !
@@ -656,7 +658,8 @@ contains
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
 !!    Linda Goletto, and Alexander Paul, Dec 2018
 !!
-!!    rho_ai =+ F_kc * (-eps_ai,ck + w)^-1 * (1 + delta_ai,ck)^-1 * (2 g_aicd c_dk + 2 g_ckad c_di - g_akcd c_di - g_ciad c_dk)
+!!    rho_ai =+ F_kc * (-eps_ai,ck + w)^-1 * (1 + delta_ai,ck)^-1 *
+!!             (2 g_aicd c_dk + 2 g_ckad c_di - g_akcd c_di - g_ciad c_dk)
 !!           =+ F_kc * (-eps_ai,ck + w)^-1 * (1 + delta_ai,ck)^-1 * (2 X_aick - X_akci + 2 X_ckai - X_ciak)
 !!           =+ F_kc * (Y_aick + Y_ckai)
 !!
@@ -820,7 +823,8 @@ contains
             do i = 1, wf%n_o
                do a = 1, batch_a%length
 !
-                  rho_ai(a + batch_a%first - 1, i) = rho_ai(a + batch_a%first - 1, i) + reduced_rho_ai(a, i)
+                  rho_ai(a + batch_a%first - 1, i) = rho_ai(a + batch_a%first - 1, i) &
+                                                   + reduced_rho_ai(a, i)
 !
                enddo
             enddo
@@ -916,6 +920,8 @@ contains
 !
 !           Divide X_ckai by 1/(1 + delta_ai,ck)*1/(-epsilon_aick + omega)
 !
+            if (batch_i%first .eq. batch_k%first) then
+!
 !$omp parallel do private(a,i)
             do a = 1, wf%n_v
                do i = 1, batch_i%length
@@ -925,6 +931,8 @@ contains
                enddo
             enddo
 !$omp end parallel do
+!
+            endif
 !
 !$omp parallel do private(a,i,k,c)
             do a = 1, wf%n_v
@@ -950,9 +958,9 @@ contains
                   do k = 1, batch_k%length
                      do c = 1, wf%n_v
 !
-                        rho_ai(a, i + batch_i%first - 1) = rho_ai(a, i + batch_i%first - 1)                                &
-                                                            - two*X_ckai(c, k, a, i)*(wf%fock_ia(k + batch_k%first - 1, c))&
-                                                            + X_ckai(a, k, c, i)*(wf%fock_ia(k + batch_k%first - 1, c))
+                        rho_ai(a, i + batch_i%first - 1) = rho_ai(a, i + batch_i%first - 1)        &
+                                 - two*X_ckai(c, k, a, i)*(wf%fock_ia(k + batch_k%first - 1, c))   &
+                                 + X_ckai(a, k, c, i)*(wf%fock_ia(k + batch_k%first - 1, c))
 !
                      enddo
                   enddo
@@ -966,9 +974,9 @@ contains
                   do i = 1, batch_i%length
                      do c = 1, wf%n_v
 !
-                        rho_ai(a, k + batch_k%first - 1) = rho_ai(a, k + batch_k%first - 1)                                & !(k <-> i)
-                                                            - two*X_ckai(a, k, c, i)*(wf%fock_ia(i + batch_i%first - 1, c))&
-                                                            + X_ckai(c, k, a, i)*(wf%fock_ia(i + batch_i%first - 1, c))
+                        rho_ai(a, k + batch_k%first - 1) = rho_ai(a, k + batch_k%first - 1)        & !(k <-> i)
+                                 - two*X_ckai(a, k, c, i)*(wf%fock_ia(i + batch_i%first - 1, c))   &
+                                 + X_ckai(c, k, a, i)*(wf%fock_ia(i + batch_i%first - 1, c))
 !
                      enddo
                   enddo
@@ -1246,8 +1254,9 @@ contains
 !!    Linda Goletto, and Alexander Paul, Dec 2018
 !!
 !!    Implicit calculation of the doubles vector
-!!    rho_ai^D1 =+ sum_ckbj - L_kijb  (- g_aklj * c_bl - g_bjlk * c_al) (omega - ε_akbj)^-1 * (1 + delta_ak,bj)^-1
-!!           =+ sum_kjb L_kijb  (X_bjak + X_akbj)
+!!    rho_ai^D1 =+ sum_ckbj - L_kijb  (- g_aklj * c_bl - g_bjlk * c_al)
+!!                 (omega - ε_akbj)^-1 * (1 + delta_ak,bj)^-1
+!!              =+ sum_kjb L_kijb  (X_bjak + X_akbj)
 !!
       implicit none
 !
@@ -1283,7 +1292,7 @@ contains
       req0 = 0
       req1_j = max((wf%integrals%n_J)*(wf%n_v),(wf%integrals%n_J)*(wf%n_o))
       req1_k = max((wf%integrals%n_J)*(wf%n_v),(wf%integrals%n_J)*(wf%n_o))
-      req2 = (wf%n_v)**2 + 2*(wf%n_v)*(wf%n_o)
+      req2 = max((wf%n_v)**2 + 2*(wf%n_v)*(wf%n_o),2*(wf%n_v)**2 + (wf%n_v)*(wf%n_o))
 !
       call batch_j%init(wf%n_o)
       call batch_k%init(wf%n_o)
@@ -1339,7 +1348,7 @@ contains
 !
             endif
 !
-            call mem%alloc(X_ajbk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+            call mem%alloc(X_ajbk, wf%n_v, (batch_j%length), wf%n_v, (batch_k%length))
 !
 !$omp parallel do private(k,b,j,a)
             do b = 1, wf%n_v
@@ -1347,8 +1356,10 @@ contains
                   do j = 1, batch_j%length
                      do a = 1, wf%n_v
 !
-                        X_ajbk(a,j,b,k) = X_bjak(b,j,a,k) &
-                                       /(- eps_v(a) - eps_v(b) + eps_o(j) + eps_o(k) + omega)
+                        X_ajbk(a,j,b,k) = X_bjak(b,j,a,k)               &
+                                       /(omega - eps_v(a) - eps_v(b)    &
+                                       + eps_o(j + batch_j%first - 1)   &
+                                       + eps_o(k + batch_k%first - 1))
 !
                      enddo
                   enddo
@@ -1402,7 +1413,6 @@ contains
                         (wf%n_v))
 !
             call mem%dealloc(X_ajbk, wf%n_v, batch_j%length, wf%n_v, batch_k%length)
-      !      call mem%dealloc(L_jbki, batch_j%length, wf%n_v, batch_k%length, wf%n_o)
 !
 !           :: Term 2: L_kijb * g_bjlk * c_al (omega - ε_akbj)^-1 * (1 + delta_ak,bj)^-1  ::
 !
@@ -1435,7 +1445,6 @@ contains
 !
 !           Reordering of X_akbj as ajbk and scaling by (omega - ε_akbj)^-1 * (1 + delta_ak,bj)^-1
 !
-
             if (batch_k%first .eq. batch_j%first) then
 !
 !$omp parallel do private(k,a)
@@ -1458,8 +1467,10 @@ contains
                   do j = 1, batch_j%length
                      do a = 1, wf%n_v
 !
-                        X_ajbk(a,j,b,k) = X_akbj(a,k,b,j) &
-                                       /(- eps_v(a) - eps_v(b) + eps_o(j) + eps_o(k) + omega)
+                        X_ajbk(a,j,b,k) = X_akbj(a,k,b,j)               &
+                                       /(omega - eps_v(a) - eps_v(b)    &
+                                       + eps_o(j + batch_j%first - 1)   &
+                                       + eps_o(k + batch_k%first - 1))
 !
                      enddo
                   enddo
@@ -1468,36 +1479,6 @@ contains
 !$omp end parallel do
 !
             call mem%dealloc(X_akbj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
-!  !
-!  !           Construct L_kijb = 2 g_kijb - g_kbji
-!  !
-!              call mem%alloc(g_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-!  !
-!              call wf%get_ovoo(g_jbki,     &
-!                                1, wf%n_o, &
-!                                1, wf%n_v, &
-!                                1, wf%n_o, &
-!                                1, wf%n_o)
-!  !
-!              call mem%alloc(g_jikb, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
-!  !
-!              call wf%get_ooov(g_jikb,     &
-!                                1, wf%n_o, &
-!                                1, wf%n_o, &
-!                                1, wf%n_o, &
-!                                1, wf%n_v)
-!  !
-!              call mem%alloc(L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-!  !
-!              L_jbki = two*g_jbki
-!  !
-!              call mem%dealloc(g_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-!  !
-!              call add_1432_to_1234(-one, g_jikb, L_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
-!  !
-!              call mem%dealloc(g_jikb, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
-!
-!           rho_ai = rho_ai + sum_jbk X_ajbk * L_jbki
 !
             call dgemm('N', 'N',                                     &
                         (wf%n_v),                                    &
@@ -1569,7 +1550,7 @@ contains
       req0 = 0
       req1_b = max((wf%integrals%n_J)*(wf%n_v),(wf%integrals%n_J)*(wf%n_o))
       req1_c = max((wf%integrals%n_J)*(wf%n_v),(wf%integrals%n_J)*(wf%n_o))
-      req2 = max((wf%n_o)**2 + 2*(wf%n_v)*(wf%n_o), 2*(wf%n_o)**2 + (wf%n_v)*(wf%n_o)) 
+      req2 = max((wf%n_o)**2 + 2*(wf%n_v)*(wf%n_o), 2*(wf%n_o)**2 + (wf%n_v)*(wf%n_o))
 !
       call batch_b%init(wf%n_v)
       call batch_c%init(wf%n_v)
@@ -1615,6 +1596,8 @@ contains
 !
 !           Reordering of X_bick as bkci and scaling by (omega - ε_bick)^-1 * (1 + delta_bi,ck)^-1
 !
+            if (batch_b%first .eq. batch_c%first) then
+!
 !$omp parallel do private(b,i)
             do i = 1, wf%n_o
                do b = 1, batch_b%length
@@ -1625,6 +1608,8 @@ contains
             enddo
 !$omp end parallel do
 !
+            endif
+!
             call mem%alloc(X_bkci, batch_b%length, wf%n_o, batch_c%length, wf%n_o)
 !
 !$omp parallel do private(i,c,k,b)
@@ -1633,8 +1618,10 @@ contains
                   do k = 1, wf%n_o
                      do b = 1, batch_b%length
 !
-                        X_bkci(b,k,c,i) = X_bick(b,i,c,k) &
-                                       /(- eps_v(b) - eps_v(c) + eps_o(i) + eps_o(k) + omega)
+                        X_bkci(b,k,c,i) = X_bick(b,i,c,k)               &
+                                       /(omega + eps_o(i) + eps_o(k)    &
+                                       - eps_v(b + batch_b%first - 1)   &
+                                       - eps_v(c + batch_c%first - 1))
 !
                      enddo
                   enddo
@@ -1721,6 +1708,8 @@ contains
 !
 !           Reordering of X_ckbi as bkci and scaling by (omega - ε_bick)^-1 * (1 + delta_bi,ck)^-1
 !
+            if (batch_b%first .eq. batch_c%first) then
+!
 !$omp parallel do private(c,k)
             do k = 1, wf%n_o
                do c = 1, batch_c%length
@@ -1731,6 +1720,8 @@ contains
             enddo
 !$omp end parallel do
 !
+            endif
+!
             call mem%alloc(X_bkci, batch_b%length, wf%n_o, batch_c%length, wf%n_o)
 !
 !$omp parallel do private(i,c,k,b)
@@ -1739,8 +1730,10 @@ contains
                   do k = 1, wf%n_o
                      do b = 1, batch_b%length
 !
-                        X_bkci(b,k,c,i) = X_ckbi(c,k,b,i)&
-                                       /(- eps_v(b) - eps_v(c) + eps_o(i) + eps_o(k) + omega)
+                        X_bkci(b,k,c,i) = X_ckbi(c,k,b,i)               &
+                                       /(omega + eps_o(i) + eps_o(k)    &
+                                       - eps_v(b + batch_b%first - 1)   &
+                                       - eps_v(c + batch_c%first - 1))
 !
                      enddo
                   enddo
