@@ -34,6 +34,9 @@ module cc3_class
       procedure :: omega_cc3_vvv_reader   => omega_cc3_vvv_reader_cc3
       procedure :: omega_cc3_ov_vv_reader => omega_cc3_ov_vv_reader_cc3
       procedure :: omega_cc3_W_calc       => omega_cc3_W_calc_cc3
+      procedure :: omega_cc3_eps          => omega_cc3_eps_cc3
+      procedure :: omega_cc3_omega1       => omega_cc3_omega1_cc3
+      procedure :: omega_cc3_omega2       => omega_cc3_omega2_cc3
 !
    end type cc3
 !

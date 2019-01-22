@@ -23,7 +23,7 @@
       class(cc3) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: omega1
-      real(dp), dimension((wf%n_v)*(wf%n_o)*((wf%n_v)*(wf%n_o) +1)/2), intent(inout) :: omega2
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: omega2
 !
    end subroutine omega_cc3_a_cc3
 !
@@ -48,12 +48,12 @@
 !!
       implicit none
 !
-      real(dp), dimension(:,:,:,:), intent(inout) :: g_bdcx
-      real(dp), dimension(:,:,:,:), intent(inout) :: g_dbxc
+      class(cc3) :: wf
 !
       type(batching_index), intent(in) :: batch_x
 !
-      class(cc3) :: wf
+      real(dp), dimension(wf%n_v,wf%n_v,wf%n_v,batch_x%length), intent(out) :: g_bdcx
+      real(dp), dimension(wf%n_v,wf%n_v,wf%n_v,batch_x%length), intent(out) :: g_dbxc
 !
    end subroutine omega_cc3_vvv_reader_cc3
 !
@@ -66,13 +66,13 @@
 !!
       implicit none
 !
-      real(dp), dimension(:,:,:,:), intent(inout) :: g_lycx
-      real(dp), dimension(:,:,:,:), intent(inout) :: g_ylxc
-      real(dp), dimension(:,:,:,:), intent(inout) :: L_ybxc
+      class(cc3) :: wf
 !
       type(batching_index), intent(in) :: batch_x, batch_y
 !
-      class(cc3) :: wf
+      real(dp), dimension(wf%n_o,wf%n_v,batch_y%length,batch_x%length), intent(out) :: g_lycx
+      real(dp), dimension(wf%n_v,wf%n_o,batch_y%length,batch_x%length), intent(out) :: g_ylxc
+      real(dp), dimension(wf%n_v,wf%n_v,batch_y%length,batch_x%length), intent(out) :: L_ybxc
 !
    end subroutine omega_cc3_ov_vv_reader_cc3
 !
@@ -91,23 +91,108 @@
 !
       integer(i15), intent(in) :: i, j, k
 !
-      real(dp), dimension(:,:,:), intent(inout) :: t_abc
-      real(dp), dimension(:,:,:), intent(inout) :: u_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: t_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: u_abc
 !
-      real(dp), dimension(:,:,:,:), intent(in)  :: t_abji
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)   :: t_abji
 !
-      real(dp), dimension(:,:,:), intent(in)    :: g_bdci 
-      real(dp), dimension(:,:,:), intent(in)    :: g_bdcj 
-      real(dp), dimension(:,:,:), intent(in)    :: g_bdck 
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdci 
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdcj 
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdck 
 !
-      real(dp), dimension(:,:), intent(in)      :: g_ljci 
-      real(dp), dimension(:,:), intent(in)      :: g_lkci 
-      real(dp), dimension(:,:), intent(in)      :: g_lkcj 
-      real(dp), dimension(:,:), intent(in)      :: g_licj 
-      real(dp), dimension(:,:), intent(in)      :: g_lick 
-      real(dp), dimension(:,:), intent(in)      :: g_ljck 
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_ljci 
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lkci 
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lkcj 
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_licj 
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lick 
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_ljck 
 !
 !
    end subroutine omega_cc3_W_calc_cc3
+!
+!
+   module subroutine omega_cc3_eps_cc3(wf, i, j, k, t_abc)
+!!
+!!    Divide W^abc_ijk with -epsilon^abc_ijk to obtain T^abc_ijk
+!!
+!!    Rolf H. Myhre, January 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      integer(i15), intent(in) :: i, j, k
+!
+      real(dp), dimension(wf%n_v,wf%n_v,wf%n_v), intent(inout) :: t_abc
+!
+!
+   end subroutine omega_cc3_eps_cc3
+!
+!
+   module subroutine omega_cc3_omega1_cc3(wf, i, j, k, t_abc, u_abc, omega1, omega2, F_kc, &
+                                          L_jbic, L_kbic, L_kbjc, L_ibjc, L_ibkc, L_jbkc)
+!!
+!!    Calculate the triples contribution to omega1 and
+!!    the Fock contribution to omega2
+!!
+!!    Rolf H. Myhre, January 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      integer(i15), intent(in) :: i, j, k
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: t_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: u_abc
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                   :: omega1
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout)   :: omega2
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: F_kc
+!
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_jbic
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_kbic
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_kbjc
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_ibjc
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_ibkc
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_jbkc
+!
+   end subroutine omega_cc3_omega1_cc3
+!
+!
+   module subroutine omega_cc3_omega2_cc3(wf, i, j, k, t_abc, u_abc, v_abc, omega2, &
+                                          g_dbic, g_dbjc, g_dbkc, &
+                                          g_jlic, g_klic, g_kljc, g_iljc, g_ilkc, g_jlkc)
+!!
+!!    Calculate the triples contribution to omega1 and
+!!    the Fock contribution to omega2
+!!
+!!    Rolf H. Myhre, January 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      integer(i15), intent(in) :: i, j, k
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: t_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: u_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: v_abc
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout)   :: omega2
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_dbic 
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_dbjc 
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_dbkc 
+!
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_jlic 
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_klic 
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_kljc 
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_iljc 
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_ilkc 
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_jlkc 
+!
+   end subroutine omega_cc3_omega2_cc3
 !
 !

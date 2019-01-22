@@ -29,8 +29,11 @@ contains
 !
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: omega
 !
-      real(dp), dimension(:,:), allocatable :: omega1
-      real(dp), dimension(:), allocatable   :: omega2
+      real(dp), dimension(:,:), allocatable     :: omega1
+      real(dp), dimension(:), allocatable       :: omega2
+      real(dp), dimension(:,:,:,:), allocatable :: omega_abij
+!
+      integer(i15)  :: i,j,a,b,a_end,aibj
 !
       type(timings) :: cc3_timer
       type(timings) :: ccsd_timer
@@ -64,19 +67,56 @@ contains
       call wf%omega_ccsd_d2(omega2)
       call wf%omega_ccsd_e2(omega2)
 !
+!      call dcopy(wf%n_t1, omega1, 1, omega, 1)
+      call dcopy(wf%n_t2, omega2, 1, omega(wf%n_t1+1, 1), 1)
+!
       call ccsd_timer%freeze()
       call ccsd_timer%switch_off()
 !
+      call mem%dealloc(omega2, wf%n_t2)
+      call mem%alloc(omega_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+      omega_abij = zero
+!
       call cc3_timer%start()
-      call wf%omega_cc3_a(omega1,omega2)
+      call wf%omega_cc3_a(omega1,omega_abij)
       call cc3_timer%freeze()
       call cc3_timer%switch_off()
 !
+      write(output%unit,*)
+      write(output%unit,*) 'omega1', omega1(1,1)
+      write(output%unit,*) 'omega2', omega_abij(1,1,1,1)
+      write(output%unit,*)
+!
       call dcopy(wf%n_t1, omega1, 1, omega, 1)
-      call dcopy(wf%n_t2, omega2, 1, omega(wf%n_t1+1, 1), 1)
+!
+      aibj = 0
+!
+      do j = 1,wf%n_o
+         do b = 1,wf%n_v
+            do i = 1,j
+!
+               if(i .ne. j) then
+                  a_end = wf%n_v
+               else
+                  a_end = b
+               end if
+!
+               do a = 1,a_end
+!
+                  aibj = aibj + 1
+!
+                  omega(wf%n_t1+aibj,1) = omega(wf%n_t1+aibj,1) + omega_abij(a,b,i,j) + omega_abij(b,a,j,i)
+!
+               end do
+            end do
+         end do
+      end do
+!
+      
 !
       call mem%dealloc(omega1, wf%n_v, wf%n_o)
-      call mem%dealloc(omega2, wf%n_t2)
+      call mem%dealloc(omega_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
    end subroutine construct_omega_cc3
 !
@@ -91,7 +131,7 @@ contains
       class(cc3) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: omega1
-      real(dp), dimension(wf%n_t2), intent(inout) :: omega2
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: omega2
 !
 !     Arrays for triples amplitudes
       real(dp), dimension(:,:,:), allocatable :: t_abc 
@@ -101,19 +141,21 @@ contains
 !     Unpacked doubles amplitudes
       real(dp), dimension(:,:,:,:), allocatable :: t_abji
 !
+      real(dp), dimension(:,:), allocatable :: F_kc !Transpose the fock matrix sub block
+!
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_bdci
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_bdcj
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_bdck
-      real(dp), dimension(:,:,:,:), pointer              :: g_bdci_p => null()
-      real(dp), dimension(:,:,:,:), pointer              :: g_bdcj_p => null()
-      real(dp), dimension(:,:,:,:), pointer              :: g_bdck_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_bdci_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_bdcj_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_bdck_p => null()
 !
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_dbic
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_dbjc
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_dbkc
-      real(dp), dimension(:,:,:,:), pointer              :: g_dbic_p => null()
-      real(dp), dimension(:,:,:,:), pointer              :: g_dbjc_p => null()
-      real(dp), dimension(:,:,:,:), pointer              :: g_dbkc_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_dbic_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_dbjc_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_dbkc_p => null()
 !
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_ljci
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_lkci
@@ -121,25 +163,25 @@ contains
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_licj
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_lick
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_ljck
-      real(dp), dimension(:,:,:,:), pointer              :: g_ljci_p => null()
-      real(dp), dimension(:,:,:,:), pointer              :: g_lkci_p => null()
-      real(dp), dimension(:,:,:,:), pointer              :: g_lkcj_p => null()
-      real(dp), dimension(:,:,:,:), pointer              :: g_licj_p => null()
-      real(dp), dimension(:,:,:,:), pointer              :: g_lick_p => null()
-      real(dp), dimension(:,:,:,:), pointer              :: g_ljck_p => null()
-!
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_ljci_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_lkci_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_lkcj_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_licj_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_lick_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_ljck_p => null()
+!                                             
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_jlic
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_klic
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_kljc
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_iljc
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_ilkc
       real(dp), dimension(:,:,:,:), allocatable, target  :: g_jlkc
-      real(dp), dimension(:,:,:,:), pointer              :: g_jlic_p => null()
-      real(dp), dimension(:,:,:,:), pointer              :: g_klic_p => null()
-      real(dp), dimension(:,:,:,:), pointer              :: g_kljc_p => null()
-      real(dp), dimension(:,:,:,:), pointer              :: g_iljc_p => null()
-      real(dp), dimension(:,:,:,:), pointer              :: g_ilkc_p => null()
-      real(dp), dimension(:,:,:,:), pointer              :: g_jlkc_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_jlic_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_klic_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_kljc_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_iljc_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_ilkc_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_jlkc_p => null()
 !
 !     L_kbjc and L_jbkc each other's transpose,
 !     but utilising this makes the code more complicated and 
@@ -151,12 +193,12 @@ contains
       real(dp), dimension(:,:,:,:), allocatable, target  :: L_ibjc
       real(dp), dimension(:,:,:,:), allocatable, target  :: L_ibkc
       real(dp), dimension(:,:,:,:), allocatable, target  :: L_jbkc
-      real(dp), dimension(:,:,:,:), pointer              :: L_jbic_p => null()
-      real(dp), dimension(:,:,:,:), pointer              :: L_kbic_p => null()
-      real(dp), dimension(:,:,:,:), pointer              :: L_kbjc_p => null()
-      real(dp), dimension(:,:,:,:), pointer              :: L_ibjc_p => null()
-      real(dp), dimension(:,:,:,:), pointer              :: L_ibkc_p => null()
-      real(dp), dimension(:,:,:,:), pointer              :: L_jbkc_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: L_jbic_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: L_kbic_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: L_kbjc_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: L_ibjc_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: L_ibkc_p => null()
+      real(dp), dimension(:,:,:,:), contiguous, pointer  :: L_jbkc_p => null()
 !
       integer(i15) :: i, j, k, i_rel, j_rel, k_rel
       type(batching_index) :: batch_i, batch_j, batch_k
@@ -170,6 +212,9 @@ contains
       call mem%alloc(t_abc,wf%n_v,wf%n_v,wf%n_v)
       call mem%alloc(u_abc,wf%n_v,wf%n_v,wf%n_v)
       call mem%alloc(v_abc,wf%n_v,wf%n_v,wf%n_v)
+!
+      call mem%alloc(F_kc,wf%n_v,wf%n_o)
+      call sort_12_to_21(wf%fock_ia,F_kc,wf%n_o,wf%n_v)
 !
       call mem%alloc(t_abji,wf%n_v,wf%n_v,wf%n_o,wf%n_o)
       call squareup_and_sort_1234_to_1342(wf%t2,t_abji,wf%n_v,wf%n_o,wf%n_v,wf%n_o)
@@ -413,6 +458,28 @@ contains
                                                  g_lick_p(:,:,i_rel,k_rel), &
                                                  g_ljck_p(:,:,j_rel,k_rel))
 !
+                        call wf%omega_cc3_eps(i, j, k, t_abc)
+!
+                        call wf%omega_cc3_omega1(i, j, k, t_abc, u_abc, omega1, omega2, F_kc, &
+                                                 L_jbic_p(:,:,j_rel,i_rel), &
+                                                 L_kbic_p(:,:,k_rel,i_rel), &
+                                                 L_kbjc_p(:,:,k_rel,j_rel), &
+                                                 L_ibjc_p(:,:,i_rel,j_rel), &
+                                                 L_ibkc_p(:,:,i_rel,k_rel), &
+                                                 L_jbkc_p(:,:,j_rel,k_rel))
+!
+                        call wf%omega_cc3_omega2(i, j, k, t_abc, u_abc, v_abc, omega2, &
+                                                 g_dbic_p(:,:,:,i_rel), &
+                                                 g_dbjc_p(:,:,:,j_rel), &
+                                                 g_dbkc_p(:,:,:,k_rel), &
+                                                 g_jlic_p(:,:,j_rel,i_rel), &
+                                                 g_klic_p(:,:,k_rel,i_rel), &
+                                                 g_kljc_p(:,:,k_rel,j_rel), &
+                                                 g_iljc_p(:,:,i_rel,j_rel), &
+                                                 g_ilkc_p(:,:,i_rel,k_rel), &
+                                                 g_jlkc_p(:,:,j_rel,k_rel))
+!
+!
                      enddo
                   enddo
                enddo
@@ -471,6 +538,8 @@ contains
          call mem%dealloc(L_jbkc,wf%n_v,wf%n_v,batch_i%length,batch_i%length) 
 !
       endif 
+!
+      call mem%dealloc(F_kc,wf%n_v,wf%n_o)
 !
 !     Deallocate amplitude arrays
 !
@@ -749,12 +818,12 @@ contains
 !!
       implicit none
 !
-      real(dp), dimension(:,:,:,:), intent(inout) :: g_bdcx
-      real(dp), dimension(:,:,:,:), intent(inout) :: g_dbxc
+      class(cc3) :: wf
 !
       type(batching_index), intent(in) :: batch_x
 !
-      class(cc3) :: wf
+      real(dp), dimension(wf%n_v,wf%n_v,wf%n_v,batch_x%length), intent(out) :: g_bdcx
+      real(dp), dimension(wf%n_v,wf%n_v,wf%n_v,batch_x%length), intent(out) :: g_dbxc
 !
       integer(i15) :: ioerror
       integer(i15) :: x, x_abs
@@ -800,13 +869,13 @@ contains
 !!
       implicit none
 !
-      real(dp), dimension(:,:,:,:), intent(inout) :: g_lycx
-      real(dp), dimension(:,:,:,:), intent(inout) :: g_ylxc
-      real(dp), dimension(:,:,:,:), intent(inout) :: L_ybxc
+      class(cc3) :: wf
 !
       type(batching_index), intent(in) :: batch_x, batch_y
 !
-      class(cc3) :: wf
+      real(dp), dimension(wf%n_o,wf%n_v,batch_y%length,batch_x%length), intent(out) :: g_lycx
+      real(dp), dimension(wf%n_v,wf%n_o,batch_y%length,batch_x%length), intent(out) :: g_ylxc
+      real(dp), dimension(wf%n_v,wf%n_v,batch_y%length,batch_x%length), intent(out) :: L_ybxc
 !
       integer(i15) :: ioerror, record
       integer(i15) :: x, y, x_abs, y_abs
@@ -898,21 +967,21 @@ contains
 !
       integer(i15), intent(in) :: i, j, k
 !
-      real(dp), dimension(:,:,:), intent(inout) :: t_abc
-      real(dp), dimension(:,:,:), intent(inout) :: u_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: t_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: u_abc
 !
-      real(dp), dimension(:,:,:,:), intent(in)  :: t_abji
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)   :: t_abji
 !
-      real(dp), dimension(:,:,:), intent(in)    :: g_bdci 
-      real(dp), dimension(:,:,:), intent(in)    :: g_bdcj 
-      real(dp), dimension(:,:,:), intent(in)    :: g_bdck 
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdci 
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdcj 
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)           :: g_bdck 
 !
-      real(dp), dimension(:,:), intent(in)      :: g_ljci 
-      real(dp), dimension(:,:), intent(in)      :: g_lkci 
-      real(dp), dimension(:,:), intent(in)      :: g_lkcj 
-      real(dp), dimension(:,:), intent(in)      :: g_licj 
-      real(dp), dimension(:,:), intent(in)      :: g_lick 
-      real(dp), dimension(:,:), intent(in)      :: g_ljck 
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_ljci 
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lkci 
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lkcj 
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_licj 
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_lick 
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                   :: g_ljck 
 !
 !
 !     Contributions to W
@@ -1129,6 +1198,622 @@ contains
 !
 !
    end subroutine omega_cc3_W_calc_cc3
+!
+!
+   module subroutine omega_cc3_eps_cc3(wf, i, j, k, t_abc)
+!!
+!!    Divide W^abc_ijk with -epsilon^abc_ijk to obtain T^abc_ijk
+!!
+!!    Rolf H. Myhre, January 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      integer(i15), intent(in) :: i, j, k
+!
+      real(dp), dimension(wf%n_v,wf%n_v,wf%n_v), intent(inout) :: t_abc
+!
+      integer(i15) a, b, c
+!
+      real(dp) :: epsilon_ijk, epsilon_c, epsilon_cb
+!
+!
+      epsilon_ijk = wf%fock_diagonal(i,1) + wf%fock_diagonal(j,1) + wf%fock_diagonal(k,1)
+!
+!$omp parallel do schedule(static) private(a)
+      do a = 1,wf%n_v
+!
+         t_abc(a,a,a) = zero
+!
+      enddo
+!$omp end parallel do
+!
+!$omp parallel do schedule(static) private(c,b,a,epsilon_c,epsilon_cb)
+      do c = 1,wf%n_v
+!
+         epsilon_c = epsilon_ijk - wf%fock_diagonal(wf%n_o + c, 1) 
+!
+         do b = 1,wf%n_v
+!
+            epsilon_cb = epsilon_c - wf%fock_diagonal(wf%n_o + b, 1) 
+!
+            do a = 1,wf%n_v
+!
+               t_abc(a,b,c) = t_abc(a,b,c)*one/(epsilon_cb - wf%fock_diagonal(wf%n_o + a, 1))
+!
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+!
+   end subroutine omega_cc3_eps_cc3
+!
+!
+   module subroutine omega_cc3_omega1_cc3(wf, i, j, k, t_abc, u_abc, omega1, omega2, F_kc, &
+                                          L_jbic, L_kbic, L_kbjc, L_ibjc, L_ibkc, L_jbkc)
+!!
+!!    Calculate the triples contribution to omega1 and
+!!    the Fock contribution to omega2
+!!
+!!    Rolf H. Myhre, January 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      integer(i15), intent(in) :: i, j, k
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: t_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: u_abc
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                   :: omega1
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout)   :: omega2
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: F_kc
+!
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_jbic
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_kbic
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_kbjc
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_ibjc
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_ibkc
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: L_jbkc
+!
+!
+!     Construct u_abc = t_abc - t_cba
+!
+      call construct_123_minus_321(t_abc, u_abc, wf%n_v)
+!
+!     omega_ai += sum_bc (t^abc - t^cba)*L_jbkc
+!
+      call dgemv('N', &
+                 wf%n_v, &
+                 wf%n_v**2, &
+                 one, &
+                 u_abc, &
+                 wf%n_v, &
+                 L_jbkc, &
+                 1, &
+                 one, &
+                 omega1(:,i), &
+                 1)
+!
+!     omega_abij += sum_c (t^abc - t^cba)*F_kc
+!
+      call dgemv('N', &
+                 wf%n_v**2, &
+                 wf%n_v, &
+                 one, &
+                 u_abc, &
+                 wf%n_v**2, &
+                 F_kc(:,k), &
+                 1, &
+                 one, &
+                 omega2(:,:,i,j), &
+                 1)
+!
+!
+!     omega_ak += sum_cb (t^cba - t^abc)*L_jbic
+!     Same as above if i == k, but this is never true
+!
+      call dgemv('N', &
+                 wf%n_v, &
+                 wf%n_v**2, &
+                 -one, &
+                 u_abc, &
+                 wf%n_v, &
+                 L_jbic, &
+                 1, &
+                 one, &
+                 omega1(:,k), &
+                 1)
+!
+!     omega_abkj += sum_c (t^cba - t^abc)*F_ic
+!
+      call dgemv('N', &
+                 wf%n_v**2, &
+                 wf%n_v, &
+                 -one, &
+                 u_abc, &
+                 wf%n_v**2, &
+                 F_kc(:,i), &
+                 1, &
+                 one, &
+                 omega2(:,:,k,j), &
+                 1)
+!
+!
+!
+      if (j .ne. k) then
+!
+!        Construct u_abc = t_acb - t_cab
+!
+         call construct_132_minus_312(t_abc, u_abc, wf%n_v)
+!
+!        omega_ai += sum_cb (t^acb - t^cab)*L_kbjc
+!
+         call dgemv('N', &
+                    wf%n_v, &
+                    wf%n_v**2, &
+                    one, &
+                    u_abc, &
+                    wf%n_v, &
+                    L_kbjc, &
+                    1, &
+                    one, &
+                    omega1(:,i), &
+                    1)
+!
+!        omega_abji += sum_c (t^acb - t^cab)*F_jc
+!
+         call dgemv('N', &
+                    wf%n_v**2, &
+                    wf%n_v, &
+                    one, &
+                    u_abc, &
+                    wf%n_v**2, &
+                    F_kc(:,j), &
+                    1, &
+                    one, &
+                    omega2(:,:,k,i), &
+                    1)
+!
+!
+         if (i .ne. j) then
+!
+!           omega_aj += sum_cb (t^cab - t^acb)*L_kbic
+!
+            call dgemv('N', &
+                       wf%n_v, &
+                       wf%n_v**2, &
+                       -one, &
+                       u_abc, &
+                       wf%n_v, &
+                       L_kbic, &
+                       1, &
+                       one, &
+                       omega1(:,j), &
+                       1)
+!
+!           omega_abjk += sum_c (t^cab - t^acb)*F_ic
+!
+            call dgemv('N', &
+                       wf%n_v**2, &
+                       wf%n_v, &
+                       -one, &
+                       u_abc, &
+                       wf%n_v**2, &
+                       F_kc(:,i), &
+                       1, &
+                       one, &
+                       omega2(:,:,j,k), &
+                       1)
+!
+!
+         end if
+!
+      end if
+!
+!
+      if (i .ne. j .and. j .ne. k) then
+!
+!        Construct u_abc = t_bac - t_bca
+!        This is zero if j == k
+!
+         call construct_213_minus_231(t_abc, u_abc, wf%n_v)
+!
+!        omega_aj += sum_cb (t^bac - t^bca)*L_ibkc
+!
+         call dgemv('N', &
+                    wf%n_v, &
+                    wf%n_v**2, &
+                    one, &
+                    u_abc, &
+                    wf%n_v, &
+                    L_ibkc, &
+                    1, &
+                    one, &
+                    omega1(:,j), &
+                    1)
+!
+!        omega_abij += sum_c (t^bac - t^bca)*F_kc
+!
+         call dgemv('N', &
+                    wf%n_v**2, &
+                    wf%n_v, &
+                    one, &
+                    u_abc, &
+                    wf%n_v**2, &
+                    F_kc(:,k), &
+                    1, &
+                    one, &
+                    omega2(:,:,i,j), &
+                    1)
+!
+!
+!        omega_ak += sum_cb (t^bca - t^bac)*L_ibjc
+!
+         call dgemv('N', &
+                    wf%n_v, &
+                    wf%n_v**2, &
+                    -one, &
+                    u_abc, &
+                    wf%n_v, &
+                    L_ibjc, &
+                    1, &
+                    one, &
+                    omega1(:,k), &
+                    1)
+!
+!        omega_abki += sum_c (t^bca - t^bac)*F_jc
+!
+         call dgemv('N', &
+                    wf%n_v**2, &
+                    wf%n_v, &
+                    -one, &
+                    u_abc, &
+                    wf%n_v**2, &
+                    F_kc(:,j), &
+                    1, &
+                    one, &
+                    omega2(:,:,k,i), &
+                    1)
+!
+!
+      end if
+!
+   end subroutine omega_cc3_omega1_cc3
+!
+!
+   module subroutine omega_cc3_omega2_cc3(wf, i, j, k, t_abc, u_abc, v_abc, omega2, &
+                                          g_dbic, g_dbjc, g_dbkc, &
+                                          g_jlic, g_klic, g_kljc, g_iljc, g_ilkc, g_jlkc)
+!!
+!!    Calculate the triples contribution to omega1 and
+!!    the Fock contribution to omega2
+!!
+!!    Rolf H. Myhre, January 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      integer(i15), intent(in) :: i, j, k
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: t_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: u_abc
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: v_abc
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout)   :: omega2
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_dbic 
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_dbjc 
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: g_dbkc 
+!
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_jlic 
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_klic 
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_kljc 
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_iljc 
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_ilkc 
+      real(dp), dimension(wf%n_v, wf%n_v), intent(in)                      :: g_jlkc 
+!
+      real(dp) :: alpha
+!
+      if (i .ne. j) then
+         alpha = one
+      else
+         alpha = half
+      end if
+!
+      write(output%unit,*)
+      write(output%unit,*) 'i,j,k', i,j,k
+!
+!     construct u_abc = 2*t_abc - t_acb - t_cba
+!
+      call construct_123_min_132_min_321(t_abc, u_abc, wf%n_v)
+!
+!     omega_adij += sum_bc (2*t_abc - t_acb - t_cba)*g_dbkc
+!
+      call dgemm('N','N', &
+                 wf%n_v, &
+                 wf%n_v, &
+                 wf%n_v**2, &
+                 alpha, &
+                 u_abc, &
+                 wf%n_v, &
+                 g_dbkc, &
+                 wf%n_v**2, &
+                 one, &
+                 omega2(:,:,i,j), &
+                 wf%n_v)
+!
+      write(output%unit,*)
+      write(output%unit,*) 'omega2(i,j)', omega2(1,1,i,j)
+!
+      if (i .ne. j) then
+!
+!        omega_ablj += \sum_c (2*t_abc - t_acb - t_cba)*g_ilkc
+!
+         call dgemm('N','N', &
+                    wf%n_v**2, &
+                    wf%n_o, &
+                    wf%n_v, &
+                    -one, &
+                    u_abc, &
+                    wf%n_v**2, &
+                    g_ilkc, &
+                    wf%n_v, &
+                    one, &
+                    omega2(:,:,:,j), &
+                    wf%n_v**2)
+!
+         write(output%unit,*)
+         write(output%unit,*) 'omega2(j)', omega2(1,1,1,j)
+!
+      end if
+!
+!
+!     resort to u_abc = 2*t_bac - t_bca - t_cab
+!
+      call sort_123_to_213(u_abc,v_abc,wf%n_v,wf%n_v,wf%n_v)
+!
+!     omega_adji += sum_bc (2*t_bac - t_bca - t_cab)*g_dbkc
+!
+      call dgemm('N','N', &
+                 wf%n_v, &
+                 wf%n_v, &
+                 wf%n_v**2, &
+                 alpha, &
+                 v_abc, &
+                 wf%n_v, &
+                 g_dbkc, &
+                 wf%n_v**2, &
+                 one, &
+                 omega2(:,:,j,i), &
+                 wf%n_v)
+!
+      write(output%unit,*)
+      write(output%unit,*) 'omega2(i,j)', omega2(1,1,j,i)
+!
+!     omega_abli += \sum_c (2*t_bac - t_bca - t_cab)*g_jlkc
+!
+      call dgemm('N','N', &
+                 wf%n_v**2, &
+                 wf%n_o, &
+                 wf%n_v, &
+                 -one, &
+                 u_abc, &
+                 wf%n_v**2, &
+                 g_jlkc, &
+                 wf%n_v, &
+                 one, &
+                 omega2(:,:,:,i), &
+                 wf%n_v**2)
+!
+      write(output%unit,*)
+      write(output%unit,*) 'omega2(i)', omega2(1,1,1,i)
+!
+!
+      if (j .ne. k) then
+!
+!        construct u_abc = 2*t_acb - t_abc - t_cab
+!
+         call construct_132_min_123_min_312(t_abc, u_abc, wf%n_v)
+!
+         if (i .ne. k) then
+            alpha = one
+         else
+            alpha = half
+         end if
+!
+!        omega_adik += sum_bc (2*t_acb - t_abc - t_cab)*g_dbjc
+!
+         call dgemm('N','N', &
+                    wf%n_v, &
+                    wf%n_v, &
+                    wf%n_v**2, &
+                    alpha, &
+                    u_abc, &
+                    wf%n_v, &
+                    g_dbjc, &
+                    wf%n_v**2, &
+                    one, &
+                    omega2(:,:,i,k), &
+                    wf%n_v)
+!
+         write(output%unit,*)
+         write(output%unit,*) 'omega2(i,k)', omega2(1,1,i,k)
+!
+         if (i .ne. k .and. i .ne. j) then
+!
+!           omega_ablk += \sum_c (2*t_acb - t_abc - t_cab)*g_iljc
+!
+            call dgemm('N','N', &
+                       wf%n_v**2, &
+                       wf%n_o, &
+                       wf%n_v, &
+                       -one, &
+                       u_abc, &
+                       wf%n_v**2, &
+                       g_iljc, &
+                       wf%n_v, &
+                       one, &
+                       omega2(:,:,:,k), &
+                       wf%n_v**2)
+!
+            write(output%unit,*)
+            write(output%unit,*) 'omega2(k)', omega2(1,1,1,k)
+!
+         end if
+!
+!        resort to u_abc = 2*t_bca - t_bac - t_cba
+!
+         call sort_123_to_213(u_abc,v_abc,wf%n_v,wf%n_v,wf%n_v)
+!
+!        omega_adki += sum_bc (2*t_bca - t_bac - t_cba)*g_dbjc
+!
+         call dgemm('N','N', &
+                    wf%n_v, &
+                    wf%n_v, &
+                    wf%n_v**2, &
+                    alpha, &
+                    v_abc, &
+                    wf%n_v, &
+                    g_dbjc, &
+                    wf%n_v**2, &
+                    one, &
+                    omega2(:,:,k,i), &
+                    wf%n_v)
+!
+         write(output%unit,*)
+         write(output%unit,*) 'omega2(k,i)', omega2(1,1,k,i)
+!
+!        omega_abli += \sum_c (2*t_bca - t_bac - t_cba)*g_kljc
+!
+         call dgemm('N','N', &
+                    wf%n_v**2, &
+                    wf%n_o, &
+                    wf%n_v, &
+                    -one, &
+                    v_abc, &
+                    wf%n_v**2, &
+                    g_kljc, &
+                    wf%n_v, &
+                    one, &
+                    omega2(:,:,:,i), &
+                    wf%n_v**2)
+!
+         write(output%unit,*)
+         write(output%unit,*) 'omega2(i)', omega2(1,1,1,i)
+!
+      end if
+!
+!
+      if(i .ne. k .and. (j .ne. k .or. i .ne. j)) then
+!
+!        construct u_abc = 2*t_acb - t_abc - t_cab
+!
+         call construct_321_min_231_min_123(t_abc, u_abc, wf%n_v)
+!
+         if (i .ne. j) then
+!
+            if (k .ne. j) then
+               alpha = one
+            else
+               alpha = half
+            end if
+!
+!           omega_adkj += sum_bc (2*t_acb - t_abc - t_cab)*g_dbic
+!
+            call dgemm('N','N', &
+                       wf%n_v, &
+                       wf%n_v, &
+                       wf%n_v**2, &
+                       alpha, &
+                       u_abc, &
+                       wf%n_v, &
+                       g_dbic, &
+                       wf%n_v**2, &
+                       one, &
+                       omega2(:,:,k,j), &
+                       wf%n_v)
+!
+            write(output%unit,*)
+            write(output%unit,*) 'omega2(k,j)', omega2(1,1,k,j)
+!
+!           omega_ablj += \sum_c (2*t_acb - t_abc - t_cab)*g_kljic
+!
+            call dgemm('N','N', &
+                       wf%n_v**2, &
+                       wf%n_o, &
+                       wf%n_v, &
+                       -one, &
+                       u_abc, &
+                       wf%n_v**2, &
+                       g_klic, &
+                       wf%n_v, &
+                       one, &
+                       omega2(:,:,:,j), &
+                       wf%n_v**2)
+!
+            write(output%unit,*)
+            write(output%unit,*) 'omega2(j)', omega2(1,1,1,j)
+!
+         end if
+!
+!        resort to u_abc = 2*t_cab - t_acb - t_bac
+!
+         call sort_123_to_213(u_abc,v_abc,wf%n_v,wf%n_v,wf%n_v)
+!
+         if (i .ne. j) then
+!
+!           omega_adjk += sum_bc (2*t_cab - t_acb - t_bac)*g_dbic
+!
+            call dgemm('N','N', &
+                       wf%n_v, &
+                       wf%n_v, &
+                       wf%n_v**2, &
+                       alpha, &
+                       v_abc, &
+                       wf%n_v, &
+                       g_dbic, &
+                       wf%n_v**2, &
+                       one, &
+                       omega2(:,:,j,k), &
+                       wf%n_v)
+!
+            write(output%unit,*)
+            write(output%unit,*) 'omega2(j,k)', omega2(1,1,j,k)
+!
+         end if
+!
+         if (j .ne. k) then
+!
+!           omega_ablk += sum_c (2*t_cab - t_acb - t_bac)*g_jlic
+!
+            call dgemm('N','N', &
+                       wf%n_v**2, &
+                       wf%n_o, &
+                       wf%n_v, &
+                       -one, &
+                       v_abc, &
+                       wf%n_v**2, &
+                       g_jlic, &
+                       wf%n_v, &
+                       one, &
+                       omega2(:,:,:,k), &
+                       wf%n_v**2)
+!
+            write(output%unit,*)
+            write(output%unit,*) 'omega2(k)', omega2(1,1,1,k)
+!
+         end if
+!
+      end if
+!
+!
+   end subroutine omega_cc3_omega2_cc3
 !
 !
 end submodule
