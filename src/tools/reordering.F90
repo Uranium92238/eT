@@ -229,9 +229,9 @@ contains
       integer(i15) :: r, q, p
 !
 !$omp parallel do schedule(static) private(r,q,p)
-      do q = 1, dim_q
-         do p = 1, dim_p
-            do r = 1, dim_r
+      do p = 1, dim_p
+         do r = 1, dim_r
+            do q = 1, dim_q
 !
                x_qrp(q,r,p) = x_qrp(q,r,p) + x_pqr(p,q,r)
 !

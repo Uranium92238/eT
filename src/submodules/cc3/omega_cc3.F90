@@ -67,7 +67,6 @@ contains
       call wf%omega_ccsd_d2(omega2)
       call wf%omega_ccsd_e2(omega2)
 !
-!      call dcopy(wf%n_t1, omega1, 1, omega, 1)
       call dcopy(wf%n_t2, omega2, 1, omega(wf%n_t1+1, 1), 1)
 !
       call ccsd_timer%freeze()
@@ -82,11 +81,6 @@ contains
       call wf%omega_cc3_a(omega1,omega_abij)
       call cc3_timer%freeze()
       call cc3_timer%switch_off()
-!
-      write(output%unit,*)
-      write(output%unit,*) 'omega1', omega1(1,1)
-      write(output%unit,*) 'omega2', omega_abij(1,1,1,1)
-      write(output%unit,*)
 !
       call dcopy(wf%n_t1, omega1, 1, omega, 1)
 !
@@ -112,8 +106,6 @@ contains
             end do
          end do
       end do
-!
-      
 !
       call mem%dealloc(omega1, wf%n_v, wf%n_o)
       call mem%dealloc(omega_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
@@ -468,6 +460,7 @@ contains
                                                  L_ibkc_p(:,:,i_rel,k_rel), &
                                                  L_jbkc_p(:,:,j_rel,k_rel))
 !
+!
                         call wf%omega_cc3_omega2(i, j, k, t_abc, u_abc, v_abc, omega2, &
                                                  g_dbic_p(:,:,:,i_rel), &
                                                  g_dbjc_p(:,:,:,j_rel), &
@@ -478,7 +471,6 @@ contains
                                                  g_iljc_p(:,:,i_rel,j_rel), &
                                                  g_ilkc_p(:,:,i_rel,k_rel), &
                                                  g_jlkc_p(:,:,j_rel,k_rel))
-!
 !
                      enddo
                   enddo
@@ -1004,7 +996,6 @@ contains
                  t_abc, &
                  wf%n_v)
 !
-!
 !     t^ab_il*(lj|ck)
 !     ---------------
 !
@@ -1020,6 +1011,7 @@ contains
                  one, &
                  t_abc, &
                  wf%n_v**2)
+!
 !
 !
 !     t^bd_ji*(ad|ck)
@@ -1376,7 +1368,7 @@ contains
                     F_kc(:,j), &
                     1, &
                     one, &
-                    omega2(:,:,k,i), &
+                    omega2(:,:,i,k), &
                     1)
 !
 !
@@ -1448,7 +1440,7 @@ contains
                     F_kc(:,k), &
                     1, &
                     one, &
-                    omega2(:,:,i,j), &
+                    omega2(:,:,j,i), &
                     1)
 !
 !
@@ -1526,9 +1518,6 @@ contains
          alpha = half
       end if
 !
-      write(output%unit,*)
-      write(output%unit,*) 'i,j,k', i,j,k
-!
 !     construct u_abc = 2*t_abc - t_acb - t_cba
 !
       call construct_123_min_132_min_321(t_abc, u_abc, wf%n_v)
@@ -1548,9 +1537,6 @@ contains
                  omega2(:,:,i,j), &
                  wf%n_v)
 !
-      write(output%unit,*)
-      write(output%unit,*) 'omega2(i,j)', omega2(1,1,i,j)
-!
       if (i .ne. j) then
 !
 !        omega_ablj += \sum_c (2*t_abc - t_acb - t_cba)*g_ilkc
@@ -1567,9 +1553,6 @@ contains
                     one, &
                     omega2(:,:,:,j), &
                     wf%n_v**2)
-!
-         write(output%unit,*)
-         write(output%unit,*) 'omega2(j)', omega2(1,1,1,j)
 !
       end if
 !
@@ -1593,9 +1576,6 @@ contains
                  omega2(:,:,j,i), &
                  wf%n_v)
 !
-      write(output%unit,*)
-      write(output%unit,*) 'omega2(i,j)', omega2(1,1,j,i)
-!
 !     omega_abli += \sum_c (2*t_bac - t_bca - t_cab)*g_jlkc
 !
       call dgemm('N','N', &
@@ -1603,16 +1583,13 @@ contains
                  wf%n_o, &
                  wf%n_v, &
                  -one, &
-                 u_abc, &
+                 v_abc, &
                  wf%n_v**2, &
                  g_jlkc, &
                  wf%n_v, &
                  one, &
                  omega2(:,:,:,i), &
                  wf%n_v**2)
-!
-      write(output%unit,*)
-      write(output%unit,*) 'omega2(i)', omega2(1,1,1,i)
 !
 !
       if (j .ne. k) then
@@ -1642,9 +1619,6 @@ contains
                     omega2(:,:,i,k), &
                     wf%n_v)
 !
-         write(output%unit,*)
-         write(output%unit,*) 'omega2(i,k)', omega2(1,1,i,k)
-!
          if (i .ne. k .and. i .ne. j) then
 !
 !           omega_ablk += \sum_c (2*t_acb - t_abc - t_cab)*g_iljc
@@ -1661,9 +1635,6 @@ contains
                        one, &
                        omega2(:,:,:,k), &
                        wf%n_v**2)
-!
-            write(output%unit,*)
-            write(output%unit,*) 'omega2(k)', omega2(1,1,1,k)
 !
          end if
 !
@@ -1686,9 +1657,6 @@ contains
                     omega2(:,:,k,i), &
                     wf%n_v)
 !
-         write(output%unit,*)
-         write(output%unit,*) 'omega2(k,i)', omega2(1,1,k,i)
-!
 !        omega_abli += \sum_c (2*t_bca - t_bac - t_cba)*g_kljc
 !
          call dgemm('N','N', &
@@ -1703,9 +1671,6 @@ contains
                     one, &
                     omega2(:,:,:,i), &
                     wf%n_v**2)
-!
-         write(output%unit,*)
-         write(output%unit,*) 'omega2(i)', omega2(1,1,1,i)
 !
       end if
 !
@@ -1739,9 +1704,6 @@ contains
                        omega2(:,:,k,j), &
                        wf%n_v)
 !
-            write(output%unit,*)
-            write(output%unit,*) 'omega2(k,j)', omega2(1,1,k,j)
-!
 !           omega_ablj += \sum_c (2*t_acb - t_abc - t_cab)*g_kljic
 !
             call dgemm('N','N', &
@@ -1756,9 +1718,6 @@ contains
                        one, &
                        omega2(:,:,:,j), &
                        wf%n_v**2)
-!
-            write(output%unit,*)
-            write(output%unit,*) 'omega2(j)', omega2(1,1,1,j)
 !
          end if
 !
@@ -1783,9 +1742,6 @@ contains
                        omega2(:,:,j,k), &
                        wf%n_v)
 !
-            write(output%unit,*)
-            write(output%unit,*) 'omega2(j,k)', omega2(1,1,j,k)
-!
          end if
 !
          if (j .ne. k) then
@@ -1804,9 +1760,6 @@ contains
                        one, &
                        omega2(:,:,:,k), &
                        wf%n_v**2)
-!
-            write(output%unit,*)
-            write(output%unit,*) 'omega2(k)', omega2(1,1,1,k)
 !
          end if
 !
