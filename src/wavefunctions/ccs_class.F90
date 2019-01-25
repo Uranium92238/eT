@@ -3742,6 +3742,9 @@ contains
 !
 !     Allocate the transformed vector & add the terms to it 
 !
+      write(output%unit, *)'FISKJ'
+      flush(output%unit)
+!
       call mem%alloc(rho_a_i, wf%n_v, wf%n_o)
       rho_a_i = zero
 !

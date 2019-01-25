@@ -90,8 +90,6 @@ contains
       call mem%dealloc(c_a_i, wf%n_v, wf%n_o)
       call mem%dealloc(rho_a_i, wf%n_v, wf%n_o)
 !
-      write(output%unit,*) 'Print' 
-!
    end subroutine effective_jacobian_transformation_cc2
 !
 !
@@ -120,7 +118,7 @@ contains
 !
       integer(i15) :: current_i_batch, current_j_batch, current_b_batch
 !
-      integer(i15) :: rho_offset
+      integer(i15) :: rho_offset, prev_available
 !
       type(batching_index) :: batch_i, batch_j, batch_b
 !
@@ -132,6 +130,9 @@ contains
       req1_j = (wf%integrals%n_J)*(wf%n_v)
 !
       req2 = (wf%n_v)**2
+!
+      prev_available = mem%available
+      mem%available = (req0 + req1_j*2+ req1_i*2 + req2*4)
 !
       call batch_i%init(wf%n_o)
       call batch_j%init(wf%n_o)
@@ -180,6 +181,7 @@ contains
 !
          enddo ! batch_j
       enddo !batch_i
+       mem%available = prev_available
 !
 !     :: Term 2 rho_ai = - g_abji * c_bj::
 !
