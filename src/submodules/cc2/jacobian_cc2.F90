@@ -700,7 +700,7 @@ contains
       real(dp), dimension(:,:), allocatable :: F_ck
       real(dp), dimension(:,:), allocatable :: reduced_rho_ai
 !
-      integer(i15) :: a, i, c, k, prev_available
+      integer(i15) :: a, i, c, k
 !
       type(batching_index) :: batch_a, batch_c
 !
@@ -711,9 +711,6 @@ contains
       req1_a = wf%integrals%n_J*wf%n_o
       req1_c = wf%integrals%n_J*wf%n_v
       req2   = wf%n_v*wf%n_o + wf%n_o**2
-!
-      prev_available = mem%available
-      mem%available = (req0 + req1_a*2+ req1_c*2 + req2*4)*dp
 !
       call batch_a%init(wf%n_v)
       call batch_c%init(wf%n_v)
@@ -881,9 +878,8 @@ contains
 !
          call mem%dealloc(reduced_rho_ai, batch_c%length, wf%n_o)
 !
-         enddo
-      enddo
-      mem%available = prev_available
+         enddo ! batch_c
+      enddo ! batch_a
 !
    end subroutine effective_jacobian_cc2_a1_cc2
 !
@@ -1280,12 +1276,12 @@ contains
       type(batching_index) :: batch_j, batch_k
 !
 !
-!     Construct X_bjak = sum_l g_aklj * c_bl
+!     X_bjak = sum_l g_aklj * c_bl
 !
       req0 = 0
-      req1_j = max((wf%integrals%n_J)*(wf%n_v),(wf%integrals%n_J)*(wf%n_o))
-      req1_k = max((wf%integrals%n_J)*(wf%n_v),(wf%integrals%n_J)*(wf%n_o))
-      req2 = max((wf%n_v)**2 + 2*(wf%n_v)*(wf%n_o),2*(wf%n_v)**2 + (wf%n_v)*(wf%n_o))
+      req1_j = max((wf%integrals%n_J)*(wf%n_v), (wf%integrals%n_J)*(wf%n_o))
+      req1_k = max((wf%integrals%n_J)*(wf%n_v), (wf%integrals%n_J)*(wf%n_o))
+      req2 = max((wf%n_v)**2 + 2*(wf%n_v)*(wf%n_o), 3*(wf%n_v)**2)
 !
       call batch_j%init(wf%n_o)
       call batch_k%init(wf%n_o)
@@ -1489,7 +1485,7 @@ contains
       req0 = 0
       req1_b = max((wf%integrals%n_J)*(wf%n_v),(wf%integrals%n_J)*(wf%n_o))
       req1_c = max((wf%integrals%n_J)*(wf%n_v),(wf%integrals%n_J)*(wf%n_o))
-      req2 = max((wf%n_o)**2 + 2*(wf%n_v)*(wf%n_o), 2*(wf%n_o)**2 + (wf%n_v)*(wf%n_o))
+      req2 = max((wf%n_o)**2 + 2*(wf%n_v)*(wf%n_o), 3*(wf%n_o)**2)
 !
       call batch_b%init(wf%n_v)
       call batch_c%init(wf%n_v)
@@ -1641,7 +1637,7 @@ contains
                         (wf%n_v))
 !
             call mem%dealloc(Y_bkci, batch_b%length, wf%n_o, batch_c%length, wf%n_o)
-            call mem%alloc(L_abkc, wf%n_v, batch_b%length, wf%n_o, batch_c%length)
+            call mem%dealloc(L_abkc, wf%n_v, batch_b%length, wf%n_o, batch_c%length)
 !
          enddo ! batch_c
       enddo ! batch_b
@@ -1765,19 +1761,6 @@ contains
                call mem%dealloc(g_lick, wf%n_o, batch_i%length, wf%n_v, batch_k%length)
 !
 !              Reorder and scale
-!
-!                 if (batch_i%first .eq. batch_k%first) then
-!  !
-!  !$omp parallel do private(b,i)
-!                 do b = 1 , wf%n_v
-!                    do i = 1, batch_i%length
-!                       X_ckbi(b,i,b,i) = half*X_ckbi(b,i,b,i)
-!                       X_bick(b,i,b,i) = half*X_bick(b,i,b,i)
-!                    enddo
-!                 enddo
-!  !$omp end parallel do
-!  !
-!                 endif
 !
                call mem%alloc(Y_bcki, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
 !
