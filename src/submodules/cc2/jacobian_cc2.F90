@@ -90,6 +90,8 @@ contains
       call mem%dealloc(c_a_i, wf%n_v, wf%n_o)
       call mem%dealloc(rho_a_i, wf%n_v, wf%n_o)
 !
+      write(output%unit,*) 'Print' 
+!
    end subroutine effective_jacobian_transformation_cc2
 !
 !
