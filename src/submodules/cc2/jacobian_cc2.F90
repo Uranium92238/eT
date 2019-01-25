@@ -131,9 +131,6 @@ contains
 !
       req2 = (wf%n_v)**2
 !
-     ! prev_available = mem%available
-     ! mem%available = (req0 + req1_j*2+ req1_i*2 + req2*4)
-!
       call batch_i%init(wf%n_o)
       call batch_j%init(wf%n_o)
 !
@@ -189,7 +186,6 @@ contains
 !
          enddo ! batch_j
       enddo !batch_i
-     !  mem%available = prev_available
 !
 !     :: Term 2 rho_ai = - g_abji * c_bj::
 !
@@ -704,7 +700,7 @@ contains
       real(dp), dimension(:,:), allocatable :: F_ck
       real(dp), dimension(:,:), allocatable :: reduced_rho_ai
 !
-      integer(i15) :: a, i, c, k
+      integer(i15) :: a, i, c, k, prev_available
 !
       type(batching_index) :: batch_a, batch_c
 !
@@ -715,6 +711,9 @@ contains
       req1_a = wf%integrals%n_J*wf%n_o
       req1_c = wf%integrals%n_J*wf%n_v
       req2   = wf%n_v*wf%n_o + wf%n_o**2
+!
+      prev_available = mem%available
+      mem%available = (req0 + req1_a*2+ req1_c*2 + req2*4)*dp
 !
       call batch_a%init(wf%n_v)
       call batch_c%init(wf%n_v)
@@ -780,7 +779,7 @@ contains
 !
 !$omp parallel do private(i,a)
                do i = 1, wf%n_o
-                  do a = 1, wf%n_v
+                  do a = 1, batch_a%length
 !
                      Y_aick(a, i, a, i) = Y_aick(a, i, a, i)/two
 !
@@ -836,7 +835,7 @@ contains
             call mem%dealloc(reduced_rho_ai, batch_a%length, wf%n_o)
             call mem%dealloc(F_ck, batch_c%length, wf%n_o)
 !
-!           Now we pretend that ck is ai and vice versa
+!           Now we pretend that ck is ai and vice versa s.t. Y_ai,ck = Y_ck,ai
 !
             call mem%alloc(F_ck, batch_a%length, wf%n_o)
 !
@@ -857,7 +856,7 @@ contains
                         1,                         &
                         wf%n_o*(batch_a%length),   &
                         one,                       &
-                        Y_aick,                    & ! Y_ai,ck^T = Y_ck,ai
+                        Y_aick,                    & ! Pretend it is Y_ck_ai^T = Y_ai_ck
                         wf%n_o*(batch_a%length),   &
                         F_ck,                      & ! F_ck
                         wf%n_o*(batch_a%length),   &
@@ -884,6 +883,7 @@ contains
 !
          enddo
       enddo
+      mem%available = prev_available
 !
    end subroutine effective_jacobian_cc2_a1_cc2
 !
