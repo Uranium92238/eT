@@ -700,7 +700,7 @@ contains
       real(dp), dimension(:,:), allocatable :: F_ck
       real(dp), dimension(:,:), allocatable :: reduced_rho_ai
 !
-      integer(i15) :: a, i, c, k, prev_available
+      integer(i15) :: a, i, c, k
 !
       type(batching_index) :: batch_a, batch_c
 !
@@ -711,9 +711,6 @@ contains
       req1_a = wf%integrals%n_J*wf%n_o
       req1_c = wf%integrals%n_J*wf%n_v
       req2   = wf%n_v*wf%n_o + wf%n_o**2
-!
-      prev_available = mem%available
-      mem%available = (req0 + req1_a*2+ req1_c*2 + req2*4)*dp
 !
       call batch_a%init(wf%n_v)
       call batch_c%init(wf%n_v)
@@ -883,7 +880,6 @@ contains
 !
          enddo
       enddo
-      mem%available = prev_available
 !
    end subroutine effective_jacobian_cc2_a1_cc2
 !
@@ -1071,7 +1067,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: X_akbj, X_bjak
       real(dp), dimension(:,:,:,:), allocatable :: Y_akjb
 !
-      integer(i15) :: j, k, a, b
+      integer(i15) :: j, k, a, b, prev_available
 !
       type(batching_index) :: batch_i, batch_a, batch_b
 !
@@ -1089,6 +1085,9 @@ contains
       req2_ab = max(3*(wf%n_o)**2, 2*(wf%n_o)**2 + (wf%n_o)*(wf%n_v))
 !
       req3 = 0
+!
+      prev_available = mem%available
+      mem%available = (req0 + req1_a*2+ req1_b*2 + req1_i*2 + req2_ia*4 + req2_ib*4 + req2_ab*4)*dp
 !
       call batch_i%init(wf%n_o)
       call batch_a%init(wf%n_v)
@@ -1236,6 +1235,7 @@ contains
             enddo ! batch_b
          enddo ! batch_a
       enddo ! batch_i
+      mem%available = prev_available
 !
    end subroutine effective_jacobian_cc2_c1_cc2
 !
