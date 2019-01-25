@@ -118,7 +118,7 @@ contains
 !
       integer(i15) :: current_i_batch, current_j_batch, current_b_batch
 !
-      integer(i15) :: rho_offset, prev_available
+      integer(i15) :: rho_offset, j, b
 !
       type(batching_index) :: batch_i, batch_j, batch_b
 !
@@ -131,8 +131,8 @@ contains
 !
       req2 = (wf%n_v)**2
 !
-      prev_available = mem%available
-      mem%available = (req0 + req1_j*2+ req1_i*2 + req2*4)
+     ! prev_available = mem%available
+     ! mem%available = (req0 + req1_j*2+ req1_i*2 + req2*4)
 !
       call batch_i%init(wf%n_o)
       call batch_j%init(wf%n_o)
@@ -157,7 +157,15 @@ contains
 !
             call mem%alloc(c_jb, (batch_j%length), wf%n_v)
 !
-            call sort_12_to_21(c_bj, c_jb, wf%n_v, (batch_j%length))
+            !$omp parallel do private(j, b)
+            do b = 1, wf%n_v
+               do j = 1, batch_j%length
+                  c_jb(j, b) = c_bj(b, j + batch_j%first - 1)
+               enddo
+            enddo
+!$omp end parallel do
+!
+            !call sort_12_to_21(c_bj, c_jb, wf%n_v, (batch_j%length))
 !
 !           rho_a_i = rho_a_i + sum_bj 2 g_aijb * c_bj
 !
@@ -181,7 +189,7 @@ contains
 !
          enddo ! batch_j
       enddo !batch_i
-       mem%available = prev_available
+     !  mem%available = prev_available
 !
 !     :: Term 2 rho_ai = - g_abji * c_bj::
 !
@@ -220,7 +228,14 @@ contains
 !
             call mem%alloc(c_jb, wf%n_o, (batch_b%length))
 !
-            call sort_12_to_21(c_bj, c_jb, (batch_b%length), wf%n_o)
+!$omp parallel do private(j, b)
+            do j = 1, wf%n_o
+               do b = 1, batch_b%length
+                  c_jb(j, b) = c_bj( b + batch_b%first - 1, j)
+               enddo
+            enddo
+!$omp end parallel do
+           ! call sort_12_to_21(c_bj, c_jb, (batch_b%length), wf%n_o)
 !
 !           rho_a_i = rho_a_i - sum_bj g_aijb * c_jb
 !
@@ -697,9 +712,9 @@ contains
       integer(i15) :: req0, req1_a, req1_c, req2
 !
       req0   = 0
-      req1_a = 0
-      req1_c = 0
-      req2   = 0
+      req1_a = wf%integrals%n_J*wf%n_o
+      req1_c = wf%integrals%n_J*wf%n_v
+      req2   = wf%n_v*wf%n_o + wf%n_o**2
 !
       call batch_a%init(wf%n_v)
       call batch_c%init(wf%n_v)
