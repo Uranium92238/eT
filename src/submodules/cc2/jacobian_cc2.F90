@@ -822,22 +822,6 @@ contains
                         reduced_rho_ai,             &
                         wf%n_o*(batch_a%length))
 !
-            call dgemm('T', 'N',                   &
-                        wf%n_o*(batch_a%length),   &
-                        1,                         &
-                        wf%n_o*(batch_c%length),   &
-                        one,                       &
-                        Y_aick,                    & ! Y_ai,ck^T = Y_ck,ai
-                        wf%n_o*(batch_a%length),   &
-                        F_ck,                      & ! F_ck
-                        wf%n_o*(batch_c%length),   &
-                        one,                       &
-                        reduced_rho_ai,            &
-                        wf%n_o*(batch_a%length))
-!
-            call mem%dealloc(F_ck, batch_c%length, wf%n_o)
-            call mem%dealloc(Y_aick, batch_a%length, wf%n_o, batch_c%length, wf%n_o)
-!
 !$omp parallel do private(i,a)
             do i = 1, wf%n_o
                do a = 1, batch_a%length
@@ -850,6 +834,53 @@ contains
 !$omp end parallel do
 !
             call mem%dealloc(reduced_rho_ai, batch_a%length, wf%n_o)
+            call mem%dealloc(F_ck, batch_c%length, wf%n_o)
+!
+!           Now we pretend that ck is ai and vice versa
+!
+            call mem%alloc(F_ck, batch_a%length, wf%n_o)
+!
+!$omp parallel do private(c,k)
+            do k = 1, wf%n_o
+               do c = 1, batch_a%length
+!
+                  F_ck(c, k) = wf%fock_ia(k, c + batch_a%first - 1)
+!
+               enddo
+            enddo
+!$omp end parallel do
+!
+            call mem%alloc(reduced_rho_ai, batch_c%length, wf%n_o)
+!
+            call dgemm('T', 'N',                   &
+                        wf%n_o*(batch_c%length),   &
+                        1,                         &
+                        wf%n_o*(batch_a%length),   &
+                        one,                       &
+                        Y_aick,                    & ! Y_ai,ck^T = Y_ck,ai
+                        wf%n_o*(batch_a%length),   &
+                        F_ck,                      & ! F_ck
+                        wf%n_o*(batch_a%length),   &
+                        zero,                      &
+                        reduced_rho_ai,            &
+                        wf%n_o*(batch_c%length))
+!
+            call mem%dealloc(Y_aick, batch_a%length, wf%n_o, batch_c%length, wf%n_o)
+            call mem%dealloc(F_ck, batch_a%length, wf%n_o)
+!
+!
+!$omp parallel do private(i,a)
+            do i = 1, wf%n_o
+               do a = 1, batch_c%length
+!
+                  rho_ai(a + batch_c%first - 1, i) = rho_ai(a + batch_c%first - 1, i) &
+                                                   + reduced_rho_ai(a, i)
+!
+               enddo
+            enddo
+!$omp end parallel do
+!
+         call mem%dealloc(reduced_rho_ai, batch_c%length, wf%n_o)
 !
          enddo
       enddo
