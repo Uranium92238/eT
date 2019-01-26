@@ -188,7 +188,7 @@ contains
    module subroutine omega_cc2_c1_cc2(wf, u_aibj, omega)
 !!
 !!    Omega CC2 C1 term
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,  Jan 2019
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, Jan 2019
 !!
 !!    Calculates the C1 term,
 !!
@@ -205,6 +205,26 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u_aibj
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout)          :: omega
+!
+      real(dp), dimension(:,:), allocatable :: F_bj
+!
+      call mem%alloc(F_bj, wf%n_o, wf%n_v)
+      call sort_12_to_21(wf%fock_ia, F_bj, wf%n_o, wf%n_v)
+!
+      call dgemm('N','N',            &
+                  (wf%n_o)*(wf%n_v), &
+                  1,                 &
+                  (wf%n_o)*(wf%n_v), &
+                  -one,              &
+                  u_aibj,            &
+                  (wf%n_o)*(wf%n_v), &
+                  F_bj,              &
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  omega,             &
+                  (wf%n_o)*(wf%n_v))
+!
+      call mem%dealloc(F_bj, wf%n_o, wf%n_v)
 !
     end subroutine omega_cc2_c1_cc2
 !
