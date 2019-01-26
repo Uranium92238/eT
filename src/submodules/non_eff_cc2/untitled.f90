@@ -99,6 +99,38 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u_ajbk
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout)          :: omega
 !
+      real(dp), dimension(:,:,:,:), allocatable :: g_kbji
+      real(dp), dimension(:,:,:,:), allocatable :: g_jbki
+!
+!     g_kbji ordered as g_jbki
+!
+      call mem%alloc(g_kbji, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
+      call wf%get_ovoo(g_kbji)
+!
+      call mem%alloc(g_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
+      call sort_1234_to_3214(g_kbji, g_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
+      call mem%dealloc(g_kbji, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
+!     omega_ai += - sum_ckl g_kb,ji * u_aj,bk
+!
+      call dgemm('N', 'N',            &
+                  wf%n_v,             &
+                  wf%n_o,             &
+                  (wf%n_o**2)*wf%n_v, &
+                  -one,               &
+                  u_ajbk,             & ! u_a_jbk
+                  wf%n_v,             &
+                  g_jbki,             & ! g_jbk_i
+                  (wf%n_o**2)*wf%n_v, &
+                  one,                &
+                  omega,              & ! omega_a_i
+                  wf%n_v)
+!
+      call mem%dealloc(g_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
    end subroutine omega_cc2_b1_cc2
 !
 !
@@ -124,5 +156,55 @@ contains
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout)          :: omega
 !
     end subroutine omega_cc2_c1_cc2
+!
+!
+    module subroutine construct_u_cc2(wf, u)
+!!
+!!    Construct U 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
+!!
+!!    Construct
+!!
+!!       u_aibj = 2t_aibj - t_ajbi
+!!
+!!    with
+!!
+!!       t_aibj = - g_aibj/ε_aibj
+!!
+!!    where
+!!
+!!       ε_aibj = ε_a - ε_i + ε_b - ε_j 
+!!
+!!    and ε_r is the r'th orbital energy.
+!!
+      class(cc2), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout) :: u
+!
+      real(dp), dimension(:,:,:,:), allocatable :: g_aibj
+!
+      call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)  
+!
+      call wf%get_vovo(g_aibj)
+!
+      do b = 1, wf%n_v 
+         do j = 1, wf%n_o 
+            do i = 1, wf%n_o
+               do a = 1, wf%n_v
+!
+                  u_aibj(a, i, b, j) = (two* g_aibj(a, i, b, j) - g_aibj(a, j, i, b))/ &
+                                       (wf%fock_diagonal(i, 1) + fock_diagonal(j, 1) &
+                                        - wf%fock_diagonal(wf%n_o + a, 1) &
+                                        - wf%fock_diagonal(wf%n_o + b, 1) )
+!
+               enddo
+            enddo
+         enddo 
+      enddo
+!    
+      call mem%dealloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)      
+!
+    end subroutine construct_u_cc2
+!
 !
 end submodule omega_cc2
