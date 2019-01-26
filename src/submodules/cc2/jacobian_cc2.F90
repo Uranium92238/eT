@@ -85,6 +85,9 @@ contains
       call wf%effective_jacobian_cc2_e1(omega, rho_a_i, c_a_i, eps_o, eps_v)
       call wf%effective_jacobian_cc2_f1(omega, rho_a_i, c_a_i, eps_o, eps_v)
 !
+      call mem%dealloc(eps_o, wf%n_o)
+      call mem%dealloc(eps_v, wf%n_v)
+!
       call dcopy(wf%n_amplitudes, rho_a_i, 1, c, 1)
 !
       call mem%dealloc(c_a_i, wf%n_v, wf%n_o)
@@ -122,7 +125,7 @@ contains
 !
       type(batching_index) :: batch_i, batch_j, batch_b
 !
-!     :: Term 1: rhO_ai sum_bj 2 g_aijb c_bj ::
+!     :: Term 1: rho_ai sum_bj 2 g_aijb c_bj ::
 !
       req0 = 0
 !
@@ -332,6 +335,8 @@ contains
 !
             call batch_k%determine_limits(current_k_batch)
 !
+!           L_kcjb = 2 g_kcjb - g_kbjc, ordered as L_kcbj
+!
             call mem%alloc(g_kcjb, batch_k%length, wf%n_v, batch_j%length, wf%n_v)
 !
             call wf%get_ovov(g_kcjb,                        &
@@ -352,6 +357,8 @@ contains
             call mem%alloc(X_kc_batch, batch_k%length, wf%n_v)
 !
             bj_offset = wf%n_v*(batch_j%first - 1) + 1
+!
+!           X_kc = L_kcjb * c_bj
 !
             call dgemm('N', 'N',                   &
                         (batch_k%length)*(wf%n_v), &
@@ -384,9 +391,6 @@ contains
          enddo ! batch_k
       enddo ! batch_j
 !
-!     u_aick = 2 t^ac_ik - t^ac_ki = - (2 g_aick - g_akci)/ε^{ac}_{ik}
-!     in batches over i and c
-!
       req0 = 0
 !
       req1_a = (wf%integrals%n_J)*(wf%n_o)
@@ -406,6 +410,8 @@ contains
          do current_c_batch = 1, batch_c%num_batches
 !
             call batch_c%determine_limits(current_c_batch)
+!
+!           u_aick = 2 t^ac_ik - t^ac_ki = - (2 g_aick - g_akci)/ε^{ac}_{ik}
 !
             call mem%alloc(g_aick, batch_a%length, wf%n_o, batch_c%length, wf%n_o)
 !
@@ -478,9 +484,6 @@ contains
 !
 !     :: Term 2: - L_kcjb t^cb_ki c_aj ::
 !
-!     Construct X_ji = sum_ckb L_kcjb t^cb_ki
-!     as X_ji = sum_ckb L_jckb g_ckbi
-!
       call mem%alloc(X_ji, wf%n_o, wf%n_o)
       X_ji = zero
 !
@@ -515,6 +518,8 @@ contains
 !
                   call batch_i%determine_limits(current_i_batch)
 !
+!                 L_kcjb = 2 g_kcjb - g_jckb, ordered as L_jckb
+!
                   call mem%alloc(g_jckb, batch_j%length, wf%n_v, batch_k%length, wf%n_v)
 !
                   call wf%get_ovov(g_jckb,                     &
@@ -525,12 +530,13 @@ contains
 !
                   call mem%alloc(L_jckb, batch_j%length, wf%n_v, batch_k%length, wf%n_v)
 !
-                  L_jckb = - g_jckb
+                  call dcopy(batch_j%length*(wf%n_v**2)*batch_k%length, g_jckb, 1, L_jckb, 1)
+                  call dscal(batch_j%length*(wf%n_v**2)*batch_k%length, -one, L_jckb, 1)
 !
                   call add_1432_to_1234(two, g_jckb, L_jckb, batch_j%length, wf%n_v, batch_k%length, wf%n_v)
                   call mem%dealloc(g_jckb, batch_j%length, wf%n_v, batch_k%length, wf%n_v)
 !
-!                 Construct t_ckbi = - g_ckbi/ε^{cb}_{ik}
+!                 t_ckbi = - g_ckbi/ε^{cb}_{ik}
 !
                   call mem%alloc(g_ckbi, wf%n_v, batch_k%length, wf%n_v, batch_i%length)
 !
@@ -621,6 +627,8 @@ contains
 !
             call batch_j%determine_limits(current_j_batch)
 !
+!           L_kcjb = 2 g_kcjb - g_kbjc
+!
             call mem%alloc(g_kcjb, batch_k%length, wf%n_v, batch_j%length, wf%n_v)
 !
             call wf%get_ovov(g_kcjb,                        &
@@ -631,7 +639,9 @@ contains
 !
             call mem%alloc(L_kcjb, batch_k%length, wf%n_v, batch_j%length, wf%n_v)
 !
-            L_kcjb = two*g_kcjb
+            call dcopy(batch_k%length*(wf%n_v**2)*batch_j%length, g_kcjb, 1, L_kcjb, 1)
+            call dscal(batch_k%length*(wf%n_v**2)*batch_j%length, two, L_kcjb, 1)
+!
             call add_1432_to_1234(-one, g_kcjb, L_kcjb, &
                                  batch_k%length, wf%n_v, batch_j%length, wf%n_v)
 !
@@ -949,7 +959,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_lkai, X_ckai
 !
-      integer(i15) :: a, c, i, k, prev_available
+      integer(i15) :: a, c, i, k
 !
       integer(i15) :: req0, req1_i, req1_k, req2
 !
@@ -966,8 +976,6 @@ contains
 !
       call batch_i%init(wf%n_o)
       call batch_k%init(wf%n_o)
-      prev_available = mem%available
-      !mem%available = (req0 + req1_k*2 + req1_i*2 + req2*4)*dp
 !
       call mem%batch_setup(batch_i, batch_k, req0, req1_i, req1_k, req2)
 !
@@ -1076,7 +1084,6 @@ contains
 !
          enddo
       enddo
-      mem%available = prev_available
 !
    end subroutine effective_jacobian_cc2_b1_cc2
 !
@@ -1647,9 +1654,11 @@ contains
 !
             call mem%alloc(L_abkc, wf%n_v, batch_b%length, wf%n_o, batch_c%length)
 !
-            L_abkc = two*g_abkc
+            call dcopy(wf%n_v*(batch_b%length)*(wf%n_o)*(batch_c%length), g_abkc, 1, L_abkc, 1)
 !
             call mem%dealloc(g_abkc, wf%n_v, batch_b%length, wf%n_o, batch_c%length)
+!
+            call dscal(wf%n_v*(batch_b%length)*(wf%n_o)*(batch_c%length), two, L_abkc, 1)
 !
             call mem%alloc(g_kbac, wf%n_o, batch_b%length, wf%n_v, batch_c%length)
 !
