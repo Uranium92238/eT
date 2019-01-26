@@ -260,6 +260,7 @@ contains
 !
       call wf%get_vovo(g_aibj)
 !
+!$omp parallel do private(b, j, i, a)
       do b = 1, wf%n_v 
          do j = 1, wf%n_o 
             do i = 1, wf%n_o
@@ -274,6 +275,7 @@ contains
             enddo
          enddo 
       enddo
+!$omp end parallel do
 !    
       call mem%dealloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)      
 !
