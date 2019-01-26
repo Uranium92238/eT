@@ -110,6 +110,7 @@ contains
                      omega_ai,             &
                      batch_a%length)
 !
+!$omp parallel do private(i, a)
          do i = 1, wf%n_o
             do a = 1, batch_a%length
 !  
@@ -118,6 +119,7 @@ contains
 !
             enddo
          enddo
+!$omp end parallel do
 !
          call mem%dealloc(omega_ai, batch_a%length, wf%n_o)
 !
