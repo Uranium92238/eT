@@ -291,6 +291,8 @@ contains
 !
       real(dp) :: correlation_energy
 !
+      integer(i15) :: a, i, b, j
+!
       call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
@@ -305,19 +307,22 @@ contains
             do j = 1, wf%n_o 
                do a = 1, wf%n_v
 !
-                        correlation_energy = correlation_energy +                                &
-                                             (wf%t1(a, i)*wf%t1(b, j) -                          &
-                                             (g_aibj(a,i,b,j))/(wf%fock_diagonal(wf%n_o + a, 1)  &
-                                                               + wf%fock_diagonal(wf%n_o + b, 1) &
-                                                               - wf%fock_diagonal(i,1)           &
-                                                               - wf%fock_diagonal(j,1)))         &
-                                             *(two*g_iajb(i,a,j,b)-g_iajb(i,b,j,a))
+                  correlation_energy = correlation_energy +                                &
+                                       (wf%t1(a, i)*wf%t1(b, j) -                          &
+                                       (g_aibj(a,i,b,j))/(wf%fock_diagonal(wf%n_o + a, 1)  &
+                                                         + wf%fock_diagonal(wf%n_o + b, 1) &
+                                                         - wf%fock_diagonal(i,1)           &
+                                                         - wf%fock_diagonal(j,1)))         &
+                                       *(two*g_iajb(i,a,j,b)-g_iajb(i,b,j,a))
 !
-                     enddo
-                  enddo
                enddo
             enddo
+         enddo
+      enddo
 !$omp end parallel do 
+!
+      call mem%dealloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
       wf%energy = wf%hf_energy + correlation_energy
 !
