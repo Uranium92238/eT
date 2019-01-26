@@ -59,9 +59,6 @@ contains
 !
       correlation_energy = zero 
 !
-      write(output%unit, *) 'hei 4'
-      flush(output%unit)
-!
 !$omp parallel do private(a,i,b,j) reduction(+:correlation_energy)
       do b = 1, wf%n_v
          do i = 1, wf%n_o 
@@ -86,9 +83,6 @@ contains
       call mem%dealloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
       wf%energy = wf%hf_energy + correlation_energy
-!
-      write(output%unit, *) 'hei 5'
-      flush(output%unit)
 !
    end subroutine calculate_energy_cc2
 !

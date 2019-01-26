@@ -339,7 +339,7 @@ contains
 !!
 !!    Calculates the C1 term,
 !!
-!!       C1: - sum_bj u_ai_bj * F_{jb},
+!!       C1: sum_bj u_ai_bj * F_{jb},
 !!
 !!    with 
 !!       

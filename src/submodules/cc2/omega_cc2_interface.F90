@@ -18,18 +18,14 @@
    end subroutine construct_omega_cc2
 !
 !
-   module subroutine omega_cc2_a1_cc2(wf, u_bjci, omega)
+   module subroutine omega_cc2_a1_cc2(wf, u_bicj, omega)
 !!
 !!    Omega CC2 A1 term
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, Jan 2019
 !!
 !!    Calculates the A1 term,
 !!
-!!       A1: sum_ckd u_bj_ci * g_abjc,
-!!
-!!    with 
-!!       
-!!       u_bj_ci = 2*t_bj_ci - t_bi_cj
+!!       A1: sum_ckd u_bicj g_abjc = sum_ckd u_bjc_i * g_a_bjc,
 !!
 !!    and adds it to the projection vector omega
 !!
@@ -37,7 +33,7 @@
 !
       class(cc2), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u_bjci
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u_bicj
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout)              :: omega
 !
    end subroutine omega_cc2_a1_cc2

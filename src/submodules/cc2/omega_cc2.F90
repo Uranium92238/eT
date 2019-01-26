@@ -33,31 +33,14 @@ contains
 !
       omega = zero
 !
-      write(output%unit,*) 'hei 0'
-      flush(output%unit)
-!
       call wf%omega_ccs_a1(omega)
 !
       call mem%alloc(u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      write(output%unit,*) 'hei 0.5'
-      flush(output%unit)
-!
       call wf%construct_u(u_aibj)
 !
-      write(output%unit,*) 'hei 1'
-      flush(output%unit)
-!
       call wf%omega_cc2_a1(u_aibj, omega)
-!
-      write(output%unit,*) 'hei 2'
-      flush(output%unit)
-!
       call wf%omega_cc2_b1(u_aibj, omega)
-!
-      write(output%unit,*) 'hei 3'
-      flush(output%unit)
-!
       call wf%omega_cc2_c1(u_aibj, omega)
 !
       call mem%dealloc(u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -65,18 +48,14 @@ contains
    end subroutine construct_omega_cc2
 !
 !
-   module subroutine omega_cc2_a1_cc2(wf, u_bjci, omega)
+   module subroutine omega_cc2_a1_cc2(wf, u_bicj, omega)
 !!
 !!    Omega CC2 A1 term
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, Jan 2019
 !!
 !!    Calculates the A1 term,
 !!
-!!       A1: sum_ckd u_bj_ci * g_abjc,
-!!
-!!    with 
-!!       
-!!       u_bj_ci = 2*t_bj_ci - t_bi_cj
+!!       A1: sum_ckd u_bicj g_abjc = sum_ckd u_bjc_i * g_a_bjc,
 !!
 !!    and adds it to the projection vector omega
 !!
@@ -84,10 +63,10 @@ contains
 !
       class(cc2), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u_bjci
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u_bicj
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout)              :: omega
 !
-      real(dp), dimension(:,:,:,:), allocatable :: g_abjc
+      real(dp), dimension(:,:,:,:), allocatable :: g_abjc, u_bjci
 !
       real(dp), dimension(:,:), allocatable :: omega_ai
 !
@@ -96,6 +75,9 @@ contains
       integer(i15) :: req0, req1
 !
       integer(i15) :: a, i, current_a_batch
+!
+      call mem%alloc(u_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call sort_1234_to_1432(u_bicj, u_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call batch_a%init(wf%n_v)
 !
@@ -143,6 +125,8 @@ contains
          call mem%dealloc(omega_ai, batch_a%length, wf%n_o)
 !
       enddo 
+!
+      call mem%dealloc(u_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
    end subroutine omega_cc2_a1_cc2
 !
@@ -211,7 +195,7 @@ contains
 !!
 !!    Calculates the C1 term,
 !!
-!!       C1: - sum_bj u_ai,bj * F_jb,
+!!       C1: sum_bj u_ai,bj * F_jb,
 !!
 !!    with 
 !!       
@@ -234,7 +218,7 @@ contains
                   (wf%n_o)*(wf%n_v), &
                   1,                 &
                   (wf%n_o)*(wf%n_v), &
-                  -one,              &
+                  one,              &
                   u_aibj,            &
                   (wf%n_o)*(wf%n_v), &
                   F_bj,              &
