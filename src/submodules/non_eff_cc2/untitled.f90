@@ -70,7 +70,58 @@ contains
       class(non_eff_cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u_bjci
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout)          :: omega
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)              :: omega
+!
+      type(batching_index) :: batch_a 
+!
+      integer(i15) :: req0, req1
+!
+      call batch_a%init(wf%n_v)
+!
+      req0 = (wf%n_o)*(wf%n_v)*(wf%integrals%n_J)
+      req1 = (wf%n_v)**2*(wf%n_o) + (wf%n_v)*(wf%integrals%n_J)
+!
+      call mem%batch_setup(batch_a, req0, req1)
+!
+      do current_a_batch = 1, batch_a%num_batches
+!
+         call batch_a%determine_limits(current_a_batch)
+!
+         call mem%alloc(g_abjc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
+!
+         call wf%integrals%get_vvov(g_abjc,                      &
+                                    batch_a%first, batch_a%last, &
+                                    1, wf%n_v,                   &
+                                    1, wf%n_o,                   &
+                                    1, wf%n_v)
+!
+         call mem%alloc(omega_ai, batch_a%length, wf%n_o)
+!
+         call dgemm('N','N',               &
+                     batch_a%length,       &
+                     wf%n_o,               &
+                     (wf%n_o)*(wf%n_v)**2, &
+                     one,                  &
+                     g_abjc,               &
+                     batch_a%length,       &
+                     u_bjci,               &
+                     (wf%n_o)*(wf%n_v)**2, &
+                     zero,                 &
+                     omega_ai,             &
+                     batch_a%length)
+!
+         do i = 1, wf%n_o
+            do a = 1, batch_a%length
+!  
+               omega(a + batch_a%first - 1, i) = omega(a + batch_a%first - 1, i) 
+                                                & + omega_ai(a, i)
+!
+            enddo
+         enddo
+!
+         call mem%dealloc(omega_ai, batch_a%length, wf%n_o)
+!
+      enddo 
 !
    end subroutine omega_cc2_a1_cc2
 !
