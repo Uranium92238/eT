@@ -18,10 +18,9 @@ contains
    module subroutine construct_omega_cc2(wf, omega)
 !!
 !!    Construct omega 
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
-!!    Linda Goletto, and Alexander Paul, Dec 2018
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, Jan 2019
 !!
-!!    Direqts the construction of the projection vector < mu | exp(-T) H exp(T) | R >
+!!    Directs the construction of the projection vector < mu | exp(-T) H exp(T) | R >
 !!    for the current wavefunction amplitudes.
 !!
       implicit none
@@ -30,22 +29,46 @@ contains
 !
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: omega
 !
+      real(dp), dimension(:,:,:,:), allocatable :: u_aibj
+!
       omega = zero
+!
+      write(output%unit,*) 'hei 0'
+      flush(output%unit)
 !
       call wf%omega_ccs_a1(omega)
 !
-      call wf%omega_cc2_a1(omega, wf%fock_diagonal(1:wf%n_o,1), wf%fock_diagonal(wf%n_o + 1 : wf%n_mo, 1))
-      call wf%omega_cc2_b1(omega, wf%fock_diagonal(1:wf%n_o,1), wf%fock_diagonal(wf%n_o + 1 : wf%n_mo, 1))
-      call wf%omega_cc2_c1(omega, wf%fock_diagonal(1:wf%n_o,1), wf%fock_diagonal(wf%n_o + 1 : wf%n_mo, 1))
+      call mem%alloc(u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      write(output%unit,*) 'hei 0.5'
+      flush(output%unit)
+!
+      call wf%construct_u(u_aibj)
+!
+      write(output%unit,*) 'hei 1'
+      flush(output%unit)
+!
+      call wf%omega_cc2_a1(u_aibj, omega)
+!
+      write(output%unit,*) 'hei 2'
+      flush(output%unit)
+!
+      call wf%omega_cc2_b1(u_aibj, omega)
+!
+      write(output%unit,*) 'hei 3'
+      flush(output%unit)
+!
+      call wf%omega_cc2_c1(u_aibj, omega)
+!
+      call mem%dealloc(u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
    end subroutine construct_omega_cc2
 !
 !
-   module subroutine omega_cc2_a1_cc2(wf, omega, eps_o, eps_v)
+   module subroutine omega_cc2_a1_cc2(wf, u_bjci, omega)
 !!
 !!    Omega CC2 A1 term
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
-!!    Linda Goletto, and Alexander Paul, Dec 2018
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, Jan 2019
 !!
 !!    Calculates the A1 term,
 !!
@@ -55,418 +78,174 @@ contains
 !!       
 !!       u_bj_ci = 2*t_bj_ci - t_bi_cj
 !!
-!!    and
-!!
-!!       t_bj_ci = - g_bjci/ε^{bc}_{ji}
-!!
 !!    and adds it to the projection vector omega
 !!
       implicit none
 !
       class(cc2), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: omega
-      real(dp), dimension(wf%n_o), intent(in) :: eps_o
-      real(dp), dimension(wf%n_v), intent(in) :: eps_v
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u_bjci
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)              :: omega
 !
-      real(dp), dimension(:,:), allocatable :: g_bi_cj
-      real(dp), dimension(:,:), allocatable :: L_bj_ci
-      real(dp), dimension(:,:), allocatable :: g_ab_jc
+      real(dp), dimension(:,:,:,:), allocatable :: g_abjc
 !
-      integer(i15) :: b, j, c, i
-      integer(i15) :: bj, ci, bi, cj
+      real(dp), dimension(:,:), allocatable :: omega_ai
 !
-      integer(i15) :: req0, req1_b, req1_c, req2
+      type(batching_index) :: batch_a 
 !
-      integer(i15) :: current_b_batch, current_c_batch
+      integer(i15) :: req0, req1
 !
-      type(batching_index) :: batch_b, batch_c
+      integer(i15) :: a, i, current_a_batch
 !
-      req0 = 0
+      call batch_a%init(wf%n_v)
 !
-      req1_b = (wf%integrals%n_J)*(wf%n_v)
-      req1_c = (wf%integrals%n_J)*(wf%n_o)
+      req0 = (wf%n_o)*(wf%n_v)*(wf%integrals%n_J)
+      req1 = (wf%n_v)**2*(wf%n_o) + (wf%n_v)*(wf%integrals%n_J)
 !
-      req2 =  (wf%n_o**2) + (wf%n_o)*(wf%n_v)
+      call mem%batch_setup(batch_a, req0, req1)
 !
-      call batch_b%init(wf%n_v)
-      call batch_c%init(wf%n_v)
+      do current_a_batch = 1, batch_a%num_batches
 !
-      call mem%batch_setup(batch_b, batch_c, req0, req1_b, req1_c, req2)
+         call batch_a%determine_limits(current_a_batch)
 !
-      do current_b_batch = 1, batch_b%num_batches
+         call mem%alloc(g_abjc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
 !
-         call batch_b%determine_limits(current_b_batch)
+         call wf%get_vvov(g_abjc,                       &
+                           batch_a%first, batch_a%last, &
+                           1, wf%n_v,                   &
+                           1, wf%n_o,                   &
+                           1, wf%n_v)
 !
-         do current_c_batch = 1, batch_c%num_batches
+         call mem%alloc(omega_ai, batch_a%length, wf%n_o)
 !
-            call batch_c%determine_limits(current_c_batch)
+         call dgemm('N','N',               &
+                     batch_a%length,       &
+                     wf%n_o,               &
+                     (wf%n_o)*(wf%n_v)**2, &
+                     one,                  &
+                     g_abjc,               &
+                     batch_a%length,       &
+                     u_bjci,               &
+                     (wf%n_o)*(wf%n_v)**2, &
+                     zero,                 &
+                     omega_ai,             &
+                     batch_a%length)
 !
-            call mem%alloc(g_bi_cj, (batch_b%length)*(wf%n_o), (batch_c%length)*(wf%n_o))
-            call mem%alloc(L_bj_ci, (batch_b%length)*(wf%n_o), (batch_c%length)*(wf%n_o))
+         do i = 1, wf%n_o
+            do a = 1, batch_a%length
+!  
+               omega(a + batch_a%first - 1, i) = omega(a + batch_a%first - 1, i) &
+                                                + omega_ai(a, i)
 !
-            call wf%get_vovo(g_bi_cj,                      &
-                              batch_b%first, batch_b%last, &
-                              1, wf%n_o,                   &
-                              batch_c%first, batch_c%last, &
-                              1, wf%n_o)
-!
-!$omp parallel do schedule(static) private(i, j, c, b, bj, ci, bi, cj)
-            do b = 1, (batch_b%length)
-               do  j = 1, wf%n_o
-                   do c = 1, (batch_c%length)
-                      do i = 1, wf%n_o
-!
-                         bj = batch_b%length*(j-1) + b
-                         ci = batch_c%length*(i-1) + c
-                         bi = batch_b%length*(i-1) + b
-                         cj = batch_c%length*(j-1) + c
-!                        
-                         L_bj_ci(bj,ci) = -(two*g_bi_cj(bi,cj) - g_bi_cj(bj,ci))&
-                                                                /(eps_v(b + batch_b%first - 1)&
-                                                                + eps_v(c + batch_c%first - 1) &
-                                                                - eps_o(i) - eps_o(j))
-                      enddo
-                   enddo
-               enddo
             enddo
-!$omp end parallel do
-!
-            call mem%dealloc(g_bi_cj, (batch_b%length)*(wf%n_o), (batch_c%length)*(wf%n_o))
-!
-            call mem%alloc(g_ab_jc, (batch_b%length)*(wf%n_v), (batch_c%length)*(wf%n_o))
-!
-            call wf%get_vvov(g_ab_jc,                       &
-                              1, wf%n_v,                    &
-                              batch_b%first, batch_b%last,  &
-                              1, wf%n_o,                    &
-                              batch_c%first, batch_c%last)
-!
-            call dgemm('N','N',                                   &
-                        wf%n_v,                                   &
-                        wf%n_o,                                   &
-                        (batch_b%length)*(batch_c%length)*wf%n_o, &
-                        one,                                      &
-                        g_ab_jc,                                  &
-                        wf%n_v,                                   &
-                        L_bj_ci,                                  &
-                        (batch_b%length)*(batch_c%length)*wf%n_o, &
-                        one,                                      &
-                        omega,                                    &
-                        wf%n_v)
-!
-            call mem%dealloc(g_ab_jc, (batch_b%length)*(wf%n_v), (batch_c%length)*(wf%n_o))
-            call mem%dealloc(L_bj_ci, (batch_b%length)*(wf%n_o), (batch_c%length)*(wf%n_o))
-!
          enddo
-      enddo
+!
+         call mem%dealloc(omega_ai, batch_a%length, wf%n_o)
+!
+      enddo 
 !
    end subroutine omega_cc2_a1_cc2
 !
 !
-   module subroutine omega_cc2_b1_cc2(wf, omega, eps_o, eps_v)
+   module subroutine omega_cc2_b1_cc2(wf, u_ajbk, omega)
 !!
 !!    Omega CC2 B1 term
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
-!!    Linda Goletto, and Alexander Paul, Dec 2018
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, Jan 2019
 !!
 !!    Calculates the B1 term,
 !!
-!!       B1: - sum_ckl (2g_kb_ji - g_jb_ki) * t_aj_bk,
+!!       B1: - sum_ckl g_kb,ji * u_aj,bk,
 !!
 !!    with
 !!
-!!       t_aj_bk = - g_ajbk/ε^{ab}_{jk}
+!!      u_aj_bk = 2t_aj,bk - t_ak,bj
 !!
-!!    and adds it to the projection vector (omega) of
-!!    the wavefunction object wf.
+!!    and adds it to the projection vector (omega)
 !!
       implicit none
 !
       class(cc2), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: omega
-      real(dp), dimension(wf%n_o), intent(in) :: eps_o
-      real(dp), dimension(wf%n_v), intent(in) :: eps_v
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u_ajbk
+      real(dp), dimension(wf%n_amplitudes, 1), intent(inout)          :: omega
 !
-      real(dp), dimension(:,:), allocatable :: g_aj_bk
-      real(dp), dimension(:,:), allocatable :: g_jb_ki
-      real(dp), dimension(:,:), allocatable :: g_kb_ji
+      real(dp), dimension(:,:,:,:), allocatable :: g_kbji
+      real(dp), dimension(:,:,:,:), allocatable :: g_jbki
 !
-      integer(i15) :: a, b, j, k
-      integer(i15) :: aj, bk
+!     g_kbji ordered as g_jbki
 !
-      integer(i15) :: req0, req1_b, req1_j, req1_k, req2_bj, req2_bk, req2_jk, req3
+      call mem%alloc(g_kbji, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-      integer(i15) :: current_b_batch, current_j_batch, current_k_batch
+      call wf%get_ovoo(g_kbji)
 !
-      type(batching_index) :: batch_b, batch_j, batch_k
+      call mem%alloc(g_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-      req0 = 0
+      call sort_1234_to_3214(g_kbji, g_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-      req1_b = 0
-      req1_j = wf%integrals%n_J*(wf%n_v)
-      req1_k = wf%integrals%n_J*(wf%n_o)
+      call mem%dealloc(g_kbji, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-      req2_bj = wf%integrals%n_J
-      req2_bk = wf%integrals%n_J
-      req2_jk = 0
+!     omega_ai += - sum_ckl g_kb,ji * u_aj,bk
 !
-      req3 = (wf%n_v) + 2*(wf%n_o) 
+      call dgemm('N', 'N',            &
+                  wf%n_v,             &
+                  wf%n_o,             &
+                  (wf%n_o**2)*wf%n_v, &
+                  -one,               &
+                  u_ajbk,             & ! u_a_jbk
+                  wf%n_v,             &
+                  g_jbki,             & ! g_jbk_i
+                  (wf%n_o**2)*wf%n_v, &
+                  one,                &
+                  omega,              & ! omega_a_i
+                  wf%n_v)
 !
-      call batch_b%init(wf%n_v)
-      call batch_j%init(wf%n_o)
-      call batch_k%init(wf%n_o)
-!
-      call mem%batch_setup(batch_b, batch_j, batch_k, req0, req1_b, &
-                    req1_j, req1_k, req2_bj, req2_bk, req2_jk, req3)
-!
-      do current_b_batch = 1, batch_b%num_batches
-!
-         call batch_b%determine_limits(current_b_batch)
-!
-         do current_j_batch = 1, batch_j%num_batches
-!
-            call batch_j%determine_limits(current_j_batch)
-!
-            do current_k_batch = 1, batch_k%num_batches
-!
-               call batch_k%determine_limits(current_k_batch)
-!
-               call mem%alloc(g_aj_bk, (wf%n_v)*(batch_j%length),&
-                             (batch_b%length)*(batch_k%length))
-!
-               call wf%get_vovo(g_aj_bk,                    &
-                               1, wf%n_v,                   &
-                               batch_j%first, batch_j%last, &
-                               batch_b%first, batch_b%last, &
-                               batch_k%first, batch_k%last)
-!
-!$omp parallel do schedule(static) private(k, j, a, b, aj, bk)
-               do a = 1, wf%n_v
-                  do j = 1, (batch_j%length)
-                     do b = 1, (batch_b%length)
-                        do k = 1, (batch_k%length)
-!
-                           aj = wf%n_v*(j-1) + a
-                           bk = (batch_b%length)*(k-1) + b
-!
-                           g_aj_bk(aj,bk) = - g_aj_bk(aj,bk)/(eps_v(a) &
-                                                   + eps_v(b + batch_b%first - 1)&
-                                                   - eps_o(j + batch_j%first - 1) &
-                                                   - eps_o(k + batch_k%first - 1))
-!
-                        enddo
-                     enddo
-                  enddo
-               enddo
-!$omp end parallel do
-!
-               call mem%alloc(g_jb_ki, (batch_b%length)*(batch_j%length), &
-                              (wf%n_o)*(batch_k%length))
-!
-               call wf%get_ovoo(g_jb_ki,                      &
-                                 batch_j%first, batch_j%last, &
-                                 batch_b%first, batch_b%last, &
-                                 batch_k%first, batch_k%last, & 
-                                 1, wf%n_o)
-!
-               call dgemm('N','N',                                             &
-                           wf%n_v,                                             &
-                           wf%n_o,                                             &
-                           (batch_j%length)*(batch_k%length)*(batch_b%length), &
-                           one,                                                &
-                           g_aj_bk,                                            &
-                           wf%n_v,                                             &
-                           g_jb_ki,                                            &
-                           (batch_j%length)*(batch_k%length)*(batch_b%length), &
-                           one,                                                &
-                           omega,                                              &
-                           wf%n_v)
-!
-               call mem%dealloc(g_jb_ki, (batch_b%length)*(batch_j%length), &
-                              (wf%n_o)*(batch_k%length))
-!
-!
-               call mem%alloc(g_kb_ji, (batch_b%length)*(batch_k%length), &
-                              (wf%n_o)*(batch_j%length))
-!
-               call wf%get_ovoo(g_kb_ji,                     &
-                                batch_k%first, batch_k%last, &
-                                batch_b%first, batch_b%last, &
-                                batch_j%first, batch_j%last, & 
-                                1, wf%n_o)
-!
-               call mem%alloc(g_jb_ki, (batch_b%length)*(batch_j%length), &
-                              (wf%n_o)*(batch_k%length))
-!
-               call sort_1234_to_3214(g_kb_ji, g_jb_ki, (batch_k%length), &
-                     (batch_b%length), (batch_j%length), wf%n_o)
-!
-               call mem%dealloc(g_kb_ji, (batch_b%length)*(batch_k%length), &
-                              (wf%n_o)*(batch_j%length))
-!
-               call dgemm('N','N',                                             &
-                           wf%n_v,                                             &
-                           wf%n_o,                                             &
-                           (batch_j%length)*(batch_k%length)*(batch_b%length), &
-                           -two,                                               &
-                           g_aj_bk,                                            &
-                           wf%n_v,                                             &
-                           g_jb_ki,                                            &
-                           (batch_j%length)*(batch_k%length)*(batch_b%length), &
-                           one,                                                &
-                           omega,                                              &
-                           wf%n_v)
-!
-               call mem%dealloc(g_jb_ki, (batch_b%length)*(batch_j%length), &
-                                       (wf%n_o)*(batch_k%length))
-               call mem%dealloc(g_aj_bk, (wf%n_v)*(batch_j%length),&
-                                      (batch_b%length)*(batch_k%length))
-!
-            enddo
-         enddo
-      enddo
+      call mem%dealloc(g_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
    end subroutine omega_cc2_b1_cc2
 !
 !
-   module subroutine omega_cc2_c1_cc2(wf, omega, eps_o, eps_v)
+   module subroutine omega_cc2_c1_cc2(wf, u_aibj, omega)
 !!
 !!    Omega CC2 C1 term
-!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
-!!    Linda Goletto, and Alexander Paul, Dec 2018
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, Jan 2019
 !!
 !!    Calculates the C1 term,
 !!
-!!       C1: - sum_bj u_ai_bj * F_{jb},
+!!       C1: - sum_bj u_ai,bj * F_jb,
 !!
 !!    with 
 !!       
 !!       u_ai_bj = 2*t_ai_bj - t_aj_bi
 !!
-!!    and
-!!
-!!       t_ai_bj = - g_aibj/ε^{ab}_{ij}
-!!
-!!    and adds it to the projection vector (omega) of
-!!    the wavefunction object wf.
 !!
       implicit none
 !
       class(cc2), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: omega
-      real(dp), dimension(wf%n_o), intent(in) :: eps_o
-      real(dp), dimension(wf%n_v), intent(in) :: eps_v
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u_aibj
+      real(dp), dimension(wf%n_amplitudes, 1), intent(inout)          :: omega
 !
-      real(dp), dimension(:,:), allocatable :: g_aibj
-      real(dp), dimension(:,:), allocatable :: u_aibj
       real(dp), dimension(:,:), allocatable :: F_bj
 !
-      integer(i15) :: i, j, a, b
-      integer(i15) :: ai, aj, bi, bj
+      call mem%alloc(F_bj, wf%n_o, wf%n_v)
+      call sort_12_to_21(wf%fock_ia, F_bj, wf%n_o, wf%n_v)
 !
-      integer(i15) :: req0, req1_j, req1_i, req2, omega_offset
+      call dgemm('N','N',            &
+                  (wf%n_o)*(wf%n_v), &
+                  1,                 &
+                  (wf%n_o)*(wf%n_v), &
+                  -one,              &
+                  u_aibj,            &
+                  (wf%n_o)*(wf%n_v), &
+                  F_bj,              &
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  omega,             &
+                  (wf%n_o)*(wf%n_v))
 !
-      integer(i15) :: current_j_batch, current_i_batch
+      call mem%dealloc(F_bj, wf%n_o, wf%n_v)
 !
-      type(batching_index) :: batch_j, batch_i
-!
-      req0 = 0
-!
-      req1_j = (wf%n_v)*(wf%integrals%n_J)
-      req1_i = (wf%n_v)*(wf%integrals%n_J)
-!
-      req2 =  2*(wf%n_v)**2
-!
-      call batch_i%init(wf%n_o)
-      call batch_j%init(wf%n_o)
-!
-      call mem%batch_setup(batch_i, batch_j, req0, req1_i, req1_j, req2)
-!
-      do current_i_batch = 1, batch_i%num_batches
-!
-         call batch_i%determine_limits(current_i_batch)
-!
-         do current_j_batch = 1, batch_j%num_batches
-!
-            call batch_j%determine_limits(current_j_batch)
-!
-            call mem%alloc(g_aibj, (batch_i%length)*wf%n_v, wf%n_v*(batch_j%length))
-!
-            call wf%get_vovo(g_aibj,                        &
-                              1, wf%n_v,                    &
-                              batch_i%first, batch_i%last,  &
-                              1, wf%n_v,                    &
-                              batch_j%first, batch_j%last)
-!
-            call mem%alloc(u_aibj, (batch_i%length)*wf%n_v, wf%n_v*(batch_j%length))
-!
-!           Construct u_aibj
-!
-!$omp parallel do schedule(static) private(i, j, a, b, ai, aj, bi, bj)
-            do b = 1, wf%n_v 
-               do j = 1, batch_j%length
-!
-                  bj = wf%n_v*(j-1) + b
-!
-                  do i = 1, batch_i%length 
-!
-                     bi = wf%n_v*(i-1) + b
-!
-                     do a = 1, wf%n_v
-!
-                        ai = wf%n_v*(i-1) + a
-                        aj = wf%n_v*(j-1) + a
-!
-                        u_aibj(ai, bj) = (-two*g_aibj(ai, bj)+g_aibj(bi, aj))/(eps_v(a) &
-                                                             + eps_v(b) &
-                                                             - eps_o(i + batch_i%first - 1) &
-                                                             - eps_o(j + batch_j%first - 1)) 
-!
-                     enddo
-                  enddo
-               enddo
-            enddo
-!$omp end parallel do
-!
-            call mem%dealloc(g_aibj, (batch_i%length)*wf%n_v, wf%n_v*(batch_j%length))
-!
-            call mem%alloc(F_bj, wf%n_v, batch_j%length)
-!
-!$omp parallel do schedule(static) private(b,j)
-            do b = 1, wf%n_v 
-               do j = 1, batch_j%length
-!
-                     F_bj(b, j) = wf%fock_ia(j + batch_j%first - 1, b)
-!
-               enddo
-            enddo
-!$omp end parallel do
-!
-            omega_offset = wf%n_v*(batch_i%first - 1) + 1
-!
-            call dgemm('N', 'N',                     &
-                       (batch_i%length)*wf%n_v,      &
-                       1,                            &
-                       (batch_j%length)*wf%n_v,      &
-                       one,                          &
-                       u_aibj,                       &
-                       wf%n_v*(batch_i%length),      &
-                       F_bj,                         &
-                       wf%n_v*(batch_j%length),      &
-                       one,                          &
-                       omega(omega_offset, 1),       &
-                       wf%n_v*wf%n_o)
-!        
-            call mem%dealloc(u_aibj, (batch_i%length)*wf%n_v, wf%n_v*(batch_j%length))
-            call mem%dealloc(F_bj, wf%n_v, batch_j%length)
-!
-         enddo
-      enddo
-!
-   end subroutine omega_cc2_c1_cc2
+    end subroutine omega_cc2_c1_cc2
 !
 !
 end submodule omega_cc2

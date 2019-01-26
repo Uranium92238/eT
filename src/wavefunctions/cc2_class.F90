@@ -14,6 +14,8 @@ module cc2_class
 !
    contains
 !
+      procedure :: construct_u      => construct_u_cc2
+!
       procedure :: construct_omega  => construct_omega_cc2
 !
       procedure :: omega_cc2_a1     => omega_cc2_a1_cc2
@@ -34,106 +36,112 @@ module cc2_class
 contains
 !
 !
-   subroutine calculate_energy_cc2(wf)
+   module subroutine calculate_energy_cc2(wf)
 !!
-!!     Calculate energy (CC2)
-!!     Written by Sarai D. Folkestad, Eirik F. Kjønstad, 
-!!     Andreas Skeidsvoll, 2018
+!!    Calculate energy 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
 !!
-!!     Calculates the CC2 energy. This is only equal to the actual
-!!     CC2 energy when the ground state amplitudes are converged.
+!!    E = E_HF + sum_aibj (t_i^a*t_j^b + t_ij^ab) L_iajb
 !!
-      implicit none
+      class(cc2), intent(inout) :: wf 
 !
-      class(cc2), intent(inout) :: wf
-!
-      real(dp), dimension(:,:), allocatable :: g_aibj
-      real(dp), dimension(:,:), allocatable :: g_iajb
+      real(dp), dimension(:,:,:,:), allocatable :: g_aibj, g_iajb 
 !
       real(dp) :: correlation_energy
 !
-      integer(i15) :: i, j, a, b, ai, bj, ia, jb, ib, ja
+      integer(i15) :: a, i, b, j
 !
-      integer(i15) :: req0, req1_i, req1_j, req2
+      call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      integer(i15) :: current_i_batch, current_j_batch
+      call wf%get_vovo(g_aibj)
+      call wf%get_ovov(g_iajb)
 !
-      type(batching_index) :: batch_i, batch_j
+      correlation_energy = zero 
 !
-      req0 = 0
+      write(output%unit, *) 'hei 4'
+      flush(output%unit)
 !
-      req1_i = (wf%n_v)*(wf%integrals%n_J)
-      req1_j = (wf%n_v)*(wf%integrals%n_J)
+!$omp parallel do private(a,i,b,j) reduction(+:correlation_energy)
+      do b = 1, wf%n_v
+         do i = 1, wf%n_o 
+            do j = 1, wf%n_o 
+               do a = 1, wf%n_v
 !
-      req2 =  2*(wf%n_v**2)
+                  correlation_energy = correlation_energy +                                &
+                                       (wf%t1(a, i)*wf%t1(b, j) -                          &
+                                       (g_aibj(a,i,b,j))/(wf%fock_diagonal(wf%n_o + a, 1)  &
+                                                         + wf%fock_diagonal(wf%n_o + b, 1) &
+                                                         - wf%fock_diagonal(i,1)           &
+                                                         - wf%fock_diagonal(j,1)))         &
+                                       *(two*g_iajb(i,a,j,b)-g_iajb(i,b,j,a))
 !
-      call batch_i%init(wf%n_o)
-      call batch_j%init(wf%n_o)
-!
-      call mem%batch_setup(batch_i, batch_j, req0, req1_i, req1_j, req2)
-!
-      correlation_energy = zero
-!
-      do current_i_batch = 1, batch_i%num_batches
-!
-         call batch_i%determine_limits(current_i_batch)
-!
-         do current_j_batch = 1, batch_j%num_batches
-!
-            call batch_j%determine_limits(current_j_batch)
-!
-            call mem%alloc(g_aibj, wf%n_v*(batch_i%length), wf%n_v*(batch_j%length))
-            call mem%alloc(g_iajb, wf%n_v*(batch_i%length), wf%n_v*(batch_j%length))
-!
-            call wf%get_vovo(g_aibj, &
-                              1, wf%n_v, &
-                              batch_i%first, batch_i%last, &
-                              1, wf%n_v, &
-                              batch_j%first, batch_j%last)
-!
-            call wf%get_ovov(g_iajb, &
-                              batch_i%first, batch_i%last, &
-                              1, wf%n_v, &
-                              batch_j%first, batch_j%last, &
-                              1, wf%n_v)
-!
-!$omp parallel do private(b,i,j,a,ai,ia,bj,jb,ib,ja) reduction(+:correlation_energy)
-            do b = 1, wf%n_v
-               do i = 1, batch_i%length
-                  do j = 1, batch_j%length
-                     do a = 1, wf%n_v
-!
-                        ai = index_two(a, i, wf%n_v)
-                        ia = index_two(i, a, batch_i%length)
-                        bj = index_two(b, j, wf%n_v)
-                        jb = index_two(j, b, batch_j%length)
-                        ib = index_two(i, b, batch_i%length)
-                        ja = index_two(j, a, batch_j%length)
-!
-                        correlation_energy = correlation_energy + &
-                                             (wf%t1(a, i + batch_i%first - 1)*wf%t1(b, j + batch_j%first - 1) &
-                                             - (g_aibj(ai, bj))/(wf%fock_diagonal(wf%n_o + a, 1) &
-                                                               + wf%fock_diagonal(wf%n_o + b, 1) &
-                                                               - wf%fock_diagonal(i + batch_i%first - 1,1) &
-                                                               - wf%fock_diagonal(j + batch_j%first - 1,1)))&
-                                             *(two*g_iajb(ia,jb)-g_iajb(ib,ja))
-!
-                     enddo
-                  enddo
                enddo
             enddo
-!$omp end parallel do 
-!
-!
-            call mem%dealloc(g_aibj, wf%n_v*(batch_i%length), wf%n_v*(batch_j%length))
-            call mem%dealloc(g_iajb, wf%n_v*(batch_i%length), wf%n_v*(batch_j%length))
-!
          enddo
       enddo
+!$omp end parallel do 
+!
+      call mem%dealloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
       wf%energy = wf%hf_energy + correlation_energy
 !
+      write(output%unit, *) 'hei 5'
+      flush(output%unit)
+!
    end subroutine calculate_energy_cc2
+!
+!
+   subroutine construct_u_cc2(wf, u_aibj)
+!!
+!!    Construct U 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Jan 2019
+!!
+!!    Construct
+!!
+!!       u_aibj = 2t_aibj - t_ajbi
+!!
+!!    with
+!!
+!!       t_aibj = - g_aibj/ε_aibj
+!!
+!!    where
+!!
+!!       ε_aibj = ε_a - ε_i + ε_b - ε_j 
+!!
+!!    and ε_r is the r'th orbital energy.
+!!
+      class(cc2), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout) :: u_aibj
+!
+      real(dp), dimension(:,:,:,:), allocatable :: g_aibj
+!
+      integer(i15) :: a, i, b, j
+!
+      call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)  
+!
+      call wf%get_vovo(g_aibj)
+!
+      do b = 1, wf%n_v 
+         do j = 1, wf%n_o 
+            do i = 1, wf%n_o
+               do a = 1, wf%n_v
+!
+                  u_aibj(a, i, b, j) = (two*g_aibj(a, i, b, j) - g_aibj(a, j, b, i))/ &
+                                       (wf%fock_diagonal(i, 1) + wf%fock_diagonal(j, 1) &
+                                        - wf%fock_diagonal(wf%n_o + a, 1) &
+                                        - wf%fock_diagonal(wf%n_o + b, 1) )
+!
+               enddo
+            enddo
+         enddo 
+      enddo
+!    
+      call mem%dealloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)      
+!
+   end subroutine construct_u_cc2
 !
 !
 end module cc2_class
