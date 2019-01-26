@@ -775,7 +775,7 @@ contains
 !
             call batch_a%determine_limits(current_a_batch)
 !
-!           Construct X_aick = sum_d g_aicd c_dk
+!           X_aick = sum_d g_aicd c_dk
 !
             call mem%alloc(g_aicd, batch_a%length, wf%n_o, batch_c%length, wf%n_v)
 !
@@ -792,17 +792,17 @@ contains
                         wf%n_o,                                   &
                         wf%n_v,                                   &
                         one,                                      &
-                        g_aicd,                                   & ! g_aic,d
+                        g_aicd,                                   & ! g_aic_d
                         wf%n_o*(batch_a%length)*(batch_c%length), &
-                        c_ai,                                     & ! c_d,k
+                        c_ai,                                     & ! c_d_k
                         wf%n_v,                                   &
                         zero,                                     &
-                        X_aick,                                   & ! X_aic,k
+                        X_aick,                                   & ! X_aic_k
                         wf%n_o*(batch_a%length)*(batch_c%length))
 !
             call mem%dealloc(g_aicd, batch_a%length, wf%n_o, batch_c%length, wf%n_v)
 !
-!           Scale X: Y_aick = (-eps_ai,ck + w)^-1 * (1 + delta_ai,ck)^-1 * (2 X_aick - X_akci)
+!           Y_aick = (-eps_ai,ck + w)^-1 * (1 + delta_ai,ck)^-1 * (2 X_aick - X_akci)
 !
             call mem%alloc(Y_aick, batch_a%length, wf%n_o, batch_c%length, wf%n_o)
 !
@@ -860,7 +860,7 @@ contains
                         1,                          &
                         wf%n_o*(batch_c%length),    &
                         one,                        &
-                        Y_aick,                     & ! Y_ai,ck
+                        Y_aick,                     & ! Y_ai_ck
                         wf%n_o*(batch_a%length),    &
                         F_ck,                       &
                         wf%n_o*(batch_c%length),    &
@@ -882,7 +882,7 @@ contains
             call mem%dealloc(reduced_rho_ai, batch_a%length, wf%n_o)
             call mem%dealloc(F_ck, batch_c%length, wf%n_o)
 !
-!           Now we pretend that ck is ai and vice versa s.t. Y_ai,ck = Y_ck,ai
+!           Now we pretend that ck is ai and vice versa s.t. Y_aick = Y_ckai
 !
             call mem%alloc(F_ck, batch_a%length, wf%n_o)
 !
@@ -987,7 +987,7 @@ contains
 !
             call batch_k%determine_limits(current_k_batch)
 !
-!           Construct X_c_kai = sum_l c_c_l g_l_kai
+!           X_c_kai = sum_l c_cl g_lkai
 !
             call mem%alloc(g_lkai, wf%n_o, batch_k%length, wf%n_v, batch_i%length)
 !
@@ -1155,7 +1155,7 @@ contains
 !
                call batch_b%determine_limits(current_b_batch)
 !
-!              Construct X_akbj = sum_c g_akbc * c_cj
+!              X_akbj = sum_c g_akbc * c_cj
 !
                call mem%alloc(g_akbc, batch_a%length, wf%n_o, batch_b%length, wf%n_v)
 !
@@ -1182,7 +1182,7 @@ contains
 !
                call mem%dealloc(g_akbc, batch_a%length, wf%n_o, batch_b%length, wf%n_v)
 !
-!              Construct X_bjak = sum_c g_bjac * c_ck
+!              X_bjak = sum_c g_bjac * c_ck
 !
                call mem%alloc(g_bjac, batch_b%length, wf%n_o, batch_a%length, wf%n_v)
 !
@@ -1243,7 +1243,7 @@ contains
 !
                endif
 !
-!              Construct L_kijb = 2 g_kijb - g_jikb
+!              L_kijb = 2 g_kijb - g_jikb, ordered as L_kjbi
 !
                call mem%alloc(g_kijb, wf%n_o, batch_i%length, wf%n_o, batch_b%length)
 !
@@ -1325,7 +1325,6 @@ contains
 !
       type(batching_index) :: batch_j, batch_k
 !
-!
 !     X_bjak = sum_l g_aklj * c_bl
 !
       req0 = 0
@@ -1371,7 +1370,7 @@ contains
 !
             call mem%dealloc(g_ljak, wf%n_o, (batch_j%length), wf%n_v, (batch_k%length))
 !
-!           Construct X_akbj = sum_c g_bjlk * c_al
+!           X_akbj = sum_c g_bjlk * c_al
 !
             call mem%alloc(g_lkbj, wf%n_o, batch_k%length, wf%n_v, batch_j%length)
 !
@@ -1397,8 +1396,8 @@ contains
                         (wf%n_v))
 !
             call mem%dealloc(g_lkbj, wf%n_o, batch_k%length, wf%n_v, batch_j%length)
-!
-!           Reordering and scaling
+!  
+!           Y_ajbk = (X_bjak + X_akbj)/(ε_bjak + ω)
 !
             call mem%alloc(Y_ajbk, wf%n_v, (batch_j%length), wf%n_v, (batch_k%length))
 !
@@ -1447,7 +1446,9 @@ contains
                               1, wf%n_o)
 !
             call mem%alloc(L_jbki, batch_j%length, wf%n_v, batch_k%length, wf%n_o)
-            L_jbki = two*g_jbki
+            !L_jbki = two*g_jbki
+            call dcopy(batch_j%length*wf%n_v*batch_k%length*wf%n_o, g_jbki, 1, L_jbki, 1)
+            call dscal(batch_j%length*wf%n_v*batch_k%length*wf%n_o, two, L_jbki, 1)
 !
             call mem%dealloc(g_jbki, batch_j%length, wf%n_v, batch_k%length, wf%n_o)
 !
