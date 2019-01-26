@@ -154,10 +154,12 @@ contains
 !
             call mem%alloc(c_jb, (batch_j%length), wf%n_v)
 !
-            !$omp parallel do private(j, b)
+!$omp parallel do private(j, b)
             do b = 1, wf%n_v
                do j = 1, batch_j%length
+!
                   c_jb(j, b) = c_bj(b, j + batch_j%first - 1)
+!
                enddo
             enddo
 !$omp end parallel do
@@ -225,7 +227,9 @@ contains
 !$omp parallel do private(j, b)
             do j = 1, wf%n_o
                do b = 1, batch_b%length
+!
                   c_jb(j, b) = c_bj( b + batch_b%first - 1, j)
+!
                enddo
             enddo
 !$omp end parallel do
@@ -279,7 +283,7 @@ contains
 !
 !     Intermediates
 !
-      real(dp), dimension(:,:), allocatable :: X_kc, X_ji, X_ab, X_kc_batch, c_bj_batch
+      real(dp), dimension(:,:), allocatable :: X_kc, X_ji, X_ab, X_kc_batch
       real(dp), dimension(:,:), allocatable :: rho_ai_batch
 !
 !     Integrals
@@ -290,15 +294,15 @@ contains
 !
 !     Indices
 !
-      integer(i15) :: i, j, k, a, b, c, ai_offset, bj_offset, kc_offset, prev_available
+      integer(i15) :: i, j, k, a, b, c, bj_offset, kc_offset
 !
       integer(i15) :: req0, req1_j, req1_k, req2, req1_a, req1_c, req1_b
       integer(i15) :: req1_i, req2_ji, req2_ki, req2_kj, req3 
 !
       integer(i15) :: current_j_batch, current_k_batch, current_i_batch
-      integer(i15) :: current_a_batch, current_c_batch, current_b_batch
+      integer(i15) :: current_a_batch, current_c_batch
 !
-      type(batching_index) :: batch_j, batch_k, batch_a, batch_c, batch_b, batch_i
+      type(batching_index) :: batch_j, batch_k, batch_a, batch_c, batch_i
 !
 !     :: Term 1: L_kcjb * c_bj * (2 t^ac_ik - t^ac_ki)  ::
 !
@@ -362,8 +366,16 @@ contains
                         X_kc_batch,                &
                         batch_k%length*(wf%n_v))
 !
-            X_kc(batch_k%first : batch_k%last, :) = X_kc(batch_k%first : batch_k%last, :)&
-                                       + X_kc_batch(1:batch_k%length,:)
+!$omp parallel do private(k, c)
+            do c = 1, wf%n_v
+               do k = 1, batch_k%length
+!
+                  X_kc(k + batch_k%first - 1, c) = X_kc(k + batch_k%first - 1, c) &
+                                                 + X_kc_batch(k, c)
+!
+               enddo
+            enddo
+!$omp end parallel do
 !
             call mem%dealloc(X_kc_batch, batch_k%length, wf%n_v)
 !
@@ -446,7 +458,16 @@ contains
 !
             call mem%dealloc(u_aikc, batch_a%length, wf%n_o, wf%n_o, batch_c%length)
 !
-            rho_ai(batch_a%first:batch_a%last, :) = rho_ai(batch_a%first:batch_a%last, :) + rho_ai_batch(:,:)
+!$omp parallel do private(a, i)
+            do i = 1, wf%n_o
+               do a = 1, batch_a%length
+!
+                  rho_ai(a + batch_a%first - 1, i) = rho_ai(a + batch_a%first - 1, i) &
+                                                 + rho_ai_batch(a, i)
+!
+               enddo
+            enddo
+!$omp end parallel do
 !
             call mem%dealloc(rho_ai_batch, batch_a%length, wf%n_o)
 !
@@ -474,10 +495,6 @@ contains
       req2_ji = 0
 !
       req3 = 0
-!
-      prev_available = mem%available
-     ! mem%available = (req0 + req1_k*2 + req1_j*2 + req1_i*2 +&
-     !     req2_ji*4 + req2_ki*4 + req2_kj*4)*dp
 !
       call batch_k%init(wf%n_o)
       call batch_j%init(wf%n_o)
@@ -524,19 +541,19 @@ contains
                                     batch_i%first, batch_i%last)
 !
 !$omp parallel do private(i,b,k,c)
-            do c = 1, wf%n_v
-               do i = 1, batch_i%length
-                  do k = 1, batch_k%length
-                     do b = 1, wf%n_v
+                  do c = 1, wf%n_v
+                     do i = 1, batch_i%length
+                        do k = 1, batch_k%length
+                           do b = 1, wf%n_v
 !
-                        g_ckbi(c,k,b,i) = - g_ckbi(c,k,b,i) &
-                                          /(eps_v(c) + eps_v(b) &
-                                          - eps_o(i + batch_i%first - 1) &
-                                          - eps_o(k + batch_k%first - 1))
+                              g_ckbi(c,k,b,i) = - g_ckbi(c,k,b,i) &
+                                                /(eps_v(c) + eps_v(b) &
+                                                - eps_o(i + batch_i%first - 1) &
+                                                - eps_o(k + batch_k%first - 1))
+                           enddo
+                        enddo
                      enddo
                   enddo
-               enddo
-            enddo
 !$omp end parallel do
 !
 
@@ -559,8 +576,6 @@ contains
             enddo ! batch_i
          enddo ! batch_j
       enddo ! batch_k
-
-      mem%available = prev_available
 !
 !     rho_ai = rho_ai - c_aj X_ji
 !
@@ -592,9 +607,6 @@ contains
       req1_b = (wf%integrals%n_J)*(wf%n_o)
 !
       req2 = 2*(wf%n_v)*(wf%n_o)
-
-      prev_available = mem%available
-     ! mem%available = (req0 + req1_k*2 + req1_b*2 + req2*4)*dp
 !
       call batch_k%init(wf%n_o)
       call batch_j%init(wf%n_o)
@@ -674,8 +686,6 @@ contains
 !
          enddo ! batch_k
       enddo ! batch_j
-!
-      mem%available = prev_available
 !
 !     rho_ai = rho_ai - X_ab c_bi
 !
