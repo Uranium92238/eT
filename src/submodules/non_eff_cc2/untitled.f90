@@ -26,7 +26,7 @@ contains
 !!
       implicit none
 !
-      class(cc2), intent(in) :: wf
+      class(non_eff_cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: omega
 !
@@ -67,7 +67,7 @@ contains
 !!
       implicit none
 !
-      class(cc2), intent(in) :: wf
+      class(non_eff_cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u_bjci
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout)          :: omega
@@ -94,7 +94,7 @@ contains
 !!
       implicit none
 !
-      class(cc2), intent(in) :: wf
+      class(non_eff_cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u_ajbk
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout)          :: omega
