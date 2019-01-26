@@ -1435,7 +1435,7 @@ contains
 !
             endif
 !
-!           Construct L_jbki = 2 g_kijb - g_kbji
+!           L_jbki = 2 g_kijb - g_kbji
 !
             call mem%alloc(g_jbki,batch_j%length, wf%n_v, batch_k%length, wf%n_o)
 !
@@ -1446,7 +1446,7 @@ contains
                               1, wf%n_o)
 !
             call mem%alloc(L_jbki, batch_j%length, wf%n_v, batch_k%length, wf%n_o)
-            !L_jbki = two*g_jbki
+!
             call dcopy(batch_j%length*wf%n_v*batch_k%length*wf%n_o, g_jbki, 1, L_jbki, 1)
             call dscal(batch_j%length*wf%n_v*batch_k%length*wf%n_o, two, L_jbki, 1)
 !
@@ -1605,7 +1605,7 @@ contains
 !
             call mem%dealloc(g_ckbd, batch_c%length, wf%n_o, batch_b%length, wf%n_v)
 !
-!           Reordering and Scaling
+!          Y_bkci = (X_bick + X_ckbi)/(ε_bick + ω)
 !
             call mem%alloc(Y_bkci, batch_b%length, wf%n_o, batch_c%length, wf%n_o)
 !
@@ -1643,7 +1643,7 @@ contains
 !
             endif
 !
-!           Construct L_abkc = 2 g_abkc - g_kbac
+!           L_abkc = 2 g_abkc - g_kbac
 !
             call mem%alloc(g_abkc, wf%n_v, batch_b%length, wf%n_o, batch_c%length)
 !
@@ -1759,7 +1759,7 @@ contains
 !
                call batch_a%determine_limits(current_a_batch)
 !
-!              Construct X_ckbi = sum_c g_lkbi * c_cl
+!              X_ckbi = sum_c g_lkbi * c_cl
 !
                call mem%alloc(g_lkbi, wf%n_o, batch_k%length, wf%n_v, batch_i%length)
 !
@@ -1786,7 +1786,7 @@ contains
 !
                call mem%dealloc(g_lkbi, wf%n_o, batch_k%length, wf%n_v, batch_i%length)
 !
-!              Construct X_ckbi = sum_c g_lkbi * c_cl
+!              X_bick = sum_l c_bl * g_lick
 !
                call mem%alloc(g_lick, wf%n_o, batch_i%length, wf%n_v, batch_k%length)
 !
@@ -1816,6 +1816,8 @@ contains
 !              Reorder and scale
 !
                call mem%alloc(Y_bcki, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
+!  
+!              Y_bcki = (X_ckbi + X_bick)/(ε_ckbi + ω)
 !
 !$omp parallel do private(c,i,k,b)
                do c = 1, wf%n_v
@@ -1849,7 +1851,7 @@ contains
 !
                endif
 !
-!              Construct L_abkc = 2 g_abkc - g_ackb
+!              L_abkc = 2 g_abkc - g_ackb ordered as L_abck
 !
                call mem%alloc(L_abck, batch_a%length, wf%n_v, wf%n_v, batch_k%length)
 !
