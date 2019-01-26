@@ -939,7 +939,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_lkai, X_ckai
 !
-      integer(i15) :: a, c, i, k
+      integer(i15) :: a, c, i, k, prev_available
 !
       integer(i15) :: req0, req1_i, req1_k, req2
 !
@@ -956,6 +956,8 @@ contains
 !
       call batch_i%init(wf%n_o)
       call batch_k%init(wf%n_o)
+      prev_available = mem%available
+      !mem%available = (req0 + req1_k*2 + req1_i*2 + req2*4)*dp
 !
       call mem%batch_setup(batch_i, batch_k, req0, req1_i, req1_k, req2)
 !
@@ -1064,6 +1066,7 @@ contains
 !
          enddo
       enddo
+      mem%available = prev_available
 !
    end subroutine effective_jacobian_cc2_b1_cc2
 !
