@@ -281,7 +281,7 @@ contains
 !
 !     Integrals
 !
-      real(dp), dimension(:,:), allocatable :: g_lc_kd 
+      real(dp), dimension(:,:,:,:), allocatable :: g_lc_kd 
       real(dp), dimension(:,:), allocatable :: L_lc_dk 
       real(dp), dimension(:,:), allocatable :: L_lk_dc 
 !
@@ -307,7 +307,7 @@ contains
 !
 !     g_lc_kd = g_lckd
 !
-      call mem%alloc(g_lc_kd, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%alloc(g_lc_kd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
       call wf%get_ovov(g_lc_kd)
 !
@@ -322,7 +322,7 @@ contains
 !
 !     Deallocate g_lc_kd
 !
-      call mem%dealloc(g_lc_kd, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(g_lc_kd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
 !     X_lc = sum_kd L_lckd c_dk = sum_kd L_lc_dk c_dk
 !
@@ -577,7 +577,7 @@ contains
       real(dp), dimension((wf%n_o)*(wf%n_v),(wf%n_o)*(wf%n_v)), intent(in) :: c_ai_bj
       real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i
 !
-      real(dp), dimension(:,:), allocatable :: g_ji_kb
+      real(dp), dimension(:,:,:,:), allocatable :: g_ji_kb
       real(dp), dimension(:,:), allocatable :: L_jb_ki
 !
       type(timings) :: jacobian_ccsd_c1_timer 
@@ -587,7 +587,7 @@ contains
 !
 !     Construct the integral g_ji_kb = sum_J L_ji_J * L_kb_J
 !
-      call mem%alloc(g_ji_kb, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
+      call mem%alloc(g_ji_kb, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
 !
       call wf%get_ooov(g_ji_kb)
 !
@@ -603,7 +603,7 @@ contains
       call add_1432_to_1234(two, g_ji_kb, L_jb_ki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
       call add_3412_to_1234(-one, g_ji_kb, L_jb_ki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
-      call mem%dealloc(g_ji_kb, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
+      call mem%dealloc(g_ji_kb, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
 !
       call dgemm('N', 'N',                &
                   wf%n_v,                 &
@@ -650,7 +650,7 @@ contains
 !
       type(batching_index) :: batch_a
 !
-      real(dp), dimension(:,:), allocatable :: g_ab_jc ! g_abjc
+      real(dp), dimension(:,:,:,:), allocatable :: g_ab_jc ! g_abjc
       real(dp), dimension(:,:), allocatable :: L_ab_jc ! L_abjc
 !
       type(timings) :: jacobian_ccsd_d1_timer
@@ -678,7 +678,7 @@ contains
 !
 !        Form g_ab_jc = g_abjc
 !
-         call mem%alloc(g_ab_jc, (batch_a%length)*(wf%n_v), (wf%n_v)*(wf%n_o))
+         call mem%alloc(g_ab_jc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
 !
          call wf%get_vvov(g_ab_jc,        &
                            batch_a%first, &
@@ -703,7 +703,7 @@ contains
          call mem%alloc(c_bj_ci, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
          call sort_1234_to_1432(c_bi_cj, c_bj_ci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-         call mem%dealloc(g_ab_jc, (batch_a%length)*(wf%n_v), (wf%n_v)*(wf%n_o))
+         call mem%dealloc(g_ab_jc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
 !
          call dgemm('N', 'N',                   &
                      batch_a%length,            &
@@ -745,9 +745,9 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)           :: c_a_i
       real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
 !
-      real(dp), dimension(:,:), allocatable :: g_ai_kj 
+      real(dp), dimension(:,:,:,:), allocatable :: g_ai_kj 
       real(dp), dimension(:,:), allocatable :: g_ai_jk 
-      real(dp), dimension(:,:), allocatable :: g_ai_bc 
+      real(dp), dimension(:,:,:,:), allocatable :: g_ai_bc 
 !
       real(dp), dimension(:,:), allocatable :: rho_ba_ij 
 !
@@ -767,7 +767,7 @@ contains
 !
 !     Calculate g_ai_kj
 !
-      call mem%alloc(g_ai_kj, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
+      call mem%alloc(g_ai_kj, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
       call wf%get_vooo(g_ai_kj)
 !
@@ -777,7 +777,7 @@ contains
 !
       call sort_1234_to_1243(g_ai_kj, g_ai_jk, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
-      call mem%dealloc(g_ai_kj, (wf%n_o)*(wf%n_v), (wf%n_o)**2)
+      call mem%dealloc(g_ai_kj, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
 !
       call mem%alloc(rho_ba_ij, (wf%n_v)**2, (wf%n_o)**2)
 !
@@ -819,7 +819,7 @@ contains
 !
          call batch_b%determine_limits(current_b_batch)
 !
-         call mem%alloc(g_ai_bc, (wf%n_v)*(wf%n_o), (wf%n_v)*(batch_b%length))
+         call mem%alloc(g_ai_bc, (wf%n_v),(wf%n_o), (wf%n_v),(batch_b%length))
 !
          call wf%get_vovv(g_ai_bc,       &
                           1,             &
@@ -848,7 +848,7 @@ contains
                      rho_ai_bj(aib_offset,1),            &
                      (wf%n_o)*(wf%n_v)**2)
 !
-          call mem%dealloc(g_ai_bc, (wf%n_v)*(wf%n_o), wf%n_v*(batch_b%length))
+          call mem%dealloc(g_ai_bc, (wf%n_v),(wf%n_o), wf%n_v,(batch_b%length))
 !
       enddo ! End of batches over b
 !
@@ -1010,7 +1010,7 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)           :: c_a_i
       real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
 !
-      real(dp), dimension(:,:), allocatable :: g_lj_kc ! g_ljkc
+      real(dp), dimension(:,:,:,:), allocatable :: g_lj_kc ! g_ljkc
       real(dp), dimension(:,:), allocatable :: g_kj_lc ! g_ljkc
       real(dp), dimension(:,:), allocatable :: L_lj_ck ! L_ljkc
 !
@@ -1039,7 +1039,7 @@ contains
 !
 !     Form g_lj_kc = g_ljkc
 !
-      call mem%alloc(g_lj_kc, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
+      call mem%alloc(g_lj_kc, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
 !
       call wf%get_ooov(g_lj_kc)
 !
@@ -1120,7 +1120,7 @@ contains
 !
       call sort_1234_to_3214(g_lj_kc, g_kj_lc, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
 !
-      call mem%dealloc(g_lj_kc, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
+      call mem%dealloc(g_lj_kc, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
 !
 !     Form the intermediate X_kj_bi = sum_lc g_kj_lc t_lc_bi
 !
@@ -1382,7 +1382,7 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)           :: c_a_i
       real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
 !
-      real(dp), dimension(:,:), allocatable :: g_bd_kc ! g_kcbd
+      real(dp), dimension(:,:,:,:), allocatable :: g_bd_kc ! g_kcbd
       real(dp), dimension(:,:), allocatable :: g_cd_kb ! g_kcbd reordered
       real(dp), dimension(:,:), allocatable :: g_ck_bd ! g_kcbd reordered
       real(dp), dimension(:,:), allocatable :: L_ck_bd ! L_kcbd = 2 g_kcbd - g-kdbc
@@ -1440,7 +1440,7 @@ contains
 !
 !        Form g_kc_db = g_kcbd
 !
-         call mem%alloc(g_bd_kc, (wf%n_v)*(batch_b%length), (wf%n_o)*(wf%n_v))
+         call mem%alloc(g_bd_kc, wf%n_v, batch_b%length, wf%n_o, wf%n_v)
 !
          call wf%get_vvov(g_bd_kc,        &
                            batch_b%first, &
@@ -1458,7 +1458,7 @@ contains
 !
          call sort_1234_to_4231(g_bd_kc, g_cd_kb, batch_b%length, wf%n_v, wf%n_o, wf%n_v)
 !
-         call mem%dealloc(g_bd_kc, (wf%n_v)*(batch_b%length), (wf%n_o)*(wf%n_v))
+         call mem%dealloc(g_bd_kc, wf%n_v, batch_b%length, wf%n_o, wf%n_v)
 !
 !        Order amplitudes as t_ij_cd = t_ij^cd = t_ci_dj
 !                              2413                1234
@@ -1913,7 +1913,7 @@ contains
       real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)), intent(in) :: c_ai_ck
 !
       real(dp), dimension(:,:), allocatable :: t_dl_bj
-      real(dp), dimension(:,:), allocatable :: g_kc_ld
+      real(dp), dimension(:,:,:,:), allocatable :: g_kc_ld
       real(dp), dimension(:,:), allocatable :: L_ck_dl
       real(dp), dimension(:,:), allocatable :: X_ck_bj
 !
@@ -1931,7 +1931,7 @@ contains
 !
 !     Construct g_kcld
 !
-      call mem%alloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%alloc(g_kc_ld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
       call wf%get_ovov(g_kc_ld)
 !
@@ -1946,7 +1946,7 @@ contains
       call add_2341_to_1234(-one, g_kc_ld, L_ck_dl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call add_2143_to_1234(two, g_kc_ld, L_ck_dl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call mem%dealloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(g_kc_ld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
 !     Intermediate X_ck_bj = sum_dl L_ck_dl * t_dl_bj
 !
@@ -2010,7 +2010,7 @@ contains
       real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
       real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)), intent(in) :: c_ai_bj
 !
-      real(dp), dimension(:,:), allocatable :: g_kc_ld
+      real(dp), dimension(:,:,:,:), allocatable :: g_kc_ld
 !
       real(dp), dimension(:,:), allocatable :: L_ck_dl
       real(dp), dimension(:,:), allocatable :: L_dl_ck
@@ -2035,7 +2035,7 @@ contains
 !
 !     :: Construct L_kc,ld ::
 !
-      call mem%alloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%alloc(g_kc_ld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
       call wf%get_ovov(g_kc_ld)
 !
@@ -2050,7 +2050,7 @@ contains
       call add_2341_to_1234(-one, g_kc_ld, L_ck_dl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call add_2143_to_1234(two, g_kc_ld, L_ck_dl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call mem%dealloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(g_kc_ld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
 !     :: Term 1: - sum_ckld t_ai,ck * L_kc,ld * c_bl,dj ::
 !
@@ -2109,7 +2109,7 @@ contains
 !
 !     :: Term 2: - sum_ckdl t_ai,dj * L_kc,ld * c_bl,ck
 !
-      call mem%alloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%alloc(g_kc_ld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
       call wf%get_ovov(g_kc_ld)
 !
@@ -2126,7 +2126,7 @@ contains
 !
       call add_4321_to_1234(two, g_kc_ld, L_dl_ck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call mem%dealloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(g_kc_ld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
 !     Y_d_b = sum_clk L_d_lck * c_b_lck
 !     Here dgemm is tricked to believe that c_bl_ck is c_b_lck
@@ -2187,7 +2187,7 @@ contains
 !
 !     :: Term 3: - sum_ckdl t_ai,bl * L_kc,ld * c_ck,dj ::
 !
-      call mem%alloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%alloc(g_kc_ld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
       call wf%get_ovov(g_kc_ld)
 !
@@ -2206,7 +2206,7 @@ contains
 !
       call add_3214_to_1234(two, g_kc_ld, L_lc_kd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      call mem%dealloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(g_kc_ld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
       call mem%alloc(Z_l_j, wf%n_o, wf%n_o)
 !
@@ -2279,7 +2279,7 @@ contains
       real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
       real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)), intent(in) :: c_ai_bj
 !
-      real(dp), dimension(:,:), allocatable :: g_kc_ld
+      real(dp), dimension(:,:,:,:), allocatable :: g_kc_ld
 !
       real(dp), dimension(:,:), allocatable :: L_ck_dl
       real(dp), dimension(:,:), allocatable :: L_d_clk
@@ -2304,7 +2304,7 @@ contains
 !
 !     :: Term 1: - sum_ckdl t_bl,dj * L_kc,ld * c_ai,ck  ::
 !
-      call mem%alloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%alloc(g_kc_ld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
       call wf%get_ovov(g_kc_ld)
 !
@@ -2321,7 +2321,7 @@ contains
 !
       call add_2143_to_1234(two, g_kc_ld, L_ck_dl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call mem%dealloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(g_kc_ld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
 !     Reorder t_bl_dj as t_dl_bj
 !
@@ -2435,7 +2435,7 @@ contains
 !
 !     :: Term 3: - sum_ckld t_ck,dj * L_kc,ld * c_ai,bl ::
 !
-      call mem%alloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%alloc(g_kc_ld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
       call wf%get_ovov(g_kc_ld)
 !
@@ -2452,7 +2452,7 @@ contains
 !
       call add_3214_to_1234(two, g_kc_ld, L_lc_kd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      call mem%dealloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(g_kc_ld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
 !     Reorder t_ck,dj to t_ckd_j
 !
@@ -2518,7 +2518,7 @@ contains
       real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
       real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)), intent(in) :: c_ai_bj
 !
-      real(dp), dimension(:,:), allocatable :: g_kc_ld
+      real(dp), dimension(:,:,:,:), allocatable :: g_kc_ld
       real(dp), dimension(:,:), allocatable :: g_lc_kd
 !
       real(dp), dimension(:,:), allocatable :: t_ai_kc
@@ -2541,7 +2541,7 @@ contains
 !
 !     Construct g_kc_ld
 !
-      call mem%alloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%alloc(g_kc_ld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
       call wf%get_ovov(g_kc_ld)
 !
@@ -2569,7 +2569,7 @@ contains
                   (wf%n_o)*(wf%n_v))
 !
       call mem%dealloc(t_ai_kc, (wf%n_o)*(wf%n_v),(wf%n_o)*(wf%n_v))
-      call mem%dealloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(g_kc_ld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
       call mem%alloc(c_ld_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       c_ld_bj = zero
@@ -2600,7 +2600,7 @@ contains
 !
 !     Construct g_kc_ld
 !
-      call mem%alloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%alloc(g_kc_ld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
       call wf%get_ovov(g_kc_ld)
 !
@@ -2610,7 +2610,7 @@ contains
 !
       call sort_1234_to_3214(g_kc_ld, g_lc_kd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      call mem%dealloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(g_kc_ld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
 !     t_al,cj ordered as t_aj_lc
 !
@@ -2703,8 +2703,8 @@ contains
       real(dp), dimension(:,:), allocatable :: rho_ai_jb
       real(dp), dimension(:,:), allocatable :: rho_aj_bi
 !
-      real(dp), dimension(:,:), allocatable :: g_bj_kc
-      real(dp), dimension(:,:), allocatable :: g_bc_kj
+      real(dp), dimension(:,:,:,:), allocatable :: g_bj_kc
+      real(dp), dimension(:,:,:,:), allocatable :: g_bc_kj
       real(dp), dimension(:,:), allocatable :: g_ck_bj ! reordering of g_bj_kc and g_bc_kj
 !
       integer(i15) :: b, bc, bj, c, ck, j, k, kj
@@ -2777,7 +2777,7 @@ contains
 !
 !     Construct g_bj,kc
 !
-      call mem%alloc(g_bj_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%alloc(g_bj_kc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
       call wf%get_voov(g_bj_kc)
 !
@@ -2787,7 +2787,7 @@ contains
 !
       call sort_1234_to_4312(g_bj_kc, g_ck_bj, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
-      call mem%dealloc(g_bj_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(g_bj_kc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
 !     rho_ai_bj += sum_ck 2*c_ai_ck * g_ck_bj
 !
@@ -2854,7 +2854,7 @@ contains
 !
 !        Construct g_bc_kj
 !
-         call mem%alloc(g_bc_kj, (wf%n_v)*(batch_c%length), (wf%n_o)**2)
+         call mem%alloc(g_bc_kj, wf%n_v, batch_c%length, wf%n_o, wf%n_o)
 !
          call wf%get_vvoo(g_bc_kj,        &
                            1,             &
@@ -2883,7 +2883,8 @@ contains
                      kj = wf%n_o*(j - 1) + k 
                      ck = wf%n_v*(k - 1) + c + batch_c%first - 1
  !
-                     g_ck_bj(ck, bj) = g_bc_kj(bc, kj)
+                     g_ck_bj(ck, bj) = g_bc_kj(b,c,k,j)
+                   !  g_ck_bj(ck, bj) = g_bc_kj(bc, kj)
  !
                   enddo
                enddo
@@ -2891,7 +2892,7 @@ contains
          enddo
 !$omp end parallel do
 !
-         call mem%dealloc(g_bc_kj, (wf%n_v)*(batch_c%length), (wf%n_o)**2)
+         call mem%dealloc(g_bc_kj, wf%n_v, batch_c%length, wf%n_o, wf%n_o)
 !
       enddo ! End of c-batches
 !
@@ -2962,7 +2963,7 @@ contains
       real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: rho_ab_ij
       real(dp), dimension((wf%n_v)**2, (wf%n_o)**2), intent(in) :: c_ab_ij
 !
-      real(dp), dimension(:,:), allocatable :: g_kc_ld
+      real(dp), dimension(:,:,:,:), allocatable :: g_kc_ld
       real(dp), dimension(:,:), allocatable :: g_kl_cd
 !
       real(dp), dimension(:,:), allocatable :: t_ab_ij
@@ -2976,7 +2977,7 @@ contains
 !
 !     Constructing g_kc_ld
 !
-      call mem%alloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%alloc(g_kc_ld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
       call wf%get_ovov(g_kc_ld)
 !
@@ -2986,7 +2987,7 @@ contains
 !
       call sort_1234_to_1324(g_kc_ld, g_kl_cd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      call mem%dealloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(g_kc_ld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
 !     Reordered T2 amplitudes
 !
@@ -3088,10 +3089,10 @@ contains
       real(dp), dimension((wf%n_v)**2, (wf%n_o)**2) :: rho_ab_ij
       real(dp), dimension((wf%n_v)**2, (wf%n_o)**2), intent(in) :: c_ab_ij
 !
-      real(dp), dimension(:,:), allocatable :: g_ki_lj
+      real(dp), dimension(:,:,:,:), allocatable :: g_ki_lj
       real(dp), dimension(:,:), allocatable :: g_kl_ij
-      real(dp), dimension(:,:), allocatable :: g_ac_bd
-      real(dp), dimension(:,:), allocatable :: g_ab_cd
+      real(dp), dimension(:,:,:,:), allocatable :: g_ac_bd
+      real(dp), dimension(:,:,:,:), allocatable :: g_ab_cd
 !
       real(dp), dimension(:,:), allocatable :: rho_batch_ab_ij
 !
@@ -3112,7 +3113,7 @@ contains
       call jacobian_ccsd_k2_timer%init('jacobian ccsd k2')
       call jacobian_ccsd_k2_timer%start()
 !
-      call mem%alloc(g_ki_lj, (wf%n_o)**2, (wf%n_o)**2)
+      call mem%alloc(g_ki_lj, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
 !
       call wf%get_oooo(g_ki_lj)
 !
@@ -3122,7 +3123,7 @@ contains
 !
       call sort_1234_to_1324(g_ki_lj, g_kl_ij, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
 !
-      call mem%dealloc(g_ki_lj, (wf%n_o)**2, (wf%n_o)**2)
+      call mem%dealloc(g_ki_lj, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
 !
 !     rho_ab_ij += sum_kl g_ki,lj * c_ak,bl = sum_kl c_ab_ij(ab,kl) g_kl_ij(kl,ij)
 !
@@ -3169,7 +3170,7 @@ contains
 !
             call batch_b%determine_limits(current_b_batch)
 !
-            call mem%alloc(g_ac_bd, (wf%n_v)*(batch_a%length), (wf%n_v)*(batch_b%length))
+            call mem%alloc(g_ac_bd, (wf%n_v),(batch_a%length), (wf%n_v),(batch_b%length))
 !
 !           g_ca_db = sum_J L_ca_J*L_db_J
 !
@@ -3187,11 +3188,11 @@ contains
 !
 !           Reorder g_ac_bd into g_ab_cd (i.e., 1234 to 1324)
 !
-            call mem%alloc(g_ab_cd, (batch_a%length)*(batch_b%length), (wf%n_v)**2)
+            call mem%alloc(g_ab_cd, (batch_a%length),(batch_b%length), (wf%n_v), (wf%n_v))
 !
             call sort_1234_to_1324(g_ac_bd, g_ab_cd, batch_a%length, wf%n_v, batch_b%length, wf%n_v)
 !
-            call mem%dealloc(g_ac_bd, (wf%n_v)*(batch_a%length), (wf%n_v)*(batch_b%length))
+            call mem%dealloc(g_ac_bd, (wf%n_v),(batch_a%length), (wf%n_v),(batch_b%length))
 !
             call mem%alloc(rho_batch_ab_ij, (batch_a%length)*(batch_b%length), (wf%n_o)**2)
 !
@@ -3210,7 +3211,7 @@ contains
                         rho_batch_ab_ij,                   &
                         (batch_a%length)*(batch_b%length))
 !
-            call mem%dealloc(g_ab_cd, (batch_a%length)*(batch_b%length), (wf%n_v)**2)
+            call mem%dealloc(g_ab_cd, (batch_a%length),(batch_b%length), (wf%n_v), (wf%n_v))
 !
 !           Reorder into rho_ab_ij
 !

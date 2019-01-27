@@ -31,6 +31,10 @@ module mo_integral_tool_class
 !
       integer(i15), private :: n_mo 
 !
+      logical, private :: eri_t1_mem = .false.
+!
+      real(dp), dimension(:,:,:,:), allocatable :: g_pqrs
+!
    contains
 !
       procedure :: prepare                => prepare_mo_integral_tool
@@ -130,6 +134,8 @@ module mo_integral_tool_class
 !
       procedure :: write_t1_cholesky      => write_t1_cholesky_mo_integral_tool
 !
+      procedure :: can_we_keep_g_pqrs     => can_we_keep_g_pqrs_mo_integral_tool
+!
    end type mo_integral_tool
 !
 !
@@ -175,7 +181,72 @@ contains
       integrals%cholesky_file      = .true.
       integrals%cholesky_t1_file   = .false.
 !
+      integrals%eri_t1_mem = .false.
+!
    end subroutine prepare_mo_integral_tool
+!
+!
+   subroutine can_we_keep_g_pqrs_mo_integral_tool(integrals)
+!!
+!!    Can we keep g_pqrs   
+!!    Written by Eirik F. Kjønstad, Jan 2019 
+!!
+!!    This routine is called to check whether the T1-ERIs can be held in 
+!!    memory safely (< 10% of total available). If this is the case, the 
+!!    manager will keep a copy of g_pqrs in memory. When an integral is 
+!!    requested (e.g. g_abci), the integral will be copied from the g_pqrs
+!!    copy instead of being constructed as g_abci = sum_J L_ab^J L_ci^J. 
+!!
+!!    Note: the routine assumes that the T1-transformed Cholesky vectors 
+!!    have been placed on file.
+!!
+      implicit none 
+!
+      class(mo_integral_tool) :: integrals 
+!
+      real(dp), dimension(:,:), allocatable :: L_pq_J 
+!
+   !   write(output%unit, '(/t3,a)') '- Checking whether T1-ERIs can be stored:'
+!
+      if ((integrals%n_mo)**4 .lt. mem%get_available('dps')/10) then
+!
+!        Assume we can hold the integrals safely in memory 
+!
+         integrals%eri_t1_mem = .true.
+!
+         if (.not. allocated(integrals%g_pqrs)) then 
+!
+            call mem%alloc(integrals%g_pqrs, integrals%n_mo, integrals%n_mo, &
+                                          integrals%n_mo, integrals%n_mo)
+!
+         endif
+!
+         call mem%alloc(L_pq_J, integrals%n_mo**2, integrals%n_J)
+!
+         call integrals%read_cholesky_t1(L_pq_J, 1, integrals%n_mo, 1, integrals%n_mo)
+!
+         call dgemm('N','T',            &
+                     integrals%n_mo**2, &
+                     integrals%n_mo**2, &
+                     integrals%n_J,     &
+                     one,               &
+                     L_pq_J,            &
+                     integrals%n_mo**2, &
+                     L_pq_J,            &
+                     integrals%n_mo**2, &
+                     zero,              &
+                     integrals%g_pqrs,  &
+                     integrals%n_mo**2)
+!
+         call mem%dealloc(L_pq_J, integrals%n_mo**2, integrals%n_J)
+!
+      else
+!
+         integrals%eri_t1_mem = .false.
+!
+      endif 
+!
+   end subroutine can_we_keep_g_pqrs_mo_integral_tool
 !
 !
    logical function need_t1_mo_integral_tool(integrals)
@@ -926,14 +997,14 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals 
 !
-      real(dp), dimension(:,:,:,:), intent(inout) :: g_ijkl
-!
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
       integer(i15), intent(in) :: first_i, last_i
       integer(i15), intent(in) :: first_k, last_k
       integer(i15), intent(in) :: first_j, last_j
       integer(i15), intent(in) :: first_l, last_l
+!
+      real(dp), dimension(last_i-first_i+1,last_j-first_j+1,last_k-first_k+1,last_l-first_l+1), intent(inout) :: g_ijkl
 !
       integer(i15) :: length_i, length_k, length_j, length_l
 !
@@ -947,7 +1018,16 @@ contains
       length_k = last_k - first_k + 1
       length_l = last_l - first_l + 1
 !
-      if (integrals%eri_file .and. .not. index_restrictions) then 
+      if (integrals%eri_t1_mem) then 
+!
+!        Extract copy from integral stored in memory
+!
+         g_ijkl(:,:,:,:) = integrals%g_pqrs(first_i : last_i, &
+                                            first_j : last_j, &
+                                            first_k : last_k, &
+                                            first_l : last_l)
+!
+      elseif (integrals%eri_file .and. .not. index_restrictions) then 
 !
 !        Coming soon: read full g_ijkl from file
 !
@@ -1115,14 +1195,14 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals 
 !
-      real(dp), dimension(:,:,:,:), intent(inout) :: g_ijka
-!
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
       integer(i15), intent(in) :: first_i, last_i
       integer(i15), intent(in) :: first_k, last_k
       integer(i15), intent(in) :: first_j, last_j
       integer(i15), intent(in) :: first_a, last_a
+!
+      real(dp), dimension(last_i-first_i+1,last_j-first_j+1,last_k-first_k+1,last_a-first_a+1), intent(inout) :: g_ijka
 !
       integer(i15) :: length_i, length_k, length_j, length_a
 !
@@ -1136,7 +1216,16 @@ contains
       length_k = last_k - first_k + 1
       length_a = last_a - first_a + 1
 !
-      if (integrals%eri_file .and. .not. index_restrictions) then 
+      if (integrals%eri_t1_mem) then 
+!
+!        Extract copy from integral stored in memory
+!
+         g_ijka(:,:,:,:) = integrals%g_pqrs(first_i                 : last_i,                &
+                                            first_j                 : last_j,                &
+                                            first_k                 : last_k,                &
+                                            integrals%n_o + first_a : integrals%n_o + last_a)
+!
+      elseif (integrals%eri_file .and. .not. index_restrictions) then 
 !
 !        Coming soon: read full g_ijka from file
 !
@@ -1269,14 +1358,14 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals 
 !
-      real(dp), dimension(:,:,:,:), intent(inout) :: g_ijak
-!
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
       integer(i15), intent(in) :: first_i, last_i
       integer(i15), intent(in) :: first_k, last_k
       integer(i15), intent(in) :: first_j, last_j
       integer(i15), intent(in) :: first_a, last_a
+!
+      real(dp), dimension(last_i-first_i+1,last_j-first_j+1,last_a-first_a+1,last_k-first_k+1), intent(inout) :: g_ijak
 !
       integer(i15) :: length_i, length_k, length_j, length_a
 !
@@ -1290,7 +1379,16 @@ contains
       length_k = last_k - first_k + 1
       length_a = last_a - first_a + 1
 !
-      if (integrals%eri_file .and. .not. index_restrictions) then 
+      if (integrals%eri_t1_mem) then 
+!
+!        Extract copy from integral stored in memory
+!
+         g_ijak(:,:,:,:) = integrals%g_pqrs(first_i                 : last_i,                 &
+                                            first_j                 : last_j,                 &
+                                            integrals%n_o + first_a : integrals%n_o + last_a, &
+                                            first_k                 : last_k)                 
+!
+      elseif (integrals%eri_file .and. .not. index_restrictions) then 
 !
 !        Coming soon: read full g_ijak from file
 !
@@ -1423,14 +1521,14 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals 
 !
-      real(dp), dimension(:,:,:,:), intent(inout) :: g_iajk
-!
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
       integer(i15), intent(in) :: first_i, last_i
       integer(i15), intent(in) :: first_k, last_k
       integer(i15), intent(in) :: first_j, last_j
       integer(i15), intent(in) :: first_a, last_a
+!
+      real(dp), dimension(last_i-first_i+1,last_a-first_a+1,last_j-first_j+1,last_k-first_k+1), intent(inout) :: g_iajk
 !
       integer(i15) :: length_i, length_k, length_j, length_a
 !
@@ -1444,7 +1542,16 @@ contains
       length_k = last_k - first_k + 1
       length_a = last_a - first_a + 1
 !
-      if (integrals%eri_file .and. .not. index_restrictions) then 
+      if (integrals%eri_t1_mem) then 
+!
+!        Extract copy from integral stored in memory
+!
+         g_iajk(:,:,:,:) = integrals%g_pqrs(first_i                 : last_i,                 &
+                                            integrals%n_o + first_a : integrals%n_o + last_a, &
+                                            first_j                 : last_j,                 &
+                                            first_k                 : last_k)                 
+!
+      elseif (integrals%eri_file .and. .not. index_restrictions) then 
 !
 !        Coming soon: read full g_iajk from file
 !
@@ -1577,14 +1684,14 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals 
 !
-      real(dp), dimension(:,:,:,:), intent(inout) :: g_aijk
-!
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
       integer(i15), intent(in) :: first_i, last_i
       integer(i15), intent(in) :: first_k, last_k
       integer(i15), intent(in) :: first_j, last_j
       integer(i15), intent(in) :: first_a, last_a
+!
+      real(dp), dimension(last_a-first_a+1,last_i-first_i+1,last_j-first_j+1,last_k-first_k+1), intent(inout) :: g_aijk
 !
       integer(i15) :: length_i, length_k, length_j, length_a
 !
@@ -1598,7 +1705,16 @@ contains
       length_k = last_k - first_k + 1
       length_a = last_a - first_a + 1
 !
-      if (integrals%eri_file .and. .not. index_restrictions) then 
+      if (integrals%eri_t1_mem) then 
+!
+!        Extract copy from integral stored in memory
+!
+         g_aijk(:,:,:,:) = integrals%g_pqrs(integrals%n_o + first_a : integrals%n_o + last_a, &
+                                            first_i                 : last_i,                 &
+                                            first_j                 : last_j,                 &
+                                            first_k                 : last_k)                 
+!
+      elseif (integrals%eri_file .and. .not. index_restrictions) then 
 !
 !        Coming soon: read full g_aijk from file
 !
@@ -1731,14 +1847,14 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals 
 !
-      real(dp), dimension(:,:,:,:), intent(inout) :: g_abij
-!
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
       integer(i15), intent(in) :: first_i, last_i
       integer(i15), intent(in) :: first_b, last_b
       integer(i15), intent(in) :: first_j, last_j
       integer(i15), intent(in) :: first_a, last_a
+!
+      real(dp), dimension(last_a-first_a+1,last_b-first_b+1,last_i-first_i+1,last_j-first_j+1), intent(inout) :: g_abij
 !
       integer(i15) :: length_i, length_b, length_j, length_a
 !
@@ -1752,7 +1868,16 @@ contains
       length_b = last_b - first_b + 1
       length_a = last_a - first_a + 1
 !
-      if (integrals%eri_file .and. .not. index_restrictions) then 
+      if (integrals%eri_t1_mem) then 
+!
+!        Extract copy from integral stored in memory
+!
+         g_abij(:,:,:,:) = integrals%g_pqrs(integrals%n_o + first_a : integrals%n_o + last_a, &  
+                                            integrals%n_o + first_b : integrals%n_o + last_b, &
+                                            first_i                 : last_i,                 &
+                                            first_j                 : last_j)
+!
+      elseif (integrals%eri_file .and. .not. index_restrictions) then 
 !
 !        Coming soon: read full g_abij from file
 !
@@ -1885,14 +2010,14 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals 
 !
-      real(dp), dimension(:,:,:,:), intent(inout) :: g_ijab
-!
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
       integer(i15), intent(in) :: first_i, last_i
       integer(i15), intent(in) :: first_b, last_b
       integer(i15), intent(in) :: first_j, last_j
       integer(i15), intent(in) :: first_a, last_a
+!
+      real(dp), dimension(last_i-first_i+1,last_j-first_j+1,last_a-first_a+1,last_b-first_b+1), intent(inout) :: g_ijab
 !
       integer(i15) :: length_i, length_b, length_j, length_a
 !
@@ -1906,7 +2031,16 @@ contains
       length_b = last_b - first_b + 1
       length_a = last_a - first_a + 1
 !
-      if (integrals%eri_file .and. .not. index_restrictions) then 
+      if (integrals%eri_t1_mem) then 
+!
+!        Extract copy from integral stored in memory
+!
+         g_ijab(:,:,:,:) = integrals%g_pqrs(first_i                 : last_i,                 &
+                                            first_j                 : last_j,                 &
+                                            integrals%n_o + first_a : integrals%n_o + last_a, &  
+                                            integrals%n_o + first_b : integrals%n_o + last_b)
+!
+      elseif (integrals%eri_file .and. .not. index_restrictions) then 
 !
 !        Coming soon: read full g_ijab from file
 !
@@ -2039,14 +2173,14 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals 
 !
-      real(dp), dimension(:,:,:,:), intent(inout) :: g_aijb
-!
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
       integer(i15), intent(in) :: first_i, last_i
       integer(i15), intent(in) :: first_b, last_b
       integer(i15), intent(in) :: first_j, last_j
       integer(i15), intent(in) :: first_a, last_a
+!
+      real(dp), dimension(last_a-first_a+1,last_i-first_i+1,last_j-first_j+1,last_b-first_b+1), intent(inout) :: g_aijb
 !
       integer(i15) :: length_i, length_b, length_j, length_a
 !
@@ -2060,7 +2194,16 @@ contains
       length_b = last_b - first_b + 1
       length_a = last_a - first_a + 1
 !
-      if (integrals%eri_file .and. .not. index_restrictions) then 
+      if (integrals%eri_t1_mem) then 
+!
+!        Extract copy from integral stored in memory
+!
+         g_aijb(:,:,:,:) = integrals%g_pqrs(integrals%n_o + first_a : integrals%n_o + last_a, & 
+                                            first_i                 : last_i,                 &                                             
+                                            first_j                 : last_j,                 &                 
+                                            integrals%n_o + first_b : integrals%n_o + last_b)
+!
+      elseif (integrals%eri_file .and. .not. index_restrictions) then 
 !
 !        Coming soon: read full g_aijb from file
 !
@@ -2193,14 +2336,14 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals 
 !
-      real(dp), dimension(:,:,:,:), intent(inout) :: g_iabj
-!
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
       integer(i15), intent(in) :: first_i, last_i
       integer(i15), intent(in) :: first_b, last_b
       integer(i15), intent(in) :: first_j, last_j
       integer(i15), intent(in) :: first_a, last_a
+!
+      real(dp), dimension(last_i-first_i+1,last_a-first_a+1,last_b-first_b+1,last_j-first_j+1), intent(inout) :: g_iabj
 !
       integer(i15) :: length_i, length_b, length_j, length_a
 !
@@ -2214,7 +2357,16 @@ contains
       length_b = last_b - first_b + 1
       length_a = last_a - first_a + 1
 !
-      if (integrals%eri_file .and. .not. index_restrictions) then 
+      if (integrals%eri_t1_mem) then 
+!
+!        Extract copy from integral stored in memory
+!
+         g_iabj(:,:,:,:) = integrals%g_pqrs(first_i                 : last_i,                 &
+                                            integrals%n_o + first_a : integrals%n_o + last_a, &  
+                                            integrals%n_o + first_b : integrals%n_o + last_b, &
+                                            first_j                 : last_j)                 
+!
+      elseif (integrals%eri_file .and. .not. index_restrictions) then 
 !
 !        Coming soon: read full g_iabj from file
 !
@@ -2361,12 +2513,12 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals 
 !
-      real(dp), dimension(:,:,:,:), intent(inout) :: g_iajb
-!
       integer(i15), intent(in) :: first_i, last_i
       integer(i15), intent(in) :: first_a, last_a
       integer(i15), intent(in) :: first_j, last_j
       integer(i15), intent(in) :: first_b, last_b
+!
+      real(dp), dimension(last_i-first_i+1,last_a-first_a+1,last_j-first_j+1,last_b-first_b+1), intent(inout) :: g_iajb
 !
       integer(i15) :: length_i, length_a, length_j, length_b
 !
@@ -2380,7 +2532,16 @@ contains
       length_j = last_j - first_j + 1
       length_b = last_b - first_b + 1
 !
-      if (integrals%eri_file .and. .not. index_restrictions) then 
+      if (integrals%eri_t1_mem) then 
+!
+!        Extract copy from integral stored in memory
+!
+         g_iajb(:,:,:,:) = integrals%g_pqrs(first_i                 : last_i,                 &
+                                            integrals%n_o + first_a : integrals%n_o + last_a, &
+                                            first_j                 : last_j,                 &
+                                            integrals%n_o + first_b : integrals%n_o + last_b)
+!
+      elseif (integrals%eri_file .and. .not. index_restrictions) then 
 !
 !        Coming soon: read full g_iajb from file
 !
@@ -2562,14 +2723,14 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals 
 !
-      real(dp), dimension(:,:,:,:), intent(inout) :: g_aibj
-!
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
       integer(i15), intent(in) :: first_i, last_i
       integer(i15), intent(in) :: first_a, last_a
       integer(i15), intent(in) :: first_j, last_j
       integer(i15), intent(in) :: first_b, last_b
+!
+      real(dp), dimension(last_a-first_a+1,last_i-first_i+1,last_b-first_b+1,last_j-first_j+1), intent(inout) :: g_aibj
 !
       integer(i15) :: length_i, length_a, length_j, length_b
 !
@@ -2583,7 +2744,16 @@ contains
       length_a = last_a - first_a + 1
       length_b = last_b - first_b + 1
 !
-      if (integrals%eri_file .and. .not. index_restrictions) then 
+      if (integrals%eri_t1_mem) then 
+!
+!        Extract copy from integral stored in memory
+!
+         g_aibj(:,:,:,:) = integrals%g_pqrs(integrals%n_o + first_a : integrals%n_o + last_a, &
+                                            first_i                 : last_i,                 &
+                                            integrals%n_o + first_b : integrals%n_o + last_b, &
+                                            first_j                 : last_j)                 
+!
+      elseif (integrals%eri_file .and. .not. index_restrictions) then 
 !
 !        Coming soon: read full g_aibj from file
 !
@@ -2826,14 +2996,14 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals 
 !
-      real(dp), dimension(:,:,:,:), intent(inout) :: g_abic
-!
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
       integer(i15), intent(in) :: first_i, last_i
       integer(i15), intent(in) :: first_a, last_a
       integer(i15), intent(in) :: first_b, last_b
       integer(i15), intent(in) :: first_c, last_c
+!
+      real(dp), dimension(last_a-first_a+1,last_b-first_b+1,last_i-first_i+1,last_c-first_c+1), intent(inout) :: g_abic
 !
       integer(i15) :: length_i, length_a, length_b, length_c
 !
@@ -2847,7 +3017,16 @@ contains
       length_b = last_b - first_b + 1
       length_c = last_c - first_c + 1
 !
-      if (integrals%eri_file .and. .not. index_restrictions) then 
+      if (integrals%eri_t1_mem) then 
+!
+!        Extract copy from integral stored in memory
+!
+         g_abic(:,:,:,:) = integrals%g_pqrs(integrals%n_o + first_a : integrals%n_o + last_a, &
+                                            integrals%n_o + first_b : integrals%n_o + last_b, &
+                                            first_i                 : last_i,                 &
+                                            integrals%n_o + first_c : integrals%n_o + last_c)
+!
+      elseif (integrals%eri_file .and. .not. index_restrictions) then 
 !
 !        Coming soon: read full g_abic from file
 !
@@ -2980,14 +3159,14 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals 
 !
-      real(dp), dimension(:,:,:,:), intent(inout) :: g_aibc
-!
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
       integer(i15), intent(in) :: first_i, last_i
       integer(i15), intent(in) :: first_a, last_a
       integer(i15), intent(in) :: first_b, last_b
       integer(i15), intent(in) :: first_c, last_c
+!
+      real(dp), dimension(last_a-first_a+1,last_i-first_i+1,last_b-first_b+1,last_c-first_c+1), intent(inout) :: g_aibc
 !
       integer(i15) :: length_i, length_a, length_b, length_c
 !
@@ -3001,7 +3180,16 @@ contains
       length_b = last_b - first_b + 1
       length_c = last_c - first_c + 1
 !
-      if (integrals%eri_file .and. .not. index_restrictions) then 
+      if (integrals%eri_t1_mem) then 
+!
+!        Extract copy from integral stored in memory
+!
+         g_aibc(:,:,:,:) = integrals%g_pqrs(integrals%n_o + first_a : integrals%n_o + last_a, &
+                                            first_i                 : last_i,                 &
+                                            integrals%n_o + first_b : integrals%n_o + last_b, &
+                                            integrals%n_o + first_c : integrals%n_o + last_c)
+!
+      elseif (integrals%eri_file .and. .not. index_restrictions) then 
 !
 !        Coming soon: read full g_aibc from file
 !
@@ -3134,14 +3322,14 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals 
 !
-      real(dp), dimension(:,:,:,:), intent(inout) :: g_iabc
-!
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
       integer(i15), intent(in) :: first_i, last_i
       integer(i15), intent(in) :: first_a, last_a
       integer(i15), intent(in) :: first_b, last_b
       integer(i15), intent(in) :: first_c, last_c
+!
+      real(dp), dimension(last_i-first_i+1,last_a-first_a+1,last_b-first_b+1,last_c-first_c+1), intent(inout) :: g_iabc
 !
       integer(i15) :: length_i, length_a, length_b, length_c
 !
@@ -3155,7 +3343,16 @@ contains
       length_b = last_b - first_b + 1
       length_c = last_c - first_c + 1
 !
-      if (integrals%eri_file .and. .not. index_restrictions) then 
+      if (integrals%eri_t1_mem) then 
+!
+!        Extract copy from integral stored in memory
+!
+         g_iabc(:,:,:,:) = integrals%g_pqrs(first_i                 : last_i,                 &
+                                            integrals%n_o + first_a : integrals%n_o + last_a, &  
+                                            integrals%n_o + first_b : integrals%n_o + last_b, &
+                                            integrals%n_o + first_c : integrals%n_o + last_c)
+!
+      elseif (integrals%eri_file .and. .not. index_restrictions) then 
 !
 !        Coming soon: read full g_aibc from file
 !
@@ -3323,14 +3520,14 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals 
 !
-      real(dp), dimension(:,:,:,:), intent(inout) :: g_abcd
-!
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
       integer(i15), intent(in) :: first_a, last_a
       integer(i15), intent(in) :: first_b, last_b
       integer(i15), intent(in) :: first_c, last_c
       integer(i15), intent(in) :: first_d, last_d
+!
+      real(dp), dimension(last_a-first_a+1,last_b-first_b+1,last_c-first_c+1,last_d-first_d+1), intent(inout) :: g_abcd
 !
       integer(i15) :: length_a, length_b, length_c, length_d
 !
@@ -3344,7 +3541,16 @@ contains
       length_c = last_c - first_c + 1
       length_d = last_d - first_d + 1
 !
-      if (integrals%eri_file .and. .not. index_restrictions) then 
+      if (integrals%eri_t1_mem) then 
+!
+!        Extract copy from integral stored in memory
+!
+         g_abcd(:,:,:,:) = integrals%g_pqrs(integrals%n_o + first_a : integrals%n_o + last_a, &
+                                            integrals%n_o + first_b : integrals%n_o + last_b, &
+                                            integrals%n_o + first_c : integrals%n_o + last_c, &
+                                            integrals%n_o + first_d : integrals%n_o + last_d)
+!
+      elseif (integrals%eri_file .and. .not. index_restrictions) then 
 !
 !        Coming soon: read full g_abcd from file
 !
