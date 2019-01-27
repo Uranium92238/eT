@@ -16,8 +16,6 @@ module mo_integral_tool_class
 !
    type :: mo_integral_tool
 !
-      logical, private :: eri_file           = .false.
-      logical, private :: eri_t1_file        = .false. 
       logical, private :: cholesky_file      = .true.
       logical, private :: cholesky_t1_file   = .false.
 !
@@ -32,13 +30,11 @@ module mo_integral_tool_class
       integer(i15), private :: n_mo 
 !
       logical, private :: eri_t1_mem = .false.
-!
       real(dp), dimension(:,:,:,:), allocatable :: g_pqrs
 !
    contains
 !
       procedure :: prepare                => prepare_mo_integral_tool
-  !    procedure :: cleanup => cleanup_mo_integral_tool
 !
       procedure :: need_t1                => need_t1_mo_integral_tool
 !
@@ -170,18 +166,13 @@ contains
       integrals%n_mo = n_o + n_v
 !
       call  integrals%cholesky_mo%init('cholesky_mo_vectors', 'direct', 'unformatted', dp*n_J)
-!
-!     Integrals on file still not implemented
-!
-      integrals%eri_file           = .false.
-      integrals%eri_t1_file        = .false.
 ! 
 !     Initially MO cholesky on file, and not T1-transformed cholesky
+!     nor full T1-ERI matrix
 !
       integrals%cholesky_file      = .true.
       integrals%cholesky_t1_file   = .false.
-!
-      integrals%eri_t1_mem = .false.
+      integrals%eri_t1_mem         = .false.
 !
    end subroutine prepare_mo_integral_tool
 !
@@ -192,7 +183,7 @@ contains
 !!    Written by Eirik F. Kjønstad, Jan 2019 
 !!
 !!    This routine is called to check whether the T1-ERIs can be held in 
-!!    memory safely (< 10% of total available). If this is the case, the 
+!!    memory safely (< 20% of total available). If this is the case, the 
 !!    manager will keep a copy of g_pqrs in memory. When an integral is 
 !!    requested (e.g. g_abci), the integral will be copied from the g_pqrs
 !!    copy instead of being constructed as g_abci = sum_J L_ab^J L_ci^J. 
@@ -206,13 +197,15 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: L_pq_J 
 !
-   !   write(output%unit, '(/t3,a)') '- Checking whether T1-ERIs can be stored:'
+      integer(i15) :: required_mem 
 !
-      if ((integrals%n_mo)**4 .lt. mem%get_available('dps')/10) then
+      required_mem = (integrals%n_mo)**4 + (integrals%n_mo)**2*(integrals%n_J)
 !
-!        Assume we can hold the integrals safely in memory 
+      if ((required_mem .lt. mem%get_available('dps')/5) .or. allocated(integrals%g_pqrs)) then
 !
          integrals%eri_t1_mem = .true.
+!
+!        If not allocated, allocate copy of ERI matrix 
 !
          if (.not. allocated(integrals%g_pqrs)) then 
 !
@@ -220,6 +213,8 @@ contains
                                           integrals%n_mo, integrals%n_mo)
 !
          endif
+!
+!        Then construct it from the T1-Cholesky vectors 
 !
          call mem%alloc(L_pq_J, integrals%n_mo**2, integrals%n_J)
 !
@@ -254,14 +249,14 @@ contains
 !!    Need t1
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
-!!    Returns true if neither t1-transformed integrals nor t1-transformed cholesky
-!!    vectors are on file.
+!!    Returns true if the t1-transformed Cholesky
+!!    vectors are not on file.
 !!
       implicit none
 !
-      class(mo_integral_tool) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals 
 !
-      need_t1_mo_integral_tool = ((.not. integrals%eri_t1_file) .and. (.not. integrals%cholesky_t1_file))
+      need_t1_mo_integral_tool = .not. integrals%cholesky_t1_file
 !
    end function need_t1_mo_integral_tool
 !
@@ -905,14 +900,6 @@ contains
       length_k = last_k - first_k + 1
       length_l = last_l - first_l + 1
 !
-      if (integrals%eri_file .and. .not. index_restrictions) then 
-!
-!        Coming soon: read full g_ijkl from file
-!
-         call output%error_msg('reading full eri integrals from file not yet supported!')
-!
-      else
-!
 !        Construct g_ijkl from Cholesky vectors
 !
          if (index_restrictions) then ! dim_ij ≠ dim_kl in general
@@ -981,8 +968,6 @@ contains
 !
          endif 
 !
-      endif 
-!
    end subroutine construct_oooo_2_mo_integral_tool
 !
 !
@@ -1026,12 +1011,6 @@ contains
                                             first_j : last_j, &
                                             first_k : last_k, &
                                             first_l : last_l)
-!
-      elseif (integrals%eri_file .and. .not. index_restrictions) then 
-!
-!        Coming soon: read full g_ijkl from file
-!
-         call output%error_msg('reading full eri integrals from file not yet supported!')
 !
       else
 !
@@ -1139,13 +1118,6 @@ contains
       length_k = last_k - first_k + 1
       length_a = last_a - first_a + 1
 !
-      if (integrals%eri_file .and. .not. index_restrictions) then 
-!
-!        Coming soon: read full g_ijka from file
-!
-         call output%error_msg('reading full eri integrals from file not yet supported!')
-!
-      else
 !
 !        Construct g_ijka
 !
@@ -1180,7 +1152,6 @@ contains
          call mem%dealloc(L_ij_J, length_i*length_j, integrals%n_J)
          call mem%dealloc(L_ka_J, length_k*length_a, integrals%n_J)
 !
-      endif 
 !
    end subroutine construct_ooov_2_mo_integral_tool
 !
@@ -1224,12 +1195,6 @@ contains
                                             first_j                 : last_j,                &
                                             first_k                 : last_k,                &
                                             integrals%n_o + first_a : integrals%n_o + last_a)
-!
-      elseif (integrals%eri_file .and. .not. index_restrictions) then 
-!
-!        Coming soon: read full g_ijka from file
-!
-         call output%error_msg('reading full eri integrals from file not yet supported!')
 !
       else
 !
@@ -1302,13 +1267,6 @@ contains
       length_k = last_k - first_k + 1
       length_a = last_a - first_a + 1
 !
-      if (integrals%eri_file .and. .not. index_restrictions) then 
-!
-!        Coming soon: read full g_ijak from file
-!
-         call output%error_msg('reading full eri integrals from file not yet supported!')
-!
-      else
 !
 !        Construct g_ijak
 !
@@ -1342,8 +1300,6 @@ contains
 !
          call mem%dealloc(L_ij_J, length_i*length_j, integrals%n_J)
          call mem%dealloc(L_ak_J, length_k*length_a, integrals%n_J)
-!
-      endif 
 !
    end subroutine construct_oovo_2_mo_integral_tool
 !
@@ -1387,12 +1343,6 @@ contains
                                             first_j                 : last_j,                 &
                                             integrals%n_o + first_a : integrals%n_o + last_a, &
                                             first_k                 : last_k)                 
-!
-      elseif (integrals%eri_file .and. .not. index_restrictions) then 
-!
-!        Coming soon: read full g_ijak from file
-!
-         call output%error_msg('reading full eri integrals from file not yet supported!')
 !
       else
 !
@@ -1465,13 +1415,6 @@ contains
       length_k = last_k - first_k + 1
       length_a = last_a - first_a + 1
 !
-      if (integrals%eri_file .and. .not. index_restrictions) then 
-!
-!        Coming soon: read full g_iajk from file
-!
-         call output%error_msg('reading full eri integrals from file not yet supported!')
-!
-      else
 !
 !        Construct g_iajk
 !
@@ -1505,8 +1448,6 @@ contains
 !
          call mem%dealloc(L_ia_J, length_i*length_a, integrals%n_J)
          call mem%dealloc(L_jk_J, length_k*length_j, integrals%n_J)
-!
-      endif 
 !
    end subroutine construct_ovoo_2_mo_integral_tool
 !
@@ -1550,12 +1491,6 @@ contains
                                             integrals%n_o + first_a : integrals%n_o + last_a, &
                                             first_j                 : last_j,                 &
                                             first_k                 : last_k)                 
-!
-      elseif (integrals%eri_file .and. .not. index_restrictions) then 
-!
-!        Coming soon: read full g_iajk from file
-!
-         call output%error_msg('reading full eri integrals from file not yet supported!')
 !
       else
 !
@@ -1628,13 +1563,6 @@ contains
       length_k = last_k - first_k + 1
       length_a = last_a - first_a + 1
 !
-      if (integrals%eri_file .and. .not. index_restrictions) then 
-!
-!        Coming soon: read full g_aijk from file
-!
-         call output%error_msg('reading full eri integrals from file not yet supported!')
-!
-      else
 !
 !        Construct g_aijk
 !
@@ -1668,8 +1596,6 @@ contains
 !
          call mem%dealloc(L_ai_J, length_i*length_a, integrals%n_J)
          call mem%dealloc(L_jk_J, length_k*length_j, integrals%n_J)
-!
-      endif
 !
    end subroutine construct_vooo_2_mo_integral_tool
 !
@@ -1713,12 +1639,6 @@ contains
                                             first_i                 : last_i,                 &
                                             first_j                 : last_j,                 &
                                             first_k                 : last_k)                 
-!
-      elseif (integrals%eri_file .and. .not. index_restrictions) then 
-!
-!        Coming soon: read full g_aijk from file
-!
-         call output%error_msg('reading full eri integrals from file not yet supported!')
 !
       else
 !
@@ -1791,13 +1711,6 @@ contains
       length_b = last_b - first_b + 1
       length_a = last_a - first_a + 1
 !
-      if (integrals%eri_file .and. .not. index_restrictions) then 
-!
-!        Coming soon: read full g_abij from file
-!
-         call output%error_msg('reading full eri integrals from file not yet supported!')
-!
-      else
 !
 !        Construct g_abij
 !
@@ -1831,8 +1744,6 @@ contains
 !
          call mem%dealloc(L_ab_J, length_a*length_b, integrals%n_J)
          call mem%dealloc(L_ij_J, length_i*length_j, integrals%n_J)
-!
-      endif 
 !
    end subroutine construct_vvoo_2_mo_integral_tool
 !
@@ -1876,12 +1787,6 @@ contains
                                             integrals%n_o + first_b : integrals%n_o + last_b, &
                                             first_i                 : last_i,                 &
                                             first_j                 : last_j)
-!
-      elseif (integrals%eri_file .and. .not. index_restrictions) then 
-!
-!        Coming soon: read full g_abij from file
-!
-         call output%error_msg('reading full eri integrals from file not yet supported!')
 !
       else
 !
@@ -1954,13 +1859,6 @@ contains
       length_b = last_b - first_b + 1
       length_a = last_a - first_a + 1
 !
-      if (integrals%eri_file .and. .not. index_restrictions) then 
-!
-!        Coming soon: read full g_ijab from file
-!
-         call output%error_msg('reading full eri integrals from file not yet supported!')
-!
-      else
 !
 !        Construct g_ijab
 !
@@ -1994,8 +1892,6 @@ contains
 !
          call mem%dealloc(L_ab_J, length_a*length_b, integrals%n_J)
          call mem%dealloc(L_ij_J, length_i*length_j, integrals%n_J)
-!
-      endif 
 !
    end subroutine construct_oovv_2_mo_integral_tool
 !
@@ -2039,12 +1935,6 @@ contains
                                             first_j                 : last_j,                 &
                                             integrals%n_o + first_a : integrals%n_o + last_a, &  
                                             integrals%n_o + first_b : integrals%n_o + last_b)
-!
-      elseif (integrals%eri_file .and. .not. index_restrictions) then 
-!
-!        Coming soon: read full g_ijab from file
-!
-         call output%error_msg('reading full eri integrals from file not yet supported!')
 !
       else
 !
@@ -2117,14 +2007,6 @@ contains
       length_b = last_b - first_b + 1
       length_a = last_a - first_a + 1
 !
-      if (integrals%eri_file .and. .not. index_restrictions) then 
-!
-!        Coming soon: read full g_aijb from file
-!
-         call output%error_msg('reading full eri integrals from file not yet supported!')
-!
-      else
-!
 !        Construct g_aijb
 !
          call mem%alloc(L_ai_J, length_a*length_i, integrals%n_J)
@@ -2157,8 +2039,6 @@ contains
 !
          call mem%dealloc(L_ai_J, length_a*length_i, integrals%n_J)
          call mem%dealloc(L_jb_J, length_b*length_j, integrals%n_J)
-!
-      endif 
 !
    end subroutine construct_voov_2_mo_integral_tool
 !
@@ -2202,12 +2082,6 @@ contains
                                             first_i                 : last_i,                 &                                             
                                             first_j                 : last_j,                 &                 
                                             integrals%n_o + first_b : integrals%n_o + last_b)
-!
-      elseif (integrals%eri_file .and. .not. index_restrictions) then 
-!
-!        Coming soon: read full g_aijb from file
-!
-         call output%error_msg('reading full eri integrals from file not yet supported!')
 !
       else
 !
@@ -2280,13 +2154,6 @@ contains
       length_b = last_b - first_b + 1
       length_a = last_a - first_a + 1
 !
-      if (integrals%eri_file .and. .not. index_restrictions) then 
-!
-!        Coming soon: read full g_iabj from file
-!
-         call output%error_msg('reading full eri integrals from file not yet supported!')
-!
-      else
 !
 !        Construct g_iabj
 !
@@ -2320,8 +2187,6 @@ contains
 !
          call mem%dealloc(L_ia_J, length_a*length_i, integrals%n_J)
          call mem%dealloc(L_bj_J, length_b*length_j, integrals%n_J)
-!
-      endif 
 !
    end subroutine construct_ovvo_2_mo_integral_tool
 !
@@ -2365,12 +2230,6 @@ contains
                                             integrals%n_o + first_a : integrals%n_o + last_a, &  
                                             integrals%n_o + first_b : integrals%n_o + last_b, &
                                             first_j                 : last_j)                 
-!
-      elseif (integrals%eri_file .and. .not. index_restrictions) then 
-!
-!        Coming soon: read full g_iabj from file
-!
-         call output%error_msg('reading full eri integrals from file not yet supported!')
 !
       else
 !
@@ -2441,13 +2300,6 @@ contains
       length_j = last_j - first_j + 1
       length_b = last_b - first_b + 1
 !
-      if (integrals%eri_file .and. .not. index_restrictions) then 
-!
-!        Coming soon: read full g_iajb from file
-!
-         call output%error_msg('reading full eri integrals from file not yet supported!')
-!
-      else
 !
 !        Construct g_iajb from Cholesky vectors (occ-vir, so not necessary to consider t1)
 !
@@ -2498,8 +2350,6 @@ contains
 !
          endif 
 !
-      endif 
-!
    end subroutine construct_ovov_2_mo_integral_tool
 !
 !
@@ -2540,12 +2390,6 @@ contains
                                             integrals%n_o + first_a : integrals%n_o + last_a, &
                                             first_j                 : last_j,                 &
                                             integrals%n_o + first_b : integrals%n_o + last_b)
-!
-      elseif (integrals%eri_file .and. .not. index_restrictions) then 
-!
-!        Coming soon: read full g_iajb from file
-!
-         call output%error_msg('reading full eri integrals from file not yet supported!')
 !
       else
 !
@@ -2634,14 +2478,6 @@ contains
       length_a = last_a - first_a + 1
       length_b = last_b - first_b + 1
 !
-      if (integrals%eri_file .and. .not. index_restrictions) then 
-!
-!        Coming soon: read full g_aibj from file
-!
-         call output%error_msg('reading full eri integrals from file not yet supported!')
-!
-      else
-!
 !        Construct g_aibj from Cholesky vectors
 !
          if (index_restrictions) then ! dim_ia ≠ dim_jb in general
@@ -2708,8 +2544,6 @@ contains
 !
          endif 
 !
-      endif 
-!
    end subroutine construct_vovo_2_mo_integral_tool
 !
 !
@@ -2752,12 +2586,6 @@ contains
                                             first_i                 : last_i,                 &
                                             integrals%n_o + first_b : integrals%n_o + last_b, &
                                             first_j                 : last_j)                 
-!
-      elseif (integrals%eri_file .and. .not. index_restrictions) then 
-!
-!        Coming soon: read full g_aibj from file
-!
-         call output%error_msg('reading full eri integrals from file not yet supported!')
 !
       else
 !
@@ -2863,13 +2691,6 @@ contains
       length_b = last_b - first_b + 1
       length_c = last_c - first_c + 1
 !
-      if (integrals%eri_file .and. .not. index_restrictions) then 
-!
-!        Coming soon: read full g_abci from file
-!
-         call output%error_msg('reading full eri integrals from file not yet supported!')
-!
-      else
 !
 !        Construct g_abci
 !
@@ -2902,9 +2723,7 @@ contains
                      length_a*length_b)
 !
          call mem%dealloc(L_ab_J, length_a*length_b, integrals%n_J)
-         call mem%dealloc(L_ci_J, length_c*length_i, integrals%n_J)
-!
-      endif 
+         call mem%dealloc(L_ci_J, length_c*length_i, integrals%n_J) 
 !
    end subroutine construct_vvvo_mo_integral_tool
 !
@@ -2940,13 +2759,6 @@ contains
       length_b = last_b - first_b + 1
       length_c = last_c - first_c + 1
 !
-      if (integrals%eri_file .and. .not. index_restrictions) then 
-!
-!        Coming soon: read full g_abic from file
-!
-         call output%error_msg('reading full eri integrals from file not yet supported!')
-!
-      else
 !
 !        Construct g_abic
 !
@@ -2979,9 +2791,7 @@ contains
                      length_a*length_b)
 !
          call mem%dealloc(L_ab_J, length_a*length_b, integrals%n_J)
-         call mem%dealloc(L_ic_J, length_c*length_i, integrals%n_J)
-!
-      endif 
+         call mem%dealloc(L_ic_J, length_c*length_i, integrals%n_J) 
 !
    end subroutine construct_vvov_2_mo_integral_tool
 !
@@ -3025,12 +2835,6 @@ contains
                                             integrals%n_o + first_b : integrals%n_o + last_b, &
                                             first_i                 : last_i,                 &
                                             integrals%n_o + first_c : integrals%n_o + last_c)
-!
-      elseif (integrals%eri_file .and. .not. index_restrictions) then 
-!
-!        Coming soon: read full g_abic from file
-!
-         call output%error_msg('reading full eri integrals from file not yet supported!')
 !
       else
 !
@@ -3103,13 +2907,6 @@ contains
       length_b = last_b - first_b + 1
       length_c = last_c - first_c + 1
 !
-      if (integrals%eri_file .and. .not. index_restrictions) then 
-!
-!        Coming soon: read full g_aibc from file
-!
-         call output%error_msg('reading full eri integrals from file not yet supported!')
-!
-      else
 !
 !        Construct g_aibc
 !
@@ -3143,8 +2940,6 @@ contains
 !
          call mem%dealloc(L_ai_J, length_a*length_i, integrals%n_J)
          call mem%dealloc(L_bc_J, length_c*length_b, integrals%n_J)
-!
-      endif 
 !
    end subroutine construct_vovv_2_mo_integral_tool
 !
@@ -3188,12 +2983,6 @@ contains
                                             first_i                 : last_i,                 &
                                             integrals%n_o + first_b : integrals%n_o + last_b, &
                                             integrals%n_o + first_c : integrals%n_o + last_c)
-!
-      elseif (integrals%eri_file .and. .not. index_restrictions) then 
-!
-!        Coming soon: read full g_aibc from file
-!
-         call output%error_msg('reading full eri integrals from file not yet supported!')
 !
       else
 !
@@ -3266,14 +3055,6 @@ contains
       length_b = last_b - first_b + 1
       length_c = last_c - first_c + 1
 !
-      if (integrals%eri_file .and. .not. index_restrictions) then 
-!
-!        Coming soon: read full g_aibc from file
-!
-         call output%error_msg('reading full eri integrals from file not yet supported!')
-!
-      else
-!
 !        Construct g_aibc
 !
          call mem%alloc(L_ia_J, length_a*length_i, integrals%n_J)
@@ -3306,8 +3087,6 @@ contains
 !
          call mem%dealloc(L_ia_J, length_a*length_i, integrals%n_J)
          call mem%dealloc(L_bc_J, length_c*length_b, integrals%n_J)
-!
-      endif 
 !
    end subroutine construct_ovvv_2_mo_integral_tool
 !
@@ -3351,12 +3130,6 @@ contains
                                             integrals%n_o + first_a : integrals%n_o + last_a, &  
                                             integrals%n_o + first_b : integrals%n_o + last_b, &
                                             integrals%n_o + first_c : integrals%n_o + last_c)
-!
-      elseif (integrals%eri_file .and. .not. index_restrictions) then 
-!
-!        Coming soon: read full g_aibc from file
-!
-         call output%error_msg('reading full eri integrals from file not yet supported!')
 !
       else
 !
@@ -3430,14 +3203,6 @@ contains
       length_c = last_c - first_c + 1
       length_d = last_d - first_d + 1
 !
-      if (integrals%eri_file .and. .not. index_restrictions) then 
-!
-!        Coming soon: read full g_abcd from file
-!
-         call output%error_msg('reading full eri integrals from file not yet supported!')
-!
-      else
-!
 !        Construct g_abcd from Cholesky vectors
 !
          if (index_restrictions) then ! dim_ab ≠ dim_cd in general
@@ -3504,8 +3269,6 @@ contains
 !
          endif 
 !
-      endif 
-!
    end subroutine construct_vvvv_2_mo_integral_tool
 !
 !
@@ -3549,12 +3312,6 @@ contains
                                             integrals%n_o + first_b : integrals%n_o + last_b, &
                                             integrals%n_o + first_c : integrals%n_o + last_c, &
                                             integrals%n_o + first_d : integrals%n_o + last_d)
-!
-      elseif (integrals%eri_file .and. .not. index_restrictions) then 
-!
-!        Coming soon: read full g_abcd from file
-!
-         call output%error_msg('reading full eri integrals from file not yet supported!')
 !
       else
 !
@@ -3727,18 +3484,10 @@ contains
 !
       get_required_voov_mo_integral_tool = 0
 !
-      if (integrals%eri_t1_file) then
-!
-         call output%error_msg('still no support for eri on file')        
-!
-      elseif (integrals%cholesky_t1_file) then
+      if (integrals%cholesky_t1_file) then
 !
          get_required_voov_mo_integral_tool = (dim_1_local)*(dim_2_local)*(integrals%n_J) + &
                                               (dim_3_local)*(dim_4_local)*(integrals%n_J)
-!
-      elseif (integrals%eri_file) then
-!
-         call output%error_msg('still no support for eri on file')  
 !
       else
 !
@@ -3788,18 +3537,10 @@ contains
 !
       get_required_vvov_mo_integral_tool = 0
 !
-      if (integrals%eri_t1_file) then
-!
-         call output%error_msg('still no support for eri on file')        
-!
-      elseif (integrals%cholesky_t1_file) then
+      if (integrals%cholesky_t1_file) then
 !
          get_required_vvov_mo_integral_tool = (dim_1_local)*(dim_2_local)*(integrals%n_J) + &
                                               (dim_3_local)*(dim_4_local)*(integrals%n_J)
-!
-      elseif (integrals%eri_file) then
-!
-         call output%error_msg('still no support for eri on file')  
 !
       else
 !
@@ -3850,19 +3591,10 @@ contains
 !
       get_required_vvvo_mo_integral_tool = 0
 !
-      if (integrals%eri_t1_file) then
-!
-         call output%error_msg('still no support for eri on file')        
-         stop
-!
-      elseif (integrals%cholesky_t1_file) then
+      if (integrals%cholesky_t1_file) then
 !
          get_required_vvvo_mo_integral_tool = (dim_1_local)*(dim_2_local)*(integrals%n_J) + &
                                               (dim_3_local)*(dim_4_local)*(integrals%n_J)
-!
-      elseif (integrals%eri_file) then
-!
-         call output%error_msg('still no support for eri on file')  
 !
       else
 !
@@ -3915,18 +3647,10 @@ contains
 !
       get_required_vvvv_mo_integral_tool = 0
 !
-      if (integrals%eri_t1_file) then
-!
-         call output%error_msg('still no support for eri on file')        
-!
-      elseif (integrals%cholesky_t1_file) then
+      if (integrals%cholesky_t1_file) then
 !
          get_required_vvvv_mo_integral_tool = (dim_1_local)*(dim_2_local)*(integrals%n_J) + &
                                               (dim_3_local)*(dim_4_local)*(integrals%n_J)
-!
-      elseif (integrals%eri_file) then
-!
-         call output%error_msg('still no support for eri on file')  
 !
       else
 !

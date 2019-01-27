@@ -2824,8 +2824,8 @@ contains
 !
       integer(i15), intent(in) :: N
 !
-      real(dp), dimension(:,:), intent(in) :: packed
-      real(dp), dimension(:,:)             :: unpacked
+      real(dp), dimension(N*(N+1)/2,1), intent(in) :: packed
+      real(dp), dimension(N,N)                     :: unpacked
 !
       integer(i15) :: i = 0, j = 0
 !
