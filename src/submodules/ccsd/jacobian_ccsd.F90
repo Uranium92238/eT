@@ -2833,8 +2833,6 @@ contains
 !
 !     Start batching over c
 !
-      required = wf%integrals%get_required_vvoo()
-!
       rec0 = wf%n_o**2*wf%integrals%n_J
 !
       rec1 = wf%integrals%n_J*wf%n_v
