@@ -607,7 +607,7 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
       req1_k = (wf%integrals%n_J)*(wf%n_v)
       req1_j = (wf%integrals%n_J)*(wf%n_v)
 !
-      req2 = 2*(wf%n_v)**2
+      req2 = 3*(wf%n_v)**2
 !
       call batch_k%init(wf%n_o)
       call batch_j%init(wf%n_o)
