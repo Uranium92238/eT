@@ -230,7 +230,7 @@ contains
 !!    Jacobian CC2 B1
 !!    Written by Sarai D. Folkestad Eirik F. Kjønstad Jan 2019
 !!
-!!    rho_ai^B1 = 2 sum_bj F_jb c_aibj - F_jb c_ajbi ) - sum_kjb L_kijb c_akbj + sum_bkc L_abkc c_bick
+!!    rho_ai^B1 = 2 sum_bj F_jb c_aibj - F_jb c_ajbi  - sum_kjb L_kijb c_akbj + sum_bkc L_abkc c_bick
 !!
       implicit none
 !
@@ -238,6 +238,122 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)   :: c_aibj
       real(dp), dimension(wf%n_v, wf%n_o), intent(out)                  :: rho_ai   
+!
+      real(dp), dimension(:,:,:,:), allocatable :: X_aijb 
+      real(dp), dimension(:,:,:,:), allocatable :: g_jbki 
+      real(dp), dimension(:,:,:,:), allocatable :: g_abkc
+      real(dp), dimension(:,:,:,:), allocatable :: L_abkc
+      real(dp), dimension(:,:,:,:), allocatable :: L_kbji
+      real(dp), dimension(:,:,:,:), allocatable :: c_bkci 
+!
+      type(batching_index) :: batch_a 
+      integer(i15)         :: req0, req1, current_a_batch
+!
+!     Make X_aijb = 2 c_aibj - c_ajbi 
+!
+      call mem%alloc(X_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+!
+      X_aijb = zero 
+      call add_1243_to_1234(two, c_aibj, X_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+      call add_1342_to_1234(-one, c_aibj, X_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+!
+!     2 sum_bj F_jb c_aibj - F_jb c_ajbi = sum_bj X_aijb F_jb 
+!
+      call dgemm('N','N',            &
+                  (wf%n_o)*(wf%n_v), &
+                  1,                 &
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  X_aijb,            & ! X_ai,jb 
+                  (wf%n_o)*(wf%n_v), &
+                  wf%fock_ia,        & ! F_jb 
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  rho_ai,            &
+                  (wf%n_o)*(wf%n_v))
+!
+      call mem%dealloc(X_aijb, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+!
+!     - sum_kjb c_akbj L_jbki
+!
+!     Make L_jbki ordered as L_kbji (= 2 g_jbki - g_kbji)
+!
+      call mem%alloc(g_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+      call wf%get_ovoo(g_jbki)
+!
+      call mem%alloc(L_kbji, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
+      L_kbji = -one*g_jbki 
+      call add_3214_to_1234(two, g_jbki, L_kbji, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
+      call mem%dealloc(g_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
+      call dgemm('N','N',               &
+                  wf%n_v,               &
+                  wf%n_o,               &
+                  (wf%n_v)*(wf%n_o)**2, &
+                  -one,                 &
+                  c_aibj,               & ! c_a,kbj
+                  wf%n_v,               &
+                  L_kbji,               & ! L_kbj,i 
+                  (wf%n_v)*(wf%n_o)**2, &
+                  one,                  &
+                  rho_ai,               & ! rho_a,i
+                  wf%n_v)
+!
+      call mem%dealloc(L_kbji, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
+!     sum_bkc L_abkc c_ckbi, batch over a 
+!
+!     Order c_ckbi as c_bkci
+!
+      call mem%alloc(c_bkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call sort_1234_to_3214(c_aibj, c_bkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      req0 = 0
+      req1 = (wf%n_v)*(wf%integrals%n_J) + 2*(wf%n_o)*(wf%n_v)**2
+!
+      call batch_a%init(wf%n_v)
+!
+      call mem%batch_setup(batch_a, req0, req1)
+!
+      do current_a_batch = 1, batch_a%num_batches
+!
+         call batch_a%determine_limits(current_a_batch)
+!
+         call mem%alloc(g_abkc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
+!
+         call wf%get_vvov(g_abkc,                       &
+                           batch_a%first, batch_a%last, &
+                           1, wf%n_v,                   &   
+                           1, wf%n_o,                   &
+                           1, wf%n_v)
+!
+         call mem%alloc(L_abkc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
+!
+         L_abkc = two*g_abkc 
+         call add_1432_to_1234(-one, g_abkc, L_abkc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
+!
+         call mem%dealloc(g_abkc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
+!
+         call dgemm('N','N',                   &
+                     batch_a%length,           &
+                     wf%n_o,                   &
+                     (wf%n_o)*(wf%n_v)**2,     &
+                     one,                      &
+                     L_abkc,                   & ! L_a,bkc 
+                     batch_a%length,           &
+                     c_bkci,                   & ! c_bkc,i
+                     (wf%n_o)*(wf%n_v)**2,     &
+                     one,                      &
+                     rho_ai(batch_a%first, 1), &
+                     wf%n_v)
+!
+         call mem%dealloc(L_abkc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
+!
+      enddo 
+!
+      call mem%dealloc(c_bkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
    end subroutine jacobian_cc2_b1_cc2
 !
