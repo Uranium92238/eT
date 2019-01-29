@@ -445,7 +445,7 @@ contains
       call mem%alloc(c_bkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call sort_1234_to_3214(c_aibj, c_bkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      req0 = 0
+      req0 = (wf%n_o)*(wf%n_v)*(wf%integrals%n_J)
       req1 = (wf%n_v)*(wf%integrals%n_J) + 2*(wf%n_o)*(wf%n_v)**2
 !
       call batch_a%init(wf%n_v)
@@ -498,7 +498,7 @@ contains
 !!    Jacobian CC2 A2
 !!    Written by Sarai D. Folkestad Eirik F. Kjønstad Jan 2019
 !!
-!!    rho_aibj^A2 = (1/Δ_aibj)P_aibj (sum_c g_abkc c_cj - sum_k g_aikj c_bk), 
+!!    rho_aibj^A2 = (1/Δ_aibj)P_aibj (sum_c g_aibc c_cj - sum_k g_aikj c_bk), 
 !!
       implicit none
 !
@@ -506,6 +506,99 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)                   :: c_ai
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(out)  :: rho_aibj   
+!
+!     (1/Δ_aibj)P_aibj (- sum_k c_bk g_kjai)
+!
+      call mem%alloc(g_kjai, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call wf%get_oovo(g_kjai)
+!
+      call mem%alloc(rho_bjai_1, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('N','N',               &
+                  wf%n_v,               &
+                  (wf%n_v)*(wf%n_o)**2, &
+                  wf%n_o,               &
+                  -one,                 &
+                  c_ai,                 & ! c_b,k
+                  wf%n_v,               &
+                  g_kjai,               & ! g_k,jai
+                  wf%n_o,               &
+                  zero,                 &
+                  rho_bjai_1,           & ! rho_b,jai 
+                  wf%n_v)
+!
+!$omp parallel do private(a, i)
+      do a = 1, wf%n_v 
+         do i = 1, wf%n_o
+!
+            rho_bjai_1(a, i, a, i) = half*rho_bjai_1(a, i, a, i)
+!
+         enddo
+      enddo
+!$omp end parallel do 
+!
+      call daxpy((wf%n_o)**2*(wf%n_v)**2, one, rho_bjai_1, 1, rho_aibj, 1)
+      call add_21_to_12(one, rho_bjai_1, rho_aibj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+!
+      call mem%dealloc(rho_bjai_1, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(g_kjai, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+!     (1/Δ_aibj)P_aibj (sum_c g_aibc c_cj)
+!
+      call mem%alloc(rho_aibj_2, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      rho_aibj_2 = zero 
+!
+      req0 = (wf%integrals%n_J)*(wf%n_o)*(wf%n_v)
+      req1 = (wf%n_o)*(wf%n_v)**2 + (wf%integrals%n_J)*(wf%n_v)
+!
+      call batch_c%init(wf%n_v)
+!
+      call mem%batch_setup(batch_c, req0, req1)
+!
+      do current_c_batch = 1, batch_c%num_batches
+!
+         call batch_c%determine_limits(current_c_batch)
+!
+         call mem%alloc(g_aibc, wf%n_v, wf%n_o, wf%n_v, batch_c%length)
+!
+         call wf%get_vovv(g_aibc,                        &
+                           1, wf%n_v,                    &
+                           1, wf%n_o,                    &
+                           1, wf%n_v,                    &
+                           batch_c%first, batch_c%last)
+!
+         call dgemm('N','N',                 &
+                     (wf%n_o)*(wf%n_v)**2,   &
+                     wf%n_o,                 &
+                     batch_c%length,         &
+                     one,                    &
+                     g_aibc,                 & ! g_aib,c 
+                     (wf%n_o)*(wf%n_v)**2,   &
+                     c_ai(batch_c%first, 1), & ! c_c,j
+                     wf%n_v,                 &
+                     one,                    &
+                     rho_aibj_2,             & ! rho_aib,j 
+                     (wf%n_o)*(wf%n_v)**2)
+!
+         call mem%dealloc(g_aibc, wf%n_v, wf%n_o, wf%n_v, batch_c%length)
+!
+      enddo 
+!
+!$omp parallel do private(a, i)
+      do a = 1, wf%n_v 
+         do i = 1, wf%n_o
+!
+            rho_aibj_2(a, i, a, i) = half*rho_aibj_2(a, i, a, i)
+!
+         enddo
+      enddo
+!$omp end parallel do 
+!
+      call daxpy((wf%n_o)**2*(wf%n_v)**2, one, rho_aibj_2, 1, rho_aibj, 1)
+      call add_21_to_12(one, rho_aibj_2, rho_aibj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))     
+!
+      call mem%dealloc(rho_aibj_2, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
    end subroutine jacobian_cc2_a2_cc2
 !
