@@ -42,7 +42,7 @@ contains
       real(dp), dimension(:), allocatable :: eps_o
       real(dp), dimension(:), allocatable :: eps_v
 !
-      integer(i15) :: i, a, ai, prev_available ! Index
+      integer(i15) :: i, a, ai ! Index
 !
 !     Allocate and zero the transformed vector (singles part)
 !
@@ -75,10 +75,6 @@ contains
       eps_o = wf%fock_diagonal(1:wf%n_o,1)
       eps_v = wf%fock_diagonal(wf%n_o + 1 : wf%n_mo, 1)
 !
-!TEST
-      prev_available = mem%available
-      mem%available = (2*3*wf%integrals%n_J*wf%n_v + 20*wf%n_v**2)*dp
-!END TEST
       call wf%jacobian_cc2_a1(rho_a_i, c_a_i)
       call wf%jacobian_cc2_b1(rho_a_i, c_a_i, eps_o, eps_v)
 !
@@ -88,7 +84,6 @@ contains
       call wf%effective_jacobian_cc2_d1(omega, rho_a_i, c_a_i, eps_o, eps_v)
       call wf%effective_jacobian_cc2_e1(omega, rho_a_i, c_a_i, eps_o, eps_v)
       call wf%effective_jacobian_cc2_f1(omega, rho_a_i, c_a_i, eps_o, eps_v)
-mem%available = prev_available
 !
       call mem%dealloc(eps_o, wf%n_o)
       call mem%dealloc(eps_v, wf%n_v)
