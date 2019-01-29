@@ -14,21 +14,31 @@ module cc2_class
 !
    contains
 !
-      procedure :: construct_u      => construct_u_cc2
+      procedure :: construct_u                     => construct_u_cc2
 !
-      procedure :: construct_omega  => construct_omega_cc2
+      procedure :: construct_omega                 => construct_omega_cc2
 !
-      procedure :: omega_cc2_a1     => omega_cc2_a1_cc2
-      procedure :: omega_cc2_b1     => omega_cc2_b1_cc2
-      procedure :: omega_cc2_c1     => omega_cc2_c1_cc2
+      procedure :: omega_cc2_a1                    => omega_cc2_a1_cc2
+      procedure :: omega_cc2_b1                    => omega_cc2_b1_cc2
+      procedure :: omega_cc2_c1                    => omega_cc2_c1_cc2
 !
-      procedure :: calculate_energy => calculate_energy_cc2
+      procedure :: calculate_energy                => calculate_energy_cc2
+!
+      procedure :: jacobian_transform_trial_vector => jacobian_transform_trial_vector_cc2
+      procedure :: jacobian_cc2_transformation     => jacobian_cc2_transformation_cc2
+!
+      procedure :: jacobian_cc2_a1                 => jacobian_cc2_a1_cc2
+      procedure :: jacobian_cc2_b1                 => jacobian_cc2_b1_cc2
+      procedure :: jacobian_cc2_c1                 => jacobian_cc2_c1_cc2
+      procedure :: jacobian_cc2_a2                 => jacobian_cc2_a2_cc2
+      procedure :: jacobian_cc2_b2                 => jacobian_cc2_b2_cc2
 !
    end type cc2
 !
    interface
 !
       include "../submodules/cc2/omega_cc2_interface.F90"
+      include "../submodules/cc2/jacobian_cc2_interface.F90"
 !
    end interface 
 !
