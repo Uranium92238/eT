@@ -250,21 +250,21 @@ contains
       do state = 1, solver%n_singlet_states
 !  
          write(string_state, '(i3.3)') state
-         call diis(state)%init('diis_cc_es_solver_' // string_state, wf%n_amplitudes, wf%n_amplitudes, solver%diis_dimension)
+         call diis(state)%init('diis_cc_es_solver_' // string_state, wf%n_es_amplitudes, wf%n_es_amplitudes, solver%diis_dimension)
 !
       enddo 
 !
 !     Make initial guess on the eigenvectors X = [X1 X2 X3 ...]
 !
-      call mem%alloc(eps, wf%n_amplitudes, 1)
-      call wf%get_orbital_differences(eps)
+      call mem%alloc(eps, wf%n_es_amplitudes, 1)
+      call wf%get_es_orbital_differences(eps, wf%n_es_amplitudes)
 !
-      call mem%alloc(X, wf%n_amplitudes, solver%n_singlet_states)
+      call mem%alloc(X, wf%n_es_amplitudes, solver%n_singlet_states)
       call solver%set_start_vectors(wf, X, eps)
 !
 !     Enter iterative loop
 !
-      call mem%alloc(R, wf%n_amplitudes, solver%n_singlet_states)
+      call mem%alloc(R, wf%n_es_amplitudes, solver%n_singlet_states)
 !
       iteration = 0
 !
@@ -287,7 +287,7 @@ contains
                call wf%construct_excited_state_equation(X(:,state), R(:,state), energies(state))
 !
 !$omp parallel do private(amplitude)
-               do amplitude = 1, wf%n_amplitudes
+               do amplitude = 1, wf%n_es_amplitudes
 !
                   R(amplitude, state) = -R(amplitude, state)/(eps(amplitude, 1) - energies(state))
 !
@@ -296,7 +296,7 @@ contains
 !
 !              Update convergence logicals 
 !
-               residual_norms(state) = get_l2_norm(R(:, state), wf%n_amplitudes)
+               residual_norms(state) = get_l2_norm(R(:, state), wf%n_es_amplitudes)
 !
                converged_eigenvalue(state) = abs(energies(state)-prev_energies(state)) .lt. solver%eigenvalue_threshold
                converged_residual(state)   = residual_norms(state)                     .lt. solver%residual_threshold
@@ -309,7 +309,7 @@ contains
                X(:,state) = X(:,state) + R(:,state)
                call diis(state)%update(R(:,state), X(:,state))
 !
-               norm_X = get_l2_norm(X(:,state), wf%n_amplitudes)
+               norm_X = get_l2_norm(X(:,state), wf%n_es_amplitudes)
                X(:,state) = X(:,state)/norm_X
 !
             endif 
@@ -354,8 +354,8 @@ contains
 !
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_amplitudes, solver%n_singlet_states), intent(inout) :: R 
-      real(dp), dimension(wf%n_amplitudes, 1), intent(in)                          :: orbital_differences 
+      real(dp), dimension(wf%n_es_amplitudes, solver%n_singlet_states), intent(inout) :: R 
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(in)                          :: orbital_differences 
 !
       real(dp), dimension(:,:), allocatable :: lowest_orbital_differences
 !
@@ -366,7 +366,7 @@ contains
       call mem%alloc(lowest_orbital_differences, solver%n_singlet_states, 1)
       call mem%alloc(lowest_orbital_differences_index, solver%n_singlet_states, 1)
 !
-      call get_n_lowest(solver%n_singlet_states, wf%n_amplitudes, orbital_differences, &
+      call get_n_lowest(solver%n_singlet_states, wf%n_es_amplitudes, orbital_differences, &
                            lowest_orbital_differences, lowest_orbital_differences_index)
 !
       call mem%dealloc(lowest_orbital_differences, solver%n_singlet_states, 1)

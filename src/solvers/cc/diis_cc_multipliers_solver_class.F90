@@ -161,11 +161,11 @@ contains
 !
       integer(i15) :: iteration
 !
-      call diis_manager%init('cc_multipliers_diis', wf%n_amplitudes, wf%n_amplitudes, solver%diis_dimension)
+      call diis_manager%init('cc_multipliers_diis', wf%n_gs_amplitudes, wf%n_gs_amplitudes, solver%diis_dimension)
 !
-      call mem%alloc(residual, wf%n_amplitudes, 1)
-      call mem%alloc(multipliers, wf%n_amplitudes, 1)
-      call mem%alloc(epsilon, wf%n_amplitudes, 1)
+      call mem%alloc(residual, wf%n_gs_amplitudes, 1)
+      call mem%alloc(multipliers, wf%n_gs_amplitudes, 1)
+      call mem%alloc(epsilon, wf%n_gs_amplitudes, 1)
 !
       if (solver%restart) then 
 !
@@ -192,7 +192,7 @@ contains
 !        Construct the multiplier equations 
 !
          call wf%construct_multiplier_equation(residual)
-         residual_norm = get_l2_norm(residual, wf%n_amplitudes)
+         residual_norm = get_l2_norm(residual, wf%n_gs_amplitudes)
 !
          write(output%unit, '(t3,i3,10x,e10.4)') iteration, residual_norm
          flush(output%unit)
@@ -211,8 +211,8 @@ contains
 !           Precondition residual, shift multipliers by preconditioned residual, 
 !           then ask for the DIIS update of the multipliers 
 !
-            call wf%get_orbital_differences(epsilon)
-            call solver%do_diagonal_precondition(-one, epsilon, residual, wf%n_amplitudes)
+            call wf%get_gs_orbital_differences(epsilon, wf%n_gs_amplitudes)
+            call solver%do_diagonal_precondition(-one, epsilon, residual, wf%n_gs_amplitudes)
 !
             call wf%get_multipliers(multipliers)
             multipliers = multipliers + residual 
@@ -226,9 +226,9 @@ contains
 !
       enddo
 !
-      call mem%dealloc(residual, wf%n_amplitudes, 1)
-      call mem%dealloc(multipliers, wf%n_amplitudes, 1)
-      call mem%dealloc(epsilon, wf%n_amplitudes, 1)
+      call mem%dealloc(residual, wf%n_gs_amplitudes, 1)
+      call mem%dealloc(multipliers, wf%n_gs_amplitudes, 1)
+      call mem%dealloc(epsilon, wf%n_gs_amplitudes, 1)
 !
       call diis_manager%finalize()
 !

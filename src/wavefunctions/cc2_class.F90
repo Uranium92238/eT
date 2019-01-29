@@ -12,6 +12,8 @@ module cc2_class
 !
    type, extends(ccs) :: cc2
 !
+      integer(i15) :: n_t2
+!
       real(dp), dimension(:,:,:,:), allocatable :: u
 !
    contains
@@ -43,6 +45,8 @@ module cc2_class
 !
       procedure :: initialize_amplitudes           => initialize_amplitudes_cc2 
       procedure :: destruct_amplitudes             => destruct_amplitudes_cc2 
+!
+      procedure :: get_es_orbital_differences      => get_es_orbital_differences_cc2
 !
    end type cc2
 !
@@ -81,8 +85,10 @@ contains
 !
       wf%hf_energy = ref_wf%energy
 !
-      wf%n_t1         = (wf%n_o)*(wf%n_v)
-      wf%n_amplitudes = wf%n_t1
+      wf%n_t1            = (wf%n_o)*(wf%n_v)
+      wf%n_t2            = wf%n_t1*(wf%n_t1+1)/2
+      wf%n_gs_amplitudes = wf%n_t1
+      wf%n_es_amplitudes = wf%n_t1 + wf%n_t2
 !
       call wf%initialize_fock_ij()
       call wf%initialize_fock_ia()
@@ -268,5 +274,53 @@ contains
       call wf%destruct_u()
 !
    end subroutine destruct_amplitudes_cc2
+!
+!
+   subroutine get_es_orbital_differences_cc2(wf, orbital_differences, N)
+!!
+!!    Get orbital differences 
+!!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
+!!    and Andreas Skeidsvoll, 2018
+!!
+      implicit none
+!
+      class(cc2), intent(in) :: wf
+!
+      integer(i15), intent(in) :: N 
+      real(dp), dimension(N), intent(inout) :: orbital_differences
+!
+      integer(i15) :: a, i, ai, b, j, bj, aibj
+!
+!$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) 
+      do a = 1, wf%n_v
+         do i = 1, wf%n_o
+!
+            ai = wf%n_v*(i - 1) + a
+!
+            orbital_differences(ai) = wf%fock_diagonal(a + wf%n_o, 1) - wf%fock_diagonal(i, 1)
+!
+            do j = 1, wf%n_o 
+               do b = 1, wf%n_v
+!
+                  bj = wf%n_v*(j-1) + b 
+!
+                  if (ai .ge. bj) then
+!
+                     aibj = (ai*(ai-3)/2) + ai + bj
+!
+                     orbital_differences(aibj + (wf%n_o)*(wf%n_v)) = wf%fock_diagonal(a + wf%n_o, 1) - wf%fock_diagonal(i, 1) &
+                                                                      +  wf%fock_diagonal(b + wf%n_o, 1) - wf%fock_diagonal(j, 1)
+!
+                  endif
+!
+               enddo
+            enddo  
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine get_es_orbital_differences_cc2
+!
 !
 end module cc2_class

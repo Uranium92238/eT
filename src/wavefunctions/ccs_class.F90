@@ -24,7 +24,9 @@ module ccs_class
 !
       real(dp) :: hf_energy 
 !
-      integer(i15)                           :: n_amplitudes
+      integer(i15)                           :: n_gs_amplitudes
+      integer(i15)                           :: n_es_amplitudes
+!
       integer(i15)                           :: n_t1
 !
       real(dp), dimension(:,:), allocatable  :: t1
@@ -78,7 +80,8 @@ module ccs_class
 ! 
       procedure :: set_fock                                    => set_fock_ccs
       procedure :: construct_fock                              => construct_fock_ccs
-      procedure :: get_orbital_differences                     => get_orbital_differences_ccs
+      procedure :: get_gs_orbital_differences                  => get_gs_orbital_differences_ccs
+      procedure :: get_es_orbital_differences                  => get_gs_orbital_differences_ccs
       procedure :: calculate_energy                            => calculate_energy_ccs
 !
 !     Routines related to the omega vector 
@@ -209,8 +212,9 @@ contains
 !
       wf%hf_energy = ref_wf%energy
 !
-      wf%n_t1         = (wf%n_o)*(wf%n_v)
-      wf%n_amplitudes = wf%n_t1
+      wf%n_t1            = (wf%n_o)*(wf%n_v)
+      wf%n_gs_amplitudes = wf%n_t1
+      wf%n_es_amplitudes = wf%n_t1
 !
       call wf%initialize_fock_ij()
       call wf%initialize_fock_ia()
@@ -295,9 +299,9 @@ contains
 !
       class(ccs) :: wf  
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(in) :: amplitudes
+      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(in) :: amplitudes
 !
-      call dcopy(wf%n_amplitudes, amplitudes, 1, wf%t1, 1)
+      call dcopy(wf%n_gs_amplitudes, amplitudes, 1, wf%t1, 1)
 !
    end subroutine set_amplitudes_ccs
 !
@@ -311,9 +315,9 @@ contains
 !
       class(ccs), intent(in) :: wf  
 !
-      real(dp), dimension(wf%n_amplitudes, 1) :: amplitudes
+      real(dp), dimension(wf%n_gs_amplitudes, 1) :: amplitudes
 !
-      call dcopy(wf%n_amplitudes, wf%t1, 1, amplitudes, 1)
+      call dcopy(wf%n_gs_amplitudes, wf%t1, 1, amplitudes, 1)
 !
    end subroutine get_amplitudes_ccs
 !
@@ -519,9 +523,9 @@ contains
 !
       class(ccs) :: wf  
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(in) :: multipliers
+      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(in) :: multipliers
 !
-      call dcopy(wf%n_amplitudes, multipliers, 1, wf%t1bar, 1)
+      call dcopy(wf%n_gs_amplitudes, multipliers, 1, wf%t1bar, 1)
 !
    end subroutine set_multipliers_ccs
 !
@@ -535,9 +539,9 @@ contains
 !
       class(ccs), intent(in) :: wf  
 !
-      real(dp), dimension(wf%n_amplitudes, 1) :: multipliers
+      real(dp), dimension(wf%n_gs_amplitudes, 1) :: multipliers
 !
-      call dcopy(wf%n_amplitudes, wf%t1bar, 1, multipliers, 1)
+      call dcopy(wf%n_gs_amplitudes, wf%t1bar, 1, multipliers, 1)
 !
    end subroutine get_multipliers_ccs
 !
@@ -620,7 +624,7 @@ contains
 !
       class(ccs), intent(inout) :: wf
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: omega
+      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: omega
 !
       omega = zero
       call wf%omega_ccs_a1(omega)
@@ -905,7 +909,7 @@ contains
    end subroutine t1_transform_ccs
 !
 !
-   subroutine get_orbital_differences_ccs(wf, orbital_differences)
+   subroutine get_gs_orbital_differences_ccs(wf, orbital_differences, N)
 !!
 !!    Get orbital differences 
 !!    Written by Sarai D. Folkestad, Sep 2018
@@ -914,7 +918,8 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: orbital_differences
+      integer(i15), intent(in) :: N 
+      real(dp), dimension(N), intent(inout) :: orbital_differences
 !
       integer(i15) :: a, i, ai
 !
@@ -923,12 +928,12 @@ contains
 !
             ai = wf%n_v*(i - 1) + a
 !
-            orbital_differences(ai, 1) = wf%fock_diagonal(a + wf%n_o, 1) - wf%fock_diagonal(i, 1)
+            orbital_differences(ai) = wf%fock_diagonal(a + wf%n_o, 1) - wf%fock_diagonal(i, 1)
 !
          enddo
       enddo
 !
-   end subroutine get_orbital_differences_ccs
+   end subroutine get_gs_orbital_differences_ccs
 !
 !
    subroutine initialize_fock_ij_ccs(wf)
@@ -3650,7 +3655,7 @@ contains
 !!
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_amplitudes, 1) :: c_i
+      real(dp), dimension(wf%n_es_amplitudes, 1) :: c_i
 !
       call wf%jacobian_ccs_transformation(c_i)
 !
@@ -3664,7 +3669,7 @@ contains
 !!
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_amplitudes, 1) :: c_i
+      real(dp), dimension(wf%n_es_amplitudes, 1) :: c_i
 !
       call wf%jacobian_transpose_ccs_transformation(c_i)
 !
@@ -3697,8 +3702,8 @@ contains
 !
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(in)    :: X 
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: R
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(in)    :: X 
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(inout) :: R
 !
       real(dp), intent(inout) :: w 
 !
@@ -3706,17 +3711,16 @@ contains
 !
       real(dp) :: ddot  
 !
-      call mem%alloc(X_copy, wf%n_amplitudes, 1)
+      call mem%alloc(X_copy, wf%n_es_amplitudes, 1)
       X_copy = X
 !
-    !  call wf%jacobian_ccs_transformation(X_copy) ! X_copy <- AX 
       call wf%jacobian_transform_trial_vector(X_copy) ! X_copy <- AX 
 !
-      w = ddot(wf%n_amplitudes, X, 1, X_copy, 1)
+      w = ddot(wf%n_es_amplitudes, X, 1, X_copy, 1)
 !
       R = X_copy - w*X
 !
-      call mem%dealloc(X_copy, wf%n_amplitudes, 1)
+      call mem%dealloc(X_copy, wf%n_es_amplitudes, 1)
 !
    end subroutine construct_excited_state_equation_ccs
 !
@@ -4119,7 +4123,7 @@ contains
 !
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: eta 
+      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: eta 
 !
       integer(i15) :: i, a, ai
 !
@@ -4150,7 +4154,7 @@ contains
 !
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: equation 
+      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: equation 
 !
       real(dp), dimension(:,:), allocatable :: eta 
 !
@@ -4274,7 +4278,7 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(out) :: projector
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(out) :: projector
 !
       integer(i15), intent(in) :: n_cores
 !
@@ -4308,7 +4312,7 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(out) :: projector
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(out) :: projector
 !
       integer(i15) :: i, a, ai
 !
@@ -4349,7 +4353,7 @@ contains
 !
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_amplitudes, 1) :: x 
+      real(dp), dimension(wf%n_gs_amplitudes, 1) :: x 
 !
       character(len=1) :: tag 
 !

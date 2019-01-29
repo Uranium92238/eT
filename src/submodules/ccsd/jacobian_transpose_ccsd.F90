@@ -29,7 +29,7 @@ contains
 !!
       class(ccsd), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_amplitudes, 1) :: c_i
+      real(dp), dimension(wf%n_es_amplitudes, 1) :: c_i
 !
       call wf%jacobian_transpose_ccsd_transformation(c_i)
 !
@@ -57,7 +57,7 @@ contains
 !
 !     Incoming vector b 
 !
-      real(dp), dimension(wf%n_amplitudes, 1) :: b
+      real(dp), dimension(wf%n_es_amplitudes, 1) :: b
 !
       real(dp), dimension(:,:), allocatable :: b_a_i
 !

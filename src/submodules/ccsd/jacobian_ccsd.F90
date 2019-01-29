@@ -28,7 +28,7 @@ contains
 !!
       class(ccsd), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_amplitudes, 1) :: c_i
+      real(dp), dimension(wf%n_es_amplitudes, 1) :: c_i
 !
       call wf%jacobian_ccsd_transformation(c_i)
 !
@@ -58,7 +58,7 @@ contains
 !
       class(ccsd) :: wf
 !
-      real(dp), dimension(wf%n_amplitudes, 1) :: c
+      real(dp), dimension(wf%n_es_amplitudes, 1) :: c
 !
       real(dp), dimension(:,:), allocatable :: c_a_i
       real(dp), dimension(:,:), allocatable :: c_ai_bj, c_ab_ij 

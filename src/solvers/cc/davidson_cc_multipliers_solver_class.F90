@@ -117,13 +117,13 @@ contains
 !
 !     Set eta
 !
-      call mem%alloc(eta, wf%n_amplitudes, 1)
+      call mem%alloc(eta, wf%n_gs_amplitudes, 1)
       call wf%construct_eta(eta)
-      call dscal(wf%n_amplitudes, -one, eta, 1)
+      call dscal(wf%n_gs_amplitudes, -one, eta, 1)
 !
 !     Initialize solver tool
 !
-      call davidson%prepare('multipliers', wf%n_amplitudes, solver%residual_threshold, eta)
+      call davidson%prepare('multipliers', wf%n_gs_amplitudes, solver%residual_threshold, eta)
 !
 !     Set start vector
 !
@@ -132,12 +132,12 @@ contains
       call solver%set_precondition_vector(wf, davidson)
       call davidson%precondition(eta)
 !
-      norm_trial = sqrt(ddot(wf%n_amplitudes, eta, 1, eta, 1))
-      call dscal(wf%n_amplitudes, one/norm_trial, eta, 1)
+      norm_trial = sqrt(ddot(wf%n_gs_amplitudes, eta, 1, eta, 1))
+      call dscal(wf%n_gs_amplitudes, one/norm_trial, eta, 1)
 !
       call davidson%write_trial(eta, 'rewind')
 !
-      call mem%dealloc(eta, wf%n_amplitudes, 1)
+      call mem%dealloc(eta, wf%n_gs_amplitudes, 1)
 !
 !     Enter iterative loop
 !
@@ -206,13 +206,13 @@ contains
       write(output%unit,'(t3,a)') '---------------------------'
       flush(output%unit)
 !
-      call mem%alloc(multipliers, wf%n_amplitudes, 1)
+      call mem%alloc(multipliers, wf%n_gs_amplitudes, 1)
 !
       call davidson%construct_X(multipliers, 1)
 !
       call wf%set_multipliers(multipliers)
 !
-      call mem%dealloc(multipliers, wf%n_amplitudes, 1)
+      call mem%dealloc(multipliers, wf%n_gs_amplitudes, 1)
 !
    end subroutine run_davidson_cc_multipliers_solver
 !
@@ -257,7 +257,7 @@ contains
 !!
       class(ccs), intent(in) :: wf 
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: c_i
+      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: c_i
 !
       call wf%jacobian_transpose_transform_trial_vector(c_i) 
 !
@@ -279,10 +279,10 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: preconditioner
 !
-      call mem%alloc(preconditioner, wf%n_amplitudes, 1)
-      call wf%get_orbital_differences(preconditioner)
+      call mem%alloc(preconditioner, wf%n_gs_amplitudes, 1)
+      call wf%get_gs_orbital_differences(preconditioner, wf%n_gs_amplitudes)
       call davidson%set_preconditioner(preconditioner)
-      call mem%dealloc(preconditioner, wf%n_amplitudes, 1)
+      call mem%dealloc(preconditioner, wf%n_gs_amplitudes, 1)
 !
    end subroutine set_precondition_vector_davidson_cc_multipliers_solver
 !
