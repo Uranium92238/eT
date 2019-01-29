@@ -64,7 +64,7 @@ contains
 !!
       implicit none
 !
-      class(ccs) :: wf
+      class(cc2) :: wf
 !
       class(hf) :: ref_wf
 !

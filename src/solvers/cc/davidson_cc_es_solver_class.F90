@@ -304,6 +304,8 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: c_i
 !
+      call wf%prepare_for_jacobian()
+!
       converged            = .false. 
       converged_eigenvalue = .false. 
       converged_residual   = .false. 

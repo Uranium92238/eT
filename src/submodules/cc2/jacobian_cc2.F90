@@ -86,6 +86,9 @@ contains
 !
 !     Allocate and zero the transformed vector (singles part)
 !
+      write(output%unit, *) 'Hello from new jacobian cc2!'
+      flush(output%unit)
+!
       call mem%alloc(rho_ai, wf%n_v, wf%n_o)
       rho_ai = zero
 !
@@ -105,12 +108,29 @@ contains
 !
 !     :: CCS contributions to the singles c vector ::
 !
+      write(output%unit, *) 'Hello 1'
+      flush(output%unit)
+!
       call wf%jacobian_ccs_a1(rho_ai, c_ai)
+!
+      write(output%unit, *) 'Hello 2'
+      flush(output%unit)
+!
       call wf%jacobian_ccs_b1(rho_ai, c_ai)
 !
 !     :: CC2 contributions to the transformed singles vector ::
 !
+      write(output%unit, *) 'Hello 3'
+      flush(output%unit)
+!
+    !  stop
+!
       call wf%jacobian_cc2_a1(rho_ai, c_ai)
+!
+      stop
+!
+      write(output%unit, *) 'Hello 4'
+      flush(output%unit)
 !
 !     Allocate the incoming unpacked doubles vector
 !
@@ -155,7 +175,13 @@ contains
       enddo
 !$omp end parallel do
 !
+      write(output%unit, *) 'Hello 5'
+      flush(output%unit)
+!
       call wf%jacobian_cc2_b1(rho_ai, c_aibj)
+!
+      write(output%unit, *) 'Hello 6'
+      flush(output%unit)
 !
 !     Done with singles vector c; overwrite it with
 !     transformed vector for exit
@@ -183,15 +209,24 @@ contains
 !
 !     Contributions from singles vector c
 !
+      write(output%unit, *) 'Hello 7'
+      flush(output%unit)
+!
       call wf%jacobian_cc2_a2(rho_aibj, c_ai)
 !
       call mem%dealloc(c_ai, wf%n_v, wf%n_o)
+!
+      write(output%unit, *) 'Hello 8'
+      flush(output%unit)
 !
 !     Contributions from doubles vector c      
 !
       call wf%jacobian_cc2_b2(rho_aibj, c_aibj)
 !
       call mem%dealloc(c_aibj, (wf%n_v), (wf%n_o), (wf%n_v), (wf%n_o))
+!
+      write(output%unit, *) 'Hello 9'
+      flush(output%unit)
 !
 !     Overwrite the incoming doubles c vector & pack in
 !
@@ -318,6 +353,7 @@ contains
 !     L_kcjb ordered as L_ckbj
 !
       call mem%alloc(L_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      L_ckbj = zero
 !
       call add_2143_to_1234(two, g_jbkc, L_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o) ! Still pretending that g_jbkc is g_kcjb although this is not necessary
       call add_4123_to_1234(-one, g_jbkc, L_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
@@ -328,7 +364,7 @@ contains
 !
       call dgemm('N', 'N',       &
                   wf%n_o*wf%n_v, &
-                  wf%n_o*wf%n_v, &
+                  1,             &
                   wf%n_o*wf%n_v, &
                   one,           &
                   L_ckbj,        & ! L_ck_bj
@@ -338,13 +374,12 @@ contains
                   zero,          &
                   X_ck,          &
                   wf%n_o*wf%n_v)
-
 !
       call mem%dealloc(L_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call dgemm('N', 'N',       &
                   wf%n_o*wf%n_v, &
-                  wf%n_o*wf%n_v, &
+                  1,             &
                   wf%n_o*wf%n_v, &
                   one,           &
                   wf%u,          & ! u_ai_ck
@@ -355,7 +390,7 @@ contains
                   rho_ai,        &
                   wf%n_o*wf%n_v)
 !
-      call mem%alloc(X_ck, wf%n_v, wf%n_o)
+      call mem%dealloc(X_ck, wf%n_v, wf%n_o)
 !
    end subroutine jacobian_cc2_a1_cc2
 !
@@ -506,6 +541,16 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)                   :: c_ai
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(out)  :: rho_aibj   
+!
+      real(dp), dimension(:,:,:,:), allocatable :: rho_bjai_1 
+      real(dp), dimension(:,:,:,:), allocatable :: rho_aibj_2 
+      real(dp), dimension(:,:,:,:), allocatable :: g_kjai 
+      real(dp), dimension(:,:,:,:), allocatable :: g_aibc
+!
+      integer(i15) :: a, i 
+!
+      type(batching_index) :: batch_c 
+      integer(i15)         :: req0, req1, current_c_batch 
 !
 !     (1/Δ_aibj)P_aibj (- sum_k c_bk g_kjai)
 !
