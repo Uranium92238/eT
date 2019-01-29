@@ -828,13 +828,13 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)           :: c_a_i
       real(dp), dimension((wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) :: rho_ai_bj
 !
-      real(dp), dimension(:,:), allocatable :: t_ai_cj ! t_ij^ac
-      real(dp), dimension(:,:), allocatable :: t_ca_ij ! t_ij^ac
+      real(dp), dimension(:,:,:,:), allocatable :: t_aicj   ! t_ij^ac
+      real(dp), dimension(:,:,:,:), allocatable :: t_caij   ! t_ij^ac
+      real(dp), dimension(:,:,:,:), allocatable :: X_kaij   ! An intermediate
+      real(dp), dimension(:,:,:,:), allocatable :: rho_baij ! rho_ai_bj, reordered, term 1
 !
-      real(dp), dimension(:,:), allocatable :: X_k_aij ! An intermediate
-      real(dp), dimension(:,:), allocatable :: X_k_j   ! An intermediate
+      real(dp), dimension(:,:), allocatable :: X_kj         ! An intermediate
 !
-      real(dp), dimension(:,:), allocatable :: rho_ba_ij ! rho_ai_bj, reordered, term 1
 !
       type(timings) :: jacobian_ccsd_b2_timer
 !
@@ -845,100 +845,98 @@ contains
 !
 !     Order the amplitudes as t_ca_ij = t_ij^ac
 !
-      call mem%alloc(t_ai_cj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      t_ai_cj = zero
+      call mem%alloc(t_aicj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      t_aicj = zero
 !
-      call squareup(wf%t2, t_ai_cj, (wf%n_o)*(wf%n_v))
+      call squareup(wf%t2, t_aicj, (wf%n_o)*(wf%n_v))
 !
 !     t_ai_cj to t_ca_ij
 !
-      call mem%alloc(t_ca_ij, (wf%n_v)**2, (wf%n_o)**2)
-      t_ca_ij = zero
+      call mem%alloc(t_caij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      t_caij = zero
 !
-      call sort_1234_to_3124(t_ai_cj, t_ca_ij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call sort_1234_to_3124(t_aicj, t_caij, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !     Form the intermediate X_k_aij = sum_c F_k_c t_c_aij
 !
-      call mem%alloc(X_k_aij, wf%n_o, (wf%n_v)*(wf%n_o)**2)
+      call mem%alloc(X_kaij, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
       call dgemm('N', 'N',              &
                   wf%n_o,               &
                   (wf%n_v)*(wf%n_o)**2, &
                   wf%n_v,               &
                   one,                  &
-                  wf%fock_ia,           &
+                  wf%fock_ia,           & ! F_k,c 
                   wf%n_o,               &
-                  t_ca_ij,              & ! t_c_aij
+                  t_caij,               & ! t_c,aij
                   wf%n_v,               &
                   zero,                 &
-                  X_k_aij,              &
+                  X_kaij,               & 
                   wf%n_o)
 !
-      call mem%dealloc(t_ca_ij, (wf%n_v)**2, (wf%n_o)**2)
+      call mem%dealloc(t_caij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
 !     Form rho_b_aij = sum_k c_a_i(b,k) X_k_aij(k,aij)
 !
-      call mem%alloc(rho_ba_ij, (wf%n_v)**2, (wf%n_o)**2)
+      call mem%alloc(rho_baij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
       call dgemm('N', 'N',              &
                   wf%n_v,               &
                   (wf%n_v)*(wf%n_o)**2, &
                   wf%n_o,               &
                   -one,                 &
-                  c_a_i,                &
+                  c_a_i,                & ! c_b,k
                   wf%n_v,               &
-                  X_k_aij,              &
+                  X_kaij,               &
                   wf%n_o,               &
                   zero,                 &
-                  rho_ba_ij,            & ! rho_b_aij
+                  rho_baij,             & ! rho_b,aij
                   wf%n_v)
 !
-      call mem%dealloc(X_k_aij, wf%n_o, (wf%n_v)*(wf%n_o)**2)
+      call mem%dealloc(X_kaij, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
 !     Add rho_ba_ij(ba,ij) to rho_ai_bj(ai,bj)
-!                   3124                1234
 !
-      call add_3124_to_1234(one, rho_ba_ij, rho_ai_bj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call add_3124_to_1234(one, rho_baij, rho_ai_bj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
-      call mem%dealloc(rho_ba_ij, (wf%n_v)**2, (wf%n_o)**2)
+      call mem%dealloc(rho_baij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
 !
 !     :: Term 2. - sum_kc F_kc t_ik^ab c_cj ::
 !
-!     Form X_k_j = sum_c F_kc c_cj = sum_c fock_ia(k,c) c_a_i(c,j)
+!     Form X_kj = sum_c F_kc c_cj = sum_c fock_ia(k,c) c_a_i(c,j)
 !
-      call mem%alloc(X_k_j, wf%n_o, wf%n_o)
+      call mem%alloc(X_kj, wf%n_o, wf%n_o)
 !
       call dgemm('N','N',     &
                   wf%n_o,     &
                   wf%n_o,     &
                   wf%n_v,     &
                   one,        &
-                  wf%fock_ia, &
+                  wf%fock_ia, & ! F_k,c 
                   wf%n_o,     &
-                  c_a_i,      &
+                  c_a_i,      & ! c_c,j
                   wf%n_v,     &
                   zero,       &
-                  X_k_j,      &
+                  X_kj,       &
                   wf%n_o)
 !
 !     Form rho_aib_j = - sum_k t_aib_k X_k_j
-!     (Interpret rho_ai_bj as rho_aib_j)
 !
       call dgemm('N','N',               &
                   (wf%n_o)*(wf%n_v)**2, &
                   wf%n_o,               &
                   wf%n_o,               &
                   -one,                 &
-                  t_ai_cj,              & ! t_aib_k
+                  t_aicj,               & ! t_aib,k
                   (wf%n_o)*(wf%n_v)**2, &
-                  X_k_j,                &
+                  X_kj,                 &
                   wf%n_o,               &
                   one,                  &
-                  rho_ai_bj,            & ! rho_aib_j
+                  rho_ai_bj,            & ! rho_aib,j
                   (wf%n_o)*(wf%n_v)**2)
 !
-      call mem%dealloc(X_k_j, wf%n_o, wf%n_o)
-      call mem%dealloc(t_ai_cj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(X_kj, wf%n_o, wf%n_o)
+      call mem%dealloc(t_aicj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call jacobian_ccsd_b2_timer%freeze()
       call jacobian_ccsd_b2_timer%switch_off()
@@ -1323,9 +1321,6 @@ contains
 !!          where the integrals are made as g_kc_db = g_kcbd and held
 !!          in some ordering or other throughout a given batch (i.e.,
 !!          all five terms are constructed gradually in the batches).
-!!
-!!    The term is added as rho_ai_bj(ai,bj) = rho_ai_bj(ai,bj) + rho_ai_bj^D2,
-!!    where c_a_i(a,i) = c_ai above.
 !!
       implicit none
 !
