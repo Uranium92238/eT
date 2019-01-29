@@ -1,5 +1,17 @@
 !
 !
+   module subroutine prepare_for_jacobian_cc2(wf)
+!!
+!!    Prepare for Jacobian
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2019
+!!
+      implicit none 
+!
+      class(cc2), intent(inout) :: wf 
+!
+   end subroutine prepare_for_jacobian_cc2
+!
+!
    module subroutine jacobian_transform_trial_vector_cc2(wf, c_i)
 !!
 !!    Jacobian transform trial vector 
@@ -48,7 +60,7 @@
 !!
       implicit none
 !
-      class(cc2) :: wf
+      class(cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(out)   :: rho_ai   
@@ -101,7 +113,7 @@
 !
       class(cc2) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)   :: c_aibj
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout)   :: c_aibj
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(out)  :: rho_aibj   
 !
    end subroutine jacobian_cc2_b2_cc2

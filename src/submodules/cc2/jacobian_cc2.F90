@@ -21,6 +21,22 @@ submodule (cc2_class) jacobian_cc2
 contains
 !
 !
+   module subroutine prepare_for_jacobian_cc2(wf)
+!!
+!!    Prepare for Jacobian
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2019
+!!
+      implicit none 
+!
+      class(cc2), intent(inout) :: wf 
+!
+      call wf%initialize_u()
+      call wf%construct_u()
+!
+   end subroutine prepare_for_jacobian_cc2
+!
+!
+!
    module subroutine jacobian_transform_trial_vector_cc2(wf, c_i)
 !!
 !!    Jacobian transform trial vector 
@@ -140,7 +156,6 @@ contains
 !$omp end parallel do
 !
       call wf%jacobian_cc2_b1(rho_ai, c_aibj)
-      call wf%jacobian_cc2_c1(rho_ai, c_aibj)
 !
 !     Done with singles vector c; overwrite it with
 !     transformed vector for exit
@@ -217,10 +232,130 @@ contains
 !!
       implicit none
 !
-      class(cc2) :: wf
+      class(cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)    :: c_ai
-      real(dp), dimension(wf%n_v, wf%n_o), intent(out)   :: rho_ai   
+      real(dp), dimension(wf%n_v, wf%n_o), intent(out)   :: rho_ai
+!
+      real(dp), dimension(:,:,:,:), allocatable :: g_jbkc, u_bkci, X_kcji, L_ckbj
+      real(dp), dimension(:,:), allocatable     :: X_ji, X_ck
+!
+      call mem%alloc(g_jbkc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+!
+      call wf%get_ovov(g_jbkc)
+!
+!     Reorder u_ckbi as u_bkci
+!
+      call mem%alloc(u_bkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call sort_1234_to_3214(wf%u, u_bkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(X_ji, wf%n_o, wf%n_o)
+!
+!     X_ji = sum_kcb g_kcjb u_ckbi 
+!
+      call dgemm('N', 'N',                &
+                  wf%n_o,                 &
+                  wf%n_o,                 &
+                  (wf%n_v**2)*(wf%n_o),   &
+                  one,                    &
+                  g_jbkc,                 & ! g_j_bkc
+                  wf%n_o,                 &
+                  u_bkci,                 & ! u_bkc_i 
+                  (wf%n_v**2)*(wf%n_o),   &
+                  zero,                   &
+                  X_ji,                   &
+                  wf%n_o)
+!
+      call dgemm('N', 'N', &
+                  wf%n_v,  &
+                  wf%n_o,  &
+                  wf%n_o,  &
+                  -one,    &
+                  c_ai,    & ! c_a_j
+                  wf%n_v,  &
+                  X_ji,    & ! X_j_i
+                  wf%n_o,  &
+                  one,     &
+                  rho_ai,  &
+                  wf%n_v)
+!
+      call mem%dealloc(X_ji, wf%n_o, wf%n_o)
+!
+!     NOTE! We will now pretend that u_bkci = u(c, k, b, i) is  u_akcj = u(a, j, c, k)
+!     NOTE! We will now pretend that g_jbkc = g_kcjb
+!
+      call mem%alloc(X_kcji, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
+      call dgemm('N', 'N',                &
+                  (wf%n_o**2)*(wf%n_v),   &
+                  wf%n_o,                 &
+                  wf%n_v,                 &
+                  one,                    &
+                  g_jbkc,                 & ! g_kcj_b
+                  (wf%n_o**2)*(wf%n_v),   &
+                  c_ai,                   & ! c_b_i
+                  wf%n_v,                 &
+                  zero,                   &
+                  X_kcji,                 & ! X_kcj_i
+                  (wf%n_o**2)*(wf%n_v))       
+!
+      call dgemm('N', 'N',                &
+                  wf%n_v,                 &
+                  wf%n_o,                 &
+                  (wf%n_o**2)*(wf%n_v),   &
+                  -one,                   &
+                  u_bkci,                 & ! u_a_kcj
+                  wf%n_v,                 &
+                  X_kcji,                 & ! X_kcj_i
+                  (wf%n_o**2)*(wf%n_v),   &
+                  one,                    &
+                  rho_ai,                 &
+                  wf%n_v)
+!
+      call mem%dealloc(u_bkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(X_kcji, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
+!     L_kcjb ordered as L_ckbj
+!
+      call mem%alloc(L_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call add_2143_to_1234(two, g_jbkc, L_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o) ! Still pretending that g_jbkc is g_kcjb although this is not necessary
+      call add_4123_to_1234(-one, g_jbkc, L_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%dealloc(g_jbkc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+!
+      call mem%alloc(X_ck, wf%n_v, wf%n_o)
+!
+      call dgemm('N', 'N',       &
+                  wf%n_o*wf%n_v, &
+                  wf%n_o*wf%n_v, &
+                  wf%n_o*wf%n_v, &
+                  one,           &
+                  L_ckbj,        & ! L_ck_bj
+                  wf%n_o*wf%n_v, &
+                  c_ai,          & ! c_bj
+                  wf%n_o*wf%n_v, &
+                  zero,          &
+                  X_ck,          &
+                  wf%n_o*wf%n_v)
+
+!
+      call mem%dealloc(L_ckbj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('N', 'N',       &
+                  wf%n_o*wf%n_v, &
+                  wf%n_o*wf%n_v, &
+                  wf%n_o*wf%n_v, &
+                  one,           &
+                  wf%u,          & ! u_ai_ck
+                  wf%n_o*wf%n_v, &
+                  X_ck,          &
+                  wf%n_o*wf%n_v, &
+                  one,           &
+                  rho_ai,        &
+                  wf%n_o*wf%n_v)
+!
+      call mem%alloc(X_ck, wf%n_v, wf%n_o)
 !
    end subroutine jacobian_cc2_a1_cc2
 !
@@ -363,7 +498,7 @@ contains
 !!    Jacobian CC2 A2
 !!    Written by Sarai D. Folkestad Eirik F. Kjønstad Jan 2019
 !!
-!!    rho_aibj^A2 = /(1/Δ_aibj)P_aibj sum_c g_abkc c_cj - sum_k g_aikj c_bk, 
+!!    rho_aibj^A2 = (1/Δ_aibj)P_aibj (sum_c g_abkc c_cj - sum_k g_aikj c_bk), 
 !!
       implicit none
 !
@@ -386,8 +521,40 @@ contains
 !
       class(cc2) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)   :: c_aibj
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(out)  :: rho_aibj   
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout)   :: c_aibj
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(out)     :: rho_aibj   
+!
+      integer(i15) :: i, j, a, b
+!
+!     c_aibj/(1/Δ_aibj) 
+!
+!$omp parallel do private(a, i)
+      do a = 1, wf%n_v
+         do i = 1, wf%n_o
+!
+            c_aibj(a, i, a, i) = half*c_aibj(a, i, a, i) 
+!
+         enddo
+      enddo
+!$omp end parallel do
+!
+!$omp parallel do private(a, i, b, j)
+      do b = 1, wf%n_v
+         do j = 1, wf%n_o
+            do i = 1, wf%n_o
+               do a = 1, wf%n_v
+!
+                  rho_aibj(a,i,b,j) = rho_aibj(a,i,b,j) + c_aibj(a,i,b,j)*&
+                                          (- wf%fock_diagonal(i, 1) &
+                                           - wf%fock_diagonal(j, 1) &
+                                           + wf%fock_diagonal(wf%n_o + a, 1) &
+                                           + wf%fock_diagonal(wf%n_o + b, 1) )
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
 !
    end subroutine jacobian_cc2_b2_cc2
 !

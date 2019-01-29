@@ -88,6 +88,8 @@ module ccs_class
 !
 !     Routines related to the Jacobian transformation 
 !
+      procedure :: prepare_for_jacobian                        => prepare_for_jacobian_ccs
+!
       procedure :: jacobian_transform_trial_vector             => jacobian_transform_trial_vector_ccs
       procedure :: jacobian_transpose_transform_trial_vector   => jacobian_transpose_transform_trial_vector_ccs
 !
@@ -616,7 +618,7 @@ contains
 !!
       implicit none
 !
-      class(ccs), intent(in) :: wf
+      class(ccs), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: omega
 !
@@ -4430,6 +4432,20 @@ contains
       get_t1_diagnostic_ccs = get_t1_diagnostic_ccs/sqrt(real(wf%system%n_electrons,kind=dp))
 !
    end function get_t1_diagnostic_ccs
+!
+!
+   subroutine prepare_for_jacobian_ccs(wf)
+!!
+!!    Prepare for jacobian
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2019
+!!
+      implicit none 
+!
+      class(ccs), intent(inout) :: wf 
+!
+!     For now, do nothing.
+!
+   end subroutine prepare_for_jacobian_ccs
 !
 !
 end module ccs_class
