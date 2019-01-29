@@ -26,7 +26,7 @@ contains
 !!
       implicit none
 !
-      class(lowmem_cc2), intent(in) :: wf
+      class(lowmem_cc2), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: omega
 !

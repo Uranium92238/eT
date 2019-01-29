@@ -25,30 +25,24 @@ contains
 !!
       implicit none
 !
-      class(cc2), intent(in) :: wf
+      class(cc2), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: omega
-!
-      real(dp), dimension(:,:,:,:), allocatable :: u_aibj
 !
       omega = zero
 !
       call wf%omega_ccs_a1(omega)
 !
-      call mem%alloc(u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call wf%construct_u()
 !
-      call wf%construct_u(u_aibj)
-!
-      call wf%omega_cc2_a1(u_aibj, omega)
-      call wf%omega_cc2_b1(u_aibj, omega)
-      call wf%omega_cc2_c1(u_aibj, omega)
-!
-      call mem%dealloc(u_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call wf%omega_cc2_a1(omega)
+      call wf%omega_cc2_b1(omega)
+      call wf%omega_cc2_c1(omega)
 !
    end subroutine construct_omega_cc2
 !
 !
-   module subroutine omega_cc2_a1_cc2(wf, u_bicj, omega)
+   module subroutine omega_cc2_a1_cc2(wf, omega)
 !!
 !!    Omega CC2 A1 term
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, Jan 2019
@@ -63,7 +57,6 @@ contains
 !
       class(cc2), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u_bicj
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout)              :: omega
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_abjc, u_bjci
@@ -77,7 +70,10 @@ contains
       integer(i15) :: a, i, current_a_batch
 !
       call mem%alloc(u_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call sort_1234_to_1432(u_bicj, u_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+!     Reorder u_bicj to u_bjci
+!
+      call sort_1234_to_1432(wf%u, u_bjci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call batch_a%init(wf%n_v)
 !
@@ -131,7 +127,7 @@ contains
    end subroutine omega_cc2_a1_cc2
 !
 !
-   module subroutine omega_cc2_b1_cc2(wf, u_ajbk, omega)
+   module subroutine omega_cc2_b1_cc2(wf, omega)
 !!
 !!    Omega CC2 B1 term
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, Jan 2019
@@ -150,7 +146,6 @@ contains
 !
       class(cc2), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u_ajbk
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout)          :: omega
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_kbji
@@ -170,17 +165,17 @@ contains
 !
 !     omega_ai += - sum_ckl g_kb,ji * u_aj,bk
 !
-      call dgemm('N', 'N',            &
-                  wf%n_v,             &
-                  wf%n_o,             &
-                  (wf%n_o**2)*wf%n_v, &
-                  -one,               &
-                  u_ajbk,             & ! u_a_jbk
-                  wf%n_v,             &
-                  g_jbki,             & ! g_jbk_i
-                  (wf%n_o**2)*wf%n_v, &
-                  one,                &
-                  omega,              & ! omega_a_i
+      call dgemm('N', 'N',             &
+                  wf%n_v,              &
+                  wf%n_o,              &
+                  (wf%n_o**2)*wf%n_v,  &
+                  -one,                &
+                  wf%u,                & ! u_a_jbk
+                  wf%n_v,              &
+                  g_jbki,              & ! g_jbk_i
+                  (wf%n_o**2)*wf%n_v,  &
+                  one,                 &
+                  omega,               & ! omega_a_i
                   wf%n_v)
 !
       call mem%dealloc(g_jbki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
@@ -188,7 +183,7 @@ contains
    end subroutine omega_cc2_b1_cc2
 !
 !
-   module subroutine omega_cc2_c1_cc2(wf, u_aibj, omega)
+   module subroutine omega_cc2_c1_cc2(wf, omega)
 !!
 !!    Omega CC2 C1 term
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, Jan 2019
@@ -206,7 +201,6 @@ contains
 !
       class(cc2), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: u_aibj
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout)          :: omega
 !
       real(dp), dimension(:,:), allocatable :: F_bj
@@ -218,8 +212,8 @@ contains
                   (wf%n_o)*(wf%n_v), &
                   1,                 &
                   (wf%n_o)*(wf%n_v), &
-                  one,              &
-                  u_aibj,            &
+                  one,               &
+                  wf%u,              & ! u_ai_bj
                   (wf%n_o)*(wf%n_v), &
                   F_bj,              &
                   (wf%n_o)*(wf%n_v), &

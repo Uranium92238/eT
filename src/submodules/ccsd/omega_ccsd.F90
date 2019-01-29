@@ -27,7 +27,7 @@ contains
 !!
       implicit none
 !
-      class(ccsd), intent(in) :: wf
+      class(ccsd), intent(inout) :: wf
 !
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: omega
 !

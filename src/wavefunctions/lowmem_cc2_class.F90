@@ -37,8 +37,7 @@ contains
    subroutine calculate_energy_lowmem_cc2(wf)
 !!
 !!     Calculate energy (CC2)
-!!     Written by Sarai D. Folkestad, Eirik F. Kjønstad, 
-!!     Andreas Skeidsvoll, 2018
+!!     Written by Sarai D. Folkestad, Eirik F. Kjønstad 2018
 !!
 !!     Calculates the CC2 energy. This is only equal to the actual
 !!     CC2 energy when the ground state amplitudes are converged.
