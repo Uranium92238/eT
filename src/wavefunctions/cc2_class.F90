@@ -29,7 +29,6 @@ module cc2_class
 !
       procedure :: jacobian_cc2_a1                 => jacobian_cc2_a1_cc2
       procedure :: jacobian_cc2_b1                 => jacobian_cc2_b1_cc2
-      procedure :: jacobian_cc2_c1                 => jacobian_cc2_c1_cc2
       procedure :: jacobian_cc2_a2                 => jacobian_cc2_a2_cc2
       procedure :: jacobian_cc2_b2                 => jacobian_cc2_b2_cc2
 !

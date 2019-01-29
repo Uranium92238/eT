@@ -61,7 +61,7 @@
 !!    Jacobian CC2 B1
 !!    Written by Sarai D. Folkestad Eirik F. Kjønstad Jan 2019
 !!
-!!    rho_ai^B1 = 2 sum_bj () F_jb c_aibj - F_jb c_ajbi ) - sum_kjb L_kijb c_akbj
+!!    rho_ai^B1 = 2 sum_bj F_jb c_aibj - F_jb c_ajbi ) - sum_kjb L_kijb c_akbj
 !!
       implicit none
 !
@@ -71,23 +71,6 @@
       real(dp), dimension(wf%n_v, wf%n_o), intent(out)                  :: rho_ai   
 !
    end subroutine jacobian_cc2_b1_cc2
-!
-!
-   module subroutine jacobian_cc2_c1_cc2(wf, rho_ai, c_aibj)
-!!
-!!    Jacobian CC2 C1
-!!    Written by Sarai D. Folkestad Eirik F. Kjønstad Jan 2019
-!!
-!!    rho_ai^C1 = sum_bkc L_abkc c_bick, 
-!!
-      implicit none
-!
-      class(cc2) :: wf
-!
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: c_aibj
-      real(dp), dimension(wf%n_v, wf%n_o), intent(out)                :: rho_ai   
-!
-   end subroutine jacobian_cc2_c1_cc2
 !
 !
    module subroutine jacobian_cc2_a2_cc2(wf, rho_aibj, c_ai)

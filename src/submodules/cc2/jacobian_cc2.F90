@@ -98,7 +98,7 @@ contains
 !
 !     Allocate the incoming unpacked doubles vector
 !
-      call mem%alloc(c_aibj, (wf%n_o), (wf%n_v), (wf%n_o), (wf%n_v))
+      call mem%alloc(c_aibj, (wf%n_v), (wf%n_o), (wf%n_v), (wf%n_o))
 !
 !$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) 
       do a = 1, wf%n_v
@@ -176,6 +176,8 @@ contains
 !
       call wf%jacobian_cc2_b2(rho_aibj, c_aibj)
 !
+      call mem%dealloc(c_aibj, (wf%n_v), (wf%n_o), (wf%n_v), (wf%n_o))
+!
 !     Overwrite the incoming doubles c vector & pack in
 !
 !$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) 
@@ -202,6 +204,7 @@ contains
          enddo
       enddo
 !$omp end parallel do
+!
    end subroutine jacobian_cc2_transformation_cc2
 !
 !
@@ -227,7 +230,7 @@ contains
 !!    Jacobian CC2 B1
 !!    Written by Sarai D. Folkestad Eirik F. Kjønstad Jan 2019
 !!
-!!    rho_ai^B1 = 2 sum_bj () F_jb c_aibj - F_jb c_ajbi ) - sum_kjb L_kijb c_akbj
+!!    rho_ai^B1 = 2 sum_bj F_jb c_aibj - F_jb c_ajbi ) - sum_kjb L_kijb c_akbj + sum_bkc L_abkc c_bick
 !!
       implicit none
 !
@@ -237,23 +240,6 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(out)                  :: rho_ai   
 !
    end subroutine jacobian_cc2_b1_cc2
-!
-!
-   module subroutine jacobian_cc2_c1_cc2(wf, rho_ai, c_aibj)
-!!
-!!    Jacobian CC2 C1
-!!    Written by Sarai D. Folkestad Eirik F. Kjønstad Jan 2019
-!!
-!!    rho_ai^C1 = sum_bkc L_abkc c_bick, 
-!!
-      implicit none
-!
-      class(cc2) :: wf
-!
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: c_aibj
-      real(dp), dimension(wf%n_v, wf%n_o), intent(out)                :: rho_ai   
-!
-   end subroutine jacobian_cc2_c1_cc2
 !
 !
    module subroutine jacobian_cc2_a2_cc2(wf, rho_aibj, c_ai)
