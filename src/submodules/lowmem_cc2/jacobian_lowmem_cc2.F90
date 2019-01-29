@@ -1110,9 +1110,8 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
       real(dp), dimension(:,:,:,:), allocatable :: L_kjbi
 !
       real(dp), dimension(:,:,:,:), allocatable :: X_akbj, X_bjak, Y_akjb
-      real(dp), dimension(:,:), allocatable :: reduced_rho_ai
 !
-      integer(i15) :: i, j, k, a, b
+      integer(i15) :: j, k, b, a
 !
       type(batching_index) :: batch_i, batch_a, batch_b
 !
@@ -1260,8 +1259,6 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !
 !              rho_ai = rho_ai - sum_jbk Y_akjb * L_kjbi
 !
-               call mem%alloc(reduced_rho_ai, batch_a%length, batch_i%length)
-!
                call dgemm('N', 'N',                               &
                            (batch_a%length),                      &
                            (batch_i%length),                      &
@@ -1271,23 +1268,10 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
                            (batch_a%length),                      &
                            L_kjbi,                                & ! L_kjb_i
                            (batch_b%length)*(wf%n_o)**2,          &
-                           zero,                                  &
-                           reduced_rho_ai,                        & ! reduced_rho_ai
-                           (batch_a%length))
+                           one,                                  &
+                           rho_ai(batch_a%first, batch_i%first),  & ! rho_ai
+                           (wf%n_v))
 !
-!$omp parallel do private(a, i)
-               do a = 1, batch_a%length
-                  do i = 1, batch_i%length
-!
-                     rho_ai(a + batch_a%first - 1, i + batch_i%first - 1)     &
-                     = rho_ai(a + batch_a%first - 1, i + batch_i%first - 1)   &
-                     + reduced_rho_ai(a, i)
-!
-                  enddo
-               enddo
-!$omp end parallel do
-!
-               call mem%dealloc(reduced_rho_ai, batch_a%length, batch_i%length)
                call mem%dealloc(Y_akjb, batch_a%length, wf%n_o, wf%n_o, batch_b%length)
                call mem%dealloc(L_kjbi, wf%n_o, wf%n_o, batch_b%length, batch_i%length)
 !
@@ -1730,9 +1714,7 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
       real(dp), dimension(:,:,:,:), allocatable :: X_ckbi, X_bick, Y_bcki
       real(dp), dimension(:,:,:,:), allocatable :: L_abck, g_abkc, g_lkbi, g_lick
 !
-      real(dp), dimension(:,:), allocatable :: reduced_rho_ai
-!
-      integer(i15) :: a, b, c, i, k
+      integer(i15) :: b, c, i, k
 !
       type(batching_index) :: batch_i, batch_k, batch_a
 !
@@ -1887,8 +1869,6 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !
 !              rho_ai = rho_ai - sum_bkc L_kjbi * Y_akjb
 !
-               call mem%alloc(reduced_rho_ai, batch_a%length, batch_i%length)
-!
                call dgemm('N', 'N',                               &
                            (batch_a%length),                      &
                            (batch_i%length),                      &
@@ -1898,23 +1878,9 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
                            (batch_a%length),                      &
                            Y_bcki,                                & ! Y_bck_i
                            (batch_k%length)*(wf%n_v)**2,          &
-                           zero,                                  &
-                           reduced_rho_ai,                        & ! reduced_rho_ai
-                           (batch_a%length))
-!
-!$omp parallel do private(a, i)
-               do a = 1, batch_a%length
-                  do i = 1, batch_i%length
-!
-                     rho_ai(a + batch_a%first - 1, i + batch_i%first - 1)     &
-                     = rho_ai(a + batch_a%first - 1, i + batch_i%first - 1)   &
-                     + reduced_rho_ai(a, i)
-!
-                  enddo
-               enddo
-!$omp end parallel do
-!
-               call mem%dealloc(reduced_rho_ai, batch_a%length, batch_i%length)
+                           one,                                  &
+                           rho_ai(batch_a%first, batch_i%first),  & ! rho_ai
+                           (wf%n_v))
 !
                call mem%dealloc(Y_bcki, wf%n_v, wf%n_v, batch_k%length, batch_i%length)
                call mem%dealloc(L_abck, batch_a%length, wf%n_v, wf%n_v, batch_k%length)
