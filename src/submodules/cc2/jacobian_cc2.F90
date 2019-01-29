@@ -123,11 +123,7 @@ contains
       write(output%unit, *) 'Hello 3'
       flush(output%unit)
 !
-    !  stop
-!
       call wf%jacobian_cc2_a1(rho_ai, c_ai)
-!
-      stop
 !
       write(output%unit, *) 'Hello 4'
       flush(output%unit)
@@ -214,6 +210,8 @@ contains
 !
       call wf%jacobian_cc2_a2(rho_aibj, c_ai)
 !
+    !  stop
+!
       call mem%dealloc(c_ai, wf%n_v, wf%n_o)
 !
       write(output%unit, *) 'Hello 8'
@@ -222,6 +220,8 @@ contains
 !     Contributions from doubles vector c      
 !
       call wf%jacobian_cc2_b2(rho_aibj, c_aibj)
+!
+    !  stop
 !
       call mem%dealloc(c_aibj, (wf%n_v), (wf%n_o), (wf%n_v), (wf%n_o))
 !
@@ -254,6 +254,8 @@ contains
          enddo
       enddo
 !$omp end parallel do
+!
+      stop
 !
    end subroutine jacobian_cc2_transformation_cc2
 !
