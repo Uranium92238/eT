@@ -1,4 +1,4 @@
-submodule (cc2_class) jacobian
+submodule (lowmem_cc2_class) jacobian
 !
 !
 !!
@@ -22,7 +22,7 @@ submodule (cc2_class) jacobian
 contains
 !
 !
-   subroutine effective_jacobian_transformation_cc2(wf, omega, c)
+   subroutine effective_jacobian_transformation_lowmem_cc2(wf, omega, c)
 !!
 !!    Effective jacobian transformation
 !!    Written by Eirik F. Kjønstad and Sarai Dery Folkestad
@@ -30,7 +30,7 @@ contains
 !!
       implicit none
 !
-      class(cc2) :: wf
+      class(lowmem_cc2) :: wf
 !
       real(dp), intent(in) :: omega
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: c
@@ -42,7 +42,7 @@ contains
       real(dp), dimension(:), allocatable :: eps_o
       real(dp), dimension(:), allocatable :: eps_v
 !
-      integer(i15) :: i, a, ai ! Index
+      integer(i15) :: i, a, ai, prev_available ! Index
 !
 !     Allocate and zero the transformed vector (singles part)
 !
@@ -75,6 +75,10 @@ contains
       eps_o = wf%fock_diagonal(1:wf%n_o,1)
       eps_v = wf%fock_diagonal(wf%n_o + 1 : wf%n_mo, 1)
 !
+!TEST
+      prev_available = mem%available
+      mem%available = (2*3*wf%integrals%n_J*wf%n_v + 20*wf%n_v**2)*dp
+!END TEST
       call wf%jacobian_cc2_a1(rho_a_i, c_a_i)
       call wf%jacobian_cc2_b1(rho_a_i, c_a_i, eps_o, eps_v)
 !
@@ -84,6 +88,7 @@ contains
       call wf%effective_jacobian_cc2_d1(omega, rho_a_i, c_a_i, eps_o, eps_v)
       call wf%effective_jacobian_cc2_e1(omega, rho_a_i, c_a_i, eps_o, eps_v)
       call wf%effective_jacobian_cc2_f1(omega, rho_a_i, c_a_i, eps_o, eps_v)
+mem%available = prev_available
 !
       call mem%dealloc(eps_o, wf%n_o)
       call mem%dealloc(eps_v, wf%n_v)
@@ -93,10 +98,10 @@ contains
       call mem%dealloc(c_a_i, wf%n_v, wf%n_o)
       call mem%dealloc(rho_a_i, wf%n_v, wf%n_o)
 !
-   end subroutine effective_jacobian_transformation_cc2
+   end subroutine effective_jacobian_transformation_lowmem_cc2
 !
 !
-   module subroutine jacobian_cc2_a1_cc2(wf, rho_ai, c_bj)
+   module subroutine jacobian_cc2_a1_lowmem_cc2(wf, rho_ai, c_bj)
 !!
 !!    Jacobian CC2 A1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
@@ -108,7 +113,7 @@ contains
 !!
       implicit none
 !
-      class(cc2), intent(in) :: wf
+      class(lowmem_cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_bj
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
@@ -125,7 +130,7 @@ contains
 !
       type(batching_index) :: batch_i, batch_j, batch_b
 !
-!     :: Term 1: rho_ai sum_bj 2 g_aijb c_bj ::
+!     :: Term 1: rho_ai = sum_bj 2 g_aijb * c_bj ::
 !
       req0 = 0
 !
@@ -178,7 +183,7 @@ contains
                         two,                       &
                         g_aijb,                    & ! g_ai_jb
                         (wf%n_v)*(batch_i%length), &
-                        c_jb,                      &
+                        c_jb,                      & ! c_jb
                         (batch_j%length)*(wf%n_v), &
                         one,                       &
                         rho_ai(rho_offset, 1),     &
@@ -248,9 +253,9 @@ contains
                         -one,                      &
                         g_aijb,                    & ! g_ai_jb
                         (wf%n_v)*(batch_i%length), &
-                        c_jb,                      &
+                        c_jb,                      & ! c_jb
                         (wf%n_o)*(batch_b%length), &
-                        one,                       &
+                        one,                       & ! rho_ai
                         rho_ai(rho_offset, 1),     &
                         (wf%n_v)*(wf%n_o))
 !
@@ -260,10 +265,10 @@ contains
          enddo ! batch_b
       enddo ! batch_i
 !
-   end subroutine jacobian_cc2_a1_cc2
+end subroutine jacobian_cc2_a1_lowmem_cc2
 !
 !
-   module subroutine jacobian_cc2_b1_cc2(wf, rho_ai, c_bj, eps_o, eps_v)
+   module subroutine jacobian_cc2_b1_lowmem_cc2(wf, rho_ai, c_bj, eps_o, eps_v)
 !!
 !!    Jacobian CC2 B1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
@@ -274,9 +279,7 @@ contains
 !!
       implicit none
 !
-      class(cc2), intent(in) :: wf
-!
-!     Vectors sent to the routine
+      class(lowmem_cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_bj
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
@@ -284,23 +287,17 @@ contains
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
 !
-!     Intermediates
-!
       real(dp), dimension(:,:), allocatable :: X_kc, X_ji, X_ab, X_kc_batch
       real(dp), dimension(:,:), allocatable :: rho_ai_batch
-!
-!     Integrals
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_kcjb, g_ckbi, g_ckaj, g_aick
       real(dp), dimension(:,:,:,:), allocatable :: L_kcbj, L_kcjb, L_jckb
       real(dp), dimension(:,:,:,:), allocatable :: u_aikc, t_akcj, g_jckb
 !
-!     Indices
-!
       integer(i15) :: i, j, k, a, b, c, bj_offset, kc_offset
 !
-      integer(i15) :: req0, req1_j, req1_k, req2, req1_a, req1_c, req1_b
-      integer(i15) :: req1_i, req2_ji, req2_ki, req2_kj, req3 
+      integer(i15) :: req0, req1_j, req1_k, req2, req1_a, req1_c
+      integer(i15) :: req1_i, req2_ji, req2_ki, req2_kj, req3
 !
       integer(i15) :: current_j_batch, current_k_batch, current_i_batch
       integer(i15) :: current_a_batch, current_c_batch
@@ -308,8 +305,9 @@ contains
       type(batching_index) :: batch_j, batch_k, batch_a, batch_c, batch_i
 !
 !     :: Term 1: L_kcjb * c_bj * (2 t^ac_ik - t^ac_ki)  ::
+!                L_kcjb * c_bj * u_aick
 !
-!     Construct X_kc = sum_jb L_kcbj * c_bj
+!     X_kc = sum_jb L_kcbj * c_bj
 !     In batches of k and j
 !
       call mem%alloc(X_kc, wf%n_o, wf%n_v)
@@ -370,7 +368,7 @@ contains
                         c_bj(bj_offset, 1),        & ! c_bj
                         (wf%n_v)*(wf%n_o),         &
                         zero,                      &
-                        X_kc_batch,                &
+                        X_kc_batch,                & ! X_kc
                         batch_k%length*(wf%n_v))
 !
 !$omp parallel do private(k, c)
@@ -390,6 +388,7 @@ contains
 !
          enddo ! batch_k
       enddo ! batch_j
+!
 !
       req0 = 0
 !
@@ -480,6 +479,7 @@ contains
          enddo ! batch_c
       enddo ! batch_a
 !
+!
       call mem%dealloc(X_kc, wf%n_o, wf%n_v)
 !
 !     :: Term 2: - L_kcjb t^cb_ki c_aj ::
@@ -568,12 +568,12 @@ contains
                         batch_i%length,                              &
                         (wf%n_v**2)*(batch_k%length),                &
                         one,                                         &
-                        L_jckb,                                      &
+                        L_jckb,                                      & ! L_j_ckb
                         batch_j%length,                              &
-                        g_ckbi,                                      &
+                        g_ckbi,                                      & ! g_ckb_i
                         (wf%n_v**2)*(batch_k%length),                &
                         one,                                         &
-                        X_ji(batch_j%first, batch_i%first),          &
+                        X_ji(batch_j%first, batch_i%first),          & ! X_ji
                         (wf%n_o))
 !
             call mem%dealloc(L_jckb, batch_j%length, wf%n_v, batch_k%length, wf%n_v)
@@ -592,10 +592,10 @@ contains
                   -one,     &
                   c_bj,     & ! c_a_j
                   (wf%n_v), &
-                  X_ji,     &
+                  X_ji,     & ! X_j_i
                   (wf%n_o), &
                   one,      &
-                  rho_ai,   &
+                  rho_ai,   & ! rho_a_i
                   (wf%n_v))
 !
       call mem%dealloc(X_ji, wf%n_o, wf%n_o)
@@ -610,9 +610,9 @@ contains
       req0 = 0
 !
       req1_k = (wf%integrals%n_J)*(wf%n_v)
-      req1_b = (wf%integrals%n_J)*(wf%n_o)
+      req1_j = (wf%integrals%n_J)*(wf%n_v)
 !
-      req2 = 2*(wf%n_v)*(wf%n_o)
+      req2 = 2*(wf%n_v)**2
 !
       call batch_k%init(wf%n_o)
       call batch_j%init(wf%n_o)
@@ -647,7 +647,7 @@ contains
 !
             call mem%dealloc(g_kcjb, batch_k%length, wf%n_v, batch_j%length, wf%n_v)
 !
-!           Construct t_akcj = - g_ckaj/ε^{ca}_{jk}
+!           t_akcj = - g_ckaj/ε^{ca}_{jk}
 !
             call mem%alloc(g_ckaj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
 !
@@ -704,20 +704,20 @@ contains
                   (wf%n_o), &
                   (wf%n_v), &
                   -one,     &
-                  X_ab,     &
+                  X_ab,     & ! X_a_b
                   (wf%n_v), &
                   c_bj,     & ! c_b_i
                   (wf%n_v), &
                   one,      &
-                  rho_ai ,  &
+                  rho_ai ,  & ! rho_a_i
                   (wf%n_v))
 !
       call mem%dealloc(X_ab, (wf%n_v), (wf%n_v))
 !
-   end subroutine jacobian_cc2_b1_cc2
+   end subroutine jacobian_cc2_b1_lowmem_cc2
 !
 !
-   module subroutine effective_jacobian_cc2_a1_cc2(wf, omega, rho_ai, c_ai, eps_o, eps_v)
+   module subroutine effective_jacobian_cc2_a1_lowmem_cc2(wf, omega, rho_ai, c_ai, eps_o, eps_v)
 !!
 !!    Jacobian CC2 A1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
@@ -732,7 +732,7 @@ contains
 !!
       implicit none
 !
-      class(cc2), intent(in) :: wf
+      class(lowmem_cc2), intent(in) :: wf
 !
       real(dp), intent(in) :: omega
 !
@@ -862,10 +862,10 @@ contains
                         one,                        &
                         Y_aick,                     & ! Y_ai_ck
                         wf%n_o*(batch_a%length),    &
-                        F_ck,                       &
+                        F_ck,                       & ! F_ck
                         wf%n_o*(batch_c%length),    &
                         zero,                       &
-                        reduced_rho_ai,             &
+                        reduced_rho_ai,             & ! reduced_rho_ai
                         wf%n_o*(batch_a%length))
 !
 !$omp parallel do private(i,a)
@@ -931,10 +931,10 @@ contains
          enddo ! batch_a
       enddo ! batch_c
 !
-   end subroutine effective_jacobian_cc2_a1_cc2
+   end subroutine effective_jacobian_cc2_a1_lowmem_cc2
 !
 !
-   module subroutine effective_jacobian_cc2_b1_cc2(wf, omega, rho_ai, c_ai, eps_o, eps_v)
+   module subroutine effective_jacobian_cc2_b1_lowmem_cc2(wf, omega, rho_ai, c_ai, eps_o, eps_v)
 !!
 !!    Effective jacobian B1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
@@ -947,7 +947,7 @@ contains
 !!
       implicit none
 !
-      class(cc2), intent(in) :: wf
+      class(lowmem_cc2), intent(in) :: wf
 !
       real(dp), intent(in) :: omega
 !
@@ -1009,7 +1009,7 @@ contains
                         g_lkai,                                   & ! g_l_kai
                         wf%n_o,                                   &
                         zero,                                     &
-                        X_ckai,                                   &  ! X_c_kai
+                        X_ckai,                                   & ! X_c_kai
                         wf%n_v)
 !
             call mem%dealloc(g_lkai, wf%n_o, batch_k%length, wf%n_v, batch_i%length)
@@ -1082,13 +1082,13 @@ contains
 !
             call mem%dealloc(X_ckai, wf%n_v, batch_k%length, wf%n_v, batch_i%length)
 !
-         enddo
-      enddo
+         enddo ! batch_k
+      enddo ! batch_i
 !
-   end subroutine effective_jacobian_cc2_b1_cc2
+   end subroutine effective_jacobian_cc2_b1_lowmem_cc2
 !
 !
-   module subroutine effective_jacobian_cc2_c1_cc2(wf, omega, rho_ai, c_cj, eps_o, eps_v)
+   module subroutine effective_jacobian_cc2_c1_lowmem_cc2(wf, omega, rho_ai, c_cj, eps_o, eps_v)
 !!
 !!    Jacobian CC2 C1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
@@ -1101,7 +1101,7 @@ contains
 !!
       implicit none
 !
-      class(cc2), intent(in) :: wf
+      class(lowmem_cc2), intent(in) :: wf
 !
       real(dp), intent(in) :: omega
 !
@@ -1114,10 +1114,10 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_akbc, g_bjac, g_kijb
       real(dp), dimension(:,:,:,:), allocatable :: L_kjbi
 !
-      real(dp), dimension(:,:,:,:), allocatable :: X_akbj, X_bjak
-      real(dp), dimension(:,:,:,:), allocatable :: Y_akjb
+      real(dp), dimension(:,:,:,:), allocatable :: X_akbj, X_bjak, Y_akjb
+      real(dp), dimension(:,:), allocatable :: reduced_rho_ai
 !
-      integer(i15) :: j, k, a, b
+      integer(i15) :: i, j, k, a, b
 !
       type(batching_index) :: batch_i, batch_a, batch_b
 !
@@ -1149,7 +1149,7 @@ contains
 !
          do current_a_batch = 1, batch_a%num_batches
 !
-            call batch_a%determine_limits(current_a_batch)
+               call batch_a%determine_limits(current_a_batch)
 !
             do current_b_batch = 1, batch_b%num_batches
 !
@@ -1177,7 +1177,7 @@ contains
                            c_cj,                                        & ! c_c_j
                            (wf%n_v),                                    &
                            zero,                                        &
-                           X_akbj,                                      &
+                           X_akbj,                                      & ! X_akb_j
                            (batch_a%length)*(wf%n_o)*(batch_b%length))
 !
                call mem%dealloc(g_akbc, batch_a%length, wf%n_o, batch_b%length, wf%n_v)
@@ -1204,12 +1204,14 @@ contains
                            c_cj,                                        & ! c_c_k
                            (wf%n_v),                                    &
                            zero,                                        &
-                           X_bjak,                                      &
+                           X_bjak,                                      & ! X_bja_k
                            (batch_b%length)*(wf%n_o)*(batch_a%length))
 !
                call mem%dealloc(g_bjac, batch_b%length, wf%n_o, batch_a%length, wf%n_v)
 !
                call mem%alloc(Y_akjb, batch_a%length, wf%n_o, wf%n_o, batch_b%length)
+!
+!              Y_akjb = (X_akbj + X_bjak)  /(ε_akbj + omega)
 !
 !$omp parallel do private(j,b,k,a)
                do j = 1, wf%n_o
@@ -1261,7 +1263,9 @@ contains
 !
                call mem%dealloc(g_kijb, wf%n_o, batch_i%length, wf%n_o, batch_b%length)
 !
-!              rho_ai = rho_ai - sum_jbk X_ajbk * L_jbki
+!              rho_ai = rho_ai - sum_jbk Y_akjb * L_kjbi
+!
+               call mem%alloc(reduced_rho_ai, batch_a%length, batch_i%length)
 !
                call dgemm('N', 'N',                               &
                            (batch_a%length),                      &
@@ -1272,10 +1276,23 @@ contains
                            (batch_a%length),                      &
                            L_kjbi,                                & ! L_kjb_i
                            (batch_b%length)*(wf%n_o)**2,          &
-                           one,                                   &
-                           rho_ai(batch_a%first, batch_i%first),  &
+                           zero,                                  &
+                           reduced_rho_ai,                        & ! reduced_rho_ai
                            (batch_a%length))
 !
+!$omp parallel do private(a, i)
+               do a = 1, batch_a%length
+                  do i = 1, batch_i%length
+!
+                     rho_ai(a + batch_a%first - 1, i + batch_i%first - 1)     &
+                     = rho_ai(a + batch_a%first - 1, i + batch_i%first - 1)   &
+                     + reduced_rho_ai(a, i)
+!
+                  enddo
+               enddo
+!$omp end parallel do
+!
+               call mem%dealloc(reduced_rho_ai, batch_a%length, batch_i%length)
                call mem%dealloc(Y_akjb, batch_a%length, wf%n_o, wf%n_o, batch_b%length)
                call mem%dealloc(L_kjbi, wf%n_o, wf%n_o, batch_b%length, batch_i%length)
 !
@@ -1283,10 +1300,11 @@ contains
          enddo ! batch_a
       enddo ! batch_i
 !
-   end subroutine effective_jacobian_cc2_c1_cc2
+!
+   end subroutine effective_jacobian_cc2_c1_lowmem_cc2
 !
 !
-   module subroutine effective_jacobian_cc2_d1_cc2(wf, omega, rho_ai, c_bl, eps_o, eps_v)
+   module subroutine effective_jacobian_cc2_d1_lowmem_cc2(wf, omega, rho_ai, c_bl, eps_o, eps_v)
 !!
 !!    Jacobian CC2 D1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
@@ -1300,9 +1318,8 @@ contains
 !!
       implicit none
 !
-      class(cc2), intent(in) :: wf
+      class(lowmem_cc2), intent(in) :: wf
 !
-!     Sent to the routine
 !
       real(dp), intent(in) :: omega
 !
@@ -1365,7 +1382,7 @@ contains
                         g_ljak,                                      & ! g_l_jak
                         (wf%n_o),                                    &
                         zero,                                        &
-                        X_bjak,                                      &
+                        X_bjak,                                      & ! X_b_jak
                         (wf%n_v))
 !
             call mem%dealloc(g_ljak, wf%n_o, (batch_j%length), wf%n_v, (batch_k%length))
@@ -1392,11 +1409,11 @@ contains
                         g_lkbj,                                      & ! g_l_kbj
                         (wf%n_o),                                    &
                         zero,                                        &
-                        X_akbj,                                      &
+                        X_akbj,                                      & ! X_a_kbj
                         (wf%n_v))
 !
             call mem%dealloc(g_lkbj, wf%n_o, batch_k%length, wf%n_v, batch_j%length)
-!  
+!
 !           Y_ajbk = (X_bjak + X_akbj)/(ε_bjak + ω)
 !
             call mem%alloc(Y_ajbk, wf%n_v, (batch_j%length), wf%n_v, (batch_k%length))
@@ -1420,6 +1437,8 @@ contains
 !
             call mem%dealloc(X_bjak, wf%n_v, batch_j%length, wf%n_v, batch_k%length)
             call mem%dealloc(X_akbj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
+!
+!           Y_ajbk = Y_ajbk * (1 + delta_ak,bj)^-1
 !
             if (batch_k%first .eq. batch_j%first) then
 !
@@ -1476,7 +1495,7 @@ contains
                         L_jbki,                                      & ! L_jbk_i
                         (wf%n_v)*(batch_j%length)*(batch_k%length),  &
                         one,                                         &
-                        rho_ai,                                      &
+                        rho_ai,                                      & ! rho_ai
                         (wf%n_v))
 !
             call mem%dealloc(Y_ajbk, wf%n_v, batch_j%length, wf%n_v, batch_k%length)
@@ -1485,10 +1504,10 @@ contains
          enddo ! batch k
       enddo ! batch j
 !
-   end subroutine effective_jacobian_cc2_d1_cc2
+   end subroutine effective_jacobian_cc2_d1_lowmem_cc2
 !
 !
-   module subroutine effective_jacobian_cc2_e1_cc2(wf, omega, rho_ai, c_dk, eps_o, eps_v)
+   module subroutine effective_jacobian_cc2_e1_lowmem_cc2(wf, omega, rho_ai, c_dk, eps_o, eps_v)
 !!
 !!    Jacobian CC2 E1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
@@ -1501,9 +1520,8 @@ contains
 !!
       implicit none
 !
-      class(cc2), intent(in) :: wf
+      class(lowmem_cc2), intent(in) :: wf
 !
-!     Sent to the routine
 !
       real(dp), intent(in) :: omega
 !
@@ -1513,16 +1531,10 @@ contains
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
       real(dp), dimension(wf%n_v), intent(in) :: eps_v
 !
-!     Integrals
-!
       real(dp), dimension(:,:,:,:), allocatable :: g_bicd, g_ckbd, g_abkc, g_kbac
       real(dp), dimension(:,:,:,:), allocatable :: L_abkc
 !
-!     Intermediates
-!
       real(dp), dimension(:,:,:,:), allocatable :: X_bick, X_ckbi, Y_bkci
-!
-!     Indices
 !
       integer(i15) :: b, c, i, k
 !
@@ -1573,7 +1585,7 @@ contains
                         c_dk,                                        & ! c_d_k
                         (wf%n_v),                                    &
                         zero,                                        &
-                        X_bick,                                      &
+                        X_bick,                                      & ! X_bic_k
                         (batch_b%length)*(wf%n_o)*(batch_c%length))
 !
             call mem%dealloc(g_bicd, batch_b%length, wf%n_o, batch_c%length, wf%n_v)
@@ -1600,7 +1612,7 @@ contains
                         c_dk,                                        & ! c_d_i
                         (wf%n_v),                                    &
                         zero,                                        &
-                        X_ckbi,                                      &
+                        X_ckbi,                                      & ! X_ckb_i
                         (batch_c%length)*(wf%n_o)*(batch_b%length))
 !
             call mem%dealloc(g_ckbd, batch_c%length, wf%n_o, batch_b%length, wf%n_v)
@@ -1628,6 +1640,8 @@ contains
 !
             call mem%dealloc(X_bick, batch_b%length, wf%n_o, batch_c%length, wf%n_o)
             call mem%dealloc(X_ckbi, batch_c%length, wf%n_o, batch_b%length, wf%n_o)
+!
+!           Y_bkci = Y_bkci * (1 + delta_bi,ck)^-1
 !
             if (batch_b%first .eq. batch_c%first) then
 !
@@ -1686,7 +1700,7 @@ contains
                         Y_bkci,                                      & ! Y_bkc_i
                         (wf%n_o)*(batch_b%length)*(batch_c%length),  &
                         one,                                         &
-                        rho_ai,                                      &
+                        rho_ai,                                      & ! rho_ai
                         (wf%n_v))
 !
             call mem%dealloc(Y_bkci, batch_b%length, wf%n_o, batch_c%length, wf%n_o)
@@ -1695,10 +1709,10 @@ contains
          enddo ! batch_c
       enddo ! batch_b
 !
-   end subroutine effective_jacobian_cc2_e1_cc2
+   end subroutine effective_jacobian_cc2_e1_lowmem_cc2
 !
 !
-   module subroutine effective_jacobian_cc2_f1_cc2(wf, omega, rho_ai, c_ai, eps_o, eps_v)
+   module subroutine effective_jacobian_cc2_f1_lowmem_cc2(wf, omega, rho_ai, c_ai, eps_o, eps_v)
 !!
 !!    Jacobian CC2 effective F1
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
@@ -1708,7 +1722,7 @@ contains
 !!
       implicit none
 !
-      class(cc2), intent(in) :: wf
+      class(lowmem_cc2), intent(in) :: wf
 !
       real(dp), intent(in) :: omega
 !
@@ -1721,12 +1735,15 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: X_ckbi, X_bick, Y_bcki
       real(dp), dimension(:,:,:,:), allocatable :: L_abck, g_abkc, g_lkbi, g_lick
 !
-      integer(i15) :: b, c, i, k
+      real(dp), dimension(:,:), allocatable :: reduced_rho_ai
+!
+      integer(i15) :: a, b, c, i, k
 !
       type(batching_index) :: batch_i, batch_k, batch_a
 !
       integer(i15) :: current_i_batch, current_k_batch, current_a_batch
       integer(i15) :: req0, req1_i, req1_k, req1_a, req2_ik, req2_ia, req2_ka, req3
+!
 !
       req0 = 0
 !
@@ -1815,8 +1832,8 @@ contains
 !
 !              Reorder and scale
 !
-               call mem%alloc(Y_bcki, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
-!  
+               call mem%alloc(Y_bcki, wf%n_v, wf%n_v, batch_k%length, batch_i%length)
+!
 !              Y_bcki = (X_ckbi + X_bick)/(ε_ckbi + ω)
 !
 !$omp parallel do private(c,i,k,b)
@@ -1839,12 +1856,16 @@ contains
                call mem%dealloc(X_ckbi, wf%n_v, batch_k%length, wf%n_v, batch_i%length)
                call mem%dealloc(X_bick, wf%n_v, batch_i%length, wf%n_v, batch_k%length)
 !
+!           Y_bcki = Y_bcki * (1 + delta_bi,ck)^-1
+!
                if (batch_i%first .eq. batch_k%first) then
 !
 !$omp parallel do private(b,i)
                do b = 1 , wf%n_v
                   do i = 1, batch_i%length
+!
                      Y_bcki(b,b,i,i) = half*Y_bcki(b,b,i,i)
+!
                   enddo
                enddo
 !$omp end parallel do
@@ -1852,8 +1873,6 @@ contains
                endif
 !
 !              L_abkc = 2 g_abkc - g_ackb ordered as L_abck
-!
-               call mem%alloc(L_abck, batch_a%length, wf%n_v, wf%n_v, batch_k%length)
 !
                call mem%alloc(g_abkc, batch_a%length, wf%n_v, batch_k%length, wf%n_v)
 !
@@ -1863,35 +1882,53 @@ contains
                                  batch_k%first, batch_k%last,  &
                                  1, wf%n_v)
 !
+               call mem%alloc(L_abck, batch_a%length, wf%n_v, wf%n_v, batch_k%length)
+!
                L_abck = 0
                call add_1243_to_1234(two, g_abkc, L_abck, batch_a%length, wf%n_v, wf%n_v, batch_k%length)
                call add_1342_to_1234(-one, g_abkc, L_abck, batch_a%length, wf%n_v, wf%n_v, batch_k%length)
 !
                call mem%dealloc(g_abkc, batch_a%length, wf%n_v, batch_k%length, wf%n_v)
 !
-!              rho_ai = rho_ai - sum_bkc X_ajbk * L_jbki
+!              rho_ai = rho_ai - sum_bkc L_kjbi * Y_akjb
+!
+               call mem%alloc(reduced_rho_ai, batch_a%length, batch_i%length)
 !
                call dgemm('N', 'N',                               &
                            (batch_a%length),                      &
                            (batch_i%length),                      &
                            (batch_k%length)*(wf%n_v)**2,          &
                            -one,                                  &
-                           L_abck,                                & ! L_a_bkc
+                           L_abck,                                & ! L_a_bck
                            (batch_a%length),                      &
-                           Y_bcki,                                & ! Y_bkc_i
+                           Y_bcki,                                & ! Y_bck_i
                            (batch_k%length)*(wf%n_v)**2,          &
-                           one,                                   &
-                           rho_ai(batch_a%first, batch_i%first),  &
+                           zero,                                  &
+                           reduced_rho_ai,                        & ! reduced_rho_ai
                            (batch_a%length))
 !
-               call mem%dealloc(Y_bcki, wf%n_v, wf%n_v, batch_i%length, batch_i%length)
+!$omp parallel do private(a, i)
+               do a = 1, batch_a%length
+                  do i = 1, batch_i%length
+!
+                     rho_ai(a + batch_a%first - 1, i + batch_i%first - 1)     &
+                     = rho_ai(a + batch_a%first - 1, i + batch_i%first - 1)   &
+                     + reduced_rho_ai(a, i)
+!
+                  enddo
+               enddo
+!$omp end parallel do
+!
+               call mem%dealloc(reduced_rho_ai, batch_a%length, batch_i%length)
+!
+               call mem%dealloc(Y_bcki, wf%n_v, wf%n_v, batch_k%length, batch_i%length)
                call mem%dealloc(L_abck, batch_a%length, wf%n_v, wf%n_v, batch_k%length)
 !
             enddo ! batch_a
          enddo ! batch_k
       enddo ! batch_i
 !
-   end subroutine effective_jacobian_cc2_f1_cc2
+   end subroutine effective_jacobian_cc2_f1_lowmem_cc2
 !
 !
 end submodule jacobian
