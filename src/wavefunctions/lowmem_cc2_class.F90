@@ -1,7 +1,7 @@
-module cc2_class
+module lowmem_cc2_class
 !
 !!
-!!    Coupled cluster singles and perturbative doubles (cc2)
+!!    Coupled cluster singles and perturbative doubles (lowmem_cc2)
 !!    class module
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
 !!
@@ -10,37 +10,39 @@ module cc2_class
 !
    implicit none
 !
-   type, extends(ccs) :: cc2
+   type, extends(ccs) :: lowmem_cc2
 !
    contains
 !
-      procedure :: construct_omega  => construct_omega_cc2
-      procedure :: omega_cc2_a1     => omega_cc2_a1_cc2
-      procedure :: omega_cc2_b1     => omega_cc2_b1_cc2
-      procedure :: omega_cc2_c1     => omega_cc2_c1_cc2
+      procedure :: prepare          => prepare_lowmem_cc2
 !
-      procedure :: calculate_energy => calculate_energy_cc2
+      procedure :: construct_omega  => construct_omega_lowmem_cc2
+      procedure :: omega_cc2_a1     => omega_cc2_a1_lowmem_cc2
+      procedure :: omega_cc2_b1     => omega_cc2_b1_lowmem_cc2
+      procedure :: omega_cc2_c1     => omega_cc2_c1_lowmem_cc2
 !
-      procedure :: construct_excited_state_equation => construct_excited_state_equation_cc2
+      procedure :: calculate_energy => calculate_energy_lowmem_cc2
 !
-      procedure :: effective_jacobian_transformation => effective_jacobian_transformation_cc2
+      procedure :: construct_excited_state_equation => construct_excited_state_equation_lowmem_cc2
 !
-      procedure :: jacobian_cc2_a1 => jacobian_cc2_a1_cc2
-      procedure :: jacobian_cc2_b1 => jacobian_cc2_b1_cc2
+      procedure :: effective_jacobian_transformation => effective_jacobian_transformation_lowmem_cc2
 !
-      procedure :: effective_jacobian_cc2_a1 => effective_jacobian_cc2_a1_cc2
-      procedure :: effective_jacobian_cc2_b1 => effective_jacobian_cc2_b1_cc2
-      procedure :: effective_jacobian_cc2_c1 => effective_jacobian_cc2_c1_cc2
-      procedure :: effective_jacobian_cc2_d1 => effective_jacobian_cc2_d1_cc2
-      procedure :: effective_jacobian_cc2_e1 => effective_jacobian_cc2_e1_cc2
-      procedure :: effective_jacobian_cc2_f1 => effective_jacobian_cc2_f1_cc2
+      procedure :: jacobian_cc2_a1 => jacobian_cc2_a1_lowmem_cc2
+      procedure :: jacobian_cc2_b1 => jacobian_cc2_b1_lowmem_cc2
 !
-   end type cc2
+      procedure :: effective_jacobian_cc2_a1 => effective_jacobian_cc2_a1_lowmem_cc2
+      procedure :: effective_jacobian_cc2_b1 => effective_jacobian_cc2_b1_lowmem_cc2
+      procedure :: effective_jacobian_cc2_c1 => effective_jacobian_cc2_c1_lowmem_cc2
+      procedure :: effective_jacobian_cc2_d1 => effective_jacobian_cc2_d1_lowmem_cc2
+      procedure :: effective_jacobian_cc2_e1 => effective_jacobian_cc2_e1_lowmem_cc2
+      procedure :: effective_jacobian_cc2_f1 => effective_jacobian_cc2_f1_lowmem_cc2
+!
+   end type lowmem_cc2
 !
    interface
 !
-      include "../submodules/cc2/omega_cc2_interface.F90"
-      include "../submodules/cc2/jacobian_cc2_interface.F90"
+      include "../submodules/lowmem_cc2/omega_lowmem_cc2_interface.F90"
+      include "../submodules/lowmem_cc2/jacobian_lowmem_cc2_interface.F90"
 !
    end interface
 !
@@ -48,19 +50,71 @@ module cc2_class
 contains
 !
 !
-!
-   subroutine calculate_energy_cc2(wf)
+   subroutine prepare_lowmem_cc2(wf, ref_wf)
 !!
-!!     Calculate energy (CC2)
+!!    Prepare
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
+!!
+      implicit none
+!
+      class(lowmem_cc2) :: wf
+!
+      class(hf) :: ref_wf
+!
+      integer(i15) :: p
+!
+      wf%name = 'low memory cc2'
+!
+      wf%system = ref_wf%system
+!
+      wf%n_ao   = ref_wf%n_ao
+      wf%n_mo   = ref_wf%n_mo
+      wf%n_o    = ref_wf%n_o
+      wf%n_v    = ref_wf%n_v
+!
+      wf%hf_energy = ref_wf%energy
+!
+      wf%n_t1         = (wf%n_o)*(wf%n_v)
+      wf%n_amplitudes = wf%n_t1
+!
+      call wf%initialize_fock_ij()
+      call wf%initialize_fock_ia()
+      call wf%initialize_fock_ai()
+      call wf%initialize_fock_ab()
+!
+      call wf%initialize_fock_diagonal()
+!
+      wf%fock_ij(:,:) = ref_wf%mo_fock(1 : wf%n_o, 1 : wf%n_o)
+      wf%fock_ia(:,:) = ref_wf%mo_fock(1 : wf%n_o, wf%n_o + 1 : wf%n_mo)
+      wf%fock_ai(:,:) = ref_wf%mo_fock(wf%n_o + 1 : wf%n_mo, 1 : wf%n_o)
+      wf%fock_ab(:,:) = ref_wf%mo_fock(wf%n_o + 1 : wf%n_mo, wf%n_o + 1 : wf%n_mo)
+!
+      do p = 1, wf%n_mo
+!
+         wf%fock_diagonal(p, 1) = ref_wf%mo_fock(p, p)
+!
+      enddo
+!
+      call ref_wf%mo_transform_and_save_h()
+!
+      call wf%initialize_orbital_coefficients()
+      wf%orbital_coefficients = ref_wf%orbital_coefficients
+!
+   end subroutine prepare_lowmem_cc2
+!
+!
+   subroutine calculate_energy_lowmem_cc2(wf)
+!!
+!!     Calculate energy (lowmem_CC2)
 !!     Written by Sarai D. Folkestad, Eirik F. Kjønstad,
 !!     Andreas Skeidsvoll, 2018
 !!
-!!     Calculates the CC2 energy. This is only equal to the actual
+!!     Calculates the lowmem_CC2 energy. This is only equal to the actual
 !!     energy when the ground state equations are solved, of course.
 !!
       implicit none
 !
-      class(cc2), intent(inout) :: wf
+      class(lowmem_cc2), intent(inout) :: wf
 !
       real(dp), dimension(:,:), allocatable :: g_aibj
       real(dp), dimension(:,:), allocatable :: g_iajb
@@ -148,10 +202,10 @@ contains
 !
       wf%energy = wf%hf_energy + correlation_energy
 !
-   end subroutine calculate_energy_cc2
+   end subroutine calculate_energy_lowmem_cc2
 !
 !
-   subroutine construct_excited_state_equation_cc2(wf, X, R, w)
+   subroutine construct_excited_state_equation_lowmem_cc2(wf, X, R, w)
 !!
 !!    Construct excited state equation
 !!    Written by Eirik F. Kjønstad, Dec 2018
@@ -163,10 +217,10 @@ contains
 !!
 !!    Note II: this routine constructs the excited state equation
 !!    for standard CC models and the effective (!) excited state
-!!    equation in perturbative models. In the CC2 routine, for
+!!    equation in perturbative models. In the lowmem_CC2 routine, for
 !!    instance, X and R will be n_o*n_v vectors and A(w) will
 !!    depend on the excitation energy w. See, e.g., Weigend and
-!!    Hättig's RI-CC2 paper for more on this topic. This means
+!!    Hättig's RI-lowmem_CC2 paper for more on this topic. This means
 !!    that w should be the previous w-value when entering the
 !!    routine (so that A(w)X may be constructed approximately)
 !!    in perturbative models.
@@ -175,7 +229,7 @@ contains
 !!
       implicit none
 !
-      class(cc2), intent(in) :: wf
+      class(lowmem_cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_amplitudes, 1), intent(in)    :: X
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: R
@@ -199,7 +253,7 @@ contains
       w = ddot(wf%n_amplitudes, X, 1, X_copy, 1)
       call mem%dealloc(X_copy, wf%n_amplitudes, 1)
 !
-   end subroutine construct_excited_state_equation_cc2
+   end subroutine construct_excited_state_equation_lowmem_cc2
 !
 !
-end module cc2_class
+end module lowmem_cc2_class

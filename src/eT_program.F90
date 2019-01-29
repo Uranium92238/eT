@@ -18,7 +18,7 @@ program eT_program
   use mlhf_class
 !
   use ccs_class
-  use cc2_class
+  use lowmem_cc2_class
   use ccsd_class
   use mp2_class
 !
@@ -45,7 +45,7 @@ program eT_program
     type(mlhf), allocatable, target  :: mlhf_wf 
 !
     type(ccs), allocatable, target   :: ccs_wf
-    type(cc2), allocatable, target   :: cc2_wf
+    type(lowmem_cc2), allocatable, target   :: cc2_wf
     type(ccsd), allocatable, target  :: ccsd_wf
     type(mp2), allocatable, target   :: mp2_wf
 !

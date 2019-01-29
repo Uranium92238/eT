@@ -1,7 +1,7 @@
-submodule (cc2_class) omega_cc2
+submodule (lowmem_cc2_class) omega_cc2
 !
 !!
-!!    Omega submodule (cc2)
+!!    Omega submodule (lowmem_cc2)
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
 !!    Linda Goletto and Alexander Paul, 2018
 !!
@@ -15,7 +15,7 @@ submodule (cc2_class) omega_cc2
 !
 contains
 !
-   module subroutine construct_omega_cc2(wf, omega)
+   module subroutine construct_omega_lowmem_cc2(wf, omega)
 !!
 !!    Construct omega 
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
@@ -26,7 +26,7 @@ contains
 !!
       implicit none
 !
-      class(cc2), intent(in) :: wf
+      class(lowmem_cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: omega
 !
@@ -38,10 +38,10 @@ contains
       call wf%omega_cc2_b1(omega, wf%fock_diagonal(1:wf%n_o,1), wf%fock_diagonal(wf%n_o + 1 : wf%n_mo, 1))
       call wf%omega_cc2_c1(omega, wf%fock_diagonal(1:wf%n_o,1), wf%fock_diagonal(wf%n_o + 1 : wf%n_mo, 1))
 !
-   end subroutine construct_omega_cc2
+   end subroutine construct_omega_lowmem_cc2
 !
 !
-   module subroutine omega_cc2_a1_cc2(wf, omega, eps_o, eps_v)
+   module subroutine omega_cc2_a1_lowmem_cc2(wf, omega, eps_o, eps_v)
 !!
 !!    Omega CC2 A1 term
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
@@ -63,7 +63,7 @@ contains
 !!
       implicit none
 !
-      class(cc2), intent(in) :: wf
+      class(lowmem_cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: omega
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
@@ -161,10 +161,10 @@ contains
          enddo
       enddo
 !
-   end subroutine omega_cc2_a1_cc2
+   end subroutine omega_cc2_a1_lowmem_cc2
 !
 !
-   module subroutine omega_cc2_b1_cc2(wf, omega, eps_o, eps_v)
+   module subroutine omega_cc2_b1_lowmem_cc2(wf, omega, eps_o, eps_v)
 !!
 !!    Omega CC2 B1 term
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
@@ -183,7 +183,7 @@ contains
 !!
       implicit none
 !
-      class(cc2), intent(in) :: wf
+      class(lowmem_cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: omega
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
@@ -328,10 +328,10 @@ contains
          enddo
       enddo
 !
-   end subroutine omega_cc2_b1_cc2
+   end subroutine omega_cc2_b1_lowmem_cc2
 !
 !
-   module subroutine omega_cc2_c1_cc2(wf, omega, eps_o, eps_v)
+   module subroutine omega_cc2_c1_lowmem_cc2(wf, omega, eps_o, eps_v)
 !!
 !!    Omega CC2 C1 term
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad, 
@@ -354,7 +354,7 @@ contains
 !!
       implicit none
 !
-      class(cc2), intent(in) :: wf
+      class(lowmem_cc2), intent(in) :: wf
 !
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: omega
       real(dp), dimension(wf%n_o), intent(in) :: eps_o
@@ -466,6 +466,6 @@ contains
          enddo
       enddo
 !
-   end subroutine omega_cc2_c1_cc2
+   end subroutine omega_cc2_c1_lowmem_cc2
 !
 end submodule
