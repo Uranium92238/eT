@@ -262,6 +262,8 @@ contains
       call mem%alloc(X, wf%n_amplitudes, solver%n_singlet_states)
       call solver%set_start_vectors(wf, X, energies, eps)
 !
+      energies = zero ! Trying here...
+!
 !     Enter iterative loop
 !
       call mem%alloc(R, wf%n_amplitudes, solver%n_singlet_states)
@@ -284,12 +286,14 @@ contains
 !
 !              Construct residual and energy and precondition the former 
 !
+               write(output%unit, *) energies(state)
                call wf%construct_excited_state_equation(X(:,state), R(:,state), energies(state))
 !
 !$omp parallel do private(amplitude)
                do amplitude = 1, wf%n_amplitudes
 !
-                  R(amplitude, state) = -R(amplitude, state)/(eps(amplitude, 1) - energies(state))
+                  R(amplitude, state) = -R(amplitude, state)/(eps(amplitude, 1))
+                !  R(amplitude, state) = -R(amplitude, state)/(eps(amplitude, 1) - energies(state))
 !
                enddo
 !$omp end parallel do 
@@ -307,6 +311,7 @@ contains
 !              then normalize it to avoid accumulating norm in X
 !
                X(:,state) = X(:,state) + R(:,state)
+!
                call diis(state)%update(R(:,state), X(:,state))
 !
                norm_X = get_l2_norm(X(:,state), wf%n_amplitudes)
@@ -331,6 +336,9 @@ contains
          ! call solver%print_summary() ... make this when printing routines from new-eT have been merged 
 !
       endif 
+         do state = 1, solver%n_singlet_states
+            call wf%print_dominant_x_amplitudes(X(:,state), 'r')
+         enddo
 !
       deallocate(energies)
       deallocate(prev_energies)

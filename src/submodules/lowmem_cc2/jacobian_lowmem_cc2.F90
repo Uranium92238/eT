@@ -78,12 +78,19 @@ contains
       call wf%jacobian_cc2_a1(rho_a_i, c_a_i)
       call wf%jacobian_cc2_b1(rho_a_i, c_a_i, eps_o, eps_v)
 !
+      write(output%unit, *) 'norm 0:', get_l2_norm(rho_a_i, wf%n_o*wf%n_v)
       call wf%effective_jacobian_cc2_a1(omega, rho_a_i, c_a_i, eps_o, eps_v)
+      write(output%unit, *) 'norm 1:', get_l2_norm(rho_a_i, wf%n_o*wf%n_v)
       call wf%effective_jacobian_cc2_b1(omega, rho_a_i, c_a_i, eps_o, eps_v)
+      write(output%unit, *) 'norm 2:', get_l2_norm(rho_a_i, wf%n_o*wf%n_v)
       call wf%effective_jacobian_cc2_c1(omega, rho_a_i, c_a_i, eps_o, eps_v)
+      write(output%unit, *) 'norm 3:', get_l2_norm(rho_a_i, wf%n_o*wf%n_v)
       call wf%effective_jacobian_cc2_d1(omega, rho_a_i, c_a_i, eps_o, eps_v)
+      write(output%unit, *) 'norm 4:', get_l2_norm(rho_a_i, wf%n_o*wf%n_v)
       call wf%effective_jacobian_cc2_e1(omega, rho_a_i, c_a_i, eps_o, eps_v)
+      write(output%unit, *) 'norm 5:', get_l2_norm(rho_a_i, wf%n_o*wf%n_v)
       call wf%effective_jacobian_cc2_f1(omega, rho_a_i, c_a_i, eps_o, eps_v)
+      write(output%unit, *) 'norm 6:', get_l2_norm(rho_a_i, wf%n_o*wf%n_v)
 !
       call mem%dealloc(eps_o, wf%n_o)
       call mem%dealloc(eps_v, wf%n_v)
@@ -823,7 +830,7 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
                do i = 1, wf%n_o
                   do a = 1, batch_a%length
 !
-                     Y_aick(a, i, a, i) = Y_aick(a, i, a, i)/two
+              !       Y_aick(a, i, a, i) = Y_aick(a, i, a, i)/two
 !
                   enddo
                enddo
@@ -1017,7 +1024,7 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
             do a = 1, wf%n_v
                do i = 1, batch_i%length
 !
-                  X_ckai(a, i, a, i) = X_ckai(a, i, a, i)/two
+             !     X_ckai(a, i, a, i) = X_ckai(a, i, a, i)/two
 !
                enddo
             enddo
@@ -1232,7 +1239,7 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !$omp parallel do private(k,a)
                do k = 1 , wf%n_o
                   do a = 1, batch_a%length
-                     Y_akjb(a,k,k,a) = half*Y_akjb(a,k,k,a)
+              !       Y_akjb(a,k,k,a) = half*Y_akjb(a,k,k,a)
                   enddo
                enddo
 !$omp end parallel do
@@ -1251,7 +1258,7 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !
                call mem%alloc(L_kjbi, wf%n_o, wf%n_o, batch_b%length, batch_i%length)
 !
-               L_kjbi = 0
+               L_kjbi = zero
                call add_1423_to_1234(two, g_kijb, L_kjbi, wf%n_o, wf%n_o, batch_b%length, batch_i%length)
                call add_2413_to_1234(-one, g_kijb, L_kjbi, wf%n_o, wf%n_o, batch_b%length, batch_i%length)
 !
@@ -1425,7 +1432,7 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
             do a = 1, wf%n_v
                do k = 1, batch_k%length
 !
-                  Y_ajbk(a,k,a,k) = half*Y_ajbk(a,k,a,k)
+               !   Y_ajbk(a,k,a,k) = half*Y_ajbk(a,k,a,k)
 !
                enddo
             enddo
@@ -1628,7 +1635,7 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
             do i = 1, wf%n_o
                do b = 1, batch_b%length
 !
-                  Y_bkci(b,i,b,i) = half*Y_bkci(b,i,b,i)
+              !    Y_bkci(b,i,b,i) = half*Y_bkci(b,i,b,i)
 !
                enddo
             enddo
@@ -1841,7 +1848,7 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
                do b = 1 , wf%n_v
                   do i = 1, batch_i%length
 !
-                     Y_bcki(b,b,i,i) = half*Y_bcki(b,b,i,i)
+               !      Y_bcki(b,b,i,i) = half*Y_bcki(b,b,i,i)
 !
                   enddo
                enddo
@@ -1861,7 +1868,7 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !
                call mem%alloc(L_abck, batch_a%length, wf%n_v, wf%n_v, batch_k%length)
 !
-               L_abck = 0
+               L_abck = zero
                call add_1243_to_1234(two, g_abkc, L_abck, batch_a%length, wf%n_v, wf%n_v, batch_k%length)
                call add_1342_to_1234(-one, g_abkc, L_abck, batch_a%length, wf%n_v, wf%n_v, batch_k%length)
 !

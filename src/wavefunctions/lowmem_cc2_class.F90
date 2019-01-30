@@ -246,11 +246,12 @@ contains
       X_copy = X
 !
       call wf%effective_jacobian_transformation(w, X_copy) ! X_copy <- AX !
-      R = X_copy - w*X
+   !   R = X_copy - w*X
 !
 !     Update excitation energy w
 !
       w = ddot(wf%n_amplitudes, X, 1, X_copy, 1)
+      R = X_copy - w*X
       call mem%dealloc(X_copy, wf%n_amplitudes, 1)
 !
    end subroutine construct_excited_state_equation_lowmem_cc2
