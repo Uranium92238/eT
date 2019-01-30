@@ -23,9 +23,9 @@ module dpstrf_et
 !=====================================================================
 !   .. integers kind=4 ..
 !
-      integer(kind=4)    info4, rank4
-      integer(kind=4)    lda4, n4
-      integer(kind=4)    piv4( n )
+      integer    info4, rank4
+      integer    lda4, n4
+      integer    piv4( n )
 !
 !=====================================================================
 !
@@ -79,13 +79,13 @@ module dpstrf_et
 !
 !      use unblocked code
 !
-         n4 = int(n,4)
-         lda4 = int(lda,4)
-         rank4 = int(rank,4)
-         info4 = int(info,4)
+         n4 = int(n)
+         lda4 = int(lda)
+         rank4 = int(rank)
+         info4 = int(info)
 !
          do i = 1,n
-            piv4(i) = int(piv(i),4)
+            piv4(i) = int(piv(i),i15)
          enddo
 !
          call dpstf2( uplo, n4, a( 1, 1 ), lda4, piv4, rank4, tol, work, &
@@ -97,7 +97,7 @@ module dpstrf_et
          info = int(info4,i15)
 !
          do i = 1,n
-            piv(i) = int(piv4(i),8)
+            piv(i) = int(piv4(i),i15)
          enddo
 !
          go to 200
@@ -196,7 +196,7 @@ module dpstrf_et
                      work( pvt ) = dtemp
                      itemp = piv( pvt )
                      piv( pvt ) = piv( j )
-                     piv( j ) = int(itemp,4)
+                     piv( j ) = int(itemp,i15)
                   end if
 !
                   ajj = sqrt( ajj )
@@ -283,7 +283,7 @@ module dpstrf_et
                      work( pvt ) = dtemp
                      itemp = piv( pvt )
                      piv( pvt ) = piv( j )
-                     piv( j ) = int(itemp,4)
+                     piv( j ) = int(itemp,i15)
                   end if
 !
                   ajj = sqrt( ajj )
@@ -322,7 +322,7 @@ module dpstrf_et
 !   rank is the number of steps completed.  set info = 1 to signal
 !   that the factorization cannot be used to solve a system.
 !
-      rank = int(j - 1,4)
+      rank = int(j - 1,i15)
       info = 1
 !
   200 continue

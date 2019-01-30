@@ -21,7 +21,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
 #   Flags needed for libint package
 #
     set(CMAKE_CXX_FLAGS
-        "${CMAKE_CXX_FLAGS} -fexceptions -I/usr/local/libint/2.4.2/include -I/usr/local/include/eigen3 -I/usr/local/libint/2.4.2/include/libint2/ -lint2 -std=c++11 -DPREP_LIBINT2_SKIP_BOOST"
+        "${CMAKE_CXX_FLAGS} -fexceptions -I/home/rolfheil/libint.2.4.2/include -I/usr/local/include/eigen3 -I/home/rolfheil/libint.2.4.2/include/libint2/ -lint2 -std=c++11 -DPREP_LIBINT2_SKIP_BOOST"
         )
 #
     if(NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
@@ -46,7 +46,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
 endif()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES Intel)
-    set(CMAKE_CXX_FLAGS         "-wd981 -wd279 -wd383 -vec-report0 -wd1572 -wd177 -fno-exceptionsi -std=c++11 -I/opt/centos/devtoolset-1.1/root/usr/include/c++/4.7.2/x86_64-redhat-linux -gcc-version=4.7 -I/usr/local/include/eigen3 -I/usr/local/libint/2.4.2/include/libint2/ -DPREP_LIBINT2_SKIP_BOOST -xHost -O3")
+    set(CMAKE_CXX_FLAGS         "-wd981 -wd279 -wd383 -vec-report0 -wd1572 -wd177 -fno-exceptions -std=c++11 -I/usr/local/include/c++/8.2.0 -gcc-version=8.2 -xHost -O3")
     if(DEVELOPMENT_CODE)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
     else()
@@ -57,6 +57,13 @@ if (CMAKE_CXX_COMPILER_ID MATCHES Intel)
     set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ip")
     set(CMAKE_CXX_FLAGS_PROFILE "${CMAKE_CXX_FLAGS_RELEASE} -g -pg")
     set (CMAKE_CXX_LINK_FLAGS "${CMAKE_CXX_LINK_FLAGS} -shared-intel")
+#
+#   Flags needed for libint package
+#
+    set(CMAKE_CXX_FLAGS
+        "${CMAKE_CXX_FLAGS} -fexceptions -I/usr/local/libint/2.4.2/include -I/usr/local/include/eigen3 -I/usr/local/libint/2.4.2/include/libint2/ -lint2 -std=c++11 -DPREP_LIBINT2_SKIP_BOOST"
+        )
+#
 
     if(DEFINED MKL_FLAG)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MKL_FLAG}")
