@@ -26,20 +26,20 @@ module davidson_cc_es_solver_class
       character(len=500) :: description2 = 'A complete description of the algorithm can be found in &
                                            &E. R. Davidson, J. Comput. Phys. 17, 87 (1975).'
 !
-      integer(i15) :: max_iterations
+      integer :: max_iterations
 !
       real(dp) :: eigenvalue_threshold  
       real(dp) :: residual_threshold  
 !
       logical      :: do_restart = .false.
 !
-      integer(i15) :: n_singlet_states = 0
+      integer :: n_singlet_states = 0
 !
       character(len=40) :: transformation 
 !
       real(dp), dimension(:,:), allocatable :: energies
 !
-      integer(i15), dimension(:,:), allocatable :: start_vectors
+      integer, dimension(:,:), allocatable :: start_vectors
 !
       type(file) :: restart_file
 !
@@ -138,7 +138,7 @@ contains
 !
       class(eigen_davidson_tool) :: davidson
 !
-      integer(i15) :: n_solutions_on_file 
+      integer :: n_solutions_on_file 
 
 !
 !     Read in the number of solutions to restart from - according the restart file 
@@ -237,7 +237,7 @@ contains
 !
       class(ccs), intent(in) :: wf 
 !
-      integer(i15) :: state 
+      integer :: state 
 !
       real(dp), dimension(:,:), allocatable :: r
 !
@@ -298,7 +298,7 @@ contains
 !
       type(eigen_davidson_tool) :: davidson
 !
-      integer(i15) :: iteration, trial, solution
+      integer :: iteration, trial, solution
 !
       real(dp) :: residual_norm
 !
@@ -493,9 +493,9 @@ contains
       real(dp), dimension(:,:), allocatable :: orbital_differences
       real(dp), dimension(:,:), allocatable :: lowest_orbital_differences
 !
-      integer(i15), dimension(:,:), allocatable :: lowest_orbital_differences_index
+      integer, dimension(:,:), allocatable :: lowest_orbital_differences_index
 !
-      integer(i15) :: trial
+      integer :: trial
 !
       if (allocated(solver%start_vectors)) then
 !
@@ -618,7 +618,7 @@ contains
 !
       class(davidson_cc_es_solver) :: solver 
 !
-      integer(i15) :: n_specs, i, j, n_start_vecs
+      integer :: n_specs, i, j, n_start_vecs
 !
       character(len=100) :: line
 !

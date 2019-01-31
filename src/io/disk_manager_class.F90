@@ -13,12 +13,12 @@ module disk_manager_class
 !
 !     The total amount of disk space specified by user (standard: 30 GB)
 !
-      integer(i15), private :: total = 3000000000000
+      integer(i15), private :: total
 !
 !     The amount of disk space currently available, based on the files
 !     currently stored on file
 !
-      integer(i15), private :: available = 3000000000000
+      integer(i15), private :: available
 !
    contains
 !
@@ -62,7 +62,7 @@ contains
       character(len=40) :: scratch_size_entry
       character(len=40) :: scratch_size_entry_only_size
 !
-      integer(i15) :: counter
+      integer :: counter
 !
       integer(i15) :: size_of_directory ! in MB
 !
@@ -131,7 +131,7 @@ contains
 !
 !        Set default
 !
-         disk%total = 30*1000000000
+         disk%total = 30000000000
 !
       endif
 !
@@ -217,7 +217,7 @@ contains
       character(len=*) :: permissions
       character(len=*), optional :: pos
 !
-      integer(i15) :: io_error = -1
+      integer :: io_error = -1
 !
 !     Sanity checks
 !
@@ -302,7 +302,7 @@ contains
 !
       character(len=*) :: permissions
 !
-      integer(i15) :: io_error = -1
+      integer :: io_error = -1
 !
 !     Sanity checks
 !
@@ -372,10 +372,10 @@ contains
 !
       character(len=*), optional :: destiny ! i.e. 'status' after close, can be 'keep' or 'delete'
 !
-      integer(i15) :: file_size_when_opened
-      integer(i15) :: file_size_when_closed
+      integer :: file_size_when_opened
+      integer :: file_size_when_closed
 !
-      integer(i15) :: bytes_written_to_disk ! Negative if storage is freed up, via 'delete'
+      integer :: bytes_written_to_disk ! Negative if storage is freed up, via 'delete'
 !
       bytes_written_to_disk = 0
 !
@@ -479,11 +479,9 @@ contains
 !  
       class(disk_manager) :: disk
 !
-      integer(i15) :: n_specs, i
+      integer :: n_specs, i
 !
       character(len=100) :: line
-!
-      disk%total = 8.0d0
 !
       call move_to_section('disk', n_specs)
 !
@@ -495,12 +493,12 @@ contains
          if (line(1:10) == 'available:' ) then
 !
             read(line(11:100), *) disk%total
+            disk%total = disk%total*1000000000
 !
          endif
 !
       enddo
 !
-      disk%total = disk%total*1000000000
 !
    end subroutine read_settings_disk_manager
 !
@@ -514,6 +512,7 @@ contains
 !  
       class(disk_manager) :: disk
 !
+      write(output%unit,*) "disk%total", disk%total
       write(output%unit, '(t3, a38, i5, a)') 'Disk space available for calculation: ',&
                                                  disk%total/1000000000, ' GB'
 !

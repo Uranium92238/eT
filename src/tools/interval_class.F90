@@ -9,9 +9,9 @@ module interval_class
 !
    type interval
 !
-      integer(i15) :: first = -1
-      integer(i15) :: last  = -1
-      integer(i15) :: size  = -1
+      integer :: first = -1
+      integer :: last  = -1
+      integer :: size  = -1
 !
    contains
 !

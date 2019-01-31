@@ -12,10 +12,10 @@ module davidson_cvs_cc_es_solver_class
 !
    type, extends(davidson_cc_es_solver) :: davidson_cvs_cc_es_solver
 !
-      integer(i15) :: n_cores
+      integer :: n_cores
 !
-      integer(i15), dimension(:,:), allocatable :: cores
-      integer(i15), dimension(:,:), allocatable :: core_MOs
+      integer, dimension(:,:), allocatable :: cores
+      integer, dimension(:,:), allocatable :: core_MOs
 !
    contains
 !
@@ -45,7 +45,7 @@ contains
 !
       class(davidson_cvs_cc_es_solver) :: solver 
 !
-      integer(i15) :: n_specs, i, j
+      integer :: n_specs, i, j
 !
       character(len=100) :: line
 !
@@ -127,10 +127,10 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: c_i
 !
-      integer(i15), dimension(:,:), allocatable :: ai_indices
+      integer, dimension(:,:), allocatable :: ai_indices
 !
-      integer(i15) :: trial, core, i, j, k, l, a, first_ao_on_atom, last_ao_on_atom
-      integer(i15) :: n_MOs_found, current_root
+      integer :: trial, core, i, j, k, l, a, first_ao_on_atom, last_ao_on_atom
+      integer :: n_MOs_found, current_root
 !
       real(dp) :: mix_factor
 !

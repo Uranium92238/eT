@@ -106,14 +106,14 @@ contains
 !
       real(dp) :: energy, prev_energy, n_electrons
 !
-      integer(i15) :: iteration
+      integer :: iteration
 !
       real(dp), dimension(:,:), allocatable :: h_wx 
 !
-      integer(i15) :: n_s
+      integer :: n_s
 !
       real(dp), dimension(:,:), allocatable     :: sp_eri_schwarz
-      integer(i15), dimension(:,:), allocatable :: sp_eri_schwarz_list
+      integer, dimension(:,:), allocatable :: sp_eri_schwarz_list
 !
 !     :: Part I. Preparations
 !

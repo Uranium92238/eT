@@ -21,12 +21,12 @@ module molecular_system_class
       character(len=100) :: name
       character(len=100), dimension(:), allocatable :: basis_sets
 !
-      integer(i15) :: n_atoms
-      integer(i15) :: n_basis_sets 
-      integer(i15) :: charge
-      integer(i15) :: multiplicity
-      integer(i15) :: n_electrons 
-      integer(i15) :: n_s
+      integer :: n_atoms
+      integer :: n_basis_sets 
+      integer :: charge
+      integer :: multiplicity
+      integer :: n_electrons 
+      integer :: n_s
 !
       type(atomic), dimension(:), allocatable :: atoms
 !
@@ -36,7 +36,7 @@ module molecular_system_class
 !
       logical :: active_atoms = .false.
 !
-      integer(i15) :: n_active_atoms = 0
+      integer :: n_active_atoms = 0
 !
    contains
 !
@@ -89,7 +89,7 @@ contains
 !
       integer(kind=4) :: i4, j
 !
-      integer(i15) :: s, n_s, i
+      integer :: s, n_s, i
 !
       integer(kind=4), dimension(:,:), allocatable :: n_shells_on_atoms
       integer(kind=4), dimension(:,:), allocatable :: n_basis_in_shells
@@ -170,7 +170,7 @@ contains
 !
          do j = 1, n_shells_on_atoms(i,1)
 !
-            molecule%atoms(i)%shells(j)%number = shell_numbers(j, 1)
+            molecule%atoms(i)%shells(j)%number_ = shell_numbers(j, 1)
 !
          enddo
 !
@@ -244,7 +244,7 @@ contains
 !
       class(molecular_system) :: molecule
 !
-      integer(i15) :: i
+      integer :: i
 !
       do i = 1, molecule%n_atoms 
 !
@@ -361,9 +361,9 @@ contains
       character(len=100) :: line
       character(len=100) :: current_basis
 !
-      integer(i15) :: current_atom, current_basis_nbr
+      integer :: current_atom, current_basis_nbr
 !
-      integer(i15) :: cursor
+      integer :: cursor
       character(len=100) :: coordinate
 !
       rewind(input%unit)
@@ -471,16 +471,16 @@ contains
 !
       class(molecular_system) :: molecule
 !
-      integer(i15) :: atom = 0
+      integer :: atom = 0
 !
       character(len=100) temp_name
       character(len=100) current_basis
 !
       type(file) :: mol_file, basis_file
 !
-      integer(i15) :: basis_set_counter, atom_offset, current_basis_nbr, i
+      integer :: basis_set_counter, atom_offset, current_basis_nbr, i
 !
-      integer(i15), dimension(:,:), allocatable :: n_atoms_in_basis
+      integer, dimension(:,:), allocatable :: n_atoms_in_basis
 !
 !     Write atom file
 !
@@ -591,10 +591,10 @@ contains
       character(len=100) :: line
       character(len=100) :: active_basis
 !
-      integer(i15) :: i, j, active_atom_counter, ioerror = 0, first, last, atom_counter
-      integer(i15) :: central_atom
+      integer :: i, j, active_atom_counter, ioerror = 0, first, last, atom_counter
+      integer :: central_atom
 !
-      integer(i15), dimension(:,:), allocatable :: active_atoms
+      integer, dimension(:,:), allocatable :: active_atoms
 !
       type(atomic), dimension(:), allocatable :: atoms_copy
 !
@@ -856,7 +856,7 @@ contains
 !
       real(dp) :: get_nuclear_repulsion_molecular_system
 !
-      integer(i15) :: i = 0, j = 0
+      integer :: i = 0, j = 0
 !
       real(dp) :: x_ij, y_ij, z_ij, r_ij
 !
@@ -880,7 +880,7 @@ contains
             endif
 !
             get_nuclear_repulsion_molecular_system = get_nuclear_repulsion_molecular_system &
-                  + ((molecule%atoms(i)%number)*(molecule%atoms(j)%number))/r_ij
+                  + ((molecule%atoms(i)%number_)*(molecule%atoms(j)%number_))/r_ij
 !
          enddo
       enddo
@@ -899,15 +899,15 @@ contains
 !
       class(molecular_system) :: molecule
 !
-      integer(i15) :: get_n_electrons_molecular_system
+      integer :: get_n_electrons_molecular_system
 !
-      integer(i15) :: i = 0
+      integer :: i = 0
 !
       get_n_electrons_molecular_system = 0
 !
       do i = 1, molecule%n_atoms
 !
-         get_n_electrons_molecular_system = get_n_electrons_molecular_system + molecule%atoms(i)%number
+         get_n_electrons_molecular_system = get_n_electrons_molecular_system + molecule%atoms(i)%number_
 !
       enddo
 !
@@ -916,7 +916,7 @@ contains
    end function get_n_electrons_molecular_system
 !
 !
-   integer(i15) function get_n_shells_molecular_system(molecule)
+   integer function get_n_shells_molecular_system(molecule)
 !!
 !!    Get number of shells
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -925,7 +925,7 @@ contains
 !
       class(molecular_system) :: molecule
 !
-      integer(i15) :: I = 0
+      integer :: I = 0
 !
       get_n_shells_molecular_system = 0
 !
@@ -938,7 +938,7 @@ contains
    end function get_n_shells_molecular_system
 !
 !
-   integer(i15) function get_n_aos_molecular_system(molecule)
+   integer function get_n_aos_molecular_system(molecule)
 !!
 !!    Get number of AOs
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -947,7 +947,7 @@ contains
 !
       class(molecular_system) :: molecule
 !
-      integer(i15) :: I = 0, J = 0
+      integer :: I = 0, J = 0
 !
       get_n_aos_molecular_system = 0
 !
@@ -979,9 +979,9 @@ contains
 !
       class(molecular_system), intent(in) :: molecule 
 !
-      integer(i15), intent(inout) :: max_shell_size
+      integer, intent(inout) :: max_shell_size
 !
-      integer(i15) :: s1 
+      integer :: s1 
 !
       max_shell_size = 0
       do s1 = 1, molecule%n_s 
@@ -1016,7 +1016,7 @@ contains
 !
          do J = 1, molecule%atoms(I)%n_shells
 !
-            if (A .eq. molecule%atoms(I)%shells(J)%number) then
+            if (A .eq. molecule%atoms(I)%shells(J)%number_) then
 !
                get_shell_limits_molecular_system%first = molecule%atoms(I)%shells(J)%first
                get_shell_limits_molecular_system%last  = molecule%atoms(I)%shells(J)%last
@@ -1042,11 +1042,11 @@ contains
 !
       class(molecular_system) :: molecule
 !
-      integer(i15), intent(in) :: basis_function
+      integer, intent(in) :: basis_function
 !
-      integer(i15) :: basis2shell_molecular_system
+      integer :: basis2shell_molecular_system
 !
-      integer(i15) :: I, J
+      integer :: I, J
 !
       basis2shell_molecular_system = 0
 !
@@ -1056,7 +1056,8 @@ contains
             if (molecule%atoms(I)%shells(J)%last  .ge. basis_function .and. &
                 molecule%atoms(I)%shells(J)%first .le. basis_function) then
 !
-               basis2shell_molecular_system = molecule%atoms(I)%shells(J)%number
+               basis2shell_molecular_system = &
+               molecule%atoms(I)%shells(J)%number_
 !
             endif
 !
@@ -1075,11 +1076,11 @@ contains
       implicit none
 !
       class(molecular_system) :: molecule
-      integer(i15), intent(in) :: shell
+      integer, intent(in) :: shell
 !
-      integer(i15) :: I, accumulated_shells
+      integer :: I, accumulated_shells
 !
-      integer(i15) :: shell_to_atom_molecular_system
+      integer :: shell_to_atom_molecular_system
 !
       shell_to_atom_molecular_system = 0
 !
@@ -1177,7 +1178,7 @@ contains
 !
       class(molecular_system) :: molecule
 !
-      integer(i15) :: n_s 
+      integer :: n_s 
 !
       n_s = molecule%get_n_shells()
 !
@@ -1209,7 +1210,7 @@ contains
 !
       class(molecular_system) :: molecule  
 !
-      integer(i15) :: I 
+      integer :: I 
 !
       write(output%unit, *)
 !

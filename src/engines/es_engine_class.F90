@@ -195,7 +195,7 @@ contains
 !
       character(len=100) :: line
 !
-      integer(i15) :: i, n_keywords
+      integer :: i, n_keywords
 !
       if (requested_section('cc excited state')) then
 !
@@ -243,7 +243,7 @@ contains
 !
       character(len=100) :: line
 !
-      integer(i15) :: i, n_records
+      integer :: i, n_records
 !
       call move_to_section('cc excited state', n_records)
 !

@@ -84,7 +84,7 @@ contains
       real(dp), dimension(:,:), allocatable :: eps
 !
       real(dp)     :: e2_neg
-      integer(i15) :: a, i, b, j, ai, bj 
+      integer :: a, i, b, j, ai, bj 
 !
       call mem%alloc(eps, wf%n_mo, 1)
       eps = wf%orbital_energies

@@ -85,14 +85,14 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout):: omega1
 !
-      integer(i15) :: current_a_batch = 0
+      integer :: current_a_batch = 0
 !
       type(batching_index) :: batch_a
 !
       real(dp), dimension(:,:), allocatable :: u_dk_ci, t_dk_ci
       real(dp), dimension(:,:,:,:), allocatable :: g_ad_kc
 !
-      integer(i15) :: ad_dim, rec0, rec1
+      integer :: ad_dim, rec0, rec1
 !
       type(timings) :: ccsd_a1_timer
 !
@@ -352,21 +352,21 @@ contains
 !
 !     Indices
 !
-      integer(i15) :: a, b, c, d
-      integer(i15) :: i, j
+      integer :: a, b, c, d
+      integer :: i, j
 !
-      integer(i15) :: ab, bc, cd, ad, ac, bd
-      integer(i15) :: ai, aj, bj, bi, ci, cj, dj, di
-      integer(i15) :: ij
+      integer :: ab, bc, cd, ad, ac, bd
+      integer :: ai, aj, bj, bi, ci, cj, dj, di
+      integer :: ij
 !
-      integer(i15) :: aibj = 0, biaj = 0, cidj = 0, dicj = 0
+      integer :: aibj = 0, biaj = 0, cidj = 0, dicj = 0
 !
 !     Batching and memory handling variables
 !
-      integer(i15) :: rec0, rec1_a, rec1_b, rec2
+      integer :: rec0, rec1_a, rec1_b, rec2
 !
-      integer(i15) :: current_a_batch = 0
-      integer(i15) :: current_b_batch = 0    
+      integer :: current_a_batch = 0
+      integer :: current_b_batch = 0    
 !
       type(batching_index) :: batch_a
       type(batching_index) :: batch_b
@@ -931,18 +931,18 @@ contains
 !
 !     Indices
 !
-      integer(i15) :: a, b, c
-      integer(i15) :: i, j, k
+      integer :: a, b, c
+      integer :: i, j, k
 !
-      integer(i15) :: ai, aj, bi, bj, ac, ki, ck
-      integer(i15) :: ai_batch
+      integer :: ai, aj, bi, bj, ac, ki, ck
+      integer :: ai_batch
 !
-      integer(i15) :: aibj
+      integer :: aibj
 !
 !     Batching and memory handling
 !
-      integer(i15) :: rec0, rec1
-      integer(i15) :: current_a_batch = 0
+      integer :: rec0, rec1
+      integer :: current_a_batch = 0
 !
       type(batching_index) :: batch_a
 !

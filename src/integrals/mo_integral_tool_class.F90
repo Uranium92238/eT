@@ -19,15 +19,15 @@ module mo_integral_tool_class
       logical, private :: cholesky_file      = .true.
       logical, private :: cholesky_t1_file   = .false.
 !
-      integer(i15) :: n_J
+      integer :: n_J
 !
       type(file) :: cholesky_mo
       type(file) :: cholesky_mo_t1
 !
-      integer(i15), private :: n_o 
-      integer(i15), private :: n_v 
+      integer, private :: n_o 
+      integer, private :: n_v 
 !
-      integer(i15), private :: n_mo 
+      integer, private :: n_mo 
 !
       logical, private :: eri_t1_mem = .false.
       real(dp), dimension(:,:,:,:), allocatable :: g_pqrs
@@ -155,9 +155,9 @@ contains
 !
       class(mo_integral_tool) :: integrals 
 !
-      integer(i15), intent(in) :: n_J
-      integer(i15), intent(in) :: n_o
-      integer(i15), intent(in) :: n_v
+      integer, intent(in) :: n_J
+      integer, intent(in) :: n_o
+      integer, intent(in) :: n_v
 !
       integrals%n_J = n_J
 !
@@ -197,7 +197,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: L_pq_J 
 !
-      integer(i15) :: required_mem 
+      integer :: required_mem 
 !
       required_mem = (integrals%n_mo)**4 + (integrals%n_mo)**2*(integrals%n_J)
 !
@@ -273,12 +273,12 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals
 !
-      integer(i15), intent(in) :: first_p, last_p
-      integer(i15), intent(in) :: first_q, last_q
+      integer, intent(in) :: first_p, last_p
+      integer, intent(in) :: first_q, last_q
 !
       real(dp), dimension((last_p - first_p + 1)*(last_q - first_q + 1), integrals%n_J) :: L_pq_J
 !
-      integer(i15) :: p, q, pq, pq_rec, J, dim_p, dim_q
+      integer :: p, q, pq, pq_rec, J, dim_p, dim_q
 !
       dim_p = last_p - first_p + 1
       dim_q = last_q - first_q + 1
@@ -315,12 +315,12 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals
 !
-      integer(i15), intent(in) :: first_p, last_p
-      integer(i15), intent(in) :: first_q, last_q
+      integer, intent(in) :: first_p, last_p
+      integer, intent(in) :: first_q, last_q
 !
       real(dp), dimension((last_p - first_p + 1)*(last_q - first_q + 1), integrals%n_J) :: L_pq_J
 !
-      integer(i15) :: p, q, pq, pq_rec, dim_p, dim_q
+      integer :: p, q, pq, pq_rec, dim_p, dim_q
 !
       dim_p = last_p - first_p + 1
       dim_q = last_q - first_q + 1
@@ -352,13 +352,13 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals 
 !  
-      integer(i15), optional, intent(in) :: first_i, last_i
-      integer(i15), optional, intent(in) :: first_a, last_a
+      integer, optional, intent(in) :: first_i, last_i
+      integer, optional, intent(in) :: first_a, last_a
 !
       real(dp), dimension(:,:) :: L_ia_J
 !
-      integer(i15) :: full_first_a, full_last_a 
-      integer(i15) :: full_first_i, full_last_i
+      integer :: full_first_a, full_last_a 
+      integer :: full_first_i, full_last_i
 !
       call integrals%set_full_index(full_first_i, 'f', 'o', first_i)
       call integrals%set_full_index(full_first_a, 'f', 'v', first_a)
@@ -386,8 +386,8 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals 
 !
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_j, last_j
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_j, last_j
 !
       real(dp), dimension(:,:) :: L_ij_J 
 !
@@ -397,10 +397,10 @@ contains
       real(dp), dimension(:,:), allocatable :: L_iJ_a
       real(dp), dimension(:,:), allocatable :: L_ia_J
 !
-      integer(i15) :: full_first_i, full_last_i 
-      integer(i15) :: full_first_j, full_last_j 
+      integer :: full_first_i, full_last_i 
+      integer :: full_first_j, full_last_j 
 !
-      integer(i15) :: i_length, j_length          
+      integer :: i_length, j_length          
 !
       call integrals%set_full_index(full_first_i, 'f', 'o', first_i)
       call integrals%set_full_index(full_first_j, 'f', 'o', first_j)
@@ -467,18 +467,18 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), intent(in) :: t1 
 !
-      integer(i15), intent(in) :: first_a, last_a
-      integer(i15), intent(in) :: first_b, last_b
+      integer, intent(in) :: first_a, last_a
+      integer, intent(in) :: first_b, last_b
 !
-      integer(i15) :: full_first_a, full_last_a 
-      integer(i15) :: full_first_b, full_last_b
+      integer :: full_first_a, full_last_a 
+      integer :: full_first_b, full_last_b
 !
-      integer(i15) :: red_first_a 
+      integer :: red_first_a 
 !
       real(dp), dimension(:,:), allocatable :: L_ib_J
       real(dp), dimension(:,:), allocatable :: L_Jb_a
 !
-      integer(i15) :: b_length, a_length
+      integer :: b_length, a_length
 !
       call integrals%set_full_index(full_first_a, 'f', 'v', first_a)
       call integrals%set_full_index(full_first_b, 'f', 'v', first_b)
@@ -535,19 +535,19 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals 
 !  
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_a, last_a
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_a, last_a
 !
       real(dp), dimension(:, :) :: L_ai_J
       real(dp), dimension(integrals%n_v, integrals%n_o) :: t1
       real(dp), dimension(:, :), allocatable :: L_bj_J, L_ji_J, L_ba_J, X_j_iJ, X_i_jJ, X_i_aJ
 !
-      integer(i15) :: full_first_a, full_last_a, length_a 
-      integer(i15) :: full_first_i, full_last_i, length_i
+      integer :: full_first_a, full_last_a, length_a 
+      integer :: full_first_i, full_last_i, length_i
 !
       type(batching_index) :: batch_j
 !
-      integer(i15) :: req0, req1, current_j_batch
+      integer :: req0, req1, current_j_batch
 !
       call integrals%set_full_index(full_first_i, 'f', 'o', first_i)
       call integrals%set_full_index(full_first_a, 'f', 'v', first_a)
@@ -674,13 +674,13 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals 
 !  
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_a, last_a
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_a, last_a
 !
       real(dp), dimension(:, :) :: L_ai_J
 !
-      integer(i15) :: full_first_a, full_last_a 
-      integer(i15) :: full_first_i, full_last_i
+      integer :: full_first_a, full_last_a 
+      integer :: full_first_i, full_last_i
 !
 !
       call integrals%set_full_index(full_first_i, 'f', 'o', first_i)
@@ -705,13 +705,13 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals 
 !  
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_a, last_a
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_a, last_a
 !
       real(dp), dimension(:, :) :: L_ia_J
 !
-      integer(i15) :: full_first_a, full_last_a
-      integer(i15) :: full_first_i, full_last_i
+      integer :: full_first_a, full_last_a
+      integer :: full_first_i, full_last_i
 !
 !
       call integrals%set_full_index(full_first_i, 'f', 'o', first_i)
@@ -736,13 +736,13 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals 
 !  
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_j, last_j
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_j, last_j
 !
       real(dp), dimension(:, :) :: L_ij_J
 !
-      integer(i15) :: full_first_j, full_last_j 
-      integer(i15) :: full_first_i, full_last_i
+      integer :: full_first_j, full_last_j 
+      integer :: full_first_i, full_last_i
 !
 !
       call integrals%set_full_index(full_first_i, 'f', 'o', first_i)
@@ -767,13 +767,13 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals 
 !  
-      integer(i15), intent(in) :: first_a, last_a
-      integer(i15), intent(in) :: first_b, last_b
+      integer, intent(in) :: first_a, last_a
+      integer, intent(in) :: first_b, last_b
 !
       real(dp), dimension(:, :) :: L_ab_J
 !
-      integer(i15) :: full_first_b, full_last_b 
-      integer(i15) :: full_first_a, full_last_a
+      integer :: full_first_b, full_last_b 
+      integer :: full_first_a, full_last_a
 !
       call integrals%set_full_index(full_first_a, 'f', 'v', first_a)
       call integrals%set_full_index(full_first_b, 'f', 'v', first_b)
@@ -800,12 +800,12 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals 
 !
-      integer(i15), intent(inout) :: ind 
+      integer, intent(inout) :: ind 
 !
       character(len=1), intent(in) :: orb_space 
       character(len=1), intent(in) :: pos  
 !
-      integer(i15), optional, intent(in) :: red_ind 
+      integer, optional, intent(in) :: red_ind 
 !
       if (present(red_ind)) then 
 !
@@ -883,12 +883,12 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_k, last_k
-      integer(i15), intent(in) :: first_j, last_j
-      integer(i15), intent(in) :: first_l, last_l
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_k, last_k
+      integer, intent(in) :: first_j, last_j
+      integer, intent(in) :: first_l, last_l
 !
-      integer(i15) :: length_i, length_k, length_j, length_l
+      integer :: length_i, length_k, length_j, length_l
 !
       logical, intent(in) :: index_restrictions
 !
@@ -984,14 +984,14 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_k, last_k
-      integer(i15), intent(in) :: first_j, last_j
-      integer(i15), intent(in) :: first_l, last_l
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_k, last_k
+      integer, intent(in) :: first_j, last_j
+      integer, intent(in) :: first_l, last_l
 !
       real(dp), dimension(last_i-first_i+1,last_j-first_j+1,last_k-first_k+1,last_l-first_l+1), intent(inout) :: g_ijkl
 !
-      integer(i15) :: length_i, length_k, length_j, length_l
+      integer :: length_i, length_k, length_j, length_l
 !
       logical, intent(in) :: index_restrictions
 !
@@ -1101,12 +1101,12 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_k, last_k
-      integer(i15), intent(in) :: first_j, last_j
-      integer(i15), intent(in) :: first_a, last_a
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_k, last_k
+      integer, intent(in) :: first_j, last_j
+      integer, intent(in) :: first_a, last_a
 !
-      integer(i15) :: length_i, length_k, length_j, length_a
+      integer :: length_i, length_k, length_j, length_a
 !
       logical, intent(in) :: index_restrictions
 !
@@ -1168,14 +1168,14 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_k, last_k
-      integer(i15), intent(in) :: first_j, last_j
-      integer(i15), intent(in) :: first_a, last_a
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_k, last_k
+      integer, intent(in) :: first_j, last_j
+      integer, intent(in) :: first_a, last_a
 !
       real(dp), dimension(last_i-first_i+1,last_j-first_j+1,last_k-first_k+1,last_a-first_a+1), intent(inout) :: g_ijka
 !
-      integer(i15) :: length_i, length_k, length_j, length_a
+      integer :: length_i, length_k, length_j, length_a
 !
       logical, intent(in) :: index_restrictions
 !
@@ -1250,12 +1250,12 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_k, last_k
-      integer(i15), intent(in) :: first_j, last_j
-      integer(i15), intent(in) :: first_a, last_a
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_k, last_k
+      integer, intent(in) :: first_j, last_j
+      integer, intent(in) :: first_a, last_a
 !
-      integer(i15) :: length_i, length_k, length_j, length_a
+      integer :: length_i, length_k, length_j, length_a
 !
       logical, intent(in) :: index_restrictions
 !
@@ -1316,14 +1316,14 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_k, last_k
-      integer(i15), intent(in) :: first_j, last_j
-      integer(i15), intent(in) :: first_a, last_a
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_k, last_k
+      integer, intent(in) :: first_j, last_j
+      integer, intent(in) :: first_a, last_a
 !
       real(dp), dimension(last_i-first_i+1,last_j-first_j+1,last_a-first_a+1,last_k-first_k+1), intent(inout) :: g_ijak
 !
-      integer(i15) :: length_i, length_k, length_j, length_a
+      integer :: length_i, length_k, length_j, length_a
 !
       logical, intent(in) :: index_restrictions
 !
@@ -1398,12 +1398,12 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_k, last_k
-      integer(i15), intent(in) :: first_j, last_j
-      integer(i15), intent(in) :: first_a, last_a
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_k, last_k
+      integer, intent(in) :: first_j, last_j
+      integer, intent(in) :: first_a, last_a
 !
-      integer(i15) :: length_i, length_k, length_j, length_a
+      integer :: length_i, length_k, length_j, length_a
 !
       logical, intent(in) :: index_restrictions
 !
@@ -1464,14 +1464,14 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_k, last_k
-      integer(i15), intent(in) :: first_j, last_j
-      integer(i15), intent(in) :: first_a, last_a
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_k, last_k
+      integer, intent(in) :: first_j, last_j
+      integer, intent(in) :: first_a, last_a
 !
       real(dp), dimension(last_i-first_i+1,last_a-first_a+1,last_j-first_j+1,last_k-first_k+1), intent(inout) :: g_iajk
 !
-      integer(i15) :: length_i, length_k, length_j, length_a
+      integer :: length_i, length_k, length_j, length_a
 !
       logical, intent(in) :: index_restrictions
 !
@@ -1546,12 +1546,12 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_k, last_k
-      integer(i15), intent(in) :: first_j, last_j
-      integer(i15), intent(in) :: first_a, last_a
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_k, last_k
+      integer, intent(in) :: first_j, last_j
+      integer, intent(in) :: first_a, last_a
 !
-      integer(i15) :: length_i, length_k, length_j, length_a
+      integer :: length_i, length_k, length_j, length_a
 !
       logical, intent(in) :: index_restrictions
 !
@@ -1612,14 +1612,14 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_k, last_k
-      integer(i15), intent(in) :: first_j, last_j
-      integer(i15), intent(in) :: first_a, last_a
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_k, last_k
+      integer, intent(in) :: first_j, last_j
+      integer, intent(in) :: first_a, last_a
 !
       real(dp), dimension(last_a-first_a+1,last_i-first_i+1,last_j-first_j+1,last_k-first_k+1), intent(inout) :: g_aijk
 !
-      integer(i15) :: length_i, length_k, length_j, length_a
+      integer :: length_i, length_k, length_j, length_a
 !
       logical, intent(in) :: index_restrictions
 !
@@ -1694,12 +1694,12 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_b, last_b
-      integer(i15), intent(in) :: first_j, last_j
-      integer(i15), intent(in) :: first_a, last_a
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_b, last_b
+      integer, intent(in) :: first_j, last_j
+      integer, intent(in) :: first_a, last_a
 !
-      integer(i15) :: length_i, length_b, length_j, length_a
+      integer :: length_i, length_b, length_j, length_a
 !
       logical, intent(in) :: index_restrictions
 !
@@ -1760,14 +1760,14 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_b, last_b
-      integer(i15), intent(in) :: first_j, last_j
-      integer(i15), intent(in) :: first_a, last_a
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_b, last_b
+      integer, intent(in) :: first_j, last_j
+      integer, intent(in) :: first_a, last_a
 !
       real(dp), dimension(last_a-first_a+1,last_b-first_b+1,last_i-first_i+1,last_j-first_j+1), intent(inout) :: g_abij
 !
-      integer(i15) :: length_i, length_b, length_j, length_a
+      integer :: length_i, length_b, length_j, length_a
 !
       logical, intent(in) :: index_restrictions
 !
@@ -1842,12 +1842,12 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_b, last_b
-      integer(i15), intent(in) :: first_j, last_j
-      integer(i15), intent(in) :: first_a, last_a
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_b, last_b
+      integer, intent(in) :: first_j, last_j
+      integer, intent(in) :: first_a, last_a
 !
-      integer(i15) :: length_i, length_b, length_j, length_a
+      integer :: length_i, length_b, length_j, length_a
 !
       logical, intent(in) :: index_restrictions
 !
@@ -1908,14 +1908,14 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_b, last_b
-      integer(i15), intent(in) :: first_j, last_j
-      integer(i15), intent(in) :: first_a, last_a
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_b, last_b
+      integer, intent(in) :: first_j, last_j
+      integer, intent(in) :: first_a, last_a
 !
       real(dp), dimension(last_i-first_i+1,last_j-first_j+1,last_a-first_a+1,last_b-first_b+1), intent(inout) :: g_ijab
 !
-      integer(i15) :: length_i, length_b, length_j, length_a
+      integer :: length_i, length_b, length_j, length_a
 !
       logical, intent(in) :: index_restrictions
 !
@@ -1990,12 +1990,12 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_b, last_b
-      integer(i15), intent(in) :: first_j, last_j
-      integer(i15), intent(in) :: first_a, last_a
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_b, last_b
+      integer, intent(in) :: first_j, last_j
+      integer, intent(in) :: first_a, last_a
 !
-      integer(i15) :: length_i, length_b, length_j, length_a
+      integer :: length_i, length_b, length_j, length_a
 !
       logical, intent(in) :: index_restrictions
 !
@@ -2055,14 +2055,14 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_b, last_b
-      integer(i15), intent(in) :: first_j, last_j
-      integer(i15), intent(in) :: first_a, last_a
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_b, last_b
+      integer, intent(in) :: first_j, last_j
+      integer, intent(in) :: first_a, last_a
 !
       real(dp), dimension(last_a-first_a+1,last_i-first_i+1,last_j-first_j+1,last_b-first_b+1), intent(inout) :: g_aijb
 !
-      integer(i15) :: length_i, length_b, length_j, length_a
+      integer :: length_i, length_b, length_j, length_a
 !
       logical, intent(in) :: index_restrictions
 !
@@ -2137,12 +2137,12 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_b, last_b
-      integer(i15), intent(in) :: first_j, last_j
-      integer(i15), intent(in) :: first_a, last_a
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_b, last_b
+      integer, intent(in) :: first_j, last_j
+      integer, intent(in) :: first_a, last_a
 !
-      integer(i15) :: length_i, length_b, length_j, length_a
+      integer :: length_i, length_b, length_j, length_a
 !
       logical, intent(in) :: index_restrictions
 !
@@ -2203,14 +2203,14 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_b, last_b
-      integer(i15), intent(in) :: first_j, last_j
-      integer(i15), intent(in) :: first_a, last_a
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_b, last_b
+      integer, intent(in) :: first_j, last_j
+      integer, intent(in) :: first_a, last_a
 !
       real(dp), dimension(last_i-first_i+1,last_a-first_a+1,last_b-first_b+1,last_j-first_j+1), intent(inout) :: g_iabj
 !
-      integer(i15) :: length_i, length_b, length_j, length_a
+      integer :: length_i, length_b, length_j, length_a
 !
       logical, intent(in) :: index_restrictions
 !
@@ -2283,12 +2283,12 @@ contains
 !
       real(dp), dimension(:,:), intent(inout) :: g_iajb
 !
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_a, last_a
-      integer(i15), intent(in) :: first_j, last_j
-      integer(i15), intent(in) :: first_b, last_b
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_a, last_a
+      integer, intent(in) :: first_j, last_j
+      integer, intent(in) :: first_b, last_b
 !
-      integer(i15) :: length_i, length_a, length_j, length_b
+      integer :: length_i, length_a, length_j, length_b
 !
       logical, intent(in) :: index_restrictions
 !
@@ -2363,14 +2363,14 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals 
 !
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_a, last_a
-      integer(i15), intent(in) :: first_j, last_j
-      integer(i15), intent(in) :: first_b, last_b
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_a, last_a
+      integer, intent(in) :: first_j, last_j
+      integer, intent(in) :: first_b, last_b
 !
       real(dp), dimension(last_i-first_i+1,last_a-first_a+1,last_j-first_j+1,last_b-first_b+1), intent(inout) :: g_iajb
 !
-      integer(i15) :: length_i, length_a, length_j, length_b
+      integer :: length_i, length_a, length_j, length_b
 !
       logical, intent(in) :: index_restrictions
 !
@@ -2461,12 +2461,12 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_a, last_a
-      integer(i15), intent(in) :: first_j, last_j
-      integer(i15), intent(in) :: first_b, last_b
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_a, last_a
+      integer, intent(in) :: first_j, last_j
+      integer, intent(in) :: first_b, last_b
 !
-      integer(i15) :: length_i, length_a, length_j, length_b
+      integer :: length_i, length_a, length_j, length_b
 !
       logical, intent(in) :: index_restrictions
 !
@@ -2559,14 +2559,14 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_a, last_a
-      integer(i15), intent(in) :: first_j, last_j
-      integer(i15), intent(in) :: first_b, last_b
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_a, last_a
+      integer, intent(in) :: first_j, last_j
+      integer, intent(in) :: first_b, last_b
 !
       real(dp), dimension(last_a-first_a+1,last_i-first_i+1,last_b-first_b+1,last_j-first_j+1), intent(inout) :: g_aibj
 !
-      integer(i15) :: length_i, length_a, length_j, length_b
+      integer :: length_i, length_a, length_j, length_b
 !
       logical, intent(in) :: index_restrictions
 !
@@ -2674,12 +2674,12 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_a, last_a
-      integer(i15), intent(in) :: first_b, last_b
-      integer(i15), intent(in) :: first_c, last_c
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_a, last_a
+      integer, intent(in) :: first_b, last_b
+      integer, intent(in) :: first_c, last_c
 !
-      integer(i15) :: length_i, length_a, length_b, length_c
+      integer :: length_i, length_a, length_b, length_c
 !
       logical, intent(in) :: index_restrictions
 !
@@ -2742,12 +2742,12 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_a, last_a
-      integer(i15), intent(in) :: first_b, last_b
-      integer(i15), intent(in) :: first_c, last_c
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_a, last_a
+      integer, intent(in) :: first_b, last_b
+      integer, intent(in) :: first_c, last_c
 !
-      integer(i15) :: length_i, length_a, length_b, length_c
+      integer :: length_i, length_a, length_b, length_c
 !
       logical, intent(in) :: index_restrictions
 !
@@ -2808,14 +2808,14 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_a, last_a
-      integer(i15), intent(in) :: first_b, last_b
-      integer(i15), intent(in) :: first_c, last_c
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_a, last_a
+      integer, intent(in) :: first_b, last_b
+      integer, intent(in) :: first_c, last_c
 !
       real(dp), dimension(last_a-first_a+1,last_b-first_b+1,last_i-first_i+1,last_c-first_c+1), intent(inout) :: g_abic
 !
-      integer(i15) :: length_i, length_a, length_b, length_c
+      integer :: length_i, length_a, length_b, length_c
 !
       logical, intent(in) :: index_restrictions
 !
@@ -2890,12 +2890,12 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_a, last_a
-      integer(i15), intent(in) :: first_b, last_b
-      integer(i15), intent(in) :: first_c, last_c
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_a, last_a
+      integer, intent(in) :: first_b, last_b
+      integer, intent(in) :: first_c, last_c
 !
-      integer(i15) :: length_i, length_a, length_b, length_c
+      integer :: length_i, length_a, length_b, length_c
 !
       logical, intent(in) :: index_restrictions
 !
@@ -2956,14 +2956,14 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_a, last_a
-      integer(i15), intent(in) :: first_b, last_b
-      integer(i15), intent(in) :: first_c, last_c
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_a, last_a
+      integer, intent(in) :: first_b, last_b
+      integer, intent(in) :: first_c, last_c
 !
       real(dp), dimension(last_a-first_a+1,last_i-first_i+1,last_b-first_b+1,last_c-first_c+1), intent(inout) :: g_aibc
 !
-      integer(i15) :: length_i, length_a, length_b, length_c
+      integer :: length_i, length_a, length_b, length_c
 !
       logical, intent(in) :: index_restrictions
 !
@@ -3038,12 +3038,12 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_a, last_a
-      integer(i15), intent(in) :: first_b, last_b
-      integer(i15), intent(in) :: first_c, last_c
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_a, last_a
+      integer, intent(in) :: first_b, last_b
+      integer, intent(in) :: first_c, last_c
 !
-      integer(i15) :: length_i, length_a, length_b, length_c
+      integer :: length_i, length_a, length_b, length_c
 !
       logical, intent(in) :: index_restrictions
 !
@@ -3103,14 +3103,14 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), intent(in) :: first_i, last_i
-      integer(i15), intent(in) :: first_a, last_a
-      integer(i15), intent(in) :: first_b, last_b
-      integer(i15), intent(in) :: first_c, last_c
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_a, last_a
+      integer, intent(in) :: first_b, last_b
+      integer, intent(in) :: first_c, last_c
 !
       real(dp), dimension(last_i-first_i+1,last_a-first_a+1,last_b-first_b+1,last_c-first_c+1), intent(inout) :: g_iabc
 !
-      integer(i15) :: length_i, length_a, length_b, length_c
+      integer :: length_i, length_a, length_b, length_c
 !
       logical, intent(in) :: index_restrictions
 !
@@ -3186,12 +3186,12 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), intent(in) :: first_a, last_a
-      integer(i15), intent(in) :: first_b, last_b
-      integer(i15), intent(in) :: first_c, last_c
-      integer(i15), intent(in) :: first_d, last_d
+      integer, intent(in) :: first_a, last_a
+      integer, intent(in) :: first_b, last_b
+      integer, intent(in) :: first_c, last_c
+      integer, intent(in) :: first_d, last_d
 !
-      integer(i15) :: length_a, length_b, length_c, length_d
+      integer :: length_a, length_b, length_c, length_d
 !
       logical, intent(in) :: index_restrictions
 !
@@ -3285,14 +3285,14 @@ contains
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
-      integer(i15), intent(in) :: first_a, last_a
-      integer(i15), intent(in) :: first_b, last_b
-      integer(i15), intent(in) :: first_c, last_c
-      integer(i15), intent(in) :: first_d, last_d
+      integer, intent(in) :: first_a, last_a
+      integer, intent(in) :: first_b, last_b
+      integer, intent(in) :: first_c, last_c
+      integer, intent(in) :: first_d, last_d
 !
       real(dp), dimension(last_a-first_a+1,last_b-first_b+1,last_c-first_c+1,last_d-first_d+1), intent(inout) :: g_abcd
 !
-      integer(i15) :: length_a, length_b, length_c, length_d
+      integer :: length_a, length_b, length_c, length_d
 !
       logical, intent(in) :: index_restrictions
 !
@@ -3402,9 +3402,9 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals 
 !  
-      integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
+      integer, intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
 !
-      integer(i15) :: get_required_vvoo_mo_integral_tool
+      integer :: get_required_vvoo_mo_integral_tool
 !
       get_required_vvoo_mo_integral_tool = 0
 !
@@ -3464,11 +3464,11 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals
 !  
-      integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
+      integer, intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
 !
-      integer(i15) :: dim_1_local, dim_2_local, dim_3_local, dim_4_local
+      integer :: dim_1_local, dim_2_local, dim_3_local, dim_4_local
 !
-      integer(i15) :: get_required_voov_mo_integral_tool
+      integer :: get_required_voov_mo_integral_tool
 !
       dim_1_local = integrals%n_v
       if (present(dim_1)) dim_1_local = dim_1
@@ -3517,11 +3517,11 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals
 !  
-      integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
+      integer, intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
 !
-      integer(i15) :: dim_1_local, dim_2_local, dim_3_local, dim_4_local
+      integer :: dim_1_local, dim_2_local, dim_3_local, dim_4_local
 !
-      integer(i15) :: get_required_vvov_mo_integral_tool
+      integer :: get_required_vvov_mo_integral_tool
 !
       dim_1_local = integrals%n_v
       if (present(dim_1)) dim_1_local = dim_1
@@ -3571,11 +3571,11 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals
 !  
-      integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
+      integer, intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
 !
-      integer(i15) :: dim_1_local, dim_2_local, dim_3_local, dim_4_local
+      integer :: dim_1_local, dim_2_local, dim_3_local, dim_4_local
 !
-      integer(i15) :: get_required_vvvo_mo_integral_tool
+      integer :: get_required_vvvo_mo_integral_tool
 !
       dim_1_local = integrals%n_v
       if (present(dim_1)) dim_1_local = dim_1
@@ -3627,11 +3627,11 @@ contains
 !
       class(mo_integral_tool), intent(in) :: integrals
 !  
-      integer(i15), intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
+      integer, intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
 !
-      integer(i15) :: dim_1_local, dim_2_local, dim_3_local, dim_4_local
+      integer :: dim_1_local, dim_2_local, dim_3_local, dim_4_local
 !
-      integer(i15) :: get_required_vvvv_mo_integral_tool
+      integer :: get_required_vvvv_mo_integral_tool
 !
       dim_1_local = integrals%n_v
       if (present(dim_1)) dim_1_local = dim_1
@@ -3680,9 +3680,9 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: L_ij_J, L_ia_J, L_ai_J, L_ab_J
 !
-      integer(i15) :: ij, ij_rec, i, j, k, ai, ai_rec, ia, ia_rec, ab, ab_rec, a, b
+      integer :: ij, ij_rec, i, j, k, ai, ai_rec, ia, ia_rec, ab, ab_rec, a, b
 !
-      integer(i15) :: req0, req1, req1_a, req1_i, req2, current_i_batch, current_a_batch, current_b_batch
+      integer :: req0, req1, req1_a, req1_i, req2, current_i_batch, current_a_batch, current_b_batch
 !
       type(batching_index) :: batch_i, batch_a, batch_b
 !

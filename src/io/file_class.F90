@@ -16,11 +16,11 @@ module file_class
 !
 !     Unit identifier
 !
-      integer(i15) :: unit = -1
+      integer :: unit = -1
 !
 !     File size (in bytes)
 !
-      integer(i15), private :: file_size = -1
+      integer, private :: file_size = -1
 !
 !     Logical for whether the file is currently opened or not
 !
@@ -29,7 +29,7 @@ module file_class
       character(len=40) :: access = 'unknown'
       character(len=40) :: format = 'unknown'
 !
-      integer(i15) :: record_length = 0
+      integer :: record_length = 0
 !
    contains
 !
@@ -78,7 +78,7 @@ contains
       character(len=*) :: access
       character(len=*) :: format
 !
-      integer(i15), optional :: record_length
+      integer, optional :: record_length
 !
 !     Sanity checks
 !
@@ -134,9 +134,9 @@ contains
 !
       class(file) :: the_file
 !
-      integer(i15) :: line
+      integer :: line
 !
-      integer(i15) :: i = 0
+      integer :: i = 0
 !
 !     Sanity checks
 !
@@ -185,7 +185,7 @@ contains
 !
       character(len=*) :: error_specs
 !
-      integer(i15), optional :: error_int 
+      integer, optional :: error_int 
 !
       character(len=40) :: error_int_char = ' '
 !
@@ -261,7 +261,7 @@ contains
 !  
       class(file), intent(in) :: the_file
 !
-      integer(i15) :: get_file_size_file
+      integer :: get_file_size_file
       get_file_size_file = the_file%file_size
 !
    end function get_file_size_file

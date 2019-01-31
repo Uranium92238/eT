@@ -18,13 +18,13 @@ module atomic_class
    type :: atomic
 !
       character(len=2) :: symbol
-      integer(i15)     :: number
+      integer     :: number_
 !
       character(len=100) :: basis ! name of basis set
 !
-      integer(i15) :: n_ao ! Number of aos sentered on this atom
+      integer :: n_ao ! Number of aos sentered on this atom
 !
-      integer(i15) :: n_shells
+      integer :: n_shells
       type(shell), dimension(:), allocatable :: shells
 !
       real(dp) :: x
@@ -78,22 +78,22 @@ contains
 !
       class(atomic) :: atom
 !
-      integer(i15) :: i = 0
+      integer :: i = 0
 !
-      atom%number = 0
+      atom%number_ = 0
 !
       do i = 1, size_periodic_table
 !
          if (atomic_symbol(i) == atom%symbol) then
 !
-            atom%number = i
+            atom%number_ = i
 !
             return
 !
          endif
       enddo
 !
-      if (atom%number == 0) then
+      if (atom%number_ == 0) then
 !
          call output%error_msg('illegal atomic symbol, check the eT.inp file ')
 !
@@ -170,7 +170,7 @@ contains
       type(file) :: alpha_density
       type(file) :: beta_density
 !
-      integer(i15) :: i, j, ioerror
+      integer :: i, j, ioerror
 !
       atomic_density = zero   
 !

@@ -71,7 +71,7 @@ program eT_program
 !
 !  Other variables
 !
-   integer(i15) :: n_methods, i
+   integer :: n_methods, i
 !
    character(len=40) :: cc_engine  
    character(len=40), dimension(:), allocatable :: cc_methods

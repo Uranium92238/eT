@@ -12,7 +12,7 @@ contains
       implicit none
 !
       real(dp), dimension(1,1) :: mu_X, mu_Y, mu_Z
-      integer(i15) :: s1, s2
+      integer :: s1, s2
 !
       call construct_ao_mu_wx_c(mu_X, mu_Y, mu_Z, s1, s2)
 !

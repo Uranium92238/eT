@@ -73,8 +73,8 @@ contains
 !
 !     Indices 
 !
-      integer(i15) :: a = 0, ab = 0, ai = 0, c = 0, bj = 0, aibj = 0 
-      integer(i15) :: i = 0, ij = 0, j = 0
+      integer :: a = 0, ab = 0, ai = 0, c = 0, bj = 0, aibj = 0 
+      integer :: i = 0, ij = 0, j = 0
 !
       call mem%alloc(sigma_a_i, wf%n_v, wf%n_o)
       sigma_a_i = zero 
@@ -498,8 +498,8 @@ contains
 !
 !     Batching variables 
 !
-      integer(i15) :: rec0, rec1
-      integer(i15) :: current_a_batch
+      integer :: rec0, rec1
+      integer :: current_a_batch
 !
       type(batching_index) :: batch_a 
 !
@@ -741,9 +741,9 @@ contains
 !
 !     Batching variables 
 !
-      integer(i15) :: rec0, rec1, offset_eld
+      integer :: rec0, rec1, offset_eld
 !
-      integer(i15) :: current_d_batch
+      integer :: current_d_batch
 !  
       type(batching_index) :: batch_d 
 !
@@ -1338,19 +1338,19 @@ contains
 !
 !     Batching variables 
 !
-      integer(i15) :: current_a_batch = 0
-      integer(i15) :: current_d_batch = 0
-      integer(i15) :: current_e_batch = 0
+      integer :: current_a_batch = 0
+      integer :: current_d_batch = 0
+      integer :: current_e_batch = 0
 !
-      integer(i15) :: offset_id = 0
-      integer(i15) :: offset_kde = 0
+      integer :: offset_id = 0
+      integer :: offset_kde = 0
 !
       type(batching_index) :: batch_a 
       type(batching_index) :: batch_d
       type(batching_index) :: batch_e 
 !
-      integer(i15) :: a, d, e, k, de, ka, kde
-      integer(i15) :: rec1, rec0
+      integer :: a, d, e, k, de, ka, kde
+      integer :: rec1, rec0
 !
 !     :: Term 2. - sum_ckdle b_cidl t_kl^ce g_kade ::
 !
@@ -1678,14 +1678,14 @@ contains
       real(dp), dimension(:,:), allocatable :: sigma_i_ajb ! sigma_ai_bj contribution 
       real(dp), dimension(:,:), allocatable :: sigma_i_bja ! sigma_ai_bj contribution 
 !
-      integer(i15) :: i, a, j, b, ai, bj, ajb, bja
+      integer :: i, a, j, b, ai, bj, ajb, bja
 !
 !     Batching variables 
 !
-      integer(i15) :: rec0, rec1
+      integer :: rec0, rec1
 !
-      integer(i15) :: current_a_batch = 0
-      integer(i15) :: current_b_batch = 0
+      integer :: current_a_batch = 0
+      integer :: current_b_batch = 0
 !
       type(batching_index) :: batch_a 
       type(batching_index) :: batch_b 
@@ -1932,13 +1932,13 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: g_cb_jk_restricted ! g_cbjk, batch over b 
 !
-      integer(i15) :: c = 0, j = 0, b = 0
-      integer(i15) :: jk = 0, k = 0, ck = 0, cb_restricted = 0, bj_full = 0
+      integer :: c = 0, j = 0, b = 0
+      integer :: jk = 0, k = 0, ck = 0, cb_restricted = 0, bj_full = 0
 !
 !     Batching variables 
 !
-      integer(i15) :: rec1, rec0
-      integer(i15) :: current_b_batch = 0
+      integer :: rec1, rec0
+      integer :: current_b_batch = 0
 !
       type(batching_index) :: batch_b
 !
@@ -2136,13 +2136,13 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: b_aj_ck ! b_akcj
 !
-      integer(i15) :: k, ik, i, ck, cb, c
-      integer(i15) :: bi, b
+      integer :: k, ik, i, ck, cb, c
+      integer :: bi, b
 !
 !     Batching variables 
 !
-      integer(i15) :: rec1, rec0
-      integer(i15) :: current_b_batch = 0
+      integer :: rec1, rec0
+      integer :: current_b_batch = 0
 !
       type(batching_index) :: batch_b 
 !
@@ -3023,20 +3023,20 @@ contains
       real(dp), dimension(:,:), allocatable :: g_ik_jl ! g_ikjl
       real(dp), dimension(:,:), allocatable :: g_kl_ij ! g_ikjl
 !
-      integer(i15) :: j, ij
-      integer(i15) :: i, db, d, cd, ca, c, b, a
+      integer :: j, ij
+      integer :: i, db, d, cd, ca, c, b, a
 !
 !     Batching variables 
 !
-      integer(i15) :: rec2, rec0, rec1_a, rec1_b
+      integer :: rec2, rec0, rec1_a, rec1_b
 !
-      integer(i15) :: current_a_batch = 0
-      integer(i15) :: current_b_batch = 0 
+      integer :: current_a_batch = 0
+      integer :: current_b_batch = 0 
 !
       type(batching_index) :: batch_a 
       type(batching_index) :: batch_b
 !
-      integer(i15) :: ab = 0, ab_full = 0
+      integer :: ab = 0, ab_full = 0
 !
 !     :: Term 1. sum_kl b_akbl g_ikjl ::
 !

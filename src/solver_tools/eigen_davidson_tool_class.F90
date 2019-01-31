@@ -69,7 +69,7 @@ contains
 !
       character(len=*), intent(in) :: name
 !
-      integer(i15), intent(in) :: n_parameters, n_solutions  
+      integer, intent(in) :: n_parameters, n_solutions  
       real(dp), intent(in)     :: residual_threshold, eigenvalue_threshold  
 !
       davidson%n_parameters = n_parameters
@@ -183,7 +183,7 @@ contains
 !
       class(eigen_davidson_tool), intent(in) :: davidson 
 !
-      integer(i15), intent(in) :: n 
+      integer, intent(in) :: n 
 !
       get_eigenvalue_eigen_davidson_tool = davidson%omega_re(n, 1)
 !
@@ -212,12 +212,12 @@ contains
       real(dp), dimension(:,:), allocatable :: omega_re
       real(dp), dimension(:,:), allocatable :: omega_im
 !
-      integer(i15), dimension(:), allocatable :: index_list
+      integer, dimension(:), allocatable :: index_list
 !
       real(dp), dimension(:,:), allocatable :: X_red
       real(dp), dimension(:,:), allocatable :: A_red ! Safe copy to avoid BLAS overwrite
 !
-      integer(i15) :: dummy = 0, info = 0, j = 0, i = 0
+      integer :: dummy = 0, info = 0, j = 0, i = 0
 !
 !     Solve reduced eigenvalue problem
 !
@@ -321,7 +321,7 @@ contains
       real(dp), dimension(davidson%n_parameters, 1)             :: R 
       real(dp), dimension(davidson%n_parameters, 1), intent(in) :: X 
 !
-      integer(i15), intent(in) :: n
+      integer, intent(in) :: n
       real(dp), intent(in)     :: norm_X 
 !
       if (davidson%omega_im(n, 1) .eq. zero) then  ! standard case: the nth root is not part of a complex pair
@@ -402,7 +402,7 @@ contains
       real(dp), dimension(davidson%n_parameters, 1)             :: R 
       real(dp), dimension(davidson%n_parameters, 1), intent(in) :: X_re  
 !
-      integer(i15), intent(in) :: n 
+      integer, intent(in) :: n 
       real(dp), intent(in)     :: norm_X_re
 !
       real(dp), dimension(:,:), allocatable :: X_im 
@@ -458,7 +458,7 @@ contains
       real(dp), dimension(davidson%n_parameters, 1)             :: R 
       real(dp), dimension(davidson%n_parameters, 1), intent(in) :: X_im  
 !
-      integer(i15), intent(in) :: n 
+      integer, intent(in) :: n 
       real(dp), intent(in)     :: norm_X_im
 !
       real(dp), dimension(:,:), allocatable :: X_re  
@@ -503,9 +503,9 @@ contains
 !
       real(dp), intent(out) :: residual_norm 
 !
-      integer(i15), optional, intent(in) :: n 
+      integer, optional, intent(in) :: n 
 !
-      integer(i15) :: k ! k = n, where k is set to 1 if n is not present 
+      integer :: k ! k = n, where k is set to 1 if n is not present 
 !
       real(dp) :: norm_X, norm_new_trial, norm_residual, norm_precond_residual
 !

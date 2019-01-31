@@ -22,9 +22,9 @@ module diis_cc_gs_solver_class
                                            &estimates of the next amplitudes. See Helgaker et al., Molecular & 
                                            &Electronic Structure Theory, Chapter 13.'
 !
-      integer(i15) :: diis_dimension
+      integer :: diis_dimension
 !
-      integer(i15) :: max_iterations 
+      integer :: max_iterations 
 !
       real(dp) :: energy_threshold
       real(dp) :: omega_threshold 
@@ -137,7 +137,7 @@ contains
 !
       class(ccs), intent(inout) :: wf 
 !
-      integer(i15) :: n_amplitudes
+      integer :: n_amplitudes
 !
       write(output%unit, '(/t6,a)') 'Requested restart. Reading amplitudes from file.'
 !
@@ -191,14 +191,14 @@ contains
 !!
       implicit none 
 !     
-      integer(i15), intent(in) :: n
+      integer, intent(in) :: n
 !
       real(dp), intent(in) :: alpha 
 !
       real(dp), dimension(n, 1), intent(in)    :: preconditioner
       real(dp), dimension(n, 1), intent(inout) :: vector  
 !
-      integer(i15) :: I 
+      integer :: I 
 !
 !$omp parallel do private(I)
       do I = 1, n 
@@ -235,7 +235,7 @@ contains
       real(dp), dimension(:,:), allocatable :: amplitudes  
       real(dp), dimension(:,:), allocatable :: epsilon  
 !
-      integer(i15) :: iteration
+      integer :: iteration
 !
       call diis_manager%init('cc_gs_diis', wf%n_amplitudes, wf%n_amplitudes, solver%diis_dimension)
 !
@@ -383,7 +383,7 @@ contains
 !
       class(diis_cc_gs_solver) :: solver 
 !
-      integer(i15) :: n_specs, i
+      integer :: n_specs, i
 !
       character(len=100) :: line
 !

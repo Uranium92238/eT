@@ -35,12 +35,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q
+      integer, intent(in) :: dim_p, dim_q
 !
       real(dp), dimension(dim_p, dim_q), intent(in) :: x_p_q
       real(dp), dimension(dim_q, dim_p) :: x_q_p
 !
-      integer(i15) :: p, q
+      integer :: p, q
 !
       do q = 1, dim_q
          do p = 1, dim_p
@@ -69,12 +69,12 @@ contains
 !
       real(dp), intent(in) :: gamma
 !
-      integer(i15), intent(in) :: dim_p, dim_q
+      integer, intent(in) :: dim_p, dim_q
 !
       real(dp), dimension(dim_p, dim_q) :: y_p_q
       real(dp), dimension(dim_q, dim_p), intent(in) :: x
 !
-      integer(i15) :: p, q
+      integer :: p, q
 !
       do q = 1, dim_q
          do p = 1, dim_p
@@ -103,11 +103,11 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim
+      integer, intent(in) :: dim
 !
       real(dp), dimension(dim, dim), intent(inout) :: x
 !
-      integer(i15) :: p, q
+      integer :: p, q
 !
 !     Overwrite the lower triangular part of the matrix
 !
@@ -150,12 +150,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r
+      integer, intent(in) :: dim_p, dim_q, dim_r
 !
       real(dp), dimension(:, :), intent(in)    :: x_pqr
       real(dp), dimension(:, :), intent(inout) :: x_rpq
 !
-      integer(i15) :: pqr, rpq, r, q, p
+      integer :: pqr, rpq, r, q, p
 !
 !$omp parallel do schedule(static) private(r,q,p,pqr, rpq)
       do r = 1, dim_r
@@ -186,12 +186,12 @@ contains
 !!
      implicit none
 !
-     integer(i15), intent(in) :: dim_p, dim_q, dim_r
+     integer, intent(in) :: dim_p, dim_q, dim_r
 !
      real(dp), dimension(:, :), intent(in)    :: x_pqr
      real(dp), dimension(:, :), intent(inout) :: x_rqp
 !
-     integer(i15) :: pqr, rqp, r, q, p
+     integer :: pqr, rqp, r, q, p
 !
 !$omp parallel do schedule(static) private(r,q,p,pqr, rqp)
      do r = 1, dim_r
@@ -222,12 +222,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r
+      integer, intent(in) :: dim_p, dim_q, dim_r
 !
       real(dp), dimension(:, :), intent(in)    :: x_pqr
       real(dp), dimension(:, :), intent(inout) :: x_prq
 !
-      integer(i15) :: pqr, prq, r, q, p
+      integer :: pqr, prq, r, q, p
 !
 !$omp parallel do schedule(static) private(r,q,p,pqr,prq)
       do r = 1, dim_r
@@ -258,12 +258,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r
+      integer, intent(in) :: dim_p, dim_q, dim_r
 !
       real(dp), dimension(:, :), intent(in)    :: x_pqr
       real(dp), dimension(:, :), intent(inout) :: x_qpr
 !
-      integer(i15) :: pqr, qpr, r, q, p
+      integer :: pqr, qpr, r, q, p
 !
 !$omp parallel do schedule(static) private(r,q,p,pqr,qpr)
       do r = 1, dim_r
@@ -297,12 +297,12 @@ contains
 !
       real(dp), intent(in) :: gamma
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r
+      integer, intent(in) :: dim_p, dim_q, dim_r
 !
       real(dp), dimension(:, :) :: y_pqr
       real(dp), dimension(:, :), intent(in) :: x
 !
-      integer(i15) :: pqr, rqp, r, q, p
+      integer :: pqr, rqp, r, q, p
 !
 !$omp parallel do schedule(static) private(r,q,p,pqr,rqp)
       do r = 1, dim_r
@@ -336,12 +336,12 @@ contains
 !
       real(dp), intent(in) :: gamma
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r
+      integer, intent(in) :: dim_p, dim_q, dim_r
 !
       real(dp), dimension(:, :) :: y_pqr
       real(dp), dimension(:, :), intent(in) :: x
 !
-      integer(i15) :: pqr, qpr, r, q, p
+      integer :: pqr, qpr, r, q, p
 !
 !$omp parallel do schedule(static) private(r,q,p,pqr,qpr)
       do r = 1, dim_r
@@ -374,12 +374,12 @@ contains
 !
       real(dp), intent(in) :: gamma
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r
+      integer, intent(in) :: dim_p, dim_q, dim_r
 !
       real(dp), dimension(dim_p*dim_q*dim_r, 1) :: y_pqr
       real(dp), dimension(dim_r*dim_p*dim_q, 1), intent(in) :: x
 !
-      integer(i15) :: p, q, r, pqr, prq
+      integer :: p, q, r, pqr, prq
 !
 !$omp parallel do schedule(static) private(r,q,p,pqr,prq)
       do r = 1, dim_r
@@ -412,12 +412,12 @@ contains
 !
       real(dp), intent(in) :: gamma
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r
+      integer, intent(in) :: dim_p, dim_q, dim_r
 !
       real(dp), dimension(dim_p*dim_q*dim_r, 1) :: y_pqr
       real(dp), dimension(dim_r*dim_p*dim_q, 1), intent(in) :: x
 !
-      integer(i15) :: p, q, r, pqr, rpq
+      integer :: p, q, r, pqr, rpq
 !
 !$omp parallel do schedule(static) private(r,q,p,pqr,rpq)
       do r = 1, dim_r
@@ -455,12 +455,12 @@ contains
 !
       real(dp), intent(in) :: gamma
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs
       real(dp), dimension(dim_r*dim_p, dim_q*dim_s), intent(in) :: x
 !
-      integer(i15) :: p, q, r, s, pq, rs, rp, qs
+      integer :: p, q, r, s, pq, rs, rp, qs
 !
 !$omp parallel do schedule(static) private(s,r,q,p,rs,qs,rp,pq)
       do s = 1, dim_s
@@ -500,12 +500,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in)    :: x_pq_rs
       real(dp), dimension(dim_s*dim_p, dim_r*dim_q), intent(inout) :: x_rs_pq
 !
-      integer(i15) :: p, q, r, s, rs, pq
+      integer :: p, q, r, s, rs, pq
 !
 !$omp parallel do schedule(static) private(s,r,rs,q,p,pq)
       do s = 1, dim_s
@@ -541,12 +541,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs
       real(dp), dimension(dim_s*dim_p, dim_r*dim_q), intent(inout) :: x_sp_rq
 !
-      integer(i15) :: p, q, r, s, rs, pq, sp, rq
+      integer :: p, q, r, s, rs, pq, sp, rq
 !
 !$omp parallel do schedule(static) private(s,r,rs,q,rq,p,pq,sp)
       do s = 1, dim_s
@@ -586,12 +586,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(:,:), intent(in) :: x_pqrs
       real(dp), dimension(dim_s*dim_p, dim_r*dim_q), intent(inout) :: x_sp_rq
 !
-      integer(i15) :: p, q, r, s, rs, pq, sp, rq, pqrs
+      integer :: p, q, r, s, rs, pq, sp, rq, pqrs
 !
 !$omp parallel do schedule(static) private(s,r,rs,q,rq,p,pq,sp,pqrs)
       do s = 1, dim_s
@@ -632,12 +632,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs
       real(dp), dimension(dim_s*dim_p, dim_r*dim_q), intent(inout) :: x_sp_qr
 !
-      integer(i15) :: p, q, r, s, rs, pq, sp, qr
+      integer :: p, q, r, s, rs, pq, sp, qr
 !
 !$omp parallel do schedule(static) private(s,r,rs,q,qr,p,pq,sp)
       do s = 1, dim_s
@@ -677,12 +677,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(:,:), intent(in) :: x_pqrs
       real(dp), dimension(dim_s*dim_p, dim_r*dim_q), intent(inout) :: x_sp_qr
 !
-      integer(i15) :: p, q, r, s, rs, pq, sp, qr, pqrs
+      integer :: p, q, r, s, rs, pq, sp, qr, pqrs
 !
 !$omp parallel do schedule(static) private(s,r,rs,q,qr,p,pq,sp,pqrs)
       do s = 1, dim_s
@@ -723,12 +723,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs
       real(dp), dimension(dim_r*dim_p, dim_q*dim_s) :: x_rp_qs
 !
-      integer(i15) :: p, q, r, s, rs, pq, rp, qs
+      integer :: p, q, r, s, rs, pq, rp, qs
 !
 !$omp parallel do schedule(static) private(s,r,rs,q,rp,p,pq,qs)
       do s = 1, dim_s
@@ -769,12 +769,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs
       real(dp), dimension(dim_r*dim_p, dim_q*dim_s) :: x_rp_sq
 !
-      integer(i15) :: p, q, r, s, rs, pq, rp, sq
+      integer :: p, q, r, s, rs, pq, rp, sq
 !
 !$omp parallel do schedule(static) private(s,r,rs,q,rp,p,pq,sq)
       do s = 1, dim_s
@@ -814,12 +814,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(:,:), intent(in) :: x_pqrs
       real(dp), dimension(dim_r*dim_p, dim_q*dim_s) :: x_rp_qs
 !
-      integer(i15) :: p, q, r, s, rs, pq, pqrs, rp, qs
+      integer :: p, q, r, s, rs, pq, pqrs, rp, qs
 !
 !$omp parallel do schedule(static) private(s,r,rs,q,rp,p,pq,qs)
       do s = 1, dim_s
@@ -857,12 +857,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(:,:), intent(in) :: x_pqrs
       real(dp), dimension(dim_q*dim_s, dim_p*dim_r) :: x_qs_pr
 !
-      integer(i15) :: p, q, r, s, rs, pq, pqrs, qs, pr
+      integer :: p, q, r, s, rs, pq, pqrs, qs, pr
 !
 !$omp parallel do schedule(static) private(s,r,rs,q,pr,p,pq,qs)
       do s = 1, dim_s
@@ -901,12 +901,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(:,:), intent(in) :: x_pqrs
       real(dp), dimension(dim_q*dim_r, dim_p*dim_s) :: x_qr_sp
 !
-      integer(i15) :: p, q, r, s, rs, pq, pqrs, qr, sp
+      integer :: p, q, r, s, rs, pq, pqrs, qr, sp
 !
 !$omp parallel do schedule(static) private(s,r,rs,q,qr,p,pq,sp)
       do s = 1, dim_s
@@ -947,12 +947,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs
       real(dp), dimension(dim_q*dim_r, dim_p*dim_s) :: x_qr_ps
 !
-      integer(i15) :: p, q, r, s, rs, pq, qr, ps
+      integer :: p, q, r, s, rs, pq, qr, ps
 !
 !$omp parallel do schedule(static) private(s,r,rs,q,qr,p,pq,ps)
       do s = 1, dim_s
@@ -993,12 +993,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs
       real(dp), dimension(dim_q*dim_p, dim_r*dim_s) :: x_qp_rs
 !
-      integer(i15) :: p, q, r, s, rs, pq, qp
+      integer :: p, q, r, s, rs, pq, qp
 !
 !$omp parallel do schedule(static) private(s,r,rs,q,qp,p,pq)
       do s = 1, dim_s
@@ -1036,12 +1036,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs
       real(dp), dimension(dim_q*dim_s, dim_p*dim_r) :: x_qs_pr
 !
-      integer(i15) :: p, q, r, s, rs, pq, qs, pr
+      integer :: p, q, r, s, rs, pq, qs, pr
 !
 !$omp parallel do schedule(static) private(s,r,rs,q,qs,p,pq,pr)
       do s = 1, dim_s
@@ -1081,12 +1081,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs
       real(dp), dimension(dim_p*dim_r, dim_q*dim_s) :: x_pr_qs
 !
-      integer(i15) :: p, q, r, s, rs, qs, pq, pr
+      integer :: p, q, r, s, rs, qs, pq, pr
 !
 !$omp parallel do schedule(static) private(s,r,rs,q,qs,p,pq,pr)
       do s = 1, dim_s
@@ -1126,12 +1126,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(:,:), intent(in) :: x_pqrs
       real(dp), dimension(dim_p*dim_r, dim_q*dim_s) :: x_pr_qs
 !
-      integer(i15) :: p, q, r, s, rs, qs, pq, pr, pqrs
+      integer :: p, q, r, s, rs, qs, pq, pr, pqrs
 !
 !$omp parallel do schedule(static) private(s,r,rs,q,qs,p,pq,pr,pqrs)
       do s = 1, dim_s
@@ -1172,12 +1172,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs
       real(dp), dimension(dim_q*dim_r, dim_s*dim_p) :: x_qr_sp
 !
-      integer(i15) :: p, q, r, s, pq, rs, qr, sp
+      integer :: p, q, r, s, pq, rs, qr, sp
 !
 !$omp parallel do schedule(static) private(s,r,q,p,pq,rs,qr,sp)
       do s = 1, dim_s
@@ -1217,12 +1217,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs
       real(dp), dimension(dim_p*dim_r, dim_s*dim_q) :: x_pr_sq
 !
-      integer(i15) :: p, q, r, s, pq, rs, pr, sq
+      integer :: p, q, r, s, pq, rs, pr, sq
 !
 !$omp parallel do schedule(static) private(s,r,q,p,pq,rs,pr,sq)
       do s = 1, dim_s
@@ -1262,12 +1262,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in)    :: x_pq_rs
       real(dp), dimension(dim_p*dim_s, dim_r*dim_q), intent(inout) :: x_ps_rq
 !
-      integer(i15) :: p, q, r, s, pq, rs, ps, rq
+      integer :: p, q, r, s, pq, rs, ps, rq
 !
 !$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
       do s = 1, dim_s
@@ -1308,12 +1308,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(:,:), intent(in) :: x_pqrs
       real(dp), dimension(dim_s*dim_r, dim_p*dim_q), intent(inout) :: x_sr_pq
 !
-      integer(i15) :: p, q, r, s, pq, rs, sr, pqrs
+      integer :: p, q, r, s, pq, rs, sr, pqrs
 !
 !$omp parallel do schedule(static) private(s,r,rs,sr,q,p,pq,pqrs)
       do s = 1, dim_s
@@ -1351,12 +1351,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in)    :: x_pq_rs
       real(dp), dimension(dim_s*dim_r, dim_p*dim_q), intent(inout) :: x_sr_pq
 !
-      integer(i15) :: r, s, rs, sr
+      integer :: r, s, rs, sr
 !
 !$omp parallel do schedule(static) private(s,r,rs,sr)
       do s = 1, dim_s
@@ -1386,12 +1386,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in)    :: x_pq_rs
       real(dp), dimension(dim_p*dim_s, dim_r*dim_q), intent(inout) :: x_ps_qr
 !
-      integer(i15) :: p, q, r, s, pq, rs, ps, qr
+      integer :: p, q, r, s, pq, rs, ps, qr
 !
 !$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,qr)
       do s = 1, dim_s
@@ -1435,12 +1435,12 @@ contains
 !
       real(dp), intent(in) :: gamma
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs
       real(dp), dimension(dim_p*dim_s, dim_q*dim_r), intent(in) :: x
 !
-      integer(i15) :: p, q, r, s, pq, rs, ps, qr
+      integer :: p, q, r, s, pq, rs, ps, qr
 !
 !$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,qr)
       do s = 1, dim_s
@@ -1484,12 +1484,12 @@ contains
 !
       real(dp), intent(in) :: gamma
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs
       real(dp), dimension(dim_p*dim_s, dim_r*dim_q), intent(in) :: x
 !
-      integer(i15) :: p, q, r, s, pq, rs, ps, rq
+      integer :: p, q, r, s, pq, rs, ps, rq
 !
 !$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
       do s = 1, dim_s
@@ -1533,12 +1533,12 @@ contains
 !
       real(dp), intent(in) :: gamma
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs
       real(dp), dimension(dim_p*dim_r, dim_s*dim_q), intent(in) :: x
 !
-      integer(i15) :: p, q, r, s, pq, rs, pr, sq
+      integer :: p, q, r, s, pq, rs, pr, sq
 !
 !$omp parallel do schedule(static) private(s,r,q,p,pq,rs,pr,sq)
       do s = 1, dim_s
@@ -1582,12 +1582,12 @@ contains
 !
       real(dp), intent(in) :: gamma
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs
       real(dp), dimension(dim_p*dim_q, dim_s*dim_r), intent(in) :: x
 !
-      integer(i15) :: p, q, r, s, pq, rs, sr
+      integer :: p, q, r, s, pq, rs, sr
 !
 !$omp parallel do schedule(static) private(s,r,q,p,pq,rs,sr)
       do s = 1, dim_s
@@ -1629,7 +1629,7 @@ contains
 !
       real(dp), intent(in) :: gamma
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs
       real(dp), dimension(dim_r*dim_s, dim_p*dim_q), intent(in) :: x
@@ -1655,12 +1655,12 @@ contains
 !
       real(dp), intent(in) :: gamma
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs
       real(dp), dimension(dim_r*dim_s, dim_p*dim_q), intent(in) :: x
 !
-      integer(i15) :: p, q, I, pq, qp
+      integer :: p, q, I, pq, qp
 !
 !$omp parallel do schedule(static) private(I,q,p,pq,qp)
       do I = 1, dim_r*dim_s
@@ -1696,12 +1696,12 @@ contains
 !
       real(dp), intent(in) :: gamma
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs
       real(dp), dimension(dim_q*dim_r, dim_s*dim_p), intent(in) :: x
 !
-      integer(i15) :: p, q, r, s, pq, rs, qr, sp
+      integer :: p, q, r, s, pq, rs, qr, sp
 !
 !$omp parallel do schedule(static) private(s,r,q,p,pq,rs,sp,qr)
       do s = 1, dim_s
@@ -1745,12 +1745,12 @@ contains
 !
       real(dp), intent(in) :: gamma
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs
       real(dp), dimension(dim_q*dim_p, dim_s*dim_r), intent(in) :: x
 !
-      integer(i15) :: p, q, r, s, pq, rs, qp, sr
+      integer :: p, q, r, s, pq, rs, qp, sr
 !
 !$omp parallel do schedule(static) private(s,r,q,p,qp,rs,sr,pq)
       do s = 1, dim_s
@@ -1794,12 +1794,12 @@ contains
 !
       real(dp), intent(in) :: gamma
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs
       real(dp), dimension(dim_q*dim_p, dim_r*dim_s), intent(in) :: x
 !
-      integer(i15) :: p, q, r, s, pq, rs, qp
+      integer :: p, q, r, s, pq, rs, qp
 !
 !$omp parallel do schedule(static) private(s,r,q,p,qp,rs,pq)
       do s = 1, dim_s
@@ -1841,12 +1841,12 @@ contains
 !
       real(dp), intent(in) :: gamma
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs
       real(dp), dimension(dim_r*dim_q, dim_p*dim_s), intent(in) :: x
 !
-      integer(i15) :: p, q, r, s, pq, rs, rq, ps
+      integer :: p, q, r, s, pq, rs, rq, ps
 !
 !$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
       do s = 1, dim_s
@@ -1890,12 +1890,12 @@ contains
 !
       real(dp), intent(in) :: gamma
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs
       real(dp), dimension(dim_s*dim_q, dim_r*dim_p), intent(in) :: x
 !
-      integer(i15) :: p, q, r, s, pq, rs, sq, rp
+      integer :: p, q, r, s, pq, rs, sq, rp
 !
 !$omp parallel do schedule(static) private(s,r,q,p,pq,rs,rp,sq)
       do s = 1, dim_s
@@ -1940,12 +1940,12 @@ contains
 !
       real(dp), intent(in) :: gamma
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs
       real(dp), dimension(dim_q*dim_s, dim_r*dim_p), intent(in) :: x
 !
-      integer(i15) :: p, q, r, s, pq, rs, qs, rp
+      integer :: p, q, r, s, pq, rs, qs, rp
 !
 !$omp parallel do schedule(static) private(s,r,q,p,pq,rs,rp,qs)
       do s = 1, dim_s
@@ -1989,12 +1989,12 @@ contains
 !
       real(dp), intent(in) :: gamma
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs
       real(dp), dimension(dim_s*dim_q, dim_p*dim_r), intent(in) :: x
 !
-      integer(i15) :: p, q, r, s, pq, rs, sq, pr
+      integer :: p, q, r, s, pq, rs, sq, pr
 !
 !$omp parallel do schedule(static) private(s,r,q,p,pq,rs,pr,sq)
       do s = 1, dim_s
@@ -2038,12 +2038,12 @@ contains
 !
       real(dp), intent(in) :: gamma
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs
       real(dp), dimension(dim_s*dim_r, dim_q*dim_p), intent(in) :: x
 !
-      integer(i15) :: p, q, r, s, pq, rs, sr, qp
+      integer :: p, q, r, s, pq, rs, sr, qp
 !
 !$omp parallel do schedule(static) private(s,r,q,p,qp,rs,sr,pq)
       do s = 1, dim_s
@@ -2081,12 +2081,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in)    :: x_pq_rs
       real(dp), dimension(dim_s*dim_r, dim_q*dim_p), intent(inout) :: x_sr_qp
 !
-      integer(i15) :: p, q, r, s, qp, rs, sr, pq
+      integer :: p, q, r, s, qp, rs, sr, pq
 !
 !$omp parallel do schedule(static) private(s,r,q,p,qp,rs,sr,pq)
       do s = 1, dim_s
@@ -2128,12 +2128,12 @@ contains
 !
       real(dp), intent(in) :: gamma
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs
       real(dp), dimension(dim_s*dim_r, dim_p*dim_q), intent(in) :: x
 !
-      integer(i15) :: p, q, r, s, pq, rs, sr
+      integer :: p, q, r, s, pq, rs, sr
 !
 !$omp parallel do schedule(static) private(s,r,q,p,sr,rs,pq)
       do s = 1, dim_s
@@ -2174,12 +2174,12 @@ contains
 !
       real(dp), intent(in) :: gamma
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs
       real(dp), dimension(dim_s*dim_p, dim_q*dim_r), intent(in) :: x
 !
-      integer(i15) :: p, q, r, s, pq, rs, sp, qr
+      integer :: p, q, r, s, pq, rs, sp, qr
 !
 !$omp parallel do schedule(static) private(s,r,q,p,pq,rs,qr,sp)
       do s = 1, dim_s
@@ -2223,12 +2223,12 @@ contains
 !
       real(dp), intent(in) :: gamma
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs
       real(dp), dimension(dim_s*dim_p, dim_q*dim_r), intent(in) :: x
 !
-      integer(i15) :: p, q, r, s, pq, rs, sp, rq
+      integer :: p, q, r, s, pq, rs, sp, rq
 !
 !$omp parallel do schedule(static) private(s,r,q,p,pq,rs,rq,sp)
       do s = 1, dim_s
@@ -2270,12 +2270,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(:,:), intent(in) :: x_pqrs
       real(dp), dimension(dim_p*dim_s, dim_r*dim_q) :: x_ps_rq
 !
-      integer(i15) :: p, q, r, s, pq, rs, pqrs, ps, rq
+      integer :: p, q, r, s, pq, rs, pqrs, ps, rq
 !
 !$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq,pqrs)
       do s = 1, dim_s
@@ -2318,12 +2318,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(:,:), intent(in) :: x_pqrs
       real(dp), dimension(dim_p*dim_q, dim_s*dim_r) :: x_pq_sr
 !
-      integer(i15) :: p, q, r, s, pq, rs, pqrs, sr
+      integer :: p, q, r, s, pq, rs, pqrs, sr
 !
 !$omp parallel do schedule(static) private(s,r,q,p,pq,rs,sr,pqrs)
       do s = 1, dim_s
@@ -2364,12 +2364,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(:,:), intent(in) :: x_pqrs
       real(dp), dimension(dim_p*dim_s, dim_r*dim_q) :: x_ps_qr
 !
-      integer(i15) :: p, q, r, s, pq, rs, pqrs, ps, qr
+      integer :: p, q, r, s, pq, rs, pqrs, ps, qr
 !
 !$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,qr,pqrs)
       do s = 1, dim_s
@@ -2410,12 +2410,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs
       real(dp), dimension(dim_r*dim_q, dim_p*dim_s) :: x_rq_ps
 !
-      integer(i15) :: p, q, r, s, pq, rs, rq, ps
+      integer :: p, q, r, s, pq, rs, rq, ps
 !
 !$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq)
       do s = 1, dim_s
@@ -2455,12 +2455,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs
       real(dp), dimension(dim_s*dim_q, dim_r*dim_p) :: x_sq_rp
 !
-      integer(i15) :: p, q, r, s, pq, rs, sq, rp
+      integer :: p, q, r, s, pq, rs, sq, rp
 !
 !$omp parallel do schedule(static) private(s,r,q,p,pq,rs,sq,rp)
       do s = 1, dim_s
@@ -2500,12 +2500,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs
       real(dp), dimension(dim_s*dim_q, dim_r*dim_p) :: x_sq_pr
 !
-      integer(i15) :: p, q, r, s, pq, rs, sq, pr
+      integer :: p, q, r, s, pq, rs, sq, pr
 !
 !$omp parallel do schedule(static) private(s,r,q,p,pq,rs,sq,pr)
       do s = 1, dim_s
@@ -2546,12 +2546,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(:,:), intent(in) :: x_pqrs
       real(dp), dimension(dim_s*dim_q, dim_r*dim_p) :: x_sq_pr
 !
-      integer(i15) :: p, q, r, s, pq, rs, sq, pr, pqrs
+      integer :: p, q, r, s, pq, rs, sq, pr, pqrs
 !
 !$omp parallel do schedule(static) private(s,r,q,p,pq,rs,sq,pr,pqrs)
       do s = 1, dim_s
@@ -2594,12 +2594,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(:, :), intent(in) :: x_pqrs
       real(dp), dimension(dim_r*dim_q, dim_p*dim_s) :: x_rq_ps
 !
-      integer(i15) :: p, q, r, s, pq, rs, pqrs, rq, ps
+      integer :: p, q, r, s, pq, rs, pqrs, rq, ps
 !
 !$omp parallel do schedule(static) private(s,r,q,p,pq,rs,ps,rq,pqrs)
       do s = 1, dim_s
@@ -2640,12 +2640,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs
       real(dp), dimension(dim_r*dim_q, dim_s*dim_p) :: x_rq_sp
 !
-      integer(i15) :: p, q, r, s, pq, rs, rq, sp
+      integer :: p, q, r, s, pq, rs, rq, sp
 !
 !$omp parallel do schedule(static) private(s,r,q,p,pq,rs,rq,sp)
       do s = 1, dim_s
@@ -2685,12 +2685,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+      integer, intent(in) :: dim_p, dim_q, dim_r, dim_s
 !
       real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs
       real(dp), dimension(dim_p*dim_q, dim_s*dim_r) :: x_pq_sr
 !
-      integer(i15) :: I, r, s, sr, rs
+      integer :: I, r, s, sr, rs
 !
 !$omp parallel do schedule(static) private(I,r,s,sr,rs)
       do I = 1, dim_p*dim_q
@@ -2725,12 +2725,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: N
+      integer, intent(in) :: N
 !
       real(dp), dimension(N*(N+1)/2, 1), intent(inout) :: packed
       real(dp), dimension(N, N), intent(in) :: unpacked
 !
-      integer(i15) :: i, j, ij
+      integer :: i, j, ij
 !
 !$omp parallel do schedule(static) private(i,j, ij)
       do i = 1, N
@@ -2754,12 +2754,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: N
+      integer, intent(in) :: N
 !
       real(dp), dimension(:,:) :: packed
       real(dp), dimension(:,:), intent(in) :: unpacked
 !
-      integer(i15) :: i, j, ij
+      integer :: i, j, ij
 !
 !$omp parallel do schedule(static) private(i,j, ij)
       do i = 1, N
@@ -2784,12 +2784,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: N
+      integer, intent(in) :: N
 !
       real(dp), dimension(:,:), intent(in) :: packed
       real(dp), dimension(:,:)             :: unpacked
 !
-      integer(i15) :: i = 0, j = 0
+      integer :: i = 0, j = 0
 !
 !     Set diagonal to zero
 !
@@ -2822,12 +2822,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: N
+      integer, intent(in) :: N
 !
       real(dp), dimension(N*(N+1)/2,1), intent(in) :: packed
       real(dp), dimension(N,N)                     :: unpacked
 !
-      integer(i15) :: i = 0, j = 0
+      integer :: i = 0, j = 0
 !
 !$omp parallel do schedule(static) private(i,j)
       do i = 1, N
@@ -2848,12 +2848,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: N,M
+      integer, intent(in) :: N,M
 !
       real(dp), dimension(N*(N+1)/2,M), intent(in) :: packed
       real(dp), dimension(N*N,M)                   :: unpacked
 !
-      integer(i15) :: i = 0, j = 0, ij = 0
+      integer :: i = 0, j = 0, ij = 0
 !
 !$omp parallel do schedule(static) private(i,j, ij)
       do i = 1, N
@@ -2876,12 +2876,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: N
+      integer, intent(in) :: N
 !
       real(dp), dimension(:,:) :: packed
       real(dp), dimension(:,:),intent(in) :: unpacked
 !
-      integer(i15) :: i = 0, j = 0
+      integer :: i = 0, j = 0
 !
 !$omp parallel do schedule(static) private(i,j)
       do i = 1, N
@@ -2907,12 +2907,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: N
+      integer, intent(in) :: N
 !
       real(dp), dimension(:,:) :: packed
       real(dp), dimension(:,:), intent(in) :: unpacked
 !
-      integer(i15) :: i = 0, j = 0
+      integer :: i = 0, j = 0
 !
       do i = 2, N
          do j = 1, i - 1

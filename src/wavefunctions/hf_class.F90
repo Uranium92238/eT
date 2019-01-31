@@ -37,7 +37,7 @@ module hf_class
 !
       type(file) :: orbital_coefficients_file
 !
-      integer(i15) :: n_densities 
+      integer :: n_densities 
 !
    contains
 !
@@ -229,7 +229,7 @@ contains
 !
       class(hf) :: wf 
 !
-      integer(i15) :: n_records, i
+      integer :: n_records, i
 !
       character(len=100) :: line, value 
 !
@@ -516,12 +516,12 @@ contains
 !
       class(hf) :: wf 
 !
-      integer(i15), intent(in) :: n_s
+      integer, intent(in) :: n_s
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
 !
       real(dp), dimension(n_s*(n_s + 1)/2, 2), intent(in)     :: sp_eri_schwarz
-      integer(i15), dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
+      integer, dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
 !
       call wf%construct_ao_fock(wf%ao_density, wf%ao_fock, sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx)      
 !
@@ -544,14 +544,14 @@ contains
 !
       class(hf) :: wf 
 !
-      integer(i15), intent(in) :: n_s
+      integer, intent(in) :: n_s
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
 !
       real(dp), dimension(wf%n_ao**2, wf%n_densities), intent(in) :: prev_ao_density
 !
       real(dp), dimension(n_s*(n_s + 1)/2, 2), intent(in)     :: sp_eri_schwarz
-      integer(i15), dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
+      integer, dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
 !
       logical :: cumulative 
 !
@@ -911,18 +911,18 @@ contains
 !
       class(hf) :: wf 
 !
-      integer(i15) :: n_s
+      integer :: n_s
 !
       real(dp), dimension(n_s*(n_s + 1)/2, 2) :: sp_eri_schwarz
 !
-      integer(i15), dimension(n_s*(n_s + 1)/2, 3) :: sp_eri_schwarz_list
+      integer, dimension(n_s*(n_s + 1)/2, 3) :: sp_eri_schwarz_list
 !
-      integer(i15), dimension(:,:), allocatable :: sp_eri_schwarz_index_list
+      integer, dimension(:,:), allocatable :: sp_eri_schwarz_index_list
       real(dp), dimension(:,:),     allocatable :: sorted_sp_eri_schwarz
 !
 !     Local variables
 !
-      integer(i15) :: s1, s2, s1s2
+      integer :: s1, s2, s1s2
 !
       real(dp) :: maximum
 !
@@ -1004,7 +1004,7 @@ contains
 !
       type(interval) :: A_interval, B_interval
 !
-      integer(i15) :: s1, s2 
+      integer :: s1, s2 
 !
       real(dp) :: maximum
 !
@@ -1047,11 +1047,11 @@ contains
 !
       class(hf), intent(in) :: wf 
 !
-      integer(i15), intent(inout) :: n_sig_sp 
+      integer, intent(inout) :: n_sig_sp 
 !
       real(dp), dimension(wf%system%n_s*(wf%system%n_s + 1)/2, 2), intent(in) :: sp_eri_schwarz
 !
-      integer(i15) :: s1s2
+      integer :: s1s2
 !
       n_sig_sp = 0
 !
@@ -1087,7 +1087,7 @@ contains
 !
       class(hf) :: wf
 !
-      integer(i15) :: n_s
+      integer :: n_s
 !
       real(dp), optional :: coulomb, exchange ! Non-standard screening thresholds
 !
@@ -1096,9 +1096,9 @@ contains
       real(dp), dimension(:,:), allocatable :: sp_eri_schwarz, sp_density_schwarz
 !
       real(dp), dimension(:,:), allocatable :: h_wx, h_AB
-      integer(i15) :: w, x, y, z, wx, yz, wz, yx
+      integer :: w, x, y, z, wx, yz, wz, yx
 !
-      integer(i15) :: A, B, C, D, atom
+      integer :: A, B, C, D, atom
 !
       type(interval) :: A_interval
       type(interval) :: B_interval
@@ -1109,7 +1109,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: g, g_C, g_K, D_yz
 !
-      integer(i15), dimension(:,:), allocatable :: shells_on_atoms
+      integer, dimension(:,:), allocatable :: shells_on_atoms
 !!
 !     Set thresholds to ignore Coulomb and exchange terms,
 !     as well as the desired Libint integral precision  
@@ -1437,7 +1437,7 @@ contains
 !
       class(hf) :: wf
 !
-      integer(i15), intent(in) :: n_s
+      integer, intent(in) :: n_s
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in)    :: D 
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(inout) :: ao_fock 
@@ -1445,19 +1445,19 @@ contains
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
 !
       real(dp), dimension(n_s*(n_s + 1)/2, 2), intent(in)     :: sp_eri_schwarz
-      integer(i15), dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
+      integer, dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
 !
       logical, intent(in), optional :: cumulative 
 !
       real(dp) :: coulomb_thr, exchange_thr, precision_thr 
 !
-      integer(i15) :: thread, n_threads, omp_get_max_threads
+      integer :: thread, n_threads, omp_get_max_threads
 !
       logical :: local_cumulative
 !
       real(dp), dimension(:,:), allocatable :: F, sp_density_schwarz
 !
-      integer(i15) :: n_sig_sp
+      integer :: n_sig_sp
 !
       real(dp) :: max_D_schwarz, max_eri_schwarz
 !
@@ -1556,7 +1556,7 @@ contains
 !
       class(hf), intent(in) :: wf 
 !
-      integer(i15), intent(in) :: n_threads, n_s, n_sig_sp
+      integer, intent(in) :: n_threads, n_s, n_sig_sp
 !
       type(interval), dimension(n_s), intent(in) :: shells
 !
@@ -1566,20 +1566,20 @@ contains
       real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz, coulomb_thr, exchange_thr, precision_thr
 !
       real(dp), dimension(n_s*(n_s + 1)/2, 2), intent(in)     :: sp_eri_schwarz
-      integer(i15), dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
+      integer, dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
       real(dp), dimension(n_s, n_s), intent(in)               :: sp_density_schwarz
 !
       real(dp) :: d1, d2, d3, d4, d5, d6, sp_eri_schwarz_s1s2
       real(dp) :: temp, temp1, temp2, temp3, temp4, temp5, temp6, temp7, temp8, deg, deg_12, deg_34, deg_12_34
 !
-      integer(i15) :: w, x, y, omp_get_thread_num, z, wx, yz, s1s2, s1, s2, s3, s4, s4_max, tot_dim 
-      integer(i15) :: s3s4, s3s4_sorted, w_red, x_red, y_red, z_red, thread_offset, wxyz, s1s2_packed
+      integer :: w, x, y, omp_get_thread_num, z, wx, yz, s1s2, s1, s2, s3, s4, s4_max, tot_dim 
+      integer :: s3s4, s3s4_sorted, w_red, x_red, y_red, z_red, thread_offset, wxyz, s1s2_packed
 !
       real(dp) :: sp_density_schwarz_s1s2, sp_density_schwarz_s3s2, sp_density_schwarz_s3s1
 !
       real(dp), dimension(:,:), allocatable :: g 
 !
-      integer(i15) :: max_shell_size, thread, skip
+      integer :: max_shell_size, thread, skip
 !
 !     Preallocate the vector that holds the shell quadruple 
 !     ERI integrals, then enter the construction loop 
@@ -1733,7 +1733,7 @@ contains
 !
       class(hf), intent(in) :: wf 
 !
-      integer(i15), intent(in) :: n_threads, n_s, n_sig_sp
+      integer, intent(in) :: n_threads, n_s, n_sig_sp
 !
       type(interval), dimension(n_s), intent(in) :: shells
 !
@@ -1743,20 +1743,20 @@ contains
       real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz, coulomb_thr, precision_thr
 !
       real(dp), dimension(n_s*(n_s + 1)/2, 2), intent(in)     :: sp_eri_schwarz
-      integer(i15), dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
+      integer, dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
       real(dp), dimension(n_s, n_s), intent(in)               :: sp_density_schwarz
 !
       real(dp) :: d1, d2, sp_eri_schwarz_s1s2
       real(dp) :: temp, temp1, temp2, temp7, deg, deg_12, deg_34, deg_12_34
 !
-      integer(i15) :: w, x, y, omp_get_thread_num, z, wx, yz, s1s2, s1, s2, s3, s4, s4_max, tot_dim 
-      integer(i15) :: s3s4, s3s4_sorted, w_red, x_red, y_red, z_red, thread_offset, wxyz, s1s2_packed
+      integer :: w, x, y, omp_get_thread_num, z, wx, yz, s1s2, s1, s2, s3, s4, s4_max, tot_dim 
+      integer :: s3s4, s3s4_sorted, w_red, x_red, y_red, z_red, thread_offset, wxyz, s1s2_packed
 !
       real(dp) :: sp_density_schwarz_s1s2, sp_density_schwarz_s3s2, sp_density_schwarz_s3s1
 !
       real(dp), dimension(:,:), allocatable :: g 
 !
-      integer(i15) :: max_shell_size, thread, skip
+      integer :: max_shell_size, thread, skip
 !
 !     Preallocate the vector that holds the shell quadruple 
 !     ERI integrals, then enter the construction loop 
@@ -1886,7 +1886,7 @@ contains
 !
       class(hf), intent(in) :: wf 
 !
-      integer(i15), intent(in) :: n_threads, n_s, n_sig_sp
+      integer, intent(in) :: n_threads, n_s, n_sig_sp
 !
       type(interval), dimension(n_s), intent(in) :: shells
 !
@@ -1896,20 +1896,20 @@ contains
       real(dp), intent(in) :: max_D_schwarz, max_eri_schwarz, exchange_thr, precision_thr
 !
       real(dp), dimension(n_s*(n_s + 1)/2, 2), intent(in)     :: sp_eri_schwarz
-      integer(i15), dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
+      integer, dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
       real(dp), dimension(n_s, n_s), intent(in)               :: sp_density_schwarz
 !
       real(dp) :: d1, d2, d3, d4, d5, d6, sp_eri_schwarz_s1s2
       real(dp) :: temp, temp3, temp4, temp5, temp6, temp8, deg, deg_12, deg_34, deg_12_34
 !
-      integer(i15) :: w, x, y, omp_get_thread_num, z, wx, yz, s1s2, s1, s2, s3, s4, s4_max, tot_dim 
-      integer(i15) :: s3s4, s3s4_sorted, w_red, x_red, y_red, z_red, thread_offset, wxyz, s1s2_packed
+      integer :: w, x, y, omp_get_thread_num, z, wx, yz, s1s2, s1, s2, s3, s4, s4_max, tot_dim 
+      integer :: s3s4, s3s4_sorted, w_red, x_red, y_red, z_red, thread_offset, wxyz, s1s2_packed
 !
       real(dp) :: sp_density_schwarz_s1s2, sp_density_schwarz_s3s2, sp_density_schwarz_s3s1
 !
       real(dp), dimension(:,:), allocatable :: g 
 !
-      integer(i15) :: max_shell_size, thread, skip
+      integer :: max_shell_size, thread, skip
 !
 !     Preallocate the vector that holds the shell quadruple 
 !     ERI integrals, then enter the construction loop 
@@ -2296,14 +2296,14 @@ contains
 !
       class(hf) :: wf
 !
-      integer(i15), dimension(:, :), allocatable :: used_diag
+      integer, dimension(:, :), allocatable :: used_diag
 !
       real(dp), dimension(:,:), allocatable :: perm_matrix
 !
       real(dp), dimension(:,:), allocatable :: tmp
 !
-      integer(i15) :: rank
-      integer(i15) :: j
+      integer :: rank
+      integer :: j
 !
       allocate(used_diag(wf%n_ao, 1))
 !
@@ -2370,11 +2370,11 @@ contains
 !
       class(hf) :: wf
 !
-      integer(i15), dimension(:, :), allocatable :: used_diag
+      integer, dimension(:, :), allocatable :: used_diag
 !
       real(dp), dimension(:, :), allocatable :: L
 !
-      integer(i15) :: j
+      integer :: j
 !
       allocate(used_diag(wf%n_ao, 1))
       used_diag = 0
@@ -2521,8 +2521,8 @@ contains
 !
       logical :: pure = .false.
 !
-      integer(i15) :: iteration
-      integer(i15), parameter :: max_iterations = 50
+      integer :: iteration
+      integer, parameter :: max_iterations = 50
 !
       iteration = 1
 !
@@ -2641,7 +2641,7 @@ contains
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: D
 !
-      integer(i15) :: w, x
+      integer :: w, x
 !
 !     Po = 1/2 D S
 !
@@ -2939,7 +2939,7 @@ contains
       real(dp), dimension(:,:), allocatable :: red_orbital_coefficients  
       real(dp), dimension(:,:), allocatable :: tmp  
 !
-      integer(i15) :: info
+      integer :: info
 !
       call mem%alloc(metric, wf%n_mo, wf%n_mo)
 !
@@ -3130,7 +3130,7 @@ contains
 !
       class(hf) :: wf 
 !
-      integer(i15) :: I, n_ao_on_atom, first_ao_on_atom, last_ao_on_atom, n_s_on_atom
+      integer :: I, n_ao_on_atom, first_ao_on_atom, last_ao_on_atom, n_s_on_atom
 !
       real(dp), dimension(:,:), allocatable :: atomic_density
 !
@@ -3173,7 +3173,7 @@ contains
       class(hf), intent(in)   :: wf 
       real(dp), intent(inout) :: n_electrons 
 !
-      integer(i15) :: ao 
+      integer :: ao 
 !
       real(dp), dimension(:,:), allocatable :: DS 
 !
@@ -3243,7 +3243,7 @@ contains
 !
       type(interval) :: A_interval, B_interval
 !
-      integer(i15) :: x, y, A, B
+      integer :: x, y, A, B
 !
       real(dp), dimension(:,:), allocatable :: h_AB 
 !
@@ -3293,7 +3293,7 @@ contains
 !
       type(interval) :: A_interval, B_interval
 !
-      integer(i15) :: x, y, A, B
+      integer :: x, y, A, B
 !
       real(dp), dimension(:,:), allocatable :: s_AB 
 !
@@ -3343,7 +3343,7 @@ contains
 !
       type(interval) :: A_interval, B_interval
 !
-      integer(i15) :: x, y, A, B
+      integer :: x, y, A, B
 !
       real(dp), dimension(:,:), allocatable :: mu_AB_X 
       real(dp), dimension(:,:), allocatable :: mu_AB_Y 

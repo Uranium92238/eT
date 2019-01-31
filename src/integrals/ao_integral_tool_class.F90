@@ -51,7 +51,7 @@ contains
       implicit none
 !
       real(dp), dimension(:,:), intent(inout) :: h
-      integer(i15), intent(in) :: s1, s2
+      integer, intent(in) :: s1, s2
 !
       call construct_ao_h_wx(h, s1, s2)
 !
@@ -70,7 +70,7 @@ contains
       implicit none
 !
       real(dp), dimension(:,:), intent(inout) :: s
-      integer(i15), intent(in) :: s1, s2
+      integer, intent(in) :: s1, s2
 !
       call construct_ao_s_wx(s, s1, s2) 
 !
@@ -90,7 +90,7 @@ contains
 !
       real(dp), dimension(:,:), intent(inout) :: g
 !
-      integer(i15), intent(in) :: s1, s2, s3, s4
+      integer, intent(in) :: s1, s2, s3, s4
 !
       call construct_ao_g_wxyz(g, s1, s2, s3, s4)
 !
@@ -136,8 +136,8 @@ contains
 !
       real(dp), intent(in) :: eps 
 !
-      integer(i15), intent(in) :: s1, s2, s3, s4, thread, n1, n2, n3, n4 
-      integer(i15) :: skip 
+      integer, intent(in) :: s1, s2, s3, s4, thread, n1, n2, n3, n4 
+      integer :: skip 
 !
       call construct_ao_g_wxyz_epsilon(g, s1, s2, s3, s4, eps, thread, skip, n1, n2, n3, n4)
 !
@@ -163,7 +163,7 @@ contains
       real(dp), dimension(:,:), intent(inout) :: mu_Y ! y component 
       real(dp), dimension(:,:), intent(inout) :: mu_Z ! z componen
 !
-      integer(i15), intent(in) :: s1, s2
+      integer, intent(in) :: s1, s2
 !
       call construct_ao_mu_wx(mu_X, mu_Y, mu_Z, s1, s2)
 !

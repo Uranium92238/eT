@@ -45,9 +45,9 @@ module eri_cd_solver_class
       real(dp) :: threshold         = 1.0D-8
       real(dp) :: span              = 1.0D-2
 !
-      integer(i15) :: max_qual      = 1000
+      integer :: max_qual      = 1000
 !
-      integer(i15) :: iteration     = 0
+      integer :: iteration     = 0
 !
       logical :: one_center         = .false.
       logical :: construct_vectors  = .true.
@@ -56,11 +56,11 @@ module eri_cd_solver_class
       type(file) :: cholesky_aux, cholesky_aux_inverse, cholesky_ao_vectors, cholesky_ao_vectors_info, cholesky_mo_vectors
       type(file) :: basis_shell_data
 !
-      integer(i15) :: n_cholesky
-      integer(i15) :: n_sp_in_basis
-      integer(i15) :: n_s, n_sp, n_ao, n_aop
+      integer :: n_cholesky
+      integer :: n_sp_in_basis
+      integer :: n_s, n_sp, n_ao, n_aop
 !
-      integer(i15) :: n_batches
+      integer :: n_batches
 !
    contains
 !
@@ -149,9 +149,9 @@ contains
       real(dp):: s_determine_basis, e_determine_basis, s_build_vectors = 0, e_build_vectors = 0
       real(dp):: s_invert_time, e_invert_time, omp_get_wtime
 !
-      integer(i15) :: batch
+      integer :: batch
 !
-      integer(i15), dimension(:,:), allocatable :: n_cholesky_batches, n_sp_in_basis_batches
+      integer, dimension(:,:), allocatable :: n_cholesky_batches, n_sp_in_basis_batches
 !
       type(file) :: batch_file_diag, batch_file_basis
 !
@@ -311,13 +311,13 @@ contains
 !
       real(dp), dimension(solver%n_ao,1), optional :: screening_vector
 !
-      integer(i15) ::sp, n_sig_aop, n_sig_sp, current_sig_sp, n_construct_aop, n_construct_sp
-      integer(i15), dimension(:,:), allocatable :: sp_index, sig_sp_index, ao_offsets
+      integer ::sp, n_sig_aop, n_sig_sp, current_sig_sp, n_construct_aop, n_construct_sp
+      integer, dimension(:,:), allocatable :: sp_index, sig_sp_index, ao_offsets
 !
       real(dp), dimension(:,:), allocatable :: g_AB_AB, D_AB, D_AB_screen, D_xy, screening_vector_local
       real(dp), dimension(:,:), allocatable :: screening_vector_reduced, max_in_sp_diagonal, construct_test
 !
-      integer(i15) :: x, y, xy, xy_packed, A, B, I
+      integer :: x, y, xy, xy_packed, A, B, I
 !
       type(interval) :: A_interval, B_interval
 !
@@ -687,13 +687,13 @@ contains
 !
       real(dp), dimension(solver%n_ao,1), optional :: screening_vector
 !
-      integer(i15) ::sp, n_sig_aop, n_sig_sp, current_sig_sp, n_construct_sp, n_construct_aop
-      integer(i15), dimension(:,:), allocatable :: sp_index, sig_sp_index, ao_offsets
+      integer ::sp, n_sig_aop, n_sig_sp, current_sig_sp, n_construct_sp, n_construct_aop
+      integer, dimension(:,:), allocatable :: sp_index, sig_sp_index, ao_offsets
 !
       real(dp), dimension(:,:), allocatable :: g_AB_AB, D_AB, D_AB_screen, D_xy, screening_vector_local
       real(dp), dimension(:,:), allocatable :: screening_vector_reduced, max_in_sp_diagonal, construct_test
 !
-      integer(i15) :: x, y, xy, xy_packed, A, B, I
+      integer :: x, y, xy, xy_packed, A, B, I
 !
       type(interval) :: A_interval, B_interval
 !
@@ -1063,7 +1063,7 @@ contains
 !
       type(molecular_system) :: system
 !
-      integer(i15) :: n_sig_aop, n_sig_sp, n_sig_sp_batch, sp
+      integer :: n_sig_aop, n_sig_sp, n_sig_sp_batch, sp
 !
       real(dp), dimension(:,:), allocatable :: D_xy, screening_vector
       real(dp), dimension(:,:), allocatable :: D_batch, screening_vector_batch
@@ -1074,8 +1074,8 @@ contains
 !
       type(file) :: batch_file
 !
-      integer(i15) :: A, B, batch, batch_first, batch_last, batch_size, current_batch_size
-      integer(i15) :: xy_first, xy_last
+      integer :: A, B, batch, batch_first, batch_last, batch_size, current_batch_size
+      integer :: xy_first, xy_last
 !
       character(len=100) :: temp_name
 !
@@ -1225,21 +1225,21 @@ contains
 !
       type(molecular_system) :: system
 !
-      integer(i15), dimension(solver%n_batches, 1), intent(in) :: n_cholesky_batches
-      integer(i15), dimension(solver%n_batches, 1), intent(in) :: n_sp_in_basis_batches
+      integer, dimension(solver%n_batches, 1), intent(in) :: n_cholesky_batches
+      integer, dimension(solver%n_batches, 1), intent(in) :: n_sp_in_basis_batches
 !
-      integer(i15) :: n_cholesky_total, n_sp_in_basis_total, J, I, n_sig_aop, n_sig_sp
-      integer(i15) :: A_shell, B_shell, sp, alpha_in_A, beta_in_B, alpha_beta_in_AB, aop, batch
-      integer(i15) :: n_basis_aop_in_AB_total, n_basis_aop_in_AB_offset, current_offset, current_offset_old
-      integer(i15) :: count_sig, n_cholesky_offset, n_sig_aop_old, n_sig_sp_old, n_sp_in_basis_offset
+      integer :: n_cholesky_total, n_sp_in_basis_total, J, I, n_sig_aop, n_sig_sp
+      integer :: A_shell, B_shell, sp, alpha_in_A, beta_in_B, alpha_beta_in_AB, aop, batch
+      integer :: n_basis_aop_in_AB_total, n_basis_aop_in_AB_offset, current_offset, current_offset_old
+      integer :: count_sig, n_cholesky_offset, n_sig_aop_old, n_sig_sp_old, n_sp_in_basis_offset
 !
       type(file) :: batch_file
 !
-      integer(i15), dimension(:,:), allocatable :: alpha, beta, alpha_beta, A, B, AB, n_basis_aop_in_AB
-      integer(i15), dimension(:,:), allocatable :: sorted_alpha, sorted_beta, sorted_alpha_beta, sorted_A
-      integer(i15), dimension(:,:), allocatable :: sorted_B, sorted_AB, sorted_n_basis_aop_in_AB
-      integer(i15), dimension(:,:), allocatable :: basis_shell_info, cholesky_basis, index_AB, index_alpha_beta
-      integer(i15), dimension(:,:), allocatable :: alpha_beta_offset, alpha_beta_offset_old
+      integer, dimension(:,:), allocatable :: alpha, beta, alpha_beta, A, B, AB, n_basis_aop_in_AB
+      integer, dimension(:,:), allocatable :: sorted_alpha, sorted_beta, sorted_alpha_beta, sorted_A
+      integer, dimension(:,:), allocatable :: sorted_B, sorted_AB, sorted_n_basis_aop_in_AB
+      integer, dimension(:,:), allocatable :: basis_shell_info, cholesky_basis, index_AB, index_alpha_beta
+      integer, dimension(:,:), allocatable :: alpha_beta_offset, alpha_beta_offset_old
 !
       logical, dimension(:), allocatable :: sig_sp, sig_sp_old
 !
@@ -1574,17 +1574,17 @@ contains
 !
       class(eri_cd_solver) :: solver
 !
-      integer(i15), dimension(solver%n_batches, 1), intent(in) :: n_cholesky_batches
-      integer(i15), dimension(solver%n_batches, 1), intent(in) :: n_sp_in_basis_batches
+      integer, dimension(solver%n_batches, 1), intent(in) :: n_cholesky_batches
+      integer, dimension(solver%n_batches, 1), intent(in) :: n_sp_in_basis_batches
 !
-      integer(i15) :: n_cholesky_total, n_sp_in_basis_total, J
-      integer(i15) :: sp, batch
-      integer(i15) :: n_cholesky_offset, n_sp_in_basis_offset
+      integer :: n_cholesky_total, n_sp_in_basis_total, J
+      integer :: sp, batch
+      integer :: n_cholesky_offset, n_sp_in_basis_offset
 !
       type(file) :: batch_file
 !
-      integer(i15), dimension(:,:), allocatable :: basis_shell_info, cholesky_basis
-      integer(i15), dimension(:,:), allocatable :: cholesky_full, basis_shell_info_full
+      integer, dimension(:,:), allocatable :: basis_shell_info, cholesky_basis
+      integer, dimension(:,:), allocatable :: cholesky_full, basis_shell_info_full
 !
       character(len=100) :: temp_name
 !
@@ -1685,46 +1685,46 @@ contains
 !
 !     Integers
 !
-      integer(i15) :: n_sig_sp, n_sig_aop
-      integer(i15) :: n_new_sig_sp, n_new_sig_aop, current_new_sig_sp
-      integer(i15) :: n_qual_sp, n_qual_aop, n_previous_qual_aop, n_qual_aop_in_sp
-      integer(i15) :: sp, current_sig_sp
-      integer(i15) :: first_sig_aop, last_sig_aop, aop
-      integer(i15) :: A, B, AB, AB_sp
-      integer(i15) :: C, D, CD_sp
-      integer(i15) :: I, J
-      integer(i15) :: w, x, y, z
-      integer(i15) :: xy, xy_packed, xy_max, wx, wx_packed, yz
-      integer(i15) :: sig_neg
-      integer(i15) :: first, last
-      integer(i15) :: first_x, first_y
-      integer(i15) :: current_qual, qual
-      integer(i15) :: n_cholesky_in_node, n_new_cholesky
-      integer(i15) :: n_sp_in_basis
-      integer(i15) :: sig_sp_counter
-      integer(i15) :: sp_in_basis
+      integer :: n_sig_sp, n_sig_aop
+      integer :: n_new_sig_sp, n_new_sig_aop, current_new_sig_sp
+      integer :: n_qual_sp, n_qual_aop, n_previous_qual_aop, n_qual_aop_in_sp
+      integer :: sp, current_sig_sp
+      integer :: first_sig_aop, last_sig_aop, aop
+      integer :: A, B, AB, AB_sp
+      integer :: C, D, CD_sp
+      integer :: I, J
+      integer :: w, x, y, z
+      integer :: xy, xy_packed, xy_max, wx, wx_packed, yz
+      integer :: sig_neg
+      integer :: first, last
+      integer :: first_x, first_y
+      integer :: current_qual, qual
+      integer :: n_cholesky_in_node, n_new_cholesky
+      integer :: n_sp_in_basis
+      integer :: sig_sp_counter
+      integer :: sp_in_basis
 !
 !     Integer allocatable arrays
 !
-      integer(i15), dimension(:,:), allocatable :: sig_sp_to_first_sig_aop       ! Maps significant shell pair to first ao pair
-      integer(i15), dimension(:,:), allocatable :: new_sig_sp_to_first_sig_aop   ! Maps significant shell pair to first ao pair
-      integer(i15), dimension(:,:), allocatable :: sig_sp_to_shells              ! Maps significant shell pair to shells
-      integer(i15), dimension(:,:), allocatable :: new_sig_sp_to_shells          ! Maps significant shell pair to shells
-      integer(i15), dimension(:,:), allocatable :: sig_aop_to_aos                ! Maps significant ao pair to aos
-      integer(i15), dimension(:,:), allocatable :: new_sig_aop_to_aos            ! Maps significant ao pair to aos
-      integer(i15), dimension(:,:), allocatable :: sorted_max_sig_sp             ! Index array for sorting shell pairs according to their maximum values
-      integer(i15), dimension(:,:), allocatable :: qual_sp                       ! List of qualified shell pairs
-      integer(i15), dimension(:,:), allocatable :: qual_sp_copy                  ! List of qualified shell pairs, copy used to reduce size
-      integer(i15), dimension(:,:), allocatable :: qual_aop                      ! List of qualified ao pairs
-      integer(i15), dimension(:,:), allocatable :: qual_aop_copy                 ! List of qualified ao pairs, copy used to reduce size
-      integer(i15), dimension(:,:), allocatable :: sorted_qual_aop_in_sp_indices ! Index array for sorting the qualified ao pairs in shell pair
-      integer(i15), dimension(:,:), allocatable :: n_qual_aop_in_prev_sps        ! Offsets for omp-loop, number of qualified ao pairs in preceding shell pair
-      integer(i15), dimension(:,:), allocatable :: cholesky_basis                ! ao and ao pair indices of the elements of the cholesky basis
-      integer(i15), dimension(:,:), allocatable :: cholesky_basis_new            ! ao and ao pair indices of the elements of the cholesky basis, written to file at end of routine
-      integer(i15), dimension(:,:), allocatable :: qual_max                      ! Index list containing order in which qualified diagonals are selected in decomposition
-      integer(i15), dimension(:,:), allocatable :: sig_sp_to_previous_sig_sp     ! Maps significant shell pair indices to significant shell pair indices of last iteration, used for reduction
-      integer(i15), dimension(:,:), allocatable :: basis_shell_info_full         ! Info on shells containing elements of the basis
-      integer(i15), dimension(:,:), allocatable :: basis_shell_info              ! Info on shells containing elements of the basis, written to file at end of routine
+      integer, dimension(:,:), allocatable :: sig_sp_to_first_sig_aop       ! Maps significant shell pair to first ao pair
+      integer, dimension(:,:), allocatable :: new_sig_sp_to_first_sig_aop   ! Maps significant shell pair to first ao pair
+      integer, dimension(:,:), allocatable :: sig_sp_to_shells              ! Maps significant shell pair to shells
+      integer, dimension(:,:), allocatable :: new_sig_sp_to_shells          ! Maps significant shell pair to shells
+      integer, dimension(:,:), allocatable :: sig_aop_to_aos                ! Maps significant ao pair to aos
+      integer, dimension(:,:), allocatable :: new_sig_aop_to_aos            ! Maps significant ao pair to aos
+      integer, dimension(:,:), allocatable :: sorted_max_sig_sp             ! Index array for sorting shell pairs according to their maximum values
+      integer, dimension(:,:), allocatable :: qual_sp                       ! List of qualified shell pairs
+      integer, dimension(:,:), allocatable :: qual_sp_copy                  ! List of qualified shell pairs, copy used to reduce size
+      integer, dimension(:,:), allocatable :: qual_aop                      ! List of qualified ao pairs
+      integer, dimension(:,:), allocatable :: qual_aop_copy                 ! List of qualified ao pairs, copy used to reduce size
+      integer, dimension(:,:), allocatable :: sorted_qual_aop_in_sp_indices ! Index array for sorting the qualified ao pairs in shell pair
+      integer, dimension(:,:), allocatable :: n_qual_aop_in_prev_sps        ! Offsets for omp-loop, number of qualified ao pairs in preceding shell pair
+      integer, dimension(:,:), allocatable :: cholesky_basis                ! ao and ao pair indices of the elements of the cholesky basis
+      integer, dimension(:,:), allocatable :: cholesky_basis_new            ! ao and ao pair indices of the elements of the cholesky basis, written to file at end of routine
+      integer, dimension(:,:), allocatable :: qual_max                      ! Index list containing order in which qualified diagonals are selected in decomposition
+      integer, dimension(:,:), allocatable :: sig_sp_to_previous_sig_sp     ! Maps significant shell pair indices to significant shell pair indices of last iteration, used for reduction
+      integer, dimension(:,:), allocatable :: basis_shell_info_full         ! Info on shells containing elements of the basis
+      integer, dimension(:,:), allocatable :: basis_shell_info              ! Info on shells containing elements of the basis, written to file at end of routine
 !
 !     Logicals
 !
@@ -2624,21 +2624,21 @@ contains
 !
 !     Integers
 !
-      integer(i15) :: n_sp_in_basis, sp_in_basis
-      integer(i15) :: n_vectors
-      integer(i15) :: current_aop_in_sp
-      integer(i15) :: A, B, C, D, AB, AB_sp, CD_sp
-      integer(i15) :: I, J, K, L, KL
-      integer(i15) :: w, x, y, z, wx, yz
+      integer :: n_sp_in_basis, sp_in_basis
+      integer :: n_vectors
+      integer :: current_aop_in_sp
+      integer :: A, B, C, D, AB, AB_sp, CD_sp
+      integer :: I, J, K, L, KL
+      integer :: w, x, y, z, wx, yz
 !
 !     Integer allocatable arrays
 !
-      integer(i15), dimension(:,:), allocatable :: basis_shell_info        ! Info on shells containing elements of the basis
-      integer(i15), dimension(:,:), allocatable :: basis_shell_info_full   ! Info on shells containing elements of the basis
-      integer(i15), dimension(:,:), allocatable :: cholesky_basis          ! ao and ao pair indices of the elements of the cholesky basis
-      integer(i15), dimension(:,:), allocatable :: cholesky_basis_updated  ! ao and ao pair indices of the elements of the cholesky basis
-      integer(i15), dimension(:,:), allocatable :: basis_aops_in_CD_sp     ! basis ao pairs in shell pair CD
-      integer(i15), dimension(:,:), allocatable :: basis_aops_in_AB_sp     ! basis ao pairs in shell pair AB
+      integer, dimension(:,:), allocatable :: basis_shell_info        ! Info on shells containing elements of the basis
+      integer, dimension(:,:), allocatable :: basis_shell_info_full   ! Info on shells containing elements of the basis
+      integer, dimension(:,:), allocatable :: cholesky_basis          ! ao and ao pair indices of the elements of the cholesky basis
+      integer, dimension(:,:), allocatable :: cholesky_basis_updated  ! ao and ao pair indices of the elements of the cholesky basis
+      integer, dimension(:,:), allocatable :: basis_aops_in_CD_sp     ! basis ao pairs in shell pair CD
+      integer, dimension(:,:), allocatable :: basis_aops_in_AB_sp     ! basis ao pairs in shell pair AB
 !
       integer, dimension(:), allocatable :: keep_vectors
 !
@@ -2986,22 +2986,22 @@ contains
 !
 !     Integers
 !
-      integer(i15) :: A, B, AB_sp, C, D, CD_sp
-      integer(i15) :: w, x, y, z, wx, yz, wx_packed
-      integer(i15) :: L, J, I
-      integer(i15) :: n_construct_sp, n_construct_aop
-      integer(i15) :: n_sp_in_basis, last_sp_included, sp_counter
-      integer(i15) :: current_aop_in_sp
-      integer(i15) :: n_AB_included, n_AB_included_current
-      integer(i15) :: rec_offset
-      integer(i15) :: size_AB, size_AB_current
+      integer :: A, B, AB_sp, C, D, CD_sp
+      integer :: w, x, y, z, wx, yz, wx_packed
+      integer :: L, J, I
+      integer :: n_construct_sp, n_construct_aop
+      integer :: n_sp_in_basis, last_sp_included, sp_counter
+      integer :: current_aop_in_sp
+      integer :: n_AB_included, n_AB_included_current
+      integer :: rec_offset
+      integer :: size_AB, size_AB_current
 !
 !     Integer allocatable arrays
 !
-      integer(i15), dimension(:,:), allocatable :: basis_shell_info     ! Info on shells containing elements of the basis
-      integer(i15), dimension(:,:), allocatable :: AB_info              ! Info on offsets and shells for OMP-loop [offset, A, B]
-      integer(i15), dimension(:,:), allocatable :: basis_aops_in_CD_sp  ! Basis ao pairs in shell pair CD
-      integer(i15), dimension(:,:), allocatable :: cholesky_basis       ! Info on cholesky basis
+      integer, dimension(:,:), allocatable :: basis_shell_info     ! Info on shells containing elements of the basis
+      integer, dimension(:,:), allocatable :: AB_info              ! Info on offsets and shells for OMP-loop [offset, A, B]
+      integer, dimension(:,:), allocatable :: basis_aops_in_CD_sp  ! Basis ao pairs in shell pair CD
+      integer, dimension(:,:), allocatable :: cholesky_basis       ! Info on cholesky basis
 !
 !     Reals
 !
@@ -3353,7 +3353,7 @@ contains
 !
       real(dp) :: max_diff
 !
-      integer(i15) :: n_sig_sp, n_sig_aop, AB_offset, x, y, xy, xy_red, xy_full, sp, A, B
+      integer :: n_sig_sp, n_sig_aop, AB_offset, x, y, xy, xy_red, xy_full, sp, A, B
 !
       type(interval) :: A_interval, B_interval
 !
@@ -3475,10 +3475,10 @@ contains
 !
       real(dp) :: ddot, max_diff, min_diff
 !
-      integer(i15) :: aop, n_construct_sp, n_construct_aop, J, I, size_AB, AB_offset, A, B, current_construct_sp
-      integer(i15) :: x, y, xy, xy_packed, sp
+      integer :: aop, n_construct_sp, n_construct_aop, J, I, size_AB, AB_offset, A, B, current_construct_sp
+      integer :: x, y, xy, xy_packed, sp
 !
-      integer(i15), dimension(:,:), allocatable :: construct_sp_index, ao_offsets
+      integer, dimension(:,:), allocatable :: construct_sp_index, ao_offsets
 !
       character(len=40) :: line
 !
@@ -3670,13 +3670,13 @@ contains
 !
       logical, dimension(:), allocatable :: construct_sp
 !
-      integer(i15) ::  A, B, C, D, w, x, y, z, wx, yz, wx_full, size_AB, AB_offset, J, I, xy
-      integer(i15) ::  sp, sig_aop_counter, yx, yz_full, n_construct_sp, n_construct_aop
+      integer ::  A, B, C, D, w, x, y, z, wx, yz, wx_full, size_AB, AB_offset, J, I, xy
+      integer ::  sp, sig_aop_counter, yx, yz_full, n_construct_sp, n_construct_aop
 !
       type(interval) :: A_interval, B_interval, C_interval, D_interval
 !
       real(dp), dimension(:,:), allocatable :: L_xy, L_xy_full, g_wxyz, g_ABCD
-      integer(i15), dimension(:,:), allocatable :: index_full
+      integer, dimension(:,:), allocatable :: index_full
 !
       character(len=40) :: line
 !
@@ -3866,7 +3866,7 @@ contains
    end subroutine  full_test_cholesky_vecs_cd_eri_solver
 !
 !
-   integer(i15) function get_size_sp(A_interval, B_interval)
+   integer function get_size_sp(A_interval, B_interval)
 !!
 !!    Get size shell pair
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -3891,7 +3891,7 @@ contains
    end function get_size_sp
 !
 !
-   integer(i15) function get_sp_from_shells(s1, s2, n_s)
+   integer function get_sp_from_shells(s1, s2, n_s)
 !!
 !!    Get shell pair from shells,
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -3900,8 +3900,8 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: s1, s2, n_s
-      integer(i15) :: A, B
+      integer, intent(in) :: s1, s2, n_s
+      integer :: A, B
 !
       get_sp_from_shells = 1
 !
@@ -4009,14 +4009,14 @@ contains
 !
       type(molecular_system), intent(in) :: system
 !
-      integer(i15), intent(in) :: n_mo
+      integer, intent(in) :: n_mo
 !
       real(dp), dimension(solver%n_ao, n_mo), intent(in) :: orbital_coefficients
 !
       logical, dimension(:), allocatable :: construct_sp
 !
-      integer(i15) :: n_construct_sp, n_construct_aop, size_AB, A, B, I, J, AB_offset, AB_offset_full
-      integer(i15) :: current_q_batch, required, throw_away_index, x, y, p, q, xy, xy_packed, sp, pq
+      integer :: n_construct_sp, n_construct_aop, size_AB, A, B, I, J, AB_offset, AB_offset_full
+      integer :: current_q_batch, required, throw_away_index, x, y, p, q, xy, xy_packed, sp, pq
 !
       type(interval) :: A_interval, B_interval
 !

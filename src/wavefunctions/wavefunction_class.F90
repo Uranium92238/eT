@@ -18,10 +18,10 @@ module wavefunction_class
 !
       real(dp) :: energy
 !
-      integer(i15) :: n_ao
-      integer(i15) :: n_mo
-      integer(i15) :: n_o
-      integer(i15) :: n_v
+      integer :: n_ao
+      integer :: n_mo
+      integer :: n_o
+      integer :: n_v
 !
       type(molecular_system) :: system
 !

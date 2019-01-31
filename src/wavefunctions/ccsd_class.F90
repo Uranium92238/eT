@@ -15,7 +15,7 @@ module ccsd_class
       real(dp), dimension(:,:), allocatable :: t2   
       real(dp), dimension(:,:), allocatable :: t2bar   
 !
-      integer(i15) :: n_t2  
+      integer :: n_t2  
 !
    contains
 !
@@ -143,7 +143,7 @@ contains
 !
       class(hf) :: ref_wf
 !
-      integer(i15) :: p
+      integer :: p
 !
       wf%name = 'ccsd'
 !
@@ -312,7 +312,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: g_ai_bj
 !
-      integer(i15) :: a, b, i, j, ai, bj, aibj
+      integer :: a, b, i, j, ai, bj, aibj
 !
       call mem%alloc(g_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call wf%get_vovo(g_ai_bj)
@@ -365,8 +365,8 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: g_ia_jb ! g_iajb
 !
-      integer(i15) :: a = 0, i = 0, b = 0, j = 0, ai = 0
-      integer(i15) :: bj = 0, aibj = 0, ia = 0, jb = 0, ib = 0, ja = 0
+      integer :: a = 0, i = 0, b = 0, j = 0, ai = 0
+      integer :: bj = 0, aibj = 0, ia = 0, jb = 0, ib = 0, ja = 0
 !
 !     Get g_ia_jb = g_iajb
 !
@@ -428,7 +428,7 @@ contains
 !
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: orbital_differences
 !
-      integer(i15) :: a, i, ai, b, j, bj, aibj
+      integer :: a, i, ai, b, j, bj, aibj
 !
 !$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) 
       do a = 1, wf%n_v
@@ -552,8 +552,8 @@ subroutine construct_eta_ccsd(wf, eta)
       real(dp), dimension(:,:), allocatable :: g_ia_jb
       real(dp), dimension(:,:), allocatable :: eta_ai_bj
 !
-      integer(i15) :: i = 0, a = 0, j = 0, b = 0, aibj = 0
-      integer(i15) :: bj = 0, ai = 0
+      integer :: i = 0, a = 0, j = 0, b = 0, aibj = 0
+      integer :: bj = 0, ai = 0
 !
       eta = zero
 !
@@ -869,10 +869,10 @@ subroutine construct_eta_ccsd(wf, eta)
 !
       real(dp), dimension(:,:), allocatable :: abs_x2
 !
-      integer(i15), dimension(:,:), allocatable :: dominant_indices
+      integer, dimension(:,:), allocatable :: dominant_indices
       real(dp), dimension(:,:), allocatable     :: dominant_values
 !
-      integer(i15) :: n_elements, elm, i, a, j, b, ai, bj
+      integer :: n_elements, elm, i, a, j, b, ai, bj
 !
 !     Sort according to largest contributions
 !

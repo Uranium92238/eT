@@ -18,7 +18,7 @@ module davidson_cc_multipliers_solver_class
       character(len=100) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
       character(len=500) :: description = 'A Davidson CC multiplier equations solver.'
 !
-      integer(i15) :: max_iterations
+      integer :: max_iterations
 !
       real(dp) :: residual_threshold
 !
@@ -111,7 +111,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: eta, c_i, multipliers
 !
-      integer(i15) :: iteration
+      integer :: iteration
 !
       real(dp) :: residual_norm, ddot, norm_trial
 !

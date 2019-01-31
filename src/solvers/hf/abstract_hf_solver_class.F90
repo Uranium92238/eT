@@ -20,7 +20,7 @@ module abstract_hf_solver_class
       real(dp) :: energy_threshold          = 1.0D-6
       real(dp) :: gradient_threshold        = 1.0D-6
 !
-      integer(i15) :: max_iterations        = 100
+      integer :: max_iterations        = 100
 !  
       character(len=40) :: ao_density_guess = 'SAD'
 !
@@ -81,7 +81,7 @@ contains
 !
       class(abstract_hf_solver) :: solver 
 !
-      integer(i15) :: n_records, i 
+      integer :: n_records, i 
 !
       character(len=100) :: line, value 
 !

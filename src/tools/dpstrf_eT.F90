@@ -11,13 +11,13 @@ module dpstrf_et
 !
 !   .. scalar arguments ..
       double precision   tol
-      integer(i15)       info, rank
-      integer(i15)       lda, n
+      integer       info, rank
+      integer       lda, n
       character          uplo
 !   ..
 !   .. array arguments ..
       double precision   a( lda, * ), work( 2*n )
-      integer(i15)            piv( n )
+      integer            piv( n )
 !   ..
 !
 !=====================================================================
