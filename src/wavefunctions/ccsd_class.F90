@@ -117,6 +117,9 @@ module ccsd_class
       procedure :: read_t2bar                                  => read_t2bar_ccsd
       procedure :: save_t2bar                                  => save_t2bar_ccsd
 !
+      procedure :: F_transform_vector                           => F_transform_vector_ccsd
+      procedure :: F_ccsd_a1_1                                  => F_ccsd_a1_1_ccsd
+
    end type ccsd
 !
 !
@@ -125,6 +128,7 @@ module ccsd_class
       include "../submodules/ccsd/omega_ccsd_interface.F90"
       include "../submodules/ccsd/jacobian_ccsd_interface.F90"
       include "../submodules/ccsd/jacobian_transpose_ccsd_interface.F90"
+      include "../submodules/ccsd/F_ccsd_interface.F90"
 !
    end interface 
 !
