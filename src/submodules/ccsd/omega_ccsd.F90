@@ -129,8 +129,6 @@ contains
 !
          call batch_a%determine_limits(current_a_batch)
 !
-       !  ad_dim = (batch_a%length)*(wf%n_v)
-!
 !        Form g_ad_kc = g_adkc
 !
          call mem%alloc(g_ad_kc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)

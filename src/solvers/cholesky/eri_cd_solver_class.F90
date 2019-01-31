@@ -4016,7 +4016,7 @@ contains
       logical, dimension(:), allocatable :: construct_sp
 !
       integer :: n_construct_sp, n_construct_aop, size_AB, A, B, I, J, AB_offset, AB_offset_full
-      integer :: current_q_batch, required, throw_away_index, x, y, p, q, xy, xy_packed, sp, pq
+      integer :: current_q_batch, required, throw_away_index, x, y, p, q, xy, xy_packed, sp, pq, req0
 !
       type(interval) :: A_interval, B_interval
 !
@@ -4194,12 +4194,13 @@ contains
 !
 !     Read L_pq_J in batches over q
 !
+      req0 = 0
       required = ((n_mo)**2)*(solver%n_cholesky)
 !
 !     Initialize batching variable
 !
       call batch_q%init(n_mo)
-      call mem%num_batch(batch_q, required)
+      call mem%batch_setup(batch_q, req0, required)
 !
       rewind(cholesky_mo_vectors_seq%unit)
 !
