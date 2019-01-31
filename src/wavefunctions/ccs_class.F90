@@ -177,7 +177,20 @@ module ccs_class
       procedure :: destruct_t1                                  => destruct_t1_ccs
       procedure :: destruct_t1bar                               => destruct_t1bar_ccs
 !
+      procedure :: F_transform_vector                           => F_transform_vector_ccs
+      procedure :: F_ccs_a1_0                                   => F_ccs_a1_0_ccs
+      procedure :: F_ccs_a1_1                                   => F_ccs_a1_1_ccs
+      procedure :: F_ccs_b1_1                                   => F_ccs_b1_1_ccs
+      procedure :: F_ccs_c1_1                                   => F_ccs_c1_1_ccs
+!
    end type ccs
+!
+!
+   interface
+!
+      include "../submodules/ccs/F_ccs_interface.F90"
+!
+   end interface
 !
 !
 contains
