@@ -1002,9 +1002,9 @@ contains
 !
       class(molecular_system) :: molecule
 !
-      integer(kind=8), intent(in) :: A
+      integer, intent(in) :: A
 !
-      integer(kind=8) :: I, J
+      integer :: I, J
 !
       type(interval) :: get_shell_limits_molecular_system
 !

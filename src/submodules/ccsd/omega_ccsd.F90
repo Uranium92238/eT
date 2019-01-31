@@ -92,7 +92,7 @@ contains
       real(dp), dimension(:,:), allocatable :: u_dk_ci, t_dk_ci
       real(dp), dimension(:,:,:,:), allocatable :: g_ad_kc
 !
-      integer :: ad_dim, rec0, rec1
+      integer :: rec0, rec1
 !
       type(timings) :: ccsd_a1_timer
 !

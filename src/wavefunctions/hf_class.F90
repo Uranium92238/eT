@@ -3397,9 +3397,9 @@ contains
 !
       class(hf) :: wf
 !
-      write(output%unit, '(/t6,a30,e10.4)') 'Coulomb screening threshold:  ', wf%coulomb_threshold
-      write(output%unit, '(t6,a30,e10.4)') 'Exchange screening threshold: ', wf%exchange_threshold
-      write(output%unit, '(t6,a30,e10.4)') 'ERI integral precision:       ', wf%libint_epsilon
+      write(output%unit, '(/t6,a30,e11.4)') 'Coulomb screening threshold:  ', wf%coulomb_threshold
+      write(output%unit, '(t6,a30,e11.4)') 'Exchange screening threshold: ', wf%exchange_threshold
+      write(output%unit, '(t6,a30,e11.4)') 'ERI integral precision:       ', wf%libint_epsilon
       flush(output%unit)
 !
    end subroutine print_screening_settings_hf

@@ -11,9 +11,9 @@ contains
 !
       implicit none
 !
-      real(kind=8), dimension(1,1) :: g
+      real(dp), dimension(1,1) :: g
 !
-      integer(kind=8) :: s1, s2, s3, s4
+      integer :: s1, s2, s3, s4
 !
       call construct_ao_g_wxyz_c(g, s1, s2, s3, s4)
 !
@@ -23,10 +23,10 @@ contains
 !
       implicit none
 !
-      real(kind=8), dimension(1,1) :: g
-      real(kind=8) :: epsilon
+      real(dp), dimension(1,1) :: g
+      real(dp) :: epsilon
 !
-      integer(kind=8) :: s1, s2, s3, s4, thread, skip, n1, n2, n3, n4 
+      integer :: s1, s2, s3, s4, thread, skip, n1, n2, n3, n4 
 !
       call construct_ao_g_wxyz_epsilon_c(g, s1, s2, s3, s4, epsilon, thread, skip, n1, n2, n3, n4)
 !
