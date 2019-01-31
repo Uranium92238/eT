@@ -106,7 +106,17 @@ contains
 !
 !     Prepare for excited state
 !
-      if (engine%algorithm == 'diis') then 
+      if (wf%name .ne. 'CC2') then 
+!
+         allocate(cc_es_solver_diis)
+!
+         call cc_es_solver_diis%prepare()
+         call cc_es_solver_diis%run(wf)
+         call cc_es_solver_diis%cleanup()
+!
+         deallocate(cc_es_solver_diis)
+!
+      elseif (engine%algorithm == 'diis') then 
 !
          allocate(cc_es_solver_diis)
 !

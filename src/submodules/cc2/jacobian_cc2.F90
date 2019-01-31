@@ -172,9 +172,6 @@ contains
       enddo
 !$omp end parallel do
 !
-      write(output%unit, *) '3', rho_ai(1:5,1)
-
-
       call mem%dealloc(rho_ai, wf%n_v, wf%n_o)
 !
 !     :: CC2 contributions to the transformed doubles vector ::

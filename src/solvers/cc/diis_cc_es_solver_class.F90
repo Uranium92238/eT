@@ -284,13 +284,11 @@ contains
 !
 !              Construct residual and energy and precondition the former 
 !
-               write(output%unit, *) energies(state)
                call wf%construct_excited_state_equation(X(:,state), R(:,state), energies(state))
 !
 !$omp parallel do private(amplitude)
                do amplitude = 1, wf%n_es_amplitudes
 !
-                !  R(amplitude, state) = -R(amplitude, state)/(eps(amplitude, 1) - energies(state))
                   R(amplitude, state) = -R(amplitude, state)/(eps(amplitude, 1))
 !
                enddo
@@ -309,6 +307,7 @@ contains
 !              then normalize it to avoid accumulating norm in X
 !
                X(:,state) = X(:,state) + R(:,state)
+!
                call diis(state)%update(R(:,state), X(:,state))
 !
                norm_X = get_l2_norm(X(:,state), wf%n_es_amplitudes)
@@ -333,10 +332,6 @@ contains
       !   call solver%print_summary() 
 !
       endif 
-!
-         do state = 1, solver%n_singlet_states
-            call wf%print_dominant_x_amplitudes(X(:,state), 'r')
-         enddo
 !
       deallocate(energies)
       deallocate(prev_energies)
@@ -375,8 +370,6 @@ contains
       call get_n_lowest(solver%n_singlet_states, wf%n_es_amplitudes, orbital_differences, &
                            lowest_orbital_differences, lowest_orbital_differences_index)
 !
-      call mem%dealloc(lowest_orbital_differences, solver%n_singlet_states, 1)
-!
       do state = 1, solver%n_singlet_states
 !
          R(:,state) = zero
@@ -384,6 +377,7 @@ contains
 !
       enddo 
 !
+      call mem%dealloc(lowest_orbital_differences, solver%n_singlet_states, 1)
       call mem%dealloc(lowest_orbital_differences_index, solver%n_singlet_states, 1)      
 !
    end subroutine set_start_vectors_diis_cc_es_solver
