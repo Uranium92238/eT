@@ -570,6 +570,7 @@ contains
       integer :: size_array ! Total size of array (M)
       integer :: stat = 0
       integer :: error = 0
+      integer :: int_size
 !
       size_array = M
 !
@@ -588,7 +589,8 @@ contains
 !     The 'integer 15', or i15, type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available - i15*size_array
+      int_size = sizeof(array(1))
+      mem%available = mem%available - int_size*size_array
 !
 !     Check if there is no more memory (defined as being no more memory
 !     left of what was specified by user as available)
@@ -621,6 +623,7 @@ contains
       integer :: size_array ! Total size of array (M*N)
       integer :: stat = 0
       integer :: error = 0
+      integer :: int_size
 !
       size_array = M*N
 !
@@ -639,7 +642,8 @@ contains
 !     The 'integer 15', or i15, type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available - i15*size_array
+      int_size = sizeof(array(1,1))
+      mem%available = mem%available - int_size*size_array
 !
 !     Check if there is no more memory (defined as being no more memory
 !     left of what was specified by user as available)
@@ -672,6 +676,7 @@ contains
       integer :: size_array ! Total size of array (M*N*O)
       integer :: stat = 0
       integer :: error = 0
+      integer :: int_size
 !
       size_array = M*N*O
 !
@@ -690,7 +695,8 @@ contains
 !     The 'integer 15', or i15, type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available - i15*size_array
+      int_size = sizeof(array(1,1,1))
+      mem%available = mem%available - int_size*size_array
 !
 !     Check if there is no more memory (defined as being no more memory
 !     left of what was specified by user as available)
@@ -723,6 +729,7 @@ contains
       integer :: size_array ! Total size of array (M*N*O*P)
       integer :: stat = 0
       integer :: error = 0
+      integer :: int_size
 !
       size_array = M*N*O*P
 !
@@ -741,7 +748,8 @@ contains
 !     The 'integer 15', or i15, type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available - i15*size_array
+      int_size = sizeof(array(1,1,1,1))
+      mem%available = mem%available - int_size*size_array
 !
 !     Check if there is no more memory (defined as being no more memory
 !     left of what was specified by user as available)
@@ -774,6 +782,7 @@ contains
       integer :: size_array ! Total size of array (M*N)
       integer :: stat = 0
       integer :: error = 0
+      integer :: int_size
 !
       size_array = M
 !
@@ -792,7 +801,8 @@ contains
 !     The 'integer 15', or i15, type (see types.F90) is typically 4 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available + i15*size_array
+      int_size = sizeof(array(1))
+      mem%available = mem%available + int_size*size_array
 !
    end subroutine dealloc_int_1_memory_manager
 !
@@ -816,6 +826,7 @@ contains
       integer :: size_array ! Total size of array (M*N)
       integer :: stat = 0
       integer :: error = 0
+      integer :: int_size
 !
       size_array = M*N
 !
@@ -834,7 +845,8 @@ contains
 !     The 'integer 15', or i15, type (see types.F90) is typically 4 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available + i15*size_array
+      int_size = sizeof(array(1,1))
+      mem%available = mem%available + int_size*size_array
 !
    end subroutine dealloc_int_2_memory_manager
 !
@@ -858,6 +870,7 @@ contains
       integer :: size_array ! Total size of array (M*N*O)
       integer :: stat = 0
       integer :: error = 0
+      integer :: int_size
 !
       size_array = M*N*O
 !
@@ -876,7 +889,8 @@ contains
 !     The 'integer 15', or i15, type (see types.F90) is typically 4 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available + i15*size_array
+      int_size = sizeof(array(1,1,1))
+      mem%available = mem%available + int_size*size_array
 !
    end subroutine dealloc_int_3_memory_manager
 !
@@ -900,6 +914,7 @@ contains
       integer :: size_array ! Total size of array (M*N*O*P)
       integer :: stat = 0
       integer :: error = 0
+      integer :: int_size
 !
       size_array = M*N*O*P
 !
@@ -918,7 +933,8 @@ contains
 !     The 'integer 15', or i15, type (see types.F90) is typically 4 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available + i15*size_array
+      int_size = sizeof(array(1,1,1,1))
+      mem%available = mem%available + int_size*size_array
 !
    end subroutine dealloc_int_4_memory_manager
 !

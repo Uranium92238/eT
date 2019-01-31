@@ -30,7 +30,7 @@ endif()
 ## GNU ##
 if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
     add_definitions(-DVAR_GFORTRAN)
-    set(CMAKE_Fortran_FLAGS "-std=f2008 -DVAR_GFORTRAN -fdefault-integer-8 -O3 -funroll-loops -fopenmp -Wall")
+    set(CMAKE_Fortran_FLAGS "-std=f2008 -DVAR_GFORTRAN -O3 -funroll-loops -fopenmp -Wall")
 
 #
 #   Testing processor 32-bit or 64-bit

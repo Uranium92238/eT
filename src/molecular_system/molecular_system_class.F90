@@ -87,14 +87,12 @@ contains
 !
       character(len=100) :: temp_name
 !
-      integer(kind=4) :: i4, j
+      integer :: s, n_s, i, j
 !
-      integer :: s, n_s, i
-!
-      integer(kind=4), dimension(:,:), allocatable :: n_shells_on_atoms
-      integer(kind=4), dimension(:,:), allocatable :: n_basis_in_shells
-      integer(kind=4), dimension(:,:), allocatable :: first_ao_in_shells
-      integer(kind=4), dimension(:,:), allocatable :: shell_numbers
+      integer(i6), dimension(:,:), allocatable :: n_shells_on_atoms
+      integer(i6), dimension(:,:), allocatable :: n_basis_in_shells
+      integer(i6), dimension(:,:), allocatable :: first_ao_in_shells
+      integer(i6), dimension(:,:), allocatable :: shell_numbers
 !
 !     Read eT.inp and write files for Libint
 !
@@ -123,8 +121,7 @@ contains
 !
       do i = 1, molecule%n_basis_sets ! Loop over atoms  
 !
-         i4 = int(i,4)
-         write(temp_name, '(a, a1, i4.4)')trim(molecule%name), '_', i4
+         write(temp_name, '(a, a1, i4.4)')trim(molecule%name), '_', i
 !
          call initialize_basis(molecule%basis_sets(i), temp_name)
 !
@@ -135,8 +132,6 @@ contains
       call get_n_shells_on_atoms(n_shells_on_atoms)
 !
       do i = 1, molecule%n_atoms ! Loop over atoms
-!
-         i4 = int(i,4)
 !
          call molecule%atoms(i)%set_number()
 !
@@ -149,7 +144,7 @@ contains
 !        and save number of aos per atom
 !
          allocate(n_basis_in_shells(n_shells_on_atoms(i,1), 1))
-         call get_n_basis_in_shells(i4, n_basis_in_shells)
+         call get_n_basis_in_shells(i, n_basis_in_shells)
 !
          molecule%atoms(i)%n_ao = 0
 !
@@ -166,7 +161,7 @@ contains
 !        Get shell numbers
 !
          allocate(shell_numbers(n_shells_on_atoms(i,1), 1))
-         call get_shell_numbers(i4, shell_numbers)
+         call get_shell_numbers(i, shell_numbers)
 !
          do j = 1, n_shells_on_atoms(i,1)
 !
@@ -179,7 +174,7 @@ contains
 !        And the first AO index in each shell
 !
          allocate(first_ao_in_shells(n_shells_on_atoms(i,1), 1))
-         call get_first_ao_in_shells(i4, first_ao_in_shells)
+         call get_first_ao_in_shells(i, first_ao_in_shells)
 !
          do j = 1, n_shells_on_atoms(i,1)
 

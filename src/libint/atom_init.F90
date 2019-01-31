@@ -11,10 +11,13 @@ contains
 !
       implicit none
 !
-      integer(kind=4) :: atom
-      integer(kind=4), dimension(1,1) :: sn
+      integer :: atom
+      integer(i6), dimension(1,1) :: sn
+      integer(i6) :: atom4 
 !
-      call get_shell_numbers_c(atom, sn)
+      atom4 = int(atom,i6)
+!
+      call get_shell_numbers_c(atom4, sn)
 !
    end subroutine get_shell_numbers
 !
@@ -22,10 +25,13 @@ contains
 !
       implicit none
 !
-      integer(kind=4) :: atom
-      integer(kind=4), dimension(1,1) :: faois
+      integer :: atom
+      integer(i6), dimension(1,1) :: faois
+      integer(i6) :: atom4 
 !
-      call get_first_ao_in_shells_c(atom, faois)
+      atom4 = int(atom,i6)
+!
+      call get_first_ao_in_shells_c(atom4, faois)
 !
    end subroutine get_first_ao_in_shells
 !
@@ -33,10 +39,13 @@ contains
 !
       implicit none
 !
-      integer(kind=4) :: atom
-      integer(kind=4), dimension(1,1) :: nbis
+      integer :: atom
+      integer(i6), dimension(1,1) :: nbis
+      integer(i6) :: atom4 
 !
-      call get_n_basis_in_shells_c(atom, nbis)
+      atom4 = int(atom,i6)
+!
+      call get_n_basis_in_shells_c(atom4, nbis)
 !
    end subroutine get_n_basis_in_shells
 !
@@ -44,7 +53,7 @@ contains
 !
       implicit none
 !
-      integer(kind=4), dimension(1,1) :: nsoa
+      integer(i6), dimension(1,1) :: nsoa
 !
       call get_n_shells_on_atoms_c(nsoa)
 !

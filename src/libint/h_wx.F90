@@ -12,7 +12,7 @@ contains
       implicit none
 !
       real(dp), dimension(1,1) :: h
-      integer :: s1, s2
+      integer(i6) :: s1, s2
 !
       call construct_ao_h_wx_c(h, s1, s2)
 !

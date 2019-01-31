@@ -852,7 +852,7 @@ contains
 !     DPSTRF computes the Cholesky factorization with complete pivoting
 !     of a real symmetric positive semidefinite matrix.
 !
-      call dpstrf_e('L',      &
+      call dpstrf('L',      &
             dim,              &
             cholesky_vectors, &
             dim,              &
