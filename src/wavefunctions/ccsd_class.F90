@@ -119,6 +119,7 @@ module ccsd_class
 !
       procedure :: F_transform_vector                           => F_transform_vector_ccsd
       procedure :: F_ccsd_a1_1                                  => F_ccsd_a1_1_ccsd
+      procedure :: F_ccsd_a2_1                                  => F_ccsd_a2_1_ccsd
 
    end type ccsd
 !
