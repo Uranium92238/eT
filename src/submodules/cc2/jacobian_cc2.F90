@@ -286,7 +286,7 @@ contains
 !
       call mem%dealloc(X_ji, wf%n_o, wf%n_o)
 !
-!     NOTE! We will now pretend that u_bkci = u(c, k, b, i) is  u_akcj = u(a, j, c, k)
+!     NOTE! We will now pretend that u_bkci = u(c, k, b, i) is  u_akcj = u(c, k, a, j)
 !     NOTE! We will now pretend that g_jbkc = g_kcjb
 !
       call mem%alloc(X_kcji, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
@@ -517,7 +517,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_kjai 
       real(dp), dimension(:,:,:,:), allocatable :: g_aibc
 !
-      integer(i15) :: a, i 
+      integer(i15) :: a, i, b, j 
 !
       type(batching_index) :: batch_c 
       integer(i15)         :: req0, req1, current_c_batch 
@@ -598,7 +598,7 @@ contains
 !
          call mem%dealloc(g_aibc, wf%n_v, wf%n_o, wf%n_v, batch_c%length)
 !
-      enddo 
+      enddo  ! batch over c 
 !
 !$omp parallel do private(a, i)
       do a = 1, wf%n_v 
@@ -663,6 +663,7 @@ contains
          enddo
       enddo
 !$omp end parallel do
+!
 !
    end subroutine jacobian_cc2_b2_cc2
 !
