@@ -86,9 +86,6 @@ contains
 !
 !     Allocate and zero the transformed vector (singles part)
 !
-      write(output%unit, *) 'Hello from new jacobian cc2!'
-      flush(output%unit)
-!
       call mem%alloc(rho_ai, wf%n_v, wf%n_o)
       rho_ai = zero
 !
@@ -108,25 +105,12 @@ contains
 !
 !     :: CCS contributions to the singles c vector ::
 !
-      write(output%unit, *) 'Hello 1'
-      flush(output%unit)
-!
       call wf%jacobian_ccs_a1(rho_ai, c_ai)
-!
-      write(output%unit, *) 'Hello 2'
-      flush(output%unit)
-!
       call wf%jacobian_ccs_b1(rho_ai, c_ai)
 !
 !     :: CC2 contributions to the transformed singles vector ::
 !
-      write(output%unit, *) 'Hello 3'
-      flush(output%unit)
-!
       call wf%jacobian_cc2_a1(rho_ai, c_ai)
-!
-      write(output%unit, *) 'Hello 4'
-      flush(output%unit)
 !
 !     Allocate the incoming unpacked doubles vector
 !
@@ -171,13 +155,7 @@ contains
       enddo
 !$omp end parallel do
 !
-      write(output%unit, *) 'Hello 5'
-      flush(output%unit)
-!
       call wf%jacobian_cc2_b1(rho_ai, c_aibj)
-!
-      write(output%unit, *) 'Hello 6'
-      flush(output%unit)
 !
 !     Done with singles vector c; overwrite it with
 !     transformed vector for exit
@@ -193,6 +171,9 @@ contains
          enddo
       enddo
 !$omp end parallel do
+!
+      write(output%unit, *) '3', rho_ai(1:5,1)
+
 
       call mem%dealloc(rho_ai, wf%n_v, wf%n_o)
 !
@@ -200,33 +181,20 @@ contains
 !
 !     Allocate unpacked transformed vector
 !
-      call mem%alloc(rho_aibj, (wf%n_o), (wf%n_v), (wf%n_o), (wf%n_v))
+      call mem%alloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       rho_aibj = zero
 !
 !     Contributions from singles vector c
 !
-      write(output%unit, *) 'Hello 7'
-      flush(output%unit)
-!
       call wf%jacobian_cc2_a2(rho_aibj, c_ai)
 !
-    !  stop
-!
       call mem%dealloc(c_ai, wf%n_v, wf%n_o)
-!
-      write(output%unit, *) 'Hello 8'
-      flush(output%unit)
 !
 !     Contributions from doubles vector c      
 !
       call wf%jacobian_cc2_b2(rho_aibj, c_aibj)
 !
-    !  stop
-!
       call mem%dealloc(c_aibj, (wf%n_v), (wf%n_o), (wf%n_v), (wf%n_o))
-!
-      write(output%unit, *) 'Hello 9'
-      flush(output%unit)
 !
 !     Overwrite the incoming doubles c vector & pack in
 !
@@ -255,7 +223,7 @@ contains
       enddo
 !$omp end parallel do
 !
-   !   stop
+      call mem%dealloc(rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
    end subroutine jacobian_cc2_transformation_cc2
 !

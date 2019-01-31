@@ -73,7 +73,7 @@ contains
       solver%eigenvalue_threshold = 1.0d-6
       solver%residual_threshold   = 1.0d-6
       solver%transformation       = 'right'
-      solver%diis_dimension       = 8
+      solver%diis_dimension       = 20
 !
       call solver%read_settings()
       call solver%print_settings()
@@ -284,12 +284,14 @@ contains
 !
 !              Construct residual and energy and precondition the former 
 !
+               write(output%unit, *) energies(state)
                call wf%construct_excited_state_equation(X(:,state), R(:,state), energies(state))
 !
 !$omp parallel do private(amplitude)
                do amplitude = 1, wf%n_es_amplitudes
 !
-                  R(amplitude, state) = -R(amplitude, state)/(eps(amplitude, 1) - energies(state))
+                !  R(amplitude, state) = -R(amplitude, state)/(eps(amplitude, 1) - energies(state))
+                  R(amplitude, state) = -R(amplitude, state)/(eps(amplitude, 1))
 !
                enddo
 !$omp end parallel do 
@@ -331,6 +333,10 @@ contains
       !   call solver%print_summary() 
 !
       endif 
+!
+         do state = 1, solver%n_singlet_states
+            call wf%print_dominant_x_amplitudes(X(:,state), 'r')
+         enddo
 !
       deallocate(energies)
       deallocate(prev_energies)
