@@ -247,7 +247,7 @@ contains
 !
          energy = wf%energy
 !
-         write(output%unit, '(t3,i3,10x,f17.12,4x,e10.4,4x,e10.4)') iteration, wf%energy, &
+         write(output%unit, '(t3,i3,10x,f17.12,4x,e11.4,4x,e11.4)') iteration, wf%energy, &
                                           max_grad, abs(wf%energy-prev_energy)
          flush(output%unit)
 !

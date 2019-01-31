@@ -122,7 +122,7 @@ contains
 !
       class(uhf) :: wf
 !
-      wf%name = 'UHF'
+      wf%name_ = 'UHF'
 !
       call wf%system%prepare()
 !
@@ -622,7 +622,7 @@ contains
       real(dp) :: homo_lumo_gap_a
       real(dp) :: homo_lumo_gap_b
 !
-      write(output%unit, '(/t3,a,a,a)') '- Summary of ', trim(wf%name), ' wavefunction energetics (a.u.):'
+      write(output%unit, '(/t3,a,a,a)') '- Summary of ', trim(wf%name_), ' wavefunction energetics (a.u.):'
 !
       homo_lumo_gap_a = wf%orbital_energies_a(wf%n_alpha + 1, 1) - wf%orbital_energies_a(wf%n_alpha, 1)
       homo_lumo_gap_b = wf%orbital_energies_b(wf%n_beta + 1, 1) - wf%orbital_energies_b(wf%n_beta, 1)

@@ -30,7 +30,7 @@ contains
 !
       class(gs_engine) :: engine 
 !
-      engine%tag = 'Ground state engine'
+      engine%name_ = 'Ground state engine'
 !
    end subroutine prepare_gs_engine
 !
@@ -49,7 +49,7 @@ contains
       type(eri_cd_solver), allocatable     :: eri_chol_solver
       type(diis_cc_gs_solver), allocatable :: cc_gs_solver 
 !
-      write(output%unit, '(/t3,a,a)') '- Running ', trim(engine%tag)
+      write(output%unit, '(/t3,a,a)') '- Running ', trim(engine%name_)
 !
 !     Cholesky decoposition 
 !
@@ -70,7 +70,7 @@ contains
 !
 !     Ground state solution (avoid starting solver if there are no equations to solve)
 !
-      if (trim(wf%name) == 'MP2') then 
+      if (trim(wf%name_) == 'MP2') then 
 !
          call wf%calculate_energy()
          call wf%print_wavefunction_summary()
@@ -99,7 +99,7 @@ contains
 !
       class(gs_engine) :: engine 
 !
-      write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(engine%tag)
+      write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(engine%name_)
 !
    end subroutine cleanup_gs_engine
 !

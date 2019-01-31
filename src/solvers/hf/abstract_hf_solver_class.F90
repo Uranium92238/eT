@@ -47,8 +47,8 @@ contains
 !
       class(abstract_hf_solver) :: solver 
 !
-      write(output%unit, '(t6,a30,e10.4)') 'Energy threshold:             ', solver%energy_threshold
-      write(output%unit, '(t6,a30,e10.4)') 'Gradient threshold:           ', solver%gradient_threshold
+      write(output%unit, '(t6,a30,e11.4)') 'Energy threshold:             ', solver%energy_threshold
+      write(output%unit, '(t6,a30,e11.4)') 'Gradient threshold:           ', solver%gradient_threshold
 !
    end subroutine print_hf_solver_settings_hf_solver
 !

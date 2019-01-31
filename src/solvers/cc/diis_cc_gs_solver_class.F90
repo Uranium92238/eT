@@ -270,7 +270,7 @@ contains
 !
          omega_norm = get_l2_norm(omega, wf%n_amplitudes)
 !
-         write(output%unit, '(t3,i3,10x,f17.12,4x,e10.4,4x,e10.4)') iteration, wf%energy, &
+         write(output%unit, '(t3,i3,10x,f17.12,4x,e11.4,4x,e11.4)') iteration, wf%energy, &
                                           omega_norm, abs(wf%energy-prev_energy)
          flush(output%unit)
 !

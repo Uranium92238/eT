@@ -314,7 +314,7 @@ contains
 !
             endif 
 !
-            write(output%unit, '(i3,3x,f19.12,6x,e10.4)') state, energies(state), residual_norms(state)
+            write(output%unit, '(i3,3x,f19.12,6x,e11.4)') state, energies(state), residual_norms(state)
             flush(output%unit)
 !
          enddo

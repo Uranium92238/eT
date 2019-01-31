@@ -145,7 +145,7 @@ contains
 !
       integer :: p
 !
-      wf%name = 'ccsd'
+      wf%name_ = 'ccsd'
 !
       wf%system = ref_wf%system
 !
@@ -196,7 +196,7 @@ contains
 !
       class(ccsd) :: wf
 !
-      write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(wf%name), ' wavefunction'
+      write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(wf%name_), ' wavefunction'
 !
    end subroutine cleanup_ccsd
 !

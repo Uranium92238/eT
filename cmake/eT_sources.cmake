@@ -6,7 +6,7 @@ set(eT_fortran_sources
    src/solvers/cc/diis_cc_gs_solver_class.F90
    src/solvers/cc/diis_cc_es_solver_class.F90
    src/solvers/cc/diis_cc_multipliers_solver_class.F90
-   src/solvers/cc/davidson_cc_multipliers_solver_class.F90
+   src/solvers/cc/davidson_cc_multipliers_class.F90
    src/solvers/cc/davidson_cc_es_solver_class.F90
    src/solvers/cc/davidson_cc_ip_solver_class.F90
    src/solvers/cc/davidson_cvs_cc_es_solver_class.F90

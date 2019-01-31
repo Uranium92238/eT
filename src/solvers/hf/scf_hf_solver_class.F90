@@ -162,7 +162,7 @@ contains
 !
 !        Print current iteration information
 !
-         write(output%unit, '(t3,i3,10x,f17.12,4x,e10.4)') iteration, energy, abs(energy-prev_energy)
+         write(output%unit, '(t3,i3,10x,f17.12,4x,e11.4)') iteration, energy, abs(energy-prev_energy)
          flush(output%unit)
 !
 !        Test for convergence:

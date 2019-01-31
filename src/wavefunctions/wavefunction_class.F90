@@ -14,7 +14,7 @@ module wavefunction_class
 !
    type, abstract :: wavefunction
 !
-      character(len=40) :: name
+      character(len=40) :: name_
 !
       real(dp) :: energy
 !
@@ -72,7 +72,7 @@ contains
 !
       class(wavefunction), intent(in) :: wf 
 !
-      write(output%unit, '(/t3,a,a,a)') '- Summary of ', trim(wf%name), ' wavefunction:'
+      write(output%unit, '(/t3,a,a,a)') '- Summary of ', trim(wf%name_), ' wavefunction:'
 !
 !
    end subroutine print_wavefunction_summary_wavefunction

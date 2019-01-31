@@ -194,7 +194,7 @@ contains
          call wf%construct_multiplier_equation(residual)
          residual_norm = get_l2_norm(residual, wf%n_amplitudes)
 !
-         write(output%unit, '(t3,i3,10x,e10.4)') iteration, residual_norm
+         write(output%unit, '(t3,i3,10x,e11.4)') iteration, residual_norm
          flush(output%unit)
 !
 !        Test for convergence & prepare for next iteration if not yet converged

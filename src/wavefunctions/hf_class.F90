@@ -151,7 +151,7 @@ contains
 !
       class(hf) :: wf
 !
-      wf%name = 'HF'
+      wf%name_ = 'HF'
 !
       call wf%read_settings()
 !
@@ -189,7 +189,7 @@ contains
 !
       real(dp) :: homo_lumo_gap
 !
-      write(output%unit, '(/t3,a,a,a)') '- Summary of ', trim(wf%name), ' wavefunction energetics (a.u.):'
+      write(output%unit, '(/t3,a,a,a)') '- Summary of ', trim(wf%name_), ' wavefunction energetics (a.u.):'
 !
       homo_lumo_gap = wf%orbital_energies(wf%n_o + 1, 1) - wf%orbital_energies(wf%n_o, 1)
 !

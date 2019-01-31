@@ -310,7 +310,7 @@ contains
 !
       iteration = 1
 !
-     call davidson%prepare(wf%name // '_es_davidson', wf%n_amplitudes, solver%n_singlet_states, &
+     call davidson%prepare(wf%name_ // '_es_davidson', wf%n_amplitudes, solver%n_singlet_states, &
                                solver%residual_threshold, solver%eigenvalue_threshold)
 !
 !     Construct first trial vectors
@@ -416,7 +416,7 @@ contains
 !
               converged = .true.
 !
-            elseif (iteration .eq. 1 .and. wf%name .eq. 'ccs') then
+            elseif (iteration .eq. 1 .and. wf%name_ .eq. 'ccs') then
 !
                   converged = .true.
                   write(output%unit,'(/t3,a,/t3,a)') 'Note: residual converged in first iteration.', &

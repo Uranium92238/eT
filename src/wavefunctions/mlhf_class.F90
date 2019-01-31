@@ -44,7 +44,7 @@ contains
 !
       class(mlhf) :: wf
 !
-      wf%name = 'MLHF'
+      wf%name_ = 'MLHF'
 !
       write(output%unit, '(a/)')':: SAD-ML test'
       flush(output%unit)
