@@ -12,7 +12,6 @@ module array_utilities
    use index
    use kinds
    use memory_manager_class
-   use dpstrf_eT
 !
    implicit none
 !

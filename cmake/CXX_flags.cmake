@@ -21,7 +21,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES GNU)
 #   Flags needed for libint package
 #
     set(CMAKE_CXX_FLAGS
-        "${CMAKE_CXX_FLAGS} -fexceptions -I/home/rolfheil/libint.2.4.2/include -I/usr/local/include/eigen3 -I/home/rolfheil/libint.2.4.2/include/libint2/ -lint2 -std=c++11 -DPREP_LIBINT2_SKIP_BOOST"
+        "${CMAKE_CXX_FLAGS} -fexceptions -I/usr/local/libint/2.4.2/include -I/usr/local/include/eigen3 -I/usr/local/libint/2.4.2/include/libint2/ -lint2 -std=c++11 -DPREP_LIBINT2_SKIP_BOOST"
         )
 #
     if(NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")

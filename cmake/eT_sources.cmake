@@ -40,7 +40,6 @@ set(eT_fortran_sources
    src/tools/array_analysis.F90
    src/tools/linked_list/array_list_class.F90
    src/tools/linked_list/array_node_class.F90
-   src/tools/dpstrf_eT.F90
    src/wavefunctions/wavefunction_class.F90
    src/wavefunctions/hf_class.F90
    src/wavefunctions/uhf_class.F90

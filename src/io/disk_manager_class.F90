@@ -131,7 +131,7 @@ contains
 !
 !        Set default
 !
-         disk%total = 30000000000
+         disk%total = 30000000000_i15
 !
       endif
 !

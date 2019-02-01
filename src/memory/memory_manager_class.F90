@@ -44,12 +44,12 @@ module memory_manager_class
 !
 !     The total amount of memory specified by user (standard: 8 GB)
 !
-      integer(i15) :: total = 8000000000
+      integer(i15) :: total
 !
 !     The amount of memory currently available, based on the arrays currently allocated
 !     (memory used by objects and local variables are not included in this estimate)
 !
-      integer(i15) :: available = 8000000000
+      integer(i15) :: available
 !
 !     Buffer for handling batches (standard: 10%). This means in practice that 'required
 !     memory' estimates are increased by 10% in case they miss they slightly underestimate
@@ -144,7 +144,7 @@ contains
 !
 !        Set default value 
 !
-         mem%total = 8*1000000000
+         mem%total = 8000000000_i15
 !
       endif
 !
@@ -589,7 +589,7 @@ contains
 !     The 'integer 15', or i15, type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      int_size = sizeof(array(1))
+      int_size = storage_size(array(1))/8
       mem%available = mem%available - int_size*size_array
 !
 !     Check if there is no more memory (defined as being no more memory
@@ -642,7 +642,7 @@ contains
 !     The 'integer 15', or i15, type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      int_size = sizeof(array(1,1))
+      int_size = storage_size(array(1,1))/8
       mem%available = mem%available - int_size*size_array
 !
 !     Check if there is no more memory (defined as being no more memory
@@ -695,7 +695,7 @@ contains
 !     The 'integer 15', or i15, type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      int_size = sizeof(array(1,1,1))
+      int_size = storage_size(array(1,1,1))/8
       mem%available = mem%available - int_size*size_array
 !
 !     Check if there is no more memory (defined as being no more memory
@@ -748,7 +748,7 @@ contains
 !     The 'integer 15', or i15, type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      int_size = sizeof(array(1,1,1,1))
+      int_size = storage_size(array(1,1,1,1))/8
       mem%available = mem%available - int_size*size_array
 !
 !     Check if there is no more memory (defined as being no more memory
@@ -801,7 +801,7 @@ contains
 !     The 'integer 15', or i15, type (see types.F90) is typically 4 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      int_size = sizeof(array(1))
+      int_size = storage_size(array(1))/8
       mem%available = mem%available + int_size*size_array
 !
    end subroutine dealloc_int_1_memory_manager
@@ -845,7 +845,7 @@ contains
 !     The 'integer 15', or i15, type (see types.F90) is typically 4 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      int_size = sizeof(array(1,1))
+      int_size = storage_size(array(1,1))/8
       mem%available = mem%available + int_size*size_array
 !
    end subroutine dealloc_int_2_memory_manager
@@ -889,7 +889,7 @@ contains
 !     The 'integer 15', or i15, type (see types.F90) is typically 4 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      int_size = sizeof(array(1,1,1))
+      int_size = storage_size(array(1,1,1))/8
       mem%available = mem%available + int_size*size_array
 !
    end subroutine dealloc_int_3_memory_manager
@@ -933,7 +933,7 @@ contains
 !     The 'integer 15', or i15, type (see types.F90) is typically 4 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      int_size = sizeof(array(1,1,1,1))
+      int_size = storage_size(array(1,1,1,1))/8
       mem%available = mem%available + int_size*size_array
 !
    end subroutine dealloc_int_4_memory_manager
@@ -1096,12 +1096,12 @@ contains
          if (line(1:10) == 'available:' ) then
 !
             read(line(11:100), *) mem%total
+            mem%total = mem%total*1000000000
 !
          endif
 !
       enddo
 !
-      mem%total = mem%total*1000000000
 !
    end subroutine read_settings_memory_manager
 !
