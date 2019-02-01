@@ -540,7 +540,108 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)      :: c_ai
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout)   :: rho_ai
-
+!
+      real(dp), dimension(:,:,:,:), allocatable :: g_ckib
+      real(dp), dimension(:,:,:,:), allocatable :: X_ckij, X_jcki, X_jick, X_ickj
+      real(dp), dimension(:,:,:,:), allocatable :: tbar_ajck 
+!
+      real(dp), dimension(:,:), allocatable :: rho_ia 
+!
+!     :: Term 1, - g_ckib tbar_ajck c_bj 
+!
+      call mem%alloc(g_ckib, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+      call wf%get_voov(g_ckib)
+!
+!     X_ckij = - g_ckib c_bj 
+!
+      call mem%alloc(X_ckij, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+!
+      call dgemm('N','N',               &
+                  (wf%n_v)*(wf%n_o)**2, &
+                  wf%n_o,               &
+                  wf%n_v,               &
+                  -one,                 &
+                  g_ckib,               & ! g_cki,b
+                  (wf%n_v)*(wf%n_o)**2, &
+                  c_ai,                 & ! c_b,j 
+                  wf%n_v,               &
+                  zero,                 &
+                  X_ckij,               & ! X_cki,j
+                  (wf%n_v)*(wf%n_o)**2)
+!
+      call mem%alloc(tbar_ajck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call squareup(wf%t2bar, tbar_ajck, (wf%n_v)*(wf%n_o))
+!
+!     rho_ai = tbar_ajck X_ckij = tbar_ajck X_jcki 
+!
+      call mem%alloc(X_jcki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
+      call sort_1234_to_4123(X_ckij, X_jcki, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+!
+      call mem%dealloc(X_ckij, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+!
+      call dgemm('N','N',               &
+                  wf%n_v,               &
+                  wf%n_o,               &
+                  (wf%n_v)*(wf%n_o)**2, &
+                  one,                  &
+                  tbar_ajck,            & ! tbar_a,jck
+                  wf%n_v,               &
+                  X_jcki,               & ! X_jck,i 
+                  (wf%n_v)*(wf%n_o)**2, &
+                  one,                  &
+                  rho_ai,               & ! rho_a,i
+                  wf%n_v)
+!
+      call mem%dealloc(X_jcki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
+!     :: Term 2, - g_ckja tbar_bick c_bj
+!
+!     X_jick = - c_bj tbar_bick = - c^T_j,b tbar_b,ick 
+!
+      call mem%alloc(X_jick, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('T','N',               &
+                  wf%n_o,               &
+                  (wf%n_v)*(wf%n_o)**2, &
+                  wf%n_v,               &
+                  -one,                 &
+                  c_ai,                 & ! c_b,j 
+                  wf%n_v,               &
+                  tbar_ajck,            & ! tbar_b,ick 
+                  wf%n_v,               &
+                  zero,                 &
+                  X_jick,               & ! X_j,ick 
+                  wf%n_o)
+!
+!     rho_ia = X_jick g_ckja = X_ickj g_ckja
+!
+      call mem%alloc(X_ickj, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
+      call sort_1234_to_2341(X_jick, X_ickj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%dealloc(X_jick, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(rho_ia, wf%n_o, wf%n_v)
+!
+      call dgemm('N','N',               &
+                  wf%n_o,               &
+                  wf%n_v,               &
+                  (wf%n_v)*(wf%n_o)**2, &
+                  one,                  &
+                  X_ickj,               & ! X_i,ckj 
+                  wf%n_o,               &
+                  g_ckib,               & ! g_ckj,a
+                  (wf%n_v)*(wf%n_o)**2, &
+                  zero,                 &
+                  rho_ia,               & ! rho_i,a
+                  wf%n_o)
+!
+      call add_21_to_12(one, rho_ia, rho_ai, wf%n_v, wf%n_o)
+!
+      call mem%dealloc(X_ickj, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+      call mem%dealloc(g_ckib, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+      call mem%dealloc(rho_ia, wf%n_o, wf%n_v)
 !
    end subroutine F_ccsd_a1_2_ccsd
 !
