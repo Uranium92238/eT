@@ -1084,7 +1084,7 @@ contains
    end subroutine F_ccsd_d1_2_ccsd
 !
 !
-   module subroutine F_ccsd_e1_2_ccsd(wf, c_aibj, rho_ai)
+   module subroutine F_ccsd_e1_2_ccsd(wf, c_aibj, rho_ai, tbar_aibj)
 !!
 !!    F transformation E1,2 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2018
@@ -1097,8 +1097,241 @@ contains
 !
       class(ccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)   :: c_aibj
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                :: rho_ai
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: c_aibj
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)              :: rho_ai
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: tbar_aibj
+!
+      real(dp), dimension(:,:,:,:), allocatable :: X_jkid, X_jdki, X_idcj, X_kbdi, X_kbdi_red, X_idcj_red
+      real(dp), dimension(:,:,:,:), allocatable :: c_jkbc, c_bkcj, c_kbcj
+      real(dp), dimension(:,:,:,:), allocatable :: tbar_idbk
+      real(dp), dimension(:,:,:,:), allocatable :: g_ibdc, g_bcid, g_dcja, g_kbda
+!
+      integer(i15) :: req0, req1, current_d_batch
+      type(batching_index) :: batch_d
+!
+!     :: Term 1, - g_ibdc tbar_ajdk c_bjck
+!
+!     X_jkid = - sum_bc g_ibdc c_bjck
+!            = - sum_bc c_jk,bc g_bc,id  
+!
+!     Construct intermediate in batches over d 
+!
+      call mem%alloc(c_jkbc, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
+      call sort_1234_to_2413(c_aibj, c_jkbc, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(X_jkid, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+      X_jkid = zero 
+!
+      req0 = (wf%integrals%n_J)*(wf%n_o)*(wf%n_v)
+      req1 = (wf%integrals%n_J)*(wf%n_v) + 2*(wf%n_o)*(wf%n_v)**2
+!
+      call batch_d%init(wf%n_v)
+!
+      call mem%batch_setup(batch_d, req0, req1)
+!
+      do current_d_batch = 1, batch_d%num_batches
+!
+         call batch_d%determine_limits(current_d_batch)
+!
+         call mem%alloc(g_ibdc, wf%n_o, wf%n_v, batch_d%length, wf%n_v)
+!
+         call wf%get_ovvv(g_ibdc,                       &
+                           1, wf%n_o,                   &
+                           1, wf%n_v,                   &
+                           batch_d%first, batch_d%last, &
+                           1, wf%n_v) 
+!
+         call mem%alloc(g_bcid, wf%n_v, wf%n_v, wf%n_o, batch_d%length)
+!
+         call sort_1234_to_2413(g_ibdc, g_bcid, wf%n_o, wf%n_v, batch_d%length, wf%n_v)
+!
+         call mem%dealloc(g_ibdc, wf%n_o, wf%n_v, batch_d%length, wf%n_v)
+!
+         call dgemm('N','N',                      &
+                     (wf%n_o)**2,                 &
+                     (wf%n_o)*(batch_d%length),   &
+                     (wf%n_v)**2,                 &
+                     -one,                        &
+                     c_jkbc,                      & ! c_jk,bc 
+                     (wf%n_o)**2,                 &
+                     g_bcid,                      & ! g_bc,i#d
+                     (wf%n_v)**2,                 &
+                     one,                         &
+                     X_jkid(1,1,1,batch_d%first), & ! X_jk,id
+                     (wf%n_o)**2)
+!
+         call mem%dealloc(g_bcid, wf%n_v, wf%n_v, wf%n_o, batch_d%length)
+!
+      enddo
+!
+      call mem%dealloc(c_jkbc, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
+!
+!     rho_ai =+ tbar_ajdk X_jkid = tbar_ajdk X_jdki
+!
+      call mem%alloc(X_jdki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
+      call sort_1234_to_1423(X_jkid, X_jdki, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+!
+      call mem%dealloc(X_jkid, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+!
+      call dgemm('N','N',               &
+                  wf%n_v,               &
+                  wf%n_o,               &
+                  (wf%n_v)*(wf%n_o)**2, &
+                  one,                  &
+                  tbar_aibj,            & ! tbar_a,jdk
+                  wf%n_v,               &
+                  X_jdki,               & ! X_jdk,i
+                  (wf%n_v)*(wf%n_o)**2, &
+                  one,                  &
+                  rho_ai,               & ! rho_a,i
+                  wf%n_v)
+!
+      call mem%dealloc(X_jdki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
+!     :: Term 2, - g_jadc tbar_bidk c_bjck
+!
+!     X_idjc = - tbar_bidk c_bjck = - tbar_id,bk c_bk,cj
+! 
+      call mem%alloc(tbar_idbk, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
+      call sort_1234_to_2314(tbar_aibj, tbar_idbk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(c_bkcj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call sort_1234_to_1432(c_aibj, c_bkcj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(X_idcj, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
+!
+      call dgemm('N','N',            &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  -one,              &
+                  tbar_idbk,         & ! tbar_id,bk
+                  (wf%n_o)*(wf%n_v), &
+                  c_bkcj,            & ! c_bk,cj
+                  (wf%n_o)*(wf%n_v), &
+                  zero,              &
+                  X_idcj,            & ! X_id,cj
+                  (wf%n_o)*(wf%n_v))
+!
+      call mem%dealloc(tbar_idbk, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
+      call mem%dealloc(c_bkcj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+!     rho_ai =+ X_idcj g_jadc = X_idcj g_dcja 
+!
+!     We construct constributions in batches over d
+!
+      req0 = (wf%integrals%n_J)*(wf%n_o)*(wf%n_v)
+      req1 = (wf%integrals%n_J)*(wf%n_v) + (wf%n_o)*(wf%n_v)**2 + (wf%n_v)*(wf%n_o)**2
+!
+      call batch_d%init(wf%n_v)
+!
+      call mem%batch_setup(batch_d, req0, req1)
+!
+      do current_d_batch = 1, batch_d%num_batches
+!
+         call batch_d%determine_limits(current_d_batch)
+!
+         call mem%alloc(g_dcja, batch_d%length, wf%n_v, wf%n_o, wf%n_v)
+!
+         call wf%get_vvov(g_dcja,                       &
+                           batch_d%first, batch_d%last, &
+                           1, wf%n_v,                   &
+                           1, wf%n_o,                   &
+                           1, wf%n_v)
+!
+         call mem%alloc(X_idcj_red, wf%n_o, batch_d%length, wf%n_v, wf%n_o)
+!
+         X_idcj_red(:,:,:,:) = X_idcj(:,batch_d%first:batch_d%last,:,:)
+!
+         call dgemm('T','T',                             &
+                     wf%n_v,                             &
+                     wf%n_o,                             &
+                     (wf%n_o)*(wf%n_v)*(batch_d%length), &
+                     one,                                &
+                     g_dcja,                             & ! g_dcj,a 
+                     (wf%n_o)*(wf%n_v)*(batch_d%length), &
+                     X_idcj_red,                         & ! g_i,dcj
+                     wf%n_o,                             &
+                     one,                                &
+                     rho_ai,                             & ! rho_a,i
+                     wf%n_v)
+!
+         call mem%dealloc(g_dcja, batch_d%length, wf%n_v, wf%n_o, wf%n_v)
+         call mem%dealloc(X_idcj_red, wf%n_o, batch_d%length, wf%n_v, wf%n_o)
+!
+      enddo
+!
+!     :: Term 3, - g_kbda tbar_cjdi c_bjck
+!
+!     X_kbdi = - tbar_cjdi c_bjck = - c_kb,cj tbar_cj,di
+!
+      call mem%alloc(c_kbcj, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
+      call sort_1234_to_4132(c_aibj, c_kbcj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(X_kbdi, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
+!
+      call dgemm('N','N',            &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  -one,              &
+                  c_kbcj,            & ! c_kb,cj 
+                  (wf%n_o)*(wf%n_v), &
+                  tbar_aibj,         & ! tbar_cj,di
+                  (wf%n_o)*(wf%n_v), &
+                  zero,              &
+                  X_kbdi,            & ! X_kb,di
+                  (wf%n_o)*(wf%n_v))
+!
+      call mem%dealloc(c_kbcj, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
+!
+!     rho_ai =+ X_kbdi g_kbda 
+!
+!     Construct term in batches over d 
+!
+      req0 = (wf%integrals%n_J)*(wf%n_o)*(wf%n_v)
+      req1 = (wf%integrals%n_J)*(wf%n_v) + (wf%n_o)*(wf%n_v)**2 + (wf%n_v)*(wf%n_o)**2
+!
+      call batch_d%init(wf%n_v)
+!
+      call mem%batch_setup(batch_d, req0, req1)
+!
+      do current_d_batch = 1, batch_d%num_batches
+!
+         call batch_d%determine_limits(current_d_batch)
+!
+         call mem%alloc(g_kbda, wf%n_o, wf%n_v, batch_d%length, wf%n_v)
+!
+         call wf%get_ovvv(g_kbda,                       &
+                           1, wf%n_o,                   &
+                           1, wf%n_v,                   &
+                           batch_d%first, batch_d%last, &
+                           1, wf%n_v)
+!
+         call mem%alloc(X_kbdi_red, wf%n_o, wf%n_v, batch_d%length, wf%n_o)
+!
+         X_kbdi_red(:,:,:,:) = X_kbdi(:,:,batch_d%first:batch_d%last,:)
+!
+         call dgemm('T','N',                             &
+                     wf%n_v,                             &
+                     wf%n_o,                             &
+                     (wf%n_o)*(wf%n_v)*(batch_d%length), &
+                     one,                                &
+                     g_kbda,                             & ! g_kbd,a
+                     (wf%n_o)*(wf%n_v)*(batch_d%length), &
+                     X_kbdi_red,                         & ! X_kbd,i
+                     (wf%n_o)*(wf%n_v)*(batch_d%length), &
+                     one,                                &
+                     rho_ai,                             & ! rho_a,i
+                     wf%n_v)
+!
+         call mem%dealloc(X_kbdi_red, wf%n_o, wf%n_v, batch_d%length, wf%n_o)
+         call mem%dealloc(g_kbda, wf%n_o, wf%n_v, batch_d%length, wf%n_v)
+!
+      enddo 
+!
+      call mem%dealloc(X_kbdi, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
 !
    end subroutine F_ccsd_e1_2_ccsd
 !

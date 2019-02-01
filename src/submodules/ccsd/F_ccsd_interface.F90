@@ -112,7 +112,7 @@
    end subroutine F_ccsd_d1_2_ccsd
 !
 !
-   module subroutine F_ccsd_e1_2_ccsd(wf, c_aibj, rho_ai)
+   module subroutine F_ccsd_e1_2_ccsd(wf, c_aibj, rho_ai, tbar_aibj)
 !!
 !!    F transformation E1,2 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2018
@@ -123,5 +123,6 @@
 !
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)   :: c_aibj
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                :: rho_ai
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)   :: tbar_aibj
 !
    end subroutine F_ccsd_e1_2_ccsd
