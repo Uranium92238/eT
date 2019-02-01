@@ -665,7 +665,7 @@ contains
    end subroutine F_ccsd_b1_2_ccsd
 !
 !
-   module subroutine F_ccsd_c1_2_ccsd(wf, c_ai, rho_ai)
+   module subroutine F_ccsd_c1_2_ccsd(wf, c_ai, rho_ai, tbar_aibj)
 !!
 !!    F transformation C1,2 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2018
@@ -678,9 +678,160 @@ contains
 !
       class(ccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)      :: c_ai
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)   :: rho_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                   :: c_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                :: rho_ai
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)   :: tbar_aibj
 !
+!     Local variables
+!
+      real(dp), dimension(:,:,:,:), allocatable :: X_jlak
+      real(dp), dimension(:,:,:,:), allocatable :: X_akjl
+      real(dp), dimension(:,:,:,:), allocatable :: g_ikjl
+      real(dp), dimension(:,:,:,:), allocatable :: X_bcdi
+      real(dp), dimension(:,:,:,:), allocatable :: X_dbci
+      real(dp), dimension(:,:,:,:), allocatable :: tbar_jcdi
+      real(dp), dimension(:,:,:,:), allocatable :: g_dbca
+!
+      type(batching_index) :: batch_c, batch_d
+!
+      integer(i15) :: req0, req1_c, req1_d, req2, current_c_batch, current_d_batch
+      integer(i15) :: c, d, i, j
+!
+!     Term 1:  - g_ikjl tbar_blak c_bj
+!
+      call mem%alloc(X_jlak, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('T', 'N',             &
+                  wf%n_o,              &
+                  (wf%n_o**2)*wf%n_v,  &
+                  wf%n_v,              &
+                  one,                 &
+                  c_ai,                & ! c_b_j
+                  wf%n_v,              &
+                  tbar_aibj,           & ! tbar_b_lak
+                  wf%n_v,              &
+                  zero,                &
+                  X_jlak,              & ! X_j_lak
+                  wf%n_o)
+!
+!     Reorder X_jlak to X_akjl
+!
+      call mem%alloc(X_akjl, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+!
+      call sort_1234_to_3412(X_jlak, X_akjl, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%dealloc(X_jlak, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(g_ikjl, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
+      call wf%get_oooo(g_ikjl)
+!
+      call dgemm('N', 'T',       &
+                  wf%n_v,        &
+                  wf%n_o,        &
+                  wf%n_o**3,     &
+                  -one,          &
+                  X_akjl,        &
+                  wf%n_o,        &
+                  g_ikjl,        &
+                  wf%n_o,        &
+                  one,           &
+                  rho_ai,        &
+                  wf%n_v)
+!
+      call mem%dealloc(X_akjl, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+      call mem%dealloc(g_ikjl, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
+!
+!     Term 2: - g_cadb tbar_cidj c_bj
+!
+      req0 = 0
+!
+      req1_c =  wf%integrals%n_J*wf%n_v
+      req1_d =  wf%integrals%n_J*wf%n_v
+!
+      req2 = (wf%n_o)*(wf%n_v) + wf%n_v**2
+!
+      call batch_c%init(wf%n_v)
+      call batch_d%init(wf%n_v)
+!
+      call mem%batch_setup(batch_c, batch_d, req0, req1_c, req1_d, req2)
+!
+      do current_c_batch = 1, batch_c%num_batches
+!
+         call batch_c%determine_limits(current_c_batch)
+!
+         do current_d_batch = 1, batch_d%num_batches
+!
+            call batch_d%determine_limits(current_d_batch)
+!
+            call mem%alloc(tbar_jcdi, wf%n_o, batch_c%length, batch_d%length, wf%n_o)
+!
+!           Reorder tbar_cidj to tbar_jcdi
+!
+!$omp parallel do private(i, d, c, j)
+            do i = 1, wf%n_o
+               do d = 1, batch_d%length
+                  do c = 1, batch_c%length
+                     do j = 1, wf%n_o
+!
+                        tbar_jcdi(j, c, d, i) = tbar_aibj(c + batch_c%first - 1, i, d + batch_d%first - 1, j)
+!
+                     enddo
+                  enddo
+               enddo
+            enddo
+!$omp end parallel do
+!
+!           X_bcdi = tbar_jcdi c_bj ( = tbar_cicj c_bj )
+!
+            call mem%alloc(X_bcdi, wf%n_v, batch_c%length, batch_d%length, wf%n_o)
+!
+            call dgemm('N', 'N',                                     &
+                        wf%n_v,                                      &
+                        (batch_d%length)*(batch_c%length)*(wf%n_o),  &
+                        wf%n_o,                                      &
+                        one,                                         &
+                        c_ai,                                        & ! c_bj 
+                        wf%n_v,                                      &
+                        tbar_jcdi,                                   & ! tbar_j_cdi
+                        wf%n_o,                                      &
+                        zero,                                        &
+                        X_bcdi,                                      & ! X_b_cdi
+                        wf%n_v)
+!
+            call mem%dealloc(tbar_jcdi, wf%n_o, batch_c%length, batch_d%length, wf%n_o)
+!
+!           Reorder X_bcdi to X_dbci
+!
+            call mem%alloc(X_dbci, batch_d%length, wf%n_v, batch_c%length, wf%n_o)
+            call sort_1234_to_3124(X_bcdi, X_dbci, wf%n_v, batch_c%length, batch_d%length, wf%n_o)
+            call mem%dealloc(X_bcdi, wf%n_v, batch_c%length, batch_d%length, wf%n_o)
+!
+            call mem%alloc(g_dbca, batch_d%length, wf%n_v, batch_c%length, wf%n_v)
+            call wf%get_vvvv(g_dbca,                        &
+                              batch_d%first, batch_d%last,  &
+                              1, wf%n_v,                    &
+                              batch_c%first, batch_c%last,  &
+                              1, wf%n_v)
+!
+            call dgemm('T', 'N',    &
+                        wf%n_v,     &
+                        wf%n_o,     &
+                        wf%n_v**3,  &
+                        -one,       &
+                        g_dbca,     & ! g_dbc_a
+                        wf%n_v**3,  &
+                        X_dbci,     & ! X_dbc_i
+                        wf%n_v**3,  &
+                        one,        &
+                        rho_ai,     &
+                        wf%n_v)
+!
+            call mem%dealloc(g_dbca, batch_d%length, wf%n_v, batch_c%length, wf%n_v)
+            call mem%dealloc(X_dbci, batch_d%length, wf%n_v, batch_c%length, wf%n_o)
+!
+         enddo ! batch_d
+      enddo ! batch_c
+
    end subroutine F_ccsd_c1_2_ccsd
 !
 !
