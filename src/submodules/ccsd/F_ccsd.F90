@@ -342,4 +342,99 @@ contains
    end subroutine F_ccsd_a2_1_ccsd
 !
 !
+   module subroutine F_ccsd_a1_2_ccsd(wf, c_ai, rho_ai)
+!!
+!!    F transformation A1,2 term
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2018
+!!
+!!    rho_A1,1 = - (g_ibck tbar_ajck + g_jack tbar_bick) c_bj
+!!
+!!    First two terms of (65)
+!!
+      implicit none
+!
+      class(ccsd), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)      :: c_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)   :: rho_ai
+
+!
+   end subroutine F_ccsd_a1_2_ccsd
+!
+!
+   module subroutine F_ccsd_b1_2_ccsd(wf, c_ai, rho_ai)
+!!
+!!    F transformation B1,2 term
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2018
+!!
+!!    rho_B1,1 = - (g_ikcb tbar_akcj + g_jkca tbar_bkci) c_bj
+!!
+!!    Term 3 & 4 of (65)
+!!
+      implicit none
+!
+      class(ccsd), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)      :: c_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)   :: rho_ai
+!
+   end subroutine F_ccsd_b1_2_ccsd
+!
+!
+   module subroutine F_ccsd_c1_2_ccsd(wf, c_ai, rho_ai)
+!!
+!!    F transformation C1,2 term
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2018
+!!
+!!    rho_C1,1 = - (g_ikjl tbar_akbl + g_cadb tbar_cidj) c_bj
+!!
+!!    Last two terms of (65)
+!!
+      implicit none
+!
+      class(ccsd), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)      :: c_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)   :: rho_ai
+!
+   end subroutine F_ccsd_c1_2_ccsd
+!
+!
+   module subroutine F_ccsd_d1_2_ccsd(wf, c_aibj, rho_ai)
+!!
+!!    F transformation D1,2 term
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2018
+!!
+!!    rho_D1,1 = (g_iljc tbar_albk + g_jlic tbar_blak + g_klja tbar_clbi) c_bjck
+!!
+!!    First three terms of (66)
+!!
+      implicit none
+!
+      class(ccsd), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)   :: c_aibj
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                :: rho_ai
+!
+   end subroutine F_ccsd_d1_2_ccsd
+!
+!
+   module subroutine F_ccsd_e1_2_ccsd(wf, c_aibj, rho_ai)
+!!
+!!    F transformation E1,2 term
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2018
+!!
+!!    rho_E1,1 = -(g_ibdc tbar_ajdk + g_jadc tbar_bidk + g_kbda tbar_cjdi) c_bjck
+!!
+!!    Last three terms of (66)
+!!
+      implicit none
+!
+      class(ccsd), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)   :: c_aibj
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                :: rho_ai
+!
+   end subroutine F_ccsd_e1_2_ccsd
+!
 end submodule F_ccsd
