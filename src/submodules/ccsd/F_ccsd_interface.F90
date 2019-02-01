@@ -47,7 +47,7 @@
 !
 !
 !
-   module subroutine F_ccsd_a1_2_ccsd(wf, c_ai, rho_ai)
+   module subroutine F_ccsd_a1_2_ccsd(wf, c_ai, rho_ai, tbar_aibj)
 !!
 !!    F transformation A1,2 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2018
@@ -56,14 +56,14 @@
 !
       class(ccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)      :: c_ai
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)   :: rho_ai
-
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                   :: c_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                :: rho_ai
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)   :: tbar_aibj
 !
    end subroutine F_ccsd_a1_2_ccsd
 !
 !
-   module subroutine F_ccsd_b1_2_ccsd(wf, c_ai, rho_ai)
+   module subroutine F_ccsd_b1_2_ccsd(wf, c_ai, rho_ai, tbar_aibj)
 !!
 !!    F transformation B1,2 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2018
@@ -72,8 +72,9 @@
 !
       class(ccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)      :: c_ai
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)   :: rho_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                   :: c_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                :: rho_ai
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)   :: tbar_aibj
 !
    end subroutine F_ccsd_b1_2_ccsd
 !
@@ -94,7 +95,7 @@
    end subroutine F_ccsd_c1_2_ccsd
 !
 !
-   module subroutine F_ccsd_d1_2_ccsd(wf, c_aibj, rho_ai)
+   module subroutine F_ccsd_d1_2_ccsd(wf, c_aibj, rho_ai, tbar_aibj)
 !!
 !!    F transformation D1,2 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2018
@@ -106,6 +107,7 @@
 !
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)   :: c_aibj
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                :: rho_ai
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)   :: tbar_aibj
 !
    end subroutine F_ccsd_d1_2_ccsd
 !

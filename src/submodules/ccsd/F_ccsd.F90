@@ -525,7 +525,7 @@ contains
    end subroutine F_ccsd_a2_1_ccsd
 !
 !
-   module subroutine F_ccsd_a1_2_ccsd(wf, c_ai, rho_ai)
+   module subroutine F_ccsd_a1_2_ccsd(wf, c_ai, rho_ai, tbar_aibj)
 !!
 !!    F transformation A1,2 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2018
@@ -538,12 +538,12 @@ contains
 !
       class(ccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)      :: c_ai
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)   :: rho_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                   :: c_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                :: rho_ai
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)   :: tbar_aibj
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_ckib
       real(dp), dimension(:,:,:,:), allocatable :: X_ckij, X_jcki, X_jick, X_ickj
-      real(dp), dimension(:,:,:,:), allocatable :: tbar_ajck 
 !
       real(dp), dimension(:,:), allocatable :: rho_ia 
 !
@@ -569,9 +569,6 @@ contains
                   X_ckij,               & ! X_cki,j
                   (wf%n_v)*(wf%n_o)**2)
 !
-      call mem%alloc(tbar_ajck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
-      call squareup(wf%t2bar, tbar_ajck, (wf%n_v)*(wf%n_o))
-!
 !     rho_ai = tbar_ajck X_ckij = tbar_ajck X_jcki 
 !
       call mem%alloc(X_jcki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
@@ -585,7 +582,7 @@ contains
                   wf%n_o,               &
                   (wf%n_v)*(wf%n_o)**2, &
                   one,                  &
-                  tbar_ajck,            & ! tbar_a,jck
+                  tbar_aibj,            & ! tbar_a,jck
                   wf%n_v,               &
                   X_jcki,               & ! X_jck,i 
                   (wf%n_v)*(wf%n_o)**2, &
@@ -608,7 +605,7 @@ contains
                   -one,                 &
                   c_ai,                 & ! c_b,j 
                   wf%n_v,               &
-                  tbar_ajck,            & ! tbar_b,ick 
+                  tbar_aibj,            & ! tbar_b,ick 
                   wf%n_v,               &
                   zero,                 &
                   X_jick,               & ! X_j,ick 
@@ -646,7 +643,7 @@ contains
    end subroutine F_ccsd_a1_2_ccsd
 !
 !
-   module subroutine F_ccsd_b1_2_ccsd(wf, c_ai, rho_ai)
+   module subroutine F_ccsd_b1_2_ccsd(wf, c_ai, rho_ai, tbar_aibj)
 !!
 !!    F transformation B1,2 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2018
@@ -659,8 +656,85 @@ contains
 !
       class(ccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o), intent(in)      :: c_ai
-      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)   :: rho_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                   :: c_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                :: rho_ai
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)   :: tbar_aibj
+!
+!     Local variables 
+!
+      real(dp), dimension(:,:,:,:), allocatable :: g_ikcb
+      real(dp), dimension(:,:,:,:), allocatable :: X_ikcj
+      real(dp), dimension(:,:,:,:), allocatable :: X_jkci
+!
+!     Term 1: - g_ikcb tbar_akcj c_bj
+!
+      call mem%alloc(g_ikcb, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
+      call wf%get_oovv(g_ikcb)
+!
+      call mem%alloc(X_ikcj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('N', 'N',                &
+                  (wf%n_o**2)*(wf%n_v),   &
+                  wf%n_o,                 &
+                  wf%n_v,                 &
+                  one,                    &
+                  g_ikcb,                 & ! g_ikc_b
+                  (wf%n_o**2)*(wf%n_v),   &
+                  c_ai,                   & ! c_b_j 
+                  wf%n_v,                 &
+                  zero,                   &
+                  X_ikcj,                 &
+                  (wf%n_o**2)*(wf%n_v))
+!
+      call dgemm('N', 'T',                &
+                  wf%n_v,                 &
+                  wf%n_o,                 &
+                  (wf%n_o**2)*(wf%n_v),   &
+                  -one,                   &
+                  tbar_aibj,              & ! tbar_a_kcj
+                  wf%n_v,                 &
+                  X_ikcj,                 & ! X_i_kcj
+                  wf%n_o,                 &
+                  one,                    &
+                  rho_ai,                 &
+                  wf%n_v)
+!
+      call mem%dealloc(X_ikcj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+!     Term 2:  - g_jkca tbar_bkci c_bj
+!
+      call mem%alloc(X_jkci, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('T', 'N',             &
+                  wf%n_o,              &
+                  (wf%n_o**2)*wf%n_v,  &
+                  wf%n_v,              &
+                  one,                 &
+                  c_ai,                & ! c_b_j
+                  wf%n_v,              &
+                  tbar_aibj,           & ! t_b_kci
+                  wf%n_v,              &
+                  zero,                &
+                  X_jkci,              & ! X_j_kci
+                  wf%n_o)
+!
+!     NOTE: we will now pretend that g_ikcb is g_jkca    
+!
+      call dgemm('T', 'N',             &
+                  wf%n_v,              &
+                  wf%n_o,              &
+                  (wf%n_o**2)*wf%n_v,  &
+                  -one,                &
+                  g_ikcb,              & ! g_jkc_a
+                  (wf%n_o**2)*wf%n_v,  &
+                  X_jkci,              & ! X_jkc_i
+                  (wf%n_o**2)*wf%n_v,  &
+                  one,                 &
+                  rho_ai,              &
+                  wf%n_v)
+!
+      call mem%dealloc(g_ikcb, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
+      call mem%dealloc(X_jkci, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
 !
    end subroutine F_ccsd_b1_2_ccsd
 !
@@ -835,7 +909,7 @@ contains
    end subroutine F_ccsd_c1_2_ccsd
 !
 !
-   module subroutine F_ccsd_d1_2_ccsd(wf, c_aibj, rho_ai)
+   module subroutine F_ccsd_d1_2_ccsd(wf, c_aibj, rho_ai, tbar_aibj)
 !!
 !!    F transformation D1,2 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2018
@@ -850,6 +924,162 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)   :: c_aibj
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout)                :: rho_ai
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)   :: tbar_aibj
+!
+!     Local variables
+!
+      real(dp), dimension(:,:,:,:), allocatable :: c_bkjc
+      real(dp), dimension(:,:,:,:), allocatable :: c_jcbk
+      real(dp), dimension(:,:,:,:), allocatable :: c_kjcb
+      real(dp), dimension(:,:,:,:), allocatable :: g_iljc
+      real(dp), dimension(:,:,:,:), allocatable :: g_jcli
+      real(dp), dimension(:,:,:,:), allocatable :: tbar_cbli
+      real(dp), dimension(:,:,:,:), allocatable :: X_bkli
+      real(dp), dimension(:,:,:,:), allocatable :: X_ilbk
+      real(dp), dimension(:,:,:,:), allocatable :: X_kbli
+      real(dp), dimension(:,:,:,:), allocatable :: X_kjli
+      real(dp), dimension(:,:,:,:), allocatable :: X_klji
+!
+!     Term 1: g_iljc tbar_albk c_bjck
+!
+!     Reorder c_ckbj to c_jcbk 
+!
+      call mem%alloc(c_jcbk, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
+      call sort_1234_to_4132(c_aibj, c_jcbk , wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(g_iljc, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+      call wf%get_ooov(g_iljc)
+!
+      call mem%alloc(X_ilbk, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('N', 'N',             &
+                  wf%n_o**2,           &
+                  (wf%n_o)*(wf%n_v),   &
+                  (wf%n_o)*(wf%n_v),   &
+                  one,                 &
+                  g_iljc,              & ! g_il_jc
+                  wf%n_o**2,           &
+                  c_jcbk,              & ! c_jc_bk
+                  (wf%n_o)*(wf%n_v),   &
+                  zero,                &
+                  X_ilbk,              & ! X_il_bk
+                  wf%n_o**2)
+!
+      call dgemm('N', 'T',                &
+                  (wf%n_v),               &
+                  (wf%n_o),               &
+                  (wf%n_o**2)*(wf%n_v),   &
+                  one,                    &
+                  tbar_aibj,              & ! tbar_a_lbk
+                  wf%n_v,                 &
+                  X_ilbk,                 & ! X_i_lbk
+                  wf%n_o,                 &
+                  one,                    &
+                  rho_ai,                 &
+                  wf%n_v)
+!
+      call mem%dealloc(X_ilbk, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+!     Term 2: g_jlic tbar_blak c_bjck
+!
+!     NOTE: We now pretend that g_iljc is g_jlic
+!
+!     Reorder g_jlic to g_jcli
+!
+      call mem%alloc(g_jcli, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+      call sort_1234_to_1423(g_iljc, g_jcli, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+!
+      call mem%alloc(X_bkli, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+!
+      call dgemm('T', 'N',             &
+                  (wf%n_o)*(wf%n_v),   &
+                  wf%n_o**2,           &
+                  (wf%n_o)*(wf%n_v),   &
+                  one,                 &
+                  c_jcbk,              & ! c_jc_bk
+                  (wf%n_o)*(wf%n_v),   &
+                  g_jcli,              & ! g_jc_li
+                  (wf%n_o)*(wf%n_v),   &
+                  zero,                &
+                  X_bkli,              & ! X_bk_li 
+                  (wf%n_o)*(wf%n_v))
+!
+      call mem%dealloc(g_jcli, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
+!     Reorder X_bkli to X_kbli
+!
+      call mem%alloc(X_kbli, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+      call sort_1234_to_2134(X_bkli, X_kbli, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+      call mem%dealloc(X_bkli, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+!
+      call dgemm('N', 'N',             &
+                  wf%n_v,              &
+                  wf%n_o,              &
+                  (wf%n_o**2)*wf%n_v,  &
+                  one,                 &
+                  tbar_aibj,           & ! t_a_kbl
+                  wf%n_v,              &
+                  X_kbli,              & ! X_kbl_i
+                  (wf%n_o**2)*wf%n_v,  &
+                  one,                 &
+                  rho_ai,              &
+                  wf%n_v)
+
+!
+      call mem%alloc(X_kbli, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+      call mem%dealloc(c_bkjc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
+!
+!     Term 3:  g_klja tbar_clbi c_bjck
+!
+!     Reorder tbar_clbi to tbar_cbli and c_ckbj to c_kjcb
+!
+      call mem%alloc(tbar_cbli, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call sort_1234_to_1324(tbar_aibj, tbar_cbli, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(c_kjcb, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
+      call sort_1234_to_2413(c_aibj, c_kjcb, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(X_kjli, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
+!
+      call dgemm('N', 'N',       &
+                  wf%n_o**2,     &
+                  wf%n_o**2,     &
+                  wf%n_v**2,     &
+                  one,           &
+                  c_kjcb,        & ! c_kj_cb
+                  wf%n_o**2,     &
+                  tbar_cbli,     & ! tbar_ck_li
+                  wf%n_v**2,     &
+                  zero,          &
+                  X_kjli,        &
+                  wf%n_o**2)
+!
+      call mem%dealloc(tbar_cbli, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call mem%dealloc(c_kjcb, wf%n_o, wf%n_o, wf%n_v, wf%n_v)
+!
+!     Reorder X_kjli to X_klji
+!
+      call mem%alloc(X_klji, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
+      call sort_1234_to_1324(X_kjli, X_klji, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
+      call mem%dealloc(X_kjli, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
+!
+!     NOTE: we now pretend that g_iljc is g_klja
+!
+      call dgemm('T', 'N',    &
+                  wf%n_v,     &
+                  wf%n_o,     &
+                  wf%n_o**3,  &
+                  one,        &
+                  g_iljc,     & ! g_klj_a
+                  wf%n_o**3,  &
+                  X_klji,     & ! X_klj_i
+                  wf%n_o**3,  &
+                  one,        &
+                  rho_ai,     &
+                  wf%n_v) 
+!
+      call mem%dealloc(g_iljc, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+      call mem%dealloc(X_klji, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
 !
    end subroutine F_ccsd_d1_2_ccsd
 !
