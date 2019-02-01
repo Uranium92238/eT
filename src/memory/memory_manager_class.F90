@@ -104,13 +104,6 @@ module memory_manager_class
       procedure :: num_batch     => num_batch_memory_manager     ! For one-index batch
       procedure :: num_two_batch => num_two_batch_memory_manager ! For two-index batches
 !
-      procedure :: read_settings  => read_settings_memory_manager
-      procedure :: print_settings => print_settings_memory_manager
-!
-!     Routines that ask for information
-!
-      procedure :: room_for_n_arrays_of_size => room_for_n_arrays_of_size_memory_manager
-!
       procedure :: batch_setup_1_memory_manager
       procedure :: batch_setup_2_memory_manager
       procedure :: batch_setup_3_memory_manager
@@ -119,6 +112,12 @@ module memory_manager_class
 !
       procedure :: batch_setup_3_ident_memory_manager
       generic   :: batch_setup_ident => batch_setup_3_ident_memory_manager
+!
+      procedure :: read_settings  => read_settings_memory_manager
+      procedure :: print_settings => print_settings_memory_manager
+!
+      procedure :: get_available  => get_available_memory_manager
+!
 !
    end type memory_manager
 !
@@ -158,6 +157,30 @@ contains
       call mem%print_settings()
 !
    end subroutine prepare_memory_manager
+!
+!
+   integer(i15) function get_available_memory_manager(mem, requested_unit)
+!!
+!!    Get available  
+!!    Written by Eirik F. Kjønstad, Jan 2019 
+!!
+      implicit none 
+!
+      class(memory_manager), intent(in) :: mem 
+!
+      character(len=*) :: requested_unit
+!
+      if (trim(requested_unit) == 'bytes') then 
+!
+         get_available_memory_manager = mem%available
+!
+      elseif (trim(requested_unit) == 'dps') then
+!
+         get_available_memory_manager = mem%available/dp
+!
+      endif
+!
+   end function get_available_memory_manager
 !
 !
    subroutine alloc_1_memory_manager(mem, array, M)
