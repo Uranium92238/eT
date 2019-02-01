@@ -1023,6 +1023,50 @@ contains
    end subroutine sort_1234_to_2134
 !
 !
+   subroutine sort_1234_to_2143(x_pq_rs, x_qp_sr, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Sort 1234 to 2143
+!!    Written by Sarai D. Folkestad, 
+!!    Eirik F. Kjønstad and Rolf H. Myhre, 2018
+!!
+!!    Reorders the array x_pq_rs to x_qp_sr (i.e., 1234 to 2143).
+!!
+!!    The unordered array x_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s.
+!!    The ordered array x_qr_ps is assumed allocated as dim_q*dim_r x dim_p*dim_s.
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+!
+      real(dp), dimension(dim_p*dim_q, dim_r*dim_s), intent(in) :: x_pq_rs
+      real(dp), dimension(dim_q*dim_p, dim_r*dim_s)             :: x_qp_sr
+!
+      integer(i15) :: p, q, r, s, rs, sr,  pq, qp
+!
+!$omp parallel do schedule(static) private(s,r,rs,sr,q,qp,p,pq)
+      do s = 1, dim_s
+         do r = 1, dim_r
+!
+            rs = dim_r*(s-1) + r
+            sr = dim_s*(r-1) + s
+!
+            do q = 1, dim_q
+               do p = 1, dim_p
+!
+                  pq = dim_p*(q-1) + p
+                  qp = dim_q*(p-1) + q
+!
+                  x_qp_sr(qp, sr) = x_pq_rs(pq, rs)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine sort_1234_to_2143
+!
+!
    subroutine sort_1234_to_2413(x_pq_rs, x_qs_pr, dim_p, dim_q, dim_r, dim_s)
 !!
 !!    Sort 1234 to 2413
