@@ -155,7 +155,7 @@ contains
    end subroutine prepare_memory_manager
 !
 !
-   integer(i15) function get_available_memory_manager(mem, requested_unit)
+   integer(i15) function get_available_memory_manager(mem)
 !!
 !!    Get available  
 !!    Written by Eirik F. Kjønstad, Jan 2019 
@@ -164,17 +164,7 @@ contains
 !
       class(memory_manager), intent(in) :: mem 
 !
-      character(len=*) :: requested_unit
-!
-      if (trim(requested_unit) == 'bytes') then 
-!
-         get_available_memory_manager = mem%available
-!
-      elseif (trim(requested_unit) == 'dps') then
-!
-         get_available_memory_manager = mem%available/dp
-!
-      endif
+      get_available_memory_manager = mem%available
 !
    end function get_available_memory_manager
 !
@@ -974,7 +964,7 @@ contains
 !
 !     Determine maximum batch length
 !
-      batch_p%max_length = (mem%available)/(required/(batch_p%index_dimension))
+      batch_p%max_length = int((mem%available)/(required/(batch_p%index_dimension)))
 !
 !     Number of full batches
 !
@@ -1120,25 +1110,6 @@ contains
    end subroutine print_settings_memory_manager
 !
 !
-   integer function room_for_n_arrays_of_size_memory_manager(mem, M)
-!!
-!!    Room for number of arrays of size
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
-!!
-!!    Returns the number of double precision arrays of size M that can currently be held 
-!!    in memory, based on what is - according to the manager - available.
-!!
-      implicit none 
-!
-      class(memory_manager), intent(in) :: mem 
-!
-      integer, intent(in) :: M
-!
-      room_for_n_arrays_of_size_memory_manager = (mem%available)/(dp*M)
-!
-   end function room_for_n_arrays_of_size_memory_manager
-!
-!
    subroutine batch_setup_1_memory_manager(mem, batch_p, req0, req1, element_size)
 !!
 !!    Setup batching 
@@ -1206,7 +1177,7 @@ contains
 !
 !        Determine maximum batch length
 !
-         batch_p%max_length = (mem%available - req0_tot)/(req1_min)
+         batch_p%max_length = int((mem%available - req0_tot)/(req1_min))
 !
 !        Number of full batches
 !
