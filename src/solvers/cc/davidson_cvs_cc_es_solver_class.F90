@@ -49,7 +49,7 @@ contains
 !
       character(len=100) :: line
 !
-      solver%tag = 'Davidson coupled cluster ionized state solver'
+      solver%tag = 'Davidson coupled cluster core excited state solver'
       solver%description1 = 'A Davidson CVS solver that calculates core excitation energies and the &
                             &corresponding right eigenvectors of the Jacobian matrix, A. The eigenvalue &
                             &problem is solved in a reduced space, the dimension of which is expanded &
@@ -268,6 +268,8 @@ contains
       type(eigen_davidson_tool) :: davidson
 !
       real(dp), dimension(:,:), allocatable :: projector
+!
+      davidson%do_projection = .true.
 !
       call mem%alloc(projector, wf%n_amplitudes, 1)
 !

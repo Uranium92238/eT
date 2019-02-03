@@ -537,7 +537,7 @@ contains
 !
    end subroutine save_t2_ccsd
 !
-subroutine construct_eta_ccsd(wf, eta)
+   subroutine construct_eta_ccsd(wf, eta)
 !!
 !!    Construct eta (CCSD)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
