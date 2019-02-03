@@ -129,12 +129,12 @@ contains
 !
       integer(i15), dimension(:), allocatable :: start_indices
 !
-      integer(i15) :: trial, core, i, j, k, l, a, first_ao_on_atom, last_ao_on_atom
-      integer(i15) :: n_MOs_found, current_root
+      integer(i15) :: trial, i, j, k, l, first_ao_on_atom, last_ao_on_atom
+      integer(i15) :: n_MOs_found
 !
       real(dp) :: mix_factor
 !
-      logical :: all_selected, used
+      logical :: used
 !
       if (solver%n_cores .gt. solver%n_singlet_states) &
          call output%error_msg('number of roots requested should be equal or greater than the number of cores.')
