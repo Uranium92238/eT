@@ -915,4 +915,51 @@ subroutine construct_eta_ccsd(wf, eta)
    end subroutine print_dominant_x2_ccsd
 !
 !
+   subroutine get_cvs_projector_ccsd(wf, projector, n_cores, core_MOs)
+!!
+!!    Get CVS projector
+!!    Written by Sarai D. Folekstad, Oct 2018
+!!
+      implicit none
+!
+      class(ccsd), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_amplitudes, 1), intent(out) :: projector
+!
+      integer(i15), intent(in) :: n_cores
+!
+      integer(i15), dimension(n_cores, 1), intent(in) :: core_MOs
+!
+      integer(i15) :: core, i, a, ai, j, b, bj, aibj
+!
+      projector = zero
+!
+      do core = 1, n_cores
+!
+        i = core_MOs(core, 1)
+!
+        do a = 1, wf%n_v
+!
+           ai = wf%n_v*(i - 1) + a
+           projector(ai, 1) = one
+!
+            do j = 1, wf%n_o 
+!
+               do b = 1, wf%n_v
+!
+                  bj = wf%n_v*(j - 1) + b
+                  aibj = max(ai, bj)*(max(ai, bj) - 3)/2 + ai + bj
+                  projector(aibj + wf%n_o*wf%n_v, 1) = one
+!
+               enddo
+!
+            enddo
+!
+        enddo
+!
+     enddo
+!
+   end subroutine get_cvs_projector_ccsd
+!
+!
 end module ccsd_class
