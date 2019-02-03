@@ -117,6 +117,8 @@ module ccsd_class
       procedure :: read_t2bar                                  => read_t2bar_ccsd
       procedure :: save_t2bar                                  => save_t2bar_ccsd
 !
+      procedure :: get_cvs_projector                           => get_cvs_projector_ccsd
+!
    end type ccsd
 !
 !
@@ -944,19 +946,16 @@ subroutine construct_eta_ccsd(wf, eta)
            projector(ai, 1) = one
 !
             do j = 1, wf%n_o 
-!
                do b = 1, wf%n_v
 !
                   bj = wf%n_v*(j - 1) + b
                   aibj = max(ai, bj)*(max(ai, bj) - 3)/2 + ai + bj
-                  projector(aibj + wf%n_o*wf%n_v, 1) = one
+!                  
+                  projector(aibj + (wf%n_o)*(wf%n_v), 1) = one
 !
                enddo
-!
             enddo
-!
         enddo
-!
      enddo
 !
    end subroutine get_cvs_projector_ccsd

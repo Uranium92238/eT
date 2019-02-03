@@ -106,6 +106,8 @@ module ccs_class
       procedure :: get_cvs_projector                           => get_cvs_projector_ccs
       procedure :: get_ip_projector                            => get_ip_projector_ccs
 !
+      procedure :: set_cvs_start_indices                       => set_cvs_start_indices_ccs
+!
 !     Routines to get electron repulsion integrals (ERIs)
 !
       procedure :: get_ovov_2_ccs
@@ -4430,6 +4432,57 @@ contains
       get_t1_diagnostic_ccs = get_t1_diagnostic_ccs/sqrt(real(wf%system%n_electrons,kind=dp))
 !
    end function get_t1_diagnostic_ccs
+!
+!
+   subroutine set_cvs_start_indices_ccs(wf, n_cores, core_MOs, n_start_indices, start_indices)
+!!
+!!    Set CVS start indices
+!!    Written by Sarai D. Folkestad 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf
+!
+      integer(i15) :: n_cores, n_start_indices
+!
+      integer(i15), dimension(n_cores)          :: core_MOs
+      integer(i15), dimension(n_start_indices)  :: start_indices
+!
+!     Local variables
+!
+      integer(i15) :: a, i, current_root, core
+!
+      logical :: all_selected
+!
+!     Calculate start indices using Koopman's
+!
+      all_selected = .false.
+      a =  0 
+      current_root = 0
+!
+      do while (.not. all_selected)
+!
+         a = a + 1
+!
+         do core = 1, n_cores
+!
+            i = core_MOs(core)
+!
+            current_root = current_root + 1
+            start_indices(current_root) = wf%n_v*( i - 1) + a
+!
+            if (current_root .eq. n_start_indices) then
+!
+               all_selected = .true.
+               exit
+!
+            endif
+!
+         enddo
+!
+      enddo
+!
+   end subroutine set_cvs_start_indices_ccs
 !
 !
 end module ccs_class

@@ -571,8 +571,10 @@ contains
       real(dp), dimension(:,:), allocatable :: preconditioner
 !
       call mem%alloc(preconditioner, wf%n_amplitudes, 1)
+!
       call wf%get_orbital_differences(preconditioner)
       call davidson%set_preconditioner(preconditioner)
+!
       call mem%dealloc(preconditioner, wf%n_amplitudes, 1)
 !
    end subroutine set_precondition_vector_davidson_cc_es_solver
