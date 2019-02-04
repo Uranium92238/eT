@@ -1353,6 +1353,82 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout)              :: rho_ai
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: tbar_aibj
 !
+      real(dp), dimension(:,:,:,:), allocatable :: X_ijck 
+!
+      real(dp), dimension(:,:), allocatable :: X_ij
+!
+!     :: Term 1, - F_ib tbar_ajck c_bjck 
+!
+!     X_ijck = - F_ib c_bjck 
+!
+      call mem%alloc(X_ijck, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('N','N',               &
+                  wf%n_o,               &
+                  (wf%n_v)*(wf%n_o)**2, &
+                  wf%n_v,               &
+                  -one,                 &
+                  wf%fock_ia,           & ! F_i,b 
+                  wf%n_o,               &
+                  c_aibj,               & ! c_b,jck
+                  wf%n_v,               &
+                  zero,                 &
+                  X_ijck,               & ! X_i,jck
+                  wf%n_o)
+!
+!     rho_ai =+ tbar_a,jck X_i,jck = tbar_a,jck X^T_jck,i 
+!
+      call dgemm('N','T',               &
+                  wf%n_v,               &
+                  wf%n_o,               &
+                  (wf%n_v)*(wf%n_o)**2, &
+                  one,                  &
+                  tbar_aibj,            & ! tbar_a,jck
+                  wf%n_v,               &
+                  X_ijck,               & ! X_i,jck
+                  wf%n_o,               &
+                  one,                  &
+                  rho_ai,               & ! rho_a,i
+                  wf%n_v)
+!
+      call mem%dealloc(X_ijck, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+!     :: Term 2, - F_ja tbar_ckbi c_ckbj 
+!
+!     X_ij = - tbar_ckb,i c_ckb,j 
+!
+      call mem%alloc(X_ij, wf%n_o, wf%n_o)
+!
+      call dgemm('T','N',               &
+                  wf%n_o,               &
+                  wf%n_o,               &
+                  (wf%n_o)*(wf%n_v)**2, &
+                  -one,                 &
+                  tbar_aibj,            & ! tbar_ckb,i
+                  (wf%n_o)*(wf%n_v)**2, &
+                  c_aibj,               & ! c_ckb,j)
+                  (wf%n_o)*(wf%n_v)**2, &
+                  zero,                 &
+                  X_ij,                 & ! X_i,j
+                  wf%n_o)
+!
+!     rho_ai =+ F_j,a X_i,j
+!
+      call dgemm('T','T',     &
+                  wf%n_v,     &
+                  wf%n_o,     &
+                  wf%n_o,     &
+                  one,        & 
+                  wf%fock_ia, & ! F_j,a 
+                  wf%n_o,     &
+                  X_ij,       & ! X_i,j
+                  wf%n_o,     &
+                  one,        &
+                  rho_ai,     & ! rho_a,i
+                  wf%n_v)
+!
+      call mem%dealloc(X_ij, wf%n_o, wf%n_o)
+!
    end subroutine F_ccsd_f1_2_ccsd
 !
 !
@@ -1418,6 +1494,28 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: t_aibj
 !
    end subroutine F_ccsd_i1_2_ccsd
+!
+!
+   module subroutine F_ccsd_j1_2_ccsd(wf, c_ai, rho_ai, tbar_aibj, t_aibj)
+!!
+!!    F transformation J1,2 term
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2018
+!!
+!!    rho_J1,2 = (g_kbid tbar_cjal + g_jcid tbar_bkal + g_kajd tbar_cibl 
+!!                g_jakd tbar_bicl + g_ibkd tbar_ajcl + g_lakb tbar_dicj) t_ckdl c_bj
+!!
+!!    Equation (68)
+!!
+      implicit none
+!
+      class(ccsd), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                 :: c_ai
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout)              :: rho_ai
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: tbar_aibj
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: t_aibj
+!
+   end subroutine F_ccsd_j1_2_ccsd
 !
 !
 end submodule F_ccsd
