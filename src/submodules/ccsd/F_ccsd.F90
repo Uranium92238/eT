@@ -1564,6 +1564,139 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout)              :: rho_ai
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: tbar_aibj
 !
+      real(dp), dimension(:,:,:,:), allocatable :: X_bjdi, X_jbdi, red_X_jbdi
+!
+      real(dp), dimension(:,:), allocatable :: X_db, red_X_db, rho_ia
+!
+      real(dp), dimension(:,:,:,:), allocatable :: g_jbda, L_jbda
+!
+      integer(i15)         :: req0, req1, current_d_batch
+      type(batching_index) :: batch_d
+!
+!     Note: we construct both terms at once 
+!
+!     Make intermediates for both: 
+!
+!        X_bjdi = c_bjck tbar_ckdi = c_bj,ck tbar_ck,di 
+!        X_db   = tbar_djck c_bjck = tbar_d,jck c_b,jck 
+!
+      call mem%alloc(X_bjdi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('N','N',            &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  one,               &
+                  c_aibj,            & ! c_bj,ck
+                  (wf%n_o)*(wf%n_v), &
+                  tbar_aibj,         & ! tbar_ck,di
+                  (wf%n_o)*(wf%n_v), &
+                  zero,              &
+                  X_bjdi,            & ! X_bj,di
+                  (wf%n_o)*(wf%n_v))
+!
+      call mem%alloc(X_db, wf%n_v, wf%n_v)
+!
+      call dgemm('N','T',               &
+                  wf%n_v,               &
+                  wf%n_v,               &
+                  (wf%n_v)*(wf%n_o)**2, &
+                  one,                  &
+                  tbar_aibj,            & ! tbar_d,jck
+                  wf%n_v,               &
+                  c_aibj,               & ! c_b,jck
+                  wf%n_v,               &
+                  zero,                 &
+                  X_db,                 & ! X_d,b
+                  wf%n_v)
+!
+!     rho_ai =+ L_jbda X_bjdi = L_jbd,a X_jbd,i 
+!     rho_ia =+ L_ia,db X_db (accumulate in temporary rho_ia)
+!
+!     Note: we batch over d 
+!
+      call mem%alloc(X_jbdi, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
+      call sort_1234_to_2134(X_bjdi, X_jbdi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%alloc(X_bjdi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(rho_ia, wf%n_o, wf%n_v)
+      rho_ia = zero 
+!
+      req0 = (wf%integrals%n_J)*(wf%n_o)*(wf%n_v)
+      req1 = (wf%integrals%n_J)*(wf%n_v) + 2*(wf%n_o)*(wf%n_v)**2 &
+                  + (wf%n_v)*(wf%n_o)**2 + wf%n_v
+!
+      call batch_d%init(wf%n_v)
+!
+      call mem%batch_setup(batch_d, req0, req1)
+!
+      do current_d_batch = 1, batch_d%num_batches
+!
+         call batch_d%determine_limits(current_d_batch)
+!
+         call mem%alloc(g_jbda, wf%n_o, wf%n_v, batch_d%length, wf%n_v)
+!
+         call wf%get_ovvv(g_jbda,                       &
+                           1, wf%n_o,                   &
+                           1, wf%n_v,                   &
+                           batch_d%first, batch_d%last, &
+                           1, wf%n_v)
+!
+         call mem%alloc(L_jbda, wf%n_o, wf%n_v, batch_d%length, wf%n_v)
+!
+         L_jbda = two*g_jbda
+         call add_1432_to_1234(-one, g_jbda, L_jbda, wf%n_o, wf%n_v, batch_d%length, wf%n_v)
+!
+         call mem%dealloc(g_jbda, wf%n_o, wf%n_v, batch_d%length, wf%n_v)
+!
+!        rho_ai =+ L_jbd,a X_jbd,i 
+!
+         call mem%alloc(red_X_jbdi, wf%n_o, wf%n_v, batch_d%length, wf%n_o)
+!
+         red_X_jbdi(:,:,:,:) = X_jbdi(:,:,batch_d%first:batch_d%last,:)
+!
+         call dgemm('T','N',                             &
+                     wf%n_v,                             &
+                     wf%n_o,                             &
+                     (wf%n_o)*(wf%n_v)*(batch_d%length), &
+                     one,                                &
+                     L_jbda,                             & ! L_jbd,a 
+                     (wf%n_o)*(wf%n_v)*(batch_d%length), &
+                     red_X_jbdi,                         & ! X_jbd,i
+                     (wf%n_o)*(wf%n_v)*(batch_d%length), &
+                     rho_ai,                             & ! rho_a,i
+                     wf%n_v)
+!
+         call mem%dealloc(red_X_jbdi, wf%n_o, wf%n_v, batch_d%length, wf%n_o)
+!
+!        rho_ia =+ L_iadb X_db      
+!
+         call mem%alloc(red_X_db, batch_d%length, wf%n_v)
+!
+         red_X_db(:,:) = X_db(batch_d%first:batch_d%last,:)
+!
+         call dgemm('N','N',                    &
+                     (wf%n_o)*(wf%n_v),         &
+                     1,                         &
+                     (wf%n_v)*(batch_d%length), &
+                     one,                       & 
+                     L_jbda,                    & ! L_ia,db
+                     (wf%n_o)*(wf%n_v),         &
+                     red_X_db,                  & ! X_db 
+                     (wf%n_v)*(batch_d%length), &
+                     one,                       &
+                     rho_ia,                    & ! rho_ia 
+                     (wf%n_o)*(wf%n_v))
+!
+         call mem%dealloc(L_jbda, wf%n_o, wf%n_v, batch_d%length, wf%n_v)
+         call mem%dealloc(red_X_db, batch_d%length, wf%n_v)
+!
+      enddo 
+!
+      call add_21_to_12(one, rho_ia, rho_ai, wf%n_v, wf%n_o)
+!
+      call mem%dealloc(rho_ia, wf%n_o, wf%n_v)
+!
    end subroutine F_ccsd_h1_2_ccsd
 !
 !
