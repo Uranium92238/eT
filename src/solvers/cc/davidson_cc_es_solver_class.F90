@@ -371,6 +371,7 @@ contains
          do solution = 1, solver%n_singlet_states
 !
             call davidson%construct_next_trial_vec(residual_norm, solution)
+!
             write(output%unit,'(t3,i2,5x,f16.12,7x,f16.12,11x,e10.4)') &
             solution, davidson%omega_re(solution, 1), davidson%omega_im(solution, 1), residual_norm
             flush(output%unit)
@@ -571,8 +572,10 @@ contains
       real(dp), dimension(:,:), allocatable :: preconditioner
 !
       call mem%alloc(preconditioner, wf%n_amplitudes, 1)
+!
       call wf%get_orbital_differences(preconditioner)
       call davidson%set_preconditioner(preconditioner)
+!
       call mem%dealloc(preconditioner, wf%n_amplitudes, 1)
 !
    end subroutine set_precondition_vector_davidson_cc_es_solver
