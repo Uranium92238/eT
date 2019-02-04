@@ -1573,8 +1573,8 @@ contains
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2018
 !!
 !!    rho_I1,2 = - L_ldic tbar_bjak (t_bjck c_dl + t_bjdl c_ck) 
-!!               - L_ialc tbar_bjdk (t_bjck c_dl + t_bjdl c_ck)
 !!               - L_ldka tbar_bjci (t_bjck c_dl + t_bjdl c_ck)
+!!               - L_ialc tbar_bjdk (t_bjck c_dl + t_bjdl c_ck)
 !!
 !!    Equation (23) in Sarai's document
 !!    Equation (69) in Eirik's document
@@ -1587,6 +1587,360 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout)              :: rho_ai
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: tbar_aibj
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: t_aibj
+!
+!     Local variables
+!
+      real(dp), dimension(:,:), allocatable :: X_cd, X_ci, X_kl
+      real(dp), dimension(:,:), allocatable :: Y_ac, Y_cl, Y_ki
+!
+      real(dp), dimension(:,:,:,:), allocatable :: g_ldic
+      real(dp), dimension(:,:,:,:), allocatable :: L_dlci
+      real(dp), dimension(:,:,:,:), allocatable :: X_kibj, X_kidl
+      real(dp), dimension(:,:,:,:), allocatable :: Y_kbji, Y_kdli, Y_kibj, Y_kidl
+!
+!     Term 1: - L_ldic tbar_bjak t_bjck c_dl  
+!
+!     Construct L_ldic = 2 g_ldic - g_lcid (ordered as L_dlci)
+!
+      call mem%alloc(g_ldic, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call wf%get_ovov(g_ldic)
+!
+      call mem%alloc(L_dlci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      L_dlci = zero
+!
+      call add_2143_to_1234(two, g_ldic, L_dlci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call add_4123_to_1234(-one, g_ldic, L_dlci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%dealloc(g_ldic, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+!  
+!     X_ci = c_dl L_dlci (c_dl L_ldic)
+!
+      call mem%alloc(X_ci, wf%n_v, wf%n_o)
+!
+      call dgemm('T', 'N',          &
+                  (wf%n_o)*(wf%n_v),&
+                  1,                &
+                  (wf%n_o)*(wf%n_v),&
+                  one,              &
+                  L_dlci,           & ! L_dl_ci
+                  (wf%n_o)*(wf%n_v),&
+                  c_ai,             & ! c_dl
+                  (wf%n_o)*(wf%n_v),&
+                  zero,             &
+                  X_ci,             &
+                  (wf%n_o)*(wf%n_v))
+!
+!     Y_ac = tbar_akbj t_ckbj
+!
+      call mem%alloc(Y_ac, wf%n_v, wf%n_v)
+!
+      call dgemm('N', 'T',             & 
+                  wf%n_v,              &
+                  wf%n_v,              &
+                  (wf%n_o**2)*wf%n_v,  &
+                  one,                 &
+                  tbar_aibj,           & ! tbar_a_kbj
+                  wf%n_v,              &
+                  t_aibj,              & ! t_c_kbj
+                  wf%n_v,              &
+                  zero,                &
+                  Y_ac,                &
+                  wf%n_v)
+!
+!     rho_ai -= Y_ac X_ci
+!
+      call dgemm('N', 'N', &
+                  wf%n_v,  &
+                  wf%n_o,  &
+                  wf%n_v,  &
+                  -one,    &
+                  Y_ac,    & ! Y_a_c
+                  wf%n_v,  &
+                  X_ci,    & ! X_c_i
+                  wf%n_v,  &
+                  one,     &
+                  rho_ai,  & ! rho_a_i
+                  wf%n_v)
+!
+      call mem%dealloc(Y_ac, wf%n_v, wf%n_v)
+!
+!     Term 2: - L_ldic tbar_bjak t_bjdl c_ck
+!
+!     Using L_dlci = L_cidl
+!     X_kidl = L_cidl c_ck (L_ldic c_ck)
+!
+      call mem%alloc(X_kidl, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('N', 'N',             &
+                  wf%n_o,              &
+                  (wf%n_o**2)*wf%n_v,  &
+                  wf%n_v,              &
+                  one,                 &
+                  c_ai,                & ! c_c_k 
+                  wf%n_v,              &
+                  L_dlci,              & ! L_c_idl
+                  wf%n_v,              &
+                  zero,                &
+                  X_kidl,              &
+                  wf%n_o)
+!
+!     Y_kibj =  X_kidl t_dlbj
+!
+      call mem%alloc(Y_kibj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('N', 'N',             &
+                  wf%n_o**2,           &
+                  (wf%n_o)*(wf%n_v),   &
+                  (wf%n_o)*(wf%n_v),   &
+                  one,                 &
+                  X_kidl,              & ! X_ki_dl
+                  wf%n_o**2,           &
+                  t_aibj,              & ! t_dl_bj
+                  (wf%n_o)*(wf%n_v),   &
+                  zero,                &
+                  Y_kibj,              &
+                  wf%n_o**2)
+!
+      call mem%dealloc(X_kidl, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+!     Reorder Y_kibj to Y_kbji
+!
+      call mem%alloc(Y_kbji, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
+      call sort_1234_to_1342(Y_kibj, Y_kbji, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%dealloc(Y_kibj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+!     rho_ai -= tbar_akbj Y_kbji 
+!
+      call dgemm('N', 'N',             &
+                  wf%n_v,              &
+                  wf%n_o,              &
+                  (wf%n_o**2)*wf%n_v,  &
+                  -one,                &
+                  tbar_aibj,           & ! t_a_kbj 
+                  wf%n_v,              &
+                  Y_kbji,              & ! Y_kbj_i
+                  (wf%n_o**2)*wf%n_v,  &
+                  one,                 &
+                  rho_ai,              &
+                  wf%n_v)
+!
+      call mem%dealloc(Y_kbji, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
+!     Term 3: - L_ldka tbar_bjci t_bjck c_dl 
+!
+!     Y_ki = t_bjck tbar_bjci 
+!
+      call mem%alloc(Y_ki, wf%n_o, wf%n_o)
+!
+      call dgemm('T', 'N',                &
+                  wf%n_o,                 &
+                  wf%n_o,                 &
+                  (wf%n_v**2)*(wf%n_o),   &
+                  one,                    &
+                  t_aibj,                 & ! t_bjc_k
+                  (wf%n_v**2)*(wf%n_o),   &
+                  tbar_aibj,              & ! tbar_bjc_i
+                  (wf%n_v**2)*(wf%n_o),   &
+                  zero,                   &
+                  Y_ki,                   & ! Y_k_i
+                  wf%n_o)
+
+!     Pretend that X_ci = c_dl L_ldic is X_ak = c_dl L_ldka
+!
+!     rho_ai -= X_ak Y_ki
+!
+      call dgemm('N', 'N', &
+                  wf%n_v,  &
+                  wf%n_o,  &
+                  wf%n_o,  &
+                  -one,    &
+                  X_ci,    &
+                  wf%n_v,  &
+                  Y_ki,    &
+                  wf%n_o,  &
+                  one,     &
+                  rho_ai,  &
+                  wf%n_v)
+!
+      call mem%dealloc(X_ci, wf%n_v, wf%n_o)
+!
+!     Term 4:  - L_ldka tbar_bjci t_bjdl c_ck
+!
+!     X_kibj = c_ck tbar_cibj
+!
+      call mem%alloc(X_kibj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('T', 'N',                &
+                  wf%n_o,                 &
+                  (wf%n_o**2)*(wf%n_v),   &
+                  wf%n_v,                 &
+                  one,                    &
+                  c_ai,                   & ! c_c_k
+                  wf%n_v,                 &
+                  tbar_aibj,              & ! tbar_c_ibj
+                  wf%n_v,                 &
+                  zero,                   &
+                  X_kibj,                 &
+                  wf%n_o)
+!
+!     Y_kidl = X_kibj t_bjdl
+!
+      call mem%alloc(Y_kidl, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('N', 'N',             &
+                  wf%n_o**2,           &
+                  (wf%n_o)*(wf%n_v),   &
+                  (wf%n_o)*(wf%n_v),   &
+                  one,                 &
+                  X_kibj,              & ! X_ki_bj
+                  wf%n_o**2,           &
+                  t_aibj,              & ! t_bj_dl
+                  (wf%n_o)*(wf%n_v),   &
+                  zero,                &
+                  Y_kidl,              & ! Y_ki_dl
+                  wf%n_o**2)
+!
+      call mem%dealloc(X_kibj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+!     Pretend that L_dlci is L_dlak = L_akdl (L_ldka = 2 g_ldka - g_lakd)
+!  
+!     Reorder Y_kidl to Y_kdli
+!
+      call mem%alloc(Y_kdli, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+      call sort_1234_to_1342(Y_kidl, Y_kdli, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(Y_kidl, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('N', 'N',             &
+                  wf%n_v,              &
+                  wf%n_o,              &
+                  (wf%n_o**2)*wf%n_v,  &
+                  -one,                &
+                  L_dlci,              & ! L_a_kdl
+                  wf%n_v,              &
+                  Y_kdli,              & ! Y_kdl_i
+                  (wf%n_o**2)*wf%n_v,  &
+                  one,                 &
+                  rho_ai,              &
+                  wf%n_v)
+!
+      call mem%alloc(Y_kdli, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
+!     Term 5: - L_ialc t_ckbj tbar_dkbj c_dl
+!
+!     X_cd = t_ckbj tbar_dkbj
+!
+      call mem%alloc(X_cd, wf%n_v, wf%n_v)
+!
+      call dgemm('N', 'T',    &
+                  wf%n_v,     &
+                  wf%n_o,     &
+                  wf%n_o**2,  &
+                  one,        &
+                  t_aibj,     & ! t_c_kbj
+                  wf%n_v,     &
+                  tbar_aibj,  & ! tbar_d_kbj
+                  wf%n_v,     &
+                  zero,       &
+                  X_cd,       &
+                  wf%n_v)
+!
+!     Y_cl =  X_cd c_dl
+!
+      call mem%alloc(Y_cl, wf%n_v, wf%n_o)
+!
+      call dgemm('N', 'N', &
+                  wf%n_v,  &
+                  wf%n_o,  &
+                  wf%n_v,  &
+                  one,     &
+                  X_cd,    & ! X_c_d
+                  wf%n_v,  &
+                  c_ai,    & ! c_d_l
+                  wf%n_v,  &
+                  zero,    &
+                  Y_cl,    &
+                  wf%n_v)
+!
+      call mem%dealloc(X_cd, wf%n_v, wf%n_v)
+!
+!     rho_ai -= L_ialc Y_cl
+!
+!     NOTE: Pretend that L_dlci (= L_ldic) is L_aicl 
+!
+      call dgemm('N', 'N',       &
+                  wf%n_v*wf%n_o, &
+                  1,             &
+                  wf%n_v*wf%n_o, &
+                  -one,          &
+                  L_dlci,        &
+                  wf%n_v*wf%n_o, &
+                  Y_cl,          &
+                  wf%n_v*wf%n_o, &
+                  one,           &
+                  rho_ai,        &
+                  wf%n_v*wf%n_o)
+!
+      call mem%dealloc(Y_cl, wf%n_v, wf%n_o)
+!
+!     Term 6:  - L_ialc tbar_bjdk t_bjdl c_ck 
+!
+!     X_kl = tbar_bjdk t_bjdl
+!
+      call mem%alloc(X_kl, wf%n_o, wf%n_o)
+!
+      call dgemm('T', 'N',             &
+                  wf%n_o,              &
+                  wf%n_o,              &
+                  (wf%n_v**2)*wf%n_o,  &
+                  one,                 &
+                  tbar_aibj,           & ! tbar_bjd_k
+                  (wf%n_v**2)*wf%n_o,  &
+                  t_aibj,              & ! t_bjd_l
+                  (wf%n_v**2)*wf%n_o,  &
+                  zero,                &
+                  X_kl,                &
+                  wf%n_o)
+!
+!     Y_cl = c_ck X_kl
+!
+      call mem%alloc(Y_cl, wf%n_v, wf%n_o)
+!
+      call dgemm('N', 'N',    &
+                  wf%n_v,     &
+                  wf%n_o,     &
+                  wf%n_o,     &
+                  one,        &
+                  c_ai,       & ! c_c_k
+                  wf%n_v,     &
+                  X_kl,       & ! X_k_l
+                  wf%n_o,     &
+                  zero,       &
+                  Y_cl,       & ! Y_c_l
+                  wf%n_v)
+! 
+      call mem%dealloc(X_kl, wf%n_o, wf%n_o)
+!
+!     rho_ai -= L_ialc Y_cl 
+!
+!     NOTE: Still pretending L_dlci (= L_ldic) is L_aicl 
+!
+      call dgemm('N', 'N',             &
+                  (wf%n_o)*(wf%n_v),   &
+                  1,                   &
+                  (wf%n_o)*(wf%n_v),   &
+                  -one,                &
+                  L_dlci,              & ! L_aicl
+                  (wf%n_o)*(wf%n_v),   &
+                  Y_cl,                &
+                  (wf%n_o)*(wf%n_v),   &
+                  one,                 &
+                  rho_ai,              &
+                  (wf%n_o)*(wf%n_v))
+!
+      call mem%dealloc(Y_cl, wf%n_v, wf%n_o)
+      call mem%dealloc(L_dlci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
    end subroutine F_ccsd_i1_2_ccsd
 !
