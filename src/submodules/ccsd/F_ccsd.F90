@@ -1449,6 +1449,101 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout)              :: rho_ai
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in) :: tbar_aibj
 !
+      real(dp), dimension(:,:,:,:), allocatable :: g_iljb, L_ilbj 
+      real(dp), dimension(:,:,:,:), allocatable :: X_ilck
+!
+      real(dp), dimension(:,:), allocatable :: X_jl 
+!
+!     :: Term 1, - L_iljb tbar_alck c_bjck 
+!
+!     Construct L_iljb ordered as L_ilbj = 2 g_iljb - g_jlib
+!
+      call mem%alloc(L_ilbj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(g_iljb, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+!
+      call wf%get_ooov(g_iljb)
+!
+      L_ilbj = zero 
+!
+      call add_1243_to_1234(two, g_iljb, L_ilbj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+      call add_4213_to_1234(-one, g_iljb, L_ilbj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%dealloc(g_iljb, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+!
+!     X_ilck = - L_iljb c_bjck = - L_il,bj c_bj,ck 
+!
+      call mem%alloc(X_ilck, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('N','N',            &
+                  (wf%n_o)**2,       &
+                  (wf%n_o)*(wf%n_v), &
+                  (wf%n_o)*(wf%n_v), &
+                  -one,              &
+                  L_ilbj,            & ! L_il,bj 
+                  (wf%n_o)**2,       &
+                  c_aibj,            & ! c_bj,ck 
+                  (wf%n_o)*(wf%n_v), &
+                  zero,              &
+                  X_ilck,            &
+                  (wf%n_o)**2)
+!
+!     rho_ai =+ tbar_a,lck X_i,lck 
+!
+      call dgemm('N','T',               &
+                  wf%n_v,               &
+                  wf%n_o,               &
+                  (wf%n_v)*(wf%n_o)**2, &
+                  one,                  &
+                  tbar_aibj,            & ! tbar_a,lck
+                  wf%n_v,               &
+                  X_ilck,               & ! X_i,lck 
+                  wf%n_o,               &
+                  one,                  &
+                  rho_ai,               & ! rho_a,i 
+                  wf%n_v)
+!
+      call mem%dealloc(X_ilck, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+!     :: Term 2, - L_jlia tbar_ckbl c_ckbj 
+!
+!     X_jl = - c_ckb,j tbar_ckb,l 
+!
+      call mem%alloc(X_jl, wf%n_o, wf%n_o)
+!
+      call dgemm('T','N',               &   
+                  wf%n_o,               &
+                  wf%n_o,               &
+                  (wf%n_o)*(wf%n_v)**2, &
+                  -one,                 &
+                  c_aibj,               & ! c_ckb,j
+                  (wf%n_o)*(wf%n_v)**2, &
+                  tbar_aibj,            & ! tbar_ckb,l)
+                  (wf%n_o)*(wf%n_v)**2, &
+                  zero,                 &
+                  X_jl,                 & ! X_j,l
+                  wf%n_o)
+!
+!     rho_ai = X_jl L_jlia = L_jl,ai X_jl 
+!
+!     Note: recall that we have L_ljia ordered as L_ljai 
+!
+      call dgemm('T','N',            &
+                  (wf%n_o)*(wf%n_v), &
+                  1,                 &
+                  (wf%n_o)**2,       &
+                  one,               &
+                  L_ilbj,            & ! L_jl,ai
+                  (wf%n_o)**2,       &
+                  X_jl,              & 
+                  (wf%n_o)**2,       &    
+                  one,               &
+                  rho_ai,            &
+                  (wf%n_o)*(wf%n_v))
+!
+      call mem%dealloc(L_ilbj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(X_jl, wf%n_o, wf%n_o)
+!
    end subroutine F_ccsd_g1_2_ccsd
 !
 !
