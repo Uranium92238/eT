@@ -1512,6 +1512,55 @@ contains
    end subroutine add_1423_to_1234
 !
 !
+   subroutine add_1324_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Add 1423 to 1234
+!!    Written by Eirik F. Kjønstad, Rolf H. Myhre and Sarai D. Folkestad, 2018
+!!
+!!    Performs:
+!!
+!!       y_pq_rs(pq,rs) = y_pq_rs(pq,rs) + gamma * x(pr, qs)
+!!
+!!    The unordered array y_pq_rs is assumed allocated as dim_p*dim_q x dim_r*dim_s,
+!!    and x accordingly.
+!!
+      implicit none
+!
+      real(dp), intent(in) :: gamma
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+!
+      real(dp), dimension(dim_p*dim_q, dim_r*dim_s) :: y_pq_rs
+      real(dp), dimension(dim_p*dim_r, dim_q*dim_s), intent(in) :: x
+!
+      integer(i15) :: p, q, r, s, pq, rs, pr, qs
+!
+!$omp parallel do schedule(static) private(s,r,q,p,pq,rs,pr,qs)
+      do s = 1, dim_s
+         do r = 1, dim_r
+!
+            rs = dim_r*(s-1) + r
+!
+            do q = 1, dim_q
+!
+               qs = dim_q*(s-1) + q
+!
+               do p = 1, dim_p
+!
+                  pq = dim_p*(q-1) + p
+                  pr = dim_p*(r-1) + p
+!
+                  y_pq_rs(pq, rs) = y_pq_rs(pq, rs) + gamma*x(pr, qs)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine add_1324_to_1234
+!
+!
    subroutine add_1432_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
 !!
 !!    Add 1432 to 1234

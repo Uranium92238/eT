@@ -210,8 +210,6 @@
    end subroutine F_ccsd_j1_2_ccsd
 !
 !
-!
-!
    module subroutine F_ccsd_a2_2_ccsd(wf, c_ai, rho_aibj, tbar_aibj)
 !!
 !!    F transformation a2,2 term

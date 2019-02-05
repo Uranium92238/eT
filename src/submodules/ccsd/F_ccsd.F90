@@ -2117,6 +2117,141 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout)   :: rho_aibj
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)      :: tbar_aibj
 !
+!     Local variables
+!
+      real(dp), dimension(:,:,:,:), allocatable :: g_iljc, g_bikl
+      real(dp), dimension(:,:,:,:), allocatable :: X_iljk, X_lkij, X_klaj, X_klbi
+      real(dp), dimension(:,:,:,:), allocatable :: tbar_ablk
+      real(dp), dimension(:,:,:,:), allocatable :: rho_abij, rho_jabi, rho_biaj
+!
+!     Term 1: g_iljc tbar_albk c_ck
+!
+      call mem%alloc(g_iljc, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+!
+      call wf%get_ooov(g_iljc)
+!
+      call mem%alloc(X_iljk, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
+      call dgemm('N', 'N',    &
+                  wf%n_o**3,  &
+                  wf%n_o,     &
+                  wf%n_v,     &
+                  one,        &
+                  g_iljc,     & ! g_ilj_c
+                  wf%n_o**3,  &
+                  c_ai,       & ! c_c_k
+                  wf%n_v,     &
+                  zero,       &
+                  X_iljk,     &
+                  wf%n_o**3)
+!
+!     Reorder X_iljk to X_lkij
+!
+      call mem%alloc(X_lkij, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
+      call sort_1234_to_2413(X_iljk, X_lkij, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
+      call mem%dealloc(X_iljk, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
+!
+!     Reorder tbar_albk to tbar_ablk
+!
+      call mem%alloc(tbar_ablk, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call sort_1234_to_1324(tbar_aibj, tbar_ablk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(rho_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+      call dgemm('N', 'N',    &
+                  wf%n_v**2,  &
+                  wf%n_o**2,  &
+                  wf%n_o**2,  &
+                  one,        &
+                  tbar_ablk,  &
+                  wf%n_v**2,  &
+                  X_lkij,     &
+                  wf%n_o**2,  &
+                  zero,       &
+                  rho_abij,   &
+                  wf%n_v**2) 
+!
+      call mem%dealloc(tbar_ablk, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+      call mem%dealloc(X_lkij, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
+!
+      call add_1324_to_1234(one, rho_abij, rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(rho_abij, wf%n_v, wf%n_v, wf%n_o, wf%n_o)
+!
+!     Term 2: g_klja tbar_clbi c_ck
+!
+      call mem%alloc(X_klbi, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('T', 'N',             &
+                  wf%n_o,              &
+                  (wf%n_o**2)*wf%n_v,  &
+                  wf%n_v,              &
+                  one,                 &
+                  c_ai,                & ! c_c_k
+                  wf%n_v,              &
+                  tbar_aibj,           & ! tbar_c_lbi
+                  wf%n_v,              &
+                  zero,                &
+                  X_klbi,              & ! X_k_lbi
+                  wf%n_o)
+!
+!     NOTE! We now pretend that g_iljc is g_klja 
+!
+      call mem%alloc(rho_jabi, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
+!
+      call dgemm('T', 'N',             &
+                  (wf%n_o)*(wf%n_v),   &
+                  (wf%n_o)*(wf%n_v),   &
+                  wf%n_o**2,           &
+                  one,                 &
+                  g_iljc,              & ! g_kl_ja
+                  wf%n_o**2,           &
+                  X_klbi,              & ! X_kl_bi
+                  wf%n_o**2,           &
+                  zero,                &
+                  rho_jabi,            &
+                  (wf%n_o)*(wf%n_v))
+!
+      call add_4132_to_1234(one, rho_jabi, rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(rho_jabi, wf%n_o, wf%n_v, wf%n_v, wf%n_o)
+!
+!     Term 3:  g_ilkb tbar_alcj c_ck
+!
+!     NOTE: Pretend that X_lkbi = tbar_clbi c_ck is X_kjal = tbar_cjal c_ck
+!
+!     Reorder X_kjal to X_klaj
+!
+      call mem%alloc(X_klaj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+      call sort_1234_to_1432(X_klbi, X_klaj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(X_klbi, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+!     NOTE: Pretend that g_iljc is g_ilkb
+!
+!     Reorder g_ilkb to g_bikl
+!
+      call mem%alloc(g_bikl, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+      call sort_1234_to_4132(g_iljc, g_bikl, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+      call mem%dealloc(g_iljc, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+!
+      call mem%alloc(rho_biaj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('N', 'N',             & 
+                  (wf%n_o)*(wf%n_v),   &
+                  (wf%n_o)*(wf%n_v),   &
+                  wf%n_o**2,           &
+                  one,                 &
+                  g_bikl,              & ! g_bi_kl
+                  (wf%n_o)*(wf%n_v),   &
+                  X_klaj,              & ! X_kl_aj
+                  (wf%n_o)*(wf%n_v),   &
+                  zero,                &
+                  rho_biaj,            &
+                  (wf%n_o)*(wf%n_v))
+!
+      call mem%dealloc(X_klaj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(g_bikl, wf%n_v, wf%n_o, wf%n_o, wf%n_o)
+!
+      call add_3214_to_1234(one, rho_biaj, rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(rho_biaj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
    end subroutine F_ccsd_a2_2_ccsd
 !
 !
