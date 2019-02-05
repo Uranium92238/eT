@@ -1,0 +1,36 @@
+name: H2O
+charge: 0
+
+method
+  hf
+  ccsd
+end method
+
+memory
+   available: 8
+end memory
+
+cholesky
+   threshold: 1.0d-12
+end cholesky
+
+hf
+  algorithm:          scf-diis
+  energy threshold:   1.0d-12
+  gradient threshold: 1.0d-12
+end hf
+
+cc ground state
+   omega threshold: 1.0d-10
+end cc ground state
+
+do
+   ground state
+end do
+
+geometry
+basis: cc-pVDZ
+ H          0.86681        0.60144        0.00000
+ H         -0.86681        0.60144        0.00000
+ O          0.00000       -0.07579        0.00000
+end geometry
