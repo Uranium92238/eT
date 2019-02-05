@@ -2937,7 +2937,7 @@ contains
 !!    F transformation d2,2 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2018
 !!
-!!    rho_D2,2 = -(L_ilkc tbar_bjal + L_klia tbar_bjcl)c_ck
+!!    rho_D2,2 = -(L_jlkc tbar_aibl + L_kljb tbar_aicl)c_ck
 !!
 !!    Terms 3 and 4 of quation (72)
 !!
@@ -2948,6 +2948,101 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: c_ai
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout)   :: rho_aibj
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)      :: tbar_aibj
+!
+!     Local variables
+!
+      real(dp), dimension(:,:), allocatable     :: X_lj
+      real(dp), dimension(:,:,:,:), allocatable :: X_klai
+      real(dp), dimension(:,:,:,:), allocatable :: g_jlkc
+      real(dp), dimension(:,:,:,:), allocatable :: L_ljck, L_klbj
+!
+!     Term 1: - L_jlkc tbar_aibl c_ck
+!
+!     L_jlkc = 2 g_jlkc - g_kljc (ordered as L_ljck)
+!
+      call mem%alloc(g_jlkc, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+      call wf%get_ooov(g_jlkc)
+!
+      call mem%alloc(L_ljck, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+      L_ljck = zero
+!
+      call add_2143_to_1234(two, g_jlkc, L_ljck, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+      call add_4123_to_1234(-one, g_jlkc, L_ljck, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%dealloc(g_jlkc, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+!
+!     X_lj = L_ljck c_ck ( = L_jlkc c_ck)
+!
+      call mem%alloc(X_lj, wf%n_o, wf%n_o)
+!
+      call dgemm('N', 'N',             &
+                  wf%n_o**2,           &
+                  1,                   &
+                  (wf%n_o)*(wf%n_v),   &
+                  one,                 &
+                  L_ljck,              & ! L_lj_ck
+                  wf%n_o**2,           &
+                  c_ai,                & ! c_ck
+                  (wf%n_o)*(wf%n_v),   &
+                  zero,                &
+                  X_lj,                &
+                  wf%n_o**2)
+!
+      call dgemm('N', 'N',             &
+                  (wf%n_v**2)*wf%n_o,  &
+                  wf%n_o,              &
+                  wf%n_o,              &
+                  -one,                &
+                  tbar_aibj,           & ! t_aib_l
+                  (wf%n_v**2)*wf%n_o,  &
+                  X_lj,                &
+                  wf%n_o,              &
+                  one,                 &
+                  rho_aibj,            & ! rho_aib_j
+                  (wf%n_v**2)*wf%n_o) 
+!
+      call mem%dealloc(X_lj, wf%n_o, wf%n_o)
+!
+!     Term 2: - L_kljb tbar_aicl c_ck
+!
+      call mem%alloc(X_klai, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('T', 'N',             &
+                  wf%n_o,              &
+                  (wf%n_o**2)*wf%n_v,  &
+                  wf%n_v,              &
+                  one,                 &
+                  c_ai,                & ! c_c_k
+                  wf%n_v,              &
+                  tbar_aibj,           & ! tbar_c_lai
+                  wf%n_v,              &
+                  zero,                &
+                  X_klai,              & ! X_k_lai
+                  wf%n_o)
+!
+!     NOTE: Pretend that L_ljck = L_jlkc is L_lkbj = L_kljb
+!     and reorder to L_klbj
+!
+      call mem%alloc(L_klbj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call sort_1234_to_2134(L_ljck, L_klbj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%dealloc(L_ljck, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('T', 'N',             &
+                  (wf%n_v)*(wf%n_o),   &
+                  (wf%n_v)*(wf%n_o),   &
+                  wf%n_o**2,           &
+                  -one,                &
+                  X_klai,              &
+                  wf%n_o**2,           &
+                  L_klbj,              &
+                  wf%n_o**2,           &
+                  one,                 &
+                  rho_aibj,            &
+                  (wf%n_v)*(wf%n_o))
+!
+      call mem%dealloc(L_klbj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
 !
    end subroutine F_ccsd_d2_2_ccsd
 !
