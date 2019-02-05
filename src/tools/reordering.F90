@@ -1113,6 +1113,74 @@ contains
    end subroutine sort_1234_to_2413
 !
 !
+   subroutine sort_1234_to_2431(x_pqrs, x_qsrp, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Sort 1234 to 2431
+!!    Written by Sarai D. Folkestad, 
+!!    Eirik F. Kjønstad and Rolf H. Myhre, 2018
+!!
+!!    Reorders the array x_pqrs to x_qsrp (i.e., 1234 to 2431).
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+!
+      real(dp), dimension(dim_p, dim_q, dim_r, dim_s), intent(in) :: x_pqrs
+      real(dp), dimension(dim_q, dim_s, dim_r, dim_p)             :: x_qsrp
+!
+      integer(i15) :: p, q, r, s
+!
+!$omp parallel do schedule(static) private(p,q,r,s)
+      do p = 1, dim_p
+         do r = 1, dim_r
+            do s = 1, dim_s
+               do q = 1, dim_q
+!
+                  x_qsrp(q,s,r,p) = x_pqrs(p,q,r,s)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine sort_1234_to_2431
+!
+!
+   subroutine sort_1234_to_3421(x_pqrs, x_rsqp, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Sort 1234 to 3421
+!!    Written by Sarai D. Folkestad, 
+!!    Eirik F. Kjønstad and Rolf H. Myhre, 2018
+!!
+!!    Reorders the array x_pqrs to x_rsqp (i.e., 1234 to 3421).
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+!
+      real(dp), dimension(dim_p, dim_q, dim_r, dim_s), intent(in) :: x_pqrs
+      real(dp), dimension(dim_r, dim_s, dim_q, dim_p)             :: x_rsqp
+!
+      integer(i15) :: p, q, r, s
+!
+!$omp parallel do schedule(static) private(p,q,r,s)
+      do p = 1, dim_p
+         do q = 1, dim_q
+            do s = 1, dim_s
+               do r = 1, dim_r
+!
+                  x_rsqp(r,s,q,p) = x_pqrs(p,q,r,s)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine sort_1234_to_3421
+!
+!
    subroutine sort_1234_to_1324(x_pq_rs, x_pr_qs, dim_p, dim_q, dim_r, dim_s)
 !!
 !!    Sort 1234 to 1324
@@ -1510,6 +1578,42 @@ contains
 !$omp end parallel do
 !
    end subroutine add_1423_to_1234
+!
+!
+   subroutine add_1324_to_1234(gamma, x, y_pqrs, dim_p, dim_q, dim_r, dim_s)
+!!
+!!    Add 1324 to 1234
+!!    Written by Sarai D. Folkestad, 
+!!    Eirik F. Kjønstad and Rolf H. Myhre, 2018
+!!
+!!    y_pqrs(p,q,r,s) =+ y_pqrs(p,q,r,s) + gamma*x(p,r,q,s)
+!!
+      implicit none
+!
+      integer(i15), intent(in) :: dim_p, dim_q, dim_r, dim_s
+!  
+      real(dp), intent(in) :: gamma 
+!
+      real(dp), dimension(dim_p, dim_q, dim_r, dim_s), intent(inout) :: y_pqrs
+      real(dp), dimension(dim_p, dim_r, dim_q, dim_s), intent(in)    :: x
+!
+      integer(i15) :: p, q, r, s
+!
+!$omp parallel do schedule(static) private(p,q,r,s)
+      do s = 1, dim_s
+         do r = 1, dim_r
+            do q = 1, dim_q
+               do p = 1, dim_p
+!
+                  y_pqrs(p,q,r,s) = y_pqrs(p,q,r,s) + gamma*x(p,r,q,s)
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+   end subroutine add_1324_to_1234
 !
 !
    subroutine add_1432_to_1234(gamma, x, y_pq_rs, dim_p, dim_q, dim_r, dim_s)
