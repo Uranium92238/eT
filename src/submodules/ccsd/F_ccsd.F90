@@ -3213,7 +3213,7 @@ contains
 !!    F transformation f2,2 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2018
 !!
-!!    rho_F2,2 = (g_lbic tbar_cjak + g_ibdk tbar_ajcl)c_ckdl
+!!    rho_F2,2 = (g_ibkd tbar_ajcl + g_kbid tbar_cjal)c_ckdl
 !!
 !!    Last two terms of Eqn. (50) Sarai's doc
 !!
@@ -3224,6 +3224,117 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)      :: c_aibj
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout)   :: rho_aibj
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)      :: tbar_aibj
+!
+!     Local variables
+!
+      real(dp), dimension(:,:,:,:), allocatable :: X_ajdk, X_bicl
+      real(dp), dimension(:,:,:,:), allocatable :: c_cldk
+      real(dp), dimension(:,:,:,:), allocatable :: g_ibkd, g_bidk, g_bidk_2
+      real(dp), dimension(:,:,:,:), allocatable :: tbar_ajcl
+      real(dp), dimension(:,:,:,:), allocatable :: rho_ajbi
+!
+!     Reorder c_ckdl to c_cldk
+!
+      call mem%alloc(c_cldk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call sort_1234_to_1432(c_aibj, c_cldk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+!     Term 1: g_ibkd tbar_ajcl c_ckdl
+!
+!     X_ajdk = tbar_ajcl c_cldk ( = tbar_ajcl c_ckdl)
+!
+      call mem%alloc(X_ajdk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('N', 'N',             &
+                  (wf%n_v)*(wf%n_o),   &
+                  (wf%n_v)*(wf%n_o),   &
+                  (wf%n_v)*(wf%n_o),   &
+                  one,                 &
+                  tbar_aibj,           & ! tbar_aj_cl
+                  (wf%n_v)*(wf%n_o),   &
+                  c_cldk,              & ! c_cl_dk
+                  (wf%n_v)*(wf%n_o),   &
+                  zero,                &
+                  X_ajdk,              &
+                  (wf%n_v)*(wf%n_o))
+!
+      call mem%alloc(g_ibkd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call wf%get_ovov(g_ibkd)
+!
+!     Reorder g_ibkd to g_bidk
+!
+      call mem%alloc(g_bidk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call sort_1234_to_2143(g_ibkd, g_bidk, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call mem%dealloc(g_ibkd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+!
+      call mem%alloc(rho_ajbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('N', 'T',             &
+                  (wf%n_v)*(wf%n_o),   &
+                  (wf%n_v)*(wf%n_o),   &
+                  (wf%n_v)*(wf%n_o),   &
+                  one,                 &
+                  X_ajdk,              & ! X_aj_dk
+                  (wf%n_v)*(wf%n_o),   &
+                  g_bidk,              & ! g_bi_dk
+                  (wf%n_v)*(wf%n_o),   &
+                  zero,                &
+                  rho_aibj,            &
+                  (wf%n_v)*(wf%n_o))
+!
+      call mem%dealloc(X_ajdk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+!     Term 2:  g_kbid tbar_cjal c_ckdl
+!
+!     NOTE: Pretend that g_bidk (= g_ibkd) is g_bkdi (=kbid), i.e., k <-> i
+!           Reorder  g_bkdi to g_bidk
+!
+      call mem%alloc(g_bidk_2, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call sort_1234_to_1432(g_bidk, g_bidk_2, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(g_bidk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%alloc(X_bicl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+!     c_cldk = c_dkcl 
+!
+      call dgemm('N', 'N',             &
+                  (wf%n_v)*(wf%n_o),   &
+                  (wf%n_v)*(wf%n_o),   &
+                  (wf%n_v)*(wf%n_o),   &
+                  one,                 &
+                  g_bidk_2,            & ! g_bi_dk
+                  (wf%n_v)*(wf%n_o),   &
+                  c_cldk,              & ! c_dk_cl
+                  (wf%n_v)*(wf%n_o),   &
+                  zero,                &
+                  X_bicl,              &
+                  (wf%n_v)*(wf%n_o))
+!  
+      call mem%dealloc(g_bidk_2, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(c_cldk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+!     Reorder tbar_alcj to t_ajcl
+!
+      call mem%alloc(tbar_ajcl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call sort_1234_to_1432(tbar_aibj, tbar_ajcl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('N', 'T',             &
+                  (wf%n_v)*(wf%n_o),   &
+                  (wf%n_v)*(wf%n_o),   &
+                  (wf%n_v)*(wf%n_o),   &
+                  one,                 &
+                  tbar_ajcl,           & ! tbar_aj_cl
+                  (wf%n_v)*(wf%n_o),   &
+                  X_bicl,              & ! X_bi_cl
+                  (wf%n_v)*(wf%n_o),   &
+                  one,                 &
+                  rho_ajbi,            & ! rho_aj_bi
+                  (wf%n_v)*(wf%n_o))
+!
+      call mem%dealloc(tbar_ajcl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(X_bicl, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call add_1432_to_1234(one, rho_ajbi, rho_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call mem%dealloc(rho_ajbi, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
    end subroutine F_ccsd_f2_2_ccsd
 !
