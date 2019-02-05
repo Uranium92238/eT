@@ -207,7 +207,7 @@ contains
 !
       class(eigen_davidson_tool) :: davidson 
 !
-      real(dp), dimension(:,:), allocatable :: work
+      real(dp), dimension(:), allocatable :: work
 !
       real(dp), dimension(:,:), allocatable :: omega_re
       real(dp), dimension(:,:), allocatable :: omega_im
@@ -217,13 +217,11 @@ contains
       real(dp), dimension(:,:), allocatable :: X_red
       real(dp), dimension(:,:), allocatable :: A_red ! Safe copy to avoid BLAS overwrite
 !
-      integer :: dummy = 0, info = 0, j = 0, i = 0
+      integer :: info = 0, j = 0, i = 0, worksize
+      real(dp)  :: dummy =0.0, optwork
 !
 !     Solve reduced eigenvalue problem
 !
-      call mem%alloc(work, 4*(davidson%dim_red), 1)
-!      
-      work = zero
       info = 0
 !
       call mem%alloc(X_red, davidson%dim_red, davidson%dim_red)
@@ -238,6 +236,26 @@ contains
       omega_re = zero
       omega_im = zero
 !
+!     Find optimal work size, lwork = -1
+      call dgeev('N','V',             &
+                  davidson%dim_red,   &
+                  A_red,              &
+                  davidson%dim_red,   &
+                  omega_re,           &
+                  omega_im,           &
+                  dummy,              &              
+                  1,                  &
+                  X_red,              &
+                  davidson%dim_red,   &
+                  optwork,            &   
+                  -1,                 &
+                  info)
+!
+      worksize = int(optwork+0.01)
+!
+      call mem%alloc(work, worksize)
+      work = zero
+!      
       call dgeev('N','V',             &
                   davidson%dim_red,   &
                   A_red,              &
@@ -249,14 +267,14 @@ contains
                   X_red,              &
                   davidson%dim_red,   &
                   work,               &   
-                  4*davidson%dim_red, &
+                  worksize,           &
                   info)
 !
       call mem%dealloc(A_red, davidson%dim_red, davidson%dim_red)
 !
       if (info .ne. 0) call output%error_msg('could not solve reduced equation in Davidson davidson.')
 !
-      call mem%dealloc(work, 4*davidson%dim_red, 1)
+      call mem%dealloc(work, worksize)
 !
 !     Find lowest n_solutions eigenvalues and sort them (the corresponding indices
 !     are placed in the integer array index_list)
