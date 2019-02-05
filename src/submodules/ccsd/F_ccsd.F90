@@ -3064,6 +3064,147 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout)   :: rho_aibj
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)      :: tbar_aibj
 !
+!     Local variables
+!
+      real(dp), dimension(:,:), allocatable :: X_ad
+      real(dp), dimension(:,:,:,:), allocatable :: X_aidk
+      real(dp), dimension(:,:,:,:), allocatable :: L_adck, L_aidc
+      real(dp), dimension(:,:,:,:), allocatable :: g_dakc, g_iadc
+!
+      integer(i15)         :: req0, req1, current_d_batch
+      type(batching_index) :: batch_d
+!
+!     Term 1: L_dakc tbar_bjdi c_ck
+!
+!     X_ad = L_dakc c_ck (constructed in batches of d)
+!
+      call mem%alloc(X_ad, wf%n_v, wf%n_v)
+      X_ad = zero
+!
+      req0 = (wf%integrals%n_J)*(wf%n_v)*(wf%n_o)
+      req1 = max((wf%integrals%n_J)*(wf%n_v) + (wf%n_v**2)*(wf%n_o), 2*(wf%n_v**2)*(wf%n_o))
+!
+      call batch_d%init(wf%n_v)
+!
+      call mem%batch_setup(batch_d, req0, req1)
+!
+      do current_d_batch = 1, batch_d%num_batches
+!
+         call batch_d%determine_limits(current_d_batch)
+!
+!        L_dakc = 2 g_dakc - g_dcka (ordered as L_adck)
+!
+         call mem%alloc(g_dakc, batch_d%length, wf%n_v, wf%n_o, wf%n_v)
+!
+         call wf%get_vvov(g_dakc,                        &
+                           batch_d%first, batch_d%last,  &
+                           1, wf%n_v,                    &
+                           1, wf%n_o,                    &
+                           1, wf%n_v)
+!
+         call mem%alloc(L_adck, wf%n_v, batch_d%length, wf%n_v, wf%n_o)
+         L_adck = zero
+         call add_2143_to_1234(two, g_dakc, L_adck, wf%n_v, batch_d%length, wf%n_v, wf%n_o)
+         call add_2341_to_1234(-one, g_dakc, L_adck, wf%n_v, batch_d%length, wf%n_v, wf%n_o)
+!
+         call mem%dealloc(g_dakc, batch_d%length, wf%n_v, wf%n_o, wf%n_v)
+!
+         call dgemm('N', 'N',                &
+                     wf%n_v*batch_d%length,  &
+                     1,                      &
+                     (wf%n_o)*(wf%n_v),      &
+                     one,                    &
+                     L_adck,                 & ! L_ad_ck
+                     wf%n_v*batch_d%length,  &
+                     c_ai,                   & ! c_ck
+                     (wf%n_o)*(wf%n_v),      &
+                     one,                    &
+                     X_ad(1, batch_d%first), &
+                     wf%n_v**2)
+!
+         call mem%dealloc(L_adck, wf%n_v, batch_d%length, wf%n_v, wf%n_o)
+!
+      enddo ! batch_d
+!
+      call dgemm('N', 'N',                &
+                  wf%n_v,                 &
+                  (wf%n_o**2)*(wf%n_v),   &
+                  wf%n_v,                 &
+                  one,                    &
+                  X_ad,                   & ! X_a_d
+                  wf%n_v,                 &
+                  tbar_aibj,              & ! tbar_d_ibj
+                  wf%n_v,                 &
+                  one,                    &
+                  rho_aibj,               & ! rho_a_ibj
+                  wf%n_v)
+!
+      call mem%dealloc(X_ad, wf%n_v, wf%n_v)
+!
+!     Term 2: Ldcia tbar_bjdk c_ck
+!
+      call mem%alloc(X_aidk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      X_aidk = zero
+!
+      req0 = (wf%integrals%n_J)*(wf%n_v)*(wf%n_o)
+      req1 = max((wf%integrals%n_J)*(wf%n_v) + (wf%n_v**2)*(wf%n_o), 2*(wf%n_v**2)*(wf%n_o))
+!
+      call batch_d%init(wf%n_v)
+!
+      call mem%batch_setup(batch_d, req0, req1)
+!
+      do current_d_batch = 1, batch_d%num_batches
+!
+         call batch_d%determine_limits(current_d_batch)
+!
+!        L_iadc = 2 g_iadc - g_icda (ordered as L_aidc)
+!
+         call mem%alloc(g_iadc, wf%n_o, wf%n_v, batch_d%length, wf%n_v)
+!
+         call wf%get_ovvv(g_iadc,                        &
+                           1, wf%n_o,                    &
+                           1, wf%n_v,                    &
+                           batch_d%first, batch_d%last,  &
+                           1, wf%n_v)
+!
+         call mem%alloc(L_aidc, wf%n_v, wf%n_o, batch_d%length, wf%n_v)
+         L_aidc = zero
+         call add_2134_to_1234(two, g_iadc, L_aidc, wf%n_v, wf%n_o, batch_d%length, wf%n_v)
+         call add_2431_to_1234(-one, g_iadc, L_aidc, wf%n_v, wf%n_o, batch_d%length, wf%n_v)
+!
+         call mem%dealloc(g_iadc, wf%n_o, wf%n_v, batch_d%length, wf%n_v)
+!
+         call dgemm('N',  'N',                           &
+                     (wf%n_v)*(wf%n_o)*batch_d%length,   &
+                     wf%n_o,                             &
+                     one,                                &
+                     L_aidc,                             & ! L_aid_c
+                     (wf%n_v)*(wf%n_o)*batch_d%length,   &
+                     c_ai,                               & ! c_c_k
+                     wf%n_v,                             &
+                     one,                                &
+                     X_aidk(1,1,batch_d%first,1),        & ! X_aid_k
+                     (wf%n_v**2)*(wf%n_o))
+!
+         call mem%dealloc(L_aidc, wf%n_v, wf%n_o, batch_d%length, wf%n_v)
+!
+      enddo ! batch_d
+!
+      call dgemm('N', 'N',             &
+                  (wf%n_v)*(wf%n_o),   &
+                  (wf%n_v)*(wf%n_o),   &
+                  (wf%n_v)*(wf%n_o),   &
+                  one,                 &
+                  X_aidk,              & ! X_ai_dk
+                  (wf%n_v)*(wf%n_o),   &
+                  tbar_aibj,           & ! tbar_dk_bj
+                  (wf%n_v)*(wf%n_o),   &
+                  one,                 &
+                  rho_aibj,            & ! rho_ai_bj
+                  (wf%n_v)*(wf%n_o))
+!
+      call mem%dealloc(X_aidk, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
    end subroutine F_ccsd_e2_2_ccsd
 !
 !
