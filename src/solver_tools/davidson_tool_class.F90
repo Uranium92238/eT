@@ -726,7 +726,6 @@ contains
 !
       integer :: i 
 !
-!
       if (davidson%do_projection) then 
 !
          call mem%alloc(projector, davidson%n_parameters, 1)

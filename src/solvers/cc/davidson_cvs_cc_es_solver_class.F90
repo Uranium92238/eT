@@ -14,8 +14,8 @@ module davidson_cvs_cc_es_solver_class
 !
       integer :: n_cores
 !
-      integer, dimension(:,:), allocatable :: cores
-      integer, dimension(:,:), allocatable :: core_MOs
+      integer, dimension(:), allocatable :: cores
+      integer, dimension(:), allocatable :: core_MOs
 !
    contains
 !
@@ -49,7 +49,7 @@ contains
 !
       character(len=100) :: line
 !
-      solver%tag = 'Davidson coupled cluster ionized state solver'
+      solver%tag = 'Davidson coupled cluster core excited state solver'
       solver%description1 = 'A Davidson CVS solver that calculates core excitation energies and the &
                             &corresponding right eigenvectors of the Jacobian matrix, A. The eigenvalue &
                             &problem is solved in a reduced space, the dimension of which is expanded &
@@ -125,16 +125,16 @@ contains
 !
       type(eigen_davidson_tool) :: davidson
 !
-      real(dp), dimension(:,:), allocatable :: c_i
+      real(dp), dimension(:), allocatable :: c_i
 !
-      integer, dimension(:,:), allocatable :: ai_indices
+      integer, dimension(:), allocatable :: start_indices
 !
-      integer :: trial, core, i, j, k, l, a, first_ao_on_atom, last_ao_on_atom
-      integer :: n_MOs_found, current_root
+      integer :: trial, i, j, k, l, first_ao_on_atom, last_ao_on_atom
+      integer :: n_MOs_found
 !
       real(dp) :: mix_factor
 !
-      logical :: all_selected, used
+      logical :: used
 !
       if (solver%n_cores .gt. solver%n_singlet_states) &
          call output%error_msg('number of roots requested should be equal or greater than the number of cores.')
@@ -143,23 +143,23 @@ contains
 !
 !        Initial trial vectors given on input
 !
-         call mem%alloc(c_i, wf%n_amplitudes, 1)
+         call mem%alloc(c_i, wf%n_amplitudes)
 !
          c_i = zero
-         c_i(solver%start_vectors(1, 1), 1) = one
+         c_i(solver%start_vectors(1, 1)) = one
 !
          call davidson%write_trial(c_i, 'rewind')
 !
          do trial = 2, solver%n_singlet_states
 !
             c_i = zero
-            c_i(solver%start_vectors(trial, 1), 1) = one
+            c_i(solver%start_vectors(trial, 1)) = one
 !
             call davidson%write_trial(c_i)
 !
          enddo
 !
-         call mem%dealloc(c_i, wf%n_amplitudes, 1)
+         call mem%dealloc(c_i, wf%n_amplitudes)
 !
       else
 !
@@ -178,8 +178,8 @@ contains
 !
          do j = 1, solver%n_cores
 !
-            first_ao_on_atom = wf%system%atoms(solver%cores(j, 1))%shells(1)%first
-            last_ao_on_atom = wf%system%atoms(solver%cores(j, 1))%shells(wf%system%atoms(solver%cores(j, 1))%n_shells)%last
+            first_ao_on_atom = wf%system%atoms(solver%cores(j))%shells(1)%first
+            last_ao_on_atom = wf%system%atoms(solver%cores(j))%shells(wf%system%atoms(solver%cores(j))%n_shells)%last
 !
             do k = first_ao_on_atom, last_ao_on_atom
 
@@ -191,7 +191,7 @@ contains
 !
                      do l = 1, n_MOs_found
 !
-                        if (solver%core_MOs(l, 1) == i) used = .true.
+                        if (solver%core_MOs(l) == i) used = .true.
 !
                      enddo
 !
@@ -204,7 +204,7 @@ contains
 !
 
 !
-                        solver%core_MOs(n_MOs_found, 1) = i
+                        solver%core_MOs(n_MOs_found) = i
                         exit
 !
                      else
@@ -221,43 +221,15 @@ contains
 !
          enddo
 !
-!        Calculate ai indices 
+         call mem%alloc(start_indices, solver%n_singlet_states)
 !
-         call mem%alloc(ai_indices, solver%n_singlet_states, 1)
+         call wf%set_cvs_start_indices(solver%n_cores, solver%core_MOs, solver%n_singlet_states, start_indices)
 !
-         all_selected = .false.
-         a =  0 
-         current_root = 0
-!
-         do while (.not. all_selected)
-!
-            a = a + 1
-!
-            do core = 1, solver%n_cores
-!
-               i = solver%core_MOs(core, 1)
-!
-               current_root = current_root + 1
-               ai_indices(current_root, 1) = wf%n_v*( i - 1) + a
-!
-               if (current_root .eq. solver%n_singlet_states) then
-!
-                  all_selected = .true.
-                  exit
-!
-               endif
-!
-            enddo
-!
-         enddo
-!
-!        Set c(ai) = 1
-!
-         call mem%alloc(c_i, wf%n_amplitudes, 1)
+         call mem%alloc(c_i, wf%n_amplitudes)
 !
          c_i = zero
 !
-         c_i(ai_indices(1, 1), 1) = one
+         c_i(start_indices(1)) = one
 !
          call davidson%write_trial(c_i, 'rewind')
 !
@@ -265,13 +237,15 @@ contains
 !
             c_i = zero
 !
-            c_i(ai_indices(trial, 1), 1) = one
+            c_i(start_indices(trial)) = one
 !
             call davidson%write_trial(c_i)
 !
          enddo
 !
-         call mem%dealloc(c_i, wf%n_amplitudes, 1)
+         call mem%dealloc(c_i, wf%n_amplitudes)
+!
+         call mem%dealloc(start_indices, solver%n_singlet_states)
 !
       endif
 !
@@ -295,6 +269,8 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: projector
 !
+      davidson%do_projection = .true.
+!
       call mem%alloc(projector, wf%n_amplitudes, 1)
 !
       call wf%get_cvs_projector(projector, solver%n_cores, solver%core_MOs)
@@ -314,7 +290,7 @@ contains
 !
       class(davidson_cvs_cc_es_solver) :: solver
 !
-      if (.not. allocated(solver%core_MOs)) call mem%alloc(solver%core_MOs, solver%n_cores, 1)
+      if (.not. allocated(solver%core_MOs)) call mem%alloc(solver%core_MOs, solver%n_cores)
 !
    end subroutine initialize_core_MOs_davidson_cvs_cc_es_solver
 !
@@ -328,7 +304,7 @@ contains
 !
       class(davidson_cvs_cc_es_solver) :: solver
 !
-      if (allocated(solver%core_MOs)) call mem%dealloc(solver%core_MOs, solver%n_cores, 1)
+      if (allocated(solver%core_MOs)) call mem%dealloc(solver%core_MOs, solver%n_cores)
 !
    end subroutine destruct_core_MOs_davidson_cvs_cc_es_solver
 !
@@ -342,7 +318,7 @@ contains
 !
       class(davidson_cvs_cc_es_solver) :: solver
 !
-      if (.not. allocated(solver%cores)) call mem%alloc(solver%cores, solver%n_cores, 1)
+      if (.not. allocated(solver%cores)) call mem%alloc(solver%cores, solver%n_cores)
 !
    end subroutine initialize_cores_davidson_cvs_cc_es_solver
 !
@@ -356,7 +332,7 @@ contains
 !
       class(davidson_cvs_cc_es_solver) :: solver
 !
-      if (allocated(solver%cores)) call mem%dealloc(solver%cores, solver%n_cores, 1)
+      if (allocated(solver%cores)) call mem%dealloc(solver%cores, solver%n_cores)
 !
    end subroutine destruct_cores_davidson_cvs_cc_es_solver
 !
