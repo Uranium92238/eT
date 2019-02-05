@@ -2100,4 +2100,145 @@ contains
    end subroutine F_ccsd_j1_2_ccsd
 !
 !
+   module subroutine F_ccsd_a2_2_ccsd(wf, c_ai, rho_aibj, tbar_aibj)
+!!
+!!    F transformation a2,2 term
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2018
+!!
+!!    rho_A2,2 = (g_iljc tbar_albk + g_klja tbar_clbi + g_ilkb tbar_alcj)c_ck
+!!
+!!    First three terms of quation (71)
+!!
+      implicit none
+!
+      class(ccsd), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: c_ai
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout)   :: rho_aibj
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)      :: tbar_aibj
+!
+   end subroutine F_ccsd_a2_2_ccsd
+!
+!
+   module subroutine F_ccsd_b2_2_ccsd(wf, c_ai, rho_aibj, tbar_aibj)
+!!
+!!    F transformation b2,2 term
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2018
+!!
+!!    rho_B2,2 = -(g_ibdc tbar_ajdk + g_kbda tbar_cjdi + g_icdb tbar_akdj)c_ck
+!!
+!!    Last three terms of quation (71)
+!!
+      implicit none
+!
+      class(ccsd), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: c_ai
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout)   :: rho_aibj
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)      :: tbar_aibj
+!
+   end subroutine F_ccsd_b2_2_ccsd
+!
+!
+   module subroutine F_ccsd_c2_2_ccsd(wf, c_ai, rho_aibj, tbar_aibj)
+!!
+!!    F transformation c2,2 term
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2018
+!!
+!!    rho_C2,2 = -(F_ic tbar_bjak + F_ka tbar_bjci)c_ck
+!!
+!!    First two terms of quation (72)
+!!
+      implicit none
+!
+      class(ccsd), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: c_ai
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout)   :: rho_aibj
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)      :: tbar_aibj
+!
+   end subroutine F_ccsd_c2_2_ccsd
+!
+!
+   module subroutine F_ccsd_d2_2_ccsd(wf, c_ai, rho_aibj, tbar_aibj)
+!!
+!!    F transformation d2,2 term
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2018
+!!
+!!    rho_D2,2 = -(L_ilkc tbar_bjal + L_klia tbar_bjcl)c_ck
+!!
+!!    Terms 3 and 4 of quation (72)
+!!
+      implicit none
+!
+      class(ccsd), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: c_ai
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout)   :: rho_aibj
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)      :: tbar_aibj
+!
+   end subroutine F_ccsd_d2_2_ccsd
+!
+!
+   module subroutine F_ccsd_e2_2_ccsd(wf, c_ai, rho_aibj, tbar_aibj)
+!!
+!!    F transformation e2,2 term
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2018
+!!
+!!    rho_E2,2 = (L_dakc tbar_bjdi + Ldcia tbar_bjdk)c_ck
+!!
+!!    Last two terms of quation (72)
+!!
+      implicit none
+!
+      class(ccsd), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: c_ai
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout)   :: rho_aibj
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)      :: tbar_aibj
+!
+   end subroutine F_ccsd_e2_2_ccsd
+!
+!
+   module subroutine F_ccsd_f2_2_ccsd(wf, c_aibj, rho_aibj, tbar_aibj)
+!!
+!!    F transformation f2,2 term
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2018
+!!
+!!    rho_F2,2 = (g_lbic tbar_cjak + g_ibdk tbar_ajcl)c_ckdl
+!!
+!!    Last two terms of Eqn. (50) Sarai's doc
+!!
+      implicit none
+!
+      class(ccsd), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)      :: c_aibj
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout)   :: rho_aibj
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)      :: tbar_aibj
+!
+   end subroutine F_ccsd_f2_2_ccsd
+!
+!
+   module subroutine F_ccsd_g2_2_ccsd(wf, c_aibj, rho_aibj, tbar_aibj)
+!!
+!!    F transformation g2,2 term
+!!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2018
+!!
+!!    rho_G2,2 = (tbar_bkal g_jcid + tbar_cjdi g_lakb)c_ckdl
+!!
+!!    First two terms of Eqn. (50) Sarai's doc
+!!
+!!    NOTE NOTE NOTE ! This term is already symmetrized !! 
+!!
+      implicit none
+!
+      class(ccsd), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)      :: c_aibj
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout)   :: rho_aibj
+      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)      :: tbar_aibj
+!
+   end subroutine F_ccsd_g2_2_ccsd
+!
 end submodule F_ccsd
