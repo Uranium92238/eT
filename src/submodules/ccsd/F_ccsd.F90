@@ -2848,7 +2848,7 @@ contains
 !!    F transformation c2,2 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2018
 !!
-!!    rho_C2,2 = -(F_ic tbar_bjak + F_ka tbar_bjci)c_ck
+!!    rho_C2,2 = -(F_jc tbar_aibk + F_ka tbar_bjci)c_ck
 !!
 !!    First two terms of quation (72)
 !!
@@ -2859,6 +2859,75 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o), intent(in)                      :: c_ai
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout)   :: rho_aibj
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)      :: tbar_aibj
+!
+!     Local variables
+!
+      real(dp), dimension(:,:), allocatable     :: X_jk
+      real(dp), dimension(:,:,:,:), allocatable :: X_kibj
+!
+!     Term 1: -F_jc tbar_aibk c_ck
+!
+      call mem%alloc(X_jk, wf%n_o, wf%n_o)
+!
+      call dgemm('N', 'N',    &
+                  wf%n_o,     &
+                  wf%n_o,     &
+                  wf%n_v,     &
+                  one,        &
+                  wf%fock_ia, & ! F_j_c
+                  wf%n_o,     &
+                  c_ai,       & ! c_c_k
+                  wf%n_v,     &
+                  zero,       &
+                  X_jk,       &
+                  wf%n_o)
+!
+      call dgemm('N', 'T',             &
+                  (wf%n_v**2)*wf%n_o,  &
+                  wf%n_o,              &
+                  wf%n_o,              &
+                  -one,                &
+                  tbar_aibj,           & ! tbar_aibk
+                  (wf%n_v**2)*wf%n_o,  &
+                  X_jk,                &
+                  wf%n_o,              &
+                  one,                 &
+                  rho_aibj,            &
+                  (wf%n_v**2)*wf%n_o)
+!
+      call mem%dealloc(X_jk, wf%n_o, wf%n_o)
+!
+!     Term 2: - F_ka tbar_bjci c_ck
+!
+      call mem%alloc(X_kibj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
+!
+      call dgemm('T', 'N',            &
+                 wf%n_o,              &
+                 (wf%n_o**2)*wf%n_v,  &
+                 wf%n_v,              &
+                 one,                 &
+                 c_ai,                & ! c_c_k 
+                 wf%n_v,              &
+                 tbar_aibj,           & ! tbar_c_ibj
+                 wf%n_v,              &
+                 zero,                &
+                 X_kibj,              &
+                 wf%n_o)
+!
+      call dgemm('T', 'N',             &
+                  wf%n_v,              &
+                  (wf%n_o**2)*wf%n_v,  &
+                  wf%n_o,              &
+                  -one,                &
+                  wf%fock_ia,          & ! F_ka
+                  wf%n_o,              &
+                  X_kibj,              &
+                  wf%n_o,              &
+                  one,                 &
+                  rho_aibj,            &
+                  wf%n_v)
+
+      call mem%dealloc(X_kibj, wf%n_o, wf%n_o, wf%n_v, wf%n_o)
 !
    end subroutine F_ccsd_c2_2_ccsd
 !
