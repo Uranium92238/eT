@@ -44,18 +44,18 @@ module memory_manager_class
 !
 !     The total amount of memory specified by user (standard: 8 GB)
 !
-      integer(i15) :: total = 8000000000
+      integer(i15) :: total
 !
 !     The amount of memory currently available, based on the arrays currently allocated
 !     (memory used by objects and local variables are not included in this estimate)
 !
-      integer(i15) :: available = 8000000000
+      integer(i15) :: available
 !
 !     Buffer for handling batches (standard: 10%). This means in practice that 'required
 !     memory' estimates are increased by 10% in case they miss they slightly underestimate
 !     the correct memory requirements
 !
-      integer(i15) :: buffer = 10 ! 10%
+      integer :: buffer = 10 ! 10%
 !
    contains
 !
@@ -144,7 +144,7 @@ contains
 !
 !        Set default value 
 !
-         mem%total = 8*1000000000
+         mem%total = 8000000000_i15
 !
       endif
 !
@@ -155,7 +155,7 @@ contains
    end subroutine prepare_memory_manager
 !
 !
-   integer(i15) function get_available_memory_manager(mem, requested_unit)
+   integer(i15) function get_available_memory_manager(mem)
 !!
 !!    Get available  
 !!    Written by Eirik F. Kjønstad, Jan 2019 
@@ -164,17 +164,7 @@ contains
 !
       class(memory_manager), intent(in) :: mem 
 !
-      character(len=*) :: requested_unit
-!
-      if (trim(requested_unit) == 'bytes') then 
-!
-         get_available_memory_manager = mem%available
-!
-      elseif (trim(requested_unit) == 'dps') then
-!
-         get_available_memory_manager = mem%available/dp
-!
-      endif
+      get_available_memory_manager = mem%available
 !
    end function get_available_memory_manager
 !
@@ -193,11 +183,11 @@ contains
 !
       real(dp), dimension(:), allocatable :: array
 !
-      integer(i15), intent(in) :: M ! Dimension of array that is being allocated
+      integer, intent(in) :: M ! Dimension of array that is being allocated
 !
-      integer(i15) :: size_array ! Total size of array (M)
-      integer(i15) :: stat = 0
-      integer(i15) :: error = 0
+      integer :: size_array ! Total size of array (M)
+      integer :: stat = 0
+      integer :: error = 0
 !
       size_array = M
 !
@@ -244,11 +234,11 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: array
 !
-      integer(i15), intent(in) :: M, N ! First and second dimension of array that is being allocated
+      integer, intent(in) :: M, N ! First and second dimension of array that is being allocated
 !
-      integer(i15) :: size_array ! Total size of array (M*N)
-      integer(i15) :: stat = 0
-      integer(i15) :: error = 0
+      integer :: size_array ! Total size of array (M*N)
+      integer :: stat = 0
+      integer :: error = 0
 !
       size_array = M*N
 !
@@ -295,11 +285,11 @@ contains
 !
       real(dp), dimension(:,:,:), allocatable :: array
 !
-      integer(i15), intent(in) :: M, N, O ! First, second and third dimension of array 
+      integer, intent(in) :: M, N, O ! First, second and third dimension of array 
 !
-      integer(i15) :: size_array ! Total size of array (M*N*O)
-      integer(i15) :: stat = 0
-      integer(i15) :: error = 0
+      integer :: size_array ! Total size of array (M*N*O)
+      integer :: stat = 0
+      integer :: error = 0
 !
       size_array = M*N*O
 !
@@ -346,11 +336,11 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: array
 !
-      integer(i15), intent(in) :: M, N, O, P ! First, second, third and fourth dimension of array 
+      integer, intent(in) :: M, N, O, P ! First, second, third and fourth dimension of array 
 !
-      integer(i15) :: size_array ! Total size of array (M*N*O*P)
-      integer(i15) :: stat = 0
-      integer(i15) :: error = 0
+      integer :: size_array ! Total size of array (M*N*O*P)
+      integer :: stat = 0
+      integer :: error = 0
 !
       size_array = M*N*O*P
 !
@@ -397,11 +387,11 @@ contains
 !
       real(dp), dimension(:), allocatable :: array
 !
-      integer(i15), intent(in) :: M ! Dimension of array 
+      integer, intent(in) :: M ! Dimension of array 
 !
-      integer(i15) :: size_array ! Total size of array (M)
-      integer(i15) :: stat = 0
-      integer(i15) :: error = 0
+      integer :: size_array ! Total size of array (M)
+      integer :: stat = 0
+      integer :: error = 0
 !
       size_array = M
 !
@@ -439,11 +429,11 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: array
 !
-      integer(i15), intent(in) :: M, N ! First and second dimension of array 
+      integer, intent(in) :: M, N ! First and second dimension of array 
 !
-      integer(i15) :: size_array ! Total size of array (M*N)
-      integer(i15) :: stat = 0
-      integer(i15) :: error = 0
+      integer :: size_array ! Total size of array (M*N)
+      integer :: stat = 0
+      integer :: error = 0
 !
       size_array = M*N
 !
@@ -481,11 +471,11 @@ contains
 !
       real(dp), dimension(:,:,:), allocatable :: array
 !
-      integer(i15), intent(in) :: M, N, O ! First, second and third dimension of array
+      integer, intent(in) :: M, N, O ! First, second and third dimension of array
 !
-      integer(i15) :: size_array ! Total size of array (M*N*O)
-      integer(i15) :: stat = 0
-      integer(i15) :: error = 0
+      integer :: size_array ! Total size of array (M*N*O)
+      integer :: stat = 0
+      integer :: error = 0
 !
       size_array = M*N*O
 !
@@ -523,11 +513,11 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: array
 !
-      integer(i15), intent(in) :: M, N, O, P ! First, second, third and fourth dimension of array
+      integer, intent(in) :: M, N, O, P ! First, second, third and fourth dimension of array
 !
-      integer(i15) :: size_array ! Total size of array (M*N*O*P)
-      integer(i15) :: stat = 0
-      integer(i15) :: error = 0
+      integer :: size_array ! Total size of array (M*N*O*P)
+      integer :: stat = 0
+      integer :: error = 0
 !
       size_array = M*N*O*P
 !
@@ -563,13 +553,14 @@ contains
 !
       class(memory_manager) :: mem
 !
-      integer(i15), dimension(:), allocatable :: array
+      integer, dimension(:), allocatable :: array
 !
-      integer(i15), intent(in) :: M ! Dimension of array 
+      integer, intent(in) :: M ! Dimension of array 
 !
-      integer(i15) :: size_array ! Total size of array (M)
-      integer(i15) :: stat = 0
-      integer(i15) :: error = 0
+      integer :: size_array ! Total size of array (M)
+      integer :: stat = 0
+      integer :: error = 0
+      integer :: int_size
 !
       size_array = M
 !
@@ -588,7 +579,8 @@ contains
 !     The 'integer 15', or i15, type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available - i15*size_array
+      int_size = storage_size(array(1))/8
+      mem%available = mem%available - int_size*size_array
 !
 !     Check if there is no more memory (defined as being no more memory
 !     left of what was specified by user as available)
@@ -614,13 +606,14 @@ contains
 !
       class(memory_manager) :: mem
 !
-      integer(i15), dimension(:,:), allocatable :: array
+      integer, dimension(:,:), allocatable :: array
 !
-      integer(i15), intent(in) :: M, N ! First and second dimension of array 
+      integer, intent(in) :: M, N ! First and second dimension of array 
 !
-      integer(i15) :: size_array ! Total size of array (M*N)
-      integer(i15) :: stat = 0
-      integer(i15) :: error = 0
+      integer :: size_array ! Total size of array (M*N)
+      integer :: stat = 0
+      integer :: error = 0
+      integer :: int_size
 !
       size_array = M*N
 !
@@ -639,7 +632,8 @@ contains
 !     The 'integer 15', or i15, type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available - i15*size_array
+      int_size = storage_size(array(1,1))/8
+      mem%available = mem%available - int_size*size_array
 !
 !     Check if there is no more memory (defined as being no more memory
 !     left of what was specified by user as available)
@@ -665,13 +659,14 @@ contains
 !
       class(memory_manager) :: mem
 !
-      integer(i15), dimension(:,:,:), allocatable :: array
+      integer, dimension(:,:,:), allocatable :: array
 !
-      integer(i15), intent(in) :: M, N, O ! First, second and third dimension of array 
+      integer, intent(in) :: M, N, O ! First, second and third dimension of array 
 !
-      integer(i15) :: size_array ! Total size of array (M*N*O)
-      integer(i15) :: stat = 0
-      integer(i15) :: error = 0
+      integer :: size_array ! Total size of array (M*N*O)
+      integer :: stat = 0
+      integer :: error = 0
+      integer :: int_size
 !
       size_array = M*N*O
 !
@@ -690,7 +685,8 @@ contains
 !     The 'integer 15', or i15, type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available - i15*size_array
+      int_size = storage_size(array(1,1,1))/8
+      mem%available = mem%available - int_size*size_array
 !
 !     Check if there is no more memory (defined as being no more memory
 !     left of what was specified by user as available)
@@ -716,13 +712,14 @@ contains
 !
       class(memory_manager) :: mem
 !
-      integer(i15), dimension(:,:,:,:), allocatable :: array
+      integer, dimension(:,:,:,:), allocatable :: array
 !
-      integer(i15), intent(in) :: M, N, O, P ! First, second, third and fourth dimension of array 
+      integer, intent(in) :: M, N, O, P ! First, second, third and fourth dimension of array 
 !
-      integer(i15) :: size_array ! Total size of array (M*N*O*P)
-      integer(i15) :: stat = 0
-      integer(i15) :: error = 0
+      integer :: size_array ! Total size of array (M*N*O*P)
+      integer :: stat = 0
+      integer :: error = 0
+      integer :: int_size
 !
       size_array = M*N*O*P
 !
@@ -741,7 +738,8 @@ contains
 !     The 'integer 15', or i15, type (see types.F90) is typically 8 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available - i15*size_array
+      int_size = storage_size(array(1,1,1,1))/8
+      mem%available = mem%available - int_size*size_array
 !
 !     Check if there is no more memory (defined as being no more memory
 !     left of what was specified by user as available)
@@ -767,13 +765,14 @@ contains
 !
       class(memory_manager) :: mem
 !
-      integer(i15), dimension(:), allocatable :: array
+      integer, dimension(:), allocatable :: array
 !
-      integer(i15), intent(in) :: M ! Dimension of array 
+      integer, intent(in) :: M ! Dimension of array 
 !
-      integer(i15) :: size_array ! Total size of array (M*N)
-      integer(i15) :: stat = 0
-      integer(i15) :: error = 0
+      integer :: size_array ! Total size of array (M*N)
+      integer :: stat = 0
+      integer :: error = 0
+      integer :: int_size
 !
       size_array = M
 !
@@ -792,7 +791,8 @@ contains
 !     The 'integer 15', or i15, type (see types.F90) is typically 4 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available + i15*size_array
+      int_size = storage_size(array(1))/8
+      mem%available = mem%available + int_size*size_array
 !
    end subroutine dealloc_int_1_memory_manager
 !
@@ -809,13 +809,14 @@ contains
 !
       class(memory_manager) :: mem
 !
-      integer(i15), dimension(:,:), allocatable :: array
+      integer, dimension(:,:), allocatable :: array
 !
-      integer(i15), intent(in) :: M, N ! First and second dimension of array 
+      integer, intent(in) :: M, N ! First and second dimension of array 
 !
-      integer(i15) :: size_array ! Total size of array (M*N)
-      integer(i15) :: stat = 0
-      integer(i15) :: error = 0
+      integer :: size_array ! Total size of array (M*N)
+      integer :: stat = 0
+      integer :: error = 0
+      integer :: int_size
 !
       size_array = M*N
 !
@@ -834,7 +835,8 @@ contains
 !     The 'integer 15', or i15, type (see types.F90) is typically 4 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available + i15*size_array
+      int_size = storage_size(array(1,1))/8
+      mem%available = mem%available + int_size*size_array
 !
    end subroutine dealloc_int_2_memory_manager
 !
@@ -851,13 +853,14 @@ contains
 !
       class(memory_manager) :: mem
 !
-      integer(i15), dimension(:,:,:), allocatable :: array
+      integer, dimension(:,:,:), allocatable :: array
 !
-      integer(i15), intent(in) :: M, N, O ! First, second and third dimension of array
+      integer, intent(in) :: M, N, O ! First, second and third dimension of array
 !
-      integer(i15) :: size_array ! Total size of array (M*N*O)
-      integer(i15) :: stat = 0
-      integer(i15) :: error = 0
+      integer :: size_array ! Total size of array (M*N*O)
+      integer :: stat = 0
+      integer :: error = 0
+      integer :: int_size
 !
       size_array = M*N*O
 !
@@ -876,7 +879,8 @@ contains
 !     The 'integer 15', or i15, type (see types.F90) is typically 4 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available + i15*size_array
+      int_size = storage_size(array(1,1,1))/8
+      mem%available = mem%available + int_size*size_array
 !
    end subroutine dealloc_int_3_memory_manager
 !
@@ -893,13 +897,14 @@ contains
 !
       class(memory_manager) :: mem
 !
-      integer(i15), dimension(:,:,:,:), allocatable :: array
+      integer, dimension(:,:,:,:), allocatable :: array
 !
-      integer(i15), intent(in) :: M, N, O, P ! First, second, third and fourth dimension of array
+      integer, intent(in) :: M, N, O, P ! First, second, third and fourth dimension of array
 !
-      integer(i15) :: size_array ! Total size of array (M*N*O*P)
-      integer(i15) :: stat = 0
-      integer(i15) :: error = 0
+      integer :: size_array ! Total size of array (M*N*O*P)
+      integer :: stat = 0
+      integer :: error = 0
+      integer :: int_size
 !
       size_array = M*N*O*P
 !
@@ -918,7 +923,8 @@ contains
 !     The 'integer 15', or i15, type (see types.F90) is typically 4 bytes,
 !     though it might differ due to its definition in terms of precision.
 !
-      mem%available = mem%available + i15*size_array
+      int_size = storage_size(array(1,1,1,1))/8
+      mem%available = mem%available + int_size*size_array
 !
    end subroutine dealloc_int_4_memory_manager
 !
@@ -937,7 +943,7 @@ contains
 !
       class(batching_index) :: batch_p ! The index being batched over
 !
-      integer(i15) :: required
+      integer :: required
 !
 !     Add buffer to required estimate
 !
@@ -958,7 +964,7 @@ contains
 !
 !     Determine maximum batch length
 !
-      batch_p%max_length = (mem%available)/(required/(batch_p%index_dimension))
+      batch_p%max_length = int((mem%available)/(required/(batch_p%index_dimension)))
 !
 !     Number of full batches
 !
@@ -991,9 +997,9 @@ contains
       class(batching_index) :: batch_p
       class(batching_index) :: batch_q
 !
-      integer(i15) :: required
+      integer :: required
 !
-      integer(i15) :: i = 0
+      integer :: i = 0
 !
       required = required + required/(mem%buffer)
 !
@@ -1064,7 +1070,7 @@ contains
 !  
       class(memory_manager) :: mem
 !
-      integer(i15) :: n_specs, i
+      integer :: n_specs, i
 !
       character(len=100) :: line
 !
@@ -1080,12 +1086,12 @@ contains
          if (line(1:10) == 'available:' ) then
 !
             read(line(11:100), *) mem%total
+            mem%total = mem%total*1000000000
 !
          endif
 !
       enddo
 !
-      mem%total = mem%total*1000000000
 !
    end subroutine read_settings_memory_manager
 !
@@ -1102,25 +1108,6 @@ contains
       write(output%unit, '(t3, a38, i5, a)') 'Memory available for calculation:     ', mem%total/1000000000, ' GB'
 !
    end subroutine print_settings_memory_manager
-!
-!
-   integer(i15) function room_for_n_arrays_of_size_memory_manager(mem, M)
-!!
-!!    Room for number of arrays of size
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
-!!
-!!    Returns the number of double precision arrays of size M that can currently be held 
-!!    in memory, based on what is - according to the manager - available.
-!!
-      implicit none 
-!
-      class(memory_manager), intent(in) :: mem 
-!
-      integer(i15), intent(in) :: M
-!
-      room_for_n_arrays_of_size_memory_manager = (mem%available)/(dp*M)
-!
-   end function room_for_n_arrays_of_size_memory_manager
 !
 !
    subroutine batch_setup_1_memory_manager(mem, batch_p, req0, req1, element_size)
@@ -1146,18 +1133,18 @@ contains
 !
       class(batching_index) :: batch_p ! The index being batched over
 !
-      integer(i15), intent(in) :: req0
-      integer(i15), intent(in) :: req1
+      integer, intent(in) :: req0
+      integer, intent(in) :: req1
 !
-      integer(i15), intent(in), optional :: element_size
+      integer, intent(in), optional :: element_size
 !
-      integer(i15) :: req0_tot
-      integer(i15) :: req1_min
-      integer(i15) :: req_min
+      integer :: req0_tot
+      integer :: req1_min
+      integer :: req_min
 !
-      integer(i15) :: req_tot
+      integer :: req_tot
 !
-      integer(i15) :: e_size
+      integer :: e_size
 !
       e_size = dp
       if(present(element_size)) then
@@ -1190,7 +1177,7 @@ contains
 !
 !        Determine maximum batch length
 !
-         batch_p%max_length = (mem%available - req0_tot)/(req1_min)
+         batch_p%max_length = int((mem%available - req0_tot)/(req1_min))
 !
 !        Number of full batches
 !
@@ -1237,25 +1224,25 @@ contains
       class(batching_index) :: batch_p ! An index being batched over
       class(batching_index) :: batch_q ! An index being batched over
 !
-      integer(i15), intent(in) :: req0
-      integer(i15), intent(in) :: req1_p
-      integer(i15), intent(in) :: req1_q
-      integer(i15), intent(in) :: req2
+      integer, intent(in) :: req0
+      integer, intent(in) :: req1_p
+      integer, intent(in) :: req1_q
+      integer, intent(in) :: req2
 !
-      integer(i15), intent(in), optional :: element_size
+      integer, intent(in), optional :: element_size
 !
       logical :: figgered_out
 !
-      integer(i15) :: req0_tot
-      integer(i15) :: req1_p_min
-      integer(i15) :: req1_q_min 
-      integer(i15) :: req2_min
-      integer(i15) :: req_min
-      integer(i15) :: req_tot 
+      integer :: req0_tot
+      integer :: req1_p_min
+      integer :: req1_q_min 
+      integer :: req2_min
+      integer :: req_min
+      integer :: req_tot 
 !
-      integer(i15) :: p_elements, q_elements
+      integer :: p_elements, q_elements
 !
-      integer(i15) :: e_size
+      integer :: e_size
 !
       e_size = dp
       if(present(element_size)) then
@@ -1418,40 +1405,40 @@ contains
       class(batching_index) :: batch_q ! An index being batched over
       class(batching_index) :: batch_r ! An index being batched over
 !
-      integer(i15), intent(in) :: req0
+      integer, intent(in) :: req0
 ! 
-      integer(i15), intent(in) :: req1_p 
-      integer(i15), intent(in) :: req1_q 
-      integer(i15), intent(in) :: req1_r 
+      integer, intent(in) :: req1_p 
+      integer, intent(in) :: req1_q 
+      integer, intent(in) :: req1_r 
 !
-      integer(i15), intent(in) :: req2_pq
-      integer(i15), intent(in) :: req2_pr
-      integer(i15), intent(in) :: req2_qr 
+      integer, intent(in) :: req2_pq
+      integer, intent(in) :: req2_pr
+      integer, intent(in) :: req2_qr 
 !
-      integer(i15), intent(in) :: req3
+      integer, intent(in) :: req3
 !
-      integer(i15), intent(in), optional :: element_size
+      integer, intent(in), optional :: element_size
 !
-      integer(i15) :: req0_tot
+      integer :: req0_tot
 !
-      integer(i15) :: req1_p_min
-      integer(i15) :: req1_q_min 
-      integer(i15) :: req1_r_min
+      integer :: req1_p_min
+      integer :: req1_q_min 
+      integer :: req1_r_min
 ! 
-      integer(i15) :: req2_pq_min
-      integer(i15) :: req2_pr_min
-      integer(i15) :: req2_qr_min
+      integer :: req2_pq_min
+      integer :: req2_pr_min
+      integer :: req2_qr_min
 !
-      integer(i15) :: req3_min
+      integer :: req3_min
 !
-      integer(i15) :: req_min
-      integer(i15) :: req_tot 
+      integer :: req_min
+      integer :: req_tot 
 !
-      integer(i15) :: p_elements, q_elements, r_elements
+      integer :: p_elements, q_elements, r_elements
 !
       logical :: found_batch_size, p_incremented, q_incremented, r_incremented
 !
-      integer(i15) :: e_size
+      integer :: e_size
 !
       e_size = dp
       if(present(element_size)) then

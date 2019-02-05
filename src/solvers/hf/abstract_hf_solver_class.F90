@@ -20,7 +20,7 @@ module abstract_hf_solver_class
       real(dp) :: energy_threshold          = 1.0D-6
       real(dp) :: gradient_threshold        = 1.0D-6
 !
-      integer(i15) :: max_iterations        = 100
+      integer :: max_iterations        = 100
 !  
       character(len=40) :: ao_density_guess = 'SAD'
 !
@@ -47,8 +47,8 @@ contains
 !
       class(abstract_hf_solver) :: solver 
 !
-      write(output%unit, '(t6,a30,e10.4)') 'Energy threshold:             ', solver%energy_threshold
-      write(output%unit, '(t6,a30,e10.4)') 'Gradient threshold:           ', solver%gradient_threshold
+      write(output%unit, '(t6,a30,e11.4)') 'Energy threshold:             ', solver%energy_threshold
+      write(output%unit, '(t6,a30,e11.4)') 'Gradient threshold:           ', solver%gradient_threshold
 !
    end subroutine print_hf_solver_settings_hf_solver
 !
@@ -81,7 +81,7 @@ contains
 !
       class(abstract_hf_solver) :: solver 
 !
-      integer(i15) :: n_records, i 
+      integer :: n_records, i 
 !
       character(len=100) :: line, value 
 !

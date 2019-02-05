@@ -66,7 +66,7 @@ contains
       real(dp), dimension(:,:), allocatable :: rho_a_i   
       real(dp), dimension(:,:), allocatable :: rho_ai_bj, rho_ab_ij 
 !
-      integer(i15) :: i, j, a, b, ai, bj, aibj ! Index
+      integer :: i, j, a, b, ai, bj, aibj ! Index
 !
 !     Allocate and zero the transformed vector (singles part)
 !
@@ -608,7 +608,7 @@ contains
       real(dp), dimension((wf%n_o)*(wf%n_v),(wf%n_o)*(wf%n_v)), intent(in) :: c_bi_cj
       real(dp), dimension(wf%n_v, wf%n_o) :: rho_a_i
 !
-      integer(i15) :: current_a_batch
+      integer :: current_a_batch
 !
       type(batching_index) :: batch_a
 !
@@ -618,7 +618,7 @@ contains
 !
       type(timings) :: jacobian_ccsd_d1_timer
 !
-      integer(i15) :: rec0, rec1
+      integer :: rec0, rec1
 !
       call jacobian_ccsd_d1_timer%init('jacobian ccsd d1')
       call jacobian_ccsd_d1_timer%start()
@@ -709,14 +709,14 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_aibc 
       real(dp), dimension(:,:,:,:), allocatable :: rho_baij 
 !
-      integer(i15) :: current_b_batch
-      integer(i15) :: aib_offset
+      integer :: current_b_batch
+      integer :: aib_offset
 !
       type(batching_index) :: batch_b
 !
       type(timings) :: jacobian_ccsd_a2_timer
 !
-      integer(i15) :: rec0, rec1
+      integer :: rec0, rec1
 !
       call jacobian_ccsd_a2_timer%init('jacobian ccsd a2')
       call jacobian_ccsd_a2_timer%start()
@@ -1352,12 +1352,12 @@ contains
       real(dp), dimension(:,:), allocatable :: rho_aib_j ! rho_ai_bj, batching over b
       real(dp), dimension(:,:), allocatable :: rho_b_aij ! rho_ai_bj, batching over b
 !
-      integer(i15) :: rec1, rec0
-      integer(i15) :: current_b_batch
+      integer :: rec1, rec0
+      integer :: current_b_batch
 !
       type(batching_index) :: batch_b
 
-      integer(i15) :: b, i, ijb, j, a, ai, bj, ib, aj, aib, aij
+      integer :: b, i, ijb, j, a, ai, bj, ib, aj, aib, aij
 !
       type(timings) :: jacobian_ccsd_d2_timer
 !
@@ -2654,16 +2654,16 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_bc_kj
       real(dp), dimension(:,:), allocatable :: g_ck_bj ! reordering of g_bj_kc and g_bc_kj
 !
-      integer(i15) :: b, bc, bj, c, ck, j, k, kj
+      integer :: b, bc, bj, c, ck, j, k, kj
 !
-      integer(i15) :: required
-      integer(i15) :: current_c_batch 
+      integer :: required
+      integer :: current_c_batch 
 !
       type(batching_index) :: batch_c
 !
       type(timings) :: jacobian_ccsd_i2_timer
 !
-      integer(i15) :: rec0, rec1
+      integer :: rec0, rec1
 !
       call jacobian_ccsd_i2_timer%init('jacobian ccsd i2')
       call jacobian_ccsd_i2_timer%start()
@@ -3043,17 +3043,17 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: rho_batch_ab_ij
 !
-      integer(i15) :: a = 0, b = 0, i = 0, j = 0, ab = 0, full_ab = 0, ij = 0
+      integer :: a = 0, b = 0, i = 0, j = 0, ab = 0, full_ab = 0, ij = 0
 !
 !     Batching and memory handling variables
 !
-      integer(i15) :: current_a_batch = 0
-      integer(i15) :: current_b_batch = 0
+      integer :: current_a_batch = 0
+      integer :: current_b_batch = 0
 !
       type(batching_index) :: batch_a
       type(batching_index) :: batch_b
 !
-      integer(i15) :: rec0, rec1_a, rec1_b, rec2
+      integer :: rec0, rec1_a, rec1_b, rec2
 !
       type(timings) :: jacobian_ccsd_k2_timer
 !

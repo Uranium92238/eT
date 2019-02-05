@@ -17,7 +17,7 @@ module index
 contains
 !
 !
-   integer(i15) function index_packed(i,j)
+   integer function index_packed(i,j)
 !!
 !!    Packed index
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2017
@@ -26,14 +26,14 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: i,j
+      integer, intent(in) :: i,j
 !
       index_packed = (max(i,j)*(max(i,j)-3)/2) + i + j
 !
    end function index_packed
 !
 !
-   integer(i15) function index_three(p,q,r,dim_p,dim_q)
+   integer function index_three(p,q,r,dim_p,dim_q)
 !!
 !!    Three index compound
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2017
@@ -42,14 +42,14 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: p, q, r, dim_p, dim_q
+      integer, intent(in) :: p, q, r, dim_p, dim_q
 !
       index_three = dim_p*(dim_q*(r-1)+q-1)+p
 !
    end function index_three
 !
 !
-   integer(i15) function index_two(p, q, dim_p)
+   integer function index_two(p, q, dim_p)
 !!
 !!    Two index compound
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2017
@@ -58,14 +58,14 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: p, q, dim_p
+      integer, intent(in) :: p, q, dim_p
 !
       index_two = dim_p*(q-1)+p
 !
    end function index_two
 !
 !
-   integer(i15) function packed_size(N)
+   integer function packed_size(N)
 !!
 !!    Packed size
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Jan 2017
@@ -75,7 +75,7 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: N
+      integer, intent(in) :: N
 !
       packed_size = N*(N+1)/2
 !
@@ -92,12 +92,12 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: pq
+      integer, intent(in) :: pq
 !
-      integer(i15) :: p, q
-      integer(i15), intent(in) :: dim_p, dim_q
+      integer :: p, q
+      integer, intent(in) :: dim_p, dim_q
 !
-      integer(i15) :: I = 0
+      integer :: I = 0
 !
 !     Since dim_p*q >= pq > dim_p*(q-1) by construction, we can determine q
 !
@@ -136,13 +136,13 @@ contains
 !!
       implicit none
 !
-      integer(i15) :: pq
+      integer :: pq
 !
-      integer(i15) :: p, q
+      integer :: p, q
 !
-      integer(i15) :: dim
+      integer :: dim
 !
-      integer(i15) :: I = 0, J = 0
+      integer :: I = 0, J = 0
 !
 !     Loop through upper triangular part until the index matches
 !

@@ -6,7 +6,7 @@ interface
       implicit none
 !
       real(c_double), dimension(1,1) :: g
-      integer(c_long) :: s1, s2, s3, s4
+      integer(c_int) :: s1, s2, s3, s4
 !
    end subroutine construct_ao_g_wxyz_c
 !
@@ -18,8 +18,8 @@ interface
 !
       real(c_double), dimension(1,1) :: g
       real(c_double)  :: epsilon
-      integer(c_long) :: s1, s2, s3, s4, thread
-      integer(c_long) :: skip, n1, n2, n3, n4
+      integer(c_int) :: s1, s2, s3, s4, thread
+      integer(c_int) :: skip, n1, n2, n3, n4
 !
    end subroutine construct_ao_g_wxyz_epsilon_c
 !

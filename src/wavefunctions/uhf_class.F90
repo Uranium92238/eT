@@ -19,8 +19,8 @@ module uhf_class
 !
    type, extends(hf) :: uhf
 !
-      integer(i15) :: n_alpha
-      integer(i15) :: n_beta 
+      integer :: n_alpha
+      integer :: n_beta 
 !
       real(dp), dimension(:,:), allocatable :: ao_density_a 
       real(dp), dimension(:,:), allocatable :: ao_density_b
@@ -122,7 +122,7 @@ contains
 !
       class(uhf) :: wf
 !
-      wf%name = 'UHF'
+      wf%name_ = 'UHF'
 !
       call wf%system%prepare()
 !
@@ -339,7 +339,7 @@ contains
 !
       class(uhf) :: wf 
 !
-      integer(i15) :: n_records, i 
+      integer :: n_records, i 
 !
       character(len=100) :: line, value 
 !
@@ -497,12 +497,12 @@ contains
 !
       class(uhf) :: wf 
 !
-      integer(i15), intent(in) :: n_s
+      integer, intent(in) :: n_s
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
 !
       real(dp), dimension(n_s*(n_s + 1)/2, 2), intent(in)     :: sp_eri_schwarz
-      integer(i15), dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
+      integer, dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
 !
       call wf%construct_ao_spin_fock(wf%ao_density, wf%ao_density_a, 'alpha',    &
                                        sp_eri_schwarz, sp_eri_schwarz_list, n_s, h_wx)
@@ -622,7 +622,7 @@ contains
       real(dp) :: homo_lumo_gap_a
       real(dp) :: homo_lumo_gap_b
 !
-      write(output%unit, '(/t3,a,a,a)') '- Summary of ', trim(wf%name), ' wavefunction energetics (a.u.):'
+      write(output%unit, '(/t3,a,a,a)') '- Summary of ', trim(wf%name_), ' wavefunction energetics (a.u.):'
 !
       homo_lumo_gap_a = wf%orbital_energies_a(wf%n_alpha + 1, 1) - wf%orbital_energies_a(wf%n_alpha, 1)
       homo_lumo_gap_b = wf%orbital_energies_b(wf%n_beta + 1, 1) - wf%orbital_energies_b(wf%n_beta, 1)
@@ -743,7 +743,7 @@ contains
 !
       class(uhf) :: wf 
 !
-      integer(i15) :: n_alpha_m_n_beta, n_alpha_p_n_beta 
+      integer :: n_alpha_m_n_beta, n_alpha_p_n_beta 
 !
       n_alpha_m_n_beta = wf%system%multiplicity - 1 ! 2 S + 1 - 1 = 2 S
       n_alpha_p_n_beta = wf%system%n_electrons 
@@ -807,11 +807,11 @@ contains
 !
       character(len=*), intent(in) :: sigma
 !
-      integer(i15) :: n_homo_electrons 
-      integer(i15) :: n_homo_orbitals  
-      integer(i15) :: homo_first, homo_last
+      integer :: n_homo_electrons 
+      integer :: n_homo_orbitals  
+      integer :: homo_first, homo_last
       real(dp)     :: electrons_to_fill 
-      integer(i15) :: alpha, beta, i
+      integer :: alpha, beta, i
 !
       if (trim(sigma) == 'alpha') then 
 !
@@ -941,11 +941,11 @@ contains
 !
       real(dp), dimension(wf%n_mo, 1), intent(in) :: energies
 !
-      integer(i15), intent(inout) :: n_homo_orbitals, n_homo_electrons, homo_first, homo_last
+      integer, intent(inout) :: n_homo_orbitals, n_homo_electrons, homo_first, homo_last
 !
-      integer(i15), intent(in) :: n_electrons 
+      integer, intent(in) :: n_electrons 
 !
-      integer(i15) :: homo, n_below, n_above, I
+      integer :: homo, n_below, n_above, I
 !
       real(dp), parameter :: threshold = 1.0D-6 
 !
@@ -1032,14 +1032,14 @@ contains
 !
       class(uhf) :: wf 
 !
-      integer(i15), intent(in) :: n_s
+      integer, intent(in) :: n_s
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
 !
       real(dp), dimension(wf%n_ao**2, wf%n_densities), intent(in) :: prev_ao_density
 !
       real(dp), dimension(n_s*(n_s + 1)/2, 2), intent(in)     :: sp_eri_schwarz
-      integer(i15), dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
+      integer, dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
 !
       logical :: cumulative
 !
@@ -1096,23 +1096,23 @@ contains
 !
       character(len=*), intent(in) :: sigma 
 !
-      integer(i15), intent(in) :: n_s
+      integer, intent(in) :: n_s
 !
       logical, intent(in), optional :: cumulative 
 !
       real(dp), dimension(wf%n_ao, wf%n_ao), intent(in) :: h_wx
 !
       real(dp), dimension(n_s*(n_s + 1)/2, 2), intent(in)     :: sp_eri_schwarz
-      integer(i15), dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
+      integer, dimension(n_s*(n_s + 1)/2, 3), intent(in) :: sp_eri_schwarz_list
 !
-      integer(i15) :: thread, n_threads, omp_get_max_threads
+      integer :: thread, n_threads, omp_get_max_threads
       logical :: local_cumulative 
 !
       real(dp), dimension(:,:), allocatable :: F, sp_density_schwarz
 !
       real(dp) :: coulomb_thr, exchange_thr, precision_thr    ! Actual thresholds 
 !
-      integer(i15) :: n_sig_sp
+      integer :: n_sig_sp
 !
       real(dp) :: max_D_schwarz, max_eri_schwarz
 !

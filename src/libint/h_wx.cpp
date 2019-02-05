@@ -22,7 +22,7 @@ using namespace std;
 
 using namespace libint2;
 
-void construct_ao_h_wx(double *h, long *s1, long *s2){
+void construct_ao_h_wx(double *h, int *s1, int *s2){
 /*
 /   Add kinetic contribution
 */

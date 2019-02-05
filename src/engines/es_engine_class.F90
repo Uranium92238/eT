@@ -40,7 +40,7 @@ contains
 !
       class(es_engine) :: engine 
 !
-      engine%tag       = 'Excited state engine'
+      engine%name_       = 'Excited state engine'
 !
 !     Set standards and then read if nonstandard
 !
@@ -74,7 +74,7 @@ contains
 !
       class(davidson_cc_es_solver), pointer :: cc_es_solver
 !
-      write(output%unit, '(/t3,a,a)') '- Running ', trim(engine%tag)
+      write(output%unit, '(/t3,a,a)') '- Running ', trim(engine%name_)
 !
 !     Cholesky decomposition 
 !
@@ -102,7 +102,7 @@ contains
 !
       deallocate(cc_gs_solver)
 !
-      if (wf%name .ne. 'CCS') then 
+      if (wf%name_ .ne. 'CCS') then 
 !
          call wf%integrals%write_t1_cholesky(wf%t1)
          call wf%integrals%can_we_keep_g_pqrs()
@@ -179,7 +179,7 @@ contains
 !
       class(es_engine) :: engine 
 !
-!     Nothing here yet...
+      write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(engine%name_)
 !
    end subroutine cleanup_es_engine
 !
@@ -195,7 +195,7 @@ contains
 !
       character(len=100) :: line
 !
-      integer(i15) :: i, n_keywords
+      integer :: i, n_keywords
 !
       if (requested_section('cc excited state')) then
 !
@@ -243,7 +243,7 @@ contains
 !
       character(len=100) :: line
 !
-      integer(i15) :: i, n_records
+      integer :: i, n_records
 !
       call move_to_section('cc excited state', n_records)
 !

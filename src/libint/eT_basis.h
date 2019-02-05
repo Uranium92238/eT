@@ -20,8 +20,8 @@ class eTBasis: public vector<BasisSet> {
         // cout << new_basis.nbf() << endl;
       }
 
-      long nbf(){
-         long n = 0;
+      int nbf(){
+         int n = 0;
          for (auto it = this->begin(); it != this->end(); ++it){
             n = n + (*it).nbf();
          }
@@ -29,8 +29,8 @@ class eTBasis: public vector<BasisSet> {
          return n;
       }
 
-      long max_nprim() {
-         long n = 0;
+      int max_nprim() {
+         int n = 0;
          for (auto it = this->begin(); it != this->end(); ++it){
             if ((*it).max_nprim() > n){
                n = (*it).max_nprim();
@@ -40,8 +40,8 @@ class eTBasis: public vector<BasisSet> {
         return n;
       }
 
-      long max_l() {
-         long n = 0;
+      int max_l() {
+         int n = 0;
          for (auto it = this->begin(); it != this->end(); ++it){
             if ((*it).max_l() > n){
                n = (*it).max_l();
@@ -51,8 +51,8 @@ class eTBasis: public vector<BasisSet> {
         return n;
       }
 
-      long nshells() {
-         long n = 0;
+      int nshells() {
+         int n = 0;
          for (auto it = this->begin(); it != this->end(); it++){
                n += (*it).size(); 
          }
@@ -61,8 +61,8 @@ class eTBasis: public vector<BasisSet> {
 
 
       Shell& operator[] (int x) {
-         long n = 0;
-         long ind = 0;
+         int n = 0;
+         int ind = 0;
 
          for (auto it = this->begin(); it != this->end(); it++){
 
@@ -75,12 +75,12 @@ class eTBasis: public vector<BasisSet> {
          }
       }
 
-      vector<long> shell2bf() {
-         vector<long> result;
+      vector<int> shell2bf() {
+         vector<int> result;
 
          result.reserve(this->nshells());
 
-         long n = 0;
+         int n = 0;
           for (auto i = 0; i != this->nshells(); i++){
 
              result.push_back(n);
@@ -90,8 +90,8 @@ class eTBasis: public vector<BasisSet> {
          return result;
       }
 
-      vector<long> shell2atom(const vector<Atom>& atoms) {
-        vector<long> result;
+      vector<int> shell2atom(const vector<Atom>& atoms) {
+        vector<int> result;
         result.reserve(nshells());
 
          for (int i = 0; i != this->nshells(); i++){
@@ -105,9 +105,9 @@ class eTBasis: public vector<BasisSet> {
         return result;
       }
 
-      vector<vector<long>>  atom2shell(const vector<Atom>& atoms) {
-        vector<vector<long>> result;
-        long iatom = 0;
+      vector<vector<int>>  atom2shell(const vector<Atom>& atoms) {
+        vector<vector<int>> result;
+        int iatom = 0;
         result.resize(atoms.size());
 
          for (int i = 0; i != atoms.size(); i++){

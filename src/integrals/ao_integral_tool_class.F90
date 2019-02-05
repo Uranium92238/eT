@@ -3,6 +3,8 @@ module ao_integral_tool_class
 !!
 !!    Integral_tool class module
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
+!!    C++ is not fond of 64-bit integers, so ints are explicitly 
+!!    translated to 32-bits here
 !!
 !
 !  Fortran interfaces to C++ routines
@@ -51,9 +53,13 @@ contains
       implicit none
 !
       real(dp), dimension(:,:), intent(inout) :: h
-      integer(i15), intent(in) :: s1, s2
+      integer, intent(in) :: s1, s2
+      integer(i6) :: s1_4, s2_4
 !
-      call construct_ao_h_wx(h, s1, s2)
+      s1_4 = int(s1,i6)
+      s2_4 = int(s2,i6)
+!
+      call construct_ao_h_wx(h, s1_4, s2_4)
 !
    end subroutine construct_ao_h_wx_ao_integral_tool
 !
@@ -70,9 +76,13 @@ contains
       implicit none
 !
       real(dp), dimension(:,:), intent(inout) :: s
-      integer(i15), intent(in) :: s1, s2
+      integer, intent(in) :: s1, s2
+      integer(i6) :: s1_4, s2_4
 !
-      call construct_ao_s_wx(s, s1, s2) 
+      s1_4 = int(s1,i6)
+      s2_4 = int(s2,i6)
+!
+      call construct_ao_s_wx(s, s1_4, s2_4) 
 !
    end subroutine construct_ao_s_wx_ao_integral_tool
 !
@@ -90,9 +100,15 @@ contains
 !
       real(dp), dimension(:,:), intent(inout) :: g
 !
-      integer(i15), intent(in) :: s1, s2, s3, s4
+      integer, intent(in) :: s1, s2, s3, s4
+      integer(i6) :: s1_4, s2_4, s3_4, s4_4
 !
-      call construct_ao_g_wxyz(g, s1, s2, s3, s4)
+      s1_4 = int(s1,i6)
+      s2_4 = int(s2,i6)
+      s3_4 = int(s3,i6)
+      s4_4 = int(s4,i6)
+!
+      call construct_ao_g_wxyz(g, s1_4, s2_4, s3_4, s4_4)
 !
    end subroutine construct_ao_g_wxyz_ao_integral_tool
 !
@@ -136,10 +152,30 @@ contains
 !
       real(dp), intent(in) :: eps 
 !
-      integer(i15), intent(in) :: s1, s2, s3, s4, thread, n1, n2, n3, n4 
-      integer(i15) :: skip 
+      integer, intent(in) :: s1, s2, s3, s4, thread, n1, n2, n3, n4
+      integer :: skip 
 !
-      call construct_ao_g_wxyz_epsilon(g, s1, s2, s3, s4, eps, thread, skip, n1, n2, n3, n4)
+      integer(i6) :: s1_4, s2_4, s3_4, s4_4
+      integer(i6) :: n1_4, n2_4, n3_4, n4_4
+      integer(i6) :: thread_4, skip_4
+!
+      s1_4 = int(s1,i6)
+      s2_4 = int(s2,i6)
+      s3_4 = int(s3,i6)
+      s4_4 = int(s4,i6)
+!
+      n1_4 = int(n1,i6)
+      n2_4 = int(n2,i6)
+      n3_4 = int(n3,i6)
+      n4_4 = int(n4,i6)
+!
+      thread_4 = int(thread,i6)
+      skip_4 = int(skip,i6)
+!
+      call construct_ao_g_wxyz_epsilon(g, s1_4, s2_4, s3_4, s4_4, eps, & 
+                                       thread_4, skip_4, n1_4, n2_4, n3_4, n4_4)
+!
+      skip = int(skip_4)
 !
    end subroutine construct_ao_g_wxyz_epsilon_ao_integral_tool
 !
@@ -163,9 +199,13 @@ contains
       real(dp), dimension(:,:), intent(inout) :: mu_Y ! y component 
       real(dp), dimension(:,:), intent(inout) :: mu_Z ! z componen
 !
-      integer(i15), intent(in) :: s1, s2
+      integer, intent(in) :: s1, s2
+      integer(i6) :: s1_4, s2_4
 !
-      call construct_ao_mu_wx(mu_X, mu_Y, mu_Z, s1, s2)
+      s1_4 = int(s1,i6)
+      s2_4 = int(s2,i6)
+!
+      call construct_ao_mu_wx(mu_X, mu_Y, mu_Z, s1_4, s2_4)
 !
    end subroutine construct_ao_mu_wx_ao_integral_tool
 !

@@ -52,11 +52,11 @@ contains
 !
       real(dp) :: correlation_energy
 !
-      integer(i15) :: i, j, a, b, ai, bj, ia, jb, ib, ja
+      integer :: i, j, a, b, ai, bj, ia, jb, ib, ja
 !
-      integer(i15) :: req0, req1_i, req1_j, req2
+      integer :: req0, req1_i, req1_j, req2
 !
-      integer(i15) :: current_i_batch, current_j_batch
+      integer :: current_i_batch, current_j_batch
 !
       type(batching_index) :: batch_i, batch_j
 !

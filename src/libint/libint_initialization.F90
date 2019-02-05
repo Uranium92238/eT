@@ -11,7 +11,7 @@ contains
 !
       implicit none
 !
-      real(kind=8) :: prec
+      real(dp) :: prec
 !
       call set_coulomb_precision_c(prec)
 !
@@ -82,7 +82,7 @@ contains
       character(len=40) :: mol_name_temp
       character(kind=c_char),dimension(40) :: cpp_temp_mol_name
 !
-      integer(i15) :: j
+      integer :: j
 !
       mol_name_temp = trim(mol_name)//c_null_char
 !
@@ -110,7 +110,7 @@ contains
       character(kind=c_char),dimension(40) :: cpp_temp_basis
       character(kind=c_char),dimension(40) :: cpp_temp_file
 !
-      integer(i15) :: j
+      integer :: j
 !
       basis_set_temp = trim(basis_set)//c_null_char
 !

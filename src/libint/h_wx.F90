@@ -11,8 +11,8 @@ contains
 !
       implicit none
 !
-      real(kind=8), dimension(1,1) :: h
-      integer(kind=8) :: s1, s2
+      real(dp), dimension(1,1) :: h
+      integer(i6) :: s1, s2
 !
       call construct_ao_h_wx_c(h, s1, s2)
 !

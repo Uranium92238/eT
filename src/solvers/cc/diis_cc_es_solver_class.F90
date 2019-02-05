@@ -22,19 +22,19 @@ module diis_cc_es_solver_class
                                            &problem is solved by DIIS extrapolation of residuals for each &
                                            &eigenvector until the convergence criteria are met.'
 !
-      integer(i15) :: max_iterations
+      integer :: max_iterations
 !
       real(dp) :: eigenvalue_threshold  
       real(dp) :: residual_threshold  
 !
-      integer(i15) :: n_singlet_states, diis_dimension
+      integer :: n_singlet_states, diis_dimension
 !
       real(dp), dimension(:,:), allocatable :: energies
       real(dp), dimension(:,:), allocatable :: residual_norms 
 !
       character(len=40) :: transformation 
 !
-      integer(i15), dimension(:,:), allocatable :: start_vectors
+      integer, dimension(:,:), allocatable :: start_vectors
 !
    contains
 !     
@@ -112,7 +112,7 @@ contains
 !
       class(diis_cc_es_solver) :: solver 
 !
-      integer(i15) :: n_specs, i
+      integer :: n_specs, i
 !
       character(len=100) :: line
 !
@@ -217,7 +217,7 @@ contains
 !
       type(diis_tool), dimension(:), allocatable :: diis 
 !
-      integer(i15) :: iteration, state, amplitude
+      integer :: iteration, state, amplitude
 !
       character(len=3) :: string_state
 !
@@ -314,7 +314,7 @@ contains
 !
             endif 
 !
-            write(output%unit, '(i3,3x,f19.12,6x,e10.4)') state, energies(state), residual_norms(state)
+            write(output%unit, '(i3,3x,f19.12,6x,e11.4)') state, energies(state), residual_norms(state)
             flush(output%unit)
 !
          enddo
@@ -359,9 +359,9 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: lowest_orbital_differences
 !
-      integer(i15), dimension(:,:), allocatable :: lowest_orbital_differences_index
+      integer, dimension(:,:), allocatable :: lowest_orbital_differences_index
 !
-      integer(i15) :: state
+      integer :: state
 !
       call mem%alloc(lowest_orbital_differences, solver%n_singlet_states, 1)
       call mem%alloc(lowest_orbital_differences_index, solver%n_singlet_states, 1)

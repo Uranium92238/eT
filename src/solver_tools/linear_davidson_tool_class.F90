@@ -56,7 +56,7 @@ contains
 !
       character(len=*), intent(in) :: name
 !
-      integer(i15), intent(in) :: n_parameters 
+      integer, intent(in) :: n_parameters 
 !
       real(dp), dimension(n_parameters, 1) :: F 
 !
@@ -110,7 +110,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: c_i
 !
-      integer(i15) :: i
+      integer :: i
 !
       real(dp) :: ddot
 !
@@ -154,7 +154,7 @@ contains
 !
       class(linear_davidson_tool) :: davidson 
 !
-      integer(i15), dimension(:,:), allocatable :: ipiv ! Pivot integers (see dgesv routine)
+      integer, dimension(:,:), allocatable :: ipiv ! Pivot integers (see dgesv routine)
 !
       real(dp), dimension(:,:), allocatable :: A_red_copy
 !
@@ -211,7 +211,7 @@ contains
 !
       real(dp), dimension(davidson%n_parameters, 1) :: R 
 !
-      integer(i15), intent(in) :: n
+      integer, intent(in) :: n
 !
       if (n .ne. 1) then
 !

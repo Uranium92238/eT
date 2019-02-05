@@ -23,19 +23,19 @@ module davidson_tool_class
 !
       type(file) :: X, trials, transforms, preconditioner, projector
 !
-      integer(i15) :: dim_red
-      integer(i15) :: max_dim_red
+      integer :: dim_red
+      integer :: max_dim_red
 !
-      integer(i15) :: n_parameters
-      integer(i15) :: n_solutions
-      integer(i15) :: n_new_trials
+      integer :: n_parameters
+      integer :: n_solutions
+      integer :: n_new_trials
 !
       real(dp) :: residual_threshold
 !
       logical :: do_precondition
       logical :: do_projection
 !
-      integer(i15) :: current_n_trials
+      integer :: current_n_trials
 !
    contains
 !
@@ -113,9 +113,9 @@ contains
 !
       real(dp), dimension(davidson%n_parameters, 1) :: c_i
 !
-      integer(i15), optional :: n
+      integer, optional :: n
 !
-      integer(i15) :: ioerror
+      integer :: ioerror
 !
       call disk%open_file(davidson%trials, 'read')
 !
@@ -146,7 +146,7 @@ contains
 !
       character(len=*), optional :: position
 !
-      integer(i15) :: ioerror 
+      integer :: ioerror 
 !
 !     Was position passed ?
 !
@@ -191,7 +191,7 @@ contains
 !
       real(dp) :: ddot, norm_c, projection_of_c_on_c_i
 !
-      integer(i15) :: i
+      integer :: i
 !
 !     Orthogonalize against current trial vectors 
 !
@@ -248,7 +248,7 @@ contains
 !
       real(dp) :: ddot, projection_of_c_on_c_i, norm_c
 !
-      integer(i15) :: i 
+      integer :: i 
 !
       real(dp), dimension(:,:), allocatable :: c_i
 !
@@ -301,9 +301,9 @@ contains
 !
       real(dp), dimension(davidson%n_parameters, 1) :: solution 
 !
-      integer(i15) :: n
+      integer :: n
 !
-      integer(i15) :: ioerror
+      integer :: ioerror
 !
       call disk%open_file(davidson%X, 'read')
       call davidson%X%prepare_to_read_line(n)
@@ -330,9 +330,9 @@ contains
 !
       real(dp), dimension(davidson%n_parameters, 1) :: rho_i
 !
-      integer(i15) :: n
+      integer :: n
 !
-      integer(i15) :: ioerror
+      integer :: ioerror
 !
       call disk%open_file(davidson%transforms, 'read')
 !
@@ -363,7 +363,7 @@ contains
 !
       character(len=*), optional, intent(in) :: position 
 !
-      integer(i15) :: ioerror   
+      integer :: ioerror   
 !
 !     Was position passed ?
 !
@@ -418,7 +418,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: A_red_copy, c_i, rho_j
 !
-      integer(i15) :: i, j, ioerror
+      integer :: i, j, ioerror
 !
       if (present(entire)) then
          entire_local = entire
@@ -536,13 +536,13 @@ contains
 !
       class(davidson_tool) :: davidson
 !
-      integer(i15) :: n
+      integer :: n
 !
       real(dp), dimension(davidson%n_parameters, 1) :: X
 !
       real(dp), dimension(:,:), allocatable :: c_i
 !
-      integer(i15) :: i, ioerror
+      integer :: i, ioerror
 !
       X = zero
 !
@@ -577,13 +577,13 @@ contains
 !
       class(davidson_tool) :: davidson
 !
-      integer(i15) :: n
+      integer :: n
 !
       real(dp), dimension(davidson%n_parameters, 1) :: AX
 !
       real(dp), dimension(:,:), allocatable :: rho_i
 !
-      integer(i15) :: i, ioerror
+      integer :: i, ioerror
 !
       AX = zero
 !
@@ -679,7 +679,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: preconditioner
 !
-      integer(i15) :: i 
+      integer :: i 
 !
 !
       if (davidson%do_precondition) then 
@@ -724,7 +724,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: projector
 !
-      integer(i15) :: i 
+      integer :: i 
 !
       if (davidson%do_projection) then 
 !
@@ -768,7 +768,7 @@ contains
 !
       real(dp) :: ddot, projection_of_R_on_c_i
 !
-      integer(i15) :: i 
+      integer :: i 
 !
       real(dp), dimension(:,:), allocatable :: c_i
 !
@@ -844,7 +844,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: X, c_i
 !
-      integer(i15) :: solution, i
+      integer :: solution, i
 !
       real(dp) :: projection_of_X_on_c_i, ddot, norm
 !
@@ -950,11 +950,11 @@ contains
 !
       class(davidson_tool) :: davidson 
 !
-      integer(i15), intent(in) :: n_solutions
+      integer, intent(in) :: n_solutions
 !
       real(dp), dimension(:,:), allocatable :: X
 !
-      integer(i15) :: solution
+      integer :: solution
 !
 !     Is file on disk?
 !

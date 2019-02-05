@@ -30,15 +30,15 @@ contains
 !
       real(dp), dimension(:,:) :: x_pq
 !
-      integer(i15) :: dim_p
-      integer(i15) :: dim_q
+      integer :: dim_p
+      integer :: dim_q
 !
       character(len=1), optional :: label_p
       character(len=1), optional :: label_q
 !
-      integer(i15), dimension(20, 1) :: index_list
+      integer, dimension(20, 1) :: index_list
 !
-      integer(i15) :: I = 0, p = 0, q = 0
+      integer :: I = 0, p = 0, q = 0
 !
 !     Print banner
 !
@@ -111,21 +111,21 @@ contains
 !
       real(dp), dimension(:,:) :: x_pqrs
 !
-      integer(i15) :: dim_p
-      integer(i15) :: dim_q
-      integer(i15) :: dim_r
-      integer(i15) :: dim_s
+      integer :: dim_p
+      integer :: dim_q
+      integer :: dim_r
+      integer :: dim_s
 !
       character(len=1), optional :: label_p
       character(len=1), optional :: label_q
       character(len=1), optional :: label_r
       character(len=1), optional :: label_s
 !
-      integer(i15), dimension(20, 1) :: index_list
+      integer, dimension(20, 1) :: index_list
 !
-      integer(i15) :: I = 0, p = 0, q = 0, r = 0, s = 0
+      integer :: I = 0, p = 0, q = 0, r = 0, s = 0
 !
-      integer(i15) :: pq = 0, rs = 0
+      integer :: pq = 0, rs = 0
 !
 !     Sanity check
 !
@@ -220,13 +220,13 @@ contains
       implicit none
 !
       real(dp), dimension(:,:) :: x
-      integer(i15)             :: dim_x
+      integer             :: dim_x
 !
-      integer(i15) :: n_to_sort ! Number of elements of x to sort
+      integer :: n_to_sort ! Number of elements of x to sort
 !
-      integer(i15), dimension(n_to_sort,1) :: index_list ! List of the sorted indices (p, q)
+      integer, dimension(n_to_sort,1) :: index_list ! List of the sorted indices (p, q)
 !
-      integer(i15) :: counter = 0, I = 0
+      integer :: counter = 0, I = 0
       real(dp)     :: largest
 !
       do counter = 1, min(n_to_sort, dim_x)
@@ -275,23 +275,23 @@ contains
 !!
       implicit none
 !
-      integer(i15) :: n    ! Number of elements wanted
-      integer(i15) :: size ! Size of original vector
+      integer :: n    ! Number of elements wanted
+      integer :: size ! Size of original vector
 !
       real(dp), dimension(size, 1) :: vec
       real(dp), dimension(n, 1)    :: sorted_short_vec
 !
-      integer(i15), dimension(n, 1) :: index_list
+      integer, dimension(n, 1) :: index_list
 !
 !     Variables for sorting
 !
       real(dp)     :: max
-      integer(i15) :: max_pos
+      integer :: max_pos
 !
       real(dp)     :: swap     = zero
-      integer(i15) :: swap_int = 0
+      integer :: swap_int = 0
 !
-      integer(i15) :: i = 0, j = 0
+      integer :: i = 0, j = 0
 !
 !        Placing the n first elements of vec into sorted_short_vec
 !
@@ -366,23 +366,23 @@ contains
 !!
       implicit none
 !
-      integer(i15) :: n    ! Number of elements wanted
-      integer(i15) :: size ! Size of original vector
+      integer :: n    ! Number of elements wanted
+      integer :: size ! Size of original vector
 !
       real(dp), dimension(size, 1) :: vec
       real(dp), dimension(n, 1)    :: sorted_short_vec
 !
-      integer(i15), dimension(n, 1) :: index_list
+      integer, dimension(n, 1) :: index_list
 !
 !     Variables for sorting
 !
       real(dp)     :: min
-      integer(i15) :: min_pos
+      integer :: min_pos
 !
       real(dp)     :: swap     = zero
-      integer(i15) :: swap_int = 0
+      integer :: swap_int = 0
 !
-      integer(i15) :: i = 0, j = 0
+      integer :: i = 0, j = 0
 !
 !        Placing the n first elements of vec into sorted_short_vec
 !
@@ -458,12 +458,12 @@ contains
 !
       implicit none
 !
-      integer(i15)             :: M
-      integer(i15)             :: N
+      integer             :: M
+      integer             :: N
       real(dp), dimension(M,N) :: A
       logical                  :: check_orthogonality
 !
-      integer(i15) :: i = 0, j = 0
+      integer :: i = 0, j = 0
       real(dp), dimension(:,:), allocatable :: a_i, a_j
       real(dp) :: ddot
 !
@@ -498,10 +498,10 @@ contains
       implicit none
 !
       real(dp), dimension(:,:), intent(inout) :: vec
-      integer(i15), intent(in) :: first, last
+      integer, intent(in) :: first, last
 !
       real(dp) :: pivot, temp
-      integer(i15) :: i, j
+      integer :: i, j
 
       pivot = vec( (first+last) / 2, 1)
 !
@@ -549,12 +549,12 @@ contains
       implicit none
 !
       real(dp), dimension(:,:), intent(inout) :: vec
-      integer(i15), dimension(:,:), intent(inout) :: index_list
-      integer(i15), intent(in) :: first, last
+      integer, dimension(:,:), intent(inout) :: index_list
+      integer, intent(in) :: first, last
 !
       real(dp) :: pivot, temp
-      integer(i15) :: temp_index
-      integer(i15) :: i, j
+      integer :: temp_index
+      integer :: i, j
 
       pivot = vec( (first+last) / 2, 1)
 !
@@ -602,7 +602,7 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim
+      integer, intent(in) :: dim
       real(dp), dimension(dim,1), intent(inout) :: vec
 !
       call quicksort_recursive(vec, 1, dim)
@@ -615,11 +615,11 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim
+      integer, intent(in) :: dim
       real(dp), dimension(dim,1), intent(inout) :: vec
-      integer(i15), dimension(dim,1), intent(inout) :: index_list
+      integer, dimension(dim,1), intent(inout) :: index_list
 !
-      integer(i15) :: i
+      integer :: i
 !
       do i = 1, dim
          index_list(i, 1) = i
@@ -635,9 +635,9 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim
+      integer, intent(in) :: dim
       real(dp), dimension(dim,1), intent(inout) :: vec
-      integer(i15), dimension(dim,1), intent(inout) :: index_list
+      integer, dimension(dim,1), intent(inout) :: index_list
 !
       call dscal(dim, -one, vec, 1)
 !
@@ -656,11 +656,11 @@ contains
 !!
       implicit none
 !
-      integer(i15), dimension(:,:), intent(inout) :: vec
-      integer(i15), intent(in) :: first, last
+      integer, dimension(:,:), intent(inout) :: vec
+      integer, intent(in) :: first, last
 !
-      integer(i15) :: pivot, temp
-      integer(i15) :: i, j
+      integer :: pivot, temp
+      integer :: i, j
 
       pivot = vec( (first+last) / 2, 1)
 !
@@ -707,13 +707,13 @@ contains
 !!
       implicit none
 !
-      integer(i15), dimension(:,:), intent(inout) :: vec
-      integer(i15), dimension(:,:), intent(inout) :: index_list
-      integer(i15), intent(in) :: first, last
+      integer, dimension(:,:), intent(inout) :: vec
+      integer, dimension(:,:), intent(inout) :: index_list
+      integer, intent(in) :: first, last
 !
-      integer(i15) :: pivot, temp
-      integer(i15) :: temp_index
-      integer(i15) :: i, j
+      integer :: pivot, temp
+      integer :: temp_index
+      integer :: i, j
 
       pivot = vec( (first+last) / 2, 1)
 !
@@ -761,8 +761,8 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim
-      integer(i15), dimension(dim,1), intent(inout) :: vec
+      integer, intent(in) :: dim
+      integer, dimension(dim,1), intent(inout) :: vec
 !
       call quicksort_recursive_int(vec, 1, dim)
 !
@@ -774,11 +774,11 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim
-      integer(i15), dimension(dim,1), intent(inout) :: vec
-      integer(i15), dimension(dim,1), intent(inout) :: index_list
+      integer, intent(in) :: dim
+      integer, dimension(dim,1), intent(inout) :: vec
+      integer, dimension(dim,1), intent(inout) :: index_list
 !
-      integer(i15) :: i
+      integer :: i
 !
       do i = 1, dim
          index_list(i, 1) = i
@@ -794,9 +794,9 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim
-      integer(i15), dimension(dim,1), intent(inout) :: vec
-      integer(i15), dimension(dim,1), intent(inout) :: index_list
+      integer, intent(in) :: dim
+      integer, dimension(dim,1), intent(inout) :: vec
+      integer, dimension(dim,1), intent(inout) :: index_list
 !
       vec = -1*vec
 !
