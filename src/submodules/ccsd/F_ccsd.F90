@@ -3460,7 +3460,7 @@ contains
                   wf%n_v**2,  &
                   X_ijkl,     & ! X_ij_kl
                   wf%n_o**2,  &
-                  zero,       &
+                  one,        &
                   rho_abij,   & ! rho_ab_ij
                   wf%n_v**2)
 !
