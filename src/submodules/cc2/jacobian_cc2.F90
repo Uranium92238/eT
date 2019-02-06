@@ -514,7 +514,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_kjai 
       real(dp), dimension(:,:,:,:), allocatable :: g_aibc
 !
-      integer :: a, i, b, j 
+      integer :: a, i
 !
       type(batching_index) :: batch_c 
       integer         :: req0, req1, current_c_batch 

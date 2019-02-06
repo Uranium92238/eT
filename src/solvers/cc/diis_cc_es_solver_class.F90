@@ -175,6 +175,8 @@ contains
 !
 !     Nothing here yet...
 !
+      if (.false.) write(output%unit, *) solver%tag ! Hack to suppress unavoidable compiler warnings
+!
    end subroutine cleanup_diis_cc_es_solver
 !
 !

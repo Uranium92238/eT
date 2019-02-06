@@ -2656,7 +2656,6 @@ contains
 !
       integer :: b, bc, bj, c, ck, j, k, kj
 !
-      integer :: required
       integer :: current_c_batch 
 !
       type(batching_index) :: batch_c

@@ -186,6 +186,8 @@ contains
       call davidson%set_projector(projector)
       call mem%dealloc(projector, wf%n_es_amplitudes, 1)
 !
+      if (.false.) write(output%unit, *) solver%tag ! Hack to suppress unavoidable compiler warnings
+!
    end subroutine set_projection_vector_davidson_cc_ip_solver
 !
 !

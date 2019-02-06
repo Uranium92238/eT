@@ -720,6 +720,8 @@ contains
 !
       davidson%do_projection = .false.
 !
+      if (.false.) write(output%unit, *) wf%name_, solver%tag ! Hack to suppress unavoidable compiler warnings
+!
    end subroutine set_projection_vector_davidson_cc_es_solver
 !
 !

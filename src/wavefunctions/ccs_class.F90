@@ -1467,14 +1467,10 @@ contains
       integer :: local_first_k, local_last_k
       integer :: local_first_a, local_last_a
 !
-      logical :: index_restrictions
-!
       if (present(first_i) .and. present(last_i) .and. &
           present(first_j) .and. present(last_j) .and. &
           present(first_k) .and. present(last_k) .and. &
           present(first_a) .and. present(last_a)) then
-!
-         index_restrictions = .true.
 !
          local_first_i = first_i 
          local_first_j = first_j 
@@ -1487,8 +1483,6 @@ contains
          local_last_a = last_a
 !
       else
-!
-         index_restrictions = .false.
 !
          local_first_i = 1 
          local_first_j = 1 
@@ -1505,14 +1499,12 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_ooov(g_ijka, local_first_i, local_last_i, local_first_j, local_last_j, &
-                                          local_first_k, local_last_k, local_first_a, local_last_a, &
-                                          index_restrictions, wf%t1)
+                                          local_first_k, local_last_k, local_first_a, local_last_a, wf%t1)
 !
       else
 !
          call wf%integrals%construct_ooov(g_ijka, local_first_i, local_last_i, local_first_j, local_last_j, &
-                                          local_first_k, local_last_k, local_first_a, local_last_a, &
-                                          index_restrictions)
+                                          local_first_k, local_last_k, local_first_a, local_last_a)
 !
       endif
 !
@@ -1549,14 +1541,10 @@ contains
       integer :: local_first_k, local_last_k
       integer :: local_first_a, local_last_a
 !
-      logical :: index_restrictions
-!
       if (present(first_i) .and. present(last_i) .and. &
           present(first_j) .and. present(last_j) .and. &
           present(first_k) .and. present(last_k) .and. &
           present(first_a) .and. present(last_a)) then
-!
-         index_restrictions = .true.
 !
          local_first_i = first_i 
          local_first_j = first_j 
@@ -1569,8 +1557,6 @@ contains
          local_last_a = last_a
 !
       else
-!
-         index_restrictions = .false.
 !
          local_first_i = 1 
          local_first_j = 1 
@@ -1587,14 +1573,12 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_ooov(g_ijka, local_first_i, local_last_i, local_first_j, local_last_j, &
-                                          local_first_k, local_last_k, local_first_a, local_last_a, &
-                                          index_restrictions, wf%t1)
+                                          local_first_k, local_last_k, local_first_a, local_last_a, wf%t1)
 !
       else
 !
          call wf%integrals%construct_ooov(g_ijka, local_first_i, local_last_i, local_first_j, local_last_j, &
-                                          local_first_k, local_last_k, local_first_a, local_last_a, &
-                                          index_restrictions)
+                                          local_first_k, local_last_k, local_first_a, local_last_a)
 !
       endif
 !
@@ -1631,14 +1615,10 @@ contains
       integer :: local_first_k, local_last_k
       integer :: local_first_a, local_last_a
 !
-      logical :: index_restrictions
-!
       if (present(first_i) .and. present(last_i) .and. &
           present(first_j) .and. present(last_j) .and. &
           present(first_k) .and. present(last_k) .and. &
           present(first_a) .and. present(last_a)) then
-!
-         index_restrictions = .true.
 !
          local_first_i = first_i 
          local_first_j = first_j 
@@ -1651,8 +1631,6 @@ contains
          local_last_a = last_a
 !
       else
-!
-         index_restrictions = .false.
 !
          local_first_i = 1 
          local_first_j = 1 
@@ -1669,14 +1647,12 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_oovo(g_ijak, local_first_i, local_last_i, local_first_j, local_last_j, &
-                                          local_first_a, local_last_a, local_first_k, local_last_k, &
-                                          index_restrictions, wf%t1)
+                                          local_first_a, local_last_a, local_first_k, local_last_k, wf%t1)
 !
       else
 !
          call wf%integrals%construct_oovo(g_ijak, local_first_i, local_last_i, local_first_j, local_last_j, &
-                                          local_first_a, local_last_a, local_first_k, local_last_k, &
-                                          index_restrictions)
+                                          local_first_a, local_last_a, local_first_k, local_last_k)
 !
       endif
 !
@@ -1713,14 +1689,10 @@ contains
       integer :: local_first_k, local_last_k
       integer :: local_first_a, local_last_a
 !
-      logical :: index_restrictions
-!
       if (present(first_i) .and. present(last_i) .and. &
           present(first_j) .and. present(last_j) .and. &
           present(first_k) .and. present(last_k) .and. &
           present(first_a) .and. present(last_a)) then
-!
-         index_restrictions = .true.
 !
          local_first_i = first_i 
          local_first_j = first_j 
@@ -1733,8 +1705,6 @@ contains
          local_last_a = last_a
 !
       else
-!
-         index_restrictions = .false.
 !
          local_first_i = 1 
          local_first_j = 1 
@@ -1751,14 +1721,12 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_oovo(g_ijak, local_first_i, local_last_i, local_first_j, local_last_j, &
-                                          local_first_a, local_last_a, local_first_k, local_last_k, &
-                                          index_restrictions, wf%t1)
+                                          local_first_a, local_last_a, local_first_k, local_last_k, wf%t1)
 !
       else
 !
          call wf%integrals%construct_oovo(g_ijak, local_first_i, local_last_i, local_first_j, local_last_j, &
-                                          local_first_a, local_last_a, local_first_k, local_last_k, &
-                                          index_restrictions)
+                                          local_first_a, local_last_a, local_first_k, local_last_k)
 !
       endif
 !
@@ -1795,14 +1763,10 @@ contains
       integer :: local_first_k, local_last_k
       integer :: local_first_a, local_last_a
 !
-      logical :: index_restrictions
-!
       if (present(first_i) .and. present(last_i) .and. &
           present(first_j) .and. present(last_j) .and. &
           present(first_k) .and. present(last_k) .and. &
           present(first_a) .and. present(last_a)) then
-!
-         index_restrictions = .true.
 !
          local_first_i = first_i 
          local_first_j = first_j 
@@ -1815,8 +1779,6 @@ contains
          local_last_a = last_a
 !
       else
-!
-         index_restrictions = .false.
 !
          local_first_i = 1 
          local_first_j = 1 
@@ -1833,14 +1795,12 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_ovoo(g_iajk, local_first_i, local_last_i, local_first_a, local_last_a, &
-                                          local_first_j, local_last_j, local_first_k, local_last_k, &
-                                          index_restrictions, wf%t1)
+                                          local_first_j, local_last_j, local_first_k, local_last_k, wf%t1)
 !
       else
 !
          call wf%integrals%construct_ovoo(g_iajk, local_first_i, local_last_i, local_first_a, local_last_a, &
-                                          local_first_j, local_last_j, local_first_k, local_last_k, &
-                                          index_restrictions)
+                                          local_first_j, local_last_j, local_first_k, local_last_k)
 !
       endif
 !
@@ -1877,14 +1837,10 @@ contains
       integer :: local_first_k, local_last_k
       integer :: local_first_a, local_last_a
 !
-      logical :: index_restrictions
-!
       if (present(first_i) .and. present(last_i) .and. &
           present(first_j) .and. present(last_j) .and. &
           present(first_k) .and. present(last_k) .and. &
           present(first_a) .and. present(last_a)) then
-!
-         index_restrictions = .true.
 !
          local_first_i = first_i 
          local_first_j = first_j 
@@ -1897,8 +1853,6 @@ contains
          local_last_a = last_a
 !
       else
-!
-         index_restrictions = .false.
 !
          local_first_i = 1 
          local_first_j = 1 
@@ -1915,14 +1869,12 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_ovoo(g_iajk, local_first_i, local_last_i, local_first_a, local_last_a, &
-                                          local_first_j, local_last_j, local_first_k, local_last_k, &
-                                          index_restrictions, wf%t1)
+                                          local_first_j, local_last_j, local_first_k, local_last_k, wf%t1)
 !
       else
 !
          call wf%integrals%construct_ovoo(g_iajk, local_first_i, local_last_i, local_first_a, local_last_a, &
-                                          local_first_j, local_last_j, local_first_k, local_last_k, &
-                                          index_restrictions)
+                                          local_first_j, local_last_j, local_first_k, local_last_k)
 !
       endif
 !
@@ -1959,14 +1911,10 @@ contains
       integer :: local_first_k, local_last_k
       integer :: local_first_a, local_last_a
 !
-      logical :: index_restrictions
-!
       if (present(first_i) .and. present(last_i) .and. &
           present(first_j) .and. present(last_j) .and. &
           present(first_k) .and. present(last_k) .and. &
           present(first_a) .and. present(last_a)) then
-!
-         index_restrictions = .true.
 !
          local_first_i = first_i 
          local_first_j = first_j 
@@ -1979,8 +1927,6 @@ contains
          local_last_a = last_a
 !
       else
-!
-         index_restrictions = .false.
 !
          local_first_i = 1 
          local_first_j = 1 
@@ -1997,14 +1943,12 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_vooo(g_aijk, local_first_a, local_last_a, local_first_i, local_last_i, &
-                                          local_first_j, local_last_j, local_first_k, local_last_k, &
-                                          index_restrictions, wf%t1)
+                                          local_first_j, local_last_j, local_first_k, local_last_k, wf%t1)
 !
       else
 !
          call wf%integrals%construct_vooo(g_aijk, local_first_a, local_last_a, local_first_i, local_last_i, &
-                                          local_first_j, local_last_j, local_first_k, local_last_k, &
-                                          index_restrictions)
+                                          local_first_j, local_last_j, local_first_k, local_last_k)
 !
       endif
 !
@@ -2041,14 +1985,10 @@ contains
       integer :: local_first_k, local_last_k
       integer :: local_first_a, local_last_a
 !
-      logical :: index_restrictions
-!
       if (present(first_i) .and. present(last_i) .and. &
           present(first_j) .and. present(last_j) .and. &
           present(first_k) .and. present(last_k) .and. &
           present(first_a) .and. present(last_a)) then
-!
-         index_restrictions = .true.
 !
          local_first_i = first_i 
          local_first_j = first_j 
@@ -2061,8 +2001,6 @@ contains
          local_last_a = last_a
 !
       else
-!
-         index_restrictions = .false.
 !
          local_first_i = 1 
          local_first_j = 1 
@@ -2079,14 +2017,12 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_vooo(g_aijk, local_first_a, local_last_a, local_first_i, local_last_i, &
-                                          local_first_j, local_last_j, local_first_k, local_last_k, &
-                                          index_restrictions, wf%t1)
+                                          local_first_j, local_last_j, local_first_k, local_last_k, wf%t1)
 !
       else
 !
          call wf%integrals%construct_vooo(g_aijk, local_first_a, local_last_a, local_first_i, local_last_i, &
-                                          local_first_j, local_last_j, local_first_k, local_last_k, &
-                                          index_restrictions)
+                                          local_first_j, local_last_j, local_first_k, local_last_k)
 !
       endif
 !
@@ -2123,14 +2059,10 @@ contains
       integer :: local_first_b, local_last_b
       integer :: local_first_a, local_last_a
 !
-      logical :: index_restrictions
-!
       if (present(first_i) .and. present(last_i) .and. &
           present(first_j) .and. present(last_j) .and. &
           present(first_b) .and. present(last_b) .and. &
           present(first_a) .and. present(last_a)) then
-!
-         index_restrictions = .true.
 !
          local_first_i = first_i 
          local_first_j = first_j 
@@ -2143,8 +2075,6 @@ contains
          local_last_a = last_a
 !
       else
-!
-         index_restrictions = .false.
 !
          local_first_i = 1 
          local_first_j = 1 
@@ -2161,14 +2091,12 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_vvoo(g_abij, local_first_a, local_last_a, local_first_b, local_last_b, &
-                                          local_first_i, local_last_i, local_first_j, local_last_j, &
-                                          index_restrictions, wf%t1)
+                                          local_first_i, local_last_i, local_first_j, local_last_j, wf%t1)
 !
       else
 !
          call wf%integrals%construct_vvoo(g_abij, local_first_a, local_last_a, local_first_b, local_last_b, &
-                                          local_first_i, local_last_i, local_first_j, local_last_j, &
-                                          index_restrictions)
+                                          local_first_i, local_last_i, local_first_j, local_last_j)
 !
       endif
 !
@@ -2205,14 +2133,10 @@ contains
       integer :: local_first_b, local_last_b
       integer :: local_first_a, local_last_a
 !
-      logical :: index_restrictions
-!
       if (present(first_i) .and. present(last_i) .and. &
           present(first_j) .and. present(last_j) .and. &
           present(first_b) .and. present(last_b) .and. &
           present(first_a) .and. present(last_a)) then
-!
-         index_restrictions = .true.
 !
          local_first_i = first_i 
          local_first_j = first_j 
@@ -2225,8 +2149,6 @@ contains
          local_last_a = last_a
 !
       else
-!
-         index_restrictions = .false.
 !
          local_first_i = 1 
          local_first_j = 1 
@@ -2243,14 +2165,12 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_vvoo(g_abij, local_first_a, local_last_a, local_first_b, local_last_b, &
-                                          local_first_i, local_last_i, local_first_j, local_last_j, &
-                                          index_restrictions, wf%t1)
+                                          local_first_i, local_last_i, local_first_j, local_last_j, wf%t1)
 !
       else
 !
          call wf%integrals%construct_vvoo(g_abij, local_first_a, local_last_a, local_first_b, local_last_b, &
-                                          local_first_i, local_last_i, local_first_j, local_last_j, &
-                                          index_restrictions)
+                                          local_first_i, local_last_i, local_first_j, local_last_j)
 !
       endif
 !
@@ -2449,14 +2369,10 @@ contains
       integer :: local_first_b, local_last_b
       integer :: local_first_a, local_last_a
 !
-      logical :: index_restrictions
-!
       if (present(first_i) .and. present(last_i) .and. &
           present(first_j) .and. present(last_j) .and. &
           present(first_b) .and. present(last_b) .and. &
           present(first_a) .and. present(last_a)) then
-!
-         index_restrictions = .true.
 !
          local_first_i = first_i 
          local_first_j = first_j 
@@ -2469,8 +2385,6 @@ contains
          local_last_a = last_a
 !
       else
-!
-         index_restrictions = .false.
 !
          local_first_i = 1 
          local_first_j = 1 
@@ -2487,14 +2401,12 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_voov(g_aijb, local_first_a, local_last_a, local_first_i, local_last_i, &
-                                          local_first_j, local_last_j, local_first_b, local_last_b, &
-                                          index_restrictions, wf%t1)
+                                          local_first_j, local_last_j, local_first_b, local_last_b, wf%t1)
 !
       else
 !
          call wf%integrals%construct_voov(g_aijb, local_first_a, local_last_a, local_first_i, local_last_i, &
-                                          local_first_j, local_last_j, local_first_b, local_last_b, &
-                                          index_restrictions)
+                                          local_first_j, local_last_j, local_first_b, local_last_b)
 !
       endif
 !
@@ -2531,14 +2443,10 @@ contains
       integer :: local_first_b, local_last_b
       integer :: local_first_a, local_last_a
 !
-      logical :: index_restrictions
-!
       if (present(first_i) .and. present(last_i) .and. &
           present(first_j) .and. present(last_j) .and. &
           present(first_b) .and. present(last_b) .and. &
           present(first_a) .and. present(last_a)) then
-!
-         index_restrictions = .true.
 !
          local_first_i = first_i 
          local_first_j = first_j 
@@ -2551,8 +2459,6 @@ contains
          local_last_a = last_a
 !
       else
-!
-         index_restrictions = .false.
 !
          local_first_i = 1 
          local_first_j = 1 
@@ -2569,14 +2475,12 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_voov(g_aijb, local_first_a, local_last_a, local_first_i, local_last_i, &
-                                          local_first_j, local_last_j, local_first_b, local_last_b, &
-                                          index_restrictions, wf%t1)
+                                          local_first_j, local_last_j, local_first_b, local_last_b, wf%t1)
 !
       else
 !
          call wf%integrals%construct_voov(g_aijb, local_first_a, local_last_a, local_first_i, local_last_i, &
-                                          local_first_j, local_last_j, local_first_b, local_last_b, &
-                                          index_restrictions)
+                                          local_first_j, local_last_j, local_first_b, local_last_b)
 !
       endif
 !
@@ -2613,14 +2517,10 @@ contains
       integer :: local_first_b, local_last_b
       integer :: local_first_a, local_last_a
 !
-      logical :: index_restrictions
-!
       if (present(first_i) .and. present(last_i) .and. &
           present(first_j) .and. present(last_j) .and. &
           present(first_b) .and. present(last_b) .and. &
           present(first_a) .and. present(last_a)) then
-!
-         index_restrictions = .true.
 !
          local_first_i = first_i 
          local_first_j = first_j 
@@ -2633,8 +2533,6 @@ contains
          local_last_a = last_a
 !
       else
-!
-         index_restrictions = .false.
 !
          local_first_i = 1 
          local_first_j = 1 
@@ -2651,14 +2549,12 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_ovvo(g_iabj, local_first_i, local_last_i, local_first_a, local_last_a, &
-                                          local_first_b, local_last_b, local_first_j, local_last_j, &
-                                          index_restrictions, wf%t1)
+                                          local_first_b, local_last_b, local_first_j, local_last_j, wf%t1)
 !
       else
 !
          call wf%integrals%construct_ovvo(g_iabj, local_first_i, local_last_i, local_first_a, local_last_a, &
-                                          local_first_b, local_last_b, local_first_j, local_last_j, &
-                                          index_restrictions)
+                                          local_first_b, local_last_b, local_first_j, local_last_j)
 !
       endif
 !
@@ -2695,14 +2591,10 @@ contains
       integer :: local_first_b, local_last_b
       integer :: local_first_a, local_last_a
 !
-      logical :: index_restrictions
-!
       if (present(first_i) .and. present(last_i) .and. &
           present(first_j) .and. present(last_j) .and. &
           present(first_b) .and. present(last_b) .and. &
           present(first_a) .and. present(last_a)) then
-!
-         index_restrictions = .true.
 !
          local_first_i = first_i 
          local_first_j = first_j 
@@ -2715,8 +2607,6 @@ contains
          local_last_a = last_a
 !
       else
-!
-         index_restrictions = .false.
 !
          local_first_i = 1 
          local_first_j = 1 
@@ -2733,14 +2623,12 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_ovvo(g_iabj, local_first_i, local_last_i, local_first_a, local_last_a, &
-                                          local_first_b, local_last_b, local_first_j, local_last_j, &
-                                          index_restrictions, wf%t1)
+                                          local_first_b, local_last_b, local_first_j, local_last_j, wf%t1)
 !
       else
 !
          call wf%integrals%construct_ovvo(g_iabj, local_first_i, local_last_i, local_first_a, local_last_a, &
-                                          local_first_b, local_last_b, local_first_j, local_last_j, &
-                                          index_restrictions)
+                                          local_first_b, local_last_b, local_first_j, local_last_j)
 !
       endif
 !
@@ -2777,14 +2665,10 @@ contains
       integer :: local_first_b, local_last_b
       integer :: local_first_a, local_last_a
 !
-      logical :: index_restrictions
-!
       if (present(first_i) .and. present(last_i) .and. &
           present(first_j) .and. present(last_j) .and. &
           present(first_b) .and. present(last_b) .and. &
           present(first_a) .and. present(last_a)) then
-!
-         index_restrictions = .true.
 !
          local_first_i = first_i 
          local_first_j = first_j 
@@ -2797,8 +2681,6 @@ contains
          local_last_a = last_a
 !
       else
-!
-         index_restrictions = .false.
 !
          local_first_i = 1 
          local_first_j = 1 
@@ -2815,14 +2697,12 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_oovv(g_ijab, local_first_i, local_last_i, local_first_j, local_last_j, &
-                                          local_first_a, local_last_a, local_first_b, local_last_b, &
-                                          index_restrictions, wf%t1)
+                                          local_first_a, local_last_a, local_first_b, local_last_b, wf%t1)
 !
       else
 !
          call wf%integrals%construct_oovv(g_ijab, local_first_i, local_last_i, local_first_j, local_last_j, &
-                                          local_first_a, local_last_a, local_first_b, local_last_b, &
-                                          index_restrictions)
+                                          local_first_a, local_last_a, local_first_b, local_last_b)
 !
       endif
 !
@@ -2859,14 +2739,10 @@ contains
       integer :: local_first_b, local_last_b
       integer :: local_first_a, local_last_a
 !
-      logical :: index_restrictions
-!
       if (present(first_i) .and. present(last_i) .and. &
           present(first_j) .and. present(last_j) .and. &
           present(first_b) .and. present(last_b) .and. &
           present(first_a) .and. present(last_a)) then
-!
-         index_restrictions = .true.
 !
          local_first_i = first_i 
          local_first_j = first_j 
@@ -2879,8 +2755,6 @@ contains
          local_last_a = last_a
 !
       else
-!
-         index_restrictions = .false.
 !
          local_first_i = 1 
          local_first_j = 1 
@@ -2897,14 +2771,12 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_oovv(g_ijab, local_first_i, local_last_i, local_first_j, local_last_j, &
-                                          local_first_a, local_last_a, local_first_b, local_last_b, &
-                                          index_restrictions, wf%t1)
+                                          local_first_a, local_last_a, local_first_b, local_last_b, wf%t1)
 !
       else
 !
          call wf%integrals%construct_oovv(g_ijab, local_first_i, local_last_i, local_first_j, local_last_j, &
-                                          local_first_a, local_last_a, local_first_b, local_last_b, &
-                                          index_restrictions)
+                                          local_first_a, local_last_a, local_first_b, local_last_b)
 !
       endif
 !
@@ -2941,14 +2813,10 @@ contains
       integer :: local_first_b, local_last_b
       integer :: local_first_a, local_last_a
 !
-      logical :: index_restrictions
-!
       if (present(first_i) .and. present(last_i) .and. &
           present(first_c) .and. present(last_c) .and. &
           present(first_b) .and. present(last_b) .and. &
           present(first_a) .and. present(last_a)) then
-!
-         index_restrictions = .true.
 !
          local_first_i = first_i 
          local_first_c = first_c 
@@ -2961,8 +2829,6 @@ contains
          local_last_a = last_a
 !
       else
-!
-         index_restrictions = .false.
 !
          local_first_i = 1 
          local_first_c = 1 
@@ -2979,14 +2845,12 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_vvvo(g_abci, local_first_a, local_last_a, local_first_b, local_last_b, &
-                                          local_first_c, local_last_c, local_first_i, local_last_i, &
-                                          index_restrictions, wf%t1)
+                                          local_first_c, local_last_c, local_first_i, local_last_i, wf%t1)
 !
       else
 !
          call wf%integrals%construct_vvvo(g_abci, local_first_a, local_last_a, local_first_b, local_last_b, &
-                                          local_first_c, local_last_c, local_first_i, local_last_i, &
-                                          index_restrictions)
+                                          local_first_c, local_last_c, local_first_i, local_last_i)
 !
       endif
 !
@@ -3023,14 +2887,10 @@ contains
       integer :: local_first_b, local_last_b
       integer :: local_first_a, local_last_a
 !
-      logical :: index_restrictions
-!
       if (present(first_i) .and. present(last_i) .and. &
           present(first_c) .and. present(last_c) .and. &
           present(first_b) .and. present(last_b) .and. &
           present(first_a) .and. present(last_a)) then
-!
-         index_restrictions = .true.
 !
          local_first_i = first_i 
          local_first_c = first_c 
@@ -3043,8 +2903,6 @@ contains
          local_last_a = last_a
 !
       else
-!
-         index_restrictions = .false.
 !
          local_first_i = 1 
          local_first_c = 1 
@@ -3061,14 +2919,12 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_vvov(g_abic, local_first_a, local_last_a, local_first_b, local_last_b, &
-                                          local_first_i, local_last_i, local_first_c, local_last_c, &
-                                          index_restrictions, wf%t1)
+                                          local_first_i, local_last_i, local_first_c, local_last_c, wf%t1)
 !
       else
 !
          call wf%integrals%construct_vvov(g_abic, local_first_a, local_last_a, local_first_b, local_last_b, &
-                                          local_first_i, local_last_i, local_first_c, local_last_c, &
-                                          index_restrictions)
+                                          local_first_i, local_last_i, local_first_c, local_last_c)
 !
       endif
 !
@@ -3105,14 +2961,10 @@ contains
       integer :: local_first_b, local_last_b
       integer :: local_first_a, local_last_a
 !
-      logical :: index_restrictions
-!
       if (present(first_i) .and. present(last_i) .and. &
           present(first_c) .and. present(last_c) .and. &
           present(first_b) .and. present(last_b) .and. &
           present(first_a) .and. present(last_a)) then
-!
-         index_restrictions = .true.
 !
          local_first_i = first_i 
          local_first_c = first_c 
@@ -3125,8 +2977,6 @@ contains
          local_last_a = last_a
 !
       else
-!
-         index_restrictions = .false.
 !
          local_first_i = 1 
          local_first_c = 1 
@@ -3143,14 +2993,12 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_vvov(g_abic, local_first_a, local_last_a, local_first_b, local_last_b, &
-                                          local_first_i, local_last_i, local_first_c, local_last_c, &
-                                          index_restrictions, wf%t1)
+                                          local_first_i, local_last_i, local_first_c, local_last_c, wf%t1)
 !
       else
 !
          call wf%integrals%construct_vvov(g_abic, local_first_a, local_last_a, local_first_b, local_last_b, &
-                                          local_first_i, local_last_i, local_first_c, local_last_c, &
-                                          index_restrictions)
+                                          local_first_i, local_last_i, local_first_c, local_last_c)
 !
       endif
 !
@@ -3187,14 +3035,10 @@ contains
       integer :: local_first_b, local_last_b
       integer :: local_first_a, local_last_a
 !
-      logical :: index_restrictions
-!
       if (present(first_i) .and. present(last_i) .and. &
           present(first_c) .and. present(last_c) .and. &
           present(first_b) .and. present(last_b) .and. &
           present(first_a) .and. present(last_a)) then
-!
-         index_restrictions = .true.
 !
          local_first_i = first_i 
          local_first_c = first_c 
@@ -3207,8 +3051,6 @@ contains
          local_last_a = last_a
 !
       else
-!
-         index_restrictions = .false.
 !
          local_first_i = 1 
          local_first_c = 1 
@@ -3225,14 +3067,12 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_vovv(g_aibc, local_first_a, local_last_a, local_first_i, local_last_i, &
-                                          local_first_b, local_last_b, local_first_c, local_last_c, &
-                                          index_restrictions, wf%t1)
+                                          local_first_b, local_last_b, local_first_c, local_last_c, wf%t1)
 !
       else
 !
          call wf%integrals%construct_vovv(g_aibc, local_first_a, local_last_a, local_first_i, local_last_i, &
-                                          local_first_b, local_last_b, local_first_c, local_last_c, &
-                                          index_restrictions)
+                                          local_first_b, local_last_b, local_first_c, local_last_c)
 !
       endif
 !
@@ -3269,14 +3109,10 @@ contains
       integer :: local_first_b, local_last_b
       integer :: local_first_a, local_last_a
 !
-      logical :: index_restrictions
-!
       if (present(first_i) .and. present(last_i) .and. &
           present(first_c) .and. present(last_c) .and. &
           present(first_b) .and. present(last_b) .and. &
           present(first_a) .and. present(last_a)) then
-!
-         index_restrictions = .true.
 !
          local_first_i = first_i 
          local_first_c = first_c 
@@ -3289,8 +3125,6 @@ contains
          local_last_a = last_a
 !
       else
-!
-         index_restrictions = .false.
 !
          local_first_i = 1 
          local_first_c = 1 
@@ -3307,14 +3141,12 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_vovv(g_aibc, local_first_a, local_last_a, local_first_i, local_last_i, &
-                                          local_first_b, local_last_b, local_first_c, local_last_c, &
-                                          index_restrictions, wf%t1)
+                                          local_first_b, local_last_b, local_first_c, local_last_c, wf%t1)
 !
       else
 !
          call wf%integrals%construct_vovv(g_aibc, local_first_a, local_last_a, local_first_i, local_last_i, &
-                                          local_first_b, local_last_b, local_first_c, local_last_c, &
-                                          index_restrictions)
+                                          local_first_b, local_last_b, local_first_c, local_last_c)
 !
       endif
 !
@@ -3351,14 +3183,10 @@ contains
       integer :: local_first_b, local_last_b
       integer :: local_first_a, local_last_a
 !
-      logical :: index_restrictions
-!
       if (present(first_i) .and. present(last_i) .and. &
           present(first_c) .and. present(last_c) .and. &
           present(first_b) .and. present(last_b) .and. &
           present(first_a) .and. present(last_a)) then
-!
-         index_restrictions = .true.
 !
          local_first_i = first_i 
          local_first_c = first_c 
@@ -3371,8 +3199,6 @@ contains
          local_last_a = last_a
 !
       else
-!
-         index_restrictions = .false.
 !
          local_first_i = 1 
          local_first_c = 1 
@@ -3389,14 +3215,12 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_ovvv(g_iabc, local_first_i, local_last_i, local_first_a, local_last_a, &
-                                          local_first_b, local_last_b, local_first_c, local_last_c, &
-                                          index_restrictions, wf%t1)
+                                          local_first_b, local_last_b, local_first_c, local_last_c, wf%t1)
 !
       else
 !
          call wf%integrals%construct_ovvv(g_iabc, local_first_i, local_last_i, local_first_a, local_last_a, &
-                                          local_first_b, local_last_b, local_first_c, local_last_c, &
-                                          index_restrictions)
+                                          local_first_b, local_last_b, local_first_c, local_last_c)
 !
       endif
 !
@@ -3433,14 +3257,10 @@ contains
       integer :: local_first_b, local_last_b
       integer :: local_first_a, local_last_a
 !
-      logical :: index_restrictions
-!
       if (present(first_i) .and. present(last_i) .and. &
           present(first_c) .and. present(last_c) .and. &
           present(first_b) .and. present(last_b) .and. &
           present(first_a) .and. present(last_a)) then
-!
-         index_restrictions = .true.
 !
          local_first_i = first_i 
          local_first_c = first_c 
@@ -3453,8 +3273,6 @@ contains
          local_last_a = last_a
 !
       else
-!
-         index_restrictions = .false.
 !
          local_first_i = 1 
          local_first_c = 1 
@@ -3471,14 +3289,12 @@ contains
       if (wf%integrals%need_t1()) then
 !
          call wf%integrals%construct_ovvv(g_iabc, local_first_i, local_last_i, local_first_a, local_last_a, &
-                                          local_first_b, local_last_b, local_first_c, local_last_c, &
-                                          index_restrictions, wf%t1)
+                                          local_first_b, local_last_b, local_first_c, local_last_c, wf%t1)
 !
       else
 !
          call wf%integrals%construct_ovvv(g_iabc, local_first_i, local_last_i, local_first_a, local_last_a, &
-                                          local_first_b, local_last_b, local_first_c, local_last_c, &
-                                          index_restrictions)
+                                          local_first_b, local_last_b, local_first_c, local_last_c)
 !
       endif
 !
@@ -4452,6 +4268,8 @@ contains
       class(ccs), intent(inout) :: wf 
 !
 !     For now, do nothing.
+!
+      write(output%unit,'(/t3,a)') 'No Jacobian preparations for ', trim(wf%name_), ' wavefunction.'
 !
    end subroutine prepare_for_jacobian_ccs
 !
