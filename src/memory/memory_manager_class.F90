@@ -1172,6 +1172,7 @@ contains
 !        Number of full batches
 !
          batch_p%num_batches = (batch_p%index_dimension-1)/(batch_p%max_length)+1
+         write(output%unit, *)'BATCHING: ', batch_p%num_batches
 !
       endif
 !

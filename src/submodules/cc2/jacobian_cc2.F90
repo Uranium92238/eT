@@ -448,7 +448,7 @@ contains
       call sort_1234_to_3214(c_aibj, c_bkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       req0 = (wf%n_o)*(wf%n_v)*(wf%integrals%n_J)
-      req1 = (wf%n_v)*(wf%integrals%n_J) + 2*(wf%n_o)*(wf%n_v)**2
+      req1 = max((wf%n_v)*(wf%integrals%n_J) + (wf%n_o)*(wf%n_v)**2, 2*(wf%n_o)*(wf%n_v)**2)
 !
       call batch_a%init(wf%n_v)
 !
@@ -488,7 +488,7 @@ contains
 !
          call mem%dealloc(L_abkc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
 !
-      enddo 
+      enddo ! batch_a
 !
       call mem%dealloc(c_bkci, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !

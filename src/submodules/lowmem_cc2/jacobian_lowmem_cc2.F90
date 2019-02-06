@@ -513,7 +513,7 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !
                   call batch_i%determine_limits(current_i_batch)
 !
-!                 L_kcjb = 2 g_kcjb - g_jckb, ordered as L_jckb
+!                 L_kcjb = 2 g_kcjb - g_jckb  (ordered as L_jckb)
 !
                   call mem%alloc(g_jckb, batch_j%length, wf%n_v, batch_k%length, wf%n_v)
 !
@@ -718,9 +718,8 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
 !!    Linda Goletto, and Alexander Paul, Dec 2018
 !!
-!!    rho_ai =+ F_kc * (-eps_ai,ck + w)^-1 * (1 + delta_ai,ck)^-1 *
-!!             (2 g_aicd c_dk + 2 g_ckad c_di - g_akcd c_di - g_ciad c_dk)
-!!           =+ F_kc * (-eps_ai,ck + w)^-1 * (1 + delta_ai,ck)^-1 * (2 X_aick - X_akci + 2 X_ckai - X_ciak)
+!!    rho_ai =+ F_kc * (-eps_ai,ck + w)^-1 * (2 g_aicd c_dk + 2 g_ckad c_di - g_akcd c_di - g_ciad c_dk)
+!!           =+ F_kc * (-eps_ai,ck + w)^-1 * (2 X_aick - X_akci + 2 X_ckai - X_ciak)
 !!           =+ F_kc * (Y_aick + Y_ckai)
 !!
 !!    The term is calculated in batches over the a and c indices.
@@ -797,7 +796,7 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !
             call mem%dealloc(g_aicd, batch_a%length, wf%n_o, batch_c%length, wf%n_v)
 !
-!           Y_aick = (-eps_ai,ck + w)^-1 * (1 + delta_ai,ck)^-1 * (2 X_aick - X_akci)
+!           Y_aick = (-eps_ai,ck + w)^-1 * (2 X_aick - X_akci)
 !
             call mem%alloc(Y_aick, batch_a%length, wf%n_o, batch_c%length, wf%n_o)
 !
@@ -816,20 +815,6 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
                enddo
             enddo
 !$omp end parallel do
-!
-            if (batch_a%first .eq. batch_c%first) then
-!
-!$omp parallel do private(i,a)
-               do i = 1, wf%n_o
-                  do a = 1, batch_a%length
-!
-              !       Y_aick(a, i, a, i) = Y_aick(a, i, a, i)/two
-!
-                  enddo
-               enddo
-!$omp end parallel do
-!
-            endif
 !
             call mem%dealloc(X_aick, batch_a%length, wf%n_o, batch_c%length, wf%n_o)
 !
@@ -935,8 +920,8 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad
 !!    Linda Goletto, and Alexander Paul, Jan 2019
 !!
-!!    Effective B1 = - 2 sum_{kcl} F_kc (1/Δ_{ai,ck})*(1/(ε_{aick} + ω)) * (g_ailk c_cl + g_ckli c_al)
-!!                     + sum_{kcl} F_kc (1/Δ_{ak,ci})*(1/(ε_{akci} + ω)) * (g_akli c_cl + g_cilk c_al)
+!!    Effective B1 = - 2 sum_{kcl} F_kc (1/(ε_{aick} + ω)) * (g_ailk c_cl + g_ckli c_al)
+!!                     + sum_{kcl} F_kc (1/(ε_{akci} + ω)) * (g_akli c_cl + g_cilk c_al)
 !!                 =   2 sum_{kcl} F_kc (- 2*X_ckai - 2*X_aick + X_ciak + X_akci)
 !!
 !!
@@ -1009,21 +994,6 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !
             call mem%dealloc(g_lkai, wf%n_o, batch_k%length, wf%n_v, batch_i%length)
 !
-!           Divide X_ckai by 1/(1 + delta_ai,ck)*1/(-epsilon_aick + omega)
-!
-            if (batch_i%first .eq. batch_k%first) then
-!
-!$omp parallel do private(a,i)
-            do a = 1, wf%n_v
-               do i = 1, batch_i%length
-!
-             !     X_ckai(a, i, a, i) = X_ckai(a, i, a, i)/two
-!
-               enddo
-            enddo
-!$omp end parallel do
-!
-            endif
 !
 !$omp parallel do private(a,i,k,c)
             do a = 1, wf%n_v
@@ -1090,7 +1060,7 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !!    Linda Goletto, and Alexander Paul, Dec 2018
 !!
 !!    Implicit calculation of the doubles vector
-!!    rho_ai^C1 =+ sum_ckbj - L_kijb  (g_akbc * c_cj + g_bjac * c_ck) (omega - ε_akbj)^-1 * (1 + delta_ak,bj)^-1
+!!    rho_ai^C1 =+ sum_ckbj - L_kijb  (g_akbc * c_cj + g_bjac * c_ck) (omega - ε_akbj)^-1
 !!              =+ sum_kjb - L_kijb  (X_akbj + X_bjak)
 !!              =+ sum_kjb - L_kijb Y_a_kjb
 !!
@@ -1227,18 +1197,6 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
                call mem%dealloc(X_akbj, batch_a%length, wf%n_o, batch_b%length, wf%n_o)
                call mem%dealloc(X_bjak, batch_b%length, wf%n_o, batch_a%length, wf%n_o)
 !
-               if (batch_a%first .eq. batch_b%first) then
-!
-!$omp parallel do private(k,a)
-               do k = 1 , wf%n_o
-                  do a = 1, batch_a%length
-              !       Y_akjb(a,k,k,a) = half*Y_akjb(a,k,k,a)
-                  enddo
-               enddo
-!$omp end parallel do
-!
-               endif
-!
 !              L_kijb = 2 g_kijb - g_jikb, ordered as L_kjbi
 !
                call mem%alloc(g_kijb, wf%n_o, batch_i%length, wf%n_o, batch_b%length)
@@ -1290,8 +1248,7 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !!    Linda Goletto, and Alexander Paul, Dec 2018
 !!
 !!    Implicit calculation of the doubles vector
-!!    rho_ai^D1 =+ sum_ckbj - L_kijb  (- g_aklj * c_bl - g_bjlk * c_al)
-!!                 (omega - ε_akbj)^-1 * (1 + delta_ak,bj)^-1
+!!    rho_ai^D1 =+ sum_ckbj - L_kijb  (- g_aklj * c_bl - g_bjlk * c_al) (omega - ε_akbj)^-1 
 !!              =+ sum_kjb L_kijb  (X_bjak + X_akbj)
 !!              =+ sum_kjb L_kijb  Y_ajbk
 !!
@@ -1417,22 +1374,6 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
             call mem%dealloc(X_bjak, wf%n_v, batch_j%length, wf%n_v, batch_k%length)
             call mem%dealloc(X_akbj, wf%n_v, batch_k%length, wf%n_v, batch_j%length)
 !
-!           Y_ajbk = Y_ajbk * (1 + delta_ak,bj)^-1
-!
-            if (batch_k%first .eq. batch_j%first) then
-!
-!$omp parallel do private(k,a)
-            do a = 1, wf%n_v
-               do k = 1, batch_k%length
-!
-               !   Y_ajbk(a,k,a,k) = half*Y_ajbk(a,k,a,k)
-!
-               enddo
-            enddo
-!$omp end parallel do
-!
-            endif
-!
 !           L_jbki = 2 g_kijb - g_kbji
 !
             call mem%alloc(g_jbki,batch_j%length, wf%n_v, batch_k%length, wf%n_o)
@@ -1493,7 +1434,7 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !!    Linda Goletto, and Alexander Paul, Jan 2019
 !!
 !!    Implicit calculation of the doubles vector
-!!    rho_ai^E1 =+ sum_bckd L_abkc  (g_bicd * c_dk + g_ckbd * c_di) (omega - ε_bick)^-1 * (1 + delta_bi,ck)^-1
+!!    rho_ai^E1 =+ sum_bckd L_abkc  (g_bicd * c_dk + g_ckbd * c_di) (omega - ε_bick)^-1
 !!              =+ sum_bck L_abkc  (X_bick + X_ckbi)
 !!
 !!
@@ -1620,22 +1561,6 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
             call mem%dealloc(X_bick, batch_b%length, wf%n_o, batch_c%length, wf%n_o)
             call mem%dealloc(X_ckbi, batch_c%length, wf%n_o, batch_b%length, wf%n_o)
 !
-!           Y_bkci = Y_bkci * (1 + delta_bi,ck)^-1
-!
-            if (batch_b%first .eq. batch_c%first) then
-!
-!$omp parallel do private(b,i)
-            do i = 1, wf%n_o
-               do b = 1, batch_b%length
-!
-              !    Y_bkci(b,i,b,i) = half*Y_bkci(b,i,b,i)
-!
-               enddo
-            enddo
-!$omp end parallel do
-!
-            endif
-!
 !           L_abkc = 2 g_abkc - g_kbac
 !
             call mem%alloc(g_abkc, wf%n_v, batch_b%length, wf%n_o, batch_c%length)
@@ -1697,7 +1622,7 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !!    Written by Eirik F. Kjønstad, Sarai D. Folkestad,
 !!    Linda Goletto, and Alexander Paul, Jan 2019
 !!
-!!    Effective F1 = - L_abkc ((1/Δ_{bi,ck})*(1/(ε_{bick} + ω)) * (g_lkbi c_cl + g_lick c_bl))
+!!    Effective F1 = - L_abkc (1/(ε_{bick} + ω) * (g_lkbi c_cl + g_lick c_bl))
 !!
       implicit none
 !
@@ -1832,22 +1757,6 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !
                call mem%dealloc(X_ckbi, wf%n_v, batch_k%length, wf%n_v, batch_i%length)
                call mem%dealloc(X_bick, wf%n_v, batch_i%length, wf%n_v, batch_k%length)
-!
-!           Y_bcki = Y_bcki * (1 + delta_bi,ck)^-1
-!
-               if (batch_i%first .eq. batch_k%first) then
-!
-!$omp parallel do private(b,i)
-               do b = 1 , wf%n_v
-                  do i = 1, batch_i%length
-!
-               !      Y_bcki(b,b,i,i) = half*Y_bcki(b,b,i,i)
-!
-                  enddo
-               enddo
-!$omp end parallel do
-!
-               endif
 !
 !              L_abkc = 2 g_abkc - g_ackb ordered as L_abck
 !
