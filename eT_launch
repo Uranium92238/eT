@@ -12,6 +12,7 @@ print(args.input_file)
 
 cwd = os.getcwd()
 eT_dir = os.path.dirname(__file__)
+eT_dir = os.path.abspath(eT_dir)
 
 print(cwd)
 print(eT_dir)

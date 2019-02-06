@@ -28,7 +28,7 @@ f = [
 options = cli()
 
 ierr = 0
-for inp in ['eT.inp']:
+for inp in ['testtest.inp']:
     # the run function runs the code and filters the outputs
     ierr += run(options,
                 configure,
