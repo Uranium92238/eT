@@ -861,9 +861,6 @@ contains
             work,             &
             info)
 !
-      write(output%unit, *) 'n_vectors:',n_vectors
-      flush(output%unit)
-!
       deallocate(work)
 !
       do I = 1, dim ! Zero upper unreferenced triangle

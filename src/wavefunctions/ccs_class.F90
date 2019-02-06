@@ -4269,7 +4269,8 @@ contains
 !
 !     For now, do nothing.
 !
-      write(output%unit,'(/t3,a)') 'No Jacobian preparations for ', trim(wf%name_), ' wavefunction.'
+      write(output%unit,'(/t3,a,a,a)') 'No Jacobian preparations for ', &
+                                       trim(wf%name_), ' wavefunction.'
 !
    end subroutine prepare_for_jacobian_ccs
 !
