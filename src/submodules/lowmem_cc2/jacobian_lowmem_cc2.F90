@@ -42,7 +42,7 @@ contains
       real(dp), dimension(:), allocatable :: eps_o
       real(dp), dimension(:), allocatable :: eps_v
 !
-      integer(i15) :: i, a, ai ! Index
+      integer :: i, a, ai ! Index
 !
 !     Allocate and zero the transformed vector (singles part)
 !
@@ -117,11 +117,11 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_aijb, g_abji
 !
-      integer(i15) :: req0, req1_i, req1_j, req1_b, req2
+      integer :: req0, req1_i, req1_j, req1_b, req2
 !
-      integer(i15) :: current_i_batch, current_j_batch, current_b_batch
+      integer :: current_i_batch, current_j_batch, current_b_batch
 !
-      integer(i15) :: rho_offset, j, b
+      integer :: rho_offset, j, b
 !
       type(batching_index) :: batch_i, batch_j, batch_b
 !
@@ -289,13 +289,13 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
       real(dp), dimension(:,:,:,:), allocatable :: L_kcbj, L_kcjb, L_jckb
       real(dp), dimension(:,:,:,:), allocatable :: u_aikc, t_akcj, g_jckb
 !
-      integer(i15) :: i, j, k, a, b, c, bj_offset, kc_offset
+      integer :: i, j, k, a, b, c, bj_offset, kc_offset
 !
-      integer(i15) :: req0, req1_j, req1_k, req2, req1_a, req1_c
-      integer(i15) :: req1_i, req2_ji, req2_ki, req2_kj, req3
+      integer :: req0, req1_j, req1_k, req2, req1_a, req1_c
+      integer :: req1_i, req2_ji, req2_ki, req2_kj, req3
 !
-      integer(i15) :: current_j_batch, current_k_batch, current_i_batch
-      integer(i15) :: current_a_batch, current_c_batch
+      integer :: current_j_batch, current_k_batch, current_i_batch
+      integer :: current_a_batch, current_c_batch
 !
       type(batching_index) :: batch_j, batch_k, batch_a, batch_c, batch_i
 !
@@ -745,12 +745,12 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
       real(dp), dimension(:,:), allocatable :: F_ck
       real(dp), dimension(:,:), allocatable :: reduced_rho_ai
 !
-      integer(i15) :: a, i, c, k
+      integer :: a, i, c, k
 !
       type(batching_index) :: batch_a, batch_c
 !
-      integer(i15) :: current_a_batch, current_c_batch
-      integer(i15) :: req0, req1_a, req1_c, req2
+      integer :: current_a_batch, current_c_batch
+      integer :: req0, req1_a, req1_c, req2
 !
       req0   = 0
       req1_a = wf%integrals%n_J*wf%n_o
@@ -954,11 +954,11 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_lkai, X_ckai
 !
-      integer(i15) :: a, c, i, k
+      integer :: a, c, i, k
 !
-      integer(i15) :: req0, req1_i, req1_k, req2
+      integer :: req0, req1_i, req1_k, req2
 !
-      integer(i15) :: current_i_batch, current_k_batch
+      integer :: current_i_batch, current_k_batch
 !
       type(batching_index) :: batch_i, batch_k
 !
@@ -1111,12 +1111,12 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !
       real(dp), dimension(:,:,:,:), allocatable :: X_akbj, X_bjak, Y_akjb
 !
-      integer(i15) :: j, k, b, a
+      integer :: j, k, b, a
 !
       type(batching_index) :: batch_i, batch_a, batch_b
 !
-      integer(i15) :: current_i_batch, current_a_batch, current_b_batch
-      integer(i15) :: req0, req1_i, req1_a, req1_b, req2_ia, req2_ib, req2_ab, req3
+      integer :: current_i_batch, current_a_batch, current_b_batch
+      integer :: req0, req1_i, req1_a, req1_b, req2_ia, req2_ib, req2_ab, req3
 !
       req0 = 0
 !
@@ -1313,11 +1313,11 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !
       real(dp), dimension(:,:,:,:), allocatable :: X_akbj, X_bjak, Y_ajbk
 !
-      integer(i15) :: j, k, a, b
+      integer :: j, k, a, b
 !
-      integer(i15) :: req0, req1_j, req1_k, req2
+      integer :: req0, req1_j, req1_k, req2
 !
-      integer(i15) :: current_j_batch, current_k_batch
+      integer :: current_j_batch, current_k_batch
 !
       type(batching_index) :: batch_j, batch_k
 !
@@ -1515,11 +1515,11 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
 !
       real(dp), dimension(:,:,:,:), allocatable :: X_bick, X_ckbi, Y_bkci
 !
-      integer(i15) :: b, c, i, k
+      integer :: b, c, i, k
 !
-      integer(i15) :: req0, req1_b, req1_c, req2
+      integer :: req0, req1_b, req1_c, req2
 !
-      integer(i15) :: current_b_batch, current_c_batch
+      integer :: current_b_batch, current_c_batch
 !
       type(batching_index) :: batch_b, batch_c
 !
@@ -1714,12 +1714,12 @@ end subroutine jacobian_cc2_a1_lowmem_cc2
       real(dp), dimension(:,:,:,:), allocatable :: X_ckbi, X_bick, Y_bcki
       real(dp), dimension(:,:,:,:), allocatable :: L_abck, g_abkc, g_lkbi, g_lick
 !
-      integer(i15) :: b, c, i, k
+      integer :: b, c, i, k
 !
       type(batching_index) :: batch_i, batch_k, batch_a
 !
-      integer(i15) :: current_i_batch, current_k_batch, current_a_batch
-      integer(i15) :: req0, req1_i, req1_k, req1_a, req2_ik, req2_ia, req2_ka, req3
+      integer :: current_i_batch, current_k_batch, current_a_batch
+      integer :: req0, req1_i, req1_k, req1_a, req2_ik, req2_ia, req2_ka, req3
 !
 !
       req0 = 0

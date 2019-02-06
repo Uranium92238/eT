@@ -69,7 +69,7 @@ contains
 !
       character(len=*), intent(in) :: name
 !
-      integer(i15), intent(in) :: n_parameters, n_solutions  
+      integer, intent(in) :: n_parameters, n_solutions  
       real(dp), intent(in)     :: residual_threshold, eigenvalue_threshold  
 !
       davidson%n_parameters = n_parameters
@@ -97,7 +97,7 @@ contains
       davidson%dim_red           = n_solutions     ! Initial dimension equal to number of solutions
       davidson%n_new_trials      = n_solutions 
 !
-      davidson%max_dim_red = min(n_solutions*20, 150)   
+      davidson%max_dim_red = min(n_solutions*50, 150)   
 !
       davidson%current_n_trials = 0
 !
@@ -183,7 +183,7 @@ contains
 !
       class(eigen_davidson_tool), intent(in) :: davidson 
 !
-      integer(i15), intent(in) :: n 
+      integer, intent(in) :: n 
 !
       get_eigenvalue_eigen_davidson_tool = davidson%omega_re(n, 1)
 !
@@ -207,23 +207,21 @@ contains
 !
       class(eigen_davidson_tool) :: davidson 
 !
-      real(dp), dimension(:,:), allocatable :: work
+      real(dp), dimension(:), allocatable :: work
 !
       real(dp), dimension(:,:), allocatable :: omega_re
       real(dp), dimension(:,:), allocatable :: omega_im
 !
-      integer(i15), dimension(:), allocatable :: index_list
+      integer, dimension(:), allocatable :: index_list
 !
       real(dp), dimension(:,:), allocatable :: X_red
       real(dp), dimension(:,:), allocatable :: A_red ! Safe copy to avoid BLAS overwrite
 !
-      integer(i15) :: dummy = 0, info = 0, j = 0, i = 0
+      integer :: info = 0, j = 0, i = 0, worksize
+      real(dp)  :: dummy =0.0, optwork
 !
 !     Solve reduced eigenvalue problem
 !
-      call mem%alloc(work, 4*(davidson%dim_red), 1)
-!      
-      work = zero
       info = 0
 !
       call mem%alloc(X_red, davidson%dim_red, davidson%dim_red)
@@ -238,6 +236,26 @@ contains
       omega_re = zero
       omega_im = zero
 !
+!     Find optimal work size, lwork = -1
+      call dgeev('N','V',             &
+                  davidson%dim_red,   &
+                  A_red,              &
+                  davidson%dim_red,   &
+                  omega_re,           &
+                  omega_im,           &
+                  dummy,              &              
+                  1,                  &
+                  X_red,              &
+                  davidson%dim_red,   &
+                  optwork,            &   
+                  -1,                 &
+                  info)
+!
+      worksize = int(optwork+0.01)
+!
+      call mem%alloc(work, worksize)
+      work = zero
+!      
       call dgeev('N','V',             &
                   davidson%dim_red,   &
                   A_red,              &
@@ -249,14 +267,14 @@ contains
                   X_red,              &
                   davidson%dim_red,   &
                   work,               &   
-                  4*davidson%dim_red, &
+                  worksize,           &
                   info)
 !
       call mem%dealloc(A_red, davidson%dim_red, davidson%dim_red)
 !
       if (info .ne. 0) call output%error_msg('could not solve reduced equation in Davidson davidson.')
 !
-      call mem%dealloc(work, 4*davidson%dim_red, 1)
+      call mem%dealloc(work, worksize)
 !
 !     Find lowest n_solutions eigenvalues and sort them (the corresponding indices
 !     are placed in the integer array index_list)
@@ -321,7 +339,7 @@ contains
       real(dp), dimension(davidson%n_parameters, 1)             :: R 
       real(dp), dimension(davidson%n_parameters, 1), intent(in) :: X 
 !
-      integer(i15), intent(in) :: n
+      integer, intent(in) :: n
       real(dp), intent(in)     :: norm_X 
 !
       if (davidson%omega_im(n, 1) .eq. zero) then  ! standard case: the nth root is not part of a complex pair
@@ -402,7 +420,7 @@ contains
       real(dp), dimension(davidson%n_parameters, 1)             :: R 
       real(dp), dimension(davidson%n_parameters, 1), intent(in) :: X_re  
 !
-      integer(i15), intent(in) :: n 
+      integer, intent(in) :: n 
       real(dp), intent(in)     :: norm_X_re
 !
       real(dp), dimension(:,:), allocatable :: X_im 
@@ -458,7 +476,7 @@ contains
       real(dp), dimension(davidson%n_parameters, 1)             :: R 
       real(dp), dimension(davidson%n_parameters, 1), intent(in) :: X_im  
 !
-      integer(i15), intent(in) :: n 
+      integer, intent(in) :: n 
       real(dp), intent(in)     :: norm_X_im
 !
       real(dp), dimension(:,:), allocatable :: X_re  
@@ -503,9 +521,9 @@ contains
 !
       real(dp), intent(out) :: residual_norm 
 !
-      integer(i15), optional, intent(in) :: n 
+      integer, optional, intent(in) :: n 
 !
-      integer(i15) :: k ! k = n, where k is set to 1 if n is not present 
+      integer :: k ! k = n, where k is set to 1 if n is not present 
 !
       real(dp) :: norm_X, norm_new_trial, norm_residual, norm_precond_residual
 !

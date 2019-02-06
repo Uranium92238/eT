@@ -7,7 +7,7 @@ interface
       implicit none
 !
       real(c_double), dimension(1,1) :: mu_X, mu_Y, mu_Z
-      integer(c_long) :: s1, s2
+      integer(c_int) :: s1, s2
 !
    end subroutine construct_ao_mu_wx_c
 !

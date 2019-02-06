@@ -12,7 +12,7 @@ module cc2_class
 !
    type, extends(ccs) :: cc2
 !
-      integer(i15) :: n_t2
+      integer :: n_t2
 !
       real(dp), dimension(:,:,:,:), allocatable :: u
 !
@@ -72,9 +72,9 @@ contains
 !
       class(hf) :: ref_wf
 !
-      integer(i15) :: p
+      integer :: p
 !
-      wf%name = 'cc2'
+      wf%name_ = 'cc2'
 !
       wf%system = ref_wf%system
 !
@@ -129,7 +129,7 @@ contains
 !
       real(dp) :: correlation_energy
 !
-      integer(i15) :: a, i, b, j
+      integer :: a, i, b, j
 !
       call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
       call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
@@ -192,7 +192,7 @@ contains
 !
       real(dp), dimension(:,:,:,:), allocatable :: g_aibj
 !
-      integer(i15) :: a, i, b, j
+      integer :: a, i, b, j
 !
       call mem%alloc(g_aibj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)  
 !
@@ -286,10 +286,10 @@ contains
 !
       class(cc2), intent(in) :: wf
 !
-      integer(i15), intent(in) :: N 
+      integer, intent(in) :: N 
       real(dp), dimension(N), intent(inout) :: orbital_differences
 !
-      integer(i15) :: a, i, ai, b, j, bj, aibj
+      integer :: a, i, ai, b, j, bj, aibj
 !
 !$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) 
       do a = 1, wf%n_v

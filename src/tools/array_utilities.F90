@@ -12,24 +12,23 @@ module array_utilities
    use index
    use kinds
    use memory_manager_class
-   use dpstrf_eT
 !
    implicit none
 !
 contains
 !
 !
-   integer(i15) function get_max_index(x, dim)
+   integer function get_max_index(x, dim)
 !!
 !!    Get max index
 !!    Written by Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim
+      integer, intent(in) :: dim
       real(dp), dimension(dim,1), intent(in) :: x
 !
-      integer(i15) :: I
+      integer :: I
       real(dp)     :: maxval
 !
       get_max_index = 1
@@ -55,11 +54,11 @@ contains
 !!
       implicit none 
 !
-      integer(i15), intent(in) :: n 
+      integer, intent(in) :: n 
 !
       real(dp), dimension(n) :: X 
 !
-      integer(i15) :: I 
+      integer :: I 
 !
 !$omp parallel do private(I) schedule(static)
       do I = 1, n 
@@ -81,7 +80,7 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: n
+      integer, intent(in) :: n
 !
       real(dp), dimension(:,:), intent(in) :: x
       real(dp), dimension(:,:), intent(in) :: y
@@ -102,14 +101,14 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim
+      integer, intent(in) :: dim
 !
       real(dp), dimension(dim,1), intent(in)  :: vec
       real(dp), dimension(dim,1), intent(in), optional  :: screening
 !
       real(dp), intent(in)  :: threshold
 !
-      integer(i15) :: i = 0
+      integer :: i = 0
 !
       is_significant = .false.
 !
@@ -141,7 +140,7 @@ contains
    end function is_significant
 !
 !
-   integer(i15) function n_significant(vec, dim, threshold)
+   integer function n_significant(vec, dim, threshold)
 !!
 !!    Number of significant in vector
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkstad, June 2018
@@ -150,13 +149,13 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim
+      integer, intent(in) :: dim
 !
       real(dp), dimension(dim,1), intent(in)  :: vec
 !
       real(dp), intent(in)  :: threshold
 !
-      integer(i15) :: i = 0
+      integer :: i = 0
 !
       n_significant = 0
 !
@@ -183,15 +182,15 @@ contains
 !!
       implicit none
 !
-      integer(i15) :: dim, dim_reduced, n_blocks
+      integer :: dim, dim_reduced, n_blocks
 !
       logical, dimension(n_blocks, 1) :: block_significant
-      integer(i15), dimension(n_blocks + 1, 1) :: block_firsts
+      integer, dimension(n_blocks + 1, 1) :: block_firsts
 !
       real(dp), dimension(dim, 1) :: vec
       real(dp), dimension(dim_reduced, 1) :: vec_reduced
 !
-      integer(i15) :: block, current_pos, first, last, size
+      integer :: block, current_pos, first, last, size
 !
       current_pos = 1
 !
@@ -223,15 +222,15 @@ contains
 !!
       implicit none
 !
-      integer(i15) :: dim, dim_reduced, n_blocks
+      integer :: dim, dim_reduced, n_blocks
 !
       logical, dimension(n_blocks, 1) :: block_significant
-      integer(i15), dimension(n_blocks + 1, 1) :: block_firsts
+      integer, dimension(n_blocks + 1, 1) :: block_firsts
 !
-      integer(i15), dimension(dim, 1) :: vec
-      integer(i15), dimension(dim_reduced, 1) :: vec_reduced
+      integer, dimension(dim, 1) :: vec
+      integer, dimension(dim_reduced, 1) :: vec_reduced
 !
-      integer(i15) :: block, current_pos, first, last, size
+      integer :: block, current_pos, first, last, size
 !
       current_pos = 1
 !
@@ -263,15 +262,15 @@ contains
 !!
       implicit none
 !
-      integer(i15) :: dim, dim_reduced, n_blocks, columns
+      integer :: dim, dim_reduced, n_blocks, columns
 !
       logical, dimension(n_blocks, 1) :: block_significant
-      integer(i15), dimension(n_blocks + 1, 1) :: block_firsts
+      integer, dimension(n_blocks + 1, 1) :: block_firsts
 !
       real(dp), dimension(dim, columns) :: array
       real(dp), dimension(dim_reduced, columns) :: array_reduced
 !
-      integer(i15) :: block, current_pos, first, last, size, I
+      integer :: block, current_pos, first, last, size, I
 !
 !$omp parallel do schedule(static) private(I, current_pos, block, first, last, size)
       do I = 1, columns
@@ -308,15 +307,15 @@ contains
 !!
       implicit none
 !
-      integer(i15) :: dim, dim_reduced, n_blocks, rows
+      integer :: dim, dim_reduced, n_blocks, rows
 !
       logical, dimension(n_blocks, 1) :: block_significant
-      integer(i15), dimension(n_blocks + 1, 1) :: block_firsts
+      integer, dimension(n_blocks + 1, 1) :: block_firsts
 !
       real(dp), dimension(rows, dim) :: array
       real(dp), dimension(rows, dim_reduced) :: array_reduced
 !
-      integer(i15) :: block, current_pos, first, last, size
+      integer :: block, current_pos, first, last, size
 !
       current_pos = 1
 !
@@ -350,15 +349,15 @@ contains
 !!
       implicit none
 !
-      integer(i15) :: dim, dim_reduced, n_blocks, columns
+      integer :: dim, dim_reduced, n_blocks, columns
 !
       logical, dimension(n_blocks, 1) :: block_significant
-      integer(i15), dimension(n_blocks + 1, 1) :: block_firsts
+      integer, dimension(n_blocks + 1, 1) :: block_firsts
 !
-      integer(i15), dimension(dim, columns) :: array
-      integer(i15), dimension(dim_reduced, columns) :: array_reduced
+      integer, dimension(dim, columns) :: array
+      integer, dimension(dim_reduced, columns) :: array_reduced
 !
-      integer(i15) :: block, current_pos, first, last, size
+      integer :: block, current_pos, first, last, size
 !
       current_pos = 1
 !
@@ -390,17 +389,17 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim
-      integer(i15), intent(out) :: n_vectors
+      integer, intent(in) :: dim
+      integer, intent(out) :: n_vectors
 !
       real(dp), intent(in) :: threshold
 !
       real(dp), dimension(dim, dim), intent(inout) :: matrix
       real(dp), dimension(dim, dim), intent(out) :: cholesky_vectors
 !
-      integer(i15), dimension(dim), optional, intent(out) :: used_diag
+      integer, dimension(dim), optional, intent(out) :: used_diag
 !
-      integer(i15) :: i, j, k, index_max
+      integer :: i, j, k, index_max
       real(dp) :: max_diagonal
 !
       real(dp), parameter :: tolerance = 1.0d-10
@@ -484,17 +483,17 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim
-      integer(i15), intent(out) :: n_vectors
+      integer, intent(in) :: dim
+      integer, intent(out) :: n_vectors
 !
       real(dp), intent(in) :: threshold
 !
       real(dp), dimension(dim, dim), intent(inout) :: matrix
       real(dp), dimension(dim, dim), intent(out) :: cholesky_vectors
 !
-      integer(i15), dimension(dim), intent(out) :: used_diag
+      integer, dimension(dim), intent(out) :: used_diag
 !
-      integer(i15) :: i, j, index_max
+      integer :: i, j, index_max
       real(dp) :: max_diagonal, min_diagonal
 !
       real(dp), dimension(:), allocatable :: diagonal
@@ -656,21 +655,21 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim, n_included_diagonals
-      integer(i15), intent(out) :: n_vectors
+      integer, intent(in) :: dim, n_included_diagonals
+      integer, intent(out) :: n_vectors
 !
       real(dp), intent(in) :: threshold
 !
-      integer(i15), intent(in), optional :: n_vectors_requested
+      integer, intent(in), optional :: n_vectors_requested
 !
       real(dp), dimension(dim, dim), intent(inout) :: matrix
       real(dp), dimension(dim, n_included_diagonals), intent(out) :: cholesky_vectors
 !
-      integer(i15), dimension(n_included_diagonals, 1), intent(in) :: included_diagonals
+      integer, dimension(n_included_diagonals, 1), intent(in) :: included_diagonals
 !
-      integer(i15), dimension(:), allocatable :: used_diag
+      integer, dimension(:), allocatable :: used_diag
 !
-      integer(i15) :: i, j, index_max, n_max_pivots
+      integer :: i, j, index_max, n_max_pivots
       real(dp) :: max_diagonal
 !
       real(dp), dimension(:), allocatable :: diagonal
@@ -830,20 +829,20 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: dim
-      integer(i15), intent(out) :: n_vectors
+      integer, intent(in) :: dim
+      integer, intent(out) :: n_vectors
 !
       real(dp), intent(in) :: threshold
 !
       real(dp), dimension(dim, dim), intent(in)  :: matrix
       real(dp), dimension(dim, dim), intent(out) :: cholesky_vectors
 !
-      integer(i15), dimension(dim) :: used_diag
+      integer, dimension(dim) :: used_diag
 !
       real(dp), dimension(:), allocatable :: work  ! work array for LAPACK
 !
       integer :: info
-      integer(i15) :: I, J
+      integer :: I, J
 !
       cholesky_vectors = matrix
 !
@@ -852,7 +851,7 @@ contains
 !     DPSTRF computes the Cholesky factorization with complete pivoting
 !     of a real symmetric positive semidefinite matrix.
 !
-      call dpstrf_e('L',      &
+      call dpstrf('L',      &
             dim,              &
             cholesky_vectors, &
             dim,              &
@@ -861,6 +860,9 @@ contains
             threshold,        &
             work,             &
             info)
+!
+      write(output%unit, *) 'n_vectors:',n_vectors
+      flush(output%unit)
 !
       deallocate(work)
 !
@@ -886,13 +888,13 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: n
+      integer, intent(in) :: n
 !
       real(dp), dimension(n,n), intent(in) :: A
       real(dp), dimension(n,n), intent(out) :: Ainv
 
       real(dp), dimension(n) :: work  ! work array for LAPACK
-      integer(i15), dimension(n) :: ipiv   ! pivot indices
+      integer, dimension(n) :: ipiv   ! pivot indices
       integer(kind=4) :: info
 !
 !     Store A in Ainv to prevent it from being overwritten by LAPACK
@@ -926,7 +928,7 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: n
+      integer, intent(in) :: n
 !
       real(dp), dimension(n, n), intent(in) :: A
       real(dp), dimension(n, n), intent(out) :: Ainv
@@ -959,9 +961,9 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: n
+      integer, intent(in) :: n
 !
-      integer(i15) :: i, j
+      integer :: i, j
 !
       real(dp), dimension(n, n) :: M
       real(dp), dimension(:, :), allocatable :: MT
@@ -992,9 +994,9 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: n
+      integer, intent(in) :: n
 !
-      integer(i15) :: i, j
+      integer :: i, j
 !
       real(dp), dimension(n, n) :: M
       real(dp), dimension(:, :), allocatable :: MT
@@ -1026,11 +1028,11 @@ contains
 !!
       implicit none 
 !
-      integer(i15), intent(in) :: n
+      integer, intent(in) :: n
 !
       real(dp), dimension(n, 1), intent(in) :: X
 !
-      integer(i15) :: i
+      integer :: i
 !
       get_abs_max = zero
 !
@@ -1055,7 +1057,7 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: n
+      integer, intent(in) :: n
 !
       real(dp), dimension(n, n), intent(in) :: A
       real(dp), dimension(n, n), intent(in) :: B
@@ -1176,7 +1178,7 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: m, n
+      integer, intent(in) :: m, n
 !
       real(dp), dimension(m, n), intent(in) :: A
 !
@@ -1229,7 +1231,7 @@ contains
 !!
       implicit none
 !
-      integer(i15), intent(in) :: m, n
+      integer, intent(in) :: m, n
 !
       real(dp), dimension(m, n), intent(in) :: A
 !
@@ -1281,7 +1283,7 @@ contains
 !!
       implicit none 
 !
-      integer(i15), intent(in) :: n 
+      integer, intent(in) :: n 
 !
       real(dp), dimension(n,n), intent(in) :: A 
       real(dp), dimension(n,n), intent(in) :: B
@@ -1328,7 +1330,7 @@ contains
 !!
       implicit none 
 !
-      integer(i15), intent(in) :: n
+      integer, intent(in) :: n
 !
       real(dp), dimension(n), intent(in) :: X 
 !
@@ -1348,11 +1350,11 @@ contains
 !!
       implicit none 
 !
-      integer(i15), intent(in) :: n
+      integer, intent(in) :: n
 !
       real(dp), dimension(n, 1), intent(in) :: A 
 !
-      integer(i15) :: I 
+      integer :: I 
 !
       character(len=*)   :: indent ! indentation
       character(len=255) :: adv    ! advance
@@ -1416,7 +1418,7 @@ contains
 !
       character(len=1), intent(in) :: first, second 
 !
-      integer(i15), intent(in) :: m, n, k 
+      integer, intent(in) :: m, n, k 
 !
       real(dp), intent(in) :: alpha, gamma 
 !
@@ -1425,7 +1427,7 @@ contains
 !
       real(dp), dimension(m, n), intent(inout) :: C 
 !
-      integer(i15) :: lda, ldb
+      integer :: lda, ldb
 !
 !     Determine leading dimensions 
 !
@@ -1474,7 +1476,7 @@ contains
 !!
       implicit none
 !
-      integer(i15) :: dim, n, m
+      integer :: dim, n, m
 !
       real(dp), dimension(dim, dim), intent(in) :: A
       real(dp), dimension(dim, dim), intent(out) :: A_trans

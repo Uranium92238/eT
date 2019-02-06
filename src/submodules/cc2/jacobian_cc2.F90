@@ -82,7 +82,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: rho_aibj
 !
 !
-      integer(i15) :: i, j, a, b, ai, bj, aibj ! Index
+      integer :: i, j, a, b, ai, bj, aibj ! Index
 !
 !     Allocate and zero the transformed vector (singles part)
 !
@@ -384,7 +384,7 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: c_bkci 
 !
       type(batching_index) :: batch_a 
-      integer(i15)         :: req0, req1, current_a_batch
+      integer         :: req0, req1, current_a_batch
 !
 !     Make X_aijb = 2 c_aibj - c_ajbi 
 !
@@ -514,10 +514,10 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: g_kjai 
       real(dp), dimension(:,:,:,:), allocatable :: g_aibc
 !
-      integer(i15) :: a, i, b, j 
+      integer :: a, i, b, j 
 !
       type(batching_index) :: batch_c 
-      integer(i15)         :: req0, req1, current_c_batch 
+      integer         :: req0, req1, current_c_batch 
 !
 !     (1/Δ_aibj)P_aibj (- sum_k c_bk g_kjai)
 !
@@ -629,7 +629,7 @@ contains
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout)   :: c_aibj
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(out)     :: rho_aibj   
 !
-      integer(i15) :: i, j, a, b
+      integer :: i, j, a, b
 !
 !     c_aibj/(1/Δ_aibj) 
 !

@@ -15,7 +15,7 @@ module ccsd_class
       real(dp), dimension(:,:), allocatable :: t2   
       real(dp), dimension(:,:), allocatable :: t2bar   
 !
-      integer(i15) :: n_t2  
+      integer :: n_t2  
 !
    contains
 !
@@ -118,6 +118,8 @@ module ccsd_class
       procedure :: read_t2bar                                  => read_t2bar_ccsd
       procedure :: save_t2bar                                  => save_t2bar_ccsd
 !
+      procedure :: get_cvs_projector                           => get_cvs_projector_ccsd
+!
    end type ccsd
 !
 !
@@ -144,9 +146,9 @@ contains
 !
       class(hf) :: ref_wf
 !
-      integer(i15) :: p
+      integer :: p
 !
-      wf%name = 'ccsd'
+      wf%name_ = 'ccsd'
 !
       wf%system = ref_wf%system
 !
@@ -198,7 +200,7 @@ contains
 !
       class(ccsd) :: wf
 !
-      write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(wf%name), ' wavefunction'
+      write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(wf%name_), ' wavefunction'
 !
    end subroutine cleanup_ccsd
 !
@@ -314,7 +316,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: g_ai_bj
 !
-      integer(i15) :: a, b, i, j, ai, bj, aibj
+      integer :: a, b, i, j, ai, bj, aibj
 !
       call mem%alloc(g_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call wf%get_vovo(g_ai_bj)
@@ -367,8 +369,8 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: g_ia_jb ! g_iajb
 !
-      integer(i15) :: a = 0, i = 0, b = 0, j = 0, ai = 0
-      integer(i15) :: bj = 0, aibj = 0, ia = 0, jb = 0, ib = 0, ja = 0
+      integer :: a = 0, i = 0, b = 0, j = 0, ai = 0
+      integer :: bj = 0, aibj = 0, ia = 0, jb = 0, ib = 0, ja = 0
 !
 !     Get g_ia_jb = g_iajb
 !
@@ -428,10 +430,10 @@ contains
 !
       class(ccsd), intent(in) :: wf
 !
-      integer(i15), intent(in) :: N 
+      integer, intent(in) :: N 
       real(dp), dimension(N), intent(inout) :: orbital_differences
 !
-      integer(i15) :: a, i, ai, b, j, bj, aibj
+      integer :: a, i, ai, b, j, bj, aibj
 !
 !$omp parallel do schedule(static) private(a, i, b, j, ai, bj, aibj) 
       do a = 1, wf%n_v
@@ -538,7 +540,7 @@ contains
 !
    end subroutine save_t2_ccsd
 !
-subroutine construct_eta_ccsd(wf, eta)
+   subroutine construct_eta_ccsd(wf, eta)
 !!
 !!    Construct eta (CCSD)
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, June 2017
@@ -555,8 +557,8 @@ subroutine construct_eta_ccsd(wf, eta)
       real(dp), dimension(:,:), allocatable :: g_ia_jb
       real(dp), dimension(:,:), allocatable :: eta_ai_bj
 !
-      integer(i15) :: i = 0, a = 0, j = 0, b = 0, aibj = 0
-      integer(i15) :: bj = 0, ai = 0
+      integer :: i = 0, a = 0, j = 0, b = 0, aibj = 0
+      integer :: bj = 0, ai = 0
 !
       eta = zero
 !
@@ -872,10 +874,10 @@ subroutine construct_eta_ccsd(wf, eta)
 !
       real(dp), dimension(:,:), allocatable :: abs_x2
 !
-      integer(i15), dimension(:,:), allocatable :: dominant_indices
+      integer, dimension(:,:), allocatable :: dominant_indices
       real(dp), dimension(:,:), allocatable     :: dominant_values
 !
-      integer(i15) :: n_elements, elm, i, a, j, b, ai, bj
+      integer :: n_elements, elm, i, a, j, b, ai, bj
 !
 !     Sort according to largest contributions
 !
@@ -916,6 +918,50 @@ subroutine construct_eta_ccsd(wf, eta)
       call mem%dealloc(abs_x2, wf%n_t2, 1)
 !
    end subroutine print_dominant_x2_ccsd
+!
+!
+   subroutine get_cvs_projector_ccsd(wf, projector, n_cores, core_MOs)
+!!
+!!    Get CVS projector
+!!    Written by Sarai D. Folekstad, Oct 2018
+!!
+      implicit none
+!
+      class(ccsd), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(out) :: projector
+!
+      integer, intent(in) :: n_cores
+!
+      integer, dimension(n_cores, 1), intent(in) :: core_MOs
+!
+      integer :: core, i, a, ai, j, b, bj, aibj
+!
+      projector = zero
+!
+      do core = 1, n_cores
+!
+        i = core_MOs(core, 1)
+!
+        do a = 1, wf%n_v
+!
+           ai = wf%n_v*(i - 1) + a
+           projector(ai, 1) = one
+!
+            do j = 1, wf%n_o 
+               do b = 1, wf%n_v
+!
+                  bj = wf%n_v*(j - 1) + b
+                  aibj = max(ai, bj)*(max(ai, bj) - 3)/2 + ai + bj
+!                  
+                  projector(aibj + (wf%n_o)*(wf%n_v), 1) = one
+!
+               enddo
+            enddo
+        enddo
+     enddo
+!
+   end subroutine get_cvs_projector_ccsd
 !
 !
 end module ccsd_class

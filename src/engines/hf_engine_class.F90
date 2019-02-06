@@ -118,7 +118,7 @@ contains
 !
       character(len=100) :: line
 !
-      integer(i15) :: i, n_records
+      integer :: i, n_records
 !
       call move_to_section('hf', n_records)
 !

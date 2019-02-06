@@ -12,7 +12,7 @@ module abstract_engine_class
 !
    type, abstract :: abstract_engine
 !
-      character(len=100) :: tag
+      character(len=100) :: name_
 !
    contains
 !

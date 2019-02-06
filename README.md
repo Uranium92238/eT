@@ -22,3 +22,5 @@ Compile eT:
 make
 ```
 Note: eT is written in Fortran 2008 standard and requires very recent versions of CMake and Gfortran (or Ifort) compilers that supports the use of submodules.
+
+<< how to install libint here >>

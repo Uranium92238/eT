@@ -25,9 +25,9 @@ module diis_cc_multipliers_solver_class
       character(len=500) :: description2 = 'See Helgaker et al., Molecular Electronic Structure Theory, &
                                            &Chapter 13, for the more details on this algorithm.'
 !
-      integer(i15) :: diis_dimension = 8
+      integer :: diis_dimension = 8
 !
-      integer(i15) :: max_iterations = 50
+      integer :: max_iterations = 50
 !
       real(dp) :: residual_threshold  = 1.0d-6
 !
@@ -118,14 +118,14 @@ contains
 !!
       implicit none 
 !     
-      integer(i15), intent(in) :: n
+      integer, intent(in) :: n
 !
       real(dp), intent(in) :: alpha 
 !
       real(dp), dimension(n, 1), intent(in)    :: preconditioner
       real(dp), dimension(n, 1), intent(inout) :: vector  
 !
-      integer(i15) :: I 
+      integer :: I 
 !
 !$omp parallel do private(I)
       do I = 1, n 
@@ -159,7 +159,7 @@ contains
       real(dp), dimension(:,:), allocatable :: multipliers  
       real(dp), dimension(:,:), allocatable :: epsilon  
 !
-      integer(i15) :: iteration
+      integer :: iteration
 !
       call diis_manager%init('cc_multipliers_diis', wf%n_gs_amplitudes, wf%n_gs_amplitudes, solver%diis_dimension)
 !
@@ -194,7 +194,7 @@ contains
          call wf%construct_multiplier_equation(residual)
          residual_norm = get_l2_norm(residual, wf%n_gs_amplitudes)
 !
-         write(output%unit, '(t3,i3,10x,e10.4)') iteration, residual_norm
+         write(output%unit, '(t3,i3,10x,e11.4)') iteration, residual_norm
          flush(output%unit)
 !
 !        Test for convergence & prepare for next iteration if not yet converged

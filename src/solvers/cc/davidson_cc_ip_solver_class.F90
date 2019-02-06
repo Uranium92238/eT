@@ -36,7 +36,7 @@ contains
 !
       class(davidson_cc_ip_solver) :: solver 
 !
-      integer(i15) :: n_specs, i
+      integer :: n_specs, i
 !
       character(len=100) :: line
 !
@@ -99,7 +99,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: c_i
 !
-      integer(i15) :: trial, count_start_vecs, a, i, ai
+      integer :: trial, count_start_vecs, a, i, ai
 !
       if (allocated(solver%start_vectors)) then
 !

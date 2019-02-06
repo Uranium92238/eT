@@ -23,7 +23,7 @@ contains
 !
       character(len=100) :: remove_preceding_blanks
 !
-      integer(i15) :: i = 0, length = 0
+      integer :: i = 0, length = 0
 !
       remove_preceding_blanks = ' '
 !
@@ -92,11 +92,11 @@ contains
 !
       character(len=*), intent(in) :: string
 !
-      integer(i15) :: n_records
+      integer :: n_records
 !
       character(len=100) :: line
 !
-      integer(i15) :: n_start, count_start, count_rec_end, count_rec_start, i
+      integer :: n_start, count_start, count_rec_end, count_rec_start, i
 !
       rewind(input%unit)
 !
@@ -185,12 +185,12 @@ contains
 !
       character(len=*), intent(in) :: string
       character(len=*), intent(in), optional :: format_string,fformat_string,lformat_string
-      integer(i15), intent(in), optional :: line_length
+      integer, intent(in), optional :: line_length
       logical, intent(in), optional :: colons
 !
       character(90)  :: temp
-      integer(i15)   :: l, l_left, lines, l_length
-      integer(i15)   :: i,j, padd, printed 
+      integer   :: l, l_left, lines, l_length
+      integer   :: i,j, padd, printed 
       character(20)  :: fs,fstring,ffstring,lfstring
       logical        :: col 
 !

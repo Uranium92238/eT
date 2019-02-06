@@ -11,7 +11,7 @@ module io_eT_program
 !
 contains
 !
-   integer(i15) function get_n_methods()
+   integer function get_n_methods()
 !!
 !!
 !!
@@ -149,13 +149,13 @@ contains
 !!
       implicit none
 !
-      integer(i15) :: n_methods
+      integer :: n_methods
 !
       character(len=40), dimension(n_methods) :: cc_methods
 !
       character(len=100) :: line
 !
-      integer(i15) :: n_methods_total, count_cc_methods, i
+      integer :: n_methods_total, count_cc_methods, i
 !
       count_cc_methods = 0
 !

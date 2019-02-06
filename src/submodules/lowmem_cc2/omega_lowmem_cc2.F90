@@ -73,12 +73,12 @@ contains
       real(dp), dimension(:,:), allocatable :: L_bj_ci
       real(dp), dimension(:,:), allocatable :: g_ab_jc
 !
-      integer(i15) :: b, j, c, i
-      integer(i15) :: bj, ci, bi, cj
+      integer :: b, j, c, i
+      integer :: bj, ci, bi, cj
 !
-      integer(i15) :: req0, req1_b, req1_c, req2
+      integer :: req0, req1_b, req1_c, req2
 !
-      integer(i15) :: current_b_batch, current_c_batch
+      integer :: current_b_batch, current_c_batch
 !
       type(batching_index) :: batch_b, batch_c
 !
@@ -193,12 +193,12 @@ contains
       real(dp), dimension(:,:), allocatable :: g_jb_ki
       real(dp), dimension(:,:), allocatable :: g_kb_ji
 !
-      integer(i15) :: a, b, j, k
-      integer(i15) :: aj, bk
+      integer :: a, b, j, k
+      integer :: aj, bk
 !
-      integer(i15) :: req0, req1_b, req1_j, req1_k, req2_bj, req2_bk, req2_jk, req3
+      integer :: req0, req1_b, req1_j, req1_k, req2_bj, req2_bk, req2_jk, req3
 !
-      integer(i15) :: current_b_batch, current_j_batch, current_k_batch
+      integer :: current_b_batch, current_j_batch, current_k_batch
 !
       type(batching_index) :: batch_b, batch_j, batch_k
 !
@@ -364,12 +364,12 @@ contains
       real(dp), dimension(:,:), allocatable :: u_aibj
       real(dp), dimension(:,:), allocatable :: F_bj
 !
-      integer(i15) :: i, j, a, b
-      integer(i15) :: ai, aj, bi, bj
+      integer :: i, j, a, b
+      integer :: ai, aj, bi, bj
 !
-      integer(i15) :: req0, req1_j, req1_i, req2, omega_offset
+      integer :: req0, req1_j, req1_i, req2, omega_offset
 !
-      integer(i15) :: current_j_batch, current_i_batch
+      integer :: current_j_batch, current_i_batch
 !
       type(batching_index) :: batch_j, batch_i
 !

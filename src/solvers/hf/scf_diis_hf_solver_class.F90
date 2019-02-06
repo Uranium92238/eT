@@ -23,7 +23,7 @@ module scf_diis_hf_solver_class
 !
    type, extends(abstract_hf_solver) :: scf_diis_hf_solver
 !
-      integer(i15) :: diis_dimension
+      integer :: diis_dimension
 !
       logical :: converged 
 !
@@ -148,7 +148,7 @@ contains
 !
       real(dp) :: max_grad, energy, prev_energy, n_electrons
 !
-      integer(i15) :: iteration
+      integer :: iteration
 !
       real(dp), dimension(:,:), allocatable :: F 
       real(dp), dimension(:,:), allocatable :: G 
@@ -156,12 +156,12 @@ contains
       real(dp), dimension(:,:), allocatable :: h_wx 
       real(dp), dimension(:,:), allocatable :: prev_ao_density 
 !
-      integer(i15) :: n_s
+      integer :: n_s
 !
       real(dp), dimension(:,:), allocatable     :: sp_eri_schwarz
-      integer(i15), dimension(:,:), allocatable :: sp_eri_schwarz_list
+      integer, dimension(:,:), allocatable :: sp_eri_schwarz_list
 !
-      integer(i15) :: dim_gradient, dim_fock
+      integer :: dim_gradient, dim_fock
 !
       type(timings) :: iteration_timer, solver_timer 
 !
@@ -247,7 +247,7 @@ contains
 !
          energy = wf%energy
 !
-         write(output%unit, '(t3,i3,10x,f17.12,4x,e10.4,4x,e10.4)') iteration, wf%energy, &
+         write(output%unit, '(t3,i3,10x,f17.12,4x,e11.4,4x,e11.4)') iteration, wf%energy, &
                                           max_grad, abs(wf%energy-prev_energy)
          flush(output%unit)
 !
@@ -401,7 +401,7 @@ contains
 !
       class(hf), intent(inout) :: wf 
 !
-      integer(i15) :: n_ao, n_mo 
+      integer :: n_ao, n_mo 
 !
       write(output%unit, '(/t3,a)') '- Requested restart. Reading orbitals from file:'
 !
@@ -452,7 +452,7 @@ contains
 !
       class(scf_diis_hf_solver) :: solver 
 !
-      integer(i15) :: n_records, i 
+      integer :: n_records, i 
 !
       character(len=100) :: line, value 
 !

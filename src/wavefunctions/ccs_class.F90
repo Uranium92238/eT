@@ -24,10 +24,9 @@ module ccs_class
 !
       real(dp) :: hf_energy 
 !
-      integer(i15)                           :: n_gs_amplitudes
-      integer(i15)                           :: n_es_amplitudes
-!
-      integer(i15)                           :: n_t1
+      integer                                :: n_gs_amplitudes
+      integer                                :: n_es_amplitudes
+      integer                                :: n_t1
 !
       real(dp), dimension(:,:), allocatable  :: t1
       real(dp), dimension(:,:), allocatable  :: t1bar
@@ -41,7 +40,7 @@ module ccs_class
 !
       type(mo_integral_tool) :: integrals
 !
-      integer(i15) :: n_bath ! Number of bath orbitals (always the last ao/mo indices)
+      integer :: n_bath ! Number of bath orbitals (always the last ao/mo indices)
 !
    contains
 !
@@ -110,6 +109,8 @@ module ccs_class
 !
       procedure :: get_cvs_projector                           => get_cvs_projector_ccs
       procedure :: get_ip_projector                            => get_ip_projector_ccs
+!
+      procedure :: set_cvs_start_indices                       => set_cvs_start_indices_ccs
 !
 !     Routines to get electron repulsion integrals (ERIs)
 !
@@ -199,9 +200,9 @@ contains
 !
       class(hf) :: ref_wf
 !
-      integer(i15) :: p
+      integer :: p
 !
-      wf%name = 'ccs'
+      wf%name_ = 'ccs'
 !
       wf%system = ref_wf%system
 !
@@ -251,7 +252,7 @@ contains
 !
       class(ccs) :: wf
 !
-      write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(wf%name), ' wavefunction'
+      write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(wf%name_), ' wavefunction'
 !
    end subroutine cleanup_ccs
 !
@@ -555,7 +556,7 @@ contains
 !
       class(ccs), intent(inout) :: wf 
 !
-      integer(i15) :: i = 0
+      integer :: i = 0
 !
       type(file)   :: h_pq_file
 !
@@ -656,8 +657,8 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: F_pq 
 !
-      integer(i15) :: i, j, k, a, b, kj, ii, ij, kk, ik, jj, ji, ai, ib, bi
-      integer(i15) :: aj, ja, ab, ia
+      integer :: i, j, k, a, b, kj, ii, ij, kk, ik, jj, ji, ai, ib, bi
+      integer :: aj, ja, ab, ia
 !
       real(dp), dimension(:,:), allocatable :: g_ij_kl
       real(dp), dimension(:,:), allocatable :: g_ab_ij
@@ -789,7 +790,7 @@ contains
 !
       real(dp), dimension(wf%n_mo, wf%n_mo), intent(in) :: F_pq 
 !
-      integer(i15) :: i, j, a, b 
+      integer :: i, j, a, b 
 !
       do i = 1, wf%n_o
          do j = 1, wf%n_o
@@ -846,7 +847,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: W ! W_sq = sum_r Z_sr Y_rq^T, intermediate 
 !
-      integer(i15) :: p, i, a
+      integer :: p, i, a
 !
 !     Construct the X and Y arrays 
 !
@@ -918,10 +919,10 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      integer(i15), intent(in) :: N 
+      integer, intent(in) :: N 
       real(dp), dimension(N), intent(inout) :: orbital_differences
 !
-      integer(i15) :: a, i, ai
+      integer :: a, i, ai
 !
       do i = 1, wf%n_o 
          do a = 1, wf%n_v
@@ -1152,15 +1153,15 @@ contains
 !
       real(dp), dimension(:,:) :: g_iajb 
 !
-      integer(i15), optional, intent(in) :: first_i, last_i 
-      integer(i15), optional, intent(in) :: first_a, last_a
-      integer(i15), optional, intent(in) :: first_j, last_j
-      integer(i15), optional, intent(in) :: first_b, last_b
+      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_a, last_a
+      integer, optional, intent(in) :: first_j, last_j
+      integer, optional, intent(in) :: first_b, last_b
 !
-      integer(i15) :: local_first_i, local_last_i 
-      integer(i15) :: local_first_a, local_last_a
-      integer(i15) :: local_first_j, local_last_j
-      integer(i15) :: local_first_b, local_last_b
+      integer :: local_first_i, local_last_i 
+      integer :: local_first_a, local_last_a
+      integer :: local_first_j, local_last_j
+      integer :: local_first_b, local_last_b
 !
       logical :: index_restrictions
 !
@@ -1224,15 +1225,15 @@ contains
 !
       real(dp), dimension(:,:,:,:) :: g_iajb 
 !
-      integer(i15), optional, intent(in) :: first_i, last_i 
-      integer(i15), optional, intent(in) :: first_a, last_a
-      integer(i15), optional, intent(in) :: first_j, last_j
-      integer(i15), optional, intent(in) :: first_b, last_b
+      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_a, last_a
+      integer, optional, intent(in) :: first_j, last_j
+      integer, optional, intent(in) :: first_b, last_b
 !
-      integer(i15) :: local_first_i, local_last_i 
-      integer(i15) :: local_first_a, local_last_a
-      integer(i15) :: local_first_j, local_last_j
-      integer(i15) :: local_first_b, local_last_b
+      integer :: local_first_i, local_last_i 
+      integer :: local_first_a, local_last_a
+      integer :: local_first_j, local_last_j
+      integer :: local_first_b, local_last_b
 !
       logical :: index_restrictions
 !
@@ -1296,15 +1297,15 @@ contains
 !
       real(dp), dimension(:,:) :: g_ijkl 
 !
-      integer(i15), optional, intent(in) :: first_i, last_i 
-      integer(i15), optional, intent(in) :: first_j, last_j
-      integer(i15), optional, intent(in) :: first_k, last_k
-      integer(i15), optional, intent(in) :: first_l, last_l
+      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_j, last_j
+      integer, optional, intent(in) :: first_k, last_k
+      integer, optional, intent(in) :: first_l, last_l
 !
-      integer(i15) :: local_first_i, local_last_i 
-      integer(i15) :: local_first_j, local_last_j
-      integer(i15) :: local_first_k, local_last_k
-      integer(i15) :: local_first_l, local_last_l
+      integer :: local_first_i, local_last_i 
+      integer :: local_first_j, local_last_j
+      integer :: local_first_k, local_last_k
+      integer :: local_first_l, local_last_l
 !
       logical :: index_restrictions
 !
@@ -1376,15 +1377,15 @@ contains
 !
       real(dp), dimension(:,:,:,:) :: g_ijkl 
 !
-      integer(i15), optional, intent(in) :: first_i, last_i 
-      integer(i15), optional, intent(in) :: first_j, last_j
-      integer(i15), optional, intent(in) :: first_k, last_k
-      integer(i15), optional, intent(in) :: first_l, last_l
+      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_j, last_j
+      integer, optional, intent(in) :: first_k, last_k
+      integer, optional, intent(in) :: first_l, last_l
 !
-      integer(i15) :: local_first_i, local_last_i 
-      integer(i15) :: local_first_j, local_last_j
-      integer(i15) :: local_first_k, local_last_k
-      integer(i15) :: local_first_l, local_last_l
+      integer :: local_first_i, local_last_i 
+      integer :: local_first_j, local_last_j
+      integer :: local_first_k, local_last_k
+      integer :: local_first_l, local_last_l
 !
       logical :: index_restrictions
 !
@@ -1456,15 +1457,15 @@ contains
 !
       real(dp), dimension(:,:) :: g_ijka 
 !
-      integer(i15), optional, intent(in) :: first_i, last_i 
-      integer(i15), optional, intent(in) :: first_j, last_j
-      integer(i15), optional, intent(in) :: first_k, last_k
-      integer(i15), optional, intent(in) :: first_a, last_a
+      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_j, last_j
+      integer, optional, intent(in) :: first_k, last_k
+      integer, optional, intent(in) :: first_a, last_a
 !
-      integer(i15) :: local_first_i, local_last_i 
-      integer(i15) :: local_first_j, local_last_j
-      integer(i15) :: local_first_k, local_last_k
-      integer(i15) :: local_first_a, local_last_a
+      integer :: local_first_i, local_last_i 
+      integer :: local_first_j, local_last_j
+      integer :: local_first_k, local_last_k
+      integer :: local_first_a, local_last_a
 !
       logical :: index_restrictions
 !
@@ -1538,15 +1539,15 @@ contains
 !
       real(dp), dimension(:,:,:,:) :: g_ijka 
 !
-      integer(i15), optional, intent(in) :: first_i, last_i 
-      integer(i15), optional, intent(in) :: first_j, last_j
-      integer(i15), optional, intent(in) :: first_k, last_k
-      integer(i15), optional, intent(in) :: first_a, last_a
+      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_j, last_j
+      integer, optional, intent(in) :: first_k, last_k
+      integer, optional, intent(in) :: first_a, last_a
 !
-      integer(i15) :: local_first_i, local_last_i 
-      integer(i15) :: local_first_j, local_last_j
-      integer(i15) :: local_first_k, local_last_k
-      integer(i15) :: local_first_a, local_last_a
+      integer :: local_first_i, local_last_i 
+      integer :: local_first_j, local_last_j
+      integer :: local_first_k, local_last_k
+      integer :: local_first_a, local_last_a
 !
       logical :: index_restrictions
 !
@@ -1620,15 +1621,15 @@ contains
 !
       real(dp), dimension(:,:) :: g_ijak 
 !
-      integer(i15), optional, intent(in) :: first_i, last_i 
-      integer(i15), optional, intent(in) :: first_j, last_j
-      integer(i15), optional, intent(in) :: first_k, last_k
-      integer(i15), optional, intent(in) :: first_a, last_a
+      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_j, last_j
+      integer, optional, intent(in) :: first_k, last_k
+      integer, optional, intent(in) :: first_a, last_a
 !
-      integer(i15) :: local_first_i, local_last_i 
-      integer(i15) :: local_first_j, local_last_j
-      integer(i15) :: local_first_k, local_last_k
-      integer(i15) :: local_first_a, local_last_a
+      integer :: local_first_i, local_last_i 
+      integer :: local_first_j, local_last_j
+      integer :: local_first_k, local_last_k
+      integer :: local_first_a, local_last_a
 !
       logical :: index_restrictions
 !
@@ -1702,15 +1703,15 @@ contains
 !
       real(dp), dimension(:,:,:,:) :: g_ijak 
 !
-      integer(i15), optional, intent(in) :: first_i, last_i 
-      integer(i15), optional, intent(in) :: first_j, last_j
-      integer(i15), optional, intent(in) :: first_k, last_k
-      integer(i15), optional, intent(in) :: first_a, last_a
+      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_j, last_j
+      integer, optional, intent(in) :: first_k, last_k
+      integer, optional, intent(in) :: first_a, last_a
 !
-      integer(i15) :: local_first_i, local_last_i 
-      integer(i15) :: local_first_j, local_last_j
-      integer(i15) :: local_first_k, local_last_k
-      integer(i15) :: local_first_a, local_last_a
+      integer :: local_first_i, local_last_i 
+      integer :: local_first_j, local_last_j
+      integer :: local_first_k, local_last_k
+      integer :: local_first_a, local_last_a
 !
       logical :: index_restrictions
 !
@@ -1784,15 +1785,15 @@ contains
 !
       real(dp), dimension(:,:) :: g_iajk 
 !
-      integer(i15), optional, intent(in) :: first_i, last_i 
-      integer(i15), optional, intent(in) :: first_j, last_j
-      integer(i15), optional, intent(in) :: first_k, last_k
-      integer(i15), optional, intent(in) :: first_a, last_a
+      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_j, last_j
+      integer, optional, intent(in) :: first_k, last_k
+      integer, optional, intent(in) :: first_a, last_a
 !
-      integer(i15) :: local_first_i, local_last_i 
-      integer(i15) :: local_first_j, local_last_j
-      integer(i15) :: local_first_k, local_last_k
-      integer(i15) :: local_first_a, local_last_a
+      integer :: local_first_i, local_last_i 
+      integer :: local_first_j, local_last_j
+      integer :: local_first_k, local_last_k
+      integer :: local_first_a, local_last_a
 !
       logical :: index_restrictions
 !
@@ -1866,15 +1867,15 @@ contains
 !
       real(dp), dimension(:,:,:,:) :: g_iajk 
 !
-      integer(i15), optional, intent(in) :: first_i, last_i 
-      integer(i15), optional, intent(in) :: first_j, last_j
-      integer(i15), optional, intent(in) :: first_k, last_k
-      integer(i15), optional, intent(in) :: first_a, last_a
+      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_j, last_j
+      integer, optional, intent(in) :: first_k, last_k
+      integer, optional, intent(in) :: first_a, last_a
 !
-      integer(i15) :: local_first_i, local_last_i 
-      integer(i15) :: local_first_j, local_last_j
-      integer(i15) :: local_first_k, local_last_k
-      integer(i15) :: local_first_a, local_last_a
+      integer :: local_first_i, local_last_i 
+      integer :: local_first_j, local_last_j
+      integer :: local_first_k, local_last_k
+      integer :: local_first_a, local_last_a
 !
       logical :: index_restrictions
 !
@@ -1948,15 +1949,15 @@ contains
 !
       real(dp), dimension(:,:) :: g_aijk 
 !
-      integer(i15), optional, intent(in) :: first_i, last_i 
-      integer(i15), optional, intent(in) :: first_j, last_j
-      integer(i15), optional, intent(in) :: first_k, last_k
-      integer(i15), optional, intent(in) :: first_a, last_a
+      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_j, last_j
+      integer, optional, intent(in) :: first_k, last_k
+      integer, optional, intent(in) :: first_a, last_a
 !
-      integer(i15) :: local_first_i, local_last_i 
-      integer(i15) :: local_first_j, local_last_j
-      integer(i15) :: local_first_k, local_last_k
-      integer(i15) :: local_first_a, local_last_a
+      integer :: local_first_i, local_last_i 
+      integer :: local_first_j, local_last_j
+      integer :: local_first_k, local_last_k
+      integer :: local_first_a, local_last_a
 !
       logical :: index_restrictions
 !
@@ -2030,15 +2031,15 @@ contains
 !
       real(dp), dimension(:,:,:,:) :: g_aijk 
 !
-      integer(i15), optional, intent(in) :: first_i, last_i 
-      integer(i15), optional, intent(in) :: first_j, last_j
-      integer(i15), optional, intent(in) :: first_k, last_k
-      integer(i15), optional, intent(in) :: first_a, last_a
+      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_j, last_j
+      integer, optional, intent(in) :: first_k, last_k
+      integer, optional, intent(in) :: first_a, last_a
 !
-      integer(i15) :: local_first_i, local_last_i 
-      integer(i15) :: local_first_j, local_last_j
-      integer(i15) :: local_first_k, local_last_k
-      integer(i15) :: local_first_a, local_last_a
+      integer :: local_first_i, local_last_i 
+      integer :: local_first_j, local_last_j
+      integer :: local_first_k, local_last_k
+      integer :: local_first_a, local_last_a
 !
       logical :: index_restrictions
 !
@@ -2112,15 +2113,15 @@ contains
 !
       real(dp), dimension(:,:) :: g_abij 
 !
-      integer(i15), optional, intent(in) :: first_i, last_i 
-      integer(i15), optional, intent(in) :: first_j, last_j
-      integer(i15), optional, intent(in) :: first_a, last_a
-      integer(i15), optional, intent(in) :: first_b, last_b
+      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_j, last_j
+      integer, optional, intent(in) :: first_a, last_a
+      integer, optional, intent(in) :: first_b, last_b
 !
-      integer(i15) :: local_first_i, local_last_i 
-      integer(i15) :: local_first_j, local_last_j
-      integer(i15) :: local_first_b, local_last_b
-      integer(i15) :: local_first_a, local_last_a
+      integer :: local_first_i, local_last_i 
+      integer :: local_first_j, local_last_j
+      integer :: local_first_b, local_last_b
+      integer :: local_first_a, local_last_a
 !
       logical :: index_restrictions
 !
@@ -2194,15 +2195,15 @@ contains
 !
       real(dp), dimension(:,:,:,:) :: g_abij 
 !
-      integer(i15), optional, intent(in) :: first_i, last_i 
-      integer(i15), optional, intent(in) :: first_j, last_j
-      integer(i15), optional, intent(in) :: first_a, last_a
-      integer(i15), optional, intent(in) :: first_b, last_b
+      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_j, last_j
+      integer, optional, intent(in) :: first_a, last_a
+      integer, optional, intent(in) :: first_b, last_b
 !
-      integer(i15) :: local_first_i, local_last_i 
-      integer(i15) :: local_first_j, local_last_j
-      integer(i15) :: local_first_b, local_last_b
-      integer(i15) :: local_first_a, local_last_a
+      integer :: local_first_i, local_last_i 
+      integer :: local_first_j, local_last_j
+      integer :: local_first_b, local_last_b
+      integer :: local_first_a, local_last_a
 !
       logical :: index_restrictions
 !
@@ -2276,15 +2277,15 @@ contains
 !
       real(dp), dimension(:,:) :: g_aibj 
 !
-      integer(i15), optional, intent(in) :: first_i, last_i 
-      integer(i15), optional, intent(in) :: first_j, last_j
-      integer(i15), optional, intent(in) :: first_a, last_a
-      integer(i15), optional, intent(in) :: first_b, last_b
+      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_j, last_j
+      integer, optional, intent(in) :: first_a, last_a
+      integer, optional, intent(in) :: first_b, last_b
 !
-      integer(i15) :: local_first_i, local_last_i 
-      integer(i15) :: local_first_j, local_last_j
-      integer(i15) :: local_first_b, local_last_b
-      integer(i15) :: local_first_a, local_last_a
+      integer :: local_first_i, local_last_i 
+      integer :: local_first_j, local_last_j
+      integer :: local_first_b, local_last_b
+      integer :: local_first_a, local_last_a
 !
       logical :: index_restrictions
 !
@@ -2356,15 +2357,15 @@ contains
 !
       real(dp), dimension(:,:,:,:) :: g_aibj 
 !
-      integer(i15), optional, intent(in) :: first_i, last_i 
-      integer(i15), optional, intent(in) :: first_j, last_j
-      integer(i15), optional, intent(in) :: first_a, last_a
-      integer(i15), optional, intent(in) :: first_b, last_b
+      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_j, last_j
+      integer, optional, intent(in) :: first_a, last_a
+      integer, optional, intent(in) :: first_b, last_b
 !
-      integer(i15) :: local_first_i, local_last_i 
-      integer(i15) :: local_first_j, local_last_j
-      integer(i15) :: local_first_b, local_last_b
-      integer(i15) :: local_first_a, local_last_a
+      integer :: local_first_i, local_last_i 
+      integer :: local_first_j, local_last_j
+      integer :: local_first_b, local_last_b
+      integer :: local_first_a, local_last_a
 !
       logical :: index_restrictions
 !
@@ -2438,15 +2439,15 @@ contains
 !
       real(dp), dimension(:,:) :: g_aijb 
 !
-      integer(i15), optional, intent(in) :: first_i, last_i 
-      integer(i15), optional, intent(in) :: first_j, last_j
-      integer(i15), optional, intent(in) :: first_a, last_a
-      integer(i15), optional, intent(in) :: first_b, last_b
+      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_j, last_j
+      integer, optional, intent(in) :: first_a, last_a
+      integer, optional, intent(in) :: first_b, last_b
 !
-      integer(i15) :: local_first_i, local_last_i 
-      integer(i15) :: local_first_j, local_last_j
-      integer(i15) :: local_first_b, local_last_b
-      integer(i15) :: local_first_a, local_last_a
+      integer :: local_first_i, local_last_i 
+      integer :: local_first_j, local_last_j
+      integer :: local_first_b, local_last_b
+      integer :: local_first_a, local_last_a
 !
       logical :: index_restrictions
 !
@@ -2520,15 +2521,15 @@ contains
 !
       real(dp), dimension(:,:,:,:) :: g_aijb 
 !
-      integer(i15), optional, intent(in) :: first_i, last_i 
-      integer(i15), optional, intent(in) :: first_j, last_j
-      integer(i15), optional, intent(in) :: first_a, last_a
-      integer(i15), optional, intent(in) :: first_b, last_b
+      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_j, last_j
+      integer, optional, intent(in) :: first_a, last_a
+      integer, optional, intent(in) :: first_b, last_b
 !
-      integer(i15) :: local_first_i, local_last_i 
-      integer(i15) :: local_first_j, local_last_j
-      integer(i15) :: local_first_b, local_last_b
-      integer(i15) :: local_first_a, local_last_a
+      integer :: local_first_i, local_last_i 
+      integer :: local_first_j, local_last_j
+      integer :: local_first_b, local_last_b
+      integer :: local_first_a, local_last_a
 !
       logical :: index_restrictions
 !
@@ -2602,15 +2603,15 @@ contains
 !
       real(dp), dimension(:,:) :: g_iabj
 !
-      integer(i15), optional, intent(in) :: first_i, last_i 
-      integer(i15), optional, intent(in) :: first_j, last_j
-      integer(i15), optional, intent(in) :: first_a, last_a
-      integer(i15), optional, intent(in) :: first_b, last_b
+      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_j, last_j
+      integer, optional, intent(in) :: first_a, last_a
+      integer, optional, intent(in) :: first_b, last_b
 !
-      integer(i15) :: local_first_i, local_last_i 
-      integer(i15) :: local_first_j, local_last_j
-      integer(i15) :: local_first_b, local_last_b
-      integer(i15) :: local_first_a, local_last_a
+      integer :: local_first_i, local_last_i 
+      integer :: local_first_j, local_last_j
+      integer :: local_first_b, local_last_b
+      integer :: local_first_a, local_last_a
 !
       logical :: index_restrictions
 !
@@ -2684,15 +2685,15 @@ contains
 !
       real(dp), dimension(:,:,:,:) :: g_iabj
 !
-      integer(i15), optional, intent(in) :: first_i, last_i 
-      integer(i15), optional, intent(in) :: first_j, last_j
-      integer(i15), optional, intent(in) :: first_a, last_a
-      integer(i15), optional, intent(in) :: first_b, last_b
+      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_j, last_j
+      integer, optional, intent(in) :: first_a, last_a
+      integer, optional, intent(in) :: first_b, last_b
 !
-      integer(i15) :: local_first_i, local_last_i 
-      integer(i15) :: local_first_j, local_last_j
-      integer(i15) :: local_first_b, local_last_b
-      integer(i15) :: local_first_a, local_last_a
+      integer :: local_first_i, local_last_i 
+      integer :: local_first_j, local_last_j
+      integer :: local_first_b, local_last_b
+      integer :: local_first_a, local_last_a
 !
       logical :: index_restrictions
 !
@@ -2766,15 +2767,15 @@ contains
 !
       real(dp), dimension(:,:,:,:) :: g_ijab
 !
-      integer(i15), optional, intent(in) :: first_i, last_i 
-      integer(i15), optional, intent(in) :: first_j, last_j
-      integer(i15), optional, intent(in) :: first_a, last_a
-      integer(i15), optional, intent(in) :: first_b, last_b
+      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_j, last_j
+      integer, optional, intent(in) :: first_a, last_a
+      integer, optional, intent(in) :: first_b, last_b
 !
-      integer(i15) :: local_first_i, local_last_i 
-      integer(i15) :: local_first_j, local_last_j
-      integer(i15) :: local_first_b, local_last_b
-      integer(i15) :: local_first_a, local_last_a
+      integer :: local_first_i, local_last_i 
+      integer :: local_first_j, local_last_j
+      integer :: local_first_b, local_last_b
+      integer :: local_first_a, local_last_a
 !
       logical :: index_restrictions
 !
@@ -2848,15 +2849,15 @@ contains
 !
       real(dp), dimension(:,:) :: g_ijab
 !
-      integer(i15), optional, intent(in) :: first_i, last_i 
-      integer(i15), optional, intent(in) :: first_j, last_j
-      integer(i15), optional, intent(in) :: first_a, last_a
-      integer(i15), optional, intent(in) :: first_b, last_b
+      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_j, last_j
+      integer, optional, intent(in) :: first_a, last_a
+      integer, optional, intent(in) :: first_b, last_b
 !
-      integer(i15) :: local_first_i, local_last_i 
-      integer(i15) :: local_first_j, local_last_j
-      integer(i15) :: local_first_b, local_last_b
-      integer(i15) :: local_first_a, local_last_a
+      integer :: local_first_i, local_last_i 
+      integer :: local_first_j, local_last_j
+      integer :: local_first_b, local_last_b
+      integer :: local_first_a, local_last_a
 !
       logical :: index_restrictions
 !
@@ -2930,15 +2931,15 @@ contains
 !
       real(dp), dimension(:,:,:,:) :: g_abci 
 !
-      integer(i15), optional, intent(in) :: first_i, last_i 
-      integer(i15), optional, intent(in) :: first_c, last_c
-      integer(i15), optional, intent(in) :: first_a, last_a
-      integer(i15), optional, intent(in) :: first_b, last_b
+      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_c, last_c
+      integer, optional, intent(in) :: first_a, last_a
+      integer, optional, intent(in) :: first_b, last_b
 !
-      integer(i15) :: local_first_i, local_last_i 
-      integer(i15) :: local_first_c, local_last_c
-      integer(i15) :: local_first_b, local_last_b
-      integer(i15) :: local_first_a, local_last_a
+      integer :: local_first_i, local_last_i 
+      integer :: local_first_c, local_last_c
+      integer :: local_first_b, local_last_b
+      integer :: local_first_a, local_last_a
 !
       logical :: index_restrictions
 !
@@ -3012,15 +3013,15 @@ contains
 !
       real(dp), dimension(:,:) :: g_abic 
 !
-      integer(i15), optional, intent(in) :: first_i, last_i 
-      integer(i15), optional, intent(in) :: first_c, last_c
-      integer(i15), optional, intent(in) :: first_a, last_a
-      integer(i15), optional, intent(in) :: first_b, last_b
+      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_c, last_c
+      integer, optional, intent(in) :: first_a, last_a
+      integer, optional, intent(in) :: first_b, last_b
 !
-      integer(i15) :: local_first_i, local_last_i 
-      integer(i15) :: local_first_c, local_last_c
-      integer(i15) :: local_first_b, local_last_b
-      integer(i15) :: local_first_a, local_last_a
+      integer :: local_first_i, local_last_i 
+      integer :: local_first_c, local_last_c
+      integer :: local_first_b, local_last_b
+      integer :: local_first_a, local_last_a
 !
       logical :: index_restrictions
 !
@@ -3094,15 +3095,15 @@ contains
 !
       real(dp), dimension(:,:,:,:) :: g_abic 
 !
-      integer(i15), optional, intent(in) :: first_i, last_i 
-      integer(i15), optional, intent(in) :: first_c, last_c
-      integer(i15), optional, intent(in) :: first_a, last_a
-      integer(i15), optional, intent(in) :: first_b, last_b
+      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_c, last_c
+      integer, optional, intent(in) :: first_a, last_a
+      integer, optional, intent(in) :: first_b, last_b
 !
-      integer(i15) :: local_first_i, local_last_i 
-      integer(i15) :: local_first_c, local_last_c
-      integer(i15) :: local_first_b, local_last_b
-      integer(i15) :: local_first_a, local_last_a
+      integer :: local_first_i, local_last_i 
+      integer :: local_first_c, local_last_c
+      integer :: local_first_b, local_last_b
+      integer :: local_first_a, local_last_a
 !
       logical :: index_restrictions
 !
@@ -3176,15 +3177,15 @@ contains
 !
       real(dp), dimension(:,:) :: g_aibc 
 !
-      integer(i15), optional, intent(in) :: first_i, last_i 
-      integer(i15), optional, intent(in) :: first_c, last_c
-      integer(i15), optional, intent(in) :: first_a, last_a
-      integer(i15), optional, intent(in) :: first_b, last_b
+      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_c, last_c
+      integer, optional, intent(in) :: first_a, last_a
+      integer, optional, intent(in) :: first_b, last_b
 !
-      integer(i15) :: local_first_i, local_last_i 
-      integer(i15) :: local_first_c, local_last_c
-      integer(i15) :: local_first_b, local_last_b
-      integer(i15) :: local_first_a, local_last_a
+      integer :: local_first_i, local_last_i 
+      integer :: local_first_c, local_last_c
+      integer :: local_first_b, local_last_b
+      integer :: local_first_a, local_last_a
 !
       logical :: index_restrictions
 !
@@ -3258,15 +3259,15 @@ contains
 !
       real(dp), dimension(:,:,:,:) :: g_aibc 
 !
-      integer(i15), optional, intent(in) :: first_i, last_i 
-      integer(i15), optional, intent(in) :: first_c, last_c
-      integer(i15), optional, intent(in) :: first_a, last_a
-      integer(i15), optional, intent(in) :: first_b, last_b
+      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_c, last_c
+      integer, optional, intent(in) :: first_a, last_a
+      integer, optional, intent(in) :: first_b, last_b
 !
-      integer(i15) :: local_first_i, local_last_i 
-      integer(i15) :: local_first_c, local_last_c
-      integer(i15) :: local_first_b, local_last_b
-      integer(i15) :: local_first_a, local_last_a
+      integer :: local_first_i, local_last_i 
+      integer :: local_first_c, local_last_c
+      integer :: local_first_b, local_last_b
+      integer :: local_first_a, local_last_a
 !
       logical :: index_restrictions
 !
@@ -3340,15 +3341,15 @@ contains
 !
       real(dp), dimension(:,:) :: g_iabc 
 !
-      integer(i15), optional, intent(in) :: first_i, last_i 
-      integer(i15), optional, intent(in) :: first_c, last_c
-      integer(i15), optional, intent(in) :: first_a, last_a
-      integer(i15), optional, intent(in) :: first_b, last_b
+      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_c, last_c
+      integer, optional, intent(in) :: first_a, last_a
+      integer, optional, intent(in) :: first_b, last_b
 !
-      integer(i15) :: local_first_i, local_last_i 
-      integer(i15) :: local_first_c, local_last_c
-      integer(i15) :: local_first_b, local_last_b
-      integer(i15) :: local_first_a, local_last_a
+      integer :: local_first_i, local_last_i 
+      integer :: local_first_c, local_last_c
+      integer :: local_first_b, local_last_b
+      integer :: local_first_a, local_last_a
 !
       logical :: index_restrictions
 !
@@ -3422,15 +3423,15 @@ contains
 !
       real(dp), dimension(:,:,:,:) :: g_iabc 
 !
-      integer(i15), optional, intent(in) :: first_i, last_i 
-      integer(i15), optional, intent(in) :: first_c, last_c
-      integer(i15), optional, intent(in) :: first_a, last_a
-      integer(i15), optional, intent(in) :: first_b, last_b
+      integer, optional, intent(in) :: first_i, last_i 
+      integer, optional, intent(in) :: first_c, last_c
+      integer, optional, intent(in) :: first_a, last_a
+      integer, optional, intent(in) :: first_b, last_b
 !
-      integer(i15) :: local_first_i, local_last_i 
-      integer(i15) :: local_first_c, local_last_c
-      integer(i15) :: local_first_b, local_last_b
-      integer(i15) :: local_first_a, local_last_a
+      integer :: local_first_i, local_last_i 
+      integer :: local_first_c, local_last_c
+      integer :: local_first_b, local_last_b
+      integer :: local_first_a, local_last_a
 !
       logical :: index_restrictions
 !
@@ -3504,15 +3505,15 @@ contains
 !
       real(dp), dimension(:,:) :: g_abcd
 !
-      integer(i15), optional, intent(in) :: first_d, last_d 
-      integer(i15), optional, intent(in) :: first_c, last_c
-      integer(i15), optional, intent(in) :: first_a, last_a
-      integer(i15), optional, intent(in) :: first_b, last_b
+      integer, optional, intent(in) :: first_d, last_d 
+      integer, optional, intent(in) :: first_c, last_c
+      integer, optional, intent(in) :: first_a, last_a
+      integer, optional, intent(in) :: first_b, last_b
 !
-      integer(i15) :: local_first_d, local_last_d 
-      integer(i15) :: local_first_c, local_last_c
-      integer(i15) :: local_first_b, local_last_b
-      integer(i15) :: local_first_a, local_last_a
+      integer :: local_first_d, local_last_d 
+      integer :: local_first_c, local_last_c
+      integer :: local_first_b, local_last_b
+      integer :: local_first_a, local_last_a
 !
       logical :: index_restrictions
 !
@@ -3586,15 +3587,15 @@ contains
 !
       real(dp), dimension(:,:,:,:) :: g_abcd
 !
-      integer(i15), optional, intent(in) :: first_d, last_d 
-      integer(i15), optional, intent(in) :: first_c, last_c
-      integer(i15), optional, intent(in) :: first_a, last_a
-      integer(i15), optional, intent(in) :: first_b, last_b
+      integer, optional, intent(in) :: first_d, last_d 
+      integer, optional, intent(in) :: first_c, last_c
+      integer, optional, intent(in) :: first_a, last_a
+      integer, optional, intent(in) :: first_b, last_b
 !
-      integer(i15) :: local_first_d, local_last_d 
-      integer(i15) :: local_first_c, local_last_c
-      integer(i15) :: local_first_b, local_last_b
-      integer(i15) :: local_first_a, local_last_a
+      integer :: local_first_d, local_last_d 
+      integer :: local_first_c, local_last_c
+      integer :: local_first_b, local_last_b
+      integer :: local_first_a, local_last_a
 !
       logical :: index_restrictions
 !
@@ -3883,7 +3884,7 @@ contains
 !
       type(batching_index) :: batch_b
 !
-      integer(i15) :: required, j, b, b_red, current_b_batch
+      integer :: required, j, b, b_red, current_b_batch
 !
       call batch_b%init(wf%n_v) 
 !
@@ -4032,9 +4033,9 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: L_ai_ck ! L_ckia = 2 * g_ckia - g_caik
 !
-      integer(i15) :: k, c, ck, i, a, Ai, iA, ca, ik
+      integer :: k, c, ck, i, a, Ai, iA, ca, ik
 !
-      integer(i15)         :: required, current_a_batch 
+      integer         :: required, current_a_batch 
       type(batching_index) :: batch_a 
 !
 !     :: Construct L_ai_ck = L_ckia
@@ -4128,7 +4129,7 @@ contains
 !
       real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: eta 
 !
-      integer(i15) :: i, a, ai
+      integer :: i, a, ai
 !
       do i = 1, wf%n_o 
          do a = 1, wf%n_v 
@@ -4190,7 +4191,7 @@ contains
 !
       class(ccs) :: wf
 !
-      integer(i15) :: p, q, pq, ao, removed_orbitals
+      integer :: p, q, pq, ao, removed_orbitals
 !
       type(file) :: h_pq_file
 !
@@ -4283,11 +4284,11 @@ contains
 !
       real(dp), dimension(wf%n_es_amplitudes, 1), intent(out) :: projector
 !
-      integer(i15), intent(in) :: n_cores
+      integer, intent(in) :: n_cores
 !
-      integer(i15), dimension(n_cores, 1), intent(in) :: core_MOs
+      integer, dimension(n_cores, 1), intent(in) :: core_MOs
 !
-      integer(i15) :: core, i, a, ai
+      integer :: core, i, a, ai
 !
       projector = zero
 !
@@ -4317,7 +4318,7 @@ contains
 !
       real(dp), dimension(wf%n_es_amplitudes, 1), intent(out) :: projector
 !
-      integer(i15) :: i, a, ai
+      integer :: i, a, ai
 !
       projector = zero
 !
@@ -4382,10 +4383,10 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: abs_x1
 !
-      integer(i15), dimension(:,:), allocatable :: dominant_indices
+      integer, dimension(:,:), allocatable :: dominant_indices
       real(dp), dimension(:,:), allocatable     :: dominant_values
 !
-      integer(i15) :: n_elements, elm, i, a 
+      integer :: n_elements, elm, i, a 
 !
 !     Sort according to largest contributions
 !
@@ -4453,6 +4454,57 @@ contains
 !     For now, do nothing.
 !
    end subroutine prepare_for_jacobian_ccs
+!
+!
+   subroutine set_cvs_start_indices_ccs(wf, n_cores, core_MOs, n_start_indices, start_indices)
+!!
+!!    Set CVS start indices
+!!    Written by Sarai D. Folkestad 
+!!
+      implicit none 
+!
+      class(ccs), intent(in) :: wf
+!
+      integer :: n_cores, n_start_indices
+!
+      integer, dimension(n_cores)          :: core_MOs
+      integer, dimension(n_start_indices)  :: start_indices
+!
+!     Local variables
+!
+      integer :: a, i, current_root, core
+!
+      logical :: all_selected
+!
+!     Calculate start indices using Koopman's
+!
+      all_selected = .false.
+      a =  0 
+      current_root = 0
+!
+      do while (.not. all_selected)
+!
+         a = a + 1
+!
+         do core = 1, n_cores
+!
+            i = core_MOs(core)
+!
+            current_root = current_root + 1
+            start_indices(current_root) = wf%n_v*( i - 1) + a
+!
+            if (current_root .eq. n_start_indices) then
+!
+               all_selected = .true.
+               exit
+!
+            endif
+!
+         enddo
+!
+      enddo
+!
+   end subroutine set_cvs_start_indices_ccs
 !
 !
 end module ccs_class
