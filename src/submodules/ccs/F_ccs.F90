@@ -33,7 +33,7 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: c
+      real(dp), dimension(wf%n_amplitudes), intent(inout) :: c
 !
       real(dp), dimension(:,:), allocatable :: rho
 !
@@ -54,7 +54,7 @@ contains
 !
             ai = wf%n_v*(i - 1) + a
 !
-            c(ai, 1) = rho(a, i)
+            c(ai) = rho(a, i)
 !
          enddo
       enddo

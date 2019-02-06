@@ -9,7 +9,7 @@
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: c
+      real(dp), dimension(wf%n_amplitudes), intent(inout) :: c
 !
    end subroutine F_transform_vector_ccs
 !

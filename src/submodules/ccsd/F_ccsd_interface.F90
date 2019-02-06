@@ -9,7 +9,7 @@
 !
       class(ccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: c
+      real(dp), dimension(wf%n_amplitudes), intent(inout) :: c
 !
    end subroutine F_transform_vector_ccsd
 !
@@ -43,8 +43,6 @@
       real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout)   :: rho_aibj
 !
    end subroutine F_ccsd_a2_1_ccsd
-!
-!
 !
 !
    module subroutine F_ccsd_a1_2_ccsd(wf, c_ai, rho_ai, tbar_aibj)
@@ -306,7 +304,7 @@
    end subroutine F_ccsd_f2_2_ccsd
 !
 !
-   module subroutine F_ccsd_g2_2_ccsd(wf, c_aibj, rho_aibj, tbar_aibj)
+   module subroutine F_ccsd_g2_2_ccsd(wf, c_abij, rho_abij, tbar_abij)
 !!
 !!    F transformation g2,2 term
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, Feb 2018
@@ -315,8 +313,8 @@
 !
       class(ccsd), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)      :: c_aibj
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(inout)   :: rho_aibj
-      real(dp), dimension(wf%n_v, wf%n_o, wf%n_v, wf%n_o), intent(in)      :: tbar_aibj
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)      :: c_abij
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout)   :: rho_abij
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in)      :: tbar_abij
 !
    end subroutine F_ccsd_g2_2_ccsd
