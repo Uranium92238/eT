@@ -21,7 +21,7 @@ assert version_info.major == 2
 # construct filter(s)
 f = [
     get_filter(string='Final ground state energy (a.u.):',
-               rel_tolerance=1.0e-5),
+               abs_tolerance=1.0e-10),
 ]
 
 # invoke the command line interface parser which returns options

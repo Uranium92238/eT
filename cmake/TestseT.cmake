@@ -12,7 +12,6 @@ endmacro()
 # all tests here should contain the label "eT"
 
 # all tests with label short should run in less than 30 seconds sequential on a 2GHz CPU
-
 # short < 30 seconds
 # medium > 30 seconds < 120 seconds
 # long > 120 seconds < 200 seconds
@@ -25,4 +24,5 @@ endmacro()
 # "long" tests should placed apart on purpose to make it less likely that they
 # are run at the same time (then they can be significantly slower)
 
-add_eT_runtest(ccsd_gs_energy                   "eT;ccsd;gs")
+add_eT_runtest(ccsd_gs_energy                 "eT;ccsd;gs")
+add_eT_runtest(hf_energy                        "eT;hf;gs")
