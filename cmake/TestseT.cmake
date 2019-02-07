@@ -25,4 +25,4 @@ endmacro()
 # are run at the same time (then they can be significantly slower)
 
 add_eT_runtest(ccsd_gs_energy                 "eT;ccsd;gs")
-add_eT_runtest(hf_energy                        "eT;hf;gs")
+add_eT_runtest(hf_energy                       "eT;hf;sad")
