@@ -25,11 +25,11 @@ f = [
                abs_tolerance=1.0e-12),
 # non-idempotent SAD 
     get_filter(string='Energy of initial guess:',
-               abs_tolerance=1.0e-12),
+               abs_tolerance=1.0e-10),
 # idempotent SAD
     get_filter(from_string='Iteration    Energy (a.u.)        Max(grad.)',
                num_lines=3,
-               abs_tolerance=1.0e-12,
+               abs_tolerance=1.0e-10,
                mask=[2]) 
 ]
 
