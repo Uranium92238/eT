@@ -18,6 +18,15 @@ This will create a folder called "eT". Change to this directory:
 ```
 cd eT
 ```
+At the moment, the new version of the program is in the branch called new\_eT. Switch branch:
+```
+git checkout new\_eT
+```
+Initialize and update the submodules:
+```
+git submodule init 
+git submodule update
+```
 Now make a directory for the compiled program, and enter the directory:
 ```
 mkdir build
@@ -30,4 +39,8 @@ cmake ..
 Compile eT:
 ```
 make
+```
+Run tests:
+```
+ctest
 ```
