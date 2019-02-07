@@ -51,7 +51,11 @@ target_link_libraries(eT ${lapackblas_libraries} ${libint_libraries})
 set_target_properties(eT PROPERTIES LINKER_LANGUAGE Fortran)
 
 file(COPY ${CMAKE_SOURCE_DIR}/tests DESTINATION ${CMAKE_BINARY_DIR})
-file(COPY ${CMAKE_SOURCE_DIR}/submodules/runtest/runtest DESTINATION ${CMAKE_BINARY_DIR}/tests)
+
+if(EXISTS ${CMAKE_SOURCE_DIR}/submodules/runtest/runtest)
+   file(COPY ${CMAKE_SOURCE_DIR}/submodules/runtest/runtest DESTINATION ${CMAKE_BINARY_DIR}/tests)
+endif()
+
 file(COPY ${CMAKE_SOURCE_DIR}/eT_launch 
      DESTINATION ${CMAKE_BINARY_DIR} 
      FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ WORLD_READ)
