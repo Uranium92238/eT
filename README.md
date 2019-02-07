@@ -20,7 +20,7 @@ cd eT
 ```
 At the moment, the new version of the program is in the branch called new\_eT. Switch branch:
 ```
-git checkout new\_eT
+git checkout new_eT
 ```
 Initialize and update the submodules:
 ```
