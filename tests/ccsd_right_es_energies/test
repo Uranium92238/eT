@@ -20,24 +20,17 @@ assert version_info.major == 2
 
 # construct filter(s)
 f = [
-# total energy
-    get_filter(string='Total energy:',
-               abs_tolerance=1.0e-12),
-# non-idempotent SAD 
-    get_filter(string='Energy of initial guess:',
-               abs_tolerance=1.0e-12),
-# idempotent SAD
-    get_filter(from_string='Iteration    Energy (a.u.)        Max(grad.)',
-               num_lines=3,
-               abs_tolerance=1.0e-12,
-               mask=[2]) 
+    get_filter(from_string='State                (Hartree)             (eV)',
+               num_lines=4,
+               abs_tolerance=1.0e-11,
+               mask=[2])
 ]
 
 # invoke the command line interface parser which returns options
 options = cli()
 
 ierr = 0
-for inp in ['hf_energy.inp']:
+for inp in ['ccsd_right_es_energies.inp']:
     # the run function runs the code and filters the outputs
     ierr += run(options,
                 configure,

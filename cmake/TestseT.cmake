@@ -24,5 +24,7 @@ endmacro()
 # "long" tests should placed apart on purpose to make it less likely that they
 # are run at the same time (then they can be significantly slower)
 
-add_eT_runtest(ccsd_gs_energy                 "eT;ccsd;gs")
 add_eT_runtest(hf_energy                       "eT;hf;sad")
+add_eT_runtest(ccsd_gs_energy                 "eT;ccsd;gs")
+add_eT_runtest(ccsd_right_es_energies         "eT;ccsd;es")
+add_eT_runtest(ccsd_left_es_energies          "eT;ccsd;es")
