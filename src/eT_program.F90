@@ -28,6 +28,7 @@ program eT_program
    use gs_engine_class
    use es_engine_class
    use multipliers_engine_class
+   use property_engine_class
    use abstract_engine_class
 !
    use eri_cd_solver_class
@@ -64,6 +65,7 @@ program eT_program
    type(gs_engine), allocatable, target :: gs_cc_engine
    type(es_engine), allocatable, target :: es_cc_engine
    type(multipliers_engine), allocatable, target :: multipliers_cc_engine
+   type(property_engine), allocatable, target :: property_cc_engine
 !
 !  Engine pointer
 !
@@ -99,6 +101,7 @@ program eT_program
    write(output%unit,'(t3,a, a)')   '                   ','Davidson-tool'
    write(output%unit,'(t3,a, a)')   'S. D. Folkestad    ','HF, CCS, CCSD, Cholesky decomposition, Davidson-tool, CVS'
    write(output%unit,'(t3,a, a)')   'A. Skeidsvoll      ','MP2, CCSD'
+   write(output%unit,'(t3,a, a)')   'J. H. Andersen     ','Property calculations'
    write(output%unit,'(/t3,a//)')'-------------------------------------------------------------------------------------------'
    flush(output%unit)
 !
@@ -231,6 +234,11 @@ program eT_program
             allocate(multipliers_cc_engine)
             engine => multipliers_cc_engine 
 !
+         elseif (cc_engine == 'property') then
+!
+            allocate(property_cc_engine)
+            engine => property_cc_engine
+!
          endif
 !
 !        Solve cc problem
@@ -269,6 +277,10 @@ program eT_program
          elseif (cc_engine == 'multipliers') then
 !
             deallocate(multipliers_cc_engine)
+!
+         elseif (cc_engine == 'property') then
+!
+            deallocate(property_cc_engine)
 !
          end if
 !

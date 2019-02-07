@@ -278,6 +278,15 @@ contains
 !
       endif 
 !
+!     Read for property
+!
+      if (requested_task('property') .or. requested_task('Property')) then
+!
+         engine = 'property'
+         return
+!
+      endif 
+!
       call output%error_msg('No cc tasks recognized.')
 !
    end subroutine select_engine
