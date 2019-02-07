@@ -21,7 +21,8 @@ hf
 end hf
 
 cc ground state
-   omega threshold: 1.0d-10
+   omega threshold:  1.0d-10
+   energy threshold: 1.0d-10
 end cc ground state
 
 do
