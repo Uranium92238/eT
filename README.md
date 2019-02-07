@@ -5,7 +5,11 @@
 4. GNU compilers (gfortran, gcc, g++) or Intel compilers (ifort, icc, icpc). These need to be recent versions (2016-) since some features of the Fortran 2008 standard were included only recently in Gfortran and Ifort. 
 5. BLAS and LAPACK libraries.
 
-# Quick install of eT
+You also need to set two environment variables, e.g. in .bashrc:
+* export LIBINT\_DATA\_PATH=/path-to-libint/libint-2.4.2/lib/basis
+* export SAD\_ET\_DIR=/path-to-eT/src/molecular\_system/sad
+
+# Installation of eT
 Open the terminal and clone the repository:
 ```
 git clone git@gitlab.com:eT-program/eT.git
