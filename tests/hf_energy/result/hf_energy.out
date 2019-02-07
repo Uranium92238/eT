@@ -1,0 +1,121 @@
+
+
+
+                         eT - a coupled cluster program 
+
+           S. D. Folkestad, E. F. Kjønstad, H. Koch and A. Skeidsvoll
+
+
+  --------------------------------------------------------------------------------------------
+
+  Contributor:       Contributions:
+
+  E. F. Kjønstad     HF, UHF, CCS, CCSD, MP2, Cholesky decomposition, DIIS-tool,
+                     Davidson-tool
+  S. D. Folkestad    HF, CCS, CCSD, Cholesky decomposition, Davidson-tool, CVS
+  A. Skeidsvoll      MP2, CCSD
+
+  -------------------------------------------------------------------------------------------
+
+
+  Memory available for calculation:         8 GB
+ disk%total          30000000000
+  Disk space available for calculation:    30 GB
+
+  - Molecular system specifications:
+
+     Charge:       0
+     Multiplicity: 1
+
+     Nuclear repulsion energy (a.u.):             48.518317619727
+     Bohr/angstrom value (CODATA 2010):            0.529177210920
+
+     H    0.866810000000   0.601440000000   5.000000000000   cc-pVDZ    
+     F   -0.866810000000   0.601440000000   5.000000000000   cc-pVDZ    
+     O    0.000000000000  -0.075790000000   5.000000000000   cc-pVDZ    
+     He   0.000000000000   0.000000000000   7.500000000000   cc-pVDZ    
+
+  - Cholesky decomposition of AO overlap to get linearly independent orbitals:
+
+     Number of occupied orbitals:        10
+     Number of virtual orbitals:         28
+     Number of molecular orbitals:       38
+     Number of atomic orbitals:          38
+
+
+  :: Self-consistent field DIIS Hartree-Fock solver
+  :: E. F. Kjønstad and S, D. Folkestad, 2018
+
+  A DIIS-accelerated Roothan-Hall self-consistent field solver. A least-square 
+  DIIS fit is performed on the previous Fock matrices and associated gradients. 
+  Following the Roothan-Hall update of the density, the DIIS-fitted Fock matrix 
+  is used to get the next orbital coefficients.
+
+  - Hartree-Fock solver settings:
+
+     DIIS dimension:               8
+     Energy threshold:              0.1000E-11
+     Gradient threshold:            0.1000E-11
+
+     Coulomb screening threshold:   0.1000E-14
+     Exchange screening threshold:  0.1000E-14
+     ERI integral precision:        0.1000E-29
+
+  - Setting initial AO density to SAD:
+
+     Energy of initial guess:      -178.316362478865
+     Number of electrons in guess:   20.000000000000
+
+  Iteration    Energy (a.u.)        Max(grad.)    Delta E (a.u.)
+  --------------------------------------------------------------
+    1          -177.452442675110     0.7565E-01     0.1775E+03
+    2          -177.479038696848     0.1346E-01     0.2660E-01
+    3          -177.480034970579     0.4311E-02     0.9963E-03
+    4          -177.480161393197     0.1845E-02     0.1264E-03
+    5          -177.480175069922     0.3629E-03     0.1368E-04
+    6          -177.480176290419     0.7402E-04     0.1220E-05
+    7          -177.480176366127     0.2207E-04     0.7571E-07
+    8          -177.480176376357     0.5096E-05     0.1023E-07
+    9          -177.480176377025     0.2976E-05     0.6679E-09
+   10          -177.480176377176     0.1277E-05     0.1513E-09
+   11          -177.480176377210     0.1965E-06     0.3351E-10
+   12          -177.480176377210     0.7561E-07     0.2274E-12
+   13          -177.480176377210     0.2353E-07     0.2274E-12
+   14          -177.480176377210     0.2964E-08     0.8527E-13
+   15          -177.480176377210     0.1258E-08     0.8527E-13
+   16          -177.480176377210     0.7684E-09     0.8527E-13
+   17          -177.480176377210     0.7885E-10     0.1705E-12
+   18          -177.480176377210     0.3107E-10     0.2842E-13
+   19          -177.480176377211     0.6088E-11     0.1990E-12
+   20          -177.480176377210     0.1470E-11     0.3695E-12
+   21          -177.480176377210     0.6146E-12     0.5684E-13
+  --------------------------------------------------------------
+
+  Convergence criterion met in  21 iterations!
+
+  - Summary of HF wavefunction energetics (a.u.):
+
+     HOMO-LUMO gap:                 0.600136348376
+     Nuclear repulsion energy:     48.518317619727
+     Electronic energy:          -225.998493996938
+     Total energy:               -177.480176377210
+
+  - Molecular orbital energies:
+
+    1  -26.334215397007      2  -20.644676143384      3   -1.894514195178
+    4   -1.204323614938      5   -0.910581317587      6   -0.866359982048
+    7   -0.832531025222      8   -0.790125272690      9   -0.497921814630
+   10   -0.439636463014     11    0.160499885361     12    0.548524783471
+   13    0.716123096552     14    1.106561922005     15    1.130678945487
+   16    1.195125644619     17    1.332305214083     18    1.423088812983
+   19    1.453320735214     20    1.486906665150     21    1.561381025899
+   22    1.686298886877     23    1.771732504120     24    2.108007790820
+   25    2.501253825884     26    2.530943514170     27    2.531186114994
+   28    2.601426569357     29    2.725832254866     30    2.888293377078
+   31    3.061115047190     32    3.534199119735     33    3.762918741789
+   34    3.962288761103     35    4.000546434666     36    4.553973955054
+   37    4.580623650143     38    5.083709277159
+
+  - Cleaning up Self-consistent field DIIS Hartree-Fock solver
+
+  eT terminated successfully!
