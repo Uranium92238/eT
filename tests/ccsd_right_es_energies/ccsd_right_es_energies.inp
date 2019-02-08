@@ -1,0 +1,47 @@
+name: H2O-He
+charge: 0
+
+do
+  ground state
+  excited state
+end do
+
+memory
+   available: 8
+end memory
+
+cholesky
+   threshold: 1.0d-12
+end cholesky
+
+hf
+   algorithm:          scf-diis
+   energy threshold:   1.0d-12
+   gradient threshold: 1.0d-12
+end hf
+
+method
+   hf
+   ccsd
+end method
+
+cc ground state
+   omega threshold:  1.0d-11
+   energy threshold: 1.0d-11
+end cc ground state
+
+cc excited state
+   algorithm:          davidson
+   singlet states:     2
+   residual threshold: 1.0d-11
+   energy threshold:   1.0d-11
+   right eigenvectors
+end cc excited state
+
+geometry
+basis: cc-pVDZ
+ H          0.86681        0.60144        5.00000
+ H         -0.86681        0.60144        5.00000
+ O          0.00000       -0.07579        5.00000
+ He         0.00000        0.00000        7.50000
+end geometry
