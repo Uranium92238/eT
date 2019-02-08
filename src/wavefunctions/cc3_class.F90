@@ -64,7 +64,7 @@ contains
 !
       integer :: p
 !
-      wf%name = 'cc3'
+      wf%name_ = 'cc3'
 !
       wf%system = ref_wf%system
 !
@@ -115,7 +115,7 @@ contains
 !
       class(cc3) :: wf
 !
-      write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(wf%name), ' wavefunction'
+      write(output%unit, '(/t3,a,a,a)') '- Cleaning up ', trim(wf%name_), ' wavefunction'
 !
    end subroutine cleanup_cc3
 !
