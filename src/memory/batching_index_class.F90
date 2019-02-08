@@ -44,28 +44,24 @@ module batching_index_class
    use parameters
    use file_class
 !
-!  ::::::::::::::::::::::::::::::::::::::::::::::::
-!  -::- Definition of the batching_index class -::-
-!  ::::::::::::::::::::::::::::::::::::::::::::::::
-!
    type :: batching_index
 !
 !     Values relating the limits and length of the current batch
 !     (set by determine_limits procedure for a given batch)
 !
-      integer(i15) :: first  = 0 ! Current first value of index
-      integer(i15) :: last   = 0 ! Current last value of index
-      integer(i15) :: length = 0 ! Current length of batch (last - first + 1)
+      integer :: first  = 0 ! Current first value of index
+      integer :: last   = 0 ! Current last value of index
+      integer :: length = 0 ! Current length of batch (last - first + 1)
 !
 !     Values relating the the size of the batch and the total number of batches
 !     (set by memory manager routines)
 !
-      integer(i15) :: max_length = 0  ! Maximum length of batch (most batches will be of this size, but typically not all)
-      integer(i15) :: num_batches = 0 ! The number of batches in total for the index
+      integer :: max_length = 0  ! Maximum length of batch (most batches will be of this size, but typically not all)
+      integer :: num_batches = 0 ! The number of batches in total for the index
 !
 !     Value that must be initialized by user
 !
-      integer(i15) :: index_dimension = 0 ! Full length of index (e.g., typically n_vir for virtual index)
+      integer :: index_dimension = 0 ! Full length of index (e.g., typically n_vir for virtual index)
 !
 !     Logical for initialization (for sanity check)
 !
@@ -101,7 +97,7 @@ contains
 !
       class(batching_index) :: batch_p
 !
-      integer(i15), intent(in) :: dimension
+      integer, intent(in) :: dimension
 !
       batch_p%index_dimension = dimension
       batch_p%initialized = .true.
@@ -122,7 +118,7 @@ contains
 !
       class(batching_index) :: batch_p ! p is general index (can be virtual or occupied or other)
 !
-      integer(i15), intent(in) :: batch_number ! The current batch
+      integer, intent(in) :: batch_number ! The current batch
 !
 !     Sanity check
 !

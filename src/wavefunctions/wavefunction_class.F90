@@ -14,14 +14,14 @@ module wavefunction_class
 !
    type, abstract :: wavefunction
 !
-      character(len=40) :: name
+      character(len=40) :: name_
 !
       real(dp) :: energy
 !
-      integer(i15) :: n_ao
-      integer(i15) :: n_mo
-      integer(i15) :: n_o
-      integer(i15) :: n_v
+      integer :: n_ao
+      integer :: n_mo
+      integer :: n_o
+      integer :: n_v
 !
       type(molecular_system) :: system
 !
@@ -72,7 +72,7 @@ contains
 !
       class(wavefunction), intent(in) :: wf 
 !
-      write(output%unit, '(/t3,a,a,a)') '- Summary of ', trim(wf%name), ' wavefunction:'
+      write(output%unit, '(/t3,a,a,a)') '- Summary of ', trim(wf%name_), ' wavefunction:'
 !
 !
    end subroutine print_wavefunction_summary_wavefunction

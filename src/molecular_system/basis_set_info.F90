@@ -19,7 +19,7 @@ contains
 !
       character(len=100) :: basis
 !
-      integer(i15), dimension(1, 2) :: info ! 1s
+      integer, dimension(1, 2) :: info ! 1s
 !
       info(1, 2) = 1 ! fill 1s first
 !
@@ -65,7 +65,7 @@ contains
 !
       character(len=100) :: basis
 !
-      integer(i15), dimension(3, 2) :: info ! 1s, 2s, 2p
+      integer, dimension(3, 2) :: info ! 1s, 2s, 2p
 !
       info(1, 1) = 1
 !
@@ -121,7 +121,7 @@ contains
 !
       character(len=100) :: basis
 !
-      integer(i15), dimension(5, 2) :: info !1s, 2s, 3s, 2p, 3p
+      integer, dimension(5, 2) :: info !1s, 2s, 3s, 2p, 3p
 !
 !     Fill order
 !
@@ -204,7 +204,7 @@ contains
 !
       character(len=100) :: basis
 !
-      integer(i15), dimension(6, 2) :: info !1s, 2s, 3s, 4s, 2p, 3p
+      integer, dimension(6, 2) :: info !1s, 2s, 3s, 4s, 2p, 3p
 !
 !     Fill order
 !

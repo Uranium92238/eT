@@ -26,20 +26,20 @@ module davidson_cc_es_solver_class
       character(len=500) :: description2 = 'A complete description of the algorithm can be found in &
                                            &E. R. Davidson, J. Comput. Phys. 17, 87 (1975).'
 !
-      integer(i15) :: max_iterations
+      integer :: max_iterations
 !
       real(dp) :: eigenvalue_threshold  
       real(dp) :: residual_threshold  
 !
       logical      :: do_restart = .false.
 !
-      integer(i15) :: n_singlet_states = 0
+      integer :: n_singlet_states = 0
 !
       character(len=40) :: transformation 
 !
       real(dp), dimension(:,:), allocatable :: energies
 !
-      integer(i15), dimension(:,:), allocatable :: start_vectors
+      integer, dimension(:,:), allocatable :: start_vectors
 !
       type(file) :: restart_file
 !
@@ -138,7 +138,7 @@ contains
 !
       class(eigen_davidson_tool) :: davidson
 !
-      integer(i15) :: n_solutions_on_file 
+      integer :: n_solutions_on_file 
 
 !
 !     Read in the number of solutions to restart from - according the restart file 
@@ -237,7 +237,7 @@ contains
 !
       class(ccs), intent(in) :: wf 
 !
-      integer(i15) :: state 
+      integer :: state 
 !
       real(dp), dimension(:,:), allocatable :: r
 !
@@ -298,7 +298,7 @@ contains
 !
       type(eigen_davidson_tool) :: davidson
 !
-      integer(i15) :: iteration, trial, solution
+      integer :: iteration, trial, solution
 !
       real(dp) :: residual_norm
 !
@@ -310,7 +310,7 @@ contains
 !
       iteration = 1
 !
-     call davidson%prepare(wf%name // '_es_davidson', wf%n_amplitudes, solver%n_singlet_states, &
+     call davidson%prepare(wf%name_ // '_es_davidson', wf%n_amplitudes, solver%n_singlet_states, &
                                solver%residual_threshold, solver%eigenvalue_threshold)
 !
 !     Construct first trial vectors
@@ -338,6 +338,8 @@ contains
 !
          write(output%unit,'(t3,a)') 'Root     Eigenvalue (Re)        Eigenvalue (Im)      Residual norm'
          write(output%unit,'(t3,a)') '-------------------------------------------------------------------'
+!
+         flush(output%unit)
 !
 !        Transform new trial vectors and write to file
 !
@@ -371,7 +373,8 @@ contains
          do solution = 1, solver%n_singlet_states
 !
             call davidson%construct_next_trial_vec(residual_norm, solution)
-            write(output%unit,'(t3,i2,5x,f16.12,7x,f16.12,11x,e10.4)') &
+!
+            write(output%unit,'(t3,i2,5x,f16.12,7x,f16.12,11x,e11.4)') &
             solution, davidson%omega_re(solution, 1), davidson%omega_im(solution, 1), residual_norm
             flush(output%unit)
 !
@@ -416,7 +419,7 @@ contains
 !
               converged = .true.
 !
-            elseif (iteration .eq. 1 .and. wf%name .eq. 'ccs') then
+            elseif (iteration .eq. 1 .and. wf%name_ .eq. 'ccs') then
 !
                   converged = .true.
                   write(output%unit,'(/t3,a,/t3,a)') 'Note: residual converged in first iteration.', &
@@ -493,9 +496,9 @@ contains
       real(dp), dimension(:,:), allocatable :: orbital_differences
       real(dp), dimension(:,:), allocatable :: lowest_orbital_differences
 !
-      integer(i15), dimension(:,:), allocatable :: lowest_orbital_differences_index
+      integer, dimension(:,:), allocatable :: lowest_orbital_differences_index
 !
-      integer(i15) :: trial
+      integer :: trial
 !
       if (allocated(solver%start_vectors)) then
 !
@@ -571,8 +574,10 @@ contains
       real(dp), dimension(:,:), allocatable :: preconditioner
 !
       call mem%alloc(preconditioner, wf%n_amplitudes, 1)
+!
       call wf%get_orbital_differences(preconditioner)
       call davidson%set_preconditioner(preconditioner)
+!
       call mem%dealloc(preconditioner, wf%n_amplitudes, 1)
 !
    end subroutine set_precondition_vector_davidson_cc_es_solver
@@ -618,7 +623,7 @@ contains
 !
       class(davidson_cc_es_solver) :: solver 
 !
-      integer(i15) :: n_specs, i, j, n_start_vecs
+      integer :: n_specs, i, j, n_start_vecs
 !
       character(len=100) :: line
 !

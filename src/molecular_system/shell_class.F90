@@ -13,11 +13,11 @@ module shell_class
 !
    type :: shell
 !
-      integer(i15)    :: size  = -1  ! The number of basis functions
-      integer(i15)    :: first = -1  ! The first AO index
-      integer(i15)    :: last  = -1  ! The last AO index
-      integer(i15)    :: l     = -1  ! The angular momentum
-      integer(kind=4) :: number = -1 ! The shell number (according to the ordering given by Libint)
+      integer    :: size  = -1  ! The number of basis functions
+      integer    :: first = -1  ! The first AO index
+      integer    :: last  = -1  ! The last AO index
+      integer    :: l     = -1  ! The angular momentum
+      integer    :: number_ = -1 ! The shell number (according to the ordering given by Libint)
 !
    contains
 !
@@ -42,7 +42,7 @@ contains
 !
       class(shell) :: sh
 !
-      integer(i15) :: i
+      integer :: i
 !
       i = 0
 !

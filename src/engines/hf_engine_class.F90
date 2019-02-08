@@ -12,9 +12,9 @@ module hf_engine_class
 !
    contains 
 !
-      procedure, nopass :: prepare    => prepare_hf_engine
-      procedure :: run        => run_hf_engine
-      procedure, nopass :: cleanup    => cleanup_hf_engine
+      procedure, nopass :: prepare        => prepare_hf_engine
+      procedure :: run                    => run_hf_engine
+      procedure, nopass :: cleanup        => cleanup_hf_engine
 !
       procedure, nopass :: read_algorithm => read_algorithm_hf_engine
 !
@@ -118,7 +118,7 @@ contains
 !
       character(len=100) :: line
 !
-      integer(i15) :: i, n_records
+      integer :: i, n_records
 !
       call move_to_section('hf', n_records)
 !

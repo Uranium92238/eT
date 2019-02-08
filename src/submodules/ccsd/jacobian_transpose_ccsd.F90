@@ -73,8 +73,8 @@ contains
 !
 !     Indices 
 !
-      integer(i15) :: a = 0, ab = 0, ai = 0, c = 0, bj = 0, aibj = 0 
-      integer(i15) :: i = 0, ij = 0, j = 0
+      integer :: a = 0, ab = 0, ai = 0, c = 0, bj = 0, aibj = 0 
+      integer :: i = 0, ij = 0, j = 0
 !
       call mem%alloc(sigma_a_i, wf%n_v, wf%n_o)
       sigma_a_i = zero 
@@ -498,8 +498,8 @@ contains
 !
 !     Batching variables 
 !
-      integer(i15) :: required 
-      integer(i15) :: current_a_batch 
+      integer :: rec0, rec1
+      integer :: current_a_batch
 !
       type(batching_index) :: batch_a 
 !
@@ -507,10 +507,11 @@ contains
 !
 !     Prepare batching over index a 
 !
-      required = wf%integrals%get_required_vvvo()
+      rec0 = wf%n_o*wf%n_v*wf%integrals%n_J
+      rec1 = wf%n_v*wf%integrals%n_J + wf%n_v**2*wf%n_o
 !     
       call batch_a%init(wf%n_v)
-      call mem%num_batch(batch_a, required)        
+      call mem%batch_setup(batch_a, rec0, rec1)        
 !
 !     Loop over the a-batches 
 !
@@ -558,7 +559,6 @@ contains
       call mem%alloc(g_ik_dl, (wf%n_o)**2, (wf%n_o)*(wf%n_v))
 !
       call wf%get_oovo(g_ik_dl)
-!
 !
       call dgemm('N','T',               &
                   wf%n_v,               &
@@ -741,13 +741,11 @@ contains
 !
 !     Batching variables 
 !
-      integer(i15) :: required = 0
+      integer :: rec0, rec1, offset_eld
 !
-      integer(i15) :: current_d_batch
-      integer(i15) :: current_a_batch 
+      integer :: current_d_batch
 !  
       type(batching_index) :: batch_d 
-      type(batching_index) :: batch_a
 !
 !     :: Term 3. - sum_ckdlm b_ckal L_ilmd t_km^cd ::
 !
@@ -870,8 +868,6 @@ contains
 !
 !     Read amplitudes from disk 
 !
-      !call wf%read_double_amplitudes
-!
       call mem%alloc(t_el_ck, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       call squareup(wf%t2, t_el_ck, (wf%n_o)*(wf%n_v))
 !
@@ -899,57 +895,64 @@ contains
 !
 !     Prepare batching over index a 
 !
-      required =  wf%integrals%get_required_vvov() + (wf%n_v**3)*(wf%n_o)
+      rec0 = wf%n_v*wf%n_o*wf%integrals%n_J
+!
+      rec1 = wf%n_v*wf%integrals%n_J + wf%n_v**2*wf%n_o
 !     
-      call batch_a%init(wf%n_v)
-      call mem%num_batch(batch_a, required)
+      call batch_d%init(wf%n_v)
+      call mem%batch_setup(batch_d, rec0, rec1)
 !
-      do current_a_batch = 1, batch_a%num_batches
+      do current_d_batch = 1, batch_d%num_batches
 !
-         call batch_a%determine_limits(current_a_batch)
+         call batch_d%determine_limits(current_d_batch)
 !
-         call mem%alloc(g_da_le, (wf%n_v)*(batch_a%length), (wf%n_o)*(wf%n_v))
+         call mem%alloc(g_da_le, (wf%n_v)*(batch_d%length), (wf%n_o)*(wf%n_v))
 !
-         call wf%get_vvov(g_da_le,        &
-                           1,             &
-                           wf%n_v,        &
-                           batch_a%first, &
-                           batch_a%last,  &
-                           1,             &
-                           wf%n_o,        &
-                           1,             &
+            call wf%get_vvov(g_da_le,        &
+                           batch_d%first,    &
+                           batch_d%last,     &
+                           1,                &
+                           wf%n_v,           &
+                           1,                &
+                           wf%n_o,           &
+                           1,                &
                            wf%n_v)
 !
 !        Form  L_a_eld = L_dale = 2 * g_dale - g_dela 
 !                               = 2 * g_da_le(da, le) - g_da_le(de, la)      
 !
-         call mem%alloc(L_a_eld, batch_a%length, (wf%n_o)*(wf%n_v)**2)
-         L_a_eld = zero
+            call mem%alloc(L_a_eld, (wf%n_v), (wf%n_o)*(wf%n_v)*batch_d%length)
+            L_a_eld = zero
 !
-         call add_4132_to_1234(two, g_da_le, L_a_eld, batch_a%length, (wf%n_v), (wf%n_o), (wf%n_v))
-         call add_4231_to_1234(-one, g_da_le, L_a_eld, batch_a%length, (wf%n_v), (wf%n_o), (wf%n_v))
+            call add_4132_to_1234(two, g_da_le, L_a_eld, (wf%n_v), (wf%n_v), (wf%n_o), batch_d%length)
 !
-         call mem%dealloc(g_da_le, (wf%n_v)*(batch_a%length), (wf%n_o)*(wf%n_v))
+            call add_4231_to_1234(-one, g_da_le, L_a_eld, (wf%n_v),  wf%n_v, (wf%n_o), batch_d%length)
 !
-!        Add sum_ckdle b_ckdi L_dale t_kl^ce
-!            = sum_eld L_a_eld X_el_di
+            call mem%dealloc(g_da_le, (wf%n_v)*(batch_d%length), (wf%n_o)*(wf%n_v))
 !
-         call dgemm('N','N',                     &
-                     batch_a%length,             &
-                     wf%n_o,                     &
-                     (wf%n_o)*(wf%n_v)**2,       &
-                     one,                        &
-                     L_a_eld,                    &
-                     batch_a%length,             &
-                     X_el_di,                    & ! X_eld_i
-                     (wf%n_o)*(wf%n_v)**2,       &
-                     one,                        &
-                     sigma_a_i(batch_a%first,1), &
-                     wf%n_v)
+!           Add sum_ckdle b_ckdi L_dale t_kl^ce
+!               = sum_eld L_a_eld X_el_di
 !
-         call mem%dealloc(L_a_eld, batch_a%length, (wf%n_o)*(wf%n_v)**2)
+            offset_eld = index_three(1, 1, batch_d%first, wf%n_v, wf%n_o)
+!
+            call dgemm('N','N',                             &
+                        wf%n_v,                             &
+                        wf%n_o,                             &
+                        (wf%n_o)*(wf%n_v)*batch_d%length,   &
+                        one,                                &
+                        L_a_eld,                            &
+                        wf%n_v,                             &
+                        X_el_di(offset_eld, 1),             & ! X_eld_i
+                        (wf%n_o)*(wf%n_v**2),               &
+                        one,                                &
+                        sigma_a_i,                          &
+                        wf%n_v)
+!
+            call mem%dealloc(L_a_eld, (wf%n_v), (wf%n_o)*(wf%n_v)*batch_d%length)
 !
       enddo ! End of batches over a 
+!
+      call mem%dealloc(X_el_di, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
 !     :: Term 2. sum_ckdle b_ckdl L_deia t_kl^ce ::
 !
@@ -982,10 +985,11 @@ contains
 !
 !     Prepare batching over index d 
 !
-      required = wf%integrals%get_required_vvov() + (wf%n_v**3)*(wf%n_o)
+      rec0 = wf%n_v*wf%n_o*wf%integrals%n_J
+      rec1 = (wf%n_v**2)*(wf%n_o) + wf%n_v*wf%integrals%n_J
 !
       call batch_d%init(wf%n_v)
-      call mem%num_batch(batch_d, required)
+      call mem%batch_setup(batch_d, rec0, rec1)
 !
       do current_d_batch = 1, batch_d%num_batches
 !
@@ -1334,20 +1338,19 @@ contains
 !
 !     Batching variables 
 !
-      integer(i15) :: required = 0 
+      integer :: current_a_batch = 0
+      integer :: current_d_batch = 0
+      integer :: current_e_batch = 0
 !
-      integer(i15) :: current_a_batch = 0
-      integer(i15) :: current_d_batch = 0
-      integer(i15) :: current_e_batch = 0
-!
-      integer(i15) :: offset_id = 0
-      integer(i15) :: offset_kde = 0
+      integer :: offset_id = 0
+      integer :: offset_kde = 0
 !
       type(batching_index) :: batch_a 
       type(batching_index) :: batch_d
       type(batching_index) :: batch_e 
 !
-      integer(i15) :: a, d, e, k, de, ka, kde
+      integer :: a, d, e, k, de, ka, kde
+      integer :: rec1, rec0
 !
 !     :: Term 2. - sum_ckdle b_cidl t_kl^ce g_kade ::
 !
@@ -1393,12 +1396,13 @@ contains
 !
 !     Prepare batching over index e
 !
-      required = wf%integrals%get_required_vvov() + (wf%n_v**3)*(wf%n_o)
-!     
+      rec0 = wf%n_v*wf%n_o*wf%integrals%n_J
+      rec1 = 2*(wf%n_v**2)*(wf%n_o) + wf%n_v*wf%integrals%n_J
+!
 !     Initialize batching variable 
 !
       call batch_e%init(wf%n_v)
-      call mem%num_batch(batch_e, required)      
+      call mem%batch_setup(batch_e, rec0, rec1)     
 !
 !     Loop over the e-batches
 !
@@ -1503,12 +1507,13 @@ contains
 !
 !     Prepare batching over a 
 !
-      required = wf%integrals%get_required_vvov()
+      rec0 = wf%n_v*wf%n_o*wf%integrals%n_J
+      rec1 = (wf%n_v**2)*(wf%n_o) + wf%n_v*wf%integrals%n_J
 !     
 !     Initialize batching variable 
 !
       call batch_a%init(wf%n_v)
-      call mem%num_batch(batch_a, required)
+      call mem%batch_setup(batch_a, rec0, rec1)
 !
 !     Loop over the a-batches 
 !
@@ -1565,10 +1570,11 @@ contains
 !
 !     Prepare for batching over d 
 !
-      required = wf%integrals%get_required_vvov() + (wf%n_v**3)*(wf%n_o)
+      rec0 = wf%n_v*wf%n_o*wf%integrals%n_J
+      rec1 = 2*(wf%n_v**2)*(wf%n_o) + wf%n_v*wf%integrals%n_J
 !
       call batch_d%init(wf%n_v)
-      call mem%num_batch(batch_d, required)         
+      call mem%batch_setup(batch_d, rec0, rec1)         
 !
 !     Loop over the d-batches
 !
@@ -1592,7 +1598,7 @@ contains
 !
          call mem%alloc(g_id_ce, (wf%n_o)*(batch_d%length), (wf%n_v)**2) 
 !
-         call sort_1234_to_1324(g_ic_de, g_id_ce, wf%n_o, wf%n_v, wf%n_v, wf%n_v)
+         call sort_1234_to_1324(g_ic_de, g_id_ce, wf%n_o, wf%n_v, (batch_d%length), wf%n_v)
 !
          call mem%dealloc(g_ic_de, (wf%n_o)*(wf%n_v), (wf%n_v)*(batch_d%length))
 !
@@ -1672,29 +1678,30 @@ contains
       real(dp), dimension(:,:), allocatable :: sigma_i_ajb ! sigma_ai_bj contribution 
       real(dp), dimension(:,:), allocatable :: sigma_i_bja ! sigma_ai_bj contribution 
 !
-      integer(i15) :: i, a, j, b, ai, bj, ajb, bja
+      integer :: i, a, j, b, ai, bj, ajb, bja
 !
 !     Batching variables 
 !
-      integer(i15) :: required = 0 
+      integer :: rec0, rec1
 !
-      integer(i15) :: current_a_batch = 0
-      integer(i15) :: current_b_batch = 0
+      integer :: current_a_batch = 0
+      integer :: current_b_batch = 0
 !
       type(batching_index) :: batch_a 
       type(batching_index) :: batch_b 
 !
 !     :: Term 1 & 2. 2 F_jb b_ai - F_ib b_aj :: 
 !
-      do i = 1, wf%n_o
-         do a = 1, wf%n_v
+!$omp parallel do private(i, a, j, b, ai, bj)
+      do j = 1, wf%n_o
+         do b = 1, wf%n_v
 !
-            ai = wf%n_v*(i - 1) + a
+            bj = wf%n_v*(j - 1) + b
 !  
-            do j = 1, wf%n_o
-               do b = 1, wf%n_v
+            do i = 1, wf%n_o
+               do a = 1, wf%n_v
 !
-                  bj = wf%n_v*(j - 1) + b
+                  ai = wf%n_v*(i - 1) + a
 !
                   sigma_ai_bj(ai, bj) = sigma_ai_bj(ai, bj) - (wf%fock_ia(i, b))*b_a_i(a, j)&
                                     + two*(wf%fock_ia(j, b))*b_a_i(a, i) 
@@ -1703,6 +1710,7 @@ contains
             enddo
          enddo
       enddo
+!$omp end parallel do
 
 !     :: Term 3. - sum_k L_ikjb b_ak ::
 !
@@ -1747,12 +1755,13 @@ contains
 !
 !     Prepare for batching over a 
 !
-      required = wf%integrals%get_required_vvov() + (wf%n_o)*(wf%n_v**3)
+      rec0 = wf%n_v*wf%n_o*wf%integrals%n_J
+      rec1 = (wf%n_v**2)*(wf%n_o) + (wf%n_v)*(wf%n_o**2) + wf%n_v*wf%integrals%n_J  
 !     
 !     Initialize batching variable 
 !
       call batch_a%init(wf%n_v)
-      call mem%num_batch(batch_a, required)         
+      call mem%batch_setup(batch_a, rec0, rec1)          
 !
 !     Loop over the a-batches 
 !
@@ -1791,16 +1800,16 @@ contains
 !
          call mem%dealloc(g_ca_jb, (wf%n_v)*(batch_a%length), (wf%n_o)*(wf%n_v))
 !
-         do i = 1, wf%n_o
-            do a = 1, batch_a%length
+!$omp parallel do private(i, a, j, b, ai, bj, ajb)
+         do b = 1, wf%n_v
+            do j = 1, wf%n_o
 !
-               Ai = wf%n_v*(i - 1) + a + batch_a%first - 1
+               bj = wf%n_v*(j - 1) + b
 !
-               do j = 1, wf%n_o
-                  do b = 1, wf%n_v
+               do i = 1, wf%n_o
+                  do a = 1, batch_a%length
 !
-                     bj = wf%n_v*(j - 1) + b
-!
+                     Ai = wf%n_v*(i - 1) + a + batch_a%first - 1
                      ajb = batch_a%length*(wf%n_o*(b - 1) + j - 1) + a
 !
                      sigma_ai_bj(Ai, bj) = sigma_ai_bj(Ai, bj) + sigma_i_ajb(i, ajb)
@@ -1809,6 +1818,7 @@ contains
                enddo
             enddo
          enddo
+!$omp end parallel do
 !
          call mem%dealloc(sigma_i_ajb, wf%n_o, (wf%n_o)*(wf%n_v)*(batch_a%length))
 !
@@ -1818,12 +1828,13 @@ contains
 !
 !     Prepare for batching over b 
 !
-      required = wf%integrals%get_required_vvov() + (wf%n_v**3)*(wf%n_o)
+      rec0 = wf%n_v*wf%n_o*wf%integrals%n_J
+      rec1 = (wf%n_v**2)*(wf%n_o) + (wf%n_v)*(wf%n_o**2) + wf%n_v*wf%integrals%n_J
 !     
 !     Initialize batching variable          
 !
       call batch_b%init(wf%n_v)
-      call mem%num_batch(batch_b, required)
+      call mem%batch_setup(batch_b, rec0, rec1)
 !
 !     Loop over the number of b batches 
 !
@@ -1864,6 +1875,7 @@ contains
 !
 !        Add it to sigma_ai_bj 
 !
+!$omp parallel do private(j, b, i, a, bj, ai, bja)
          do j = 1, wf%n_o
             do b = 1, batch_b%length
 !
@@ -1883,11 +1895,12 @@ contains
                enddo
             enddo
          enddo
+!$omp end parallel do
 !
          call mem%dealloc(sigma_i_bja, wf%n_o, (batch_b%length)*(wf%n_o)*(wf%n_v))
 !
       enddo ! End of batches over b
-
+!
    end subroutine jacobian_transpose_ccsd_a2_ccsd
 !
 !
@@ -1919,13 +1932,13 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: g_cb_jk_restricted ! g_cbjk, batch over b 
 !
-      integer(i15) :: c = 0, j = 0, b = 0
-      integer(i15) :: jk = 0, k = 0, ck = 0, cb_restricted = 0, bj_full = 0
+      integer :: c = 0, j = 0, b = 0
+      integer :: jk = 0, k = 0, ck = 0, cb_restricted = 0, bj_full = 0
 !
 !     Batching variables 
 !
-      integer(i15) :: required = 0
-      integer(i15) :: current_b_batch = 0
+      integer :: rec1, rec0
+      integer :: current_b_batch = 0
 !
       type(batching_index) :: batch_b
 !
@@ -2018,12 +2031,13 @@ contains
       call mem%alloc(g_ck_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v)) ! g_cbjk reordered
       g_ck_bj = zero
 !
-      required = wf%integrals%get_required_vvoo()
+      rec0 = wf%n_o**2*wf%integrals%n_J
+      rec1 = wf%n_v*wf%integrals%n_J  + (wf%n_o**2)*(wf%n_v)
 !     
 !     Initialize batching variable 
 !
       call batch_b%init(wf%n_v)
-      call mem%num_batch(batch_b, required)         
+      call mem%batch_setup(batch_b, rec0, rec1)         
 !
 !     Loop over the number of b batches 
 !
@@ -2122,13 +2136,13 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: b_aj_ck ! b_akcj
 !
-      integer(i15) :: k, ik, i, ck, cb, c
-      integer(i15) :: bi, b
+      integer :: k, ik, i, ck, cb, c
+      integer :: bi, b
 !
 !     Batching variables 
 !
-      integer(i15) :: required = 0
-      integer(i15) :: current_b_batch = 0
+      integer :: rec1, rec0
+      integer :: current_b_batch = 0
 !
       type(batching_index) :: batch_b 
 !
@@ -2170,12 +2184,13 @@ contains
       call mem%alloc(g_ck_bi, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
       g_ck_bi = zero
 !
-      required = wf%integrals%get_required_vvoo()
+      rec0 = wf%n_o**2*wf%integrals%n_J
+      rec1 = wf%n_v*wf%integrals%n_J  + (wf%n_o**2)*(wf%n_v)
 !     
 !     Initialize batching variable 
 !
       call batch_b%init(wf%n_v)
-      call mem%num_batch(batch_b, required)           
+      call mem%batch_setup(batch_b, rec0, rec1)           
 !
 !     Loop over the b-batches 
 !
@@ -2608,7 +2623,6 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: g_jb_id ! g_jbid 
       real(dp), dimension(:,:), allocatable :: L_d_ibj ! L_jbid
-      !real(dp), dimension(:,:), allocatable :: L_aib_l ! L_ialb
       real(dp), dimension(:,:), allocatable :: L_dl_bi ! L_ldib
 !
       real(dp), dimension(:,:), allocatable :: X_a_d   ! An intermediate, term 1
@@ -3009,20 +3023,20 @@ contains
       real(dp), dimension(:,:), allocatable :: g_ik_jl ! g_ikjl
       real(dp), dimension(:,:), allocatable :: g_kl_ij ! g_ikjl
 !
-      integer(i15) :: j, ij
-      integer(i15) :: i, db, d, cd, ca, c, b, a
+      integer :: j, ij
+      integer :: i, db, d, cd, ca, c, b, a
 !
 !     Batching variables 
 !
-      integer(i15) :: required = 0 
+      integer :: rec2, rec0, rec1_a, rec1_b
 !
-      integer(i15) :: current_a_batch = 0
-      integer(i15) :: current_b_batch = 0 
+      integer :: current_a_batch = 0
+      integer :: current_b_batch = 0 
 !
       type(batching_index) :: batch_a 
       type(batching_index) :: batch_b
 !
-      integer(i15) :: ab = 0, ab_full = 0
+      integer :: ab = 0, ab_full = 0
 !
 !     :: Term 1. sum_kl b_akbl g_ikjl ::
 !
@@ -3064,14 +3078,17 @@ contains
 !
 !     Prepare batching over a and b 
 !
-      required = wf%integrals%get_required_vvvv() + (wf%n_v**4) + (wf%n_o**2)*(wf%n_v**2)
+      rec0 = 0
+      rec1_a = wf%n_v*wf%integrals%n_J
+      rec1_b = wf%n_v*wf%integrals%n_J
+      rec2 = 2*wf%n_v**2 + wf%n_o**2
 !     
 !     Initialize batching indices 
 !
       call batch_a%init(wf%n_v)
       call batch_b%init(wf%n_v) 
 !
-      call mem%num_two_batch(batch_a, batch_b, required)
+      call mem%batch_setup(batch_a, batch_b, rec0, rec1_a, rec1_b, rec2)
 !
 !     Loop over a-batches 
 !

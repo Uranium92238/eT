@@ -85,14 +85,14 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout):: omega1
 !
-      integer(i15) :: required        = 0
-      integer(i15) :: current_a_batch = 0
+      integer :: current_a_batch = 0
 !
       type(batching_index) :: batch_a
 !
-      real(dp), dimension(:,:), allocatable :: u_dk_ci, t_dk_ci, g_ad_kc
+      real(dp), dimension(:,:), allocatable :: u_dk_ci, t_dk_ci
+      real(dp), dimension(:,:,:,:), allocatable :: g_ad_kc
 !
-      integer(i15) :: ad_dim
+      integer :: rec0, rec1
 !
       type(timings) :: ccsd_a1_timer
 !
@@ -115,28 +115,23 @@ contains
 !
 !     Prepare for batching
 !
-!     Estimated memory required to construct g_adkc
+      rec0 = wf%n_o*wf%integrals%n_J*wf%n_v
 !
-      required = wf%integrals%get_required_vvov() + (wf%n_o)*(wf%n_v**3)
+      rec1 = wf%n_v*wf%integrals%n_J + wf%n_v**2*(wf%n_o)
 !
-!     Initialization of the batching variable
+      call batch_a%init(wf%n_v)
 !
-      call batch_a%init(wf%n_v)                ! Initialize batching index a
-      call mem%num_batch(batch_a, required) ! Determine batching information
+      call mem%batch_setup(batch_a, rec0, rec1)
 !
 !     Loop over the number of a batches
 !
       do current_a_batch = 1, batch_a%num_batches
 !
-!        For each batch, get the limits for the a index
-!
          call batch_a%determine_limits(current_a_batch)
-!
-         ad_dim = (batch_a%length)*(wf%n_v)
 !
 !        Form g_ad_kc = g_adkc
 !
-         call mem%alloc(g_ad_kc, ad_dim, (wf%n_o)*(wf%n_v))
+         call mem%alloc(g_ad_kc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
 !
          call wf%get_vvov(g_ad_kc,                       &
                            batch_a%first, batch_a%last,  &
@@ -157,7 +152,7 @@ contains
                      omega1(batch_a%first,1),    &
                      wf%n_v)
 !
-         call mem%dealloc(g_ad_kc, ad_dim, (wf%n_o)*(wf%n_v))
+         call mem%dealloc(g_ad_kc, batch_a%length, wf%n_v, wf%n_o, wf%n_v)
 !
       enddo ! End of batches of the index a
 !
@@ -188,7 +183,7 @@ contains
 !
       real(dp), dimension(wf%n_v, wf%n_o), intent(inout):: omega1
 !
-      real(dp), dimension(:,:), allocatable :: g_lc_ki ! g_kilc
+      real(dp), dimension(:,:,:,:), allocatable :: g_lc_ki ! g_kilc
       real(dp), dimension(:,:), allocatable :: t_al_ck ! t_kl^ac
       real(dp), dimension(:,:), allocatable :: u_al_ck ! u_kl^ac = 2 t_kl^ac - t_lk^ac
 !
@@ -200,7 +195,7 @@ contains
 !     Form u_al_ck = u_kl^ac = 2 * t_kl^ac - t_lk^ac
 !     Square up amplitudes and reorder: t_ak_cl to t_al_ck
 !
-      call mem%alloc(g_lc_ki, (wf%n_v)*(wf%n_o), (wf%n_o)**2)
+      call mem%alloc(g_lc_ki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
       call wf%get_ovoo(g_lc_ki)
 !
@@ -233,7 +228,7 @@ contains
 !     Deallocate remaining vectors
 !
       call mem%dealloc(u_al_ck, (wf%n_v)*(wf%n_o), (wf%n_v)*(wf%n_o))
-      call mem%dealloc(g_lc_ki, (wf%n_v)*(wf%n_o), (wf%n_o)**2)
+      call mem%dealloc(g_lc_ki, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
 !
       call ccsd_b1_timer%freeze()
       call ccsd_b1_timer%switch_off()
@@ -338,8 +333,8 @@ contains
 !
 !     Integrals
 !
-      real(dp), dimension(:,:), allocatable :: g_ai_bj
-      real(dp), dimension(:,:), allocatable :: g_ac_bd
+      real(dp), dimension(:,:,:,:), allocatable :: g_ai_bj
+      real(dp), dimension(:,:,:,:), allocatable :: g_ac_bd
       real(dp), dimension(:,:), allocatable :: g_p_ab_cd
       real(dp), dimension(:,:), allocatable :: g_m_ab_cd
 !
@@ -355,21 +350,21 @@ contains
 !
 !     Indices
 !
-      integer(i15) :: a, b, c, d
-      integer(i15) :: i, j
+      integer :: a, b, c, d
+      integer :: i, j
 !
-      integer(i15) :: ab, bc, cd, ad, ac, bd
-      integer(i15) :: ai, aj, bj, bi, ci, cj, dj, di
-      integer(i15) :: ij
+      integer :: ab, bc, cd, ad, ac, bd
+      integer :: ai, aj, bj, bi, ci, cj, dj, di
+      integer :: ij
 !
-      integer(i15) :: aibj = 0, biaj = 0, cidj = 0, dicj = 0
+      integer :: aibj = 0, biaj = 0, cidj = 0, dicj = 0
 !
 !     Batching and memory handling variables
 !
-      integer(i15) :: required = 0
+      integer :: rec0, rec1_a, rec1_b, rec2
 !
-      integer(i15) :: current_a_batch = 0
-      integer(i15) :: current_b_batch = 0
+      integer :: current_a_batch = 0
+      integer :: current_b_batch = 0    
 !
       type(batching_index) :: batch_a
       type(batching_index) :: batch_b
@@ -385,7 +380,7 @@ contains
 !
 !     Create g_ai_bj
 !
-      call mem%alloc(g_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%alloc(g_ai_bj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
       call wf%get_vovo(g_ai_bj)
 !
@@ -393,40 +388,35 @@ contains
 !
       call add_to_packed(omega2, g_ai_bj, (wf%n_o)*(wf%n_v))
 
-      call mem%dealloc(g_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(g_ai_bj, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
 !
 !    ::  Calculate the A2.2 term  of omega ::
 !
-      required = wf%integrals%get_required_vvvv() + 4*(wf%n_o**2)*(wf%n_v**2) + 2*(wf%n_v**4)
+      rec0 = 2*(packed_size(wf%n_o))*(packed_size(wf%n_v))
+!
+      rec1_a = wf%integrals%n_J*wf%n_v 
+      rec1_b = wf%integrals%n_J*wf%n_v 
+!
+      rec2 = 2*wf%n_v**2 + 2*(packed_size(wf%n_o))
 !
 !     Initialize batching variables
 !
       call batch_a%init(wf%n_v)
       call batch_b%init(wf%n_v)
 !
-      call mem%num_two_batch(batch_a, batch_b, required)
+      call mem%batch_setup(batch_a, batch_b, rec0, rec1_a, rec1_b, rec2)
 !
 !     Start looping over a-batches
 !
       do current_a_batch = 1, batch_a%num_batches
 !
-!        Determine the limits for the a-batch
-!
          call batch_a%determine_limits(current_a_batch)
-!
-!        Start looping over b-batches
 !
          do current_b_batch = 1, batch_b%num_batches
 !
-!           Determine the limits for the b-batch
-!
             call batch_b%determine_limits(current_b_batch)
 !
-!           Allocate g_ca_db
-!
-            call mem%alloc(g_ac_bd, (wf%n_v)*(batch_a%length), (wf%n_v)*(batch_b%length))
-!
-!           Get g_ac_bd
+            call mem%alloc(g_ac_bd, batch_a%length, wf%n_v, batch_b%length, wf%n_v)
 !
             call ccsd_a2_integral_timer%start()
 !
@@ -477,8 +467,8 @@ contains
 !
                               ab = (max(a,b)*(max(a,b)-3)/2) + a + b
 !
-                              g_p_ab_cd(ab, cd) = g_ac_bd(ac, bd) + g_ac_bd(ad, bc)
-                              g_m_ab_cd(ab, cd) = g_ac_bd(ac, bd) - g_ac_bd(ad, bc)
+                              g_p_ab_cd(ab, cd) = g_ac_bd(a, c, b, d) + g_ac_bd(a, d, b, c)
+                              g_m_ab_cd(ab, cd) = g_ac_bd(a, c, b, d) - g_ac_bd(a, d, b, c)
 !
                              if(c .ne. d) then
                                g_p_ab_cd(ab, cd) = two*g_p_ab_cd(ab, cd)
@@ -513,16 +503,16 @@ contains
 !
 !              Dellocate g_ac_bd
 !
-               call mem%dealloc(g_ac_bd, (wf%n_v)*(batch_a%length), (wf%n_v)*(batch_b%length))
+               call mem%dealloc(g_ac_bd, batch_a%length, wf%n_v, batch_b%length, wf%n_v)
 !
 !              Allocate omega +-
 !
-              call mem%alloc(omega2_p_ab_ij, packed_size(batch_a%length), packed_size(wf%n_o))
-              call mem%alloc(omega2_m_ab_ij, packed_size(batch_a%length), packed_size(wf%n_o))
+               call mem%alloc(omega2_p_ab_ij, packed_size(batch_a%length), packed_size(wf%n_o))
+               call mem%alloc(omega2_m_ab_ij, packed_size(batch_a%length), packed_size(wf%n_o))
 !
 !              omega2_ab_ij = sum_(cd) g_ab_cd*t_cd_ij
 !
-              call dgemm('N','N',                      &
+               call dgemm('N','N',                      &
                           packed_size(batch_a%length), &
                           packed_size(wf%n_o),         &
                           packed_size(wf%n_v),         &
@@ -535,7 +525,7 @@ contains
                           omega2_p_ab_ij,              &
                           packed_size(batch_a%length))
 !
-              call dgemm('N','N',                      &
+               call dgemm('N','N',                      &
                           packed_size(batch_a%length), &
                           packed_size(wf%n_o),         &
                           packed_size(wf%n_v),         &
@@ -555,6 +545,7 @@ contains
               call mem%dealloc(t_p_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
               call mem%dealloc(t_m_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
 !
+!$omp parallel do private(i, j, a, b, ij, ai, aj, bj, bi, ab, aibj, biaj)
               do i = 1, wf%n_o
                  do j = 1, i
 !
@@ -568,6 +559,7 @@ contains
                        do b = 1, batch_b%length
 !
                           if ((a+batch_a%first-1) .ge. (b+batch_b%first-1)) then
+!
                              bj = index_two(b + batch_b%first - 1, j, wf%n_v) ! B is full-CCSD-space b index
                              bi = index_two(b + batch_b%first - 1, i, wf%n_v) ! B is full-CCSD-space b index
 !
@@ -582,8 +574,10 @@ contains
                                                    + omega2_p_ab_ij(ab, ij) + omega2_m_ab_ij(ab, ij)
 !
                              if (aibj .ne. biaj) then
+!
                                 omega2(biaj,1) = omega2(biaj, 1) &
                                                    + omega2_p_ab_ij(ab, ij) - omega2_m_ab_ij(ab, ij)
+!
                              endif
                           endif
 !
@@ -591,11 +585,13 @@ contains
                     enddo
                  enddo
               enddo
+!$omp end parallel do
 !
 !              Deallocate omega +-
 !
                call mem%dealloc(omega2_p_ab_ij, packed_size(batch_a%length), packed_size(wf%n_o))
                call mem%dealloc(omega2_m_ab_ij, packed_size(batch_a%length), packed_size(wf%n_o))
+!
             else
 !
 !              Allocate for +-g, +-t
@@ -628,12 +624,14 @@ contains
 !
                              ab = index_two(a, b, batch_a%length)
 !
-                             g_p_ab_cd(ab, cd) = g_ac_bd(ac, bd) + g_ac_bd(ad, bc)
-                             g_m_ab_cd(ab, cd) = g_ac_bd(ac, bd) - g_ac_bd(ad, bc)
+                             g_p_ab_cd(ab, cd) = g_ac_bd(a, c, b, d) + g_ac_bd(a, d, b, c)
+                             g_m_ab_cd(ab, cd) = g_ac_bd(a, c, b, d) - g_ac_bd(a, d, b, c)
 !
                             if(c .ne. d) then
+!
                               g_p_ab_cd(ab, cd) = two*g_p_ab_cd(ab, cd)
                               g_m_ab_cd(ab, cd) = two*g_m_ab_cd(ab, cd)
+!
                             endif
 !
                        enddo
@@ -663,7 +661,7 @@ contains
 !
 !              Dellocate g_ac_bd
 !
-               call mem%dealloc(g_ac_bd, (wf%n_v)*(batch_a%length), (wf%n_v)*(batch_b%length))
+               call mem%dealloc(g_ac_bd, batch_a%length, wf%n_v, batch_b%length, wf%n_v)
 !
 !              Allocate omega +-
 !
@@ -705,6 +703,7 @@ contains
                call mem%dealloc(t_p_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
                call mem%dealloc(t_m_cd_ij, packed_size(wf%n_v), packed_size(wf%n_o))
 !
+!$omp parallel do private(i, j, a, b, ij, ai, aj, bj, bi, ab, aibj, biaj)
                do i = 1, wf%n_o
                   do j = 1, i
 !
@@ -716,6 +715,8 @@ contains
                         aj = wf%n_v*(j - 1) + a + batch_a%first - 1 ! A is full-space a index
 !
                         do b = 1, batch_b%length
+!
+                           if (a + batch_a%first - 1 .ge. b + batch_b%first - 1) then
 !
                               bj = wf%n_v*(j - 1) + b + batch_b%first - 1 ! B is full-space b index
                               bi = wf%n_v*(i - 1) + b + batch_b%first - 1 ! B is full-space b index
@@ -737,10 +738,13 @@ contains
 !
                               endif
 !
+                           endif
+!
                         enddo
                      enddo
                   enddo
                enddo
+!$omp end parallel do
 !
 !              Deallocate omega +-
 !
@@ -780,10 +784,10 @@ contains
 !
 !     Integrals
 !
-      real(dp), dimension(:,:), allocatable :: g_kc_ld
+      real(dp), dimension(:,:,:,:), allocatable :: g_kc_ld
       real(dp), dimension(:,:), allocatable :: g_kl_cd
       real(dp), dimension(:,:), allocatable :: g_kl_ij
-      real(dp), dimension(:,:), allocatable :: g_ki_lj
+      real(dp), dimension(:,:,:,:), allocatable :: g_ki_lj
 !
 !     Reordered T2 apmlitudes
 !
@@ -801,7 +805,7 @@ contains
 !
 !     Allocate and construct g_ki_lj
 !
-      call mem%alloc(g_ki_lj, (wf%n_o)*(wf%n_o), (wf%n_o)*(wf%n_o))
+      call mem%alloc(g_ki_lj, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
 !
       call wf%get_oooo(g_ki_lj)
 !
@@ -809,11 +813,11 @@ contains
 !
       call sort_1234_to_1324(g_ki_lj, g_kl_ij, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
 !
-      call mem%dealloc(g_ki_lj, (wf%n_o)*(wf%n_o), (wf%n_o)*(wf%n_o))
+      call mem%dealloc(g_ki_lj, wf%n_o, wf%n_o, wf%n_o, wf%n_o)
 !
 !     Allocate and construct g_kc_ld
 !
-      call mem%alloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%alloc(g_kc_ld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
       call wf%get_ovov(g_kc_ld)
 !
@@ -823,7 +827,7 @@ contains
 !
       call sort_1234_to_1324(g_kc_ld, g_kl_cd, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      call mem%dealloc(g_kc_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(g_kc_ld, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
 !     Reorder t_ci_dj as t_cd_ij
 !
@@ -901,9 +905,9 @@ contains
 !
 !     Integrals
 !
-      real(dp), dimension(:,:), allocatable :: g_kd_lc
+      real(dp), dimension(:,:,:,:), allocatable :: g_kd_lc
       real(dp), dimension(:,:), allocatable :: g_dl_ck
-      real(dp), dimension(:,:), allocatable :: g_ki_ac
+      real(dp), dimension(:,:,:,:), allocatable :: g_ki_ac
       real(dp), dimension(:,:), allocatable :: g_ai_ck
 !
 !     Reordered T2 amplitudes
@@ -921,21 +925,22 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: u_ck_bj
       real(dp), dimension(:,:), allocatable :: omega2_ai_bj ! Holds term temporarily
+      real(dp), dimension(:,:), allocatable :: omega_a_batch
 !
 !     Indices
 !
-      integer(i15) :: a, b
-      integer(i15) :: i, j
+      integer :: a, b, c
+      integer :: i, j, k
 !
-      integer(i15) :: ai, aj, bi, bj
-      integer(i15) :: ai_offset
+      integer :: ai, aj, bi, bj, ac, ki, ck
+      integer :: ai_batch
 !
-      integer(i15) :: aibj
+      integer :: aibj
 !
 !     Batching and memory handling
 !
-      integer(i15) :: required = 0
-      integer(i15) :: current_a_batch = 0
+      integer :: rec0, rec1
+      integer :: current_a_batch = 0
 !
       type(batching_index) :: batch_a
 !
@@ -952,7 +957,7 @@ contains
 !
 !     Allocate and construct g_kd_lc
 !
-      call mem%alloc(g_kd_lc,(wf%n_o)*(wf%n_v),(wf%n_o)*(wf%n_v))
+      call mem%alloc(g_kd_lc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
       call wf%get_ovov(g_kd_lc)
 !
@@ -962,7 +967,7 @@ contains
 !
       call sort_1234_to_2341(g_kd_lc, g_dl_ck, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
-      call mem%dealloc(g_kd_lc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(g_kd_lc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
 !     -1/2*sum_(dl) t_ai_dl*g_dl_ck = X_ai_ck
 !
@@ -1007,36 +1012,56 @@ contains
 !
 !     Constructing g_ki_ac
 !
-      required = wf%integrals%get_required_vvoo()
+!     Prepare for batching
+!
+      rec0 = wf%n_o**2*wf%integrals%n_J
+!
+      rec1 = wf%n_v*wf%integrals%n_J + (wf%n_o)*(wf%n_v**2)
 !
       call batch_a%init(wf%n_v)
-      call mem%num_batch(batch_a, required)
 !
-!     Start looping over a-batches
+      call mem%batch_setup(batch_a, rec0, rec1)
+!
+!     Loop over the number of a batches
 !
       do current_a_batch = 1, batch_a%num_batches
-!
-!        Determine batch limits for the a-batch
 !
          call batch_a%determine_limits(current_a_batch)
 !
 !        Allocate and construct g_ki_ac
 !
-         call mem%alloc(g_ki_ac, (wf%n_o)**2, (batch_a%length)*(wf%n_v))
+         call mem%alloc(g_ki_ac, wf%n_o, wf%n_o, batch_a%length, wf%n_v)
 !
-         call wf%get_oovv(g_ki_ac,        &
-                           1,             &
-                           wf%n_o,        &
-                           1,             &
-                           wf%n_o,        &
-                           batch_a%first, &
-                           batch_a%last,  &
-                           1,             &
-                           wf%n_v)
+         call wf%get_oovv(g_ki_ac,                       &
+                           1, wf%n_o,                    &
+                           1, wf%n_o,                    &
+                           batch_a%first, batch_a%last,  &
+                           1, wf%n_v)
 !
 !        X_ai_ck = X_ai_ck + g_ki_ac
 !
-         call add_4213_to_1234(one, g_ki_ac, X_ai_ck, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!$omp parallel do private(a, i, k, c, ck, ki, ac, ai)
+         do k = 1, wf%n_o
+            do c = 1, wf%n_v
+!
+               ck = wf%n_v*(k-1) + c
+!
+               do i = 1, wf%n_o
+!
+                  ki = wf%n_o*(i - 1) + k
+!
+                  do a = 1, batch_a%length
+!
+                     ac = batch_a%length*(c-1) + a
+                     ai = wf%n_v*(i-1) + a + batch_a%first - 1 
+!
+                     X_ai_ck(ai, ck) = X_ai_ck(ai, ck) + g_ki_ac(k, i, a, c)
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!$omp end parallel do
 !
 !        Calculate the contribution to the term
 !
@@ -1046,11 +1071,11 @@ contains
 !
          call sort_1234_to_3241(g_ki_ac, g_ai_ck, wf%n_o, wf%n_o, batch_a%length, wf%n_v)
 !
-         call mem%dealloc(g_ki_ac, (wf%n_o)**2, (batch_a%length)*(wf%n_v))
+         call mem%dealloc(g_ki_ac, wf%n_o, wf%n_o, batch_a%length, wf%n_v)
 !
 !        - 1/2 * sum_ck u_jk^bc g_acki = -1/2 * sum_ck g_ai_ck u_ck_bj
 !
-         ai_offset = index_two(batch_a%first, 1, wf%n_v)
+         call mem%alloc(omega_a_batch, batch_a%length*wf%n_o, wf%n_v*wf%n_o)
 !
          call dgemm('N','N',                 &
                   (wf%n_o)*(batch_a%length), &
@@ -1062,10 +1087,32 @@ contains
                   u_ck_bj,                   &
                   (wf%n_o)*(wf%n_v),         &
                   zero,                      &
-                  omega2_ai_bj(ai_offset,1), &
-                  (wf%n_o)*(wf%n_v))
+                  omega_a_batch, &
+                  (wf%n_o)*batch_a%length)
 !
          call mem%dealloc(g_ai_ck, (batch_a%length)*(wf%n_o), (wf%n_o)*(wf%n_v))
+!
+!$omp parallel do private(a, i, b, j, bj, ai, ai_batch)
+         do j = 1, wf%n_o
+            do b = 1, wf%n_v
+!
+               bj = wf%n_v*(j-1) + b
+!
+               do i = 1, wf%n_o
+                  do a = 1, batch_a%length
+!
+                     ai_batch = batch_a%length*(i-1) + a
+                     ai = wf%n_v*(i-1) + a + batch_a%first - 1
+!
+                     omega2_ai_bj(ai, bj) = omega_a_batch(ai_batch, bj)               
+!
+                  enddo
+               enddo
+            enddo
+         enddo
+!$omp end parallel do
+!
+         call mem%dealloc(omega_a_batch, batch_a%length*wf%n_o, wf%n_v*wf%n_o)
 !
       enddo ! End of batching
 !
@@ -1114,6 +1161,7 @@ contains
 !
 !     Omega_aibj,1 = P_ai_bj ( 1/2*Y_ai_bj + Y_aj_bi )
 !
+!$omp parallel do private(i, a, j, b, ai, bj, aj, bi, aibj)
          do i = 1, wf%n_o
             do a = 1, wf%n_v
 !
@@ -1140,6 +1188,7 @@ contains
             enddo
          enddo
       enddo
+!$omp end parallel do
 !
       call mem%dealloc(Y_ai_bj, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
 !
@@ -1178,13 +1227,13 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: omega2_ai_bj ! For storing D2.2 & D2.1
 !
-      real(dp), dimension(:,:), allocatable :: g_ld_kc ! g_ldkc
+      real(dp), dimension(:,:,:,:), allocatable :: g_ld_kc ! g_ldkc
       real(dp), dimension(:,:), allocatable :: L_ld_kc ! L_ldkc = 2 * g_ldkc - g_lckd
       real(dp), dimension(:,:), allocatable :: t_ai_dl ! t_il^ad
       real(dp), dimension(:,:), allocatable :: u_ai_dl ! u_il^ad = 2 * t_il^ad - t_li^ad
       real(dp), dimension(:,:), allocatable :: u_ai_ld ! u_il^ad = 2 * t_il^ad - t_li^ad
       real(dp), dimension(:,:), allocatable :: Z_ai_kc ! An intermediate, see below
-      real(dp), dimension(:,:), allocatable :: g_ai_kc ! g_aikc
+      real(dp), dimension(:,:,:,:), allocatable :: g_ai_kc ! g_aikc
 !
       type(timings) :: ccsd_d2_timer
 !
@@ -1195,7 +1244,7 @@ contains
 !
 !     Form L_ld_kc = L_ldkc = 2*g_ld_kc(ld,kc) - g_ld_kc(lc,kd)
 !
-      call mem%alloc(g_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%alloc(g_ld_kc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
       call wf%get_ovov(g_ld_kc)
 !
       call mem%alloc(L_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
@@ -1204,7 +1253,7 @@ contains
       call add_1432_to_1234(-one, g_ld_kc, L_ld_kc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
       call daxpy((wf%n_o)**2*(wf%n_v)**2, two, g_ld_kc, 1, L_ld_kc, 1)
 !
-      call mem%dealloc(g_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(g_ld_kc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
 !     Form u_ai_ld = u_il^ad = 2 * t_il^ad - t_li^ad
 !
@@ -1273,7 +1322,7 @@ contains
 !
 !     Form g_ai_kc = g_aikc
 !
-      call mem%alloc(g_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%alloc(g_ai_kc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
       call wf%get_voov(g_ai_kc)
 !
@@ -1293,7 +1342,7 @@ contains
                   (wf%n_o)*(wf%n_v))
 !
       call mem%dealloc(u_ai_ld, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
-      call mem%dealloc(g_ai_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(g_ai_kc, wf%n_v, wf%n_o, wf%n_o, wf%n_v)
 !
 !     Add the D2.1 term to the omega vector
 !
@@ -1337,7 +1386,7 @@ contains
 !     Vectors for E2.1 term
 !
       real(dp), dimension(:,:), allocatable :: omega2_bj_ai ! For storing the E2.1 term temporarily
-      real(dp), dimension(:,:), allocatable :: g_ld_kc      ! g_ldkc
+      real(dp), dimension(:,:,:,:), allocatable :: g_ld_kc      ! g_ldkc
       real(dp), dimension(:,:), allocatable :: u_bl_dk      ! u_kl^bd
       real(dp), dimension(:,:), allocatable :: t_bk_dl      ! t_kl^bd
       real(dp), dimension(:,:), allocatable :: u_bk_dl      ! u_kl^bd
@@ -1377,7 +1426,7 @@ contains
 !
 !     Form g_ld_kc = g_ldkc
 !
-      call mem%alloc(g_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%alloc(g_ld_kc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
       call wf%get_ovov(g_ld_kc)
 !
 !     Make the intermediate X_b_c = F_bc - sum_dkl g_ldkc u_kl^bd and set to zero
@@ -1467,7 +1516,7 @@ contains
                  wf%n_o)
 !
       call mem%dealloc(u_bl_dk, (wf%n_o)*(wf%n_v), (wf%n_v)*(wf%n_o))
-      call mem%dealloc(g_ld_kc, (wf%n_o)*(wf%n_v), (wf%n_o)*(wf%n_v))
+      call mem%dealloc(g_ld_kc, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
 !
 !     Calculate the E2.2 term,
 !     - sum_k t_aib_k Y_k_j = - sum_k t_ik^ab (F_kj + sum_cdl g_ldkc u_lj^dc)

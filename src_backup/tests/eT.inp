@@ -1,8 +1,0 @@
-Method:
-.CCSD
-Calculation:
-.ground_state
-Settings:
-.energy_threshold
- 1.0D-10
-#end of eT input

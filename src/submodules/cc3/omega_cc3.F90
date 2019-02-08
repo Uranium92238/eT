@@ -33,7 +33,7 @@ contains
       real(dp), dimension(:), allocatable       :: omega2
       real(dp), dimension(:,:,:,:), allocatable :: omega_abij
 !
-      integer(i15)  :: i,j,a,b,a_end,aibj
+      integer  :: i,j,a,b,a_end,aibj
 !
       type(timings) :: cc3_timer
       type(timings) :: ccsd_timer
@@ -192,10 +192,10 @@ contains
       real(dp), dimension(:,:,:,:), contiguous, pointer  :: L_ibkc_p => null()
       real(dp), dimension(:,:,:,:), contiguous, pointer  :: L_jbkc_p => null()
 !
-      integer(i15) :: i, j, k, i_rel, j_rel, k_rel
+      integer :: i, j, k, i_rel, j_rel, k_rel
       type(batching_index) :: batch_i, batch_j, batch_k
-      integer(i15) :: i_batch, j_batch, k_batch
-      integer(i15) :: req_0, req_1, req_2, req_3
+      integer :: i_batch, j_batch, k_batch
+      integer :: req_0, req_1, req_2, req_3
       real(dp)     :: batch_buff = 0.0
 !
 !     Set up required integrals on disk
@@ -563,13 +563,13 @@ contains
       real(dp), dimension(:,:,:,:), allocatable :: h_pqrs !Array for sorted integrals
       real(dp), dimension(:,:), allocatable     :: v2_help !Help array for constructing L_jbkc
 !
-      integer(i15) :: k, j, record 
+      integer :: k, j, record 
       type(batching_index) :: batch_k
 !
-      integer(i15) :: req_0, req_k
-      integer(i15) :: current_k_batch
+      integer :: req_0, req_k
+      integer :: current_k_batch
 !
-      integer(i15) :: ioerror=-1
+      integer :: ioerror=-1
 !
       call mem%alloc(v2_help,wf%n_v,wf%n_v)
 !
@@ -817,8 +817,8 @@ contains
       real(dp), dimension(wf%n_v,wf%n_v,wf%n_v,batch_x%length), intent(out) :: g_bdcx
       real(dp), dimension(wf%n_v,wf%n_v,wf%n_v,batch_x%length), intent(out) :: g_dbxc
 !
-      integer(i15) :: ioerror
-      integer(i15) :: x, x_abs
+      integer :: ioerror
+      integer :: x, x_abs
 !
       do x = 1,batch_x%length
 !
@@ -869,8 +869,8 @@ contains
       real(dp), dimension(wf%n_v,wf%n_o,batch_y%length,batch_x%length), intent(out) :: g_ylxc
       real(dp), dimension(wf%n_v,wf%n_v,batch_y%length,batch_x%length), intent(out) :: L_ybxc
 !
-      integer(i15) :: ioerror, record
-      integer(i15) :: x, y, x_abs, y_abs
+      integer :: ioerror, record
+      integer :: x, y, x_abs, y_abs
 !
       do x = 1,batch_x%length
 !
@@ -957,7 +957,7 @@ contains
 !
       class(cc3) :: wf
 !
-      integer(i15), intent(in) :: i, j, k
+      integer, intent(in) :: i, j, k
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: t_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: u_abc
@@ -1202,11 +1202,11 @@ contains
 !
       class(cc3) :: wf
 !
-      integer(i15), intent(in) :: i, j, k
+      integer, intent(in) :: i, j, k
 !
       real(dp), dimension(wf%n_v,wf%n_v,wf%n_v), intent(inout) :: t_abc
 !
-      integer(i15) a, b, c
+      integer a, b, c
 !
       real(dp) :: epsilon_ijk, epsilon_c, epsilon_cb
 !
@@ -1255,7 +1255,7 @@ contains
 !
       class(cc3) :: wf
 !
-      integer(i15), intent(in) :: i, j, k
+      integer, intent(in) :: i, j, k
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: t_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: u_abc
@@ -1491,7 +1491,7 @@ contains
 !
       class(cc3) :: wf
 !
-      integer(i15), intent(in) :: i, j, k
+      integer, intent(in) :: i, j, k
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: t_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: u_abc

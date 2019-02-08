@@ -20,7 +20,7 @@ using namespace std;
 
 using namespace libint2;
 
-void construct_ao_mu_wx(double *mu_X, double *mu_Y, double *mu_Z, long *s1, long *s2){
+void construct_ao_mu_wx(double *mu_X, double *mu_Y, double *mu_Z, int *s1, int *s2){
 
   const auto& buf_vec = dipole.results(); // will point to computed shell sets
 

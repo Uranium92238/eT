@@ -38,7 +38,7 @@ contains
       class(mp2) :: wf
       class(hf)  :: ref_wf
 !
-      wf%name = 'MP2'
+      wf%name_ = 'MP2'
 !
       wf%system = ref_wf%system
 !
@@ -84,7 +84,7 @@ contains
       real(dp), dimension(:,:), allocatable :: eps
 !
       real(dp)     :: e2_neg
-      integer(i15) :: a, i, b, j, ai, bj 
+      integer :: a, i, b, j, ai, bj 
 !
       call mem%alloc(eps, wf%n_mo, 1)
       eps = wf%orbital_energies
@@ -138,7 +138,7 @@ contains
 !
       class(mp2), intent(in) :: wf
 !
-      write(output%unit, '(/t3,a,a,a)') ':: Summary of ', trim(wf%name), ' wavefunction energetics (a.u.)'
+      write(output%unit, '(/t3,a,a,a)') ':: Summary of ', trim(wf%name_), ' wavefunction energetics (a.u.)'
 !
       write(output%unit, '(/t3,a26,f19.12)') 'HF energy:                ', wf%hf_energy
       write(output%unit, '(t3,a26,f19.12)')  'MP2 correction:           ', (wf%energy)-(wf%hf_energy)

@@ -4,8 +4,9 @@ set(eT_fortran_sources
    src/solvers/hf/scf_diis_hf_solver_class.F90
    src/solvers/hf/scf_hf_solver_class.F90
    src/solvers/cc/diis_cc_gs_solver_class.F90
+   src/solvers/cc/diis_cc_es_solver_class.F90
    src/solvers/cc/diis_cc_multipliers_solver_class.F90
-   src/solvers/cc/davidson_cc_multipliers_solver_class.F90
+   src/solvers/cc/davidson_cc_multipliers_class.F90
    src/solvers/cc/davidson_cc_es_solver_class.F90
    src/solvers/cc/davidson_cc_ip_solver_class.F90
    src/solvers/cc/davidson_cvs_cc_es_solver_class.F90
@@ -39,12 +40,12 @@ set(eT_fortran_sources
    src/tools/array_analysis.F90
    src/tools/linked_list/array_list_class.F90
    src/tools/linked_list/array_node_class.F90
-   src/tools/dpstrf_eT.F90
    src/wavefunctions/wavefunction_class.F90
    src/wavefunctions/hf_class.F90
    src/wavefunctions/uhf_class.F90
    src/wavefunctions/mlhf_class.F90
    src/wavefunctions/ccs_class.F90
+   src/wavefunctions/cc2_class.F90
    src/wavefunctions/ccsd_class.F90
    src/wavefunctions/cc3_class.F90
    src/wavefunctions/mp2_class.F90
@@ -62,5 +63,6 @@ set(eT_fortran_sources
    src/submodules/ccsd/omega_ccsd.F90
    src/submodules/ccsd/jacobian_ccsd.F90
    src/submodules/ccsd/jacobian_transpose_ccsd.F90
+   src/submodules/cc2/omega_cc2.F90
    src/submodules/cc3/omega_cc3.F90
 )

@@ -89,7 +89,7 @@
 !
       class(cc3) :: wf
 !
-      integer(i15), intent(in) :: i, j, k
+      integer, intent(in) :: i, j, k
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: t_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)          :: u_abc
@@ -121,7 +121,7 @@
 !
       class(cc3) :: wf
 !
-      integer(i15), intent(in) :: i, j, k
+      integer, intent(in) :: i, j, k
 !
       real(dp), dimension(wf%n_v,wf%n_v,wf%n_v), intent(inout) :: t_abc
 !
@@ -141,7 +141,7 @@
 !
       class(cc3) :: wf
 !
-      integer(i15), intent(in) :: i, j, k
+      integer, intent(in) :: i, j, k
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: t_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: u_abc
@@ -174,7 +174,7 @@
 !
       class(cc3) :: wf
 !
-      integer(i15), intent(in) :: i, j, k
+      integer, intent(in) :: i, j, k
 !
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(in)              :: t_abc
       real(dp), dimension(wf%n_v, wf%n_v, wf%n_v), intent(out)             :: u_abc

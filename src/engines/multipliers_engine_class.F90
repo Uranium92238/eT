@@ -11,7 +11,7 @@ module multipliers_engine_class
    use davidson_cvs_cc_es_solver_class
    use diis_cc_gs_solver_class
    use diis_cc_multipliers_solver_class
-   use davidson_cc_multipliers_solver_class
+   use davidson_cc_multipliers_class
 !
    type, extends(abstract_engine) :: multipliers_engine 
 !
@@ -34,7 +34,7 @@ contains
 !
       class(multipliers_engine) :: engine 
 !
-      engine%tag = 'Multipliers engine'
+      engine%name_ = 'Multipliers engine'
 !
    end subroutine prepare_multipliers_engine
 !
@@ -53,9 +53,9 @@ contains
       type(eri_cd_solver), allocatable                   :: eri_chol_solver
       type(diis_cc_gs_solver), allocatable               :: cc_gs_solver
 !
-      type(davidson_cc_multipliers_solver), allocatable  :: cc_multipliers_solver_davidson
+      type(davidson_cc_multipliers), allocatable  :: cc_multipliers_davidson
 !
-      write(output%unit, '(/t3,a,a)') '- Running ', trim(engine%tag)
+      write(output%unit, '(/t3,a,a)') '- Running ', trim(engine%name_)
 !
 !     Cholesky decomposition 
 !
@@ -88,23 +88,13 @@ contains
 !
 !     Multiplier equation
 !
-      allocate(cc_multipliers_solver_davidson)
+      allocate(cc_multipliers_davidson)
 !
-      call cc_multipliers_solver_davidson%prepare(wf)
-      call cc_multipliers_solver_davidson%run(wf)
-      call cc_multipliers_solver_davidson%cleanup(wf)
+      call cc_multipliers_davidson%prepare(wf)
+      call cc_multipliers_davidson%run(wf)
+      call cc_multipliers_davidson%cleanup(wf)
 !
-      deallocate(cc_multipliers_solver_davidson)
-!
-!     Multiplier equation
-!
-!      allocate(cc_multipliers_solver_diis)
-!!
-!     call cc_multipliers_solver_diis%prepare(wf)
-!     call cc_multipliers_solver_diis%run(wf)
-!     call cc_multipliers_solver_diis%cleanup(wf)
-!!
-!      deallocate(cc_multipliers_solver_diis)
+      deallocate(cc_multipliers_davidson)
 !
    end subroutine run_multipliers_engine
 !
@@ -118,7 +108,7 @@ contains
 !
       class(multipliers_engine) :: engine 
 !
-      write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(engine%tag)
+      write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(engine%name_)
 !
    end subroutine cleanup_multipliers_engine
 !

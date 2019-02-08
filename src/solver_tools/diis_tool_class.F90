@@ -31,20 +31,20 @@ module diis_tool_class
 !
    type :: diis_tool
 !
-      character(len=40), private :: name ! Solver name; determines the prefix of all DIIS files
+      character(len=40) :: name ! Solver name; determines the prefix of all DIIS files
 !
       type(file), private :: dx   ! File containing the O vector from previous iterations
       type(file), private :: x_dx ! File containing the X vector from previous iterations
 !
       type(file), private :: diis_matrix ! File containing the previously computed elements of the DIIS matrix
 !
-      integer(i15), private :: iteration = 1 ! Variable keeping track of the current DIIS iteration
+      integer, private :: iteration = 1 ! Variable keeping track of the current DIIS iteration
                                              ! Note: defined to increment by +1 each time 'update' is called.
 !
-      integer(i15), private :: diis_dimension = 8   ! Standard is 8, though it might be useful to change this value
+      integer, private :: diis_dimension = 8   ! Standard is 8, though it might be useful to change this value
 !
-      integer(i15), private :: n_parameters ! The length of the X vector
-      integer(i15), private :: n_equations  ! The length of the O vector
+      integer, private :: n_parameters ! The length of the X vector
+      integer, private :: n_equations  ! The length of the O vector
 
 !
    contains
@@ -93,10 +93,10 @@ contains
 !
       character(len=*), intent(in) :: name
 !
-      integer(i15), intent(in) :: n_parameters
-      integer(i15), intent(in) :: n_equations
+      integer, intent(in) :: n_parameters
+      integer, intent(in) :: n_equations
 !
-      integer(i15), intent(in), optional :: diis_dimension
+      integer, intent(in), optional :: diis_dimension
 !
       solver%name = trim(name)
       solver%n_parameters = n_parameters
@@ -134,17 +134,17 @@ contains
 !
       real(dp) :: ddot
 !
-      integer(i15) :: i = 0, j = 0
+      integer :: i = 0, j = 0
 !
       integer      :: info = -1         ! Error integer for dgesv routine (LU factorization)
-      integer(i15) :: current_index = 0 ! Progressing as follows: 1,2,...,7,8,1,2,...
+      integer :: current_index = 0 ! Progressing as follows: 1,2,...,7,8,1,2,...
 !
-      integer(i15) :: dummy = 0
+      integer :: dummy = 0
 !
       real(dp), dimension(:,:), allocatable :: diis_vector
       real(dp), dimension(:,:), allocatable :: diis_matrix
 !
-      integer(i15), dimension(:), allocatable :: ipiv ! Pivot integers (see dgesv routine)
+      integer, dimension(:), allocatable :: ipiv ! Pivot integers (see dgesv routine)
 !
 !     :: Open DIIS files
 !
@@ -313,7 +313,7 @@ contains
 !
       class(diis_tool) :: solver
 !
-      integer(i15) :: get_current_index_diis_tool
+      integer :: get_current_index_diis_tool
 !
       get_current_index_diis_tool = solver%iteration - &
                ((solver%diis_dimension)-1)*((solver%iteration-1)/((solver%diis_dimension)-1))

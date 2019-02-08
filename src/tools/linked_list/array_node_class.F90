@@ -15,8 +15,8 @@ module array_node_class
 !
       real(dp), dimension(:,:), allocatable :: array
 !
-      integer(i15) :: n_rows
-      integer(i15) :: n_columns
+      integer :: n_rows
+      integer :: n_columns
 !
    contains
 !
@@ -38,8 +38,8 @@ contains
 !
       class(array_node) :: node
 !
-      integer(i15), intent(in) :: n_rows
-      integer(i15), intent(in) :: n_columns
+      integer, intent(in) :: n_rows
+      integer, intent(in) :: n_columns
 !
       node%n_rows    = n_rows
       node%n_columns = n_columns

@@ -83,9 +83,9 @@ contains
 !
       class(array_list) :: list
 !
-      integer(i15) :: n, first, last
+      integer :: n, first, last
 !
-      integer(i15) :: element
+      integer :: element
 !
       real(dp), dimension(:,:), allocatable :: temp_array
 !
@@ -120,7 +120,7 @@ contains
       implicit none
 !
       class(array_list) :: list
-      integer(i15), intent(in) :: n_rows, n_columns
+      integer, intent(in) :: n_rows, n_columns
 !
       if (associated(list%head)) then ! List has nodes already
 !
@@ -195,9 +195,9 @@ contains
 !
       real(dp), dimension(:,:), pointer :: array_pointer
 !
-      integer(i15), intent(in) :: n
+      integer, intent(in) :: n
 !
-      integer(i15) :: element
+      integer :: element
       type(array_node), pointer :: node_pointer
 !
       if (n .gt. list%n_nodes .or. n .lt. 1) then
@@ -228,8 +228,8 @@ contains
 !
       class(array_list) :: list
 !
-      integer(i15) :: n
-      integer(i15) :: element
+      integer :: n
+      integer :: element
 !
       type(array_node), pointer :: node_pointer
 !
@@ -259,14 +259,14 @@ contains
 !
       class(array_list) :: list
 !
-      integer(i15) :: n
+      integer :: n
 !
-      integer(i15) :: n_rows
-      integer(i15) :: n_columns
+      integer :: n_rows
+      integer :: n_columns
 !
       real(dp), dimension(n_rows, n_columns) :: array
 !
-      integer(i15) :: element
+      integer :: element
       type(array_node), pointer :: node_pointer
 !
       if (n .gt. list%n_nodes .or. n .lt. 1) then
@@ -306,9 +306,9 @@ contains
 !
       class(array_list) :: list
 !
-      integer(i15), intent(in) :: n
+      integer, intent(in) :: n
 !
-      integer(i15) :: element
+      integer :: element
       type(array_node), pointer :: node_pointer
 !
       if (n .gt. list%n_nodes .or. n .lt. 1) then
@@ -339,9 +339,9 @@ contains
 !
       class(array_list) :: list
 !
-      integer(i15), intent(in) :: n
+      integer, intent(in) :: n
 !
-      integer(i15) :: element
+      integer :: element
       type(array_node), pointer :: node_pointer
 !
       if (n .gt. list%n_nodes .or. n .lt. 1) then
@@ -371,11 +371,11 @@ contains
       implicit none
 !
       class(array_list) :: list
-      integer(i15), intent(in) :: n_rows, n_columns, n
+      integer, intent(in) :: n_rows, n_columns, n
 !
       type(array_node), pointer :: nth_pointer, nth_prev_pointer
 !
-      integer(i15) :: element
+      integer :: element
 !
        if (n .gt. (list%n_nodes + 1) .or. n .lt. 1) then
 !

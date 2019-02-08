@@ -44,7 +44,7 @@ contains
 !
       class(mlhf) :: wf
 !
-      wf%name = 'MLHF'
+      wf%name_ = 'MLHF'
 !
       write(output%unit, '(a/)')':: SAD-ML test'
       flush(output%unit)
@@ -88,14 +88,14 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: cholesky_vectors_occ, cholesky_vectors_virt, V, ao_density_v
 !
-      integer(i15):: i, j, n_active_aos, n_vectors_occ, n_vectors_virt
-      integer(i15):: a
+      integer:: i, j, n_active_aos, n_vectors_occ, n_vectors_virt
+      integer:: a
 !
       real(dp) :: max_val, e_construct_fock, s_construct_fock, omp_get_wtime, x, y, z
 !
-      integer(i15), dimension(:,:), allocatable :: active_aos
+      integer, dimension(:,:), allocatable :: active_aos
 !
-      integer(i15) :: n_active_occ, n_active_vir, n_s
+      integer :: n_active_occ, n_active_vir, n_s
 !
       type(eri_cd_solver)  :: chol_solver
 !
@@ -153,7 +153,7 @@ contains
 !
       do i = 1, wf%system%n_active_atoms
 !
-        n_active_occ = n_active_occ + wf%system%atoms(i)%number
+        n_active_occ = n_active_occ + wf%system%atoms(i)%number_
 !
       enddo
 !
@@ -256,9 +256,9 @@ contains
 !
       real(dp), dimension(wf%n_ao, wf%n_ao) :: D_v
 !
-      integer(i15) :: rank, i
+      integer :: rank, i
 !
-      integer(i15), dimension(:), allocatable :: piv
+      integer, dimension(:), allocatable :: piv
 !
       real(dp), dimension(:,:), allocatable :: L, L_inv, P,  L_inv_P_trans
 !

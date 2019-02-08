@@ -1,4 +1,4 @@
-module davidson_cc_multipliers_solver_class
+module davidson_cc_multipliers_class
 !
 !!
 !!    Davidson coupled cluster multipliers solver class module
@@ -12,13 +12,13 @@ module davidson_cc_multipliers_solver_class
 !
    implicit none
 !
-   type :: davidson_cc_multipliers_solver
+   type :: davidson_cc_multipliers
 !
       character(len=100) :: tag = 'Davidson coupled cluster multipliers solver'
       character(len=100) :: author = 'E. F. Kjønstad, S. D. Folkestad, 2018'
       character(len=500) :: description = 'A Davidson CC multiplier equations solver.'
 !
-      integer(i15) :: max_iterations
+      integer :: max_iterations
 !
       real(dp) :: residual_threshold
 !
@@ -26,32 +26,32 @@ module davidson_cc_multipliers_solver_class
 !
    contains
 !
-      procedure :: prepare                         => prepare_davidson_cc_multipliers_solver
-      procedure, nopass :: cleanup                 => cleanup_davidson_cc_multipliers_solver
+      procedure :: prepare                         => prepare_davidson_cc_multipliers
+      procedure, nopass :: cleanup                 => cleanup_davidson_cc_multipliers
 !
-      procedure :: print_banner                    => print_banner_davidson_cc_multipliers_solver
-      procedure :: print_settings                  => print_settings_davidson_cc_multipliers_solver
+      procedure :: print_banner                    => print_banner_davidson_cc_multipliers
+      procedure :: print_settings                  => print_settings_davidson_cc_multipliers
 !
-      procedure :: run                             => run_davidson_cc_multipliers_solver
+      procedure :: run                             => run_davidson_cc_multipliers
 !
-      procedure, nopass :: set_precondition_vector => set_precondition_vector_davidson_cc_multipliers_solver     
+      procedure, nopass :: set_precondition_vector => set_precondition_vector_davidson_cc_multipliers     
 !
-      procedure, nopass :: transform_trial_vector  => transform_trial_vector_davidson_cc_multipliers_solver 
+      procedure, nopass :: transform_trial_vector  => transform_trial_vector_davidson_cc_multipliers 
 !
-   end type davidson_cc_multipliers_solver
+   end type davidson_cc_multipliers
 !
 !
 contains
 !
 !
-   subroutine prepare_davidson_cc_multipliers_solver(solver, wf)
+   subroutine prepare_davidson_cc_multipliers(solver, wf)
 !!
 !!    Prepare 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(davidson_cc_multipliers_solver) :: solver
+      class(davidson_cc_multipliers) :: solver
 !
       class(ccs) :: wf
 !
@@ -73,17 +73,17 @@ contains
 !
       call wf%initialize_multipliers()
 !
-   end subroutine prepare_davidson_cc_multipliers_solver
+   end subroutine prepare_davidson_cc_multipliers
 !
 !
-   subroutine print_settings_davidson_cc_multipliers_solver(solver)
+   subroutine print_settings_davidson_cc_multipliers(solver)
 !!
 !!    Print settings    
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
 !!
       implicit none 
 !
-      class(davidson_cc_multipliers_solver) :: solver 
+      class(davidson_cc_multipliers) :: solver 
 !
       write(output%unit, '(/t3,a)')      '- Davidson CC multipliers solver settings:'
 !
@@ -91,17 +91,17 @@ contains
 !
       write(output%unit, '(t6,a26,i9)')    'Max number of iterations: ', solver%max_iterations
 !
-   end subroutine print_settings_davidson_cc_multipliers_solver
+   end subroutine print_settings_davidson_cc_multipliers
 !
 !
-   subroutine run_davidson_cc_multipliers_solver(solver, wf)
+   subroutine run_davidson_cc_multipliers(solver, wf)
 !!
 !!    Run 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none
 !
-      class(davidson_cc_multipliers_solver) :: solver
+      class(davidson_cc_multipliers) :: solver
 !
       class(ccs) :: wf
 !
@@ -111,7 +111,7 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: eta, c_i, multipliers
 !
-      integer(i15) :: iteration
+      integer :: iteration
 !
       real(dp) :: residual_norm, ddot, norm_trial
 !
@@ -214,10 +214,10 @@ contains
 !
       call mem%dealloc(multipliers, wf%n_amplitudes, 1)
 !
-   end subroutine run_davidson_cc_multipliers_solver
+   end subroutine run_davidson_cc_multipliers
 !
 !
-   subroutine cleanup_davidson_cc_multipliers_solver(wf)
+   subroutine cleanup_davidson_cc_multipliers(wf)
 !!
 !!    Cleanup 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -229,26 +229,26 @@ contains
       call wf%save_multipliers()  
       call wf%destruct_multipliers()
 !
-   end subroutine cleanup_davidson_cc_multipliers_solver
+   end subroutine cleanup_davidson_cc_multipliers
 !
 !
-   subroutine print_banner_davidson_cc_multipliers_solver(solver)
+   subroutine print_banner_davidson_cc_multipliers(solver)
 !!
 !!    Print banner
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
 !!
       implicit none 
 !
-      class(davidson_cc_multipliers_solver) :: solver 
+      class(davidson_cc_multipliers) :: solver 
 !
       call long_string_print(solver%tag,'(//t3,a)',.true.)
       call long_string_print(solver%author,'(t3,a/)',.true.)
       call long_string_print(solver%description,'(t3,a)',.false.,'(t3,a)','(t3,a/)')
 !
-   end subroutine print_banner_davidson_cc_multipliers_solver
+   end subroutine print_banner_davidson_cc_multipliers
 !
 !
-   subroutine transform_trial_vector_davidson_cc_multipliers_solver(wf, c_i)
+   subroutine transform_trial_vector_davidson_cc_multipliers(wf, c_i)
 !!
 !!    Transform trial vector 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Sep 2018 
@@ -261,10 +261,10 @@ contains
 !
       call wf%jacobian_transpose_transform_trial_vector(c_i) 
 !
-   end subroutine transform_trial_vector_davidson_cc_multipliers_solver
+   end subroutine transform_trial_vector_davidson_cc_multipliers
 !
 !
-   subroutine set_precondition_vector_davidson_cc_multipliers_solver(wf, davidson)
+   subroutine set_precondition_vector_davidson_cc_multipliers(wf, davidson)
 !!
 !!    Set precondition vector
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, September 2018
@@ -284,6 +284,6 @@ contains
       call davidson%set_preconditioner(preconditioner)
       call mem%dealloc(preconditioner, wf%n_amplitudes, 1)
 !
-   end subroutine set_precondition_vector_davidson_cc_multipliers_solver
+   end subroutine set_precondition_vector_davidson_cc_multipliers
 !
-end module davidson_cc_multipliers_solver_class
+end module davidson_cc_multipliers_class

@@ -10,7 +10,7 @@ module periodic_table
 !
    implicit none
 !
-   integer(i15), parameter :: size_periodic_table = 20
+   integer, parameter :: size_periodic_table = 20
    character(len=2), dimension(size_periodic_table) :: atomic_symbol = &
    ['H ', 'He', 'Li', 'Be', 'B ', 'C ', 'N ', 'O ', 'F ', 'Ne', 'Na', 'Mg', 'Al', 'Si', 'P ', &
     'S ',  'Cl', 'Ar', 'K ', 'Ca']
