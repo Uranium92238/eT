@@ -12,6 +12,7 @@ module property_engine_class
    use diis_cc_gs_solver_class
    use diis_cc_es_solver_class
    use diis_cc_multipliers_solver_class
+   use cc_property_solver_class
 !
    type, extends(abstract_engine) :: property_engine
 !
@@ -64,25 +65,98 @@ contains
 !
       class(ccs) :: wf
 !
-! -- here allocatable variables (solvers)
+      type(eri_cd_solver), allocatable              :: eri_chol_solver
+      type(diis_cc_gs_solver), allocatable          :: cc_gs_solver
+      type(diis_cc_es_solver), allocatable          :: cc_es_solver_diis
+! 
+      type(davidson_cc_es_solver), allocatable, target      :: cc_valence_es_solver
+      type(davidson_cvs_cc_es_solver), allocatable, target  :: cc_core_es_solver
+      type(davidson_cc_multipliers), allocatable            :: cc_multipliers_davidson
+!
+      class(cc_property_solver), pointer :: cc_property_solver
 !
       write(output%unit, '(/t3,a,a)') '- Running ', trim(engine%name_)      
 !
 !     Cholesky decomposition
 !
-
+      allocate(eri_chol_solver)
+!
+      call eri_chol_solver%prepare(wf%system)
+      call eri_chol_solver%run(wf%system)
+!
+      call eri_chol_solver%cholesky_vecs_diagonal_test(wf%system)
+!
+      call eri_chol_solver%construct_mo_cholesky_vecs(wf%system, wf%n_mo, wf%orbital_coefficients)
+!
+      call wf%integrals%prepare(eri_chol_solver%n_cholesky, wf%n_o, wf%n_v)
+!
+      call eri_chol_solver%cleanup()
+      deallocate(eri_chol_solver)
 !
 !     Ground state solver
 !
-
+      allocate(cc_gs_solver)
+!
+      call cc_gs_solver%prepare(wf)
+      call cc_gs_solver%run(wf)
+      call cc_gs_solver%cleanup(wf)
+!
+      deallocate(cc_gs_solver)
+!
+      if (wf%name_ .ne. 'CCS') then
+!
+         call wf%integrals%write_t1_cholesky(wf%t1)
+         call wf%integrals%can_we_keep_g_pqrs()
+!
+      endif
 !
 !     Prepare for excited state
 !
-
+      if (engine%algorithm == 'diis') then
+!
+         allocate(cc_es_solver_diis)
+!
+         call cc_es_solver_diis%prepare()
+         call cc_es_solver_diis%run(wf)
+         call cc_es_solver_diis%cleanup()
+!
+         deallocate(cc_es_solver_diis)
+!
+      elseif (engine%algorithm == 'davidson') then
+!
+         if (engine%es_type == 'core') then
+!
+            allocate(cc_core_es_solver)
+!
+            call cc_core_es_solver%prepare()
+            call cc_core_es_solver%run(wf)
+            call cc_core_es_solver%cleanup()
+!
+            deallocate(cc_core_es_solver)
+!
+         else ! es_type = valence
+!
+            allocate(cc_valence_es_solver)
+!
+            call cc_valence_es_solver%prepare()
+            call cc_valence_es_solver%run(wf)
+            call cc_valence_es_solver%cleanup()
+!
+            deallocate(cc_valence_es)
+!
+         endif
+!
+      endif
 !
 !     Multiplier equation
 !
-
+      allocate(cc_multipliers_davidson)
+!
+      call cc_multipliers_davidson%prepare(wf)
+      call cc_multipliers_davidson%run(wf)
+      call cc_multipliers_davidson%cleanup(wf)
+!
+      deallocate(cc_multipliers_davidson)
 !
    end run_property_engine
 !
@@ -124,6 +198,8 @@ contains
             line = remove_preceding_blanks(line)
 !
             if (line(1:15) == 'core excitation' ) then
+!
+               write(output%unit, '(/t3,a,a)') 'Spectra for core excitations not implemented'
 !
                engine%es_type = 'core'
                return
