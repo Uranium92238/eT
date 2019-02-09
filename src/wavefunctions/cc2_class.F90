@@ -18,35 +18,49 @@ module cc2_class
 !
    contains
 !
-      procedure :: prepare                         => prepare_cc2
+      procedure :: prepare                                     => prepare_cc2
 !
-      procedure :: construct_u                     => construct_u_cc2
+      procedure :: construct_u                                 => construct_u_cc2
 !
-      procedure :: construct_omega                 => construct_omega_cc2
+      procedure :: construct_omega                             => construct_omega_cc2
 !
-      procedure :: omega_cc2_a1                    => omega_cc2_a1_cc2
-      procedure :: omega_cc2_b1                    => omega_cc2_b1_cc2
-      procedure :: omega_cc2_c1                    => omega_cc2_c1_cc2
+      procedure :: omega_cc2_a1                                => omega_cc2_a1_cc2
+      procedure :: omega_cc2_b1                                => omega_cc2_b1_cc2
+      procedure :: omega_cc2_c1                                => omega_cc2_c1_cc2
 !
-      procedure :: calculate_energy                => calculate_energy_cc2
+      procedure :: calculate_energy                            => calculate_energy_cc2
 !
-      procedure :: prepare_for_jacobian            => prepare_for_jacobian_cc2
+      procedure :: prepare_for_jacobian                        => prepare_for_jacobian_cc2
 !
-      procedure :: jacobian_transform_trial_vector => jacobian_transform_trial_vector_cc2
-      procedure :: jacobian_cc2_transformation     => jacobian_cc2_transformation_cc2
+      procedure :: jacobian_transform_trial_vector             => jacobian_transform_trial_vector_cc2
+      procedure :: jacobian_cc2_transformation                 => jacobian_cc2_transformation_cc2
 !
-      procedure :: jacobian_cc2_a1                 => jacobian_cc2_a1_cc2
-      procedure :: jacobian_cc2_b1                 => jacobian_cc2_b1_cc2
-      procedure :: jacobian_cc2_a2                 => jacobian_cc2_a2_cc2
-      procedure :: jacobian_cc2_b2                 => jacobian_cc2_b2_cc2
+      procedure :: jacobian_cc2_a1                             => jacobian_cc2_a1_cc2
+      procedure :: jacobian_cc2_b1                             => jacobian_cc2_b1_cc2
+      procedure :: jacobian_cc2_a2                             => jacobian_cc2_a2_cc2
+      procedure :: jacobian_cc2_b2                             => jacobian_cc2_b2_cc2
 !
-      procedure :: initialize_u                    => initialize_u_cc2 
-      procedure :: destruct_u                      => destruct_u_cc2 
+      procedure :: prepare_for_jacobian_transpose              => prepare_for_jacobian_transpose_cc2
 !
-      procedure :: initialize_amplitudes           => initialize_amplitudes_cc2 
-      procedure :: destruct_amplitudes             => destruct_amplitudes_cc2 
+      procedure :: jacobian_transpose_transform_trial_vector   => jacobian_transpose_transform_trial_vector_cc2
+      procedure :: jacobian_transpose_cc2_transformation       => jacobian_transpose_cc2_transformation_cc2
 !
-      procedure :: get_es_orbital_differences      => get_es_orbital_differences_cc2
+      procedure :: jacobian_transpose_cc2_a1                   => jacobian_transpose_cc2_a1_cc2
+      procedure :: jacobian_transpose_cc2_b1                   => jacobian_transpose_cc2_b1_cc2
+      procedure :: jacobian_transpose_cc2_a2                   => jacobian_transpose_cc2_a2_cc2
+      procedure :: jacobian_transpose_cc2_b2                   => jacobian_transpose_cc2_b2_cc2
+!
+      procedure :: initialize_u                                => initialize_u_cc2 
+      procedure :: destruct_u                                  => destruct_u_cc2 
+!
+      procedure :: initialize_amplitudes                       => initialize_amplitudes_cc2 
+      procedure :: destruct_amplitudes                         => destruct_amplitudes_cc2 
+!
+      procedure :: get_es_orbital_differences                  => get_es_orbital_differences_cc2
+!
+      procedure :: construct_multiplier_equation               => construct_multiplier_equation_cc2
+!
+      procedure :: get_cvs_projector                           => get_cvs_projector_cc2
 !
    end type cc2
 !
@@ -54,6 +68,7 @@ module cc2_class
 !
       include "../submodules/cc2/omega_cc2_interface.F90"
       include "../submodules/cc2/jacobian_cc2_interface.F90"
+      include "../submodules/cc2/jacobian_transpose_cc2_interface.F90"
 !
    end interface 
 !
@@ -321,6 +336,142 @@ contains
 !$omp end parallel do
 !
    end subroutine get_es_orbital_differences_cc2
+!
+!
+   subroutine construct_multiplier_equation_cc2(wf, equation)
+!!
+!!    Construct multiplier equation 
+!!    Written by Sarai D. Folkestad, Feb 2019
+!!
+!!    Constructs 
+!!
+!!       t-bar^T A + eta,
+!!
+!!    and places the result in 'equation'.
+!!
+!!    Solves analytically for tbar_aibj
+!!
+!!       tbar_aibj = (η_aibj - sum_ai tbar_ai A_ai,aibj)/ε_aibj
+!!
+!!    where
+!!
+!!       η_aibj = 2 L_iajb       
+!!
+!!    and uses this to set up 'equation'
+!!
+!!       η_ai + sum_bj tbar_bj A_bj,ai + sum_bjck tbar_bjck A_{bjck,ai}
+!!
+      implicit none 
+!
+      class(cc2), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_gs_amplitudes, 1), intent(inout) :: equation 
+!
+      real(dp), dimension(:,:), allocatable :: eta 
+      real(dp), dimension(:,:,:,:), allocatable :: t2bar
+      real(dp), dimension(:,:,:,:), allocatable :: g_iajb
+!
+      integer :: a, b, i, j
+!
+!     Construct t2bar
+!
+      call mem%alloc(t2bar, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      t2bar = zero
+!
+      call mem%alloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+      call wf%get_ovov(g_iajb)
+!
+      call add_2143_to_1234(four, g_iajb, t2bar, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+      call add_2341_to_1234(-two, g_iajb, t2bar, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call mem%dealloc(g_iajb, wf%n_o, wf%n_v, wf%n_o, wf%n_v)
+!
+      call wf%jacobian_transpose_cc2_a2(t2bar, wf%t1bar)
+!
+      do b = 1, wf%n_v
+         do j = 1, wf%n_o
+            do i = 1, wf%n_o
+               do a = 1, wf%n_v
+!
+                  t2bar(a, i, b, j) = t2bar(a, i, b, j)/( wf%fock_diagonal(a + wf%n_o, 1) &
+                                                        + wf%fock_diagonal(b + wf%n_o, 1) &
+                                                        - wf%fock_diagonal(i, 1) &
+                                                        - wf%fock_diagonal(j, 1))
+!
+               enddo
+            enddo
+         enddo
+      enddo
+!
+!     Set up the multipliers equation
+!
+      equation = zero
+!
+      call wf%jacobian_transpose_cc2_b1(equation, t2bar)
+!
+      call mem%dealloc(t2bar, wf%n_v, wf%n_o, wf%n_v, wf%n_o)
+!
+      call wf%jacobian_transpose_ccs_a1(equation, wf%t1bar)
+      call wf%jacobian_transpose_ccs_b1(equation, wf%t1bar)
+      call wf%jacobian_transpose_cc2_a1(equation, wf%t1bar)
+!
+!     Add eta, eq. = t-bar^T A + eta 
+!
+      call mem%alloc(eta, wf%n_gs_amplitudes, 1)
+      call wf%construct_eta(eta)
+!
+      call daxpy(wf%n_gs_amplitudes, one, eta, 1, equation, 1)
+!
+      call mem%dealloc(eta, wf%n_gs_amplitudes, 1)
+!
+   end subroutine construct_multiplier_equation_cc2
+!
+!
+   subroutine get_cvs_projector_cc2(wf, projector, n_cores, core_MOs)
+!!
+!!    Get CVS projector
+!!    Written by Sarai D. Folekstad, Oct 2018
+!!
+      implicit none
+!
+      class(cc2), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_es_amplitudes, 1), intent(out) :: projector
+!
+      integer, intent(in) :: n_cores
+!
+      integer, dimension(n_cores, 1), intent(in) :: core_MOs
+!
+      integer :: core, i, a, ai, j, b, bj, aibj
+!
+      projector = zero
+!
+      do core = 1, n_cores
+!
+        i = core_MOs(core, 1)
+!
+!$omp parallel do private (a, ai, j, b, bj, aibj)
+        do a = 1, wf%n_v
+!
+           ai = wf%n_v*(i - 1) + a
+           projector(ai, 1) = one
+!
+            do j = 1, wf%n_o 
+               do b = 1, wf%n_v
+!
+                  bj = wf%n_v*(j - 1) + b
+                  aibj = max(ai, bj)*(max(ai, bj) - 3)/2 + ai + bj
+!                  
+                  projector(aibj + (wf%n_o)*(wf%n_v), 1) = one
+!
+               enddo
+            enddo
+        enddo
+!$omp end parallel do
+!
+     enddo
+!
+   end subroutine get_cvs_projector_cc2
 !
 !
 end module cc2_class

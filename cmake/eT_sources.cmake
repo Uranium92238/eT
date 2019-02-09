@@ -5,7 +5,7 @@ set(eT_fortran_sources
    src/solvers/hf/scf_hf_solver_class.F90
    src/solvers/cc/diis_cc_gs_solver_class.F90
    src/solvers/cc/diis_cc_es_solver_class.F90
-   src/solvers/cc/diis_cc_multipliers_solver_class.F90
+   src/solvers/cc/diis_cc_multipliers_class.F90
    src/solvers/cc/davidson_cc_multipliers_class.F90
    src/solvers/cc/davidson_cc_es_solver_class.F90
    src/solvers/cc/davidson_cc_ip_solver_class.F90
@@ -65,6 +65,7 @@ set(eT_fortran_sources
    src/submodules/ccsd/jacobian_transpose_ccsd.F90
    src/submodules/cc2/omega_cc2.F90
    src/submodules/cc2/jacobian_cc2.F90
+   src/submodules/cc2/jacobian_transpose_cc2.F90
    src/submodules/lowmem_cc2/omega_lowmem_cc2.F90
    src/submodules/lowmem_cc2/jacobian_lowmem_cc2.F90
 )

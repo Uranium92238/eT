@@ -10,8 +10,8 @@ module multipliers_engine_class
    use davidson_cc_ip_solver_class
    use davidson_cvs_cc_es_solver_class
    use diis_cc_gs_solver_class
-   use diis_cc_multipliers_solver_class
    use davidson_cc_multipliers_class
+   use diis_cc_multipliers_class
 !
    type, extends(abstract_engine) :: multipliers_engine 
 !
@@ -53,7 +53,8 @@ contains
       type(eri_cd_solver), allocatable                   :: eri_chol_solver
       type(diis_cc_gs_solver), allocatable               :: cc_gs_solver
 !
-      type(davidson_cc_multipliers), allocatable  :: cc_multipliers_davidson
+      type(davidson_cc_multipliers), allocatable   :: cc_multipliers_davidson
+      type(diis_cc_multipliers), allocatable       :: cc_multipliers_diis
 !
       write(output%unit, '(/t3,a,a)') '- Running ', trim(engine%name_)
 !
@@ -88,14 +89,29 @@ contains
 !
 !     Multiplier equation
 !
-      allocate(cc_multipliers_davidson)
+      if (wf%name_ == 'cc2') then
 !
-      call cc_multipliers_davidson%prepare(wf)
-      call cc_multipliers_davidson%run(wf)
-      call cc_multipliers_davidson%cleanup(wf)
+!        If cc2 wavefunction -> use diis
 !
-      deallocate(cc_multipliers_davidson)
+         allocate(cc_multipliers_diis)
 !
+         call cc_multipliers_diis%prepare(wf)
+         call cc_multipliers_diis%run(wf)
+         call cc_multipliers_diis%cleanup(wf)
+!
+         deallocate(cc_multipliers_diis)
+!
+      else
+!
+         allocate(cc_multipliers_davidson)
+!
+         call cc_multipliers_davidson%prepare(wf)
+         call cc_multipliers_davidson%run(wf)
+         call cc_multipliers_davidson%cleanup(wf)
+!
+         deallocate(cc_multipliers_davidson)
+!
+      endif
    end subroutine run_multipliers_engine
 !
 !

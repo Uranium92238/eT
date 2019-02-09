@@ -11,7 +11,6 @@ module es_engine_class
    use davidson_cvs_cc_es_solver_class
    use diis_cc_gs_solver_class
    use diis_cc_es_solver_class
-   use diis_cc_multipliers_solver_class
 !
    type, extends(abstract_engine) :: es_engine 
 !
