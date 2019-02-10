@@ -2814,15 +2814,6 @@ contains
       write(output%unit, '(/t6, a)') 'Done decomposing (J|K)!'
       flush(output%unit)
 !
-!
-    ! do I = 1, solver%n_cholesky ! Zero upper unreferenced triangle
-    !    do J = 1, I - 1
-!
-    !       integrals_auxiliary(J, I) = zero
-!
-    !    enddo
-    ! enddo
-!
       call mem%alloc(cholesky_basis_updated, n_vectors, 3)
 !
 !$omp parallel do private(I)
