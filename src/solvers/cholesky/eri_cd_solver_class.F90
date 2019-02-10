@@ -2811,21 +2811,27 @@ contains
 !
       call cpu_time(e_decomp_time)
 !
-      do I = 1, solver%n_cholesky ! Zero upper unreferenced triangle
-         do J = 1, I - 1
+      write(output%unit, '(/t6, a)') 'Done decomposing (J|K)!'
+      flush(output%unit)
 !
-            integrals_auxiliary(J, I) = zero
 !
-         enddo
-      enddo
+    ! do I = 1, solver%n_cholesky ! Zero upper unreferenced triangle
+    !    do J = 1, I - 1
+!
+    !       integrals_auxiliary(J, I) = zero
+!
+    !    enddo
+    ! enddo
 !
       call mem%alloc(cholesky_basis_updated, n_vectors, 3)
 !
+!$omp parallel do private(I)
       do I = 1, n_vectors
 !
          cholesky_basis_updated(I, :) = cholesky_basis(keep_vectors(I), :)
 !
       enddo
+!$omp end parallel do
 !
       call mem%dealloc(cholesky_basis, solver%n_cholesky, 3)
       deallocate(keep_vectors)
@@ -2927,6 +2933,8 @@ contains
 !
       real(dp), dimension(:,:), allocatable :: cholesky, cholesky_inverse
 !
+      integer :: I
+!
       call cpu_time(s_invert_time)
 !
 !     Read Cholesky vectors of auxiliary basis overlap
@@ -2938,13 +2946,15 @@ contains
 !
       read(solver%cholesky_aux%unit) cholesky
 !
-      call disk%close_file(solver%cholesky_aux)
+      call disk%close_file(solver%cholesky_aux, 'delete')
 !
 !     Invert cholesky vectors
 !
       call mem%alloc(cholesky_inverse, solver%n_cholesky, solver%n_cholesky)
 !
       call inv_lower_tri(cholesky_inverse, cholesky, solver%n_cholesky)
+      write(output%unit, '(/t6, a)') 'Done inverting L_JK!'
+      flush(output%unit)
 !
       call mem%dealloc(cholesky, solver%n_cholesky, solver%n_cholesky)
 !
@@ -2955,7 +2965,13 @@ contains
 !
       call disk%open_file(solver%cholesky_aux_inverse, 'write', 'rewind')
 !
-      write(solver%cholesky_aux_inverse%unit) cholesky_inverse
+!     Write out columns, but only the parts that are not rubbish left over from dpstrf
+!
+      do I = 1, solver%n_cholesky
+!
+         write(solver%cholesky_aux_inverse%unit) cholesky_inverse(1 + (I - 1) : solver%n_cholesky, I)
+!
+      enddo
 !
       call disk%close_file(solver%cholesky_aux_inverse)
 !
@@ -3046,8 +3062,13 @@ contains
       rewind(solver%cholesky_aux_inverse%unit)
 !
       call mem%alloc(aux_chol_inverse, solver%n_cholesky, solver%n_cholesky)
+      aux_chol_inverse = zero
 !
-      read(solver%cholesky_aux_inverse%unit) aux_chol_inverse
+      do I = 1, solver%n_cholesky
+!
+         read(solver%cholesky_aux_inverse%unit) aux_chol_inverse(1 + (I - 1) : solver%n_cholesky, I)
+!
+      enddo
 !
       call disk%close_file(solver%cholesky_aux_inverse)
 !
@@ -3057,7 +3078,7 @@ contains
 !
       call trans(aux_chol_inverse, aux_chol_inverse_transpose, solver%n_cholesky)
 !
-      call mem%alloc(aux_chol_inverse, solver%n_cholesky, solver%n_cholesky)
+      call mem%dealloc(aux_chol_inverse, solver%n_cholesky, solver%n_cholesky)
 !
 !     Prepare file for AO Cholesky vectors
 !
