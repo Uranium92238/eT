@@ -219,6 +219,8 @@ contains
 !
       class(hf) :: wf
 !
+      logical :: do_mo_transformation
+!
       write(output%unit, '(/t3,a,a)') '- Cleaning up ', trim(solver%tag)
 !
 !     Do a final Roothan-Hall step to transform the Fock matrix in the canonical MO basis 
