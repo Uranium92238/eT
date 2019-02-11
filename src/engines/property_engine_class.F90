@@ -9,10 +9,11 @@ module property_engine_class
    use davidson_cc_es_solver_class
    use davidson_cc_ip_solver_class
    use davidson_cvs_cc_es_solver_class
+   use davidson_cc_multipliers_class
    use diis_cc_gs_solver_class
    use diis_cc_es_solver_class
    use diis_cc_multipliers_solver_class
-   use cc_property_solver_class
+!   use cc_property_solver_class
 !
    type, extends(abstract_engine) :: property_engine
 !
@@ -71,9 +72,9 @@ contains
 ! 
       type(davidson_cc_es_solver), allocatable, target      :: cc_valence_es_solver
       type(davidson_cvs_cc_es_solver), allocatable, target  :: cc_core_es_solver
-      type(davidson_cc_multipliers), allocatable            :: cc_multipliers_davidson
+      type(davidson_cc_multipliers), allocatable, target    :: cc_multipliers_davidson
 !
-      class(cc_property_solver), pointer :: cc_property_solver
+ !     class(cc_property_solver), pointer :: cc_property_solver
 !
       write(output%unit, '(/t3,a,a)') '- Running ', trim(engine%name_)      
 !
@@ -142,7 +143,7 @@ contains
             call cc_valence_es_solver%run(wf)
             call cc_valence_es_solver%cleanup()
 !
-            deallocate(cc_valence_es)
+            deallocate(cc_valence_es_solver)
 !
          endif
 !
@@ -158,7 +159,7 @@ contains
 !
       deallocate(cc_multipliers_davidson)
 !
-   end run_property_engine
+   end subroutine run_property_engine
 !
 !
    subroutine cleanup_property_engine(engine)
@@ -217,17 +218,17 @@ contains
 !
       engine%es_type = 'valence'
 !
-   end subroutine determine_es_type_property_engine(engine)
+   end subroutine determine_es_type_property_engine
 !
 !
-   subroutine read_algorithm_es_engine(engine)
+   subroutine read_algorithm_property_engine(engine)
 !!
 !!    Read algorithm
 !!    Written by Josefine H. Andersen
 !!
       implicit none
 !
-      class(es_engine), intent(inout) :: engine
+      class(property_engine), intent(inout) :: engine
 !
       character(len=100) :: line
 !
@@ -250,7 +251,7 @@ contains
 !
       enddo
 !
-   end subroutine read_algorithm_es_engine
+   end subroutine read_algorithm_property_engine
 !
 !
 end module property_engine_class
