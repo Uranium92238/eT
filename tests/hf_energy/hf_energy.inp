@@ -9,14 +9,10 @@ memory
    available: 8
 end memory
 
-cholesky
-   threshold: 1.0d-12
-end cholesky
-
 hf
    algorithm:          scf-diis
-   energy threshold:   1.0d-12
-   gradient threshold: 1.0d-12
+   energy threshold:   1.0d-10
+   gradient threshold: 1.0d-10
 end hf
 
 method

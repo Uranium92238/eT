@@ -22,7 +22,7 @@ assert version_info.major == 2
 f = [
 # total energy
     get_filter(string='Total energy:',
-               abs_tolerance=1.0e-12),
+               abs_tolerance=1.0e-10),
 # non-idempotent SAD 
     get_filter(string='Energy of initial guess:',
                abs_tolerance=1.0e-10),

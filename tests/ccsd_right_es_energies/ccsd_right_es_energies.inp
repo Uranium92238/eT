@@ -16,8 +16,8 @@ end cholesky
 
 hf
    algorithm:          scf-diis
-   energy threshold:   1.0d-12
-   gradient threshold: 1.0d-12
+   energy threshold:   1.0d-10
+   gradient threshold: 1.0d-10
 end hf
 
 method
@@ -26,15 +26,15 @@ method
 end method
 
 cc ground state
-   omega threshold:  1.0d-11
-   energy threshold: 1.0d-11
+   omega threshold:  1.0d-10
+   energy threshold: 1.0d-10
 end cc ground state
 
 cc excited state
    algorithm:          davidson
    singlet states:     2
-   residual threshold: 1.0d-11
-   energy threshold:   1.0d-11
+   residual threshold: 1.0d-10
+   energy threshold:   1.0d-10
    right eigenvectors
 end cc excited state
 
@@ -43,5 +43,5 @@ basis: cc-pVDZ
  H          0.86681        0.60144        5.00000
  H         -0.86681        0.60144        5.00000
  O          0.00000       -0.07579        5.00000
- He         0.00000        0.00000        7.50000
+ He         0.10000       -0.02000        7.53000
 end geometry

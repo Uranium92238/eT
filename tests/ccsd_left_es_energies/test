@@ -22,7 +22,7 @@ assert version_info.major == 2
 f = [
     get_filter(from_string='State                (Hartree)             (eV)',
                num_lines=4,
-               abs_tolerance=1.0e-11,
+               abs_tolerance=1.0e-10,
                mask=[2])
 ]
 
