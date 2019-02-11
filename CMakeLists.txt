@@ -11,7 +11,7 @@ set(CMAKE_MODULE_PATH
     /usr/local/share/cmake/Modules
     )
 
-option(ENABLE_64BIT_INTEGERS "Enable 64-bit integers"       			ON)
+option(ENABLE_64BIT_INTEGERS "Enable 64-bit integers"       			              ON)
 option(ENABLE_AUTO_BLAS      "Enable CMake to autodetect BLAS"                  ON)
 option(ENABLE_AUTO_LAPACK    "Enable CMake to autodetect LAPACK"                ON)
 option(ENABLE_OMP            "Enable OpenMP parallelization"                    ON)
@@ -22,6 +22,7 @@ include(eT_sources)
 include(Fortran_flags)
 include(eT_CXX_sources)
 include(CXX_flags)
+include(ConfigTesting)
 
 # math detection
 set(BLAS_LANG "Fortran")
@@ -48,3 +49,14 @@ add_executable(eT ${eT_fortran_sources} ${eT_CXX_sources})
 target_link_libraries(eT ${lapackblas_libraries} ${libint_libraries})
 
 set_target_properties(eT PROPERTIES LINKER_LANGUAGE Fortran)
+
+file(COPY ${CMAKE_SOURCE_DIR}/tests DESTINATION ${CMAKE_BINARY_DIR})
+
+if(EXISTS ${CMAKE_SOURCE_DIR}/submodules/runtest/runtest)
+   file(COPY ${CMAKE_SOURCE_DIR}/submodules/runtest/runtest DESTINATION ${CMAKE_BINARY_DIR}/tests)
+endif()
+
+file(COPY ${CMAKE_SOURCE_DIR}/eT_launch 
+     DESTINATION ${CMAKE_BINARY_DIR} 
+     FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ WORLD_READ)
+

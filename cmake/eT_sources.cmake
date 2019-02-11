@@ -47,6 +47,7 @@ set(eT_fortran_sources
    src/wavefunctions/ccs_class.F90
    src/wavefunctions/cc2_class.F90
    src/wavefunctions/ccsd_class.F90
+   src/wavefunctions/cc3_class.F90
    src/wavefunctions/mp2_class.F90
    src/molecular_system/atomic_class.F90
    src/molecular_system/molecular_system_class.F90
@@ -63,4 +64,5 @@ set(eT_fortran_sources
    src/submodules/ccsd/jacobian_ccsd.F90
    src/submodules/ccsd/jacobian_transpose_ccsd.F90
    src/submodules/cc2/omega_cc2.F90
+   src/submodules/cc3/omega_cc3.F90
 )
