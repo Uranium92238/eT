@@ -23,6 +23,8 @@ module cc_property_solver_class
 !
       real(dp), allocatable :: S
 !
+      integer, allocatable :: n_singlet_states = 0
+!
    contains
 !
       procedure, non_overridable :: prepare          => prepare_cc_property_solver
@@ -131,7 +133,7 @@ contains
       write(output%unit, '(t6,a)')  'State        Excitation energy(Hartree)           Strength     '
       write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
 !
-      do state = 1, wf%n_singlet_states
+      do state = 1, solver%n_singlet_states
 !
          write(output%unit, '(t6,i2,14x,f19.12,4x,f19.12)') state, 'energy', solver%get_S
 !

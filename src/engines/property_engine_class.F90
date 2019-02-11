@@ -142,7 +142,7 @@ contains
             call cc_valence_es_solver%run(wf)
             call cc_valence_es_solver%cleanup()
 !
-            deallocate(cc_valence_es)
+            deallocate(cc_valence_es_solver)
 !
          endif
 !
@@ -157,6 +157,16 @@ contains
       call cc_multipliers_davidson%cleanup(wf)
 !
       deallocate(cc_multipliers_davidson)
+!
+!     Property (spectra)
+!
+      allocate(cc_property_solver)
+!
+      call cc_property_solver%prepare(wf)
+      call cc_property_solver%run(wf)
+      call cc_property_solver%cleanup(wf)
+!
+      deallocate(cc_property_solver)
 !
    end run_property_engine
 !
@@ -188,9 +198,9 @@ contains
 !
       integer :: i, n_keywords
 !
-      if (requested_section('cc property')) then
+      if (requested_section('cc excited state')) then
 !
-         call move_to_section('cc property', n_keywords)
+         call move_to_section('cc excited state', n_keywords)
 !
          do i = 1, n_keywords
 !
@@ -220,20 +230,20 @@ contains
    end subroutine determine_es_type_property_engine(engine)
 !
 !
-   subroutine read_algorithm_es_engine(engine)
+   subroutine read_algorithm_property_engine(engine)
 !!
 !!    Read algorithm
 !!    Written by Josefine H. Andersen
 !!
       implicit none
 !
-      class(es_engine), intent(inout) :: engine
+      class(property_engine), intent(inout) :: engine
 !
       character(len=100) :: line
 !
       integer :: i, n_records
 !
-      call move_to_section('cc property', n_records)
+      call move_to_section('cc excited state', n_records)
 !
       do i = 1, n_records
 !
@@ -250,7 +260,7 @@ contains
 !
       enddo
 !
-   end subroutine read_algorithm_es_engine
+   end subroutine read_algorithm_property_engine
 !
 !
 end module property_engine_class
