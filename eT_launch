@@ -1,0 +1,45 @@
+#!/usr/bin/env python3
+
+import os
+import tempfile
+import shutil
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('input_file', help="eT input file")
+args = parser.parse_args()
+print(args.input_file)
+
+cwd = os.getcwd()
+eT_dir = os.path.dirname(__file__)
+eT_dir = os.path.abspath(eT_dir)
+
+print(cwd)
+print(eT_dir)
+
+scratch = os.getenv('eT_SCRATCH')
+print(scratch)
+
+tmpscratch = tempfile.mkdtemp(dir=scratch)
+
+print(tmpscratch)
+
+inp_name = os.path.splitext(args.input_file)[0]
+output_file = '{0}{1}'.format(inp_name,'.out')
+
+inp_src = os.path.abspath(args.input_file)
+out_dest = os.path.join(cwd,output_file)
+inp_dest = os.path.join(tmpscratch,'eT.inp')
+out_src = os.path.join(tmpscratch,'eT.out')
+print('inp_src',inp_src)
+print('inp_dest',inp_dest)
+print('out_src',out_src)
+print('out_dest',out_dest)
+
+shutil.copyfile(inp_src,inp_dest)
+os.chdir(tmpscratch)
+os.system(os.path.join(eT_dir,'eT'))
+shutil.copyfile(out_src,out_dest)
+os.chdir(cwd)
+
+shutil.rmtree(tmpscratch)
