@@ -159,7 +159,17 @@ contains
 !
       deallocate(cc_multipliers_davidson)
 !
-   end subroutine run_property_engine
+!     Property (spectra)
+!
+      allocate(cc_property_solver)
+!
+      call cc_property_solver%prepare(wf)
+      call cc_property_solver%run(wf)
+      call cc_property_solver%cleanup(wf)
+!
+      deallocate(cc_property_solver)
+!
+   end run_property_engine
 !
 !
    subroutine cleanup_property_engine(engine)
@@ -189,9 +199,9 @@ contains
 !
       integer :: i, n_keywords
 !
-      if (requested_section('cc property')) then
+      if (requested_section('cc excited state')) then
 !
-         call move_to_section('cc property', n_keywords)
+         call move_to_section('cc excited state', n_keywords)
 !
          do i = 1, n_keywords
 !
@@ -234,7 +244,7 @@ contains
 !
       integer :: i, n_records
 !
-      call move_to_section('cc property', n_records)
+      call move_to_section('cc excited state', n_records)
 !
       do i = 1, n_records
 !
