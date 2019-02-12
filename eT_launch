@@ -18,10 +18,12 @@ parser.add_argument('output_file', help="eT output file", nargs='?', default=Non
 parser.add_argument('--scratch', help="Specify scratch directory", type=str)
 parser.add_argument('-ks', '--keep_scratch', help="Do not delete scratch", action="store_true")
 parser.add_argument("--omp", help="Number of OpenMP threads", action=OMPaction, type=int)
+parser.add_argument('-nt', "--no_timing", help="Do not copy timing.out from scratch", action='store_true')
 args = parser.parse_args()
 print(args.input_file)
 print(args.output_file)
 print(args.keep_scratch)
+print(args.no_timing)
 print(args.omp)
 print(args.scratch)
 
@@ -55,23 +57,32 @@ print(tmpscratch)
 
 if args.output_file:
     output_file = args.output_file
+    out_name = os.path.splitext(args.output_file)[0]
+    time_file = '{0}{1}{2}'.format(out_name,'.timing','.out')
 else:
     inp_name = os.path.splitext(args.input_file)[0]
     output_file = '{0}{1}'.format(inp_name,'.out')
+    time_file = '{0}{1}{2}'.format(inp_name,'.timing','.out')
 
 inp_src = os.path.abspath(args.input_file)
 out_dest = os.path.join(cwd,output_file)
+time_dest = os.path.join(cwd,time_file)
 inp_dest = os.path.join(tmpscratch,'eT.inp')
 out_src = os.path.join(tmpscratch,'eT.out')
+time_src = os.path.join(tmpscratch,'timing.out')
 print('inp_src',inp_src)
 print('inp_dest',inp_dest)
 print('out_src',out_src)
 print('out_dest',out_dest)
+print('time_src',time_src)
+print('time_dest',time_dest)
 
 shutil.copyfile(inp_src,inp_dest)
 os.chdir(tmpscratch)
 os.system(os.path.join(eT_dir,'eT'))
 shutil.copyfile(out_src,out_dest)
+if not args.no_timing:
+    shutil.copyfile(time_src,time_dest)
 os.chdir(cwd)
 
 if not args.keep_scratch:
