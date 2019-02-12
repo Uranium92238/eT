@@ -5,10 +5,25 @@ import tempfile
 import shutil
 import argparse
 
+class OMPaction(argparse.Action):
+    def __call__(self, parser, namespace, value, option_string=None):
+        if value < 1:
+            parser.error("{0} must be greater than 0".format(option_string))
+        setattr(namespace, self.dest, value)
+
+
 parser = argparse.ArgumentParser()
-parser.add_argument('input_file', help="eT input file")
+parser.add_argument('input_file', help="eT input file", nargs='?', default="eT.inp")
+parser.add_argument('output_file', help="eT output file", nargs='?', default=None)
+parser.add_argument('--scratch', help="Specify scratch directory", type=str)
+parser.add_argument('-ks', '--keep_scratch', help="Do not delete scratch", action="store_true")
+parser.add_argument("--omp", help="Number of OpenMP threads", action=OMPaction, type=int)
 args = parser.parse_args()
 print(args.input_file)
+print(args.output_file)
+print(args.keep_scratch)
+print(args.omp)
+print(args.scratch)
 
 cwd = os.getcwd()
 eT_dir = os.path.dirname(__file__)
@@ -17,15 +32,32 @@ eT_dir = os.path.abspath(eT_dir)
 print(cwd)
 print(eT_dir)
 
-scratch = os.getenv('eT_SCRATCH')
-print(scratch)
-
-tmpscratch = tempfile.mkdtemp(dir=scratch)
+if args.scratch:
+    tmpscratch = os.path.abspath(args.scratch)
+    os.makedirs(tmpscratch, exist_ok=True)
+else:
+    scratch = os.getenv('eT_SCRATCH')
+    tmpscratch = tempfile.mkdtemp(dir=scratch)
 
 print(tmpscratch)
 
-inp_name = os.path.splitext(args.input_file)[0]
-output_file = '{0}{1}'.format(inp_name,'.out')
+if args.omp:
+    os.environ['OMP_NUM_THREAD'] = str(args.omp)
+    os.environ['MKL_NUM_THREAD'] = str(args.omp)
+
+omps = os.getenv('OMP_NUM_THREAD')
+mkls = os.getenv('MKL_NUM_THREAD')
+print(omps)
+print(mkls)
+
+
+print(tmpscratch)
+
+if args.output_file:
+    output_file = args.output_file
+else:
+    inp_name = os.path.splitext(args.input_file)[0]
+    output_file = '{0}{1}'.format(inp_name,'.out')
 
 inp_src = os.path.abspath(args.input_file)
 out_dest = os.path.join(cwd,output_file)
@@ -42,4 +74,5 @@ os.system(os.path.join(eT_dir,'eT'))
 shutil.copyfile(out_src,out_dest)
 os.chdir(cwd)
 
-shutil.rmtree(tmpscratch)
+if not args.keep_scratch:
+    shutil.rmtree(tmpscratch)
