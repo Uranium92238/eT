@@ -24,7 +24,7 @@ parser.add_argument('-v', "--verbose", help="Run some print statements", action=
 args = parser.parse_args()
 
 cwd = os.getcwd() # Get current directory
-eT_dir = os.path.dirname(__file__) # Find location of eT_launch. Assume eT is here
+eT_dir = '${CMAKE_BINARY_DIR}' # Find location of eT_launch. Assume eT is here
 eT_dir = os.path.abspath(eT_dir) # Use absolute path
 
 # Make a scratch dir. Either specified by user or wherever os dumps temporary file
