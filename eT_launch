@@ -44,11 +44,11 @@ else:
 print(tmpscratch)
 
 if args.omp:
-    os.environ['OMP_NUM_THREAD'] = str(args.omp)
-    os.environ['MKL_NUM_THREAD'] = str(args.omp)
+    os.environ['OMP_NUM_THREADS'] = str(args.omp)
+    os.environ['MKL_NUM_THREADS'] = str(args.omp)
 
-omps = os.getenv('OMP_NUM_THREAD')
-mkls = os.getenv('MKL_NUM_THREAD')
+omps = os.getenv('OMP_NUM_THREADS')
+mkls = os.getenv('MKL_NUM_THREADS')
 print(omps)
 print(mkls)
 
