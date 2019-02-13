@@ -24,10 +24,10 @@ module mo_integral_tool_class
       type(file) :: cholesky_mo
       type(file) :: cholesky_mo_t1
 !
-      integer, private :: n_o 
-      integer, private :: n_v 
+      integer, private :: n_o
+      integer, private :: n_v
 !
-      integer, private :: n_mo 
+      integer, private :: n_mo
 !
       logical, private :: eri_t1_mem = .false.
       real(dp), dimension(:,:,:,:), allocatable :: g_pqrs
@@ -57,7 +57,7 @@ module mo_integral_tool_class
       procedure :: construct_ovov_2_mo_integral_tool
       procedure :: construct_ovov_4_mo_integral_tool
       generic   :: construct_ovov         => construct_ovov_2_mo_integral_tool, &
-                                             construct_ovov_4_mo_integral_tool   
+                                             construct_ovov_4_mo_integral_tool
       procedure :: construct_vovo_2_mo_integral_tool
       procedure :: construct_vovo_4_mo_integral_tool
       generic   :: construct_vovo         => construct_vovo_2_mo_integral_tool, &
@@ -140,20 +140,20 @@ contains
 !
    subroutine prepare_mo_integral_tool(integrals, n_J, n_o, n_v)
 !!
-!!    Prepare 
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Prepare
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-!!    Initializes the integral tool. Note that the integral tool 
+!!    Initializes the integral tool. Note that the integral tool
 !!    needs to know the number of occupied and virtual orbitals,
-!!    which are also stored in the wavefunction. 
+!!    which are also stored in the wavefunction.
 !!
-!!    n_o: number of occupied orbitals 
-!!    n_v: number of virtual orbitals 
-!!    n_J: number of Cholesky vectors 
+!!    n_o: number of occupied orbitals
+!!    n_v: number of virtual orbitals
+!!    n_J: number of Cholesky vectors
 !!
       implicit none
 !
-      class(mo_integral_tool) :: integrals 
+      class(mo_integral_tool) :: integrals
 !
       integer, intent(in) :: n_J
       integer, intent(in) :: n_o
@@ -161,12 +161,12 @@ contains
 !
       integrals%n_J = n_J
 !
-      integrals%n_o  = n_o 
+      integrals%n_o  = n_o
       integrals%n_v  = n_v
       integrals%n_mo = n_o + n_v
 !
       call  integrals%cholesky_mo%init('cholesky_mo_vectors', 'direct', 'unformatted', dp*n_J)
-! 
+!
 !     Initially MO cholesky on file, and not T1-transformed cholesky
 !     nor full T1-ERI matrix
 !
@@ -179,25 +179,25 @@ contains
 !
    subroutine can_we_keep_g_pqrs_mo_integral_tool(integrals)
 !!
-!!    Can we keep g_pqrs   
-!!    Written by Eirik F. Kjønstad, Jan 2019 
+!!    Can we keep g_pqrs
+!!    Written by Eirik F. Kjønstad, Jan 2019
 !!
-!!    This routine is called to check whether the T1-ERIs can be held in 
-!!    memory safely (< 20% of total available). If this is the case, the 
-!!    manager will keep a copy of g_pqrs in memory. When an integral is 
+!!    This routine is called to check whether the T1-ERIs can be held in
+!!    memory safely (< 20% of total available). If this is the case, the
+!!    manager will keep a copy of g_pqrs in memory. When an integral is
 !!    requested (e.g. g_abci), the integral will be copied from the g_pqrs
-!!    copy instead of being constructed as g_abci = sum_J L_ab^J L_ci^J. 
+!!    copy instead of being constructed as g_abci = sum_J L_ab^J L_ci^J.
 !!
-!!    Note: the routine assumes that the T1-transformed Cholesky vectors 
+!!    Note: the routine assumes that the T1-transformed Cholesky vectors
 !!    have been placed on file.
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool) :: integrals 
+      class(mo_integral_tool) :: integrals
 !
-      real(dp), dimension(:,:), allocatable :: L_pq_J 
+      real(dp), dimension(:,:), allocatable :: L_pq_J
 !
-      integer :: required_mem 
+      integer :: required_mem
 !
       required_mem = (integrals%n_mo)**4 + (integrals%n_mo)**2*(integrals%n_J)
 !
@@ -205,16 +205,16 @@ contains
 !
          integrals%eri_t1_mem = .true.
 !
-!        If not allocated, allocate copy of ERI matrix 
+!        If not allocated, allocate copy of ERI matrix
 !
-         if (.not. allocated(integrals%g_pqrs)) then 
+         if (.not. allocated(integrals%g_pqrs)) then
 !
             call mem%alloc(integrals%g_pqrs, integrals%n_mo, integrals%n_mo, &
                                           integrals%n_mo, integrals%n_mo)
 !
          endif
 !
-!        Then construct it from the T1-Cholesky vectors 
+!        Then construct it from the T1-Cholesky vectors
 !
          call mem%alloc(L_pq_J, integrals%n_mo**2, integrals%n_J)
 !
@@ -239,7 +239,7 @@ contains
 !
          integrals%eri_t1_mem = .false.
 !
-      endif 
+      endif
 !
    end subroutine can_we_keep_g_pqrs_mo_integral_tool
 !
@@ -254,7 +254,7 @@ contains
 !!
       implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       need_t1_mo_integral_tool = .not. integrals%cholesky_t1_file
 !
@@ -266,7 +266,7 @@ contains
 !!    Read mo cholesky vectors
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
-!!    Reads cholesky vectors L_pq_J for mo indices 
+!!    Reads cholesky vectors L_pq_J for mo indices
 !!    [first_p, first_p + dim_p - 1] and [first_q, first_q + dim_q - 1]
 !!
       implicit none
@@ -308,7 +308,7 @@ contains
 !!    Read mo t1 cholesky vectors
 !!    Written by Eirik F. Kjønstad and Sarai D. Folkestad, 2018
 !!
-!!    Reads T1-transformed cholesky vectors L_pq_J for mo indices 
+!!    Reads T1-transformed cholesky vectors L_pq_J for mo indices
 !!    [first_p, last_p] and [first_q, last_q]
 !!
       implicit none
@@ -345,19 +345,19 @@ contains
 !
    subroutine read_cholesky_ia_mo_integral_tool(integrals, L_ia_J, first_i, last_i, first_a, last_a)
 !!
-!!    Read Cholesky ia 
+!!    Read Cholesky ia
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
-!  
+      class(mo_integral_tool), intent(in) :: integrals
+!
       integer, optional, intent(in) :: first_i, last_i
       integer, optional, intent(in) :: first_a, last_a
 !
       real(dp), dimension(:,:) :: L_ia_J
 !
-      integer :: full_first_a, full_last_a 
+      integer :: full_first_a, full_last_a
       integer :: full_first_i, full_last_i
 !
       call integrals%set_full_index(full_first_i, 'f', 'o', first_i)
@@ -374,7 +374,7 @@ contains
    subroutine construct_cholesky_ij_mo_integral_tool(integrals, L_ij_J, t1, first_i, last_i, first_j, last_j)
 !!
 !!    Construct Cholesky ij
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!    Computes
 !!
@@ -382,25 +382,25 @@ contains
 !!
 !!    and saves the result in L_ij_J.
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       integer, intent(in) :: first_i, last_i
       integer, intent(in) :: first_j, last_j
 !
-      real(dp), dimension(:,:) :: L_ij_J 
+      real(dp), dimension(:,:) :: L_ij_J
 !
-      real(dp), dimension(integrals%n_v, integrals%n_o), intent(in) :: t1 
+      real(dp), dimension(integrals%n_v, integrals%n_o), intent(in) :: t1
 !
       real(dp), dimension(:,:), allocatable :: L_iJ_j_term
       real(dp), dimension(:,:), allocatable :: L_iJ_a
       real(dp), dimension(:,:), allocatable :: L_ia_J
 !
-      integer :: full_first_i, full_last_i 
-      integer :: full_first_j, full_last_j 
+      integer :: full_first_i, full_last_i
+      integer :: full_first_j, full_last_j
 !
-      integer :: i_length, j_length          
+      integer :: i_length, j_length
 !
       call integrals%set_full_index(full_first_i, 'f', 'o', first_i)
       call integrals%set_full_index(full_first_j, 'f', 'o', first_j)
@@ -418,7 +418,7 @@ contains
       call integrals%read_cholesky(L_ij_J, full_first_i, full_last_i, full_first_j, full_last_j)
       call integrals%read_cholesky(L_ia_J, full_first_i, full_last_i, integrals%n_o + 1, integrals%n_mo)
 !
-!     Compute and add t1-transformed term, L_iJ_j sum_a t_aj L_ia_J 
+!     Compute and add t1-transformed term, L_iJ_j sum_a t_aj L_ia_J
 !
       call mem%alloc(L_iJ_a, i_length*(integrals%n_J), integrals%n_v)
       call sort_123_to_132(L_ia_J, L_iJ_a, i_length, integrals%n_v, integrals%n_J)
@@ -449,34 +449,33 @@ contains
 !
    subroutine construct_cholesky_ab_mo_integral_tool(integrals, L_ab_J, t1, first_a, last_a, first_b, last_b)
 !!
-!!    Construct Cholesky ab 
+!!    Construct Cholesky ab
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-!!    Computes 
+!!    Computes
 !!
 !!       L_ab_J_T1 = L_ab_J - sum_i t_ai L_ib_J
-!! 
-!!    and saves the result in L_ab_J. Note that batching is handled 
-!!    outside this routine, not inside. 
 !!
-      implicit none 
+!!    and saves the result in L_ab_J. Note that batching is handled
+!!    outside this routine, not inside.
+!!
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(:,:) :: L_ab_J
 !
-      real(dp), dimension(integrals%n_v, integrals%n_o), intent(in) :: t1 
+      real(dp), dimension(integrals%n_v, integrals%n_o), intent(in) :: t1
 !
       integer, intent(in) :: first_a, last_a
       integer, intent(in) :: first_b, last_b
 !
-      integer :: full_first_a, full_last_a 
+      integer :: full_first_a, full_last_a
       integer :: full_first_b, full_last_b
 !
-      integer :: red_first_a 
+      integer :: red_first_a
 !
       real(dp), dimension(:,:), allocatable :: L_ib_J
-      real(dp), dimension(:,:), allocatable :: L_Jb_a
 !
       integer :: b_length, a_length
 !
@@ -484,14 +483,14 @@ contains
       call integrals%set_full_index(full_first_b, 'f', 'v', first_b)
 !
       call integrals%set_full_index(full_last_a, 'l', 'v', last_a)
-      call integrals%set_full_index(full_last_b, 'l', 'v', last_b)      
+      call integrals%set_full_index(full_last_b, 'l', 'v', last_b)
 !
       red_first_a = full_first_a - integrals%n_o
 !
       a_length = full_last_a - full_first_a + 1
       b_length = full_last_b - full_first_b + 1
 !
-!     Set L_ib_J = L_ib^J and L_ab_J^T1 = L_ab_J 
+!     Set L_ib_J = L_ib^J and L_ab_J^T1 = L_ab_J
 !
       call mem%alloc(L_ib_J, (integrals%n_o)*b_length, integrals%n_J)
       call integrals%read_cholesky(L_ib_J, 1, integrals%n_o, full_first_b, full_last_b)
@@ -500,7 +499,7 @@ contains
 !
 !     Calculate and add t1-transformed term, - sum_i t_ai L_ib_J
 !
-      call mem%alloc(L_Jb_a, (integrals%n_J)*b_length, a_length)
+   !   call mem%alloc(L_Jb_a, (integrals%n_J)*b_length, a_length)set_full_index_mo (not Needed?????)
 !
       call dgemm('N','N',                   &
                   a_length,                 &
@@ -515,7 +514,7 @@ contains
                   L_ab_J,                   & ! L_a_bj
                   a_length)
 !
-      call mem%dealloc(L_ib_J, (integrals%n_o)*b_length, integrals%n_J)  
+      call mem%dealloc(L_ib_J, (integrals%n_o)*b_length, integrals%n_J)
 !
    end subroutine construct_cholesky_ab_mo_integral_tool
 !
@@ -526,15 +525,15 @@ contains
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!    Computes the T1-transformed cholesky vector
-!!    
-!!       L_ai_J_T1 = L_ai_J - sum_j t_aj*L_ji_J 
+!!
+!!       L_ai_J_T1 = L_ai_J - sum_j t_aj*L_ji_J
 !!                          + sum_b t_bi*L_ab_J
 !!                          - sum_bj t_aj*t_bi*L_jb_J
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
-!  
+      class(mo_integral_tool), intent(in) :: integrals
+!
       integer, intent(in) :: first_i, last_i
       integer, intent(in) :: first_a, last_a
 !
@@ -542,7 +541,7 @@ contains
       real(dp), dimension(integrals%n_v, integrals%n_o) :: t1
       real(dp), dimension(:, :), allocatable :: L_bj_J, L_ji_J, L_ba_J, X_j_iJ, X_i_jJ, X_i_aJ
 !
-      integer :: full_first_a, full_last_a, length_a 
+      integer :: full_first_a, full_last_a, length_a
       integer :: full_first_i, full_last_i, length_i
 !
       type(batching_index) :: batch_j
@@ -564,7 +563,7 @@ contains
 !
       req0 = 0
       req1 = (integrals%n_o)*(integrals%n_J) & ! X_i_jJ
-            + (integrals%n_v)*(integrals%n_J)  ! L_bj_J 
+            + (integrals%n_v)*(integrals%n_J)  ! L_bj_J
 !
       call mem%batch_setup(batch_j, req0, req1)
 !
@@ -629,16 +628,16 @@ contains
                    integrals%n_o,                            &
                    one,                                      &
                    L_ai_J,                                   & ! L_a_iJ
-                   length_a)     
+                   length_a)
 !
       call mem%dealloc(L_ji_J, (integrals%n_o)*length_i, (integrals%n_J))
 !
-      call mem%alloc(L_ba_J, length_a*(integrals%n_v), (integrals%n_J)) 
+      call mem%alloc(L_ba_J, length_a*(integrals%n_v), (integrals%n_J))
 !
       call integrals%read_cholesky(L_ba_J, (integrals%n_o) + 1, (integrals%n_mo), &
                         first_a + (integrals%n_o), last_a + (integrals%n_o))
 !
-      call mem%alloc(X_i_aJ, length_i, (length_a)*(integrals%n_J)) 
+      call mem%alloc(X_i_aJ, length_i, (length_a)*(integrals%n_J))
 !
       call dgemm('T', 'N',                                  &
                   length_i,                                 &
@@ -650,17 +649,299 @@ contains
                   L_ba_J,                                   & ! L_b_aJ
                   integrals%n_v,                            &
                   zero,                                     &
-                  X_i_aJ,                                   & 
-                  length_i) 
- 
-!        
-      call mem%dealloc(L_ba_J, (length_a)*(integrals%n_v), (integrals%n_J))  
+                  X_i_aJ,                                   &
+                  length_i)
+
+!
+      call mem%dealloc(L_ba_J, (length_a)*(integrals%n_v), (integrals%n_J))
 !
       call add_213_to_123(one, X_i_aJ, L_ai_J, length_a, length_i, integrals%n_J)
 !
-      call mem%dealloc(X_i_aJ, length_i, (length_a)*(integrals%n_J)) 
+      call mem%dealloc(X_i_aJ, length_i, (length_a)*(integrals%n_J))
 !
    end subroutine construct_cholesky_ai_mo_integral_tool
+!
+!
+   subroutine c1_transform_cholesky_ij_j_mo_integral_tool(integrals, L_ij_J, c_aj, first_i, last_i, first_j, last_j)
+!!
+!!    Construct C1-transformed Cholesky ij from T1-transformed
+!!    j is the transformed index
+!!    L_ia_J_T1 is equal to L_ia_J
+!!
+!!    Assume that T1-transformed Cholesky vectors already exist.
+!!    Written by Alexander Paul, Feb 2019
+!!
+!!    Computes
+!!
+!!       L_ij_J_c1= sum_a L_ia_J_T1 c_aj ,
+!!
+!!    and returns the result in L_ij_J.
+!!
+      implicit none
+!
+      class(mo_integral_tool), intent(in) :: integrals
+!
+      integer, intent(in) :: first_i, last_i
+      integer, intent(in) :: first_j, last_j
+!
+      real(dp), dimension(:,:) :: L_ij_J
+!
+      real(dp), dimension(integrals%n_v, integrals%n_o), intent(in) :: c_aj
+!
+      real(dp), dimension(:,:), allocatable :: L_iJ_j_term
+      real(dp), dimension(:,:), allocatable :: L_iJ_a
+      real(dp), dimension(:,:), allocatable :: L_ia_J
+!
+      integer :: full_first_i, full_last_i
+      integer :: full_first_j, full_last_j
+!
+      integer :: i_length, j_length
+!
+      call integrals%set_full_index(full_first_i, 'f', 'o', first_i)
+      call integrals%set_full_index(full_first_j, 'f', 'o', first_j)
+!
+      call integrals%set_full_index(full_last_i, 'l', 'o', last_i)
+      call integrals%set_full_index(full_last_j, 'l', 'o', last_j)
+!
+      i_length = full_last_i - full_first_i + 1
+      j_length = full_last_j - full_first_j + 1
+!
+      call mem%alloc(L_ia_J, i_length*(integrals%n_v), integrals%n_J)
+!
+      call integrals%read_cholesky_ia_t1(L_ia_J, full_first_i, full_last_i, integrals%n_o + 1, integrals%n_mo)
+!
+!     Compute c1-transformed term: L_iJ_j = sum_a c_aj L_ia_J
+!
+      call mem%alloc(L_iJ_a, i_length*(integrals%n_J), integrals%n_v)
+!
+      call sort_123_to_132(L_ia_J, L_iJ_a, i_length, integrals%n_v, integrals%n_J)
+!
+      call mem%dealloc(L_ia_J, i_length*(integrals%n_v), integrals%n_J)
+!
+      call mem%alloc(L_iJ_j_term, i_length*(integrals%n_J), j_length)
+!
+      call dgemm('N','N',                   &
+                  i_length*(integrals%n_J), &
+                  j_length,                 &
+                  integrals%n_v,            &
+                  one,                      &
+                  L_iJ_a,                   & ! L_iJ_a
+                  i_length*(integrals%n_J), &
+                  c_aj(1, first_j),         & ! c_a_j
+                  integrals%n_v,            &
+                  zero,                     &
+                  L_iJ_j_term,              &
+                  i_length*(integrals%n_J))
+!
+     call mem%dealloc(L_iJ_a, i_length*(integrals%n_J), integrals%n_v)
+!
+     call sort_123_to_132(L_iJ_j_term, L_ij_J, i_length, integrals%n_J, j_length)
+!
+     call mem%dealloc(L_iJ_j_term, i_length*(integrals%n_J), j_length)
+!
+   end subroutine c1_transform_cholesky_ij_j_mo_integral_tool
+!
+!
+   subroutine c1_transform_cholesky_ab_a_mo_integral_tool(integrals, L_ab_J, c_ai, first_a, last_a, first_b, last_b)
+!!
+!!    Construct C1-transformed Cholesky ab from T1-transformed
+!!    a is the transformed index
+!!    L_ia_J_T1 is equal to L_ia_J
+!!
+!!    Written by Alexander Paul, Feb 2019
+!!
+!!    Computes
+!!
+!!       L_ab_J_c1= - sum_i c_ai L_ib_J_T1 ,
+!!
+!!    and returns the result in L_ab_J.
+!!
+      implicit none
+!
+      class(mo_integral_tool), intent(in) :: integrals
+!
+      real(dp), dimension(:,:) :: L_ab_J
+!
+      real(dp), dimension(integrals%n_v, integrals%n_o), intent(in) :: c_ai
+!
+      integer, intent(in) :: first_a, last_a
+      integer, intent(in) :: first_b, last_b
+!
+      integer :: full_first_a, full_last_a
+      integer :: full_first_b, full_last_b
+!
+      real(dp), dimension(:,:), allocatable :: L_ib_J
+!
+      integer :: b_length, a_length
+!
+      call integrals%set_full_index(full_first_a, 'f', 'v', first_a)
+      call integrals%set_full_index(full_first_b, 'f', 'v', first_b)
+!
+      call integrals%set_full_index(full_last_a, 'l', 'v', last_a)
+      call integrals%set_full_index(full_last_b, 'l', 'v', last_b)
+!
+      a_length = full_last_a - full_first_a + 1
+      b_length = full_last_b - full_first_b + 1
+!
+      call mem%alloc(L_ib_J, (integrals%n_o)*b_length, integrals%n_J)
+      call integrals%read_cholesky_ia_t1(L_ib_J, 1, integrals%n_o, full_first_b, full_last_b)
+!
+!     Calculate c1-transformed term, - sum_i c_ai L_ib_J
+!
+      call dgemm('N','N',                   &
+                  a_length,                 &
+                  b_length*(integrals%n_J), &
+                  integrals%n_o,            &
+                  -one,                     &
+                  c_ai(first_a, 1),         & ! c_a_i
+                  integrals%n_v,            &
+                  L_ib_J,                   & ! L_i_bJ
+                  integrals%n_o,            &
+                  zero,                     &
+                  L_ab_J,                   & ! L_a_bJ
+                  a_length)
+!
+      call mem%dealloc(L_ib_J, (integrals%n_o)*b_length, integrals%n_J)
+!
+   end subroutine c1_transform_cholesky_ab_a_mo_integral_tool
+!
+!
+   subroutine c1_transform_cholesky_ai_a_mo_integral_tool(integrals, L_ai_J, c_aj, first_a, last_a, first_i, last_i)
+!!
+!!    Construct C1-transformed Cholesky ai from T1-transformed L_ai_J
+!!    a is the transformed index
+!!
+!!    Written by Alexander Paul, Feb 2019
+!!
+!!    Computes
+!!
+!!       L_ai_J_c1= - sum_j c_aj L_ji_J_T1 ,
+!!
+!!    and returns the result in L_ai_J.
+!!
+      implicit none
+!
+      class(mo_integral_tool), intent(in) :: integrals
+!
+      real(dp), dimension(:,:) :: L_ai_J
+!
+      real(dp), dimension(integrals%n_v, integrals%n_o), intent(in) :: c_aj
+!
+      integer, intent(in) :: first_a, last_a
+      integer, intent(in) :: first_i, last_i
+!
+      integer :: full_first_a, full_last_a
+      integer :: full_first_i, full_last_i
+!
+      real(dp), dimension(:,:), allocatable :: L_ji_J
+!
+      integer :: i_length, a_length
+!
+      call integrals%set_full_index(full_first_a, 'f', 'v', first_a)
+      call integrals%set_full_index(full_first_i, 'f', 'o', first_i)
+!
+      call integrals%set_full_index(full_last_a, 'l', 'v', last_a)
+      call integrals%set_full_index(full_last_i, 'l', 'o', last_i)
+!
+      a_length = full_last_a - full_first_a + 1
+      i_length = full_last_i - full_first_i + 1
+!
+      call mem%alloc(L_ji_J, (integrals%n_o)*i_length, integrals%n_J)
+      call integrals%read_cholesky_t1_ij(L_ji_J, 1, integrals%n_o, full_first_i, full_last_i)
+!
+!     Calculate c1-transformed term, - sum_i c_aj L_ji_J
+!
+      call dgemm('N','N',                   &
+                  a_length,                 &
+                  i_length*(integrals%n_J), &
+                  integrals%n_o,            &
+                  -one,                     &
+                  c_aj(first_a, 1),         & ! c_a_j
+                  integrals%n_v,            &
+                  L_ji_J,                   & ! L_j_iJ
+                  integrals%n_o,            &
+                  zero,                     &
+                  L_ai_J,                   & ! L_ai_J
+                  a_length)
+!
+      call mem%dealloc(L_ji_J, (integrals%n_o)*i_length, integrals%n_J)
+!
+   end subroutine c1_transform_cholesky_ai_a_mo_integral_tool
+!
+!
+   subroutine c1_transform_cholesky_ai_i_mo_integral_tool(integrals, L_ai_J, c_bi, first_a, last_a, first_i, last_i)
+!!
+!!    Construct C1-transformed Cholesky ai from T1-transformed L_ji_J
+!!    i is the transformed index
+!!
+!!    Written by Alexander Paul, Feb 2019
+!!
+!!    Computes
+!!
+!!       L_ai_J_c1= sum_b L_ab_J_T1 c_bi,
+!!
+!!    and returns the result in L_ai_J.
+!!
+      implicit none
+!
+      class(mo_integral_tool), intent(in) :: integrals
+!
+      real(dp), dimension(:,:) :: L_ai_J
+!
+      real(dp), dimension(integrals%n_v, integrals%n_o), intent(in) :: c_bi
+!
+      integer, intent(in) :: first_a, last_a
+      integer, intent(in) :: first_i, last_i
+!
+      integer :: full_first_a, full_last_a
+      integer :: full_first_i, full_last_i
+!
+      real(dp), dimension(:,:), allocatable :: L_ab_J, L_i_aJ, L_b_aJ
+!
+      integer :: i_length, a_length
+!
+      call integrals%set_full_index(full_first_a, 'f', 'v', first_a)
+      call integrals%set_full_index(full_first_i, 'f', 'o', first_i)
+!
+      call integrals%set_full_index(full_last_a, 'l', 'v', last_a)
+      call integrals%set_full_index(full_last_i, 'l', 'o', last_i)
+!
+      a_length = full_last_a - full_first_a + 1
+      i_length = full_last_i - full_first_i + 1
+!
+      call mem%alloc(L_ab_J, (integrals%n_v)*a_length, integrals%n_J)
+      call integrals%read_cholesky_ab_t1(L_ab_J, full_first_a, full_last_a, 1, integrals%n_v)
+!
+      call mem%alloc(L_b_aJ, integrals%n_v, a_length*(integrals%n_J))
+!
+      call sort_123_to_213(L_ab_J, L_b_aJ, a_length, integrals%n_v, integrals%n_J)
+!
+      call mem%dealloc(L_ab_J, (integrals%n_v)*a_length, integrals%n_J)
+!
+      call mem%alloc(L_i_aJ, i_length, a_length*(integrals%n_J))
+!
+!     Calculate c1-transformed term, sum_b L_ab_J c_bi
+!
+      call dgemm('T','N',                    &
+                  i_length,                  &
+                  a_length*integrals%n_J,    &
+                  integrals%n_v,             &
+                  one,                       &
+                  c_bi,                      & ! c_b_i
+                  integrals%n_v,             &
+                  L_b_aJ,                    & ! L_b_aJ
+                  integrals%n_v,             &
+                  zero,                      &
+                  L_i_aJ,                    & ! L_i_aJ
+                  i_length)
+!
+      call mem%dealloc(L_b_aJ, integrals%n_v, a_length*(integrals%n_J))
+!
+      call sort_123_to_213(L_i_aJ, L_ai_J, i_length, a_length, integrals%n_J)
+!
+      call mem%dealloc(L_i_aJ, i_length, a_length*(integrals%n_J))
+!
+   end subroutine c1_transform_cholesky_ai_i_mo_integral_tool
 !
 !
    subroutine read_cholesky_ai_t1_mo_integral_tool(integrals, L_ai_J, first_a, last_a, first_i, last_i)
@@ -668,18 +949,18 @@ contains
 !!    Read Cholesky ai T1
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-!!    Read T1-transformed mo cholesky L_ai^J vectors from file 
+!!    Read T1-transformed mo cholesky L_ai^J vectors from file
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
-!  
+      class(mo_integral_tool), intent(in) :: integrals
+!
       integer, intent(in) :: first_i, last_i
       integer, intent(in) :: first_a, last_a
 !
       real(dp), dimension(:, :) :: L_ai_J
 !
-      integer :: full_first_a, full_last_a 
+      integer :: full_first_a, full_last_a
       integer :: full_first_i, full_last_i
 !
 !
@@ -699,12 +980,12 @@ contains
 !!    Read Cholesky ia T1
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-!!    Read T1-transformed mo cholesky L_ai^J vectors from file 
+!!    Read T1-transformed mo cholesky L_ai^J vectors from file
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
-!  
+      class(mo_integral_tool), intent(in) :: integrals
+!
       integer, intent(in) :: first_i, last_i
       integer, intent(in) :: first_a, last_a
 !
@@ -730,18 +1011,18 @@ contains
 !!    Read Cholesky ij T1
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-!!    Read T1-transformed mo cholesky L_ij^J vectors from file 
+!!    Read T1-transformed mo cholesky L_ij^J vectors from file
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
-!  
+      class(mo_integral_tool), intent(in) :: integrals
+!
       integer, intent(in) :: first_i, last_i
       integer, intent(in) :: first_j, last_j
 !
       real(dp), dimension(:, :) :: L_ij_J
 !
-      integer :: full_first_j, full_last_j 
+      integer :: full_first_j, full_last_j
       integer :: full_first_i, full_last_i
 !
 !
@@ -761,18 +1042,18 @@ contains
 !!    Read Cholesky ab T1
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-!!    Read T1-transformed mo cholesky L_ab^J vectors from file 
+!!    Read T1-transformed mo cholesky L_ab^J vectors from file
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
-!  
+      class(mo_integral_tool), intent(in) :: integrals
+!
       integer, intent(in) :: first_a, last_a
       integer, intent(in) :: first_b, last_b
 !
       real(dp), dimension(:, :) :: L_ab_J
 !
-      integer :: full_first_b, full_last_b 
+      integer :: full_first_b, full_last_b
       integer :: full_first_a, full_last_a
 !
       call integrals%set_full_index(full_first_a, 'f', 'v', first_a)
@@ -788,66 +1069,66 @@ contains
 !
    subroutine set_full_index_mo_integral_tool(integrals, ind, pos, orb_space, red_ind)
 !!
-!!    Set full index 
+!!    Set full index
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!    Sets the full space index "ind" based on the provided orbital space ('o' or 'v'
-!!    for occupied or virtual). Prepares the index "ind" to call the routine to 
-!!    read cholesky vector. The "pos" specifies whether it is the first or last orbital 
+!!    for occupied or virtual). Prepares the index "ind" to call the routine to
+!!    read cholesky vector. The "pos" specifies whether it is the first or last orbital
 !!    index ('f' or 'l').
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
-      integer, intent(inout) :: ind 
+      integer, intent(inout) :: ind
 !
-      character(len=1), intent(in) :: orb_space 
-      character(len=1), intent(in) :: pos  
+      character(len=1), intent(in) :: orb_space
+      character(len=1), intent(in) :: pos
 !
-      integer, optional, intent(in) :: red_ind 
+      integer, optional, intent(in) :: red_ind
 !
-      if (present(red_ind)) then 
+      if (present(red_ind)) then
 !
-         if (trim(orb_space) == 'o') then 
+         if (trim(orb_space) == 'o') then
 !
-            ind = red_ind 
+            ind = red_ind
 !
-         elseif (trim(orb_space) == 'v') then 
+         elseif (trim(orb_space) == 'v') then
 !
-            ind = integrals%n_o + red_ind 
+            ind = integrals%n_o + red_ind
 !
          else
 !
             call output%error_msg('did not recognize orbital space' // orb_space // ' in integral tool')
 !
-         endif 
+         endif
 !
       else
 !
-         if (trim(orb_space) == 'o') then 
+         if (trim(orb_space) == 'o') then
 !
-            if (trim(pos) == 'f') then ! First index 
+            if (trim(pos) == 'f') then ! First index
 !
-               ind = 1 
+               ind = 1
 !
-            elseif (trim(pos) == 'l') then ! Last index 
+            elseif (trim(pos) == 'l') then ! Last index
 !
-               ind = integrals%n_o 
+               ind = integrals%n_o
 !
             else
 !
                call output%error_msg('did not recognize position' // pos // ' in integral tool')
 !
-            endif  
+            endif
 !
-         elseif (trim(orb_space) == 'v') then 
+         elseif (trim(orb_space) == 'v') then
 !
-            if (trim(pos) == 'f') then ! First index 
+            if (trim(pos) == 'f') then ! First index
 !
-               ind = integrals%n_o + 1 
+               ind = integrals%n_o + 1
 !
-            elseif (trim(pos) == 'l') then ! Last index 
+            elseif (trim(pos) == 'l') then ! Last index
 !
                ind = integrals%n_o + integrals%n_v
 !
@@ -855,15 +1136,15 @@ contains
 !
                call output%error_msg('did not recognize position' // pos // ' in integral tool')
 !
-            endif  
+            endif
 !
          else
 !
             call output%error_msg('did not recognize orbital space' // orb_space // ' in integral tool')
 !
-         endif          
+         endif
 !
-      endif 
+      endif
 !
    end subroutine set_full_index_mo_integral_tool
 !
@@ -872,12 +1153,12 @@ contains
                                                 first_k, last_k, first_l, last_l, index_restrictions, t1)
 !!
 !!    Construct oooo
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(:,:), intent(inout) :: g_ijkl
 !
@@ -892,8 +1173,8 @@ contains
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ij_J 
-      real(dp), dimension(:,:), allocatable :: L_kl_J 
+      real(dp), dimension(:,:), allocatable :: L_ij_J
+      real(dp), dimension(:,:), allocatable :: L_kl_J
 !
       length_i = last_i - first_i + 1
       length_j = last_j - first_j + 1
@@ -959,14 +1240,14 @@ contains
                         L_ij_J,            &
                         length_i*length_j, &
                         L_ij_J,            &
-                        length_i*length_j, & 
+                        length_i*length_j, &
                         zero,              &
                         g_ijkl,            &
                         length_i*length_j)
 !
             call mem%dealloc(L_ij_J, length_i*length_j, integrals%n_J)
 !
-         endif 
+         endif
 !
    end subroutine construct_oooo_2_mo_integral_tool
 !
@@ -975,12 +1256,12 @@ contains
                                                 first_k, last_k, first_l, last_l, index_restrictions, t1)
 !!
 !!    Construct oooo
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
@@ -995,15 +1276,15 @@ contains
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ij_J 
-      real(dp), dimension(:,:), allocatable :: L_kl_J 
+      real(dp), dimension(:,:), allocatable :: L_ij_J
+      real(dp), dimension(:,:), allocatable :: L_kl_J
 !
       length_i = last_i - first_i + 1
       length_j = last_j - first_j + 1
       length_k = last_k - first_k + 1
       length_l = last_l - first_l + 1
 !
-      if (integrals%eri_t1_mem) then 
+      if (integrals%eri_t1_mem) then
 !
 !        Extract copy from integral stored in memory
 !
@@ -1073,16 +1354,16 @@ contains
                         L_ij_J,            &
                         length_i*length_j, &
                         L_ij_J,            &
-                        length_i*length_j, & 
+                        length_i*length_j, &
                         zero,              &
                         g_ijkl,            &
                         length_i*length_j)
 !
             call mem%dealloc(L_ij_J, length_i*length_j, integrals%n_J)
 !
-         endif 
+         endif
 !
-      endif 
+      endif
 !
    end subroutine construct_oooo_4_mo_integral_tool
 !
@@ -1091,11 +1372,11 @@ contains
                                                 first_k, last_k, first_a, last_a, index_restrictions, t1)
 !!
 !!    Construct ooov
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(:,:), intent(inout) :: g_ijka
 !
@@ -1110,8 +1391,8 @@ contains
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ij_J 
-      real(dp), dimension(:,:), allocatable :: L_ka_J 
+      real(dp), dimension(:,:), allocatable :: L_ij_J
+      real(dp), dimension(:,:), allocatable :: L_ka_J
 !
       length_i = last_i - first_i + 1
       length_j = last_j - first_j + 1
@@ -1160,11 +1441,11 @@ contains
                                                 first_k, last_k, first_a, last_a, index_restrictions, t1)
 !!
 !!    Construct ooov
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
@@ -1179,15 +1460,15 @@ contains
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ij_J 
-      real(dp), dimension(:,:), allocatable :: L_ka_J 
+      real(dp), dimension(:,:), allocatable :: L_ij_J
+      real(dp), dimension(:,:), allocatable :: L_ka_J
 !
       length_i = last_i - first_i + 1
       length_j = last_j - first_j + 1
       length_k = last_k - first_k + 1
       length_a = last_a - first_a + 1
 !
-      if (integrals%eri_t1_mem) then 
+      if (integrals%eri_t1_mem) then
 !
 !        Extract copy from integral stored in memory
 !
@@ -1231,7 +1512,7 @@ contains
          call mem%dealloc(L_ij_J, length_i*length_j, integrals%n_J)
          call mem%dealloc(L_ka_J, length_k*length_a, integrals%n_J)
 !
-      endif 
+      endif
 !
    end subroutine construct_ooov_4_mo_integral_tool
 !
@@ -1240,11 +1521,11 @@ contains
                                                 first_a, last_a, first_k, last_k, index_restrictions, t1)
 !!
 !!    Construct oovo
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(:,:), intent(inout) :: g_ijak
 !
@@ -1259,8 +1540,8 @@ contains
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ij_J 
-      real(dp), dimension(:,:), allocatable :: L_ak_J 
+      real(dp), dimension(:,:), allocatable :: L_ij_J
+      real(dp), dimension(:,:), allocatable :: L_ak_J
 !
       length_i = last_i - first_i + 1
       length_j = last_j - first_j + 1
@@ -1308,11 +1589,11 @@ contains
                                                 first_a, last_a, first_k, last_k, index_restrictions, t1)
 !!
 !!    Construct oovo
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
@@ -1327,22 +1608,22 @@ contains
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ij_J 
-      real(dp), dimension(:,:), allocatable :: L_ak_J 
+      real(dp), dimension(:,:), allocatable :: L_ij_J
+      real(dp), dimension(:,:), allocatable :: L_ak_J
 !
       length_i = last_i - first_i + 1
       length_j = last_j - first_j + 1
       length_k = last_k - first_k + 1
       length_a = last_a - first_a + 1
 !
-      if (integrals%eri_t1_mem) then 
+      if (integrals%eri_t1_mem) then
 !
 !        Extract copy from integral stored in memory
 !
          g_ijak(:,:,:,:) = integrals%g_pqrs(first_i                 : last_i,                 &
                                             first_j                 : last_j,                 &
                                             integrals%n_o + first_a : integrals%n_o + last_a, &
-                                            first_k                 : last_k)                 
+                                            first_k                 : last_k)
 !
       else
 !
@@ -1379,7 +1660,7 @@ contains
          call mem%dealloc(L_ij_J, length_i*length_j, integrals%n_J)
          call mem%dealloc(L_ak_J, length_k*length_a, integrals%n_J)
 !
-      endif 
+      endif
 !
    end subroutine construct_oovo_4_mo_integral_tool
 !
@@ -1388,11 +1669,11 @@ contains
                                                 first_j, last_j, first_k, last_k, index_restrictions, t1)
 !!
 !!    Construct ovoo
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(:,:), intent(inout) :: g_iajk
 !
@@ -1407,8 +1688,8 @@ contains
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ia_J 
-      real(dp), dimension(:,:), allocatable :: L_jk_J 
+      real(dp), dimension(:,:), allocatable :: L_ia_J
+      real(dp), dimension(:,:), allocatable :: L_jk_J
 !
       length_i = last_i - first_i + 1
       length_j = last_j - first_j + 1
@@ -1456,11 +1737,11 @@ contains
                                                 first_j, last_j, first_k, last_k, index_restrictions, t1)
 !!
 !!    Construct ovoo
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
@@ -1475,22 +1756,22 @@ contains
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ia_J 
-      real(dp), dimension(:,:), allocatable :: L_jk_J 
+      real(dp), dimension(:,:), allocatable :: L_ia_J
+      real(dp), dimension(:,:), allocatable :: L_jk_J
 !
       length_i = last_i - first_i + 1
       length_j = last_j - first_j + 1
       length_k = last_k - first_k + 1
       length_a = last_a - first_a + 1
 !
-      if (integrals%eri_t1_mem) then 
+      if (integrals%eri_t1_mem) then
 !
 !        Extract copy from integral stored in memory
 !
          g_iajk(:,:,:,:) = integrals%g_pqrs(first_i                 : last_i,                 &
                                             integrals%n_o + first_a : integrals%n_o + last_a, &
                                             first_j                 : last_j,                 &
-                                            first_k                 : last_k)                 
+                                            first_k                 : last_k)
 !
       else
 !
@@ -1527,7 +1808,7 @@ contains
          call mem%dealloc(L_ia_J, length_i*length_a, integrals%n_J)
          call mem%dealloc(L_jk_J, length_k*length_j, integrals%n_J)
 !
-      endif 
+      endif
 !
    end subroutine construct_ovoo_4_mo_integral_tool
 !
@@ -1536,11 +1817,11 @@ contains
                                                 first_j, last_j, first_k, last_k, index_restrictions, t1)
 !!
 !!    Construct ovoo
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(:,:), intent(inout) :: g_aijk
 !
@@ -1555,8 +1836,8 @@ contains
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ai_J 
-      real(dp), dimension(:,:), allocatable :: L_jk_J 
+      real(dp), dimension(:,:), allocatable :: L_ai_J
+      real(dp), dimension(:,:), allocatable :: L_jk_J
 !
       length_i = last_i - first_i + 1
       length_j = last_j - first_j + 1
@@ -1604,11 +1885,11 @@ contains
                                                 first_j, last_j, first_k, last_k, index_restrictions, t1)
 !!
 !!    Construct ovoo
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
@@ -1623,22 +1904,22 @@ contains
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ai_J 
-      real(dp), dimension(:,:), allocatable :: L_jk_J 
+      real(dp), dimension(:,:), allocatable :: L_ai_J
+      real(dp), dimension(:,:), allocatable :: L_jk_J
 !
       length_i = last_i - first_i + 1
       length_j = last_j - first_j + 1
       length_k = last_k - first_k + 1
       length_a = last_a - first_a + 1
 !
-      if (integrals%eri_t1_mem) then 
+      if (integrals%eri_t1_mem) then
 !
 !        Extract copy from integral stored in memory
 !
          g_aijk(:,:,:,:) = integrals%g_pqrs(integrals%n_o + first_a : integrals%n_o + last_a, &
                                             first_i                 : last_i,                 &
                                             first_j                 : last_j,                 &
-                                            first_k                 : last_k)                 
+                                            first_k                 : last_k)
 !
       else
 !
@@ -1684,11 +1965,11 @@ contains
                                               first_i, last_i, first_j, last_j, index_restrictions, t1)
 !!
 !!    Construct vvoo
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(:,:), intent(inout) :: g_abij
 !
@@ -1703,8 +1984,8 @@ contains
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ab_J 
-      real(dp), dimension(:,:), allocatable :: L_ij_J 
+      real(dp), dimension(:,:), allocatable :: L_ab_J
+      real(dp), dimension(:,:), allocatable :: L_ij_J
 !
       length_i = last_i - first_i + 1
       length_j = last_j - first_j + 1
@@ -1752,11 +2033,11 @@ contains
                                               first_i, last_i, first_j, last_j, index_restrictions, t1)
 !!
 !!    Construct vvoo
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
@@ -1771,19 +2052,19 @@ contains
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ab_J 
-      real(dp), dimension(:,:), allocatable :: L_ij_J 
+      real(dp), dimension(:,:), allocatable :: L_ab_J
+      real(dp), dimension(:,:), allocatable :: L_ij_J
 !
       length_i = last_i - first_i + 1
       length_j = last_j - first_j + 1
       length_b = last_b - first_b + 1
       length_a = last_a - first_a + 1
 !
-      if (integrals%eri_t1_mem) then 
+      if (integrals%eri_t1_mem) then
 !
 !        Extract copy from integral stored in memory
 !
-         g_abij(:,:,:,:) = integrals%g_pqrs(integrals%n_o + first_a : integrals%n_o + last_a, &  
+         g_abij(:,:,:,:) = integrals%g_pqrs(integrals%n_o + first_a : integrals%n_o + last_a, &
                                             integrals%n_o + first_b : integrals%n_o + last_b, &
                                             first_i                 : last_i,                 &
                                             first_j                 : last_j)
@@ -1823,7 +2104,7 @@ contains
          call mem%dealloc(L_ab_J, length_a*length_b, integrals%n_J)
          call mem%dealloc(L_ij_J, length_i*length_j, integrals%n_J)
 !
-      endif 
+      endif
 !
    end subroutine construct_vvoo_4_mo_integral_tool
 !
@@ -1832,11 +2113,11 @@ contains
                                                 first_a, last_a, first_b, last_b, index_restrictions, t1)
 !!
 !!    Construct oovv
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(:,:), intent(inout) :: g_ijab
 !
@@ -1851,8 +2132,8 @@ contains
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ab_J 
-      real(dp), dimension(:,:), allocatable :: L_ij_J 
+      real(dp), dimension(:,:), allocatable :: L_ab_J
+      real(dp), dimension(:,:), allocatable :: L_ij_J
 !
       length_i = last_i - first_i + 1
       length_j = last_j - first_j + 1
@@ -1900,11 +2181,11 @@ contains
                                                 first_a, last_a, first_b, last_b, index_restrictions, t1)
 !!
 !!    Construct oovv
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
@@ -1919,21 +2200,21 @@ contains
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ab_J 
-      real(dp), dimension(:,:), allocatable :: L_ij_J 
+      real(dp), dimension(:,:), allocatable :: L_ab_J
+      real(dp), dimension(:,:), allocatable :: L_ij_J
 !
       length_i = last_i - first_i + 1
       length_j = last_j - first_j + 1
       length_b = last_b - first_b + 1
       length_a = last_a - first_a + 1
 !
-      if (integrals%eri_t1_mem) then 
+      if (integrals%eri_t1_mem) then
 !
 !        Extract copy from integral stored in memory
 !
          g_ijab(:,:,:,:) = integrals%g_pqrs(first_i                 : last_i,                 &
                                             first_j                 : last_j,                 &
-                                            integrals%n_o + first_a : integrals%n_o + last_a, &  
+                                            integrals%n_o + first_a : integrals%n_o + last_a, &
                                             integrals%n_o + first_b : integrals%n_o + last_b)
 !
       else
@@ -1971,7 +2252,7 @@ contains
          call mem%dealloc(L_ab_J, length_a*length_b, integrals%n_J)
          call mem%dealloc(L_ij_J, length_i*length_j, integrals%n_J)
 !
-      endif 
+      endif
 !
    end subroutine construct_oovv_4_mo_integral_tool
 !
@@ -1980,11 +2261,11 @@ contains
                                                 first_j, last_j, first_b, last_b, index_restrictions, t1)
 !!
 !!    Construct voov
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(:,:), intent(inout) :: g_aijb
 !
@@ -1999,8 +2280,8 @@ contains
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ai_J 
-      real(dp), dimension(:,:), allocatable :: L_jb_J 
+      real(dp), dimension(:,:), allocatable :: L_ai_J
+      real(dp), dimension(:,:), allocatable :: L_jb_J
 !
       length_i = last_i - first_i + 1
       length_j = last_j - first_j + 1
@@ -2047,11 +2328,11 @@ contains
                                                 first_j, last_j, first_b, last_b, index_restrictions, t1)
 !!
 !!    Construct voov
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
@@ -2066,21 +2347,21 @@ contains
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ai_J 
-      real(dp), dimension(:,:), allocatable :: L_jb_J 
+      real(dp), dimension(:,:), allocatable :: L_ai_J
+      real(dp), dimension(:,:), allocatable :: L_jb_J
 !
       length_i = last_i - first_i + 1
       length_j = last_j - first_j + 1
       length_b = last_b - first_b + 1
       length_a = last_a - first_a + 1
 !
-      if (integrals%eri_t1_mem) then 
+      if (integrals%eri_t1_mem) then
 !
 !        Extract copy from integral stored in memory
 !
-         g_aijb(:,:,:,:) = integrals%g_pqrs(integrals%n_o + first_a : integrals%n_o + last_a, & 
-                                            first_i                 : last_i,                 &                                             
-                                            first_j                 : last_j,                 &                 
+         g_aijb(:,:,:,:) = integrals%g_pqrs(integrals%n_o + first_a : integrals%n_o + last_a, &
+                                            first_i                 : last_i,                 &
+                                            first_j                 : last_j,                 &
                                             integrals%n_o + first_b : integrals%n_o + last_b)
 !
       else
@@ -2118,7 +2399,7 @@ contains
          call mem%dealloc(L_ai_J, length_a*length_i, integrals%n_J)
          call mem%dealloc(L_jb_J, length_b*length_j, integrals%n_J)
 !
-      endif 
+      endif
 !
    end subroutine construct_voov_4_mo_integral_tool
 !
@@ -2127,11 +2408,11 @@ contains
                                                 first_b, last_b, first_j, last_j, index_restrictions, t1)
 !!
 !!    Construct ovvo
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(:,:), intent(inout) :: g_iabj
 !
@@ -2146,8 +2427,8 @@ contains
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ia_J 
-      real(dp), dimension(:,:), allocatable :: L_bj_J 
+      real(dp), dimension(:,:), allocatable :: L_ia_J
+      real(dp), dimension(:,:), allocatable :: L_bj_J
 !
       length_i = last_i - first_i + 1
       length_j = last_j - first_j + 1
@@ -2195,11 +2476,11 @@ contains
                                                 first_b, last_b, first_j, last_j, index_restrictions, t1)
 !!
 !!    Construct ovvo
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
@@ -2214,22 +2495,22 @@ contains
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ia_J 
-      real(dp), dimension(:,:), allocatable :: L_bj_J 
+      real(dp), dimension(:,:), allocatable :: L_ia_J
+      real(dp), dimension(:,:), allocatable :: L_bj_J
 !
       length_i = last_i - first_i + 1
       length_j = last_j - first_j + 1
       length_b = last_b - first_b + 1
       length_a = last_a - first_a + 1
 !
-      if (integrals%eri_t1_mem) then 
+      if (integrals%eri_t1_mem) then
 !
 !        Extract copy from integral stored in memory
 !
          g_iabj(:,:,:,:) = integrals%g_pqrs(first_i                 : last_i,                 &
-                                            integrals%n_o + first_a : integrals%n_o + last_a, &  
+                                            integrals%n_o + first_a : integrals%n_o + last_a, &
                                             integrals%n_o + first_b : integrals%n_o + last_b, &
-                                            first_j                 : last_j)                 
+                                            first_j                 : last_j)
 !
       else
 !
@@ -2266,7 +2547,7 @@ contains
          call mem%dealloc(L_ia_J, length_a*length_i, integrals%n_J)
          call mem%dealloc(L_bj_J, length_b*length_j, integrals%n_J)
 !
-      endif 
+      endif
 !
    end subroutine construct_ovvo_4_mo_integral_tool
 !
@@ -2275,11 +2556,11 @@ contains
                                                 first_j, last_j, first_b, last_b, index_restrictions)
 !!
 !!    Read ovov
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(:,:), intent(inout) :: g_iajb
 !
@@ -2292,8 +2573,8 @@ contains
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ia_J 
-      real(dp), dimension(:,:), allocatable :: L_jb_J 
+      real(dp), dimension(:,:), allocatable :: L_ia_J
+      real(dp), dimension(:,:), allocatable :: L_jb_J
 !
       length_i = last_i - first_i + 1
       length_a = last_a - first_a + 1
@@ -2327,7 +2608,7 @@ contains
             call mem%dealloc(L_ia_J, length_i*length_a, integrals%n_J)
             call mem%dealloc(L_jb_J, length_j*length_b, integrals%n_J)
 !
-         else ! dim_ia = dim_jb 
+         else ! dim_ia = dim_jb
 !
             call mem%alloc(L_ia_J, length_i*length_a, integrals%n_J)
 !
@@ -2341,14 +2622,14 @@ contains
                         L_ia_J,            &
                         length_i*length_a, &
                         L_ia_J,            &
-                        length_i*length_a, & 
+                        length_i*length_a, &
                         zero,              &
                         g_iajb,            &
                         length_i*length_a)
 !
             call mem%dealloc(L_ia_J, length_i*length_a, integrals%n_J)
 !
-         endif 
+         endif
 !
    end subroutine construct_ovov_2_mo_integral_tool
 !
@@ -2357,11 +2638,11 @@ contains
                                                 first_j, last_j, first_b, last_b, index_restrictions)
 !!
 !!    Read ovov
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       integer, intent(in) :: first_i, last_i
       integer, intent(in) :: first_a, last_a
@@ -2374,15 +2655,15 @@ contains
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ia_J 
-      real(dp), dimension(:,:), allocatable :: L_jb_J 
+      real(dp), dimension(:,:), allocatable :: L_ia_J
+      real(dp), dimension(:,:), allocatable :: L_jb_J
 !
       length_i = last_i - first_i + 1
       length_a = last_a - first_a + 1
       length_j = last_j - first_j + 1
       length_b = last_b - first_b + 1
 !
-      if (integrals%eri_t1_mem) then 
+      if (integrals%eri_t1_mem) then
 !
 !        Extract copy from integral stored in memory
 !
@@ -2419,7 +2700,7 @@ contains
             call mem%dealloc(L_ia_J, length_i*length_a, integrals%n_J)
             call mem%dealloc(L_jb_J, length_j*length_b, integrals%n_J)
 !
-         else ! dim_ia = dim_jb 
+         else ! dim_ia = dim_jb
 !
             call mem%alloc(L_ia_J, length_i*length_a, integrals%n_J)
 !
@@ -2433,16 +2714,16 @@ contains
                         L_ia_J,            &
                         length_i*length_a, &
                         L_ia_J,            &
-                        length_i*length_a, & 
+                        length_i*length_a, &
                         zero,              &
                         g_iajb,            &
                         length_i*length_a)
 !
             call mem%dealloc(L_ia_J, length_i*length_a, integrals%n_J)
 !
-         endif 
+         endif
 !
-      endif 
+      endif
 !
    end subroutine construct_ovov_4_mo_integral_tool
 !
@@ -2451,11 +2732,11 @@ contains
                                                 first_b, last_b, first_j, last_j, index_restrictions, t1)
 !!
 !!    Construct vovo
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(:,:), intent(inout) :: g_aibj
 !
@@ -2470,8 +2751,8 @@ contains
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ai_J 
-      real(dp), dimension(:,:), allocatable :: L_bj_J 
+      real(dp), dimension(:,:), allocatable :: L_ai_J
+      real(dp), dimension(:,:), allocatable :: L_bj_J
 !
       length_i = last_i - first_i + 1
       length_j = last_j - first_j + 1
@@ -2518,7 +2799,7 @@ contains
             call mem%alloc(L_ai_J, length_a*length_i, integrals%n_J)
 !
             if (present(t1)) then
-!      
+!
                call integrals%construct_cholesky_ai(L_ai_J, t1, first_a, last_a, first_i, last_i)
 !
             else
@@ -2535,14 +2816,14 @@ contains
                         L_ai_J,            &
                         length_i*length_a, &
                         L_ai_J,            &
-                        length_i*length_a, & 
+                        length_i*length_a, &
                         zero,              &
                         g_aibj,            &
                         length_i*length_a)
 !
             call mem%dealloc(L_ai_J, length_i*length_a, integrals%n_J)
 !
-         endif 
+         endif
 !
    end subroutine construct_vovo_2_mo_integral_tool
 !
@@ -2551,11 +2832,11 @@ contains
                                                 first_b, last_b, first_j, last_j, index_restrictions, t1)
 !!
 !!    Construct vovo
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
@@ -2570,22 +2851,22 @@ contains
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ai_J 
-      real(dp), dimension(:,:), allocatable :: L_bj_J 
+      real(dp), dimension(:,:), allocatable :: L_ai_J
+      real(dp), dimension(:,:), allocatable :: L_bj_J
 !
       length_i = last_i - first_i + 1
       length_j = last_j - first_j + 1
       length_a = last_a - first_a + 1
       length_b = last_b - first_b + 1
 !
-      if (integrals%eri_t1_mem) then 
+      if (integrals%eri_t1_mem) then
 !
 !        Extract copy from integral stored in memory
 !
          g_aibj(:,:,:,:) = integrals%g_pqrs(integrals%n_o + first_a : integrals%n_o + last_a, &
                                             first_i                 : last_i,                 &
                                             integrals%n_o + first_b : integrals%n_o + last_b, &
-                                            first_j                 : last_j)                 
+                                            first_j                 : last_j)
 !
       else
 !
@@ -2629,7 +2910,7 @@ contains
             call mem%alloc(L_ai_J, length_a*length_i, integrals%n_J)
 !
             if (present(t1)) then
-!      
+!
                call integrals%construct_cholesky_ai(L_ai_J, t1, first_a, last_a, first_i, last_i)
 !
             else
@@ -2646,16 +2927,16 @@ contains
                         L_ai_J,            &
                         length_i*length_a, &
                         L_ai_J,            &
-                        length_i*length_a, & 
+                        length_i*length_a, &
                         zero,              &
                         g_aibj,            &
                         length_i*length_a)
 !
             call mem%dealloc(L_ai_J, length_i*length_a, integrals%n_J)
 !
-         endif 
+         endif
 !
-      endif 
+      endif
 !
    end subroutine construct_vovo_4_mo_integral_tool
 !
@@ -2664,11 +2945,11 @@ contains
                                               first_c, last_c, first_i, last_i, index_restrictions, t1)
 !!
 !!    Construct vvvo
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(:,:,:,:), intent(inout) :: g_abci
 !
@@ -2683,8 +2964,8 @@ contains
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ab_J 
-      real(dp), dimension(:,:), allocatable :: L_ci_J 
+      real(dp), dimension(:,:), allocatable :: L_ab_J
+      real(dp), dimension(:,:), allocatable :: L_ci_J
 !
       length_i = last_i - first_i + 1
       length_a = last_a - first_a + 1
@@ -2723,7 +3004,7 @@ contains
                      length_a*length_b)
 !
          call mem%dealloc(L_ab_J, length_a*length_b, integrals%n_J)
-         call mem%dealloc(L_ci_J, length_c*length_i, integrals%n_J) 
+         call mem%dealloc(L_ci_J, length_c*length_i, integrals%n_J)
 !
    end subroutine construct_vvvo_mo_integral_tool
 !
@@ -2732,11 +3013,11 @@ contains
                                                 first_i, last_i, first_c, last_c, index_restrictions, t1)
 !!
 !!    Construct vvov
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(:,:), intent(inout) :: g_abic
 !
@@ -2751,8 +3032,8 @@ contains
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ab_J 
-      real(dp), dimension(:,:), allocatable :: L_ic_J 
+      real(dp), dimension(:,:), allocatable :: L_ab_J
+      real(dp), dimension(:,:), allocatable :: L_ic_J
 !
       length_i = last_i - first_i + 1
       length_a = last_a - first_a + 1
@@ -2791,7 +3072,7 @@ contains
                      length_a*length_b)
 !
          call mem%dealloc(L_ab_J, length_a*length_b, integrals%n_J)
-         call mem%dealloc(L_ic_J, length_c*length_i, integrals%n_J) 
+         call mem%dealloc(L_ic_J, length_c*length_i, integrals%n_J)
 !
    end subroutine construct_vvov_2_mo_integral_tool
 !
@@ -2800,11 +3081,11 @@ contains
                                                 first_i, last_i, first_c, last_c, index_restrictions, t1)
 !!
 !!    Construct vvov
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
@@ -2819,15 +3100,15 @@ contains
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ab_J 
-      real(dp), dimension(:,:), allocatable :: L_ic_J 
+      real(dp), dimension(:,:), allocatable :: L_ab_J
+      real(dp), dimension(:,:), allocatable :: L_ic_J
 !
       length_i = last_i - first_i + 1
       length_a = last_a - first_a + 1
       length_b = last_b - first_b + 1
       length_c = last_c - first_c + 1
 !
-      if (integrals%eri_t1_mem) then 
+      if (integrals%eri_t1_mem) then
 !
 !        Extract copy from integral stored in memory
 !
@@ -2871,7 +3152,7 @@ contains
          call mem%dealloc(L_ab_J, length_a*length_b, integrals%n_J)
          call mem%dealloc(L_ic_J, length_c*length_i, integrals%n_J)
 !
-      endif 
+      endif
 !
    end subroutine construct_vvov_4_mo_integral_tool
 !
@@ -2880,11 +3161,11 @@ contains
                                                 first_b, last_b, first_c, last_c, index_restrictions, t1)
 !!
 !!    Construct vovv
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(:,:), intent(inout) :: g_aibc
 !
@@ -2899,8 +3180,8 @@ contains
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ai_J 
-      real(dp), dimension(:,:), allocatable :: L_bc_J 
+      real(dp), dimension(:,:), allocatable :: L_ai_J
+      real(dp), dimension(:,:), allocatable :: L_bc_J
 !
       length_i = last_i - first_i + 1
       length_a = last_a - first_a + 1
@@ -2948,11 +3229,11 @@ contains
                                                 first_b, last_b, first_c, last_c, index_restrictions, t1)
 !!
 !!    Construct vovv
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
@@ -2967,15 +3248,15 @@ contains
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ai_J 
-      real(dp), dimension(:,:), allocatable :: L_bc_J 
+      real(dp), dimension(:,:), allocatable :: L_ai_J
+      real(dp), dimension(:,:), allocatable :: L_bc_J
 !
       length_i = last_i - first_i + 1
       length_a = last_a - first_a + 1
       length_b = last_b - first_b + 1
       length_c = last_c - first_c + 1
 !
-      if (integrals%eri_t1_mem) then 
+      if (integrals%eri_t1_mem) then
 !
 !        Extract copy from integral stored in memory
 !
@@ -3019,7 +3300,7 @@ contains
          call mem%dealloc(L_ai_J, length_a*length_i, integrals%n_J)
          call mem%dealloc(L_bc_J, length_c*length_b, integrals%n_J)
 !
-      endif 
+      endif
 !
    end subroutine construct_vovv_4_mo_integral_tool
 !
@@ -3028,11 +3309,11 @@ contains
                                                 first_b, last_b, first_c, last_c, index_restrictions, t1)
 !!
 !!    Construct ovvv
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(:,:), intent(inout) :: g_iabc
 !
@@ -3047,8 +3328,8 @@ contains
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ia_J 
-      real(dp), dimension(:,:), allocatable :: L_bc_J 
+      real(dp), dimension(:,:), allocatable :: L_ia_J
+      real(dp), dimension(:,:), allocatable :: L_bc_J
 !
       length_i = last_i - first_i + 1
       length_a = last_a - first_a + 1
@@ -3095,11 +3376,11 @@ contains
                                                 first_b, last_b, first_c, last_c, index_restrictions, t1)
 !!
 !!    Construct ovvv
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
@@ -3114,20 +3395,20 @@ contains
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ia_J 
-      real(dp), dimension(:,:), allocatable :: L_bc_J 
+      real(dp), dimension(:,:), allocatable :: L_ia_J
+      real(dp), dimension(:,:), allocatable :: L_bc_J
 !
       length_i = last_i - first_i + 1
       length_a = last_a - first_a + 1
       length_b = last_b - first_b + 1
       length_c = last_c - first_c + 1
 !
-      if (integrals%eri_t1_mem) then 
+      if (integrals%eri_t1_mem) then
 !
 !        Extract copy from integral stored in memory
 !
          g_iabc(:,:,:,:) = integrals%g_pqrs(first_i                 : last_i,                 &
-                                            integrals%n_o + first_a : integrals%n_o + last_a, &  
+                                            integrals%n_o + first_a : integrals%n_o + last_a, &
                                             integrals%n_o + first_b : integrals%n_o + last_b, &
                                             integrals%n_o + first_c : integrals%n_o + last_c)
 !
@@ -3166,7 +3447,7 @@ contains
          call mem%dealloc(L_ia_J, length_a*length_i, integrals%n_J)
          call mem%dealloc(L_bc_J, length_c*length_b, integrals%n_J)
 !
-      endif 
+      endif
 !
    end subroutine construct_ovvv_4_mo_integral_tool
 !
@@ -3175,12 +3456,12 @@ contains
                                                 first_c, last_c, first_d, last_d, index_restrictions, t1)
 !!
 !!    Construct vvvv
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(:,:), intent(inout) :: g_abcd
 !
@@ -3195,8 +3476,8 @@ contains
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ab_J 
-      real(dp), dimension(:,:), allocatable :: L_cd_J 
+      real(dp), dimension(:,:), allocatable :: L_ab_J
+      real(dp), dimension(:,:), allocatable :: L_cd_J
 !
       length_a = last_a - first_a + 1
       length_b = last_b - first_b + 1
@@ -3260,14 +3541,14 @@ contains
                         L_ab_J,            &
                         length_a*length_b, &
                         L_ab_J,            &
-                        length_a*length_b, & 
+                        length_a*length_b, &
                         zero,              &
                         g_abcd,            &
                         length_a*length_b)
 !
             call mem%dealloc(L_ab_J, length_a*length_b, integrals%n_J)
 !
-         endif 
+         endif
 !
    end subroutine construct_vvvv_2_mo_integral_tool
 !
@@ -3276,12 +3557,12 @@ contains
                                                 first_c, last_c, first_d, last_d, index_restrictions, t1)
 !!
 !!    Construct vvvv
-!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018 
+!!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, Aug 2018
 !!
 !!
-      implicit none 
+      implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
+      class(mo_integral_tool), intent(in) :: integrals
 !
       real(dp), dimension(integrals%n_v, integrals%n_o), optional :: t1
 !
@@ -3296,15 +3577,15 @@ contains
 !
       logical, intent(in) :: index_restrictions
 !
-      real(dp), dimension(:,:), allocatable :: L_ab_J 
-      real(dp), dimension(:,:), allocatable :: L_cd_J 
+      real(dp), dimension(:,:), allocatable :: L_ab_J
+      real(dp), dimension(:,:), allocatable :: L_cd_J
 !
       length_a = last_a - first_a + 1
       length_b = last_b - first_b + 1
       length_c = last_c - first_c + 1
       length_d = last_d - first_d + 1
 !
-      if (integrals%eri_t1_mem) then 
+      if (integrals%eri_t1_mem) then
 !
 !        Extract copy from integral stored in memory
 !
@@ -3372,16 +3653,16 @@ contains
                         L_ab_J,            &
                         length_a*length_b, &
                         L_ab_J,            &
-                        length_a*length_b, & 
+                        length_a*length_b, &
                         zero,              &
                         g_abcd,            &
                         length_a*length_b)
 !
             call mem%dealloc(L_ab_J, length_a*length_b, integrals%n_J)
 !
-         endif 
+         endif
 !
-      endif 
+      endif
 !
    end subroutine construct_vvvv_4_mo_integral_tool
 !
@@ -3394,14 +3675,14 @@ contains
 !!    Calculates and returns required memory to make vvvv electronic repulsion integral.
 !!
 !!    Here, dim_1, dim_2, dim_3, and dim_4 are the full dimension of indices 1-4.
-!!    They will typically be wf%n_v for dim_1 and dim_2 and wf%n_o for dim_3 and dim_4 and 
+!!    They will typically be wf%n_v for dim_1 and dim_2 and wf%n_o for dim_3 and dim_4 and
 !!    are therefore optionals. They will not necessarily have the standard values in multi-
 !!    level CC models.
 !!
       implicit none
 !
-      class(mo_integral_tool), intent(in) :: integrals 
-!  
+      class(mo_integral_tool), intent(in) :: integrals
+!
       integer, intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
 !
       integer :: get_required_vvoo_mo_integral_tool
@@ -3418,19 +3699,19 @@ contains
 !
          get_required_vvoo_mo_integral_tool = get_required_vvoo_mo_integral_tool + &
                                        max(2*(dim_2)*(integrals%n_o)*(integrals%n_J),      &
-                                          (dim_2)*(integrals%n_o)*(integrals%n_J)+         & 
+                                          (dim_2)*(integrals%n_o)*(integrals%n_J)+         &
                                           (dim_1)*(dim_2)*(integrals%n_J),                 &
                                           2*(integrals%n_v)*(dim_3)*(integrals%n_J),       &
                                           dim_3*(integrals%n_v)*(integrals%n_J) +          &
                                           (dim_4)*(dim_3)*(integrals%n_J))
-           
+
 !
       elseif (.not. (present(dim_1) .and. present(dim_2) .and. present(dim_3) .and. present(dim_4))) then
 !
          get_required_vvoo_mo_integral_tool = (integrals%n_v**2)*(integrals%n_o**2)
 !
          get_required_vvoo_mo_integral_tool = get_required_vvoo_mo_integral_tool + &
-                                                      (integrals%n_v**2)*(integrals%n_J) + & 
+                                                      (integrals%n_v**2)*(integrals%n_J) + &
                                                       (integrals%n_o**2)*(integrals%n_J)
 !
          get_required_vvoo_mo_integral_tool = get_required_vvoo_mo_integral_tool +                &
@@ -3458,12 +3739,12 @@ contains
 !!    Calculates and returns required memory to make voov electronic repulsion integral.
 !!
 !!    dim_1, dim_2, dim_3, and dim_4 are the full dimension of index dim_1-dim_4.
-!!    They will typically be  n_v/n_o and are therefore optionals, however will not be n_v/n_o for ML 
+!!    They will typically be  n_v/n_o and are therefore optionals, however will not be n_v/n_o for ML
 !!
-      implicit none 
+      implicit none
 !
       class(mo_integral_tool), intent(in) :: integrals
-!  
+!
       integer, intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
 !
       integer :: dim_1_local, dim_2_local, dim_3_local, dim_4_local
@@ -3511,12 +3792,12 @@ contains
 !!    Calculates and returns required memory to make voov electronic repulsion integral.
 !!
 !!    dim_1, dim_2, dim_3, and dim_4 are the full dimension of index dim_1-dim_4.
-!!    They will typically be  n_v/n_o and are therefore optionals, however will not be n_v/n_o for ML 
+!!    They will typically be  n_v/n_o and are therefore optionals, however will not be n_v/n_o for ML
 !!
-      implicit none 
+      implicit none
 !
       class(mo_integral_tool), intent(in) :: integrals
-!  
+!
       integer, intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
 !
       integer :: dim_1_local, dim_2_local, dim_3_local, dim_4_local
@@ -3565,12 +3846,12 @@ contains
 !!    Calculates and returns required memory to make voov electronic repulsion integral.
 !!
 !!    dim_1, dim_2, dim_3, and dim_4 are the full dimension of index dim_1-dim_4.
-!!    They will typically be  n_v/n_o and are therefore optionals, however will not be n_v/n_o for ML 
+!!    They will typically be  n_v/n_o and are therefore optionals, however will not be n_v/n_o for ML
 !!
-      implicit none 
+      implicit none
 !
       class(mo_integral_tool), intent(in) :: integrals
-!  
+!
       integer, intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
 !
       integer :: dim_1_local, dim_2_local, dim_3_local, dim_4_local
@@ -3621,12 +3902,12 @@ contains
 !!    Calculates and returns required memory to make voov electronic repulsion integral.
 !!
 !!    dim_1, dim_2, dim_3, and dim_4 are the full dimension of index dim_1-dim_4.
-!!    They will typically be  n_v/n_o and are therefore optionals, however will not be n_v/n_o for ML 
+!!    They will typically be  n_v/n_o and are therefore optionals, however will not be n_v/n_o for ML
 !!
-      implicit none 
+      implicit none
 !
       class(mo_integral_tool), intent(in) :: integrals
-!  
+!
       integer, intent(in), optional  :: dim_1, dim_2, dim_3, dim_4
 !
       integer :: dim_1_local, dim_2_local, dim_3_local, dim_4_local
@@ -3672,7 +3953,7 @@ contains
 !!    Write T1-transformed Cholesky vectors to file
 !!    Written by Sarai D. Folkestad, 2018
 !!
-      implicit none 
+      implicit none
 !
       class(mo_integral_tool), intent(inout) :: integrals
 !
@@ -3687,7 +3968,7 @@ contains
       type(batching_index) :: batch_i, batch_a, batch_b
 !
       call integrals%cholesky_mo_t1%init('cholesky_mo_t1_vectors', 'direct', 'unformatted', dp*(integrals%n_J))
-      call disk%open_file(integrals%cholesky_mo_t1, 'write') 
+      call disk%open_file(integrals%cholesky_mo_t1, 'write')
 !
 !     occupied-occupied block
 !
@@ -3695,9 +3976,9 @@ contains
 !
       req0 = 0
 !
-      req1 = (integrals%n_o)*(integrals%n_J)  & ! L_ij^J 
-            + (integrals%n_v)*(integrals%n_J) & ! L_ia^J 
-            + (integrals%n_J)*(integrals%n_v)   ! L_iJ_a = L_ia^J 
+      req1 = (integrals%n_o)*(integrals%n_J)  & ! L_ij^J
+            + (integrals%n_v)*(integrals%n_J) & ! L_ia^J
+            + (integrals%n_J)*(integrals%n_v)   ! L_iJ_a = L_ia^J
 !
       call mem%batch_setup(batch_i, req0, req1)
 !
@@ -3730,7 +4011,7 @@ contains
 !
       req0 = 0
 !
-      req1 = (integrals%n_o)*(integrals%n_J) ! L_ia^J 
+      req1 = (integrals%n_o)*(integrals%n_J) ! L_ia^J
 !
       call mem%batch_setup(batch_a, req0, req1)
 !
@@ -3742,7 +4023,7 @@ contains
 !
          call integrals%read_cholesky_ia(L_ia_J, 1, integrals%n_o, batch_a%first, batch_a%last)
 !
-         do a = batch_a%first, batch_a%last 
+         do a = batch_a%first, batch_a%last
             do i = 1, integrals%n_o
 !
                ia = integrals%n_o*(a - batch_a%first) + i
@@ -3757,14 +4038,14 @@ contains
 !
       enddo
 !
-!     virtual-occupied block 
+!     virtual-occupied block
 !
-      req0 = (integrals%n_v)*(integrals%n_J)   ! Uncontrollable from outside (L_jb^J, batching over j inside) 
+      req0 = (integrals%n_v)*(integrals%n_J)   ! Uncontrollable from outside (L_jb^J, batching over j inside)
 !
-      req1_a = (integrals%n_v)*(integrals%n_J) ! L_ab^J 
+      req1_a = (integrals%n_v)*(integrals%n_J) ! L_ab^J
       req1_i = (integrals%n_o)*(integrals%n_J) ! L_ji^J
 !
-      req2 = (integrals%n_J) ! L_ai^J  
+      req2 = (integrals%n_J) ! L_ai^J
 !
       call batch_i%init(integrals%n_o)
       call batch_a%init(integrals%n_v)
@@ -3783,8 +4064,8 @@ contains
 !
             call integrals%construct_cholesky_ai(L_ai_J, t1, batch_a%first, batch_a%last, batch_i%first, batch_i%last)
 !
-            do i = batch_i%first, batch_i%last 
-               do a = batch_a%first, batch_a%last 
+            do i = batch_i%first, batch_i%last
+               do a = batch_a%first, batch_a%last
 !
                   ai = (batch_a%length)*(i - batch_i%first) + a - batch_a%first + 1
                   ai_rec = integrals%n_mo*(i - 1) + a + integrals%n_o
@@ -3805,12 +4086,12 @@ contains
 !
       req0 = 0
 !
-      req1 = (integrals%n_v)*(integrals%n_J) & ! L_ab^J 
-            + (integrals%n_o)*(integrals%n_J)  ! L_ib^J 
+      req1 = (integrals%n_v)*(integrals%n_J) & ! L_ab^J
+            + (integrals%n_o)*(integrals%n_J)  ! L_ib^J
 !
       call mem%batch_setup(batch_b, req0, req1)
 !
-      do current_b_batch = 1, batch_b%num_batches 
+      do current_b_batch = 1, batch_b%num_batches
 !
          call batch_b%determine_limits(current_b_batch)
 !
@@ -3819,7 +4100,7 @@ contains
          call integrals%construct_cholesky_ab(L_ab_J, t1, 1, integrals%n_v, batch_b%first, batch_b%last)
 !
          do a = 1, integrals%n_v
-            do b = batch_b%first, batch_b%last 
+            do b = batch_b%first, batch_b%last
 !
                ab_rec = integrals%n_mo*((integrals%n_o + b) - 1) + (a + integrals%n_o)
                ab = integrals%n_v*(b - batch_b%first) + a
@@ -3827,18 +4108,17 @@ contains
                write(integrals%cholesky_mo_t1%unit, rec=ab_rec) (L_ab_J(ab, j), j = 1, integrals%n_J)
 !
             enddo
-         enddo  
+         enddo
 !
-         call mem%dealloc(L_ab_J, (integrals%n_v)*(batch_b%length), integrals%n_J)  
+         call mem%dealloc(L_ab_J, (integrals%n_v)*(batch_b%length), integrals%n_J)
 !
       enddo
 !
       integrals%cholesky_t1_file   = .true.
 !
-      call disk%close_file(integrals%cholesky_mo_t1)    
+      call disk%close_file(integrals%cholesky_mo_t1)
 !
    end subroutine write_t1_cholesky_mo_integral_tool
 !
 !
 end module mo_integral_tool_class
-
