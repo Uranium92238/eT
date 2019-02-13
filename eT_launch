@@ -5,6 +5,7 @@ import tempfile
 import shutil
 import argparse
 
+# Kill if given negative number of OMP threads
 class OMPaction(argparse.Action):
     def __call__(self, parser, namespace, value, option_string=None):
         if value < 1:
@@ -19,42 +20,30 @@ parser.add_argument('--scratch', help="Specify scratch directory", type=str)
 parser.add_argument('-ks', '--keep_scratch', help="Do not delete scratch", action="store_true")
 parser.add_argument("--omp", help="Number of OpenMP threads", action=OMPaction, type=int)
 parser.add_argument('-nt', "--no_timing", help="Do not copy timing.out from scratch", action='store_true')
+parser.add_argument('-v', "--verbose", help="Run some print statements", action='store_true')
 args = parser.parse_args()
-print(args.input_file)
-print(args.output_file)
-print(args.keep_scratch)
-print(args.no_timing)
-print(args.omp)
-print(args.scratch)
 
-cwd = os.getcwd()
-eT_dir = os.path.dirname(__file__)
-eT_dir = os.path.abspath(eT_dir)
+cwd = os.getcwd() # Get current directory
+eT_dir = os.path.dirname(__file__) # Find location of eT_launch. Assume eT is here
+eT_dir = os.path.abspath(eT_dir) # Use absolute path
 
-print(cwd)
-print(eT_dir)
-
+# Make a scratch dir. Either specified by user or wherever os dumps temporary file
 if args.scratch:
-    tmpscratch = os.path.abspath(args.scratch)
-    os.makedirs(tmpscratch, exist_ok=True)
+    scratch = os.path.abspath(args.scratch)
+    os.makedirs(scratch, exist_ok=True)
 else:
-    scratch = os.getenv('eT_SCRATCH')
-    tmpscratch = tempfile.mkdtemp(dir=scratch)
+    tmpscratch = os.getenv('eT_SCRATCH')
+    scratch = tempfile.mkdtemp(dir=tmpscratch)
 
-print(tmpscratch)
-
+# Set OMP_NUM_THREADS in environment
 if args.omp:
     os.environ['OMP_NUM_THREADS'] = str(args.omp)
     os.environ['MKL_NUM_THREADS'] = str(args.omp)
 
 omps = os.getenv('OMP_NUM_THREADS')
 mkls = os.getenv('MKL_NUM_THREADS')
-print(omps)
-print(mkls)
 
-
-print(tmpscratch)
-
+# Set up name for output files
 if args.output_file:
     output_file = args.output_file
     out_name = os.path.splitext(args.output_file)[0]
@@ -64,26 +53,35 @@ else:
     output_file = '{0}{1}'.format(inp_name,'.out')
     time_file = '{0}{1}{2}'.format(inp_name,'.timing','.out')
 
+# Set up paths for copying files back and forth
 inp_src = os.path.abspath(args.input_file)
 out_dest = os.path.join(cwd,output_file)
 time_dest = os.path.join(cwd,time_file)
-inp_dest = os.path.join(tmpscratch,'eT.inp')
-out_src = os.path.join(tmpscratch,'eT.out')
-time_src = os.path.join(tmpscratch,'timing.out')
-print('inp_src',inp_src)
-print('inp_dest',inp_dest)
-print('out_src',out_src)
-print('out_dest',out_dest)
-print('time_src',time_src)
-print('time_dest',time_dest)
+inp_dest = os.path.join(scratch,'eT.inp')
+out_src = os.path.join(scratch,'eT.out')
+time_src = os.path.join(scratch,'timing.out')
 
+# Copy files
 shutil.copyfile(inp_src,inp_dest)
-os.chdir(tmpscratch)
+os.chdir(scratch)
+
+if (args.verbose):
+    print("Ready to run eT in", scratch, "with", omps, "threads")
+
+# Run eT
 os.system(os.path.join(eT_dir,'eT'))
+
+if (args.verbose):
+    print("Success, copying output to", out_dest)
+
+# Copy files back
 shutil.copyfile(out_src,out_dest)
 if not args.no_timing:
     shutil.copyfile(time_src,time_dest)
 os.chdir(cwd)
 
+# Delete scratch
 if not args.keep_scratch:
-    shutil.rmtree(tmpscratch)
+    if (args.verbose):
+        print("and deleting scratch")
+    shutil.rmtree(scratch)
