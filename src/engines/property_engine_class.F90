@@ -13,7 +13,7 @@ module property_engine_class
    use diis_cc_gs_solver_class
    use diis_cc_es_solver_class
    use diis_cc_multipliers_solver_class
-!   use cc_property_solver_class
+   use cc_property_solver_class
 !
    type, extends(abstract_engine) :: property_engine
 !
@@ -74,7 +74,7 @@ contains
       type(davidson_cvs_cc_es_solver), allocatable, target  :: cc_core_es_solver
       type(davidson_cc_multipliers), allocatable, target    :: cc_multipliers_davidson
 !
- !     class(cc_property_solver), pointer :: cc_property_solver
+      class(cc_property_solver), pointer :: cc_property_solver
 !
       write(output%unit, '(/t3,a,a)') '- Running ', trim(engine%name_)      
 !
@@ -163,13 +163,13 @@ contains
 !
       allocate(cc_property_solver)
 !
-      call cc_property_solver%prepare(wf)
+      call cc_property_solver%prepare()
       call cc_property_solver%run(wf)
-      call cc_property_solver%cleanup(wf)
+      call cc_property_solver%cleanup()
 !
       deallocate(cc_property_solver)
 !
-   end run_property_engine
+   end subroutine run_property_engine
 !
 !
    subroutine cleanup_property_engine(engine)

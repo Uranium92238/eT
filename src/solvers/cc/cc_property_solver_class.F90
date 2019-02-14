@@ -22,8 +22,10 @@ module cc_property_solver_class
                                            &cluster excited state calculations'
 !
       real(dp), allocatable :: S
+      real(dp), dimension(:,:), allocatable :: etaX
+      real(dp), dimension(:,:), allocatable :: csiX
 !
-      integer, allocatable :: n_singlet_states = 0
+      integer :: n_singlet_states = 0
 !
    contains
 !
@@ -34,8 +36,7 @@ module cc_property_solver_class
       procedure :: print_banner                      => print_banner_cc_property_solver
       procedure :: print_summary                     => print_summary_cc_property_solver
 !
-      procedure :: construct_etaX                    => construct_etaX_cc_property_solver
-      procedure :: construct_csiX                    => construct_csiX_cc_property_solver
+      procedure :: transition_strength               => transition_strength_property_solver
 !
    end type cc_property_solver
 !
@@ -54,9 +55,9 @@ contains
 !
       call solver%print_banner()
 !
-      call read_settings()
+!      call read_settings()
 !
-      call print_settings()
+!      call print_settings()
 !
       solver%S = zero
 !
@@ -75,6 +76,7 @@ contains
       class(ccs) :: wf
 !
 
+      call solver%print_summary(wf)
 !
    end subroutine run_cc_property_solver
 !
@@ -87,8 +89,6 @@ contains
       implicit none
 !
       class(cc_property_solver) :: solver
-!
-      call solver%print_summary(solver,wf)
 !
 !     What to clean up?
 !
@@ -111,16 +111,16 @@ contains
    end subroutine print_banner_cc_property_solver
 !
 !
-   subroutine print_summary_cc_property(solver, wf)
+   subroutine print_summary_cc_property_solver(solver, wf)
 !!
 !!    Print summary
 !!    Written by Josefine H. Andersen
 !!
       implicit  none
 !
-      class(cc_property_solver) :: solver
+      class(cc_property_solver), intent(in) :: solver
 !
-      class(ccs) :: wf
+      class(ccs), intent(in) :: wf
 !
       integer :: state
 !
@@ -135,47 +135,50 @@ contains
 !
       do state = 1, solver%n_singlet_states
 !
-         write(output%unit, '(t6,i2,14x,f19.12,4x,f19.12)') state, 'energy', solver%get_S
+         write(output%unit, '(t6,i2,14x,f19.12,4x,f19.12)') state, 'energy', solver%S
 !
       enddo
 !
       write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
 !
-
-!
-   end subroutine print_summary_cc_property
+   end subroutine print_summary_cc_property_solver
 !
 !
-   subroutine construct_etaX_cc_property_solver(solver, wf)
+   subroutine transition_strength_property_solver(solver, csiX, etaX, wf)
 !!
-!!    Construct left-hand-side vector etaX
-!!    Written by Josefine H. Andersen, 2019
+!!    Calculate transition strength
+!!    Written by Josefine H. Andersen, February 2019
 !!
       implicit none
 !
       class(cc_property_solver) :: solver
 !
-      class(ccs) :: wf
+      class(ccs), intent(in) :: wf
 !
-!     Here call sequence of wf functions
+      real(dp), dimension(wf%n_amplitudes, 1), intent(in) :: etaX
+      real(dp), dimension(wf%n_amplitudes, 1), intent(in) :: csiX
 !
-   end subroutine construct_etaX_cc_property_solver
+      real(dp), dimension(:,:), allocatable :: T_left, T_right
 !
+      integer :: state
 !
-   subroutine construct_csiX_cc_property_solver(solver, wf) 
-!!
-!!    Construct right-hand-side vector csiX
-!!    Written by Josefine H. Andersen, 2019
-!!
-      implicit none
+      call mem%alloc(T_left, wf%n_amplitudes, 1)
+      call mem%alloc(T_right, wf%n_amplitudes, 1)
 !
-      class(cc_property_solver) :: solver
+      do state = 1, solver%n_singlet_states
 !
-      class(ccs) :: wf
+      ! get right and left excitation vector
+      !
+      ! calc dotproducts btwn exc. vectors and csiX/etaX
+      ! T_left = ddot(wf%n_parameters, etaX, 1, right_j, 1)
+      ! T_right = ddot(wf%n_parameters, left_j, 1, csiX, 1)
+      !
+      ! sum S over three components
+      ! solver%S += T_left * T_right
 !
-!     Here call sequence of wf functions
+      enddo
 !
-   end subroutine construct_csiX_cc_property_solver
+   end subroutine transition_strength_property_solver
 !
 !
 end module cc_property_solver_class

@@ -179,6 +179,11 @@ module ccs_class
       procedure :: destruct_t1                                  => destruct_t1_ccs
       procedure :: destruct_t1bar                               => destruct_t1bar_ccs
 !
+!     Routines related to property calculations
+!
+      procedure :: construct_etaX                              => construct_etaX_ccs
+      procedure :: construct_csiX                              => construct_csiX_ccs
+!
    end type ccs
 !
 !
@@ -4483,6 +4488,38 @@ contains
       enddo
 !
    end subroutine set_cvs_start_indices_ccs
+!
+!
+   subroutine construct_etaX_ccs(wf, etaX, Xoperator)
+!!
+!!    Construct left-hand-side vector etaX 
+!!    Written by Josefine H. Andersen, 2019
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_amplitudes, 1) :: etaX
+      character(len=*) :: Xoperator
+      
+!
+   end subroutine construct_etaX_ccs
+!
+!
+   subroutine construct_csiX_ccs(wf, csiX, Xoperator)
+!!
+!!    Construct right-hand-side vector csiX 
+!!    Written by Josefine H. Andersen, 2019
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), dimension(wf%n_amplitudes, 1) :: csiX
+      character(len=*) :: Xoperator
+      
+!
+   end subroutine construct_csiX_ccs
 !
 !
 end module ccs_class
