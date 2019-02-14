@@ -55,6 +55,9 @@ contains
       call wf%initialize_amplitudes()
       wf%t1 = zero
 !
+      call wf%initialize_orbital_coefficients()
+      wf%orbital_coefficients = ref_wf%orbital_coefficients
+!
    end subroutine prepare_mp2
 !
 !
