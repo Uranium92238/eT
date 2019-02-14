@@ -1,4 +1,6 @@
 #Making a gitignore
 build/
 *.swp
+*.swo
 .DS_Store
+__pycache__
