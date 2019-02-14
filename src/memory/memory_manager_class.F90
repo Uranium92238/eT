@@ -1614,7 +1614,7 @@ contains
          e_size = element_size
       endif
 !
-      buff = one/mem%buffer
+      buff = zero
       if(present(buffer_size)) then
          buff = buffer_size
       endif

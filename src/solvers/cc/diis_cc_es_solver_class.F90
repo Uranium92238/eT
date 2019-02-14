@@ -29,7 +29,7 @@ module diis_cc_es_solver_class
 !
       integer :: n_singlet_states, diis_dimension
 !
-      real(dp), dimension(:,:), allocatable :: energies
+      real(dp), dimension(:), allocatable :: energies
       real(dp), dimension(:,:), allocatable :: residual_norms 
 !
       character(len=40) :: transformation 
@@ -45,6 +45,7 @@ module diis_cc_es_solver_class
       procedure :: set_start_vectors               => set_start_vectors_diis_cc_es_solver
 !
       procedure :: print_banner                    => print_banner_diis_cc_es_solver
+      procedure :: print_summary                   => print_summary_diis_cc_es_solver
 !
       procedure :: read_settings                   => read_settings_diis_cc_es_solver
       procedure :: print_settings                  => print_settings_diis_cc_es_solver
@@ -212,7 +213,7 @@ contains
       logical, dimension(:), allocatable :: converged_eigenvalue
       logical, dimension(:), allocatable :: converged_residual
 !
-      real(dp), dimension(:), allocatable :: energies 
+     ! real(dp), dimension(:), allocatable :: energies 
       real(dp), dimension(:), allocatable :: prev_energies 
 !
       real(dp), dimension(:), allocatable :: residual_norms
@@ -229,13 +230,13 @@ contains
 !
 !     Initialize energies, residual norms, and convergence arrays 
 !
-      allocate(energies(solver%n_singlet_states))
+      allocate(solver%energies(solver%n_singlet_states))
       allocate(prev_energies(solver%n_singlet_states))
       allocate(residual_norms(solver%n_singlet_states))
 !
-      energies       = zero 
-      prev_energies  = zero 
-      residual_norms = zero 
+      solver%energies   = zero 
+      prev_energies     = zero 
+      residual_norms    = zero 
 !
       allocate(converged(solver%n_singlet_states))
       allocate(converged_residual(solver%n_singlet_states))
@@ -286,7 +287,7 @@ contains
 !
 !              Construct residual and energy and precondition the former 
 !
-               call wf%construct_excited_state_equation(X(:,state), R(:,state), energies(state))
+               call wf%construct_excited_state_equation(X(:,state), R(:,state), solver%energies(state))
 !
 !$omp parallel do private(amplitude)
                do amplitude = 1, wf%n_es_amplitudes
@@ -300,7 +301,8 @@ contains
 !
                residual_norms(state) = get_l2_norm(R(:, state), wf%n_es_amplitudes)
 !
-               converged_eigenvalue(state) = abs(energies(state)-prev_energies(state)) .lt. solver%eigenvalue_threshold
+               converged_eigenvalue(state) = abs(solver%energies(state)-prev_energies(state)) &
+                                                      .lt. solver%eigenvalue_threshold
                converged_residual(state)   = residual_norms(state)                     .lt. solver%residual_threshold
 !
                converged(state) = converged_eigenvalue(state) .and. converged_residual(state)
@@ -317,12 +319,12 @@ contains
 !
             endif 
 !
-            write(output%unit, '(i3,3x,f19.12,6x,e11.4)') state, energies(state), residual_norms(state)
+            write(output%unit, '(i3,3x,f19.12,6x,e11.4)') state, solver%energies(state), residual_norms(state)
             flush(output%unit)
 !
          enddo
 !
-         prev_energies = energies 
+         prev_energies = solver%energies 
 !
          write(output%unit,'(t3,a)')  '----------------------------------------------'     
 !
@@ -331,17 +333,21 @@ contains
       if (all(converged)) then 
 !
          write(output%unit, '(/t3,a29,i3,a12)') 'Convergence criterion met in ', iteration, ' iterations!'
-      !   call solver%print_summary() 
+         call solver%print_summary(wf, X) 
 !
       endif 
 !
-      deallocate(energies)
+      deallocate(solver%energies)
       deallocate(prev_energies)
       deallocate(residual_norms)
 !
       deallocate(converged)
       deallocate(converged_residual)
       deallocate(converged_eigenvalue)
+!
+      call mem%dealloc(eps, wf%n_es_amplitudes, 1)
+      call mem%dealloc(X, wf%n_es_amplitudes, solver%n_singlet_states)
+      call mem%dealloc(R, wf%n_es_amplitudes, solver%n_singlet_states)
 !
    end subroutine run_diis_cc_es_solver
 !
@@ -383,6 +389,59 @@ contains
       call mem%dealloc(lowest_orbital_differences_index, solver%n_singlet_states, 1)      
 !
    end subroutine set_start_vectors_diis_cc_es_solver
+!
+!
+   subroutine print_summary_diis_cc_es_solver(solver, wf, X)
+!!
+!!    Print summary 
+!!    Written by Eirik F. Kjønstad, Dec 2018 
+!!
+      implicit none 
+!
+      class(diis_cc_es_solver), intent(in) :: solver 
+!
+      class(ccs), intent(in) :: wf 
+!
+      real(dp), dimension(wf%n_es_amplitudes, solver%n_singlet_states), intent(in) :: X
+!
+      integer :: state 
+!
+      write(output%unit, '(/t3,a)') '- Excitation vector amplitudes:'
+      flush(output%unit)
+!
+      do state = 1, solver%n_singlet_states
+!
+         write(output%unit, '(/t6,a21,i2)')    'Electronic state nr. ', state
+         flush(output%unit)       
+!
+         write(output%unit, '(/t6,a30,f15.12)')  'Energy (Hartree):             ', solver%energies(state)
+         flush(output%unit)
+         write(output%unit, '(t6,a30,f15.12)') 'Fraction singles (|r1|/|r|):  ', &
+                        get_l2_norm(X(1:wf%n_t1,state),wf%n_t1)/get_l2_norm(X(:,state),wf%n_es_amplitudes)   
+         flush(output%unit)
+!
+         call wf%print_dominant_x_amplitudes(X(1,state), 'r')
+!
+      enddo 
+!
+      write(output%unit, '(/t3,a)') '- Electronic excitation energies:'
+!
+      write(output%unit, '(/t6,a)') '                                 Excitation energy            '
+      write(output%unit, '(t6,a)')  '                     ------------------------------------------'
+      write(output%unit, '(t6,a)')  'State                (Hartree)             (eV)                '
+      write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
+!
+      do state = 1, solver%n_singlet_states
+!
+         write(output%unit, '(t6,i2,14x,f19.12,4x,f19.12)') state, solver%energies(state), &
+                                                            solver%energies(state)*Hartree_to_eV
+!
+      enddo 
+!
+      write(output%unit, '(t6,a)')  '---------------------------------------------------------------'
+      write(output%unit, '(t6,a26,f11.8)') 'eV/Hartree (CODATA 2014): ', Hartree_to_eV
+!
+   end subroutine print_summary_diis_cc_es_solver
 !
 !
 end module diis_cc_es_solver_class

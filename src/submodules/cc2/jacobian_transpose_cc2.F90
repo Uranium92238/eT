@@ -100,8 +100,6 @@ contains
 !
 !     :: CCS contributions to the singles c vector ::
 !
-      write(output%unit,*) 'Start CC2 transpose'
-!
       call wf%jacobian_transpose_ccs_a1(sigma_ai, c_ai)
       call wf%jacobian_transpose_ccs_b1(sigma_ai, c_ai)
 !
