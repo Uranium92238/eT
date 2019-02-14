@@ -364,7 +364,7 @@ contains
 !
 !     Set up required integrals
       call wf%jacobian_cc3_integrals()
-      call wf%jacobian_cc3_c1_integrals()
+      call wf%jacobian_cc3_c1_integrals(c_ai)
 !
 !
    end subroutine jacobian_cc3_A_cc3
@@ -374,13 +374,257 @@ contains
 !!
 !!    Construct integrals need in CC3 Jacobian and store on disk
 !!    (bd|ck) ordered as dbc,k
-!!    (db|kc) ordered as bcd,k
+!!    (bd|kc) ordered as dcb,k
 !!    (lj|ck) ordered as lc,jk
-!!    (jl|kc) ordered as cl,jk
+!!    (lj|kc) ordered as cj,lk
 !!    (jb|kc) stored as L_jbkc = 2g_jbkc - g_jckb ordered as bc,jk
 !!
 !!    Rolf H. Myhre and Alexander Paul, Feb 2019
 !!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      real(dp), dimension(:,:,:,:), allocatable :: g_pqrs   ! Array for constructed integrals
+      real(dp), dimension(:,:,:,:), allocatable :: h_pqrs   ! Array for sorted integrals
+      real(dp), dimension(:,:), allocatable     :: v2_help  ! Help array for constructing L_jbkc
+!
+      integer :: k, j, record
+      type(batching_index) :: batch_k
+!
+      integer :: req_0, req_k
+      integer :: current_k_batch
+!
+      integer :: ioerror=-1
+!
+      call mem%alloc(v2_help,wf%n_v,wf%n_v)
+!
+      call batch_k%init(wf%n_o)
+!
+!     (bd|ck)
+!
+      req_0 = wf%integrals%n_J*wf%n_v**2
+      req_k = 2*wf%n_v**3 + wf%integrals%n_J*wf%n_v
+!
+      call mem%batch_setup(batch_k,req_0,req_k)
+!
+      call wf%g_bdck_t%init('g_bdck_t','direct','unformatted',dp*wf%n_v**3)
+      call disk%open_file(wf%g_bdck_t,'write')
+!
+      do current_k_batch = 1,batch_k%num_batches
+!
+         call batch_k%determine_limits(current_k_batch)
+!
+         call mem%alloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
+         call mem%alloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
+!
+         call wf%get_vvvo(g_pqrs, &
+                           1,wf%n_v, &
+                           1,wf%n_v, &
+                           1,wf%n_v, &
+                           batch_k%first,batch_k%last)
+!
+         call sort_1234_to_2134(g_pqrs,h_pqrs,wf%n_v,wf%n_v,wf%n_v,batch_k%length)
+!
+         do k = 1,batch_k%length
+!
+            record = batch_k%first + k -1
+            write(wf%g_bdck_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,:,k)
+!
+         enddo
+!
+         if(ioerror .ne. 0) then
+            call output%error_msg('Failed to write bdck_t file')
+         endif
+!
+         call mem%dealloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
+         call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
+!
+      enddo
+!
+      call disk%close_file(wf%g_bdck_t,'keep')
+!
+!
+!     (db|kc)
+!     Same batching
+!
+      call wf%g_dbkc_t%init('g_dbkc_t','direct','unformatted',dp*wf%n_v**3)
+      call disk%open_file(wf%g_dbkc_t,'write')
+!
+      do current_k_batch = 1,batch_k%num_batches
+!
+         call batch_k%determine_limits(current_k_batch)
+!
+         call mem%alloc(g_pqrs, wf%n_v, wf%n_v, batch_k%length, wf%n_v)
+         call mem%alloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
+!
+         call wf%get_vvov(g_pqrs, &
+                           1,wf%n_v, &
+                           1,wf%n_v, &
+                           batch_k%first,batch_k%last, &
+                           1,wf%n_v)
+!
+         call sort_1234_to_2413(g_pqrs,h_pqrs,wf%n_v,wf%n_v,batch_k%length,wf%n_v)
+!
+         do k = 1,batch_k%length
+!
+            record = batch_k%first + k -1
+            write(wf%g_dbkc_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,:,k)
+!
+         enddo
+!
+         if(ioerror .ne. 0) then
+            call output%error_msg('Failed to write dbkc_t file')
+         endif
+!
+         call mem%dealloc(g_pqrs, wf%n_v, wf%n_v, batch_k%length, wf%n_v)
+         call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
+!
+      enddo
+!
+      call disk%close_file(wf%g_dbkc_t,'keep')
+!
+!
+!     (lj|ck)
+!
+      req_0 = wf%integrals%n_J*wf%n_o**2
+      req_k = 2*wf%n_o**2*wf%n_v + wf%integrals%n_J*wf%n_v
+!
+      call mem%batch_setup(batch_k,req_0,req_k)
+!
+      call wf%g_ljck_t%init('g_ljck_t','direct','unformatted',dp*wf%n_v*wf%n_o)
+      call disk%open_file(wf%g_ljck_t,'write')
+!
+      do current_k_batch = 1,batch_k%num_batches
+!
+         call batch_k%determine_limits(current_k_batch)
+!
+         call mem%alloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
+         call mem%alloc(h_pqrs, wf%n_o, wf%n_v, wf%n_o ,batch_k%length)
+!
+         call wf%get_oovo(g_pqrs, &
+                           1,wf%n_o, &
+                           1,wf%n_o, &
+                           1,wf%n_v, &
+                           batch_k%first,batch_k%last)
+!
+         call sort_1234_to_1324(g_pqrs,h_pqrs,wf%n_o,wf%n_o,wf%n_v,batch_k%length)
+!
+         do k = 1,batch_k%length
+            do j = 1,wf%n_o
+!
+               record  = (batch_k%first + k - 2)*wf%n_o + j
+               write(wf%g_ljck_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,j,k)
+!
+            enddo
+         enddo
+!
+         if(ioerror .ne. 0) then
+            call output%error_msg('Failed to write ljck_t file')
+         endif
+
+         call mem%dealloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
+         call mem%dealloc(h_pqrs, wf%n_o, wf%n_v, wf%n_o, batch_k%length)
+!
+      enddo
+!
+      call disk%close_file(wf%g_ljck_t,'keep')
+!
+!
+!     (jl|kc)
+!     Same batching
+!
+      call wf%g_jlkc_t%init('g_jlkc_t','direct','unformatted',dp*wf%n_v*wf%n_o)
+      call disk%open_file(wf%g_jlkc_t,'write')
+!
+      do current_k_batch = 1,batch_k%num_batches
+!
+         call batch_k%determine_limits(current_k_batch)
+!
+         call mem%alloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
+         call mem%alloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_k%length)
+!
+         call wf%get_ooov(g_pqrs, &
+                           1,wf%n_o, &
+                           1,wf%n_o, &
+                           batch_k%first,batch_k%last, &
+                           1,wf%n_v)
+!
+         call sort_1234_to_4213(g_pqrs,h_pqrs,wf%n_o,wf%n_o,batch_k%length,wf%n_v)
+!
+         do k = 1,batch_k%length
+            do j = 1,wf%n_o
+!
+               record  = (batch_k%first + k - 2)*wf%n_o + j
+               write(wf%g_jlkc_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,j,k)
+!
+            enddo
+         enddo
+!
+         if(ioerror .ne. 0) then
+            call output%error_msg('Failed to write jlkc_t file')
+         endif
+
+         call mem%dealloc(g_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_v)
+         call mem%dealloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_k%length)
+!
+      enddo
+!
+      call disk%close_file(wf%g_jlkc_t,'keep')
+!
+!
+!     (jb|kc)
+!
+      req_0 = wf%integrals%n_J*wf%n_o*wf%n_v
+      req_k = 2*wf%n_v**2*wf%n_o + wf%integrals%n_J*wf%n_v
+!
+      call mem%batch_setup(batch_k,req_0,req_k)
+!
+      call wf%L_jbkc_t%init('L_jbkc_t','direct','unformatted',dp*wf%n_v**2)
+      call disk%open_file(wf%L_jbkc_t,'write')
+!
+      do current_k_batch = 1,batch_k%num_batches
+!
+         call batch_k%determine_limits(current_k_batch)
+!
+         call mem%alloc(g_pqrs, wf%n_o, wf%n_v, batch_k%length, wf%n_v)
+         call mem%alloc(h_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%length)
+!
+         call wf%get_ovov(g_pqrs, &
+                           1,wf%n_o, &
+                           1,wf%n_v, &
+                           batch_k%first,batch_k%last, &
+                           1,wf%n_v)
+!
+         call sort_1234_to_2413(g_pqrs,h_pqrs,wf%n_o,wf%n_v,batch_k%length,wf%n_v)
+!
+         do k = 1,batch_k%length
+            do j = 1,wf%n_o
+!
+               call sort_12_to_21(h_pqrs(:,:,j,k), v2_help, wf%n_v, wf%n_v)
+!
+               call dscal(wf%n_v**2, two, h_pqrs(:,:,j,k),1)
+!
+               call daxpy(wf%n_v**2, -one, v2_help, 1, h_pqrs(:,:,j,k), 1)
+!
+               record  = (batch_k%first + k - 2)*wf%n_o + j
+               write(wf%L_jbkc_t%unit,rec=record,iostat=ioerror) h_pqrs(:,:,j,k)
+!
+            enddo
+         enddo
+!
+         if(ioerror .ne. 0) then
+            call output%error_msg('Failed to write jbkc_t file')
+         endif
+
+         call mem%dealloc(g_pqrs, wf%n_o, wf%n_v, batch_k%length, wf%n_v)
+         call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_o, batch_k%length)
+!
+      enddo
+!
+      call disk%close_file(wf%L_jbkc_t,'keep')
+!
+!
    end subroutine jacobian_cc3_integrals_cc3
 !
 !
@@ -736,7 +980,7 @@ contains
                      (wf%n_v)*(batch_k%length), &
                      integrals%n_J,             &
                      one,                       &
-                     L_lj_J_c1,                 & ! L_lj_J  b is c1-transformed
+                     L_lj_J_c1,                 & ! L_lj_J  j is c1-transformed
                      (wf%n_o)**2,               &
                      L_kc_J,                    & ! L_kc_J
                      (wf%n_v)*(batch_k%length), &
@@ -775,6 +1019,90 @@ contains
 !
 !
    end subroutine jacobian_cc3_c1_integrals_cc3
+!
+!
+   subroutine construct_fock_ia_c1_cc3(wf, c_ai, F_ia_c1)
+!!
+!!    Calculates C1 transformed elements of the Fock matrix required for the CC3 jacobian
+!!
+!!    F_ia_c1 = sum_j L_iajj' = sum_j 2 g_iajj' - g_ij'ja
+!!
+!!    Rolf H. Myhre and Alexander Paul, Feb 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
+      real(dp), dimension(wf%n_o, wf%n_v), intent(out) :: F_ia_c1
+!
+      real(dp), dimension(:,:), allocatable :: L_ia_J
+      real(dp), dimension(:,:), allocatable :: L_ij_J_c1
+!
+      real(dp), dimension(:,:,:,:), allocatable :: g_iajj, g_ijja
+!
+      integer :: i, a, j
+!
+!     Construct the integrals from the Cholesky Vectors
+!
+      call mem%alloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%integrals%n_J)
+!
+      call wf%integrals%read_cholesky_ia_t1(L_ia_J, 1, wf%n_o, 1, wf%n_v)
+!
+      call mem%alloc(L_ij_J_c1, (wf%n_o)**2, wf%integrals%n_J)
+!
+      call wf%integrals%construct_cholesky_ij_c1(L_ij_J_c1, c_ai, 1, wf%n_o, 1, wf%n_o)
+!
+      call mem%alloc(g_iajj, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
+      call dgemm('N', 'T',             &
+                  (wf%n_v)*(wf%n_o),   &
+                  (wf%n_o)**2,         &
+                  integrals%n_J,       &
+                  one,                 &
+                  L_ia_J,              & ! L_ia_J
+                  (wf%n_v)*(wf%n_o),   &
+                  L_ij_J_c1,           & ! L_jj'_J
+                  (wf%n_o)**2,         &
+                  zero,                &
+                  g_iajj,              & ! (ia|jj')
+                  (wf%n_v)*(wf%n_o))
+!
+      call mem%alloc(g_ijja, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+!
+      call dgemm('N', 'T',             &
+                  (wf%n_o)**2,         &
+                  (wf%n_v)*(wf%n_o),   &
+                  integrals%n_J,       &
+                  one,                 &
+                  L_ij_J_c1,           & ! L_ij'_J
+                  (wf%n_o)**2,         &
+                  L_ia_J,              & ! L_ja_J
+                  (wf%n_v)*(wf%n_o),   &
+                  zero,                &
+                  g_ijja,              & ! (ia|jj')
+                  (wf%n_o)**2)
+!
+      call mem%dealloc(L_ij_J_c1, (wf%n_o)**2, wf%integrals%n_J)
+      call mem%dealloc(L_ia_J, (wf%n_o)*(wf%n_v), wf%integrals%n_J)
+!
+!$omp parallel do private(a,i,j)
+      do a = 1, wf%n_v
+         do j = 1, wf%n_o
+            do i = 1, wf%n_o
+!
+               F_ia_c1(i,a) = two*g_iajj(i,a,j,j) - g_ijja(i,j,j,a)
+!
+            enddo
+         enddo
+      enddo
+!$omp end parallel do
+!
+      call mem%dealloc(g_ijja, wf%n_o, wf%n_o, wf%n_o, wf%n_v)
+      call mem%dealloc(g_iajj, wf%n_o, wf%n_v, wf%n_o, wf%n_o)
+!
+!
+   end subroutine construct_fock_ia_c1_cc3
 !
 !
 end submodule jacobian_cc3
