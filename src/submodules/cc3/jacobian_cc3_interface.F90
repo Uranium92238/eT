@@ -29,7 +29,7 @@
 !
    module subroutine jacobian_cc3_integrals_cc3(wf)
 !!
-!!    Construct integrals need in CC3 Jacobian and store on disk
+!!    Construct integrals needed in CC3 Jacobian and store on disk
 !!    Alexander Paul and Rolf H. Myhre February 2019
 !!
       implicit none
@@ -37,6 +37,18 @@
       class(cc3) :: wf
 !
    end subroutine jacobian_cc3_integrals_cc3
+!
+!
+   module subroutine jacobian_cc3_c1_integrals_cc3(wf)
+!!
+!!    Construct c1 transformed integrals needed in CC3 Jacobian
+!!    Alexander Paul and Rolf H. Myhre February 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+end subroutine jacobian_cc3_c1_integrals_cc3
 !
 !
    module subroutine jacobian_cc3_vvv_reader_cc3(wf,batch_x,g_bdcx,g_dbxc)

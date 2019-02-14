@@ -66,6 +66,8 @@ contains
 !
       integer :: i, j, a, b, ai, bj, aibj ! Index
 !
+      logical, private :: eri_c1_mem = .false.
+!
       type(timings) :: cc3_timer
       type(timings) :: ccsd_timer
 !
@@ -277,7 +279,7 @@ contains
    end subroutine jacobian_cc3_transformation_cc3
 !
 !
-   module subroutine jacboian_cc3_A_cc3(wf, rho, rho_ai, rho_aibj)
+   module subroutine jacobian_cc3_A_cc3(wf, rho, rho_ai, rho_aibj)
 !!
 !!    CC3 terms depending on the C^{abc}_{ijk} amplitudes
 !!    Alex C. Paul and Rolf H. Myhre 2018
@@ -359,7 +361,420 @@ contains
       real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_lick_c1_p => null()
       real(dp), dimension(:,:,:,:), contiguous, pointer  :: g_ljck_c1_p => null()
 !
-      end subroutine jacboian_cc3_A_cc3
+!
+!     Set up required integrals
+      call wf%jacobian_cc3_integrals()
+      call wf%jacobian_cc3_c1_integrals()
+!
+!
+   end subroutine jacobian_cc3_A_cc3
+!
+!
+   module subroutine jacobian_cc3_integrals_cc3(wf)
+!!
+!!    Construct integrals need in CC3 Jacobian and store on disk
+!!    (bd|ck) ordered as dbc,k
+!!    (db|kc) ordered as bcd,k
+!!    (lj|ck) ordered as lc,jk
+!!    (jl|kc) ordered as cl,jk
+!!    (jb|kc) stored as L_jbkc = 2g_jbkc - g_jckb ordered as bc,jk
+!!
+!!    Rolf H. Myhre and Alexander Paul, Feb 2019
+!!
+   end subroutine jacobian_cc3_integrals_cc3
+!
+!
+   module subroutine jacobian_cc3_c1_integrals_cc3(wf, c_ai)
+!!
+!!    Construct c1-transformed integrals needed in CC3 jacobian
+!!    from the c1-transformed Cholesky Vectors
+!!
+!!    Should include check if they can be safely stored in memory
+!!
+!!    g'_bdck = (b'd|ck) + (bd|c'k) - (bd|ck')  ordered as dbc,k
+!!    g'_ljck = (lj'|ck) + (lj|ck') - (lj|c'k)  ordered as lc,jk
+!!    (b'd|kc)                                  ordered as dcb,k
+!!    (lj'|kc)                                  orderd as cjlk
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(in) :: c_ai
+!
+      real(dp), dimension(:,:,:,:), allocatable :: g_pqrs ! Array for constructed integrals
+      real(dp), dimension(:,:,:,:), allocatable :: h_pqrs ! Array for sorted integrals
+!
+      real(dp), dimension(:,:), allocatable :: L_bd_J_c1, L_ck_J_c1, L_lj_J_c1 ! c1 transformed Cholesky vectors
+      real(dp), dimension(:,:), allocatable :: L_ck_J, L_bd_J, L_kc_J, L_lj_J ! Cholesky vectors
+!
+      integer :: k, j, record
+      type(batching_index) :: batch_k
+!
+      integer :: req_0, req_k
+      integer :: current_k_batch
+!
+      integer :: ioerror=-1
+!
+      call batch_k%init(wf%n_o)
+!
+!     g'_bdck = (b'd|ck) + (bd|c'k) - (bd|ck')
+!
+      req_0 = (wf%integrals%n_J)*(wf%n_v)**2 + (wf%integrals%n_J)*(wf%n_o)*(wf%n_v)
+      req_k = max((wf%integrals%n_J)*(wf%n_v) + (wf%n_v)**3, 2*(wf%n_v)**3)
+!
+      call mem%batch_setup(batch_k,req_0,req_k)
+!
+      call wf%g_bdck_c%init('g_bdck_c','direct','unformatted',dp*wf%n_v**3)
+      call disk%open_file(wf%g_bdck_c,'write')
+!
+      do current_k_batch = 1,batch_k%num_batches
+!
+         call batch_k%determine_limits(current_k_batch)
+!
+!        :: Term 1: g_b'dck = sum_J L_bd_J_c1 L_ck_J ::
+!
+         call mem%alloc(L_bd_J_c1, (wf%n_v)*(wf%n_v), wf%integrals%n_J)
+!
+         call wf%integrals%construct_cholesky_ab_c1(L_bd_J_c1, c_ai, 1, wf%n_v, 1, wf%n_v)
+!
+         call mem%alloc(L_ck_J, (wf%n_v)*(batch_k%length), wf%integrals%n_J)
+!
+         call wf%integrals%read_cholesky_ai_t1(L_ck_J, 1, wf%n_v, batch_k%first, batch_k%last)
+!
+         call mem%alloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
+!
+         call dgemm('N', 'T',                   &
+                     (wf%n_v)**2,               &
+                     (wf%n_v)*(batch_k%length), &
+                     integrals%n_J,             &
+                     one,                       &
+                     L_bd_J_c1,                 & ! L_bd_J  b is c1-transformed
+                     (wf%n_v)**2,               &
+                     L_ck_J,                    & ! L_ck_J
+                     (wf%n_v)*(batch_k%length), &
+                     zero,                      &
+                     g_pqrs,                    & ! (b'd|ck)
+                     (wf%n_v)**2)
+!
+         call mem%dealloc(L_bd_J_c1, (wf%n_v)*(wf%n_v), wf%integrals%n_J)
+         call mem%dealloc(L_ck_J, (wf%n_v)*(batch_k%length), wf%integrals%n_J)
+!
+!        :: Term 2: g_bdc'k = sum_J L_bd_J L_ck_J_c1 ::
+!
+         call mem%alloc(L_ck_J_c1, (wf%n_v)*(batch_k%length), wf%integrals%n_J)
+!
+         call wf%integrals%construct_cholesky_ai_a_c1(L_ck_J_c1, c_ai, 1, wf%n_v, batch_k%first, batch_k%last)
+!
+         call mem%alloc(L_bd_J, (wf%n_v)*(wf%n_v), wf%integrals%n_J)
+!
+         call wf%integrals%read_cholesky_ab_t1(L_bd_J, 1, wf%n_v, 1, wf%n_v)
+!
+         call dgemm('N', 'T',                   &
+                     (wf%n_v)**2,               &
+                     (wf%n_v)*(batch_k%length), &
+                     integrals%n_J,             &
+                     one,                       &
+                     L_bd_J,                    & ! L_bd_J
+                     (wf%n_v)**2,               &
+                     L_ck_J_c1,                 & ! L_ck_J  c is c1_transformed
+                     (wf%n_v)*(batch_k%length), &
+                     one,                       &
+                     g_pqrs,                    & ! (bd|c'k)
+                     (wf%n_v)**2)
+!
+!        :: Term 3: g_bdck' = sum_J L_bd_J L_ck_J_c1 ::
+!
+!
+         call wf%integrals%construct_cholesky_ai_i_c1(L_ck_J_c1, c_ai, 1, wf%n_v, batch_k%first, batch_k%last)
+!
+         call dgemm('N', 'T',                   &
+                     (wf%n_v)**2,               &
+                     (wf%n_v)*(batch_k%length), &
+                     integrals%n_J,             &
+                     -one,                      &
+                     L_bd_J,                    & ! L_bd_J
+                     (wf%n_v)**2,               &
+                     L_ck_J_c1,                 & ! L_ck_J  k is c1_transformed
+                     (wf%n_v)*(batch_k%length), &
+                     one,                       &
+                     g_pqrs,                    & ! (bd|ck')
+                     (wf%n_v)**2)
+!
+         call mem%dealloc(L_ck_J_c1, (wf%n_v)*(batch_k%length), wf%integrals%n_J)
+         call mem%dealloc(L_db_J, (wf%n_v)*(wf%n_v), wf%integrals%n_J)
+!
+!        Sort from g_pqrs = (b'd|ck) + (bd|c'k) - (bd|ck') to h_pqrs sorted as dbck
+!
+         call mem%alloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length) ! order dbck
+!
+         call sort_1234_to_2134(g_pqrs, h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
+!
+         call mem%dealloc(g_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
+!
+!        Write to file
+!        Should implement possibility to have them in mem if possible
+!
+         do k = 1, batch_k%length
+!
+            record = batch_k%first + k -1
+            write(wf%g_bdck_c%unit, rec=record, iostat=ioerror) h_pqrs(:,:,:,k)
+!
+         enddo
+!
+         if(ioerror .ne. 0) then
+            call output%error_msg('Failed to write bdck_c file')
+         endif
+!
+         call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
+!
+      enddo
+!
+      call disk%close_file(wf%g_bdck_c,'keep')
+!
+!
+!     (b'd|kc) same batching (req0 and req_k)
+!
+!
+      call wf%g_bdkc_t%init('g_bdkc_c','direct','unformatted',dp*wf%n_v**3)
+      call disk%open_file(wf%g_bdkc_c,'write')
+!
+      do current_k_batch = 1, batch_k%num_batches
+!
+         call batch_k%determine_limits(current_k_batch)
+!
+         call mem%alloc(L_bd_J_c1, (wf%n_v)*(wf%n_v), wf%integrals%n_J)
+!
+         call wf%integrals%construct_cholesky_ab_c1(L_bd_J_c1, c_ai, 1, wf%n_v, 1, wf%n_v)
+!
+         call mem%alloc(L_kc_J, (wf%n_v)*(batch_k%length), wf%integrals%n_J)
+!
+         call wf%integrals%read_cholesky_ia_t1(L_kc_J, batch_k%first, batch_k%last, 1, wf%n_v)
+!
+         call mem%alloc(g_pqrs, wf%n_v, wf%n_v, batch_k%length, wf%n_v)
+!
+         call dgemm('N', 'T',                   &
+                     (wf%n_v)**2,               &
+                     (wf%n_v)*(batch_k%length), &
+                     integrals%n_J,             &
+                     one,                       &
+                     L_bd_J_c1,                 & ! L_bd_J  b is c1-transformed
+                     (wf%n_v)**2,               &
+                     L_kc_J,                    & ! L_kc_J
+                     (wf%n_v)*(batch_k%length), &
+                     zero,                      &
+                     g_pqrs,                    & ! (b'd|kc)
+                     (wf%n_v)**2)
+!
+         call mem%dealloc(L_bd_J_c1, (wf%n_v)*(wf%n_v), wf%integrals%n_J)
+         call mem%dealloc(L_kc_J, (wf%n_v)*(batch_k%length), wf%integrals%n_J)
+!
+         call mem%alloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length) ! order dcb,k
+!
+         call sort_1234_to_2413(g_pqrs,h_pqrs,wf%n_v,wf%n_v,batch_k%length,wf%n_v)
+!
+         call mem%dealloc(g_pqrs, wf%n_v, wf%n_v, batch_k%length, wf%n_v)
+!
+!        Write to file
+!        Should implement possibility to have them in mem if possible
+!
+         do k = 1,batch_k%length
+!
+            record = batch_k%first + k -1
+            write(wf%g_bdkc_c%unit, rec=record, iostat=ioerror) h_pqrs(:,:,:,k)
+!
+         enddo
+!
+         if(ioerror .ne. 0) then
+            call output%error_msg('Failed to write bdkc_c file')
+         endif
+!
+         call mem%dealloc(h_pqrs, wf%n_v, wf%n_v, wf%n_v, batch_k%length)
+!
+      enddo
+!
+      call disk%close_file(wf%g_bdkc_c,'keep')
+!
+!
+!     g'_ljck = (lj|'ck) + (lj|ck') - (lj|c'k) ordered as lc,jk
+!
+!
+      req_0 = wf%integrals%n_J*wf%n_o**2 + 2*(wf%integrals%n_J)*(wf%n_o)*(wf%n_v)
+      req_k = max(2*(wf%n_v)*(wf%n_o)**2, (wf%n_v)*(wf%n_o)**2 + wf%integrals%n_J*wf%n_v)
+!
+      call mem%batch_setup(batch_k,req_0,req_k)
+!
+      call wf%g_ljck_c%init('g_ljck_c','direct','unformatted',dp*wf%n_v*wf%n_o)
+      call disk%open_file(wf%g_ljck_c,'write')
+!
+      do current_k_batch = 1,batch_k%num_batches
+!
+         call batch_k%determine_limits(current_k_batch)
+!
+!        :: Term 1: g_lj'ck = sum_J L_jl_J_c1 L_ck_J ::
+!
+         call mem%alloc(L_lj_J_c1, (wf%n_o)*(wf%n_o), wf%integrals%n_J)
+!
+         call wf%integrals%construct_cholesky_ij_c1(L_lj_J_c1, c_ai, 1, wf%n_o, 1, wf%n_o)
+!
+         call mem%alloc(L_ck_J, (wf%n_v)*(batch_k%length), wf%integrals%n_J)
+!
+         call wf%integrals%read_cholesky_ai_t1(L_ck_J, 1, wf%n_v, batch_k%first, batch_k%last)
+!
+         call mem%alloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
+!
+         call dgemm('N', 'T',                   &
+                     (wf%n_o)**2,               &
+                     (wf%n_v)*(batch_k%length), &
+                     integrals%n_J,             &
+                     one,                       &
+                     L_lj_J_c1,                 & ! L_lj_J  j is c1-transformed
+                     (wf%n_o)**2,               &
+                     L_ck_J,                    & ! L_ck_J
+                     (wf%n_v)*(batch_k%length), &
+                     zero,                      &
+                     g_pqrs,                    & ! (lj'|ck)
+                     (wf%n_o)**2)
+!
+         call mem%dealloc(L_lj_J_c1, (wf%n_o)*(wf%n_o), wf%integrals%n_J)
+         call mem%dealloc(L_ck_J, (wf%n_v)*(batch_k%length), wf%integrals%n_J)
+!
+!        :: Term 2: g_ljck' = sum_J L_lj_J L_ck_J_c1 ::
+!
+         call mem%alloc(L_ck_J_c1, (wf%n_v)*(batch_k%length), wf%integrals%n_J)
+!
+         call wf%integrals%construct_cholesky_ai_i_c1(L_ck_J_c1, c_ai, 1, wf%n_v, batch_k%first, batch_k%last)
+!
+         call mem%alloc(L_lj_J, (wf%n_o)*(wf%n_o), wf%integrals%n_J)
+!
+         call wf%integrals%read_cholesky_ij_t1(L_lj_J, 1, wf%n_o, 1, wf%n_o)
+!
+         call dgemm('N', 'T',                   &
+                     (wf%n_o)**2,               &
+                     (wf%n_v)*(batch_k%length), &
+                     integrals%n_J,             &
+                     one,                       &
+                     L_lj_J,                    & ! L_lj_J
+                     (wf%n_o)**2,               &
+                     L_ck_J_c1,                 & ! L_ck_J  k is c1_transformed
+                     (wf%n_v)*(batch_k%length), &
+                     one,                       &
+                     g_pqrs,                    & ! (lj|ck')
+                     (wf%n_o)**2)
+!
+!        :: Term 3: g_bdck' = sum_J L_bd_J L_ck_J_c1 ::
+!
+!
+         call wf%integrals%construct_cholesky_ai_a_c1(L_ck_J_c1, c_ai, 1, wf%n_v, batch_k%first, batch_k%last)
+!
+         call dgemm('N', 'T',                   &
+                     (wf%n_o)**2,               &
+                     (wf%n_v)*(batch_k%length), &
+                     integrals%n_J,             &
+                     -one,                      &
+                     L_lj_J,                    & ! L_lj_J
+                     (wf%n_o)**2,               &
+                     L_ck_J_c1,                 & ! L_ck_J  c is c1_transformed
+                     (wf%n_v)*(batch_k%length), &
+                     one,                       &
+                     g_pqrs,                    & ! (lj|c'k)
+                     (wf%n_o)**2)
+!
+         call mem%dealloc(L_ck_J_c1, (wf%n_v)*(batch_k%length), wf%integrals%n_J)
+         call mem%dealloc(L_lj_J, (wf%n_o)*(wf%n_o), wf%integrals%n_J)
+!
+!        Sort from g_pqrs = (lj'|ck) + (lj|ck') - (lj|c'k) to h_pqrs
+!
+         call mem%alloc(h_pqrs, wf%n_o, wf%n_v, wf%n_o ,batch_k%length) ! lcjk
+!
+         call sort_1234_to_1324(g_pqrs,h_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
+!
+         call mem%dealloc(g_pqrs, wf%n_o, wf%n_o, wf%n_v, batch_k%length)
+!
+         do k = 1,batch_k%length
+            do j = 1,wf%n_o
+!
+               record  = (batch_k%first + k - 2)*wf%n_o + j
+               write(wf%g_ljck_c%unit,rec=record,iostat=ioerror) h_pqrs(:,:,j,k)
+!
+            enddo
+         enddo
+!
+         if(ioerror .ne. 0) then
+            call output%error_msg('Failed to write ljck_c file')
+         endif
+!
+         call mem%dealloc(h_pqrs, wf%n_o, wf%n_v, wf%n_o, batch_k%length)
+!
+      enddo
+!
+      call disk%close_file(wf%g_ljck_c,'keep')
+!
+!
+!     (lj'|kc) same batching (req0 and req_k)
+!
+!
+      call wf%g_ljkc_c%init('g_ljkc_c','direct','unformatted',dp*wf%n_v**3)
+      call disk%open_file(wf%g_ljkc_c,'write')
+!
+      do current_k_batch = 1, batch_k%num_batches
+!
+         call batch_k%determine_limits(current_k_batch)
+!
+         call mem%alloc(L_lj_J_c1, (wf%n_o)*(wf%n_o), wf%integrals%n_J)
+!
+         call wf%integrals%construct_cholesky_ij_c1(L_lj_J_c1, c_ai, 1, wf%n_o, 1, wf%n_o)
+!
+         call mem%alloc(L_kc_J, (wf%n_v)*(batch_k%length), wf%integrals%n_J)
+!
+         call wf%integrals%read_cholesky_ia_t1(L_kc_J, batch_k%first, batch_k%last, 1, wf%n_v)
+!
+         call mem%alloc(g_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_v)
+!
+         call dgemm('N', 'T',                   &
+                     (wf%n_o)**2,               &
+                     (wf%n_v)*(batch_k%length), &
+                     integrals%n_J,             &
+                     one,                       &
+                     L_lj_J_c1,                 & ! L_lj_J  b is c1-transformed
+                     (wf%n_o)**2,               &
+                     L_kc_J,                    & ! L_kc_J
+                     (wf%n_v)*(batch_k%length), &
+                     zero,                      &
+                     g_pqrs,                    & ! (lj'|kc)
+                     (wf%n_o)**2)
+!
+         call mem%dealloc(L_lj_J_c1, (wf%n_o)*(wf%n_o), wf%integrals%n_J)
+         call mem%dealloc(L_kc_J, (wf%n_o)*(batch_k%length), wf%integrals%n_J)
+!
+         call mem%alloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_k%length) ! order cjlk
+!
+         call sort_1234_to_2413(g_pqrs, h_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_v)
+!
+         call mem%dealloc(g_pqrs, wf%n_o, wf%n_o, batch_k%length, wf%n_v)
+!
+!        Write to file
+!        Should implement possibility to have them in mem if possible
+!
+         do k = 1,batch_k%length
+!
+            record = batch_k%first + k -1
+            write(wf%g_ljkc_c%unit, rec=record, iostat=ioerror) h_pqrs(:,:,:,k)
+!
+         enddo
+!
+         if(ioerror .ne. 0) then
+            call output%error_msg('Failed to write ljkc_c file')
+         endif
+!
+         call mem%dealloc(h_pqrs, wf%n_v, wf%n_o, wf%n_o, batch_k%length)
+!
+      enddo
+!
+      call disk%close_file(wf%g_ljkc_c, 'keep')
+!
+!
+   end subroutine jacobian_cc3_c1_integrals_cc3
 !
 !
 end submodule jacobian_cc3

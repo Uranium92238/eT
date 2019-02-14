@@ -17,10 +17,14 @@ module cc3_class
    type(file)  :: g_dbkc_t
    type(file)  :: g_jlkc_t
    type(file)  :: L_jbkc_t
+   type(file)  :: g_bdck_c
+   type(file)  :: g_ljck_c
+   type(file)  :: g_bdkc_c
+   type(file)  :: g_ljkc_c
 !
    contains
 !
-!     Preparation and cleanup routines 
+!     Preparation and cleanup routines
 !
       procedure :: prepare                => prepare_cc3
       procedure :: cleanup                => cleanup_cc3
@@ -45,7 +49,7 @@ module cc3_class
 !
       include "../submodules/cc3/omega_cc3_interface.F90"
 !
-   end interface 
+   end interface
 !
 !
 contains
@@ -75,10 +79,10 @@ contains
 !
       wf%hf_energy = ref_wf%energy
 !
-      wf%n_t1 = (wf%n_o)*(wf%n_v) 
+      wf%n_t1 = (wf%n_o)*(wf%n_v)
       wf%n_t2 = (wf%n_o)*(wf%n_v)*((wf%n_o)*(wf%n_v) + 1)/2
 !
-      wf%n_amplitudes = wf%n_t1 + wf%n_t2 
+      wf%n_amplitudes = wf%n_t1 + wf%n_t2
 !
       call wf%initialize_fock_ij()
       call wf%initialize_fock_ia()

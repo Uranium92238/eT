@@ -34,103 +34,107 @@ module mo_integral_tool_class
 !
    contains
 !
-      procedure :: prepare                => prepare_mo_integral_tool
+      procedure :: prepare                      => prepare_mo_integral_tool
 !
-      procedure :: need_t1                => need_t1_mo_integral_tool
+      procedure :: need_t1                      => need_t1_mo_integral_tool
 !
-      procedure :: read_cholesky          => read_cholesky_mo_integral_tool
-      procedure :: read_cholesky_t1       => read_cholesky_t1_mo_integral_tool
+      procedure :: read_cholesky                => read_cholesky_mo_integral_tool
+      procedure :: read_cholesky_t1             => read_cholesky_t1_mo_integral_tool
 !
-      procedure :: read_cholesky_ia       => read_cholesky_ia_mo_integral_tool
+      procedure :: read_cholesky_ia             => read_cholesky_ia_mo_integral_tool
 !
-      procedure :: construct_cholesky_ij  => construct_cholesky_ij_mo_integral_tool
-      procedure :: construct_cholesky_ab  => construct_cholesky_ab_mo_integral_tool
-      procedure :: construct_cholesky_ai  => construct_cholesky_ai_mo_integral_tool
+      procedure :: construct_cholesky_ij        => construct_cholesky_ij_mo_integral_tool
+      procedure :: construct_cholesky_ab        => construct_cholesky_ab_mo_integral_tool
+      procedure :: construct_cholesky_ai        => construct_cholesky_ai_mo_integral_tool
 !
-      procedure :: read_cholesky_ai_t1    => read_cholesky_ai_t1_mo_integral_tool
-      procedure :: read_cholesky_ia_t1    => read_cholesky_ia_t1_mo_integral_tool
-      procedure :: read_cholesky_ij_t1    => read_cholesky_ij_t1_mo_integral_tool
-      procedure :: read_cholesky_ab_t1    => read_cholesky_ab_t1_mo_integral_tool
+      procedure :: construct_cholesky_ij_c1     => construct_cholesky_ij_c1_mo_integral_tool
+      procedure :: construct_cholesky_ab_c1     => construct_cholesky_ab_c1_mo_integral_tool
+      procedure :: construct_cholesky_ai_a_c1   => construct_cholesky_ai_a_c1_mo_integral_tool
+      procedure :: construct_cholesky_ai_i_c1   => construct_cholesky_ai_i_c1_mo_integral_tool
 !
-      procedure :: set_full_index         => set_full_index_mo_integral_tool
+      procedure :: read_cholesky_ai_t1          => read_cholesky_ai_t1_mo_integral_tool
+      procedure :: read_cholesky_ia_t1          => read_cholesky_ia_t1_mo_integral_tool
+      procedure :: read_cholesky_ij_t1          => read_cholesky_ij_t1_mo_integral_tool
+      procedure :: read_cholesky_ab_t1          => read_cholesky_ab_t1_mo_integral_tool
+!
+      procedure :: set_full_index               => set_full_index_mo_integral_tool
 !
       procedure :: construct_ovov_2_mo_integral_tool
       procedure :: construct_ovov_4_mo_integral_tool
-      generic   :: construct_ovov         => construct_ovov_2_mo_integral_tool, &
-                                             construct_ovov_4_mo_integral_tool
+      generic   :: construct_ovov               => construct_ovov_2_mo_integral_tool, &
+                                                   construct_ovov_4_mo_integral_tool
       procedure :: construct_vovo_2_mo_integral_tool
       procedure :: construct_vovo_4_mo_integral_tool
-      generic   :: construct_vovo         => construct_vovo_2_mo_integral_tool, &
-                                             construct_vovo_4_mo_integral_tool
-
+      generic   :: construct_vovo               => construct_vovo_2_mo_integral_tool, &
+                                                   construct_vovo_4_mo_integral_tool
 !
       procedure :: construct_oooo_2_mo_integral_tool
       procedure :: construct_oooo_4_mo_integral_tool
-      generic   :: construct_oooo         => construct_oooo_2_mo_integral_tool, &
-                                             construct_oooo_4_mo_integral_tool
+      generic   :: construct_oooo            => construct_oooo_2_mo_integral_tool, &
+                                                construct_oooo_4_mo_integral_tool
 !
       procedure :: construct_ooov_2_mo_integral_tool
       procedure :: construct_ooov_4_mo_integral_tool
-      generic   :: construct_ooov         => construct_ooov_2_mo_integral_tool, &
-                                             construct_ooov_4_mo_integral_tool
+      generic   :: construct_ooov            => construct_ooov_2_mo_integral_tool, &
+                                                construct_ooov_4_mo_integral_tool
       procedure :: construct_oovo_2_mo_integral_tool
       procedure :: construct_oovo_4_mo_integral_tool
-      generic   :: construct_oovo         => construct_oovo_2_mo_integral_tool, &
-                                             construct_oovo_4_mo_integral_tool
+      generic   :: construct_oovo            => construct_oovo_2_mo_integral_tool, &
+                                                construct_oovo_4_mo_integral_tool
       procedure :: construct_ovoo_2_mo_integral_tool
       procedure :: construct_ovoo_4_mo_integral_tool
-      generic   :: construct_ovoo         => construct_ovoo_2_mo_integral_tool, &
-                                             construct_ovoo_4_mo_integral_tool
+      generic   :: construct_ovoo            => construct_ovoo_2_mo_integral_tool, &
+                                                construct_ovoo_4_mo_integral_tool
       procedure :: construct_vooo_2_mo_integral_tool
       procedure :: construct_vooo_4_mo_integral_tool
-      generic   :: construct_vooo         => construct_vooo_2_mo_integral_tool, &
-                                             construct_vooo_4_mo_integral_tool
+      generic   :: construct_vooo            => construct_vooo_2_mo_integral_tool, &
+                                                construct_vooo_4_mo_integral_tool
 !
-      procedure :: construct_vvvo         => construct_vvvo_mo_integral_tool
+      procedure :: construct_vvvo            => construct_vvvo_mo_integral_tool
       procedure :: construct_vvov_2_mo_integral_tool
       procedure :: construct_vvov_4_mo_integral_tool
-      generic   :: construct_vvov         => construct_vvov_2_mo_integral_tool, &
-                                             construct_vvov_4_mo_integral_tool
+      generic   :: construct_vvov            => construct_vvov_2_mo_integral_tool, &
+                                                construct_vvov_4_mo_integral_tool
       procedure :: construct_vovv_2_mo_integral_tool
       procedure :: construct_vovv_4_mo_integral_tool
-      generic   :: construct_vovv         => construct_vovv_2_mo_integral_tool, &
-                                             construct_vovv_4_mo_integral_tool
+      generic   :: construct_vovv            => construct_vovv_2_mo_integral_tool, &
+                                                construct_vovv_4_mo_integral_tool
       procedure :: construct_ovvv_2_mo_integral_tool
       procedure :: construct_ovvv_4_mo_integral_tool
-      generic   :: construct_ovvv         => construct_ovvv_2_mo_integral_tool, &
-                                             construct_ovvv_4_mo_integral_tool
+      generic   :: construct_ovvv            => construct_ovvv_2_mo_integral_tool, &
+                                                construct_ovvv_4_mo_integral_tool
 !
       procedure :: construct_vvoo_2_mo_integral_tool
       procedure :: construct_vvoo_4_mo_integral_tool
-      generic   :: construct_vvoo         => construct_vvoo_2_mo_integral_tool, &
-                                             construct_vvoo_4_mo_integral_tool
+      generic   :: construct_vvoo            => construct_vvoo_2_mo_integral_tool, &
+                                                construct_vvoo_4_mo_integral_tool
       procedure :: construct_oovv_2_mo_integral_tool
       procedure :: construct_oovv_4_mo_integral_tool
-      generic   :: construct_oovv         => construct_oovv_2_mo_integral_tool, &
-                                             construct_oovv_4_mo_integral_tool
+      generic   :: construct_oovv            => construct_oovv_2_mo_integral_tool, &
+                                                construct_oovv_4_mo_integral_tool
       procedure :: construct_ovvo_2_mo_integral_tool
       procedure :: construct_ovvo_4_mo_integral_tool
-      generic   :: construct_ovvo         => construct_ovvo_2_mo_integral_tool, &
-                                             construct_ovvo_4_mo_integral_tool
+      generic   :: construct_ovvo            => construct_ovvo_2_mo_integral_tool, &
+                                                construct_ovvo_4_mo_integral_tool
       procedure :: construct_voov_2_mo_integral_tool
       procedure :: construct_voov_4_mo_integral_tool
-      generic   :: construct_voov         => construct_voov_2_mo_integral_tool, &
-                                             construct_voov_4_mo_integral_tool
+      generic   :: construct_voov            => construct_voov_2_mo_integral_tool, &
+                                                construct_voov_4_mo_integral_tool
 !
       procedure :: construct_vvvv_2_mo_integral_tool
       procedure :: construct_vvvv_4_mo_integral_tool
-      generic   :: construct_vvvv         => construct_vvvv_2_mo_integral_tool, &
-                                             construct_vvvv_4_mo_integral_tool
+      generic   :: construct_vvvv            => construct_vvvv_2_mo_integral_tool, &
+                                                construct_vvvv_4_mo_integral_tool
 !
-      procedure :: get_required_voov      => get_required_voov_mo_integral_tool
-      procedure :: get_required_vvoo      => get_required_vvoo_mo_integral_tool
-      procedure :: get_required_vvov      => get_required_vvov_mo_integral_tool
-      procedure :: get_required_vvvo      => get_required_vvvo_mo_integral_tool
-      procedure :: get_required_vvvv      => get_required_vvvv_mo_integral_tool
+      procedure :: get_required_voov         => get_required_voov_mo_integral_tool
+      procedure :: get_required_vvoo         => get_required_vvoo_mo_integral_tool
+      procedure :: get_required_vvov         => get_required_vvov_mo_integral_tool
+      procedure :: get_required_vvvo         => get_required_vvvo_mo_integral_tool
+      procedure :: get_required_vvvv         => get_required_vvvv_mo_integral_tool
 !
-      procedure :: write_t1_cholesky      => write_t1_cholesky_mo_integral_tool
+      procedure :: write_t1_cholesky         => write_t1_cholesky_mo_integral_tool
 !
-      procedure :: can_we_keep_g_pqrs     => can_we_keep_g_pqrs_mo_integral_tool
+      procedure :: can_we_keep_g_pqrs        => can_we_keep_g_pqrs_mo_integral_tool
 !
    end type mo_integral_tool
 !
@@ -662,13 +666,16 @@ contains
    end subroutine construct_cholesky_ai_mo_integral_tool
 !
 !
-   subroutine c1_transform_cholesky_ij_j_mo_integral_tool(integrals, L_ij_J, c_aj, first_i, last_i, first_j, last_j)
+   subroutine construct_cholesky_ij_c1_mo_integral_tool(integrals, L_ij_J, c_aj, first_i, last_i, first_j, last_j)
 !!
-!!    Construct C1-transformed Cholesky ij from T1-transformed
+!!    Construct the C1-transformed Cholesky Vector ij
+!!    from the T1-transformed Cholesky Vector
+!!
 !!    j is the transformed index
-!!    L_ia_J_T1 is equal to L_ia_J
 !!
-!!    Assume that T1-transformed Cholesky vectors already exist.
+!!    Note: the routine assumes that the T1-transformed Cholesky vectors
+!!    have been placed on file.
+!!
 !!    Written by Alexander Paul, Feb 2019
 !!
 !!    Computes
@@ -739,14 +746,18 @@ contains
 !
      call mem%dealloc(L_iJ_j_term, i_length*(integrals%n_J), j_length)
 !
-   end subroutine c1_transform_cholesky_ij_j_mo_integral_tool
+   end subroutine construct_cholesky_ij_c1_mo_integral_tool
 !
 !
-   subroutine c1_transform_cholesky_ab_a_mo_integral_tool(integrals, L_ab_J, c_ai, first_a, last_a, first_b, last_b)
+   subroutine construct_cholesky_ab_c1_mo_integral_tool(integrals, L_ab_J, c_ai, first_a, last_a, first_b, last_b)
 !!
-!!    Construct C1-transformed Cholesky ab from T1-transformed
+!!    Construct the C1-transformed Cholesky Vector ij
+!!    from the T1-transformed Cholesky Vector
+!!
 !!    a is the transformed index
-!!    L_ia_J_T1 is equal to L_ia_J
+!!
+!!    Note: the routine assumes that the T1-transformed Cholesky vectors
+!!    have been placed on file.
 !!
 !!    Written by Alexander Paul, Feb 2019
 !!
@@ -803,13 +814,18 @@ contains
 !
       call mem%dealloc(L_ib_J, (integrals%n_o)*b_length, integrals%n_J)
 !
-   end subroutine c1_transform_cholesky_ab_a_mo_integral_tool
+   end subroutine construct_cholesky_ab_c1_mo_integral_tool
 !
 !
-   subroutine c1_transform_cholesky_ai_a_mo_integral_tool(integrals, L_ai_J, c_aj, first_a, last_a, first_i, last_i)
+   subroutine construct_cholesky_ai_a_c1_mo_integral_tool(integrals, L_ai_J, c_aj, first_a, last_a, first_i, last_i)
 !!
-!!    Construct C1-transformed Cholesky ai from T1-transformed L_ai_J
+!!    Construct the C1-transformed Cholesky Vector ij
+!!    from the T1-transformed Cholesky Vector
+!!
 !!    a is the transformed index
+!!
+!!    Note: the routine assumes that the T1-transformed Cholesky vectors
+!!    have been placed on file.
 !!
 !!    Written by Alexander Paul, Feb 2019
 !!
@@ -847,7 +863,7 @@ contains
       i_length = full_last_i - full_first_i + 1
 !
       call mem%alloc(L_ji_J, (integrals%n_o)*i_length, integrals%n_J)
-      call integrals%read_cholesky_t1_ij(L_ji_J, 1, integrals%n_o, full_first_i, full_last_i)
+      call integrals%read_cholesky_ij_t1(L_ji_J, 1, integrals%n_o, full_first_i, full_last_i)
 !
 !     Calculate c1-transformed term, - sum_i c_aj L_ji_J
 !
@@ -866,13 +882,18 @@ contains
 !
       call mem%dealloc(L_ji_J, (integrals%n_o)*i_length, integrals%n_J)
 !
-   end subroutine c1_transform_cholesky_ai_a_mo_integral_tool
+   end subroutine construct_cholesky_ai_a_c1_mo_integral_tool
 !
 !
-   subroutine c1_transform_cholesky_ai_i_mo_integral_tool(integrals, L_ai_J, c_bi, first_a, last_a, first_i, last_i)
+   subroutine construct_cholesky_ai_i_c1_mo_integral_tool(integrals, L_ai_J, c_bi, first_a, last_a, first_i, last_i)
 !!
-!!    Construct C1-transformed Cholesky ai from T1-transformed L_ji_J
+!!    Construct the C1-transformed Cholesky Vector ij
+!!    from the T1-transformed Cholesky Vector
+!!
 !!    i is the transformed index
+!!
+!!    Note: the routine assumes that the T1-transformed Cholesky vectors
+!!    have been placed on file.
 !!
 !!    Written by Alexander Paul, Feb 2019
 !!
@@ -941,7 +962,7 @@ contains
 !
       call mem%dealloc(L_i_aJ, i_length, a_length*(integrals%n_J))
 !
-   end subroutine c1_transform_cholesky_ai_i_mo_integral_tool
+   end subroutine construct_cholesky_ai_i_c1_mo_integral_tool
 !
 !
    subroutine read_cholesky_ai_t1_mo_integral_tool(integrals, L_ai_J, first_a, last_a, first_i, last_i)
