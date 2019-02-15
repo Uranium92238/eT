@@ -18,7 +18,7 @@ module cc_property_solver_class
       character(len=100) :: tag = 'Coupled cluster property solver'
       character(len=100) :: author = 'Josefine H. Andersen, 2019'
 !
-      character(len=500) :: description1 = 'A solver that calculates spectral  intesities from coupled &
+      character(len=500) :: description1 = 'A solver that calculates spectral intensities from coupled &
                                            &cluster excited state calculations'
 !
       real(dp), allocatable :: S
@@ -75,7 +75,9 @@ contains
 !
       class(ccs) :: wf
 !
-
+      ! call wf%construct_etaX(wf, etaX, Xoperator)      
+      ! call wf%construct_csiX(wf, csiX, Xoperator)      
+!
       call solver%print_summary(wf)
 !
    end subroutine run_cc_property_solver

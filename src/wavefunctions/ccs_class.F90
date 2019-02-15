@@ -183,6 +183,7 @@ module ccs_class
 !
       procedure :: construct_etaX                              => construct_etaX_ccs
       procedure :: construct_csiX                              => construct_csiX_ccs
+      procedure :: get_transformed_dipole_operator                         => get_transformed_dipole_operator_ccs
 !
    end type ccs
 !
@@ -4499,9 +4500,14 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_amplitudes, 1) :: etaX
-      character(len=*) :: Xoperator
-      
+      real(dp), dimension(wf%n_v, wf%n_o) :: etaX
+      real(dp), dimension(wf%n_o, wf%n_v) :: Xoperator
+!
+      real(dp), parameter :: two = 2.0
+!
+!     etaX_ai = 2*X_ia
+!
+      etaX = two * transpose(Xoperator)
 !
    end subroutine construct_etaX_ccs
 !
@@ -4515,11 +4521,52 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_amplitudes, 1) :: csiX
-      character(len=*) :: Xoperator
-      
+      real(dp), dimension(wf%n_v, wf%n_o) :: csiX
+      real(dp), dimension(wf%n_o, wf%n_v) :: Xoperator
+!
+      real(dp), dimension(:,:), allocatable :: X_ai 
+!
+      call mem%alloc(X_ai, wf%n_v, wf%n_o)
+!
+      X_ai(:,:) = Xoperator(wf%n_o + 1 : wf%n_mo, 1 : wf%n_o)
+!
+!     CCS: csiX = X_ai
+!
+      csiX = X_ai
+!
+      call mem%dealloc(X_ai, wf%n_v, wf%n_o)
 !
    end subroutine construct_csiX_ccs
+!
+!
+   subroutine get_transformed_dipole_operator_ccs(wf, ref_wf, mu_X_mo, mu_Y_mo, mu_Z_mo)
+!!
+!!    Get and transform dipole operator from hf calculations
+!!    Written by Josefine H. Andersen, February 2019
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+      class(hf), intent(in)  :: ref_wf
+!
+      real(dp), dimension(wf%n_o, wf%n_v) :: mu_X_ao, mu_Y_ao, mu_Z_ao
+      real(dp), dimension(wf%n_o, wf%n_v) :: mu_X_mo, mu_Y_mo, mu_Z_mo
+!
+      call ref_wf%get_ao_mu_wx(mu_X_ao, mu_Y_ao, mu_Z_ao)
+!
+!     Transform to MO basis
+!
+      call ref_wf%mo_transform(mu_X_ao, mu_X_mo) 
+      call ref_wf%mo_transform(mu_Y_ao, mu_Y_mo) 
+      call ref_wf%mo_transform(mu_Z_ao, mu_Z_mo) 
+!
+!     T1 transform
+!
+      call wf%t1_transform(mu_X_mo)
+      call wf%t1_transform(mu_Y_mo)
+      call wf%t1_transform(mu_Z_mo)
+!
+   end subroutine get_transformed_dipole_operator_ccs
 !
 !
 end module ccs_class

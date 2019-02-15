@@ -111,6 +111,16 @@ contains
 !
       endif
 !
+!     Multiplier equation
+!
+      allocate(cc_multipliers_davidson)
+!
+      call cc_multipliers_davidson%prepare(wf)
+      call cc_multipliers_davidson%run(wf)
+      call cc_multipliers_davidson%cleanup(wf)
+!
+      deallocate(cc_multipliers_davidson)
+!
 !     Prepare for excited state
 !
       if (engine%algorithm == 'diis') then
@@ -139,8 +149,12 @@ contains
 !
             allocate(cc_valence_es_solver)
 !
-            call cc_valence_es_solver%prepare()
+            call cc_valence_es_solver%prepare('right')
             call cc_valence_es_solver%run(wf)
+!
+            call cc_valence_es_solver%prepare('left')
+            call cc_valence_es_solver%run(wf)
+!
             call cc_valence_es_solver%cleanup()
 !
             deallocate(cc_valence_es_solver)
@@ -149,17 +163,7 @@ contains
 !
       endif
 !
-!     Multiplier equation
-!
-      allocate(cc_multipliers_davidson)
-!
-      call cc_multipliers_davidson%prepare(wf)
-      call cc_multipliers_davidson%run(wf)
-      call cc_multipliers_davidson%cleanup(wf)
-!
-      deallocate(cc_multipliers_davidson)
-!
-!     Property (spectra)
+!     Properties
 !
       allocate(cc_property_solver)
 !

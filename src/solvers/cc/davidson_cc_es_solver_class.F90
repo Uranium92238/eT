@@ -74,7 +74,7 @@ module davidson_cc_es_solver_class
 contains
 !
 !
-   subroutine prepare_davidson_cc_es_solver(solver)
+   subroutine prepare_davidson_cc_es_solver(solver, transform)
 !!
 !!    Prepare 
 !!    Written by Sarai D. Folkestad and Eirik F. Kjønstad, 2018
@@ -82,6 +82,7 @@ contains
       implicit none
 !
       class(davidson_cc_es_solver) :: solver
+      character(len=*), optional :: transform
 !
       call solver%print_banner()
 !
@@ -95,6 +96,8 @@ contains
       solver%do_restart           = .false.
 !
       call solver%read_settings()
+!
+      if (present(transform)) solver%transformation = transform
 !
       call solver%print_settings()
 !
