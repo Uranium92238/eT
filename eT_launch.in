@@ -55,6 +55,8 @@ if args.omp:
     os.environ['MKL_NUM_THREADS'] = str(args.omp)
 
 omps = os.getenv('OMP_NUM_THREADS')
+if (not omps):
+    omps = 'dynamic number of'
 mkls = os.getenv('MKL_NUM_THREADS')
 
 # Set up name for output files

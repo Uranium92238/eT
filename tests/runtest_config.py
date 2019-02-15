@@ -14,6 +14,7 @@ def configure(options, input_files, extra_args):
     command = []
     command.append('{0}'.format(launcher_full_path))
     command.append('{0} '.format(inp))
+    command.append(' --omp 4') #Set default number of threads, can be overwritten
     if extra_args is not None:
         command.append(extra_args)
 
