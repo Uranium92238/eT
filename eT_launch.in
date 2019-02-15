@@ -22,11 +22,24 @@ parser.add_argument('-ks', '--keep_scratch', help="Do not delete scratch", actio
 parser.add_argument("--omp", help="Number of OpenMP threads", action=OMPaction, type=int)
 parser.add_argument('-nt', "--no_timing", help="Do not copy timing.out from scratch", action='store_true')
 parser.add_argument('-v', "--verbose", help="Run some print statements", action='store_true')
+parser.add_argument('-bd', "--binary_dir", help="Specify location of eT executable", type=str)
 args = parser.parse_args()
 
 cwd = os.getcwd() # Get current directory
-eT_dir = '${CMAKE_BINARY_DIR}' # Find location of eT_launch. Assume eT is here
+if (args.binary_dir):
+    eT_dir = args.binary_dir
+else:
+    eT_dir = '${CMAKE_BINARY_DIR}' # Find location of eT_launch. Assume eT is here
 eT_dir = os.path.abspath(eT_dir) # Use absolute path
+
+executable = os.path.join(eT_dir,'eT')
+
+if (not os.path.isfile(executable)):
+    print(executable, 'is not a file')
+    raise FileNotFoundError
+
+if (args.verbose):
+    print("Will use executable from", eT_dir)
 
 # Make a scratch dir. Either specified by user or wherever os dumps temporary file
 if args.scratch:
@@ -71,7 +84,7 @@ if (args.verbose):
 
 # Run eT
 wstart = time.time()
-os.system(os.path.join(eT_dir,'eT'))
+os.system(executable)
 wstop = time.time()
 
 if (args.verbose):
