@@ -95,6 +95,7 @@ module hf_class
       procedure :: print_orbital_energies                   => print_orbital_energies_hf
       procedure :: mo_transform                             => mo_transform_hf
       procedure :: mo_transform_and_save_h                  => mo_transform_and_save_h_hf
+      procedure :: mo_transform_and_save_mu                 => mo_transform_and_save_mu_hf
       procedure :: save_orbital_coefficients                => save_orbital_coefficients_hf
       procedure :: read_orbital_coefficients                => read_orbital_coefficients_hf
 !
@@ -379,6 +380,63 @@ contains
       call mem%dealloc(Z_wq, wf%n_ao, wf%n_mo)
 !
    end subroutine mo_transform_hf
+!
+!
+   subroutine mo_transform_and_save_mu_hf(wf)
+!!
+!!    MO transform and save mu_X, mu_Y, and mu_Z 
+!!    Written by Josefine H. Andersen, February 2019
+!!
+      implicit none
+!      
+      class(hf), intent(in) :: wf
+!
+      real(dp), dimension(:,:), allocatable :: mu_X_wx, mu_Y_wx, mu_Z_wx
+      real(dp), dimension(:,:), allocatable :: mu_X_pq, mu_Y_pq, mu_Z_pq
+!
+      type(file) :: mu_X_pq_file
+      type(file) :: mu_Y_pq_file
+      type(file) :: mu_Z_pq_file
+!
+      call mem%alloc(mu_X_wx, wf%n_ao, wf%n_ao)
+      call mem%alloc(mu_Y_wx, wf%n_ao, wf%n_ao)
+      call mem%alloc(mu_Z_wx, wf%n_ao, wf%n_ao)
+!     
+      call mem%alloc(mu_X_pq, wf%n_mo, wf%n_mo)
+      call mem%alloc(mu_Y_pq, wf%n_mo, wf%n_mo)
+      call mem%alloc(mu_Z_pq, wf%n_mo, wf%n_mo)
+!
+      call wf%get_ao_mu_wx(mu_X_wx, mu_Y_wx, mu_Z_wx)
+!      
+      call wf%mo_transform(mu_X_wx, mu_X_pq)
+      call wf%mo_transform(mu_Y_wx, mu_Y_pq)
+      call wf%mo_transform(mu_Z_wx, mu_Z_pq)
+!
+      mu_X_pq_file%name = 'mu_X'
+      call disk%open_file(mu_X_pq_file, 'write', 'rewind')
+      write(mu_X_pq_file%unit) mu_X_pq
+!
+      mu_Y_pq_file%name = 'mu_Y'
+      call disk%open_file(mu_Y_pq_file, 'write', 'rewind')
+      write(mu_Y_pq_file%unit) mu_Y_pq
+!
+      mu_Z_pq_file%name = 'mu_Z'
+      call disk%open_file(mu_Z_pq_file, 'write', 'rewind')
+      write(mu_Z_pq_file%unit) mu_Z_pq
+!
+      call mem%dealloc(mu_X_wx, wf%n_ao, wf%n_ao)
+      call mem%dealloc(mu_Y_wx, wf%n_ao, wf%n_ao)
+      call mem%dealloc(mu_Z_wx, wf%n_ao, wf%n_ao)
+!     
+      call mem%dealloc(mu_X_pq, wf%n_mo, wf%n_mo)
+      call mem%dealloc(mu_Y_pq, wf%n_mo, wf%n_mo)
+      call mem%dealloc(mu_Z_pq, wf%n_mo, wf%n_mo)
+!
+      call disk%close_file(mu_X_pq_file)
+      call disk%close_file(mu_Y_pq_file)
+      call disk%close_file(mu_Z_pq_file)
+!
+   end subroutine mo_transform_and_save_mu_hf
 !
 !
    subroutine set_initial_ao_density_guess_hf(wf, guess)

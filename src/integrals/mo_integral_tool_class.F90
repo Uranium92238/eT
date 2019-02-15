@@ -132,6 +132,8 @@ module mo_integral_tool_class
 !
       procedure :: can_we_keep_g_pqrs     => can_we_keep_g_pqrs_mo_integral_tool
 !
+      procedure :: prepare_operator_pq     => prepare_operator_pq_mo_integral_tool
+!
    end type mo_integral_tool
 !
 !
@@ -3838,6 +3840,55 @@ contains
       call disk%close_file(integrals%cholesky_mo_t1)    
 !
    end subroutine write_t1_cholesky_mo_integral_tool
+!
+!
+   subroutine prepare_operator_pq_mo_integral_tool(integrals, operator_type)
+!!
+!!    Prepare operator X_pq.
+!!    Reads MO-based operator from disk, T1-transforms, and writes integrals to file.
+!!    Written by Josefine H. Andersen
+!!
+      implicit none
+!
+      class(mo_integral_tool), intent(inout) :: integrals
+!
+      character(len=*) :: operator_type
+!
+!      real(dp), dimension(:,:), allocatable :: X_xy_packed
+!      real(dp), dimension(:,:), allocatable :: X_xy, X_pq
+      real(dp), dimension(:,:), allocatable :: X_pq
+!
+      type(file) :: mo_operator, operator_output
+!
+      character(len=1), dimension(3) :: cartesian_coordinate = ['X', 'Y', 'Z']
+      character(len=31) :: line
+      character(len=15) :: keyword, Xoperator
+!
+      integer :: i
+!
+      if (trim(operator_type) == 'dipole_length') then
+!
+         Xoperator = 'mu'
+!
+      !else
+!
+         ! write error message
+!
+      endif
+!
+      do i = 1, 3
+!
+         mo_operator%name  = Xoperator // '_' // cartesian_coordinate(i)
+!
+         call mem%alloc(X_pq, integrals%n_mo, integrals%n_mo)
+!
+         call disk%open_file(mo_operator, 'unformatted', 'read', 'sequential')
+!
+         read(mo_operator, *) X_pq 
+
+      enddo
+!
+   end subroutine prepare_operator_pq_mo_integral_tool
 !
 !
 end module mo_integral_tool_class

@@ -4569,4 +4569,41 @@ contains
    end subroutine get_transformed_dipole_operator_ccs
 !
 !
+   subroutine calculate_transition_strength_ccs(wf, S, etaX, csiX)
+!!
+!!    Calculate transition strength for spectra
+!!    Written by Josefine H. Andersen, February 2019
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      real(dp), intent(inout) :: S
+!
+      real(dp), dimension(wf%n_amplitudes, 1), intent(in) :: etaX
+      real(dp), dimension(wf%n_amplitudes, 1), intent(in) :: csiX
+!
+      real(dp) :: T_l, T_r
+      real(dp) :: ddot
+!
+      real(dp), dimension(:,:), allocatable :: right_j      
+      real(dp), dimension(:,:), allocatable :: left_j 
+!
+      integer :: state
+!
+      call mem%alloc(right_j, wf%n_amplitudes, 1)
+      call mem%alloc(left_j, wf%n_amplitudes, 1)
+!
+      ! get right and left excitation vector
+      !
+      ! calc dotproducts btwn exc. vectors and csiX/etaX
+      ! T_left = ddot(wf%n_parameters, etaX, 1, right_j, 1)
+      ! T_right = ddot(wf%n_parameters, left_j, 1, csiX, 1)
+      !
+      ! sum S over three components
+      ! solver%S += T_left * T_right
+!
+   end subroutine calculate_transition_strength_ccs
+!
+!
 end module ccs_class
