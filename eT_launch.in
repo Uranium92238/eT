@@ -4,6 +4,7 @@ import os
 import tempfile
 import shutil
 import argparse
+import time
 
 # Kill if given negative number of OMP threads
 class OMPaction(argparse.Action):
@@ -69,10 +70,13 @@ if (args.verbose):
     print("Ready to run eT in", scratch, "with", omps, "threads")
 
 # Run eT
+wstart = time.time()
 os.system(os.path.join(eT_dir,'eT'))
+wstop = time.time()
 
 if (args.verbose):
-    print("Success, copying output to", out_dest)
+    print("eT used %.4g seconds" %(wstop - wstart))
+    print("Copying output to", out_dest)
 
 # Copy files back
 shutil.copyfile(out_src,out_dest)
