@@ -20,7 +20,10 @@ module cc_property_solver_class
       character(len=500) :: description1 = 'A solver that calculates spectral intensities from coupled &
                                            &cluster excited state calculations'
 !
+      character(len=40)   :: X_operator
+!
       real(dp), allocatable :: S
+!
       real(dp), dimension(:,:), allocatable :: etaX
       real(dp), dimension(:,:), allocatable :: csiX
 !
@@ -96,13 +99,14 @@ contains
    subroutine read_settings_cc_property_solver(solver)
 !!
 !!    Read cc excited state settings to find n_singlet_states
+!!    and cc properties settings to determine operator
 !!    Written by Josefine H. Andersen, 2019
 !!
       implicit none
 !
       class(cc_property_solver) :: solver
 !
-      integer :: n_specs, i
+      integer :: n_specs, n_ops, i
 !
       character(len=100) :: line
 !
@@ -126,6 +130,50 @@ contains
          endif
 !
       enddo
+!     
+      if (.not. requested_section('cc properties')) then
+!
+      call output%error_msg('Operator type must be specified for property calculations.')
+!
+      endif
+!
+      call move_to_section('cc excited state', n_specs)
+!
+      do i = 1, n_specs
+!
+         read(input%unit, '(a100)') line
+         line = remove_preceding_blanks(line)
+!
+         if (line(1:15) == 'singlet states:' ) then
+!
+            read(line(16:100), *) solver%n_singlet_states
+!
+         endif
+!
+      enddo
+!     
+      if (.not. requested_section('cc properties')) then
+!
+         call output%error_msg('operator type must be specified for property calculations')
+!
+      endif
+!
+      call move_to_section('cc properties', n_ops)
+!
+      if (n_ops .gt. 1) then
+!
+         call output%error_msg('More than one operator specified')
+!
+      endif
+!      
+      read(input%unit, '(a100)') line
+      line = remove_preceding_blanks(line)
+!
+      if (line(1:13) == 'dipole length') then
+!
+         solver%X_operator = 'dipole_length'
+!         
+      endif
 !
    end subroutine read_settings_cc_property_solver
 !

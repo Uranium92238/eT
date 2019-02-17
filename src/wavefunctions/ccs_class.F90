@@ -179,11 +179,19 @@ module ccs_class
       procedure :: destruct_t1                                  => destruct_t1_ccs
       procedure :: destruct_t1bar                               => destruct_t1bar_ccs
 !
+!     Routines to get operator integrals
+!
+      procedure :: get_operator_vo                             => get_operator_vo_ccs
+      procedure :: get_operator_ov                             => get_operator_ov_ccs
+      procedure :: get_operator_vv                             => get_operator_vv_ccs
+      procedure :: get_operator_oo                             => get_operator_oo_ccs
+!
 !     Routines related to property calculations
 !
       procedure :: construct_etaX                              => construct_etaX_ccs
       procedure :: construct_csiX                              => construct_csiX_ccs
-      procedure :: get_transformed_dipole_operator                         => get_transformed_dipole_operator_ccs
+      procedure :: prepare_operator_pq                         => prepare_operator_pq_ccs
+      procedure :: calculate_transition_strength               => calculate_transition_strength_ccs
 !
    end type ccs
 !
@@ -237,6 +245,8 @@ contains
       enddo
 !
       call ref_wf%mo_transform_and_save_h()
+!
+      call ref_wf%mo_transform_and_save_mu()
 !
       call wf%initialize_orbital_coefficients()
       wf%orbital_coefficients = ref_wf%orbital_coefficients
@@ -4491,6 +4501,138 @@ contains
    end subroutine set_cvs_start_indices_ccs
 !
 !
+   subroutine get_operator_vo_ccs(wf, integral_type, X_vo)
+!!
+!!    Get operator ai
+!!    Written by Josefine H. Andersen, February 2019
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      character(len=*), intent(in) ::  integral_type
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: X_vo
+      real(dp), dimension(:,:), allocatable              :: X_pq
+!
+      type(file) :: integral
+!
+      integral%name = integral_type
+!
+      call disk%open_file(integral, 'formatted', 'read')
+!
+      call mem%alloc(X_pq, wf%n_mo, wf%n_mo)
+!
+      read(integral%unit, *) X_pq
+!
+      X_vo(:,:) = X_pq(wf%n_o + 1 : wf%n_mo, 1 : wf%n_o)
+!
+      call disk%close_file(integral)
+!
+      call mem%dealloc(X_pq, wf%n_mo, wf%n_mo)
+!
+   end subroutine get_operator_vo_ccs
+!
+!
+   subroutine get_operator_ov_ccs(wf, integral_type, X_ov)
+!!
+!!    Get operator ia
+!!    Written by Josefine H. Andersen, February 2019
+!!
+      implicit none
+!
+      class(ccs), intent(in) :: wf
+!
+      character(len=*), intent(in) ::  integral_type
+!
+      real(dp), dimension(wf%n_o, wf%n_v), intent(inout) :: X_ov
+      real(dp), dimension(:,:), allocatable              :: X_pq
+!
+      type(file) :: integral
+!
+      integral%name = integral_type
+!
+      call disk%open_file(integral, 'formatted', 'read')
+!
+      call mem%alloc(X_pq, wf%n_mo, wf%n_mo)
+!
+      read(integral%unit, *) X_pq
+!
+      X_ov(:,:) = X_pq(1 : wf%n_o, wf%n_o + 1 : wf%n_mo)
+!
+      call disk%close_file(integral)
+!
+      call mem%dealloc(X_pq, wf%n_mo, wf%n_mo)
+!
+   end subroutine get_operator_ov_ccs
+!
+!
+   subroutine get_operator_oo_ccs(wf, integral_type, X_oo)
+!!
+!!    Get operator ij
+!!    Written by Josefine H. Andersen, February 2019
+!!
+      implicit none
+!
+      class(ccs) :: wf
+!
+      character(len=*), intent(in) ::  integral_type
+!
+      real(dp), dimension(wf%n_o, wf%n_o), intent(inout) :: X_oo
+      real(dp), dimension(:,:), allocatable              :: X_pq
+!
+      type(file) :: integral
+!
+      integral%name = integral_type
+!
+      call disk%open_file(integral, 'formatted', 'read')
+!
+      call mem%alloc(X_pq, wf%n_mo, wf%n_mo)
+!
+      read(integral%unit, *) X_pq
+!
+      X_oo(:,:) = X_pq(1 : wf%n_o, 1 : wf%n_o)
+!
+      call disk%close_file(integral)
+!
+      call mem%dealloc(X_pq, wf%n_mo, wf%n_mo)
+!
+   end subroutine get_operator_oo_ccs
+!
+!
+   subroutine get_operator_vv_ccs(wf, integral_type, X_vv)
+!!
+!!    Get operator ab
+!!    Written by Josefine H. Andersen, February 2019
+!!
+      implicit none 
+!
+      class(ccs) :: wf
+!
+      character(len=*), intent(in) ::  integral_type
+!
+      real(dp), dimension(wf%n_v, wf%n_v), intent(inout) :: X_vv 
+      real(dp), dimension(:,:), allocatable              :: X_pq 
+!
+      type(file) :: integral
+!
+      integral%name = integral_type
+!
+      call disk%open_file(integral, 'formatted', 'read')
+!
+      call mem%alloc(X_pq, wf%n_mo, wf%n_mo)
+!
+      read(integral%unit, *) X_pq 
+!
+      X_vv(:,:) = X_pq(wf%n_o + 1 : wf%n_mo, wf%n_o + 1 : wf%n_mo)
+!
+      call disk%close_file(integral)
+!
+      call mem%dealloc(X_pq, wf%n_mo, wf%n_mo)
+!
+   end subroutine get_operator_vv_ccs
+!
+!
    subroutine construct_etaX_ccs(wf, etaX, Xoperator)
 !!
 !!    Construct left-hand-side vector etaX 
@@ -4500,14 +4642,22 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o) :: etaX
-      real(dp), dimension(wf%n_o, wf%n_v) :: Xoperator
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: etaX
+      real(dp), dimension(:,:), allocatable              :: eta_temp
+!
+      character(len=*), intent(in) :: Xoperator
 !
       real(dp), parameter :: two = 2.0
 !
+      call mem%alloc(eta_temp, wf%n_o, wf%n_v)
+!
 !     etaX_ai = 2*X_ia
 !
-      etaX = two * transpose(Xoperator)
+      call  wf%get_operator_ov(Xoperator, eta_temp)
+!
+      etaX = two * transpose(eta_temp)
+!
+      call mem%dealloc(eta_temp, wf%n_o, wf%n_v)
 !
    end subroutine construct_etaX_ccs
 !
@@ -4521,52 +4671,75 @@ contains
 !
       class(ccs), intent(in) :: wf
 !
-      real(dp), dimension(wf%n_v, wf%n_o) :: csiX
-      real(dp), dimension(wf%n_o, wf%n_v) :: Xoperator
-!
-      real(dp), dimension(:,:), allocatable :: X_ai 
-!
-      call mem%alloc(X_ai, wf%n_v, wf%n_o)
-!
-      X_ai(:,:) = Xoperator(wf%n_o + 1 : wf%n_mo, 1 : wf%n_o)
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: csiX
+      character(len=*), intent(in) :: Xoperator
 !
 !     CCS: csiX = X_ai
 !
-      csiX = X_ai
-!
-      call mem%dealloc(X_ai, wf%n_v, wf%n_o)
+      call wf%get_operator_vo(Xoperator, csiX)
 !
    end subroutine construct_csiX_ccs
 !
 !
-   subroutine get_transformed_dipole_operator_ccs(wf, ref_wf, mu_X_mo, mu_Y_mo, mu_Z_mo)
+   subroutine prepare_operator_pq_ccs(wf, operator_type)
 !!
-!!    Get and transform dipole operator from hf calculations
-!!    Written by Josefine H. Andersen, February 2019
+!!    Prepare operator X_pq.
+!!    Reads MO-based operator from disk, T1-transforms, and writes integrals to file.
+!!    Written by Josefine H. Andersen
 !!
       implicit none
 !
       class(ccs), intent(in) :: wf
-      class(hf), intent(in)  :: ref_wf
 !
-      real(dp), dimension(wf%n_o, wf%n_v) :: mu_X_ao, mu_Y_ao, mu_Z_ao
-      real(dp), dimension(wf%n_o, wf%n_v) :: mu_X_mo, mu_Y_mo, mu_Z_mo
+      character(len=*) :: operator_type
 !
-      call ref_wf%get_ao_mu_wx(mu_X_ao, mu_Y_ao, mu_Z_ao)
+      real(dp), dimension(:,:), allocatable :: X_pq
 !
-!     Transform to MO basis
+      type(file) :: mo_operator, operator_output
 !
-      call ref_wf%mo_transform(mu_X_ao, mu_X_mo) 
-      call ref_wf%mo_transform(mu_Y_ao, mu_Y_mo) 
-      call ref_wf%mo_transform(mu_Z_ao, mu_Z_mo) 
+      character(len=1), dimension(3) :: cartesian_coordinate = ['X', 'Y', 'Z']
+     ! character(len=31) :: line
+      character(len=15) :: keyword, Xoperator
 !
-!     T1 transform
+      integer :: i = 0, ioerror = 0
 !
-      call wf%t1_transform(mu_X_mo)
-      call wf%t1_transform(mu_Y_mo)
-      call wf%t1_transform(mu_Z_mo)
+      if (trim(operator_type) == 'dipole_length') then
 !
-   end subroutine get_transformed_dipole_operator_ccs
+         Xoperator = 'mu'
+!
+      !else
+!
+         ! write error message
+!
+      endif
+!
+      do i = 1, 3
+!
+         mo_operator%name  = Xoperator // '_' // cartesian_coordinate(i)
+!
+         call mem%alloc(X_pq, wf%n_mo, wf%n_mo)
+!
+         call disk%open_file(mo_operator, 'unformatted', 'read')
+!
+         read(mo_operator%unit, iostat = ioerror) X_pq         
+!         
+         call disk%close_file(mo_operator)
+!
+         call wf%t1_transform(X_pq)
+!
+         operator_output%name = cartesian_coordinate(i) // '_' // operator_type
+!
+         call disk%open_file(operator_output, 'formatted', 'write')
+!
+         write(operator_output%unit, *) X_pq
+!
+         call mem%dealloc(X_pq, wf%n_mo, wf%n_mo)
+!
+         call disk%close_file(operator_output)
+!
+      enddo
+!
+   end subroutine prepare_operator_pq_ccs
 !
 !
    subroutine calculate_transition_strength_ccs(wf, S, etaX, csiX)

@@ -95,7 +95,7 @@ module hf_class
       procedure :: print_orbital_energies                   => print_orbital_energies_hf
       procedure :: mo_transform                             => mo_transform_hf
       procedure :: mo_transform_and_save_h                  => mo_transform_and_save_h_hf
-      procedure :: mo_transform_and_save_mu                 => mo_transform_and_save_mu_hf
+      procedure :: mo_transform_and_save_mu                 => mo_transform_and_save_mu_vectors_hf
       procedure :: save_orbital_coefficients                => save_orbital_coefficients_hf
       procedure :: read_orbital_coefficients                => read_orbital_coefficients_hf
 !
@@ -382,7 +382,7 @@ contains
    end subroutine mo_transform_hf
 !
 !
-   subroutine mo_transform_and_save_mu_hf(wf)
+   subroutine mo_transform_and_save_mu_vectors_hf(wf)
 !!
 !!    MO transform and save mu_X, mu_Y, and mu_Z 
 !!    Written by Josefine H. Andersen, February 2019
@@ -436,7 +436,7 @@ contains
       call disk%close_file(mu_Y_pq_file)
       call disk%close_file(mu_Z_pq_file)
 !
-   end subroutine mo_transform_and_save_mu_hf
+   end subroutine mo_transform_and_save_mu_vectors_hf
 !
 !
    subroutine set_initial_ao_density_guess_hf(wf, guess)
