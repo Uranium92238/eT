@@ -1,4 +1,4 @@
-   module subroutine jacobian_transform_trial_vector_cc3(wf, omega, c_i)
+   module subroutine jacobian_transform_trial_vector_cc3(wf, c_i)
 !!
 !!   Jacobian transform trail vector (CC3)
 !!   Alexander Paul and Rolf H. Myhre February 2019
@@ -12,7 +12,7 @@
    end subroutine jacobian_transform_trial_vector_cc3
 !
 !
-   module subroutine jacobian_cc3_transformation_cc3(wf, omega, c)
+   module subroutine jacobian_cc3_transformation_cc3(wf, c)
 !!
 !!    Jacobian transformation (CC3)
 !!    Alexander Paul and Rolf H. Myhre Feb 2019
@@ -21,10 +21,26 @@
 !
       class(cc3) :: wf
 !
-      real(dp), intent(in) :: omega
       real(dp), dimension(wf%n_amplitudes, 1), intent(inout) :: c
 !
    end subroutine jacobian_cc3_transformation_cc3
+!
+!
+   module subroutine jacobian_cc3_A_cc3(wf, c_abji, rho_ai, rho_aibj)
+!!
+!!    CC3 jacobian terms
+!!    Alex C. Paul and Rolf H. Myhre, Feb 2019
+!!
+      implicit none
+!
+      class(cc3) :: wf
+!
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(in) :: c_abji
+!
+      real(dp), dimension(wf%n_v, wf%n_o), intent(inout) :: rho_ai
+      real(dp), dimension(wf%n_v, wf%n_v, wf%n_o, wf%n_o), intent(inout) :: rho_aibj
+!
+   end subroutine jacobian_cc3_A_cc3
 !
 !
    module subroutine jacobian_cc3_integrals_cc3(wf)
@@ -68,7 +84,7 @@
    end subroutine construct_fock_ia_c1_cc3
 !
 !
-   module subroutine jacobian_cc3_vvv_reader_cc3(wf,batch_x,g_bdcx,g_dbxc)
+   module subroutine jacobian_cc3_vvv_reader_cc3(wf, batch_x, g_bdcx, g_dbxc, g_bdcx_c1, g_dbxc_c1)
 !!
 !!    Read in the intgrals needed in the current batches
 !!    Alexander Paul and Rolf H. Myhre February 2019
@@ -85,7 +101,8 @@
    end subroutine jacobian_cc3_vvv_reader_cc3
 !
 !
-   module subroutine jacobian_cc3_ov_vv_reader_cc3(wf,batch_y,batch_x,g_lycx,g_ylxc,L_ybxc)
+   module subroutine jacobian_cc3_ov_vv_reader_cc3(wf, batch_y, batch_x, g_lycx, g_ylxc, L_ybxc, &
+                                                   g_lycx_c1, g_ylxc_c1)
 !!
 !!    Read the ljck, jlkc and jbkc integrals needed in the current batches
 !!    Alexander Paul and Rolf H. Myhre Feb 2019
@@ -103,8 +120,8 @@
    end subroutine jacobian_cc3_ov_vv_reader_cc3
 !
 !
-   module subroutine jacobian_cc3_W_calc_cc3(wf, i, j, k, t_abc, u_abc, t_abji, &
-                                                g_bdci, g_bdcj, g_bdck, &
+   module subroutine jacobian_cc3_W_calc_cc3(wf, i, j, k, t_abc, u_abc, t_abji,  &
+                                                g_bdci, g_bdcj, g_bdck,          &
                                                 g_ljci, g_lkci, g_lkcj, g_licj, g_lick, g_ljck)
 !!
 !!    Calculate intermediates W^abc_ijk needed for the T^abc_ijk and C^abc_ijk amplitudes
@@ -136,7 +153,7 @@
    end subroutine jacobian_cc3_W_calc_cc3
 !
 !
-   module subroutine jacobian_cc3_eps_cc3(wf, omega, i, j, k, t_abc)
+   module subroutine jacobian_cc3_eps_cc3(wf, i, j, k, t_abc)
 !!
 !!    Divide W^abc_ijk with -epsilon^abc_ijk to obtain T^abc_ijk
 !!    Alexander Paul and Rolf H. Myhre Feb 2019
